@@ -12,7 +12,7 @@ Discordにスクリーニング結果をDM送信するBotです。
 | コンポーネント | 場所 | 役割 |
 |---|---|---|
 | Bot本体 | VM `ubuntu@168.110.60.126` / `~/screening-bot/` | pm2で常時稼働（Node.js） |
-| スコア最適化 | ローカル `optimize_screener.py` | 毎日19:30にタスクスケジューラーで自動実行 |
+| スコア最適化 | GitHub Actions `.github/workflows/optimize.yml` | 毎日19:30にcron-job.orgが自動起動 |
 | データソース | Google Sheets（`alerts_raw`, `ohlcv_4h`） | バックテスト用シグナル・OHLCVデータ |
 
 ## データフロー（全体像）
@@ -105,7 +105,7 @@ py optimize_screener.py --dry-run
 
 - **SSH key**: `C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key`
 - **VM**: `ubuntu@168.110.60.126`、pm2プロセス名 `screening-bot`
-- **タスクスケジューラー**: `screening-bot-daily-optimize`（毎日19:30、`--yes` フラグ付き）
+- **自動実行**: cron-job.org（`Screening-Bot-Action`）が毎日19:30 JSTにGitHub Actions `workflow_dispatch` APIを叩いて起動。GitHubのスケジュール遅延回避のため外部cronを使用。
 - **バックアップ**: `backups/screener_backup_YYYYMMDD_HHMMSS.js`（最大30件）
 
 ## 重要な注意事項

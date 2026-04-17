@@ -1,0 +1,12 @@
+下記をPowerShellにコピペ
+
+scp -i $HOME\Downloads\ssh-key-2026-03-08.key "C:\Users\ken5\OneDrive\Desktop\screening-bot\screener.js" ubuntu@168.110.60.126:~/screening-bot/
+
+scp -i $HOME\Downloads\ssh-key-2026-03-08.key "C:\Users\ken5\OneDrive\Desktop\screening-bot\index.js" ubuntu@168.110.60.126:~/screening-bot/
+
+
+
+ssh -i $HOME\Downloads\ssh-key-2026-03-08.key ubuntu@168.110.60.126
+
+
+pm2 restart screening-bot

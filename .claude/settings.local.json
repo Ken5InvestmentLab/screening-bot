@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONIOENCODING=utf-8 py optimize_screener.py --yes)",
+      "Bash(where py:*)",
+      "Bash(schtasks:*)",
+      "Bash(powershell:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Skill(update-config)"
+    ]
+  }
+}

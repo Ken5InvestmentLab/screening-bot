@@ -45,12 +45,12 @@ npm run dev        # ホットリロード起動（nodemon）
 ### デプロイ（PowerShellから）
 
 ```powershell
-# VMにファイル転送（SSHキーは $HOME\Downloads に置く）
-scp -i $HOME\Downloads\ssh-key-2026-03-08.key ".\screener.js" ubuntu@168.110.60.126:~/screening-bot/
-scp -i $HOME\Downloads\ssh-key-2026-03-08.key ".\index.js" ubuntu@168.110.60.126:~/screening-bot/
+# VMにファイル転送（通常: 自宅PC）
+scp -i C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key ".\screener.js" ubuntu@168.110.60.126:~/screening-bot/
+scp -i C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key ".\index.js" ubuntu@168.110.60.126:~/screening-bot/
 
 # VM接続 → pm2 再起動
-ssh -i $HOME\Downloads\ssh-key-2026-03-08.key ubuntu@168.110.60.126
+ssh -i C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key ubuntu@168.110.60.126
 pm2 restart screening-bot
 ```
 
@@ -118,7 +118,7 @@ py optimize_screener.py --dry-run
 
 ## デプロイ構成
 
-- **SSH key**: `$HOME\Downloads\ssh-key-2026-03-08.key`（PowerShell）/ `~/ssh-key-2026-03-08.key`（Cloud Shell）
+- **SSH key**: `C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key`（自宅PC）/ `~/ssh-key-2026-03-08.key`（Cloud Shell）
 - **VM**: `ubuntu@168.110.60.126`、pm2プロセス名 `screening-bot`
 - **自動実行**: cron-job.org（`Screening-Bot-Action`）が毎日16:10 JSTにGitHub Actions `workflow_dispatch` APIを叩いて起動。処理完了は18:30〜19:30頃。GitHubのスケジュール遅延回避のため外部cronを使用。
 - **バックアップ**: `backups/screener_backup_YYYYMMDD_HHMMSS.js`（最大30件）

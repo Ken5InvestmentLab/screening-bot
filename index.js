@@ -185,7 +185,7 @@ async function sendUnanalyzed(user, unanalyzed) {
     if (isFirst) {
       embed.setDescription(
         'これらの銘柄は現在データが不足しているためスコアを計算できません。\n' +
-        'データは毎日夕方（18:30〜19:30頃）に順次追加されるため、しばらくお待ちください。'
+        'データは毎日18:30〜19:30頃に自動更新されるため、次回の更新後に分析対象となります。'
       );
     }
 

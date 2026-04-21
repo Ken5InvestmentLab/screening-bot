@@ -275,7 +275,9 @@ def get_features(daily, sig_date):
 # ══════════════════════════════════════════════════════════════
 def calc_stats(df_s6):
     n = len(df_s6)
-    if n == 0: return dict(n=0, wr=0, avg=0, win10=0, lose10=0, composite=-9999)
+    if n == 0: return dict(n=0, wr=0, avg=0, win10=0, lose10=0,
+                           wr_raw=0, avg_raw=0, win10_raw=0, lose10_raw=0,
+                           composite=-9999)
     # 近接性加重: 直近シグナルを重視（古いデータの影響を指数減衰）
     today = pd.Timestamp.today()
     dates = pd.to_datetime(df_s6["date"], errors="coerce").fillna(today)
@@ -286,18 +288,26 @@ def calc_stats(df_s6):
     avg = float((df_s6["perf_5bd"] * w).sum() / W)
     w10 = float((df_s6["win10"]    * w).sum())
     l10 = float((df_s6["lose10"]   * w).sum())
+    # 非加重（実カウント）: 表示用
+    wr_raw  = float(df_s6["win_5bd"].mean())
+    avg_raw = float(df_s6["perf_5bd"].mean())
+    win10_raw  = float(df_s6["win10"].sum())
+    lose10_raw = float(df_s6["lose10"].sum())
     return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
+                wr_raw=wr_raw, avg_raw=avg_raw,
+                win10_raw=win10_raw, lose10_raw=lose10_raw,
                 composite=wr*50 + avg*100 + (w10-l10)*3)
 
 def check_criteria(stats, baseline):
     if stats["n"] < 5: return False, ["★6件数5件未満"]
     threshold = baseline["composite"] * BASELINE_DECAY
     ok = stats["composite"] > threshold
+    # 表示は非加重の実カウント値を使用
     res = [
         f"{'✓' if ok else '✗'} 絶対条件: {stats['composite']:.1f} {'>' if ok else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
-        f"{'✓' if stats['wr']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr']*100:.1f}% (≥55%)",
-        f"{'✓' if stats['avg']>=TARGET_AVG_PERF else '△'} 努力②平均 {stats['avg']*100:.1f}% (>+3%)",
-        f"{'✓' if stats['win10']>stats['lose10'] else '△'} 努力③上昇{stats['win10']}件>下落{stats['lose10']}件",
+        f"{'✓' if stats['wr_raw']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr_raw']*100:.1f}% (≥55%)",
+        f"{'✓' if stats['avg_raw']>=TARGET_AVG_PERF else '△'} 努力②平均 {stats['avg_raw']*100:.1f}% (>+3%)",
+        f"{'✓' if stats['win10_raw']>stats['lose10_raw'] else '△'} 努力③上昇{stats['win10_raw']:.0f}件>下落{stats['lose10_raw']:.0f}件",
     ]
     return ok, res
 
@@ -472,8 +482,8 @@ def analyze_winners(df, baseline):
     ok, _ = check_criteria(st6, baseline)
     st5 = calc_stats(df[df["score_b"] == 5])
     st4 = calc_stats(df[df["score_b"] == 4])
-    print(f"  方式B ★6: {st6['n']}件 勝率{st6['wr']*100:.1f}% 平均{st6['avg']*100:.1f}%"
-          f" 上昇{st6['win10']} 下落{st6['lose10']} → {'✓絶対条件OK' if ok else '✗絶対条件NG'}")
+    print(f"  方式B ★6: {st6['n']}件 勝率{st6['wr_raw']*100:.1f}% 平均{st6['avg_raw']*100:.1f}%"
+          f" 上昇{st6['win10_raw']:.0f} 下落{st6['lose10_raw']:.0f} → {'✓絶対条件OK' if ok else '✗絶対条件NG'}")
     return (scheme, st6, st5, st4) if ok else None
 
 # ══════════════════════════════════════════════════════════════
@@ -553,11 +563,11 @@ def tune_thresholds(df_train, df_test, combo, baseline):
         test_cur_stats = calc_stats(df_test[s_test_cur == 6])
         passed = test_stats["n"] >= 2 and test_stats["composite"] > test_cur_stats["composite"]
         result_str = "✅ 通過" if passed else "⚠ 不合格（デフォルト閾値を使用）"
-        print(f"  訓練★6: {best_train_stats['n']}件 勝率{best_train_stats['wr']*100:.1f}% 平均{best_train_stats['avg']*100:.1f}%")
+        print(f"  訓練★6: {best_train_stats['n']}件 勝率{best_train_stats['wr_raw']*100:.1f}% 平均{best_train_stats['avg_raw']*100:.1f}%")
         if test_cur_stats["n"] > 0:
-            print(f"  検証現行★6: {test_cur_stats['n']}件 勝率{test_cur_stats['wr']*100:.1f}% 平均{test_cur_stats['avg']*100:.1f}%")
+            print(f"  検証現行★6: {test_cur_stats['n']}件 勝率{test_cur_stats['wr_raw']*100:.1f}% 平均{test_cur_stats['avg_raw']*100:.1f}%")
         if test_stats["n"] > 0:
-            print(f"  検証最適化★6: {test_stats['n']}件 勝率{test_stats['wr']*100:.1f}% 平均{test_stats['avg']*100:.1f}%")
+            print(f"  検証最適化★6: {test_stats['n']}件 勝率{test_stats['wr_raw']*100:.1f}% 平均{test_stats['avg_raw']*100:.1f}%")
         print(f"  検証結果: {result_str}")
         if passed:
             for c, th in best_thresholds.items():
@@ -642,8 +652,8 @@ def build_func_a(conditions, stats, baseline, n, thresholds=None):
     tuned_note = " +閾値最適化" if thresholds else ""
     lines = [
         f"// 自動最適化(方式A{tuned_note}) {now} / {n}件データ",
-        f"// ★6: {stats['n']}件 勝率{stats['wr']*100:.1f}% 平均{stats['avg']*100:.1f}% 上昇{stats['win10']}件 下落{stats['lose10']}件",
-        f"// 現行: 勝率{baseline['wr']*100:.1f}% 平均{baseline['avg']*100:.1f}%",
+        f"// ★6: {stats['n']}件 勝率{stats['wr_raw']*100:.1f}% 平均{stats['avg_raw']*100:.1f}% 上昇{stats['win10_raw']:.0f}件 下落{stats['lose10_raw']:.0f}件",
+        f"// 現行: 勝率{baseline['wr_raw']*100:.1f}% 平均{baseline['avg_raw']*100:.1f}%",
         "// 【6条件（各1点）】",
     ]
     for i, c in enumerate(conditions):
@@ -676,8 +686,8 @@ def build_func_b(scheme, stats, baseline, n):
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     lines = [
         f"// 自動最適化(方式B・重み付き) {now} / {n}件データ",
-        f"// ★6: {stats['n']}件 勝率{stats['wr']*100:.1f}% 平均{stats['avg']*100:.1f}% 上昇{stats['win10']}件 下落{stats['lose10']}件",
-        f"// 現行: 勝率{baseline['wr']*100:.1f}% 平均{baseline['avg']*100:.1f}%",
+        f"// ★6: {stats['n']}件 勝率{stats['wr_raw']*100:.1f}% 平均{stats['avg_raw']*100:.1f}% 上昇{stats['win10_raw']:.0f}件 下落{stats['lose10_raw']:.0f}件",
+        f"// 現行: 勝率{baseline['wr_raw']*100:.1f}% 平均{baseline['avg_raw']*100:.1f}%",
         "// 【スコア設計（+10%銘柄共通点から自動導出）】",
     ]
     for c,w,lift in scheme:
@@ -831,10 +841,10 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
 
     stats_lines = [
         "```",
-        f"Stable ★6: {st6['n']:3}件 勝率{st6['wr']*100:5.1f}% 平均{fmt(st6['avg'])}",
-        f"Stable ★5: {st5['n']:3}件 勝率{st5['wr']*100:5.1f}% 平均{fmt(st5['avg'])}",
-        f"Aggr.  ★4: {st4['n']:3}件 勝率{st4['wr']*100:5.1f}% 平均{fmt(st4['avg'])}",
-        f"全シグナル: {n_total:3}件 勝率{base['wr']*100:5.1f}%            平均{fmt(base['avg'])}",
+        f"Stable ★6: {st6['n']:3}件 勝率{st6['wr_raw']*100:5.1f}% 平均{fmt(st6['avg_raw'])}",
+        f"Stable ★5: {st5['n']:3}件 勝率{st5['wr_raw']*100:5.1f}% 平均{fmt(st5['avg_raw'])}",
+        f"Aggr.  ★4: {st4['n']:3}件 勝率{st4['wr_raw']*100:5.1f}% 平均{fmt(st4['avg_raw'])}",
+        f"全シグナル: {n_total:3}件 勝率{base['wr_raw']*100:5.1f}%            平均{fmt(base['avg_raw'])}",
         "```",
     ]
     stats_text = NL.join(stats_lines)
@@ -1021,8 +1031,8 @@ def main():
             label = " ".join(f"{c}({w}pt)" for c, w, _ in scheme)
             cur_thresholds = {}
         baseline = calc_stats(df[df["sc_cur"] == 6])
-        print(f"  現行★6: {baseline['n']}件 勝率{baseline['wr']*100:.1f}%"
-              f" 平均{baseline['avg']*100:.2f}% 上昇{baseline['win10']}件 下落{baseline['lose10']}件")
+        print(f"  現行★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
+              f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
         print(f"  条件: {label}")
     else:
         print("  初回実行 — v14.1をベースラインとして使用")
@@ -1030,8 +1040,8 @@ def main():
         for c in V14: df[c] = df[c].astype(bool)
         df["sc_v14"] = sum(df[c].astype(int) for c in V14)
         baseline = calc_stats(df[df["sc_v14"] == 6])
-        print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr']*100:.1f}%"
-              f" 平均{baseline['avg']*100:.2f}% 上昇{baseline['win10']}件 下落{baseline['lose10']}件")
+        print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
+              f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
 
     print("\n🔍 Step 5a: 方式A（組み合わせ探索）...")
     cands_a = search_combinations(df.copy(), baseline)
@@ -1053,12 +1063,12 @@ def main():
     all_cands.sort(key=lambda x: (-x[1], -calc_ordering_score(x[5], x[6], x[7]), -x[2], -x[3]))
 
     for i, (method, sc6, sc5, sc4, combo, st6, st5, st4) in enumerate(all_cands[:10]):
-        e = ("✓" if st6["wr"] >= TARGET_WIN_RATE else "△") + \
-            ("✓" if st6["avg"] >= TARGET_AVG_PERF else "△") + \
-            ("✓" if st6["win10"] > st6["lose10"] else "△")
+        e = ("✓" if st6["wr_raw"] >= TARGET_WIN_RATE else "△") + \
+            ("✓" if st6["avg_raw"] >= TARGET_AVG_PERF else "△") + \
+            ("✓" if st6["win10_raw"] > st6["lose10_raw"] else "△")
         label = "+".join(combo) if method == "A" else " ".join(f"{c}({w}pt)" for c, w, _ in combo)
-        print(f"  #{i+1:<2} {method:<4} {st6['wr']*100:>6.1f}%  {st6['avg']*100:>+7.1f}%"
-              f"  {st6['win10']:>3}件  {st6['lose10']:>3}件  {st6['n']:>3}件  {e}  {label}")
+        print(f"  #{i+1:<2} {method:<4} {st6['wr_raw']*100:>6.1f}%  {st6['avg_raw']*100:>+7.1f}%"
+              f"  {st6['win10_raw']:>3.0f}件  {st6['lose10_raw']:>3.0f}件  {st6['n']:>3}件  {e}  {label}")
 
     # ── Step 5c: 閾値最適化（train/test split） ──────────────
     best_thresholds = {}
@@ -1108,8 +1118,8 @@ def main():
     ord_lb = ordering_label(best_stats, best_stats5, best_stats4)
     print(f"  {'✓' if ord_sc >= 1 else '△'} 努力④順序: {ord_lb}")
     print(f"  タイブレーカー参照:")
-    print(f"    ★5: {best_stats5['n']}件 勝率{best_stats5['wr']*100:.1f}% 平均{best_stats5['avg']*100:.1f}%")
-    print(f"    ★4: {best_stats4['n']}件 勝率{best_stats4['wr']*100:.1f}% 平均{best_stats4['avg']*100:.1f}%")
+    print(f"    ★5: {best_stats5['n']}件 勝率{best_stats5['wr_raw']*100:.1f}% 平均{best_stats5['avg_raw']*100:.1f}%")
+    print(f"    ★4: {best_stats4['n']}件 勝率{best_stats4['wr_raw']*100:.1f}% 平均{best_stats4['avg_raw']*100:.1f}%")
 
     if not ok:
         print("\n❌ 絶対条件未達。更新しません。"); return
@@ -1126,8 +1136,8 @@ def main():
 
     # 承認確認
     print(f"\n❓ screener.js を更新してデプロイしますか？")
-    print(f"  方式{best_method}: 勝率{best_stats['wr']*100:.1f}% 平均{best_stats['avg']*100:.1f}%"
-          f" 上昇{best_stats['win10']}件 下落{best_stats['lose10']}件")
+    print(f"  方式{best_method}: 勝率{best_stats['wr_raw']*100:.1f}% 平均{best_stats['avg_raw']*100:.1f}%"
+          f" 上昇{best_stats['win10_raw']:.0f}件 下落{best_stats['lose10_raw']:.0f}件")
     if args.yes:
         print("  --yes フラグにより自動承認")
     else:
@@ -1207,8 +1217,8 @@ def main():
 
     print(f"\n{'=' * 62}")
     print(f"完了 — 方式{best_method}")
-    print(f"★6: {best_stats['n']}件 勝率{best_stats['wr']*100:.1f}%"
-          f" 平均{best_stats['avg']*100:.1f}% 上昇{best_stats['win10']}件 下落{best_stats['lose10']}件")
+    print(f"★6: {best_stats['n']}件 勝率{best_stats['wr_raw']*100:.1f}%"
+          f" 平均{best_stats['avg_raw']*100:.1f}% 上昇{best_stats['win10_raw']:.0f}件 下落{best_stats['lose10_raw']:.0f}件")
     print("=" * 62)
 
 if __name__ == "__main__":

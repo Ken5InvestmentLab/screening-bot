@@ -57,6 +57,8 @@ SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 TARGET_WIN_RATE  = 0.55
 TARGET_AVG_PERF  = 0.03
+RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
+BASELINE_DECAY   = 0.95  # 現行compositeの95%超えで採用（更新ゲート緩和）
 
 # 更新通知先Discord Webhook
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
@@ -274,18 +276,25 @@ def get_features(daily, sig_date):
 def calc_stats(df_s6):
     n = len(df_s6)
     if n == 0: return dict(n=0, wr=0, avg=0, win10=0, lose10=0, composite=-9999)
-    wr  = df_s6["win_5bd"].mean()
-    avg = df_s6["perf_5bd"].mean()
-    w10 = int(df_s6["win10"].sum())
-    l10 = int(df_s6["lose10"].sum())
+    # 近接性加重: 直近シグナルを重視（古いデータの影響を指数減衰）
+    today = pd.Timestamp.today()
+    dates = pd.to_datetime(df_s6["date"], errors="coerce").fillna(today)
+    days_old = (today - dates).dt.days.clip(lower=0)
+    w = np.exp(-days_old / RECENCY_HALFLIFE)
+    W = w.sum()
+    wr  = float((df_s6["win_5bd"]  * w).sum() / W)
+    avg = float((df_s6["perf_5bd"] * w).sum() / W)
+    w10 = float((df_s6["win10"]    * w).sum())
+    l10 = float((df_s6["lose10"]   * w).sum())
     return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
                 composite=wr*50 + avg*100 + (w10-l10)*3)
 
 def check_criteria(stats, baseline):
     if stats["n"] < 5: return False, ["★6件数5件未満"]
-    ok = stats["composite"] > baseline["composite"]
+    threshold = baseline["composite"] * BASELINE_DECAY
+    ok = stats["composite"] > threshold
     res = [
-        f"{'✓' if ok else '✗'} 絶対条件: {stats['composite']:.1f} {'>' if ok else '≤'} 現行{baseline['composite']:.1f}",
+        f"{'✓' if ok else '✗'} 絶対条件: {stats['composite']:.1f} {'>' if ok else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
         f"{'✓' if stats['wr']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr']*100:.1f}% (≥55%)",
         f"{'✓' if stats['avg']>=TARGET_AVG_PERF else '△'} 努力②平均 {stats['avg']*100:.1f}% (>+3%)",
         f"{'✓' if stats['win10']>stats['lose10'] else '△'} 努力③上昇{stats['win10']}件>下落{stats['lose10']}件",
@@ -404,7 +413,7 @@ def search_combinations(df, baseline):
         s6 = df[scores == 6]
         if len(s6) < 5: continue
         st6 = calc_stats(s6)
-        if st6["composite"] <= baseline["composite"]: continue
+        if st6["composite"] <= baseline["composite"] * BASELINE_DECAY: continue
         # ★5/★4 もタイブレーカー用に計算（各ランク単独・悪化してもOK）
         st5 = calc_stats(df[scores == 5])
         st4 = calc_stats(df[scores == 4])

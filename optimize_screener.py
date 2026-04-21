@@ -140,7 +140,7 @@ def parse_alerts(rows):
             "date": g("signal_date").strip(),
             "entry": float(str(g("entry_price")).replace(",", "") or 0),
             "perf_5bd": p5,
-            "win_5bd": str(g("win_flag_5bd")).upper() == "TRUE"
+            "win_5bd": p5 > 0  # win_flag_5bdはGAS取得タイミング次第でズレるため自力判定
         })
     df = pd.DataFrame(recs)
     if df.empty: return df

@@ -296,7 +296,7 @@ def calc_stats(df_s6):
     return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
-                composite=wr*50 + avg*100 + (w10-l10)*3)
+                composite=wr*50 + avg*100 + (w10-l10)*4 + win10_raw*2)
 
 def check_criteria(stats, baseline):
     if stats["n"] < 5: return False, ["★6件数5件未満"]
@@ -1034,6 +1034,13 @@ def main():
         print(f"  現行★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
         print(f"  条件: {label}")
+        # ★6シグナル一覧（診断用）
+        s6_df = df[df["sc_cur"] == 6].sort_values("date", ascending=False)
+        print(f"\n  ── 現行★6シグナル一覧（確定済み perf_5bd あり）──")
+        print(f"  {'日付':<12} {'銘柄':<8} {'社名':<24} {'騰落率':>7}")
+        for _, row in s6_df.iterrows():
+            sign = "+" if row["perf_5bd"] >= 0 else ""
+            print(f"  {row['date']:<12} {row['symbol']:<8} {row['name']:<24} {sign}{row['perf_5bd']*100:.1f}%")
     else:
         print("  初回実行 — v14.1をベースラインとして使用")
         V14 = ["ema75", "vol20", "sbull", "macdgc", "atr5", "ema25"]
@@ -1132,6 +1139,15 @@ def main():
         print(f"\n🔍 Dry-run: 更新・デプロイをスキップ")
         print(f"  採用予定: 方式{best_method} / "
               f"{best_combo if best_method == 'A' else [c for c, w, _ in best_combo]}")
+        # 採用候補の★6シグナル一覧を表示
+        if best_method == "A":
+            cand_scores = score_with_thresholds(df, best_combo, best_thresholds)
+            cand_s6 = df[cand_scores == 6].sort_values("date", ascending=False)
+            print(f"\n  ── 採用候補ロジックの★6シグナル一覧（{len(cand_s6)}件）──")
+            print(f"  {'日付':<12} {'銘柄':<8} {'社名':<24} {'騰落率':>7}")
+            for _, row in cand_s6.iterrows():
+                sign = "+" if row["perf_5bd"] >= 0 else ""
+                print(f"  {row['date']:<12} {row['symbol']:<8} {row['name']:<24} {sign}{row['perf_5bd']*100:.1f}%")
         return
 
     # 承認確認

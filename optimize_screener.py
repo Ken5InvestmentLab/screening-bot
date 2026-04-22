@@ -59,7 +59,7 @@ TARGET_WIN_RATE  = 0.55
 TARGET_AVG_PERF  = 0.03
 RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
 BASELINE_DECAY   = 0.95  # 現行compositeの95%超えで採用（更新ゲート緩和）
-MAX_WIN10_DROP   = 0.20  # ★6大幅上昇件数の許容減少率（20%超減でNG）
+MAX_WIN10_DROP   = 0.25  # ★6大幅上昇件数の許容減少率（25%超減でNG）
 
 # 更新通知先Discord Webhook
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
@@ -1239,7 +1239,8 @@ def main():
         nt6 = calc_stats(df[s_all == 6])
         nt5 = calc_stats(df[s_all == 5])
         nt4 = calc_stats(df[s_all == 4])
-        base_all = dict(n=len(df), wr=df["win_5bd"].mean(), avg=df["perf_5bd"].mean())
+        _wr = float(df["win_5bd"].mean()); _avg = float(df["perf_5bd"].mean())
+        base_all = dict(n=len(df), wr=_wr, avg=_avg, wr_raw=_wr, avg_raw=_avg)
         notify_discord_update(best_method, best_combo, nt6, nt5, nt4, base_all, len(df), what_changed)
     else:
         print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")

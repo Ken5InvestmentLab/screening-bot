@@ -1,12 +1,19 @@
 {
   "method": "A",
   "conditions": [
-    "ema75",
+    "ema25",
     "vol20",
     "sbull",
     "atr5",
-    "stoch75",
-    "rsi5070"
+    "atr7",
+    "stoch75"
   ],
-  "updated_at": "2026-04-22T11:37:39Z"
+  "updated_at": "2026-04-13T13:21:21Z",
+  "thresholds": {
+    "vol20": 2.5,
+    "sbull": 2.0,
+    "atr5": 5.0,
+    "atr7": 5.0,
+    "stoch75": 65
+  }
 }

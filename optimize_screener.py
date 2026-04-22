@@ -1144,6 +1144,14 @@ def main():
     if not ok:
         print("\n❌ 絶対条件未達。更新しません。"); return
 
+    # 条件・閾値が現行と完全一致なら更新不要
+    if current_logic and best_method == "A":
+        cur_conds_sorted = sorted(current_logic.get("conditions", []))
+        new_conds_sorted = sorted(best_combo)
+        cur_ths = current_logic.get("thresholds", {})
+        if cur_conds_sorted == new_conds_sorted and cur_ths == best_thresholds:
+            print("\n✅ 条件・閾値が現行と同一のため更新しません。"); return
+
     new_code = (build_func_a(best_combo, best_stats, baseline, len(df), best_thresholds)
                 if best_method == "A"
                 else build_func_b(best_combo, best_stats, baseline, len(df)))

@@ -12,8 +12,9 @@ Discordにスクリーニング結果をDM送信するBotです。
 | コンポーネント | 場所 | 役割 |
 |---|---|---|
 | Bot本体 | VM `ubuntu@168.110.60.126` / `~/screening-bot/` | pm2で常時稼働（Node.js） |
-| スコア最適化 | GitHub Actions `.github/workflows/optimize.yml` | 毎日19:30にcron-job.orgが自動起動 |
+| スコア最適化 | GitHub Actions `.github/workflows/optimize.yml` | GASの`runDailyMaintenance`完了後に自動起動 |
 | データソース | Google Sheets（`alerts_raw`, `ohlcv_4h`） | バックテスト用シグナル・OHLCVデータ |
+| GAS | Google Apps Script | TradingViewアラート受信・OHLCV取得・日次メンテ・GitHub Actions起動 |
 
 ## データフロー（全体像）
 
@@ -21,21 +22,32 @@ Discordにスクリーニング結果をDM送信するBotです。
 TradingView アラート
     │ alert() / alertcondition
     ▼
-Google Apps Script (GAS) Webhook
-    │ alerts_raw シートに書き込み + ohlcv_4h に4h足OHLCVを追記
+GAS doPost() Webhook
+    │ alerts_raw シートに書き込み
     ▼
-Google Sheets（SPREADSHEET_ID）
-    │ googleapis で読み取り
+GAS fetchOHLCVForNewAlerts() → PHASE4完了
+    │ runDailyMaintenance() 呼び出し
     ▼
-screener.js — calculateScore()
-    │ 4h足 → 日次バー集約 → 指標計算 → スコアリング
+GAS runDailyMaintenance() 完了
+    │ triggerGitHubActionsOptimize_() → GitHub API workflow_dispatch
     ▼
-Discord DM（/scan コマンドのレスポンス）
+GitHub Actions optimize.yml
+    │ optimize_screener.py --yes
+    ▼
+screener.js + current_logic.json 更新 → SCP → pm2 restart
+    ▼
+Discord /scan コマンドで結果確認
 ```
 
 ## コマンド
 
-### ローカル開発
+### ローカル開発初回セットアップ
+
+```bash
+cp .env.example .env   # DISCORD_TOKEN / SPREADSHEET_ID などを埋める
+# credentials.json をプロジェクト直下に配置（Google サービスアカウントJSON）
+npm install
+```
 
 ```bash
 npm start          # 本番起動（node index.js）
@@ -45,27 +57,17 @@ npm run dev        # ホットリロード起動（nodemon）
 ### デプロイ（PowerShellから）
 
 ```powershell
-# VMにファイル転送（通常: 自宅PC）
 scp -i C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key ".\screener.js" ubuntu@168.110.60.126:~/screening-bot/
 scp -i C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key ".\index.js" ubuntu@168.110.60.126:~/screening-bot/
-
-# VM接続 → pm2 再起動
 ssh -i C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key ubuntu@168.110.60.126
 pm2 restart screening-bot
 ```
 
-### デプロイ（Oracle Cloud Shell経由 — PowerShellからVMに繋がらない場合）
-
-Oracle Cloudコンソール右上の `>_` アイコンでCloud Shellを開く。
+### デプロイ（Oracle Cloud Shell経由）
 
 ```bash
-# SSHキーをCloud Shellにアップロード後（歯車アイコン→Upload）
 chmod 600 ~/ssh-key-2026-03-08.key
-
-# ファイル転送（index.js / screener.js）
-scp -i ~/ssh-key-2026-03-08.key ~/index.js ubuntu@168.110.60.126:~/screening-bot/
-
-# pm2 再起動
+scp -i ~/ssh-key-2026-03-08.key ~/screener.js ubuntu@168.110.60.126:~/screening-bot/
 ssh -i ~/ssh-key-2026-03-08.key ubuntu@168.110.60.126 "pm2 restart screening-bot"
 ```
 
@@ -75,7 +77,7 @@ ssh -i ~/ssh-key-2026-03-08.key ubuntu@168.110.60.126 "pm2 restart screening-bot
 # 通常実行（分析→確認プロンプト→デプロイ）
 py optimize_screener.py
 
-# 自動承認・自動デプロイ（タスクスケジューラーはこちら）
+# 自動承認・自動デプロイ（GitHub Actionsはこちら）
 PYTHONIOENCODING=utf-8 py optimize_screener.py --yes
 
 # 分析のみ（ファイル更新・デプロイなし）
@@ -85,10 +87,25 @@ py optimize_screener.py --dry-run
 ## 主要ファイルとアーキテクチャ
 
 - **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` の条件を手動変更する場合は `current_logic.json` との整合性に注意。
-- **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive]`・`/help` の2コマンドを実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュする。
-- **`sheets.js`** — Google Sheets APIクライアント。`alerts_raw`（ヘッダーが4行目）と `ohlcv_4h` の2シートを読み取る。
+- **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|code]` を実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュ。stable=スコア5以上、aggressive=4以上。
+- **`sheets.js`** — Google Sheets APIクライアント。`alerts_raw`（ヘッダーが4行目）と `ohlcv_4h` の2シートを読み取る。`cleanSymbol()` で `TYO:4074` → `4074` に変換。
+- **`config.js`** — フィルター定数（下記参照）。**数値は変更禁止**。
 - **`optimize_screener.py`** — C(18,6)=18,564通りの指標組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。
 - **`current_logic.json`** — デプロイ済みのスコアロジック。次回最適化のベースラインとして使用される。
+
+### `config.js` のFILTER定数（変更禁止）
+
+```js
+VOL_RATIO_MIN: 0.80      // 出来高 >= 5日平均 × 0.80
+EMA_GAP_MIN: -3.00       // EMA5-EMA25乖離(%) >= -3.00
+EMA25_SLOPE_MIN: -0.50   // EMA25傾き(5日,%) >= -0.50
+RANGE_POS_MAX: 0.95      // 5日レンジ位置 >= 0.95なら強制除外
+CUMUL3D_MAX: 4.00        // 直近3日上昇率(%) > 4.00なら強制除外
+SCORE_STABLE: 4          // /scan stable の最低スコア
+SCORE_AGGRESSIVE: 4      // /scan aggressive の最低スコア
+RECENT_SIGNAL_DAYS: 30   // シグナル検索期間（日）
+MIN_4H_BARS: 30          // 最低4h足本数
+```
 
 ### `current_logic.json` スキーマ
 
@@ -107,20 +124,30 @@ py optimize_screener.py --dry-run
 }
 ```
 
-`conditions` に指定できるキーは `optimize_screener.py` の `INDICATORS` 辞書で定義されている（`ema25`, `ema75`, `vol20`, `sbull`, `macdGC`, `macdPos`, `atr5`, `atr7`, `rsi50`, `stoch65`, `stoch75`, `bbPct30`, `hiBrk20` など）。
+利用可能な条件キー（`optimize_screener.py` の `INDICATORS` で定義）: `ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`
 
 ### `screener.js` の処理フロー
 
-1. `aggregateToDailyBars(bars)` — 4h足 → 日次バーに集約（同日のbarsはvolume合算、high/low更新、closeは最後）
-2. `computeIndicators(dailyBars, signalIdx)` — シグナル日時点のEMA/ATR/MACD/RSI/Stoch/BBを計算
-3. `calculateScore(ind)` — 現行ロジックで0〜6点スコアを付与
+1. `aggregateToDailyBars(bars)` — 4h足 → 日次バーに集約（同日はvolume合算・high/low更新・closeは最後）
+2. `computeIndicators(dailyBars, signalIdx)` — EMA/ATR/MACD/RSI/Stoch/BB を `signalIdx` 時点で計算
+3. `calculateScore(ind)` — 現行ロジックで0〜6点スコアを付与（各条件1点）
 4. `screenSymbol(...)` — 上記3関数をラップし、シグナル日・現在変化率・futurePrice等を付けて返す
+
+### `optimize_screener.py` の評価指標
+
+- **採用基準①**: `composite > baseline × 0.95`（ベースラインの95%以上）
+- **採用基準②**: `wr_raw >= baseline.wr_raw`（勝率維持）
+- **採用基準③**: `win10_raw >= baseline.win10_raw × 0.75`（★6件数の25%以内の減少）
+- **compositeスコア**: `wr×50 + avg×100 + (win10−lose10)×3`（recency半減期90日の加重）
+- **Method A**: 6条件の組み合わせ全探索（各1点）
+- **Method B**: lift分析による重み付きスコア（各1〜2点）
 
 ## デプロイ構成
 
 - **SSH key**: `C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key`（自宅PC）/ `~/ssh-key-2026-03-08.key`（Cloud Shell）
 - **VM**: `ubuntu@168.110.60.126`、pm2プロセス名 `screening-bot`
-- **自動実行**: cron-job.org（`Screening-Bot-Action`）が毎日16:10 JSTにGitHub Actions `workflow_dispatch` APIを叩いて起動。処理完了は18:30〜19:30頃。GitHubのスケジュール遅延回避のため外部cronを使用。
+- **自動実行トリガー**: GASの `runDailyMaintenance` 完了 → `triggerGitHubActionsOptimize_()` → GitHub Actions `workflow_dispatch`。GAS Script Propertiesに `GITHUB_PAT`（`actions:write` スコープ）が必要。
+- **GitHub Actions コミット対象**: `current_logic.json` / `screener.js` / `index.js` の3ファイル。
 - **バックアップ**: `backups/screener_backup_YYYYMMDD_HHMMSS.js`（最大30件）
 
 ### GitHub Actions 必要Secrets
@@ -130,13 +157,20 @@ py optimize_screener.py --dry-run
 | `GOOGLE_CREDENTIALS` | サービスアカウントJSONの中身 |
 | `SSH_PRIVATE_KEY` | VMへのSSH秘密鍵 |
 
-### `config.js` のフィルター設定
+### GAS Script Properties
 
-`FILTER` オブジェクト内の数値（`VOL_RATIO_MIN`, `EMA_GAP_MIN` など）は**要件通り固定・変更禁止**。スコアロジックの調整は `current_logic.json` と `optimize_screener.py` で行う。
+| キー | 内容 |
+|---|---|
+| `SPREADSHEET_ID` | Google SheetsのID |
+| `GAS_SHARED_SECRET` | Webhook署名検証用シークレット |
+| `DISCORD_STATS_WEBHOOK_URL` | 週次レポート送信先 |
+| `DISCORD_WEBHOOK` | OHLCV同期完了通知先 |
+| `GITHUB_PAT` | GitHub Personal Access Token（`actions:write`スコープ） |
 
 ## 重要な注意事項
 
-- **`optimize_screener.py` をVM上で直接実行しない** — RAM 1GB のVMでOOMが発生してVMごとクラッシュする。最適化はローカルPCで実行し、結果をSCPでVMに転送する設計。
+- **`optimize_screener.py` をVM上で直接実行しない** — RAM 1GB のVMでOOMが発生してVMごとクラッシュする。
 - VMクラッシュ時はOracle Cloudコンソールから強制リブート → `pm2 restart screening-bot` で復旧。
-- Discord Webhook送信時は `User-Agent: DiscordBot (screening-bot, 1.0)` ヘッダーが必須（ないとCloudflareに403で弾かれる）。
-- `optimize_screener.py` 実行時は `PYTHONIOENCODING=utf-8` が必要（Windowsでの文字化け防止）。
+- Discord Webhook送信時は `User-Agent: DiscordBot (screening-bot, 1.0)` ヘッダーが必須（ないとCloudflareに403）。
+- `optimize_screener.py` 実行時は `PYTHONIOENCODING=utf-8` が必要（Windows文字化け防止）。
+- `screener.js` の `calculateScore()` を手動編集しても、次回 `optimize_screener.py` 実行時に上書きされる。手動変更は `current_logic.json` も同時に更新すること。

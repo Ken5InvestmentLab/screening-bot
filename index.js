@@ -263,9 +263,11 @@ async function runScan(interaction) {
   scanningUsers.add(user.id);
 
   try {
+    const isYesterday  = rangeInput === 'yesterday';
+    const yesterday    = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
     const isDate       = /^\d{4}-\d{2}-\d{2}$/.test(rangeInput);
-    const specificDate = isDate ? rangeInput : null;
-    const rangeDays    = isDate ? null : parseInt(rangeInput);
+    const specificDate = isYesterday ? yesterday : isDate ? rangeInput : null;
+    const rangeDays    = (isYesterday || isDate) ? null : parseInt(rangeInput);
 
     const [ohlcvMap, signals] = await Promise.all([
       fetchOHLCVData(),
@@ -292,9 +294,10 @@ async function runScan(interaction) {
     sortResults(scored);
     unanalyzed.sort((a, b) => (b.perf_5bd ?? -999) - (a.perf_5bd ?? -999));
 
-    const rangeText = isDate ? rangeInput
-      : rangeInput === '1'  ? '当日'
-      : rangeInput === '0'  ? '全期間'
+    const rangeText = isYesterday          ? '前日'
+      : isDate                             ? rangeInput
+      : rangeInput === '1'                 ? '当日'
+      : rangeInput === '0'                 ? '全期間'
       : `直近${rangeInput}日`;
 
     await prog.delete().catch(() => {});
@@ -630,6 +633,7 @@ client.on('interactionCreate', async (interaction) => {
     } else {
       const fixed = [
         { name: '当日（今日出たシグナル）', value: '1' },
+        { name: '前日（昨日出たシグナル）', value: 'yesterday' },
         { name: '1週間（最近7日間）',      value: '7' },
         { name: '1ヶ月（最近30日間）',    value: '30' },
         { name: '全期間（すべて）',        value: '0' },

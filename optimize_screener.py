@@ -59,6 +59,7 @@ TARGET_WIN_RATE  = 0.55
 TARGET_AVG_PERF  = 0.03
 RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
 BASELINE_DECAY   = 0.95  # 現行compositeの95%超えで採用（更新ゲート緩和）
+MAX_WIN10_DROP   = 0.20  # ★6大幅上昇件数の許容減少率（20%超減でNG）
 
 # 更新通知先Discord Webhook
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
@@ -296,15 +297,23 @@ def calc_stats(df_s6):
     return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
-                composite=wr*50 + avg*100 + (w10-l10)*4 + win10_raw*2)
+                composite=wr*50 + avg*100 + (w10-l10)*3)
 
 def check_criteria(stats, baseline):
     if stats["n"] < 5: return False, ["★6件数5件未満"]
     threshold = baseline["composite"] * BASELINE_DECAY
-    ok = stats["composite"] > threshold
+    ok_comp = stats["composite"] > threshold
+    # 絶対条件②: 勝率が現行以上（最重要）
+    ok_wr = stats["wr_raw"] >= baseline["wr_raw"]
+    # 絶対条件③: ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたらNG
+    win10_floor = baseline["win10_raw"] * (1 - MAX_WIN10_DROP)
+    ok_win10 = stats["win10_raw"] >= win10_floor
+    ok = ok_comp and ok_wr and ok_win10
     # 表示は非加重の実カウント値を使用
     res = [
-        f"{'✓' if ok else '✗'} 絶対条件: {stats['composite']:.1f} {'>' if ok else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
+        f"{'✓' if ok_comp else '✗'} 絶対条件①: composite {stats['composite']:.1f} {'>' if ok_comp else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
+        f"{'✓' if ok_wr else '✗'} 絶対条件②: 勝率 {stats['wr_raw']*100:.1f}% {'≥' if ok_wr else '<'} 現行{baseline['wr_raw']*100:.1f}%",
+        f"{'✓' if ok_win10 else '✗'} 絶対条件③: 大幅上昇 {stats['win10_raw']:.0f}件 {'≥' if ok_win10 else '<'} 現行{baseline['win10_raw']:.0f}件×{1-MAX_WIN10_DROP:.2f}={win10_floor:.1f}件",
         f"{'✓' if stats['wr_raw']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr_raw']*100:.1f}% (≥55%)",
         f"{'✓' if stats['avg_raw']>=TARGET_AVG_PERF else '△'} 努力②平均 {stats['avg_raw']*100:.1f}% (>+3%)",
         f"{'✓' if stats['win10_raw']>stats['lose10_raw'] else '△'} 努力③上昇{stats['win10_raw']:.0f}件>下落{stats['lose10_raw']:.0f}件",
@@ -424,6 +433,10 @@ def search_combinations(df, baseline):
         if len(s6) < 5: continue
         st6 = calc_stats(s6)
         if st6["composite"] <= baseline["composite"] * BASELINE_DECAY: continue
+        # 勝率が現行未満なら除外（最重要）
+        if st6["wr_raw"] < baseline["wr_raw"]: continue
+        # ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたら除外
+        if st6["win10_raw"] < baseline["win10_raw"] * (1 - MAX_WIN10_DROP): continue
         # ★5/★4 もタイブレーカー用に計算（各ランク単独・悪化してもOK）
         st5 = calc_stats(df[scores == 5])
         st4 = calc_stats(df[scores == 4])

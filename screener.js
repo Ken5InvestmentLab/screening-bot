@@ -200,38 +200,38 @@ function computeIndicators(dailyBars, signalIdx) {
 // ============================================================
 // スコア計算（6点満点）
 // ============================================================
-// 自動最適化(方式A +閾値最適化) 2026-04-13 22:20 / 940件データ
-// ★6: 27件 勝率74.1% 平均10.2% 上昇7件 下落1件
-// 現行: 勝率64.1% 平均6.4%
+// 自動最適化(方式A) 2026-04-22 10:31 / 1110件データ
+// ★6: 31件 勝率61.3% 平均9.6% 上昇8件 下落1件
+// 現行: 勝率60.5% 平均9.5%
 // 【6条件（各1点）】
-//   ① close > EMA25（中期トレンド）
-//   ② 当日出来高≥20日×2.50
-//   ③ 強い陽線（実体≥2.00%）
+//   ① close > EMA75（長期上昇トレンド）
+//   ② 当日出来高≥20日×2.0
+//   ③ 強い陽線（実体≥0.5%）
 //   ④ ATR% < 5.0%
-//   ⑤ ATR% < 5.0%
-//   ⑥ ストキャス≥65
+//   ⑤ ストキャス≥75
+//   ⑥ RSI 50〜70
 
 function calculateScore(ind) {
   if (!ind) return null;
   const filters = [];
   let score = 0;
 
-  // ① close > EMA25（中期トレンド）
-  if (ind.ema25 !== null && ind.close > ind.ema25) {
+  // ① close > EMA75（長期上昇トレンド）
+  if (ind.ema75 !== null && ind.close > ind.ema75) {
     score++;
-    filters.push(`①EMA25順張り`);
+    filters.push(`①EMA75順張り`);
   }
 
-  // ② 当日出来高≥20日×2.50
-  if (ind.volSurge >= 2.50) {
+  // ② 当日出来高≥20日×2.0
+  if (ind.volSurge >= 2.0) {
     score++;
     filters.push(`②vol急増(${ind.volSurge}x)`);
   }
 
-  // ③ 強い陽線（実体≥2.00%）
-  if (ind.bodyPct >= 2.00) {
+  // ③ 強い陽線（実体≥0.5%）
+  if (ind.isStrongBull) {
     score++;
-    filters.push(`③強陽線(${ind.bodyPct.toFixed(2)}%)`);
+    filters.push(`③強陽線(${ind.bodyPct.toFixed(1)}%)`);
   }
 
   // ④ ATR% < 5.0%
@@ -240,20 +240,21 @@ function calculateScore(ind) {
     filters.push(`④ATR(${ind.atrPct}%)`);
   }
 
-  // ⑤ ATR% < 5.0%
-  if (ind.atrPct < 5.0) {
+  // ⑤ ストキャス≥75
+  if (ind.stochK >= 75) {
     score++;
-    filters.push(`⑤ATR(${ind.atrPct}%)`);
+    filters.push(`⑤STOCH(${ind.stochK.toFixed(0)})`);
   }
 
-  // ⑥ ストキャス≥65
-  if (ind.stochK >= 65) {
+  // ⑥ RSI 50〜70
+  if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {
     score++;
-    filters.push(`⑥STOCH(${ind.stochK.toFixed(0)})`);
+    filters.push(`⑥RSI(${ind.rsi14.toFixed(0)})`);
   }
 
   return { score, filters };
 }
+
 
 
 

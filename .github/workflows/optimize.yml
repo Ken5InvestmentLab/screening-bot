@@ -1,10 +1,7 @@
 name: Daily Screener Optimization
 
 on:
-  schedule:
-    # UTC 10:30 = JST 19:30
-    - cron: '30 10 * * *'
-  workflow_dispatch:  # 手動実行ボタン
+  workflow_dispatch:  # 手動実行ボタン（GASのrunDailyMaintenanceから自動起動）
 
 jobs:
   optimize:

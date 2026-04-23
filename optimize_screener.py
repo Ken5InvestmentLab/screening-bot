@@ -793,23 +793,29 @@ def update_screener_js(new_code):
         f.write(content)
     return True
 
-def update_index_js_help(conditions, method):
+def update_index_js_help(conditions, method, thresholds=None):
     """/helpのスコアリング条件テキストをindex.jsで更新"""
     if not os.path.exists(INDEX_JS_PATH):
         print(f"  ⚠ index.js が見つかりません: {INDEX_JS_PATH}"); return False
     with open(INDEX_JS_PATH, "r", encoding="utf-8") as f:
         content = f.read()
 
+    def _desc(c):
+        # パラメーター化条件は実際の閾値を使った説明文を生成
+        if thresholds and c in COND_PARAM and c in thresholds:
+            raw_col = COND_PARAM[c][0]
+            if raw_col in PARAM_JS_TPL:
+                return PARAM_JS_TPL[raw_col][0](thresholds[c])
+        return JS_IMPL[c][0] if c in JS_IMPL else c
+
     NUMS_FULL = ["①","②","③","④","⑤","⑥"]
     new_lines = []
     if method == "A":
         for i, c in enumerate(conditions):
-            desc = JS_IMPL[c][0] if c in JS_IMPL else c
-            new_lines.append(f"'{NUMS_FULL[i]} {desc}    1点\\n' +")
+            new_lines.append(f"'{NUMS_FULL[i]} {_desc(c)}    1点\\n' +")
     else:
         for i, (c, w, lift) in enumerate(conditions):
-            desc = JS_IMPL[c][0] if c in JS_IMPL else c
-            new_lines.append(f"'{NUMS_FULL[min(i,5)]} {desc}    {w}点\\n' +")
+            new_lines.append(f"'{NUMS_FULL[min(i,5)]} {_desc(c)}    {w}点\\n' +")
 
     start_idx = content.find("'①")
     if start_idx < 0:
@@ -1274,7 +1280,7 @@ def main():
     if not update_screener_js(new_code):
         print("❌ screener.js 更新失敗"); return
     print("  ✅ screener.js 更新完了")
-    if update_index_js_help(best_combo, best_method):
+    if update_index_js_help(best_combo, best_method, best_thresholds):
         print("  ✅ index.js /help 条件テキスト更新完了")
     else:
         print("  ⚠ index.js の更新に失敗（手動で修正してください）")

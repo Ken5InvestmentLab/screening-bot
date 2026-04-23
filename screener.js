@@ -200,15 +200,15 @@ function computeIndicators(dailyBars, signalIdx) {
 // ============================================================
 // スコア計算（6点満点）
 // ============================================================
-// 自動最適化(方式A) 2026-04-22 11:37 / 1110件データ
-// ★6: 31件 勝率61.3% 平均9.6% 上昇8件 下落1件
-// 現行: 勝率61.3% 平均9.6%
+// 自動最適化(方式A +閾値最適化) 2026-04-23 21:02 / 1174件データ
+// ★6: 31件 勝率61.3% 平均9.8% 上昇9件 下落1件
+// 現行: 勝率56.1% 平均8.5%
 // 【6条件（各1点）】
 //   ① close > EMA75（長期上昇トレンド）
-//   ② 当日出来高≥20日×2.0
-//   ③ 強い陽線（実体≥0.5%）
+//   ② 当日出来高≥20日×2.00
+//   ③ 強い陽線（実体≥2.00%）
 //   ④ ATR% < 5.0%
-//   ⑤ ストキャス≥75
+//   ⑤ ストキャス≥65
 //   ⑥ RSI 50〜70
 
 function calculateScore(ind) {
@@ -222,16 +222,16 @@ function calculateScore(ind) {
     filters.push(`①EMA75順張り`);
   }
 
-  // ② 当日出来高≥20日×2.0
-  if (ind.volSurge >= 2.0) {
+  // ② 当日出来高≥20日×2.00
+  if (ind.volSurge >= 2.00) {
     score++;
     filters.push(`②vol急増(${ind.volSurge}x)`);
   }
 
-  // ③ 強い陽線（実体≥0.5%）
-  if (ind.isStrongBull) {
+  // ③ 強い陽線（実体≥2.00%）
+  if (ind.bodyPct >= 2.00) {
     score++;
-    filters.push(`③強陽線(${ind.bodyPct.toFixed(1)}%)`);
+    filters.push(`③強陽線(${ind.bodyPct.toFixed(2)}%)`);
   }
 
   // ④ ATR% < 5.0%
@@ -240,8 +240,8 @@ function calculateScore(ind) {
     filters.push(`④ATR(${ind.atrPct}%)`);
   }
 
-  // ⑤ ストキャス≥75
-  if (ind.stochK >= 75) {
+  // ⑤ ストキャス≥65
+  if (ind.stochK >= 65) {
     score++;
     filters.push(`⑤STOCH(${ind.stochK.toFixed(0)})`);
   }
@@ -254,6 +254,7 @@ function calculateScore(ind) {
 
   return { score, filters };
 }
+
 
 
 

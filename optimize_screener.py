@@ -58,8 +58,13 @@ SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 TARGET_WIN_RATE  = 0.55
 TARGET_AVG_PERF  = 0.03
 RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
-BASELINE_DECAY   = 0.95  # 現行compositeの95%超えで採用（更新ゲート緩和）
+BASELINE_DECAY   = 1.0   # 現行compositeを厳密に超えた場合のみ採用（同一・改悪は不採用）
 MAX_WIN10_DROP   = 0.20  # ★6大幅上昇件数の許容減少率（20%超減でNG）
+
+# composite バリアント: rate_adjusted=件数正規化(デフォルト) / snr=√n正規化 / legacy=旧来
+COMPOSITE_VARIANT = "rate_adjusted"
+STRICT_WR  = True   # 勝率フロアは > (等号排除 = 同一勝率では更新しない)
+WR_FLOOR   = 0.0    # 勝率絶対下限 (0.0=無効)
 
 # 更新通知先Discord Webhook
 DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
@@ -297,22 +302,36 @@ def calc_stats(df_s6):
     return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
-                composite=wr*50 + avg*100 + (w10-l10)*3)
+                composite=_calc_composite(wr, avg, w10, l10, W, n))
+
+def _calc_composite(wr, avg, w10, l10, W, n):
+    """composite スコア計算（COMPOSITE_VARIANT で切り替え）"""
+    if COMPOSITE_VARIANT == "rate_adjusted":
+        # 加重比率で評価 — 件数が多くても比率が低ければ加点されない
+        rate = (w10 / W - l10 / W) * 150 if W > 0 else 0
+        return wr * 50 + avg * 100 + rate
+    elif COMPOSITE_VARIANT == "snr":
+        import math
+        return wr * 50 + avg * 100 + (w10 - l10) / math.sqrt(max(n, 1)) * 15
+    else:  # legacy
+        return wr * 50 + avg * 100 + (w10 - l10) * 3
 
 def check_criteria(stats, baseline):
     if stats["n"] < 5: return False, ["★6件数5件未満"]
     threshold = baseline["composite"] * BASELINE_DECAY
     ok_comp = stats["composite"] > threshold
-    # 絶対条件②: 勝率が現行以上（最重要）
-    ok_wr = stats["wr_raw"] >= baseline["wr_raw"]
+    # 絶対条件②: 勝率（strict時は等号排除、floor追加）
+    ok_wr = (stats["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (stats["wr_raw"] >= baseline["wr_raw"])
+    ok_wr_floor = stats["wr_raw"] >= WR_FLOOR
     # 絶対条件③: ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたらNG
     win10_floor = baseline["win10_raw"] * (1 - MAX_WIN10_DROP)
     ok_win10 = stats["win10_raw"] >= win10_floor
-    ok = ok_comp and ok_wr and ok_win10
-    # 表示は非加重の実カウント値を使用
+    ok = ok_comp and ok_wr and ok_wr_floor and ok_win10
+    op_wr = ">" if STRICT_WR else "≥"
     res = [
         f"{'✓' if ok_comp else '✗'} 絶対条件①: composite {stats['composite']:.1f} {'>' if ok_comp else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
-        f"{'✓' if ok_wr else '✗'} 絶対条件②: 勝率 {stats['wr_raw']*100:.1f}% {'≥' if ok_wr else '<'} 現行{baseline['wr_raw']*100:.1f}%",
+        f"{'✓' if ok_wr else '✗'} 絶対条件②: 勝率 {stats['wr_raw']*100:.1f}% {op_wr} 現行{baseline['wr_raw']*100:.1f}%",
+        f"{'✓' if ok_wr_floor else '✗'} 絶対条件②-b: 勝率 {stats['wr_raw']*100:.1f}% ≥ 下限{WR_FLOOR*100:.0f}%",
         f"{'✓' if ok_win10 else '✗'} 絶対条件③: 大幅上昇 {stats['win10_raw']:.0f}件 {'≥' if ok_win10 else '<'} 現行{baseline['win10_raw']:.0f}件×{1-MAX_WIN10_DROP:.2f}={win10_floor:.1f}件",
         f"{'✓' if stats['wr_raw']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr_raw']*100:.1f}% (≥55%)",
         f"{'✓' if stats['avg_raw']>=TARGET_AVG_PERF else '△'} 努力②平均 {stats['avg_raw']*100:.1f}% (>+3%)",
@@ -433,8 +452,10 @@ def search_combinations(df, baseline):
         if len(s6) < 5: continue
         st6 = calc_stats(s6)
         if st6["composite"] <= baseline["composite"] * BASELINE_DECAY: continue
-        # 勝率が現行未満なら除外（最重要）
-        if st6["wr_raw"] < baseline["wr_raw"]: continue
+        # 勝率フロア（strict時は等号排除）
+        wr_ok = (st6["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (st6["wr_raw"] >= baseline["wr_raw"])
+        if not wr_ok: continue
+        if st6["wr_raw"] < WR_FLOOR: continue
         # ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたら除外
         if st6["win10_raw"] < baseline["win10_raw"] * (1 - MAX_WIN10_DROP): continue
         # ★5/★4 もタイブレーカー用に計算（各ランク単独・悪化してもOK）
@@ -989,11 +1010,27 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", "--no-apply", action="store_true")
     parser.add_argument("--yes", "-y", action="store_true", help="確認プロンプトをスキップして自動デプロイ")
+    parser.add_argument("--composite-variant", default="rate_adjusted",
+                        choices=["rate_adjusted", "snr", "legacy"],
+                        help="composite計算方式 (default: rate_adjusted)")
+    parser.add_argument("--baseline-decay", type=float, default=None,
+                        help="ベースライン採用閾値 (default: 0.95)")
+    parser.add_argument("--strict-wr", action="store_true",
+                        help="勝率フロアを厳格化: >= → >")
+    parser.add_argument("--wr-floor", type=float, default=0.0,
+                        help="勝率絶対下限 (例: 0.55、default: 0.0=無効)")
     args = parser.parse_args()
+    global COMPOSITE_VARIANT, BASELINE_DECAY, STRICT_WR, WR_FLOOR
+    COMPOSITE_VARIANT = args.composite_variant
+    if args.baseline_decay is not None:
+        BASELINE_DECAY = args.baseline_decay
+    STRICT_WR = args.strict_wr
+    WR_FLOOR  = args.wr_floor
 
     print("=" * 62)
     print("天底極致 スコアロジック自動最適化")
     print("=" * 62)
+    print(f"  composite: {COMPOSITE_VARIANT} | decay: {BASELINE_DECAY} | strict_wr: {STRICT_WR} | wr_floor: {WR_FLOOR*100:.0f}%")
 
     print("\n📡 Step 1: データ取得...")
     try:
@@ -1114,22 +1151,47 @@ def main():
         best_stats5  = calc_stats(df[s_full == 5])
         best_stats4  = calc_stats(df[s_full == 4])
     else:
-        best_method_pre, _, _, _, best_combo_pre = all_cands[0][:5]
-        if best_method_pre == "A":
-            df_sorted = df.sort_values("date").reset_index(drop=True)
-            split_idx = int(len(df_sorted) * 0.8)
-            df_train  = df_sorted.iloc[:split_idx].copy()
-            df_test   = df_sorted.iloc[split_idx:].copy()
-            print(f"\n📐 train/test split: 訓練{len(df_train)}件 / 検証{len(df_test)}件")
-            tuned_ths, _, _, tune_passed = tune_thresholds(df_train, df_test, best_combo_pre, baseline)
-            if tune_passed and tuned_ths:
-                best_thresholds = tuned_ths
-                s_full = score_with_thresholds(df, best_combo_pre, best_thresholds)
-                st6f = calc_stats(df[s_full == 6])
-                st5f = calc_stats(df[s_full == 5])
-                st4f = calc_stats(df[s_full == 4])
-                all_cands[0] = ("A", st6f["composite"], st5f["composite"],
-                                st4f["composite"], best_combo_pre, st6f, st5f, st4f)
+        df_sorted = df.sort_values("date").reset_index(drop=True)
+        split_idx = int(len(df_sorted) * 0.8)
+        df_train  = df_sorted.iloc[:split_idx].copy()
+        df_test   = df_sorted.iloc[split_idx:].copy()
+        print(f"\n📐 train/test split: 訓練{len(df_train)}件 / 検証{len(df_test)}件")
+
+        # 全候補に閾値最適化を適用 → post-tune compositeで再ソートして最良を選ぶ
+        print(f"\n🔬 Step 5c: 全{len(all_cands)}候補 閾値最適化...")
+        print(f"  {'#':<3} {'★6勝率':>7} {'★6平均':>8} {'上昇':>4} {'下落':>4} {'件数':>4}  閾値変更  条件")
+        tuned_ths_list = []  # all_cands と同順に保存
+        for i, (method_i, _, _, _, combo_i, _, _, _) in enumerate(all_cands):
+            if method_i != "A":
+                tuned_ths_list.append(None)
+                continue
+            tuned_ths_i, _, _, tune_passed_i = tune_thresholds(df_train, df_test, combo_i, baseline)
+            if tune_passed_i and tuned_ths_i:
+                s_full_i = score_with_thresholds(df, combo_i, tuned_ths_i)
+                st6f = calc_stats(df[s_full_i == 6])
+                st5f = calc_stats(df[s_full_i == 5])
+                st4f = calc_stats(df[s_full_i == 4])
+                all_cands[i] = ("A", st6f["composite"], st5f["composite"],
+                                st4f["composite"], combo_i, st6f, st5f, st4f)
+                tuned_ths_list.append(tuned_ths_i)
+                changes = ", ".join(
+                    f"{k}:{COND_PARAM[k][1]}→{v}" for k, v in tuned_ths_i.items()
+                    if k in COND_PARAM and abs(v - COND_PARAM[k][1]) > 1e-9
+                ) or "変更なし"
+                print(f"  #{i+1:<2} {st6f['wr_raw']*100:>6.1f}%  {st6f['avg_raw']*100:>+7.1f}%"
+                      f"  {st6f['win10_raw']:>3.0f}件  {st6f['lose10_raw']:>3.0f}件  {st6f['n']:>3}件"
+                      f"  {changes}  {'+'.join(combo_i)}")
+            else:
+                tuned_ths_list.append(None)
+                print(f"  #{i+1:<2} (閾値最適化NG — デフォルト維持)  {'+'.join(combo_i)}")
+
+        # post-tune compositeで再ソート
+        paired = sorted(zip(all_cands, tuned_ths_list),
+                        key=lambda x: (-x[0][1], -calc_ordering_score(x[0][5], x[0][6], x[0][7]), -x[0][2], -x[0][3]))
+        all_cands     = [p[0] for p in paired]
+        tuned_ths_list = [p[1] for p in paired]
+
+        best_thresholds = tuned_ths_list[0] or {}
         best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4 = all_cands[0]
     ok, check_res = check_criteria(best_stats, baseline)
     print(f"\n🎯 Step 7: 採用判断 — 方式{best_method}")

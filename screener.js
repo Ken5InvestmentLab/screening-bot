@@ -216,16 +216,16 @@ function calculateScore(ind) {
   const filters = [];
   let score = 0;
 
-  // ① close > EMA75（長期上昇トレンド）
-  if (ind.ema75 !== null && ind.close > ind.ema75) {
+  // ① 当日出来高≥20日×1.2
+  if (ind.volSurge >= 1.2) {
     score++;
-    filters.push(`①EMA75順張り`);
+    filters.push(`①vol急増(${ind.volSurge}x)`);
   }
 
   // ② 当日出来高≥20日×2.00
   if (ind.volSurge >= 2.00) {
     score++;
-    filters.push(`②vol急増(${ind.volSurge}x)`);
+    filters.push(`②MACD上昇`);
   }
 
   // ③ 強い陽線（実体≥2.00%）
@@ -237,19 +237,25 @@ function calculateScore(ind) {
   // ④ ATR% < 5.0%
   if (ind.atrPct < 5.0) {
     score++;
-    filters.push(`④ATR(${ind.atrPct}%)`);
+    filters.push(`③ATR(${ind.atrPct}%)`);
   }
 
   // ⑤ ストキャス≥65
   if (ind.stochK >= 65) {
     score++;
-    filters.push(`⑤STOCH(${ind.stochK.toFixed(0)})`);
+    filters.push(`④STOCH(${ind.stochK.toFixed(0)})`);
   }
 
-  // ⑥ RSI 50〜70
+  // ⑤ RSI 50〜70
   if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {
     score++;
-    filters.push(`⑥RSI(${ind.rsi14.toFixed(0)})`);
+    filters.push(`⑤RSI(${ind.rsi14.toFixed(0)})`);
+  }
+
+  // ⑥ BB位置≥80%
+  if (ind.bbPct >= 0.80) {
+    score++;
+    filters.push(`⑥BB上部(${(ind.bbPct*100).toFixed(0)}%)`);
   }
 
   return { score, filters };

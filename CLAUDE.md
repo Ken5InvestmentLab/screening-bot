@@ -13,6 +13,7 @@ Discordにスクリーニング結果をDM送信するBotです。
 |---|---|---|
 | Bot本体 | VM `ubuntu@168.110.60.126` / `~/screening-bot/` | pm2で常時稼働（Node.js） |
 | スコア最適化 | GitHub Actions `.github/workflows/optimize.yml` | GASの`runDailyMaintenance`完了後に自動起動 |
+| 承認デプロイ | GitHub Actions `.github/workflows/deploy.yml` | `/approve-update` コマンドから手動起動 |
 | データソース | Google Sheets（`alerts_raw`, `ohlcv_4h`） | バックテスト用シグナル・OHLCVデータ |
 | GAS | Google Apps Script | TradingViewアラート受信・OHLCV取得・日次メンテ・GitHub Actions起動 |
 
@@ -32,9 +33,16 @@ GAS runDailyMaintenance() 完了
     │ triggerGitHubActionsOptimize_() → GitHub API workflow_dispatch
     ▼
 GitHub Actions optimize.yml
-    │ optimize_screener.py --yes
+    │ optimize_screener.py --propose
     ▼
-screener.js + current_logic.json 更新 → SCP → pm2 restart
+候補なし → 自動終了（通知なし）
+候補あり → pending_logic.json をコミット + Discord承認チャンネルに通知
+    ▼
+管理者が Discord で /approve-update を実行
+    │ → GitHub Actions deploy.yml 起動
+    ▼
+optimize_screener.py --apply-pending
+    │ screener.js + current_logic.json + index.js 更新 → SCP → pm2 restart
     ▼
 Discord /scan コマンドで結果確認
 ```
@@ -74,24 +82,25 @@ ssh -i ~/ssh-key-2026-03-08.key ubuntu@168.110.60.126 "pm2 restart screening-bot
 ### optimize_screener.py の実行
 
 ```bash
-# 通常実行（分析→確認プロンプト→デプロイ）
-py optimize_screener.py
+# 候補を提案のみ（ファイル更新・デプロイなし。GitHub Actionsはこちら）
+PYTHONIOENCODING=utf-8 py optimize_screener.py --propose
 
-# 自動承認・自動デプロイ（GitHub Actionsはこちら）
-PYTHONIOENCODING=utf-8 py optimize_screener.py --yes
+# 承認済み pending_logic.json を読み込んでデプロイ（deploy.yml はこちら）
+PYTHONIOENCODING=utf-8 py optimize_screener.py --apply-pending
 
-# 分析のみ（ファイル更新・デプロイなし）
+# 分析のみ（ファイル更新・デプロイなし・通知なし）
 py optimize_screener.py --dry-run
 ```
 
 ## 主要ファイルとアーキテクチャ
 
-- **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` の条件を手動変更する場合は `current_logic.json` との整合性に注意。
-- **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|code]` を実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュ。stable=スコア5以上、aggressive=4以上。
+- **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` を手動変更する場合は `current_logic.json` との整合性に注意。`.gitattributes` により `merge=ours` が設定済み。
+- **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|code]` と `/approve-update`（管理者専用）を実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュ。stable=スコア5以上、aggressive=4以上。
 - **`sheets.js`** — Google Sheets APIクライアント。`alerts_raw`（ヘッダーが4行目）と `ohlcv_4h` の2シートを読み取る。`cleanSymbol()` で `TYO:4074` → `4074` に変換。
 - **`config.js`** — フィルター定数（下記参照）。**数値は変更禁止**。
-- **`optimize_screener.py`** — C(18,6)=18,564通りの指標組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。
-- **`current_logic.json`** — デプロイ済みのスコアロジック。次回最適化のベースラインとして使用される。
+- **`optimize_screener.py`** — C(18,6)=18,564通りの指標組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。**VMで直接実行しない**（RAM 1GB でOOMクラッシュする）。
+- **`current_logic.json`** — デプロイ済みのスコアロジック。次回最適化のベースラインとして使用される。`.gitattributes` で `merge=ours`。
+- **`pending_logic.json`** — `--propose` が見つけた候補ロジック。承認待ち状態。`--apply-pending` がデプロイ後に削除する。gitignoreされていないため、GitHub Actions経由でコミット・参照される。
 
 ### `config.js` のFILTER定数（変更禁止）
 
@@ -112,13 +121,12 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ```json
 {
   "method": "A",
-  "conditions": ["ema25", "vol20", "sbull", "atr5", "atr7", "stoch75"],
+  "conditions": ["ema75", "vol20", "body1", "atr5", "stoch75", "rsi5070"],
   "updated_at": "ISO8601",
   "thresholds": {
-    "vol20": 2.5,
-    "sbull": 2.0,
+    "vol20": 2.0,
+    "body1": 2.0,
     "atr5": 5.0,
-    "atr7": 5.0,
     "stoch75": 65
   }
 }
@@ -147,8 +155,9 @@ MIN_4H_BARS: 30          // 最低4h足本数
 
 - **SSH key**: `C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key`（自宅PC）/ `~/ssh-key-2026-03-08.key`（Cloud Shell）
 - **VM**: `ubuntu@168.110.60.126`、pm2プロセス名 `screening-bot`
-- **自動実行トリガー**: GASの `runDailyMaintenance` 完了 → `triggerGitHubActionsOptimize_()` → GitHub Actions `workflow_dispatch`。GAS Script Propertiesに `GITHUB_PAT`（`actions:write` スコープ）が必要。
-- **GitHub Actions コミット対象**: `current_logic.json` / `screener.js` / `index.js` の3ファイル。
+- **自動実行トリガー**: GASの `runDailyMaintenance` 完了 → `triggerGitHubActionsOptimize_()` → GitHub Actions `workflow_dispatch`
+- **承認フロー**: `optimize.yml`（`--propose`）→ Discord通知 → 管理者が `/approve-update` → `deploy.yml`（`--apply-pending`）→ デプロイ
+- **GitHub Actions コミット対象**: `current_logic.json` / `screener.js` / `index.js` の3ファイル（deploy.yml実行時）
 - **バックアップ**: `backups/screener_backup_YYYYMMDD_HHMMSS.js`（最大30件）
 
 ### GitHub Actions 必要Secrets
@@ -158,6 +167,16 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `GOOGLE_CREDENTIALS` | サービスアカウントJSONの中身 |
 | `SSH_PRIVATE_KEY` | VMへのSSH秘密鍵 |
 
+### VM 環境変数（`~/screening-bot/.env`）
+
+| キー | 内容 |
+|---|---|
+| `DISCORD_TOKEN` | Discord BotトークN |
+| `SPREADSHEET_ID` | Google SheetsのID |
+| `ADMIN_USER_ID` | `/approve-update` を実行できるDiscordユーザーID |
+| `GITHUB_TOKEN` | Classic PAT（`workflow` スコープ）。`/approve-update` から `deploy.yml` を起動するために使用 |
+| `GITHUB_REPO` | `Ken5InvestmentLab/screening-bot` |
+
 ### GAS Script Properties
 
 | キー | 内容 |
@@ -166,7 +185,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `GAS_SHARED_SECRET` | Webhook署名検証用シークレット |
 | `DISCORD_STATS_WEBHOOK_URL` | 週次レポート送信先 |
 | `DISCORD_WEBHOOK` | OHLCV同期完了通知先 |
-| `GITHUB_PAT` | GitHub Personal Access Token（`actions:write`スコープ） |
+| `GITHUB_PAT` | Classic PAT（`workflow` スコープ）。GASから `optimize.yml` を起動するために使用 |
 
 ## 重要な注意事項
 
@@ -175,6 +194,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - Discord Webhook送信時は `User-Agent: DiscordBot (screening-bot, 1.0)` ヘッダーが必須（ないとCloudflareに403）。
 - `optimize_screener.py` 実行時は `PYTHONIOENCODING=utf-8` が必要（Windows文字化け防止）。
 - `screener.js` の `calculateScore()` を手動編集しても、次回 `optimize_screener.py` 実行時に上書きされる。手動変更は `current_logic.json` も同時に更新すること。
+- `screener.js` / `current_logic.json` / `index.js` は `.gitattributes` で `merge=ours` に設定済み。`git merge` 時にこれらのファイルが外部変更で上書きされることはない。
 
 ## コードの落とし穴（Gotchas）
 

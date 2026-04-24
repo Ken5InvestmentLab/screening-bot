@@ -38,9 +38,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ ! -f pending_logic.json ]; then
+            echo "No pending logic to commit (no better candidate found)"
+            exit 0
+          fi
           git add pending_logic.json
           if git diff --staged --quiet; then
-            echo "No pending logic to commit (no better candidate found)"
+            echo "No changes staged"
           else
             git commit -m "feat: propose screener logic update [pending approval]"
             git pull --rebase origin main

@@ -228,8 +228,8 @@ function calculateScore(ind) {
     filters.push(`②MACD上昇`);
   }
 
-  // ③ 強い陽線（実体≥1.00%）
-  if (ind.bodyPct >= 1.00) {
+  // ③ 強い陽線（実体≥2.00%）
+  if (ind.bodyPct >= 2.00) {
     score++;
     filters.push(`③強陽線(${ind.bodyPct.toFixed(2)}%)`);
   }
@@ -240,8 +240,8 @@ function calculateScore(ind) {
     filters.push(`③ATR(${ind.atrPct}%)`);
   }
 
-  // ⑤ ストキャス≥75
-  if (ind.stochK >= 75) {
+  // ⑤ ストキャス≥65
+  if (ind.stochK >= 65) {
     score++;
     filters.push(`④STOCH(${ind.stochK.toFixed(0)})`);
   }

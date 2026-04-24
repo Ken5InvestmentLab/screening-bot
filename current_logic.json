@@ -11,8 +11,8 @@
   "updated_at": "2026-04-23T12:02:15Z",
   "thresholds": {
     "vol20": 2.0,
-    "body1": 1.0,
+    "body1": 2.0,
     "atr5": 5.0,
-    "stoch75": 75
+    "stoch75": 65
   }
 }

@@ -1,10 +1,10 @@
-name: Daily Screener Optimization
+name: Deploy Approved Logic
 
 on:
-  workflow_dispatch:  # 手動実行ボタン（GASのrunDailyMaintenanceから自動起動）
+  workflow_dispatch:  # Discord の /approve-update コマンドから呼び出し
 
 jobs:
-  optimize:
+  deploy:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -29,20 +29,21 @@ jobs:
           echo '${{ secrets.SSH_PRIVATE_KEY }}' > /tmp/ssh_key
           chmod 600 /tmp/ssh_key
 
-      - name: Run optimizer (propose mode)
+      - name: Apply pending logic
         env:
           PYTHONIOENCODING: utf-8
-        run: python optimize_screener.py --propose
+        run: python optimize_screener.py --apply-pending
 
-      - name: Commit pending logic (if candidate found)
+      - name: Commit applied logic
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pending_logic.json
+          git rm --cached pending_logic.json 2>/dev/null || true
+          git add screener.js current_logic.json index.js
           if git diff --staged --quiet; then
-            echo "No pending logic to commit (no better candidate found)"
+            echo "Nothing to commit"
           else
-            git commit -m "feat: propose screener logic update [pending approval]"
+            git commit -m "chore: apply approved screener logic [skip ci]"
             git pull --rebase origin main
             git push
           fi

@@ -52,6 +52,8 @@ else:
     VM_HOST             = "ubuntu@168.110.60.126"
     VM_DEST             = "~/screening-bot/"
 
+PENDING_LOGIC_PATH = os.path.join(BASE_DIR, "pending_logic.json")
+
 SPREADSHEET_ID   = "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8"
 SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
@@ -67,7 +69,9 @@ STRICT_WR  = True   # 勝率フロアは > (等号排除 = 同一勝率では更
 WR_FLOOR   = 0.0    # 勝率絶対下限 (0.0=無効)
 
 # 更新通知先Discord Webhook
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
+DISCORD_WEBHOOK_URL  = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
+# 承認リクエスト送信先Discord Webhook（管理者チャンネル）
+APPROVAL_WEBHOOK_URL = "https://discord.com/api/webhooks/1480211740007600351/OWog6gutSvvUfJN6vbZgzI3AsJjMeIdcw_ho0pEGqwHVd_RRMnstqvMg8WGaLnK5jHwO"
 
 # ══════════════════════════════════════════════════════════════
 # 現行ロジック永続化
@@ -939,6 +943,96 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
         print(f"  ⚠ Discord通知失敗: {e}")
 
 
+def notify_discord_approval(best_method, best_combo, best_stats, baseline, thresholds):
+    """スコアリング更新候補の承認リクエストをDiscordに送信"""
+    import urllib.request, json as _json
+
+    if not APPROVAL_WEBHOOK_URL:
+        return
+
+    NL = "\n"
+    NUMS_FULL = ["①","②","③","④","⑤","⑥"]
+    thresholds = thresholds or {}
+
+    def _desc(c):
+        if c in COND_PARAM and c in thresholds:
+            raw_col = COND_PARAM[c][0]
+            if raw_col in PARAM_JS_TPL:
+                return PARAM_JS_TPL[raw_col][0](thresholds[c])
+        return JS_IMPL.get(c, (c,))[0]
+
+    if best_method == "A":
+        cond_lines = [f"{NUMS_FULL[i]} {_desc(c)}" for i, c in enumerate(best_combo)]
+    else:
+        cond_lines = [f"{NUMS_FULL[min(i,5)]} {_desc(c)}  ({w}点)"
+                      for i, (c, w, _) in enumerate(best_combo)]
+
+    wr_new  = best_stats['wr_raw'] * 100
+    wr_old  = baseline.get('wr_raw', 0) * 100
+    avg_new = best_stats['avg_raw'] * 100
+    avg_old = baseline.get('avg_raw', 0) * 100
+
+    payload = {
+        "embeds": [{
+            "title": "📋 スコアリング条件の更新候補",
+            "description": "新しい更新候補が見つかりました。承認するには `/approve-update` を実行してください。",
+            "color": 0xFFA500,
+            "fields": [
+                {
+                    "name": f"🔬 候補条件（方式{best_method}）",
+                    "value": "```\n" + NL.join(cond_lines) + "\n```",
+                    "inline": False
+                },
+                {
+                    "name": "📊 バックテスト成績",
+                    "value": (
+                        f"```\n"
+                        f"★6  {int(best_stats['n'])}件  "
+                        f"勝率 {wr_new:.1f}%  "
+                        f"平均 {avg_new:+.1f}%\n"
+                        f"    上昇 {int(best_stats['win10_raw'])}件  "
+                        f"下落 {int(best_stats['lose10_raw'])}件\n"
+                        f"```"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "📈 現行との比較",
+                    "value": (
+                        f"勝率: {wr_old:.1f}% → **{wr_new:.1f}%** ({wr_new-wr_old:+.1f}pt)\n"
+                        f"平均: {avg_old:+.1f}% → **{avg_new:+.1f}%** ({avg_new-avg_old:+.1f}pt)"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "✅ 承認方法",
+                    "value": "Discord で `/approve-update` を実行してください",
+                    "inline": False
+                }
+            ],
+            "footer": {"text": "承認するまで現行ロジックは変更されません"},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }]
+    }
+
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        APPROVAL_WEBHOOK_URL,
+        data=data,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "DiscordBot (screening-bot, 1.0)"
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status not in (200, 204):
+                print(f"  ⚠ Discord承認通知失敗: HTTP {resp.status}")
+    except Exception as e:
+        print(f"  ⚠ Discord承認通知失敗: {e}")
+
+
 # ══════════════════════════════════════════════════════════════
 # 自動デプロイ
 # ══════════════════════════════════════════════════════════════
@@ -1016,6 +1110,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", "--no-apply", action="store_true")
     parser.add_argument("--yes", "-y", action="store_true", help="確認プロンプトをスキップして自動デプロイ")
+    parser.add_argument("--propose", action="store_true",
+                        help="候補をpending_logic.jsonに保存してDiscord通知（デプロイしない）")
+    parser.add_argument("--apply-pending", action="store_true",
+                        help="pending_logic.jsonの承認済み候補をデプロイ")
     parser.add_argument("--composite-variant", default="rate_adjusted",
                         choices=["rate_adjusted", "snr", "legacy"],
                         help="composite計算方式 (default: rate_adjusted)")
@@ -1032,6 +1130,64 @@ def main():
         BASELINE_DECAY = args.baseline_decay
     STRICT_WR = args.strict_wr
     WR_FLOOR  = args.wr_floor
+
+    # ─── --apply-pending: 承認済みロジックをデプロイして終了 ───────
+    if args.apply_pending:
+        import json as _pjson, shutil, time as _time, glob as _glob
+        if not os.path.exists(PENDING_LOGIC_PATH):
+            print("❌ pending_logic.json が見つかりません。先に --propose を実行してください。")
+            sys.exit(1)
+        with open(PENDING_LOGIC_PATH, "r", encoding="utf-8") as _pf:
+            _p = _pjson.load(_pf)
+        _method  = _p["method"]
+        _combo   = _p["conditions"]
+        _ths     = _p.get("thresholds", {})
+        _code    = _p["screener_code"]
+        _st6     = _p["stats6"]
+        _st5     = _p["stats5"]
+        _st4     = _p["stats4"]
+        _base    = _p.get("baseline", {})
+        _n_total = _p.get("n_total", 0)
+        print("=" * 62)
+        print("承認済みロジックをデプロイします")
+        print("=" * 62)
+        print(f"  proposed_at : {_p.get('proposed_at', '不明')}")
+        print(f"  方式{_method}: 勝率{_st6['wr_raw']*100:.1f}% 平均{_st6['avg_raw']*100:.1f}%"
+              f" ★6 {int(_st6['n'])}件")
+        # バックアップ
+        _backup_dir = os.path.join(BASE_DIR, "backups")
+        os.makedirs(_backup_dir, exist_ok=True)
+        _ts = _time.strftime("%Y%m%d_%H%M%S")
+        try:
+            shutil.copy2(SCREENER_JS_PATH,
+                         os.path.join(_backup_dir, f"screener_backup_{_ts}.js"))
+            print(f"  💾 バックアップ作成: screener_backup_{_ts}.js")
+            _existing = sorted(_glob.glob(os.path.join(_backup_dir, "screener_backup_*.js")))
+            for _old in _existing[:-30]:
+                os.remove(_old)
+        except Exception as _e:
+            print(f"  ⚠ バックアップ失敗: {_e}")
+        # screener.js + index.js 更新
+        if not update_screener_js(_code):
+            print("❌ screener.js 更新失敗"); sys.exit(1)
+        print("  ✅ screener.js 更新完了")
+        update_index_js_help(_combo, _method, _ths)
+        print("  ✅ index.js /help 更新完了")
+        # デプロイ
+        if deploy():
+            save_current_logic(_method, _combo, _ths or None)
+            os.remove(PENDING_LOGIC_PATH)
+            print("  ✅ pending_logic.json 削除完了")
+            _wr  = _base.get('wr_raw', 0)
+            _avg = _base.get('avg_raw', 0)
+            _base_all = dict(n=_n_total, wr=_wr, avg=_avg, wr_raw=_wr, avg_raw=_avg)
+            notify_discord_update(_method, _combo, _st6, _st5, _st4,
+                                  _base_all, _n_total, "conditions")
+            print("\n✅ 承認済みロジックのデプロイ完了")
+        else:
+            print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")
+            sys.exit(1)
+        return
 
     print("=" * 62)
     print("天底極致 スコアロジック自動最適化")
@@ -1223,6 +1379,33 @@ def main():
     new_code = (build_func_a(best_combo, best_stats, baseline, len(df), best_thresholds)
                 if best_method == "A"
                 else build_func_b(best_combo, best_stats, baseline, len(df)))
+
+    # ─── --propose: pending_logic.json に保存して Discord通知して終了 ───
+    if args.propose:
+        import json as _pjson2
+        def _to_jsonable(d):
+            return {k: float(v) if hasattr(v, 'item') else v for k, v in d.items()}
+        _pending = {
+            "method":       best_method,
+            "conditions":   best_combo if best_method == "A" else [[c, w, l] for c, w, l in best_combo],
+            "thresholds":   best_thresholds or {},
+            "screener_code": new_code,
+            "stats6":       _to_jsonable(best_stats),
+            "stats5":       _to_jsonable(best_stats5),
+            "stats4":       _to_jsonable(best_stats4),
+            "baseline":     {k: float(v) if hasattr(v, 'item') else v
+                             for k, v in baseline.items()
+                             if not isinstance(v, str)},
+            "n_total":      int(len(df)),
+            "proposed_at":  datetime.utcnow().isoformat() + "Z"
+        }
+        with open(PENDING_LOGIC_PATH, "w", encoding="utf-8") as _pf2:
+            _pjson2.dump(_pending, _pf2, ensure_ascii=False, indent=2)
+        print(f"\n📋 pending_logic.json に保存しました")
+        notify_discord_approval(best_method, best_combo, best_stats, baseline, best_thresholds)
+        print("✅ Discord に承認リクエストを送信しました")
+        print("（承認後、Discord で /approve-update を実行するとデプロイされます）")
+        return
 
     if args.dry_run:
         print(f"\n🔍 Dry-run: 更新・デプロイをスキップ")

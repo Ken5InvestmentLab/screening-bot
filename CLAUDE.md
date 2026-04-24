@@ -135,12 +135,13 @@ MIN_4H_BARS: 30          // 最低4h足本数
 
 ### `optimize_screener.py` の評価指標
 
-- **採用基準①**: `composite > baseline × 0.95`（ベースラインの95%以上）
-- **採用基準②**: `wr_raw >= baseline.wr_raw`（勝率維持）
-- **採用基準③**: `win10_raw >= baseline.win10_raw × 0.75`（★6件数の25%以内の減少）
-- **compositeスコア**: `wr×50 + avg×100 + (win10−lose10)×3`（recency半減期90日の加重）
+- **採用基準①**: `composite > baseline`（ベースラインを上回ること）
+- **採用基準②**: `wr_raw > baseline.wr_raw`（勝率を上回ること、strict `>`）
+- **採用基準③**: `win10_raw >= baseline.win10_raw × 0.80`（★6件数の20%以内の減少）
+- **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×50 + avg×100 + (win10−lose10)/total×150`（recency半減期90日の加重）
 - **Method A**: 6条件の組み合わせ全探索（各1点）
 - **Method B**: lift分析による重み付きスコア（各1〜2点）
+- **閾値チューニング**: Stage 2でグリッドサーチ（訓練/テスト分割あり）。組み合わせ数が20万超の場合は独立最適化に切り替え
 
 ## デプロイ構成
 
@@ -174,3 +175,18 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - Discord Webhook送信時は `User-Agent: DiscordBot (screening-bot, 1.0)` ヘッダーが必須（ないとCloudflareに403）。
 - `optimize_screener.py` 実行時は `PYTHONIOENCODING=utf-8` が必要（Windows文字化け防止）。
 - `screener.js` の `calculateScore()` を手動編集しても、次回 `optimize_screener.py` 実行時に上書きされる。手動変更は `current_logic.json` も同時に更新すること。
+
+## コードの落とし穴（Gotchas）
+
+### 日付フォーマットの不一致
+- `alerts_raw` シート: `"2026/03/18"`（スラッシュ区切り）
+- `ohlcv_4h` シート: `"2026-03-18"`（ハイフン区切り）
+- 比較時は必ず `replace(/\//g, '-').slice(0, 10)` で正規化すること
+- **絶対やってはいけない**: `String(new Date(...)).slice(0, 10)` → `"Wed Mar 18"` になる（v14.0のバグ）
+- **正しい方法**: `new Date(...).toISOString().slice(0, 10)`
+
+### インジケーター計算の注意点
+- EMA25は25本以上のバーが必要。不足時は `null` を返す。`if (!ind) return null` の null チェックが全関数に必須。
+- **出来高20日平均は当日を除外**する（前20日間のみ）。当日を含めると循環参照になる。
+- `aggregateToDailyBars()` はバーがソート済みであることを前提とする。未ソートだと20日ルックバックウィンドウが壊れる。
+- `screenSymbol()` はシグナル日**以前**で最も近いバーを探す（完全一致不要）。シグナル日がバーの最終日より新しい場合は `null` を返す。

@@ -1259,6 +1259,73 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
         print(f"  ⚠ Discord Sniper承認通知失敗: {e}")
 
 
+def notify_discord_sniper_update(conditions, stats, thresholds):
+    """Sniperロジック更新完了をDiscordに通知"""
+    import urllib.request, json as _json
+    thresholds = thresholds or {}
+    NL = "\n"
+    NUMS_FULL = ["①","②","③","④","⑤","⑥"]
+
+    def _desc(c):
+        if c in COND_PARAM and c in thresholds:
+            raw_col = COND_PARAM[c][0]
+            if raw_col in PARAM_JS_TPL:
+                return PARAM_JS_TPL[raw_col][0](thresholds[c])
+        return JS_IMPL.get(c, (c,))[0]
+
+    cond_lines = [f"{NUMS_FULL[i]} {_desc(c)}" for i, c in enumerate(conditions)]
+    wr = stats["wr_raw"] * 100
+    avg = stats["avg_raw"] * 100
+
+    payload = {
+        "embeds": [{
+            "title": "🎯 Sniperモードのスコアリング条件を更新しました",
+            "description": "承認済みのSniperロジックをデプロイし、Botへ反映しました。",
+            "color": 0x2ecc71,
+            "fields": [
+                {
+                    "name": "🔬 新しいSniper条件（全通過で採択）",
+                    "value": "```\n" + NL.join(cond_lines) + "\n```",
+                    "inline": False
+                },
+                {
+                    "name": "📊 バックテスト成績（全件データ）",
+                    "value": (
+                        f"```\nSniper: {int(stats['n'])}件  勝率 {wr:.1f}%  平均 {avg:+.1f}%\n"
+                        f"上昇 {int(stats['win10_raw'])}件  下落 {int(stats['lose10_raw'])}件\n```"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "🔍 確認方法",
+                    "value": "`/scan sniper` または `/help` で最新条件を確認できます。",
+                    "inline": False
+                }
+            ],
+            "footer": {"text": "Ken5 Investment Lab — 自動デプロイ完了"},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }]
+    }
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        DISCORD_WEBHOOK_URL,
+        data=data,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "DiscordBot (screening-bot, 1.0)",
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status in (200, 204):
+                print("  ✅ Discord Sniper更新通知送信完了")
+            else:
+                print(f"  ⚠ Discord Sniper更新通知失敗: HTTP {resp.status}")
+    except Exception as e:
+        print(f"  ⚠ Discord Sniper更新通知失敗: {e}")
+
+
 def apply_sniper_pending():
     """pending_logic_sniper.json を読み込んで screener.js を更新する。
     デプロイは行わない（呼び出し元が deploy() を担当）。
@@ -1589,6 +1656,8 @@ def main():
                                       _base_all, _n_total, "conditions", _ths)
             if _has_sniper:
                 finalize_sniper_pending(_sniper_data)
+                notify_discord_sniper_update(_sniper_data["combo"], _sniper_data["stats"],
+                                             _sniper_data["thresholds"] or {})
             print("\n✅ 承認済みロジックのデプロイ完了")
         else:
             print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")

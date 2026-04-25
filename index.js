@@ -422,7 +422,7 @@ async function runScan(interaction) {
 // コード検索実行
 // ============================================================
 async function runCodeSearch(interaction, user, codeInput) {
-  const symbolCode = String(codeInput).trim();
+  const symbolCode = String(codeInput).trim().toUpperCase();
 
   if (!/^\d{3,4}[A-Z]?$/.test(symbolCode)) {
     return interaction.reply({
@@ -486,7 +486,7 @@ async function runCodeSearch(interaction, user, codeInput) {
         if (r) {
           r.name = info.name;
           // Sniperモード満点の場合はバッジを付与
-          r.sniperTag = r.sniperEnabled && r.sniperScore === 6;
+          r.sniperTag = r.sniperEnabled && r.sniperScore === (sniperLogic.conditions.length || 6);
           scored.push(r);
         }
       }

@@ -736,7 +736,12 @@ async function runApproveUpdate(interaction) {
 client.once('ready', async () => {
   console.log(`✅ ${client.user.tag} 起動完了`);
 
-  await client.application.commands.set([
+  // ギルド専用登録（即時反映）。GUILD_IDがなければグローバル登録にフォールバック。
+  const commandTarget = config.GUILD_ID
+    ? (await client.guilds.fetch(config.GUILD_ID))
+    : client.application;
+
+  await commandTarget.commands.set([
     {
       name: 'scan',
       description: 'BOTTOMシグナルのスクリーニングを実行',

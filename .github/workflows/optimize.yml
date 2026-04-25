@@ -42,7 +42,8 @@ jobs:
             echo "No pending logic to commit (no better candidate found)"
             exit 0
           fi
-          git add pending_logic.json pending_logic_sniper.json 2>/dev/null || true
+          [ -f pending_logic.json ] && git add pending_logic.json
+          [ -f pending_logic_sniper.json ] && git add pending_logic_sniper.json
           if git diff --staged --quiet; then
             echo "No changes staged"
           else

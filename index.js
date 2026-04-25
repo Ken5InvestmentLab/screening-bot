@@ -184,7 +184,7 @@ async function sendResultDMs(user, results, headerEmbed) {
       let val;
       if (r.hideScore) {
         // Sniperモード: ★表示なし
-        val = `🎯 **勝率特化シグナル**${volTag}\n`;
+        val = `🎯 **Sniperモード検出（β版）**${volTag}\n`;
       } else {
         const maxScore = r.maxScore || 6;
         const scoreBar = '★'.repeat(r.score) + '☆'.repeat(Math.max(0, maxScore - r.score));
@@ -421,9 +421,9 @@ async function runScan(interaction) {
 async function runCodeSearch(interaction, user, codeInput) {
   const symbolCode = String(codeInput).trim();
 
-  if (!/^\d{4}[A-Z]?$/.test(symbolCode)) {
+  if (!/^\d{3,4}[A-Z]?$/.test(symbolCode)) {
     return interaction.reply({
-      content: '❌ 証券コードは4桁の数字（例: 6731）で入力してください。',
+      content: '❌ 証券コードは4桁の数字または3桁+英字（例: 6731, 428A）で入力してください。',
       ephemeral: true,
     });
   }
@@ -556,11 +556,7 @@ function buildHelpEmbed() {
           '**mode（分析タイプ）** — 下記参照\n' +
           '**range（対象期間 or 証券コード）**\n' +
           '　・当日 / 1週間 / 1ヶ月 / 全期間 / 日付指定\n' +
-          '　・コード検索の場合は4桁の証券コードを入力',
-      },
-      {
-        name: '🎯 Sniper（勝率重視）',
-        value: '勝率特化モード。6条件すべてを満たした高確度候補だけを表示します。',
+          '　・コード検索の場合は証券コードを入力（例: 7203, 428A）',
       },
       {
         name: '🎯 Stable（5点以上・厳選）',
@@ -569,6 +565,10 @@ function buildHelpEmbed() {
       {
         name: '⚡ Aggressive（4点以上・広め）',
         value: 'より多くの候補を表示。大化け候補も含む幅広いスキャン。',
+      },
+      {
+        name: '🎯 Sniper（勝率重視・β版）',
+        value: '勝率特化モード。6条件すべてを満たした高確度候補だけを表示します。',
       },
       {
         name: '🔎 コード検索',
@@ -590,15 +590,6 @@ function buildHelpEmbed() {
           '⑥ RSI 50〜70    1点\n' +
           '```',
       },
-      {
-        name: '🎯 Sniper ロジック',
-        value:
-          '```\n' +
-          `${sniperConditions}\n` +
-          '```\n' +
-          `バックテスト実績\n${sniperBacktestText}\n\n` +
-          `ライブ実績\n${sniperLiveText}`,
-      },
     );
 
   // ── ライブ実績 or フォールバック ──
@@ -619,6 +610,16 @@ function buildHelpEmbed() {
     });
 
     embed.addFields({
+      name: '🎯 Sniper モード検出ロジック',
+      value:
+        '```\n' +
+        `${sniperConditions}\n` +
+        '```\n' +
+        `バックテスト実績\n${sniperBacktestText}\n\n` +
+        `ライブ実績\n${sniperLiveText}`,
+    });
+
+    embed.addFields({
       name: '🏷️ ボラティリティタグ',
       value:
         '各銘柄にATR%に基づくリスク特性タグを表示します。\n' +
@@ -632,6 +633,16 @@ function buildHelpEmbed() {
     embed.addFields({
       name: '📈 実績データ',
       value: '起動直後のため集計中です。しばらくしてから再度 `/help` をお試しください。',
+    });
+
+    embed.addFields({
+      name: '🎯 Sniper モード検出ロジック',
+      value:
+        '```\n' +
+        `${sniperConditions}\n` +
+        '```\n' +
+        `バックテスト実績\n${sniperBacktestText}\n\n` +
+        `ライブ実績\n${sniperLiveText}`,
     });
 
     embed.addFields({
@@ -733,9 +744,9 @@ client.once('ready', async () => {
         {
           name: 'mode', type: 3, description: '分析タイプを選択', required: true,
           choices: [
-            { name: '🎯 Sniper（勝率重視）',            value: 'sniper' },
             { name: '🎯 Stable（5点以上・厳選）',       value: 'stable' },
             { name: '⚡ Aggressive（4点以上・広め）',   value: 'aggressive' },
+            { name: '🎯 Sniper（勝率重視・β版）',       value: 'sniper' },
             { name: '🔎 コード検索（個別銘柄確認）',    value: 'code' },
           ],
         },

@@ -88,11 +88,12 @@ async function refreshStats() {
         perf:   sig.perf5bd,
       });
 
+      const _sniperMax = sniperLogic.conditions.length || 6;
       if (
         sniperReleaseDate &&
         toDateKey(sig.date) >= sniperReleaseDate &&
         r.sniperEnabled &&
-        r.sniperScore === 6
+        r.sniperScore === _sniperMax
       ) {
         sniperEntries.push({ perf: sig.perf5bd });
       }
@@ -292,8 +293,10 @@ async function runScan(interaction) {
     return runCodeSearch(interaction, user, rangeInput);
   }
 
-  const isSniperMode = modeKey === 'sniper';
-  const modeMinScore = isSniperMode ? 6 : modeKey === 'aggressive' ? 4 : 5;
+  const isSniperMode   = modeKey === 'sniper';
+  // Sniper閾値はJSONの条件数から動的に取得（5条件→5点満点、6条件→6点満点）
+  const sniperMaxScore = sniperLogic.conditions.length || 6;
+  const modeMinScore   = isSniperMode ? sniperMaxScore : modeKey === 'aggressive' ? 4 : 5;
   const modeLabel = isSniperMode
     ? '🔫 Sniper（勝率重視）'
     : modeKey === 'aggressive'
@@ -343,14 +346,14 @@ async function runScan(interaction) {
         ? {
             ...r,
             score: r.sniperScore,
-            maxScore: 6,
+            maxScore: sniperMaxScore,
             filters: r.sniperFilters,
             hideScore: true,
           }
         : {
             ...r,
             // Stable/Aggressive表示時: Sniperにも引っかかっていたらタグを付与
-            sniperTag: r.sniperEnabled && r.sniperScore === 6,
+            sniperTag: r.sniperEnabled && r.sniperScore === sniperMaxScore,
           };
 
       if (isSniperMode && !r.sniperEnabled) continue;

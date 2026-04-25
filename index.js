@@ -184,7 +184,7 @@ async function sendResultDMs(user, results, headerEmbed) {
       let val;
       if (r.hideScore) {
         // Sniperモード: ★表示なし
-        val = `🎯 **Sniperモード検出（β版）**${volTag}\n`;
+        val = `🔫 **Sniperモード検出（β版）**${volTag}\n`;
       } else {
         const maxScore = r.maxScore || 6;
         const scoreBar = '★'.repeat(r.score) + '☆'.repeat(Math.max(0, maxScore - r.score));
@@ -295,7 +295,7 @@ async function runScan(interaction) {
   const isSniperMode = modeKey === 'sniper';
   const modeMinScore = isSniperMode ? 6 : modeKey === 'aggressive' ? 4 : 5;
   const modeLabel = isSniperMode
-    ? '🎯 Sniper（勝率重視）'
+    ? '🔫 Sniper（勝率重視）'
     : modeKey === 'aggressive'
       ? '⚡ Aggressive（4点以上）'
       : '🎯 Stable（5点以上）';
@@ -384,7 +384,7 @@ async function runScan(interaction) {
     if (scored.length === 0 && unanalyzed.length === 0) {
       headerEmbed.setDescription(
         isSniperMode
-          ? `モード: **${modeLabel}**\n期間: ${rangeText}\n該当銘柄: **0件**\n\nSniper Beta は条件がかなり厳しいため、Stableモードもあわせてお試しください。`
+          ? `モード: **${modeLabel}**\n期間: ${rangeText}\n該当銘柄: **0件**\n\nSniper は条件が厳しいため、Stableモードもあわせてお試しください。`
           : `モード: **${modeLabel}**\n期間: ${rangeText}\n該当銘柄: **0件**\n\n期間を広げるか、Aggressiveモードをお試しください。`
       );
       headerEmbed.setFooter({ text: DISCLAIMER });
@@ -392,7 +392,7 @@ async function runScan(interaction) {
     } else if (scored.length === 0) {
       headerEmbed.setDescription(
         isSniperMode
-          ? `モード: **${modeLabel}**\n期間: ${rangeText}\nスコア該当: **0銘柄**（条件未達）\nOHLCVデータなし: **${unanalyzed.length}銘柄**（下記参照）\n\nSniper Beta は条件がかなり厳しいため、Stableモードもあわせてお試しください。`
+          ? `モード: **${modeLabel}**\n期間: ${rangeText}\nスコア該当: **0銘柄**（条件未達）\nOHLCVデータなし: **${unanalyzed.length}銘柄**（下記参照）\n\nSniper は条件が厳しいため、Stableモードもあわせてお試しください。`
           : `モード: **${modeLabel}**\n期間: ${rangeText}\nスコア該当: **0銘柄**（条件未達）\nOHLCVデータなし: **${unanalyzed.length}銘柄**（下記参照）\n\nAggressiveモードをお試しください。`
       );
       await user.send({ embeds: [headerEmbed] });
@@ -567,8 +567,8 @@ function buildHelpEmbed() {
         value: 'より多くの候補を表示。大化け候補も含む幅広いスキャン。',
       },
       {
-        name: '🎯 Sniper（勝率重視・β版）',
-        value: '勝率特化モード。6条件すべてを満たした高確度候補だけを表示します。',
+        name: '🔫 Sniper（勝率重視・β版）',
+        value: '勝率特化モード。より厳しい条件すべてを満たした少数精鋭の候補だけを表示します。',
       },
       {
         name: '🔎 コード検索',
@@ -610,13 +610,13 @@ function buildHelpEmbed() {
     });
 
     embed.addFields({
-      name: '🎯 Sniper モード検出ロジック',
+      name: '🔫 Sniper モード',
       value:
         '```\n' +
-        `${sniperConditions}\n` +
-        '```\n' +
+        `${sniperConditions}\n\n` +
         `バックテスト実績\n${sniperBacktestText}\n\n` +
-        `ライブ実績\n${sniperLiveText}`,
+        `ライブ実績\n${sniperLiveText}\n` +
+        '```',
     });
 
     embed.addFields({
@@ -636,13 +636,13 @@ function buildHelpEmbed() {
     });
 
     embed.addFields({
-      name: '🎯 Sniper モード検出ロジック',
+      name: '🔫 Sniper モード',
       value:
         '```\n' +
-        `${sniperConditions}\n` +
-        '```\n' +
+        `${sniperConditions}\n\n` +
         `バックテスト実績\n${sniperBacktestText}\n\n` +
-        `ライブ実績\n${sniperLiveText}`,
+        `ライブ実績\n${sniperLiveText}\n` +
+        '```',
     });
 
     embed.addFields({
@@ -746,7 +746,7 @@ client.once('ready', async () => {
           choices: [
             { name: '🎯 Stable（5点以上・厳選）',       value: 'stable' },
             { name: '⚡ Aggressive（4点以上・広め）',   value: 'aggressive' },
-            { name: '🎯 Sniper（勝率重視・β版）',       value: 'sniper' },
+            { name: '🔫 Sniper（勝率重視・β版）',       value: 'sniper' },
             { name: '🔎 コード検索（個別銘柄確認）',    value: 'code' },
           ],
         },

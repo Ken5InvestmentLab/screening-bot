@@ -5,10 +5,11 @@
   "conditions": ["vol15", "atr5", "stoch75", "rsi4060", "bb80"],
   "updated_at": "2026-04-25T00:00:00+09:00",
   "thresholds": {},
-  "wr_raw": 0.708,
+  "wr_raw": 0.72,
   "backtest": {
-    "n": 24,
-    "wr": 70.8,
+    "source": "all",
+    "n": 25,
+    "wr": 72.0,
     "avg": 4.1
   }
 }

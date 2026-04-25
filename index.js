@@ -535,8 +535,9 @@ async function runCodeSearch(interaction, user, codeInput) {
 function buildHelpEmbed() {
   const sniperBacktest = sniperLogic.backtest;
   const sniperLive = statsCache?.sniperLive ?? null;
+  const sniperBacktestLabel = sniperBacktest?.source === 'all' ? '全件データ' : 'バックテスト';
   const sniperBacktestText = sniperBacktest
-    ? `${sniperBacktest.n}件 / 勝率 ${sniperBacktest.wr.toFixed(1)}% / 平均 ${(sniperBacktest.avg >= 0 ? '+' : '') + sniperBacktest.avg.toFixed(1)}%`
+    ? `${sniperBacktestLabel}: ${sniperBacktest.n}件 / 勝率 ${sniperBacktest.wr.toFixed(1)}% / 平均 ${(sniperBacktest.avg >= 0 ? '+' : '') + sniperBacktest.avg.toFixed(1)}%`
     : '集計データなし';
   const sniperLiveText = sniperLive && sniperLive.n > 0
     ? `β公開後: ${sniperLive.n}件 / 勝率 ${sniperLive.wr.toFixed(1)}% / 平均 ${(sniperLive.avg >= 0 ? '+' : '') + sniperLive.avg.toFixed(2)}%`

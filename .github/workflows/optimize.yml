@@ -38,11 +38,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ ! -f pending_logic.json ]; then
+          if [ ! -f pending_logic.json ] && [ ! -f pending_logic_sniper.json ]; then
             echo "No pending logic to commit (no better candidate found)"
             exit 0
           fi
-          git add pending_logic.json
+          git add pending_logic.json pending_logic_sniper.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No changes staged"
           else

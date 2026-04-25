@@ -39,7 +39,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git rm --cached pending_logic.json 2>/dev/null || true
-          git add screener.js current_logic.json index.js
+          git rm --cached pending_logic_sniper.json 2>/dev/null || true
+          git add screener.js current_logic.json current_logic_sniper.json index.js
           if git diff --staged --quiet; then
             echo "Nothing to commit"
           else

@@ -124,7 +124,7 @@ def load_current_logic_sniper():
         print(f"  ⚠ current_logic_sniper.json 読み込みエラー: {e}")
         return None
 
-def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None):
+def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None, backtest_stats=None):
     """デプロイ成功後にSniperロジックを保存する。"""
     import json
     data = {
@@ -133,6 +133,14 @@ def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None):
         "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "thresholds": thresholds or {},
     }
+    if backtest_stats:
+        wr_raw = backtest_stats.get("wr_raw", wr_raw)
+        data["backtest"] = {
+            "source": "all",
+            "n": int(backtest_stats.get("n", 0)),
+            "wr": round(float(backtest_stats.get("wr_raw", 0)) * 100, 1),
+            "avg": round(float(backtest_stats.get("avg_raw", 0)) * 100, 1),
+        }
     if wr_raw is not None:
         data["wr_raw"] = float(wr_raw)
     try:
@@ -344,6 +352,30 @@ def calc_stats(df_s6):
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
                 composite=_calc_composite(wr, avg, w10, l10, W, n))
+
+def calc_score_b_series(df, scheme):
+    """Method BのスコアをSeriesで返す（表示用集計）。"""
+    def score_row(row):
+        return min(sum(int(bool(row[c])) * w for c, w, _ in scheme if c in row.index), 6)
+    return df.apply(score_row, axis=1)
+
+def calc_backtest_display_stats(df_eval, method, combo, thresholds=None):
+    """通知や/helpに出すバックテスト結果を全件データで集計する。"""
+    thresholds = thresholds or {}
+    if df_eval is None or len(df_eval) == 0:
+        empty = calc_stats(df_eval if df_eval is not None else pd.DataFrame())
+        return empty, empty, empty, empty, 0
+
+    if method == "A":
+        scores = score_with_thresholds(df_eval, combo, thresholds)
+    else:
+        scores = calc_score_b_series(df_eval, combo)
+
+    st6 = calc_stats(df_eval[scores == 6])
+    st5 = calc_stats(df_eval[scores == 5])
+    st4 = calc_stats(df_eval[scores == 4])
+    base = calc_stats(df_eval)
+    return st6, st5, st4, base, int(len(df_eval))
 
 def _calc_composite(wr, avg, w10, l10, W, n):
     """composite スコア計算（COMPOSITE_VARIANT で切り替え）"""
@@ -1032,7 +1064,7 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
                 "inline": False
             },
             {
-                "name": f"📈 バックテスト結果（{n_total}シグナル検証）",
+                "name": f"📈 バックテスト結果（全件データ / {n_total}シグナル）",
                 "value": stats_text,
                 "inline": False
             },
@@ -1111,7 +1143,7 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                     "inline": False
                 },
                 {
-                    "name": "📊 バックテスト成績",
+                    "name": "📊 バックテスト成績（全件データ）",
                     "value": (
                         f"```\n"
                         f"★6  {int(best_stats['n'])}件  "
@@ -1190,7 +1222,7 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
                     "inline": False
                 },
                 {
-                    "name": "📊 バックテスト成績",
+                    "name": "📊 バックテスト成績（全件データ）",
                     "value": (
                         f"```\nSniper: {int(stats['n'])}件  勝率 {wr_new:.1f}%  平均 {avg_new:+.1f}%\n"
                         f"上昇 {int(stats['win10_raw'])}件  下落 {int(stats['lose10_raw'])}件\n```"
@@ -1253,7 +1285,7 @@ def finalize_sniper_pending(sniper_data):
     if sniper_data is None:
         return
     save_current_logic_sniper(sniper_data["combo"], sniper_data["thresholds"] or None,
-                              sniper_data["stats"]["wr_raw"])
+                              backtest_stats=sniper_data["stats"])
     if os.path.exists(SNIPER_PENDING_PATH):
         os.remove(SNIPER_PENDING_PATH)
         print("  ✅ pending_logic_sniper.json 削除完了")
@@ -1290,7 +1322,10 @@ def deploy():
             ("② scp転送(index.js)",
              ["scp", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
               INDEX_JS_PATH, f"{VM_HOST}:{VM_DEST}"]),
-            ("③ pm2 restart",
+            ("③ scp転送(current_logic_sniper.json)",
+             ["scp", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
+              SNIPER_LOGIC_PATH, f"{VM_HOST}:{VM_DEST}"]),
+            ("④ pm2 restart",
              ["ssh", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
               VM_HOST, "pm2 restart screening-bot"]),
         ]
@@ -1312,7 +1347,9 @@ def deploy():
              f'scp -i "{SSH_KEY_PATH}" "{SCREENER_JS_PATH}" {VM_HOST}:{VM_DEST}'),
             ("② scp転送(index.js)",
              f'scp -i "{SSH_KEY_PATH}" "{INDEX_JS_PATH}" {VM_HOST}:{VM_DEST}'),
-            ("③ pm2 restart",
+            ("③ scp転送(current_logic_sniper.json)",
+             f'scp -i "{SSH_KEY_PATH}" "{SNIPER_LOGIC_PATH}" {VM_HOST}:{VM_DEST}'),
+            ("④ pm2 restart",
              f'ssh -i "{SSH_KEY_PATH}" -o StrictHostKeyChecking=no {VM_HOST} "pm2 restart screening-bot"'),
         ]
         for label, cmd in steps:
@@ -1369,13 +1406,13 @@ def _run_sniper_optimization(df, args):
             continue
         st6_v = calc_stats(s6_v)
         if st6_v["wr_raw"] >= SNIPER_WR_MIN * 0.85:
-            wf_validated.append((wr, n, combo, st6_train))
+            wf_validated.append((wr, n, combo, st6_train, st6_v))
     print(f"  Walk-forward 通過: {len(wf_validated)}/{min(50, len(cands))}通り")
     if not wf_validated:
         print("  ✅ Sniper: Walk-forward 通過なし。現行を維持。")
         return
 
-    best_wr, best_n, best_combo, _ = wf_validated[0]
+    best_wr, best_n, best_combo, _, st6_valid = wf_validated[0]
 
     # 全データで最終評価
     scores_full = sum(df[c].astype(int) for c in best_combo if c in df.columns)
@@ -1384,6 +1421,8 @@ def _run_sniper_optimization(df, args):
     print(f"  最良条件: {'+'.join(best_combo)}")
     print(f"  Sniper全体: {st6_full['n']}件 勝率{st6_full['wr_raw']*100:.1f}%"
           f" 平均{st6_full['avg_raw']*100:.1f}%")
+    print(f"  Sniper検証: {st6_valid['n']}件 勝率{st6_valid['wr_raw']*100:.1f}%"
+          f" 平均{st6_valid['avg_raw']*100:.1f}%")
 
     # 現行と同一条件なら更新しない
     if sniper_logic and sorted(sniper_logic.get("conditions", [])) == sorted(best_combo):
@@ -1401,6 +1440,7 @@ def _run_sniper_optimization(df, args):
             "thresholds":  {},
             "sniper_code": sniper_code,
             "stats":       _to_jsonable(st6_full),
+            "validation_stats": _to_jsonable(st6_valid),
             "proposed_at": datetime.utcnow().isoformat() + "Z"
         }
         with open(SNIPER_PENDING_PATH, "w", encoding="utf-8") as _f:
@@ -1436,7 +1476,7 @@ def _run_sniper_optimization(df, args):
 
     if update_screener_js_sniper(sniper_code):
         print("  ✅ calculateScoreSniper() 更新完了")
-        save_current_logic_sniper(best_combo, {}, st6_full["wr_raw"])
+        save_current_logic_sniper(best_combo, {}, backtest_stats=st6_full)
     else:
         print("  ❌ calculateScoreSniper() 更新失敗")
 
@@ -1533,6 +1573,8 @@ def main():
             _sniper_data = apply_sniper_pending()
             if _sniper_data is None:
                 print("❌ calculateScoreSniper() 更新失敗"); sys.exit(1)
+            save_current_logic_sniper(_sniper_data["combo"], _sniper_data["thresholds"] or None,
+                                      backtest_stats=_sniper_data["stats"])
 
         # デプロイ（1回）
         if deploy():
@@ -1771,6 +1813,12 @@ def main():
                 if best_method == "A"
                 else build_func_b(best_combo, best_stats, baseline, len(df)))
 
+    display_df = df
+    display_stats6, display_stats5, display_stats4, display_base, display_n_total = \
+        calc_backtest_display_stats(display_df, best_method, best_combo, best_thresholds)
+    print(f"  表示用バックテスト（全件データ）: ★6 {display_stats6['n']}件 "
+          f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
+
     # ─── --propose: pending_logic.json に保存して Discord通知して終了 ───
     if args.propose:
         import json as _pjson2
@@ -1781,19 +1829,23 @@ def main():
             "conditions":   best_combo if best_method == "A" else [[c, w, l] for c, w, l in best_combo],
             "thresholds":   best_thresholds or {},
             "screener_code": new_code,
-            "stats6":       _to_jsonable(best_stats),
-            "stats5":       _to_jsonable(best_stats5),
-            "stats4":       _to_jsonable(best_stats4),
+            "stats6":       _to_jsonable(display_stats6),
+            "stats5":       _to_jsonable(display_stats5),
+            "stats4":       _to_jsonable(display_stats4),
+            "training_stats6": _to_jsonable(best_stats),
+            "training_stats5": _to_jsonable(best_stats5),
+            "training_stats4": _to_jsonable(best_stats4),
             "baseline":     {k: float(v) if hasattr(v, 'item') else v
-                             for k, v in baseline.items()
+                             for k, v in display_base.items()
                              if not isinstance(v, str)},
-            "n_total":      int(len(df)),
+            "n_total":      display_n_total,
+            "backtest_source": "all",
             "proposed_at":  datetime.utcnow().isoformat() + "Z"
         }
         with open(PENDING_LOGIC_PATH, "w", encoding="utf-8") as _pf2:
             _pjson2.dump(_pending, _pf2, ensure_ascii=False, indent=2)
         print(f"\n📋 pending_logic.json に保存しました")
-        notify_discord_approval(best_method, best_combo, best_stats, baseline, best_thresholds)
+        notify_discord_approval(best_method, best_combo, display_stats6, display_base, best_thresholds)
         print("✅ Discord に承認リクエストを送信しました")
         print("（承認後、Discord で /approve-update を実行するとデプロイされます）")
         return
@@ -1884,14 +1936,10 @@ def main():
         else:
             save_current_logic("B", [[c, w, lift] for c, w, lift in best_combo])
 
-        # Discord更新通知（全シグナル点灯地点で集計 → /helpと同じ母集団）
-        s_all = score_with_thresholds(df, best_combo, new_ths)
-        nt6 = calc_stats(df[s_all == 6])
-        nt5 = calc_stats(df[s_all == 5])
-        nt4 = calc_stats(df[s_all == 4])
-        _wr = float(df["win_5bd"].mean()); _avg = float(df["perf_5bd"].mean())
-        base_all = dict(n=len(df), wr=_wr, avg=_avg, wr_raw=_wr, avg_raw=_avg)
-        notify_discord_update(best_method, best_combo, nt6, nt5, nt4, base_all, len(df), what_changed, new_ths)
+        # Discord更新通知は /scan 全期間と同じ全件データの成績を表示する
+        notify_discord_update(best_method, best_combo,
+                              display_stats6, display_stats5, display_stats4,
+                              display_base, display_n_total, what_changed, new_ths)
     else:
         print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")
 

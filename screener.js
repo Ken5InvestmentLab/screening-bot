@@ -266,52 +266,60 @@ function calculateScore(ind) {
 // ============================================================
 // Sniperモード採点（optimize_screener.py が最適化後に自動書き換え）
 // ============================================================
-// Sniperモード自動最適化 2026-04-25 / 1199件データ（C(18,5) Walk-forward 70/30検証済み）
-// Sniper: 24件 勝率70.8% 平均+4.1%（検証勝率72.7% — 過学習なし）
-// 【Sniper条件（全5条件通過で採択）】
-//   ① 出来高急増（20日平均×1.5以上）
-//   ② ATR% < 5.0%（低ボラ）
-//   ③ ストキャス≥75（モメンタム）
-//   ④ RSI 40〜60（中立ゾーン）
-//   ⑤ BB位置≥80%（上方ブレイクアウト）
+// Sniperモード自動最適化 2026-04-25 11:03 / 1199件データ
+// Sniper: 17件 勝率76.5% 平均1.5%
+// 【Sniper条件（全6条件通過で採択）】
+//   ① close > EMA25（中期トレンド）
+//   ② 強い陽線（実体≥0.5%）
+//   ③ MACD hist > 0
+//   ④ ATR% < 5.0%
+//   ⑤ 直近20日高値更新
+//   ⑥ RSI 40〜60
 
 function calculateScoreSniper(ind) {
   if (!ind) return null;
   const filters = [];
   let score = 0;
 
-  // ① 出来高急増（20日平均×1.5以上）
-  if (ind.volSurge >= 1.5) {
+  // ① close > EMA25（中期トレンド）
+  if (ind.ema25 !== null && ind.close > ind.ema25) {
     score++;
-    filters.push(`①vol急増(${ind.volSurge}x)`);
+    filters.push(`①EMA25順張り`);
   }
 
-  // ② ATR% < 5.0%（低ボラ）
+  // ② 強い陽線（実体≥0.5%）
+  if (ind.isStrongBull) {
+    score++;
+    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);
+  }
+
+  // ③ MACD hist > 0
+  if (ind.macdPos) {
+    score++;
+    filters.push(`③MACD上昇`);
+  }
+
+  // ④ ATR% < 5.0%
   if (ind.atrPct < 5.0) {
     score++;
-    filters.push(`②ATR(${ind.atrPct}%)`);
+    filters.push(`④ATR(${ind.atrPct}%)`);
   }
 
-  // ③ ストキャス≥75（モメンタム）
-  if (ind.stochK >= 75) {
+  // ⑤ 直近20日高値更新
+  if (ind.hiBrk20) {
     score++;
-    filters.push(`③STOCH(${ind.stochK.toFixed(0)})`);
+    filters.push(`⑤高値更新`);
   }
 
-  // ④ RSI 40〜60（中立ゾーン）
+  // ⑥ RSI 40〜60
   if (!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60) {
     score++;
-    filters.push(`④RSI(${ind.rsi14.toFixed(0)})`);
-  }
-
-  // ⑤ BB位置≥80%（上方ブレイクアウト）
-  if (ind.bbPct >= 0.80) {
-    score++;
-    filters.push(`⑤BB(${(ind.bbPct * 100).toFixed(0)}%)`);
+    filters.push(`⑥RSI(${ind.rsi14.toFixed(0)})`);
   }
 
   return { score, filters };
 }
+
 
 
 

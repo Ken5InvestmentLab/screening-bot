@@ -678,7 +678,8 @@ function buildHelpEmbed() {
 // ============================================================
 async function runApproveUpdate(interaction) {
   const adminUserId = process.env.ADMIN_USER_ID;
-  if (adminUserId && interaction.user.id !== adminUserId) {
+  // ADMIN_USER_ID 未設定の場合も含め、IDが一致しない全ユーザーをブロック
+  if (!adminUserId || interaction.user.id !== adminUserId) {
     return interaction.reply({ content: '❌ このコマンドは管理者専用です。', ephemeral: true });
   }
 
@@ -739,15 +740,14 @@ async function runApproveUpdate(interaction) {
 client.once('ready', async () => {
   console.log(`✅ ${client.user.tag} 起動完了`);
 
-  // グローバルコマンドを削除（ギルドコマンドと重複して2つ表示されるのを防ぐ）
-  await client.application.commands.set([]);
+  // ギルドコマンドが残っていれば削除（グローバルコマンドとの重複を防ぐ）
+  if (config.GUILD_ID) {
+    const guild = await client.guilds.fetch(config.GUILD_ID).catch(() => null);
+    if (guild) await guild.commands.set([]);
+  }
 
-  // ギルド専用登録（即時反映）。GUILD_IDがなければグローバル登録にフォールバック。
-  const commandTarget = config.GUILD_ID
-    ? (await client.guilds.fetch(config.GUILD_ID))
-    : client.application;
-
-  await commandTarget.commands.set([
+  // グローバル登録（サーバー内・BotDM両方で使えるようにする）
+  await client.application.commands.set([
     {
       name: 'scan',
       description: 'BOTTOMシグナルのスクリーニングを実行',

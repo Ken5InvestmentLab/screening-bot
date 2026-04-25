@@ -1515,9 +1515,9 @@ def main():
         _has_main   = os.path.exists(PENDING_LOGIC_PATH)
         _has_sniper = os.path.exists(SNIPER_PENDING_PATH)
         if not _has_main and not _has_sniper:
-            print("❌ pending_logic.json も pending_logic_sniper.json も見つかりません。")
-            print("   先に --propose を実行してください。")
-            sys.exit(1)
+            print("ℹ️ pending_logic.json も pending_logic_sniper.json も見つかりません。")
+            print("   承認待ちロジックがないため、デプロイはスキップします。")
+            return
 
         _method = _combo = _ths = _code = _st6 = _st5 = _st4 = _base = _n_total = None
 

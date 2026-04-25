@@ -6,7 +6,9 @@
 // ・最終更新日時を表示
 
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const fs = require('fs');
 const https = require('https');
+const path = require('path');
 const config = require('./config');
 const { fetchOHLCVData, fetchRecentBottomSymbols, fetchRecentBottomSignals, fetchAllBottomSignals } = require('./sheets');
 const { screenSymbol } = require('./screener');
@@ -20,11 +22,45 @@ const scanningUsers = new Set();
 const COLOR      = 0x00b4d8;
 const COLOR_WARN = 0xf5a623;
 const DISCLAIMER = '⚠️ これは情報提供ツールであり、投資助言ではありません。';
+const SNIPER_LOGIC_PATH = path.join(__dirname, 'current_logic_sniper.json');
 
 // ============================================================
 // ライブ実績キャッシュ
 // ============================================================
 let statsCache = null;
+const sniperLogic = loadSniperLogic();
+
+function loadSniperLogic() {
+  try {
+    const raw = fs.readFileSync(SNIPER_LOGIC_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    return {
+      method: parsed.method ?? 'sniper',
+      label: parsed.label ?? 'Sniper Beta',
+      description: parsed.description ?? '少数精鋭・高勝率狙いのβモード',
+      conditions: Array.isArray(parsed.conditions) ? parsed.conditions : [],
+      updated_at: parsed.updated_at ?? null,
+      thresholds: parsed.thresholds ?? {},
+      backtest: parsed.backtest ?? null,
+    };
+  } catch (err) {
+    console.warn('[sniper] current_logic_sniper.json の読み込みに失敗:', err.message);
+    return {
+      method: 'sniper',
+      label: 'Sniper Beta',
+      description: '少数精鋭・高勝率狙いのβモード',
+      conditions: [],
+      updated_at: null,
+      thresholds: {},
+      backtest: null,
+    };
+  }
+}
+
+function toDateKey(value) {
+  if (!value) return null;
+  return String(value).replace(/\//g, '-').slice(0, 10);
+}
 
 async function refreshStats() {
   try {
@@ -36,6 +72,8 @@ async function refreshStats() {
 
     // 全シグナル点灯地点を対象にする（バックテストと同じ母集団）
     const entries = [];
+    const sniperEntries = [];
+    const sniperReleaseDate = toDateKey(sniperLogic.updated_at);
     for (const sig of allSignals) {
       if (sig.perf5bd === null || sig.perf5bd === undefined) continue;
       const data = ohlcvMap.get(sig.symbol);
@@ -49,6 +87,15 @@ async function refreshStats() {
         atrPct: r.atrPct,
         perf:   sig.perf5bd,
       });
+
+      if (
+        sniperReleaseDate &&
+        toDateKey(sig.date) >= sniperReleaseDate &&
+        r.sniperEnabled &&
+        r.sniperScore === 6
+      ) {
+        sniperEntries.push({ perf: sig.perf5bd });
+      }
     }
 
     // ── スコア別集計 ──
@@ -68,15 +115,7 @@ async function refreshStats() {
     const star5      = calcTierStats(entries.filter(e => e.score === 5));
     const star4      = calcTierStats(entries.filter(e => e.score === 4));
     const all        = calcTierStats(entries);
-
-    // ── ボラタグ別集計 ──
-    function volTagOf(atrPct) {
-      if (atrPct == null || isNaN(atrPct)) return 'UNKNOWN';
-      if (atrPct < 3.0) return 'LOW';
-      if (atrPct < 6.0) return 'MID';
-      return 'HIGH';
-    }
-
+    const sniperLive = calcTierStats(sniperEntries);
 
     // ── タイムスタンプ（JST）──
     const now = new Date();
@@ -86,10 +125,11 @@ async function refreshStats() {
     statsCache = {
       total: all.n,
       star6, star5, star4, all,
+      sniperLive,
       updatedAt: timestamp,
     };
 
-    console.log(`[stats] 集計完了: ${all.n}件確定 (★6=${star6.n}, ★5=${star5.n}, ★4=${star4.n})`);
+    console.log(`[stats] 集計完了: ${all.n}件確定 (★6=${star6.n}, ★5=${star5.n}, ★4=${star4.n}, Sniper=${sniperLive.n})`);
   } catch (err) {
     console.error('[stats] 集計エラー:', err.message);
     // エラー時はキャッシュを消さない（前回の値を維持）
@@ -138,12 +178,20 @@ async function sendResultDMs(user, results, headerEmbed) {
     const embed  = new EmbedBuilder().setColor(COLOR);
 
     for (const r of chunk) {
-      const tvUrl    = `https://jp.tradingview.com/chart/?symbol=TSE:${r.symbol}`;
-      const maxScore = r.maxScore || 6;
-      const scoreBar = '★'.repeat(r.score) + '☆'.repeat(Math.max(0, maxScore - r.score));
-      const volTag   = getVolTag(r.atrPct);
+      const tvUrl  = `https://jp.tradingview.com/chart/?symbol=TSE:${r.symbol}`;
+      const volTag = getVolTag(r.atrPct);
 
-      let val = `${scoreBar} **${r.score}/${maxScore}点**${volTag}\n`;
+      let val;
+      if (r.hideScore) {
+        // Sniperモード: ★表示なし
+        val = `🎯 **勝率特化シグナル**${volTag}\n`;
+      } else {
+        const maxScore = r.maxScore || 6;
+        const scoreBar = '★'.repeat(r.score) + '☆'.repeat(Math.max(0, maxScore - r.score));
+        // Stable/Aggressiveで Sniper条件も満たす銘柄にはタグを付加
+        const sniperBadge = r.sniperTag ? ' 🎯' : '';
+        val = `${scoreBar} **${r.score}/${maxScore}点**${volTag}${sniperBadge}\n`;
+      }
       val += `点灯日: ${r.signalDate}　エントリー: **${formatPrice(r.signalPrice)}円**\n`;
       if (r.futurePrice) {
         const prefix = parseFloat(r.futureDiff) >= 0 ? '+' : '';
@@ -244,10 +292,13 @@ async function runScan(interaction) {
     return runCodeSearch(interaction, user, rangeInput);
   }
 
-  const modeMinScore = modeKey === 'aggressive' ? 4 : 5;
-  const modeLabel = modeKey === 'aggressive'
-    ? '⚡ Aggressive（4点以上）'
-    : '🎯 Stable（5点以上）';
+  const isSniperMode = modeKey === 'sniper';
+  const modeMinScore = isSniperMode ? 6 : modeKey === 'aggressive' ? 4 : 5;
+  const modeLabel = isSniperMode
+    ? '🎯 Sniper（勝率重視）'
+    : modeKey === 'aggressive'
+      ? '⚡ Aggressive（4点以上）'
+      : '🎯 Stable（5点以上）';
 
   await interaction.reply({ content: '🚀 解析を開始します。DMに結果をお送りします...', ephemeral: true });
 
@@ -288,8 +339,24 @@ async function runScan(interaction) {
       }
       const r = screenSymbol(sig.symbol, data, sig.date, sig.entry, sig.eval5bd, sig.perf5bd);
       if (!r) continue;
-      r.name = sig.name;
-      if (r.score >= modeMinScore) scored.push(r);
+      const scanResult = isSniperMode
+        ? {
+            ...r,
+            score: r.sniperScore,
+            maxScore: 6,
+            filters: r.sniperFilters,
+            hideScore: true,
+          }
+        : {
+            ...r,
+            // Stable/Aggressive表示時: Sniperにも引っかかっていたらタグを付与
+            sniperTag: r.sniperEnabled && r.sniperScore === 6,
+          };
+
+      if (isSniperMode && !r.sniperEnabled) continue;
+
+      scanResult.name = sig.name;
+      if (scanResult.score >= modeMinScore) scored.push(scanResult);
     }
 
     sortResults(scored);
@@ -316,13 +383,17 @@ async function runScan(interaction) {
 
     if (scored.length === 0 && unanalyzed.length === 0) {
       headerEmbed.setDescription(
-        `モード: **${modeLabel}**\n期間: ${rangeText}\n該当銘柄: **0件**\n\n期間を広げるか、Aggressiveモードをお試しください。`
+        isSniperMode
+          ? `モード: **${modeLabel}**\n期間: ${rangeText}\n該当銘柄: **0件**\n\nSniper Beta は条件がかなり厳しいため、Stableモードもあわせてお試しください。`
+          : `モード: **${modeLabel}**\n期間: ${rangeText}\n該当銘柄: **0件**\n\n期間を広げるか、Aggressiveモードをお試しください。`
       );
       headerEmbed.setFooter({ text: DISCLAIMER });
       await user.send({ embeds: [headerEmbed] });
     } else if (scored.length === 0) {
       headerEmbed.setDescription(
-        `モード: **${modeLabel}**\n期間: ${rangeText}\nスコア該当: **0銘柄**（条件未達）\nOHLCVデータなし: **${unanalyzed.length}銘柄**（下記参照）\n\nAggressiveモードをお試しください。`
+        isSniperMode
+          ? `モード: **${modeLabel}**\n期間: ${rangeText}\nスコア該当: **0銘柄**（条件未達）\nOHLCVデータなし: **${unanalyzed.length}銘柄**（下記参照）\n\nSniper Beta は条件がかなり厳しいため、Stableモードもあわせてお試しください。`
+          : `モード: **${modeLabel}**\n期間: ${rangeText}\nスコア該当: **0銘柄**（条件未達）\nOHLCVデータなし: **${unanalyzed.length}銘柄**（下記参照）\n\nAggressiveモードをお試しください。`
       );
       await user.send({ embeds: [headerEmbed] });
       await sendUnanalyzed(user, unanalyzed);
@@ -409,7 +480,12 @@ async function runCodeSearch(interaction, user, codeInput) {
         });
       } else {
         const r = screenSymbol(symbolCode, data, info.date, info.entry, info.eval5bd, info.perf5bd);
-        if (r) { r.name = info.name; scored.push(r); }
+        if (r) {
+          r.name = info.name;
+          // Sniperモード満点の場合はバッジを付与
+          r.sniperTag = r.sniperEnabled && r.sniperScore === 6;
+          scored.push(r);
+        }
       }
     }
 
@@ -454,6 +530,18 @@ async function runCodeSearch(interaction, user, codeInput) {
 // ヘルプ（ライブ実績表示）
 // ============================================================
 function buildHelpEmbed() {
+  const sniperBacktest = sniperLogic.backtest;
+  const sniperLive = statsCache?.sniperLive ?? null;
+  const sniperBacktestText = sniperBacktest
+    ? `${sniperBacktest.n}件 / 勝率 ${sniperBacktest.wr.toFixed(1)}% / 平均 ${(sniperBacktest.avg >= 0 ? '+' : '') + sniperBacktest.avg.toFixed(1)}%`
+    : '集計データなし';
+  const sniperLiveText = sniperLive && sniperLive.n > 0
+    ? `β公開後: ${sniperLive.n}件 / 勝率 ${sniperLive.wr.toFixed(1)}% / 平均 ${(sniperLive.avg >= 0 ? '+' : '') + sniperLive.avg.toFixed(2)}%`
+    : 'β公開後: 0件 / 集計中';
+  const sniperConditions = sniperLogic.conditions.length > 0
+    ? `${sniperLogic.conditions.slice(0, 3).join(' / ')}\n${sniperLogic.conditions.slice(3).join(' / ')}`
+    : '未設定';
+
   const embed = new EmbedBuilder()
     .setTitle('📖 天底極致スクリーニングBot — 使い方')
     .setColor(COLOR)
@@ -469,6 +557,10 @@ function buildHelpEmbed() {
           '**range（対象期間 or 証券コード）**\n' +
           '　・当日 / 1週間 / 1ヶ月 / 全期間 / 日付指定\n' +
           '　・コード検索の場合は4桁の証券コードを入力',
+      },
+      {
+        name: '🎯 Sniper（勝率重視）',
+        value: '勝率特化モード。6条件すべてを満たした高確度候補だけを表示します。',
       },
       {
         name: '🎯 Stable（5点以上・厳選）',
@@ -497,6 +589,15 @@ function buildHelpEmbed() {
           '⑤ ストキャス≥65    1点\n' +
           '⑥ RSI 50〜70    1点\n' +
           '```',
+      },
+      {
+        name: '🎯 Sniper ロジック',
+        value:
+          '```\n' +
+          `${sniperConditions}\n` +
+          '```\n' +
+          `バックテスト実績\n${sniperBacktestText}\n\n` +
+          `ライブ実績\n${sniperLiveText}`,
       },
     );
 
@@ -632,7 +733,8 @@ client.once('ready', async () => {
         {
           name: 'mode', type: 3, description: '分析タイプを選択', required: true,
           choices: [
-            { name: '🎯 Stable（5点以上・厳選）',      value: 'stable' },
+            { name: '🎯 Sniper（勝率重視）',            value: 'sniper' },
+            { name: '🎯 Stable（5点以上・厳選）',       value: 'stable' },
             { name: '⚡ Aggressive（4点以上・広め）',   value: 'aggressive' },
             { name: '🔎 コード検索（個別銘柄確認）',    value: 'code' },
           ],

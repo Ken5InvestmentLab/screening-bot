@@ -1,5 +1,6 @@
 # optimize_screener.py が自動生成するファイル。
 # マージ時は常に「自分のバージョン（最新最適化結果）」を優先する。
-screener.js       merge=ours
-current_logic.json merge=ours
-index.js          merge=ours
+screener.js              merge=ours
+current_logic.json      merge=ours
+current_logic_sniper.json merge=ours
+index.js                merge=ours

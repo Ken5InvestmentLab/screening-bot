@@ -52,7 +52,11 @@ else:
     VM_HOST             = "ubuntu@168.110.60.126"
     VM_DEST             = "~/screening-bot/"
 
-PENDING_LOGIC_PATH = os.path.join(BASE_DIR, "pending_logic.json")
+PENDING_LOGIC_PATH       = os.path.join(BASE_DIR, "pending_logic.json")
+SNIPER_LOGIC_PATH        = os.path.join(BASE_DIR, "current_logic_sniper.json")
+SNIPER_PENDING_PATH      = os.path.join(BASE_DIR, "pending_logic_sniper.json")
+SNIPER_WR_MIN            = 0.65   # Sniper採用の最低勝率
+SNIPER_N_MIN             = 10     # Sniper採用の最低件数
 
 SPREADSHEET_ID   = "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8"
 SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -104,6 +108,39 @@ def save_current_logic(method, conditions, thresholds=None):
         print(f"  ✅ current_logic.json 更新完了")
     except Exception as e:
         print(f"  ⚠ current_logic.json 保存エラー: {e}")
+
+def load_current_logic_sniper():
+    """デプロイ済みのSniperロジックを読み込む。未保存ならNoneを返す。"""
+    import json
+    if not os.path.exists(SNIPER_LOGIC_PATH):
+        return None
+    try:
+        with open(SNIPER_LOGIC_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not data.get("conditions"):
+            return None  # 空のプレースホルダー → 未初期化
+        return data
+    except Exception as e:
+        print(f"  ⚠ current_logic_sniper.json 読み込みエラー: {e}")
+        return None
+
+def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None):
+    """デプロイ成功後にSniperロジックを保存する。"""
+    import json
+    data = {
+        "method": "sniper",
+        "conditions": conditions,
+        "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "thresholds": thresholds or {},
+    }
+    if wr_raw is not None:
+        data["wr_raw"] = float(wr_raw)
+    try:
+        with open(SNIPER_LOGIC_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"  ✅ current_logic_sniper.json 更新完了")
+    except Exception as e:
+        print(f"  ⚠ current_logic_sniper.json 保存エラー: {e}")
 
 # ══════════════════════════════════════════════════════════════
 # Google Sheets
@@ -470,6 +507,26 @@ def search_combinations(df, baseline):
     best.sort(reverse=True)  # (★6, ★5, ★4) タプルで比較
     return best
 
+def search_combinations_sniper(df):
+    """Sniperモード: 勝率最大化の組み合わせ探索 (C(18,6), 全条件通過)"""
+    conds = [c for c in BOOL_CONDS if c in df.columns]
+    for c in conds:
+        df[c] = df[c].astype(bool)
+    total = sum(1 for _ in combinations(conds, 6))
+    print(f"  探索数: C({len(conds)},6) = {total:,}通り")
+    best = []
+    for combo in combinations(conds, 6):
+        scores = sum(df[c].astype(int) for c in combo)
+        s6 = df[scores == 6]
+        if len(s6) < SNIPER_N_MIN:
+            continue
+        st6 = calc_stats(s6)
+        if st6["wr_raw"] < SNIPER_WR_MIN:
+            continue
+        best.append((st6["wr_raw"], st6["n"], list(combo), st6))
+    best.sort(key=lambda x: (-x[0], -x[1]))  # 勝率降順・件数降順
+    return best
+
 # ══════════════════════════════════════════════════════════════
 # 方式B: +10%銘柄共通点分析 → 重み付きスコア自動設計
 # ══════════════════════════════════════════════════════════════
@@ -739,6 +796,68 @@ def build_func_b(scheme, stats, baseline, n):
                   f"    score += {w};",f"    filters.push(`{num}{label}({w}pt)`);",f"  }}",""]
     lines += ["  score = Math.min(score, 6);","  return { score, filters };","}"]
     return "\n".join(lines)
+
+def build_func_sniper(conditions, stats, n, thresholds=None):
+    """calculateScoreSniper() の JS コードを生成"""
+    thresholds = thresholds or {}
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    lines = [
+        f"// Sniperモード自動最適化 {now} / {n}件データ",
+        f"// Sniper: {stats['n']}件 勝率{stats['wr_raw']*100:.1f}% 平均{stats['avg_raw']*100:.1f}%",
+        f"// 【Sniper条件（全6条件通過で採択）】",
+    ]
+    for i, c in enumerate(conditions):
+        if c in thresholds and c in COND_PARAM:
+            raw_col = COND_PARAM[c][0]
+            desc = PARAM_JS_TPL[raw_col][0](thresholds[c])
+        else:
+            desc = JS_IMPL.get(c, ('',))[0] or c
+        lines.append(f"//   {NUMS[i]} {desc}")
+    lines += ["", "function calculateScoreSniper(ind) {",
+              "  if (!ind) return null;",
+              "  const filters = [];",
+              "  let score = 0;", ""]
+    for i, c in enumerate(conditions):
+        num = NUMS[i]
+        if c in thresholds and c in COND_PARAM:
+            raw_col = COND_PARAM[c][0]
+            th = thresholds[c]
+            desc  = PARAM_JS_TPL[raw_col][0](th)
+            cond  = PARAM_JS_TPL[raw_col][1](th)
+            label = PARAM_JS_TPL[raw_col][2](th)
+        elif c in JS_IMPL:
+            desc, cond, label = JS_IMPL[c]
+        else:
+            continue
+        lines += [f"  // {num} {desc}", f"  if ({cond}) {{",
+                  f"    score++;", f"    filters.push(`{num}{label}`);", f"  }}", ""]
+    lines += ["  return { score, filters };", "}"]
+    return "\n".join(lines)
+
+def update_screener_js_sniper(new_code):
+    """calculateScoreSniper() を置換"""
+    if not os.path.exists(SCREENER_JS_PATH):
+        print(f"  ⚠ 見つかりません: {SCREENER_JS_PATH}"); return False
+    with open(SCREENER_JS_PATH, "r", encoding="utf-8") as f:
+        content = f.read()
+    start = content.find("function calculateScoreSniper(ind)")
+    if start < 0:
+        print("  ⚠ calculateScoreSniper関数が見つかりません"); return False
+    block_start = start
+    for marker in ["// Sniperモード自動最適化", "// Sniper:", "// 【Sniper条件"]:
+        pos = content.rfind(marker, 0, start)
+        if 0 < pos and pos > start - 400:
+            block_start = min(block_start, pos)
+    depth = 0; end = start
+    for i in range(start, len(content)):
+        if content[i] == "{": depth += 1
+        elif content[i] == "}":
+            depth -= 1
+            if depth == 0: end = i + 1; break
+    content = content[:block_start] + new_code + "\n" + content[end:]
+    with open(SCREENER_JS_PATH, "w", encoding="utf-8") as f:
+        f.write(content)
+    return True
 
 def update_screener_js(new_code):
     """calculateScore() 置換 + computeIndicators() に追加指標を注入"""
@@ -1041,6 +1160,105 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
         print(f"  ⚠ Discord承認通知失敗: {e}")
 
 
+def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
+    """Sniperロジック更新候補の承認リクエストをDiscordに送信"""
+    import urllib.request, json as _json
+    if not APPROVAL_WEBHOOK_URL:
+        return
+    thresholds = thresholds or {}
+    NL = "\n"
+    NUMS_FULL = ["①","②","③","④","⑤","⑥"]
+    def _desc(c):
+        if c in COND_PARAM and c in thresholds:
+            raw_col = COND_PARAM[c][0]
+            if raw_col in PARAM_JS_TPL:
+                return PARAM_JS_TPL[raw_col][0](thresholds[c])
+        return JS_IMPL.get(c, (c,))[0]
+    cond_lines = [f"{NUMS_FULL[i]} {_desc(c)}" for i, c in enumerate(conditions)]
+    wr_new  = stats["wr_raw"] * 100
+    avg_new = stats["avg_raw"] * 100
+    wr_old  = baseline_wr * 100
+    payload = {
+        "embeds": [{
+            "title": "🎯 Sniperモード — スコアリング更新候補",
+            "description": "勝率特化モードの更新候補が見つかりました。承認するには `/approve-update` を実行してください。",
+            "color": 0xFF69B4,
+            "fields": [
+                {
+                    "name": "🔬 Sniper条件（全通過で採択）",
+                    "value": "```\n" + NL.join(cond_lines) + "\n```",
+                    "inline": False
+                },
+                {
+                    "name": "📊 バックテスト成績",
+                    "value": (
+                        f"```\nSniper: {int(stats['n'])}件  勝率 {wr_new:.1f}%  平均 {avg_new:+.1f}%\n"
+                        f"上昇 {int(stats['win10_raw'])}件  下落 {int(stats['lose10_raw'])}件\n```"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "📈 現行との比較",
+                    "value": f"勝率: {wr_old:.1f}% → **{wr_new:.1f}%** ({wr_new-wr_old:+.1f}pt)",
+                    "inline": False
+                },
+                {
+                    "name": "✅ 承認方法",
+                    "value": "Discord で `/approve-update` を実行してください",
+                    "inline": False
+                }
+            ],
+            "footer": {"text": "承認するまで現行Sniperロジックは変更されません"},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }]
+    }
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        APPROVAL_WEBHOOK_URL, data=data,
+        headers={"Content-Type": "application/json; charset=utf-8",
+                 "User-Agent": "DiscordBot (screening-bot, 1.0)"},
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status not in (200, 204):
+                print(f"  ⚠ Discord Sniper承認通知失敗: HTTP {resp.status}")
+    except Exception as e:
+        print(f"  ⚠ Discord Sniper承認通知失敗: {e}")
+
+
+def apply_sniper_pending():
+    """pending_logic_sniper.json を読み込んで screener.js を更新する。
+    デプロイは行わない（呼び出し元が deploy() を担当）。
+    戻り値: {"combo": ..., "thresholds": ..., "stats": ...} or None"""
+    import json as _pjson
+    if not os.path.exists(SNIPER_PENDING_PATH):
+        return None
+    print("\n📋 Sniper: pending_logic_sniper.json を適用...")
+    with open(SNIPER_PENDING_PATH, "r", encoding="utf-8") as _pf:
+        _p = _pjson.load(_pf)
+    _combo = _p["conditions"]
+    _ths   = _p.get("thresholds", {})
+    _code  = _p["sniper_code"]
+    _st    = _p["stats"]
+    print(f"  Sniper: 勝率{_st['wr_raw']*100:.1f}% 平均{_st['avg_raw']*100:.1f}% {int(_st['n'])}件")
+    if not update_screener_js_sniper(_code):
+        print("  ❌ calculateScoreSniper() 更新失敗")
+        return None
+    print("  ✅ calculateScoreSniper() 更新完了")
+    return {"combo": _combo, "thresholds": _ths, "stats": _st}
+
+def finalize_sniper_pending(sniper_data):
+    """deploy()成功後にSniperロジックを確定（JSON保存 + pending削除）"""
+    if sniper_data is None:
+        return
+    save_current_logic_sniper(sniper_data["combo"], sniper_data["thresholds"] or None,
+                              sniper_data["stats"]["wr_raw"])
+    if os.path.exists(SNIPER_PENDING_PATH):
+        os.remove(SNIPER_PENDING_PATH)
+        print("  ✅ pending_logic_sniper.json 削除完了")
+
+
 # ══════════════════════════════════════════════════════════════
 # 自動デプロイ
 # ══════════════════════════════════════════════════════════════
@@ -1112,6 +1330,118 @@ def deploy():
     return True
 
 # ══════════════════════════════════════════════════════════════
+# Sniperモード最適化（勝率特化）
+# ══════════════════════════════════════════════════════════════
+def _run_sniper_optimization(df, args):
+    """Sniperモード最適化（勝率特化）。
+    --propose: pending_logic_sniper.json 保存 + Discord通知。
+    --dry-run: 候補表示のみ。
+    通常実行: screener.js + current_logic_sniper.json を直接更新（デプロイは main() が担当）。
+    """
+    import json as _json
+
+    print("\n🎯 Step S1: Sniperモード最適化（勝率特化）...")
+    sniper_logic = load_current_logic_sniper()
+    baseline_wr  = sniper_logic.get("wr_raw", 0.0) if sniper_logic else 0.0
+
+    # Walk-forward分割（70/30）
+    df_sorted = df.sort_values("date").reset_index(drop=True)
+    wf_split  = int(len(df_sorted) * 0.7)
+    df_train  = df_sorted.iloc[:wf_split].copy()
+    df_valid  = df_sorted.iloc[wf_split:].copy()
+    print(f"  Walk-forward: train {len(df_train)}件 / validation {len(df_valid)}件")
+
+    cands = search_combinations_sniper(df_train.copy())
+    print(f"  勝率{SNIPER_WR_MIN*100:.0f}%以上クリア(train): {len(cands)}通り")
+    if not cands:
+        print("  ✅ Sniper: 適合ロジックなし。現行を維持。")
+        return
+
+    # Walk-forward validation
+    wf_validated = []
+    for wr, n, combo, st6_train in cands[:50]:
+        conds_in_valid = [c for c in combo if c in df_valid.columns]
+        if len(conds_in_valid) < len(combo):
+            continue
+        scores_v = sum(df_valid[c].astype(int) for c in conds_in_valid)
+        s6_v = df_valid[scores_v == 6]
+        if len(s6_v) < 3:
+            continue
+        st6_v = calc_stats(s6_v)
+        if st6_v["wr_raw"] >= SNIPER_WR_MIN * 0.85:
+            wf_validated.append((wr, n, combo, st6_train))
+    print(f"  Walk-forward 通過: {len(wf_validated)}/{min(50, len(cands))}通り")
+    if not wf_validated:
+        print("  ✅ Sniper: Walk-forward 通過なし。現行を維持。")
+        return
+
+    best_wr, best_n, best_combo, _ = wf_validated[0]
+
+    # 全データで最終評価
+    scores_full = sum(df[c].astype(int) for c in best_combo if c in df.columns)
+    s6_full = df[scores_full == 6]
+    st6_full = calc_stats(s6_full)
+    print(f"  最良条件: {'+'.join(best_combo)}")
+    print(f"  Sniper全体: {st6_full['n']}件 勝率{st6_full['wr_raw']*100:.1f}%"
+          f" 平均{st6_full['avg_raw']*100:.1f}%")
+
+    # 現行と同一条件なら更新しない
+    if sniper_logic and sorted(sniper_logic.get("conditions", [])) == sorted(best_combo):
+        print("  ✅ Sniper: 条件が現行と同一。更新しません。")
+        return
+
+    sniper_code = build_func_sniper(best_combo, st6_full, len(df))
+
+    # ── --propose: pending保存 + Discord通知 ────────────────────
+    if args.propose:
+        def _to_jsonable(d):
+            return {k: float(v) if hasattr(v, 'item') else v for k, v in d.items()}
+        _pending = {
+            "conditions":  best_combo,
+            "thresholds":  {},
+            "sniper_code": sniper_code,
+            "stats":       _to_jsonable(st6_full),
+            "proposed_at": datetime.utcnow().isoformat() + "Z"
+        }
+        with open(SNIPER_PENDING_PATH, "w", encoding="utf-8") as _f:
+            _json.dump(_pending, _f, ensure_ascii=False, indent=2)
+        print(f"  📋 pending_logic_sniper.json に保存しました")
+        notify_discord_sniper_approval(best_combo, st6_full, baseline_wr, {})
+        print("  ✅ Discord に Sniper承認リクエストを送信しました")
+        return
+
+    # ── --dry-run: 候補表示のみ ──────────────────────────────────
+    if args.dry_run:
+        print(f"  🔍 Sniper Dry-run: 更新・デプロイをスキップ")
+        print(f"\n  ── Sniperシグナル候補（{len(s6_full)}件）──")
+        print(f"  {'日付':<12} {'銘柄':<8} {'社名':<24} {'騰落率':>7}")
+        for _, row in s6_full.sort_values("date", ascending=False).iterrows():
+            sign = "+" if row["perf_5bd"] >= 0 else ""
+            print(f"  {row['date']:<12} {row['symbol']:<8} {row['name']:<24}"
+                  f" {sign}{row['perf_5bd']*100:.1f}%")
+        return
+
+    # ── 通常実行: screener.js 更新（デプロイは main() が担当）──────
+    if not args.yes:
+        try:
+            ans = input(
+                f"  Sniper: {'+'.join(best_combo)} 勝率{st6_full['wr_raw']*100:.1f}%"
+                f" を更新しますか？ [y/N] → "
+            ).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ans = "n"
+        if ans != "y":
+            print("  Sniper更新をキャンセルしました。")
+            return
+
+    if update_screener_js_sniper(sniper_code):
+        print("  ✅ calculateScoreSniper() 更新完了")
+        save_current_logic_sniper(best_combo, {}, st6_full["wr_raw"])
+    else:
+        print("  ❌ calculateScoreSniper() 更新失敗")
+
+
+# ══════════════════════════════════════════════════════════════
 # メイン
 # ══════════════════════════════════════════════════════════════
 def main():
@@ -1142,26 +1472,40 @@ def main():
     # ─── --apply-pending: 承認済みロジックをデプロイして終了 ───────
     if args.apply_pending:
         import json as _pjson, shutil, time as _time, glob as _glob
-        if not os.path.exists(PENDING_LOGIC_PATH):
-            print("❌ pending_logic.json が見つかりません。先に --propose を実行してください。")
+        _has_main   = os.path.exists(PENDING_LOGIC_PATH)
+        _has_sniper = os.path.exists(SNIPER_PENDING_PATH)
+        if not _has_main and not _has_sniper:
+            print("❌ pending_logic.json も pending_logic_sniper.json も見つかりません。")
+            print("   先に --propose を実行してください。")
             sys.exit(1)
-        with open(PENDING_LOGIC_PATH, "r", encoding="utf-8") as _pf:
-            _p = _pjson.load(_pf)
-        _method  = _p["method"]
-        _combo   = _p["conditions"]
-        _ths     = _p.get("thresholds", {})
-        _code    = _p["screener_code"]
-        _st6     = _p["stats6"]
-        _st5     = _p["stats5"]
-        _st4     = _p["stats4"]
-        _base    = _p.get("baseline", {})
-        _n_total = _p.get("n_total", 0)
-        print("=" * 62)
-        print("承認済みロジックをデプロイします")
-        print("=" * 62)
-        print(f"  proposed_at : {_p.get('proposed_at', '不明')}")
-        print(f"  方式{_method}: 勝率{_st6['wr_raw']*100:.1f}% 平均{_st6['avg_raw']*100:.1f}%"
-              f" ★6 {int(_st6['n'])}件")
+
+        _method = _combo = _ths = _code = _st6 = _st5 = _st4 = _base = _n_total = None
+
+        if _has_main:
+            with open(PENDING_LOGIC_PATH, "r", encoding="utf-8") as _pf:
+                _p = _pjson.load(_pf)
+            _method  = _p["method"]
+            _combo   = _p["conditions"]
+            _ths     = _p.get("thresholds", {})
+            _code    = _p["screener_code"]
+            _st6     = _p["stats6"]
+            _st5     = _p["stats5"]
+            _st4     = _p["stats4"]
+            _base    = _p.get("baseline", {})
+            _n_total = _p.get("n_total", 0)
+            print("=" * 62)
+            print("承認済みロジックをデプロイします")
+            print("=" * 62)
+            print(f"  proposed_at : {_p.get('proposed_at', '不明')}")
+            print(f"  方式{_method}: 勝率{_st6['wr_raw']*100:.1f}% 平均{_st6['avg_raw']*100:.1f}%"
+                  f" ★6 {int(_st6['n'])}件")
+        if _has_sniper:
+            with open(SNIPER_PENDING_PATH, "r", encoding="utf-8") as _sf:
+                _sp = _pjson.load(_sf)
+            _sp_stats = _sp["stats"]
+            print(f"  Sniper pending: 勝率{_sp_stats['wr_raw']*100:.1f}%"
+                  f" 平均{_sp_stats['avg_raw']*100:.1f}% {int(_sp_stats['n'])}件")
+
         # バックアップ
         _backup_dir = os.path.join(BASE_DIR, "backups")
         os.makedirs(_backup_dir, exist_ok=True)
@@ -1175,22 +1519,34 @@ def main():
                 os.remove(_old)
         except Exception as _e:
             print(f"  ⚠ バックアップ失敗: {_e}")
-        # screener.js + index.js 更新
-        if not update_screener_js(_code):
-            print("❌ screener.js 更新失敗"); sys.exit(1)
-        print("  ✅ screener.js 更新完了")
-        update_index_js_help(_combo, _method, _ths)
-        print("  ✅ index.js /help 更新完了")
-        # デプロイ
+
+        # screener.js 更新（main と sniper を両方適用してから1回だけデプロイ）
+        if _has_main:
+            if not update_screener_js(_code):
+                print("❌ screener.js 更新失敗"); sys.exit(1)
+            print("  ✅ screener.js (calculateScore) 更新完了")
+            update_index_js_help(_combo, _method, _ths)
+            print("  ✅ index.js /help 更新完了")
+
+        _sniper_data = None
+        if _has_sniper:
+            _sniper_data = apply_sniper_pending()
+            if _sniper_data is None:
+                print("❌ calculateScoreSniper() 更新失敗"); sys.exit(1)
+
+        # デプロイ（1回）
         if deploy():
-            save_current_logic(_method, _combo, _ths or None)
-            os.remove(PENDING_LOGIC_PATH)
-            print("  ✅ pending_logic.json 削除完了")
-            _wr  = _base.get('wr_raw', 0)
-            _avg = _base.get('avg_raw', 0)
-            _base_all = dict(n=_n_total, wr=_wr, avg=_avg, wr_raw=_wr, avg_raw=_avg)
-            notify_discord_update(_method, _combo, _st6, _st5, _st4,
-                                  _base_all, _n_total, "conditions", _ths)
+            if _has_main:
+                save_current_logic(_method, _combo, _ths or None)
+                os.remove(PENDING_LOGIC_PATH)
+                print("  ✅ pending_logic.json 削除完了")
+                _wr  = _base.get('wr_raw', 0)
+                _avg = _base.get('avg_raw', 0)
+                _base_all = dict(n=_n_total, wr=_wr, avg=_avg, wr_raw=_wr, avg_raw=_avg)
+                notify_discord_update(_method, _combo, _st6, _st5, _st4,
+                                      _base_all, _n_total, "conditions", _ths)
+            if _has_sniper:
+                finalize_sniper_pending(_sniper_data)
             print("\n✅ 承認済みロジックのデプロイ完了")
         else:
             print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")
@@ -1269,6 +1625,9 @@ def main():
         baseline = calc_stats(df[df["sc_v14"] == 6])
         print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
+
+    # ── Sniperモード最適化（Step 4完了後・Step 5a前） ─────────────
+    _run_sniper_optimization(df, args)
 
     print("\n🔍 Step 5a: 方式A（組み合わせ探索）...")
     # Walk-forward: 古い70%でランキング → 新しい30%で検証して過学習を防ぐ

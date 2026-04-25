@@ -321,7 +321,7 @@ def _calc_composite(wr, avg, w10, l10, W, n):
         return wr * 50 + avg * 100 + (w10 - l10) * 3
 
 def check_criteria(stats, baseline):
-    if stats["n"] < 5: return False, ["★6件数5件未満"]
+    if stats["n"] < 10: return False, ["★6件数10件未満（過学習防止）"]
     threshold = baseline["composite"] * BASELINE_DECAY
     ok_comp = stats["composite"] > threshold
     # 絶対条件②: 勝率（strict時は等号排除、floor追加）
@@ -453,7 +453,7 @@ def search_combinations(df, baseline):
     for combo in combinations(conds, 6):
         scores = sum(df[c].astype(int) for c in combo)
         s6 = df[scores == 6]
-        if len(s6) < 5: continue
+        if len(s6) < 10: continue
         st6 = calc_stats(s6)
         if st6["composite"] <= baseline["composite"] * BASELINE_DECAY: continue
         # 勝率フロア（strict時は等号排除）
@@ -559,7 +559,7 @@ def tune_thresholds(df_train, df_test, combo, baseline):
             thresholds = {c: v for (c, _), v in zip(param_list, vals)}
             s = score_with_thresholds(df_train, combo, thresholds)
             s6 = df_train[s == 6]
-            if len(s6) < 5: continue
+            if len(s6) < 10: continue
             st = calc_stats(s6)
             if st["composite"] > best_composite:
                 best_composite = st["composite"]
@@ -576,7 +576,7 @@ def tune_thresholds(df_train, df_test, combo, baseline):
                 t = dict(cur_thresholds, **{c: th})
                 s = score_with_thresholds(df_train, combo, t)
                 s6 = df_train[s == 6]
-                if len(s6) < 5: continue
+                if len(s6) < 10: continue
                 st = calc_stats(s6)
                 if st["composite"] > best_c_comp:
                     best_c_comp = st["composite"]
@@ -841,13 +841,21 @@ def update_index_js_help(conditions, method, thresholds=None):
 # ══════════════════════════════════════════════════════════════
 # Discord更新通知
 # ══════════════════════════════════════════════════════════════
-def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total, what_changed="conditions"):
+def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total, what_changed="conditions", thresholds=None):
     """スコアロジック更新をDiscordに通知
     what_changed: "conditions" | "thresholds" | "both"
     """
     import urllib.request, json as _json
 
     NL = "\n"  # 改行文字（文字列連結で使う）
+    thresholds = thresholds or {}
+
+    def _desc(c):
+        if c in COND_PARAM and c in thresholds:
+            raw_col = COND_PARAM[c][0]
+            if raw_col in PARAM_JS_TPL:
+                return PARAM_JS_TPL[raw_col][0](thresholds[c])
+        return JS_IMPL.get(c, (c,))[0]
 
     # 変更タイプに応じたタイトル・説明
     if what_changed == "thresholds":
@@ -871,13 +879,13 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
         )
         cond_section_name = "🔬 新しいスコアリング条件（6点満点）"
 
-    # 条件テキスト
+    # 条件テキスト（閾値チューニング結果を反映）
     NUMS_FULL = ["①","②","③","④","⑤","⑥"]
     if best_method == "A":
-        cond_lines = [f"{NUMS_FULL[i]} {JS_IMPL.get(c,('',))[0] or c}  1点"
+        cond_lines = [f"{NUMS_FULL[i]} {_desc(c)}  1点"
                       for i, c in enumerate(best_combo)]
     else:
-        cond_lines = [f"{NUMS_FULL[min(i,5)]} {JS_IMPL.get(c,('',))[0] or c}  {w}点"
+        cond_lines = [f"{NUMS_FULL[min(i,5)]} {_desc(c)}  {w}点"
                       for i,(c,w,_) in enumerate(best_combo)]
 
     def fmt(v):
@@ -1182,7 +1190,7 @@ def main():
             _avg = _base.get('avg_raw', 0)
             _base_all = dict(n=_n_total, wr=_wr, avg=_avg, wr_raw=_wr, avg_raw=_avg)
             notify_discord_update(_method, _combo, _st6, _st5, _st4,
-                                  _base_all, _n_total, "conditions")
+                                  _base_all, _n_total, "conditions", _ths)
             print("\n✅ 承認済みロジックのデプロイ完了")
         else:
             print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")
@@ -1263,8 +1271,32 @@ def main():
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
 
     print("\n🔍 Step 5a: 方式A（組み合わせ探索）...")
-    cands_a = search_combinations(df.copy(), baseline)
-    print(f"  絶対条件クリア: {len(cands_a)}通り")
+    # Walk-forward: 古い70%でランキング → 新しい30%で検証して過学習を防ぐ
+    df_wf = df.sort_values("date").reset_index(drop=True)
+    wf_split = int(len(df_wf) * 0.7)
+    df_wf_train = df_wf.iloc[:wf_split].copy()
+    df_wf_valid = df_wf.iloc[wf_split:].copy()
+    print(f"  Walk-forward: train {len(df_wf_train)}件 / validation {len(df_wf_valid)}件")
+    cands_a = search_combinations(df_wf_train.copy(), baseline)
+    print(f"  絶対条件クリア(train): {len(cands_a)}通り")
+    if cands_a:
+        wf_validated = []
+        for item in cands_a[:50]:
+            combo = item[3]
+            st6_train = item[4]
+            conds_in_valid = [c for c in combo if c in df_wf_valid.columns]
+            if len(conds_in_valid) < len(combo):
+                continue
+            scores_v = sum(df_wf_valid[c].astype(int) for c in conds_in_valid)
+            s6_v = df_wf_valid[scores_v == 6]
+            if len(s6_v) < 3:
+                continue
+            st6_v = calc_stats(s6_v)
+            # validation composite が train の85%以上ならwalk-forward 通過
+            if st6_v["composite"] >= st6_train["composite"] * 0.85:
+                wf_validated.append(item)
+        print(f"  Walk-forward 通過: {len(wf_validated)}/{min(50, len(cands_a))}通り")
+        cands_a = wf_validated
 
     print("\n🔍 Step 5b: 方式B（+10%共通点分析）...")
     result_b = analyze_winners(df.copy(), baseline)
@@ -1500,7 +1532,7 @@ def main():
         nt4 = calc_stats(df[s_all == 4])
         _wr = float(df["win_5bd"].mean()); _avg = float(df["perf_5bd"].mean())
         base_all = dict(n=len(df), wr=_wr, avg=_avg, wr_raw=_wr, avg_raw=_avg)
-        notify_discord_update(best_method, best_combo, nt6, nt5, nt4, base_all, len(df), what_changed)
+        notify_discord_update(best_method, best_combo, nt6, nt5, nt4, base_all, len(df), what_changed, new_ths)
     else:
         print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")
 

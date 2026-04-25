@@ -739,6 +739,9 @@ async function runApproveUpdate(interaction) {
 client.once('ready', async () => {
   console.log(`✅ ${client.user.tag} 起動完了`);
 
+  // グローバルコマンドを削除（ギルドコマンドと重複して2つ表示されるのを防ぐ）
+  await client.application.commands.set([]);
+
   // ギルド専用登録（即時反映）。GUILD_IDがなければグローバル登録にフォールバック。
   const commandTarget = config.GUILD_ID
     ? (await client.guilds.fetch(config.GUILD_ID))

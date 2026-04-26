@@ -67,6 +67,16 @@ RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
 BASELINE_DECAY   = 1.0   # 現行compositeを厳密に超えた場合のみ採用（同一・改悪は不採用）
 MAX_WIN10_DROP   = 0.20  # ★6大幅上昇件数の許容減少率（20%超減でNG）
 
+# Stable ★6 品質ゲート（過学習防止 + 劣化検知）
+STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
+STABLE_S6_N_MIN        = 25    # 全件★6最低件数
+STABLE_AVG_MIN         = 0.03  # 全件★6平均騰落率
+STABLE_VALID_WR_MIN    = 0.55  # 直近30%検証側★6勝率は strict >
+STABLE_VALID_S6_N_MIN  = 8     # 直近30%検証側★6最低件数
+STABLE_VALID_AVG_MIN   = 0.00  # 直近30%検証側★6平均騰落率
+WALK_FORWARD_VALID_FRAC = 0.30
+WALK_FORWARD_CANDIDATE_LIMIT = 20_000
+
 # composite バリアント: rate_adjusted=件数正規化(デフォルト) / snr=√n正規化 / legacy=旧来
 COMPOSITE_VARIANT = "rate_adjusted"
 STRICT_WR  = True   # 勝率フロアは > (等号排除 = 同一勝率では更新しない)
@@ -377,6 +387,24 @@ def calc_backtest_display_stats(df_eval, method, combo, thresholds=None):
     base = calc_stats(df_eval)
     return st6, st5, st4, base, int(len(df_eval))
 
+def calc_candidate_tiers(df_eval, method, combo, thresholds=None):
+    """候補ロジックの★6/★5/★4を任意データセット上で集計する。"""
+    thresholds = thresholds or {}
+    if df_eval is None or len(df_eval) == 0:
+        empty = calc_stats(pd.DataFrame())
+        return empty, empty, empty
+
+    if method == "A":
+        scores = score_with_thresholds(df_eval, combo, thresholds)
+    else:
+        scores = calc_score_b_series(df_eval, combo)
+
+    return (
+        calc_stats(df_eval[scores == 6]),
+        calc_stats(df_eval[scores == 5]),
+        calc_stats(df_eval[scores == 4]),
+    )
+
 def _calc_composite(wr, avg, w10, l10, W, n):
     """composite スコア計算（COMPOSITE_VARIANT で切り替え）"""
     if COMPOSITE_VARIANT == "rate_adjusted":
@@ -389,8 +417,57 @@ def _calc_composite(wr, avg, w10, l10, W, n):
     else:  # legacy
         return wr * 50 + avg * 100 + (w10 - l10) * 3
 
-def check_criteria(stats, baseline):
-    if stats["n"] < 10: return False, ["★6件数10件未満（過学習防止）"]
+def _quality_gate_lines(stats, validation_stats=None):
+    """Stable ★6の絶対品質ゲートを評価する。"""
+    validation_stats = validation_stats or calc_stats(pd.DataFrame())
+
+    checks = [
+        (stats["n"] >= STABLE_S6_N_MIN,
+         f"全件★6件数 {stats['n']}件 ≥ {STABLE_S6_N_MIN}件"),
+        (stats["wr_raw"] >= STABLE_WR_MIN,
+         f"全件★6勝率 {stats['wr_raw']*100:.1f}% ≥ {STABLE_WR_MIN*100:.0f}%"),
+        (stats["avg_raw"] > STABLE_AVG_MIN,
+         f"全件★6平均 {stats['avg_raw']*100:+.1f}% > {STABLE_AVG_MIN*100:+.0f}%"),
+        (validation_stats["n"] >= STABLE_VALID_S6_N_MIN,
+         f"検証★6件数 {validation_stats['n']}件 ≥ {STABLE_VALID_S6_N_MIN}件"),
+        (validation_stats["wr_raw"] > STABLE_VALID_WR_MIN,
+         f"検証★6勝率 {validation_stats['wr_raw']*100:.1f}% > {STABLE_VALID_WR_MIN*100:.0f}%"),
+        (validation_stats["avg_raw"] >= STABLE_VALID_AVG_MIN,
+         f"検証★6平均 {validation_stats['avg_raw']*100:+.1f}% ≥ {STABLE_VALID_AVG_MIN*100:+.0f}%"),
+    ]
+    lines = [f"{'✓' if ok else '✗'} 品質: {label}" for ok, label in checks]
+    return all(ok for ok, _ in checks), lines
+
+def detect_rescue_mode(current_stats, current_validation_stats):
+    """現行Stable ★6が劣化している場合にrescue modeを起動する。"""
+    reasons = []
+    if current_stats["wr_raw"] < STABLE_WR_MIN:
+        reasons.append(
+            f"現行 全件★6勝率 {current_stats['wr_raw']*100:.1f}% < {STABLE_WR_MIN*100:.0f}%"
+        )
+
+    if current_validation_stats["n"] >= STABLE_VALID_S6_N_MIN:
+        if current_validation_stats["wr_raw"] <= STABLE_VALID_WR_MIN:
+            reasons.append(
+                f"現行 検証★6勝率 {current_validation_stats['wr_raw']*100:.1f}% <= {STABLE_VALID_WR_MIN*100:.0f}%"
+            )
+        if current_validation_stats["avg_raw"] < STABLE_VALID_AVG_MIN:
+            reasons.append(
+                f"現行 検証★6平均 {current_validation_stats['avg_raw']*100:+.1f}% < {STABLE_VALID_AVG_MIN*100:+.0f}%"
+            )
+    return bool(reasons), reasons
+
+def validation_gate_ok(validation_stats):
+    return (
+        validation_stats["n"] >= STABLE_VALID_S6_N_MIN
+        and validation_stats["wr_raw"] > STABLE_VALID_WR_MIN
+        and validation_stats["avg_raw"] >= STABLE_VALID_AVG_MIN
+    )
+
+def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
+    validation_stats = validation_stats or calc_stats(pd.DataFrame())
+    quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats)
+
     threshold = baseline["composite"] * BASELINE_DECAY
     ok_comp = stats["composite"] > threshold
     # 絶対条件②: 勝率（strict時は等号排除、floor追加）
@@ -399,18 +476,28 @@ def check_criteria(stats, baseline):
     # 絶対条件③: ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたらNG
     win10_floor = baseline["win10_raw"] * (1 - MAX_WIN10_DROP)
     ok_win10 = stats["win10_raw"] >= win10_floor
-    ok = ok_comp and ok_wr and ok_wr_floor and ok_win10
+    relative_ok = ok_comp and ok_wr and ok_wr_floor and ok_win10
+    ok = quality_ok and (relative_ok if mode == "normal" else True)
     op_wr = ">" if STRICT_WR else "≥"
     res = [
-        f"{'✓' if ok_comp else '✗'} 絶対条件①: composite {stats['composite']:.1f} {'>' if ok_comp else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
-        f"{'✓' if ok_wr else '✗'} 絶対条件②: 勝率 {stats['wr_raw']*100:.1f}% {op_wr} 現行{baseline['wr_raw']*100:.1f}%",
-        f"{'✓' if ok_wr_floor else '✗'} 絶対条件②-b: 勝率 {stats['wr_raw']*100:.1f}% ≥ 下限{WR_FLOOR*100:.0f}%",
-        f"{'✓' if ok_win10 else '✗'} 絶対条件③: 大幅上昇 {stats['win10_raw']:.0f}件 {'≥' if ok_win10 else '<'} 現行{baseline['win10_raw']:.0f}件×{1-MAX_WIN10_DROP:.2f}={win10_floor:.1f}件",
+        f"{'✓' if ok_comp else '✗'} 通常条件①: composite {stats['composite']:.1f} {'>' if ok_comp else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
+        f"{'✓' if ok_wr else '✗'} 通常条件②: 勝率 {stats['wr_raw']*100:.1f}% {op_wr} 現行{baseline['wr_raw']*100:.1f}%",
+        f"{'✓' if ok_wr_floor else '✗'} 通常条件②-b: 勝率 {stats['wr_raw']*100:.1f}% ≥ 下限{WR_FLOOR*100:.0f}%",
+        f"{'✓' if ok_win10 else '✗'} 通常条件③: 大幅上昇 {stats['win10_raw']:.0f}件 {'≥' if ok_win10 else '<'} 現行{baseline['win10_raw']:.0f}件×{1-MAX_WIN10_DROP:.2f}={win10_floor:.1f}件",
+        f"{'✓' if mode == 'rescue' else ' '} rescue mode: {'現行超え条件を免除' if mode == 'rescue' else '未使用'}",
+        *quality_lines,
         f"{'✓' if stats['wr_raw']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr_raw']*100:.1f}% (≥55%)",
         f"{'✓' if stats['avg_raw']>=TARGET_AVG_PERF else '△'} 努力②平均 {stats['avg_raw']*100:.1f}% (>+3%)",
         f"{'✓' if stats['win10_raw']>stats['lose10_raw'] else '△'} 努力③上昇{stats['win10_raw']:.0f}件>下落{stats['lose10_raw']:.0f}件",
     ]
-    return ok, res
+    adoption_reasons = []
+    if mode == "rescue":
+        adoption_reasons.append("rescue: 現行劣化のため現行超え条件を免除")
+    else:
+        adoption_reasons.append("normal: 現行composite・勝率・大幅上昇件数ガードを通過")
+    adoption_reasons.append("Stable品質ゲートを通過")
+    adoption_reasons.append("直近30% walk-forward検証を通過")
+    return ok, res, adoption_reasons
 
 # ══════════════════════════════════════════════════════════════
 # 方式A: C(N,6) 組み合わせ探索
@@ -513,7 +600,7 @@ def ordering_label(st6, st5, st4):
     if sc >= 0.5: return "△ 部分的に順序あり"
     return         "✗ 順序なし"
 
-def search_combinations(df, baseline):
+def search_combinations(df, baseline, mode="normal"):
     conds = [c for c in BOOL_CONDS if c in df.columns]
     for c in conds: df[c] = df[c].astype(bool)
     total = sum(1 for _ in combinations(conds, 6))
@@ -524,13 +611,17 @@ def search_combinations(df, baseline):
         s6 = df[scores == 6]
         if len(s6) < 10: continue
         st6 = calc_stats(s6)
-        if st6["composite"] <= baseline["composite"] * BASELINE_DECAY: continue
-        # 勝率フロア（strict時は等号排除）
-        wr_ok = (st6["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (st6["wr_raw"] >= baseline["wr_raw"])
-        if not wr_ok: continue
-        if st6["wr_raw"] < WR_FLOOR: continue
-        # ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたら除外
-        if st6["win10_raw"] < baseline["win10_raw"] * (1 - MAX_WIN10_DROP): continue
+        if mode == "normal":
+            if st6["composite"] <= baseline["composite"] * BASELINE_DECAY: continue
+            # 勝率フロア（strict時は等号排除）
+            wr_ok = (st6["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (st6["wr_raw"] >= baseline["wr_raw"])
+            if not wr_ok: continue
+            if st6["wr_raw"] < WR_FLOOR: continue
+            # ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたら除外
+            if st6["win10_raw"] < baseline["win10_raw"] * (1 - MAX_WIN10_DROP): continue
+        else:
+            # rescue modeでは現行超え条件を緩め、後段の全件/検証品質ゲートで絞る。
+            if st6["wr_raw"] < TARGET_WIN_RATE: continue
         # ★5/★4 もタイブレーカー用に計算（各ランク単独・悪化してもOK）
         st5 = calc_stats(df[scores == 5])
         st4 = calc_stats(df[scores == 4])
@@ -562,7 +653,7 @@ def search_combinations_sniper(df):
 # ══════════════════════════════════════════════════════════════
 # 方式B: +10%銘柄共通点分析 → 重み付きスコア自動設計
 # ══════════════════════════════════════════════════════════════
-def analyze_winners(df, baseline):
+def analyze_winners(df, baseline, mode="normal"):
     winners = df[df["win10"] == True]
     n_all = len(df); n_win = len(winners)
     if n_win < 5:
@@ -603,14 +694,22 @@ def analyze_winners(df, baseline):
 
     df["score_b"] = df.apply(score_row, axis=1)
     s6 = df[df["score_b"] == 6]
-    if len(s6) < 5: print("  方式B: ★6件数不足"); return None
+    if len(s6) < 10: print("  方式B: ★6件数不足"); return None
 
     st6 = calc_stats(s6)
-    ok, _ = check_criteria(st6, baseline)
+    wr_ok = (st6["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (st6["wr_raw"] >= baseline["wr_raw"])
+    relative_ok = (
+        st6["composite"] > baseline["composite"] * BASELINE_DECAY
+        and wr_ok
+        and st6["wr_raw"] >= WR_FLOOR
+        and st6["win10_raw"] >= baseline["win10_raw"] * (1 - MAX_WIN10_DROP)
+    )
+    rescue_ok = st6["wr_raw"] >= TARGET_WIN_RATE
+    ok = relative_ok if mode == "normal" else rescue_ok
     st5 = calc_stats(df[df["score_b"] == 5])
     st4 = calc_stats(df[df["score_b"] == 4])
     print(f"  方式B ★6: {st6['n']}件 勝率{st6['wr_raw']*100:.1f}% 平均{st6['avg_raw']*100:.1f}%"
-          f" 上昇{st6['win10_raw']:.0f} 下落{st6['lose10_raw']:.0f} → {'✓絶対条件OK' if ok else '✗絶対条件NG'}")
+          f" 上昇{st6['win10_raw']:.0f} 下落{st6['lose10_raw']:.0f} → {'✓候補OK' if ok else '✗候補NG'}")
     return (scheme, st6, st5, st4) if ok else None
 
 # ══════════════════════════════════════════════════════════════
@@ -688,7 +787,10 @@ def tune_thresholds(df_train, df_test, combo, baseline):
         # 現行閾値（最適化前）でテストセットを評価してベースラインとする
         s_test_cur = score_with_thresholds(df_test, combo, {})
         test_cur_stats = calc_stats(df_test[s_test_cur == 6])
-        passed = test_stats["n"] >= 2 and test_stats["composite"] > test_cur_stats["composite"]
+        passed = (
+            validation_gate_ok(test_stats)
+            and test_stats["composite"] > test_cur_stats["composite"]
+        )
         result_str = "✅ 通過" if passed else "⚠ 不合格（デフォルト閾値を使用）"
         print(f"  訓練★6: {best_train_stats['n']}件 勝率{best_train_stats['wr_raw']*100:.1f}% 平均{best_train_stats['avg_raw']*100:.1f}%")
         if test_cur_stats["n"] > 0:
@@ -1102,7 +1204,10 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
         print(f"  ⚠ Discord通知失敗: {e}")
 
 
-def notify_discord_approval(best_method, best_combo, best_stats, baseline, thresholds):
+def notify_discord_approval(best_method, best_combo, best_stats, baseline, thresholds,
+                            validation_stats=None, current_stats=None,
+                            current_validation_stats=None, adoption_reasons=None,
+                            mode="normal"):
     """スコアリング更新候補の承認リクエストをDiscordに送信"""
     import urllib.request, json as _json
 
@@ -1126,16 +1231,29 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
         cond_lines = [f"{NUMS_FULL[min(i,5)]} {_desc(c)}  ({w}点)"
                       for i, (c, w, _) in enumerate(best_combo)]
 
+    validation_stats = validation_stats or calc_stats(pd.DataFrame())
+    current_stats = current_stats or baseline
+    current_validation_stats = current_validation_stats or calc_stats(pd.DataFrame())
+    adoption_reasons = adoption_reasons or []
+
     wr_new  = best_stats['wr_raw'] * 100
-    wr_old  = baseline.get('wr_raw', 0) * 100
+    wr_old  = current_stats.get('wr_raw', 0) * 100
     avg_new = best_stats['avg_raw'] * 100
-    avg_old = baseline.get('avg_raw', 0) * 100
+    avg_old = current_stats.get('avg_raw', 0) * 100
+    mode_label = "rescue" if mode == "rescue" else "normal"
+
+    def _stats_line(label, st):
+        return (
+            f"{label:<8} {int(st.get('n', 0)):3}件 "
+            f"勝率{st.get('wr_raw', 0)*100:5.1f}% "
+            f"平均{st.get('avg_raw', 0)*100:+5.1f}%"
+        )
 
     payload = {
         "embeds": [{
-            "title": "📋 スコアリング条件の更新候補",
+            "title": f"📋 スコアリング条件の更新候補 ({mode_label})",
             "description": "新しい更新候補が見つかりました。承認するには `/approve-update` を実行してください。",
-            "color": 0xFFA500,
+            "color": 0xE67E22 if mode == "rescue" else 0xFFA500,
             "fields": [
                 {
                     "name": f"🔬 候補条件（方式{best_method}）",
@@ -1143,14 +1261,12 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                     "inline": False
                 },
                 {
-                    "name": "📊 バックテスト成績（全件データ）",
+                    "name": "📊 候補成績",
                     "value": (
                         f"```\n"
-                        f"★6  {int(best_stats['n'])}件  "
-                        f"勝率 {wr_new:.1f}%  "
-                        f"平均 {avg_new:+.1f}%\n"
-                        f"    上昇 {int(best_stats['win10_raw'])}件  "
-                        f"下落 {int(best_stats['lose10_raw'])}件\n"
+                        f"{_stats_line('全件★6', best_stats)}\n"
+                        f"{_stats_line('検証★6', validation_stats)}\n"
+                        f"上昇 {int(best_stats['win10_raw'])}件 / 下落 {int(best_stats['lose10_raw'])}件\n"
                         f"```"
                     ),
                     "inline": False
@@ -1158,9 +1274,20 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                 {
                     "name": "📈 現行との比較",
                     "value": (
+                        f"```\n"
+                        f"{_stats_line('現行全件', current_stats)}\n"
+                        f"{_stats_line('現行検証', current_validation_stats)}\n"
+                        f"{_stats_line('候補全件', best_stats)}\n"
+                        f"{_stats_line('候補検証', validation_stats)}\n"
+                        f"```\n"
                         f"勝率: {wr_old:.1f}% → **{wr_new:.1f}%** ({wr_new-wr_old:+.1f}pt)\n"
                         f"平均: {avg_old:+.1f}% → **{avg_new:+.1f}%** ({avg_new-avg_old:+.1f}pt)"
                     ),
+                    "inline": False
+                },
+                {
+                    "name": "🧭 採用理由",
+                    "value": "```\n" + NL.join(adoption_reasons or ["品質ゲート通過"]) + "\n```",
                     "inline": False
                 },
                 {
@@ -1190,6 +1317,77 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                 print(f"  ⚠ Discord承認通知失敗: HTTP {resp.status}")
     except Exception as e:
         print(f"  ⚠ Discord承認通知失敗: {e}")
+
+
+def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
+                                       rescue_reasons, n_total):
+    """rescue mode発動時に更新候補が見つからなかったことを管理者へ通知する。"""
+    import urllib.request, json as _json
+
+    if not APPROVAL_WEBHOOK_URL:
+        return
+
+    def _stats_line(label, st):
+        return (
+            f"{label:<8} {int(st.get('n', 0)):3}件 "
+            f"勝率{st.get('wr_raw', 0)*100:5.1f}% "
+            f"平均{st.get('avg_raw', 0)*100:+5.1f}%"
+        )
+
+    payload = {
+        "embeds": [{
+            "title": "⚠ Stable現行ロジック劣化 / 更新候補なし",
+            "description": (
+                "Stable ★6 の劣化条件に該当しましたが、"
+                "品質ゲートを満たす代替ロジックは見つかりませんでした。"
+            ),
+            "color": 0xE74C3C,
+            "fields": [
+                {
+                    "name": "📉 現行成績",
+                    "value": (
+                        "```\n"
+                        f"{_stats_line('全件★6', current_stats)}\n"
+                        f"{_stats_line('検証★6', current_validation_stats)}\n"
+                        f"全シグナル {n_total}件\n"
+                        "```"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "🧯 rescue mode 発動理由",
+                    "value": "```\n" + "\n".join(rescue_reasons) + "\n```",
+                    "inline": False
+                },
+                {
+                    "name": "判断",
+                    "value": "品質条件を満たさない置き換えは行わず、人間判断に上げます。",
+                    "inline": False
+                },
+            ],
+            "footer": {"text": "pending_logic.json は作成していません"},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }]
+    }
+
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        APPROVAL_WEBHOOK_URL,
+        data=data,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "DiscordBot (screening-bot, 1.0)"
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status not in (200, 204):
+                print(f"  ⚠ Discord rescue通知失敗: HTTP {resp.status}")
+            else:
+                print("  ✅ Discord rescue通知送信完了")
+    except Exception as e:
+        print(f"  ⚠ Discord rescue通知失敗: {e}")
 
 
 def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
@@ -1563,9 +1761,11 @@ def main():
                         choices=["rate_adjusted", "snr", "legacy"],
                         help="composite計算方式 (default: rate_adjusted)")
     parser.add_argument("--baseline-decay", type=float, default=None,
-                        help="ベースライン採用閾値 (default: 0.95)")
-    parser.add_argument("--strict-wr", action="store_true",
-                        help="勝率フロアを厳格化: >= → >")
+                        help="ベースライン採用閾値 (default: 1.0)")
+    parser.add_argument("--strict-wr", dest="strict_wr", action="store_true", default=True,
+                        help="勝率フロアを厳格化: >= → > (default)")
+    parser.add_argument("--no-strict-wr", dest="strict_wr", action="store_false",
+                        help="勝率フロアを緩和: > → >=")
     parser.add_argument("--wr-floor", type=float, default=0.0,
                         help="勝率絶対下限 (例: 0.55、default: 0.0=無効)")
     args = parser.parse_args()
@@ -1733,60 +1933,92 @@ def main():
         V14 = ["ema75", "vol20", "sbull", "macdgc", "atr5", "ema25"]
         for c in V14: df[c] = df[c].astype(bool)
         df["sc_v14"] = sum(df[c].astype(int) for c in V14)
+        df["sc_cur"] = df["sc_v14"]
+        cur_conds = V14
+        cur_thresholds = {}
         baseline = calc_stats(df[df["sc_v14"] == 6])
         print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
+
+    # Walk-forward: 古い70%で探索し、直近30%を採用判定用の検証セットにする。
+    df_wf = df.sort_values("date").reset_index(drop=True)
+    wf_split = int(len(df_wf) * (1 - WALK_FORWARD_VALID_FRAC))
+    df_wf_train = df_wf.iloc[:wf_split].copy()
+    df_wf_valid = df_wf.iloc[wf_split:].copy()
+    current_validation_stats6 = calc_stats(df_wf_valid[df_wf_valid["sc_cur"] == 6])
+    rescue_mode, rescue_reasons = detect_rescue_mode(baseline, current_validation_stats6)
+    adoption_mode = "rescue" if rescue_mode else "normal"
+    print(f"  現行検証★6: {current_validation_stats6['n']}件 "
+          f"勝率{current_validation_stats6['wr_raw']*100:.1f}% "
+          f"平均{current_validation_stats6['avg_raw']*100:.1f}%")
+    if rescue_mode:
+        print("  ⚠ rescue mode 発動:")
+        for reason in rescue_reasons:
+            print(f"    - {reason}")
+    else:
+        print("  ✅ normal mode: 現行ロジックは劣化条件に該当しません")
+
+    def handle_no_stable_candidate(message):
+        print(f"\n✅ {message}")
+        if rescue_mode:
+            print("  ⚠ rescue mode: 品質ゲートを満たす代替候補なし")
+            if args.propose and not args.dry_run:
+                notify_discord_rescue_no_candidate(
+                    baseline, current_validation_stats6, rescue_reasons, len(df)
+                )
+            else:
+                print("  ℹ dry-run/通常実行では rescue候補なし通知を送信しません")
 
     # ── Sniperモード最適化（Step 4完了後・Step 5a前） ─────────────
     _run_sniper_optimization(df, args)
 
     print("\n🔍 Step 5a: 方式A（組み合わせ探索）...")
-    # Walk-forward: 古い70%でランキング → 新しい30%で検証して過学習を防ぐ
-    df_wf = df.sort_values("date").reset_index(drop=True)
-    wf_split = int(len(df_wf) * 0.7)
-    df_wf_train = df_wf.iloc[:wf_split].copy()
-    df_wf_valid = df_wf.iloc[wf_split:].copy()
     print(f"  Walk-forward: train {len(df_wf_train)}件 / validation {len(df_wf_valid)}件")
-    cands_a = search_combinations(df_wf_train.copy(), baseline)
-    print(f"  絶対条件クリア(train): {len(cands_a)}通り")
+    cands_a = search_combinations(df_wf_train.copy(), baseline, adoption_mode)
+    print(f"  候補クリア(train/{adoption_mode}): {len(cands_a)}通り")
     if cands_a:
         wf_validated = []
-        for item in cands_a[:50]:
+        limit = min(WALK_FORWARD_CANDIDATE_LIMIT, len(cands_a))
+        for item in cands_a[:limit]:
             combo = item[3]
-            st6_train = item[4]
             conds_in_valid = [c for c in combo if c in df_wf_valid.columns]
             if len(conds_in_valid) < len(combo):
                 continue
             scores_v = sum(df_wf_valid[c].astype(int) for c in conds_in_valid)
             s6_v = df_wf_valid[scores_v == 6]
-            if len(s6_v) < 3:
-                continue
             st6_v = calc_stats(s6_v)
-            # validation composite が train の85%以上ならwalk-forward 通過
-            if st6_v["composite"] >= st6_train["composite"] * 0.85:
-                wf_validated.append(item)
-        print(f"  Walk-forward 通過: {len(wf_validated)}/{min(50, len(cands_a))}通り")
+            if validation_gate_ok(st6_v):
+                wf_validated.append((*item, st6_v))
+        print(f"  Walk-forward 品質ゲート通過: {len(wf_validated)}/{limit}通り")
         cands_a = wf_validated
 
     print("\n🔍 Step 5b: 方式B（+10%共通点分析）...")
-    result_b = analyze_winners(df.copy(), baseline)
+    result_b = analyze_winners(df.copy(), baseline, adoption_mode)
 
     print(f"\n🏆 Step 6: 候補一覧（上位10）")
     print(f"  {'#':<3} {'方式':<4} {'★6勝率':>7} {'★6平均':>8} {'上昇':>4} {'下落':>4} {'件数':>4} {'努力':>4}  条件")
     all_cands = []
-    for sc6, sc5, sc4, combo, st6, st5, st4 in cands_a[:9]:
-        all_cands.append(("A", sc6, sc5, sc4, combo, st6, st5, st4))
+    for sc6, sc5, sc4, combo, st6, st5, st4, st6_valid in cands_a[:9]:
+        all_cands.append(("A", sc6, sc5, sc4, combo, st6, st5, st4, st6_valid))
     if result_b:
         scheme_b, stats_b6, stats_b5, stats_b4 = result_b
-        all_cands.append(("B", stats_b6["composite"], stats_b5["composite"],
-                          stats_b4["composite"], scheme_b, stats_b6, stats_b5, stats_b4))
+        stats_b6_valid, _, _ = calc_candidate_tiers(df_wf_valid, "B", scheme_b)
+        if validation_gate_ok(stats_b6_valid):
+            all_cands.append(("B", stats_b6["composite"], stats_b5["composite"],
+                              stats_b4["composite"], scheme_b, stats_b6, stats_b5,
+                              stats_b4, stats_b6_valid))
+        else:
+            print(f"  方式B: Walk-forward品質ゲートNG "
+                  f"(検証★6 {stats_b6_valid['n']}件 勝率{stats_b6_valid['wr_raw']*100:.1f}% "
+                  f"平均{stats_b6_valid['avg_raw']*100:.1f}%)")
     # ★6総合スコア → 順序スコア(努力義務) → ★5 → ★4 の順でソート
     all_cands.sort(key=lambda x: (-x[1], -calc_ordering_score(x[5], x[6], x[7]), -x[2], -x[3]))
 
-    for i, (method, sc6, sc5, sc4, combo, st6, st5, st4) in enumerate(all_cands[:10]):
+    for i, (method, sc6, sc5, sc4, combo, st6, st5, st4, st6_valid) in enumerate(all_cands[:10]):
         e = ("✓" if st6["wr_raw"] >= TARGET_WIN_RATE else "△") + \
             ("✓" if st6["avg_raw"] >= TARGET_AVG_PERF else "△") + \
-            ("✓" if st6["win10_raw"] > st6["lose10_raw"] else "△")
+            ("✓" if st6["win10_raw"] > st6["lose10_raw"] else "△") + \
+            ("✓" if validation_gate_ok(st6_valid) else "△")
         label = "+".join(combo) if method == "A" else " ".join(f"{c}({w}pt)" for c, w, _ in combo)
         print(f"  #{i+1:<2} {method:<4} {st6['wr_raw']*100:>6.1f}%  {st6['avg_raw']*100:>+7.1f}%"
               f"  {st6['win10_raw']:>3.0f}件  {st6['lose10_raw']:>3.0f}件  {st6['n']:>3}件  {e}  {label}")
@@ -1796,17 +2028,15 @@ def main():
     if not all_cands:
         # 新しい組み合わせなし → 現行条件の閾値だけ最適化を試みる
         if not (current_logic and current_logic["method"] == "A"):
-            print("\n✅ 現行ロジックが最良。更新しません。"); return
+            handle_no_stable_candidate("現行ロジックが最良。更新しません。"); return
         print(f"\n🔍 組み合わせ変更なし → 閾値最適化のみ試みます")
         cur_conds = current_logic["conditions"]
-        df_sorted = df.sort_values("date").reset_index(drop=True)
-        split_idx = int(len(df_sorted) * 0.8)
-        df_train  = df_sorted.iloc[:split_idx].copy()
-        df_test   = df_sorted.iloc[split_idx:].copy()
+        df_train  = df_wf_train.copy()
+        df_test   = df_wf_valid.copy()
         print(f"📐 train/test split: 訓練{len(df_train)}件 / 検証{len(df_test)}件")
         tuned_ths, _, _, tune_passed = tune_thresholds(df_train, df_test, cur_conds, baseline)
         if not (tune_passed and tuned_ths):
-            print("\n✅ 現行ロジックが最良。更新しません。"); return
+            handle_no_stable_candidate("現行ロジックが最良。更新しません。"); return
         best_thresholds = tuned_ths
         s_full = score_with_thresholds(df, cur_conds, best_thresholds)
         best_method  = "A"
@@ -1814,18 +2044,17 @@ def main():
         best_stats   = calc_stats(df[s_full == 6])
         best_stats5  = calc_stats(df[s_full == 5])
         best_stats4  = calc_stats(df[s_full == 4])
+        best_validation_stats6, _, _ = calc_candidate_tiers(df_wf_valid, "A", cur_conds, best_thresholds)
     else:
-        df_sorted = df.sort_values("date").reset_index(drop=True)
-        split_idx = int(len(df_sorted) * 0.8)
-        df_train  = df_sorted.iloc[:split_idx].copy()
-        df_test   = df_sorted.iloc[split_idx:].copy()
+        df_train  = df_wf_train.copy()
+        df_test   = df_wf_valid.copy()
         print(f"\n📐 train/test split: 訓練{len(df_train)}件 / 検証{len(df_test)}件")
 
         # 全候補に閾値最適化を適用 → post-tune compositeで再ソートして最良を選ぶ
         print(f"\n🔬 Step 5c: 全{len(all_cands)}候補 閾値最適化...")
         print(f"  {'#':<3} {'★6勝率':>7} {'★6平均':>8} {'上昇':>4} {'下落':>4} {'件数':>4}  閾値変更  条件")
         tuned_ths_list = []  # all_cands と同順に保存
-        for i, (method_i, _, _, _, combo_i, _, _, _) in enumerate(all_cands):
+        for i, (method_i, _, _, _, combo_i, _, _, _, validation_i) in enumerate(all_cands):
             if method_i != "A":
                 tuned_ths_list.append(None)
                 continue
@@ -1835,8 +2064,9 @@ def main():
                 st6f = calc_stats(df[s_full_i == 6])
                 st5f = calc_stats(df[s_full_i == 5])
                 st4f = calc_stats(df[s_full_i == 4])
+                st6vf, _, _ = calc_candidate_tiers(df_wf_valid, "A", combo_i, tuned_ths_i)
                 all_cands[i] = ("A", st6f["composite"], st5f["composite"],
-                                st4f["composite"], combo_i, st6f, st5f, st4f)
+                                st4f["composite"], combo_i, st6f, st5f, st4f, st6vf)
                 tuned_ths_list.append(tuned_ths_i)
                 changes = ", ".join(
                     f"{k}:{COND_PARAM[k][1]}→{v}" for k, v in tuned_ths_i.items()
@@ -1844,20 +2074,53 @@ def main():
                 ) or "変更なし"
                 print(f"  #{i+1:<2} {st6f['wr_raw']*100:>6.1f}%  {st6f['avg_raw']*100:>+7.1f}%"
                       f"  {st6f['win10_raw']:>3.0f}件  {st6f['lose10_raw']:>3.0f}件  {st6f['n']:>3}件"
-                      f"  {changes}  {'+'.join(combo_i)}")
+                      f"  検証{st6vf['n']}件/{st6vf['wr_raw']*100:.1f}%  {changes}  {'+'.join(combo_i)}")
             else:
                 tuned_ths_list.append(None)
                 print(f"  #{i+1:<2} (閾値最適化NG — デフォルト維持)  {'+'.join(combo_i)}")
 
-        # post-tune compositeで再ソート
-        paired = sorted(zip(all_cands, tuned_ths_list),
+        # 採用判定は必ず全件データで再評価する。
+        # cands_a は walk-forward train 上の探索結果なので、そのまま使うと
+        # 全件品質ゲートをすり抜ける可能性がある。
+        final_pairs = []
+        for cand, ths in zip(all_cands, tuned_ths_list):
+            method_i, _, _, _, combo_i, _, _, _, _ = cand
+            eval_thresholds = (ths or {}) if method_i == "A" else {}
+            st6f, st5f, st4f = calc_candidate_tiers(
+                df, method_i, combo_i, eval_thresholds
+            )
+            st6vf, _, _ = calc_candidate_tiers(
+                df_wf_valid, method_i, combo_i, eval_thresholds
+            )
+            final_pairs.append((
+                (method_i, st6f["composite"], st5f["composite"], st4f["composite"],
+                 combo_i, st6f, st5f, st4f, st6vf),
+                ths,
+            ))
+
+        # post-tune/full-data compositeで再ソート
+        paired = sorted(final_pairs,
                         key=lambda x: (-x[0][1], -calc_ordering_score(x[0][5], x[0][6], x[0][7]), -x[0][2], -x[0][3]))
         all_cands     = [p[0] for p in paired]
         tuned_ths_list = [p[1] for p in paired]
 
-        best_thresholds = tuned_ths_list[0] or {}
-        best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4 = all_cands[0]
-    ok, check_res = check_criteria(best_stats, baseline)
+        selected = None
+        for cand, ths in zip(all_cands, tuned_ths_list):
+            ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode)
+            if ok_sel:
+                selected = (cand, ths, reasons_sel)
+                break
+        if selected is None:
+            best_thresholds = tuned_ths_list[0] or {}
+            best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = all_cands[0]
+            preselected_adoption_reasons = []
+        else:
+            cand, ths, preselected_adoption_reasons = selected
+            best_thresholds = ths or {}
+            best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = cand
+    ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode)
+    if 'preselected_adoption_reasons' in locals() and preselected_adoption_reasons:
+        adoption_reasons = preselected_adoption_reasons
     print(f"\n🎯 Step 7: 採用判断 — 方式{best_method}")
     for line in check_res: print(f"  {line}")
     ord_sc = calc_ordering_score(best_stats, best_stats5, best_stats4)
@@ -1866,9 +2129,12 @@ def main():
     print(f"  タイブレーカー参照:")
     print(f"    ★5: {best_stats5['n']}件 勝率{best_stats5['wr_raw']*100:.1f}% 平均{best_stats5['avg_raw']*100:.1f}%")
     print(f"    ★4: {best_stats4['n']}件 勝率{best_stats4['wr_raw']*100:.1f}% 平均{best_stats4['avg_raw']*100:.1f}%")
+    print(f"  Walk-forward検証:")
+    print(f"    現行★6: {current_validation_stats6['n']}件 勝率{current_validation_stats6['wr_raw']*100:.1f}% 平均{current_validation_stats6['avg_raw']*100:.1f}%")
+    print(f"    候補★6: {best_validation_stats6['n']}件 勝率{best_validation_stats6['wr_raw']*100:.1f}% 平均{best_validation_stats6['avg_raw']*100:.1f}%")
 
     if not ok:
-        print("\n❌ 絶対条件未達。更新しません。"); return
+        handle_no_stable_candidate("品質条件未達。更新しません。"); return
 
     # 条件・閾値が現行と完全一致なら更新不要
     if current_logic and best_method == "A":
@@ -1876,7 +2142,7 @@ def main():
         new_conds_sorted = sorted(best_combo)
         cur_ths = current_logic.get("thresholds", {})
         if cur_conds_sorted == new_conds_sorted and cur_ths == best_thresholds:
-            print("\n✅ 条件・閾値が現行と同一のため更新しません。"); return
+            handle_no_stable_candidate("条件・閾値が現行と同一のため更新しません。"); return
 
     new_code = (build_func_a(best_combo, best_stats, baseline, len(df), best_thresholds)
                 if best_method == "A"
@@ -1885,6 +2151,9 @@ def main():
     display_df = df
     display_stats6, display_stats5, display_stats4, display_base, display_n_total = \
         calc_backtest_display_stats(display_df, best_method, best_combo, best_thresholds)
+    training_stats6, training_stats5, training_stats4 = calc_candidate_tiers(
+        df_wf_train, best_method, best_combo, best_thresholds
+    )
     print(f"  表示用バックテスト（全件データ）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
@@ -1894,6 +2163,7 @@ def main():
         def _to_jsonable(d):
             return {k: float(v) if hasattr(v, 'item') else v for k, v in d.items()}
         _pending = {
+            "mode":         adoption_mode,
             "method":       best_method,
             "conditions":   best_combo if best_method == "A" else [[c, w, l] for c, w, l in best_combo],
             "thresholds":   best_thresholds or {},
@@ -1901,9 +2171,13 @@ def main():
             "stats6":       _to_jsonable(display_stats6),
             "stats5":       _to_jsonable(display_stats5),
             "stats4":       _to_jsonable(display_stats4),
-            "training_stats6": _to_jsonable(best_stats),
-            "training_stats5": _to_jsonable(best_stats5),
-            "training_stats4": _to_jsonable(best_stats4),
+            "training_stats6": _to_jsonable(training_stats6),
+            "training_stats5": _to_jsonable(training_stats5),
+            "training_stats4": _to_jsonable(training_stats4),
+            "validation_stats6": _to_jsonable(best_validation_stats6),
+            "current_stats6": _to_jsonable(baseline),
+            "current_validation_stats6": _to_jsonable(current_validation_stats6),
+            "adoption_reasons": adoption_reasons,
             "baseline":     {k: float(v) if hasattr(v, 'item') else v
                              for k, v in display_base.items()
                              if not isinstance(v, str)},
@@ -1914,15 +2188,25 @@ def main():
         with open(PENDING_LOGIC_PATH, "w", encoding="utf-8") as _pf2:
             _pjson2.dump(_pending, _pf2, ensure_ascii=False, indent=2)
         print(f"\n📋 pending_logic.json に保存しました")
-        notify_discord_approval(best_method, best_combo, display_stats6, display_base, best_thresholds)
+        notify_discord_approval(
+            best_method, best_combo, display_stats6, display_base, best_thresholds,
+            validation_stats=best_validation_stats6,
+            current_stats=baseline,
+            current_validation_stats=current_validation_stats6,
+            adoption_reasons=adoption_reasons,
+            mode=adoption_mode,
+        )
         print("✅ Discord に承認リクエストを送信しました")
         print("（承認後、Discord で /approve-update を実行するとデプロイされます）")
         return
 
     if args.dry_run:
         print(f"\n🔍 Dry-run: 更新・デプロイをスキップ")
-        print(f"  採用予定: 方式{best_method} / "
+        print(f"  採用予定: {adoption_mode} / 方式{best_method} / "
               f"{best_combo if best_method == 'A' else [c for c, w, _ in best_combo]}")
+        print(f"  検証★6: {best_validation_stats6['n']}件 "
+              f"勝率{best_validation_stats6['wr_raw']*100:.1f}% "
+              f"平均{best_validation_stats6['avg_raw']*100:.1f}%")
         # 採用候補の★6シグナル一覧を表示
         if best_method == "A":
             cand_scores = score_with_thresholds(df, best_combo, best_thresholds)

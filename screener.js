@@ -200,60 +200,61 @@ function computeIndicators(dailyBars, signalIdx) {
 // ============================================================
 // スコア計算（6点満点）
 // ============================================================
-// 自動最適化(方式A +閾値最適化) 2026-04-23 21:02 / 1174件データ
-// ★6: 31件 勝率61.3% 平均9.8% 上昇9件 下落1件
-// 現行: 勝率56.1% 平均8.5%
+// 自動最適化(方式A) 2026-04-27 09:38 / 1222件データ
+// ★6: 58件 勝率62.1% 平均6.1% 上昇8件 下落2件
+// 現行: 勝率61.3% 平均9.8%
 // 【6条件（各1点）】
-//   ① close > EMA75（長期上昇トレンド）
-//   ② 当日出来高≥20日×2.00
-//   ③ 強い陽線（実体≥2.00%）
-//   ④ ATR% < 5.0%
-//   ⑤ ストキャス≥65
-//   ⑥ RSI 50〜70
+//   ① 当日出来高≥20日×1.5
+//   ② MACD hist > 0
+//   ③ ATR% < 5.0%
+//   ④ ストキャス≥75
+//   ⑤ RSI 50〜70
+//   ⑥ BB位置≥80%
 
 function calculateScore(ind) {
   if (!ind) return null;
   const filters = [];
   let score = 0;
 
-  // ① close > EMA75（長期上昇トレンド）
-  if (ind.ema75 !== null && ind.close > ind.ema75) {
+  // ① 当日出来高≥20日×1.5
+  if (ind.volSurge >= 1.5) {
     score++;
-    filters.push(`①EMA75順張り`);
+    filters.push(`①vol急増(${ind.volSurge}x)`);
   }
 
-  // ② 当日出来高≥20日×2.00
-  if (ind.volSurge >= 2.00) {
+  // ② MACD hist > 0
+  if (ind.macdPos) {
     score++;
-    filters.push(`②vol急増(${ind.volSurge}x)`);
+    filters.push(`②MACD上昇`);
   }
 
-  // ③ 強い陽線（実体≥2.00%）
-  if (ind.bodyPct >= 2.00) {
-    score++;
-    filters.push(`③強陽線(${ind.bodyPct.toFixed(2)}%)`);
-  }
-
-  // ④ ATR% < 5.0%
+  // ③ ATR% < 5.0%
   if (ind.atrPct < 5.0) {
     score++;
-    filters.push(`④ATR(${ind.atrPct}%)`);
+    filters.push(`③ATR(${ind.atrPct}%)`);
   }
 
-  // ⑤ ストキャス≥65
-  if (ind.stochK >= 65) {
+  // ④ ストキャス≥75
+  if (ind.stochK >= 75) {
     score++;
-    filters.push(`⑤STOCH(${ind.stochK.toFixed(0)})`);
+    filters.push(`④STOCH(${ind.stochK.toFixed(0)})`);
   }
 
-  // ⑥ RSI 50〜70
+  // ⑤ RSI 50〜70
   if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {
     score++;
-    filters.push(`⑥RSI(${ind.rsi14.toFixed(0)})`);
+    filters.push(`⑤RSI(${ind.rsi14.toFixed(0)})`);
+  }
+
+  // ⑥ BB位置≥80%
+  if (ind.bbPct >= 0.80) {
+    score++;
+    filters.push(`⑥BB上部(${(ind.bbPct*100).toFixed(0)}%)`);
   }
 
   return { score, filters };
 }
+
 
 
 

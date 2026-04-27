@@ -1,18 +1,12 @@
 {
   "method": "A",
   "conditions": [
-    "ema75",
-    "vol20",
-    "body1",
+    "vol15",
+    "macdpos",
     "atr5",
     "stoch75",
-    "rsi5070"
+    "rsi5070",
+    "bb80"
   ],
-  "updated_at": "2026-04-23T12:02:15Z",
-  "thresholds": {
-    "vol20": 2.0,
-    "body1": 2.0,
-    "atr5": 5.0,
-    "stoch75": 65
-  }
+  "updated_at": "2026-04-27T09:41:46Z"
 }

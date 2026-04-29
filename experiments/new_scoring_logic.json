@@ -1,0 +1,557 @@
+{
+  "objective": "perf_5bd",
+  "spreadsheet_id": "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8",
+  "generated_at": "2026-04-29T12:40:09Z",
+  "data": {
+    "alerts_with_objective": 1256,
+    "feature_complete": 1254,
+    "skipped_no_features": 2,
+    "train": 752,
+    "validation": 251,
+    "holdout": 251
+  },
+  "baseline": {
+    "train": {
+      "n": 752,
+      "win_rate": 0.344415,
+      "avg": -0.003919,
+      "median": -0.01,
+      "win10_rate": 0.053191,
+      "lose10_rate": 0.043883,
+      "min_perf": -0.315,
+      "max_perf": 0.902
+    },
+    "validation": {
+      "n": 251,
+      "win_rate": 0.454183,
+      "avg": 0.001287,
+      "median": 0.0,
+      "win10_rate": 0.027888,
+      "lose10_rate": 0.015936,
+      "min_perf": -0.258,
+      "max_perf": 0.384
+    },
+    "holdout": {
+      "n": 251,
+      "win_rate": 0.326693,
+      "avg": -0.004749,
+      "median": -0.018,
+      "win10_rate": 0.071713,
+      "lose10_rate": 0.063745,
+      "min_perf": -0.286,
+      "max_perf": 0.831
+    },
+    "all": {
+      "n": 1254,
+      "win_rate": 0.362839,
+      "avg": -0.003043,
+      "median": -0.01,
+      "win10_rate": 0.051834,
+      "lose10_rate": 0.042265,
+      "min_perf": -0.315,
+      "max_perf": 0.902
+    }
+  },
+  "score": {
+    "scale": "0-100",
+    "cutoff": 100,
+    "validation_at_cutoff": {
+      "n": 16,
+      "win_rate": 0.875,
+      "avg": 0.034625,
+      "median": 0.027,
+      "win10_rate": 0.0625,
+      "lose10_rate": 0.0,
+      "min_perf": -0.01,
+      "max_perf": 0.126
+    },
+    "holdout_at_cutoff": {
+      "n": 5,
+      "win_rate": 0.6,
+      "avg": 0.0074,
+      "median": 0.032,
+      "win10_rate": 0.0,
+      "lose10_rate": 0.0,
+      "min_perf": -0.092,
+      "max_perf": 0.063
+    },
+    "all_at_cutoff": {
+      "n": 67,
+      "win_rate": 0.537313,
+      "avg": 0.020119,
+      "median": 0.005,
+      "win10_rate": 0.074627,
+      "lose10_rate": 0.0,
+      "min_perf": -0.092,
+      "max_perf": 0.493
+    },
+    "top_decile_cutoff_all": 97,
+    "top_decile_all": {
+      "n": 136,
+      "win_rate": 0.426471,
+      "avg": 0.009088,
+      "median": -0.003,
+      "win10_rate": 0.058824,
+      "lose10_rate": 0.007353,
+      "min_perf": -0.145,
+      "max_perf": 0.493
+    },
+    "buckets_all": [
+      {
+        "bucket": "90-100",
+        "n": 215,
+        "win_rate": 0.395349,
+        "avg": 0.002851,
+        "median": -0.005,
+        "win10_rate": 0.055814,
+        "lose10_rate": 0.027907,
+        "min_perf": -0.22,
+        "max_perf": 0.493
+      },
+      {
+        "bucket": "80-89",
+        "n": 107,
+        "win_rate": 0.373832,
+        "avg": -0.008093,
+        "median": -0.006,
+        "win10_rate": 0.028037,
+        "lose10_rate": 0.028037,
+        "min_perf": -0.151,
+        "max_perf": 0.177
+      },
+      {
+        "bucket": "70-79",
+        "n": 191,
+        "win_rate": 0.298429,
+        "avg": -0.013644,
+        "median": -0.013,
+        "win10_rate": 0.020942,
+        "lose10_rate": 0.036649,
+        "min_perf": -0.244,
+        "max_perf": 0.191
+      },
+      {
+        "bucket": "60-69",
+        "n": 181,
+        "win_rate": 0.337017,
+        "avg": -0.005503,
+        "median": -0.01,
+        "win10_rate": 0.022099,
+        "lose10_rate": 0.005525,
+        "min_perf": -0.146,
+        "max_perf": 0.397
+      },
+      {
+        "bucket": "50-59",
+        "n": 223,
+        "win_rate": 0.372197,
+        "avg": -0.00439,
+        "median": -0.009,
+        "win10_rate": 0.026906,
+        "lose10_rate": 0.013453,
+        "min_perf": -0.179,
+        "max_perf": 0.465
+      },
+      {
+        "bucket": "0-49",
+        "n": 337,
+        "win_rate": 0.382789,
+        "avg": 0.003021,
+        "median": -0.018,
+        "win10_rate": 0.106825,
+        "lose10_rate": 0.097923,
+        "min_perf": -0.315,
+        "max_perf": 0.902
+      }
+    ],
+    "cutoff_options_validation": [
+      {
+        "cutoff": 100,
+        "quality": 67.9474,
+        "stats": {
+          "n": 16,
+          "win_rate": 0.875,
+          "avg": 0.034625,
+          "median": 0.027,
+          "win10_rate": 0.0625,
+          "lose10_rate": 0.0,
+          "min_perf": -0.01,
+          "max_perf": 0.126
+        }
+      },
+      {
+        "cutoff": 97,
+        "quality": 46.3334,
+        "stats": {
+          "n": 30,
+          "win_rate": 0.7,
+          "avg": 0.0262,
+          "median": 0.0105,
+          "win10_rate": 0.066667,
+          "lose10_rate": 0.0,
+          "min_perf": -0.028,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 88,
+        "quality": 44.7493,
+        "stats": {
+          "n": 41,
+          "win_rate": 0.707317,
+          "avg": 0.020585,
+          "median": 0.013,
+          "win10_rate": 0.04878,
+          "lose10_rate": 0.0,
+          "min_perf": -0.056,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 90,
+        "quality": 43.0805,
+        "stats": {
+          "n": 35,
+          "win_rate": 0.685714,
+          "avg": 0.022429,
+          "median": 0.013,
+          "win10_rate": 0.057143,
+          "lose10_rate": 0.0,
+          "min_perf": -0.056,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 92,
+        "quality": 42.8043,
+        "stats": {
+          "n": 31,
+          "win_rate": 0.677419,
+          "avg": 0.023548,
+          "median": 0.008,
+          "win10_rate": 0.064516,
+          "lose10_rate": 0.0,
+          "min_perf": -0.056,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 81,
+        "quality": 41.9867,
+        "stats": {
+          "n": 45,
+          "win_rate": 0.688889,
+          "avg": 0.019267,
+          "median": 0.013,
+          "win10_rate": 0.044444,
+          "lose10_rate": 0.0,
+          "min_perf": -0.056,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 79,
+        "quality": 33.6719,
+        "stats": {
+          "n": 57,
+          "win_rate": 0.631579,
+          "avg": 0.015193,
+          "median": 0.006,
+          "win10_rate": 0.035088,
+          "lose10_rate": 0.0,
+          "min_perf": -0.056,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 74,
+        "quality": 32.1513,
+        "stats": {
+          "n": 58,
+          "win_rate": 0.62069,
+          "avg": 0.014448,
+          "median": 0.006,
+          "win10_rate": 0.034483,
+          "lose10_rate": 0.0,
+          "min_perf": -0.056,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 72,
+        "quality": 30.5559,
+        "stats": {
+          "n": 62,
+          "win_rate": 0.596774,
+          "avg": 0.014032,
+          "median": 0.0055,
+          "win10_rate": 0.048387,
+          "lose10_rate": 0.0,
+          "min_perf": -0.056,
+          "max_perf": 0.128
+        }
+      },
+      {
+        "cutoff": 71,
+        "quality": 18.2957,
+        "stats": {
+          "n": 84,
+          "win_rate": 0.511905,
+          "avg": 0.008131,
+          "median": 0.0025,
+          "win10_rate": 0.035714,
+          "lose10_rate": 0.0,
+          "min_perf": -0.086,
+          "max_perf": 0.128
+        }
+      }
+    ]
+  },
+  "conditions": [
+    {
+      "feature": "ret_3d",
+      "family": "returns",
+      "operator": "<=",
+      "description": "3d return <= -0.024",
+      "threshold": -0.02361,
+      "weight": 4,
+      "validation_stats": {
+        "n": 18,
+        "win_rate": 0.777778,
+        "avg": 0.026111,
+        "median": 0.0165,
+        "win10_rate": 0.055556,
+        "lose10_rate": 0.0,
+        "min_perf": -0.056,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "upper_wick_pct",
+      "family": "candle",
+      "operator": "<=",
+      "description": "upper wick percent <= 0.009",
+      "threshold": 0.008853,
+      "weight": 12,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "rebound_5",
+      "family": "range",
+      "operator": "<=",
+      "description": "5d rebound from low <= 0.089",
+      "threshold": 0.089055,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "ret_5d",
+      "family": "returns",
+      "operator": "<=",
+      "description": "5d return <= -0.010",
+      "threshold": -0.009794,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "ema5_gap",
+      "family": "trend",
+      "operator": "<=",
+      "description": "close vs EMA5 <= 0.009",
+      "threshold": 0.009342,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "ema10_gap",
+      "family": "trend",
+      "operator": "<=",
+      "description": "close vs EMA10 <= 0.000",
+      "threshold": 0.000301,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "vol_ratio_5",
+      "family": "volume",
+      "operator": "<=",
+      "description": "volume vs prior 5d <= 2.429",
+      "threshold": 2.428705,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "vol_ratio_10",
+      "family": "volume",
+      "operator": "<=",
+      "description": "volume vs prior 10d <= 2.429",
+      "threshold": 2.429159,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "realized_vol_10",
+      "family": "risk",
+      "operator": "<=",
+      "description": "10d realized volatility <= 0.080",
+      "threshold": 0.08,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "body_pct",
+      "family": "candle",
+      "operator": ">=",
+      "description": "candle body percent >= -0.030",
+      "threshold": -0.03,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "rsi14",
+      "family": "oscillator",
+      "operator": "<=",
+      "description": "RSI14 <= 47.48",
+      "threshold": 47.481202,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    },
+    {
+      "feature": "stoch14",
+      "family": "oscillator",
+      "operator": "<=",
+      "description": "Stochastic K14 <= 53.85",
+      "threshold": 53.846154,
+      "weight": 14,
+      "validation_stats": {
+        "n": 16,
+        "win_rate": 0.875,
+        "avg": 0.034625,
+        "median": 0.027,
+        "win10_rate": 0.0625,
+        "lose10_rate": 0.0,
+        "min_perf": -0.01,
+        "max_perf": 0.126
+      }
+    }
+  ],
+  "current_logic_reference": {
+    "available": true,
+    "method": "A",
+    "conditions": [
+      "vol15",
+      "macdpos",
+      "atr5",
+      "stoch75",
+      "rsi5070",
+      "bb80"
+    ],
+    "thresholds": {},
+    "star6": {
+      "n": 56,
+      "win_rate": 0.553571,
+      "avg": 0.058214,
+      "median": 0.005,
+      "win10_rate": 0.142857,
+      "lose10_rate": 0.035714,
+      "min_perf": -0.133,
+      "max_perf": 0.902
+    }
+  },
+  "recommendation": {
+    "status": "no robust candidate",
+    "reasons": [
+      "holdout sample 5 < minimum 7"
+    ]
+  }
+}

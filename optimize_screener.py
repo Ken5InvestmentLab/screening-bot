@@ -72,12 +72,15 @@ WIN10_RATE_FLOOR_RATIO = 0.90  # ★6内の+10%以上率が現行比90%以上な
 # Stable ★6 品質ゲート（過学習防止 + 劣化検知）
 STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
 STABLE_S6_N_MIN        = 25    # 全件★6最低件数
+RESCUE_STABLE_S6_N_MIN = 20    # rescue mode時の全件★6最低件数
 STABLE_AVG_MIN         = 0.03  # 全件★6平均騰落率
 STABLE_VALID_WR_MIN    = 0.55  # 直近30%検証側★6勝率は strict >
 STABLE_VALID_S6_N_MIN  = 8     # 直近30%検証側★6最低件数
 STABLE_VALID_AVG_MIN   = 0.00  # 直近30%検証側★6平均騰落率
 WALK_FORWARD_VALID_FRAC = 0.30
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
+FINAL_EVAL_CANDIDATE_LIMIT = 2_000
+THRESHOLD_TUNE_CANDIDATE_LIMIT = 9
 
 # composite バリアント: rate_adjusted=件数正規化(デフォルト) / snr=√n正規化 / legacy=旧来
 COMPOSITE_VARIANT = "rate_adjusted"
@@ -551,13 +554,14 @@ def _calc_composite(wr, avg, w10, l10, W, n):
     else:  # legacy
         return wr * 50 + avg * 100 + (w10 - l10) * 3
 
-def _quality_gate_lines(stats, validation_stats=None):
+def _quality_gate_lines(stats, validation_stats=None, mode="normal"):
     """Stable ★6の絶対品質ゲートを評価する。"""
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
+    stable_s6_n_min = RESCUE_STABLE_S6_N_MIN if mode == "rescue" else STABLE_S6_N_MIN
 
     checks = [
-        (stats["n"] >= STABLE_S6_N_MIN,
-         f"全件★6件数 {stats['n']}件 ≥ {STABLE_S6_N_MIN}件"),
+        (stats["n"] >= stable_s6_n_min,
+         f"全件★6件数 {stats['n']}件 ≥ {stable_s6_n_min}件"),
         (stats["wr_raw"] >= STABLE_WR_MIN,
          f"全件★6勝率 {stats['wr_raw']*100:.1f}% ≥ {STABLE_WR_MIN*100:.0f}%"),
         (stats["avg_raw"] > STABLE_AVG_MIN,
@@ -616,7 +620,7 @@ def win10_guard_ok(stats, baseline):
 
 def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
-    quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats)
+    quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats, mode)
 
     threshold = baseline["composite"] * BASELINE_DECAY
     ok_comp = stats["composite"] > threshold
@@ -2285,24 +2289,27 @@ def main():
 
     print(f"\n🏆 Step 6: 候補一覧（上位10）")
     print(f"  {'#':<3} {'方式':<4} {'★6勝率':>7} {'★6平均':>8} {'上昇':>4} {'下落':>4} {'件数':>4} {'努力':>4}  条件")
-    all_cands = []
-    for sc6, sc5, sc4, combo, st6, st5, st4, st6_valid in cands_a[:9]:
-        all_cands.append(("A", sc6, sc5, sc4, combo, st6, st5, st4, st6_valid))
+    candidate_pool = []
+    final_eval_limit = min(FINAL_EVAL_CANDIDATE_LIMIT, len(cands_a))
+    for sc6, sc5, sc4, combo, st6, st5, st4, st6_valid in cands_a[:final_eval_limit]:
+        candidate_pool.append(("A", sc6, sc5, sc4, combo, st6, st5, st4, st6_valid))
+    if len(cands_a) > final_eval_limit:
+        print(f"  最終判定候補: {final_eval_limit}/{len(cands_a)}通りに制限")
     if result_b:
         scheme_b, stats_b6, stats_b5, stats_b4 = result_b
         stats_b6_valid, _, _ = calc_candidate_tiers(df_wf_valid, "B", scheme_b)
         if validation_gate_ok(stats_b6_valid):
-            all_cands.append(("B", stats_b6["composite"], stats_b5["composite"],
-                              stats_b4["composite"], scheme_b, stats_b6, stats_b5,
-                              stats_b4, stats_b6_valid))
+            candidate_pool.append(("B", stats_b6["composite"], stats_b5["composite"],
+                                   stats_b4["composite"], scheme_b, stats_b6, stats_b5,
+                                   stats_b4, stats_b6_valid))
         else:
             print(f"  方式B: Walk-forward品質ゲートNG "
                   f"(検証★6 {stats_b6_valid['n']}件 勝率{stats_b6_valid['wr_raw']*100:.1f}% "
                   f"平均{stats_b6_valid['avg_raw']*100:.1f}%)")
     # ★6総合スコア → 順序スコア(努力義務) → ★5 → ★4 の順でソート
-    all_cands.sort(key=lambda x: (-x[1], -calc_ordering_score(x[5], x[6], x[7]), -x[2], -x[3]))
+    candidate_pool.sort(key=lambda x: (-x[1], -calc_ordering_score(x[5], x[6], x[7]), -x[2], -x[3]))
 
-    for i, (method, sc6, sc5, sc4, combo, st6, st5, st4, st6_valid) in enumerate(all_cands[:10]):
+    for i, (method, sc6, sc5, sc4, combo, st6, st5, st4, st6_valid) in enumerate(candidate_pool[:10]):
         e = ("✓" if st6["wr_raw"] >= TARGET_WIN_RATE else "△") + \
             ("✓" if st6["avg_raw"] >= TARGET_AVG_PERF else "△") + \
             ("✓" if st6["win10_raw"] > st6["lose10_raw"] else "△") + \
@@ -2313,7 +2320,7 @@ def main():
 
     # ── Step 5c: 閾値最適化（train/test split） ──────────────
     best_thresholds = {}
-    if not all_cands:
+    if not candidate_pool:
         # 新しい組み合わせなし → 現行条件の閾値だけ最適化を試みる
         if not (current_logic and current_logic["method"] == "A"):
             handle_no_stable_candidate("現行ロジックが最良。更新しません。"); return
@@ -2338,13 +2345,13 @@ def main():
         df_test   = df_wf_valid.copy()
         print(f"\n📐 train/test split: 訓練{len(df_train)}件 / 検証{len(df_test)}件")
 
-        # 全候補に閾値最適化を適用 → post-tune compositeで再ソートして最良を選ぶ
-        print(f"\n🔬 Step 5c: 全{len(all_cands)}候補 閾値最適化...")
+        # 閾値最適化は重いため上位候補だけに適用し、最終判定は広い候補プールで行う。
+        tune_cands = list(candidate_pool[:THRESHOLD_TUNE_CANDIDATE_LIMIT])
+        print(f"\n🔬 Step 5c: 上位{len(tune_cands)}候補 閾値最適化...")
         print(f"  {'#':<3} {'★6勝率':>7} {'★6平均':>8} {'上昇':>4} {'下落':>4} {'件数':>4}  閾値変更  条件")
-        tuned_ths_list = []  # all_cands と同順に保存
-        for i, (method_i, _, _, _, combo_i, _, _, _, validation_i) in enumerate(all_cands):
+        tuned_pairs = []
+        for i, (method_i, _, _, _, combo_i, _, _, _, validation_i) in enumerate(tune_cands):
             if method_i != "A":
-                tuned_ths_list.append(None)
                 continue
             tuned_ths_i, _, _, tune_passed_i = tune_thresholds(df_train, df_test, combo_i, baseline)
             if tune_passed_i and tuned_ths_i:
@@ -2353,9 +2360,9 @@ def main():
                 st5f = calc_stats(df[s_full_i == 5])
                 st4f = calc_stats(df[s_full_i == 4])
                 st6vf, _, _ = calc_candidate_tiers(df_wf_valid, "A", combo_i, tuned_ths_i)
-                all_cands[i] = ("A", st6f["composite"], st5f["composite"],
-                                st4f["composite"], combo_i, st6f, st5f, st4f, st6vf)
-                tuned_ths_list.append(tuned_ths_i)
+                tuned_cand = ("A", st6f["composite"], st5f["composite"],
+                              st4f["composite"], combo_i, st6f, st5f, st4f, st6vf)
+                tuned_pairs.append((tuned_cand, tuned_ths_i))
                 changes = ", ".join(
                     f"{k}:{COND_PARAM[k][1]}→{v}" for k, v in tuned_ths_i.items()
                     if k in COND_PARAM and abs(v - COND_PARAM[k][1]) > 1e-9
@@ -2364,16 +2371,21 @@ def main():
                       f"  {st6f['win10_raw']:>3.0f}件  {st6f['lose10_raw']:>3.0f}件  {st6f['n']:>3}件"
                       f"  検証{st6vf['n']}件/{st6vf['wr_raw']*100:.1f}%  {changes}  {'+'.join(combo_i)}")
             else:
-                tuned_ths_list.append(None)
                 print(f"  #{i+1:<2} (閾値最適化NG — デフォルト維持)  {'+'.join(combo_i)}")
 
         # 採用判定は必ず全件データで再評価する。
         # cands_a は walk-forward train 上の探索結果なので、そのまま使うと
         # 全件品質ゲートをすり抜ける可能性がある。
         final_pairs = []
-        for cand, ths in zip(all_cands, tuned_ths_list):
+        seen_signatures = set()
+
+        def append_final_pair(cand, ths):
             method_i, _, _, _, combo_i, _, _, _, _ = cand
             eval_thresholds = (ths or {}) if method_i == "A" else {}
+            sig = logic_signature(method_i, combo_i, eval_thresholds)
+            if sig in seen_signatures:
+                return
+            seen_signatures.add(sig)
             st6f, st5f, st4f = calc_candidate_tiers(
                 df, method_i, combo_i, eval_thresholds
             )
@@ -2385,6 +2397,11 @@ def main():
                  combo_i, st6f, st5f, st4f, st6vf),
                 ths,
             ))
+
+        for cand, ths in tuned_pairs:
+            append_final_pair(cand, ths)
+        for cand in candidate_pool:
+            append_final_pair(cand, None)
 
         # post-tune/full-data compositeで再ソート
         paired = sorted(final_pairs,

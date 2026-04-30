@@ -132,7 +132,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 }
 ```
 
-利用可能な条件キー（`optimize_screener.py` の `INDICATORS` で定義）: `ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`
+利用可能な条件キー（`optimize_screener.py` の `BOOL_CONDS` で定義。Stable/Sniper共通）: `ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `ich_tk`, `ich_price_tenkan`, `ich_price_kijun`, `ich_cloud_above`, `ich_cloud_green`, `ich_chikou`, `ich_kumo_break`
 
 ### `screener.js` の処理フロー
 

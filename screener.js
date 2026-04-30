@@ -180,6 +180,36 @@ function computeIndicators(dailyBars, signalIdx) {
   const hi20v   = hi20Arr.length > 0 ? Math.max(...hi20Arr) : latestClose;
   const hiBrk20 = latestClose > hi20v;
 
+  // 一目均衡表
+  function ichimokuMid(end, period) {
+    if (end == null || end - period + 1 < 0) return null;
+    const h = highs.slice(end - period + 1, end + 1);
+    const l = lows.slice(end - period + 1, end + 1);
+    return (Math.max(...h) + Math.min(...l)) / 2;
+  }
+
+  const ichTenkan = ichimokuMid(last, 9);
+  const ichKijun  = ichimokuMid(last, 26);
+  const ichSpanAFuture = (ichTenkan !== null && ichKijun !== null) ? (ichTenkan + ichKijun) / 2 : null;
+  const ichSpanBFuture = ichimokuMid(last, 52);
+
+  function visibleIchimokuCloud(end) {
+    const base = end - 26;
+    const t = ichimokuMid(base, 9);
+    const k = ichimokuMid(base, 26);
+    const b = ichimokuMid(base, 52);
+    if (t === null || k === null || b === null) return { spanA: null, spanB: null, top: null };
+    const a = (t + k) / 2;
+    return { spanA: a, spanB: b, top: Math.max(a, b) };
+  }
+
+  const ichCloud = visibleIchimokuCloud(last);
+  const ichCloudPrev = visibleIchimokuCloud(last - 1);
+  const ichCloudGreen = ichSpanAFuture !== null && ichSpanBFuture !== null && ichSpanAFuture > ichSpanBFuture;
+  const ichChikou = last >= 26 && latestClose > closes[last - 26];
+  const ichKumoBreak = ichCloud.top !== null && ichCloudPrev.top !== null
+    && closes[last - 1] <= ichCloudPrev.top && latestClose > ichCloud.top;
+
   return {
     close:       latestClose,
     ema25:       ema25 !== null ? +ema25.toFixed(2) : null,
@@ -194,6 +224,12 @@ function computeIndicators(dailyBars, signalIdx) {
     stochK:   +stochK.toFixed(2),
     bbPct:    +bbPct.toFixed(4),
     hiBrk20,
+    ichTenkan:    ichTenkan !== null ? +ichTenkan.toFixed(2) : null,
+    ichKijun:     ichKijun !== null ? +ichKijun.toFixed(2) : null,
+    ichCloudTop:  ichCloud.top !== null ? +ichCloud.top.toFixed(2) : null,
+    ichCloudGreen,
+    ichChikou,
+    ichKumoBreak,
   };
 }
 

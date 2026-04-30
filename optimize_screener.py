@@ -321,6 +321,41 @@ def get_features(daily, sig_date):
     bs = (sum((x - bm)**2 for x in bb) / len(bb)) ** 0.5
     bbpct = max(0, min(1, ((lc - (bm - 2*bs)) / (4*bs)) if bs > 0 else 0.5))
 
+    def ichimoku_mid(end, period):
+        if end is None or end - period + 1 < 0:
+            return None
+        return (max(H[end-period+1:end+1]) + min(L[end-period+1:end+1])) / 2
+
+    tenkan = ichimoku_mid(last, 9)
+    kijun = ichimoku_mid(last, 26)
+    span_a_future = (tenkan + kijun) / 2 if tenkan is not None and kijun is not None else None
+    span_b_future = ichimoku_mid(last, 52)
+
+    def visible_ichimoku_cloud(end):
+        # Signal-date cloud values are the spans calculated 26 bars earlier.
+        base = end - 26
+        t = ichimoku_mid(base, 9)
+        k = ichimoku_mid(base, 26)
+        b = ichimoku_mid(base, 52)
+        if t is None or k is None or b is None:
+            return None, None, None
+        a = (t + k) / 2
+        return a, b, max(a, b)
+
+    cloud_a, cloud_b, cloud_top = visible_ichimoku_cloud(last)
+    _, _, cloud_top_prev = visible_ichimoku_cloud(last - 1)
+
+    ich_tk = tenkan is not None and kijun is not None and tenkan > kijun
+    ich_price_tenkan = tenkan is not None and lc > tenkan
+    ich_price_kijun = kijun is not None and lc > kijun
+    ich_cloud_above = cloud_top is not None and lc > cloud_top
+    ich_cloud_green = span_a_future is not None and span_b_future is not None and span_a_future > span_b_future
+    ich_chikou = last >= 26 and lc > C[last-26]
+    ich_kumo_break = (
+        cloud_top is not None and cloud_top_prev is not None
+        and C[last-1] <= cloud_top_prev and lc > cloud_top
+    )
+
     return dict(
         ema75=e75 is not None and lc > e75, ema25=lc > e25,
         vol20=vsurge >= 2.0, vol15=vsurge >= 1.5, vol12=vsurge >= 1.2,
@@ -331,6 +366,10 @@ def get_features(daily, sig_date):
         stoch75=stoch >= 75, stoch60=stoch >= 60,
         rsi5070=50 <= rsi < 70, rsi4060=40 <= rsi < 60,
         bb80=bbpct >= 0.80,
+        ich_tk=ich_tk, ich_price_tenkan=ich_price_tenkan,
+        ich_price_kijun=ich_price_kijun, ich_cloud_above=ich_cloud_above,
+        ich_cloud_green=ich_cloud_green, ich_chikou=ich_chikou,
+        ich_kumo_break=ich_kumo_break,
         _vsurge=vsurge, _atr=atr_pct, _body=body_pct,
         _rsi=rsi, _stoch=stoch, _bbpct=bbpct,
     )
@@ -362,6 +401,52 @@ def calc_stats(df_s6):
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
                 composite=_calc_composite(wr, avg, w10, l10, W, n))
+
+def _prepare_stats_arrays(df_eval):
+    """組み合わせ探索用に、calc_stats相当の入力をNumPy配列へ変換する。"""
+    today = pd.Timestamp.today()
+    dates = pd.to_datetime(df_eval["date"], errors="coerce").fillna(today)
+    days_old = (today - dates).dt.days.clip(lower=0).to_numpy(dtype=float)
+    return {
+        "w": np.exp(-days_old / RECENCY_HALFLIFE),
+        "win": df_eval["win_5bd"].to_numpy(dtype=float),
+        "perf": df_eval["perf_5bd"].to_numpy(dtype=float),
+        "win10": df_eval["win10"].to_numpy(dtype=float),
+        "lose10": df_eval["lose10"].to_numpy(dtype=float),
+    }
+
+def _calc_stats_mask(mask, arrays):
+    """Boolean maskからcalc_stats()と同じ統計辞書を返す。"""
+    mask = np.asarray(mask, dtype=bool)
+    n = int(mask.sum())
+    if n == 0:
+        return dict(n=0, wr=0, avg=0, win10=0, lose10=0,
+                    wr_raw=0, avg_raw=0, win10_raw=0, lose10_raw=0,
+                    composite=-9999)
+    w = arrays["w"][mask]
+    W = float(w.sum())
+    wr  = float((arrays["win"][mask]  * w).sum() / W) if W > 0 else 0
+    avg = float((arrays["perf"][mask] * w).sum() / W) if W > 0 else 0
+    w10 = float((arrays["win10"][mask]  * w).sum())
+    l10 = float((arrays["lose10"][mask] * w).sum())
+    wr_raw  = float(arrays["win"][mask].mean())
+    avg_raw = float(arrays["perf"][mask].mean())
+    win10_raw  = float(arrays["win10"][mask].sum())
+    lose10_raw = float(arrays["lose10"][mask].sum())
+    return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
+                wr_raw=wr_raw, avg_raw=avg_raw,
+                win10_raw=win10_raw, lose10_raw=lose10_raw,
+                composite=_calc_composite(wr, avg, w10, l10, W, n))
+
+def _combo_all_mask(matrix, idxs):
+    """6条件すべてを満たす行のmaskを返す。"""
+    mask = matrix[:, idxs[0]].copy()
+    for i in idxs[1:]:
+        mask &= matrix[:, i]
+    return mask
+
+def _combo_score(matrix, idxs):
+    return matrix[:, list(idxs)].sum(axis=1)
 
 def calc_score_b_series(df, scheme):
     """Method BのスコアをSeriesで返す（表示用集計）。"""
@@ -553,6 +638,8 @@ BOOL_CONDS = [
     "ema75","ema25","vol20","vol15","vol12","sbull","body1",
     "macdgc","macdpos","atr5","atr3","atr7","hb20",
     "stoch75","stoch60","rsi5070","rsi4060","bb80",
+    "ich_tk","ich_price_tenkan","ich_price_kijun","ich_cloud_above",
+    "ich_cloud_green","ich_chikou","ich_kumo_break",
 ]
 
 # ── Stage 2: 閾値パラメーター定義 ────────────────────────────
@@ -652,12 +739,13 @@ def search_combinations(df, baseline, mode="normal"):
     for c in conds: df[c] = df[c].astype(bool)
     total = sum(1 for _ in combinations(conds, 6))
     print(f"  探索数: C({len(conds)},6) = {total:,}通り")
+    matrix = df[conds].to_numpy(dtype=np.bool_)
+    arrays = _prepare_stats_arrays(df)
     best = []
-    for combo in combinations(conds, 6):
-        scores = sum(df[c].astype(int) for c in combo)
-        s6 = df[scores == 6]
-        if len(s6) < 10: continue
-        st6 = calc_stats(s6)
+    for idxs in combinations(range(len(conds)), 6):
+        s6_mask = _combo_all_mask(matrix, idxs)
+        if int(s6_mask.sum()) < 10: continue
+        st6 = _calc_stats_mask(s6_mask, arrays)
         if mode == "normal":
             if st6["composite"] <= baseline["composite"] * BASELINE_DECAY: continue
             # 勝率フロア（strict時は等号排除）
@@ -670,29 +758,33 @@ def search_combinations(df, baseline, mode="normal"):
             # rescue modeでは現行超え条件を緩め、後段の全件/検証品質ゲートで絞る。
             if st6["wr_raw"] < TARGET_WIN_RATE: continue
         # ★5/★4 もタイブレーカー用に計算（各ランク単独・悪化してもOK）
-        st5 = calc_stats(df[scores == 5])
-        st4 = calc_stats(df[scores == 4])
+        scores = _combo_score(matrix, idxs)
+        st5 = _calc_stats_mask(scores == 5, arrays)
+        st4 = _calc_stats_mask(scores == 4, arrays)
+        combo = [conds[i] for i in idxs]
         best.append((st6["composite"], st5["composite"], st4["composite"],
-                     list(combo), st6, st5, st4))
-    best.sort(reverse=True)  # (★6, ★5, ★4) タプルで比較
+                     combo, st6, st5, st4))
+    best.sort(key=lambda x: (x[0], x[1], x[2], x[3]), reverse=True)
     return best
 
 def search_combinations_sniper(df):
-    """Sniperモード: 勝率最大化の組み合わせ探索 (C(18,6), 全条件通過)"""
+    """Sniperモード: 勝率最大化の組み合わせ探索 (C(N,6), 全条件通過)"""
     conds = [c for c in BOOL_CONDS if c in df.columns]
     for c in conds:
         df[c] = df[c].astype(bool)
     total = sum(1 for _ in combinations(conds, 6))
     print(f"  探索数: C({len(conds)},6) = {total:,}通り")
+    matrix = df[conds].to_numpy(dtype=np.bool_)
+    arrays = _prepare_stats_arrays(df)
     best = []
-    for combo in combinations(conds, 6):
-        scores = sum(df[c].astype(int) for c in combo)
-        s6 = df[scores == 6]
-        if len(s6) < SNIPER_N_MIN:
+    for idxs in combinations(range(len(conds)), 6):
+        s6_mask = _combo_all_mask(matrix, idxs)
+        if int(s6_mask.sum()) < SNIPER_N_MIN:
             continue
-        st6 = calc_stats(s6)
+        st6 = _calc_stats_mask(s6_mask, arrays)
         if st6["wr_raw"] < SNIPER_WR_MIN:
             continue
+        combo = [conds[i] for i in idxs]
         best.append((st6["wr_raw"], st6["n"], list(combo), st6))
     best.sort(key=lambda x: (-x[0], -x[1]))  # 勝率降順・件数降順
     return best
@@ -878,6 +970,13 @@ JS_IMPL = {
     "rsi5070": ("RSI 50〜70","!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70","RSI(${ind.rsi14.toFixed(0)})"),
     "rsi4060": ("RSI 40〜60","!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60","RSI(${ind.rsi14.toFixed(0)})"),
     "bb80":    ("BB位置≥80%","ind.bbPct >= 0.80","BB上部(${(ind.bbPct*100).toFixed(0)}%)"),
+    "ich_tk":            ("一目: 転換線 > 基準線","ind.ichTenkan !== null && ind.ichKijun !== null && ind.ichTenkan > ind.ichKijun","一目TK"),
+    "ich_price_tenkan":  ("一目: close > 転換線","ind.ichTenkan !== null && ind.close > ind.ichTenkan","一目>転換"),
+    "ich_price_kijun":   ("一目: close > 基準線","ind.ichKijun !== null && ind.close > ind.ichKijun","一目>基準"),
+    "ich_cloud_above":   ("一目: close > 雲上限","ind.ichCloudTop !== null && ind.close > ind.ichCloudTop","一目雲上"),
+    "ich_cloud_green":   ("一目: 先行雲が陽転","ind.ichCloudGreen","一目雲陽転"),
+    "ich_chikou":        ("一目: close > 26日前終値","ind.ichChikou","一目遅行"),
+    "ich_kumo_break":    ("一目: 雲上抜け","ind.ichKumoBreak","一目雲抜け"),
 }
 
 EXTRA_JS_BLOCK = """
@@ -913,13 +1012,49 @@ EXTRA_JS_BLOCK = """
   // 直近20日高値更新
   const hi20Arr = highs.slice(Math.max(0, last-20), last);
   const hi20v   = hi20Arr.length > 0 ? Math.max(...hi20Arr) : latestClose;
-  const hiBrk20 = latestClose > hi20v;"""
+  const hiBrk20 = latestClose > hi20v;
+
+  // 一目均衡表
+  function ichimokuMid(end, period) {
+    if (end == null || end - period + 1 < 0) return null;
+    const h = highs.slice(end - period + 1, end + 1);
+    const l = lows.slice(end - period + 1, end + 1);
+    return (Math.max(...h) + Math.min(...l)) / 2;
+  }
+
+  const ichTenkan = ichimokuMid(last, 9);
+  const ichKijun  = ichimokuMid(last, 26);
+  const ichSpanAFuture = (ichTenkan !== null && ichKijun !== null) ? (ichTenkan + ichKijun) / 2 : null;
+  const ichSpanBFuture = ichimokuMid(last, 52);
+
+  function visibleIchimokuCloud(end) {
+    const base = end - 26;
+    const t = ichimokuMid(base, 9);
+    const k = ichimokuMid(base, 26);
+    const b = ichimokuMid(base, 52);
+    if (t === null || k === null || b === null) return { spanA: null, spanB: null, top: null };
+    const a = (t + k) / 2;
+    return { spanA: a, spanB: b, top: Math.max(a, b) };
+  }
+
+  const ichCloud = visibleIchimokuCloud(last);
+  const ichCloudPrev = visibleIchimokuCloud(last - 1);
+  const ichCloudGreen = ichSpanAFuture !== null && ichSpanBFuture !== null && ichSpanAFuture > ichSpanBFuture;
+  const ichChikou = last >= 26 && latestClose > closes[last - 26];
+  const ichKumoBreak = ichCloud.top !== null && ichCloudPrev.top !== null
+    && closes[last - 1] <= ichCloudPrev.top && latestClose > ichCloud.top;"""
 
 EXTRA_JS_RETURN = """    macdPos,
     rsi14:    +rsi14.toFixed(2),
     stochK:   +stochK.toFixed(2),
     bbPct:    +bbPct.toFixed(4),
-    hiBrk20,"""
+    hiBrk20,
+    ichTenkan:    ichTenkan !== null ? +ichTenkan.toFixed(2) : null,
+    ichKijun:     ichKijun !== null ? +ichKijun.toFixed(2) : null,
+    ichCloudTop:  ichCloud.top !== null ? +ichCloud.top.toFixed(2) : null,
+    ichCloudGreen,
+    ichChikou,
+    ichKumoBreak,"""
 
 
 def build_func_a(conditions, stats, baseline, n, thresholds=None):
@@ -1092,6 +1227,55 @@ def update_screener_js(new_code):
             print("  ✅ computeIndicators() に追加指標を注入")
         else:
             print("  ⚠ computeIndicators()のreturnパターンが見つかりません")
+
+    # 既に追加指標ブロックが入っている環境にも、一目均衡表だけを追加入力する。
+    if "ichTenkan:" not in content:
+        ich_block_anchor = "  const hiBrk20 = latestClose > hi20v;"
+        ich_return_anchor = "    hiBrk20,"
+        ich_block = """
+
+  // 一目均衡表
+  function ichimokuMid(end, period) {
+    if (end == null || end - period + 1 < 0) return null;
+    const h = highs.slice(end - period + 1, end + 1);
+    const l = lows.slice(end - period + 1, end + 1);
+    return (Math.max(...h) + Math.min(...l)) / 2;
+  }
+
+  const ichTenkan = ichimokuMid(last, 9);
+  const ichKijun  = ichimokuMid(last, 26);
+  const ichSpanAFuture = (ichTenkan !== null && ichKijun !== null) ? (ichTenkan + ichKijun) / 2 : null;
+  const ichSpanBFuture = ichimokuMid(last, 52);
+
+  function visibleIchimokuCloud(end) {
+    const base = end - 26;
+    const t = ichimokuMid(base, 9);
+    const k = ichimokuMid(base, 26);
+    const b = ichimokuMid(base, 52);
+    if (t === null || k === null || b === null) return { spanA: null, spanB: null, top: null };
+    const a = (t + k) / 2;
+    return { spanA: a, spanB: b, top: Math.max(a, b) };
+  }
+
+  const ichCloud = visibleIchimokuCloud(last);
+  const ichCloudPrev = visibleIchimokuCloud(last - 1);
+  const ichCloudGreen = ichSpanAFuture !== null && ichSpanBFuture !== null && ichSpanAFuture > ichSpanBFuture;
+  const ichChikou = last >= 26 && latestClose > closes[last - 26];
+  const ichKumoBreak = ichCloud.top !== null && ichCloudPrev.top !== null
+    && closes[last - 1] <= ichCloudPrev.top && latestClose > ichCloud.top;"""
+        ich_return = """
+    ichTenkan:    ichTenkan !== null ? +ichTenkan.toFixed(2) : null,
+    ichKijun:     ichKijun !== null ? +ichKijun.toFixed(2) : null,
+    ichCloudTop:  ichCloud.top !== null ? +ichCloud.top.toFixed(2) : null,
+    ichCloudGreen,
+    ichChikou,
+    ichKumoBreak,"""
+        if ich_block_anchor in content and ich_return_anchor in content:
+            content = content.replace(ich_block_anchor, ich_block_anchor + ich_block, 1)
+            content = content.replace(ich_return_anchor, ich_return_anchor + ich_return, 1)
+            print("  ✅ computeIndicators() に一目均衡表指標を注入")
+        else:
+            print("  ⚠ computeIndicators()の一目注入パターンが見つかりません")
 
     with open(SCREENER_JS_PATH, "w", encoding="utf-8") as f:
         f.write(content)

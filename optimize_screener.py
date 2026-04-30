@@ -57,6 +57,7 @@ SNIPER_LOGIC_PATH        = os.path.join(BASE_DIR, "current_logic_sniper.json")
 SNIPER_PENDING_PATH      = os.path.join(BASE_DIR, "pending_logic_sniper.json")
 SNIPER_WR_MIN            = 0.65   # Sniper採用の最低勝率
 SNIPER_N_MIN             = 10     # Sniper採用の最低件数
+SNIPER_WR_EPS            = 1e-12  # 浮動小数誤差を吸収しつつ、勝率はstrict改善のみ採用
 
 SPREADSHEET_ID   = "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8"
 SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -1937,6 +1938,14 @@ def _run_sniper_optimization(df, args):
     print(f"  Sniper検証: {st6_valid['n']}件 勝率{st6_valid['wr_raw']*100:.1f}%"
           f" 平均{st6_valid['avg_raw']*100:.1f}%")
 
+    # Sniperは勝率特化のため、現行勝率をstrictに上回らない候補は通知しない。
+    if sniper_logic and st6_full["wr_raw"] <= baseline_wr + SNIPER_WR_EPS:
+        print(
+            f"  ✅ Sniper: 勝率が現行以下 "
+            f"({st6_full['wr_raw']*100:.1f}% ≤ {baseline_wr*100:.1f}%) のため更新しません。"
+        )
+        return
+
     # 現行と同一条件、または条件が違っても対象シグナル集合が同一なら更新しない
     if sniper_logic:
         current_sniper_conditions = sniper_logic.get("conditions", [])
@@ -2075,6 +2084,22 @@ def main():
             _sp_stats = _sp["stats"]
             print(f"  Sniper pending: 勝率{_sp_stats['wr_raw']*100:.1f}%"
                   f" 平均{_sp_stats['avg_raw']*100:.1f}% {int(_sp_stats['n'])}件")
+
+            _current_sniper = load_current_logic_sniper()
+            if _current_sniper:
+                _current_sniper_wr = float(_current_sniper.get("wr_raw", 0.0))
+                _pending_sniper_wr = float(_sp_stats.get("wr_raw", 0.0))
+                if _pending_sniper_wr <= _current_sniper_wr + SNIPER_WR_EPS:
+                    print(
+                        f"  ✅ Sniper pending: 勝率が現行以下 "
+                        f"({_pending_sniper_wr*100:.1f}% ≤ {_current_sniper_wr*100:.1f}%) "
+                        "のため適用しません。"
+                    )
+                    _has_sniper = False
+
+        if not _has_main and not _has_sniper:
+            print("ℹ️ 適用対象のpendingロジックがないため、デプロイはスキップします。")
+            return
 
         # バックアップ
         _backup_dir = os.path.join(BASE_DIR, "backups")

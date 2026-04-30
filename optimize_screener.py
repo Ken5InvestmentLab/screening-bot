@@ -65,7 +65,8 @@ TARGET_WIN_RATE  = 0.55
 TARGET_AVG_PERF  = 0.03
 RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
 BASELINE_DECAY   = 1.0   # 現行compositeを厳密に超えた場合のみ採用（同一・改悪は不採用）
-MAX_WIN10_DROP   = 0.20  # ★6大幅上昇件数の許容減少率（20%超減でNG）
+WIN10_MIN_COUNT  = 5     # ★6内の+10%以上銘柄の最低件数
+WIN10_RATE_FLOOR_RATIO = 0.90  # ★6内の+10%以上率が現行比90%以上ならOK
 
 # Stable ★6 品質ゲート（過学習防止 + 劣化検知）
 STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
@@ -596,6 +597,22 @@ def validation_gate_ok(validation_stats):
         and validation_stats["avg_raw"] >= STABLE_VALID_AVG_MIN
     )
 
+def win10_rate(stats):
+    n = stats.get("n", 0) or 0
+    return (stats.get("win10_raw", 0) or 0) / n if n > 0 else 0
+
+def win10_guard_details(stats, baseline):
+    cand_rate = win10_rate(stats)
+    base_rate = win10_rate(baseline)
+    rate_floor = base_rate * WIN10_RATE_FLOOR_RATIO
+    ok_count = stats["win10_raw"] >= WIN10_MIN_COUNT
+    ok_rate = cand_rate >= rate_floor
+    return ok_count, ok_rate, cand_rate, base_rate, rate_floor
+
+def win10_guard_ok(stats, baseline):
+    ok_count, ok_rate, _, _, _ = win10_guard_details(stats, baseline)
+    return ok_count and ok_rate
+
 def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
     quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats)
@@ -605,17 +622,18 @@ def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
     # 絶対条件②: 勝率（strict時は等号排除、floor追加）
     ok_wr = (stats["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (stats["wr_raw"] >= baseline["wr_raw"])
     ok_wr_floor = stats["wr_raw"] >= WR_FLOOR
-    # 絶対条件③: ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたらNG
-    win10_floor = baseline["win10_raw"] * (1 - MAX_WIN10_DROP)
-    ok_win10 = stats["win10_raw"] >= win10_floor
-    relative_ok = ok_comp and ok_wr and ok_wr_floor and ok_win10
+    # 絶対条件③: ★6内の大幅上昇は「最低件数」と「現行比率」を両方見る
+    ok_win10_count, ok_win10_rate, cand_win10_rate, base_win10_rate, win10_rate_floor = \
+        win10_guard_details(stats, baseline)
+    relative_ok = ok_comp and ok_wr and ok_wr_floor and ok_win10_count and ok_win10_rate
     ok = quality_ok and (relative_ok if mode == "normal" else True)
     op_wr = ">" if STRICT_WR else "≥"
     res = [
         f"{'✓' if ok_comp else '✗'} 通常条件①: composite {stats['composite']:.1f} {'>' if ok_comp else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
         f"{'✓' if ok_wr else '✗'} 通常条件②: 勝率 {stats['wr_raw']*100:.1f}% {op_wr} 現行{baseline['wr_raw']*100:.1f}%",
         f"{'✓' if ok_wr_floor else '✗'} 通常条件②-b: 勝率 {stats['wr_raw']*100:.1f}% ≥ 下限{WR_FLOOR*100:.0f}%",
-        f"{'✓' if ok_win10 else '✗'} 通常条件③: 大幅上昇 {stats['win10_raw']:.0f}件 {'≥' if ok_win10 else '<'} 現行{baseline['win10_raw']:.0f}件×{1-MAX_WIN10_DROP:.2f}={win10_floor:.1f}件",
+        f"{'✓' if ok_win10_count else '✗'} 通常条件③-a: 大幅上昇 {stats['win10_raw']:.0f}件 ≥ 最低{WIN10_MIN_COUNT}件",
+        f"{'✓' if ok_win10_rate else '✗'} 通常条件③-b: 大幅上昇率 {cand_win10_rate*100:.1f}% ≥ 現行{base_win10_rate*100:.1f}%×{WIN10_RATE_FLOOR_RATIO:.2f}={win10_rate_floor*100:.1f}%",
         f"{'✓' if mode == 'rescue' else ' '} rescue mode: {'現行超え条件を免除' if mode == 'rescue' else '未使用'}",
         *quality_lines,
         f"{'✓' if stats['wr_raw']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr_raw']*100:.1f}% (≥55%)",
@@ -626,7 +644,7 @@ def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
     if mode == "rescue":
         adoption_reasons.append("rescue: 現行劣化のため現行超え条件を免除")
     else:
-        adoption_reasons.append("normal: 現行composite・勝率・大幅上昇件数ガードを通過")
+        adoption_reasons.append("normal: 現行composite・勝率・大幅上昇率ガードを通過")
     adoption_reasons.append("Stable品質ゲートを通過")
     adoption_reasons.append("直近30% walk-forward検証を通過")
     return ok, res, adoption_reasons
@@ -752,8 +770,7 @@ def search_combinations(df, baseline, mode="normal"):
             wr_ok = (st6["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (st6["wr_raw"] >= baseline["wr_raw"])
             if not wr_ok: continue
             if st6["wr_raw"] < WR_FLOOR: continue
-            # ★6大幅上昇件数が MAX_WIN10_DROP 以上減っていたら除外
-            if st6["win10_raw"] < baseline["win10_raw"] * (1 - MAX_WIN10_DROP): continue
+            if not win10_guard_ok(st6, baseline): continue
         else:
             # rescue modeでは現行超え条件を緩め、後段の全件/検証品質ゲートで絞る。
             if st6["wr_raw"] < TARGET_WIN_RATE: continue
@@ -841,7 +858,7 @@ def analyze_winners(df, baseline, mode="normal"):
         st6["composite"] > baseline["composite"] * BASELINE_DECAY
         and wr_ok
         and st6["wr_raw"] >= WR_FLOOR
-        and st6["win10_raw"] >= baseline["win10_raw"] * (1 - MAX_WIN10_DROP)
+        and win10_guard_ok(st6, baseline)
     )
     rescue_ok = st6["wr_raw"] >= TARGET_WIN_RATE
     ok = relative_ok if mode == "normal" else rescue_ok

@@ -145,7 +145,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 
 - **採用基準①**: `composite > baseline`（ベースラインを上回ること）
 - **採用基準②**: `wr_raw > baseline.wr_raw`（勝率を上回ること、strict `>`）
-- **採用基準③**: `win10_raw >= baseline.win10_raw × 0.80`（★6件数の20%以内の減少）
+- **採用基準③**: `win10_raw >= 5` かつ `win10_raw / n >= (baseline.win10_raw / baseline.n) × 0.90`（少数精鋭ロジックを絶対件数だけで弾かない）
 - **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×50 + avg×100 + (win10−lose10)/total×150`（recency半減期90日の加重）
 - **Method A**: 6条件の組み合わせ全探索（各1点）
 - **Method B**: lift分析による重み付きスコア（各1〜2点）

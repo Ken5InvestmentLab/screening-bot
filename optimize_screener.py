@@ -405,6 +405,53 @@ def calc_candidate_tiers(df_eval, method, combo, thresholds=None):
         calc_stats(df_eval[scores == 4]),
     )
 
+def calc_score_series_for_logic(df_eval, method, combo, thresholds=None):
+    """任意ロジックのスコアSeriesを返す。"""
+    thresholds = thresholds or {}
+    if method == "A":
+        return score_with_thresholds(df_eval, combo, thresholds)
+    return calc_score_b_series(df_eval, combo)
+
+def selected_signal_indices(df_eval, method, combo, thresholds=None, target_score=6):
+    """指定スコアに該当するシグナル行indexの集合を返す。"""
+    if df_eval is None or len(df_eval) == 0:
+        return set()
+    scores = calc_score_series_for_logic(df_eval, method, combo, thresholds)
+    return set(df_eval.index[scores == target_score].tolist())
+
+def all_pass_signal_indices(df_eval, conditions, thresholds=None):
+    """Sniperなど、全条件通過が採用条件のシグナル行index集合を返す。"""
+    conditions = conditions or []
+    if not conditions:
+        return set()
+    return selected_signal_indices(
+        df_eval, "A", conditions, thresholds or {}, target_score=len(conditions)
+    )
+
+def _normalize_thresholds_for_compare(thresholds=None):
+    normalized = []
+    for k, v in (thresholds or {}).items():
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            v = str(v)
+        normalized.append((str(k), v))
+    return tuple(sorted(normalized))
+
+def logic_signature(method, combo, thresholds=None):
+    """条件順序差を無視して、同一ロジックか比較できる形に正規化する。"""
+    if method == "A":
+        return (
+            "A",
+            tuple(sorted(str(c) for c in combo)),
+            _normalize_thresholds_for_compare(thresholds),
+        )
+
+    scheme = []
+    for c, w, lift in combo:
+        scheme.append((str(c), int(w), round(float(lift), 10)))
+    return ("B", tuple(sorted(scheme)), ())
+
 def _calc_composite(wr, avg, w10, l10, W, n):
     """composite スコア計算（COMPOSITE_VARIANT で切り替え）"""
     if COMPOSITE_VARIANT == "rate_adjusted":
@@ -1689,10 +1736,25 @@ def _run_sniper_optimization(df, args):
     print(f"  Sniper検証: {st6_valid['n']}件 勝率{st6_valid['wr_raw']*100:.1f}%"
           f" 平均{st6_valid['avg_raw']*100:.1f}%")
 
-    # 現行と同一条件なら更新しない
-    if sniper_logic and sorted(sniper_logic.get("conditions", [])) == sorted(best_combo):
-        print("  ✅ Sniper: 条件が現行と同一。更新しません。")
-        return
+    # 現行と同一条件、または条件が違っても対象シグナル集合が同一なら更新しない
+    if sniper_logic:
+        current_sniper_conditions = sniper_logic.get("conditions", [])
+        current_sniper_thresholds = sniper_logic.get("thresholds", {}) or {}
+        current_sniper_sig = logic_signature(
+            "A", current_sniper_conditions, current_sniper_thresholds
+        )
+        candidate_sniper_sig = logic_signature("A", best_combo, {})
+        if current_sniper_sig == candidate_sniper_sig:
+            print("  ✅ Sniper: 条件が現行と同一。更新しません。")
+            return
+
+        current_targets = all_pass_signal_indices(
+            df, current_sniper_conditions, current_sniper_thresholds
+        )
+        candidate_targets = set(s6_full.index.tolist())
+        if candidate_targets == current_targets:
+            print("  ✅ Sniper: 条件は異なるが抽出結果が現行と同一のため更新しません。")
+            return
 
     sniper_code = build_func_sniper(best_combo, st6_full, len(df))
 
@@ -2136,13 +2198,24 @@ def main():
     if not ok:
         handle_no_stable_candidate("品質条件未達。更新しません。"); return
 
-    # 条件・閾値が現行と完全一致なら更新不要
-    if current_logic and best_method == "A":
-        cur_conds_sorted = sorted(current_logic.get("conditions", []))
-        new_conds_sorted = sorted(best_combo)
-        cur_ths = current_logic.get("thresholds", {})
-        if cur_conds_sorted == new_conds_sorted and cur_ths == best_thresholds:
+    # 条件・閾値が現行と完全一致、または★6対象シグナル集合が同一なら更新不要
+    if current_logic:
+        current_sig = logic_signature(
+            current_logic.get("method"),
+            current_logic.get("conditions", []),
+            current_logic.get("thresholds", {}),
+        )
+        candidate_sig = logic_signature(best_method, best_combo, best_thresholds)
+        if current_sig == candidate_sig:
             handle_no_stable_candidate("条件・閾値が現行と同一のため更新しません。"); return
+
+    current_targets = set(df.index[df["sc_cur"] == 6].tolist()) if "sc_cur" in df.columns else set()
+    candidate_targets = selected_signal_indices(
+        df, best_method, best_combo, best_thresholds, target_score=6
+    )
+    if candidate_targets == current_targets:
+        print("\n✅ 条件は異なるが抽出結果が現行と同一のため更新しません。")
+        return
 
     new_code = (build_func_a(best_combo, best_stats, baseline, len(df), best_thresholds)
                 if best_method == "A"

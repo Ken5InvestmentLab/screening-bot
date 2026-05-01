@@ -236,15 +236,15 @@ function computeIndicators(dailyBars, signalIdx) {
 // ============================================================
 // スコア計算（6点満点）
 // ============================================================
-// 自動最適化(方式A) 2026-04-27 09:38 / 1222件データ
-// ★6: 58件 勝率62.1% 平均6.1% 上昇8件 下落2件
-// 現行: 勝率61.3% 平均9.8%
+// 自動最適化(方式A) 2026-05-01 07:45 / 1273件データ
+// ★6: 27件 勝率63.0% 平均8.2% 上昇6件 下落1件
+// 現行: 勝率55.9% 平均5.8%
 // 【6条件（各1点）】
-//   ① 当日出来高≥20日×1.5
-//   ② MACD hist > 0
-//   ③ ATR% < 5.0%
-//   ④ ストキャス≥75
-//   ⑤ RSI 50〜70
+//   ① 当日出来高≥20日×2.0
+//   ② 強い陽線（実体≥0.5%）
+//   ③ MACD GC（3日以内）
+//   ④ ATR% < 5.0%
+//   ⑤ ストキャス≥60
 //   ⑥ BB位置≥80%
 
 function calculateScore(ind) {
@@ -252,34 +252,34 @@ function calculateScore(ind) {
   const filters = [];
   let score = 0;
 
-  // ① 当日出来高≥20日×1.5
-  if (ind.volSurge >= 1.5) {
+  // ① 当日出来高≥20日×2.0
+  if (ind.volSurge >= 2.0) {
     score++;
     filters.push(`①vol急増(${ind.volSurge}x)`);
   }
 
-  // ② MACD hist > 0
-  if (ind.macdPos) {
+  // ② 強い陽線（実体≥0.5%）
+  if (ind.isStrongBull) {
     score++;
-    filters.push(`②MACD上昇`);
+    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);
   }
 
-  // ③ ATR% < 5.0%
+  // ③ MACD GC（3日以内）
+  if (ind.macdGC3d) {
+    score++;
+    filters.push(`③MACD-GC`);
+  }
+
+  // ④ ATR% < 5.0%
   if (ind.atrPct < 5.0) {
     score++;
-    filters.push(`③ATR(${ind.atrPct}%)`);
+    filters.push(`④ATR(${ind.atrPct}%)`);
   }
 
-  // ④ ストキャス≥75
-  if (ind.stochK >= 75) {
+  // ⑤ ストキャス≥60
+  if (ind.stochK >= 60) {
     score++;
-    filters.push(`④STOCH(${ind.stochK.toFixed(0)})`);
-  }
-
-  // ⑤ RSI 50〜70
-  if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {
-    score++;
-    filters.push(`⑤RSI(${ind.rsi14.toFixed(0)})`);
+    filters.push(`⑤STOCH(${ind.stochK.toFixed(0)})`);
   }
 
   // ⑥ BB位置≥80%
@@ -290,6 +290,7 @@ function calculateScore(ind) {
 
   return { score, filters };
 }
+
 
 
 

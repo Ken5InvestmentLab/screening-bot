@@ -1,0 +1,142 @@
+{
+  "mode": "rescue",
+  "method": "A",
+  "conditions": [
+    "vol15",
+    "atr5",
+    "stoch60",
+    "rsi4060",
+    "bb80",
+    "ich_price_kijun"
+  ],
+  "thresholds": {},
+  "screener_code": "// 自動最適化(方式A) 2026-05-11 08:22 / 1379件データ\n// ★6: 30件 勝率66.7% 平均3.4% 上昇2件 下落0件\n// 現行: 勝率58.6% 平均8.3%\n// 【6条件（各1点）】\n//   ① 当日出来高≥20日×1.5\n//   ② ATR% < 5.0%\n//   ③ ストキャス≥60\n//   ④ RSI 40〜60\n//   ⑤ BB位置≥80%\n//   ⑥ 一目: close > 基準線\n\nfunction calculateScore(ind) {\n  if (!ind) return null;\n  const filters = [];\n  let score = 0;\n\n  // ① 当日出来高≥20日×1.5\n  if (ind.volSurge >= 1.5) {\n    score++;\n    filters.push(`①vol急増(${ind.volSurge}x)`);\n  }\n\n  // ② ATR% < 5.0%\n  if (ind.atrPct < 5.0) {\n    score++;\n    filters.push(`②ATR(${ind.atrPct}%)`);\n  }\n\n  // ③ ストキャス≥60\n  if (ind.stochK >= 60) {\n    score++;\n    filters.push(`③STOCH(${ind.stochK.toFixed(0)})`);\n  }\n\n  // ④ RSI 40〜60\n  if (!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60) {\n    score++;\n    filters.push(`④RSI(${ind.rsi14.toFixed(0)})`);\n  }\n\n  // ⑤ BB位置≥80%\n  if (ind.bbPct >= 0.80) {\n    score++;\n    filters.push(`⑤BB上部(${(ind.bbPct*100).toFixed(0)}%)`);\n  }\n\n  // ⑥ 一目: close > 基準線\n  if (ind.ichKijun !== null && ind.close > ind.ichKijun) {\n    score++;\n    filters.push(`⑥一目>基準`);\n  }\n\n  return { score, filters };\n}",
+  "stats6": {
+    "n": 30,
+    "wr": 0.6793788939639441,
+    "avg": 0.03983928113029382,
+    "win10": 1.514930256793933,
+    "lose10": 0.0,
+    "wr_raw": 0.6666666666666666,
+    "avg_raw": 0.03443333333333333,
+    "win10_raw": 2.0,
+    "lose10_raw": 0.0,
+    "composite": 49.570753186267815
+  },
+  "stats5": {
+    "n": 177,
+    "wr": 0.4177743310383428,
+    "avg": 0.01025079941453491,
+    "win10": 11.677820783472509,
+    "lose10": 6.997159418808572,
+    "wr_raw": 0.4180790960451977,
+    "avg_raw": 0.01029943502824859,
+    "win10_raw": 17.0,
+    "lose10_raw": 11.0,
+    "composite": 27.822452261336903
+  },
+  "stats4": {
+    "n": 206,
+    "wr": 0.34466889559747366,
+    "avg": -0.007752954850396213,
+    "win10": 6.1775108194983535,
+    "lose10": 9.173561235515294,
+    "wr_raw": 0.34951456310679613,
+    "avg_raw": -0.008621359223300972,
+    "win10_raw": 10.0,
+    "lose10_raw": 16.0,
+    "composite": 12.998683675159313
+  },
+  "training_stats6": {
+    "n": 16,
+    "wr": 0.6376827958411684,
+    "avg": 0.003917369082505833,
+    "win10": 0.0,
+    "lose10": 0.0,
+    "wr_raw": 0.625,
+    "avg_raw": 0.0033749999999999995,
+    "win10_raw": 0.0,
+    "lose10_raw": 0.0,
+    "composite": 32.275876700309006
+  },
+  "training_stats5": {
+    "n": 95,
+    "wr": 0.45375337279869804,
+    "avg": 0.012434745112063689,
+    "win10": 5.267471120154933,
+    "lose10": 4.593085049250385,
+    "wr_raw": 0.4421052631578947,
+    "avg_raw": 0.012199999999999997,
+    "win10_raw": 9.0,
+    "lose10_raw": 8.0,
+    "composite": 25.72297042460365
+  },
+  "training_stats4": {
+    "n": 145,
+    "wr": 0.3471275470374862,
+    "avg": -0.011960607153228126,
+    "win10": 3.121595562762887,
+    "lose10": 7.706848886558111,
+    "wr_raw": 0.35172413793103446,
+    "avg_raw": -0.012082758620689657,
+    "win10_raw": 6.0,
+    "lose10_raw": 14.0,
+    "composite": 7.8323318948809835
+  },
+  "validation_stats6": {
+    "n": 14,
+    "wr": 0.7140113037702093,
+    "avg": 0.0696757031235562,
+    "win10": 1.514930256793933,
+    "lose10": 0.0,
+    "wr_raw": 0.7142857142857143,
+    "avg_raw": 0.06992857142857142,
+    "win10_raw": 2.0,
+    "lose10_raw": 0.0,
+    "composite": 63.93572441803145
+  },
+  "current_stats6": {
+    "n": 29,
+    "wr": 0.5858442232426859,
+    "avg": 0.08488879952745039,
+    "win10": 4.84651830104163,
+    "lose10": 0.634095594745432,
+    "wr_raw": 0.5862068965517241,
+    "avg_raw": 0.0826551724137931,
+    "win10_raw": 7.0,
+    "lose10_raw": 1.0,
+    "composite": 71.06177811398948
+  },
+  "current_validation_stats6": {
+    "n": 8,
+    "wr": 0.4897920690908936,
+    "avg": 0.11674577357609503,
+    "win10": 2.3982560881348576,
+    "lose10": 0.0,
+    "wr_raw": 0.5,
+    "avg_raw": 0.12125,
+    "win10_raw": 3.0,
+    "lose10_raw": 0.0,
+    "composite": 92.8762483799795
+  },
+  "adoption_reasons": [
+    "rescue: 現行劣化のため現行超え条件を免除",
+    "Stable品質ゲートを通過",
+    "直近30% walk-forward検証を通過"
+  ],
+  "baseline": {
+    "n": 1379,
+    "wr": 0.3766328385759899,
+    "avg": -0.0013629259441471607,
+    "win10": 47.18196589975347,
+    "lose10": 38.05641485596225,
+    "wr_raw": 0.37055837563451777,
+    "avg_raw": -0.001970268310369833,
+    "win10_raw": 73.0,
+    "lose10_raw": 59.0,
+    "composite": 20.253518154254973
+  },
+  "n_total": 1379,
+  "backtest_source": "all",
+  "proposed_at": "2026-05-11T08:22:07.982594Z"
+}

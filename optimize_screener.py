@@ -7,8 +7,8 @@ optimize_screener.py — 天底極致スコアロジック自動最適化 + 自�
   py optimize_screener.py --dry-run    # 分析のみ（ファイル更新・デプロイなし）
 """
 
-import argparse, math, os, subprocess, sys
-from datetime import datetime
+import argparse, json, math, os, subprocess, sys
+from datetime import datetime, timedelta, timezone
 from itertools import combinations
 
 import numpy as np
@@ -55,6 +55,7 @@ else:
 PENDING_LOGIC_PATH       = os.path.join(BASE_DIR, "pending_logic.json")
 SNIPER_LOGIC_PATH        = os.path.join(BASE_DIR, "current_logic_sniper.json")
 SNIPER_PENDING_PATH      = os.path.join(BASE_DIR, "pending_logic_sniper.json")
+RESCUE_STATE_PATH        = os.path.join(BASE_DIR, "rescue_state.json")
 SNIPER_WR_MIN            = 0.65   # Sniper採用の最低勝率
 SNIPER_N_MIN             = 10     # Sniper採用の最低件数
 SNIPER_WR_EPS            = 1e-12  # 浮動小数誤差を吸収しつつ、勝率はstrict改善のみ採用
@@ -77,6 +78,8 @@ STABLE_AVG_MIN         = 0.03  # 全件★6平均騰落率
 STABLE_VALID_WR_MIN    = 0.55  # 直近30%検証側★6勝率は strict >
 STABLE_VALID_S6_N_MIN  = 8     # 直近30%検証側★6最低件数
 STABLE_VALID_AVG_MIN   = 0.00  # 直近30%検証側★6平均騰落率
+RESCUE_REQUIRED_STREAK = 2     # rescueは劣化判定が連続した場合のみ起動
+RESCUE_CURRENT_S6_N_MIN = 5    # 現在値の未確定★6を回復兆候として見る最低件数
 WALK_FORWARD_VALID_FRAC = 0.30
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
 FINAL_EVAL_CANDIDATE_LIMIT = 2_000
@@ -190,7 +193,15 @@ def parse_perf(v):
     except ValueError:
         return float("nan")
 
-def parse_alerts(rows):
+def parse_price(v):
+    if v is None or str(v).strip() == "":
+        return float("nan")
+    try:
+        return float(str(v).replace(",", "").strip())
+    except ValueError:
+        return float("nan")
+
+def parse_alerts(rows, include_unconfirmed=False):
     if len(rows) < 5: return pd.DataFrame()
     header = [h.lower().strip() for h in rows[3]]
     def idx(n): return header.index(n) if n in header else -1
@@ -203,14 +214,21 @@ def parse_alerts(rows):
         sym = g("symbol_code").strip()
         sym = sym.split(":")[-1] if ":" in sym else sym
         if not sym: continue
+        entry = parse_price(g("entry_price"))
         p5 = parse_perf(g("perf_5bd"))
-        if math.isnan(p5): continue
+        confirmed = math.isfinite(p5)
+        if not confirmed and not include_unconfirmed: continue
+        if not math.isfinite(entry) or entry <= 0:
+            if not confirmed:
+                continue
+            entry = 0.0
         recs.append({
             "symbol": sym, "name": g("symbol_name").strip(),
             "date": g("signal_date").strip(),
-            "entry": float(str(g("entry_price")).replace(",", "") or 0),
-            "perf_5bd": p5,
-            "win_5bd": p5 > 0  # win_flag_5bdはGAS取得タイミング次第でズレるため自力判定
+            "entry": entry,
+            "perf_5bd": p5 if confirmed else np.nan,
+            "win_5bd": p5 > 0 if confirmed else False,  # win_flag_5bdはGAS取得タイミング次第でズレるため自力判定
+            "confirmed_5bd": confirmed,
         })
     df = pd.DataFrame(recs)
     if df.empty: return df
@@ -378,6 +396,43 @@ def get_features(daily, sig_date):
         _vsurge=vsurge, _atr=atr_pct, _body=body_pct,
         _rsi=rsi, _stoch=stoch, _bbpct=bbpct,
     )
+
+def latest_close_for_signal(daily, sig_date):
+    """シグナル日以降の最新終値を返す。未確定5日後成績の現在値代替に使う。"""
+    if not daily:
+        return None
+    sig_dt = sig_date.replace("/", "-")[:10]
+    if daily[-1]["date"] < sig_dt:
+        return None
+    latest = daily[-1].get("close")
+    return latest if latest is not None and math.isfinite(latest) else None
+
+def build_unconfirmed_current_df(alerts_all, ohlcv):
+    """perf_5bd未確定のBOTTOMを、現在値ベースの暫定perfで評価可能なDataFrameにする。"""
+    if alerts_all is None or alerts_all.empty or "confirmed_5bd" not in alerts_all.columns:
+        return pd.DataFrame()
+
+    pending = alerts_all[~alerts_all["confirmed_5bd"].astype(bool)].copy()
+    rows = []
+    for _, r in pending.iterrows():
+        daily = ohlcv.get(r["symbol"], [])
+        features = get_features(daily, r["date"])
+        latest_close = latest_close_for_signal(daily, r["date"])
+        entry = r.get("entry", float("nan"))
+        if not features or latest_close is None or not math.isfinite(entry) or entry <= 0:
+            continue
+
+        perf = latest_close / entry - 1
+        rows.append({
+            **r.to_dict(),
+            **features,
+            "perf_5bd": perf,
+            "win_5bd": perf > 0,
+            "win10": perf >= 0.10,
+            "lose10": perf <= -0.10,
+            "latest_close": latest_close,
+        })
+    return pd.DataFrame(rows)
 
 # ══════════════════════════════════════════════════════════════
 # 評価
@@ -594,6 +649,159 @@ def detect_rescue_mode(current_stats, current_validation_stats):
                 f"現行 検証★6平均 {current_validation_stats['avg_raw']*100:+.1f}% < {STABLE_VALID_AVG_MIN*100:+.0f}%"
             )
     return bool(reasons), reasons
+
+def _jst_today_key():
+    return (datetime.now(timezone.utc) + timedelta(hours=9)).date().isoformat()
+
+def _utc_now_z():
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+def _previous_date_key(date_key):
+    try:
+        return (datetime.fromisoformat(date_key).date() - timedelta(days=1)).isoformat()
+    except (TypeError, ValueError):
+        return None
+
+def load_rescue_state():
+    if not os.path.exists(RESCUE_STATE_PATH):
+        return {}
+    try:
+        with open(RESCUE_STATE_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception as e:
+        print(f"  ⚠ rescue_state.json 読み込みエラー: {e}")
+        return {}
+
+def _jsonable_stats(stats):
+    return {
+        k: int(v) if k == "n" else float(v)
+        for k, v in (stats or {}).items()
+        if isinstance(v, (int, float, np.integer, np.floating))
+    }
+
+def save_rescue_state(state):
+    try:
+        with open(RESCUE_STATE_PATH, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        print("  ✅ rescue_state.json 更新完了")
+    except Exception as e:
+        print(f"  ⚠ rescue_state.json 保存エラー: {e}")
+
+def rescue_projection_wait_reasons(unconfirmed_stats, projected_stats):
+    """未確定の現在値を加味した投影が回復を示すならrescueを待機する。"""
+    if (unconfirmed_stats or {}).get("n", 0) < RESCUE_CURRENT_S6_N_MIN:
+        return []
+
+    projected_ok = (
+        projected_stats["n"] >= STABLE_S6_N_MIN
+        and projected_stats["wr_raw"] >= STABLE_WR_MIN
+        and projected_stats["avg_raw"] > STABLE_AVG_MIN
+    )
+    if not projected_ok:
+        return []
+
+    return [
+        (
+            f"未確定★6（現在値）{unconfirmed_stats['n']}件: "
+            f"勝率{unconfirmed_stats['wr_raw']*100:.1f}% "
+            f"平均{unconfirmed_stats['avg_raw']*100:+.1f}%"
+        ),
+        (
+            f"確定済み+未確定現在値の★6投影: {projected_stats['n']}件 "
+            f"勝率{projected_stats['wr_raw']*100:.1f}% "
+            f"平均{projected_stats['avg_raw']*100:+.1f}% "
+            f"（通常ライン 勝率{STABLE_WR_MIN*100:.0f}% / 平均{STABLE_AVG_MIN*100:+.0f}% を回復）"
+        ),
+    ]
+
+def resolve_rescue_mode(raw_reasons, current_stats, current_validation_stats,
+                        unconfirmed_current_stats, projected_current_stats,
+                        persist_state=False):
+    """回復投影と連続日数を加味して、最終的にrescueを使うか決める。"""
+    raw_reasons = raw_reasons or []
+    today_key = _jst_today_key()
+    state = load_rescue_state()
+    wait_reasons = rescue_projection_wait_reasons(
+        unconfirmed_current_stats, projected_current_stats
+    )
+
+    if not raw_reasons:
+        new_state = {
+            "updated_at": _utc_now_z(),
+            "last_checked_date": today_key,
+            "status": "healthy",
+            "streak": 0,
+            "current_stats6": _jsonable_stats(current_stats),
+            "current_validation_stats6": _jsonable_stats(current_validation_stats),
+            "unconfirmed_current_stats6": _jsonable_stats(unconfirmed_current_stats),
+            "projected_current_stats6": _jsonable_stats(projected_current_stats),
+        }
+        if persist_state:
+            save_rescue_state(new_state)
+        return False, [], 0
+
+    if wait_reasons:
+        reasons = [
+            *raw_reasons,
+            "未確定分の現在値が回復を示しているため、rescue更新は今回スルー",
+            *wait_reasons,
+        ]
+        new_state = {
+            "updated_at": _utc_now_z(),
+            "last_checked_date": today_key,
+            "status": "deferred_by_current_projection",
+            "streak": 0,
+            "raw_rescue_reasons": raw_reasons,
+            "defer_reasons": wait_reasons,
+            "current_stats6": _jsonable_stats(current_stats),
+            "current_validation_stats6": _jsonable_stats(current_validation_stats),
+            "unconfirmed_current_stats6": _jsonable_stats(unconfirmed_current_stats),
+            "projected_current_stats6": _jsonable_stats(projected_current_stats),
+        }
+        if persist_state:
+            save_rescue_state(new_state)
+        return False, reasons, 0
+
+    last_breach_date = state.get("last_breach_date")
+    prev_key = _previous_date_key(today_key)
+    if last_breach_date == today_key:
+        streak = max(1, int(state.get("streak", 1) or 1))
+    elif last_breach_date == prev_key:
+        streak = int(state.get("streak", 0) or 0) + 1
+    else:
+        streak = 1
+
+    new_state = {
+        "updated_at": _utc_now_z(),
+        "last_checked_date": today_key,
+        "last_breach_date": today_key,
+        "status": "rescue_active" if streak >= RESCUE_REQUIRED_STREAK else "breach_observed",
+        "streak": streak,
+        "raw_rescue_reasons": raw_reasons,
+        "current_stats6": _jsonable_stats(current_stats),
+        "current_validation_stats6": _jsonable_stats(current_validation_stats),
+        "unconfirmed_current_stats6": _jsonable_stats(unconfirmed_current_stats),
+        "projected_current_stats6": _jsonable_stats(projected_current_stats),
+    }
+    if persist_state:
+        save_rescue_state(new_state)
+
+    if streak < RESCUE_REQUIRED_STREAK:
+        reasons = [
+            *raw_reasons,
+            (
+                f"rescue対象 {streak}/{RESCUE_REQUIRED_STREAK}日目のため、"
+                "今回はnormal判定で様子見"
+            ),
+        ]
+        return False, reasons, streak
+
+    reasons = [
+        *raw_reasons,
+        f"rescue対象が{streak}日連続のためrescue modeを使用",
+    ]
+    return True, reasons, streak
 
 def validation_gate_ok(validation_stats):
     return (
@@ -2173,8 +2381,10 @@ def main():
 
     print("\n🔧 Step 2: 解析...")
     alerts = parse_alerts(ar)
+    alerts_all = parse_alerts(ar, include_unconfirmed=True)
     ohlcv  = parse_ohlcv(oh)
-    print(f"  BOTTOMシグナル確定済み: {len(alerts)}件")
+    unconfirmed_count = max(0, len(alerts_all) - len(alerts))
+    print(f"  BOTTOMシグナル確定済み: {len(alerts)}件 / 5日後未確定: {unconfirmed_count}件")
     if len(alerts) < 30: print("❌ データ不足"); sys.exit(1)
 
     print("\n📊 Step 3: 指標計算...")
@@ -2198,6 +2408,9 @@ def main():
             for c in cur_conds:
                 if c in df.columns: df[c] = df[c].astype(bool)
             df["sc_cur"] = score_with_thresholds(df, cur_conds, cur_thresholds)
+            current_method = "A"
+            current_combo = cur_conds
+            current_thresholds = cur_thresholds
             label = "+".join(
                 f"{c}({cur_thresholds[c]})" if c in cur_thresholds else c
                 for c in cur_conds
@@ -2209,6 +2422,9 @@ def main():
             df["sc_cur"] = df.apply(score_row_cur, axis=1)
             label = " ".join(f"{c}({w}pt)" for c, w, _ in scheme)
             cur_thresholds = {}
+            current_method = "B"
+            current_combo = scheme
+            current_thresholds = {}
         baseline = calc_stats(df[df["sc_cur"] == 6])
         print(f"  現行★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
@@ -2228,9 +2444,35 @@ def main():
         df["sc_cur"] = df["sc_v14"]
         cur_conds = V14
         cur_thresholds = {}
+        current_method = "A"
+        current_combo = V14
+        current_thresholds = {}
         baseline = calc_stats(df[df["sc_v14"] == 6])
         print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
+
+    unconfirmed_current_df = build_unconfirmed_current_df(alerts_all, ohlcv)
+    current_unconfirmed_stats6 = calc_stats(pd.DataFrame())
+    current_projection_stats6 = baseline
+    if len(unconfirmed_current_df) > 0:
+        unconfirmed_current_df["sc_cur"] = calc_score_series_for_logic(
+            unconfirmed_current_df, current_method, current_combo, current_thresholds
+        )
+        current_unconfirmed_s6 = unconfirmed_current_df[unconfirmed_current_df["sc_cur"] == 6]
+        current_unconfirmed_stats6 = calc_stats(current_unconfirmed_s6)
+        projected_s6 = pd.concat(
+            [df[df["sc_cur"] == 6], current_unconfirmed_s6],
+            ignore_index=True,
+            sort=False,
+        )
+        current_projection_stats6 = calc_stats(projected_s6)
+
+    print(f"  未確定★6（現在値）: {current_unconfirmed_stats6['n']}件 "
+          f"勝率{current_unconfirmed_stats6['wr_raw']*100:.1f}% "
+          f"平均{current_unconfirmed_stats6['avg_raw']*100:+.1f}%")
+    print(f"  現行★6投影（確定+未確定現在値）: {current_projection_stats6['n']}件 "
+          f"勝率{current_projection_stats6['wr_raw']*100:.1f}% "
+          f"平均{current_projection_stats6['avg_raw']*100:+.1f}%")
 
     # Walk-forward: 古い70%で探索し、直近30%を採用判定用の検証セットにする。
     df_wf = df.sort_values("date").reset_index(drop=True)
@@ -2238,13 +2480,32 @@ def main():
     df_wf_train = df_wf.iloc[:wf_split].copy()
     df_wf_valid = df_wf.iloc[wf_split:].copy()
     current_validation_stats6 = calc_stats(df_wf_valid[df_wf_valid["sc_cur"] == 6])
-    rescue_mode, rescue_reasons = detect_rescue_mode(baseline, current_validation_stats6)
+    raw_rescue_mode, raw_rescue_reasons = detect_rescue_mode(baseline, current_validation_stats6)
+    rescue_mode, rescue_reasons, rescue_streak = resolve_rescue_mode(
+        raw_rescue_reasons,
+        baseline,
+        current_validation_stats6,
+        current_unconfirmed_stats6,
+        current_projection_stats6,
+        persist_state=(args.propose and not args.dry_run),
+    )
     adoption_mode = "rescue" if rescue_mode else "normal"
     print(f"  現行検証★6: {current_validation_stats6['n']}件 "
           f"勝率{current_validation_stats6['wr_raw']*100:.1f}% "
           f"平均{current_validation_stats6['avg_raw']*100:.1f}%")
+    if raw_rescue_mode:
+        print("  ⚠ rescue対象条件を検知:")
+        for reason in raw_rescue_reasons:
+            print(f"    - {reason}")
     if rescue_mode:
         print("  ⚠ rescue mode 発動:")
+        for reason in rescue_reasons:
+            print(f"    - {reason}")
+    elif raw_rescue_mode:
+        if rescue_streak == 0:
+            print("  ✅ rescue mode 見送り（未確定現在値の回復投影を優先）:")
+        else:
+            print(f"  ✅ rescue mode 見送り（連続{rescue_streak}/{RESCUE_REQUIRED_STREAK}日）:")
         for reason in rescue_reasons:
             print(f"    - {reason}")
     else:

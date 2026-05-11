@@ -34,20 +34,25 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python optimize_screener.py --propose
 
-      - name: Commit pending logic (if candidate found)
+      - name: Commit pending logic/state (if changed)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ ! -f pending_logic.json ] && [ ! -f pending_logic_sniper.json ]; then
-            echo "No pending logic to commit (no better candidate found)"
+          if [ ! -f pending_logic.json ] && [ ! -f pending_logic_sniper.json ] && [ ! -f rescue_state.json ]; then
+            echo "No pending logic or optimizer state to commit"
             exit 0
           fi
           [ -f pending_logic.json ] && git add pending_logic.json
           [ -f pending_logic_sniper.json ] && git add pending_logic_sniper.json
+          [ -f rescue_state.json ] && git add rescue_state.json
           if git diff --staged --quiet; then
             echo "No changes staged"
           else
-            git commit -m "feat: propose screener logic update [pending approval]"
+            if git diff --staged --name-only | grep -Eq '^(pending_logic|pending_logic_sniper)\.json$'; then
+              git commit -m "feat: propose screener logic update [pending approval]"
+            else
+              git commit -m "chore: update optimizer rescue state [skip ci]"
+            fi
             git pull --rebase origin main
             git push
           fi

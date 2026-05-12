@@ -236,60 +236,61 @@ function computeIndicators(dailyBars, signalIdx) {
 // ============================================================
 // スコア計算（6点満点）
 // ============================================================
-// 自動最適化(方式A) 2026-05-01 07:45 / 1273件データ
-// ★6: 27件 勝率63.0% 平均8.2% 上昇6件 下落1件
-// 現行: 勝率55.9% 平均5.8%
+// 自動最適化(方式A) 2026-05-11 08:22 / 1379件データ
+// ★6: 30件 勝率66.7% 平均3.4% 上昇2件 下落0件
+// 現行: 勝率58.6% 平均8.3%
 // 【6条件（各1点）】
-//   ① 当日出来高≥20日×2.0
-//   ② 強い陽線（実体≥0.5%）
-//   ③ MACD GC（3日以内）
-//   ④ ATR% < 5.0%
-//   ⑤ ストキャス≥60
-//   ⑥ BB位置≥80%
+//   ① 当日出来高≥20日×1.5
+//   ② ATR% < 5.0%
+//   ③ ストキャス≥60
+//   ④ RSI 40〜60
+//   ⑤ BB位置≥80%
+//   ⑥ 一目: close > 基準線
 
 function calculateScore(ind) {
   if (!ind) return null;
   const filters = [];
   let score = 0;
 
-  // ① 当日出来高≥20日×2.0
-  if (ind.volSurge >= 2.0) {
+  // ① 当日出来高≥20日×1.5
+  if (ind.volSurge >= 1.5) {
     score++;
     filters.push(`①vol急増(${ind.volSurge}x)`);
   }
 
-  // ② 強い陽線（実体≥0.5%）
-  if (ind.isStrongBull) {
-    score++;
-    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);
-  }
-
-  // ③ MACD GC（3日以内）
-  if (ind.macdGC3d) {
-    score++;
-    filters.push(`③MACD-GC`);
-  }
-
-  // ④ ATR% < 5.0%
+  // ② ATR% < 5.0%
   if (ind.atrPct < 5.0) {
     score++;
-    filters.push(`④ATR(${ind.atrPct}%)`);
+    filters.push(`②ATR(${ind.atrPct}%)`);
   }
 
-  // ⑤ ストキャス≥60
+  // ③ ストキャス≥60
   if (ind.stochK >= 60) {
     score++;
-    filters.push(`⑤STOCH(${ind.stochK.toFixed(0)})`);
+    filters.push(`③STOCH(${ind.stochK.toFixed(0)})`);
   }
 
-  // ⑥ BB位置≥80%
+  // ④ RSI 40〜60
+  if (!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60) {
+    score++;
+    filters.push(`④RSI(${ind.rsi14.toFixed(0)})`);
+  }
+
+  // ⑤ BB位置≥80%
   if (ind.bbPct >= 0.80) {
     score++;
-    filters.push(`⑥BB上部(${(ind.bbPct*100).toFixed(0)}%)`);
+    filters.push(`⑤BB上部(${(ind.bbPct*100).toFixed(0)}%)`);
+  }
+
+  // ⑥ 一目: close > 基準線
+  if (ind.ichKijun !== null && ind.close > ind.ichKijun) {
+    score++;
+    filters.push(`⑥一目>基準`);
   }
 
   return { score, filters };
 }
+
 
 
 

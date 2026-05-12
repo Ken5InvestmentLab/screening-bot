@@ -304,13 +304,13 @@ function calculateScore(ind) {
 // ============================================================
 // Sniperモード採点（optimize_screener.py が最適化後に自動書き換え）
 // ============================================================
-// Sniperモード自動最適化 2026-04-25 11:03 / 1199件データ
-// Sniper: 17件 勝率76.5% 平均1.5%
+// Sniperモード自動最適化 2026-05-12 07:51 / 1398件データ
+// Sniper: 18件 勝率77.8% 平均1.8%
 // 【Sniper条件（全6条件通過で採択）】
 //   ① close > EMA25（中期トレンド）
 //   ② 強い陽線（実体≥0.5%）
-//   ③ MACD hist > 0
-//   ④ ATR% < 5.0%
+//   ③ ATR% < 5.0%
+//   ④ ATR% < 7.0%
 //   ⑤ 直近20日高値更新
 //   ⑥ RSI 40〜60
 
@@ -331,14 +331,14 @@ function calculateScoreSniper(ind) {
     filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);
   }
 
-  // ③ MACD hist > 0
-  if (ind.macdPos) {
+  // ③ ATR% < 5.0%
+  if (ind.atrPct < 5.0) {
     score++;
-    filters.push(`③MACD上昇`);
+    filters.push(`③ATR(${ind.atrPct}%)`);
   }
 
-  // ④ ATR% < 5.0%
-  if (ind.atrPct < 5.0) {
+  // ④ ATR% < 7.0%
+  if (ind.atrPct < 7.0) {
     score++;
     filters.push(`④ATR(${ind.atrPct}%)`);
   }
@@ -357,6 +357,7 @@ function calculateScoreSniper(ind) {
 
   return { score, filters };
 }
+
 
 
 

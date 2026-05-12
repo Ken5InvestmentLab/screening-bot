@@ -3,18 +3,18 @@
   "conditions": [
     "ema25",
     "sbull",
-    "macdpos",
     "atr5",
+    "atr7",
     "hb20",
     "rsi4060"
   ],
-  "updated_at": "2026-04-25T11:05:36Z",
+  "updated_at": "2026-05-12T08:15:59Z",
   "thresholds": {},
   "backtest": {
     "source": "all",
-    "n": 17,
-    "wr": 76.5,
-    "avg": 1.5
+    "n": 18,
+    "wr": 77.8,
+    "avg": 1.8
   },
-  "wr_raw": 0.7647058823529411
+  "wr_raw": 0.7777777777777778
 }

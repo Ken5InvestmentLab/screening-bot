@@ -1,12 +1,12 @@
 {
   "method": "A",
   "conditions": [
-    "vol15",
+    "vol20",
+    "sbull",
+    "macdgc",
     "atr5",
     "stoch60",
-    "rsi4060",
-    "bb80",
-    "ich_price_kijun"
+    "bb80"
   ],
-  "updated_at": "2026-05-12T07:53:12Z"
+  "updated_at": "2026-05-01T09:07:42Z"
 }

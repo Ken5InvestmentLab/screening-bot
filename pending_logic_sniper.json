@@ -8,7 +8,7 @@
     "ich_chikou"
   ],
   "thresholds": {},
-  "sniper_code": "// Sniperモード自動最適化 2026-05-13 08:45 / 1428件データ\n// Sniper: 14件 勝率78.6% 平均2.0%\n// 【Sniper条件（全6条件通過で採択）】\n//   ① close > EMA25（中期トレンド）\n//   ② 強い陽線（実体≥0.5%）\n//   ③ ATR% < 5.0%\n//   ④ 直近20日高値更新\n//   ⑤ RSI 40〜60\n//   ⑥ 一目: close > 26日前終値\n\nfunction calculateScoreSniper(ind) {\n  if (!ind) return null;\n  const filters = [];\n  let score = 0;\n\n  // ① close > EMA25（中期トレンド）\n  if (ind.ema25 !== null && ind.close > ind.ema25) {\n    score++;\n    filters.push(`①EMA25順張り`);\n  }\n\n  // ② 強い陽線（実体≥0.5%）\n  if (ind.isStrongBull) {\n    score++;\n    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);\n  }\n\n  // ③ ATR% < 5.0%\n  if (ind.atrPct < 5.0) {\n    score++;\n    filters.push(`③ATR(${ind.atrPct}%)`);\n  }\n\n  // ④ 直近20日高値更新\n  if (ind.hiBrk20) {\n    score++;\n    filters.push(`④高値更新`);\n  }\n\n  // ⑤ RSI 40〜60\n  if (!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60) {\n    score++;\n    filters.push(`⑤RSI(${ind.rsi14.toFixed(0)})`);\n  }\n\n  // ⑥ 一目: close > 26日前終値\n  if (ind.ichChikou) {\n    score++;\n    filters.push(`⑥一目遅行`);\n  }\n\n  return { score, filters };\n}",
+  "sniper_code": "// Sniperモード自動最適化 2026-05-13 12:55 / 1428件データ\n// Sniper: 14件 勝率78.6% 平均2.0%\n// 【Sniper条件（全6条件通過で採択）】\n//   ① close > EMA25（中期トレンド）\n//   ② 強い陽線（実体≥0.5%）\n//   ③ ATR% < 5.0%\n//   ④ 直近20日高値更新\n//   ⑤ RSI 40〜60\n//   ⑥ 一目: close > 26日前終値\n\nfunction calculateScoreSniper(ind) {\n  if (!ind) return null;\n  const filters = [];\n  let score = 0;\n\n  // ① close > EMA25（中期トレンド）\n  if (ind.ema25 !== null && ind.close > ind.ema25) {\n    score++;\n    filters.push(`①EMA25順張り`);\n  }\n\n  // ② 強い陽線（実体≥0.5%）\n  if (ind.isStrongBull) {\n    score++;\n    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);\n  }\n\n  // ③ ATR% < 5.0%\n  if (ind.atrPct < 5.0) {\n    score++;\n    filters.push(`③ATR(${ind.atrPct}%)`);\n  }\n\n  // ④ 直近20日高値更新\n  if (ind.hiBrk20) {\n    score++;\n    filters.push(`④高値更新`);\n  }\n\n  // ⑤ RSI 40〜60\n  if (!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60) {\n    score++;\n    filters.push(`⑤RSI(${ind.rsi14.toFixed(0)})`);\n  }\n\n  // ⑥ 一目: close > 26日前終値\n  if (ind.ichChikou) {\n    score++;\n    filters.push(`⑥一目遅行`);\n  }\n\n  return { score, filters };\n}",
   "stats": {
     "n": 14,
     "wr": 0.770566488507583,
@@ -33,5 +33,5 @@
     "lose10_raw": 0.0,
     "composite": 34.73994379543407
   },
-  "proposed_at": "2026-05-13T08:45:49.073512Z"
+  "proposed_at": "2026-05-13T12:55:37.110824Z"
 }

@@ -1,0 +1,37 @@
+{
+  "conditions": [
+    "ema25",
+    "sbull",
+    "atr5",
+    "hb20",
+    "rsi4060",
+    "ich_chikou"
+  ],
+  "thresholds": {},
+  "sniper_code": "// Sniperモード自動最適化 2026-05-14 07:12 / 1428件データ\n// Sniper: 14件 勝率78.6% 平均2.0%\n// 【Sniper条件（全6条件通過で採択）】\n//   ① close > EMA25（中期トレンド）\n//   ② 強い陽線（実体≥0.5%）\n//   ③ ATR% < 5.0%\n//   ④ 直近20日高値更新\n//   ⑤ RSI 40〜60\n//   ⑥ 一目: close > 26日前終値\n\nfunction calculateScoreSniper(ind) {\n  if (!ind) return null;\n  const filters = [];\n  let score = 0;\n\n  // ① close > EMA25（中期トレンド）\n  if (ind.ema25 !== null && ind.close > ind.ema25) {\n    score++;\n    filters.push(`①EMA25順張り`);\n  }\n\n  // ② 強い陽線（実体≥0.5%）\n  if (ind.isStrongBull) {\n    score++;\n    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);\n  }\n\n  // ③ ATR% < 5.0%\n  if (ind.atrPct < 5.0) {\n    score++;\n    filters.push(`③ATR(${ind.atrPct}%)`);\n  }\n\n  // ④ 直近20日高値更新\n  if (ind.hiBrk20) {\n    score++;\n    filters.push(`④高値更新`);\n  }\n\n  // ⑤ RSI 40〜60\n  if (!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60) {\n    score++;\n    filters.push(`⑤RSI(${ind.rsi14.toFixed(0)})`);\n  }\n\n  // ⑥ 一目: close > 26日前終値\n  if (ind.ichChikou) {\n    score++;\n    filters.push(`⑥一目遅行`);\n  }\n\n  return { score, filters };\n}",
+  "stats": {
+    "n": 14,
+    "wr": 0.770566488507583,
+    "avg": 0.01878510572884977,
+    "win10": 0.0,
+    "lose10": 0.0,
+    "wr_raw": 0.7857142857142857,
+    "avg_raw": 0.020214285714285716,
+    "win10_raw": 0.0,
+    "lose10_raw": 0.0,
+    "composite": 40.40683499826413
+  },
+  "validation_stats": {
+    "n": 3,
+    "wr": 0.6805180023886762,
+    "avg": 0.007140436760002591,
+    "win10": 0.0,
+    "lose10": 0.0,
+    "wr_raw": 0.6666666666666666,
+    "avg_raw": 0.0036666666666666675,
+    "win10_raw": 0.0,
+    "lose10_raw": 0.0,
+    "composite": 34.73994379543407
+  },
+  "proposed_at": "2026-05-14T07:12:55.013696Z"
+}

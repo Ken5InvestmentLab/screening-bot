@@ -80,6 +80,11 @@ STABLE_VALID_S6_N_MIN  = 8     # 直近30%検証側★6最低件数
 STABLE_VALID_AVG_MIN   = 0.00  # 直近30%検証側★6平均騰落率
 RESCUE_REQUIRED_STREAK = 2     # rescueは劣化判定が連続した場合のみ起動
 RESCUE_CURRENT_S6_N_MIN = 5    # 現在値の未確定★6を回復兆候として見る最低件数
+
+# 現行ロジックが健全と判定するためのスキップ下限（満たしていれば最適化しない）
+HEALTHY_SKIP_WR    = 0.55   # 全件★6勝率がこれ以上 → 更新不要
+HEALTHY_SKIP_AVG   = 0.05   # 全件★6平均がこれ以上 → 更新不要
+HEALTHY_SKIP_N_MIN = 15     # 全件★6件数がこれ以上 → 更新不要
 WALK_FORWARD_VALID_FRAC = 0.30
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
 FINAL_EVAL_CANDIDATE_LIMIT = 2_000
@@ -805,6 +810,16 @@ def resolve_rescue_mode(raw_reasons, current_stats, current_validation_stats,
         f"rescue対象が{streak}日連続のためrescue modeを使用",
     ]
     return True, reasons, streak
+
+def is_current_healthy(stats, validation_stats):
+    """現行ロジックが更新不要な水準かどうかを判定する。
+    勝率・平均・件数・検証平均の4条件をすべて満たせばTrue。"""
+    return (
+        stats["n"] >= HEALTHY_SKIP_N_MIN
+        and stats["wr_raw"] >= HEALTHY_SKIP_WR
+        and stats["avg_raw"] >= HEALTHY_SKIP_AVG
+        and validation_stats["avg_raw"] >= 0.0
+    )
 
 def validation_gate_ok(validation_stats):
     return (
@@ -2518,6 +2533,24 @@ def main():
     df_wf_train = df_wf.iloc[:wf_split].copy()
     df_wf_valid = df_wf.iloc[wf_split:].copy()
     current_validation_stats6 = calc_stats(df_wf_valid[df_wf_valid["sc_cur"] == 6])
+
+    # 現行ロジックが健全なら最適化をスキップ（rescue含め更新不要）
+    if is_current_healthy(baseline, current_validation_stats6):
+        print(f"\n✅ 現行ロジック健全のため最適化をスキップ（更新不要）")
+        print(f"   全件★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}% 平均{baseline['avg_raw']*100:+.1f}%")
+        print(f"   検証★6: {current_validation_stats6['n']}件 平均{current_validation_stats6['avg_raw']*100:+.1f}%")
+        print(f"   (スキップ条件: 勝率≥{HEALTHY_SKIP_WR*100:.0f}% / 平均≥{HEALTHY_SKIP_AVG*100:.0f}% / ★6≥{HEALTHY_SKIP_N_MIN}件 / 検証平均≥0%)")
+        if args.propose and not args.dry_run:
+            save_rescue_state({
+                "updated_at": _utc_now_z(),
+                "last_checked_date": _jst_today_key(),
+                "status": "healthy",
+                "streak": 0,
+                "current_stats6": _jsonable_stats(baseline),
+                "current_validation_stats6": _jsonable_stats(current_validation_stats6),
+            })
+        return
+
     raw_rescue_mode, raw_rescue_reasons = detect_rescue_mode(baseline, current_validation_stats6)
     rescue_mode, rescue_reasons, rescue_streak = resolve_rescue_mode(
         raw_rescue_reasons,

@@ -1,12 +1,12 @@
 {
   "method": "A",
   "conditions": [
-    "vol15",
-    "vol12",
+    "vol20",
+    "sbull",
+    "macdgc",
     "atr5",
-    "atr7",
-    "stoch75",
-    "pre_down3"
+    "stoch60",
+    "bb80"
   ],
-  "updated_at": "2026-05-14T17:58:03Z"
+  "updated_at": "2026-05-01T09:07:42Z"
 }

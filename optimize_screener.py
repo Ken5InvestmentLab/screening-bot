@@ -372,7 +372,6 @@ def get_features(daily, sig_date):
     tp_md_cci   = sum(abs(x-tp_mean_cci) for x in tp_cci)/len(tp_cci)
     cci = (tp_cci[-1]-tp_mean_cci)/(0.015*tp_md_cci) if tp_md_cci > 0 else 0
     cci_os = cci <= -100
-    bb_lower = bbpct <= 0.20
 
     lo14 = min(L[max(0, last-13):last+1])
     hi14 = max(H[max(0, last-13):last+1])
@@ -382,6 +381,7 @@ def get_features(daily, sig_date):
     bm = sum(bb) / len(bb)
     bs = (sum((x - bm)**2 for x in bb) / len(bb)) ** 0.5
     bbpct = max(0, min(1, ((lc - (bm - 2*bs)) / (4*bs)) if bs > 0 else 0.5))
+    bb_lower = bbpct <= 0.20
 
     def ichimoku_mid(end, period):
         if end is None or end - period + 1 < 0:

@@ -82,9 +82,13 @@ RESCUE_REQUIRED_STREAK = 2     # rescueは劣化判定が連続した場合の�
 RESCUE_CURRENT_S6_N_MIN = 5    # 現在値の未確定★6を回復兆候として見る最低件数
 
 # 現行ロジックが健全と判定するためのスキップ下限（満たしていれば最適化しない）
-HEALTHY_SKIP_WR    = 0.55   # 全件★6勝率がこれ以上 → 更新不要
-HEALTHY_SKIP_AVG   = 0.05   # 全件★6平均がこれ以上 → 更新不要
-HEALTHY_SKIP_N_MIN = 15     # 全件★6件数がこれ以上 → 更新不要
+HEALTHY_SKIP_WR    = 0.65   # 全件★6勝率がこれ以上 → 更新不要
+HEALTHY_SKIP_AVG   = 0.08   # 全件★6平均がこれ以上 → 更新不要
+HEALTHY_SKIP_N_MIN = 25     # 全件★6件数がこれ以上 → 更新不要
+
+# Sniperモードのスキップ下限（勝率特化のためavg不要・件数は少なくてOK）
+SNIPER_HEALTHY_SKIP_WR    = 0.75   # Sniper全件勝率がこれ以上 → 更新不要
+SNIPER_HEALTHY_SKIP_N_MIN = 15     # Sniper全件★6件数がこれ以上 → 更新不要
 WALK_FORWARD_VALID_FRAC = 0.30
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
 FINAL_EVAL_CANDIDATE_LIMIT = 2_000
@@ -2159,6 +2163,18 @@ def _run_sniper_optimization(df, args):
     print("\n🎯 Step S1: Sniperモード最適化（勝率特化）...")
     sniper_logic = load_current_logic_sniper()
     baseline_wr  = sniper_logic.get("wr_raw", 0.0) if sniper_logic else 0.0
+
+    # 現行Sniperが健全なら最適化をスキップ
+    if sniper_logic:
+        sniper_n = sniper_logic.get("backtest", {}).get("n", 0)
+        if (baseline_wr >= SNIPER_HEALTHY_SKIP_WR
+                and sniper_n >= SNIPER_HEALTHY_SKIP_N_MIN):
+            print(
+                f"  ✅ Sniper健全のためスキップ: "
+                f"勝率{baseline_wr*100:.1f}% ≥ {SNIPER_HEALTHY_SKIP_WR*100:.0f}%"
+                f" / {sniper_n}件 ≥ {SNIPER_HEALTHY_SKIP_N_MIN}件"
+            )
+            return
 
     # Walk-forward分割（70/30）
     df_sorted = df.sort_values("date").reset_index(drop=True)

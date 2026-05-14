@@ -187,6 +187,36 @@ function computeIndicators(dailyBars, signalIdx) {
   // 直近20日高値から15%以上の押し
   const preDecline15 = hi20v > 0 && (latestClose / hi20v - 1) <= -0.15;
 
+  // RCI (Rank Correlation Index)
+  function calcRCI(arr, period) {
+    if (arr.length < period) return null;
+    const p = arr.slice(-period);
+    const n = period;
+    const sorted = [...p].sort((a, b) => b - a);
+    const priceRank = p.map(v => sorted.indexOf(v) + 1);
+    const dSq = priceRank.reduce((sum, pr, i) => sum + Math.pow((i + 1) - pr, 2), 0);
+    return (1 - 6 * dSq / (n * (n * n - 1))) * 100;
+  }
+  const rci9     = calcRCI(closes.slice(0, last + 1), 9);
+  const rci9Prev = last >= 9 ? calcRCI(closes.slice(0, last), 9) : null;
+  const rci26    = calcRCI(closes.slice(0, last + 1), 26);
+
+  // 直近3日連続下落（押し目確認）
+  const preDown3 = last >= 3
+    && closes[last-1] < closes[last-2]
+    && closes[last-2] < closes[last-3];
+
+  // ギャップアップ（当日始値 > 前日終値）
+  const gapUp = last > 0 && opens[last] > closes[last - 1];
+
+  // CCI(14)
+  const cciStart_ = Math.max(0, last - 13);
+  const tp14_ = [];
+  for (let i = cciStart_; i <= last; i++) tp14_.push((highs[i]+lows[i]+closes[i])/3);
+  const tpMean_ = tp14_.reduce((a,b)=>a+b,0)/tp14_.length;
+  const tpMd_   = tp14_.reduce((a,v)=>a+Math.abs(v-tpMean_),0)/tp14_.length;
+  const cciVal  = tpMd_ > 0 ? (tp14_[tp14_.length-1]-tpMean_)/(0.015*tpMd_) : 0;
+
   // 一目均衡表
   function ichimokuMid(end, period) {
     if (end == null || end - period + 1 < 0) return null;
@@ -233,6 +263,12 @@ function computeIndicators(dailyBars, signalIdx) {
     hiBrk20,
     lowerWick50,
     preDecline15,
+    rci9:     rci9 !== null ? +rci9.toFixed(1) : null,
+    rci9Prev: rci9Prev !== null ? +rci9Prev.toFixed(1) : null,
+    rci26:    rci26 !== null ? +rci26.toFixed(1) : null,
+    preDown3,
+    gapUp,
+    cciVal:   +cciVal.toFixed(1),
     ichTenkan:    ichTenkan !== null ? +ichTenkan.toFixed(2) : null,
     ichKijun:     ichKijun !== null ? +ichKijun.toFixed(2) : null,
     ichCloudTop:  ichCloud.top !== null ? +ichCloud.top.toFixed(2) : null,

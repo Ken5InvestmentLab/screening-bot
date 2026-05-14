@@ -347,6 +347,33 @@ def get_features(daily, sig_date):
     hb20 = lc > hi20
     pre_decline15 = hi20 > 0 and (lc / hi20 - 1) <= -0.15
 
+    def _rci(prices, period):
+        if len(prices) < period: return None
+        p = prices[-period:]
+        n = period
+        sorted_desc = sorted(p, reverse=True)
+        d_sq = sum((i+1 - (sorted_desc.index(p[i])+1))**2 for i in range(n))
+        return (1 - 6*d_sq / (n*(n**2-1))) * 100
+
+    rci9  = _rci(C[:last+1], 9)
+    rci26 = _rci(C[:last+1], 26)
+    rci9_prev = _rci(C[:last], 9) if last >= 9 else None
+    rci9_os  = rci9  is not None and rci9  <= -50
+    rci26_os = rci26 is not None and rci26 <= -50
+    rci9_up  = (rci9 is not None and rci9_prev is not None
+                and rci9 > rci9_prev and rci9 < 0)
+
+    pre_down3 = (last >= 3 and C[last-1] < C[last-2] and C[last-2] < C[last-3])
+    gap_up    = (last > 0 and lo > C[last-1])
+
+    cci_start = max(0, last-13)
+    tp_cci = [(H[i]+L[i]+C[i])/3 for i in range(cci_start, last+1)]
+    tp_mean_cci = sum(tp_cci)/len(tp_cci)
+    tp_md_cci   = sum(abs(x-tp_mean_cci) for x in tp_cci)/len(tp_cci)
+    cci = (tp_cci[-1]-tp_mean_cci)/(0.015*tp_md_cci) if tp_md_cci > 0 else 0
+    cci_os = cci <= -100
+    bb_lower = bbpct <= 0.20
+
     lo14 = min(L[max(0, last-13):last+1])
     hi14 = max(H[max(0, last-13):last+1])
     stoch = (lc - lo14) / (hi14 - lo14) * 100 if (hi14 - lo14) > 0 else 50
@@ -405,8 +432,13 @@ def get_features(daily, sig_date):
         ich_price_kijun=ich_price_kijun, ich_cloud_above=ich_cloud_above,
         ich_cloud_green=ich_cloud_green, ich_chikou=ich_chikou,
         ich_kumo_break=ich_kumo_break,
+        rci9_os=rci9_os, rci26_os=rci26_os, rci9_up=rci9_up,
+        pre_down3=pre_down3, gap_up=gap_up, bb_lower=bb_lower, cci_os=cci_os,
         _vsurge=vsurge, _atr=atr_pct, _body=body_pct,
         _rsi=rsi, _stoch=stoch, _bbpct=bbpct,
+        _rci9=rci9 if rci9 is not None else 0.0,
+        _rci26=rci26 if rci26 is not None else 0.0,
+        _cci=cci,
     )
 
 def latest_close_for_signal(daily, sig_date):
@@ -893,6 +925,7 @@ BOOL_CONDS = [
     "stoch75","stoch60","rsi5070","rsi4060","bb80",
     "ich_tk","ich_price_tenkan","ich_price_kijun","ich_cloud_above",
     "ich_cloud_green","ich_chikou","ich_kumo_break",
+    "rci9_os","rci26_os","rci9_up","pre_down3","gap_up","bb_lower","cci_os",
 ]
 
 # ── Stage 2: 閾値パラメーター定義 ────────────────────────────
@@ -909,6 +942,9 @@ COND_PARAM = {
     "stoch75": ("_stoch",  75.0, ">="),
     "stoch60": ("_stoch",  60.0, ">="),
     "bb80":    ("_bbpct",  0.80, ">="),
+    "rci9_os":  ("_rci9",   -50.0, "<="),
+    "rci26_os": ("_rci26",  -50.0, "<="),
+    "cci_os":   ("_cci",   -100.0, "<="),
 }
 
 # 連続値列 → 閾値候補
@@ -918,6 +954,9 @@ PARAM_CANDIDATES = {
     "_atr":    [2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
     "_stoch":  [40, 45, 50, 55, 60, 65, 70, 75, 80, 85],
     "_bbpct":  [0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95],
+    "_rci9":   [-80, -70, -60, -50, -40, -30, -20, -10, 0],
+    "_rci26":  [-80, -70, -60, -50, -40, -30, -20, -10, 0],
+    "_cci":    [-200, -150, -100, -50, 0],
 }
 
 # JS生成テンプレート (raw_col → (desc_fn, cond_fn, label_fn))
@@ -947,6 +986,21 @@ PARAM_JS_TPL = {
         lambda t: f"ind.bbPct >= {t:.2f}",
         lambda t: "BB上部(${(ind.bbPct*100).toFixed(0)}%)",
     ),
+    "_rci9": (
+        lambda t: f"RCI(9) ≤ {t:.0f}",
+        lambda t: f"ind.rci9 !== null && ind.rci9 <= {t:.0f}",
+        lambda t: "RCI9(${ind.rci9 !== null ? ind.rci9.toFixed(0) : 'N/A'})",
+    ),
+    "_rci26": (
+        lambda t: f"RCI(26) ≤ {t:.0f}",
+        lambda t: f"ind.rci26 !== null && ind.rci26 <= {t:.0f}",
+        lambda t: "RCI26(${ind.rci26 !== null ? ind.rci26.toFixed(0) : 'N/A'})",
+    ),
+    "_cci": (
+        lambda t: f"CCI(14) ≤ {t:.0f}",
+        lambda t: f"ind.cciVal <= {t:.0f}",
+        lambda t: "CCI(${ind.cciVal.toFixed(0)})",
+    ),
 }
 
 def score_with_thresholds(df, combo, thresholds):
@@ -956,7 +1010,12 @@ def score_with_thresholds(df, combo, thresholds):
         if c in thresholds and c in COND_PARAM:
             raw_col, _, direction = COND_PARAM[c]
             th = thresholds[c]
-            scores += (df[raw_col] >= th).astype(int) if direction == ">=" else (df[raw_col] < th).astype(int)
+            if direction == ">=":
+                scores += (df[raw_col] >= th).astype(int)
+            elif direction == "<=":
+                scores += (df[raw_col] <= th).astype(int)
+            else:
+                scores += (df[raw_col] < th).astype(int)
         elif c in df.columns:
             scores += df[c].astype(int)
     return scores
@@ -1233,6 +1292,13 @@ JS_IMPL = {
     "body2":         ("強い陽線（実体≥2.0%）","ind.bodyPct >= 2.0","強陽線(${ind.bodyPct.toFixed(1)}%)"),
     "lower_wick50":  ("下ヒゲ優位（下ヒゲ長 ≥ 実体長）","ind.lowerWick50","下ヒゲ優位"),
     "pre_decline15": ("直近20日押し≥15%","ind.preDecline15","深押し"),
+    "rci9_os":  ("RCI(9) ≤ -50（短期売られすぎ）","ind.rci9 !== null && ind.rci9 <= -50","RCI9(${ind.rci9 !== null ? ind.rci9.toFixed(0) : 'N/A'})"),
+    "rci26_os": ("RCI(26) ≤ -50（中期売られすぎ）","ind.rci26 !== null && ind.rci26 <= -50","RCI26(${ind.rci26 !== null ? ind.rci26.toFixed(0) : 'N/A'})"),
+    "rci9_up":  ("RCI(9) 底打ち転換（負→上昇中）","ind.rci9 !== null && ind.rci9Prev !== null && ind.rci9 > ind.rci9Prev && ind.rci9 < 0","RCI9転換"),
+    "pre_down3":("直近3日連続下落後","ind.preDown3","3連陰後"),
+    "gap_up":   ("ギャップアップ（始値>前終値）","ind.gapUp","GAP-UP"),
+    "bb_lower": ("BB位置≤20%（下バンド付近）","ind.bbPct <= 0.20","BB下部"),
+    "cci_os":   ("CCI(14) ≤ -100（売られすぎ）","ind.cciVal <= -100","CCI売られ"),
 }
 
 EXTRA_JS_BLOCK = """
@@ -1305,7 +1371,37 @@ EXTRA_JS_BLOCK = """
   const lowerWick50 = lowerWick >= Math.abs(latestClose - latestOpen) && lowerWick > 0;
 
   // 直近20日高値から15%以上の押し
-  const preDecline15 = hi20v > 0 && (latestClose / hi20v - 1) <= -0.15;"""
+  const preDecline15 = hi20v > 0 && (latestClose / hi20v - 1) <= -0.15;
+
+  // RCI (Rank Correlation Index)
+  function calcRCI(arr, period) {
+    if (arr.length < period) return null;
+    const p = arr.slice(-period);
+    const n = period;
+    const sorted = [...p].sort((a, b) => b - a);
+    const priceRank = p.map(v => sorted.indexOf(v) + 1);
+    const dSq = priceRank.reduce((sum, pr, i) => sum + Math.pow((i + 1) - pr, 2), 0);
+    return (1 - 6 * dSq / (n * (n * n - 1))) * 100;
+  }
+  const rci9     = calcRCI(closes.slice(0, last + 1), 9);
+  const rci9Prev = last >= 9 ? calcRCI(closes.slice(0, last), 9) : null;
+  const rci26    = calcRCI(closes.slice(0, last + 1), 26);
+
+  // 直近3日連続下落（押し目確認）
+  const preDown3 = last >= 3
+    && closes[last-1] < closes[last-2]
+    && closes[last-2] < closes[last-3];
+
+  // ギャップアップ（当日始値 > 前日終値）
+  const gapUp = last > 0 && opens[last] > closes[last - 1];
+
+  // CCI(14)
+  const cciStart_ = Math.max(0, last - 13);
+  const tp14_ = [];
+  for (let i = cciStart_; i <= last; i++) tp14_.push((highs[i]+lows[i]+closes[i])/3);
+  const tpMean_ = tp14_.reduce((a,b)=>a+b,0)/tp14_.length;
+  const tpMd_   = tp14_.reduce((a,v)=>a+Math.abs(v-tpMean_),0)/tp14_.length;
+  const cciVal  = tpMd_ > 0 ? (tp14_[tp14_.length-1]-tpMean_)/(0.015*tpMd_) : 0;"""
 
 EXTRA_JS_RETURN = """    macdPos,
     rsi14:    +rsi14.toFixed(2),
@@ -1319,7 +1415,13 @@ EXTRA_JS_RETURN = """    macdPos,
     ichChikou,
     ichKumoBreak,
     lowerWick50,
-    preDecline15,"""
+    preDecline15,
+    rci9:     rci9 !== null ? +rci9.toFixed(1) : null,
+    rci9Prev: rci9Prev !== null ? +rci9Prev.toFixed(1) : null,
+    rci26:    rci26 !== null ? +rci26.toFixed(1) : null,
+    preDown3,
+    gapUp,
+    cciVal:   +cciVal.toFixed(1),"""
 
 
 def build_func_a(conditions, stats, baseline, n, thresholds=None):
@@ -1563,6 +1665,55 @@ def update_screener_js(new_code):
             print("  ✅ computeIndicators() に下ヒゲ・深押し指標を注入")
         else:
             print("  ⚠ computeIndicators()の下ヒゲ注入パターンが見つかりません")
+
+    # RCI / 押し目 / CCI 指標を注入する。
+    if "const rci9 " not in content:
+        rci_block_anchor = "  const preDecline15 = hi20v > 0 && (latestClose / hi20v - 1) <= -0.15;"
+        rci_return_anchor = "    preDecline15,"
+        rci_block = """
+
+  // RCI (Rank Correlation Index)
+  function calcRCI(arr, period) {
+    if (arr.length < period) return null;
+    const p = arr.slice(-period);
+    const n = period;
+    const sorted = [...p].sort((a, b) => b - a);
+    const priceRank = p.map(v => sorted.indexOf(v) + 1);
+    const dSq = priceRank.reduce((sum, pr, i) => sum + Math.pow((i + 1) - pr, 2), 0);
+    return (1 - 6 * dSq / (n * (n * n - 1))) * 100;
+  }
+  const rci9     = calcRCI(closes.slice(0, last + 1), 9);
+  const rci9Prev = last >= 9 ? calcRCI(closes.slice(0, last), 9) : null;
+  const rci26    = calcRCI(closes.slice(0, last + 1), 26);
+
+  // 直近3日連続下落（押し目確認）
+  const preDown3 = last >= 3
+    && closes[last-1] < closes[last-2]
+    && closes[last-2] < closes[last-3];
+
+  // ギャップアップ（当日始値 > 前日終値）
+  const gapUp = last > 0 && opens[last] > closes[last - 1];
+
+  // CCI(14)
+  const cciStart_ = Math.max(0, last - 13);
+  const tp14_ = [];
+  for (let i = cciStart_; i <= last; i++) tp14_.push((highs[i]+lows[i]+closes[i])/3);
+  const tpMean_ = tp14_.reduce((a,b)=>a+b,0)/tp14_.length;
+  const tpMd_   = tp14_.reduce((a,v)=>a+Math.abs(v-tpMean_),0)/tp14_.length;
+  const cciVal  = tpMd_ > 0 ? (tp14_[tp14_.length-1]-tpMean_)/(0.015*tpMd_) : 0;"""
+        rci_return = """
+    rci9:     rci9 !== null ? +rci9.toFixed(1) : null,
+    rci9Prev: rci9Prev !== null ? +rci9Prev.toFixed(1) : null,
+    rci26:    rci26 !== null ? +rci26.toFixed(1) : null,
+    preDown3,
+    gapUp,
+    cciVal:   +cciVal.toFixed(1),"""
+        if rci_block_anchor in content and rci_return_anchor in content:
+            content = content.replace(rci_block_anchor, rci_block_anchor + rci_block, 1)
+            content = content.replace(rci_return_anchor, rci_return_anchor + rci_return, 1)
+            print("  ✅ computeIndicators() に RCI/押し目/CCI指標を注入")
+        else:
+            print("  ⚠ computeIndicators()のRCI注入パターンが見つかりません")
 
     with open(SCREENER_JS_PATH, "w", encoding="utf-8") as f:
         f.write(content)

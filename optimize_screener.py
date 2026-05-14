@@ -74,7 +74,7 @@ WIN10_RATE_FLOOR_RATIO = 0.90  # ★6内の+10%以上率が現行比90%以上な
 STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
 STABLE_S6_N_MIN        = 25    # 全件★6最低件数
 RESCUE_STABLE_S6_N_MIN = 20    # rescue mode時の全件★6最低件数
-STABLE_AVG_MIN         = 0.03  # 全件★6平均騰落率
+STABLE_AVG_MIN         = 0.05  # 全件★6平均騰落率（最低5%要求）
 STABLE_VALID_WR_MIN    = 0.55  # 直近30%検証側★6勝率は strict >
 STABLE_VALID_S6_N_MIN  = 8     # 直近30%検証側★6最低件数
 STABLE_VALID_AVG_MIN   = 0.00  # 直近30%検証側★6平均騰落率
@@ -315,6 +315,8 @@ def get_features(daily, sig_date):
            else sum(V[:last]) / max(1, last))
     vsurge = V[last] / v20 if v20 > 0 else 0
     body_pct = (lc - lo) / lc * 100 if lc > 0 else 0
+    lower_wick = min(lc, lo) - L[last]
+    lower_wick50 = lower_wick >= abs(lc - lo) and lower_wick > 0
 
     m12 = ema_arr(C, 12); m26 = ema_arr(C, 26)
     ml  = [a - b for a, b in zip(m12, m26) if a is not None and b is not None]
@@ -334,6 +336,7 @@ def get_features(daily, sig_date):
 
     hi20 = max(H[max(0, last-20):last]) if last > 0 else lc
     hb20 = lc > hi20
+    pre_decline15 = hi20 > 0 and (lc / hi20 - 1) <= -0.15
 
     lo14 = min(L[max(0, last-13):last+1])
     hi14 = max(H[max(0, last-13):last+1])
@@ -381,11 +384,11 @@ def get_features(daily, sig_date):
 
     return dict(
         ema75=e75 is not None and lc > e75, ema25=lc > e25,
-        vol20=vsurge >= 2.0, vol15=vsurge >= 1.5, vol12=vsurge >= 1.2,
-        sbull=body_pct >= 0.5, body1=body_pct >= 1.0,
+        vol20=vsurge >= 2.0, vol15=vsurge >= 1.5, vol12=vsurge >= 1.2, vol30=vsurge >= 3.0,
+        sbull=body_pct >= 0.5, body1=body_pct >= 1.0, body2=body_pct >= 2.0,
         macdgc=gc3, macdpos=macd_pos,
         atr5=atr_pct < 5.0, atr3=atr_pct < 3.0, atr7=atr_pct < 7.0,
-        hb20=hb20,
+        hb20=hb20, lower_wick50=lower_wick50, pre_decline15=pre_decline15,
         stoch75=stoch >= 75, stoch60=stoch >= 60,
         rsi5070=50 <= rsi < 70, rsi4060=40 <= rsi < 60,
         bb80=bbpct >= 0.80,
@@ -600,9 +603,9 @@ def logic_signature(method, combo, thresholds=None):
 def _calc_composite(wr, avg, w10, l10, W, n):
     """composite スコア計算（COMPOSITE_VARIANT で切り替え）"""
     if COMPOSITE_VARIANT == "rate_adjusted":
-        # 加重比率で評価 — 件数が多くても比率が低ければ加点されない
-        rate = (w10 / W - l10 / W) * 150 if W > 0 else 0
-        return wr * 50 + avg * 100 + rate
+        # avg・win10重視: 平均騰落率と+10%比率を最大化（勝率は抑制）
+        rate = (w10 / W - l10 / W) * 250 if W > 0 else 0
+        return wr * 20 + avg * 200 + rate
     elif COMPOSITE_VARIANT == "snr":
         import math
         return wr * 50 + avg * 100 + (w10 - l10) / math.sqrt(max(n, 1)) * 15
@@ -866,8 +869,8 @@ def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
 # 方式A: C(N,6) 組み合わせ探索
 # ══════════════════════════════════════════════════════════════
 BOOL_CONDS = [
-    "ema75","ema25","vol20","vol15","vol12","sbull","body1",
-    "macdgc","macdpos","atr5","atr3","atr7","hb20",
+    "ema75","ema25","vol20","vol15","vol12","vol30","sbull","body1","body2",
+    "macdgc","macdpos","atr5","atr3","atr7","hb20","lower_wick50","pre_decline15",
     "stoch75","stoch60","rsi5070","rsi4060","bb80",
     "ich_tk","ich_price_tenkan","ich_price_kijun","ich_cloud_above",
     "ich_cloud_green","ich_chikou","ich_kumo_break",
@@ -1207,6 +1210,10 @@ JS_IMPL = {
     "ich_cloud_green":   ("一目: 先行雲が陽転","ind.ichCloudGreen","一目雲陽転"),
     "ich_chikou":        ("一目: close > 26日前終値","ind.ichChikou","一目遅行"),
     "ich_kumo_break":    ("一目: 雲上抜け","ind.ichKumoBreak","一目雲抜け"),
+    "vol30":         ("当日出来高≥20日×3.0","ind.volSurge >= 3.0","vol急増(${ind.volSurge}x)"),
+    "body2":         ("強い陽線（実体≥2.0%）","ind.bodyPct >= 2.0","強陽線(${ind.bodyPct.toFixed(1)}%)"),
+    "lower_wick50":  ("下ヒゲ優位（下ヒゲ長 ≥ 実体長）","ind.lowerWick50","下ヒゲ優位"),
+    "pre_decline15": ("直近20日押し≥15%","ind.preDecline15","深押し"),
 }
 
 EXTRA_JS_BLOCK = """
@@ -1272,7 +1279,14 @@ EXTRA_JS_BLOCK = """
   const ichCloudGreen = ichSpanAFuture !== null && ichSpanBFuture !== null && ichSpanAFuture > ichSpanBFuture;
   const ichChikou = last >= 26 && latestClose > closes[last - 26];
   const ichKumoBreak = ichCloud.top !== null && ichCloudPrev.top !== null
-    && closes[last - 1] <= ichCloudPrev.top && latestClose > ichCloud.top;"""
+    && closes[last - 1] <= ichCloudPrev.top && latestClose > ichCloud.top;
+
+  // 下ヒゲ優位（下ヒゲ長 ≥ 実体長）
+  const lowerWick = Math.min(latestClose, latestOpen) - lows[last];
+  const lowerWick50 = lowerWick >= Math.abs(latestClose - latestOpen) && lowerWick > 0;
+
+  // 直近20日高値から15%以上の押し
+  const preDecline15 = hi20v > 0 && (latestClose / hi20v - 1) <= -0.15;"""
 
 EXTRA_JS_RETURN = """    macdPos,
     rsi14:    +rsi14.toFixed(2),
@@ -1284,7 +1298,9 @@ EXTRA_JS_RETURN = """    macdPos,
     ichCloudTop:  ichCloud.top !== null ? +ichCloud.top.toFixed(2) : null,
     ichCloudGreen,
     ichChikou,
-    ichKumoBreak,"""
+    ichKumoBreak,
+    lowerWick50,
+    preDecline15,"""
 
 
 def build_func_a(conditions, stats, baseline, n, thresholds=None):
@@ -1506,6 +1522,28 @@ def update_screener_js(new_code):
             print("  ✅ computeIndicators() に一目均衡表指標を注入")
         else:
             print("  ⚠ computeIndicators()の一目注入パターンが見つかりません")
+
+    # 既に一目が入っている環境に、下ヒゲ・深押し指標を追加注入する。
+    if "const lowerWick50" not in content:
+        lw_block_anchor = "    && closes[last - 1] <= ichCloudPrev.top && latestClose > ichCloud.top;"
+        lw_return_anchor = "    ichKumoBreak,"
+        lw_block = """
+
+  // 下ヒゲ優位（下ヒゲ長 ≥ 実体長）
+  const lowerWick = Math.min(latestClose, latestOpen) - lows[last];
+  const lowerWick50 = lowerWick >= Math.abs(latestClose - latestOpen) && lowerWick > 0;
+
+  // 直近20日高値から15%以上の押し
+  const preDecline15 = hi20v > 0 && (latestClose / hi20v - 1) <= -0.15;"""
+        lw_return = """
+    lowerWick50,
+    preDecline15,"""
+        if lw_block_anchor in content and lw_return_anchor in content:
+            content = content.replace(lw_block_anchor, lw_block_anchor + lw_block, 1)
+            content = content.replace(lw_return_anchor, lw_return_anchor + lw_return, 1)
+            print("  ✅ computeIndicators() に下ヒゲ・深押し指標を注入")
+        else:
+            print("  ⚠ computeIndicators()の下ヒゲ注入パターンが見つかりません")
 
     with open(SCREENER_JS_PATH, "w", encoding="utf-8") as f:
         f.write(content)

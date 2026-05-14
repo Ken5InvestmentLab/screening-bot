@@ -180,6 +180,13 @@ function computeIndicators(dailyBars, signalIdx) {
   const hi20v   = hi20Arr.length > 0 ? Math.max(...hi20Arr) : latestClose;
   const hiBrk20 = latestClose > hi20v;
 
+  // 下ヒゲ優位（下ヒゲ長 ≥ 実体長）
+  const lowerWick = Math.min(latestClose, latestOpen) - lows[last];
+  const lowerWick50 = lowerWick >= Math.abs(latestClose - latestOpen) && lowerWick > 0;
+
+  // 直近20日高値から15%以上の押し
+  const preDecline15 = hi20v > 0 && (latestClose / hi20v - 1) <= -0.15;
+
   // 一目均衡表
   function ichimokuMid(end, period) {
     if (end == null || end - period + 1 < 0) return null;
@@ -224,6 +231,8 @@ function computeIndicators(dailyBars, signalIdx) {
     stochK:   +stochK.toFixed(2),
     bbPct:    +bbPct.toFixed(4),
     hiBrk20,
+    lowerWick50,
+    preDecline15,
     ichTenkan:    ichTenkan !== null ? +ichTenkan.toFixed(2) : null,
     ichKijun:     ichKijun !== null ? +ichKijun.toFixed(2) : null,
     ichCloudTop:  ichCloud.top !== null ? +ichCloud.top.toFixed(2) : null,

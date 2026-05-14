@@ -2734,6 +2734,23 @@ def main():
     print(f"  表示用バックテスト（全件データ）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
+    # ─── 通常モード時は大幅改善（勝率+5pt以上）のみ提案する ───────────
+    # rescue mode（streak >= RESCUE_REQUIRED_STREAK）は従来通り提案を通す。
+    # 頻繁なロジック変更でユーザーが混乱しないよう、軽微な改善はスキップ。
+    WR_SIGNIFICANT_IMPROVEMENT = 0.05  # +5ppを「大幅」の閾値とする
+    if adoption_mode == "normal":
+        wr_improvement = display_stats6["wr_raw"] - baseline["wr_raw"]
+        if wr_improvement < WR_SIGNIFICANT_IMPROVEMENT:
+            print(
+                f"\n✅ 勝率改善が軽微（+{wr_improvement*100:.1f}pt < "
+                f"+{WR_SIGNIFICANT_IMPROVEMENT*100:.0f}pt）のため更新をスキップします。"
+            )
+            print(
+                f"   rescue modeまたは勝率+{WR_SIGNIFICANT_IMPROVEMENT*100:.0f}pt以上の"
+                f"改善時のみ更新候補として提案します。"
+            )
+            return
+
     # ─── --propose: pending_logic.json に保存して Discord通知して終了 ───
     if args.propose:
         import json as _pjson2

@@ -736,6 +736,66 @@ async function runApproveUpdate(interaction) {
 }
 
 // ============================================================
+// スコアリングロジック却下（管理者専用）
+// ============================================================
+async function runRejectUpdate(interaction) {
+  const adminUserId = process.env.ADMIN_USER_ID;
+  if (!adminUserId || interaction.user.id !== adminUserId) {
+    return interaction.reply({ content: '❌ このコマンドは管理者専用です。', ephemeral: true });
+  }
+
+  const githubToken = process.env.GITHUB_TOKEN;
+  const githubRepo  = process.env.GITHUB_REPO || 'Ken5-jp/screening-bot';
+  if (!githubToken) {
+    return interaction.reply({ content: '❌ GITHUB_TOKEN が未設定です。', ephemeral: true });
+  }
+
+  await interaction.reply({ content: '⏳ 却下ワークフローを起動中...', ephemeral: true });
+
+  const body = JSON.stringify({ ref: 'main' });
+  const [owner, repo] = githubRepo.split('/');
+  const options = {
+    hostname: 'api.github.com',
+    path: `/repos/${owner}/${repo}/actions/workflows/reject.yml/dispatches`,
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${githubToken}`,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(body),
+      'User-Agent': 'DiscordBot (screening-bot, 1.0)',
+    },
+  };
+
+  await new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      if (res.statusCode === 204) {
+        resolve();
+      } else {
+        let data = '';
+        res.on('data', chunk => { data += chunk; });
+        res.on('end', () => reject(new Error(`GitHub API ${res.statusCode}: ${data}`)));
+      }
+    });
+    req.on('error', reject);
+    req.write(body);
+    req.end();
+  }).then(async () => {
+    await interaction.editReply({
+      content: '🗑️ 更新候補を却下しました。pending_logic.json を削除するワークフローを起動しました。',
+      ephemeral: true,
+    });
+  }).catch(async (err) => {
+    console.error('[reject-update] GitHub API エラー:', err.message);
+    await interaction.editReply({
+      content: `❌ GitHub Actions の起動に失敗しました: ${err.message}`,
+      ephemeral: true,
+    });
+  });
+}
+
+// ============================================================
 // Bot起動・コマンド登録
 // ============================================================
 client.once('ready', async () => {
@@ -770,6 +830,7 @@ client.once('ready', async () => {
     },
     { name: 'help', description: 'Botの使い方とスコアの説明を表示' },
     { name: 'approve-update', description: '【管理者専用】保留中のスコアリングロジック更新を承認してデプロイ' },
+    { name: 'reject-update',  description: '【管理者専用】保留中のスコアリングロジック更新を却下して削除' },
   ]);
   console.log('スラッシュコマンド登録完了');
 
@@ -840,6 +901,9 @@ client.on('interactionCreate', async (interaction) => {
   }
   if (interaction.commandName === 'approve-update') {
     await runApproveUpdate(interaction);
+  }
+  if (interaction.commandName === 'reject-update') {
+    await runRejectUpdate(interaction);
   }
 });
 

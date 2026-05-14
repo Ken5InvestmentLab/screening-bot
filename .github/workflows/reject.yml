@@ -1,0 +1,36 @@
+name: Reject Pending Logic
+
+on:
+  workflow_dispatch:  # Discord の /reject-update コマンドから呼び出し
+
+jobs:
+  reject:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove pending files and commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          CHANGED=0
+          if [ -f pending_logic.json ]; then
+            git rm pending_logic.json
+            CHANGED=1
+          fi
+          if [ -f pending_logic_sniper.json ]; then
+            git rm pending_logic_sniper.json
+            CHANGED=1
+          fi
+          if [ "$CHANGED" = "1" ]; then
+            git commit -m "chore: reject pending screener logic [skip ci]"
+            git pull --rebase origin main
+            git push
+            echo "::notice::pending_logic.json を削除しました"
+          else
+            echo "::notice::削除対象の pending ファイルがありませんでした"
+          fi

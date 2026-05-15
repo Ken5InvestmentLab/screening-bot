@@ -30,34 +30,36 @@ function cleanSymbol(sym) {
 function parseAlerts(rows) {
   if (rows.length < 4) return []
   const header = rows[3].map(h => String(h).toLowerCase())
-  
+
   const idx = {
+    alertId: header.indexOf('alert_id'),       // A列
     type: header.indexOf('signal_type'),
-    symbol: header.indexOf('symbol_code'), 
+    symbol: header.indexOf('symbol_code'),
     date: header.indexOf('signal_date'),
     name: header.indexOf('symbol_name'),
     entry: header.indexOf('entry_price'),
     eval5bd: header.indexOf('eval_close_5bd'), // M列を追加
     perf5bd: header.indexOf('perf_5bd')        // N列を追加
   }
-  
+
   if (idx.symbol === -1 || idx.date === -1) return []
 
   return rows.slice(4).map(r => {
     // entry_priceを数値化
     const rawEntry = r[idx.entry];
     const entryPrice = rawEntry ? parseFloat(String(rawEntry).replace(/,/g, '')) : 0;
-    
+
     // 5日後株価と騰落率を数値化（空欄やハイフンの場合は null）
     const rawEval5bd = r[idx.eval5bd];
     const eval5bd = rawEval5bd && String(rawEval5bd).trim() !== '' ? parseFloat(String(rawEval5bd).replace(/,/g, '')) : null;
-    
+
     const rawPerf5bd = r[idx.perf5bd];
     const perf5bd = rawPerf5bd && String(rawPerf5bd).trim() !== '' ? parseFloat(String(rawPerf5bd).replace(/%/g, '')) : null;
 
     return {
+      alertId: idx.alertId >= 0 ? (r[idx.alertId]?.toString().trim() || null) : null,
       type: r[idx.type]?.toString().trim().toUpperCase(),
-      symbol: cleanSymbol(r[idx.symbol]), 
+      symbol: cleanSymbol(r[idx.symbol]),
       date: r[idx.date]?.toString().trim(),
       name: r[idx.name]?.toString().trim(),
       entry: entryPrice,
@@ -201,4 +203,59 @@ async function fetchAllBottomSignals(days = 0) {
   })
 }
 
-module.exports = { fetchOHLCVData, fetchRecentBottomSymbols, fetchRecentBottomSignals, fetchAllBottomSignals }
+// ============================================================
+// fetchPremiumReasonsByAlertIds — premium_alert_log から理由を取得
+// シグナル配列の alertId を使って K列 reason を引き、Map で返す
+// ============================================================
+async function fetchPremiumReasonsByAlertIds(signals) {
+  if (!config.PREMIUM_SPREADSHEET_ID || !signals || signals.length === 0) return new Map()
+
+  const idToSymbol = new Map()
+  for (const sig of signals) {
+    if (sig.alertId) idToSymbol.set(sig.alertId, sig.symbol)
+  }
+  if (idToSymbol.size === 0) return new Map()
+
+  const sheets = google.sheets({ version: 'v4', auth: getAuth() })
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: config.PREMIUM_SPREADSHEET_ID,
+    range: `${config.PREMIUM_SHEET_NAME}!A:K`,
+  })
+  const rows = res.data.values || []
+  if (rows.length < 2) return new Map()
+
+  const header = rows[0].map(h => String(h).toLowerCase().trim())
+  const col = {
+    eventType:  header.indexOf('event_type'),
+    alertId:    header.indexOf('alert_id'),
+    symbolCode: header.indexOf('symbol_code'),
+    signalType: header.indexOf('signal_type'),
+    // reason が header にない場合は K列（index 10）にフォールバック
+    reason: header.indexOf('reason') !== -1 ? header.indexOf('reason') : 10,
+  }
+
+  const reasonMap = new Map()
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i]
+    if (!r || r.length === 0) continue
+
+    if (col.eventType >= 0 && String(r[col.eventType] || '').trim().toUpperCase() !== 'POSTED') continue
+    if (col.signalType >= 0 && String(r[col.signalType] || '').trim().toUpperCase() !== 'BOTTOM') continue
+
+    const alertId = col.alertId >= 0 ? String(r[col.alertId] || '').trim() : null
+    if (!alertId || !idToSymbol.has(alertId)) continue
+
+    // symbol_code の突合（銘柄ずれ防止）
+    if (col.symbolCode >= 0) {
+      const rowSymbol = cleanSymbol(String(r[col.symbolCode] || '').trim())
+      if (rowSymbol !== idToSymbol.get(alertId)) continue
+    }
+
+    const reason = r[col.reason] ? String(r[col.reason]).trim() : null
+    if (reason) reasonMap.set(alertId, reason) // 後勝ち
+  }
+
+  return reasonMap
+}
+
+module.exports = { fetchOHLCVData, fetchRecentBottomSymbols, fetchRecentBottomSignals, fetchAllBottomSignals, fetchPremiumReasonsByAlertIds }

@@ -14,6 +14,7 @@ Discordにスクリーニング結果をDM送信するBotです。
 | Bot本体 | VM `ubuntu@168.110.60.126` / `~/screening-bot/` | pm2で常時稼働（Node.js） |
 | スコア最適化 | GitHub Actions `.github/workflows/optimize.yml` | GASの`runDailyMaintenance`完了後に自動起動 |
 | 承認デプロイ | GitHub Actions `.github/workflows/deploy.yml` | `/approve-update` コマンドから手動起動 |
+| 否決ワークフロー | GitHub Actions `.github/workflows/reject.yml` | `/reject-update` コマンドから手動起動 |
 | データソース | Google Sheets（`alerts_raw`, `ohlcv_4h`） | バックテスト用シグナル・OHLCVデータ |
 | GAS | Google Apps Script | TradingViewアラート受信・OHLCV取得・日次メンテ・GitHub Actions起動 |
 
@@ -36,13 +37,13 @@ GitHub Actions optimize.yml
     │ optimize_screener.py --propose
     ▼
 候補なし → 自動終了（通知なし）
-候補あり → pending_logic.json をコミット + Discord承認チャンネルに通知
+候補あり → pending_logic.json / pending_logic_sniper.json をコミット + Discord承認チャンネルに通知
     ▼
 管理者が Discord で /approve-update を実行
     │ → GitHub Actions deploy.yml 起動
     ▼
 optimize_screener.py --apply-pending
-    │ screener.js + current_logic.json + index.js 更新 → SCP → pm2 restart
+    │ screener.js + current_logic.json + current_logic_sniper.json + index.js 更新 → SCP → pm2 restart
     ▼
 Discord /scan コマンドで結果確認
 ```
@@ -90,17 +91,23 @@ PYTHONIOENCODING=utf-8 py optimize_screener.py --apply-pending
 
 # 分析のみ（ファイル更新・デプロイなし・通知なし）
 py optimize_screener.py --dry-run
+
+# レスキューモードを自動承認して実行（GitHub Actionsの --yes フラグ）
+PYTHONIOENCODING=utf-8 py optimize_screener.py --propose --yes
 ```
 
 ## 主要ファイルとアーキテクチャ
 
-- **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` を手動変更する場合は `current_logic.json` との整合性に注意。`.gitattributes` により `merge=ours` が設定済み。
-- **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|code]` と `/approve-update`（管理者専用）を実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュ。stable=スコア5以上、aggressive=4以上。
-- **`sheets.js`** — Google Sheets APIクライアント。`alerts_raw`（ヘッダーが4行目）と `ohlcv_4h` の2シートを読み取る。`cleanSymbol()` で `TYO:4074` → `4074` に変換。
+- **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` / `calculateScoreSniper()` を手動変更する場合は `current_logic.json` / `current_logic_sniper.json` との整合性に注意。`.gitattributes` により `merge=ours` が設定済み。
+- **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|sniper|code]`、`/help`、`/approve-update`（管理者専用）、`/reject-update`（管理者専用）を実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュ。stable=スコア4以上、aggressive=スコア4以上（設定値依存）、sniper=スコア6固定。`.gitattributes` で `merge=ours`。
+- **`sheets.js`** — Google Sheets APIクライアント。`alerts_raw`（ヘッダーが4行目）と `ohlcv_4h` の2シートを読み取る。`premium_alert_log` シートからトリガー理由も取得。`cleanSymbol()` で `TYO:4074` → `4074` に変換。
 - **`config.js`** — フィルター定数（下記参照）。**数値は変更禁止**。
-- **`optimize_screener.py`** — C(18,6)=18,564通りの指標組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。**VMで直接実行しない**（RAM 1GB でOOMクラッシュする）。
-- **`current_logic.json`** — デプロイ済みのスコアロジック。次回最適化のベースラインとして使用される。`.gitattributes` で `merge=ours`。
-- **`pending_logic.json`** — `--propose` が見つけた候補ロジック。承認待ち状態。`--apply-pending` がデプロイ後に削除する。gitignoreされていないため、GitHub Actions経由でコミット・参照される。
+- **`optimize_screener.py`** — 指標の組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。**VMで直接実行しない**（RAM 1GB でOOMクラッシュする）。
+- **`current_logic.json`** — デプロイ済みのStableスコアロジック。次回最適化のベースラインとして使用される。`.gitattributes` で `merge=ours`。
+- **`current_logic_sniper.json`** — デプロイ済みのSniperモードロジック（バックテスト統計付き）。`.gitattributes` で `merge=ours`。
+- **`pending_logic.json`** — `--propose` が見つけた候補Stableロジック。承認待ち状態。`--apply-pending` がデプロイ後に削除する。gitignoreされていないため、GitHub Actions経由でコミット・参照される。
+- **`pending_logic_sniper.json`** — `--propose` が見つけた候補Sniperロジック。`pending_logic.json` と並行して生成される。
+- **`rescue_state.json`** — オプティマイザーの劣化検知状態を追跡するファイル。連続ブリーチストリーク数・プロジェクション統計・待機状態を保存する。
 
 ### `config.js` のFILTER定数（変更禁止）
 
@@ -121,7 +128,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ```json
 {
   "method": "A",
-  "conditions": ["ema75", "vol20", "body1", "atr5", "stoch75", "rsi5070"],
+  "conditions": ["vol15", "vol12", "atr5", "atr7", "stoch75", "pre_down3"],
   "updated_at": "ISO8601",
   "thresholds": {
     "vol20": 2.0,
@@ -132,14 +139,31 @@ MIN_4H_BARS: 30          // 最低4h足本数
 }
 ```
 
-利用可能な条件キー（`optimize_screener.py` の `INDICATORS` で定義）: `ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`
+利用可能な条件キー（`optimize_screener.py` の `INDICATORS` / `BOOL_CONDS` で定義）:
+`ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `pre_down3`
+
+### `current_logic_sniper.json` スキーマ
+
+```json
+{
+  "method": "A",
+  "conditions": ["ema25", "body1", "atr5", "atr7", "hb20", "rsi4060"],
+  "updated_at": "ISO8601",
+  "backtest": {
+    "win_rate": 0.778,
+    "avg_return": 0.082,
+    "count": 18
+  }
+}
+```
 
 ### `screener.js` の処理フロー
 
 1. `aggregateToDailyBars(bars)` — 4h足 → 日次バーに集約（同日はvolume合算・high/low更新・closeは最後）
-2. `computeIndicators(dailyBars, signalIdx)` — EMA/ATR/MACD/RSI/Stoch/BB を `signalIdx` 時点で計算
-3. `calculateScore(ind)` — 現行ロジックで0〜6点スコアを付与（各条件1点）
-4. `screenSymbol(...)` — 上記3関数をラップし、シグナル日・現在変化率・futurePrice等を付けて返す
+2. `computeIndicators(dailyBars, signalIdx)` — EMA/ATR/MACD/RSI/Stoch/BB/Ichimoku/RCI/CCIなど20以上の指標を `signalIdx` 時点で計算
+3. `calculateScore(ind)` — Stableモード: 現行ロジックで0〜6点スコアを付与（各条件1点）
+4. `calculateScoreSniper(ind)` — Sniperモード: 高精度6条件で厳密スコアを付与（全条件通過のみ採用）
+5. `screenSymbol(...)` — 上記関数をラップし、シグナル日・現在変化率・futurePrice等を付けて返す
 
 ### `optimize_screener.py` の評価指標
 
@@ -150,6 +174,12 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **Method A**: 6条件の組み合わせ全探索（各1点）
 - **Method B**: lift分析による重み付きスコア（各1〜2点）
 - **閾値チューニング**: Stage 2でグリッドサーチ（訓練/テスト分割あり）。組み合わせ数が20万超の場合は独立最適化に切り替え
+- **Sniperモード採用基準**: `SNIPER_WR_MIN = 0.65`（勝率65%以上）
+- **Stableモード採用基準**: `STABLE_WR_MIN = 0.60`、`STABLE_AVG_MIN = 0.05`
+
+### レスキューモード（Rescue Mode）
+
+`optimize_screener.py` は現行ロジックのパフォーマンスを継続監視し、2日連続で劣化（ブリーチ）を検知すると自動的にレスキューモードに入る。レスキューモードでは採用基準を緩和し、より広い条件から候補を探す。`rescue_state.json` に状態が永続化される。
 
 ## デプロイ構成
 
@@ -157,7 +187,8 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **VM**: `ubuntu@168.110.60.126`、pm2プロセス名 `screening-bot`
 - **自動実行トリガー**: GASの `runDailyMaintenance` 完了 → `triggerGitHubActionsOptimize_()` → GitHub Actions `workflow_dispatch`
 - **承認フロー**: `optimize.yml`（`--propose`）→ Discord通知 → 管理者が `/approve-update` → `deploy.yml`（`--apply-pending`）→ デプロイ
-- **GitHub Actions コミット対象**: `current_logic.json` / `screener.js` / `index.js` の3ファイル（deploy.yml実行時）
+- **否決フロー**: 管理者が `/reject-update` → `reject.yml` → `pending_logic.json` / `pending_logic_sniper.json` を削除してコミット
+- **GitHub Actions コミット対象**: `current_logic.json` / `current_logic_sniper.json` / `screener.js` / `index.js` の4ファイル（deploy.yml実行時）。`pending_logic.json` / `pending_logic_sniper.json` / `rescue_state.json`（optimize.yml実行時）
 - **バックアップ**: `backups/screener_backup_YYYYMMDD_HHMMSS.js`（最大30件）
 
 ### GitHub Actions 必要Secrets
@@ -174,7 +205,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `DISCORD_TOKEN` | Discord BotトークN |
 | `SPREADSHEET_ID` | Google SheetsのID |
 | `ADMIN_USER_ID` | `/approve-update` を実行できるDiscordユーザーID |
-| `GITHUB_TOKEN` | Classic PAT（`workflow` スコープ）。`/approve-update` から `deploy.yml` を起動するために使用 |
+| `GITHUB_TOKEN` | Classic PAT（`workflow` スコープ）。`/approve-update` / `/reject-update` から `deploy.yml` / `reject.yml` を起動するために使用 |
 | `GITHUB_REPO` | `Ken5InvestmentLab/screening-bot` |
 
 ### GAS Script Properties
@@ -187,14 +218,27 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `DISCORD_WEBHOOK` | OHLCV同期完了通知先 |
 | `GITHUB_PAT` | Classic PAT（`workflow` スコープ）。GASから `optimize.yml` を起動するために使用 |
 
+## 自動生成ファイル一覧
+
+| ファイル | 生成元 | 役割 |
+|---|---|---|
+| `screener.js` | `optimize_screener.py` | スコアリングロジック本体 |
+| `current_logic.json` | `optimize_screener.py` | デプロイ済みStableロジック |
+| `current_logic_sniper.json` | `optimize_screener.py` | デプロイ済みSniperロジック |
+| `pending_logic.json` | `optimize_screener.py --propose` | 承認待ちStableロジック候補 |
+| `pending_logic_sniper.json` | `optimize_screener.py --propose` | 承認待ちSniperロジック候補 |
+| `rescue_state.json` | `optimize_screener.py` | レスキューモード状態追跡 |
+
+これらは `.gitattributes` で `merge=ours` に設定済み。`git merge` 時に外部変更で上書きされることはない。
+
 ## 重要な注意事項
 
 - **`optimize_screener.py` をVM上で直接実行しない** — RAM 1GB のVMでOOMが発生してVMごとクラッシュする。
 - VMクラッシュ時はOracle Cloudコンソールから強制リブート → `pm2 restart screening-bot` で復旧。
 - Discord Webhook送信時は `User-Agent: DiscordBot (screening-bot, 1.0)` ヘッダーが必須（ないとCloudflareに403）。
 - `optimize_screener.py` 実行時は `PYTHONIOENCODING=utf-8` が必要（Windows文字化け防止）。
-- `screener.js` の `calculateScore()` を手動編集しても、次回 `optimize_screener.py` 実行時に上書きされる。手動変更は `current_logic.json` も同時に更新すること。
-- `screener.js` / `current_logic.json` / `index.js` は `.gitattributes` で `merge=ours` に設定済み。`git merge` 時にこれらのファイルが外部変更で上書きされることはない。
+- `screener.js` の `calculateScore()` / `calculateScoreSniper()` を手動編集しても、次回 `optimize_screener.py` 実行時に上書きされる。手動変更は `current_logic.json` / `current_logic_sniper.json` も同時に更新すること。
+- `screener.js` / `current_logic.json` / `current_logic_sniper.json` / `index.js` は `.gitattributes` で `merge=ours` に設定済み。
 
 ## コードの落とし穴（Gotchas）
 
@@ -210,3 +254,8 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **出来高20日平均は当日を除外**する（前20日間のみ）。当日を含めると循環参照になる。
 - `aggregateToDailyBars()` はバーがソート済みであることを前提とする。未ソートだと20日ルックバックウィンドウが壊れる。
 - `screenSymbol()` はシグナル日**以前**で最も近いバーを探す（完全一致不要）。シグナル日がバーの最終日より新しい場合は `null` を返す。
+
+### SniperモードとStableモードの分離
+- `calculateScore()` と `calculateScoreSniper()` はそれぞれ独立した条件セットを使用する。
+- `current_logic.json` (Stable) と `current_logic_sniper.json` (Sniper) は個別に管理される。
+- Sniperモードは6条件すべて通過（スコア6/6）のみを出力する高精度モード。

@@ -19,6 +19,11 @@ module.exports = {
   OHLCV_SHEET_NAME:   process.env.OHLCV_SHEET_NAME   || 'ohlcv_4h',
   ALERTS_SHEET_NAME:  process.env.ALERTS_SHEET_NAME  || 'alerts_raw',
 
+  // ── Premium Report スプレッドシート ───────────────────────
+  // ポジティブ材料（K列 reason）を参照するシート
+  PREMIUM_SPREADSHEET_ID: process.env.PREMIUM_SPREADSHEET_ID || '1GeLT-DUEdsYzT6AR3n1MkhkCeivqgtsMEXMhYfnHm9s',
+  PREMIUM_SHEET_NAME:     process.env.PREMIUM_SHEET_NAME     || 'premium_alert_log',
+
   // ── スクリーニング設定 ─────────────────────────────────
   // Stableモード: スコアがこの値以上を表示
   SCORE_STABLE:     parseInt(process.env.SCORE_STABLE     || '4', 10),

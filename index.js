@@ -10,7 +10,7 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 const config = require('./config');
-const { fetchOHLCVData, fetchRecentBottomSymbols, fetchRecentBottomSignals, fetchAllBottomSignals } = require('./sheets');
+const { fetchOHLCVData, fetchRecentBottomSymbols, fetchRecentBottomSignals, fetchAllBottomSignals, fetchPremiumReasonsByAlertIds } = require('./sheets');
 const { screenSymbol } = require('./screener');
 
 const client = new Client({
@@ -153,6 +153,19 @@ function getVolTag(atrPct) {
   return ' 🔴HIGH';
 }
 
+// 1024文字制限対応: Markdownリンク [text](url) のテキスト部分だけ短縮する
+function truncatePremiumReason(reason, maxLen) {
+  if (reason.length <= maxLen) return reason;
+  const match = reason.match(/^\[(.+)\]\((.+)\)$/s);
+  if (match) {
+    const url = match[2];
+    const suffix = `...](${url})`;
+    const available = maxLen - 1 - suffix.length; // 1 for '['
+    if (available > 0) return `[${match[1].slice(0, available)}${suffix}`;
+  }
+  return reason.slice(0, maxLen - 3) + '...';
+}
+
 function sortResults(results) {
   return results.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
@@ -210,6 +223,11 @@ async function sendResultDMs(user, results, headerEmbed) {
         val += `通過: なし\n`;
       }
       val += `[📊 チャート](${tvUrl})`;
+      if (r.premiumReason) {
+        const prefix = '\n🏦 ';
+        const available = 1024 - val.length - prefix.length;
+        if (available > 10) val += prefix + truncatePremiumReason(r.premiumReason, available);
+      }
 
       embed.addFields({ name: `${r.symbol}　${r.name ?? ''}`, value: val, inline: false });
     }
@@ -359,7 +377,23 @@ async function runScan(interaction) {
       if (isSniperMode && !r.sniperEnabled) continue;
 
       scanResult.name = sig.name;
+      scanResult.alertId = sig.alertId;
       if (scanResult.score >= modeMinScore) scored.push(scanResult);
+    }
+
+    // Premium理由を取得（失敗してもスキャン続行）
+    let premiumReasonMap = new Map();
+    try {
+      if (config.PREMIUM_SPREADSHEET_ID) {
+        premiumReasonMap = await fetchPremiumReasonsByAlertIds(signals);
+      }
+    } catch (err) {
+      console.warn('[scan] Premium理由取得エラー（スキップ）:', err.message);
+    }
+    for (const r of scored) {
+      if (r.alertId && premiumReasonMap.has(r.alertId)) {
+        r.premiumReason = premiumReasonMap.get(r.alertId);
+      }
     }
 
     sortResults(scored);
@@ -480,6 +514,7 @@ async function runCodeSearch(interaction, user, codeInput) {
           futurePrice: (info.eval5bd !== null && !isNaN(info.eval5bd)) ? info.eval5bd : null,
           futureDiff: info.perf5bd !== null ? Number(info.perf5bd).toFixed(2) : null,
           latestClose: null, change: '0.00',
+          alertId: info.alertId,
         });
       } else {
         const r = screenSymbol(symbolCode, data, info.date, info.entry, info.eval5bd, info.perf5bd);
@@ -487,6 +522,7 @@ async function runCodeSearch(interaction, user, codeInput) {
           r.name = info.name;
           // Sniperモード満点の場合はバッジを付与
           r.sniperTag = r.sniperEnabled && r.sniperScore === (sniperLogic.conditions.length || 6);
+          r.alertId = info.alertId;
           scored.push(r);
         }
       }
@@ -508,6 +544,21 @@ async function runCodeSearch(interaction, user, codeInput) {
       if (a.score !== b.score) return b.score - a.score;
       return new Date(b.signalDate) - new Date(a.signalDate);
     });
+
+    // Premium理由を取得（失敗してもスキャン続行）
+    let codeReasonMap = new Map();
+    try {
+      if (config.PREMIUM_SPREADSHEET_ID) {
+        codeReasonMap = await fetchPremiumReasonsByAlertIds(symbolSignals);
+      }
+    } catch (err) {
+      console.warn('[code-search] Premium理由取得エラー（スキップ）:', err.message);
+    }
+    for (const r of scored) {
+      if (r.alertId && codeReasonMap.has(r.alertId)) {
+        r.premiumReason = codeReasonMap.get(r.alertId);
+      }
+    }
 
     const headerEmbed = new EmbedBuilder()
       .setTitle(`🔍 コード検索: ${symbolCode}`)

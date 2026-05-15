@@ -448,7 +448,7 @@ async function runCodeSearch(interaction, user, codeInput) {
   try {
     const [ohlcvMap, allSignals] = await Promise.all([
       fetchOHLCVData(),
-      fetchAllBottomSignals(65),
+      fetchAllBottomSignals(0),
     ]);
 
     await prog.delete().catch(() => {});
@@ -459,7 +459,7 @@ async function runCodeSearch(interaction, user, codeInput) {
     if (symbolSignals.length === 0) {
       const embed = new EmbedBuilder()
         .setTitle(`🔍 コード検索: ${symbolCode}`)
-        .setDescription(`過去40営業日以内にBOTTOMシグナルは検出されていません。`)
+        .setDescription(`BOTTOMシグナルは検出されていません。`)
         .setColor(COLOR_WARN)
         .setFooter({ text: DISCLAIMER })
         .setTimestamp();

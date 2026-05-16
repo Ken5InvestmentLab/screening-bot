@@ -232,6 +232,7 @@ def parse_alerts(rows, include_unconfirmed=False):
                 continue
             entry = 0.0
         recs.append({
+            "alert_id": g("alert_id").strip(),  # signals_archive と alerts_raw の統合時に重複除去キーとして使う
             "symbol": sym, "name": g("symbol_name").strip(),
             "date": g("signal_date").strip(),
             "entry": entry,
@@ -2594,17 +2595,40 @@ def main():
         svc = get_service()
         print("  接続OK...")
         ar = fetch(svc, "alerts_raw")
+        # signals_archive は GAS が完了済みシグナルを移動するシート（最大365日保持）。
+        # バックテストの母数を増やすために検証時のみ追加で読み込む。
+        # シート未作成や API エラーでも本処理を止めない（空配列でフォールバック）。
+        try:
+            sa = fetch(svc, "signals_archive")
+        except Exception as _sa_e:
+            sa = []
+            print(f"  signals_archive 取得スキップ: {_sa_e}")
         oh = fetch(svc, "ohlcv_4h")
-        print(f"  alerts_raw: {len(ar)}行 / ohlcv_4h: {len(oh)}行")
+        print(f"  alerts_raw: {len(ar)}行 / signals_archive: {len(sa)}行 / ohlcv_4h: {len(oh)}行")
     except Exception as e:
         print(f"❌ 取得エラー: {e}"); sys.exit(1)
 
     print("\n🔧 Step 2: 解析...")
-    alerts = parse_alerts(ar)
+    alerts_raw_confirmed = parse_alerts(ar)
+    alerts_archive_confirmed = parse_alerts(sa)
+    # alerts_raw を先に concat → 万一 alert_id が両方に存在しても alerts_raw 側が残る。
+    # 時系列順 sort_values("date") は後段の Walk-forward 分割で行われるため、
+    # ここではそのまま結合してよい。
+    alerts = pd.concat([alerts_raw_confirmed, alerts_archive_confirmed], ignore_index=True)
+    if "alert_id" in alerts.columns and len(alerts) > 0:
+        _has_id = alerts["alert_id"].astype(str) != ""
+        alerts = pd.concat([
+            alerts[_has_id].drop_duplicates(subset=["alert_id"], keep="first"),
+            alerts[~_has_id],
+        ], ignore_index=True)
+    # 未確定★6投影で使う alerts_all は alerts_raw 限定。
+    # signals_archive は完了済みのみなので、include_unconfirmed=True で取り直しても意味がない。
     alerts_all = parse_alerts(ar, include_unconfirmed=True)
     ohlcv  = parse_ohlcv(oh)
-    unconfirmed_count = max(0, len(alerts_all) - len(alerts))
-    print(f"  BOTTOMシグナル確定済み: {len(alerts)}件 / 5日後未確定: {unconfirmed_count}件")
+    unconfirmed_count = max(0, len(alerts_all) - len(alerts_raw_confirmed))
+    print(f"  BOTTOM確定済み合計: {len(alerts)}件 "
+          f"(alerts_raw {len(alerts_raw_confirmed)} + archive {len(alerts_archive_confirmed)})")
+    print(f"  5日後未確定: {unconfirmed_count}件")
     if len(alerts) < 30: print("❌ データ不足"); sys.exit(1)
 
     print("\n📊 Step 3: 指標計算...")

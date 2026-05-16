@@ -15,7 +15,7 @@ Discordにスクリーニング結果をDM送信するBotです。
 | スコア最適化 | GitHub Actions `.github/workflows/optimize.yml` | GASの`runDailyMaintenance`完了後に自動起動 |
 | 承認デプロイ | GitHub Actions `.github/workflows/deploy.yml` | `/approve-update` コマンドから手動起動 |
 | 否決ワークフロー | GitHub Actions `.github/workflows/reject.yml` | `/reject-update` コマンドから手動起動 |
-| データソース | Google Sheets（`alerts_raw`, `ohlcv_4h`） | バックテスト用シグナル・OHLCVデータ |
+| データソース | Google Sheets（`alerts_raw`, `signals_archive`, `ohlcv_4h`） | バックテスト用シグナル・OHLCVデータ。`signals_archive` はバックテスト母数拡張用（365日保持）、`optimize_screener.py` 内部のみで使用 |
 | GAS | Google Apps Script | TradingViewアラート受信・OHLCV取得・日次メンテ・GitHub Actions起動 |
 
 ## データフロー（全体像）
@@ -102,7 +102,7 @@ PYTHONIOENCODING=utf-8 py optimize_screener.py --propose --yes
 - **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|sniper|code]`、`/help`、`/approve-update`（管理者専用）、`/reject-update`（管理者専用）を実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュ。stable=スコア4以上、aggressive=スコア4以上（設定値依存）、sniper=スコア6固定。`.gitattributes` で `merge=ours`。
 - **`sheets.js`** — Google Sheets APIクライアント。`alerts_raw`（ヘッダーが4行目）と `ohlcv_4h` の2シートを読み取る。`premium_alert_log` シートからトリガー理由も取得。`cleanSymbol()` で `TYO:4074` → `4074` に変換。
 - **`config.js`** — フィルター定数（下記参照）。**数値は変更禁止**。
-- **`optimize_screener.py`** — 指標の組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。**VMで直接実行しない**（RAM 1GB でOOMクラッシュする）。
+- **`optimize_screener.py`** — 指標の組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。**VMで直接実行しない**（RAM 1GB でOOMクラッシュする）。バックテスト評価時は `alerts_raw` と `signals_archive` を統合して使用（`alert_id` ベースで重複除去・Walk-forward 70/30 分割）。`signals_archive` はバックテスト内部のみで使用し、`/scan` 結果・Discord 通知・`index.js` には一切影響しない。
 - **`current_logic.json`** — デプロイ済みのStableスコアロジック。次回最適化のベースラインとして使用される。`.gitattributes` で `merge=ours`。
 - **`current_logic_sniper.json`** — デプロイ済みのSniperモードロジック（バックテスト統計付き）。`.gitattributes` で `merge=ours`。
 - **`pending_logic.json`** — `--propose` が見つけた候補Stableロジック。承認待ち状態。`--apply-pending` がデプロイ後に削除する。gitignoreされていないため、GitHub Actions経由でコミット・参照される。

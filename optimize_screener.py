@@ -56,6 +56,8 @@ PENDING_LOGIC_PATH       = os.path.join(BASE_DIR, "pending_logic.json")
 SNIPER_LOGIC_PATH        = os.path.join(BASE_DIR, "current_logic_sniper.json")
 SNIPER_PENDING_PATH      = os.path.join(BASE_DIR, "pending_logic_sniper.json")
 RESCUE_STATE_PATH        = os.path.join(BASE_DIR, "rescue_state.json")
+CHAMPION_STATE_PATH      = os.path.join(BASE_DIR, "champion_state.json")
+LOGIC_HISTORY_PATH       = os.path.join(BASE_DIR, "current_logic_history.jsonl")
 SNIPER_WR_MIN            = 0.65   # Sniper採用の最低勝率
 SNIPER_N_MIN             = 10     # Sniper採用の最低件数
 SNIPER_WR_EPS            = 1e-12  # 浮動小数誤差を吸収しつつ、勝率はstrict改善のみ採用
@@ -72,12 +74,12 @@ WIN10_RATE_FLOOR_RATIO = 0.90  # ★6内の+10%以上率が現行比90%以上な
 
 # Stable ★6 品質ゲート（過学習防止 + 劣化検知）
 STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
-STABLE_S6_N_MIN        = 25    # 全件★6最低件数
-RESCUE_STABLE_S6_N_MIN = 20    # rescue mode時の全件★6最低件数
+STABLE_S6_N_MIN        = 40    # 全件★6最低件数 (25→40: CI半幅±15pt確保で過学習抑制)
+RESCUE_STABLE_S6_N_MIN = 30    # rescue mode時の全件★6最低件数 (20→30)
 STABLE_AVG_MIN         = 0.05  # 全件★6平均騰落率（最低5%要求）
-STABLE_VALID_WR_MIN    = 0.55  # 直近30%検証側★6勝率は strict >
-STABLE_VALID_S6_N_MIN  = 8     # 直近30%検証側★6最低件数
-STABLE_VALID_AVG_MIN   = 0.00  # 直近30%検証側★6平均騰落率
+STABLE_VALID_WR_MIN    = 0.55  # 直近検証側★6勝率は strict >
+STABLE_VALID_S6_N_MIN  = 20    # 直近検証側★6最低件数 (8→20: n=8はノイズと区別不能)
+STABLE_VALID_AVG_MIN   = 0.00  # 直近検証側★6平均騰落率
 RESCUE_REQUIRED_STREAK = 2     # rescueは劣化判定が連続した場合のみ起動
 RESCUE_CURRENT_S6_N_MIN = 5    # 現在値の未確定★6を回復兆候として見る最低件数
 
@@ -89,7 +91,8 @@ HEALTHY_SKIP_N_MIN = 25     # 全件★6件数がこれ以上 → 更新不要
 # Sniperモードのスキップ下限（勝率特化のためavg不要・件数は少なくてOK）
 SNIPER_HEALTHY_SKIP_WR    = 0.75   # Sniper全件勝率がこれ以上 → 更新不要
 SNIPER_HEALTHY_SKIP_N_MIN = 15     # Sniper全件★6件数がこれ以上 → 更新不要
-WALK_FORWARD_VALID_FRAC = 0.30
+WALK_FORWARD_VALID_FRAC = 0.20  # 30%→20%: lockbox分を確保するため
+LOCKBOX_FRAC            = 0.20  # 選別ループに一切触れない真のOOS
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
 FINAL_EVAL_CANDIDATE_LIMIT = 2_000
 THRESHOLD_TUNE_CANDIDATE_LIMIT = 9
@@ -119,7 +122,7 @@ def load_current_logic():
         print(f"  ⚠ current_logic.json 読み込みエラー: {e}")
         return None
 
-def save_current_logic(method, conditions, thresholds=None):
+def save_current_logic(method, conditions, thresholds=None, backtest=None):
     """デプロイ成功後に現行ロジックを保存する。"""
     import json
     data = {
@@ -129,12 +132,85 @@ def save_current_logic(method, conditions, thresholds=None):
     }
     if thresholds:
         data["thresholds"] = thresholds
+    if backtest:
+        data["backtest"] = backtest
     try:
         with open(CURRENT_LOGIC_PATH, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
         print(f"  ✅ current_logic.json 更新完了")
     except Exception as e:
         print(f"  ⚠ current_logic.json 保存エラー: {e}")
+
+def load_champion_state():
+    """champion_state.json を読み込む。存在しない場合は空の状態を返す。"""
+    if not os.path.exists(CHAMPION_STATE_PATH):
+        return {}
+    try:
+        with open(CHAMPION_STATE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"  ⚠ champion_state.json 読み込みエラー: {e}")
+        return {}
+
+def save_champion_state(state):
+    """champion_state.json を保存する。"""
+    try:
+        with open(CHAMPION_STATE_PATH, "w", encoding="utf-8") as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+        print("  ✅ champion_state.json 更新完了")
+    except Exception as e:
+        print(f"  ⚠ champion_state.json 保存エラー: {e}")
+
+def promote_to_champion(method, conditions, thresholds, backtest, deployed_at=None):
+    """新ロジックを Champion に昇格し、旧 Champion を prev_champion に降格する。
+    live_log はリセットされ、次回以降のシグナルから prev_champion スコアを並走計算する。"""
+    old_state = load_champion_state()
+    old_champion = old_state.get("champion")
+    now_str = deployed_at or datetime.utcnow().isoformat().replace("+00:00", "Z")
+    new_state = {
+        "champion": {
+            "method": method,
+            "conditions": list(conditions),
+            "thresholds": thresholds or {},
+            "deployed_at": now_str,
+            "backtest_snapshot": backtest or {},
+        },
+        "prev_champion": None,
+        "live_log": [],
+    }
+    if old_champion:
+        new_state["prev_champion"] = {
+            **old_champion,
+            "demoted_at": now_str,
+        }
+    save_champion_state(new_state)
+    # ロジック履歴（最大20件）に追記
+    _append_logic_history(method, conditions, thresholds, backtest, now_str)
+
+def _append_logic_history(method, conditions, thresholds, backtest, deployed_at):
+    """current_logic_history.jsonl にロジック変更履歴を追記する（最大20件保持）。"""
+    entry = {
+        "deployed_at": deployed_at,
+        "method": method,
+        "conditions": list(conditions),
+        "thresholds": thresholds or {},
+        "backtest": backtest or {},
+    }
+    existing = []
+    if os.path.exists(LOGIC_HISTORY_PATH):
+        try:
+            with open(LOGIC_HISTORY_PATH, "r", encoding="utf-8") as f:
+                existing = [json.loads(line) for line in f if line.strip()]
+        except Exception:
+            existing = []
+    existing.append(entry)
+    existing = existing[-20:]  # 最大20件
+    try:
+        with open(LOGIC_HISTORY_PATH, "w", encoding="utf-8") as f:
+            for e in existing:
+                f.write(json.dumps(e, ensure_ascii=False) + "\n")
+    except Exception as ex:
+        print(f"  ⚠ 履歴追記エラー: {ex}")
 
 def load_current_logic_sniper():
     """デプロイ済みのSniperロジックを読み込む。未保存ならNoneを返す。"""
@@ -645,14 +721,23 @@ def logic_signature(method, combo, thresholds=None):
 def _calc_composite(wr, avg, w10, l10, W, n):
     """composite スコア計算（COMPOSITE_VARIANT で切り替え）"""
     if COMPOSITE_VARIANT == "rate_adjusted":
-        # avg・win10重視: 平均騰落率と+10%比率を最大化（勝率は抑制）
+        # 過学習抑制のため avg の影響を半減し勝率重視に変更
+        # (avg×200 はアウトライヤー1件で10pt動くため過学習の温床)
         rate = (w10 / W - l10 / W) * 250 if W > 0 else 0
-        return wr * 20 + avg * 200 + rate
+        return wr * 40 + avg * 100 + rate
     elif COMPOSITE_VARIANT == "snr":
         import math
         return wr * 50 + avg * 100 + (w10 - l10) / math.sqrt(max(n, 1)) * 15
     else:  # legacy
         return wr * 50 + avg * 100 + (w10 - l10) * 3
+
+def _complexity_penalty(thresholds):
+    """非デフォルト閾値の数 × 0.5 の過学習ペナルティ。
+    6条件全部にカスタム閾値を当てるほど過学習しやすいため、
+    同等composite ならシンプルな組み合わせを優先する（Occam's Razor）。"""
+    if not thresholds:
+        return 0.0
+    return len(thresholds) * 0.5
 
 def _quality_gate_lines(stats, validation_stats=None, mode="normal"):
     """Stable ★6の絶対品質ゲートを評価する。"""
@@ -675,6 +760,86 @@ def _quality_gate_lines(stats, validation_stats=None, mode="normal"):
     ]
     lines = [f"{'✓' if ok else '✗'} 品質: {label}" for ok, label in checks]
     return all(ok for ok, _ in checks), lines
+
+# ══════════════════════════════════════════════════════════════
+# 過学習抑制: Bootstrap CI / Lockbox / Permutation / K-Fold
+# ══════════════════════════════════════════════════════════════
+
+def bootstrap_wr_ci(df_s6, n_iter=1000, alpha=0.05, seed=42):
+    """★6サンプルから Bootstrap して wr_raw の (1-alpha) CI を返す。
+    サンプル不足（<5件）の場合は (0.0, 1.0) を返す。"""
+    n = len(df_s6)
+    if n < 5:
+        return (0.0, 1.0)
+    wins = df_s6["win_5bd"].to_numpy(dtype=float)
+    rng = np.random.default_rng(seed)
+    idx = rng.integers(0, n, (n_iter, n))
+    sample_wrs = wins[idx].mean(axis=1)
+    lo = float(np.percentile(sample_wrs, alpha * 50))
+    hi = float(np.percentile(sample_wrs, 100 - alpha * 50))
+    return (lo, hi)
+
+def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats):
+    """Lockbox（真のOOS）での過度な劣化を検出する。
+    現行ロジックの lockbox baseline より 5pt 超の下落、
+    または平均が大きくマイナスなら過学習と判断して不採用。"""
+    if lockbox_stats["n"] < 8:
+        return False, "lockbox★6件数不足（<8件）"
+    base_wr = baseline_lockbox_stats.get("wr_raw", 0.0)
+    if lockbox_stats["wr_raw"] < base_wr - 0.05:
+        return False, (
+            f"lockbox勝率 {lockbox_stats['wr_raw']*100:.1f}% < "
+            f"現行lockbox {base_wr*100:.1f}% - 5pt"
+        )
+    if lockbox_stats["avg_raw"] < -0.02:
+        return False, f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < -2%"
+    return True, (
+        f"lockbox★6 {lockbox_stats['n']}件 "
+        f"勝率{lockbox_stats['wr_raw']*100:.1f}% "
+        f"平均{lockbox_stats['avg_raw']*100:+.1f}%"
+    )
+
+def permutation_pvalue(df, method, combo, thresholds, observed_composite, n_perm=200, seed=42):
+    """win/loss ラベルをランダムシャッフルして observed_composite 以上が出る確率を返す。
+    p 値が低いほど偶然ではなく真のエッジがある可能性が高い。
+    採用後の最終候補にのみ実行（計算コスト節約）。"""
+    if len(df) < 10:
+        return 1.0  # サンプル不足なら常に不採用方向
+    base_wins = df["win_5bd"].to_numpy(dtype=float).copy()
+    rng = np.random.default_rng(seed)
+    better = 0
+    df_perm = df.copy()
+    for _ in range(n_perm):
+        df_perm["win_5bd"] = rng.permutation(base_wins)
+        try:
+            st6 = calc_candidate_tiers(df_perm, method, combo, thresholds)[0]
+            if st6["composite"] >= observed_composite:
+                better += 1
+        except Exception:
+            pass
+    df_perm["win_5bd"] = base_wins  # restore
+    return better / n_perm
+
+def time_series_kfold_passes(df, method, combo, thresholds, baseline_wr, k=3):
+    """時系列K-Foldで候補が baseline_wr を超えるフォールド数を返す。
+    特定期間に過剰適合している「局所過学習」候補を排除する。"""
+    df_s = df.sort_values("date").reset_index(drop=True)
+    n = len(df_s)
+    if n < k * 5:
+        return k  # サンプル不足なら全通過扱い（制限しない）
+    fold_size = n // k
+    wins = 0
+    for i in range(k):
+        start = i * fold_size
+        end = (start + fold_size) if i < k - 1 else n
+        df_test = df_s.iloc[start:end]
+        try:
+            st6 = calc_candidate_tiers(df_test, method, combo, thresholds)[0]
+            if st6["n"] >= 5 and st6["wr_raw"] > baseline_wr:
+                wins += 1
+        except Exception:
+            pass
+    return wins
 
 def detect_rescue_mode(current_stats, current_validation_stats):
     """現行Stable ★6が劣化している場合にrescue modeを起動する。"""
@@ -881,12 +1046,16 @@ def win10_guard_ok(stats, baseline):
     ok_count, ok_rate, _, _, _ = win10_guard_details(stats, baseline)
     return ok_count and ok_rate
 
-def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
+def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresholds=None):
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
     quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats, mode)
 
+    # 複雑さペナルティ: 非デフォルト閾値を多用した候補は composite を減点して評価
+    penalty = _complexity_penalty(thresholds)
+    adj_composite = stats["composite"] - penalty
+
     threshold = baseline["composite"] * BASELINE_DECAY
-    ok_comp = stats["composite"] > threshold
+    ok_comp = adj_composite > threshold
     # 絶対条件②: 勝率（strict時は等号排除、floor追加）
     ok_wr = (stats["wr_raw"] > baseline["wr_raw"]) if STRICT_WR else (stats["wr_raw"] >= baseline["wr_raw"])
     ok_wr_floor = stats["wr_raw"] >= WR_FLOOR
@@ -896,8 +1065,9 @@ def check_criteria(stats, baseline, validation_stats=None, mode="normal"):
     relative_ok = ok_comp and ok_wr and ok_wr_floor and ok_win10_count and ok_win10_rate
     ok = quality_ok and (relative_ok if mode == "normal" else True)
     op_wr = ">" if STRICT_WR else "≥"
+    penalty_str = f" - penalty{penalty:.1f}" if penalty > 0 else ""
     res = [
-        f"{'✓' if ok_comp else '✗'} 通常条件①: composite {stats['composite']:.1f} {'>' if ok_comp else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
+        f"{'✓' if ok_comp else '✗'} 通常条件①: composite {stats['composite']:.1f}{penalty_str}={adj_composite:.1f} {'>' if ok_comp else '≤'} 現行{baseline['composite']:.1f}×{BASELINE_DECAY}={threshold:.1f}",
         f"{'✓' if ok_wr else '✗'} 通常条件②: 勝率 {stats['wr_raw']*100:.1f}% {op_wr} 現行{baseline['wr_raw']*100:.1f}%",
         f"{'✓' if ok_wr_floor else '✗'} 通常条件②-b: 勝率 {stats['wr_raw']*100:.1f}% ≥ 下限{WR_FLOOR*100:.0f}%",
         f"{'✓' if ok_win10_count else '✗'} 通常条件③-a: 大幅上昇 {stats['win10_raw']:.0f}件 ≥ 最低{WIN10_MIN_COUNT}件",
@@ -2567,7 +2737,11 @@ def main():
         # デプロイ（1回）
         if deploy():
             if _has_main:
-                save_current_logic(_method, _combo, _ths or None)
+                _backtest_data = _p.get("backtest")
+                save_current_logic(_method, _combo, _ths or None,
+                                   backtest=_backtest_data)
+                promote_to_champion(_method, _combo, _ths or {},
+                                    backtest=_backtest_data)
                 os.remove(PENDING_LOGIC_PATH)
                 print("  ✅ pending_logic.json 削除完了")
                 _wr  = _base.get('wr_raw', 0)
@@ -2718,12 +2892,19 @@ def main():
           f"勝率{current_projection_stats6['wr_raw']*100:.1f}% "
           f"平均{current_projection_stats6['avg_raw']*100:+.1f}%")
 
-    # Walk-forward: 古い70%で探索し、直近30%を採用判定用の検証セットにする。
+    # Walk-forward: 60% 訓練 / 20% 検証 / 20% lockbox（真のOOS、選別ループに触れない）
     df_wf = df.sort_values("date").reset_index(drop=True)
-    wf_split = int(len(df_wf) * (1 - WALK_FORWARD_VALID_FRAC))
-    df_wf_train = df_wf.iloc[:wf_split].copy()
-    df_wf_valid = df_wf.iloc[wf_split:].copy()
+    n_total = len(df_wf)
+    n_train = int(n_total * (1.0 - WALK_FORWARD_VALID_FRAC - LOCKBOX_FRAC))
+    n_valid = int(n_total * WALK_FORWARD_VALID_FRAC)
+    df_wf_train   = df_wf.iloc[:n_train].copy()
+    df_wf_valid   = df_wf.iloc[n_train:n_train + n_valid].copy()
+    df_wf_lockbox = df_wf.iloc[n_train + n_valid:].copy()   # 採用直前まで絶対に使わない
     current_validation_stats6 = calc_stats(df_wf_valid[df_wf_valid["sc_cur"] == 6])
+    # 現行ロジックの lockbox baseline（候補との比較用）
+    baseline_lockbox_stats6 = calc_stats(df_wf_lockbox[df_wf_lockbox["sc_cur"] == 6]) \
+        if "sc_cur" in df_wf_lockbox.columns else calc_stats(pd.DataFrame())
+    print(f"  Walk-forward分割: 訓練{len(df_wf_train)}件 / 検証{len(df_wf_valid)}件 / lockbox{len(df_wf_lockbox)}件")
 
     # 現行ロジックが健全なら最適化をスキップ（rescue含め更新不要）
     if is_current_healthy(baseline, current_validation_stats6):
@@ -2926,15 +3107,17 @@ def main():
         for cand in candidate_pool:
             append_final_pair(cand, None)
 
-        # post-tune/full-data compositeで再ソート
+        # post-tune/full-data compositeで再ソート（複雑さペナルティを加味）
         paired = sorted(final_pairs,
-                        key=lambda x: (-x[0][1], -calc_ordering_score(x[0][5], x[0][6], x[0][7]), -x[0][2], -x[0][3]))
+                        key=lambda x: (-(x[0][1] - _complexity_penalty(x[1])),
+                                       -calc_ordering_score(x[0][5], x[0][6], x[0][7]),
+                                       -x[0][2], -x[0][3]))
         all_cands     = [p[0] for p in paired]
         tuned_ths_list = [p[1] for p in paired]
 
         selected = None
         for cand, ths in zip(all_cands, tuned_ths_list):
-            ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode)
+            ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode, thresholds=ths)
             if ok_sel:
                 selected = (cand, ths, reasons_sel)
                 break
@@ -2946,7 +3129,7 @@ def main():
             cand, ths, preselected_adoption_reasons = selected
             best_thresholds = ths or {}
             best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = cand
-    ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode)
+    ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode, thresholds=best_thresholds)
     if 'preselected_adoption_reasons' in locals() and preselected_adoption_reasons:
         adoption_reasons = preselected_adoption_reasons
     print(f"\n🎯 Step 7: 採用判断 — 方式{best_method}")
@@ -2963,6 +3146,44 @@ def main():
 
     if not ok:
         handle_no_stable_candidate("品質条件未達。更新しません。"); return
+
+    # ── 過学習抑制チェック（Tier B） ────────────────────────────────────
+    # 1. Lockbox（真のOOS）ゲート: 選別ループに一切触れていない直近20%で検証
+    lockbox_s6_stats, _, _ = calc_candidate_tiers(df_wf_lockbox, best_method, best_combo, best_thresholds)
+    lb_ok, lb_reason = lockbox_gate_ok(lockbox_s6_stats, baseline_lockbox_stats6)
+    print(f"\n🔒 Lockbox OOS検証 — {'✓ 通過' if lb_ok else '✗ 過学習検出'}: {lb_reason}")
+    if not lb_ok:
+        handle_no_stable_candidate(f"Lockbox(OOS)で過学習を検出。更新しません。({lb_reason})"); return
+
+    # 2. Bootstrap CI: 候補の全件★6でブートストラップ95% CI を計算
+    cand_scores = calc_score_series_for_logic(df, best_method, best_combo, best_thresholds)
+    cand_s6_df = df[cand_scores == 6]
+    wr_lo, wr_hi = bootstrap_wr_ci(cand_s6_df)
+    bs_ok = wr_lo > baseline["wr_raw"]  # CI下限が現行勝率を超える = 統計的有意な改善
+    print(f"  Bootstrap CI(95%): [{wr_lo*100:.1f}%, {wr_hi*100:.1f}%] "
+          f"→ CI下限 {wr_lo*100:.1f}% {'>' if bs_ok else '≤'} 現行勝率 {baseline['wr_raw']*100:.1f}% "
+          f"({'✓' if bs_ok else '✗ 統計的有意性なし'})")
+
+    # 3. K-Fold時系列CV: 3分割で2/3以上のフォールドで baseline を超えること
+    kfold_wins = time_series_kfold_passes(df, best_method, best_combo, best_thresholds, baseline["wr_raw"], k=3)
+    kfold_ok = kfold_wins >= 2
+    print(f"  K-Fold(k=3)安定性: {kfold_wins}/3 フォールドで現行超 "
+          f"({'✓ 安定' if kfold_ok else '✗ 局所過学習の疑い'})")
+
+    # BS CI と K-Fold は両方通過必須（rescue mode は K-Fold のみ免除）
+    if not bs_ok:
+        handle_no_stable_candidate("Bootstrap CI 下限が現行勝率を下回ります。統計的有意性なし。"); return
+    if not kfold_ok and adoption_mode != "rescue":
+        handle_no_stable_candidate("K-Fold CV で局所過学習を検出。全期間での安定性が不十分。"); return
+
+    # 4. Permutation Test: win/lossラベルをランダム化して偶然で出る確率を計算
+    perm_p = permutation_pvalue(df, best_method, best_combo, best_thresholds,
+                                best_stats["composite"], n_perm=200)
+    perm_ok = perm_p < 0.05
+    print(f"  Permutation Test(n=200): p={perm_p:.3f} "
+          f"({'✓ p<0.05' if perm_ok else '△ p≥0.05 (偶然の可能性あり)'})")
+    # permutation は参考情報のみ（採用阻止はしない）
+    # ── 過学習抑制チェックここまで ────────────────────────────────────────
 
     # 条件・閾値が現行と完全一致、または★6対象シグナル集合が同一なら更新不要
     if current_logic:
@@ -3039,7 +3260,17 @@ def main():
                              if not isinstance(v, str)},
             "n_total":      display_n_total,
             "backtest_source": "all",
-            "proposed_at":  datetime.utcnow().isoformat() + "Z"
+            "proposed_at":  datetime.utcnow().isoformat() + "Z",
+            "backtest": {
+                "train":   _to_jsonable(training_stats6),
+                "valid":   _to_jsonable(best_validation_stats6),
+                "lockbox": _to_jsonable(lockbox_s6_stats),
+                "all":     _to_jsonable(display_stats6),
+                "wr_95ci": [wr_lo, wr_hi],
+                "permutation_pvalue": round(perm_p, 4),
+                "kfold_wins": f"{kfold_wins}/3",
+                "complexity": len(best_thresholds or {}),
+            },
         }
         with open(PENDING_LOGIC_PATH, "w", encoding="utf-8") as _pf2:
             _pjson2.dump(_pending, _pf2, ensure_ascii=False, indent=2)

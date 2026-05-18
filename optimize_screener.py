@@ -74,12 +74,21 @@ WIN10_RATE_FLOOR_RATIO = 0.90  # ★6内の+10%以上率が現行比90%以上な
 
 # Stable ★6 品質ゲート（過学習防止 + 劣化検知）
 STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
-STABLE_S6_N_MIN        = 40    # 全件★6最低件数 (25→40: CI半幅±15pt確保で過学習抑制)
+STABLE_S6_N_MIN        = 40    # 全件★6最低件数 (strict時) (25→40: CI半幅±15pt確保)
 RESCUE_STABLE_S6_N_MIN = 30    # rescue mode時の全件★6最低件数 (20→30)
 STABLE_AVG_MIN         = 0.05  # 全件★6平均騰落率（最低5%要求）
 STABLE_VALID_WR_MIN    = 0.55  # 直近検証側★6勝率は strict >
-STABLE_VALID_S6_N_MIN  = 20    # 直近検証側★6最低件数 (8→20: n=8はノイズと区別不能)
+STABLE_VALID_S6_N_MIN  = 20    # 直近検証側★6最低件数 (strict時) (8→20)
 STABLE_VALID_AVG_MIN   = 0.00  # 直近検証側★6平均騰落率
+
+# ── 過渡期（archive 蓄積中）の緩和水準 ───────────────────────────────
+# データが少ない期間は統計的厳格化を一時スキップし、pre-Tier-A 水準で運用。
+# 統計検定 (Lockbox/Bootstrap CI/K-Fold) は n が小さいと逆に偽陽性/偽陰性を量産するため。
+TRANSITION_STABLE_S6_N_MIN        = 25   # 過渡期: pre-Tier-A 水準
+TRANSITION_RESCUE_STABLE_S6_N_MIN = 20   # 過渡期: pre-Tier-A 水準
+TRANSITION_STABLE_VALID_S6_N_MIN  = 8    # 過渡期: pre-Tier-A 水準
+MIN_TOTAL_FOR_STRICT_MODE         = 150  # strict mode に切り替える全件数の最低ライン
+MIN_LOCKBOX_FOR_STRICT_MODE       = 25   # strict mode に切り替える lockbox 件数の最低ライン
 RESCUE_REQUIRED_STREAK = 2     # rescueは劣化判定が連続した場合のみ起動
 RESCUE_CURRENT_S6_N_MIN = 5    # 現在値の未確定★6を回復兆候として見る最低件数
 
@@ -739,10 +748,33 @@ def _complexity_penalty(thresholds):
         return 0.0
     return len(thresholds) * 0.5
 
-def _quality_gate_lines(stats, validation_stats=None, mode="normal"):
-    """Stable ★6の絶対品質ゲートを評価する。"""
+def is_data_sufficient(df, df_wf_lockbox):
+    """過学習抑制ゲート（Lockbox / Bootstrap CI / K-Fold）を意味のあるレベルで
+    動作させるのに十分なデータがあるか判定する。
+
+    不足時は「過渡期モード（transition）」で動作し、pre-Tier-A 水準の緩和ゲートに
+    フォールバックする。
+    - 統計手法は n が小さいと偽陽性/偽陰性を量産するため、厳格適用は逆効果。
+    - archive 蓄積中（signals_archive 統合直後など）でも更新が止まらないようにする。
+    """
+    total_n   = len(df) if df is not None else 0
+    lockbox_n = len(df_wf_lockbox) if df_wf_lockbox is not None else 0
+    return (
+        total_n   >= MIN_TOTAL_FOR_STRICT_MODE
+        and lockbox_n >= MIN_LOCKBOX_FOR_STRICT_MODE
+    )
+
+def _quality_gate_lines(stats, validation_stats=None, mode="normal", data_mode="strict"):
+    """Stable ★6の絶対品質ゲートを評価する。
+
+    data_mode: "strict" (通常時、Tier A 強化済み水準) / "transition" (archive 蓄積中、pre-Tier-A 水準)"""
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
-    stable_s6_n_min = RESCUE_STABLE_S6_N_MIN if mode == "rescue" else STABLE_S6_N_MIN
+    if data_mode == "transition":
+        stable_s6_n_min = TRANSITION_RESCUE_STABLE_S6_N_MIN if mode == "rescue" else TRANSITION_STABLE_S6_N_MIN
+        valid_n_min     = TRANSITION_STABLE_VALID_S6_N_MIN
+    else:
+        stable_s6_n_min = RESCUE_STABLE_S6_N_MIN if mode == "rescue" else STABLE_S6_N_MIN
+        valid_n_min     = STABLE_VALID_S6_N_MIN
 
     checks = [
         (stats["n"] >= stable_s6_n_min,
@@ -751,8 +783,8 @@ def _quality_gate_lines(stats, validation_stats=None, mode="normal"):
          f"全件★6勝率 {stats['wr_raw']*100:.1f}% ≥ {STABLE_WR_MIN*100:.0f}%"),
         (stats["avg_raw"] > STABLE_AVG_MIN,
          f"全件★6平均 {stats['avg_raw']*100:+.1f}% > {STABLE_AVG_MIN*100:+.0f}%"),
-        (validation_stats["n"] >= STABLE_VALID_S6_N_MIN,
-         f"検証★6件数 {validation_stats['n']}件 ≥ {STABLE_VALID_S6_N_MIN}件"),
+        (validation_stats["n"] >= valid_n_min,
+         f"検証★6件数 {validation_stats['n']}件 ≥ {valid_n_min}件"),
         (validation_stats["wr_raw"] > STABLE_VALID_WR_MIN,
          f"検証★6勝率 {validation_stats['wr_raw']*100:.1f}% > {STABLE_VALID_WR_MIN*100:.0f}%"),
         (validation_stats["avg_raw"] >= STABLE_VALID_AVG_MIN,
@@ -1023,9 +1055,11 @@ def is_current_healthy(stats, validation_stats):
         and validation_stats["avg_raw"] >= 0.0
     )
 
-def validation_gate_ok(validation_stats):
+def validation_gate_ok(validation_stats, data_mode="strict"):
+    valid_n_min = (TRANSITION_STABLE_VALID_S6_N_MIN
+                   if data_mode == "transition" else STABLE_VALID_S6_N_MIN)
     return (
-        validation_stats["n"] >= STABLE_VALID_S6_N_MIN
+        validation_stats["n"] >= valid_n_min
         and validation_stats["wr_raw"] > STABLE_VALID_WR_MIN
         and validation_stats["avg_raw"] >= STABLE_VALID_AVG_MIN
     )
@@ -1046,9 +1080,9 @@ def win10_guard_ok(stats, baseline):
     ok_count, ok_rate, _, _, _ = win10_guard_details(stats, baseline)
     return ok_count and ok_rate
 
-def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresholds=None):
+def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresholds=None, data_mode="strict"):
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
-    quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats, mode)
+    quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats, mode, data_mode)
 
     # 複雑さペナルティ: 非デフォルト閾値を多用した候補は composite を減点して評価
     penalty = _complexity_penalty(thresholds)
@@ -1336,7 +1370,7 @@ def analyze_winners(df, baseline, mode="normal"):
 # ══════════════════════════════════════════════════════════════
 # Stage 2: 閾値最適化
 # ══════════════════════════════════════════════════════════════
-def tune_thresholds(df_train, df_test, combo, baseline):
+def tune_thresholds(df_train, df_test, combo, baseline, data_mode="strict"):
     """
     Stage 2: 選ばれた6条件の閾値をグリッドサーチで最適化し、
     テストデータ（直近20%）で検証する。
@@ -1409,7 +1443,7 @@ def tune_thresholds(df_train, df_test, combo, baseline):
         s_test_cur = score_with_thresholds(df_test, combo, {})
         test_cur_stats = calc_stats(df_test[s_test_cur == 6])
         passed = (
-            validation_gate_ok(test_stats)
+            validation_gate_ok(test_stats, data_mode=data_mode)
             and test_stats["composite"] > test_cur_stats["composite"]
         )
         result_str = "✅ 通過" if passed else "⚠ 不合格（デフォルト閾値を使用）"
@@ -2906,6 +2940,15 @@ def main():
         if "sc_cur" in df_wf_lockbox.columns else calc_stats(pd.DataFrame())
     print(f"  Walk-forward分割: 訓練{len(df_wf_train)}件 / 検証{len(df_wf_valid)}件 / lockbox{len(df_wf_lockbox)}件")
 
+    # ── データ充足判定（archive 蓄積中は transition mode で動作） ────────
+    data_mode = "strict" if is_data_sufficient(df, df_wf_lockbox) else "transition"
+    if data_mode == "strict":
+        print(f"  📊 データ充足判定: strict mode（全件{len(df)}≥{MIN_TOTAL_FOR_STRICT_MODE} / lockbox{len(df_wf_lockbox)}≥{MIN_LOCKBOX_FOR_STRICT_MODE}）")
+        print(f"     → Tier B 統計検定（Lockbox / Bootstrap CI / K-Fold）を全面適用")
+    else:
+        print(f"  📊 データ充足判定: transition mode（全件{len(df)}<{MIN_TOTAL_FOR_STRICT_MODE} または lockbox{len(df_wf_lockbox)}<{MIN_LOCKBOX_FOR_STRICT_MODE}）")
+        print(f"     → archive 蓄積中: 統計検定は参考表示のみ、pre-Tier-A 水準で品質ゲート評価")
+
     # 現行ロジックが健全なら最適化をスキップ（rescue含め更新不要）
     if is_current_healthy(baseline, current_validation_stats6):
         print(f"\n✅ 現行ロジック健全のため最適化をスキップ（更新不要）")
@@ -2983,7 +3026,7 @@ def main():
             scores_v = sum(df_wf_valid[c].astype(int) for c in conds_in_valid)
             s6_v = df_wf_valid[scores_v == 6]
             st6_v = calc_stats(s6_v)
-            if validation_gate_ok(st6_v):
+            if validation_gate_ok(st6_v, data_mode=data_mode):
                 wf_validated.append((*item, st6_v))
         print(f"  Walk-forward 品質ゲート通過: {len(wf_validated)}/{limit}通り")
         cands_a = wf_validated
@@ -3002,7 +3045,7 @@ def main():
     if result_b:
         scheme_b, stats_b6, stats_b5, stats_b4 = result_b
         stats_b6_valid, _, _ = calc_candidate_tiers(df_wf_valid, "B", scheme_b)
-        if validation_gate_ok(stats_b6_valid):
+        if validation_gate_ok(stats_b6_valid, data_mode=data_mode):
             candidate_pool.append(("B", stats_b6["composite"], stats_b5["composite"],
                                    stats_b4["composite"], scheme_b, stats_b6, stats_b5,
                                    stats_b4, stats_b6_valid))
@@ -3017,7 +3060,7 @@ def main():
         e = ("✓" if st6["wr_raw"] >= TARGET_WIN_RATE else "△") + \
             ("✓" if st6["avg_raw"] >= TARGET_AVG_PERF else "△") + \
             ("✓" if st6["win10_raw"] > st6["lose10_raw"] else "△") + \
-            ("✓" if validation_gate_ok(st6_valid) else "△")
+            ("✓" if validation_gate_ok(st6_valid, data_mode=data_mode) else "△")
         label = "+".join(combo) if method == "A" else " ".join(f"{c}({w}pt)" for c, w, _ in combo)
         print(f"  #{i+1:<2} {method:<4} {st6['wr_raw']*100:>6.1f}%  {st6['avg_raw']*100:>+7.1f}%"
               f"  {st6['win10_raw']:>3.0f}件  {st6['lose10_raw']:>3.0f}件  {st6['n']:>3}件  {e}  {label}")
@@ -3033,7 +3076,7 @@ def main():
         df_train  = df_wf_train.copy()
         df_test   = df_wf_valid.copy()
         print(f"📐 train/test split: 訓練{len(df_train)}件 / 検証{len(df_test)}件")
-        tuned_ths, _, _, tune_passed = tune_thresholds(df_train, df_test, cur_conds, baseline)
+        tuned_ths, _, _, tune_passed = tune_thresholds(df_train, df_test, cur_conds, baseline, data_mode=data_mode)
         if not (tune_passed and tuned_ths):
             handle_no_stable_candidate("現行ロジックが最良。更新しません。"); return
         best_thresholds = tuned_ths
@@ -3057,7 +3100,7 @@ def main():
         for i, (method_i, _, _, _, combo_i, _, _, _, validation_i) in enumerate(tune_cands):
             if method_i != "A":
                 continue
-            tuned_ths_i, _, _, tune_passed_i = tune_thresholds(df_train, df_test, combo_i, baseline)
+            tuned_ths_i, _, _, tune_passed_i = tune_thresholds(df_train, df_test, combo_i, baseline, data_mode=data_mode)
             if tune_passed_i and tuned_ths_i:
                 s_full_i = score_with_thresholds(df, combo_i, tuned_ths_i)
                 st6f = calc_stats(df[s_full_i == 6])
@@ -3117,7 +3160,7 @@ def main():
 
         selected = None
         for cand, ths in zip(all_cands, tuned_ths_list):
-            ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode, thresholds=ths)
+            ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode, thresholds=ths, data_mode=data_mode)
             if ok_sel:
                 selected = (cand, ths, reasons_sel)
                 break
@@ -3129,7 +3172,7 @@ def main():
             cand, ths, preselected_adoption_reasons = selected
             best_thresholds = ths or {}
             best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = cand
-    ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode, thresholds=best_thresholds)
+    ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode, thresholds=best_thresholds, data_mode=data_mode)
     if 'preselected_adoption_reasons' in locals() and preselected_adoption_reasons:
         adoption_reasons = preselected_adoption_reasons
     print(f"\n🎯 Step 7: 採用判断 — 方式{best_method}")
@@ -3148,41 +3191,43 @@ def main():
         handle_no_stable_candidate("品質条件未達。更新しません。"); return
 
     # ── 過学習抑制チェック（Tier B） ────────────────────────────────────
-    # 1. Lockbox（真のOOS）ゲート: 選別ループに一切触れていない直近20%で検証
+    # strict mode: 全ゲート適用 / transition mode: 参考表示のみで強制 reject しない
+    strict_gates = (data_mode == "strict")
+    if not strict_gates:
+        print(f"\n⚠ transition mode: Tier B 統計検定は参考表示のみ（強制 reject しない）")
+
+    # 1. Lockbox（真のOOS）ゲート
     lockbox_s6_stats, _, _ = calc_candidate_tiers(df_wf_lockbox, best_method, best_combo, best_thresholds)
     lb_ok, lb_reason = lockbox_gate_ok(lockbox_s6_stats, baseline_lockbox_stats6)
     print(f"\n🔒 Lockbox OOS検証 — {'✓ 通過' if lb_ok else '✗ 過学習検出'}: {lb_reason}")
-    if not lb_ok:
+    if strict_gates and not lb_ok:
         handle_no_stable_candidate(f"Lockbox(OOS)で過学習を検出。更新しません。({lb_reason})"); return
 
-    # 2. Bootstrap CI: 候補の全件★6でブートストラップ95% CI を計算
+    # 2. Bootstrap CI
     cand_scores = calc_score_series_for_logic(df, best_method, best_combo, best_thresholds)
     cand_s6_df = df[cand_scores == 6]
     wr_lo, wr_hi = bootstrap_wr_ci(cand_s6_df)
-    bs_ok = wr_lo > baseline["wr_raw"]  # CI下限が現行勝率を超える = 統計的有意な改善
+    bs_ok = wr_lo > baseline["wr_raw"]
     print(f"  Bootstrap CI(95%): [{wr_lo*100:.1f}%, {wr_hi*100:.1f}%] "
           f"→ CI下限 {wr_lo*100:.1f}% {'>' if bs_ok else '≤'} 現行勝率 {baseline['wr_raw']*100:.1f}% "
           f"({'✓' if bs_ok else '✗ 統計的有意性なし'})")
+    if strict_gates and not bs_ok:
+        handle_no_stable_candidate("Bootstrap CI 下限が現行勝率を下回ります。統計的有意性なし。"); return
 
-    # 3. K-Fold時系列CV: 3分割で2/3以上のフォールドで baseline を超えること
+    # 3. K-Fold 時系列CV
     kfold_wins = time_series_kfold_passes(df, best_method, best_combo, best_thresholds, baseline["wr_raw"], k=3)
     kfold_ok = kfold_wins >= 2
     print(f"  K-Fold(k=3)安定性: {kfold_wins}/3 フォールドで現行超 "
           f"({'✓ 安定' if kfold_ok else '✗ 局所過学習の疑い'})")
-
-    # BS CI と K-Fold は両方通過必須（rescue mode は K-Fold のみ免除）
-    if not bs_ok:
-        handle_no_stable_candidate("Bootstrap CI 下限が現行勝率を下回ります。統計的有意性なし。"); return
-    if not kfold_ok and adoption_mode != "rescue":
+    if strict_gates and not kfold_ok and adoption_mode != "rescue":
         handle_no_stable_candidate("K-Fold CV で局所過学習を検出。全期間での安定性が不十分。"); return
 
-    # 4. Permutation Test: win/lossラベルをランダム化して偶然で出る確率を計算
+    # 4. Permutation Test（strict / transition どちらでも参考表示のみ）
     perm_p = permutation_pvalue(df, best_method, best_combo, best_thresholds,
                                 best_stats["composite"], n_perm=200)
     perm_ok = perm_p < 0.05
     print(f"  Permutation Test(n=200): p={perm_p:.3f} "
           f"({'✓ p<0.05' if perm_ok else '△ p≥0.05 (偶然の可能性あり)'})")
-    # permutation は参考情報のみ（採用阻止はしない）
     # ── 過学習抑制チェックここまで ────────────────────────────────────────
 
     # 条件・閾値が現行と完全一致、または★6対象シグナル集合が同一なら更新不要
@@ -3262,6 +3307,7 @@ def main():
             "backtest_source": "all",
             "proposed_at":  datetime.utcnow().isoformat() + "Z",
             "backtest": {
+                "data_mode": data_mode,
                 "train":   _to_jsonable(training_stats6),
                 "valid":   _to_jsonable(best_validation_stats6),
                 "lockbox": _to_jsonable(lockbox_s6_stats),
@@ -3270,6 +3316,8 @@ def main():
                 "permutation_pvalue": round(perm_p, 4),
                 "kfold_wins": f"{kfold_wins}/3",
                 "complexity": len(best_thresholds or {}),
+                "n_total": int(len(df)),
+                "n_lockbox": int(len(df_wf_lockbox)),
             },
         }
         with open(PENDING_LOGIC_PATH, "w", encoding="utf-8") as _pf2:

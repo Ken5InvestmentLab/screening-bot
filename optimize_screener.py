@@ -2040,7 +2040,7 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
                 "inline": False
             },
             {
-                "name": f"📈 バックテスト結果（全件データ / {n_total}シグナル）",
+                "name": f"📈 バックテスト結果（直近シグナル / {n_total}件検証）",
                 "value": stats_text,
                 "inline": False
             },
@@ -2850,6 +2850,9 @@ def main():
     print("\n🔧 Step 2: 解析...")
     alerts_raw_confirmed = parse_alerts(ar)
     alerts_archive_confirmed = parse_alerts(sa)
+    # alerts_raw 由来かどうかを追跡（通知表示で /help と件数・勝率を揃えるため）
+    alerts_raw_confirmed['_from_archive'] = False
+    alerts_archive_confirmed['_from_archive'] = True
     # alerts_raw を先に concat → 万一 alert_id が両方に存在しても alerts_raw 側が残る。
     # 時系列順 sort_values("date") は後段の Walk-forward 分割で行われるため、
     # ここではそのまま結合してよい。
@@ -2933,6 +2936,12 @@ def main():
         baseline = calc_stats(df[df["sc_v14"] == 6])
         print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
+
+    # alerts_raw 由来のみ（通知表示・/help との整合用）
+    df_alerts_raw = df[~df['_from_archive'].fillna(False)].copy() if '_from_archive' in df.columns else df
+    baseline_ar = calc_stats(df_alerts_raw[df_alerts_raw["sc_cur"] == 6])
+    print(f"  alerts_raw ★6（表示用）: {baseline_ar['n']}件 勝率{baseline_ar['wr_raw']*100:.1f}%"
+          f" 平均{baseline_ar['avg_raw']*100:.2f}%")
 
     unconfirmed_current_df = build_unconfirmed_current_df(alerts_all, ohlcv)
     current_unconfirmed_stats6 = calc_stats(pd.DataFrame())
@@ -3034,7 +3043,7 @@ def main():
             print("  ⚠ rescue mode: 品質ゲートを満たす代替候補なし")
             if args.propose and not args.dry_run:
                 notify_discord_rescue_no_candidate(
-                    baseline, current_validation_stats6, rescue_reasons, len(df)
+                    baseline_ar, current_validation_stats6, rescue_reasons, len(df_alerts_raw)
                 )
             else:
                 print("  ℹ dry-run/通常実行では rescue候補なし通知を送信しません")
@@ -3288,13 +3297,14 @@ def main():
                 if best_method == "A"
                 else build_func_b(best_combo, best_stats, baseline, len(df)))
 
-    display_df = df
+    # alerts_raw のみで表示用統計を計算（/help と件数・勝率を揃える）
+    display_df = df_alerts_raw
     display_stats6, display_stats5, display_stats4, display_base, display_n_total = \
         calc_backtest_display_stats(display_df, best_method, best_combo, best_thresholds)
     training_stats6, training_stats5, training_stats4 = calc_candidate_tiers(
         df_wf_train, best_method, best_combo, best_thresholds
     )
-    print(f"  表示用バックテスト（全件データ）: ★6 {display_stats6['n']}件 "
+    print(f"  表示用バックテスト（alerts_rawデータ / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
     # ─── 通常モード時は大幅改善（勝率+5pt以上）のみ提案する ───────────
@@ -3302,7 +3312,7 @@ def main():
     # 頻繁なロジック変更でユーザーが混乱しないよう、軽微な改善はスキップ。
     WR_SIGNIFICANT_IMPROVEMENT = 0.05  # +5ppを「大幅」の閾値とする
     if adoption_mode == "normal":
-        wr_improvement = display_stats6["wr_raw"] - baseline["wr_raw"]
+        wr_improvement = best_stats["wr_raw"] - baseline["wr_raw"]
         if wr_improvement < WR_SIGNIFICANT_IMPROVEMENT:
             print(
                 f"\n✅ 勝率改善が軽微（+{wr_improvement*100:.1f}pt < "
@@ -3341,7 +3351,7 @@ def main():
                              for k, v in display_base.items()
                              if not isinstance(v, str)},
             "n_total":      display_n_total,
-            "backtest_source": "all",
+            "backtest_source": "alerts_raw",
             "proposed_at":  datetime.utcnow().isoformat() + "Z",
             "backtest": {
                 "data_mode": data_mode,
@@ -3363,7 +3373,7 @@ def main():
         notify_discord_approval(
             best_method, best_combo, display_stats6, display_base, best_thresholds,
             validation_stats=best_validation_stats6,
-            current_stats=baseline,
+            current_stats=baseline_ar,
             current_validation_stats=current_validation_stats6,
             adoption_reasons=adoption_reasons,
             mode=adoption_mode,

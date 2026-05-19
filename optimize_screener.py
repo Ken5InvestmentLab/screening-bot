@@ -2505,6 +2505,37 @@ def deploy():
                 print(f"     ❌ エラー: {err[:200]}"); return False
     return True
 
+
+def restart_bot_only():
+    """ファイル転送なしで pm2 restart だけ実行する（ロジック更新なし再起動用）"""
+    print("\n🔄 Bot 再起動（pm2 restart only）...")
+    if _ON_VM:
+        r = subprocess.run(["pm2", "restart", "screening-bot"],
+                           capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
+    elif _ON_GITHUB_ACTIONS:
+        r = subprocess.run(
+            ["ssh", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
+             VM_HOST, "pm2 restart screening-bot"],
+            capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+        )
+    else:
+        cmd = (f'ssh -i "{SSH_KEY_PATH}" -o StrictHostKeyChecking=no '
+               f'{VM_HOST} "pm2 restart screening-bot"')
+        r = subprocess.run(["powershell", "-Command", cmd],
+                           capture_output=True, text=True,
+                           encoding="utf-8", errors="replace")
+    if r.returncode == 0:
+        print("  ✅ pm2 restart 完了")
+        out = (r.stdout or "").strip()
+        if out:
+            print(f"  {out[:120]}")
+    else:
+        err = (r.stderr or "").strip()
+        print(f"  ⚠ pm2 restart 失敗: {err[:200]}")
+
+
 # ══════════════════════════════════════════════════════════════
 # Sniperモード最適化（勝率特化）
 # ══════════════════════════════════════════════════════════════
@@ -3007,6 +3038,8 @@ def main():
                 )
             else:
                 print("  ℹ dry-run/通常実行では rescue候補なし通知を送信しません")
+        if not args.dry_run:
+            restart_bot_only()
 
     # ── Sniperモード最適化（Step 4完了後・Step 5a前） ─────────────
     _run_sniper_optimization(df, args)
@@ -3247,6 +3280,8 @@ def main():
     )
     if candidate_targets == current_targets:
         print("\n✅ 条件は異なるが抽出結果が現行と同一のため更新しません。")
+        if not args.dry_run:
+            restart_bot_only()
         return
 
     new_code = (build_func_a(best_combo, best_stats, baseline, len(df), best_thresholds)
@@ -3277,6 +3312,8 @@ def main():
                 f"   rescue modeまたは勝率+{WR_SIGNIFICANT_IMPROVEMENT*100:.0f}pt以上の"
                 f"改善時のみ更新候補として提案します。"
             )
+            if not args.dry_run:
+                restart_bot_only()
             return
 
     # ─── --propose: pending_logic.json に保存して Discord通知して終了 ───
@@ -3333,6 +3370,7 @@ def main():
         )
         print("✅ Discord に承認リクエストを送信しました")
         print("（承認後、Discord で /approve-update を実行するとデプロイされます）")
+        restart_bot_only()
         return
 
     if args.dry_run:

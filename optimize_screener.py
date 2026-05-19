@@ -3326,6 +3326,19 @@ def main():
                 restart_bot_only()
             return
 
+    # ─── 最終ゲート: alerts_raw★6勝率が現行を下回るなら提案しない ────────────
+    # /help の表示勝率が下がる変更はユーザー体験の改悪になるため、
+    # 全体データ（signals_archive込み）での改善があっても却下する。
+    if display_stats6["wr_raw"] < baseline_ar["wr_raw"]:
+        msg = (
+            f"alerts_rawベース★6勝率が現行以下のため更新をスキップ"
+            f"（候補{display_stats6['wr_raw']*100:.1f}%"
+            f" < 現行{baseline_ar['wr_raw']*100:.1f}%）"
+        )
+        print(f"\n⛔ {msg}")
+        handle_no_stable_candidate(msg)
+        return
+
     # ─── --propose: pending_logic.json に保存して Discord通知して終了 ───
     if args.propose:
         import json as _pjson2

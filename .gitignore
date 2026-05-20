@@ -4,3 +4,5 @@ node_modules/
 logs/
 backups/
 desktop.ini
+__pycache__/
+*.pyc

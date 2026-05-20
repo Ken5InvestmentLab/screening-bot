@@ -80,6 +80,11 @@ STABLE_AVG_MIN         = 0.05  # 全件★6平均騰落率（最低5%要求）
 STABLE_VALID_WR_MIN    = 0.55  # 直近検証側★6勝率は strict >
 STABLE_VALID_S6_N_MIN  = 20    # 直近検証側★6最低件数 (strict時) (8→20)
 STABLE_VALID_AVG_MIN   = 0.00  # 直近検証側★6平均騰落率
+# 検証件数の相対ゲート（絶対閾値ではなく現行ロジック比で評価）
+# 6条件AND型の自然な選択性（≈1-2%）に対応し、データ規模に応じてスケールする。
+# baseline_validation_stats が渡された場合のみ有効。後方互換は絶対閾値を継続使用。
+MIN_VALID_N_FLOOR     = 5     # 検証★6の絶対最低件数（これ未満は統計的意味なし）
+VALID_N_RATIO_FLOOR   = 0.8   # 現行検証★6 × 0.8 以上を維持（WIN10_RATE_FLOOR_RATIOと同思想）
 
 # ── 過渡期（archive 蓄積中）の緩和水準 ───────────────────────────────
 # データが少ない期間は統計的厳格化を一時スキップし、pre-Tier-A 水準で運用。
@@ -764,17 +769,27 @@ def is_data_sufficient(df, df_wf_lockbox):
         and lockbox_n >= MIN_LOCKBOX_FOR_STRICT_MODE
     )
 
-def _quality_gate_lines(stats, validation_stats=None, mode="normal", data_mode="strict"):
+def _quality_gate_lines(stats, validation_stats=None, mode="normal", data_mode="strict",
+                        baseline_validation_stats=None):
     """Stable ★6の絶対品質ゲートを評価する。
 
-    data_mode: "strict" (通常時、Tier A 強化済み水準) / "transition" (archive 蓄積中、pre-Tier-A 水準)"""
+    data_mode: "strict" (通常時、Tier A 強化済み水準) / "transition" (archive 蓄積中、pre-Tier-A 水準)
+    baseline_validation_stats: 現行ロジックの検証★6統計。指定時は絶対件数ゲートを
+        相対ゲート(現行比VALID_N_RATIO_FLOOR以上)に切り替える。"""
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
     if data_mode == "transition":
         stable_s6_n_min = TRANSITION_RESCUE_STABLE_S6_N_MIN if mode == "rescue" else TRANSITION_STABLE_S6_N_MIN
-        valid_n_min     = TRANSITION_STABLE_VALID_S6_N_MIN
     else:
         stable_s6_n_min = RESCUE_STABLE_S6_N_MIN if mode == "rescue" else STABLE_S6_N_MIN
-        valid_n_min     = STABLE_VALID_S6_N_MIN
+
+    if baseline_validation_stats is not None:
+        baseline_valid_n = max(int(baseline_validation_stats.get("n", 0)), 0)
+        valid_n_min = max(MIN_VALID_N_FLOOR, math.ceil(baseline_valid_n * VALID_N_RATIO_FLOOR))
+        valid_n_label = (f"≥ max({MIN_VALID_N_FLOOR}, 現行{baseline_valid_n}件"
+                         f"×{VALID_N_RATIO_FLOOR}) = {valid_n_min}件")
+    else:
+        valid_n_min = TRANSITION_STABLE_VALID_S6_N_MIN if data_mode == "transition" else STABLE_VALID_S6_N_MIN
+        valid_n_label = f"≥ {valid_n_min}件"
 
     checks = [
         (stats["n"] >= stable_s6_n_min,
@@ -784,7 +799,7 @@ def _quality_gate_lines(stats, validation_stats=None, mode="normal", data_mode="
         (stats["avg_raw"] > STABLE_AVG_MIN,
          f"全件★6平均 {stats['avg_raw']*100:+.1f}% > {STABLE_AVG_MIN*100:+.0f}%"),
         (validation_stats["n"] >= valid_n_min,
-         f"検証★6件数 {validation_stats['n']}件 ≥ {valid_n_min}件"),
+         f"検証★6件数 {validation_stats['n']}件 {valid_n_label}"),
         (validation_stats["wr_raw"] > STABLE_VALID_WR_MIN,
          f"検証★6勝率 {validation_stats['wr_raw']*100:.1f}% > {STABLE_VALID_WR_MIN*100:.0f}%"),
         (validation_stats["avg_raw"] >= STABLE_VALID_AVG_MIN,
@@ -1055,9 +1070,13 @@ def is_current_healthy(stats, validation_stats):
         and validation_stats["avg_raw"] >= 0.0
     )
 
-def validation_gate_ok(validation_stats, data_mode="strict"):
-    valid_n_min = (TRANSITION_STABLE_VALID_S6_N_MIN
-                   if data_mode == "transition" else STABLE_VALID_S6_N_MIN)
+def validation_gate_ok(validation_stats, data_mode="strict", baseline_validation_stats=None):
+    if baseline_validation_stats is not None:
+        baseline_n = max(int(baseline_validation_stats.get("n", 0)), 0)
+        valid_n_min = max(MIN_VALID_N_FLOOR, math.ceil(baseline_n * VALID_N_RATIO_FLOOR))
+    else:
+        valid_n_min = (TRANSITION_STABLE_VALID_S6_N_MIN
+                       if data_mode == "transition" else STABLE_VALID_S6_N_MIN)
     return (
         validation_stats["n"] >= valid_n_min
         and validation_stats["wr_raw"] > STABLE_VALID_WR_MIN
@@ -1080,9 +1099,11 @@ def win10_guard_ok(stats, baseline):
     ok_count, ok_rate, _, _, _ = win10_guard_details(stats, baseline)
     return ok_count and ok_rate
 
-def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresholds=None, data_mode="strict"):
+def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresholds=None,
+                   data_mode="strict", baseline_validation_stats=None):
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
-    quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats, mode, data_mode)
+    quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats, mode, data_mode,
+                                                     baseline_validation_stats=baseline_validation_stats)
 
     # 複雑さペナルティ: 非デフォルト閾値を多用した候補は composite を減点して評価
     penalty = _complexity_penalty(thresholds)
@@ -1370,7 +1391,8 @@ def analyze_winners(df, baseline, mode="normal"):
 # ══════════════════════════════════════════════════════════════
 # Stage 2: 閾値最適化
 # ══════════════════════════════════════════════════════════════
-def tune_thresholds(df_train, df_test, combo, baseline, data_mode="strict"):
+def tune_thresholds(df_train, df_test, combo, baseline, data_mode="strict",
+                    baseline_validation_stats=None):
     """
     Stage 2: 選ばれた6条件の閾値をグリッドサーチで最適化し、
     テストデータ（直近20%）で検証する。
@@ -1443,7 +1465,8 @@ def tune_thresholds(df_train, df_test, combo, baseline, data_mode="strict"):
         s_test_cur = score_with_thresholds(df_test, combo, {})
         test_cur_stats = calc_stats(df_test[s_test_cur == 6])
         passed = (
-            validation_gate_ok(test_stats, data_mode=data_mode)
+            validation_gate_ok(test_stats, data_mode=data_mode,
+                               baseline_validation_stats=baseline_validation_stats)
             and test_stats["composite"] > test_cur_stats["composite"]
         )
         result_str = "✅ 通過" if passed else "⚠ 不合格（デフォルト閾値を使用）"
@@ -3068,7 +3091,8 @@ def main():
             scores_v = sum(df_wf_valid[c].astype(int) for c in conds_in_valid)
             s6_v = df_wf_valid[scores_v == 6]
             st6_v = calc_stats(s6_v)
-            if validation_gate_ok(st6_v, data_mode=data_mode):
+            if validation_gate_ok(st6_v, data_mode=data_mode,
+                                   baseline_validation_stats=current_validation_stats6):
                 wf_validated.append((*item, st6_v))
         print(f"  Walk-forward 品質ゲート通過: {len(wf_validated)}/{limit}通り")
         cands_a = wf_validated
@@ -3087,7 +3111,8 @@ def main():
     if result_b:
         scheme_b, stats_b6, stats_b5, stats_b4 = result_b
         stats_b6_valid, _, _ = calc_candidate_tiers(df_wf_valid, "B", scheme_b)
-        if validation_gate_ok(stats_b6_valid, data_mode=data_mode):
+        if validation_gate_ok(stats_b6_valid, data_mode=data_mode,
+                              baseline_validation_stats=current_validation_stats6):
             candidate_pool.append(("B", stats_b6["composite"], stats_b5["composite"],
                                    stats_b4["composite"], scheme_b, stats_b6, stats_b5,
                                    stats_b4, stats_b6_valid))
@@ -3102,7 +3127,8 @@ def main():
         e = ("✓" if st6["wr_raw"] >= TARGET_WIN_RATE else "△") + \
             ("✓" if st6["avg_raw"] >= TARGET_AVG_PERF else "△") + \
             ("✓" if st6["win10_raw"] > st6["lose10_raw"] else "△") + \
-            ("✓" if validation_gate_ok(st6_valid, data_mode=data_mode) else "△")
+            ("✓" if validation_gate_ok(st6_valid, data_mode=data_mode,
+                                       baseline_validation_stats=current_validation_stats6) else "△")
         label = "+".join(combo) if method == "A" else " ".join(f"{c}({w}pt)" for c, w, _ in combo)
         print(f"  #{i+1:<2} {method:<4} {st6['wr_raw']*100:>6.1f}%  {st6['avg_raw']*100:>+7.1f}%"
               f"  {st6['win10_raw']:>3.0f}件  {st6['lose10_raw']:>3.0f}件  {st6['n']:>3}件  {e}  {label}")
@@ -3118,7 +3144,9 @@ def main():
         df_train  = df_wf_train.copy()
         df_test   = df_wf_valid.copy()
         print(f"📐 train/test split: 訓練{len(df_train)}件 / 検証{len(df_test)}件")
-        tuned_ths, _, _, tune_passed = tune_thresholds(df_train, df_test, cur_conds, baseline, data_mode=data_mode)
+        tuned_ths, _, _, tune_passed = tune_thresholds(df_train, df_test, cur_conds, baseline,
+                                                        data_mode=data_mode,
+                                                        baseline_validation_stats=current_validation_stats6)
         if not (tune_passed and tuned_ths):
             handle_no_stable_candidate("現行ロジックが最良。更新しません。"); return
         best_thresholds = tuned_ths
@@ -3142,7 +3170,9 @@ def main():
         for i, (method_i, _, _, _, combo_i, _, _, _, validation_i) in enumerate(tune_cands):
             if method_i != "A":
                 continue
-            tuned_ths_i, _, _, tune_passed_i = tune_thresholds(df_train, df_test, combo_i, baseline, data_mode=data_mode)
+            tuned_ths_i, _, _, tune_passed_i = tune_thresholds(df_train, df_test, combo_i, baseline,
+                                                                data_mode=data_mode,
+                                                                baseline_validation_stats=current_validation_stats6)
             if tune_passed_i and tuned_ths_i:
                 s_full_i = score_with_thresholds(df, combo_i, tuned_ths_i)
                 st6f = calc_stats(df[s_full_i == 6])
@@ -3202,7 +3232,9 @@ def main():
 
         selected = None
         for cand, ths in zip(all_cands, tuned_ths_list):
-            ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode, thresholds=ths, data_mode=data_mode)
+            ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode,
+                                                     thresholds=ths, data_mode=data_mode,
+                                                     baseline_validation_stats=current_validation_stats6)
             if ok_sel:
                 selected = (cand, ths, reasons_sel)
                 break
@@ -3214,7 +3246,9 @@ def main():
             cand, ths, preselected_adoption_reasons = selected
             best_thresholds = ths or {}
             best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = cand
-    ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode, thresholds=best_thresholds, data_mode=data_mode)
+    ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode,
+                                                      thresholds=best_thresholds, data_mode=data_mode,
+                                                      baseline_validation_stats=current_validation_stats6)
     if 'preselected_adoption_reasons' in locals() and preselected_adoption_reasons:
         adoption_reasons = preselected_adoption_reasons
     print(f"\n🎯 Step 7: 採用判断 — 方式{best_method}")

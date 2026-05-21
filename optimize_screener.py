@@ -457,6 +457,14 @@ def get_features(daily, sig_date):
     pre_down3 = (last >= 3 and C[last-1] < C[last-2] and C[last-2] < C[last-3])
     gap_up    = (last > 0 and lo > C[last-1])
 
+    # 連続小陽線（シグナル前に body 0〜1% の陽線が連続）
+    def _is_small_bull(i):
+        if i < 0 or i >= len(C): return False
+        bp = (C[i] - O[i]) / C[i] * 100 if C[i] > 0 else 0
+        return 0 < bp < 1.0
+    smbull_seq2 = last >= 2 and _is_small_bull(last-1) and _is_small_bull(last-2)
+    smbull_seq3 = last >= 3 and _is_small_bull(last-1) and _is_small_bull(last-2) and _is_small_bull(last-3)
+
     cci_start = max(0, last-13)
     tp_cci = [(H[i]+L[i]+C[i])/3 for i in range(cci_start, last+1)]
     tp_mean_cci = sum(tp_cci)/len(tp_cci)
@@ -525,6 +533,7 @@ def get_features(daily, sig_date):
         ich_kumo_break=ich_kumo_break,
         rci9_os=rci9_os, rci26_os=rci26_os, rci9_up=rci9_up,
         pre_down3=pre_down3, gap_up=gap_up, bb_lower=bb_lower, cci_os=cci_os,
+        smbull_seq2=smbull_seq2, smbull_seq3=smbull_seq3,
         _vsurge=vsurge, _atr=atr_pct, _body=body_pct,
         _rsi=rsi, _stoch=stoch, _bbpct=bbpct,
         _rci9=rci9 if rci9 is not None else 0.0,
@@ -1152,6 +1161,7 @@ BOOL_CONDS = [
     "ich_tk","ich_price_tenkan","ich_price_kijun","ich_cloud_above",
     "ich_cloud_green","ich_chikou","ich_kumo_break",
     "rci9_os","rci26_os","rci9_up","pre_down3","gap_up","bb_lower","cci_os",
+    "smbull_seq2","smbull_seq3",
 ]
 
 # ── Stage 2: 閾値パラメーター定義 ────────────────────────────
@@ -1527,6 +1537,8 @@ JS_IMPL = {
     "gap_up":   ("ギャップアップ（始値>前終値）","ind.gapUp","GAP-UP"),
     "bb_lower": ("BB位置≤20%（下バンド付近）","ind.bbPct <= 0.20","BB下部"),
     "cci_os":   ("CCI(14) ≤ -100（売られすぎ）","ind.cciVal <= -100","CCI売られ"),
+    "smbull_seq2": ("直近2日連続小陽線後（body 0〜1%）","ind.smbullSeq2","2連小陽後"),
+    "smbull_seq3": ("直近3日連続小陽線後（body 0〜1%）","ind.smbullSeq3","3連小陽後"),
 }
 
 EXTRA_JS_BLOCK = """
@@ -1629,7 +1641,16 @@ EXTRA_JS_BLOCK = """
   for (let i = cciStart_; i <= last; i++) tp14_.push((highs[i]+lows[i]+closes[i])/3);
   const tpMean_ = tp14_.reduce((a,b)=>a+b,0)/tp14_.length;
   const tpMd_   = tp14_.reduce((a,v)=>a+Math.abs(v-tpMean_),0)/tp14_.length;
-  const cciVal  = tpMd_ > 0 ? (tp14_[tp14_.length-1]-tpMean_)/(0.015*tpMd_) : 0;"""
+  const cciVal  = tpMd_ > 0 ? (tp14_[tp14_.length-1]-tpMean_)/(0.015*tpMd_) : 0;
+
+  // 連続小陽線（シグナル前に body 0〜1% の陽線が連続）
+  function _isSmBull(i) {
+    if (i < 0) return false;
+    const bp = closes[i] > 0 ? (closes[i] - opens[i]) / closes[i] * 100 : 0;
+    return bp > 0 && bp < 1.0;
+  }
+  const smbullSeq2 = last >= 2 && _isSmBull(last-1) && _isSmBull(last-2);
+  const smbullSeq3 = last >= 3 && _isSmBull(last-1) && _isSmBull(last-2) && _isSmBull(last-3);"""
 
 EXTRA_JS_RETURN = """    macdPos,
     rsi14:    +rsi14.toFixed(2),
@@ -1649,7 +1670,9 @@ EXTRA_JS_RETURN = """    macdPos,
     rci26:    rci26 !== null ? +rci26.toFixed(1) : null,
     preDown3,
     gapUp,
-    cciVal:   +cciVal.toFixed(1),"""
+    cciVal:   +cciVal.toFixed(1),
+    smbullSeq2,
+    smbullSeq3,"""
 
 
 def build_func_a(conditions, stats, baseline, n, thresholds=None):

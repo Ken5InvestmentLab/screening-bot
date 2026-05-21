@@ -209,6 +209,15 @@ function computeIndicators(dailyBars, signalIdx) {
   // ギャップアップ（当日始値 > 前日終値）
   const gapUp = last > 0 && opens[last] > closes[last - 1];
 
+  // 連続小陽線（シグナル前に body 0〜1% の陽線が連続）
+  function isSmBull(i) {
+    if (i < 0) return false;
+    const bp = closes[i] > 0 ? (closes[i] - opens[i]) / closes[i] * 100 : 0;
+    return bp > 0 && bp < 1.0;
+  }
+  const smbullSeq2 = last >= 2 && isSmBull(last-1) && isSmBull(last-2);
+  const smbullSeq3 = last >= 3 && isSmBull(last-1) && isSmBull(last-2) && isSmBull(last-3);
+
   // CCI(14)
   const cciStart_ = Math.max(0, last - 13);
   const tp14_ = [];
@@ -275,6 +284,8 @@ function computeIndicators(dailyBars, signalIdx) {
     ichCloudGreen,
     ichChikou,
     ichKumoBreak,
+    smbullSeq2,
+    smbullSeq3,
   };
 }
 

@@ -72,6 +72,12 @@ BASELINE_DECAY   = 1.0   # 現行compositeを厳密に超えた場合のみ採�
 WIN10_MIN_COUNT  = 5     # ★6内の+10%以上銘柄の最低件数
 WIN10_RATE_FLOOR_RATIO = 0.90  # ★6内の+10%以上率が現行比90%以上ならOK
 
+# 「大勝ち / 大負け」を定義する閾値（5BD騰落率）。
+# --win-threshold / --win-threshold-sweep CLI フラグで上書き可能。
+# Method B リフト分析、composite スコア、品質ゲート、上昇/下落表示に伝播する。
+WIN_THRESHOLD  = 0.10
+LOSE_THRESHOLD = -0.10
+
 # Stable ★6 品質ゲート（過学習防止 + 劣化検知）
 STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
 STABLE_S6_N_MIN        = 40    # 全件★6最低件数 (strict時) (25→40: CI半幅±15pt確保)
@@ -332,8 +338,8 @@ def parse_alerts(rows, include_unconfirmed=False):
         })
     df = pd.DataFrame(recs)
     if df.empty: return df
-    df["win10"]  = df["perf_5bd"] >= 0.10
-    df["lose10"] = df["perf_5bd"] <= -0.10
+    df["win10"]  = df["perf_5bd"] >= WIN_THRESHOLD
+    df["lose10"] = df["perf_5bd"] <= LOSE_THRESHOLD
     return df
 
 def aggregate_daily(bars):
@@ -572,8 +578,8 @@ def build_unconfirmed_current_df(alerts_all, ohlcv):
             **features,
             "perf_5bd": perf,
             "win_5bd": perf > 0,
-            "win10": perf >= 0.10,
-            "lose10": perf <= -0.10,
+            "win10": perf >= WIN_THRESHOLD,
+            "lose10": perf <= LOSE_THRESHOLD,
             "latest_close": latest_close,
         })
     return pd.DataFrame(rows)
@@ -1343,8 +1349,8 @@ def analyze_winners(df, baseline, mode="normal"):
     winners = df[df["win10"] == True]
     n_all = len(df); n_win = len(winners)
     if n_win < 5:
-        print("  +10%銘柄5件未満のためスキップ"); return None
-    print(f"  +10%以上: {n_win}件 / 全体: {n_all}件 ({n_win/n_all*100:.1f}%)")
+        print(f"  +{WIN_THRESHOLD*100:.0f}%銘柄5件未満のためスキップ"); return None
+    print(f"  +{WIN_THRESHOLD*100:.0f}%以上: {n_win}件 / 全体: {n_all}件 ({n_win/n_all*100:.1f}%)")
 
     conds = [c for c in BOOL_CONDS if c in df.columns]
     lifts = []
@@ -1355,7 +1361,7 @@ def analyze_winners(df, baseline, mode="normal"):
         lifts.append((lift, c, rw, ra))
     lifts.sort(reverse=True)
 
-    print(f"\n  【+10%銘柄への識別力（リフト値上位10）】")
+    print(f"\n  【+{WIN_THRESHOLD*100:.0f}%銘柄への識別力（リフト値上位10）】")
     print(f"  {'指標':<12} {'リフト':>6}  {'winner率':>8}  {'全体率':>8}")
     for lift, c, rw, ra in lifts[:10]:
         print(f"  {c:<12} {lift:>6.2f}   {rw*100:>6.1f}%    {ra*100:>6.1f}%")
@@ -2733,6 +2739,193 @@ def _run_sniper_optimization(df, args):
 
 
 # ══════════════════════════════════════════════════════════════
+# +X% 閾値スイープ（オーケストレータ）
+# ══════════════════════════════════════════════════════════════
+def _run_threshold_sweep(sweep_arg):
+    """各閾値で自身を --dry-run --win-threshold X として再帰実行し、
+    出力をパースして比較表を表示する。"""
+    import subprocess as _sp
+    import re as _re
+
+    # 閾値リストをパース
+    try:
+        thresholds = [float(x.strip()) for x in sweep_arg.split(",") if x.strip()]
+    except ValueError:
+        print(f"❌ --win-threshold-sweep の値が不正: {sweep_arg}")
+        sys.exit(1)
+    if not thresholds:
+        print(f"❌ --win-threshold-sweep に閾値が指定されていません")
+        sys.exit(1)
+    for th in thresholds:
+        if not (0.01 <= th <= 0.50):
+            print(f"❌ 閾値 {th} は範囲外 (0.01〜0.50)")
+            sys.exit(1)
+
+    print(f"{'='*62}")
+    print(f"  📊 +X% 閾値スイープ実行 — {len(thresholds)}個の閾値を比較")
+    print(f"{'='*62}")
+    print(f"  対象閾値: {', '.join(f'±{th*100:.1f}%' for th in thresholds)}")
+    print(f"  各閾値で --dry-run --win-threshold X を実行します")
+    print(f"  (実ファイル更新・pm2 restart・Discord通知は行われません)")
+
+    self_path = os.path.abspath(__file__)
+    results = []
+
+    for i, th in enumerate(thresholds, 1):
+        print(f"\n{'='*62}")
+        print(f"  [{i}/{len(thresholds)}] THRESHOLD = ±{th*100:.1f}%")
+        print(f"{'='*62}\n")
+
+        cmd = [sys.executable, self_path, "--dry-run", "--win-threshold", str(th)]
+        env = dict(os.environ)
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUNBUFFERED"] = "1"
+
+        captured = []
+        try:
+            proc = _sp.Popen(cmd, stdout=_sp.PIPE, stderr=_sp.STDOUT,
+                             text=True, encoding="utf-8", errors="replace",
+                             env=env, bufsize=1)
+            for line in proc.stdout:
+                print(line, end="")
+                captured.append(line)
+            proc.wait()
+            if proc.returncode != 0:
+                print(f"⚠ subprocess returned exit code {proc.returncode}")
+        except Exception as e:
+            print(f"❌ subprocess error: {e}")
+            results.append({"threshold": th, "error": str(e)})
+            continue
+
+        summary = _parse_sweep_output("".join(captured), th)
+        results.append(summary)
+
+    _print_sweep_summary(results)
+
+
+def _parse_sweep_output(output, threshold):
+    """subprocess出力からサマリ情報を抽出する。
+    出力フォーマットが変わったら正規表現も更新が必要。"""
+    import re as _re
+    summary = {"threshold": threshold}
+
+    # 現行★6: 26件 勝率57.7% 平均9.07% 上昇6件 下落0件
+    m = _re.search(
+        r"現行★6:\s*(\d+)件\s*勝率([\d.]+)%\s*平均([+-]?[\d.]+)%\s*上昇([\d.]+)件\s*下落([\d.]+)件",
+        output)
+    if m:
+        summary["base_n"] = int(m.group(1))
+        summary["base_wr"] = float(m.group(2))
+        summary["base_avg"] = float(m.group(3))
+        summary["base_up"] = int(float(m.group(4)))
+        summary["base_down"] = int(float(m.group(5)))
+
+    # +X%以上: 87件 / 全体: 1629件 (5.3%)
+    m = _re.search(
+        r"\+[\d.]+%以上:\s*(\d+)件\s*/\s*全体:\s*(\d+)件\s*\(([\d.]+)%\)",
+        output)
+    if m:
+        summary["winx_n"] = int(m.group(1))
+        summary["total_n"] = int(m.group(2))
+        summary["winx_pct"] = float(m.group(3))
+
+    # トップ候補: #1  A   69.2%  +14.0%   5件   2件  13件  ...  vol20+...+pre_down3
+    m = _re.search(
+        r"^\s*#1\s+([AB])\s+([\d.]+)%\s+([+-][\d.]+)%\s+(\d+)件\s+(\d+)件\s+(\d+)件.*?(\S+)\s*$",
+        output, _re.MULTILINE)
+    if m:
+        summary["best_method"] = m.group(1)
+        summary["best_wr"] = float(m.group(2))
+        summary["best_avg"] = float(m.group(3))
+        summary["best_up"] = int(m.group(4))
+        summary["best_down"] = int(m.group(5))
+        summary["best_n"] = int(m.group(6))
+        summary["best_combo"] = m.group(7)
+
+    # 採用判定
+    if _re.search(r"現行ロジック健全のため最適化をスキップ", output):
+        summary["verdict"] = "skip_healthy"
+    elif _re.search(r"品質条件未達。更新しません", output):
+        summary["verdict"] = "NG"
+    elif _re.search(r"✅ +採用!", output):
+        summary["verdict"] = "OK"
+    elif _re.search(r"候補なし", output):
+        summary["verdict"] = "no_cand"
+    else:
+        summary["verdict"] = "?"
+
+    # 採用NG時の最初の ✗ 理由
+    if summary.get("verdict") == "NG":
+        m = _re.search(r"^\s*✗\s+(通常条件①|通常条件②|品質:[^\n]+)", output, _re.MULTILINE)
+        if m:
+            reason = m.group(1)
+            # 短縮: "通常条件①" → "composite", "通常条件②" → "勝率", "品質: 全件★6件数" → "件数"
+            if "通常条件①" in reason:
+                summary["ng_reason"] = "composite"
+            elif "通常条件②" in reason:
+                summary["ng_reason"] = "勝率"
+            elif "★6件数" in reason:
+                summary["ng_reason"] = "★6件数"
+            elif "★6勝率" in reason:
+                summary["ng_reason"] = "★6勝率"
+            elif "★6平均" in reason:
+                summary["ng_reason"] = "★6平均"
+            else:
+                summary["ng_reason"] = reason[:20]
+
+    return summary
+
+
+def _print_sweep_summary(results):
+    """スイープ結果の比較表を表示"""
+    print(f"\n\n{'='*100}")
+    print(f"  📊 +X% 閾値スイープ比較結果")
+    print(f"{'='*100}")
+
+    # ヘッダー
+    print(f"  {'閾値':<8} {'+X%母数':<10} {'★6件数':<8} {'★6勝率':<8} {'★6平均':<9} "
+          f"{'上昇/下落':<11} {'候補★6':<22} {'判定':<14} {'候補条件'}")
+    print(f"  {'-'*8} {'-'*10} {'-'*8} {'-'*8} {'-'*9} {'-'*11} {'-'*22} {'-'*14} {'-'*30}")
+
+    for r in results:
+        if "error" in r:
+            print(f"  ±{r['threshold']*100:>4.1f}%  ERROR: {r['error']}")
+            continue
+
+        th_str = f"±{r['threshold']*100:.1f}%"
+        winx = f"{r.get('winx_n', '-')}件" if 'winx_n' in r else "-"
+        base_n_str = f"{r.get('base_n', '-')}件" if 'base_n' in r else "-"
+        base_wr_str = f"{r.get('base_wr', 0):.1f}%" if 'base_wr' in r else "-"
+        base_avg_str = f"{r.get('base_avg', 0):+.1f}%" if 'base_avg' in r else "-"
+        up_down = f"{r.get('base_up', '-')}/{r.get('base_down', '-')}" if 'base_up' in r else "-"
+        if 'best_wr' in r:
+            best = f"{r['best_n']}件 {r['best_wr']:.1f}%/{r['best_avg']:+.1f}%"
+        else:
+            best = "-"
+        verdict = r.get('verdict', '?')
+        if verdict == "NG" and r.get('ng_reason'):
+            verdict_str = f"✗ {r['ng_reason']}"
+        elif verdict == "OK":
+            verdict_str = "✓ OK"
+        elif verdict == "skip_healthy":
+            verdict_str = "skip:健全"
+        elif verdict == "no_cand":
+            verdict_str = "候補なし"
+        else:
+            verdict_str = verdict
+        combo = r.get('best_combo', '-')
+        if len(combo) > 60:
+            combo = combo[:57] + "..."
+        print(f"  {th_str:<8} {winx:<10} {base_n_str:<8} {base_wr_str:<8} {base_avg_str:<9} "
+              f"{up_down:<11} {best:<22} {verdict_str:<14} {combo}")
+
+    print(f"{'='*100}")
+    print(f"  ※ ★6件数/勝率/平均/上昇下落: 現行ロジックを各閾値の定義で再評価した値")
+    print(f"  ※ 候補★6: 各閾値で見つかった上位候補の (件数 勝率/平均)")
+    print(f"  ※ 判定: ✓OK=採用基準クリア / ✗XXX=不採用(理由) / skip:健全=現行健全のためスキップ")
+
+
+# ══════════════════════════════════════════════════════════════
 # メイン
 # ══════════════════════════════════════════════════════════════
 def main():
@@ -2754,13 +2947,41 @@ def main():
                         help="勝率フロアを緩和: > → >=")
     parser.add_argument("--wr-floor", type=float, default=0.0,
                         help="勝率絶対下限 (例: 0.55、default: 0.0=無効)")
+    parser.add_argument("--win-threshold", type=float, default=None,
+                        help="単発の +X%% 閾値上書き (例: 0.07)。"
+                             "Method Bリフト分析・composite・採用ゲート全てに伝播。"
+                             "--win-threshold-sweep と併用不可")
+    parser.add_argument("--win-threshold-sweep", default=None,
+                        help="カンマ区切り閾値リスト (例: 0.05,0.07,0.08,0.10)。"
+                             "各値で自身を --dry-run --win-threshold X として再実行し比較表を表示。"
+                             "実ファイル更新・デプロイは行わない")
     args = parser.parse_args()
     global COMPOSITE_VARIANT, BASELINE_DECAY, STRICT_WR, WR_FLOOR
+    global WIN_THRESHOLD, LOSE_THRESHOLD
     COMPOSITE_VARIANT = args.composite_variant
     if args.baseline_decay is not None:
         BASELINE_DECAY = args.baseline_decay
     STRICT_WR = args.strict_wr
     WR_FLOOR  = args.wr_floor
+
+    # --win-threshold と --win-threshold-sweep は排他
+    if args.win_threshold is not None and args.win_threshold_sweep is not None:
+        print("❌ --win-threshold と --win-threshold-sweep は併用できません")
+        sys.exit(1)
+
+    # --win-threshold-sweep: 各閾値で自身を再帰実行
+    if args.win_threshold_sweep is not None:
+        _run_threshold_sweep(args.win_threshold_sweep)
+        return
+
+    # --win-threshold: globals を上書きして通常フローへ
+    if args.win_threshold is not None:
+        if not (0.01 <= args.win_threshold <= 0.50):
+            print(f"❌ --win-threshold は 0.01〜0.50 の範囲で指定してください (指定値: {args.win_threshold})")
+            sys.exit(1)
+        WIN_THRESHOLD  = args.win_threshold
+        LOSE_THRESHOLD = -args.win_threshold
+        print(f"⚙️ +X% 閾値オーバーライド: ±{args.win_threshold*100:.1f}%")
 
     # ─── --apply-pending: 承認済みロジックをデプロイして終了 ───────
     if args.apply_pending:
@@ -3120,7 +3341,7 @@ def main():
         print(f"  Walk-forward 品質ゲート通過: {len(wf_validated)}/{limit}通り")
         cands_a = wf_validated
 
-    print("\n🔍 Step 5b: 方式B（+10%共通点分析）...")
+    print(f"\n🔍 Step 5b: 方式B（+{WIN_THRESHOLD*100:.0f}%共通点分析）...")
     result_b = analyze_winners(df.copy(), baseline, adoption_mode)
 
     print(f"\n🏆 Step 6: 候補一覧（上位10）")

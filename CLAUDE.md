@@ -140,7 +140,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ```
 
 利用可能な条件キー（`optimize_screener.py` の `INDICATORS` / `BOOL_CONDS` で定義）:
-`ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `pre_down3`
+`ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `pre_down3`, `smbull_seq2`, `smbull_seq3`
 
 ### `current_logic_sniper.json` スキーマ
 

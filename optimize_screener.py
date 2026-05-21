@@ -427,7 +427,7 @@ def get_features(daily, sig_date):
             hn = ml[len(ml)-1-i] - sig[len(sig)-1-i]
             hp = ml[len(ml)-2-i] - sig[len(sig)-2-i]
             if hn > 0 and hp <= 0: gc3 = True; break
-    macd_pos = len(ml) > 0 and len(sig) > 0 and ml[-1] > sig[-1]
+    macd_pos = len(ml) > 0 and len(sig) > 0 and sig[-1] is not None and ml[-1] > sig[-1]
 
     d = [C[i] - C[i-1] for i in range(1, len(C))]
     ag = sum(x for x in d[-14:] if x > 0) / 14 if len(d) >= 14 else 0

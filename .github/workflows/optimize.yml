@@ -29,10 +29,14 @@ jobs:
           echo '${{ secrets.SSH_PRIVATE_KEY }}' > /tmp/ssh_key
           chmod 600 /tmp/ssh_key
 
-      - name: Run optimizer (propose mode)
+      - name: Run optimizer (sweep + auto-propose best threshold)
         env:
           PYTHONIOENCODING: utf-8
-        run: python optimize_screener.py --propose
+        # 複数の +X% 閾値で並列バックテストし、品質ゲートをクリアした中で
+        # 最良（候補★6勝率が最高、同率なら低閾値優先）を自動採用する。
+        # 1閾値あたり約60秒、4閾値で約4分。propose実行込みで約5分。
+        # どの閾値もゲートを通らなければ pending_logic.json は作成されない。
+        run: python optimize_screener.py --win-threshold-sweep "0.05,0.07,0.08,0.10" --propose --yes
 
       - name: Commit pending logic/state (if changed)
         run: |

@@ -2888,6 +2888,29 @@ def _parse_sweep_output(output, threshold):
         summary["best_n"] = int(m.group(6))
         summary["best_combo"] = m.group(7)
 
+    # Lockbox 候補/現行 ★6 件数・勝率・平均
+    m = _re.search(
+        r"候補lockbox★6:\s*(\d+)件\s*勝率([\d.]+)%\s*平均([+-]?[\d.]+)%",
+        output)
+    if m:
+        summary["lb_cand_n"] = int(m.group(1))
+        summary["lb_cand_wr"] = float(m.group(2))
+        summary["lb_cand_avg"] = float(m.group(3))
+    m = _re.search(
+        r"現行lockbox★6:\s*(\d+)件\s*勝率([\d.]+)%\s*平均([+-]?[\d.]+)%",
+        output)
+    if m:
+        summary["lb_base_n"] = int(m.group(1))
+        summary["lb_base_wr"] = float(m.group(2))
+        summary["lb_base_avg"] = float(m.group(3))
+    # Lockbox 詳細メッセージ
+    m = _re.search(r"🔒 Lockbox OOS検証 — (✓ 通過|✗ 過学習検出)", output)
+    if m:
+        summary["lb_passed"] = (m.group(1) == "✓ 通過")
+    m = _re.search(r"^\s*詳細:\s*(.+?)$", output, _re.MULTILINE)
+    if m:
+        summary["lb_detail"] = m.group(1).strip()
+
     # 採用判定（順序重要: skip_healthy → OK → 各種NG → no_cand → ?）
     if _re.search(r"現行ロジック健全のため最適化をスキップ", output):
         summary["verdict"] = "skip_healthy"
@@ -2995,6 +3018,23 @@ def _print_sweep_summary(results):
     print(f"  ※ ★6件数/勝率/平均/上昇下落: 現行ロジックを各閾値の定義で再評価した値")
     print(f"  ※ 候補★6: 各閾値で見つかった上位候補の (件数 勝率/平均)")
     print(f"  ※ 判定: ✓OK=採用基準クリア / ✗XXX=不採用(理由) / skip:健全=現行健全のためスキップ")
+
+    # Lockbox 詳細ブロック（候補が Lockbox(OOS) に到達した閾値のみ表示）
+    lb_rows = [r for r in results if "lb_cand_n" in r]
+    if lb_rows:
+        print(f"\n🔒 Lockbox(OOS) 詳細 — 候補が訓練+検証ゲートを通過後の真の未見データ評価:")
+        print(f"  {'閾値':<8} {'候補lockbox':<28} {'現行lockbox':<28} {'判定/詳細'}")
+        print(f"  {'-'*8} {'-'*28} {'-'*28} {'-'*40}")
+        for r in lb_rows:
+            th_str = f"±{r['threshold']*100:.1f}%"
+            cand = f"{r['lb_cand_n']}件 勝率{r['lb_cand_wr']:.1f}% 平均{r['lb_cand_avg']:+.1f}%"
+            base = (f"{r['lb_base_n']}件 勝率{r['lb_base_wr']:.1f}% 平均{r['lb_base_avg']:+.1f}%"
+                    if 'lb_base_n' in r else "-")
+            mark = "✓" if r.get('lb_passed') else "✗"
+            detail = r.get('lb_detail', '-')
+            if len(detail) > 40:
+                detail = detail[:37] + "..."
+            print(f"  {th_str:<8} {cand:<28} {base:<28} {mark} {detail}")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -3592,7 +3632,18 @@ def main():
     # 1. Lockbox（真のOOS）ゲート
     lockbox_s6_stats, _, _ = calc_candidate_tiers(df_wf_lockbox, best_method, best_combo, best_thresholds)
     lb_ok, lb_reason = lockbox_gate_ok(lockbox_s6_stats, baseline_lockbox_stats6)
-    print(f"\n🔒 Lockbox OOS検証 — {'✓ 通過' if lb_ok else '✗ 過学習検出'}: {lb_reason}")
+    print(f"\n🔒 Lockbox OOS検証 — {'✓ 通過' if lb_ok else '✗ 過学習検出'}")
+    print(f"   候補lockbox★6: {lockbox_s6_stats['n']}件 "
+          f"勝率{lockbox_s6_stats['wr_raw']*100:.1f}% "
+          f"平均{lockbox_s6_stats['avg_raw']*100:+.1f}% "
+          f"上昇{int(lockbox_s6_stats.get('win10_raw', 0))}件 "
+          f"下落{int(lockbox_s6_stats.get('lose10_raw', 0))}件")
+    print(f"   現行lockbox★6: {baseline_lockbox_stats6['n']}件 "
+          f"勝率{baseline_lockbox_stats6['wr_raw']*100:.1f}% "
+          f"平均{baseline_lockbox_stats6['avg_raw']*100:+.1f}% "
+          f"上昇{int(baseline_lockbox_stats6.get('win10_raw', 0))}件 "
+          f"下落{int(baseline_lockbox_stats6.get('lose10_raw', 0))}件")
+    print(f"   詳細: {lb_reason}")
     if strict_gates and not lb_ok:
         handle_no_stable_candidate(f"Lockbox(OOS)で過学習を検出。更新しません。({lb_reason})"); return
 

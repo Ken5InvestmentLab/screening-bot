@@ -94,6 +94,12 @@ py optimize_screener.py --dry-run
 
 # レスキューモードを自動承認して実行（GitHub Actionsの --yes フラグ）
 PYTHONIOENCODING=utf-8 py optimize_screener.py --propose --yes
+
+# +X% 閾値の単発上書き（Method Bリフト分析・composite・採用ゲート全てに伝播）
+PYTHONIOENCODING=utf-8 py optimize_screener.py --dry-run --win-threshold 0.07
+
+# +X% 閾値スイープ（各値で自身を再帰実行して比較表を表示。dry-run強制）
+PYTHONIOENCODING=utf-8 py optimize_screener.py --win-threshold-sweep "0.05,0.07,0.08,0.10"
 ```
 
 ## 主要ファイルとアーキテクチャ

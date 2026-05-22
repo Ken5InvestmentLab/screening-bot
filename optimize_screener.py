@@ -2835,6 +2835,10 @@ def _run_threshold_sweep(args):
     if not ok_results:
         print(f"\n💡 自動採用スキップ: ゲートをクリアした閾値がありませんでした")
         print(f"   pending_logic.json は作成されません")
+        # 候補なしでも Bot を再起動して統計キャッシュ（refreshStats）を更新する
+        if not args.dry_run:
+            print(f"\n🔄 候補なし → SCP + pm2 restart で Bot を更新します")
+            deploy()
         return
 
     # 採用基準: best_wr 降順 → 閾値昇順（低閾値優先で安全側）

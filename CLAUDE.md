@@ -37,7 +37,7 @@ GitHub Actions optimize.yml
     │ optimize_screener.py --win-threshold-sweep "0.05,0.07,0.08,0.10" --propose --yes
     │ （複数の +X% 閾値で並列バックテスト → ゲートクリアした最良を自動採用）
     ▼
-候補なし → 自動終了（通知なし）
+候補なし → SCP + pm2 restart（Bot を再起動して統計キャッシュ更新、通知なし）
 候補あり → pending_logic.json / pending_logic_sniper.json をコミット + Discord承認チャンネルに通知
     ▼
 管理者が Discord で /approve-update を実行
@@ -196,7 +196,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **SSH key**: `C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key`（自宅PC）/ `~/ssh-key-2026-03-08.key`（Cloud Shell）
 - **VM**: `ubuntu@168.110.60.126`、pm2プロセス名 `screening-bot`
 - **自動実行トリガー**: GASの `runDailyMaintenance` 完了 → `triggerGitHubActionsOptimize_()` → GitHub Actions `workflow_dispatch`
-- **承認フロー**: `optimize.yml`（`--win-threshold-sweep ... --propose --yes`: 複数閾値スイープ→ゲートクリアした最良を自動採用）→ Discord通知 → 管理者が `/approve-update` → `deploy.yml`（`--apply-pending`）→ デプロイ
+- **承認フロー**: `optimize.yml`（`--win-threshold-sweep ... --propose --yes`: 複数閾値スイープ→ゲートクリアした最良を自動採用、候補なしでも SCP + pm2 restart で Bot 再起動）→ Discord通知 → 管理者が `/approve-update` → `deploy.yml`（`--apply-pending`）→ デプロイ
 - **否決フロー**: 管理者が `/reject-update` → `reject.yml` → `pending_logic.json` / `pending_logic_sniper.json` を削除してコミット
 - **GitHub Actions コミット対象**: `current_logic.json` / `current_logic_sniper.json` / `screener.js` / `index.js` の4ファイル（deploy.yml実行時）。`pending_logic.json` / `pending_logic_sniper.json` / `rescue_state.json`（optimize.yml実行時）
 - **バックアップ**: `backups/screener_backup_YYYYMMDD_HHMMSS.js`（最大30件）

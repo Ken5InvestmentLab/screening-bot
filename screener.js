@@ -363,24 +363,23 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
 
   // daysSince = 0: ind（シグナル時点指標）で状態描写
   if (daysSince === 0) {
-    if (!ind) return '📊 標準的シグナル';
+    if (!ind) return '⏳ 初動を待機中';
     const isStrong = ind.volSurge >= 2.0 && ind.bodyPct >= 0.8 && (ind.macdPos || ind.macdGC3d);
     const isHot    = ind.rsi14 >= 65 || ind.stochK >= 80;
     const isWeak   = ind.volSurge < 1.2 && ind.bodyPct < 0.3;
     if (isStrong) return '🔥 出来高急増・勢い強い';
     if (isHot)    return '⚠️ 短期過熱域';
     if (isWeak)   return '🔍 出来高・モメンタム弱め';
-    return '📊 標準的シグナル';
+    return '⏳ 初動を待機中';
   }
 
   // daysSince = 1: 初動の方向で状態描写
   if (daysSince === 1) {
     const d = (postBars[1].close - postBars[0].close) / postBars[0].close * 100;
-    const dStr = (d >= 0 ? '+' : '') + d.toFixed(1) + '%';
-    if (d >= 2)  return '⚡ 初日から上昇発進｜+1日｜' + dStr;
-    if (d >= 0)  return '🌱 穏やかな初動｜+1日｜' + dStr;
-    if (d >= -3) return '⏸ 初日は下押し｜+1日｜' + dStr;
-    return '⚠️ 初日は軟調｜+1日｜' + dStr;
+    if (d >= 2)  return '⚡ 初日から上昇発進｜+1日';
+    if (d >= 0)  return '🌱 穏やかな初動｜+1日';
+    if (d >= -3) return '⏸ 初日は下押し｜+1日';
+    return '⚠️ 初日は軟調｜+1日';
   }
 
   // daysSince >= 2: 軌跡ベースのフェーズ分類
@@ -421,28 +420,27 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
   const tBase  = -2.5 * atrMul;
 
   const dayStr = '+' + daysSince + '日';
-  const chStr  = (totalChange >= 0 ? '+' : '') + totalChange.toFixed(1) + '%';
 
   if (maxHighGain >= tSurge && totalChange >= tHold)
-    return '🚀 急騰継続中｜' + dayStr + '｜高値+' + maxHighGain.toFixed(1) + '%';
+    return '🚀 急騰継続中｜' + dayStr;
 
   if (maxGain >= tPeak && totalChange <= tCrash)
-    return '💀 天井打ち・急反落｜' + dayStr + '｜現在' + chStr;
+    return '💀 天井打ち・急反落｜' + dayStr;
 
   if (maxGain >= tPeak && dipFromPeak <= -3 && totalChange >= 1 && recentMomentum > 0 && peakIdx < n - 1)
-    return '🔄 押し目から反発｜' + dayStr + '｜' + chStr;
+    return '🔄 押し目から反発｜' + dayStr;
 
   if ((totalChange >= tTrend && recentMomentum >= -0.5) || (totalChange >= tRise && recentMomentum > 0.3))
-    return '📈 上昇トレンド中｜' + dayStr + '｜' + chStr;
+    return '📈 上昇トレンド中｜' + dayStr;
 
   if (maxGain >= tFade && totalChange >= 0 && recentMomentum < -0.3)
-    return '🧱 上値の重い展開｜' + dayStr + '｜' + chStr;
+    return '🧱 上値の重い展開｜' + dayStr;
 
   if (maxGain >= 2 && totalChange < 0 && recentMomentum < -0.2)
-    return '⚠️ 戻り売り優勢｜' + dayStr + '｜' + chStr;
+    return '⚠️ 戻り売り優勢｜' + dayStr;
 
   if (totalChange <= tSoft)
-    return '📉 軟調推移｜' + dayStr + '｜' + chStr;
+    return '📉 軟調推移｜' + dayStr;
 
   if (daysSince >= 5 && totalChange >= tBase && recentMomentum > -0.3) {
     const signalVolBars = dailyBars.slice(Math.max(0, signalIdx - 5), signalIdx + 1);
@@ -450,12 +448,12 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
     const recentVolBars = postBars.slice(-3);
     const recentVolAvg  = recentVolBars.reduce((a, b) => a + (b.volume || 0), 0) / (recentVolBars.length || 1);
     const volNote = (signalVolAvg > 0 && recentVolAvg / signalVolAvg < 0.7) ? '（出来高収縮）' : '';
-    return '🛡️ 底値固め中' + volNote + '｜' + dayStr + '｜' + chStr;
+    return '🛡️ 底値固め中' + volNote + '｜' + dayStr;
   }
 
-  if (daysSince < 5)  return '➡️ 初動を確認中｜' + dayStr + '｜' + chStr;
-  if (daysSince < 15) return '➡️ 膠着状態｜' + dayStr + '｜' + chStr;
-  return '🤔 長期膠着｜' + dayStr + '｜' + chStr;
+  if (daysSince < 5)  return '➡️ 初動を確認中｜' + dayStr;
+  if (daysSince < 15) return '➡️ 膠着状態｜' + dayStr;
+  return '🤔 長期膠着｜' + dayStr;
 }
 
 

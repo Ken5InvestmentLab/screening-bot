@@ -361,25 +361,69 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
   // ATRスケール補正（ATR5%基準。高ATR銘柄の過剰判定を抑制）
   const atrMul = ind ? Math.max(0.8, Math.min(1.5, (ind.atrPct || 5) / 5.0)) : 1.0;
 
-  // daysSince = 0: ind（シグナル時点指標）で状態描写
+  // ── 点灯前コンテキスト計算（最大20日分）─────────────────
+  const preStartIdx = Math.max(0, signalIdx - 20);
+  const preBars     = dailyBars.slice(preStartIdx, signalIdx);
+  const preCloses   = preBars.map(b => b.close);
+  const hasPreData  = preCloses.length >= 10; // 最低10日分必要
+
+  let pre20Low = null, pre20High = null, pre20Trend = 0, signalZone = 'mid';
+  if (hasPreData) {
+    pre20Low   = Math.min(...preCloses);
+    pre20High  = Math.max(...preCloses);
+    pre20Trend = (preCloses[preCloses.length - 1] - preCloses[0]) / preCloses[0] * 100;
+    const signalClose = postBars[0]?.close;
+    if (pre20High > pre20Low && signalClose !== undefined) {
+      const pos = (signalClose - pre20Low) / (pre20High - pre20Low);
+      if (pos <= 0.25)      signalZone = 'low';
+      else if (pos >= 0.75) signalZone = 'high';
+      else                  signalZone = 'mid';
+    }
+  }
+
+  // 点灯日が点灯前20日安値を下回ったか（安値ブレイク判定）
+  const isBreakdown = hasPreData && pre20Low !== null && postBars[0]?.close < pre20Low;
+
+  // daysSince = 0: 点灯当日 — 指標と点灯前ゾーンで状態描写
   if (daysSince === 0) {
-    if (!ind) return '⏳ 初動を待機中';
-    const isStrong = ind.volSurge >= 2.0 && ind.bodyPct >= 0.8 && (ind.macdPos || ind.macdGC3d);
-    const isHot    = ind.rsi14 >= 65 || ind.stochK >= 80;
-    const isWeak   = ind.volSurge < 1.2 && ind.bodyPct < 0.3;
-    if (isStrong) return '🔥 出来高急増・勢い強い';
-    if (isHot)    return '⚠️ 短期過熱域';
-    if (isWeak)   return '🔍 出来高・モメンタム弱め';
-    return '⏳ 初動を待機中';
+    if (!ind && !hasPreData) return '🔔 シグナル点灯';
+
+    // 安値ブレイク（最優先）
+    if (isBreakdown) return '🔻 20日安値ブレイクで点灯';
+
+    // 指標ベース判定
+    if (ind) {
+      const isStrong = ind.volSurge >= 2.0 && ind.bodyPct >= 0.8 && (ind.macdPos || ind.macdGC3d);
+      const isHot    = ind.rsi14 >= 65 || ind.stochK >= 80;
+      const isWeak   = ind.volSurge < 1.2 && ind.bodyPct < 0.3;
+
+      if (isStrong) {
+        if (signalZone === 'low')  return '🔥 安値圏で出来高急増';
+        if (signalZone === 'high') return '⚠️ 高値圏で出来高急増';
+        return '🔥 出来高急増・勢い強い';
+      }
+      if (isHot)  return '⚠️ 短期過熱域';
+      if (isWeak) return '🔍 出来高・モメンタム弱め';
+    }
+
+    // ゾーンベースのフォールバック
+    if (signalZone === 'low') {
+      if (pre20Trend <= -5) return '🪨 急落後・安値圏で点灯';
+      return '🪨 安値圏で点灯';
+    }
+    if (signalZone === 'high') return '⚠️ 高値圏で点灯';
+    // 中段
+    if (pre20Trend <= -3) return '📍 下落後・中段で点灯';
+    return '📍 中段で点灯';
   }
 
   // daysSince = 1: 初動の方向で状態描写
   if (daysSince === 1) {
     const d = (postBars[1].close - postBars[0].close) / postBars[0].close * 100;
     if (d >= 2)  return '⚡ 初日から上昇発進｜+1日';
-    if (d >= 0)  return '🌱 穏やかな初動｜+1日';
-    if (d >= -3) return '⏸ 初日は下押し｜+1日';
-    return '⚠️ 初日は軟調｜+1日';
+    if (d >= 0)  return '↗️ 初日小幅上昇｜+1日';
+    if (d >= -3) return '↘️ 初日小幅下落｜+1日';
+    return '⚠️ 初日大幅下落｜+1日';
   }
 
   // daysSince >= 2: 軌跡ベースのフェーズ分類
@@ -418,6 +462,7 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
   const tFade  = 3  * atrMul;
   const tSoft  = -3 * atrMul;
   const tBase  = -2.5 * atrMul;
+  const tNear  = 1.5 * atrMul; // シグナル価格±tNear% を「付近」と判定
 
   const dayStr = '+' + daysSince + '日';
 
@@ -425,7 +470,7 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
     return '🚀 急騰継続中｜' + dayStr;
 
   if (maxGain >= tPeak && totalChange <= tCrash)
-    return '💀 天井打ち・急反落｜' + dayStr;
+    return '🔻 高値から急反落｜' + dayStr;
 
   if (maxGain >= tPeak && dipFromPeak <= -3 && totalChange >= 1 && recentMomentum > 0 && peakIdx < n - 1)
     return '🔄 押し目から反発｜' + dayStr;
@@ -451,9 +496,32 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
     return '🛡️ 底値固め中' + volNote + '｜' + dayStr;
   }
 
-  if (daysSince < 5)  return '➡️ 初動を確認中｜' + dayStr;
-  if (daysSince < 15) return '➡️ 膠着状態｜' + dayStr;
-  return '🤔 長期膠着｜' + dayStr;
+  // 無分類フォールバック — 点灯前ゾーンとシグナル価格との関係性で描写
+  const zoneSuffix = hasPreData
+    ? (signalZone === 'low' ? '安値圏' : signalZone === 'high' ? '高値圏' : '中段')
+    : null;
+  const zoneTag = zoneSuffix ? '｜' + zoneSuffix : '';
+
+  if (daysSince < 5) {
+    if (totalChange > tNear)
+      return '↗️ シグナル価格を上回り推移' + zoneTag + '｜' + dayStr;
+    if (totalChange < -tNear)
+      return '↘️ シグナル価格を下回り推移' + zoneTag + '｜' + dayStr;
+    return '↔️ シグナル価格付近で推移' + zoneTag + '｜' + dayStr;
+  }
+
+  if (daysSince < 15) {
+    if (signalZone === 'low' && totalChange >= -tNear)
+      return '🪨 安値圏で揉み合い継続｜' + dayStr;
+    if (totalChange < -tNear)
+      return '🔻 シグナル価格を割込み停滞｜' + dayStr;
+    return '⏸ シグナル価格付近で推移｜' + dayStr;
+  }
+
+  // daysSince >= 15
+  if (signalZone === 'low' && totalChange >= -tNear)
+    return '🪨 長期ベース形成（安値圏）｜' + dayStr;
+  return '⏹ 長期レンジ推移｜' + dayStr;
 }
 
 

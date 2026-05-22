@@ -350,6 +350,115 @@ function calculateScore(ind) {
 
 
 
+// ============================================================
+// マーケットフェーズ検出: シグナル後の価格軌跡を分類
+// ============================================================
+function detectMarketPhase(dailyBars, signalIdx, ind) {
+  const postBars = dailyBars.slice(signalIdx); // index 0 = signal day
+  const n = postBars.length;
+  const daysSince = n - 1;
+
+  // ATRスケール補正（ATR5%基準。高ATR銘柄の過剰判定を抑制）
+  const atrMul = ind ? Math.max(0.8, Math.min(1.5, (ind.atrPct || 5) / 5.0)) : 1.0;
+
+  // daysSince = 0: ind（シグナル時点指標）で状態描写
+  if (daysSince === 0) {
+    if (!ind) return '📊 標準的シグナル';
+    const isStrong = ind.volSurge >= 2.0 && ind.bodyPct >= 0.8 && (ind.macdPos || ind.macdGC3d);
+    const isHot    = ind.rsi14 >= 65 || ind.stochK >= 80;
+    const isWeak   = ind.volSurge < 1.2 && ind.bodyPct < 0.3;
+    if (isStrong) return '🔥 出来高急増・勢い強い';
+    if (isHot)    return '⚠️ 短期過熱域';
+    if (isWeak)   return '🔍 出来高・モメンタム弱め';
+    return '📊 標準的シグナル';
+  }
+
+  // daysSince = 1: 初動の方向で状態描写
+  if (daysSince === 1) {
+    const d = (postBars[1].close - postBars[0].close) / postBars[0].close * 100;
+    const dStr = (d >= 0 ? '+' : '') + d.toFixed(1) + '%';
+    if (d >= 2)  return '⚡ 初日から上昇発進｜+1日｜' + dStr;
+    if (d >= 0)  return '🌱 穏やかな初動｜+1日｜' + dStr;
+    if (d >= -3) return '⏸ 初日は下押し｜+1日｜' + dStr;
+    return '⚠️ 初日は軟調｜+1日｜' + dStr;
+  }
+
+  // daysSince >= 2: 軌跡ベースのフェーズ分類
+  const baseClose   = postBars[0].close;
+  const latestClose = postBars[n - 1].close;
+
+  let maxClose = baseClose, peakIdx = 0;
+  for (let i = 0; i < n; i++) {
+    if (postBars[i].close > maxClose) { maxClose = postBars[i].close; peakIdx = i; }
+  }
+  let troughClose = maxClose;
+  for (let i = peakIdx; i < n; i++) {
+    if (postBars[i].close < troughClose) troughClose = postBars[i].close;
+  }
+  let maxHigh = baseClose;
+  for (const b of postBars) maxHigh = Math.max(maxHigh, b.high ?? b.close);
+
+  const totalChange = (latestClose - baseClose) / baseClose * 100;
+  const maxGain     = (maxClose   - baseClose) / baseClose * 100;
+  const maxHighGain = (maxHigh    - baseClose) / baseClose * 100;
+  const dipFromPeak = maxClose > 0 ? (troughClose - maxClose) / maxClose * 100 : 0;
+
+  const recentN = Math.min(3, daysSince);
+  let recentMomentum = 0;
+  for (let i = n - recentN; i < n; i++) {
+    recentMomentum += (postBars[i].close - postBars[i - 1].close) / postBars[i - 1].close * 100;
+  }
+  recentMomentum /= recentN;
+
+  const tSurge = 10 * atrMul;
+  const tHold  = 7  * atrMul;
+  const tPeak  = 5  * atrMul;
+  const tCrash = -5 * atrMul;
+  const tTrend = 4  * atrMul;
+  const tRise  = 2  * atrMul;
+  const tFade  = 3  * atrMul;
+  const tSoft  = -3 * atrMul;
+  const tBase  = -2.5 * atrMul;
+
+  const dayStr = '+' + daysSince + '日';
+  const chStr  = (totalChange >= 0 ? '+' : '') + totalChange.toFixed(1) + '%';
+
+  if (maxHighGain >= tSurge && totalChange >= tHold)
+    return '🚀 急騰継続中｜' + dayStr + '｜高値+' + maxHighGain.toFixed(1) + '%';
+
+  if (maxGain >= tPeak && totalChange <= tCrash)
+    return '💀 天井打ち・急反落｜' + dayStr + '｜現在' + chStr;
+
+  if (maxGain >= tPeak && dipFromPeak <= -3 && totalChange >= 1 && recentMomentum > 0 && peakIdx < n - 1)
+    return '🔄 押し目から反発｜' + dayStr + '｜' + chStr;
+
+  if ((totalChange >= tTrend && recentMomentum >= -0.5) || (totalChange >= tRise && recentMomentum > 0.3))
+    return '📈 上昇トレンド中｜' + dayStr + '｜' + chStr;
+
+  if (maxGain >= tFade && totalChange >= 0 && recentMomentum < -0.3)
+    return '🧱 上値の重い展開｜' + dayStr + '｜' + chStr;
+
+  if (maxGain >= 2 && totalChange < 0 && recentMomentum < -0.2)
+    return '⚠️ 戻り売り優勢｜' + dayStr + '｜' + chStr;
+
+  if (totalChange <= tSoft)
+    return '📉 軟調推移｜' + dayStr + '｜' + chStr;
+
+  if (daysSince >= 5 && totalChange >= tBase && recentMomentum > -0.3) {
+    const signalVolBars = dailyBars.slice(Math.max(0, signalIdx - 5), signalIdx + 1);
+    const signalVolAvg  = signalVolBars.reduce((a, b) => a + (b.volume || 0), 0) / (signalVolBars.length || 1);
+    const recentVolBars = postBars.slice(-3);
+    const recentVolAvg  = recentVolBars.reduce((a, b) => a + (b.volume || 0), 0) / (recentVolBars.length || 1);
+    const volNote = (signalVolAvg > 0 && recentVolAvg / signalVolAvg < 0.7) ? '（出来高収縮）' : '';
+    return '🛡️ 底値固め中' + volNote + '｜' + dayStr + '｜' + chStr;
+  }
+
+  if (daysSince < 5)  return '➡️ 初動を確認中｜' + dayStr + '｜' + chStr;
+  if (daysSince < 15) return '➡️ 膠着状態｜' + dayStr + '｜' + chStr;
+  return '🤔 長期膠着｜' + dayStr + '｜' + chStr;
+}
+
+
 
 
 
@@ -464,6 +573,8 @@ function screenSymbol(symbol, ohlcvData, signalDateStr, entryPrice, eval5bd, per
     currentChange = ((latestClose / signalPrice - 1) * 100).toFixed(2);
   }
 
+  const marketPhase = detectMarketPhase(dailyBars, signalIdx, ind);
+
   return {
     symbol,
     score:    sr.score,
@@ -478,6 +589,7 @@ function screenSymbol(symbol, ohlcvData, signalDateStr, entryPrice, eval5bd, per
     signalPrice,
     futurePrice, futureDiff,
     latestClose, change: currentChange,
+    marketPhase,
   };
 }
 

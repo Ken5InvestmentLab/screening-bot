@@ -217,6 +217,9 @@ async function sendResultDMs(user, results, headerEmbed) {
         const chPrefix = parseFloat(r.change) >= 0 ? '+' : '';
         val += `現在: ${formatPrice(r.latestClose)}円 (${chPrefix}${r.change}%)\n`;
       }
+      if (r.marketPhase) {
+        val += `${r.marketPhase}\n`;
+      }
       if (r.filters && r.filters.length > 0) {
         val += `通過: ${r.filters.join(' / ')}\n`;
       } else {

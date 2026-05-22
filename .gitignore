@@ -6,3 +6,4 @@ backups/
 desktop.ini
 __pycache__/
 *.pyc
+test_phase.js

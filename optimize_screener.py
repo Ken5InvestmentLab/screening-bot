@@ -841,7 +841,7 @@ def bootstrap_wr_ci(df_s6, n_iter=1000, alpha=0.05, seed=42):
     hi = float(np.percentile(sample_wrs, 100 - alpha * 50))
     return (lo, hi)
 
-def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats):
+def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, adoption_mode="normal"):
     """Lockbox（真のOOS）での過度な劣化を検出する。
     現行ロジックの lockbox baseline より一定以上の勝率下落、
     または平均が大きくマイナスなら過学習と判断して不採用。
@@ -852,9 +852,16 @@ def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats):
     - 8-14件:  -15pt (低位データ、ノイズ吸収)
     - 8件未満: 自動fail
     標準誤差が 1/sqrt(n) で増大することを踏まえた緩和。
+
+    adoption_mode="rescue" の場合は現行劣化中なので緩和適用:
+    - 件数floor: 8→5件
+    - 勝率gap: 階層に +5pt 追加許容
+    - 平均: 絶対床-2%ではなく、現行lockbox平均-5pt の相対比較
     """
-    if lockbox_stats["n"] < 8:
-        return False, "lockbox★6件数不足（<8件）"
+    is_rescue = (adoption_mode == "rescue")
+    min_n = 5 if is_rescue else 8
+    if lockbox_stats["n"] < min_n:
+        return False, f"lockbox★6件数不足（<{min_n}件{'/rescue' if is_rescue else ''}）"
 
     n_cand = lockbox_stats["n"]
     if n_cand >= 30:
@@ -863,21 +870,36 @@ def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats):
         wr_gap = 0.08    # 8pt
     else:
         wr_gap = 0.15    # 15pt (低サンプル時はノイズ許容)
+    if is_rescue:
+        wr_gap += 0.05   # rescue時はさらに5pt許容
 
     base_wr = baseline_lockbox_stats.get("wr_raw", 0.0)
     if lockbox_stats["wr_raw"] < base_wr - wr_gap:
         return False, (
             f"lockbox勝率 {lockbox_stats['wr_raw']*100:.1f}% < "
             f"現行lockbox {base_wr*100:.1f}% - {wr_gap*100:.0f}pt "
-            f"(n={n_cand}, 階層ゲート)"
+            f"(n={n_cand}, 階層ゲート{'/rescue' if is_rescue else ''})"
         )
-    if lockbox_stats["avg_raw"] < -0.02:
-        return False, f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < -2%"
+
+    if is_rescue:
+        # rescue時は相対比較: 現行lockbox平均 -5pt まで許容
+        base_avg = baseline_lockbox_stats.get("avg_raw", 0.0)
+        avg_floor = base_avg - 0.05
+        if lockbox_stats["avg_raw"] < avg_floor:
+            return False, (
+                f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < "
+                f"現行{base_avg*100:+.1f}% − 5pt = {avg_floor*100:+.1f}% (rescue相対)"
+            )
+    else:
+        if lockbox_stats["avg_raw"] < -0.02:
+            return False, f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < -2%"
+
     return True, (
         f"lockbox★6 {lockbox_stats['n']}件 "
         f"勝率{lockbox_stats['wr_raw']*100:.1f}% "
         f"平均{lockbox_stats['avg_raw']*100:+.1f}% "
-        f"(gap許容=−{wr_gap*100:.0f}pt)"
+        f"(gap許容=−{wr_gap*100:.0f}pt"
+        f"{'/rescue相対' if is_rescue else ''})"
     )
 
 def permutation_pvalue(df, method, combo, thresholds, observed_composite, n_perm=200, seed=42):
@@ -3662,7 +3684,7 @@ def main():
 
     # 1. Lockbox（真のOOS）ゲート
     lockbox_s6_stats, _, _ = calc_candidate_tiers(df_wf_lockbox, best_method, best_combo, best_thresholds)
-    lb_ok, lb_reason = lockbox_gate_ok(lockbox_s6_stats, baseline_lockbox_stats6)
+    lb_ok, lb_reason = lockbox_gate_ok(lockbox_s6_stats, baseline_lockbox_stats6, adoption_mode)
     print(f"\n🔒 Lockbox OOS検証 — {'✓ 通過' if lb_ok else '✗ 過学習検出'}")
     print(f"   候補lockbox★6: {lockbox_s6_stats['n']}件 "
           f"勝率{lockbox_s6_stats['wr_raw']*100:.1f}% "
@@ -3695,8 +3717,9 @@ def main():
     print(f"  Bootstrap CI(95%): [{wr_lo*100:.1f}%, {wr_hi*100:.1f}%] "
           f"→ CI下限 {wr_lo*100:.1f}% {'>' if bs_ok else '≤'} 閾値{bs_threshold*100:.1f}% "
           f"[{bs_mode_label}, n={n_cand_full}] "
-          f"({'✓' if bs_ok else '✗ 統計的有意性なし'})")
-    if strict_gates and not bs_ok:
+          f"({'✓' if bs_ok else '✗ 統計的有意性なし'}"
+          f"{' / rescue時はバイパス' if adoption_mode == 'rescue' and not bs_ok else ''})")
+    if strict_gates and not bs_ok and adoption_mode != "rescue":
         handle_no_stable_candidate(
             f"Bootstrap CI: 下限{wr_lo*100:.1f}%が閾値{bs_threshold*100:.1f}%を下回ります。"
             f"({bs_mode_label}, n={n_cand_full})"

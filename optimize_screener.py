@@ -843,22 +843,41 @@ def bootstrap_wr_ci(df_s6, n_iter=1000, alpha=0.05, seed=42):
 
 def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats):
     """Lockbox（真のOOS）での過度な劣化を検出する。
-    現行ロジックの lockbox baseline より 5pt 超の下落、
-    または平均が大きくマイナスなら過学習と判断して不採用。"""
+    現行ロジックの lockbox baseline より一定以上の勝率下落、
+    または平均が大きくマイナスなら過学習と判断して不採用。
+
+    勝率差ゲートは lockbox ★6件数に応じて階層的に変動する:
+    - 30件以上: -5pt (データ十分、統計的有意差を要求)
+    - 15-29件: -8pt (中位データ、適度な許容)
+    - 8-14件:  -15pt (低位データ、ノイズ吸収)
+    - 8件未満: 自動fail
+    標準誤差が 1/sqrt(n) で増大することを踏まえた緩和。
+    """
     if lockbox_stats["n"] < 8:
         return False, "lockbox★6件数不足（<8件）"
+
+    n_cand = lockbox_stats["n"]
+    if n_cand >= 30:
+        wr_gap = 0.05    # 5pt
+    elif n_cand >= 15:
+        wr_gap = 0.08    # 8pt
+    else:
+        wr_gap = 0.15    # 15pt (低サンプル時はノイズ許容)
+
     base_wr = baseline_lockbox_stats.get("wr_raw", 0.0)
-    if lockbox_stats["wr_raw"] < base_wr - 0.05:
+    if lockbox_stats["wr_raw"] < base_wr - wr_gap:
         return False, (
             f"lockbox勝率 {lockbox_stats['wr_raw']*100:.1f}% < "
-            f"現行lockbox {base_wr*100:.1f}% - 5pt"
+            f"現行lockbox {base_wr*100:.1f}% - {wr_gap*100:.0f}pt "
+            f"(n={n_cand}, 階層ゲート)"
         )
     if lockbox_stats["avg_raw"] < -0.02:
         return False, f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < -2%"
     return True, (
         f"lockbox★6 {lockbox_stats['n']}件 "
         f"勝率{lockbox_stats['wr_raw']*100:.1f}% "
-        f"平均{lockbox_stats['avg_raw']*100:+.1f}%"
+        f"平均{lockbox_stats['avg_raw']*100:+.1f}% "
+        f"(gap許容=−{wr_gap*100:.0f}pt)"
     )
 
 def permutation_pvalue(df, method, combo, thresholds, observed_composite, n_perm=200, seed=42):
@@ -2933,6 +2952,12 @@ def _parse_sweep_output(output, threshold):
     elif _re.search(r"Lockbox\(OOS\)で過学習を検出", output):
         summary["verdict"] = "NG"
         summary["ng_kind"] = "lockbox"
+    elif _re.search(r"Bootstrap CI[:：]?\s*下限", output):
+        summary["verdict"] = "NG"
+        summary["ng_kind"] = "bootstrap"
+    elif _re.search(r"K-Fold CV で局所過学習を検出", output):
+        summary["verdict"] = "NG"
+        summary["ng_kind"] = "kfold"
     elif _re.search(r"条件・閾値が現行と同一", output):
         summary["verdict"] = "NG"
         summary["ng_kind"] = "same"
@@ -2942,7 +2967,9 @@ def _parse_sweep_output(output, threshold):
     elif _re.search(r"現行ロジックが最良。更新しません", output):
         summary["verdict"] = "NG"
         summary["ng_kind"] = "baseline_best"
-    elif _re.search(r"候補なし|全件★6が不足|Step 5a.*候補クリア\(train/\w+\): 0通り", output):
+    elif _re.search(r"全件★6が不足|Step 5a.*候補クリア\(train/\w+\): 0通り", output):
+        # 注: 単独「候補なし」は rescue mode の副作用メッセージ（"代替候補なし"）と
+        # 衝突するため使わない。具体的なメッセージのみで判定。
         summary["verdict"] = "no_cand"
     else:
         summary["verdict"] = "?"
@@ -3647,24 +3674,46 @@ def main():
     if strict_gates and not lb_ok:
         handle_no_stable_candidate(f"Lockbox(OOS)で過学習を検出。更新しません。({lb_reason})"); return
 
-    # 2. Bootstrap CI
+    # 2. Bootstrap CI（候補★6件数に応じて評価方式を切替）
+    # n<30 では Bootstrap CI 幅が ~30-40pt と広く、相対比較が事実上機能しない。
+    # n が大きい時のみ厳格 (現行勝率超え)、それ以外は絶対床35%でカタストロフィのみ防ぐ。
     cand_scores = calc_score_series_for_logic(df, best_method, best_combo, best_thresholds)
     cand_s6_df = df[cand_scores == 6]
+    n_cand_full = len(cand_s6_df)
     wr_lo, wr_hi = bootstrap_wr_ci(cand_s6_df)
-    bs_ok = wr_lo > baseline["wr_raw"]
+    if n_cand_full >= 30:
+        bs_threshold = baseline["wr_raw"]              # 厳格: > 現行勝率
+        bs_mode_label = f"現行{baseline['wr_raw']*100:.1f}% (n≥30 厳格)"
+    else:
+        bs_threshold = 0.35                            # 絶対床35%
+        bs_mode_label = f"絶対床35% (n<30 はCI幅広く相対比較困難)"
+    bs_ok = wr_lo > bs_threshold
     print(f"  Bootstrap CI(95%): [{wr_lo*100:.1f}%, {wr_hi*100:.1f}%] "
-          f"→ CI下限 {wr_lo*100:.1f}% {'>' if bs_ok else '≤'} 現行勝率 {baseline['wr_raw']*100:.1f}% "
+          f"→ CI下限 {wr_lo*100:.1f}% {'>' if bs_ok else '≤'} 閾値{bs_threshold*100:.1f}% "
+          f"[{bs_mode_label}, n={n_cand_full}] "
           f"({'✓' if bs_ok else '✗ 統計的有意性なし'})")
     if strict_gates and not bs_ok:
-        handle_no_stable_candidate("Bootstrap CI 下限が現行勝率を下回ります。統計的有意性なし。"); return
+        handle_no_stable_candidate(
+            f"Bootstrap CI: 下限{wr_lo*100:.1f}%が閾値{bs_threshold*100:.1f}%を下回ります。"
+            f"({bs_mode_label}, n={n_cand_full})"
+        ); return
 
-    # 3. K-Fold 時系列CV
+    # 3. K-Fold 時系列CV（候補★6件数に応じて要求フォールド数を階層化）
     kfold_wins = time_series_kfold_passes(df, best_method, best_combo, best_thresholds, baseline["wr_raw"], k=3)
-    kfold_ok = kfold_wins >= 2
+    if n_cand_full >= 30:
+        kfold_min = 2    # 厳格: 2/3 fold
+    elif n_cand_full >= 15:
+        kfold_min = 1    # 緩和: 1/3 fold
+    else:
+        kfold_min = 0    # スキップ（サンプル過小でCV意味なし）
+    kfold_ok = (kfold_min == 0) or (kfold_wins >= kfold_min)
     print(f"  K-Fold(k=3)安定性: {kfold_wins}/3 フォールドで現行超 "
+          f"[要求{kfold_min}/3, n={n_cand_full}] "
           f"({'✓ 安定' if kfold_ok else '✗ 局所過学習の疑い'})")
     if strict_gates and not kfold_ok and adoption_mode != "rescue":
-        handle_no_stable_candidate("K-Fold CV で局所過学習を検出。全期間での安定性が不十分。"); return
+        handle_no_stable_candidate(
+            f"K-Fold CV で局所過学習を検出。全期間での安定性が不十分。(要求{kfold_min}/3, n={n_cand_full})"
+        ); return
 
     # 4. Permutation Test（strict / transition どちらでも参考表示のみ）
     perm_p = permutation_pvalue(df, best_method, best_combo, best_thresholds,

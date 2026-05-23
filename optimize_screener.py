@@ -844,7 +844,7 @@ def bootstrap_wr_ci(df_s6, n_iter=1000, alpha=0.05, seed=42):
 def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, adoption_mode="normal"):
     """Lockbox（真のOOS）での過度な劣化を検出する。
     現行ロジックの lockbox baseline より一定以上の勝率下落、
-    または平均が大きくマイナスなら過学習と判断して不採用。
+    または平均が床を下回るなら過学習と判断して不採用。
 
     勝率差ゲートは lockbox ★6件数に応じて階層的に変動する:
     - 30件以上: -5pt (データ十分、統計的有意差を要求)
@@ -853,10 +853,14 @@ def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, adoption_mode="normal
     - 8件未満: 自動fail
     標準誤差が 1/sqrt(n) で増大することを踏まえた緩和。
 
-    adoption_mode="rescue" の場合は現行劣化中なので緩和適用:
+    平均床は二段構え（通常モード）:
+    - 絶対床 -2% と 現行lockbox平均-3pt の「緩い方」を採用
+    - ベア相場で現行も赤字の局面では絶対床だけだと全候補が落ちるため
+
+    adoption_mode="rescue" の場合は現行劣化中なのでさらに緩和:
     - 件数floor: 8→5件
     - 勝率gap: 階層に +5pt 追加許容
-    - 平均: 絶対床-2%ではなく、現行lockbox平均-5pt の相対比較
+    - 平均: 絶対床なし、現行lockbox平均-5pt の相対比較のみ
     """
     is_rescue = (adoption_mode == "rescue")
     min_n = 5 if is_rescue else 8
@@ -881,9 +885,9 @@ def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, adoption_mode="normal
             f"(n={n_cand}, 階層ゲート{'/rescue' if is_rescue else ''})"
         )
 
+    base_avg = baseline_lockbox_stats.get("avg_raw", 0.0)
     if is_rescue:
-        # rescue時は相対比較: 現行lockbox平均 -5pt まで許容
-        base_avg = baseline_lockbox_stats.get("avg_raw", 0.0)
+        # rescue時は相対比較のみ: 現行lockbox平均 -5pt まで許容
         avg_floor = base_avg - 0.05
         if lockbox_stats["avg_raw"] < avg_floor:
             return False, (
@@ -891,8 +895,14 @@ def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, adoption_mode="normal
                 f"現行{base_avg*100:+.1f}% − 5pt = {avg_floor*100:+.1f}% (rescue相対)"
             )
     else:
-        if lockbox_stats["avg_raw"] < -0.02:
-            return False, f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < -2%"
+        # 通常時は絶対床-2%と相対床（現行-3pt）の緩い方
+        avg_floor = min(-0.02, base_avg - 0.03)
+        if lockbox_stats["avg_raw"] < avg_floor:
+            return False, (
+                f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < "
+                f"床{avg_floor*100:+.1f}% "
+                f"(絶対-2% と 現行{base_avg*100:+.1f}%−3pt の緩い方)"
+            )
 
     return True, (
         f"lockbox★6 {lockbox_stats['n']}件 "

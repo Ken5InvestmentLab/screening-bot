@@ -3003,6 +3003,13 @@ def _parse_sweep_output(output, threshold):
     elif _re.search(r"現行ロジックが最良。更新しません", output):
         summary["verdict"] = "NG"
         summary["ng_kind"] = "baseline_best"
+    elif _re.search(r"勝率改善が軽微", output):
+        # 通常モードの WR_SIGNIFICANT_IMPROVEMENT 未満で却下されたケース
+        summary["verdict"] = "NG"
+        summary["ng_kind"] = "minor"
+    elif _re.search(r"alerts_rawベース★6勝率が現行以下", output):
+        summary["verdict"] = "NG"
+        summary["ng_kind"] = "ar_wr"
     elif _re.search(r"全件★6が不足|Step 5a.*候補クリア\(train/\w+\): 0通り", output):
         # 注: 単独「候補なし」は rescue mode の副作用メッセージ（"代替候補なし"）と
         # 衝突するため使わない。具体的なメッセージのみで判定。
@@ -3027,6 +3034,13 @@ def _parse_sweep_output(output, threshold):
                 summary["ng_reason"] = "★6平均"
             else:
                 summary["ng_reason"] = reason[:20]
+    elif summary.get("verdict") == "NG" and summary.get("ng_kind") == "minor":
+        # 軽微スキップは改善幅を含めて表示（例: 軽微+3.1pp）
+        m_imp = _re.search(r"勝率改善が軽微（\+([\d.]+)pt", output)
+        if m_imp:
+            summary["ng_reason"] = f"軽微+{m_imp.group(1)}pp"
+        else:
+            summary["ng_reason"] = "軽微"
     elif summary.get("verdict") == "NG":
         # quality 以外のNGは ng_kind をそのまま reason として表示
         summary["ng_reason"] = summary.get("ng_kind", "?")
@@ -3078,7 +3092,9 @@ def _print_sweep_summary(results):
               f"{up_down:<11} {best:<22} {verdict_str:<14} {combo}")
 
     print(f"{'='*100}")
-    print(f"  ※ ★6件数/勝率/平均/上昇下落: 現行ロジックを各閾値の定義で再評価した値")
+    print(f"  ※ ★6件数/勝率/平均: 現行ロジックの★6セットの統計 — 閾値非依存")
+    print(f"  ※ 上昇/下落: ★6のうち perf > +X% / < -X% の件数 — ここだけ閾値依存")
+    print(f"  ※ +X%母数: 全データ中で perf > +X% の銘柄数（方式Bリフト分析用）")
     print(f"  ※ 候補★6: 各閾値で見つかった上位候補の (件数 勝率/平均)")
     print(f"  ※ 判定: ✓OK=採用基準クリア / ✗XXX=不採用(理由) / skip:健全=現行健全のためスキップ")
 
@@ -3795,10 +3811,11 @@ def main():
     print(f"  表示用バックテスト（alerts_rawデータ / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
-    # ─── 通常モード時は大幅改善（勝率+5pt以上）のみ提案する ───────────
+    # ─── 通常モード時は中程度以上の改善（勝率+4pt以上）のみ提案する ───────────
     # rescue mode（streak >= RESCUE_REQUIRED_STREAK）は従来通り提案を通す。
     # 頻繁なロジック変更でユーザーが混乱しないよう、軽微な改善はスキップ。
-    WR_SIGNIFICANT_IMPROVEMENT = 0.05  # +5ppを「大幅」の閾値とする
+    # ベア相場で +5pp 改善が出にくいため +4pp に緩和（2026-05-23）。
+    WR_SIGNIFICANT_IMPROVEMENT = 0.04  # +4ppを「中程度以上」の閾値とする
     if adoption_mode == "normal":
         wr_improvement = best_stats["wr_raw"] - baseline["wr_raw"]
         if wr_improvement < WR_SIGNIFICANT_IMPROVEMENT:

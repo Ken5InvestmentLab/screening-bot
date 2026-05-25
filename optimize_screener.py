@@ -55,12 +55,27 @@ else:
 PENDING_LOGIC_PATH       = os.path.join(BASE_DIR, "pending_logic.json")
 SNIPER_LOGIC_PATH        = os.path.join(BASE_DIR, "current_logic_sniper.json")
 SNIPER_PENDING_PATH      = os.path.join(BASE_DIR, "pending_logic_sniper.json")
+MOONSHOT_LOGIC_PATH      = os.path.join(BASE_DIR, "current_logic_moonshot.json")
+MOONSHOT_PENDING_PATH    = os.path.join(BASE_DIR, "pending_logic_moonshot.json")
 RESCUE_STATE_PATH        = os.path.join(BASE_DIR, "rescue_state.json")
 CHAMPION_STATE_PATH      = os.path.join(BASE_DIR, "champion_state.json")
 LOGIC_HISTORY_PATH       = os.path.join(BASE_DIR, "current_logic_history.jsonl")
 SNIPER_WR_MIN            = 0.65   # Sniper採用の最低勝率
 SNIPER_N_MIN             = 10     # Sniper採用の最低件数
 SNIPER_WR_EPS            = 1e-12  # 浮動小数誤差を吸収しつつ、勝率はstrict改善のみ採用
+
+# Moonshot (平均リターン特化): 勝率不問・検出数フリー・15%以上の平均リターンが採用条件
+MOONSHOT_AVG_MIN              = 0.15   # 採用最低平均リターン（+15%）
+MOONSHOT_N_MIN                = 3      # 最低件数（検出数フリー方針なので緩め）
+MOONSHOT_AVG_EPS              = 1e-12  # 平均はstrict改善のみ採用
+MOONSHOT_EVAL_DAYS_CANDIDATES = [10, 20, 40]  # 初回最適化での評価日候補
+# ─── Moonshot 自動最適化のマスタースイッチ ───
+# False の間は optimize.yml / --apply-pending どちらでも Moonshot は完全スキップされる:
+#   - main() の _run_moonshot_optimization() 呼び出しを no-op 化
+#   - pending_logic_moonshot.json は生成されない（Discord通知も飛ばない）
+#   - 万一 pending_logic_moonshot.json が残っていても --apply-pending で無視される
+# データ蓄積後にここを True に変更すれば、翌日の optimize.yml から自動最適化が走る。
+MOONSHOT_AUTO_OPTIMIZE_ENABLED = False
 
 SPREADSHEET_ID   = "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8"
 SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -111,6 +126,16 @@ HEALTHY_SKIP_N_MIN = 25     # 全件★6件数がこれ以上 → 更新不要
 # Sniperモードのスキップ下限（勝率特化のためavg不要・件数は少なくてOK）
 SNIPER_HEALTHY_SKIP_WR    = 0.75   # Sniper全件勝率がこれ以上 → 更新不要
 SNIPER_HEALTHY_SKIP_N_MIN = 15     # Sniper全件★6件数がこれ以上 → 更新不要
+
+# Sniperモードのレスキュー閾値
+# - SNIPER_RESCUE_TRIGGER_WR: 全件再計算 or ライブ実績がこの勝率を下回ったらレスキュー候補
+# - SNIPER_RESCUE_TRIGGER_N : ライブ実績（採用日以降）がこの件数以上ならライブ単独でもレスキューを判定
+# - SNIPER_LIVE_HEALTH_WR   : ライブ実績がこれ以上なら健全と判定して健全スキップを継続
+# - SNIPER_RESCUE_WR_MIN    : レスキューモード時の採用最低勝率（normalの0.65から緩和）
+SNIPER_RESCUE_TRIGGER_WR = 0.60
+SNIPER_RESCUE_TRIGGER_N  = 10
+SNIPER_LIVE_HEALTH_WR    = 0.60
+SNIPER_RESCUE_WR_MIN     = 0.55
 WALK_FORWARD_VALID_FRAC = 0.20  # 30%→20%: lockbox分を確保するため
 LOCKBOX_FRAC            = 0.20  # 選別ループに一切触れない真のOOS
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
@@ -247,13 +272,26 @@ def load_current_logic_sniper():
         print(f"  ⚠ current_logic_sniper.json 読み込みエラー: {e}")
         return None
 
-def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None, backtest_stats=None):
-    """デプロイ成功後にSniperロジックを保存する。"""
+def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None, backtest_stats=None,
+                              preserve_updated_at=False):
+    """デプロイ成功後にSniperロジックを保存する。
+    preserve_updated_at=True なら既存ファイルの updated_at を引き継ぐ
+    （統計だけリフレッシュする用途。ライブ実績集計の起点日を維持するため）。"""
     import json
+    updated_at = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    if preserve_updated_at and os.path.exists(SNIPER_LOGIC_PATH):
+        try:
+            with open(SNIPER_LOGIC_PATH, "r", encoding="utf-8") as _ef:
+                _existing = json.load(_ef)
+            _ex_updated = _existing.get("updated_at")
+            if _ex_updated:
+                updated_at = _ex_updated
+        except Exception:
+            pass
     data = {
         "method": "sniper",
         "conditions": conditions,
-        "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "updated_at": updated_at,
         "thresholds": thresholds or {},
     }
     if backtest_stats:
@@ -272,6 +310,102 @@ def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None, backtest
         print(f"  ✅ current_logic_sniper.json 更新完了")
     except Exception as e:
         print(f"  ⚠ current_logic_sniper.json 保存エラー: {e}")
+
+def compute_current_sniper_backtest_stats(df, sniper_logic):
+    """現行Sniper条件に対して df 全体（alerts_raw + signals_archive）の
+    全通過統計を再計算する。current_logic_sniper.json の凍結数値を
+    最新化するために毎回の最適化で呼ぶ。"""
+    if not sniper_logic or df is None or len(df) == 0:
+        return None
+    conditions = sniper_logic.get("conditions") or []
+    if not conditions:
+        return None
+    missing = [c for c in conditions if c not in df.columns]
+    if missing:
+        print(f"  ⚠ Sniperバックテスト再計算: 条件列が見つかりません: {missing}")
+        return None
+    mask_pass = pd.Series(True, index=df.index)
+    for c in conditions:
+        mask_pass &= df[c].astype(bool)
+    return calc_stats(df[mask_pass])
+
+def compute_live_sniper_stats(df, sniper_logic):
+    """current_logic_sniper.json の updated_at 以降に発生したシグナルに対し、
+    現行Sniper条件全通過の勝率/平均/件数を返す（採用後のライブ実績）。
+    対象0件のときは n=0 の calc_stats 辞書、計算不能なら None。"""
+    if not sniper_logic or df is None or len(df) == 0:
+        return None
+    conditions = sniper_logic.get("conditions") or []
+    if not conditions:
+        return None
+    updated_at = sniper_logic.get("updated_at")
+    if not updated_at:
+        return None
+    try:
+        adopted_ts = pd.to_datetime(updated_at, errors="coerce", utc=True)
+    except Exception:
+        return None
+    if pd.isna(adopted_ts):
+        return None
+    # df["date"] は "YYYY/MM/DD" 文字列で tz-naive。比較のために adopted も tz-naive 化。
+    adopted_date = adopted_ts.tz_convert("UTC").tz_localize(None).normalize()
+    df_dates = pd.to_datetime(df["date"], errors="coerce")
+    mask_recent = df_dates >= adopted_date
+    df_live = df[mask_recent]
+    if len(df_live) == 0:
+        return calc_stats(pd.DataFrame())
+    missing = [c for c in conditions if c not in df_live.columns]
+    if missing:
+        print(f"  ⚠ Sniperライブ集計: 条件列が見つかりません: {missing}")
+        return None
+    mask_pass = pd.Series(True, index=df_live.index)
+    for c in conditions:
+        mask_pass &= df_live[c].astype(bool)
+    return calc_stats(df_live[mask_pass])
+
+def load_current_logic_moonshot():
+    """デプロイ済みのMoonshotロジックを読み込む。conditions空 or eval_days未設定はNone扱い。"""
+    import json
+    if not os.path.exists(MOONSHOT_LOGIC_PATH):
+        return None
+    try:
+        with open(MOONSHOT_LOGIC_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not data.get("conditions"):
+            return None  # 空のプレースホルダー → 未初期化
+        return data
+    except Exception as e:
+        print(f"  ⚠ current_logic_moonshot.json 読み込みエラー: {e}")
+        return None
+
+def save_current_logic_moonshot(conditions, eval_days, thresholds=None, avg_raw=None,
+                                 backtest_stats=None):
+    """Moonshotロジックを保存。eval_days は初回決定後は固定（外側で同じ値を渡す）。"""
+    import json
+    data = {
+        "method": "moonshot",
+        "conditions": conditions,
+        "eval_days": int(eval_days) if eval_days is not None else None,
+        "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "thresholds": thresholds or {},
+    }
+    if backtest_stats:
+        avg_raw = backtest_stats.get("avg_raw", avg_raw)
+        data["backtest"] = {
+            "source": "all",
+            "eval_days": int(eval_days) if eval_days is not None else None,
+            "n": int(backtest_stats.get("n", 0)),
+            "wr": round(float(backtest_stats.get("wr_raw", 0)) * 100, 1),
+            "avg": round(float(backtest_stats.get("avg_raw", 0)) * 100, 1),
+        }
+    if avg_raw is not None:
+        data["avg_raw"] = float(avg_raw)
+    try:
+        with open(MOONSHOT_LOGIC_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print(f"  ✅ current_logic_moonshot.json 更新完了")
+    except Exception as e:
+        print(f"  ⚠ current_logic_moonshot.json 保存エラー: {e}")
 
 # ══════════════════════════════════════════════════════════════
 # Google Sheets
@@ -321,6 +455,10 @@ def parse_alerts(rows, include_unconfirmed=False):
         if not sym: continue
         entry = parse_price(g("entry_price"))
         p5 = parse_perf(g("perf_5bd"))
+        # Moonshot 用: 10/20/40 BD 後の騰落率（スプシに未配置のときは NaN）
+        p10 = parse_perf(g("perf_10bd"))
+        p20 = parse_perf(g("perf_20bd"))
+        p40 = parse_perf(g("perf_40bd"))
         confirmed = math.isfinite(p5)
         if not confirmed and not include_unconfirmed: continue
         if not math.isfinite(entry) or entry <= 0:
@@ -333,6 +471,9 @@ def parse_alerts(rows, include_unconfirmed=False):
             "date": g("signal_date").strip(),
             "entry": entry,
             "perf_5bd": p5 if confirmed else np.nan,
+            "perf_10bd": p10 if math.isfinite(p10) else np.nan,
+            "perf_20bd": p20 if math.isfinite(p20) else np.nan,
+            "perf_40bd": p40 if math.isfinite(p40) else np.nan,
             "win_5bd": p5 > 0 if confirmed else False,  # win_flag_5bdはGAS取得タイミング次第でズレるため自力判定
             "confirmed_5bd": confirmed,
         })
@@ -1045,6 +1186,9 @@ def resolve_rescue_mode(raw_reasons, current_stats, current_validation_stats,
     raw_reasons = raw_reasons or []
     today_key = _jst_today_key()
     state = load_rescue_state()
+    # Sniperレスキュー状態は独立管理。Stable側で state を再構築する際に
+    # 上書きされないよう、ここで保持して各分岐で書き戻す。
+    sniper_carry = state.get("sniper") if isinstance(state, dict) else None
     wait_reasons = rescue_projection_wait_reasons(
         unconfirmed_current_stats, projected_current_stats
     )
@@ -1060,6 +1204,8 @@ def resolve_rescue_mode(raw_reasons, current_stats, current_validation_stats,
             "unconfirmed_current_stats6": _jsonable_stats(unconfirmed_current_stats),
             "projected_current_stats6": _jsonable_stats(projected_current_stats),
         }
+        if sniper_carry is not None:
+            new_state["sniper"] = sniper_carry
         if persist_state:
             save_rescue_state(new_state)
         return False, [], 0
@@ -1082,6 +1228,8 @@ def resolve_rescue_mode(raw_reasons, current_stats, current_validation_stats,
             "unconfirmed_current_stats6": _jsonable_stats(unconfirmed_current_stats),
             "projected_current_stats6": _jsonable_stats(projected_current_stats),
         }
+        if sniper_carry is not None:
+            new_state["sniper"] = sniper_carry
         if persist_state:
             save_rescue_state(new_state)
         return False, reasons, 0
@@ -1107,6 +1255,8 @@ def resolve_rescue_mode(raw_reasons, current_stats, current_validation_stats,
         "unconfirmed_current_stats6": _jsonable_stats(unconfirmed_current_stats),
         "projected_current_stats6": _jsonable_stats(projected_current_stats),
     }
+    if sniper_carry is not None:
+        new_state["sniper"] = sniper_carry
     if persist_state:
         save_rescue_state(new_state)
 
@@ -1123,6 +1273,92 @@ def resolve_rescue_mode(raw_reasons, current_stats, current_validation_stats,
     reasons = [
         *raw_reasons,
         f"rescue対象が{streak}日連続のためrescue modeを使用",
+    ]
+    return True, reasons, streak
+
+def detect_rescue_mode_sniper(refreshed_stats, live_stats):
+    """現行Sniper★6が劣化している場合にrescue modeを起動する。
+    refreshed_stats: df全体（alerts_raw + signals_archive）での現行条件の統計
+    live_stats     : 採用日以降のライブ実績
+    どちらかが SNIPER_RESCUE_TRIGGER_WR を下回れば breach 扱い。
+    ライブ件数が SNIPER_RESCUE_TRIGGER_N 未満ならライブ単独では breach 判定しない。"""
+    reasons = []
+    if refreshed_stats and refreshed_stats.get("n", 0) >= SNIPER_N_MIN:
+        if refreshed_stats["wr_raw"] < SNIPER_RESCUE_TRIGGER_WR:
+            reasons.append(
+                f"現行 全件★6勝率 {refreshed_stats['wr_raw']*100:.1f}% "
+                f"< {SNIPER_RESCUE_TRIGGER_WR*100:.0f}% "
+                f"(n={int(refreshed_stats['n'])})"
+            )
+    if live_stats and live_stats.get("n", 0) >= SNIPER_RESCUE_TRIGGER_N:
+        if live_stats["wr_raw"] < SNIPER_RESCUE_TRIGGER_WR:
+            reasons.append(
+                f"採用後ライブ★6勝率 {live_stats['wr_raw']*100:.1f}% "
+                f"< {SNIPER_RESCUE_TRIGGER_WR*100:.0f}% "
+                f"(n={int(live_stats['n'])})"
+            )
+    return bool(reasons), reasons
+
+def resolve_sniper_rescue_mode(raw_reasons, refreshed_stats, live_stats, persist_state=False):
+    """連続日数を加味してSniperのrescue mode利用可否を決める。
+    rescue_state.json の "sniper" キー配下に状態を保存する（Stable側とは独立）。"""
+    raw_reasons = raw_reasons or []
+    today_key = _jst_today_key()
+    prev_key = _previous_date_key(today_key)
+    state = load_rescue_state()
+    sniper_state = state.get("sniper") if isinstance(state, dict) else None
+    sniper_state = sniper_state if isinstance(sniper_state, dict) else {}
+
+    if not raw_reasons:
+        new_sniper_state = {
+            "updated_at": _utc_now_z(),
+            "last_checked_date": today_key,
+            "status": "healthy",
+            "streak": 0,
+            "raw_rescue_reasons": [],
+            "refreshed_stats": _jsonable_stats(refreshed_stats or {}),
+            "live_stats": _jsonable_stats(live_stats or {}),
+        }
+        state["sniper"] = new_sniper_state
+        if persist_state:
+            save_rescue_state(state)
+        return False, [], 0
+
+    last_breach_date = sniper_state.get("last_breach_date")
+    if last_breach_date == today_key:
+        streak = max(1, int(sniper_state.get("streak", 1) or 1))
+    elif last_breach_date == prev_key:
+        streak = int(sniper_state.get("streak", 0) or 0) + 1
+    else:
+        streak = 1
+
+    new_sniper_state = {
+        "updated_at": _utc_now_z(),
+        "last_checked_date": today_key,
+        "last_breach_date": today_key,
+        "status": "rescue_active" if streak >= RESCUE_REQUIRED_STREAK else "breach_observed",
+        "streak": streak,
+        "raw_rescue_reasons": raw_reasons,
+        "refreshed_stats": _jsonable_stats(refreshed_stats or {}),
+        "live_stats": _jsonable_stats(live_stats or {}),
+    }
+    state["sniper"] = new_sniper_state
+    if persist_state:
+        save_rescue_state(state)
+
+    if streak < RESCUE_REQUIRED_STREAK:
+        reasons = [
+            *raw_reasons,
+            (
+                f"Sniper rescue対象 {streak}/{RESCUE_REQUIRED_STREAK}日目のため、"
+                "今回はnormal判定で様子見"
+            ),
+        ]
+        return False, reasons, streak
+
+    reasons = [
+        *raw_reasons,
+        f"Sniper rescue対象が{streak}日連続のためrescue modeを使用",
     ]
     return True, reasons, streak
 
@@ -1371,13 +1607,16 @@ def search_combinations(df, baseline, mode="normal"):
     best.sort(key=lambda x: (x[0], x[1], x[2], x[3]), reverse=True)
     return best
 
-def search_combinations_sniper(df):
-    """Sniperモード: 勝率最大化の組み合わせ探索 (C(N,6), 全条件通過)"""
+def search_combinations_sniper(df, wr_floor=None):
+    """Sniperモード: 勝率最大化の組み合わせ探索 (C(N,6), 全条件通過)。
+    wr_floor を指定するとそれを採用最低勝率として使う（rescue時 = SNIPER_RESCUE_WR_MIN）。"""
+    if wr_floor is None:
+        wr_floor = SNIPER_WR_MIN
     conds = [c for c in BOOL_CONDS if c in df.columns]
     for c in conds:
         df[c] = df[c].astype(bool)
     total = sum(1 for _ in combinations(conds, 6))
-    print(f"  探索数: C({len(conds)},6) = {total:,}通り")
+    print(f"  探索数: C({len(conds)},6) = {total:,}通り (最低勝率 {wr_floor*100:.0f}%)")
     matrix = df[conds].to_numpy(dtype=np.bool_)
     arrays = _prepare_stats_arrays(df)
     best = []
@@ -1386,12 +1625,45 @@ def search_combinations_sniper(df):
         if int(s6_mask.sum()) < SNIPER_N_MIN:
             continue
         st6 = _calc_stats_mask(s6_mask, arrays)
-        if st6["wr_raw"] < SNIPER_WR_MIN:
+        if st6["wr_raw"] < wr_floor:
             continue
         combo = [conds[i] for i in idxs]
         best.append((st6["wr_raw"], st6["n"], list(combo), st6))
     best.sort(key=lambda x: (-x[0], -x[1]))  # 勝率降順・件数降順
     return best
+
+def search_combinations_moonshot(df, perf_col):
+    """Moonshotモード: 平均リターン最大化の組み合わせ探索 (C(N,6), 全条件通過)。
+    perf_col は perf_10bd / perf_20bd / perf_40bd のいずれか。
+    perf_col が NaN の行は探索対象から除外する（評価日未確定）。"""
+    if perf_col not in df.columns:
+        return []
+    df_eval = df.dropna(subset=[perf_col]).copy()
+    if df_eval.empty:
+        return []
+    conds = [c for c in BOOL_CONDS if c in df_eval.columns]
+    for c in conds:
+        df_eval[c] = df_eval[c].astype(bool)
+    total = sum(1 for _ in combinations(conds, 6))
+    print(f"  探索数: C({len(conds)},6) = {total:,}通り (perf={perf_col}, 対象{len(df_eval)}件)")
+    matrix = df_eval[conds].to_numpy(dtype=np.bool_)
+    perf_arr = df_eval[perf_col].to_numpy(dtype=float)
+    win_arr  = (perf_arr > 0).astype(float)
+    best = []
+    for idxs in combinations(range(len(conds)), 6):
+        s6_mask = _combo_all_mask(matrix, idxs)
+        n_hit = int(s6_mask.sum())
+        if n_hit < MOONSHOT_N_MIN:
+            continue
+        avg_raw = float(perf_arr[s6_mask].mean())
+        if avg_raw < MOONSHOT_AVG_MIN:
+            continue
+        wr_raw = float(win_arr[s6_mask].mean())
+        combo = [conds[i] for i in idxs]
+        best.append((avg_raw, n_hit, list(combo),
+                     {"n": n_hit, "avg_raw": avg_raw, "wr_raw": wr_raw}))
+    best.sort(key=lambda x: (-x[0], -x[1]))  # 平均降順・件数降順
+    return best, df_eval
 
 # ══════════════════════════════════════════════════════════════
 # 方式B: +10%銘柄共通点分析 → 重み付きスコア自動設計
@@ -1839,6 +2111,71 @@ def update_screener_js_sniper(new_code):
         pos = content.rfind(marker, 0, start)
         if 0 < pos and pos > start - 400:
             block_start = min(block_start, pos)
+    depth = 0; end = start
+    for i in range(start, len(content)):
+        if content[i] == "{": depth += 1
+        elif content[i] == "}":
+            depth -= 1
+            if depth == 0: end = i + 1; break
+    content = content[:block_start] + new_code + "\n" + content[end:]
+    with open(SCREENER_JS_PATH, "w", encoding="utf-8") as f:
+        f.write(content)
+    return True
+
+def build_func_moonshot(conditions, stats, eval_days, n, thresholds=None):
+    """calculateScoreMoonshot() の JS コードを生成"""
+    thresholds = thresholds or {}
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    lines = [
+        f"// Moonshotモード自動最適化 {now} / {n}件データ / 評価日 {eval_days}BD後",
+        f"// Moonshot: {stats['n']}件 平均{stats['avg_raw']*100:.1f}% 勝率{stats['wr_raw']*100:.1f}%",
+        f"// 【Moonshot条件（全6条件通過で採択・平均リターン特化）】",
+    ]
+    for i, c in enumerate(conditions):
+        if c in thresholds and c in COND_PARAM:
+            raw_col = COND_PARAM[c][0]
+            desc = PARAM_JS_TPL[raw_col][0](thresholds[c])
+        else:
+            desc = JS_IMPL.get(c, ('',))[0] or c
+        lines.append(f"//   {NUMS[i]} {desc}")
+    lines += ["", "function calculateScoreMoonshot(ind) {",
+              "  if (!ind) return null;",
+              "  const filters = [];",
+              "  let score = 0;", ""]
+    for i, c in enumerate(conditions):
+        num = NUMS[i]
+        if c in thresholds and c in COND_PARAM:
+            raw_col = COND_PARAM[c][0]
+            th = thresholds[c]
+            desc  = PARAM_JS_TPL[raw_col][0](th)
+            cond  = PARAM_JS_TPL[raw_col][1](th)
+            label = PARAM_JS_TPL[raw_col][2](th)
+        elif c in JS_IMPL:
+            desc, cond, label = JS_IMPL[c]
+        else:
+            continue
+        lines += [f"  // {num} {desc}", f"  if ({cond}) {{",
+                  f"    score++;", f"    filters.push(`{num}{label}`);", f"  }}", ""]
+    lines += ["  return { score, filters };", "}"]
+    return "\n".join(lines)
+
+def update_screener_js_moonshot(new_code):
+    """calculateScoreMoonshot() を置換"""
+    if not os.path.exists(SCREENER_JS_PATH):
+        print(f"  ⚠ 見つかりません: {SCREENER_JS_PATH}"); return False
+    with open(SCREENER_JS_PATH, "r", encoding="utf-8") as f:
+        content = f.read()
+    start = content.find("function calculateScoreMoonshot(ind)")
+    if start < 0:
+        print("  ⚠ calculateScoreMoonshot関数が見つかりません"); return False
+    block_start = start
+    for marker in ["// Moonshotモード自動最適化", "// Moonshot:", "// 【Moonshot条件",
+                   "// Moonshotモード採点", "// 平均騰落率重視", "// 平均リターン重視"]:
+        pos = content.rfind(marker, 0, start)
+        if 0 < pos and pos > start - 800:
+            block_start = min(block_start, pos)
+    # `// ===` の罫線は generic すぎるので採用しない。block_start の手前に罫線が
+    # 残っても害はないので無視する（最初の最適化で1度だけ）。
     depth = 0; end = start
     for i in range(start, len(content)):
         if content[i] == "{": depth += 1
@@ -2367,6 +2704,79 @@ def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
         print(f"  ⚠ Discord rescue通知失敗: {e}")
 
 
+def notify_discord_sniper_rescue_no_candidate(refreshed_stats, live_stats,
+                                              rescue_reasons, n_total):
+    """Sniper rescue mode 発動時に更新候補が見つからなかったことを管理者へ通知する。"""
+    import urllib.request, json as _json
+    if not APPROVAL_WEBHOOK_URL:
+        return
+
+    def _stats_line(label, st):
+        if not st or st.get("n", 0) == 0:
+            return f"{label:<10} (該当なし)"
+        return (
+            f"{label:<10} {int(st.get('n', 0)):3}件 "
+            f"勝率{st.get('wr_raw', 0)*100:5.1f}% "
+            f"平均{st.get('avg_raw', 0)*100:+5.1f}%"
+        )
+
+    payload = {
+        "embeds": [{
+            "title": "⚠ Sniper現行ロジック劣化 / 更新候補なし",
+            "description": (
+                "Sniper ★6 の劣化条件に該当しましたが、"
+                f"勝率{SNIPER_RESCUE_WR_MIN*100:.0f}%以上の代替ロジックは"
+                "見つかりませんでした。"
+            ),
+            "color": 0xE74C3C,
+            "fields": [
+                {
+                    "name": "📉 現行成績",
+                    "value": (
+                        "```\n"
+                        f"{_stats_line('全件★6', refreshed_stats)}\n"
+                        f"{_stats_line('ライブ★6', live_stats)}\n"
+                        f"全シグナル {n_total}件\n"
+                        "```"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "🧯 rescue mode 発動理由",
+                    "value": "```\n" + "\n".join(rescue_reasons) + "\n```",
+                    "inline": False
+                },
+                {
+                    "name": "判断",
+                    "value": "品質条件を満たさない置き換えは行わず、人間判断に上げます。",
+                    "inline": False
+                },
+            ],
+            "footer": {"text": "pending_logic_sniper.json は作成していません"},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }]
+    }
+
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        APPROVAL_WEBHOOK_URL,
+        data=data,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "DiscordBot (screening-bot, 1.0)"
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status not in (200, 204):
+                print(f"  ⚠ Discord Sniper rescue通知失敗: HTTP {resp.status}")
+            else:
+                print("  ✅ Discord Sniper rescue通知送信完了")
+    except Exception as e:
+        print(f"  ⚠ Discord Sniper rescue通知失敗: {e}")
+
+
 def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
     """Sniperロジック更新候補の承認リクエストをDiscordに送信"""
     import urllib.request, json as _json
@@ -2533,6 +2943,181 @@ def finalize_sniper_pending(sniper_data):
         print("  ✅ pending_logic_sniper.json 削除完了")
 
 
+def notify_discord_moonshot_approval(conditions, stats, eval_days, baseline_avg, thresholds):
+    """Moonshotロジック更新候補の承認リクエストをDiscordに送信"""
+    import urllib.request, json as _json
+    if not APPROVAL_WEBHOOK_URL:
+        return
+    thresholds = thresholds or {}
+    NL = "\n"
+    NUMS_FULL = ["①","②","③","④","⑤","⑥"]
+    def _desc(c):
+        if c in COND_PARAM and c in thresholds:
+            raw_col = COND_PARAM[c][0]
+            if raw_col in PARAM_JS_TPL:
+                return PARAM_JS_TPL[raw_col][0](thresholds[c])
+        return JS_IMPL.get(c, (c,))[0]
+    cond_lines = [f"{NUMS_FULL[i]} {_desc(c)}" for i, c in enumerate(conditions)]
+    avg_new = stats["avg_raw"] * 100
+    wr_new  = stats["wr_raw"] * 100
+    avg_old = baseline_avg * 100
+    payload = {
+        "embeds": [{
+            "title": "🌙 Moonshotモード — スコアリング更新候補",
+            "description": (
+                "平均リターン特化モードの更新候補が見つかりました。"
+                "承認するには `/approve-update` を実行してください。"
+            ),
+            "color": 0x9b59b6,
+            "fields": [
+                {
+                    "name": "🔬 Moonshot条件（全通過で採択）",
+                    "value": "```\n" + NL.join(cond_lines) + "\n```",
+                    "inline": False
+                },
+                {
+                    "name": f"📊 バックテスト成績（評価日 {eval_days}BD後）",
+                    "value": (
+                        f"```\nMoonshot: {int(stats['n'])}件  "
+                        f"平均 {avg_new:+.1f}%  勝率 {wr_new:.1f}%\n```"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "📈 現行との比較",
+                    "value": f"平均: {avg_old:+.1f}% → **{avg_new:+.1f}%** ({avg_new-avg_old:+.1f}pt)",
+                    "inline": False
+                },
+                {
+                    "name": "✅ 承認方法",
+                    "value": "Discord で `/approve-update` を実行してください",
+                    "inline": False
+                }
+            ],
+            "footer": {"text": "承認するまで現行Moonshotロジックは変更されません"},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }]
+    }
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        APPROVAL_WEBHOOK_URL, data=data,
+        headers={"Content-Type": "application/json; charset=utf-8",
+                 "User-Agent": "DiscordBot (screening-bot, 1.0)"},
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status not in (200, 204):
+                print(f"  ⚠ Discord Moonshot承認通知失敗: HTTP {resp.status}")
+    except Exception as e:
+        print(f"  ⚠ Discord Moonshot承認通知失敗: {e}")
+
+
+def notify_discord_moonshot_update(conditions, stats, eval_days, thresholds):
+    """Moonshotロジック更新完了をDiscordに通知"""
+    import urllib.request, json as _json
+    thresholds = thresholds or {}
+    NL = "\n"
+    NUMS_FULL = ["①","②","③","④","⑤","⑥"]
+
+    def _desc(c):
+        if c in COND_PARAM and c in thresholds:
+            raw_col = COND_PARAM[c][0]
+            if raw_col in PARAM_JS_TPL:
+                return PARAM_JS_TPL[raw_col][0](thresholds[c])
+        return JS_IMPL.get(c, (c,))[0]
+
+    cond_lines = [f"{NUMS_FULL[i]} {_desc(c)}" for i, c in enumerate(conditions)]
+    avg = stats["avg_raw"] * 100
+    wr  = stats["wr_raw"] * 100
+
+    payload = {
+        "embeds": [{
+            "title": "🌙 Moonshotモードのスコアリング条件を更新しました",
+            "description": "承認済みのMoonshotロジックをデプロイし、Botへ反映しました。",
+            "color": 0x2ecc71,
+            "fields": [
+                {
+                    "name": "🔬 新しいMoonshot条件（全通過で採択）",
+                    "value": "```\n" + NL.join(cond_lines) + "\n```",
+                    "inline": False
+                },
+                {
+                    "name": f"📊 バックテスト成績（評価日 {eval_days}BD後）",
+                    "value": (
+                        f"```\nMoonshot: {int(stats['n'])}件  "
+                        f"平均 {avg:+.1f}%  勝率 {wr:.1f}%\n```"
+                    ),
+                    "inline": False
+                },
+                {
+                    "name": "🔍 確認方法",
+                    "value": "`/scan moonshot` または `/help` で最新条件を確認できます。",
+                    "inline": False
+                }
+            ],
+            "footer": {"text": "Ken5 Investment Lab — 自動デプロイ完了"},
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }]
+    }
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        DISCORD_WEBHOOK_URL,
+        data=data,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "DiscordBot (screening-bot, 1.0)",
+        },
+        method="POST"
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status in (200, 204):
+                print("  ✅ Discord Moonshot更新通知送信完了")
+            else:
+                print(f"  ⚠ Discord Moonshot更新通知失敗: HTTP {resp.status}")
+    except Exception as e:
+        print(f"  ⚠ Discord Moonshot更新通知失敗: {e}")
+
+
+def apply_moonshot_pending():
+    """pending_logic_moonshot.json を読み込んで screener.js を更新する。
+    デプロイは行わない（呼び出し元が deploy() を担当）。
+    戻り値: {"combo": ..., "thresholds": ..., "stats": ..., "eval_days": ...} or None"""
+    import json as _pjson
+    if not os.path.exists(MOONSHOT_PENDING_PATH):
+        return None
+    print("\n📋 Moonshot: pending_logic_moonshot.json を適用...")
+    with open(MOONSHOT_PENDING_PATH, "r", encoding="utf-8") as _pf:
+        _p = _pjson.load(_pf)
+    _combo     = _p["conditions"]
+    _ths       = _p.get("thresholds", {})
+    _code      = _p["moonshot_code"]
+    _st        = _p["stats"]
+    _eval_days = _p.get("eval_days")
+    print(f"  Moonshot: 平均{_st['avg_raw']*100:.1f}% 勝率{_st['wr_raw']*100:.1f}%"
+          f" {int(_st['n'])}件 / 評価日 {_eval_days}BD")
+    if not update_screener_js_moonshot(_code):
+        print("  ❌ calculateScoreMoonshot() 更新失敗")
+        return None
+    print("  ✅ calculateScoreMoonshot() 更新完了")
+    return {"combo": _combo, "thresholds": _ths, "stats": _st, "eval_days": _eval_days}
+
+def finalize_moonshot_pending(moonshot_data):
+    """deploy()成功後にMoonshotロジックを確定（JSON保存 + pending削除）"""
+    if moonshot_data is None:
+        return
+    save_current_logic_moonshot(
+        moonshot_data["combo"],
+        moonshot_data["eval_days"],
+        thresholds=moonshot_data["thresholds"] or None,
+        backtest_stats=moonshot_data["stats"],
+    )
+    if os.path.exists(MOONSHOT_PENDING_PATH):
+        os.remove(MOONSHOT_PENDING_PATH)
+        print("  ✅ pending_logic_moonshot.json 削除完了")
+
+
 # ══════════════════════════════════════════════════════════════
 # 自動デプロイ
 # ══════════════════════════════════════════════════════════════
@@ -2567,7 +3152,10 @@ def deploy():
             ("③ scp転送(current_logic_sniper.json)",
              ["scp", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
               SNIPER_LOGIC_PATH, f"{VM_HOST}:{VM_DEST}"]),
-            ("④ pm2 restart",
+            ("④ scp転送(current_logic_moonshot.json)",
+             ["scp", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
+              MOONSHOT_LOGIC_PATH, f"{VM_HOST}:{VM_DEST}"]),
+            ("⑤ pm2 restart",
              ["ssh", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
               VM_HOST, "pm2 restart screening-bot"]),
         ]
@@ -2591,7 +3179,9 @@ def deploy():
              f'scp -i "{SSH_KEY_PATH}" "{INDEX_JS_PATH}" {VM_HOST}:{VM_DEST}'),
             ("③ scp転送(current_logic_sniper.json)",
              f'scp -i "{SSH_KEY_PATH}" "{SNIPER_LOGIC_PATH}" {VM_HOST}:{VM_DEST}'),
-            ("④ pm2 restart",
+            ("④ scp転送(current_logic_moonshot.json)",
+             f'scp -i "{SSH_KEY_PATH}" "{MOONSHOT_LOGIC_PATH}" {VM_HOST}:{VM_DEST}'),
+            ("⑤ pm2 restart",
              f'ssh -i "{SSH_KEY_PATH}" -o StrictHostKeyChecking=no {VM_HOST} "pm2 restart screening-bot"'),
         ]
         for label, cmd in steps:
@@ -2654,29 +3244,94 @@ def _run_sniper_optimization(df, args):
     sniper_logic = load_current_logic_sniper()
     baseline_wr  = sniper_logic.get("wr_raw", 0.0) if sniper_logic else 0.0
 
-    # 現行Sniperが健全なら最適化をスキップ
-    if sniper_logic:
-        sniper_n = sniper_logic.get("backtest", {}).get("n", 0)
+    # ── 現行条件の最新バックテスト + 採用後ライブ実績を毎回再計算 ────
+    refreshed_stats = compute_current_sniper_backtest_stats(df, sniper_logic) if sniper_logic else None
+    live_stats      = compute_live_sniper_stats(df, sniper_logic) if sniper_logic else None
+    if refreshed_stats:
+        print(f"  📈 現行条件の最新バックテスト: {int(refreshed_stats['n'])}件 "
+              f"勝率{refreshed_stats['wr_raw']*100:.1f}% "
+              f"平均{refreshed_stats['avg_raw']*100:.1f}%")
+    if live_stats is not None:
+        if live_stats.get("n", 0) > 0:
+            print(f"  📊 採用日以降のライブ実績: {int(live_stats['n'])}件 "
+                  f"勝率{live_stats['wr_raw']*100:.1f}% "
+                  f"平均{live_stats['avg_raw']*100:.1f}%")
+        else:
+            print("  📊 採用日以降のライブ実績: 該当シグナルなし")
+
+    # 統計だけリフレッシュして保存（updated_at は据え置き → ライブ集計の起点を維持）
+    # --dry-run はファイル変更を伴わないため、メモリ上の baseline_wr のみ最新化する。
+    if sniper_logic and refreshed_stats and refreshed_stats.get("n", 0) > 0:
+        if not args.dry_run:
+            save_current_logic_sniper(
+                sniper_logic.get("conditions", []),
+                sniper_logic.get("thresholds") or None,
+                backtest_stats=refreshed_stats,
+                preserve_updated_at=True,
+            )
+        baseline_wr = float(refreshed_stats.get("wr_raw", baseline_wr))
+
+    # ── Sniper rescue mode 判定 ─────────────────────────────────
+    raw_rescue, raw_rescue_reasons = detect_rescue_mode_sniper(refreshed_stats, live_stats)
+    persist_rescue = (args.propose or not args.dry_run)
+    rescue_mode, rescue_reasons, rescue_streak = resolve_sniper_rescue_mode(
+        raw_rescue_reasons, refreshed_stats, live_stats,
+        persist_state=persist_rescue,
+    )
+    if raw_rescue:
+        print("  ⚠ Sniper rescue対象条件を検知:")
+        for r in raw_rescue_reasons:
+            print(f"    - {r}")
+    if rescue_mode:
+        print("  🧯 Sniper rescue mode 発動:")
+        for r in rescue_reasons:
+            print(f"    - {r}")
+    elif raw_rescue and rescue_streak < RESCUE_REQUIRED_STREAK:
+        print(f"  ℹ Sniper rescue streak {rescue_streak}/{RESCUE_REQUIRED_STREAK}: 様子見継続")
+
+    # 現行Sniperが健全なら最適化をスキップ（rescue 中はスキップしない）
+    if sniper_logic and not rescue_mode:
+        sniper_n = int((refreshed_stats or {}).get("n", 0)
+                       or sniper_logic.get("backtest", {}).get("n", 0))
+        live_healthy = (
+            live_stats is None
+            or live_stats.get("n", 0) < SNIPER_RESCUE_TRIGGER_N
+            or live_stats.get("wr_raw", 0) >= SNIPER_LIVE_HEALTH_WR
+        )
         if (baseline_wr >= SNIPER_HEALTHY_SKIP_WR
-                and sniper_n >= SNIPER_HEALTHY_SKIP_N_MIN):
+                and sniper_n >= SNIPER_HEALTHY_SKIP_N_MIN
+                and live_healthy):
             print(
                 f"  ✅ Sniper健全のためスキップ: "
                 f"勝率{baseline_wr*100:.1f}% ≥ {SNIPER_HEALTHY_SKIP_WR*100:.0f}%"
                 f" / {sniper_n}件 ≥ {SNIPER_HEALTHY_SKIP_N_MIN}件"
             )
+            if live_stats and live_stats.get("n", 0) >= SNIPER_RESCUE_TRIGGER_N:
+                print(f"  ✅ ライブ実績も健全: "
+                      f"{live_stats['wr_raw']*100:.1f}% ≥ {SNIPER_LIVE_HEALTH_WR*100:.0f}% "
+                      f"(n={int(live_stats['n'])})")
             return
+
+    # rescue mode 時は採用最低勝率を緩和
+    wr_floor = SNIPER_RESCUE_WR_MIN if rescue_mode else SNIPER_WR_MIN
+    valid_floor = wr_floor * 0.85
 
     # Walk-forward分割（70/30）
     df_sorted = df.sort_values("date").reset_index(drop=True)
     wf_split  = int(len(df_sorted) * 0.7)
     df_train  = df_sorted.iloc[:wf_split].copy()
     df_valid  = df_sorted.iloc[wf_split:].copy()
-    print(f"  Walk-forward: train {len(df_train)}件 / validation {len(df_valid)}件")
+    print(f"  Walk-forward: train {len(df_train)}件 / validation {len(df_valid)}件"
+          + ("  [rescue mode]" if rescue_mode else ""))
 
-    cands = search_combinations_sniper(df_train.copy())
-    print(f"  勝率{SNIPER_WR_MIN*100:.0f}%以上クリア(train): {len(cands)}通り")
+    cands = search_combinations_sniper(df_train.copy(), wr_floor=wr_floor)
+    print(f"  勝率{wr_floor*100:.0f}%以上クリア(train): {len(cands)}通り")
     if not cands:
         print("  ✅ Sniper: 適合ロジックなし。現行を維持。")
+        if rescue_mode and (args.propose or not args.dry_run):
+            notify_discord_sniper_rescue_no_candidate(
+                refreshed_stats, live_stats, rescue_reasons, len(df)
+            )
         return
 
     # Walk-forward validation
@@ -2690,11 +3345,15 @@ def _run_sniper_optimization(df, args):
         if len(s6_v) < 3:
             continue
         st6_v = calc_stats(s6_v)
-        if st6_v["wr_raw"] >= SNIPER_WR_MIN * 0.85:
+        if st6_v["wr_raw"] >= valid_floor:
             wf_validated.append((wr, n, combo, st6_train, st6_v))
     print(f"  Walk-forward 通過: {len(wf_validated)}/{min(50, len(cands))}通り")
     if not wf_validated:
         print("  ✅ Sniper: Walk-forward 通過なし。現行を維持。")
+        if rescue_mode and (args.propose or not args.dry_run):
+            notify_discord_sniper_rescue_no_candidate(
+                refreshed_stats, live_stats, rescue_reasons, len(df)
+            )
         return
 
     best_wr, best_n, best_combo, _, st6_valid = wf_validated[0]
@@ -2710,12 +3369,27 @@ def _run_sniper_optimization(df, args):
           f" 平均{st6_valid['avg_raw']*100:.1f}%")
 
     # Sniperは勝率特化のため、現行勝率をstrictに上回らない候補は通知しない。
-    if sniper_logic and st6_full["wr_raw"] <= baseline_wr + SNIPER_WR_EPS:
+    # rescue mode 中は現行が劣化しているので、baseline 超えは要求しない（候補側の
+    # 全体勝率が rescue 下限 SNIPER_RESCUE_WR_MIN を満たしていれば通す）。
+    if sniper_logic and not rescue_mode:
+        if st6_full["wr_raw"] <= baseline_wr + SNIPER_WR_EPS:
+            print(
+                f"  ✅ Sniper: 勝率が現行以下 "
+                f"({st6_full['wr_raw']*100:.1f}% ≤ {baseline_wr*100:.1f}%) のため更新しません。"
+            )
+            return
+    elif rescue_mode:
+        if st6_full["wr_raw"] < SNIPER_RESCUE_WR_MIN:
+            print(
+                f"  ✅ Sniper(rescue): 勝率が下限未満 "
+                f"({st6_full['wr_raw']*100:.1f}% < {SNIPER_RESCUE_WR_MIN*100:.0f}%) "
+                f"のため更新しません。"
+            )
+            return
         print(
-            f"  ✅ Sniper: 勝率が現行以下 "
-            f"({st6_full['wr_raw']*100:.1f}% ≤ {baseline_wr*100:.1f}%) のため更新しません。"
+            f"  🧯 Sniper(rescue): 現行劣化のため baseline 超え条件を免除 "
+            f"(候補 {st6_full['wr_raw']*100:.1f}% / 現行 {baseline_wr*100:.1f}%)"
         )
-        return
 
     # 現行と同一条件、または条件が違っても対象シグナル集合が同一なら更新しない
     if sniper_logic:
@@ -2787,6 +3461,209 @@ def _run_sniper_optimization(df, args):
         save_current_logic_sniper(best_combo, {}, backtest_stats=st6_full)
     else:
         print("  ❌ calculateScoreSniper() 更新失敗")
+
+
+# ══════════════════════════════════════════════════════════════
+# Moonshotモード最適化（平均リターン特化・評価日固定）
+# ══════════════════════════════════════════════════════════════
+def _moonshot_evaluate_one(df, perf_col):
+    """指定の perf_col で Moonshot 探索 + Walk-forward 検証を行い、
+    最良候補（avg_raw 最大）を1つ返す。なければ None。"""
+    df_use = df.dropna(subset=[perf_col]).copy()
+    if df_use.empty or len(df_use) < MOONSHOT_N_MIN * 2:
+        print(f"  [{perf_col}] データ不足: {len(df_use)}件")
+        return None
+
+    df_sorted = df_use.sort_values("date").reset_index(drop=True)
+    wf_split  = int(len(df_sorted) * 0.7)
+    df_train  = df_sorted.iloc[:wf_split].copy()
+    df_valid  = df_sorted.iloc[wf_split:].copy()
+    print(f"  [{perf_col}] Walk-forward: train {len(df_train)}件 / valid {len(df_valid)}件")
+
+    cands, _ = search_combinations_moonshot(df_train, perf_col)
+    print(f"  [{perf_col}] 平均{MOONSHOT_AVG_MIN*100:.0f}%以上クリア(train): {len(cands)}通り")
+    if not cands:
+        return None
+
+    # Walk-forward 検証: 検証側でも avg_raw が MOONSHOT_AVG_MIN × 0.7 以上を維持
+    # 上位50だと訓練に過適合した尖った候補ばかりが検証で全滅するので、
+    # プールを 1000 まで広げて「訓練15%ジャスト前後の素直な候補」も検証対象に入れる。
+    MOONSHOT_VALID_POOL = 1000
+    valid_floor = MOONSHOT_AVG_MIN * 0.7
+    wf_validated = []
+    for avg_t, n_t, combo, st_t in cands[:MOONSHOT_VALID_POOL]:
+        conds_in_valid = [c for c in combo if c in df_valid.columns]
+        if len(conds_in_valid) < len(combo):
+            continue
+        v_mask = df_valid[conds_in_valid].astype(bool).all(axis=1)
+        s6_v = df_valid[v_mask].dropna(subset=[perf_col])
+        if len(s6_v) < 2:
+            continue
+        avg_v = float(s6_v[perf_col].mean())
+        n_v   = int(len(s6_v))
+        wr_v  = float((s6_v[perf_col] > 0).mean())
+        if avg_v >= valid_floor:
+            wf_validated.append((avg_t, n_t, combo, st_t,
+                                 {"n": n_v, "avg_raw": avg_v, "wr_raw": wr_v}))
+    print(f"  [{perf_col}] Walk-forward 通過: {len(wf_validated)}/{min(MOONSHOT_VALID_POOL, len(cands))}通り")
+    if not wf_validated:
+        return None
+
+    # 全データで最終評価（avg_raw / wr_raw / n）
+    best_avg_t, best_n_t, best_combo, _, st_v = wf_validated[0]
+    df_full = df.dropna(subset=[perf_col]).copy()
+    f_mask = df_full[best_combo].astype(bool).all(axis=1)
+    s6_full = df_full[f_mask]
+    if len(s6_full) < MOONSHOT_N_MIN:
+        return None
+    avg_full = float(s6_full[perf_col].mean())
+    wr_full  = float((s6_full[perf_col] > 0).mean())
+    st_full  = {"n": int(len(s6_full)), "avg_raw": avg_full, "wr_raw": wr_full}
+    return {
+        "combo":   best_combo,
+        "stats":   st_full,
+        "valid":   st_v,
+        "s6_full": s6_full,
+        "perf_col": perf_col,
+    }
+
+
+def _run_moonshot_optimization(df, args):
+    """Moonshotモード最適化（平均リターン特化・評価日1つ固定）。
+    --propose: pending_logic_moonshot.json 保存 + Discord通知。
+    --dry-run: 候補表示のみ。
+    通常実行: screener.js + current_logic_moonshot.json を直接更新。
+    """
+    import json as _json
+
+    print("\n🌙 Step M1: Moonshotモード最適化（平均リターン特化）...")
+    moonshot_logic = load_current_logic_moonshot()
+    baseline_avg = (moonshot_logic.get("avg_raw", 0.0) if moonshot_logic else 0.0)
+
+    # 評価日: 既存JSONがあれば固定、なければ [10/20/40] 全部試して最良採用
+    if moonshot_logic and moonshot_logic.get("eval_days") in (10, 20, 40):
+        fixed_eval = int(moonshot_logic["eval_days"])
+        eval_candidates = [fixed_eval]
+        print(f"  評価日 固定: {fixed_eval}BD (current_logic_moonshot.json から)")
+    else:
+        eval_candidates = list(MOONSHOT_EVAL_DAYS_CANDIDATES)
+        print(f"  評価日 未確定 → 初回最適化: {eval_candidates} を並列評価")
+
+    best = None
+    for eval_days in eval_candidates:
+        perf_col = f"perf_{eval_days}bd"
+        if perf_col not in df.columns:
+            print(f"  [{perf_col}] カラムが DataFrame に存在しません — スキップ")
+            continue
+        result = _moonshot_evaluate_one(df, perf_col)
+        if result is None:
+            continue
+        result["eval_days"] = eval_days
+        st = result["stats"]
+        print(f"  [{perf_col}] 候補★全: {st['n']}件 平均{st['avg_raw']*100:+.1f}%"
+              f" 勝率{st['wr_raw']*100:.1f}% {'+'.join(result['combo'])}")
+        if best is None or st["avg_raw"] > best["stats"]["avg_raw"]:
+            best = result
+
+    if best is None:
+        print("  ✅ Moonshot: 適合ロジックなし。現行を維持。")
+        return
+
+    best_combo = best["combo"]
+    st_full    = best["stats"]
+    st_valid   = best["valid"]
+    eval_days  = best["eval_days"]
+    s6_full    = best["s6_full"]
+    perf_col   = best["perf_col"]
+    print(f"\n  🌙 最良: 評価日 {eval_days}BD / {'+'.join(best_combo)}")
+    print(f"     全件: {st_full['n']}件 平均{st_full['avg_raw']*100:+.1f}%"
+          f" 勝率{st_full['wr_raw']*100:.1f}%")
+    print(f"     検証: {st_valid['n']}件 平均{st_valid['avg_raw']*100:+.1f}%"
+          f" 勝率{st_valid['wr_raw']*100:.1f}%")
+
+    # 採用ゲート①: 平均が MOONSHOT_AVG_MIN 以上
+    if st_full["avg_raw"] < MOONSHOT_AVG_MIN:
+        print(f"  ✅ Moonshot: 平均 {st_full['avg_raw']*100:+.1f}% < {MOONSHOT_AVG_MIN*100:.0f}% のため見送り")
+        return
+
+    # 採用ゲート②: 現行平均を strict に上回る
+    if moonshot_logic and st_full["avg_raw"] <= baseline_avg + MOONSHOT_AVG_EPS:
+        print(
+            f"  ✅ Moonshot: 平均が現行以下 "
+            f"({st_full['avg_raw']*100:+.1f}% ≤ {baseline_avg*100:+.1f}%) のため更新しません。"
+        )
+        return
+
+    # 採用ゲート③: 現行と同一条件 or 抽出シグナル集合が同一なら更新しない
+    if moonshot_logic:
+        current_conds = moonshot_logic.get("conditions", [])
+        current_ths   = moonshot_logic.get("thresholds", {}) or {}
+        if logic_signature("A", current_conds, current_ths) == logic_signature("A", best_combo, {}):
+            print("  ✅ Moonshot: 条件が現行と同一。更新しません。")
+            return
+        # 抽出集合の比較は perf_col 由来の df 全体で行う
+        df_full = df.dropna(subset=[perf_col])
+        cur_targets = set()
+        if all(c in df_full.columns for c in current_conds) and current_conds:
+            cur_mask = df_full[current_conds].astype(bool).all(axis=1)
+            cur_targets = set(df_full[cur_mask].index.tolist())
+        cand_targets = set(s6_full.index.tolist())
+        if cur_targets and cand_targets == cur_targets:
+            print("  ✅ Moonshot: 条件は異なるが抽出結果が現行と同一のため更新しません。")
+            return
+
+    moonshot_code = build_func_moonshot(best_combo, st_full, eval_days, len(df))
+
+    # ── --propose: pending保存 + Discord通知 ────────────────────
+    if args.propose:
+        def _to_jsonable(d):
+            return {k: float(v) if hasattr(v, 'item') else v for k, v in d.items()}
+        _pending = {
+            "conditions":      best_combo,
+            "thresholds":      {},
+            "eval_days":       int(eval_days),
+            "moonshot_code":   moonshot_code,
+            "stats":           _to_jsonable(st_full),
+            "validation_stats": _to_jsonable(st_valid),
+            "proposed_at":     datetime.utcnow().isoformat() + "Z"
+        }
+        with open(MOONSHOT_PENDING_PATH, "w", encoding="utf-8") as _f:
+            _json.dump(_pending, _f, ensure_ascii=False, indent=2)
+        print(f"  📋 pending_logic_moonshot.json に保存しました")
+        notify_discord_moonshot_approval(best_combo, st_full, eval_days, baseline_avg, {})
+        print("  ✅ Discord に Moonshot承認リクエストを送信しました")
+        return
+
+    # ── --dry-run: 候補表示のみ ──────────────────────────────────
+    if args.dry_run:
+        print(f"  🔍 Moonshot Dry-run: 更新・デプロイをスキップ")
+        print(f"\n  ── Moonshotシグナル候補（{len(s6_full)}件・評価日 {eval_days}BD）──")
+        print(f"  {'日付':<12} {'銘柄':<8} {'社名':<24} {'リターン':>9}")
+        for _, row in s6_full.sort_values("date", ascending=False).iterrows():
+            sign = "+" if row[perf_col] >= 0 else ""
+            print(f"  {row['date']:<12} {row['symbol']:<8} {row['name']:<24}"
+                  f" {sign}{row[perf_col]*100:.1f}%")
+        return
+
+    # ── 通常実行: screener.js 更新（デプロイは main() が担当）──────
+    if not args.yes:
+        try:
+            ans = input(
+                f"  Moonshot: {'+'.join(best_combo)} 平均{st_full['avg_raw']*100:+.1f}%"
+                f" (評価日 {eval_days}BD) を更新しますか？ [y/N] → "
+            ).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ans = "n"
+        if ans != "y":
+            print("  Moonshot更新をキャンセルしました。")
+            return
+
+    if update_screener_js_moonshot(moonshot_code):
+        print("  ✅ calculateScoreMoonshot() 更新完了")
+        save_current_logic_moonshot(best_combo, eval_days, thresholds=None,
+                                     backtest_stats=st_full)
+    else:
+        print("  ❌ calculateScoreMoonshot() 更新失敗")
 
 
 # ══════════════════════════════════════════════════════════════
@@ -3178,10 +4055,19 @@ def main():
     # ─── --apply-pending: 承認済みロジックをデプロイして終了 ───────
     if args.apply_pending:
         import json as _pjson, shutil, time as _time, glob as _glob
-        _has_main   = os.path.exists(PENDING_LOGIC_PATH)
-        _has_sniper = os.path.exists(SNIPER_PENDING_PATH)
-        if not _has_main and not _has_sniper:
-            print("ℹ️ pending_logic.json も pending_logic_sniper.json も見つかりません。")
+        _has_main     = os.path.exists(PENDING_LOGIC_PATH)
+        _has_sniper   = os.path.exists(SNIPER_PENDING_PATH)
+        # マスタースイッチがOFFの間は pending_logic_moonshot.json が残っていても
+        # apply 対象に入れない（誤って一緒にデプロイされるのを防ぐ）。
+        _has_moonshot = (MOONSHOT_AUTO_OPTIMIZE_ENABLED
+                         and os.path.exists(MOONSHOT_PENDING_PATH))
+        if (not MOONSHOT_AUTO_OPTIMIZE_ENABLED
+                and os.path.exists(MOONSHOT_PENDING_PATH)):
+            print("ℹ️ pending_logic_moonshot.json は存在しますが "
+                  "MOONSHOT_AUTO_OPTIMIZE_ENABLED=False のためスキップします。")
+        if not _has_main and not _has_sniper and not _has_moonshot:
+            print("ℹ️ pending_logic.json / pending_logic_sniper.json / pending_logic_moonshot.json"
+                  " いずれも見つかりません。")
             print("   承認待ちロジックがないため、デプロイはスキップします。")
             return
 
@@ -3224,7 +4110,28 @@ def main():
                     )
                     _has_sniper = False
 
-        if not _has_main and not _has_sniper:
+        if _has_moonshot:
+            with open(MOONSHOT_PENDING_PATH, "r", encoding="utf-8") as _mf:
+                _mp = _pjson.load(_mf)
+            _mp_stats = _mp["stats"]
+            _mp_eval  = _mp.get("eval_days")
+            print(f"  Moonshot pending: 平均{_mp_stats['avg_raw']*100:+.1f}%"
+                  f" 勝率{_mp_stats['wr_raw']*100:.1f}% {int(_mp_stats['n'])}件"
+                  f" / 評価日 {_mp_eval}BD")
+
+            _current_moonshot = load_current_logic_moonshot()
+            if _current_moonshot:
+                _current_moonshot_avg = float(_current_moonshot.get("avg_raw", 0.0))
+                _pending_moonshot_avg = float(_mp_stats.get("avg_raw", 0.0))
+                if _pending_moonshot_avg <= _current_moonshot_avg + MOONSHOT_AVG_EPS:
+                    print(
+                        f"  ✅ Moonshot pending: 平均が現行以下 "
+                        f"({_pending_moonshot_avg*100:+.1f}% ≤ {_current_moonshot_avg*100:+.1f}%) "
+                        "のため適用しません。"
+                    )
+                    _has_moonshot = False
+
+        if not _has_main and not _has_sniper and not _has_moonshot:
             print("ℹ️ 適用対象のpendingロジックがないため、デプロイはスキップします。")
             return
 
@@ -3258,6 +4165,17 @@ def main():
             save_current_logic_sniper(_sniper_data["combo"], _sniper_data["thresholds"] or None,
                                       backtest_stats=_sniper_data["stats"])
 
+        _moonshot_data = None
+        if _has_moonshot:
+            _moonshot_data = apply_moonshot_pending()
+            if _moonshot_data is None:
+                print("❌ calculateScoreMoonshot() 更新失敗"); sys.exit(1)
+            save_current_logic_moonshot(
+                _moonshot_data["combo"], _moonshot_data["eval_days"],
+                thresholds=_moonshot_data["thresholds"] or None,
+                backtest_stats=_moonshot_data["stats"],
+            )
+
         # デプロイ（1回）
         if deploy():
             if _has_main:
@@ -3277,6 +4195,12 @@ def main():
                 finalize_sniper_pending(_sniper_data)
                 notify_discord_sniper_update(_sniper_data["combo"], _sniper_data["stats"],
                                              _sniper_data["thresholds"] or {})
+            if _has_moonshot:
+                finalize_moonshot_pending(_moonshot_data)
+                notify_discord_moonshot_update(
+                    _moonshot_data["combo"], _moonshot_data["stats"],
+                    _moonshot_data["eval_days"], _moonshot_data["thresholds"] or {}
+                )
             print("\n✅ 承認済みロジックのデプロイ完了")
         else:
             print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")
@@ -3511,6 +4435,14 @@ def main():
 
     # ── Sniperモード最適化（Step 4完了後・Step 5a前） ─────────────
     _run_sniper_optimization(df, args)
+
+    # ── Moonshotモード最適化（Sniperの直後） ─────────────────────
+    # マスタースイッチがOFFの間は完全スキップ（pending生成・Discord通知も走らない）
+    if MOONSHOT_AUTO_OPTIMIZE_ENABLED:
+        _run_moonshot_optimization(df, args)
+    else:
+        print("\n🌙 Moonshot 自動最適化はスキップ "
+              "(MOONSHOT_AUTO_OPTIMIZE_ENABLED=False / データ蓄積待ち)")
 
     print("\n🔍 Step 5a: 方式A（組み合わせ探索）...")
     print(f"  Walk-forward: train {len(df_wf_train)}件 / validation {len(df_wf_valid)}件")

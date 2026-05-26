@@ -3152,13 +3152,17 @@ def deploy():
             ("③ scp転送(current_logic_sniper.json)",
              ["scp", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
               SNIPER_LOGIC_PATH, f"{VM_HOST}:{VM_DEST}"]),
-            ("④ scp転送(current_logic_moonshot.json)",
-             ["scp", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
-              MOONSHOT_LOGIC_PATH, f"{VM_HOST}:{VM_DEST}"]),
-            ("⑤ pm2 restart",
-             ["ssh", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
-              VM_HOST, "pm2 restart screening-bot"]),
         ]
+        # Moonshotファイルが存在する場合のみ転送（MOONSHOT_AUTO_OPTIMIZE_ENABLED=False の間は不在）
+        if os.path.exists(MOONSHOT_LOGIC_PATH):
+            steps.append(("④ scp転送(current_logic_moonshot.json)",
+             ["scp", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
+              MOONSHOT_LOGIC_PATH, f"{VM_HOST}:{VM_DEST}"]))
+        else:
+            print("  ⊘ current_logic_moonshot.json 不在 → SCPスキップ")
+        steps.append(("⑤ pm2 restart",
+             ["ssh", "-i", SSH_KEY_PATH, "-o", "StrictHostKeyChecking=no",
+              VM_HOST, "pm2 restart screening-bot"]))
         for label, cmd in steps:
             print(f"  {label}...")
             r = subprocess.run(cmd, capture_output=True, text=True,
@@ -3179,11 +3183,15 @@ def deploy():
              f'scp -i "{SSH_KEY_PATH}" "{INDEX_JS_PATH}" {VM_HOST}:{VM_DEST}'),
             ("③ scp転送(current_logic_sniper.json)",
              f'scp -i "{SSH_KEY_PATH}" "{SNIPER_LOGIC_PATH}" {VM_HOST}:{VM_DEST}'),
-            ("④ scp転送(current_logic_moonshot.json)",
-             f'scp -i "{SSH_KEY_PATH}" "{MOONSHOT_LOGIC_PATH}" {VM_HOST}:{VM_DEST}'),
-            ("⑤ pm2 restart",
-             f'ssh -i "{SSH_KEY_PATH}" -o StrictHostKeyChecking=no {VM_HOST} "pm2 restart screening-bot"'),
         ]
+        # Moonshotファイルが存在する場合のみ転送（MOONSHOT_AUTO_OPTIMIZE_ENABLED=False の間は不在の可能性）
+        if os.path.exists(MOONSHOT_LOGIC_PATH):
+            steps.append(("④ scp転送(current_logic_moonshot.json)",
+             f'scp -i "{SSH_KEY_PATH}" "{MOONSHOT_LOGIC_PATH}" {VM_HOST}:{VM_DEST}'))
+        else:
+            print("  ⊘ current_logic_moonshot.json 不在 → SCPスキップ")
+        steps.append(("⑤ pm2 restart",
+             f'ssh -i "{SSH_KEY_PATH}" -o StrictHostKeyChecking=no {VM_HOST} "pm2 restart screening-bot"'))
         for label, cmd in steps:
             print(f"  {label}...")
             r = subprocess.run(["powershell", "-Command", cmd],

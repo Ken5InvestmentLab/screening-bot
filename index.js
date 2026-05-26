@@ -5,7 +5,7 @@
 // ・スコア別・ボラタグ別の実績を自動表示
 // ・最終更新日時を表示
 
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const https = require('https');
 const path = require('path');
@@ -182,7 +182,7 @@ function sortResults(results) {
 // ============================================================
 // DM送信
 // ============================================================
-async function sendResultDMs(user, results, headerEmbed, withCodeSearchButtons = true) {
+async function sendResultDMs(user, results, headerEmbed) {
   await user.send({ embeds: [headerEmbed] });
 
   const CHUNK = 5;
@@ -190,7 +190,6 @@ async function sendResultDMs(user, results, headerEmbed, withCodeSearchButtons =
     const chunk = results.slice(i, i + CHUNK);
     const isLast = i + CHUNK >= results.length;
     const embed  = new EmbedBuilder().setColor(COLOR);
-    const rows   = [];
 
     for (const r of chunk) {
       const tvUrl  = `https://jp.tradingview.com/chart/?symbol=TSE:${r.symbol}`;
@@ -234,20 +233,10 @@ async function sendResultDMs(user, results, headerEmbed, withCodeSearchButtons =
       }
 
       embed.addFields({ name: `${r.symbol}　${r.name ?? ''}`, value: val, inline: false });
-
-      if (withCodeSearchButtons) {
-        // 各銘柄に「全履歴を見る」ボタンを付与（クリックで /scan mode:code range:<symbol> 相当を実行）
-        rows.push(new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`codeSearch:${r.symbol}`)
-            .setLabel(`🔍 ${r.symbol} のすべての履歴を見る`)
-            .setStyle(ButtonStyle.Secondary)
-        ));
-      }
     }
 
     if (isLast) embed.setFooter({ text: DISCLAIMER });
-    await user.send({ embeds: [embed], components: rows });
+    await user.send({ embeds: [embed] });
   }
 }
 
@@ -582,7 +571,7 @@ async function runCodeSearch(interaction, user, codeInput) {
       .setColor(COLOR)
       .setTimestamp();
 
-    await sendResultDMs(user, scored, headerEmbed, false); // コード検索結果はボタンOFF（同一銘柄が並ぶので冗長）
+    await sendResultDMs(user, scored, headerEmbed);
     await interaction.editReply({ content: `✅ ${symbolCode} — DMを確認してください。`, ephemeral: true });
 
   } catch (err) {
@@ -952,23 +941,6 @@ client.on('interactionCreate', async (interaction) => {
         { name: '全期間（すべて）',        value: '0' },
       ];
       await interaction.respond(fixed.filter(c => c.name.includes(focused) || focused === ''));
-    }
-    return;
-  }
-
-  if (interaction.isButton()) {
-    const [action, payload] = interaction.customId.split(':');
-    if (action === 'codeSearch' && payload) {
-      if (!(await checkRole(interaction))) {
-        return interaction.reply({
-          content: '❌ このボタンを使用するには専用ロールが必要です。',
-          ephemeral: true,
-        });
-      }
-      if (scanningUsers.has(interaction.user.id)) {
-        return interaction.reply({ content: '⚙️ 現在実行中です。少しお待ちください。', ephemeral: true });
-      }
-      return runCodeSearch(interaction, interaction.user, payload);
     }
     return;
   }

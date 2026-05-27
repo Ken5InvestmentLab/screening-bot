@@ -199,7 +199,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ### `optimize_screener.py` の評価指標
 
 - **採用基準①**: `composite > baseline`（ベースラインを上回ること）
-- **採用基準②**: `wr_raw > baseline.wr_raw`（勝率を上回ること、strict `>`）
+- **採用基準②**: `wr_raw >= baseline.wr_raw`（勝率を下回らないこと、`STRICT_WR=False` で等号許可。同率なら avg / win10 / composite の優劣で勝てば採用）
 - **採用基準③**: `win10_raw >= baseline.win10_raw × 0.80`（★6件数の20%以内の減少）
 - **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×50 + avg×100 + (win10−lose10)/total×150`（recency半減期90日の加重）
 - **Method A**: 6条件の組み合わせ全探索（各1点）

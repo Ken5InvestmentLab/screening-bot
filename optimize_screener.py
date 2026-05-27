@@ -144,7 +144,7 @@ THRESHOLD_TUNE_CANDIDATE_LIMIT = 9
 
 # composite バリアント: rate_adjusted=件数正規化(デフォルト) / snr=√n正規化 / legacy=旧来
 COMPOSITE_VARIANT = "rate_adjusted"
-STRICT_WR  = True   # 勝率フロアは > (等号排除 = 同一勝率では更新しない)
+STRICT_WR  = False  # 勝率フロアは >= (同一勝率でも他指標で勝てば採用。Phase 1緩和)
 WR_FLOOR   = 0.0    # 勝率絶対下限 (0.0=無効)
 
 # 更新通知先Discord Webhook
@@ -4017,10 +4017,10 @@ def main():
                         help="composite計算方式 (default: rate_adjusted)")
     parser.add_argument("--baseline-decay", type=float, default=None,
                         help="ベースライン採用閾値 (default: 1.0)")
-    parser.add_argument("--strict-wr", dest="strict_wr", action="store_true", default=True,
-                        help="勝率フロアを厳格化: >= → > (default)")
+    parser.add_argument("--strict-wr", dest="strict_wr", action="store_true", default=None,
+                        help="勝率フロアを厳格化: >= → > (モジュール定数を上書き)")
     parser.add_argument("--no-strict-wr", dest="strict_wr", action="store_false",
-                        help="勝率フロアを緩和: > → >=")
+                        help="勝率フロアを緩和: > → >= (モジュール定数を上書き)")
     parser.add_argument("--wr-floor", type=float, default=0.0,
                         help="勝率絶対下限 (例: 0.55、default: 0.0=無効)")
     parser.add_argument("--win-threshold", type=float, default=None,
@@ -4037,7 +4037,8 @@ def main():
     COMPOSITE_VARIANT = args.composite_variant
     if args.baseline_decay is not None:
         BASELINE_DECAY = args.baseline_decay
-    STRICT_WR = args.strict_wr
+    if args.strict_wr is not None:
+        STRICT_WR = args.strict_wr
     WR_FLOOR  = args.wr_floor
 
     # --win-threshold と --win-threshold-sweep は排他

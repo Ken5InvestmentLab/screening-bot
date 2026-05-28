@@ -292,14 +292,14 @@ function computeIndicators(dailyBars, signalIdx) {
 // ============================================================
 // スコア計算（6点満点）
 // ============================================================
-// 自動最適化(方式A) 2026-05-23 07:00 / 1668件データ
-// ★6: 29件 勝率65.5% 平均13.2% 上昇9件 下落3件
-// 現行: 勝率60.9% 平均9.9%
+// 自動最適化(方式A) 2026-05-28 18:34 / 1798件データ
+// ★6: 25件 勝率60.0% 平均12.6% 上昇8件 下落3件
+// 現行: 勝率58.8% 平均11.0%
 // 【6条件（各1点）】
-//   ① 当日出来高≥20日×2.0
-//   ② 強い陽線（実体≥0.5%）
-//   ③ 強い陽線（実体≥1.0%）
-//   ④ MACD hist > 0
+//   ① close > EMA25（中期トレンド）
+//   ② MACD hist > 0
+//   ③ ストキャス≥75
+//   ④ BB位置≥80%
 //   ⑤ 直近3日連続下落後
 //   ⑥ ギャップアップ（始値>前終値）
 
@@ -308,28 +308,28 @@ function calculateScore(ind) {
   const filters = [];
   let score = 0;
 
-  // ① 当日出来高≥20日×2.0
-  if (ind.volSurge >= 2.0) {
+  // ① close > EMA25（中期トレンド）
+  if (ind.ema25 !== null && ind.close > ind.ema25) {
     score++;
-    filters.push(`①vol急増(${ind.volSurge}x)`);
+    filters.push(`①EMA25順張り`);
   }
 
-  // ② 強い陽線（実体≥0.5%）
-  if (ind.isStrongBull) {
-    score++;
-    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);
-  }
-
-  // ③ 強い陽線（実体≥1.0%）
-  if (ind.bodyPct >= 1.0) {
-    score++;
-    filters.push(`③強陽線(${ind.bodyPct.toFixed(1)}%)`);
-  }
-
-  // ④ MACD hist > 0
+  // ② MACD hist > 0
   if (ind.macdPos) {
     score++;
-    filters.push(`④MACD上昇`);
+    filters.push(`②MACD上昇`);
+  }
+
+  // ③ ストキャス≥75
+  if (ind.stochK >= 75) {
+    score++;
+    filters.push(`③STOCH(${ind.stochK.toFixed(0)})`);
+  }
+
+  // ④ BB位置≥80%
+  if (ind.bbPct >= 0.80) {
+    score++;
+    filters.push(`④BB上部(${(ind.bbPct*100).toFixed(0)}%)`);
   }
 
   // ⑤ 直近3日連続下落後
@@ -346,6 +346,7 @@ function calculateScore(ind) {
 
   return { score, filters };
 }
+
 
 
 

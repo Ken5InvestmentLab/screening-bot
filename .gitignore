@@ -7,3 +7,12 @@ desktop.ini
 __pycache__/
 *.pyc
 test_phase.js
+
+# 一時的な実行ログ
+tmp_*.log
+
+# Claude Code 内部
+.claude/worktrees/
+
+# Python インタプリタ本体（OneDrive同期で混入）
+Python/

@@ -4752,11 +4752,13 @@ def main():
     print(f"  表示用バックテスト（alerts_rawデータ / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
-    # ─── 通常モード時は中程度以上の改善（勝率+4pt以上）のみ提案する ───────────
+    # ─── 通常モード時は中程度以上の改善（勝率+1pt以上）のみ提案する ───────────
     # rescue mode（streak >= RESCUE_REQUIRED_STREAK）は従来通り提案を通す。
     # 頻繁なロジック変更でユーザーが混乱しないよう、軽微な改善はスキップ。
     # ベア相場で +5pp 改善が出にくいため +4pp に緩和（2026-05-23）。
-    WR_SIGNIFICANT_IMPROVEMENT = 0.04  # +4ppを「中程度以上」の閾値とする
+    # 統計検定（Lockbox/Bootstrap/K-Fold/Permutation）を全通過しても
+    # +4pp 未満で却下されるケースが発生したため +1pp に緩和（2026-05-28）。
+    WR_SIGNIFICANT_IMPROVEMENT = 0.01  # +1ppを「中程度以上」の閾値とする
     if adoption_mode == "normal":
         wr_improvement = best_stats["wr_raw"] - baseline["wr_raw"]
         if wr_improvement < WR_SIGNIFICANT_IMPROVEMENT:

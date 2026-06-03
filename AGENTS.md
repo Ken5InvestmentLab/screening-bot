@@ -132,7 +132,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 }
 ```
 
-利用可能な条件キー（`optimize_screener.py` の `BOOL_CONDS` で定義。Stable/Sniper共通）: `ema25`, `ema75`, `vol20`, `vol15`, `vol12`, `sbull`, `body1`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `ich_tk`, `ich_price_tenkan`, `ich_price_kijun`, `ich_cloud_above`, `ich_cloud_green`, `ich_chikou`, `ich_kumo_break`
+利用可能な条件キー（`optimize_screener.py` の `BOOL_CONDS` で定義。Stable/Sniper共通）: `ema75`, `ema25`, `vol20`, `vol15`, `vol12`, `vol30`, `sbull`, `body1`, `body2`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `lower_wick50`, `pre_decline15`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `ich_tk`, `ich_price_tenkan`, `ich_price_kijun`, `ich_cloud_above`, `ich_cloud_green`, `ich_chikou`, `ich_kumo_break`, `rci9_os`, `rci26_os`, `rci9_up`, `pre_down3`, `gap_up`, `bb_lower`, `cci_os`, `smbull_seq2`, `smbull_seq3`
 
 ### `screener.js` の処理フロー
 
@@ -144,10 +144,10 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ### `optimize_screener.py` の評価指標
 
 - **採用基準①**: `composite > baseline`（ベースラインを上回ること）
-- **採用基準②**: `wr_raw > baseline.wr_raw`（勝率を上回ること、strict `>`）
+- **採用基準②**: 現行実装は `STRICT_WR = False` のため `wr_raw >= baseline.wr_raw`。`STRICT_WR` を `True` に戻した場合のみ strict `>` で判定する。
 - **採用基準③**: `win10_raw >= 5` かつ `win10_raw / n >= (baseline.win10_raw / baseline.n) × 0.90`（少数精鋭ロジックを絶対件数だけで弾かない）
-- **Stable品質ゲート**: 通常時の全件★6最低件数は25件、rescue mode時のみ20件に緩和する。閾値最適化は上位候補に限定し、最終採用判定は広い候補プールを全件再評価する。
-- **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×50 + avg×100 + (win10−lose10)/total×150`（recency半減期90日の加重）
+- **Stable品質ゲート**: strict modeの全件★6最低件数は通常20件、rescue modeで15件。検証側は現行検証★6件数がある場合 `max(5, 現行検証★6件数 × 0.8)` を最低件数にする。閾値最適化は上位候補に限定し、最終採用判定は広い候補プールを全件再評価する。
+- **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×40 + avg×100 + ((win10_weighted / W) - (lose10_weighted / W)) × 250`（recency半減期90日の加重）
 - **Method A**: 6条件の組み合わせ全探索（各1点）
 - **Method B**: lift分析による重み付きスコア（各1〜2点）
 - **閾値チューニング**: Stage 2でグリッドサーチ（訓練/テスト分割あり）。組み合わせ数が20万超の場合は独立最適化に切り替え

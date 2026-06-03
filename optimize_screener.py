@@ -76,6 +76,15 @@ MOONSHOT_EVAL_DAYS_CANDIDATES = [10, 20, 40]  # 初回最適化での評価日�
 #   - 万一 pending_logic_moonshot.json が残っていても --apply-pending で無視される
 # データ蓄積後にここを True に変更すれば、翌日の optimize.yml から自動最適化が走る。
 MOONSHOT_AUTO_OPTIMIZE_ENABLED = False
+MOONSHOT_IMPLEMENTATION_LOCKED = True
+MOONSHOT_LOCK_REASON = (
+    "2026-06-03 review found weak live/unconfirmed 20BD performance. "
+    "Do not enable, apply, save, or deploy Moonshot until the user explicitly "
+    "re-approves it after fresh 20BD validation."
+)
+
+def print_moonshot_lock(action):
+    print(f"[moonshot-lock] {action} blocked. {MOONSHOT_LOCK_REASON}")
 
 SPREADSHEET_ID   = "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8"
 SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -366,6 +375,8 @@ def compute_live_sniper_stats(df, sniper_logic):
 def load_current_logic_moonshot():
     """デプロイ済みのMoonshotロジックを読み込む。conditions空 or eval_days未設定はNone扱い。"""
     import json
+    if MOONSHOT_IMPLEMENTATION_LOCKED:
+        return None
     if not os.path.exists(MOONSHOT_LOGIC_PATH):
         return None
     try:
@@ -382,6 +393,9 @@ def save_current_logic_moonshot(conditions, eval_days, thresholds=None, avg_raw=
                                  backtest_stats=None):
     """Moonshotロジックを保存。eval_days は初回決定後は固定（外側で同じ値を渡す）。"""
     import json
+    if MOONSHOT_IMPLEMENTATION_LOCKED:
+        print_moonshot_lock("save_current_logic_moonshot")
+        return
     data = {
         "method": "moonshot",
         "conditions": conditions,
@@ -2161,6 +2175,9 @@ def build_func_moonshot(conditions, stats, eval_days, n, thresholds=None):
 
 def update_screener_js_moonshot(new_code):
     """calculateScoreMoonshot() を置換"""
+    if MOONSHOT_IMPLEMENTATION_LOCKED:
+        print_moonshot_lock("update_screener_js_moonshot")
+        return False
     if not os.path.exists(SCREENER_JS_PATH):
         print(f"  ⚠ 見つかりません: {SCREENER_JS_PATH}"); return False
     with open(SCREENER_JS_PATH, "r", encoding="utf-8") as f:
@@ -3085,6 +3102,9 @@ def apply_moonshot_pending():
     デプロイは行わない（呼び出し元が deploy() を担当）。
     戻り値: {"combo": ..., "thresholds": ..., "stats": ..., "eval_days": ...} or None"""
     import json as _pjson
+    if MOONSHOT_IMPLEMENTATION_LOCKED:
+        print_moonshot_lock("apply_moonshot_pending")
+        return None
     if not os.path.exists(MOONSHOT_PENDING_PATH):
         return None
     print("\n📋 Moonshot: pending_logic_moonshot.json を適用...")
@@ -3543,6 +3563,10 @@ def _run_moonshot_optimization(df, args):
     通常実行: screener.js + current_logic_moonshot.json を直接更新。
     """
     import json as _json
+
+    if MOONSHOT_IMPLEMENTATION_LOCKED:
+        print_moonshot_lock("_run_moonshot_optimization")
+        return
 
     print("\n🌙 Step M1: Moonshotモード最適化（平均リターン特化）...")
     moonshot_logic = load_current_logic_moonshot()
@@ -4069,8 +4093,12 @@ def main():
         # マスタースイッチがOFFの間は pending_logic_moonshot.json が残っていても
         # apply 対象に入れない（誤って一緒にデプロイされるのを防ぐ）。
         _has_moonshot = (MOONSHOT_AUTO_OPTIMIZE_ENABLED
+                         and not MOONSHOT_IMPLEMENTATION_LOCKED
                          and os.path.exists(MOONSHOT_PENDING_PATH))
-        if (not MOONSHOT_AUTO_OPTIMIZE_ENABLED
+        if (MOONSHOT_IMPLEMENTATION_LOCKED
+                and os.path.exists(MOONSHOT_PENDING_PATH)):
+            print_moonshot_lock("--apply-pending")
+        elif (not MOONSHOT_AUTO_OPTIMIZE_ENABLED
                 and os.path.exists(MOONSHOT_PENDING_PATH)):
             print("ℹ️ pending_logic_moonshot.json は存在しますが "
                   "MOONSHOT_AUTO_OPTIMIZE_ENABLED=False のためスキップします。")

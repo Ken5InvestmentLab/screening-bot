@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Moonshot implementation lock
+
+Moonshot is not a live mode and must not be implemented accidentally. Do not add `/scan moonshot`, enable `MOONSHOT_AUTO_OPTIMIZE_ENABLED`, create/apply `pending_logic_moonshot.json`, or populate `current_logic_moonshot.json` unless the user explicitly re-approves it after fresh 20BD validation. The 2026-06-03 review found weak live/unconfirmed performance despite promising backtest averages.
+
 # 天底極致スコアリングBot — プロジェクト概要
 
 TradingViewのBOTTOMシグナル銘柄を複数のテクニカル指標でスコアリングし、

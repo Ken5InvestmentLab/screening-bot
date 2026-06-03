@@ -214,4 +214,4 @@ MIN_4H_BARS: 30          // 最低4h足本数
 
 ## Future Work
 
-- **Moonshot mode is deferred**: the medium-term double-bagger mode should be revisited only after enough `perf_20bd` / `perf_40bd` outcomes accumulate. The current sample is still too thin and likely to overfit.
+- **Moonshot mode is locked/deferred**: do not add `/scan moonshot`, enable `MOONSHOT_AUTO_OPTIMIZE_ENABLED`, create/apply `pending_logic_moonshot.json`, or populate `current_logic_moonshot.json` unless the user explicitly re-approves after fresh 20BD validation. The 2026-06-03 review found weak live/unconfirmed performance despite promising backtest averages, so the current sample is still too thin and likely to overfit.

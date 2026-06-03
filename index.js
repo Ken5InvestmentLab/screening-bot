@@ -23,6 +23,7 @@ const COLOR      = 0x00b4d8;
 const COLOR_WARN = 0xf5a623;
 const DISCLAIMER = '⚠️ これは情報提供ツールであり、投資助言ではありません。';
 const SNIPER_LOGIC_PATH = path.join(__dirname, 'current_logic_sniper.json');
+const PREMIUM_SCAN_BUTTON_PREFIX = 'premium_scan:';
 
 // ============================================================
 // ライブ実績キャッシュ
@@ -586,6 +587,34 @@ async function runCodeSearch(interaction, user, codeInput) {
 // ============================================================
 // ヘルプ（ライブ実績表示）
 // ============================================================
+async function runPremiumScanButton(interaction) {
+  const customId = String(interaction.customId || '');
+  const symbolCode = customId.slice(PREMIUM_SCAN_BUTTON_PREFIX.length).trim().toUpperCase();
+
+  if (!/^\d{3,4}[A-Z]?$/.test(symbolCode)) {
+    return interaction.reply({
+      content: 'このスキャンボタンの証券コードを読み取れませんでした。',
+      ephemeral: true,
+    });
+  }
+
+  if (!(await checkRole(interaction))) {
+    return interaction.reply({
+      content: 'このボタンを使うには専用ロールが必要です。',
+      ephemeral: true,
+    });
+  }
+
+  if (scanningUsers.has(interaction.user.id)) {
+    return interaction.reply({
+      content: '現在スキャン実行中です。少し待ってからもう一度押してください。',
+      ephemeral: true,
+    });
+  }
+
+  return runCodeSearch(interaction, interaction.user, symbolCode);
+}
+
 function buildHelpEmbed() {
   const sniperBacktest = sniperLogic.backtest;
   const sniperLive = statsCache?.sniperLive ?? null;
@@ -941,6 +970,13 @@ client.on('interactionCreate', async (interaction) => {
         { name: '全期間（すべて）',        value: '0' },
       ];
       await interaction.respond(fixed.filter(c => c.name.includes(focused) || focused === ''));
+    }
+    return;
+  }
+
+  if (interaction.isButton()) {
+    if (String(interaction.customId || '').startsWith(PREMIUM_SCAN_BUTTON_PREFIX)) {
+      await runPremiumScanButton(interaction);
     }
     return;
   }

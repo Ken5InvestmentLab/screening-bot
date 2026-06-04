@@ -142,9 +142,26 @@ async function refreshStats() {
 // ユーティリティ
 // ============================================================
 function formatPrice(price) {
-  if (price == null || isNaN(price)) return "-";
-  const rounded = Math.round(price * 10) / 10;
+  const rounded = roundDisplayPrice(price);
+  if (rounded == null) return "-";
   return rounded % 1 === 0 ? String(Math.round(rounded)) : rounded.toFixed(1);
+}
+
+function roundDisplayPrice(price) {
+  if (price == null || isNaN(price)) return null;
+  return Math.round(Number(price) * 10) / 10;
+}
+
+function formatDisplayChange(entryPrice, targetPrice, fallbackChange = '0.00') {
+  const entry = roundDisplayPrice(entryPrice);
+  const target = roundDisplayPrice(targetPrice);
+  if (entry !== null && entry > 0 && target !== null) {
+    return ((target / entry - 1) * 100).toFixed(2);
+  }
+  if (fallbackChange !== null && fallbackChange !== undefined && !isNaN(fallbackChange)) {
+    return Number(fallbackChange).toFixed(2);
+  }
+  return '0.00';
 }
 
 function getVolTag(atrPct) {
@@ -192,9 +209,18 @@ async function sendResultDMs(user, results, headerEmbed) {
     const isLast = i + CHUNK >= results.length;
     const embed  = new EmbedBuilder().setColor(COLOR);
 
-    for (const r of chunk) {
+    for (let r of chunk) {
       const tvUrl  = `https://jp.tradingview.com/chart/?symbol=TSE:${r.symbol}`;
       const volTag = getVolTag(r.atrPct);
+      r = {
+        ...r,
+        futureDiff: r.futurePrice != null
+          ? formatDisplayChange(r.signalPrice, r.futurePrice, r.futureDiff)
+          : r.futureDiff,
+        change: r.latestClose != null
+          ? formatDisplayChange(r.signalPrice, r.latestClose, r.change)
+          : r.change,
+      };
 
       let val;
       if (r.hideScore) {

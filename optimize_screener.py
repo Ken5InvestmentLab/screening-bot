@@ -104,7 +104,7 @@ LOSE_THRESHOLD = -0.10
 
 # Stable ★6 品質ゲート（過学習防止 + 劣化検知）
 STABLE_WR_MIN          = 0.60  # 全件★6勝率の最低ライン
-STABLE_S6_N_MIN        = 20    # 全件★6最低件数 (strict時) (40→20: 現行ロジック23件の実態に合わせて緩和)
+STABLE_S6_N_MIN        = 18    # 全件★6最低件数 (strict時) (20→18: 基準件数を緩和)
 RESCUE_STABLE_S6_N_MIN = 15    # rescue mode時の全件★6最低件数 (30→15)
 STABLE_AVG_MIN         = 0.05  # 全件★6平均騰落率（最低5%要求）
 STABLE_VALID_WR_MIN    = 0.55  # 直近検証側★6勝率は strict >

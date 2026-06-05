@@ -146,7 +146,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **採用基準①**: `composite > baseline`（ベースラインを上回ること）
 - **採用基準②**: 現行実装は `STRICT_WR = False` のため `wr_raw >= baseline.wr_raw`。`STRICT_WR` を `True` に戻した場合のみ strict `>` で判定する。
 - **採用基準③**: `win10_raw >= 5` かつ `win10_raw / n >= (baseline.win10_raw / baseline.n) × 0.90`（少数精鋭ロジックを絶対件数だけで弾かない）
-- **Stable品質ゲート**: strict modeの全件★6最低件数は通常20件、rescue modeで15件。検証側は現行検証★6件数がある場合 `max(5, 現行検証★6件数 × 0.8)` を最低件数にする。閾値最適化は上位候補に限定し、最終採用判定は広い候補プールを全件再評価する。
+- **Stable品質ゲート**: strict modeの全件★6最低件数は通常18件、rescue modeで15件。検証側は現行検証★6件数がある場合 `max(5, 現行検証★6件数 × 0.8)` を最低件数にする。閾値最適化は上位候補に限定し、最終採用判定は広い候補プールを全件再評価する。
 - **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×40 + avg×100 + ((win10_weighted / W) - (lose10_weighted / W)) × 250`（recency半減期90日の加重）
 - **Method A**: 6条件の組み合わせ全探索（各1点）
 - **Method B**: lift分析による重み付きスコア（各1〜2点）

@@ -4,12 +4,13 @@
 
 This script is intentionally read-only against the production bot. It fetches
 the same Google Sheets data used by the optimizer, evaluates fixed candidate
-condition sets, and writes a Markdown report for human review.
+condition sets, and writes human-review reports.
 """
 
 from __future__ import annotations
 
 import argparse
+from html import escape
 import math
 import os
 from datetime import datetime
@@ -22,7 +23,8 @@ import optimize_screener as opt
 
 
 JST = ZoneInfo("Asia/Tokyo")
-DEFAULT_OUTPUT = os.path.join("reports", "mega_validation_report_latest.md")
+DEFAULT_MARKDOWN_OUTPUT = os.path.join("reports", "mega_validation_report_latest.md")
+DEFAULT_HTML_OUTPUT = os.path.join("reports", "mega_validation_report_latest.html")
 
 CONDITION_LABELS = {
     "ema75": "close > EMA75",
@@ -473,8 +475,602 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
     return markdown_table(headers, table_rows)
 
 
-def build_report(frame_confirmed: pd.DataFrame, frame_all: pd.DataFrame, meta: dict) -> str:
-    generated_at = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S %Z")
+def html_escape(value) -> str:
+    return escape("" if value is None else str(value), quote=True)
+
+
+def pct_html(value, signed: bool = True) -> str:
+    text = pct(value, signed=signed)
+    css_class = "muted"
+    if is_finite(value):
+        numeric = float(value)
+        if numeric > 0:
+            css_class = "pos"
+        elif numeric < 0:
+            css_class = "neg"
+        else:
+            css_class = "flat"
+    return f'<span class="{css_class}">{html_escape(text)}</span>'
+
+
+def verdict_class(value: str) -> str:
+    if value.startswith("有望"):
+        return "good"
+    if value.startswith("注意"):
+        return "warn"
+    return "hold"
+
+
+def verdict_badge(value: str) -> str:
+    css_class = verdict_class(value)
+    return f'<span class="badge {css_class}">{html_escape(value)}</span>'
+
+
+def condition_chips(conditions: list[str]) -> str:
+    chips = []
+    for cond in conditions:
+        label = CONDITION_LABELS.get(cond, cond)
+        chips.append(
+            f'<span class="chip" title="{html_escape(label)}">{html_escape(cond)}</span>'
+        )
+    return "".join(chips)
+
+
+def html_table(headers: list[str], rows: list[list[str]], table_class: str = "") -> str:
+    class_attr = f' class="{html_escape(table_class)}"' if table_class else ""
+    out = [f"<table{class_attr}>", "<thead><tr>"]
+    out.extend(f"<th>{html_escape(header)}</th>" for header in headers)
+    out.append("</tr></thead><tbody>")
+    for row in rows:
+        out.append("<tr>")
+        out.extend(f"<td>{cell}</td>" for cell in row)
+        out.append("</tr>")
+    out.append("</tbody></table>")
+    return "\n".join(out)
+
+
+def html_signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> str:
+    perf_col = f"perf_{eval_days}bd"
+    if rows.empty:
+        return '<p class="empty">該当なし</p>'
+
+    if confirmed:
+        table_rows = []
+        for _, row in rows.iterrows():
+            table_rows.append(
+                [
+                    html_escape(row.get("date", "")),
+                    f'<span class="symbol">{html_escape(row.get("symbol", ""))}</span>',
+                    html_escape(row.get("name", "")),
+                    pct_html(row.get(perf_col)),
+                    pct_html(row.get("perf_5bd")),
+                    pct_html(row.get("perf_10bd")),
+                    pct_html(row.get("perf_20bd")),
+                    pct_html(row.get("perf_40bd")),
+                ]
+            )
+        return html_table(
+            ["日付", "銘柄", "社名", "評価値", "5BD", "10BD", "20BD", "40BD"],
+            table_rows,
+            "signals",
+        )
+
+    table_rows = []
+    for _, row in rows.iterrows():
+        table_rows.append(
+            [
+                html_escape(row.get("date", "")),
+                f'<span class="symbol">{html_escape(row.get("symbol", ""))}</span>',
+                html_escape(row.get("name", "")),
+                html_escape(row.get("days_elapsed", "")),
+                pct_html(row.get("cur_perf")),
+                pct_html(row.get("perf_5bd")),
+                pct_html(row.get("perf_10bd")),
+                pct_html(row.get("perf_20bd")),
+            ]
+        )
+    return html_table(
+        ["日付", "銘柄", "社名", "経過", "現在騰落", "5BD", "10BD", "20BD"],
+        table_rows,
+        "signals",
+    )
+
+
+def build_html_report(
+    frame_confirmed: pd.DataFrame,
+    frame_all: pd.DataFrame,
+    meta: dict,
+    generated_at: str,
+) -> str:
+    stats_rows, stats_by_id = stats_table_rows(frame_confirmed)
+    summary = horizon_summary(frame_confirmed)
+
+    best_candidates = [
+        candidate
+        for candidate in CANDIDATES
+        if verdict(stats_by_id[candidate["id"]]).startswith("有望")
+    ]
+
+    summary_table = html_table(
+        ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
+        [
+            [
+                f"<strong>{row['days']}BD</strong>",
+                html_escape(row["n"]),
+                pct_html(row["avg"]),
+                pct_html(row["win"], signed=False),
+                html_escape(row["p10"]),
+                html_escape(row["p20"]),
+                html_escape(row["p30"]),
+                html_escape(row["p50"]),
+                html_escape(row["p100"]),
+            ]
+            for row in summary
+        ],
+        "compact",
+    )
+
+    score_rows = []
+    for candidate in CANDIDATES:
+        stats = stats_by_id[candidate["id"]]
+        score_rows.append(
+            [
+                f'<strong>{html_escape(candidate["label"])}</strong>',
+                f'{candidate["eval_days"]}BD',
+                pct_html(candidate["target"], signed=False),
+                condition_chips(candidate["conditions"]),
+                html_escape(stats["n"]),
+                pct_html(stats["avg"]),
+                pct_html(stats["median"]),
+                pct_html(stats["win_rate"], signed=False),
+                f'{stats["target_hits"]} <span class="muted">({pct(stats["target_rate"], signed=False)})</span>',
+                pct_html(stats["recall"], signed=False),
+                html_escape(num(stats["lift"])),
+                (
+                    f'<span class="tail">+50% {stats["p50"]}</span>'
+                    f'<span class="tail">+100% {stats["p100"]}</span>'
+                    f'<span class="tail danger">&lt;=-10% {stats["m10"]}</span>'
+                ),
+                verdict_badge(verdict(stats)),
+            ]
+        )
+
+    score_table = html_table(
+        [
+            "候補",
+            "評価",
+            "目標",
+            "条件",
+            "件数",
+            "平均",
+            "中央値",
+            "勝率",
+            "目標Hit",
+            "Recall",
+            "Lift",
+            "Tail",
+            "判定",
+        ],
+        score_rows,
+        "score",
+    )
+
+    lift_sections = []
+    for days, target in LIFT_TARGETS:
+        rows = top_lift_conditions(frame_confirmed, days, target)
+        lift_sections.append(
+            f"""
+            <section class="panel">
+              <h3>{days}BD / 目標 {pct(target, signed=False)}</h3>
+              {html_table(
+                  ["条件", "説明", "Lift", "Precision", "Cover", "全体出現率", "Hit/該当"],
+                  [
+                      [
+                          f'<span class="symbol">{html_escape(item["condition"])}</span>',
+                          html_escape(CONDITION_LABELS.get(item["condition"], item["condition"])),
+                          html_escape(num(item["lift"])),
+                          pct_html(item["precision"], signed=False),
+                          pct_html(item["cover"], signed=False),
+                          pct_html(item["all_rate"], signed=False),
+                          html_escape(f'{item["hits"]}/{item["n"]}'),
+                      ]
+                      for item in rows
+                  ],
+                  "compact",
+              )}
+            </section>
+            """
+        )
+
+    detail_sections = []
+    for index, candidate in enumerate(CANDIDATES):
+        stats = stats_by_id[candidate["id"]]
+        candidate_verdict = verdict(stats)
+        open_attr = " open" if index == 0 or candidate in best_candidates else ""
+        confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=10)
+        unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=12)
+        detail_sections.append(
+            f"""
+            <details class="candidate-detail"{open_attr}>
+              <summary>
+                <span>{html_escape(candidate["label"])}</span>
+                {verdict_badge(candidate_verdict)}
+              </summary>
+              <div class="detail-grid">
+                <section>
+                  <h3>条件と成績</h3>
+                  <p>{html_escape(candidate["intent"])}</p>
+                  <div class="chips">{condition_chips(candidate["conditions"])}</div>
+                  <dl class="metrics">
+                    <div><dt>評価軸</dt><dd>{candidate["eval_days"]}BD / 目標 {pct(candidate["target"], signed=False)}</dd></div>
+                    <div><dt>件数</dt><dd>{stats["n"]}</dd></div>
+                    <div><dt>平均</dt><dd>{pct_html(stats["avg"])}</dd></div>
+                    <div><dt>中央値</dt><dd>{pct_html(stats["median"])}</dd></div>
+                    <div><dt>勝率</dt><dd>{pct_html(stats["win_rate"], signed=False)}</dd></div>
+                    <div><dt>Lift</dt><dd>{num(stats["lift"])}</dd></div>
+                  </dl>
+                </section>
+                <section>
+                  <h3>条件説明</h3>
+                  <ul class="condition-list">
+                    {''.join(
+                        f'<li><code>{html_escape(cond)}</code><span>{html_escape(CONDITION_LABELS.get(cond, cond))}</span></li>'
+                        for cond in candidate["conditions"]
+                    )}
+                  </ul>
+                </section>
+              </div>
+              <h3>確定済み上位</h3>
+              {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True)}
+              <h3>未確定ウォッチ</h3>
+              {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False)}
+            </details>
+            """
+        )
+
+    return f"""<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mega候補スコアリング検証レポート</title>
+  <style>
+    :root {{
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #182230;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --blue: #2563eb;
+      --green: #16815c;
+      --green-bg: #e7f6ef;
+      --amber: #a35a00;
+      --amber-bg: #fff2d7;
+      --red: #b42318;
+      --red-bg: #fde7e4;
+      --chip: #eef3fb;
+    }}
+    * {{ box-sizing: border-box; }}
+    body {{
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }}
+    header {{
+      background: #102033;
+      color: white;
+      padding: 28px 32px;
+      border-bottom: 4px solid #2f80ed;
+    }}
+    header h1 {{
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }}
+    header p {{
+      margin: 4px 0;
+      color: #d7e2f0;
+    }}
+    main {{
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }}
+    .cards {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }}
+    .card, .panel, .candidate-detail {{
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    }}
+    .card {{
+      padding: 16px;
+    }}
+    .card .label {{
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }}
+    .card .value {{
+      font-size: 24px;
+      font-weight: 700;
+    }}
+    .panel {{
+      padding: 18px;
+      margin-bottom: 18px;
+      overflow-x: auto;
+    }}
+    h2 {{
+      margin: 26px 0 12px;
+      font-size: 20px;
+    }}
+    h3 {{
+      margin: 16px 0 10px;
+      font-size: 16px;
+    }}
+    table {{
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }}
+    th, td {{
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: right;
+      vertical-align: top;
+      white-space: nowrap;
+    }}
+    th:first-child, td:first-child,
+    .signals th:nth-child(3), .signals td:nth-child(3),
+    .score th:nth-child(4), .score td:nth-child(4) {{
+      text-align: left;
+      white-space: normal;
+    }}
+    thead th {{
+      background: #f0f4f8;
+      color: #344054;
+      font-size: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }}
+    tbody tr:hover {{
+      background: #f8fbff;
+    }}
+    .compact th, .compact td {{
+      padding: 8px 9px;
+    }}
+    .score {{
+      min-width: 1120px;
+    }}
+    .pos {{ color: var(--green); font-weight: 700; }}
+    .neg {{ color: var(--red); font-weight: 700; }}
+    .flat, .muted {{ color: var(--muted); }}
+    .symbol {{
+      font-family: "Consolas", "Menlo", monospace;
+      font-weight: 700;
+    }}
+    .chip {{
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: #27415f;
+      font-family: "Consolas", "Menlo", monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }}
+    .badge {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-weight: 700;
+      font-size: 12px;
+      white-space: nowrap;
+    }}
+    .badge.good {{ color: var(--green); background: var(--green-bg); }}
+    .badge.warn {{ color: var(--amber); background: var(--amber-bg); }}
+    .badge.hold {{ color: var(--muted); background: #eef0f3; }}
+    .tail {{
+      display: inline-block;
+      margin-right: 6px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+    }}
+    .tail.danger {{ color: var(--red); }}
+    .note {{
+      color: var(--muted);
+      margin: 0 0 14px;
+    }}
+    .candidate-detail {{
+      margin-bottom: 14px;
+      overflow: hidden;
+    }}
+    .candidate-detail summary {{
+      cursor: pointer;
+      list-style: none;
+      padding: 15px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 700;
+      font-size: 16px;
+    }}
+    .candidate-detail summary::-webkit-details-marker {{ display: none; }}
+    .candidate-detail summary::before {{
+      content: "+";
+      display: inline-grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      border-radius: 999px;
+      background: #edf2f7;
+      color: #344054;
+      font-weight: 700;
+    }}
+    .candidate-detail[open] summary::before {{
+      content: "-";
+    }}
+    .candidate-detail > h3,
+    .candidate-detail > table,
+    .candidate-detail > .empty {{
+      margin-left: 18px;
+      margin-right: 18px;
+    }}
+    .candidate-detail table {{
+      width: calc(100% - 36px);
+      margin: 0 18px 16px;
+    }}
+    .detail-grid {{
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+      gap: 16px;
+      padding: 16px 18px 0;
+    }}
+    .metrics {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin: 12px 0 0;
+    }}
+    .metrics div {{
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }}
+    .metrics dt {{
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }}
+    .metrics dd {{
+      margin: 0;
+      font-weight: 700;
+    }}
+    .condition-list {{
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }}
+    .condition-list li {{
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid #eef2f6;
+    }}
+    code {{
+      font-family: "Consolas", "Menlo", monospace;
+      color: #1849a9;
+    }}
+    .empty {{
+      color: var(--muted);
+      padding: 0 18px 18px;
+    }}
+    .gate-list {{
+      margin: 0;
+      padding-left: 18px;
+    }}
+    .gate-list li {{
+      margin: 8px 0;
+    }}
+    @media (max-width: 760px) {{
+      header {{ padding: 22px 18px; }}
+      main {{ padding: 14px; }}
+      .detail-grid {{ grid-template-columns: 1fr; }}
+      .candidate-detail summary {{ align-items: flex-start; }}
+      table {{ min-width: 760px; }}
+    }}
+    @media print {{
+      body {{ background: white; }}
+      header {{ background: white; color: var(--text); border-bottom: 2px solid var(--line); }}
+      header p {{ color: var(--muted); }}
+      .card, .panel, .candidate-detail {{ box-shadow: none; break-inside: avoid; }}
+      .candidate-detail {{ break-inside: avoid; }}
+    }}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Mega候補スコアリング検証レポート</h1>
+    <p>生成日時: {html_escape(generated_at)}</p>
+    <p>検証専用。Bot本体、Discordコマンド、Moonshotロック状態は変更しません。</p>
+  </header>
+  <main>
+    <section class="cards">
+      <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
+      <div class="card"><div class="label">5BD +20%以上</div><div class="value">{summary[0]["p20"]}</div></div>
+      <div class="card"><div class="label">20BD +50%以上</div><div class="value">{summary[2]["p50"]}</div></div>
+      <div class="card"><div class="label">40BD +50%以上</div><div class="value">{summary[3]["p50"]}</div></div>
+    </section>
+
+    <section class="panel">
+      <h2>データ概要</h2>
+      <p class="note">alerts_raw {meta["alerts_raw_rows"]} rows / signals_archive {meta["signals_archive_rows"]} rows / ohlcv_4h {meta["ohlcv_rows"]} rows / dedupe後 {meta["alerts_after_dedupe"]} signals</p>
+      {summary_table}
+    </section>
+
+    <section class="panel">
+      <h2>候補スコアカード</h2>
+      <p class="note">実装判断は判定ラベルだけではなく、未確定候補の品質と件数増加後の再現性を見て決める前提です。</p>
+      {score_table}
+    </section>
+
+    <section class="panel">
+      <h2>読み取り</h2>
+      <ul class="gate-list">
+        <li><strong>Mega5 短期リバウンド</strong>は短期検証の主候補。中央値と下振れを最重視して見る。</li>
+        <li><strong>Mega10 初動ブレイク</strong>と<strong>Mega20 出来高売られすぎ反転</strong>は大化けを拾うが外れ値依存になりやすい。</li>
+        <li><strong>Mega40 深押し反転</strong>と<strong>Mega40 下ヒゲ回復</strong>は本命候補。ただし40BD確定まで時間がかかるため未確定監視が重要。</li>
+        <li>20BD単独での実装判断は避け、40BD候補の中間評価として扱う。</li>
+      </ul>
+    </section>
+
+    <h2>条件別 Lift</h2>
+    {"".join(lift_sections)}
+
+    <h2>候補別 詳細</h2>
+    {"".join(detail_sections)}
+
+    <section class="panel">
+      <h2>実装判断ゲート案</h2>
+      <ul class="gate-list">
+        <li>確定件数: 主要候補で最低10件以上。少数精鋭候補でも5件未満は不可。</li>
+        <li>中央値: 0%以上。平均だけが高い外れ値依存は不可。</li>
+        <li>下振れ: <code>&lt;= -10%</code> が候補内の25%を超える場合は警戒扱い。</li>
+        <li>未確定候補: 直近候補の現在騰落が極端に弱い場合は、確定バックテストが良くても実装しない。</li>
+        <li>Moonshotロック: <code>/scan moonshot</code> や pending/current moonshot への反映は、別途ユーザー承認があるまで行わない。</li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>
+"""
+
+
+def build_report(
+    frame_confirmed: pd.DataFrame,
+    frame_all: pd.DataFrame,
+    meta: dict,
+    generated_at: str,
+) -> str:
     stats_rows, stats_by_id = stats_table_rows(frame_confirmed)
 
     lines = [
@@ -641,8 +1237,23 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--output",
-        default=DEFAULT_OUTPUT,
-        help=f"Markdown output path (default: {DEFAULT_OUTPUT})",
+        dest="markdown_output",
+        default=DEFAULT_MARKDOWN_OUTPUT,
+        help=(
+            "Markdown output path. Kept as --output for compatibility "
+            f"(default: {DEFAULT_MARKDOWN_OUTPUT})"
+        ),
+    )
+    parser.add_argument(
+        "--markdown-output",
+        dest="markdown_output",
+        default=None,
+        help=f"Markdown output path (default: {DEFAULT_MARKDOWN_OUTPUT})",
+    )
+    parser.add_argument(
+        "--html-output",
+        default=DEFAULT_HTML_OUTPUT,
+        help=f"HTML output path (default: {DEFAULT_HTML_OUTPUT})",
     )
     return parser.parse_args()
 
@@ -654,14 +1265,26 @@ def main() -> None:
     meta = dict(confirmed_meta)
     meta["alerts_after_dedupe"] = all_meta["alerts_after_dedupe"]
     meta["feature_rows"] = all_meta["feature_rows"]
+    generated_at = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S %Z")
 
-    report = build_report(confirmed_frame, all_frame, meta)
-    output_path = os.path.abspath(args.output)
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    with open(output_path, "w", encoding="utf-8", newline="\n") as handle:
-        handle.write(report)
+    markdown_output = args.markdown_output or DEFAULT_MARKDOWN_OUTPUT
+    markdown_report = build_report(confirmed_frame, all_frame, meta, generated_at)
+    markdown_path = os.path.abspath(markdown_output)
+    os.makedirs(os.path.dirname(markdown_path), exist_ok=True)
+    with open(markdown_path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(markdown_report)
         handle.write("\n")
-    print(f"wrote {output_path}")
+
+    html_report = build_html_report(confirmed_frame, all_frame, meta, generated_at)
+    html_report = "\n".join(line.rstrip() for line in html_report.rstrip().splitlines())
+    html_path = os.path.abspath(args.html_output)
+    os.makedirs(os.path.dirname(html_path), exist_ok=True)
+    with open(html_path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(html_report.rstrip())
+        handle.write("\n")
+
+    print(f"wrote {markdown_path}")
+    print(f"wrote {html_path}")
 
 
 if __name__ == "__main__":

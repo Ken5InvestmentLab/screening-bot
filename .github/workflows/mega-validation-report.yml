@@ -1,0 +1,97 @@
+name: Mega Validation Report
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Daily Screener Optimization"]
+    types: [completed]
+  schedule:
+    # Fallback refresh after the Japan market close on weekdays.
+    - cron: "30 8 * * 1-5"
+
+jobs:
+  report:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas google-auth google-auth-httplib2 google-api-python-client
+
+      - name: Write credentials.json
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
+      - name: Snapshot current report
+        run: |
+          mkdir -p /tmp/mega-report-before
+          cp reports/mega_validation_report_latest.md /tmp/mega-report-before/mega_validation_report_latest.md 2>/dev/null || true
+          cp reports/mega_validation_report_latest.html /tmp/mega-report-before/mega_validation_report_latest.html 2>/dev/null || true
+
+      - name: Generate report
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python generate_mega_validation_report.py
+
+      - name: Ignore timestamp-only refresh
+        run: |
+          python - <<'PY'
+          import re
+          import subprocess
+          from pathlib import Path
+
+          pairs = [
+              (Path("reports/mega_validation_report_latest.md"),
+               Path("/tmp/mega-report-before/mega_validation_report_latest.md")),
+              (Path("reports/mega_validation_report_latest.html"),
+               Path("/tmp/mega-report-before/mega_validation_report_latest.html")),
+          ]
+
+          def normalize(text):
+              return re.sub(
+                  r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} JST",
+                  "<generated-at>",
+                  text,
+              )
+
+          substantive_change = False
+          for current, previous in pairs:
+              if not current.exists() or not previous.exists():
+                  substantive_change = True
+                  break
+              if normalize(current.read_text(encoding="utf-8")) != normalize(previous.read_text(encoding="utf-8")):
+                  substantive_change = True
+                  break
+
+          if substantive_change:
+              print("Report content changed")
+          else:
+              subprocess.run([
+                  "git", "checkout", "--",
+                  "reports/mega_validation_report_latest.md",
+                  "reports/mega_validation_report_latest.html",
+              ], check=False)
+              print("Only generated timestamp changed; restored tracked reports")
+          PY
+
+      - name: Commit report if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reports/mega_validation_report_latest.md reports/mega_validation_report_latest.html
+          if git diff --staged --quiet; then
+            echo "Mega validation report is already current"
+          else
+            git commit -m "chore: update mega validation report [skip ci]"
+            git pull --rebase origin main
+            git push
+          fi

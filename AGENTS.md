@@ -92,6 +92,15 @@ PYTHONIOENCODING=utf-8 py optimize_screener.py --apply-pending
 py optimize_screener.py --dry-run
 ```
 
+### Mega候補検証レポート
+
+```bash
+# Bot本体・Discordコマンド・Moonshotロック状態は変更せず、検証用Markdownだけを生成
+PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
+```
+
+出力先は `reports/mega_validation_report_latest.md`。実装判断前の大化け候補検証では、このレポートで確定済み成績と未確定ウォッチを確認すること。
+
 ## 主要ファイルとアーキテクチャ
 
 - **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` を手動変更する場合は `current_logic.json` との整合性に注意。`.gitattributes` により `merge=ours` が設定済み。

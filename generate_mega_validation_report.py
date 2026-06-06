@@ -324,6 +324,118 @@ def candidate_stats(frame: pd.DataFrame, candidate: dict) -> dict:
     }
 
 
+def current_watch_stats(frame: pd.DataFrame, candidate: dict) -> dict:
+    days = candidate["eval_days"]
+    perf_col = f"perf_{days}bd"
+    if perf_col not in frame.columns:
+        return {
+            "n": 0,
+            "with_current": 0,
+            "avg": np.nan,
+            "median": np.nan,
+            "win_rate": np.nan,
+            "p10": 0,
+            "p20": 0,
+            "p50": 0,
+            "p100": 0,
+            "m10": 0,
+            "max": np.nan,
+            "min": np.nan,
+        }
+
+    mask = condition_mask(frame, candidate["conditions"])
+    watch = frame[mask & ~frame[perf_col].apply(is_finite)].copy()
+    current = watch[watch["cur_perf"].apply(is_finite)] if "cur_perf" in watch.columns else watch.iloc[0:0]
+
+    if current.empty:
+        return {
+            "n": len(watch),
+            "with_current": 0,
+            "avg": np.nan,
+            "median": np.nan,
+            "win_rate": np.nan,
+            "p10": 0,
+            "p20": 0,
+            "p50": 0,
+            "p100": 0,
+            "m10": 0,
+            "max": np.nan,
+            "min": np.nan,
+        }
+
+    perf = current["cur_perf"].astype(float)
+    return {
+        "n": len(watch),
+        "with_current": len(current),
+        "avg": float(perf.mean()),
+        "median": float(perf.median()),
+        "win_rate": float((perf > 0).mean()),
+        "p10": int((perf >= 0.10).sum()),
+        "p20": int((perf >= 0.20).sum()),
+        "p50": int((perf >= 0.50).sum()),
+        "p100": int((perf >= 1.00).sum()),
+        "m10": int((perf <= -0.10).sum()),
+        "max": float(perf.max()),
+        "min": float(perf.min()),
+    }
+
+
+def compact_stats_text(stats: dict, include_target: bool = False) -> str:
+    if stats["n"] == 0:
+        return "該当なし"
+    if "with_current" in stats and stats["with_current"] == 0:
+        return f"n=0/{stats['n']} / 現在値なし"
+    count_text = f"n={stats['n']}"
+    if "with_current" in stats and stats["with_current"] != stats["n"]:
+        count_text = f"n={stats['with_current']}/{stats['n']}"
+    parts = [
+        count_text,
+        f"平均 {pct(stats['avg'])}",
+        f"中央値 {pct(stats['median'])}",
+        f"勝率 {pct(stats['win_rate'], signed=False)}",
+        f"最大 {pct(stats['max'])}",
+        f"最小 {pct(stats['min'])}",
+        f"<=-10% {stats['m10']}",
+    ]
+    if include_target:
+        parts.insert(4, f"目標Hit {stats['target_hits']}")
+    else:
+        parts.insert(4, f"+10% {stats['p10']}")
+        parts.insert(5, f"+20% {stats['p20']}")
+    return " / ".join(parts)
+
+
+def compact_stats_html(stats: dict, include_target: bool = False) -> str:
+    if stats["n"] == 0:
+        return '<span class="muted">該当なし</span>'
+    if "with_current" in stats and stats["with_current"] == 0:
+        empty_count = f"n=0/{stats['n']}"
+        return (
+            '<div class="stat-stack">'
+            f"<span>{html_escape(empty_count)}</span>"
+            '<span class="muted">現在値なし</span>'
+            "</div>"
+        )
+    count_text = f"n={stats['n']}"
+    if "with_current" in stats and stats["with_current"] != stats["n"]:
+        count_text = f"n={stats['with_current']}/{stats['n']}"
+    rows = [
+        f"<span>{html_escape(count_text)}</span>",
+        f"<span>平均 {pct_html(stats['avg'])}</span>",
+        f"<span>中央値 {pct_html(stats['median'])}</span>",
+        f"<span>勝率 {pct_html(stats['win_rate'], signed=False)}</span>",
+        f"<span>最大 {pct_html(stats['max'])}</span>",
+        f"<span>最小 {pct_html(stats['min'])}</span>",
+        f"<span class=\"neg\">&lt;=-10% {stats['m10']}</span>",
+    ]
+    if include_target:
+        rows.insert(4, f"<span>目標Hit {stats['target_hits']}</span>")
+    else:
+        rows.insert(4, f"<span>+10% {stats['p10']}</span>")
+        rows.insert(5, f"<span>+20% {stats['p20']}</span>")
+    return '<div class="stat-stack">' + "".join(rows) + "</div>"
+
+
 def verdict(stats: dict) -> str:
     if stats["n"] < 5:
         return "保留: 件数不足"
@@ -400,12 +512,18 @@ def condition_labels_text(conditions: list[str]) -> str:
     return "<br>".join(f"`{cond}`: {CONDITION_LABELS.get(cond, cond)}" for cond in conditions)
 
 
-def stats_table_rows(frame: pd.DataFrame) -> tuple[list[dict], dict[str, dict]]:
+def stats_table_rows(
+    frame_confirmed: pd.DataFrame,
+    frame_all: pd.DataFrame,
+) -> tuple[list[dict], dict[str, dict], dict[str, dict]]:
     stats_by_id = {}
+    watch_by_id = {}
     rows = []
     for candidate in CANDIDATES:
-        stats = candidate_stats(frame, candidate)
+        stats = candidate_stats(frame_confirmed, candidate)
+        watch_stats = current_watch_stats(frame_all, candidate)
         stats_by_id[candidate["id"]] = stats
+        watch_by_id[candidate["id"]] = watch_stats
         rows.append(
             {
                 "label": candidate["label"],
@@ -420,10 +538,12 @@ def stats_table_rows(frame: pd.DataFrame) -> tuple[list[dict], dict[str, dict]]:
                 "recall": pct(stats["recall"], signed=False),
                 "lift": num(stats["lift"]),
                 "tail": f"+50% {stats['p50']} / +100% {stats['p100']} / <=-10% {stats['m10']}",
+                "confirmed_perf": compact_stats_text(stats, include_target=True),
+                "watch_perf": compact_stats_text(watch_stats),
                 "verdict": verdict(stats),
             }
         )
-    return rows, stats_by_id
+    return rows, stats_by_id, watch_by_id
 
 
 def markdown_table(headers: list[str], rows: list[list[str]]) -> list[str]:
@@ -582,7 +702,7 @@ def build_html_report(
     meta: dict,
     generated_at: str,
 ) -> str:
-    stats_rows, stats_by_id = stats_table_rows(frame_confirmed)
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
     summary = horizon_summary(frame_confirmed)
 
     best_candidates = [
@@ -613,6 +733,7 @@ def build_html_report(
     score_rows = []
     for candidate in CANDIDATES:
         stats = stats_by_id[candidate["id"]]
+        watch_stats = watch_by_id[candidate["id"]]
         score_rows.append(
             [
                 f'<strong>{html_escape(candidate["label"])}</strong>',
@@ -631,6 +752,8 @@ def build_html_report(
                     f'<span class="tail">+100% {stats["p100"]}</span>'
                     f'<span class="tail danger">&lt;=-10% {stats["m10"]}</span>'
                 ),
+                compact_stats_html(stats, include_target=True),
+                compact_stats_html(watch_stats),
                 verdict_badge(verdict(stats)),
             ]
         )
@@ -649,6 +772,8 @@ def build_html_report(
             "Recall",
             "Lift",
             "Tail",
+            "確定済み成績",
+            "未確定現在成績",
             "判定",
         ],
         score_rows,
@@ -685,6 +810,7 @@ def build_html_report(
     detail_sections = []
     for index, candidate in enumerate(CANDIDATES):
         stats = stats_by_id[candidate["id"]]
+        watch_stats = watch_by_id[candidate["id"]]
         candidate_verdict = verdict(stats)
         open_attr = " open" if index == 0 or candidate in best_candidates else ""
         confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=10)
@@ -701,6 +827,7 @@ def build_html_report(
                   <h3>条件と成績</h3>
                   <p>{html_escape(candidate["intent"])}</p>
                   <div class="chips">{condition_chips(candidate["conditions"])}</div>
+                  <h4>確定済み銘柄の成績</h4>
                   <dl class="metrics">
                     <div><dt>評価軸</dt><dd>{candidate["eval_days"]}BD / 目標 {pct(candidate["target"], signed=False)}</dd></div>
                     <div><dt>件数</dt><dd>{stats["n"]}</dd></div>
@@ -708,6 +835,21 @@ def build_html_report(
                     <div><dt>中央値</dt><dd>{pct_html(stats["median"])}</dd></div>
                     <div><dt>勝率</dt><dd>{pct_html(stats["win_rate"], signed=False)}</dd></div>
                     <div><dt>Lift</dt><dd>{num(stats["lift"])}</dd></div>
+                    <div><dt>最大</dt><dd>{pct_html(stats["max"])}</dd></div>
+                    <div><dt>最小</dt><dd>{pct_html(stats["min"])}</dd></div>
+                    <div><dt>&lt;=-10%</dt><dd>{stats["m10"]}</dd></div>
+                  </dl>
+                  <h4>未確定ウォッチリストの現在成績</h4>
+                  <dl class="metrics">
+                    <div><dt>件数</dt><dd>{watch_stats["with_current"]}/{watch_stats["n"]}</dd></div>
+                    <div><dt>平均</dt><dd>{pct_html(watch_stats["avg"])}</dd></div>
+                    <div><dt>中央値</dt><dd>{pct_html(watch_stats["median"])}</dd></div>
+                    <div><dt>勝率</dt><dd>{pct_html(watch_stats["win_rate"], signed=False)}</dd></div>
+                    <div><dt>+10%</dt><dd>{watch_stats["p10"]}</dd></div>
+                    <div><dt>+20%</dt><dd>{watch_stats["p20"]}</dd></div>
+                    <div><dt>最大</dt><dd>{pct_html(watch_stats["max"])}</dd></div>
+                    <div><dt>最小</dt><dd>{pct_html(watch_stats["min"])}</dd></div>
+                    <div><dt>&lt;=-10%</dt><dd>{watch_stats["m10"]}</dd></div>
                   </dl>
                 </section>
                 <section>
@@ -817,6 +959,10 @@ def build_html_report(
       margin: 16px 0 10px;
       font-size: 16px;
     }}
+    h4 {{
+      margin: 14px 0 8px;
+      font-size: 14px;
+    }}
     table {{
       width: 100%;
       border-collapse: collapse;
@@ -850,7 +996,17 @@ def build_html_report(
       padding: 8px 9px;
     }}
     .score {{
-      min-width: 1120px;
+      min-width: 1500px;
+    }}
+    .stat-stack {{
+      display: grid;
+      gap: 3px;
+      min-width: 170px;
+      text-align: left;
+      white-space: normal;
+    }}
+    .stat-stack span {{
+      display: block;
     }}
     .pos {{ color: var(--green); font-weight: 700; }}
     .neg {{ color: var(--red); font-weight: 700; }}
@@ -1071,7 +1227,7 @@ def build_report(
     meta: dict,
     generated_at: str,
 ) -> str:
-    stats_rows, stats_by_id = stats_table_rows(frame_confirmed)
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
 
     lines = [
         "# Mega候補スコアリング検証レポート",
@@ -1134,6 +1290,8 @@ def build_report(
                 "Recall",
                 "Lift",
                 "Tail",
+                "確定済み成績",
+                "未確定現在成績",
                 "判定",
             ],
             [
@@ -1150,6 +1308,8 @@ def build_report(
                     row["recall"],
                     row["lift"],
                     row["tail"],
+                    row["confirmed_perf"],
+                    row["watch_perf"],
                     row["verdict"],
                 ]
                 for row in stats_rows
@@ -1196,6 +1356,7 @@ def build_report(
 
     for candidate in CANDIDATES:
         stats = stats_by_id[candidate["id"]]
+        watch_stats = watch_by_id[candidate["id"]]
         lines += [
             f"### {candidate['label']}",
             "",
@@ -1208,6 +1369,8 @@ def build_report(
                 f"勝率 {pct(stats['win_rate'], signed=False)} / 目標Hit {stats['target_hits']} / "
                 f"Lift {num(stats['lift'])} / 判定 {verdict(stats)}"
             ),
+            f"- 確定済み銘柄の成績: {compact_stats_text(stats, include_target=True)}",
+            f"- 未確定ウォッチリストの現在成績: {compact_stats_text(watch_stats)}",
             "",
             "#### 確定済み上位",
             "",

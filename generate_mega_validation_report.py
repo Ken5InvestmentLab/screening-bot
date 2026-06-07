@@ -105,7 +105,7 @@ CANDIDATES = [
     },
     {
         "id": "sniper",
-        "label": "Sniper",
+        "label": "Sniper 勝率重視",
         "eval_days": 5,
         "target": 0.0,
         "target_label": "勝ち",
@@ -174,6 +174,10 @@ def num(value) -> str:
 
 def target_label(candidate: dict) -> str:
     return candidate.get("target_label") or pct(candidate["target"], signed=False)
+
+
+def horizon_label(days: int) -> str:
+    return f"{days}営業日後"
 
 
 def md(value) -> str:
@@ -581,36 +585,40 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
         return ["該当なし"]
 
     if confirmed:
-        headers = ["日付", "銘柄", "社名", "評価値", "5BD", "10BD", "20BD", "40BD"]
+        headers = ["日付", "銘柄", "社名", "評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後", "操作"]
         table_rows = []
         for _, row in rows.iterrows():
+            symbol = row.get("symbol", "")
             table_rows.append(
                 [
                     row.get("date", ""),
-                    row.get("symbol", ""),
+                    symbol,
                     row.get("name", ""),
                     pct(row.get(perf_col)),
                     pct(row.get("perf_5bd")),
                     pct(row.get("perf_10bd")),
                     pct(row.get("perf_20bd")),
                     pct(row.get("perf_40bd")),
+                    action_links_text(symbol),
                 ]
             )
         return markdown_table(headers, table_rows)
 
-    headers = ["日付", "銘柄", "社名", "経過日数", "現在騰落", "5BD", "10BD", "20BD"]
+    headers = ["日付", "銘柄", "社名", "経過日数", "現在騰落", "5営業日後", "10営業日後", "20営業日後", "操作"]
     table_rows = []
     for _, row in rows.iterrows():
+        symbol = row.get("symbol", "")
         table_rows.append(
             [
                 row.get("date", ""),
-                row.get("symbol", ""),
+                symbol,
                 row.get("name", ""),
                 str(row.get("days_elapsed", "")),
                 pct(row.get("cur_perf")),
                 pct(row.get("perf_5bd")),
                 pct(row.get("perf_10bd")),
                 pct(row.get("perf_20bd")),
+                action_links_text(symbol),
             ]
         )
     return markdown_table(headers, table_rows)
@@ -618,6 +626,37 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
 
 def html_escape(value) -> str:
     return escape("" if value is None else str(value), quote=True)
+
+
+def clean_symbol_text(value) -> str:
+    return str(value or "").replace("TYO:", "").replace("TSE:", "").strip()
+
+
+def chart_url(symbol: str) -> str:
+    return f"https://jp.tradingview.com/chart/?symbol=TSE:{html_escape(clean_symbol_text(symbol))}"
+
+
+def fundamental_url(symbol: str) -> str:
+    return f"https://irbank.net/{html_escape(clean_symbol_text(symbol))}"
+
+
+def action_buttons(symbol: str) -> str:
+    clean = clean_symbol_text(symbol)
+    if not clean:
+        return '<span class="muted">--</span>'
+    return (
+        '<div class="action-buttons">'
+        f'<a class="action-btn" href="{chart_url(clean)}" target="_blank" rel="noopener noreferrer">チャート</a>'
+        f'<a class="action-btn secondary" href="{fundamental_url(clean)}" target="_blank" rel="noopener noreferrer">ファンダ</a>'
+        "</div>"
+    )
+
+
+def action_links_text(symbol: str) -> str:
+    clean = clean_symbol_text(symbol)
+    if not clean:
+        return "--"
+    return f"[チャート]({chart_url(clean)}) / [ファンダ]({fundamental_url(clean)})"
 
 
 def pct_html(value, signed: bool = True) -> str:
@@ -642,11 +681,6 @@ def verdict_class(value: str) -> str:
     return "hold"
 
 
-def verdict_badge(value: str) -> str:
-    css_class = verdict_class(value)
-    return f'<span class="badge {css_class}">{html_escape(value)}</span>'
-
-
 def condition_chips(conditions: list[str]) -> str:
     chips = []
     for cond in conditions:
@@ -666,14 +700,14 @@ def mode_summary_html(candidate: dict, stats: dict, watch_stats: dict) -> str:
       <a class="mode-card {verdict_class(verdict(stats))}" href="#{html_escape(anchor_id(candidate))}">
         <div class="mode-card-head">
           <span class="mode-name">{html_escape(candidate["label"])}</span>
-          <span class="mode-horizon">{candidate["eval_days"]}BD / {html_escape(target_label(candidate))}</span>
+          <span class="mode-horizon">{horizon_label(candidate["eval_days"])} / {html_escape(target_label(candidate))}</span>
         </div>
         <p>{html_escape(candidate["intent"])}</p>
         <div class="mode-metrics">
           <span><strong>{stats["n"]}</strong><small>確定</small></span>
           <span><strong>{pct_html(stats["win_rate"], signed=False)}</strong><small>勝率</small></span>
           <span><strong>{pct_html(stats["avg"])}</strong><small>平均</small></span>
-          <span><strong>{watch_stats["with_current"]}/{watch_stats["n"]}</strong><small>ウォッチ中</small></span>
+          <span><strong>{watch_stats["with_current"]}</strong><small>ウォッチ中</small></span>
         </div>
       </a>
     """
@@ -686,7 +720,10 @@ def html_table(headers: list[str], rows: list[list[str]], table_class: str = "")
     out.append("</tr></thead><tbody>")
     for row in rows:
         out.append("<tr>")
-        out.extend(f"<td>{cell}</td>" for cell in row)
+        out.extend(
+            f'<td data-label="{html_escape(headers[index])}">{cell}</td>'
+            for index, cell in enumerate(row)
+        )
         out.append("</tr>")
     out.append("</tbody></table>")
     return "\n".join(out)
@@ -700,40 +737,44 @@ def html_signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> st
     if confirmed:
         table_rows = []
         for _, row in rows.iterrows():
+            symbol = row.get("symbol", "")
             table_rows.append(
                 [
                     html_escape(row.get("date", "")),
-                    f'<span class="symbol">{html_escape(row.get("symbol", ""))}</span>',
+                    f'<span class="symbol">{html_escape(symbol)}</span>',
                     html_escape(row.get("name", "")),
                     pct_html(row.get(perf_col)),
                     pct_html(row.get("perf_5bd")),
                     pct_html(row.get("perf_10bd")),
                     pct_html(row.get("perf_20bd")),
                     pct_html(row.get("perf_40bd")),
+                    action_buttons(symbol),
                 ]
             )
         return html_table(
-            ["日付", "銘柄", "社名", "評価値", "5BD", "10BD", "20BD", "40BD"],
+            ["日付", "銘柄", "社名", "評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後", "操作"],
             table_rows,
             "signals",
         )
 
     table_rows = []
     for _, row in rows.iterrows():
+        symbol = row.get("symbol", "")
         table_rows.append(
             [
                 html_escape(row.get("date", "")),
-                f'<span class="symbol">{html_escape(row.get("symbol", ""))}</span>',
+                f'<span class="symbol">{html_escape(symbol)}</span>',
                 html_escape(row.get("name", "")),
                 html_escape(row.get("days_elapsed", "")),
                 pct_html(row.get("cur_perf")),
                 pct_html(row.get("perf_5bd")),
                 pct_html(row.get("perf_10bd")),
                 pct_html(row.get("perf_20bd")),
+                action_buttons(symbol),
             ]
         )
     return html_table(
-        ["日付", "銘柄", "社名", "経過", "現在騰落", "5BD", "10BD", "20BD"],
+        ["日付", "銘柄", "社名", "経過", "現在騰落", "5営業日後", "10営業日後", "20営業日後", "操作"],
         table_rows,
         "signals",
     )
@@ -758,7 +799,7 @@ def build_html_report(
         ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
         [
             [
-                f"<strong>{row['days']}BD</strong>",
+                f"<strong>{horizon_label(row['days'])}</strong>",
                 html_escape(row["n"]),
                 pct_html(row["avg"]),
                 pct_html(row["win"], signed=False),
@@ -788,7 +829,6 @@ def build_html_report(
     for index, candidate in enumerate(CANDIDATES):
         stats = stats_by_id[candidate["id"]]
         watch_stats = watch_by_id[candidate["id"]]
-        candidate_verdict = verdict(stats)
         open_attr = " open" if index == 0 or candidate in best_candidates else ""
         confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
         unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
@@ -798,12 +838,11 @@ def build_html_report(
               <summary>
                 <span class="summary-title">
                   <strong>{html_escape(candidate["label"])}</strong>
-                  <small>{candidate["eval_days"]}BD / 目標 {html_escape(target_label(candidate))}</small>
+                  <small>{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}</small>
                 </span>
                 <span class="summary-stats">
                   <span>確定 {stats["n"]}</span>
-                  <span>ウォッチ {watch_stats["with_current"]}/{watch_stats["n"]}</span>
-                  {verdict_badge(candidate_verdict)}
+                  <span>ウォッチ {watch_stats["with_current"]}</span>
                 </span>
               </summary>
               <div class="detail-grid">
@@ -813,7 +852,7 @@ def build_html_report(
                   <div class="chips">{condition_chips(candidate["conditions"])}</div>
                   <h4>確定済み銘柄の成績</h4>
                   <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>{candidate["eval_days"]}BD / 目標 {html_escape(target_label(candidate))}</dd></div>
+                    <div><dt>評価軸</dt><dd>{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}</dd></div>
                     <div><dt>件数</dt><dd>{stats["n"]}</dd></div>
                     <div><dt>平均</dt><dd>{pct_html(stats["avg"])}</dd></div>
                     <div><dt>中央値</dt><dd>{pct_html(stats["median"])}</dd></div>
@@ -825,7 +864,7 @@ def build_html_report(
                   </dl>
                   <h4>未確定ウォッチリストの現在成績</h4>
                   <dl class="metrics">
-                    <div><dt>件数</dt><dd>{watch_stats["with_current"]}/{watch_stats["n"]}</dd></div>
+                    <div><dt>件数</dt><dd>{watch_stats["with_current"]}</dd></div>
                     <div><dt>平均</dt><dd>{pct_html(watch_stats["avg"])}</dd></div>
                     <div><dt>中央値</dt><dd>{pct_html(watch_stats["median"])}</dd></div>
                     <div><dt>勝率</dt><dd>{pct_html(watch_stats["win_rate"], signed=False)}</dd></div>
@@ -1136,6 +1175,34 @@ def build_html_report(
       font-size: 12px;
       color: var(--muted);
     }}
+    .action-buttons {{
+      display: inline-flex;
+      justify-content: flex-end;
+      gap: 6px;
+      white-space: nowrap;
+    }}
+    .action-btn {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 5px 9px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+    }}
+    .action-btn.secondary {{
+      border-color: #cfd8e6;
+      background: #f6f8fb;
+      color: #344054;
+    }}
+    .action-btn:hover {{
+      background: #dfeeff;
+    }}
     .candidate-detail summary::-webkit-details-marker {{ display: none; }}
     .candidate-detail summary::before {{
       content: "+";
@@ -1228,9 +1295,66 @@ def build_html_report(
     @media (max-width: 760px) {{
       header {{ padding: 22px 18px; }}
       main {{ padding: 14px; }}
+      .cards {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .card {{ padding: 12px; }}
+      .card .value {{ font-size: 20px; }}
+      .mode-grid {{ grid-template-columns: 1fr; }}
+      .mode-metrics {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .detail-grid {{ grid-template-columns: 1fr; }}
-      .candidate-detail summary {{ align-items: flex-start; }}
-      table {{ min-width: 760px; }}
+      .candidate-detail summary {{
+        align-items: flex-start;
+        display: grid;
+        grid-template-columns: auto 1fr;
+      }}
+      .summary-stats {{
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        padding-left: 28px;
+      }}
+      .signals {{
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+      }}
+      .signals thead {{
+        display: none;
+      }}
+      .signals tbody,
+      .signals tr,
+      .signals td {{
+        display: block;
+        width: 100%;
+      }}
+      .signals tr {{
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        overflow: hidden;
+      }}
+      .signals td {{
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 10px;
+        text-align: right;
+        white-space: normal;
+      }}
+      .signals td::before {{
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        text-align: left;
+      }}
+      .signals td:nth-child(2),
+      .signals td:nth-child(3) {{
+        text-align: right;
+      }}
+      .action-buttons {{
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }}
+      table {{ min-width: 680px; }}
+      .signals {{ min-width: 0; }}
     }}
     @media print {{
       body {{ background: white; }}
@@ -1247,6 +1371,7 @@ def build_html_report(
     <h1>天底スコアリング ウォッチリスト</h1>
     <p>生成日時: {html_escape(generated_at)}</p>
     <p>Stable、Sniper、Mega候補の過去成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
+    <p>BDは営業日を意味します。例: 5BD = 5営業日後。</p>
   </header>
   <main>
     <section class="cards">
@@ -1274,7 +1399,7 @@ def build_html_report(
       <h2>注目ポイント</h2>
       <ul class="gate-list">
         <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
-        <li><strong>Sniper</strong>は勝率重視。派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
         <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
         <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
       </ul>
@@ -1301,6 +1426,7 @@ def build_report(
         "",
         f"- 生成日時: {generated_at}",
         "- 対象: TradingView BOTTOM シグナル",
+        "- 注釈: BDは営業日を意味します。",
         "- 注意: 過去成績は将来の値動きを保証するものではありません。",
         "",
         "## 全体成績",
@@ -1316,7 +1442,7 @@ def build_report(
     for row in horizon_summary(frame_confirmed):
         summary_rows.append(
             [
-                f"{row['days']}BD",
+                horizon_label(row["days"]),
                 str(row["n"]),
                 pct(row["avg"]),
                 pct(row["win"], signed=False),
@@ -1347,7 +1473,7 @@ def build_report(
             [
                 [
                     row["label"],
-                    f"{row['days']}BD",
+                    horizon_label(row["days"]),
                     row["target"],
                     str(row["n"]),
                     row["avg"],
@@ -1365,7 +1491,7 @@ def build_report(
         "## 注目ポイント",
         "",
         "- `Stable ★6` は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。",
-        "- `Sniper` は勝率重視。派手さよりも、条件通過後にプラスで終わる比率を重視します。",
+        "- `Sniper 勝率重視` は派手さよりも、条件通過後にプラスで終わる比率を重視します。",
         "- `Mega5 短期リバウンド` は短期急騰狙い。5営業日でどこまで反転するかを見ます。",
         "- `Mega40` の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。",
         "",
@@ -1380,13 +1506,13 @@ def build_report(
             f"### {candidate['label']}",
             "",
             f"- 概要: {candidate['intent']}",
-            f"- 評価軸: {candidate['eval_days']}BD / 目標 {target_label(candidate)}",
+            f"- 評価軸: {horizon_label(candidate['eval_days'])} / 目標 {target_label(candidate)}",
             f"- 条件: {conditions_text(candidate['conditions'])}",
             f"- 条件説明:<br>{condition_labels_text(candidate['conditions'])}",
             (
                 f"- 成績: 件数 {stats['n']} / 平均 {pct(stats['avg'])} / 中央値 {pct(stats['median'])} / "
                 f"勝率 {pct(stats['win_rate'], signed=False)} / 目標Hit {stats['target_hits']} / "
-                f"Lift {num(stats['lift'])} / 判定 {verdict(stats)}"
+                f"Lift {num(stats['lift'])}"
             ),
             f"- 確定済み銘柄の成績: {compact_stats_text(stats, include_target=True)}",
             f"- 未確定ウォッチリストの現在成績: {compact_stats_text(watch_stats)}",

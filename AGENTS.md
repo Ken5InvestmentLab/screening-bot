@@ -99,7 +99,7 @@ py optimize_screener.py --dry-run
 PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 ```
 
-出力先は `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_latest.md`。ユーザー向けレポートとして、Stable ★6、Sniper、Mega5 短期リバウンド、Mega40 深押し反転、Mega40 下ヒゲ回復だけを対象にし、候補スコアカードや実装判断ゲートなどの内部向けセクションは出さない。各モードでは確定済み成績と未確定ウォッチ全件を表示すること。GitHub Actions の `Mega Validation Report` は optimizer 完了後と平日定期実行で同じレポートを再生成し、差分があれば `reports/` だけを自動コミットする。
+出力先は `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_latest.md`。ユーザー向けレポートとして、Stable ★6、Sniper 勝率重視、Mega5 短期リバウンド、Mega40 深押し反転、Mega40 下ヒゲ回復だけを対象にし、候補スコアカードや実装判断ゲートなどの内部向けセクションは出さない。各モードでは確定済み成績と未確定ウォッチ全件を表示し、BDは営業日という注釈を入れ、銘柄ごとにTradingViewチャートとIRBANKファンダリンクを出すこと。スマホでは銘柄テーブルを横スクロール前提にせず、カード状に読める表示を維持する。GitHub Actions の `Mega Validation Report` は optimizer 完了後と平日定期実行で同じレポートを再生成し、差分があれば `reports/` だけを自動コミットする。
 
 ### MegaレポートのDiscordロール制限配信
 

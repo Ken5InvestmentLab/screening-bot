@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>スコアリング検証レポート</title>
+  <title>天底スコアリング ウォッチリスト</title>
   <style>
     :root {
       color-scheme: light;
@@ -13,6 +13,7 @@
       --muted: #667085;
       --line: #d9e0ea;
       --blue: #2563eb;
+      --navy: #102033;
       --green: #16815c;
       --green-bg: #e7f6ef;
       --amber: #a35a00;
@@ -31,7 +32,7 @@
       line-height: 1.55;
     }
     header {
-      background: #102033;
+      background: var(--navy);
       color: white;
       padding: 28px 32px;
       border-bottom: 4px solid #2f80ed;
@@ -44,6 +45,14 @@
     header p {
       margin: 4px 0;
       color: #d7e2f0;
+    }
+    .eyebrow {
+      margin: 0 0 6px;
+      color: #8fb7ff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
     }
     main {
       max-width: 1320px;
@@ -73,6 +82,68 @@
     .card .value {
       font-size: 24px;
       font-weight: 700;
+    }
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .mode-card {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--muted);
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    }
+    .mode-card.good { border-left-color: var(--green); }
+    .mode-card.warn { border-left-color: var(--amber); }
+    .mode-card.hold { border-left-color: var(--muted); }
+    .mode-card:hover {
+      border-color: #b8c6d9;
+      background: #fbfdff;
+    }
+    .mode-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .mode-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .mode-horizon {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .mode-card p {
+      margin: 0;
+      color: #475467;
+    }
+    .mode-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mode-metrics > span {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .mode-metrics strong {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .mode-metrics small {
+      color: var(--muted);
+      font-size: 11px;
     }
     .panel {
       padding: 18px;
@@ -104,8 +175,7 @@
       white-space: nowrap;
     }
     th:first-child, td:first-child,
-    .signals th:nth-child(3), .signals td:nth-child(3),
-    .score th:nth-child(4), .score td:nth-child(4) {
+    .signals th:nth-child(3), .signals td:nth-child(3) {
       text-align: left;
       white-space: normal;
     }
@@ -122,9 +192,6 @@
     }
     .compact th, .compact td {
       padding: 8px 9px;
-    }
-    .score {
-      min-width: 1500px;
     }
     .stat-stack {
       display: grid;
@@ -194,6 +261,24 @@
       border-bottom: 1px solid var(--line);
       font-weight: 700;
       font-size: 16px;
+    }
+    .summary-title {
+      display: grid;
+      gap: 2px;
+    }
+    .summary-title small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .summary-stats {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
     }
     .candidate-detail summary::-webkit-details-marker { display: none; }
     .candidate-detail summary::before {
@@ -275,6 +360,15 @@
     .gate-list li {
       margin: 8px 0;
     }
+    .notice {
+      color: #475467;
+      font-size: 13px;
+      border-left: 4px solid var(--amber);
+      padding: 10px 12px;
+      background: #fffaf0;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
     @media (max-width: 760px) {
       header { padding: 22px 18px; }
       main { padding: 14px; }
@@ -293,21 +387,22 @@
 </head>
 <body>
   <header>
-    <h1>スコアリング検証レポート</h1>
-    <p>生成日時: 2026-06-08 01:07:16 JST</p>
-    <p>検証専用。Bot本体、Discordコマンド、Moonshotロック状態は変更しません。</p>
+    <div class="eyebrow">Bottom Signal Report</div>
+    <h1>天底スコアリング ウォッチリスト</h1>
+    <p>生成日時: 2026-06-08 01:23:32 JST</p>
+    <p>Stable、Sniper、Mega候補の過去成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
     <section class="cards">
       <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2142</div></div>
-      <div class="card"><div class="label">Stable ★6 確定</div><div class="value">26</div></div>
-      <div class="card"><div class="label">Sniper 確定</div><div class="value">24</div></div>
-      <div class="card"><div class="label">Mega40 確定</div><div class="value">17</div></div>
+      <div class="card"><div class="label">対象モード</div><div class="value">5</div></div>
+      <div class="card"><div class="label">確定済み延べ件数</div><div class="value">78</div></div>
+      <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">13</div></div>
     </section>
 
     <section class="panel">
-      <h2>データ概要</h2>
-      <p class="note">alerts_raw 3648 rows / signals_archive 1535 rows / ohlcv_4h 243637 rows / dedupe後 2151 signals</p>
+      <h2>全体成績</h2>
+      <p class="note">BOTTOMシグナル全体の営業日別成績です。各モードの詳細は下のサマリーから確認できます。</p>
       <table class="compact">
 <thead><tr>
 <th>評価日</th>
@@ -346,134 +441,110 @@
     </section>
 
     <section class="panel">
-      <h2>候補スコアカード</h2>
-      <p class="note">実装判断は判定ラベルだけではなく、未確定候補の品質と件数増加後の再現性を見て決める前提です。</p>
-      <table class="score">
-<thead><tr>
-<th>候補</th>
-<th>評価</th>
-<th>目標</th>
-<th>条件</th>
-<th>件数</th>
-<th>平均</th>
-<th>中央値</th>
-<th>勝率</th>
-<th>目標Hit</th>
-<th>Recall</th>
-<th>Lift</th>
-<th>Tail</th>
-<th>確定済み成績</th>
-<th>未確定現在成績</th>
-<th>判定</th>
-</tr></thead><tbody>
-<tr>
-<td><strong>Stable ★6</strong></td>
-<td>5BD</td>
-<td>+10%</td>
-<td><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="MACD hist &gt; 0">macdpos</span><span class="chip" title="Stoch &gt;= 75">stoch75</span><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="ギャップアップ">gap_up</span></td>
-<td>26</td>
-<td><span class="pos">+15.3%</span></td>
-<td><span class="pos">+3.1%</span></td>
-<td><span class="pos">61.5%</span></td>
-<td>8 <span class="muted">(30.8%)</span></td>
-<td><span class="pos">7.3%</span></td>
-<td>5.61</td>
-<td><span class="tail">+50% 4</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 2</span></td>
-<td><div class="stat-stack"><span>n=26</span><span>平均 <span class="pos">+15.3%</span></span><span>中央値 <span class="pos">+3.1%</span></span><span>勝率 <span class="pos">61.5%</span></span><span>目標Hit 8</span><span>最大 <span class="pos">+90.2%</span></span><span>最小 <span class="neg">-17.2%</span></span><span class="neg">&lt;=-10% 2</span></div></td>
-<td><div class="stat-stack"><span>n=2</span><span>平均 <span class="pos">+10.1%</span></span><span>中央値 <span class="pos">+10.1%</span></span><span>勝率 <span class="pos">100.0%</span></span><span>+10% 1</span><span>+20% 0</span><span>最大 <span class="pos">+17.6%</span></span><span>最小 <span class="pos">+2.6%</span></span><span class="neg">&lt;=-10% 0</span></div></td>
-<td><span class="badge good">有望: 継続監視</span></td>
-</tr>
-<tr>
-<td><strong>Sniper</strong></td>
-<td>5BD</td>
-<td>勝ち</td>
-<td><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="陽線実体 &gt;= 0.5%">sbull</span><span class="chip" title="ATR &lt; 5%">atr5</span><span class="chip" title="ATR &lt; 7%">atr7</span><span class="chip" title="20日高値更新">hb20</span><span class="chip" title="RSI 40-60">rsi4060</span></td>
-<td>24</td>
-<td><span class="pos">+0.9%</span></td>
-<td><span class="pos">+0.5%</span></td>
-<td><span class="pos">66.7%</span></td>
-<td>17 <span class="muted">(70.8%)</span></td>
-<td><span class="pos">2.1%</span></td>
-<td>1.78</td>
-<td><span class="tail">+50% 0</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 1</span></td>
-<td><div class="stat-stack"><span>n=24</span><span>平均 <span class="pos">+0.9%</span></span><span>中央値 <span class="pos">+0.5%</span></span><span>勝率 <span class="pos">66.7%</span></span><span>目標Hit 17</span><span>最大 <span class="pos">+15.8%</span></span><span>最小 <span class="neg">-18.9%</span></span><span class="neg">&lt;=-10% 1</span></div></td>
-<td><div class="stat-stack"><span>n=3</span><span>平均 <span class="pos">+6.3%</span></span><span>中央値 <span class="pos">+2.6%</span></span><span>勝率 <span class="pos">100.0%</span></span><span>+10% 1</span><span>+20% 0</span><span>最大 <span class="pos">+15.0%</span></span><span>最小 <span class="pos">+1.4%</span></span><span class="neg">&lt;=-10% 0</span></div></td>
-<td><span class="badge good">有望: 継続監視</span></td>
-</tr>
-<tr>
-<td><strong>Mega5 短期リバウンド</strong></td>
-<td>5BD</td>
-<td>+20%</td>
-<td><span class="chip" title="RCI9 &lt;= -50">rci9_os</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></td>
-<td>11</td>
-<td><span class="pos">+21.6%</span></td>
-<td><span class="pos">+4.2%</span></td>
-<td><span class="pos">72.7%</span></td>
-<td>5 <span class="muted">(45.5%)</span></td>
-<td><span class="pos">12.5%</span></td>
-<td>22.81</td>
-<td><span class="tail">+50% 2</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 0</span></td>
-<td><div class="stat-stack"><span>n=11</span><span>平均 <span class="pos">+21.6%</span></span><span>中央値 <span class="pos">+4.2%</span></span><span>勝率 <span class="pos">72.7%</span></span><span>目標Hit 5</span><span>最大 <span class="pos">+68.5%</span></span><span>最小 <span class="neg">-7.8%</span></span><span class="neg">&lt;=-10% 0</span></div></td>
-<td><span class="muted">該当なし</span></td>
-<td><span class="badge good">有望: 継続監視</span></td>
-</tr>
-<tr>
-<td><strong>Mega40 深押し反転</strong></td>
-<td>40BD</td>
-<td>+30%</td>
-<td><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="BB位置 &lt;= 20%">bb_lower</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></td>
-<td>12</td>
-<td><span class="pos">+32.2%</span></td>
-<td><span class="pos">+12.2%</span></td>
-<td><span class="pos">66.7%</span></td>
-<td>3 <span class="muted">(25.0%)</span></td>
-<td><span class="pos">7.0%</span></td>
-<td>5.47</td>
-<td><span class="tail">+50% 1</span><span class="tail">+100% 1</span><span class="tail danger">&lt;=-10% 3</span></td>
-<td><div class="stat-stack"><span>n=12</span><span>平均 <span class="pos">+32.2%</span></span><span>中央値 <span class="pos">+12.2%</span></span><span>勝率 <span class="pos">66.7%</span></span><span>目標Hit 3</span><span>最大 <span class="pos">+278.2%</span></span><span>最小 <span class="neg">-11.5%</span></span><span class="neg">&lt;=-10% 3</span></div></td>
-<td><div class="stat-stack"><span>n=6</span><span>平均 <span class="pos">+2.3%</span></span><span>中央値 <span class="pos">+1.5%</span></span><span>勝率 <span class="pos">50.0%</span></span><span>+10% 3</span><span>+20% 1</span><span>最大 <span class="pos">+26.3%</span></span><span>最小 <span class="neg">-19.0%</span></span><span class="neg">&lt;=-10% 2</span></div></td>
-<td><span class="badge good">有望: 継続監視</span></td>
-</tr>
-<tr>
-<td><strong>Mega40 下ヒゲ回復</strong></td>
-<td>40BD</td>
-<td>+50%</td>
-<td><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="CCI &lt;= -100">cci_os</span><span class="chip" title="下ヒゲ優位">lower_wick50</span><span class="chip" title="一目: close &gt; 26日前終値">ich_chikou</span></td>
-<td>5</td>
-<td><span class="pos">+21.0%</span></td>
-<td><span class="pos">+13.0%</span></td>
-<td><span class="pos">60.0%</span></td>
-<td>2 <span class="muted">(40.0%)</span></td>
-<td><span class="pos">9.1%</span></td>
-<td>17.09</td>
-<td><span class="tail">+50% 2</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 1</span></td>
-<td><div class="stat-stack"><span>n=5</span><span>平均 <span class="pos">+21.0%</span></span><span>中央値 <span class="pos">+13.0%</span></span><span>勝率 <span class="pos">60.0%</span></span><span>目標Hit 2</span><span>最大 <span class="pos">+63.4%</span></span><span>最小 <span class="neg">-17.6%</span></span><span class="neg">&lt;=-10% 1</span></div></td>
-<td><div class="stat-stack"><span>n=2</span><span>平均 <span class="pos">+7.4%</span></span><span>中央値 <span class="pos">+7.4%</span></span><span>勝率 <span class="pos">50.0%</span></span><span>+10% 1</span><span>+20% 0</span><span>最大 <span class="pos">+17.1%</span></span><span>最小 <span class="neg">-2.4%</span></span><span class="neg">&lt;=-10% 0</span></div></td>
-<td><span class="badge good">有望: 継続監視</span></td>
-</tr>
-</tbody></table>
+      <h2>モード別サマリー</h2>
+      <div class="mode-grid">
+
+      <a class="mode-card good" href="#mode-stable_s6">
+        <div class="mode-card-head">
+          <span class="mode-name">Stable ★6</span>
+          <span class="mode-horizon">5BD / +10%</span>
+        </div>
+        <p>現行Stableロジックの6条件すべてを満たす満点候補。</p>
+        <div class="mode-metrics">
+          <span><strong>26</strong><small>確定</small></span>
+          <span><strong><span class="pos">61.5%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+15.3%</span></strong><small>平均</small></span>
+          <span><strong>2/2</strong><small>ウォッチ中</small></span>
+        </div>
+      </a>
+
+      <a class="mode-card good" href="#mode-sniper">
+        <div class="mode-card-head">
+          <span class="mode-name">Sniper</span>
+          <span class="mode-horizon">5BD / 勝ち</span>
+        </div>
+        <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
+        <div class="mode-metrics">
+          <span><strong>24</strong><small>確定</small></span>
+          <span><strong><span class="pos">66.7%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+0.9%</span></strong><small>平均</small></span>
+          <span><strong>3/3</strong><small>ウォッチ中</small></span>
+        </div>
+      </a>
+
+      <a class="mode-card good" href="#mode-mega5_rebound">
+        <div class="mode-card-head">
+          <span class="mode-name">Mega5 短期リバウンド</span>
+          <span class="mode-horizon">5BD / +20%</span>
+        </div>
+        <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
+        <div class="mode-metrics">
+          <span><strong>11</strong><small>確定</small></span>
+          <span><strong><span class="pos">72.7%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+21.6%</span></strong><small>平均</small></span>
+          <span><strong>0/0</strong><small>ウォッチ中</small></span>
+        </div>
+      </a>
+
+      <a class="mode-card good" href="#mode-mega40_deep_reversal">
+        <div class="mode-card-head">
+          <span class="mode-name">Mega40 深押し反転</span>
+          <span class="mode-horizon">40BD / +30%</span>
+        </div>
+        <p>深い押し目から強陽線で切り返す40営業日候補。</p>
+        <div class="mode-metrics">
+          <span><strong>12</strong><small>確定</small></span>
+          <span><strong><span class="pos">66.7%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+32.2%</span></strong><small>平均</small></span>
+          <span><strong>6/6</strong><small>ウォッチ中</small></span>
+        </div>
+      </a>
+
+      <a class="mode-card good" href="#mode-mega40_wick_recovery">
+        <div class="mode-card-head">
+          <span class="mode-name">Mega40 下ヒゲ回復</span>
+          <span class="mode-horizon">40BD / +50%</span>
+        </div>
+        <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
+        <div class="mode-metrics">
+          <span><strong>5</strong><small>確定</small></span>
+          <span><strong><span class="pos">60.0%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+21.0%</span></strong><small>平均</small></span>
+          <span><strong>2/2</strong><small>ウォッチ中</small></span>
+        </div>
+      </a>
+
+      </div>
+      <p class="notice">過去成績は将来の値動きを保証するものではありません。銘柄を確認するときは、最新の開示、出来高、地合い、リスク許容度もあわせて確認してください。</p>
     </section>
 
     <section class="panel">
-      <h2>読み取り</h2>
+      <h2>注目ポイント</h2>
       <ul class="gate-list">
-        <li><strong>Stable ★6</strong>は現行Stable満点の品質確認用。5BDの再現性と下振れを優先して見る。</li>
-        <li><strong>Sniper</strong>は勝率重視の全条件通過候補。未確定候補の現在騰落が弱い場合は慎重に扱う。</li>
-        <li><strong>Mega5 短期リバウンド</strong>は短期急騰候補。中央値と下振れを最重視して見る。</li>
-        <li><strong>Mega40 深押し反転</strong>と<strong>Mega40 下ヒゲ回復</strong>は40BD候補。確定まで時間がかかるため未確定監視を重視する。</li>
+        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
+        <li><strong>Sniper</strong>は勝率重視。派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
+        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
       </ul>
     </section>
 
-    <h2>候補別 詳細</h2>
+    <h2>モード別 銘柄一覧</h2>
 
-            <details class="candidate-detail" open>
+            <details id="mode-stable_s6" class="candidate-detail" open>
               <summary>
-                <span>Stable ★6</span>
-                <span class="badge good">有望: 継続監視</span>
+                <span class="summary-title">
+                  <strong>Stable ★6</strong>
+                  <small>5BD / 目標 +10%</small>
+                </span>
+                <span class="summary-stats">
+                  <span>確定 26</span>
+                  <span>ウォッチ 2/2</span>
+                  <span class="badge good">有望: 継続監視</span>
+                </span>
               </summary>
               <div class="detail-grid">
                 <section>
-                  <h3>条件と成績</h3>
+                  <h3>モード概要</h3>
                   <p>現行Stableロジックの6条件すべてを満たす満点候補。</p>
                   <div class="chips"><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="MACD hist &gt; 0">macdpos</span><span class="chip" title="Stoch &gt;= 75">stoch75</span><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="ギャップアップ">gap_up</span></div>
                   <h4>確定済み銘柄の成績</h4>
@@ -502,7 +573,7 @@
                   </dl>
                 </section>
                 <section>
-                  <h3>条件説明</h3>
+                  <h3>判定条件</h3>
                   <ul class="condition-list">
                     <li><code>ema25</code><span>close &gt; EMA25</span></li><li><code>macdpos</code><span>MACD hist &gt; 0</span></li><li><code>stoch75</code><span>Stoch &gt;= 75</span></li><li><code>bb80</code><span>BB位置 &gt;= 80%</span></li><li><code>pre_down3</code><span>直近3日連続下落後</span></li><li><code>gap_up</code><span>ギャップアップ</span></li>
                   </ul>
@@ -816,14 +887,21 @@
 </tbody></table>
             </details>
 
-            <details class="candidate-detail" open>
+            <details id="mode-sniper" class="candidate-detail" open>
               <summary>
-                <span>Sniper</span>
-                <span class="badge good">有望: 継続監視</span>
+                <span class="summary-title">
+                  <strong>Sniper</strong>
+                  <small>5BD / 目標 勝ち</small>
+                </span>
+                <span class="summary-stats">
+                  <span>確定 24</span>
+                  <span>ウォッチ 3/3</span>
+                  <span class="badge good">有望: 継続監視</span>
+                </span>
               </summary>
               <div class="detail-grid">
                 <section>
-                  <h3>条件と成績</h3>
+                  <h3>モード概要</h3>
                   <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
                   <div class="chips"><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="陽線実体 &gt;= 0.5%">sbull</span><span class="chip" title="ATR &lt; 5%">atr5</span><span class="chip" title="ATR &lt; 7%">atr7</span><span class="chip" title="20日高値更新">hb20</span><span class="chip" title="RSI 40-60">rsi4060</span></div>
                   <h4>確定済み銘柄の成績</h4>
@@ -852,7 +930,7 @@
                   </dl>
                 </section>
                 <section>
-                  <h3>条件説明</h3>
+                  <h3>判定条件</h3>
                   <ul class="condition-list">
                     <li><code>ema25</code><span>close &gt; EMA25</span></li><li><code>sbull</code><span>陽線実体 &gt;= 0.5%</span></li><li><code>atr5</code><span>ATR &lt; 5%</span></li><li><code>atr7</code><span>ATR &lt; 7%</span></li><li><code>hb20</code><span>20日高値更新</span></li><li><code>rsi4060</code><span>RSI 40-60</span></li>
                   </ul>
@@ -1156,14 +1234,21 @@
 </tbody></table>
             </details>
 
-            <details class="candidate-detail" open>
+            <details id="mode-mega5_rebound" class="candidate-detail" open>
               <summary>
-                <span>Mega5 短期リバウンド</span>
-                <span class="badge good">有望: 継続監視</span>
+                <span class="summary-title">
+                  <strong>Mega5 短期リバウンド</strong>
+                  <small>5BD / 目標 +20%</small>
+                </span>
+                <span class="summary-stats">
+                  <span>確定 11</span>
+                  <span>ウォッチ 0/0</span>
+                  <span class="badge good">有望: 継続監視</span>
+                </span>
               </summary>
               <div class="detail-grid">
                 <section>
-                  <h3>条件と成績</h3>
+                  <h3>モード概要</h3>
                   <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
                   <div class="chips"><span class="chip" title="RCI9 &lt;= -50">rci9_os</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></div>
                   <h4>確定済み銘柄の成績</h4>
@@ -1192,7 +1277,7 @@
                   </dl>
                 </section>
                 <section>
-                  <h3>条件説明</h3>
+                  <h3>判定条件</h3>
                   <ul class="condition-list">
                     <li><code>rci9_os</code><span>RCI9 &lt;= -50</span></li><li><code>pre_down3</code><span>直近3日連続下落後</span></li><li><code>body2</code><span>陽線実体 &gt;= 2.0%</span></li>
                   </ul>
@@ -1325,14 +1410,21 @@
               <p class="empty">該当なし</p>
             </details>
 
-            <details class="candidate-detail" open>
+            <details id="mode-mega40_deep_reversal" class="candidate-detail" open>
               <summary>
-                <span>Mega40 深押し反転</span>
-                <span class="badge good">有望: 継続監視</span>
+                <span class="summary-title">
+                  <strong>Mega40 深押し反転</strong>
+                  <small>40BD / 目標 +30%</small>
+                </span>
+                <span class="summary-stats">
+                  <span>確定 12</span>
+                  <span>ウォッチ 6/6</span>
+                  <span class="badge good">有望: 継続監視</span>
+                </span>
               </summary>
               <div class="detail-grid">
                 <section>
-                  <h3>条件と成績</h3>
+                  <h3>モード概要</h3>
                   <p>深い押し目から強陽線で切り返す40営業日候補。</p>
                   <div class="chips"><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="BB位置 &lt;= 20%">bb_lower</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></div>
                   <h4>確定済み銘柄の成績</h4>
@@ -1361,7 +1453,7 @@
                   </dl>
                 </section>
                 <section>
-                  <h3>条件説明</h3>
+                  <h3>判定条件</h3>
                   <ul class="condition-list">
                     <li><code>pre_decline15</code><span>20日高値から-15%以上</span></li><li><code>pre_down3</code><span>直近3日連続下落後</span></li><li><code>bb_lower</code><span>BB位置 &lt;= 20%</span></li><li><code>body2</code><span>陽線実体 &gt;= 2.0%</span></li>
                   </ul>
@@ -1575,14 +1667,21 @@
 </tbody></table>
             </details>
 
-            <details class="candidate-detail" open>
+            <details id="mode-mega40_wick_recovery" class="candidate-detail" open>
               <summary>
-                <span>Mega40 下ヒゲ回復</span>
-                <span class="badge good">有望: 継続監視</span>
+                <span class="summary-title">
+                  <strong>Mega40 下ヒゲ回復</strong>
+                  <small>40BD / 目標 +50%</small>
+                </span>
+                <span class="summary-stats">
+                  <span>確定 5</span>
+                  <span>ウォッチ 2/2</span>
+                  <span class="badge good">有望: 継続監視</span>
+                </span>
               </summary>
               <div class="detail-grid">
                 <section>
-                  <h3>条件と成績</h3>
+                  <h3>モード概要</h3>
                   <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
                   <div class="chips"><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="CCI &lt;= -100">cci_os</span><span class="chip" title="下ヒゲ優位">lower_wick50</span><span class="chip" title="一目: close &gt; 26日前終値">ich_chikou</span></div>
                   <h4>確定済み銘柄の成績</h4>
@@ -1611,7 +1710,7 @@
                   </dl>
                 </section>
                 <section>
-                  <h3>条件説明</h3>
+                  <h3>判定条件</h3>
                   <ul class="condition-list">
                     <li><code>pre_decline15</code><span>20日高値から-15%以上</span></li><li><code>cci_os</code><span>CCI &lt;= -100</span></li><li><code>lower_wick50</code><span>下ヒゲ優位</span></li><li><code>ich_chikou</code><span>一目: close &gt; 26日前終値</span></li>
                   </ul>
@@ -1715,17 +1814,6 @@
 </tbody></table>
             </details>
 
-
-    <section class="panel">
-      <h2>実装判断ゲート案</h2>
-      <ul class="gate-list">
-        <li>確定件数: 主要候補で最低10件以上。少数精鋭候補でも5件未満は不可。</li>
-        <li>中央値: 0%以上。平均だけが高い外れ値依存は不可。</li>
-        <li>下振れ: <code>&lt;= -10%</code> が候補内の25%を超える場合は警戒扱い。</li>
-        <li>未確定候補: 直近候補の現在騰落が極端に弱い場合は、確定バックテストが良くても実装しない。</li>
-        <li>Moonshotロック: <code>/scan moonshot</code> や pending/current moonshot への反映は、別途ユーザー承認があるまで行わない。</li>
-      </ul>
-    </section>
   </main>
 </body>
 </html>

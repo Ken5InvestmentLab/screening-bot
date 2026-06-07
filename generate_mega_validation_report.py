@@ -657,6 +657,28 @@ def condition_chips(conditions: list[str]) -> str:
     return "".join(chips)
 
 
+def anchor_id(candidate: dict) -> str:
+    return f"mode-{candidate['id']}"
+
+
+def mode_summary_html(candidate: dict, stats: dict, watch_stats: dict) -> str:
+    return f"""
+      <a class="mode-card {verdict_class(verdict(stats))}" href="#{html_escape(anchor_id(candidate))}">
+        <div class="mode-card-head">
+          <span class="mode-name">{html_escape(candidate["label"])}</span>
+          <span class="mode-horizon">{candidate["eval_days"]}BD / {html_escape(target_label(candidate))}</span>
+        </div>
+        <p>{html_escape(candidate["intent"])}</p>
+        <div class="mode-metrics">
+          <span><strong>{stats["n"]}</strong><small>確定</small></span>
+          <span><strong>{pct_html(stats["win_rate"], signed=False)}</strong><small>勝率</small></span>
+          <span><strong>{pct_html(stats["avg"])}</strong><small>平均</small></span>
+          <span><strong>{watch_stats["with_current"]}/{watch_stats["n"]}</strong><small>ウォッチ中</small></span>
+        </div>
+      </a>
+    """
+
+
 def html_table(headers: list[str], rows: list[list[str]], table_class: str = "") -> str:
     class_attr = f' class="{html_escape(table_class)}"' if table_class else ""
     out = [f"<table{class_attr}>", "<thead><tr>"]
@@ -751,55 +773,16 @@ def build_html_report(
         "compact",
     )
 
-    score_rows = []
-    for candidate in CANDIDATES:
-        stats = stats_by_id[candidate["id"]]
-        watch_stats = watch_by_id[candidate["id"]]
-        score_rows.append(
-            [
-                f'<strong>{html_escape(candidate["label"])}</strong>',
-                f'{candidate["eval_days"]}BD',
-                html_escape(target_label(candidate)),
-                condition_chips(candidate["conditions"]),
-                html_escape(stats["n"]),
-                pct_html(stats["avg"]),
-                pct_html(stats["median"]),
-                pct_html(stats["win_rate"], signed=False),
-                f'{stats["target_hits"]} <span class="muted">({pct(stats["target_rate"], signed=False)})</span>',
-                pct_html(stats["recall"], signed=False),
-                html_escape(num(stats["lift"])),
-                (
-                    f'<span class="tail">+50% {stats["p50"]}</span>'
-                    f'<span class="tail">+100% {stats["p100"]}</span>'
-                    f'<span class="tail danger">&lt;=-10% {stats["m10"]}</span>'
-                ),
-                compact_stats_html(stats, include_target=True),
-                compact_stats_html(watch_stats),
-                verdict_badge(verdict(stats)),
-            ]
+    mode_cards = "".join(
+        mode_summary_html(
+            candidate,
+            stats_by_id[candidate["id"]],
+            watch_by_id[candidate["id"]],
         )
-
-    score_table = html_table(
-        [
-            "候補",
-            "評価",
-            "目標",
-            "条件",
-            "件数",
-            "平均",
-            "中央値",
-            "勝率",
-            "目標Hit",
-            "Recall",
-            "Lift",
-            "Tail",
-            "確定済み成績",
-            "未確定現在成績",
-            "判定",
-        ],
-        score_rows,
-        "score",
+        for candidate in CANDIDATES
     )
+    confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
+    watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
 
     detail_sections = []
     for index, candidate in enumerate(CANDIDATES):
@@ -811,14 +794,21 @@ def build_html_report(
         unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
         detail_sections.append(
             f"""
-            <details class="candidate-detail"{open_attr}>
+            <details id="{html_escape(anchor_id(candidate))}" class="candidate-detail"{open_attr}>
               <summary>
-                <span>{html_escape(candidate["label"])}</span>
-                {verdict_badge(candidate_verdict)}
+                <span class="summary-title">
+                  <strong>{html_escape(candidate["label"])}</strong>
+                  <small>{candidate["eval_days"]}BD / 目標 {html_escape(target_label(candidate))}</small>
+                </span>
+                <span class="summary-stats">
+                  <span>確定 {stats["n"]}</span>
+                  <span>ウォッチ {watch_stats["with_current"]}/{watch_stats["n"]}</span>
+                  {verdict_badge(candidate_verdict)}
+                </span>
               </summary>
               <div class="detail-grid">
                 <section>
-                  <h3>条件と成績</h3>
+                  <h3>モード概要</h3>
                   <p>{html_escape(candidate["intent"])}</p>
                   <div class="chips">{condition_chips(candidate["conditions"])}</div>
                   <h4>確定済み銘柄の成績</h4>
@@ -847,7 +837,7 @@ def build_html_report(
                   </dl>
                 </section>
                 <section>
-                  <h3>条件説明</h3>
+                  <h3>判定条件</h3>
                   <ul class="condition-list">
                     {''.join(
                         f'<li><code>{html_escape(cond)}</code><span>{html_escape(CONDITION_LABELS.get(cond, cond))}</span></li>'
@@ -869,7 +859,7 @@ def build_html_report(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>スコアリング検証レポート</title>
+  <title>天底スコアリング ウォッチリスト</title>
   <style>
     :root {{
       color-scheme: light;
@@ -879,6 +869,7 @@ def build_html_report(
       --muted: #667085;
       --line: #d9e0ea;
       --blue: #2563eb;
+      --navy: #102033;
       --green: #16815c;
       --green-bg: #e7f6ef;
       --amber: #a35a00;
@@ -897,7 +888,7 @@ def build_html_report(
       line-height: 1.55;
     }}
     header {{
-      background: #102033;
+      background: var(--navy);
       color: white;
       padding: 28px 32px;
       border-bottom: 4px solid #2f80ed;
@@ -910,6 +901,14 @@ def build_html_report(
     header p {{
       margin: 4px 0;
       color: #d7e2f0;
+    }}
+    .eyebrow {{
+      margin: 0 0 6px;
+      color: #8fb7ff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
     }}
     main {{
       max-width: 1320px;
@@ -939,6 +938,68 @@ def build_html_report(
     .card .value {{
       font-size: 24px;
       font-weight: 700;
+    }}
+    .mode-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }}
+    .mode-card {{
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--muted);
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    }}
+    .mode-card.good {{ border-left-color: var(--green); }}
+    .mode-card.warn {{ border-left-color: var(--amber); }}
+    .mode-card.hold {{ border-left-color: var(--muted); }}
+    .mode-card:hover {{
+      border-color: #b8c6d9;
+      background: #fbfdff;
+    }}
+    .mode-card-head {{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }}
+    .mode-name {{
+      font-size: 16px;
+      font-weight: 700;
+    }}
+    .mode-horizon {{
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }}
+    .mode-card p {{
+      margin: 0;
+      color: #475467;
+    }}
+    .mode-metrics {{
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }}
+    .mode-metrics > span {{
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }}
+    .mode-metrics strong {{
+      font-size: 15px;
+      line-height: 1.2;
+    }}
+    .mode-metrics small {{
+      color: var(--muted);
+      font-size: 11px;
     }}
     .panel {{
       padding: 18px;
@@ -970,8 +1031,7 @@ def build_html_report(
       white-space: nowrap;
     }}
     th:first-child, td:first-child,
-    .signals th:nth-child(3), .signals td:nth-child(3),
-    .score th:nth-child(4), .score td:nth-child(4) {{
+    .signals th:nth-child(3), .signals td:nth-child(3) {{
       text-align: left;
       white-space: normal;
     }}
@@ -988,9 +1048,6 @@ def build_html_report(
     }}
     .compact th, .compact td {{
       padding: 8px 9px;
-    }}
-    .score {{
-      min-width: 1500px;
     }}
     .stat-stack {{
       display: grid;
@@ -1060,6 +1117,24 @@ def build_html_report(
       border-bottom: 1px solid var(--line);
       font-weight: 700;
       font-size: 16px;
+    }}
+    .summary-title {{
+      display: grid;
+      gap: 2px;
+    }}
+    .summary-title small {{
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }}
+    .summary-stats {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
     }}
     .candidate-detail summary::-webkit-details-marker {{ display: none; }}
     .candidate-detail summary::before {{
@@ -1141,6 +1216,15 @@ def build_html_report(
     .gate-list li {{
       margin: 8px 0;
     }}
+    .notice {{
+      color: #475467;
+      font-size: 13px;
+      border-left: 4px solid var(--amber);
+      padding: 10px 12px;
+      background: #fffaf0;
+      border-radius: 6px;
+      margin-top: 12px;
+    }}
     @media (max-width: 760px) {{
       header {{ padding: 22px 18px; }}
       main {{ padding: 14px; }}
@@ -1159,53 +1243,45 @@ def build_html_report(
 </head>
 <body>
   <header>
-    <h1>スコアリング検証レポート</h1>
+    <div class="eyebrow">Bottom Signal Report</div>
+    <h1>天底スコアリング ウォッチリスト</h1>
     <p>生成日時: {html_escape(generated_at)}</p>
-    <p>検証専用。Bot本体、Discordコマンド、Moonshotロック状態は変更しません。</p>
+    <p>Stable、Sniper、Mega候補の過去成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
     <section class="cards">
       <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
-      <div class="card"><div class="label">Stable ★6 確定</div><div class="value">{stats_by_id["stable_s6"]["n"]}</div></div>
-      <div class="card"><div class="label">Sniper 確定</div><div class="value">{stats_by_id["sniper"]["n"]}</div></div>
-      <div class="card"><div class="label">Mega40 確定</div><div class="value">{stats_by_id["mega40_deep_reversal"]["n"] + stats_by_id["mega40_wick_recovery"]["n"]}</div></div>
+      <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
+      <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
+      <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
     </section>
 
     <section class="panel">
-      <h2>データ概要</h2>
-      <p class="note">alerts_raw {meta["alerts_raw_rows"]} rows / signals_archive {meta["signals_archive_rows"]} rows / ohlcv_4h {meta["ohlcv_rows"]} rows / dedupe後 {meta["alerts_after_dedupe"]} signals</p>
+      <h2>全体成績</h2>
+      <p class="note">BOTTOMシグナル全体の営業日別成績です。各モードの詳細は下のサマリーから確認できます。</p>
       {summary_table}
     </section>
 
     <section class="panel">
-      <h2>候補スコアカード</h2>
-      <p class="note">実装判断は判定ラベルだけではなく、未確定候補の品質と件数増加後の再現性を見て決める前提です。</p>
-      {score_table}
+      <h2>モード別サマリー</h2>
+      <div class="mode-grid">
+        {mode_cards}
+      </div>
+      <p class="notice">過去成績は将来の値動きを保証するものではありません。銘柄を確認するときは、最新の開示、出来高、地合い、リスク許容度もあわせて確認してください。</p>
     </section>
 
     <section class="panel">
-      <h2>読み取り</h2>
+      <h2>注目ポイント</h2>
       <ul class="gate-list">
-        <li><strong>Stable ★6</strong>は現行Stable満点の品質確認用。5BDの再現性と下振れを優先して見る。</li>
-        <li><strong>Sniper</strong>は勝率重視の全条件通過候補。未確定候補の現在騰落が弱い場合は慎重に扱う。</li>
-        <li><strong>Mega5 短期リバウンド</strong>は短期急騰候補。中央値と下振れを最重視して見る。</li>
-        <li><strong>Mega40 深押し反転</strong>と<strong>Mega40 下ヒゲ回復</strong>は40BD候補。確定まで時間がかかるため未確定監視を重視する。</li>
+        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
+        <li><strong>Sniper</strong>は勝率重視。派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
+        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
       </ul>
     </section>
 
-    <h2>候補別 詳細</h2>
+    <h2>モード別 銘柄一覧</h2>
     {"".join(detail_sections)}
-
-    <section class="panel">
-      <h2>実装判断ゲート案</h2>
-      <ul class="gate-list">
-        <li>確定件数: 主要候補で最低10件以上。少数精鋭候補でも5件未満は不可。</li>
-        <li>中央値: 0%以上。平均だけが高い外れ値依存は不可。</li>
-        <li>下振れ: <code>&lt;= -10%</code> が候補内の25%を超える場合は警戒扱い。</li>
-        <li>未確定候補: 直近候補の現在騰落が極端に弱い場合は、確定バックテストが良くても実装しない。</li>
-        <li>Moonshotロック: <code>/scan moonshot</code> や pending/current moonshot への反映は、別途ユーザー承認があるまで行わない。</li>
-      </ul>
-    </section>
   </main>
 </body>
 </html>
@@ -1221,19 +1297,18 @@ def build_report(
     stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
 
     lines = [
-        "# スコアリング検証レポート",
+        "# 天底スコアリング ウォッチリスト",
         "",
         f"- 生成日時: {generated_at}",
         "- 対象: TradingView BOTTOM シグナル",
-        "- 注意: このレポートは検証専用です。Bot本体、Discordコマンド、Moonshotロック状態は変更しません。",
+        "- 注意: 過去成績は将来の値動きを保証するものではありません。",
         "",
-        "## データ概要",
+        "## 全体成績",
         "",
-        f"- alerts_raw rows: {meta['alerts_raw_rows']}",
-        f"- signals_archive rows: {meta['signals_archive_rows']}",
-        f"- ohlcv_4h rows: {meta['ohlcv_rows']}",
-        f"- dedupe後シグナル: {meta['alerts_after_dedupe']}",
         f"- 指標計算可能シグナル: {meta['feature_rows']}",
+        f"- 対象モード: {len(CANDIDATES)}",
+        f"- 確定済み延べ件数: {sum(stats_by_id[candidate['id']]['n'] for candidate in CANDIDATES)}",
+        f"- ウォッチ中延べ件数: {sum(watch_by_id[candidate['id']]['with_current'] for candidate in CANDIDATES)}",
         "",
     ]
 
@@ -1260,66 +1335,43 @@ def build_report(
     )
     lines += [
         "",
-        "## 候補スコアカード",
+        "## モード別サマリー",
         "",
-        "実装判断は `有望` 表示だけではなく、未確定候補の品質と件数増加後の再現性を見て決める前提です。",
+        "各モードの過去成績とウォッチ中銘柄の現在成績です。",
         "",
     ]
 
     lines.extend(
         markdown_table(
-            [
-                "候補",
-                "評価",
-                "目標",
-                "条件",
-                "件数",
-                "平均",
-                "中央値",
-                "勝率",
-                "目標Hit",
-                "Recall",
-                "Lift",
-                "Tail",
-                "確定済み成績",
-                "未確定現在成績",
-                "判定",
-            ],
+            ["モード", "評価", "目標", "確定", "平均", "勝率", "ウォッチ中", "現在平均"],
             [
                 [
                     row["label"],
                     f"{row['days']}BD",
                     row["target"],
-                    row["conditions"],
                     str(row["n"]),
                     row["avg"],
-                    row["median"],
                     row["win"],
-                    row["target_hits"],
-                    row["recall"],
-                    row["lift"],
-                    row["tail"],
-                    row["confirmed_perf"],
-                    row["watch_perf"],
-                    row["verdict"],
+                    str(watch_by_id[CANDIDATES[index]["id"]]["with_current"]),
+                    pct(watch_by_id[CANDIDATES[index]["id"]]["avg"]),
                 ]
-                for row in stats_rows
+                for index, row in enumerate(stats_rows)
             ],
         )
     )
 
     lines += [
         "",
-        "## 読み取り",
+        "## 注目ポイント",
         "",
-        "- `Stable ★6` は現行Stable満点の品質確認用。5BDの再現性と下振れを優先して見る。",
-        "- `Sniper` は勝率重視の全条件通過候補。未確定候補の現在騰落が弱い場合は慎重に扱う。",
-        "- `Mega5 短期リバウンド` は短期急騰候補。中央値と下振れを最重視して見る。",
-        "- `Mega40 深押し反転` と `Mega40 下ヒゲ回復` は40BD候補。確定まで時間がかかるため未確定監視を重視する。",
+        "- `Stable ★6` は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。",
+        "- `Sniper` は勝率重視。派手さよりも、条件通過後にプラスで終わる比率を重視します。",
+        "- `Mega5 短期リバウンド` は短期急騰狙い。5営業日でどこまで反転するかを見ます。",
+        "- `Mega40` の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。",
         "",
     ]
 
-    lines += ["## 候補別 詳細", ""]
+    lines += ["## モード別 銘柄一覧", ""]
 
     for candidate in CANDIDATES:
         stats = stats_by_id[candidate["id"]]
@@ -1327,7 +1379,7 @@ def build_report(
         lines += [
             f"### {candidate['label']}",
             "",
-            f"- 意図: {candidate['intent']}",
+            f"- 概要: {candidate['intent']}",
             f"- 評価軸: {candidate['eval_days']}BD / 目標 {target_label(candidate)}",
             f"- 条件: {conditions_text(candidate['conditions'])}",
             f"- 条件説明:<br>{condition_labels_text(candidate['conditions'])}",
@@ -1350,15 +1402,10 @@ def build_report(
         lines.append("")
 
     lines += [
-        "## 実装判断ゲート案",
+        "## 注意事項",
         "",
-        "実装前に最低限、以下を満たすか確認する。",
-        "",
-        "- 確定件数: 主要候補で最低10件以上。少数精鋭候補でも5件未満は不可。",
-        "- 中央値: 0%以上。平均だけが高い外れ値依存は不可。",
-        "- 下振れ: `<= -10%` が候補内の25%を超える場合は警戒扱い。",
-        "- 未確定候補: 直近候補の現在騰落が極端に弱い場合は、確定バックテストが良くても実装しない。",
-        "- Moonshotロック: `/scan moonshot` や pending/current moonshot への反映は、別途ユーザー承認があるまで行わない。",
+        "- 本ページは情報提供を目的とした集計であり、投資助言ではありません。",
+        "- 最新の開示、出来高、地合い、リスク許容度をあわせて確認してください。",
     ]
     return "\n".join(lines)
 

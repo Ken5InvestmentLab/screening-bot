@@ -35,7 +35,6 @@ Non-secret settings are in `wrangler.jsonc`:
 
 | Variable | Purpose |
 |---|---|
-| `DISCORD_CLIENT_ID` | Discord OAuth application client ID |
 | `DISCORD_GUILD_ID` | Discord server ID to check |
 | `DISCORD_ALLOWED_ROLE_IDS` | Comma-separated role IDs allowed to view the report |
 | `REPORT_ASSET_PATH` | Report asset path, normally `/mega_validation_report_latest.html` |
@@ -46,6 +45,7 @@ Secrets must be set in Cloudflare, not committed:
 
 ```bash
 cd report-gate
+npx wrangler secret put DISCORD_CLIENT_ID
 npx wrangler secret put DISCORD_CLIENT_SECRET
 npx wrangler secret put SESSION_SECRET
 ```

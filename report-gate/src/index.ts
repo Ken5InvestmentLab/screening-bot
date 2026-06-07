@@ -4,6 +4,7 @@ const RETURN_TO_COOKIE = "__Host-report_gate_return_to";
 const DISCORD_SCOPE = "identify guilds.members.read";
 
 type WorkerEnv = Env & {
+  DISCORD_CLIENT_ID?: string;
   DISCORD_CLIENT_SECRET?: string;
   PUBLIC_BASE_URL?: string;
   SESSION_SECRET?: string;
@@ -79,7 +80,7 @@ function escapeHtml(value: string): string {
 
 function requiredEnv(env: WorkerEnv, key: keyof WorkerEnv): string {
   const value = env[key];
-  if (typeof value !== "string" || value.trim() === "" || value.trim() === "set-discord-client-id") {
+  if (typeof value !== "string" || value.trim() === "") {
     throw new Error(`Missing required environment variable: ${String(key)}`);
   }
   return value.trim();

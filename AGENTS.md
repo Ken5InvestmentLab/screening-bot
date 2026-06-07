@@ -111,7 +111,7 @@ npm ci
 npm run check
 ```
 
-デプロイ前にDiscord Developer Portalへ `https://<worker-domain>/auth/callback` をRedirect URIとして登録し、Cloudflare Worker secretsに `DISCORD_CLIENT_SECRET` と `SESSION_SECRET` を設定する。GitHub Actionsから自動デプロイする場合は repo secrets に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を設定する。`Mega Validation Report` workflow はCloudflare secretsがある場合だけ、レポート再生成後に保護Workerも再デプロイする。
+デプロイ前にDiscord Developer Portalへ `https://<worker-domain>/auth/callback` をRedirect URIとして登録し、Cloudflare Worker secretsに `DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`、`SESSION_SECRET` を設定する。GitHub Actionsから自動デプロイする場合は repo secrets に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を設定する。`Mega Validation Report` workflow はCloudflare secretsがある場合だけ、レポート再生成後に保護Workerも再デプロイする。
 
 ## 主要ファイルとアーキテクチャ
 

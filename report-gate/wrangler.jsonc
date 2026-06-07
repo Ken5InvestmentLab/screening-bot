@@ -14,7 +14,6 @@
   },
   "vars": {
     "DISCORD_API_BASE": "https://discord.com/api",
-    "DISCORD_CLIENT_ID": "set-discord-client-id",
     "DISCORD_GUILD_ID": "1479418833352785944",
     "DISCORD_ALLOWED_ROLE_IDS": "1487089073385373828",
     "REPORT_ASSET_PATH": "/mega_validation_report_latest.html",

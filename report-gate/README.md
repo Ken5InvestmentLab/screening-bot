@@ -1,14 +1,15 @@
 # Protected Mega Report Gate
 
-This Worker serves `reports/mega_validation_report_latest.html` only after a Discord OAuth login confirms that the user has an allowed role in the configured Discord server. Deploy and check commands copy the report into `report-gate/public/` first, so only the HTML asset is uploaded to Cloudflare.
+This Worker serves `reports/mega_validation_report_latest.html` only after a Discord OAuth login confirms that the user currently has an allowed role in the configured Discord server. Deploy and check commands copy the report into `report-gate/public/` first, so only the HTML asset is uploaded to Cloudflare.
 
 ## Flow
 
 1. A request to `/`, `/report`, or `/mega_validation_report_latest.html` reaches the Worker first.
 2. The Worker redirects unauthenticated users to Discord OAuth with `identify guilds.members.read`.
-3. The callback fetches `/users/@me/guilds/{guild.id}/member`.
-4. Access is granted only when the member `roles` array contains one of `DISCORD_ALLOWED_ROLE_IDS`.
-5. The report is streamed from the Workers static asset binding with `Cache-Control: private, no-store`.
+3. The callback fetches `/users/@me/guilds/{guild.id}/member` and stores the OAuth access token plus the latest allowed roles in an encrypted, HttpOnly session cookie.
+4. Protected requests re-check `/users/@me/guilds/{guild.id}/member` after a short cache window, so role removals are reflected without hammering Discord's API.
+5. Access is granted only when the current member `roles` array contains one of `DISCORD_ALLOWED_ROLE_IDS`.
+6. The report is served with `Cache-Control: private, no-store` and a guard script that checks `/auth/check` every 120 seconds while the page is open.
 
 ## Local commands
 

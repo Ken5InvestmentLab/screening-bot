@@ -103,7 +103,7 @@ PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 
 ### MegaレポートのDiscordロール制限配信
 
-`report-gate/` は Cloudflare Worker で `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_<mode>.html` を保護配信する独立サブプロジェクト。`npm run sync-report` は `reports/mega_validation_report*.html` を `report-gate/public/` に同期し、Workerは認可後に要求されたレポートHTMLを返すため、モード別リンクを増やした場合は同期対象とWorkerの許可パスを揃えること。Bot本体やDiscordコマンドに混ぜないこと。WorkerはDiscord OAuth2の `identify guilds.members.read` でログインしたユーザーのguild memberを取得し、`DISCORD_ALLOWED_ROLE_IDS` に含まれるロールIDを持つ場合だけHTMLを返す。
+`report-gate/` は Cloudflare Worker `scoring-bot-report`（公開URL: `https://scoring-bot-report.ipo-ken5-5489.workers.dev/`）で `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_<mode>.html` を保護配信する独立サブプロジェクト。`npm run sync-report` は `reports/mega_validation_report*.html` を `report-gate/public/` に同期し、Workerは認可後に要求されたレポートHTMLを返すため、モード別リンクを増やした場合は同期対象とWorkerの許可パスを揃えること。Bot本体やDiscordコマンドに混ぜないこと。WorkerはDiscord OAuth2の `identify guilds.members.read` でログインしたユーザーのguild memberを取得し、`DISCORD_ALLOWED_ROLE_IDS` に含まれるロールIDを持つ場合だけHTMLを返す。OAuth `state` はcookie依存に戻さず署名付きstateパラメータで検証し、OAuth access tokenと直近ロール確認結果は暗号化したHttpOnly session cookieにだけ保存する。保護HTMLには `/auth/guard.js` を注入し、開きっぱなしページも `/auth/check` で定期的にロール再確認するため、この仕組みを外す変更はしないこと。Discord APIの429回避として短時間のロールキャッシュと猶予を持たせている。
 
 ```bash
 cd report-gate
@@ -111,7 +111,7 @@ npm ci
 npm run check
 ```
 
-デプロイ前にDiscord Developer Portalへ `https://<worker-domain>/auth/callback` をRedirect URIとして登録し、Cloudflare Worker secretsに `DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`、`SESSION_SECRET` を設定する。GitHub Actionsから自動デプロイする場合は repo secrets に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を設定する。`Mega Validation Report` workflow はCloudflare secretsがある場合だけ、レポート再生成後に保護Workerも再デプロイする。
+デプロイ前にDiscord Developer Portalへ `https://<worker-domain>/auth/callback` をRedirect URIとして登録し、Cloudflare Worker secretsに `DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`、`SESSION_SECRET` を設定する。Worker名を変更した場合は新しいWorker側に同じsecretsを再設定し、Discord Redirect URIも新ドメインで追加する。GitHub Actionsから自動デプロイする場合は repo secrets に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を設定する。`Mega Validation Report` workflow はCloudflare secretsがある場合だけ、レポート再生成後に保護Workerも再デプロイする。
 
 ## 主要ファイルとアーキテクチャ
 

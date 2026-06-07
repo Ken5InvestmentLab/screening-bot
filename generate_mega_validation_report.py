@@ -2015,7 +2015,7 @@ def build_html_report(
     </section>
 
     <section class="panel">
-      <h2>モード別サマリー（alerts_rawのみ）</h2>
+      <h2>モード別サマリー</h2>
       <div class="mode-grid">
         {mode_cards}
       </div>
@@ -2309,7 +2309,7 @@ def build_report(
     )
     lines += [
         "",
-        "## モード別サマリー（alerts_rawのみ）",
+        "## モード別サマリー",
         "",
         "各モードの過去成績とウォッチ中銘柄の現在成績です。signals_archive込みの確認はHTML下部の任意表示セクションを使います。",
         "",

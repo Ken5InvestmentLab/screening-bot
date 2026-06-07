@@ -103,7 +103,7 @@ PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 
 ### MegaレポートのDiscordロール制限配信
 
-`report-gate/` は Cloudflare Worker で `reports/mega_validation_report_latest.html` を保護配信する独立サブプロジェクト。Bot本体やDiscordコマンドに混ぜないこと。WorkerはDiscord OAuth2の `identify guilds.members.read` でログインしたユーザーのguild memberを取得し、`DISCORD_ALLOWED_ROLE_IDS` に含まれるロールIDを持つ場合だけHTMLを返す。
+`report-gate/` は Cloudflare Worker で `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_<mode>.html` を保護配信する独立サブプロジェクト。`npm run sync-report` は `reports/mega_validation_report*.html` を `report-gate/public/` に同期し、Workerは認可後に要求されたレポートHTMLを返すため、モード別リンクを増やした場合は同期対象とWorkerの許可パスを揃えること。Bot本体やDiscordコマンドに混ぜないこと。WorkerはDiscord OAuth2の `identify guilds.members.read` でログインしたユーザーのguild memberを取得し、`DISCORD_ALLOWED_ROLE_IDS` に含まれるロールIDを持つ場合だけHTMLを返す。
 
 ```bash
 cd report-gate

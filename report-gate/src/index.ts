@@ -2,6 +2,7 @@ const SESSION_COOKIE = "__Host-report_gate_session";
 const STATE_COOKIE = "__Host-report_gate_oauth_state";
 const RETURN_TO_COOKIE = "__Host-report_gate_return_to";
 const DISCORD_SCOPE = "identify guilds.members.read";
+const REPORT_ASSET_PATH_RE = /^\/mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
 
 type WorkerEnv = Env & {
   DISCORD_CLIENT_ID?: string;
@@ -369,13 +370,17 @@ function reportAssetPath(env: WorkerEnv): string {
   return path.startsWith("/") ? path : `/${path}`;
 }
 
-async function serveReport(request: Request, env: WorkerEnv): Promise<Response> {
+function isReportAssetPath(pathname: string, env: WorkerEnv): boolean {
+  return pathname === reportAssetPath(env) || REPORT_ASSET_PATH_RE.test(pathname);
+}
+
+async function serveReport(request: Request, env: WorkerEnv, assetPath = reportAssetPath(env)): Promise<Response> {
   const unauthorized = await requireAuthorized(request, env);
   if (unauthorized) {
     return unauthorized;
   }
 
-  const assetUrl = new URL(reportAssetPath(env), "https://assets.local");
+  const assetUrl = new URL(assetPath, "https://assets.local");
   const assetResponse = await env.ASSETS.fetch(assetUrl.toString());
   if (!assetResponse.ok || !assetResponse.body) {
     return textResponse("Report asset not found", 404);
@@ -417,8 +422,11 @@ async function router(request: Request, env: WorkerEnv): Promise<Response> {
   if (url.pathname === "/auth/logout") {
     return logout(request);
   }
-  if (url.pathname === "/" || url.pathname === "/report" || url.pathname === reportAssetPath(env)) {
+  if (url.pathname === "/" || url.pathname === "/report") {
     return serveReport(request, env);
+  }
+  if (isReportAssetPath(url.pathname, env)) {
+    return serveReport(request, env, url.pathname);
   }
   return textResponse("Not found", 404);
 }

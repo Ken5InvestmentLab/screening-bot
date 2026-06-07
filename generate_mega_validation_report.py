@@ -14,6 +14,10 @@ from html import escape
 import json
 import math
 import os
+import re
+import time
+import urllib.error
+import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -29,6 +33,12 @@ DEFAULT_MARKDOWN_OUTPUT = os.path.join("reports", "mega_validation_report_latest
 DEFAULT_HTML_OUTPUT = os.path.join("reports", "mega_validation_report_latest.html")
 CURRENT_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic.json")
 SNIPER_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_sniper.json")
+PREMIUM_LOG_SPREADSHEET_ID_DEFAULT = "1GeLT-DUEdsYzT6AR3n1MkhkCeivqgtsMEXMhYfnHm9s"
+DISCORD_API_BASE = "https://discord.com/api/v10"
+DISCORD_MESSAGE_URL_RE = re.compile(
+    r"^https?://(?:canary\.|ptb\.)?discord(?:app)?\.com/channels/([^/]+)/([^/]+)/([^/?#]+)"
+)
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
 
 CONDITION_LABELS = {
     "ema75": "close > EMA75",
@@ -82,6 +92,39 @@ def load_logic_conditions(path: str, fallback: list[str]) -> list[str]:
     except (OSError, json.JSONDecodeError):
         pass
     return fallback
+
+
+_LOCAL_ENV_CACHE: dict[str, str] | None = None
+
+
+def local_env() -> dict[str, str]:
+    global _LOCAL_ENV_CACHE
+    if _LOCAL_ENV_CACHE is not None:
+        return _LOCAL_ENV_CACHE
+    values: dict[str, str] = {}
+    env_path = os.path.join(BASE_DIR, ".env")
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as handle:
+            for raw_line in handle:
+                line = raw_line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key:
+                    values[key] = value
+    _LOCAL_ENV_CACHE = values
+    return values
+
+
+def config_value(names: list[str], default: str = "") -> str:
+    env_values = local_env()
+    for name in names:
+        value = os.environ.get(name) or env_values.get(name)
+        if value:
+            return str(value).strip()
+    return default
 
 
 STABLE_CONDITIONS = load_logic_conditions(
@@ -191,6 +234,214 @@ def normalize_date(value) -> str:
 
 def parse_date(value):
     return pd.to_datetime(normalize_date(value), errors="coerce")
+
+
+def parse_discord_message_url(value: str) -> tuple[str, str, str] | None:
+    match = DISCORD_MESSAGE_URL_RE.match(str(value or "").strip())
+    if not match:
+        return None
+    return match.group(1), match.group(2), match.group(3)
+
+
+def extract_markdown_url(value: str) -> str:
+    text = str(value or "").strip()
+    match = MARKDOWN_LINK_RE.search(text)
+    if match:
+        return match.group(2).strip()
+    if parse_discord_message_url(text):
+        return text
+    return ""
+
+
+def fetch_premium_discord_links(service) -> dict:
+    spreadsheet_id = config_value(
+        ["PREMIUM_LOG_SPREADSHEET_ID", "PREMIUM_SPREADSHEET_ID"],
+        PREMIUM_LOG_SPREADSHEET_ID_DEFAULT,
+    )
+    sheet_name = config_value(["PREMIUM_LOG_SHEET_NAME", "PREMIUM_SHEET_NAME"], "premium_alert_log")
+    result = {"by_alert_id": {}, "by_symbol": {}, "row_count": 0, "matched_urls": 0}
+    if not spreadsheet_id:
+        return result
+
+    try:
+        response = (
+            service.spreadsheets()
+            .values()
+            .get(spreadsheetId=spreadsheet_id, range=f"{sheet_name}!A:K")
+            .execute()
+        )
+    except Exception as err:
+        print(f"premium log read skipped: {err}")
+        return result
+
+    rows = response.get("values", [])
+    if len(rows) < 2:
+        return result
+    header = [str(cell).lower().strip() for cell in rows[0]]
+
+    def col(name: str, fallback: int | None = None) -> int:
+        return header.index(name) if name in header else (fallback if fallback is not None else -1)
+
+    columns = {
+        "event_at": col("event_at", 0),
+        "event_type": col("event_type", 1),
+        "alert_id": col("alert_id", 2),
+        "symbol_code": col("symbol_code", 3),
+        "signal_type": col("signal_type", 5),
+        "reason": col("reason", 10),
+    }
+
+    def cell(row: list[str], name: str) -> str:
+        index = columns[name]
+        return str(row[index]).strip() if 0 <= index < len(row) else ""
+
+    def newer(item: dict, existing: dict | None) -> bool:
+        if not existing:
+            return True
+        return item.get("event_at", "") >= existing.get("event_at", "")
+
+    for row in rows[1:]:
+        if not row:
+            continue
+        result["row_count"] += 1
+        if cell(row, "event_type").upper() != "POSTED":
+            continue
+        if cell(row, "signal_type").upper() not in ("", "BOTTOM"):
+            continue
+        url = extract_markdown_url(cell(row, "reason"))
+        if not url or not parse_discord_message_url(url):
+            continue
+
+        alert_id = cell(row, "alert_id")
+        symbol = clean_symbol_text(cell(row, "symbol_code"))
+        item = {
+            "alert_id": alert_id,
+            "symbol": symbol,
+            "url": url,
+            "event_at": cell(row, "event_at"),
+        }
+        result["matched_urls"] += 1
+        if alert_id and newer(item, result["by_alert_id"].get(alert_id)):
+            result["by_alert_id"][alert_id] = item
+        if symbol and newer(item, result["by_symbol"].get(symbol)):
+            result["by_symbol"][symbol] = item
+    return result
+
+
+def discord_api_token() -> str:
+    return config_value(["DISCORD_PREMIUM_BOT_TOKEN", "DISCORD_BOT_TOKEN", "DISCORD_TOKEN"], "")
+
+
+def fetch_discord_message(url: str, token: str) -> dict | None:
+    parsed = parse_discord_message_url(url)
+    if not parsed or not token:
+        return None
+    _, channel_id, message_id = parsed
+    endpoint = f"{DISCORD_API_BASE}/channels/{channel_id}/messages/{message_id}"
+    request = urllib.request.Request(
+        endpoint,
+        headers={
+            "Authorization": f"Bot {token}",
+            "User-Agent": "screening-bot-mega-report",
+        },
+    )
+    for _ in range(2):
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+            return simplify_discord_message(payload, url)
+        except urllib.error.HTTPError as err:
+            if err.code == 429:
+                try:
+                    body = json.loads(err.read().decode("utf-8"))
+                    time.sleep(min(float(body.get("retry_after", 1.0)), 3.0))
+                    continue
+                except Exception:
+                    time.sleep(1.0)
+                    continue
+            return None
+        except Exception:
+            return None
+    return None
+
+
+def simplify_discord_message(payload: dict, jump_url: str) -> dict:
+    embeds = []
+    for embed in payload.get("embeds") or []:
+        fields = []
+        for field in embed.get("fields") or []:
+            fields.append(
+                {
+                    "name": str(field.get("name") or ""),
+                    "value": str(field.get("value") or ""),
+                }
+            )
+        footer = embed.get("footer") or {}
+        embeds.append(
+            {
+                "title": str(embed.get("title") or ""),
+                "url": str(embed.get("url") or ""),
+                "description": str(embed.get("description") or ""),
+                "fields": fields,
+                "footer": str(footer.get("text") or ""),
+                "timestamp": str(embed.get("timestamp") or payload.get("timestamp") or ""),
+            }
+        )
+    return {
+        "content": str(payload.get("content") or ""),
+        "embeds": embeds,
+        "jump_url": jump_url,
+    }
+
+
+def fetch_discord_messages(urls: list[str]) -> dict[str, dict]:
+    enabled = config_value(["MEGA_REPORT_FETCH_DISCORD_MESSAGES"], "").lower() in ("1", "true", "yes", "on")
+    if not enabled:
+        return {}
+    token = discord_api_token()
+    if not token:
+        return {}
+    messages = {}
+    for url in sorted(set(urls)):
+        message = fetch_discord_message(url, token)
+        if message:
+            messages[url] = message
+    return messages
+
+
+def premium_link_for_row(row: pd.Series, premium_links: dict) -> str:
+    alert_id = str(row.get("alert_id", "") or "").strip()
+    symbol = clean_symbol_text(row.get("symbol", ""))
+    item = premium_links.get("by_alert_id", {}).get(alert_id)
+    if not item and symbol:
+        item = premium_links.get("by_symbol", {}).get(symbol)
+    return str(item.get("url") or "") if item else ""
+
+
+def attach_fundamental_links(
+    frame: pd.DataFrame,
+    premium_links: dict,
+    discord_messages: dict[str, dict],
+) -> pd.DataFrame:
+    frame = frame.copy()
+    urls = []
+    html_blocks = []
+    for _, row in frame.iterrows():
+        url = premium_link_for_row(row, premium_links)
+        urls.append(url)
+        html_blocks.append(discord_message_html(discord_messages.get(url)) if url else "")
+    frame["fundamental_url"] = urls
+    frame["fundamental_html"] = html_blocks
+    return frame
+
+
+def collect_premium_urls(frame: pd.DataFrame, premium_links: dict) -> list[str]:
+    urls = []
+    for _, row in frame.iterrows():
+        url = premium_link_for_row(row, premium_links)
+        if url:
+            urls.append(url)
+    return urls
 
 
 def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, dict]:
@@ -409,8 +660,8 @@ def compact_stats_text(stats: dict, include_target: bool = False) -> str:
     if "with_current" in stats and stats["with_current"] == 0:
         return f"n=0/{stats['n']} / 現在値なし"
     count_text = f"n={stats['n']}"
-    if "with_current" in stats and stats["with_current"] != stats["n"]:
-        count_text = f"n={stats['with_current']}/{stats['n']}"
+    if "with_current" in stats:
+        count_text = f"n={stats['with_current']}"
     parts = [
         count_text,
         f"平均 {pct(stats['avg'])}",
@@ -432,7 +683,7 @@ def compact_stats_html(stats: dict, include_target: bool = False) -> str:
     if stats["n"] == 0:
         return '<span class="muted">該当なし</span>'
     if "with_current" in stats and stats["with_current"] == 0:
-        empty_count = f"n=0/{stats['n']}"
+        empty_count = "n=0"
         return (
             '<div class="stat-stack">'
             f"<span>{html_escape(empty_count)}</span>"
@@ -440,8 +691,8 @@ def compact_stats_html(stats: dict, include_target: bool = False) -> str:
             "</div>"
         )
     count_text = f"n={stats['n']}"
-    if "with_current" in stats and stats["with_current"] != stats["n"]:
-        count_text = f"n={stats['with_current']}/{stats['n']}"
+    if "with_current" in stats:
+        count_text = f"n={stats['with_current']}"
     rows = [
         f"<span>{html_escape(count_text)}</span>",
         f"<span>平均 {pct_html(stats['avg'])}</span>",
@@ -464,7 +715,7 @@ def verdict(stats: dict) -> str:
         return "保留: 件数不足"
     if is_finite(stats["median"]) and stats["median"] > 0 and stats["avg"] > 0:
         if stats["m10"] / max(stats["n"], 1) <= 0.25:
-            return "有望: 継続監視"
+            return "継続監視"
         return "注意: 下振れ多め"
     if stats["avg"] > 0 and stats["max"] > 0.5:
         return "注意: 外れ値依存"
@@ -599,7 +850,7 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
                     pct(row.get("perf_10bd")),
                     pct(row.get("perf_20bd")),
                     pct(row.get("perf_40bd")),
-                    action_links_text(symbol),
+                    action_links_text(symbol, row),
                 ]
             )
         return markdown_table(headers, table_rows)
@@ -618,7 +869,7 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
                 pct(row.get("perf_5bd")),
                 pct(row.get("perf_10bd")),
                 pct(row.get("perf_20bd")),
-                action_links_text(symbol),
+                action_links_text(symbol, row),
             ]
         )
     return markdown_table(headers, table_rows)
@@ -626,6 +877,70 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
 
 def html_escape(value) -> str:
     return escape("" if value is None else str(value), quote=True)
+
+
+def markdown_text_html(value: str) -> str:
+    text = str(value or "")
+    parts = []
+    last = 0
+    for match in MARKDOWN_LINK_RE.finditer(text):
+        parts.append(html_escape(text[last : match.start()]))
+        label = match.group(1).replace("\\]", "]").replace("\\\\", "\\")
+        url = match.group(2)
+        parts.append(
+            f'<a href="{html_escape(url)}" target="_blank" rel="noopener noreferrer">'
+            f"{html_escape(label)}</a>"
+        )
+        last = match.end()
+    parts.append(html_escape(text[last:]))
+    return "".join(parts).replace("\n", "<br>")
+
+
+def discord_message_html(message: dict | None) -> str:
+    if not message:
+        return ""
+    blocks = []
+    content = str(message.get("content") or "").strip()
+    if content:
+        blocks.append(f'<p class="discord-content">{markdown_text_html(content)}</p>')
+    for embed in message.get("embeds") or []:
+        title = str(embed.get("title") or "").strip()
+        title_url = str(embed.get("url") or "").strip()
+        description = str(embed.get("description") or "").strip()
+        fields = embed.get("fields") or []
+        footer = str(embed.get("footer") or "").strip()
+        timestamp = str(embed.get("timestamp") or "").strip()
+        title_html = ""
+        if title:
+            if title_url:
+                title_html = (
+                    f'<h4><a href="{html_escape(title_url)}" target="_blank" '
+                    f'rel="noopener noreferrer">{html_escape(title)}</a></h4>'
+                )
+            else:
+                title_html = f"<h4>{html_escape(title)}</h4>"
+        field_html = "".join(
+            "<div>"
+            f"<dt>{html_escape(field.get('name', ''))}</dt>"
+            f"<dd>{markdown_text_html(field.get('value', ''))}</dd>"
+            "</div>"
+            for field in fields
+        )
+        meta = " / ".join(part for part in [footer, timestamp] if part)
+        description_html = f"<p>{markdown_text_html(description)}</p>" if description else ""
+        fields_html = f"<dl>{field_html}</dl>" if field_html else ""
+        meta_html = f'<p class="discord-meta">{html_escape(meta)}</p>' if meta else ""
+        blocks.append(
+            '<article class="discord-embed">'
+            f"{title_html}"
+            f"{description_html}"
+            f"{fields_html}"
+            f"{meta_html}"
+            "</article>"
+        )
+    if not blocks:
+        return ""
+    return '<div class="discord-message">' + "".join(blocks) + "</div>"
 
 
 def clean_symbol_text(value) -> str:
@@ -636,27 +951,45 @@ def chart_url(symbol: str) -> str:
     return f"https://jp.tradingview.com/chart/?symbol=TSE:{html_escape(clean_symbol_text(symbol))}"
 
 
-def fundamental_url(symbol: str) -> str:
-    return f"https://irbank.net/{html_escape(clean_symbol_text(symbol))}"
-
-
-def action_buttons(symbol: str) -> str:
+def action_buttons(symbol: str, row: pd.Series) -> str:
     clean = clean_symbol_text(symbol)
+    fundamental_url = str(row.get("fundamental_url", "") or "").strip()
+    fundamental_html = str(row.get("fundamental_html", "") or "").strip()
     if not clean:
         return '<span class="muted">--</span>'
+    fundamental_button = (
+        f'<a class="action-btn secondary" href="{html_escape(fundamental_url)}" '
+        'target="_blank" rel="noopener noreferrer">ファンダ分析</a>'
+        if fundamental_url
+        else ""
+    )
+    fundamental_detail = (
+        '<details class="fundamental-detail">'
+        '<summary>ファンダ本文</summary>'
+        f"{fundamental_html}"
+        "</details>"
+        if fundamental_html
+        else ""
+    )
     return (
         '<div class="action-buttons">'
+        f"{fundamental_button}"
         f'<a class="action-btn" href="{chart_url(clean)}" target="_blank" rel="noopener noreferrer">チャート</a>'
-        f'<a class="action-btn secondary" href="{fundamental_url(clean)}" target="_blank" rel="noopener noreferrer">ファンダ</a>'
         "</div>"
+        f"{fundamental_detail}"
     )
 
 
-def action_links_text(symbol: str) -> str:
+def action_links_text(symbol: str, row: pd.Series) -> str:
     clean = clean_symbol_text(symbol)
     if not clean:
         return "--"
-    return f"[チャート]({chart_url(clean)}) / [ファンダ]({fundamental_url(clean)})"
+    fundamental_url = str(row.get("fundamental_url", "") or "").strip()
+    parts = []
+    if fundamental_url:
+        parts.append(f"[ファンダ分析]({fundamental_url})")
+    parts.append(f"[チャート]({chart_url(clean)})")
+    return " / ".join(parts)
 
 
 def pct_html(value, signed: bool = True) -> str:
@@ -674,7 +1007,7 @@ def pct_html(value, signed: bool = True) -> str:
 
 
 def verdict_class(value: str) -> str:
-    if value.startswith("有望"):
+    if value.startswith(("有望", "継続監視")):
         return "good"
     if value.startswith("注意"):
         return "warn"
@@ -691,13 +1024,53 @@ def condition_chips(conditions: list[str]) -> str:
     return "".join(chips)
 
 
-def anchor_id(candidate: dict) -> str:
-    return f"mode-{candidate['id']}"
+def anchor_id(candidate: dict, prefix: str = "") -> str:
+    return f"{prefix}mode-{candidate['id']}"
 
 
-def mode_summary_html(candidate: dict, stats: dict, watch_stats: dict) -> str:
+def mode_page_filename(candidate: dict) -> str:
+    return f"mega_validation_report_{candidate['id']}.html"
+
+
+def navigation_html(current_mode_id: str | None = None, include_mode_sections: bool = False) -> str:
+    mode_links = "".join(
+        f'<a class="{ "active" if candidate["id"] == current_mode_id else "" }" '
+        f'href="{html_escape(mode_page_filename(candidate))}">{html_escape(candidate["label"])}</a>'
+        for candidate in CANDIDATES
+    )
+    section_links = (
+        """
+        <hr>
+        <a href="#summary">成績サマリー</a>
+        <a href="#confirmed">確定済み全件</a>
+        <a href="#watch">未確定ウォッチ</a>
+        <a href="#archive">archive込み</a>
+        """
+        if include_mode_sections
+        else ""
+    )
     return f"""
-      <a class="mode-card {verdict_class(verdict(stats))}" href="#{html_escape(anchor_id(candidate))}">
+    <details class="hamburger-menu">
+      <summary aria-label="メニュー">☰</summary>
+      <nav>
+        <a class="{ "active" if current_mode_id is None else "" }" href="mega_validation_report_latest.html">トップ</a>
+        {mode_links}
+        {section_links}
+      </nav>
+    </details>
+    """
+
+
+def mode_summary_html(
+    candidate: dict,
+    stats: dict,
+    watch_stats: dict,
+    anchor_prefix: str = "",
+    href: str | None = None,
+) -> str:
+    link = href or f"#{anchor_id(candidate, anchor_prefix)}"
+    return f"""
+      <a class="mode-card {verdict_class(verdict(stats))}" href="{html_escape(link)}">
         <div class="mode-card-head">
           <span class="mode-name">{html_escape(candidate["label"])}</span>
           <span class="mode-horizon">{horizon_label(candidate["eval_days"])} / {html_escape(target_label(candidate))}</span>
@@ -748,7 +1121,7 @@ def html_signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> st
                     pct_html(row.get("perf_10bd")),
                     pct_html(row.get("perf_20bd")),
                     pct_html(row.get("perf_40bd")),
-                    action_buttons(symbol),
+                    action_buttons(symbol, row),
                 ]
             )
         return html_table(
@@ -770,7 +1143,7 @@ def html_signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> st
                 pct_html(row.get("perf_5bd")),
                 pct_html(row.get("perf_10bd")),
                 pct_html(row.get("perf_20bd")),
-                action_buttons(symbol),
+                action_buttons(symbol, row),
             ]
         )
     return html_table(
@@ -780,51 +1153,14 @@ def html_signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> st
     )
 
 
-def build_html_report(
+def build_candidate_detail_sections(
     frame_confirmed: pd.DataFrame,
     frame_all: pd.DataFrame,
-    meta: dict,
-    generated_at: str,
+    stats_by_id: dict[str, dict],
+    watch_by_id: dict[str, dict],
+    best_candidates: list[dict],
+    anchor_prefix: str = "",
 ) -> str:
-    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
-    summary = horizon_summary(frame_confirmed)
-
-    best_candidates = [
-        candidate
-        for candidate in CANDIDATES
-        if verdict(stats_by_id[candidate["id"]]).startswith("有望")
-    ]
-
-    summary_table = html_table(
-        ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
-        [
-            [
-                f"<strong>{horizon_label(row['days'])}</strong>",
-                html_escape(row["n"]),
-                pct_html(row["avg"]),
-                pct_html(row["win"], signed=False),
-                html_escape(row["p10"]),
-                html_escape(row["p20"]),
-                html_escape(row["p30"]),
-                html_escape(row["p50"]),
-                html_escape(row["p100"]),
-            ]
-            for row in summary
-        ],
-        "compact",
-    )
-
-    mode_cards = "".join(
-        mode_summary_html(
-            candidate,
-            stats_by_id[candidate["id"]],
-            watch_by_id[candidate["id"]],
-        )
-        for candidate in CANDIDATES
-    )
-    confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
-    watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
-
     detail_sections = []
     for index, candidate in enumerate(CANDIDATES):
         stats = stats_by_id[candidate["id"]]
@@ -834,7 +1170,7 @@ def build_html_report(
         unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
         detail_sections.append(
             f"""
-            <details id="{html_escape(anchor_id(candidate))}" class="candidate-detail"{open_attr}>
+            <details id="{html_escape(anchor_id(candidate, anchor_prefix))}" class="candidate-detail"{open_attr}>
               <summary>
                 <span class="summary-title">
                   <strong>{html_escape(candidate["label"])}</strong>
@@ -892,6 +1228,140 @@ def build_html_report(
             </details>
             """
         )
+    return "".join(detail_sections)
+
+
+def build_optional_archive_scope_html(
+    frame_confirmed: pd.DataFrame | None,
+    frame_all: pd.DataFrame | None,
+    meta: dict | None,
+) -> str:
+    if frame_confirmed is None or frame_all is None or meta is None:
+        return ""
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
+    summary = horizon_summary(frame_confirmed)
+    best_candidates = [
+        candidate
+        for candidate in CANDIDATES
+        if verdict(stats_by_id[candidate["id"]]).startswith(("有望", "継続監視"))
+    ]
+    summary_table = html_table(
+        ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
+        [
+            [
+                f"<strong>{horizon_label(row['days'])}</strong>",
+                html_escape(row["n"]),
+                pct_html(row["avg"]),
+                pct_html(row["win"], signed=False),
+                html_escape(row["p10"]),
+                html_escape(row["p20"]),
+                html_escape(row["p30"]),
+                html_escape(row["p50"]),
+                html_escape(row["p100"]),
+            ]
+            for row in summary
+        ],
+        "compact",
+    )
+    mode_cards = "".join(
+        mode_summary_html(
+            candidate,
+            stats_by_id[candidate["id"]],
+            watch_by_id[candidate["id"]],
+            anchor_prefix="archive-",
+        )
+        for candidate in CANDIDATES
+    )
+    confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
+    watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
+    detail_sections = build_candidate_detail_sections(
+        frame_confirmed,
+        frame_all,
+        stats_by_id,
+        watch_by_id,
+        best_candidates,
+        anchor_prefix="archive-",
+    )
+    return f"""
+    <details class="archive-scope">
+      <summary>
+        <span>
+          <strong>signals_archive込みの成績と銘柄を表示</strong>
+          <small>通常表示はalerts_rawのみです。必要な場合だけ過去アーカイブを含めて確認できます。</small>
+        </span>
+      </summary>
+      <section class="cards archive-cards">
+        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
+        <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
+        <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
+      </section>
+
+      <section class="panel">
+        <h2>全体成績（signals_archive込み）</h2>
+        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した成績です。</p>
+        {summary_table}
+      </section>
+
+      <section class="panel">
+        <h2>モード別サマリー（signals_archive込み）</h2>
+        <div class="mode-grid">
+          {mode_cards}
+        </div>
+      </section>
+
+      <h2>モード別 銘柄一覧（signals_archive込み）</h2>
+      {detail_sections}
+    </details>
+    """
+
+
+def build_html_report(
+    frame_confirmed: pd.DataFrame,
+    frame_all: pd.DataFrame,
+    meta: dict,
+    generated_at: str,
+) -> str:
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
+    summary = horizon_summary(frame_confirmed)
+
+    summary_table = html_table(
+        ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
+        [
+            [
+                f"<strong>{horizon_label(row['days'])}</strong>",
+                html_escape(row["n"]),
+                pct_html(row["avg"]),
+                pct_html(row["win"], signed=False),
+                html_escape(row["p10"]),
+                html_escape(row["p20"]),
+                html_escape(row["p30"]),
+                html_escape(row["p50"]),
+                html_escape(row["p100"]),
+            ]
+            for row in summary
+        ],
+        "compact",
+    )
+
+    mode_cards = "".join(
+        mode_summary_html(
+            candidate,
+            stats_by_id[candidate["id"]],
+            watch_by_id[candidate["id"]],
+            href=mode_page_filename(candidate),
+        )
+        for candidate in CANDIDATES
+    )
+    confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
+    watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
+    mode_links = "".join(
+        f'<a class="mode-link" href="{html_escape(mode_page_filename(candidate))}">'
+        f"<strong>{html_escape(candidate['label'])}</strong>"
+        f"<span>{horizon_label(candidate['eval_days'])} / 目標 {html_escape(target_label(candidate))}</span>"
+        "</a>"
+        for candidate in CANDIDATES
+    )
 
     return f"""<!doctype html>
 <html lang="ja">
@@ -953,6 +1423,58 @@ def build_html_report(
       max-width: 1320px;
       margin: 0 auto;
       padding: 24px;
+    }}
+    .hamburger-menu {{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      z-index: 20;
+    }}
+    .hamburger-menu > summary {{
+      list-style: none;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      background: rgba(16, 32, 51, 0.92);
+      color: white;
+      font-size: 24px;
+      line-height: 1;
+    }}
+    .hamburger-menu > summary::-webkit-details-marker {{ display: none; }}
+    .hamburger-menu nav {{
+      position: absolute;
+      top: 48px;
+      right: 0;
+      display: grid;
+      gap: 4px;
+      min-width: 240px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 14px 30px rgba(16, 24, 40, 0.18);
+    }}
+    .hamburger-menu nav a {{
+      padding: 8px 10px;
+      border-radius: 6px;
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 700;
+    }}
+    .hamburger-menu nav a:hover,
+    .hamburger-menu nav a.active {{
+      background: #eef5ff;
+      color: #1849a9;
+    }}
+    .hamburger-menu nav hr {{
+      width: 100%;
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 6px 0;
     }}
     .cards {{
       display: grid;
@@ -1039,6 +1561,29 @@ def build_html_report(
     .mode-metrics small {{
       color: var(--muted);
       font-size: 11px;
+    }}
+    .mode-link-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+    }}
+    .mode-link {{
+      display: grid;
+      gap: 4px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      color: var(--text);
+      text-decoration: none;
+    }}
+    .mode-link:hover {{
+      border-color: #b8c6d9;
+      background: #eef5ff;
+    }}
+    .mode-link span {{
+      color: var(--muted);
+      font-size: 12px;
     }}
     .panel {{
       padding: 18px;
@@ -1145,7 +1690,7 @@ def build_html_report(
       margin-bottom: 14px;
       overflow: hidden;
     }}
-    .candidate-detail summary {{
+    .candidate-detail > summary {{
       cursor: pointer;
       list-style: none;
       padding: 15px 18px;
@@ -1200,11 +1745,89 @@ def build_html_report(
       background: #f6f8fb;
       color: #344054;
     }}
+    .action-btn.disabled {{
+      border-color: #e1e7ef;
+      background: #f3f5f8;
+      color: #98a2b3;
+      cursor: default;
+    }}
     .action-btn:hover {{
       background: #dfeeff;
     }}
-    .candidate-detail summary::-webkit-details-marker {{ display: none; }}
-    .candidate-detail summary::before {{
+    .fundamental-detail {{
+      margin-top: 8px;
+      min-width: 260px;
+      max-width: 520px;
+      text-align: left;
+      white-space: normal;
+    }}
+    .fundamental-detail summary {{
+      cursor: pointer;
+      color: #1849a9;
+      font-size: 12px;
+      font-weight: 700;
+    }}
+    .discord-message {{
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+      color: #182230;
+    }}
+    .discord-embed {{
+      border-left: 4px solid #5865f2;
+      background: #f8f9ff;
+      border-radius: 6px;
+      padding: 10px;
+    }}
+    .discord-embed h4 {{
+      margin: 0 0 8px;
+      font-size: 13px;
+    }}
+    .discord-embed dl {{
+      display: grid;
+      gap: 8px;
+      margin: 0;
+    }}
+    .discord-embed dt {{
+      font-weight: 700;
+      color: #344054;
+      margin-bottom: 2px;
+    }}
+    .discord-embed dd {{
+      margin: 0;
+      color: #182230;
+    }}
+    .discord-meta {{
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+    }}
+    .archive-scope {{
+      margin-top: 22px;
+      border: 1px solid #c9d6e7;
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 0 16px 16px;
+    }}
+    .archive-scope > summary {{
+      cursor: pointer;
+      padding: 16px 0;
+      color: #1849a9;
+      font-weight: 700;
+    }}
+    .archive-scope > summary span {{
+      display: grid;
+      gap: 3px;
+    }}
+    .archive-scope > summary small {{
+      color: var(--muted);
+      font-weight: 500;
+    }}
+    .archive-cards {{
+      margin-top: 6px;
+    }}
+    .candidate-detail > summary::-webkit-details-marker {{ display: none; }}
+    .candidate-detail > summary::before {{
       content: "+";
       display: inline-grid;
       place-items: center;
@@ -1216,7 +1839,7 @@ def build_html_report(
       color: #344054;
       font-weight: 700;
     }}
-    .candidate-detail[open] summary::before {{
+    .candidate-detail[open] > summary::before {{
       content: "-";
     }}
     .candidate-detail > h3,
@@ -1301,7 +1924,7 @@ def build_html_report(
       .mode-grid {{ grid-template-columns: 1fr; }}
       .mode-metrics {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .detail-grid {{ grid-template-columns: 1fr; }}
-      .candidate-detail summary {{
+      .candidate-detail > summary {{
         align-items: flex-start;
         display: grid;
         grid-template-columns: auto 1fr;
@@ -1353,6 +1976,10 @@ def build_html_report(
         justify-content: flex-end;
         flex-wrap: wrap;
       }}
+      .fundamental-detail {{
+        min-width: 0;
+        max-width: 100%;
+      }}
       table {{ min-width: 680px; }}
       .signals {{ min-width: 0; }}
     }}
@@ -1366,29 +1993,29 @@ def build_html_report(
   </style>
 </head>
 <body>
+  {navigation_html()}
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底スコアリング ウォッチリスト</h1>
     <p>生成日時: {html_escape(generated_at)}</p>
-    <p>Stable、Sniper、Mega候補の過去成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
-    <p>BDは営業日を意味します。例: 5BD = 5営業日後。</p>
+    <p>Stable、Sniper、Mega候補の過去成績と、ウォッチ中銘柄の現在成績をまとめています。通常表示はalerts_rawのみです。</p>
   </header>
   <main>
     <section class="cards">
-      <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
+      <div class="card"><div class="label">alerts_raw 指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
       <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
       <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
       <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
     </section>
 
     <section class="panel">
-      <h2>全体成績</h2>
-      <p class="note">BOTTOMシグナル全体の営業日別成績です。各モードの詳細は下のサマリーから確認できます。</p>
+      <h2>全体成績（alerts_rawのみ）</h2>
+      <p class="note">alerts_rawシートに残っているBOTTOMシグナルだけの営業日別成績です。signals_archive込みの銘柄一覧は各モードページの任意表示セクションで確認できます。</p>
       {summary_table}
     </section>
 
     <section class="panel">
-      <h2>モード別サマリー</h2>
+      <h2>モード別サマリー（alerts_rawのみ）</h2>
       <div class="mode-grid">
         {mode_cards}
       </div>
@@ -1405,8 +2032,230 @@ def build_html_report(
       </ul>
     </section>
 
-    <h2>モード別 銘柄一覧</h2>
-    {"".join(detail_sections)}
+    <section class="panel">
+      <h2>モード別 銘柄一覧</h2>
+      <p class="note">各モードの確定済み全件・未確定ウォッチ全件は、モード別ページで確認できます。</p>
+      <div class="mode-link-grid">
+        {mode_links}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
+"""
+
+
+def mode_page_style() -> str:
+    return """
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #182230;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --navy: #102033;
+      --green: #16815c;
+      --red: #b42318;
+      --chip: #eef3fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    header {
+      background: var(--navy);
+      color: white;
+      padding: 28px 32px;
+      border-bottom: 4px solid #2f80ed;
+    }
+    header h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0; }
+    header p { margin: 4px 0; color: #d7e2f0; }
+    main { max-width: 1320px; margin: 0 auto; padding: 24px; }
+    .hamburger-menu { position: fixed; top: 14px; right: 14px; z-index: 20; }
+    .hamburger-menu > summary {
+      list-style: none; cursor: pointer; display: grid; place-items: center;
+      width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.35);
+      border-radius: 8px; background: rgba(16,32,51,.92); color: white;
+      font-size: 24px; line-height: 1;
+    }
+    .hamburger-menu > summary::-webkit-details-marker { display: none; }
+    .hamburger-menu nav {
+      position: absolute; top: 48px; right: 0; display: grid; gap: 4px;
+      min-width: 240px; padding: 10px; border: 1px solid var(--line);
+      border-radius: 8px; background: white; box-shadow: 0 14px 30px rgba(16,24,40,.18);
+    }
+    .hamburger-menu nav a {
+      padding: 8px 10px; border-radius: 6px; color: var(--text);
+      text-decoration: none; font-weight: 700;
+    }
+    .hamburger-menu nav a:hover, .hamburger-menu nav a.active {
+      background: #eef5ff; color: #1849a9;
+    }
+    .hamburger-menu nav hr { width: 100%; border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+    .panel, .candidate-detail {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16,24,40,.05); margin-bottom: 18px;
+    }
+    .panel { padding: 18px; overflow-x: auto; }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+    h3 { margin: 16px 0 10px; font-size: 16px; }
+    h4 { margin: 14px 0 8px; font-size: 14px; }
+    .note { color: var(--muted); margin: 0 0 14px; }
+    .chips { margin: 8px 0 0; }
+    .chip {
+      display: inline-block; margin: 2px 4px 2px 0; padding: 3px 7px;
+      border-radius: 999px; background: var(--chip); color: #27415f;
+      font-family: "Consolas", "Menlo", monospace; font-size: 12px;
+    }
+    .cards, .metrics {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fbfcfe;
+    }
+    .metric .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .metric .value { font-weight: 700; font-size: 18px; }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    th, td {
+      border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: right;
+      vertical-align: top; white-space: nowrap;
+    }
+    th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
+      text-align: left; white-space: normal;
+    }
+    thead th { background: #f0f4f8; color: #344054; font-size: 12px; position: sticky; top: 0; }
+    tbody tr:hover { background: #f8fbff; }
+    .pos { color: var(--green); font-weight: 700; }
+    .neg { color: var(--red); font-weight: 700; }
+    .flat, .muted { color: var(--muted); }
+    .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
+    .action-buttons { display: inline-flex; justify-content: flex-end; gap: 6px; white-space: nowrap; }
+    .action-btn {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 30px;
+      padding: 5px 9px; border: 1px solid #bfd2ee; border-radius: 6px;
+      background: #eef5ff; color: #1849a9; font-size: 12px; font-weight: 700; text-decoration: none;
+    }
+    .action-btn.secondary { border-color: #cfd8e6; background: #f6f8fb; color: #344054; }
+    .fundamental-detail { margin-top: 8px; min-width: 260px; max-width: 520px; text-align: left; white-space: normal; }
+    .fundamental-detail summary { cursor: pointer; color: #1849a9; font-size: 12px; font-weight: 700; }
+    .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
+    .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
+    .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
+    .discord-embed dl { display: grid; gap: 8px; margin: 0; }
+    .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
+    .discord-embed dd { margin: 0; color: #182230; }
+    .discord-meta { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+    .candidate-detail { padding: 18px; }
+    .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
+    .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+    .empty { color: var(--muted); padding: 0 0 10px; }
+    @media (max-width: 760px) {
+      header { padding: 22px 18px; }
+      main { padding: 14px; }
+      .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
+      .signals thead { display: none; }
+      .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
+      .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals td {
+        display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
+        text-align: right; white-space: normal;
+      }
+      .signals td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; }
+      .action-buttons { justify-content: flex-end; flex-wrap: wrap; }
+      .fundamental-detail { min-width: 0; max-width: 100%; }
+      table { min-width: 680px; }
+    }
+    """
+
+
+def stat_metrics_html(stats: dict, watch_stats: dict) -> str:
+    items = [
+        ("確定件数", stats["n"]),
+        ("確定平均", pct_html(stats["avg"])),
+        ("確定勝率", pct_html(stats["win_rate"], signed=False)),
+        ("目標Hit", stats["target_hits"]),
+        ("ウォッチ中", watch_stats["with_current"]),
+        ("現在平均", pct_html(watch_stats["avg"])),
+        ("現在勝率", pct_html(watch_stats["win_rate"], signed=False)),
+        ("現在+10%", watch_stats["p10"]),
+    ]
+    return "".join(
+        f'<div class="metric"><div class="label">{html_escape(label)}</div><div class="value">{value}</div></div>'
+        for label, value in items
+    )
+
+
+def build_mode_html_page(
+    candidate: dict,
+    frame_confirmed: pd.DataFrame,
+    frame_all: pd.DataFrame,
+    archive_confirmed: pd.DataFrame,
+    archive_all: pd.DataFrame,
+    generated_at: str,
+) -> str:
+    stats = candidate_stats(frame_confirmed, candidate)
+    watch_stats = current_watch_stats(frame_all, candidate)
+    archive_stats = candidate_stats(archive_confirmed, candidate)
+    archive_watch_stats = current_watch_stats(archive_all, candidate)
+    confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
+    unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
+    archive_confirmed_rows = candidate_rows(archive_confirmed, candidate, confirmed=True, limit=None)
+    archive_unconfirmed_rows = candidate_rows(archive_all, candidate, confirmed=False, limit=None)
+    return f"""<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{html_escape(candidate["label"])} | 天底スコアリング</title>
+  <style>{mode_page_style()}</style>
+</head>
+<body>
+  {navigation_html(candidate["id"], include_mode_sections=True)}
+  <header>
+    <h1>{html_escape(candidate["label"])}</h1>
+    <p>生成日時: {html_escape(generated_at)}</p>
+    <p>{html_escape(candidate["intent"])}</p>
+  </header>
+  <main>
+    <section id="summary" class="panel">
+      <h2>成績サマリー（alerts_rawのみ）</h2>
+      <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}</p>
+      <div class="chips">{condition_chips(candidate["conditions"])}</div>
+      <div class="metrics">{stat_metrics_html(stats, watch_stats)}</div>
+    </section>
+
+    <section id="confirmed" class="panel">
+      <h2>確定済み全件（alerts_rawのみ）</h2>
+      {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True)}
+    </section>
+
+    <section id="watch" class="panel">
+      <h2>未確定ウォッチ全件（alerts_rawのみ）</h2>
+      {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False)}
+    </section>
+
+    <details id="archive" class="candidate-detail">
+      <summary>signals_archive込みの成績と銘柄を表示</summary>
+      <section class="panel">
+        <h2>成績サマリー（signals_archive込み）</h2>
+        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した成績です。</p>
+        <div class="metrics">{stat_metrics_html(archive_stats, archive_watch_stats)}</div>
+      </section>
+      <section class="panel">
+        <h2>確定済み全件（signals_archive込み）</h2>
+        {html_signal_table(archive_confirmed_rows, candidate["eval_days"], confirmed=True)}
+      </section>
+      <section class="panel">
+        <h2>未確定ウォッチ全件（signals_archive込み）</h2>
+        {html_signal_table(archive_unconfirmed_rows, candidate["eval_days"], confirmed=False)}
+      </section>
+    </details>
   </main>
 </body>
 </html>
@@ -1425,11 +2274,10 @@ def build_report(
         "# 天底スコアリング ウォッチリスト",
         "",
         f"- 生成日時: {generated_at}",
-        "- 対象: TradingView BOTTOM シグナル",
-        "- 注釈: BDは営業日を意味します。",
+        "- 対象: TradingView BOTTOM シグナル（alerts_rawのみ）",
         "- 注意: 過去成績は将来の値動きを保証するものではありません。",
         "",
-        "## 全体成績",
+        "## 全体成績（alerts_rawのみ）",
         "",
         f"- 指標計算可能シグナル: {meta['feature_rows']}",
         f"- 対象モード: {len(CANDIDATES)}",
@@ -1461,9 +2309,9 @@ def build_report(
     )
     lines += [
         "",
-        "## モード別サマリー",
+        "## モード別サマリー（alerts_rawのみ）",
         "",
-        "各モードの過去成績とウォッチ中銘柄の現在成績です。",
+        "各モードの過去成績とウォッチ中銘柄の現在成績です。signals_archive込みの確認はHTML下部の任意表示セクションを使います。",
         "",
     ]
 
@@ -1497,7 +2345,7 @@ def build_report(
         "",
     ]
 
-    lines += ["## モード別 銘柄一覧", ""]
+    lines += ["## モード別 銘柄一覧（alerts_rawのみ）", ""]
 
     for candidate in CANDIDATES:
         stats = stats_by_id[candidate["id"]]
@@ -1536,6 +2384,19 @@ def build_report(
     return "\n".join(lines)
 
 
+def source_frame(frame: pd.DataFrame, include_archive: bool) -> pd.DataFrame:
+    if frame.empty or "_from_archive" not in frame.columns or include_archive:
+        return frame.copy()
+    return frame[~frame["_from_archive"].astype(bool)].copy()
+
+
+def report_meta(base_meta: dict, frame_all: pd.DataFrame, frame_confirmed: pd.DataFrame) -> dict:
+    meta = dict(base_meta)
+    meta["feature_rows"] = len(frame_all)
+    meta["confirmed_feature_rows"] = len(frame_confirmed)
+    return meta
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -1565,26 +2426,56 @@ def main() -> None:
     args = parse_args()
     confirmed_frame, _, confirmed_meta = build_alert_frame(include_unconfirmed=False)
     all_frame, _, all_meta = build_alert_frame(include_unconfirmed=True)
-    meta = dict(confirmed_meta)
-    meta["alerts_after_dedupe"] = all_meta["alerts_after_dedupe"]
-    meta["feature_rows"] = all_meta["feature_rows"]
+    premium_links = fetch_premium_discord_links(opt.get_service())
+    premium_urls = collect_premium_urls(all_frame, premium_links)
+    discord_messages = fetch_discord_messages(premium_urls)
+    confirmed_frame = attach_fundamental_links(confirmed_frame, premium_links, discord_messages)
+    all_frame = attach_fundamental_links(all_frame, premium_links, discord_messages)
+
+    raw_confirmed_frame = source_frame(confirmed_frame, include_archive=False)
+    raw_all_frame = source_frame(all_frame, include_archive=False)
+    raw_meta = report_meta(all_meta, raw_all_frame, raw_confirmed_frame)
+    raw_meta["premium_log_urls"] = premium_links.get("matched_urls", 0)
+    raw_meta["discord_messages"] = len(discord_messages)
     generated_at = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S %Z")
 
     markdown_output = args.markdown_output or DEFAULT_MARKDOWN_OUTPUT
-    markdown_report = build_report(confirmed_frame, all_frame, meta, generated_at)
+    markdown_report = build_report(raw_confirmed_frame, raw_all_frame, raw_meta, generated_at)
     markdown_path = os.path.abspath(markdown_output)
     os.makedirs(os.path.dirname(markdown_path), exist_ok=True)
     with open(markdown_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(markdown_report)
         handle.write("\n")
 
-    html_report = build_html_report(confirmed_frame, all_frame, meta, generated_at)
+    html_report = build_html_report(
+        raw_confirmed_frame,
+        raw_all_frame,
+        raw_meta,
+        generated_at,
+    )
     html_report = "\n".join(line.rstrip() for line in html_report.rstrip().splitlines())
     html_path = os.path.abspath(args.html_output)
     os.makedirs(os.path.dirname(html_path), exist_ok=True)
     with open(html_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(html_report.rstrip())
         handle.write("\n")
+
+    html_dir = os.path.dirname(html_path)
+    for candidate in CANDIDATES:
+        mode_report = build_mode_html_page(
+            candidate,
+            raw_confirmed_frame,
+            raw_all_frame,
+            confirmed_frame,
+            all_frame,
+            generated_at,
+        )
+        mode_report = "\n".join(line.rstrip() for line in mode_report.rstrip().splitlines())
+        mode_path = os.path.join(html_dir, mode_page_filename(candidate))
+        with open(mode_path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(mode_report.rstrip())
+            handle.write("\n")
+        print(f"wrote {mode_path}")
 
     print(f"wrote {markdown_path}")
     print(f"wrote {html_path}")

@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mega5 短期リバウンド | 天底スコアリング</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #182230;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --navy: #102033;
+      --green: #16815c;
+      --red: #b42318;
+      --chip: #eef3fb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    header {
+      background: var(--navy);
+      color: white;
+      padding: 28px 32px;
+      border-bottom: 4px solid #2f80ed;
+    }
+    header h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0; }
+    header p { margin: 4px 0; color: #d7e2f0; }
+    main { max-width: 1320px; margin: 0 auto; padding: 24px; }
+    .hamburger-menu { position: fixed; top: 14px; right: 14px; z-index: 20; }
+    .hamburger-menu > summary {
+      list-style: none; cursor: pointer; display: grid; place-items: center;
+      width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.35);
+      border-radius: 8px; background: rgba(16,32,51,.92); color: white;
+      font-size: 24px; line-height: 1;
+    }
+    .hamburger-menu > summary::-webkit-details-marker { display: none; }
+    .hamburger-menu nav {
+      position: absolute; top: 48px; right: 0; display: grid; gap: 4px;
+      min-width: 240px; padding: 10px; border: 1px solid var(--line);
+      border-radius: 8px; background: white; box-shadow: 0 14px 30px rgba(16,24,40,.18);
+    }
+    .hamburger-menu nav a {
+      padding: 8px 10px; border-radius: 6px; color: var(--text);
+      text-decoration: none; font-weight: 700;
+    }
+    .hamburger-menu nav a:hover, .hamburger-menu nav a.active {
+      background: #eef5ff; color: #1849a9;
+    }
+    .hamburger-menu nav hr { width: 100%; border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+    .panel, .candidate-detail {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16,24,40,.05); margin-bottom: 18px;
+    }
+    .panel { padding: 18px; overflow-x: auto; }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+    h3 { margin: 16px 0 10px; font-size: 16px; }
+    h4 { margin: 14px 0 8px; font-size: 14px; }
+    .note { color: var(--muted); margin: 0 0 14px; }
+    .chips { margin: 8px 0 0; }
+    .chip {
+      display: inline-block; margin: 2px 4px 2px 0; padding: 3px 7px;
+      border-radius: 999px; background: var(--chip); color: #27415f;
+      font-family: "Consolas", "Menlo", monospace; font-size: 12px;
+    }
+    .cards, .metrics {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
+    }
+    .metric {
+      border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fbfcfe;
+    }
+    .metric .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .metric .value { font-weight: 700; font-size: 18px; }
+    table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    th, td {
+      border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: right;
+      vertical-align: top; white-space: nowrap;
+    }
+    th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
+      text-align: left; white-space: normal;
+    }
+    thead th { background: #f0f4f8; color: #344054; font-size: 12px; position: sticky; top: 0; }
+    tbody tr:hover { background: #f8fbff; }
+    .pos { color: var(--green); font-weight: 700; }
+    .neg { color: var(--red); font-weight: 700; }
+    .flat, .muted { color: var(--muted); }
+    .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
+    .action-buttons { display: inline-flex; justify-content: flex-end; gap: 6px; white-space: nowrap; }
+    .action-btn {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 30px;
+      padding: 5px 9px; border: 1px solid #bfd2ee; border-radius: 6px;
+      background: #eef5ff; color: #1849a9; font-size: 12px; font-weight: 700; text-decoration: none;
+    }
+    .action-btn.secondary { border-color: #cfd8e6; background: #f6f8fb; color: #344054; }
+    .fundamental-detail { margin-top: 8px; min-width: 260px; max-width: 520px; text-align: left; white-space: normal; }
+    .fundamental-detail summary { cursor: pointer; color: #1849a9; font-size: 12px; font-weight: 700; }
+    .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
+    .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
+    .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
+    .discord-embed dl { display: grid; gap: 8px; margin: 0; }
+    .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
+    .discord-embed dd { margin: 0; color: #182230; }
+    .discord-meta { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+    .candidate-detail { padding: 18px; }
+    .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
+    .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+    .empty { color: var(--muted); padding: 0 0 10px; }
+    @media (max-width: 760px) {
+      header { padding: 22px 18px; }
+      main { padding: 14px; }
+      .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
+      .signals thead { display: none; }
+      .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
+      .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals td {
+        display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
+        text-align: right; white-space: normal;
+      }
+      .signals td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; }
+      .action-buttons { justify-content: flex-end; flex-wrap: wrap; }
+      .fundamental-detail { min-width: 0; max-width: 100%; }
+      table { min-width: 680px; }
+    }
+    </style>
+</head>
+<body>
+
+    <details class="hamburger-menu">
+      <summary aria-label="メニュー">☰</summary>
+      <nav>
+        <a class="" href="mega_validation_report_latest.html">トップ</a>
+        <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="active" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
+
+        <hr>
+        <a href="#summary">成績サマリー</a>
+        <a href="#confirmed">確定済み全件</a>
+        <a href="#watch">未確定ウォッチ</a>
+        <a href="#archive">archive込み</a>
+
+      </nav>
+    </details>
+
+  <header>
+    <h1>Mega5 短期リバウンド</h1>
+    <p>生成日時: 2026-06-08 03:15:33 JST</p>
+    <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
+  </header>
+  <main>
+    <section id="summary" class="panel">
+      <h2>成績サマリー（alerts_rawのみ）</h2>
+      <p class="note">5営業日後 / 目標 +20%</p>
+      <div class="chips"><span class="chip" title="RCI9 &lt;= -50">rci9_os</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></div>
+      <div class="metrics"><div class="metric"><div class="label">確定件数</div><div class="value">8</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+19.3%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">62.5%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">3</div></div><div class="metric"><div class="label">ウォッチ中</div><div class="value">0</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div>
+    </section>
+
+    <section id="confirmed" class="panel">
+      <h2>確定済み全件（alerts_rawのみ）</h2>
+      <table class="signals">
+<thead><tr>
+<th>日付</th>
+<th>銘柄</th>
+<th>社名</th>
+<th>評価値</th>
+<th>5営業日後</th>
+<th>10営業日後</th>
+<th>20営業日後</th>
+<th>40営業日後</th>
+<th>操作</th>
+</tr></thead><tbody>
+<tr>
+<td data-label="日付">2026/04/16</td>
+<td data-label="銘柄"><span class="symbol">3444</span></td>
+<td data-label="社名">菊池製作所</td>
+<td data-label="評価値"><span class="pos">+68.5%</span></td>
+<td data-label="5営業日後"><span class="pos">+68.5%</span></td>
+<td data-label="10営業日後"><span class="pos">+41.6%</span></td>
+<td data-label="20営業日後"><span class="pos">+15.0%</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3444" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/05/29</td>
+<td data-label="銘柄"><span class="symbol">6656</span></td>
+<td data-label="社名">インスペック</td>
+<td data-label="評価値"><span class="pos">+61.5%</span></td>
+<td data-label="5営業日後"><span class="pos">+61.5%</span></td>
+<td data-label="10営業日後"><span class="muted">--</span></td>
+<td data-label="20営業日後"><span class="muted">--</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509851686376575029" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6656" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/15</td>
+<td data-label="銘柄"><span class="symbol">5575</span></td>
+<td data-label="社名">Ｇｌｏｂｅｅ</td>
+<td data-label="評価値"><span class="pos">+30.3%</span></td>
+<td data-label="5営業日後"><span class="pos">+30.3%</span></td>
+<td data-label="10営業日後"><span class="pos">+12.8%</span></td>
+<td data-label="20営業日後"><span class="pos">+13.2%</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509423945449996413" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5575" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/01</td>
+<td data-label="銘柄"><span class="symbol">2334</span></td>
+<td data-label="社名">イオレ</td>
+<td data-label="評価値"><span class="pos">+4.2%</span></td>
+<td data-label="5営業日後"><span class="pos">+4.2%</span></td>
+<td data-label="10営業日後"><span class="neg">-4.0%</span></td>
+<td data-label="20営業日後"><span class="pos">+25.7%</span></td>
+<td data-label="40営業日後"><span class="pos">+27.4%</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2334" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/08</td>
+<td data-label="銘柄"><span class="symbol">4192</span></td>
+<td data-label="社名">スパイダープラス</td>
+<td data-label="評価値"><span class="pos">+3.8%</span></td>
+<td data-label="5営業日後"><span class="pos">+3.8%</span></td>
+<td data-label="10営業日後"><span class="pos">+6.3%</span></td>
+<td data-label="20営業日後"><span class="pos">+18.2%</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4192" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/05/11</td>
+<td data-label="銘柄"><span class="symbol">7213</span></td>
+<td data-label="社名">レシップホールディングス</td>
+<td data-label="評価値"><span class="neg">-2.0%</span></td>
+<td data-label="5営業日後"><span class="neg">-2.0%</span></td>
+<td data-label="10営業日後"><span class="pos">+11.7%</span></td>
+<td data-label="20営業日後"><span class="muted">--</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1503287261809213531" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7213" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/05/22</td>
+<td data-label="銘柄"><span class="symbol">477A</span></td>
+<td data-label="社名">スタートライン</td>
+<td data-label="評価値"><span class="neg">-4.2%</span></td>
+<td data-label="5営業日後"><span class="neg">-4.2%</span></td>
+<td data-label="10営業日後"><span class="neg">-4.8%</span></td>
+<td data-label="20営業日後"><span class="muted">--</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507276469758460147" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:477A" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/01</td>
+<td data-label="銘柄"><span class="symbol">6664</span></td>
+<td data-label="社名">オプトエレクトロニクス</td>
+<td data-label="評価値"><span class="neg">-7.8%</span></td>
+<td data-label="5営業日後"><span class="neg">-7.8%</span></td>
+<td data-label="10営業日後"><span class="neg">-8.2%</span></td>
+<td data-label="20営業日後"><span class="neg">-15.0%</span></td>
+<td data-label="40営業日後"><span class="neg">-18.3%</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6664" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+</tbody></table>
+    </section>
+
+    <section id="watch" class="panel">
+      <h2>未確定ウォッチ全件（alerts_rawのみ）</h2>
+      <p class="empty">該当なし</p>
+    </section>
+
+    <details id="archive" class="candidate-detail">
+      <summary>signals_archive込みの成績と銘柄を表示</summary>
+      <section class="panel">
+        <h2>成績サマリー（signals_archive込み）</h2>
+        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した成績です。</p>
+        <div class="metrics"><div class="metric"><div class="label">確定件数</div><div class="value">11</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+21.6%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">72.7%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">5</div></div><div class="metric"><div class="label">ウォッチ中</div><div class="value">0</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div>
+      </section>
+      <section class="panel">
+        <h2>確定済み全件（signals_archive込み）</h2>
+        <table class="signals">
+<thead><tr>
+<th>日付</th>
+<th>銘柄</th>
+<th>社名</th>
+<th>評価値</th>
+<th>5営業日後</th>
+<th>10営業日後</th>
+<th>20営業日後</th>
+<th>40営業日後</th>
+<th>操作</th>
+</tr></thead><tbody>
+<tr>
+<td data-label="日付">2026/04/16</td>
+<td data-label="銘柄"><span class="symbol">3444</span></td>
+<td data-label="社名">菊池製作所</td>
+<td data-label="評価値"><span class="pos">+68.5%</span></td>
+<td data-label="5営業日後"><span class="pos">+68.5%</span></td>
+<td data-label="10営業日後"><span class="pos">+41.6%</span></td>
+<td data-label="20営業日後"><span class="pos">+15.0%</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3444" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/05/29</td>
+<td data-label="銘柄"><span class="symbol">6656</span></td>
+<td data-label="社名">インスペック</td>
+<td data-label="評価値"><span class="pos">+61.5%</span></td>
+<td data-label="5営業日後"><span class="pos">+61.5%</span></td>
+<td data-label="10営業日後"><span class="muted">--</span></td>
+<td data-label="20営業日後"><span class="muted">--</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509851686376575029" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6656" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/03/10</td>
+<td data-label="銘柄"><span class="symbol">2338</span></td>
+<td data-label="社名">クオンタムソリューションズ</td>
+<td data-label="評価値"><span class="pos">+44.4%</span></td>
+<td data-label="5営業日後"><span class="pos">+44.4%</span></td>
+<td data-label="10営業日後"><span class="pos">+11.3%</span></td>
+<td data-label="20営業日後"><span class="pos">+2.3%</span></td>
+<td data-label="40営業日後"><span class="neg">-21.1%</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1506875368231932084" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2338" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/03/05</td>
+<td data-label="銘柄"><span class="symbol">6666</span></td>
+<td data-label="社名">リバーエレテック</td>
+<td data-label="評価値"><span class="pos">+37.3%</span></td>
+<td data-label="5営業日後"><span class="pos">+37.3%</span></td>
+<td data-label="10営業日後"><span class="pos">+7.7%</span></td>
+<td data-label="20営業日後"><span class="pos">+10.8%</span></td>
+<td data-label="40営業日後"><span class="pos">+84.1%</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507276480286298153" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6666" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/15</td>
+<td data-label="銘柄"><span class="symbol">5575</span></td>
+<td data-label="社名">Ｇｌｏｂｅｅ</td>
+<td data-label="評価値"><span class="pos">+30.3%</span></td>
+<td data-label="5営業日後"><span class="pos">+30.3%</span></td>
+<td data-label="10営業日後"><span class="pos">+12.8%</span></td>
+<td data-label="20営業日後"><span class="pos">+13.2%</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509423945449996413" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5575" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/01</td>
+<td data-label="銘柄"><span class="symbol">2334</span></td>
+<td data-label="社名">イオレ</td>
+<td data-label="評価値"><span class="pos">+4.2%</span></td>
+<td data-label="5営業日後"><span class="pos">+4.2%</span></td>
+<td data-label="10営業日後"><span class="neg">-4.0%</span></td>
+<td data-label="20営業日後"><span class="pos">+25.7%</span></td>
+<td data-label="40営業日後"><span class="pos">+27.4%</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2334" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/08</td>
+<td data-label="銘柄"><span class="symbol">4192</span></td>
+<td data-label="社名">スパイダープラス</td>
+<td data-label="評価値"><span class="pos">+3.8%</span></td>
+<td data-label="5営業日後"><span class="pos">+3.8%</span></td>
+<td data-label="10営業日後"><span class="pos">+6.3%</span></td>
+<td data-label="20営業日後"><span class="pos">+18.2%</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4192" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/03/05</td>
+<td data-label="銘柄"><span class="symbol">6193</span></td>
+<td data-label="社名">バーチャレクス・ホールディングス</td>
+<td data-label="評価値"><span class="pos">+1.8%</span></td>
+<td data-label="5営業日後"><span class="pos">+1.8%</span></td>
+<td data-label="10営業日後"><span class="pos">+1.4%</span></td>
+<td data-label="20営業日後"><span class="neg">-3.8%</span></td>
+<td data-label="40営業日後"><span class="neg">-6.1%</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6193" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/05/11</td>
+<td data-label="銘柄"><span class="symbol">7213</span></td>
+<td data-label="社名">レシップホールディングス</td>
+<td data-label="評価値"><span class="neg">-2.0%</span></td>
+<td data-label="5営業日後"><span class="neg">-2.0%</span></td>
+<td data-label="10営業日後"><span class="pos">+11.7%</span></td>
+<td data-label="20営業日後"><span class="muted">--</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1503287261809213531" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7213" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/05/22</td>
+<td data-label="銘柄"><span class="symbol">477A</span></td>
+<td data-label="社名">スタートライン</td>
+<td data-label="評価値"><span class="neg">-4.2%</span></td>
+<td data-label="5営業日後"><span class="neg">-4.2%</span></td>
+<td data-label="10営業日後"><span class="neg">-4.8%</span></td>
+<td data-label="20営業日後"><span class="muted">--</span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507276469758460147" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:477A" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/01</td>
+<td data-label="銘柄"><span class="symbol">6664</span></td>
+<td data-label="社名">オプトエレクトロニクス</td>
+<td data-label="評価値"><span class="neg">-7.8%</span></td>
+<td data-label="5営業日後"><span class="neg">-7.8%</span></td>
+<td data-label="10営業日後"><span class="neg">-8.2%</span></td>
+<td data-label="20営業日後"><span class="neg">-15.0%</span></td>
+<td data-label="40営業日後"><span class="neg">-18.3%</span></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6664" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+</tr>
+</tbody></table>
+      </section>
+      <section class="panel">
+        <h2>未確定ウォッチ全件（signals_archive込み）</h2>
+        <p class="empty">該当なし</p>
+      </section>
+    </details>
+  </main>
+</body>
+</html>

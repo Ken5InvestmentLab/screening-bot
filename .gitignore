@@ -16,3 +16,8 @@ tmp_*.log
 
 # Python インタプリタ本体（OneDrive同期で混入）
 Python/
+
+# Cloudflare report gate generated deploy assets
+report-gate/.wrangler/
+report-gate/public/
+report-gate/worker-configuration.d.ts

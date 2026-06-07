@@ -1,0 +1,19 @@
+{
+  "name": "screening-bot-report-gate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npm run types && npm run typecheck && npm run deploy:dry-run",
+    "deploy": "npm run sync-report && wrangler deploy --minify",
+    "deploy:dry-run": "npm run sync-report && wrangler deploy --dry-run",
+    "dev": "npm run sync-report && wrangler dev --local --port 8787",
+    "sync-report": "node scripts/sync-report.mjs",
+    "typecheck": "tsc --noEmit",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "wrangler": "4.98.0"
+  }
+}

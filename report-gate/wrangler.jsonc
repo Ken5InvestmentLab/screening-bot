@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "screening-bot-report-gate",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-08",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "DISCORD_API_BASE": "https://discord.com/api",
+    "DISCORD_CLIENT_ID": "set-discord-client-id",
+    "DISCORD_GUILD_ID": "1479418833352785944",
+    "DISCORD_ALLOWED_ROLE_IDS": "1487089073385373828",
+    "REPORT_ASSET_PATH": "/mega_validation_report_latest.html",
+    "SESSION_TTL_SECONDS": "21600"
+  }
+}

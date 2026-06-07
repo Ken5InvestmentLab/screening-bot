@@ -101,6 +101,18 @@ PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 
 出力先は `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_latest.md`。実装判断前の大化け候補検証では、このレポートで確定済み成績と未確定ウォッチを確認すること。GitHub Actions の `Mega Validation Report` は optimizer 完了後と平日定期実行で同じレポートを再生成し、差分があれば `reports/` だけを自動コミットする。
 
+### MegaレポートのDiscordロール制限配信
+
+`report-gate/` は Cloudflare Worker で `reports/mega_validation_report_latest.html` を保護配信する独立サブプロジェクト。Bot本体やDiscordコマンドに混ぜないこと。WorkerはDiscord OAuth2の `identify guilds.members.read` でログインしたユーザーのguild memberを取得し、`DISCORD_ALLOWED_ROLE_IDS` に含まれるロールIDを持つ場合だけHTMLを返す。
+
+```bash
+cd report-gate
+npm ci
+npm run check
+```
+
+デプロイ前にDiscord Developer Portalへ `https://<worker-domain>/auth/callback` をRedirect URIとして登録し、Cloudflare Worker secretsに `DISCORD_CLIENT_SECRET` と `SESSION_SECRET` を設定する。GitHub Actionsから自動デプロイする場合は repo secrets に `CLOUDFLARE_API_TOKEN` と `CLOUDFLARE_ACCOUNT_ID` を設定する。`Mega Validation Report` workflow はCloudflare secretsがある場合だけ、レポート再生成後に保護Workerも再デプロイする。
+
 ## 主要ファイルとアーキテクチャ
 
 - **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` を手動変更する場合は `current_logic.json` との整合性に注意。`.gitattributes` により `merge=ours` が設定済み。

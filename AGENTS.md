@@ -92,14 +92,14 @@ PYTHONIOENCODING=utf-8 py optimize_screener.py --apply-pending
 py optimize_screener.py --dry-run
 ```
 
-### Mega候補検証レポート
+### スコアリング検証レポート
 
 ```bash
 # Bot本体・Discordコマンド・Moonshotロック状態は変更せず、検証用Markdown/HTMLだけを生成
 PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 ```
 
-出力先は `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_latest.md`。実装判断前の大化け候補検証では、このレポートで確定済み成績と未確定ウォッチを確認すること。GitHub Actions の `Mega Validation Report` は optimizer 完了後と平日定期実行で同じレポートを再生成し、差分があれば `reports/` だけを自動コミットする。
+出力先は `reports/mega_validation_report_latest.html` と `reports/mega_validation_report_latest.md`。実装判断前の検証では、Stable ★6、Sniper、Mega5 短期リバウンド、Mega40 深押し反転、Mega40 下ヒゲ回復だけを対象にし、確定済み成績と未確定ウォッチ全件を確認すること。GitHub Actions の `Mega Validation Report` は optimizer 完了後と平日定期実行で同じレポートを再生成し、差分があれば `reports/` だけを自動コミットする。
 
 ### MegaレポートのDiscordロール制限配信
 

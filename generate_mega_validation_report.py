@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 from html import escape
+import json
 import math
 import os
 from datetime import datetime
@@ -23,8 +24,11 @@ import optimize_screener as opt
 
 
 JST = ZoneInfo("Asia/Tokyo")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MARKDOWN_OUTPUT = os.path.join("reports", "mega_validation_report_latest.md")
 DEFAULT_HTML_OUTPUT = os.path.join("reports", "mega_validation_report_latest.html")
+CURRENT_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic.json")
+SNIPER_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_sniper.json")
 
 CONDITION_LABELS = {
     "ema75": "close > EMA75",
@@ -67,52 +71,62 @@ CONDITION_LABELS = {
     "smbull_seq3": "3連小陽線後",
 }
 
+
+def load_logic_conditions(path: str, fallback: list[str]) -> list[str]:
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        conditions = payload.get("conditions")
+        if isinstance(conditions, list) and conditions:
+            return [str(cond) for cond in conditions]
+    except (OSError, json.JSONDecodeError):
+        pass
+    return fallback
+
+
+STABLE_CONDITIONS = load_logic_conditions(
+    CURRENT_LOGIC_PATH,
+    ["ema25", "macdpos", "stoch75", "bb80", "pre_down3", "gap_up"],
+)
+SNIPER_CONDITIONS = load_logic_conditions(
+    SNIPER_LOGIC_PATH,
+    ["ema25", "sbull", "atr5", "atr7", "hb20", "rsi4060"],
+)
+
 CANDIDATES = [
+    {
+        "id": "stable_s6",
+        "label": "Stable ★6",
+        "eval_days": 5,
+        "target": 0.10,
+        "target_label": "+10%",
+        "conditions": STABLE_CONDITIONS,
+        "intent": "現行Stableロジックの6条件すべてを満たす満点候補。",
+    },
+    {
+        "id": "sniper",
+        "label": "Sniper",
+        "eval_days": 5,
+        "target": 0.0,
+        "target_label": "勝ち",
+        "conditions": SNIPER_CONDITIONS,
+        "intent": "現行Sniperロジックの全条件通過候補。勝率重視で確認する。",
+    },
     {
         "id": "mega5_rebound",
         "label": "Mega5 短期リバウンド",
         "eval_days": 5,
         "target": 0.20,
+        "target_label": "+20%",
         "conditions": ["rci9_os", "pre_down3", "body2"],
         "intent": "売られすぎから強い陽線で反転した短期急騰候補。",
-    },
-    {
-        "id": "mega5_trend_break",
-        "label": "Mega5 トレンド加速",
-        "eval_days": 5,
-        "target": 0.20,
-        "conditions": ["ich_cloud_above", "ema75", "bb80", "stoch75"],
-        "intent": "雲上・EMA75上の高モメンタム短期ブレイク候補。",
-    },
-    {
-        "id": "mega10_breakout",
-        "label": "Mega10 初動ブレイク",
-        "eval_days": 10,
-        "target": 0.20,
-        "conditions": ["bb80", "vol30", "macdgc", "pre_down3", "body2", "stoch75"],
-        "intent": "出来高急増、MACD反転、強陽線が重なる初動ブレイク候補。",
-    },
-    {
-        "id": "mega20_cloud_momentum",
-        "label": "Mega20 雲上モメンタム",
-        "eval_days": 20,
-        "target": 0.30,
-        "conditions": ["ich_cloud_above", "vol20", "stoch75", "rci26_os"],
-        "intent": "雲上の強い買い戻しを20営業日で検証する参考候補。",
-    },
-    {
-        "id": "mega20_volume_oversold",
-        "label": "Mega20 出来高売られすぎ反転",
-        "eval_days": 20,
-        "target": 0.50,
-        "conditions": ["vol30", "cci_os", "gap_up"],
-        "intent": "売られすぎ圏から出来高を伴ってギャップ反転した外れ値狙い。",
     },
     {
         "id": "mega40_deep_reversal",
         "label": "Mega40 深押し反転",
         "eval_days": 40,
         "target": 0.30,
+        "target_label": "+30%",
         "conditions": ["pre_decline15", "pre_down3", "bb_lower", "body2"],
         "intent": "深い押し目から強陽線で切り返す40営業日候補。",
     },
@@ -121,6 +135,7 @@ CANDIDATES = [
         "label": "Mega40 下ヒゲ回復",
         "eval_days": 40,
         "target": 0.50,
+        "target_label": "+50%",
         "conditions": ["pre_decline15", "cci_os", "lower_wick50", "ich_chikou"],
         "intent": "深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。",
     },
@@ -155,6 +170,10 @@ def num(value) -> str:
     if not is_finite(value):
         return "--"
     return f"{float(value):.2f}"
+
+
+def target_label(candidate: dict) -> str:
+    return candidate.get("target_label") or pct(candidate["target"], signed=False)
 
 
 def md(value) -> str:
@@ -251,7 +270,7 @@ def horizon_frame(frame: pd.DataFrame, eval_days: int) -> pd.DataFrame:
 
 def horizon_summary(frame: pd.DataFrame) -> list[dict]:
     rows = []
-    for days in (5, 10, 20, 40):
+    for days in sorted({int(candidate["eval_days"]) for candidate in CANDIDATES}):
         col = f"perf_{days}bd"
         subset = horizon_frame(frame, days)
         perf = subset[col].astype(float) if not subset.empty else pd.Series(dtype=float)
@@ -488,7 +507,7 @@ def candidate_rows(
     frame: pd.DataFrame,
     candidate: dict,
     confirmed: bool,
-    limit: int,
+    limit: int | None,
 ) -> pd.DataFrame:
     days = candidate["eval_days"]
     perf_col = f"perf_{days}bd"
@@ -497,11 +516,13 @@ def candidate_rows(
     mask = condition_mask(frame, candidate["conditions"])
     if confirmed:
         rows = frame[mask & frame[perf_col].apply(is_finite)].copy()
-        return rows.sort_values(perf_col, ascending=False).head(limit)
+        rows = rows.sort_values(perf_col, ascending=False)
+        return rows if limit is None else rows.head(limit)
     rows = frame[mask & ~frame[perf_col].apply(is_finite)].copy()
     if rows.empty:
         return rows
-    return rows.sort_values(["signal_dt", "cur_perf"], ascending=[False, False]).head(limit)
+    rows = rows.sort_values(["signal_dt", "cur_perf"], ascending=[False, False])
+    return rows if limit is None else rows.head(limit)
 
 
 def conditions_text(conditions: list[str]) -> str:
@@ -528,7 +549,7 @@ def stats_table_rows(
             {
                 "label": candidate["label"],
                 "days": candidate["eval_days"],
-                "target": pct(candidate["target"], signed=False),
+                "target": target_label(candidate),
                 "conditions": conditions_text(candidate["conditions"]),
                 "n": stats["n"],
                 "avg": pct(stats["avg"]),
@@ -738,7 +759,7 @@ def build_html_report(
             [
                 f'<strong>{html_escape(candidate["label"])}</strong>',
                 f'{candidate["eval_days"]}BD',
-                pct_html(candidate["target"], signed=False),
+                html_escape(target_label(candidate)),
                 condition_chips(candidate["conditions"]),
                 html_escape(stats["n"]),
                 pct_html(stats["avg"]),
@@ -780,41 +801,14 @@ def build_html_report(
         "score",
     )
 
-    lift_sections = []
-    for days, target in LIFT_TARGETS:
-        rows = top_lift_conditions(frame_confirmed, days, target)
-        lift_sections.append(
-            f"""
-            <section class="panel">
-              <h3>{days}BD / 目標 {pct(target, signed=False)}</h3>
-              {html_table(
-                  ["条件", "説明", "Lift", "Precision", "Cover", "全体出現率", "Hit/該当"],
-                  [
-                      [
-                          f'<span class="symbol">{html_escape(item["condition"])}</span>',
-                          html_escape(CONDITION_LABELS.get(item["condition"], item["condition"])),
-                          html_escape(num(item["lift"])),
-                          pct_html(item["precision"], signed=False),
-                          pct_html(item["cover"], signed=False),
-                          pct_html(item["all_rate"], signed=False),
-                          html_escape(f'{item["hits"]}/{item["n"]}'),
-                      ]
-                      for item in rows
-                  ],
-                  "compact",
-              )}
-            </section>
-            """
-        )
-
     detail_sections = []
     for index, candidate in enumerate(CANDIDATES):
         stats = stats_by_id[candidate["id"]]
         watch_stats = watch_by_id[candidate["id"]]
         candidate_verdict = verdict(stats)
         open_attr = " open" if index == 0 or candidate in best_candidates else ""
-        confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=10)
-        unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=12)
+        confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
+        unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
         detail_sections.append(
             f"""
             <details class="candidate-detail"{open_attr}>
@@ -829,7 +823,7 @@ def build_html_report(
                   <div class="chips">{condition_chips(candidate["conditions"])}</div>
                   <h4>確定済み銘柄の成績</h4>
                   <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>{candidate["eval_days"]}BD / 目標 {pct(candidate["target"], signed=False)}</dd></div>
+                    <div><dt>評価軸</dt><dd>{candidate["eval_days"]}BD / 目標 {html_escape(target_label(candidate))}</dd></div>
                     <div><dt>件数</dt><dd>{stats["n"]}</dd></div>
                     <div><dt>平均</dt><dd>{pct_html(stats["avg"])}</dd></div>
                     <div><dt>中央値</dt><dd>{pct_html(stats["median"])}</dd></div>
@@ -862,9 +856,9 @@ def build_html_report(
                   </ul>
                 </section>
               </div>
-              <h3>確定済み上位</h3>
+              <h3>確定済み全件</h3>
               {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True)}
-              <h3>未確定ウォッチ</h3>
+              <h3>未確定ウォッチ全件</h3>
               {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False)}
             </details>
             """
@@ -875,7 +869,7 @@ def build_html_report(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mega候補スコアリング検証レポート</title>
+  <title>スコアリング検証レポート</title>
   <style>
     :root {{
       color-scheme: light;
@@ -1165,16 +1159,16 @@ def build_html_report(
 </head>
 <body>
   <header>
-    <h1>Mega候補スコアリング検証レポート</h1>
+    <h1>スコアリング検証レポート</h1>
     <p>生成日時: {html_escape(generated_at)}</p>
     <p>検証専用。Bot本体、Discordコマンド、Moonshotロック状態は変更しません。</p>
   </header>
   <main>
     <section class="cards">
       <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
-      <div class="card"><div class="label">5BD +20%以上</div><div class="value">{summary[0]["p20"]}</div></div>
-      <div class="card"><div class="label">20BD +50%以上</div><div class="value">{summary[2]["p50"]}</div></div>
-      <div class="card"><div class="label">40BD +50%以上</div><div class="value">{summary[3]["p50"]}</div></div>
+      <div class="card"><div class="label">Stable ★6 確定</div><div class="value">{stats_by_id["stable_s6"]["n"]}</div></div>
+      <div class="card"><div class="label">Sniper 確定</div><div class="value">{stats_by_id["sniper"]["n"]}</div></div>
+      <div class="card"><div class="label">Mega40 確定</div><div class="value">{stats_by_id["mega40_deep_reversal"]["n"] + stats_by_id["mega40_wick_recovery"]["n"]}</div></div>
     </section>
 
     <section class="panel">
@@ -1192,15 +1186,12 @@ def build_html_report(
     <section class="panel">
       <h2>読み取り</h2>
       <ul class="gate-list">
-        <li><strong>Mega5 短期リバウンド</strong>は短期検証の主候補。中央値と下振れを最重視して見る。</li>
-        <li><strong>Mega10 初動ブレイク</strong>と<strong>Mega20 出来高売られすぎ反転</strong>は大化けを拾うが外れ値依存になりやすい。</li>
-        <li><strong>Mega40 深押し反転</strong>と<strong>Mega40 下ヒゲ回復</strong>は本命候補。ただし40BD確定まで時間がかかるため未確定監視が重要。</li>
-        <li>20BD単独での実装判断は避け、40BD候補の中間評価として扱う。</li>
+        <li><strong>Stable ★6</strong>は現行Stable満点の品質確認用。5BDの再現性と下振れを優先して見る。</li>
+        <li><strong>Sniper</strong>は勝率重視の全条件通過候補。未確定候補の現在騰落が弱い場合は慎重に扱う。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰候補。中央値と下振れを最重視して見る。</li>
+        <li><strong>Mega40 深押し反転</strong>と<strong>Mega40 下ヒゲ回復</strong>は40BD候補。確定まで時間がかかるため未確定監視を重視する。</li>
       </ul>
     </section>
-
-    <h2>条件別 Lift</h2>
-    {"".join(lift_sections)}
 
     <h2>候補別 詳細</h2>
     {"".join(detail_sections)}
@@ -1230,7 +1221,7 @@ def build_report(
     stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
 
     lines = [
-        "# Mega候補スコアリング検証レポート",
+        "# スコアリング検証レポート",
         "",
         f"- 生成日時: {generated_at}",
         "- 対象: TradingView BOTTOM シグナル",
@@ -1321,36 +1312,12 @@ def build_report(
         "",
         "## 読み取り",
         "",
-        "- `Mega5 短期リバウンド` は短期検証の主候補。中央値と下振れを最重視して見る。",
-        "- `Mega10 初動ブレイク` と `Mega20 出来高売られすぎ反転` は大化けを拾うが外れ値依存になりやすい。",
-        "- `Mega40 深押し反転` と `Mega40 下ヒゲ回復` は本命候補。ただし40BD確定まで時間がかかるため未確定監視が重要。",
-        "- 20BD単独での実装判断は避け、40BD候補の中間評価として扱う。",
-        "",
-        "## 条件別 Lift",
+        "- `Stable ★6` は現行Stable満点の品質確認用。5BDの再現性と下振れを優先して見る。",
+        "- `Sniper` は勝率重視の全条件通過候補。未確定候補の現在騰落が弱い場合は慎重に扱う。",
+        "- `Mega5 短期リバウンド` は短期急騰候補。中央値と下振れを最重視して見る。",
+        "- `Mega40 深押し反転` と `Mega40 下ヒゲ回復` は40BD候補。確定まで時間がかかるため未確定監視を重視する。",
         "",
     ]
-
-    for days, target in LIFT_TARGETS:
-        rows = top_lift_conditions(frame_confirmed, days, target)
-        lines += [f"### {days}BD / 目標 {pct(target, signed=False)}", ""]
-        lines.extend(
-            markdown_table(
-                ["条件", "説明", "Lift", "Precision", "Cover", "全体出現率", "Hit/該当"],
-                [
-                    [
-                        f"`{item['condition']}`",
-                        CONDITION_LABELS.get(item["condition"], item["condition"]),
-                        num(item["lift"]),
-                        pct(item["precision"], signed=False),
-                        pct(item["cover"], signed=False),
-                        pct(item["all_rate"], signed=False),
-                        f"{item['hits']}/{item['n']}",
-                    ]
-                    for item in rows
-                ],
-            )
-        )
-        lines.append("")
 
     lines += ["## 候補別 詳細", ""]
 
@@ -1361,7 +1328,7 @@ def build_report(
             f"### {candidate['label']}",
             "",
             f"- 意図: {candidate['intent']}",
-            f"- 評価軸: {candidate['eval_days']}BD / 目標 {pct(candidate['target'], signed=False)}",
+            f"- 評価軸: {candidate['eval_days']}BD / 目標 {target_label(candidate)}",
             f"- 条件: {conditions_text(candidate['conditions'])}",
             f"- 条件説明:<br>{condition_labels_text(candidate['conditions'])}",
             (
@@ -1372,13 +1339,13 @@ def build_report(
             f"- 確定済み銘柄の成績: {compact_stats_text(stats, include_target=True)}",
             f"- 未確定ウォッチリストの現在成績: {compact_stats_text(watch_stats)}",
             "",
-            "#### 確定済み上位",
+            "#### 確定済み全件",
             "",
         ]
-        confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=10)
+        confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
         lines.extend(signal_table(confirmed_rows, candidate["eval_days"], confirmed=True))
-        lines += ["", "#### 未確定ウォッチ", ""]
-        unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=12)
+        lines += ["", "#### 未確定ウォッチ全件", ""]
+        unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
         lines.extend(signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False))
         lines.append("")
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mega候補スコアリング検証レポート</title>
+  <title>スコアリング検証レポート</title>
   <style>
     :root {
       color-scheme: light;
@@ -293,16 +293,16 @@
 </head>
 <body>
   <header>
-    <h1>Mega候補スコアリング検証レポート</h1>
-    <p>生成日時: 2026-06-06 12:07:33 JST</p>
+    <h1>スコアリング検証レポート</h1>
+    <p>生成日時: 2026-06-08 01:07:16 JST</p>
     <p>検証専用。Bot本体、Discordコマンド、Moonshotロック状態は変更しません。</p>
   </header>
   <main>
     <section class="cards">
       <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2142</div></div>
-      <div class="card"><div class="label">5BD +20%以上</div><div class="value">40</div></div>
-      <div class="card"><div class="label">20BD +50%以上</div><div class="value">13</div></div>
-      <div class="card"><div class="label">40BD +50%以上</div><div class="value">22</div></div>
+      <div class="card"><div class="label">Stable ★6 確定</div><div class="value">26</div></div>
+      <div class="card"><div class="label">Sniper 確定</div><div class="value">24</div></div>
+      <div class="card"><div class="label">Mega40 確定</div><div class="value">17</div></div>
     </section>
 
     <section class="panel">
@@ -330,28 +330,6 @@
 <td>27</td>
 <td>10</td>
 <td>1</td>
-</tr>
-<tr>
-<td><strong>10BD</strong></td>
-<td>1838</td>
-<td><span class="neg">-1.0%</span></td>
-<td><span class="pos">36.4%</span></td>
-<td>136</td>
-<td>43</td>
-<td>24</td>
-<td>8</td>
-<td>4</td>
-</tr>
-<tr>
-<td><strong>20BD</strong></td>
-<td>1515</td>
-<td><span class="neg">-1.8%</span></td>
-<td><span class="pos">32.1%</span></td>
-<td>147</td>
-<td>66</td>
-<td>22</td>
-<td>13</td>
-<td>4</td>
 </tr>
 <tr>
 <td><strong>40BD</strong></td>
@@ -389,9 +367,43 @@
 <th>判定</th>
 </tr></thead><tbody>
 <tr>
+<td><strong>Stable ★6</strong></td>
+<td>5BD</td>
+<td>+10%</td>
+<td><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="MACD hist &gt; 0">macdpos</span><span class="chip" title="Stoch &gt;= 75">stoch75</span><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="ギャップアップ">gap_up</span></td>
+<td>26</td>
+<td><span class="pos">+15.3%</span></td>
+<td><span class="pos">+3.1%</span></td>
+<td><span class="pos">61.5%</span></td>
+<td>8 <span class="muted">(30.8%)</span></td>
+<td><span class="pos">7.3%</span></td>
+<td>5.61</td>
+<td><span class="tail">+50% 4</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 2</span></td>
+<td><div class="stat-stack"><span>n=26</span><span>平均 <span class="pos">+15.3%</span></span><span>中央値 <span class="pos">+3.1%</span></span><span>勝率 <span class="pos">61.5%</span></span><span>目標Hit 8</span><span>最大 <span class="pos">+90.2%</span></span><span>最小 <span class="neg">-17.2%</span></span><span class="neg">&lt;=-10% 2</span></div></td>
+<td><div class="stat-stack"><span>n=2</span><span>平均 <span class="pos">+10.1%</span></span><span>中央値 <span class="pos">+10.1%</span></span><span>勝率 <span class="pos">100.0%</span></span><span>+10% 1</span><span>+20% 0</span><span>最大 <span class="pos">+17.6%</span></span><span>最小 <span class="pos">+2.6%</span></span><span class="neg">&lt;=-10% 0</span></div></td>
+<td><span class="badge good">有望: 継続監視</span></td>
+</tr>
+<tr>
+<td><strong>Sniper</strong></td>
+<td>5BD</td>
+<td>勝ち</td>
+<td><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="陽線実体 &gt;= 0.5%">sbull</span><span class="chip" title="ATR &lt; 5%">atr5</span><span class="chip" title="ATR &lt; 7%">atr7</span><span class="chip" title="20日高値更新">hb20</span><span class="chip" title="RSI 40-60">rsi4060</span></td>
+<td>24</td>
+<td><span class="pos">+0.9%</span></td>
+<td><span class="pos">+0.5%</span></td>
+<td><span class="pos">66.7%</span></td>
+<td>17 <span class="muted">(70.8%)</span></td>
+<td><span class="pos">2.1%</span></td>
+<td>1.78</td>
+<td><span class="tail">+50% 0</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 1</span></td>
+<td><div class="stat-stack"><span>n=24</span><span>平均 <span class="pos">+0.9%</span></span><span>中央値 <span class="pos">+0.5%</span></span><span>勝率 <span class="pos">66.7%</span></span><span>目標Hit 17</span><span>最大 <span class="pos">+15.8%</span></span><span>最小 <span class="neg">-18.9%</span></span><span class="neg">&lt;=-10% 1</span></div></td>
+<td><div class="stat-stack"><span>n=3</span><span>平均 <span class="pos">+6.3%</span></span><span>中央値 <span class="pos">+2.6%</span></span><span>勝率 <span class="pos">100.0%</span></span><span>+10% 1</span><span>+20% 0</span><span>最大 <span class="pos">+15.0%</span></span><span>最小 <span class="pos">+1.4%</span></span><span class="neg">&lt;=-10% 0</span></div></td>
+<td><span class="badge good">有望: 継続監視</span></td>
+</tr>
+<tr>
 <td><strong>Mega5 短期リバウンド</strong></td>
 <td>5BD</td>
-<td><span class="pos">20.0%</span></td>
+<td>+20%</td>
 <td><span class="chip" title="RCI9 &lt;= -50">rci9_os</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></td>
 <td>11</td>
 <td><span class="pos">+21.6%</span></td>
@@ -406,77 +418,9 @@
 <td><span class="badge good">有望: 継続監視</span></td>
 </tr>
 <tr>
-<td><strong>Mega5 トレンド加速</strong></td>
-<td>5BD</td>
-<td><span class="pos">20.0%</span></td>
-<td><span class="chip" title="一目: close &gt; 雲上限">ich_cloud_above</span><span class="chip" title="close &gt; EMA75">ema75</span><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="Stoch &gt;= 75">stoch75</span></td>
-<td>72</td>
-<td><span class="pos">+3.1%</span></td>
-<td><span class="neg">-0.6%</span></td>
-<td><span class="pos">43.1%</span></td>
-<td>7 <span class="muted">(9.7%)</span></td>
-<td><span class="pos">17.5%</span></td>
-<td>4.88</td>
-<td><span class="tail">+50% 3</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 7</span></td>
-<td><div class="stat-stack"><span>n=72</span><span>平均 <span class="pos">+3.1%</span></span><span>中央値 <span class="neg">-0.6%</span></span><span>勝率 <span class="pos">43.1%</span></span><span>目標Hit 7</span><span>最大 <span class="pos">+82.0%</span></span><span>最小 <span class="neg">-24.9%</span></span><span class="neg">&lt;=-10% 7</span></div></td>
-<td><div class="stat-stack"><span>n=11</span><span>平均 <span class="pos">+1.2%</span></span><span>中央値 <span class="pos">+0.2%</span></span><span>勝率 <span class="pos">54.5%</span></span><span>+10% 3</span><span>+20% 0</span><span>最大 <span class="pos">+17.2%</span></span><span>最小 <span class="neg">-22.7%</span></span><span class="neg">&lt;=-10% 1</span></div></td>
-<td><span class="badge warn">注意: 外れ値依存</span></td>
-</tr>
-<tr>
-<td><strong>Mega10 初動ブレイク</strong></td>
-<td>10BD</td>
-<td><span class="pos">20.0%</span></td>
-<td><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="出来高 &gt;= 20日平均x3.0">vol30</span><span class="chip" title="MACD GC 3日以内">macdgc</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span><span class="chip" title="Stoch &gt;= 75">stoch75</span></td>
-<td>14</td>
-<td><span class="pos">+22.1%</span></td>
-<td><span class="neg">-2.1%</span></td>
-<td><span class="pos">28.6%</span></td>
-<td>3 <span class="muted">(21.4%)</span></td>
-<td><span class="pos">7.0%</span></td>
-<td>9.16</td>
-<td><span class="tail">+50% 2</span><span class="tail">+100% 1</span><span class="tail danger">&lt;=-10% 1</span></td>
-<td><div class="stat-stack"><span>n=14</span><span>平均 <span class="pos">+22.1%</span></span><span>中央値 <span class="neg">-2.1%</span></span><span>勝率 <span class="pos">28.6%</span></span><span>目標Hit 3</span><span>最大 <span class="pos">+235.2%</span></span><span>最小 <span class="neg">-16.1%</span></span><span class="neg">&lt;=-10% 1</span></div></td>
-<td><div class="stat-stack"><span>n=1</span><span>平均 <span class="pos">+2.6%</span></span><span>中央値 <span class="pos">+2.6%</span></span><span>勝率 <span class="pos">100.0%</span></span><span>+10% 0</span><span>+20% 0</span><span>最大 <span class="pos">+2.6%</span></span><span>最小 <span class="pos">+2.6%</span></span><span class="neg">&lt;=-10% 0</span></div></td>
-<td><span class="badge warn">注意: 外れ値依存</span></td>
-</tr>
-<tr>
-<td><strong>Mega20 雲上モメンタム</strong></td>
-<td>20BD</td>
-<td><span class="pos">30.0%</span></td>
-<td><span class="chip" title="一目: close &gt; 雲上限">ich_cloud_above</span><span class="chip" title="出来高 &gt;= 20日平均x2.0">vol20</span><span class="chip" title="Stoch &gt;= 75">stoch75</span><span class="chip" title="RCI26 &lt;= -50">rci26_os</span></td>
-<td>8</td>
-<td><span class="pos">+7.1%</span></td>
-<td><span class="pos">+12.2%</span></td>
-<td><span class="pos">75.0%</span></td>
-<td>2 <span class="muted">(25.0%)</span></td>
-<td><span class="pos">9.1%</span></td>
-<td>17.22</td>
-<td><span class="tail">+50% 1</span><span class="tail">+100% 0</span><span class="tail danger">&lt;=-10% 2</span></td>
-<td><div class="stat-stack"><span>n=8</span><span>平均 <span class="pos">+7.1%</span></span><span>中央値 <span class="pos">+12.2%</span></span><span>勝率 <span class="pos">75.0%</span></span><span>目標Hit 2</span><span>最大 <span class="pos">+67.3%</span></span><span>最小 <span class="neg">-48.2%</span></span><span class="neg">&lt;=-10% 2</span></div></td>
-<td><div class="stat-stack"><span>n=10</span><span>平均 <span class="pos">+7.1%</span></span><span>中央値 <span class="pos">+6.3%</span></span><span>勝率 <span class="pos">60.0%</span></span><span>+10% 2</span><span>+20% 1</span><span>最大 <span class="pos">+61.5%</span></span><span>最小 <span class="neg">-19.5%</span></span><span class="neg">&lt;=-10% 1</span></div></td>
-<td><span class="badge good">有望: 継続監視</span></td>
-</tr>
-<tr>
-<td><strong>Mega20 出来高売られすぎ反転</strong></td>
-<td>20BD</td>
-<td><span class="pos">50.0%</span></td>
-<td><span class="chip" title="出来高 &gt;= 20日平均x3.0">vol30</span><span class="chip" title="CCI &lt;= -100">cci_os</span><span class="chip" title="ギャップアップ">gap_up</span></td>
-<td>6</td>
-<td><span class="pos">+46.8%</span></td>
-<td><span class="pos">+0.5%</span></td>
-<td><span class="pos">50.0%</span></td>
-<td>1 <span class="muted">(16.7%)</span></td>
-<td><span class="pos">7.7%</span></td>
-<td>19.42</td>
-<td><span class="tail">+50% 1</span><span class="tail">+100% 1</span><span class="tail danger">&lt;=-10% 2</span></td>
-<td><div class="stat-stack"><span>n=6</span><span>平均 <span class="pos">+46.8%</span></span><span>中央値 <span class="pos">+0.5%</span></span><span>勝率 <span class="pos">50.0%</span></span><span>目標Hit 1</span><span>最大 <span class="pos">+284.2%</span></span><span>最小 <span class="neg">-19.5%</span></span><span class="neg">&lt;=-10% 2</span></div></td>
-<td><div class="stat-stack"><span>n=5</span><span>平均 <span class="neg">-3.6%</span></span><span>中央値 <span class="neg">-1.9%</span></span><span>勝率 <span class="pos">20.0%</span></span><span>+10% 1</span><span>+20% 0</span><span>最大 <span class="pos">+12.0%</span></span><span>最小 <span class="neg">-23.1%</span></span><span class="neg">&lt;=-10% 1</span></div></td>
-<td><span class="badge warn">注意: 下振れ多め</span></td>
-</tr>
-<tr>
 <td><strong>Mega40 深押し反転</strong></td>
 <td>40BD</td>
-<td><span class="pos">30.0%</span></td>
+<td>+30%</td>
 <td><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="BB位置 &lt;= 20%">bb_lower</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></td>
 <td>12</td>
 <td><span class="pos">+32.2%</span></td>
@@ -493,7 +437,7 @@
 <tr>
 <td><strong>Mega40 下ヒゲ回復</strong></td>
 <td>40BD</td>
-<td><span class="pos">50.0%</span></td>
+<td>+50%</td>
 <td><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="CCI &lt;= -100">cci_os</span><span class="chip" title="下ヒゲ優位">lower_wick50</span><span class="chip" title="一目: close &gt; 26日前終値">ich_chikou</span></td>
 <td>5</td>
 <td><span class="pos">+21.0%</span></td>
@@ -513,626 +457,704 @@
     <section class="panel">
       <h2>読み取り</h2>
       <ul class="gate-list">
-        <li><strong>Mega5 短期リバウンド</strong>は短期検証の主候補。中央値と下振れを最重視して見る。</li>
-        <li><strong>Mega10 初動ブレイク</strong>と<strong>Mega20 出来高売られすぎ反転</strong>は大化けを拾うが外れ値依存になりやすい。</li>
-        <li><strong>Mega40 深押し反転</strong>と<strong>Mega40 下ヒゲ回復</strong>は本命候補。ただし40BD確定まで時間がかかるため未確定監視が重要。</li>
-        <li>20BD単独での実装判断は避け、40BD候補の中間評価として扱う。</li>
+        <li><strong>Stable ★6</strong>は現行Stable満点の品質確認用。5BDの再現性と下振れを優先して見る。</li>
+        <li><strong>Sniper</strong>は勝率重視の全条件通過候補。未確定候補の現在騰落が弱い場合は慎重に扱う。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰候補。中央値と下振れを最重視して見る。</li>
+        <li><strong>Mega40 深押し反転</strong>と<strong>Mega40 下ヒゲ回復</strong>は40BD候補。確定まで時間がかかるため未確定監視を重視する。</li>
       </ul>
     </section>
 
-    <h2>条件別 Lift</h2>
-
-            <section class="panel">
-              <h3>5BD / 目標 20.0%</h3>
-              <table class="compact">
-<thead><tr>
-<th>条件</th>
-<th>説明</th>
-<th>Lift</th>
-<th>Precision</th>
-<th>Cover</th>
-<th>全体出現率</th>
-<th>Hit/該当</th>
-</tr></thead><tbody>
-<tr>
-<td><span class="symbol">ich_cloud_above</span></td>
-<td>一目: close &gt; 雲上限</td>
-<td>4.06</td>
-<td><span class="pos">8.1%</span></td>
-<td><span class="pos">27.5%</span></td>
-<td><span class="pos">6.8%</span></td>
-<td>11/136</td>
-</tr>
-<tr>
-<td><span class="symbol">ich_kumo_break</span></td>
-<td>一目: 雲上抜け</td>
-<td>3.79</td>
-<td><span class="pos">7.5%</span></td>
-<td><span class="pos">10.0%</span></td>
-<td><span class="pos">2.6%</span></td>
-<td>4/53</td>
-</tr>
-<tr>
-<td><span class="symbol">ema75</span></td>
-<td>close &gt; EMA75</td>
-<td>2.49</td>
-<td><span class="pos">5.0%</span></td>
-<td><span class="pos">35.0%</span></td>
-<td><span class="pos">14.1%</span></td>
-<td>14/282</td>
-</tr>
-<tr>
-<td><span class="symbol">hb20</span></td>
-<td>20日高値更新</td>
-<td>2.45</td>
-<td><span class="pos">4.9%</span></td>
-<td><span class="pos">27.5%</span></td>
-<td><span class="pos">11.2%</span></td>
-<td>11/225</td>
-</tr>
-<tr>
-<td><span class="symbol">rci9_os</span></td>
-<td>RCI9 &lt;= -50</td>
-<td>2.20</td>
-<td><span class="pos">4.4%</span></td>
-<td><span class="pos">35.0%</span></td>
-<td><span class="pos">15.9%</span></td>
-<td>14/319</td>
-</tr>
-<tr>
-<td><span class="symbol">bb80</span></td>
-<td>BB位置 &gt;= 80%</td>
-<td>2.04</td>
-<td><span class="pos">4.1%</span></td>
-<td><span class="pos">47.5%</span></td>
-<td><span class="pos">23.3%</span></td>
-<td>19/467</td>
-</tr>
-<tr>
-<td><span class="symbol">vol30</span></td>
-<td>出来高 &gt;= 20日平均x3.0</td>
-<td>1.94</td>
-<td><span class="pos">3.9%</span></td>
-<td><span class="pos">32.5%</span></td>
-<td><span class="pos">16.8%</span></td>
-<td>13/337</td>
-</tr>
-<tr>
-<td><span class="symbol">stoch75</span></td>
-<td>Stoch &gt;= 75</td>
-<td>1.77</td>
-<td><span class="pos">3.5%</span></td>
-<td><span class="pos">50.0%</span></td>
-<td><span class="pos">28.2%</span></td>
-<td>20/566</td>
-</tr>
-</tbody></table>
-            </section>
-
-            <section class="panel">
-              <h3>10BD / 目標 20.0%</h3>
-              <table class="compact">
-<thead><tr>
-<th>条件</th>
-<th>説明</th>
-<th>Lift</th>
-<th>Precision</th>
-<th>Cover</th>
-<th>全体出現率</th>
-<th>Hit/該当</th>
-</tr></thead><tbody>
-<tr>
-<td><span class="symbol">ich_kumo_break</span></td>
-<td>一目: 雲上抜け</td>
-<td>3.05</td>
-<td><span class="pos">7.1%</span></td>
-<td><span class="pos">7.0%</span></td>
-<td><span class="pos">2.3%</span></td>
-<td>3/42</td>
-</tr>
-<tr>
-<td><span class="symbol">ich_cloud_above</span></td>
-<td>一目: close &gt; 雲上限</td>
-<td>2.42</td>
-<td><span class="pos">5.7%</span></td>
-<td><span class="pos">14.0%</span></td>
-<td><span class="pos">5.8%</span></td>
-<td>6/106</td>
-</tr>
-<tr>
-<td><span class="symbol">pre_decline15</span></td>
-<td>20日高値から-15%以上</td>
-<td>1.79</td>
-<td><span class="pos">4.2%</span></td>
-<td><span class="pos">25.6%</span></td>
-<td><span class="pos">14.3%</span></td>
-<td>11/262</td>
-</tr>
-<tr>
-<td><span class="symbol">bb80</span></td>
-<td>BB位置 &gt;= 80%</td>
-<td>1.42</td>
-<td><span class="pos">3.3%</span></td>
-<td><span class="pos">32.6%</span></td>
-<td><span class="pos">23.0%</span></td>
-<td>14/422</td>
-</tr>
-<tr>
-<td><span class="symbol">vol30</span></td>
-<td>出来高 &gt;= 20日平均x3.0</td>
-<td>1.39</td>
-<td><span class="pos">3.2%</span></td>
-<td><span class="pos">23.3%</span></td>
-<td><span class="pos">16.8%</span></td>
-<td>10/308</td>
-</tr>
-<tr>
-<td><span class="symbol">bb_lower</span></td>
-<td>BB位置 &lt;= 20%</td>
-<td>1.34</td>
-<td><span class="pos">3.1%</span></td>
-<td><span class="pos">23.3%</span></td>
-<td><span class="pos">17.4%</span></td>
-<td>10/319</td>
-</tr>
-<tr>
-<td><span class="symbol">stoch75</span></td>
-<td>Stoch &gt;= 75</td>
-<td>1.32</td>
-<td><span class="pos">3.1%</span></td>
-<td><span class="pos">37.2%</span></td>
-<td><span class="pos">28.2%</span></td>
-<td>16/518</td>
-</tr>
-<tr>
-<td><span class="symbol">vol20</span></td>
-<td>出来高 &gt;= 20日平均x2.0</td>
-<td>1.32</td>
-<td><span class="pos">3.1%</span></td>
-<td><span class="pos">34.9%</span></td>
-<td><span class="pos">26.5%</span></td>
-<td>15/487</td>
-</tr>
-</tbody></table>
-            </section>
-
-            <section class="panel">
-              <h3>10BD / 目標 30.0%</h3>
-              <table class="compact">
-<thead><tr>
-<th>条件</th>
-<th>説明</th>
-<th>Lift</th>
-<th>Precision</th>
-<th>Cover</th>
-<th>全体出現率</th>
-<th>Hit/該当</th>
-</tr></thead><tbody>
-<tr>
-<td><span class="symbol">ich_kumo_break</span></td>
-<td>一目: 雲上抜け</td>
-<td>3.65</td>
-<td><span class="pos">4.8%</span></td>
-<td><span class="pos">8.3%</span></td>
-<td><span class="pos">2.3%</span></td>
-<td>2/42</td>
-</tr>
-<tr>
-<td><span class="symbol">vol30</span></td>
-<td>出来高 &gt;= 20日平均x3.0</td>
-<td>2.24</td>
-<td><span class="pos">2.9%</span></td>
-<td><span class="pos">37.5%</span></td>
-<td><span class="pos">16.8%</span></td>
-<td>9/308</td>
-</tr>
-<tr>
-<td><span class="symbol">bb80</span></td>
-<td>BB位置 &gt;= 80%</td>
-<td>2.18</td>
-<td><span class="pos">2.8%</span></td>
-<td><span class="pos">50.0%</span></td>
-<td><span class="pos">23.0%</span></td>
-<td>12/422</td>
-</tr>
-<tr>
-<td><span class="symbol">ich_cloud_above</span></td>
-<td>一目: close &gt; 雲上限</td>
-<td>2.17</td>
-<td><span class="pos">2.8%</span></td>
-<td><span class="pos">12.5%</span></td>
-<td><span class="pos">5.8%</span></td>
-<td>3/106</td>
-</tr>
-<tr>
-<td><span class="symbol">macdgc</span></td>
-<td>MACD GC 3日以内</td>
-<td>2.16</td>
-<td><span class="pos">2.8%</span></td>
-<td><span class="pos">50.0%</span></td>
-<td><span class="pos">23.2%</span></td>
-<td>12/426</td>
-</tr>
-<tr>
-<td><span class="symbol">stoch75</span></td>
-<td>Stoch &gt;= 75</td>
-<td>1.92</td>
-<td><span class="pos">2.5%</span></td>
-<td><span class="pos">54.2%</span></td>
-<td><span class="pos">28.2%</span></td>
-<td>13/518</td>
-</tr>
-<tr>
-<td><span class="symbol">vol20</span></td>
-<td>出来高 &gt;= 20日平均x2.0</td>
-<td>1.89</td>
-<td><span class="pos">2.5%</span></td>
-<td><span class="pos">50.0%</span></td>
-<td><span class="pos">26.5%</span></td>
-<td>12/487</td>
-</tr>
-<tr>
-<td><span class="symbol">hb20</span></td>
-<td>20日高値更新</td>
-<td>1.84</td>
-<td><span class="pos">2.4%</span></td>
-<td><span class="pos">20.8%</span></td>
-<td><span class="pos">11.3%</span></td>
-<td>5/208</td>
-</tr>
-</tbody></table>
-            </section>
-
-            <section class="panel">
-              <h3>20BD / 目標 30.0%</h3>
-              <table class="compact">
-<thead><tr>
-<th>条件</th>
-<th>説明</th>
-<th>Lift</th>
-<th>Precision</th>
-<th>Cover</th>
-<th>全体出現率</th>
-<th>Hit/該当</th>
-</tr></thead><tbody>
-<tr>
-<td><span class="symbol">ich_cloud_above</span></td>
-<td>一目: close &gt; 雲上限</td>
-<td>3.13</td>
-<td><span class="pos">4.5%</span></td>
-<td><span class="pos">9.1%</span></td>
-<td><span class="pos">2.9%</span></td>
-<td>2/44</td>
-</tr>
-<tr>
-<td><span class="symbol">hb20</span></td>
-<td>20日高値更新</td>
-<td>2.17</td>
-<td><span class="pos">3.1%</span></td>
-<td><span class="pos">22.7%</span></td>
-<td><span class="pos">10.5%</span></td>
-<td>5/159</td>
-</tr>
-<tr>
-<td><span class="symbol">vol30</span></td>
-<td>出来高 &gt;= 20日平均x3.0</td>
-<td>1.86</td>
-<td><span class="pos">2.7%</span></td>
-<td><span class="pos">27.3%</span></td>
-<td><span class="pos">14.7%</span></td>
-<td>6/222</td>
-</tr>
-<tr>
-<td><span class="symbol">bb80</span></td>
-<td>BB位置 &gt;= 80%</td>
-<td>1.84</td>
-<td><span class="pos">2.7%</span></td>
-<td><span class="pos">40.9%</span></td>
-<td><span class="pos">22.2%</span></td>
-<td>9/336</td>
-</tr>
-<tr>
-<td><span class="symbol">vol20</span></td>
-<td>出来高 &gt;= 20日平均x2.0</td>
-<td>1.78</td>
-<td><span class="pos">2.6%</span></td>
-<td><span class="pos">40.9%</span></td>
-<td><span class="pos">23.0%</span></td>
-<td>9/348</td>
-</tr>
-<tr>
-<td><span class="symbol">cci_os</span></td>
-<td>CCI &lt;= -100</td>
-<td>1.72</td>
-<td><span class="pos">2.5%</span></td>
-<td><span class="pos">27.3%</span></td>
-<td><span class="pos">15.8%</span></td>
-<td>6/240</td>
-</tr>
-<tr>
-<td><span class="symbol">bb_lower</span></td>
-<td>BB位置 &lt;= 20%</td>
-<td>1.68</td>
-<td><span class="pos">2.4%</span></td>
-<td><span class="pos">27.3%</span></td>
-<td><span class="pos">16.2%</span></td>
-<td>6/246</td>
-</tr>
-<tr>
-<td><span class="symbol">stoch75</span></td>
-<td>Stoch &gt;= 75</td>
-<td>1.62</td>
-<td><span class="pos">2.4%</span></td>
-<td><span class="pos">45.5%</span></td>
-<td><span class="pos">28.0%</span></td>
-<td>10/424</td>
-</tr>
-</tbody></table>
-            </section>
-
-            <section class="panel">
-              <h3>20BD / 目標 50.0%</h3>
-              <table class="compact">
-<thead><tr>
-<th>条件</th>
-<th>説明</th>
-<th>Lift</th>
-<th>Precision</th>
-<th>Cover</th>
-<th>全体出現率</th>
-<th>Hit/該当</th>
-</tr></thead><tbody>
-<tr>
-<td><span class="symbol">ich_cloud_above</span></td>
-<td>一目: close &gt; 雲上限</td>
-<td>2.65</td>
-<td><span class="pos">2.3%</span></td>
-<td><span class="pos">7.7%</span></td>
-<td><span class="pos">2.9%</span></td>
-<td>1/44</td>
-</tr>
-<tr>
-<td><span class="symbol">vol30</span></td>
-<td>出来高 &gt;= 20日平均x3.0</td>
-<td>2.62</td>
-<td><span class="pos">2.3%</span></td>
-<td><span class="pos">38.5%</span></td>
-<td><span class="pos">14.7%</span></td>
-<td>5/222</td>
-</tr>
-<tr>
-<td><span class="symbol">hb20</span></td>
-<td>20日高値更新</td>
-<td>2.20</td>
-<td><span class="pos">1.9%</span></td>
-<td><span class="pos">23.1%</span></td>
-<td><span class="pos">10.5%</span></td>
-<td>3/159</td>
-</tr>
-<tr>
-<td><span class="symbol">rci9_os</span></td>
-<td>RCI9 &lt;= -50</td>
-<td>2.15</td>
-<td><span class="pos">1.8%</span></td>
-<td><span class="pos">30.8%</span></td>
-<td><span class="pos">14.3%</span></td>
-<td>4/217</td>
-</tr>
-<tr>
-<td><span class="symbol">bb80</span></td>
-<td>BB位置 &gt;= 80%</td>
-<td>2.08</td>
-<td><span class="pos">1.8%</span></td>
-<td><span class="pos">46.2%</span></td>
-<td><span class="pos">22.2%</span></td>
-<td>6/336</td>
-</tr>
-<tr>
-<td><span class="symbol">vol20</span></td>
-<td>出来高 &gt;= 20日平均x2.0</td>
-<td>2.01</td>
-<td><span class="pos">1.7%</span></td>
-<td><span class="pos">46.2%</span></td>
-<td><span class="pos">23.0%</span></td>
-<td>6/348</td>
-</tr>
-<tr>
-<td><span class="symbol">stoch75</span></td>
-<td>Stoch &gt;= 75</td>
-<td>1.92</td>
-<td><span class="pos">1.7%</span></td>
-<td><span class="pos">53.8%</span></td>
-<td><span class="pos">28.0%</span></td>
-<td>7/424</td>
-</tr>
-<tr>
-<td><span class="symbol">body2</span></td>
-<td>陽線実体 &gt;= 2.0%</td>
-<td>1.80</td>
-<td><span class="pos">1.5%</span></td>
-<td><span class="pos">69.2%</span></td>
-<td><span class="pos">38.5%</span></td>
-<td>9/583</td>
-</tr>
-</tbody></table>
-            </section>
-
-            <section class="panel">
-              <h3>40BD / 目標 30.0%</h3>
-              <table class="compact">
-<thead><tr>
-<th>条件</th>
-<th>説明</th>
-<th>Lift</th>
-<th>Precision</th>
-<th>Cover</th>
-<th>全体出現率</th>
-<th>Hit/該当</th>
-</tr></thead><tbody>
-<tr>
-<td><span class="symbol">pre_decline15</span></td>
-<td>20日高値から-15%以上</td>
-<td>1.82</td>
-<td><span class="pos">8.3%</span></td>
-<td><span class="pos">30.2%</span></td>
-<td><span class="pos">16.6%</span></td>
-<td>13/156</td>
-</tr>
-<tr>
-<td><span class="symbol">rci26_os</span></td>
-<td>RCI26 &lt;= -50</td>
-<td>1.71</td>
-<td><span class="pos">7.8%</span></td>
-<td><span class="pos">18.6%</span></td>
-<td><span class="pos">10.9%</span></td>
-<td>8/102</td>
-</tr>
-<tr>
-<td><span class="symbol">hb20</span></td>
-<td>20日高値更新</td>
-<td>1.68</td>
-<td><span class="pos">7.7%</span></td>
-<td><span class="pos">11.6%</span></td>
-<td><span class="pos">6.9%</span></td>
-<td>5/65</td>
-</tr>
-<tr>
-<td><span class="symbol">ich_tk</span></td>
-<td>一目: 転換線 &gt; 基準線</td>
-<td>1.64</td>
-<td><span class="pos">7.5%</span></td>
-<td><span class="pos">30.2%</span></td>
-<td><span class="pos">18.4%</span></td>
-<td>13/173</td>
-</tr>
-<tr>
-<td><span class="symbol">pre_down3</span></td>
-<td>直近3日連続下落後</td>
-<td>1.48</td>
-<td><span class="pos">6.8%</span></td>
-<td><span class="pos">34.9%</span></td>
-<td><span class="pos">23.5%</span></td>
-<td>15/221</td>
-</tr>
-<tr>
-<td><span class="symbol">stoch75</span></td>
-<td>Stoch &gt;= 75</td>
-<td>1.41</td>
-<td><span class="pos">6.5%</span></td>
-<td><span class="pos">32.6%</span></td>
-<td><span class="pos">23.1%</span></td>
-<td>14/217</td>
-</tr>
-<tr>
-<td><span class="symbol">bb80</span></td>
-<td>BB位置 &gt;= 80%</td>
-<td>1.36</td>
-<td><span class="pos">6.2%</span></td>
-<td><span class="pos">20.9%</span></td>
-<td><span class="pos">15.4%</span></td>
-<td>9/145</td>
-</tr>
-<tr>
-<td><span class="symbol">cci_os</span></td>
-<td>CCI &lt;= -100</td>
-<td>1.33</td>
-<td><span class="pos">6.1%</span></td>
-<td><span class="pos">20.9%</span></td>
-<td><span class="pos">15.7%</span></td>
-<td>9/148</td>
-</tr>
-</tbody></table>
-            </section>
-
-            <section class="panel">
-              <h3>40BD / 目標 50.0%</h3>
-              <table class="compact">
-<thead><tr>
-<th>条件</th>
-<th>説明</th>
-<th>Lift</th>
-<th>Precision</th>
-<th>Cover</th>
-<th>全体出現率</th>
-<th>Hit/該当</th>
-</tr></thead><tbody>
-<tr>
-<td><span class="symbol">hb20</span></td>
-<td>20日高値更新</td>
-<td>1.97</td>
-<td><span class="pos">4.6%</span></td>
-<td><span class="pos">13.6%</span></td>
-<td><span class="pos">6.9%</span></td>
-<td>3/65</td>
-</tr>
-<tr>
-<td><span class="symbol">pre_decline15</span></td>
-<td>20日高値から-15%以上</td>
-<td>1.92</td>
-<td><span class="pos">4.5%</span></td>
-<td><span class="pos">31.8%</span></td>
-<td><span class="pos">16.6%</span></td>
-<td>7/156</td>
-</tr>
-<tr>
-<td><span class="symbol">bb80</span></td>
-<td>BB位置 &gt;= 80%</td>
-<td>1.77</td>
-<td><span class="pos">4.1%</span></td>
-<td><span class="pos">27.3%</span></td>
-<td><span class="pos">15.4%</span></td>
-<td>6/145</td>
-</tr>
-<tr>
-<td><span class="symbol">rci26_os</span></td>
-<td>RCI26 &lt;= -50</td>
-<td>1.68</td>
-<td><span class="pos">3.9%</span></td>
-<td><span class="pos">18.2%</span></td>
-<td><span class="pos">10.9%</span></td>
-<td>4/102</td>
-</tr>
-<tr>
-<td><span class="symbol">stoch75</span></td>
-<td>Stoch &gt;= 75</td>
-<td>1.58</td>
-<td><span class="pos">3.7%</span></td>
-<td><span class="pos">36.4%</span></td>
-<td><span class="pos">23.1%</span></td>
-<td>8/217</td>
-</tr>
-<tr>
-<td><span class="symbol">rci9_os</span></td>
-<td>RCI9 &lt;= -50</td>
-<td>1.53</td>
-<td><span class="pos">3.6%</span></td>
-<td><span class="pos">18.2%</span></td>
-<td><span class="pos">11.9%</span></td>
-<td>4/112</td>
-</tr>
-<tr>
-<td><span class="symbol">ich_tk</span></td>
-<td>一目: 転換線 &gt; 基準線</td>
-<td>1.48</td>
-<td><span class="pos">3.5%</span></td>
-<td><span class="pos">27.3%</span></td>
-<td><span class="pos">18.4%</span></td>
-<td>6/173</td>
-</tr>
-<tr>
-<td><span class="symbol">cci_os</span></td>
-<td>CCI &lt;= -100</td>
-<td>1.44</td>
-<td><span class="pos">3.4%</span></td>
-<td><span class="pos">22.7%</span></td>
-<td><span class="pos">15.7%</span></td>
-<td>5/148</td>
-</tr>
-</tbody></table>
-            </section>
-
-
     <h2>候補別 詳細</h2>
+
+            <details class="candidate-detail" open>
+              <summary>
+                <span>Stable ★6</span>
+                <span class="badge good">有望: 継続監視</span>
+              </summary>
+              <div class="detail-grid">
+                <section>
+                  <h3>条件と成績</h3>
+                  <p>現行Stableロジックの6条件すべてを満たす満点候補。</p>
+                  <div class="chips"><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="MACD hist &gt; 0">macdpos</span><span class="chip" title="Stoch &gt;= 75">stoch75</span><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="ギャップアップ">gap_up</span></div>
+                  <h4>確定済み銘柄の成績</h4>
+                  <dl class="metrics">
+                    <div><dt>評価軸</dt><dd>5BD / 目標 +10%</dd></div>
+                    <div><dt>件数</dt><dd>26</dd></div>
+                    <div><dt>平均</dt><dd><span class="pos">+15.3%</span></dd></div>
+                    <div><dt>中央値</dt><dd><span class="pos">+3.1%</span></dd></div>
+                    <div><dt>勝率</dt><dd><span class="pos">61.5%</span></dd></div>
+                    <div><dt>Lift</dt><dd>5.61</dd></div>
+                    <div><dt>最大</dt><dd><span class="pos">+90.2%</span></dd></div>
+                    <div><dt>最小</dt><dd><span class="neg">-17.2%</span></dd></div>
+                    <div><dt>&lt;=-10%</dt><dd>2</dd></div>
+                  </dl>
+                  <h4>未確定ウォッチリストの現在成績</h4>
+                  <dl class="metrics">
+                    <div><dt>件数</dt><dd>2/2</dd></div>
+                    <div><dt>平均</dt><dd><span class="pos">+10.1%</span></dd></div>
+                    <div><dt>中央値</dt><dd><span class="pos">+10.1%</span></dd></div>
+                    <div><dt>勝率</dt><dd><span class="pos">100.0%</span></dd></div>
+                    <div><dt>+10%</dt><dd>1</dd></div>
+                    <div><dt>+20%</dt><dd>0</dd></div>
+                    <div><dt>最大</dt><dd><span class="pos">+17.6%</span></dd></div>
+                    <div><dt>最小</dt><dd><span class="pos">+2.6%</span></dd></div>
+                    <div><dt>&lt;=-10%</dt><dd>0</dd></div>
+                  </dl>
+                </section>
+                <section>
+                  <h3>条件説明</h3>
+                  <ul class="condition-list">
+                    <li><code>ema25</code><span>close &gt; EMA25</span></li><li><code>macdpos</code><span>MACD hist &gt; 0</span></li><li><code>stoch75</code><span>Stoch &gt;= 75</span></li><li><code>bb80</code><span>BB位置 &gt;= 80%</span></li><li><code>pre_down3</code><span>直近3日連続下落後</span></li><li><code>gap_up</code><span>ギャップアップ</span></li>
+                  </ul>
+                </section>
+              </div>
+              <h3>確定済み全件</h3>
+              <table class="signals">
+<thead><tr>
+<th>日付</th>
+<th>銘柄</th>
+<th>社名</th>
+<th>評価値</th>
+<th>5BD</th>
+<th>10BD</th>
+<th>20BD</th>
+<th>40BD</th>
+</tr></thead><tbody>
+<tr>
+<td>2026/03/26</td>
+<td><span class="symbol">4840</span></td>
+<td>トライアイズ</td>
+<td><span class="pos">+90.2%</span></td>
+<td><span class="pos">+90.2%</span></td>
+<td><span class="pos">+72.5%</span></td>
+<td><span class="pos">+80.8%</span></td>
+<td><span class="pos">+60.0%</span></td>
+</tr>
+<tr>
+<td>2026/05/28</td>
+<td><span class="symbol">8105</span></td>
+<td>Ｂｉｔｃｏｉｎ　Ｊａｐａｎ</td>
+<td><span class="pos">+82.8%</span></td>
+<td><span class="pos">+82.8%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/13</td>
+<td><span class="symbol">6217</span></td>
+<td>津田駒工業</td>
+<td><span class="pos">+76.2%</span></td>
+<td><span class="pos">+76.2%</span></td>
+<td><span class="pos">+235.2%</span></td>
+<td><span class="pos">+267.6%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/16</td>
+<td><span class="symbol">3444</span></td>
+<td>菊池製作所</td>
+<td><span class="pos">+68.5%</span></td>
+<td><span class="pos">+68.5%</span></td>
+<td><span class="pos">+41.6%</span></td>
+<td><span class="pos">+15.0%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/05</td>
+<td><span class="symbol">6666</span></td>
+<td>リバーエレテック</td>
+<td><span class="pos">+37.3%</span></td>
+<td><span class="pos">+37.3%</span></td>
+<td><span class="pos">+7.7%</span></td>
+<td><span class="pos">+10.8%</span></td>
+<td><span class="pos">+84.1%</span></td>
+</tr>
+<tr>
+<td>2026/04/15</td>
+<td><span class="symbol">5575</span></td>
+<td>Ｇｌｏｂｅｅ</td>
+<td><span class="pos">+30.3%</span></td>
+<td><span class="pos">+30.3%</span></td>
+<td><span class="pos">+12.8%</span></td>
+<td><span class="pos">+13.2%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/01</td>
+<td><span class="symbol">7162</span></td>
+<td>アストマックス</td>
+<td><span class="pos">+27.2%</span></td>
+<td><span class="pos">+27.2%</span></td>
+<td><span class="pos">+5.0%</span></td>
+<td><span class="neg">-10.1%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/23</td>
+<td><span class="symbol">7066</span></td>
+<td>ピアズ</td>
+<td><span class="pos">+10.1%</span></td>
+<td><span class="pos">+10.1%</span></td>
+<td><span class="pos">+38.0%</span></td>
+<td><span class="pos">+13.0%</span></td>
+<td><span class="pos">+1.8%</span></td>
+</tr>
+<tr>
+<td>2026/03/24</td>
+<td><span class="symbol">6836</span></td>
+<td>ぷらっとホーム</td>
+<td><span class="pos">+8.9%</span></td>
+<td><span class="pos">+8.9%</span></td>
+<td><span class="neg">-1.7%</span></td>
+<td><span class="neg">-0.3%</span></td>
+<td><span class="neg">-1.5%</span></td>
+</tr>
+<tr>
+<td>2026/05/07</td>
+<td><span class="symbol">6094</span></td>
+<td>フリークアウト・ホールディングス</td>
+<td><span class="pos">+4.7%</span></td>
+<td><span class="pos">+4.7%</span></td>
+<td><span class="neg">-9.1%</span></td>
+<td><span class="neg">-16.4%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/01</td>
+<td><span class="symbol">2334</span></td>
+<td>イオレ</td>
+<td><span class="pos">+4.2%</span></td>
+<td><span class="pos">+4.2%</span></td>
+<td><span class="neg">-4.0%</span></td>
+<td><span class="pos">+25.7%</span></td>
+<td><span class="pos">+27.4%</span></td>
+</tr>
+<tr>
+<td>2026/04/08</td>
+<td><span class="symbol">4192</span></td>
+<td>スパイダープラス</td>
+<td><span class="pos">+3.8%</span></td>
+<td><span class="pos">+3.8%</span></td>
+<td><span class="pos">+6.3%</span></td>
+<td><span class="pos">+18.2%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/14</td>
+<td><span class="symbol">3205</span></td>
+<td>ダイドーリミテッド</td>
+<td><span class="pos">+3.2%</span></td>
+<td><span class="pos">+3.2%</span></td>
+<td><span class="pos">+8.6%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/13</td>
+<td><span class="symbol">4651</span></td>
+<td>サニックスホールディングス</td>
+<td><span class="pos">+3.1%</span></td>
+<td><span class="pos">+3.1%</span></td>
+<td><span class="pos">+0.9%</span></td>
+<td><span class="pos">+10.9%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/24</td>
+<td><span class="symbol">9235</span></td>
+<td>売れるネット広告社グループ</td>
+<td><span class="pos">+2.0%</span></td>
+<td><span class="pos">+2.0%</span></td>
+<td><span class="neg">-6.7%</span></td>
+<td><span class="neg">-3.9%</span></td>
+<td><span class="neg">-3.8%</span></td>
+</tr>
+<tr>
+<td>2026/05/07</td>
+<td><span class="symbol">9535</span></td>
+<td>広島ガス</td>
+<td><span class="pos">+1.5%</span></td>
+<td><span class="pos">+1.5%</span></td>
+<td><span class="neg">-1.0%</span></td>
+<td><span class="neg">-5.4%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/27</td>
+<td><span class="symbol">9368</span></td>
+<td>キムラユニティー</td>
+<td><span class="neg">-0.4%</span></td>
+<td><span class="neg">-0.4%</span></td>
+<td><span class="neg">-1.0%</span></td>
+<td><span class="neg">-3.4%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/10</td>
+<td><span class="symbol">9405</span></td>
+<td>朝日放送グループホールディングス</td>
+<td><span class="neg">-0.9%</span></td>
+<td><span class="neg">-0.9%</span></td>
+<td><span class="neg">-1.1%</span></td>
+<td><span class="neg">-4.4%</span></td>
+<td><span class="neg">-13.4%</span></td>
+</tr>
+<tr>
+<td>2026/05/11</td>
+<td><span class="symbol">7213</span></td>
+<td>レシップホールディングス</td>
+<td><span class="neg">-2.0%</span></td>
+<td><span class="neg">-2.0%</span></td>
+<td><span class="pos">+11.7%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/07</td>
+<td><span class="symbol">4331</span></td>
+<td>テイクアンドギヴ・ニーズ</td>
+<td><span class="neg">-2.3%</span></td>
+<td><span class="neg">-2.3%</span></td>
+<td><span class="neg">-2.5%</span></td>
+<td><span class="neg">-5.2%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/18</td>
+<td><span class="symbol">8769</span></td>
+<td>アドバンテッジリスクマネジメント</td>
+<td><span class="neg">-2.8%</span></td>
+<td><span class="neg">-2.8%</span></td>
+<td><span class="neg">-2.6%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/15</td>
+<td><span class="symbol">155A</span></td>
+<td>情報戦略テクノロジー</td>
+<td><span class="neg">-4.2%</span></td>
+<td><span class="neg">-4.2%</span></td>
+<td><span class="neg">-1.9%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/21</td>
+<td><span class="symbol">6157</span></td>
+<td>日進工具</td>
+<td><span class="neg">-6.5%</span></td>
+<td><span class="neg">-6.5%</span></td>
+<td><span class="neg">-5.0%</span></td>
+<td><span class="neg">-3.5%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/12</td>
+<td><span class="symbol">3726</span></td>
+<td>フォーシーズＨＤ</td>
+<td><span class="neg">-9.4%</span></td>
+<td><span class="neg">-9.4%</span></td>
+<td><span class="neg">-9.0%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/05</td>
+<td><span class="symbol">4881</span></td>
+<td>ＦｕｎＰｅｐ</td>
+<td><span class="neg">-10.7%</span></td>
+<td><span class="neg">-10.7%</span></td>
+<td><span class="neg">-7.1%</span></td>
+<td><span class="neg">-28.6%</span></td>
+<td><span class="neg">-37.5%</span></td>
+</tr>
+<tr>
+<td>2026/05/07</td>
+<td><span class="symbol">3350</span></td>
+<td>メタプラネット</td>
+<td><span class="neg">-17.2%</span></td>
+<td><span class="neg">-17.2%</span></td>
+<td><span class="neg">-17.4%</span></td>
+<td><span class="neg">-34.0%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+</tbody></table>
+              <h3>未確定ウォッチ全件</h3>
+              <table class="signals">
+<thead><tr>
+<th>日付</th>
+<th>銘柄</th>
+<th>社名</th>
+<th>経過</th>
+<th>現在騰落</th>
+<th>5BD</th>
+<th>10BD</th>
+<th>20BD</th>
+</tr></thead><tbody>
+<tr>
+<td>2026/06/05</td>
+<td><span class="symbol">2936</span></td>
+<td>ベースフード</td>
+<td>3</td>
+<td><span class="pos">+2.6%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/06/03</td>
+<td><span class="symbol">8254</span></td>
+<td>さいか屋</td>
+<td>5</td>
+<td><span class="pos">+17.6%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+</tbody></table>
+            </details>
+
+            <details class="candidate-detail" open>
+              <summary>
+                <span>Sniper</span>
+                <span class="badge good">有望: 継続監視</span>
+              </summary>
+              <div class="detail-grid">
+                <section>
+                  <h3>条件と成績</h3>
+                  <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
+                  <div class="chips"><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="陽線実体 &gt;= 0.5%">sbull</span><span class="chip" title="ATR &lt; 5%">atr5</span><span class="chip" title="ATR &lt; 7%">atr7</span><span class="chip" title="20日高値更新">hb20</span><span class="chip" title="RSI 40-60">rsi4060</span></div>
+                  <h4>確定済み銘柄の成績</h4>
+                  <dl class="metrics">
+                    <div><dt>評価軸</dt><dd>5BD / 目標 勝ち</dd></div>
+                    <div><dt>件数</dt><dd>24</dd></div>
+                    <div><dt>平均</dt><dd><span class="pos">+0.9%</span></dd></div>
+                    <div><dt>中央値</dt><dd><span class="pos">+0.5%</span></dd></div>
+                    <div><dt>勝率</dt><dd><span class="pos">66.7%</span></dd></div>
+                    <div><dt>Lift</dt><dd>1.78</dd></div>
+                    <div><dt>最大</dt><dd><span class="pos">+15.8%</span></dd></div>
+                    <div><dt>最小</dt><dd><span class="neg">-18.9%</span></dd></div>
+                    <div><dt>&lt;=-10%</dt><dd>1</dd></div>
+                  </dl>
+                  <h4>未確定ウォッチリストの現在成績</h4>
+                  <dl class="metrics">
+                    <div><dt>件数</dt><dd>3/3</dd></div>
+                    <div><dt>平均</dt><dd><span class="pos">+6.3%</span></dd></div>
+                    <div><dt>中央値</dt><dd><span class="pos">+2.6%</span></dd></div>
+                    <div><dt>勝率</dt><dd><span class="pos">100.0%</span></dd></div>
+                    <div><dt>+10%</dt><dd>1</dd></div>
+                    <div><dt>+20%</dt><dd>0</dd></div>
+                    <div><dt>最大</dt><dd><span class="pos">+15.0%</span></dd></div>
+                    <div><dt>最小</dt><dd><span class="pos">+1.4%</span></dd></div>
+                    <div><dt>&lt;=-10%</dt><dd>0</dd></div>
+                  </dl>
+                </section>
+                <section>
+                  <h3>条件説明</h3>
+                  <ul class="condition-list">
+                    <li><code>ema25</code><span>close &gt; EMA25</span></li><li><code>sbull</code><span>陽線実体 &gt;= 0.5%</span></li><li><code>atr5</code><span>ATR &lt; 5%</span></li><li><code>atr7</code><span>ATR &lt; 7%</span></li><li><code>hb20</code><span>20日高値更新</span></li><li><code>rsi4060</code><span>RSI 40-60</span></li>
+                  </ul>
+                </section>
+              </div>
+              <h3>確定済み全件</h3>
+              <table class="signals">
+<thead><tr>
+<th>日付</th>
+<th>銘柄</th>
+<th>社名</th>
+<th>評価値</th>
+<th>5BD</th>
+<th>10BD</th>
+<th>20BD</th>
+<th>40BD</th>
+</tr></thead><tbody>
+<tr>
+<td>2026/05/13</td>
+<td><span class="symbol">5029</span></td>
+<td>サークレイス</td>
+<td><span class="pos">+15.8%</span></td>
+<td><span class="pos">+15.8%</span></td>
+<td><span class="pos">+13.9%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/24</td>
+<td><span class="symbol">6836</span></td>
+<td>ぷらっとホーム</td>
+<td><span class="pos">+8.9%</span></td>
+<td><span class="pos">+8.9%</span></td>
+<td><span class="neg">-1.7%</span></td>
+<td><span class="neg">-0.3%</span></td>
+<td><span class="neg">-1.5%</span></td>
+</tr>
+<tr>
+<td>2026/03/23</td>
+<td><span class="symbol">3077</span></td>
+<td>ホリイフードサービス</td>
+<td><span class="pos">+7.4%</span></td>
+<td><span class="pos">+7.4%</span></td>
+<td><span class="pos">+40.3%</span></td>
+<td><span class="pos">+25.1%</span></td>
+<td><span class="pos">+40.0%</span></td>
+</tr>
+<tr>
+<td>2026/03/05</td>
+<td><span class="symbol">2337</span></td>
+<td>いちご</td>
+<td><span class="pos">+6.8%</span></td>
+<td><span class="pos">+6.8%</span></td>
+<td><span class="pos">+6.2%</span></td>
+<td><span class="pos">+6.8%</span></td>
+<td><span class="pos">+7.9%</span></td>
+</tr>
+<tr>
+<td>2026/04/30</td>
+<td><span class="symbol">8103</span></td>
+<td>明和産業</td>
+<td><span class="pos">+5.9%</span></td>
+<td><span class="pos">+5.9%</span></td>
+<td><span class="pos">+9.5%</span></td>
+<td><span class="pos">+5.8%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/01</td>
+<td><span class="symbol">7038</span></td>
+<td>フロンティア・マネジメント</td>
+<td><span class="pos">+2.6%</span></td>
+<td><span class="pos">+2.6%</span></td>
+<td><span class="pos">+1.7%</span></td>
+<td><span class="pos">+1.9%</span></td>
+<td><span class="neg">-1.6%</span></td>
+</tr>
+<tr>
+<td>2026/03/31</td>
+<td><span class="symbol">428A</span></td>
+<td>サイプレス・ホールディングス</td>
+<td><span class="pos">+2.3%</span></td>
+<td><span class="pos">+2.3%</span></td>
+<td><span class="pos">+0.6%</span></td>
+<td><span class="pos">+8.1%</span></td>
+<td><span class="pos">+48.6%</span></td>
+</tr>
+<tr>
+<td>2026/04/08</td>
+<td><span class="symbol">6262</span></td>
+<td>ＰＥＧＡＳＵＳ</td>
+<td><span class="pos">+2.1%</span></td>
+<td><span class="pos">+2.1%</span></td>
+<td><span class="pos">+0.5%</span></td>
+<td><span class="pos">+23.8%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/16</td>
+<td><span class="symbol">6584</span></td>
+<td>三櫻工業</td>
+<td><span class="pos">+1.1%</span></td>
+<td><span class="pos">+1.1%</span></td>
+<td><span class="pos">+4.4%</span></td>
+<td><span class="neg">-3.3%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/17</td>
+<td><span class="symbol">2341</span></td>
+<td>アルバイトタイムス</td>
+<td><span class="pos">+1.0%</span></td>
+<td><span class="pos">+1.0%</span></td>
+<td><span class="pos">+4.2%</span></td>
+<td><span class="pos">+6.3%</span></td>
+<td><span class="neg">-12.0%</span></td>
+</tr>
+<tr>
+<td>2026/05/14</td>
+<td><span class="symbol">4486</span></td>
+<td>ユナイトアンドグロウ</td>
+<td><span class="pos">+0.6%</span></td>
+<td><span class="pos">+0.6%</span></td>
+<td><span class="pos">+1.0%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/18</td>
+<td><span class="symbol">6694</span></td>
+<td>ズーム</td>
+<td><span class="pos">+0.5%</span></td>
+<td><span class="pos">+0.5%</span></td>
+<td><span class="pos">+0.3%</span></td>
+<td><span class="pos">+1.3%</span></td>
+<td><span class="pos">+1.7%</span></td>
+</tr>
+<tr>
+<td>2026/04/03</td>
+<td><span class="symbol">8285</span></td>
+<td>三谷産業</td>
+<td><span class="pos">+0.4%</span></td>
+<td><span class="pos">+0.4%</span></td>
+<td><span class="pos">+4.6%</span></td>
+<td><span class="neg">-9.7%</span></td>
+<td><span class="neg">-15.6%</span></td>
+</tr>
+<tr>
+<td>2026/04/08</td>
+<td><span class="symbol">6040</span></td>
+<td>日本スキー場開発</td>
+<td><span class="pos">+0.2%</span></td>
+<td><span class="pos">+0.2%</span></td>
+<td><span class="neg">-5.3%</span></td>
+<td><span class="neg">-6.6%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/11</td>
+<td><span class="symbol">1844</span></td>
+<td>大盛工業</td>
+<td><span class="pos">+0.2%</span></td>
+<td><span class="pos">+0.2%</span></td>
+<td><span class="neg">-7.2%</span></td>
+<td><span class="neg">-8.7%</span></td>
+<td><span class="neg">-12.3%</span></td>
+</tr>
+<tr>
+<td>2026/04/08</td>
+<td><span class="symbol">6480</span></td>
+<td>日本トムソン</td>
+<td><span class="pos">+0.1%</span></td>
+<td><span class="pos">+0.1%</span></td>
+<td><span class="pos">+1.8%</span></td>
+<td><span class="pos">+90.7%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/03/31</td>
+<td><span class="symbol">7112</span></td>
+<td>キューブ</td>
+<td><span class="flat">+0.0%</span></td>
+<td><span class="flat">+0.0%</span></td>
+<td><span class="pos">+4.3%</span></td>
+<td><span class="pos">+6.0%</span></td>
+<td><span class="neg">-5.9%</span></td>
+</tr>
+<tr>
+<td>2026/04/08</td>
+<td><span class="symbol">4188</span></td>
+<td>三菱ケミカルグループ</td>
+<td><span class="neg">-0.1%</span></td>
+<td><span class="neg">-0.1%</span></td>
+<td><span class="neg">-5.6%</span></td>
+<td><span class="neg">-6.9%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/11</td>
+<td><span class="symbol">7412</span></td>
+<td>アトム</td>
+<td><span class="neg">-1.3%</span></td>
+<td><span class="neg">-1.3%</span></td>
+<td><span class="flat">+0.0%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/06</td>
+<td><span class="symbol">2929</span></td>
+<td>ファーマフーズ</td>
+<td><span class="neg">-2.5%</span></td>
+<td><span class="neg">-2.5%</span></td>
+<td><span class="neg">-7.4%</span></td>
+<td><span class="neg">-14.8%</span></td>
+<td><span class="neg">-11.7%</span></td>
+</tr>
+<tr>
+<td>2026/05/18</td>
+<td><span class="symbol">8769</span></td>
+<td>アドバンテッジリスクマネジメント</td>
+<td><span class="neg">-2.8%</span></td>
+<td><span class="neg">-2.8%</span></td>
+<td><span class="neg">-2.6%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/15</td>
+<td><span class="symbol">155A</span></td>
+<td>情報戦略テクノロジー</td>
+<td><span class="neg">-4.2%</span></td>
+<td><span class="neg">-4.2%</span></td>
+<td><span class="neg">-1.9%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/04/14</td>
+<td><span class="symbol">4176</span></td>
+<td>ココナラ</td>
+<td><span class="neg">-5.0%</span></td>
+<td><span class="neg">-5.0%</span></td>
+<td><span class="neg">-10.0%</span></td>
+<td><span class="neg">-14.6%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/05/08</td>
+<td><span class="symbol">3900</span></td>
+<td>クラウドワークス</td>
+<td><span class="neg">-18.9%</span></td>
+<td><span class="neg">-18.9%</span></td>
+<td><span class="neg">-17.5%</span></td>
+<td><span class="neg">-13.2%</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+</tbody></table>
+              <h3>未確定ウォッチ全件</h3>
+              <table class="signals">
+<thead><tr>
+<th>日付</th>
+<th>銘柄</th>
+<th>社名</th>
+<th>経過</th>
+<th>現在騰落</th>
+<th>5BD</th>
+<th>10BD</th>
+<th>20BD</th>
+</tr></thead><tbody>
+<tr>
+<td>2026/06/05</td>
+<td><span class="symbol">2936</span></td>
+<td>ベースフード</td>
+<td>3</td>
+<td><span class="pos">+2.6%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/06/04</td>
+<td><span class="symbol">3154</span></td>
+<td>メディアスホールディングス</td>
+<td>4</td>
+<td><span class="pos">+1.4%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+<tr>
+<td>2026/06/01</td>
+<td><span class="symbol">4406</span></td>
+<td>新日本理化</td>
+<td>7</td>
+<td><span class="pos">+15.0%</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+<td><span class="muted">--</span></td>
+</tr>
+</tbody></table>
+            </details>
 
             <details class="candidate-detail" open>
               <summary>
@@ -1146,7 +1168,7 @@
                   <div class="chips"><span class="chip" title="RCI9 &lt;= -50">rci9_os</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></div>
                   <h4>確定済み銘柄の成績</h4>
                   <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>5BD / 目標 20.0%</dd></div>
+                    <div><dt>評価軸</dt><dd>5BD / 目標 +20%</dd></div>
                     <div><dt>件数</dt><dd>11</dd></div>
                     <div><dt>平均</dt><dd><span class="pos">+21.6%</span></dd></div>
                     <div><dt>中央値</dt><dd><span class="pos">+4.2%</span></dd></div>
@@ -1176,7 +1198,7 @@
                   </ul>
                 </section>
               </div>
-              <h3>確定済み上位</h3>
+              <h3>確定済み全件</h3>
               <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -1288,899 +1310,19 @@
 <td><span class="muted">--</span></td>
 <td><span class="muted">--</span></td>
 </tr>
-</tbody></table>
-              <h3>未確定ウォッチ</h3>
-              <p class="empty">該当なし</p>
-            </details>
-
-            <details class="candidate-detail">
-              <summary>
-                <span>Mega5 トレンド加速</span>
-                <span class="badge warn">注意: 外れ値依存</span>
-              </summary>
-              <div class="detail-grid">
-                <section>
-                  <h3>条件と成績</h3>
-                  <p>雲上・EMA75上の高モメンタム短期ブレイク候補。</p>
-                  <div class="chips"><span class="chip" title="一目: close &gt; 雲上限">ich_cloud_above</span><span class="chip" title="close &gt; EMA75">ema75</span><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="Stoch &gt;= 75">stoch75</span></div>
-                  <h4>確定済み銘柄の成績</h4>
-                  <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>5BD / 目標 20.0%</dd></div>
-                    <div><dt>件数</dt><dd>72</dd></div>
-                    <div><dt>平均</dt><dd><span class="pos">+3.1%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="neg">-0.6%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">43.1%</span></dd></div>
-                    <div><dt>Lift</dt><dd>4.88</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+82.0%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="neg">-24.9%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>7</dd></div>
-                  </dl>
-                  <h4>未確定ウォッチリストの現在成績</h4>
-                  <dl class="metrics">
-                    <div><dt>件数</dt><dd>11/11</dd></div>
-                    <div><dt>平均</dt><dd><span class="pos">+1.2%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="pos">+0.2%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">54.5%</span></dd></div>
-                    <div><dt>+10%</dt><dd>3</dd></div>
-                    <div><dt>+20%</dt><dd>0</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+17.2%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="neg">-22.7%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>1</dd></div>
-                  </dl>
-                </section>
-                <section>
-                  <h3>条件説明</h3>
-                  <ul class="condition-list">
-                    <li><code>ich_cloud_above</code><span>一目: close &gt; 雲上限</span></li><li><code>ema75</code><span>close &gt; EMA75</span></li><li><code>bb80</code><span>BB位置 &gt;= 80%</span></li><li><code>stoch75</code><span>Stoch &gt;= 75</span></li>
-                  </ul>
-                </section>
-              </div>
-              <h3>確定済み上位</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>評価値</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-<th>40BD</th>
-</tr></thead><tbody>
 <tr>
-<td>2026/05/19</td>
-<td><span class="symbol">3907</span></td>
-<td>シリコンスタジオ</td>
-<td><span class="pos">+82.0%</span></td>
-<td><span class="pos">+82.0%</span></td>
-<td><span class="pos">+9.5%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/29</td>
-<td><span class="symbol">6656</span></td>
-<td>インスペック</td>
-<td><span class="pos">+61.5%</span></td>
-<td><span class="pos">+61.5%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/08</td>
-<td><span class="symbol">3810</span></td>
-<td>サイバーステップホールディングス</td>
-<td><span class="pos">+52.4%</span></td>
-<td><span class="pos">+52.4%</span></td>
-<td><span class="pos">+38.6%</span></td>
-<td><span class="neg">-28.5%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/25</td>
-<td><span class="symbol">5367</span></td>
-<td>ニッカトー</td>
-<td><span class="pos">+46.0%</span></td>
-<td><span class="pos">+46.0%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/01</td>
-<td><span class="symbol">7162</span></td>
-<td>アストマックス</td>
-<td><span class="pos">+27.2%</span></td>
-<td><span class="pos">+27.2%</span></td>
-<td><span class="pos">+5.0%</span></td>
-<td><span class="neg">-10.1%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/11</td>
-<td><span class="symbol">4420</span></td>
-<td>イーソル</td>
-<td><span class="pos">+25.8%</span></td>
-<td><span class="pos">+25.8%</span></td>
-<td><span class="pos">+30.8%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/27</td>
-<td><span class="symbol">7868</span></td>
-<td>広済堂ホールディングス</td>
-<td><span class="pos">+22.5%</span></td>
-<td><span class="pos">+22.5%</span></td>
-<td><span class="pos">+19.9%</span></td>
-<td><span class="pos">+12.3%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/20</td>
-<td><span class="symbol">4293</span></td>
-<td>セプテーニ・ホールディングス</td>
-<td><span class="pos">+18.7%</span></td>
-<td><span class="pos">+18.7%</span></td>
-<td><span class="pos">+4.4%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/27</td>
-<td><span class="symbol">6768</span></td>
-<td>タムラ製作所</td>
-<td><span class="pos">+16.6%</span></td>
-<td><span class="pos">+16.6%</span></td>
-<td><span class="pos">+16.0%</span></td>
-<td><span class="pos">+34.8%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/30</td>
-<td><span class="symbol">6472</span></td>
-<td>ＮＴＮ</td>
-<td><span class="pos">+15.1%</span></td>
-<td><span class="pos">+15.1%</span></td>
-<td><span class="pos">+2.2%</span></td>
-<td><span class="pos">+12.1%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-</tbody></table>
-              <h3>未確定ウォッチ</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>経過</th>
-<th>現在騰落</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-</tr></thead><tbody>
-<tr>
-<td>2026/06/05</td>
-<td><span class="symbol">9997</span></td>
-<td>ベルーナ</td>
-<td>1</td>
-<td><span class="pos">+0.2%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/05</td>
-<td><span class="symbol">8714</span></td>
-<td>池田泉州ホールディングス</td>
-<td>1</td>
-<td><span class="flat">+0.0%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/05</td>
-<td><span class="symbol">6306</span></td>
-<td>日工</td>
-<td>1</td>
-<td><span class="neg">-0.1%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/04</td>
-<td><span class="symbol">3154</span></td>
-<td>メディアスホールディングス</td>
-<td>2</td>
-<td><span class="pos">+1.4%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/03</td>
-<td><span class="symbol">6955</span></td>
-<td>ＦＤＫ</td>
-<td>3</td>
-<td><span class="pos">+16.7%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/03</td>
-<td><span class="symbol">7038</span></td>
-<td>フロンティア・マネジメント</td>
-<td>3</td>
-<td><span class="pos">+1.2%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/03</td>
-<td><span class="symbol">9166</span></td>
-<td>ＧＥＮＤＡ</td>
-<td>3</td>
-<td><span class="neg">-8.1%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/02</td>
-<td><span class="symbol">9552</span></td>
-<td>クオンツ総研ホールディングス</td>
-<td>4</td>
-<td><span class="pos">+17.2%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/02</td>
-<td><span class="symbol">3697</span></td>
-<td>ＳＨＩＦＴ</td>
-<td>4</td>
-<td><span class="neg">-6.8%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/01</td>
-<td><span class="symbol">2162</span></td>
-<td>ｎｍｓ　ホールディングス</td>
-<td>5</td>
-<td><span class="pos">+14.2%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/06/01</td>
-<td><span class="symbol">3624</span></td>
-<td>アクセルマーク</td>
-<td>5</td>
-<td><span class="neg">-22.7%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-</tbody></table>
-            </details>
-
-            <details class="candidate-detail">
-              <summary>
-                <span>Mega10 初動ブレイク</span>
-                <span class="badge warn">注意: 外れ値依存</span>
-              </summary>
-              <div class="detail-grid">
-                <section>
-                  <h3>条件と成績</h3>
-                  <p>出来高急増、MACD反転、強陽線が重なる初動ブレイク候補。</p>
-                  <div class="chips"><span class="chip" title="BB位置 &gt;= 80%">bb80</span><span class="chip" title="出来高 &gt;= 20日平均x3.0">vol30</span><span class="chip" title="MACD GC 3日以内">macdgc</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span><span class="chip" title="Stoch &gt;= 75">stoch75</span></div>
-                  <h4>確定済み銘柄の成績</h4>
-                  <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>10BD / 目標 20.0%</dd></div>
-                    <div><dt>件数</dt><dd>14</dd></div>
-                    <div><dt>平均</dt><dd><span class="pos">+22.1%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="neg">-2.1%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">28.6%</span></dd></div>
-                    <div><dt>Lift</dt><dd>9.16</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+235.2%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="neg">-16.1%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>1</dd></div>
-                  </dl>
-                  <h4>未確定ウォッチリストの現在成績</h4>
-                  <dl class="metrics">
-                    <div><dt>件数</dt><dd>1/1</dd></div>
-                    <div><dt>平均</dt><dd><span class="pos">+2.6%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="pos">+2.6%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">100.0%</span></dd></div>
-                    <div><dt>+10%</dt><dd>0</dd></div>
-                    <div><dt>+20%</dt><dd>0</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+2.6%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="pos">+2.6%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>0</dd></div>
-                  </dl>
-                </section>
-                <section>
-                  <h3>条件説明</h3>
-                  <ul class="condition-list">
-                    <li><code>bb80</code><span>BB位置 &gt;= 80%</span></li><li><code>vol30</code><span>出来高 &gt;= 20日平均x3.0</span></li><li><code>macdgc</code><span>MACD GC 3日以内</span></li><li><code>pre_down3</code><span>直近3日連続下落後</span></li><li><code>body2</code><span>陽線実体 &gt;= 2.0%</span></li><li><code>stoch75</code><span>Stoch &gt;= 75</span></li>
-                  </ul>
-                </section>
-              </div>
-              <h3>確定済み上位</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>評価値</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-<th>40BD</th>
-</tr></thead><tbody>
-<tr>
-<td>2026/04/13</td>
-<td><span class="symbol">6217</span></td>
-<td>津田駒工業</td>
-<td><span class="pos">+235.2%</span></td>
-<td><span class="pos">+76.2%</span></td>
-<td><span class="pos">+235.2%</span></td>
-<td><span class="pos">+267.6%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/03/26</td>
-<td><span class="symbol">4840</span></td>
-<td>トライアイズ</td>
-<td><span class="pos">+72.5%</span></td>
-<td><span class="pos">+90.2%</span></td>
-<td><span class="pos">+72.5%</span></td>
-<td><span class="pos">+80.8%</span></td>
-<td><span class="pos">+60.0%</span></td>
-</tr>
-<tr>
-<td>2026/03/23</td>
-<td><span class="symbol">7066</span></td>
-<td>ピアズ</td>
-<td><span class="pos">+38.0%</span></td>
-<td><span class="pos">+10.1%</span></td>
-<td><span class="pos">+38.0%</span></td>
-<td><span class="pos">+13.0%</span></td>
-<td><span class="pos">+1.8%</span></td>
-</tr>
-<tr>
-<td>2026/04/16</td>
-<td><span class="symbol">7162</span></td>
-<td>アストマックス</td>
-<td><span class="pos">+19.7%</span></td>
-<td><span class="neg">-8.0%</span></td>
-<td><span class="pos">+19.7%</span></td>
-<td><span class="pos">+25.7%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/13</td>
-<td><span class="symbol">8127</span></td>
-<td>ヤマトインターナショナル</td>
-<td><span class="flat">+0.0%</span></td>
-<td><span class="pos">+6.6%</span></td>
-<td><span class="flat">+0.0%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/27</td>
-<td><span class="symbol">9368</span></td>
-<td>キムラユニティー</td>
-<td><span class="neg">-1.0%</span></td>
-<td><span class="neg">-0.4%</span></td>
-<td><span class="neg">-1.0%</span></td>
-<td><span class="neg">-3.4%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/03/24</td>
-<td><span class="symbol">6836</span></td>
-<td>ぷらっとホーム</td>
-<td><span class="neg">-1.7%</span></td>
-<td><span class="pos">+8.9%</span></td>
-<td><span class="neg">-1.7%</span></td>
-<td><span class="neg">-0.3%</span></td>
-<td><span class="neg">-1.5%</span></td>
-</tr>
-<tr>
-<td>2026/05/07</td>
-<td><span class="symbol">4331</span></td>
-<td>テイクアンドギヴ・ニーズ</td>
-<td><span class="neg">-2.5%</span></td>
-<td><span class="neg">-2.3%</span></td>
-<td><span class="neg">-2.5%</span></td>
-<td><span class="neg">-5.2%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/18</td>
-<td><span class="symbol">8769</span></td>
-<td>アドバンテッジリスクマネジメント</td>
-<td><span class="neg">-2.6%</span></td>
-<td><span class="neg">-2.8%</span></td>
-<td><span class="neg">-2.6%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/03/24</td>
-<td><span class="symbol">9235</span></td>
-<td>売れるネット広告社グループ</td>
-<td><span class="neg">-6.7%</span></td>
-<td><span class="pos">+2.0%</span></td>
-<td><span class="neg">-6.7%</span></td>
-<td><span class="neg">-3.9%</span></td>
-<td><span class="neg">-3.8%</span></td>
-</tr>
-</tbody></table>
-              <h3>未確定ウォッチ</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>経過</th>
-<th>現在騰落</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-</tr></thead><tbody>
-<tr>
-<td>2026/06/05</td>
-<td><span class="symbol">2936</span></td>
-<td>ベースフード</td>
-<td>1</td>
-<td><span class="pos">+2.6%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-</tbody></table>
-            </details>
-
-            <details class="candidate-detail" open>
-              <summary>
-                <span>Mega20 雲上モメンタム</span>
-                <span class="badge good">有望: 継続監視</span>
-              </summary>
-              <div class="detail-grid">
-                <section>
-                  <h3>条件と成績</h3>
-                  <p>雲上の強い買い戻しを20営業日で検証する参考候補。</p>
-                  <div class="chips"><span class="chip" title="一目: close &gt; 雲上限">ich_cloud_above</span><span class="chip" title="出来高 &gt;= 20日平均x2.0">vol20</span><span class="chip" title="Stoch &gt;= 75">stoch75</span><span class="chip" title="RCI26 &lt;= -50">rci26_os</span></div>
-                  <h4>確定済み銘柄の成績</h4>
-                  <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>20BD / 目標 30.0%</dd></div>
-                    <div><dt>件数</dt><dd>8</dd></div>
-                    <div><dt>平均</dt><dd><span class="pos">+7.1%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="pos">+12.2%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">75.0%</span></dd></div>
-                    <div><dt>Lift</dt><dd>17.22</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+67.3%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="neg">-48.2%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>2</dd></div>
-                  </dl>
-                  <h4>未確定ウォッチリストの現在成績</h4>
-                  <dl class="metrics">
-                    <div><dt>件数</dt><dd>10/10</dd></div>
-                    <div><dt>平均</dt><dd><span class="pos">+7.1%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="pos">+6.3%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">60.0%</span></dd></div>
-                    <div><dt>+10%</dt><dd>2</dd></div>
-                    <div><dt>+20%</dt><dd>1</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+61.5%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="neg">-19.5%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>1</dd></div>
-                  </dl>
-                </section>
-                <section>
-                  <h3>条件説明</h3>
-                  <ul class="condition-list">
-                    <li><code>ich_cloud_above</code><span>一目: close &gt; 雲上限</span></li><li><code>vol20</code><span>出来高 &gt;= 20日平均x2.0</span></li><li><code>stoch75</code><span>Stoch &gt;= 75</span></li><li><code>rci26_os</code><span>RCI26 &lt;= -50</span></li>
-                  </ul>
-                </section>
-              </div>
-              <h3>確定済み上位</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>評価値</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-<th>40BD</th>
-</tr></thead><tbody>
-<tr>
-<td>2026/05/08</td>
-<td><span class="symbol">6656</span></td>
-<td>インスペック</td>
-<td><span class="pos">+67.3%</span></td>
-<td><span class="neg">-17.8%</span></td>
-<td><span class="neg">-9.8%</span></td>
-<td><span class="pos">+67.3%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/27</td>
-<td><span class="symbol">6768</span></td>
-<td>タムラ製作所</td>
-<td><span class="pos">+34.8%</span></td>
-<td><span class="pos">+16.6%</span></td>
-<td><span class="pos">+16.0%</span></td>
-<td><span class="pos">+34.8%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/07</td>
-<td><span class="symbol">6962</span></td>
-<td>大真空</td>
-<td><span class="pos">+22.8%</span></td>
-<td><span class="pos">+0.3%</span></td>
-<td><span class="neg">-2.3%</span></td>
-<td><span class="pos">+22.8%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/27</td>
-<td><span class="symbol">7868</span></td>
-<td>広済堂ホールディングス</td>
-<td><span class="pos">+12.3%</span></td>
-<td><span class="pos">+22.5%</span></td>
-<td><span class="pos">+19.9%</span></td>
-<td><span class="pos">+12.3%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/30</td>
-<td><span class="symbol">6472</span></td>
-<td>ＮＴＮ</td>
-<td><span class="pos">+12.1%</span></td>
-<td><span class="pos">+15.1%</span></td>
-<td><span class="pos">+2.2%</span></td>
-<td><span class="pos">+12.1%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/28</td>
-<td><span class="symbol">8609</span></td>
-<td>岡三証券グループ</td>
-<td><span class="pos">+1.4%</span></td>
-<td><span class="neg">-3.4%</span></td>
-<td><span class="neg">-1.1%</span></td>
-<td><span class="pos">+1.4%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/07</td>
-<td><span class="symbol">6262</span></td>
-<td>ＰＥＧＡＳＵＳ</td>
-<td><span class="neg">-45.5%</span></td>
-<td><span class="neg">-20.7%</span></td>
-<td><span class="neg">-35.8%</span></td>
-<td><span class="neg">-45.5%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/08</td>
-<td><span class="symbol">4169</span></td>
-<td>ＥＮＥＣＨＡＮＧＥ</td>
-<td><span class="neg">-48.2%</span></td>
-<td><span class="neg">-23.8%</span></td>
-<td><span class="neg">-40.2%</span></td>
-<td><span class="neg">-48.2%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-</tbody></table>
-              <h3>未確定ウォッチ</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>経過</th>
-<th>現在騰落</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-</tr></thead><tbody>
-<tr>
-<td>2026/05/29</td>
-<td><span class="symbol">6656</span></td>
-<td>インスペック</td>
-<td>8</td>
-<td><span class="pos">+61.5%</span></td>
-<td><span class="pos">+61.5%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/21</td>
-<td><span class="symbol">6633</span></td>
-<td>ＣＧＳホールディングス</td>
-<td>16</td>
-<td><span class="neg">-8.1%</span></td>
-<td><span class="neg">-8.4%</span></td>
-<td><span class="neg">-10.3%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/20</td>
-<td><span class="symbol">7213</span></td>
-<td>レシップホールディングス</td>
-<td>17</td>
-<td><span class="pos">+6.1%</span></td>
-<td><span class="pos">+7.0%</span></td>
-<td><span class="pos">+5.2%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/19</td>
-<td><span class="symbol">6958</span></td>
-<td>日本シイエムケイ</td>
-<td>18</td>
-<td><span class="pos">+17.9%</span></td>
-<td><span class="pos">+9.2%</span></td>
-<td><span class="pos">+8.4%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/19</td>
-<td><span class="symbol">5363</span></td>
-<td>東京窯業</td>
-<td>18</td>
-<td><span class="pos">+6.7%</span></td>
-<td><span class="pos">+2.1%</span></td>
-<td><span class="pos">+4.6%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/15</td>
-<td><span class="symbol">5884</span></td>
-<td>クラダシ</td>
-<td>22</td>
-<td><span class="pos">+7.5%</span></td>
-<td><span class="neg">-4.4%</span></td>
-<td><span class="pos">+6.3%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/15</td>
-<td><span class="symbol">6176</span></td>
-<td>ブランジスタ</td>
-<td>22</td>
-<td><span class="neg">-5.2%</span></td>
-<td><span class="pos">+3.7%</span></td>
-<td><span class="neg">-1.2%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/13</td>
-<td><span class="symbol">4241</span></td>
-<td>アテクト</td>
-<td>24</td>
-<td><span class="neg">-19.5%</span></td>
-<td><span class="neg">-24.9%</span></td>
+<td>2026/04/01</td>
+<td><span class="symbol">6664</span></td>
+<td>オプトエレクトロニクス</td>
+<td><span class="neg">-7.8%</span></td>
+<td><span class="neg">-7.8%</span></td>
+<td><span class="neg">-8.2%</span></td>
+<td><span class="neg">-15.0%</span></td>
 <td><span class="neg">-18.3%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/11</td>
-<td><span class="symbol">7213</span></td>
-<td>レシップホールディングス</td>
-<td>26</td>
-<td><span class="pos">+6.5%</span></td>
-<td><span class="neg">-2.0%</span></td>
-<td><span class="pos">+11.7%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/11</td>
-<td><span class="symbol">7412</span></td>
-<td>アトム</td>
-<td>26</td>
-<td><span class="neg">-2.7%</span></td>
-<td><span class="neg">-1.3%</span></td>
-<td><span class="flat">+0.0%</span></td>
-<td><span class="muted">--</span></td>
 </tr>
 </tbody></table>
-            </details>
-
-            <details class="candidate-detail">
-              <summary>
-                <span>Mega20 出来高売られすぎ反転</span>
-                <span class="badge warn">注意: 下振れ多め</span>
-              </summary>
-              <div class="detail-grid">
-                <section>
-                  <h3>条件と成績</h3>
-                  <p>売られすぎ圏から出来高を伴ってギャップ反転した外れ値狙い。</p>
-                  <div class="chips"><span class="chip" title="出来高 &gt;= 20日平均x3.0">vol30</span><span class="chip" title="CCI &lt;= -100">cci_os</span><span class="chip" title="ギャップアップ">gap_up</span></div>
-                  <h4>確定済み銘柄の成績</h4>
-                  <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>20BD / 目標 50.0%</dd></div>
-                    <div><dt>件数</dt><dd>6</dd></div>
-                    <div><dt>平均</dt><dd><span class="pos">+46.8%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="pos">+0.5%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">50.0%</span></dd></div>
-                    <div><dt>Lift</dt><dd>19.42</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+284.2%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="neg">-19.5%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>2</dd></div>
-                  </dl>
-                  <h4>未確定ウォッチリストの現在成績</h4>
-                  <dl class="metrics">
-                    <div><dt>件数</dt><dd>5/5</dd></div>
-                    <div><dt>平均</dt><dd><span class="neg">-3.6%</span></dd></div>
-                    <div><dt>中央値</dt><dd><span class="neg">-1.9%</span></dd></div>
-                    <div><dt>勝率</dt><dd><span class="pos">20.0%</span></dd></div>
-                    <div><dt>+10%</dt><dd>1</dd></div>
-                    <div><dt>+20%</dt><dd>0</dd></div>
-                    <div><dt>最大</dt><dd><span class="pos">+12.0%</span></dd></div>
-                    <div><dt>最小</dt><dd><span class="neg">-23.1%</span></dd></div>
-                    <div><dt>&lt;=-10%</dt><dd>1</dd></div>
-                  </dl>
-                </section>
-                <section>
-                  <h3>条件説明</h3>
-                  <ul class="condition-list">
-                    <li><code>vol30</code><span>出来高 &gt;= 20日平均x3.0</span></li><li><code>cci_os</code><span>CCI &lt;= -100</span></li><li><code>gap_up</code><span>ギャップアップ</span></li>
-                  </ul>
-                </section>
-              </div>
-              <h3>確定済み上位</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>評価値</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-<th>40BD</th>
-</tr></thead><tbody>
-<tr>
-<td>2026/04/28</td>
-<td><span class="symbol">9256</span></td>
-<td>サクシード</td>
-<td><span class="pos">+284.2%</span></td>
-<td><span class="pos">+8.8%</span></td>
-<td><span class="pos">+150.0%</span></td>
-<td><span class="pos">+284.2%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/03/24</td>
-<td><span class="symbol">6444</span></td>
-<td>サンデン</td>
-<td><span class="pos">+25.3%</span></td>
-<td><span class="neg">-0.7%</span></td>
-<td><span class="pos">+10.3%</span></td>
-<td><span class="pos">+25.3%</span></td>
-<td><span class="pos">+13.0%</span></td>
-</tr>
-<tr>
-<td>2026/05/07</td>
-<td><span class="symbol">2345</span></td>
-<td>ＨＯＤＬ１</td>
-<td><span class="pos">+1.0%</span></td>
-<td><span class="pos">+16.3%</span></td>
-<td><span class="pos">+15.3%</span></td>
-<td><span class="pos">+1.0%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/04/02</td>
-<td><span class="symbol">9348</span></td>
-<td>ｉｓｐａｃｅ</td>
-<td><span class="flat">+0.0%</span></td>
-<td><span class="neg">-2.8%</span></td>
-<td><span class="pos">+4.0%</span></td>
-<td><span class="flat">+0.0%</span></td>
-<td><span class="pos">+24.9%</span></td>
-</tr>
-<tr>
-<td>2026/03/05</td>
-<td><span class="symbol">9237</span></td>
-<td>笑美面</td>
-<td><span class="neg">-10.2%</span></td>
-<td><span class="pos">+1.1%</span></td>
-<td><span class="neg">-12.4%</span></td>
-<td><span class="neg">-10.2%</span></td>
-<td><span class="neg">-15.4%</span></td>
-</tr>
-<tr>
-<td>2026/03/18</td>
-<td><span class="symbol">477A</span></td>
-<td>スタートライン</td>
-<td><span class="neg">-19.5%</span></td>
-<td><span class="neg">-15.1%</span></td>
-<td><span class="neg">-20.5%</span></td>
-<td><span class="neg">-19.5%</span></td>
-<td><span class="neg">-7.5%</span></td>
-</tr>
-</tbody></table>
-              <h3>未確定ウォッチ</h3>
-              <table class="signals">
-<thead><tr>
-<th>日付</th>
-<th>銘柄</th>
-<th>社名</th>
-<th>経過</th>
-<th>現在騰落</th>
-<th>5BD</th>
-<th>10BD</th>
-<th>20BD</th>
-</tr></thead><tbody>
-<tr>
-<td>2026/05/29</td>
-<td><span class="symbol">9656</span></td>
-<td>グリーンランドリゾート</td>
-<td>8</td>
-<td><span class="neg">-0.3%</span></td>
-<td><span class="neg">-0.3%</span></td>
-<td><span class="muted">--</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/18</td>
-<td><span class="symbol">3773</span></td>
-<td>アドバンスト・メディア</td>
-<td>19</td>
-<td><span class="pos">+12.0%</span></td>
-<td><span class="pos">+2.2%</span></td>
-<td><span class="pos">+11.8%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/15</td>
-<td><span class="symbol">3825</span></td>
-<td>リミックスポイント</td>
-<td>22</td>
-<td><span class="neg">-23.1%</span></td>
-<td><span class="pos">+6.3%</span></td>
-<td><span class="neg">-12.0%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/14</td>
-<td><span class="symbol">7992</span></td>
-<td>セーラー万年筆</td>
-<td>23</td>
-<td><span class="neg">-1.9%</span></td>
-<td><span class="pos">+0.9%</span></td>
-<td><span class="flat">+0.0%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-<tr>
-<td>2026/05/14</td>
-<td><span class="symbol">8007</span></td>
-<td>高島</td>
-<td>23</td>
-<td><span class="neg">-4.8%</span></td>
-<td><span class="neg">-4.1%</span></td>
-<td><span class="neg">-1.3%</span></td>
-<td><span class="muted">--</span></td>
-</tr>
-</tbody></table>
+              <h3>未確定ウォッチ全件</h3>
+              <p class="empty">該当なし</p>
             </details>
 
             <details class="candidate-detail" open>
@@ -2195,7 +1337,7 @@
                   <div class="chips"><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="BB位置 &lt;= 20%">bb_lower</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></div>
                   <h4>確定済み銘柄の成績</h4>
                   <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>40BD / 目標 30.0%</dd></div>
+                    <div><dt>評価軸</dt><dd>40BD / 目標 +30%</dd></div>
                     <div><dt>件数</dt><dd>12</dd></div>
                     <div><dt>平均</dt><dd><span class="pos">+32.2%</span></dd></div>
                     <div><dt>中央値</dt><dd><span class="pos">+12.2%</span></dd></div>
@@ -2225,7 +1367,7 @@
                   </ul>
                 </section>
               </div>
-              <h3>確定済み上位</h3>
+              <h3>確定済み全件</h3>
               <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -2337,8 +1479,28 @@
 <td><span class="neg">-8.8%</span></td>
 <td><span class="neg">-10.6%</span></td>
 </tr>
+<tr>
+<td>2026/03/05</td>
+<td><span class="symbol">7150</span></td>
+<td>島根銀行</td>
+<td><span class="neg">-10.8%</span></td>
+<td><span class="neg">-5.5%</span></td>
+<td><span class="neg">-9.1%</span></td>
+<td><span class="neg">-9.8%</span></td>
+<td><span class="neg">-10.8%</span></td>
+</tr>
+<tr>
+<td>2026/03/18</td>
+<td><span class="symbol">7777</span></td>
+<td>スリー・ディー・マトリックス</td>
+<td><span class="neg">-11.5%</span></td>
+<td><span class="neg">-15.0%</span></td>
+<td><span class="neg">-14.7%</span></td>
+<td><span class="pos">+5.5%</span></td>
+<td><span class="neg">-11.5%</span></td>
+</tr>
 </tbody></table>
-              <h3>未確定ウォッチ</h3>
+              <h3>未確定ウォッチ全件</h3>
               <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -2354,7 +1516,7 @@
 <td>2026/06/01</td>
 <td><span class="symbol">6085</span></td>
 <td>アーキテクツ・スタジオ・ジャパン</td>
-<td>5</td>
+<td>7</td>
 <td><span class="neg">-12.8%</span></td>
 <td><span class="muted">--</span></td>
 <td><span class="muted">--</span></td>
@@ -2364,7 +1526,7 @@
 <td>2026/05/27</td>
 <td><span class="symbol">3350</span></td>
 <td>メタプラネット</td>
-<td>10</td>
+<td>12</td>
 <td><span class="neg">-19.0%</span></td>
 <td><span class="neg">-12.4%</span></td>
 <td><span class="muted">--</span></td>
@@ -2374,7 +1536,7 @@
 <td>2026/05/22</td>
 <td><span class="symbol">5162</span></td>
 <td>朝日ラバー</td>
-<td>15</td>
+<td>17</td>
 <td><span class="pos">+16.5%</span></td>
 <td><span class="pos">+6.8%</span></td>
 <td><span class="pos">+16.5%</span></td>
@@ -2384,7 +1546,7 @@
 <td>2026/05/21</td>
 <td><span class="symbol">7779</span></td>
 <td>ＣＹＢＥＲＤＹＮＥ</td>
-<td>16</td>
+<td>18</td>
 <td><span class="pos">+26.3%</span></td>
 <td><span class="pos">+4.4%</span></td>
 <td><span class="pos">+24.1%</span></td>
@@ -2394,7 +1556,7 @@
 <td>2026/05/19</td>
 <td><span class="symbol">5535</span></td>
 <td>ミガロホールディングス</td>
-<td>18</td>
+<td>20</td>
 <td><span class="neg">-9.0%</span></td>
 <td><span class="neg">-3.8%</span></td>
 <td><span class="neg">-10.4%</span></td>
@@ -2404,7 +1566,7 @@
 <td>2026/05/18</td>
 <td><span class="symbol">3773</span></td>
 <td>アドバンスト・メディア</td>
-<td>19</td>
+<td>21</td>
 <td><span class="pos">+12.0%</span></td>
 <td><span class="pos">+2.2%</span></td>
 <td><span class="pos">+11.8%</span></td>
@@ -2425,7 +1587,7 @@
                   <div class="chips"><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="CCI &lt;= -100">cci_os</span><span class="chip" title="下ヒゲ優位">lower_wick50</span><span class="chip" title="一目: close &gt; 26日前終値">ich_chikou</span></div>
                   <h4>確定済み銘柄の成績</h4>
                   <dl class="metrics">
-                    <div><dt>評価軸</dt><dd>40BD / 目標 50.0%</dd></div>
+                    <div><dt>評価軸</dt><dd>40BD / 目標 +50%</dd></div>
                     <div><dt>件数</dt><dd>5</dd></div>
                     <div><dt>平均</dt><dd><span class="pos">+21.0%</span></dd></div>
                     <div><dt>中央値</dt><dd><span class="pos">+13.0%</span></dd></div>
@@ -2455,7 +1617,7 @@
                   </ul>
                 </section>
               </div>
-              <h3>確定済み上位</h3>
+              <h3>確定済み全件</h3>
               <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -2518,7 +1680,7 @@
 <td><span class="neg">-17.6%</span></td>
 </tr>
 </tbody></table>
-              <h3>未確定ウォッチ</h3>
+              <h3>未確定ウォッチ全件</h3>
               <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -2534,7 +1696,7 @@
 <td>2026/05/18</td>
 <td><span class="symbol">196A</span></td>
 <td>ＭＦＳ</td>
-<td>19</td>
+<td>21</td>
 <td><span class="pos">+17.1%</span></td>
 <td><span class="neg">-2.0%</span></td>
 <td><span class="pos">+4.8%</span></td>
@@ -2544,7 +1706,7 @@
 <td>2026/04/30</td>
 <td><span class="symbol">4167</span></td>
 <td>ココペリ</td>
-<td>37</td>
+<td>39</td>
 <td><span class="neg">-2.4%</span></td>
 <td><span class="pos">+4.1%</span></td>
 <td><span class="pos">+2.1%</span></td>

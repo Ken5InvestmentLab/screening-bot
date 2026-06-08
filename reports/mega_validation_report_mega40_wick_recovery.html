@@ -14,6 +14,9 @@
       --line: #d9e0ea;
       --navy: #102033;
       --green: #16815c;
+      --green-bg: #e7f6ef;
+      --amber: #a35a00;
+      --amber-bg: #fff2d7;
       --red: #b42318;
       --chip: #eef3fb;
     }
@@ -71,6 +74,24 @@
       border-radius: 999px; background: var(--chip); color: #27415f;
       font-family: "Consolas", "Menlo", monospace; font-size: 12px;
     }
+    .star-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 42px; min-height: 26px; padding: 3px 8px;
+      border-radius: 999px; font-weight: 700; font-size: 12px; white-space: nowrap;
+    }
+    .star-badge.high { color: var(--green); background: var(--green-bg); }
+    .star-badge.mid { color: var(--amber); background: var(--amber-bg); }
+    .star-badge.low { color: var(--muted); background: #eef0f3; }
+    .mode-badges {
+      display: inline-flex; justify-content: flex-end; gap: 4px;
+      flex-wrap: wrap; max-width: 260px;
+    }
+    .mode-badge {
+      display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px;
+      border-radius: 999px; background: #eef5ff; color: #1849a9;
+      font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap;
+    }
+    .mode-badge.none { background: #eef0f3; color: var(--muted); }
     .cards, .metrics {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
     }
@@ -82,6 +103,7 @@
     .metric .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
     .metric .value { font-weight: 700; font-size: 18px; }
     table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    .signals { min-width: 980px; }
     th, td {
       border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: right;
       vertical-align: top; white-space: nowrap;
@@ -94,6 +116,13 @@
     .pos { color: var(--green); font-weight: 700; }
     .neg { color: var(--red); font-weight: 700; }
     .flat, .muted { color: var(--muted); }
+    .perf-cell {
+      display: inline-grid; justify-items: end; gap: 1px;
+      min-width: 62px; line-height: 1.25;
+    }
+    .price-sub {
+      color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap;
+    }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
     .action-buttons { display: inline-flex; justify-content: flex-end; gap: 6px; white-space: nowrap; }
     .action-btn {
@@ -127,9 +156,12 @@
         text-align: right; white-space: normal;
       }
       .signals td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; }
+      .signals td > .mode-badges { justify-content: flex-end; }
+      .perf-cell { justify-items: end; }
       .action-buttons { justify-content: flex-end; flex-wrap: wrap; }
       .fundamental-detail { min-width: 0; max-width: 100%; }
       table { min-width: 680px; }
+      .signals { min-width: 0; }
     }
     </style>
 </head>
@@ -151,7 +183,7 @@
 
   <header>
     <h1>Mega40 下ヒゲ回復</h1>
-    <p>生成日時: 2026-06-08 12:55:51 JST</p>
+    <p>生成日時: 2026-06-08 14:06:12 JST</p>
     <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
   </header>
   <main>
@@ -159,7 +191,7 @@
       <h2>成績サマリー（過去1年分）</h2>
       <p class="note">40営業日後 / 目標 +50%。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
       <div class="chips"><span class="chip" title="20日高値から-15%以上">pre_decline15</span><span class="chip" title="CCI &lt;= -100">cci_os</span><span class="chip" title="下ヒゲ優位">lower_wick50</span><span class="chip" title="一目: close &gt; 26日前終値">ich_chikou</span></div>
-      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">5</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+21.0%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">60.0%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">2</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">2</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="pos">+7.4%</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="pos">50.0%</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">1</div></div></div></div>
+      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">5</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+21.0%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">60.0%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">2</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">2</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="pos">+1.8%</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="pos">50.0%</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">1</div></div></div></div>
     </section>
 
     <section id="confirmed" class="panel">
@@ -167,8 +199,10 @@
       <table class="signals">
 <thead><tr>
 <th>日付</th>
+<th>★</th>
 <th>銘柄</th>
 <th>社名</th>
+<th>他モード</th>
 <th>評価値</th>
 <th>5営業日後</th>
 <th>10営業日後</th>
@@ -178,57 +212,67 @@
 </tr></thead><tbody>
 <tr>
 <td data-label="日付">2026/03/09</td>
+<td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
 <td data-label="銘柄"><span class="symbol">5381</span></td>
 <td data-label="社名">Mipox</td>
-<td data-label="評価値"><span class="pos">+63.4%</span></td>
-<td data-label="5営業日後"><span class="pos">+49.3%</span></td>
-<td data-label="10営業日後"><span class="pos">+23.4%</span></td>
-<td data-label="20営業日後"><span class="pos">+26.8%</span></td>
-<td data-label="40営業日後"><span class="pos">+63.4%</span></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+63.4%</span><small class="price-sub">1,214.1円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+49.3%</span><small class="price-sub">1,109.3円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+23.4%</span><small class="price-sub">916.9円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="pos">+26.8%</span><small class="price-sub">942.1円</small></span></td>
+<td data-label="40営業日後"><span class="perf-cell"><span class="pos">+63.4%</span><small class="price-sub">1,214.1円</small></span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507234188414160916" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5381" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/31</td>
+<td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
 <td data-label="銘柄"><span class="symbol">6336</span></td>
 <td data-label="社名">石井表記</td>
-<td data-label="評価値"><span class="pos">+52.7%</span></td>
-<td data-label="5営業日後"><span class="pos">+9.9%</span></td>
-<td data-label="10営業日後"><span class="pos">+19.8%</span></td>
-<td data-label="20営業日後"><span class="pos">+32.5%</span></td>
-<td data-label="40営業日後"><span class="pos">+52.7%</span></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+52.7%</span><small class="price-sub">1,298円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+9.9%</span><small class="price-sub">934.1円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+19.8%</span><small class="price-sub">1,018.3円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="pos">+32.5%</span><small class="price-sub">1,126.2円</small></span></td>
+<td data-label="40営業日後"><span class="perf-cell"><span class="pos">+52.7%</span><small class="price-sub">1,298円</small></span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6336" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/24</td>
+<td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
 <td data-label="銘柄"><span class="symbol">6444</span></td>
 <td data-label="社名">サンデン</td>
-<td data-label="評価値"><span class="pos">+13.0%</span></td>
-<td data-label="5営業日後"><span class="neg">-0.7%</span></td>
-<td data-label="10営業日後"><span class="pos">+10.3%</span></td>
-<td data-label="20営業日後"><span class="pos">+25.3%</span></td>
-<td data-label="40営業日後"><span class="pos">+13.0%</span></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+13.0%</span><small class="price-sub">165円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="neg">-0.7%</span><small class="price-sub">145円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+10.3%</span><small class="price-sub">161円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="pos">+25.3%</span><small class="price-sub">182.9円</small></span></td>
+<td data-label="40営業日後"><span class="perf-cell"><span class="pos">+13.0%</span><small class="price-sub">165円</small></span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6444" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/05</td>
+<td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
 <td data-label="銘柄"><span class="symbol">7205</span></td>
 <td data-label="社名">日野自動車</td>
-<td data-label="評価値"><span class="neg">-6.7%</span></td>
-<td data-label="5営業日後"><span class="neg">-5.1%</span></td>
-<td data-label="10営業日後"><span class="neg">-4.8%</span></td>
-<td data-label="20営業日後"><span class="neg">-6.7%</span></td>
-<td data-label="40営業日後"><span class="neg">-6.7%</span></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="neg">-6.7%</span><small class="price-sub">387.2円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="neg">-5.1%</span><small class="price-sub">393.8円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="neg">-4.8%</span><small class="price-sub">395.1円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="neg">-6.7%</span><small class="price-sub">387.2円</small></span></td>
+<td data-label="40営業日後"><span class="perf-cell"><span class="neg">-6.7%</span><small class="price-sub">387.2円</small></span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7205" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/03</td>
+<td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
 <td data-label="銘柄"><span class="symbol">3358</span></td>
 <td data-label="社名">Ｔｒａｉｌｈｅａｄ　Ｇｌｏｂａｌ　Ｈｏｌｄｉｎｇｓ</td>
-<td data-label="評価値"><span class="neg">-17.6%</span></td>
-<td data-label="5営業日後"><span class="neg">-5.6%</span></td>
-<td data-label="10営業日後"><span class="neg">-5.6%</span></td>
-<td data-label="20営業日後"><span class="neg">-5.6%</span></td>
-<td data-label="40営業日後"><span class="neg">-17.6%</span></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="neg">-17.6%</span><small class="price-sub">89円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="neg">-5.6%</span><small class="price-sub">102円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="neg">-5.6%</span><small class="price-sub">102円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="neg">-5.6%</span><small class="price-sub">102円</small></span></td>
+<td data-label="40営業日後"><span class="perf-cell"><span class="neg">-17.6%</span><small class="price-sub">89円</small></span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1504700553580642456" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3358" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 </tbody></table>
@@ -239,8 +283,10 @@
       <table class="signals">
 <thead><tr>
 <th>日付</th>
+<th>★</th>
 <th>銘柄</th>
 <th>社名</th>
+<th>他モード</th>
 <th>経過</th>
 <th>現在騰落</th>
 <th>5営業日後</th>
@@ -250,24 +296,28 @@
 </tr></thead><tbody>
 <tr>
 <td data-label="日付">2026/05/18</td>
+<td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
 <td data-label="銘柄"><span class="symbol">196A</span></td>
 <td data-label="社名">ＭＦＳ</td>
+<td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="経過">21</td>
-<td data-label="現在騰落"><span class="pos">+17.1%</span></td>
-<td data-label="5営業日後"><span class="neg">-2.0%</span></td>
-<td data-label="10営業日後"><span class="pos">+4.8%</span></td>
+<td data-label="現在騰落"><span class="perf-cell"><span class="pos">+10.8%</span><small class="price-sub">278円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="neg">-2.0%</span><small class="price-sub">246円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+4.8%</span><small class="price-sub">263円</small></span></td>
 <td data-label="20営業日後"><span class="muted">--</span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1505825948484898846" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:196A" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/30</td>
+<td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
 <td data-label="銘柄"><span class="symbol">4167</span></td>
 <td data-label="社名">ココペリ</td>
+<td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="経過">39</td>
-<td data-label="現在騰落"><span class="neg">-2.4%</span></td>
-<td data-label="5営業日後"><span class="pos">+4.1%</span></td>
-<td data-label="10営業日後"><span class="pos">+2.1%</span></td>
-<td data-label="20営業日後"><span class="neg">-2.7%</span></td>
+<td data-label="現在騰落"><span class="perf-cell"><span class="neg">-7.2%</span><small class="price-sub">270円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+4.1%</span><small class="price-sub">302.9円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+2.1%</span><small class="price-sub">297.1円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="neg">-2.7%</span><small class="price-sub">283.1円</small></span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4167" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 </tbody></table>

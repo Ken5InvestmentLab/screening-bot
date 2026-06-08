@@ -215,6 +215,15 @@ def num(value) -> str:
     return f"{float(value):.2f}"
 
 
+def yen(value) -> str:
+    if not is_finite(value):
+        return "--"
+    price = float(value)
+    if abs(price - round(price)) < 0.05:
+        return f"{price:,.0f}円"
+    return f"{price:,.1f}円"
+
+
 def target_label(candidate: dict) -> str:
     return candidate.get("target_label") or pct(candidate["target"], signed=False)
 
@@ -1010,6 +1019,66 @@ def action_links_text(symbol: str, row: pd.Series) -> str:
     return " / ".join(parts)
 
 
+def row_condition_truthy(row: pd.Series, condition: str) -> bool:
+    value = row.get(condition, False)
+    try:
+        return bool(value) and not bool(pd.isna(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def row_condition_count(row: pd.Series, conditions: list[str]) -> int:
+    return sum(1 for condition in conditions if row_condition_truthy(row, condition))
+
+
+def stable_star_score(row: pd.Series) -> int:
+    return row_condition_count(row, STABLE_CONDITIONS)
+
+
+def star_score_badge(row: pd.Series) -> str:
+    score = stable_star_score(row)
+    tone = "high" if score >= 6 else "mid" if score >= 4 else "low"
+    return (
+        f'<span class="star-badge {tone}" '
+        'title="Stable ★6の判定条件を何個満たしたか">'
+        f"★{score}</span>"
+    )
+
+
+def row_matches_candidate(row: pd.Series, candidate: dict) -> bool:
+    return all(row_condition_truthy(row, condition) for condition in candidate["conditions"])
+
+
+def row_mode_matches(row: pd.Series) -> list[dict]:
+    return [candidate for candidate in CANDIDATES if row_matches_candidate(row, candidate)]
+
+
+def mode_match_badges(
+    row: pd.Series,
+    current_candidate_id: str | None = None,
+    include_empty: bool = True,
+    link: bool = False,
+) -> str:
+    matches = [
+        candidate
+        for candidate in row_mode_matches(row)
+        if candidate["id"] != current_candidate_id
+    ]
+    if not matches:
+        return '<span class="muted">なし</span>' if include_empty else ""
+
+    badges = []
+    for candidate in matches:
+        label = html_escape(candidate["label"])
+        if link:
+            badges.append(
+                f'<a class="mode-badge" href="{html_escape(mode_page_filename(candidate))}">{label}</a>'
+            )
+        else:
+            badges.append(f'<span class="mode-badge">{label}</span>')
+    return '<span class="mode-badges">' + "".join(badges) + "</span>"
+
+
 def pct_html(value, signed: bool = True) -> str:
     text = pct(value, signed=signed)
     css_class = "muted"
@@ -1022,6 +1091,26 @@ def pct_html(value, signed: bool = True) -> str:
         else:
             css_class = "flat"
     return f'<span class="{css_class}">{html_escape(text)}</span>'
+
+
+def projected_price(row: pd.Series, perf_key: str) -> float:
+    entry = row.get("entry", np.nan)
+    perf_value = row.get(perf_key, np.nan)
+    if not is_finite(entry) or not is_finite(perf_value):
+        return np.nan
+    return float(entry) * (1.0 + float(perf_value))
+
+
+def perf_with_price_html(perf_value, price_value=None) -> str:
+    perf_markup = pct_html(perf_value)
+    if not is_finite(price_value):
+        return perf_markup
+    return (
+        '<span class="perf-cell">'
+        f"{perf_markup}"
+        f'<small class="price-sub">{html_escape(yen(price_value))}</small>'
+        "</span>"
+    )
 
 
 def verdict_class(value: str) -> str:
@@ -1056,16 +1145,23 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         f'href="{html_escape(mode_page_filename(candidate))}">{html_escape(candidate["label"])}</a>'
         for candidate in CANDIDATES
     )
-    section_links = (
-        """
+    if include_mode_sections:
+        section_links = """
         <hr>
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
         <a href="#watch">未確定ウォッチ</a>
         """
-        if include_mode_sections
-        else ""
-    )
+    elif current_mode_id is None:
+        section_links = """
+        <hr>
+        <a href="#daily-detections">本日・日別検出</a>
+        <a href="#performance-summary">全体成績</a>
+        <a href="#mode-summary">モード別サマリー</a>
+        <a href="#mode-pages">モード別ページ</a>
+        """
+    else:
+        section_links = ""
     return f"""
     <details class="hamburger-menu">
       <summary aria-label="メニュー">☰</summary>
@@ -1086,6 +1182,7 @@ def mode_summary_html(
     href: str | None = None,
 ) -> str:
     link = href or f"#{anchor_id(candidate, anchor_prefix)}"
+    action_label = "詳細ページを見る" if href else "詳細を見る"
     return f"""
       <a class="mode-card {verdict_class(verdict(stats))}" href="{html_escape(link)}">
         <div class="mode-card-head">
@@ -1099,6 +1196,7 @@ def mode_summary_html(
           <span><strong>{pct_html(stats["avg"])}</strong><small>平均</small></span>
           <span><strong>{watch_stats["with_current"]}</strong><small>ウォッチ中</small></span>
         </div>
+        <span class="mode-card-action">{html_escape(action_label)} →</span>
       </a>
     """
 
@@ -1119,55 +1217,90 @@ def html_table(headers: list[str], rows: list[list[str]], table_class: str = "")
     return "\n".join(out)
 
 
-def html_signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> str:
+def html_signal_table(
+    rows: pd.DataFrame,
+    eval_days: int,
+    confirmed: bool,
+    current_candidate: dict | None = None,
+) -> str:
     perf_col = f"perf_{eval_days}bd"
     if rows.empty:
         return '<p class="empty">該当なし</p>'
 
+    show_star = current_candidate is not None and current_candidate.get("id") != "stable_s6"
+    show_overlap = current_candidate is not None
+    overlap_id = current_candidate.get("id") if current_candidate else None
+
     if confirmed:
+        headers = ["日付"]
+        if show_star:
+            headers.append("★")
+        headers.extend(["銘柄", "社名"])
+        if show_overlap:
+            headers.append("他モード")
+        headers.extend(["評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後", "操作"])
+
         table_rows = []
         for _, row in rows.iterrows():
             symbol = row.get("symbol", "")
-            table_rows.append(
+            cells = [html_escape(row.get("date", ""))]
+            if show_star:
+                cells.append(star_score_badge(row))
+            cells.extend(
                 [
-                    html_escape(row.get("date", "")),
                     f'<span class="symbol">{html_escape(symbol)}</span>',
                     html_escape(row.get("name", "")),
-                    pct_html(row.get(perf_col)),
-                    pct_html(row.get("perf_5bd")),
-                    pct_html(row.get("perf_10bd")),
-                    pct_html(row.get("perf_20bd")),
-                    pct_html(row.get("perf_40bd")),
+                ]
+            )
+            if show_overlap:
+                cells.append(mode_match_badges(row, current_candidate_id=overlap_id))
+            cells.extend(
+                [
+                    perf_with_price_html(row.get(perf_col), projected_price(row, perf_col)),
+                    perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
+                    perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
+                    perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
+                    perf_with_price_html(row.get("perf_40bd"), projected_price(row, "perf_40bd")),
                     action_buttons(symbol, row),
                 ]
             )
-        return html_table(
-            ["日付", "銘柄", "社名", "評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後", "操作"],
-            table_rows,
-            "signals",
-        )
+            table_rows.append(cells)
+        return html_table(headers, table_rows, "signals")
+
+    headers = ["日付"]
+    if show_star:
+        headers.append("★")
+    headers.extend(["銘柄", "社名"])
+    if show_overlap:
+        headers.append("他モード")
+    headers.extend(["経過", "現在騰落", "5営業日後", "10営業日後", "20営業日後", "操作"])
 
     table_rows = []
     for _, row in rows.iterrows():
         symbol = row.get("symbol", "")
-        table_rows.append(
+        cells = [html_escape(row.get("date", ""))]
+        if show_star:
+            cells.append(star_score_badge(row))
+        cells.extend(
             [
-                html_escape(row.get("date", "")),
                 f'<span class="symbol">{html_escape(symbol)}</span>',
                 html_escape(row.get("name", "")),
+            ]
+        )
+        if show_overlap:
+            cells.append(mode_match_badges(row, current_candidate_id=overlap_id))
+        cells.extend(
+            [
                 html_escape(row.get("days_elapsed", "")),
-                pct_html(row.get("cur_perf")),
-                pct_html(row.get("perf_5bd")),
-                pct_html(row.get("perf_10bd")),
-                pct_html(row.get("perf_20bd")),
+                perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
+                perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
+                perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
+                perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
                 action_buttons(symbol, row),
             ]
         )
-    return html_table(
-        ["日付", "銘柄", "社名", "経過", "現在騰落", "5営業日後", "10営業日後", "20営業日後", "操作"],
-        table_rows,
-        "signals",
-    )
+        table_rows.append(cells)
+    return html_table(headers, table_rows, "signals")
 
 
 def build_candidate_detail_sections(
@@ -1239,9 +1372,9 @@ def build_candidate_detail_sections(
                 </section>
               </div>
               <h3>確定済み全件</h3>
-              {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True)}
+              {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
               <h3>未確定ウォッチ全件</h3>
-              {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False)}
+              {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False, current_candidate=candidate)}
             </details>
             """
         )
@@ -1333,6 +1466,152 @@ def build_optional_archive_scope_html(
     """
 
 
+def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
+    title = "本日検出された銘柄一覧"
+    if frame_all.empty or "signal_dt" not in frame_all.columns:
+        return f"""
+        <section id="daily-detections" class="panel">
+          <h2>{title}</h2>
+          <p class="empty">表示できる銘柄がありません。</p>
+        </section>
+        """
+
+    rows = frame_all.copy()
+    rows["_date_key"] = pd.to_datetime(rows["signal_dt"], errors="coerce").dt.strftime("%Y-%m-%d")
+    rows = rows[rows["_date_key"].notna()].copy()
+    if rows.empty:
+        return f"""
+        <section id="daily-detections" class="panel">
+          <h2>{title}</h2>
+          <p class="empty">表示できる銘柄がありません。</p>
+        </section>
+        """
+
+    rows["_stable_score"] = rows.apply(stable_star_score, axis=1)
+    rows["_mode_count"] = rows.apply(lambda row: len(row_mode_matches(row)), axis=1)
+    rows["_cur_perf_sort"] = (
+        pd.to_numeric(rows["cur_perf"], errors="coerce").fillna(-999.0)
+        if "cur_perf" in rows.columns
+        else -999.0
+    )
+    rows = rows.sort_values(
+        ["_date_key", "_stable_score", "_mode_count", "_cur_perf_sort", "symbol"],
+        ascending=[False, False, False, False, True],
+    )
+
+    available_dates = sorted(rows["_date_key"].dropna().unique(), reverse=True)
+    today = datetime.now(JST).strftime("%Y-%m-%d")
+    default_date = today if today in available_dates else available_dates[0]
+    default_count = int((rows["_date_key"] == default_date).sum())
+    note = (
+        "初期表示は本日分です。日付を変えると過去の検出銘柄を確認できます。"
+        if default_date == today
+        else "本日分がないため、初期表示は最新の日付です。日付を変えると過去の検出銘柄を確認できます。"
+    )
+    note += " ★はStable ★6の判定条件を何個満たしたかです。"
+
+    options = "\n".join(
+        f'<option value="{html_escape(date_key)}"{ " selected" if date_key == default_date else "" }>'
+        f"{html_escape(date_key)}</option>"
+        for date_key in available_dates
+    )
+
+    headers = [
+        "日付",
+        "★",
+        "銘柄",
+        "社名",
+        "該当モード",
+        "現在騰落",
+        "5営業日後",
+        "10営業日後",
+        "20営業日後",
+        "40営業日後",
+        "操作",
+    ]
+    table_parts = ['<table class="signals daily-detections">', "<thead><tr>"]
+    table_parts.extend(f"<th>{html_escape(header)}</th>" for header in headers)
+    table_parts.append("</tr></thead><tbody>")
+    for _, row in rows.iterrows():
+        date_key = str(row.get("_date_key", ""))
+        symbol = row.get("symbol", "")
+        mode_html = mode_match_badges(row, include_empty=False, link=True)
+        if not mode_html:
+            mode_html = '<span class="mode-badge none">モード外</span>'
+        hidden_attr = "" if date_key == default_date else " hidden"
+        cells = [
+            html_escape(date_key),
+            star_score_badge(row),
+            f'<span class="symbol">{html_escape(symbol)}</span>',
+            html_escape(row.get("name", "")),
+            mode_html,
+            perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
+            perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
+            perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
+            perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
+            perf_with_price_html(row.get("perf_40bd"), projected_price(row, "perf_40bd")),
+            action_buttons(symbol, row),
+        ]
+        table_parts.append(
+            f'<tr data-detection-row data-date="{html_escape(date_key)}"{hidden_attr}>'
+        )
+        table_parts.extend(
+            f'<td data-label="{html_escape(headers[index])}">{cell}</td>'
+            for index, cell in enumerate(cells)
+        )
+        table_parts.append("</tr>")
+    table_parts.append("</tbody></table>")
+
+    return f"""
+    <section id="daily-detections" class="panel">
+      <div class="daily-head">
+        <div>
+          <h2>{title}</h2>
+          <p class="note">{html_escape(note)}</p>
+        </div>
+        <label class="filter-control" for="daily-date-filter">
+          <span>表示日</span>
+          <select id="daily-date-filter" data-default-date="{html_escape(default_date)}">
+            {options}
+          </select>
+        </label>
+      </div>
+      <p class="filter-status"><strong id="daily-visible-count">{default_count}</strong>件を表示中</p>
+      <p id="daily-empty-message" class="empty" hidden>この日付の銘柄はありません。</p>
+      {"".join(table_parts)}
+    </section>
+    """
+
+
+def daily_detection_script() -> str:
+    return """
+  <script>
+    (() => {
+      const select = document.getElementById("daily-date-filter");
+      const rows = Array.from(document.querySelectorAll("[data-detection-row]"));
+      const count = document.getElementById("daily-visible-count");
+      const empty = document.getElementById("daily-empty-message");
+      if (!select || rows.length === 0) return;
+
+      const applyFilter = () => {
+        const selectedDate = select.value || select.dataset.defaultDate;
+        let visible = 0;
+        rows.forEach((row) => {
+          const shouldShow = row.dataset.date === selectedDate;
+          row.hidden = !shouldShow;
+          if (shouldShow) visible += 1;
+        });
+        if (count) count.textContent = String(visible);
+        if (empty) empty.hidden = visible !== 0;
+      };
+
+      select.addEventListener("change", applyFilter);
+      applyFilter();
+    })();
+  </script>
+    """
+
+
 def build_html_report(
     frame_confirmed: pd.DataFrame,
     frame_all: pd.DataFrame,
@@ -1341,6 +1620,7 @@ def build_html_report(
 ) -> str:
     stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
     summary = horizon_summary(frame_confirmed)
+    daily_detection_section = daily_detection_section_html(frame_all)
 
     summary_table = html_table(
         ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
@@ -1561,6 +1841,22 @@ def build_html_report(
       margin: 0;
       color: #475467;
     }}
+    .mode-card-action {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-size: 12px;
+      font-weight: 700;
+    }}
+    .mode-card:hover .mode-card-action {{
+      background: #dceaff;
+    }}
     .mode-metrics {{
       display: grid;
       grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1607,6 +1903,38 @@ def build_html_report(
       margin-bottom: 18px;
       overflow-x: auto;
     }}
+    .daily-head {{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 10px;
+    }}
+    .daily-head h2 {{
+      margin-top: 0;
+    }}
+    .filter-control {{
+      display: grid;
+      gap: 5px;
+      min-width: 180px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }}
+    .filter-control select {{
+      min-height: 36px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+    }}
+    .filter-status {{
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }}
     h2 {{
       margin: 26px 0 12px;
       font-size: 20px;
@@ -1623,6 +1951,9 @@ def build_html_report(
       width: 100%;
       border-collapse: collapse;
       min-width: 820px;
+    }}
+    .signals {{
+      min-width: 980px;
     }}
     th, td {{
       border-bottom: 1px solid var(--line);
@@ -1663,6 +1994,19 @@ def build_html_report(
     .pos {{ color: var(--green); font-weight: 700; }}
     .neg {{ color: var(--red); font-weight: 700; }}
     .flat, .muted {{ color: var(--muted); }}
+    .perf-cell {{
+      display: inline-grid;
+      justify-items: end;
+      gap: 1px;
+      min-width: 62px;
+      line-height: 1.25;
+    }}
+    .price-sub {{
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }}
     .symbol {{
       font-family: "Consolas", "Menlo", monospace;
       font-weight: 700;
@@ -1677,6 +2021,57 @@ def build_html_report(
       font-family: "Consolas", "Menlo", monospace;
       font-size: 12px;
       white-space: nowrap;
+    }}
+    .star-badge {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      min-height: 26px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 12px;
+      white-space: nowrap;
+    }}
+    .star-badge.high {{
+      color: var(--green);
+      background: var(--green-bg);
+    }}
+    .star-badge.mid {{
+      color: var(--amber);
+      background: var(--amber-bg);
+    }}
+    .star-badge.low {{
+      color: var(--muted);
+      background: #eef0f3;
+    }}
+    .mode-badges {{
+      display: inline-flex;
+      justify-content: flex-end;
+      gap: 4px;
+      flex-wrap: wrap;
+      max-width: 260px;
+    }}
+    .mode-badge {{
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }}
+    .mode-badge.none {{
+      background: #eef0f3;
+      color: var(--muted);
+    }}
+    a.mode-badge:hover {{
+      background: #dceaff;
     }}
     .badge {{
       display: inline-flex;
@@ -1908,6 +2303,9 @@ def build_html_report(
       border-radius: 6px;
       margin-top: 12px;
     }}
+    [hidden] {{
+      display: none !important;
+    }}
     @media (max-width: 760px) {{
       header {{ padding: 22px 18px; }}
       main {{ padding: 14px; }}
@@ -1916,6 +2314,12 @@ def build_html_report(
       .card .value {{ font-size: 20px; }}
       .mode-grid {{ grid-template-columns: 1fr; }}
       .mode-metrics {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .daily-head {{
+        display: grid;
+      }}
+      .filter-control {{
+        min-width: 0;
+      }}
       .detail-grid {{ grid-template-columns: 1fr; }}
       .candidate-detail > summary {{
         align-items: flex-start;
@@ -1954,6 +2358,12 @@ def build_html_report(
         padding: 8px 10px;
         text-align: right;
         white-space: normal;
+      }}
+      .signals td > .mode-badges {{
+        justify-content: flex-end;
+      }}
+      .perf-cell {{
+        justify-items: end;
       }}
       .signals td::before {{
         content: attr(data-label);
@@ -2001,13 +2411,15 @@ def build_html_report(
       <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
     </section>
 
-    <section class="panel">
+    {daily_detection_section}
+
+    <section id="performance-summary" class="panel">
       <h2>全体成績（過去1年分）</h2>
       <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       {summary_table}
     </section>
 
-    <section class="panel">
+    <section id="mode-summary" class="panel">
       <h2>モード別サマリー</h2>
       <div class="mode-grid">
         {mode_cards}
@@ -2025,7 +2437,7 @@ def build_html_report(
       </ul>
     </section>
 
-    <section class="panel">
+    <section id="mode-pages" class="panel">
       <h2>モード別 銘柄一覧</h2>
       <p class="note">各モードの確定済み全件・未確定ウォッチ全件は、モード別ページで確認できます。</p>
       <div class="mode-link-grid">
@@ -2033,6 +2445,7 @@ def build_html_report(
       </div>
     </section>
   </main>
+  {daily_detection_script()}
 </body>
 </html>
 """
@@ -2049,6 +2462,9 @@ def mode_page_style() -> str:
       --line: #d9e0ea;
       --navy: #102033;
       --green: #16815c;
+      --green-bg: #e7f6ef;
+      --amber: #a35a00;
+      --amber-bg: #fff2d7;
       --red: #b42318;
       --chip: #eef3fb;
     }
@@ -2106,6 +2522,24 @@ def mode_page_style() -> str:
       border-radius: 999px; background: var(--chip); color: #27415f;
       font-family: "Consolas", "Menlo", monospace; font-size: 12px;
     }
+    .star-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 42px; min-height: 26px; padding: 3px 8px;
+      border-radius: 999px; font-weight: 700; font-size: 12px; white-space: nowrap;
+    }
+    .star-badge.high { color: var(--green); background: var(--green-bg); }
+    .star-badge.mid { color: var(--amber); background: var(--amber-bg); }
+    .star-badge.low { color: var(--muted); background: #eef0f3; }
+    .mode-badges {
+      display: inline-flex; justify-content: flex-end; gap: 4px;
+      flex-wrap: wrap; max-width: 260px;
+    }
+    .mode-badge {
+      display: inline-flex; align-items: center; min-height: 24px; padding: 3px 7px;
+      border-radius: 999px; background: #eef5ff; color: #1849a9;
+      font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap;
+    }
+    .mode-badge.none { background: #eef0f3; color: var(--muted); }
     .cards, .metrics {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
     }
@@ -2117,6 +2551,7 @@ def mode_page_style() -> str:
     .metric .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
     .metric .value { font-weight: 700; font-size: 18px; }
     table { width: 100%; border-collapse: collapse; min-width: 820px; }
+    .signals { min-width: 980px; }
     th, td {
       border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: right;
       vertical-align: top; white-space: nowrap;
@@ -2129,6 +2564,13 @@ def mode_page_style() -> str:
     .pos { color: var(--green); font-weight: 700; }
     .neg { color: var(--red); font-weight: 700; }
     .flat, .muted { color: var(--muted); }
+    .perf-cell {
+      display: inline-grid; justify-items: end; gap: 1px;
+      min-width: 62px; line-height: 1.25;
+    }
+    .price-sub {
+      color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap;
+    }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
     .action-buttons { display: inline-flex; justify-content: flex-end; gap: 6px; white-space: nowrap; }
     .action-btn {
@@ -2162,9 +2604,12 @@ def mode_page_style() -> str:
         text-align: right; white-space: normal;
       }
       .signals td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; }
+      .signals td > .mode-badges { justify-content: flex-end; }
+      .perf-cell { justify-items: end; }
       .action-buttons { justify-content: flex-end; flex-wrap: wrap; }
       .fundamental-detail { min-width: 0; max-width: 100%; }
       table { min-width: 680px; }
+      .signals { min-width: 0; }
     }
     """
 
@@ -2233,12 +2678,12 @@ def build_mode_html_page(
 
     <section id="confirmed" class="panel">
       <h2>確定済み全件</h2>
-      {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True)}
+      {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
     </section>
 
     <section id="watch" class="panel">
       <h2>未確定ウォッチ全件</h2>
-      {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False)}
+      {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False, current_candidate=candidate)}
     </section>
   </main>
 </body>

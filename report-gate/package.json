@@ -6,7 +6,9 @@
   "scripts": {
     "check": "npm run types && npm run typecheck && npm run deploy:dry-run",
     "deploy": "npm run sync-report && wrangler deploy --minify",
+    "deploy:legacy": "npm run sync-report && wrangler deploy --minify --name screening-bot-report-gate",
     "deploy:dry-run": "npm run sync-report && wrangler deploy --dry-run",
+    "deploy:legacy:dry-run": "npm run sync-report && wrangler deploy --dry-run --name screening-bot-report-gate",
     "dev": "npm run sync-report && wrangler dev --local --port 8787",
     "sync-report": "node scripts/sync-report.mjs",
     "typecheck": "tsc --noEmit",

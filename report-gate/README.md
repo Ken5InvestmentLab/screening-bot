@@ -2,6 +2,8 @@
 
 This Worker serves `reports/mega_validation_report_latest.html` only after a Discord OAuth login confirms that the user currently has an allowed role in the configured Discord server. Deploy and check commands copy the report into `report-gate/public/` first, so only the HTML asset is uploaded to Cloudflare.
 
+The primary Worker name is `scoring-bot-report`. The legacy `screening-bot-report-gate` Worker is deployed with the same code and assets so existing report links continue to work.
+
 ## Flow
 
 1. A request to `/`, `/report`, or `/mega_validation_report_latest.html` reaches the Worker first.
@@ -65,6 +67,7 @@ cd report-gate
 npm ci
 npm run deploy:dry-run
 npm run deploy
+npm run deploy:legacy
 ```
 
 For GitHub Actions auto-deploy, set repository secrets:
@@ -74,4 +77,4 @@ For GitHub Actions auto-deploy, set repository secrets:
 | `CLOUDFLARE_API_TOKEN` | Token with permission to deploy this Worker |
 | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
 
-The existing `Mega Validation Report` workflow deploys this Worker after regenerating the report when those two Cloudflare secrets are present.
+The existing `Mega Validation Report` workflow deploys both the primary Worker and legacy Worker after regenerating the report when those two Cloudflare secrets are present.

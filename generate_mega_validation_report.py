@@ -478,6 +478,19 @@ def business_days_elapsed_for_signal(daily: list[dict], sig_date: str) -> int:
     return sum(1 for bar in daily if sig_dt < str(bar.get("date", ""))[:10])
 
 
+def close_after_business_days(daily: list[dict], sig_date: str, days: int) -> float:
+    if not daily or days <= 0:
+        return np.nan
+    sig_dt = str(sig_date or "").replace("/", "-")[:10]
+    if not sig_dt:
+        return np.nan
+    future_bars = [bar for bar in daily if sig_dt < str(bar.get("date", ""))[:10]]
+    if len(future_bars) < days:
+        return np.nan
+    close = future_bars[days - 1].get("close", np.nan)
+    return float(close) if is_finite(close) else np.nan
+
+
 def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, dict]:
     svc = opt.get_service()
     alerts_raw_rows = opt.fetch(svc, "alerts_raw")
@@ -514,6 +527,8 @@ def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, di
         latest_close = opt.latest_close_for_signal(daily, alert["date"])
         entry = alert.get("entry", float("nan"))
         rec["latest_close"] = latest_close if is_finite(latest_close) else np.nan
+        for days in (5, 10, 20, 40):
+            rec[f"price_{days}bd"] = close_after_business_days(daily, alert["date"], days)
         rec["cur_perf"] = (
             latest_close / entry - 1
             if is_finite(latest_close) and is_finite(entry) and float(entry) > 0
@@ -1067,11 +1082,20 @@ def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
         else ""
     )
     volatility_html = volatility_tag_html(row)
+    entry_html = (
+        '<div class="symbol-price-meta">'
+        '<span><span class="price-label">Entry</span>'
+        f'<span class="price-value">{html_escape(yen(row.get("entry")))}</span></span>'
+        "</div>"
+        if is_finite(row.get("entry"))
+        else ""
+    )
     return (
         '<div class="symbol-stack">'
         '<div class="symbol-identity">'
         f'<span class="symbol">{html_escape(symbol)}</span>{name_html}'
         "</div>"
+        f"{entry_html}"
         f"{volatility_html}"
         f"{action_buttons(symbol, row)}"
         "</div>"
@@ -1181,17 +1205,9 @@ def pct_html(value, signed: bool = True) -> str:
     return f'<span class="{css_class}">{html_escape(text)}</span>'
 
 
-def projected_price(row: pd.Series, perf_key: str) -> float:
-    entry = row.get("entry", np.nan)
-    perf_value = row.get(perf_key, np.nan)
-    if not is_finite(entry) or not is_finite(perf_value):
-        return np.nan
-    return float(entry) * (1.0 + float(perf_value))
-
-
 def perf_with_price_html(perf_value, price_value=None) -> str:
     perf_markup = pct_html(perf_value)
-    if not is_finite(price_value):
+    if not is_finite(perf_value) or not is_finite(price_value):
         return perf_markup
     return (
         '<span class="perf-cell">'
@@ -1390,11 +1406,11 @@ def html_signal_table(
                 cells.append(mode_match_badges(row, current_candidate_id=overlap_id))
             cells.extend(
                 [
-                    perf_with_price_html(row.get(perf_col), projected_price(row, perf_col)),
-                    perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
-                    perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
-                    perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
-                    perf_with_price_html(row.get("perf_40bd"), projected_price(row, "perf_40bd")),
+                    perf_with_price_html(row.get(perf_col), row.get(f"price_{eval_days}bd")),
+                    perf_with_price_html(row.get("perf_5bd"), row.get("price_5bd")),
+                    perf_with_price_html(row.get("perf_10bd"), row.get("price_10bd")),
+                    perf_with_price_html(row.get("perf_20bd"), row.get("price_20bd")),
+                    perf_with_price_html(row.get("perf_40bd"), row.get("price_40bd")),
                 ]
             )
             table_rows.append(cells)
@@ -1425,9 +1441,9 @@ def html_signal_table(
             [
                 html_escape(elapsed_business_days_text(row)),
                 perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
-                perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
-                perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
-                perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
+                perf_with_price_html(row.get("perf_5bd"), row.get("price_5bd")),
+                perf_with_price_html(row.get("perf_10bd"), row.get("price_10bd")),
+                perf_with_price_html(row.get("perf_20bd"), row.get("price_20bd")),
             ]
         )
         table_rows.append(cells)
@@ -1683,10 +1699,10 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
             symbol_with_actions_html(symbol, row),
             mode_html,
             perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
-            perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
-            perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
-            perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
-            perf_with_price_html(row.get("perf_40bd"), projected_price(row, "perf_40bd")),
+            perf_with_price_html(row.get("perf_5bd"), row.get("price_5bd")),
+            perf_with_price_html(row.get("perf_10bd"), row.get("price_10bd")),
+            perf_with_price_html(row.get("perf_20bd"), row.get("price_20bd")),
+            perf_with_price_html(row.get("perf_40bd"), row.get("price_40bd")),
         ]
         table_parts.append(
             f'<tr data-detection-row data-date="{html_escape(date_key)}" '
@@ -2461,6 +2477,25 @@ def build_html_report(
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }}
+    .symbol-price-meta {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.25;
+    }}
+    .symbol-price-meta > span {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }}
+    .symbol-price-meta .price-value {{
+      color: var(--text);
+      font-weight: 800;
     }}
     .vol-tag {{
       display: inline-flex;
@@ -3238,6 +3273,14 @@ def mode_page_style() -> str:
       color: var(--text); font-size: 13px; font-weight: 700; line-height: 1.35;
       min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .symbol-price-meta {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+      color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.25;
+    }
+    .symbol-price-meta > span {
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .symbol-price-meta .price-value { color: var(--text); font-weight: 800; }
     .vol-tag {
       display: inline-flex; align-items: center; width: fit-content; min-height: 22px;
       padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 800;

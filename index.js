@@ -659,14 +659,10 @@ async function runPremiumScanButton(interaction) {
 
 function buildHelpEmbed() {
   const sniperBacktest = sniperLogic.backtest;
-  const sniperLive = statsCache?.sniperLive ?? null;
   const sniperBacktestLabel = sniperBacktest?.source === 'all' ? '全件データ' : '過去データ';
   const sniperBacktestText = sniperBacktest
     ? `${sniperBacktestLabel}: ${sniperBacktest.n}件 / 勝率 ${sniperBacktest.wr.toFixed(1)}% / 平均 ${(sniperBacktest.avg >= 0 ? '+' : '') + sniperBacktest.avg.toFixed(1)}%`
     : '集計データなし';
-  const sniperLiveText = sniperLive && sniperLive.n > 0
-    ? `運用開始後: ${sniperLive.n}件 / 勝率 ${sniperLive.wr.toFixed(1)}% / 平均 ${(sniperLive.avg >= 0 ? '+' : '') + sniperLive.avg.toFixed(2)}%`
-    : '運用開始後: 0件 / 集計中';
   const sniperConditions = sniperLogic.conditions.length > 0
     ? `${sniperLogic.conditions.slice(0, 3).join(' / ')}\n${sniperLogic.conditions.slice(3).join(' / ')}`
     : '未設定';
@@ -743,8 +739,7 @@ function buildHelpEmbed() {
       value:
         '```\n' +
         `${sniperConditions}\n\n` +
-        `過去実績\n${sniperBacktestText}\n\n` +
-        `運用実績\n${sniperLiveText}\n` +
+        `過去実績\n${sniperBacktestText}\n` +
         '```',
     });
 
@@ -769,8 +764,7 @@ function buildHelpEmbed() {
       value:
         '```\n' +
         `${sniperConditions}\n\n` +
-        `過去実績\n${sniperBacktestText}\n\n` +
-        `運用実績\n${sniperLiveText}\n` +
+        `過去実績\n${sniperBacktestText}\n` +
         '```',
     });
 

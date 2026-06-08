@@ -57,6 +57,7 @@ SNIPER_LOGIC_PATH        = os.path.join(BASE_DIR, "current_logic_sniper.json")
 SNIPER_PENDING_PATH      = os.path.join(BASE_DIR, "pending_logic_sniper.json")
 MOONSHOT_LOGIC_PATH      = os.path.join(BASE_DIR, "current_logic_moonshot.json")
 MOONSHOT_PENDING_PATH    = os.path.join(BASE_DIR, "pending_logic_moonshot.json")
+MEGA_LOGIC_PATH          = os.path.join(BASE_DIR, "current_logic_mega.json")
 RESCUE_STATE_PATH        = os.path.join(BASE_DIR, "rescue_state.json")
 CHAMPION_STATE_PATH      = os.path.join(BASE_DIR, "champion_state.json")
 LOGIC_HISTORY_PATH       = os.path.join(BASE_DIR, "current_logic_history.jsonl")
@@ -85,6 +86,37 @@ MOONSHOT_LOCK_REASON = (
 
 def print_moonshot_lock(action):
     print(f"[moonshot-lock] {action} blocked. {MOONSHOT_LOCK_REASON}")
+
+MEGA_REPORT_MODES = [
+    {
+        "id": "mega5_rebound",
+        "label": "Mega5 短期リバウンド",
+        "eval_days": 5,
+        "target": 0.20,
+        "combo_size": 3,
+        "required_conditions": ["rci9_os"],
+        "fallback_conditions": ["rci9_os", "pre_down3", "body2"],
+    },
+    {
+        "id": "mega40_deep_reversal",
+        "label": "Mega40 深押し反転",
+        "eval_days": 40,
+        "target": 0.30,
+        "combo_size": 4,
+        "required_conditions": ["pre_decline15", "bb_lower"],
+        "fallback_conditions": ["pre_decline15", "pre_down3", "bb_lower", "body2"],
+    },
+    {
+        "id": "mega40_wick_recovery",
+        "label": "Mega40 下ヒゲ回復",
+        "eval_days": 40,
+        "target": 0.50,
+        "combo_size": 4,
+        "required_conditions": ["lower_wick50", "cci_os"],
+        "fallback_conditions": ["pre_decline15", "cci_os", "lower_wick50", "ich_chikou"],
+    },
+]
+MEGA_LOGIC_EPS = 1e-12
 
 SPREADSHEET_ID   = "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8"
 SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -421,6 +453,287 @@ def save_current_logic_moonshot(conditions, eval_days, thresholds=None, avg_raw=
     except Exception as e:
         print(f"  ⚠ current_logic_moonshot.json 保存エラー: {e}")
 
+
+def load_current_logic_mega():
+    """Load report-only Mega scoring logic. This is never deployed to the bot."""
+    if not os.path.exists(MEGA_LOGIC_PATH):
+        return {"modes": {}}
+    try:
+        with open(MEGA_LOGIC_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return {"modes": {}}
+        modes = data.get("modes")
+        if not isinstance(modes, dict):
+            data["modes"] = {}
+        return data
+    except Exception as e:
+        print(f"  [warn] current_logic_mega.json 読み込みエラー: {e}")
+        return {"modes": {}}
+
+
+def _round_mega_float(value):
+    if value is None:
+        return None
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(v):
+        return None
+    return round(v, 6)
+
+
+def _mega_utc_now_z():
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _mega_stats_payload(stats):
+    return {
+        "n": int(stats.get("n", 0)),
+        "avg_raw": _round_mega_float(stats.get("avg_raw", 0.0)) or 0.0,
+        "wr_raw": _round_mega_float(stats.get("wr_raw", 0.0)) or 0.0,
+        "target_hits": int(stats.get("target_hits", 0)),
+        "target_rate": _round_mega_float(stats.get("target_rate", 0.0)) or 0.0,
+    }
+
+
+def _mega_payload_for_compare(payload):
+    cloned = json.loads(json.dumps(payload, ensure_ascii=False))
+    cloned.pop("updated_at", None)
+    for mode in cloned.get("modes", {}).values():
+        if isinstance(mode, dict):
+            mode.pop("updated_at", None)
+    return cloned
+
+
+def save_current_logic_mega(modes):
+    existing = load_current_logic_mega()
+    payload = {
+        "method": "mega_report",
+        "description": "Report-only Mega mode scoring. The bot does not read or deploy this file.",
+        "updated_at": _mega_utc_now_z(),
+        "modes": modes,
+    }
+    if _mega_payload_for_compare(existing) == _mega_payload_for_compare(payload):
+        print("  [skip] current_logic_mega.json 変更なし")
+        return False
+    try:
+        with open(MEGA_LOGIC_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+        print("  [ok] current_logic_mega.json 更新完了")
+        return True
+    except Exception as e:
+        print(f"  [warn] current_logic_mega.json 保存エラー: {e}")
+        return False
+
+
+def _mega_base_stats(df_eval, perf_col, target):
+    if df_eval is None or df_eval.empty or perf_col not in df_eval.columns:
+        return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+    values = pd.to_numeric(df_eval[perf_col], errors="coerce")
+    values = values[np.isfinite(values)]
+    n = int(len(values))
+    if n == 0:
+        return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+    target_hits = int((values >= target).sum())
+    return {
+        "n": n,
+        "avg_raw": float(values.mean()),
+        "wr_raw": float((values > 0).mean()),
+        "target_hits": target_hits,
+        "target_rate": target_hits / n,
+    }
+
+
+def _mega_condition_stats(df_eval, conditions, perf_col, target):
+    if df_eval is None or df_eval.empty or perf_col not in df_eval.columns:
+        return _mega_base_stats(pd.DataFrame(), perf_col, target)
+    if not conditions or any(c not in df_eval.columns for c in conditions):
+        return _mega_base_stats(pd.DataFrame(), perf_col, target)
+    mask = df_eval[conditions].astype(bool).all(axis=1)
+    return _mega_base_stats(df_eval[mask], perf_col, target)
+
+
+def _mega_stats_from_mask(mask, perf_arr, target):
+    mask = np.asarray(mask, dtype=bool)
+    values = perf_arr[mask]
+    values = values[np.isfinite(values)]
+    n = int(len(values))
+    if n == 0:
+        return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+    target_hits = int((values >= target).sum())
+    return {
+        "n": n,
+        "avg_raw": float(values.mean()),
+        "wr_raw": float((values > 0).mean()),
+        "target_hits": target_hits,
+        "target_rate": target_hits / n,
+    }
+
+
+def _mega_rank_tuple(stats, validation_stats):
+    valid_n = int(validation_stats.get("n", 0))
+    return (
+        float(validation_stats.get("target_rate", 0.0)) if valid_n else -1.0,
+        float(validation_stats.get("avg_raw", 0.0)) if valid_n else -1.0,
+        float(stats.get("target_rate", 0.0)),
+        float(stats.get("avg_raw", 0.0)),
+        int(stats.get("target_hits", 0)),
+        min(int(stats.get("n", 0)), 100),
+    )
+
+
+def _search_mega_report_combo(df, mode):
+    perf_col = f"perf_{int(mode['eval_days'])}bd"
+    if perf_col not in df.columns:
+        return None
+    df_eval = df.dropna(subset=[perf_col]).sort_values("date").reset_index(drop=True)
+    if df_eval.empty:
+        return None
+
+    split = int(len(df_eval) * 0.7)
+    if split <= 0 or split >= len(df_eval):
+        split = len(df_eval)
+    df_train = df_eval.iloc[:split].copy()
+    df_valid = df_eval.iloc[split:].copy()
+    base_train = _mega_base_stats(df_train, perf_col, mode["target"])
+    base_valid = _mega_base_stats(df_valid, perf_col, mode["target"])
+
+    conds = [c for c in BOOL_CONDS if c in df_eval.columns]
+    combo_size = int(mode["combo_size"])
+    required_conditions = [c for c in mode.get("required_conditions", []) if c in df_eval.columns]
+    if len(required_conditions) < len(mode.get("required_conditions", [])):
+        return None
+    required_idxs = {conds.index(c) for c in required_conditions}
+    if len(required_idxs) > combo_size:
+        return None
+    if len(conds) < combo_size:
+        return None
+    for c in conds:
+        df_train[c] = df_train[c].astype(bool)
+        if not df_valid.empty:
+            df_valid[c] = df_valid[c].astype(bool)
+        df_eval[c] = df_eval[c].astype(bool)
+    train_matrix = df_train[conds].to_numpy(dtype=np.bool_)
+    train_perf = pd.to_numeric(df_train[perf_col], errors="coerce").to_numpy(dtype=float)
+    valid_matrix = df_valid[conds].to_numpy(dtype=np.bool_) if not df_valid.empty else None
+    valid_perf = pd.to_numeric(df_valid[perf_col], errors="coerce").to_numpy(dtype=float) if not df_valid.empty else None
+    full_matrix = df_eval[conds].to_numpy(dtype=np.bool_)
+    full_perf = pd.to_numeric(df_eval[perf_col], errors="coerce").to_numpy(dtype=float)
+
+    best = None
+    min_train_n = max(3, combo_size)
+    min_full_n = max(3, combo_size)
+    needs_validation = len(df_valid) >= max(8, combo_size * 2)
+    train_rate_floor = max(
+        base_train["target_rate"] + 0.01,
+        base_train["target_rate"] * 1.15,
+    )
+
+    for idxs in combinations(range(len(conds)), combo_size):
+        if required_idxs and not required_idxs.issubset(idxs):
+            continue
+        combo = [conds[i] for i in idxs]
+        train_mask = _combo_all_mask(train_matrix, idxs)
+        train_stats = _mega_stats_from_mask(train_mask, train_perf, mode["target"])
+        if train_stats["n"] < min_train_n or train_stats["target_hits"] < 1:
+            continue
+        if train_stats["target_rate"] + MEGA_LOGIC_EPS < train_rate_floor:
+            continue
+
+        if valid_matrix is not None and valid_perf is not None:
+            valid_mask = _combo_all_mask(valid_matrix, idxs)
+            validation_stats = _mega_stats_from_mask(valid_mask, valid_perf, mode["target"])
+        else:
+            validation_stats = {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+        if needs_validation:
+            if validation_stats["n"] < 1:
+                continue
+            if validation_stats["avg_raw"] < min(base_valid["avg_raw"], 0.0) - 0.05:
+                continue
+
+        full_mask = _combo_all_mask(full_matrix, idxs)
+        full_stats = _mega_stats_from_mask(full_mask, full_perf, mode["target"])
+        if full_stats["n"] < min_full_n or full_stats["target_hits"] < 1:
+            continue
+
+        rank = _mega_rank_tuple(full_stats, validation_stats)
+        item = {
+            "conditions": combo,
+            "stats": full_stats,
+            "validation_stats": validation_stats,
+            "train_stats": train_stats,
+            "rank": rank,
+        }
+        if best is None or rank > best["rank"]:
+            best = item
+    return best
+
+
+def _run_mega_report_logic_optimization(df, args):
+    """Refresh report-only Mega mode logic during daily optimization."""
+    print("\nStep M0: Megaレポート用スコアロジック更新...")
+    current = load_current_logic_mega()
+    current_modes = current.get("modes", {}) if isinstance(current.get("modes"), dict) else {}
+    next_modes = {}
+
+    for mode in MEGA_REPORT_MODES:
+        mode_id = mode["id"]
+        existing_mode = current_modes.get(mode_id, {}) if isinstance(current_modes.get(mode_id), dict) else {}
+        current_conditions = existing_mode.get("conditions") or mode["fallback_conditions"]
+        required_conditions = list(mode.get("required_conditions", []))
+        if required_conditions and not set(required_conditions).issubset(set(current_conditions)):
+            current_conditions = mode["fallback_conditions"]
+            existing_mode = {}
+        perf_col = f"perf_{int(mode['eval_days'])}bd"
+        df_eval = df.dropna(subset=[perf_col]).sort_values("date").reset_index(drop=True) if perf_col in df.columns else pd.DataFrame()
+        current_stats = _mega_condition_stats(df_eval, current_conditions, perf_col, mode["target"])
+        split = int(len(df_eval) * 0.7) if not df_eval.empty else 0
+        df_valid = df_eval.iloc[split:].copy() if split < len(df_eval) else pd.DataFrame()
+        current_validation = _mega_condition_stats(df_valid, current_conditions, perf_col, mode["target"])
+
+        best = _search_mega_report_combo(df, mode)
+        chosen_conditions = list(current_conditions)
+        chosen_stats = current_stats
+        chosen_validation = current_validation
+        chosen_source = existing_mode.get("source", "fallback")
+
+        if best:
+            current_rank = _mega_rank_tuple(current_stats, current_validation)
+            if list(best["conditions"]) != list(current_conditions) and best["rank"] > current_rank:
+                chosen_conditions = list(best["conditions"])
+                chosen_stats = best["stats"]
+                chosen_validation = best["validation_stats"]
+                chosen_source = "daily_screener_optimization"
+                print(
+                    f"  [ok] {mode['label']}: {'+'.join(current_conditions)} -> {'+'.join(chosen_conditions)} "
+                    f"({chosen_stats['n']}件 / target {chosen_stats['target_rate']*100:.1f}%)"
+                )
+            else:
+                print(f"  [skip] {mode['label']}: 現行条件を維持")
+        else:
+            print(f"  [skip] {mode['label']}: 採用品質を満たす候補なし")
+
+        next_modes[mode_id] = {
+            "label": mode["label"],
+            "eval_days": int(mode["eval_days"]),
+            "target": float(mode["target"]),
+            "conditions": chosen_conditions,
+            "combo_size": int(mode["combo_size"]),
+            "required_conditions": list(mode.get("required_conditions", [])),
+            "source": chosen_source,
+            "updated_at": _mega_utc_now_z(),
+            "backtest": _mega_stats_payload(chosen_stats),
+            "validation": _mega_stats_payload(chosen_validation),
+        }
+
+    if args.dry_run:
+        print("  [skip] dry-run: current_logic_mega.json は更新しません")
+        return False
+    return save_current_logic_mega(next_modes)
+
 # ══════════════════════════════════════════════════════════════
 # Google Sheets
 # ══════════════════════════════════════════════════════════════
@@ -738,6 +1051,48 @@ def build_unconfirmed_current_df(alerts_all, ohlcv):
             "latest_close": latest_close,
         })
     return pd.DataFrame(rows)
+
+
+def build_confirmed_feature_frame():
+    """Fetch confirmed alerts and feature rows used by optimizer/report-only logic."""
+    svc = get_service()
+    ar = fetch(svc, "alerts_raw")
+    try:
+        sa = fetch(svc, "signals_archive")
+    except Exception as _sa_e:
+        sa = []
+        print(f"  signals_archive 取得スキップ: {_sa_e}")
+    oh = fetch(svc, "ohlcv_4h")
+
+    alerts_raw_confirmed = parse_alerts(ar)
+    alerts_archive_confirmed = parse_alerts(sa)
+    alerts_raw_confirmed["_from_archive"] = False
+    alerts_archive_confirmed["_from_archive"] = True
+    alerts = pd.concat([alerts_raw_confirmed, alerts_archive_confirmed], ignore_index=True)
+    if "alert_id" in alerts.columns and len(alerts) > 0:
+        has_id = alerts["alert_id"].astype(str) != ""
+        alerts = pd.concat(
+            [
+                alerts[has_id].drop_duplicates(subset=["alert_id"], keep="first"),
+                alerts[~has_id],
+            ],
+            ignore_index=True,
+        )
+    ohlcv = parse_ohlcv(oh)
+    rows = []
+    skipped = 0
+    for _, r in alerts.iterrows():
+        features = get_features(ohlcv.get(r["symbol"], []), r["date"])
+        if features:
+            rows.append({**r.to_dict(), **features})
+        else:
+            skipped += 1
+    df = pd.DataFrame(rows)
+    print(
+        f"  Megaロジック用データ: alerts_raw {len(alerts_raw_confirmed)}件 + "
+        f"archive {len(alerts_archive_confirmed)}件 / 有効 {len(df)}件 / スキップ {skipped}件"
+    )
+    return df
 
 # ══════════════════════════════════════════════════════════════
 # 評価
@@ -4055,6 +4410,8 @@ def main():
                         help="カンマ区切り閾値リスト (例: 0.05,0.07,0.08,0.10)。"
                              "各値で自身を --dry-run --win-threshold X として再実行し比較表を表示。"
                              "実ファイル更新・デプロイは行わない")
+    parser.add_argument("--update-mega-report-logic-only", action="store_true",
+                        help="Botには触らず、HTMLレポート用MegaロジックJSONだけを更新して終了")
     args = parser.parse_args()
     global COMPOSITE_VARIANT, BASELINE_DECAY, STRICT_WR, WR_FLOOR
     global WIN_THRESHOLD, LOSE_THRESHOLD
@@ -4064,6 +4421,21 @@ def main():
     if args.strict_wr is not None:
         STRICT_WR = args.strict_wr
     WR_FLOOR  = args.wr_floor
+
+    if args.update_mega_report_logic_only:
+        print("=" * 62)
+        print("Megaレポート用スコアロジック更新")
+        print("=" * 62)
+        try:
+            df = build_confirmed_feature_frame()
+        except Exception as e:
+            print(f"[error] Megaロジック用データ取得エラー: {e}")
+            sys.exit(1)
+        if len(df) < 20:
+            print("[error] Megaロジック用データ不足")
+            sys.exit(1)
+        _run_mega_report_logic_optimization(df, args)
+        return
 
     # --win-threshold と --win-threshold-sweep は排他
     if args.win_threshold is not None and args.win_threshold_sweep is not None:
@@ -4362,6 +4734,8 @@ def main():
     baseline_ar = calc_stats(df_alerts_raw[df_alerts_raw["sc_cur"] == 6])
     print(f"  alerts_raw ★6（表示用）: {baseline_ar['n']}件 勝率{baseline_ar['wr_raw']*100:.1f}%"
           f" 平均{baseline_ar['avg_raw']*100:.2f}%")
+
+    _run_mega_report_logic_optimization(df, args)
 
     unconfirmed_current_df = build_unconfirmed_current_df(alerts_all, ohlcv)
     current_unconfirmed_stats6 = calc_stats(pd.DataFrame())

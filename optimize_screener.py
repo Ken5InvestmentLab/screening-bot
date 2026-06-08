@@ -58,6 +58,7 @@ SNIPER_PENDING_PATH      = os.path.join(BASE_DIR, "pending_logic_sniper.json")
 MOONSHOT_LOGIC_PATH      = os.path.join(BASE_DIR, "current_logic_moonshot.json")
 MOONSHOT_PENDING_PATH    = os.path.join(BASE_DIR, "pending_logic_moonshot.json")
 MEGA_LOGIC_PATH          = os.path.join(BASE_DIR, "current_logic_mega.json")
+MEGA_PENDING_PATH        = os.path.join(BASE_DIR, "pending_logic_mega.json")
 RESCUE_STATE_PATH        = os.path.join(BASE_DIR, "rescue_state.json")
 CHAMPION_STATE_PATH      = os.path.join(BASE_DIR, "champion_state.json")
 LOGIC_HISTORY_PATH       = os.path.join(BASE_DIR, "current_logic_history.jsonl")
@@ -117,6 +118,18 @@ MEGA_REPORT_MODES = [
     },
 ]
 MEGA_LOGIC_EPS = 1e-12
+MEGA_LIVE_AVG_TOLERANCE = 0.05
+MEGA_LIVE_WR_TOLERANCE = 0.15
+MEGA_MIN_N_RATIO = 0.60
+LOGIC_TARGETS = {
+    "all",
+    "stable",
+    "sniper",
+    "mega",
+    "mega5_rebound",
+    "mega40_deep_reversal",
+    "mega40_wick_recovery",
+}
 
 SPREADSHEET_ID   = "1pcD6-462nyv1A1bcW5UeWwaxBr7A1RIJ6Ofixeo5Xb8"
 SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -501,6 +514,7 @@ def _mega_stats_payload(stats):
 def _mega_payload_for_compare(payload):
     cloned = json.loads(json.dumps(payload, ensure_ascii=False))
     cloned.pop("updated_at", None)
+    cloned.pop("proposed_at", None)
     for mode in cloned.get("modes", {}).values():
         if isinstance(mode, dict):
             mode.pop("updated_at", None)
@@ -511,7 +525,7 @@ def save_current_logic_mega(modes):
     existing = load_current_logic_mega()
     payload = {
         "method": "mega_report",
-        "description": "Report-only Mega mode scoring. The bot does not read or deploy this file.",
+        "description": "Approved report-only Mega mode scoring. The bot does not read or deploy this file.",
         "updated_at": _mega_utc_now_z(),
         "modes": modes,
     }
@@ -527,6 +541,108 @@ def save_current_logic_mega(modes):
     except Exception as e:
         print(f"  [warn] current_logic_mega.json 保存エラー: {e}")
         return False
+
+
+def load_pending_logic_mega():
+    if not os.path.exists(MEGA_PENDING_PATH):
+        return {"modes": {}}
+    try:
+        with open(MEGA_PENDING_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return {"modes": {}}
+        modes = data.get("modes")
+        if not isinstance(modes, dict):
+            data["modes"] = {}
+        return data
+    except Exception as e:
+        print(f"  [warn] pending_logic_mega.json 読み込みエラー: {e}")
+        return {"modes": {}}
+
+
+def save_pending_logic_mega(proposals):
+    if not proposals:
+        if os.path.exists(MEGA_PENDING_PATH):
+            os.remove(MEGA_PENDING_PATH)
+            print("  [auto-reject] Mega: 基準未満のため pending_logic_mega.json を削除")
+            return True
+        print("  [auto-reject] Mega: 基準を満たす更新候補なし")
+        return False
+    payload = {
+        "method": "mega_report_pending",
+        "description": "Pending report-only Mega mode scoring. Apply only after explicit approval.",
+        "proposed_at": _mega_utc_now_z(),
+        "modes": proposals,
+    }
+    existing = load_pending_logic_mega()
+    if _mega_payload_for_compare(existing) == _mega_payload_for_compare(payload):
+        print("  [skip] pending_logic_mega.json 変更なし")
+        return False
+    with open(MEGA_PENDING_PATH, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print("  [ok] pending_logic_mega.json に承認待ち候補を保存")
+    return True
+
+
+def _mega_target_mode_ids(target):
+    target = (target or "all").strip()
+    if target in ("all", "mega"):
+        return [mode["id"] for mode in MEGA_REPORT_MODES]
+    return [target] if target in {mode["id"] for mode in MEGA_REPORT_MODES} else []
+
+
+def apply_mega_pending(target="mega"):
+    pending = load_pending_logic_mega()
+    pending_modes = pending.get("modes", {}) if isinstance(pending.get("modes"), dict) else {}
+    selected = set(_mega_target_mode_ids(target))
+    if not selected:
+        print(f"  [skip] Mega pending: target={target} はMega対象外")
+        return None
+    current = load_current_logic_mega()
+    current_modes = current.get("modes", {}) if isinstance(current.get("modes"), dict) else {}
+    applied = []
+    for mode in MEGA_REPORT_MODES:
+        mode_id = mode["id"]
+        if mode_id not in selected or mode_id not in pending_modes:
+            continue
+        proposal = pending_modes[mode_id]
+        candidate = proposal.get("candidate", {}) if isinstance(proposal, dict) else {}
+        conditions = candidate.get("conditions")
+        if not isinstance(conditions, list) or not conditions:
+            print(f"  [skip] Mega pending: {mode_id} の候補条件が不正")
+            continue
+        current_modes[mode_id] = {
+            "label": mode["label"],
+            "eval_days": int(mode["eval_days"]),
+            "target": float(mode["target"]),
+            "conditions": [str(c) for c in conditions],
+            "combo_size": int(mode["combo_size"]),
+            "required_conditions": list(mode.get("required_conditions", [])),
+            "source": "approved_pending",
+            "updated_at": _mega_utc_now_z(),
+            "backtest": candidate.get("backtest", {}),
+            "validation": candidate.get("validation", {}),
+            "live": candidate.get("live", {}),
+        }
+        applied.append(mode_id)
+        print(f"  [ok] Mega pending適用: {mode['label']} -> {'+'.join(conditions)}")
+    if not applied:
+        print("  [skip] Mega pending: 選択対象に承認待ち候補なし")
+        return None
+
+    save_current_logic_mega(current_modes)
+    for mode_id in applied:
+        pending_modes.pop(mode_id, None)
+    if pending_modes:
+        pending["modes"] = pending_modes
+        with open(MEGA_PENDING_PATH, "w", encoding="utf-8") as f:
+            json.dump(pending, f, ensure_ascii=False, indent=2)
+            f.write("\n")
+    else:
+        os.remove(MEGA_PENDING_PATH)
+        print("  [ok] pending_logic_mega.json 削除完了")
+    return {"applied": applied, "remaining": list(pending_modes.keys())}
 
 
 def _mega_base_stats(df_eval, perf_col, target):
@@ -672,12 +788,83 @@ def _search_mega_report_combo(df, mode):
     return best
 
 
-def _run_mega_report_logic_optimization(df, args):
-    """Refresh report-only Mega mode logic during daily optimization."""
-    print("\nStep M0: Megaレポート用スコアロジック更新...")
+def _mega_live_condition_stats(live_df, conditions, target):
+    if live_df is None or live_df.empty:
+        return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+    return _mega_condition_stats(live_df, conditions, "perf_5bd", target)
+
+
+def _mega_adoption_decision(mode, current_stats, current_validation, current_live,
+                            candidate_stats, candidate_validation, candidate_live):
+    reasons = []
+    rejects = []
+    current_n = int(current_stats.get("n", 0))
+    cand_n = int(candidate_stats.get("n", 0))
+    current_target = float(current_stats.get("target_rate", 0.0))
+    cand_target = float(candidate_stats.get("target_rate", 0.0))
+    current_avg = float(current_stats.get("avg_raw", 0.0))
+    cand_avg = float(candidate_stats.get("avg_raw", 0.0))
+    current_wr = float(current_stats.get("wr_raw", 0.0))
+    cand_wr = float(candidate_stats.get("wr_raw", 0.0))
+
+    if current_n >= 5 and cand_n < max(int(math.ceil(current_n * MEGA_MIN_N_RATIO)), int(mode["combo_size"])):
+        rejects.append(f"件数が現行比で少なすぎる ({cand_n}件 < 現行{current_n}件の{MEGA_MIN_N_RATIO:.0%})")
+    if cand_n < max(3, int(mode["combo_size"])):
+        rejects.append(f"候補件数が少なすぎる ({cand_n}件)")
+
+    target_gain = cand_target - current_target
+    avg_gain = cand_avg - current_avg
+    wr_gain = cand_wr - current_wr
+    if target_gain < 0.05 and avg_gain < 0.08:
+        rejects.append(
+            "Mega系の主目的である目標Hit率または平均リターンの改善幅が不足 "
+            f"(目標Hit {target_gain*100:+.1f}pt / 平均 {avg_gain*100:+.1f}pt / 勝率 {wr_gain*100:+.1f}pt)"
+        )
+    else:
+        reasons.append(
+            f"確定成績が改善 (目標Hit {target_gain*100:+.1f}pt / 平均 {avg_gain*100:+.1f}pt / 勝率 {wr_gain*100:+.1f}pt)"
+        )
+
+    current_valid_n = int(current_validation.get("n", 0))
+    cand_valid_n = int(candidate_validation.get("n", 0))
+    if current_valid_n >= 2:
+        if cand_valid_n == 0:
+            rejects.append("検証期間の候補が0件")
+        elif float(candidate_validation.get("avg_raw", 0.0)) < float(current_validation.get("avg_raw", 0.0)) - 0.03:
+            rejects.append("検証期間の平均が現行より悪化")
+        else:
+            reasons.append("検証期間で大きな悪化なし")
+
+    current_live_n = int(current_live.get("n", 0))
+    cand_live_n = int(candidate_live.get("n", 0))
+    if current_live_n >= 2:
+        if cand_live_n == 0:
+            rejects.append("未確定ウォッチ銘柄をすべて落とすため却下")
+        else:
+            live_avg_drop = float(candidate_live.get("avg_raw", 0.0)) - float(current_live.get("avg_raw", 0.0))
+            live_wr_drop = float(candidate_live.get("wr_raw", 0.0)) - float(current_live.get("wr_raw", 0.0))
+            if live_avg_drop < -MEGA_LIVE_AVG_TOLERANCE:
+                rejects.append(f"未確定銘柄の現在平均が悪化 ({live_avg_drop*100:+.1f}pt)")
+            if live_wr_drop < -MEGA_LIVE_WR_TOLERANCE:
+                rejects.append(f"未確定銘柄の現在勝率が悪化 ({live_wr_drop*100:+.1f}pt)")
+            if live_avg_drop >= -MEGA_LIVE_AVG_TOLERANCE and live_wr_drop >= -MEGA_LIVE_WR_TOLERANCE:
+                reasons.append("未確定銘柄の現在成績を大きく悪化させない")
+    else:
+        reasons.append("未確定銘柄サンプルが少ないため、確定成績と検証期間を優先")
+
+    if rejects:
+        return False, reasons, rejects
+    if not reasons:
+        reasons.append("品質ゲート通過")
+    return True, reasons, rejects
+
+
+def _run_mega_report_logic_proposal(df, args, live_df=None):
+    """Create pending report-only Mega mode proposals. Never updates approved logic directly."""
+    print("\nStep M0: Megaレポート用スコアロジック提案...")
     current = load_current_logic_mega()
     current_modes = current.get("modes", {}) if isinstance(current.get("modes"), dict) else {}
-    next_modes = {}
+    proposals = {}
 
     for mode in MEGA_REPORT_MODES:
         mode_id = mode["id"]
@@ -693,46 +880,64 @@ def _run_mega_report_logic_optimization(df, args):
         split = int(len(df_eval) * 0.7) if not df_eval.empty else 0
         df_valid = df_eval.iloc[split:].copy() if split < len(df_eval) else pd.DataFrame()
         current_validation = _mega_condition_stats(df_valid, current_conditions, perf_col, mode["target"])
+        current_live = _mega_live_condition_stats(live_df, current_conditions, mode["target"])
 
         best = _search_mega_report_combo(df, mode)
-        chosen_conditions = list(current_conditions)
-        chosen_stats = current_stats
-        chosen_validation = current_validation
-        chosen_source = existing_mode.get("source", "fallback")
-
-        if best:
-            current_rank = _mega_rank_tuple(current_stats, current_validation)
-            if list(best["conditions"]) != list(current_conditions) and best["rank"] > current_rank:
-                chosen_conditions = list(best["conditions"])
-                chosen_stats = best["stats"]
-                chosen_validation = best["validation_stats"]
-                chosen_source = "daily_screener_optimization"
-                print(
-                    f"  [ok] {mode['label']}: {'+'.join(current_conditions)} -> {'+'.join(chosen_conditions)} "
-                    f"({chosen_stats['n']}件 / target {chosen_stats['target_rate']*100:.1f}%)"
-                )
-            else:
-                print(f"  [skip] {mode['label']}: 現行条件を維持")
-        else:
+        if not best:
             print(f"  [skip] {mode['label']}: 採用品質を満たす候補なし")
+            continue
+        if list(best["conditions"]) == list(current_conditions):
+            print(f"  [skip] {mode['label']}: 現行条件が最良")
+            continue
+        current_rank = _mega_rank_tuple(current_stats, current_validation)
+        if best["rank"] <= current_rank:
+            print(f"  [auto-reject] {mode['label']}: 現行成績を上回らない")
+            continue
 
-        next_modes[mode_id] = {
+        candidate_live = _mega_live_condition_stats(live_df, best["conditions"], mode["target"])
+        accepted, reasons, rejects = _mega_adoption_decision(
+            mode, current_stats, current_validation, current_live,
+            best["stats"], best["validation_stats"], candidate_live,
+        )
+        if not accepted:
+            print(f"  [auto-reject] {mode['label']}: " + " / ".join(rejects))
+            continue
+
+        proposals[mode_id] = {
             "label": mode["label"],
             "eval_days": int(mode["eval_days"]),
             "target": float(mode["target"]),
-            "conditions": chosen_conditions,
-            "combo_size": int(mode["combo_size"]),
-            "required_conditions": list(mode.get("required_conditions", [])),
-            "source": chosen_source,
-            "updated_at": _mega_utc_now_z(),
-            "backtest": _mega_stats_payload(chosen_stats),
-            "validation": _mega_stats_payload(chosen_validation),
+            "current": {
+                "conditions": list(current_conditions),
+                "backtest": _mega_stats_payload(current_stats),
+                "validation": _mega_stats_payload(current_validation),
+                "live": _mega_stats_payload(current_live),
+            },
+            "candidate": {
+                "conditions": list(best["conditions"]),
+                "backtest": _mega_stats_payload(best["stats"]),
+                "validation": _mega_stats_payload(best["validation_stats"]),
+                "live": _mega_stats_payload(candidate_live),
+            },
+            "adoption_reasons": reasons,
+            "overfit_checks": {
+                "min_n_ratio": MEGA_MIN_N_RATIO,
+                "live_avg_tolerance": MEGA_LIVE_AVG_TOLERANCE,
+                "live_wr_tolerance": MEGA_LIVE_WR_TOLERANCE,
+            },
         }
+        print(
+            f"  [proposal] {mode['label']}: {'+'.join(current_conditions)} -> {'+'.join(best['conditions'])} "
+            f"({best['stats']['n']}件 / target {best['stats']['target_rate']*100:.1f}%)"
+        )
 
     if args.dry_run:
-        print("  [skip] dry-run: current_logic_mega.json は更新しません")
+        print("  [skip] dry-run: pending_logic_mega.json は更新しません")
         return False
-    return save_current_logic_mega(next_modes)
+    changed = save_pending_logic_mega(proposals)
+    if proposals:
+        notify_discord_mega_approval(proposals)
+    return changed
 
 # ══════════════════════════════════════════════════════════════
 # Google Sheets
@@ -1093,6 +1298,51 @@ def build_confirmed_feature_frame():
         f"archive {len(alerts_archive_confirmed)}件 / 有効 {len(df)}件 / スキップ {skipped}件"
     )
     return df
+
+
+def build_mega_report_feature_frames():
+    """Fetch confirmed and unconfirmed feature rows for Mega proposal gates."""
+    svc = get_service()
+    ar = fetch(svc, "alerts_raw")
+    try:
+        sa = fetch(svc, "signals_archive")
+    except Exception as _sa_e:
+        sa = []
+        print(f"  signals_archive 取得スキップ: {_sa_e}")
+    oh = fetch(svc, "ohlcv_4h")
+
+    alerts_raw_confirmed = parse_alerts(ar)
+    alerts_archive_confirmed = parse_alerts(sa)
+    alerts_raw_confirmed["_from_archive"] = False
+    alerts_archive_confirmed["_from_archive"] = True
+    alerts = pd.concat([alerts_raw_confirmed, alerts_archive_confirmed], ignore_index=True)
+    if "alert_id" in alerts.columns and len(alerts) > 0:
+        has_id = alerts["alert_id"].astype(str) != ""
+        alerts = pd.concat(
+            [
+                alerts[has_id].drop_duplicates(subset=["alert_id"], keep="first"),
+                alerts[~has_id],
+            ],
+            ignore_index=True,
+        )
+
+    ohlcv = parse_ohlcv(oh)
+    rows = []
+    skipped = 0
+    for _, r in alerts.iterrows():
+        features = get_features(ohlcv.get(r["symbol"], []), r["date"])
+        if features:
+            rows.append({**r.to_dict(), **features})
+        else:
+            skipped += 1
+    confirmed_df = pd.DataFrame(rows)
+    alerts_all = parse_alerts(ar, include_unconfirmed=True)
+    live_df = build_unconfirmed_current_df(alerts_all, ohlcv)
+    print(
+        f"  Megaロジック用データ: 確定 {len(confirmed_df)}件 / "
+        f"未確定現在値 {len(live_df)}件 / スキップ {skipped}件"
+    )
+    return confirmed_df, live_df
 
 # ══════════════════════════════════════════════════════════════
 # 評価
@@ -3216,6 +3466,72 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
         print(f"  ⚠ Discord Sniper承認通知失敗: {e}")
 
 
+def notify_discord_mega_approval(proposals):
+    """Megaレポート専用ロジックの更新候補をDiscordに通知する。"""
+    import urllib.request, json as _json
+    if not APPROVAL_WEBHOOK_URL or not proposals:
+        return
+
+    def _stats_line(st):
+        if not st or int(st.get("n", 0)) == 0:
+            return "該当なし"
+        return (
+            f"{int(st.get('n', 0))}件 / 勝率{st.get('wr_raw', 0)*100:.1f}% / "
+            f"平均{st.get('avg_raw', 0)*100:+.1f}% / 目標Hit{st.get('target_rate', 0)*100:.1f}%"
+        )
+
+    fields = []
+    for mode_id, proposal in proposals.items():
+        current = proposal.get("current", {})
+        candidate = proposal.get("candidate", {})
+        reasons = proposal.get("adoption_reasons", [])
+        fields.append({
+            "name": f"📋 {proposal.get('label', mode_id)}",
+            "value": (
+                "```\n"
+                f"現行: {' + '.join(current.get('conditions', []))}\n"
+                f"候補: {' + '.join(candidate.get('conditions', []))}\n"
+                f"現行確定: {_stats_line(current.get('backtest'))}\n"
+                f"候補確定: {_stats_line(candidate.get('backtest'))}\n"
+                f"現行未確定: {_stats_line(current.get('live'))}\n"
+                f"候補未確定: {_stats_line(candidate.get('live'))}\n"
+                "```\n"
+                "採用理由: " + " / ".join(reasons or ["品質ゲート通過"])
+            ),
+            "inline": False,
+        })
+
+    payload = {
+        "embeds": [{
+            "title": "📋 Megaレポート — スコアリング更新候補",
+            "description": (
+                "基準を満たしたMega候補だけを pending_logic_mega.json に保存しました。"
+                "承認する対象モードを `/approve-update` のオートコンプリートで選択してください。"
+            ),
+            "color": 0x2E86DE,
+            "fields": fields[:10],
+            "footer": {"text": "承認するまでMegaレポートの承認済みロジックは変更されません"},
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }]
+    }
+
+    data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    req = urllib.request.Request(
+        APPROVAL_WEBHOOK_URL, data=data,
+        headers={
+            "Content-Type": "application/json; charset=utf-8",
+            "User-Agent": "DiscordBot (screening-bot, 1.0)",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            if resp.status not in (200, 204):
+                print(f"  ⚠ Discord Mega承認通知失敗: HTTP {resp.status}")
+    except Exception as e:
+        print(f"  ⚠ Discord Mega承認通知失敗: {e}")
+
+
 def notify_discord_sniper_update(conditions, stats, thresholds):
     """Sniperロジック更新完了をDiscordに通知"""
     import urllib.request, json as _json
@@ -4410,8 +4726,14 @@ def main():
                         help="カンマ区切り閾値リスト (例: 0.05,0.07,0.08,0.10)。"
                              "各値で自身を --dry-run --win-threshold X として再実行し比較表を表示。"
                              "実ファイル更新・デプロイは行わない")
-    parser.add_argument("--update-mega-report-logic-only", action="store_true",
-                        help="Botには触らず、HTMLレポート用MegaロジックJSONだけを更新して終了")
+    parser.add_argument("--propose-mega-report-logic-only", dest="propose_mega_report_logic_only",
+                        action="store_true",
+                        help="Botには触らず、HTMLレポート用Megaロジック候補だけをpendingに保存して終了")
+    parser.add_argument("--update-mega-report-logic-only", dest="propose_mega_report_logic_only",
+                        action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--target-logic", default=os.environ.get("LOGIC_TARGET", "all"),
+                        choices=sorted(LOGIC_TARGETS),
+                        help="--apply-pending で適用する対象ロジック")
     args = parser.parse_args()
     global COMPOSITE_VARIANT, BASELINE_DECAY, STRICT_WR, WR_FLOOR
     global WIN_THRESHOLD, LOSE_THRESHOLD
@@ -4422,19 +4744,19 @@ def main():
         STRICT_WR = args.strict_wr
     WR_FLOOR  = args.wr_floor
 
-    if args.update_mega_report_logic_only:
+    if args.propose_mega_report_logic_only:
         print("=" * 62)
-        print("Megaレポート用スコアロジック更新")
+        print("Megaレポート用スコアロジック提案")
         print("=" * 62)
         try:
-            df = build_confirmed_feature_frame()
+            df, live_df = build_mega_report_feature_frames()
         except Exception as e:
             print(f"[error] Megaロジック用データ取得エラー: {e}")
             sys.exit(1)
         if len(df) < 20:
             print("[error] Megaロジック用データ不足")
             sys.exit(1)
-        _run_mega_report_logic_optimization(df, args)
+        _run_mega_report_logic_proposal(df, args, live_df=live_df)
         return
 
     # --win-threshold と --win-threshold-sweep は排他
@@ -4460,11 +4782,16 @@ def main():
     # ─── --apply-pending: 承認済みロジックをデプロイして終了 ───────
     if args.apply_pending:
         import json as _pjson, shutil, time as _time, glob as _glob
-        _has_main     = os.path.exists(PENDING_LOGIC_PATH)
-        _has_sniper   = os.path.exists(SNIPER_PENDING_PATH)
+        _target       = args.target_logic
+        _has_main     = os.path.exists(PENDING_LOGIC_PATH) and _target in ("all", "stable")
+        _has_sniper   = os.path.exists(SNIPER_PENDING_PATH) and _target in ("all", "sniper")
+        _has_mega     = os.path.exists(MEGA_PENDING_PATH) and (
+            _target in ("all", "mega", "mega5_rebound", "mega40_deep_reversal", "mega40_wick_recovery")
+        )
         # マスタースイッチがOFFの間は pending_logic_moonshot.json が残っていても
         # apply 対象に入れない（誤って一緒にデプロイされるのを防ぐ）。
-        _has_moonshot = (MOONSHOT_AUTO_OPTIMIZE_ENABLED
+        _has_moonshot = (_target == "all"
+                         and MOONSHOT_AUTO_OPTIMIZE_ENABLED
                          and not MOONSHOT_IMPLEMENTATION_LOCKED
                          and os.path.exists(MOONSHOT_PENDING_PATH))
         if (MOONSHOT_IMPLEMENTATION_LOCKED
@@ -4474,10 +4801,10 @@ def main():
                 and os.path.exists(MOONSHOT_PENDING_PATH)):
             print("ℹ️ pending_logic_moonshot.json は存在しますが "
                   "MOONSHOT_AUTO_OPTIMIZE_ENABLED=False のためスキップします。")
-        if not _has_main and not _has_sniper and not _has_moonshot:
-            print("ℹ️ pending_logic.json / pending_logic_sniper.json / pending_logic_moonshot.json"
+        if not _has_main and not _has_sniper and not _has_moonshot and not _has_mega:
+            print("ℹ️ pending_logic.json / pending_logic_sniper.json / pending_logic_mega.json / pending_logic_moonshot.json"
                   " いずれも見つかりません。")
-            print("   承認待ちロジックがないため、デプロイはスキップします。")
+            print(f"   target={_target} の承認待ちロジックがないため、デプロイはスキップします。")
             return
 
         _method = _combo = _ths = _code = _st6 = _st5 = _st4 = _base = _n_total = None
@@ -4540,8 +4867,25 @@ def main():
                     )
                     _has_moonshot = False
 
-        if not _has_main and not _has_sniper and not _has_moonshot:
+        if _has_mega:
+            _mega_pending = load_pending_logic_mega()
+            _mega_modes = _mega_pending.get("modes", {}) if isinstance(_mega_pending.get("modes"), dict) else {}
+            _selected_mega = [m for m in _mega_target_mode_ids(_target) if m in _mega_modes]
+            if _selected_mega:
+                print(f"  Mega pending: {', '.join(_selected_mega)}")
+            else:
+                print(f"  Mega pending: target={_target} に該当する候補なし")
+                _has_mega = False
+
+        if not _has_main and not _has_sniper and not _has_moonshot and not _has_mega:
             print("ℹ️ 適用対象のpendingロジックがないため、デプロイはスキップします。")
+            return
+
+        if _has_mega and not _has_main and not _has_sniper and not _has_moonshot:
+            if apply_mega_pending(_target) is None:
+                print("ℹ️ Mega pendingの適用対象がないため終了します。")
+                return
+            print("\n✅ Megaレポート用ロジックの承認適用完了")
             return
 
         # バックアップ
@@ -4610,6 +4954,8 @@ def main():
                     _moonshot_data["combo"], _moonshot_data["stats"],
                     _moonshot_data["eval_days"], _moonshot_data["thresholds"] or {}
                 )
+            if _has_mega:
+                apply_mega_pending(_target)
             print("\n✅ 承認済みロジックのデプロイ完了")
         else:
             print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")
@@ -4734,8 +5080,6 @@ def main():
     baseline_ar = calc_stats(df_alerts_raw[df_alerts_raw["sc_cur"] == 6])
     print(f"  alerts_raw ★6（表示用）: {baseline_ar['n']}件 勝率{baseline_ar['wr_raw']*100:.1f}%"
           f" 平均{baseline_ar['avg_raw']*100:.2f}%")
-
-    _run_mega_report_logic_optimization(df, args)
 
     unconfirmed_current_df = build_unconfirmed_current_df(alerts_all, ohlcv)
     current_unconfirmed_stats6 = calc_stats(pd.DataFrame())

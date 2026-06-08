@@ -29,10 +29,10 @@ jobs:
           echo '${{ secrets.SSH_PRIVATE_KEY }}' > /tmp/ssh_key
           chmod 600 /tmp/ssh_key
 
-      - name: Update Mega report scoring logic
+      - name: Propose Mega report scoring logic
         env:
           PYTHONIOENCODING: utf-8
-        run: python optimize_screener.py --update-mega-report-logic-only
+        run: python optimize_screener.py --propose-mega-report-logic-only
 
       - name: Run optimizer (sweep + auto-propose best threshold)
         env:
@@ -47,22 +47,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ ! -f pending_logic.json ] && [ ! -f pending_logic_sniper.json ] && [ ! -f rescue_state.json ] && [ ! -f current_logic_mega.json ]; then
+          if [ ! -f pending_logic.json ] && [ ! -f pending_logic_sniper.json ] && [ ! -f pending_logic_mega.json ] && [ ! -f rescue_state.json ]; then
             echo "No pending logic or optimizer state to commit"
             exit 0
           fi
           [ -f pending_logic.json ] && git add pending_logic.json
           [ -f pending_logic_sniper.json ] && git add pending_logic_sniper.json
+          [ -f pending_logic_mega.json ] && git add pending_logic_mega.json
           [ -f rescue_state.json ] && git add rescue_state.json
-          [ -f current_logic_mega.json ] && git add current_logic_mega.json
           if git diff --staged --quiet; then
             echo "No changes staged"
           else
             staged_files="$(git diff --staged --name-only)"
-            if echo "$staged_files" | grep -Eq '^(pending_logic|pending_logic_sniper)\.json$'; then
+            if echo "$staged_files" | grep -Eq '^(pending_logic|pending_logic_sniper|pending_logic_mega)\.json$'; then
               git commit -m "feat: propose screener logic update [pending approval]"
-            elif echo "$staged_files" | grep -qx 'current_logic_mega.json'; then
-              git commit -m "chore: update mega report logic [skip ci]"
             else
               git commit -m "chore: update optimizer rescue state [skip ci]"
             fi

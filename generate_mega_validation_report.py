@@ -1024,11 +1024,17 @@ def action_buttons(symbol: str, row: pd.Series) -> str:
 
 def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
     name = str(row.get("name", "") or "").strip()
-    name_html = f'<span class="symbol-name">{html_escape(name)}</span>' if name else ""
+    name_html = (
+        '<span class="symbol-separator">/</span>'
+        f'<span class="symbol-name">{html_escape(name)}</span>'
+        if name
+        else ""
+    )
     return (
         '<div class="symbol-stack">'
-        f'<span class="symbol">{html_escape(symbol)}</span>'
-        f"{name_html}"
+        '<div class="symbol-identity">'
+        f'<span class="symbol">{html_escape(symbol)}</span>{name_html}'
+        "</div>"
         f"{action_buttons(symbol, row)}"
         "</div>"
     )
@@ -2343,15 +2349,31 @@ def build_html_report(
       justify-items: start;
       gap: 4px;
       min-width: 0;
-      max-width: 230px;
+      max-width: 270px;
       text-align: left;
     }}
+    .symbol-identity {{
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      min-width: 0;
+      max-width: 100%;
+      white-space: nowrap;
+    }}
+    .symbol-separator {{
+      color: var(--text);
+      font-weight: 700;
+      flex: 0 0 auto;
+    }}
     .symbol-name {{
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 500;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
       line-height: 1.35;
-      white-space: normal;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }}
     .symbol-stack .action-buttons {{
       margin-top: 2px;
@@ -3028,12 +3050,19 @@ def mode_page_style() -> str:
     .price-sub {
       color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap;
     }
-    .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
+    .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; flex: 0 0 auto; }
     .symbol-stack {
-      display: grid; justify-items: start; gap: 4px; min-width: 0; max-width: 230px; text-align: left;
+      display: grid; justify-items: start; gap: 4px; min-width: 0; max-width: 270px; text-align: left;
+    }
+    .symbol-identity {
+      display: flex; align-items: baseline; gap: 6px; min-width: 0; max-width: 100%; white-space: nowrap;
+    }
+    .symbol-separator {
+      color: var(--text); font-weight: 700; flex: 0 0 auto;
     }
     .symbol-name {
-      color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.35; white-space: normal;
+      color: var(--text); font-size: 13px; font-weight: 700; line-height: 1.35;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
     .symbol-stack .action-buttons { margin-top: 2px; justify-content: flex-start; flex-wrap: nowrap; }
     .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }

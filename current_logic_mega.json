@@ -1,101 +1,59 @@
 {
   "method": "mega_report",
-  "description": "Report-only Mega mode scoring. The bot does not read or deploy this file.",
-  "updated_at": "2026-06-08T07:29:54Z",
+  "description": "Approved report-only Mega mode scoring. The bot does not read or deploy this file.",
+  "updated_at": "2026-06-08T00:00:00Z",
   "modes": {
     "mega5_rebound": {
       "label": "Mega5 短期リバウンド",
       "eval_days": 5,
       "target": 0.2,
       "conditions": [
-        "rsi5070",
         "rci9_os",
-        "pre_down3"
+        "pre_down3",
+        "body2"
       ],
       "combo_size": 3,
       "required_conditions": [
         "rci9_os"
       ],
-      "source": "daily_screener_optimization",
-      "updated_at": "2026-06-08T07:29:53Z",
-      "backtest": {
-        "n": 9,
-        "avg_raw": 0.149889,
-        "wr_raw": 0.777778,
-        "target_hits": 3,
-        "target_rate": 0.333333
-      },
-      "validation": {
-        "n": 1,
-        "avg_raw": 0.615,
-        "wr_raw": 1.0,
-        "target_hits": 1,
-        "target_rate": 1.0
-      }
+      "source": "approved_baseline",
+      "updated_at": "2026-06-08T00:00:00Z"
     },
     "mega40_deep_reversal": {
       "label": "Mega40 深押し反転",
       "eval_days": 40,
       "target": 0.3,
       "conditions": [
-        "lower_wick50",
         "pre_decline15",
-        "ich_cloud_green",
-        "bb_lower"
+        "pre_down3",
+        "bb_lower",
+        "body2"
       ],
       "combo_size": 4,
       "required_conditions": [
         "pre_decline15",
         "bb_lower"
       ],
-      "source": "daily_screener_optimization",
-      "updated_at": "2026-06-08T07:29:53Z",
-      "backtest": {
-        "n": 5,
-        "avg_raw": 0.0986,
-        "wr_raw": 0.4,
-        "target_hits": 2,
-        "target_rate": 0.4
-      },
-      "validation": {
-        "n": 1,
-        "avg_raw": 0.527,
-        "wr_raw": 1.0,
-        "target_hits": 1,
-        "target_rate": 1.0
-      }
+      "source": "approved_baseline",
+      "updated_at": "2026-06-08T00:00:00Z"
     },
     "mega40_wick_recovery": {
       "label": "Mega40 下ヒゲ回復",
       "eval_days": 40,
       "target": 0.5,
       "conditions": [
-        "sbull",
-        "lower_wick50",
         "pre_decline15",
-        "cci_os"
+        "cci_os",
+        "lower_wick50",
+        "ich_chikou"
       ],
       "combo_size": 4,
       "required_conditions": [
         "lower_wick50",
         "cci_os"
       ],
-      "source": "daily_screener_optimization",
-      "updated_at": "2026-06-08T07:29:54Z",
-      "backtest": {
-        "n": 5,
-        "avg_raw": 0.2396,
-        "wr_raw": 0.8,
-        "target_hits": 2,
-        "target_rate": 0.4
-      },
-      "validation": {
-        "n": 1,
-        "avg_raw": 0.527,
-        "wr_raw": 1.0,
-        "target_hits": 1,
-        "target_rate": 1.0
-      }
+      "source": "approved_baseline",
+      "updated_at": "2026-06-08T00:00:00Z"
     }
   }
 }

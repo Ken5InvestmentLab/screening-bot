@@ -2,6 +2,20 @@ name: Reject Pending Logic
 
 on:
   workflow_dispatch:  # Discord の /reject-update コマンドから呼び出し
+    inputs:
+      target:
+        description: "却下するロジック"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - stable
+          - sniper
+          - mega
+          - mega5_rebound
+          - mega40_deep_reversal
+          - mega40_wick_recovery
 
 jobs:
   reject:
@@ -17,20 +31,53 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          TARGET="${{ inputs.target }}"
           CHANGED=0
-          if [ -f pending_logic.json ]; then
-            git rm pending_logic.json
-            CHANGED=1
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "stable" ]; then
+            if [ -f pending_logic.json ]; then
+              git rm pending_logic.json
+              CHANGED=1
+            fi
           fi
-          if [ -f pending_logic_sniper.json ]; then
-            git rm pending_logic_sniper.json
-            CHANGED=1
+          if [ "$TARGET" = "all" ] || [ "$TARGET" = "sniper" ]; then
+            if [ -f pending_logic_sniper.json ]; then
+              git rm pending_logic_sniper.json
+              CHANGED=1
+            fi
+          fi
+          if [ -f pending_logic_mega.json ]; then
+            if [ "$TARGET" = "all" ] || [ "$TARGET" = "mega" ]; then
+              git rm pending_logic_mega.json
+              CHANGED=1
+            elif echo "$TARGET" | grep -Eq '^mega(5_rebound|40_deep_reversal|40_wick_recovery)$'; then
+              python - <<PY
+import json
+from pathlib import Path
+target = "${{ inputs.target }}"
+path = Path("pending_logic_mega.json")
+data = json.loads(path.read_text(encoding="utf-8"))
+modes = data.get("modes", {})
+if target in modes:
+    modes.pop(target, None)
+    if modes:
+        data["modes"] = modes
+        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    else:
+        path.unlink()
+    Path(".mega_reject_changed").write_text("1", encoding="utf-8")
+PY
+              if [ -f .mega_reject_changed ]; then
+                rm .mega_reject_changed
+                git add -A pending_logic_mega.json
+                CHANGED=1
+              fi
+            fi
           fi
           if [ "$CHANGED" = "1" ]; then
             git commit -m "chore: reject pending screener logic [skip ci]"
             git pull --rebase origin main
             git push
-            echo "::notice::pending_logic.json を削除しました"
+            echo "::notice::対象の pending ロジックを削除しました"
           else
             echo "::notice::削除対象の pending ファイルがありませんでした"
           fi

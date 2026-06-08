@@ -2,6 +2,20 @@ name: Deploy Approved Logic
 
 on:
   workflow_dispatch:  # Discord の /approve-update コマンドから呼び出し
+    inputs:
+      target:
+        description: "承認するロジック"
+        required: true
+        default: "all"
+        type: choice
+        options:
+          - all
+          - stable
+          - sniper
+          - mega
+          - mega5_rebound
+          - mega40_deep_reversal
+          - mega40_wick_recovery
 
 jobs:
   deploy:
@@ -32,15 +46,14 @@ jobs:
       - name: Apply pending logic
         env:
           PYTHONIOENCODING: utf-8
-        run: python optimize_screener.py --apply-pending
+        run: python optimize_screener.py --apply-pending --target-logic "${{ inputs.target }}"
 
       - name: Commit applied logic
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git rm --cached pending_logic.json 2>/dev/null || true
-          git rm --cached pending_logic_sniper.json 2>/dev/null || true
-          git add screener.js current_logic.json current_logic_sniper.json index.js
+          git add -A pending_logic.json pending_logic_sniper.json pending_logic_mega.json
+          git add screener.js current_logic.json current_logic_sniper.json current_logic_mega.json index.js
           if git diff --staged --quiet; then
             echo "Nothing to commit"
           else

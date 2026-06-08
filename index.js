@@ -24,6 +24,22 @@ const COLOR_WARN = 0xf5a623;
 const DISCLAIMER = '⚠️ これは情報提供ツールであり、投資助言ではありません。';
 const SNIPER_LOGIC_PATH = path.join(__dirname, 'current_logic_sniper.json');
 const PREMIUM_SCAN_BUTTON_PREFIX = 'premium_scan:';
+const LOGIC_UPDATE_TARGETS = [
+  { name: 'すべての更新候補', value: 'all' },
+  { name: 'Stable', value: 'stable' },
+  { name: 'Sniper', value: 'sniper' },
+  { name: 'Mega すべて', value: 'mega' },
+  { name: 'Mega5 短期リバウンド', value: 'mega5_rebound' },
+  { name: 'Mega40 深押し反転', value: 'mega40_deep_reversal' },
+  { name: 'Mega40 下ヒゲ回復', value: 'mega40_wick_recovery' },
+];
+
+function logicUpdateTargetChoices(focused) {
+  const q = String(focused || '').toLowerCase();
+  return LOGIC_UPDATE_TARGETS
+    .filter(item => !q || item.name.toLowerCase().includes(q) || item.value.toLowerCase().includes(q))
+    .slice(0, 25);
+}
 
 // ============================================================
 // ライブ実績キャッシュ
@@ -799,9 +815,12 @@ async function runApproveUpdate(interaction) {
     return interaction.reply({ content: '❌ GITHUB_TOKEN が未設定です。', ephemeral: true });
   }
 
-  await interaction.reply({ content: '⏳ デプロイワークフローを起動中...', ephemeral: true });
+  const target = interaction.options.getString('target') || 'all';
+  const targetLabel = LOGIC_UPDATE_TARGETS.find(item => item.value === target)?.name || target;
 
-  const body = JSON.stringify({ ref: 'main' });
+  await interaction.reply({ content: `⏳ ${targetLabel} の承認ワークフローを起動中...`, ephemeral: true });
+
+  const body = JSON.stringify({ ref: 'main', inputs: { target } });
   const [owner, repo] = githubRepo.split('/');
   const options = {
     hostname: 'api.github.com',
@@ -832,7 +851,7 @@ async function runApproveUpdate(interaction) {
     req.end();
   }).then(async () => {
     await interaction.editReply({
-      content: '✅ デプロイワークフローを起動しました。GitHub Actions で進捗を確認してください。',
+      content: `✅ ${targetLabel} の承認ワークフローを起動しました。GitHub Actions で進捗を確認してください。`,
       ephemeral: true,
     });
   }).catch(async (err) => {
@@ -859,9 +878,12 @@ async function runRejectUpdate(interaction) {
     return interaction.reply({ content: '❌ GITHUB_TOKEN が未設定です。', ephemeral: true });
   }
 
-  await interaction.reply({ content: '⏳ 却下ワークフローを起動中...', ephemeral: true });
+  const target = interaction.options.getString('target') || 'all';
+  const targetLabel = LOGIC_UPDATE_TARGETS.find(item => item.value === target)?.name || target;
 
-  const body = JSON.stringify({ ref: 'main' });
+  await interaction.reply({ content: `⏳ ${targetLabel} の却下ワークフローを起動中...`, ephemeral: true });
+
+  const body = JSON.stringify({ ref: 'main', inputs: { target } });
   const [owner, repo] = githubRepo.split('/');
   const options = {
     hostname: 'api.github.com',
@@ -892,7 +914,7 @@ async function runRejectUpdate(interaction) {
     req.end();
   }).then(async () => {
     await interaction.editReply({
-      content: '🗑️ 更新候補を却下しました。pending_logic.json を削除するワークフローを起動しました。',
+      content: `🗑️ ${targetLabel} の更新候補を却下するワークフローを起動しました。`,
       ephemeral: true,
     });
   }).catch(async (err) => {
@@ -938,8 +960,32 @@ client.once('ready', async () => {
       ],
     },
     { name: 'help', description: 'Botの使い方とスコアの説明を表示' },
-    { name: 'approve-update', description: '【管理者専用】保留中のスコアリングロジック更新を承認してデプロイ' },
-    { name: 'reject-update',  description: '【管理者専用】保留中のスコアリングロジック更新を却下して削除' },
+    {
+      name: 'approve-update',
+      description: '【管理者専用】保留中のスコアリングロジック更新を承認してデプロイ',
+      options: [
+        {
+          name: 'target',
+          type: 3,
+          description: '承認するロジックを選択',
+          required: true,
+          autocomplete: true,
+        },
+      ],
+    },
+    {
+      name: 'reject-update',
+      description: '【管理者専用】保留中のスコアリングロジック更新を却下して削除',
+      options: [
+        {
+          name: 'target',
+          type: 3,
+          description: '却下するロジックを選択',
+          required: true,
+          autocomplete: true,
+        },
+      ],
+    },
   ]);
   console.log('スラッシュコマンド登録完了');
 
@@ -957,6 +1003,10 @@ client.on('interactionCreate', async (interaction) => {
 
   if (interaction.isAutocomplete()) {
     const focused = interaction.options.getFocused();
+    if (interaction.commandName === 'approve-update' || interaction.commandName === 'reject-update') {
+      await interaction.respond(logicUpdateTargetChoices(focused));
+      return;
+    }
     const modeKey = interaction.options.getString('mode');
 
     if (modeKey === 'code') {

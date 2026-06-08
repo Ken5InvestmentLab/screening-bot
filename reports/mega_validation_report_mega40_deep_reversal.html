@@ -167,6 +167,26 @@
       color: var(--text); font-size: 13px; font-weight: 700; line-height: 1.35;
       min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .vol-tag {
+      display: inline-flex; align-items: center; width: fit-content; min-height: 22px;
+      padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 800;
+      line-height: 1.2; white-space: nowrap;
+    }
+    .vol-low { color: #087443; background: #e8f7ef; }
+    .vol-mid { color: #946300; background: #fff4cf; }
+    .vol-high { color: #b42318; background: #fde7e4; }
+    .vol-tag[data-tooltip] {
+      position: relative; cursor: help; outline-offset: 2px;
+    }
+    .vol-tag[data-tooltip]::after {
+      content: attr(data-tooltip); display: none; position: absolute; left: 0; top: calc(100% + 6px);
+      z-index: 20; width: max-content; max-width: 260px; padding: 8px 10px;
+      border: 1px solid #c9d7ea; border-radius: 7px; background: #102033; color: #fff;
+      box-shadow: 0 10px 26px rgba(16, 24, 40, .18); font-size: 12px; font-weight: 700;
+      line-height: 1.45; white-space: normal;
+    }
+    .vol-tag[data-tooltip]:hover::after,
+    .vol-tag[data-tooltip]:focus-visible::after { display: block; }
     .symbol-stack .action-buttons { margin-top: 2px; justify-content: flex-start; flex-wrap: nowrap; }
     .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
@@ -263,7 +283,7 @@
 
   <header>
     <h1>Mega40 深押し反転</h1>
-    <p>生成日時: 2026-06-08 17:25:54 JST</p>
+    <p>生成日時: 2026-06-08 18:19:43 JST</p>
     <p>深い押し目から強陽線で切り返す40営業日候補。</p>
   </header>
   <main>
@@ -291,7 +311,7 @@
 <tr>
 <td data-label="日付">2026/03/24</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6217</span><span class="symbol-separator">/</span><span class="symbol-name">津田駒工業</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6217" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6217</span><span class="symbol-separator">/</span><span class="symbol-name">津田駒工業</span></div><span class="vol-tag vol-high" tabindex="0" title="ATR%: 6.9% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 6.9% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6217" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+278.2%</span><small class="price-sub">1,807.8円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-6.1%</span><small class="price-sub">448.8円</small></span></td>
@@ -302,7 +322,7 @@
 <tr>
 <td data-label="日付">2026/04/01</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">4366</span><span class="symbol-separator">/</span><span class="symbol-name">ダイトーケミックス</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4366" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">4366</span><span class="symbol-separator">/</span><span class="symbol-name">ダイトーケミックス</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 5.7% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 5.7% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4366" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+40.7%</span><small class="price-sub">519.2円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+19.0%</span><small class="price-sub">439.1円</small></span></td>
@@ -313,7 +333,7 @@
 <tr>
 <td data-label="日付">2026/03/30</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6635</span><span class="symbol-separator">/</span><span class="symbol-name">大日光・エンジニアリング</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6635" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6635</span><span class="symbol-separator">/</span><span class="symbol-name">大日光・エンジニアリング</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 5.2% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 5.2% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6635" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+30.1%</span><small class="price-sub">815.7円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-1.3%</span><small class="price-sub">618.8円</small></span></td>
@@ -324,7 +344,7 @@
 <tr>
 <td data-label="日付">2026/03/24</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6663</span><span class="symbol-separator">/</span><span class="symbol-name">太洋テクノレックス</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6663" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6663</span><span class="symbol-separator">/</span><span class="symbol-name">太洋テクノレックス</span></div><span class="vol-tag vol-high" tabindex="0" title="ATR%: 6.9% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 6.9% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6663" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+26.6%</span><small class="price-sub">386.1円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-1.0%</span><small class="price-sub">301.9円</small></span></td>
@@ -335,7 +355,7 @@
 <tr>
 <td data-label="日付">2026/03/24</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3237</span><span class="symbol-separator">/</span><span class="symbol-name">イントランス</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3237" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3237</span><span class="symbol-separator">/</span><span class="symbol-name">イントランス</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 3.9% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 3.9% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3237" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+21.1%</span><small class="price-sub">69円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+8.8%</span><small class="price-sub">62円</small></span></td>
@@ -346,7 +366,7 @@
 <tr>
 <td data-label="日付">2026/03/10</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6584</span><span class="symbol-separator">/</span><span class="symbol-name">三桜工業</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6584" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6584</span><span class="symbol-separator">/</span><span class="symbol-name">三桜工業</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 4.9% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 4.9% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6584" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+19.4%</span><small class="price-sub">872.8円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-4.0%</span><small class="price-sub">701.8円</small></span></td>
@@ -357,7 +377,7 @@
 <tr>
 <td data-label="日付">2026/03/24</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7078</span><span class="symbol-separator">/</span><span class="symbol-name">ＩＮＣＬＵＳＩＶＥ　Ｈｏｌｄｉｎｇｓ</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7078" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7078</span><span class="symbol-separator">/</span><span class="symbol-name">ＩＮＣＬＵＳＩＶＥ　Ｈｏｌｄｉｎｇｓ</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 4.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 4.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7078" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+5.0%</span><small class="price-sub">397.9円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+0.8%</span><small class="price-sub">382円</small></span></td>
@@ -368,7 +388,7 @@
 <tr>
 <td data-label="日付">2026/03/10</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6494</span><span class="symbol-separator">/</span><span class="symbol-name">ＮＦＫホールディングス</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6494" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6494</span><span class="symbol-separator">/</span><span class="symbol-name">ＮＦＫホールディングス</span></div><span class="vol-tag vol-high" tabindex="0" title="ATR%: 8.8% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 8.8% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6494" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+0.8%</span><small class="price-sub">122円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-2.5%</span><small class="price-sub">118円</small></span></td>
@@ -379,7 +399,7 @@
 <tr>
 <td data-label="日付">2026/03/30</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3350</span><span class="symbol-separator">/</span><span class="symbol-name">メタプラネット</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3350" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3350</span><span class="symbol-separator">/</span><span class="symbol-name">メタプラネット</span></div><span class="vol-tag vol-high" tabindex="0" title="ATR%: 8.3% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 8.3% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3350" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-3.0%</span><small class="price-sub">291円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+0.7%</span><small class="price-sub">302.1円</small></span></td>
@@ -390,7 +410,7 @@
 <tr>
 <td data-label="日付">2026/03/06</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7201</span><span class="symbol-separator">/</span><span class="symbol-name">日産自動車</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7201" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7201</span><span class="symbol-separator">/</span><span class="symbol-name">日産自動車</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 4.1% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 4.1% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7201" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-10.6%</span><small class="price-sub">345.5円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-5.7%</span><small class="price-sub">364.5円</small></span></td>
@@ -401,7 +421,7 @@
 <tr>
 <td data-label="日付">2026/03/05</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7150</span><span class="symbol-separator">/</span><span class="symbol-name">島根銀行</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7150" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7150</span><span class="symbol-separator">/</span><span class="symbol-name">島根銀行</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 5.4% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 5.4% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7150" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-10.8%</span><small class="price-sub">519.1円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-5.5%</span><small class="price-sub">550円</small></span></td>
@@ -412,7 +432,7 @@
 <tr>
 <td data-label="日付">2026/03/18</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7777</span><span class="symbol-separator">/</span><span class="symbol-name">スリー・ディー・マトリックス</span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7777" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7777</span><span class="symbol-separator">/</span><span class="symbol-name">スリー・ディー・マトリックス</span></div><span class="vol-tag vol-high" tabindex="0" title="ATR%: 14.3% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 14.3% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7777" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-11.5%</span><small class="price-sub">446.9円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-15.0%</span><small class="price-sub">429.2円</small></span></td>
@@ -440,20 +460,20 @@
 <tr>
 <td data-label="日付">2026/06/01</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6085</span><span class="symbol-separator">/</span><span class="symbol-name">アーキテクツ・スタジオ・ジャパン</span></div><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1510861179575341126" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6085" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6085</span><span class="symbol-separator">/</span><span class="symbol-name">アーキテクツ・スタジオ・ジャパン</span></div><span class="vol-tag vol-high" tabindex="0" title="ATR%: 18.7% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 18.7% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1510861179575341126" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6085" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
-<td data-label="経過">7</td>
+<td data-label="経過">5営業日</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="neg">-15.3%</span><small class="price-sub">311円</small></span></td>
-<td data-label="5営業日後"><span class="muted">--</span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="neg">-15.3%</span><small class="price-sub">310.8円</small></span></td>
 <td data-label="10営業日後"><span class="muted">--</span></td>
 <td data-label="20営業日後"><span class="muted">--</span></td>
 </tr>
 <tr>
 <td data-label="日付">2026/05/27</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3350</span><span class="symbol-separator">/</span><span class="symbol-name">メタプラネット</span></div><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509088485984964668" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3350" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3350</span><span class="symbol-separator">/</span><span class="symbol-name">メタプラネット</span></div><span class="vol-tag vol-high" tabindex="0" title="ATR%: 6.8% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 6.8% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509088485984964668" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3350" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
-<td data-label="経過">12</td>
+<td data-label="経過">8営業日</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="neg">-18.3%</span><small class="price-sub">237円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-12.4%</span><small class="price-sub">254円</small></span></td>
 <td data-label="10営業日後"><span class="muted">--</span></td>
@@ -462,9 +482,9 @@
 <tr>
 <td data-label="日付">2026/05/22</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">5162</span><span class="symbol-separator">/</span><span class="symbol-name">朝日ラバー</span></div><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507276472338088090" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5162" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">5162</span><span class="symbol-separator">/</span><span class="symbol-name">朝日ラバー</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 5.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 5.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507276472338088090" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5162" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
-<td data-label="経過">17</td>
+<td data-label="経過">11営業日</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="pos">+16.0%</span><small class="price-sub">732円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+6.8%</span><small class="price-sub">673.9円</small></span></td>
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+16.5%</span><small class="price-sub">735.1円</small></span></td>
@@ -473,9 +493,9 @@
 <tr>
 <td data-label="日付">2026/05/21</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7779</span><span class="symbol-separator">/</span><span class="symbol-name">ＣＹＢＥＲＤＹＮＥ</span></div><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1506875354353111201" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7779" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7779</span><span class="symbol-separator">/</span><span class="symbol-name">ＣＹＢＥＲＤＹＮＥ</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 5.9% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 5.9% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1506875354353111201" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7779" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
-<td data-label="経過">18</td>
+<td data-label="経過">12営業日</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="pos">+15.9%</span><small class="price-sub">313円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+4.4%</span><small class="price-sub">281.9円</small></span></td>
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+24.1%</span><small class="price-sub">335.1円</small></span></td>
@@ -484,9 +504,9 @@
 <tr>
 <td data-label="日付">2026/05/19</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">5535</span><span class="symbol-separator">/</span><span class="symbol-name">ミガロホールディングス</span></div><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1506169460137132052" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5535" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">5535</span><span class="symbol-separator">/</span><span class="symbol-name">ミガロホールディングス</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 4.7% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 4.7% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1506169460137132052" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5535" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
-<td data-label="経過">20</td>
+<td data-label="経過">14営業日</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="neg">-11.8%</span><small class="price-sub">254円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-3.8%</span><small class="price-sub">277.1円</small></span></td>
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-10.4%</span><small class="price-sub">258円</small></span></td>
@@ -495,9 +515,9 @@
 <tr>
 <td data-label="日付">2026/05/18</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3773</span><span class="symbol-separator">/</span><span class="symbol-name">アドバンスト・メディア</span></div><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1505803852140646430" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3773" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3773</span><span class="symbol-separator">/</span><span class="symbol-name">アドバンスト・メディア</span></div><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 3.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 3.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1505803852140646430" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3773" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
-<td data-label="経過">21</td>
+<td data-label="経過">15営業日</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="pos">+8.1%</span><small class="price-sub">1,046円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+2.2%</span><small class="price-sub">989.3円</small></span></td>
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+11.8%</span><small class="price-sub">1,082.2円</small></span></td>

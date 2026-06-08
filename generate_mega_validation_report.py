@@ -468,6 +468,15 @@ def collect_premium_urls(frame: pd.DataFrame, premium_links: dict) -> list[str]:
     return urls
 
 
+def business_days_elapsed_for_signal(daily: list[dict], sig_date: str) -> int:
+    if not daily:
+        return -1
+    sig_dt = str(sig_date or "").replace("/", "-")[:10]
+    if not sig_dt or daily[-1].get("date", "") < sig_dt:
+        return -1
+    return sum(1 for bar in daily if sig_dt < str(bar.get("date", ""))[:10])
+
+
 def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, dict]:
     svc = opt.get_service()
     alerts_raw_rows = opt.fetch(svc, "alerts_raw")
@@ -512,6 +521,7 @@ def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, di
         signal_dt = parse_date(alert["date"])
         rec["signal_dt"] = signal_dt
         rec["days_elapsed"] = int((today - signal_dt).days) if pd.notna(signal_dt) else -1
+        rec["business_days_elapsed"] = business_days_elapsed_for_signal(daily, alert["date"])
         records.append(rec)
 
     frame = pd.DataFrame(records)
@@ -897,7 +907,7 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
             )
         return markdown_table(headers, table_rows)
 
-    headers = ["日付", "銘柄", "社名", "経過日数", "現在騰落", "5営業日後", "10営業日後", "20営業日後", "操作"]
+    headers = ["日付", "銘柄", "社名", "経過営業日", "現在騰落", "5営業日後", "10営業日後", "20営業日後", "操作"]
     table_rows = []
     for _, row in rows.iterrows():
         symbol = row.get("symbol", "")
@@ -906,7 +916,7 @@ def signal_table(rows: pd.DataFrame, eval_days: int, confirmed: bool) -> list[st
                 row.get("date", ""),
                 symbol,
                 row.get("name", ""),
-                str(row.get("days_elapsed", "")),
+                elapsed_business_days_text(row),
                 pct(row.get("cur_perf")),
                 pct(row.get("perf_5bd")),
                 pct(row.get("perf_10bd")),
@@ -1022,6 +1032,31 @@ def action_buttons(symbol: str, row: pd.Series) -> str:
     )
 
 
+def volatility_tag(row: pd.Series) -> tuple[str, str, str]:
+    atr_pct = row.get("_atr", np.nan)
+    if not is_finite(atr_pct):
+        return "", "", ""
+    atr = float(atr_pct)
+    if atr < 3.0:
+        return "low", "🟢LOW", "ATR 3%未満。値動きが比較的穏やかな銘柄です。"
+    if atr < 6.0:
+        return "mid", "🟡MID", "ATR 3%以上6%未満。標準的な変動幅の銘柄です。"
+    return "high", "🔴HIGH", "ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。"
+
+
+def volatility_tag_html(row: pd.Series) -> str:
+    tone, label, description = volatility_tag(row)
+    if not label:
+        return ""
+    atr_pct = float(row.get("_atr"))
+    tooltip = f"ATR%: {atr_pct:.1f}% / {description}"
+    return (
+        f'<span class="vol-tag vol-{tone}" tabindex="0" '
+        f'title="{html_escape(tooltip)}" data-tooltip="{html_escape(tooltip)}">'
+        f"{html_escape(label)}</span>"
+    )
+
+
 def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
     name = str(row.get("name", "") or "").strip()
     name_html = (
@@ -1030,11 +1065,13 @@ def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
         if name
         else ""
     )
+    volatility_html = volatility_tag_html(row)
     return (
         '<div class="symbol-stack">'
         '<div class="symbol-identity">'
         f'<span class="symbol">{html_escape(symbol)}</span>{name_html}'
         "</div>"
+        f"{volatility_html}"
         f"{action_buttons(symbol, row)}"
         "</div>"
     )
@@ -1163,6 +1200,17 @@ def perf_with_price_html(perf_value, price_value=None) -> str:
     )
 
 
+def elapsed_business_days_text(row: pd.Series) -> str:
+    value = row.get("business_days_elapsed", row.get("days_elapsed", ""))
+    try:
+        days = int(value)
+    except (TypeError, ValueError):
+        return "--"
+    if days < 0:
+        return "--"
+    return f"{days}営業日"
+
+
 def verdict_class(value: str) -> str:
     if value.startswith(("有望", "継続監視")):
         return "good"
@@ -1207,6 +1255,7 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         <a href="#performance-summary">全体成績</a>
         <a href="#mode-summary">モード別サマリー</a>
         <a href="#highlights">注目ポイント</a>
+        <a href="#guide">使い方</a>
         <a href="#daily-detections">銘柄検索</a>
         """
     else:
@@ -1219,6 +1268,42 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         {mode_links}
       </div>
     </nav>
+    """
+
+
+def guide_section_html() -> str:
+    return """
+    <section id="guide" class="panel guide-panel">
+      <h2>使い方・対象銘柄</h2>
+      <div class="guide-grid">
+        <section class="guide-block">
+          <h3>監視対象</h3>
+          <ul class="guide-list">
+            <li>東証個別株</li>
+            <li>シグナル点灯前日終値が1,000円以下、かつ出来高10,000株以上</li>
+            <li>シグナル点灯時のローソク足の出来高が5,000株以上</li>
+            <li>1日あたり最大1,000銘柄。対象が1,001銘柄以上ある場合は、出来高が少ない銘柄から除外されます。</li>
+          </ul>
+        </section>
+        <section class="guide-block">
+          <h3>ボラティリティタグ</h3>
+          <p class="note">ATR%から、銘柄ごとの値動きの大きさを示します。</p>
+          <div class="vol-legend">
+            <div><span class="vol-tag vol-low">🟢LOW</span><span>ATR 3%未満。値動きが比較的穏やかな銘柄です。</span></div>
+            <div><span class="vol-tag vol-mid">🟡MID</span><span>ATR 3%以上6%未満。標準的な変動幅の銘柄です。</span></div>
+            <div><span class="vol-tag vol-high">🔴HIGH</span><span>ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。</span></div>
+          </div>
+        </section>
+        <section class="guide-block">
+          <h3>サイトの見方</h3>
+          <ul class="guide-list">
+            <li>モード別サマリーから、Stable、Sniper、Mega各モードの詳細ページへ移動できます。</li>
+            <li>銘柄検索では、日付、証券コード、★数、株価、テクニカル指標で絞り込めます。</li>
+            <li>各銘柄のファンダ分析ボタンは、該当日のDiscord分析がある場合だけ表示されます。</li>
+          </ul>
+        </section>
+      </div>
+    </section>
     """
 
 
@@ -1336,7 +1421,7 @@ def html_signal_table(
             cells.append(mode_match_badges(row, current_candidate_id=overlap_id))
         cells.extend(
             [
-                html_escape(row.get("days_elapsed", "")),
+                html_escape(elapsed_business_days_text(row)),
                 perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
                 perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
                 perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
@@ -1642,7 +1727,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
           </label>
           <label>
             <span>証券コード</span>
-            <input id="search-symbol" type="search" inputmode="latin" placeholder="例: 2936">
+            <input id="search-symbol" type="search" inputmode="latin" placeholder="例: 9432">
           </label>
           <label>
             <span>★最小</span>
@@ -2375,6 +2460,59 @@ def build_html_report(
       text-overflow: ellipsis;
       white-space: nowrap;
     }}
+    .vol-tag {{
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 22px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+    }}
+    .vol-low {{
+      color: #087443;
+      background: #e8f7ef;
+    }}
+    .vol-mid {{
+      color: #946300;
+      background: #fff4cf;
+    }}
+    .vol-high {{
+      color: #b42318;
+      background: #fde7e4;
+    }}
+    .vol-tag[data-tooltip] {{
+      position: relative;
+      cursor: help;
+      outline-offset: 2px;
+    }}
+    .vol-tag[data-tooltip]::after {{
+      content: attr(data-tooltip);
+      display: none;
+      position: absolute;
+      left: 0;
+      top: calc(100% + 6px);
+      z-index: 20;
+      width: max-content;
+      max-width: 260px;
+      padding: 8px 10px;
+      border: 1px solid #c9d7ea;
+      border-radius: 7px;
+      background: #102033;
+      color: #ffffff;
+      box-shadow: 0 10px 26px rgba(16, 24, 40, 0.18);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+      white-space: normal;
+    }}
+    .vol-tag[data-tooltip]:hover::after,
+    .vol-tag[data-tooltip]:focus-visible::after {{
+      display: block;
+    }}
     .symbol-stack .action-buttons {{
       margin-top: 2px;
       justify-content: flex-start;
@@ -2673,6 +2811,38 @@ def build_html_report(
     .gate-list li {{
       margin: 8px 0;
     }}
+    .guide-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }}
+    .guide-block {{
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 2px solid var(--line);
+    }}
+    .guide-block h3 {{
+      margin: 0;
+    }}
+    .guide-list {{
+      margin: 0;
+      padding-left: 18px;
+    }}
+    .guide-list li {{
+      margin: 0 0 7px;
+    }}
+    .vol-legend {{
+      display: grid;
+      gap: 8px;
+    }}
+    .vol-legend > div {{
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 9px;
+    }}
     .notice {{
       color: #475467;
       font-size: 13px;
@@ -2892,6 +3062,8 @@ def build_html_report(
       </ul>
     </section>
 
+    {guide_section_html()}
+
     {daily_detection_section}
   </main>
   {daily_detection_script()}
@@ -3064,6 +3236,26 @@ def mode_page_style() -> str:
       color: var(--text); font-size: 13px; font-weight: 700; line-height: 1.35;
       min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .vol-tag {
+      display: inline-flex; align-items: center; width: fit-content; min-height: 22px;
+      padding: 2px 7px; border-radius: 999px; font-size: 11px; font-weight: 800;
+      line-height: 1.2; white-space: nowrap;
+    }
+    .vol-low { color: #087443; background: #e8f7ef; }
+    .vol-mid { color: #946300; background: #fff4cf; }
+    .vol-high { color: #b42318; background: #fde7e4; }
+    .vol-tag[data-tooltip] {
+      position: relative; cursor: help; outline-offset: 2px;
+    }
+    .vol-tag[data-tooltip]::after {
+      content: attr(data-tooltip); display: none; position: absolute; left: 0; top: calc(100% + 6px);
+      z-index: 20; width: max-content; max-width: 260px; padding: 8px 10px;
+      border: 1px solid #c9d7ea; border-radius: 7px; background: #102033; color: #fff;
+      box-shadow: 0 10px 26px rgba(16, 24, 40, .18); font-size: 12px; font-weight: 700;
+      line-height: 1.45; white-space: normal;
+    }
+    .vol-tag[data-tooltip]:hover::after,
+    .vol-tag[data-tooltip]:focus-visible::after { display: block; }
     .symbol-stack .action-buttons { margin-top: 2px; justify-content: flex-start; flex-wrap: nowrap; }
     .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
@@ -3302,6 +3494,24 @@ def build_report(
         "- `Sniper 勝率重視` は派手さよりも、条件通過後にプラスで終わる比率を重視します。",
         "- `Mega5 短期リバウンド` は短期急騰狙い。5営業日でどこまで反転するかを見ます。",
         "- `Mega40` の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。",
+        "",
+    ]
+
+    lines += [
+        "## 使い方・対象銘柄",
+        "",
+        "### 監視対象",
+        "",
+        "- 東証個別株",
+        "- シグナル点灯前日終値が1,000円以下、かつ出来高10,000株以上",
+        "- シグナル点灯時のローソク足の出来高が5,000株以上",
+        "- 1日あたり最大1,000銘柄。対象が1,001銘柄以上ある場合は、出来高が少ない銘柄から除外されます。",
+        "",
+        "### ボラティリティタグ",
+        "",
+        "- 🟢LOW: ATR 3%未満。値動きが比較的穏やかな銘柄です。",
+        "- 🟡MID: ATR 3%以上6%未満。標準的な変動幅の銘柄です。",
+        "- 🔴HIGH: ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。",
         "",
     ]
 

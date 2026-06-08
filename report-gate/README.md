@@ -38,6 +38,7 @@ Non-secret settings are in `wrangler.jsonc`:
 |---|---|
 | `DISCORD_GUILD_ID` | Discord server ID to check |
 | `DISCORD_ALLOWED_ROLE_IDS` | Comma-separated role IDs allowed to view the report |
+| `ACCESS_PURCHASE_URL` | Purchase page shown when a logged-in Discord user does not have an allowed role |
 | `REPORT_ASSET_PATH` | Report asset path, normally `/mega_validation_report_latest.html` |
 | `SESSION_TTL_SECONDS` | Signed session cookie lifetime |
 | `PUBLIC_BASE_URL` | Optional fixed public origin, such as `https://reports.example.com` |

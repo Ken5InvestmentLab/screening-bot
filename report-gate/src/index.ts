@@ -7,10 +7,19 @@ const REPORT_INTERACTIONS_SCRIPT_PATH = "/report-interactions.js";
 const ROLE_CACHE_SECONDS = 90;
 const ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS = 600;
 const REPORT_ASSET_PATH_RE = /^\/mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
-const ACCESS_GUARD_SCRIPT = `(() => {
+const DEFAULT_ACCESS_PURCHASE_URL = "https://whop.com/scoring-bot/tenteikyokuchi/";
+const ROLE_REQUIRED_TITLE = "アクセス権限がありません";
+const ROLE_REQUIRED_MESSAGE =
+  "このレポートを見るには、Discordで対象ロールが必要です。まだアクセス権を購入していない場合は、購入ページから参加してください。";
+
+function accessGuardScript(env: WorkerEnv): string {
+  const purchaseUrl = JSON.stringify(accessPurchaseUrl(env));
+  const deniedTitle = JSON.stringify(ROLE_REQUIRED_TITLE);
+  const deniedMessage = JSON.stringify(ROLE_REQUIRED_MESSAGE);
+  return `(() => {
   const checkIntervalMs = 120000;
   const deny = () => {
-    document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Access denied</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.6;color:#182230}a{color:#2563eb}</style></head><body><h1>Access denied</h1><p>Your Discord role no longer allows access to this report.</p><p><a href="/auth/logout">Log in again</a></p></body>';
+    document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + ${deniedTitle} + '</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}.wrap{max-width:680px;margin:0 auto;padding:28px;border:1px solid #d7e0ea;border-radius:10px;background:#fff}h1{font-size:24px;margin:0 0 12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}a{color:#2563eb}.button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:7px;text-decoration:none;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{border:1px solid #c9d7ea;color:#1849a9;background:#f3f7ff}</style></head><body><main class="wrap"><h1>' + ${deniedTitle} + '</h1><p>' + ${deniedMessage} + '</p><div class="actions"><a class="button primary" href="' + ${purchaseUrl} + '">アクセス権を購入する</a><a class="button secondary" href="/auth/logout">Discordで再ログイン</a></div></main></body>';
   };
   const check = async () => {
     try {
@@ -38,10 +47,12 @@ const ACCESS_GUARD_SCRIPT = `(() => {
   });
   window.setInterval(check, checkIntervalMs);
 })();`;
+}
 
 type WorkerEnv = Env & {
   DISCORD_CLIENT_ID?: string;
   DISCORD_CLIENT_SECRET?: string;
+  ACCESS_PURCHASE_URL?: string;
   PUBLIC_BASE_URL?: string;
   SESSION_SECRET?: string;
 };
@@ -103,14 +114,32 @@ function jsonResponse(body: unknown, status = 200, init: HeadersInit = {}): Resp
   });
 }
 
-function htmlResponse(title: string, message: string, status = 200, init: HeadersInit = {}): Response {
+type HtmlAction = {
+  href: string;
+  label: string;
+  primary?: boolean;
+};
+
+function htmlResponse(
+  title: string,
+  message: string,
+  status = 200,
+  init: HeadersInit = {},
+  actions: HtmlAction[] = [{ href: "/auth/login", label: "Discordでログイン" }],
+): Response {
   const safeTitle = escapeHtml(title);
   const safeMessage = escapeHtml(message);
+  const actionHtml = actions
+    .map((action) => {
+      const classes = action.primary ? "button primary" : "button secondary";
+      return `<a class="${classes}" href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>`;
+    })
+    .join("");
   const headers = new Headers(init);
   headers.set("content-type", "text/html; charset=utf-8");
   headers.set("cache-control", "no-store");
   return new Response(
-    `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safeTitle}</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.6;color:#182230}a{color:#2563eb}</style></head><body><h1>${safeTitle}</h1><p>${safeMessage}</p><p><a href="/auth/login">Discordでログイン</a></p></body></html>`,
+    `<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${safeTitle}</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}.wrap{max-width:680px;margin:0 auto;padding:28px;border:1px solid #d7e0ea;border-radius:10px;background:#fff}h1{font-size:24px;margin:0 0 12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}a{color:#2563eb}.button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:7px;text-decoration:none;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{border:1px solid #c9d7ea;color:#1849a9;background:#f3f7ff}</style></head><body><main class="wrap"><h1>${safeTitle}</h1><p>${safeMessage}</p><div class="actions">${actionHtml}</div></main></body></html>`,
     {
       status,
       headers: securityHeaders(headers),
@@ -156,6 +185,10 @@ function requiredEnv(env: WorkerEnv, key: keyof WorkerEnv): string {
 function optionalEnv(env: WorkerEnv, key: keyof WorkerEnv, fallback: string): string {
   const value = env[key];
   return typeof value === "string" && value.trim() !== "" ? value.trim() : fallback;
+}
+
+function accessPurchaseUrl(env: WorkerEnv): string {
+  return optionalEnv(env, "ACCESS_PURCHASE_URL", DEFAULT_ACCESS_PURCHASE_URL);
 }
 
 function allowedRoleIds(env: WorkerEnv): string[] {
@@ -421,11 +454,18 @@ async function encryptedSessionCookie(request: Request, env: WorkerEnv, session:
   return cookie(SESSION_COOKIE, await createSession(session, requiredEnv(env, "SESSION_SECRET")), new URL(request.url), maxAge);
 }
 
-function accessDeniedResponse(request: Request): Response {
+function roleRequiredResponse(env: WorkerEnv, status = 403, init: HeadersInit = {}): Response {
+  return htmlResponse(ROLE_REQUIRED_TITLE, ROLE_REQUIRED_MESSAGE, status, init, [
+    { href: accessPurchaseUrl(env), label: "アクセス権を購入する", primary: true },
+    { href: "/auth/logout", label: "Discordで再ログイン" },
+  ]);
+}
+
+function accessDeniedResponse(request: Request, env: WorkerEnv): Response {
   const url = new URL(request.url);
   const headers = new Headers();
   headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-  return htmlResponse("Access denied", "Your Discord account does not have the required role.", 403, headers);
+  return roleRequiredResponse(env, 403, headers);
 }
 
 type AuthorizationResult =
@@ -439,7 +479,7 @@ async function requireAuthorized(request: Request, env: WorkerEnv): Promise<Auth
     if (check.authorized) {
       return { allowed: true, refreshedSession: check.refreshedSession };
     }
-    return { allowed: false, response: accessDeniedResponse(request) };
+    return { allowed: false, response: accessDeniedResponse(request, env) };
   }
 
   const url = new URL(request.url);
@@ -490,7 +530,7 @@ async function callback(request: Request, env: WorkerEnv): Promise<Response> {
   const member = await fetchGuildMember(token.accessToken, env);
   const roles = member.roles ?? [];
   if (!hasAllowedRole(roles, allowedRoleIds(env))) {
-    return htmlResponse("Access denied", "Your Discord account does not have the required role.", 403);
+    return roleRequiredResponse(env);
   }
 
   const userId = member.user?.id;
@@ -681,7 +721,7 @@ async function router(request: Request, env: WorkerEnv): Promise<Response> {
     return authCheck(request, env);
   }
   if (url.pathname === ACCESS_GUARD_SCRIPT_PATH) {
-    return new Response(ACCESS_GUARD_SCRIPT, {
+    return new Response(accessGuardScript(env), {
       headers: securityHeaders({
         "content-type": "application/javascript; charset=utf-8",
         "cache-control": "no-store",
@@ -712,7 +752,7 @@ export default {
       return await router(request, env);
     } catch (error) {
       if (error instanceof AccessDeniedError) {
-        return htmlResponse("Access denied", "Your Discord account is not allowed to view this report.", 403);
+        return roleRequiredResponse(env);
       }
       console.error(
         JSON.stringify({

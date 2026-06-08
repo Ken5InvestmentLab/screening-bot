@@ -1255,8 +1255,8 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         <a href="#performance-summary">全体成績</a>
         <a href="#mode-summary">モード別サマリー</a>
         <a href="#highlights">注目ポイント</a>
-        <a href="#guide">使い方</a>
         <a href="#daily-detections">銘柄検索</a>
+        <a href="#guide">使い方</a>
         """
     else:
         section_links = ""
@@ -1727,7 +1727,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
           </label>
           <label>
             <span>証券コード</span>
-            <input id="search-symbol" type="search" inputmode="latin" placeholder="例: 9432">
+            <input id="search-symbol" type="search" inputmode="latin" placeholder="例: 1234">
           </label>
           <label>
             <span>★最小</span>
@@ -3062,9 +3062,9 @@ def build_html_report(
       </ul>
     </section>
 
-    {guide_section_html()}
-
     {daily_detection_section}
+
+    {guide_section_html()}
   </main>
   {daily_detection_script()}
 </body>

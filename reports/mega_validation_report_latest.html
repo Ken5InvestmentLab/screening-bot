@@ -437,30 +437,6 @@
       color: var(--muted);
       font-size: 11px;
     }
-    .archive-scope {
-      margin-top: 22px;
-      border: 1px solid #c9d6e7;
-      border-radius: 8px;
-      background: #fbfdff;
-      padding: 0 16px 16px;
-    }
-    .archive-scope > summary {
-      cursor: pointer;
-      padding: 16px 0;
-      color: #1849a9;
-      font-weight: 700;
-    }
-    .archive-scope > summary span {
-      display: grid;
-      gap: 3px;
-    }
-    .archive-scope > summary small {
-      color: var(--muted);
-      font-weight: 500;
-    }
-    .archive-cards {
-      margin-top: 6px;
-    }
     .candidate-detail > summary::-webkit-details-marker { display: none; }
     .candidate-detail > summary::before {
       content: "+";
@@ -634,26 +610,27 @@
       <nav>
         <a class="active" href="mega_validation_report_latest.html">トップ</a>
         <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
+
       </nav>
     </details>
 
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底スコアリング ウォッチリスト</h1>
-    <p>生成日時: 2026-06-08 11:58:04 JST</p>
-    <p>Stable、Sniper、Mega候補の過去成績と、ウォッチ中銘柄の現在成績をまとめています。通常表示はalerts_rawのみです。</p>
+    <p>生成日時: 2026-06-08 12:55:51 JST</p>
+    <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
     <section class="cards">
-      <div class="card"><div class="label">alerts_raw 指標計算可能シグナル</div><div class="value">1457</div></div>
+      <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2142</div></div>
       <div class="card"><div class="label">対象モード</div><div class="value">5</div></div>
-      <div class="card"><div class="label">確定済み延べ件数</div><div class="value">40</div></div>
+      <div class="card"><div class="label">確定済み延べ件数</div><div class="value">78</div></div>
       <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">13</div></div>
     </section>
 
     <section class="panel">
-      <h2>全体成績（alerts_rawのみ）</h2>
-      <p class="note">alerts_rawシートに残っているBOTTOMシグナルだけの営業日別成績です。signals_archive込みの銘柄一覧は各モードページの任意表示セクションで確認できます。</p>
+      <h2>全体成績（過去1年分）</h2>
+      <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       <table class="compact">
 <thead><tr>
 <th>評価日</th>
@@ -668,25 +645,25 @@
 </tr></thead><tbody>
 <tr>
 <td data-label="評価日"><strong>5営業日後</strong></td>
-<td data-label="確定件数">1067</td>
-<td data-label="平均"><span class="neg">-0.6%</span></td>
-<td data-label="勝率"><span class="pos">36.0%</span></td>
-<td data-label="+10%">63</td>
-<td data-label="+20%">26</td>
-<td data-label="+30%">16</td>
-<td data-label="+50%">8</td>
+<td data-label="確定件数">2007</td>
+<td data-label="平均"><span class="neg">-0.4%</span></td>
+<td data-label="勝率"><span class="pos">37.5%</span></td>
+<td data-label="+10%">110</td>
+<td data-label="+20%">40</td>
+<td data-label="+30%">27</td>
+<td data-label="+50%">10</td>
 <td data-label="+100%">1</td>
 </tr>
 <tr>
 <td data-label="評価日"><strong>40営業日後</strong></td>
-<td data-label="確定件数">255</td>
-<td data-label="平均"><span class="neg">-1.4%</span></td>
-<td data-label="勝率"><span class="pos">25.8%</span></td>
-<td data-label="+10%">34</td>
-<td data-label="+20%">26</td>
-<td data-label="+30%">18</td>
-<td data-label="+50%">10</td>
-<td data-label="+100%">3</td>
+<td data-label="確定件数">940</td>
+<td data-label="平均"><span class="neg">-1.9%</span></td>
+<td data-label="勝率"><span class="pos">30.7%</span></td>
+<td data-label="+10%">122</td>
+<td data-label="+20%">73</td>
+<td data-label="+30%">43</td>
+<td data-label="+50%">22</td>
+<td data-label="+100%">6</td>
 </tr>
 </tbody></table>
     </section>
@@ -702,23 +679,23 @@
         </div>
         <p>現行Stableロジックの6条件すべてを満たす満点候補。</p>
         <div class="mode-metrics">
-          <span><strong>18</strong><small>確定</small></span>
-          <span><strong><span class="pos">55.6%</span></strong><small>勝率</small></span>
-          <span><strong><span class="pos">+14.3%</span></strong><small>平均</small></span>
+          <span><strong>26</strong><small>確定</small></span>
+          <span><strong><span class="pos">61.5%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+15.3%</span></strong><small>平均</small></span>
           <span><strong>2</strong><small>ウォッチ中</small></span>
         </div>
       </a>
 
-      <a class="mode-card hold" href="mega_validation_report_sniper.html">
+      <a class="mode-card good" href="mega_validation_report_sniper.html">
         <div class="mode-card-head">
           <span class="mode-name">Sniper 勝率重視</span>
           <span class="mode-horizon">5営業日後 / 勝ち</span>
         </div>
         <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
         <div class="mode-metrics">
-          <span><strong>13</strong><small>確定</small></span>
-          <span><strong><span class="pos">53.8%</span></strong><small>勝率</small></span>
-          <span><strong><span class="neg">-0.5%</span></strong><small>平均</small></span>
+          <span><strong>24</strong><small>確定</small></span>
+          <span><strong><span class="pos">69.6%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+0.9%</span></strong><small>平均</small></span>
           <span><strong>3</strong><small>ウォッチ中</small></span>
         </div>
       </a>
@@ -730,37 +707,37 @@
         </div>
         <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
         <div class="mode-metrics">
-          <span><strong>6</strong><small>確定</small></span>
-          <span><strong><span class="pos">66.7%</span></strong><small>勝率</small></span>
-          <span><strong><span class="pos">+26.3%</span></strong><small>平均</small></span>
+          <span><strong>11</strong><small>確定</small></span>
+          <span><strong><span class="pos">72.7%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+21.6%</span></strong><small>平均</small></span>
           <span><strong>0</strong><small>ウォッチ中</small></span>
         </div>
       </a>
 
-      <a class="mode-card hold" href="mega_validation_report_mega40_deep_reversal.html">
+      <a class="mode-card good" href="mega_validation_report_mega40_deep_reversal.html">
         <div class="mode-card-head">
           <span class="mode-name">Mega40 深押し反転</span>
           <span class="mode-horizon">40営業日後 / +30%</span>
         </div>
         <p>深い押し目から強陽線で切り返す40営業日候補。</p>
         <div class="mode-metrics">
-          <span><strong>1</strong><small>確定</small></span>
-          <span><strong><span class="pos">100.0%</span></strong><small>勝率</small></span>
-          <span><strong><span class="pos">+40.7%</span></strong><small>平均</small></span>
+          <span><strong>12</strong><small>確定</small></span>
+          <span><strong><span class="pos">66.7%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+32.2%</span></strong><small>平均</small></span>
           <span><strong>6</strong><small>ウォッチ中</small></span>
         </div>
       </a>
 
-      <a class="mode-card hold" href="mega_validation_report_mega40_wick_recovery.html">
+      <a class="mode-card good" href="mega_validation_report_mega40_wick_recovery.html">
         <div class="mode-card-head">
           <span class="mode-name">Mega40 下ヒゲ回復</span>
           <span class="mode-horizon">40営業日後 / +50%</span>
         </div>
         <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
         <div class="mode-metrics">
-          <span><strong>2</strong><small>確定</small></span>
-          <span><strong><span class="pos">50.0%</span></strong><small>勝率</small></span>
-          <span><strong><span class="pos">+17.5%</span></strong><small>平均</small></span>
+          <span><strong>5</strong><small>確定</small></span>
+          <span><strong><span class="pos">60.0%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+21.0%</span></strong><small>平均</small></span>
           <span><strong>2</strong><small>ウォッチ中</small></span>
         </div>
       </a>

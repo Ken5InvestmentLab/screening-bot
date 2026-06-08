@@ -523,10 +523,6 @@ def horizon_frame(frame: pd.DataFrame, eval_days: int) -> pd.DataFrame:
     return frame[frame[col].apply(is_finite)].copy()
 
 
-def display_business_days(candidate: dict) -> int:
-    return 60 if int(candidate["eval_days"]) >= 40 else 45
-
-
 def win_rate_excluding_ties(perf: pd.Series) -> float:
     values = pd.to_numeric(perf, errors="coerce")
     values = values[np.isfinite(values)]
@@ -534,18 +530,6 @@ def win_rate_excluding_ties(perf: pd.Series) -> float:
     if decisive.empty:
         return np.nan
     return float((decisive > 0).mean())
-
-
-def recent_business_day_frame(frame: pd.DataFrame, business_days: int) -> pd.DataFrame:
-    if frame.empty or "signal_dt" not in frame.columns:
-        return frame.copy()
-    today = pd.Timestamp(datetime.now(JST).date())
-    cutoff_range = pd.bdate_range(end=today, periods=max(int(business_days), 1))
-    if cutoff_range.empty:
-        return frame.copy()
-    cutoff = pd.Timestamp(cutoff_range[0].date())
-    signal_dt = pd.to_datetime(frame["signal_dt"], errors="coerce")
-    return frame[signal_dt >= cutoff].copy()
 
 
 def recent_calendar_day_frame(frame: pd.DataFrame, calendar_days: int) -> pd.DataFrame:
@@ -557,14 +541,11 @@ def recent_calendar_day_frame(frame: pd.DataFrame, calendar_days: int) -> pd.Dat
     return frame[signal_dt >= cutoff].copy()
 
 
-def horizon_summary(frame: pd.DataFrame, use_display_windows: bool = False) -> list[dict]:
+def horizon_summary(frame: pd.DataFrame) -> list[dict]:
     rows = []
     for days in sorted({int(candidate["eval_days"]) for candidate in CANDIDATES}):
         col = f"perf_{days}bd"
-        scoped = frame
-        if use_display_windows:
-            scoped = recent_business_day_frame(frame, 60 if days >= 40 else 45)
-        subset = horizon_frame(scoped, days)
+        subset = horizon_frame(frame, days)
         perf = subset[col].astype(float) if not subset.empty else pd.Series(dtype=float)
         rows.append(
             {
@@ -828,20 +809,13 @@ def condition_labels_text(conditions: list[str]) -> str:
 def stats_table_rows(
     frame_confirmed: pd.DataFrame,
     frame_all: pd.DataFrame,
-    use_display_windows: bool = False,
 ) -> tuple[list[dict], dict[str, dict], dict[str, dict]]:
     stats_by_id = {}
     watch_by_id = {}
     rows = []
     for candidate in CANDIDATES:
-        scoped_confirmed = frame_confirmed
-        scoped_all = frame_all
-        if use_display_windows:
-            business_days = display_business_days(candidate)
-            scoped_confirmed = recent_business_day_frame(frame_confirmed, business_days)
-            scoped_all = recent_business_day_frame(frame_all, business_days)
-        stats = candidate_stats(scoped_confirmed, candidate)
-        watch_stats = current_watch_stats(scoped_all, candidate)
+        stats = candidate_stats(frame_confirmed, candidate)
+        watch_stats = current_watch_stats(frame_all, candidate)
         stats_by_id[candidate["id"]] = stats
         watch_by_id[candidate["id"]] = watch_stats
         rows.append(
@@ -1082,13 +1056,23 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         f'href="{html_escape(mode_page_filename(candidate))}">{html_escape(candidate["label"])}</a>'
         for candidate in CANDIDATES
     )
-    _ = include_mode_sections
+    section_links = (
+        """
+        <hr>
+        <a href="#summary">成績サマリー</a>
+        <a href="#confirmed">確定済み全件</a>
+        <a href="#watch">未確定ウォッチ</a>
+        """
+        if include_mode_sections
+        else ""
+    )
     return f"""
     <details class="hamburger-menu">
       <summary aria-label="メニュー">☰</summary>
       <nav>
         <a class="{ "active" if current_mode_id is None else "" }" href="mega_validation_report_latest.html">トップ</a>
         {mode_links}
+        {section_links}
       </nav>
     </details>
     """
@@ -1320,7 +1304,7 @@ def build_optional_archive_scope_html(
       <summary>
         <span>
           <strong>過去1年分の成績と銘柄を表示</strong>
-          <small>通常表示はalerts_rawのみです。必要な場合だけ過去アーカイブを含めて確認できます。</small>
+          <small>過去のシグナルも含めて、長めの期間で確認できます。</small>
         </span>
       </summary>
       <section class="cards archive-cards">
@@ -1331,19 +1315,19 @@ def build_optional_archive_scope_html(
       </section>
 
       <section class="panel">
-        <h2>全体成績（signals_archive込み）</h2>
-        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した成績です。</p>
+        <h2>全体成績（過去1年分）</h2>
+        <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
         {summary_table}
       </section>
 
       <section class="panel">
-        <h2>モード別サマリー（signals_archive込み）</h2>
+        <h2>モード別サマリー（過去1年分）</h2>
         <div class="mode-grid">
           {mode_cards}
         </div>
       </section>
 
-      <h2>モード別 銘柄一覧（signals_archive込み）</h2>
+      <h2>モード別 銘柄一覧（過去1年分）</h2>
       {detail_sections}
     </details>
     """
@@ -1355,12 +1339,8 @@ def build_html_report(
     meta: dict,
     generated_at: str,
 ) -> str:
-    stats_rows, stats_by_id, watch_by_id = stats_table_rows(
-        frame_confirmed,
-        frame_all,
-        use_display_windows=True,
-    )
-    summary = horizon_summary(frame_confirmed, use_display_windows=True)
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
+    summary = horizon_summary(frame_confirmed)
 
     summary_table = html_table(
         ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
@@ -1839,30 +1819,6 @@ def build_html_report(
       color: var(--muted);
       font-size: 11px;
     }}
-    .archive-scope {{
-      margin-top: 22px;
-      border: 1px solid #c9d6e7;
-      border-radius: 8px;
-      background: #fbfdff;
-      padding: 0 16px 16px;
-    }}
-    .archive-scope > summary {{
-      cursor: pointer;
-      padding: 16px 0;
-      color: #1849a9;
-      font-weight: 700;
-    }}
-    .archive-scope > summary span {{
-      display: grid;
-      gap: 3px;
-    }}
-    .archive-scope > summary small {{
-      color: var(--muted);
-      font-weight: 500;
-    }}
-    .archive-cards {{
-      margin-top: 6px;
-    }}
     .candidate-detail > summary::-webkit-details-marker {{ display: none; }}
     .candidate-detail > summary::before {{
       content: "+";
@@ -2035,19 +1991,19 @@ def build_html_report(
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底スコアリング ウォッチリスト</h1>
     <p>生成日時: {html_escape(generated_at)}</p>
-    <p>Stable、Sniper、Mega候補の過去成績と、ウォッチ中銘柄の現在成績をまとめています。通常表示はalerts_rawのみです。</p>
+    <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
     <section class="cards">
-      <div class="card"><div class="label">alerts_raw 指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
+      <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
       <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
       <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
       <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
     </section>
 
     <section class="panel">
-      <h2>全体成績（alerts_rawのみ）</h2>
-      <p class="note">alerts_rawシートに残っているBOTTOMシグナルだけの営業日別成績です。signals_archive込みの銘柄一覧は各モードページの任意表示セクションで確認できます。</p>
+      <h2>全体成績（過去1年分）</h2>
+      <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       {summary_table}
     </section>
 
@@ -2246,23 +2202,12 @@ def build_mode_html_page(
     candidate: dict,
     frame_confirmed: pd.DataFrame,
     frame_all: pd.DataFrame,
-    archive_confirmed: pd.DataFrame,
-    archive_all: pd.DataFrame,
     generated_at: str,
 ) -> str:
-    display_days = display_business_days(candidate)
-    display_confirmed = recent_business_day_frame(frame_confirmed, display_days)
-    display_all = recent_business_day_frame(frame_all, display_days)
-    archive_confirmed_year = recent_calendar_day_frame(archive_confirmed, 365)
-    archive_all_year = recent_calendar_day_frame(archive_all, 365)
-    stats = candidate_stats(display_confirmed, candidate)
-    watch_stats = current_watch_stats(display_all, candidate)
-    archive_stats = candidate_stats(archive_confirmed_year, candidate)
-    archive_watch_stats = current_watch_stats(archive_all_year, candidate)
-    confirmed_rows = candidate_rows(display_confirmed, candidate, confirmed=True, limit=None)
-    unconfirmed_rows = candidate_rows(display_all, candidate, confirmed=False, limit=None)
-    archive_confirmed_rows = candidate_rows(archive_confirmed_year, candidate, confirmed=True, limit=None)
-    archive_unconfirmed_rows = candidate_rows(archive_all_year, candidate, confirmed=False, limit=None)
+    stats = candidate_stats(frame_confirmed, candidate)
+    watch_stats = current_watch_stats(frame_all, candidate)
+    confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
+    unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -2280,8 +2225,8 @@ def build_mode_html_page(
   </header>
   <main>
     <section id="summary" class="panel">
-      <h2>成績サマリー（{display_days}営業日分）</h2>
-      <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}。通常表示はalerts_rawの直近{display_days}営業日分です。</p>
+      <h2>成績サマリー（過去1年分）</h2>
+      <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
       <div class="chips">{condition_chips(candidate["conditions"])}</div>
       {stat_metrics_html(stats, watch_stats)}
     </section>
@@ -2295,23 +2240,6 @@ def build_mode_html_page(
       <h2>未確定ウォッチ全件</h2>
       {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False)}
     </section>
-
-    <details id="archive" class="candidate-detail">
-      <summary>過去1年分の成績と銘柄を表示</summary>
-      <section class="panel">
-        <h2>成績サマリー（過去1年分）</h2>
-        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した過去1年分の成績です。</p>
-        {stat_metrics_html(archive_stats, archive_watch_stats)}
-      </section>
-      <section class="panel">
-        <h2>確定済み全件</h2>
-        {html_signal_table(archive_confirmed_rows, candidate["eval_days"], confirmed=True)}
-      </section>
-      <section class="panel">
-        <h2>未確定ウォッチ全件</h2>
-        {html_signal_table(archive_unconfirmed_rows, candidate["eval_days"], confirmed=False)}
-      </section>
-    </details>
   </main>
 </body>
 </html>
@@ -2324,20 +2252,16 @@ def build_report(
     meta: dict,
     generated_at: str,
 ) -> str:
-    stats_rows, stats_by_id, watch_by_id = stats_table_rows(
-        frame_confirmed,
-        frame_all,
-        use_display_windows=True,
-    )
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
 
     lines = [
         "# 天底スコアリング ウォッチリスト",
         "",
         f"- 生成日時: {generated_at}",
-        "- 対象: TradingView BOTTOM シグナル（alerts_rawのみ）",
+        "- 対象: 過去1年以内に出たTradingView BOTTOMシグナル",
         "- 注意: 過去成績は将来の値動きを保証するものではありません。",
         "",
-        "## 全体成績（alerts_rawのみ）",
+        "## 全体成績（過去1年分）",
         "",
         f"- 指標計算可能シグナル: {meta['feature_rows']}",
         f"- 対象モード: {len(CANDIDATES)}",
@@ -2347,7 +2271,7 @@ def build_report(
     ]
 
     summary_rows = []
-    for row in horizon_summary(frame_confirmed, use_display_windows=True):
+    for row in horizon_summary(frame_confirmed):
         summary_rows.append(
             [
                 horizon_label(row["days"]),
@@ -2371,7 +2295,7 @@ def build_report(
         "",
         "## モード別サマリー",
         "",
-        "各モードの過去成績とウォッチ中銘柄の現在成績です。signals_archive込みの確認はHTML下部の任意表示セクションを使います。",
+        "各モードの過去1年分の成績と、ウォッチ中銘柄の現在成績です。",
         "",
     ]
 
@@ -2405,7 +2329,7 @@ def build_report(
         "",
     ]
 
-    lines += ["## モード別 銘柄一覧（alerts_rawのみ）", ""]
+    lines += ["## モード別 銘柄一覧（過去1年分）", ""]
 
     for candidate in CANDIDATES:
         stats = stats_by_id[candidate["id"]]
@@ -2442,12 +2366,6 @@ def build_report(
         "- 最新の開示、出来高、地合い、リスク許容度をあわせて確認してください。",
     ]
     return "\n".join(lines)
-
-
-def source_frame(frame: pd.DataFrame, include_archive: bool) -> pd.DataFrame:
-    if frame.empty or "_from_archive" not in frame.columns or include_archive:
-        return frame.copy()
-    return frame[~frame["_from_archive"].astype(bool)].copy()
 
 
 def report_meta(base_meta: dict, frame_all: pd.DataFrame, frame_confirmed: pd.DataFrame) -> dict:
@@ -2492,15 +2410,15 @@ def main() -> None:
     confirmed_frame = attach_fundamental_links(confirmed_frame, premium_links, discord_messages)
     all_frame = attach_fundamental_links(all_frame, premium_links, discord_messages)
 
-    raw_confirmed_frame = source_frame(confirmed_frame, include_archive=False)
-    raw_all_frame = source_frame(all_frame, include_archive=False)
-    raw_meta = report_meta(all_meta, raw_all_frame, raw_confirmed_frame)
-    raw_meta["premium_log_urls"] = premium_links.get("matched_urls", 0)
-    raw_meta["discord_messages"] = len(discord_messages)
+    report_confirmed_frame = recent_calendar_day_frame(confirmed_frame, 365)
+    report_all_frame = recent_calendar_day_frame(all_frame, 365)
+    report_meta_data = report_meta(all_meta, report_all_frame, report_confirmed_frame)
+    report_meta_data["premium_log_urls"] = premium_links.get("matched_urls", 0)
+    report_meta_data["discord_messages"] = len(discord_messages)
     generated_at = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S %Z")
 
     markdown_output = args.markdown_output or DEFAULT_MARKDOWN_OUTPUT
-    markdown_report = build_report(raw_confirmed_frame, raw_all_frame, raw_meta, generated_at)
+    markdown_report = build_report(report_confirmed_frame, report_all_frame, report_meta_data, generated_at)
     markdown_path = os.path.abspath(markdown_output)
     os.makedirs(os.path.dirname(markdown_path), exist_ok=True)
     with open(markdown_path, "w", encoding="utf-8", newline="\n") as handle:
@@ -2508,9 +2426,9 @@ def main() -> None:
         handle.write("\n")
 
     html_report = build_html_report(
-        raw_confirmed_frame,
-        raw_all_frame,
-        raw_meta,
+        report_confirmed_frame,
+        report_all_frame,
+        report_meta_data,
         generated_at,
     )
     html_report = "\n".join(line.rstrip() for line in html_report.rstrip().splitlines())
@@ -2524,10 +2442,8 @@ def main() -> None:
     for candidate in CANDIDATES:
         mode_report = build_mode_html_page(
             candidate,
-            raw_confirmed_frame,
-            raw_all_frame,
-            confirmed_frame,
-            all_frame,
+            report_confirmed_frame,
+            report_all_frame,
             generated_at,
         )
         mode_report = "\n".join(line.rstrip() for line in mode_report.rstrip().splitlines())

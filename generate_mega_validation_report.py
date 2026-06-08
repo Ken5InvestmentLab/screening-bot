@@ -523,8 +523,17 @@ def horizon_frame(frame: pd.DataFrame, eval_days: int) -> pd.DataFrame:
     return frame[frame[col].apply(is_finite)].copy()
 
 
-def history_business_days(candidate: dict) -> int:
+def display_business_days(candidate: dict) -> int:
     return 60 if int(candidate["eval_days"]) >= 40 else 45
+
+
+def win_rate_excluding_ties(perf: pd.Series) -> float:
+    values = pd.to_numeric(perf, errors="coerce")
+    values = values[np.isfinite(values)]
+    decisive = values[values != 0]
+    if decisive.empty:
+        return np.nan
+    return float((decisive > 0).mean())
 
 
 def recent_business_day_frame(frame: pd.DataFrame, business_days: int) -> pd.DataFrame:
@@ -539,18 +548,30 @@ def recent_business_day_frame(frame: pd.DataFrame, business_days: int) -> pd.Dat
     return frame[signal_dt >= cutoff].copy()
 
 
-def horizon_summary(frame: pd.DataFrame) -> list[dict]:
+def recent_calendar_day_frame(frame: pd.DataFrame, calendar_days: int) -> pd.DataFrame:
+    if frame.empty or "signal_dt" not in frame.columns:
+        return frame.copy()
+    today = pd.Timestamp(datetime.now(JST).date())
+    cutoff = today - pd.Timedelta(days=max(int(calendar_days), 1) - 1)
+    signal_dt = pd.to_datetime(frame["signal_dt"], errors="coerce")
+    return frame[signal_dt >= cutoff].copy()
+
+
+def horizon_summary(frame: pd.DataFrame, use_display_windows: bool = False) -> list[dict]:
     rows = []
     for days in sorted({int(candidate["eval_days"]) for candidate in CANDIDATES}):
         col = f"perf_{days}bd"
-        subset = horizon_frame(frame, days)
+        scoped = frame
+        if use_display_windows:
+            scoped = recent_business_day_frame(frame, 60 if days >= 40 else 45)
+        subset = horizon_frame(scoped, days)
         perf = subset[col].astype(float) if not subset.empty else pd.Series(dtype=float)
         rows.append(
             {
                 "days": days,
                 "n": len(subset),
                 "avg": perf.mean() if len(perf) else np.nan,
-                "win": (perf > 0).mean() if len(perf) else np.nan,
+                "win": win_rate_excluding_ties(perf) if len(perf) else np.nan,
                 "p10": int((perf >= 0.10).sum()) if len(perf) else 0,
                 "p20": int((perf >= 0.20).sum()) if len(perf) else 0,
                 "p30": int((perf >= 0.30).sum()) if len(perf) else 0,
@@ -598,7 +619,7 @@ def candidate_stats(frame: pd.DataFrame, candidate: dict) -> dict:
         "n": len(hits),
         "avg": float(perf.mean()),
         "median": float(perf.median()),
-        "win_rate": float((perf > 0).mean()),
+        "win_rate": win_rate_excluding_ties(perf),
         "target_hits": target_hits,
         "target_rate": target_rate,
         "recall": target_hits / total_target if total_target else 0.0,
@@ -659,7 +680,7 @@ def current_watch_stats(frame: pd.DataFrame, candidate: dict) -> dict:
         "with_current": len(current),
         "avg": float(perf.mean()),
         "median": float(perf.median()),
-        "win_rate": float((perf > 0).mean()),
+        "win_rate": win_rate_excluding_ties(perf),
         "p10": int((perf >= 0.10).sum()),
         "p20": int((perf >= 0.20).sum()),
         "p50": int((perf >= 0.50).sum()),
@@ -807,13 +828,20 @@ def condition_labels_text(conditions: list[str]) -> str:
 def stats_table_rows(
     frame_confirmed: pd.DataFrame,
     frame_all: pd.DataFrame,
+    use_display_windows: bool = False,
 ) -> tuple[list[dict], dict[str, dict], dict[str, dict]]:
     stats_by_id = {}
     watch_by_id = {}
     rows = []
     for candidate in CANDIDATES:
-        stats = candidate_stats(frame_confirmed, candidate)
-        watch_stats = current_watch_stats(frame_all, candidate)
+        scoped_confirmed = frame_confirmed
+        scoped_all = frame_all
+        if use_display_windows:
+            business_days = display_business_days(candidate)
+            scoped_confirmed = recent_business_day_frame(frame_confirmed, business_days)
+            scoped_all = recent_business_day_frame(frame_all, business_days)
+        stats = candidate_stats(scoped_confirmed, candidate)
+        watch_stats = current_watch_stats(scoped_all, candidate)
         stats_by_id[candidate["id"]] = stats
         watch_by_id[candidate["id"]] = watch_stats
         rows.append(
@@ -1327,8 +1355,12 @@ def build_html_report(
     meta: dict,
     generated_at: str,
 ) -> str:
-    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
-    summary = horizon_summary(frame_confirmed)
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(
+        frame_confirmed,
+        frame_all,
+        use_display_windows=True,
+    )
+    summary = horizon_summary(frame_confirmed, use_display_windows=True)
 
     summary_table = html_table(
         ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
@@ -2218,17 +2250,19 @@ def build_mode_html_page(
     archive_all: pd.DataFrame,
     generated_at: str,
 ) -> str:
-    stats = candidate_stats(frame_confirmed, candidate)
-    watch_stats = current_watch_stats(frame_all, candidate)
-    history_days = history_business_days(candidate)
-    history_confirmed = recent_business_day_frame(archive_confirmed, history_days)
-    history_all = recent_business_day_frame(archive_all, history_days)
-    archive_stats = candidate_stats(history_confirmed, candidate)
-    archive_watch_stats = current_watch_stats(history_all, candidate)
-    confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
-    unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
-    archive_confirmed_rows = candidate_rows(history_confirmed, candidate, confirmed=True, limit=None)
-    archive_unconfirmed_rows = candidate_rows(history_all, candidate, confirmed=False, limit=None)
+    display_days = display_business_days(candidate)
+    display_confirmed = recent_business_day_frame(frame_confirmed, display_days)
+    display_all = recent_business_day_frame(frame_all, display_days)
+    archive_confirmed_year = recent_calendar_day_frame(archive_confirmed, 365)
+    archive_all_year = recent_calendar_day_frame(archive_all, 365)
+    stats = candidate_stats(display_confirmed, candidate)
+    watch_stats = current_watch_stats(display_all, candidate)
+    archive_stats = candidate_stats(archive_confirmed_year, candidate)
+    archive_watch_stats = current_watch_stats(archive_all_year, candidate)
+    confirmed_rows = candidate_rows(display_confirmed, candidate, confirmed=True, limit=None)
+    unconfirmed_rows = candidate_rows(display_all, candidate, confirmed=False, limit=None)
+    archive_confirmed_rows = candidate_rows(archive_confirmed_year, candidate, confirmed=True, limit=None)
+    archive_unconfirmed_rows = candidate_rows(archive_all_year, candidate, confirmed=False, limit=None)
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -2246,8 +2280,8 @@ def build_mode_html_page(
   </header>
   <main>
     <section id="summary" class="panel">
-      <h2>成績サマリー</h2>
-      <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}</p>
+      <h2>成績サマリー（{display_days}営業日分）</h2>
+      <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}。通常表示はalerts_rawの直近{display_days}営業日分です。</p>
       <div class="chips">{condition_chips(candidate["conditions"])}</div>
       {stat_metrics_html(stats, watch_stats)}
     </section>
@@ -2265,8 +2299,8 @@ def build_mode_html_page(
     <details id="archive" class="candidate-detail">
       <summary>過去1年分の成績と銘柄を表示</summary>
       <section class="panel">
-        <h2>成績サマリー（{history_days}営業日分）</h2>
-        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した直近{history_days}営業日分の成績です。</p>
+        <h2>成績サマリー（過去1年分）</h2>
+        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した過去1年分の成績です。</p>
         {stat_metrics_html(archive_stats, archive_watch_stats)}
       </section>
       <section class="panel">
@@ -2290,7 +2324,11 @@ def build_report(
     meta: dict,
     generated_at: str,
 ) -> str:
-    stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
+    stats_rows, stats_by_id, watch_by_id = stats_table_rows(
+        frame_confirmed,
+        frame_all,
+        use_display_windows=True,
+    )
 
     lines = [
         "# 天底スコアリング ウォッチリスト",
@@ -2309,7 +2347,7 @@ def build_report(
     ]
 
     summary_rows = []
-    for row in horizon_summary(frame_confirmed):
+    for row in horizon_summary(frame_confirmed, use_display_windows=True):
         summary_rows.append(
             [
                 horizon_label(row["days"]),

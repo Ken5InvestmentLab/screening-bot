@@ -1297,6 +1297,7 @@ def guide_section_html() -> str:
     return """
     <section id="guide" class="panel guide-panel">
       <h2>使い方・対象銘柄</h2>
+      <p class="note">TradingViewでBOTTOMシグナルが点灯した銘柄に対して、複数のテクニカル指標で品質スコアリングをして表示します。</p>
       <div class="guide-grid">
         <section class="guide-block">
           <h3>監視対象</h3>
@@ -3615,6 +3616,8 @@ def build_report(
 
     lines += [
         "## 使い方・対象銘柄",
+        "",
+        "TradingViewでBOTTOMシグナルが点灯した銘柄に対して、複数のテクニカル指標で品質スコアリングをして表示します。",
         "",
         "### 監視対象",
         "",

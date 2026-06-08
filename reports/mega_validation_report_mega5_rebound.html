@@ -134,7 +134,8 @@
       border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: right;
       vertical-align: top; white-space: nowrap;
     }
-    th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
+    th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3),
+    .signals td[data-label="銘柄"] {
       text-align: left; white-space: normal;
     }
     .signals td[data-label="操作"] {
@@ -154,9 +155,12 @@
     }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
     .symbol-stack {
-      display: grid; justify-items: start; gap: 6px; min-width: 0; max-width: 210px;
+      display: grid; justify-items: start; gap: 4px; min-width: 0; max-width: 230px; text-align: left;
     }
-    .symbol-stack .action-buttons { justify-content: flex-start; flex-wrap: nowrap; }
+    .symbol-name {
+      color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.35; white-space: normal;
+    }
+    .symbol-stack .action-buttons { margin-top: 2px; justify-content: flex-start; flex-wrap: nowrap; }
     .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
       display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;
@@ -252,7 +256,7 @@
 
   <header>
     <h1>Mega5 短期リバウンド</h1>
-    <p>生成日時: 2026-06-08 16:38:01 JST</p>
+    <p>生成日時: 2026-06-08 16:43:35 JST</p>
     <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
   </header>
   <main>
@@ -270,7 +274,6 @@
 <th>日付</th>
 <th>★</th>
 <th>銘柄</th>
-<th>社名</th>
 <th>他モード</th>
 <th>評価値</th>
 <th>5営業日後</th>
@@ -281,8 +284,7 @@
 <tr>
 <td data-label="日付">2026/05/29</td>
 <td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★5</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6656</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509851686376575029" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6656" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">インスペック</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6656</span><span class="symbol-name">インスペック</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509851686376575029" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6656" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+61.5%</span><small class="price-sub">1,364.7円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+61.5%</span><small class="price-sub">1,364.7円</small></span></td>
@@ -293,8 +295,7 @@
 <tr>
 <td data-label="日付">2026/03/05</td>
 <td data-label="★"><span class="star-badge high" title="Stable ★6の判定条件を何個満たしたか">★6</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6666</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6666" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">リバーエレテック</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6666</span><span class="symbol-name">リバーエレテック</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6666" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="mode-badges"><span class="mode-badge">Stable ★6</span></span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+37.3%</span><small class="price-sub">889.7円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+37.3%</span><small class="price-sub">889.7円</small></span></td>
@@ -305,8 +306,7 @@
 <tr>
 <td data-label="日付">2026/04/15</td>
 <td data-label="★"><span class="star-badge high" title="Stable ★6の判定条件を何個満たしたか">★6</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">5575</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5575" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">Ｇｌｏｂｅｅ</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">5575</span><span class="symbol-name">Ｇｌｏｂｅｅ</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5575" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="mode-badges"><span class="mode-badge">Stable ★6</span></span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+30.3%</span><small class="price-sub">841.7円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+30.3%</span><small class="price-sub">841.7円</small></span></td>
@@ -317,8 +317,7 @@
 <tr>
 <td data-label="日付">2026/04/27</td>
 <td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★4</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6853</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6853" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">共和電業</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6853</span><span class="symbol-name">共和電業</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6853" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+5.4%</span><small class="price-sub">778.9円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+5.4%</span><small class="price-sub">778.9円</small></span></td>
@@ -329,8 +328,7 @@
 <tr>
 <td data-label="日付">2026/04/01</td>
 <td data-label="★"><span class="star-badge high" title="Stable ★6の判定条件を何個満たしたか">★6</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">2334</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2334" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">イオレ</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">2334</span><span class="symbol-name">イオレ</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2334" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="mode-badges"><span class="mode-badge">Stable ★6</span></span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+4.2%</span><small class="price-sub">417.8円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+4.2%</span><small class="price-sub">417.8円</small></span></td>
@@ -341,8 +339,7 @@
 <tr>
 <td data-label="日付">2026/04/08</td>
 <td data-label="★"><span class="star-badge high" title="Stable ★6の判定条件を何個満たしたか">★6</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">4192</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4192" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">スパイダープラス</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">4192</span><span class="symbol-name">スパイダープラス</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4192" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="mode-badges"><span class="mode-badge">Stable ★6</span></span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+3.8%</span><small class="price-sub">296.9円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+3.8%</span><small class="price-sub">296.9円</small></span></td>
@@ -353,8 +350,7 @@
 <tr>
 <td data-label="日付">2026/03/05</td>
 <td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★5</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6193</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6193" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">バーチャレクス・ホールディングス</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6193</span><span class="symbol-name">バーチャレクス・ホールディングス</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6193" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+1.8%</span><small class="price-sub">1,034.3円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+1.8%</span><small class="price-sub">1,034.3円</small></span></td>
@@ -365,8 +361,7 @@
 <tr>
 <td data-label="日付">2026/04/24</td>
 <td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★4</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">7427</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7427" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">エコートレーディング</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">7427</span><span class="symbol-name">エコートレーディング</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7427" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-1.6%</span><small class="price-sub">874.8円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-1.6%</span><small class="price-sub">874.8円</small></span></td>
@@ -377,8 +372,7 @@
 <tr>
 <td data-label="日付">2026/04/01</td>
 <td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★5</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6664</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6664" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">オプトエレクトロニクス</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6664</span><span class="symbol-name">オプトエレクトロニクス</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6664" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-7.8%</span><small class="price-sub">282.1円</small></span></td>
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-7.8%</span><small class="price-sub">282.1円</small></span></td>
@@ -396,7 +390,6 @@
 <th>日付</th>
 <th>★</th>
 <th>銘柄</th>
-<th>社名</th>
 <th>他モード</th>
 <th>経過</th>
 <th>現在騰落</th>
@@ -407,8 +400,7 @@
 <tr>
 <td data-label="日付">2026/06/04</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★3</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">2440</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1511948914440278117" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2440" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">ぐるなび</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">2440</span><span class="symbol-name">ぐるなび</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1511948914440278117" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2440" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="経過">4</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="neg">-1.6%</span><small class="price-sub">123円</small></span></td>
@@ -419,8 +411,7 @@
 <tr>
 <td data-label="日付">2026/06/03</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★3</span></td>
-<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">2471</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1511586344558661653" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2471" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
-<td data-label="社名">エスプール</td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">2471</span><span class="symbol-name">エスプール</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1511586344558661653" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2471" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="経過">5</td>
 <td data-label="現在騰落"><span class="perf-cell"><span class="pos">+3.0%</span><small class="price-sub">243円</small></span></td>

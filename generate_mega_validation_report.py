@@ -1023,9 +1023,12 @@ def action_buttons(symbol: str, row: pd.Series) -> str:
 
 
 def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
+    name = str(row.get("name", "") or "").strip()
+    name_html = f'<span class="symbol-name">{html_escape(name)}</span>' if name else ""
     return (
         '<div class="symbol-stack">'
         f'<span class="symbol">{html_escape(symbol)}</span>'
+        f"{name_html}"
         f"{action_buttons(symbol, row)}"
         "</div>"
     )
@@ -1274,7 +1277,7 @@ def html_signal_table(
         headers = ["日付"]
         if show_star:
             headers.append("★")
-        headers.extend(["銘柄", "社名"])
+        headers.extend(["銘柄"])
         if show_overlap:
             headers.append("他モード")
         headers.extend(["評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後"])
@@ -1288,7 +1291,6 @@ def html_signal_table(
             cells.extend(
                 [
                     symbol_with_actions_html(symbol, row),
-                    html_escape(row.get("name", "")),
                 ]
             )
             if show_overlap:
@@ -1308,7 +1310,7 @@ def html_signal_table(
     headers = ["日付"]
     if show_star:
         headers.append("★")
-    headers.extend(["銘柄", "社名"])
+    headers.extend(["銘柄"])
     if show_overlap:
         headers.append("他モード")
     headers.extend(["経過", "現在騰落", "5営業日後", "10営業日後", "20営業日後"])
@@ -1322,7 +1324,6 @@ def html_signal_table(
         cells.extend(
             [
                 symbol_with_actions_html(symbol, row),
-                html_escape(row.get("name", "")),
             ]
         )
         if show_overlap:
@@ -1558,7 +1559,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         "日付",
         "★",
         "銘柄",
-        "社名",
         "該当モード",
         "現在騰落",
         "5営業日後",
@@ -1588,7 +1588,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
             html_escape(date_key),
             star_score_badge(row),
             symbol_with_actions_html(symbol, row),
-            html_escape(row.get("name", "")),
             mode_html,
             perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
             perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
@@ -2284,7 +2283,8 @@ def build_html_report(
       white-space: nowrap;
     }}
     th:first-child, td:first-child,
-    .signals th:nth-child(3), .signals td:nth-child(3) {{
+    .signals th:nth-child(3), .signals td:nth-child(3),
+    .signals td[data-label="銘柄"] {{
       text-align: left;
       white-space: normal;
     }}
@@ -2341,11 +2341,20 @@ def build_html_report(
     .symbol-stack {{
       display: grid;
       justify-items: start;
-      gap: 6px;
+      gap: 4px;
       min-width: 0;
-      max-width: 210px;
+      max-width: 230px;
+      text-align: left;
+    }}
+    .symbol-name {{
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.35;
+      white-space: normal;
     }}
     .symbol-stack .action-buttons {{
+      margin-top: 2px;
       justify-content: flex-start;
       flex-wrap: nowrap;
     }}
@@ -3000,7 +3009,8 @@ def mode_page_style() -> str:
       border-bottom: 1px solid var(--line); padding: 9px 10px; text-align: right;
       vertical-align: top; white-space: nowrap;
     }
-    th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
+    th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3),
+    .signals td[data-label="銘柄"] {
       text-align: left; white-space: normal;
     }
     .signals td[data-label="操作"] {
@@ -3020,9 +3030,12 @@ def mode_page_style() -> str:
     }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
     .symbol-stack {
-      display: grid; justify-items: start; gap: 6px; min-width: 0; max-width: 210px;
+      display: grid; justify-items: start; gap: 4px; min-width: 0; max-width: 230px; text-align: left;
     }
-    .symbol-stack .action-buttons { justify-content: flex-start; flex-wrap: nowrap; }
+    .symbol-name {
+      color: var(--muted); font-size: 11px; font-weight: 500; line-height: 1.35; white-space: normal;
+    }
+    .symbol-stack .action-buttons { margin-top: 2px; justify-content: flex-start; flex-wrap: nowrap; }
     .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
       display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;

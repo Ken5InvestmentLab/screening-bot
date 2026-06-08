@@ -1155,10 +1155,10 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
     elif current_mode_id is None:
         section_links = """
         <hr>
-        <a href="#daily-detections">本日・日別検出</a>
         <a href="#performance-summary">全体成績</a>
         <a href="#mode-summary">モード別サマリー</a>
-        <a href="#mode-pages">モード別ページ</a>
+        <a href="#highlights">注目ポイント</a>
+        <a href="#daily-detections">本日・日別検出</a>
         """
     else:
         section_links = ""
@@ -1538,7 +1538,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         mode_html = mode_match_badges(row, include_empty=False, link=True)
         if not mode_html:
             mode_html = '<span class="mode-badge none">モード外</span>'
-        hidden_attr = "" if date_key == default_date else " hidden"
+        hidden_class = "" if date_key == default_date else ' class="is-hidden"'
         cells = [
             html_escape(date_key),
             star_score_badge(row),
@@ -1553,7 +1553,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
             action_buttons(symbol, row),
         ]
         table_parts.append(
-            f'<tr data-detection-row data-date="{html_escape(date_key)}"{hidden_attr}>'
+            f'<tr data-detection-row data-date="{html_escape(date_key)}"{hidden_class}>'
         )
         table_parts.extend(
             f'<td data-label="{html_escape(headers[index])}">{cell}</td>'
@@ -1584,31 +1584,34 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
 
 
 def daily_detection_script() -> str:
+    return '<script src="report-interactions.js" defer></script>'
+
+
+def report_interactions_js() -> str:
     return """
-  <script>
-    (() => {
-      const select = document.getElementById("daily-date-filter");
-      const rows = Array.from(document.querySelectorAll("[data-detection-row]"));
-      const count = document.getElementById("daily-visible-count");
-      const empty = document.getElementById("daily-empty-message");
-      if (!select || rows.length === 0) return;
+(() => {
+  const select = document.getElementById("daily-date-filter");
+  const rows = Array.from(document.querySelectorAll("[data-detection-row]"));
+  const count = document.getElementById("daily-visible-count");
+  const empty = document.getElementById("daily-empty-message");
+  if (!select || rows.length === 0) return;
 
-      const applyFilter = () => {
-        const selectedDate = select.value || select.dataset.defaultDate;
-        let visible = 0;
-        rows.forEach((row) => {
-          const shouldShow = row.dataset.date === selectedDate;
-          row.hidden = !shouldShow;
-          if (shouldShow) visible += 1;
-        });
-        if (count) count.textContent = String(visible);
-        if (empty) empty.hidden = visible !== 0;
-      };
+  const applyFilter = () => {
+    const selectedDate = select.value || select.dataset.defaultDate;
+    let visible = 0;
+    rows.forEach((row) => {
+      const shouldShow = row.dataset.date === selectedDate;
+      row.classList.toggle("is-hidden", !shouldShow);
+      if (shouldShow) visible += 1;
+    });
+    if (count) count.textContent = String(visible);
+    if (empty) empty.hidden = visible !== 0;
+  };
 
-      select.addEventListener("change", applyFilter);
-      applyFilter();
-    })();
-  </script>
+  select.addEventListener("change", applyFilter);
+  select.addEventListener("input", applyFilter);
+  applyFilter();
+})();
     """
 
 
@@ -1652,14 +1655,6 @@ def build_html_report(
     )
     confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
     watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
-    mode_links = "".join(
-        f'<a class="mode-link" href="{html_escape(mode_page_filename(candidate))}">'
-        f"<strong>{html_escape(candidate['label'])}</strong>"
-        f"<span>{horizon_label(candidate['eval_days'])} / 目標 {html_escape(target_label(candidate))}</span>"
-        "</a>"
-        for candidate in CANDIDATES
-    )
-
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -2303,6 +2298,7 @@ def build_html_report(
       border-radius: 6px;
       margin-top: 12px;
     }}
+    .is-hidden,
     [hidden] {{
       display: none !important;
     }}
@@ -2404,17 +2400,14 @@ def build_html_report(
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
-    <section class="cards">
-      <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
-      <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
-      <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
-      <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
-    </section>
-
-    {daily_detection_section}
-
     <section id="performance-summary" class="panel">
       <h2>全体成績（過去1年分）</h2>
+      <section class="cards">
+        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
+        <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
+        <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
+      </section>
       <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       {summary_table}
     </section>
@@ -2427,7 +2420,7 @@ def build_html_report(
       <p class="notice">過去成績は将来の値動きを保証するものではありません。銘柄を確認するときは、最新の開示、出来高、地合い、リスク許容度もあわせて確認してください。</p>
     </section>
 
-    <section class="panel">
+    <section id="highlights" class="panel">
       <h2>注目ポイント</h2>
       <ul class="gate-list">
         <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
@@ -2437,13 +2430,7 @@ def build_html_report(
       </ul>
     </section>
 
-    <section id="mode-pages" class="panel">
-      <h2>モード別 銘柄一覧</h2>
-      <p class="note">各モードの確定済み全件・未確定ウォッチ全件は、モード別ページで確認できます。</p>
-      <div class="mode-link-grid">
-        {mode_links}
-      </div>
-    </section>
+    {daily_detection_section}
   </main>
   {daily_detection_script()}
 </body>
@@ -2884,6 +2871,11 @@ def main() -> None:
         handle.write("\n")
 
     html_dir = os.path.dirname(html_path)
+    script_path = os.path.join(html_dir, "report-interactions.js")
+    with open(script_path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(report_interactions_js().strip())
+        handle.write("\n")
+
     for candidate in CANDIDATES:
         mode_report = build_mode_html_page(
             candidate,
@@ -2898,6 +2890,7 @@ def main() -> None:
             handle.write("\n")
         print(f"wrote {mode_path}")
 
+    print(f"wrote {script_path}")
     print(f"wrote {markdown_path}")
     print(f"wrote {html_path}")
 

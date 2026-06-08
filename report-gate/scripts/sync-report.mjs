@@ -7,12 +7,13 @@ const reportGateDir = path.resolve(scriptDir, "..");
 const repoRoot = path.resolve(reportGateDir, "..");
 const sourceDir = path.join(repoRoot, "reports");
 const destinationDir = path.join(reportGateDir, "public");
-const reportFilePattern = /^mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
+const reportHtmlFilePattern = /^mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
+const reportFilePattern = /^(?:mega_validation_report(?:_[a-z0-9_]+)?\.html|report-interactions\.js)$/;
 
 await mkdir(destinationDir, { recursive: true });
 
 const files = (await readdir(sourceDir)).filter((name) => reportFilePattern.test(name)).sort();
-if (files.length === 0) {
+if (!files.some((name) => reportHtmlFilePattern.test(name))) {
   throw new Error(`No mega report HTML files found in ${path.relative(repoRoot, sourceDir)}`);
 }
 

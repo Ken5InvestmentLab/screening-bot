@@ -3,6 +3,7 @@ const STATE_COOKIE = "__Host-report_gate_oauth_state";
 const RETURN_TO_COOKIE = "__Host-report_gate_return_to";
 const DISCORD_SCOPE = "identify guilds.members.read";
 const ACCESS_GUARD_SCRIPT_PATH = "/auth/guard.js";
+const REPORT_INTERACTIONS_SCRIPT_PATH = "/report-interactions.js";
 const ROLE_CACHE_SECONDS = 90;
 const ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS = 600;
 const REPORT_ASSET_PATH_RE = /^\/mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
@@ -617,6 +618,21 @@ async function serveReport(request: Request, env: WorkerEnv, assetPath = reportA
   });
 }
 
+async function serveReportScript(env: WorkerEnv): Promise<Response> {
+  const assetUrl = new URL(REPORT_INTERACTIONS_SCRIPT_PATH, "https://assets.local");
+  const assetResponse = await env.ASSETS.fetch(assetUrl.toString());
+  if (!assetResponse.ok || !assetResponse.body) {
+    return textResponse("Report script not found", 404);
+  }
+  return new Response(assetResponse.body, {
+    status: assetResponse.status,
+    headers: securityHeaders({
+      "content-type": "application/javascript; charset=utf-8",
+      "cache-control": "public, max-age=300",
+    }),
+  });
+}
+
 async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
   const session = await readSession(request, env);
   const url = new URL(request.url);
@@ -671,6 +687,9 @@ async function router(request: Request, env: WorkerEnv): Promise<Response> {
         "cache-control": "no-store",
       }),
     });
+  }
+  if (url.pathname === REPORT_INTERACTIONS_SCRIPT_PATH) {
+    return serveReportScript(env);
   }
   if (url.pathname === "/auth/callback") {
     return callback(request, env);

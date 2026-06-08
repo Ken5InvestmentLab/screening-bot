@@ -1054,24 +1054,13 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         f'href="{html_escape(mode_page_filename(candidate))}">{html_escape(candidate["label"])}</a>'
         for candidate in CANDIDATES
     )
-    section_links = (
-        """
-        <hr>
-        <a href="#summary">成績サマリー</a>
-        <a href="#confirmed">確定済み全件</a>
-        <a href="#watch">未確定ウォッチ</a>
-        <a href="#archive">過去1年分</a>
-        """
-        if include_mode_sections
-        else ""
-    )
+    _ = include_mode_sections
     return f"""
     <details class="hamburger-menu">
       <summary aria-label="メニュー">☰</summary>
       <nav>
         <a class="{ "active" if current_mode_id is None else "" }" href="mega_validation_report_latest.html">トップ</a>
         {mode_links}
-        {section_links}
       </nav>
     </details>
     """

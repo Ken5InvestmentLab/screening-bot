@@ -1083,11 +1083,16 @@ def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
     )
     volatility_html = volatility_tag_html(row)
     entry_html = (
-        '<div class="symbol-price-meta">'
+        '<span class="symbol-price-meta">'
         '<span><span class="price-label">Entry</span>'
         f'<span class="price-value">{html_escape(yen(row.get("entry")))}</span></span>'
-        "</div>"
+        "</span>"
         if is_finite(row.get("entry"))
+        else ""
+    )
+    meta_html = (
+        f'<div class="symbol-meta-row">{volatility_html}{entry_html}</div>'
+        if volatility_html or entry_html
         else ""
     )
     return (
@@ -1095,8 +1100,7 @@ def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
         '<div class="symbol-identity">'
         f'<span class="symbol">{html_escape(symbol)}</span>{name_html}'
         "</div>"
-        f"{entry_html}"
-        f"{volatility_html}"
+        f"{meta_html}"
         f"{action_buttons(symbol, row)}"
         "</div>"
     )
@@ -2478,11 +2482,17 @@ def build_html_report(
       text-overflow: ellipsis;
       white-space: nowrap;
     }}
-    .symbol-price-meta {{
+    .symbol-meta-row {{
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 6px;
+      min-width: 0;
+      max-width: 100%;
+    }}
+    .symbol-price-meta {{
+      display: inline-flex;
+      align-items: center;
       color: var(--muted);
       font-size: 11px;
       font-weight: 700;
@@ -3273,8 +3283,11 @@ def mode_page_style() -> str:
       color: var(--text); font-size: 13px; font-weight: 700; line-height: 1.35;
       min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    .symbol-meta-row {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; max-width: 100%;
+    }
     .symbol-price-meta {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+      display: inline-flex; align-items: center;
       color: var(--muted); font-size: 11px; font-weight: 700; line-height: 1.25;
     }
     .symbol-price-meta > span {

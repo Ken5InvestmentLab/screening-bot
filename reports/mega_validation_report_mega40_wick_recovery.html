@@ -137,8 +137,6 @@
     th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
       text-align: left; white-space: normal;
     }
-    .signals th:last-child,
-    .signals td:last-child,
     .signals td[data-label="操作"] {
       min-width: 118px; max-width: 170px; text-align: right; white-space: normal;
     }
@@ -155,6 +153,11 @@
       color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap;
     }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
+    .symbol-stack {
+      display: grid; justify-items: start; gap: 6px; min-width: 0; max-width: 210px;
+    }
+    .symbol-stack .action-buttons { justify-content: flex-start; flex-wrap: nowrap; }
+    .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
       display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;
       max-width: 100%; white-space: normal;
@@ -249,7 +252,7 @@
 
   <header>
     <h1>Mega40 下ヒゲ回復</h1>
-    <p>生成日時: 2026-06-08 16:11:21 JST</p>
+    <p>生成日時: 2026-06-08 16:24:48 JST</p>
     <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
   </header>
   <main>
@@ -274,12 +277,11 @@
 <th>10営業日後</th>
 <th>20営業日後</th>
 <th>40営業日後</th>
-<th>操作</th>
 </tr></thead><tbody>
 <tr>
 <td data-label="日付">2026/03/09</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
-<td data-label="銘柄"><span class="symbol">5381</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">5381</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5381" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="社名">Mipox</td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+63.4%</span><small class="price-sub">1,214.1円</small></span></td>
@@ -287,12 +289,11 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+23.4%</span><small class="price-sub">916.9円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+26.8%</span><small class="price-sub">942.1円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+63.4%</span><small class="price-sub">1,214.1円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5381" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/31</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><span class="symbol">6336</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6336</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6336" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="社名">石井表記</td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+52.7%</span><small class="price-sub">1,298円</small></span></td>
@@ -300,12 +301,11 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+19.8%</span><small class="price-sub">1,018.3円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+32.5%</span><small class="price-sub">1,126.2円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+52.7%</span><small class="price-sub">1,298円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6336" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/24</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><span class="symbol">6444</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">6444</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6444" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="社名">サンデン</td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="pos">+13.0%</span><small class="price-sub">165円</small></span></td>
@@ -313,12 +313,11 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+10.3%</span><small class="price-sub">161円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+25.3%</span><small class="price-sub">182.9円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+13.0%</span><small class="price-sub">165円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6444" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/05</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
-<td data-label="銘柄"><span class="symbol">7205</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">7205</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7205" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="社名">日野自動車</td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-6.7%</span><small class="price-sub">387.2円</small></span></td>
@@ -326,12 +325,11 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-4.8%</span><small class="price-sub">395.1円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-6.7%</span><small class="price-sub">387.2円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-6.7%</span><small class="price-sub">387.2円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7205" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/03</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
-<td data-label="銘柄"><span class="symbol">3358</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">3358</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3358" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="社名">Ｔｒａｉｌｈｅａｄ　Ｇｌｏｂａｌ　Ｈｏｌｄｉｎｇｓ</td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="評価値"><span class="perf-cell"><span class="neg">-17.6%</span><small class="price-sub">89円</small></span></td>
@@ -339,7 +337,6 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-5.6%</span><small class="price-sub">102円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-5.6%</span><small class="price-sub">102円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-17.6%</span><small class="price-sub">89円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3358" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 </tbody></table>
     </section>
@@ -358,12 +355,11 @@
 <th>5営業日後</th>
 <th>10営業日後</th>
 <th>20営業日後</th>
-<th>操作</th>
 </tr></thead><tbody>
 <tr>
 <td data-label="日付">2026/05/18</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
-<td data-label="銘柄"><span class="symbol">196A</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">196A</span><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1505825948484898846" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:196A" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="社名">ＭＦＳ</td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="経過">21</td>
@@ -371,12 +367,11 @@
 <td data-label="5営業日後"><span class="perf-cell"><span class="neg">-2.0%</span><small class="price-sub">246円</small></span></td>
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+4.8%</span><small class="price-sub">263円</small></span></td>
 <td data-label="20営業日後"><span class="muted">--</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1505825948484898846" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:196A" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/30</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
-<td data-label="銘柄"><span class="symbol">4167</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><span class="symbol">4167</span><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4167" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
 <td data-label="社名">ココペリ</td>
 <td data-label="他モード"><span class="muted">なし</span></td>
 <td data-label="経過">39</td>
@@ -384,7 +379,6 @@
 <td data-label="5営業日後"><span class="perf-cell"><span class="pos">+4.1%</span><small class="price-sub">302.9円</small></span></td>
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+2.1%</span><small class="price-sub">297.1円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-2.7%</span><small class="price-sub">283.1円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4167" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 </tbody></table>
     </section>

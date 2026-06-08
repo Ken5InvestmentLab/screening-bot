@@ -33,6 +33,7 @@ DEFAULT_MARKDOWN_OUTPUT = os.path.join("reports", "mega_validation_report_latest
 DEFAULT_HTML_OUTPUT = os.path.join("reports", "mega_validation_report_latest.html")
 CURRENT_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic.json")
 SNIPER_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_sniper.json")
+MEGA_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_mega.json")
 PREMIUM_LOG_SPREADSHEET_ID_DEFAULT = "1GeLT-DUEdsYzT6AR3n1MkhkCeivqgtsMEXMhYfnHm9s"
 DISCORD_API_BASE = "https://discord.com/api/v10"
 DISCORD_MESSAGE_URL_RE = re.compile(
@@ -90,6 +91,19 @@ def load_logic_conditions(path: str, fallback: list[str]) -> list[str]:
         if isinstance(conditions, list) and conditions:
             return [str(cond) for cond in conditions]
     except (OSError, json.JSONDecodeError):
+        pass
+    return fallback
+
+
+def load_mega_logic_conditions(mode_id: str, fallback: list[str]) -> list[str]:
+    try:
+        with open(MEGA_LOGIC_PATH, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+        mode = payload.get("modes", {}).get(mode_id, {})
+        conditions = mode.get("conditions")
+        if isinstance(conditions, list) and conditions:
+            return [str(cond) for cond in conditions]
+    except (OSError, AttributeError, json.JSONDecodeError):
         pass
     return fallback
 
@@ -161,7 +175,10 @@ CANDIDATES = [
         "eval_days": 5,
         "target": 0.20,
         "target_label": "+20%",
-        "conditions": ["rci9_os", "pre_down3", "body2"],
+        "conditions": load_mega_logic_conditions(
+            "mega5_rebound",
+            ["rci9_os", "pre_down3", "body2"],
+        ),
         "intent": "売られすぎから強い陽線で反転した短期急騰候補。",
     },
     {
@@ -170,7 +187,10 @@ CANDIDATES = [
         "eval_days": 40,
         "target": 0.30,
         "target_label": "+30%",
-        "conditions": ["pre_decline15", "pre_down3", "bb_lower", "body2"],
+        "conditions": load_mega_logic_conditions(
+            "mega40_deep_reversal",
+            ["pre_decline15", "pre_down3", "bb_lower", "body2"],
+        ),
         "intent": "深い押し目から強陽線で切り返す40営業日候補。",
     },
     {
@@ -179,7 +199,10 @@ CANDIDATES = [
         "eval_days": 40,
         "target": 0.50,
         "target_label": "+50%",
-        "conditions": ["pre_decline15", "cci_os", "lower_wick50", "ich_chikou"],
+        "conditions": load_mega_logic_conditions(
+            "mega40_wick_recovery",
+            ["pre_decline15", "cci_os", "lower_wick50", "ich_chikou"],
+        ),
         "intent": "深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。",
     },
 ]
@@ -999,6 +1022,15 @@ def action_buttons(symbol: str, row: pd.Series) -> str:
     )
 
 
+def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
+    return (
+        '<div class="symbol-stack">'
+        f'<span class="symbol">{html_escape(symbol)}</span>'
+        f"{action_buttons(symbol, row)}"
+        "</div>"
+    )
+
+
 def action_links_text(symbol: str, row: pd.Series) -> str:
     clean = clean_symbol_text(symbol)
     if not clean:
@@ -1245,7 +1277,7 @@ def html_signal_table(
         headers.extend(["銘柄", "社名"])
         if show_overlap:
             headers.append("他モード")
-        headers.extend(["評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後", "操作"])
+        headers.extend(["評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後"])
 
         table_rows = []
         for _, row in rows.iterrows():
@@ -1255,7 +1287,7 @@ def html_signal_table(
                 cells.append(star_score_badge(row))
             cells.extend(
                 [
-                    f'<span class="symbol">{html_escape(symbol)}</span>',
+                    symbol_with_actions_html(symbol, row),
                     html_escape(row.get("name", "")),
                 ]
             )
@@ -1268,7 +1300,6 @@ def html_signal_table(
                     perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
                     perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
                     perf_with_price_html(row.get("perf_40bd"), projected_price(row, "perf_40bd")),
-                    action_buttons(symbol, row),
                 ]
             )
             table_rows.append(cells)
@@ -1280,7 +1311,7 @@ def html_signal_table(
     headers.extend(["銘柄", "社名"])
     if show_overlap:
         headers.append("他モード")
-    headers.extend(["経過", "現在騰落", "5営業日後", "10営業日後", "20営業日後", "操作"])
+    headers.extend(["経過", "現在騰落", "5営業日後", "10営業日後", "20営業日後"])
 
     table_rows = []
     for _, row in rows.iterrows():
@@ -1290,7 +1321,7 @@ def html_signal_table(
             cells.append(star_score_badge(row))
         cells.extend(
             [
-                f'<span class="symbol">{html_escape(symbol)}</span>',
+                symbol_with_actions_html(symbol, row),
                 html_escape(row.get("name", "")),
             ]
         )
@@ -1303,7 +1334,6 @@ def html_signal_table(
                 perf_with_price_html(row.get("perf_5bd"), projected_price(row, "perf_5bd")),
                 perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
                 perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
-                action_buttons(symbol, row),
             ]
         )
         table_rows.append(cells)
@@ -1535,7 +1565,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         "10営業日後",
         "20営業日後",
         "40営業日後",
-        "操作",
     ]
     table_parts = ['<table class="signals daily-detections">', "<thead><tr>"]
     table_parts.extend(f"<th>{html_escape(header)}</th>" for header in headers)
@@ -1558,7 +1587,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         cells = [
             html_escape(date_key),
             star_score_badge(row),
-            f'<span class="symbol">{html_escape(symbol)}</span>',
+            symbol_with_actions_html(symbol, row),
             html_escape(row.get("name", "")),
             mode_html,
             perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
@@ -1566,7 +1595,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
             perf_with_price_html(row.get("perf_10bd"), projected_price(row, "perf_10bd")),
             perf_with_price_html(row.get("perf_20bd"), projected_price(row, "perf_20bd")),
             perf_with_price_html(row.get("perf_40bd"), projected_price(row, "perf_40bd")),
-            action_buttons(symbol, row),
         ]
         table_parts.append(
             f'<tr data-detection-row data-date="{html_escape(date_key)}" '
@@ -1646,9 +1674,11 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         </div>
       </details>
       <p class="filter-status"><strong id="daily-visible-count">{default_count}</strong>/<span id="daily-total-count">{default_total}</span>件を表示中</p>
-      <button id="daily-load-more" class="load-more" type="button"{" hidden" if default_count >= default_total else ""}>さらに表示</button>
       <p id="daily-empty-message" class="empty" hidden>この条件に一致する銘柄はありません。</p>
       {"".join(table_parts)}
+      <div class="load-more-row">
+        <button id="daily-load-more" class="load-more" type="button"{" hidden" if default_count >= default_total else ""}>さらに表示</button>
+      </div>
     </section>
     """
 
@@ -2109,7 +2139,6 @@ def build_html_report(
       align-items: center;
       justify-content: center;
       min-height: 36px;
-      margin: 0 0 14px;
       padding: 7px 14px;
       border: 1px solid #bfd2ee;
       border-radius: 6px;
@@ -2117,6 +2146,11 @@ def build_html_report(
       color: #1849a9;
       font-weight: 700;
       cursor: pointer;
+    }}
+    .load-more-row {{
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 2px;
     }}
     .search-panel {{
       margin: 8px 0 12px;
@@ -2254,8 +2288,6 @@ def build_html_report(
       text-align: left;
       white-space: normal;
     }}
-    .signals th:last-child,
-    .signals td:last-child,
     .signals td[data-label="操作"] {{
       min-width: 118px;
       max-width: 170px;
@@ -2305,6 +2337,21 @@ def build_html_report(
     .symbol {{
       font-family: "Consolas", "Menlo", monospace;
       font-weight: 700;
+    }}
+    .symbol-stack {{
+      display: grid;
+      justify-items: start;
+      gap: 6px;
+      min-width: 0;
+      max-width: 210px;
+    }}
+    .symbol-stack .action-buttons {{
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+    }}
+    .symbol-stack .action-btn {{
+      flex: 0 0 auto;
+      min-width: 58px;
     }}
     .chip {{
       display: inline-block;
@@ -2956,8 +3003,6 @@ def mode_page_style() -> str:
     th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
       text-align: left; white-space: normal;
     }
-    .signals th:last-child,
-    .signals td:last-child,
     .signals td[data-label="操作"] {
       min-width: 118px; max-width: 170px; text-align: right; white-space: normal;
     }
@@ -2974,6 +3019,11 @@ def mode_page_style() -> str:
       color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap;
     }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
+    .symbol-stack {
+      display: grid; justify-items: start; gap: 6px; min-width: 0; max-width: 210px;
+    }
+    .symbol-stack .action-buttons { justify-content: flex-start; flex-wrap: nowrap; }
+    .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
       display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;
       max-width: 100%; white-space: normal;

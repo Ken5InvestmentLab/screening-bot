@@ -137,6 +137,11 @@
     th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
       text-align: left; white-space: normal;
     }
+    .signals th:last-child,
+    .signals td:last-child,
+    .signals td[data-label="操作"] {
+      min-width: 118px; max-width: 170px; text-align: right; white-space: normal;
+    }
     thead th { background: #f0f4f8; color: #344054; font-size: 12px; position: sticky; top: 0; }
     tbody tr:hover { background: #f8fbff; }
     .pos { color: var(--green); font-weight: 700; }
@@ -150,11 +155,16 @@
       color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap;
     }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
-    .action-buttons { display: inline-flex; justify-content: flex-end; gap: 6px; white-space: nowrap; }
+    .action-buttons {
+      display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;
+      max-width: 100%; white-space: normal;
+    }
     .action-btn {
       display: inline-flex; align-items: center; justify-content: center; min-height: 30px;
+      flex: 1 1 64px; min-width: 58px; max-width: 100%;
       padding: 5px 9px; border: 1px solid #bfd2ee; border-radius: 6px;
       background: #eef5ff; color: #1849a9; font-size: 12px; font-weight: 700; text-decoration: none;
+      white-space: nowrap;
     }
     .action-btn.secondary { border-color: #cfd8e6; background: #f6f8fb; color: #344054; }
     .fundamental-detail { margin-top: 8px; min-width: 260px; max-width: 520px; text-align: left; white-space: normal; }
@@ -239,7 +249,7 @@
 
   <header>
     <h1>Mega5 短期リバウンド</h1>
-    <p>生成日時: 2026-06-08 15:18:40 JST</p>
+    <p>生成日時: 2026-06-08 16:11:21 JST</p>
     <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
   </header>
   <main>

@@ -1509,14 +1509,17 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
     available_dates = sorted(rows["_date_key"].dropna().unique(), reverse=True)
     min_date = available_dates[-1]
     max_date = available_dates[0]
-    default_count = len(rows)
-    note = "初期表示は全期間です。日付や条件を指定すると、対象銘柄を絞り込めます。"
+    default_date = max_date
+    page_size = 100
+    default_total = int((rows["_date_key"] == default_date).sum())
+    default_count = min(default_total, page_size)
+    note = "初期表示は最新日です。表示日で全期間を選んだ場合も、端末に負荷がかからないよう100件ずつ表示します。"
     note += " ★はStable ★6の判定条件を何個満たしたかです。"
 
     options = "\n".join(
-        ["<option value=\"\" selected>全期間</option>"]
+        ["<option value=\"\">全期間</option>"]
         + [
-            f'<option value="{html_escape(date_key)}">{html_escape(date_key)}</option>'
+            f'<option value="{html_escape(date_key)}"{" selected" if date_key == default_date else ""}>{html_escape(date_key)}</option>'
             for date_key in available_dates
         ]
     )
@@ -1537,6 +1540,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
     table_parts = ['<table class="signals daily-detections">', "<thead><tr>"]
     table_parts.extend(f"<th>{html_escape(header)}</th>" for header in headers)
     table_parts.append("</tr></thead><tbody>")
+    default_rendered = 0
     for _, row in rows.iterrows():
         date_key = str(row.get("_date_key", ""))
         symbol = row.get("symbol", "")
@@ -1547,7 +1551,10 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         mode_html = mode_match_badges(row, include_empty=False, link=True)
         if not mode_html:
             mode_html = '<span class="mode-badge none">モード外</span>'
-        hidden_class = ""
+        is_initial_row = date_key == default_date and default_rendered < page_size
+        if date_key == default_date:
+            default_rendered += 1
+        hidden_class = "" if is_initial_row else ' class="is-hidden"'
         cells = [
             html_escape(date_key),
             star_score_badge(row),
@@ -1584,7 +1591,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         </div>
         <label class="filter-control" for="daily-date-filter">
           <span>表示日</span>
-          <select id="daily-date-filter" data-default-date="">
+          <select id="daily-date-filter" data-default-date="{html_escape(default_date)}" data-page-size="{page_size}">
             {options}
           </select>
         </label>
@@ -1638,7 +1645,8 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
           </div>
         </div>
       </details>
-      <p class="filter-status"><strong id="daily-visible-count">{default_count}</strong>件を表示中</p>
+      <p class="filter-status"><strong id="daily-visible-count">{default_count}</strong>/<span id="daily-total-count">{default_total}</span>件を表示中</p>
+      <button id="daily-load-more" class="load-more" type="button"{" hidden" if default_count >= default_total else ""}>さらに表示</button>
       <p id="daily-empty-message" class="empty" hidden>この条件に一致する銘柄はありません。</p>
       {"".join(table_parts)}
     </section>
@@ -1655,6 +1663,7 @@ def report_interactions_js() -> str:
   const select = document.getElementById("daily-date-filter");
   const rows = Array.from(document.querySelectorAll("[data-detection-row]"));
   const count = document.getElementById("daily-visible-count");
+  const total = document.getElementById("daily-total-count");
   const empty = document.getElementById("daily-empty-message");
   const dateFrom = document.getElementById("search-date-from");
   const dateTo = document.getElementById("search-date-to");
@@ -1665,7 +1674,11 @@ def report_interactions_js() -> str:
   const priceMax = document.getElementById("search-price-max");
   const indicatorInputs = Array.from(document.querySelectorAll("[data-indicator-filter]"));
   const reset = document.getElementById("search-reset");
+  const loadMore = document.getElementById("daily-load-more");
   if (!select || rows.length === 0) return;
+  const configuredPageSize = Number(select.dataset.pageSize || 100);
+  const pageSize = Number.isFinite(configuredPageSize) ? Math.max(20, configuredPageSize) : 100;
+  let visibleLimit = pageSize;
 
   const normalizeSymbol = (value) => String(value || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
   const numericValue = (element) => {
@@ -1675,9 +1688,12 @@ def report_interactions_js() -> str:
     return Number.isFinite(number) ? number : null;
   };
 
-  const applyFilter = () => {
+  const applyFilter = (resetLimit = true) => {
+    if (resetLimit) visibleLimit = pageSize;
+    const selectedDate = String(select.value || "");
     const from = String(dateFrom?.value || "");
     const to = String(dateTo?.value || "");
+    const useCustomDateRange = Boolean(from || to);
     const symbol = normalizeSymbol(symbolInput?.value);
     const minStar = numericValue(starMin);
     const maxStar = numericValue(starMax);
@@ -1686,41 +1702,63 @@ def report_interactions_js() -> str:
     const requiredConditions = indicatorInputs
       .filter((input) => input.checked)
       .map((input) => input.value);
-    let visible = 0;
+    let matched = 0;
+    let rendered = 0;
     rows.forEach((row) => {
       const rowDate = row.dataset.date || "";
       const rowSymbol = normalizeSymbol(row.dataset.symbol);
       const rowStar = Number(row.dataset.star);
-      const rowPrice = Number(row.dataset.price);
+      const rowPrice = row.dataset.price === "" ? NaN : Number(row.dataset.price);
       const rowConditions = new Set(String(row.dataset.conditions || "").split(/\\s+/).filter(Boolean));
       let shouldShow = true;
-      if (from && rowDate < from) shouldShow = false;
-      if (to && rowDate > to) shouldShow = false;
+      if (useCustomDateRange) {
+        if (from && rowDate < from) shouldShow = false;
+        if (to && rowDate > to) shouldShow = false;
+      } else if (selectedDate && rowDate !== selectedDate) {
+        shouldShow = false;
+      }
       if (symbol && !rowSymbol.includes(symbol)) shouldShow = false;
       if (minStar !== null && (!Number.isFinite(rowStar) || rowStar < minStar)) shouldShow = false;
       if (maxStar !== null && (!Number.isFinite(rowStar) || rowStar > maxStar)) shouldShow = false;
       if (minPrice !== null && (!Number.isFinite(rowPrice) || rowPrice < minPrice)) shouldShow = false;
       if (maxPrice !== null && (!Number.isFinite(rowPrice) || rowPrice > maxPrice)) shouldShow = false;
       if (requiredConditions.some((condition) => !rowConditions.has(condition))) shouldShow = false;
-      row.classList.toggle("is-hidden", !shouldShow);
-      if (shouldShow) visible += 1;
+      const shouldRender = shouldShow && rendered < visibleLimit;
+      row.classList.toggle("is-hidden", !shouldRender);
+      if (shouldShow) matched += 1;
+      if (shouldRender) rendered += 1;
     });
-    if (count) count.textContent = String(visible);
-    if (empty) empty.hidden = visible !== 0;
+    if (count) count.textContent = String(rendered);
+    if (total) total.textContent = String(matched);
+    if (empty) empty.hidden = matched !== 0;
+    if (loadMore) {
+      const remaining = matched - rendered;
+      loadMore.hidden = remaining <= 0;
+      loadMore.textContent = remaining > 0
+        ? `さらに${Math.min(pageSize, remaining)}件表示`
+        : "さらに表示";
+    }
   };
 
   const applySelectedDate = () => {
-    const selectedDate = select.value || "";
-    if (dateFrom) dateFrom.value = selectedDate;
-    if (dateTo) dateTo.value = selectedDate;
-    applyFilter();
+    if (dateFrom) dateFrom.value = "";
+    if (dateTo) dateTo.value = "";
+    applyFilter(true);
   };
 
   select.addEventListener("change", applySelectedDate);
   select.addEventListener("input", applySelectedDate);
+  [dateFrom, dateTo].filter(Boolean).forEach((element) => {
+    element.addEventListener("change", () => {
+      select.value = "";
+      applyFilter(true);
+    });
+    element.addEventListener("input", () => {
+      select.value = "";
+      applyFilter(true);
+    });
+  });
   [
-    dateFrom,
-    dateTo,
     symbolInput,
     starMin,
     starMax,
@@ -1731,11 +1769,15 @@ def report_interactions_js() -> str:
     element.addEventListener("change", applyFilter);
     element.addEventListener("input", applyFilter);
   });
+  loadMore?.addEventListener("click", () => {
+    visibleLimit += pageSize;
+    applyFilter(false);
+  });
   reset?.addEventListener("click", () => {
-    const defaultDate = select.dataset.defaultDate ?? "";
+    const defaultDate = select.dataset.defaultDate || "";
     select.value = defaultDate;
-    if (dateFrom) dateFrom.value = defaultDate;
-    if (dateTo) dateTo.value = defaultDate;
+    if (dateFrom) dateFrom.value = "";
+    if (dateTo) dateTo.value = "";
     if (symbolInput) symbolInput.value = "";
     if (starMin) starMin.value = "";
     if (starMax) starMax.value = "";
@@ -1744,9 +1786,9 @@ def report_interactions_js() -> str:
     indicatorInputs.forEach((input) => {
       input.checked = false;
     });
-    applyFilter();
+    applyFilter(true);
   });
-  applyFilter();
+  applyFilter(true);
 })();
     """
 
@@ -2062,6 +2104,20 @@ def build_html_report(
       color: var(--muted);
       font-size: 13px;
     }}
+    .load-more {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      margin: 0 0 14px;
+      padding: 7px 14px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+    }}
     .search-panel {{
       margin: 8px 0 12px;
       border: 1px solid var(--line);
@@ -2196,6 +2252,14 @@ def build_html_report(
     th:first-child, td:first-child,
     .signals th:nth-child(3), .signals td:nth-child(3) {{
       text-align: left;
+      white-space: normal;
+    }}
+    .signals th:last-child,
+    .signals td:last-child,
+    .signals td[data-label="操作"] {{
+      min-width: 118px;
+      max-width: 170px;
+      text-align: right;
       white-space: normal;
     }}
     thead th {{
@@ -2364,15 +2428,20 @@ def build_html_report(
       color: var(--muted);
     }}
     .action-buttons {{
-      display: inline-flex;
+      display: flex;
       justify-content: flex-end;
       gap: 6px;
-      white-space: nowrap;
+      flex-wrap: wrap;
+      max-width: 100%;
+      white-space: normal;
     }}
     .action-btn {{
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 1 1 64px;
+      min-width: 58px;
+      max-width: 100%;
       min-height: 30px;
       padding: 5px 9px;
       border: 1px solid #bfd2ee;
@@ -2382,6 +2451,7 @@ def build_html_report(
       font-size: 12px;
       font-weight: 700;
       text-decoration: none;
+      white-space: nowrap;
     }}
     .action-btn.secondary {{
       border-color: #cfd8e6;
@@ -2585,7 +2655,6 @@ def build_html_report(
       }}
       .action-buttons {{
         justify-content: flex-end;
-        flex-wrap: wrap;
         max-width: 100%;
       }}
       .fundamental-detail {{
@@ -2688,7 +2757,7 @@ def build_html_report(
       }}
       .action-buttons {{
         justify-content: flex-end;
-        flex-wrap: wrap;
+        max-width: 100%;
       }}
       .fundamental-detail {{
         min-width: 0;
@@ -2887,6 +2956,11 @@ def mode_page_style() -> str:
     th:first-child, td:first-child, .signals th:nth-child(3), .signals td:nth-child(3) {
       text-align: left; white-space: normal;
     }
+    .signals th:last-child,
+    .signals td:last-child,
+    .signals td[data-label="操作"] {
+      min-width: 118px; max-width: 170px; text-align: right; white-space: normal;
+    }
     thead th { background: #f0f4f8; color: #344054; font-size: 12px; position: sticky; top: 0; }
     tbody tr:hover { background: #f8fbff; }
     .pos { color: var(--green); font-weight: 700; }
@@ -2900,11 +2974,16 @@ def mode_page_style() -> str:
       color: var(--muted); font-size: 11px; font-weight: 500; white-space: nowrap;
     }
     .symbol { font-family: "Consolas", "Menlo", monospace; font-weight: 700; }
-    .action-buttons { display: inline-flex; justify-content: flex-end; gap: 6px; white-space: nowrap; }
+    .action-buttons {
+      display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;
+      max-width: 100%; white-space: normal;
+    }
     .action-btn {
       display: inline-flex; align-items: center; justify-content: center; min-height: 30px;
+      flex: 1 1 64px; min-width: 58px; max-width: 100%;
       padding: 5px 9px; border: 1px solid #bfd2ee; border-radius: 6px;
       background: #eef5ff; color: #1849a9; font-size: 12px; font-weight: 700; text-decoration: none;
+      white-space: nowrap;
     }
     .action-btn.secondary { border-color: #cfd8e6; background: #f6f8fb; color: #344054; }
     .fundamental-detail { margin-top: 8px; min-width: 260px; max-width: 520px; text-align: left; white-space: normal; }

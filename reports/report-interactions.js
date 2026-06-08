@@ -57,8 +57,9 @@
   };
 
   const applySelectedDate = () => {
-    if (dateFrom) dateFrom.value = select.value || select.dataset.defaultDate || "";
-    if (dateTo) dateTo.value = select.value || select.dataset.defaultDate || "";
+    const selectedDate = select.value || "";
+    if (dateFrom) dateFrom.value = selectedDate;
+    if (dateTo) dateTo.value = selectedDate;
     applyFilter();
   };
 
@@ -78,7 +79,7 @@
     element.addEventListener("input", applyFilter);
   });
   reset?.addEventListener("click", () => {
-    const defaultDate = select.dataset.defaultDate || select.value || "";
+    const defaultDate = select.dataset.defaultDate ?? "";
     select.value = defaultDate;
     if (dateFrom) dateFrom.value = defaultDate;
     if (dateTo) dateTo.value = defaultDate;

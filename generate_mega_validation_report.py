@@ -1474,7 +1474,7 @@ def build_optional_archive_scope_html(
 
 
 def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
-    title = "本日検出された銘柄一覧"
+    title = "検出された銘柄一覧"
     if frame_all.empty or "signal_dt" not in frame_all.columns:
         return f"""
         <section id="daily-detections" class="panel">
@@ -1507,22 +1507,18 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
     )
 
     available_dates = sorted(rows["_date_key"].dropna().unique(), reverse=True)
-    today = datetime.now(JST).strftime("%Y-%m-%d")
-    default_date = today if today in available_dates else available_dates[0]
-    default_count = int((rows["_date_key"] == default_date).sum())
     min_date = available_dates[-1]
     max_date = available_dates[0]
-    note = (
-        "初期表示は本日分です。日付を変えると過去の検出銘柄を確認できます。"
-        if default_date == today
-        else "本日分がないため、初期表示は最新の日付です。日付を変えると過去の検出銘柄を確認できます。"
-    )
+    default_count = len(rows)
+    note = "初期表示は全期間です。日付や条件を指定すると、対象銘柄を絞り込めます。"
     note += " ★はStable ★6の判定条件を何個満たしたかです。"
 
     options = "\n".join(
-        f'<option value="{html_escape(date_key)}"{ " selected" if date_key == default_date else "" }>'
-        f"{html_escape(date_key)}</option>"
-        for date_key in available_dates
+        ["<option value=\"\" selected>全期間</option>"]
+        + [
+            f'<option value="{html_escape(date_key)}">{html_escape(date_key)}</option>'
+            for date_key in available_dates
+        ]
     )
 
     headers = [
@@ -1551,7 +1547,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         mode_html = mode_match_badges(row, include_empty=False, link=True)
         if not mode_html:
             mode_html = '<span class="mode-badge none">モード外</span>'
-        hidden_class = "" if date_key == default_date else ' class="is-hidden"'
+        hidden_class = ""
         cells = [
             html_escape(date_key),
             star_score_badge(row),
@@ -1588,7 +1584,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         </div>
         <label class="filter-control" for="daily-date-filter">
           <span>表示日</span>
-          <select id="daily-date-filter" data-default-date="{html_escape(default_date)}">
+          <select id="daily-date-filter" data-default-date="">
             {options}
           </select>
         </label>
@@ -1598,11 +1594,11 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
         <div class="search-grid">
           <label>
             <span>開始日</span>
-            <input id="search-date-from" type="date" min="{html_escape(min_date)}" max="{html_escape(max_date)}" value="{html_escape(default_date)}">
+            <input id="search-date-from" type="date" min="{html_escape(min_date)}" max="{html_escape(max_date)}">
           </label>
           <label>
             <span>終了日</span>
-            <input id="search-date-to" type="date" min="{html_escape(min_date)}" max="{html_escape(max_date)}" value="{html_escape(default_date)}">
+            <input id="search-date-to" type="date" min="{html_escape(min_date)}" max="{html_escape(max_date)}">
           </label>
           <label>
             <span>証券コード</span>
@@ -1714,8 +1710,9 @@ def report_interactions_js() -> str:
   };
 
   const applySelectedDate = () => {
-    if (dateFrom) dateFrom.value = select.value || select.dataset.defaultDate || "";
-    if (dateTo) dateTo.value = select.value || select.dataset.defaultDate || "";
+    const selectedDate = select.value || "";
+    if (dateFrom) dateFrom.value = selectedDate;
+    if (dateTo) dateTo.value = selectedDate;
     applyFilter();
   };
 
@@ -1735,7 +1732,7 @@ def report_interactions_js() -> str:
     element.addEventListener("input", applyFilter);
   });
   reset?.addEventListener("click", () => {
-    const defaultDate = select.dataset.defaultDate || select.value || "";
+    const defaultDate = select.dataset.defaultDate ?? "";
     select.value = defaultDate;
     if (dateFrom) dateFrom.value = defaultDate;
     if (dateTo) dateTo.value = defaultDate;
@@ -2541,6 +2538,61 @@ def build_html_report(
     [hidden] {{
       display: none !important;
     }}
+    @media (max-width: 1100px) {{
+      .signals {{
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+      }}
+      .signals thead {{
+        display: none;
+      }}
+      .signals tbody,
+      .signals tr,
+      .signals td {{
+        display: block;
+        width: 100%;
+      }}
+      .signals tr {{
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        overflow: hidden;
+      }}
+      .signals td {{
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 10px;
+        text-align: right;
+        white-space: normal;
+      }}
+      .signals td > .mode-badges {{
+        justify-content: flex-end;
+      }}
+      .signals td::before {{
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        text-align: left;
+      }}
+      .signals td:nth-child(2),
+      .signals td:nth-child(3) {{
+        text-align: right;
+      }}
+      .perf-cell {{
+        justify-items: end;
+      }}
+      .action-buttons {{
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        max-width: 100%;
+      }}
+      .fundamental-detail {{
+        min-width: 0;
+        max-width: 100%;
+      }}
+    }}
     @media (max-width: 760px) {{
       .top-nav {{
         align-items: center;
@@ -2868,6 +2920,21 @@ def mode_page_style() -> str:
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    @media (max-width: 1100px) {
+      .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
+      .signals thead { display: none; }
+      .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
+      .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals td {
+        display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
+        text-align: right; white-space: normal;
+      }
+      .signals td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; }
+      .signals td > .mode-badges { justify-content: flex-end; }
+      .perf-cell { justify-items: end; }
+      .action-buttons { justify-content: flex-end; flex-wrap: wrap; max-width: 100%; }
+      .fundamental-detail { min-width: 0; max-width: 100%; }
+    }
     @media (max-width: 760px) {
       .top-nav {
         align-items: center;

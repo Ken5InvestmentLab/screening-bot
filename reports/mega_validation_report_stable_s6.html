@@ -170,6 +170,21 @@
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    @media (max-width: 1100px) {
+      .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
+      .signals thead { display: none; }
+      .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
+      .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals td {
+        display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
+        text-align: right; white-space: normal;
+      }
+      .signals td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; }
+      .signals td > .mode-badges { justify-content: flex-end; }
+      .perf-cell { justify-items: end; }
+      .action-buttons { justify-content: flex-end; flex-wrap: wrap; max-width: 100%; }
+      .fundamental-detail { min-width: 0; max-width: 100%; }
+    }
     @media (max-width: 760px) {
       .top-nav {
         align-items: center;
@@ -224,7 +239,7 @@
 
   <header>
     <h1>Stable ★6</h1>
-    <p>生成日時: 2026-06-08 15:07:51 JST</p>
+    <p>生成日時: 2026-06-08 15:18:40 JST</p>
     <p>現行Stableロジックの6条件すべてを満たす満点候補。</p>
   </header>
   <main>

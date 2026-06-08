@@ -523,6 +523,22 @@ def horizon_frame(frame: pd.DataFrame, eval_days: int) -> pd.DataFrame:
     return frame[frame[col].apply(is_finite)].copy()
 
 
+def history_business_days(candidate: dict) -> int:
+    return 60 if int(candidate["eval_days"]) >= 40 else 45
+
+
+def recent_business_day_frame(frame: pd.DataFrame, business_days: int) -> pd.DataFrame:
+    if frame.empty or "signal_dt" not in frame.columns:
+        return frame.copy()
+    today = pd.Timestamp(datetime.now(JST).date())
+    cutoff_range = pd.bdate_range(end=today, periods=max(int(business_days), 1))
+    if cutoff_range.empty:
+        return frame.copy()
+    cutoff = pd.Timestamp(cutoff_range[0].date())
+    signal_dt = pd.to_datetime(frame["signal_dt"], errors="coerce")
+    return frame[signal_dt >= cutoff].copy()
+
+
 def horizon_summary(frame: pd.DataFrame) -> list[dict]:
     rows = []
     for days in sorted({int(candidate["eval_days"]) for candidate in CANDIDATES}):
@@ -1044,7 +1060,7 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
         <a href="#watch">未確定ウォッチ</a>
-        <a href="#archive">archive込み</a>
+        <a href="#archive">過去1年分</a>
         """
         if include_mode_sections
         else ""
@@ -1286,7 +1302,7 @@ def build_optional_archive_scope_html(
     <details class="archive-scope">
       <summary>
         <span>
-          <strong>signals_archive込みの成績と銘柄を表示</strong>
+          <strong>過去1年分の成績と銘柄を表示</strong>
           <small>通常表示はalerts_rawのみです。必要な場合だけ過去アーカイブを含めて確認できます。</small>
         </span>
       </summary>
@@ -2116,6 +2132,8 @@ def mode_page_style() -> str:
     .cards, .metrics {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
     }
+    .metric-groups { display: grid; gap: 10px; }
+    .watch-metrics { padding-top: 2px; }
     .metric {
       border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fbfcfe;
     }
@@ -2175,19 +2193,31 @@ def mode_page_style() -> str:
 
 
 def stat_metrics_html(stats: dict, watch_stats: dict) -> str:
-    items = [
+    confirmed_items = [
         ("確定件数", stats["n"]),
         ("確定平均", pct_html(stats["avg"])),
         ("確定勝率", pct_html(stats["win_rate"], signed=False)),
         ("目標Hit", stats["target_hits"]),
+    ]
+    watch_items = [
         ("ウォッチ中", watch_stats["with_current"]),
         ("現在平均", pct_html(watch_stats["avg"])),
         ("現在勝率", pct_html(watch_stats["win_rate"], signed=False)),
         ("現在+10%", watch_stats["p10"]),
     ]
-    return "".join(
-        f'<div class="metric"><div class="label">{html_escape(label)}</div><div class="value">{value}</div></div>'
-        for label, value in items
+
+    def row_html(items: list[tuple[str, object]], row_class: str) -> str:
+        cards = "".join(
+            f'<div class="metric"><div class="label">{html_escape(label)}</div><div class="value">{value}</div></div>'
+            for label, value in items
+        )
+        return f'<div class="metrics {row_class}">{cards}</div>'
+
+    return (
+        '<div class="metric-groups">'
+        f'{row_html(confirmed_items, "confirmed-metrics")}'
+        f'{row_html(watch_items, "watch-metrics")}'
+        "</div>"
     )
 
 
@@ -2201,12 +2231,15 @@ def build_mode_html_page(
 ) -> str:
     stats = candidate_stats(frame_confirmed, candidate)
     watch_stats = current_watch_stats(frame_all, candidate)
-    archive_stats = candidate_stats(archive_confirmed, candidate)
-    archive_watch_stats = current_watch_stats(archive_all, candidate)
+    history_days = history_business_days(candidate)
+    history_confirmed = recent_business_day_frame(archive_confirmed, history_days)
+    history_all = recent_business_day_frame(archive_all, history_days)
+    archive_stats = candidate_stats(history_confirmed, candidate)
+    archive_watch_stats = current_watch_stats(history_all, candidate)
     confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
     unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
-    archive_confirmed_rows = candidate_rows(archive_confirmed, candidate, confirmed=True, limit=None)
-    archive_unconfirmed_rows = candidate_rows(archive_all, candidate, confirmed=False, limit=None)
+    archive_confirmed_rows = candidate_rows(history_confirmed, candidate, confirmed=True, limit=None)
+    archive_unconfirmed_rows = candidate_rows(history_all, candidate, confirmed=False, limit=None)
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -2224,35 +2257,35 @@ def build_mode_html_page(
   </header>
   <main>
     <section id="summary" class="panel">
-      <h2>成績サマリー（alerts_rawのみ）</h2>
+      <h2>成績サマリー</h2>
       <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}</p>
       <div class="chips">{condition_chips(candidate["conditions"])}</div>
-      <div class="metrics">{stat_metrics_html(stats, watch_stats)}</div>
+      {stat_metrics_html(stats, watch_stats)}
     </section>
 
     <section id="confirmed" class="panel">
-      <h2>確定済み全件（alerts_rawのみ）</h2>
+      <h2>確定済み全件</h2>
       {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True)}
     </section>
 
     <section id="watch" class="panel">
-      <h2>未確定ウォッチ全件（alerts_rawのみ）</h2>
+      <h2>未確定ウォッチ全件</h2>
       {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False)}
     </section>
 
     <details id="archive" class="candidate-detail">
-      <summary>signals_archive込みの成績と銘柄を表示</summary>
+      <summary>過去1年分の成績と銘柄を表示</summary>
       <section class="panel">
-        <h2>成績サマリー（signals_archive込み）</h2>
-        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した成績です。</p>
-        <div class="metrics">{stat_metrics_html(archive_stats, archive_watch_stats)}</div>
+        <h2>成績サマリー（{history_days}営業日分）</h2>
+        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した直近{history_days}営業日分の成績です。</p>
+        {stat_metrics_html(archive_stats, archive_watch_stats)}
       </section>
       <section class="panel">
-        <h2>確定済み全件（signals_archive込み）</h2>
+        <h2>確定済み全件</h2>
         {html_signal_table(archive_confirmed_rows, candidate["eval_days"], confirmed=True)}
       </section>
       <section class="panel">
-        <h2>未確定ウォッチ全件（signals_archive込み）</h2>
+        <h2>未確定ウォッチ全件</h2>
         {html_signal_table(archive_unconfirmed_rows, candidate["eval_days"], confirmed=False)}
       </section>
     </details>

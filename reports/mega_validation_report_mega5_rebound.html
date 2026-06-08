@@ -74,6 +74,8 @@
     .cards, .metrics {
       display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;
     }
+    .metric-groups { display: grid; gap: 10px; }
+    .watch-metrics { padding-top: 2px; }
     .metric {
       border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: #fbfcfe;
     }
@@ -143,26 +145,26 @@
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
         <a href="#watch">未確定ウォッチ</a>
-        <a href="#archive">archive込み</a>
+        <a href="#archive">過去1年分</a>
 
       </nav>
     </details>
 
   <header>
     <h1>Mega5 短期リバウンド</h1>
-    <p>生成日時: 2026-06-08 08:16:03 JST</p>
+    <p>生成日時: 2026-06-08 11:10:42 JST</p>
     <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
   </header>
   <main>
     <section id="summary" class="panel">
-      <h2>成績サマリー（alerts_rawのみ）</h2>
+      <h2>成績サマリー</h2>
       <p class="note">5営業日後 / 目標 +20%</p>
       <div class="chips"><span class="chip" title="RCI9 &lt;= -50">rci9_os</span><span class="chip" title="直近3日連続下落後">pre_down3</span><span class="chip" title="陽線実体 &gt;= 2.0%">body2</span></div>
-      <div class="metrics"><div class="metric"><div class="label">確定件数</div><div class="value">8</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+19.3%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">62.5%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">3</div></div><div class="metric"><div class="label">ウォッチ中</div><div class="value">0</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div>
+      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">8</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+19.3%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">62.5%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">3</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">0</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div></div>
     </section>
 
     <section id="confirmed" class="panel">
-      <h2>確定済み全件（alerts_rawのみ）</h2>
+      <h2>確定済み全件</h2>
       <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -267,19 +269,19 @@
     </section>
 
     <section id="watch" class="panel">
-      <h2>未確定ウォッチ全件（alerts_rawのみ）</h2>
+      <h2>未確定ウォッチ全件</h2>
       <p class="empty">該当なし</p>
     </section>
 
     <details id="archive" class="candidate-detail">
-      <summary>signals_archive込みの成績と銘柄を表示</summary>
+      <summary>過去1年分の成績と銘柄を表示</summary>
       <section class="panel">
-        <h2>成績サマリー（signals_archive込み）</h2>
-        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した成績です。</p>
-        <div class="metrics"><div class="metric"><div class="label">確定件数</div><div class="value">11</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+21.6%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">72.7%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">5</div></div><div class="metric"><div class="label">ウォッチ中</div><div class="value">0</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div>
+        <h2>成績サマリー（45営業日分）</h2>
+        <p class="note">alerts_raw と signals_archive を統合し、alert_id重複はalerts_raw側を優先した直近45営業日分の成績です。</p>
+        <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">6</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+26.3%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">66.7%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">3</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">0</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div></div>
       </section>
       <section class="panel">
-        <h2>確定済み全件（signals_archive込み）</h2>
+        <h2>確定済み全件</h2>
         <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -315,28 +317,6 @@
 <td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509851686376575029" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6656" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
-<td data-label="日付">2026/03/10</td>
-<td data-label="銘柄"><span class="symbol">2338</span></td>
-<td data-label="社名">クオンタムソリューションズ</td>
-<td data-label="評価値"><span class="pos">+44.4%</span></td>
-<td data-label="5営業日後"><span class="pos">+44.4%</span></td>
-<td data-label="10営業日後"><span class="pos">+11.3%</span></td>
-<td data-label="20営業日後"><span class="pos">+2.3%</span></td>
-<td data-label="40営業日後"><span class="neg">-21.1%</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1506875368231932084" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2338" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
-</tr>
-<tr>
-<td data-label="日付">2026/03/05</td>
-<td data-label="銘柄"><span class="symbol">6666</span></td>
-<td data-label="社名">リバーエレテック</td>
-<td data-label="評価値"><span class="pos">+37.3%</span></td>
-<td data-label="5営業日後"><span class="pos">+37.3%</span></td>
-<td data-label="10営業日後"><span class="pos">+7.7%</span></td>
-<td data-label="20営業日後"><span class="pos">+10.8%</span></td>
-<td data-label="40営業日後"><span class="pos">+84.1%</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507276480286298153" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6666" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
-</tr>
-<tr>
 <td data-label="日付">2026/04/15</td>
 <td data-label="銘柄"><span class="symbol">5575</span></td>
 <td data-label="社名">Ｇｌｏｂｅｅ</td>
@@ -348,17 +328,6 @@
 <td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509423945449996413" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5575" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
-<td data-label="日付">2026/04/01</td>
-<td data-label="銘柄"><span class="symbol">2334</span></td>
-<td data-label="社名">イオレ</td>
-<td data-label="評価値"><span class="pos">+4.2%</span></td>
-<td data-label="5営業日後"><span class="pos">+4.2%</span></td>
-<td data-label="10営業日後"><span class="neg">-4.0%</span></td>
-<td data-label="20営業日後"><span class="pos">+25.7%</span></td>
-<td data-label="40営業日後"><span class="pos">+27.4%</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2334" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
-</tr>
-<tr>
 <td data-label="日付">2026/04/08</td>
 <td data-label="銘柄"><span class="symbol">4192</span></td>
 <td data-label="社名">スパイダープラス</td>
@@ -368,17 +337,6 @@
 <td data-label="20営業日後"><span class="pos">+18.2%</span></td>
 <td data-label="40営業日後"><span class="muted">--</span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4192" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
-</tr>
-<tr>
-<td data-label="日付">2026/03/05</td>
-<td data-label="銘柄"><span class="symbol">6193</span></td>
-<td data-label="社名">バーチャレクス・ホールディングス</td>
-<td data-label="評価値"><span class="pos">+1.8%</span></td>
-<td data-label="5営業日後"><span class="pos">+1.8%</span></td>
-<td data-label="10営業日後"><span class="pos">+1.4%</span></td>
-<td data-label="20営業日後"><span class="neg">-3.8%</span></td>
-<td data-label="40営業日後"><span class="neg">-6.1%</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6193" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/05/11</td>
@@ -402,21 +360,10 @@
 <td data-label="40営業日後"><span class="muted">--</span></td>
 <td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1507276469758460147" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:477A" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
-<tr>
-<td data-label="日付">2026/04/01</td>
-<td data-label="銘柄"><span class="symbol">6664</span></td>
-<td data-label="社名">オプトエレクトロニクス</td>
-<td data-label="評価値"><span class="neg">-7.8%</span></td>
-<td data-label="5営業日後"><span class="neg">-7.8%</span></td>
-<td data-label="10営業日後"><span class="neg">-8.2%</span></td>
-<td data-label="20営業日後"><span class="neg">-15.0%</span></td>
-<td data-label="40営業日後"><span class="neg">-18.3%</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6664" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
-</tr>
 </tbody></table>
       </section>
       <section class="panel">
-        <h2>未確定ウォッチ全件（signals_archive込み）</h2>
+        <h2>未確定ウォッチ全件</h2>
         <p class="empty">該当なし</p>
       </section>
     </details>

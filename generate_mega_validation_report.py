@@ -2945,6 +2945,20 @@ def build_html_report(
       .signals td:nth-child(3) {{
         text-align: right;
       }}
+      .signals td[data-label="銘柄"] .symbol-stack {{
+        justify-items: end;
+        margin-left: auto;
+        text-align: right;
+      }}
+      .signals td[data-label="銘柄"] .symbol-identity,
+      .signals td[data-label="銘柄"] .symbol-meta-row,
+      .signals td[data-label="銘柄"] .action-buttons {{
+        justify-content: flex-end;
+      }}
+      .signals td[data-label="銘柄"] .vol-tag[data-tooltip]::after {{
+        left: auto;
+        right: 0;
+      }}
       .perf-cell {{
         justify-items: end;
       }}
@@ -3380,6 +3394,20 @@ def mode_page_style() -> str:
       }
       .signals td::before { content: attr(data-label); color: var(--muted); font-size: 12px; text-align: left; }
       .signals td > .mode-badges { justify-content: flex-end; }
+      .signals td[data-label="銘柄"] .symbol-stack {
+        justify-items: end;
+        margin-left: auto;
+        text-align: right;
+      }
+      .signals td[data-label="銘柄"] .symbol-identity,
+      .signals td[data-label="銘柄"] .symbol-meta-row,
+      .signals td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-end;
+      }
+      .signals td[data-label="銘柄"] .vol-tag[data-tooltip]::after {
+        left: auto;
+        right: 0;
+      }
       .perf-cell { justify-items: end; }
       .action-buttons { justify-content: flex-end; flex-wrap: wrap; max-width: 100%; }
       .fundamental-detail { min-width: 0; max-width: 100%; }

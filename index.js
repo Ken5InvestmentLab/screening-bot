@@ -53,8 +53,8 @@ function loadSniperLogic() {
     const parsed = JSON.parse(raw);
     return {
       method: parsed.method ?? 'sniper',
-      label: parsed.label ?? 'Sniper Beta',
-      description: parsed.description ?? '少数精鋭・高勝率狙いのβモード',
+      label: parsed.label ?? 'Sniper',
+      description: parsed.description ?? '少数精鋭・高勝率狙いの正式モード',
       conditions: Array.isArray(parsed.conditions) ? parsed.conditions : [],
       updated_at: parsed.updated_at ?? null,
       thresholds: parsed.thresholds ?? {},
@@ -64,8 +64,8 @@ function loadSniperLogic() {
     console.warn('[sniper] current_logic_sniper.json の読み込みに失敗:', err.message);
     return {
       method: 'sniper',
-      label: 'Sniper Beta',
-      description: '少数精鋭・高勝率狙いのβモード',
+      label: 'Sniper',
+      description: '少数精鋭・高勝率狙いの正式モード',
       conditions: [],
       updated_at: null,
       thresholds: {},
@@ -241,7 +241,7 @@ async function sendResultDMs(user, results, headerEmbed) {
       let val;
       if (r.hideScore) {
         // Sniperモード: ★表示なし
-        val = `🔫 **Sniperモード検出（β版）**${volTag}\n`;
+        val = `🔫 **Sniperモード検出**${volTag}\n`;
       } else {
         const maxScore = r.maxScore || 6;
         const scoreBar = '★'.repeat(r.score) + '☆'.repeat(Math.max(0, maxScore - r.score));
@@ -660,13 +660,13 @@ async function runPremiumScanButton(interaction) {
 function buildHelpEmbed() {
   const sniperBacktest = sniperLogic.backtest;
   const sniperLive = statsCache?.sniperLive ?? null;
-  const sniperBacktestLabel = sniperBacktest?.source === 'all' ? '全件データ' : 'バックテスト';
+  const sniperBacktestLabel = sniperBacktest?.source === 'all' ? '全件データ' : '過去データ';
   const sniperBacktestText = sniperBacktest
     ? `${sniperBacktestLabel}: ${sniperBacktest.n}件 / 勝率 ${sniperBacktest.wr.toFixed(1)}% / 平均 ${(sniperBacktest.avg >= 0 ? '+' : '') + sniperBacktest.avg.toFixed(1)}%`
     : '集計データなし';
   const sniperLiveText = sniperLive && sniperLive.n > 0
-    ? `β公開後: ${sniperLive.n}件 / 勝率 ${sniperLive.wr.toFixed(1)}% / 平均 ${(sniperLive.avg >= 0 ? '+' : '') + sniperLive.avg.toFixed(2)}%`
-    : 'β公開後: 0件 / 集計中';
+    ? `運用開始後: ${sniperLive.n}件 / 勝率 ${sniperLive.wr.toFixed(1)}% / 平均 ${(sniperLive.avg >= 0 ? '+' : '') + sniperLive.avg.toFixed(2)}%`
+    : '運用開始後: 0件 / 集計中';
   const sniperConditions = sniperLogic.conditions.length > 0
     ? `${sniperLogic.conditions.slice(0, 3).join(' / ')}\n${sniperLogic.conditions.slice(3).join(' / ')}`
     : '未設定';
@@ -696,8 +696,8 @@ function buildHelpEmbed() {
         value: 'より多くの候補を表示。大化け候補も含む幅広いスキャン。',
       },
       {
-        name: '🔫 Sniper（勝率重視・β版）',
-        value: '勝率特化モード。より厳しい条件すべてを満たした少数精鋭の候補だけを表示します。',
+        name: '🔫 Sniper（勝率重視）',
+        value: '勝率重視の正式モード。より厳しい条件すべてを満たした少数精鋭の候補だけを表示します。',
       },
       {
         name: '🔎 コード検索',
@@ -727,7 +727,7 @@ function buildHelpEmbed() {
     const fmtPf = (pf) => pf >= 999 ? ' -  ' : pf.toFixed(2);
 
     embed.addFields({
-      name: `📈 スコア別実績（${s.total}シグナル検証）`,
+      name: `📈 スコア別実績（${s.total}シグナル集計）`,
       value:
         '```\n' +
         `Stable ★6: ${String(s.star6.n).padStart(3)}件 勝率${String(s.star6.wr).padStart(5)}% PF${fmtPf(s.star6.pf).padStart(5)} 平均${(s.star6.avg >= 0 ? '+' : '') + s.star6.avg}%\n` +
@@ -743,8 +743,8 @@ function buildHelpEmbed() {
       value:
         '```\n' +
         `${sniperConditions}\n\n` +
-        `バックテスト実績\n${sniperBacktestText}\n\n` +
-        `ライブ実績\n${sniperLiveText}\n` +
+        `過去実績\n${sniperBacktestText}\n\n` +
+        `運用実績\n${sniperLiveText}\n` +
         '```',
     });
 
@@ -769,8 +769,8 @@ function buildHelpEmbed() {
       value:
         '```\n' +
         `${sniperConditions}\n\n` +
-        `バックテスト実績\n${sniperBacktestText}\n\n` +
-        `ライブ実績\n${sniperLiveText}\n` +
+        `過去実績\n${sniperBacktestText}\n\n` +
+        `運用実績\n${sniperLiveText}\n` +
         '```',
     });
 
@@ -949,7 +949,7 @@ client.once('ready', async () => {
           choices: [
             { name: '🎯 Stable（5点以上・厳選）',       value: 'stable' },
             { name: '⚡ Aggressive（4点以上・広め）',   value: 'aggressive' },
-            { name: '🔫 Sniper（勝率重視・β版）',       value: 'sniper' },
+            { name: '🔫 Sniper（勝率重視）',             value: 'sniper' },
             { name: '🔎 コード検索（個別銘柄確認）',    value: 'code' },
           ],
         },

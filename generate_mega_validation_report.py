@@ -2856,7 +2856,7 @@ def build_html_report(
     [hidden] {{
       display: none !important;
     }}
-    @media (max-width: 1100px) {{
+    @media (max-width: 820px) {{
       .signals {{
         min-width: 0;
         border-collapse: separate;
@@ -3283,7 +3283,7 @@ def mode_page_style() -> str:
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
-    @media (max-width: 1100px) {
+    @media (max-width: 820px) {
       .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
       .signals thead { display: none; }
       .signals tbody, .signals tr, .signals td { display: block; width: 100%; }

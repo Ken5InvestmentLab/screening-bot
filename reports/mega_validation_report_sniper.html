@@ -21,6 +21,7 @@
       --chip: #eef3fb;
     }
     * { box-sizing: border-box; }
+    html { scroll-padding-top: 104px; }
     body {
       margin: 0;
       background: var(--bg);
@@ -38,27 +39,52 @@
     header h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0; }
     header p { margin: 4px 0; color: #d7e2f0; }
     main { max-width: 1320px; margin: 0 auto; padding: 24px; }
-    .hamburger-menu { position: fixed; top: 14px; right: 14px; z-index: 20; }
-    .hamburger-menu > summary {
-      list-style: none; cursor: pointer; display: grid; place-items: center;
-      width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.35);
-      border-radius: 8px; background: rgba(16,32,51,.92); color: white;
-      font-size: 24px; line-height: 1;
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 14px;
+      background: rgba(16, 32, 51, 0.96);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
     }
-    .hamburger-menu > summary::-webkit-details-marker { display: none; }
-    .hamburger-menu nav {
-      position: absolute; top: 48px; right: 0; display: grid; gap: 4px;
-      min-width: 240px; padding: 10px; border: 1px solid var(--line);
-      border-radius: 8px; background: white; box-shadow: 0 14px 30px rgba(16,24,40,.18);
+    .top-nav-brand {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .hamburger-menu nav a {
-      padding: 8px 10px; border-radius: 6px; color: var(--text);
-      text-decoration: none; font-weight: 700;
+    .top-nav-links {
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+      overflow-x: visible;
+      scrollbar-width: thin;
     }
-    .hamburger-menu nav a:hover, .hamburger-menu nav a.active {
-      background: #eef5ff; color: #1849a9;
+    .top-nav a {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #d7e2f0;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .hamburger-menu nav hr { width: 100%; border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+    .top-nav a:hover, .top-nav a.active {
+      background: #eef5ff;
+      color: #1849a9;
+    }
     .panel, .candidate-detail {
       background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
       box-shadow: 0 1px 2px rgba(16,24,40,.05); margin-bottom: 18px;
@@ -145,6 +171,23 @@
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
     @media (max-width: 760px) {
+      .top-nav {
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+      }
+      .top-nav-brand {
+        max-width: 138px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .top-nav a {
+        padding: 7px 9px;
+      }
+      .top-nav-links {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
       header { padding: 22px 18px; }
       main { padding: 14px; }
       .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
@@ -167,23 +210,21 @@
 </head>
 <body>
 
-    <details class="hamburger-menu">
-      <summary aria-label="メニュー">☰</summary>
-      <nav>
-        <a class="" href="mega_validation_report_latest.html">トップ</a>
-        <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="active" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
+    <nav class="top-nav" aria-label="ページメニュー">
+      <a class="top-nav-brand " href="mega_validation_report_latest.html">天底スコアリング</a>
+      <div class="top-nav-links">
 
-        <hr>
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
         <a href="#watch">未確定ウォッチ</a>
 
-      </nav>
-    </details>
+        <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="active" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
+      </div>
+    </nav>
 
   <header>
     <h1>Sniper 勝率重視</h1>
-    <p>生成日時: 2026-06-08 14:23:57 JST</p>
+    <p>生成日時: 2026-06-08 15:07:51 JST</p>
     <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
   </header>
   <main>
@@ -234,7 +275,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-1.7%</span><small class="price-sub">912.2円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-0.3%</span><small class="price-sub">925.2円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-1.5%</span><small class="price-sub">914.1円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1501210512476733441" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6836" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6836" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/23</td>
@@ -247,7 +288,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+40.3%</span><small class="price-sub">832円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+25.1%</span><small class="price-sub">741.8円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+40.0%</span><small class="price-sub">830.2円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1511270174085480538" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3077" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3077" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/05</td>
@@ -273,7 +314,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+9.5%</span><small class="price-sub">908.9円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+5.8%</span><small class="price-sub">878.1円</small></span></td>
 <td data-label="40営業日後"><span class="muted">--</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509774886950797353" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:8103" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:8103" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/01</td>
@@ -286,7 +327,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+1.7%</span><small class="price-sub">587.8円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+1.9%</span><small class="price-sub">589円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-1.6%</span><small class="price-sub">568.8円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1511586323964629036" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7038" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7038" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/31</td>
@@ -312,7 +353,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+0.5%</span><small class="price-sub">804円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+23.8%</span><small class="price-sub">990.4円</small></span></td>
 <td data-label="40営業日後"><span class="muted">--</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1501805651813335061" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6262" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6262" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/16</td>
@@ -377,7 +418,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="pos">+4.6%</span><small class="price-sub">779.3円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-9.7%</span><small class="price-sub">672.7円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-15.6%</span><small class="price-sub">628.8円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1503287254393815110" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:8285" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:8285" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/08</td>
@@ -390,7 +431,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-5.3%</span><small class="price-sub">446円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-6.6%</span><small class="price-sub">439.9円</small></span></td>
 <td data-label="40営業日後"><span class="muted">--</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1509774998615625870" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6040" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6040" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/03/11</td>
@@ -403,7 +444,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-7.2%</span><small class="price-sub">579.1円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-8.7%</span><small class="price-sub">569.7円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-12.3%</span><small class="price-sub">547.2円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1512312238449360916" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:1844" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:1844" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/04/08</td>
@@ -442,7 +483,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-5.6%</span><small class="price-sub">941.6円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-6.9%</span><small class="price-sub">928.7円</small></span></td>
 <td data-label="40営業日後"><span class="muted">--</span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1503977785843126333" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4188" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:4188" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/05/11</td>
@@ -468,7 +509,7 @@
 <td data-label="10営業日後"><span class="perf-cell"><span class="neg">-7.4%</span><small class="price-sub">671.3円</small></span></td>
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-14.8%</span><small class="price-sub">617.7円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-11.7%</span><small class="price-sub">640.2円</small></span></td>
-<td data-label="操作"><div class="action-buttons"><a class="action-btn secondary" href="https://discord.com/channels/1479418833352785944/1501035137817640960/1506875337387020439" target="_blank" rel="noopener noreferrer">ファンダ分析</a><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2929" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
+<td data-label="操作"><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:2929" target="_blank" rel="noopener noreferrer">チャート</a></div></td>
 </tr>
 <tr>
 <td data-label="日付">2026/05/18</td>

@@ -268,7 +268,7 @@ def fetch_premium_discord_links(service) -> dict:
         PREMIUM_LOG_SPREADSHEET_ID_DEFAULT,
     )
     sheet_name = config_value(["PREMIUM_LOG_SHEET_NAME", "PREMIUM_SHEET_NAME"], "premium_alert_log")
-    result = {"by_alert_id": {}, "by_symbol": {}, "row_count": 0, "matched_urls": 0}
+    result = {"by_alert_id": {}, "row_count": 0, "matched_urls": 0}
     if not spreadsheet_id:
         return result
 
@@ -295,7 +295,6 @@ def fetch_premium_discord_links(service) -> dict:
         "event_at": col("event_at", 0),
         "event_type": col("event_type", 1),
         "alert_id": col("alert_id", 2),
-        "symbol_code": col("symbol_code", 3),
         "signal_type": col("signal_type", 5),
         "reason": col("reason", 10),
     }
@@ -322,18 +321,14 @@ def fetch_premium_discord_links(service) -> dict:
             continue
 
         alert_id = cell(row, "alert_id")
-        symbol = clean_symbol_text(cell(row, "symbol_code"))
         item = {
             "alert_id": alert_id,
-            "symbol": symbol,
             "url": url,
             "event_at": cell(row, "event_at"),
         }
         result["matched_urls"] += 1
         if alert_id and newer(item, result["by_alert_id"].get(alert_id)):
             result["by_alert_id"][alert_id] = item
-        if symbol and newer(item, result["by_symbol"].get(symbol)):
-            result["by_symbol"][symbol] = item
     return result
 
 
@@ -420,10 +415,7 @@ def fetch_discord_messages(urls: list[str]) -> dict[str, dict]:
 
 def premium_link_for_row(row: pd.Series, premium_links: dict) -> str:
     alert_id = str(row.get("alert_id", "") or "").strip()
-    symbol = clean_symbol_text(row.get("symbol", ""))
-    item = premium_links.get("by_alert_id", {}).get(alert_id)
-    if not item and symbol:
-        item = premium_links.get("by_symbol", {}).get(symbol)
+    item = premium_links.get("by_alert_id", {}).get(alert_id) if alert_id else None
     return str(item.get("url") or "") if item else ""
 
 
@@ -1031,6 +1023,10 @@ def row_condition_count(row: pd.Series, conditions: list[str]) -> int:
     return sum(1 for condition in conditions if row_condition_truthy(row, condition))
 
 
+def row_true_conditions(row: pd.Series) -> list[str]:
+    return [condition for condition in opt.BOOL_CONDS if row_condition_truthy(row, condition)]
+
+
 def stable_star_score(row: pd.Series) -> int:
     return row_condition_count(row, STABLE_CONDITIONS)
 
@@ -1077,6 +1073,19 @@ def mode_match_badges(
         else:
             badges.append(f'<span class="mode-badge">{label}</span>')
     return '<span class="mode-badges">' + "".join(badges) + "</span>"
+
+
+def search_indicator_options_html() -> str:
+    options = []
+    for condition in opt.BOOL_CONDS:
+        label = CONDITION_LABELS.get(condition, condition)
+        options.append(
+            '<label class="indicator-option">'
+            f'<input type="checkbox" value="{html_escape(condition)}" data-indicator-filter>'
+            f'<span><code>{html_escape(condition)}</code><small>{html_escape(label)}</small></span>'
+            "</label>"
+        )
+    return "".join(options)
 
 
 def pct_html(value, signed: bool = True) -> str:
@@ -1140,6 +1149,7 @@ def mode_page_filename(candidate: dict) -> str:
 
 
 def navigation_html(current_mode_id: str | None = None, include_mode_sections: bool = False) -> str:
+    brand_active = "active" if current_mode_id is None else ""
     mode_links = "".join(
         f'<a class="{ "active" if candidate["id"] == current_mode_id else "" }" '
         f'href="{html_escape(mode_page_filename(candidate))}">{html_escape(candidate["label"])}</a>'
@@ -1147,30 +1157,27 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
     )
     if include_mode_sections:
         section_links = """
-        <hr>
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
         <a href="#watch">未確定ウォッチ</a>
         """
     elif current_mode_id is None:
         section_links = """
-        <hr>
         <a href="#performance-summary">全体成績</a>
         <a href="#mode-summary">モード別サマリー</a>
         <a href="#highlights">注目ポイント</a>
-        <a href="#daily-detections">本日・日別検出</a>
+        <a href="#daily-detections">銘柄検索</a>
         """
     else:
         section_links = ""
     return f"""
-    <details class="hamburger-menu">
-      <summary aria-label="メニュー">☰</summary>
-      <nav>
-        <a class="{ "active" if current_mode_id is None else "" }" href="mega_validation_report_latest.html">トップ</a>
-        {mode_links}
+    <nav class="top-nav" aria-label="ページメニュー">
+      <a class="top-nav-brand {brand_active}" href="mega_validation_report_latest.html">天底スコアリング</a>
+      <div class="top-nav-links">
         {section_links}
-      </nav>
-    </details>
+        {mode_links}
+      </div>
+    </nav>
     """
 
 
@@ -1503,6 +1510,8 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
     today = datetime.now(JST).strftime("%Y-%m-%d")
     default_date = today if today in available_dates else available_dates[0]
     default_count = int((rows["_date_key"] == default_date).sum())
+    min_date = available_dates[-1]
+    max_date = available_dates[0]
     note = (
         "初期表示は本日分です。日付を変えると過去の検出銘柄を確認できます。"
         if default_date == today
@@ -1535,6 +1544,10 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
     for _, row in rows.iterrows():
         date_key = str(row.get("_date_key", ""))
         symbol = row.get("symbol", "")
+        clean_symbol = clean_symbol_text(symbol)
+        star_score = stable_star_score(row)
+        latest_price = row.get("latest_close", np.nan)
+        condition_keys = " ".join(row_true_conditions(row))
         mode_html = mode_match_badges(row, include_empty=False, link=True)
         if not mode_html:
             mode_html = '<span class="mode-badge none">モード外</span>'
@@ -1553,7 +1566,11 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
             action_buttons(symbol, row),
         ]
         table_parts.append(
-            f'<tr data-detection-row data-date="{html_escape(date_key)}"{hidden_class}>'
+            f'<tr data-detection-row data-date="{html_escape(date_key)}" '
+            f'data-symbol="{html_escape(clean_symbol)}" '
+            f'data-star="{star_score}" '
+            f'data-price="{html_escape(latest_price if is_finite(latest_price) else "")}" '
+            f'data-conditions="{html_escape(condition_keys)}"{hidden_class}>'
         )
         table_parts.extend(
             f'<td data-label="{html_escape(headers[index])}">{cell}</td>'
@@ -1576,8 +1593,57 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
           </select>
         </label>
       </div>
+      <details class="search-panel">
+        <summary>銘柄検索モード</summary>
+        <div class="search-grid">
+          <label>
+            <span>開始日</span>
+            <input id="search-date-from" type="date" min="{html_escape(min_date)}" max="{html_escape(max_date)}" value="{html_escape(default_date)}">
+          </label>
+          <label>
+            <span>終了日</span>
+            <input id="search-date-to" type="date" min="{html_escape(min_date)}" max="{html_escape(max_date)}" value="{html_escape(default_date)}">
+          </label>
+          <label>
+            <span>証券コード</span>
+            <input id="search-symbol" type="search" inputmode="latin" placeholder="例: 2936">
+          </label>
+          <label>
+            <span>★最小</span>
+            <select id="search-star-min">
+              <option value="">指定なし</option>
+              {''.join(f'<option value="{score}">★{score}以上</option>' for score in range(7))}
+            </select>
+          </label>
+          <label>
+            <span>★最大</span>
+            <select id="search-star-max">
+              <option value="">指定なし</option>
+              {''.join(f'<option value="{score}">★{score}以下</option>' for score in range(7))}
+            </select>
+          </label>
+          <label>
+            <span>株価下限</span>
+            <input id="search-price-min" type="number" min="0" step="1" inputmode="numeric" placeholder="円">
+          </label>
+          <label>
+            <span>株価上限</span>
+            <input id="search-price-max" type="number" min="0" step="1" inputmode="numeric" placeholder="円">
+          </label>
+          <button id="search-reset" type="button">条件をリセット</button>
+        </div>
+        <div class="indicator-filter">
+          <div class="indicator-filter-head">
+            <strong>テクニカル指標</strong>
+            <small>選択した条件をすべて満たす銘柄だけ表示します。</small>
+          </div>
+          <div class="indicator-options">
+            {search_indicator_options_html()}
+          </div>
+        </div>
+      </details>
       <p class="filter-status"><strong id="daily-visible-count">{default_count}</strong>件を表示中</p>
-      <p id="daily-empty-message" class="empty" hidden>この日付の銘柄はありません。</p>
+      <p id="daily-empty-message" class="empty" hidden>この条件に一致する銘柄はありません。</p>
       {"".join(table_parts)}
     </section>
     """
@@ -1594,13 +1660,52 @@ def report_interactions_js() -> str:
   const rows = Array.from(document.querySelectorAll("[data-detection-row]"));
   const count = document.getElementById("daily-visible-count");
   const empty = document.getElementById("daily-empty-message");
+  const dateFrom = document.getElementById("search-date-from");
+  const dateTo = document.getElementById("search-date-to");
+  const symbolInput = document.getElementById("search-symbol");
+  const starMin = document.getElementById("search-star-min");
+  const starMax = document.getElementById("search-star-max");
+  const priceMin = document.getElementById("search-price-min");
+  const priceMax = document.getElementById("search-price-max");
+  const indicatorInputs = Array.from(document.querySelectorAll("[data-indicator-filter]"));
+  const reset = document.getElementById("search-reset");
   if (!select || rows.length === 0) return;
 
+  const normalizeSymbol = (value) => String(value || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
+  const numericValue = (element) => {
+    const value = String(element?.value || "").trim();
+    if (value === "") return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  };
+
   const applyFilter = () => {
-    const selectedDate = select.value || select.dataset.defaultDate;
+    const from = String(dateFrom?.value || "");
+    const to = String(dateTo?.value || "");
+    const symbol = normalizeSymbol(symbolInput?.value);
+    const minStar = numericValue(starMin);
+    const maxStar = numericValue(starMax);
+    const minPrice = numericValue(priceMin);
+    const maxPrice = numericValue(priceMax);
+    const requiredConditions = indicatorInputs
+      .filter((input) => input.checked)
+      .map((input) => input.value);
     let visible = 0;
     rows.forEach((row) => {
-      const shouldShow = row.dataset.date === selectedDate;
+      const rowDate = row.dataset.date || "";
+      const rowSymbol = normalizeSymbol(row.dataset.symbol);
+      const rowStar = Number(row.dataset.star);
+      const rowPrice = Number(row.dataset.price);
+      const rowConditions = new Set(String(row.dataset.conditions || "").split(/\\s+/).filter(Boolean));
+      let shouldShow = true;
+      if (from && rowDate < from) shouldShow = false;
+      if (to && rowDate > to) shouldShow = false;
+      if (symbol && !rowSymbol.includes(symbol)) shouldShow = false;
+      if (minStar !== null && (!Number.isFinite(rowStar) || rowStar < minStar)) shouldShow = false;
+      if (maxStar !== null && (!Number.isFinite(rowStar) || rowStar > maxStar)) shouldShow = false;
+      if (minPrice !== null && (!Number.isFinite(rowPrice) || rowPrice < minPrice)) shouldShow = false;
+      if (maxPrice !== null && (!Number.isFinite(rowPrice) || rowPrice > maxPrice)) shouldShow = false;
+      if (requiredConditions.some((condition) => !rowConditions.has(condition))) shouldShow = false;
       row.classList.toggle("is-hidden", !shouldShow);
       if (shouldShow) visible += 1;
     });
@@ -1608,8 +1713,42 @@ def report_interactions_js() -> str:
     if (empty) empty.hidden = visible !== 0;
   };
 
-  select.addEventListener("change", applyFilter);
-  select.addEventListener("input", applyFilter);
+  const applySelectedDate = () => {
+    if (dateFrom) dateFrom.value = select.value || select.dataset.defaultDate || "";
+    if (dateTo) dateTo.value = select.value || select.dataset.defaultDate || "";
+    applyFilter();
+  };
+
+  select.addEventListener("change", applySelectedDate);
+  select.addEventListener("input", applySelectedDate);
+  [
+    dateFrom,
+    dateTo,
+    symbolInput,
+    starMin,
+    starMax,
+    priceMin,
+    priceMax,
+    ...indicatorInputs,
+  ].filter(Boolean).forEach((element) => {
+    element.addEventListener("change", applyFilter);
+    element.addEventListener("input", applyFilter);
+  });
+  reset?.addEventListener("click", () => {
+    const defaultDate = select.dataset.defaultDate || select.value || "";
+    select.value = defaultDate;
+    if (dateFrom) dateFrom.value = defaultDate;
+    if (dateTo) dateTo.value = defaultDate;
+    if (symbolInput) symbolInput.value = "";
+    if (starMin) starMin.value = "";
+    if (starMax) starMax.value = "";
+    if (priceMin) priceMin.value = "";
+    if (priceMax) priceMax.value = "";
+    indicatorInputs.forEach((input) => {
+      input.checked = false;
+    });
+    applyFilter();
+  });
   applyFilter();
 })();
     """
@@ -1680,6 +1819,7 @@ def build_html_report(
       --chip: #eef3fb;
     }}
     * {{ box-sizing: border-box; }}
+    html {{ scroll-padding-top: 104px; }}
     body {{
       margin: 0;
       background: var(--bg);
@@ -1716,57 +1856,52 @@ def build_html_report(
       margin: 0 auto;
       padding: 24px;
     }}
-    .hamburger-menu {{
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      z-index: 20;
+    .top-nav {{
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 14px;
+      background: rgba(16, 32, 51, 0.96);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
     }}
-    .hamburger-menu > summary {{
-      list-style: none;
-      cursor: pointer;
-      display: grid;
-      place-items: center;
-      width: 42px;
-      height: 42px;
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      border-radius: 8px;
-      background: rgba(16, 32, 51, 0.92);
+    .top-nav-brand {{
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
       color: white;
-      font-size: 24px;
-      line-height: 1;
-    }}
-    .hamburger-menu > summary::-webkit-details-marker {{ display: none; }}
-    .hamburger-menu nav {{
-      position: absolute;
-      top: 48px;
-      right: 0;
-      display: grid;
-      gap: 4px;
-      min-width: 240px;
-      padding: 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: white;
-      box-shadow: 0 14px 30px rgba(16, 24, 40, 0.18);
-    }}
-    .hamburger-menu nav a {{
-      padding: 8px 10px;
-      border-radius: 6px;
-      color: var(--text);
+      font-weight: 800;
       text-decoration: none;
-      font-weight: 700;
+      white-space: nowrap;
     }}
-    .hamburger-menu nav a:hover,
-    .hamburger-menu nav a.active {{
+    .top-nav-links {{
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+      overflow-x: visible;
+      scrollbar-width: thin;
+    }}
+    .top-nav a {{
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #d7e2f0;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none;
+      white-space: nowrap;
+    }}
+    .top-nav a:hover,
+    .top-nav a.active {{
       background: #eef5ff;
       color: #1849a9;
-    }}
-    .hamburger-menu nav hr {{
-      width: 100%;
-      border: 0;
-      border-top: 1px solid var(--line);
-      margin: 6px 0;
     }}
     .cards {{
       display: grid;
@@ -1929,6 +2064,110 @@ def build_html_report(
       margin: 0 0 10px;
       color: var(--muted);
       font-size: 13px;
+    }}
+    .search-panel {{
+      margin: 8px 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      overflow: hidden;
+    }}
+    .search-panel > summary {{
+      cursor: pointer;
+      padding: 11px 13px;
+      color: #1849a9;
+      font-weight: 700;
+      list-style-position: inside;
+    }}
+    .search-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 10px;
+      padding: 0 13px 12px;
+    }}
+    .search-grid label,
+    .indicator-filter {{
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }}
+    .search-grid input,
+    .search-grid select {{
+      min-height: 34px;
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+    }}
+    .search-grid button {{
+      align-self: end;
+      min-height: 34px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+    }}
+    .indicator-filter {{
+      padding: 0 13px 13px;
+    }}
+    .indicator-filter-head {{
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }}
+    .indicator-filter-head small {{
+      color: var(--muted);
+      font-weight: 500;
+    }}
+    .indicator-options {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 6px;
+      max-height: 230px;
+      overflow: auto;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+    }}
+    .indicator-option {{
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      min-width: 0;
+      padding: 6px;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+    }}
+    .indicator-option:hover {{
+      background: #f3f7fc;
+    }}
+    .indicator-option input {{
+      margin-top: 3px;
+      flex: 0 0 auto;
+    }}
+    .indicator-option span {{
+      display: grid;
+      gap: 1px;
+      min-width: 0;
+    }}
+    .indicator-option small {{
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }}
     h2 {{
       margin: 26px 0 12px;
@@ -2303,6 +2542,23 @@ def build_html_report(
       display: none !important;
     }}
     @media (max-width: 760px) {{
+      .top-nav {{
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+      }}
+      .top-nav-brand {{
+        max-width: 138px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }}
+      .top-nav a {{
+        padding: 7px 9px;
+      }}
+      .top-nav-links {{
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }}
       header {{ padding: 22px 18px; }}
       main {{ padding: 14px; }}
       .cards {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
@@ -2315,6 +2571,13 @@ def build_html_report(
       }}
       .filter-control {{
         min-width: 0;
+      }}
+      .search-grid {{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }}
+      .indicator-options {{
+        grid-template-columns: 1fr;
+        max-height: 280px;
       }}
       .detail-grid {{ grid-template-columns: 1fr; }}
       .candidate-detail > summary {{
@@ -2456,6 +2719,7 @@ def mode_page_style() -> str:
       --chip: #eef3fb;
     }
     * { box-sizing: border-box; }
+    html { scroll-padding-top: 104px; }
     body {
       margin: 0;
       background: var(--bg);
@@ -2473,27 +2737,52 @@ def mode_page_style() -> str:
     header h1 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0; }
     header p { margin: 4px 0; color: #d7e2f0; }
     main { max-width: 1320px; margin: 0 auto; padding: 24px; }
-    .hamburger-menu { position: fixed; top: 14px; right: 14px; z-index: 20; }
-    .hamburger-menu > summary {
-      list-style: none; cursor: pointer; display: grid; place-items: center;
-      width: 42px; height: 42px; border: 1px solid rgba(255,255,255,.35);
-      border-radius: 8px; background: rgba(16,32,51,.92); color: white;
-      font-size: 24px; line-height: 1;
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 14px;
+      background: rgba(16, 32, 51, 0.96);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
     }
-    .hamburger-menu > summary::-webkit-details-marker { display: none; }
-    .hamburger-menu nav {
-      position: absolute; top: 48px; right: 0; display: grid; gap: 4px;
-      min-width: 240px; padding: 10px; border: 1px solid var(--line);
-      border-radius: 8px; background: white; box-shadow: 0 14px 30px rgba(16,24,40,.18);
+    .top-nav-brand {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .hamburger-menu nav a {
-      padding: 8px 10px; border-radius: 6px; color: var(--text);
-      text-decoration: none; font-weight: 700;
+    .top-nav-links {
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+      overflow-x: visible;
+      scrollbar-width: thin;
     }
-    .hamburger-menu nav a:hover, .hamburger-menu nav a.active {
-      background: #eef5ff; color: #1849a9;
+    .top-nav a {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #d7e2f0;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .hamburger-menu nav hr { width: 100%; border: 0; border-top: 1px solid var(--line); margin: 6px 0; }
+    .top-nav a:hover, .top-nav a.active {
+      background: #eef5ff;
+      color: #1849a9;
+    }
     .panel, .candidate-detail {
       background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
       box-shadow: 0 1px 2px rgba(16,24,40,.05); margin-bottom: 18px;
@@ -2580,6 +2869,23 @@ def mode_page_style() -> str:
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
     @media (max-width: 760px) {
+      .top-nav {
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+      }
+      .top-nav-brand {
+        max-width: 138px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .top-nav a {
+        padding: 7px 9px;
+      }
+      .top-nav-links {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
       header { padding: 22px 18px; }
       main { padding: 14px; }
       .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }

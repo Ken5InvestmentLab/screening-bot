@@ -1249,6 +1249,7 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
         <a href="#watch">未確定ウォッチ</a>
+        <a href="#guide">使い方</a>
         """
     elif current_mode_id is None:
         section_links = """
@@ -3283,6 +3284,34 @@ def mode_page_style() -> str:
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }
+    .guide-block {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 2px solid var(--line);
+    }
+    .guide-block h3 { margin: 0; }
+    .guide-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .guide-list li { margin: 0 0 7px; }
+    .vol-legend {
+      display: grid;
+      gap: 8px;
+    }
+    .vol-legend > div {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 9px;
+    }
     @media (max-width: 820px) {
       .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
       .signals thead { display: none; }
@@ -3408,6 +3437,8 @@ def build_mode_html_page(
       <h2>未確定ウォッチ全件</h2>
       {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False, current_candidate=candidate)}
     </section>
+
+    {guide_section_html()}
   </main>
 </body>
 </html>

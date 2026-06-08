@@ -214,6 +214,34 @@
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }
+    .guide-block {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 2px solid var(--line);
+    }
+    .guide-block h3 { margin: 0; }
+    .guide-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .guide-list li { margin: 0 0 7px; }
+    .vol-legend {
+      display: grid;
+      gap: 8px;
+    }
+    .vol-legend > div {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 9px;
+    }
     @media (max-width: 820px) {
       .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
       .signals thead { display: none; }
@@ -276,6 +304,7 @@
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
         <a href="#watch">未確定ウォッチ</a>
+        <a href="#guide">使い方</a>
 
         <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="active" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
       </div>
@@ -283,7 +312,7 @@
 
   <header>
     <h1>Mega40 深押し反転</h1>
-    <p>生成日時: 2026-06-08 18:40:38 JST</p>
+    <p>生成日時: 2026-06-08 19:15:12 JST</p>
     <p>深い押し目から強陽線で切り返す40営業日候補。</p>
   </header>
   <main>
@@ -525,6 +554,40 @@
 </tr>
 </tbody></table>
     </section>
+
+
+    <section id="guide" class="panel guide-panel">
+      <h2>使い方・対象銘柄</h2>
+      <div class="guide-grid">
+        <section class="guide-block">
+          <h3>監視対象</h3>
+          <ul class="guide-list">
+            <li>東証個別株</li>
+            <li>シグナル点灯前日終値が1,000円以下、かつ出来高10,000株以上</li>
+            <li>シグナル点灯時のローソク足の出来高が5,000株以上</li>
+            <li>1日あたり最大1,000銘柄。対象が1,001銘柄以上ある場合は、出来高が少ない銘柄から除外されます。</li>
+          </ul>
+        </section>
+        <section class="guide-block">
+          <h3>ボラティリティタグ</h3>
+          <p class="note">ATR%から、銘柄ごとの値動きの大きさを示します。</p>
+          <div class="vol-legend">
+            <div><span class="vol-tag vol-low">🟢LOW</span><span>ATR 3%未満。値動きが比較的穏やかな銘柄です。</span></div>
+            <div><span class="vol-tag vol-mid">🟡MID</span><span>ATR 3%以上6%未満。標準的な変動幅の銘柄です。</span></div>
+            <div><span class="vol-tag vol-high">🔴HIGH</span><span>ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。</span></div>
+          </div>
+        </section>
+        <section class="guide-block">
+          <h3>サイトの見方</h3>
+          <ul class="guide-list">
+            <li>モード別サマリーから、Stable、Sniper、Mega各モードの詳細ページへ移動できます。</li>
+            <li>銘柄検索では、日付、証券コード、★数、株価、テクニカル指標で絞り込めます。</li>
+            <li>各銘柄のファンダ分析ボタンは、該当日のDiscord分析がある場合だけ表示されます。</li>
+          </ul>
+        </section>
+      </div>
+    </section>
+
   </main>
 </body>
 </html>

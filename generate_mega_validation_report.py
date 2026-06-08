@@ -34,6 +34,7 @@ DEFAULT_HTML_OUTPUT = os.path.join("reports", "mega_validation_report_latest.htm
 CURRENT_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic.json")
 SNIPER_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_sniper.json")
 MEGA_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_mega.json")
+REPORT_TITLE = "天底極致 スコアリングBot レポート"
 PREMIUM_LOG_SPREADSHEET_ID_DEFAULT = "1GeLT-DUEdsYzT6AR3n1MkhkCeivqgtsMEXMhYfnHm9s"
 DISCORD_API_BASE = "https://discord.com/api/v10"
 DISCORD_MESSAGE_URL_RE = re.compile(
@@ -1959,7 +1960,7 @@ def build_html_report(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>天底スコアリング ウォッチリスト</title>
+  <title>{html_escape(REPORT_TITLE)}</title>
   <style>
     :root {{
       color-scheme: light;
@@ -3028,7 +3029,7 @@ def build_html_report(
   {navigation_html()}
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
-    <h1>天底スコアリング ウォッチリスト</h1>
+    <h1>{html_escape(REPORT_TITLE)}</h1>
     <p>生成日時: {html_escape(generated_at)}</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
@@ -3410,7 +3411,7 @@ def build_mode_html_page(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{html_escape(candidate["label"])} | 天底スコアリング</title>
+  <title>{html_escape(candidate["label"])} | {html_escape(REPORT_TITLE)}</title>
   <style>{mode_page_style()}</style>
 </head>
 <body>
@@ -3454,7 +3455,7 @@ def build_report(
     stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
 
     lines = [
-        "# 天底スコアリング ウォッチリスト",
+        f"# {REPORT_TITLE}",
         "",
         f"- 生成日時: {generated_at}",
         "- 対象: 過去1年以内に出たTradingView BOTTOMシグナル",

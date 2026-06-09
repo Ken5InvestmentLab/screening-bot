@@ -6,6 +6,8 @@ on:
     branches: [main]
     paths:
       - "report-gate/**"
+      - "reports/mega_validation_report*.html"
+      - "reports/report-interactions.js"
       - ".github/workflows/report-gate-deploy.yml"
 
 jobs:

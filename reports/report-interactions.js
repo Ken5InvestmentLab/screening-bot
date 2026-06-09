@@ -11,6 +11,7 @@
   const starMax = document.getElementById("search-star-max");
   const priceMin = document.getElementById("search-price-min");
   const priceMax = document.getElementById("search-price-max");
+  const modeInputs = Array.from(document.querySelectorAll("[data-mode-filter]"));
   const indicatorInputs = Array.from(document.querySelectorAll("[data-indicator-filter]"));
   const reset = document.getElementById("search-reset");
   const loadMore = document.getElementById("daily-load-more");
@@ -38,6 +39,9 @@
     const maxStar = numericValue(starMax);
     const minPrice = numericValue(priceMin);
     const maxPrice = numericValue(priceMax);
+    const selectedModes = modeInputs
+      .filter((input) => input.checked)
+      .map((input) => input.value);
     const requiredConditions = indicatorInputs
       .filter((input) => input.checked)
       .map((input) => input.value);
@@ -49,6 +53,7 @@
       const rowStar = Number(row.dataset.star);
       const rowPrice = row.dataset.price === "" ? NaN : Number(row.dataset.price);
       const rowConditions = new Set(String(row.dataset.conditions || "").split(/\s+/).filter(Boolean));
+      const rowModes = new Set(String(row.dataset.modes || "").split(/\s+/).filter(Boolean));
       let shouldShow = true;
       if (useCustomDateRange) {
         if (from && rowDate < from) shouldShow = false;
@@ -61,6 +66,7 @@
       if (maxStar !== null && (!Number.isFinite(rowStar) || rowStar > maxStar)) shouldShow = false;
       if (minPrice !== null && (!Number.isFinite(rowPrice) || rowPrice < minPrice)) shouldShow = false;
       if (maxPrice !== null && (!Number.isFinite(rowPrice) || rowPrice > maxPrice)) shouldShow = false;
+      if (selectedModes.length > 0 && !selectedModes.some((mode) => rowModes.has(mode))) shouldShow = false;
       if (requiredConditions.some((condition) => !rowConditions.has(condition))) shouldShow = false;
       const shouldRender = shouldShow && rendered < visibleLimit;
       row.classList.toggle("is-hidden", !shouldRender);
@@ -103,6 +109,7 @@
     starMax,
     priceMin,
     priceMax,
+    ...modeInputs,
     ...indicatorInputs,
   ].filter(Boolean).forEach((element) => {
     element.addEventListener("change", applyFilter);
@@ -122,6 +129,9 @@
     if (starMax) starMax.value = "";
     if (priceMin) priceMin.value = "";
     if (priceMax) priceMax.value = "";
+    modeInputs.forEach((input) => {
+      input.checked = false;
+    });
     indicatorInputs.forEach((input) => {
       input.checked = false;
     });

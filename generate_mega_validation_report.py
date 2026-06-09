@@ -1205,6 +1205,19 @@ def search_indicator_options_html() -> str:
     return "".join(options)
 
 
+def search_mode_options_html() -> str:
+    options = []
+    for candidate in CANDIDATES:
+        options.append(
+            '<label class="indicator-option">'
+            f'<input type="checkbox" value="{html_escape(candidate["id"])}" data-mode-filter>'
+            f'<span><strong>{html_escape(candidate["label"])}</strong>'
+            f'<small>{horizon_label(candidate["eval_days"])} / {html_escape(target_label(candidate))}</small></span>'
+            "</label>"
+        )
+    return "".join(options)
+
+
 def pct_html(value, signed: bool = True) -> str:
     text = pct(value, signed=signed)
     css_class = "muted"
@@ -1743,6 +1756,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
         star_score = stable_star_score(row)
         latest_price = row.get("latest_close", np.nan)
         condition_keys = " ".join(row_true_conditions(row))
+        mode_keys = " ".join(candidate["id"] for candidate in row_mode_matches(row))
         mode_html = mode_match_badges(row, include_empty=False, link=True)
         if not mode_html:
             mode_html = '<span class="mode-badge none">モード外</span>'
@@ -1766,7 +1780,8 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
             f'data-symbol="{html_escape(clean_symbol)}" '
             f'data-star="{star_score}" '
             f'data-price="{html_escape(latest_price if is_finite(latest_price) else "")}" '
-            f'data-conditions="{html_escape(condition_keys)}"{hidden_class}>'
+            f'data-conditions="{html_escape(condition_keys)}" '
+            f'data-modes="{html_escape(mode_keys)}"{hidden_class}>'
         )
         table_parts.extend(
             f'<td data-label="{html_escape(headers[index])}">{cell}</td>'
@@ -1830,6 +1845,15 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
         </div>
         <div class="indicator-filter">
           <div class="indicator-filter-head">
+            <strong>検出モード</strong>
+            <small>選択したモードのいずれかに該当する銘柄だけ表示します。</small>
+          </div>
+          <div class="indicator-options mode-options">
+            {search_mode_options_html()}
+          </div>
+        </div>
+        <div class="indicator-filter">
+          <div class="indicator-filter-head">
             <strong>テクニカル指標</strong>
             <small>選択した条件をすべて満たす銘柄だけ表示します。</small>
           </div>
@@ -1886,6 +1910,7 @@ def report_interactions_js() -> str:
   const starMax = document.getElementById("search-star-max");
   const priceMin = document.getElementById("search-price-min");
   const priceMax = document.getElementById("search-price-max");
+  const modeInputs = Array.from(document.querySelectorAll("[data-mode-filter]"));
   const indicatorInputs = Array.from(document.querySelectorAll("[data-indicator-filter]"));
   const reset = document.getElementById("search-reset");
   const loadMore = document.getElementById("daily-load-more");
@@ -1913,6 +1938,9 @@ def report_interactions_js() -> str:
     const maxStar = numericValue(starMax);
     const minPrice = numericValue(priceMin);
     const maxPrice = numericValue(priceMax);
+    const selectedModes = modeInputs
+      .filter((input) => input.checked)
+      .map((input) => input.value);
     const requiredConditions = indicatorInputs
       .filter((input) => input.checked)
       .map((input) => input.value);
@@ -1924,6 +1952,7 @@ def report_interactions_js() -> str:
       const rowStar = Number(row.dataset.star);
       const rowPrice = row.dataset.price === "" ? NaN : Number(row.dataset.price);
       const rowConditions = new Set(String(row.dataset.conditions || "").split(/\\s+/).filter(Boolean));
+      const rowModes = new Set(String(row.dataset.modes || "").split(/\\s+/).filter(Boolean));
       let shouldShow = true;
       if (useCustomDateRange) {
         if (from && rowDate < from) shouldShow = false;
@@ -1936,6 +1965,7 @@ def report_interactions_js() -> str:
       if (maxStar !== null && (!Number.isFinite(rowStar) || rowStar > maxStar)) shouldShow = false;
       if (minPrice !== null && (!Number.isFinite(rowPrice) || rowPrice < minPrice)) shouldShow = false;
       if (maxPrice !== null && (!Number.isFinite(rowPrice) || rowPrice > maxPrice)) shouldShow = false;
+      if (selectedModes.length > 0 && !selectedModes.some((mode) => rowModes.has(mode))) shouldShow = false;
       if (requiredConditions.some((condition) => !rowConditions.has(condition))) shouldShow = false;
       const shouldRender = shouldShow && rendered < visibleLimit;
       row.classList.toggle("is-hidden", !shouldRender);
@@ -1978,6 +2008,7 @@ def report_interactions_js() -> str:
     starMax,
     priceMin,
     priceMax,
+    ...modeInputs,
     ...indicatorInputs,
   ].filter(Boolean).forEach((element) => {
     element.addEventListener("change", applyFilter);
@@ -1997,6 +2028,9 @@ def report_interactions_js() -> str:
     if (starMax) starMax.value = "";
     if (priceMin) priceMin.value = "";
     if (priceMax) priceMax.value = "";
+    modeInputs.forEach((input) => {
+      input.checked = false;
+    });
     indicatorInputs.forEach((input) => {
       input.checked = false;
     });

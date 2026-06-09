@@ -1209,14 +1209,14 @@
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底極致 スコアリングBot レポート</h1>
-    <p>生成日時: 2026-06-09 12:57:14 JST</p>
+    <p>生成日時: 2026-06-09 13:22:57 JST</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
     <section id="performance-summary" class="panel">
       <h2>全体成績（過去1年分）</h2>
       <section class="cards">
-        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2153</div></div>
+        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2170</div></div>
         <div class="card"><div class="label">対象モード</div><div class="value">5</div></div>
         <div class="card"><div class="label">確定済み延べ件数</div><div class="value">79</div></div>
         <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">12</div></div>
@@ -1371,9 +1371,10 @@
         </div>
         <label class="filter-control" for="daily-date-filter">
           <span>表示日</span>
-          <select id="daily-date-filter" data-default-date="2026-06-08" data-page-size="100">
+          <select id="daily-date-filter" data-default-date="2026-06-09" data-page-size="100">
             <option value="">全期間</option>
-<option value="2026-06-08" selected>2026-06-08</option>
+<option value="2026-06-09" selected>2026-06-09</option>
+<option value="2026-06-08">2026-06-08</option>
 <option value="2026-06-05">2026-06-05</option>
 <option value="2026-06-04">2026-06-04</option>
 <option value="2026-06-03">2026-06-03</option>
@@ -1444,11 +1445,11 @@
         <div class="search-grid">
           <label>
             <span>開始日</span>
-            <input id="search-date-from" type="date" min="2026-03-05" max="2026-06-08">
+            <input id="search-date-from" type="date" min="2026-03-05" max="2026-06-09">
           </label>
           <label>
             <span>終了日</span>
-            <input id="search-date-to" type="date" min="2026-03-05" max="2026-06-08">
+            <input id="search-date-to" type="date" min="2026-03-05" max="2026-06-09">
           </label>
           <label>
             <span>証券コード</span>
@@ -1477,6 +1478,15 @@
             <input id="search-price-max" type="number" min="0" step="1" inputmode="numeric" placeholder="円">
           </label>
           <button id="search-reset" type="button">条件をリセット</button>
+        </div>
+        <div class="indicator-filter">
+          <div class="indicator-filter-head">
+            <strong>検出モード</strong>
+            <small>選択したモードのいずれかに該当する銘柄だけ表示します。</small>
+          </div>
+          <div class="indicator-options mode-options">
+            <label class="indicator-option"><input type="checkbox" value="stable_s6" data-mode-filter><span><strong>Stable ★6</strong><small>5営業日後 / +10%</small></span></label><label class="indicator-option"><input type="checkbox" value="sniper" data-mode-filter><span><strong>Sniper 勝率重視</strong><small>5営業日後 / 勝ち</small></span></label><label class="indicator-option"><input type="checkbox" value="mega5_rebound" data-mode-filter><span><strong>Mega5 短期リバウンド</strong><small>5営業日後 / +20%</small></span></label><label class="indicator-option"><input type="checkbox" value="mega40_deep_reversal" data-mode-filter><span><strong>Mega40 深押し反転</strong><small>40営業日後 / +30%</small></span></label><label class="indicator-option"><input type="checkbox" value="mega40_wick_recovery" data-mode-filter><span><strong>Mega40 下ヒゲ回復</strong><small>40営業日後 / +50%</small></span></label>
+          </div>
         </div>
         <div class="indicator-filter">
           <div class="indicator-filter-head">

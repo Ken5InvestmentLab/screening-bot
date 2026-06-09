@@ -1841,7 +1841,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
             <span>株価上限</span>
             <input id="search-price-max" type="number" min="0" step="1" inputmode="numeric" placeholder="円">
           </label>
-          <button id="search-reset" type="button">条件をリセット</button>
         </div>
         <div class="indicator-filter">
           <div class="indicator-filter-head">
@@ -1860,6 +1859,9 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
           <div class="indicator-options">
             {search_indicator_options_html()}
           </div>
+        </div>
+        <div class="search-actions">
+          <button id="search-reset" type="button">検索条件をリセット</button>
         </div>
       </details>
       {
@@ -2412,15 +2414,23 @@ def build_html_report(
       color: var(--text);
       font: inherit;
     }}
-    .search-grid button {{
-      align-self: end;
+    .search-actions {{
+      display: flex;
+      justify-content: flex-end;
+      padding: 0 13px 13px;
+    }}
+    .search-actions button {{
       min-height: 34px;
+      padding: 6px 12px;
       border: 1px solid #bfd2ee;
       border-radius: 6px;
       background: #eef5ff;
       color: #1849a9;
       font-weight: 700;
       cursor: pointer;
+    }}
+    .search-actions button:hover {{
+      background: #e3efff;
     }}
     .indicator-filter {{
       padding: 0 13px 13px;

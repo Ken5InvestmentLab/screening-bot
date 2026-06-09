@@ -1388,25 +1388,14 @@ def mode_summary_html(
     link = href or f"#{anchor_id(candidate, anchor_prefix)}"
     locked = free and is_paid_mode(candidate)
     action_label = "有料会員限定" if locked else "詳細ページを見る" if href else "詳細を見る"
-    metrics_html = (
-        """
-        <div class="mode-metrics locked-metrics">
-          <span><strong>会員限定</strong><small>確定成績</small></span>
-          <span><strong>会員限定</strong><small>銘柄一覧</small></span>
-          <span><strong>会員限定</strong><small>ウォッチ</small></span>
-          <span><strong>有料会員</strong><small>ログイン後表示</small></span>
-        </div>
-        """
-        if locked
-        else f"""
+    metrics_html = f"""
         <div class="mode-metrics">
           <span><strong>{stats["n"]}</strong><small>確定</small></span>
           <span><strong>{pct_html(stats["win_rate"], signed=False)}</strong><small>勝率</small></span>
           <span><strong>{pct_html(stats["avg"])}</strong><small>平均</small></span>
-          <span><strong>{"会員限定" if free else watch_stats["with_current"]}</strong><small>ウォッチ中</small></span>
+          <span><strong>{watch_stats["with_current"]}</strong><small>ウォッチ中</small></span>
         </div>
         """
-    )
     return f"""
       <a class="mode-card {verdict_class(verdict(stats))}{" locked" if locked else ""}" href="{html_escape(link)}">
         <div class="mode-card-head">
@@ -2060,7 +2049,6 @@ def build_html_report(
     )
     confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
     watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
-    watch_total_value = "会員限定" if free else watch_total
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -3068,9 +3056,6 @@ def build_html_report(
       border-left-color: var(--blue);
       background: #fbfdff;
     }}
-    .locked-metrics strong {{
-      color: #1849a9;
-    }}
     .is-hidden,
     [hidden] {{
       display: none !important;
@@ -3271,7 +3256,7 @@ def build_html_report(
         <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
         <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
         <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
-        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total_value}</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
       </section>
       <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       {summary_table}
@@ -3770,8 +3755,7 @@ def build_mode_html_page(
       <h2>成績サマリー（過去1年分）</h2>
       <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
       <div class="chips">{condition_chips(candidate["conditions"])}</div>
-      {stat_metrics_html(stats, watch_stats, include_watch=not free)}
-      {paywall_cta_html("未確定ウォッチリストの統計は有料会員限定です", "無料表示では確定済み成績のみ表示します。ウォッチ中の現在成績はアクセス権を購入すると表示されます。", f"/{mode_page_filename(candidate)}#summary") if free else ""}
+      {stat_metrics_html(stats, watch_stats, include_watch=True)}
     </section>
 
     <section id="confirmed" class="panel">

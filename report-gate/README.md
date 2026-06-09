@@ -1,17 +1,17 @@
 # Mega Report Gate
 
-This Worker serves public/free report HTML to visitors without a paid Discord role, and serves the full report HTML only after Discord OAuth confirms the configured role. Deploy and check commands copy `reports/mega_validation_report*.html` plus `reports/report-interactions.js` into `report-gate/public/` first.
+This Worker sends first-time visitors through Discord OAuth, then serves free report HTML to logged-in users without a paid Discord role and the full report HTML to users with the configured role. Deploy and check commands copy `reports/mega_validation_report*.html` plus `reports/report-interactions.js` into `report-gate/public/` first.
 
 The primary Worker name is `scoring-bot-report`. The legacy `screening-bot-report-gate` Worker is deployed with the same code and assets so existing report links continue to work.
 
 ## Flow
 
 1. A request to `/`, `/report`, or any `mega_validation_report*.html` reaches the Worker first.
-2. If the request has no valid paid-role session, the Worker serves the matching `_free.html` report asset without exposing premium rows in the HTML source.
-3. Free report CTAs link to `/purchase`, which redirects to `ACCESS_PURCHASE_URL`, and `/auth/login`, which starts Discord OAuth with `identify guilds.members.read`.
-4. The callback fetches `/users/@me/guilds/{guild.id}/member` and stores the OAuth access token plus latest roles in an encrypted, HttpOnly session cookie.
-5. Full report access is granted only when the current member `roles` array contains one of `DISCORD_ALLOWED_ROLE_IDS`.
-6. Full reports are served with `Cache-Control: private, no-store` and a guard script that checks `/auth/check` every 120 seconds while the page is open.
+2. If the request has no valid session, the Worker redirects to `/auth/login` and preserves the original path in `return_to`.
+3. Discord OAuth starts with `identify guilds.members.read`; the callback fetches `/users/@me/guilds/{guild.id}/member` and stores the OAuth access token plus latest roles in an encrypted, HttpOnly session cookie.
+4. The callback redirects the user back to the requested page; the next report request is classified from the saved session roles.
+5. If the logged-in member has one of `DISCORD_ALLOWED_ROLE_IDS`, the Worker serves the full report. Otherwise it serves the matching `_free.html` report asset without exposing premium rows in the HTML source.
+6. Free report CTAs link to `/purchase`, which redirects to `ACCESS_PURCHASE_URL`; full reports are served with `Cache-Control: private, no-store` and a guard script that checks `/auth/check` every 120 seconds while the page is open.
 
 ## Local commands
 

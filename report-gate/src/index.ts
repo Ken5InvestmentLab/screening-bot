@@ -475,10 +475,7 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     throw error;
   }
 
-  const hasFreshRoles =
-    currentSession.roles.length > 0 &&
-    currentSession.roleCheckedAt > 0 &&
-    now - currentSession.roleCheckedAt <= ROLE_CACHE_SECONDS;
+  const hasFreshRoles = currentSession.roleCheckedAt > 0 && now - currentSession.roleCheckedAt <= ROLE_CACHE_SECONDS;
   if (hasFreshRoles) {
     return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession };
   }
@@ -501,7 +498,6 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     }
     if (
       error instanceof DiscordRateLimitedError &&
-      currentSession.roles.length > 0 &&
       currentSession.roleCheckedAt > 0 &&
       now - currentSession.roleCheckedAt <= ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS
     ) {
@@ -526,6 +522,7 @@ function roleRequiredResponse(env: WorkerEnv, status = 403, init: HeadersInit = 
 
 type ReportAccessResult = {
   fullAccess: boolean;
+  loginRequired?: boolean;
   refreshedSession?: SessionPayload;
   clearSession?: boolean;
 };
@@ -533,7 +530,7 @@ type ReportAccessResult = {
 async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAccessResult> {
   const session = await readSession(request, env);
   if (!session) {
-    return { fullAccess: false };
+    return { fullAccess: false, loginRequired: true };
   }
 
   const check = await checkSessionAuthorization(session, env);
@@ -541,7 +538,7 @@ async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAcc
     return { fullAccess: true, refreshedSession: check.refreshedSession };
   }
   if (check.loginRequired) {
-    return { fullAccess: false, clearSession: true };
+    return { fullAccess: false, loginRequired: true, clearSession: true };
   }
   return { fullAccess: false, refreshedSession: check.refreshedSession };
 }
@@ -587,10 +584,6 @@ async function callback(request: Request, env: WorkerEnv): Promise<Response> {
   const token = await exchangeCodeForToken(code, request, env);
   const member = await fetchGuildMember(token.accessToken, env);
   const roles = member.roles ?? [];
-  if (!hasAllowedRole(roles, allowedRoleIds(env))) {
-    return roleRequiredResponse(env);
-  }
-
   const userId = member.user?.id;
   if (!userId) {
     return htmlResponse("Access denied", "Discord did not return a user id for this guild member.", 403);
@@ -741,6 +734,15 @@ function injectAccessGuard(html: string): string {
 
 async function serveReport(request: Request, env: WorkerEnv, assetPath = reportAssetPath(env)): Promise<Response> {
   const access = await reportAccess(request, env);
+  if (access.loginRequired) {
+    const headers = new Headers();
+    const url = new URL(request.url);
+    if (access.clearSession) {
+      headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
+    }
+    return loginRedirect(request, headers);
+  }
+
   const servedAssetPath = access.fullAccess ? assetPath : freeReportAssetPath(assetPath);
 
   const assetUrl = new URL(servedAssetPath, "https://assets.local");
@@ -819,6 +821,17 @@ function logout(request: Request): Response {
     "cache-control": "no-store",
   });
   headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
+  return new Response(null, { status: 302, headers });
+}
+
+function loginRedirect(request: Request, init: HeadersInit = {}): Response {
+  const url = new URL(request.url);
+  const returnTo = safeReturnTo(`${url.pathname}${url.search}`);
+  const loginUrl = new URL("/auth/login", url.origin);
+  loginUrl.searchParams.set("return_to", returnTo);
+  const headers = securityHeaders(init);
+  headers.set("location", `${loginUrl.pathname}${loginUrl.search}`);
+  headers.set("cache-control", "no-store");
   return new Response(null, { status: 302, headers });
 }
 

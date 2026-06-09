@@ -2052,6 +2052,39 @@ def report_interactions_js() -> str:
   });
   applyFilter(true);
 })();
+
+(() => {
+  const rows = Array.from(document.querySelectorAll("[data-confirmed-row]"));
+  const button = document.getElementById("confirmed-load-more");
+  const visibleCount = document.getElementById("confirmed-visible-count");
+  const totalCount = document.getElementById("confirmed-total-count");
+  if (!button || rows.length === 0) return;
+  const configuredPageSize = Number(button.dataset.pageSize || 10);
+  const pageSize = Number.isFinite(configuredPageSize) ? Math.max(1, configuredPageSize) : 10;
+  let visibleLimit = pageSize;
+
+  const render = () => {
+    let rendered = 0;
+    rows.forEach((row, index) => {
+      const shouldShow = index < visibleLimit;
+      row.classList.toggle("is-hidden", !shouldShow);
+      if (shouldShow) rendered += 1;
+    });
+    if (visibleCount) visibleCount.textContent = String(rendered);
+    if (totalCount) totalCount.textContent = String(rows.length);
+    const remaining = rows.length - rendered;
+    button.hidden = remaining <= 0;
+    button.textContent = remaining > 0
+      ? `さらに${Math.min(pageSize, remaining)}件表示`
+      : "さらに表示";
+  };
+
+  button.addEventListener("click", () => {
+    visibleLimit += pageSize;
+    render();
+  });
+  render();
+})();
     """
 
 
@@ -3768,44 +3801,6 @@ def mode_page_style() -> str:
     """
 
 
-def mode_confirmed_pagination_script() -> str:
-    return f"""
-  <script>
-  (() => {{
-    const rows = Array.from(document.querySelectorAll("[data-confirmed-row]"));
-    const button = document.getElementById("confirmed-load-more");
-    const visibleCount = document.getElementById("confirmed-visible-count");
-    const totalCount = document.getElementById("confirmed-total-count");
-    if (!button || rows.length === 0) return;
-    const pageSize = Number(button.dataset.pageSize || {MODE_CONFIRMED_PAGE_SIZE});
-    let visibleLimit = Number.isFinite(pageSize) ? Math.max(1, pageSize) : {MODE_CONFIRMED_PAGE_SIZE};
-
-    const render = () => {{
-      let rendered = 0;
-      rows.forEach((row, index) => {{
-        const shouldShow = index < visibleLimit;
-        row.classList.toggle("is-hidden", !shouldShow);
-        if (shouldShow) rendered += 1;
-      }});
-      if (visibleCount) visibleCount.textContent = String(rendered);
-      if (totalCount) totalCount.textContent = String(rows.length);
-      const remaining = rows.length - rendered;
-      button.hidden = remaining <= 0;
-      button.textContent = remaining > 0
-        ? `さらに${{Math.min(pageSize, remaining)}}件表示`
-        : "さらに表示";
-    }};
-
-    button.addEventListener("click", () => {{
-      visibleLimit += pageSize;
-      render();
-    }});
-    render();
-  }})();
-  </script>
-    """
-
-
 def stat_metrics_html(stats: dict, watch_stats: dict, include_watch: bool = True) -> str:
     confirmed_items = [
         ("確定件数", stats["n"]),
@@ -3949,7 +3944,7 @@ def build_mode_html_page(
 
     {guide_section_html()}
   </main>
-  {"" if free else mode_confirmed_pagination_script()}
+  {"" if free else daily_detection_script()}
 </body>
 </html>
 """

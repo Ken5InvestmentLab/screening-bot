@@ -139,3 +139,36 @@
   });
   applyFilter(true);
 })();
+
+(() => {
+  const rows = Array.from(document.querySelectorAll("[data-confirmed-row]"));
+  const button = document.getElementById("confirmed-load-more");
+  const visibleCount = document.getElementById("confirmed-visible-count");
+  const totalCount = document.getElementById("confirmed-total-count");
+  if (!button || rows.length === 0) return;
+  const configuredPageSize = Number(button.dataset.pageSize || 10);
+  const pageSize = Number.isFinite(configuredPageSize) ? Math.max(1, configuredPageSize) : 10;
+  let visibleLimit = pageSize;
+
+  const render = () => {
+    let rendered = 0;
+    rows.forEach((row, index) => {
+      const shouldShow = index < visibleLimit;
+      row.classList.toggle("is-hidden", !shouldShow);
+      if (shouldShow) rendered += 1;
+    });
+    if (visibleCount) visibleCount.textContent = String(rendered);
+    if (totalCount) totalCount.textContent = String(rows.length);
+    const remaining = rows.length - rendered;
+    button.hidden = remaining <= 0;
+    button.textContent = remaining > 0
+      ? `さらに${Math.min(pageSize, remaining)}件表示`
+      : "さらに表示";
+  };
+
+  button.addEventListener("click", () => {
+    visibleLimit += pageSize;
+    render();
+  });
+  render();
+})();

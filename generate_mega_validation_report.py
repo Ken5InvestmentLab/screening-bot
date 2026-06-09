@@ -1840,8 +1840,8 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
       </details>
       {
         paywall_cta_html(
-            "検出銘柄と検索結果は有料会員限定です",
-            "検索フォームは確認できますが、無料表示では銘柄名・株価・チャート・ファンダリンクをHTMLに含めません。アクセス権を購入すると全件を表示できます。",
+            "検出銘柄一覧と銘柄検索モードは有料会員限定です",
+            "アクセス権を購入すると全件を表示できます。",
             "/mega_validation_report_latest.html#daily-detections",
         )
         if free
@@ -3717,19 +3717,30 @@ def build_mode_html_page(
     generated_at: str,
     free: bool = False,
 ) -> str:
-    if free and is_paid_mode(candidate):
-        return build_locked_mode_html_page(candidate, generated_at)
-
+    free_paid_mode = free and is_paid_mode(candidate)
     stats = candidate_stats(frame_confirmed, candidate)
     watch_stats = current_watch_stats(frame_all, candidate)
-    confirmed_limit = FREE_CONFIRMED_LIMIT if free else None
+    confirmed_limit = FREE_CONFIRMED_LIMIT if free and not free_paid_mode else None
     confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=confirmed_limit)
     unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
-    confirmed_heading = "確定済み上位5件" if free else "確定済み全件"
+    confirmed_heading = "確定済み銘柄一覧" if free_paid_mode else "確定済み上位5件" if free else "確定済み全件"
+    condition_detail_html = "" if free_paid_mode else f'<div class="chips">{condition_chips(candidate["conditions"])}</div>'
+    confirmed_html = (
+        paywall_cta_html(
+            "銘柄一覧は有料会員限定です",
+            "アクセス権を購入すると全件を表示できます。",
+            f"/{mode_page_filename(candidate)}#confirmed",
+        )
+        if free_paid_mode
+        else f"""
+      {('<p class="note">無料表示では、既存の並び順で上位5件だけを表示します。</p>' if free else '')}
+      {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
+        """
+    )
     watch_html = (
         paywall_cta_html(
             "未確定ウォッチリストは有料会員限定です",
-            "無料表示では未確定銘柄の銘柄名・現在騰落・株価・チャート・ファンダリンクをHTMLに含めません。アクセス権を購入すると全件を表示できます。",
+            "アクセス権を購入すると全件を表示できます。",
             f"/{mode_page_filename(candidate)}#watch",
         )
         if free
@@ -3754,14 +3765,13 @@ def build_mode_html_page(
     <section id="summary" class="panel">
       <h2>成績サマリー（過去1年分）</h2>
       <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
-      <div class="chips">{condition_chips(candidate["conditions"])}</div>
+      {condition_detail_html}
       {stat_metrics_html(stats, watch_stats, include_watch=True)}
     </section>
 
     <section id="confirmed" class="panel">
       <h2>{confirmed_heading}</h2>
-      {('<p class="note">無料表示では、既存の並び順で上位5件だけを表示します。</p>' if free else '')}
-      {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
+      {confirmed_html}
     </section>
 
     <section id="watch" class="panel">
@@ -3796,8 +3806,8 @@ def build_locked_mode_html_page(candidate: dict, generated_at: str) -> str:
     <section id="summary" class="panel">
       <h2>有料会員限定モード</h2>
       {paywall_cta_html(
-          "Megaモードの成績と銘柄一覧は有料会員限定です",
-          "無料表示ではMegaモード3種の確定済み銘柄・未確定ウォッチリスト・条件詳細をHTMLに含めません。アクセス権を購入すると表示されます。",
+          "Megaモードの銘柄一覧は有料会員限定です",
+          "アクセス権を購入すると表示されます。",
           f"/{mode_page_filename(candidate)}",
       )}
     </section>

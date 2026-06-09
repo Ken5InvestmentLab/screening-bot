@@ -17,6 +17,7 @@ import os
 import re
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -207,6 +208,15 @@ CANDIDATES = [
         "intent": "深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。",
     },
 ]
+
+PAID_MODE_IDS = {"mega5_rebound", "mega40_deep_reversal", "mega40_wick_recovery"}
+FREE_CONFIRMED_LIMIT = 5
+FREE_REPORT_SUFFIX = "_free"
+PURCHASE_PATH = "/purchase"
+
+
+def is_paid_mode(candidate: dict) -> bool:
+    return candidate.get("id") in PAID_MODE_IDS
 
 LIFT_TARGETS = [
     (5, 0.20),
@@ -1258,6 +1268,43 @@ def mode_page_filename(candidate: dict) -> str:
     return f"mega_validation_report_{candidate['id']}.html"
 
 
+def free_report_filename(filename: str) -> str:
+    if filename.endswith(f"{FREE_REPORT_SUFFIX}.html"):
+        return filename
+    return filename.replace(".html", f"{FREE_REPORT_SUFFIX}.html")
+
+
+def free_mode_page_filename(candidate: dict) -> str:
+    return free_report_filename(mode_page_filename(candidate))
+
+
+def login_path(return_to: str = "/mega_validation_report_latest.html") -> str:
+    return f"/auth/login?return_to={urllib.parse.quote(return_to, safe='/')}"
+
+
+def paywall_cta_html(
+    title: str,
+    message: str,
+    return_to: str = "/mega_validation_report_latest.html",
+) -> str:
+    return f"""
+    <div class="paywall-panel">
+      <div class="locked-preview" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="paywall-copy">
+        <span class="premium-badge">有料会員限定</span>
+        <h3>{html_escape(title)}</h3>
+        <p>{html_escape(message)}</p>
+        <div class="access-actions">
+          <a class="access-btn primary" href="{PURCHASE_PATH}">アクセス権を購入する</a>
+          <a class="access-btn secondary" href="{login_path(return_to)}">Discordでログイン</a>
+        </div>
+      </div>
+    </div>
+    """
+
+
 def navigation_html(current_mode_id: str | None = None, include_mode_sections: bool = False) -> str:
     brand_active = "active" if current_mode_id is None else ""
     mode_links = "".join(
@@ -1269,7 +1316,7 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         section_links = """
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み全件</a>
-        <a href="#watch">未確定ウォッチ</a>
+        <a href="#watch">未確定ウォッチリスト</a>
         <a href="#guide">使い方</a>
         """
     elif current_mode_id is None:
@@ -1336,22 +1383,38 @@ def mode_summary_html(
     watch_stats: dict,
     anchor_prefix: str = "",
     href: str | None = None,
+    free: bool = False,
 ) -> str:
     link = href or f"#{anchor_id(candidate, anchor_prefix)}"
-    action_label = "詳細ページを見る" if href else "詳細を見る"
+    locked = free and is_paid_mode(candidate)
+    action_label = "有料会員限定" if locked else "詳細ページを見る" if href else "詳細を見る"
+    metrics_html = (
+        """
+        <div class="mode-metrics locked-metrics">
+          <span><strong>会員限定</strong><small>確定成績</small></span>
+          <span><strong>会員限定</strong><small>銘柄一覧</small></span>
+          <span><strong>会員限定</strong><small>ウォッチ</small></span>
+          <span><strong>有料会員</strong><small>ログイン後表示</small></span>
+        </div>
+        """
+        if locked
+        else f"""
+        <div class="mode-metrics">
+          <span><strong>{stats["n"]}</strong><small>確定</small></span>
+          <span><strong>{pct_html(stats["win_rate"], signed=False)}</strong><small>勝率</small></span>
+          <span><strong>{pct_html(stats["avg"])}</strong><small>平均</small></span>
+          <span><strong>{"会員限定" if free else watch_stats["with_current"]}</strong><small>ウォッチ中</small></span>
+        </div>
+        """
+    )
     return f"""
-      <a class="mode-card {verdict_class(verdict(stats))}" href="{html_escape(link)}">
+      <a class="mode-card {verdict_class(verdict(stats))}{" locked" if locked else ""}" href="{html_escape(link)}">
         <div class="mode-card-head">
           <span class="mode-name">{html_escape(candidate["label"])}</span>
           <span class="mode-horizon">{horizon_label(candidate["eval_days"])} / {html_escape(target_label(candidate))}</span>
         </div>
         <p>{html_escape(candidate["intent"])}</p>
-        <div class="mode-metrics">
-          <span><strong>{stats["n"]}</strong><small>確定</small></span>
-          <span><strong>{pct_html(stats["win_rate"], signed=False)}</strong><small>勝率</small></span>
-          <span><strong>{pct_html(stats["avg"])}</strong><small>平均</small></span>
-          <span><strong>{watch_stats["with_current"]}</strong><small>ウォッチ中</small></span>
-        </div>
+        {metrics_html}
         <span class="mode-card-action">{html_escape(action_label)} →</span>
       </a>
     """
@@ -1525,7 +1588,7 @@ def build_candidate_detail_sections(
               </div>
               <h3>確定済み全件</h3>
               {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
-              <h3>未確定ウォッチ全件</h3>
+              <h3>未確定ウォッチリスト全件</h3>
               {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False, current_candidate=candidate)}
             </details>
             """
@@ -1618,7 +1681,7 @@ def build_optional_archive_scope_html(
     """
 
 
-def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
+def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) -> str:
     title = "検出された銘柄一覧"
     if frame_all.empty or "signal_dt" not in frame_all.columns:
         return f"""
@@ -1786,12 +1849,31 @@ def daily_detection_section_html(frame_all: pd.DataFrame) -> str:
           </div>
         </div>
       </details>
-      <p class="filter-status"><strong id="daily-visible-count">{default_count}</strong>/<span id="daily-total-count">{default_total}</span>件を表示中</p>
-      <p id="daily-empty-message" class="empty" hidden>この条件に一致する銘柄はありません。</p>
-      {"".join(table_parts)}
-      <div class="load-more-row">
-        <button id="daily-load-more" class="load-more" type="button"{" hidden" if default_count >= default_total else ""}>さらに表示</button>
-      </div>
+      {
+        paywall_cta_html(
+            "検出銘柄と検索結果は有料会員限定です",
+            "検索フォームは確認できますが、無料表示では銘柄名・株価・チャート・ファンダリンクをHTMLに含めません。アクセス権を購入すると全件を表示できます。",
+            "/mega_validation_report_latest.html#daily-detections",
+        )
+        if free
+        else ""
+      }
+      {
+        '<p class="filter-status"><strong>会員限定</strong>/<span>会員限定</span>件を表示中</p>'
+        if free
+        else f'<p class="filter-status"><strong id="daily-visible-count">{default_count}</strong>/<span id="daily-total-count">{default_total}</span>件を表示中</p>'
+      }
+      {
+        '<p class="empty">銘柄データは有料会員限定です。</p>'
+        if free
+        else '<p id="daily-empty-message" class="empty" hidden>この条件に一致する銘柄はありません。</p>'
+      }
+      {"" if free else "".join(table_parts)}
+      {
+        ""
+        if free
+        else f'<div class="load-more-row"><button id="daily-load-more" class="load-more" type="button"{" hidden" if default_count >= default_total else ""}>さらに表示</button></div>'
+      }
     </section>
     """
 
@@ -1941,10 +2023,11 @@ def build_html_report(
     frame_all: pd.DataFrame,
     meta: dict,
     generated_at: str,
+    free: bool = False,
 ) -> str:
     stats_rows, stats_by_id, watch_by_id = stats_table_rows(frame_confirmed, frame_all)
     summary = horizon_summary(frame_confirmed)
-    daily_detection_section = daily_detection_section_html(frame_all)
+    daily_detection_section = daily_detection_section_html(frame_all, free=free)
 
     summary_table = html_table(
         ["評価日", "確定件数", "平均", "勝率", "+10%", "+20%", "+30%", "+50%", "+100%"],
@@ -1971,11 +2054,13 @@ def build_html_report(
             stats_by_id[candidate["id"]],
             watch_by_id[candidate["id"]],
             href=mode_page_filename(candidate),
+            free=free,
         )
         for candidate in CANDIDATES
     )
     confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
     watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
+    watch_total_value = "会員限定" if free else watch_total
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -2900,6 +2985,92 @@ def build_html_report(
       border-radius: 6px;
       margin-top: 12px;
     }}
+    .paywall-panel {{
+      position: relative;
+      display: grid;
+      gap: 14px;
+      margin: 12px 0;
+      padding: 18px;
+      border: 1px solid #bfd2ee;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+      overflow: hidden;
+    }}
+    .locked-preview {{
+      display: grid;
+      gap: 8px;
+      opacity: 0.55;
+      filter: blur(2px);
+      pointer-events: none;
+    }}
+    .locked-preview span {{
+      display: block;
+      height: 18px;
+      border-radius: 999px;
+      background: #d8e4f3;
+    }}
+    .locked-preview span:nth-child(2) {{ width: 84%; }}
+    .locked-preview span:nth-child(3) {{ width: 68%; }}
+    .locked-preview span:nth-child(4) {{ width: 76%; }}
+    .paywall-copy {{
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 8px;
+      max-width: 720px;
+    }}
+    .paywall-copy h3 {{
+      margin: 0;
+      font-size: 18px;
+    }}
+    .paywall-copy p {{
+      margin: 0;
+      color: #475467;
+    }}
+    .premium-badge {{
+      display: inline-flex;
+      width: fit-content;
+      min-height: 24px;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #102033;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+    }}
+    .access-actions {{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }}
+    .access-btn {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-weight: 800;
+      text-decoration: none;
+    }}
+    .access-btn.primary {{
+      background: var(--blue);
+      color: #ffffff;
+    }}
+    .access-btn.secondary {{
+      border: 1px solid #bfd2ee;
+      background: #eef5ff;
+      color: #1849a9;
+    }}
+    .mode-card.locked {{
+      border-left-color: var(--blue);
+      background: #fbfdff;
+    }}
+    .locked-metrics strong {{
+      color: #1849a9;
+    }}
     .is-hidden,
     [hidden] {{
       display: none !important;
@@ -3100,7 +3271,7 @@ def build_html_report(
         <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
         <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
         <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
-        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total_value}</div></div>
       </section>
       <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       {summary_table}
@@ -3384,6 +3555,79 @@ def mode_page_style() -> str:
       align-items: start;
       gap: 9px;
     }
+    .paywall-panel {
+      position: relative;
+      display: grid;
+      gap: 14px;
+      margin: 12px 0;
+      padding: 18px;
+      border: 1px solid #bfd2ee;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+      overflow: hidden;
+    }
+    .locked-preview {
+      display: grid;
+      gap: 8px;
+      opacity: 0.55;
+      filter: blur(2px);
+      pointer-events: none;
+    }
+    .locked-preview span {
+      display: block;
+      height: 18px;
+      border-radius: 999px;
+      background: #d8e4f3;
+    }
+    .locked-preview span:nth-child(2) { width: 84%; }
+    .locked-preview span:nth-child(3) { width: 68%; }
+    .locked-preview span:nth-child(4) { width: 76%; }
+    .paywall-copy {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 8px;
+      max-width: 720px;
+    }
+    .paywall-copy h3 { margin: 0; font-size: 18px; }
+    .paywall-copy p { margin: 0; color: #475467; }
+    .premium-badge {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 24px;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #102033;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .access-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .access-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .access-btn.primary {
+      background: #2563eb;
+      color: #ffffff;
+    }
+    .access-btn.secondary {
+      border: 1px solid #bfd2ee;
+      background: #eef5ff;
+      color: #1849a9;
+    }
     @media (max-width: 820px) {
       .signals { min-width: 0; border-collapse: separate; border-spacing: 0 10px; }
       .signals thead { display: none; }
@@ -3452,7 +3696,7 @@ def mode_page_style() -> str:
     """
 
 
-def stat_metrics_html(stats: dict, watch_stats: dict) -> str:
+def stat_metrics_html(stats: dict, watch_stats: dict, include_watch: bool = True) -> str:
     confirmed_items = [
         ("確定件数", stats["n"]),
         ("確定平均", pct_html(stats["avg"])),
@@ -3476,7 +3720,7 @@ def stat_metrics_html(stats: dict, watch_stats: dict) -> str:
     return (
         '<div class="metric-groups">'
         f'{row_html(confirmed_items, "confirmed-metrics")}'
-        f'{row_html(watch_items, "watch-metrics")}'
+        f'{row_html(watch_items, "watch-metrics") if include_watch else ""}'
         "</div>"
     )
 
@@ -3486,11 +3730,26 @@ def build_mode_html_page(
     frame_confirmed: pd.DataFrame,
     frame_all: pd.DataFrame,
     generated_at: str,
+    free: bool = False,
 ) -> str:
+    if free and is_paid_mode(candidate):
+        return build_locked_mode_html_page(candidate, generated_at)
+
     stats = candidate_stats(frame_confirmed, candidate)
     watch_stats = current_watch_stats(frame_all, candidate)
-    confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
+    confirmed_limit = FREE_CONFIRMED_LIMIT if free else None
+    confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=confirmed_limit)
     unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
+    confirmed_heading = "確定済み上位5件" if free else "確定済み全件"
+    watch_html = (
+        paywall_cta_html(
+            "未確定ウォッチリストは有料会員限定です",
+            "無料表示では未確定銘柄の銘柄名・現在騰落・株価・チャート・ファンダリンクをHTMLに含めません。アクセス権を購入すると全件を表示できます。",
+            f"/{mode_page_filename(candidate)}#watch",
+        )
+        if free
+        else html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False, current_candidate=candidate)
+    )
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -3511,19 +3770,53 @@ def build_mode_html_page(
       <h2>成績サマリー（過去1年分）</h2>
       <p class="note">{horizon_label(candidate["eval_days"])} / 目標 {html_escape(target_label(candidate))}。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
       <div class="chips">{condition_chips(candidate["conditions"])}</div>
-      {stat_metrics_html(stats, watch_stats)}
+      {stat_metrics_html(stats, watch_stats, include_watch=not free)}
+      {paywall_cta_html("未確定ウォッチリストの統計は有料会員限定です", "無料表示では確定済み成績のみ表示します。ウォッチ中の現在成績はアクセス権を購入すると表示されます。", f"/{mode_page_filename(candidate)}#summary") if free else ""}
     </section>
 
     <section id="confirmed" class="panel">
-      <h2>確定済み全件</h2>
+      <h2>{confirmed_heading}</h2>
+      {('<p class="note">無料表示では、既存の並び順で上位5件だけを表示します。</p>' if free else '')}
       {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
     </section>
 
     <section id="watch" class="panel">
-      <h2>未確定ウォッチ全件</h2>
-      {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False, current_candidate=candidate)}
+      <h2>未確定ウォッチリスト全件</h2>
+      {watch_html}
     </section>
 
+    {guide_section_html()}
+  </main>
+</body>
+</html>
+"""
+
+
+def build_locked_mode_html_page(candidate: dict, generated_at: str) -> str:
+    return f"""<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{html_escape(candidate["label"])} | {html_escape(REPORT_TITLE)}</title>
+  <style>{mode_page_style()}</style>
+</head>
+<body>
+  {navigation_html(candidate["id"], include_mode_sections=True)}
+  <header>
+    <h1>{html_escape(candidate["label"])}</h1>
+    <p>生成日時: {html_escape(generated_at)}</p>
+    <p>{html_escape(candidate["intent"])}</p>
+  </header>
+  <main>
+    <section id="summary" class="panel">
+      <h2>有料会員限定モード</h2>
+      {paywall_cta_html(
+          "Megaモードの成績と銘柄一覧は有料会員限定です",
+          "無料表示ではMegaモード3種の確定済み銘柄・未確定ウォッチリスト・条件詳細をHTMLに含めません。アクセス権を購入すると表示されます。",
+          f"/{mode_page_filename(candidate)}",
+      )}
+    </section>
     {guide_section_html()}
   </main>
 </body>
@@ -3659,7 +3952,7 @@ def build_report(
         ]
         confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
         lines.extend(signal_table(confirmed_rows, candidate["eval_days"], confirmed=True))
-        lines += ["", "#### 未確定ウォッチ全件", ""]
+        lines += ["", "#### 未確定ウォッチリスト全件", ""]
         unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
         lines.extend(signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False))
         lines.append("")
@@ -3743,6 +4036,22 @@ def main() -> None:
         handle.write(html_report.rstrip())
         handle.write("\n")
 
+    free_html_report = build_html_report(
+        report_confirmed_frame,
+        report_all_frame,
+        report_meta_data,
+        generated_at,
+        free=True,
+    )
+    free_html_report = "\n".join(line.rstrip() for line in free_html_report.rstrip().splitlines())
+    free_html_path = os.path.join(
+        os.path.dirname(html_path),
+        free_report_filename(os.path.basename(html_path)),
+    )
+    with open(free_html_path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(free_html_report.rstrip())
+        handle.write("\n")
+
     html_dir = os.path.dirname(html_path)
     script_path = os.path.join(html_dir, "report-interactions.js")
     with open(script_path, "w", encoding="utf-8", newline="\n") as handle:
@@ -3763,9 +4072,24 @@ def main() -> None:
             handle.write("\n")
         print(f"wrote {mode_path}")
 
+        free_mode_report = build_mode_html_page(
+            candidate,
+            report_confirmed_frame,
+            report_all_frame,
+            generated_at,
+            free=True,
+        )
+        free_mode_report = "\n".join(line.rstrip() for line in free_mode_report.rstrip().splitlines())
+        free_mode_path = os.path.join(html_dir, free_mode_page_filename(candidate))
+        with open(free_mode_path, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(free_mode_report.rstrip())
+            handle.write("\n")
+        print(f"wrote {free_mode_path}")
+
     print(f"wrote {script_path}")
     print(f"wrote {markdown_path}")
     print(f"wrote {html_path}")
+    print(f"wrote {free_html_path}")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1554 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>天底極致 スコアリングBot レポート</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #182230;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --blue: #2563eb;
+      --navy: #102033;
+      --green: #16815c;
+      --green-bg: #e7f6ef;
+      --amber: #a35a00;
+      --amber-bg: #fff2d7;
+      --red: #b42318;
+      --red-bg: #fde7e4;
+      --chip: #eef3fb;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-padding-top: 104px; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Yu Gothic", "Meiryo", "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    header {
+      background: var(--navy);
+      color: white;
+      padding: 28px 32px;
+      border-bottom: 4px solid #2f80ed;
+    }
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    header p {
+      margin: 4px 0;
+      color: #d7e2f0;
+    }
+    .eyebrow {
+      margin: 0 0 6px;
+      color: #8fb7ff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+    main {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .top-nav {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 14px;
+      background: rgba(16, 32, 51, 0.96);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+    }
+    .top-nav-brand {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      font-weight: 800;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .top-nav-links {
+      display: flex;
+      flex: 1 1 auto;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-width: 0;
+      overflow-x: visible;
+      scrollbar-width: thin;
+    }
+    .top-nav a {
+      flex: 0 0 auto;
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: #d7e2f0;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .top-nav a:hover,
+    .top-nav a.active {
+      background: #eef5ff;
+      color: #1849a9;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .card, .panel, .candidate-detail {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    }
+    .card {
+      padding: 16px;
+    }
+    .card .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .card .value {
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .mode-card {
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--muted);
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    }
+    .mode-card.good { border-left-color: var(--green); }
+    .mode-card.warn { border-left-color: var(--amber); }
+    .mode-card.hold { border-left-color: var(--muted); }
+    .mode-card:hover {
+      border-color: #b8c6d9;
+      background: #fbfdff;
+    }
+    .mode-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .mode-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .mode-horizon {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .mode-card p {
+      margin: 0;
+      color: #475467;
+    }
+    .mode-card-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .mode-card:hover .mode-card-action {
+      background: #dceaff;
+    }
+    .mode-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .mode-metrics > span {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .mode-metrics strong {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .mode-metrics small {
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .mode-link-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 10px;
+    }
+    .mode-link {
+      display: grid;
+      gap: 4px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .mode-link:hover {
+      border-color: #b8c6d9;
+      background: #eef5ff;
+    }
+    .mode-link span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .panel {
+      padding: 18px;
+      margin-bottom: 18px;
+      overflow-x: auto;
+    }
+    .daily-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 10px;
+    }
+    .daily-head h2 {
+      margin-top: 0;
+    }
+    .filter-control {
+      display: grid;
+      gap: 5px;
+      min-width: 180px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .filter-control select {
+      min-height: 36px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+    }
+    .filter-status {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .load-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 7px 14px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .load-more-row {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 2px;
+    }
+    .search-panel {
+      margin: 8px 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      overflow: hidden;
+    }
+    .search-panel > summary {
+      cursor: pointer;
+      padding: 11px 13px;
+      color: #1849a9;
+      font-weight: 700;
+      list-style-position: inside;
+    }
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 10px;
+      padding: 0 13px 12px;
+    }
+    .search-grid label,
+    .indicator-filter {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .search-grid input,
+    .search-grid select {
+      min-height: 34px;
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--text);
+      font: inherit;
+    }
+    .search-grid button {
+      align-self: end;
+      min-height: 34px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .indicator-filter {
+      padding: 0 13px 13px;
+    }
+    .indicator-filter-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .indicator-filter-head small {
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .indicator-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 6px;
+      max-height: 230px;
+      overflow: auto;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+    }
+    .indicator-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 7px;
+      min-width: 0;
+      padding: 6px;
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .indicator-option:hover {
+      background: #f3f7fc;
+    }
+    .indicator-option input {
+      margin-top: 3px;
+      flex: 0 0 auto;
+    }
+    .indicator-option span {
+      display: grid;
+      gap: 1px;
+      min-width: 0;
+    }
+    .indicator-option small {
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    h2 {
+      margin: 26px 0 12px;
+      font-size: 20px;
+    }
+    h3 {
+      margin: 16px 0 10px;
+      font-size: 16px;
+    }
+    h4 {
+      margin: 14px 0 8px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+    .signals {
+      min-width: 980px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 10px;
+      text-align: right;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child,
+    .signals th:nth-child(3), .signals td:nth-child(3),
+    .signals td[data-label="銘柄"] {
+      text-align: left;
+      white-space: normal;
+    }
+    .signals td[data-label="操作"] {
+      min-width: 118px;
+      max-width: 170px;
+      text-align: right;
+      white-space: normal;
+    }
+    thead th {
+      background: #f0f4f8;
+      color: #344054;
+      font-size: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody tr:hover {
+      background: #f8fbff;
+    }
+    .compact th, .compact td {
+      padding: 8px 9px;
+    }
+    .stat-stack {
+      display: grid;
+      gap: 3px;
+      min-width: 170px;
+      text-align: left;
+      white-space: normal;
+    }
+    .stat-stack span {
+      display: block;
+    }
+    .pos { color: var(--green); font-weight: 700; }
+    .neg { color: var(--red); font-weight: 700; }
+    .flat, .muted { color: var(--muted); }
+    .perf-cell {
+      display: inline-grid;
+      justify-items: end;
+      gap: 1px;
+      min-width: 62px;
+      line-height: 1.25;
+    }
+    .price-sub {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .symbol {
+      font-family: "Consolas", "Menlo", monospace;
+      font-weight: 700;
+    }
+    .symbol-stack {
+      display: grid;
+      justify-items: start;
+      gap: 4px;
+      min-width: 0;
+      max-width: 270px;
+      text-align: left;
+    }
+    .symbol-identity {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      min-width: 0;
+      max-width: 100%;
+      white-space: nowrap;
+    }
+    .symbol-separator {
+      color: var(--text);
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+    .symbol-name {
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .symbol-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      max-width: 100%;
+    }
+    .symbol-price-meta {
+      display: inline-flex;
+      align-items: center;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    .symbol-price-meta > span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .symbol-price-meta .price-value {
+      color: var(--text);
+      font-weight: 800;
+    }
+    .vol-tag {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      min-height: 22px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+    .vol-low {
+      color: #087443;
+      background: #e8f7ef;
+    }
+    .vol-mid {
+      color: #946300;
+      background: #fff4cf;
+    }
+    .vol-high {
+      color: #b42318;
+      background: #fde7e4;
+    }
+    .vol-tag[data-tooltip] {
+      position: relative;
+      cursor: help;
+      outline-offset: 2px;
+    }
+    .vol-tag[data-tooltip]::after {
+      content: attr(data-tooltip);
+      display: none;
+      position: absolute;
+      left: 0;
+      top: calc(100% + 6px);
+      z-index: 20;
+      width: max-content;
+      max-width: 260px;
+      padding: 8px 10px;
+      border: 1px solid #c9d7ea;
+      border-radius: 7px;
+      background: #102033;
+      color: #ffffff;
+      box-shadow: 0 10px 26px rgba(16, 24, 40, 0.18);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.45;
+      white-space: normal;
+    }
+    .vol-tag[data-tooltip]:hover::after,
+    .vol-tag[data-tooltip]:focus-visible::after {
+      display: block;
+    }
+    .symbol-stack .action-buttons {
+      margin-top: 2px;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+    }
+    .symbol-stack .action-btn {
+      flex: 0 0 auto;
+      min-width: 58px;
+    }
+    .chip {
+      display: inline-block;
+      margin: 2px 4px 2px 0;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: #27415f;
+      font-family: "Consolas", "Menlo", monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .star-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 42px;
+      min-height: 26px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .star-badge.high {
+      color: var(--green);
+      background: var(--green-bg);
+    }
+    .star-badge.mid {
+      color: var(--amber);
+      background: var(--amber-bg);
+    }
+    .star-badge.low {
+      color: var(--muted);
+      background: #eef0f3;
+    }
+    .mode-badges {
+      display: inline-flex;
+      justify-content: flex-end;
+      gap: 4px;
+      flex-wrap: wrap;
+      max-width: 260px;
+    }
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-size: 11px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .mode-badge.none {
+      background: #eef0f3;
+      color: var(--muted);
+    }
+    a.mode-badge:hover {
+      background: #dceaff;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-weight: 700;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .badge.good { color: var(--green); background: var(--green-bg); }
+    .badge.warn { color: var(--amber); background: var(--amber-bg); }
+    .badge.hold { color: var(--muted); background: #eef0f3; }
+    .tail {
+      display: inline-block;
+      margin-right: 6px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tail.danger { color: var(--red); }
+    .note {
+      color: var(--muted);
+      margin: 0 0 14px;
+    }
+    .candidate-detail {
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .candidate-detail > summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 15px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 700;
+      font-size: 16px;
+    }
+    .summary-title {
+      display: grid;
+      gap: 2px;
+    }
+    .summary-title small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .summary-stats {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .action-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      flex-wrap: wrap;
+      max-width: 100%;
+      white-space: normal;
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1 1 64px;
+      min-width: 58px;
+      max-width: 100%;
+      min-height: 30px;
+      padding: 5px 9px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .action-btn.secondary {
+      border-color: #cfd8e6;
+      background: #f6f8fb;
+      color: #344054;
+    }
+    .action-btn.disabled {
+      border-color: #e1e7ef;
+      background: #f3f5f8;
+      color: #98a2b3;
+      cursor: default;
+    }
+    .action-btn:hover {
+      background: #dfeeff;
+    }
+    .fundamental-detail {
+      margin-top: 8px;
+      min-width: 260px;
+      max-width: 520px;
+      text-align: left;
+      white-space: normal;
+    }
+    .fundamental-detail summary {
+      cursor: pointer;
+      color: #1849a9;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .discord-message {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+      color: #182230;
+    }
+    .discord-embed {
+      border-left: 4px solid #5865f2;
+      background: #f8f9ff;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .discord-embed h4 {
+      margin: 0 0 8px;
+      font-size: 13px;
+    }
+    .discord-embed dl {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+    }
+    .discord-embed dt {
+      font-weight: 700;
+      color: #344054;
+      margin-bottom: 2px;
+    }
+    .discord-embed dd {
+      margin: 0;
+      color: #182230;
+    }
+    .discord-meta {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .candidate-detail > summary::-webkit-details-marker { display: none; }
+    .candidate-detail > summary::before {
+      content: "+";
+      display: inline-grid;
+      place-items: center;
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      border-radius: 999px;
+      background: #edf2f7;
+      color: #344054;
+      font-weight: 700;
+    }
+    .candidate-detail[open] > summary::before {
+      content: "-";
+    }
+    .candidate-detail > h3,
+    .candidate-detail > table,
+    .candidate-detail > .empty {
+      margin-left: 18px;
+      margin-right: 18px;
+    }
+    .candidate-detail table {
+      width: calc(100% - 36px);
+      margin: 0 18px 16px;
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+      gap: 16px;
+      padding: 16px 18px 0;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin: 12px 0 0;
+    }
+    .metrics div {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      background: #fbfcfe;
+    }
+    .metrics dt {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .metrics dd {
+      margin: 0;
+      font-weight: 700;
+    }
+    .condition-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .condition-list li {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid #eef2f6;
+    }
+    code {
+      font-family: "Consolas", "Menlo", monospace;
+      color: #1849a9;
+    }
+    .empty {
+      color: var(--muted);
+      padding: 0 18px 18px;
+    }
+    .gate-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .gate-list li {
+      margin: 8px 0;
+    }
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }
+    .guide-block {
+      display: grid;
+      align-content: start;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 2px solid var(--line);
+    }
+    .guide-block h3 {
+      margin: 0;
+    }
+    .guide-list {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .guide-list li {
+      margin: 0 0 7px;
+    }
+    .vol-legend {
+      display: grid;
+      gap: 8px;
+    }
+    .vol-legend > div {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 9px;
+    }
+    .notice {
+      color: #475467;
+      font-size: 13px;
+      border-left: 4px solid var(--amber);
+      padding: 10px 12px;
+      background: #fffaf0;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+    .paywall-panel {
+      position: relative;
+      display: grid;
+      gap: 14px;
+      margin: 12px 0;
+      padding: 18px;
+      border: 1px solid #bfd2ee;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f7fbff 0%, #ffffff 100%);
+      overflow: hidden;
+    }
+    .locked-preview {
+      display: grid;
+      gap: 8px;
+      opacity: 0.55;
+      filter: blur(2px);
+      pointer-events: none;
+    }
+    .locked-preview span {
+      display: block;
+      height: 18px;
+      border-radius: 999px;
+      background: #d8e4f3;
+    }
+    .locked-preview span:nth-child(2) { width: 84%; }
+    .locked-preview span:nth-child(3) { width: 68%; }
+    .locked-preview span:nth-child(4) { width: 76%; }
+    .paywall-copy {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      gap: 8px;
+      max-width: 720px;
+    }
+    .paywall-copy h3 {
+      margin: 0;
+      font-size: 18px;
+    }
+    .paywall-copy p {
+      margin: 0;
+      color: #475467;
+    }
+    .premium-badge {
+      display: inline-flex;
+      width: fit-content;
+      min-height: 24px;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #102033;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .access-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .access-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+    .access-btn.primary {
+      background: var(--blue);
+      color: #ffffff;
+    }
+    .access-btn.secondary {
+      border: 1px solid #bfd2ee;
+      background: #eef5ff;
+      color: #1849a9;
+    }
+    .mode-card.locked {
+      border-left-color: var(--blue);
+      background: #fbfdff;
+    }
+    .locked-metrics strong {
+      color: #1849a9;
+    }
+    .is-hidden,
+    [hidden] {
+      display: none !important;
+    }
+    @media (max-width: 820px) {
+      .signals {
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+      }
+      .signals thead {
+        display: none;
+      }
+      .signals tbody,
+      .signals tr,
+      .signals td {
+        display: block;
+        width: 100%;
+      }
+      .signals tr {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        overflow: hidden;
+      }
+      .signals td {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 10px;
+        text-align: right;
+        white-space: normal;
+      }
+      .signals td > .mode-badges {
+        justify-content: flex-end;
+      }
+      .signals td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        text-align: left;
+      }
+      .signals td:nth-child(2),
+      .signals td:nth-child(3) {
+        text-align: right;
+      }
+      .signals td[data-label="銘柄"] .symbol-stack {
+        justify-items: end;
+        margin-left: auto;
+        text-align: right;
+      }
+      .signals td[data-label="銘柄"] .symbol-identity,
+      .signals td[data-label="銘柄"] .symbol-meta-row,
+      .signals td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-end;
+      }
+      .signals td[data-label="銘柄"] .vol-tag[data-tooltip]::after {
+        left: auto;
+        right: 0;
+      }
+      .perf-cell {
+        justify-items: end;
+      }
+      .action-buttons {
+        justify-content: flex-end;
+        max-width: 100%;
+      }
+      .fundamental-detail {
+        min-width: 0;
+        max-width: 100%;
+      }
+    }
+    @media (max-width: 760px) {
+      .top-nav {
+        align-items: center;
+        gap: 7px;
+        padding: 7px 10px;
+      }
+      .top-nav-brand {
+        max-width: 138px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .top-nav a {
+        padding: 7px 9px;
+      }
+      .top-nav-links {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
+      header { padding: 22px 18px; }
+      main { padding: 14px; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .card { padding: 12px; }
+      .card .value { font-size: 20px; }
+      .mode-grid { grid-template-columns: 1fr; }
+      .mode-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .daily-head {
+        display: grid;
+      }
+      .filter-control {
+        min-width: 0;
+      }
+      .search-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .indicator-options {
+        grid-template-columns: 1fr;
+        max-height: 280px;
+      }
+      .detail-grid { grid-template-columns: 1fr; }
+      .candidate-detail > summary {
+        align-items: flex-start;
+        display: grid;
+        grid-template-columns: auto 1fr;
+      }
+      .summary-stats {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+        padding-left: 28px;
+      }
+      .signals {
+        min-width: 0;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+      }
+      .signals thead {
+        display: none;
+      }
+      .signals tbody,
+      .signals tr,
+      .signals td {
+        display: block;
+        width: 100%;
+      }
+      .signals tr {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        overflow: hidden;
+      }
+      .signals td {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 10px;
+        text-align: right;
+        white-space: normal;
+      }
+      .signals td > .mode-badges {
+        justify-content: flex-end;
+      }
+      .perf-cell {
+        justify-items: end;
+      }
+      .signals td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        text-align: left;
+      }
+      .signals td:nth-child(2),
+      .signals td:nth-child(3) {
+        text-align: right;
+      }
+      .action-buttons {
+        justify-content: flex-end;
+        max-width: 100%;
+      }
+      .fundamental-detail {
+        min-width: 0;
+        max-width: 100%;
+      }
+      table { min-width: 680px; }
+      .signals { min-width: 0; }
+    }
+    @media print {
+      body { background: white; }
+      header { background: white; color: var(--text); border-bottom: 2px solid var(--line); }
+      header p { color: var(--muted); }
+      .card, .panel, .candidate-detail { box-shadow: none; break-inside: avoid; }
+      .candidate-detail { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+    <nav class="top-nav" aria-label="ページメニュー">
+      <a class="top-nav-brand active" href="mega_validation_report_latest.html">天底スコアリング</a>
+      <div class="top-nav-links">
+
+        <a href="#performance-summary">全体成績</a>
+        <a href="#mode-summary">モード別サマリー</a>
+        <a href="#highlights">注目ポイント</a>
+        <a href="#daily-detections">銘柄検索</a>
+        <a href="#guide">使い方</a>
+
+        <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
+      </div>
+    </nav>
+
+  <header>
+    <div class="eyebrow">Bottom Signal Report</div>
+    <h1>天底極致 スコアリングBot レポート</h1>
+    <p>生成日時: 2026-06-09 12:17:22 JST</p>
+    <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
+  </header>
+  <main>
+    <section id="performance-summary" class="panel">
+      <h2>全体成績（過去1年分）</h2>
+      <section class="cards">
+        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2153</div></div>
+        <div class="card"><div class="label">対象モード</div><div class="value">5</div></div>
+        <div class="card"><div class="label">確定済み延べ件数</div><div class="value">79</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">会員限定</div></div>
+      </section>
+      <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
+      <table class="compact">
+<thead><tr>
+<th>評価日</th>
+<th>確定件数</th>
+<th>平均</th>
+<th>勝率</th>
+<th>+10%</th>
+<th>+20%</th>
+<th>+30%</th>
+<th>+50%</th>
+<th>+100%</th>
+</tr></thead><tbody>
+<tr>
+<td data-label="評価日"><strong>5営業日後</strong></td>
+<td data-label="確定件数">2030</td>
+<td data-label="平均"><span class="neg">-0.5%</span></td>
+<td data-label="勝率"><span class="pos">37.3%</span></td>
+<td data-label="+10%">111</td>
+<td data-label="+20%">40</td>
+<td data-label="+30%">27</td>
+<td data-label="+50%">10</td>
+<td data-label="+100%">1</td>
+</tr>
+<tr>
+<td data-label="評価日"><strong>40営業日後</strong></td>
+<td data-label="確定件数">966</td>
+<td data-label="平均"><span class="neg">-2.0%</span></td>
+<td data-label="勝率"><span class="pos">30.5%</span></td>
+<td data-label="+10%">125</td>
+<td data-label="+20%">75</td>
+<td data-label="+30%">45</td>
+<td data-label="+50%">23</td>
+<td data-label="+100%">6</td>
+</tr>
+</tbody></table>
+    </section>
+
+    <section id="mode-summary" class="panel">
+      <h2>モード別サマリー</h2>
+      <div class="mode-grid">
+
+      <a class="mode-card good" href="mega_validation_report_stable_s6.html">
+        <div class="mode-card-head">
+          <span class="mode-name">Stable ★6</span>
+          <span class="mode-horizon">5営業日後 / +10%</span>
+        </div>
+        <p>現行Stableロジックの6条件すべてを満たす満点候補。</p>
+
+        <div class="mode-metrics">
+          <span><strong>26</strong><small>確定</small></span>
+          <span><strong><span class="pos">61.5%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+15.3%</span></strong><small>平均</small></span>
+          <span><strong>会員限定</strong><small>ウォッチ中</small></span>
+        </div>
+
+        <span class="mode-card-action">詳細ページを見る →</span>
+      </a>
+
+      <a class="mode-card good" href="mega_validation_report_sniper.html">
+        <div class="mode-card-head">
+          <span class="mode-name">Sniper 勝率重視</span>
+          <span class="mode-horizon">5営業日後 / 勝ち</span>
+        </div>
+        <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
+
+        <div class="mode-metrics">
+          <span><strong>25</strong><small>確定</small></span>
+          <span><strong><span class="pos">70.8%</span></strong><small>勝率</small></span>
+          <span><strong><span class="pos">+1.1%</span></strong><small>平均</small></span>
+          <span><strong>会員限定</strong><small>ウォッチ中</small></span>
+        </div>
+
+        <span class="mode-card-action">詳細ページを見る →</span>
+      </a>
+
+      <a class="mode-card good locked" href="mega_validation_report_mega5_rebound.html">
+        <div class="mode-card-head">
+          <span class="mode-name">Mega5 短期リバウンド</span>
+          <span class="mode-horizon">5営業日後 / +20%</span>
+        </div>
+        <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
+
+        <div class="mode-metrics locked-metrics">
+          <span><strong>会員限定</strong><small>確定成績</small></span>
+          <span><strong>会員限定</strong><small>銘柄一覧</small></span>
+          <span><strong>会員限定</strong><small>ウォッチ</small></span>
+          <span><strong>有料会員</strong><small>ログイン後表示</small></span>
+        </div>
+
+        <span class="mode-card-action">有料会員限定 →</span>
+      </a>
+
+      <a class="mode-card good locked" href="mega_validation_report_mega40_deep_reversal.html">
+        <div class="mode-card-head">
+          <span class="mode-name">Mega40 深押し反転</span>
+          <span class="mode-horizon">40営業日後 / +30%</span>
+        </div>
+        <p>深い押し目から強陽線で切り返す40営業日候補。</p>
+
+        <div class="mode-metrics locked-metrics">
+          <span><strong>会員限定</strong><small>確定成績</small></span>
+          <span><strong>会員限定</strong><small>銘柄一覧</small></span>
+          <span><strong>会員限定</strong><small>ウォッチ</small></span>
+          <span><strong>有料会員</strong><small>ログイン後表示</small></span>
+        </div>
+
+        <span class="mode-card-action">有料会員限定 →</span>
+      </a>
+
+      <a class="mode-card good locked" href="mega_validation_report_mega40_wick_recovery.html">
+        <div class="mode-card-head">
+          <span class="mode-name">Mega40 下ヒゲ回復</span>
+          <span class="mode-horizon">40営業日後 / +50%</span>
+        </div>
+        <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
+
+        <div class="mode-metrics locked-metrics">
+          <span><strong>会員限定</strong><small>確定成績</small></span>
+          <span><strong>会員限定</strong><small>銘柄一覧</small></span>
+          <span><strong>会員限定</strong><small>ウォッチ</small></span>
+          <span><strong>有料会員</strong><small>ログイン後表示</small></span>
+        </div>
+
+        <span class="mode-card-action">有料会員限定 →</span>
+      </a>
+
+      </div>
+      <p class="notice">過去成績は将来の値動きを保証するものではありません。銘柄を確認するときは、最新の開示、出来高、地合い、リスク許容度もあわせて確認してください。</p>
+    </section>
+
+    <section id="highlights" class="panel">
+      <h2>注目ポイント</h2>
+      <ul class="gate-list">
+        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
+        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
+        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
+      </ul>
+    </section>
+
+
+    <section id="daily-detections" class="panel">
+      <div class="daily-head">
+        <div>
+          <h2>検出された銘柄一覧</h2>
+          <p class="note">初期表示は最新日です。表示日で全期間を選んだ場合も、端末に負荷がかからないよう100件ずつ表示します。 ★はStable ★6の判定条件を何個満たしたかです。</p>
+        </div>
+        <label class="filter-control" for="daily-date-filter">
+          <span>表示日</span>
+          <select id="daily-date-filter" data-default-date="2026-06-08" data-page-size="100">
+            <option value="">全期間</option>
+<option value="2026-06-08" selected>2026-06-08</option>
+<option value="2026-06-05">2026-06-05</option>
+<option value="2026-06-04">2026-06-04</option>
+<option value="2026-06-03">2026-06-03</option>
+<option value="2026-06-02">2026-06-02</option>
+<option value="2026-06-01">2026-06-01</option>
+<option value="2026-05-29">2026-05-29</option>
+<option value="2026-05-28">2026-05-28</option>
+<option value="2026-05-27">2026-05-27</option>
+<option value="2026-05-26">2026-05-26</option>
+<option value="2026-05-25">2026-05-25</option>
+<option value="2026-05-22">2026-05-22</option>
+<option value="2026-05-21">2026-05-21</option>
+<option value="2026-05-20">2026-05-20</option>
+<option value="2026-05-19">2026-05-19</option>
+<option value="2026-05-18">2026-05-18</option>
+<option value="2026-05-15">2026-05-15</option>
+<option value="2026-05-14">2026-05-14</option>
+<option value="2026-05-13">2026-05-13</option>
+<option value="2026-05-12">2026-05-12</option>
+<option value="2026-05-11">2026-05-11</option>
+<option value="2026-05-08">2026-05-08</option>
+<option value="2026-05-07">2026-05-07</option>
+<option value="2026-05-01">2026-05-01</option>
+<option value="2026-04-30">2026-04-30</option>
+<option value="2026-04-28">2026-04-28</option>
+<option value="2026-04-27">2026-04-27</option>
+<option value="2026-04-24">2026-04-24</option>
+<option value="2026-04-23">2026-04-23</option>
+<option value="2026-04-22">2026-04-22</option>
+<option value="2026-04-21">2026-04-21</option>
+<option value="2026-04-20">2026-04-20</option>
+<option value="2026-04-17">2026-04-17</option>
+<option value="2026-04-16">2026-04-16</option>
+<option value="2026-04-15">2026-04-15</option>
+<option value="2026-04-14">2026-04-14</option>
+<option value="2026-04-13">2026-04-13</option>
+<option value="2026-04-10">2026-04-10</option>
+<option value="2026-04-09">2026-04-09</option>
+<option value="2026-04-08">2026-04-08</option>
+<option value="2026-04-07">2026-04-07</option>
+<option value="2026-04-06">2026-04-06</option>
+<option value="2026-04-03">2026-04-03</option>
+<option value="2026-04-02">2026-04-02</option>
+<option value="2026-04-01">2026-04-01</option>
+<option value="2026-03-31">2026-03-31</option>
+<option value="2026-03-30">2026-03-30</option>
+<option value="2026-03-27">2026-03-27</option>
+<option value="2026-03-26">2026-03-26</option>
+<option value="2026-03-25">2026-03-25</option>
+<option value="2026-03-24">2026-03-24</option>
+<option value="2026-03-23">2026-03-23</option>
+<option value="2026-03-19">2026-03-19</option>
+<option value="2026-03-18">2026-03-18</option>
+<option value="2026-03-17">2026-03-17</option>
+<option value="2026-03-16">2026-03-16</option>
+<option value="2026-03-13">2026-03-13</option>
+<option value="2026-03-12">2026-03-12</option>
+<option value="2026-03-11">2026-03-11</option>
+<option value="2026-03-10">2026-03-10</option>
+<option value="2026-03-09">2026-03-09</option>
+<option value="2026-03-06">2026-03-06</option>
+<option value="2026-03-05">2026-03-05</option>
+          </select>
+        </label>
+      </div>
+      <details class="search-panel">
+        <summary>銘柄検索モード</summary>
+        <div class="search-grid">
+          <label>
+            <span>開始日</span>
+            <input id="search-date-from" type="date" min="2026-03-05" max="2026-06-08">
+          </label>
+          <label>
+            <span>終了日</span>
+            <input id="search-date-to" type="date" min="2026-03-05" max="2026-06-08">
+          </label>
+          <label>
+            <span>証券コード</span>
+            <input id="search-symbol" type="search" inputmode="latin" placeholder="例: 1234">
+          </label>
+          <label>
+            <span>★最小</span>
+            <select id="search-star-min">
+              <option value="">指定なし</option>
+              <option value="0">★0以上</option><option value="1">★1以上</option><option value="2">★2以上</option><option value="3">★3以上</option><option value="4">★4以上</option><option value="5">★5以上</option><option value="6">★6以上</option>
+            </select>
+          </label>
+          <label>
+            <span>★最大</span>
+            <select id="search-star-max">
+              <option value="">指定なし</option>
+              <option value="0">★0以下</option><option value="1">★1以下</option><option value="2">★2以下</option><option value="3">★3以下</option><option value="4">★4以下</option><option value="5">★5以下</option><option value="6">★6以下</option>
+            </select>
+          </label>
+          <label>
+            <span>株価下限</span>
+            <input id="search-price-min" type="number" min="0" step="1" inputmode="numeric" placeholder="円">
+          </label>
+          <label>
+            <span>株価上限</span>
+            <input id="search-price-max" type="number" min="0" step="1" inputmode="numeric" placeholder="円">
+          </label>
+          <button id="search-reset" type="button">条件をリセット</button>
+        </div>
+        <div class="indicator-filter">
+          <div class="indicator-filter-head">
+            <strong>テクニカル指標</strong>
+            <small>選択した条件をすべて満たす銘柄だけ表示します。</small>
+          </div>
+          <div class="indicator-options">
+            <label class="indicator-option"><input type="checkbox" value="ema75" data-indicator-filter><span><code>ema75</code><small>close &gt; EMA75</small></span></label><label class="indicator-option"><input type="checkbox" value="ema25" data-indicator-filter><span><code>ema25</code><small>close &gt; EMA25</small></span></label><label class="indicator-option"><input type="checkbox" value="vol20" data-indicator-filter><span><code>vol20</code><small>出来高 &gt;= 20日平均x2.0</small></span></label><label class="indicator-option"><input type="checkbox" value="vol15" data-indicator-filter><span><code>vol15</code><small>出来高 &gt;= 20日平均x1.5</small></span></label><label class="indicator-option"><input type="checkbox" value="vol12" data-indicator-filter><span><code>vol12</code><small>出来高 &gt;= 20日平均x1.2</small></span></label><label class="indicator-option"><input type="checkbox" value="vol30" data-indicator-filter><span><code>vol30</code><small>出来高 &gt;= 20日平均x3.0</small></span></label><label class="indicator-option"><input type="checkbox" value="sbull" data-indicator-filter><span><code>sbull</code><small>陽線実体 &gt;= 0.5%</small></span></label><label class="indicator-option"><input type="checkbox" value="body1" data-indicator-filter><span><code>body1</code><small>陽線実体 &gt;= 1.0%</small></span></label><label class="indicator-option"><input type="checkbox" value="body2" data-indicator-filter><span><code>body2</code><small>陽線実体 &gt;= 2.0%</small></span></label><label class="indicator-option"><input type="checkbox" value="macdgc" data-indicator-filter><span><code>macdgc</code><small>MACD GC 3日以内</small></span></label><label class="indicator-option"><input type="checkbox" value="macdpos" data-indicator-filter><span><code>macdpos</code><small>MACD hist &gt; 0</small></span></label><label class="indicator-option"><input type="checkbox" value="atr5" data-indicator-filter><span><code>atr5</code><small>ATR &lt; 5%</small></span></label><label class="indicator-option"><input type="checkbox" value="atr3" data-indicator-filter><span><code>atr3</code><small>ATR &lt; 3%</small></span></label><label class="indicator-option"><input type="checkbox" value="atr7" data-indicator-filter><span><code>atr7</code><small>ATR &lt; 7%</small></span></label><label class="indicator-option"><input type="checkbox" value="hb20" data-indicator-filter><span><code>hb20</code><small>20日高値更新</small></span></label><label class="indicator-option"><input type="checkbox" value="lower_wick50" data-indicator-filter><span><code>lower_wick50</code><small>下ヒゲ優位</small></span></label><label class="indicator-option"><input type="checkbox" value="pre_decline15" data-indicator-filter><span><code>pre_decline15</code><small>20日高値から-15%以上</small></span></label><label class="indicator-option"><input type="checkbox" value="stoch75" data-indicator-filter><span><code>stoch75</code><small>Stoch &gt;= 75</small></span></label><label class="indicator-option"><input type="checkbox" value="stoch60" data-indicator-filter><span><code>stoch60</code><small>Stoch &gt;= 60</small></span></label><label class="indicator-option"><input type="checkbox" value="rsi5070" data-indicator-filter><span><code>rsi5070</code><small>RSI 50-70</small></span></label><label class="indicator-option"><input type="checkbox" value="rsi4060" data-indicator-filter><span><code>rsi4060</code><small>RSI 40-60</small></span></label><label class="indicator-option"><input type="checkbox" value="bb80" data-indicator-filter><span><code>bb80</code><small>BB位置 &gt;= 80%</small></span></label><label class="indicator-option"><input type="checkbox" value="ich_tk" data-indicator-filter><span><code>ich_tk</code><small>一目: 転換線 &gt; 基準線</small></span></label><label class="indicator-option"><input type="checkbox" value="ich_price_tenkan" data-indicator-filter><span><code>ich_price_tenkan</code><small>一目: close &gt; 転換線</small></span></label><label class="indicator-option"><input type="checkbox" value="ich_price_kijun" data-indicator-filter><span><code>ich_price_kijun</code><small>一目: close &gt; 基準線</small></span></label><label class="indicator-option"><input type="checkbox" value="ich_cloud_above" data-indicator-filter><span><code>ich_cloud_above</code><small>一目: close &gt; 雲上限</small></span></label><label class="indicator-option"><input type="checkbox" value="ich_cloud_green" data-indicator-filter><span><code>ich_cloud_green</code><small>一目: 先行雲が陽転</small></span></label><label class="indicator-option"><input type="checkbox" value="ich_chikou" data-indicator-filter><span><code>ich_chikou</code><small>一目: close &gt; 26日前終値</small></span></label><label class="indicator-option"><input type="checkbox" value="ich_kumo_break" data-indicator-filter><span><code>ich_kumo_break</code><small>一目: 雲上抜け</small></span></label><label class="indicator-option"><input type="checkbox" value="rci9_os" data-indicator-filter><span><code>rci9_os</code><small>RCI9 &lt;= -50</small></span></label><label class="indicator-option"><input type="checkbox" value="rci26_os" data-indicator-filter><span><code>rci26_os</code><small>RCI26 &lt;= -50</small></span></label><label class="indicator-option"><input type="checkbox" value="rci9_up" data-indicator-filter><span><code>rci9_up</code><small>RCI9反転上向き</small></span></label><label class="indicator-option"><input type="checkbox" value="pre_down3" data-indicator-filter><span><code>pre_down3</code><small>直近3日連続下落後</small></span></label><label class="indicator-option"><input type="checkbox" value="gap_up" data-indicator-filter><span><code>gap_up</code><small>ギャップアップ</small></span></label><label class="indicator-option"><input type="checkbox" value="bb_lower" data-indicator-filter><span><code>bb_lower</code><small>BB位置 &lt;= 20%</small></span></label><label class="indicator-option"><input type="checkbox" value="cci_os" data-indicator-filter><span><code>cci_os</code><small>CCI &lt;= -100</small></span></label><label class="indicator-option"><input type="checkbox" value="smbull_seq2" data-indicator-filter><span><code>smbull_seq2</code><small>2連小陽線後</small></span></label><label class="indicator-option"><input type="checkbox" value="smbull_seq3" data-indicator-filter><span><code>smbull_seq3</code><small>3連小陽線後</small></span></label>
+          </div>
+        </div>
+      </details>
+
+    <div class="paywall-panel">
+      <div class="locked-preview" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="paywall-copy">
+        <span class="premium-badge">有料会員限定</span>
+        <h3>検出銘柄と検索結果は有料会員限定です</h3>
+        <p>検索フォームは確認できますが、無料表示では銘柄名・株価・チャート・ファンダリンクをHTMLに含めません。アクセス権を購入すると全件を表示できます。</p>
+        <div class="access-actions">
+          <a class="access-btn primary" href="/purchase">アクセス権を購入する</a>
+          <a class="access-btn secondary" href="/auth/login?return_to=/mega_validation_report_latest.html%23daily-detections">Discordでログイン</a>
+        </div>
+      </div>
+    </div>
+
+      <p class="filter-status"><strong>会員限定</strong>/<span>会員限定</span>件を表示中</p>
+      <p class="empty">銘柄データは有料会員限定です。</p>
+
+
+    </section>
+
+
+
+    <section id="guide" class="panel guide-panel">
+      <h2>使い方・対象銘柄</h2>
+      <p class="note">TradingViewでBOTTOMシグナルが点灯した銘柄について、複数のテクニカル指標をもとに品質スコアを算出し、一覧で表示します。</p>
+      <div class="guide-grid">
+        <section class="guide-block">
+          <h3>監視対象</h3>
+          <ul class="guide-list">
+            <li>東証個別株</li>
+            <li>シグナル点灯前日終値が1,000円以下、かつ出来高10,000株以上</li>
+            <li>シグナル点灯時のローソク足の出来高が5,000株以上</li>
+            <li>1日あたり最大1,000銘柄。対象が1,001銘柄以上ある場合は、出来高が少ない銘柄から除外されます。</li>
+          </ul>
+        </section>
+        <section class="guide-block">
+          <h3>ボラティリティタグ</h3>
+          <p class="note">ATR%から、銘柄ごとの値動きの大きさを示します。</p>
+          <div class="vol-legend">
+            <div><span class="vol-tag vol-low">🟢LOW</span><span>ATR 3%未満。値動きが比較的穏やかな銘柄です。</span></div>
+            <div><span class="vol-tag vol-mid">🟡MID</span><span>ATR 3%以上6%未満。標準的な変動幅の銘柄です。</span></div>
+            <div><span class="vol-tag vol-high">🔴HIGH</span><span>ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。</span></div>
+          </div>
+        </section>
+        <section class="guide-block">
+          <h3>サイトの見方</h3>
+          <ul class="guide-list">
+            <li>モード別サマリーから、Stable、Sniper、Mega各モードの詳細ページへ移動できます。</li>
+            <li>銘柄検索では、日付、証券コード、★数、株価、テクニカル指標で絞り込めます。</li>
+            <li>各銘柄のファンダ分析ボタンは、該当日のDiscord分析がある場合だけ表示されます。</li>
+          </ul>
+        </section>
+      </div>
+    </section>
+
+  </main>
+  <script src="report-interactions.js" defer></script>
+</body>
+</html>

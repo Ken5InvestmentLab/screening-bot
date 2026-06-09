@@ -9,6 +9,7 @@ const ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS = 600;
 const TOKEN_REFRESH_SKEW_SECONDS = 300;
 const DEFAULT_SESSION_TTL_SECONDS = 31536000;
 const REPORT_ASSET_PATH_RE = /^\/mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
+const FREE_REPORT_SUFFIX = "_free";
 const DEFAULT_ACCESS_PURCHASE_URL = "https://whop.com/scoring-bot/tenteikyokuchi/";
 const ROLE_REQUIRED_TITLE = "アクセス権限がありません";
 const ROLE_REQUIRED_MESSAGE =
@@ -523,39 +524,26 @@ function roleRequiredResponse(env: WorkerEnv, status = 403, init: HeadersInit = 
   ]);
 }
 
-function accessDeniedResponse(_request: Request, env: WorkerEnv): Response {
-  return roleRequiredResponse(env);
-}
+type ReportAccessResult = {
+  fullAccess: boolean;
+  refreshedSession?: SessionPayload;
+  clearSession?: boolean;
+};
 
-function loginRequiredResponse(request: Request): Response {
-  const url = new URL(request.url);
-  const loginUrl = new URL("/auth/login", url.origin);
-  loginUrl.searchParams.set("return_to", safeReturnTo(`${url.pathname}${url.search}`));
-  const headers = new Headers();
-  headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-  headers.set("location", loginUrl.toString());
-  headers.set("cache-control", "no-store");
-  return new Response(null, { status: 302, headers });
-}
-
-type AuthorizationResult =
-  | { allowed: true; refreshedSession?: SessionPayload }
-  | { allowed: false; response: Response };
-
-async function requireAuthorized(request: Request, env: WorkerEnv): Promise<AuthorizationResult> {
+async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAccessResult> {
   const session = await readSession(request, env);
-  if (session) {
-    const check = await checkSessionAuthorization(session, env);
-    if (check.authorized) {
-      return { allowed: true, refreshedSession: check.refreshedSession };
-    }
-    if (check.loginRequired) {
-      return { allowed: false, response: loginRequiredResponse(request) };
-    }
-    return { allowed: false, response: accessDeniedResponse(request, env) };
+  if (!session) {
+    return { fullAccess: false };
   }
 
-  return { allowed: false, response: loginRequiredResponse(request) };
+  const check = await checkSessionAuthorization(session, env);
+  if (check.authorized) {
+    return { fullAccess: true, refreshedSession: check.refreshedSession };
+  }
+  if (check.loginRequired) {
+    return { fullAccess: false, clearSession: true };
+  }
+  return { fullAccess: false, refreshedSession: check.refreshedSession };
 }
 
 async function login(request: Request, env: WorkerEnv): Promise<Response> {
@@ -728,6 +716,13 @@ function reportAssetPath(env: WorkerEnv): string {
   return path.startsWith("/") ? path : `/${path}`;
 }
 
+function freeReportAssetPath(assetPath: string): string {
+  if (assetPath.endsWith(`${FREE_REPORT_SUFFIX}.html`)) {
+    return assetPath;
+  }
+  return assetPath.replace(/\.html$/, `${FREE_REPORT_SUFFIX}.html`);
+}
+
 function isReportAssetPath(pathname: string, env: WorkerEnv): boolean {
   return pathname === reportAssetPath(env) || REPORT_ASSET_PATH_RE.test(pathname);
 }
@@ -745,18 +740,17 @@ function injectAccessGuard(html: string): string {
 }
 
 async function serveReport(request: Request, env: WorkerEnv, assetPath = reportAssetPath(env)): Promise<Response> {
-  const authorization = await requireAuthorized(request, env);
-  if (!authorization.allowed) {
-    return authorization.response;
-  }
+  const access = await reportAccess(request, env);
+  const servedAssetPath = access.fullAccess ? assetPath : freeReportAssetPath(assetPath);
 
-  const assetUrl = new URL(assetPath, "https://assets.local");
+  const assetUrl = new URL(servedAssetPath, "https://assets.local");
   const assetResponse = await env.ASSETS.fetch(assetUrl.toString());
   if (!assetResponse.ok || !assetResponse.body) {
     return textResponse("Report asset not found", 404);
   }
 
-  const html = injectAccessGuard(await assetResponse.text());
+  const assetHtml = await assetResponse.text();
+  const html = access.fullAccess ? injectAccessGuard(assetHtml) : assetHtml;
   const headers = securityHeaders(
     {
       "content-type": "text/html; charset=utf-8",
@@ -764,8 +758,12 @@ async function serveReport(request: Request, env: WorkerEnv, assetPath = reportA
     },
     { allowReportScript: true },
   );
-  if (authorization.refreshedSession) {
-    headers.append("set-cookie", await encryptedSessionCookie(request, env, authorization.refreshedSession));
+  const url = new URL(request.url);
+  if (access.clearSession) {
+    headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
+  }
+  if (access.refreshedSession) {
+    headers.append("set-cookie", await encryptedSessionCookie(request, env, access.refreshedSession));
   }
   return new Response(html, {
     status: assetResponse.status,
@@ -824,6 +822,16 @@ function logout(request: Request): Response {
   return new Response(null, { status: 302, headers });
 }
 
+function purchaseRedirect(env: WorkerEnv): Response {
+  return new Response(null, {
+    status: 302,
+    headers: securityHeaders({
+      location: accessPurchaseUrl(env),
+      "cache-control": "no-store",
+    }),
+  });
+}
+
 async function router(request: Request, env: WorkerEnv): Promise<Response> {
   const url = new URL(request.url);
   if (url.pathname === "/healthz") {
@@ -854,6 +862,9 @@ async function router(request: Request, env: WorkerEnv): Promise<Response> {
   }
   if (url.pathname === "/auth/logout") {
     return logout(request);
+  }
+  if (url.pathname === "/purchase") {
+    return purchaseRedirect(env);
   }
   if (url.pathname === "/" || url.pathname === "/report") {
     return serveReport(request, env);

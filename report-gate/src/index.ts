@@ -6,6 +6,8 @@ const ACCESS_GUARD_SCRIPT_PATH = "/auth/guard.js";
 const REPORT_INTERACTIONS_SCRIPT_PATH = "/report-interactions.js";
 const ROLE_CACHE_SECONDS = 90;
 const ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS = 600;
+const TOKEN_REFRESH_SKEW_SECONDS = 300;
+const DEFAULT_SESSION_TTL_SECONDS = 31536000;
 const REPORT_ASSET_PATH_RE = /^\/mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
 const DEFAULT_ACCESS_PURCHASE_URL = "https://whop.com/scoring-bot/tenteikyokuchi/";
 const ROLE_REQUIRED_TITLE = "アクセス権限がありません";
@@ -60,6 +62,7 @@ type WorkerEnv = Env & {
 type SessionPayload = {
   sub: string;
   accessToken: string;
+  refreshToken?: string;
   exp: number;
   roleCheckedAt: number;
   roles: string[];
@@ -73,9 +76,16 @@ type OAuthStatePayload = {
 
 type DiscordTokenResponse = {
   access_token?: string;
+  refresh_token?: string;
   expires_in?: number;
   token_type?: string;
   scope?: string;
+};
+
+type OAuthToken = {
+  accessToken: string;
+  refreshToken?: string;
+  expiresIn: number;
 };
 
 type DiscordGuildMember = {
@@ -252,6 +262,14 @@ function discordApiBase(env: WorkerEnv): string {
   return optionalEnv(env, "DISCORD_API_BASE", "https://discord.com/api").replace(/\/+$/, "");
 }
 
+function sessionTtlSeconds(env: WorkerEnv): number {
+  const configuredTtl = Number.parseInt(
+    optionalEnv(env, "SESSION_TTL_SECONDS", String(DEFAULT_SESSION_TTL_SECONDS)),
+    10,
+  );
+  return Number.isFinite(configuredTtl) && configuredTtl > 0 ? configuredTtl : DEFAULT_SESSION_TTL_SECONDS;
+}
+
 function randomToken(bytes = 32): string {
   const buffer = new Uint8Array(bytes);
   crypto.getRandomValues(buffer);
@@ -392,12 +410,14 @@ async function readSession(request: Request, env: WorkerEnv): Promise<SessionPay
       return null;
     }
     const now = Math.floor(Date.now() / 1000);
-    if (parsed.exp <= now || parsed.tokenExp <= now) {
+    const refreshToken = typeof parsed.refreshToken === "string" && parsed.refreshToken !== "" ? parsed.refreshToken : undefined;
+    if (parsed.exp <= now || (parsed.tokenExp <= now && !refreshToken)) {
       return null;
     }
     return {
       sub: parsed.sub,
       accessToken: parsed.accessToken,
+      refreshToken,
       exp: parsed.exp,
       roleCheckedAt: typeof parsed.roleCheckedAt === "number" ? parsed.roleCheckedAt : 0,
       roles: Array.isArray(parsed.roles) ? parsed.roles.filter((role): role is string => typeof role === "string") : [],
@@ -411,26 +431,68 @@ async function readSession(request: Request, env: WorkerEnv): Promise<SessionPay
 type AuthorizationCheck = {
   authorized: boolean;
   refreshedSession?: SessionPayload;
+  loginRequired?: boolean;
 };
+
+async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv): Promise<SessionPayload | null> {
+  const now = Math.floor(Date.now() / 1000);
+  if (session.tokenExp > now + TOKEN_REFRESH_SKEW_SECONDS) {
+    return session;
+  }
+  if (!session.refreshToken) {
+    return null;
+  }
+
+  const token = await refreshAccessToken(session.refreshToken, env);
+  const refreshedAt = Math.floor(Date.now() / 1000);
+  return {
+    ...session,
+    accessToken: token.accessToken,
+    refreshToken: token.refreshToken ?? session.refreshToken,
+    tokenExp: refreshedAt + token.expiresIn,
+  };
+}
 
 async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv): Promise<AuthorizationCheck> {
   const now = Math.floor(Date.now() / 1000);
+  let currentSession: SessionPayload;
+  let refreshedSession: SessionPayload | undefined;
+
+  try {
+    const tokenSession = await refreshSessionAccessToken(session, env);
+    if (!tokenSession) {
+      return { authorized: false, loginRequired: true };
+    }
+    currentSession = tokenSession;
+    if (tokenSession !== session) {
+      refreshedSession = tokenSession;
+    }
+  } catch (error) {
+    if (error instanceof AccessDeniedError) {
+      return { authorized: false, loginRequired: true };
+    }
+    throw error;
+  }
+
   const hasFreshRoles =
-    session.roles.length > 0 && session.roleCheckedAt > 0 && now - session.roleCheckedAt <= ROLE_CACHE_SECONDS;
+    currentSession.roles.length > 0 &&
+    currentSession.roleCheckedAt > 0 &&
+    now - currentSession.roleCheckedAt <= ROLE_CACHE_SECONDS;
   if (hasFreshRoles) {
-    return { authorized: hasAllowedRole(session.roles, allowedRoleIds(env)) };
+    return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession };
   }
 
   try {
-    const member = await fetchGuildMember(session.accessToken, env);
+    const member = await fetchGuildMember(currentSession.accessToken, env);
     const roles = member.roles ?? [];
+    const roleCheckedSession = {
+      ...currentSession,
+      roleCheckedAt: now,
+      roles,
+    };
     return {
       authorized: hasAllowedRole(roles, allowedRoleIds(env)),
-      refreshedSession: {
-        ...session,
-        roleCheckedAt: now,
-        roles,
-      },
+      refreshedSession: roleCheckedSession,
     };
   } catch (error) {
     if (error instanceof AccessDeniedError) {
@@ -438,11 +500,11 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     }
     if (
       error instanceof DiscordRateLimitedError &&
-      session.roles.length > 0 &&
-      session.roleCheckedAt > 0 &&
-      now - session.roleCheckedAt <= ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS
+      currentSession.roles.length > 0 &&
+      currentSession.roleCheckedAt > 0 &&
+      now - currentSession.roleCheckedAt <= ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS
     ) {
-      return { authorized: hasAllowedRole(session.roles, allowedRoleIds(env)) };
+      return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession };
     }
     throw error;
   }
@@ -461,11 +523,19 @@ function roleRequiredResponse(env: WorkerEnv, status = 403, init: HeadersInit = 
   ]);
 }
 
-function accessDeniedResponse(request: Request, env: WorkerEnv): Response {
+function accessDeniedResponse(_request: Request, env: WorkerEnv): Response {
+  return roleRequiredResponse(env);
+}
+
+function loginRequiredResponse(request: Request): Response {
   const url = new URL(request.url);
+  const loginUrl = new URL("/auth/login", url.origin);
+  loginUrl.searchParams.set("return_to", safeReturnTo(`${url.pathname}${url.search}`));
   const headers = new Headers();
   headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-  return roleRequiredResponse(env, 403, headers);
+  headers.set("location", loginUrl.toString());
+  headers.set("cache-control", "no-store");
+  return new Response(null, { status: 302, headers });
 }
 
 type AuthorizationResult =
@@ -479,13 +549,13 @@ async function requireAuthorized(request: Request, env: WorkerEnv): Promise<Auth
     if (check.authorized) {
       return { allowed: true, refreshedSession: check.refreshedSession };
     }
+    if (check.loginRequired) {
+      return { allowed: false, response: loginRequiredResponse(request) };
+    }
     return { allowed: false, response: accessDeniedResponse(request, env) };
   }
 
-  const url = new URL(request.url);
-  const loginUrl = new URL("/auth/login", url.origin);
-  loginUrl.searchParams.set("return_to", safeReturnTo(`${url.pathname}${url.search}`));
-  return { allowed: false, response: Response.redirect(loginUrl.toString(), 302) };
+  return { allowed: false, response: loginRequiredResponse(request) };
 }
 
 async function login(request: Request, env: WorkerEnv): Promise<Response> {
@@ -538,13 +608,20 @@ async function callback(request: Request, env: WorkerEnv): Promise<Response> {
     return htmlResponse("Access denied", "Discord did not return a user id for this guild member.", 403);
   }
 
-  const configuredTtl = Number.parseInt(optionalEnv(env, "SESSION_TTL_SECONDS", "21600"), 10);
-  const ttl = Number.isFinite(configuredTtl) && configuredTtl > 0 ? configuredTtl : 21600;
+  const ttl = sessionTtlSeconds(env);
   const now = Math.floor(Date.now() / 1000);
   const exp = now + ttl;
   const tokenExp = now + token.expiresIn;
   const session = await createSession(
-    { sub: userId, accessToken: token.accessToken, exp, roleCheckedAt: now, roles, tokenExp },
+    {
+      sub: userId,
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
+      exp,
+      roleCheckedAt: now,
+      roles,
+      tokenExp,
+    },
     requiredEnv(env, "SESSION_SECRET"),
   );
   const returnTo = state.returnTo;
@@ -562,7 +639,7 @@ async function exchangeCodeForToken(
   code: string,
   request: Request,
   env: WorkerEnv,
-): Promise<{ accessToken: string; expiresIn: number }> {
+): Promise<OAuthToken> {
   const body = new URLSearchParams({
     client_id: requiredEnv(env, "DISCORD_CLIENT_ID"),
     client_secret: requiredEnv(env, "DISCORD_CLIENT_SECRET"),
@@ -587,7 +664,45 @@ async function exchangeCodeForToken(
     throw new Error("Discord token response did not include access_token");
   }
   const expiresIn = typeof token.expires_in === "number" && token.expires_in > 0 ? token.expires_in : 3600;
-  return { accessToken: token.access_token, expiresIn };
+  return {
+    accessToken: token.access_token,
+    refreshToken: token.refresh_token,
+    expiresIn,
+  };
+}
+
+async function refreshAccessToken(refreshToken: string, env: WorkerEnv): Promise<OAuthToken> {
+  const body = new URLSearchParams({
+    client_id: requiredEnv(env, "DISCORD_CLIENT_ID"),
+    client_secret: requiredEnv(env, "DISCORD_CLIENT_SECRET"),
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+  });
+
+  const response = await fetch(`${discordApiBase(env)}/oauth2/token`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body,
+  });
+
+  if ([400, 401, 403].includes(response.status)) {
+    throw new AccessDeniedError("Discord refresh token is no longer valid");
+  }
+  if (!response.ok) {
+    const errorBody = (await response.text()).slice(0, 500);
+    throw new Error(`Discord token refresh failed: ${response.status} ${errorBody}`);
+  }
+
+  const token = (await response.json()) as DiscordTokenResponse;
+  if (!token.access_token) {
+    throw new Error("Discord refresh response did not include access_token");
+  }
+  const expiresIn = typeof token.expires_in === "number" && token.expires_in > 0 ? token.expires_in : 3600;
+  return {
+    accessToken: token.access_token,
+    refreshToken: token.refresh_token,
+    expiresIn,
+  };
 }
 
 async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<DiscordGuildMember> {
@@ -684,9 +799,12 @@ async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
 
   const check = await checkSessionAuthorization(session, env);
   if (!check.authorized) {
-    const headers = new Headers();
-    headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-    return jsonResponse({ ok: false, reason: "role_required" }, 403, headers);
+    if (check.loginRequired) {
+      const headers = new Headers();
+      headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
+      return jsonResponse({ ok: false, reason: "login_required" }, 401, headers);
+    }
+    return jsonResponse({ ok: false, reason: "role_required" }, 403);
   }
 
   const headers = new Headers();

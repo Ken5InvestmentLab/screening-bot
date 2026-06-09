@@ -18,6 +18,6 @@
     "DISCORD_ALLOWED_ROLE_IDS": "1487089073385373828",
     "ACCESS_PURCHASE_URL": "https://whop.com/scoring-bot/tenteikyokuchi/",
     "REPORT_ASSET_PATH": "/mega_validation_report_latest.html",
-    "SESSION_TTL_SECONDS": "21600"
+    "SESSION_TTL_SECONDS": "31536000"
   }
 }

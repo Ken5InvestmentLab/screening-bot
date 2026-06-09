@@ -225,6 +225,37 @@
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    .is-hidden,
+    [hidden] {
+      display: none !important;
+    }
+    .confirmed-list-status {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .load-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 7px 14px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .load-more:hover {
+      background: #e3efff;
+    }
+    .load-more-row {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 2px;
+    }
     .guide-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -400,7 +431,7 @@
       <div class="top-nav-links">
 
         <a href="#summary">成績サマリー</a>
-        <a href="#confirmed">確定済み全件</a>
+        <a href="#confirmed">確定済み銘柄一覧</a>
         <a href="#watch">未確定ウォッチリスト</a>
         <a href="#guide">使い方</a>
 
@@ -410,7 +441,7 @@
 
   <header>
     <h1>Mega40 下ヒゲ回復</h1>
-    <p>生成日時: 2026-06-09 13:51:26 JST</p>
+    <p>生成日時: 2026-06-09 14:27:49 JST</p>
     <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
   </header>
   <main>
@@ -422,8 +453,11 @@
     </section>
 
     <section id="confirmed" class="panel">
-      <h2>確定済み全件</h2>
+      <h2>確定済み銘柄一覧</h2>
 
+
+
+      <p class="confirmed-list-status"><strong id="confirmed-visible-count">5</strong>/<span id="confirmed-total-count">5</span>件を表示中</p>
 
       <table class="signals">
 <thead><tr>
@@ -437,7 +471,7 @@
 <th>20営業日後</th>
 <th>40営業日後</th>
 </tr></thead><tbody>
-<tr>
+<tr data-confirmed-row data-confirmed-index="0">
 <td data-label="日付">2026/03/09</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
 <td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">5381</span><span class="symbol-separator">/</span><span class="symbol-name">Mipox</span></div><div class="symbol-meta-row"><span class="vol-tag vol-high" tabindex="0" title="ATR%: 13.1% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 13.1% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">743円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:5381" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
@@ -448,7 +482,7 @@
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+26.8%</span><small class="price-sub">942円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+63.4%</span><small class="price-sub">1,280円</small></span></td>
 </tr>
-<tr>
+<tr data-confirmed-row data-confirmed-index="1">
 <td data-label="日付">2026/03/31</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★1</span></td>
 <td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6336</span><span class="symbol-separator">/</span><span class="symbol-name">石井表記</span></div><div class="symbol-meta-row"><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 5.5% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 5.5% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">850円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6336" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
@@ -459,7 +493,7 @@
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+32.5%</span><small class="price-sub">1,172円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+52.7%</span><small class="price-sub">1,297円</small></span></td>
 </tr>
-<tr>
+<tr data-confirmed-row data-confirmed-index="2">
 <td data-label="日付">2026/03/24</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
 <td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6444</span><span class="symbol-separator">/</span><span class="symbol-name">サンデン</span></div><div class="symbol-meta-row"><span class="vol-tag vol-high" tabindex="0" title="ATR%: 7.0% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。" data-tooltip="ATR%: 7.0% / ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。">🔴HIGH</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">146円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6444" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
@@ -470,7 +504,7 @@
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+25.3%</span><small class="price-sub">183円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+13.0%</span><small class="price-sub">170円</small></span></td>
 </tr>
-<tr>
+<tr data-confirmed-row data-confirmed-index="3">
 <td data-label="日付">2026/03/05</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★2</span></td>
 <td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7205</span><span class="symbol-separator">/</span><span class="symbol-name">日野自動車</span></div><div class="symbol-meta-row"><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 3.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 3.8% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">415円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7205" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
@@ -481,7 +515,7 @@
 <td data-label="20営業日後"><span class="perf-cell"><span class="neg">-6.7%</span><small class="price-sub">300円</small></span></td>
 <td data-label="40営業日後"><span class="neg">-6.7%</span></td>
 </tr>
-<tr>
+<tr data-confirmed-row data-confirmed-index="4">
 <td data-label="日付">2026/04/03</td>
 <td data-label="★"><span class="star-badge low" title="Stable ★6の判定条件を何個満たしたか">★0</span></td>
 <td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">3358</span><span class="symbol-separator">/</span><span class="symbol-name">Ｔｒａｉｌｈｅａｄ　Ｇｌｏｂａｌ　Ｈｏｌｄｉｎｇｓ</span></div><div class="symbol-meta-row"><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 3.5% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 3.5% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">108円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:3358" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
@@ -493,6 +527,12 @@
 <td data-label="40営業日後"><span class="perf-cell"><span class="neg">-17.6%</span><small class="price-sub">89円</small></span></td>
 </tr>
 </tbody></table>
+
+      <div class="load-more-row">
+        <button id="confirmed-load-more" class="load-more" type="button" data-page-size="10" hidden>さらに0件表示</button>
+      </div>
+
+
 
     </section>
 
@@ -570,5 +610,40 @@
     </section>
 
   </main>
+
+  <script>
+  (() => {
+    const rows = Array.from(document.querySelectorAll("[data-confirmed-row]"));
+    const button = document.getElementById("confirmed-load-more");
+    const visibleCount = document.getElementById("confirmed-visible-count");
+    const totalCount = document.getElementById("confirmed-total-count");
+    if (!button || rows.length === 0) return;
+    const pageSize = Number(button.dataset.pageSize || 10);
+    let visibleLimit = Number.isFinite(pageSize) ? Math.max(1, pageSize) : 10;
+
+    const render = () => {
+      let rendered = 0;
+      rows.forEach((row, index) => {
+        const shouldShow = index < visibleLimit;
+        row.classList.toggle("is-hidden", !shouldShow);
+        if (shouldShow) rendered += 1;
+      });
+      if (visibleCount) visibleCount.textContent = String(rendered);
+      if (totalCount) totalCount.textContent = String(rows.length);
+      const remaining = rows.length - rendered;
+      button.hidden = remaining <= 0;
+      button.textContent = remaining > 0
+        ? `さらに${Math.min(pageSize, remaining)}件表示`
+        : "さらに表示";
+    };
+
+    button.addEventListener("click", () => {
+      visibleLimit += pageSize;
+      render();
+    });
+    render();
+  })();
+  </script>
+
 </body>
 </html>

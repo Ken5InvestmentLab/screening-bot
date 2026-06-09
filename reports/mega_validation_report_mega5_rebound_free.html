@@ -225,6 +225,37 @@
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    .is-hidden,
+    [hidden] {
+      display: none !important;
+    }
+    .confirmed-list-status {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .load-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 7px 14px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .load-more:hover {
+      background: #e3efff;
+    }
+    .load-more-row {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 2px;
+    }
     .guide-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -400,7 +431,7 @@
       <div class="top-nav-links">
 
         <a href="#summary">成績サマリー</a>
-        <a href="#confirmed">確定済み全件</a>
+        <a href="#confirmed">確定済み銘柄一覧</a>
         <a href="#watch">未確定ウォッチリスト</a>
         <a href="#guide">使い方</a>
 
@@ -410,7 +441,7 @@
 
   <header>
     <h1>Mega5 短期リバウンド</h1>
-    <p>生成日時: 2026-06-09 13:51:26 JST</p>
+    <p>生成日時: 2026-06-09 14:27:49 JST</p>
     <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
   </header>
   <main>
@@ -496,5 +527,6 @@
     </section>
 
   </main>
+
 </body>
 </html>

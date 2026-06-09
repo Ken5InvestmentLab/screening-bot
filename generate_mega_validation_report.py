@@ -210,7 +210,8 @@ CANDIDATES = [
 ]
 
 PAID_MODE_IDS = {"mega5_rebound", "mega40_deep_reversal", "mega40_wick_recovery"}
-FREE_CONFIRMED_LIMIT = 5
+FREE_CONFIRMED_LIMIT = 10
+MODE_CONFIRMED_PAGE_SIZE = 10
 FREE_REPORT_SUFFIX = "_free"
 PURCHASE_PATH = "/purchase"
 
@@ -1328,7 +1329,7 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
     if include_mode_sections:
         section_links = """
         <a href="#summary">成績サマリー</a>
-        <a href="#confirmed">確定済み全件</a>
+        <a href="#confirmed">確定済み銘柄一覧</a>
         <a href="#watch">未確定ウォッチリスト</a>
         <a href="#guide">使い方</a>
         """
@@ -1422,13 +1423,19 @@ def mode_summary_html(
     """
 
 
-def html_table(headers: list[str], rows: list[list[str]], table_class: str = "") -> str:
+def html_table(
+    headers: list[str],
+    rows: list[list[str]],
+    table_class: str = "",
+    row_attrs: list[str] | None = None,
+) -> str:
     class_attr = f' class="{html_escape(table_class)}"' if table_class else ""
     out = [f"<table{class_attr}>", "<thead><tr>"]
     out.extend(f"<th>{html_escape(header)}</th>" for header in headers)
     out.append("</tr></thead><tbody>")
-    for row in rows:
-        out.append("<tr>")
+    for row_index, row in enumerate(rows):
+        attr = f" {row_attrs[row_index]}" if row_attrs and row_index < len(row_attrs) else ""
+        out.append(f"<tr{attr}>")
         out.extend(
             f'<td data-label="{html_escape(headers[index])}">{cell}</td>'
             for index, cell in enumerate(row)
@@ -1443,6 +1450,8 @@ def html_signal_table(
     eval_days: int,
     confirmed: bool,
     current_candidate: dict | None = None,
+    paginate_confirmed: bool = False,
+    page_size: int = MODE_CONFIRMED_PAGE_SIZE,
 ) -> str:
     perf_col = f"perf_{eval_days}bd"
     if rows.empty:
@@ -1462,7 +1471,8 @@ def html_signal_table(
         headers.extend(["評価値", "5営業日後", "10営業日後", "20営業日後", "40営業日後"])
 
         table_rows = []
-        for _, row in rows.iterrows():
+        row_attrs = []
+        for row_index, (_, row) in enumerate(rows.iterrows()):
             symbol = row.get("symbol", "")
             cells = [html_escape(row.get("date", ""))]
             if show_star:
@@ -1484,7 +1494,10 @@ def html_signal_table(
                 ]
             )
             table_rows.append(cells)
-        return html_table(headers, table_rows, "signals")
+            if paginate_confirmed:
+                hidden_class = ' class="is-hidden"' if row_index >= page_size else ""
+                row_attrs.append(f'data-confirmed-row data-confirmed-index="{row_index}"{hidden_class}')
+        return html_table(headers, table_rows, "signals", row_attrs if paginate_confirmed else None)
 
     headers = ["日付"]
     if show_star:
@@ -1588,7 +1601,7 @@ def build_candidate_detail_sections(
                   </ul>
                 </section>
               </div>
-              <h3>確定済み全件</h3>
+              <h3>確定済み銘柄一覧</h3>
               {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
               <h3>未確定ウォッチリスト全件</h3>
               {html_signal_table(unconfirmed_rows, candidate["eval_days"], confirmed=False, current_candidate=candidate)}
@@ -1723,8 +1736,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
     page_size = 100
     default_total = int((rows["_date_key"] == default_date).sum())
     default_count = min(default_total, page_size)
-    note = "初期表示は最新日です。表示日で全期間を選んだ場合も、端末に負荷がかからないよう100件ずつ表示します。"
-    note += " ★はStable ★6の判定条件を何個満たしたかです。"
+    note = "初期表示は最新日です。★はStable ★6の判定条件を何個満たしたかです。"
 
     options = "\n".join(
         ["<option value=\"\">全期間</option>"]
@@ -3556,6 +3568,37 @@ def mode_page_style() -> str:
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    .is-hidden,
+    [hidden] {
+      display: none !important;
+    }
+    .confirmed-list-status {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .load-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 7px 14px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .load-more:hover {
+      background: #e3efff;
+    }
+    .load-more-row {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 2px;
+    }
     .guide-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -3725,6 +3768,44 @@ def mode_page_style() -> str:
     """
 
 
+def mode_confirmed_pagination_script() -> str:
+    return f"""
+  <script>
+  (() => {{
+    const rows = Array.from(document.querySelectorAll("[data-confirmed-row]"));
+    const button = document.getElementById("confirmed-load-more");
+    const visibleCount = document.getElementById("confirmed-visible-count");
+    const totalCount = document.getElementById("confirmed-total-count");
+    if (!button || rows.length === 0) return;
+    const pageSize = Number(button.dataset.pageSize || {MODE_CONFIRMED_PAGE_SIZE});
+    let visibleLimit = Number.isFinite(pageSize) ? Math.max(1, pageSize) : {MODE_CONFIRMED_PAGE_SIZE};
+
+    const render = () => {{
+      let rendered = 0;
+      rows.forEach((row, index) => {{
+        const shouldShow = index < visibleLimit;
+        row.classList.toggle("is-hidden", !shouldShow);
+        if (shouldShow) rendered += 1;
+      }});
+      if (visibleCount) visibleCount.textContent = String(rendered);
+      if (totalCount) totalCount.textContent = String(rows.length);
+      const remaining = rows.length - rendered;
+      button.hidden = remaining <= 0;
+      button.textContent = remaining > 0
+        ? `さらに${{Math.min(pageSize, remaining)}}件表示`
+        : "さらに表示";
+    }};
+
+    button.addEventListener("click", () => {{
+      visibleLimit += pageSize;
+      render();
+    }});
+    render();
+  }})();
+  </script>
+    """
+
+
 def stat_metrics_html(stats: dict, watch_stats: dict, include_watch: bool = True) -> str:
     confirmed_items = [
         ("確定件数", stats["n"]),
@@ -3765,9 +3846,49 @@ def build_mode_html_page(
     stats = candidate_stats(frame_confirmed, candidate)
     watch_stats = current_watch_stats(frame_all, candidate)
     confirmed_limit = FREE_CONFIRMED_LIMIT if free and not free_paid_mode else None
-    confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=confirmed_limit)
+    confirmed_all_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)
+    confirmed_rows = confirmed_all_rows if confirmed_limit is None else confirmed_all_rows.head(confirmed_limit)
     unconfirmed_rows = candidate_rows(frame_all, candidate, confirmed=False, limit=None)
-    confirmed_heading = "確定済み銘柄一覧" if free_paid_mode else "確定済み上位5件" if free else "確定済み全件"
+    confirmed_heading = "確定済み銘柄一覧" if free_paid_mode else f"確定済み上位{FREE_CONFIRMED_LIMIT}件" if free else "確定済み銘柄一覧"
+    confirmed_visible_total = int(len(confirmed_rows))
+    confirmed_full_total = int(len(confirmed_all_rows))
+    confirmed_initial = min(confirmed_visible_total, MODE_CONFIRMED_PAGE_SIZE)
+    confirmed_table_html = html_signal_table(
+        confirmed_rows,
+        candidate["eval_days"],
+        confirmed=True,
+        current_candidate=candidate,
+        paginate_confirmed=not free,
+        page_size=MODE_CONFIRMED_PAGE_SIZE,
+    )
+    if free_paid_mode or confirmed_visible_total == 0:
+        confirmed_status_html = ""
+    elif free:
+        confirmed_status_html = f"""
+      <p class="confirmed-list-status"><strong>{confirmed_visible_total}</strong>/<span>{confirmed_full_total}</span>件を表示中</p>
+        """
+    else:
+        confirmed_status_html = f"""
+      <p class="confirmed-list-status"><strong id="confirmed-visible-count">{confirmed_initial}</strong>/<span id="confirmed-total-count">{confirmed_visible_total}</span>件を表示中</p>
+        """
+    confirmed_load_more_html = (
+        ""
+        if free or confirmed_visible_total == 0
+        else f"""
+      <div class="load-more-row">
+        <button id="confirmed-load-more" class="load-more" type="button" data-page-size="{MODE_CONFIRMED_PAGE_SIZE}"{" hidden" if confirmed_initial >= confirmed_visible_total else ""}>さらに{min(MODE_CONFIRMED_PAGE_SIZE, max(confirmed_visible_total - confirmed_initial, 0))}件表示</button>
+      </div>
+        """
+    )
+    confirmed_upgrade_html = (
+        f"""
+      <div class="load-more-row">
+        <a class="load-more" href="{PURCHASE_PATH}">さらに表示するには有料会員へ</a>
+      </div>
+        """
+        if free and not free_paid_mode and confirmed_full_total > confirmed_visible_total
+        else ""
+    )
     condition_detail_html = "" if free_paid_mode else f'<div class="chips">{condition_chips(candidate["conditions"])}</div>'
     confirmed_html = (
         paywall_cta_html(
@@ -3777,8 +3898,11 @@ def build_mode_html_page(
         )
         if free_paid_mode
         else f"""
-      {('<p class="note">無料表示では、既存の並び順で上位5件だけを表示します。</p>' if free else '')}
-      {html_signal_table(confirmed_rows, candidate["eval_days"], confirmed=True, current_candidate=candidate)}
+      {('<p class="note">無料表示では、既存の並び順で上位10件だけを表示します。</p>' if free else '')}
+      {confirmed_status_html}
+      {confirmed_table_html}
+      {confirmed_load_more_html}
+      {confirmed_upgrade_html}
         """
     )
     watch_html = (
@@ -3825,6 +3949,7 @@ def build_mode_html_page(
 
     {guide_section_html()}
   </main>
+  {"" if free else mode_confirmed_pagination_script()}
 </body>
 </html>
 """
@@ -3985,7 +4110,7 @@ def build_report(
             f"- 確定済み銘柄の成績: {compact_stats_text(stats, include_target=True)}",
             f"- 未確定ウォッチリストの現在成績: {compact_stats_text(watch_stats)}",
             "",
-            "#### 確定済み全件",
+            "#### 確定済み銘柄一覧",
             "",
         ]
         confirmed_rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=None)

@@ -225,6 +225,37 @@
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
     .empty { color: var(--muted); padding: 0 0 10px; }
+    .is-hidden,
+    [hidden] {
+      display: none !important;
+    }
+    .confirmed-list-status {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .load-more {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 36px;
+      padding: 7px 14px;
+      border: 1px solid #bfd2ee;
+      border-radius: 6px;
+      background: #eef5ff;
+      color: #1849a9;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .load-more:hover {
+      background: #e3efff;
+    }
+    .load-more-row {
+      display: flex;
+      justify-content: center;
+      padding: 12px 0 2px;
+    }
     .guide-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -400,7 +431,7 @@
       <div class="top-nav-links">
 
         <a href="#summary">成績サマリー</a>
-        <a href="#confirmed">確定済み全件</a>
+        <a href="#confirmed">確定済み銘柄一覧</a>
         <a href="#watch">未確定ウォッチリスト</a>
         <a href="#guide">使い方</a>
 
@@ -410,7 +441,7 @@
 
   <header>
     <h1>Sniper 勝率重視</h1>
-    <p>生成日時: 2026-06-09 13:51:26 JST</p>
+    <p>生成日時: 2026-06-09 14:27:49 JST</p>
     <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
   </header>
   <main>
@@ -422,9 +453,12 @@
     </section>
 
     <section id="confirmed" class="panel">
-      <h2>確定済み上位5件</h2>
+      <h2>確定済み上位10件</h2>
 
-      <p class="note">無料表示では、既存の並び順で上位5件だけを表示します。</p>
+      <p class="note">無料表示では、既存の並び順で上位10件だけを表示します。</p>
+
+      <p class="confirmed-list-status"><strong>10</strong>/<span>25</span>件を表示中</p>
+
       <table class="signals">
 <thead><tr>
 <th>日付</th>
@@ -492,7 +526,68 @@
 <td data-label="20営業日後"><span class="perf-cell"><span class="pos">+6.8%</span><small class="price-sub">486円</small></span></td>
 <td data-label="40営業日後"><span class="perf-cell"><span class="pos">+7.9%</span><small class="price-sub">488円</small></span></td>
 </tr>
+<tr>
+<td data-label="日付">2026/04/30</td>
+<td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★4</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">8103</span><span class="symbol-separator">/</span><span class="symbol-name">明和産業</span></div><div class="symbol-meta-row"><span class="vol-tag vol-low" tabindex="0" title="ATR%: 2.2% / ATR 3%未満。値動きが比較的穏やかな銘柄です。" data-tooltip="ATR%: 2.2% / ATR 3%未満。値動きが比較的穏やかな銘柄です。">🟢LOW</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">830円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:8103" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+5.9%</span><small class="price-sub">879円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+5.9%</span><small class="price-sub">879円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+9.5%</span><small class="price-sub">909円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="pos">+5.8%</span><small class="price-sub">877円</small></span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/01</td>
+<td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★5</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">7038</span><span class="symbol-separator">/</span><span class="symbol-name">フロンティア・マネジメント</span></div><div class="symbol-meta-row"><span class="vol-tag vol-low" tabindex="0" title="ATR%: 2.2% / ATR 3%未満。値動きが比較的穏やかな銘柄です。" data-tooltip="ATR%: 2.2% / ATR 3%未満。値動きが比較的穏やかな銘柄です。">🟢LOW</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">578円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:7038" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+2.6%</span><small class="price-sub">593円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+2.6%</span><small class="price-sub">593円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+1.7%</span><small class="price-sub">588円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="pos">+1.9%</span><small class="price-sub">586円</small></span></td>
+<td data-label="40営業日後"><span class="perf-cell"><span class="neg">-1.6%</span><small class="price-sub">589円</small></span></td>
+</tr>
+<tr>
+<td data-label="日付">2026/03/31</td>
+<td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★5</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">428A</span><span class="symbol-separator">/</span><span class="symbol-name">サイプレス・ホールディングス</span></div><div class="symbol-meta-row"><span class="vol-tag vol-low" tabindex="0" title="ATR%: 2.6% / ATR 3%未満。値動きが比較的穏やかな銘柄です。" data-tooltip="ATR%: 2.6% / ATR 3%未満。値動きが比較的穏やかな銘柄です。">🟢LOW</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">860円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:428A" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+2.3%</span><small class="price-sub">880円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+2.3%</span><small class="price-sub">880円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+0.6%</span><small class="price-sub">865円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="pos">+8.1%</span><small class="price-sub">933円</small></span></td>
+<td data-label="40営業日後"><span class="perf-cell"><span class="pos">+48.6%</span><small class="price-sub">1,278円</small></span></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/08</td>
+<td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★5</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6262</span><span class="symbol-separator">/</span><span class="symbol-name">ＰＥＧＡＳＵＳ</span></div><div class="symbol-meta-row"><span class="vol-tag vol-low" tabindex="0" title="ATR%: 2.7% / ATR 3%未満。値動きが比較的穏やかな銘柄です。" data-tooltip="ATR%: 2.7% / ATR 3%未満。値動きが比較的穏やかな銘柄です。">🟢LOW</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">800円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6262" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+2.1%</span><small class="price-sub">817円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+2.1%</span><small class="price-sub">817円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+0.5%</span><small class="price-sub">795円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="pos">+23.8%</span><small class="price-sub">865円</small></span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+</tr>
+<tr>
+<td data-label="日付">2026/04/16</td>
+<td data-label="★"><span class="star-badge mid" title="Stable ★6の判定条件を何個満たしたか">★4</span></td>
+<td data-label="銘柄"><div class="symbol-stack"><div class="symbol-identity"><span class="symbol">6584</span><span class="symbol-separator">/</span><span class="symbol-name">三櫻工業</span></div><div class="symbol-meta-row"><span class="vol-tag vol-mid" tabindex="0" title="ATR%: 3.0% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。" data-tooltip="ATR%: 3.0% / ATR 3%以上6%未満。標準的な変動幅の銘柄です。">🟡MID</span><span class="symbol-price-meta"><span><span class="price-label">Entry</span><span class="price-value">726円</span></span></span></div><div class="action-buttons"><a class="action-btn" href="https://jp.tradingview.com/chart/?symbol=TSE:6584" target="_blank" rel="noopener noreferrer">チャート</a></div></div></td>
+<td data-label="他モード"><span class="muted">なし</span></td>
+<td data-label="評価値"><span class="perf-cell"><span class="pos">+1.1%</span><small class="price-sub">729円</small></span></td>
+<td data-label="5営業日後"><span class="perf-cell"><span class="pos">+1.1%</span><small class="price-sub">729円</small></span></td>
+<td data-label="10営業日後"><span class="perf-cell"><span class="pos">+4.4%</span><small class="price-sub">770円</small></span></td>
+<td data-label="20営業日後"><span class="perf-cell"><span class="neg">-3.3%</span><small class="price-sub">726円</small></span></td>
+<td data-label="40営業日後"><span class="muted">--</span></td>
+</tr>
 </tbody></table>
+
+
+      <div class="load-more-row">
+        <a class="load-more" href="/purchase">さらに表示するには有料会員へ</a>
+      </div>
+
 
     </section>
 
@@ -551,5 +646,6 @@
     </section>
 
   </main>
+
 </body>
 </html>

@@ -4,7 +4,14 @@ on:
   workflow_dispatch:  # 手動実行ボタン（GASのrunDailyMaintenanceから自動起動）
 
 jobs:
+  refresh_report_before_optimize:
+    uses: ./.github/workflows/mega-validation-report.yml
+    permissions:
+      contents: write
+    secrets: inherit
+
   optimize:
+    needs: refresh_report_before_optimize
     runs-on: ubuntu-latest
     permissions:
       contents: write

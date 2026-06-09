@@ -2,16 +2,13 @@ name: Mega Validation Report
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Daily Screener Optimization"]
-    types: [completed]
+  workflow_call:
   schedule:
     # Fallback refresh at 21:00 JST on weekdays.
     - cron: "0 12 * * 1-5"
 
 jobs:
   report:
-    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write

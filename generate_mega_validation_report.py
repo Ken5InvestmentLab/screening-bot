@@ -3522,6 +3522,10 @@ def build_html_report(
         font-weight: 700;
         cursor: pointer;
       }}
+      .signals tr.mobile-details-open .mobile-row-toggle {{
+        justify-self: flex-end;
+        margin-left: auto;
+      }}
       .mobile-row-toggle:focus-visible {{
         outline: 2px solid #2f80ed;
         outline-offset: 2px;
@@ -4149,6 +4153,10 @@ def mode_page_style() -> str:
         font-size: 12px;
         font-weight: 700;
         cursor: pointer;
+      }
+      .signals tr.mobile-details-open .mobile-row-toggle {
+        justify-self: flex-end;
+        margin-left: auto;
       }
       .mobile-row-toggle:focus-visible {
         outline: 2px solid #2f80ed;

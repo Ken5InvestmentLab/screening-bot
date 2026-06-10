@@ -819,9 +819,29 @@
       background: #fbfdff;
       text-align: left;
       white-space: normal;
+      box-sizing: border-box;
     }
     .fundamental-detail[hidden] {
       display: none;
+    }
+    @media (min-width: 821px) {
+      .symbol-actions .fundamental-detail {
+        position: fixed;
+        top: 96px;
+        left: 50%;
+        z-index: 80;
+        width: min(760px, calc(100vw - 48px));
+        max-width: min(760px, calc(100vw - 48px));
+        max-height: calc(100vh - 128px);
+        margin-top: 0;
+        padding: 14px;
+        overflow: auto;
+        transform: translateX(-50%);
+        box-shadow: 0 22px 56px rgba(16, 24, 40, 0.28);
+      }
+      .symbol-actions .fundamental-detail .discord-message {
+        margin-top: 0;
+      }
     }
     .discord-message {
       display: grid;
@@ -1368,7 +1388,7 @@
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底極致 スコアリングBot レポート</h1>
-    <p>生成日時: 2026-06-11 01:16:21 JST</p>
+    <p>生成日時: 2026-06-11 01:39:06 JST</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>

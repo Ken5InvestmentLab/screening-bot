@@ -260,20 +260,35 @@
 (() => {
   const buttons = Array.from(document.querySelectorAll("[data-fundamental-toggle]"));
   if (buttons.length === 0) return;
-  buttons.forEach((button) => {
+  const pairs = buttons.map((button) => {
     const container = button.closest(".symbol-actions");
     const detail = container?.querySelector(".fundamental-detail");
-    if (!detail) return;
-    const render = () => {
-      const expanded = !detail.hidden;
-      button.setAttribute("aria-expanded", expanded ? "true" : "false");
-      button.textContent = expanded ? "閉じる" : "ファンダ分析";
-    };
+    return detail ? { button, detail } : null;
+  }).filter(Boolean);
+  const render = ({ button, detail }) => {
+    const expanded = !detail.hidden;
+    button.setAttribute("aria-expanded", expanded ? "true" : "false");
+    button.textContent = expanded ? "閉じる" : "ファンダ分析";
+  };
+  const closePair = (pair) => {
+    pair.detail.hidden = true;
+    render(pair);
+  };
+  pairs.forEach((pair) => {
+    const { button, detail } = pair;
     button.addEventListener("click", () => {
-      detail.hidden = !detail.hidden;
-      render();
+      const shouldOpen = detail.hidden;
+      pairs.forEach((other) => {
+        if (other !== pair) closePair(other);
+      });
+      detail.hidden = !shouldOpen;
+      render(pair);
     });
-    render();
+    render(pair);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    pairs.forEach(closePair);
   });
 })();
 

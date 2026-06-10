@@ -2364,20 +2364,35 @@ def report_interactions_js() -> str:
 (() => {
   const buttons = Array.from(document.querySelectorAll("[data-fundamental-toggle]"));
   if (buttons.length === 0) return;
-  buttons.forEach((button) => {
+  const pairs = buttons.map((button) => {
     const container = button.closest(".symbol-actions");
     const detail = container?.querySelector(".fundamental-detail");
-    if (!detail) return;
-    const render = () => {
-      const expanded = !detail.hidden;
-      button.setAttribute("aria-expanded", expanded ? "true" : "false");
-      button.textContent = expanded ? "閉じる" : "ファンダ分析";
-    };
+    return detail ? { button, detail } : null;
+  }).filter(Boolean);
+  const render = ({ button, detail }) => {
+    const expanded = !detail.hidden;
+    button.setAttribute("aria-expanded", expanded ? "true" : "false");
+    button.textContent = expanded ? "閉じる" : "ファンダ分析";
+  };
+  const closePair = (pair) => {
+    pair.detail.hidden = true;
+    render(pair);
+  };
+  pairs.forEach((pair) => {
+    const { button, detail } = pair;
     button.addEventListener("click", () => {
-      detail.hidden = !detail.hidden;
-      render();
+      const shouldOpen = detail.hidden;
+      pairs.forEach((other) => {
+        if (other !== pair) closePair(other);
+      });
+      detail.hidden = !shouldOpen;
+      render(pair);
     });
-    render();
+    render(pair);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    pairs.forEach(closePair);
   });
 })();
 
@@ -3315,9 +3330,29 @@ def build_html_report(
       background: #fbfdff;
       text-align: left;
       white-space: normal;
+      box-sizing: border-box;
     }}
     .fundamental-detail[hidden] {{
       display: none;
+    }}
+    @media (min-width: 821px) {{
+      .symbol-actions .fundamental-detail {{
+        position: fixed;
+        top: 96px;
+        left: 50%;
+        z-index: 80;
+        width: min(760px, calc(100vw - 48px));
+        max-width: min(760px, calc(100vw - 48px));
+        max-height: calc(100vh - 128px);
+        margin-top: 0;
+        padding: 14px;
+        overflow: auto;
+        transform: translateX(-50%);
+        box-shadow: 0 22px 56px rgba(16, 24, 40, 0.28);
+      }}
+      .symbol-actions .fundamental-detail .discord-message {{
+        margin-top: 0;
+      }}
     }}
     .discord-message {{
       display: grid;
@@ -4090,9 +4125,21 @@ def mode_page_style() -> str:
     .fundamental-detail {
       margin-top: 0; min-width: 260px; max-width: 520px; padding: 10px;
       border: 1px solid var(--line); border-radius: 6px; background: #fbfdff;
-      text-align: left; white-space: normal;
+      text-align: left; white-space: normal; box-sizing: border-box;
     }
     .fundamental-detail[hidden] { display: none; }
+    @media (min-width: 821px) {
+      .symbol-actions .fundamental-detail {
+        position: fixed; top: 96px; left: 50%; z-index: 80;
+        width: min(760px, calc(100vw - 48px));
+        max-width: min(760px, calc(100vw - 48px));
+        max-height: calc(100vh - 128px);
+        margin-top: 0; padding: 14px; overflow: auto;
+        transform: translateX(-50%);
+        box-shadow: 0 22px 56px rgba(16, 24, 40, .28);
+      }
+      .symbol-actions .fundamental-detail .discord-message { margin-top: 0; }
+    }
     .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
     .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }

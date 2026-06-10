@@ -235,9 +235,21 @@
     .fundamental-detail {
       margin-top: 0; min-width: 260px; max-width: 520px; padding: 10px;
       border: 1px solid var(--line); border-radius: 6px; background: #fbfdff;
-      text-align: left; white-space: normal;
+      text-align: left; white-space: normal; box-sizing: border-box;
     }
     .fundamental-detail[hidden] { display: none; }
+    @media (min-width: 821px) {
+      .symbol-actions .fundamental-detail {
+        position: fixed; top: 96px; left: 50%; z-index: 80;
+        width: min(760px, calc(100vw - 48px));
+        max-width: min(760px, calc(100vw - 48px));
+        max-height: calc(100vh - 128px);
+        margin-top: 0; padding: 14px; overflow: auto;
+        transform: translateX(-50%);
+        box-shadow: 0 22px 56px rgba(16, 24, 40, .28);
+      }
+      .symbol-actions .fundamental-detail .discord-message { margin-top: 0; }
+    }
     .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
     .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
@@ -551,7 +563,7 @@
 
   <header>
     <h1>Mega40 下ヒゲ回復</h1>
-    <p>生成日時: 2026-06-11 01:16:21 JST</p>
+    <p>生成日時: 2026-06-11 01:39:06 JST</p>
     <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
   </header>
   <main>

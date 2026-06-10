@@ -1955,7 +1955,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
           {
             ""
             if free
-            else '<label class="search-persist-control" for="search-persist-toggle"><input id="search-persist-toggle" type="checkbox" autocomplete="off"><span>次回もこの条件で開く（日付は毎回最新）</span></label>'
+            else '<label class="search-persist-control" for="search-persist-toggle"><input id="search-persist-toggle" type="checkbox" autocomplete="off"><span>次回もこの条件で開く（日付は毎回リセット）</span></label>'
           }
           <button id="search-reset" type="button">検索条件をリセット</button>
         </div>

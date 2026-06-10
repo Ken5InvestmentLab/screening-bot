@@ -1952,6 +1952,11 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
           </div>
         </div>
         <div class="search-actions">
+          {
+            ""
+            if free
+            else '<label class="search-persist-control" for="search-persist-toggle"><input id="search-persist-toggle" type="checkbox" autocomplete="off"><span>次回もこの条件で開く（日付は毎回最新）</span></label>'
+          }
           <button id="search-reset" type="button">検索条件をリセット</button>
         </div>
       </details>
@@ -2006,8 +2011,10 @@ def report_interactions_js() -> str:
   const modeInputs = Array.from(document.querySelectorAll("[data-mode-filter]"));
   const indicatorInputs = Array.from(document.querySelectorAll("[data-indicator-filter]"));
   const reset = document.getElementById("search-reset");
+  const persistToggle = document.getElementById("search-persist-toggle");
   const loadMore = document.getElementById("daily-load-more");
   if (!select || rows.length === 0) return;
+  const STORAGE_KEY = "megaReportDailySearchPrefs:v1";
   const configuredPageSize = Number(select.dataset.pageSize || 100);
   const pageSize = Number.isFinite(configuredPageSize) ? Math.max(20, configuredPageSize) : 100;
   let visibleLimit = pageSize;
@@ -2020,7 +2027,75 @@ def report_interactions_js() -> str:
     return Number.isFinite(number) ? number : null;
   };
 
-  const applyFilter = (resetLimit = true) => {
+  const readSearchPrefs = () => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const prefs = JSON.parse(raw);
+      return prefs && typeof prefs === "object" && prefs.enabled ? prefs : null;
+    } catch (_error) {
+      return null;
+    }
+  };
+
+  const clearSearchPrefs = () => {
+    try {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } catch (_error) {
+      // Keep search usable even when localStorage is unavailable.
+    }
+  };
+
+  const writeSearchPrefs = () => {
+    if (!persistToggle?.checked) return;
+    const prefs = {
+      enabled: true,
+      version: 1,
+      symbol: String(symbolInput?.value || ""),
+      starMin: String(starMin?.value || ""),
+      starMax: String(starMax?.value || ""),
+      priceMin: String(priceMin?.value || ""),
+      priceMax: String(priceMax?.value || ""),
+      modes: modeInputs.filter((input) => input.checked).map((input) => input.value),
+      indicators: indicatorInputs.filter((input) => input.checked).map((input) => input.value),
+    };
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    } catch (_error) {
+      // Keep search usable even when localStorage is unavailable.
+    }
+  };
+
+  const setSelectValue = (element, value) => {
+    if (!element) return;
+    const candidate = String(value || "");
+    const hasOption = Array.from(element.options || []).some((option) => option.value === candidate);
+    element.value = candidate === "" || hasOption ? candidate : "";
+  };
+
+  const restoreSearchPrefs = (prefs) => {
+    if (!prefs) return;
+    if (persistToggle) persistToggle.checked = true;
+    const defaultDate = select.dataset.defaultDate || "";
+    if (defaultDate) select.value = defaultDate;
+    if (dateFrom) dateFrom.value = "";
+    if (dateTo) dateTo.value = "";
+    if (symbolInput) symbolInput.value = String(prefs.symbol || "");
+    setSelectValue(starMin, prefs.starMin);
+    setSelectValue(starMax, prefs.starMax);
+    if (priceMin) priceMin.value = String(prefs.priceMin || "");
+    if (priceMax) priceMax.value = String(prefs.priceMax || "");
+    const savedModes = new Set(Array.isArray(prefs.modes) ? prefs.modes.map(String) : []);
+    const savedIndicators = new Set(Array.isArray(prefs.indicators) ? prefs.indicators.map(String) : []);
+    modeInputs.forEach((input) => {
+      input.checked = savedModes.has(input.value);
+    });
+    indicatorInputs.forEach((input) => {
+      input.checked = savedIndicators.has(input.value);
+    });
+  };
+
+  const applyFilter = (resetLimit = true, persist = true) => {
     if (resetLimit) visibleLimit = pageSize;
     const selectedDate = String(select.value || "");
     const from = String(dateFrom?.value || "");
@@ -2075,6 +2150,7 @@ def report_interactions_js() -> str:
         ? `さらに${Math.min(pageSize, remaining)}件表示`
         : "さらに表示";
     }
+    if (persist) writeSearchPrefs();
   };
 
   const applySelectedDate = () => {
@@ -2107,9 +2183,16 @@ def report_interactions_js() -> str:
     element.addEventListener("change", applyFilter);
     element.addEventListener("input", applyFilter);
   });
+  persistToggle?.addEventListener("change", () => {
+    if (persistToggle.checked) {
+      writeSearchPrefs();
+    } else {
+      clearSearchPrefs();
+    }
+  });
   loadMore?.addEventListener("click", () => {
     visibleLimit += pageSize;
-    applyFilter(false);
+    applyFilter(false, false);
   });
   reset?.addEventListener("click", () => {
     const defaultDate = select.dataset.defaultDate || "";
@@ -2129,7 +2212,13 @@ def report_interactions_js() -> str:
     });
     applyFilter(true);
   });
-  applyFilter(true);
+  const savedPrefs = readSearchPrefs();
+  if (savedPrefs) {
+    restoreSearchPrefs(savedPrefs);
+  } else if (persistToggle) {
+    persistToggle.checked = false;
+  }
+  applyFilter(true, false);
 })();
 
 (() => {
@@ -2624,8 +2713,27 @@ def build_html_report(
     }}
     .search-actions {{
       display: flex;
+      align-items: center;
+      gap: 10px;
       justify-content: flex-end;
+      flex-wrap: wrap;
       padding: 0 13px 13px;
+    }}
+    .search-persist-control {{
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }}
+    .search-persist-control input {{
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: #1849a9;
     }}
     .search-actions button {{
       min-height: 34px;

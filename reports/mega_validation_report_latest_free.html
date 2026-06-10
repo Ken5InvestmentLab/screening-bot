@@ -344,8 +344,27 @@
     }
     .search-actions {
       display: flex;
+      align-items: center;
+      gap: 10px;
       justify-content: flex-end;
+      flex-wrap: wrap;
       padding: 0 13px 13px;
+    }
+    .search-persist-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 34px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .search-persist-control input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: #1849a9;
     }
     .search-actions button {
       min-height: 34px;
@@ -1614,6 +1633,7 @@
           </div>
         </div>
         <div class="search-actions">
+
           <button id="search-reset" type="button">検索条件をリセット</button>
         </div>
       </details>

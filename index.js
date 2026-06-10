@@ -727,15 +727,21 @@ function buildHelpEmbed() {
   // ── ライブ実績 or フォールバック ──
   if (statsCache) {
     const s = statsCache;
+    const fmtPf = (pf) => pf >= 999 ? ' -  ' : pf.toFixed(2);
     const formatStatLine = (label, stat) =>
       `${label}: ${String(stat.n).padStart(3)}件 勝率${String(stat.wr).padStart(5)}% 平均${(stat.avg >= 0 ? '+' : '') + stat.avg}%`;
+    const formatScoreStatLine = (label, stat) =>
+      `${label}: ${String(stat.n).padStart(3)}件 勝率${String(stat.wr).padStart(5)}% PF${fmtPf(stat.pf).padStart(5)} 平均${(stat.avg >= 0 ? '+' : '') + stat.avg}%`;
 
     embed.addFields({
-      name: `📈 バックテスト実績（過去${s.backtestDays}日 / 確定済み）`,
+      name: '📈 バックテスト実績',
       value:
         '```\n' +
-        `${formatStatLine('Stable ★6', s.star6)}\n` +
-        `${formatStatLine('Sniper', s.sniperLive)}\n` +
+        `過去${s.backtestDays}日実績\n` +
+        `${formatScoreStatLine('Stable ★6', s.star6)}\n` +
+        `${formatScoreStatLine('Stable ★5', s.star5)}\n` +
+        `${formatScoreStatLine('Aggr.  ★4', s.star4)}\n` +
+        `全シグナル: ${String(s.all.n).padStart(3)}件 勝率${String(s.all.wr).padStart(5)}%            平均${(s.all.avg >= 0 ? '+' : '') + s.all.avg}%\n` +
         '```\n' +
         `勝率は0%の引き分けを分母から除外。Botスキャン対象は標準で直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日です。\n` +
         `最終更新: ${s.updatedAt}`,

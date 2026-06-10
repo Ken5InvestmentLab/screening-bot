@@ -1385,13 +1385,13 @@ def navigation_html(
     return f"""
     <nav class="top-nav" aria-label="ページメニュー">
       <div class="top-nav-main">
-        <a class="top-nav-brand {brand_active}" href="mega_validation_report_latest.html">天底スコアリング</a>
-        <div class="top-nav-links" aria-label="ページ内メニュー">
-          {section_links}
+        <a class="top-nav-brand {brand_active}" href="mega_validation_report_latest.html">天底スコアリングTop</a>
+        <div class="top-nav-mode-links" aria-label="モード別ページ">
+          {mode_links}
         </div>
       </div>
-      <div class="top-nav-mode-links" aria-label="モード別ページ">
-        {mode_links}
+      <div class="top-nav-links" aria-label="ページ内メニュー">
+        {section_links}
       </div>
     </nav>
     """

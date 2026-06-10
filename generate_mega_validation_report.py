@@ -1084,7 +1084,7 @@ def volatility_tag_html(row: pd.Series) -> str:
     )
 
 
-def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
+def symbol_with_actions_html(symbol: str, row: pd.Series, mobile_summary_html: str = "") -> str:
     name = str(row.get("name", "") or "").strip()
     name_html = (
         '<span class="symbol-separator">/</span>'
@@ -1112,7 +1112,9 @@ def symbol_with_actions_html(symbol: str, row: pd.Series) -> str:
         f'<span class="symbol">{html_escape(symbol)}</span>{name_html}'
         "</div>"
         f"{meta_html}"
-        f"{action_buttons(symbol, row)}"
+        f"{mobile_summary_html}"
+        '<button class="mobile-row-toggle" type="button" aria-expanded="false">詳細を見る</button>'
+        f'<div class="mobile-detail-inline">{action_buttons(symbol, row)}</div>'
         "</div>"
     )
 
@@ -1191,6 +1193,29 @@ def mode_match_badges(
         else:
             badges.append(f'<span class="mode-badge">{label}</span>')
     return '<span class="mode-badges">' + "".join(badges) + "</span>"
+
+
+def mobile_summary_item(label: str, value_html: str) -> str:
+    if not value_html:
+        value_html = '<span class="muted">--</span>'
+    return (
+        '<span class="mobile-summary-item">'
+        f'<small>{html_escape(label)}</small>'
+        f'<strong>{value_html}</strong>'
+        "</span>"
+    )
+
+
+def mobile_row_summary_html(items: list[tuple[str, str]]) -> str:
+    rendered = "".join(mobile_summary_item(label, value_html) for label, value_html in items)
+    return f'<div class="mobile-row-summary">{rendered}</div>' if rendered else ""
+
+
+def primary_eval_days_for_row(row: pd.Series) -> int | None:
+    matched_days = sorted({int(candidate["eval_days"]) for candidate in row_mode_matches(row)})
+    if not matched_days:
+        return None
+    return 5 if 5 in matched_days else matched_days[0]
 
 
 def search_indicator_options_html() -> str:
@@ -1319,7 +1344,11 @@ def paywall_cta_html(
     """
 
 
-def navigation_html(current_mode_id: str | None = None, include_mode_sections: bool = False) -> str:
+def navigation_html(
+    current_mode_id: str | None = None,
+    include_mode_sections: bool = False,
+    free: bool = False,
+) -> str:
     brand_active = "active" if current_mode_id is None else ""
     mode_links = "".join(
         f'<a class="{ "active" if candidate["id"] == current_mode_id else "" }" '
@@ -1334,20 +1363,34 @@ def navigation_html(current_mode_id: str | None = None, include_mode_sections: b
         <a href="#guide">使い方</a>
         """
     elif current_mode_id is None:
-        section_links = """
+        section_links = (
+            """
         <a href="#performance-summary">全体成績</a>
         <a href="#mode-summary">モード別サマリー</a>
-        <a href="#highlights">注目ポイント</a>
+        <a href="#mode-guide">検出モードの見方</a>
         <a href="#daily-detections">銘柄検索</a>
         <a href="#guide">使い方</a>
-        """
+            """
+            if free
+            else """
+        <a href="#daily-detections">銘柄検索</a>
+        <a href="#mode-summary">モード別サマリー</a>
+        <a href="#mode-guide">検出モードの見方</a>
+        <a href="#performance-summary">全体成績</a>
+        <a href="#guide">使い方</a>
+            """
+        )
     else:
         section_links = ""
     return f"""
     <nav class="top-nav" aria-label="ページメニュー">
-      <a class="top-nav-brand {brand_active}" href="mega_validation_report_latest.html">天底スコアリング</a>
-      <div class="top-nav-links">
-        {section_links}
+      <div class="top-nav-main">
+        <a class="top-nav-brand {brand_active}" href="mega_validation_report_latest.html">天底スコアリング</a>
+        <div class="top-nav-links" aria-label="ページ内メニュー">
+          {section_links}
+        </div>
+      </div>
+      <div class="top-nav-mode-links" aria-label="モード別ページ">
         {mode_links}
       </div>
     </nav>
@@ -1474,12 +1517,22 @@ def html_signal_table(
         row_attrs = []
         for row_index, (_, row) in enumerate(rows.iterrows()):
             symbol = row.get("symbol", "")
+            mobile_summary = mobile_row_summary_html(
+                [
+                    ("日付", html_escape(row.get("date", ""))),
+                    *([("★", star_score_badge(row))] if show_star else []),
+                    (
+                        horizon_label(eval_days),
+                        perf_with_price_html(row.get(perf_col), row.get(f"price_{eval_days}bd")),
+                    ),
+                ]
+            )
             cells = [html_escape(row.get("date", ""))]
             if show_star:
                 cells.append(star_score_badge(row))
             cells.extend(
                 [
-                    symbol_with_actions_html(symbol, row),
+                    symbol_with_actions_html(symbol, row, mobile_summary),
                 ]
             )
             if show_overlap:
@@ -1510,12 +1563,20 @@ def html_signal_table(
     table_rows = []
     for _, row in rows.iterrows():
         symbol = row.get("symbol", "")
+        mobile_summary = mobile_row_summary_html(
+            [
+                ("日付", html_escape(row.get("date", ""))),
+                *([("★", star_score_badge(row))] if show_star else []),
+                ("経過", html_escape(elapsed_business_days_text(row))),
+                ("現在騰落", perf_with_price_html(row.get("cur_perf"), row.get("latest_close"))),
+            ]
+        )
         cells = [html_escape(row.get("date", ""))]
         if show_star:
             cells.append(star_score_badge(row))
         cells.extend(
             [
-                symbol_with_actions_html(symbol, row),
+                symbol_with_actions_html(symbol, row, mobile_summary),
             ]
         )
         if show_overlap:
@@ -1772,6 +1833,24 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
         mode_html = mode_match_badges(row, include_empty=False, link=True)
         if not mode_html:
             mode_html = '<span class="mode-badge none">モード外</span>'
+        primary_days = primary_eval_days_for_row(row)
+        mobile_items = [
+            ("日付", html_escape(date_key)),
+            ("★", star_score_badge(row)),
+            ("該当モード", mode_html),
+            ("現在騰落", perf_with_price_html(row.get("cur_perf"), row.get("latest_close"))),
+        ]
+        if primary_days is not None:
+            mobile_items.append(
+                (
+                    horizon_label(primary_days),
+                    perf_with_price_html(
+                        row.get(f"perf_{primary_days}bd"),
+                        row.get(f"price_{primary_days}bd"),
+                    ),
+                )
+            )
+        mobile_summary = mobile_row_summary_html(mobile_items)
         is_initial_row = date_key == default_date and default_rendered < page_size
         if date_key == default_date:
             default_rendered += 1
@@ -1779,7 +1858,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
         cells = [
             html_escape(date_key),
             star_score_badge(row),
-            symbol_with_actions_html(symbol, row),
+            symbol_with_actions_html(symbol, row, mobile_summary),
             mode_html,
             perf_with_price_html(row.get("cur_perf"), row.get("latest_close")),
             perf_with_price_html(row.get("perf_5bd"), row.get("price_5bd")),
@@ -2085,6 +2164,25 @@ def report_interactions_js() -> str:
   });
   render();
 })();
+
+(() => {
+  const buttons = Array.from(document.querySelectorAll(".mobile-row-toggle"));
+  if (buttons.length === 0) return;
+  buttons.forEach((button) => {
+    const row = button.closest("tr");
+    if (!row) return;
+    const render = () => {
+      const expanded = row.classList.contains("mobile-details-open");
+      button.setAttribute("aria-expanded", expanded ? "true" : "false");
+      button.textContent = expanded ? "閉じる" : "詳細を見る";
+    };
+    button.addEventListener("click", () => {
+      row.classList.toggle("mobile-details-open");
+      render();
+    });
+    render();
+  });
+})();
     """
 
 
@@ -2130,6 +2228,56 @@ def build_html_report(
     )
     confirmed_total = sum(stats_by_id[candidate["id"]]["n"] for candidate in CANDIDATES)
     watch_total = sum(watch_by_id[candidate["id"]]["with_current"] for candidate in CANDIDATES)
+    performance_section = f"""
+    <section id="performance-summary" class="panel">
+      <h2>全体成績（過去1年分）</h2>
+      <section class="cards">
+        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
+        <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
+        <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
+      </section>
+      <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
+      {summary_table}
+    </section>
+    """
+    mode_summary_section = f"""
+    <section id="mode-summary" class="panel">
+      <h2>モード別サマリー</h2>
+      <div class="mode-grid">
+        {mode_cards}
+      </div>
+      <p class="notice">過去成績は将来の値動きを保証するものではありません。銘柄を確認するときは、最新の開示、出来高、地合い、リスク許容度もあわせて確認してください。</p>
+    </section>
+    """
+    mode_guide_section = """
+    <section id="mode-guide" class="panel">
+      <h2>検出モードの見方</h2>
+      <ul class="gate-list">
+        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
+        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
+        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
+      </ul>
+    </section>
+    """
+    page_sections = (
+        [
+            performance_section,
+            mode_summary_section,
+            mode_guide_section,
+            daily_detection_section,
+            guide_section_html(),
+        ]
+        if free
+        else [
+            daily_detection_section,
+            mode_summary_section,
+            mode_guide_section,
+            performance_section,
+            guide_section_html(),
+        ]
+    )
     return f"""<!doctype html>
 <html lang="ja">
 <head>
@@ -2197,12 +2345,19 @@ def build_html_report(
       top: 0;
       z-index: 30;
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
       padding: 8px 14px;
       background: rgba(16, 32, 51, 0.96);
       border-bottom: 1px solid rgba(255, 255, 255, 0.16);
       box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+    }}
+    .top-nav-main {{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
     }}
     .top-nav-brand {{
       flex: 0 0 auto;
@@ -2214,7 +2369,8 @@ def build_html_report(
       text-decoration: none;
       white-space: nowrap;
     }}
-    .top-nav-links {{
+    .top-nav-links,
+    .top-nav-mode-links {{
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
@@ -2222,6 +2378,9 @@ def build_html_report(
       min-width: 0;
       overflow-x: visible;
       scrollbar-width: thin;
+    }}
+    .top-nav-mode-links {{
+      padding-left: 2px;
     }}
     .top-nav a {{
       flex: 0 0 auto;
@@ -2238,6 +2397,10 @@ def build_html_report(
     .top-nav a.active {{
       background: #eef5ff;
       color: #1849a9;
+    }}
+    .mobile-row-summary,
+    .mobile-row-toggle {{
+      display: none;
     }}
     .cards {{
       display: grid;
@@ -3170,6 +3333,91 @@ def build_html_report(
         background: white;
         overflow: hidden;
       }}
+      .signals tr:not(.mobile-details-open) td:not([data-label="銘柄"]) {{
+        display: none;
+      }}
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] {{
+        display: block;
+        padding: 10px;
+        text-align: left;
+      }}
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"]::before {{
+        display: none;
+      }}
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-stack {{
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }}
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-identity,
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-meta-row {{
+        justify-content: flex-start;
+      }}
+      .signals tr:not(.mobile-details-open) .mobile-detail-inline {{
+        display: none;
+      }}
+      .signals tr.mobile-details-open .mobile-row-summary {{
+        display: none;
+      }}
+      .mobile-row-summary {{
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+        margin-top: 6px;
+      }}
+      .mobile-summary-item {{
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 4px 7px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #f8fafc;
+      }}
+      .mobile-summary-item small {{
+        flex: 0 0 auto;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.2;
+      }}
+      .mobile-summary-item strong {{
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        font-size: 12px;
+        line-height: 1.35;
+      }}
+      .mobile-summary-item .perf-cell {{
+        justify-items: start;
+      }}
+      .mobile-summary-item .mode-badges {{
+        justify-content: flex-start;
+      }}
+      .mobile-row-toggle {{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        justify-self: flex-start;
+        min-height: 32px;
+        margin-top: 2px;
+        padding: 6px 10px;
+        border: 1px solid #b8c6d9;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #1849a9;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }}
+      .mobile-row-toggle:focus-visible {{
+        outline: 2px solid #2f80ed;
+        outline-offset: 2px;
+      }}
       .signals td {{
         display: flex;
         justify-content: space-between;
@@ -3219,9 +3467,12 @@ def build_html_report(
     }}
     @media (max-width: 760px) {{
       .top-nav {{
-        align-items: center;
         gap: 7px;
         padding: 7px 10px;
+      }}
+      .top-nav-main {{
+        align-items: center;
+        gap: 7px;
       }}
       .top-nav-brand {{
         max-width: 138px;
@@ -3231,7 +3482,8 @@ def build_html_report(
       .top-nav a {{
         padding: 7px 9px;
       }}
-      .top-nav-links {{
+      .top-nav-links,
+      .top-nav-mode-links {{
         flex-wrap: nowrap;
         overflow-x: auto;
       }}
@@ -3331,7 +3583,7 @@ def build_html_report(
   </style>
 </head>
 <body>
-  {navigation_html()}
+  {navigation_html(free=free)}
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>{html_escape(REPORT_TITLE)}</h1>
@@ -3339,39 +3591,7 @@ def build_html_report(
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
-    <section id="performance-summary" class="panel">
-      <h2>全体成績（過去1年分）</h2>
-      <section class="cards">
-        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">{meta["feature_rows"]}</div></div>
-        <div class="card"><div class="label">対象モード</div><div class="value">{len(CANDIDATES)}</div></div>
-        <div class="card"><div class="label">確定済み延べ件数</div><div class="value">{confirmed_total}</div></div>
-        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">{watch_total}</div></div>
-      </section>
-      <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
-      {summary_table}
-    </section>
-
-    <section id="mode-summary" class="panel">
-      <h2>モード別サマリー</h2>
-      <div class="mode-grid">
-        {mode_cards}
-      </div>
-      <p class="notice">過去成績は将来の値動きを保証するものではありません。銘柄を確認するときは、最新の開示、出来高、地合い、リスク許容度もあわせて確認してください。</p>
-    </section>
-
-    <section id="highlights" class="panel">
-      <h2>注目ポイント</h2>
-      <ul class="gate-list">
-        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
-        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
-        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
-        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
-      </ul>
-    </section>
-
-    {daily_detection_section}
-
-    {guide_section_html()}
+    {"".join(page_sections)}
   </main>
   {daily_detection_script()}
 </body>
@@ -3420,12 +3640,19 @@ def mode_page_style() -> str:
       top: 0;
       z-index: 30;
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
       padding: 8px 14px;
       background: rgba(16, 32, 51, 0.96);
       border-bottom: 1px solid rgba(255, 255, 255, 0.16);
       box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+    }
+    .top-nav-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
     }
     .top-nav-brand {
       flex: 0 0 auto;
@@ -3437,7 +3664,8 @@ def mode_page_style() -> str:
       text-decoration: none;
       white-space: nowrap;
     }
-    .top-nav-links {
+    .top-nav-links,
+    .top-nav-mode-links {
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
@@ -3445,6 +3673,9 @@ def mode_page_style() -> str:
       min-width: 0;
       overflow-x: visible;
       scrollbar-width: thin;
+    }
+    .top-nav-mode-links {
+      padding-left: 2px;
     }
     .top-nav a {
       flex: 0 0 auto;
@@ -3460,6 +3691,10 @@ def mode_page_style() -> str:
     .top-nav a:hover, .top-nav a.active {
       background: #eef5ff;
       color: #1849a9;
+    }
+    .mobile-row-summary,
+    .mobile-row-toggle {
+      display: none;
     }
     .panel, .candidate-detail {
       background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
@@ -3738,6 +3973,79 @@ def mode_page_style() -> str:
       .signals thead { display: none; }
       .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
       .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals tr:not(.mobile-details-open) td:not([data-label="銘柄"]) { display: none; }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] {
+        display: block;
+        padding: 10px;
+        text-align: left;
+      }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"]::before { display: none; }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-stack {
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-identity,
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-meta-row {
+        justify-content: flex-start;
+      }
+      .signals tr:not(.mobile-details-open) .mobile-detail-inline { display: none; }
+      .signals tr.mobile-details-open .mobile-row-summary { display: none; }
+      .mobile-row-summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+        margin-top: 6px;
+      }
+      .mobile-summary-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 4px 7px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #f8fafc;
+      }
+      .mobile-summary-item small {
+        flex: 0 0 auto;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.2;
+      }
+      .mobile-summary-item strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .mobile-summary-item .perf-cell { justify-items: start; }
+      .mobile-summary-item .mode-badges { justify-content: flex-start; }
+      .mobile-row-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        justify-self: flex-start;
+        min-height: 32px;
+        margin-top: 2px;
+        padding: 6px 10px;
+        border: 1px solid #b8c6d9;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #1849a9;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .mobile-row-toggle:focus-visible {
+        outline: 2px solid #2f80ed;
+        outline-offset: 2px;
+      }
       .signals td {
         display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
         text-align: right; white-space: normal;
@@ -3764,9 +4072,12 @@ def mode_page_style() -> str:
     }
     @media (max-width: 760px) {
       .top-nav {
-        align-items: center;
         gap: 7px;
         padding: 7px 10px;
+      }
+      .top-nav-main {
+        align-items: center;
+        gap: 7px;
       }
       .top-nav-brand {
         max-width: 138px;
@@ -3776,7 +4087,8 @@ def mode_page_style() -> str:
       .top-nav a {
         padding: 7px 9px;
       }
-      .top-nav-links {
+      .top-nav-links,
+      .top-nav-mode-links {
         flex-wrap: nowrap;
         overflow-x: auto;
       }
@@ -3918,7 +4230,7 @@ def build_mode_html_page(
   <style>{mode_page_style()}</style>
 </head>
 <body>
-  {navigation_html(candidate["id"], include_mode_sections=True)}
+  {navigation_html(candidate["id"], include_mode_sections=True, free=free)}
   <header>
     <h1>{html_escape(candidate["label"])}</h1>
     <p>生成日時: {html_escape(generated_at)}</p>
@@ -3944,7 +4256,7 @@ def build_mode_html_page(
 
     {guide_section_html()}
   </main>
-  {"" if free else daily_detection_script()}
+  {daily_detection_script()}
 </body>
 </html>
 """
@@ -4056,7 +4368,7 @@ def build_report(
 
     lines += [
         "",
-        "## 注目ポイント",
+        "## 検出モードの見方",
         "",
         "- `Stable ★6` は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。",
         "- `Sniper 勝率重視` は派手さよりも、条件通過後にプラスで終わる比率を重視します。",

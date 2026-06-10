@@ -172,3 +172,22 @@
   });
   render();
 })();
+
+(() => {
+  const buttons = Array.from(document.querySelectorAll(".mobile-row-toggle"));
+  if (buttons.length === 0) return;
+  buttons.forEach((button) => {
+    const row = button.closest("tr");
+    if (!row) return;
+    const render = () => {
+      const expanded = row.classList.contains("mobile-details-open");
+      button.setAttribute("aria-expanded", expanded ? "true" : "false");
+      button.textContent = expanded ? "閉じる" : "詳細を見る";
+    };
+    button.addEventListener("click", () => {
+      row.classList.toggle("mobile-details-open");
+      render();
+    });
+    render();
+  });
+})();

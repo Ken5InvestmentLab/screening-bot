@@ -44,12 +44,19 @@
       top: 0;
       z-index: 30;
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
       padding: 8px 14px;
       background: rgba(16, 32, 51, 0.96);
       border-bottom: 1px solid rgba(255, 255, 255, 0.16);
       box-shadow: 0 8px 24px rgba(16, 24, 40, 0.16);
+    }
+    .top-nav-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
     }
     .top-nav-brand {
       flex: 0 0 auto;
@@ -61,7 +68,8 @@
       text-decoration: none;
       white-space: nowrap;
     }
-    .top-nav-links {
+    .top-nav-links,
+    .top-nav-mode-links {
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
@@ -69,6 +77,9 @@
       min-width: 0;
       overflow-x: visible;
       scrollbar-width: thin;
+    }
+    .top-nav-mode-links {
+      padding-left: 2px;
     }
     .top-nav a {
       flex: 0 0 auto;
@@ -84,6 +95,10 @@
     .top-nav a:hover, .top-nav a.active {
       background: #eef5ff;
       color: #1849a9;
+    }
+    .mobile-row-summary,
+    .mobile-row-toggle {
+      display: none;
     }
     .panel, .candidate-detail {
       background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
@@ -362,6 +377,79 @@
       .signals thead { display: none; }
       .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
       .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals tr:not(.mobile-details-open) td:not([data-label="銘柄"]) { display: none; }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] {
+        display: block;
+        padding: 10px;
+        text-align: left;
+      }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"]::before { display: none; }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-stack {
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-identity,
+      .signals tr:not(.mobile-details-open) td[data-label="銘柄"] .symbol-meta-row {
+        justify-content: flex-start;
+      }
+      .signals tr:not(.mobile-details-open) .mobile-detail-inline { display: none; }
+      .signals tr.mobile-details-open .mobile-row-summary { display: none; }
+      .mobile-row-summary {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 5px;
+        margin-top: 6px;
+      }
+      .mobile-summary-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        min-width: 0;
+        max-width: 100%;
+        padding: 4px 7px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #f8fafc;
+      }
+      .mobile-summary-item small {
+        flex: 0 0 auto;
+        color: var(--muted);
+        font-size: 10px;
+        line-height: 1.2;
+      }
+      .mobile-summary-item strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+        font-size: 12px;
+        line-height: 1.35;
+      }
+      .mobile-summary-item .perf-cell { justify-items: start; }
+      .mobile-summary-item .mode-badges { justify-content: flex-start; }
+      .mobile-row-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        justify-self: flex-start;
+        min-height: 32px;
+        margin-top: 2px;
+        padding: 6px 10px;
+        border: 1px solid #b8c6d9;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #1849a9;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .mobile-row-toggle:focus-visible {
+        outline: 2px solid #2f80ed;
+        outline-offset: 2px;
+      }
       .signals td {
         display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
         text-align: right; white-space: normal;
@@ -388,9 +476,12 @@
     }
     @media (max-width: 760px) {
       .top-nav {
-        align-items: center;
         gap: 7px;
         padding: 7px 10px;
+      }
+      .top-nav-main {
+        align-items: center;
+        gap: 7px;
       }
       .top-nav-brand {
         max-width: 138px;
@@ -400,7 +491,8 @@
       .top-nav a {
         padding: 7px 9px;
       }
-      .top-nav-links {
+      .top-nav-links,
+      .top-nav-mode-links {
         flex-wrap: nowrap;
         overflow-x: auto;
       }
@@ -427,21 +519,25 @@
 <body>
 
     <nav class="top-nav" aria-label="ページメニュー">
-      <a class="top-nav-brand " href="mega_validation_report_latest.html">天底スコアリング</a>
-      <div class="top-nav-links">
+      <div class="top-nav-main">
+        <a class="top-nav-brand " href="mega_validation_report_latest.html">天底スコアリング</a>
+        <div class="top-nav-links" aria-label="ページ内メニュー">
 
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み銘柄一覧</a>
         <a href="#watch">未確定ウォッチリスト</a>
         <a href="#guide">使い方</a>
 
+        </div>
+      </div>
+      <div class="top-nav-mode-links" aria-label="モード別ページ">
         <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="active" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
       </div>
     </nav>
 
   <header>
     <h1>Mega40 深押し反転</h1>
-    <p>生成日時: 2026-06-10 13:43:15 JST</p>
+    <p>生成日時: 2026-06-10 19:06:00 JST</p>
     <p>深い押し目から強陽線で切り返す40営業日候補。</p>
   </header>
   <main>
@@ -449,7 +545,7 @@
       <h2>成績サマリー（過去1年分）</h2>
       <p class="note">40営業日後 / 目標 +30%。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
 
-      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">12</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+32.2%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">66.7%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">3</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">6</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="pos">+0.8%</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="pos">66.7%</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">1</div></div></div></div>
+      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">12</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+32.2%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">66.7%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">3</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">6</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="pos">+2.3%</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="pos">66.7%</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">2</div></div></div></div>
     </section>
 
     <section id="confirmed" class="panel">
@@ -527,6 +623,6 @@
     </section>
 
   </main>
-
+  <script src="report-interactions.js" defer></script>
 </body>
 </html>

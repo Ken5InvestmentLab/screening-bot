@@ -10,7 +10,13 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 const config = require('./config');
-const { fetchOHLCVData, fetchRecentBottomSymbols, fetchRecentBottomSignals, fetchAllBottomSignals, fetchPremiumReasonsByAlertIds } = require('./sheets');
+const {
+  fetchOHLCVData,
+  fetchRecentBottomSignals,
+  fetchAllBottomSignals,
+  fetchBacktestBottomSignals,
+  fetchPremiumReasonsByAlertIds,
+} = require('./sheets');
 const { screenSymbol } = require('./screener');
 
 const client = new Client({
@@ -24,6 +30,7 @@ const COLOR_WARN = 0xf5a623;
 const DISCLAIMER = '⚠️ これは情報提供ツールであり、投資助言ではありません。';
 const SNIPER_LOGIC_PATH = path.join(__dirname, 'current_logic_sniper.json');
 const PREMIUM_SCAN_BUTTON_PREFIX = 'premium_scan:';
+const DEFAULT_SCAN_RANGE_VALUE = 'default';
 const LOGIC_UPDATE_TARGETS = [
   { name: 'すべての更新候補', value: 'all' },
   { name: 'Stable', value: 'stable' },
@@ -74,23 +81,17 @@ function loadSniperLogic() {
   }
 }
 
-function toDateKey(value) {
-  if (!value) return null;
-  return String(value).replace(/\//g, '-').slice(0, 10);
-}
-
 async function refreshStats() {
   try {
     console.log('[stats] 実績データ集計開始...');
     const [ohlcvMap, allSignals] = await Promise.all([
       fetchOHLCVData(),
-      fetchAllBottomSignals(0),  // 全期間
+      fetchBacktestBottomSignals(config.HELP_BACKTEST_DAYS),
     ]);
 
-    // 全シグナル点灯地点を対象にする（バックテストと同じ母集団）
+    // HTMLレポートと同じく、過去1年分の確定済みシグナルを対象にする。
     const entries = [];
     const sniperEntries = [];
-    const sniperReleaseDate = toDateKey(sniperLogic.updated_at);
     for (const sig of allSignals) {
       if (sig.perf5bd === null || sig.perf5bd === undefined) continue;
       const data = ohlcvMap.get(sig.symbol);
@@ -107,8 +108,6 @@ async function refreshStats() {
 
       const _sniperMax = sniperLogic.conditions.length || 6;
       if (
-        sniperReleaseDate &&
-        toDateKey(sig.date) >= sniperReleaseDate &&
         r.sniperEnabled &&
         r.sniperScore === _sniperMax
       ) {
@@ -119,10 +118,11 @@ async function refreshStats() {
     // ── スコア別集計 ──
     function calcTierStats(items) {
       if (items.length === 0) return { n: 0, wr: 0, avg: 0, pf: 0 };
-      const wins   = items.filter(e => e.perf > 0);
-      const losses = items.filter(e => e.perf < 0);
-      const wr     = (wins.length / items.length * 100);
-      const avg    = items.reduce((s, e) => s + e.perf, 0) / items.length;
+      const wins   = items.filter(e => Number(e.perf) > 0);
+      const losses = items.filter(e => Number(e.perf) < 0);
+      const decisive = items.filter(e => Number(e.perf) !== 0);
+      const wr     = decisive.length > 0 ? (wins.length / decisive.length * 100) : 0;
+      const avg    = items.reduce((s, e) => s + Number(e.perf), 0) / items.length;
       const gainSum = wins.reduce((s, e) => s + e.perf, 0);
       const lossSum = Math.abs(losses.reduce((s, e) => s + e.perf, 0));
       const pf     = lossSum > 0 ? gainSum / lossSum : 999;
@@ -144,6 +144,7 @@ async function refreshStats() {
       total: all.n,
       star6, star5, star4, all,
       sniperLive,
+      backtestDays: config.HELP_BACKTEST_DAYS,
       updatedAt: timestamp,
     };
 
@@ -350,12 +351,20 @@ async function runScan(interaction) {
     return interaction.reply({ content: '⚙️ 現在実行中です。少しお待ちください。', ephemeral: true });
   }
 
-  const modeKey    = interaction.options.getString('mode');
-  const rangeInput = interaction.options.getString('range');
+  const modeKey = interaction.options.getString('mode');
+  const rawRangeInput = interaction.options.getString('range');
 
   if (modeKey === 'code') {
-    return runCodeSearch(interaction, user, rangeInput);
+    if (!rawRangeInput) {
+      return interaction.reply({
+        content: '❌ コード検索では証券コードを入力してください（例: 1234）。',
+        ephemeral: true,
+      });
+    }
+    return runCodeSearch(interaction, user, rawRangeInput);
   }
+
+  const rangeInput = rawRangeInput || DEFAULT_SCAN_RANGE_VALUE;
 
   const isSniperMode   = modeKey === 'sniper';
   // Sniper閾値はJSONの条件数から動的に取得（5条件→5点満点、6条件→6点満点）
@@ -382,15 +391,16 @@ async function runScan(interaction) {
   scanningUsers.add(user.id);
 
   try {
+    const isDefaultRange = rangeInput === DEFAULT_SCAN_RANGE_VALUE;
     const isYesterday  = rangeInput === 'yesterday';
     const yesterday    = (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); })();
     const isDate       = /^\d{4}-\d{2}-\d{2}$/.test(rangeInput);
     const specificDate = isYesterday ? yesterday : isDate ? rangeInput : null;
-    const rangeDays    = (isYesterday || isDate) ? null : parseInt(rangeInput);
+    const rangeDays    = (isDefaultRange || isYesterday || isDate) ? null : parseInt(rangeInput, 10);
 
     const [ohlcvMap, signals] = await Promise.all([
       fetchOHLCVData(),
-      fetchRecentBottomSignals(specificDate, rangeDays),
+      fetchRecentBottomSignals(specificDate, isDefaultRange ? DEFAULT_SCAN_RANGE_VALUE : rangeDays),
     ]);
 
     await prog.edit('🔍 フィルタリング中...');
@@ -445,7 +455,8 @@ async function runScan(interaction) {
     sortResults(scored);
     unanalyzed.sort((a, b) => (b.perf_5bd ?? -999) - (a.perf_5bd ?? -999));
 
-    const rangeText = isYesterday          ? '前日'
+    const rangeText = isDefaultRange       ? `直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日`
+      : isYesterday                        ? '前日'
       : isDate                             ? rangeInput
       : rangeInput === '1'                 ? '当日'
       : rangeInput === '0'                 ? '全期間'
@@ -658,11 +669,6 @@ async function runPremiumScanButton(interaction) {
 }
 
 function buildHelpEmbed() {
-  const sniperBacktest = sniperLogic.backtest;
-  const sniperBacktestLabel = sniperBacktest?.source === 'all' ? '全件データ' : '過去データ';
-  const sniperBacktestText = sniperBacktest
-    ? `${sniperBacktestLabel}: ${sniperBacktest.n}件 / 勝率 ${sniperBacktest.wr.toFixed(1)}% / 平均 ${(sniperBacktest.avg >= 0 ? '+' : '') + sniperBacktest.avg.toFixed(1)}%`
-    : '集計データなし';
   const sniperConditions = sniperLogic.conditions.length > 0
     ? `${sniperLogic.conditions.slice(0, 3).join(' / ')}\n${sniperLogic.conditions.slice(3).join(' / ')}`
     : '未設定';
@@ -677,11 +683,12 @@ function buildHelpEmbed() {
       {
         name: '🔍 基本操作',
         value:
-          '`/scan` と入力して、2つの選択肢を選んでください。\n\n' +
+          '`/scan` と入力して、分析タイプを選んでください。\n\n' +
           '**mode（分析タイプ）** — 下記参照\n' +
-          '**range（対象期間 or 証券コード）**\n' +
+          '**range（任意: 対象期間 or 証券コード）**\n' +
+          `　・未指定なら直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日\n` +
           '　・当日 / 前日 / 1週間 / 1ヶ月 / 全期間 / 日付指定\n' +
-          '　・コード検索の場合は証券コードを入力（例: 7203, 428A）',
+          '　・コード検索の場合は証券コードを入力（例: 1234）',
       },
       {
         name: '🎯 Stable（5点以上・厳選）',
@@ -720,17 +727,17 @@ function buildHelpEmbed() {
   // ── ライブ実績 or フォールバック ──
   if (statsCache) {
     const s = statsCache;
-    const fmtPf = (pf) => pf >= 999 ? ' -  ' : pf.toFixed(2);
+    const formatStatLine = (label, stat) =>
+      `${label}: ${String(stat.n).padStart(3)}件 勝率${String(stat.wr).padStart(5)}% 平均${(stat.avg >= 0 ? '+' : '') + stat.avg}%`;
 
     embed.addFields({
-      name: `📈 スコア別実績（${s.total}シグナル集計）`,
+      name: `📈 バックテスト実績（過去${s.backtestDays}日 / 確定済み）`,
       value:
         '```\n' +
-        `Stable ★6: ${String(s.star6.n).padStart(3)}件 勝率${String(s.star6.wr).padStart(5)}% PF${fmtPf(s.star6.pf).padStart(5)} 平均${(s.star6.avg >= 0 ? '+' : '') + s.star6.avg}%\n` +
-        `Stable ★5: ${String(s.star5.n).padStart(3)}件 勝率${String(s.star5.wr).padStart(5)}% PF${fmtPf(s.star5.pf).padStart(5)} 平均${(s.star5.avg >= 0 ? '+' : '') + s.star5.avg}%\n` +
-        `Aggr.  ★4: ${String(s.star4.n).padStart(3)}件 勝率${String(s.star4.wr).padStart(5)}% PF${fmtPf(s.star4.pf).padStart(5)} 平均${(s.star4.avg >= 0 ? '+' : '') + s.star4.avg}%\n` +
-        `全シグナル: ${String(s.all.n).padStart(3)}件 勝率${String(s.all.wr).padStart(5)}%            平均${(s.all.avg >= 0 ? '+' : '') + s.all.avg}%\n` +
+        `${formatStatLine('Stable ★6', s.star6)}\n` +
+        `${formatStatLine('Sniper', s.sniperLive)}\n` +
         '```\n' +
+        `勝率は0%の引き分けを分母から除外。Botスキャン対象は標準で直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日です。\n` +
         `最終更新: ${s.updatedAt}`,
     });
 
@@ -739,7 +746,7 @@ function buildHelpEmbed() {
       value:
         '```\n' +
         `${sniperConditions}\n\n` +
-        `過去実績\n${sniperBacktestText}\n` +
+        `過去${s.backtestDays}日実績\n${formatStatLine('Sniper', s.sniperLive)}\n` +
         '```',
     });
 
@@ -764,7 +771,7 @@ function buildHelpEmbed() {
       value:
         '```\n' +
         `${sniperConditions}\n\n` +
-        `過去実績\n${sniperBacktestText}\n` +
+        '過去実績\n集計中\n' +
         '```',
     });
 
@@ -948,8 +955,8 @@ client.once('ready', async () => {
           ],
         },
         {
-          name: 'range', type: 3, required: true, autocomplete: true,
-          description: '期間を選ぶか日付をYYYY-MM-DD形式で入力（コード検索は証券コード）',
+          name: 'range', type: 3, required: false, autocomplete: true,
+          description: `未指定なら直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日。期間/日付を選択可（コード検索は証券コード）`,
         },
       ],
     },
@@ -1010,7 +1017,7 @@ client.on('interactionCreate', async (interaction) => {
         ]);
       } else {
         await interaction.respond([
-          { name: '4桁の証券コードを入力してください（例: 7203, 285A）', value: '0000' },
+          { name: '4桁の証券コードを入力してください（例: 1234）', value: '0000' },
         ]);
       }
       return;
@@ -1033,6 +1040,7 @@ client.on('interactionCreate', async (interaction) => {
       await interaction.respond(candidates.slice(0, 25));
     } else {
       const fixed = [
+        { name: `標準（直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日）`, value: DEFAULT_SCAN_RANGE_VALUE },
         { name: '当日（今日出たシグナル）', value: '1' },
         { name: '前日（昨日出たシグナル）', value: 'yesterday' },
         { name: '1週間（最近7日間）',      value: '7' },

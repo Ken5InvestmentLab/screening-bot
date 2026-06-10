@@ -33,9 +33,14 @@ module.exports = {
   // 結果の最大表示件数
   MAX_RESULTS: parseInt(process.env.MAX_RESULTS || '20', 10),
 
-  // 直近BOTTOMシグナルの対象日数（この日数以内のシグナルを持つ銘柄のみ対象）
-  // 0 にすると全銘柄スキャン
+  // Botの標準スキャン対象: 直近45営業日（週末を除外、祝日は未考慮）
+  RECENT_SIGNAL_BUSINESS_DAYS: parseInt(process.env.RECENT_SIGNAL_BUSINESS_DAYS || '45', 10),
+
+  // 明示的な日数指定の互換用（例: /scan range=30）
   RECENT_SIGNAL_DAYS: parseInt(process.env.RECENT_SIGNAL_DAYS || '30', 10),
+
+  // /help の実績表示はHTMLレポートと同じ過去1年分に揃える
+  HELP_BACKTEST_DAYS: parseInt(process.env.HELP_BACKTEST_DAYS || '365', 10),
 
   // 指標の計算に必要な最低4h足本数
   MIN_4H_BARS: parseInt(process.env.MIN_4H_BARS || '30', 10),

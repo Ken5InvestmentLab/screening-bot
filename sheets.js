@@ -26,6 +26,69 @@ function cleanSymbol(sym) {
   return s.includes(':') ? s.split(':')[1] : s
 }
 
+function parseSignalDate(value) {
+  const date = new Date(String(value || '').replace(/\//g, '-'))
+  return isNaN(date.getTime()) ? null : date
+}
+
+function startOfToday() {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return today
+}
+
+function cutoffByCalendarDays(days) {
+  const cutoff = startOfToday()
+  cutoff.setDate(cutoff.getDate() - Math.max(Number(days) || 0, 1) + 1)
+  return cutoff
+}
+
+function cutoffByBusinessDays(days) {
+  const cutoff = startOfToday()
+  let remaining = Math.max(Number(days) || 0, 1) - 1
+  while (remaining > 0) {
+    cutoff.setDate(cutoff.getDate() - 1)
+    const day = cutoff.getDay()
+    if (day !== 0 && day !== 6) remaining -= 1
+  }
+  return cutoff
+}
+
+function filterByCutoff(alerts, cutoff) {
+  return alerts.filter(a => {
+    const d = parseSignalDate(a.date)
+    return d && d >= cutoff
+  })
+}
+
+function matchesSpecificDate(alert, specificDate) {
+  const target = specificDate.replace(/-/g, '/')
+  return alert.date && (alert.date.includes(specificDate) || alert.date.includes(target))
+}
+
+function filterRecentAlerts(alerts, specificDate = null, rangeDays = null) {
+  if (specificDate) return alerts.filter(a => matchesSpecificDate(a, specificDate))
+  if (rangeDays === 0 || rangeDays === '0') return alerts
+  if (rangeDays === null || rangeDays === undefined || rangeDays === '' || rangeDays === 'default') {
+    return filterByCutoff(alerts, cutoffByBusinessDays(config.RECENT_SIGNAL_BUSINESS_DAYS))
+  }
+  return filterByCutoff(alerts, cutoffByCalendarDays(rangeDays))
+}
+
+function dedupeSignalsByAlertId(signals) {
+  const seen = new Set()
+  const result = []
+  for (const signal of signals) {
+    const id = signal.alertId ? String(signal.alertId) : ''
+    if (id) {
+      if (seen.has(id)) continue
+      seen.add(id)
+    }
+    result.push(signal)
+  }
+  return result
+}
+
 // alerts_raw 用 (4行目ヘッダー)
 function parseAlerts(rows) {
   if (rows.length < 4) return []
@@ -119,40 +182,9 @@ async function fetchOHLCVData() {
 
 async function fetchRecentBottomSymbols(specificDate = null, rangeDays = null) {
   const rows = await getRawSheetData(config.ALERTS_SHEET_NAME)
-  const alerts = parseAlerts(rows)
+  const alerts = filterRecentAlerts(parseAlerts(rows), specificDate, rangeDays)
   const symbolMap = new Map()
-
-  // 1. 日付指定がある場合
-  if (specificDate) {
-    const target = specificDate.replace(/-/g, '/')
-    alerts.forEach(a => {
-      if (a.date && (a.date.includes(specificDate) || a.date.includes(target))) {
-        // 【修正】eval5bd, perf5bd を追加
-        symbolMap.set(a.symbol, { date: a.date, name: a.name, entry: a.entry, eval5bd: a.eval5bd, perf5bd: a.perf5bd })
-      }
-    })
-    return symbolMap
-  }
-
-  // 2. 全期間 (0) の場合
-  if (rangeDays === 0 || rangeDays === "0") {
-    // 【修正】eval5bd, perf5bd を追加
-    alerts.forEach(a => symbolMap.set(a.symbol, { date: a.date, name: a.name, entry: a.entry, eval5bd: a.eval5bd, perf5bd: a.perf5bd }))
-    return symbolMap
-  }
-
-  // 3. 期間指定 (直近 n 日間)
-  const days = rangeDays !== null ? Number(rangeDays) : config.RECENT_SIGNAL_DAYS
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
-  
-  alerts.forEach(a => {
-    const d = new Date(String(a.date).replace(/\//g, '-'))
-    if (!isNaN(d.getTime()) && d >= cutoff) {
-      // 【修正】eval5bd, perf5bd を追加
-      symbolMap.set(a.symbol, { date: a.date, name: a.name, entry: a.entry, eval5bd: a.eval5bd, perf5bd: a.perf5bd })
-    }
-  })
+  alerts.forEach(a => symbolMap.set(a.symbol, { date: a.date, name: a.name, entry: a.entry, eval5bd: a.eval5bd, perf5bd: a.perf5bd }))
   return symbolMap
 }
 
@@ -163,28 +195,7 @@ async function fetchRecentBottomSymbols(specificDate = null, rangeDays = null) {
 async function fetchRecentBottomSignals(specificDate = null, rangeDays = null) {
   const rows = await getRawSheetData(config.ALERTS_SHEET_NAME)
   const alerts = parseAlerts(rows)
-
-  // 1. 日付指定
-  if (specificDate) {
-    const target = specificDate.replace(/-/g, '/')
-    return alerts.filter(a =>
-      a.date && (a.date.includes(specificDate) || a.date.includes(target))
-    )
-  }
-
-  // 2. 全期間
-  if (rangeDays === 0 || rangeDays === '0') {
-    return alerts
-  }
-
-  // 3. 直近 n 日
-  const days = rangeDays !== null ? Number(rangeDays) : config.RECENT_SIGNAL_DAYS
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
-  return alerts.filter(a => {
-    const d = new Date(String(a.date).replace(/\//g, '-'))
-    return !isNaN(d.getTime()) && d >= cutoff
-  })
+  return filterRecentAlerts(alerts, specificDate, rangeDays)
 }
 
 // ============================================================
@@ -195,12 +206,22 @@ async function fetchAllBottomSignals(days = 0) {
   const rows = await getRawSheetData(config.ALERTS_SHEET_NAME)
   const alerts = parseAlerts(rows)
   if (days === 0) return alerts
-  const cutoff = new Date()
-  cutoff.setDate(cutoff.getDate() - days)
-  return alerts.filter(a => {
-    const d = new Date(String(a.date).replace(/\//g, '-'))
-    return !isNaN(d.getTime()) && d >= cutoff
-  })
+  return filterByCutoff(alerts, cutoffByCalendarDays(days))
+}
+
+async function fetchBacktestBottomSignals(days = config.HELP_BACKTEST_DAYS) {
+  const [rawRows, archiveRows] = await Promise.all([
+    getRawSheetData(config.ALERTS_SHEET_NAME),
+    getRawSheetData('signals_archive').catch(err => {
+      console.warn('[sheets] signals_archive 取得スキップ:', err.message)
+      return []
+    }),
+  ])
+  const alerts = dedupeSignalsByAlertId([
+    ...parseAlerts(rawRows),
+    ...parseAlerts(archiveRows),
+  ])
+  return filterByCutoff(alerts, cutoffByCalendarDays(days))
 }
 
 // ============================================================
@@ -258,4 +279,11 @@ async function fetchPremiumReasonsByAlertIds(signals) {
   return reasonMap
 }
 
-module.exports = { fetchOHLCVData, fetchRecentBottomSymbols, fetchRecentBottomSignals, fetchAllBottomSignals, fetchPremiumReasonsByAlertIds }
+module.exports = {
+  fetchOHLCVData,
+  fetchRecentBottomSymbols,
+  fetchRecentBottomSignals,
+  fetchAllBottomSignals,
+  fetchBacktestBottomSignals,
+  fetchPremiumReasonsByAlertIds,
+}

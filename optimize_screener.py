@@ -136,6 +136,7 @@ SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 TARGET_WIN_RATE  = 0.55
 TARGET_AVG_PERF  = 0.03
+DISPLAY_BACKTEST_DAYS = 365
 RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
 BASELINE_DECAY   = 1.0   # 現行compositeを厳密に超えた場合のみ採用（同一・改悪は不採用）
 WIN10_MIN_COUNT  = 5     # ★6内の+10%以上銘柄の最低件数
@@ -1372,6 +1373,26 @@ def calc_stats(df_s6):
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
                 composite=_calc_composite(wr, avg, w10, l10, W, n))
 
+def recent_calendar_day_df(df_eval, days=DISPLAY_BACKTEST_DAYS):
+    """HTMLレポートの表示期間と同じ、直近N暦日分のDataFrameを返す。"""
+    if df_eval is None or len(df_eval) == 0 or "date" not in df_eval.columns:
+        return df_eval if df_eval is not None else pd.DataFrame()
+    today = pd.Timestamp.today().normalize()
+    cutoff = today - pd.Timedelta(days=max(int(days), 1) - 1)
+    dates = pd.to_datetime(df_eval["date"], errors="coerce")
+    return df_eval[dates >= cutoff].copy()
+
+def calc_display_stats(df_s6):
+    """通知や/help相当の表示用統計。勝率はHTMLと同じく0%の引き分けを分母から除外する。"""
+    stats = calc_stats(df_s6)
+    if df_s6 is None or len(df_s6) == 0 or "perf_5bd" not in df_s6.columns:
+        return stats
+    perf = pd.to_numeric(df_s6["perf_5bd"], errors="coerce")
+    perf = perf[np.isfinite(perf)]
+    decisive = perf[perf != 0]
+    stats["wr_raw"] = float((decisive > 0).mean()) if len(decisive) else 0.0
+    return stats
+
 def _prepare_stats_arrays(df_eval):
     """組み合わせ探索用に、calc_stats相当の入力をNumPy配列へ変換する。"""
     today = pd.Timestamp.today()
@@ -1428,7 +1449,7 @@ def calc_backtest_display_stats(df_eval, method, combo, thresholds=None):
     """通知や/helpに出すバックテスト結果を全件データで集計する。"""
     thresholds = thresholds or {}
     if df_eval is None or len(df_eval) == 0:
-        empty = calc_stats(df_eval if df_eval is not None else pd.DataFrame())
+        empty = calc_display_stats(df_eval if df_eval is not None else pd.DataFrame())
         return empty, empty, empty, empty, 0
 
     if method == "A":
@@ -1436,10 +1457,10 @@ def calc_backtest_display_stats(df_eval, method, combo, thresholds=None):
     else:
         scores = calc_score_b_series(df_eval, combo)
 
-    st6 = calc_stats(df_eval[scores == 6])
-    st5 = calc_stats(df_eval[scores == 5])
-    st4 = calc_stats(df_eval[scores == 4])
-    base = calc_stats(df_eval)
+    st6 = calc_display_stats(df_eval[scores == 6])
+    st5 = calc_display_stats(df_eval[scores == 5])
+    st4 = calc_display_stats(df_eval[scores == 4])
+    base = calc_display_stats(df_eval)
     return st6, st5, st4, base, int(len(df_eval))
 
 def calc_candidate_tiers(df_eval, method, combo, thresholds=None):
@@ -4587,9 +4608,9 @@ def _parse_sweep_output(output, threshold):
         # 通常モードの WR_SIGNIFICANT_IMPROVEMENT 未満で却下されたケース
         summary["verdict"] = "NG"
         summary["ng_kind"] = "minor"
-    elif _re.search(r"alerts_rawベース★6勝率が現行以下", output):
+    elif _re.search(r"表示用★6勝率が現行以下", output):
         summary["verdict"] = "NG"
-        summary["ng_kind"] = "ar_wr"
+        summary["ng_kind"] = "display_wr"
     elif _re.search(r"全件★6が不足|Step 5a.*候補クリア\(train/\w+\): 0通り", output):
         # 注: 単独「候補なし」は rescue mode の副作用メッセージ（"代替候補なし"）と
         # 衝突するため使わない。具体的なメッセージのみで判定。
@@ -5075,10 +5096,10 @@ def main():
         print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
 
-    # alerts_raw 由来のみ（通知表示・/help との整合用）
-    df_alerts_raw = df[~df['_from_archive'].fillna(False)].copy() if '_from_archive' in df.columns else df
-    baseline_ar = calc_stats(df_alerts_raw[df_alerts_raw["sc_cur"] == 6])
-    print(f"  alerts_raw ★6（表示用）: {baseline_ar['n']}件 勝率{baseline_ar['wr_raw']*100:.1f}%"
+    # 表示用統計はHTMLレポートと同じく、直近1年の merged dataset を使う。
+    display_current_df = recent_calendar_day_df(df, DISPLAY_BACKTEST_DAYS)
+    baseline_ar = calc_display_stats(display_current_df[display_current_df["sc_cur"] == 6])
+    print(f"  表示用★6（過去{DISPLAY_BACKTEST_DAYS}日）: {baseline_ar['n']}件 勝率{baseline_ar['wr_raw']*100:.1f}%"
           f" 平均{baseline_ar['avg_raw']*100:.2f}%")
 
     unconfirmed_current_df = build_unconfirmed_current_df(alerts_all, ohlcv)
@@ -5181,7 +5202,7 @@ def main():
             print("  ⚠ rescue mode: 品質ゲートを満たす代替候補なし")
             if args.propose and not args.dry_run:
                 notify_discord_rescue_no_candidate(
-                    baseline_ar, current_validation_stats6, rescue_reasons, len(df_alerts_raw)
+                    baseline_ar, current_validation_stats6, rescue_reasons, len(display_current_df)
                 )
             else:
                 print("  ℹ dry-run/通常実行では rescue候補なし通知を送信しません")
@@ -5488,14 +5509,14 @@ def main():
                 if best_method == "A"
                 else build_func_b(best_combo, best_stats, baseline, len(df)))
 
-    # alerts_raw のみで表示用統計を計算（/help と件数・勝率を揃える）
-    display_df = df_alerts_raw
+    # HTMLレポートと同じ表示期間・勝率定義で、通知/pending用統計を計算する。
+    display_df = display_current_df
     display_stats6, display_stats5, display_stats4, display_base, display_n_total = \
         calc_backtest_display_stats(display_df, best_method, best_combo, best_thresholds)
     training_stats6, training_stats5, training_stats4 = calc_candidate_tiers(
         df_wf_train, best_method, best_combo, best_thresholds
     )
-    print(f"  表示用バックテスト（alerts_rawデータ / {display_n_total}件）: ★6 {display_stats6['n']}件 "
+    print(f"  表示用バックテスト（過去{DISPLAY_BACKTEST_DAYS}日 / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
     # ─── 通常モード時は中程度以上の改善（勝率+1pt以上）のみ提案する ───────────
@@ -5520,12 +5541,12 @@ def main():
                 restart_bot_only()
             return
 
-    # ─── 最終ゲート: alerts_raw★6勝率が現行を下回るなら提案しない ────────────
-    # /help の表示勝率が下がる変更はユーザー体験の改悪になるため、
-    # 全体データ（signals_archive込み）での改善があっても却下する。
+    # ─── 最終ゲート: 表示用★6勝率が現行を下回るなら提案しない ────────────
+    # /help/HTMLの表示勝率が下がる変更はユーザー体験の改悪になるため、
+    # 学習用の全体データで改善があっても却下する。
     if display_stats6["wr_raw"] < baseline_ar["wr_raw"]:
         msg = (
-            f"alerts_rawベース★6勝率が現行以下のため更新をスキップ"
+            f"表示用★6勝率が現行以下のため更新をスキップ"
             f"（候補{display_stats6['wr_raw']*100:.1f}%"
             f" < 現行{baseline_ar['wr_raw']*100:.1f}%）"
         )
@@ -5558,7 +5579,7 @@ def main():
                              for k, v in display_base.items()
                              if not isinstance(v, str)},
             "n_total":      display_n_total,
-            "backtest_source": "alerts_raw",
+            "backtest_source": f"merged_recent_{DISPLAY_BACKTEST_DAYS}d",
             "proposed_at":  datetime.utcnow().isoformat() + "Z",
             "backtest": {
                 "data_mode": data_mode,

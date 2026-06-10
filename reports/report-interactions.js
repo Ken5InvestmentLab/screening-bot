@@ -263,7 +263,8 @@
   const pairs = buttons.map((button) => {
     const container = button.closest(".symbol-actions");
     const detail = container?.querySelector(".fundamental-detail");
-    return detail ? { button, detail } : null;
+    const closeButton = detail?.querySelector(".fundamental-close");
+    return detail ? { button, closeButton, detail } : null;
   }).filter(Boolean);
   const render = ({ button, detail }) => {
     const expanded = !detail.hidden;
@@ -284,7 +285,16 @@
       detail.hidden = !shouldOpen;
       render(pair);
     });
+    pair.closeButton?.addEventListener("click", () => {
+      closePair(pair);
+    });
     render(pair);
+  });
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest(".fundamental-detail") || target.closest("[data-fundamental-toggle]")) return;
+    pairs.forEach(closePair);
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;

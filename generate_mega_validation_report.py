@@ -212,6 +212,7 @@ CANDIDATES = [
 ]
 
 PAID_MODE_IDS = {"mega5_rebound", "mega40_deep_reversal", "mega40_wick_recovery"}
+FREE_SAMPLE_MODE_IDS = {"stable_s6", "sniper"}
 FREE_CONFIRMED_LIMIT = 10
 MODE_CONFIRMED_PAGE_SIZE = 10
 FREE_REPORT_SUFFIX = "_free"
@@ -535,22 +536,49 @@ def attach_fundamental_links(
     return frame
 
 
-def lock_fundamental_actions(frame: pd.DataFrame) -> pd.DataFrame:
+def lock_fundamental_actions(frame: pd.DataFrame, unlocked_alert_ids: set[str] | None = None) -> pd.DataFrame:
     frame = frame.copy()
     has_url = (
         frame["fundamental_url"].fillna("").astype(str).str.strip().ne("")
         if "fundamental_url" in frame.columns
-        else False
+        else pd.Series(False, index=frame.index)
     )
     has_html = (
         frame["fundamental_html"].fillna("").astype(str).str.strip().ne("")
         if "fundamental_html" in frame.columns
-        else False
+        else pd.Series(False, index=frame.index)
     )
-    frame["fundamental_locked"] = has_url | has_html
-    frame["fundamental_url"] = ""
-    frame["fundamental_html"] = ""
+    has_fundamental = has_url | has_html
+    if unlocked_alert_ids:
+        alert_ids = (
+            frame["alert_id"].fillna("").astype(str).str.strip()
+            if "alert_id" in frame.columns
+            else pd.Series("", index=frame.index)
+        )
+        unlocked = alert_ids.isin(unlocked_alert_ids)
+    else:
+        unlocked = pd.Series(False, index=frame.index)
+    locked = has_fundamental & ~unlocked
+    frame["fundamental_locked"] = locked
+    frame.loc[locked, "fundamental_url"] = ""
+    frame.loc[locked, "fundamental_html"] = ""
     return frame
+
+
+def free_fundamental_sample_alert_ids(frame_confirmed: pd.DataFrame) -> set[str]:
+    alert_ids: set[str] = set()
+    for candidate in CANDIDATES:
+        if candidate.get("id") not in FREE_SAMPLE_MODE_IDS:
+            continue
+        rows = candidate_rows(frame_confirmed, candidate, confirmed=True, limit=FREE_CONFIRMED_LIMIT)
+        if rows.empty or "alert_id" not in rows.columns:
+            continue
+        alert_ids.update(
+            str(alert_id).strip()
+            for alert_id in rows["alert_id"].fillna("")
+            if str(alert_id).strip()
+        )
+    return alert_ids
 
 
 def collect_premium_urls(frame: pd.DataFrame, premium_links: dict) -> list[str]:
@@ -1057,6 +1085,27 @@ def markdown_text_html(value: str) -> str:
     return "".join(parts).replace("\n", "<br>")
 
 
+def discord_embed_impact_class(embed: dict) -> str:
+    impact_text = ""
+    for field in embed.get("fields") or []:
+        name = str(field.get("name") or "")
+        value = str(field.get("value") or "")
+        if "材料インパクト" in name:
+            impact_text = value
+            break
+    if not impact_text:
+        impact_text = " ".join(
+            str(field.get("value") or "") for field in embed.get("fields") or []
+        )
+    if "ネガティブ" in impact_text:
+        return " impact-negative"
+    if any(keyword in impact_text for keyword in ["様子見", "混在", "要確認"]):
+        return " impact-watch"
+    if "ポジティブ" in impact_text:
+        return " impact-positive"
+    return ""
+
+
 def discord_message_html(message: dict | None) -> str:
     if not message:
         return ""
@@ -1091,8 +1140,9 @@ def discord_message_html(message: dict | None) -> str:
         description_html = f"<p>{markdown_text_html(description)}</p>" if description else ""
         fields_html = f"<dl>{field_html}</dl>" if field_html else ""
         meta_html = f'<p class="discord-meta">{html_escape(meta)}</p>' if meta else ""
+        impact_class = discord_embed_impact_class(embed)
         blocks.append(
-            '<article class="discord-embed">'
+            f'<article class="discord-embed{impact_class}">'
             f"{title_html}"
             f"{description_html}"
             f"{fields_html}"
@@ -1145,7 +1195,12 @@ def action_buttons(symbol: str, row: pd.Series) -> str:
             '<button class="action-btn secondary" type="button" '
             'data-fundamental-toggle aria-expanded="false">ファンダ分析</button>'
         )
-        fundamental_detail = f'<div class="fundamental-detail" hidden>{fundamental_html}</div>'
+        fundamental_detail = (
+            '<div class="fundamental-detail" hidden>'
+            '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる">&times;</button>'
+            f"{fundamental_html}"
+            "</div>"
+        )
     elif fundamental_url:
         fundamental_button = (
             f'<a class="action-btn secondary" href="{html_escape(fundamental_url)}" '
@@ -2367,7 +2422,8 @@ def report_interactions_js() -> str:
   const pairs = buttons.map((button) => {
     const container = button.closest(".symbol-actions");
     const detail = container?.querySelector(".fundamental-detail");
-    return detail ? { button, detail } : null;
+    const closeButton = detail?.querySelector(".fundamental-close");
+    return detail ? { button, closeButton, detail } : null;
   }).filter(Boolean);
   const render = ({ button, detail }) => {
     const expanded = !detail.hidden;
@@ -2388,7 +2444,16 @@ def report_interactions_js() -> str:
       detail.hidden = !shouldOpen;
       render(pair);
     });
+    pair.closeButton?.addEventListener("click", () => {
+      closePair(pair);
+    });
     render(pair);
+  });
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (target.closest(".fundamental-detail") || target.closest("[data-fundamental-toggle]")) return;
+    pairs.forEach(closePair);
   });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
@@ -3331,9 +3396,34 @@ def build_html_report(
       text-align: left;
       white-space: normal;
       box-sizing: border-box;
+      position: relative;
+      padding-right: 42px;
     }}
     .fundamental-detail[hidden] {{
       display: none;
+    }}
+    .fundamental-close {{
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid #cfd8e6;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #344054;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+    }}
+    .fundamental-close:hover {{
+      background: #eef5ff;
+      color: #1849a9;
     }}
     @media (min-width: 821px) {{
       .symbol-actions .fundamental-detail {{
@@ -3345,7 +3435,7 @@ def build_html_report(
         max-width: min(760px, calc(100vw - 48px));
         max-height: calc(100vh - 128px);
         margin-top: 0;
-        padding: 14px;
+        padding: 14px 48px 14px 14px;
         overflow: auto;
         transform: translateX(-50%);
         box-shadow: 0 22px 56px rgba(16, 24, 40, 0.28);
@@ -3365,6 +3455,15 @@ def build_html_report(
       background: #f8f9ff;
       border-radius: 6px;
       padding: 10px;
+    }}
+    .discord-embed.impact-positive {{
+      border-left-color: #12b76a;
+    }}
+    .discord-embed.impact-watch {{
+      border-left-color: #fdb022;
+    }}
+    .discord-embed.impact-negative {{
+      border-left-color: #f04438;
     }}
     .discord-embed h4 {{
       margin: 0 0 8px;
@@ -4126,15 +4225,24 @@ def mode_page_style() -> str:
       margin-top: 0; min-width: 260px; max-width: 520px; padding: 10px;
       border: 1px solid var(--line); border-radius: 6px; background: #fbfdff;
       text-align: left; white-space: normal; box-sizing: border-box;
+      position: relative; padding-right: 42px;
     }
     .fundamental-detail[hidden] { display: none; }
+    .fundamental-close {
+      position: absolute; top: 8px; right: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 1px solid #cfd8e6; border-radius: 999px;
+      background: #fff; color: #344054; font-size: 18px; font-weight: 700;
+      line-height: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(16, 24, 40, .08);
+    }
+    .fundamental-close:hover { background: #eef5ff; color: #1849a9; }
     @media (min-width: 821px) {
       .symbol-actions .fundamental-detail {
         position: fixed; top: 96px; left: 50%; z-index: 80;
         width: min(760px, calc(100vw - 48px));
         max-width: min(760px, calc(100vw - 48px));
         max-height: calc(100vh - 128px);
-        margin-top: 0; padding: 14px; overflow: auto;
+        margin-top: 0; padding: 14px 48px 14px 14px; overflow: auto;
         transform: translateX(-50%);
         box-shadow: 0 22px 56px rgba(16, 24, 40, .28);
       }
@@ -4142,6 +4250,9 @@ def mode_page_style() -> str:
     }
     .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
     .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
+    .discord-embed.impact-positive { border-left-color: #12b76a; }
+    .discord-embed.impact-watch { border-left-color: #fdb022; }
+    .discord-embed.impact-negative { border-left-color: #f04438; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
     .discord-embed dl { display: grid; gap: 8px; margin: 0; }
     .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
@@ -4826,7 +4937,11 @@ def main() -> None:
         handle.write(html_report.rstrip())
         handle.write("\n")
 
-    free_report_confirmed_frame = lock_fundamental_actions(report_confirmed_frame)
+    free_sample_alert_ids = free_fundamental_sample_alert_ids(report_confirmed_frame)
+    free_report_confirmed_frame = lock_fundamental_actions(
+        report_confirmed_frame,
+        unlocked_alert_ids=free_sample_alert_ids,
+    )
     free_report_all_frame = lock_fundamental_actions(report_all_frame)
     free_html_report = build_html_report(
         free_report_confirmed_frame,

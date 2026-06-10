@@ -236,15 +236,24 @@
       margin-top: 0; min-width: 260px; max-width: 520px; padding: 10px;
       border: 1px solid var(--line); border-radius: 6px; background: #fbfdff;
       text-align: left; white-space: normal; box-sizing: border-box;
+      position: relative; padding-right: 42px;
     }
     .fundamental-detail[hidden] { display: none; }
+    .fundamental-close {
+      position: absolute; top: 8px; right: 8px;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 28px; height: 28px; border: 1px solid #cfd8e6; border-radius: 999px;
+      background: #fff; color: #344054; font-size: 18px; font-weight: 700;
+      line-height: 1; cursor: pointer; box-shadow: 0 2px 8px rgba(16, 24, 40, .08);
+    }
+    .fundamental-close:hover { background: #eef5ff; color: #1849a9; }
     @media (min-width: 821px) {
       .symbol-actions .fundamental-detail {
         position: fixed; top: 96px; left: 50%; z-index: 80;
         width: min(760px, calc(100vw - 48px));
         max-width: min(760px, calc(100vw - 48px));
         max-height: calc(100vh - 128px);
-        margin-top: 0; padding: 14px; overflow: auto;
+        margin-top: 0; padding: 14px 48px 14px 14px; overflow: auto;
         transform: translateX(-50%);
         box-shadow: 0 22px 56px rgba(16, 24, 40, .28);
       }
@@ -252,6 +261,9 @@
     }
     .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
     .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
+    .discord-embed.impact-positive { border-left-color: #12b76a; }
+    .discord-embed.impact-watch { border-left-color: #fdb022; }
+    .discord-embed.impact-negative { border-left-color: #f04438; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
     .discord-embed dl { display: grid; gap: 8px; margin: 0; }
     .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
@@ -563,7 +575,7 @@
 
   <header>
     <h1>Mega40 下ヒゲ回復</h1>
-    <p>生成日時: 2026-06-11 01:39:06 JST</p>
+    <p>生成日時: 2026-06-11 02:32:00 JST</p>
     <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
   </header>
   <main>

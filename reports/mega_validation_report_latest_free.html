@@ -625,8 +625,17 @@
     .vol-tag[data-tooltip]:focus-visible::after {
       display: block;
     }
-    .symbol-stack .action-buttons {
+    .symbol-actions {
+      display: grid;
+      gap: 8px;
+      justify-items: flex-start;
+      max-width: 100%;
+    }
+    .symbol-stack .symbol-actions {
       margin-top: 2px;
+    }
+    .symbol-stack .action-buttons {
+      margin-top: 0;
       justify-content: flex-start;
       flex-wrap: nowrap;
     }
@@ -778,8 +787,13 @@
       color: #1849a9;
       font-size: 12px;
       font-weight: 700;
+      font-family: inherit;
       text-decoration: none;
       white-space: nowrap;
+      cursor: pointer;
+    }
+    button.action-btn {
+      appearance: none;
     }
     .action-btn.secondary {
       border-color: #cfd8e6;
@@ -796,17 +810,18 @@
       background: #dfeeff;
     }
     .fundamental-detail {
-      margin-top: 8px;
+      margin-top: 0;
       min-width: 260px;
       max-width: 520px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfdff;
       text-align: left;
       white-space: normal;
     }
-    .fundamental-detail summary {
-      cursor: pointer;
-      color: #1849a9;
-      font-size: 12px;
-      font-weight: 700;
+    .fundamental-detail[hidden] {
+      display: none;
     }
     .discord-message {
       display: grid;
@@ -842,6 +857,11 @@
       margin: 8px 0 0;
       color: var(--muted);
       font-size: 11px;
+    }
+    .discord-attachments {
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12px;
     }
     .candidate-detail > summary::-webkit-details-marker { display: none; }
     .candidate-detail > summary::before {
@@ -1348,7 +1368,7 @@
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底極致 スコアリングBot レポート</h1>
-    <p>生成日時: 2026-06-10 23:31:46 JST</p>
+    <p>生成日時: 2026-06-11 00:47:54 JST</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>

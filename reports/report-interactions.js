@@ -258,6 +258,26 @@
 })();
 
 (() => {
+  const buttons = Array.from(document.querySelectorAll("[data-fundamental-toggle]"));
+  if (buttons.length === 0) return;
+  buttons.forEach((button) => {
+    const container = button.closest(".symbol-actions");
+    const detail = container?.querySelector(".fundamental-detail");
+    if (!detail) return;
+    const render = () => {
+      const expanded = !detail.hidden;
+      button.setAttribute("aria-expanded", expanded ? "true" : "false");
+      button.textContent = expanded ? "閉じる" : "ファンダ分析";
+    };
+    button.addEventListener("click", () => {
+      detail.hidden = !detail.hidden;
+      render();
+    });
+    render();
+  });
+})();
+
+(() => {
   const buttons = Array.from(document.querySelectorAll(".mobile-row-toggle"));
   if (buttons.length === 0) return;
   buttons.forEach((button) => {

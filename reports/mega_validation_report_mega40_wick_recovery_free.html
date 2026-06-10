@@ -213,7 +213,11 @@
     }
     .vol-tag[data-tooltip]:hover::after,
     .vol-tag[data-tooltip]:focus-visible::after { display: block; }
-    .symbol-stack .action-buttons { margin-top: 2px; justify-content: flex-start; flex-wrap: nowrap; }
+    .symbol-actions {
+      display: grid; gap: 8px; justify-items: flex-start; max-width: 100%;
+    }
+    .symbol-stack .symbol-actions { margin-top: 2px; }
+    .symbol-stack .action-buttons { margin-top: 0; justify-content: flex-start; flex-wrap: nowrap; }
     .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
       display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;
@@ -224,11 +228,16 @@
       flex: 1 1 64px; min-width: 58px; max-width: 100%;
       padding: 5px 9px; border: 1px solid #bfd2ee; border-radius: 6px;
       background: #eef5ff; color: #1849a9; font-size: 12px; font-weight: 700; text-decoration: none;
-      white-space: nowrap;
+      white-space: nowrap; font-family: inherit; cursor: pointer;
     }
+    button.action-btn { appearance: none; }
     .action-btn.secondary { border-color: #cfd8e6; background: #f6f8fb; color: #344054; }
-    .fundamental-detail { margin-top: 8px; min-width: 260px; max-width: 520px; text-align: left; white-space: normal; }
-    .fundamental-detail summary { cursor: pointer; color: #1849a9; font-size: 12px; font-weight: 700; }
+    .fundamental-detail {
+      margin-top: 0; min-width: 260px; max-width: 520px; padding: 10px;
+      border: 1px solid var(--line); border-radius: 6px; background: #fbfdff;
+      text-align: left; white-space: normal;
+    }
+    .fundamental-detail[hidden] { display: none; }
     .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
     .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
@@ -236,6 +245,7 @@
     .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
     .discord-embed dd { margin: 0; color: #182230; }
     .discord-meta { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+    .discord-attachments { margin: 0; padding-left: 18px; font-size: 12px; }
     .candidate-detail { padding: 18px; }
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
@@ -541,7 +551,7 @@
 
   <header>
     <h1>Mega40 下ヒゲ回復</h1>
-    <p>生成日時: 2026-06-10 23:31:46 JST</p>
+    <p>生成日時: 2026-06-11 00:47:54 JST</p>
     <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
   </header>
   <main>

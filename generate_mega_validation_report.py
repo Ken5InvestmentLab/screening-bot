@@ -10,11 +10,13 @@ condition sets, and writes human-review reports.
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from html import escape
 import json
 import math
 import os
 import re
+import threading
 import time
 import urllib.error
 import urllib.parse
@@ -377,14 +379,15 @@ def fetch_discord_message(url: str, token: str) -> dict | None:
         return None
     _, channel_id, message_id = parsed
     endpoint = f"{DISCORD_API_BASE}/channels/{channel_id}/messages/{message_id}"
+    authorization = token if token.lower().startswith(("bot ", "bearer ")) else f"Bot {token}"
     request = urllib.request.Request(
         endpoint,
         headers={
-            "Authorization": f"Bot {token}",
+            "Authorization": authorization,
             "User-Agent": "screening-bot-mega-report",
         },
     )
-    for _ in range(2):
+    for _ in range(8):
         try:
             with urllib.request.urlopen(request, timeout=15) as response:
                 payload = json.loads(response.read().decode("utf-8"))
@@ -393,7 +396,7 @@ def fetch_discord_message(url: str, token: str) -> dict | None:
             if err.code == 429:
                 try:
                     body = json.loads(err.read().decode("utf-8"))
-                    time.sleep(min(float(body.get("retry_after", 1.0)), 3.0))
+                    time.sleep(min(float(body.get("retry_after", 1.0)), 5.0) + 0.1)
                     continue
                 except Exception:
                     time.sleep(1.0)
@@ -426,9 +429,18 @@ def simplify_discord_message(payload: dict, jump_url: str) -> dict:
                 "timestamp": str(embed.get("timestamp") or payload.get("timestamp") or ""),
             }
         )
+    attachments = []
+    for attachment in payload.get("attachments") or []:
+        attachments.append(
+            {
+                "filename": str(attachment.get("filename") or ""),
+                "url": str(attachment.get("url") or ""),
+            }
+        )
     return {
         "content": str(payload.get("content") or ""),
         "embeds": embeds,
+        "attachments": attachments,
         "jump_url": jump_url,
     }
 
@@ -439,12 +451,64 @@ def fetch_discord_messages(urls: list[str]) -> dict[str, dict]:
         return {}
     token = discord_api_token()
     if not token:
-        return {}
+        raise RuntimeError("MEGA_REPORT_FETCH_DISCORD_MESSAGES is enabled, but no Discord bot token is configured")
+    try:
+        max_workers = int(config_value(["MEGA_REPORT_DISCORD_FETCH_WORKERS"], "6"))
+    except ValueError:
+        max_workers = 6
+    max_workers = max(1, min(max_workers, 16))
+    try:
+        min_interval = float(config_value(["MEGA_REPORT_DISCORD_FETCH_MIN_INTERVAL_SECONDS"], "0.8"))
+    except ValueError:
+        min_interval = 0.8
+    min_interval = max(0.0, min(min_interval, 2.0))
+    try:
+        fetch_passes = int(config_value(["MEGA_REPORT_DISCORD_FETCH_PASSES"], "2"))
+    except ValueError:
+        fetch_passes = 2
+    fetch_passes = max(1, min(fetch_passes, 4))
+    unique_urls = sorted(set(urls))
     messages = {}
-    for url in sorted(set(urls)):
-        message = fetch_discord_message(url, token)
-        if message:
-            messages[url] = message
+    throttle_lock = threading.Lock()
+    last_started = 0.0
+
+    def throttled_fetch(url: str) -> dict | None:
+        nonlocal last_started
+        if min_interval > 0:
+            with throttle_lock:
+                elapsed = time.monotonic() - last_started
+                if elapsed < min_interval:
+                    time.sleep(min_interval - elapsed)
+                last_started = time.monotonic()
+        return fetch_discord_message(url, token)
+
+    def fetch_batch(batch_urls: list[str]) -> None:
+        if max_workers == 1:
+            for url in batch_urls:
+                message = throttled_fetch(url)
+                if message:
+                    messages[url] = message
+            return
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {executor.submit(throttled_fetch, url): url for url in batch_urls}
+            for future in as_completed(futures):
+                url = futures[future]
+                try:
+                    message = future.result()
+                except Exception:
+                    message = None
+                if message:
+                    messages[url] = message
+
+    print(f"fetching {len(unique_urls)} Discord messages with {max_workers} workers")
+    for fetch_pass in range(fetch_passes):
+        remaining = [url for url in unique_urls if url not in messages]
+        if not remaining:
+            break
+        if fetch_pass > 0:
+            print(f"retrying {len(remaining)} Discord messages")
+            time.sleep(5.0)
+        fetch_batch(remaining)
     return messages
 
 
@@ -468,6 +532,24 @@ def attach_fundamental_links(
         html_blocks.append(discord_message_html(discord_messages.get(url)) if url else "")
     frame["fundamental_url"] = urls
     frame["fundamental_html"] = html_blocks
+    return frame
+
+
+def lock_fundamental_actions(frame: pd.DataFrame) -> pd.DataFrame:
+    frame = frame.copy()
+    has_url = (
+        frame["fundamental_url"].fillna("").astype(str).str.strip().ne("")
+        if "fundamental_url" in frame.columns
+        else False
+    )
+    has_html = (
+        frame["fundamental_html"].fillna("").astype(str).str.strip().ne("")
+        if "fundamental_html" in frame.columns
+        else False
+    )
+    frame["fundamental_locked"] = has_url | has_html
+    frame["fundamental_url"] = ""
+    frame["fundamental_html"] = ""
     return frame
 
 
@@ -1017,6 +1099,19 @@ def discord_message_html(message: dict | None) -> str:
             f"{meta_html}"
             "</article>"
         )
+    attachments = message.get("attachments") or []
+    if attachments:
+        attachment_links = "".join(
+            '<li>'
+            f'<a href="{html_escape(attachment.get("url", ""))}" target="_blank" rel="noopener noreferrer">'
+            f'{html_escape(attachment.get("filename", "") or attachment.get("url", ""))}'
+            "</a>"
+            "</li>"
+            for attachment in attachments
+            if str(attachment.get("url") or "").strip()
+        )
+        if attachment_links:
+            blocks.append(f'<ul class="discord-attachments">{attachment_links}</ul>')
     if not blocks:
         return ""
     return '<div class="discord-message">' + "".join(blocks) + "</div>"
@@ -1034,28 +1129,40 @@ def action_buttons(symbol: str, row: pd.Series) -> str:
     clean = clean_symbol_text(symbol)
     fundamental_url = str(row.get("fundamental_url", "") or "").strip()
     fundamental_html = str(row.get("fundamental_html", "") or "").strip()
+    try:
+        fundamental_locked = bool(row.get("fundamental_locked", False)) and not bool(
+            pd.isna(row.get("fundamental_locked", False))
+        )
+    except (TypeError, ValueError):
+        fundamental_locked = False
     if not clean:
         return '<span class="muted">--</span>'
-    fundamental_button = (
-        f'<a class="action-btn secondary" href="{html_escape(fundamental_url)}" '
-        'target="_blank" rel="noopener noreferrer">ファンダ分析</a>'
-        if fundamental_url
-        else ""
-    )
-    fundamental_detail = (
-        '<details class="fundamental-detail">'
-        '<summary>ファンダ本文</summary>'
-        f"{fundamental_html}"
-        "</details>"
-        if fundamental_html
-        else ""
-    )
+    if fundamental_locked:
+        fundamental_button = f'<a class="action-btn secondary" href="{PURCHASE_PATH}">ファンダ分析</a>'
+        fundamental_detail = ""
+    elif fundamental_html:
+        fundamental_button = (
+            '<button class="action-btn secondary" type="button" '
+            'data-fundamental-toggle aria-expanded="false">ファンダ分析</button>'
+        )
+        fundamental_detail = f'<div class="fundamental-detail" hidden>{fundamental_html}</div>'
+    elif fundamental_url:
+        fundamental_button = (
+            f'<a class="action-btn secondary" href="{html_escape(fundamental_url)}" '
+            'target="_blank" rel="noopener noreferrer">ファンダ分析</a>'
+        )
+        fundamental_detail = ""
+    else:
+        fundamental_button = ""
+        fundamental_detail = ""
     return (
+        '<div class="symbol-actions">'
         '<div class="action-buttons">'
         f"{fundamental_button}"
         f'<a class="action-btn" href="{chart_url(clean)}" target="_blank" rel="noopener noreferrer">チャート</a>'
         "</div>"
         f"{fundamental_detail}"
+        "</div>"
     )
 
 
@@ -2255,6 +2362,26 @@ def report_interactions_js() -> str:
 })();
 
 (() => {
+  const buttons = Array.from(document.querySelectorAll("[data-fundamental-toggle]"));
+  if (buttons.length === 0) return;
+  buttons.forEach((button) => {
+    const container = button.closest(".symbol-actions");
+    const detail = container?.querySelector(".fundamental-detail");
+    if (!detail) return;
+    const render = () => {
+      const expanded = !detail.hidden;
+      button.setAttribute("aria-expanded", expanded ? "true" : "false");
+      button.textContent = expanded ? "閉じる" : "ファンダ分析";
+    };
+    button.addEventListener("click", () => {
+      detail.hidden = !detail.hidden;
+      render();
+    });
+    render();
+  });
+})();
+
+(() => {
   const buttons = Array.from(document.querySelectorAll(".mobile-row-toggle"));
   if (buttons.length === 0) return;
   buttons.forEach((button) => {
@@ -2994,8 +3121,17 @@ def build_html_report(
     .vol-tag[data-tooltip]:focus-visible::after {{
       display: block;
     }}
-    .symbol-stack .action-buttons {{
+    .symbol-actions {{
+      display: grid;
+      gap: 8px;
+      justify-items: flex-start;
+      max-width: 100%;
+    }}
+    .symbol-stack .symbol-actions {{
       margin-top: 2px;
+    }}
+    .symbol-stack .action-buttons {{
+      margin-top: 0;
       justify-content: flex-start;
       flex-wrap: nowrap;
     }}
@@ -3147,8 +3283,13 @@ def build_html_report(
       color: #1849a9;
       font-size: 12px;
       font-weight: 700;
+      font-family: inherit;
       text-decoration: none;
       white-space: nowrap;
+      cursor: pointer;
+    }}
+    button.action-btn {{
+      appearance: none;
     }}
     .action-btn.secondary {{
       border-color: #cfd8e6;
@@ -3165,17 +3306,18 @@ def build_html_report(
       background: #dfeeff;
     }}
     .fundamental-detail {{
-      margin-top: 8px;
+      margin-top: 0;
       min-width: 260px;
       max-width: 520px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbfdff;
       text-align: left;
       white-space: normal;
     }}
-    .fundamental-detail summary {{
-      cursor: pointer;
-      color: #1849a9;
-      font-size: 12px;
-      font-weight: 700;
+    .fundamental-detail[hidden] {{
+      display: none;
     }}
     .discord-message {{
       display: grid;
@@ -3211,6 +3353,11 @@ def build_html_report(
       margin: 8px 0 0;
       color: var(--muted);
       font-size: 11px;
+    }}
+    .discord-attachments {{
+      margin: 0;
+      padding-left: 18px;
+      font-size: 12px;
     }}
     .candidate-detail > summary::-webkit-details-marker {{ display: none; }}
     .candidate-detail > summary::before {{
@@ -3921,7 +4068,11 @@ def mode_page_style() -> str:
     }
     .vol-tag[data-tooltip]:hover::after,
     .vol-tag[data-tooltip]:focus-visible::after { display: block; }
-    .symbol-stack .action-buttons { margin-top: 2px; justify-content: flex-start; flex-wrap: nowrap; }
+    .symbol-actions {
+      display: grid; gap: 8px; justify-items: flex-start; max-width: 100%;
+    }
+    .symbol-stack .symbol-actions { margin-top: 2px; }
+    .symbol-stack .action-buttons { margin-top: 0; justify-content: flex-start; flex-wrap: nowrap; }
     .symbol-stack .action-btn { flex: 0 0 auto; min-width: 58px; }
     .action-buttons {
       display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap;
@@ -3932,11 +4083,16 @@ def mode_page_style() -> str:
       flex: 1 1 64px; min-width: 58px; max-width: 100%;
       padding: 5px 9px; border: 1px solid #bfd2ee; border-radius: 6px;
       background: #eef5ff; color: #1849a9; font-size: 12px; font-weight: 700; text-decoration: none;
-      white-space: nowrap;
+      white-space: nowrap; font-family: inherit; cursor: pointer;
     }
+    button.action-btn { appearance: none; }
     .action-btn.secondary { border-color: #cfd8e6; background: #f6f8fb; color: #344054; }
-    .fundamental-detail { margin-top: 8px; min-width: 260px; max-width: 520px; text-align: left; white-space: normal; }
-    .fundamental-detail summary { cursor: pointer; color: #1849a9; font-size: 12px; font-weight: 700; }
+    .fundamental-detail {
+      margin-top: 0; min-width: 260px; max-width: 520px; padding: 10px;
+      border: 1px solid var(--line); border-radius: 6px; background: #fbfdff;
+      text-align: left; white-space: normal;
+    }
+    .fundamental-detail[hidden] { display: none; }
     .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
     .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
@@ -3944,6 +4100,7 @@ def mode_page_style() -> str:
     .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
     .discord-embed dd { margin: 0; color: #182230; }
     .discord-meta { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
+    .discord-attachments { margin: 0; padding-left: 18px; font-size: 12px; }
     .candidate-detail { padding: 18px; }
     .candidate-detail > summary { cursor: pointer; font-weight: 700; color: #1849a9; margin: -18px; padding: 18px; }
     .candidate-detail[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 16px; }
@@ -4622,9 +4779,11 @@ def main() -> None:
         handle.write(html_report.rstrip())
         handle.write("\n")
 
+    free_report_confirmed_frame = lock_fundamental_actions(report_confirmed_frame)
+    free_report_all_frame = lock_fundamental_actions(report_all_frame)
     free_html_report = build_html_report(
-        report_confirmed_frame,
-        report_all_frame,
+        free_report_confirmed_frame,
+        free_report_all_frame,
         report_meta_data,
         generated_at,
         free=True,
@@ -4660,8 +4819,8 @@ def main() -> None:
 
         free_mode_report = build_mode_html_page(
             candidate,
-            report_confirmed_frame,
-            report_all_frame,
+            free_report_confirmed_frame,
+            free_report_all_frame,
             generated_at,
             free=True,
         )

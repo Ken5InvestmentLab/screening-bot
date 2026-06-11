@@ -221,6 +221,28 @@
       border-color: var(--line);
       color: var(--text);
     }
+    :root[data-theme="dark"] .discord-embed {
+      background: #18263a;
+      border-left-color: #7f8cff;
+    }
+    :root[data-theme="dark"] .discord-embed.impact-positive {
+      background: #102a22;
+      border-left-color: #63d49b;
+    }
+    :root[data-theme="dark"] .discord-embed.impact-watch {
+      background: #332710;
+      border-left-color: #f4c15d;
+    }
+    :root[data-theme="dark"] .discord-embed.impact-negative {
+      background: #351b20;
+      border-left-color: #ff8a7c;
+    }
+    :root[data-theme="dark"] code,
+    :root[data-theme="dark"] .indicator-options code,
+    :root[data-theme="dark"] .condition-list code,
+    :root[data-theme="dark"] .discord-embed h4 a {
+      color: #9cc7ff;
+    }
     :root[data-theme="dark"] .mode-card,
     :root[data-theme="dark"] .search-panel,
     :root[data-theme="dark"] .indicator-options {
@@ -1718,7 +1740,7 @@
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底極致 スコアリングBot レポート</h1>
-    <p>生成日時: 2026-06-11 15:48:16 JST</p>
+    <p>生成日時: 2026-06-11 17:02:34 JST</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
@@ -1726,10 +1748,10 @@
     <section id="performance-summary" class="panel">
       <h2>全体成績（過去1年分）</h2>
       <section class="cards">
-        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2219</div></div>
+        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2212</div></div>
         <div class="card"><div class="label">対象モード</div><div class="value">5</div></div>
         <div class="card"><div class="label">確定済み延べ件数</div><div class="value">80</div></div>
-        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">14</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">13</div></div>
       </section>
       <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       <table class="compact">
@@ -1835,7 +1857,7 @@
           <span><strong>12</strong><small>確定</small></span>
           <span><strong><span class="pos">66.7%</span></strong><small>勝率</small></span>
           <span><strong><span class="pos">+32.2%</span></strong><small>平均</small></span>
-          <span><strong>7</strong><small>ウォッチ中</small></span>
+          <span><strong>6</strong><small>ウォッチ中</small></span>
         </div>
 
         <span class="mode-card-action">有料会員限定 →</span>

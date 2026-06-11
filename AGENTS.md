@@ -99,6 +99,8 @@ py optimize_screener.py --dry-run
 PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 ```
 
+特定時刻時点の表示へ手動で戻す必要がある場合だけ、`MEGA_REPORT_ALERT_RECEIVED_CUTOFF="YYYY-MM-DD HH:mm"` または `--alert-received-cutoff "YYYY-MM-DD HH:mm"` を指定して再生成する。通常生成やGitHub Actionsではこのカットオフを指定しない。
+
 サイトタイトルとトップH1は `天底極致 スコアリングBot レポート` にする。
 レポート上の評価日後株価は騰落率から逆算せず、OHLCVの日足にある実際の終値を表示する。エントリー価格は銘柄セル内のボラティリティタグ右隣に表示し、列は増やさない。PCの表表示は左揃えを維持する。スマホカード表示では銘柄セル内に主要情報だけの概要を出し、詳細を見るボタンで操作ボタンや非対象評価日などの全情報を開く。
 

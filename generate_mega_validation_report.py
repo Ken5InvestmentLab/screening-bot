@@ -288,6 +288,60 @@ def parse_date(value):
     return pd.to_datetime(normalize_date(value), errors="coerce")
 
 
+def parse_local_timestamp(value: str):
+    text = str(value or "").strip()
+    if not text:
+        return pd.NaT
+    return pd.to_datetime(text.replace("/", "-"), errors="coerce")
+
+
+def alert_received_at_lookup(*row_sets: list[list[str]]) -> dict[str, str]:
+    lookup: dict[str, str] = {}
+    for rows in row_sets:
+        if len(rows) < 5:
+            continue
+        header = [str(cell).lower().strip() for cell in rows[3]]
+        if "alert_id" not in header or "received_at" not in header:
+            continue
+        alert_id_index = header.index("alert_id")
+        received_at_index = header.index("received_at")
+        for row in rows[4:]:
+            if not row or alert_id_index >= len(row):
+                continue
+            alert_id = str(row[alert_id_index]).strip()
+            if not alert_id or alert_id in lookup:
+                continue
+            received_at = str(row[received_at_index]).strip() if received_at_index < len(row) else ""
+            lookup[alert_id] = received_at
+    return lookup
+
+
+def attach_alert_received_at(alerts: pd.DataFrame, lookup: dict[str, str]) -> pd.DataFrame:
+    if alerts.empty or "alert_id" not in alerts.columns:
+        return alerts
+    alerts = alerts.copy()
+    alerts["received_at"] = alerts["alert_id"].astype(str).map(lookup).fillna("")
+    alerts["_received_at_dt"] = alerts["received_at"].map(parse_local_timestamp)
+    return alerts
+
+
+def filter_alerts_by_received_cutoff(alerts: pd.DataFrame, cutoff) -> tuple[pd.DataFrame, int]:
+    if cutoff is None or pd.isna(cutoff) or alerts.empty or "_received_at_dt" not in alerts.columns:
+        return alerts, 0
+    received_at = pd.to_datetime(alerts["_received_at_dt"], errors="coerce")
+    keep = received_at.isna() | (received_at <= cutoff)
+    return alerts[keep].copy(), int((~keep).sum())
+
+
+def configured_alert_received_cutoff(value: str):
+    if not value:
+        return None
+    cutoff = parse_local_timestamp(value)
+    if pd.isna(cutoff):
+        raise ValueError(f"Invalid alert received cutoff: {value}")
+    return cutoff
+
+
 def parse_discord_message_url(value: str) -> tuple[str, str, str] | None:
     match = DISCORD_MESSAGE_URL_RE.match(str(value or "").strip())
     if not match:
@@ -393,7 +447,7 @@ def fetch_discord_message(url: str, token: str) -> dict | None:
             "User-Agent": "screening-bot-mega-report",
         },
     )
-    for _ in range(8):
+    for attempt in range(8):
         try:
             with urllib.request.urlopen(request, timeout=15) as response:
                 payload = json.loads(response.read().decode("utf-8"))
@@ -407,9 +461,13 @@ def fetch_discord_message(url: str, token: str) -> dict | None:
                 except Exception:
                     time.sleep(1.0)
                     continue
+            if 500 <= err.code < 600:
+                time.sleep(min(2.0 + attempt, 8.0))
+                continue
             return None
         except Exception:
-            return None
+            time.sleep(min(0.5 + attempt * 0.5, 4.0))
+            continue
     return None
 
 
@@ -469,9 +527,9 @@ def fetch_discord_messages(urls: list[str]) -> dict[str, dict]:
         min_interval = 0.8
     min_interval = max(0.0, min(min_interval, 2.0))
     try:
-        fetch_passes = int(config_value(["MEGA_REPORT_DISCORD_FETCH_PASSES"], "2"))
+        fetch_passes = int(config_value(["MEGA_REPORT_DISCORD_FETCH_PASSES"], "4"))
     except ValueError:
-        fetch_passes = 2
+        fetch_passes = 4
     fetch_passes = max(1, min(fetch_passes, 4))
     unique_urls = sorted(set(urls))
     messages = {}
@@ -644,15 +702,18 @@ def close_after_business_days(daily: list[dict], sig_date: str, days: int) -> fl
     return float(close) if is_finite(close) else np.nan
 
 
-def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, dict]:
+def build_alert_frame(include_unconfirmed: bool, alert_received_cutoff=None) -> tuple[pd.DataFrame, dict, dict]:
     svc = opt.get_service()
     alerts_raw_rows = opt.fetch(svc, "alerts_raw")
     archive_rows = opt.fetch(svc, "signals_archive")
     ohlcv_rows = opt.fetch(svc, "ohlcv_4h")
 
+    received_at_by_alert_id = alert_received_at_lookup(alerts_raw_rows, archive_rows)
     alerts_raw = opt.parse_alerts(alerts_raw_rows, include_unconfirmed=include_unconfirmed)
+    alerts_raw = attach_alert_received_at(alerts_raw, received_at_by_alert_id)
     alerts_raw["_from_archive"] = False
     archive = opt.parse_alerts(archive_rows, include_unconfirmed=include_unconfirmed)
+    archive = attach_alert_received_at(archive, received_at_by_alert_id)
     archive["_from_archive"] = True
     alerts = pd.concat([alerts_raw, archive], ignore_index=True)
 
@@ -665,6 +726,7 @@ def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, di
             ],
             ignore_index=True,
         )
+    alerts, cutoff_excluded = filter_alerts_by_received_cutoff(alerts, alert_received_cutoff)
 
     ohlcv = opt.parse_ohlcv(ohlcv_rows)
     today = pd.Timestamp(datetime.now(JST).date())
@@ -703,6 +765,7 @@ def build_alert_frame(include_unconfirmed: bool) -> tuple[pd.DataFrame, dict, di
         "signals_archive_rows": len(archive_rows),
         "ohlcv_rows": len(ohlcv_rows),
         "alerts_after_dedupe": len(alerts),
+        "alert_cutoff_excluded": cutoff_excluded,
         "feature_rows": len(frame),
     }
     return frame, ohlcv, meta
@@ -1896,6 +1959,28 @@ def shared_report_theme_css() -> str:
       background: var(--panel);
       border-color: var(--line);
       color: var(--text);
+    }
+    :root[data-theme="dark"] .discord-embed {
+      background: #18263a;
+      border-left-color: #7f8cff;
+    }
+    :root[data-theme="dark"] .discord-embed.impact-positive {
+      background: #102a22;
+      border-left-color: #63d49b;
+    }
+    :root[data-theme="dark"] .discord-embed.impact-watch {
+      background: #332710;
+      border-left-color: #f4c15d;
+    }
+    :root[data-theme="dark"] .discord-embed.impact-negative {
+      background: #351b20;
+      border-left-color: #ff8a7c;
+    }
+    :root[data-theme="dark"] code,
+    :root[data-theme="dark"] .indicator-options code,
+    :root[data-theme="dark"] .condition-list code,
+    :root[data-theme="dark"] .discord-embed h4 a {
+      color: #9cc7ff;
     }
     :root[data-theme="dark"] .mode-card,
     :root[data-theme="dark"] .search-panel,
@@ -5381,13 +5466,30 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_HTML_OUTPUT,
         help=f"HTML output path (default: {DEFAULT_HTML_OUTPUT})",
     )
+    parser.add_argument(
+        "--alert-received-cutoff",
+        default="",
+        help=(
+            "Optional local timestamp cutoff for displayed signals, for example "
+            "'2026-06-11 14:39'. Defaults to MEGA_REPORT_ALERT_RECEIVED_CUTOFF."
+        ),
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    confirmed_frame, _, confirmed_meta = build_alert_frame(include_unconfirmed=False)
-    all_frame, _, all_meta = build_alert_frame(include_unconfirmed=True)
+    alert_received_cutoff = configured_alert_received_cutoff(
+        args.alert_received_cutoff or config_value(["MEGA_REPORT_ALERT_RECEIVED_CUTOFF"], "")
+    )
+    confirmed_frame, _, confirmed_meta = build_alert_frame(
+        include_unconfirmed=False,
+        alert_received_cutoff=alert_received_cutoff,
+    )
+    all_frame, _, all_meta = build_alert_frame(
+        include_unconfirmed=True,
+        alert_received_cutoff=alert_received_cutoff,
+    )
     premium_links = fetch_premium_discord_links(opt.get_service())
     premium_urls = collect_premium_urls(all_frame, premium_links)
     html_path = os.path.abspath(args.html_output)

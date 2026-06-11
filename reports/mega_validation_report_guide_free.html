@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Mega5 短期リバウンド | 天底極致 スコアリングBot レポート</title>
+  <title>使い方・対象銘柄 | 天底極致 スコアリングBot レポート</title>
   <style>
     :root {
       color-scheme: light;
@@ -786,9 +786,9 @@
       <div class="top-nav-main">
         <a class="top-nav-brand " href="mega_validation_report_latest.html">天底スコアリングTop</a>
         <div class="top-nav-mode-links" aria-label="モード別ページ">
-          <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="active" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
+          <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
         </div>
-        <a class="top-nav-guide " href="mega_validation_report_guide.html">使い方</a>
+        <a class="top-nav-guide active" href="mega_validation_report_guide.html">使い方</a>
 
         <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える">
           <span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span>
@@ -798,65 +798,77 @@
       </div>
       <div class="top-nav-links" aria-label="ページ内メニュー">
 
-        <a href="#summary">成績サマリー</a>
-        <a href="#confirmed">確定済み銘柄一覧</a>
-        <a href="#watch">未確定ウォッチリスト</a>
+        <a href="#guide-overview">概要</a>
+        <a href="#guide-coverage">対象銘柄</a>
+        <a href="#guide-modes">検出モード</a>
+        <a href="#guide-reading">サイトの見方</a>
+        <a href="#guide-fundamental">ファンダ分析</a>
 
       </div>
     </nav>
 
   <header>
-    <h1>Mega5 短期リバウンド</h1>
+    <h1>使い方・対象銘柄</h1>
     <p>生成日時: 2026-06-11 12:54:04 JST</p>
-    <p>売られすぎから強い陽線で反転した短期急騰候補。</p>
+    <p>検出モード、対象銘柄、ファンダ分析の見方をまとめています。</p>
   </header>
   <main>
-    <section id="summary" class="panel">
-      <h2>成績サマリー（過去1年分）</h2>
-      <p class="note">5営業日後 / 目標 +20%。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
 
-      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">11</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+21.6%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">72.7%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">5</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">0</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="muted">--</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div></div>
+    <section id="guide-overview" class="panel guide-panel">
+      <h2>使い方・対象銘柄</h2>
+      <p class="note">TradingView用インジケーター「天底極致 - 蒼橙の審眼 -」にて底シグナルが点灯した銘柄について、複数のテクニカル指標をもとに品質スコアを算出し、一覧で表示します。</p>
+      <p class="notice">このシステムは2026年3月5日から稼働しています。そのため、2026年3月4日以前に底シグナルが点灯した銘柄は、このレポートには記録されていません。</p>
     </section>
 
-    <section id="confirmed" class="panel">
-      <h2>確定済み銘柄一覧</h2>
-
-    <div class="paywall-panel">
-      <div class="locked-preview" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
+    <section id="guide-coverage" class="panel guide-panel">
+      <h2>対象銘柄と収録範囲</h2>
+      <div class="guide-grid">
+        <section class="guide-block">
+          <h3>監視対象</h3>
+          <ul class="guide-list">
+            <li>東証個別株</li>
+            <li>シグナル点灯前日終値が1,000円以下、かつ出来高10,000株以上</li>
+            <li>シグナル点灯時のローソク足の出来高が5,000株以上</li>
+            <li>1日あたり最大1,000銘柄。対象が1,001銘柄以上ある場合は、出来高が少ない銘柄から除外されます。</li>
+          </ul>
+        </section>
+        <section class="guide-block">
+          <h3>ボラティリティタグ</h3>
+          <p class="note">ATR%から、銘柄ごとの値動きの大きさを示します。</p>
+          <div class="vol-legend">
+            <div><span class="vol-tag vol-low">🟢LOW</span><span>ATR 3%未満。値動きが比較的穏やかな銘柄です。</span></div>
+            <div><span class="vol-tag vol-mid">🟡MID</span><span>ATR 3%以上6%未満。標準的な変動幅の銘柄です。</span></div>
+            <div><span class="vol-tag vol-high">🔴HIGH</span><span>ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。</span></div>
+          </div>
+        </section>
       </div>
-      <div class="paywall-copy">
-        <span class="premium-badge">有料会員限定</span>
-        <h3>銘柄一覧は有料会員限定です</h3>
-        <p>アクセス権を購入すると全件を表示できます。</p>
-        <div class="access-actions">
-          <a class="access-btn primary" href="/purchase">アクセス権を購入する</a>
-          <a class="access-btn secondary" href="/auth/login?return_to=/mega_validation_report_mega5_rebound.html%23confirmed">Discordでログイン</a>
-        </div>
-      </div>
-    </div>
-
     </section>
 
-    <section id="watch" class="panel">
-      <h2>未確定ウォッチリスト全件</h2>
-
-    <div class="paywall-panel">
-      <div class="locked-preview" aria-hidden="true">
-        <span></span><span></span><span></span><span></span>
-      </div>
-      <div class="paywall-copy">
-        <span class="premium-badge">有料会員限定</span>
-        <h3>未確定ウォッチリストは有料会員限定です</h3>
-        <p>アクセス権を購入すると全件を表示できます。</p>
-        <div class="access-actions">
-          <a class="access-btn primary" href="/purchase">アクセス権を購入する</a>
-          <a class="access-btn secondary" href="/auth/login?return_to=/mega_validation_report_mega5_rebound.html%23watch">Discordでログイン</a>
-        </div>
-      </div>
-    </div>
-
+    <section id="guide-modes" class="panel guide-panel">
+      <h2>検出モードの見方</h2>
+      <ul class="gate-list">
+        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
+        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
+        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
+      </ul>
     </section>
+
+    <section id="guide-reading" class="panel guide-panel">
+      <h2>サイトの見方</h2>
+      <ul class="guide-list">
+        <li>トップページでは、銘柄検索、モード別サマリー、全体成績を確認できます。</li>
+        <li>モード別サマリーから、Stable、Sniper、Mega各モードの詳細ページへ移動できます。</li>
+        <li>銘柄検索では、日付、証券コード、★数、株価、テクニカル指標で絞り込めます。</li>
+        <li>各銘柄のファンダ分析ボタンは、該当日のDiscord分析がある場合だけ表示されます。</li>
+      </ul>
+    </section>
+
+    <section id="guide-fundamental" class="panel guide-panel">
+      <h2>ファンダ分析について</h2>
+      <p class="note">ファンダ分析は、底シグナル検出時点で確認できる開示や事業情報をもとにした分析です。最新の開示、IR、ニュース、決算情報は変化している可能性があるため、投資判断の前にユーザー自身でも必ず確認してください。</p>
+    </section>
+
   </main>
 
   <footer class="site-footer">

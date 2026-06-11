@@ -1,4 +1,54 @@
 (() => {
+  const STORAGE_KEY = "megaReportTheme:v1";
+  const root = document.documentElement;
+  const buttons = Array.from(document.querySelectorAll("[data-theme-toggle]"));
+
+  const readTheme = () => {
+    try {
+      const value = window.localStorage.getItem(STORAGE_KEY);
+      return value === "dark" || value === "light" ? value : "light";
+    } catch (_error) {
+      return "light";
+    }
+  };
+
+  const writeTheme = (theme) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch (_error) {
+      // Theme switching should keep working even when storage is unavailable.
+    }
+  };
+
+  const applyTheme = (theme, persist = false) => {
+    const normalized = theme === "dark" ? "dark" : "light";
+    if (normalized === "dark") {
+      root.dataset.theme = "dark";
+    } else {
+      root.removeAttribute("data-theme");
+    }
+    buttons.forEach((button) => {
+      button.setAttribute("aria-pressed", normalized === "dark" ? "true" : "false");
+      button.setAttribute(
+        "aria-label",
+        normalized === "dark" ? "ライトモードに切り替える" : "ダークモードに切り替える"
+      );
+      const label = button.querySelector(".theme-toggle-label");
+      if (label) label.textContent = normalized === "dark" ? "ライト" : "ダーク";
+    });
+    if (persist) writeTheme(normalized);
+  };
+
+  applyTheme(readTheme(), false);
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme, true);
+    });
+  });
+})();
+
+(() => {
   const select = document.getElementById("daily-date-filter");
   const rows = Array.from(document.querySelectorAll("[data-detection-row]"));
   const count = document.getElementById("daily-visible-count");

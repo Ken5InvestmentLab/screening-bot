@@ -216,6 +216,7 @@ FREE_SAMPLE_MODE_IDS = {"stable_s6", "sniper"}
 FREE_CONFIRMED_LIMIT = 10
 MODE_CONFIRMED_PAGE_SIZE = 10
 FREE_REPORT_SUFFIX = "_free"
+GUIDE_REPORT_FILENAME = "mega_validation_report_guide.html"
 PURCHASE_PATH = "/purchase"
 
 
@@ -1479,6 +1480,14 @@ def free_mode_page_filename(candidate: dict) -> str:
     return free_report_filename(mode_page_filename(candidate))
 
 
+def guide_page_filename() -> str:
+    return GUIDE_REPORT_FILENAME
+
+
+def free_guide_page_filename() -> str:
+    return free_report_filename(guide_page_filename())
+
+
 def login_path(return_to: str = "/mega_validation_report_latest.html") -> str:
     return f"/auth/login?return_to={urllib.parse.quote(return_to, safe='/')}"
 
@@ -1506,40 +1515,82 @@ def paywall_cta_html(
     """
 
 
+def theme_toggle_html() -> str:
+    return """
+        <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える">
+          <span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span>
+          <span class="theme-toggle-label">ダーク</span>
+        </button>
+    """
+
+
+def site_footer_html() -> str:
+    return """
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
+      <div class="footer-links" aria-label="公式リンク">
+        <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
+          <span class="footer-icon footer-icon-x" aria-hidden="true">X</span>
+          <span>X</span>
+        </a>
+        <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">
+          <span class="footer-icon footer-icon-discord" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M8.4 8.8c.8-.6 1.7-.9 2.6-1l.3.6c.5-.1.9-.1 1.4 0l.3-.6c.9.1 1.8.4 2.6 1 1.1 1.7 1.6 3.5 1.5 5.4-.9.7-1.8 1.1-2.9 1.4l-.6-.8c.4-.1.8-.3 1.1-.5-.2-.1-.3-.2-.5-.3-1.4.6-3 .6-4.4 0-.2.1-.3.2-.5.3.3.2.7.4 1.1.5l-.6.8c-1-.3-2-.7-2.9-1.4-.1-1.9.4-3.7 1.5-5.4Zm1.8 4.1c.5 0 .9-.5.9-1.1s-.4-1.1-.9-1.1-.9.5-.9 1.1.4 1.1.9 1.1Zm3.6 0c.5 0 .9-.5.9-1.1s-.4-1.1-.9-1.1-.9.5-.9 1.1.4 1.1.9 1.1Z"/>
+            </svg>
+          </span>
+          <span>Discord</span>
+        </a>
+        <a class="footer-link" href="https://coconala.com/users/322523" target="_blank" rel="noopener noreferrer" aria-label="ココナラ">
+          <span class="footer-icon footer-icon-coconala" aria-hidden="true">c</span>
+          <span>ココナラ</span>
+        </a>
+      </div>
+    </div>
+  </footer>
+    """
+
+
 def navigation_html(
     current_mode_id: str | None = None,
     include_mode_sections: bool = False,
     free: bool = False,
+    current_page: str = "home",
 ) -> str:
-    brand_active = "active" if current_mode_id is None else ""
+    brand_active = "active" if current_mode_id is None and current_page == "home" else ""
+    guide_active = "active" if current_page == "guide" else ""
     mode_links = "".join(
         f'<a class="{ "active" if candidate["id"] == current_mode_id else "" }" '
         f'href="{html_escape(mode_page_filename(candidate))}">{html_escape(candidate["label"])}</a>'
         for candidate in CANDIDATES
     )
-    if include_mode_sections:
+    if current_page == "guide":
+        section_links = """
+        <a href="#guide-overview">概要</a>
+        <a href="#guide-coverage">対象銘柄</a>
+        <a href="#guide-modes">検出モード</a>
+        <a href="#guide-reading">サイトの見方</a>
+        <a href="#guide-fundamental">ファンダ分析</a>
+        """
+    elif include_mode_sections:
         section_links = """
         <a href="#summary">成績サマリー</a>
         <a href="#confirmed">確定済み銘柄一覧</a>
         <a href="#watch">未確定ウォッチリスト</a>
-        <a href="#guide">使い方</a>
         """
     elif current_mode_id is None:
         section_links = (
             """
         <a href="#performance-summary">全体成績</a>
         <a href="#mode-summary">モード別サマリー</a>
-        <a href="#mode-guide">検出モードの見方</a>
         <a href="#daily-detections">銘柄検索</a>
-        <a href="#guide">使い方</a>
             """
             if free
             else """
         <a href="#daily-detections">銘柄検索</a>
         <a href="#mode-summary">モード別サマリー</a>
-        <a href="#mode-guide">検出モードの見方</a>
         <a href="#performance-summary">全体成績</a>
-        <a href="#guide">使い方</a>
             """
         )
     else:
@@ -1551,6 +1602,8 @@ def navigation_html(
         <div class="top-nav-mode-links" aria-label="モード別ページ">
           {mode_links}
         </div>
+        <a class="top-nav-guide {guide_active}" href="{html_escape(guide_page_filename())}">使い方</a>
+        {theme_toggle_html()}
       </div>
       <div class="top-nav-links" aria-label="ページ内メニュー">
         {section_links}
@@ -1559,11 +1612,16 @@ def navigation_html(
     """
 
 
-def guide_section_html() -> str:
+def guide_content_html() -> str:
     return """
-    <section id="guide" class="panel guide-panel">
+    <section id="guide-overview" class="panel guide-panel">
       <h2>使い方・対象銘柄</h2>
-      <p class="note">TradingViewでBOTTOMシグナルが点灯した銘柄について、複数のテクニカル指標をもとに品質スコアを算出し、一覧で表示します。</p>
+      <p class="note">TradingView用インジケーター「天底極致 - 蒼橙の審眼 -」にて底シグナルが点灯した銘柄について、複数のテクニカル指標をもとに品質スコアを算出し、一覧で表示します。</p>
+      <p class="notice">このシステムは2026年3月5日から稼働しています。そのため、2026年3月4日以前に底シグナルが点灯した銘柄は、このレポートには記録されていません。</p>
+    </section>
+
+    <section id="guide-coverage" class="panel guide-panel">
+      <h2>対象銘柄と収録範囲</h2>
       <div class="guide-grid">
         <section class="guide-block">
           <h3>監視対象</h3>
@@ -1583,16 +1641,262 @@ def guide_section_html() -> str:
             <div><span class="vol-tag vol-high">🔴HIGH</span><span>ATR 6%以上。大きく動きやすく、上振れも下振れも大きくなりやすい銘柄です。</span></div>
           </div>
         </section>
-        <section class="guide-block">
-          <h3>サイトの見方</h3>
-          <ul class="guide-list">
-            <li>モード別サマリーから、Stable、Sniper、Mega各モードの詳細ページへ移動できます。</li>
-            <li>銘柄検索では、日付、証券コード、★数、株価、テクニカル指標で絞り込めます。</li>
-            <li>各銘柄のファンダ分析ボタンは、該当日のDiscord分析がある場合だけ表示されます。</li>
-          </ul>
-        </section>
       </div>
     </section>
+
+    <section id="guide-modes" class="panel guide-panel">
+      <h2>検出モードの見方</h2>
+      <ul class="gate-list">
+        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
+        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
+        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
+      </ul>
+    </section>
+
+    <section id="guide-reading" class="panel guide-panel">
+      <h2>サイトの見方</h2>
+      <ul class="guide-list">
+        <li>トップページでは、銘柄検索、モード別サマリー、全体成績を確認できます。</li>
+        <li>モード別サマリーから、Stable、Sniper、Mega各モードの詳細ページへ移動できます。</li>
+        <li>銘柄検索では、日付、証券コード、★数、株価、テクニカル指標で絞り込めます。</li>
+        <li>各銘柄のファンダ分析ボタンは、該当日のDiscord分析がある場合だけ表示されます。</li>
+      </ul>
+    </section>
+
+    <section id="guide-fundamental" class="panel guide-panel">
+      <h2>ファンダ分析について</h2>
+      <p class="note">ファンダ分析は、底シグナル検出時点で確認できる開示や事業情報をもとにした分析です。最新の開示、IR、ニュース、決算情報は変化している可能性があるため、投資判断の前にユーザー自身でも必ず確認してください。</p>
+    </section>
+    """
+
+
+def shared_report_theme_css() -> str:
+    return """
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0d1420;
+      --panel: #151f2d;
+      --text: #e7edf5;
+      --muted: #9aa8bb;
+      --line: #2b3a4e;
+      --blue: #6ea8ff;
+      --navy: #0a111c;
+      --green: #63d49b;
+      --green-bg: #123524;
+      --amber: #f4c15d;
+      --amber-bg: #3a2a12;
+      --red: #ff8a7c;
+      --red-bg: #3a1b1e;
+      --chip: #223149;
+    }
+    .theme-toggle {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 32px;
+      padding: 5px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #f3f7ff;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+    .theme-toggle:focus-visible,
+    .footer-link:focus-visible,
+    .top-nav a:focus-visible {
+      outline: 2px solid #8fb7ff;
+      outline-offset: 2px;
+    }
+    .theme-toggle-track {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+      border-radius: 999px;
+      background: rgba(215, 226, 240, 0.48);
+      transition: background 0.2s ease;
+    }
+    .theme-toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(16, 24, 40, 0.28);
+      transition: transform 0.2s ease;
+    }
+    :root[data-theme="dark"] .theme-toggle-track {
+      background: #4f8dff;
+    }
+    :root[data-theme="dark"] .theme-toggle-knob {
+      transform: translateX(16px);
+    }
+    .site-footer {
+      border-top: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--muted);
+    }
+    .site-footer-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+    }
+    .footer-copy {
+      margin: 0;
+      font-size: 12px;
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .footer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      text-decoration: none;
+    }
+    .footer-link:hover {
+      border-color: #8fb7ff;
+      color: #1849a9;
+      background: #eef5ff;
+    }
+    .footer-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #102033;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .footer-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+    .footer-icon-coconala {
+      background: #30b7b7;
+      font-family: "Segoe UI", sans-serif;
+    }
+    :root[data-theme="dark"] .top-nav {
+      background: rgba(8, 14, 23, 0.98);
+      border-bottom-color: rgba(148, 163, 184, 0.24);
+    }
+    :root[data-theme="dark"] header {
+      background: #0b1220;
+      border-bottom-color: #315f9f;
+    }
+    :root[data-theme="dark"] .top-nav a:hover,
+    :root[data-theme="dark"] .top-nav a.active {
+      background: #183250;
+      color: #d9e9ff;
+    }
+    :root[data-theme="dark"] .mode-card:hover,
+    :root[data-theme="dark"] .mode-link:hover,
+    :root[data-theme="dark"] tbody tr:hover {
+      background: #1a2636;
+    }
+    :root[data-theme="dark"] .mode-card p,
+    :root[data-theme="dark"] .mode-link span,
+    :root[data-theme="dark"] .discord-embed dt,
+    :root[data-theme="dark"] .discord-embed dd,
+    :root[data-theme="dark"] .discord-message,
+    :root[data-theme="dark"] .paywall-copy p {
+      color: var(--text);
+    }
+    :root[data-theme="dark"] table,
+    :root[data-theme="dark"] .metric,
+    :root[data-theme="dark"] .filter-control,
+    :root[data-theme="dark"] .daily-search,
+    :root[data-theme="dark"] .mode-options label,
+    :root[data-theme="dark"] .indicator-options label,
+    :root[data-theme="dark"] .fundamental-detail,
+    :root[data-theme="dark"] .discord-embed,
+    :root[data-theme="dark"] .paywall-card,
+    :root[data-theme="dark"] .signals tr {
+      background: var(--panel);
+      border-color: var(--line);
+      color: var(--text);
+    }
+    :root[data-theme="dark"] thead th {
+      background: #202d3d;
+      color: #c9d5e5;
+    }
+    :root[data-theme="dark"] input,
+    :root[data-theme="dark"] select,
+    :root[data-theme="dark"] .action-btn.secondary,
+    :root[data-theme="dark"] .fundamental-close,
+    :root[data-theme="dark"] .mobile-row-toggle,
+    :root[data-theme="dark"] .daily-load-more,
+    :root[data-theme="dark"] .filter-buttons button {
+      background: #0f1826;
+      border-color: var(--line);
+      color: var(--text);
+    }
+    :root[data-theme="dark"] input::placeholder {
+      color: #7f8da1;
+    }
+    :root[data-theme="dark"] .mode-badge,
+    :root[data-theme="dark"] .star-badge,
+    :root[data-theme="dark"] .chip,
+    :root[data-theme="dark"] .badge.hold,
+    :root[data-theme="dark"] .mode-badge.none {
+      background: var(--chip);
+      color: #d5e2f2;
+    }
+    :root[data-theme="dark"] .notice {
+      background: #332710;
+      color: #f7d58a;
+      border-left-color: var(--amber);
+    }
+    :root[data-theme="dark"] .vol-low { background: #123524; color: #7ee3ad; }
+    :root[data-theme="dark"] .vol-mid { background: #3a2a12; color: #f4c15d; }
+    :root[data-theme="dark"] .vol-high { background: #3a1b1e; color: #ff9a8e; }
+    :root[data-theme="dark"] .footer-link:hover {
+      background: #183250;
+      color: #d9e9ff;
+      border-color: #4f8dff;
+    }
+    @media (max-width: 760px) {
+      .theme-toggle-label {
+        display: none;
+      }
+      .site-footer-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        padding: 16px 14px;
+      }
+    }
     """
 
 
@@ -2158,6 +2462,56 @@ def daily_detection_script() -> str:
 def report_interactions_js() -> str:
     return """
 (() => {
+  const STORAGE_KEY = "megaReportTheme:v1";
+  const root = document.documentElement;
+  const buttons = Array.from(document.querySelectorAll("[data-theme-toggle]"));
+
+  const readTheme = () => {
+    try {
+      const value = window.localStorage.getItem(STORAGE_KEY);
+      return value === "dark" || value === "light" ? value : "light";
+    } catch (_error) {
+      return "light";
+    }
+  };
+
+  const writeTheme = (theme) => {
+    try {
+      window.localStorage.setItem(STORAGE_KEY, theme);
+    } catch (_error) {
+      // Theme switching should keep working even when storage is unavailable.
+    }
+  };
+
+  const applyTheme = (theme, persist = false) => {
+    const normalized = theme === "dark" ? "dark" : "light";
+    if (normalized === "dark") {
+      root.dataset.theme = "dark";
+    } else {
+      root.removeAttribute("data-theme");
+    }
+    buttons.forEach((button) => {
+      button.setAttribute("aria-pressed", normalized === "dark" ? "true" : "false");
+      button.setAttribute(
+        "aria-label",
+        normalized === "dark" ? "ライトモードに切り替える" : "ダークモードに切り替える"
+      );
+      const label = button.querySelector(".theme-toggle-label");
+      if (label) label.textContent = normalized === "dark" ? "ライト" : "ダーク";
+    });
+    if (persist) writeTheme(normalized);
+  };
+
+  applyTheme(readTheme(), false);
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const nextTheme = root.dataset.theme === "dark" ? "light" : "dark";
+      applyTheme(nextTheme, true);
+    });
+  });
+})();
+
+(() => {
   const select = document.getElementById("daily-date-filter");
   const rows = Array.from(document.querySelectorAll("[data-detection-row]"));
   const count = document.getElementById("daily-visible-count");
@@ -2546,32 +2900,17 @@ def build_html_report(
       <p class="notice">過去成績は将来の値動きを保証するものではありません。銘柄を確認するときは、最新の開示、出来高、地合い、リスク許容度もあわせて確認してください。</p>
     </section>
     """
-    mode_guide_section = """
-    <section id="mode-guide" class="panel">
-      <h2>検出モードの見方</h2>
-      <ul class="gate-list">
-        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
-        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
-        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
-        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
-      </ul>
-    </section>
-    """
     page_sections = (
         [
             performance_section,
             mode_summary_section,
-            mode_guide_section,
             daily_detection_section,
-            guide_section_html(),
         ]
         if free
         else [
             daily_detection_section,
             mode_summary_section,
-            mode_guide_section,
             performance_section,
-            guide_section_html(),
         ]
     )
     return f"""<!doctype html>
@@ -2598,6 +2937,7 @@ def build_html_report(
       --red-bg: #fde7e4;
       --chip: #eef3fb;
     }}
+    {shared_report_theme_css()}
     * {{ box-sizing: border-box; }}
     html {{ scroll-padding-top: 104px; }}
     body {{
@@ -3986,6 +4326,7 @@ def build_html_report(
   <main>
     {"".join(page_sections)}
   </main>
+  {site_footer_html()}
   {daily_detection_script()}
 </body>
 </html>
@@ -4001,6 +4342,7 @@ def mode_page_style() -> str:
       --text: #182230;
       --muted: #667085;
       --line: #d9e0ea;
+      --blue: #2563eb;
       --navy: #102033;
       --green: #16815c;
       --green-bg: #e7f6ef;
@@ -4541,7 +4883,7 @@ def mode_page_style() -> str:
       table { min-width: 680px; }
       .signals { min-width: 0; }
     }
-    """
+    """ + shared_report_theme_css()
 
 
 def stat_metrics_html(stats: dict, watch_stats: dict, include_watch: bool = True) -> str:
@@ -4684,9 +5026,8 @@ def build_mode_html_page(
       <h2>未確定ウォッチリスト全件</h2>
       {watch_html}
     </section>
-
-    {guide_section_html()}
   </main>
+  {site_footer_html()}
   {daily_detection_script()}
 </body>
 </html>
@@ -4718,8 +5059,35 @@ def build_locked_mode_html_page(candidate: dict, generated_at: str) -> str:
           f"/{mode_page_filename(candidate)}",
       )}
     </section>
-    {guide_section_html()}
   </main>
+  {site_footer_html()}
+  {daily_detection_script()}
+</body>
+</html>
+"""
+
+
+def build_guide_html_page(generated_at: str, free: bool = False) -> str:
+    return f"""<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>使い方・対象銘柄 | {html_escape(REPORT_TITLE)}</title>
+  <style>{mode_page_style()}</style>
+</head>
+<body>
+  {navigation_html(free=free, current_page="guide")}
+  <header>
+    <h1>使い方・対象銘柄</h1>
+    <p>生成日時: {html_escape(generated_at)}</p>
+    <p>検出モード、対象銘柄、ファンダ分析の見方をまとめています。</p>
+  </header>
+  <main>
+    {guide_content_html()}
+  </main>
+  {site_footer_html()}
+  {daily_detection_script()}
 </body>
 </html>
 """
@@ -4965,6 +5333,20 @@ def main() -> None:
         handle.write(report_interactions_js().strip())
         handle.write("\n")
 
+    guide_report = build_guide_html_page(generated_at)
+    guide_report = "\n".join(line.rstrip() for line in guide_report.rstrip().splitlines())
+    guide_path = os.path.join(html_dir, guide_page_filename())
+    with open(guide_path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(guide_report.rstrip())
+        handle.write("\n")
+
+    free_guide_report = build_guide_html_page(generated_at, free=True)
+    free_guide_report = "\n".join(line.rstrip() for line in free_guide_report.rstrip().splitlines())
+    free_guide_path = os.path.join(html_dir, free_guide_page_filename())
+    with open(free_guide_path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(free_guide_report.rstrip())
+        handle.write("\n")
+
     for candidate in CANDIDATES:
         mode_report = build_mode_html_page(
             candidate,
@@ -4994,6 +5376,8 @@ def main() -> None:
         print(f"wrote {free_mode_path}")
 
     print(f"wrote {script_path}")
+    print(f"wrote {guide_path}")
+    print(f"wrote {free_guide_path}")
     print(f"wrote {markdown_path}")
     print(f"wrote {html_path}")
     print(f"wrote {free_html_path}")

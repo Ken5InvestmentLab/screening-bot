@@ -191,6 +191,14 @@ SNIPER_RESCUE_TRIGGER_WR = 0.60
 SNIPER_RESCUE_TRIGGER_N  = 10
 SNIPER_LIVE_HEALTH_WR    = 0.60
 SNIPER_RESCUE_WR_MIN     = 0.55
+SNIPER_WALK_FORWARD_CANDIDATE_LIMIT = 1000
+SNIPER_VALID_N_MIN = 5
+SNIPER_VALID_AVG_MIN = 0.0
+SNIPER_LOCKBOX_N_MIN = 5
+SNIPER_LOCKBOX_WR_TOLERANCE = 0.10
+SNIPER_LOCKBOX_AVG_TOLERANCE = 0.03
+SNIPER_LOCKBOX_AVG_MIN = -0.02
+SNIPER_AVG_REGRESSION_TOLERANCE = 0.005
 WALK_FORWARD_VALID_FRAC = 0.20  # 30%→20%: lockbox分を確保するため
 LOCKBOX_FRAC            = 0.20  # 選別ループに一切触れない真のOOS
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
@@ -3952,6 +3960,42 @@ def restart_bot_only():
 # ══════════════════════════════════════════════════════════════
 # Sniperモード最適化（勝率特化）
 # ══════════════════════════════════════════════════════════════
+def _sniper_lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, wr_floor, rescue_mode=False):
+    """Sniper候補を未使用lockboxで確認する。
+
+    Sniperは件数が少ないためStable用の階層ゲートより少し緩めるが、
+    検証セットだけに寄った候補を採用しないよう最低件数・勝率・平均を確認する。
+    """
+    min_n = max(3, SNIPER_VALID_N_MIN - 1) if rescue_mode else SNIPER_LOCKBOX_N_MIN
+    if lockbox_stats["n"] < min_n:
+        return False, f"lockbox件数 {lockbox_stats['n']}件 < {min_n}件"
+
+    base_n = int((baseline_lockbox_stats or {}).get("n", 0))
+    base_wr = float((baseline_lockbox_stats or {}).get("wr_raw", 0.0))
+    base_avg = float((baseline_lockbox_stats or {}).get("avg_raw", 0.0))
+    wr_floor_oos = wr_floor * 0.85
+    if base_n >= min_n:
+        wr_floor_oos = max(wr_floor_oos, base_wr - SNIPER_LOCKBOX_WR_TOLERANCE)
+    if lockbox_stats["wr_raw"] < wr_floor_oos:
+        return (
+            False,
+            f"lockbox勝率 {lockbox_stats['wr_raw']*100:.1f}% < {wr_floor_oos*100:.1f}%",
+        )
+
+    avg_floor = SNIPER_LOCKBOX_AVG_MIN
+    if base_n >= min_n:
+        avg_floor = max(avg_floor, base_avg - SNIPER_LOCKBOX_AVG_TOLERANCE)
+    if rescue_mode:
+        avg_floor = min(avg_floor, base_avg - 0.05) if base_n >= min_n else -0.05
+    if lockbox_stats["avg_raw"] < avg_floor:
+        return (
+            False,
+            f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < {avg_floor*100:+.1f}%",
+        )
+
+    return True, "lockbox passed"
+
+
 def _run_sniper_optimization(df, args):
     """Sniperモード最適化（勝率特化）。
     --propose: pending_logic_sniper.json 保存 + Discord通知。
@@ -3963,6 +4007,7 @@ def _run_sniper_optimization(df, args):
     print("\n🎯 Step S1: Sniperモード最適化（勝率特化）...")
     sniper_logic = load_current_logic_sniper()
     baseline_wr  = sniper_logic.get("wr_raw", 0.0) if sniper_logic else 0.0
+    baseline_avg = None
 
     # ── 現行条件の最新バックテスト + 採用後ライブ実績を毎回再計算 ────
     refreshed_stats = compute_current_sniper_backtest_stats(df, sniper_logic) if sniper_logic else None
@@ -3990,6 +4035,7 @@ def _run_sniper_optimization(df, args):
                 preserve_updated_at=True,
             )
         baseline_wr = float(refreshed_stats.get("wr_raw", baseline_wr))
+        baseline_avg = float(refreshed_stats.get("avg_raw", 0.0))
 
     # ── Sniper rescue mode 判定 ─────────────────────────────────
     raw_rescue, raw_rescue_reasons = detect_rescue_mode_sniper(refreshed_stats, live_stats)
@@ -4036,13 +4082,30 @@ def _run_sniper_optimization(df, args):
     wr_floor = SNIPER_RESCUE_WR_MIN if rescue_mode else SNIPER_WR_MIN
     valid_floor = wr_floor * 0.85
 
-    # Walk-forward分割（70/30）
+    # Walk-forward: 60% 訓練 / 20% 検証 / 20% lockbox（真のOOS）
     df_sorted = df.sort_values("date").reset_index(drop=True)
-    wf_split  = int(len(df_sorted) * 0.7)
-    df_train  = df_sorted.iloc[:wf_split].copy()
-    df_valid  = df_sorted.iloc[wf_split:].copy()
-    print(f"  Walk-forward: train {len(df_train)}件 / validation {len(df_valid)}件"
+    n_total = len(df_sorted)
+    n_train = int(n_total * (1.0 - WALK_FORWARD_VALID_FRAC - LOCKBOX_FRAC))
+    n_valid = int(n_total * WALK_FORWARD_VALID_FRAC)
+    df_train = df_sorted.iloc[:n_train].copy()
+    df_valid = df_sorted.iloc[n_train:n_train + n_valid].copy()
+    df_lockbox = df_sorted.iloc[n_train + n_valid:].copy()
+    baseline_lockbox_stats = calc_stats(pd.DataFrame())
+    if sniper_logic:
+        cur_conditions = sniper_logic.get("conditions", [])
+        cur_thresholds = sniper_logic.get("thresholds", {}) or {}
+        if cur_conditions:
+            baseline_lockbox_stats, _, _ = calc_candidate_tiers(
+                df_lockbox, "A", cur_conditions, cur_thresholds
+            )
+    print(f"  Walk-forward: train {len(df_train)}件 / validation {len(df_valid)}件 / lockbox {len(df_lockbox)}件"
           + ("  [rescue mode]" if rescue_mode else ""))
+    if baseline_lockbox_stats["n"] > 0:
+        print(
+            f"  現行Sniper lockbox: {baseline_lockbox_stats['n']}件 "
+            f"勝率{baseline_lockbox_stats['wr_raw']*100:.1f}% "
+            f"平均{baseline_lockbox_stats['avg_raw']*100:.1f}%"
+        )
 
     cands = search_combinations_sniper(df_train.copy(), wr_floor=wr_floor)
     print(f"  勝率{wr_floor*100:.0f}%以上クリア(train): {len(cands)}通り")
@@ -4056,27 +4119,61 @@ def _run_sniper_optimization(df, args):
 
     # Walk-forward validation
     wf_validated = []
-    for wr, n, combo, st6_train in cands[:50]:
+    lockbox_rejects = []
+    limit = min(SNIPER_WALK_FORWARD_CANDIDATE_LIMIT, len(cands))
+    for wr, n, combo, st6_train in cands[:limit]:
         conds_in_valid = [c for c in combo if c in df_valid.columns]
         if len(conds_in_valid) < len(combo):
             continue
         scores_v = sum(df_valid[c].astype(int) for c in conds_in_valid)
         s6_v = df_valid[scores_v == 6]
-        if len(s6_v) < 3:
+        if len(s6_v) < SNIPER_VALID_N_MIN:
             continue
         st6_v = calc_stats(s6_v)
-        if st6_v["wr_raw"] >= valid_floor:
-            wf_validated.append((wr, n, combo, st6_train, st6_v))
-    print(f"  Walk-forward 通過: {len(wf_validated)}/{min(50, len(cands))}通り")
+        if st6_v["wr_raw"] >= valid_floor and st6_v["avg_raw"] >= SNIPER_VALID_AVG_MIN:
+            conds_in_lockbox = [c for c in combo if c in df_lockbox.columns]
+            if len(conds_in_lockbox) < len(combo):
+                continue
+            scores_l = sum(df_lockbox[c].astype(int) for c in conds_in_lockbox)
+            s6_l = df_lockbox[scores_l == 6]
+            st6_l = calc_stats(s6_l)
+            lb_ok, lb_reason = _sniper_lockbox_gate_ok(
+                st6_l, baseline_lockbox_stats, wr_floor, rescue_mode=rescue_mode
+            )
+            if not lb_ok:
+                lockbox_rejects.append(("+".join(combo), st6_l, lb_reason))
+                continue
+            wf_validated.append((wr, n, combo, st6_train, st6_v, st6_l, lb_reason))
+    wf_validated.sort(
+        key=lambda x: (
+            x[4]["wr_raw"],
+            x[4]["avg_raw"],
+            x[5]["wr_raw"],
+            x[5]["avg_raw"],
+            x[3]["wr_raw"],
+            x[3]["avg_raw"],
+            x[3]["n"],
+        ),
+        reverse=True,
+    )
+    print(f"  Walk-forward/Lockbox 通過: {len(wf_validated)}/{limit}通り")
+    if lockbox_rejects:
+        print(f"  Lockboxで除外: {len(lockbox_rejects)}通り")
+        for label, stats_l, reason_l in lockbox_rejects[:3]:
+            print(
+                f"    - {label}: lockbox n={stats_l['n']} "
+                f"勝率{stats_l['wr_raw']*100:.1f}% "
+                f"平均{stats_l['avg_raw']*100:+.1f}% ({reason_l})"
+            )
     if not wf_validated:
-        print("  ✅ Sniper: Walk-forward 通過なし。現行を維持。")
+        print("  ✅ Sniper: Walk-forward/Lockbox 通過なし。現行を維持。")
         if rescue_mode and (args.propose or not args.dry_run):
             notify_discord_sniper_rescue_no_candidate(
                 refreshed_stats, live_stats, rescue_reasons, len(df)
             )
         return
 
-    best_wr, best_n, best_combo, _, st6_valid = wf_validated[0]
+    best_wr, best_n, best_combo, _, st6_valid, st6_lockbox, _ = wf_validated[0]
 
     # 全データで最終評価
     scores_full = sum(df[c].astype(int) for c in best_combo if c in df.columns)
@@ -4087,6 +4184,8 @@ def _run_sniper_optimization(df, args):
           f" 平均{st6_full['avg_raw']*100:.1f}%")
     print(f"  Sniper検証: {st6_valid['n']}件 勝率{st6_valid['wr_raw']*100:.1f}%"
           f" 平均{st6_valid['avg_raw']*100:.1f}%")
+    print(f"  Sniper lockbox: {st6_lockbox['n']}件 勝率{st6_lockbox['wr_raw']*100:.1f}%"
+          f" 平均{st6_lockbox['avg_raw']*100:.1f}%")
 
     # Sniperは勝率特化のため、現行勝率をstrictに上回らない候補は通知しない。
     # rescue mode 中は現行が劣化しているので、baseline 超えは要求しない（候補側の
@@ -4096,6 +4195,15 @@ def _run_sniper_optimization(df, args):
             print(
                 f"  ✅ Sniper: 勝率が現行以下 "
                 f"({st6_full['wr_raw']*100:.1f}% ≤ {baseline_wr*100:.1f}%) のため更新しません。"
+            )
+            return
+        if (baseline_avg is not None
+                and st6_full["avg_raw"] < baseline_avg - SNIPER_AVG_REGRESSION_TOLERANCE):
+            print(
+                f"  ✅ Sniper: 平均リターンが現行比で悪化 "
+                f"({st6_full['avg_raw']*100:.1f}% < "
+                f"{(baseline_avg - SNIPER_AVG_REGRESSION_TOLERANCE)*100:.1f}%) "
+                f"のため更新しません。"
             )
             return
     elif rescue_mode:
@@ -4434,7 +4542,7 @@ def _run_threshold_sweep(args):
         print(f"  [{i}/{len(thresholds)}] THRESHOLD = ±{th*100:.1f}% (dry-run)")
         print(f"{'='*62}\n")
 
-        cmd = [sys.executable, self_path, "--dry-run", "--win-threshold", str(th)]
+        cmd = [sys.executable, self_path, "--dry-run", "--skip-sniper", "--win-threshold", str(th)]
         env = dict(os.environ)
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUNBUFFERED"] = "1"
@@ -4468,10 +4576,7 @@ def _run_threshold_sweep(args):
     if not ok_results:
         print(f"\n💡 自動採用スキップ: ゲートをクリアした閾値がありませんでした")
         print(f"   pending_logic.json は作成されません")
-        # 候補なしでも Bot を再起動して統計キャッシュ（refreshStats）を更新する
-        if not args.dry_run:
-            print(f"\n🔄 候補なし → SCP + pm2 restart で Bot を更新します")
-            deploy()
+        print(f"   No deploy/restart is run for a sweep with no adoptable candidate.")
         return
 
     # 採用基準: best_wr 降順 → 閾値昇順（低閾値優先で安全側）
@@ -4747,6 +4852,7 @@ def main():
                         help="カンマ区切り閾値リスト (例: 0.05,0.07,0.08,0.10)。"
                              "各値で自身を --dry-run --win-threshold X として再実行し比較表を表示。"
                              "実ファイル更新・デプロイは行わない")
+    parser.add_argument("--skip-sniper", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--propose-mega-report-logic-only", dest="propose_mega_report_logic_only",
                         action="store_true",
                         help="Botには触らず、HTMLレポート用Megaロジック候補だけをpendingに保存して終了")
@@ -5210,7 +5316,10 @@ def main():
             restart_bot_only()
 
     # ── Sniperモード最適化（Step 4完了後・Step 5a前） ─────────────
-    _run_sniper_optimization(df, args)
+    if args.skip_sniper:
+        print("\n[skip] Sniper optimization skipped for threshold-sweep child run.")
+    else:
+        _run_sniper_optimization(df, args)
 
     # ── Moonshotモード最適化（Sniperの直後） ─────────────────────
     # マスタースイッチがOFFの間は完全スキップ（pending生成・Discord通知も走らない）
@@ -5375,13 +5484,38 @@ def main():
         tuned_ths_list = [p[1] for p in paired]
 
         selected = None
+        lockbox_prefilter_rejects = []
         for cand, ths in zip(all_cands, tuned_ths_list):
             ok_sel, _, reasons_sel = check_criteria(cand[5], baseline, cand[8], adoption_mode,
                                                      thresholds=ths, data_mode=data_mode,
                                                      baseline_validation_stats=current_validation_stats6)
             if ok_sel:
+                if data_mode == "strict":
+                    method_i, _, _, _, combo_i, _, _, _, _ = cand
+                    eval_thresholds = (ths or {}) if method_i == "A" else {}
+                    lb_stats_i, _, _ = calc_candidate_tiers(
+                        df_wf_lockbox, method_i, combo_i, eval_thresholds
+                    )
+                    lb_ok_i, lb_reason_i = lockbox_gate_ok(
+                        lb_stats_i, baseline_lockbox_stats6, adoption_mode
+                    )
+                    if not lb_ok_i:
+                        label_i = "+".join(combo_i) if method_i == "A" else " ".join(
+                            f"{c}({w}pt)" for c, w, _ in combo_i
+                        )
+                        lockbox_prefilter_rejects.append((label_i, lb_stats_i, lb_reason_i))
+                        continue
+                    reasons_sel = list(reasons_sel) + ["Lockbox prefilter passed"]
                 selected = (cand, ths, reasons_sel)
                 break
+        if lockbox_prefilter_rejects:
+            print(f"  Lockbox prefilter skipped {len(lockbox_prefilter_rejects)} quality-passing candidate(s).")
+            for label_i, lb_stats_i, lb_reason_i in lockbox_prefilter_rejects[:3]:
+                print(
+                    f"    - {label_i}: lockbox n={lb_stats_i['n']} "
+                    f"wr={lb_stats_i['wr_raw']*100:.1f}% "
+                    f"avg={lb_stats_i['avg_raw']*100:+.1f}% ({lb_reason_i})"
+                )
         if selected is None:
             best_thresholds = tuned_ths_list[0] or {}
             best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = all_cands[0]

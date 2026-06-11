@@ -1,15 +1,31 @@
 (() => {
   const STORAGE_KEY = "megaReportTheme:v1";
+  const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
   const root = document.documentElement;
   const buttons = Array.from(document.querySelectorAll("[data-theme-toggle]"));
+
+  const readCookie = (name) => {
+    const prefix = `${name}=`;
+    const match = document.cookie
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix));
+    return match ? decodeURIComponent(match.slice(prefix.length)) : "";
+  };
+
+  const writeCookie = (name, value) => {
+    document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+  };
 
   const readTheme = () => {
     try {
       const value = window.localStorage.getItem(STORAGE_KEY);
-      return value === "dark" || value === "light" ? value : "light";
+      if (value === "dark" || value === "light") return value;
     } catch (_error) {
-      return "light";
+      // Fall back to the cookie mirror below.
     }
+    const cookieValue = readCookie(STORAGE_KEY);
+    return cookieValue === "dark" || cookieValue === "light" ? cookieValue : "light";
   };
 
   const writeTheme = (theme) => {
@@ -18,6 +34,7 @@
     } catch (_error) {
       // Theme switching should keep working even when storage is unavailable.
     }
+    writeCookie(STORAGE_KEY, theme);
   };
 
   const applyTheme = (theme, persist = false) => {
@@ -68,9 +85,27 @@
   const loadMore = document.getElementById("daily-load-more");
   if (!select || rows.length === 0) return;
   const STORAGE_KEY = "megaReportDailySearchPrefs:v1";
+  const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
   const configuredPageSize = Number(select.dataset.pageSize || 100);
   const pageSize = Number.isFinite(configuredPageSize) ? Math.max(20, configuredPageSize) : 100;
   let visibleLimit = pageSize;
+
+  const readCookie = (name) => {
+    const prefix = `${name}=`;
+    const match = document.cookie
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix));
+    return match ? decodeURIComponent(match.slice(prefix.length)) : "";
+  };
+
+  const writeCookie = (name, value) => {
+    document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+  };
+
+  const clearCookie = (name) => {
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  };
 
   const normalizeSymbol = (value) => String(value || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
   const numericValue = (element) => {
@@ -80,15 +115,25 @@
     return Number.isFinite(number) ? number : null;
   };
 
-  const readSearchPrefs = () => {
+  const normalizePrefs = (raw) => {
+    if (!raw) return null;
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
       const prefs = JSON.parse(raw);
       return prefs && typeof prefs === "object" && prefs.enabled ? prefs : null;
     } catch (_error) {
       return null;
     }
+  };
+
+  const readSearchPrefs = () => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const prefs = normalizePrefs(raw);
+      if (prefs) return prefs;
+    } catch (_error) {
+      // Fall back to the cookie mirror below.
+    }
+    return normalizePrefs(readCookie(STORAGE_KEY));
   };
 
   const clearSearchPrefs = () => {
@@ -97,6 +142,7 @@
     } catch (_error) {
       // Keep search usable even when localStorage is unavailable.
     }
+    clearCookie(STORAGE_KEY);
   };
 
   const writeSearchPrefs = () => {
@@ -117,6 +163,7 @@
     } catch (_error) {
       // Keep search usable even when localStorage is unavailable.
     }
+    writeCookie(STORAGE_KEY, JSON.stringify(prefs));
   };
 
   const setSelectValue = (element, value) => {
@@ -268,6 +315,7 @@
   const savedPrefs = readSearchPrefs();
   if (savedPrefs) {
     restoreSearchPrefs(savedPrefs);
+    writeSearchPrefs();
   } else if (persistToggle) {
     persistToggle.checked = false;
   }

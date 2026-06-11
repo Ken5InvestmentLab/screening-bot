@@ -37,6 +37,7 @@ DEFAULT_HTML_OUTPUT = os.path.join("reports", "mega_validation_report_latest.htm
 CURRENT_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic.json")
 SNIPER_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_sniper.json")
 MEGA_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_mega.json")
+FUNDAMENTAL_CACHE_PATH = os.path.join(BASE_DIR, "reports", "mega_report_fundamental_cache.json")
 REPORT_TITLE = "天底極致 スコアリングBot レポート"
 PREMIUM_LOG_SPREADSHEET_ID_DEFAULT = "1GeLT-DUEdsYzT6AR3n1MkhkCeivqgtsMEXMhYfnHm9s"
 DISCORD_API_BASE = "https://discord.com/api/v10"
@@ -612,7 +613,7 @@ def premium_link_for_row(row: pd.Series, premium_links: dict) -> str:
 def attach_fundamental_links(
     frame: pd.DataFrame,
     premium_links: dict,
-    discord_messages: dict[str, dict],
+    fundamental_html_cache: dict[str, str],
 ) -> pd.DataFrame:
     frame = frame.copy()
     urls = []
@@ -620,7 +621,7 @@ def attach_fundamental_links(
     for _, row in frame.iterrows():
         url = premium_link_for_row(row, premium_links)
         urls.append(url)
-        html_blocks.append(discord_message_html(discord_messages.get(url)) if url else "")
+        html_blocks.append(fundamental_html_cache.get(url) or missing_fundamental_html() if url else "")
     frame["fundamental_url"] = urls
     frame["fundamental_html"] = html_blocks
     return frame
@@ -1262,6 +1263,64 @@ def discord_message_html(message: dict | None) -> str:
     return '<div class="discord-message">' + "".join(blocks) + "</div>"
 
 
+def missing_fundamental_html() -> str:
+    return (
+        '<div class="discord-message">'
+        '<article class="discord-embed impact-watch">'
+        "<h4>ファンダ分析を取得中です</h4>"
+        "<p>このシグナルのファンダ分析本文は、現在HTMLキャッシュにありません。"
+        "次回の本文取得ありレポート生成で自動的に取得を試みます。</p>"
+        "</article>"
+        "</div>"
+    )
+
+
+def load_fundamental_html_cache(path: str = FUNDAMENTAL_CACHE_PATH) -> dict[str, str]:
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, json.JSONDecodeError):
+        return {}
+    items = payload.get("items", payload if isinstance(payload, dict) else {})
+    if not isinstance(items, dict):
+        return {}
+    cache: dict[str, str] = {}
+    for url, item in items.items():
+        html = item.get("html") if isinstance(item, dict) else item
+        if parse_discord_message_url(str(url)) and isinstance(html, str) and 'class="discord-message"' in html:
+            cache[str(url)] = html
+    return cache
+
+
+def save_fundamental_html_cache(cache: dict[str, str], path: str = FUNDAMENTAL_CACHE_PATH) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    payload = {
+        "version": 1,
+        "items": {
+            url: {"html": html}
+            for url, html in sorted(cache.items())
+            if parse_discord_message_url(url) and str(html or "").strip()
+        },
+    }
+    with open(path, "w", encoding="utf-8", newline="\n") as handle:
+        json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
+        handle.write("\n")
+
+
+def merge_fetched_fundamental_html(cache: dict[str, str], messages: dict[str, dict]) -> bool:
+    changed = False
+    for url, message in messages.items():
+        html = discord_message_html(message)
+        if not html:
+            continue
+        if cache.get(url) != html:
+            cache[url] = html
+            changed = True
+    return changed
+
+
 def clean_symbol_text(value) -> str:
     return str(value or "").replace("TYO:", "").replace("TSE:", "").strip()
 
@@ -1298,10 +1357,15 @@ def action_buttons(symbol: str, row: pd.Series) -> str:
         )
     elif fundamental_url:
         fundamental_button = (
-            f'<a class="action-btn secondary" href="{html_escape(fundamental_url)}" '
-            'target="_blank" rel="noopener noreferrer">ファンダ分析</a>'
+            '<button class="action-btn secondary" type="button" '
+            'data-fundamental-toggle aria-expanded="false">ファンダ分析</button>'
         )
-        fundamental_detail = ""
+        fundamental_detail = (
+            '<div class="fundamental-detail" hidden>'
+            '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる">&times;</button>'
+            f"{missing_fundamental_html()}"
+            "</div>"
+        )
     else:
         fundamental_button = ""
         fundamental_detail = ""
@@ -2643,8 +2707,40 @@ def report_theme_init_js() -> str:
     return """
 (() => {
   const STORAGE_KEY = "megaReportTheme:v1";
+  const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+  const readCookie = (name) => {
+    const prefix = `${name}=`;
+    const match = document.cookie
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix));
+    return match ? decodeURIComponent(match.slice(prefix.length)) : "";
+  };
+
+  const writeCookie = (name, value) => {
+    document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+  };
+
+  const readTheme = () => {
+    try {
+      const value = window.localStorage.getItem(STORAGE_KEY);
+      if (value === "dark" || value === "light") return value;
+    } catch (_error) {
+      // Fall back to the cookie mirror below.
+    }
+    const cookieValue = readCookie(STORAGE_KEY);
+    return cookieValue === "dark" || cookieValue === "light" ? cookieValue : "light";
+  };
+
+  const theme = readTheme();
   try {
-    const theme = window.localStorage.getItem(STORAGE_KEY);
+    window.localStorage.setItem(STORAGE_KEY, theme);
+  } catch (_error) {
+    // The cookie mirror still preserves the preference.
+  }
+  writeCookie(STORAGE_KEY, theme);
+  try {
     if (theme === "dark") {
       document.documentElement.dataset.theme = "dark";
     } else {
@@ -2661,16 +2757,32 @@ def report_interactions_js() -> str:
     return """
 (() => {
   const STORAGE_KEY = "megaReportTheme:v1";
+  const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
   const root = document.documentElement;
   const buttons = Array.from(document.querySelectorAll("[data-theme-toggle]"));
+
+  const readCookie = (name) => {
+    const prefix = `${name}=`;
+    const match = document.cookie
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix));
+    return match ? decodeURIComponent(match.slice(prefix.length)) : "";
+  };
+
+  const writeCookie = (name, value) => {
+    document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+  };
 
   const readTheme = () => {
     try {
       const value = window.localStorage.getItem(STORAGE_KEY);
-      return value === "dark" || value === "light" ? value : "light";
+      if (value === "dark" || value === "light") return value;
     } catch (_error) {
-      return "light";
+      // Fall back to the cookie mirror below.
     }
+    const cookieValue = readCookie(STORAGE_KEY);
+    return cookieValue === "dark" || cookieValue === "light" ? cookieValue : "light";
   };
 
   const writeTheme = (theme) => {
@@ -2679,6 +2791,7 @@ def report_interactions_js() -> str:
     } catch (_error) {
       // Theme switching should keep working even when storage is unavailable.
     }
+    writeCookie(STORAGE_KEY, theme);
   };
 
   const applyTheme = (theme, persist = false) => {
@@ -2729,9 +2842,27 @@ def report_interactions_js() -> str:
   const loadMore = document.getElementById("daily-load-more");
   if (!select || rows.length === 0) return;
   const STORAGE_KEY = "megaReportDailySearchPrefs:v1";
+  const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
   const configuredPageSize = Number(select.dataset.pageSize || 100);
   const pageSize = Number.isFinite(configuredPageSize) ? Math.max(20, configuredPageSize) : 100;
   let visibleLimit = pageSize;
+
+  const readCookie = (name) => {
+    const prefix = `${name}=`;
+    const match = document.cookie
+      .split(";")
+      .map((part) => part.trim())
+      .find((part) => part.startsWith(prefix));
+    return match ? decodeURIComponent(match.slice(prefix.length)) : "";
+  };
+
+  const writeCookie = (name, value) => {
+    document.cookie = `${name}=${encodeURIComponent(value)}; Max-Age=${COOKIE_MAX_AGE}; Path=/; SameSite=Lax`;
+  };
+
+  const clearCookie = (name) => {
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`;
+  };
 
   const normalizeSymbol = (value) => String(value || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase();
   const numericValue = (element) => {
@@ -2741,15 +2872,25 @@ def report_interactions_js() -> str:
     return Number.isFinite(number) ? number : null;
   };
 
-  const readSearchPrefs = () => {
+  const normalizePrefs = (raw) => {
+    if (!raw) return null;
     try {
-      const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
       const prefs = JSON.parse(raw);
       return prefs && typeof prefs === "object" && prefs.enabled ? prefs : null;
     } catch (_error) {
       return null;
     }
+  };
+
+  const readSearchPrefs = () => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      const prefs = normalizePrefs(raw);
+      if (prefs) return prefs;
+    } catch (_error) {
+      // Fall back to the cookie mirror below.
+    }
+    return normalizePrefs(readCookie(STORAGE_KEY));
   };
 
   const clearSearchPrefs = () => {
@@ -2758,6 +2899,7 @@ def report_interactions_js() -> str:
     } catch (_error) {
       // Keep search usable even when localStorage is unavailable.
     }
+    clearCookie(STORAGE_KEY);
   };
 
   const writeSearchPrefs = () => {
@@ -2778,6 +2920,7 @@ def report_interactions_js() -> str:
     } catch (_error) {
       // Keep search usable even when localStorage is unavailable.
     }
+    writeCookie(STORAGE_KEY, JSON.stringify(prefs));
   };
 
   const setSelectValue = (element, value) => {
@@ -2929,6 +3072,7 @@ def report_interactions_js() -> str:
   const savedPrefs = readSearchPrefs();
   if (savedPrefs) {
     restoreSearchPrefs(savedPrefs);
+    writeSearchPrefs();
   } else if (persistToggle) {
     persistToggle.checked = false;
   }
@@ -5494,15 +5638,22 @@ def main() -> None:
     premium_urls = collect_premium_urls(all_frame, premium_links)
     html_path = os.path.abspath(args.html_output)
     guard_against_link_only_fundamental_regression(html_path, premium_urls)
-    discord_messages = fetch_discord_messages(premium_urls)
-    confirmed_frame = attach_fundamental_links(confirmed_frame, premium_links, discord_messages)
-    all_frame = attach_fundamental_links(all_frame, premium_links, discord_messages)
+    fundamental_html_cache = load_fundamental_html_cache()
+    urls_to_fetch = [url for url in premium_urls if url and url not in fundamental_html_cache]
+    discord_messages = fetch_discord_messages(urls_to_fetch)
+    if merge_fetched_fundamental_html(fundamental_html_cache, discord_messages):
+        save_fundamental_html_cache(fundamental_html_cache)
+    missing_fundamental_urls = [url for url in premium_urls if url and url not in fundamental_html_cache]
+    if missing_fundamental_urls:
+        print(f"warning: {len(missing_fundamental_urls)} fundamental messages missing from cache")
+    confirmed_frame = attach_fundamental_links(confirmed_frame, premium_links, fundamental_html_cache)
+    all_frame = attach_fundamental_links(all_frame, premium_links, fundamental_html_cache)
 
     report_confirmed_frame = recent_calendar_day_frame(confirmed_frame, 365)
     report_all_frame = recent_calendar_day_frame(all_frame, 365)
     report_meta_data = report_meta(all_meta, report_all_frame, report_confirmed_frame)
     report_meta_data["premium_log_urls"] = premium_links.get("matched_urls", 0)
-    report_meta_data["discord_messages"] = len(discord_messages)
+    report_meta_data["discord_messages"] = len([url for url in premium_urls if url in fundamental_html_cache])
     generated_at = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S %Z")
 
     markdown_output = args.markdown_output or DEFAULT_MARKDOWN_OUTPUT

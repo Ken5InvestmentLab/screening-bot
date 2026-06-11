@@ -106,6 +106,8 @@ PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 
 銘柄検索モードの検索条件保存は端末ブラウザの `localStorage` だけで行い、保存対象は日付以外の条件に限定する。表示日・開始日・終了日は保存せず、次回表示時は常に最新日の通常初期表示へ戻す。保存チェックを外したら保存済み条件を削除する。
 
+`Mega Validation Report` workflow はDiscord Bot tokenが無い環境でもHTML再生成自体を失敗させず、リンクのみのファンダ導線で生成・デプロイを継続する。
+
 Mega5/Mega40 の承認済み条件は `current_logic_mega.json` を正とし、`Daily Screener Optimization` 内の `optimize_screener.py --propose-mega-report-logic-only` は `pending_logic_mega.json` への提案だけを行う。Mega提案は確定成績、検証期間、未確定ウォッチリスト銘柄の現在成績、件数低下による過学習リスクを見て、基準未満ならpendingを作らず自動却下する。承認済みMega条件を変更するのは `/approve-update target:<mega系>` で明示承認されたときだけで、却下は `/reject-update target:<mega系>` で対象モードを選ぶ。これはHTML/Markdownレポート専用で、Bot本体の `screener.js` / `index.js` や `/scan` コマンドにMegaモードを追加しない。
 
 レポートヘッダーの二段ナビは、1段目に `天底スコアリングTop`、モード別ページ、使い方ページリンク、ダークモードトグル、2段目に銘柄検索などの主要セクションを置く。

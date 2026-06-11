@@ -589,19 +589,10 @@ def existing_report_has_embedded_fundamentals(html_path: str) -> bool:
 
 
 def guard_against_link_only_fundamental_regression(html_path: str, premium_urls: list[str]) -> None:
-    if truthy_config(["MEGA_REPORT_FETCH_DISCORD_MESSAGES"]):
-        return
-    if truthy_config(["MEGA_REPORT_ALLOW_LINK_ONLY_FUNDAMENTALS"]):
-        return
-    if not premium_urls or not existing_report_has_embedded_fundamentals(html_path):
-        return
-    raise RuntimeError(
-        "Existing generated reports contain embedded fundamental analysis, but "
-        "MEGA_REPORT_FETCH_DISCORD_MESSAGES is not enabled. Refusing to overwrite them "
-        "with Discord-link-only output. Enable MEGA_REPORT_FETCH_DISCORD_MESSAGES=1, "
-        "or set MEGA_REPORT_ALLOW_LINK_ONLY_FUNDAMENTALS=1 only when intentionally "
-        "regenerating link-only reports."
-    )
+    # Kept for compatibility with older call sites. Fundamental analysis buttons no
+    # longer fall back to Discord links; cached or missing analyses render as in-page
+    # popups, so Discord fetch being disabled is not a link-only regression anymore.
+    return
 
 
 def premium_link_for_row(row: pd.Series, premium_links: dict) -> str:

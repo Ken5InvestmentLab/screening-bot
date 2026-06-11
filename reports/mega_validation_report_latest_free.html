@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>天底極致 スコアリングBot レポート</title>
+  <script src="report-theme-init.js"></script>
   <style>
     :root {
       color-scheme: light;
@@ -221,8 +222,18 @@
       color: var(--text);
     }
     :root[data-theme="dark"] .mode-card,
-    :root[data-theme="dark"] .search-panel {
+    :root[data-theme="dark"] .search-panel,
+    :root[data-theme="dark"] .indicator-options {
+      background: var(--panel);
       border-color: var(--line);
+    }
+    :root[data-theme="dark"] .search-panel > summary,
+    :root[data-theme="dark"] .search-grid label,
+    :root[data-theme="dark"] .indicator-filter,
+    :root[data-theme="dark"] .indicator-filter-head small,
+    :root[data-theme="dark"] .search-persist-control,
+    :root[data-theme="dark"] .indicator-options {
+      color: var(--text);
     }
     :root[data-theme="dark"] thead th {
       background: #223249;
@@ -234,6 +245,7 @@
     }
     :root[data-theme="dark"] input,
     :root[data-theme="dark"] select,
+    :root[data-theme="dark"] option,
     :root[data-theme="dark"] .action-btn.secondary,
     :root[data-theme="dark"] .fundamental-close,
     :root[data-theme="dark"] .mobile-row-toggle,
@@ -242,6 +254,20 @@
       background: #0f1826;
       border-color: var(--line);
       color: var(--text);
+    }
+    :root[data-theme="dark"] option {
+      background: #0f1826;
+    }
+    :root[data-theme="dark"] input[type="checkbox"] {
+      accent-color: #6ea8ff;
+    }
+    :root[data-theme="dark"] .search-actions button {
+      background: #183250;
+      border-color: #4f8dff;
+      color: #d9e9ff;
+    }
+    :root[data-theme="dark"] .search-actions button:hover {
+      background: #21446d;
     }
     :root[data-theme="dark"] input::placeholder {
       color: #7f8da1;
@@ -1692,7 +1718,7 @@
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底極致 スコアリングBot レポート</h1>
-    <p>生成日時: 2026-06-11 14:32:09 JST</p>
+    <p>生成日時: 2026-06-11 15:48:16 JST</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>
@@ -1700,10 +1726,10 @@
     <section id="performance-summary" class="panel">
       <h2>全体成績（過去1年分）</h2>
       <section class="cards">
-        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2212</div></div>
+        <div class="card"><div class="label">指標計算可能シグナル</div><div class="value">2219</div></div>
         <div class="card"><div class="label">対象モード</div><div class="value">5</div></div>
         <div class="card"><div class="label">確定済み延べ件数</div><div class="value">80</div></div>
-        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">13</div></div>
+        <div class="card"><div class="label">ウォッチ中延べ件数</div><div class="value">14</div></div>
       </section>
       <p class="note">過去1年以内に出たBOTTOMシグナルを、評価日別に集計しています。</p>
       <table class="compact">
@@ -1809,7 +1835,7 @@
           <span><strong>12</strong><small>確定</small></span>
           <span><strong><span class="pos">66.7%</span></strong><small>勝率</small></span>
           <span><strong><span class="pos">+32.2%</span></strong><small>平均</small></span>
-          <span><strong>6</strong><small>ウォッチ中</small></span>
+          <span><strong>7</strong><small>ウォッチ中</small></span>
         </div>
 
         <span class="mode-card-action">有料会員限定 →</span>
@@ -2004,10 +2030,6 @@
     <div class="site-footer-inner">
       <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
       <div class="footer-links" aria-label="公式リンク">
-        <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
-          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
-          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
-        </a>
         <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">
           <img class="footer-logo footer-logo-light footer-logo-discord" src="report-assets/discord-light.png" alt="">
           <img class="footer-logo footer-logo-dark footer-logo-discord" src="report-assets/discord-dark.png" alt="">
@@ -2015,6 +2037,10 @@
         <a class="footer-link" href="https://coconala.com/users/322523" target="_blank" rel="noopener noreferrer" aria-label="ココナラ">
           <img class="footer-logo footer-logo-light footer-logo-coconala" src="report-assets/coconala-light.png" alt="">
           <img class="footer-logo footer-logo-dark footer-logo-coconala" src="report-assets/coconala-dark.png" alt="">
+        </a>
+        <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
+          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
         </a>
       </div>
     </div>

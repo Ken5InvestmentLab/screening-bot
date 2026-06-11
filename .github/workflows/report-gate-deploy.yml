@@ -8,6 +8,8 @@ on:
       - "report-gate/**"
       - "reports/mega_validation_report*.html"
       - "reports/report-interactions.js"
+      - "reports/report-theme-init.js"
+      - "reports/report-assets/*.png"
       - ".github/workflows/report-gate-deploy.yml"
 
 jobs:

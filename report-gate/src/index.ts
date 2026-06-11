@@ -4,6 +4,7 @@ const RETURN_TO_COOKIE = "__Host-report_gate_return_to";
 const DISCORD_SCOPE = "identify guilds.members.read";
 const ACCESS_GUARD_SCRIPT_PATH = "/auth/guard.js";
 const REPORT_INTERACTIONS_SCRIPT_PATH = "/report-interactions.js";
+const REPORT_THEME_INIT_SCRIPT_PATH = "/report-theme-init.js";
 const ROLE_CACHE_SECONDS = 90;
 const ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS = 600;
 const TOKEN_REFRESH_SKEW_SECONDS = 300;
@@ -774,8 +775,8 @@ async function serveReport(request: Request, env: WorkerEnv, assetPath = reportA
   });
 }
 
-async function serveReportScript(env: WorkerEnv): Promise<Response> {
-  const assetUrl = new URL(REPORT_INTERACTIONS_SCRIPT_PATH, "https://assets.local");
+async function serveReportScript(env: WorkerEnv, assetPath = REPORT_INTERACTIONS_SCRIPT_PATH): Promise<Response> {
+  const assetUrl = new URL(assetPath, "https://assets.local");
   const assetResponse = await env.ASSETS.fetch(assetUrl.toString());
   if (!assetResponse.ok || !assetResponse.body) {
     return textResponse("Report script not found", 404);
@@ -883,8 +884,8 @@ async function router(request: Request, env: WorkerEnv): Promise<Response> {
       }),
     });
   }
-  if (url.pathname === REPORT_INTERACTIONS_SCRIPT_PATH) {
-    return serveReportScript(env);
+  if (url.pathname === REPORT_INTERACTIONS_SCRIPT_PATH || url.pathname === REPORT_THEME_INIT_SCRIPT_PATH) {
+    return serveReportScript(env, url.pathname);
   }
   if (REPORT_IMAGE_ASSET_PATH_RE.test(url.pathname)) {
     return serveReportImageAsset(env, url.pathname);

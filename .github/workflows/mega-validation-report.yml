@@ -36,6 +36,7 @@ jobs:
           cp reports/mega_validation_report_latest.md /tmp/mega-report-before/mega_validation_report_latest.md 2>/dev/null || true
           cp reports/mega_validation_report*.html /tmp/mega-report-before/ 2>/dev/null || true
           cp reports/report-interactions.js /tmp/mega-report-before/report-interactions.js 2>/dev/null || true
+          cp reports/report-theme-init.js /tmp/mega-report-before/report-theme-init.js 2>/dev/null || true
 
       - name: Generate report
         env:
@@ -54,11 +55,13 @@ jobs:
 
           before_dir = Path("/tmp/mega-report-before")
           reports_dir = Path("reports")
-          report_names = {"mega_validation_report_latest.md", "report-interactions.js"}
+          report_names = {"mega_validation_report_latest.md", "report-interactions.js", "report-theme-init.js"}
           report_names.update(path.name for path in reports_dir.glob("mega_validation_report*.html"))
           report_names.update(path.name for path in before_dir.glob("mega_validation_report*.html"))
           if (before_dir / "report-interactions.js").exists():
               report_names.add("report-interactions.js")
+          if (before_dir / "report-theme-init.js").exists():
+              report_names.add("report-theme-init.js")
 
           def normalize(text):
               return re.sub(
@@ -94,7 +97,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add reports/mega_validation_report_latest.md reports/mega_validation_report*.html reports/report-interactions.js
+          git add reports/mega_validation_report_latest.md reports/mega_validation_report*.html reports/report-interactions.js reports/report-theme-init.js
           if git diff --staged --quiet; then
             echo "Mega validation report is already current"
           else

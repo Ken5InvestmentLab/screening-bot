@@ -1561,10 +1561,6 @@ def site_footer_html() -> str:
     <div class="site-footer-inner">
       <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
       <div class="footer-links" aria-label="公式リンク">
-        <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
-          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
-          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
-        </a>
         <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">
           <img class="footer-logo footer-logo-light footer-logo-discord" src="report-assets/discord-light.png" alt="">
           <img class="footer-logo footer-logo-dark footer-logo-discord" src="report-assets/discord-dark.png" alt="">
@@ -1572,6 +1568,10 @@ def site_footer_html() -> str:
         <a class="footer-link" href="https://coconala.com/users/322523" target="_blank" rel="noopener noreferrer" aria-label="ココナラ">
           <img class="footer-logo footer-logo-light footer-logo-coconala" src="report-assets/coconala-light.png" alt="">
           <img class="footer-logo footer-logo-dark footer-logo-coconala" src="report-assets/coconala-dark.png" alt="">
+        </a>
+        <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
+          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
         </a>
       </div>
     </div>
@@ -1642,7 +1642,7 @@ def navigation_html(
 def guide_content_html() -> str:
     return """
     <section id="guide-overview" class="panel guide-panel">
-      <h2>使い方・対象銘柄</h2>
+      <h2>天底極致 スコアリングBot レポートについて</h2>
       <p class="note">TradingView用インジケーター「天底極致 - 蒼橙の審眼 -」にて底シグナルが点灯した銘柄について、複数のテクニカル指標をもとに品質スコアを算出し、一覧で表示します。</p>
       <p class="notice">このシステムは2026年3月5日から稼働しています。そのため、2026年3月4日以前に底シグナルが点灯した銘柄は、このレポートには記録されていません。</p>
     </section>
@@ -1898,8 +1898,18 @@ def shared_report_theme_css() -> str:
       color: var(--text);
     }
     :root[data-theme="dark"] .mode-card,
-    :root[data-theme="dark"] .search-panel {
+    :root[data-theme="dark"] .search-panel,
+    :root[data-theme="dark"] .indicator-options {
+      background: var(--panel);
       border-color: var(--line);
+    }
+    :root[data-theme="dark"] .search-panel > summary,
+    :root[data-theme="dark"] .search-grid label,
+    :root[data-theme="dark"] .indicator-filter,
+    :root[data-theme="dark"] .indicator-filter-head small,
+    :root[data-theme="dark"] .search-persist-control,
+    :root[data-theme="dark"] .indicator-options {
+      color: var(--text);
     }
     :root[data-theme="dark"] thead th {
       background: #223249;
@@ -1911,6 +1921,7 @@ def shared_report_theme_css() -> str:
     }
     :root[data-theme="dark"] input,
     :root[data-theme="dark"] select,
+    :root[data-theme="dark"] option,
     :root[data-theme="dark"] .action-btn.secondary,
     :root[data-theme="dark"] .fundamental-close,
     :root[data-theme="dark"] .mobile-row-toggle,
@@ -1919,6 +1930,20 @@ def shared_report_theme_css() -> str:
       background: #0f1826;
       border-color: var(--line);
       color: var(--text);
+    }
+    :root[data-theme="dark"] option {
+      background: #0f1826;
+    }
+    :root[data-theme="dark"] input[type="checkbox"] {
+      accent-color: #6ea8ff;
+    }
+    :root[data-theme="dark"] .search-actions button {
+      background: #183250;
+      border-color: #4f8dff;
+      color: #d9e9ff;
+    }
+    :root[data-theme="dark"] .search-actions button:hover {
+      background: #21446d;
     }
     :root[data-theme="dark"] input::placeholder {
       color: #7f8da1;
@@ -2525,6 +2550,28 @@ def daily_detection_script() -> str:
     return '<script src="report-interactions.js" defer></script>'
 
 
+def theme_bootstrap_script() -> str:
+    return '<script src="report-theme-init.js"></script>'
+
+
+def report_theme_init_js() -> str:
+    return """
+(() => {
+  const STORAGE_KEY = "megaReportTheme:v1";
+  try {
+    const theme = window.localStorage.getItem(STORAGE_KEY);
+    if (theme === "dark") {
+      document.documentElement.dataset.theme = "dark";
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  } catch (_error) {
+    document.documentElement.removeAttribute("data-theme");
+  }
+})();
+    """
+
+
 def report_interactions_js() -> str:
     return """
 (() => {
@@ -2985,6 +3032,7 @@ def build_html_report(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html_escape(REPORT_TITLE)}</title>
+  {theme_bootstrap_script()}
   <style>
     :root {{
       color-scheme: light;
@@ -5066,6 +5114,7 @@ def build_mode_html_page(
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html_escape(candidate["label"])} | {html_escape(REPORT_TITLE)}</title>
+  {theme_bootstrap_script()}
   <style>{mode_page_style()}</style>
 </head>
 <body>
@@ -5107,6 +5156,7 @@ def build_locked_mode_html_page(candidate: dict, generated_at: str) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{html_escape(candidate["label"])} | {html_escape(REPORT_TITLE)}</title>
+  {theme_bootstrap_script()}
   <style>{mode_page_style()}</style>
 </head>
 <body>
@@ -5140,6 +5190,7 @@ def build_guide_html_page(generated_at: str, free: bool = False) -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>使い方・対象銘柄 | {html_escape(REPORT_TITLE)}</title>
+  {theme_bootstrap_script()}
   <style>{mode_page_style()}</style>
 </head>
 <body>
@@ -5398,6 +5449,11 @@ def main() -> None:
     script_path = os.path.join(html_dir, "report-interactions.js")
     with open(script_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(report_interactions_js().strip())
+        handle.write("\n")
+
+    theme_script_path = os.path.join(html_dir, "report-theme-init.js")
+    with open(theme_script_path, "w", encoding="utf-8", newline="\n") as handle:
+        handle.write(report_theme_init_js().strip())
         handle.write("\n")
 
     guide_report = build_guide_html_page(generated_at)

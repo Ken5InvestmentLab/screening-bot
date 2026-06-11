@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>使い方・対象銘柄 | 天底極致 スコアリングBot レポート</title>
+  <script src="report-theme-init.js"></script>
   <style>
     :root {
       color-scheme: light;
@@ -752,8 +753,18 @@
       color: var(--text);
     }
     :root[data-theme="dark"] .mode-card,
-    :root[data-theme="dark"] .search-panel {
+    :root[data-theme="dark"] .search-panel,
+    :root[data-theme="dark"] .indicator-options {
+      background: var(--panel);
       border-color: var(--line);
+    }
+    :root[data-theme="dark"] .search-panel > summary,
+    :root[data-theme="dark"] .search-grid label,
+    :root[data-theme="dark"] .indicator-filter,
+    :root[data-theme="dark"] .indicator-filter-head small,
+    :root[data-theme="dark"] .search-persist-control,
+    :root[data-theme="dark"] .indicator-options {
+      color: var(--text);
     }
     :root[data-theme="dark"] thead th {
       background: #223249;
@@ -765,6 +776,7 @@
     }
     :root[data-theme="dark"] input,
     :root[data-theme="dark"] select,
+    :root[data-theme="dark"] option,
     :root[data-theme="dark"] .action-btn.secondary,
     :root[data-theme="dark"] .fundamental-close,
     :root[data-theme="dark"] .mobile-row-toggle,
@@ -773,6 +785,20 @@
       background: #0f1826;
       border-color: var(--line);
       color: var(--text);
+    }
+    :root[data-theme="dark"] option {
+      background: #0f1826;
+    }
+    :root[data-theme="dark"] input[type="checkbox"] {
+      accent-color: #6ea8ff;
+    }
+    :root[data-theme="dark"] .search-actions button {
+      background: #183250;
+      border-color: #4f8dff;
+      color: #d9e9ff;
+    }
+    :root[data-theme="dark"] .search-actions button:hover {
+      background: #21446d;
     }
     :root[data-theme="dark"] input::placeholder {
       color: #7f8da1;
@@ -848,13 +874,13 @@
 
   <header>
     <h1>使い方・対象銘柄</h1>
-    <p>生成日時: 2026-06-11 14:32:09 JST</p>
+    <p>生成日時: 2026-06-11 15:48:16 JST</p>
     <p>検出モード、対象銘柄、ファンダ分析の見方をまとめています。</p>
   </header>
   <main>
 
     <section id="guide-overview" class="panel guide-panel">
-      <h2>使い方・対象銘柄</h2>
+      <h2>天底極致 スコアリングBot レポートについて</h2>
       <p class="note">TradingView用インジケーター「天底極致 - 蒼橙の審眼 -」にて底シグナルが点灯した銘柄について、複数のテクニカル指標をもとに品質スコアを算出し、一覧で表示します。</p>
       <p class="notice">このシステムは2026年3月5日から稼働しています。そのため、2026年3月4日以前に底シグナルが点灯した銘柄は、このレポートには記録されていません。</p>
     </section>
@@ -914,10 +940,6 @@
     <div class="site-footer-inner">
       <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
       <div class="footer-links" aria-label="公式リンク">
-        <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
-          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
-          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
-        </a>
         <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">
           <img class="footer-logo footer-logo-light footer-logo-discord" src="report-assets/discord-light.png" alt="">
           <img class="footer-logo footer-logo-dark footer-logo-discord" src="report-assets/discord-dark.png" alt="">
@@ -925,6 +947,10 @@
         <a class="footer-link" href="https://coconala.com/users/322523" target="_blank" rel="noopener noreferrer" aria-label="ココナラ">
           <img class="footer-logo footer-logo-light footer-logo-coconala" src="report-assets/coconala-light.png" alt="">
           <img class="footer-logo footer-logo-dark footer-logo-coconala" src="report-assets/coconala-dark.png" alt="">
+        </a>
+        <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
+          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
         </a>
       </div>
     </div>

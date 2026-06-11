@@ -9,7 +9,7 @@ const sourceDir = path.join(repoRoot, "reports");
 const destinationDir = path.join(reportGateDir, "public");
 const reportAssetDirName = "report-assets";
 const reportHtmlFilePattern = /^mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
-const reportFilePattern = /^(?:mega_validation_report(?:_[a-z0-9_]+)?\.html|report-interactions\.js)$/;
+const reportFilePattern = /^(?:mega_validation_report(?:_[a-z0-9_]+)?\.html|report-(?:interactions|theme-init)\.js)$/;
 const reportAssetFilePattern = /^[a-z0-9-]+\.png$/;
 
 await mkdir(destinationDir, { recursive: true });

@@ -302,6 +302,38 @@
       background: var(--chip);
       color: #d5e2f2;
     }
+    :root[data-theme="dark"] .mobile-summary-item {
+      background: #16263b;
+      border-color: #4c6585;
+      color: #edf5ff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    :root[data-theme="dark"] .mobile-summary-item small {
+      color: #aebfd4;
+      font-weight: 700;
+    }
+    :root[data-theme="dark"] .mobile-summary-item strong {
+      color: #f4f8ff;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .flat {
+      color: #dce8f7;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .price-sub {
+      color: #b9c7d8;
+      font-weight: 600;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .pos {
+      color: #75e0a7;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .neg {
+      color: #ff9b8f;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .star-badge,
+    :root[data-theme="dark"] .mobile-summary-item .mode-badge,
+    :root[data-theme="dark"] .mobile-summary-item .mode-badge.none {
+      background: #263f61;
+      color: #f4f8ff;
+    }
     :root[data-theme="dark"] .notice {
       background: #3b2d12;
       color: #ffe0a0;
@@ -403,7 +435,9 @@
       white-space: nowrap;
     }
     .top-nav-links,
-    .top-nav-mode-links {
+    .top-nav-mode-links,
+    .top-nav-section-links,
+    .top-nav-utility {
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
@@ -411,6 +445,18 @@
       min-width: 0;
       overflow-x: visible;
       scrollbar-width: thin;
+    }
+    .top-nav-links {
+      align-items: center;
+      justify-content: space-between;
+    }
+    .top-nav-section-links {
+      flex: 1 1 auto;
+    }
+    .top-nav-utility {
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: flex-end;
     }
     .top-nav-mode-links {
       padding-left: 2px;
@@ -1612,10 +1658,24 @@
       .top-nav a {
         padding: 7px 9px;
       }
-      .top-nav-links,
-      .top-nav-mode-links {
+      .top-nav-mode-links,
+      .top-nav-section-links {
         flex-wrap: nowrap;
         overflow-x: auto;
+      }
+      .top-nav-links {
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: visible;
+      }
+      .top-nav-section-links {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .top-nav-utility {
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        overflow-x: visible;
       }
       header { padding: 22px 18px; }
       main { padding: 14px; }
@@ -1720,27 +1780,31 @@
         <div class="top-nav-mode-links" aria-label="モード別ページ">
           <a class="" href="mega_validation_report_stable_s6.html">Stable ★6</a><a class="" href="mega_validation_report_sniper.html">Sniper 勝率重視</a><a class="" href="mega_validation_report_mega5_rebound.html">Mega5 短期リバウンド</a><a class="" href="mega_validation_report_mega40_deep_reversal.html">Mega40 深押し反転</a><a class="" href="mega_validation_report_mega40_wick_recovery.html">Mega40 下ヒゲ回復</a>
         </div>
-        <a class="top-nav-guide " href="mega_validation_report_guide.html">使い方</a>
+      </div>
+      <div class="top-nav-links" aria-label="ページ内メニュー">
+        <div class="top-nav-section-links">
+
+        <a href="#daily-detections">銘柄検索</a>
+        <a href="#mode-summary">モード別サマリー</a>
+        <a href="#performance-summary">全体成績</a>
+
+        </div>
+        <div class="top-nav-utility">
+          <a class="top-nav-guide " href="mega_validation_report_guide.html">使い方</a>
 
         <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える">
           <span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span>
           <span class="theme-toggle-label">ダーク</span>
         </button>
 
-      </div>
-      <div class="top-nav-links" aria-label="ページ内メニュー">
-
-        <a href="#daily-detections">銘柄検索</a>
-        <a href="#mode-summary">モード別サマリー</a>
-        <a href="#performance-summary">全体成績</a>
-
+        </div>
       </div>
     </nav>
 
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底極致 スコアリングBot レポート</h1>
-    <p>生成日時: 2026-06-11 19:02:34 JST</p>
+    <p>生成日時: 2026-06-11 20:04:36 JST</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>

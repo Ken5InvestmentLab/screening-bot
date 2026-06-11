@@ -1747,11 +1747,15 @@ def navigation_html(
         <div class="top-nav-mode-links" aria-label="モード別ページ">
           {mode_links}
         </div>
-        <a class="top-nav-guide {guide_active}" href="{html_escape(guide_page_filename())}">使い方</a>
-        {theme_toggle_html()}
       </div>
       <div class="top-nav-links" aria-label="ページ内メニュー">
-        {section_links}
+        <div class="top-nav-section-links">
+          {section_links}
+        </div>
+        <div class="top-nav-utility">
+          <a class="top-nav-guide {guide_active}" href="{html_escape(guide_page_filename())}">使い方</a>
+          {theme_toggle_html()}
+        </div>
       </div>
     </nav>
     """
@@ -2095,6 +2099,38 @@ def shared_report_theme_css() -> str:
     :root[data-theme="dark"] .mode-badge.none {
       background: var(--chip);
       color: #d5e2f2;
+    }
+    :root[data-theme="dark"] .mobile-summary-item {
+      background: #16263b;
+      border-color: #4c6585;
+      color: #edf5ff;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    :root[data-theme="dark"] .mobile-summary-item small {
+      color: #aebfd4;
+      font-weight: 700;
+    }
+    :root[data-theme="dark"] .mobile-summary-item strong {
+      color: #f4f8ff;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .flat {
+      color: #dce8f7;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .price-sub {
+      color: #b9c7d8;
+      font-weight: 600;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .pos {
+      color: #75e0a7;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .neg {
+      color: #ff9b8f;
+    }
+    :root[data-theme="dark"] .mobile-summary-item .star-badge,
+    :root[data-theme="dark"] .mobile-summary-item .mode-badge,
+    :root[data-theme="dark"] .mobile-summary-item .mode-badge.none {
+      background: #263f61;
+      color: #f4f8ff;
     }
     :root[data-theme="dark"] .notice {
       background: #3b2d12;
@@ -3340,7 +3376,9 @@ def build_html_report(
       white-space: nowrap;
     }}
     .top-nav-links,
-    .top-nav-mode-links {{
+    .top-nav-mode-links,
+    .top-nav-section-links,
+    .top-nav-utility {{
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
@@ -3348,6 +3386,18 @@ def build_html_report(
       min-width: 0;
       overflow-x: visible;
       scrollbar-width: thin;
+    }}
+    .top-nav-links {{
+      align-items: center;
+      justify-content: space-between;
+    }}
+    .top-nav-section-links {{
+      flex: 1 1 auto;
+    }}
+    .top-nav-utility {{
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: flex-end;
     }}
     .top-nav-mode-links {{
       padding-left: 2px;
@@ -4549,10 +4599,24 @@ def build_html_report(
       .top-nav a {{
         padding: 7px 9px;
       }}
-      .top-nav-links,
-      .top-nav-mode-links {{
+      .top-nav-mode-links,
+      .top-nav-section-links {{
         flex-wrap: nowrap;
         overflow-x: auto;
+      }}
+      .top-nav-links {{
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: visible;
+      }}
+      .top-nav-section-links {{
+        flex: 1 1 0;
+        min-width: 0;
+      }}
+      .top-nav-utility {{
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        overflow-x: visible;
       }}
       header {{ padding: 22px 18px; }}
       main {{ padding: 14px; }}
@@ -4734,7 +4798,9 @@ def mode_page_style() -> str:
       white-space: nowrap;
     }
     .top-nav-links,
-    .top-nav-mode-links {
+    .top-nav-mode-links,
+    .top-nav-section-links,
+    .top-nav-utility {
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
@@ -4742,6 +4808,18 @@ def mode_page_style() -> str:
       min-width: 0;
       overflow-x: visible;
       scrollbar-width: thin;
+    }
+    .top-nav-links {
+      align-items: center;
+      justify-content: space-between;
+    }
+    .top-nav-section-links {
+      flex: 1 1 auto;
+    }
+    .top-nav-utility {
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: flex-end;
     }
     .top-nav-mode-links {
       padding-left: 2px;
@@ -5194,10 +5272,24 @@ def mode_page_style() -> str:
       .top-nav a {
         padding: 7px 9px;
       }
-      .top-nav-links,
-      .top-nav-mode-links {
+      .top-nav-mode-links,
+      .top-nav-section-links {
         flex-wrap: nowrap;
         overflow-x: auto;
+      }
+      .top-nav-links {
+        gap: 8px;
+        flex-wrap: nowrap;
+        overflow-x: visible;
+      }
+      .top-nav-section-links {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+      .top-nav-utility {
+        flex: 0 0 auto;
+        flex-wrap: nowrap;
+        overflow-x: visible;
       }
       header { padding: 22px 18px; }
       main { padding: 14px; }

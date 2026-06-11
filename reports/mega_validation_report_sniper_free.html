@@ -556,11 +556,11 @@
 
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --bg: #0d1420;
-      --panel: #151f2d;
+      --bg: #0a1019;
+      --panel: #172234;
       --text: #e7edf5;
-      --muted: #9aa8bb;
-      --line: #2b3a4e;
+      --muted: #aeb9c9;
+      --line: #465b74;
       --blue: #6ea8ff;
       --navy: #0a111c;
       --green: #63d49b;
@@ -588,6 +588,16 @@
       line-height: 1;
       white-space: nowrap;
       cursor: pointer;
+    }
+    .guide-panel .note {
+      color: var(--text);
+    }
+    .guide-panel .guide-list,
+    .guide-panel .gate-list {
+      color: var(--text);
+    }
+    .guide-panel strong {
+      color: var(--text);
     }
     .theme-toggle:hover {
       background: rgba(255, 255, 255, 0.16);
@@ -646,48 +656,42 @@
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
     .footer-link {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 6px 9px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1;
+      justify-content: center;
+      min-width: 42px;
+      min-height: 40px;
+      padding: 6px 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
       text-decoration: none;
     }
     .footer-link:hover {
-      border-color: #8fb7ff;
-      color: #1849a9;
+      border-color: #b7c8e4;
       background: #eef5ff;
     }
-    .footer-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #102033;
-      color: #ffffff;
-      font-size: 12px;
-      font-weight: 900;
-      line-height: 1;
+    .footer-logo {
+      display: block;
+      object-fit: contain;
     }
-    .footer-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
+    .footer-logo-dark {
+      display: none;
     }
-    .footer-icon-coconala {
-      background: #30b7b7;
-      font-family: "Segoe UI", sans-serif;
+    .footer-logo-x {
+      width: 24px;
+      height: 24px;
+    }
+    .footer-logo-discord {
+      width: 35px;
+      height: 27px;
+    }
+    .footer-logo-coconala {
+      width: 76px;
+      height: 42px;
     }
     :root[data-theme="dark"] .top-nav {
       background: rgba(8, 14, 23, 0.98);
@@ -696,6 +700,23 @@
     :root[data-theme="dark"] header {
       background: #0b1220;
       border-bottom-color: #315f9f;
+    }
+    :root[data-theme="dark"] .card,
+    :root[data-theme="dark"] .panel,
+    :root[data-theme="dark"] .candidate-detail {
+      border-color: var(--line);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 12px 30px rgba(0, 0, 0, 0.22);
+    }
+    :root[data-theme="dark"] .guide-panel {
+      background: #18263a;
+    }
+    :root[data-theme="dark"] .guide-block {
+      border-top-color: #607896;
+      background: rgba(255, 255, 255, 0.025);
+      border-radius: 8px;
+      padding: 12px;
     }
     :root[data-theme="dark"] .top-nav a:hover,
     :root[data-theme="dark"] .top-nav a.active {
@@ -717,6 +738,7 @@
     }
     :root[data-theme="dark"] table,
     :root[data-theme="dark"] .metric,
+    :root[data-theme="dark"] .mode-metrics > span,
     :root[data-theme="dark"] .filter-control,
     :root[data-theme="dark"] .daily-search,
     :root[data-theme="dark"] .mode-options label,
@@ -729,9 +751,17 @@
       border-color: var(--line);
       color: var(--text);
     }
+    :root[data-theme="dark"] .mode-card,
+    :root[data-theme="dark"] .search-panel {
+      border-color: var(--line);
+    }
     :root[data-theme="dark"] thead th {
-      background: #202d3d;
+      background: #223249;
       color: #c9d5e5;
+    }
+    :root[data-theme="dark"] th,
+    :root[data-theme="dark"] td {
+      border-bottom-color: var(--line);
     }
     :root[data-theme="dark"] input,
     :root[data-theme="dark"] select,
@@ -756,8 +786,8 @@
       color: #d5e2f2;
     }
     :root[data-theme="dark"] .notice {
-      background: #332710;
-      color: #f7d58a;
+      background: #3b2d12;
+      color: #ffe0a0;
       border-left-color: var(--amber);
     }
     :root[data-theme="dark"] .vol-low { background: #123524; color: #7ee3ad; }
@@ -765,8 +795,17 @@
     :root[data-theme="dark"] .vol-high { background: #3a1b1e; color: #ff9a8e; }
     :root[data-theme="dark"] .footer-link:hover {
       background: #183250;
-      color: #d9e9ff;
       border-color: #4f8dff;
+    }
+    :root[data-theme="dark"] .footer-logo-light {
+      display: none;
+    }
+    :root[data-theme="dark"] .footer-logo-dark {
+      display: block;
+    }
+    :root[data-theme="dark"] .site-footer {
+      border-top-color: var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
     @media (max-width: 760px) {
       .theme-toggle-label {
@@ -807,7 +846,7 @@
 
   <header>
     <h1>Sniper 勝率重視</h1>
-    <p>生成日時: 2026-06-11 12:54:04 JST</p>
+    <p>生成日時: 2026-06-11 14:32:09 JST</p>
     <p>現行Sniperロジックの全条件通過候補。勝率重視で確認する。</p>
   </header>
   <main>
@@ -815,7 +854,7 @@
       <h2>成績サマリー（過去1年分）</h2>
       <p class="note">5営業日後 / 目標 勝ち。過去1年以内に出たBOTTOMシグナルの成績を集計しています。</p>
       <div class="chips"><span class="chip" title="close &gt; EMA25">ema25</span><span class="chip" title="陽線実体 &gt;= 0.5%">sbull</span><span class="chip" title="ATR &lt; 5%">atr5</span><span class="chip" title="ATR &lt; 7%">atr7</span><span class="chip" title="20日高値更新">hb20</span><span class="chip" title="RSI 40-60">rsi4060</span></div>
-      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">25</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+1.1%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">70.8%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">18</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">3</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="neg">-3.4%</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="pos">33.3%</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div></div>
+      <div class="metric-groups"><div class="metrics confirmed-metrics"><div class="metric"><div class="label">確定件数</div><div class="value">25</div></div><div class="metric"><div class="label">確定平均</div><div class="value"><span class="pos">+1.1%</span></div></div><div class="metric"><div class="label">確定勝率</div><div class="value"><span class="pos">70.8%</span></div></div><div class="metric"><div class="label">目標Hit</div><div class="value">18</div></div></div><div class="metrics watch-metrics"><div class="metric"><div class="label">ウォッチ中</div><div class="value">3</div></div><div class="metric"><div class="label">現在平均</div><div class="value"><span class="neg">-3.4%</span></div></div><div class="metric"><div class="label">現在勝率</div><div class="value"><span class="flat">0.0%</span></div></div><div class="metric"><div class="label">現在+10%</div><div class="value">0</div></div></div></div>
     </section>
 
     <section id="confirmed" class="panel">
@@ -983,20 +1022,16 @@
       <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
       <div class="footer-links" aria-label="公式リンク">
         <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
-          <span class="footer-icon footer-icon-x" aria-hidden="true">X</span>
-          <span>X</span>
+          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
         </a>
         <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">
-          <span class="footer-icon footer-icon-discord" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path d="M8.4 8.8c.8-.6 1.7-.9 2.6-1l.3.6c.5-.1.9-.1 1.4 0l.3-.6c.9.1 1.8.4 2.6 1 1.1 1.7 1.6 3.5 1.5 5.4-.9.7-1.8 1.1-2.9 1.4l-.6-.8c.4-.1.8-.3 1.1-.5-.2-.1-.3-.2-.5-.3-1.4.6-3 .6-4.4 0-.2.1-.3.2-.5.3.3.2.7.4 1.1.5l-.6.8c-1-.3-2-.7-2.9-1.4-.1-1.9.4-3.7 1.5-5.4Zm1.8 4.1c.5 0 .9-.5.9-1.1s-.4-1.1-.9-1.1-.9.5-.9 1.1.4 1.1.9 1.1Zm3.6 0c.5 0 .9-.5.9-1.1s-.4-1.1-.9-1.1-.9.5-.9 1.1.4 1.1.9 1.1Z"/>
-            </svg>
-          </span>
-          <span>Discord</span>
+          <img class="footer-logo footer-logo-light footer-logo-discord" src="report-assets/discord-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-discord" src="report-assets/discord-dark.png" alt="">
         </a>
         <a class="footer-link" href="https://coconala.com/users/322523" target="_blank" rel="noopener noreferrer" aria-label="ココナラ">
-          <span class="footer-icon footer-icon-coconala" aria-hidden="true">c</span>
-          <span>ココナラ</span>
+          <img class="footer-logo footer-logo-light footer-logo-coconala" src="report-assets/coconala-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-coconala" src="report-assets/coconala-dark.png" alt="">
         </a>
       </div>
     </div>

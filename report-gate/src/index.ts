@@ -9,6 +9,7 @@ const ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS = 600;
 const TOKEN_REFRESH_SKEW_SECONDS = 300;
 const DEFAULT_SESSION_TTL_SECONDS = 31536000;
 const REPORT_ASSET_PATH_RE = /^\/mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
+const REPORT_IMAGE_ASSET_PATH_RE = /^\/report-assets\/[a-z0-9-]+\.png$/;
 const FREE_REPORT_SUFFIX = "_free";
 const DEFAULT_ACCESS_PURCHASE_URL = "https://whop.com/scoring-bot/tenteikyokuchi/";
 const ROLE_REQUIRED_TITLE = "アクセス権限がありません";
@@ -169,7 +170,7 @@ function securityHeaders(init: HeadersInit = {}, options: SecurityHeaderOptions 
     options.allowReportScript ? "script-src 'self'" : "",
     options.allowReportScript ? "connect-src 'self'" : "",
     "style-src 'unsafe-inline'",
-    "img-src data: https:",
+    "img-src 'self' data: https:",
     "base-uri 'none'",
     "frame-ancestors 'none'",
   ].filter(Boolean);
@@ -788,6 +789,21 @@ async function serveReportScript(env: WorkerEnv): Promise<Response> {
   });
 }
 
+async function serveReportImageAsset(env: WorkerEnv, assetPath: string): Promise<Response> {
+  const assetUrl = new URL(assetPath, "https://assets.local");
+  const assetResponse = await env.ASSETS.fetch(assetUrl.toString());
+  if (!assetResponse.ok || !assetResponse.body) {
+    return textResponse("Report image asset not found", 404);
+  }
+  return new Response(assetResponse.body, {
+    status: assetResponse.status,
+    headers: securityHeaders({
+      "content-type": "image/png",
+      "cache-control": "public, max-age=86400",
+    }),
+  });
+}
+
 async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
   const session = await readSession(request, env);
   const url = new URL(request.url);
@@ -869,6 +885,9 @@ async function router(request: Request, env: WorkerEnv): Promise<Response> {
   }
   if (url.pathname === REPORT_INTERACTIONS_SCRIPT_PATH) {
     return serveReportScript(env);
+  }
+  if (REPORT_IMAGE_ASSET_PATH_RE.test(url.pathname)) {
+    return serveReportImageAsset(env, url.pathname);
   }
   if (url.pathname === "/auth/callback") {
     return callback(request, env);

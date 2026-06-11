@@ -145,6 +145,10 @@ def config_value(names: list[str], default: str = "") -> str:
     return default
 
 
+def truthy_config(names: list[str]) -> bool:
+    return config_value(names, "").lower() in ("1", "true", "yes", "on")
+
+
 STABLE_CONDITIONS = load_logic_conditions(
     CURRENT_LOGIC_PATH,
     ["ema25", "macdpos", "stoch75", "bb80", "pre_down3", "gap_up"],
@@ -448,7 +452,7 @@ def simplify_discord_message(payload: dict, jump_url: str) -> dict:
 
 
 def fetch_discord_messages(urls: list[str]) -> dict[str, dict]:
-    enabled = config_value(["MEGA_REPORT_FETCH_DISCORD_MESSAGES"], "").lower() in ("1", "true", "yes", "on")
+    enabled = truthy_config(["MEGA_REPORT_FETCH_DISCORD_MESSAGES"])
     if not enabled:
         return {}
     token = discord_api_token()
@@ -512,6 +516,33 @@ def fetch_discord_messages(urls: list[str]) -> dict[str, dict]:
             time.sleep(5.0)
         fetch_batch(remaining)
     return messages
+
+
+def existing_report_has_embedded_fundamentals(html_path: str) -> bool:
+    if not os.path.exists(html_path):
+        return False
+    try:
+        with open(html_path, "r", encoding="utf-8") as handle:
+            content = handle.read()
+    except OSError:
+        return False
+    return 'class="discord-message"' in content and "data-fundamental-toggle" in content
+
+
+def guard_against_link_only_fundamental_regression(html_path: str, premium_urls: list[str]) -> None:
+    if truthy_config(["MEGA_REPORT_FETCH_DISCORD_MESSAGES"]):
+        return
+    if truthy_config(["MEGA_REPORT_ALLOW_LINK_ONLY_FUNDAMENTALS"]):
+        return
+    if not premium_urls or not existing_report_has_embedded_fundamentals(html_path):
+        return
+    raise RuntimeError(
+        "Existing generated reports contain embedded fundamental analysis, but "
+        "MEGA_REPORT_FETCH_DISCORD_MESSAGES is not enabled. Refusing to overwrite them "
+        "with Discord-link-only output. Enable MEGA_REPORT_FETCH_DISCORD_MESSAGES=1, "
+        "or set MEGA_REPORT_ALLOW_LINK_ONLY_FUNDAMENTALS=1 only when intentionally "
+        "regenerating link-only reports."
+    )
 
 
 def premium_link_for_row(row: pd.Series, premium_links: dict) -> str:
@@ -1531,20 +1562,16 @@ def site_footer_html() -> str:
       <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
       <div class="footer-links" aria-label="公式リンク">
         <a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer" aria-label="X">
-          <span class="footer-icon footer-icon-x" aria-hidden="true">X</span>
-          <span>X</span>
+          <img class="footer-logo footer-logo-light footer-logo-x" src="report-assets/x-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-x" src="report-assets/x-dark.png" alt="">
         </a>
         <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">
-          <span class="footer-icon footer-icon-discord" aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
-              <path d="M8.4 8.8c.8-.6 1.7-.9 2.6-1l.3.6c.5-.1.9-.1 1.4 0l.3-.6c.9.1 1.8.4 2.6 1 1.1 1.7 1.6 3.5 1.5 5.4-.9.7-1.8 1.1-2.9 1.4l-.6-.8c.4-.1.8-.3 1.1-.5-.2-.1-.3-.2-.5-.3-1.4.6-3 .6-4.4 0-.2.1-.3.2-.5.3.3.2.7.4 1.1.5l-.6.8c-1-.3-2-.7-2.9-1.4-.1-1.9.4-3.7 1.5-5.4Zm1.8 4.1c.5 0 .9-.5.9-1.1s-.4-1.1-.9-1.1-.9.5-.9 1.1.4 1.1.9 1.1Zm3.6 0c.5 0 .9-.5.9-1.1s-.4-1.1-.9-1.1-.9.5-.9 1.1.4 1.1.9 1.1Z"/>
-            </svg>
-          </span>
-          <span>Discord</span>
+          <img class="footer-logo footer-logo-light footer-logo-discord" src="report-assets/discord-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-discord" src="report-assets/discord-dark.png" alt="">
         </a>
         <a class="footer-link" href="https://coconala.com/users/322523" target="_blank" rel="noopener noreferrer" aria-label="ココナラ">
-          <span class="footer-icon footer-icon-coconala" aria-hidden="true">c</span>
-          <span>ココナラ</span>
+          <img class="footer-logo footer-logo-light footer-logo-coconala" src="report-assets/coconala-light.png" alt="">
+          <img class="footer-logo footer-logo-dark footer-logo-coconala" src="report-assets/coconala-dark.png" alt="">
         </a>
       </div>
     </div>
@@ -1569,8 +1596,8 @@ def navigation_html(
         section_links = """
         <a href="#guide-overview">概要</a>
         <a href="#guide-coverage">対象銘柄</a>
-        <a href="#guide-modes">検出モード</a>
         <a href="#guide-reading">サイトの見方</a>
+        <a href="#guide-modes">検出モード</a>
         <a href="#guide-fundamental">ファンダ分析</a>
         """
     elif include_mode_sections:
@@ -1644,16 +1671,6 @@ def guide_content_html() -> str:
       </div>
     </section>
 
-    <section id="guide-modes" class="panel guide-panel">
-      <h2>検出モードの見方</h2>
-      <ul class="gate-list">
-        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
-        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
-        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
-        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
-      </ul>
-    </section>
-
     <section id="guide-reading" class="panel guide-panel">
       <h2>サイトの見方</h2>
       <ul class="guide-list">
@@ -1661,6 +1678,16 @@ def guide_content_html() -> str:
         <li>モード別サマリーから、Stable、Sniper、Mega各モードの詳細ページへ移動できます。</li>
         <li>銘柄検索では、日付、証券コード、★数、株価、テクニカル指標で絞り込めます。</li>
         <li>各銘柄のファンダ分析ボタンは、該当日のDiscord分析がある場合だけ表示されます。</li>
+      </ul>
+    </section>
+
+    <section id="guide-modes" class="panel guide-panel">
+      <h2>検出モードの見方</h2>
+      <ul class="gate-list">
+        <li><strong>Stable ★6</strong>は現行Stable満点。短期の安定感と下振れの少なさを見るモードです。</li>
+        <li><strong>Sniper 勝率重視</strong>は派手さよりも、条件通過後にプラスで終わる比率を重視します。</li>
+        <li><strong>Mega5 短期リバウンド</strong>は短期急騰狙い。5営業日でどこまで反転するかを見ます。</li>
+        <li><strong>Mega40</strong>の2モードは中期反転狙い。確定まで時間がかかるため、ウォッチ中の現在成績が特に重要です。</li>
       </ul>
     </section>
 
@@ -1675,11 +1702,11 @@ def shared_report_theme_css() -> str:
     return """
     :root[data-theme="dark"] {
       color-scheme: dark;
-      --bg: #0d1420;
-      --panel: #151f2d;
+      --bg: #0a1019;
+      --panel: #172234;
       --text: #e7edf5;
-      --muted: #9aa8bb;
-      --line: #2b3a4e;
+      --muted: #aeb9c9;
+      --line: #465b74;
       --blue: #6ea8ff;
       --navy: #0a111c;
       --green: #63d49b;
@@ -1707,6 +1734,16 @@ def shared_report_theme_css() -> str:
       line-height: 1;
       white-space: nowrap;
       cursor: pointer;
+    }
+    .guide-panel .note {
+      color: var(--text);
+    }
+    .guide-panel .guide-list,
+    .guide-panel .gate-list {
+      color: var(--text);
+    }
+    .guide-panel strong {
+      color: var(--text);
     }
     .theme-toggle:hover {
       background: rgba(255, 255, 255, 0.16);
@@ -1765,48 +1802,42 @@ def shared_report_theme_css() -> str:
       display: flex;
       align-items: center;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
     }
     .footer-link {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      padding: 6px 9px;
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1;
+      justify-content: center;
+      min-width: 42px;
+      min-height: 40px;
+      padding: 6px 8px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      background: transparent;
       text-decoration: none;
     }
     .footer-link:hover {
-      border-color: #8fb7ff;
-      color: #1849a9;
+      border-color: #b7c8e4;
       background: #eef5ff;
     }
-    .footer-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #102033;
-      color: #ffffff;
-      font-size: 12px;
-      font-weight: 900;
-      line-height: 1;
+    .footer-logo {
+      display: block;
+      object-fit: contain;
     }
-    .footer-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
+    .footer-logo-dark {
+      display: none;
     }
-    .footer-icon-coconala {
-      background: #30b7b7;
-      font-family: "Segoe UI", sans-serif;
+    .footer-logo-x {
+      width: 24px;
+      height: 24px;
+    }
+    .footer-logo-discord {
+      width: 35px;
+      height: 27px;
+    }
+    .footer-logo-coconala {
+      width: 76px;
+      height: 42px;
     }
     :root[data-theme="dark"] .top-nav {
       background: rgba(8, 14, 23, 0.98);
@@ -1815,6 +1846,23 @@ def shared_report_theme_css() -> str:
     :root[data-theme="dark"] header {
       background: #0b1220;
       border-bottom-color: #315f9f;
+    }
+    :root[data-theme="dark"] .card,
+    :root[data-theme="dark"] .panel,
+    :root[data-theme="dark"] .candidate-detail {
+      border-color: var(--line);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 12px 30px rgba(0, 0, 0, 0.22);
+    }
+    :root[data-theme="dark"] .guide-panel {
+      background: #18263a;
+    }
+    :root[data-theme="dark"] .guide-block {
+      border-top-color: #607896;
+      background: rgba(255, 255, 255, 0.025);
+      border-radius: 8px;
+      padding: 12px;
     }
     :root[data-theme="dark"] .top-nav a:hover,
     :root[data-theme="dark"] .top-nav a.active {
@@ -1836,6 +1884,7 @@ def shared_report_theme_css() -> str:
     }
     :root[data-theme="dark"] table,
     :root[data-theme="dark"] .metric,
+    :root[data-theme="dark"] .mode-metrics > span,
     :root[data-theme="dark"] .filter-control,
     :root[data-theme="dark"] .daily-search,
     :root[data-theme="dark"] .mode-options label,
@@ -1848,9 +1897,17 @@ def shared_report_theme_css() -> str:
       border-color: var(--line);
       color: var(--text);
     }
+    :root[data-theme="dark"] .mode-card,
+    :root[data-theme="dark"] .search-panel {
+      border-color: var(--line);
+    }
     :root[data-theme="dark"] thead th {
-      background: #202d3d;
+      background: #223249;
       color: #c9d5e5;
+    }
+    :root[data-theme="dark"] th,
+    :root[data-theme="dark"] td {
+      border-bottom-color: var(--line);
     }
     :root[data-theme="dark"] input,
     :root[data-theme="dark"] select,
@@ -1875,8 +1932,8 @@ def shared_report_theme_css() -> str:
       color: #d5e2f2;
     }
     :root[data-theme="dark"] .notice {
-      background: #332710;
-      color: #f7d58a;
+      background: #3b2d12;
+      color: #ffe0a0;
       border-left-color: var(--amber);
     }
     :root[data-theme="dark"] .vol-low { background: #123524; color: #7ee3ad; }
@@ -1884,8 +1941,17 @@ def shared_report_theme_css() -> str:
     :root[data-theme="dark"] .vol-high { background: #3a1b1e; color: #ff9a8e; }
     :root[data-theme="dark"] .footer-link:hover {
       background: #183250;
-      color: #d9e9ff;
       border-color: #4f8dff;
+    }
+    :root[data-theme="dark"] .footer-logo-light {
+      display: none;
+    }
+    :root[data-theme="dark"] .footer-logo-dark {
+      display: block;
+    }
+    :root[data-theme="dark"] .site-footer {
+      border-top-color: var(--line);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
     }
     @media (max-width: 760px) {
       .theme-toggle-label {
@@ -5273,6 +5339,8 @@ def main() -> None:
     all_frame, _, all_meta = build_alert_frame(include_unconfirmed=True)
     premium_links = fetch_premium_discord_links(opt.get_service())
     premium_urls = collect_premium_urls(all_frame, premium_links)
+    html_path = os.path.abspath(args.html_output)
+    guard_against_link_only_fundamental_regression(html_path, premium_urls)
     discord_messages = fetch_discord_messages(premium_urls)
     confirmed_frame = attach_fundamental_links(confirmed_frame, premium_links, discord_messages)
     all_frame = attach_fundamental_links(all_frame, premium_links, discord_messages)
@@ -5299,7 +5367,6 @@ def main() -> None:
         generated_at,
     )
     html_report = "\n".join(line.rstrip() for line in html_report.rstrip().splitlines())
-    html_path = os.path.abspath(args.html_output)
     os.makedirs(os.path.dirname(html_path), exist_ok=True)
     with open(html_path, "w", encoding="utf-8", newline="\n") as handle:
         handle.write(html_report.rstrip())

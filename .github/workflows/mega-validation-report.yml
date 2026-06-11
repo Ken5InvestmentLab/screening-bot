@@ -40,7 +40,8 @@ jobs:
       - name: Generate report
         env:
           PYTHONIOENCODING: utf-8
-          MEGA_REPORT_FETCH_DISCORD_MESSAGES: "1"
+          MEGA_REPORT_FETCH_DISCORD_MESSAGES: ${{ (secrets.DISCORD_BOT_TOKEN != '' || secrets.DISCORD_TOKEN != '') && '1' || '0' }}
+          MEGA_REPORT_ALLOW_LINK_ONLY_FUNDAMENTALS: ${{ (secrets.DISCORD_BOT_TOKEN == '' && secrets.DISCORD_TOKEN == '') && '1' || '0' }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN || secrets.DISCORD_TOKEN }}
         run: python generate_mega_validation_report.py
 

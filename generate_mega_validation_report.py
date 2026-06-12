@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from html import escape, unescape
+from html import escape
 import json
 import math
 import os
@@ -237,158 +237,6 @@ LIFT_TARGETS = [
     (40, 0.30),
     (40, 0.50),
 ]
-
-FUNDAMENTAL_RISK_FLAGS = [
-    {
-        "id": "dilution",
-        "label": "希薄化",
-        "tone": "high",
-        "description": "新株予約権、MSワラント、第三者割当などで1株価値や需給が重くなりやすい材料です。",
-        "patterns": [
-            r"MSワラント",
-            r"ワラント",
-            r"新株予約権",
-            r"行使価額修正",
-            r"第三者割当",
-            r"潜在株式",
-            r"希薄化",
-            r"株式数増加",
-            r"新株発行",
-            r"転換社債",
-            r"\bCB\b",
-        ],
-    },
-    {
-        "id": "supply_pressure",
-        "label": "需給圧力",
-        "tone": "watch",
-        "description": "市場売却、未行使残、ロックアップ解除などで短期の売り圧力が残りやすい材料です。",
-        "patterns": [
-            r"市場売却",
-            r"売却圧力",
-            r"売り圧力",
-            r"需給負担",
-            r"行使売却",
-            r"大量行使",
-            r"未行使",
-            r"大株主.{0,12}売却",
-            r"ロックアップ解除",
-        ],
-    },
-    {
-        "id": "loss_financing",
-        "label": "赤字/資金繰り",
-        "tone": "high",
-        "description": "赤字継続、営業損失、資金繰りなど、追加調達や下振れに注意したい材料です。",
-        "patterns": [
-            r"継続赤字",
-            r"赤字継続",
-            r"赤字転落",
-            r"営業損失",
-            r"経常損失",
-            r"純損失",
-            r"当期純損失",
-            r"赤字",
-            r"資金繰り",
-            r"手元資金",
-            r"現預金",
-            r"債務超過",
-            r"継続企業",
-            r"runway",
-        ],
-    },
-    {
-        "id": "listing_liquidity",
-        "label": "上場維持",
-        "tone": "high",
-        "description": "上場維持基準、流通株式時価総額、低流動性など市場制度面のリスクです。",
-        "patterns": [
-            r"上場維持",
-            r"流通株式",
-            r"時価総額基準",
-            r"監理銘柄",
-            r"改善期間",
-            r"特設注意市場",
-            r"低流動性",
-            r"出来高.{0,8}少な",
-        ],
-    },
-    {
-        "id": "earnings_deterioration",
-        "label": "業績悪化",
-        "tone": "high",
-        "description": "下方修正、減収減益、特損、減損、評価損など利益面の悪化材料です。",
-        "patterns": [
-            r"下方修正",
-            r"業績予想.{0,20}下方",
-            r"下方.{0,20}業績予想",
-            r"業績予想.{0,12}差異",
-            r"実績値.{0,12}差異",
-            r"減収減益",
-            r"減益",
-            r"特別損失",
-            r"減損",
-            r"評価損",
-            r"営業外費用",
-            r"利益.{0,8}減少",
-        ],
-    },
-    {
-        "id": "governance_disclosure",
-        "label": "開示/監査",
-        "tone": "high",
-        "description": "決算訂正、監査人変更、内部統制など、開示品質やガバナンス確認が必要な材料です。",
-        "patterns": [
-            r"決算短信.{0,12}訂正",
-            r"訂正.{0,12}決算",
-            r"数値データ訂正",
-            r"公認会計士等の異動",
-            r"監査人",
-            r"監査法人",
-            r"内部統制",
-            r"開示精度",
-        ],
-    },
-    {
-        "id": "legal_regulatory",
-        "label": "法務/行政",
-        "tone": "watch",
-        "description": "訴訟、行政処分、不正調査など、事業や信用への影響確認が必要な材料です。",
-        "patterns": [
-            r"訴訟",
-            r"和解",
-            r"行政処分",
-            r"課徴金",
-            r"不正",
-            r"特別調査",
-            r"第三者委員会",
-        ],
-    },
-    {
-        "id": "commercialization",
-        "label": "事業化未確定",
-        "tone": "watch",
-        "description": "臨床、提携、販売立ち上げ、案件化など、材料が売上利益へ変わるまで確認が必要な段階です。",
-        "patterns": [
-            r"契約終了",
-            r"共同研究.{0,12}終了",
-            r"提携.{0,12}終了",
-            r"承認.{0,12}未確定",
-            r"収益化時期",
-            r"商業化時期",
-            r"導入速度",
-            r"案件化",
-            r"研究開発費",
-            r"臨床",
-            r"治験",
-            r"パイプライン",
-        ],
-    },
-]
-FUNDAMENTAL_RISK_BY_ID = {flag["id"]: flag for flag in FUNDAMENTAL_RISK_FLAGS}
-FUNDAMENTAL_RISK_HIGH_IDS = {
-    flag["id"] for flag in FUNDAMENTAL_RISK_FLAGS if flag["tone"] == "high"
-}
 
 
 def is_finite(value) -> bool:
@@ -761,16 +609,12 @@ def attach_fundamental_links(
     frame = frame.copy()
     urls = []
     html_blocks = []
-    risk_flags = []
     for _, row in frame.iterrows():
         url = premium_link_for_row(row, premium_links)
-        html_block = fundamental_html_cache.get(url) or missing_fundamental_html() if url else ""
         urls.append(url)
-        html_blocks.append(html_block)
-        risk_flags.append(fundamental_risk_flags_from_html(html_block))
+        html_blocks.append(fundamental_html_cache.get(url) or missing_fundamental_html() if url else "")
     frame["fundamental_url"] = urls
     frame["fundamental_html"] = html_blocks
-    frame["fundamental_risk_flags"] = risk_flags
     return frame
 
 
@@ -800,11 +644,6 @@ def lock_fundamental_actions(frame: pd.DataFrame, unlocked_alert_ids: set[str] |
     frame["fundamental_locked"] = locked
     frame.loc[locked, "fundamental_url"] = ""
     frame.loc[locked, "fundamental_html"] = ""
-    if "fundamental_risk_flags" in frame.columns:
-        frame["fundamental_risk_flags"] = [
-            [] if is_locked else normalize_fundamental_risk_flags(flags)
-            for is_locked, flags in zip(locked.tolist(), frame["fundamental_risk_flags"].tolist())
-        ]
     return frame
 
 
@@ -1473,107 +1312,6 @@ def merge_fetched_fundamental_html(cache: dict[str, str], messages: dict[str, di
     return changed
 
 
-def fundamental_plain_text(html_text: str) -> str:
-    if not html_text or "discord-message" not in html_text:
-        return ""
-    text = re.sub(r"<[^>]+>", " ", str(html_text))
-    text = unescape(text)
-    return re.sub(r"\s+", " ", text).strip()
-
-
-def fundamental_risk_flags_from_html(html_text: str) -> list[str]:
-    text = fundamental_plain_text(html_text)
-    if not text:
-        return []
-    flags: list[str] = []
-    for flag in FUNDAMENTAL_RISK_FLAGS:
-        if fundamental_risk_flag_matches(flag, text):
-            flags.append(flag["id"])
-    return flags
-
-
-def fundamental_risk_flag_matches(flag: dict, text: str) -> bool:
-    if not any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in flag["patterns"]):
-        return False
-    if flag["id"] == "dilution":
-        strong_dilution = re.search(
-            r"MSワラント|ワラント|新株予約権|行使価額修正|第三者割当|潜在株式|新株発行|転換社債|\bCB\b",
-            text,
-            flags=re.IGNORECASE,
-        )
-        low_impact_stock_comp = re.search(
-            r"譲渡制限付株式報酬|株式報酬|自己株式の処分",
-            text,
-        ) and re.search(
-            r"希薄化.{0,16}(小さ|軽微|限定的)|影響.{0,12}(軽微|限定的)",
-            text,
-        )
-        if low_impact_stock_comp and not strong_dilution:
-            return False
-    return True
-
-
-def normalize_fundamental_risk_flags(value) -> list[str]:
-    if isinstance(value, list):
-        raw_flags = value
-    elif isinstance(value, tuple):
-        raw_flags = list(value)
-    elif isinstance(value, str):
-        raw_flags = [part.strip() for part in re.split(r"[\s,]+", value) if part.strip()]
-    else:
-        return []
-    seen: set[str] = set()
-    flags: list[str] = []
-    for flag_id in raw_flags:
-        key = str(flag_id).strip()
-        if key and key in FUNDAMENTAL_RISK_BY_ID and key not in seen:
-            seen.add(key)
-            flags.append(key)
-    return flags
-
-
-def fundamental_risk_level(flags: list[str]) -> tuple[str, str]:
-    if not flags:
-        return "", ""
-    high_count = sum(1 for flag_id in flags if flag_id in FUNDAMENTAL_RISK_HIGH_IDS)
-    if high_count >= 2 or len(flags) >= 3:
-        return "high", "強警戒"
-    return "watch", "サイズ抑制候補"
-
-
-def fundamental_risk_summary_text(flags: list[str]) -> str:
-    labels = [FUNDAMENTAL_RISK_BY_ID[flag_id]["label"] for flag_id in flags if flag_id in FUNDAMENTAL_RISK_BY_ID]
-    return " / ".join(labels)
-
-
-def fundamental_risk_badges_html(row: pd.Series, compact: bool = False) -> str:
-    flags = normalize_fundamental_risk_flags(row.get("fundamental_risk_flags", []))
-    if not flags:
-        return ""
-    level_tone, level_label = fundamental_risk_level(flags)
-    summary = fundamental_risk_summary_text(flags)
-    pieces = [
-        (
-            f'<span class="fundamental-risk-level risk-{level_tone}" '
-            f'title="{html_escape(summary)}">{html_escape(level_label)}</span>'
-        )
-    ]
-    visible_flags = flags[:2] if compact else flags
-    for flag_id in visible_flags:
-        flag = FUNDAMENTAL_RISK_BY_ID[flag_id]
-        pieces.append(
-            f'<span class="fundamental-risk-badge risk-{html_escape(flag["tone"])}" '
-            f'title="{html_escape(flag["description"])}">'
-            f'{html_escape(flag["label"])}</span>'
-        )
-    if compact and len(flags) > len(visible_flags):
-        pieces.append(
-            f'<span class="fundamental-risk-badge risk-more" title="{html_escape(summary)}">'
-            f'+{len(flags) - len(visible_flags)}</span>'
-        )
-    return '<div class="fundamental-risk-row">' + "".join(pieces) + "</div>"
-
-
 def clean_symbol_text(value) -> str:
     return str(value or "").replace("TYO:", "").replace("TSE:", "").strip()
 
@@ -1667,7 +1405,6 @@ def symbol_with_actions_html(symbol: str, row: pd.Series, mobile_summary_html: s
         else ""
     )
     volatility_html = volatility_tag_html(row)
-    risk_html = fundamental_risk_badges_html(row, compact=True)
     entry_html = (
         '<span class="symbol-price-meta">'
         '<span><span class="price-label">Entry</span>'
@@ -1677,8 +1414,8 @@ def symbol_with_actions_html(symbol: str, row: pd.Series, mobile_summary_html: s
         else ""
     )
     meta_html = (
-        f'<div class="symbol-meta-row">{volatility_html}{entry_html}{risk_html}</div>'
-        if volatility_html or entry_html or risk_html
+        f'<div class="symbol-meta-row">{volatility_html}{entry_html}</div>'
+        if volatility_html or entry_html
         else ""
     )
     return (
@@ -1703,9 +1440,6 @@ def action_links_text(symbol: str, row: pd.Series) -> str:
     if fundamental_url:
         parts.append(f"[ファンダ分析]({fundamental_url})")
     parts.append(f"[チャート]({chart_url(clean)})")
-    risk_summary = fundamental_risk_summary_text(normalize_fundamental_risk_flags(row.get("fundamental_risk_flags", [])))
-    if risk_summary:
-        parts.append(f"警戒: {risk_summary}")
     return " / ".join(parts)
 
 
@@ -2082,8 +1816,6 @@ def guide_content_html() -> str:
     <section id="guide-fundamental" class="panel guide-panel">
       <h2>ファンダ分析について</h2>
       <p class="note">ファンダ分析は、底シグナル検出時点で確認できる開示や事業情報をもとにした分析です。最新の開示、IR、ニュース、決算情報は変化している可能性があるため、投資判断の前にユーザー自身でも必ず確認してください。</p>
-      <h3>ファンダ警戒フラグ</h3>
-      <p class="note">ファンダ分析本文に、希薄化、需給圧力、赤字や資金繰り、上場維持、業績悪化、開示や監査、法務や行政、事業化未確定などの注意語が含まれる場合、銘柄セルに警戒バッジを表示します。Stable ★6でも、これらが出た銘柄はファンダ再確認やサイズ抑制候補として扱います。</p>
     </section>
     """
 
@@ -2134,59 +1866,6 @@ def shared_report_theme_css() -> str:
     }
     .guide-panel strong {
       color: var(--text);
-    }
-    .fundamental-risk-row {
-      display: inline-flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 4px;
-      max-width: 100%;
-    }
-    .fundamental-risk-level,
-    .fundamental-risk-badge {
-      display: inline-flex;
-      align-items: center;
-      width: fit-content;
-      min-height: 22px;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-    .fundamental-risk-level.risk-high {
-      color: #b42318;
-      background: #fde7e4;
-    }
-    .fundamental-risk-level.risk-watch {
-      color: #946300;
-      background: #fff4cf;
-    }
-    .fundamental-risk-badge {
-      color: #4b5563;
-      background: #eef0f3;
-    }
-    .fundamental-risk-badge.risk-high {
-      color: #b42318;
-      background: #fff1f0;
-    }
-    .fundamental-risk-badge.risk-watch,
-    .fundamental-risk-badge.risk-more {
-      color: #946300;
-      background: #fff7df;
-    }
-    .search-check {
-      gap: 6px;
-    }
-    .inline-check {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      min-height: 34px;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 800;
     }
     .theme-toggle:hover {
       background: rgba(255, 255, 255, 0.16);
@@ -2420,21 +2099,6 @@ def shared_report_theme_css() -> str:
     :root[data-theme="dark"] .mode-badge.none {
       background: var(--chip);
       color: #d5e2f2;
-    }
-    :root[data-theme="dark"] .fundamental-risk-level.risk-high,
-    :root[data-theme="dark"] .fundamental-risk-badge.risk-high {
-      color: #ffb4aa;
-      background: #4a1f24;
-    }
-    :root[data-theme="dark"] .fundamental-risk-level.risk-watch,
-    :root[data-theme="dark"] .fundamental-risk-badge.risk-watch,
-    :root[data-theme="dark"] .fundamental-risk-badge.risk-more {
-      color: #ffd58a;
-      background: #473310;
-    }
-    :root[data-theme="dark"] .fundamental-risk-badge {
-      color: #cbd5e1;
-      background: #2a3446;
     }
     :root[data-theme="dark"] .mobile-summary-item {
       background: #16263b;
@@ -2899,7 +2563,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
         latest_price = row.get("latest_close", np.nan)
         condition_keys = " ".join(row_true_conditions(row))
         mode_keys = " ".join(candidate["id"] for candidate in row_mode_matches(row))
-        risk_keys = " ".join(normalize_fundamental_risk_flags(row.get("fundamental_risk_flags", [])))
         mode_html = mode_match_badges(row, include_empty=False, link=True)
         if not mode_html:
             mode_html = '<span class="mode-badge none">モード外</span>'
@@ -2941,7 +2604,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
             f'data-symbol="{html_escape(clean_symbol)}" '
             f'data-star="{star_score}" '
             f'data-price="{html_escape(latest_price if is_finite(latest_price) else "")}" '
-            f'data-risk="{html_escape(risk_keys)}" '
             f'data-conditions="{html_escape(condition_keys)}" '
             f'data-modes="{html_escape(mode_keys)}"{hidden_class}>'
         )
@@ -3002,10 +2664,6 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
           <label>
             <span>株価上限</span>
             <input id="search-price-max" type="number" min="0" step="1" inputmode="numeric" placeholder="円">
-          </label>
-          <label class="search-check">
-            <span>ファンダ警戒</span>
-            <span class="inline-check"><input id="search-risk-only" type="checkbox" autocomplete="off">警戒あり</span>
           </label>
         </div>
         <div class="indicator-filter">
@@ -3204,7 +2862,6 @@ def report_interactions_js() -> str:
   const starMax = document.getElementById("search-star-max");
   const priceMin = document.getElementById("search-price-min");
   const priceMax = document.getElementById("search-price-max");
-  const riskOnly = document.getElementById("search-risk-only");
   const modeInputs = Array.from(document.querySelectorAll("[data-mode-filter]"));
   const indicatorInputs = Array.from(document.querySelectorAll("[data-indicator-filter]"));
   const reset = document.getElementById("search-reset");
@@ -3282,7 +2939,6 @@ def report_interactions_js() -> str:
       starMax: String(starMax?.value || ""),
       priceMin: String(priceMin?.value || ""),
       priceMax: String(priceMax?.value || ""),
-      riskOnly: Boolean(riskOnly?.checked),
       modes: modeInputs.filter((input) => input.checked).map((input) => input.value),
       indicators: indicatorInputs.filter((input) => input.checked).map((input) => input.value),
     };
@@ -3313,7 +2969,6 @@ def report_interactions_js() -> str:
     setSelectValue(starMax, prefs.starMax);
     if (priceMin) priceMin.value = String(prefs.priceMin || "");
     if (priceMax) priceMax.value = String(prefs.priceMax || "");
-    if (riskOnly) riskOnly.checked = Boolean(prefs.riskOnly);
     const savedModes = new Set(Array.isArray(prefs.modes) ? prefs.modes.map(String) : []);
     const savedIndicators = new Set(Array.isArray(prefs.indicators) ? prefs.indicators.map(String) : []);
     modeInputs.forEach((input) => {
@@ -3335,7 +2990,6 @@ def report_interactions_js() -> str:
     const maxStar = numericValue(starMax);
     const minPrice = numericValue(priceMin);
     const maxPrice = numericValue(priceMax);
-    const requireRisk = Boolean(riskOnly?.checked);
     const selectedModes = modeInputs
       .filter((input) => input.checked)
       .map((input) => input.value);
@@ -3349,7 +3003,6 @@ def report_interactions_js() -> str:
       const rowSymbol = normalizeSymbol(row.dataset.symbol);
       const rowStar = Number(row.dataset.star);
       const rowPrice = row.dataset.price === "" ? NaN : Number(row.dataset.price);
-      const rowRisk = String(row.dataset.risk || "").trim();
       const rowConditions = new Set(String(row.dataset.conditions || "").split(/\\s+/).filter(Boolean));
       const rowModes = new Set(String(row.dataset.modes || "").split(/\\s+/).filter(Boolean));
       let shouldShow = true;
@@ -3364,7 +3017,6 @@ def report_interactions_js() -> str:
       if (maxStar !== null && (!Number.isFinite(rowStar) || rowStar > maxStar)) shouldShow = false;
       if (minPrice !== null && (!Number.isFinite(rowPrice) || rowPrice < minPrice)) shouldShow = false;
       if (maxPrice !== null && (!Number.isFinite(rowPrice) || rowPrice > maxPrice)) shouldShow = false;
-      if (requireRisk && !rowRisk) shouldShow = false;
       if (selectedModes.length > 0 && !selectedModes.some((mode) => rowModes.has(mode))) shouldShow = false;
       if (requiredConditions.some((condition) => !rowConditions.has(condition))) shouldShow = false;
       const shouldRender = shouldShow && rendered < visibleLimit;
@@ -3409,7 +3061,6 @@ def report_interactions_js() -> str:
     starMax,
     priceMin,
     priceMax,
-    riskOnly,
     ...modeInputs,
     ...indicatorInputs,
   ].filter(Boolean).forEach((element) => {
@@ -3437,7 +3088,6 @@ def report_interactions_js() -> str:
     if (starMax) starMax.value = "";
     if (priceMin) priceMin.value = "";
     if (priceMax) priceMax.value = "";
-    if (riskOnly) riskOnly.checked = false;
     modeInputs.forEach((input) => {
       input.checked = false;
     });

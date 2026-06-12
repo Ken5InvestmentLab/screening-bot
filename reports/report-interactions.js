@@ -78,6 +78,7 @@
   const starMax = document.getElementById("search-star-max");
   const priceMin = document.getElementById("search-price-min");
   const priceMax = document.getElementById("search-price-max");
+  const riskOnly = document.getElementById("search-risk-only");
   const modeInputs = Array.from(document.querySelectorAll("[data-mode-filter]"));
   const indicatorInputs = Array.from(document.querySelectorAll("[data-indicator-filter]"));
   const reset = document.getElementById("search-reset");
@@ -155,6 +156,7 @@
       starMax: String(starMax?.value || ""),
       priceMin: String(priceMin?.value || ""),
       priceMax: String(priceMax?.value || ""),
+      riskOnly: Boolean(riskOnly?.checked),
       modes: modeInputs.filter((input) => input.checked).map((input) => input.value),
       indicators: indicatorInputs.filter((input) => input.checked).map((input) => input.value),
     };
@@ -185,6 +187,7 @@
     setSelectValue(starMax, prefs.starMax);
     if (priceMin) priceMin.value = String(prefs.priceMin || "");
     if (priceMax) priceMax.value = String(prefs.priceMax || "");
+    if (riskOnly) riskOnly.checked = Boolean(prefs.riskOnly);
     const savedModes = new Set(Array.isArray(prefs.modes) ? prefs.modes.map(String) : []);
     const savedIndicators = new Set(Array.isArray(prefs.indicators) ? prefs.indicators.map(String) : []);
     modeInputs.forEach((input) => {
@@ -206,6 +209,7 @@
     const maxStar = numericValue(starMax);
     const minPrice = numericValue(priceMin);
     const maxPrice = numericValue(priceMax);
+    const requireRisk = Boolean(riskOnly?.checked);
     const selectedModes = modeInputs
       .filter((input) => input.checked)
       .map((input) => input.value);
@@ -219,6 +223,7 @@
       const rowSymbol = normalizeSymbol(row.dataset.symbol);
       const rowStar = Number(row.dataset.star);
       const rowPrice = row.dataset.price === "" ? NaN : Number(row.dataset.price);
+      const rowRisk = String(row.dataset.risk || "").trim();
       const rowConditions = new Set(String(row.dataset.conditions || "").split(/\s+/).filter(Boolean));
       const rowModes = new Set(String(row.dataset.modes || "").split(/\s+/).filter(Boolean));
       let shouldShow = true;
@@ -233,6 +238,7 @@
       if (maxStar !== null && (!Number.isFinite(rowStar) || rowStar > maxStar)) shouldShow = false;
       if (minPrice !== null && (!Number.isFinite(rowPrice) || rowPrice < minPrice)) shouldShow = false;
       if (maxPrice !== null && (!Number.isFinite(rowPrice) || rowPrice > maxPrice)) shouldShow = false;
+      if (requireRisk && !rowRisk) shouldShow = false;
       if (selectedModes.length > 0 && !selectedModes.some((mode) => rowModes.has(mode))) shouldShow = false;
       if (requiredConditions.some((condition) => !rowConditions.has(condition))) shouldShow = false;
       const shouldRender = shouldShow && rendered < visibleLimit;
@@ -277,6 +283,7 @@
     starMax,
     priceMin,
     priceMax,
+    riskOnly,
     ...modeInputs,
     ...indicatorInputs,
   ].filter(Boolean).forEach((element) => {
@@ -304,6 +311,7 @@
     if (starMax) starMax.value = "";
     if (priceMin) priceMin.value = "";
     if (priceMax) priceMax.value = "";
+    if (riskOnly) riskOnly.checked = false;
     modeInputs.forEach((input) => {
       input.checked = false;
     });

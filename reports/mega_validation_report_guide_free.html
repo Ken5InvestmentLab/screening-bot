@@ -635,6 +635,7 @@
       gap: 4px;
       max-width: 100%;
     }
+    .fundamental-risk-level,
     .fundamental-risk-badge {
       display: inline-flex;
       align-items: center;
@@ -647,6 +648,14 @@
       line-height: 1.2;
       white-space: nowrap;
     }
+    .fundamental-risk-level.risk-high {
+      color: #b42318;
+      background: #fde7e4;
+    }
+    .fundamental-risk-level.risk-watch {
+      color: #946300;
+      background: #fff4cf;
+    }
     .fundamental-risk-badge {
       color: #4b5563;
       background: #eef0f3;
@@ -655,6 +664,7 @@
       color: #b42318;
       background: #fff1f0;
     }
+    .fundamental-risk-badge.risk-watch,
     .fundamental-risk-badge.risk-more {
       color: #946300;
       background: #fff7df;
@@ -904,10 +914,13 @@
       background: var(--chip);
       color: #d5e2f2;
     }
+    :root[data-theme="dark"] .fundamental-risk-level.risk-high,
     :root[data-theme="dark"] .fundamental-risk-badge.risk-high {
       color: #ffb4aa;
       background: #4a1f24;
     }
+    :root[data-theme="dark"] .fundamental-risk-level.risk-watch,
+    :root[data-theme="dark"] .fundamental-risk-badge.risk-watch,
     :root[data-theme="dark"] .fundamental-risk-badge.risk-more {
       color: #ffd58a;
       background: #473310;
@@ -1015,7 +1028,7 @@
 
   <header>
     <h1>使い方・対象銘柄</h1>
-    <p>生成日時: 2026-06-12 11:09:21 JST</p>
+    <p>生成日時: 2026-06-12 10:32:04 JST</p>
     <p>検出モード、対象銘柄、ファンダ分析の見方をまとめています。</p>
   </header>
   <main>
@@ -1074,7 +1087,7 @@
       <h2>ファンダ分析について</h2>
       <p class="note">ファンダ分析は、底シグナル検出時点で確認できる開示や事業情報をもとにした分析です。最新の開示、IR、ニュース、決算情報は変化している可能性があるため、投資判断の前にユーザー自身でも必ず確認してください。</p>
       <h3>ファンダ警戒フラグ</h3>
-      <p class="note">ファンダ分析本文に、希薄化、継続赤字、資金繰り、上場維持、業績悪化などの注意語が含まれる場合、銘柄セルに警戒バッジを表示します。Stable ★6でも、これらが出た銘柄はファンダ再確認の対象として扱います。</p>
+      <p class="note">ファンダ分析本文に、希薄化、需給圧力、赤字や資金繰り、上場維持、業績悪化、開示や監査、法務や行政、事業化未確定などの注意語が含まれる場合、銘柄セルに警戒バッジを表示します。Stable ★6でも、これらが出た銘柄はファンダ再確認やサイズ抑制候補として扱います。</p>
     </section>
 
   </main>

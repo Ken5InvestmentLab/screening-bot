@@ -259,43 +259,42 @@ FUNDAMENTAL_RISK_FLAGS = [
         ],
     },
     {
-        "id": "loss_continuity",
-        "label": "継続赤字",
+        "id": "supply_pressure",
+        "label": "需給圧力",
+        "tone": "watch",
+        "description": "市場売却、未行使残、ロックアップ解除などで短期の売り圧力が残りやすい材料です。",
+        "patterns": [
+            r"市場売却",
+            r"売却圧力",
+            r"売り圧力",
+            r"需給負担",
+            r"行使売却",
+            r"大量行使",
+            r"未行使",
+            r"大株主.{0,12}売却",
+            r"ロックアップ解除",
+        ],
+    },
+    {
+        "id": "loss_financing",
+        "label": "赤字/資金繰り",
         "tone": "high",
-        "description": "赤字継続、営業損失、経常損失など、黒字化までの距離を確認したい材料です。",
+        "description": "赤字継続、営業損失、資金繰りなど、追加調達や下振れに注意したい材料です。",
         "patterns": [
             r"継続赤字",
             r"赤字継続",
             r"赤字転落",
-            r"営業赤字",
-            r"経常赤字",
-            r"最終赤字",
-            r"赤字拡大",
-            r"赤字.{0,8}長引",
-            r"赤字.{0,8}続",
             r"営業損失",
             r"経常損失",
             r"純損失",
             r"当期純損失",
-        ],
-    },
-    {
-        "id": "cash_financing",
-        "label": "資金繰り",
-        "tone": "high",
-        "description": "手元資金、債務超過、継続企業、追加調達など、財務余力を確認したい材料です。",
-        "patterns": [
+            r"赤字",
             r"資金繰り",
             r"手元資金",
             r"現預金",
             r"債務超過",
             r"継続企業",
-            r"継続前提",
             r"runway",
-            r"追加調達",
-            r"資金不足",
-            r"運転資金",
-            r"財務余力.{0,8}(低下|不足|乏し|薄)",
         ],
     },
     {
@@ -334,8 +333,62 @@ FUNDAMENTAL_RISK_FLAGS = [
             r"利益.{0,8}減少",
         ],
     },
+    {
+        "id": "governance_disclosure",
+        "label": "開示/監査",
+        "tone": "high",
+        "description": "決算訂正、監査人変更、内部統制など、開示品質やガバナンス確認が必要な材料です。",
+        "patterns": [
+            r"決算短信.{0,12}訂正",
+            r"訂正.{0,12}決算",
+            r"数値データ訂正",
+            r"公認会計士等の異動",
+            r"監査人",
+            r"監査法人",
+            r"内部統制",
+            r"開示精度",
+        ],
+    },
+    {
+        "id": "legal_regulatory",
+        "label": "法務/行政",
+        "tone": "watch",
+        "description": "訴訟、行政処分、不正調査など、事業や信用への影響確認が必要な材料です。",
+        "patterns": [
+            r"訴訟",
+            r"和解",
+            r"行政処分",
+            r"課徴金",
+            r"不正",
+            r"特別調査",
+            r"第三者委員会",
+        ],
+    },
+    {
+        "id": "commercialization",
+        "label": "事業化未確定",
+        "tone": "watch",
+        "description": "臨床、提携、販売立ち上げ、案件化など、材料が売上利益へ変わるまで確認が必要な段階です。",
+        "patterns": [
+            r"契約終了",
+            r"共同研究.{0,12}終了",
+            r"提携.{0,12}終了",
+            r"承認.{0,12}未確定",
+            r"収益化時期",
+            r"商業化時期",
+            r"導入速度",
+            r"案件化",
+            r"研究開発費",
+            r"臨床",
+            r"治験",
+            r"パイプライン",
+        ],
+    },
 ]
 FUNDAMENTAL_RISK_BY_ID = {flag["id"]: flag for flag in FUNDAMENTAL_RISK_FLAGS}
+FUNDAMENTAL_RISK_HIGH_IDS = {
+    flag["id"] for flag in FUNDAMENTAL_RISK_FLAGS if flag["tone"] == "high"
+}
 
 
 def is_finite(value) -> bool:
@@ -1479,6 +1532,15 @@ def normalize_fundamental_risk_flags(value) -> list[str]:
     return flags
 
 
+def fundamental_risk_level(flags: list[str]) -> tuple[str, str]:
+    if not flags:
+        return "", ""
+    high_count = sum(1 for flag_id in flags if flag_id in FUNDAMENTAL_RISK_HIGH_IDS)
+    if high_count >= 2 or len(flags) >= 3:
+        return "high", "強警戒"
+    return "watch", "サイズ抑制候補"
+
+
 def fundamental_risk_summary_text(flags: list[str]) -> str:
     labels = [FUNDAMENTAL_RISK_BY_ID[flag_id]["label"] for flag_id in flags if flag_id in FUNDAMENTAL_RISK_BY_ID]
     return " / ".join(labels)
@@ -1488,8 +1550,14 @@ def fundamental_risk_badges_html(row: pd.Series, compact: bool = False) -> str:
     flags = normalize_fundamental_risk_flags(row.get("fundamental_risk_flags", []))
     if not flags:
         return ""
+    level_tone, level_label = fundamental_risk_level(flags)
     summary = fundamental_risk_summary_text(flags)
-    pieces = []
+    pieces = [
+        (
+            f'<span class="fundamental-risk-level risk-{level_tone}" '
+            f'title="{html_escape(summary)}">{html_escape(level_label)}</span>'
+        )
+    ]
     visible_flags = flags[:2] if compact else flags
     for flag_id in visible_flags:
         flag = FUNDAMENTAL_RISK_BY_ID[flag_id]
@@ -2015,7 +2083,7 @@ def guide_content_html() -> str:
       <h2>ファンダ分析について</h2>
       <p class="note">ファンダ分析は、底シグナル検出時点で確認できる開示や事業情報をもとにした分析です。最新の開示、IR、ニュース、決算情報は変化している可能性があるため、投資判断の前にユーザー自身でも必ず確認してください。</p>
       <h3>ファンダ警戒フラグ</h3>
-      <p class="note">ファンダ分析本文に、希薄化、継続赤字、資金繰り、上場維持、業績悪化などの注意語が含まれる場合、銘柄セルに警戒バッジを表示します。Stable ★6でも、これらが出た銘柄はファンダ再確認の対象として扱います。</p>
+      <p class="note">ファンダ分析本文に、希薄化、需給圧力、赤字や資金繰り、上場維持、業績悪化、開示や監査、法務や行政、事業化未確定などの注意語が含まれる場合、銘柄セルに警戒バッジを表示します。Stable ★6でも、これらが出た銘柄はファンダ再確認やサイズ抑制候補として扱います。</p>
     </section>
     """
 
@@ -2074,6 +2142,7 @@ def shared_report_theme_css() -> str:
       gap: 4px;
       max-width: 100%;
     }
+    .fundamental-risk-level,
     .fundamental-risk-badge {
       display: inline-flex;
       align-items: center;
@@ -2086,6 +2155,14 @@ def shared_report_theme_css() -> str:
       line-height: 1.2;
       white-space: nowrap;
     }
+    .fundamental-risk-level.risk-high {
+      color: #b42318;
+      background: #fde7e4;
+    }
+    .fundamental-risk-level.risk-watch {
+      color: #946300;
+      background: #fff4cf;
+    }
     .fundamental-risk-badge {
       color: #4b5563;
       background: #eef0f3;
@@ -2094,6 +2171,7 @@ def shared_report_theme_css() -> str:
       color: #b42318;
       background: #fff1f0;
     }
+    .fundamental-risk-badge.risk-watch,
     .fundamental-risk-badge.risk-more {
       color: #946300;
       background: #fff7df;
@@ -2343,10 +2421,13 @@ def shared_report_theme_css() -> str:
       background: var(--chip);
       color: #d5e2f2;
     }
+    :root[data-theme="dark"] .fundamental-risk-level.risk-high,
     :root[data-theme="dark"] .fundamental-risk-badge.risk-high {
       color: #ffb4aa;
       background: #4a1f24;
     }
+    :root[data-theme="dark"] .fundamental-risk-level.risk-watch,
+    :root[data-theme="dark"] .fundamental-risk-badge.risk-watch,
     :root[data-theme="dark"] .fundamental-risk-badge.risk-more {
       color: #ffd58a;
       background: #473310;

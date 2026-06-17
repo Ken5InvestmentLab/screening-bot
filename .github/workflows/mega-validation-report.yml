@@ -103,8 +103,6 @@ jobs:
       - name: Notify Discord that report HTML is ready
         env:
           DISCORD_REPORT_WEBHOOK_URL: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK }}
-          REPORT_URL: https://scoring-bot-report.ipo-ken5-5489.workers.dev/
-          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           python - <<'PY'
           import json
@@ -118,25 +116,18 @@ jobs:
               print("DISCORD_REPORT_WEBHOOK_URL is not set; skipping report-ready Discord notice")
               raise SystemExit(0)
 
-          report_url = os.environ["REPORT_URL"]
-          run_url = os.environ["RUN_URL"]
           embed = {
-              "title": "分析HTMLを生成しました",
-              "color": 0x2ECC71,
+              "title": "✅ OHLCVデータ同期完了",
+              "color": 0x2ecc71,
               "fields": [
                   {
-                      "name": "スコアリングBot",
-                      "value": f"最新の分析結果は `/scan` または [ブラウザ]({report_url}) にてご確認いただけます。",
+                      "name": "🤖 スコアリングBot",
+                      "value": "最新の分析結果は `/scan` または [ブラウザ](https://scoring-bot-report.ipo-ken5-5489.workers.dev/) にてご確認いただけます。",
                       "inline": False,
-                  },
-                  {
-                      "name": "GitHub Actions",
-                      "value": f"[実行ログ]({run_url})",
-                      "inline": False,
-                  },
+                  }
               ],
               "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-              "footer": {"text": "Mega Validation Report"},
+              "footer": {"text": "天底極致 OHLCV同期"},
           }
           payload = json.dumps({"embeds": [embed]}, ensure_ascii=False).encode("utf-8")
           request = urllib.request.Request(

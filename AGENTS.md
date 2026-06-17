@@ -209,6 +209,8 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `DISCORD_BOT_TOKEN` | `Mega Validation Report` でDiscord投稿済みファンダ本文をHTMLキャッシュへ追加取得するBotトークン。未設定でもHTML再生成は継続するが、新規ファンダ本文はHTML内に埋め込まれない |
 | `DISCORD_REPORT_WEBHOOK_URL` | `Mega Validation Report` でHTML生成直後にDiscordへ完了通知を送るWebhook URL。未設定の場合、通知だけをスキップしHTML生成・コミット・デプロイは継続する |
 
+`Mega Validation Report` のHTML生成完了通知は、旧GASのOHLCV完了通知と同じDiscord表示にする。タイトルは `✅ OHLCVデータ同期完了`、フィールド名は `🤖 スコアリングBot`、本文は `/scan` とブラウザリンクの案内だけにし、GitHub Actions実行ログ欄は出さない。
+
 ### VM 環境変数（`~/screening-bot/.env`）
 
 | キー | 内容 |

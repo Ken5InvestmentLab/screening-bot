@@ -296,6 +296,106 @@ def parse_local_timestamp(value: str):
     return pd.to_datetime(text.replace("/", "-"), errors="coerce")
 
 
+def parse_ohlcv_session_rows(rows: list[list[str]]) -> dict[str, list[dict]]:
+    if len(rows) < 2:
+        return {}
+    header = [str(cell).lower().strip() for cell in rows[0]]
+
+    def idx(name: str) -> int:
+        return header.index(name) if name in header else -1
+
+    idx_symbol = idx("symbol")
+    idx_timestamp = idx("timestamp")
+    idx_open = idx("open")
+    idx_high = idx("high")
+    idx_low = idx("low")
+    idx_close = idx("close")
+    idx_volume = idx("volume")
+    sessions: dict[str, list[dict]] = {}
+
+    for row in rows[1:]:
+        if not row:
+            continue
+        raw_symbol = row[idx_symbol] if 0 <= idx_symbol < len(row) else ""
+        symbol = str(raw_symbol or "").split(":")[-1].strip()
+        if not symbol:
+            continue
+        raw_timestamp = row[idx_timestamp] if 0 <= idx_timestamp < len(row) else ""
+        timestamp = parse_local_timestamp(raw_timestamp)
+        if pd.isna(timestamp):
+            continue
+
+        def float_at(index: int) -> float:
+            if index < 0 or index >= len(row):
+                return np.nan
+            try:
+                return float(str(row[index]).replace(",", "").strip())
+            except (TypeError, ValueError):
+                return np.nan
+
+        close = float_at(idx_close)
+        if not is_finite(close):
+            continue
+        sessions.setdefault(symbol, []).append(
+            {
+                "timestamp": timestamp,
+                "date": timestamp.strftime("%Y-%m-%d"),
+                "open": float_at(idx_open),
+                "high": float_at(idx_high),
+                "low": float_at(idx_low),
+                "close": close,
+                "volume": float_at(idx_volume),
+            }
+        )
+
+    return {
+        symbol: sorted(symbol_rows, key=lambda item: item["timestamp"])
+        for symbol, symbol_rows in sessions.items()
+    }
+
+
+def signal_feature_cutoff(alert: pd.Series):
+    signal_dt = parse_date(alert.get("date", ""))
+    if pd.isna(signal_dt):
+        return None
+    received_at = alert.get("_received_at_dt", pd.NaT)
+    if pd.isna(received_at):
+        return None
+    received_at = pd.Timestamp(received_at)
+    session_hour = 9 if received_at.hour < 14 else 13
+    return pd.Timestamp(
+        year=signal_dt.year,
+        month=signal_dt.month,
+        day=signal_dt.day,
+        hour=session_hour,
+    )
+
+
+def daily_bars_for_signal_features(session_rows: list[dict], alert: pd.Series) -> list[dict]:
+    if not session_rows:
+        return []
+    signal_key = normalize_date(alert.get("date", ""))
+    cutoff = signal_feature_cutoff(alert)
+    selected = []
+    for row in session_rows:
+        date_key = str(row.get("date", ""))
+        if date_key > signal_key:
+            continue
+        if cutoff is not None and date_key == signal_key and row.get("timestamp") > cutoff:
+            continue
+        selected.append(
+            {
+                "date": date_key,
+                "open": row.get("open", np.nan),
+                "high": row.get("high", np.nan),
+                "low": row.get("low", np.nan),
+                "close": row.get("close", np.nan),
+                "volume": row.get("volume", np.nan),
+            }
+        )
+    return opt.aggregate_daily(selected)
+
+
 def alert_received_at_lookup(*row_sets: list[list[str]]) -> dict[str, str]:
     lookup: dict[str, str] = {}
     for rows in row_sets:
@@ -721,12 +821,17 @@ def build_alert_frame(include_unconfirmed: bool, alert_received_cutoff=None) -> 
     alerts, cutoff_excluded = filter_alerts_by_received_cutoff(alerts, alert_received_cutoff)
 
     ohlcv = opt.parse_ohlcv(ohlcv_rows)
+    ohlcv_sessions = parse_ohlcv_session_rows(ohlcv_rows)
     today = pd.Timestamp(datetime.now(JST).date())
     records = []
 
     for _, alert in alerts.iterrows():
         daily = ohlcv.get(alert["symbol"], [])
-        features = opt.get_features(daily, alert["date"])
+        feature_daily = daily_bars_for_signal_features(
+            ohlcv_sessions.get(alert["symbol"], []),
+            alert,
+        )
+        features = opt.get_features(feature_daily or daily, alert["date"])
         if not features:
             continue
 
@@ -756,6 +861,7 @@ def build_alert_frame(include_unconfirmed: bool, alert_received_cutoff=None) -> 
         "alerts_raw_rows": len(alerts_raw_rows),
         "signals_archive_rows": len(archive_rows),
         "ohlcv_rows": len(ohlcv_rows),
+        "ohlcv_session_symbols": len(ohlcv_sessions),
         "alerts_after_dedupe": len(alerts),
         "alert_cutoff_excluded": cutoff_excluded,
         "feature_rows": len(frame),
@@ -1468,7 +1574,7 @@ def star_score_badge(row: pd.Series) -> str:
     tone = "high" if score >= 6 else "mid" if score >= 4 else "low"
     return (
         f'<span class="star-badge {tone}" '
-        'title="Stable ★6の判定条件を何個満たしたか">'
+        'title="シグナル点灯足時点でStable ★6の判定条件を何個満たしたか">'
         f"★{score}</span>"
     )
 
@@ -2530,7 +2636,7 @@ def daily_detection_section_html(frame_all: pd.DataFrame, free: bool = False) ->
     page_size = 100
     default_total = int((rows["_date_key"] == default_date).sum())
     default_count = min(default_total, page_size)
-    note = "初期表示は最新日です。★はStable ★6の判定条件を何個満たしたかです。"
+    note = "初期表示は最新日です。★はシグナル点灯足時点でStable ★6の判定条件を何個満たしたかです。"
 
     options = "\n".join(
         ["<option value=\"\">全期間</option>"]

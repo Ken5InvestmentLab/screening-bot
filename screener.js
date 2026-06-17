@@ -539,55 +539,50 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
 // ============================================================
 // Sniperモード採点（optimize_screener.py が最適化後に自動書き換え）
 // ============================================================
-// Sniperモード自動最適化 2026-05-12 07:51 / 1398件データ
-// Sniper: 18件 勝率77.8% 平均1.8%
-// 【Sniper条件（全6条件通過で採択）】
-//   ① close > EMA25（中期トレンド）
-//   ② 強い陽線（実体≥0.5%）
-//   ③ ATR% < 5.0%
-//   ④ ATR% < 7.0%
-//   ⑤ 直近20日高値更新
-//   ⑥ RSI 40〜60
-
+// Sniper scoring mode - approved 2026-06-17
+// Adopted logic: 18 confirmed signals, win 88.2%, avg +6.7%.
+// Conditions are all-pass: vol12 + atr3 + hb20 + rsi5070 + ich_chikou + rci9_os.
+// Stable and Mega modes remain on their current approved logic.
+// ============================================================
 function calculateScoreSniper(ind) {
   if (!ind) return null;
   const filters = [];
   let score = 0;
 
-  // ① close > EMA25（中期トレンド）
-  if (ind.ema25 !== null && ind.close > ind.ema25) {
+  // 1. Volume surge >= 20-day average x 1.2
+  if (ind.volSurge >= 1.2) {
     score++;
-    filters.push(`①EMA25順張り`);
+    filters.push(`1 vol>=1.2x(${ind.volSurge}x)`);
   }
 
-  // ② 強い陽線（実体≥0.5%）
-  if (ind.isStrongBull) {
+  // 2. ATR% < 3.0%
+  if (ind.atrPct < 3.0) {
     score++;
-    filters.push(`②強陽線(${ind.bodyPct.toFixed(1)}%)`);
+    filters.push(`2 ATR<3%(${ind.atrPct}%)`);
   }
 
-  // ③ ATR% < 5.0%
-  if (ind.atrPct < 5.0) {
-    score++;
-    filters.push(`③ATR(${ind.atrPct}%)`);
-  }
-
-  // ④ ATR% < 7.0%
-  if (ind.atrPct < 7.0) {
-    score++;
-    filters.push(`④ATR(${ind.atrPct}%)`);
-  }
-
-  // ⑤ 直近20日高値更新
+  // 3. Break above recent 20-day high
   if (ind.hiBrk20) {
     score++;
-    filters.push(`⑤高値更新`);
+    filters.push(`3 20d-high-break`);
   }
 
-  // ⑥ RSI 40〜60
-  if (!isNaN(ind.rsi14) && ind.rsi14 >= 40 && ind.rsi14 < 60) {
+  // 4. RSI 50-70
+  if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {
     score++;
-    filters.push(`⑥RSI(${ind.rsi14.toFixed(0)})`);
+    filters.push(`4 RSI50-70(${ind.rsi14.toFixed(0)})`);
+  }
+
+  // 5. Ichimoku chikou condition: close > close 26 days ago
+  if (ind.ichChikou) {
+    score++;
+    filters.push(`5 ichimoku-chikou`);
+  }
+
+  // 6. RCI(9) <= -50
+  if (ind.rci9 !== null && ind.rci9 <= -50) {
+    score++;
+    filters.push(`6 RCI9<=-50(${ind.rci9 !== null ? ind.rci9.toFixed(0) : 'N/A'})`);
   }
 
   return { score, filters };

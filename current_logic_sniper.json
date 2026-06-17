@@ -1,20 +1,53 @@
 {
   "method": "sniper",
   "conditions": [
-    "ema25",
-    "sbull",
-    "atr5",
-    "atr7",
+    "vol12",
+    "atr3",
     "hb20",
-    "rsi4060"
+    "rsi5070",
+    "ich_chikou",
+    "rci9_os"
   ],
-  "updated_at": "2026-05-12T08:15:59Z",
+  "updated_at": "2026-06-17T13:30:00Z",
   "thresholds": {},
   "backtest": {
-    "source": "all",
-    "n": 24,
-    "wr": 66.7,
-    "avg": 0.9
+    "source": "signal_candle_explore",
+    "n": 18,
+    "wr": 88.2,
+    "avg": 6.7,
+    "target_hits": 16,
+    "target_rate": 88.9,
+    "m10": 1
   },
-  "wr_raw": 0.6666666666666666
+  "validation": {
+    "n": 5,
+    "wr": 80.0,
+    "avg": 2.3,
+    "target_hits": 4,
+    "target_rate": 80.0,
+    "m10": 1
+  },
+  "lockbox": {
+    "n": 2,
+    "wr": 100.0,
+    "avg": 5.2,
+    "target_hits": 2,
+    "target_rate": 100.0,
+    "m10": 0,
+    "note": "Thin lockbox sample; approved by user after comparison."
+  },
+  "watch": {
+    "n": 2,
+    "wr": 50.0,
+    "avg": 0.1,
+    "target_hits": 1,
+    "target_rate": 50.0,
+    "m10": 0
+  },
+  "decision": {
+    "status": "approved",
+    "approved_at": "2026-06-17T13:30:00Z",
+    "reason": "Adopt the 18-signal high-win Sniper candidate; keep Stable and Mega modes on current logic."
+  },
+  "wr_raw": 0.8823529411764706
 }

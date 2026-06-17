@@ -10,6 +10,9 @@ test_phase.js
 
 # 一時的な実行ログ
 tmp_*.log
+tmp_*.json
+tmp_*.html
+tmp_*.md
 
 # Claude Code 内部
 .claude/worktrees/

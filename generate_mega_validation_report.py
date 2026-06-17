@@ -21,7 +21,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -1404,6 +1404,36 @@ def save_fundamental_html_cache(cache: dict[str, str], path: str = FUNDAMENTAL_C
     with open(path, "w", encoding="utf-8", newline="\n") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def cached_fundamental_snapshot_date(html: str):
+    match = re.search(r"Premium fundamental snapshot / Not investment advice / (\d{4}-\d{2}-\d{2})", str(html or ""))
+    if not match:
+        return None
+    try:
+        return datetime.strptime(match.group(1), "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def recent_cached_fundamental_urls(cache: dict[str, str], urls: list[str]) -> list[str]:
+    try:
+        refresh_days = int(config_value(["MEGA_REPORT_REFRESH_DISCORD_CACHE_DAYS"], "2"))
+    except ValueError:
+        refresh_days = 2
+    refresh_days = max(0, min(refresh_days, 14))
+    if refresh_days <= 0:
+        return []
+    cutoff = datetime.now(JST).date() - timedelta(days=refresh_days - 1)
+    refresh_urls = []
+    for url in sorted(set(urls)):
+        html = cache.get(url)
+        if not html:
+            continue
+        snapshot_date = cached_fundamental_snapshot_date(html)
+        if snapshot_date and snapshot_date >= cutoff:
+            refresh_urls.append(url)
+    return refresh_urls
 
 
 def merge_fetched_fundamental_html(cache: dict[str, str], messages: dict[str, dict]) -> bool:
@@ -5828,7 +5858,11 @@ def main() -> None:
     html_path = os.path.abspath(args.html_output)
     guard_against_link_only_fundamental_regression(html_path, premium_urls)
     fundamental_html_cache = load_fundamental_html_cache()
-    urls_to_fetch = [url for url in premium_urls if url and url not in fundamental_html_cache]
+    missing_urls_to_fetch = [url for url in premium_urls if url and url not in fundamental_html_cache]
+    cached_urls_to_refresh = recent_cached_fundamental_urls(fundamental_html_cache, premium_urls)
+    urls_to_fetch = sorted(set(missing_urls_to_fetch + cached_urls_to_refresh))
+    if cached_urls_to_refresh:
+        print(f"refreshing {len(cached_urls_to_refresh)} recent cached fundamental messages")
     discord_messages = fetch_discord_messages(urls_to_fetch)
     if merge_fetched_fundamental_html(fundamental_html_cache, discord_messages):
         save_fundamental_html_cache(fundamental_html_cache)

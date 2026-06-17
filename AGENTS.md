@@ -207,6 +207,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `GOOGLE_CREDENTIALS` | サービスアカウントJSONの中身 |
 | `SSH_PRIVATE_KEY` | VMへのSSH秘密鍵 |
 | `DISCORD_BOT_TOKEN` | `Mega Validation Report` でDiscord投稿済みファンダ本文をHTMLキャッシュへ追加取得するBotトークン。未設定でもHTML再生成は継続するが、新規ファンダ本文はHTML内に埋め込まれない |
+| `DISCORD_REPORT_WEBHOOK_URL` | `Mega Validation Report` でHTML生成直後にDiscordへ完了通知を送るWebhook URL。未設定の場合、通知だけをスキップしHTML生成・コミット・デプロイは継続する |
 
 ### VM 環境変数（`~/screening-bot/.env`）
 

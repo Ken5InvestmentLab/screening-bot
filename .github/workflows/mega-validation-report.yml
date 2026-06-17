@@ -100,6 +100,71 @@ jobs:
               print("Only generated timestamp changed; restored tracked reports")
           PY
 
+      - name: Notify Discord that report HTML is ready
+        env:
+          DISCORD_REPORT_WEBHOOK_URL: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK }}
+          REPORT_URL: https://scoring-bot-report.ipo-ken5-5489.workers.dev/
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+
+          webhook_url = os.environ.get("DISCORD_REPORT_WEBHOOK_URL", "").strip()
+          if not webhook_url:
+              print("DISCORD_REPORT_WEBHOOK_URL is not set; skipping report-ready Discord notice")
+              raise SystemExit(0)
+
+          report_url = os.environ["REPORT_URL"]
+          run_url = os.environ["RUN_URL"]
+          embed = {
+              "title": "分析HTMLを生成しました",
+              "color": 0x2ECC71,
+              "fields": [
+                  {
+                      "name": "スコアリングBot",
+                      "value": f"最新の分析結果は `/scan` または [ブラウザ]({report_url}) にてご確認いただけます。",
+                      "inline": False,
+                  },
+                  {
+                      "name": "GitHub Actions",
+                      "value": f"[実行ログ]({run_url})",
+                      "inline": False,
+                  },
+              ],
+              "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+              "footer": {"text": "Mega Validation Report"},
+          }
+          payload = json.dumps({"embeds": [embed]}, ensure_ascii=False).encode("utf-8")
+          request = urllib.request.Request(
+              webhook_url,
+              data=payload,
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "DiscordBot (screening-bot, 1.0)",
+              },
+              method="POST",
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=15) as response:
+                  if response.status not in (200, 204):
+                      body = response.read().decode("utf-8", errors="replace")
+                      print(f"::warning::Discord webhook returned HTTP {response.status}: {body[:300]}")
+                      raise SystemExit(0)
+          except urllib.error.HTTPError as exc:
+              body = exc.read().decode("utf-8", errors="replace")
+              print(f"::warning::Discord webhook failed: HTTP {exc.code}: {body[:300]}")
+              raise SystemExit(0)
+          except Exception as exc:
+              print(f"::warning::Discord webhook failed: {exc}")
+              raise SystemExit(0)
+
+          print("Sent report-ready Discord notice")
+          PY
+
       - name: Commit report if changed
         run: |
           git config user.name "github-actions[bot]"

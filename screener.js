@@ -33,6 +33,56 @@ function toDateKey(datetimeVal) {
   return String(datetimeVal).replace(/\//g, '-').slice(0, 10);
 }
 
+function normalizeDateKey(value) {
+  return String(value || '').replace(/\//g, '-').slice(0, 10);
+}
+
+function parseTimestampParts(value) {
+  const text = String(value || '').trim().replace(/\//g, '-');
+  const match = text.match(/^(\d{4}-\d{1,2}-\d{1,2})(?:[ T](\d{1,2})(?::\d{1,2})?)?/);
+  if (!match) return null;
+  const dateKey = normalizeDateKey(match[1]);
+  const hour = match[2] !== undefined ? Number(match[2]) : null;
+  return { dateKey, hour: Number.isFinite(hour) ? hour : null };
+}
+
+function barDateKey(bar) {
+  return bar && bar.dateKey ? bar.dateKey : toDateKey(bar ? bar.datetime : '');
+}
+
+function barSessionHour(bar) {
+  if (!bar) return null;
+  if (Number.isFinite(bar.sessionHour)) return Number(bar.sessionHour);
+  const fromText = parseTimestampParts(bar.timestampText);
+  if (fromText && fromText.hour !== null) return fromText.hour;
+  if (bar.datetime instanceof Date && !isNaN(bar.datetime.getTime())) return bar.datetime.getHours();
+  return null;
+}
+
+function signalFeatureCutoff(signalDateStr, receivedAt) {
+  const signalDateISO = normalizeDateKey(signalDateStr);
+  const received = parseTimestampParts(receivedAt);
+  if (!signalDateISO || !received || received.hour === null) return null;
+  return {
+    dateKey: signalDateISO,
+    sessionHour: received.hour < 14 ? 9 : 13,
+  };
+}
+
+function barsForSignalFeatures(bars, signalDateStr, receivedAt) {
+  const signalDateISO = normalizeDateKey(signalDateStr);
+  const cutoff = signalFeatureCutoff(signalDateStr, receivedAt);
+  if (!signalDateISO || !cutoff) return bars;
+  const selected = bars.filter((bar) => {
+    const dateKey = barDateKey(bar);
+    if (dateKey < signalDateISO) return true;
+    if (dateKey > signalDateISO) return false;
+    const hour = barSessionHour(bar);
+    return hour === null || hour <= cutoff.sessionHour;
+  });
+  return selected.length > 0 ? selected : bars;
+}
+
 // ============================================================
 // 4hバー → 日次バーへ集約
 // ============================================================
@@ -596,14 +646,15 @@ function calculateScoreSniper(ind) {
 // ============================================================
 // メインAPI: 銘柄スクリーニング
 // ============================================================
-function screenSymbol(symbol, ohlcvData, signalDateStr, entryPrice, eval5bd, perf5bd) {
+function screenSymbol(symbol, ohlcvData, signalDateStr, entryPrice, eval5bd, perf5bd, receivedAt = null) {
   const { bars } = ohlcvData;
   if (!bars || bars.length === 0) return null;
 
-  const dailyBars = aggregateToDailyBars(bars);
+  const featureBars = barsForSignalFeatures(bars, signalDateStr, receivedAt);
+  const dailyBars = aggregateToDailyBars(featureBars);
 
   // シグナル日をISO文字列 "YYYY-MM-DD" に正規化
-  const signalDateISO = signalDateStr.replace(/\//g, '-').slice(0, 10);
+  const signalDateISO = normalizeDateKey(signalDateStr);
 
   // ← 修正: ISO文字列の辞書順比較（Date変換なし・timezone依存なし）
   let signalIdx = -1;

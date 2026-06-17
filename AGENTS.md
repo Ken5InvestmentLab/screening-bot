@@ -134,6 +134,7 @@ npm run check
 
 - **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` を手動変更する場合は `current_logic.json` との整合性に注意。`.gitattributes` により `merge=ours` が設定済み。
 - **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|code]`、プレミアム通知の `premium_scan:<symbolCode>` ボタン、`/approve-update`（管理者専用）を実装。ボタンは既存のコード検索処理へ流し、3秒以内に interaction へ応答する。`/scan` の標準対象は直近45営業日、`/help` の実績はHTMLに合わせて過去365日の確定済み `alerts_raw + signals_archive` を集計し、勝率は0%引き分けを分母から除外する。stable=スコア5以上、aggressive=4以上。DM表示で株価と騰落率を並べる場合は、表示上の丸め済み株価から `formatDisplayChange()` で騰落率を計算し、同じ表示株価なのにパーセントだけずれないようにする。
+  `/scan` の `range` オプションはモード選択後に入力へ進めるため必須にし、autocompleteに「標準（直近45営業日）」の候補は出さない。未指定フォールバック用の内部デフォルト値は古いクライアント互換として残してよい。
 - **`sheets.js`** — Google Sheets APIクライアント。通常スキャンは `alerts_raw`、`/help` 用バックテストは `alerts_raw` と `signals_archive`、OHLCVは `ohlcv_4h` を読み取る。`cleanSymbol()` で `TYO:4074` → `4074` に変換。
 - **`config.js`** — フィルター定数（下記参照）。**数値は変更禁止**。
 - **`optimize_screener.py`** — C(18,6)=18,564通りの指標組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。**VMで直接実行しない**（RAM 1GB でOOMクラッシュする）。

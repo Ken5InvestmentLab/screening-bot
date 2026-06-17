@@ -96,6 +96,7 @@ function parseAlerts(rows) {
 
   const idx = {
     alertId: header.indexOf('alert_id'),       // A列
+    receivedAt: header.indexOf('received_at'),
     type: header.indexOf('signal_type'),
     symbol: header.indexOf('symbol_code'),
     date: header.indexOf('signal_date'),
@@ -121,6 +122,7 @@ function parseAlerts(rows) {
 
     return {
       alertId: idx.alertId >= 0 ? (r[idx.alertId]?.toString().trim() || null) : null,
+      receivedAt: idx.receivedAt >= 0 ? (r[idx.receivedAt]?.toString().trim() || null) : null,
       type: r[idx.type]?.toString().trim().toUpperCase(),
       symbol: cleanSymbol(r[idx.symbol]),
       date: r[idx.date]?.toString().trim(),
@@ -158,9 +160,16 @@ function parseOHLCV(rows) {
       map.set(sym, { name: sym, bars: [] })
     }
     
-    const dateStr = String(r[idx.dt]).replace(/\//g, '-')
+    const rawTimestamp = String(r[idx.dt] || '').trim()
+    const dateStr = rawTimestamp.replace(/\//g, '-')
+    const dateKey = dateStr.slice(0, 10)
+    const hourMatch = dateStr.match(/[ T](\d{1,2})(?::\d{1,2})?/)
+    const sessionHour = hourMatch ? Number(hourMatch[1]) : null
     const bar = {
       datetime: new Date(dateStr),
+      timestampText: rawTimestamp,
+      dateKey,
+      sessionHour,
       open:   parseFloat(r[idx.o]),
       high:   parseFloat(r[idx.h]),
       low:    parseFloat(r[idx.l]),
@@ -171,6 +180,16 @@ function parseOHLCV(rows) {
     if (!isNaN(bar.close) && !isNaN(bar.datetime.getTime())) {
       map.get(sym).bars.push(bar)
     }
+  }
+  for (const item of map.values()) {
+    item.bars.sort((a, b) => {
+      const ad = a.dateKey || ''
+      const bd = b.dateKey || ''
+      if (ad !== bd) return ad < bd ? -1 : 1
+      const ah = Number.isFinite(a.sessionHour) ? a.sessionHour : -1
+      const bh = Number.isFinite(b.sessionHour) ? b.sessionHour : -1
+      return ah - bh
+    })
   }
   return map
 }
@@ -184,7 +203,7 @@ async function fetchRecentBottomSymbols(specificDate = null, rangeDays = null) {
   const rows = await getRawSheetData(config.ALERTS_SHEET_NAME)
   const alerts = filterRecentAlerts(parseAlerts(rows), specificDate, rangeDays)
   const symbolMap = new Map()
-  alerts.forEach(a => symbolMap.set(a.symbol, { date: a.date, name: a.name, entry: a.entry, eval5bd: a.eval5bd, perf5bd: a.perf5bd }))
+  alerts.forEach(a => symbolMap.set(a.symbol, { date: a.date, name: a.name, entry: a.entry, eval5bd: a.eval5bd, perf5bd: a.perf5bd, receivedAt: a.receivedAt }))
   return symbolMap
 }
 

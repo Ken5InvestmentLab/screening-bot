@@ -97,7 +97,7 @@ async function refreshStats() {
       const data = ohlcvMap.get(sig.symbol);
       if (!data) continue;
 
-      const r = screenSymbol(sig.symbol, data, sig.date, sig.entry, sig.eval5bd, sig.perf5bd);
+      const r = screenSymbol(sig.symbol, data, sig.date, sig.entry, sig.eval5bd, sig.perf5bd, sig.receivedAt);
       if (!r) continue;
 
       entries.push({
@@ -414,7 +414,7 @@ async function runScan(interaction) {
         unanalyzed.push({ symbol: sig.symbol, name: sig.name ?? sig.symbol, date: sig.date, perf_5bd: sig.perf5bd ?? null });
         continue;
       }
-      const r = screenSymbol(sig.symbol, data, sig.date, sig.entry, sig.eval5bd, sig.perf5bd);
+      const r = screenSymbol(sig.symbol, data, sig.date, sig.entry, sig.eval5bd, sig.perf5bd, sig.receivedAt);
       if (!r) continue;
       const scanResult = isSniperMode
         ? {
@@ -574,7 +574,7 @@ async function runCodeSearch(interaction, user, codeInput) {
           alertId: info.alertId,
         });
       } else {
-        const r = screenSymbol(symbolCode, data, info.date, info.entry, info.eval5bd, info.perf5bd);
+        const r = screenSymbol(symbolCode, data, info.date, info.entry, info.eval5bd, info.perf5bd, info.receivedAt);
         if (r) {
           r.name = info.name;
           // Sniperモード満点の場合はバッジを付与
@@ -685,8 +685,7 @@ function buildHelpEmbed() {
         value:
           '`/scan` と入力して、分析タイプを選んでください。\n\n' +
           '**mode（分析タイプ）** — 下記参照\n' +
-          '**range（任意: 対象期間 or 証券コード）**\n' +
-          `　・未指定なら直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日\n` +
+          '**range（必須: 対象期間 or 証券コード）**\n' +
           '　・当日 / 前日 / 1週間 / 1ヶ月 / 全期間 / 日付指定\n' +
           '　・コード検索の場合は証券コードを入力（例: 1234）',
       },
@@ -960,8 +959,8 @@ client.once('ready', async () => {
           ],
         },
         {
-          name: 'range', type: 3, required: false, autocomplete: true,
-          description: `未指定なら直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日。期間/日付を選択可（コード検索は証券コード）`,
+          name: 'range', type: 3, required: true, autocomplete: true,
+          description: '対象期間/日付を選択（コード検索は証券コード）',
         },
       ],
     },
@@ -1045,7 +1044,6 @@ client.on('interactionCreate', async (interaction) => {
       await interaction.respond(candidates.slice(0, 25));
     } else {
       const fixed = [
-        { name: `標準（直近${config.RECENT_SIGNAL_BUSINESS_DAYS}営業日）`, value: DEFAULT_SCAN_RANGE_VALUE },
         { name: '当日（今日出たシグナル）', value: '1' },
         { name: '前日（昨日出たシグナル）', value: 'yesterday' },
         { name: '1週間（最近7日間）',      value: '7' },

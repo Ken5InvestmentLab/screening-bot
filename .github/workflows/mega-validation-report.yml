@@ -101,6 +101,7 @@ jobs:
           PY
 
       - name: Notify Discord that report HTML is ready
+        if: ${{ github.event_name != 'schedule' }}
         env:
           DISCORD_REPORT_WEBHOOK_URL: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK }}
         run: |

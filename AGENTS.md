@@ -215,6 +215,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `DISCORD_REPORT_WEBHOOK_URL` | `Mega Validation Report` でHTML生成直後にDiscordへ完了通知を送るWebhook URL。未設定の場合、通知だけをスキップしHTML生成・コミット・デプロイは継続する |
 
 `Mega Validation Report` のHTML生成完了通知は、旧GASのOHLCV完了通知と同じDiscord表示にする。タイトルは `✅ OHLCVデータ同期完了`、フィールド名は `🤖 スコアリングBot`、本文は `/scan` とブラウザリンクの案内だけにし、GitHub Actions実行ログ欄は出さない。
+平日21:00 JSTの定時 `schedule` レポート再生成ではDiscord完了通知を送らず、`Daily Screener Optimization` からの共有workflow呼び出しや手動実行時だけ通知する。
 
 ### VM 環境変数（`~/screening-bot/.env`）
 

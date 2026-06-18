@@ -3,9 +3,6 @@ name: Mega Validation Report
 on:
   workflow_dispatch:
   workflow_call:
-  schedule:
-    # Fallback refresh at 21:00 JST on weekdays.
-    - cron: "0 12 * * 1-5"
 
 jobs:
   report:
@@ -101,7 +98,6 @@ jobs:
           PY
 
       - name: Notify Discord that report HTML is ready
-        if: ${{ github.event_name != 'schedule' }}
         env:
           DISCORD_REPORT_WEBHOOK_URL: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK }}
         run: |

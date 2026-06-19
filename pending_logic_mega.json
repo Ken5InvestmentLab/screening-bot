@@ -1,0 +1,78 @@
+{
+  "method": "mega_report_pending",
+  "description": "Pending report-only Mega mode scoring. Apply only after explicit approval.",
+  "proposed_at": "2026-06-19T10:29:09Z",
+  "modes": {
+    "mega5_rebound": {
+      "label": "Mega5 短期リバウンド",
+      "eval_days": 5,
+      "target": 0.2,
+      "current": {
+        "conditions": [
+          "rci9_os",
+          "pre_down3",
+          "body2"
+        ],
+        "backtest": {
+          "n": 12,
+          "avg_raw": 0.199917,
+          "wr_raw": 0.75,
+          "target_hits": 5,
+          "target_rate": 0.416667
+        },
+        "validation": {
+          "n": 3,
+          "avg_raw": 0.198,
+          "wr_raw": 0.666667,
+          "target_hits": 1,
+          "target_rate": 0.333333
+        },
+        "live": {
+          "n": 2,
+          "avg_raw": -0.048546,
+          "wr_raw": 0.0,
+          "target_hits": 0,
+          "target_rate": 0.0
+        }
+      },
+      "candidate": {
+        "conditions": [
+          "ich_tk",
+          "rci9_os",
+          "pre_down3"
+        ],
+        "backtest": {
+          "n": 8,
+          "avg_raw": 0.254,
+          "wr_raw": 0.75,
+          "target_hits": 4,
+          "target_rate": 0.5
+        },
+        "validation": {
+          "n": 1,
+          "avg_raw": 0.615,
+          "wr_raw": 1.0,
+          "target_hits": 1,
+          "target_rate": 1.0
+        },
+        "live": {
+          "n": 1,
+          "avg_raw": -0.086888,
+          "wr_raw": 0.0,
+          "target_hits": 0,
+          "target_rate": 0.0
+        }
+      },
+      "adoption_reasons": [
+        "確定成績が改善 (目標Hit +8.3pt / 平均 +5.4pt / 勝率 +0.0pt)",
+        "検証期間で大きな悪化なし",
+        "未確定銘柄の現在成績を大きく悪化させない"
+      ],
+      "overfit_checks": {
+        "min_n_ratio": 0.6,
+        "live_avg_tolerance": 0.05,
+        "live_wr_tolerance": 0.15
+      }
+    }
+  }
+}

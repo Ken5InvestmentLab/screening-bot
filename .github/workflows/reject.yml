@@ -51,21 +51,21 @@ jobs:
               CHANGED=1
             elif echo "$TARGET" | grep -Eq '^mega(5_rebound|40_deep_reversal|40_wick_recovery)$'; then
               python - <<PY
-import json
-from pathlib import Path
-target = "${{ inputs.target }}"
-path = Path("pending_logic_mega.json")
-data = json.loads(path.read_text(encoding="utf-8"))
-modes = data.get("modes", {})
-if target in modes:
-    modes.pop(target, None)
-    if modes:
-        data["modes"] = modes
-        path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    else:
-        path.unlink()
-    Path(".mega_reject_changed").write_text("1", encoding="utf-8")
-PY
+          import json
+          from pathlib import Path
+          target = "${{ inputs.target }}"
+          path = Path("pending_logic_mega.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          modes = data.get("modes", {})
+          if target in modes:
+              modes.pop(target, None)
+              if modes:
+                  data["modes"] = modes
+                  path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+              else:
+                  path.unlink()
+              Path(".mega_reject_changed").write_text("1", encoding="utf-8")
+          PY
               if [ -f .mega_reject_changed ]; then
                 rm .mega_reject_changed
                 git add -A pending_logic_mega.json

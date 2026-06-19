@@ -31,6 +31,8 @@ const DISCLAIMER = '⚠️ これは情報提供ツールであり、投資助�
 const SNIPER_LOGIC_PATH = path.join(__dirname, 'current_logic_sniper.json');
 const PREMIUM_SCAN_BUTTON_PREFIX = 'premium_scan:';
 const DEFAULT_SCAN_RANGE_VALUE = 'default';
+const DEFAULT_GITHUB_REPO = 'Ken5InvestmentLab/screening-bot';
+const DEFAULT_GITHUB_WORKFLOW_REF = 'main';
 const LOGIC_UPDATE_TARGETS = [
   { name: 'すべての更新候補', value: 'all' },
   { name: 'Stable', value: 'stable' },
@@ -46,6 +48,18 @@ function logicUpdateTargetChoices(focused) {
   return LOGIC_UPDATE_TARGETS
     .filter(item => !q || item.name.toLowerCase().includes(q) || item.value.toLowerCase().includes(q))
     .slice(0, 25);
+}
+
+function getGithubRepo() {
+  return String(process.env.GITHUB_REPO || DEFAULT_GITHUB_REPO).trim();
+}
+
+function getGithubWorkflowRef() {
+  return String(
+    process.env.GITHUB_WORKFLOW_REF ||
+    process.env.GITHUB_BRANCH ||
+    DEFAULT_GITHUB_WORKFLOW_REF
+  ).replace(/^refs\/heads\//, '').trim();
 }
 
 // ============================================================
@@ -815,17 +829,18 @@ async function runApproveUpdate(interaction) {
   }
 
   const githubToken = process.env.GITHUB_TOKEN;
-  const githubRepo  = process.env.GITHUB_REPO || 'Ken5-jp/screening-bot';
+  const githubRepo  = getGithubRepo();
   if (!githubToken) {
     return interaction.reply({ content: '❌ GITHUB_TOKEN が未設定です。', ephemeral: true });
   }
 
   const target = interaction.options.getString('target') || 'all';
   const targetLabel = LOGIC_UPDATE_TARGETS.find(item => item.value === target)?.name || target;
+  const workflowRef = getGithubWorkflowRef();
 
   await interaction.reply({ content: `⏳ ${targetLabel} の承認ワークフローを起動中...`, ephemeral: true });
 
-  const body = JSON.stringify({ ref: 'main', inputs: { target } });
+  const body = JSON.stringify({ ref: workflowRef, inputs: { target } });
   const [owner, repo] = githubRepo.split('/');
   const options = {
     hostname: 'api.github.com',
@@ -848,7 +863,9 @@ async function runApproveUpdate(interaction) {
       } else {
         let data = '';
         res.on('data', chunk => { data += chunk; });
-        res.on('end', () => reject(new Error(`GitHub API ${res.statusCode}: ${data}`)));
+        res.on('end', () => reject(new Error(
+          `GitHub API ${res.statusCode} (repo=${githubRepo}, workflow=deploy.yml, ref=${workflowRef}): ${data}`
+        )));
       }
     });
     req.on('error', reject);
@@ -878,17 +895,18 @@ async function runRejectUpdate(interaction) {
   }
 
   const githubToken = process.env.GITHUB_TOKEN;
-  const githubRepo  = process.env.GITHUB_REPO || 'Ken5-jp/screening-bot';
+  const githubRepo  = getGithubRepo();
   if (!githubToken) {
     return interaction.reply({ content: '❌ GITHUB_TOKEN が未設定です。', ephemeral: true });
   }
 
   const target = interaction.options.getString('target') || 'all';
   const targetLabel = LOGIC_UPDATE_TARGETS.find(item => item.value === target)?.name || target;
+  const workflowRef = getGithubWorkflowRef();
 
   await interaction.reply({ content: `⏳ ${targetLabel} の却下ワークフローを起動中...`, ephemeral: true });
 
-  const body = JSON.stringify({ ref: 'main', inputs: { target } });
+  const body = JSON.stringify({ ref: workflowRef, inputs: { target } });
   const [owner, repo] = githubRepo.split('/');
   const options = {
     hostname: 'api.github.com',
@@ -911,7 +929,9 @@ async function runRejectUpdate(interaction) {
       } else {
         let data = '';
         res.on('data', chunk => { data += chunk; });
-        res.on('end', () => reject(new Error(`GitHub API ${res.statusCode}: ${data}`)));
+        res.on('end', () => reject(new Error(
+          `GitHub API ${res.statusCode} (repo=${githubRepo}, workflow=reject.yml, ref=${workflowRef}): ${data}`
+        )));
       }
     });
     req.on('error', reject);

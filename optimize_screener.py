@@ -121,6 +121,10 @@ MEGA_LOGIC_EPS = 1e-12
 MEGA_LIVE_AVG_TOLERANCE = 0.05
 MEGA_LIVE_WR_TOLERANCE = 0.15
 MEGA_MIN_N_RATIO = 0.60
+DELTA_QUALITY_MIN_RATIO = 0.75
+DELTA_QUALITY_MIN_CURRENT_N = 5
+DELTA_QUALITY_MAX_WEAK_ADDS = 2
+DELTA_QUALITY_VALID_N_MIN = 3
 LOGIC_TARGETS = {
     "all",
     "stable",
@@ -912,6 +916,27 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
             print(f"  [auto-reject] {mode['label']}: " + " / ".join(rejects))
             continue
 
+        current_rows = _mask_condition_rows(df_eval, current_conditions)
+        candidate_rows = _mask_condition_rows(df_eval, best["conditions"])
+        delta_reject = delta_quality_reject_reason(
+            mode["label"],
+            current_rows,
+            candidate_rows,
+            perf_col,
+            target=mode["target"],
+            current_stats=current_stats,
+            candidate_stats=best["stats"],
+            current_validation_stats=current_validation,
+            candidate_validation_stats=best["validation_stats"],
+            current_live_stats=current_live,
+            candidate_live_stats=candidate_live,
+            strong_win_threshold=mode["target"],
+        )
+        if delta_reject:
+            print(f"  [auto-reject] {delta_reject}")
+            continue
+        reasons.append("差分品質ゲート通過")
+
         proposals[mode_id] = {
             "label": mode["label"],
             "eval_days": int(mode["eval_days"]),
@@ -945,7 +970,11 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
         return False
     changed = save_pending_logic_mega(proposals)
     if proposals:
-        notify_discord_mega_approval(proposals)
+        comparison_attachment = build_mega_comparison_attachment(proposals, df, live_df)
+        notify_discord_mega_approval(
+            proposals,
+            comparison_attachment=comparison_attachment,
+        )
     return changed
 
 # ══════════════════════════════════════════════════════════════
@@ -1077,6 +1106,86 @@ def ema_arr(vals, p):
         res.append(e)
     return res
 
+def calc_volume_profile_proxy(bars, close, lookback=60, bins=24, band_pct=0.10):
+    """Approximate volume profile from OHLCV bars by spreading volume over high-low bins."""
+    default = {
+        "support_ratio": 0.0,
+        "overhead_ratio": 1.0,
+        "poc_dist_pct": 999.0,
+        "poc_abs_dist_pct": 999.0,
+    }
+    if not bars or close is None or not math.isfinite(close) or close <= 0:
+        return default
+    window = []
+    for b in bars[-lookback:]:
+        try:
+            lo = float(b.get("low", float("nan")))
+            hi = float(b.get("high", float("nan")))
+            vol = float(b.get("volume", 0.0))
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(lo) and math.isfinite(hi) and math.isfinite(vol) and vol > 0:
+            if hi < lo:
+                lo, hi = hi, lo
+            window.append((lo, hi, vol))
+    if len(window) < 10:
+        return default
+    price_min = min(lo for lo, _, _ in window)
+    price_max = max(hi for _, hi, _ in window)
+    if not math.isfinite(price_min) or not math.isfinite(price_max) or price_max <= price_min:
+        return default
+
+    step = (price_max - price_min) / bins
+    profile = [0.0] * bins
+    for lo, hi, vol in window:
+        if hi == lo:
+            idx = min(bins - 1, max(0, int((lo - price_min) / step)))
+            profile[idx] += vol
+            continue
+        total_overlap = 0.0
+        overlaps = []
+        for i in range(bins):
+            bin_lo = price_min + step * i
+            bin_hi = bin_lo + step
+            overlap = max(0.0, min(hi, bin_hi) - max(lo, bin_lo))
+            overlaps.append(overlap)
+            total_overlap += overlap
+        if total_overlap <= 0:
+            idx = min(bins - 1, max(0, int(((lo + hi) / 2 - price_min) / step)))
+            profile[idx] += vol
+        else:
+            for i, overlap in enumerate(overlaps):
+                if overlap > 0:
+                    profile[i] += vol * overlap / total_overlap
+
+    total = sum(profile)
+    if total <= 0:
+        return default
+
+    lower_bound = close * (1 - band_pct)
+    upper_bound = close * (1 + band_pct)
+    support = 0.0
+    overhead = 0.0
+    for i, vol in enumerate(profile):
+        center = price_min + step * (i + 0.5)
+        if lower_bound <= center <= close:
+            support += vol
+        elif close < center <= upper_bound:
+            overhead += vol
+
+    denom = max(overhead, total * 0.01)
+    support_ratio = min(99.0, support / denom) if support > 0 else 0.0
+    overhead_ratio = overhead / total
+    poc_idx = max(range(bins), key=lambda i: profile[i])
+    poc_price = price_min + step * (poc_idx + 0.5)
+    poc_dist_pct = (close / poc_price - 1) * 100 if poc_price > 0 else 999.0
+    return {
+        "support_ratio": support_ratio,
+        "overhead_ratio": overhead_ratio,
+        "poc_dist_pct": poc_dist_pct,
+        "poc_abs_dist_pct": abs(poc_dist_pct),
+    }
+
 def get_features(daily, sig_date):
     # 日付フォーマット統一: alerts='2026/03/05', ohlcv='2026-03-05'
     sig_dt = sig_date.replace('/', '-')[:10]
@@ -1102,6 +1211,7 @@ def get_features(daily, sig_date):
     v20 = (sum(V[max(0, last-20):last]) / 20 if last >= 20
            else sum(V[:last]) / max(1, last))
     vsurge = V[last] / v20 if v20 > 0 else 0
+    vp = calc_volume_profile_proxy(bars, lc)
     body_pct = (lc - lo) / lc * 100 if lc > 0 else 0
     lower_wick = min(lc, lo) - L[last]
     lower_wick50 = lower_wick >= abs(lc - lo) and lower_wick > 0
@@ -1222,11 +1332,17 @@ def get_features(daily, sig_date):
         rci9_os=rci9_os, rci26_os=rci26_os, rci9_up=rci9_up,
         pre_down3=pre_down3, gap_up=gap_up, bb_lower=bb_lower, cci_os=cci_os,
         smbull_seq2=smbull_seq2, smbull_seq3=smbull_seq3,
+        vp_support=vp["support_ratio"] >= 1.25,
+        vp_no_overhead=vp["overhead_ratio"] <= 0.20,
+        vp_near_poc=vp["poc_abs_dist_pct"] <= 5.0,
         _vsurge=vsurge, _atr=atr_pct, _body=body_pct,
         _rsi=rsi, _stoch=stoch, _bbpct=bbpct,
         _rci9=rci9 if rci9 is not None else 0.0,
         _rci26=rci26 if rci26 is not None else 0.0,
         _cci=cci,
+        _vp_support=vp["support_ratio"],
+        _vp_overhead=vp["overhead_ratio"],
+        _vp_poc_abs=vp["poc_abs_dist_pct"],
     )
 
 def latest_close_for_signal(daily, sig_date):
@@ -2102,7 +2218,7 @@ BOOL_CONDS = [
     "ich_tk","ich_price_tenkan","ich_price_kijun","ich_cloud_above",
     "ich_cloud_green","ich_chikou","ich_kumo_break",
     "rci9_os","rci26_os","rci9_up","pre_down3","gap_up","bb_lower","cci_os",
-    "smbull_seq2","smbull_seq3",
+    "smbull_seq2","smbull_seq3","vp_support","vp_no_overhead","vp_near_poc",
 ]
 
 # ── Stage 2: 閾値パラメーター定義 ────────────────────────────
@@ -2122,6 +2238,9 @@ COND_PARAM = {
     "rci9_os":  ("_rci9",   -50.0, "<="),
     "rci26_os": ("_rci26",  -50.0, "<="),
     "cci_os":   ("_cci",   -100.0, "<="),
+    "vp_support":    ("_vp_support", 1.25, ">="),
+    "vp_no_overhead":("_vp_overhead", 0.20, "<="),
+    "vp_near_poc":   ("_vp_poc_abs", 5.00, "<="),
 }
 
 # 連続値列 → 閾値候補
@@ -2134,6 +2253,9 @@ PARAM_CANDIDATES = {
     "_rci9":   [-80, -70, -60, -50, -40, -30, -20, -10, 0],
     "_rci26":  [-80, -70, -60, -50, -40, -30, -20, -10, 0],
     "_cci":    [-200, -150, -100, -50, 0],
+    "_vp_support": [0.75, 1.0, 1.25, 1.5, 2.0, 3.0],
+    "_vp_overhead": [0.10, 0.15, 0.20, 0.25, 0.30, 0.35],
+    "_vp_poc_abs": [3.0, 5.0, 7.5, 10.0, 12.5],
 }
 
 # JS生成テンプレート (raw_col → (desc_fn, cond_fn, label_fn))
@@ -2177,6 +2299,21 @@ PARAM_JS_TPL = {
         lambda t: f"CCI(14) ≤ {t:.0f}",
         lambda t: f"ind.cciVal <= {t:.0f}",
         lambda t: "CCI(${ind.cciVal.toFixed(0)})",
+    ),
+    "_vp_support": (
+        lambda t: f"VP support/overhead >= {t:.2f}",
+        lambda t: f"ind.vpSupportRatio >= {t:.2f}",
+        lambda t: "VP支持(${ind.vpSupportRatio.toFixed(2)}x)",
+    ),
+    "_vp_overhead": (
+        lambda t: f"VP overhead <= {t*100:.0f}%",
+        lambda t: f"ind.vpOverheadRatio <= {t:.2f}",
+        lambda t: "VP上値(${(ind.vpOverheadRatio*100).toFixed(0)}%)",
+    ),
+    "_vp_poc_abs": (
+        lambda t: f"VP POC distance <= {t:.1f}%",
+        lambda t: f"ind.vpPocAbsDistPct <= {t:.1f}",
+        lambda t: "VP-POC(${ind.vpPocAbsDistPct.toFixed(1)}%)",
     ),
 }
 
@@ -2516,6 +2653,9 @@ JS_IMPL = {
     "cci_os":   ("CCI(14) ≤ -100（売られすぎ）","ind.cciVal <= -100","CCI売られ"),
     "smbull_seq2": ("直近2日連続小陽線後（body 0〜1%）","ind.smbullSeq2","2連小陽後"),
     "smbull_seq3": ("直近3日連続小陽線後（body 0〜1%）","ind.smbullSeq3","3連小陽後"),
+    "vp_support": ("VP support/overhead >= 1.25","ind.vpSupportRatio >= 1.25","VP支持(${ind.vpSupportRatio.toFixed(2)}x)"),
+    "vp_no_overhead": ("VP overhead <= 20%","ind.vpOverheadRatio <= 0.20","VP上値(${(ind.vpOverheadRatio*100).toFixed(0)}%)"),
+    "vp_near_poc": ("VP POC distance <= 5%","ind.vpPocAbsDistPct <= 5.0","VP-POC(${ind.vpPocAbsDistPct.toFixed(1)}%)"),
 }
 
 EXTRA_JS_BLOCK = """
@@ -2524,6 +2664,80 @@ EXTRA_JS_BLOCK = """
   const macdHistVal = (validMacd.length > 0 && macdSignalArr.length > 0)
     ? validMacd[validMacd.length-1] - macdSignalArr[macdSignalArr.length-1] : 0;
   const macdPos = macdHistVal > 0;
+
+  function calcVolumeProfileProxy(profileBars, close, lookback = 60, bins = 24, bandPct = 0.10) {
+    const fallback = {
+      supportRatio: 0,
+      overheadRatio: 1,
+      pocDistPct: 999,
+      pocAbsDistPct: 999,
+    };
+    if (!Number.isFinite(close) || close <= 0) return fallback;
+    const window = profileBars.slice(-lookback).filter(b =>
+      Number.isFinite(b.low) && Number.isFinite(b.high) && Number.isFinite(b.volume) && b.volume > 0
+    );
+    if (window.length < 10) return fallback;
+    const priceMin = Math.min(...window.map(b => Math.min(b.low, b.high)));
+    const priceMax = Math.max(...window.map(b => Math.max(b.low, b.high)));
+    if (!Number.isFinite(priceMin) || !Number.isFinite(priceMax) || priceMax <= priceMin) return fallback;
+
+    const step = (priceMax - priceMin) / bins;
+    const profile = Array(bins).fill(0);
+    for (const b of window) {
+      const lo = Math.min(b.low, b.high);
+      const hi = Math.max(b.low, b.high);
+      if (hi === lo) {
+        const idx = Math.min(bins - 1, Math.max(0, Math.floor((lo - priceMin) / step)));
+        profile[idx] += b.volume;
+        continue;
+      }
+      const overlaps = [];
+      let totalOverlap = 0;
+      for (let i = 0; i < bins; i++) {
+        const binLo = priceMin + step * i;
+        const binHi = binLo + step;
+        const overlap = Math.max(0, Math.min(hi, binHi) - Math.max(lo, binLo));
+        overlaps.push(overlap);
+        totalOverlap += overlap;
+      }
+      if (totalOverlap <= 0) {
+        const idx = Math.min(bins - 1, Math.max(0, Math.floor((((lo + hi) / 2) - priceMin) / step)));
+        profile[idx] += b.volume;
+      } else {
+        overlaps.forEach((overlap, i) => {
+          if (overlap > 0) profile[i] += b.volume * overlap / totalOverlap;
+        });
+      }
+    }
+
+    const total = profile.reduce((a, b) => a + b, 0);
+    if (total <= 0) return fallback;
+    const lowerBound = close * (1 - bandPct);
+    const upperBound = close * (1 + bandPct);
+    let support = 0;
+    let overhead = 0;
+    for (let i = 0; i < bins; i++) {
+      const center = priceMin + step * (i + 0.5);
+      if (center >= lowerBound && center <= close) support += profile[i];
+      else if (center > close && center <= upperBound) overhead += profile[i];
+    }
+    const denom = Math.max(overhead, total * 0.01);
+    const supportRatio = support > 0 ? Math.min(99, support / denom) : 0;
+    const overheadRatio = overhead / total;
+    let pocIdx = 0;
+    for (let i = 1; i < bins; i++) {
+      if (profile[i] > profile[pocIdx]) pocIdx = i;
+    }
+    const pocPrice = priceMin + step * (pocIdx + 0.5);
+    const pocDistPct = pocPrice > 0 ? (close / pocPrice - 1) * 100 : 999;
+    return {
+      supportRatio,
+      overheadRatio,
+      pocDistPct,
+      pocAbsDistPct: Math.abs(pocDistPct),
+    };
+  }
+  const vp = calcVolumeProfileProxy(bars, latestClose);
 
   // RSI(14)
   let rsiSumG = 0, rsiSumL = 0;
@@ -2633,6 +2847,10 @@ EXTRA_JS_RETURN = """    macdPos,
     rsi14:    +rsi14.toFixed(2),
     stochK:   +stochK.toFixed(2),
     bbPct:    +bbPct.toFixed(4),
+    vpSupportRatio: +vp.supportRatio.toFixed(2),
+    vpOverheadRatio: +vp.overheadRatio.toFixed(4),
+    vpPocDistPct: +vp.pocDistPct.toFixed(2),
+    vpPocAbsDistPct: +vp.pocAbsDistPct.toFixed(2),
     hiBrk20,
     ichTenkan:    ichTenkan !== null ? +ichTenkan.toFixed(2) : null,
     ichKijun:     ichKijun !== null ? +ichKijun.toFixed(2) : null,
@@ -3059,6 +3277,655 @@ def update_index_js_help(conditions, method, thresholds=None):
 # ══════════════════════════════════════════════════════════════
 # Discord更新通知
 # ══════════════════════════════════════════════════════════════
+def _finite_number(value):
+    try:
+        return math.isfinite(float(value))
+    except (TypeError, ValueError):
+        return False
+
+def _as_float_or_none(value):
+    return float(value) if _finite_number(value) else None
+
+def _pct_text(value):
+    if not _finite_number(value):
+        return ""
+    return f"{float(value) * 100:+.1f}%"
+
+def _num_text(value):
+    if not _finite_number(value):
+        return ""
+    return f"{float(value):.4g}"
+
+def _logic_label(method, combo, thresholds=None):
+    thresholds = thresholds or {}
+    if method == "B":
+        return " + ".join(f"{c}({w}pt)" for c, w, *_ in combo)
+    return " + ".join(
+        f"{c}({thresholds[c]})" if c in thresholds else str(c)
+        for c in (combo or [])
+    )
+
+def _safe_attachment_name(value, fallback="logic_comparison"):
+    text = "".join(ch if ch.isalnum() else "_" for ch in str(value or fallback))
+    text = "_".join(part for part in text.split("_") if part)
+    return (text or fallback)[:80]
+
+def _safe_sheet_title(value, used):
+    raw = str(value or "sheet").replace("/", "_").replace("\\", "_")
+    raw = raw.replace("?", "_").replace("*", "_").replace("[", "_").replace("]", "_").replace(":", "_")
+    title = raw[:31] or "sheet"
+    base = title
+    i = 2
+    while title in used:
+        suffix = f"_{i}"
+        title = (base[:31 - len(suffix)] + suffix)[:31]
+        i += 1
+    used.add(title)
+    return title
+
+def _logic_row_key(record):
+    alert_id = str(record.get("alert_id") or "").strip()
+    if alert_id:
+        return ("alert_id", alert_id)
+    return (
+        "fallback",
+        str(record.get("symbol") or ""),
+        str(record.get("date") or ""),
+        str(record.get("entry") or ""),
+    )
+
+def _logic_records(rows, perf_col, scope="確定"):
+    if rows is None or len(rows) == 0:
+        return []
+    records = []
+    for _, row in rows.iterrows():
+        record = {
+            "scope": str(row.get("_comparison_scope") or scope),
+            "date": str(row.get("date") or "")[:10],
+            "symbol": str(row.get("symbol") or ""),
+            "name": str(row.get("name") or ""),
+            "entry": _as_float_or_none(row.get("entry")),
+            "return": _as_float_or_none(row.get(perf_col)),
+            "latest_close": _as_float_or_none(row.get("latest_close")),
+            "perf_5bd": _as_float_or_none(row.get("perf_5bd")),
+            "perf_10bd": _as_float_or_none(row.get("perf_10bd")),
+            "perf_20bd": _as_float_or_none(row.get("perf_20bd")),
+            "perf_40bd": _as_float_or_none(row.get("perf_40bd")),
+            "alert_id": str(row.get("alert_id") or ""),
+        }
+        record["_key"] = _logic_row_key(record)
+        records.append(record)
+    return records
+
+def _comparison_rows(current_rows, candidate_rows, perf_col):
+    current_records = _logic_records(current_rows, perf_col)
+    candidate_records = _logic_records(candidate_rows, perf_col)
+    current_map = {record["_key"]: record for record in current_records}
+    candidate_map = {record["_key"]: record for record in candidate_records}
+    common = set(current_map) & set(candidate_map)
+    current_only = set(current_map) - set(candidate_map)
+    candidate_only = set(candidate_map) - set(current_map)
+
+    rows = []
+    for status, keys, source in (
+        ("共通", common, candidate_map),
+        ("現行のみ", current_only, current_map),
+        ("候補のみ", candidate_only, candidate_map),
+    ):
+        for key in keys:
+            row = dict(source[key])
+            row["diff_status"] = status
+            rows.append(row)
+    rows.sort(key=lambda item: (item.get("diff_status", ""), item.get("date", ""), item.get("symbol", "")))
+    rows.reverse()
+    return rows, current_records, candidate_records
+
+def _empty_like(df):
+    return df.iloc[0:0].copy() if df is not None else pd.DataFrame()
+
+def _scored_rows(df, method, combo, thresholds=None, target_score=6):
+    if df is None or len(df) == 0:
+        return _empty_like(df)
+    scores = calc_score_series_for_logic(df, method, combo, thresholds or {})
+    return df[scores == target_score].copy()
+
+def _all_condition_rows(df, conditions, thresholds=None):
+    if df is None or len(df) == 0 or not conditions:
+        return _empty_like(df)
+    return _scored_rows(df, "A", conditions, thresholds or {}, target_score=len(conditions))
+
+def _mask_condition_rows(df, conditions):
+    if df is None or len(df) == 0 or not conditions:
+        return _empty_like(df)
+    mask = pd.Series(True, index=df.index)
+    for condition in conditions:
+        if condition not in df.columns:
+            return _empty_like(df)
+        mask &= df[condition].astype(bool)
+    return df[mask].copy()
+
+def _with_comparison_scope(df, scope):
+    if df is None or len(df) == 0:
+        out = _empty_like(df)
+    else:
+        out = df.copy()
+    out["_comparison_scope"] = scope
+    return out
+
+def _concat_scoped_frames(*frames):
+    frames = [frame for frame in frames if frame is not None and len(frame) > 0]
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True, sort=False)
+
+def _simple_perf_stats(rows, perf_col, target=None):
+    if rows is None or len(rows) == 0 or perf_col not in rows.columns:
+        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0}
+        if target is not None:
+            stats.update({"target_hits": 0, "target_rate": 0.0})
+        return stats
+    values = pd.to_numeric(rows[perf_col], errors="coerce")
+    values = values[np.isfinite(values)]
+    if len(values) == 0:
+        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0}
+        if target is not None:
+            stats.update({"target_hits": 0, "target_rate": 0.0})
+        return stats
+    stats = {
+        "n": int(len(values)),
+        "wr_raw": float((values > 0).mean()),
+        "avg_raw": float(values.mean()),
+    }
+    if target is not None:
+        hits = int((values >= target).sum())
+        stats.update({"target_hits": hits, "target_rate": hits / len(values)})
+    return stats
+
+def _record_perf_stats(records, target=None):
+    values = []
+    for record in records or []:
+        value = _as_float_or_none(record.get("return"))
+        if value is not None and np.isfinite(value):
+            values.append(float(value))
+    if not values:
+        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0, "max_raw": None}
+        if target is not None:
+            stats.update({"target_hits": 0, "target_rate": 0.0})
+        return stats
+    arr = np.asarray(values, dtype=float)
+    stats = {
+        "n": int(len(arr)),
+        "wr_raw": float((arr > 0).mean()),
+        "avg_raw": float(arr.mean()),
+        "max_raw": float(arr.max()),
+    }
+    if target is not None:
+        hits = int((arr >= target).sum())
+        stats.update({"target_hits": hits, "target_rate": hits / len(arr)})
+    return stats
+
+def _strong_validation_evidence(candidate_validation_stats, current_validation_stats=None,
+                                min_n=DELTA_QUALITY_VALID_N_MIN):
+    cand = candidate_validation_stats or {}
+    cur = current_validation_stats or {}
+    cand_n = int(cand.get("n", 0) or 0)
+    if cand_n < min_n:
+        return False
+    cand_avg = float(cand.get("avg_raw", 0.0) or 0.0)
+    cand_wr = float(cand.get("wr_raw", 0.0) or 0.0)
+    if cand_avg < 0 or cand_wr < 0.50:
+        return False
+    cur_n = int(cur.get("n", 0) or 0)
+    if cur_n >= min_n:
+        cur_avg = float(cur.get("avg_raw", 0.0) or 0.0)
+        cur_wr = float(cur.get("wr_raw", 0.0) or 0.0)
+        if cand_avg < cur_avg - 0.02 and cand_wr < cur_wr:
+            return False
+    return True
+
+def _strong_full_or_live_improvement(current_stats, candidate_stats,
+                                     current_live_stats=None, candidate_live_stats=None,
+                                     target=None):
+    cur = current_stats or {}
+    cand = candidate_stats or {}
+    avg_gain = float(cand.get("avg_raw", 0.0) or 0.0) - float(cur.get("avg_raw", 0.0) or 0.0)
+    wr_gain = float(cand.get("wr_raw", 0.0) or 0.0) - float(cur.get("wr_raw", 0.0) or 0.0)
+    if target is not None:
+        target_gain = (
+            float(cand.get("target_rate", 0.0) or 0.0)
+            - float(cur.get("target_rate", 0.0) or 0.0)
+        )
+        if target_gain >= 0.10 and avg_gain >= max(0.04, float(target) * 0.25):
+            return True
+    elif avg_gain >= 0.04 and wr_gain >= 0.05:
+        return True
+
+    cur_live = current_live_stats or {}
+    cand_live = candidate_live_stats or {}
+    cur_live_n = int(cur_live.get("n", 0) or 0)
+    cand_live_n = int(cand_live.get("n", 0) or 0)
+    if cur_live_n >= 3 and cand_live_n > 0:
+        live_avg_gain = (
+            float(cand_live.get("avg_raw", 0.0) or 0.0)
+            - float(cur_live.get("avg_raw", 0.0) or 0.0)
+        )
+        live_wr_gain = (
+            float(cand_live.get("wr_raw", 0.0) or 0.0)
+            - float(cur_live.get("wr_raw", 0.0) or 0.0)
+        )
+        if live_avg_gain >= 0.05 or live_wr_gain >= 0.15:
+            return True
+    return False
+
+def delta_quality_reject_reason(mode_label, current_rows, candidate_rows, perf_col,
+                                target=None, current_stats=None, candidate_stats=None,
+                                current_validation_stats=None, candidate_validation_stats=None,
+                                current_live_stats=None, candidate_live_stats=None,
+                                min_ratio=DELTA_QUALITY_MIN_RATIO,
+                                min_current_n=DELTA_QUALITY_MIN_CURRENT_N,
+                                max_weak_adds=DELTA_QUALITY_MAX_WEAK_ADDS,
+                                min_validation_n=DELTA_QUALITY_VALID_N_MIN,
+                                strong_win_threshold=None):
+    """Reject proposals that mostly improve by dropping proven winners without new support."""
+    if current_rows is None or candidate_rows is None:
+        return None
+    if perf_col not in getattr(current_rows, "columns", []) or perf_col not in getattr(candidate_rows, "columns", []):
+        return None
+
+    diff_records, current_records, candidate_records = _comparison_rows(current_rows, candidate_rows, perf_col)
+    current_n = int((current_stats or {}).get("n", 0) or len(current_records))
+    candidate_n = int((candidate_stats or {}).get("n", 0) or len(candidate_records))
+    if current_n < min_current_n or candidate_n >= current_n:
+        return None
+    if candidate_n >= int(math.ceil(current_n * min_ratio)):
+        return None
+    if _strong_validation_evidence(candidate_validation_stats, current_validation_stats, min_validation_n):
+        return None
+    if _strong_full_or_live_improvement(
+        current_stats, candidate_stats, current_live_stats, candidate_live_stats, target
+    ):
+        return None
+
+    candidate_only = [r for r in diff_records if r.get("diff_status") == "候補のみ"]
+    current_only = [r for r in diff_records if r.get("diff_status") == "現行のみ"]
+    if not current_only:
+        return None
+
+    strong_threshold = (
+        float(strong_win_threshold)
+        if strong_win_threshold is not None
+        else float(target if target is not None else WIN_THRESHOLD)
+    )
+    added = _record_perf_stats(candidate_only, target)
+    removed = _record_perf_stats(current_only, target)
+    added_n = int(added.get("n", 0) or 0)
+    added_max = added.get("max_raw")
+    removed_max = removed.get("max_raw")
+    added_has_strong = added_max is not None and added_max >= strong_threshold
+    removed_has_strong = removed_max is not None and removed_max >= strong_threshold
+    added_avg = float(added.get("avg_raw", 0.0) or 0.0)
+    weak_adds = (
+        added_n <= max_weak_adds
+        and not added_has_strong
+        and (added_n == 0 or added_avg <= max(0.0, strong_threshold * 0.25))
+    )
+    if not (weak_adds and removed_has_strong):
+        return None
+
+    added_max_text = "なし" if added_max is None else f"{added_max*100:+.1f}%"
+    removed_max_text = "なし" if removed_max is None else f"{removed_max*100:+.1f}%"
+    return (
+        f"{mode_label}: 差分品質ゲートで見送り。件数が現行{current_n}件→候補{candidate_n}件まで減り、"
+        f"候補のみ追加{added_n}件の裏付けが弱い一方、現行のみ除外側に大きな勝ち銘柄があります "
+        f"(候補のみ最大 {added_max_text} / 現行のみ最大 {removed_max_text})"
+    )
+
+def _write_stats_section(ws, mode_label, section):
+    current = section.get("current") or {}
+    candidate = section.get("candidate") or {}
+    keys = []
+    for label, key, number_format in [
+        ("件数", "n", None),
+        ("勝率", "wr_raw", "percent"),
+        ("平均", "avg_raw", "percent"),
+        ("+10%到達", "win10_raw", None),
+        ("-10%以下", "lose10_raw", None),
+        ("目標Hit数", "target_hits", None),
+        ("目標Hit率", "target_rate", "percent"),
+    ]:
+        if key in current or key in candidate:
+            keys.append((label, key, number_format))
+    for label, key, number_format in keys:
+        cur_value = _as_float_or_none(current.get(key))
+        cand_value = _as_float_or_none(candidate.get(key))
+        delta = (
+            cand_value - cur_value
+            if cur_value is not None and cand_value is not None
+            else None
+        )
+        ws.append([mode_label, section.get("label", ""), label, cur_value, cand_value, delta])
+        if number_format == "percent":
+            row = ws.max_row
+            for col in (4, 5, 6):
+                ws.cell(row=row, column=col).number_format = "0.0%"
+
+def _write_records_sheet(ws, records, include_diff_status=False):
+    headers = []
+    if include_diff_status:
+        headers.append("差分")
+    headers.extend([
+        "評価",
+        "日付",
+        "コード",
+        "銘柄",
+        "Entry",
+        "対象リターン",
+        "現在株価",
+        "5営業日",
+        "10営業日",
+        "20営業日",
+        "40営業日",
+        "alert_id",
+    ])
+    ws.append(headers)
+    for record in records:
+        row = []
+        if include_diff_status:
+            row.append(record.get("diff_status", ""))
+        row.extend([
+            record.get("scope", ""),
+            record.get("date", ""),
+            record.get("symbol", ""),
+            record.get("name", ""),
+            record.get("entry"),
+            record.get("return"),
+            record.get("latest_close"),
+            record.get("perf_5bd"),
+            record.get("perf_10bd"),
+            record.get("perf_20bd"),
+            record.get("perf_40bd"),
+            record.get("alert_id", ""),
+        ])
+        ws.append(row)
+        offset = 1 if include_diff_status else 0
+        for col in (6 + offset, 8 + offset, 9 + offset, 10 + offset, 11 + offset):
+            ws.cell(row=ws.max_row, column=col).number_format = "0.0%"
+    ws.freeze_panes = "A2"
+    for column_cells in ws.columns:
+        max_len = max(len(str(cell.value or "")) for cell in column_cells)
+        ws.column_dimensions[column_cells[0].column_letter].width = min(max(max_len + 2, 10), 36)
+
+def _build_csv_comparison_attachment(title, specs, filename_prefix):
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([title])
+    for spec in specs:
+        diff_records, _, _ = _comparison_rows(
+            spec["current_rows"], spec["candidate_rows"], spec["perf_col"]
+        )
+        writer.writerow([])
+        writer.writerow([spec["mode_label"], "現行条件", spec["current_logic"]])
+        writer.writerow([spec["mode_label"], "候補条件", spec["candidate_logic"]])
+        writer.writerow(["差分", "評価", "日付", "コード", "銘柄", "Entry", "対象リターン", "現在株価", "5営業日", "10営業日", "20営業日", "40営業日", "alert_id"])
+        for record in diff_records:
+            writer.writerow([
+                record.get("diff_status", ""),
+                record.get("scope", ""),
+                record.get("date", ""),
+                record.get("symbol", ""),
+                record.get("name", ""),
+                _num_text(record.get("entry")),
+                _pct_text(record.get("return")),
+                _num_text(record.get("latest_close")),
+                _pct_text(record.get("perf_5bd")),
+                _pct_text(record.get("perf_10bd")),
+                _pct_text(record.get("perf_20bd")),
+                _pct_text(record.get("perf_40bd")),
+                record.get("alert_id", ""),
+            ])
+    return {
+        "filename": f"{_safe_attachment_name(filename_prefix)}.csv",
+        "content": ("\ufeff" + output.getvalue()).encode("utf-8"),
+        "content_type": "text/csv; charset=utf-8",
+    }
+
+def build_logic_comparison_attachment(title, specs, filename_prefix):
+    if not specs:
+        return None
+    try:
+        from io import BytesIO
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill
+    except Exception as exc:
+        print(f"  [warn] openpyxl unavailable; attaching CSV comparison instead: {exc}")
+        return _build_csv_comparison_attachment(title, specs, filename_prefix)
+
+    wb = Workbook()
+    summary = wb.active
+    summary.title = "Summary"
+    summary.append([title])
+    summary["A1"].font = Font(bold=True, size=14)
+    summary.append([])
+    summary.append(["モード", "項目", "現行", "候補"])
+    for cell in summary[3]:
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill("solid", fgColor="D9EAF7")
+    for spec in specs:
+        summary.append([spec["mode_label"], "現行条件", spec["current_logic"], ""])
+        summary.append([spec["mode_label"], "候補条件", "", spec["candidate_logic"]])
+    summary.append([])
+    summary.append(["モード", "集計", "指標", "現行", "候補", "差分"])
+    for cell in summary[summary.max_row]:
+        cell.font = Font(bold=True)
+        cell.fill = PatternFill("solid", fgColor="D9EAF7")
+    for spec in specs:
+        for section in spec.get("stats_sections", []):
+            _write_stats_section(summary, spec["mode_label"], section)
+    summary.freeze_panes = "A4"
+    for column_cells in summary.columns:
+        max_len = max(len(str(cell.value or "")) for cell in column_cells)
+        summary.column_dimensions[column_cells[0].column_letter].width = min(max(max_len + 2, 10), 48)
+
+    used_titles = {"Summary"}
+    for spec in specs:
+        base = _safe_sheet_title(spec["mode_label"], used_titles)
+        diff_records, current_records, candidate_records = _comparison_rows(
+            spec["current_rows"], spec["candidate_rows"], spec["perf_col"]
+        )
+        diff_ws = wb.create_sheet(_safe_sheet_title(f"{base}_Diff", used_titles))
+        _write_records_sheet(diff_ws, diff_records, include_diff_status=True)
+        current_ws = wb.create_sheet(_safe_sheet_title(f"{base}_Current", used_titles))
+        _write_records_sheet(current_ws, current_records)
+        candidate_ws = wb.create_sheet(_safe_sheet_title(f"{base}_Candidate", used_titles))
+        _write_records_sheet(candidate_ws, candidate_records)
+
+    stream = BytesIO()
+    wb.save(stream)
+    return {
+        "filename": f"{_safe_attachment_name(filename_prefix)}.xlsx",
+        "content": stream.getvalue(),
+        "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+
+def _post_discord_webhook(webhook_url, payload, attachment=None, label="Discord"):
+    import json as _json
+    import urllib.error
+    import urllib.request
+    import uuid
+
+    if not attachment:
+        data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        req = urllib.request.Request(
+            webhook_url,
+            data=data,
+            headers={
+                "Content-Type": "application/json; charset=utf-8",
+                "User-Agent": "DiscordBot (screening-bot, 1.0)",
+            },
+            method="POST",
+        )
+    else:
+        boundary = f"----screening-bot-{uuid.uuid4().hex}"
+        payload_json = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        filename = attachment.get("filename") or "logic_comparison.xlsx"
+        content = attachment.get("content") or b""
+        content_type = attachment.get("content_type") or "application/octet-stream"
+        body = b"".join([
+            f"--{boundary}\r\n".encode("utf-8"),
+            b'Content-Disposition: form-data; name="payload_json"\r\n',
+            b"Content-Type: application/json; charset=utf-8\r\n\r\n",
+            payload_json,
+            b"\r\n",
+            f"--{boundary}\r\n".encode("utf-8"),
+            f'Content-Disposition: form-data; name="files[0]"; filename="{filename}"\r\n'.encode("utf-8"),
+            f"Content-Type: {content_type}\r\n\r\n".encode("utf-8"),
+            content,
+            b"\r\n",
+            f"--{boundary}--\r\n".encode("utf-8"),
+        ])
+        req = urllib.request.Request(
+            webhook_url,
+            data=body,
+            headers={
+                "Content-Type": f"multipart/form-data; boundary={boundary}",
+                "User-Agent": "DiscordBot (screening-bot, 1.0)",
+            },
+            method="POST",
+        )
+
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            if resp.status in (200, 204):
+                print(f"  [ok] {label} notification sent")
+                return True
+            body = resp.read().decode("utf-8", errors="replace")
+            print(f"  [warn] {label} notification returned HTTP {resp.status}: {body[:300]}")
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        print(f"  [warn] {label} notification failed: HTTP {exc.code}: {body[:300]}")
+    except Exception as exc:
+        print(f"  [warn] {label} notification failed: {exc}")
+    return False
+
+def build_stable_comparison_attachment(display_df, current_method, current_combo, current_thresholds,
+                                       candidate_method, candidate_combo, candidate_thresholds,
+                                       current_validation_stats, candidate_validation_stats):
+    try:
+        current_rows = _scored_rows(display_df, current_method, current_combo, current_thresholds, 6)
+        candidate_rows = _scored_rows(display_df, candidate_method, candidate_combo, candidate_thresholds, 6)
+        cur6, cur5, cur4, _, _ = calc_backtest_display_stats(
+            display_df, current_method, current_combo, current_thresholds
+        )
+        cand6, cand5, cand4, _, _ = calc_backtest_display_stats(
+            display_df, candidate_method, candidate_combo, candidate_thresholds
+        )
+        spec = {
+            "mode_label": "Stable score",
+            "current_logic": _logic_label(current_method, current_combo, current_thresholds),
+            "candidate_logic": _logic_label(candidate_method, candidate_combo, candidate_thresholds),
+            "current_rows": current_rows,
+            "candidate_rows": candidate_rows,
+            "perf_col": "perf_5bd",
+            "stats_sections": [
+                {"label": f"表示用★6 過去{DISPLAY_BACKTEST_DAYS}日", "current": cur6, "candidate": cand6},
+                {"label": f"表示用★5 過去{DISPLAY_BACKTEST_DAYS}日", "current": cur5, "candidate": cand5},
+                {"label": f"表示用★4 過去{DISPLAY_BACKTEST_DAYS}日", "current": cur4, "candidate": cand4},
+                {"label": "Walk-forward検証★6", "current": current_validation_stats, "candidate": candidate_validation_stats},
+            ],
+        }
+        return build_logic_comparison_attachment(
+            "スコアロジック更新候補 比較",
+            [spec],
+            "stable_score_logic_comparison",
+        )
+    except Exception as exc:
+        print(f"  [warn] Stable comparison attachment skipped: {exc}")
+        return None
+
+def build_condition_logic_comparison_attachment(mode_label, df, perf_col,
+                                                current_conditions, candidate_conditions,
+                                                current_stats, candidate_stats,
+                                                filename_prefix,
+                                                extra_sections=None,
+                                                current_thresholds=None):
+    try:
+        current_rows = _all_condition_rows(df, current_conditions, current_thresholds or {})
+        candidate_rows = _all_condition_rows(df, candidate_conditions, {})
+        sections = [{"label": "全期間", "current": current_stats, "candidate": candidate_stats}]
+        sections.extend(extra_sections or [])
+        spec = {
+            "mode_label": mode_label,
+            "current_logic": _logic_label("A", current_conditions, current_thresholds or {}),
+            "candidate_logic": _logic_label("A", candidate_conditions, {}),
+            "current_rows": current_rows,
+            "candidate_rows": candidate_rows,
+            "perf_col": perf_col,
+            "stats_sections": sections,
+        }
+        return build_logic_comparison_attachment(
+            "スコアロジック更新候補 比較",
+            [spec],
+            filename_prefix,
+        )
+    except Exception as exc:
+        print(f"  [warn] {mode_label} comparison attachment skipped: {exc}")
+        return None
+
+def build_mega_comparison_attachment(proposals, df, live_df):
+    if not proposals:
+        return None
+    try:
+        specs = []
+        mode_by_id = {mode["id"]: mode for mode in MEGA_REPORT_MODES}
+        for mode_id, proposal in proposals.items():
+            mode = mode_by_id.get(mode_id, {})
+            eval_days = int(proposal.get("eval_days") or mode.get("eval_days") or 5)
+            perf_col = f"perf_{eval_days}bd"
+            df_eval = (
+                df.dropna(subset=[perf_col]).copy()
+                if df is not None and perf_col in df.columns
+                else pd.DataFrame()
+            )
+            current = proposal.get("current", {})
+            candidate = proposal.get("candidate", {})
+            current_conditions = current.get("conditions", [])
+            candidate_conditions = candidate.get("conditions", [])
+            current_confirmed = _with_comparison_scope(
+                _mask_condition_rows(df_eval, current_conditions), "確定"
+            )
+            candidate_confirmed = _with_comparison_scope(
+                _mask_condition_rows(df_eval, candidate_conditions), "確定"
+            )
+            current_live = _with_comparison_scope(
+                _mask_condition_rows(live_df, current_conditions), "未確定(現在値)"
+            )
+            candidate_live = _with_comparison_scope(
+                _mask_condition_rows(live_df, candidate_conditions), "未確定(現在値)"
+            )
+            specs.append({
+                "mode_label": proposal.get("label") or mode_id,
+                "current_logic": _logic_label("A", current_conditions, {}),
+                "candidate_logic": _logic_label("A", candidate_conditions, {}),
+                "current_rows": _concat_scoped_frames(current_confirmed, current_live),
+                "candidate_rows": _concat_scoped_frames(candidate_confirmed, candidate_live),
+                "perf_col": perf_col,
+                "stats_sections": [
+                    {"label": "確定", "current": current.get("backtest"), "candidate": candidate.get("backtest")},
+                    {"label": "検証", "current": current.get("validation"), "candidate": candidate.get("validation")},
+                    {"label": "未確定(現在値)", "current": current.get("live"), "candidate": candidate.get("live")},
+                ],
+            })
+        return build_logic_comparison_attachment(
+            "Megaレポート スコアロジック更新候補 比較",
+            specs,
+            "mega_score_logic_comparison",
+        )
+    except Exception as exc:
+        print(f"  [warn] Mega comparison attachment skipped: {exc}")
+        return None
+
 def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total, what_changed="conditions", thresholds=None):
     """スコアロジック更新をDiscordに通知
     what_changed: "conditions" | "thresholds" | "both"
@@ -3172,7 +4039,7 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
 def notify_discord_approval(best_method, best_combo, best_stats, baseline, thresholds,
                             validation_stats=None, current_stats=None,
                             current_validation_stats=None, adoption_reasons=None,
-                            mode="normal"):
+                            mode="normal", comparison_attachment=None):
     """スコアリング更新候補の承認リクエストをDiscordに送信"""
     import urllib.request, json as _json
 
@@ -3265,6 +4132,14 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+
+    _post_discord_webhook(
+        APPROVAL_WEBHOOK_URL,
+        payload,
+        attachment=comparison_attachment,
+        label="Discord approval",
+    )
+    return
 
     data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
@@ -3428,7 +4303,7 @@ def notify_discord_sniper_rescue_no_candidate(refreshed_stats, live_stats,
         print(f"  ⚠ Discord Sniper rescue通知失敗: {e}")
 
 
-def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
+def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds, comparison_attachment=None):
     """Sniperロジック更新候補の承認リクエストをDiscordに送信"""
     import urllib.request, json as _json
     if not APPROVAL_WEBHOOK_URL:
@@ -3480,6 +4355,14 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+    _post_discord_webhook(
+        APPROVAL_WEBHOOK_URL,
+        payload,
+        attachment=comparison_attachment,
+        label="Discord Sniper approval",
+    )
+    return
+
     data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
         APPROVAL_WEBHOOK_URL, data=data,
@@ -3495,7 +4378,7 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds):
         print(f"  ⚠ Discord Sniper承認通知失敗: {e}")
 
 
-def notify_discord_mega_approval(proposals):
+def notify_discord_mega_approval(proposals, comparison_attachment=None):
     """Megaレポート専用ロジックの更新候補をDiscordに通知する。"""
     import urllib.request, json as _json
     if not APPROVAL_WEBHOOK_URL or not proposals:
@@ -3543,6 +4426,14 @@ def notify_discord_mega_approval(proposals):
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }]
     }
+
+    _post_discord_webhook(
+        APPROVAL_WEBHOOK_URL,
+        payload,
+        attachment=comparison_attachment,
+        label="Discord Mega approval",
+    )
+    return
 
     data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
@@ -3660,7 +4551,7 @@ def finalize_sniper_pending(sniper_data):
         print("  ✅ pending_logic_sniper.json 削除完了")
 
 
-def notify_discord_moonshot_approval(conditions, stats, eval_days, baseline_avg, thresholds):
+def notify_discord_moonshot_approval(conditions, stats, eval_days, baseline_avg, thresholds, comparison_attachment=None):
     """Moonshotロジック更新候補の承認リクエストをDiscordに送信"""
     import urllib.request, json as _json
     if not APPROVAL_WEBHOOK_URL:
@@ -3715,6 +4606,14 @@ def notify_discord_moonshot_approval(conditions, stats, eval_days, baseline_avg,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+    _post_discord_webhook(
+        APPROVAL_WEBHOOK_URL,
+        payload,
+        attachment=comparison_attachment,
+        label="Discord Moonshot approval",
+    )
+    return
+
     data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
         APPROVAL_WEBHOOK_URL, data=data,
@@ -4238,6 +5137,24 @@ def _run_sniper_optimization(df, args):
         if candidate_targets == current_targets:
             print("  ✅ Sniper: 条件は異なるが抽出結果が現行と同一のため更新しません。")
             return
+        if not rescue_mode:
+            current_sniper_rows = _all_condition_rows(
+                df, current_sniper_conditions, current_sniper_thresholds
+            )
+            delta_reject = delta_quality_reject_reason(
+                "Sniper",
+                current_sniper_rows,
+                s6_full,
+                "perf_5bd",
+                current_stats=refreshed_stats or {},
+                candidate_stats=st6_full,
+                candidate_validation_stats=st6_valid,
+                min_validation_n=SNIPER_VALID_N_MIN,
+                strong_win_threshold=WIN_THRESHOLD,
+            )
+            if delta_reject:
+                print(f"  ✅ {delta_reject}")
+                return
 
     sniper_code = build_func_sniper(best_combo, st6_full, len(df))
 
@@ -4256,7 +5173,30 @@ def _run_sniper_optimization(df, args):
         with open(SNIPER_PENDING_PATH, "w", encoding="utf-8") as _f:
             _json.dump(_pending, _f, ensure_ascii=False, indent=2)
         print(f"  📋 pending_logic_sniper.json に保存しました")
-        notify_discord_sniper_approval(best_combo, st6_full, baseline_wr, {})
+        current_sniper_conditions = sniper_logic.get("conditions", []) if sniper_logic else []
+        current_sniper_thresholds = sniper_logic.get("thresholds", {}) if sniper_logic else {}
+        comparison_attachment = build_condition_logic_comparison_attachment(
+            "Sniper score",
+            df,
+            "perf_5bd",
+            current_sniper_conditions,
+            best_combo,
+            refreshed_stats or {},
+            st6_full,
+            "sniper_score_logic_comparison",
+            extra_sections=[
+                {"label": "検証", "current": {}, "candidate": st6_valid},
+                {"label": "Lockbox", "current": baseline_lockbox_stats, "candidate": st6_lockbox},
+            ],
+            current_thresholds=current_sniper_thresholds,
+        )
+        notify_discord_sniper_approval(
+            best_combo,
+            st6_full,
+            baseline_wr,
+            {},
+            comparison_attachment=comparison_attachment,
+        )
         print("  ✅ Discord に Sniper承認リクエストを送信しました")
         return
 
@@ -4443,6 +5383,21 @@ def _run_moonshot_optimization(df, args):
         if cur_targets and cand_targets == cur_targets:
             print("  ✅ Moonshot: 条件は異なるが抽出結果が現行と同一のため更新しません。")
             return
+        current_moonshot_rows = _all_condition_rows(df_full, current_conds, current_ths)
+        candidate_moonshot_rows = _all_condition_rows(df_full, best_combo, {})
+        delta_reject = delta_quality_reject_reason(
+            "Moonshot",
+            current_moonshot_rows,
+            candidate_moonshot_rows,
+            perf_col,
+            current_stats=_simple_perf_stats(current_moonshot_rows, perf_col),
+            candidate_stats=st_full,
+            candidate_validation_stats=st_valid,
+            strong_win_threshold=max(WIN_THRESHOLD, MOONSHOT_AVG_MIN),
+        )
+        if delta_reject:
+            print(f"  ✅ {delta_reject}")
+            return
 
     moonshot_code = build_func_moonshot(best_combo, st_full, eval_days, len(df))
 
@@ -4462,7 +5417,36 @@ def _run_moonshot_optimization(df, args):
         with open(MOONSHOT_PENDING_PATH, "w", encoding="utf-8") as _f:
             _json.dump(_pending, _f, ensure_ascii=False, indent=2)
         print(f"  📋 pending_logic_moonshot.json に保存しました")
-        notify_discord_moonshot_approval(best_combo, st_full, eval_days, baseline_avg, {})
+        current_moonshot_conditions = moonshot_logic.get("conditions", []) if moonshot_logic else []
+        current_moonshot_thresholds = moonshot_logic.get("thresholds", {}) if moonshot_logic else {}
+        df_moonshot_eval = df.dropna(subset=[perf_col]).copy() if perf_col in df.columns else pd.DataFrame()
+        current_moonshot_rows = _all_condition_rows(
+            df_moonshot_eval,
+            current_moonshot_conditions,
+            current_moonshot_thresholds,
+        )
+        comparison_attachment = build_condition_logic_comparison_attachment(
+            "Moonshot score",
+            df_moonshot_eval,
+            perf_col,
+            current_moonshot_conditions,
+            best_combo,
+            _simple_perf_stats(current_moonshot_rows, perf_col),
+            st_full,
+            "moonshot_score_logic_comparison",
+            extra_sections=[
+                {"label": "検証", "current": {}, "candidate": st_valid},
+            ],
+            current_thresholds=current_moonshot_thresholds,
+        )
+        notify_discord_moonshot_approval(
+            best_combo,
+            st_full,
+            eval_days,
+            baseline_avg,
+            {},
+            comparison_attachment=comparison_attachment,
+        )
         print("  ✅ Discord に Moonshot承認リクエストを送信しました")
         return
 
@@ -5653,6 +6637,27 @@ def main():
     print(f"  表示用バックテスト（過去{DISPLAY_BACKTEST_DAYS}日 / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
+    if adoption_mode != "rescue":
+        display_current_rows = _scored_rows(display_df, current_method, current_combo, current_thresholds, 6)
+        display_candidate_rows = _scored_rows(display_df, best_method, best_combo, best_thresholds, 6)
+        delta_reject = delta_quality_reject_reason(
+            "Stable",
+            display_current_rows,
+            display_candidate_rows,
+            "perf_5bd",
+            current_stats=baseline_ar,
+            candidate_stats=display_stats6,
+            current_validation_stats=current_validation_stats6,
+            candidate_validation_stats=best_validation_stats6,
+            min_validation_n=max(DELTA_QUALITY_VALID_N_MIN, MIN_VALID_N_FLOOR),
+            strong_win_threshold=WIN_THRESHOLD,
+        )
+        if delta_reject:
+            print(f"\n✅ {delta_reject}")
+            handle_no_stable_candidate(delta_reject)
+            return
+        adoption_reasons = list(adoption_reasons) + ["差分品質ゲート通過"]
+
     # ─── 通常モード時は中程度以上の改善（勝率+1pt以上）のみ提案する ───────────
     # rescue mode（streak >= RESCUE_REQUIRED_STREAK）は従来通り提案を通す。
     # 頻繁なロジック変更でユーザーが混乱しないよう、軽微な改善はスキップ。
@@ -5732,6 +6737,17 @@ def main():
         with open(PENDING_LOGIC_PATH, "w", encoding="utf-8") as _pf2:
             _pjson2.dump(_pending, _pf2, ensure_ascii=False, indent=2)
         print(f"\n📋 pending_logic.json に保存しました")
+        comparison_attachment = build_stable_comparison_attachment(
+            display_df,
+            current_method,
+            current_combo,
+            current_thresholds,
+            best_method,
+            best_combo,
+            best_thresholds,
+            current_validation_stats6,
+            best_validation_stats6,
+        )
         notify_discord_approval(
             best_method, best_combo, display_stats6, display_base, best_thresholds,
             validation_stats=best_validation_stats6,
@@ -5739,6 +6755,7 @@ def main():
             current_validation_stats=current_validation_stats6,
             adoption_reasons=adoption_reasons,
             mode=adoption_mode,
+            comparison_attachment=comparison_attachment,
         )
         print("✅ Discord に承認リクエストを送信しました")
         print("（承認後、Discord で /approve-update を実行するとデプロイされます）")

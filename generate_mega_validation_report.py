@@ -85,6 +85,9 @@ CONDITION_LABELS = {
     "cci_os": "CCI <= -100",
     "smbull_seq2": "2連小陽線後",
     "smbull_seq3": "3連小陽線後",
+    "vp_support": "価格帯出来高: 下値支持優位",
+    "vp_no_overhead": "価格帯出来高: 上値しこり小",
+    "vp_near_poc": "価格帯出来高: POC付近",
 }
 
 

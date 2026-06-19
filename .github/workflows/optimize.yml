@@ -26,7 +26,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install numpy pandas google-auth google-auth-httplib2 google-api-python-client
+        run: pip install numpy pandas openpyxl google-auth google-auth-httplib2 google-api-python-client
 
       - name: Write credentials.json
         run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json

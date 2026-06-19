@@ -102,7 +102,7 @@ PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 特定時刻時点の表示へ手動で戻す必要がある場合だけ、`MEGA_REPORT_ALERT_RECEIVED_CUTOFF="YYYY-MM-DD HH:mm"` または `--alert-received-cutoff "YYYY-MM-DD HH:mm"` を指定して再生成する。通常生成やGitHub Actionsではこのカットオフを指定しない。
 
 BOTTOMシグナルのStable★数や各モード条件は、シグナル点灯足時点のOHLCVだけで特徴量を計算する。後から同日13:00足などが `ohlcv_4h` に追加されても、当該シグナルの採点を日足の「最後の4h足close」で再計算しない。13:00より前に受信した当日シグナルは09:00足まで、14:00以降に受信した当日シグナルは13:00足までを特徴量に使い、現在株価・将来騰落率の評価だけは後続OHLCVを使う。
-本番ロジックへ反映する前の現行比較では、成績指標だけでなく現行銘柄・候補銘柄・追加/除外/共通の銘柄差分も提示する。
+本番ロジックへ反映する前の現行比較では、成績指標だけでなく現行銘柄・候補銘柄・追加/除外/共通の銘柄差分も提示する。スコアロジック更新候補をDiscordへ通知するときは、現行/候補の銘柄一覧、共通/追加/除外、成績比較を含むスプレッドシートを添付する。
 
 サイトタイトルとトップH1は `天底極致 スコアリングBot レポート` にする。
 レポート上の評価日後株価は騰落率から逆算せず、OHLCVの日足にある実際の終値を表示する。エントリー価格は銘柄セル内のボラティリティタグ右隣に表示し、列は増やさない。PCの表表示は左揃えを維持する。スマホカード表示では銘柄セル内に主要情報だけの概要を出し、詳細を見るボタンで操作ボタンや非対象評価日などの全情報を開く。
@@ -173,7 +173,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 }
 ```
 
-利用可能な条件キー（`optimize_screener.py` の `BOOL_CONDS` で定義。Stable/Sniper共通）: `ema75`, `ema25`, `vol20`, `vol15`, `vol12`, `vol30`, `sbull`, `body1`, `body2`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `lower_wick50`, `pre_decline15`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `ich_tk`, `ich_price_tenkan`, `ich_price_kijun`, `ich_cloud_above`, `ich_cloud_green`, `ich_chikou`, `ich_kumo_break`, `rci9_os`, `rci26_os`, `rci9_up`, `pre_down3`, `gap_up`, `bb_lower`, `cci_os`, `smbull_seq2`, `smbull_seq3`
+利用可能な条件キー（`optimize_screener.py` の `BOOL_CONDS` で定義。Stable/Sniper共通）: `ema75`, `ema25`, `vol20`, `vol15`, `vol12`, `vol30`, `sbull`, `body1`, `body2`, `macdgc`, `macdpos`, `atr5`, `atr3`, `atr7`, `hb20`, `lower_wick50`, `pre_decline15`, `stoch75`, `stoch60`, `rsi5070`, `rsi4060`, `bb80`, `ich_tk`, `ich_price_tenkan`, `ich_price_kijun`, `ich_cloud_above`, `ich_cloud_green`, `ich_chikou`, `ich_kumo_break`, `rci9_os`, `rci26_os`, `rci9_up`, `pre_down3`, `gap_up`, `bb_lower`, `cci_os`, `smbull_seq2`, `smbull_seq3`, `vp_support`, `vp_no_overhead`, `vp_near_poc`
 
 ### `screener.js` の処理フロー
 
@@ -189,6 +189,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **採用基準③**: `win10_raw >= 5` かつ `win10_raw / n >= (baseline.win10_raw / baseline.n) × 0.90`（少数精鋭ロジックを絶対件数だけで弾かない）
 - **Stable品質ゲート**: strict modeの全件★6最低件数は通常18件、rescue modeで15件。検証側は現行検証★6件数がある場合 `max(5, 現行検証★6件数 × 0.8)` を最低件数にする。閾値最適化は上位候補に限定し、最終採用判定は広い候補プールを全件再評価する。strict modeでは採用前にLockboxも事前確認し、OOSゲートに落ちた候補はスキップして次の品質通過候補を試す。
 - **Sniper検証ゲート**: 訓練上位だけで採用せず、60%訓練・20%検証・20%Lockboxに分ける。Walk-forward候補を最大1000件まで広げ、検証側の最低件数5件を要求し、検証平均リターンがマイナスの候補は除外する。候補選択は検証勝率・検証平均リターン・Lockbox勝率・Lockbox平均リターンを優先し、全期間再評価では現行勝率未満、または現行平均リターンから許容幅を超えて悪化する候補を採用しない。
+- **差分品質ゲート**: スコアロジック更新候補をpending保存・Discord通知する直前に、現行/候補の抽出銘柄差分を確認する。候補件数が現行比で大きく減り、候補のみ追加の件数や成績が弱く、現行のみ除外側に目標Hitや大勝ち銘柄がある場合は、見かけの成績改善として自動却下する。ただし検証/Lockbox、全体成績、未確定ウォッチリストの改善が十分に強い場合は通し、rescue modeでは必要な更新を逃さないため過度に抑制しない。
 - **Sniper探査判断**: Sniper候補は固定銘柄や固定条件名で採用せず、十分な件数での全体勝率・検証勝率・目標到達率・-10%以下の少なさ・未確定ウォッチ悪化なしを優先する。件数を増やすだけで勝率や検証成績が落ちる候補は、見かけのサンプル数が多くても採用しない。
 - **閾値スイープ**: `--win-threshold-sweep` の子プロセスはStable比較に絞るためSniperをスキップする。採用可能な閾値がない場合は `pending_logic.json` を作らず、SCPや `pm2 restart` も実行しない。
 - **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×40 + avg×100 + ((win10_weighted / W) - (lose10_weighted / W)) × 250`（recency半減期90日の加重）
@@ -201,7 +202,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **SSH key**: `C:\Users\ken5\OneDrive\Desktop\Product\ssh-key-2026-03-08.key`（自宅PC）/ `~/ssh-key-2026-03-08.key`（Cloud Shell）
 - **VM**: `ubuntu@168.110.60.126`、pm2プロセス名 `screening-bot`
 - **自動実行トリガー**: GASの `runDailyMaintenance` 完了 → `triggerGitHubActionsOptimize_()` → GitHub Actions `workflow_dispatch`
-- **承認フロー**: `optimize.yml`（`--propose`）→ Discord通知 → 管理者が `/approve-update` → `deploy.yml`（`--apply-pending`）→ デプロイ
+- **承認フロー**: `optimize.yml`（`--propose`）→ Discord通知 → 管理者が `/approve-update` → `deploy.yml`（`--apply-pending`）→ デプロイ → `Mega Validation Report` 再生成
 - **GitHub Actions コミット対象**: `current_logic.json` / `screener.js` / `index.js` の3ファイル（deploy.yml実行時）
 - **バックアップ**: `backups/screener_backup_YYYYMMDD_HHMMSS.js`（最大30件）
 
@@ -258,6 +259,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ### インジケーター計算の注意点
 - EMA25は25本以上のバーが必要。不足時は `null` を返す。`if (!ind) return null` の null チェックが全関数に必須。
 - **出来高20日平均は当日を除外**する（前20日間のみ）。当日を含めると循環参照になる。
+- `vp_support` / `vp_no_overhead` / `vp_near_poc` は `ohlcv_4h` 由来のOHLCV足から価格帯出来高を近似する条件であり、約定別の真のVolume Profileではない。変更時は `optimize_screener.py`、`screener.js`、`generate_mega_validation_report.py` の条件名・計算式・表示ラベルを揃える。
 - `aggregateToDailyBars()` はバーがソート済みであることを前提とする。未ソートだと20日ルックバックウィンドウが壊れる。
 - `screenSymbol()` はシグナル日**以前**で最も近いバーを探す（完全一致不要）。シグナル日がバーの最終日より新しい場合は `null` を返す。
 

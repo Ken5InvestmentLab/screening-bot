@@ -61,3 +61,10 @@ jobs:
             git pull --rebase origin main
             git push
           fi
+
+  refresh_report_after_approval:
+    needs: deploy
+    uses: ./.github/workflows/mega-validation-report.yml
+    permissions:
+      contents: write
+    secrets: inherit

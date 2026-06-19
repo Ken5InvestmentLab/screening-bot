@@ -170,6 +170,80 @@ function computeIndicators(dailyBars, signalIdx) {
     : volumes.slice(0, last).reduce((a, b) => a + b, 0) / Math.max(1, last);
   const volSurge = vol20Avg > 0 ? volumes[last] / vol20Avg : 0;
 
+  function calcVolumeProfileProxy(profileBars, close, lookback = 60, bins = 24, bandPct = 0.10) {
+    const fallback = {
+      supportRatio: 0,
+      overheadRatio: 1,
+      pocDistPct: 999,
+      pocAbsDistPct: 999,
+    };
+    if (!Number.isFinite(close) || close <= 0) return fallback;
+    const window = profileBars.slice(-lookback).filter(b =>
+      Number.isFinite(b.low) && Number.isFinite(b.high) && Number.isFinite(b.volume) && b.volume > 0
+    );
+    if (window.length < 10) return fallback;
+    const priceMin = Math.min(...window.map(b => Math.min(b.low, b.high)));
+    const priceMax = Math.max(...window.map(b => Math.max(b.low, b.high)));
+    if (!Number.isFinite(priceMin) || !Number.isFinite(priceMax) || priceMax <= priceMin) return fallback;
+
+    const step = (priceMax - priceMin) / bins;
+    const profile = Array(bins).fill(0);
+    for (const b of window) {
+      const lo = Math.min(b.low, b.high);
+      const hi = Math.max(b.low, b.high);
+      if (hi === lo) {
+        const idx = Math.min(bins - 1, Math.max(0, Math.floor((lo - priceMin) / step)));
+        profile[idx] += b.volume;
+        continue;
+      }
+      const overlaps = [];
+      let totalOverlap = 0;
+      for (let i = 0; i < bins; i++) {
+        const binLo = priceMin + step * i;
+        const binHi = binLo + step;
+        const overlap = Math.max(0, Math.min(hi, binHi) - Math.max(lo, binLo));
+        overlaps.push(overlap);
+        totalOverlap += overlap;
+      }
+      if (totalOverlap <= 0) {
+        const idx = Math.min(bins - 1, Math.max(0, Math.floor((((lo + hi) / 2) - priceMin) / step)));
+        profile[idx] += b.volume;
+      } else {
+        overlaps.forEach((overlap, i) => {
+          if (overlap > 0) profile[i] += b.volume * overlap / totalOverlap;
+        });
+      }
+    }
+
+    const total = profile.reduce((a, b) => a + b, 0);
+    if (total <= 0) return fallback;
+    const lowerBound = close * (1 - bandPct);
+    const upperBound = close * (1 + bandPct);
+    let support = 0;
+    let overhead = 0;
+    for (let i = 0; i < bins; i++) {
+      const center = priceMin + step * (i + 0.5);
+      if (center >= lowerBound && center <= close) support += profile[i];
+      else if (center > close && center <= upperBound) overhead += profile[i];
+    }
+    const denom = Math.max(overhead, total * 0.01);
+    const supportRatio = support > 0 ? Math.min(99, support / denom) : 0;
+    const overheadRatio = overhead / total;
+    let pocIdx = 0;
+    for (let i = 1; i < bins; i++) {
+      if (profile[i] > profile[pocIdx]) pocIdx = i;
+    }
+    const pocPrice = priceMin + step * (pocIdx + 0.5);
+    const pocDistPct = pocPrice > 0 ? (close / pocPrice - 1) * 100 : 999;
+    return {
+      supportRatio,
+      overheadRatio,
+      pocDistPct,
+      pocAbsDistPct: Math.abs(pocDistPct),
+    };
+  }
+  const vp = calcVolumeProfileProxy(bars, latestClose);
+
   // ── 陽線強度（実体 / 終値 × 100%）──────────────────────
   const bodyPct  = latestClose > 0 ? (latestClose - latestOpen) / latestClose * 100 : 0;
   const isStrongBull = bodyPct >= 0.5;
@@ -312,6 +386,10 @@ function computeIndicators(dailyBars, signalIdx) {
     ema75:       ema75 !== null ? +ema75.toFixed(2) : null,
     atrPct:      +atrPct.toFixed(2),
     volSurge:    +volSurge.toFixed(2),
+    vpSupportRatio: +vp.supportRatio.toFixed(2),
+    vpOverheadRatio: +vp.overheadRatio.toFixed(4),
+    vpPocDistPct: +vp.pocDistPct.toFixed(2),
+    vpPocAbsDistPct: +vp.pocAbsDistPct.toFixed(2),
     bodyPct:     +bodyPct.toFixed(2),
     isStrongBull,
     macdGC3d,

@@ -52,7 +52,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A pending_logic.json pending_logic_sniper.json pending_logic_mega.json
+          for path in pending_logic.json pending_logic_sniper.json pending_logic_mega.json; do
+            if [ -e "$path" ] || git ls-files --error-unmatch "$path" >/dev/null 2>&1; then
+              git add -A "$path"
+            fi
+          done
           git add screener.js current_logic.json current_logic_sniper.json current_logic_mega.json index.js
           if git diff --staged --quiet; then
             echo "Nothing to commit"

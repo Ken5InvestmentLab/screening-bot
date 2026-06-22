@@ -615,21 +615,26 @@ def apply_mega_pending(target="mega"):
     current = load_current_logic_mega()
     current_modes = current.get("modes", {}) if isinstance(current.get("modes"), dict) else {}
     applied = []
+    applied_details = []
     for mode in MEGA_REPORT_MODES:
         mode_id = mode["id"]
         if mode_id not in selected or mode_id not in pending_modes:
             continue
         proposal = pending_modes[mode_id]
         candidate = proposal.get("candidate", {}) if isinstance(proposal, dict) else {}
+        current_proposal = proposal.get("current", {}) if isinstance(proposal, dict) else {}
         conditions = candidate.get("conditions")
         if not isinstance(conditions, list) or not conditions:
             print(f"  [skip] Mega pending: {mode_id} の候補条件が不正")
             continue
+        previous_mode = current_modes.get(mode_id, {}) if isinstance(current_modes.get(mode_id), dict) else {}
+        previous_conditions = previous_mode.get("conditions") or current_proposal.get("conditions", [])
+        new_conditions = [str(c) for c in conditions]
         current_modes[mode_id] = {
             "label": mode["label"],
             "eval_days": int(mode["eval_days"]),
             "target": float(mode["target"]),
-            "conditions": [str(c) for c in conditions],
+            "conditions": new_conditions,
             "combo_size": int(mode["combo_size"]),
             "required_conditions": list(mode.get("required_conditions", [])),
             "source": "approved_pending",
@@ -639,6 +644,14 @@ def apply_mega_pending(target="mega"):
             "live": candidate.get("live", {}),
         }
         applied.append(mode_id)
+        applied_details.append({
+            "mode_id": mode_id,
+            "label": mode["label"],
+            "previous_conditions": [str(c) for c in previous_conditions],
+            "new_conditions": new_conditions,
+            "current": current_proposal,
+            "candidate": candidate,
+        })
         print(f"  [ok] Mega pending適用: {mode['label']} -> {'+'.join(conditions)}")
     if not applied:
         print("  [skip] Mega pending: 選択対象に承認待ち候補なし")
@@ -655,7 +668,7 @@ def apply_mega_pending(target="mega"):
     else:
         os.remove(MEGA_PENDING_PATH)
         print("  [ok] pending_logic_mega.json 削除完了")
-    return {"applied": applied, "remaining": list(pending_modes.keys())}
+    return {"applied": applied, "remaining": list(pending_modes.keys()), "details": applied_details}
 
 
 def _mega_base_stats(df_eval, perf_col, target):
@@ -4452,6 +4465,64 @@ def notify_discord_mega_approval(proposals, comparison_attachment=None):
         print(f"  ⚠ Discord Mega承認通知失敗: {e}")
 
 
+def notify_discord_mega_update(applied_details):
+    """Megaレポート専用ロジックの更新完了をDiscordに通知する。"""
+    if not DISCORD_WEBHOOK_URL or not applied_details:
+        return False
+
+    def _cond_text(values):
+        values = [str(v) for v in (values or []) if str(v)]
+        return " + ".join(values) if values else "なし"
+
+    def _stats_line(st):
+        if not st or int(st.get("n", 0) or 0) == 0:
+            return "該当なし"
+        def _float(value):
+            try:
+                return float(value or 0)
+            except (TypeError, ValueError):
+                return 0.0
+        return (
+            f"{int(st.get('n', 0))}件 / 勝率{_float(st.get('wr_raw'))*100:.1f}% / "
+            f"平均{_float(st.get('avg_raw'))*100:+.1f}% / 目標Hit{_float(st.get('target_rate'))*100:.1f}%"
+        )
+
+    fields = []
+    for detail in applied_details:
+        current = detail.get("current", {}) if isinstance(detail.get("current"), dict) else {}
+        candidate = detail.get("candidate", {}) if isinstance(detail.get("candidate"), dict) else {}
+        fields.append({
+            "name": f"📌 {detail.get('label') or detail.get('mode_id', 'Mega')}",
+            "value": (
+                "```\n"
+                f"旧条件: {_cond_text(detail.get('previous_conditions'))}\n"
+                f"新条件: {_cond_text(detail.get('new_conditions'))}\n"
+                f"確定  : {_stats_line(current.get('backtest'))} -> {_stats_line(candidate.get('backtest'))}\n"
+                f"検証  : {_stats_line(current.get('validation'))} -> {_stats_line(candidate.get('validation'))}\n"
+                f"未確定: {_stats_line(current.get('live'))} -> {_stats_line(candidate.get('live'))}\n"
+                "```"
+            ),
+            "inline": False,
+        })
+
+    payload = {
+        "embeds": [{
+            "title": "✅ Megaレポート用スコアロジックを更新しました",
+            "description": "承認済みのMegaレポート専用スコア条件を反映しました。",
+            "color": 0x2ECC71,
+            "fields": fields[:10],
+            "footer": {"text": "Ken5 Investment Lab - approved Mega report logic"},
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }]
+    }
+
+    return _post_discord_webhook(
+        DISCORD_WEBHOOK_URL,
+        payload,
+        label="Discord Mega update",
+    )
+
+
 def notify_discord_sniper_update(conditions, stats, thresholds):
     """Sniperロジック更新完了をDiscordに通知"""
     import urllib.request, json as _json
@@ -5993,9 +6064,11 @@ def main():
             return
 
         if _has_mega and not _has_main and not _has_sniper and not _has_moonshot:
-            if apply_mega_pending(_target) is None:
+            _mega_data = apply_mega_pending(_target)
+            if _mega_data is None:
                 print("ℹ️ Mega pendingの適用対象がないため終了します。")
                 return
+            notify_discord_mega_update(_mega_data.get("details", []))
             print("\n✅ Megaレポート用ロジックの承認適用完了")
             return
 
@@ -6066,7 +6139,9 @@ def main():
                     _moonshot_data["eval_days"], _moonshot_data["thresholds"] or {}
                 )
             if _has_mega:
-                apply_mega_pending(_target)
+                _mega_data = apply_mega_pending(_target)
+                if _mega_data:
+                    notify_discord_mega_update(_mega_data.get("details", []))
             print("\n✅ 承認済みロジックのデプロイ完了")
         else:
             print("\n⚠ デプロイ失敗。手動でscp & pm2 restartしてください")

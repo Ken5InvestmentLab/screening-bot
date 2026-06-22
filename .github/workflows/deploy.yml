@@ -75,6 +75,8 @@ jobs:
     needs: deploy
     if: ${{ needs.deploy.outputs.applied == 'true' }}
     uses: ./.github/workflows/mega-validation-report.yml
+    with:
+      notify_discord: false
     permissions:
       contents: write
     secrets: inherit

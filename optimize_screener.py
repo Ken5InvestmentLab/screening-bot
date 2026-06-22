@@ -3336,6 +3336,27 @@ def _safe_sheet_title(value, used):
     used.add(title)
     return title
 
+def _defer_discord_update_payload(payload, label):
+    path = os.environ.get("DISCORD_UPDATE_NOTICE_PAYLOAD_PATH", "").strip()
+    if not path:
+        return False
+
+    notices = []
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            existing = json.load(f)
+        notices = existing if isinstance(existing, list) else [existing]
+
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    notices.append({"label": label, "payload": payload})
+    tmp_path = f"{path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(notices, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    os.replace(tmp_path, path)
+    print(f"  [ok] {label} notification deferred until report refresh completes")
+    return True
+
 def _logic_row_key(record):
     alert_id = str(record.get("alert_id") or "").strip()
     if alert_id:
@@ -4025,7 +4046,11 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
         "timestamp": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     }
 
-    payload = _json.dumps({"embeds": [embed]}).encode("utf-8")
+    payload_obj = {"embeds": [embed]}
+    if _defer_discord_update_payload(payload_obj, "Discord Stable update"):
+        return
+
+    payload = _json.dumps(payload_obj).encode("utf-8")
     req = urllib.request.Request(
         DISCORD_WEBHOOK_URL,
         data=payload,
@@ -4516,6 +4541,9 @@ def notify_discord_mega_update(applied_details):
         }]
     }
 
+    if _defer_discord_update_payload(payload, "Discord Mega update"):
+        return True
+
     return _post_discord_webhook(
         DISCORD_WEBHOOK_URL,
         payload,
@@ -4570,6 +4598,9 @@ def notify_discord_sniper_update(conditions, stats, thresholds):
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+    if _defer_discord_update_payload(payload, "Discord Sniper update"):
+        return
+
     data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
         DISCORD_WEBHOOK_URL,
@@ -4747,6 +4778,9 @@ def notify_discord_moonshot_update(conditions, stats, eval_days, thresholds):
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+    if _defer_discord_update_payload(payload, "Discord Moonshot update"):
+        return
+
     data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
         DISCORD_WEBHOOK_URL,

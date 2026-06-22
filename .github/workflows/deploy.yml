@@ -24,6 +24,7 @@ jobs:
       contents: write
     outputs:
       applied: ${{ steps.commit.outputs.applied }}
+      logic_update_notice_payload: ${{ steps.notice.outputs.payload }}
 
     steps:
       - name: Checkout
@@ -48,6 +49,7 @@ jobs:
       - name: Apply pending logic
         env:
           PYTHONIOENCODING: utf-8
+          DISCORD_UPDATE_NOTICE_PAYLOAD_PATH: /tmp/approved-logic-update-notice.json
         run: python optimize_screener.py --apply-pending --target-logic "${{ inputs.target }}"
 
       - name: Commit applied logic
@@ -71,12 +73,22 @@ jobs:
             echo "applied=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Prepare approved logic notice
+        id: notice
+        run: |
+          if [ -s /tmp/approved-logic-update-notice.json ]; then
+            echo "payload=$(base64 -w 0 /tmp/approved-logic-update-notice.json)" >> "$GITHUB_OUTPUT"
+          else
+            echo "payload=" >> "$GITHUB_OUTPUT"
+          fi
+
   refresh_report_after_approval:
     needs: deploy
     if: ${{ needs.deploy.outputs.applied == 'true' }}
     uses: ./.github/workflows/mega-validation-report.yml
     with:
       notify_discord: false
+      logic_update_notice_payload_b64: ${{ needs.deploy.outputs.logic_update_notice_payload }}
     permissions:
       contents: write
     secrets: inherit

@@ -22,6 +22,10 @@ on:
         required: false
         type: boolean
         default: true
+      logic_update_notice_payload_b64:
+        required: false
+        type: string
+        default: ""
 
 jobs:
   report:
@@ -214,3 +218,34 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: npm run deploy:legacy
+
+      - name: Notify Discord about approved logic update
+        if: ${{ inputs.logic_update_notice_payload_b64 != '' }}
+        env:
+          LOGIC_UPDATE_NOTICE_PAYLOAD_B64: ${{ inputs.logic_update_notice_payload_b64 }}
+          PYTHONIOENCODING: utf-8
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+
+          from optimize_screener import DISCORD_WEBHOOK_URL, _post_discord_webhook
+
+          encoded = os.environ.get("LOGIC_UPDATE_NOTICE_PAYLOAD_B64", "").strip()
+          if not encoded:
+              raise SystemExit(0)
+          notices = json.loads(base64.b64decode(encoded).decode("utf-8"))
+          if isinstance(notices, dict):
+              notices = [notices]
+
+          sent = 0
+          for notice in notices:
+              payload = notice.get("payload") if isinstance(notice, dict) else None
+              if not payload:
+                  continue
+              label = notice.get("label") or "Discord approved logic update"
+              if _post_discord_webhook(DISCORD_WEBHOOK_URL, payload, label=label):
+                  sent += 1
+          print(f"Sent {sent} approved logic update notice(s)")
+          PY

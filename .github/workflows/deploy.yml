@@ -22,6 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    outputs:
+      applied: ${{ steps.commit.outputs.applied }}
 
     steps:
       - name: Checkout
@@ -49,6 +51,7 @@ jobs:
         run: python optimize_screener.py --apply-pending --target-logic "${{ inputs.target }}"
 
       - name: Commit applied logic
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -60,14 +63,17 @@ jobs:
           git add screener.js current_logic.json current_logic_sniper.json current_logic_mega.json index.js
           if git diff --staged --quiet; then
             echo "Nothing to commit"
+            echo "applied=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "chore: apply approved screener logic [skip ci]"
             git pull --rebase origin main
             git push
+            echo "applied=true" >> "$GITHUB_OUTPUT"
           fi
 
   refresh_report_after_approval:
     needs: deploy
+    if: ${{ needs.deploy.outputs.applied == 'true' }}
     uses: ./.github/workflows/mega-validation-report.yml
     permissions:
       contents: write

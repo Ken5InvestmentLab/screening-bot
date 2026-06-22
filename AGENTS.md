@@ -100,6 +100,7 @@ PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 ```
 
 特定時刻時点の表示へ手動で戻す必要がある場合だけ、`MEGA_REPORT_ALERT_RECEIVED_CUTOFF="YYYY-MM-DD HH:mm"` または `--alert-received-cutoff "YYYY-MM-DD HH:mm"` を指定して再生成する。通常生成やGitHub Actionsではこのカットオフを指定しない。
+`Mega Validation Report` を手動 `workflow_dispatch` でHTML再生成する場合、Discord完了通知は原則送らない。通知が本当に必要な通常運用だけ `notify_discord=true` を明示する。
 
 BOTTOMシグナルのStable★数や各モード条件は、シグナル点灯足時点のOHLCVだけで特徴量を計算する。後から同日13:00足などが `ohlcv_4h` に追加されても、当該シグナルの採点を日足の「最後の4h足close」で再計算しない。13:00より前に受信した当日シグナルは09:00足まで、14:00以降に受信した当日シグナルは13:00足までを特徴量に使い、現在株価・将来騰落率の評価だけは後続OHLCVを使う。
 本番ロジックへ反映する前の現行比較では、成績指標だけでなく現行銘柄・候補銘柄・追加/除外/共通の銘柄差分も提示する。スコアロジック更新候補をDiscordへ通知するときは、現行/候補の銘柄一覧、共通/追加/除外、成績比較を含むスプレッドシートを添付する。

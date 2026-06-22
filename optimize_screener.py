@@ -1081,6 +1081,120 @@ def aggregate_daily(bars):
             d["volume"] += b["volume"]
     return sorted(dm.values(), key=lambda x: x["date"])
 
+def normalize_signal_date(value):
+    return str(value or "").replace("/", "-")[:10]
+
+def parse_local_timestamp(value):
+    text = str(value or "").strip()
+    if not text:
+        return pd.NaT
+    return pd.to_datetime(text.replace("/", "-"), errors="coerce")
+
+def parse_ohlcv_session_rows(rows):
+    if len(rows) < 2:
+        return {}
+    hdr = [str(h).lower().strip() for h in rows[0]]
+    def idx(n): return hdr.index(n) if n in hdr else -1
+    iS=idx("symbol"); iT=idx("timestamp"); iO=idx("open")
+    iH=idx("high");   iL=idx("low");       iC=idx("close"); iV=idx("volume")
+    sessions = {}
+    for r in rows[1:]:
+        if not r:
+            continue
+        raw = r[iS] if 0 <= iS < len(r) else ""
+        sym = raw.split(":")[-1].strip() if raw else ""
+        if not sym:
+            continue
+        ts_raw = r[iT] if 0 <= iT < len(r) else ""
+        ts = parse_local_timestamp(ts_raw)
+        if pd.isna(ts):
+            continue
+        def fv(i):
+            try: return float(r[i]) if 0 <= i < len(r) else float("nan")
+            except: return float("nan")
+        close = fv(iC)
+        if not math.isfinite(close):
+            continue
+        sessions.setdefault(sym, []).append({
+            "timestamp": ts,
+            "date": ts.strftime("%Y-%m-%d"),
+            "open": fv(iO),
+            "high": fv(iH),
+            "low": fv(iL),
+            "close": close,
+            "volume": fv(iV),
+        })
+    return {s: sorted(b, key=lambda x: x["timestamp"]) for s, b in sessions.items()}
+
+def alert_received_at_lookup(*row_sets):
+    lookup = {}
+    for rows in row_sets:
+        if len(rows) < 5:
+            continue
+        header = [str(cell).lower().strip() for cell in rows[3]]
+        if "alert_id" not in header or "received_at" not in header:
+            continue
+        alert_id_index = header.index("alert_id")
+        received_at_index = header.index("received_at")
+        for row in rows[4:]:
+            if not row or alert_id_index >= len(row):
+                continue
+            alert_id = str(row[alert_id_index]).strip()
+            if not alert_id:
+                continue
+            received_at = str(row[received_at_index]).strip() if received_at_index < len(row) else ""
+            if received_at:
+                lookup[alert_id] = received_at
+    return lookup
+
+def attach_alert_received_at(alerts, lookup):
+    alerts = alerts.copy()
+    if alerts.empty or "alert_id" not in alerts.columns:
+        alerts["received_at"] = ""
+        alerts["_received_at_dt"] = pd.NaT
+        return alerts
+    alerts["received_at"] = alerts["alert_id"].astype(str).map(lookup).fillna("")
+    alerts["_received_at_dt"] = alerts["received_at"].map(parse_local_timestamp)
+    return alerts
+
+def signal_feature_cutoff(alert):
+    signal_dt = pd.to_datetime(normalize_signal_date(alert.get("date", "")), errors="coerce")
+    if pd.isna(signal_dt):
+        return None
+    received_at = alert.get("_received_at_dt", pd.NaT)
+    if pd.isna(received_at):
+        return None
+    received_at = pd.Timestamp(received_at)
+    session_hour = 9 if received_at.hour < 14 else 13
+    return pd.Timestamp(
+        year=signal_dt.year,
+        month=signal_dt.month,
+        day=signal_dt.day,
+        hour=session_hour,
+    )
+
+def daily_bars_for_signal_features(session_rows, alert):
+    if not session_rows:
+        return []
+    signal_key = normalize_signal_date(alert.get("date", ""))
+    cutoff = signal_feature_cutoff(alert)
+    selected = []
+    for row in session_rows:
+        date_key = str(row.get("date", ""))[:10]
+        if date_key > signal_key:
+            continue
+        if cutoff is not None and date_key == signal_key and row.get("timestamp") > cutoff:
+            continue
+        selected.append({
+            "date": date_key,
+            "open": row.get("open", float("nan")),
+            "high": row.get("high", float("nan")),
+            "low": row.get("low", float("nan")),
+            "close": row.get("close", float("nan")),
+            "volume": row.get("volume", float("nan")),
+        })
+    return aggregate_daily(selected)
+
 def parse_ohlcv(rows):
     if len(rows) < 2: return {}
     hdr = [h.lower().strip() for h in rows[0]]
@@ -1368,16 +1482,21 @@ def latest_close_for_signal(daily, sig_date):
     latest = daily[-1].get("close")
     return latest if latest is not None and math.isfinite(latest) else None
 
-def build_unconfirmed_current_df(alerts_all, ohlcv):
+def build_unconfirmed_current_df(alerts_all, ohlcv, ohlcv_sessions=None):
     """perf_5bd未確定のBOTTOMを、現在値ベースの暫定perfで評価可能なDataFrameにする。"""
     if alerts_all is None or alerts_all.empty or "confirmed_5bd" not in alerts_all.columns:
         return pd.DataFrame()
 
     pending = alerts_all[~alerts_all["confirmed_5bd"].astype(bool)].copy()
+    ohlcv_sessions = ohlcv_sessions or {}
     rows = []
     for _, r in pending.iterrows():
         daily = ohlcv.get(r["symbol"], [])
-        features = get_features(daily, r["date"])
+        feature_daily = daily_bars_for_signal_features(
+            ohlcv_sessions.get(r["symbol"], []),
+            r,
+        )
+        features = get_features(feature_daily or daily, r["date"])
         latest_close = latest_close_for_signal(daily, r["date"])
         entry = r.get("entry", float("nan"))
         if not features or latest_close is None or not math.isfinite(entry) or entry <= 0:
@@ -1449,8 +1568,9 @@ def build_mega_report_feature_frames():
         print(f"  signals_archive 取得スキップ: {_sa_e}")
     oh = fetch(svc, "ohlcv_4h")
 
-    alerts_raw_confirmed = parse_alerts(ar)
-    alerts_archive_confirmed = parse_alerts(sa)
+    received_at_by_alert_id = alert_received_at_lookup(ar, sa)
+    alerts_raw_confirmed = attach_alert_received_at(parse_alerts(ar), received_at_by_alert_id)
+    alerts_archive_confirmed = attach_alert_received_at(parse_alerts(sa), received_at_by_alert_id)
     alerts_raw_confirmed["_from_archive"] = False
     alerts_archive_confirmed["_from_archive"] = True
     alerts = pd.concat([alerts_raw_confirmed, alerts_archive_confirmed], ignore_index=True)
@@ -1465,17 +1585,26 @@ def build_mega_report_feature_frames():
         )
 
     ohlcv = parse_ohlcv(oh)
+    ohlcv_sessions = parse_ohlcv_session_rows(oh)
     rows = []
     skipped = 0
     for _, r in alerts.iterrows():
-        features = get_features(ohlcv.get(r["symbol"], []), r["date"])
+        daily = ohlcv.get(r["symbol"], [])
+        feature_daily = daily_bars_for_signal_features(
+            ohlcv_sessions.get(r["symbol"], []),
+            r,
+        )
+        features = get_features(feature_daily or daily, r["date"])
         if features:
             rows.append({**r.to_dict(), **features})
         else:
             skipped += 1
     confirmed_df = pd.DataFrame(rows)
-    alerts_all = parse_alerts(ar, include_unconfirmed=True)
-    live_df = build_unconfirmed_current_df(alerts_all, ohlcv)
+    alerts_all = attach_alert_received_at(
+        parse_alerts(ar, include_unconfirmed=True),
+        received_at_by_alert_id,
+    )
+    live_df = build_unconfirmed_current_df(alerts_all, ohlcv, ohlcv_sessions)
     print(
         f"  Megaロジック用データ: 確定 {len(confirmed_df)}件 / "
         f"未確定現在値 {len(live_df)}件 / スキップ {skipped}件"

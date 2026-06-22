@@ -2,7 +2,26 @@ name: Mega Validation Report
 
 on:
   workflow_dispatch:
+    inputs:
+      alert_received_cutoff:
+        description: "Optional local timestamp cutoff for displayed signals, e.g. 2026-06-22 14:36"
+        required: false
+        default: ""
+      notify_discord:
+        description: "Send the report-ready Discord notice"
+        required: false
+        type: boolean
+        default: false
   workflow_call:
+    inputs:
+      alert_received_cutoff:
+        required: false
+        type: string
+        default: ""
+      notify_discord:
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   report:
@@ -43,7 +62,13 @@ jobs:
           PYTHONIOENCODING: utf-8
           MEGA_REPORT_FETCH_DISCORD_MESSAGES: ${{ (secrets.DISCORD_BOT_TOKEN != '' || secrets.DISCORD_TOKEN != '') && '1' || '0' }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN || secrets.DISCORD_TOKEN }}
-        run: python generate_mega_validation_report.py
+          MEGA_REPORT_ALERT_RECEIVED_CUTOFF_INPUT: ${{ inputs.alert_received_cutoff }}
+        run: |
+          args=()
+          if [ -n "$MEGA_REPORT_ALERT_RECEIVED_CUTOFF_INPUT" ]; then
+            args+=(--alert-received-cutoff "$MEGA_REPORT_ALERT_RECEIVED_CUTOFF_INPUT")
+          fi
+          python generate_mega_validation_report.py "${args[@]}"
 
       - name: Ignore timestamp-only refresh
         run: |
@@ -100,6 +125,7 @@ jobs:
           PY
 
       - name: Notify Discord that report HTML is ready
+        if: ${{ inputs.notify_discord }}
         env:
           DISCORD_REPORT_WEBHOOK_URL: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK }}
         run: |

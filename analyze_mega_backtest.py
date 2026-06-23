@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Moonshot v2 (バケモノ検出モード) のバックテスト試算
+Mega40 deep-reversal backtest trial
 
 (1) 10BD/20BD/40BD × +50%/+100% でMega Hit銘柄を洗い出し
 (2) Mega Hitに対するlift分析（どの指標が偏在するか）
@@ -38,7 +38,7 @@ def compute_lift(df, target_mask, cond_col):
 
 def main():
     print("="*78)
-    print("Moonshot v2 バックテスト試算")
+    print("Mega40 backtest trial")
     print("="*78)
 
     print("\n📡 データ取得...")

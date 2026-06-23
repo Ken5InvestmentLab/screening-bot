@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Moonshot implementation lock
+## Retired modes
 
-Moonshot is not a live mode and must not be implemented accidentally. Do not add `/scan moonshot`, enable `MOONSHOT_AUTO_OPTIMIZE_ENABLED`, create/apply `pending_logic_moonshot.json`, or populate `current_logic_moonshot.json` unless the user explicitly re-approves it after fresh 20BD validation. The 2026-06-03 review found weak live/unconfirmed performance despite promising backtest averages.
+Moonshot was removed because it overlaps with Mega40. Do not recreate `/scan moonshot`, `current_logic_moonshot.json`, `pending_logic_moonshot.json`, or Moonshot optimizer paths. Use the report-only Mega40 modes instead.
 
 # 天底極致スコアリングBot — プロジェクト概要
 
@@ -113,16 +113,14 @@ PYTHONIOENCODING=utf-8 py optimize_screener.py --win-threshold-sweep "0.05,0.07,
 ## 主要ファイルとアーキテクチャ
 
 - **`screener.js`** — スコアリングロジック本体。**`optimize_screener.py` によって自動上書きされる**。`calculateScore()` / `calculateScoreSniper()` を手動変更する場合は `current_logic.json` / `current_logic_sniper.json` との整合性に注意。`.gitattributes` により `merge=ours` が設定済み。
-- **`index.js`** — Discordコマンドハンドラー。`/scan [stable|aggressive|sniper|moonshot|code]`、`/help`、`/approve-update`（管理者専用）、`/reject-update`（管理者専用）を実装。起動時と24時間ごとに `refreshStats()` でライブ実績を集計しキャッシュ。stable=スコア5以上、aggressive=スコア4以上、sniper=条件数満点（勝率特化）、moonshot=条件数満点（平均リターン特化・評価日固定）。`.gitattributes` で `merge=ours`。
+- **`index.js`** - Discord command handler. `/scan [stable|aggressive|sniper|code]`, `/help`, `/approve-update`, and `/reject-update` are implemented here.
 - **`sheets.js`** — Google Sheets APIクライアント。`alerts_raw`（ヘッダーが4行目）と `ohlcv_4h` の2シートを読み取る。`alerts_raw` からは `perf_5bd / perf_10bd / perf_20bd / perf_40bd` を含む全パフォーマンスカラムを取得。`premium_alert_log` シートからトリガー理由も取得。`cleanSymbol()` で `TYO:4074` → `4074` に変換。
 - **`config.js`** — フィルター定数（下記参照）。**数値は変更禁止**。
 - **`optimize_screener.py`** — 指標の組み合わせを全探索し、`screener.js` を更新してSCP転送→pm2 restart まで自動実行。**VMで直接実行しない**（RAM 1GB でOOMクラッシュする）。バックテスト評価時は `alerts_raw` と `signals_archive` を統合して使用（`alert_id` ベースで重複除去・Walk-forward 70/30 分割）。`signals_archive` はバックテスト内部のみで使用し、`/scan` 結果・Discord 通知・`index.js` には一切影響しない。
 - **`current_logic.json`** — デプロイ済みのStableスコアロジック。次回最適化のベースラインとして使用される。`.gitattributes` で `merge=ours`。
 - **`current_logic_sniper.json`** — デプロイ済みのSniperモードロジック（バックテスト統計付き）。`.gitattributes` で `merge=ours`。
-- **`current_logic_moonshot.json`** — デプロイ済みのMoonshotモードロジック。`eval_days` フィールド（10/20/40 のいずれか）は**初回最適化で決定後は固定**（変更しない）。`.gitattributes` で `merge=ours`。
 - **`pending_logic.json`** — `--propose` が見つけた候補Stableロジック。承認待ち状態。`--apply-pending` がデプロイ後に削除する。gitignoreされていないため、GitHub Actions経由でコミット・参照される。
 - **`pending_logic_sniper.json`** — `--propose` が見つけた候補Sniperロジック。`pending_logic.json` と並行して生成される。
-- **`pending_logic_moonshot.json`** — `--propose` が見つけた候補Moonshotロジック。Stable / Sniperと並行して生成される。
 - **`rescue_state.json`** — オプティマイザーの劣化検知状態を追跡するファイル。連続ブリーチストリーク数・プロジェクション統計・待機状態を保存する。
 
 ### `config.js` のFILTER定数（変更禁止）
@@ -174,22 +172,6 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **`updated_at`** はロジック採用日。Sniperレスキュー判定の「採用後ライブ実績」集計の起点として参照される。
 - **`backtest` / `wr_raw`** は `optimize_screener.py` 実行時に `alerts_raw + signals_archive` 全体で毎回再計算され上書きされる。ロジックが同一でも統計だけ最新化される（`updated_at` は据え置き）。
 
-### `current_logic_moonshot.json` スキーマ
-
-```json
-{
-  "method": "moonshot",
-  "conditions": ["body1", "atr3", "stoch75", "rsi5070", "pre_down3", "gap_up"],
-  "eval_days": 20,
-  "updated_at": "ISO8601",
-  "thresholds": {},
-  "backtest": { "source": "all", "eval_days": 20, "n": 5, "wr": 80.0, "avg": 18.5 },
-  "avg_raw": 0.185
-}
-```
-
-`eval_days` は初回最適化で `MOONSHOT_EVAL_DAYS_CANDIDATES = [10, 20, 40]` から
-平均リターンが最大の評価日が選ばれ、**以後は変更しない**（固定）。これによりライブ実績の連続性を保つ。
 
 ### `screener.js` の処理フロー
 
@@ -197,8 +179,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 2. `computeIndicators(dailyBars, signalIdx)` — EMA/ATR/MACD/RSI/Stoch/BB/Ichimoku/RCI/CCIなど20以上の指標を `signalIdx` 時点で計算
 3. `calculateScore(ind)` — Stableモード: 現行ロジックで0〜6点スコアを付与（各条件1点）
 4. `calculateScoreSniper(ind)` — Sniperモード: 高精度6条件で厳密スコアを付与（全条件通過のみ採用）
-5. `calculateScoreMoonshot(ind)` — Moonshotモード: 平均リターン特化6条件で厳密スコア（全条件通過のみ採用）。`current_logic_moonshot.json` が未初期化の間は常に `{score:0}` を返すプレースホルダ
-6. `screenSymbol(...)` — 上記関数をラップし、シグナル日・現在変化率・futurePrice等を付けて返す
+5. `screenSymbol(...)` — 上記関数をラップし、シグナル日・現在変化率・futurePrice等を付けて返す
 
 ### `optimize_screener.py` の評価指標
 
@@ -211,8 +192,6 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **閾値チューニング**: Stage 2でグリッドサーチ（訓練/テスト分割あり）。組み合わせ数が20万超の場合は独立最適化に切り替え
 - **Sniperモード採用基準**: `SNIPER_WR_MIN = 0.65`（勝率65%以上）。レスキュー時は `SNIPER_RESCUE_WR_MIN = 0.55` に緩和され、現行 strict 超え条件も免除される
 - **Stableモード採用基準**: `STABLE_WR_MIN = 0.60`、`STABLE_AVG_MIN = 0.05`
-- **Moonshotモード採用基準**: `MOONSHOT_AVG_MIN = 0.15`（平均リターン+15%以上）、`MOONSHOT_N_MIN = 3`（最低3件）、現行平均を strict に上回る場合のみ更新。評価日は初回最適化で 10/20/40BD から平均最大のものを選び、以後固定
-- **Moonshot自動最適化のマスタースイッチ**: `MOONSHOT_AUTO_OPTIMIZE_ENABLED`（`optimize_screener.py` の冒頭定数）。`False` の間は `optimize.yml` / `--apply-pending` どちらでも Moonshot ブロックが完全にスキップされる（pending生成なし・Discord通知なし・万一pending残存しても無視）。データ蓄積後に `True` に変更すれば翌日の自動実行から有効化される。現状: **`False`（データ蓄積待ち）**
 
 ### レスキューモード（Rescue Mode）
 
@@ -270,10 +249,8 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `screener.js` | `optimize_screener.py` | スコアリングロジック本体 |
 | `current_logic.json` | `optimize_screener.py` | デプロイ済みStableロジック |
 | `current_logic_sniper.json` | `optimize_screener.py` | デプロイ済みSniperロジック |
-| `current_logic_moonshot.json` | `optimize_screener.py` | デプロイ済みMoonshotロジック（`eval_days` 固定） |
 | `pending_logic.json` | `optimize_screener.py --propose` | 承認待ちStableロジック候補 |
 | `pending_logic_sniper.json` | `optimize_screener.py --propose` | 承認待ちSniperロジック候補 |
-| `pending_logic_moonshot.json` | `optimize_screener.py --propose` | 承認待ちMoonshotロジック候補 |
 | `rescue_state.json` | `optimize_screener.py` | レスキューモード状態追跡 |
 
 これらは `.gitattributes` で `merge=ours` に設定済み。`git merge` 時に外部変更で上書きされることはない。
@@ -302,9 +279,6 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - `aggregateToDailyBars()` はバーがソート済みであることを前提とする。未ソートだと20日ルックバックウィンドウが壊れる。
 - `screenSymbol()` はシグナル日**以前**で最も近いバーを探す（完全一致不要）。シグナル日がバーの最終日より新しい場合は `null` を返す。
 
-### Stable / Sniper / Moonshot モードの分離
-- `calculateScore()` / `calculateScoreSniper()` / `calculateScoreMoonshot()` はそれぞれ独立した条件セットを使用する。
-- `current_logic.json` (Stable) / `current_logic_sniper.json` (Sniper) / `current_logic_moonshot.json` (Moonshot) は個別に管理される。
-- Sniper と Moonshot はどちらも6条件すべて通過（スコア6/6）のみを出力する高精度モード。
-- **Moonshot の評価日固定**: `current_logic_moonshot.json` の `eval_days` は初回最適化で 10/20/40 BD のうち平均リターン最大のものが選ばれ、以後変更されない。`_run_moonshot_optimization()` は2回目以降この値を固定して最適化を回す。
-- **Moonshot のライブ実績**: `index.js` の `refreshStats()` は `eval_days` に応じて `perf_10bd / perf_20bd / perf_40bd` のうち対応するカラムを集計する。バックテストとライブ実績の評価軸が揃う。
+### Stable / Sniper mode separation
+- `calculateScore()` and `calculateScoreSniper()` use independent condition sets.
+- `current_logic.json` and `current_logic_sniper.json` are managed separately.

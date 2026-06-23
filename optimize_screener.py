@@ -203,6 +203,12 @@ SNIPER_LOCKBOX_WR_TOLERANCE = 0.10
 SNIPER_LOCKBOX_AVG_TOLERANCE = 0.03
 SNIPER_LOCKBOX_AVG_MIN = -0.02
 SNIPER_AVG_REGRESSION_TOLERANCE = 0.005
+ADOPTION_LIVE_MIN_N = 2
+ADOPTION_RECENT_MIN_N = 2
+ADOPTION_LIVE_AVG_TOLERANCE = 0.02
+ADOPTION_MEDIAN_TOLERANCE = 0.02
+ADOPTION_RECENT_MEDIAN_TOLERANCE = 0.02
+ADOPTION_M10_EXTRA_MAX = 0
 WALK_FORWARD_VALID_FRAC = 0.20  # 30%→20%: lockbox分を確保するため
 LOCKBOX_FRAC            = 0.20  # 選別ループに一切触れない真のOOS
 WALK_FORWARD_CANDIDATE_LIMIT = 20_000
@@ -519,9 +525,100 @@ def _mega_stats_payload(stats):
         "n": int(stats.get("n", 0)),
         "avg_raw": _round_mega_float(stats.get("avg_raw", 0.0)) or 0.0,
         "wr_raw": _round_mega_float(stats.get("wr_raw", 0.0)) or 0.0,
+        "median_raw": _round_mega_float(stats.get("median_raw", 0.0)) or 0.0,
+        "m10_raw": int(stats.get("m10_raw", stats.get("lose10_raw", 0))),
         "target_hits": int(stats.get("target_hits", 0)),
         "target_rate": _round_mega_float(stats.get("target_rate", 0.0)) or 0.0,
     }
+
+
+def _stat_n(stats):
+    return int((stats or {}).get("n", 0) or 0)
+
+
+def _stat_float(stats, key, default=0.0):
+    try:
+        value = float((stats or {}).get(key, default) or default)
+    except (TypeError, ValueError):
+        return float(default)
+    return value if math.isfinite(value) else float(default)
+
+
+def _stat_median(stats):
+    return _stat_float(stats, "median_raw", _stat_float(stats, "avg_raw", 0.0))
+
+
+def _stat_m10(stats):
+    return int((stats or {}).get("m10_raw", (stats or {}).get("lose10_raw", 0)) or 0)
+
+
+def _scope_adoption_rejects(scope, current_stats, candidate_stats,
+                            min_current_n=ADOPTION_RECENT_MIN_N,
+                            compare_avg=False,
+                            require_candidate=True,
+                            avg_tolerance=ADOPTION_LIVE_AVG_TOLERANCE,
+                            median_tolerance=ADOPTION_MEDIAN_TOLERANCE,
+                            m10_extra_max=ADOPTION_M10_EXTRA_MAX):
+    rejects = []
+    current_n = _stat_n(current_stats)
+    candidate_n = _stat_n(candidate_stats)
+    if current_n < min_current_n:
+        return rejects
+    if candidate_n == 0:
+        if require_candidate:
+            rejects.append(f"{scope}: 現行{current_n}件に対して候補0件")
+        return rejects
+
+    if compare_avg:
+        avg_drop = _stat_float(candidate_stats, "avg_raw") - _stat_float(current_stats, "avg_raw")
+        if avg_drop < -avg_tolerance:
+            rejects.append(f"{scope}: 平均が現行比で悪化 ({avg_drop*100:+.1f}pt)")
+
+    median_drop = _stat_median(candidate_stats) - _stat_median(current_stats)
+    if median_drop < -median_tolerance:
+        rejects.append(f"{scope}: 中央値が現行比で悪化 ({median_drop*100:+.1f}pt)")
+
+    candidate_m10 = _stat_m10(candidate_stats)
+    current_m10 = _stat_m10(current_stats)
+    if candidate_m10 > current_m10 + m10_extra_max:
+        rejects.append(f"{scope}: -10%以下件数が増加 ({candidate_m10}件 > 現行{current_m10}件)")
+    return rejects
+
+
+def adoption_force_gate_rejects(mode_label, current_stats, candidate_stats,
+                                current_live_stats=None, candidate_live_stats=None,
+                                current_recent_stats=None, candidate_recent_stats=None):
+    rejects = []
+    rejects.extend(_scope_adoption_rejects(
+        f"{mode_label}確定済み",
+        current_stats,
+        candidate_stats,
+        min_current_n=ADOPTION_RECENT_MIN_N,
+        compare_avg=False,
+        require_candidate=False,
+        median_tolerance=ADOPTION_MEDIAN_TOLERANCE,
+    ))
+    rejects.extend(_scope_adoption_rejects(
+        f"{mode_label}未確定",
+        current_live_stats,
+        candidate_live_stats,
+        min_current_n=ADOPTION_LIVE_MIN_N,
+        compare_avg=True,
+        require_candidate=True,
+        avg_tolerance=ADOPTION_LIVE_AVG_TOLERANCE,
+        median_tolerance=ADOPTION_MEDIAN_TOLERANCE,
+    ))
+    rejects.extend(_scope_adoption_rejects(
+        f"{mode_label}直近lockbox",
+        current_recent_stats,
+        candidate_recent_stats,
+        min_current_n=ADOPTION_RECENT_MIN_N,
+        compare_avg=True,
+        require_candidate=True,
+        avg_tolerance=ADOPTION_LIVE_AVG_TOLERANCE,
+        median_tolerance=ADOPTION_RECENT_MEDIAN_TOLERANCE,
+    ))
+    return rejects
 
 
 def _mega_payload_for_compare(payload):
@@ -673,17 +770,27 @@ def apply_mega_pending(target="mega"):
 
 def _mega_base_stats(df_eval, perf_col, target):
     if df_eval is None or df_eval.empty or perf_col not in df_eval.columns:
-        return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+        return {
+            "n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "median_raw": 0.0,
+            "m10_raw": 0, "lose10_raw": 0, "target_hits": 0, "target_rate": 0.0,
+        }
     values = pd.to_numeric(df_eval[perf_col], errors="coerce")
     values = values[np.isfinite(values)]
     n = int(len(values))
     if n == 0:
-        return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+        return {
+            "n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "median_raw": 0.0,
+            "m10_raw": 0, "lose10_raw": 0, "target_hits": 0, "target_rate": 0.0,
+        }
     target_hits = int((values >= target).sum())
+    m10 = int((values <= LOSE_THRESHOLD).sum())
     return {
         "n": n,
         "avg_raw": float(values.mean()),
         "wr_raw": float((values > 0).mean()),
+        "median_raw": float(values.median()),
+        "m10_raw": m10,
+        "lose10_raw": m10,
         "target_hits": target_hits,
         "target_rate": target_hits / n,
     }
@@ -704,12 +811,19 @@ def _mega_stats_from_mask(mask, perf_arr, target):
     values = values[np.isfinite(values)]
     n = int(len(values))
     if n == 0:
-        return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+        return {
+            "n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "median_raw": 0.0,
+            "m10_raw": 0, "lose10_raw": 0, "target_hits": 0, "target_rate": 0.0,
+        }
     target_hits = int((values >= target).sum())
+    m10 = int((values <= LOSE_THRESHOLD).sum())
     return {
         "n": n,
         "avg_raw": float(values.mean()),
         "wr_raw": float((values > 0).mean()),
+        "median_raw": float(np.median(values)),
+        "m10_raw": m10,
+        "lose10_raw": m10,
         "target_hits": target_hits,
         "target_rate": target_hits / n,
     }
@@ -877,6 +991,20 @@ def _mega_adoption_decision(mode, current_stats, current_validation, current_liv
                 reasons.append("未確定銘柄の現在成績を大きく悪化させない")
     else:
         reasons.append("未確定銘柄サンプルが少ないため、確定成績と検証期間を優先")
+
+    force_rejects = adoption_force_gate_rejects(
+        mode.get("label", "Mega"),
+        current_stats,
+        candidate_stats,
+        current_live_stats=current_live,
+        candidate_live_stats=candidate_live,
+        current_recent_stats=current_validation,
+        candidate_recent_stats=candidate_validation,
+    )
+    if force_rejects:
+        rejects.extend(force_rejects)
+    else:
+        reasons.append("未確定平均・-10%以下件数・中央値・直近lockbox強制ゲートを通過")
 
     if rejects:
         return False, reasons, rejects
@@ -1446,6 +1574,7 @@ def get_features(daily, sig_date):
         ema75=e75 is not None and lc > e75, ema25=lc > e25,
         vol20=vsurge >= 2.0, vol15=vsurge >= 1.5, vol12=vsurge >= 1.2, vol30=vsurge >= 3.0,
         sbull=body_pct >= 0.5, body1=body_pct >= 1.0, body2=body_pct >= 2.0,
+        body_pullback10=body_pct >= 10.0, body_overheat15=body_pct >= 15.0,
         macdgc=gc3, macdpos=macd_pos,
         atr5=atr_pct < 5.0, atr3=atr_pct < 3.0, atr7=atr_pct < 7.0,
         hb20=hb20, lower_wick50=lower_wick50, pre_decline15=pre_decline15,
@@ -1618,6 +1747,7 @@ def calc_stats(df_s6):
     n = len(df_s6)
     if n == 0: return dict(n=0, wr=0, avg=0, win10=0, lose10=0,
                            wr_raw=0, avg_raw=0, win10_raw=0, lose10_raw=0,
+                           median_raw=0, m10_raw=0,
                            composite=-9999)
     # 近接性加重: 直近シグナルを重視（古いデータの影響を指数減衰）
     today = pd.Timestamp.today()
@@ -1634,9 +1764,14 @@ def calc_stats(df_s6):
     avg_raw = float(df_s6["perf_5bd"].mean())
     win10_raw  = float(df_s6["win10"].sum())
     lose10_raw = float(df_s6["lose10"].sum())
+    perf_values = pd.to_numeric(df_s6["perf_5bd"], errors="coerce")
+    perf_values = perf_values[np.isfinite(perf_values)]
+    median_raw = float(perf_values.median()) if len(perf_values) else 0.0
+    m10_raw = int((perf_values <= LOSE_THRESHOLD).sum())
     return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
+                median_raw=median_raw, m10_raw=m10_raw,
                 composite=_calc_composite(wr, avg, w10, l10, W, n))
 
 def recent_calendar_day_df(df_eval, days=DISPLAY_BACKTEST_DAYS):
@@ -1679,6 +1814,7 @@ def _calc_stats_mask(mask, arrays):
     if n == 0:
         return dict(n=0, wr=0, avg=0, win10=0, lose10=0,
                     wr_raw=0, avg_raw=0, win10_raw=0, lose10_raw=0,
+                    median_raw=0, m10_raw=0,
                     composite=-9999)
     w = arrays["w"][mask]
     W = float(w.sum())
@@ -1690,9 +1826,14 @@ def _calc_stats_mask(mask, arrays):
     avg_raw = float(arrays["perf"][mask].mean())
     win10_raw  = float(arrays["win10"][mask].sum())
     lose10_raw = float(arrays["lose10"][mask].sum())
+    perf_values = arrays["perf"][mask]
+    perf_values = perf_values[np.isfinite(perf_values)]
+    median_raw = float(np.median(perf_values)) if len(perf_values) else 0.0
+    m10_raw = int((perf_values <= LOSE_THRESHOLD).sum())
     return dict(n=n, wr=wr, avg=avg, win10=w10, lose10=l10,
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
+                median_raw=median_raw, m10_raw=m10_raw,
                 composite=_calc_composite(wr, avg, w10, l10, W, n))
 
 def _combo_all_mask(matrix, idxs):
@@ -1949,6 +2090,20 @@ def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, adoption_mode="normal
                 f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < "
                 f"床{avg_floor*100:+.1f}% "
                 f"(絶対-2% と 現行{base_avg*100:+.1f}%−3pt の緩い方)"
+            )
+
+    if _stat_n(baseline_lockbox_stats) >= min_n:
+        median_floor = _stat_median(baseline_lockbox_stats) - ADOPTION_RECENT_MEDIAN_TOLERANCE
+        if _stat_median(lockbox_stats) < median_floor:
+            return False, (
+                f"lockbox中央値 {_stat_median(lockbox_stats)*100:+.1f}% < "
+                f"現行{_stat_median(baseline_lockbox_stats)*100:+.1f}% - {ADOPTION_RECENT_MEDIAN_TOLERANCE*100:.0f}pt"
+            )
+        allowed_m10 = _stat_m10(baseline_lockbox_stats) + ADOPTION_M10_EXTRA_MAX
+        if _stat_m10(lockbox_stats) > allowed_m10:
+            return False, (
+                f"lockbox -10%以下件数 {_stat_m10(lockbox_stats)}件 > "
+                f"現行{_stat_m10(baseline_lockbox_stats)}件"
             )
 
     return True, (
@@ -2355,6 +2510,7 @@ def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresh
 # ══════════════════════════════════════════════════════════════
 BOOL_CONDS = [
     "ema75","ema25","vol20","vol15","vol12","vol30","sbull","body1","body2",
+    "body_pullback10","body_overheat15",
     "macdgc","macdpos","atr5","atr3","atr7","hb20","lower_wick50","pre_decline15",
     "stoch75","stoch60","rsi5070","rsi4060","bb80",
     "ich_tk","ich_price_tenkan","ich_price_kijun","ich_cloud_above",
@@ -2371,6 +2527,9 @@ COND_PARAM = {
     "vol12":   ("_vsurge", 1.20, ">="),
     "sbull":   ("_body",   0.50, ">="),
     "body1":   ("_body",   1.00, ">="),
+    "body2":   ("_body",   2.00, ">="),
+    "body_pullback10": ("_body", 10.00, ">="),
+    "body_overheat15": ("_body", 15.00, ">="),
     "atr5":    ("_atr",    5.00, "<"),
     "atr3":    ("_atr",    3.00, "<"),
     "atr7":    ("_atr",    7.00, "<"),
@@ -2401,6 +2560,23 @@ PARAM_CANDIDATES = {
 }
 
 # JS生成テンプレート (raw_col → (desc_fn, cond_fn, label_fn))
+COND_PARAM_CANDIDATES = {
+    "body_pullback10": [8.0, 10.0, 12.5],
+    "body_overheat15": [10.0, 12.5, 15.0],
+}
+
+
+def param_candidates_for_condition(cond):
+    if cond in COND_PARAM_CANDIDATES:
+        return COND_PARAM_CANDIDATES[cond]
+    raw_col = COND_PARAM[cond][0]
+    values = list(PARAM_CANDIDATES[raw_col])
+    default = COND_PARAM[cond][1]
+    if default not in values:
+        values.append(default)
+    return sorted(set(values))
+
+
 PARAM_JS_TPL = {
     "_vsurge": (
         lambda t: f"当日出来高≥20日×{t:.2f}",
@@ -2674,7 +2850,7 @@ def tune_thresholds(df_train, df_test, combo, baseline, data_mode="strict",
     print(f"\n🔬 Step 5c: 閾値最適化（Stage 2）...")
     print(f"  パラメーター化対象: {paramable}")
 
-    param_list = [(c, PARAM_CANDIDATES[COND_PARAM[c][0]]) for c in paramable]
+    param_list = [(c, param_candidates_for_condition(c)) for c in paramable]
     total = 1
     for _, cands in param_list:
         total *= len(cands)
@@ -2799,6 +2975,19 @@ JS_IMPL = {
     "vp_no_overhead": ("VP overhead <= 20%","ind.vpOverheadRatio <= 0.20","VP上値(${(ind.vpOverheadRatio*100).toFixed(0)}%)"),
     "vp_near_poc": ("VP POC distance <= 5%","ind.vpPocAbsDistPct <= 5.0","VP-POC(${ind.vpPocAbsDistPct.toFixed(1)}%)"),
 }
+
+JS_IMPL.update({
+    "body_pullback10": (
+        "body >= 10% pullback wait warning",
+        "ind.bodyPct >= 10.0",
+        "押し待ち警告(${ind.bodyPct.toFixed(1)}%)",
+    ),
+    "body_overheat15": (
+        "body >= 15% overheat warning",
+        "ind.bodyPct >= 15.0",
+        "過熱警告(${ind.bodyPct.toFixed(1)}%)",
+    ),
+})
 
 EXTRA_JS_BLOCK = """
   // ── 追加指標（optimize_screener.pyが使用する可能性のある条件）───────
@@ -3583,21 +3772,25 @@ def _concat_scoped_frames(*frames):
 
 def _simple_perf_stats(rows, perf_col, target=None):
     if rows is None or len(rows) == 0 or perf_col not in rows.columns:
-        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0}
+        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0, "median_raw": 0.0, "m10_raw": 0, "lose10_raw": 0}
         if target is not None:
             stats.update({"target_hits": 0, "target_rate": 0.0})
         return stats
     values = pd.to_numeric(rows[perf_col], errors="coerce")
     values = values[np.isfinite(values)]
     if len(values) == 0:
-        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0}
+        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0, "median_raw": 0.0, "m10_raw": 0, "lose10_raw": 0}
         if target is not None:
             stats.update({"target_hits": 0, "target_rate": 0.0})
         return stats
+    m10 = int((values <= LOSE_THRESHOLD).sum())
     stats = {
         "n": int(len(values)),
         "wr_raw": float((values > 0).mean()),
         "avg_raw": float(values.mean()),
+        "median_raw": float(values.median()),
+        "m10_raw": m10,
+        "lose10_raw": m10,
     }
     if target is not None:
         hits = int((values >= target).sum())
@@ -3611,15 +3804,22 @@ def _record_perf_stats(records, target=None):
         if value is not None and np.isfinite(value):
             values.append(float(value))
     if not values:
-        stats = {"n": 0, "wr_raw": 0.0, "avg_raw": 0.0, "max_raw": None}
+        stats = {
+            "n": 0, "wr_raw": 0.0, "avg_raw": 0.0, "median_raw": 0.0,
+            "m10_raw": 0, "lose10_raw": 0, "max_raw": None,
+        }
         if target is not None:
             stats.update({"target_hits": 0, "target_rate": 0.0})
         return stats
     arr = np.asarray(values, dtype=float)
+    m10 = int((arr <= LOSE_THRESHOLD).sum())
     stats = {
         "n": int(len(arr)),
         "wr_raw": float((arr > 0).mean()),
         "avg_raw": float(arr.mean()),
+        "median_raw": float(np.median(arr)),
+        "m10_raw": m10,
+        "lose10_raw": m10,
         "max_raw": float(arr.max()),
     }
     if target is not None:
@@ -3758,6 +3958,8 @@ def _write_stats_section(ws, mode_label, section):
     ]:
         if key in current or key in candidate:
             keys.append((label, key, number_format))
+    if ("median_raw" in current or "median_raw" in candidate) and not any(k == "median_raw" for _, k, _ in keys):
+        keys.insert(3, ("中央値", "median_raw", "percent"))
     for label, key, number_format in keys:
         cur_value = _as_float_or_none(current.get(key))
         cand_value = _as_float_or_none(candidate.get(key))
@@ -5126,6 +5328,20 @@ def _sniper_lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, wr_floor, res
             f"lockbox平均 {lockbox_stats['avg_raw']*100:+.1f}% < {avg_floor*100:+.1f}%",
         )
 
+    if base_n >= min_n:
+        median_floor = _stat_median(baseline_lockbox_stats) - ADOPTION_RECENT_MEDIAN_TOLERANCE
+        if _stat_median(lockbox_stats) < median_floor:
+            return (
+                False,
+                f"lockbox中央値 {_stat_median(lockbox_stats)*100:+.1f}% < {median_floor*100:+.1f}%",
+            )
+        allowed_m10 = _stat_m10(baseline_lockbox_stats) + ADOPTION_M10_EXTRA_MAX
+        if _stat_m10(lockbox_stats) > allowed_m10:
+            return (
+                False,
+                f"lockbox -10%以下件数 {_stat_m10(lockbox_stats)}件 > 現行{_stat_m10(baseline_lockbox_stats)}件",
+            )
+
     return True, "lockbox passed"
 
 
@@ -5312,6 +5528,28 @@ def _run_sniper_optimization(df, args):
     scores_full = sum(df[c].astype(int) for c in best_combo if c in df.columns)
     s6_full = df[scores_full == 6]
     st6_full = calc_stats(s6_full)
+    candidate_live_stats = None
+    if sniper_logic:
+        candidate_live_stats = compute_live_sniper_stats(
+            df,
+            {
+                "conditions": best_combo,
+                "thresholds": {},
+                "updated_at": sniper_logic.get("updated_at"),
+            },
+        )
+    force_rejects = adoption_force_gate_rejects(
+        "Sniper",
+        refreshed_stats or {},
+        st6_full,
+        current_live_stats=live_stats,
+        candidate_live_stats=candidate_live_stats,
+        current_recent_stats=baseline_lockbox_stats,
+        candidate_recent_stats=st6_lockbox,
+    )
+    if force_rejects:
+        print("  ❌ Sniper強制ゲートで却下: " + " / ".join(force_rejects))
+        return
     print(f"  最良条件: {'+'.join(best_combo)}")
     print(f"  Sniper全体: {st6_full['n']}件 勝率{st6_full['wr_raw']*100:.1f}%"
           f" 平均{st6_full['avg_raw']*100:.1f}%")
@@ -6874,6 +7112,27 @@ def main():
     )
     print(f"  表示用バックテスト（過去{DISPLAY_BACKTEST_DAYS}日 / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
+
+    candidate_unconfirmed_stats6 = calc_stats(pd.DataFrame())
+    if len(unconfirmed_current_df) > 0:
+        candidate_unconfirmed_stats6, _, _ = calc_candidate_tiers(
+            unconfirmed_current_df, best_method, best_combo, best_thresholds
+        )
+    force_rejects = adoption_force_gate_rejects(
+        "Stable",
+        baseline_ar,
+        display_stats6,
+        current_live_stats=current_unconfirmed_stats6,
+        candidate_live_stats=candidate_unconfirmed_stats6,
+        current_recent_stats=baseline_lockbox_stats6,
+        candidate_recent_stats=lockbox_s6_stats,
+    )
+    if force_rejects:
+        msg = " / ".join(force_rejects)
+        print(f"\n❌ Stable強制ゲートで却下: {msg}")
+        handle_no_stable_candidate(msg)
+        return
+    adoption_reasons = list(adoption_reasons) + ["未確定平均・-10%以下件数・中央値・直近lockbox強制ゲート通過"]
 
     if adoption_mode != "rescue":
         display_current_rows = _scored_rows(display_df, current_method, current_combo, current_thresholds, 6)

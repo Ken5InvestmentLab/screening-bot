@@ -107,6 +107,8 @@ MODE_DEFS = [
     },
 ]
 
+WARNING_CONDITIONS = ("body_pullback10", "body_overheat15")
+
 
 @dataclass(frozen=True)
 class Candidate:
@@ -170,7 +172,7 @@ def add_threshold_conditions(frame: pd.DataFrame) -> tuple[pd.DataFrame, list[st
         created.append(name)
 
     specs = [
-        ("_body", "body_ge", ">=", [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]),
+        ("_body", "body_ge", ">=", [0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 10.0, 15.0]),
         ("_atr", "atr_lt", "<", [3.0, 5.0, 7.0, 10.0]),
         ("_stoch", "stoch_ge", ">=", [40, 50, 60, 70, 75, 80]),
         ("_bbpct", "bbpct_ge", ">=", [0.50, 0.65, 0.80, 0.90]),
@@ -193,6 +195,11 @@ def add_threshold_conditions(frame: pd.DataFrame) -> tuple[pd.DataFrame, list[st
                 add(name, values_series <= threshold)
             else:
                 add(name, values_series < threshold)
+    if "_body" in frame.columns:
+        body = pd.to_numeric(frame["_body"], errors="coerce")
+        add("body_pullback10", body >= 10.0)
+        add("body_overheat15", body >= 15.0)
+        created = [name for name in created if name not in WARNING_CONDITIONS]
     return frame, created
 
 
@@ -200,12 +207,13 @@ def stats(mask: np.ndarray, perf: np.ndarray, target: float) -> dict:
     vals = perf[np.asarray(mask, dtype=bool) & np.isfinite(perf)]
     n = int(vals.size)
     if n == 0:
-        return {"n": 0, "avg": np.nan, "wr": np.nan, "hits": 0, "rate": 0.0, "m10": 0}
+        return {"n": 0, "avg": np.nan, "median": np.nan, "wr": np.nan, "hits": 0, "rate": 0.0, "m10": 0}
     decisive = vals[vals != 0]
     hits = int(np.sum(vals >= target))
     return {
         "n": n,
         "avg": float(vals.mean()),
+        "median": float(np.median(vals)),
         "wr": float(np.mean(decisive > 0)) if decisive.size else np.nan,
         "hits": hits,
         "rate": float(hits / n),
@@ -215,7 +223,7 @@ def stats(mask: np.ndarray, perf: np.ndarray, target: float) -> dict:
 
 def fmt_stats(item: dict) -> str:
     return (
-        f"n={item['n']} avg={pct(item['avg'])} win={pct(item['wr'])} "
+        f"n={item['n']} avg={pct(item['avg'])} med={pct(item.get('median'))} win={pct(item['wr'])} "
         f"target={item['hits']}/{pct(item['rate'])} m10={item['m10']}"
     )
 
@@ -361,7 +369,7 @@ def condition_pool(
         scored.append((score, col))
     scored.sort(reverse=True)
     pool = []
-    for col in itertools.chain(current, seed):
+    for col in itertools.chain(current, seed, WARNING_CONDITIONS):
         if col in columns and col not in pool:
             pool.append(col)
     for _, col in scored:
@@ -377,6 +385,9 @@ def gate(metrics: dict, current_metrics: dict, mode: dict) -> tuple[bool, tuple]
     valid = metrics["valid"]
     lock = metrics["lock"]
     watch = metrics["watch"]
+    current_full = current_metrics["all"]
+    current_valid = current_metrics["valid"]
+    current_lock = current_metrics["lock"]
     current_watch = current_metrics["watch"]
 
     if full["n"] < mode["min_full"] or full["hits"] < 1:
@@ -385,10 +396,27 @@ def gate(metrics: dict, current_metrics: dict, mode: dict) -> tuple[bool, tuple]
         return False, ()
     if valid["avg"] < -0.03 or lock["avg"] < -0.03:
         return False, ()
+    if current_full["n"] and full["n"]:
+        if full["m10"] > current_full["m10"]:
+            return False, ()
+        if is_finite(full.get("median")) and is_finite(current_full.get("median")) and full["median"] < current_full["median"] - 0.02:
+            return False, ()
+    if current_valid["n"] and valid["n"]:
+        if valid["m10"] > current_valid["m10"]:
+            return False, ()
+        if is_finite(valid.get("median")) and is_finite(current_valid.get("median")) and valid["median"] < current_valid["median"] - 0.02:
+            return False, ()
+    if current_lock["n"] and lock["n"]:
+        if lock["m10"] > current_lock["m10"]:
+            return False, ()
+        if is_finite(lock.get("median")) and is_finite(current_lock.get("median")) and lock["median"] < current_lock["median"] - 0.02:
+            return False, ()
     if current_watch["n"] and watch["n"]:
         if watch["m10"] > current_watch["m10"]:
             return False, ()
         if is_finite(watch["avg"]) and is_finite(current_watch["avg"]) and watch["avg"] < current_watch["avg"] - 0.02:
+            return False, ()
+        if is_finite(watch.get("median")) and is_finite(current_watch.get("median")) and watch["median"] < current_watch["median"] - 0.02:
             return False, ()
 
     fold_stats = [s for s in metrics["folds"] if s["n"] > 0]

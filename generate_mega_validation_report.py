@@ -91,6 +91,12 @@ CONDITION_LABELS = {
 }
 
 
+CONDITION_LABELS.update({
+    "body_pullback10": "実体 >= 10%（押し待ち警告）",
+    "body_overheat15": "実体 >= 15%（過熱警告）",
+})
+
+
 def load_logic_conditions(path: str, fallback: list[str]) -> list[str]:
     try:
         with open(path, "r", encoding="utf-8") as handle:

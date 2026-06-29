@@ -229,7 +229,8 @@
       background: #102a22;
       border-left-color: #63d49b;
     }
-    :root[data-theme="dark"] .discord-embed.impact-watch {
+    :root[data-theme="dark"] .discord-embed.impact-watch,
+    :root[data-theme="dark"] .discord-embed.impact-mixed {
       background: #332710;
       border-left-color: #f4c15d;
     }
@@ -1232,21 +1233,29 @@
       gap: 8px;
       margin-top: 8px;
       color: #182230;
+      min-width: 0;
+      max-width: 100%;
     }
     .discord-embed {
       border-left: 4px solid #5865f2;
       background: #f8f9ff;
       border-radius: 6px;
       padding: 10px;
+      min-width: 0;
+      max-width: 100%;
     }
     .discord-embed.impact-positive {
       border-left-color: #12b76a;
+      background: #f0fdf4;
     }
-    .discord-embed.impact-watch {
+    .discord-embed.impact-watch,
+    .discord-embed.impact-mixed {
       border-left-color: #fdb022;
+      background: #fff8e6;
     }
     .discord-embed.impact-negative {
       border-left-color: #f04438;
+      background: #fff1f2;
     }
     .discord-embed h4 {
       margin: 0 0 8px;
@@ -1256,6 +1265,7 @@
       display: grid;
       gap: 8px;
       margin: 0;
+      min-width: 0;
     }
     .discord-embed dt {
       font-weight: 700;
@@ -1265,6 +1275,14 @@
     .discord-embed dd {
       margin: 0;
       color: #182230;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .discord-content,
+    .discord-embed a {
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .discord-meta {
       margin: 8px 0 0;
@@ -1505,6 +1523,16 @@
         background: white;
         overflow: hidden;
       }
+      .signals tr.mobile-details-open {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }
+      .signals tr.mobile-details-open {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }
       .signals tr:not(.mobile-details-open) td:not([data-label="銘柄"]) {
         display: none;
       }
@@ -1640,6 +1668,37 @@
         min-width: 0;
         max-width: 100%;
       }
+      .signals tr.mobile-details-open td[data-label="銘柄"] {
+        order: -1;
+        display: block;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-start;
+      }
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }
+      .signals tr.mobile-details-open .fundamental-detail {
+        padding: 10px 38px 10px 10px;
+      }
     }
     @media (max-width: 760px) {
       .top-nav {
@@ -1760,6 +1819,37 @@
         min-width: 0;
         max-width: 100%;
       }
+      .signals tr.mobile-details-open td[data-label="銘柄"] {
+        order: -1;
+        display: block;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-start;
+      }
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }
+      .signals tr.mobile-details-open .fundamental-detail {
+        padding: 10px 38px 10px 10px;
+      }
       table { min-width: 680px; }
       .signals { min-width: 0; }
     }
@@ -1804,7 +1894,7 @@
   <header>
     <div class="eyebrow">Bottom Signal Report</div>
     <h1>天底極致 スコアリングBot レポート</h1>
-    <p>生成日時: 2026-06-29 20:30:03 JST</p>
+    <p>生成日時: 2026-06-29 22:40:29 JST</p>
     <p>Stable、Sniper、Mega候補の過去1年分の成績と、ウォッチ中銘柄の現在成績をまとめています。</p>
   </header>
   <main>

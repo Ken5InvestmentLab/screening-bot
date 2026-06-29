@@ -411,9 +411,16 @@
       button.setAttribute("aria-expanded", expanded ? "true" : "false");
       button.textContent = expanded ? "閉じる" : "詳細を見る";
     };
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      const beforeTop = button.getBoundingClientRect().top;
       row.classList.toggle("mobile-details-open");
       render();
+      window.requestAnimationFrame(() => {
+        if (!document.documentElement.contains(button)) return;
+        const delta = button.getBoundingClientRect().top - beforeTop;
+        if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+      });
     });
     render();
   });

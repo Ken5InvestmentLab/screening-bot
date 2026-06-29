@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from html import escape
+from html.parser import HTMLParser
 import json
 import math
 import os
@@ -44,7 +45,11 @@ DISCORD_API_BASE = "https://discord.com/api/v10"
 DISCORD_MESSAGE_URL_RE = re.compile(
     r"^https?://(?:canary\.|ptb\.)?discord(?:app)?\.com/channels/([^/]+)/([^/]+)/([^/?#]+)"
 )
-MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^)\s]+)\)")
+BARE_URL_RE = re.compile(r"https?://[^\s<>\"]+")
+TRADINGVIEW_DUPLICATE_CODE_RE = re.compile(
+    r"\s*[\(（]([0-9A-Z]{3,5})[\)）]\s*[\(（]\1[\)）](?=\s*\|\s*TradingView)"
+)
+TRADINGVIEW_GARBLED_CHART_RE = re.compile(r"\|\s*TradingView\s*\?{2,}")
 
 CONDITION_LABELS = {
     "ema75": "close > EMA75",
@@ -459,11 +464,80 @@ def parse_discord_message_url(value: str) -> tuple[str, str, str] | None:
     return match.group(1), match.group(2), match.group(3)
 
 
+def iter_markdown_links(text: str):
+    source = str(text or "")
+    index = 0
+    while index < len(source):
+        if source[index] != "[":
+            index += 1
+            continue
+        label_start = index + 1
+        cursor = label_start
+        escaped = False
+        bracket_depth = 0
+        while cursor < len(source):
+            char = source[cursor]
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == "[":
+                bracket_depth += 1
+            elif char == "]":
+                if bracket_depth == 0:
+                    break
+                bracket_depth -= 1
+            cursor += 1
+        if cursor >= len(source) or cursor + 1 >= len(source) or source[cursor + 1] != "(":
+            index += 1
+            continue
+
+        url_start = cursor + 2
+        url_end = url_start
+        paren_depth = 0
+        while url_end < len(source):
+            char = source[url_end]
+            if char == "(":
+                paren_depth += 1
+            elif char == ")":
+                if paren_depth == 0:
+                    break
+                paren_depth -= 1
+            url_end += 1
+        if url_end >= len(source):
+            index += 1
+            continue
+
+        label = (
+            source[label_start:cursor]
+            .replace("\\[", "[")
+            .replace("\\]", "]")
+            .replace("\\\\", "\\")
+        )
+        url = source[url_start:url_end].strip()
+        if re.match(r"^https?://\S+$", url):
+            yield index, url_end + 1, label, url
+            index = url_end + 1
+        else:
+            index += 1
+
+
+def first_markdown_url(text: str) -> str:
+    for _, _, _, url in iter_markdown_links(text):
+        return url.strip()
+    return ""
+
+
+def normalize_tradingview_title(text: str) -> str:
+    normalized = TRADINGVIEW_DUPLICATE_CODE_RE.sub(r" (\1)", str(text or ""))
+    return TRADINGVIEW_GARBLED_CHART_RE.sub("| TradingView チャート", normalized)
+
+
 def extract_markdown_url(value: str) -> str:
     text = str(value or "").strip()
-    match = MARKDOWN_LINK_RE.search(text)
-    if match:
-        return match.group(2).strip()
+    markdown_url = first_markdown_url(text)
+    if markdown_url:
+        return markdown_url
     if parse_discord_message_url(text):
         return text
     return ""
@@ -1270,20 +1344,72 @@ def html_escape(value) -> str:
     return escape("" if value is None else str(value), quote=True)
 
 
+def anchor_html(url: str, label: str) -> str:
+    return (
+        f'<a href="{html_escape(url)}" target="_blank" rel="noopener noreferrer">'
+        f"{html_escape(label)}</a>"
+    )
+
+
+def markdown_label_bounds_before_url(text: str, url_start: int) -> tuple[int, int] | None:
+    if url_start < 2 or text[url_start - 2 : url_start] != "](":
+        return None
+    label_end = url_start - 2
+    cursor = label_end - 1
+    bracket_depth = 0
+    while cursor >= 0:
+        char = text[cursor]
+        if char == "]":
+            bracket_depth += 1
+        elif char == "[":
+            if bracket_depth == 0:
+                return cursor, label_end
+            bracket_depth -= 1
+        cursor -= 1
+    return None
+
+
+def linkify_plain_text_html(value: str) -> str:
+    text = str(value or "")
+    parts = []
+    last = 0
+    trailing_chars = ".,;:!?、。)]}）】」』"
+    for match in BARE_URL_RE.finditer(text):
+        url = match.group(0)
+        malformed_label_bounds = markdown_label_bounds_before_url(text, match.start())
+        if malformed_label_bounds and malformed_label_bounds[0] >= last:
+            label_start, label_end = malformed_label_bounds
+            label = text[label_start + 1 : label_end]
+            parts.append(html_escape(text[last:label_start]))
+            if "…" in url or "..." in url:
+                parts.append(html_escape(label))
+            else:
+                parts.append(anchor_html(url, label))
+            last = match.end()
+            continue
+        trailing = ""
+        while url and url[-1] in trailing_chars:
+            trailing = url[-1] + trailing
+            url = url[:-1]
+        if not url:
+            continue
+        parts.append(html_escape(text[last : match.start()]))
+        parts.append(anchor_html(url, url))
+        parts.append(html_escape(trailing))
+        last = match.end()
+    parts.append(html_escape(text[last:]))
+    return "".join(parts)
+
+
 def markdown_text_html(value: str) -> str:
     text = str(value or "")
     parts = []
     last = 0
-    for match in MARKDOWN_LINK_RE.finditer(text):
-        parts.append(html_escape(text[last : match.start()]))
-        label = match.group(1).replace("\\]", "]").replace("\\\\", "\\")
-        url = match.group(2)
-        parts.append(
-            f'<a href="{html_escape(url)}" target="_blank" rel="noopener noreferrer">'
-            f"{html_escape(label)}</a>"
-        )
-        last = match.end()
-    parts.append(html_escape(text[last:]))
+    for start, end, label, url in iter_markdown_links(text):
+        parts.append(linkify_plain_text_html(text[last:start]))
+        parts.append(anchor_html(url, label))
+        last = end
+    parts.append(linkify_plain_text_html(text[last:]))
     return "".join(parts).replace("\n", "<br>")
 
 
@@ -1316,7 +1442,7 @@ def discord_message_html(message: dict | None) -> str:
     if content:
         blocks.append(f'<p class="discord-content">{markdown_text_html(content)}</p>')
     for embed in message.get("embeds") or []:
-        title = str(embed.get("title") or "").strip()
+        title = normalize_tradingview_title(str(embed.get("title") or "").strip())
         title_url = str(embed.get("url") or "").strip()
         description = str(embed.get("description") or "").strip()
         fields = embed.get("fields") or []
@@ -1369,6 +1495,67 @@ def discord_message_html(message: dict | None) -> str:
     return '<div class="discord-message">' + "".join(blocks) + "</div>"
 
 
+class FundamentalHtmlNormalizer(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.anchor_depth = 0
+
+    def attrs_html(self, attrs) -> str:
+        chunks = []
+        for name, value in attrs:
+            if value is None:
+                chunks.append(f" {name}")
+            else:
+                if str(name).lower() == "class":
+                    classes = str(value).split()
+                    if "impact-mixed" in classes and "impact-watch" not in classes:
+                        classes = ["impact-watch" if item == "impact-mixed" else item for item in classes]
+                    value = " ".join(classes)
+                chunks.append(f' {name}="{html_escape(value)}"')
+        return "".join(chunks)
+
+    def handle_starttag(self, tag, attrs) -> None:
+        normalized_tag = str(tag or "")
+        if normalized_tag.lower() == "a":
+            self.anchor_depth += 1
+        self.parts.append(f"<{normalized_tag}{self.attrs_html(attrs)}>")
+
+    def handle_startendtag(self, tag, attrs) -> None:
+        normalized_tag = str(tag or "")
+        self.parts.append(f"<{normalized_tag}{self.attrs_html(attrs)}>")
+
+    def handle_endtag(self, tag) -> None:
+        normalized_tag = str(tag or "")
+        if normalized_tag.lower() == "a":
+            self.anchor_depth = max(0, self.anchor_depth - 1)
+        self.parts.append(f"</{normalized_tag}>")
+
+    def handle_data(self, data) -> None:
+        if self.anchor_depth:
+            self.parts.append(html_escape(normalize_tradingview_title(data)))
+        else:
+            self.parts.append(markdown_text_html(normalize_tradingview_title(data)))
+
+    def handle_comment(self, data) -> None:
+        self.parts.append(f"<!--{data}-->")
+
+    def get_html(self) -> str:
+        return "".join(self.parts)
+
+
+def normalize_cached_fundamental_html(html: str) -> str:
+    if "](" not in html and "http" not in html and "TradingView" not in html and "impact-mixed" not in html:
+        return html
+    parser = FundamentalHtmlNormalizer()
+    try:
+        parser.feed(str(html or ""))
+        parser.close()
+        return parser.get_html()
+    except Exception:
+        return html
+
+
 def missing_fundamental_html() -> str:
     return (
         '<div class="discord-message">'
@@ -1396,7 +1583,7 @@ def load_fundamental_html_cache(path: str = FUNDAMENTAL_CACHE_PATH) -> dict[str,
     for url, item in items.items():
         html = item.get("html") if isinstance(item, dict) else item
         if parse_discord_message_url(str(url)) and isinstance(html, str) and 'class="discord-message"' in html:
-            cache[str(url)] = html
+            cache[str(url)] = normalize_cached_fundamental_html(html)
     return cache
 
 
@@ -2172,7 +2359,8 @@ def shared_report_theme_css() -> str:
       background: #102a22;
       border-left-color: #63d49b;
     }
-    :root[data-theme="dark"] .discord-embed.impact-watch {
+    :root[data-theme="dark"] .discord-embed.impact-watch,
+    :root[data-theme="dark"] .discord-embed.impact-mixed {
       background: #332710;
       border-left-color: #f4c15d;
     }
@@ -3340,9 +3528,16 @@ def report_interactions_js() -> str:
       button.setAttribute("aria-expanded", expanded ? "true" : "false");
       button.textContent = expanded ? "閉じる" : "詳細を見る";
     };
-    button.addEventListener("click", () => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      const beforeTop = button.getBoundingClientRect().top;
       row.classList.toggle("mobile-details-open");
       render();
+      window.requestAnimationFrame(() => {
+        if (!document.documentElement.contains(button)) return;
+        const delta = button.getBoundingClientRect().top - beforeTop;
+        if (Math.abs(delta) > 1) window.scrollBy(0, delta);
+      });
     });
     render();
   });
@@ -4318,21 +4513,29 @@ def build_html_report(
       gap: 8px;
       margin-top: 8px;
       color: #182230;
+      min-width: 0;
+      max-width: 100%;
     }}
     .discord-embed {{
       border-left: 4px solid #5865f2;
       background: #f8f9ff;
       border-radius: 6px;
       padding: 10px;
+      min-width: 0;
+      max-width: 100%;
     }}
     .discord-embed.impact-positive {{
       border-left-color: #12b76a;
+      background: #f0fdf4;
     }}
-    .discord-embed.impact-watch {{
+    .discord-embed.impact-watch,
+    .discord-embed.impact-mixed {{
       border-left-color: #fdb022;
+      background: #fff8e6;
     }}
     .discord-embed.impact-negative {{
       border-left-color: #f04438;
+      background: #fff1f2;
     }}
     .discord-embed h4 {{
       margin: 0 0 8px;
@@ -4342,6 +4545,7 @@ def build_html_report(
       display: grid;
       gap: 8px;
       margin: 0;
+      min-width: 0;
     }}
     .discord-embed dt {{
       font-weight: 700;
@@ -4351,6 +4555,14 @@ def build_html_report(
     .discord-embed dd {{
       margin: 0;
       color: #182230;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }}
+    .discord-content,
+    .discord-embed a {{
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }}
     .discord-meta {{
       margin: 8px 0 0;
@@ -4591,6 +4803,16 @@ def build_html_report(
         background: white;
         overflow: hidden;
       }}
+      .signals tr.mobile-details-open {{
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }}
+      .signals tr.mobile-details-open {{
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }}
       .signals tr:not(.mobile-details-open) td:not([data-label="銘柄"]) {{
         display: none;
       }}
@@ -4726,6 +4948,37 @@ def build_html_report(
         min-width: 0;
         max-width: 100%;
       }}
+      .signals tr.mobile-details-open td[data-label="銘柄"] {{
+        order: -1;
+        display: block;
+        text-align: left;
+      }}
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {{
+        display: block;
+        margin-bottom: 6px;
+      }}
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {{
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }}
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {{
+        justify-content: flex-start;
+      }}
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {{
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }}
+      .signals tr.mobile-details-open .fundamental-detail {{
+        padding: 10px 38px 10px 10px;
+      }}
     }}
     @media (max-width: 760px) {{
       .top-nav {{
@@ -4845,6 +5098,37 @@ def build_html_report(
       .fundamental-detail {{
         min-width: 0;
         max-width: 100%;
+      }}
+      .signals tr.mobile-details-open td[data-label="銘柄"] {{
+        order: -1;
+        display: block;
+        text-align: left;
+      }}
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {{
+        display: block;
+        margin-bottom: 6px;
+      }}
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {{
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }}
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {{
+        justify-content: flex-start;
+      }}
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {{
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }}
+      .signals tr.mobile-details-open .fundamental-detail {{
+        padding: 10px 38px 10px 10px;
       }}
       table {{ min-width: 680px; }}
       .signals {{ min-width: 0; }}
@@ -5147,15 +5431,27 @@ def mode_page_style() -> str:
       }
       .symbol-actions .fundamental-detail .discord-message { margin-top: 0; }
     }
-    .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
-    .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
-    .discord-embed.impact-positive { border-left-color: #12b76a; }
-    .discord-embed.impact-watch { border-left-color: #fdb022; }
-    .discord-embed.impact-negative { border-left-color: #f04438; }
+    .discord-message {
+      display: grid; gap: 8px; margin-top: 8px; color: #182230;
+      min-width: 0; max-width: 100%;
+    }
+    .discord-embed {
+      border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px;
+      min-width: 0; max-width: 100%;
+    }
+    .discord-embed.impact-positive { border-left-color: #12b76a; background: #f0fdf4; }
+    .discord-embed.impact-watch,
+    .discord-embed.impact-mixed { border-left-color: #fdb022; background: #fff8e6; }
+    .discord-embed.impact-negative { border-left-color: #f04438; background: #fff1f2; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
-    .discord-embed dl { display: grid; gap: 8px; margin: 0; }
+    .discord-embed dl { display: grid; gap: 8px; margin: 0; min-width: 0; }
     .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
-    .discord-embed dd { margin: 0; color: #182230; }
+    .discord-embed dd {
+      margin: 0; color: #182230; min-width: 0;
+      overflow-wrap: anywhere; word-break: break-word;
+    }
+    .discord-content,
+    .discord-embed a { overflow-wrap: anywhere; word-break: break-word; }
     .discord-meta { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
     .discord-attachments { margin: 0; padding-left: 18px; font-size: 12px; }
     .candidate-detail { padding: 18px; }
@@ -5299,6 +5595,11 @@ def mode_page_style() -> str:
       .signals thead { display: none; }
       .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
       .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals tr.mobile-details-open {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }
       .signals tr:not(.mobile-details-open) td:not([data-label="銘柄"]) { display: none; }
       .signals tr:not(.mobile-details-open) td[data-label="銘柄"] {
         display: block;
@@ -5399,6 +5700,37 @@ def mode_page_style() -> str:
       .perf-cell { justify-items: end; }
       .action-buttons { justify-content: flex-end; flex-wrap: wrap; max-width: 100%; }
       .fundamental-detail { min-width: 0; max-width: 100%; }
+      .signals tr.mobile-details-open td[data-label="銘柄"] {
+        order: -1;
+        display: block;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-start;
+      }
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }
+      .signals tr.mobile-details-open .fundamental-detail {
+        padding: 10px 38px 10px 10px;
+      }
     }
     @media (max-width: 760px) {
       .top-nav {
@@ -5442,6 +5774,11 @@ def mode_page_style() -> str:
       .signals thead { display: none; }
       .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
       .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals tr.mobile-details-open {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }
       .signals td {
         display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
         text-align: right; white-space: normal;
@@ -5451,6 +5788,37 @@ def mode_page_style() -> str:
       .perf-cell { justify-items: end; }
       .action-buttons { justify-content: flex-end; flex-wrap: wrap; }
       .fundamental-detail { min-width: 0; max-width: 100%; }
+      .signals tr.mobile-details-open td[data-label="銘柄"] {
+        order: -1;
+        display: block;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-start;
+      }
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }
+      .signals tr.mobile-details-open .fundamental-detail {
+        padding: 10px 38px 10px 10px;
+      }
       table { min-width: 680px; }
       .signals { min-width: 0; }
     }

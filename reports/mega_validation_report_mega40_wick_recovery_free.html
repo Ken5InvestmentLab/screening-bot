@@ -275,15 +275,27 @@
       }
       .symbol-actions .fundamental-detail .discord-message { margin-top: 0; }
     }
-    .discord-message { display: grid; gap: 8px; margin-top: 8px; color: #182230; }
-    .discord-embed { border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px; }
-    .discord-embed.impact-positive { border-left-color: #12b76a; }
-    .discord-embed.impact-watch { border-left-color: #fdb022; }
-    .discord-embed.impact-negative { border-left-color: #f04438; }
+    .discord-message {
+      display: grid; gap: 8px; margin-top: 8px; color: #182230;
+      min-width: 0; max-width: 100%;
+    }
+    .discord-embed {
+      border-left: 4px solid #5865f2; background: #f8f9ff; border-radius: 6px; padding: 10px;
+      min-width: 0; max-width: 100%;
+    }
+    .discord-embed.impact-positive { border-left-color: #12b76a; background: #f0fdf4; }
+    .discord-embed.impact-watch,
+    .discord-embed.impact-mixed { border-left-color: #fdb022; background: #fff8e6; }
+    .discord-embed.impact-negative { border-left-color: #f04438; background: #fff1f2; }
     .discord-embed h4 { margin: 0 0 8px; font-size: 13px; }
-    .discord-embed dl { display: grid; gap: 8px; margin: 0; }
+    .discord-embed dl { display: grid; gap: 8px; margin: 0; min-width: 0; }
     .discord-embed dt { font-weight: 700; color: #344054; margin-bottom: 2px; }
-    .discord-embed dd { margin: 0; color: #182230; }
+    .discord-embed dd {
+      margin: 0; color: #182230; min-width: 0;
+      overflow-wrap: anywhere; word-break: break-word;
+    }
+    .discord-content,
+    .discord-embed a { overflow-wrap: anywhere; word-break: break-word; }
     .discord-meta { margin: 8px 0 0; color: var(--muted); font-size: 11px; }
     .discord-attachments { margin: 0; padding-left: 18px; font-size: 12px; }
     .candidate-detail { padding: 18px; }
@@ -427,6 +439,11 @@
       .signals thead { display: none; }
       .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
       .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals tr.mobile-details-open {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }
       .signals tr:not(.mobile-details-open) td:not([data-label="銘柄"]) { display: none; }
       .signals tr:not(.mobile-details-open) td[data-label="銘柄"] {
         display: block;
@@ -527,6 +544,37 @@
       .perf-cell { justify-items: end; }
       .action-buttons { justify-content: flex-end; flex-wrap: wrap; max-width: 100%; }
       .fundamental-detail { min-width: 0; max-width: 100%; }
+      .signals tr.mobile-details-open td[data-label="銘柄"] {
+        order: -1;
+        display: block;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-start;
+      }
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }
+      .signals tr.mobile-details-open .fundamental-detail {
+        padding: 10px 38px 10px 10px;
+      }
     }
     @media (max-width: 760px) {
       .top-nav {
@@ -570,6 +618,11 @@
       .signals thead { display: none; }
       .signals tbody, .signals tr, .signals td { display: block; width: 100%; }
       .signals tr { border: 1px solid var(--line); border-radius: 8px; background: white; overflow: hidden; }
+      .signals tr.mobile-details-open {
+        display: flex;
+        flex-direction: column;
+        overflow: visible;
+      }
       .signals td {
         display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px;
         text-align: right; white-space: normal;
@@ -579,6 +632,37 @@
       .perf-cell { justify-items: end; }
       .action-buttons { justify-content: flex-end; flex-wrap: wrap; }
       .fundamental-detail { min-width: 0; max-width: 100%; }
+      .signals tr.mobile-details-open td[data-label="銘柄"] {
+        order: -1;
+        display: block;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"]::before {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-stack {
+        width: 100%;
+        max-width: 100%;
+        justify-items: stretch;
+        margin-left: 0;
+        text-align: left;
+      }
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-identity,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .symbol-meta-row,
+      .signals tr.mobile-details-open td[data-label="銘柄"] .action-buttons {
+        justify-content: flex-start;
+      }
+      .signals tr.mobile-details-open .mobile-detail-inline,
+      .signals tr.mobile-details-open .symbol-actions,
+      .signals tr.mobile-details-open .fundamental-detail {
+        width: 100%;
+        max-width: 100%;
+        justify-self: stretch;
+      }
+      .signals tr.mobile-details-open .fundamental-detail {
+        padding: 10px 38px 10px 10px;
+      }
       table { min-width: 680px; }
       .signals { min-width: 0; }
     }
@@ -788,7 +872,8 @@
       background: #102a22;
       border-left-color: #63d49b;
     }
-    :root[data-theme="dark"] .discord-embed.impact-watch {
+    :root[data-theme="dark"] .discord-embed.impact-watch,
+    :root[data-theme="dark"] .discord-embed.impact-mixed {
       background: #332710;
       border-left-color: #f4c15d;
     }
@@ -958,7 +1043,7 @@
 
   <header>
     <h1>Mega40 下ヒゲ回復</h1>
-    <p>生成日時: 2026-06-29 20:30:03 JST</p>
+    <p>生成日時: 2026-06-29 22:40:29 JST</p>
     <p>深い調整後の下ヒゲ・遅行線回復を使う少数精鋭候補。</p>
   </header>
   <main>

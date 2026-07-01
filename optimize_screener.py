@@ -5408,6 +5408,25 @@ def _run_threshold_sweep(args):
         print(f"\n💡 自動採用スキップ: ゲートをクリアした閾値がありませんでした")
         print(f"   pending_logic.json は作成されません")
         print(f"   No deploy/restart is run for a sweep with no adoptable candidate.")
+        if args.propose and not args.dry_run:
+            print(f"   rescue_state.json だけ更新します（pending/deployなし）")
+            cmd = [sys.executable, self_path, "--record-rescue-state-only"]
+            env = dict(os.environ)
+            env["PYTHONIOENCODING"] = "utf-8"
+            env["PYTHONUNBUFFERED"] = "1"
+            try:
+                proc = _sp.Popen(cmd, stdout=_sp.PIPE, stderr=_sp.STDOUT,
+                                 text=True, encoding="utf-8", errors="replace",
+                                 env=env, bufsize=1)
+                for line in proc.stdout:
+                    print(line, end="")
+                proc.wait()
+                if proc.returncode != 0:
+                    print(f"⚠ rescue-state subprocess returned exit code {proc.returncode}")
+                    sys.exit(proc.returncode)
+            except Exception as e:
+                print(f"❌ rescue-state subprocess error: {e}")
+                sys.exit(1)
         return
 
     # 採用基準: best_wr 降順 → 閾値昇順（低閾値優先で安全側）
@@ -5684,6 +5703,7 @@ def main():
                              "各値で自身を --dry-run --win-threshold X として再実行し比較表を表示。"
                              "実ファイル更新・デプロイは行わない")
     parser.add_argument("--skip-sniper", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--record-rescue-state-only", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--propose-mega-report-logic-only", dest="propose_mega_report_logic_only",
                         action="store_true",
                         help="Botには触らず、HTMLレポート用Megaロジック候補だけをpendingに保存して終了")
@@ -6037,13 +6057,16 @@ def main():
         print(f"  📊 データ充足判定: transition mode（全件{len(df)}<{MIN_TOTAL_FOR_STRICT_MODE} または lockbox{len(df_wf_lockbox)}<{MIN_LOCKBOX_FOR_STRICT_MODE}）")
         print(f"     → archive 蓄積中: 統計検定は参考表示のみ、pre-Tier-A 水準で品質ゲート評価")
 
+    stable_rescue_state_only = bool(getattr(args, "record_rescue_state_only", False))
+    persist_stable_rescue_state = (args.propose and not args.dry_run) or stable_rescue_state_only
+
     # 現行ロジックが健全なら最適化をスキップ（rescue含め更新不要）
     if is_current_healthy(baseline, current_validation_stats6):
         print(f"\n✅ 現行ロジック健全のため最適化をスキップ（更新不要）")
         print(f"   全件★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}% 平均{baseline['avg_raw']*100:+.1f}%")
         print(f"   検証★6: {current_validation_stats6['n']}件 平均{current_validation_stats6['avg_raw']*100:+.1f}%")
         print(f"   (スキップ条件: 勝率≥{HEALTHY_SKIP_WR*100:.0f}% / 平均≥{HEALTHY_SKIP_AVG*100:.0f}% / ★6≥{HEALTHY_SKIP_N_MIN}件 / 検証平均≥0%)")
-        if args.propose and not args.dry_run:
+        if persist_stable_rescue_state:
             save_rescue_state({
                 "updated_at": _utc_now_z(),
                 "last_checked_date": _jst_today_key(),
@@ -6061,7 +6084,7 @@ def main():
         current_validation_stats6,
         current_unconfirmed_stats6,
         current_projection_stats6,
-        persist_state=(args.propose and not args.dry_run),
+        persist_state=persist_stable_rescue_state,
     )
     adoption_mode = "rescue" if rescue_mode else "normal"
     print(f"  現行検証★6: {current_validation_stats6['n']}件 "
@@ -6084,6 +6107,10 @@ def main():
             print(f"    - {reason}")
     else:
         print("  ✅ normal mode: 現行ロジックは劣化条件に該当しません")
+
+    if stable_rescue_state_only:
+        print("\n✅ rescue_state.json state-only update complete")
+        return
 
     def handle_no_stable_candidate(message):
         print(f"\n✅ {message}")

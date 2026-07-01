@@ -193,7 +193,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **差分品質ゲート**: スコアロジック更新候補をpending保存・Discord通知する直前に、現行/候補の抽出銘柄差分を確認する。候補件数が現行比で大きく減り、候補のみ追加の件数や成績が弱く、現行のみ除外側に目標Hitや大勝ち銘柄がある場合は、見かけの成績改善として自動却下する。ただし検証/Lockbox、全体成績、未確定ウォッチリストの改善が十分に強い場合は通し、rescue modeでは必要な更新を逃さないため過度に抑制しない。
 - **採用強制ゲート**: Stable/Sniper/Mega候補は、pending保存前に未確定平均、-10%以下件数、中央値、直近Lockbox（Megaは直近検証期間）を現行と比較し、悪化する候補を自動却下する。`body_pullback10`（実体10%以上）と `body_overheat15`（実体15%以上）は過熱系の探索候補であり、採用には同じ強制ゲート通過が必要。
 - **Sniper探査判断**: Sniper候補は固定銘柄や固定条件名で採用せず、十分な件数での全体勝率・検証勝率・目標到達率・-10%以下の少なさ・未確定ウォッチ悪化なしを優先する。件数を増やすだけで勝率や検証成績が落ちる候補は、見かけのサンプル数が多くても採用しない。
-- **閾値スイープ**: `--win-threshold-sweep` の子プロセスはStable比較に絞るためSniperをスキップする。採用可能な閾値がない場合は `pending_logic.json` を作らず、SCPや `pm2 restart` も実行しない。
+- **閾値スイープ**: `--win-threshold-sweep` の子プロセスはStable比較に絞るためSniperをスキップする。採用可能な閾値がない場合は `pending_logic.json` を作らず、SCPや `pm2 restart` も実行しない。ただし `--propose` 実行ではStableレスキュー連続判定用の `rescue_state.json` だけ更新する。
 - **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×40 + avg×100 + ((win10_weighted / W) - (lose10_weighted / W)) × 250`（recency半減期90日の加重）
 - **Method A**: 6条件の組み合わせ全探索（各1点）
 - **Method B**: lift分析による重み付きスコア（各1〜2点）

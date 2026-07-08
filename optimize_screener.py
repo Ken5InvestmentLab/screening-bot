@@ -5003,7 +5003,7 @@ def _run_sniper_optimization(df, args):
     # 統計だけリフレッシュして保存（updated_at は据え置き → ライブ集計の起点を維持）
     # --dry-run はファイル変更を伴わないため、メモリ上の baseline_wr のみ最新化する。
     if sniper_logic and refreshed_stats and refreshed_stats.get("n", 0) > 0:
-        if not args.dry_run:
+        if not args.dry_run and not args.propose:
             save_current_logic_sniper(
                 sniper_logic.get("conditions", []),
                 sniper_logic.get("thresholds") or None,

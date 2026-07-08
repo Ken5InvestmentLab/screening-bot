@@ -41,7 +41,12 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: python optimize_screener.py --propose-mega-report-logic-only
 
-      - name: Run optimizer (sweep + auto-propose best threshold)
+      - name: Propose Sniper scoring logic
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python optimize_screener.py --propose-sniper-only
+
+      - name: Run Stable optimizer (sweep + auto-propose best threshold)
         env:
           PYTHONIOENCODING: utf-8
         # 複数の +X% 閾値で並列バックテストし、品質ゲートをクリアした中で

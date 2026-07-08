@@ -194,6 +194,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - **採用強制ゲート**: Stable/Sniper/Mega候補は、pending保存前に未確定平均、-10%以下件数、中央値、直近Lockbox（Megaは直近検証期間）を現行と比較し、悪化する候補を自動却下する。`body_pullback10`（実体10%以上）と `body_overheat15`（実体15%以上）は過熱系の探索候補であり、採用には同じ強制ゲート通過が必要。
 - **Sniper探査判断**: Sniper候補は固定銘柄や固定条件名で採用せず、十分な件数での全体勝率・検証勝率・目標到達率・-10%以下の少なさ・未確定ウォッチ悪化なしを優先する。件数を増やすだけで勝率や検証成績が落ちる候補は、見かけのサンプル数が多くても採用しない。
 - **閾値スイープ**: `--win-threshold-sweep` の子プロセスはStable比較に絞るためSniperをスキップする。採用可能な閾値がない場合は `pending_logic.json` を作らず、SCPや `pm2 restart` も実行しない。ただし `--propose` 実行ではStableレスキュー連続判定用の `rescue_state.json` だけ更新する。
+- **Daily Screener Optimizationのモード分離**: 日次実行ではMega3種を `--propose-mega-report-logic-only`、Sniperを `--propose-sniper-only` でStable探索から独立して必ず提案探索する。Stableの `--win-threshold-sweep` と最終 `--propose` 子プロセスはSniper重複通知を避けるため `--skip-sniper` のままにする。
 - **compositeスコア**: `COMPOSITE_VARIANT = "rate_adjusted"` — `wr×40 + avg×100 + ((win10_weighted / W) - (lose10_weighted / W)) × 250`（recency半減期90日の加重）
 - **Method A**: 6条件の組み合わせ全探索（各1点）
 - **Method B**: lift分析による重み付きスコア（各1〜2点）

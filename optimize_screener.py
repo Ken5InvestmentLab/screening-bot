@@ -5032,7 +5032,8 @@ def _run_sniper_optimization(df, args):
         print(f"  ℹ Sniper rescue streak {rescue_streak}/{RESCUE_REQUIRED_STREAK}: 様子見継続")
 
     # 現行Sniperが健全なら最適化をスキップ（rescue 中はスキップしない）
-    if sniper_logic and not rescue_mode:
+    force_search = bool(getattr(args, "force_sniper_search", False))
+    if sniper_logic and not rescue_mode and not force_search:
         sniper_n = int((refreshed_stats or {}).get("n", 0)
                        or sniper_logic.get("backtest", {}).get("n", 0))
         live_healthy = (
@@ -5053,6 +5054,8 @@ def _run_sniper_optimization(df, args):
                       f"{live_stats['wr_raw']*100:.1f}% ≥ {SNIPER_LIVE_HEALTH_WR*100:.0f}% "
                       f"(n={int(live_stats['n'])})")
             return
+    elif sniper_logic and force_search and not rescue_mode:
+        print("  [force] Sniper healthy-skip disabled for independent proposal run.")
 
     # rescue mode 時は採用最低勝率を緩和
     wr_floor = SNIPER_RESCUE_WR_MIN if rescue_mode else SNIPER_WR_MIN
@@ -5437,9 +5440,16 @@ def _run_threshold_sweep(args):
     print(f"  候補★6: {best.get('best_n', '?')}件 "
           f"勝率{best.get('best_wr', 0):.1f}% 平均{best.get('best_avg', 0):+.1f}%")
     print(f"  条件: {best.get('best_combo', '?')}")
-    print(f"  → --propose --yes --win-threshold {best['threshold']} を実行します")
+    print(f"  → --propose --yes --skip-sniper --win-threshold {best['threshold']} を実行します")
 
-    cmd = [sys.executable, self_path, "--propose", "--win-threshold", str(best['threshold'])]
+    cmd = [
+        sys.executable,
+        self_path,
+        "--propose",
+        "--skip-sniper",
+        "--win-threshold",
+        str(best['threshold']),
+    ]
     if args.yes:
         cmd.append("--yes")
     env = dict(os.environ)
@@ -5675,6 +5685,65 @@ def _print_sweep_summary(results):
 # ══════════════════════════════════════════════════════════════
 # メイン
 # ══════════════════════════════════════════════════════════════
+def build_sniper_feature_frame():
+    """Build the same confirmed feature frame used by the normal optimizer."""
+    print("\nStep N1: Fetch data for independent Sniper proposal...")
+    try:
+        svc = get_service()
+        ar = fetch(svc, "alerts_raw")
+        try:
+            sa = fetch(svc, "signals_archive")
+        except Exception as exc:
+            sa = []
+            print(f"  signals_archive fetch skipped: {exc}")
+        oh = fetch(svc, "ohlcv_4h")
+        print(
+            f"  alerts_raw: {len(ar)} rows / "
+            f"signals_archive: {len(sa)} rows / ohlcv_4h: {len(oh)} rows"
+        )
+    except Exception as exc:
+        print(f"[error] Sniper data fetch failed: {exc}")
+        sys.exit(1)
+
+    alerts_raw_confirmed = parse_alerts(ar)
+    alerts_archive_confirmed = parse_alerts(sa)
+    alerts_raw_confirmed["_from_archive"] = False
+    alerts_archive_confirmed["_from_archive"] = True
+    alerts = pd.concat(
+        [alerts_raw_confirmed, alerts_archive_confirmed],
+        ignore_index=True,
+    )
+    if "alert_id" in alerts.columns and len(alerts) > 0:
+        has_id = alerts["alert_id"].astype(str) != ""
+        alerts = pd.concat(
+            [
+                alerts[has_id].drop_duplicates(subset=["alert_id"], keep="first"),
+                alerts[~has_id],
+            ],
+            ignore_index=True,
+        )
+    if len(alerts) < 30:
+        print("[error] Sniper data is insufficient")
+        sys.exit(1)
+
+    ohlcv = parse_ohlcv(oh)
+    rows = []
+    skipped = 0
+    for _, row in alerts.iterrows():
+        features = get_features(ohlcv.get(row["symbol"], []), row["date"])
+        if features:
+            rows.append({**row.to_dict(), **features})
+        else:
+            skipped += 1
+
+    df = pd.DataFrame(rows)
+    print(f"  feature rows: {len(df)} / skipped: {skipped}")
+    if len(df) < 20:
+        print("[error] Sniper feature data is insufficient")
+        sys.exit(1)
+    return df
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", "--no-apply", action="store_true")
@@ -5703,6 +5772,9 @@ def main():
                              "各値で自身を --dry-run --win-threshold X として再実行し比較表を表示。"
                              "実ファイル更新・デプロイは行わない")
     parser.add_argument("--skip-sniper", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--propose-sniper-only", dest="propose_sniper_only",
+                        action="store_true",
+                        help="Run only Sniper scoring proposal search and save pending approval")
     parser.add_argument("--record-rescue-state-only", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("--propose-mega-report-logic-only", dest="propose_mega_report_logic_only",
                         action="store_true",
@@ -5721,6 +5793,19 @@ def main():
     if args.strict_wr is not None:
         STRICT_WR = args.strict_wr
     WR_FLOOR  = args.wr_floor
+
+    if args.propose_sniper_only:
+        print("=" * 62)
+        print("Independent Sniper scoring logic proposal")
+        print("=" * 62)
+        if args.dry_run:
+            args.propose = False
+        else:
+            args.propose = True
+        args.force_sniper_search = True
+        df = build_sniper_feature_frame()
+        _run_sniper_optimization(df, args)
+        return
 
     if args.propose_mega_report_logic_only:
         print("=" * 62)

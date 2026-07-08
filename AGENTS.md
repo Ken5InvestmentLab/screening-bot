@@ -216,9 +216,9 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `GOOGLE_CREDENTIALS` | サービスアカウントJSONの中身 |
 | `SSH_PRIVATE_KEY` | VMへのSSH秘密鍵 |
 | `DISCORD_BOT_TOKEN` | `Mega Validation Report` でDiscord投稿済みファンダ本文をHTMLキャッシュへ追加取得するBotトークン。未設定でもHTML再生成は継続するが、新規ファンダ本文はHTML内に埋め込まれない |
-| `DISCORD_REPORT_WEBHOOK_URL` | `Mega Validation Report` でHTML生成後、150秒待ってからDiscordへ完了通知を送るWebhook URL。未設定の場合、通知だけをスキップしHTML生成・コミット・デプロイは継続する |
+| `DISCORD_REPORT_WEBHOOK_URL` | `Mega Validation Report` でHTML生成・コミット・report-gateデプロイ後、150秒待ってからDiscordへ完了通知を送るWebhook URL。未設定の場合、通知だけをスキップしHTML生成・コミット・デプロイは継続する |
 
-`Mega Validation Report` のHTML生成完了通知は、Webhook URL確認後に150秒待ってから送信し、旧GASのOHLCV完了通知と同じDiscord表示にする。タイトルは `✅ OHLCVデータ同期完了`、フィールド名は `🤖 スコアリングBot`、本文は `/scan` とブラウザリンクの案内だけにし、GitHub Actions実行ログ欄は出さない。
+`Mega Validation Report` のHTML生成完了通知は、生成済みHTMLのコミットとreport-gateデプロイ完了後、Webhook URL確認後に150秒待ってから送信し、旧GASのOHLCV完了通知と同じDiscord表示にする。report-gateデプロイが無効な環境では、通知リンク先のWorker HTML更新を保証できないためこの通知も送らない。タイトルは `✅ OHLCVデータ同期完了`、フィールド名は `🤖 スコアリングBot`、本文は `/scan` とブラウザリンクの案内だけにし、GitHub Actions実行ログ欄は出さない。
 `Deploy Approved Logic` 承認後のレポート再生成ではこのDiscord完了通知を送らない。`deploy.yml` から `mega-validation-report.yml` を呼ぶ場合は `notify_discord: false` を明示し、承認適用したスコアロジックの内容通知は `--apply-pending` 中に一時JSONへ退避して、HTML再生成とreport-gate反映後に `mega-validation-report.yml` の最終段で送る。
 `Mega Validation Report` workflow に平日21:00 JSTなどの定時 `schedule` は置かない。レポート再生成は `Daily Screener Optimization` からの共有workflow呼び出し、13:21先行OHLCV取得後の明示dispatch、または手動実行で行う。
 

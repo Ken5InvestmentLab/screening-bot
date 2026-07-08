@@ -146,8 +146,8 @@ jobs:
               print("DISCORD_REPORT_WEBHOOK_URL is not set; skipping report-ready Discord notice")
               raise SystemExit(0)
 
-          print("Waiting 90 seconds before sending the report-ready Discord notice")
-          time.sleep(90)
+          print("Waiting 150 seconds before sending the report-ready Discord notice")
+          time.sleep(150)
 
           embed = {
               "title": "✅ OHLCVデータ同期完了",

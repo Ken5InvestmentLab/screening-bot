@@ -136,6 +136,7 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import time
           import urllib.error
           import urllib.request
           from datetime import datetime, timezone
@@ -144,6 +145,9 @@ jobs:
           if not webhook_url:
               print("DISCORD_REPORT_WEBHOOK_URL is not set; skipping report-ready Discord notice")
               raise SystemExit(0)
+
+          print("Waiting 60 seconds before sending the report-ready Discord notice")
+          time.sleep(60)
 
           embed = {
               "title": "✅ OHLCVデータ同期完了",

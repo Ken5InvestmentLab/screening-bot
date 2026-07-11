@@ -101,14 +101,6 @@ CONDITION_LABELS.update({
     "body_overheat15": "実体 >= 15%（過熱警告）",
 })
 
-CONDITION_CHIP_LABELS = {
-    "pre_decline15": "20日高値から15%以上下落",
-    "pre_down3": "3日連続下落",
-    "bb_lower": "ボリンジャーバンド下部",
-    "body2": "陽線の実体が2%以上",
-}
-
-
 def load_logic_conditions(path: str, fallback: list[str]) -> list[str]:
     try:
         with open(path, "r", encoding="utf-8") as handle:
@@ -1944,9 +1936,8 @@ def condition_chips(conditions: list[str]) -> str:
     chips = []
     for cond in conditions:
         label = CONDITION_LABELS.get(cond, cond)
-        display_label = CONDITION_CHIP_LABELS.get(cond, cond)
         chips.append(
-            f'<span class="chip" title="{html_escape(label)}">{html_escape(display_label)}</span>'
+            f'<span class="chip" title="{html_escape(label)}">{html_escape(label)}</span>'
         )
     return "".join(chips)
 

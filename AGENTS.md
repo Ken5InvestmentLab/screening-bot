@@ -269,6 +269,11 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - `aggregateToDailyBars()` はバーがソート済みであることを前提とする。未ソートだと20日ルックバックウィンドウが壊れる。
 - `screenSymbol()` はシグナル日**以前**で最も近いバーを探す（完全一致不要）。シグナル日がバーの最終日より新しい場合は `null` を返す。
 
+## Premium snapshot completion barrier
+
+- When `.github/workflows/mega-validation-report.yml` runs with `notify_discord=true`, keep `wait_for_premium_snapshot.py` before report generation. It compares the current JST date's `BOTTOM` alert IDs in `alerts_raw` with `POSTED` events in the separate `premium_alert_log`.
+- The barrier fails closed: a timeout or persistent premium-log read failure must block report generation, deployment, and the report-ready Discord notice. Runs with `notify_discord=false` bypass the barrier.
+
 ## Future Work
 
 - **Moonshot mode is retired**: it overlapped with Mega40 and was removed from optimizer code, pending/current logic files, and old analysis scripts. Do not recreate `/scan moonshot`, `current_logic_moonshot.json`, `pending_logic_moonshot.json`, or Moonshot optimizer paths; use the report-only Mega40 modes instead.

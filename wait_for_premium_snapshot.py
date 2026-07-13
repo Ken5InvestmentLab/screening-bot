@@ -95,7 +95,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-wait-seconds",
         type=int,
-        default=int(os.environ.get("PREMIUM_SNAPSHOT_WAIT_SECONDS", "3600")),
+        default=int(os.environ.get("PREMIUM_SNAPSHOT_WAIT_SECONDS", "5400")),
     )
     parser.add_argument(
         "--poll-seconds",

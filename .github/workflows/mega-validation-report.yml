@@ -55,7 +55,7 @@ jobs:
       - name: Wait for premium snapshot completion
         if: ${{ inputs.notify_discord }}
         env:
-          PREMIUM_SNAPSHOT_WAIT_SECONDS: "3600"
+          PREMIUM_SNAPSHOT_WAIT_SECONDS: "5400"
           PREMIUM_SNAPSHOT_POLL_SECONDS: "30"
           PYTHONIOENCODING: utf-8
         run: python wait_for_premium_snapshot.py

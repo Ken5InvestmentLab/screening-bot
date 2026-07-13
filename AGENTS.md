@@ -272,6 +272,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ## Premium snapshot completion barrier
 
 - When `.github/workflows/mega-validation-report.yml` runs with `notify_discord=true`, keep `wait_for_premium_snapshot.py` before report generation. It compares the current JST date's `BOTTOM` alert IDs in `alerts_raw` with `POSTED` events in the separate `premium_alert_log`.
+- Keep `.github/workflows/optimize.yml` passing `notify_discord: true` explicitly so the 15:51 path waits for the 15:36 premium batch through the same barrier.
 - The barrier fails closed: a timeout or persistent premium-log read failure must block report generation, deployment, and the report-ready Discord notice. Runs with `notify_discord=false` bypass the barrier.
 
 ## Future Work

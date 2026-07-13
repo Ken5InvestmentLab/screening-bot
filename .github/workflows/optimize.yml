@@ -8,6 +8,8 @@ jobs:
     uses: ./.github/workflows/mega-validation-report.yml
     permissions:
       contents: write
+    with:
+      notify_discord: true
     secrets: inherit
 
   optimize:

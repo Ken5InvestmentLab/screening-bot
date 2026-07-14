@@ -18,6 +18,8 @@ module.exports = {
   // シート名（GASが書き込むシート名に合わせる）
   OHLCV_SHEET_NAME:   process.env.OHLCV_SHEET_NAME   || 'ohlcv_4h',
   ALERTS_SHEET_NAME:  process.env.ALERTS_SHEET_NAME  || 'alerts_raw',
+  SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME:
+    process.env.SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME || 'signal_feature_snapshots',
 
   // ── Premium Report スプレッドシート ───────────────────────
   // ポジティブ材料（K列 reason）を参照するシート

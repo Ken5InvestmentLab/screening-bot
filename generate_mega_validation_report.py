@@ -30,6 +30,11 @@ import pandas as pd
 
 import optimize_screener as opt
 
+try:
+    import signal_score_snapshots
+except ImportError:
+    signal_score_snapshots = None
+
 
 JST = ZoneInfo("Asia/Tokyo")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -39,6 +44,24 @@ CURRENT_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic.json")
 SNIPER_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_sniper.json")
 MEGA_LOGIC_PATH = os.path.join(BASE_DIR, "current_logic_mega.json")
 FUNDAMENTAL_CACHE_PATH = os.path.join(BASE_DIR, "reports", "mega_report_fundamental_cache.json")
+SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME = os.environ.get(
+    "SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME",
+    "signal_feature_snapshots",
+)
+SNAPSHOT_NUMERIC_FEATURE_KEYS = {
+    "_vsurge",
+    "_atr",
+    "_body",
+    "_rsi",
+    "_stoch",
+    "_bbpct",
+    "_rci9",
+    "_rci26",
+    "_cci",
+    "_vp_support",
+    "_vp_overhead",
+    "_vp_poc_abs",
+}
 REPORT_TITLE = "天底極致 スコアリングBot レポート"
 PREMIUM_LOG_SPREADSHEET_ID_DEFAULT = "1GeLT-DUEdsYzT6AR3n1MkhkCeivqgtsMEXMhYfnHm9s"
 DISCORD_API_BASE = "https://discord.com/api/v10"
@@ -437,6 +460,36 @@ def attach_alert_received_at(alerts: pd.DataFrame, lookup: dict[str, str]) -> pd
     alerts["received_at"] = alerts["alert_id"].astype(str).map(lookup).fillna("")
     alerts["_received_at_dt"] = alerts["received_at"].map(parse_local_timestamp)
     return alerts
+
+
+def apply_final_signal_snapshot(
+    live_features: dict,
+    snapshot: dict | None,
+) -> tuple[dict, dict]:
+    """Overlay immutable signal-time features without touching performance fields."""
+    if not isinstance(snapshot, dict) or not snapshot_final_value(snapshot.get("status")):
+        return dict(live_features), {}
+
+    stored_features = snapshot.get("features")
+    if not isinstance(stored_features, dict):
+        stored_features = {}
+    snapshot_modes = normalized_snapshot_modes(snapshot.get("modes"))
+    stable_score = snapshot.get("stable_score", np.nan)
+    if not is_finite(stable_score):
+        return dict(live_features), {}
+
+    feature_keys = set(opt.BOOL_CONDS) | SNAPSHOT_NUMERIC_FEATURE_KEYS
+    overlaid = dict(live_features)
+    for key, value in stored_features.items():
+        if key in feature_keys:
+            overlaid[key] = value
+    metadata = {
+        "_snapshot_final": True,
+        "_snapshot_stable_score": int(float(stable_score)),
+        "_snapshot_modes": tuple(sorted(snapshot_modes)),
+        "_snapshot_status": str(snapshot.get("status", "FINAL")),
+    }
+    return overlaid, metadata
 
 
 def filter_alerts_by_received_cutoff(alerts: pd.DataFrame, cutoff) -> tuple[pd.DataFrame, int]:
@@ -876,11 +929,85 @@ def close_after_business_days(daily: list[dict], sig_date: str, days: int) -> fl
     return float(close) if is_finite(close) else np.nan
 
 
-def build_alert_frame(include_unconfirmed: bool, alert_received_cutoff=None) -> tuple[pd.DataFrame, dict, dict]:
-    svc = opt.get_service()
-    alerts_raw_rows = opt.fetch(svc, "alerts_raw")
-    archive_rows = opt.fetch(svc, "signals_archive")
-    ohlcv_rows = opt.fetch(svc, "ohlcv_4h")
+def load_final_signal_snapshots(svc) -> dict[str, dict]:
+    """Read immutable scores once; a missing/unavailable Sheet keeps legacy behavior."""
+    if signal_score_snapshots is None:
+        print("warning: signal snapshot module unavailable; using live feature calculation")
+        return {}
+    try:
+        rows = opt.fetch(svc, SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME)
+        return signal_score_snapshots.load_snapshot_map(rows)
+    except Exception as exc:
+        print(
+            "warning: signal_feature_snapshots unavailable; "
+            f"using live feature calculation ({type(exc).__name__})"
+        )
+        return {}
+
+
+def fetch_report_source_rows(svc) -> dict[str, list[list]]:
+    """Fetch the large report inputs once and share them across both frames."""
+    return {
+        "alerts_raw": opt.fetch(svc, "alerts_raw"),
+        "signals_archive": opt.fetch(svc, "signals_archive"),
+        "ohlcv_4h": opt.fetch(svc, "ohlcv_4h"),
+    }
+
+
+def finalize_signal_snapshots_for_report(
+    source_rows: dict[str, list[list]],
+    ohlcv_sessions: dict[str, list[dict]],
+) -> dict:
+    """Finalize recent alerts without another full ohlcv_4h read."""
+    if signal_score_snapshots is None:
+        raise RuntimeError("signal_score_snapshots module is required for snapshot finalization")
+    service = signal_score_snapshots.get_write_service()
+    snapshot_rows = signal_score_snapshots.fetch_optional_values(
+        service,
+        SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME,
+    )
+    args = argparse.Namespace(
+        lookback_days=3,
+        date=None,
+        alert_id=None,
+        symbol=None,
+        all_missing=False,
+    )
+    calculated, metadata = signal_score_snapshots.calculate_missing_from_rows(
+        source_rows["alerts_raw"],
+        source_rows["signals_archive"],
+        source_rows["ohlcv_4h"],
+        snapshot_rows,
+        args,
+        sessions_by_symbol=ohlcv_sessions,
+    )
+    appended = signal_score_snapshots.append_snapshots(service, calculated)
+    print(
+        "signal snapshots: "
+        f"selected={metadata['selected']} calculated={len(calculated)} appended={appended} "
+        f"yahoo_failures={len(metadata['yahoo_failures'])}"
+    )
+    # Re-read the append-only Sheet. load_snapshot_map keeps the first FINAL row.
+    final_rows = signal_score_snapshots.fetch_optional_values(
+        service,
+        SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME,
+    )
+    return signal_score_snapshots.load_snapshot_map(final_rows)
+
+
+def build_alert_frame(
+    include_unconfirmed: bool,
+    alert_received_cutoff=None,
+    signal_snapshots: dict[str, dict] | None = None,
+    source_rows: dict[str, list[list]] | None = None,
+    parsed_ohlcv: dict[str, list[dict]] | None = None,
+    parsed_ohlcv_sessions: dict[str, list[dict]] | None = None,
+) -> tuple[pd.DataFrame, dict, dict]:
+    if source_rows is None:
+        source_rows = fetch_report_source_rows(opt.get_service())
+    alerts_raw_rows = source_rows["alerts_raw"]
+    archive_rows = source_rows["signals_archive"]
+    ohlcv_rows = source_rows["ohlcv_4h"]
 
     received_at_by_alert_id = alert_received_at_lookup(alerts_raw_rows, archive_rows)
     alerts_raw = opt.parse_alerts(alerts_raw_rows, include_unconfirmed=include_unconfirmed)
@@ -902,10 +1029,16 @@ def build_alert_frame(include_unconfirmed: bool, alert_received_cutoff=None) -> 
         )
     alerts, cutoff_excluded = filter_alerts_by_received_cutoff(alerts, alert_received_cutoff)
 
-    ohlcv = opt.parse_ohlcv(ohlcv_rows)
-    ohlcv_sessions = parse_ohlcv_session_rows(ohlcv_rows)
+    ohlcv = parsed_ohlcv if parsed_ohlcv is not None else opt.parse_ohlcv(ohlcv_rows)
+    ohlcv_sessions = (
+        parsed_ohlcv_sessions
+        if parsed_ohlcv_sessions is not None
+        else parse_ohlcv_session_rows(ohlcv_rows)
+    )
     today = pd.Timestamp(datetime.now(JST).date())
     records = []
+    snapshot_hits = 0
+    snapshot_by_alert_id = signal_snapshots or {}
 
     for _, alert in alerts.iterrows():
         daily = ohlcv.get(alert["symbol"], [])
@@ -913,11 +1046,18 @@ def build_alert_frame(include_unconfirmed: bool, alert_received_cutoff=None) -> 
             ohlcv_sessions.get(alert["symbol"], []),
             alert,
         )
-        features = opt.get_features(feature_daily or daily, alert["date"])
-        if not features:
+        alert_id = str(alert.get("alert_id", "") or "").strip()
+        live_features = opt.get_features(feature_daily or daily, alert["date"]) or {}
+        features, snapshot_metadata = apply_final_signal_snapshot(
+            live_features,
+            snapshot_by_alert_id.get(alert_id) if alert_id else None,
+        )
+        if not features or (not live_features and not snapshot_metadata):
             continue
+        if snapshot_metadata:
+            snapshot_hits += 1
 
-        rec = {**alert.to_dict(), **features}
+        rec = {**alert.to_dict(), **features, **snapshot_metadata}
         latest_close = opt.latest_close_for_signal(daily, alert["date"])
         entry = alert.get("entry", float("nan"))
         rec["latest_close"] = latest_close if is_finite(latest_close) else np.nan
@@ -947,6 +1087,8 @@ def build_alert_frame(include_unconfirmed: bool, alert_received_cutoff=None) -> 
         "alerts_after_dedupe": len(alerts),
         "alert_cutoff_excluded": cutoff_excluded,
         "feature_rows": len(frame),
+        "signal_snapshot_rows": len(snapshot_by_alert_id),
+        "signal_snapshot_hits": snapshot_hits,
     }
     return frame, ohlcv, meta
 
@@ -960,6 +1102,49 @@ def condition_mask(frame: pd.DataFrame, conditions: list[str]) -> pd.Series:
             return pd.Series(False, index=frame.index)
         mask &= frame[cond].astype(bool)
     return mask
+
+
+def snapshot_final_value(value) -> bool:
+    if isinstance(value, str):
+        return value.strip().lower() in ("1", "true", "yes", "final")
+    try:
+        return bool(value) and not bool(pd.isna(value))
+    except (TypeError, ValueError):
+        return False
+
+
+def normalized_snapshot_modes(value) -> set[str]:
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return set()
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError:
+            parsed = [part.strip() for part in text.split(",")]
+        value = parsed
+    if isinstance(value, dict):
+        value = [key for key, enabled in value.items() if enabled]
+    if not isinstance(value, (list, tuple, set, frozenset)):
+        return set()
+    return {str(mode).strip() for mode in value if str(mode).strip()}
+
+
+def candidate_mask(frame: pd.DataFrame, candidate: dict) -> pd.Series:
+    """Prefer finalized point-in-time mode selections over live recalculation."""
+    computed = condition_mask(frame, candidate["conditions"])
+    if frame.empty or "_snapshot_final" not in frame.columns:
+        return computed
+    final_mask = frame["_snapshot_final"].map(snapshot_final_value).astype(bool)
+    if not final_mask.any():
+        return computed
+    if "_snapshot_modes" in frame.columns:
+        snapshot_match = frame["_snapshot_modes"].map(
+            lambda value: candidate["id"] in normalized_snapshot_modes(value)
+        )
+    else:
+        snapshot_match = pd.Series(False, index=frame.index)
+    return computed.where(~final_mask, snapshot_match.astype(bool))
 
 
 def horizon_frame(frame: pd.DataFrame, eval_days: int) -> pd.DataFrame:
@@ -1014,7 +1199,7 @@ def candidate_stats(frame: pd.DataFrame, candidate: dict) -> dict:
     target = candidate["target"]
     perf_col = f"perf_{days}bd"
     subset = horizon_frame(frame, days)
-    mask = condition_mask(subset, candidate["conditions"])
+    mask = candidate_mask(subset, candidate)
     hits = subset[mask].copy()
 
     total_target = int((subset[perf_col].astype(float) >= target).sum()) if not subset.empty else 0
@@ -1081,7 +1266,7 @@ def current_watch_stats(frame: pd.DataFrame, candidate: dict) -> dict:
             "min": np.nan,
         }
 
-    mask = condition_mask(frame, candidate["conditions"])
+    mask = candidate_mask(frame, candidate)
     watch = frame[mask & ~frame[perf_col].apply(is_finite)].copy()
     current = watch[watch["cur_perf"].apply(is_finite)] if "cur_perf" in watch.columns else watch.iloc[0:0]
 
@@ -1232,7 +1417,7 @@ def candidate_rows(
     perf_col = f"perf_{days}bd"
     if perf_col not in frame.columns:
         return frame.iloc[0:0].copy()
-    mask = condition_mask(frame, candidate["conditions"])
+    mask = candidate_mask(frame, candidate)
     if confirmed:
         rows = frame[mask & frame[perf_col].apply(is_finite)].copy()
         rows = rows.sort_values(perf_col, ascending=False)
@@ -1791,6 +1976,10 @@ def row_true_conditions(row: pd.Series) -> list[str]:
 
 
 def stable_star_score(row: pd.Series) -> int:
+    if snapshot_final_value(row.get("_snapshot_final", False)):
+        snapshot_score = row.get("_snapshot_stable_score", np.nan)
+        if is_finite(snapshot_score):
+            return max(0, min(len(STABLE_CONDITIONS), int(float(snapshot_score))))
     return row_condition_count(row, STABLE_CONDITIONS)
 
 
@@ -1805,6 +1994,8 @@ def star_score_badge(row: pd.Series) -> str:
 
 
 def row_matches_candidate(row: pd.Series, candidate: dict) -> bool:
+    if snapshot_final_value(row.get("_snapshot_final", False)):
+        return candidate["id"] in normalized_snapshot_modes(row.get("_snapshot_modes"))
     return all(row_condition_truthy(row, condition) for condition in candidate["conditions"])
 
 
@@ -6221,15 +6412,34 @@ def main() -> None:
     alert_received_cutoff = configured_alert_received_cutoff(
         args.alert_received_cutoff or config_value(["MEGA_REPORT_ALERT_RECEIVED_CUTOFF"], "")
     )
+    sheet_service = opt.get_service()
+    source_rows = fetch_report_source_rows(sheet_service)
+    parsed_ohlcv = opt.parse_ohlcv(source_rows["ohlcv_4h"])
+    parsed_ohlcv_sessions = parse_ohlcv_session_rows(source_rows["ohlcv_4h"])
+    if truthy_config(["MEGA_REPORT_FINALIZE_SIGNAL_SNAPSHOTS"]):
+        signal_snapshots = finalize_signal_snapshots_for_report(
+            source_rows,
+            parsed_ohlcv_sessions,
+        )
+    else:
+        signal_snapshots = load_final_signal_snapshots(sheet_service)
     confirmed_frame, _, confirmed_meta = build_alert_frame(
         include_unconfirmed=False,
         alert_received_cutoff=alert_received_cutoff,
+        signal_snapshots=signal_snapshots,
+        source_rows=source_rows,
+        parsed_ohlcv=parsed_ohlcv,
+        parsed_ohlcv_sessions=parsed_ohlcv_sessions,
     )
     all_frame, _, all_meta = build_alert_frame(
         include_unconfirmed=True,
         alert_received_cutoff=alert_received_cutoff,
+        signal_snapshots=signal_snapshots,
+        source_rows=source_rows,
+        parsed_ohlcv=parsed_ohlcv,
+        parsed_ohlcv_sessions=parsed_ohlcv_sessions,
     )
-    premium_links = fetch_premium_discord_links(opt.get_service())
+    premium_links = fetch_premium_discord_links(sheet_service)
     premium_urls = collect_premium_urls(all_frame, premium_links)
     html_path = os.path.abspath(args.html_output)
     guard_against_link_only_fundamental_regression(html_path, premium_urls)

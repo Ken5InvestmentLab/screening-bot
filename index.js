@@ -15,9 +15,11 @@ const {
   fetchRecentBottomSignals,
   fetchAllBottomSignals,
   fetchBacktestBottomSignals,
+  fetchSignalFeatureSnapshots,
   fetchPremiumReasonsByAlertIds,
 } = require('./sheets');
 const { screenSymbol } = require('./screener');
+const { applySignalSnapshot, buildSnapshotOnlyResult } = require('./signal_snapshot');
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildMembers],
@@ -28,6 +30,7 @@ const scanningUsers = new Set();
 const COLOR      = 0x00b4d8;
 const COLOR_WARN = 0xf5a623;
 const DISCLAIMER = '⚠️ これは情報提供ツールであり、投資助言ではありません。';
+const STABLE_LOGIC_PATH = path.join(__dirname, 'current_logic.json');
 const SNIPER_LOGIC_PATH = path.join(__dirname, 'current_logic_sniper.json');
 const PREMIUM_SCAN_BUTTON_PREFIX = 'premium_scan:';
 const DEFAULT_SCAN_RANGE_VALUE = 'default';
@@ -66,7 +69,21 @@ function getGithubWorkflowRef() {
 // ライブ実績キャッシュ
 // ============================================================
 let statsCache = null;
+const stableLogic = loadStableLogic();
 const sniperLogic = loadSniperLogic();
+
+function loadStableLogic() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(STABLE_LOGIC_PATH, 'utf8'));
+    return {
+      conditions: Array.isArray(parsed.conditions) ? parsed.conditions : [],
+      updated_at: parsed.updated_at ?? null,
+    };
+  } catch (err) {
+    console.warn('[stable] current_logic.json の読み込みに失敗:', err.message);
+    return { conditions: [], updated_at: null };
+  }
+}
 
 function loadSniperLogic() {
   try {
@@ -95,12 +112,56 @@ function loadSniperLogic() {
   }
 }
 
+function signalSnapshotOptions() {
+  return {
+    stableConditions: stableLogic.conditions,
+    sniperConditions: sniperLogic.conditions,
+    sniperMaxScore: sniperLogic.conditions.length || 6,
+  };
+}
+
+function snapshotForSignal(snapshotMap, signal) {
+  if (!snapshotMap || !signal || !signal.alertId) return null;
+  const snapshot = snapshotMap.get(String(signal.alertId).trim());
+  if (!snapshot) return null;
+  if (snapshot.symbol && snapshot.symbol !== signal.symbol) {
+    console.warn(`[snapshot] alert_id=${signal.alertId} の銘柄不一致を無視: ${snapshot.symbol} != ${signal.symbol}`);
+    return null;
+  }
+  const snapshotDate = String(snapshot.signalDate || '').replace(/\//g, '-').slice(0, 10);
+  const signalDate = String(signal.date || '').replace(/\//g, '-').slice(0, 10);
+  if (snapshotDate && signalDate && snapshotDate !== signalDate) {
+    console.warn(`[snapshot] alert_id=${signal.alertId} の点灯日不一致を無視: ${snapshotDate} != ${signalDate}`);
+    return null;
+  }
+  return snapshot;
+}
+
+function screenSignalWithSnapshot(signal, ohlcvData, snapshotMap) {
+  const snapshot = snapshotForSignal(snapshotMap, signal);
+  let result = ohlcvData
+    ? screenSymbol(
+        signal.symbol,
+        ohlcvData,
+        signal.date,
+        signal.entry,
+        signal.eval5bd,
+        signal.perf5bd,
+        signal.receivedAt,
+      )
+    : null;
+  if (!snapshot) return result;
+  if (!result) return buildSnapshotOnlyResult(signal, snapshot, signalSnapshotOptions());
+  return applySignalSnapshot(result, snapshot, signalSnapshotOptions());
+}
+
 async function refreshStats() {
   try {
     console.log('[stats] 実績データ集計開始...');
-    const [ohlcvMap, allSignals] = await Promise.all([
+    const [ohlcvMap, allSignals, snapshotMap] = await Promise.all([
       fetchOHLCVData(),
       fetchBacktestBottomSignals(config.HELP_BACKTEST_DAYS),
+      fetchSignalFeatureSnapshots(),
     ]);
 
     // HTMLレポートと同じく、過去1年分の確定済みシグナルを対象にする。
@@ -109,9 +170,7 @@ async function refreshStats() {
     for (const sig of allSignals) {
       if (sig.perf5bd === null || sig.perf5bd === undefined) continue;
       const data = ohlcvMap.get(sig.symbol);
-      if (!data) continue;
-
-      const r = screenSymbol(sig.symbol, data, sig.date, sig.entry, sig.eval5bd, sig.perf5bd, sig.receivedAt);
+      const r = screenSignalWithSnapshot(sig, data, snapshotMap);
       if (!r) continue;
 
       entries.push({
@@ -412,9 +471,10 @@ async function runScan(interaction) {
     const specificDate = isYesterday ? yesterday : isDate ? rangeInput : null;
     const rangeDays    = (isDefaultRange || isYesterday || isDate) ? null : parseInt(rangeInput, 10);
 
-    const [ohlcvMap, signals] = await Promise.all([
+    const [ohlcvMap, signals, snapshotMap] = await Promise.all([
       fetchOHLCVData(),
       fetchRecentBottomSignals(specificDate, isDefaultRange ? DEFAULT_SCAN_RANGE_VALUE : rangeDays),
+      fetchSignalFeatureSnapshots(),
     ]);
 
     await prog.edit('🔍 フィルタリング中...');
@@ -424,12 +484,11 @@ async function runScan(interaction) {
 
     for (const sig of signals) {
       const data = ohlcvMap.get(sig.symbol);
-      if (!data) {
+      const r = screenSignalWithSnapshot(sig, data, snapshotMap);
+      if (!r) {
         unanalyzed.push({ symbol: sig.symbol, name: sig.name ?? sig.symbol, date: sig.date, perf_5bd: sig.perf5bd ?? null });
         continue;
       }
-      const r = screenSymbol(sig.symbol, data, sig.date, sig.entry, sig.eval5bd, sig.perf5bd, sig.receivedAt);
-      if (!r) continue;
       const scanResult = isSniperMode
         ? {
             ...r,
@@ -551,9 +610,10 @@ async function runCodeSearch(interaction, user, codeInput) {
   scanningUsers.add(user.id);
 
   try {
-    const [ohlcvMap, allSignals] = await Promise.all([
+    const [ohlcvMap, allSignals, snapshotMap] = await Promise.all([
       fetchOHLCVData(),
       fetchAllBottomSignals(0),
+      fetchSignalFeatureSnapshots(),
     ]);
 
     await prog.delete().catch(() => {});
@@ -576,7 +636,8 @@ async function runCodeSearch(interaction, user, codeInput) {
     const scored = [];
     for (const info of symbolSignals) {
       const data = ohlcvMap.get(symbolCode);
-      if (!data) {
+      const r = screenSignalWithSnapshot(info, data, snapshotMap);
+      if (!r) {
         scored.push({
           symbol: symbolCode,
           name: info.name ?? symbolCode,
@@ -588,14 +649,11 @@ async function runCodeSearch(interaction, user, codeInput) {
           alertId: info.alertId,
         });
       } else {
-        const r = screenSymbol(symbolCode, data, info.date, info.entry, info.eval5bd, info.perf5bd, info.receivedAt);
-        if (r) {
-          r.name = info.name;
-          // Sniperモード満点の場合はバッジを付与
-          r.sniperTag = r.sniperEnabled && r.sniperScore === (sniperLogic.conditions.length || 6);
-          r.alertId = info.alertId;
-          scored.push(r);
-        }
+        r.name = info.name;
+        // Sniperモード満点の場合はバッジを付与
+        r.sniperTag = r.sniperEnabled && r.sniperScore === (sniperLogic.conditions.length || 6);
+        r.alertId = info.alertId;
+        scored.push(r);
       }
     }
 

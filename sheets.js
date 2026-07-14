@@ -1,6 +1,7 @@
 // sheets.js — Google Sheets API クライアント
 const { google } = require('googleapis')
 const config = require('./config')
+const { numericScore, parseJson, parseList, parseModes } = require('./signal_snapshot')
 
 let _auth = null
 function getAuth() {
@@ -17,6 +18,137 @@ async function getRawSheetData(sheetName) {
   const sheets = google.sheets({ version: 'v4', auth: getAuth() })
   const res = await sheets.spreadsheets.values.get({ spreadsheetId: config.SPREADSHEET_ID, range: sheetName })
   return res.data.values || []
+}
+
+function normalizeHeader(value) {
+  return String(value || '')
+    .replace(/^\uFEFF/, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_')
+}
+
+function firstHeaderIndex(header, aliases) {
+  for (const alias of aliases) {
+    const index = header.indexOf(alias)
+    if (index >= 0) return index
+  }
+  return -1
+}
+
+function parseBoolean(value) {
+  if (typeof value === 'boolean') return value
+  const normalized = String(value || '').trim().toLowerCase()
+  if (!normalized) return null
+  if (['1', 'true', 'yes', 'y', 'on', 'selected'].includes(normalized)) return true
+  if (['0', 'false', 'no', 'n', 'off', 'unselected'].includes(normalized)) return false
+  return null
+}
+
+function parseSignalFeatureSnapshots(rows) {
+  if (!Array.isArray(rows) || rows.length < 2) return new Map()
+
+  let headerRow = -1
+  let header = []
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const candidate = (rows[i] || []).map(normalizeHeader)
+    if (candidate.includes('alert_id') || candidate.includes('alertid')) {
+      headerRow = i
+      header = candidate
+      break
+    }
+  }
+  if (headerRow < 0) return new Map()
+
+  const idx = {
+    alertId: firstHeaderIndex(header, ['alert_id', 'alertid']),
+    symbol: firstHeaderIndex(header, ['symbol_code', 'symbol', 'code']),
+    signalDate: firstHeaderIndex(header, ['signal_date', 'date']),
+    stableScore: firstHeaderIndex(header, [
+      'stable_score', 'stable_star_score', 'stable_star', 'star_score', 'score',
+    ]),
+    sniperScore: firstHeaderIndex(header, ['sniper_score']),
+    modes: firstHeaderIndex(header, [
+      'modes_json', 'selected_modes_json', 'mode_flags_json', 'mode_json', 'modes',
+    ]),
+    sniperSelected: firstHeaderIndex(header, [
+      'sniper_selected', 'is_sniper', 'sniper_enabled', 'sniper',
+    ]),
+    features: firstHeaderIndex(header, [
+      'features_json', 'feature_json', 'indicators_json', 'features', 'indicators',
+    ]),
+    stableFilters: firstHeaderIndex(header, [
+      'stable_filters_json', 'stable_conditions_json', 'stable_filters',
+    ]),
+    sniperFilters: firstHeaderIndex(header, [
+      'sniper_filters_json', 'sniper_conditions_json', 'sniper_filters',
+    ]),
+    status: firstHeaderIndex(header, ['status', 'snapshot_status', 'state']),
+    finalized: firstHeaderIndex(header, ['finalized', 'is_final', 'final']),
+    cutoff: firstHeaderIndex(header, ['feature_cutoff', 'signal_feature_cutoff', 'cutoff']),
+    logicHash: firstHeaderIndex(header, ['logic_hash', 'logic_version', 'stable_logic_hash']),
+    inputHash: firstHeaderIndex(header, ['input_hash', 'data_hash']),
+  }
+
+  if (idx.alertId < 0 || idx.stableScore < 0) return new Map()
+
+  const snapshots = new Map()
+  for (let i = headerRow + 1; i < rows.length; i++) {
+    const row = rows[i] || []
+    const alertId = String(row[idx.alertId] || '').trim()
+    const stableScore = numericScore(row[idx.stableScore], 6)
+    if (!alertId || stableScore === null || snapshots.has(alertId)) continue
+
+    const status = idx.status >= 0 ? String(row[idx.status] || '').trim() : ''
+    const statusKey = status.toLowerCase().replace(/[\s-]+/g, '_')
+    if (idx.status >= 0 && statusKey !== 'final') continue
+    if (idx.finalized >= 0 && parseBoolean(row[idx.finalized]) === false) continue
+
+    let modes = idx.modes >= 0 ? parseModes(row[idx.modes]) : new Set()
+    let hasModes = idx.modes >= 0
+    if (idx.sniperSelected >= 0) {
+      const selected = parseBoolean(row[idx.sniperSelected])
+      if (selected !== null) {
+        hasModes = true
+        if (selected) modes.add('sniper')
+        else modes = new Set(Array.from(modes).filter(mode => !String(mode).startsWith('sniper')))
+      }
+    }
+
+    const features = idx.features >= 0 ? parseJson(row[idx.features]) : null
+    snapshots.set(alertId, {
+      alertId,
+      symbol: idx.symbol >= 0 ? cleanSymbol(row[idx.symbol]) : null,
+      signalDate: idx.signalDate >= 0 ? String(row[idx.signalDate] || '').trim() : null,
+      stableScore,
+      sniperScore: idx.sniperScore >= 0 ? numericScore(row[idx.sniperScore], 99) : null,
+      modes,
+      hasModes,
+      features: features && typeof features === 'object' && !Array.isArray(features) ? features : null,
+      stableFilters: idx.stableFilters >= 0 ? parseList(row[idx.stableFilters]) : [],
+      sniperFilters: idx.sniperFilters >= 0 ? parseList(row[idx.sniperFilters]) : [],
+      hasStableFilters: idx.stableFilters >= 0,
+      hasSniperFilters: idx.sniperFilters >= 0,
+      status,
+      cutoff: idx.cutoff >= 0 ? String(row[idx.cutoff] || '').trim() : null,
+      logicHash: idx.logicHash >= 0 ? String(row[idx.logicHash] || '').trim() : null,
+      inputHash: idx.inputHash >= 0 ? String(row[idx.inputHash] || '').trim() : null,
+    })
+  }
+  return snapshots
+}
+
+let snapshotCache = new Map()
+
+async function fetchSignalFeatureSnapshots() {
+  try {
+    const rows = await getRawSheetData(config.SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME)
+    snapshotCache = parseSignalFeatureSnapshots(rows)
+    return snapshotCache
+  } catch (err) {
+    console.warn('[sheets] signal_feature_snapshots 取得スキップ:', err.message)
+    return snapshotCache
+  }
 }
 
 // 「TYO:4074」などの文字列から「4074」だけを抽出する共通関数
@@ -304,5 +436,7 @@ module.exports = {
   fetchRecentBottomSignals,
   fetchAllBottomSignals,
   fetchBacktestBottomSignals,
+  fetchSignalFeatureSnapshots,
   fetchPremiumReasonsByAlertIds,
+  parseSignalFeatureSnapshots,
 }

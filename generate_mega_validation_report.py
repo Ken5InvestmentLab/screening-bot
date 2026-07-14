@@ -606,15 +606,40 @@ def fetch_premium_discord_links(service) -> dict:
         return result
 
     try:
-        response = (
-            service.spreadsheets()
-            .values()
-            .get(spreadsheetId=spreadsheet_id, range=f"{sheet_name}!A:K")
-            .execute()
-        )
-    except Exception as err:
-        print(f"premium log read skipped: {err}")
-        return result
+        read_attempts = int(config_value(["MEGA_REPORT_PREMIUM_LOG_READ_ATTEMPTS"], "3"))
+    except ValueError:
+        read_attempts = 3
+    read_attempts = max(1, min(read_attempts, 5))
+
+    response = None
+    last_error = None
+    for attempt in range(1, read_attempts + 1):
+        try:
+            response = (
+                service.spreadsheets()
+                .values()
+                .get(
+                    spreadsheetId=spreadsheet_id,
+                    range=f"'{sheet_name}'!A1:K",
+                    majorDimension="ROWS",
+                    valueRenderOption="UNFORMATTED_VALUE",
+                )
+                .execute()
+            )
+            break
+        except Exception as err:
+            last_error = err
+            if attempt < read_attempts:
+                print(
+                    f"premium log read attempt {attempt}/{read_attempts} failed: {err}; retrying"
+                )
+                time.sleep(min(2 ** (attempt - 1), 4))
+
+    if response is None:
+        raise RuntimeError(
+            f"premium log read failed after {read_attempts} attempts; "
+            "refusing to publish a report without fundamental analysis"
+        ) from last_error
 
     rows = response.get("values", [])
     if len(rows) < 2:
@@ -6439,7 +6464,9 @@ def main() -> None:
         parsed_ohlcv=parsed_ohlcv,
         parsed_ohlcv_sessions=parsed_ohlcv_sessions,
     )
-    premium_links = fetch_premium_discord_links(sheet_service)
+    # Use a fresh transport after the large report-sheet reads. A stale/slow
+    # connection here must not erase every fundamental-analysis action.
+    premium_links = fetch_premium_discord_links(opt.get_service())
     premium_urls = collect_premium_urls(all_frame, premium_links)
     html_path = os.path.abspath(args.html_output)
     guard_against_link_only_fundamental_regression(html_path, premium_urls)

@@ -117,6 +117,8 @@ BOTTOMシグナルのStable★数や各モード条件は、シグナル点灯�
 
 `Mega Validation Report` workflow はDiscord Bot tokenが無い環境でもHTML再生成自体を失敗させず、リンクのみのファンダ導線で生成・デプロイを継続する。
 
+`premium_alert_log` の読取に失敗した場合は空のURL対応表としてレポート生成を続行しない。再試行後も取得できなければ生成を失敗させ、既存の公開HTMLをファンダ分析なしのHTMLで上書きしないこと。本文キャッシュが残っていても、同一シグナルIDとDiscord URLの対応表が無ければ再利用できない。
+
 Mega5/Mega40 の承認済み条件は `current_logic_mega.json` を正とし、`Daily Screener Optimization` 内の `optimize_screener.py --propose-mega-report-logic-only` は `pending_logic_mega.json` への提案だけを行う。Mega提案は確定成績、検証期間、未確定ウォッチリスト銘柄の現在成績、件数低下による過学習リスクを見て、基準未満ならpendingを作らず自動却下する。承認済みMega条件を変更するのは `/approve-update target:<mega系>` で明示承認されたときだけで、却下は `/reject-update target:<mega系>` で対象モードを選ぶ。これはHTML/Markdownレポート専用で、Bot本体の `screener.js` / `index.js` や `/scan` コマンドにMegaモードを追加しない。
 
 レポートヘッダーの二段ナビは、1段目に `天底スコアリングTop`、モード別ページ、使い方ページリンク、ダークモードトグル、2段目に銘柄検索などの主要セクションを置く。

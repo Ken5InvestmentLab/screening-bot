@@ -19,6 +19,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -367,8 +368,11 @@ def build_feature_daily_bars(
 
 
 def yahoo_ticker(symbol: str) -> str:
-    cleaned = clean_symbol(symbol)
-    if cleaned.isdigit() and len(cleaned) in (4, 5):
+    cleaned = clean_symbol(symbol).upper()
+    if (
+        (cleaned.isdigit() and len(cleaned) in (4, 5))
+        or re.fullmatch(r"\d{3}[A-Z]", cleaned)
+    ):
         return f"{cleaned}.T"
     return cleaned
 

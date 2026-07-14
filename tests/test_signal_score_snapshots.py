@@ -31,6 +31,10 @@ def daily(date_key, open_, high, low, close, volume):
 
 
 class SignalScoreSnapshotTest(unittest.TestCase):
+    def test_yahoo_ticker_supports_japanese_alphanumeric_codes(self):
+        self.assertEqual(snapshots.yahoo_ticker("7807"), "7807.T")
+        self.assertEqual(snapshots.yahoo_ticker("155A"), "155A.T")
+
     def test_complete_4h_day_wins_and_partial_day_is_wholly_replaced(self):
         rows = [
             session("2026-07-09", 9, 100, 105, 99, 103, 10),

@@ -1,0 +1,41 @@
+{
+  "conditions": [
+    "vol12",
+    "atr3",
+    "lower_wick50",
+    "stoch75",
+    "rsi5070",
+    "bb80"
+  ],
+  "thresholds": {},
+  "sniper_code": "// Sniperモード自動最適化 2026-07-15 10:56 / 2923件データ\n// Sniper: 23件 勝率73.9% 平均0.4%\n// 【Sniper条件（全6条件通過で採択）】\n//   ① 当日出来高≥20日×1.2\n//   ② ATR% < 3.0%\n//   ③ 下ヒゲ優位（下ヒゲ長 ≥ 実体長）\n//   ④ ストキャス≥75\n//   ⑤ RSI 50〜70\n//   ⑥ BB位置≥80%\n\nfunction calculateScoreSniper(ind) {\n  if (!ind) return null;\n  const filters = [];\n  let score = 0;\n\n  // ① 当日出来高≥20日×1.2\n  if (ind.volSurge >= 1.2) {\n    score++;\n    filters.push(`①vol急増(${ind.volSurge}x)`);\n  }\n\n  // ② ATR% < 3.0%\n  if (ind.atrPct < 3.0) {\n    score++;\n    filters.push(`②ATR(${ind.atrPct}%)`);\n  }\n\n  // ③ 下ヒゲ優位（下ヒゲ長 ≥ 実体長）\n  if (ind.lowerWick50) {\n    score++;\n    filters.push(`③下ヒゲ優位`);\n  }\n\n  // ④ ストキャス≥75\n  if (ind.stochK >= 75) {\n    score++;\n    filters.push(`④STOCH(${ind.stochK.toFixed(0)})`);\n  }\n\n  // ⑤ RSI 50〜70\n  if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {\n    score++;\n    filters.push(`⑤RSI(${ind.rsi14.toFixed(0)})`);\n  }\n\n  // ⑥ BB位置≥80%\n  if (ind.bbPct >= 0.80) {\n    score++;\n    filters.push(`⑥BB上部(${(ind.bbPct*100).toFixed(0)}%)`);\n  }\n\n  return { score, filters };\n}",
+  "stats": {
+    "n": 23,
+    "wr": 0.6840210043731673,
+    "avg": 0.004591928802203123,
+    "win10": 0.0,
+    "lose10": 0.5021336855390237,
+    "wr_raw": 0.7391304347826086,
+    "avg_raw": 0.004217391304347827,
+    "win10_raw": 0.0,
+    "lose10_raw": 1.0,
+    "median_raw": 0.012,
+    "m10_raw": 1,
+    "composite": 17.55097911970045
+  },
+  "validation_stats": {
+    "n": 7,
+    "wr": 0.7400593059171964,
+    "avg": 0.013629860397261792,
+    "win10": 0.0,
+    "lose10": 0.0,
+    "wr_raw": 0.7142857142857143,
+    "avg_raw": 0.011285714285714286,
+    "win10_raw": 0.0,
+    "lose10_raw": 0.0,
+    "median_raw": 0.017,
+    "m10_raw": 0,
+    "composite": 30.965358276414037
+  },
+  "proposed_at": "2026-07-15T10:56:49.577554Z"
+}

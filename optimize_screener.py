@@ -116,7 +116,28 @@ SCOPES           = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 TARGET_WIN_RATE  = 0.55
 TARGET_AVG_PERF  = 0.03
-DISPLAY_BACKTEST_DAYS = 365
+# HTMLレポートと全モードの更新判断で共有する評価期間。
+# 「表示だけ365日、探索は全履歴」のような母集団ずれを作らないこと。
+EVALUATION_BACKTEST_DAYS = 365
+DISPLAY_BACKTEST_DAYS = EVALUATION_BACKTEST_DAYS  # 既存の比較添付ラベル用alias
+SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME = os.environ.get(
+    "SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME",
+    "signal_feature_snapshots",
+)
+SNAPSHOT_NUMERIC_FEATURE_KEYS = {
+    "_vsurge",
+    "_atr",
+    "_body",
+    "_rsi",
+    "_stoch",
+    "_bbpct",
+    "_rci9",
+    "_rci26",
+    "_cci",
+    "_vp_support",
+    "_vp_overhead",
+    "_vp_poc_abs",
+}
 RECENCY_HALFLIFE = 90    # 近接性加重: 90日前のシグナルは重み0.5
 BASELINE_DECAY   = 1.0   # 現行compositeを厳密に超えた場合のみ採用（同一・改悪は不採用）
 WIN10_MIN_COUNT  = 5     # ★6内の+10%以上銘柄の最低件数
@@ -222,7 +243,8 @@ def save_current_logic(method, conditions, thresholds=None, backtest=None):
     data = {
         "method": method,
         "conditions": conditions,
-        "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        "updated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "evaluation_policy": evaluation_policy_payload(),
     }
     if thresholds:
         data["thresholds"] = thresholds
@@ -342,12 +364,14 @@ def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None, backtest
         "conditions": conditions,
         "updated_at": updated_at,
         "thresholds": thresholds or {},
+        "evaluation_policy": evaluation_policy_payload(),
     }
     if backtest_stats:
         wr_raw = backtest_stats.get("wr_raw", wr_raw)
         data["backtest"] = {
-            "source": "all",
+            "source": f"published_recent_{EVALUATION_BACKTEST_DAYS}d",
             "n": int(backtest_stats.get("n", 0)),
+            "decisive_n": int(backtest_stats.get("decisive_n", backtest_stats.get("n", 0))),
             "wr": round(float(backtest_stats.get("wr_raw", 0)) * 100, 1),
             "avg": round(float(backtest_stats.get("avg_raw", 0)) * 100, 1),
         }
@@ -361,9 +385,7 @@ def save_current_logic_sniper(conditions, thresholds=None, wr_raw=None, backtest
         print(f"  ⚠ current_logic_sniper.json 保存エラー: {e}")
 
 def compute_current_sniper_backtest_stats(df, sniper_logic):
-    """現行Sniper条件に対して df 全体（alerts_raw + signals_archive）の
-    全通過統計を再計算する。current_logic_sniper.json の凍結数値を
-    最新化するために毎回の最適化で呼ぶ。"""
+    """HTMLと同じfirst-FINAL Sniper選定を優先して現行成績を返す。"""
     if not sniper_logic or df is None or len(df) == 0:
         return None
     conditions = sniper_logic.get("conditions") or []
@@ -376,9 +398,10 @@ def compute_current_sniper_backtest_stats(df, sniper_logic):
     mask_pass = pd.Series(True, index=df.index)
     for c in conditions:
         mask_pass &= df[c].astype(bool)
+    mask_pass = published_mode_mask(df, "sniper", mask_pass)
     return calc_stats(df[mask_pass])
 
-def compute_live_sniper_stats(df, sniper_logic):
+def compute_live_sniper_stats(df, sniper_logic, published_mode_id=None):
     """current_logic_sniper.json の updated_at 以降に発生したシグナルに対し、
     現行Sniper条件全通過の勝率/平均/件数を返す（採用後のライブ実績）。
     対象0件のときは n=0 の calc_stats 辞書、計算不能なら None。"""
@@ -410,6 +433,8 @@ def compute_live_sniper_stats(df, sniper_logic):
     mask_pass = pd.Series(True, index=df_live.index)
     for c in conditions:
         mask_pass &= df_live[c].astype(bool)
+    if published_mode_id:
+        mask_pass = published_mode_mask(df_live, published_mode_id, mask_pass)
     return calc_stats(df_live[mask_pass])
 
 
@@ -449,9 +474,39 @@ def _mega_utc_now_z():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def evaluation_policy_payload():
+    return {
+        "calendar_days": EVALUATION_BACKTEST_DAYS,
+        "timezone": "Asia/Tokyo",
+        "feature_source": "first_final_snapshot_then_signal_received_cutoff",
+        "current_selection": "published_mode_or_stable_score_then_conditions_fallback",
+        "win_rate": "exclude_zero_percent_draws",
+    }
+
+
+def pending_evaluation_policy_is_current(payload):
+    """Reject approval artifacts made with a different evaluation population."""
+    if not isinstance(payload, dict):
+        return False
+    return payload.get("evaluation_policy") == evaluation_policy_payload()
+
+
+def discard_stale_pending_payload(payload, path, label):
+    if pending_evaluation_policy_is_current(payload):
+        return False
+    if os.path.exists(path):
+        os.remove(path)
+    print(
+        f"  🧹 {label}: 評価基準が現行{EVALUATION_BACKTEST_DAYS}日ポリシーと"
+        "一致しないため破棄しました"
+    )
+    return True
+
+
 def _mega_stats_payload(stats):
     return {
         "n": int(stats.get("n", 0)),
+        "decisive_n": int(stats.get("decisive_n", stats.get("n", 0))),
         "avg_raw": _round_mega_float(stats.get("avg_raw", 0.0)) or 0.0,
         "wr_raw": _round_mega_float(stats.get("wr_raw", 0.0)) or 0.0,
         "median_raw": _round_mega_float(stats.get("median_raw", 0.0)) or 0.0,
@@ -566,6 +621,7 @@ def save_current_logic_mega(modes):
         "method": "mega_report",
         "description": "Approved report-only Mega mode scoring. The bot does not read or deploy this file.",
         "updated_at": _mega_utc_now_z(),
+        "evaluation_policy": evaluation_policy_payload(),
         "modes": modes,
     }
     if _mega_payload_for_compare(existing) == _mega_payload_for_compare(payload):
@@ -611,6 +667,7 @@ def save_pending_logic_mega(proposals):
         "method": "mega_report_pending",
         "description": "Pending report-only Mega mode scoring. Apply only after explicit approval.",
         "proposed_at": _mega_utc_now_z(),
+        "evaluation_policy": evaluation_policy_payload(),
         "modes": proposals,
     }
     existing = load_pending_logic_mega()
@@ -702,6 +759,7 @@ def _mega_base_stats(df_eval, perf_col, target):
         return {
             "n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "median_raw": 0.0,
             "m10_raw": 0, "lose10_raw": 0, "target_hits": 0, "target_rate": 0.0,
+            "decisive_n": 0,
         }
     values = pd.to_numeric(df_eval[perf_col], errors="coerce")
     values = values[np.isfinite(values)]
@@ -710,18 +768,21 @@ def _mega_base_stats(df_eval, perf_col, target):
         return {
             "n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "median_raw": 0.0,
             "m10_raw": 0, "lose10_raw": 0, "target_hits": 0, "target_rate": 0.0,
+            "decisive_n": 0,
         }
     target_hits = int((values >= target).sum())
     m10 = int((values <= LOSE_THRESHOLD).sum())
+    wr_raw, decisive_n = win_rate_excluding_ties(values)
     return {
         "n": n,
         "avg_raw": float(values.mean()),
-        "wr_raw": float((values > 0).mean()),
+        "wr_raw": wr_raw,
         "median_raw": float(values.median()),
         "m10_raw": m10,
         "lose10_raw": m10,
         "target_hits": target_hits,
         "target_rate": target_hits / n,
+        "decisive_n": decisive_n,
     }
 
 
@@ -734,6 +795,25 @@ def _mega_condition_stats(df_eval, conditions, perf_col, target):
     return _mega_base_stats(df_eval[mask], perf_col, target)
 
 
+def _published_mode_rows(df_eval, mode_id, conditions):
+    if df_eval is None or df_eval.empty:
+        return df_eval.copy() if df_eval is not None else pd.DataFrame()
+    if not conditions or any(condition not in df_eval.columns for condition in conditions):
+        fallback = pd.Series(False, index=df_eval.index)
+    else:
+        fallback = df_eval[conditions].astype(bool).all(axis=1)
+    mask = published_mode_mask(df_eval, mode_id, fallback)
+    return df_eval[mask].copy()
+
+
+def _published_mode_stats(df_eval, mode_id, conditions, perf_col, target):
+    return _mega_base_stats(
+        _published_mode_rows(df_eval, mode_id, conditions),
+        perf_col,
+        target,
+    )
+
+
 def _mega_stats_from_mask(mask, perf_arr, target):
     mask = np.asarray(mask, dtype=bool)
     values = perf_arr[mask]
@@ -743,18 +823,21 @@ def _mega_stats_from_mask(mask, perf_arr, target):
         return {
             "n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "median_raw": 0.0,
             "m10_raw": 0, "lose10_raw": 0, "target_hits": 0, "target_rate": 0.0,
+            "decisive_n": 0,
         }
     target_hits = int((values >= target).sum())
     m10 = int((values <= LOSE_THRESHOLD).sum())
+    wr_raw, decisive_n = win_rate_excluding_ties(values)
     return {
         "n": n,
         "avg_raw": float(values.mean()),
-        "wr_raw": float((values > 0).mean()),
+        "wr_raw": wr_raw,
         "median_raw": float(np.median(values)),
         "m10_raw": m10,
         "lose10_raw": m10,
         "target_hits": target_hits,
         "target_rate": target_hits / n,
+        "decisive_n": decisive_n,
     }
 
 
@@ -857,9 +940,17 @@ def _search_mega_report_combo(df, mode):
     return best
 
 
-def _mega_live_condition_stats(live_df, conditions, target):
+def _mega_live_condition_stats(live_df, conditions, target, mode_id=None):
     if live_df is None or live_df.empty:
         return {"n": 0, "avg_raw": 0.0, "wr_raw": 0.0, "target_hits": 0, "target_rate": 0.0}
+    if mode_id:
+        return _published_mode_stats(
+            live_df,
+            mode_id,
+            conditions,
+            "perf_5bd",
+            target,
+        )
     return _mega_condition_stats(live_df, conditions, "perf_5bd", target)
 
 
@@ -959,11 +1050,40 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
             existing_mode = {}
         perf_col = f"perf_{int(mode['eval_days'])}bd"
         df_eval = df.dropna(subset=[perf_col]).sort_values("date").reset_index(drop=True) if perf_col in df.columns else pd.DataFrame()
-        current_stats = _mega_condition_stats(df_eval, current_conditions, perf_col, mode["target"])
+        current_stats = _published_mode_stats(
+            df_eval,
+            mode_id,
+            current_conditions,
+            perf_col,
+            mode["target"],
+        )
+        current_condition_stats = _mega_condition_stats(
+            df_eval,
+            current_conditions,
+            perf_col,
+            mode["target"],
+        )
         split = int(len(df_eval) * 0.7) if not df_eval.empty else 0
         df_valid = df_eval.iloc[split:].copy() if split < len(df_eval) else pd.DataFrame()
-        current_validation = _mega_condition_stats(df_valid, current_conditions, perf_col, mode["target"])
-        current_live = _mega_live_condition_stats(live_df, current_conditions, mode["target"])
+        current_validation = _published_mode_stats(
+            df_valid,
+            mode_id,
+            current_conditions,
+            perf_col,
+            mode["target"],
+        )
+        current_condition_validation = _mega_condition_stats(
+            df_valid,
+            current_conditions,
+            perf_col,
+            mode["target"],
+        )
+        current_live = _mega_live_condition_stats(
+            live_df,
+            current_conditions,
+            mode["target"],
+            mode_id=mode_id,
+        )
 
         best = _search_mega_report_combo(df, mode)
         if not best:
@@ -972,9 +1092,18 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
         if list(best["conditions"]) == list(current_conditions):
             print(f"  [skip] {mode['label']}: 現行条件が最良")
             continue
-        current_rank = _mega_rank_tuple(current_stats, current_validation)
-        if best["rank"] <= current_rank:
-            print(f"  [auto-reject] {mode['label']}: 現行成績を上回らない")
+        published_rank = _mega_rank_tuple(current_stats, current_validation)
+        reapplied_rank = _mega_rank_tuple(
+            current_condition_stats,
+            current_condition_validation,
+        )
+        required_rank = max(published_rank, reapplied_rank)
+        if best["rank"] <= required_rank:
+            print(
+                f"  [auto-reject] {mode['label']}: "
+                f"HTML公開{EVALUATION_BACKTEST_DAYS}日成績または"
+                "現行条件再適用成績を上回らない"
+            )
             continue
 
         candidate_live = _mega_live_condition_stats(live_df, best["conditions"], mode["target"])
@@ -986,7 +1115,7 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
             print(f"  [auto-reject] {mode['label']}: " + " / ".join(rejects))
             continue
 
-        current_rows = _mask_condition_rows(df_eval, current_conditions)
+        current_rows = _published_mode_rows(df_eval, mode_id, current_conditions)
         candidate_rows = _mask_condition_rows(df_eval, best["conditions"])
         delta_reject = delta_quality_reject_reason(
             mode["label"],
@@ -1197,11 +1326,10 @@ def alert_received_at_lookup(*row_sets):
             if not row or alert_id_index >= len(row):
                 continue
             alert_id = str(row[alert_id_index]).strip()
-            if not alert_id:
+            if not alert_id or alert_id in lookup:
                 continue
             received_at = str(row[received_at_index]).strip() if received_at_index < len(row) else ""
-            if received_at:
-                lookup[alert_id] = received_at
+            lookup[alert_id] = received_at
     return lookup
 
 def attach_alert_received_at(alerts, lookup):
@@ -1213,6 +1341,203 @@ def attach_alert_received_at(alerts, lookup):
     alerts["received_at"] = alerts["alert_id"].astype(str).map(lookup).fillna("")
     alerts["_received_at_dt"] = alerts["received_at"].map(parse_local_timestamp)
     return alerts
+
+
+def _parse_snapshot_json(value, default):
+    if isinstance(value, (dict, list)):
+        return value
+    text = str(value or "").strip()
+    if not text:
+        return default
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return default
+
+
+def load_final_signal_snapshot_map(rows):
+    """Parse the snapshot Sheet, preserving the first FINAL row per alert.
+
+    The HTML report uses the same append-only rule. Optimizer baselines must use
+    these immutable signal-time features/mode selections instead of rebuilding
+    historical signals from later OHLCV.
+    """
+    if not rows:
+        return {}
+    header_index = -1
+    header = []
+    for index, row in enumerate(rows[:10]):
+        candidate = [str(cell or "").strip().lower() for cell in row]
+        if "alert_id" in candidate:
+            header_index = index
+            header = candidate
+            break
+    if header_index < 0:
+        return {}
+
+    def column_index(name):
+        return header.index(name) if name in header else -1
+
+    indexes = {
+        name: column_index(name)
+        for name in (
+            "alert_id",
+            "status",
+            "stable_score",
+            "sniper_score",
+            "modes_json",
+            "features_json",
+        )
+    }
+    result = {}
+    for row in rows[header_index + 1:]:
+        def cell(name):
+            index = indexes.get(name, -1)
+            return row[index] if 0 <= index < len(row) else ""
+
+        alert_id = str(cell("alert_id") or "").strip()
+        status = str(cell("status") or "").strip().upper()
+        if not alert_id or alert_id in result or status != "FINAL":
+            continue
+        try:
+            stable_score = int(float(cell("stable_score")))
+        except (TypeError, ValueError):
+            continue
+        try:
+            sniper_score = int(float(cell("sniper_score")))
+        except (TypeError, ValueError):
+            sniper_score = -1
+        result[alert_id] = {
+            "status": status,
+            "stable_score": stable_score,
+            "sniper_score": sniper_score,
+            "modes": _parse_snapshot_json(cell("modes_json"), []),
+            "features": _parse_snapshot_json(cell("features_json"), {}),
+        }
+    return result
+
+
+def fetch_final_signal_snapshot_map(service):
+    """Load the published FINAL snapshot baseline, failing closed if absent."""
+    rows = fetch(service, SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME)
+    snapshots = load_final_signal_snapshot_map(rows)
+    if not snapshots:
+        raise RuntimeError(
+            f"{SIGNAL_FEATURE_SNAPSHOT_SHEET_NAME} にFINALスナップショットがありません"
+        )
+    return snapshots
+
+
+def normalized_snapshot_modes(value):
+    if isinstance(value, str):
+        value = _parse_snapshot_json(value, [])
+    if isinstance(value, dict):
+        value = [key for key, enabled in value.items() if enabled]
+    if not isinstance(value, (list, tuple, set, frozenset)):
+        return set()
+    return {str(mode).strip() for mode in value if str(mode).strip()}
+
+
+def apply_final_signal_snapshots(frame, snapshot_by_alert_id):
+    """Overlay immutable signal-time features and published selection metadata."""
+    if frame is None or frame.empty:
+        return frame.copy() if frame is not None else pd.DataFrame()
+    records = []
+    allowed_features = set(BOOL_CONDS) | SNAPSHOT_NUMERIC_FEATURE_KEYS
+    for record in frame.to_dict(orient="records"):
+        record["_snapshot_final"] = False
+        record["_snapshot_stable_score"] = np.nan
+        record["_snapshot_sniper_score"] = np.nan
+        record["_snapshot_modes"] = tuple()
+        alert_id = str(record.get("alert_id", "") or "").strip()
+        snapshot = snapshot_by_alert_id.get(alert_id) if alert_id else None
+        if isinstance(snapshot, dict) and str(snapshot.get("status", "")).upper() == "FINAL":
+            stored_features = snapshot.get("features")
+            if isinstance(stored_features, dict):
+                for key, value in stored_features.items():
+                    if key in allowed_features:
+                        record[key] = value
+            record["_snapshot_final"] = True
+            record["_snapshot_stable_score"] = snapshot.get("stable_score", np.nan)
+            record["_snapshot_sniper_score"] = snapshot.get("sniper_score", np.nan)
+            record["_snapshot_modes"] = tuple(
+                sorted(normalized_snapshot_modes(snapshot.get("modes")))
+            )
+        records.append(record)
+    out = pd.DataFrame(records, index=frame.index)
+    for condition in BOOL_CONDS:
+        if condition in out.columns:
+            out[condition] = out[condition].astype(bool)
+    return out
+
+
+def final_snapshot_has_features(snapshot_by_alert_id, alert_id):
+    """Match the report rule that a valid FINAL snapshot can rescue live feature gaps."""
+    snapshot = snapshot_by_alert_id.get(str(alert_id or "").strip())
+    return (
+        isinstance(snapshot, dict)
+        and str(snapshot.get("status", "")).strip().upper() == "FINAL"
+        and isinstance(snapshot.get("features"), dict)
+        and bool(snapshot.get("features"))
+    )
+
+
+def optimizer_feature_record(alert, live_features, snapshot_by_alert_id):
+    """Keep snapshot-backed rows even when current OHLCV cannot rebuild features."""
+    record = alert.to_dict() if hasattr(alert, "to_dict") else dict(alert)
+    live_features = live_features or {}
+    if not live_features and not final_snapshot_has_features(
+        snapshot_by_alert_id,
+        record.get("alert_id", ""),
+    ):
+        return None
+    return {**record, **live_features}
+
+
+def published_mode_mask(frame, mode_id, fallback_mask):
+    """Use first-FINAL published membership, falling back only when no snapshot exists."""
+    fallback = pd.Series(fallback_mask, index=frame.index, dtype=bool)
+    if frame is None or frame.empty or "_snapshot_final" not in frame.columns:
+        return fallback
+    final_mask = frame["_snapshot_final"].fillna(False).astype(bool)
+    if not final_mask.any():
+        return fallback
+    snapshot_modes = frame.get(
+        "_snapshot_modes",
+        pd.Series([tuple()] * len(frame), index=frame.index),
+    )
+    snapshot_match = snapshot_modes.map(
+        lambda value: mode_id in normalized_snapshot_modes(value)
+    )
+    return fallback.where(~final_mask, snapshot_match.astype(bool))
+
+
+def published_stable_score(frame, fallback_scores):
+    """Use the immutable Stable score shown by the HTML report when available."""
+    fallback = pd.Series(fallback_scores, index=frame.index).astype(int)
+    if frame is None or frame.empty or "_snapshot_final" not in frame.columns:
+        return fallback
+    scores = fallback.copy()
+    final_mask = frame["_snapshot_final"].fillna(False).astype(bool)
+    snapshot_score_values = frame.get(
+        "_snapshot_stable_score",
+        pd.Series(np.nan, index=frame.index),
+    )
+    snapshot_scores = pd.to_numeric(snapshot_score_values, errors="coerce")
+    use_snapshot = final_mask & snapshot_scores.notna()
+    scores.loc[use_snapshot] = snapshot_scores.loc[use_snapshot].astype(int)
+    return scores
+
+
+def optimizer_evaluation_frame(frame, snapshot_by_alert_id, today=None):
+    """Apply the shared point-in-time snapshot and 365-day optimizer policy."""
+    point_in_time = apply_final_signal_snapshots(frame, snapshot_by_alert_id)
+    return recent_calendar_day_df(
+        point_in_time,
+        EVALUATION_BACKTEST_DAYS,
+        today=today,
+    )
+
 
 def signal_feature_cutoff(alert):
     signal_dt = pd.to_datetime(normalize_signal_date(alert.get("date", "")), errors="coerce")
@@ -1540,13 +1865,19 @@ def latest_close_for_signal(daily, sig_date):
     latest = daily[-1].get("close")
     return latest if latest is not None and math.isfinite(latest) else None
 
-def build_unconfirmed_current_df(alerts_all, ohlcv, ohlcv_sessions=None):
+def build_unconfirmed_current_df(
+    alerts_all,
+    ohlcv,
+    ohlcv_sessions=None,
+    snapshot_by_alert_id=None,
+):
     """perf_5bd未確定のBOTTOMを、現在値ベースの暫定perfで評価可能なDataFrameにする。"""
     if alerts_all is None or alerts_all.empty or "confirmed_5bd" not in alerts_all.columns:
         return pd.DataFrame()
 
     pending = alerts_all[~alerts_all["confirmed_5bd"].astype(bool)].copy()
     ohlcv_sessions = ohlcv_sessions or {}
+    snapshot_by_alert_id = snapshot_by_alert_id or {}
     rows = []
     for _, r in pending.iterrows():
         daily = ohlcv.get(r["symbol"], [])
@@ -1554,16 +1885,16 @@ def build_unconfirmed_current_df(alerts_all, ohlcv, ohlcv_sessions=None):
             ohlcv_sessions.get(r["symbol"], []),
             r,
         )
-        features = get_features(feature_daily or daily, r["date"])
+        features = get_features(feature_daily or daily, r["date"]) or {}
         latest_close = latest_close_for_signal(daily, r["date"])
         entry = r.get("entry", float("nan"))
-        if not features or latest_close is None or not math.isfinite(entry) or entry <= 0:
+        record = optimizer_feature_record(r, features, snapshot_by_alert_id)
+        if record is None or latest_close is None or not math.isfinite(entry) or entry <= 0:
             continue
 
         perf = latest_close / entry - 1
         rows.append({
-            **r.to_dict(),
-            **features,
+            **record,
             "perf_5bd": perf,
             "win_5bd": perf > 0,
             "win10": perf >= WIN_THRESHOLD,
@@ -1625,6 +1956,7 @@ def build_mega_report_feature_frames():
         sa = []
         print(f"  signals_archive 取得スキップ: {_sa_e}")
     oh = fetch(svc, "ohlcv_4h")
+    snapshot_by_alert_id = fetch_final_signal_snapshot_map(svc)
 
     received_at_by_alert_id = alert_received_at_lookup(ar, sa)
     alerts_raw_confirmed = attach_alert_received_at(parse_alerts(ar), received_at_by_alert_id)
@@ -1652,48 +1984,90 @@ def build_mega_report_feature_frames():
             ohlcv_sessions.get(r["symbol"], []),
             r,
         )
-        features = get_features(feature_daily or daily, r["date"])
-        if features:
-            rows.append({**r.to_dict(), **features})
+        features = get_features(feature_daily or daily, r["date"]) or {}
+        record = optimizer_feature_record(r, features, snapshot_by_alert_id)
+        if record is not None:
+            rows.append(record)
         else:
             skipped += 1
-    confirmed_df = pd.DataFrame(rows)
+    confirmed_raw_df = pd.DataFrame(rows)
+    confirmed_df = optimizer_evaluation_frame(
+        confirmed_raw_df,
+        snapshot_by_alert_id,
+    )
     alerts_all = attach_alert_received_at(
         parse_alerts(ar, include_unconfirmed=True),
         received_at_by_alert_id,
     )
-    live_df = build_unconfirmed_current_df(alerts_all, ohlcv, ohlcv_sessions)
+    live_raw_df = build_unconfirmed_current_df(
+        alerts_all,
+        ohlcv,
+        ohlcv_sessions,
+        snapshot_by_alert_id,
+    )
+    live_df = optimizer_evaluation_frame(
+        live_raw_df,
+        snapshot_by_alert_id,
+    )
     print(
-        f"  Megaロジック用データ: 確定 {len(confirmed_df)}件 / "
-        f"未確定現在値 {len(live_df)}件 / スキップ {skipped}件"
+        f"  Megaロジック用データ（過去{EVALUATION_BACKTEST_DAYS}日）: "
+        f"確定 {len(confirmed_raw_df)}→{len(confirmed_df)}件 / "
+        f"未確定現在値 {len(live_raw_df)}→{len(live_df)}件 / "
+        f"FINAL snapshots {len(snapshot_by_alert_id)}件 / スキップ {skipped}件"
     )
     return confirmed_df, live_df
 
 # ══════════════════════════════════════════════════════════════
 # 評価
 # ══════════════════════════════════════════════════════════════
+def win_rate_excluding_ties(values, weights=None, empty_rate=0.0):
+    """Return win rate over finite, non-zero returns only.
+
+    Confirmed count and average still include 0% returns; only the win-rate
+    denominator follows the HTML report rule that a 0% result is a draw.
+    """
+    arr = np.asarray(values, dtype=float)
+    decisive = np.isfinite(arr) & (arr != 0)
+    decisive_n = int(decisive.sum())
+    if decisive_n == 0:
+        return float(empty_rate), 0
+    wins = (arr[decisive] > 0).astype(float)
+    if weights is None:
+        return float(wins.mean()), decisive_n
+    weight_arr = np.asarray(weights, dtype=float)[decisive]
+    finite_weights = np.isfinite(weight_arr)
+    if not finite_weights.any():
+        return float(empty_rate), decisive_n
+    weight_arr = weight_arr[finite_weights]
+    wins = wins[finite_weights]
+    total_weight = float(weight_arr.sum())
+    if total_weight <= 0:
+        return float(empty_rate), decisive_n
+    return float((wins * weight_arr).sum() / total_weight), decisive_n
+
+
 def calc_stats(df_s6):
     n = len(df_s6)
     if n == 0: return dict(n=0, wr=0, avg=0, win10=0, lose10=0,
                            wr_raw=0, avg_raw=0, win10_raw=0, lose10_raw=0,
-                           median_raw=0, m10_raw=0,
+                           median_raw=0, m10_raw=0, decisive_n=0,
                            composite=-9999)
     # 近接性加重: 直近シグナルを重視（古いデータの影響を指数減衰）
-    today = pd.Timestamp.today()
+    today = pd.Timestamp(_jst_today_key())
     dates = pd.to_datetime(df_s6["date"], errors="coerce").fillna(today)
     days_old = (today - dates).dt.days.clip(lower=0)
     w = np.exp(-days_old / RECENCY_HALFLIFE)
     W = w.sum()
-    wr  = float((df_s6["win_5bd"]  * w).sum() / W)
+    perf_values = pd.to_numeric(df_s6["perf_5bd"], errors="coerce")
+    wr, decisive_n = win_rate_excluding_ties(perf_values, weights=w)
     avg = float((df_s6["perf_5bd"] * w).sum() / W)
     w10 = float((df_s6["win10"]    * w).sum())
     l10 = float((df_s6["lose10"]   * w).sum())
     # 非加重（実カウント）: 表示用
-    wr_raw  = float(df_s6["win_5bd"].mean())
+    wr_raw, _ = win_rate_excluding_ties(perf_values)
     avg_raw = float(df_s6["perf_5bd"].mean())
     win10_raw  = float(df_s6["win10"].sum())
     lose10_raw = float(df_s6["lose10"].sum())
-    perf_values = pd.to_numeric(df_s6["perf_5bd"], errors="coerce")
     perf_values = perf_values[np.isfinite(perf_values)]
     median_raw = float(perf_values.median()) if len(perf_values) else 0.0
     m10_raw = int((perf_values <= LOSE_THRESHOLD).sum())
@@ -1701,31 +2075,25 @@ def calc_stats(df_s6):
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
                 median_raw=median_raw, m10_raw=m10_raw,
+                decisive_n=decisive_n,
                 composite=_calc_composite(wr, avg, w10, l10, W, n))
 
-def recent_calendar_day_df(df_eval, days=DISPLAY_BACKTEST_DAYS):
-    """HTMLレポートの表示期間と同じ、直近N暦日分のDataFrameを返す。"""
+def recent_calendar_day_df(df_eval, days=EVALUATION_BACKTEST_DAYS, today=None):
+    """HTMLレポートの判定期間と同じ、直近N暦日分のDataFrameを返す。"""
     if df_eval is None or len(df_eval) == 0 or "date" not in df_eval.columns:
         return df_eval if df_eval is not None else pd.DataFrame()
-    today = pd.Timestamp.today().normalize()
-    cutoff = today - pd.Timedelta(days=max(int(days), 1) - 1)
+    today_ts = pd.Timestamp(today or _jst_today_key()).normalize()
+    cutoff = today_ts - pd.Timedelta(days=max(int(days), 1) - 1)
     dates = pd.to_datetime(df_eval["date"], errors="coerce")
     return df_eval[dates >= cutoff].copy()
 
 def calc_display_stats(df_s6):
     """通知や/help相当の表示用統計。勝率はHTMLと同じく0%の引き分けを分母から除外する。"""
-    stats = calc_stats(df_s6)
-    if df_s6 is None or len(df_s6) == 0 or "perf_5bd" not in df_s6.columns:
-        return stats
-    perf = pd.to_numeric(df_s6["perf_5bd"], errors="coerce")
-    perf = perf[np.isfinite(perf)]
-    decisive = perf[perf != 0]
-    stats["wr_raw"] = float((decisive > 0).mean()) if len(decisive) else 0.0
-    return stats
+    return calc_stats(df_s6)
 
 def _prepare_stats_arrays(df_eval):
     """組み合わせ探索用に、calc_stats相当の入力をNumPy配列へ変換する。"""
-    today = pd.Timestamp.today()
+    today = pd.Timestamp(_jst_today_key())
     dates = pd.to_datetime(df_eval["date"], errors="coerce").fillna(today)
     days_old = (today - dates).dt.days.clip(lower=0).to_numpy(dtype=float)
     return {
@@ -1743,19 +2111,19 @@ def _calc_stats_mask(mask, arrays):
     if n == 0:
         return dict(n=0, wr=0, avg=0, win10=0, lose10=0,
                     wr_raw=0, avg_raw=0, win10_raw=0, lose10_raw=0,
-                    median_raw=0, m10_raw=0,
+                    median_raw=0, m10_raw=0, decisive_n=0,
                     composite=-9999)
     w = arrays["w"][mask]
     W = float(w.sum())
-    wr  = float((arrays["win"][mask]  * w).sum() / W) if W > 0 else 0
-    avg = float((arrays["perf"][mask] * w).sum() / W) if W > 0 else 0
+    perf_values = arrays["perf"][mask]
+    wr, decisive_n = win_rate_excluding_ties(perf_values, weights=w)
+    avg = float((perf_values * w).sum() / W) if W > 0 else 0
     w10 = float((arrays["win10"][mask]  * w).sum())
     l10 = float((arrays["lose10"][mask] * w).sum())
-    wr_raw  = float(arrays["win"][mask].mean())
-    avg_raw = float(arrays["perf"][mask].mean())
+    wr_raw, _ = win_rate_excluding_ties(perf_values)
+    avg_raw = float(perf_values.mean())
     win10_raw  = float(arrays["win10"][mask].sum())
     lose10_raw = float(arrays["lose10"][mask].sum())
-    perf_values = arrays["perf"][mask]
     perf_values = perf_values[np.isfinite(perf_values)]
     median_raw = float(np.median(perf_values)) if len(perf_values) else 0.0
     m10_raw = int((perf_values <= LOSE_THRESHOLD).sum())
@@ -1763,6 +2131,7 @@ def _calc_stats_mask(mask, arrays):
                 wr_raw=wr_raw, avg_raw=avg_raw,
                 win10_raw=win10_raw, lose10_raw=lose10_raw,
                 median_raw=median_raw, m10_raw=m10_raw,
+                decisive_n=decisive_n,
                 composite=_calc_composite(wr, avg, w10, l10, W, n))
 
 def _combo_all_mask(matrix, idxs):
@@ -1782,7 +2151,7 @@ def calc_score_b_series(df, scheme):
     return df.apply(score_row, axis=1)
 
 def calc_backtest_display_stats(df_eval, method, combo, thresholds=None):
-    """通知や/helpに出すバックテスト結果を全件データで集計する。"""
+    """通知やHTMLに出すバックテスト結果を渡された365日frameで集計する。"""
     thresholds = thresholds or {}
     if df_eval is None or len(df_eval) == 0:
         empty = calc_display_stats(df_eval if df_eval is not None else pd.DataFrame())
@@ -1947,10 +2316,12 @@ def _quality_gate_lines(stats, validation_stats=None, mode="normal", data_mode="
 def bootstrap_wr_ci(df_s6, n_iter=1000, alpha=0.05, seed=42):
     """★6サンプルから Bootstrap して wr_raw の (1-alpha) CI を返す。
     サンプル不足（<5件）の場合は (0.0, 1.0) を返す。"""
-    n = len(df_s6)
+    perf = pd.to_numeric(df_s6["perf_5bd"], errors="coerce").to_numpy(dtype=float)
+    perf = perf[np.isfinite(perf) & (perf != 0)]
+    n = len(perf)
     if n < 5:
         return (0.0, 1.0)
-    wins = df_s6["win_5bd"].to_numpy(dtype=float)
+    wins = (perf > 0).astype(float)
     rng = np.random.default_rng(seed)
     idx = rng.integers(0, n, (n_iter, n))
     sample_wrs = wins[idx].mean(axis=1)
@@ -2044,24 +2415,27 @@ def lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, adoption_mode="normal
     )
 
 def permutation_pvalue(df, method, combo, thresholds, observed_composite, n_perm=200, seed=42):
-    """win/loss ラベルをランダムシャッフルして observed_composite 以上が出る確率を返す。
+    """騰落率ラベルをランダムシャッフルして observed_composite 以上が出る確率を返す。
     p 値が低いほど偶然ではなく真のエッジがある可能性が高い。
     採用後の最終候補にのみ実行（計算コスト節約）。"""
     if len(df) < 10:
         return 1.0  # サンプル不足なら常に不採用方向
-    base_wins = df["win_5bd"].to_numpy(dtype=float).copy()
+    base_perf = pd.to_numeric(df["perf_5bd"], errors="coerce").to_numpy(dtype=float)
     rng = np.random.default_rng(seed)
     better = 0
     df_perm = df.copy()
     for _ in range(n_perm):
-        df_perm["win_5bd"] = rng.permutation(base_wins)
+        permuted_perf = rng.permutation(base_perf)
+        df_perm["perf_5bd"] = permuted_perf
+        df_perm["win_5bd"] = permuted_perf > 0
+        df_perm["win10"] = permuted_perf >= WIN_THRESHOLD
+        df_perm["lose10"] = permuted_perf <= LOSE_THRESHOLD
         try:
             st6 = calc_candidate_tiers(df_perm, method, combo, thresholds)[0]
             if st6["composite"] >= observed_composite:
                 better += 1
         except Exception:
             pass
-    df_perm["win_5bd"] = base_wins  # restore
     return better / n_perm
 
 def time_series_kfold_passes(df, method, combo, thresholds, baseline_wr, k=3):
@@ -2122,7 +2496,12 @@ def load_rescue_state():
     try:
         with open(RESCUE_STATE_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return data if isinstance(data, dict) else {}
+        if not isinstance(data, dict):
+            return {}
+        if data and not pending_evaluation_policy_is_current(data):
+            print("  🧹 rescue_state.json は旧評価基準のためリセットします")
+            return {}
+        return data
     except Exception as e:
         print(f"  ⚠ rescue_state.json 読み込みエラー: {e}")
         return {}
@@ -2136,6 +2515,11 @@ def _jsonable_stats(stats):
 
 def save_rescue_state(state):
     try:
+        state = dict(state or {})
+        existing = load_rescue_state()
+        if "sniper" not in state and isinstance(existing.get("sniper"), dict):
+            state["sniper"] = existing["sniper"]
+        state["evaluation_policy"] = evaluation_policy_payload()
         with open(RESCUE_STATE_PATH, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=2)
         print("  ✅ rescue_state.json 更新完了")
@@ -3614,13 +3998,15 @@ def _simple_perf_stats(rows, perf_col, target=None):
             stats.update({"target_hits": 0, "target_rate": 0.0})
         return stats
     m10 = int((values <= LOSE_THRESHOLD).sum())
+    wr_raw, decisive_n = win_rate_excluding_ties(values)
     stats = {
         "n": int(len(values)),
-        "wr_raw": float((values > 0).mean()),
+        "wr_raw": wr_raw,
         "avg_raw": float(values.mean()),
         "median_raw": float(values.median()),
         "m10_raw": m10,
         "lose10_raw": m10,
+        "decisive_n": decisive_n,
     }
     if target is not None:
         hits = int((values >= target).sum())
@@ -3643,14 +4029,16 @@ def _record_perf_stats(records, target=None):
         return stats
     arr = np.asarray(values, dtype=float)
     m10 = int((arr <= LOSE_THRESHOLD).sum())
+    wr_raw, decisive_n = win_rate_excluding_ties(arr)
     stats = {
         "n": int(len(arr)),
-        "wr_raw": float((arr > 0).mean()),
+        "wr_raw": wr_raw,
         "avg_raw": float(arr.mean()),
         "median_raw": float(np.median(arr)),
         "m10_raw": m10,
         "lose10_raw": m10,
         "max_raw": float(arr.max()),
+        "decisive_n": decisive_n,
     }
     if target is not None:
         hits = int((arr >= target).sum())
@@ -4008,11 +4396,19 @@ def build_stable_comparison_attachment(display_df, current_method, current_combo
                                        candidate_method, candidate_combo, candidate_thresholds,
                                        current_validation_stats, candidate_validation_stats):
     try:
-        current_rows = _scored_rows(display_df, current_method, current_combo, current_thresholds, 6)
+        if "sc_cur" in display_df.columns:
+            current_rows = display_df[display_df["sc_cur"] == 6].copy()
+            cur6 = calc_display_stats(current_rows)
+            cur5 = calc_display_stats(display_df[display_df["sc_cur"] == 5])
+            cur4 = calc_display_stats(display_df[display_df["sc_cur"] == 4])
+        else:
+            current_rows = _scored_rows(
+                display_df, current_method, current_combo, current_thresholds, 6
+            )
+            cur6, cur5, cur4, _, _ = calc_backtest_display_stats(
+                display_df, current_method, current_combo, current_thresholds
+            )
         candidate_rows = _scored_rows(display_df, candidate_method, candidate_combo, candidate_thresholds, 6)
-        cur6, cur5, cur4, _, _ = calc_backtest_display_stats(
-            display_df, current_method, current_combo, current_thresholds
-        )
         cand6, cand5, cand4, _, _ = calc_backtest_display_stats(
             display_df, candidate_method, candidate_combo, candidate_thresholds
         )
@@ -4024,9 +4420,9 @@ def build_stable_comparison_attachment(display_df, current_method, current_combo
             "candidate_rows": candidate_rows,
             "perf_col": "perf_5bd",
             "stats_sections": [
-                {"label": f"表示用★6 過去{DISPLAY_BACKTEST_DAYS}日", "current": cur6, "candidate": cand6},
-                {"label": f"表示用★5 過去{DISPLAY_BACKTEST_DAYS}日", "current": cur5, "candidate": cand5},
-                {"label": f"表示用★4 過去{DISPLAY_BACKTEST_DAYS}日", "current": cur4, "candidate": cand4},
+                {"label": f"判定用★6 過去{EVALUATION_BACKTEST_DAYS}日", "current": cur6, "candidate": cand6},
+                {"label": f"判定用★5 過去{EVALUATION_BACKTEST_DAYS}日", "current": cur5, "candidate": cand5},
+                {"label": f"判定用★4 過去{EVALUATION_BACKTEST_DAYS}日", "current": cur4, "candidate": cand4},
                 {"label": "Walk-forward検証★6", "current": current_validation_stats, "candidate": candidate_validation_stats},
             ],
         }
@@ -4044,11 +4440,23 @@ def build_condition_logic_comparison_attachment(mode_label, df, perf_col,
                                                 current_stats, candidate_stats,
                                                 filename_prefix,
                                                 extra_sections=None,
-                                                current_thresholds=None):
+                                                current_thresholds=None,
+                                                current_mode_id=None):
     try:
         current_rows = _all_condition_rows(df, current_conditions, current_thresholds or {})
+        if current_mode_id:
+            current_mask = published_mode_mask(
+                df,
+                current_mode_id,
+                df.index.isin(current_rows.index),
+            )
+            current_rows = df[current_mask].copy()
         candidate_rows = _all_condition_rows(df, candidate_conditions, {})
-        sections = [{"label": "全期間", "current": current_stats, "candidate": candidate_stats}]
+        sections = [{
+            "label": f"過去{EVALUATION_BACKTEST_DAYS}日",
+            "current": current_stats,
+            "candidate": candidate_stats,
+        }]
         sections.extend(extra_sections or [])
         spec = {
             "mode_label": mode_label,
@@ -4088,13 +4496,13 @@ def build_mega_comparison_attachment(proposals, df, live_df):
             current_conditions = current.get("conditions", [])
             candidate_conditions = candidate.get("conditions", [])
             current_confirmed = _with_comparison_scope(
-                _mask_condition_rows(df_eval, current_conditions), "確定"
+                _published_mode_rows(df_eval, mode_id, current_conditions), "確定"
             )
             candidate_confirmed = _with_comparison_scope(
                 _mask_condition_rows(df_eval, candidate_conditions), "確定"
             )
             current_live = _with_comparison_scope(
-                _mask_condition_rows(live_df, current_conditions), "未確定(現在値)"
+                _published_mode_rows(live_df, mode_id, current_conditions), "未確定(現在値)"
             )
             candidate_live = _with_comparison_scope(
                 _mask_condition_rows(live_df, candidate_conditions), "未確定(現在値)"
@@ -4272,6 +4680,7 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
     avg_new = best_stats['avg_raw'] * 100
     avg_old = current_stats.get('avg_raw', 0) * 100
     mode_label = "rescue" if mode == "rescue" else "normal"
+    period_label = f"{EVALUATION_BACKTEST_DAYS}日"
 
     def _stats_line(label, st):
         return (
@@ -4292,10 +4701,10 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                     "inline": False
                 },
                 {
-                    "name": "📊 候補成績",
+                    "name": f"📊 候補成績（過去{EVALUATION_BACKTEST_DAYS}日）",
                     "value": (
                         f"```\n"
-                        f"{_stats_line('全件★6', best_stats)}\n"
+                        f"{_stats_line(period_label + '★6', best_stats)}\n"
                         f"{_stats_line('検証★6', validation_stats)}\n"
                         f"上昇 {int(best_stats['win10_raw'])}件 / 下落 {int(best_stats['lose10_raw'])}件\n"
                         f"```"
@@ -4306,9 +4715,9 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                     "name": "📈 現行との比較",
                     "value": (
                         f"```\n"
-                        f"{_stats_line('現行全件', current_stats)}\n"
+                        f"{_stats_line('現行' + period_label, current_stats)}\n"
                         f"{_stats_line('現行検証', current_validation_stats)}\n"
-                        f"{_stats_line('候補全件', best_stats)}\n"
+                        f"{_stats_line('候補' + period_label, best_stats)}\n"
                         f"{_stats_line('候補検証', validation_stats)}\n"
                         f"```\n"
                         f"勝率: {wr_old:.1f}% → **{wr_new:.1f}%** ({wr_new-wr_old:+.1f}pt)\n"
@@ -4372,6 +4781,7 @@ def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
             f"勝率{st.get('wr_raw', 0)*100:5.1f}% "
             f"平均{st.get('avg_raw', 0)*100:+5.1f}%"
         )
+    period_label = f"{EVALUATION_BACKTEST_DAYS}日"
 
     payload = {
         "embeds": [{
@@ -4386,7 +4796,7 @@ def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
                     "name": "📉 現行成績",
                     "value": (
                         "```\n"
-                        f"{_stats_line('全件★6', current_stats)}\n"
+                        f"{_stats_line(period_label + '★6', current_stats)}\n"
                         f"{_stats_line('検証★6', current_validation_stats)}\n"
                         f"全シグナル {n_total}件\n"
                         "```"
@@ -4444,6 +4854,7 @@ def notify_discord_sniper_rescue_no_candidate(refreshed_stats, live_stats,
             f"勝率{st.get('wr_raw', 0)*100:5.1f}% "
             f"平均{st.get('avg_raw', 0)*100:+5.1f}%"
         )
+    period_label = f"{EVALUATION_BACKTEST_DAYS}日"
 
     payload = {
         "embeds": [{
@@ -4459,7 +4870,7 @@ def notify_discord_sniper_rescue_no_candidate(refreshed_stats, live_stats,
                     "name": "📉 現行成績",
                     "value": (
                         "```\n"
-                        f"{_stats_line('全件★6', refreshed_stats)}\n"
+                        f"{_stats_line(period_label + '★6', refreshed_stats)}\n"
                         f"{_stats_line('ライブ★6', live_stats)}\n"
                         f"全シグナル {n_total}件\n"
                         "```"
@@ -4532,7 +4943,7 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds, c
                     "inline": False
                 },
                 {
-                    "name": "📊 バックテスト成績（全件データ）",
+                    "name": f"📊 バックテスト成績（過去{EVALUATION_BACKTEST_DAYS}日）",
                     "value": (
                         f"```\nSniper: {int(stats['n'])}件  勝率 {wr_new:.1f}%  平均 {avg_new:+.1f}%\n"
                         f"上昇 {int(stats['win10_raw'])}件  下落 {int(stats['lose10_raw'])}件\n```"
@@ -4602,8 +5013,8 @@ def notify_discord_mega_approval(proposals, comparison_attachment=None):
                 "```\n"
                 f"現行: {' + '.join(current.get('conditions', []))}\n"
                 f"候補: {' + '.join(candidate.get('conditions', []))}\n"
-                f"現行確定: {_stats_line(current.get('backtest'))}\n"
-                f"候補確定: {_stats_line(candidate.get('backtest'))}\n"
+                f"現行{EVALUATION_BACKTEST_DAYS}日確定: {_stats_line(current.get('backtest'))}\n"
+                f"候補{EVALUATION_BACKTEST_DAYS}日確定: {_stats_line(candidate.get('backtest'))}\n"
                 f"現行未確定: {_stats_line(current.get('live'))}\n"
                 f"候補未確定: {_stats_line(candidate.get('live'))}\n"
                 "```\n"
@@ -4742,7 +5153,7 @@ def notify_discord_sniper_update(conditions, stats, thresholds):
                     "inline": False
                 },
                 {
-                    "name": "📊 バックテスト成績（全件データ）",
+                    "name": f"📊 バックテスト成績（過去{EVALUATION_BACKTEST_DAYS}日）",
                     "value": (
                         f"```\nSniper: {int(stats['n'])}件  勝率 {wr:.1f}%  平均 {avg:+.1f}%\n"
                         f"上昇 {int(stats['win10_raw'])}件  下落 {int(stats['lose10_raw'])}件\n```"
@@ -4922,6 +5333,26 @@ def restart_bot_only():
 # ══════════════════════════════════════════════════════════════
 # Sniperモード最適化（勝率特化）
 # ══════════════════════════════════════════════════════════════
+def sniper_baseline_gate_reject_reason(candidate_stats, baseline_wr, baseline_avg=None):
+    """Reject candidates that do not improve the published 365-day baseline."""
+    candidate_wr = float((candidate_stats or {}).get("wr_raw", 0.0))
+    baseline_wr = float(baseline_wr or 0.0)
+    if candidate_wr <= baseline_wr + SNIPER_WR_EPS:
+        return (
+            f"勝率が現行以下 ({candidate_wr*100:.1f}% ≤ "
+            f"{baseline_wr*100:.1f}%)"
+        )
+    if baseline_avg is not None:
+        candidate_avg = float((candidate_stats or {}).get("avg_raw", 0.0))
+        avg_floor = float(baseline_avg) - SNIPER_AVG_REGRESSION_TOLERANCE
+        if candidate_avg < avg_floor:
+            return (
+                f"平均リターンが現行比で悪化 ({candidate_avg*100:.1f}% < "
+                f"{avg_floor*100:.1f}%)"
+            )
+    return None
+
+
 def _sniper_lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, wr_floor, rescue_mode=False):
     """Sniper候補を未使用lockboxで確認する。
 
@@ -4981,17 +5412,47 @@ def _run_sniper_optimization(df, args):
     import json as _json
 
     print("\n🎯 Step S1: Sniperモード最適化（勝率特化）...")
+    if args.propose and os.path.exists(SNIPER_PENDING_PATH):
+        os.remove(SNIPER_PENDING_PATH)
+        print(
+            f"  🧹 旧Sniper pendingを破棄し、"
+            f"現行{EVALUATION_BACKTEST_DAYS}日基準で再評価します"
+        )
     sniper_logic = load_current_logic_sniper()
     baseline_wr  = sniper_logic.get("wr_raw", 0.0) if sniper_logic else 0.0
     baseline_avg = None
 
     # ── 現行条件の最新バックテスト + 採用後ライブ実績を毎回再計算 ────
     refreshed_stats = compute_current_sniper_backtest_stats(df, sniper_logic) if sniper_logic else None
-    live_stats      = compute_live_sniper_stats(df, sniper_logic) if sniper_logic else None
+    current_condition_stats = None
+    if sniper_logic:
+        current_condition_rows = _all_condition_rows(
+            df,
+            sniper_logic.get("conditions", []),
+            sniper_logic.get("thresholds", {}) or {},
+        )
+        current_condition_stats = calc_stats(current_condition_rows)
+    live_stats = (
+        compute_live_sniper_stats(df, sniper_logic, published_mode_id="sniper")
+        if sniper_logic else None
+    )
     if refreshed_stats:
-        print(f"  📈 現行条件の最新バックテスト: {int(refreshed_stats['n'])}件 "
+        print(f"  📈 HTML公開基準の最新バックテスト: {int(refreshed_stats['n'])}件 "
               f"勝率{refreshed_stats['wr_raw']*100:.1f}% "
               f"平均{refreshed_stats['avg_raw']*100:.1f}%")
+    if current_condition_stats and (
+        int(current_condition_stats.get("n", 0)) != int((refreshed_stats or {}).get("n", 0))
+        or abs(
+            float(current_condition_stats.get("wr_raw", 0.0))
+            - float((refreshed_stats or {}).get("wr_raw", 0.0))
+        ) > SNIPER_WR_EPS
+    ):
+        print(
+            f"  📐 同一点灯時特徴量への現行条件再適用: "
+            f"{int(current_condition_stats['n'])}件 "
+            f"勝率{current_condition_stats['wr_raw']*100:.1f}% "
+            f"平均{current_condition_stats['avg_raw']*100:.1f}%"
+        )
     if live_stats is not None:
         if live_stats.get("n", 0) > 0:
             print(f"  📊 採用日以降のライブ実績: {int(live_stats['n'])}件 "
@@ -5010,8 +5471,14 @@ def _run_sniper_optimization(df, args):
                 backtest_stats=refreshed_stats,
                 preserve_updated_at=True,
             )
-        baseline_wr = float(refreshed_stats.get("wr_raw", baseline_wr))
-        baseline_avg = float(refreshed_stats.get("avg_raw", 0.0))
+        baseline_wr = max(
+            float(refreshed_stats.get("wr_raw", baseline_wr)),
+            float((current_condition_stats or {}).get("wr_raw", 0.0)),
+        )
+        baseline_avg = max(
+            float(refreshed_stats.get("avg_raw", 0.0)),
+            float((current_condition_stats or {}).get("avg_raw", 0.0)),
+        )
 
     # ── Sniper rescue mode 判定 ─────────────────────────────────
     raw_rescue, raw_rescue_reasons = detect_rescue_mode_sniper(refreshed_stats, live_stats)
@@ -5074,9 +5541,15 @@ def _run_sniper_optimization(df, args):
         cur_conditions = sniper_logic.get("conditions", [])
         cur_thresholds = sniper_logic.get("thresholds", {}) or {}
         if cur_conditions:
-            baseline_lockbox_stats, _, _ = calc_candidate_tiers(
-                df_lockbox, "A", cur_conditions, cur_thresholds
+            current_lockbox_scores = score_with_thresholds(
+                df_lockbox, cur_conditions, cur_thresholds
             )
+            current_lockbox_mask = published_mode_mask(
+                df_lockbox,
+                "sniper",
+                current_lockbox_scores == len(cur_conditions),
+            )
+            baseline_lockbox_stats = calc_stats(df_lockbox[current_lockbox_mask])
     print(f"  Walk-forward: train {len(df_train)}件 / validation {len(df_valid)}件 / lockbox {len(df_lockbox)}件"
           + ("  [rescue mode]" if rescue_mode else ""))
     if baseline_lockbox_stats["n"] > 0:
@@ -5188,26 +5661,18 @@ def _run_sniper_optimization(df, args):
     print(f"  Sniper lockbox: {st6_lockbox['n']}件 勝率{st6_lockbox['wr_raw']*100:.1f}%"
           f" 平均{st6_lockbox['avg_raw']*100:.1f}%")
 
-    # Sniperは勝率特化のため、現行勝率をstrictに上回らない候補は通知しない。
-    # rescue mode 中は現行が劣化しているので、baseline 超えは要求しない（候補側の
-    # 全体勝率が rescue 下限 SNIPER_RESCUE_WR_MIN を満たしていれば通す）。
-    if sniper_logic and not rescue_mode:
-        if st6_full["wr_raw"] <= baseline_wr + SNIPER_WR_EPS:
-            print(
-                f"  ✅ Sniper: 勝率が現行以下 "
-                f"({st6_full['wr_raw']*100:.1f}% ≤ {baseline_wr*100:.1f}%) のため更新しません。"
-            )
+    # Sniperは勝率特化のため、rescue中でもHTML公開365日成績をstrictに
+    # 上回らない候補は通知しない。短期ライブ劣化だけで全体成績を下げない。
+    if sniper_logic:
+        baseline_reject = sniper_baseline_gate_reject_reason(
+            st6_full,
+            baseline_wr,
+            baseline_avg,
+        )
+        if baseline_reject:
+            print(f"  ✅ Sniper: {baseline_reject} のため更新しません。")
             return
-        if (baseline_avg is not None
-                and st6_full["avg_raw"] < baseline_avg - SNIPER_AVG_REGRESSION_TOLERANCE):
-            print(
-                f"  ✅ Sniper: 平均リターンが現行比で悪化 "
-                f"({st6_full['avg_raw']*100:.1f}% < "
-                f"{(baseline_avg - SNIPER_AVG_REGRESSION_TOLERANCE)*100:.1f}%) "
-                f"のため更新しません。"
-            )
-            return
-    elif rescue_mode:
+    if rescue_mode:
         if st6_full["wr_raw"] < SNIPER_RESCUE_WR_MIN:
             print(
                 f"  ✅ Sniper(rescue): 勝率が下限未満 "
@@ -5216,7 +5681,7 @@ def _run_sniper_optimization(df, args):
             )
             return
         print(
-            f"  🧯 Sniper(rescue): 現行劣化のため baseline 超え条件を免除 "
+            f"  🧯 Sniper(rescue): 公開{EVALUATION_BACKTEST_DAYS}日baseline超えを確認 "
             f"(候補 {st6_full['wr_raw']*100:.1f}% / 現行 {baseline_wr*100:.1f}%)"
         )
 
@@ -5232,17 +5697,21 @@ def _run_sniper_optimization(df, args):
             print("  ✅ Sniper: 条件が現行と同一。更新しません。")
             return
 
-        current_targets = all_pass_signal_indices(
+        current_condition_scores = score_with_thresholds(
             df, current_sniper_conditions, current_sniper_thresholds
         )
+        current_sniper_mask = published_mode_mask(
+            df,
+            "sniper",
+            current_condition_scores == len(current_sniper_conditions),
+        )
+        current_targets = set(df.index[current_sniper_mask].tolist())
         candidate_targets = set(s6_full.index.tolist())
         if candidate_targets == current_targets:
             print("  ✅ Sniper: 条件は異なるが抽出結果が現行と同一のため更新しません。")
             return
         if not rescue_mode:
-            current_sniper_rows = _all_condition_rows(
-                df, current_sniper_conditions, current_sniper_thresholds
-            )
+            current_sniper_rows = df[current_sniper_mask].copy()
             delta_reject = delta_quality_reject_reason(
                 "Sniper",
                 current_sniper_rows,
@@ -5267,6 +5736,7 @@ def _run_sniper_optimization(df, args):
         _pending = {
             "conditions":  best_combo,
             "thresholds":  {},
+            "evaluation_policy": evaluation_policy_payload(),
             "sniper_code": sniper_code,
             "stats":       _to_jsonable(st6_full),
             "validation_stats": _to_jsonable(st6_valid),
@@ -5291,6 +5761,7 @@ def _run_sniper_optimization(df, args):
                 {"label": "Lockbox", "current": baseline_lockbox_stats, "candidate": st6_lockbox},
             ],
             current_thresholds=current_sniper_thresholds,
+            current_mode_id="sniper",
         )
         notify_discord_sniper_approval(
             best_combo,
@@ -5359,6 +5830,12 @@ def _run_threshold_sweep(args):
             sys.exit(1)
 
     auto_propose = bool(args.propose)
+    if auto_propose and os.path.exists(PENDING_LOGIC_PATH):
+        os.remove(PENDING_LOGIC_PATH)
+        print(
+            f"  🧹 旧Stable pendingを破棄し、"
+            f"現行{EVALUATION_BACKTEST_DAYS}日基準で再評価します"
+        )
     print(f"{'='*62}")
     print(f"  📊 +X% 閾値スイープ実行 — {len(thresholds)}個の閾値を比較")
     print(f"{'='*62}")
@@ -5686,7 +6163,7 @@ def _print_sweep_summary(results):
 # メイン
 # ══════════════════════════════════════════════════════════════
 def build_sniper_feature_frame():
-    """Build the same confirmed feature frame used by the normal optimizer."""
+    """Build the HTML-aligned, point-in-time frame for Sniper proposals."""
     print("\nStep N1: Fetch data for independent Sniper proposal...")
     try:
         svc = get_service()
@@ -5697,16 +6174,23 @@ def build_sniper_feature_frame():
             sa = []
             print(f"  signals_archive fetch skipped: {exc}")
         oh = fetch(svc, "ohlcv_4h")
+        snapshot_by_alert_id = fetch_final_signal_snapshot_map(svc)
         print(
             f"  alerts_raw: {len(ar)} rows / "
-            f"signals_archive: {len(sa)} rows / ohlcv_4h: {len(oh)} rows"
+            f"signals_archive: {len(sa)} rows / ohlcv_4h: {len(oh)} rows / "
+            f"FINAL snapshots: {len(snapshot_by_alert_id)}"
         )
     except Exception as exc:
         print(f"[error] Sniper data fetch failed: {exc}")
         sys.exit(1)
 
-    alerts_raw_confirmed = parse_alerts(ar)
-    alerts_archive_confirmed = parse_alerts(sa)
+    received_at_by_alert_id = alert_received_at_lookup(ar, sa)
+    alerts_raw_confirmed = attach_alert_received_at(
+        parse_alerts(ar), received_at_by_alert_id
+    )
+    alerts_archive_confirmed = attach_alert_received_at(
+        parse_alerts(sa), received_at_by_alert_id
+    )
     alerts_raw_confirmed["_from_archive"] = False
     alerts_archive_confirmed["_from_archive"] = True
     alerts = pd.concat(
@@ -5727,17 +6211,28 @@ def build_sniper_feature_frame():
         sys.exit(1)
 
     ohlcv = parse_ohlcv(oh)
+    ohlcv_sessions = parse_ohlcv_session_rows(oh)
     rows = []
     skipped = 0
     for _, row in alerts.iterrows():
-        features = get_features(ohlcv.get(row["symbol"], []), row["date"])
-        if features:
-            rows.append({**row.to_dict(), **features})
+        daily = ohlcv.get(row["symbol"], [])
+        feature_daily = daily_bars_for_signal_features(
+            ohlcv_sessions.get(row["symbol"], []),
+            row,
+        )
+        features = get_features(feature_daily or daily, row["date"]) or {}
+        record = optimizer_feature_record(row, features, snapshot_by_alert_id)
+        if record is not None:
+            rows.append(record)
         else:
             skipped += 1
 
-    df = pd.DataFrame(rows)
-    print(f"  feature rows: {len(df)} / skipped: {skipped}")
+    raw_df = pd.DataFrame(rows)
+    df = optimizer_evaluation_frame(raw_df, snapshot_by_alert_id)
+    print(
+        f"  feature rows: {len(raw_df)} -> 過去{EVALUATION_BACKTEST_DAYS}日 {len(df)} "
+        f"/ skipped: {skipped}"
+    )
     if len(df) < 20:
         print("[error] Sniper feature data is insufficient")
         sys.exit(1)
@@ -5785,6 +6280,13 @@ def main():
                         choices=sorted(LOGIC_TARGETS),
                         help="--apply-pending で適用する対象ロジック")
     args = parser.parse_args()
+    if args.apply_pending and (
+        args.propose
+        or args.propose_sniper_only
+        or args.propose_mega_report_logic_only
+        or args.win_threshold_sweep is not None
+    ):
+        parser.error("--apply-pending と提案系オプションは同時に指定できません")
     global COMPOSITE_VARIANT, BASELINE_DECAY, STRICT_WR, WR_FLOOR
     global WIN_THRESHOLD, LOSE_THRESHOLD
     COMPOSITE_VARIANT = args.composite_variant
@@ -5842,6 +6344,13 @@ def main():
         LOSE_THRESHOLD = -args.win_threshold
         print(f"⚙️ +X% 閾値オーバーライド: ±{args.win_threshold*100:.1f}%")
 
+    if args.propose and os.path.exists(PENDING_LOGIC_PATH):
+        os.remove(PENDING_LOGIC_PATH)
+        print(
+            f"  🧹 旧Stable pendingを破棄し、"
+            f"現行{EVALUATION_BACKTEST_DAYS}日基準で再評価します"
+        )
+
     # ─── --apply-pending: 承認済みロジックをデプロイして終了 ───────
     if args.apply_pending:
         import json as _pjson, shutil, time as _time, glob as _glob
@@ -5862,49 +6371,58 @@ def main():
         if _has_main:
             with open(PENDING_LOGIC_PATH, "r", encoding="utf-8") as _pf:
                 _p = _pjson.load(_pf)
-            _method  = _p["method"]
-            _combo   = _p["conditions"]
-            _ths     = _p.get("thresholds", {})
-            _code    = _p["screener_code"]
-            _st6     = _p["stats6"]
-            _st5     = _p["stats5"]
-            _st4     = _p["stats4"]
-            _base    = _p.get("baseline", {})
-            _n_total = _p.get("n_total", 0)
-            print("=" * 62)
-            print("承認済みロジックをデプロイします")
-            print("=" * 62)
-            print(f"  proposed_at : {_p.get('proposed_at', '不明')}")
-            print(f"  方式{_method}: 勝率{_st6['wr_raw']*100:.1f}% 平均{_st6['avg_raw']*100:.1f}%"
-                  f" ★6 {int(_st6['n'])}件")
+            if discard_stale_pending_payload(_p, PENDING_LOGIC_PATH, "Stable pending"):
+                _has_main = False
+            else:
+                _method  = _p["method"]
+                _combo   = _p["conditions"]
+                _ths     = _p.get("thresholds", {})
+                _code    = _p["screener_code"]
+                _st6     = _p["stats6"]
+                _st5     = _p["stats5"]
+                _st4     = _p["stats4"]
+                _base    = _p.get("baseline", {})
+                _n_total = _p.get("n_total", 0)
+                print("=" * 62)
+                print("承認済みロジックをデプロイします")
+                print("=" * 62)
+                print(f"  proposed_at : {_p.get('proposed_at', '不明')}")
+                print(f"  方式{_method}: 勝率{_st6['wr_raw']*100:.1f}% 平均{_st6['avg_raw']*100:.1f}%"
+                      f" ★6 {int(_st6['n'])}件")
         if _has_sniper:
             with open(SNIPER_PENDING_PATH, "r", encoding="utf-8") as _sf:
                 _sp = _pjson.load(_sf)
-            _sp_stats = _sp["stats"]
-            print(f"  Sniper pending: 勝率{_sp_stats['wr_raw']*100:.1f}%"
-                  f" 平均{_sp_stats['avg_raw']*100:.1f}% {int(_sp_stats['n'])}件")
+            if discard_stale_pending_payload(_sp, SNIPER_PENDING_PATH, "Sniper pending"):
+                _has_sniper = False
+            else:
+                _sp_stats = _sp["stats"]
+                print(f"  Sniper pending: 勝率{_sp_stats['wr_raw']*100:.1f}%"
+                      f" 平均{_sp_stats['avg_raw']*100:.1f}% {int(_sp_stats['n'])}件")
 
-            _current_sniper = load_current_logic_sniper()
-            if _current_sniper:
-                _current_sniper_wr = float(_current_sniper.get("wr_raw", 0.0))
-                _pending_sniper_wr = float(_sp_stats.get("wr_raw", 0.0))
-                if _pending_sniper_wr <= _current_sniper_wr + SNIPER_WR_EPS:
-                    print(
-                        f"  ✅ Sniper pending: 勝率が現行以下 "
-                        f"({_pending_sniper_wr*100:.1f}% ≤ {_current_sniper_wr*100:.1f}%) "
-                        "のため適用しません。"
-                    )
-                    _has_sniper = False
+                _current_sniper = load_current_logic_sniper()
+                if _current_sniper:
+                    _current_sniper_wr = float(_current_sniper.get("wr_raw", 0.0))
+                    _pending_sniper_wr = float(_sp_stats.get("wr_raw", 0.0))
+                    if _pending_sniper_wr <= _current_sniper_wr + SNIPER_WR_EPS:
+                        print(
+                            f"  ✅ Sniper pending: 勝率が現行以下 "
+                            f"({_pending_sniper_wr*100:.1f}% ≤ {_current_sniper_wr*100:.1f}%) "
+                            "のため適用しません。"
+                        )
+                        _has_sniper = False
 
         if _has_mega:
             _mega_pending = load_pending_logic_mega()
-            _mega_modes = _mega_pending.get("modes", {}) if isinstance(_mega_pending.get("modes"), dict) else {}
-            _selected_mega = [m for m in _mega_target_mode_ids(_target) if m in _mega_modes]
-            if _selected_mega:
-                print(f"  Mega pending: {', '.join(_selected_mega)}")
-            else:
-                print(f"  Mega pending: target={_target} に該当する候補なし")
+            if discard_stale_pending_payload(_mega_pending, MEGA_PENDING_PATH, "Mega pending"):
                 _has_mega = False
+            else:
+                _mega_modes = _mega_pending.get("modes", {}) if isinstance(_mega_pending.get("modes"), dict) else {}
+                _selected_mega = [m for m in _mega_target_mode_ids(_target) if m in _mega_modes]
+                if _selected_mega:
+                    print(f"  Mega pending: {', '.join(_selected_mega)}")
+                else:
+                    print(f"  Mega pending: target={_target} に該当する候補なし")
+                    _has_mega = False
 
         if not _has_main and not _has_sniper and not _has_mega:
             print("ℹ️ 適用対象のpendingロジックがないため、デプロイはスキップします。")
@@ -5996,13 +6514,22 @@ def main():
             sa = []
             print(f"  signals_archive 取得スキップ: {_sa_e}")
         oh = fetch(svc, "ohlcv_4h")
-        print(f"  alerts_raw: {len(ar)}行 / signals_archive: {len(sa)}行 / ohlcv_4h: {len(oh)}行")
+        snapshot_by_alert_id = fetch_final_signal_snapshot_map(svc)
+        print(
+            f"  alerts_raw: {len(ar)}行 / signals_archive: {len(sa)}行 / "
+            f"ohlcv_4h: {len(oh)}行 / FINAL snapshots: {len(snapshot_by_alert_id)}件"
+        )
     except Exception as e:
         print(f"❌ 取得エラー: {e}"); sys.exit(1)
 
     print("\n🔧 Step 2: 解析...")
-    alerts_raw_confirmed = parse_alerts(ar)
-    alerts_archive_confirmed = parse_alerts(sa)
+    received_at_by_alert_id = alert_received_at_lookup(ar, sa)
+    alerts_raw_confirmed = attach_alert_received_at(
+        parse_alerts(ar), received_at_by_alert_id
+    )
+    alerts_archive_confirmed = attach_alert_received_at(
+        parse_alerts(sa), received_at_by_alert_id
+    )
     # alerts_raw 由来かどうかを追跡（通知表示で /help と件数・勝率を揃えるため）
     alerts_raw_confirmed['_from_archive'] = False
     alerts_archive_confirmed['_from_archive'] = True
@@ -6018,8 +6545,12 @@ def main():
         ], ignore_index=True)
     # 未確定★6投影で使う alerts_all は alerts_raw 限定。
     # signals_archive は完了済みのみなので、include_unconfirmed=True で取り直しても意味がない。
-    alerts_all = parse_alerts(ar, include_unconfirmed=True)
+    alerts_all = attach_alert_received_at(
+        parse_alerts(ar, include_unconfirmed=True),
+        received_at_by_alert_id,
+    )
     ohlcv  = parse_ohlcv(oh)
+    ohlcv_sessions = parse_ohlcv_session_rows(oh)
     unconfirmed_count = max(0, len(alerts_all) - len(alerts_raw_confirmed))
     print(f"  BOTTOM確定済み合計: {len(alerts)}件 "
           f"(alerts_raw {len(alerts_raw_confirmed)} + archive {len(alerts_archive_confirmed)})")
@@ -6029,15 +6560,31 @@ def main():
     print("\n📊 Step 3: 指標計算...")
     rows = []; skipped = 0
     for _, r in alerts.iterrows():
-        f = get_features(ohlcv.get(r["symbol"], []), r["date"])
-        if f: rows.append({**r.to_dict(), **f})
+        daily = ohlcv.get(r["symbol"], [])
+        feature_daily = daily_bars_for_signal_features(
+            ohlcv_sessions.get(r["symbol"], []),
+            r,
+        )
+        f = get_features(feature_daily or daily, r["date"]) or {}
+        record = optimizer_feature_record(r, f, snapshot_by_alert_id)
+        if record is not None:
+            rows.append(record)
         else: skipped += 1
-    df = pd.DataFrame(rows)
-    print(f"  有効データ: {len(df)}件（スキップ: {skipped}件）")
+    raw_df = pd.DataFrame(rows)
+    df = optimizer_evaluation_frame(raw_df, snapshot_by_alert_id)
+    print(
+        f"  有効データ: {len(raw_df)}件 → 過去{EVALUATION_BACKTEST_DAYS}日 {len(df)}件"
+        f"（スキップ: {skipped}件）"
+    )
     if len(df) < 20: print("❌ 有効データ不足"); sys.exit(1)
 
     print("\n📏 Step 4: ベースライン計算...")
-    print(f"  全体: {len(df)}件 勝率{df['win_5bd'].mean()*100:.1f}% 平均{df['perf_5bd'].mean()*100:.2f}%")
+    overall_wr, overall_decisive_n = win_rate_excluding_ties(df["perf_5bd"])
+    print(
+        f"  過去{EVALUATION_BACKTEST_DAYS}日全体: {len(df)}件 "
+        f"勝率{overall_wr*100:.1f}%（勝敗確定{overall_decisive_n}件） "
+        f"平均{df['perf_5bd'].mean()*100:.2f}%"
+    )
     current_logic = load_current_logic()
     if current_logic:
         print(f"  現行ロジック（方式{current_logic['method']} / {current_logic.get('updated_at','?')}）をベースラインとして使用")
@@ -6064,6 +6611,7 @@ def main():
             current_method = "B"
             current_combo = scheme
             current_thresholds = {}
+        df["sc_cur"] = published_stable_score(df, df["sc_cur"])
         baseline = calc_stats(df[df["sc_cur"] == 6])
         print(f"  現行★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
@@ -6086,22 +6634,35 @@ def main():
         current_method = "A"
         current_combo = V14
         current_thresholds = {}
-        baseline = calc_stats(df[df["sc_v14"] == 6])
+        df["sc_cur"] = published_stable_score(df, df["sc_cur"])
+        baseline = calc_stats(df[df["sc_cur"] == 6])
         print(f"  v14.1★6: {baseline['n']}件 勝率{baseline['wr_raw']*100:.1f}%"
               f" 平均{baseline['avg_raw']*100:.2f}% 上昇{baseline['win10_raw']:.0f}件 下落{baseline['lose10_raw']:.0f}件")
 
-    # 表示用統計はHTMLレポートと同じく、直近1年の merged dataset を使う。
+    # 判定用統計はHTMLレポートと同じ直近1年の点灯時データを使う。
     display_current_df = recent_calendar_day_df(df, DISPLAY_BACKTEST_DAYS)
     baseline_ar = calc_display_stats(display_current_df[display_current_df["sc_cur"] == 6])
-    print(f"  表示用★6（過去{DISPLAY_BACKTEST_DAYS}日）: {baseline_ar['n']}件 勝率{baseline_ar['wr_raw']*100:.1f}%"
+    print(f"  判定用★6（過去{EVALUATION_BACKTEST_DAYS}日）: {baseline_ar['n']}件 勝率{baseline_ar['wr_raw']*100:.1f}%"
           f" 平均{baseline_ar['avg_raw']*100:.2f}%")
 
-    unconfirmed_current_df = build_unconfirmed_current_df(alerts_all, ohlcv)
+    unconfirmed_current_df = optimizer_evaluation_frame(
+        build_unconfirmed_current_df(
+            alerts_all,
+            ohlcv,
+            ohlcv_sessions,
+            snapshot_by_alert_id,
+        ),
+        snapshot_by_alert_id,
+    )
     current_unconfirmed_stats6 = calc_stats(pd.DataFrame())
     current_projection_stats6 = baseline
     if len(unconfirmed_current_df) > 0:
         unconfirmed_current_df["sc_cur"] = calc_score_series_for_logic(
             unconfirmed_current_df, current_method, current_combo, current_thresholds
+        )
+        unconfirmed_current_df["sc_cur"] = published_stable_score(
+            unconfirmed_current_df,
+            unconfirmed_current_df["sc_cur"],
         )
         current_unconfirmed_s6 = unconfirmed_current_df[unconfirmed_current_df["sc_cur"] == 6]
         current_unconfirmed_stats6 = calc_stats(current_unconfirmed_s6)
@@ -6332,7 +6893,7 @@ def main():
             else:
                 print(f"  #{i+1:<2} (閾値最適化NG — デフォルト維持)  {'+'.join(combo_i)}")
 
-        # 採用判定は必ず全件データで再評価する。
+        # 採用判定は必ず365日判定データ全体で再評価する。
         # cands_a は walk-forward train 上の探索結果なので、そのまま使うと
         # 全件品質ゲートをすり抜ける可能性がある。
         final_pairs = []
@@ -6530,14 +7091,14 @@ def main():
                 if best_method == "A"
                 else build_func_b(best_combo, best_stats, baseline, len(df)))
 
-    # HTMLレポートと同じ表示期間・勝率定義で、通知/pending用統計を計算する。
+    # HTMLレポートと同じ判定期間・勝率定義で、通知/pending用統計を計算する。
     display_df = display_current_df
     display_stats6, display_stats5, display_stats4, display_base, display_n_total = \
         calc_backtest_display_stats(display_df, best_method, best_combo, best_thresholds)
     training_stats6, training_stats5, training_stats4 = calc_candidate_tiers(
         df_wf_train, best_method, best_combo, best_thresholds
     )
-    print(f"  表示用バックテスト（過去{DISPLAY_BACKTEST_DAYS}日 / {display_n_total}件）: ★6 {display_stats6['n']}件 "
+    print(f"  判定用バックテスト（過去{EVALUATION_BACKTEST_DAYS}日 / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
     candidate_unconfirmed_stats6 = calc_stats(pd.DataFrame())
@@ -6562,7 +7123,7 @@ def main():
     adoption_reasons = list(adoption_reasons) + ["未確定平均・-10%以下件数・中央値・直近lockbox強制ゲート通過"]
 
     if adoption_mode != "rescue":
-        display_current_rows = _scored_rows(display_df, current_method, current_combo, current_thresholds, 6)
+        display_current_rows = display_df[display_df["sc_cur"] == 6].copy()
         display_candidate_rows = _scored_rows(display_df, best_method, best_combo, best_thresholds, 6)
         delta_reject = delta_quality_reject_reason(
             "Stable",
@@ -6604,12 +7165,12 @@ def main():
                 restart_bot_only()
             return
 
-    # ─── 最終ゲート: 表示用★6勝率が現行を下回るなら提案しない ────────────
+    # ─── 最終ゲート: 公開365日★6勝率が現行を下回るなら提案しない ─────────
     # /help/HTMLの表示勝率が下がる変更はユーザー体験の改悪になるため、
     # 学習用の全体データで改善があっても却下する。
     if display_stats6["wr_raw"] < baseline_ar["wr_raw"]:
         msg = (
-            f"表示用★6勝率が現行以下のため更新をスキップ"
+            f"公開{EVALUATION_BACKTEST_DAYS}日★6勝率が現行以下のため更新をスキップ"
             f"（候補{display_stats6['wr_raw']*100:.1f}%"
             f" < 現行{baseline_ar['wr_raw']*100:.1f}%）"
         )
@@ -6627,6 +7188,7 @@ def main():
             "method":       best_method,
             "conditions":   best_combo if best_method == "A" else [[c, w, l] for c, w, l in best_combo],
             "thresholds":   best_thresholds or {},
+            "evaluation_policy": evaluation_policy_payload(),
             "screener_code": new_code,
             "stats6":       _to_jsonable(display_stats6),
             "stats5":       _to_jsonable(display_stats5),
@@ -6642,7 +7204,7 @@ def main():
                              for k, v in display_base.items()
                              if not isinstance(v, str)},
             "n_total":      display_n_total,
-            "backtest_source": f"merged_recent_{DISPLAY_BACKTEST_DAYS}d",
+            "backtest_source": f"published_recent_{EVALUATION_BACKTEST_DAYS}d",
             "proposed_at":  datetime.utcnow().isoformat() + "Z",
             "backtest": {
                 "data_mode": data_mode,
@@ -6775,7 +7337,7 @@ def main():
         else:
             save_current_logic("B", [[c, w, lift] for c, w, lift in best_combo])
 
-        # Discord更新通知は /scan 全期間と同じ全件データの成績を表示する
+        # Discord更新通知もHTMLと同じ過去365日成績を表示する
         notify_discord_update(best_method, best_combo,
                               display_stats6, display_stats5, display_stats4,
                               display_base, display_n_total, what_changed, new_ths)

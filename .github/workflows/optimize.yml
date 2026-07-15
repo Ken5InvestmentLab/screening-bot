@@ -61,14 +61,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ ! -f pending_logic.json ] && [ ! -f pending_logic_sniper.json ] && [ ! -f pending_logic_mega.json ] && [ ! -f rescue_state.json ]; then
-            echo "No pending logic or optimizer state to commit"
-            exit 0
-          fi
-          [ -f pending_logic.json ] && git add pending_logic.json
-          [ -f pending_logic_sniper.json ] && git add pending_logic_sniper.json
-          [ -f pending_logic_mega.json ] && git add pending_logic_mega.json
-          [ -f rescue_state.json ] && git add rescue_state.json
+          for path in pending_logic.json pending_logic_sniper.json pending_logic_mega.json rescue_state.json; do
+            if [ -e "$path" ] || git ls-files --error-unmatch "$path" >/dev/null 2>&1; then
+              git add -A -- "$path"
+            fi
+          done
           if git diff --staged --quiet; then
             echo "No changes staged"
           else

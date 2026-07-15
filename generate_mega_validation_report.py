@@ -37,6 +37,7 @@ except ImportError:
 
 
 JST = ZoneInfo("Asia/Tokyo")
+REPORT_BACKTEST_DAYS = opt.EVALUATION_BACKTEST_DAYS
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MARKDOWN_OUTPUT = os.path.join("reports", "mega_validation_report_latest.md")
 DEFAULT_HTML_OUTPUT = os.path.join("reports", "mega_validation_report_latest.html")
@@ -6485,8 +6486,14 @@ def main() -> None:
     confirmed_frame = attach_fundamental_links(confirmed_frame, premium_links, fundamental_html_cache)
     all_frame = attach_fundamental_links(all_frame, premium_links, fundamental_html_cache)
 
-    report_confirmed_frame = recent_calendar_day_frame(confirmed_frame, 365)
-    report_all_frame = recent_calendar_day_frame(all_frame, 365)
+    report_confirmed_frame = recent_calendar_day_frame(
+        confirmed_frame,
+        REPORT_BACKTEST_DAYS,
+    )
+    report_all_frame = recent_calendar_day_frame(
+        all_frame,
+        REPORT_BACKTEST_DAYS,
+    )
     report_meta_data = report_meta(all_meta, report_all_frame, report_confirmed_frame)
     report_meta_data["premium_log_urls"] = premium_links.get("matched_urls", 0)
     report_meta_data["discord_messages"] = len([url for url in premium_urls if url in fundamental_html_cache])

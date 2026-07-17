@@ -183,62 +183,12 @@ jobs:
         if: ${{ inputs.notify_discord && env.REPORT_GATE_DEPLOY_ENABLED == 'true' }}
         env:
           DISCORD_REPORT_WEBHOOK_URL: ${{ secrets.DISCORD_REPORT_WEBHOOK_URL || secrets.DISCORD_WEBHOOK_URL || secrets.DISCORD_WEBHOOK }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN || secrets.DISCORD_TOKEN }}
+          REPORT_READY_NOTICE_DEDUP_SECONDS: "900"
         run: |
-          python - <<'PY'
-          import json
-          import os
-          import time
-          import urllib.error
-          import urllib.request
-          from datetime import datetime, timezone
-
-          webhook_url = os.environ.get("DISCORD_REPORT_WEBHOOK_URL", "").strip()
-          if not webhook_url:
-              print("DISCORD_REPORT_WEBHOOK_URL is not set; skipping report-ready Discord notice")
-              raise SystemExit(0)
-
-          print("Waiting 150 seconds after report-gate deployment before sending the report-ready Discord notice")
-          time.sleep(150)
-
-          embed = {
-              "title": "✅ OHLCVデータ同期完了",
-              "color": 0x2ecc71,
-              "fields": [
-                  {
-                      "name": "🤖 スコアリングBot",
-                      "value": "最新の分析結果は `/scan` または [ブラウザ](https://scoring-bot-report.ipo-ken5-5489.workers.dev/) にてご確認いただけます。",
-                      "inline": False,
-                  }
-              ],
-              "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-              "footer": {"text": "天底極致 OHLCV同期"},
-          }
-          payload = json.dumps({"embeds": [embed]}, ensure_ascii=False).encode("utf-8")
-          request = urllib.request.Request(
-              webhook_url,
-              data=payload,
-              headers={
-                  "Content-Type": "application/json",
-                  "User-Agent": "DiscordBot (screening-bot, 1.0)",
-              },
-              method="POST",
-          )
-          try:
-              with urllib.request.urlopen(request, timeout=15) as response:
-                  if response.status not in (200, 204):
-                      body = response.read().decode("utf-8", errors="replace")
-                      print(f"::warning::Discord webhook returned HTTP {response.status}: {body[:300]}")
-                      raise SystemExit(0)
-          except urllib.error.HTTPError as exc:
-              body = exc.read().decode("utf-8", errors="replace")
-              print(f"::warning::Discord webhook failed: HTTP {exc.code}: {body[:300]}")
-              raise SystemExit(0)
-          except Exception as exc:
-              print(f"::warning::Discord webhook failed: {exc}")
-              raise SystemExit(0)
-
-          print("Sent report-ready Discord notice")
-          PY
+          echo "Waiting 150 seconds after report-gate deployment before sending the report-ready Discord notice"
+          sleep 150
+          python send_report_ready_notice.py
 
       - name: Notify Discord about approved logic update
         if: ${{ inputs.logic_update_notice_payload_b64 != '' }}

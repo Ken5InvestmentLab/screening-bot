@@ -1,6 +1,7 @@
 .env
 credentials.json
 node_modules/
+pine/.cache/
 logs/
 backups/
 desktop.ini

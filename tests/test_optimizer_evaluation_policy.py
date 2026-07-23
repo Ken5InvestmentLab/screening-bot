@@ -174,6 +174,61 @@ class OptimizerEvaluationPolicyTest(unittest.TestCase):
         self.assertEqual(mega["target_hits"], 19)
         self.assertEqual(mega_vectorized["target_hits"], 19)
 
+    def test_mega_rejects_win_rate_drop_hidden_by_one_extreme_winner(self):
+        current_values = [0.634, 0.527, 0.130, 0.076, 0.035, -0.032, -0.192, -0.325]
+        candidate_values = [
+            4.654, 0.618, 0.617, 0.249, 0.130, 0.099,
+            -0.011, -0.019, -0.037, -0.075, -0.087, -0.154,
+        ]
+        current_rows = pd.DataFrame({"perf_40bd": current_values})
+        candidate_rows = pd.DataFrame({"perf_40bd": candidate_values})
+        current_stats = opt._mega_base_stats(current_rows, "perf_40bd", 0.50)
+        candidate_stats = opt._mega_base_stats(candidate_rows, "perf_40bd", 0.50)
+
+        reason = opt.mega_outlier_dependency_reject_reason(
+            "Mega40 下ヒゲ回復",
+            current_stats,
+            candidate_stats,
+            candidate_rows,
+            "perf_40bd",
+            0.50,
+        )
+
+        self.assertIsNotNone(reason)
+        self.assertIn("最大1銘柄に依存", reason)
+        self.assertIn("勝率が現行比12.5pt悪化", reason)
+
+    def test_mega_keeps_broad_based_candidate_despite_lower_win_rate(self):
+        current_values = [0.634, 0.527, 0.130, 0.076, 0.035, -0.032, -0.192, -0.325]
+        candidate_values = [
+            0.700, 0.650, 0.600, 0.550, 0.200, 0.150,
+            -0.010, -0.020, -0.030, -0.040, -0.050, -0.060,
+        ]
+        current_rows = pd.DataFrame({"perf_40bd": current_values})
+        candidate_rows = pd.DataFrame({"perf_40bd": candidate_values})
+        current_stats = opt._mega_base_stats(current_rows, "perf_40bd", 0.50)
+        candidate_stats = opt._mega_base_stats(candidate_rows, "perf_40bd", 0.50)
+
+        reason = opt.mega_outlier_dependency_reject_reason(
+            "Mega40 下ヒゲ回復",
+            current_stats,
+            candidate_stats,
+            candidate_rows,
+            "perf_40bd",
+            0.50,
+        )
+
+        self.assertIsNone(reason)
+
+    def test_mega_proposal_checks_outlier_dependency_before_notification(self):
+        source = inspect.getsource(opt._run_mega_report_logic_proposal)
+
+        self.assertIn("mega_outlier_dependency_reject_reason(", source)
+        self.assertLess(
+            source.index("mega_outlier_dependency_reject_reason("),
+            source.index("notify_discord_mega_approval("),
+        )
+
     def test_sniper_candidate_below_html_baseline_is_rejected_even_in_rescue(self):
         baseline_wr = 17 / 22
         candidate = {"n": 13, "wr_raw": 10 / 13, "avg_raw": 0.00954}

@@ -97,6 +97,12 @@ MEGA_LOGIC_EPS = 1e-12
 MEGA_LIVE_AVG_TOLERANCE = 0.05
 MEGA_LIVE_WR_TOLERANCE = 0.15
 MEGA_MIN_N_RATIO = 0.60
+MEGA_OUTLIER_GUARD_MIN_N = 5
+MEGA_OUTLIER_GUARD_WR_DROP = 0.05
+MEGA_OUTLIER_GUARD_AVG_GAIN = 0.08
+MEGA_OUTLIER_GUARD_DEPENDENCE = 0.75
+MEGA_OUTLIER_GUARD_ROBUST_AVG_GAIN = 0.05
+MEGA_OUTLIER_GUARD_TARGET_RATE_GAIN = 0.05
 DELTA_QUALITY_MIN_RATIO = 0.75
 DELTA_QUALITY_MIN_CURRENT_N = 5
 DELTA_QUALITY_MAX_WEAK_ADDS = 2
@@ -841,6 +847,71 @@ def _mega_stats_from_mask(mask, perf_arr, target):
     }
 
 
+def mega_outlier_dependency_reject_reason(
+        mode_label, current_stats, candidate_stats, candidate_rows, perf_col, target):
+    """Reject mean-only Mega improvements that depend on one extreme winner."""
+    current_n = _stat_n(current_stats)
+    candidate_n = _stat_n(candidate_stats)
+    if (
+        current_n < MEGA_OUTLIER_GUARD_MIN_N
+        or candidate_n < MEGA_OUTLIER_GUARD_MIN_N
+        or candidate_rows is None
+        or perf_col not in getattr(candidate_rows, "columns", [])
+    ):
+        return None
+
+    current_wr = _stat_float(current_stats, "wr_raw")
+    candidate_wr = _stat_float(candidate_stats, "wr_raw")
+    wr_drop = current_wr - candidate_wr
+    current_avg = _stat_float(current_stats, "avg_raw")
+    candidate_avg = _stat_float(candidate_stats, "avg_raw")
+    avg_gain = candidate_avg - current_avg
+    if (
+        wr_drop + MEGA_LOGIC_EPS < MEGA_OUTLIER_GUARD_WR_DROP
+        or avg_gain + MEGA_LOGIC_EPS < MEGA_OUTLIER_GUARD_AVG_GAIN
+    ):
+        return None
+
+    values = pd.to_numeric(candidate_rows[perf_col], errors="coerce").to_numpy(dtype=float)
+    values = values[np.isfinite(values)]
+    if len(values) < MEGA_OUTLIER_GUARD_MIN_N:
+        return None
+    trimmed_values = np.delete(values, int(np.argmax(values)))
+    trimmed_stats = _mega_stats_from_mask(
+        np.ones(len(trimmed_values), dtype=bool),
+        trimmed_values,
+        target,
+    )
+    trimmed_avg = _stat_float(trimmed_stats, "avg_raw")
+    removed_lift = candidate_avg - trimmed_avg
+    dependence = removed_lift / avg_gain if avg_gain > MEGA_LOGIC_EPS else 0.0
+    if dependence + MEGA_LOGIC_EPS < MEGA_OUTLIER_GUARD_DEPENDENCE:
+        return None
+
+    robust_avg_gain = trimmed_avg - current_avg
+    robust_median_gain = _stat_median(trimmed_stats) - _stat_median(current_stats)
+    robust_target_gain = (
+        _stat_float(trimmed_stats, "target_rate")
+        - _stat_float(current_stats, "target_rate")
+    )
+    has_robust_support = (
+        robust_avg_gain + MEGA_LOGIC_EPS >= MEGA_OUTLIER_GUARD_ROBUST_AVG_GAIN
+        or robust_median_gain >= -MEGA_LOGIC_EPS
+        or robust_target_gain + MEGA_LOGIC_EPS >= MEGA_OUTLIER_GUARD_TARGET_RATE_GAIN
+    )
+    if has_robust_support:
+        return None
+
+    return (
+        f"{mode_label}: 勝率が現行比{wr_drop*100:.1f}pt悪化し、"
+        f"平均改善の{dependence*100:.1f}%が最大1銘柄に依存。"
+        f"最大銘柄除外後は平均{trimmed_avg*100:+.1f}%"
+        f"（現行比{robust_avg_gain*100:+.1f}pt）/ "
+        f"中央値{_stat_median(trimmed_stats)*100:+.1f}% / "
+        f"目標Hit率{_stat_float(trimmed_stats, 'target_rate')*100:.1f}%のため自動却下"
+    )
+
+
 def _mega_rank_tuple(stats, validation_stats):
     valid_n = int(validation_stats.get("n", 0))
     return (
@@ -1117,6 +1188,19 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
 
         current_rows = _published_mode_rows(df_eval, mode_id, current_conditions)
         candidate_rows = _mask_condition_rows(df_eval, best["conditions"])
+        outlier_reject = mega_outlier_dependency_reject_reason(
+            mode["label"],
+            current_stats,
+            best["stats"],
+            candidate_rows,
+            perf_col,
+            mode["target"],
+        )
+        if outlier_reject:
+            print(f"  [auto-reject] {outlier_reject}")
+            continue
+        reasons.append("勝率悪化・単一銘柄依存ゲート通過")
+
         delta_reject = delta_quality_reject_reason(
             mode["label"],
             current_rows,

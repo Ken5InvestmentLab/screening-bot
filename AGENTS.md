@@ -228,7 +228,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 | `DISCORD_BOT_TOKEN` | `Mega Validation Report` でDiscord投稿済みファンダ本文をHTMLキャッシュへ追加取得し、完了通知の直近メッセージ重複を確認するBotトークン。未設定でもHTML再生成は継続するが、新規ファンダ本文はHTML内に埋め込まれず、重複安全性を確認できない完了通知は送らない |
 | `DISCORD_REPORT_WEBHOOK_URL` | `Mega Validation Report` でHTML生成・コミット・report-gateデプロイ後、150秒待ってからDiscordへ完了通知を送るWebhook URL。未設定の場合、通知だけをスキップしHTML生成・コミット・デプロイは継続する |
 
-`Mega Validation Report` のHTML生成完了通知は、生成済みHTMLのコミットとreport-gateデプロイ完了後、Webhook URL確認後に150秒待ってから送信し、旧GASのOHLCV完了通知と同じDiscord表示にする。report-gateデプロイが無効な環境では、通知リンク先のWorker HTML更新を保証できないためこの通知も送らない。タイトルは `✅ OHLCVデータ同期完了`、フィールド名は `🤖 スコアリングBot`、本文は `/scan` とブラウザリンクの案内だけにし、GitHub Actions実行ログ欄は出さない。
+`Mega Validation Report` のHTML生成完了通知は、生成済みHTMLのコミットとreport-gateデプロイ完了後、Webhook URL確認後に150秒待ってから送信し、旧GASのOHLCV完了通知と同じDiscord表示にする。report-gateデプロイが無効な環境では、通知リンク先のWorker HTML更新を保証できないためこの通知も送らない。タイトルは `✅ OHLCVデータ同期完了`、フィールド名は `🤖 スコアリングレポート`、本文は `/scan` とブラウザリンクの案内だけにし、GitHub Actions実行ログ欄は出さない。
 完了通知は `send_report_ready_notice.py` を唯一の送信実装とし、同じタイトル・フィールド・本文・フッターのメッセージが直近15分にあれば送信をスキップする。送信直後も再確認し、競合で同一通知が増えた場合はこのWebhook側の重複を削除して1通へ収束させる。この重複ガードをインラインWebhook POSTへ戻さない。
 `Deploy Approved Logic` 承認後のレポート再生成ではこのDiscord完了通知を送らない。`deploy.yml` から `mega-validation-report.yml` を呼ぶ場合は `notify_discord: false` を明示し、承認適用したスコアロジックの内容通知は `--apply-pending` 中に一時JSONへ退避して、HTML再生成とreport-gate反映後に `mega-validation-report.yml` の最終段で送る。
 `Mega Validation Report` workflow に平日21:00 JSTなどの定時 `schedule` は置かない。レポート再生成は `Daily Screener Optimization` からの共有workflow呼び出し、13:21先行OHLCV取得後の明示dispatch、または手動実行で行う。

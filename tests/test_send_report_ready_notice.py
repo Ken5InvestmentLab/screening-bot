@@ -47,6 +47,7 @@ class ReportReadyNoticeTests(unittest.TestCase):
     def test_embed_copy_matches_existing_notice(self):
         embed = build_notice_embed(NOW)
         self.assertEqual(embed["title"], NOTICE_TITLE)
+        self.assertEqual(NOTICE_FIELD_NAME, "🤖 スコアリングレポート")
         self.assertEqual(embed["fields"][0]["name"], NOTICE_FIELD_NAME)
         self.assertEqual(embed["fields"][0]["value"], NOTICE_FIELD_VALUE)
         self.assertEqual(embed["footer"]["text"], NOTICE_FOOTER)

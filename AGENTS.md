@@ -99,6 +99,10 @@ py optimize_screener.py --dry-run
 PYTHONIOENCODING=utf-8 py generate_mega_validation_report.py
 ```
 
+### 独立TradingViewストラテジー
+
+`pine/` はBot本体・GAS・レポート採点から独立した調査用パスとして扱い、明示指示なしに `screener.js`、`index.js`、`current_logic*.json` へ接続しない。`pine/backtest_entry_strategy.py` は既定で公式JPX銘柄一覧とYahoo Finance日足を使い、`alerts_raw` / `signals_archive` の履歴を候補選定へ使わない。生成される価格キャッシュと結果JSONは `pine/.cache/` に置いてGit管理しない。Pine変更はローカル構文確認だけで完了扱いにせず、可能ならTradingViewのPineエディタでコンパイルし、日足チャートとストラテジーテスターを確認する。
+
 特定時刻時点の表示へ手動で戻す必要がある場合だけ、`MEGA_REPORT_ALERT_RECEIVED_CUTOFF="YYYY-MM-DD HH:mm"` または `--alert-received-cutoff "YYYY-MM-DD HH:mm"` を指定して再生成する。通常生成やGitHub Actionsではこのカットオフを指定しない。
 `Mega Validation Report` を手動 `workflow_dispatch` でHTML再生成する場合、Discord完了通知は原則送らない。通知が本当に必要な通常運用だけ `notify_discord=true` を明示する。
 

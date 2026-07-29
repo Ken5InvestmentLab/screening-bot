@@ -63,7 +63,7 @@ SNAPSHOT_NUMERIC_FEATURE_KEYS = {
     "_vp_overhead",
     "_vp_poc_abs",
 }
-REPORT_TITLE = "天底極致 スコアリングBot レポート"
+REPORT_TITLE = "天底極致 スコアリングレポート"
 PREMIUM_LOG_SPREADSHEET_ID_DEFAULT = "1GeLT-DUEdsYzT6AR3n1MkhkCeivqgtsMEXMhYfnHm9s"
 DISCORD_API_BASE = "https://discord.com/api/v10"
 DISCORD_MESSAGE_URL_RE = re.compile(
@@ -2312,7 +2312,7 @@ def navigation_html(
 def guide_content_html() -> str:
     return """
     <section id="guide-overview" class="panel guide-panel">
-      <h2>天底極致 スコアリングBot レポートについて</h2>
+      <h2>天底極致 スコアリングレポートについて</h2>
       <p class="note">TradingView用インジケーター「天底極致 - 蒼橙の審眼 -」にて底シグナルが点灯した銘柄について、複数のテクニカル指標をもとに品質スコアを算出し、一覧で表示します。</p>
       <p class="notice">このシステムは2026年3月5日から稼働しています。そのため、2026年3月4日以前に底シグナルが点灯した銘柄は、このレポートには記録されていません。</p>
     </section>

@@ -1,3 +1,4 @@
+import copy
 import inspect
 import json
 import os
@@ -298,6 +299,201 @@ class OptimizerEvaluationPolicyTest(unittest.TestCase):
                     encoding="utf-8",
                 )
                 self.assertEqual(opt.load_rescue_state(), {})
+
+    def test_august_3_stable_proposal_fails_dramatic_improvement_gate(self):
+        rejects = opt.stable_replacement_gate_rejects(
+            {"n": 47, "wr_raw": 0.5531914894, "avg_raw": 0.0746595745},
+            {"n": 26, "wr_raw": 0.60, "avg_raw": 0.0528846154},
+            {"n": 7, "wr_raw": 0.2857142857, "avg_raw": 0.04},
+            {"n": 7, "wr_raw": 0.6666666667, "avg_raw": 0.0204285714},
+            {"n": 16, "wr_raw": 0.5625, "avg_raw": 0.002},
+            {"n": 9, "wr_raw": 0.4444444444, "avg_raw": 0.0257777778},
+            bootstrap_ci_low=0.40,
+            kfold_wins=1,
+            permutation_pvalue=0.0,
+            mode="normal",
+            data_mode="strict",
+        )
+
+        self.assertTrue(any("+8.0pt" in reason for reason in rejects))
+        self.assertTrue(any("公開365日平均" in reason for reason in rejects))
+        self.assertTrue(any("公開365日件数" in reason for reason in rejects))
+        self.assertTrue(any("検証平均" in reason for reason in rejects))
+        self.assertTrue(any("Lockbox勝率" in reason for reason in rejects))
+        self.assertTrue(any("Bootstrap" in reason for reason in rejects))
+        self.assertTrue(any("K-Fold" in reason for reason in rejects))
+
+    def test_august_4_rescue_proposal_fails_same_dramatic_improvement_gate(self):
+        rejects = opt.stable_replacement_gate_rejects(
+            {"n": 47, "wr_raw": 0.5531914894, "avg_raw": 0.0746595745},
+            {"n": 24, "wr_raw": 0.6086956522, "avg_raw": 0.0577916667},
+            {"n": 7, "wr_raw": 0.2857142857, "avg_raw": 0.04},
+            {"n": 8, "wr_raw": 0.5714285714, "avg_raw": 0.015},
+            {"n": 16, "wr_raw": 0.5625, "avg_raw": 0.002},
+            {"n": 5, "wr_raw": 0.40, "avg_raw": 0.0004},
+            bootstrap_ci_low=0.4347826087,
+            kfold_wins=1,
+            permutation_pvalue=0.0,
+            mode="rescue",
+            data_mode="strict",
+        )
+
+        self.assertTrue(any("+8.0pt" in reason for reason in rejects))
+        self.assertTrue(any("公開365日平均" in reason for reason in rejects))
+        self.assertTrue(any("公開365日件数" in reason for reason in rejects))
+        self.assertTrue(any("検証平均" in reason for reason in rejects))
+        self.assertTrue(any("Lockbox件数" in reason for reason in rejects))
+        self.assertTrue(any("Lockbox勝率" in reason for reason in rejects))
+        self.assertTrue(any("Bootstrap" in reason for reason in rejects))
+        self.assertTrue(any("K-Fold" in reason for reason in rejects))
+
+    def test_stable_dramatic_improvement_gate_accepts_exact_policy_boundaries(self):
+        rejects = opt.stable_replacement_gate_rejects(
+            {"n": 20, "wr_raw": 0.55, "avg_raw": 0.06},
+            {"n": 18, "wr_raw": 0.63, "avg_raw": 0.06},
+            {"n": 10, "wr_raw": 0.60, "avg_raw": 0.02},
+            {"n": 8, "wr_raw": 0.60, "avg_raw": 0.02},
+            {"n": 10, "wr_raw": 0.60, "avg_raw": 0.01},
+            {"n": 8, "wr_raw": 0.60, "avg_raw": 0.01},
+            bootstrap_ci_low=0.550001,
+            kfold_wins=2,
+            permutation_pvalue=0.049,
+            mode="normal",
+            data_mode="strict",
+        )
+
+        self.assertEqual(rejects, [])
+
+    def test_each_stable_dramatic_improvement_requirement_is_mandatory(self):
+        base = {
+            "current": {"n": 20, "wr_raw": 0.55, "avg_raw": 0.06},
+            "candidate": {"n": 18, "wr_raw": 0.63, "avg_raw": 0.06},
+            "current_valid": {"n": 10, "wr_raw": 0.60, "avg_raw": 0.02},
+            "candidate_valid": {"n": 8, "wr_raw": 0.60, "avg_raw": 0.02},
+            "current_lockbox": {"n": 10, "wr_raw": 0.60, "avg_raw": 0.01},
+            "candidate_lockbox": {"n": 8, "wr_raw": 0.60, "avg_raw": 0.01},
+            "bootstrap_ci_low": 0.550001,
+            "kfold_wins": 2,
+            "permutation_pvalue": 0.049,
+        }
+        cases = {
+            "win_rate": ("candidate", "wr_raw", 0.629),
+            "average": ("candidate", "avg_raw", 0.059),
+            "full_count": ("candidate", "n", 17),
+            "validation_count": ("candidate_valid", "n", 7),
+            "validation_win_rate": ("candidate_valid", "wr_raw", 0.59),
+            "validation_average": ("candidate_valid", "avg_raw", 0.019),
+            "lockbox_count": ("candidate_lockbox", "n", 7),
+            "lockbox_win_rate": ("candidate_lockbox", "wr_raw", 0.59),
+            "lockbox_average": ("candidate_lockbox", "avg_raw", 0.009),
+            "bootstrap": (None, "bootstrap_ci_low", 0.55),
+            "kfold": (None, "kfold_wins", 1),
+            "permutation": (None, "permutation_pvalue", 0.05),
+        }
+
+        for label, (section, key, value) in cases.items():
+            with self.subTest(label=label):
+                case = copy.deepcopy(base)
+                if section is None:
+                    case[key] = value
+                else:
+                    case[section][key] = value
+                rejects = opt.stable_replacement_gate_rejects(
+                    case["current"],
+                    case["candidate"],
+                    case["current_valid"],
+                    case["candidate_valid"],
+                    case["current_lockbox"],
+                    case["candidate_lockbox"],
+                    case["bootstrap_ci_low"],
+                    case["kfold_wins"],
+                    case["permutation_pvalue"],
+                    mode="normal",
+                    data_mode="strict",
+                )
+                self.assertNotEqual(rejects, [])
+
+    def test_rescue_final_criteria_do_not_bypass_existing_relative_gates(self):
+        baseline = {
+            "n": 20,
+            "wr_raw": 0.60,
+            "avg_raw": 0.06,
+            "composite": 100.0,
+            "win10_raw": 6.0,
+        }
+        candidate = {
+            "n": 20,
+            "wr_raw": 0.61,
+            "avg_raw": 0.06,
+            "composite": 90.0,
+            "win10_raw": 6.0,
+            "lose10_raw": 0.0,
+        }
+        validation = {"n": 8, "wr_raw": 0.60, "avg_raw": 0.01}
+
+        exploratory_ok, _, _ = opt.check_criteria(
+            candidate,
+            baseline,
+            validation,
+            mode="rescue",
+            baseline_validation_stats=validation,
+        )
+        final_ok, _, _ = opt.check_criteria(
+            candidate,
+            baseline,
+            validation,
+            mode="rescue",
+            baseline_validation_stats=validation,
+            enforce_relative=True,
+        )
+
+        self.assertTrue(exploratory_ok)
+        self.assertFalse(final_ok)
+
+    def test_rescue_no_candidate_notification_contains_rejection_reason(self):
+        response = mock.MagicMock()
+        response.status = 204
+        with mock.patch.object(opt, "APPROVAL_WEBHOOK_URL", "https://example.invalid/webhook"), \
+                mock.patch("urllib.request.urlopen") as urlopen:
+            urlopen.return_value.__enter__.return_value = response
+            opt.notify_discord_rescue_no_candidate(
+                {"n": 47, "wr_raw": 0.55, "avg_raw": 0.07},
+                {"n": 7, "wr_raw": 0.29, "avg_raw": 0.04},
+                ["rescue test"],
+                100,
+                rejection_reason="劇的改善ゲート未達: Lockbox勝率が現行未満",
+            )
+
+        request = urlopen.call_args.args[0]
+        payload = json.loads(request.data.decode("utf-8"))
+        fields = payload["embeds"][0]["fields"]
+        reason_field = next(field for field in fields if field["name"] == "今回の見送り理由")
+        self.assertIn("Lockbox勝率", reason_field["value"])
+
+    def test_stable_replacement_rejection_returns_before_pending_save(self):
+        source = inspect.getsource(opt.main)
+        gate_index = source.index("replacement_rejects = stable_replacement_gate_rejects(")
+        rejection_index = source.index("if replacement_rejects:", gate_index)
+        pending_index = source.index("if args.propose:", rejection_index)
+        rejection_block = source[rejection_index:pending_index]
+
+        self.assertIn("handle_no_stable_candidate(msg)", rejection_block)
+        self.assertIn("return", rejection_block)
+        self.assertNotIn('if adoption_mode != "rescue":', source)
+
+    def test_threshold_sweep_treats_all_final_gate_rejections_as_ng(self):
+        cases = {
+            "quality": "✅ 最終採用条件未達: ✗ 通常条件①",
+            "dramatic": "⛔ 劇的改善ゲート未達: 公開365日勝率の改善が+5.6pt",
+            "force": "❌ Stable強制ゲートで却下: 未確定平均が現行比で悪化",
+            "delta": "Stable: 差分品質ゲートで見送り。件数が減少",
+        }
+
+        for expected_kind, output in cases.items():
+            with self.subTest(expected_kind=expected_kind):
+                summary = opt._parse_sweep_output(output, 0.10)
+                self.assertEqual(summary["verdict"], "NG")
+                self.assertEqual(summary["ng_kind"], expected_kind)
 
     def test_workflow_stages_pending_deletions(self):
         workflow = Path(".github/workflows/optimize.yml").read_text(encoding="utf-8")

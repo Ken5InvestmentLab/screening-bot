@@ -169,6 +169,15 @@ STABLE_VALID_AVG_MIN   = 0.00  # 直近検証側★6平均騰落率
 MIN_VALID_N_FLOOR     = 5     # 検証★6の絶対最低件数（これ未満は統計的意味なし）
 VALID_N_RATIO_FLOOR   = 0.8   # 現行検証★6 × 0.8 以上を維持（WIN10_RATE_FLOOR_RATIOと同思想）
 
+# Stableの最終置換ゲート。rescueは探索範囲だけを広げ、pending作成条件は緩和しない。
+STABLE_REPLACEMENT_WR_GAIN_MIN = 0.08
+STABLE_REPLACEMENT_N_RATIO_MIN = 0.70
+STABLE_REPLACEMENT_VALID_N_RATIO_MIN = 0.80
+STABLE_REPLACEMENT_LOCKBOX_N_MIN = 8
+STABLE_REPLACEMENT_LOCKBOX_N_RATIO_MIN = 0.70
+STABLE_REPLACEMENT_KFOLD_MIN = 2
+STABLE_REPLACEMENT_PERMUTATION_P_MAX = 0.05
+
 # ── 過渡期（archive 蓄積中）の緩和水準 ───────────────────────────────
 # データが少ない期間は統計的厳格化を一時スキップし、pre-Tier-A 水準で運用。
 # 統計検定 (Lockbox/Bootstrap CI/K-Fold) は n が小さいと逆に偽陽性/偽陰性を量産するため。
@@ -2860,7 +2869,8 @@ def win10_guard_ok(stats, baseline):
     return ok_count and ok_rate
 
 def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresholds=None,
-                   data_mode="strict", baseline_validation_stats=None):
+                   data_mode="strict", baseline_validation_stats=None,
+                   enforce_relative=None):
     validation_stats = validation_stats or calc_stats(pd.DataFrame())
     quality_ok, quality_lines = _quality_gate_lines(stats, validation_stats, mode, data_mode,
                                                      baseline_validation_stats=baseline_validation_stats)
@@ -2878,7 +2888,9 @@ def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresh
     ok_win10_count, ok_win10_rate, cand_win10_rate, base_win10_rate, win10_rate_floor = \
         win10_guard_details(stats, baseline)
     relative_ok = ok_comp and ok_wr and ok_wr_floor and ok_win10_count and ok_win10_rate
-    ok = quality_ok and (relative_ok if mode == "normal" else True)
+    relative_required = (mode == "normal") if enforce_relative is None else bool(enforce_relative)
+    rescue_exemption = mode == "rescue" and not relative_required
+    ok = quality_ok and (relative_ok if relative_required else True)
     op_wr = ">" if STRICT_WR else "≥"
     penalty_str = f" - penalty{penalty:.1f}" if penalty > 0 else ""
     res = [
@@ -2887,20 +2899,113 @@ def check_criteria(stats, baseline, validation_stats=None, mode="normal", thresh
         f"{'✓' if ok_wr_floor else '✗'} 通常条件②-b: 勝率 {stats['wr_raw']*100:.1f}% ≥ 下限{WR_FLOOR*100:.0f}%",
         f"{'✓' if ok_win10_count else '✗'} 通常条件③-a: 大幅上昇 {stats['win10_raw']:.0f}件 ≥ 最低{WIN10_MIN_COUNT}件",
         f"{'✓' if ok_win10_rate else '✗'} 通常条件③-b: 大幅上昇率 {cand_win10_rate*100:.1f}% ≥ 現行{base_win10_rate*100:.1f}%×{WIN10_RATE_FLOOR_RATIO:.2f}={win10_rate_floor*100:.1f}%",
-        f"{'✓' if mode == 'rescue' else ' '} rescue mode: {'現行超え条件を免除' if mode == 'rescue' else '未使用'}",
+        f"{'✓' if rescue_exemption else ' '} rescue mode: "
+        f"{'探索候補では現行超え条件を免除' if rescue_exemption else '最終採用では現行超え条件を免除しない' if mode == 'rescue' else '未使用'}",
         *quality_lines,
         f"{'✓' if stats['wr_raw']>=TARGET_WIN_RATE else '△'} 努力①勝率 {stats['wr_raw']*100:.1f}% (≥55%)",
         f"{'✓' if stats['avg_raw']>=TARGET_AVG_PERF else '△'} 努力②平均 {stats['avg_raw']*100:.1f}% (>+3%)",
         f"{'✓' if stats['win10_raw']>stats['lose10_raw'] else '△'} 努力③上昇{stats['win10_raw']:.0f}件>下落{stats['lose10_raw']:.0f}件",
     ]
     adoption_reasons = []
-    if mode == "rescue":
-        adoption_reasons.append("rescue: 現行劣化のため現行超え条件を免除")
+    if rescue_exemption:
+        adoption_reasons.append("rescue探索: 現行劣化のため候補探索時だけ現行超え条件を免除")
     else:
-        adoption_reasons.append("normal: 現行composite・勝率・大幅上昇率ガードを通過")
+        adoption_reasons.append("最終採用: 現行composite・勝率・大幅上昇率ガードを通過")
     adoption_reasons.append("Stable品質ゲートを通過")
     adoption_reasons.append("直近30% walk-forward検証を通過")
     return ok, res, adoption_reasons
+
+
+def stable_replacement_gate_rejects(current_stats, candidate_stats,
+                                    current_validation_stats, candidate_validation_stats,
+                                    current_lockbox_stats, candidate_lockbox_stats,
+                                    bootstrap_ci_low, kfold_wins, permutation_pvalue,
+                                    mode="normal", data_mode="strict"):
+    """Stableのpending作成前に、劇的かつ再現性のある改善だけを通す。"""
+    rejects = []
+    eps = 1e-12
+
+    if data_mode == "transition":
+        absolute_n_min = (
+            TRANSITION_RESCUE_STABLE_S6_N_MIN
+            if mode == "rescue"
+            else TRANSITION_STABLE_S6_N_MIN
+        )
+    else:
+        absolute_n_min = RESCUE_STABLE_S6_N_MIN if mode == "rescue" else STABLE_S6_N_MIN
+
+    current_n = _stat_n(current_stats)
+    candidate_n = _stat_n(candidate_stats)
+    full_n_min = max(absolute_n_min, math.ceil(current_n * STABLE_REPLACEMENT_N_RATIO_MIN))
+    wr_gain = _stat_float(candidate_stats, "wr_raw") - _stat_float(current_stats, "wr_raw")
+    if wr_gain + eps < STABLE_REPLACEMENT_WR_GAIN_MIN:
+        rejects.append(
+            f"公開365日勝率の改善が+{wr_gain*100:.1f}pt "
+            f"< +{STABLE_REPLACEMENT_WR_GAIN_MIN*100:.1f}pt"
+        )
+    if _stat_float(candidate_stats, "avg_raw") + eps < _stat_float(current_stats, "avg_raw"):
+        rejects.append(
+            f"公開365日平均が現行未満 "
+            f"({_stat_float(candidate_stats, 'avg_raw')*100:+.1f}% "
+            f"< {_stat_float(current_stats, 'avg_raw')*100:+.1f}%)"
+        )
+    if candidate_n < full_n_min:
+        rejects.append(
+            f"公開365日件数が{candidate_n}件 < {full_n_min}件 "
+            f"(現行{current_n}件の{STABLE_REPLACEMENT_N_RATIO_MIN*100:.0f}%かつ絶対下限)"
+        )
+
+    current_valid_n = _stat_n(current_validation_stats)
+    candidate_valid_n = _stat_n(candidate_validation_stats)
+    valid_n_min = max(
+        MIN_VALID_N_FLOOR,
+        math.ceil(current_valid_n * STABLE_REPLACEMENT_VALID_N_RATIO_MIN),
+    )
+    if candidate_valid_n < valid_n_min:
+        rejects.append(
+            f"検証件数が{candidate_valid_n}件 < {valid_n_min}件 "
+            f"(現行{current_valid_n}件の{STABLE_REPLACEMENT_VALID_N_RATIO_MIN*100:.0f}%)"
+        )
+    if _stat_float(candidate_validation_stats, "wr_raw") + eps < _stat_float(current_validation_stats, "wr_raw"):
+        rejects.append("検証勝率が現行未満")
+    if _stat_float(candidate_validation_stats, "avg_raw") + eps < _stat_float(current_validation_stats, "avg_raw"):
+        rejects.append("検証平均が現行未満")
+
+    current_lockbox_n = _stat_n(current_lockbox_stats)
+    candidate_lockbox_n = _stat_n(candidate_lockbox_stats)
+    lockbox_n_min = max(
+        STABLE_REPLACEMENT_LOCKBOX_N_MIN,
+        math.ceil(current_lockbox_n * STABLE_REPLACEMENT_LOCKBOX_N_RATIO_MIN),
+    )
+    if candidate_lockbox_n < lockbox_n_min:
+        rejects.append(
+            f"Lockbox件数が{candidate_lockbox_n}件 < {lockbox_n_min}件 "
+            f"(現行{current_lockbox_n}件の{STABLE_REPLACEMENT_LOCKBOX_N_RATIO_MIN*100:.0f}%)"
+        )
+    if _stat_float(candidate_lockbox_stats, "wr_raw") + eps < _stat_float(current_lockbox_stats, "wr_raw"):
+        rejects.append("Lockbox勝率が現行未満")
+    if _stat_float(candidate_lockbox_stats, "avg_raw") + eps < _stat_float(current_lockbox_stats, "avg_raw"):
+        rejects.append("Lockbox平均が現行未満")
+
+    current_wr = _stat_float(current_stats, "wr_raw")
+    bootstrap_ci_low = float(bootstrap_ci_low)
+    if not math.isfinite(bootstrap_ci_low) or bootstrap_ci_low <= current_wr:
+        rejects.append(
+            f"Bootstrap CI下限{bootstrap_ci_low*100:.1f}% "
+            f"<= 現行勝率{current_wr*100:.1f}%"
+        )
+    if int(kfold_wins) < STABLE_REPLACEMENT_KFOLD_MIN:
+        rejects.append(
+            f"K-Foldが{int(kfold_wins)}/3 < {STABLE_REPLACEMENT_KFOLD_MIN}/3"
+        )
+    permutation_pvalue = float(permutation_pvalue)
+    if (not math.isfinite(permutation_pvalue)
+            or permutation_pvalue >= STABLE_REPLACEMENT_PERMUTATION_P_MAX):
+        rejects.append(
+            f"Permutation Test p={permutation_pvalue:.3f} "
+            f">= {STABLE_REPLACEMENT_PERMUTATION_P_MAX:.2f}"
+        )
+    return rejects
 
 # ══════════════════════════════════════════════════════════════
 # 方式A: C(N,6) 組み合わせ探索
@@ -4852,7 +4957,7 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
 
 
 def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
-                                       rescue_reasons, n_total):
+                                       rescue_reasons, n_total, rejection_reason=None):
     """rescue mode発動時に更新候補が見つからなかったことを管理者へ通知する。"""
     import urllib.request, json as _json
 
@@ -4902,6 +5007,13 @@ def notify_discord_rescue_no_candidate(current_stats, current_validation_stats,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+
+    if rejection_reason:
+        payload["embeds"][0]["fields"].insert(2, {
+            "name": "今回の見送り理由",
+            "value": str(rejection_reason)[:1000],
+            "inline": False,
+        })
 
     data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
     req = urllib.request.Request(
@@ -6109,9 +6221,18 @@ def _parse_sweep_output(output, threshold):
     elif _re.search(r"✅\s*採用!", output):
         # 実デプロイフローの採用完了（dry-runではないが念のため）
         summary["verdict"] = "OK"
-    elif _re.search(r"品質条件未達。更新しません", output):
+    elif _re.search(r"最終採用条件未達|品質条件未達。更新しません", output):
         summary["verdict"] = "NG"
         summary["ng_kind"] = "quality"
+    elif _re.search(r"劇的改善ゲート未達", output):
+        summary["verdict"] = "NG"
+        summary["ng_kind"] = "dramatic"
+    elif _re.search(r"Stable強制ゲートで却下", output):
+        summary["verdict"] = "NG"
+        summary["ng_kind"] = "force"
+    elif _re.search(r"差分品質ゲートで見送り", output):
+        summary["verdict"] = "NG"
+        summary["ng_kind"] = "delta"
     elif _re.search(r"Lockbox\(OOS\)で過学習を検出", output):
         summary["verdict"] = "NG"
         summary["ng_kind"] = "lockbox"
@@ -6848,7 +6969,8 @@ def main():
             print("  ⚠ rescue mode: 品質ゲートを満たす代替候補なし")
             if args.propose and not args.dry_run:
                 notify_discord_rescue_no_candidate(
-                    baseline_ar, current_validation_stats6, rescue_reasons, len(display_current_df)
+                    baseline_ar, current_validation_stats6, rescue_reasons,
+                    len(display_current_df), rejection_reason=message
                 )
             else:
                 print("  ℹ dry-run/通常実行では rescue候補なし通知を送信しません")
@@ -7051,16 +7173,14 @@ def main():
         if selected is None:
             best_thresholds = tuned_ths_list[0] or {}
             best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = all_cands[0]
-            preselected_adoption_reasons = []
         else:
-            cand, ths, preselected_adoption_reasons = selected
+            cand, ths, _ = selected
             best_thresholds = ths or {}
             best_method, _, _, _, best_combo, best_stats, best_stats5, best_stats4, best_validation_stats6 = cand
     ok, check_res, adoption_reasons = check_criteria(best_stats, baseline, best_validation_stats6, adoption_mode,
                                                       thresholds=best_thresholds, data_mode=data_mode,
-                                                      baseline_validation_stats=current_validation_stats6)
-    if 'preselected_adoption_reasons' in locals() and preselected_adoption_reasons:
-        adoption_reasons = preselected_adoption_reasons
+                                                      baseline_validation_stats=current_validation_stats6,
+                                                      enforce_relative=True)
     print(f"\n🎯 Step 7: 採用判断 — 方式{best_method}")
     for line in check_res: print(f"  {line}")
     ord_sc = calc_ordering_score(best_stats, best_stats5, best_stats4)
@@ -7074,17 +7194,16 @@ def main():
     print(f"    候補★6: {best_validation_stats6['n']}件 勝率{best_validation_stats6['wr_raw']*100:.1f}% 平均{best_validation_stats6['avg_raw']*100:.1f}%")
 
     if not ok:
-        handle_no_stable_candidate("品質条件未達。更新しません。"); return
+        failed_checks = [line for line in check_res if line.startswith("✗")]
+        reason = "最終採用条件未達: " + (" / ".join(failed_checks) if failed_checks else "品質条件未達")
+        handle_no_stable_candidate(reason); return
 
-    # ── 過学習抑制チェック（Tier B） ────────────────────────────────────
-    # strict mode: 全ゲート適用 / transition mode: 参考表示のみで強制 reject しない
-    strict_gates = (data_mode == "strict")
-    if not strict_gates:
-        print(f"\n⚠ transition mode: Tier B 統計検定は参考表示のみ（強制 reject しない）")
+    # ── 過学習抑制チェック（最終置換ゲートでは全モード必須） ────────────
 
     # 1. Lockbox（真のOOS）ゲート
     lockbox_s6_stats, _, _ = calc_candidate_tiers(df_wf_lockbox, best_method, best_combo, best_thresholds)
-    lb_ok, lb_reason = lockbox_gate_ok(lockbox_s6_stats, baseline_lockbox_stats6, adoption_mode)
+    # rescueの緩和は探索用だけに留め、最終判定はnormal基準で評価する。
+    lb_ok, lb_reason = lockbox_gate_ok(lockbox_s6_stats, baseline_lockbox_stats6, "normal")
     print(f"\n🔒 Lockbox OOS検証 — {'✓ 通過' if lb_ok else '✗ 過学習検出'}")
     print(f"   候補lockbox★6: {lockbox_s6_stats['n']}件 "
           f"勝率{lockbox_s6_stats['wr_raw']*100:.1f}% "
@@ -7097,55 +7216,32 @@ def main():
           f"上昇{int(baseline_lockbox_stats6.get('win10_raw', 0))}件 "
           f"下落{int(baseline_lockbox_stats6.get('lose10_raw', 0))}件")
     print(f"   詳細: {lb_reason}")
-    if strict_gates and not lb_ok:
-        handle_no_stable_candidate(f"Lockbox(OOS)で過学習を検出。更新しません。({lb_reason})"); return
-
-    # 2. Bootstrap CI（候補★6件数に応じて評価方式を切替）
-    # n<30 では Bootstrap CI 幅が ~30-40pt と広く、相対比較が事実上機能しない。
-    # n が大きい時のみ厳格 (現行勝率超え)、それ以外は絶対床35%でカタストロフィのみ防ぐ。
+    # 2. Bootstrap CI（件数によらず現行勝率を上回ることを必須化）
     cand_scores = calc_score_series_for_logic(df, best_method, best_combo, best_thresholds)
     cand_s6_df = df[cand_scores == 6]
     n_cand_full = len(cand_s6_df)
     wr_lo, wr_hi = bootstrap_wr_ci(cand_s6_df)
-    if n_cand_full >= 30:
-        bs_threshold = baseline["wr_raw"]              # 厳格: > 現行勝率
-        bs_mode_label = f"現行{baseline['wr_raw']*100:.1f}% (n≥30 厳格)"
-    else:
-        bs_threshold = 0.35                            # 絶対床35%
-        bs_mode_label = f"絶対床35% (n<30 はCI幅広く相対比較困難)"
+    bs_threshold = baseline_ar["wr_raw"]
+    bs_mode_label = f"現行{baseline_ar['wr_raw']*100:.1f}%"
     bs_ok = wr_lo > bs_threshold
     print(f"  Bootstrap CI(95%): [{wr_lo*100:.1f}%, {wr_hi*100:.1f}%] "
           f"→ CI下限 {wr_lo*100:.1f}% {'>' if bs_ok else '≤'} 閾値{bs_threshold*100:.1f}% "
           f"[{bs_mode_label}, n={n_cand_full}] "
-          f"({'✓' if bs_ok else '✗ 統計的有意性なし'}"
-          f"{' / rescue時はバイパス' if adoption_mode == 'rescue' and not bs_ok else ''})")
-    if strict_gates and not bs_ok and adoption_mode != "rescue":
-        handle_no_stable_candidate(
-            f"Bootstrap CI: 下限{wr_lo*100:.1f}%が閾値{bs_threshold*100:.1f}%を下回ります。"
-            f"({bs_mode_label}, n={n_cand_full})"
-        ); return
+          f"({'✓' if bs_ok else '✗ 統計的有意性なし'})")
 
-    # 3. K-Fold 時系列CV（候補★6件数に応じて要求フォールド数を階層化）
-    kfold_wins = time_series_kfold_passes(df, best_method, best_combo, best_thresholds, baseline["wr_raw"], k=3)
-    if n_cand_full >= 30:
-        kfold_min = 2    # 厳格: 2/3 fold
-    elif n_cand_full >= 15:
-        kfold_min = 1    # 緩和: 1/3 fold
-    else:
-        kfold_min = 0    # スキップ（サンプル過小でCV意味なし）
-    kfold_ok = (kfold_min == 0) or (kfold_wins >= kfold_min)
+    # 3. K-Fold 時系列CV（常に最低2/3期間で現行超を要求）
+    kfold_wins = time_series_kfold_passes(
+        df, best_method, best_combo, best_thresholds, baseline_ar["wr_raw"], k=3
+    )
+    kfold_min = STABLE_REPLACEMENT_KFOLD_MIN
+    kfold_ok = kfold_wins >= kfold_min
     print(f"  K-Fold(k=3)安定性: {kfold_wins}/3 フォールドで現行超 "
           f"[要求{kfold_min}/3, n={n_cand_full}] "
           f"({'✓ 安定' if kfold_ok else '✗ 局所過学習の疑い'})")
-    if strict_gates and not kfold_ok and adoption_mode != "rescue":
-        handle_no_stable_candidate(
-            f"K-Fold CV で局所過学習を検出。全期間での安定性が不十分。(要求{kfold_min}/3, n={n_cand_full})"
-        ); return
-
-    # 4. Permutation Test（strict / transition どちらでも参考表示のみ）
+    # 4. Permutation Test（最終置換ゲートで必須）
     perm_p = permutation_pvalue(df, best_method, best_combo, best_thresholds,
                                 best_stats["composite"], n_perm=200)
-    perm_ok = perm_p < 0.05
+    perm_ok = perm_p < STABLE_REPLACEMENT_PERMUTATION_P_MAX
     print(f"  Permutation Test(n=200): p={perm_p:.3f} "
           f"({'✓ p<0.05' if perm_ok else '△ p≥0.05 (偶然の可能性あり)'})")
     # ── 過学習抑制チェックここまで ────────────────────────────────────────
@@ -7185,6 +7281,30 @@ def main():
     print(f"  判定用バックテスト（過去{EVALUATION_BACKTEST_DAYS}日 / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
+    replacement_rejects = stable_replacement_gate_rejects(
+        baseline_ar,
+        display_stats6,
+        current_validation_stats6,
+        best_validation_stats6,
+        baseline_lockbox_stats6,
+        lockbox_s6_stats,
+        wr_lo,
+        kfold_wins,
+        perm_p,
+        mode=adoption_mode,
+        data_mode=data_mode,
+    )
+    if not lb_ok:
+        replacement_rejects.append(f"Lockbox既存品質ゲート未達 ({lb_reason})")
+    if replacement_rejects:
+        msg = "劇的改善ゲート未達: " + " / ".join(replacement_rejects)
+        print(f"\n⛔ {msg}")
+        handle_no_stable_candidate(msg)
+        return
+    adoption_reasons = list(adoption_reasons) + [
+        "公開365日勝率+8pt・平均非悪化・件数維持・検証/Lockbox非劣化・統計ゲートを通過"
+    ]
+
     candidate_unconfirmed_stats6 = calc_stats(pd.DataFrame())
     if len(unconfirmed_current_df) > 0:
         candidate_unconfirmed_stats6, _, _ = calc_candidate_tiers(
@@ -7206,61 +7326,25 @@ def main():
         return
     adoption_reasons = list(adoption_reasons) + ["未確定平均・-10%以下件数・中央値・直近lockbox強制ゲート通過"]
 
-    if adoption_mode != "rescue":
-        display_current_rows = display_df[display_df["sc_cur"] == 6].copy()
-        display_candidate_rows = _scored_rows(display_df, best_method, best_combo, best_thresholds, 6)
-        delta_reject = delta_quality_reject_reason(
-            "Stable",
-            display_current_rows,
-            display_candidate_rows,
-            "perf_5bd",
-            current_stats=baseline_ar,
-            candidate_stats=display_stats6,
-            current_validation_stats=current_validation_stats6,
-            candidate_validation_stats=best_validation_stats6,
-            min_validation_n=max(DELTA_QUALITY_VALID_N_MIN, MIN_VALID_N_FLOOR),
-            strong_win_threshold=WIN_THRESHOLD,
-        )
-        if delta_reject:
-            print(f"\n✅ {delta_reject}")
-            handle_no_stable_candidate(delta_reject)
-            return
-        adoption_reasons = list(adoption_reasons) + ["差分品質ゲート通過"]
-
-    # ─── 通常モード時は中程度以上の改善（勝率+1pt以上）のみ提案する ───────────
-    # rescue mode（streak >= RESCUE_REQUIRED_STREAK）は従来通り提案を通す。
-    # 頻繁なロジック変更でユーザーが混乱しないよう、軽微な改善はスキップ。
-    # ベア相場で +5pp 改善が出にくいため +4pp に緩和（2026-05-23）。
-    # 統計検定（Lockbox/Bootstrap/K-Fold/Permutation）を全通過しても
-    # +4pp 未満で却下されるケースが発生したため +1pp に緩和（2026-05-28）。
-    WR_SIGNIFICANT_IMPROVEMENT = 0.01  # +1ppを「中程度以上」の閾値とする
-    if adoption_mode == "normal":
-        wr_improvement = best_stats["wr_raw"] - baseline["wr_raw"]
-        if wr_improvement < WR_SIGNIFICANT_IMPROVEMENT:
-            print(
-                f"\n✅ 勝率改善が軽微（+{wr_improvement*100:.1f}pt < "
-                f"+{WR_SIGNIFICANT_IMPROVEMENT*100:.0f}pt）のため更新をスキップします。"
-            )
-            print(
-                f"   rescue modeまたは勝率+{WR_SIGNIFICANT_IMPROVEMENT*100:.0f}pt以上の"
-                f"改善時のみ更新候補として提案します。"
-            )
-            if not args.dry_run:
-                restart_bot_only()
-            return
-
-    # ─── 最終ゲート: 公開365日★6勝率が現行を下回るなら提案しない ─────────
-    # /help/HTMLの表示勝率が下がる変更はユーザー体験の改悪になるため、
-    # 学習用の全体データで改善があっても却下する。
-    if display_stats6["wr_raw"] < baseline_ar["wr_raw"]:
-        msg = (
-            f"公開{EVALUATION_BACKTEST_DAYS}日★6勝率が現行以下のため更新をスキップ"
-            f"（候補{display_stats6['wr_raw']*100:.1f}%"
-            f" < 現行{baseline_ar['wr_raw']*100:.1f}%）"
-        )
-        print(f"\n⛔ {msg}")
-        handle_no_stable_candidate(msg)
+    display_current_rows = display_df[display_df["sc_cur"] == 6].copy()
+    display_candidate_rows = _scored_rows(display_df, best_method, best_combo, best_thresholds, 6)
+    delta_reject = delta_quality_reject_reason(
+        "Stable",
+        display_current_rows,
+        display_candidate_rows,
+        "perf_5bd",
+        current_stats=baseline_ar,
+        candidate_stats=display_stats6,
+        current_validation_stats=current_validation_stats6,
+        candidate_validation_stats=best_validation_stats6,
+        min_validation_n=max(DELTA_QUALITY_VALID_N_MIN, MIN_VALID_N_FLOOR),
+        strong_win_threshold=WIN_THRESHOLD,
+    )
+    if delta_reject:
+        print(f"\n✅ {delta_reject}")
+        handle_no_stable_candidate(delta_reject)
         return
+    adoption_reasons = list(adoption_reasons) + ["差分品質ゲート通過"]
 
     # ─── --propose: pending_logic.json に保存して Discord通知して終了 ───
     if args.propose:

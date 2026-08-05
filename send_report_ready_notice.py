@@ -16,8 +16,8 @@ from typing import Any, Callable
 NOTICE_TITLE = "✅ OHLCVデータ同期完了"
 NOTICE_FIELD_NAME = "🤖 スコアリングレポート"
 NOTICE_FIELD_VALUE = (
-    "最新の分析結果は `/scan` または "
-    "[ブラウザ](https://scoring-bot-report.ipo-ken5-5489.workers.dev/) "
+    "最新の分析結果は "
+    "[天底極致スコアリングレポート](https://scoring-bot-report.ipo-ken5-5489.workers.dev/) "
     "にてご確認いただけます。"
 )
 NOTICE_FOOTER = "天底極致 OHLCV同期"

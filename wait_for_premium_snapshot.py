@@ -16,6 +16,9 @@ from generate_mega_validation_report import PREMIUM_LOG_SPREADSHEET_ID_DEFAULT
 
 JST = ZoneInfo("Asia/Tokyo")
 DATE_PREFIX_RE = re.compile(r"^\s*(\d{4})[\/.-](\d{1,2})[\/.-](\d{1,2})")
+DEFAULT_MAX_WAIT_SECONDS = 4 * 60 * 60
+DEFAULT_POLL_SECONDS = 30
+MAX_DISPLAYED_ALERT_IDS = 12
 
 
 def cell(row: list[str], index: int) -> str:
@@ -75,6 +78,13 @@ def posted_bottom_alert_ids(rows: list[list[str]]) -> set[str]:
     return result
 
 
+def summarized_alert_ids(alert_ids: set[str]) -> str:
+    ordered = sorted(alert_ids)
+    visible = ordered[:MAX_DISPLAYED_ALERT_IDS]
+    suffix = f",...(+{len(ordered) - len(visible)} more)" if len(ordered) > len(visible) else ""
+    return f"{','.join(visible)}{suffix}"
+
+
 def fetch_premium_log_rows(service, spreadsheet_id: str, sheet_name: str) -> list[list[str]]:
     response = (
         service.spreadsheets()
@@ -95,12 +105,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--max-wait-seconds",
         type=int,
-        default=int(os.environ.get("PREMIUM_SNAPSHOT_WAIT_SECONDS", "5400")),
+        default=int(os.environ.get("PREMIUM_SNAPSHOT_WAIT_SECONDS", str(DEFAULT_MAX_WAIT_SECONDS))),
     )
     parser.add_argument(
         "--poll-seconds",
         type=int,
-        default=int(os.environ.get("PREMIUM_SNAPSHOT_POLL_SECONDS", "30")),
+        default=int(os.environ.get("PREMIUM_SNAPSHOT_POLL_SECONDS", str(DEFAULT_POLL_SECONDS))),
     )
     return parser.parse_args()
 
@@ -128,7 +138,11 @@ def main() -> int:
         print(f"No BOTTOM alerts found for {target_date}; premium snapshot barrier is clear")
         return 0
 
-    print(f"Waiting for {len(expected)} premium snapshot POSTED event(s) for {target_date}")
+    print(
+        f"Waiting up to {args.max_wait_seconds}s for {len(expected)} premium snapshot "
+        f"POSTED event(s) for {target_date}",
+        flush=True,
+    )
     deadline = time.monotonic() + args.max_wait_seconds
     last_missing: set[str] | None = None
     last_error = ""
@@ -145,7 +159,8 @@ def main() -> int:
             if missing != last_missing:
                 print(
                     f"Premium snapshot pending: {len(expected) - len(missing)} of {len(expected)} POSTED; "
-                    f"missing={','.join(sorted(missing))}"
+                    f"missing_count={len(missing)}; missing={summarized_alert_ids(missing)}",
+                    flush=True,
                 )
                 last_missing = missing
         except Exception as err:
@@ -155,7 +170,8 @@ def main() -> int:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             detail = (
-                f"missing={','.join(sorted(last_missing or expected))}"
+                f"missing_count={len(last_missing or expected)}; "
+                f"missing={summarized_alert_ids(last_missing or expected)}"
                 if not last_error
                 else f"last_error={last_error}"
             )

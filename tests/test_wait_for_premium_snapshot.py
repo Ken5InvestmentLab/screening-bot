@@ -1,13 +1,27 @@
 import unittest
+from pathlib import Path
 
 from wait_for_premium_snapshot import (
+    DEFAULT_MAX_WAIT_SECONDS,
     expected_bottom_alert_ids,
     normalized_date_prefix,
     posted_bottom_alert_ids,
+    summarized_alert_ids,
 )
 
 
 class WaitForPremiumSnapshotTest(unittest.TestCase):
+    def test_default_wait_allows_delayed_local_automation_catch_up(self):
+        self.assertEqual(DEFAULT_MAX_WAIT_SECONDS, 4 * 60 * 60)
+
+    def test_report_workflow_keeps_matching_wait_and_job_headroom(self):
+        workflow = (
+            Path(__file__).resolve().parents[1] / ".github" / "workflows" / "mega-validation-report.yml"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn(f'PREMIUM_SNAPSHOT_WAIT_SECONDS: "{DEFAULT_MAX_WAIT_SECONDS}"', workflow)
+        self.assertIn("timeout-minutes: 300", workflow)
+
     def test_normalized_date_prefix_accepts_sheet_formats(self):
         self.assertEqual(normalized_date_prefix("2026/07/13 13:01:00"), "2026-07-13")
         self.assertEqual(normalized_date_prefix("2026-7-3"), "2026-07-03")
@@ -37,6 +51,15 @@ class WaitForPremiumSnapshotTest(unittest.TestCase):
         ]
 
         self.assertEqual(posted_bottom_alert_ids(rows), {"a1", "a2"})
+
+    def test_missing_alert_summary_is_bounded(self):
+        alert_ids = {f"a{index:02d}" for index in range(20)}
+
+        summary = summarized_alert_ids(alert_ids)
+
+        self.assertIn("a00,a01,a02", summary)
+        self.assertIn("...(+8 more)", summary)
+        self.assertNotIn("a19", summary)
 
 
 if __name__ == "__main__":

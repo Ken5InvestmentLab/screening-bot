@@ -34,6 +34,9 @@ concurrency:
 jobs:
   report:
     runs-on: ubuntu-latest
+    # Local Codex premium workers can catch up after a sleeping Windows host wakes.
+    # Keep enough headroom after the four-hour barrier for report generation/deploy.
+    timeout-minutes: 300
     permissions:
       contents: write
     env:
@@ -59,7 +62,7 @@ jobs:
       - name: Wait for premium snapshot completion
         if: ${{ inputs.notify_discord }}
         env:
-          PREMIUM_SNAPSHOT_WAIT_SECONDS: "5400"
+          PREMIUM_SNAPSHOT_WAIT_SECONDS: "14400"
           PREMIUM_SNAPSHOT_POLL_SECONDS: "30"
           PYTHONIOENCODING: utf-8
         run: python wait_for_premium_snapshot.py

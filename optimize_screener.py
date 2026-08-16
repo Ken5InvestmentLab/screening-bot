@@ -416,6 +416,17 @@ def compute_current_sniper_backtest_stats(df, sniper_logic):
     mask_pass = published_mode_mask(df, "sniper", mask_pass)
     return calc_stats(df[mask_pass])
 
+
+def compute_published_sniper_stats(df, conditions, thresholds=None):
+    """Return the exact Sniper population/stats that the regenerated HTML will use."""
+    if df is None or len(df) == 0 or not conditions:
+        return calc_stats(pd.DataFrame()), pd.DataFrame()
+    scores = score_with_thresholds(df, conditions, thresholds or {})
+    fallback = scores == len(conditions)
+    mask = published_mode_mask(df, "sniper", fallback)
+    rows = df[mask].copy()
+    return calc_stats(rows), rows
+
 def compute_live_sniper_stats(df, sniper_logic, published_mode_id=None):
     """current_logic_sniper.json の updated_at 以降に発生したシグナルに対し、
     現行Sniper条件全通過の勝率/平均/件数を返す（採用後のライブ実績）。
@@ -1186,7 +1197,33 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
             )
             continue
 
-        candidate_live = _mega_live_condition_stats(live_df, best["conditions"], mode["target"])
+        candidate_published_stats = _published_mode_stats(
+            df_eval,
+            mode_id,
+            best["conditions"],
+            perf_col,
+            mode["target"],
+        )
+        candidate_published_validation = _published_mode_stats(
+            df_valid,
+            mode_id,
+            best["conditions"],
+            perf_col,
+            mode["target"],
+        )
+        public_reject = public_html_win_rate_reject_reason(
+            mode["label"], current_stats, candidate_published_stats
+        )
+        if public_reject:
+            print(f"  [auto-reject] {public_reject}")
+            continue
+
+        candidate_live = _mega_live_condition_stats(
+            live_df,
+            best["conditions"],
+            mode["target"],
+            mode_id=mode_id,
+        )
         accepted, reasons, rejects = _mega_adoption_decision(
             mode, current_stats, current_validation, current_live,
             best["stats"], best["validation_stats"], candidate_live,
@@ -1196,11 +1233,11 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
             continue
 
         current_rows = _published_mode_rows(df_eval, mode_id, current_conditions)
-        candidate_rows = _mask_condition_rows(df_eval, best["conditions"])
+        candidate_rows = _published_mode_rows(df_eval, mode_id, best["conditions"])
         outlier_reject = mega_outlier_dependency_reject_reason(
             mode["label"],
             current_stats,
-            best["stats"],
+            candidate_published_stats,
             candidate_rows,
             perf_col,
             mode["target"],
@@ -1217,7 +1254,7 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
             perf_col,
             target=mode["target"],
             current_stats=current_stats,
-            candidate_stats=best["stats"],
+            candidate_stats=candidate_published_stats,
             current_validation_stats=current_validation,
             candidate_validation_stats=best["validation_stats"],
             current_live_stats=current_live,
@@ -1241,9 +1278,11 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
             },
             "candidate": {
                 "conditions": list(best["conditions"]),
-                "backtest": _mega_stats_payload(best["stats"]),
-                "validation": _mega_stats_payload(best["validation_stats"]),
+                "backtest": _mega_stats_payload(candidate_published_stats),
+                "validation": _mega_stats_payload(candidate_published_validation),
                 "live": _mega_stats_payload(candidate_live),
+                "simulation_backtest": _mega_stats_payload(best["stats"]),
+                "simulation_validation": _mega_stats_payload(best["validation_stats"]),
             },
             "adoption_reasons": reasons,
             "overfit_checks": {
@@ -1254,7 +1293,9 @@ def _run_mega_report_logic_proposal(df, args, live_df=None):
         }
         print(
             f"  [proposal] {mode['label']}: {'+'.join(current_conditions)} -> {'+'.join(best['conditions'])} "
-            f"({best['stats']['n']}件 / target {best['stats']['target_rate']*100:.1f}%)"
+            f"(公開HTML {candidate_published_stats['n']}件 / "
+            f"勝率 {candidate_published_stats['wr_raw']*100:.1f}% / "
+            f"参考試算 {best['stats']['wr_raw']*100:.1f}%)"
         )
 
     if args.dry_run:
@@ -3007,6 +3048,24 @@ def stable_replacement_gate_rejects(current_stats, candidate_stats,
         )
     return rejects
 
+
+def public_html_win_rate_reject_reason(mode_label, current_stats, candidate_stats):
+    """Reject a candidate whose post-approval public HTML win rate would regress."""
+    current_n = _stat_n(current_stats)
+    candidate_n = _stat_n(candidate_stats)
+    if current_n <= 0:
+        return None
+    if candidate_n <= 0:
+        return f"{mode_label}公開HTML対象が0件になる"
+    current_wr = _stat_float(current_stats, "wr_raw")
+    candidate_wr = _stat_float(candidate_stats, "wr_raw")
+    if candidate_wr + 1e-12 < current_wr:
+        return (
+            f"{mode_label}公開HTML勝率が悪化 "
+            f"({candidate_wr*100:.1f}% < {current_wr*100:.1f}%)"
+        )
+    return None
+
 # ══════════════════════════════════════════════════════════════
 # 方式A: C(N,6) 組み合わせ探索
 # ══════════════════════════════════════════════════════════════
@@ -4681,10 +4740,14 @@ def build_stable_comparison_attachment(display_df, current_method, current_combo
             cur6, cur5, cur4, _, _ = calc_backtest_display_stats(
                 display_df, current_method, current_combo, current_thresholds
             )
-        candidate_rows = _scored_rows(display_df, candidate_method, candidate_combo, candidate_thresholds, 6)
-        cand6, cand5, cand4, _, _ = calc_backtest_display_stats(
+        candidate_scores = calc_score_series_for_logic(
             display_df, candidate_method, candidate_combo, candidate_thresholds
         )
+        candidate_scores = published_stable_score(display_df, candidate_scores)
+        candidate_rows = display_df[candidate_scores == 6].copy()
+        cand6 = calc_display_stats(candidate_rows)
+        cand5 = calc_display_stats(display_df[candidate_scores == 5])
+        cand4 = calc_display_stats(display_df[candidate_scores == 4])
         spec = {
             "mode_label": "Stable score",
             "current_logic": _logic_label(current_method, current_combo, current_thresholds),
@@ -4714,7 +4777,8 @@ def build_condition_logic_comparison_attachment(mode_label, df, perf_col,
                                                 filename_prefix,
                                                 extra_sections=None,
                                                 current_thresholds=None,
-                                                current_mode_id=None):
+                                                current_mode_id=None,
+                                                candidate_mode_id=None):
     try:
         current_rows = _all_condition_rows(df, current_conditions, current_thresholds or {})
         if current_mode_id:
@@ -4725,6 +4789,13 @@ def build_condition_logic_comparison_attachment(mode_label, df, perf_col,
             )
             current_rows = df[current_mask].copy()
         candidate_rows = _all_condition_rows(df, candidate_conditions, {})
+        if candidate_mode_id:
+            candidate_mask = published_mode_mask(
+                df,
+                candidate_mode_id,
+                df.index.isin(candidate_rows.index),
+            )
+            candidate_rows = df[candidate_mask].copy()
         sections = [{
             "label": f"過去{EVALUATION_BACKTEST_DAYS}日",
             "current": current_stats,
@@ -4772,13 +4843,13 @@ def build_mega_comparison_attachment(proposals, df, live_df):
                 _published_mode_rows(df_eval, mode_id, current_conditions), "確定"
             )
             candidate_confirmed = _with_comparison_scope(
-                _mask_condition_rows(df_eval, candidate_conditions), "確定"
+                _published_mode_rows(df_eval, mode_id, candidate_conditions), "確定"
             )
             current_live = _with_comparison_scope(
                 _published_mode_rows(live_df, mode_id, current_conditions), "未確定(現在値)"
             )
             candidate_live = _with_comparison_scope(
-                _mask_condition_rows(live_df, candidate_conditions), "未確定(現在値)"
+                _published_mode_rows(live_df, mode_id, candidate_conditions), "未確定(現在値)"
             )
             specs.append({
                 "mode_label": proposal.get("label") or mode_id,
@@ -4874,7 +4945,7 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
                 "inline": False
             },
             {
-                "name": f"📈 バックテスト結果（直近シグナル / {n_total}件検証）",
+                "name": f"📈 公開HTML成績（直近シグナル / {n_total}件検証）",
                 "value": stats_text,
                 "inline": False
             },
@@ -4919,7 +4990,8 @@ def notify_discord_update(best_method, best_combo, st6, st5, st4, base, n_total,
 def notify_discord_approval(best_method, best_combo, best_stats, baseline, thresholds,
                             validation_stats=None, current_stats=None,
                             current_validation_stats=None, adoption_reasons=None,
-                            mode="normal", comparison_attachment=None):
+                            mode="normal", comparison_attachment=None,
+                            simulation_stats=None):
     """スコアリング更新候補の承認リクエストをDiscordに送信"""
     import urllib.request, json as _json
 
@@ -4974,7 +5046,7 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                     "inline": False
                 },
                 {
-                    "name": f"📊 候補成績（過去{EVALUATION_BACKTEST_DAYS}日）",
+                    "name": f"📊 承認後の公開HTML成績（過去{EVALUATION_BACKTEST_DAYS}日）",
                     "value": (
                         f"```\n"
                         f"{_stats_line(period_label + '★6', best_stats)}\n"
@@ -4985,7 +5057,7 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
                     "inline": False
                 },
                 {
-                    "name": "📈 現行との比較",
+                    "name": "📈 公開HTMLの現行との比較",
                     "value": (
                         f"```\n"
                         f"{_stats_line('現行' + period_label, current_stats)}\n"
@@ -5014,6 +5086,12 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
         }]
     }
 
+    if simulation_stats:
+        payload["embeds"][0]["fields"].insert(2, {
+            "name": "🧪 新条件の全履歴再適用（参考試算）",
+            "value": _stats_line(f"参考{period_label}", simulation_stats),
+            "inline": False,
+        })
     _queue_or_post_discord_approval(
         payload,
         attachment=comparison_attachment,
@@ -5192,7 +5270,8 @@ def notify_discord_sniper_rescue_no_candidate(refreshed_stats, live_stats,
         print(f"  ⚠ Discord Sniper rescue通知失敗: {e}")
 
 
-def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds, comparison_attachment=None):
+def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds,
+                                    comparison_attachment=None, simulation_stats=None):
     """Sniperロジック更新候補の承認リクエストをDiscordに送信"""
     import urllib.request, json as _json
     if not APPROVAL_WEBHOOK_URL:
@@ -5222,7 +5301,7 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds, c
                     "inline": False
                 },
                 {
-                    "name": f"📊 バックテスト成績（過去{EVALUATION_BACKTEST_DAYS}日）",
+                    "name": f"📊 承認後の公開HTML成績（過去{EVALUATION_BACKTEST_DAYS}日）",
                     "value": (
                         f"```\nSniper: {int(stats['n'])}件  勝率 {wr_new:.1f}%  平均 {avg_new:+.1f}%\n"
                         f"上昇 {int(stats['win10_raw'])}件  下落 {int(stats['lose10_raw'])}件\n```"
@@ -5230,7 +5309,7 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds, c
                     "inline": False
                 },
                 {
-                    "name": "📈 現行との比較",
+                    "name": "📈 公開HTMLの現行との比較",
                     "value": f"勝率: {wr_old:.1f}% → **{wr_new:.1f}%** ({wr_new-wr_old:+.1f}pt)",
                     "inline": False
                 },
@@ -5244,6 +5323,18 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds, c
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+    if simulation_stats:
+        simulation_wr = float(simulation_stats.get("wr_raw", 0.0)) * 100
+        simulation_avg = float(simulation_stats.get("avg_raw", 0.0)) * 100
+        payload["embeds"][0]["fields"].insert(2, {
+            "name": "🧪 新条件の全履歴再適用（参考試算）",
+            "value": (
+                f"{int(simulation_stats.get('n', 0))}件 / "
+                f"勝率 {simulation_wr:.1f}% / 平均 {simulation_avg:+.1f}%\n"
+                "※ シグナル当時に確定したモード所属は変更しないため、公開HTML成績とは一致しません。"
+            ),
+            "inline": False,
+        })
     _queue_or_post_discord_approval(
         payload,
         attachment=comparison_attachment,
@@ -5293,6 +5384,7 @@ def notify_discord_mega_approval(proposals, comparison_attachment=None):
                 f"候補: {' + '.join(candidate.get('conditions', []))}\n"
                 f"現行{EVALUATION_BACKTEST_DAYS}日確定: {_stats_line(current.get('backtest'))}\n"
                 f"候補{EVALUATION_BACKTEST_DAYS}日確定: {_stats_line(candidate.get('backtest'))}\n"
+                f"候補全履歴再適用（参考）: {_stats_line(candidate.get('simulation_backtest'))}\n"
                 f"現行未確定: {_stats_line(current.get('live'))}\n"
                 f"候補未確定: {_stats_line(candidate.get('live'))}\n"
                 "```\n"
@@ -5372,6 +5464,7 @@ def notify_discord_mega_update(applied_details):
                 f"旧条件: {_cond_text(detail.get('previous_conditions'))}\n"
                 f"新条件: {_cond_text(detail.get('new_conditions'))}\n"
                 f"確定  : {_stats_line(current.get('backtest'))} -> {_stats_line(candidate.get('backtest'))}\n"
+                f"参考試算: {_stats_line(candidate.get('simulation_backtest'))}\n"
                 f"検証  : {_stats_line(current.get('validation'))} -> {_stats_line(candidate.get('validation'))}\n"
                 f"未確定: {_stats_line(current.get('live'))} -> {_stats_line(candidate.get('live'))}\n"
                 "```"
@@ -5400,7 +5493,7 @@ def notify_discord_mega_update(applied_details):
     )
 
 
-def notify_discord_sniper_update(conditions, stats, thresholds):
+def notify_discord_sniper_update(conditions, stats, thresholds, simulation_stats=None):
     """Sniperロジック更新完了をDiscordに通知"""
     import urllib.request, json as _json
     thresholds = thresholds or {}
@@ -5430,7 +5523,7 @@ def notify_discord_sniper_update(conditions, stats, thresholds):
                     "inline": False
                 },
                 {
-                    "name": f"📊 バックテスト成績（過去{EVALUATION_BACKTEST_DAYS}日）",
+                    "name": f"📊 公開HTML成績（過去{EVALUATION_BACKTEST_DAYS}日）",
                     "value": (
                         f"```\nSniper: {int(stats['n'])}件  勝率 {wr:.1f}%  平均 {avg:+.1f}%\n"
                         f"上昇 {int(stats['win10_raw'])}件  下落 {int(stats['lose10_raw'])}件\n```"
@@ -5447,6 +5540,17 @@ def notify_discord_sniper_update(conditions, stats, thresholds):
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
+    if simulation_stats:
+        simulation_wr = float(simulation_stats.get("wr_raw", 0.0)) * 100
+        simulation_avg = float(simulation_stats.get("avg_raw", 0.0)) * 100
+        payload["embeds"][0]["fields"].insert(2, {
+            "name": "🧪 新条件の全履歴再適用（参考試算）",
+            "value": (
+                f"{int(simulation_stats.get('n', 0))}件 / "
+                f"勝率 {simulation_wr:.1f}% / 平均 {simulation_avg:+.1f}%"
+            ),
+            "inline": False,
+        })
     if _defer_discord_update_payload(payload, "Discord Sniper update"):
         return
 
@@ -5489,7 +5593,12 @@ def apply_sniper_pending():
         print("  ❌ calculateScoreSniper() 更新失敗")
         return None
     print("  ✅ calculateScoreSniper() 更新完了")
-    return {"combo": _combo, "thresholds": _ths, "stats": _st}
+    return {
+        "combo": _combo,
+        "thresholds": _ths,
+        "stats": _st,
+        "simulation_stats": _p.get("simulation_stats"),
+    }
 
 def finalize_sniper_pending(sniper_data):
     """deploy()成功後に、転送前に保存済みのSniper pendingを削除する。"""
@@ -5924,6 +6033,11 @@ def _run_sniper_optimization(df, args):
     scores_full = sum(df[c].astype(int) for c in best_combo if c in df.columns)
     s6_full = df[scores_full == 6]
     st6_full = calc_stats(s6_full)
+    published_candidate_stats, published_candidate_rows = compute_published_sniper_stats(
+        df,
+        best_combo,
+        {},
+    )
     candidate_live_stats = None
     if sniper_logic:
         candidate_live_stats = compute_live_sniper_stats(
@@ -5949,6 +6063,11 @@ def _run_sniper_optimization(df, args):
     print(f"  最良条件: {'+'.join(best_combo)}")
     print(f"  Sniper全体: {st6_full['n']}件 勝率{st6_full['wr_raw']*100:.1f}%"
           f" 平均{st6_full['avg_raw']*100:.1f}%")
+    print(
+        f"  承認後の公開HTML: {published_candidate_stats['n']}件 "
+        f"勝率{published_candidate_stats['wr_raw']*100:.1f}% "
+        f"平均{published_candidate_stats['avg_raw']*100:.1f}%"
+    )
     print(f"  Sniper検証: {st6_valid['n']}件 勝率{st6_valid['wr_raw']*100:.1f}%"
           f" 平均{st6_valid['avg_raw']*100:.1f}%")
     print(f"  Sniper lockbox: {st6_lockbox['n']}件 勝率{st6_lockbox['wr_raw']*100:.1f}%"
@@ -5957,6 +6076,14 @@ def _run_sniper_optimization(df, args):
     # Sniperは勝率特化のため、rescue中でもHTML公開365日成績をstrictに
     # 上回らない候補は通知しない。短期ライブ劣化だけで全体成績を下げない。
     if sniper_logic:
+        published_reject = sniper_baseline_gate_reject_reason(
+            published_candidate_stats,
+            float((refreshed_stats or {}).get("wr_raw", 0.0)),
+            baseline_avg=float((refreshed_stats or {}).get("avg_raw", 0.0)),
+        )
+        if published_reject:
+            print(f"  ✅ Sniper: 公開HTML成績が改善しない ({published_reject}) ため更新しません。")
+            return
         baseline_reject = sniper_baseline_gate_reject_reason(
             st6_full,
             baseline_wr,
@@ -5999,7 +6126,7 @@ def _run_sniper_optimization(df, args):
             current_condition_scores == len(current_sniper_conditions),
         )
         current_targets = set(df.index[current_sniper_mask].tolist())
-        candidate_targets = set(s6_full.index.tolist())
+        candidate_targets = set(published_candidate_rows.index.tolist())
         if candidate_targets == current_targets:
             print("  ✅ Sniper: 条件は異なるが抽出結果が現行と同一のため更新しません。")
             return
@@ -6008,10 +6135,10 @@ def _run_sniper_optimization(df, args):
             delta_reject = delta_quality_reject_reason(
                 "Sniper",
                 current_sniper_rows,
-                s6_full,
+                published_candidate_rows,
                 "perf_5bd",
                 current_stats=refreshed_stats or {},
-                candidate_stats=st6_full,
+                candidate_stats=published_candidate_stats,
                 candidate_validation_stats=st6_valid,
                 min_validation_n=SNIPER_VALID_N_MIN,
                 strong_win_threshold=WIN_THRESHOLD,
@@ -6038,7 +6165,8 @@ def _run_sniper_optimization(df, args):
                 "stats": _to_jsonable(refreshed_stats or {}),
             },
             "sniper_code": sniper_code,
-            "stats":       _to_jsonable(st6_full),
+            "stats":       _to_jsonable(published_candidate_stats),
+            "simulation_stats": _to_jsonable(st6_full),
             "validation_stats": _to_jsonable(st6_valid),
             "proposed_at": datetime.utcnow().isoformat() + "Z"
         }
@@ -6052,7 +6180,7 @@ def _run_sniper_optimization(df, args):
             current_sniper_conditions,
             best_combo,
             refreshed_stats or {},
-            st6_full,
+            published_candidate_stats,
             "sniper_score_logic_comparison",
             extra_sections=[
                 {"label": "検証", "current": {}, "candidate": st6_valid},
@@ -6060,13 +6188,15 @@ def _run_sniper_optimization(df, args):
             ],
             current_thresholds=current_sniper_thresholds,
             current_mode_id="sniper",
+            candidate_mode_id="sniper",
         )
         notify_discord_sniper_approval(
             best_combo,
-            st6_full,
-            baseline_wr,
+            published_candidate_stats,
+            float((refreshed_stats or {}).get("wr_raw", 0.0)),
             {},
             comparison_attachment=comparison_attachment,
+            simulation_stats=st6_full,
         )
         return
 
@@ -6791,7 +6921,8 @@ def main():
             if _has_sniper:
                 finalize_sniper_pending(_sniper_data)
                 notify_discord_sniper_update(_sniper_data["combo"], _sniper_data["stats"],
-                                             _sniper_data["thresholds"] or {})
+                                             _sniper_data["thresholds"] or {},
+                                             simulation_stats=_sniper_data.get("simulation_stats"))
             if _has_mega:
                 _mega_data = apply_mega_pending(_target)
                 if _mega_data:
@@ -7383,6 +7514,34 @@ def main():
     print(f"  判定用バックテスト（過去{EVALUATION_BACKTEST_DAYS}日 / {display_n_total}件）: ★6 {display_stats6['n']}件 "
           f"勝率{display_stats6['wr_raw']*100:.1f}% 平均{display_stats6['avg_raw']*100:.1f}%")
 
+    candidate_public_scores = calc_score_series_for_logic(
+        display_df, best_method, best_combo, best_thresholds
+    )
+    candidate_public_scores = published_stable_score(
+        display_df, candidate_public_scores
+    )
+    public_candidate_stats6 = calc_display_stats(
+        display_df[candidate_public_scores == 6]
+    )
+    public_candidate_stats5 = calc_display_stats(
+        display_df[candidate_public_scores == 5]
+    )
+    public_candidate_stats4 = calc_display_stats(
+        display_df[candidate_public_scores == 4]
+    )
+    print(
+        f"  承認後の公開HTML: ★6 {public_candidate_stats6['n']}件 "
+        f"勝率{public_candidate_stats6['wr_raw']*100:.1f}% "
+        f"平均{public_candidate_stats6['avg_raw']*100:.1f}%"
+    )
+    public_reject = public_html_win_rate_reject_reason(
+        "Stable ★6", baseline_ar, public_candidate_stats6
+    )
+    if public_reject:
+        print(f"\n⛔ {public_reject}")
+        handle_no_stable_candidate(public_reject)
+        return
+
     replacement_rejects = stable_replacement_gate_rejects(
         baseline_ar,
         display_stats6,
@@ -7429,14 +7588,14 @@ def main():
     adoption_reasons = list(adoption_reasons) + ["未確定平均・-10%以下件数・中央値・直近lockbox強制ゲート通過"]
 
     display_current_rows = display_df[display_df["sc_cur"] == 6].copy()
-    display_candidate_rows = _scored_rows(display_df, best_method, best_combo, best_thresholds, 6)
+    display_candidate_rows = display_df[candidate_public_scores == 6].copy()
     delta_reject = delta_quality_reject_reason(
         "Stable",
         display_current_rows,
         display_candidate_rows,
         "perf_5bd",
         current_stats=baseline_ar,
-        candidate_stats=display_stats6,
+        candidate_stats=public_candidate_stats6,
         current_validation_stats=current_validation_stats6,
         candidate_validation_stats=best_validation_stats6,
         min_validation_n=max(DELTA_QUALITY_VALID_N_MIN, MIN_VALID_N_FLOOR),
@@ -7460,9 +7619,12 @@ def main():
             "thresholds":   best_thresholds or {},
             "evaluation_policy": evaluation_policy_payload(),
             "screener_code": new_code,
-            "stats6":       _to_jsonable(display_stats6),
-            "stats5":       _to_jsonable(display_stats5),
-            "stats4":       _to_jsonable(display_stats4),
+            "stats6":       _to_jsonable(public_candidate_stats6),
+            "stats5":       _to_jsonable(public_candidate_stats5),
+            "stats4":       _to_jsonable(public_candidate_stats4),
+            "simulation_stats6": _to_jsonable(display_stats6),
+            "simulation_stats5": _to_jsonable(display_stats5),
+            "simulation_stats4": _to_jsonable(display_stats4),
             "training_stats6": _to_jsonable(training_stats6),
             "training_stats5": _to_jsonable(training_stats5),
             "training_stats4": _to_jsonable(training_stats4),
@@ -7505,13 +7667,14 @@ def main():
             best_validation_stats6,
         )
         notify_discord_approval(
-            best_method, best_combo, display_stats6, display_base, best_thresholds,
+            best_method, best_combo, public_candidate_stats6, display_base, best_thresholds,
             validation_stats=best_validation_stats6,
             current_stats=baseline_ar,
             current_validation_stats=current_validation_stats6,
             adoption_reasons=adoption_reasons,
             mode=adoption_mode,
             comparison_attachment=comparison_attachment,
+            simulation_stats=display_stats6,
         )
         print("（承認後、Discord で /approve-update を実行するとデプロイされます）")
         restart_bot_only()

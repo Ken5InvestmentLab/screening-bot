@@ -144,6 +144,150 @@ class OptimizerEvaluationPolicyTest(unittest.TestCase):
         self.assertEqual(modes.tolist(), [True, True])
         self.assertEqual(scores.tolist(), [6, 4])
 
+    def test_sniper_candidate_stats_match_post_approval_html_population(self):
+        frame = stats_frame([0.10, 0.02, -0.03])
+        frame["old"] = [True, True, True]
+        frame["new"] = [True, True, False]
+        frame["_snapshot_final"] = [True, False, False]
+        frame["_snapshot_modes"] = [("sniper",), tuple(), tuple()]
+
+        current_stats, current_rows = opt.compute_published_sniper_stats(
+            frame, ["old"]
+        )
+        candidate_stats, candidate_rows = opt.compute_published_sniper_stats(
+            frame, ["new"]
+        )
+
+        self.assertEqual(current_rows.index.tolist(), [0, 1, 2])
+        self.assertEqual(candidate_rows.index.tolist(), [0, 1])
+        self.assertAlmostEqual(current_stats["wr_raw"], 2 / 3)
+        self.assertEqual(candidate_stats["wr_raw"], 1.0)
+        report_stats = report.candidate_stats(
+            frame,
+            {
+                "id": "sniper",
+                "conditions": ["new"],
+                "eval_days": 5,
+                "target": 0.0,
+            },
+        )
+        self.assertEqual(candidate_stats["n"], report_stats["n"])
+        self.assertEqual(candidate_stats["wr_raw"], report_stats["win_rate"])
+
+    def test_sniper_public_html_regression_is_rejected_even_when_simulation_improves(self):
+        published_current = {"n": 32, "wr_raw": 2 / 3, "avg_raw": 0.031}
+        published_candidate = {"n": 30, "wr_raw": 19 / 29, "avg_raw": 0.063}
+        simulation_candidate = {"n": 26, "wr_raw": 0.68, "avg_raw": 0.072}
+
+        self.assertGreater(simulation_candidate["wr_raw"], published_current["wr_raw"])
+        reason = opt.sniper_baseline_gate_reject_reason(
+            published_candidate,
+            published_current["wr_raw"],
+            baseline_avg=published_current["avg_raw"],
+        )
+
+        self.assertIsNotNone(reason)
+        self.assertIn("勝率が現行以下", reason)
+
+    def test_every_mode_rejects_public_html_win_rate_regression(self):
+        current = {"n": 30, "wr_raw": 2 / 3}
+        candidate = {"n": 29, "wr_raw": 0.65}
+
+        for mode_label in ("Stable ★6", "Sniper", "Mega5", "Mega40"):
+            with self.subTest(mode=mode_label):
+                reason = opt.public_html_win_rate_reject_reason(
+                    mode_label, current, candidate
+                )
+                self.assertIsNotNone(reason)
+                self.assertIn(mode_label, reason)
+                self.assertIn("公開HTML勝率が悪化", reason)
+
+    def test_stable_and_mega_public_gates_run_before_pending_and_notice(self):
+        stable_source = inspect.getsource(opt.main)
+        stable_gate = stable_source.index(
+            'public_reject = public_html_win_rate_reject_reason(\n        "Stable ★6"'
+        )
+        stable_pending = stable_source.index(
+            'with open(PENDING_LOGIC_PATH, "w"'
+        )
+        stable_notice = stable_source.index("notify_discord_approval(")
+        self.assertLess(stable_gate, stable_pending)
+        self.assertLess(stable_gate, stable_notice)
+
+        mega_source = inspect.getsource(opt._run_mega_report_logic_proposal)
+        mega_gate = mega_source.index(
+            "public_reject = public_html_win_rate_reject_reason("
+        )
+        mega_pending = mega_source.index("save_pending_logic_mega(")
+        mega_notice = mega_source.index("notify_discord_mega_approval(")
+        self.assertLess(mega_gate, mega_pending)
+        self.assertLess(mega_gate, mega_notice)
+
+    def test_sniper_notice_uses_public_html_stats_as_primary_number(self):
+        public_stats = {
+            "n": 30, "wr_raw": 19 / 29, "avg_raw": 0.063,
+            "win10_raw": 4, "lose10_raw": 1,
+        }
+        simulation_stats = {
+            "n": 26, "wr_raw": 0.68, "avg_raw": 0.072,
+            "win10_raw": 5, "lose10_raw": 1,
+        }
+        with mock.patch.object(opt, "APPROVAL_WEBHOOK_URL", "https://example.invalid"), \
+                mock.patch.object(opt, "_queue_or_post_discord_approval") as queued:
+            opt.notify_discord_sniper_approval(
+                ["ema75"],
+                public_stats,
+                2 / 3,
+                {},
+                simulation_stats=simulation_stats,
+            )
+
+        payload = queued.call_args.args[0]
+        fields = payload["embeds"][0]["fields"]
+        primary = next(field for field in fields if "公開HTML成績" in field["name"])
+        reference = next(field for field in fields if "参考試算" in field["name"])
+        comparison = next(field for field in fields if "公開HTMLの現行" in field["name"])
+        self.assertIn("65.5%", primary["value"])
+        self.assertIn("68.0%", reference["value"])
+        self.assertIn("66.7%", comparison["value"])
+        self.assertIn("65.5%", comparison["value"])
+
+    def test_stable_notice_uses_public_html_stats_as_primary_number(self):
+        public_stats = {
+            "n": 48, "wr_raw": 0.60, "avg_raw": 0.07,
+            "win10_raw": 10, "lose10_raw": 2,
+        }
+        simulation_stats = {
+            "n": 25, "wr_raw": 0.72, "avg_raw": 0.10,
+            "win10_raw": 8, "lose10_raw": 1,
+        }
+        with mock.patch.object(opt, "APPROVAL_WEBHOOK_URL", "https://example.invalid"), \
+                mock.patch.object(opt, "_queue_or_post_discord_approval") as queued:
+            opt.notify_discord_approval(
+                "A",
+                ["ema75"],
+                public_stats,
+                public_stats,
+                {},
+                current_stats={**public_stats, "wr_raw": 0.58},
+                simulation_stats=simulation_stats,
+            )
+
+        payload = queued.call_args.args[0]
+        fields = payload["embeds"][0]["fields"]
+        primary = next(field for field in fields if "公開HTML成績" in field["name"])
+        reference = next(field for field in fields if "参考試算" in field["name"])
+        self.assertIn("60.0%", primary["value"])
+        self.assertIn("72.0%", reference["value"])
+
+    def test_sniper_public_html_gate_runs_before_pending_and_notice(self):
+        source = inspect.getsource(opt._run_sniper_optimization)
+        gate = source.index("published_reject = sniper_baseline_gate_reject_reason(")
+        pending = source.index('with open(SNIPER_PENDING_PATH, "w"')
+        notice = source.index("notify_discord_sniper_approval(")
+        self.assertLess(gate, pending)
+        self.assertLess(gate, notice)
+
     def test_received_at_lookup_matches_report_first_row_wins(self):
         header = ["alert_id", "received_at"]
         raw = [[], [], [], header, ["A1", "2026-07-15 10:00:00"]]

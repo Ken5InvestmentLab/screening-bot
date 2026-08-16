@@ -1,53 +1,28 @@
 {
   "method": "sniper",
   "conditions": [
-    "vol12",
-    "atr3",
-    "hb20",
+    "sbull",
+    "macdpos",
     "rsi5070",
-    "ich_chikou",
-    "rci9_os"
+    "ich_price_tenkan",
+    "rci9_os",
+    "pre_down3"
   ],
-  "updated_at": "2026-06-17T13:30:00Z",
+  "updated_at": "2026-08-16T06:28:31Z",
   "thresholds": {},
+  "evaluation_policy": {
+    "calendar_days": 365,
+    "timezone": "Asia/Tokyo",
+    "feature_source": "first_final_snapshot_then_signal_received_cutoff",
+    "current_selection": "published_mode_or_stable_score_then_conditions_fallback",
+    "win_rate": "exclude_zero_percent_draws"
+  },
   "backtest": {
-    "source": "signal_candle_explore",
-    "n": 18,
-    "wr": 88.2,
-    "avg": 6.7,
-    "target_hits": 16,
-    "target_rate": 88.9,
-    "m10": 1
+    "source": "published_recent_365d",
+    "n": 26,
+    "decisive_n": 25,
+    "wr": 68.0,
+    "avg": 7.2
   },
-  "validation": {
-    "n": 5,
-    "wr": 80.0,
-    "avg": 2.3,
-    "target_hits": 4,
-    "target_rate": 80.0,
-    "m10": 1
-  },
-  "lockbox": {
-    "n": 2,
-    "wr": 100.0,
-    "avg": 5.2,
-    "target_hits": 2,
-    "target_rate": 100.0,
-    "m10": 0,
-    "note": "Thin lockbox sample; approved by user after comparison."
-  },
-  "watch": {
-    "n": 2,
-    "wr": 50.0,
-    "avg": 0.1,
-    "target_hits": 1,
-    "target_rate": 50.0,
-    "m10": 0
-  },
-  "decision": {
-    "status": "approved",
-    "approved_at": "2026-06-17T13:30:00Z",
-    "reason": "Adopt the 18-signal high-win Sniper candidate; keep Stable and Mega modes on current logic."
-  },
-  "wr_raw": 0.8823529411764706
+  "wr_raw": 0.68
 }

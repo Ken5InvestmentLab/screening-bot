@@ -672,49 +672,60 @@ function detectMarketPhase(dailyBars, signalIdx, ind) {
 // Conditions are all-pass: vol12 + atr3 + hb20 + rsi5070 + ich_chikou + rci9_os.
 // Stable and Mega modes remain on their current approved logic.
 // ============================================================
+// Sniperモード自動最適化 2026-08-16 05:39 / 3439件データ
+// Sniper: 26件 勝率68.0% 平均7.2%
+// 【Sniper条件（全6条件通過で採択）】
+//   ① 強い陽線（実体≥0.5%）
+//   ② MACD hist > 0
+//   ③ RSI 50〜70
+//   ④ 一目: close > 転換線
+//   ⑤ RCI(9) ≤ -50（短期売られすぎ）
+//   ⑥ 直近3日連続下落後
+
 function calculateScoreSniper(ind) {
   if (!ind) return null;
   const filters = [];
   let score = 0;
 
-  // 1. Volume surge >= 20-day average x 1.2
-  if (ind.volSurge >= 1.2) {
+  // ① 強い陽線（実体≥0.5%）
+  if (ind.isStrongBull) {
     score++;
-    filters.push(`1 vol>=1.2x(${ind.volSurge}x)`);
+    filters.push(`①強陽線(${ind.bodyPct.toFixed(1)}%)`);
   }
 
-  // 2. ATR% < 3.0%
-  if (ind.atrPct < 3.0) {
+  // ② MACD hist > 0
+  if (ind.macdPos) {
     score++;
-    filters.push(`2 ATR<3%(${ind.atrPct}%)`);
+    filters.push(`②MACD上昇`);
   }
 
-  // 3. Break above recent 20-day high
-  if (ind.hiBrk20) {
-    score++;
-    filters.push(`3 20d-high-break`);
-  }
-
-  // 4. RSI 50-70
+  // ③ RSI 50〜70
   if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {
     score++;
-    filters.push(`4 RSI50-70(${ind.rsi14.toFixed(0)})`);
+    filters.push(`③RSI(${ind.rsi14.toFixed(0)})`);
   }
 
-  // 5. Ichimoku chikou condition: close > close 26 days ago
-  if (ind.ichChikou) {
+  // ④ 一目: close > 転換線
+  if (ind.ichTenkan !== null && ind.close > ind.ichTenkan) {
     score++;
-    filters.push(`5 ichimoku-chikou`);
+    filters.push(`④一目>転換`);
   }
 
-  // 6. RCI(9) <= -50
+  // ⑤ RCI(9) ≤ -50（短期売られすぎ）
   if (ind.rci9 !== null && ind.rci9 <= -50) {
     score++;
-    filters.push(`6 RCI9<=-50(${ind.rci9 !== null ? ind.rci9.toFixed(0) : 'N/A'})`);
+    filters.push(`⑤RCI9(${ind.rci9 !== null ? ind.rci9.toFixed(0) : 'N/A'})`);
+  }
+
+  // ⑥ 直近3日連続下落後
+  if (ind.preDown3) {
+    score++;
+    filters.push(`⑥3連陰後`);
   }
 
   return { score, filters };
 }
+
 
 
 

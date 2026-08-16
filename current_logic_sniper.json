@@ -1,14 +1,14 @@
 {
   "method": "sniper",
   "conditions": [
-    "sbull",
-    "macdpos",
+    "vol12",
+    "atr3",
+    "hb20",
     "rsi5070",
-    "ich_price_tenkan",
-    "rci9_os",
-    "pre_down3"
+    "ich_chikou",
+    "rci9_os"
   ],
-  "updated_at": "2026-08-16T06:28:31Z",
+  "updated_at": "2026-08-16T06:52:38Z",
   "thresholds": {},
   "evaluation_policy": {
     "calendar_days": 365,
@@ -19,10 +19,10 @@
   },
   "backtest": {
     "source": "published_recent_365d",
-    "n": 26,
-    "decisive_n": 25,
-    "wr": 68.0,
-    "avg": 7.2
+    "n": 32,
+    "decisive_n": 30,
+    "wr": 66.7,
+    "avg": 3.1
   },
-  "wr_raw": 0.68
+  "wr_raw": 0.6666666666666666
 }

@@ -4581,6 +4581,90 @@ def _post_discord_webhook(webhook_url, payload, attachment=None, label="Discord"
         print(f"  [warn] {label} notification failed: {exc}")
     return False
 
+
+def _queue_or_post_discord_approval(payload, attachment=None, label="Discord approval"):
+    """Queue approval requests during optimizer runs, or post immediately outside CI."""
+    import base64
+
+    outbox_dir = os.environ.get("DISCORD_APPROVAL_NOTICE_DIR", "").strip()
+    if not outbox_dir:
+        return _post_discord_webhook(
+            APPROVAL_WEBHOOK_URL,
+            payload,
+            attachment=attachment,
+            label=label,
+        )
+
+    os.makedirs(outbox_dir, exist_ok=True)
+    manifest_path = os.path.join(outbox_dir, "notices.json")
+    notices = []
+    if os.path.exists(manifest_path):
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            existing = json.load(f)
+        notices = existing if isinstance(existing, list) else [existing]
+
+    queued_attachment = None
+    if attachment:
+        queued_attachment = {
+            "filename": attachment.get("filename") or "logic_comparison.xlsx",
+            "content_type": attachment.get("content_type") or "application/octet-stream",
+            "content_b64": base64.b64encode(attachment.get("content") or b"").decode("ascii"),
+        }
+    notices.append({
+        "label": label,
+        "payload": payload,
+        "attachment": queued_attachment,
+    })
+    tmp_path = f"{manifest_path}.tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(notices, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    os.replace(tmp_path, manifest_path)
+    print(f"  [ok] {label} queued until all pending files are committed and pushed")
+    return True
+
+
+def flush_discord_approval_notices(outbox_dir=None):
+    """Send every queued approval request after the workflow has pushed pending files."""
+    import base64
+
+    outbox_dir = (outbox_dir or os.environ.get("DISCORD_APPROVAL_NOTICE_DIR", "")).strip()
+    if not outbox_dir:
+        print("[approval-notices] outbox is disabled")
+        return 0
+    manifest_path = os.path.join(outbox_dir, "notices.json")
+    if not os.path.exists(manifest_path):
+        print("[approval-notices] no queued notices")
+        return 0
+    with open(manifest_path, "r", encoding="utf-8") as f:
+        notices = json.load(f)
+    if not isinstance(notices, list):
+        notices = [notices]
+
+    sent = 0
+    for notice in notices:
+        attachment = notice.get("attachment")
+        decoded_attachment = None
+        if attachment:
+            decoded_attachment = {
+                "filename": attachment.get("filename") or "logic_comparison.xlsx",
+                "content_type": attachment.get("content_type") or "application/octet-stream",
+                "content": base64.b64decode(attachment.get("content_b64") or ""),
+            }
+        label = notice.get("label") or "Discord approval"
+        if not _post_discord_webhook(
+            APPROVAL_WEBHOOK_URL,
+            notice.get("payload") or {},
+            attachment=decoded_attachment,
+            label=label,
+        ):
+            raise RuntimeError(f"Failed to send queued approval notice: {label}")
+        sent += 1
+    os.remove(manifest_path)
+    print(f"[approval-notices] sent {sent} queued notice(s) after pending push")
+    return sent
+
+
 def build_stable_comparison_attachment(display_df, current_method, current_combo, current_thresholds,
                                        candidate_method, candidate_combo, candidate_thresholds,
                                        current_validation_stats, candidate_validation_stats):
@@ -4930,8 +5014,7 @@ def notify_discord_approval(best_method, best_combo, best_stats, baseline, thres
         }]
     }
 
-    _post_discord_webhook(
-        APPROVAL_WEBHOOK_URL,
+    _queue_or_post_discord_approval(
         payload,
         attachment=comparison_attachment,
         label="Discord approval",
@@ -5161,8 +5244,7 @@ def notify_discord_sniper_approval(conditions, stats, baseline_wr, thresholds, c
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }]
     }
-    _post_discord_webhook(
-        APPROVAL_WEBHOOK_URL,
+    _queue_or_post_discord_approval(
         payload,
         attachment=comparison_attachment,
         label="Discord Sniper approval",
@@ -5233,8 +5315,7 @@ def notify_discord_mega_approval(proposals, comparison_attachment=None):
         }]
     }
 
-    _post_discord_webhook(
-        APPROVAL_WEBHOOK_URL,
+    _queue_or_post_discord_approval(
         payload,
         attachment=comparison_attachment,
         label="Discord Mega approval",
@@ -5547,6 +5628,24 @@ def sniper_baseline_gate_reject_reason(candidate_stats, baseline_wr, baseline_av
                 f"{avg_floor*100:.1f}%)"
             )
     return None
+
+
+def sniper_pending_matches_current_logic(pending, current_logic):
+    """Reject only a pending proposal whose recorded current conditions have since changed."""
+    proposed_current = (pending or {}).get("current_logic")
+    if not isinstance(proposed_current, dict) or not current_logic:
+        return True
+    expected_sig = logic_signature(
+        "A",
+        proposed_current.get("conditions", []),
+        proposed_current.get("thresholds", {}),
+    )
+    actual_sig = logic_signature(
+        "A",
+        current_logic.get("conditions", []),
+        current_logic.get("thresholds", {}),
+    )
+    return actual_sig == expected_sig
 
 
 def _sniper_lockbox_gate_ok(lockbox_stats, baseline_lockbox_stats, wr_floor, rescue_mode=False):
@@ -5929,10 +6028,17 @@ def _run_sniper_optimization(df, args):
     if args.propose:
         def _to_jsonable(d):
             return {k: float(v) if hasattr(v, 'item') else v for k, v in d.items()}
+        current_sniper_conditions = sniper_logic.get("conditions", []) if sniper_logic else []
+        current_sniper_thresholds = sniper_logic.get("thresholds", {}) if sniper_logic else {}
         _pending = {
             "conditions":  best_combo,
             "thresholds":  {},
             "evaluation_policy": evaluation_policy_payload(),
+            "current_logic": {
+                "conditions": current_sniper_conditions,
+                "thresholds": current_sniper_thresholds,
+                "stats": _to_jsonable(refreshed_stats or {}),
+            },
             "sniper_code": sniper_code,
             "stats":       _to_jsonable(st6_full),
             "validation_stats": _to_jsonable(st6_valid),
@@ -5941,8 +6047,6 @@ def _run_sniper_optimization(df, args):
         with open(SNIPER_PENDING_PATH, "w", encoding="utf-8") as _f:
             _json.dump(_pending, _f, ensure_ascii=False, indent=2)
         print(f"  📋 pending_logic_sniper.json に保存しました")
-        current_sniper_conditions = sniper_logic.get("conditions", []) if sniper_logic else []
-        current_sniper_thresholds = sniper_logic.get("thresholds", {}) if sniper_logic else {}
         comparison_attachment = build_condition_logic_comparison_attachment(
             "Sniper score",
             df,
@@ -5966,7 +6070,6 @@ def _run_sniper_optimization(df, args):
             {},
             comparison_attachment=comparison_attachment,
         )
-        print("  ✅ Discord に Sniper承認リクエストを送信しました")
         return
 
     # ── --dry-run: 候補表示のみ ──────────────────────────────────
@@ -6452,6 +6555,8 @@ def main():
                         help="候補をpending_logic.jsonに保存してDiscord通知（デプロイしない）")
     parser.add_argument("--apply-pending", action="store_true",
                         help="pending_logic.jsonの承認済み候補をデプロイ")
+    parser.add_argument("--flush-approval-notices", action="store_true",
+                        help="Send queued optimizer approval requests after pending push")
     parser.add_argument("--composite-variant", default="rate_adjusted",
                         choices=["rate_adjusted", "snr", "legacy"],
                         help="composite計算方式 (default: rate_adjusted)")
@@ -6485,6 +6590,9 @@ def main():
                         choices=sorted(LOGIC_TARGETS),
                         help="--apply-pending で適用する対象ロジック")
     args = parser.parse_args()
+    if args.flush_approval_notices:
+        flush_discord_approval_notices()
+        return
     if args.apply_pending and (
         args.propose
         or args.propose_sniper_only
@@ -6605,16 +6713,12 @@ def main():
                       f" 平均{_sp_stats['avg_raw']*100:.1f}% {int(_sp_stats['n'])}件")
 
                 _current_sniper = load_current_logic_sniper()
-                if _current_sniper:
-                    _current_sniper_wr = float(_current_sniper.get("wr_raw", 0.0))
-                    _pending_sniper_wr = float(_sp_stats.get("wr_raw", 0.0))
-                    if _pending_sniper_wr <= _current_sniper_wr + SNIPER_WR_EPS:
-                        print(
-                            f"  ✅ Sniper pending: 勝率が現行以下 "
-                            f"({_pending_sniper_wr*100:.1f}% ≤ {_current_sniper_wr*100:.1f}%) "
-                            "のため適用しません。"
-                        )
-                        _has_sniper = False
+                if not sniper_pending_matches_current_logic(_sp, _current_sniper):
+                    print(
+                        "  [skip] Sniper pending was proposed against a different current logic; "
+                        "run the optimizer again before approval."
+                    )
+                    _has_sniper = False
 
         if _has_mega:
             _mega_pending = load_pending_logic_mega()
@@ -7411,7 +7515,6 @@ def main():
             mode=adoption_mode,
             comparison_attachment=comparison_attachment,
         )
-        print("✅ Discord に承認リクエストを送信しました")
         print("（承認後、Discord で /approve-update を実行するとデプロイされます）")
         restart_bot_only()
         return

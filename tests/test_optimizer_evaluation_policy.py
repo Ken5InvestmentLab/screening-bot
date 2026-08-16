@@ -500,6 +500,50 @@ class OptimizerEvaluationPolicyTest(unittest.TestCase):
         self.assertIn('git add -A -- "$path"', workflow)
         self.assertIn('git ls-files --error-unmatch "$path"', workflow)
 
+    def test_approval_notices_are_queued_until_explicit_flush(self):
+        with tempfile.TemporaryDirectory() as temp_dir, \
+                mock.patch.dict(os.environ, {"DISCORD_APPROVAL_NOTICE_DIR": temp_dir}), \
+                mock.patch.object(opt, "_post_discord_webhook", return_value=True) as post:
+            attachment = {
+                "filename": "comparison.xlsx",
+                "content_type": "application/test",
+                "content": b"test-workbook",
+            }
+            opt._queue_or_post_discord_approval(
+                {"content": "Sniper"}, attachment=attachment, label="Sniper approval"
+            )
+            opt._queue_or_post_discord_approval(
+                {"content": "Stable"}, label="Stable approval"
+            )
+
+            post.assert_not_called()
+            self.assertEqual(opt.flush_discord_approval_notices(), 2)
+            self.assertEqual(post.call_count, 2)
+            self.assertEqual(post.call_args_list[0].kwargs["attachment"]["content"], b"test-workbook")
+            self.assertFalse((Path(temp_dir) / "notices.json").exists())
+
+    def test_workflow_sends_approval_requests_only_after_pending_push(self):
+        workflow = Path(".github/workflows/optimize.yml").read_text(encoding="utf-8")
+        self.assertIn("DISCORD_APPROVAL_NOTICE_DIR: /tmp/optimizer-approval-notices", workflow)
+        self.assertLess(
+            workflow.index("git push"),
+            workflow.index("python optimize_screener.py --flush-approval-notices"),
+        )
+
+    def test_sniper_apply_uses_current_logic_signature_not_stored_win_rate(self):
+        current = {"conditions": ["ema75", "rsi5070"], "thresholds": {}, "wr_raw": 0.99}
+        matching = {
+            "current_logic": {"conditions": ["ema75", "rsi5070"], "thresholds": {}},
+            "stats": {"wr_raw": 0.68},
+        }
+        changed = copy.deepcopy(matching)
+        changed["current_logic"]["conditions"] = ["ema75", "stoch75"]
+
+        self.assertTrue(opt.sniper_pending_matches_current_logic(matching, current))
+        self.assertFalse(opt.sniper_pending_matches_current_logic(changed, current))
+        self.assertTrue(opt.sniper_pending_matches_current_logic({"stats": {"wr_raw": 0.68}}, current))
+        self.assertNotIn("_current_sniper_wr", inspect.getsource(opt.main))
+
 
 if __name__ == "__main__":
     unittest.main()

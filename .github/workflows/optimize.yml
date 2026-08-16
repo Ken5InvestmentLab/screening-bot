@@ -15,6 +15,8 @@ jobs:
   optimize:
     needs: refresh_report_before_optimize
     runs-on: ubuntu-latest
+    env:
+      DISCORD_APPROVAL_NOTICE_DIR: /tmp/optimizer-approval-notices
     permissions:
       contents: write
 
@@ -78,3 +80,8 @@ jobs:
             git pull --rebase origin main
             git push
           fi
+
+      - name: Send approval requests after pending push
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python optimize_screener.py --flush-approval-notices

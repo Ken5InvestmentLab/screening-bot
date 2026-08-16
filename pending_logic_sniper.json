@@ -1,0 +1,50 @@
+{
+  "conditions": [
+    "sbull",
+    "macdpos",
+    "rsi5070",
+    "ich_price_tenkan",
+    "rci9_os",
+    "pre_down3"
+  ],
+  "thresholds": {},
+  "evaluation_policy": {
+    "calendar_days": 365,
+    "timezone": "Asia/Tokyo",
+    "feature_source": "first_final_snapshot_then_signal_received_cutoff",
+    "current_selection": "published_mode_or_stable_score_then_conditions_fallback",
+    "win_rate": "exclude_zero_percent_draws"
+  },
+  "sniper_code": "// Sniperモード自動最適化 2026-08-16 05:39 / 3439件データ\n// Sniper: 26件 勝率68.0% 平均7.2%\n// 【Sniper条件（全6条件通過で採択）】\n//   ① 強い陽線（実体≥0.5%）\n//   ② MACD hist > 0\n//   ③ RSI 50〜70\n//   ④ 一目: close > 転換線\n//   ⑤ RCI(9) ≤ -50（短期売られすぎ）\n//   ⑥ 直近3日連続下落後\n\nfunction calculateScoreSniper(ind) {\n  if (!ind) return null;\n  const filters = [];\n  let score = 0;\n\n  // ① 強い陽線（実体≥0.5%）\n  if (ind.isStrongBull) {\n    score++;\n    filters.push(`①強陽線(${ind.bodyPct.toFixed(1)}%)`);\n  }\n\n  // ② MACD hist > 0\n  if (ind.macdPos) {\n    score++;\n    filters.push(`②MACD上昇`);\n  }\n\n  // ③ RSI 50〜70\n  if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {\n    score++;\n    filters.push(`③RSI(${ind.rsi14.toFixed(0)})`);\n  }\n\n  // ④ 一目: close > 転換線\n  if (ind.ichTenkan !== null && ind.close > ind.ichTenkan) {\n    score++;\n    filters.push(`④一目>転換`);\n  }\n\n  // ⑤ RCI(9) ≤ -50（短期売られすぎ）\n  if (ind.rci9 !== null && ind.rci9 <= -50) {\n    score++;\n    filters.push(`⑤RCI9(${ind.rci9 !== null ? ind.rci9.toFixed(0) : 'N/A'})`);\n  }\n\n  // ⑥ 直近3日連続下落後\n  if (ind.preDown3) {\n    score++;\n    filters.push(`⑥3連陰後`);\n  }\n\n  return { score, filters };\n}",
+  "stats": {
+    "n": 26,
+    "wr": 0.6295892290883642,
+    "avg": 0.04203470442832351,
+    "win10": 1.0032288787047328,
+    "lose10": 0.0,
+    "wr_raw": 0.68,
+    "avg_raw": 0.07234615384615387,
+    "win10_raw": 4.0,
+    "lose10_raw": 0.0,
+    "median_raw": 0.023,
+    "m10_raw": 0,
+    "decisive_n": 25,
+    "composite": 49.48607574916197
+  },
+  "validation_stats": {
+    "n": 5,
+    "wr": 0.6222651346841068,
+    "avg": 0.02430721431730802,
+    "win10": 0.0,
+    "lose10": 0.0,
+    "wr_raw": 0.6,
+    "avg_raw": 0.022400000000000003,
+    "win10_raw": 0.0,
+    "lose10_raw": 0.0,
+    "median_raw": 0.035,
+    "m10_raw": 0,
+    "decisive_n": 5,
+    "composite": 27.321326819095077
+  },
+  "proposed_at": "2026-08-16T05:39:18.373123Z"
+}

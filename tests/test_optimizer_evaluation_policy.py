@@ -544,6 +544,11 @@ class OptimizerEvaluationPolicyTest(unittest.TestCase):
         self.assertTrue(opt.sniper_pending_matches_current_logic({"stats": {"wr_raw": 0.68}}, current))
         self.assertNotIn("_current_sniper_wr", inspect.getsource(opt.main))
 
+    def test_sniper_finalize_does_not_rewrite_current_logic_after_deploy(self):
+        source = inspect.getsource(opt.finalize_sniper_pending)
+        self.assertNotIn("save_current_logic_sniper", source)
+        self.assertIn("os.remove(SNIPER_PENDING_PATH)", source)
+
 
 if __name__ == "__main__":
     unittest.main()

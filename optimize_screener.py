@@ -5492,11 +5492,9 @@ def apply_sniper_pending():
     return {"combo": _combo, "thresholds": _ths, "stats": _st}
 
 def finalize_sniper_pending(sniper_data):
-    """deploy()成功後にSniperロジックを確定（JSON保存 + pending削除）"""
+    """deploy()成功後に、転送前に保存済みのSniper pendingを削除する。"""
     if sniper_data is None:
         return
-    save_current_logic_sniper(sniper_data["combo"], sniper_data["thresholds"] or None,
-                              backtest_stats=sniper_data["stats"])
     if os.path.exists(SNIPER_PENDING_PATH):
         os.remove(SNIPER_PENDING_PATH)
         print("  ✅ pending_logic_sniper.json 削除完了")

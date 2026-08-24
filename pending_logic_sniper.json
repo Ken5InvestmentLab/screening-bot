@@ -1,0 +1,91 @@
+{
+  "conditions": [
+    "atr3",
+    "hb20",
+    "rsi5070",
+    "ich_tk",
+    "rci9_os",
+    "gap_up"
+  ],
+  "thresholds": {},
+  "evaluation_policy": {
+    "calendar_days": 365,
+    "timezone": "Asia/Tokyo",
+    "feature_source": "first_final_snapshot_then_signal_received_cutoff",
+    "current_selection": "published_mode_or_stable_score_then_conditions_fallback",
+    "win_rate": "exclude_zero_percent_draws"
+  },
+  "current_logic": {
+    "conditions": [
+      "vol12",
+      "atr3",
+      "hb20",
+      "rsi5070",
+      "ich_chikou",
+      "rci9_os"
+    ],
+    "thresholds": {},
+    "stats": {
+      "n": 39,
+      "wr": 0.5949397864730009,
+      "avg": 0.00862916574687767,
+      "win10": 1.3430325471792595,
+      "lose10": 1.1210873208979741,
+      "wr_raw": 0.6756756756756757,
+      "avg_raw": 0.026230769230769228,
+      "win10_raw": 5.0,
+      "lose10_raw": 2.0,
+      "median_raw": 0.009000000000000001,
+      "m10_raw": 2,
+      "decisive_n": 37,
+      "composite": 27.444064485566457
+    }
+  },
+  "sniper_code": "// Sniperモード自動最適化 2026-08-24 09:40 / 3688件データ\n// Sniper: 37件 勝率75.7% 平均3.7%\n// 【Sniper条件（全6条件通過で採択）】\n//   ① ATR% < 3.0%\n//   ② 直近20日高値更新\n//   ③ RSI 50〜70\n//   ④ 一目: 転換線 > 基準線\n//   ⑤ RCI(9) ≤ -50（短期売られすぎ）\n//   ⑥ ギャップアップ（始値>前終値）\n\nfunction calculateScoreSniper(ind) {\n  if (!ind) return null;\n  const filters = [];\n  let score = 0;\n\n  // ① ATR% < 3.0%\n  if (ind.atrPct < 3.0) {\n    score++;\n    filters.push(`①ATR(${ind.atrPct}%)`);\n  }\n\n  // ② 直近20日高値更新\n  if (ind.hiBrk20) {\n    score++;\n    filters.push(`②高値更新`);\n  }\n\n  // ③ RSI 50〜70\n  if (!isNaN(ind.rsi14) && ind.rsi14 >= 50 && ind.rsi14 < 70) {\n    score++;\n    filters.push(`③RSI(${ind.rsi14.toFixed(0)})`);\n  }\n\n  // ④ 一目: 転換線 > 基準線\n  if (ind.ichTenkan !== null && ind.ichKijun !== null && ind.ichTenkan > ind.ichKijun) {\n    score++;\n    filters.push(`④一目TK`);\n  }\n\n  // ⑤ RCI(9) ≤ -50（短期売られすぎ）\n  if (ind.rci9 !== null && ind.rci9 <= -50) {\n    score++;\n    filters.push(`⑤RCI9(${ind.rci9 !== null ? ind.rci9.toFixed(0) : 'N/A'})`);\n  }\n\n  // ⑥ ギャップアップ（始値>前終値）\n  if (ind.gapUp) {\n    score++;\n    filters.push(`⑥GAP-UP`);\n  }\n\n  return { score, filters };\n}",
+  "stats": {
+    "n": 39,
+    "wr": 0.6339143005947535,
+    "avg": 0.008234888039200352,
+    "win10": 0.6804780023402641,
+    "lose10": 1.1210873208979741,
+    "wr_raw": 0.6923076923076923,
+    "avg_raw": 0.02307692307692307,
+    "win10_raw": 3.0,
+    "lose10_raw": 2.0,
+    "median_raw": 0.012,
+    "m10_raw": 2,
+    "decisive_n": 39,
+    "composite": 20.79748123690725
+  },
+  "simulation_stats": {
+    "n": 37,
+    "wr": 0.7303289883589682,
+    "avg": 0.030484526377106934,
+    "win10": 1.5083564904235018,
+    "lose10": 0.3114032239145977,
+    "wr_raw": 0.7567567567567568,
+    "avg_raw": 0.03748648648648648,
+    "win10_raw": 4.0,
+    "lose10_raw": 1.0,
+    "median_raw": 0.023,
+    "m10_raw": 1,
+    "decisive_n": 37,
+    "composite": 48.6860332215314
+  },
+  "validation_stats": {
+    "n": 7,
+    "wr": 0.8492236039735004,
+    "avg": 0.01698949103016447,
+    "win10": 0.0,
+    "lose10": 0.0,
+    "wr_raw": 0.8571428571428571,
+    "avg_raw": 0.016999999999999998,
+    "win10_raw": 0.0,
+    "lose10_raw": 0.0,
+    "median_raw": 0.023,
+    "m10_raw": 0,
+    "decisive_n": 7,
+    "composite": 35.667893261956465
+  },
+  "proposed_at": "2026-08-24T09:40:46.847563Z"
+}

@@ -23,7 +23,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/install-
 
 `~/.codex/premium-runner/probe-latest.json` の `ok=true`、`sessionId=0`、`cli=true`、`sheetsRead=true`、`discordRead=true` を確認し、CLI ログで実際の読取・検索の成功も確認する。
 
-確認後、同じコマンドの `-Mode Scheduled` で本番タスクを無効状態で登録する。登録成功を確認してから、Codex アプリの管理ツールで既存の 13:05 / 15:36 の **両方**の Premium automation を PAUSED にし、`Enable-ScheduledTask -TaskName PremiumAlertCli` で有効にする。切り替えに失敗したら既存 automation を ACTIVE に戻す。テスト・登録完了前に旧 automation を停止しない。
+確認後、同じコマンドの `-Mode Scheduled` で本番タスクを無効状態で登録する。S4U タスクの有効化・無効化にも管理者権限が必要な環境があるため、管理者 PowerShell で `Enable-ScheduledTask -TaskName PremiumAlertCli` を実行して有効化を確認する。その後、Codex アプリの管理ツールで既存の 13:05 / 15:36 の **両方**の Premium automation を PAUSED にする。旧 automation が ACTIVE の間は CLI 内の事前チェックが収集を止める。切り替えに失敗したら既存 automation を ACTIVE に戻す。テスト・登録・有効化の完了前に旧 automation を停止しない。
+
+両方の旧 automation が PAUSED になったことを確認したら、同じ管理者 PowerShell で `Disable-ScheduledTask -TaskName CodexKeepAlive` と `Disable-ScheduledTask -TaskName PremiumAlertCliProbe` を実行する。実行中の Codex アプリを終了する操作は不要。
 
 本番タスク `PremiumAlertCli` は 12:55 / 15:26 に PC を起こし、13:05 / 15:36 まで回復時間を確保してから実行する。遅延起動時はすぐ実行する。2つの時刻は同じ Windows タスクで直列化し、共有 mutex でも多重実行を防ぐ。PC のスリープ抑止は最大4時間の実行中だけに限定する。
 

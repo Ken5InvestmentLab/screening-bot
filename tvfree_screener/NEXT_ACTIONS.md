@@ -2,27 +2,23 @@
 
 TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. Keep `HANDOFF.md` synchronized.
 
-## 1. Build reproducible V3 Short reconstruction runner
+## 1. Confirm reproducible V3 Short runner in GitHub Actions
 
-Current decision: `Short Attack = none / unaccepted`.
+`tvfree_screener/v3_short_reconstruction.py` is implemented and integrated into the test workflow.
 
-Why:
-- exact-feature recent-outcome Meta failed frozen 2026,
-- whole-universe +10/+20 Attack selected on 2025 failed frozen 2026,
-- 5 distinct event families x 2 fixed variants all failed the 2024-2025 robustness gate before 2026 evaluation.
-
-Create `tvfree_screener/v3_short_reconstruction.py` with only defensible, reproducible test-only components. Do not recreate the historical +5.42% result by inventing missing parameters.
-
-Recommended representation:
+Current frozen representation:
 - causal monthly exact-feature Core using `r_top10 - 2*r_loss10`, selected on 2025,
-- optionally report the contemporaneous `med_ret5 >= -1%` defensive market gate as a supporting lane,
-- recent-outcome Meta = rejected/not active,
-- Attack = none,
+- contemporaneous `med_ret5 >= -1%` defensive market gate as a supporting lane,
+- recent-outcome Meta = rejected/inactive,
+- Attack = none/unaccepted,
 - one-selection-day same-symbol cooldown,
 - next-session-open -> 5BD evaluation,
 - JSON/CSV reports with 2025H1/H2 and contaminated fixed 2026 Mar-Aug clearly labeled.
 
-If implementing the monthly XGBoost runner in Actions is too expensive, first preserve a reproducible checkpoint/report path and document the runtime blocker rather than weakening causal rules.
+Next:
+- inspect the workflow run triggered by the new runner/workflow commits,
+- if successful, preserve/report its artifact and reconcile exact numbers with prior research notes,
+- if it fails or times out, fix checkpoint/runtime plumbing only; do not reduce model semantics or tune to 2026.
 
 ## 2. Reproduce/freeze Swing S in GitHub Actions
 

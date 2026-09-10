@@ -1,0 +1,61 @@
+name: TradingView-free screener TEST
+
+on:
+  workflow_dispatch:
+    inputs:
+      period:
+        description: Yahoo daily history period
+        required: true
+        default: 3y
+      price_cap:
+        description: Previous-close cap; 0 = no cap
+        required: true
+        default: "1000"
+      loss_penalty:
+        description: Penalty multiplier for P(-10% or worse)
+        required: true
+        default: "6"
+      topk:
+        description: Picks per trading day in walk-forward
+        required: true
+        default: "1"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Purged walk-forward backtest
+        run: >-
+          python tvfree_screener/run.py
+          --mode backtest
+          --period "${{ inputs.period }}"
+          --price-cap "${{ inputs.price_cap }}"
+          --loss-penalty "${{ inputs.loss_penalty }}"
+          --topk "${{ inputs.topk }}"
+          --refresh
+      - name: Score latest session from same downloaded cache
+        run: >-
+          python tvfree_screener/run.py
+          --mode score
+          --price-cap "${{ inputs.price_cap }}"
+          --loss-penalty "${{ inputs.loss_penalty }}"
+          --topn 30
+      - name: Upload test outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-screener-test-${{ github.run_id }}
+          path: tvfree_screener/out/
+          if-no-files-found: warn
+          retention-days: 14

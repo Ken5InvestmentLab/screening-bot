@@ -1,0 +1,53 @@
+name: No-TV Stable Feature Parity
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - research/audit_yahoo_stable_feature_parity.py
+      - .github/workflows/no-tv-stable-feature-parity.yml
+
+concurrency:
+  group: no-tv-stable-feature-parity
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install numpy==2.3.1 pandas==2.3.0 requests==2.32.4 scikit-learn==1.7.2 openpyxl==3.1.5 google-auth google-auth-httplib2 google-api-python-client
+      - name: Write read-only Google credentials
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+      - name: Export production feature teacher read-only
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python research/export_no_tv_teacher.py
+      - name: Audit Stable feature parity
+        run: |
+          python research/audit_yahoo_stable_feature_parity.py \
+            --teacher research_artifacts/no_tv_teacher/teacher_bottom_confirmed.csv \
+            --start 2026-07-01 \
+            --end 2026-08-31 \
+            --max-symbols 200 \
+            --max-workers 20 \
+            --output-dir research_artifacts/stable_feature_parity
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-stable-feature-parity
+          path: research_artifacts/stable_feature_parity/
+          if-no-files-found: ignore
+          retention-days: 14

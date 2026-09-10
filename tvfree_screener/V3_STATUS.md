@@ -42,10 +42,13 @@ Rejected during continuation:
 - Monthly-retrained classifiers converted to daily percentiles: rejected at useful sample sizes.
 - Continuous relative-rank XGB regression: rejected.
 - Static Trend T2 factor: strong in 2025H2 but failed in 2026; rejected.
-- Simple breadth regime switch: failed in 2026; rejected.
-- 10BD Meta gate based on recent Low-Vol Core results: did not improve robustness; rejected for now.
+- Simple breadth regime switch: failed in 2026 when used as a standalone engine.
+- 10BD Meta gate based only on recent 10BD outcomes: too slow to recover after regime changes; rejected.
+- 5BD outcome-only Meta gate: reacts faster but still selected early bad trades and over-stopped recovery; rejected as a standalone gate.
+- Big-winner / +20% classifier Attack variants: good development numbers did not survive the fixed 2026 side; rejected.
+- Six intuitive 10BD Deep Reversal rule families: failed to remain positive across development and validation; rejected.
 
-Current reproducible research candidates in `v3_swing.py`:
+Current reproducible baseline candidates in `v3_swing.py`:
 
 ### Swing Core — Low-Vol Momentum
 
@@ -67,7 +70,7 @@ Pre-2026 half-year mean 10BD returns observed during research:
 
 This is defensive and stable pre-2026, but 2026 March-August was only about +0.10%, so it is not strong enough alone.
 
-### Swing Attack — MomCross transition event
+### Swing Attack baseline — MomCross transition event
 
 Event definition:
 
@@ -87,15 +90,69 @@ Pre-2026 half-year mean 10BD returns observed during research:
 - 2025H1: +0.76%
 - 2025H2: +1.78%
 
-2026 March-August contaminated check:
+2026 March-August contaminated check from the earlier baseline:
 
 - mean: about +0.85%
 - +10% rate: about 19.1%
 - +20% rate: about 9.6%
 - -10% rate: about 20.2%
 
-Interpretation: MomCross retains an Attack-like large-winner profile, but loss risk is too high to promote to production.
+Interpretation: MomCross retains an Attack-like large-winner profile, but loss risk is too high without a second-stage quality mechanism.
+
+## V3 Swing v2 — current leading 10BD candidate
+
+Implemented in `v3_swing_v2.py`.
+
+Architecture:
+
+1. MomCross event filter.
+2. Semiannual event-quality model; every training row's 10BD outcome must end before the prediction half-year begins.
+3. Return-regression prediction and -10% loss prediction are converted to empirical CDF percentiles using that period's training prediction distribution.
+4. `score_R = cdf_return - cdf_loss10`; raw model probabilities are never thresholded.
+5. Breadth Meta: require more than 40% of the TSE candidate universe to be above MA20 at signal close.
+6. Daily best MomCross event, with one-selection-day same-symbol cooldown.
+7. Swing S gate: `score_R >= 0.20`.
+
+The score threshold was checked only with pre-2026 periods using a coarse fixed sweep `[-0.50, -0.25, 0.00, 0.10, 0.20, 0.30]`. A minimum of 30 signals was required in both 2025H1 development and 2025H2 validation. Under the locked robust utility, 0.20 was the best eligible threshold before looking at the fixed-side report.
+
+Observed next-open -> 10BD results for the locked Swing S candidate:
+
+### 2025H1 development
+
+- n: 33
+- mean: +2.68%
+- median: +2.12%
+- win rate: 57.6%
+- +10% rate: 15.2%
+- -10% rate: 6.1%
+
+### 2025H2 validation
+
+- n: 31
+- mean: +1.95%
+- median: -0.70%
+- win rate: 45.2%
+- +10% rate: 16.1%
+- -10% rate: 6.5%
+
+### 2026 March-August contaminated fixed-side check
+
+- n: 30
+- mean: +1.42%
+- median: +1.63%
+- win rate: 60.0%
+- +10% rate: 10.0%
+- -10% rate: 3.3%
+- max: about +17.5%
+
+Interpretation: this is not a Stable★6-level large-winner engine. It is currently the most credible defensive 10BD Swing S candidate because its median/win/loss profile survives into 2026 much better than prior Swing models. It should remain research-only until a new untouched forward period exists.
+
+The same Swing S candidates weaken at 20BD and especially 40BD, so this lane should be treated as a 10BD-specific engine rather than a generic long-hold strategy.
 
 ## Next research direction
 
-The evidence so far says that a daily Top-1 Swing model is structurally too noisy. The next Swing iteration should keep event/transition detection as the first-stage universe, then develop a future-safe risk/quality gate inside those events. Do not tune that gate from 2026 alone.
+- Keep `v3_swing_v2.py` as the current Swing S candidate and do not retune it from 2026.
+- Continue searching for a separate Swing A / Attack lane; do not weaken Swing S merely to capture large winners.
+- Favor a genuinely different event family for Attack rather than increasingly tuning MomCross to the already-seen 2026 winners.
+- Preserve 5BD V3 Short separately; its exact missing parameters still need reconstruction/revalidation before claiming exact reproducibility.
+- Final promotion remains blocked until explicit user Go approval and a genuinely new forward period is available.

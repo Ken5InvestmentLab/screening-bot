@@ -53,6 +53,17 @@ def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
 
     confirmed, live = opt.build_mega_report_feature_frames()
+
+    # Read-only raw production 4H/session data for Yahoo synthetic-bar parity research.
+    svc = opt.get_service()
+    raw_4h = opt.fetch(svc, "ohlcv_4h")
+    if raw_4h:
+        header = list(map(str, raw_4h[0]))
+        body = raw_4h[1:]
+        pd.DataFrame(body, columns=header).to_csv(
+            OUT / "teacher_ohlcv_4h_raw.csv", index=False, encoding="utf-8-sig"
+        )
+
     if confirmed is None or confirmed.empty:
         raise RuntimeError("confirmed teacher frame is empty")
 

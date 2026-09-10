@@ -19,9 +19,10 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 - Last fully successful research pipeline: Actions run `34519284035` on rolling `period=3y`; all Short/Swing/comparison steps passed, runtime about 23m15s, artifact about 33.55 MB.
 - Critical reproducibility flaw found: rolling `period=3y` drops old training rows as time advances.
 - Test-only fixed-start acquisition was added in `bootstrap.py` (`063a73b3...`) and workflow (`458be814...`), defaulting to `2022-01-01 -> current`; no model architecture or threshold changed.
-- Fixed-start verification is currently blocked by GitHub Actions runner startup failure, not a model/test exception: run `34525453744` failed before any step and exposed no step logs; rerun was requested. New-head run `34530881770` also failed before any step with an empty steps list.
-- Because jobs are not starting, do not treat these failures as evidence against fixed-start code or the models.
-- Commit `797a8578...` added `reproducibility_manifest.py`; commit `418c42b7...` added it to the test workflow. It records fixed-cutoff (2026-08-31) SHA-256 fingerprints for OHLCV date/symbol coverage, Short Core, Short defensive lane, and Swing S so later append-only stability can be checked mechanically.
+- Fixed-start verification is currently blocked by GitHub Actions runner startup failure, not a model/test exception. Runs `34525453744`, `34530881770`, `34530963918`, and `34531004386` all failed before any workflow step. The latter two expose `steps=[]`, `runner_id=0`, and blank runner name, confirming no hosted runner was assigned.
+- Because jobs are not starting, do not treat these failures as evidence against fixed-start code or the models. Do not weaken model semantics to work around this blocker.
+- Commit `797a8578...` added `reproducibility_manifest.py`; commit `418c42b7...` added it to the test workflow.
+- Commit `49ac8088...` fixed an important manifest gap: the cache manifest previously hashed only historical date/symbol coverage, which could not detect Yahoo historical OHLCV revisions. It now records both coverage SHA-256 and full historical OHLCV SHA-256 through the frozen cutoff `2026-08-31`.
 
 ## Stable★6 historical reference
 2026 Mar-Aug 5BD: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%.
@@ -62,9 +63,16 @@ Latest fully successful rolling-3y snapshot at unchanged 0.20:
 - Swing A: none.
 - Production migration: blocked pending explicit user Go.
 
+## Completed in latest run
+- Re-read HANDOFF/NEXT_ACTIONS/V3_STATUS and inspected Draft PR #13.
+- Confirmed current runner-start blocker with exact job metadata (`steps=[]`, `runner_id=0`, no runner name) on runs `34530963918` and `34531004386`.
+- Inspected fixed-start bootstrap semantics and confirmed `TVFREE_START_DATE` is consumed by the test-only wrapper while normal `run.py` remains untouched.
+- Found and fixed a reproducibility blind spot in `reproducibility_manifest.py`: historical OHLCV values themselves are now hashed, not just date/symbol coverage. Commit: `49ac8088a8160b6e8f4571374613b5d0343981d0`.
+- No production files/workflows/writes were touched.
+
 ## Next concrete task
-1. Re-check Actions runner availability. Current failure mode is pre-step/no-log and may be transient/account-runner infrastructure rather than code.
+1. Re-check Actions runner availability after the latest test-only commit.
 2. Once a fixed-start job actually starts, confirm logs say `Yahoo history mode: fixed start 2022-01-01 -> current` and all Short/Swing/comparison/manifest steps succeed.
-3. Freeze the resulting fixed-start Short/Swing numeric snapshot and the manifest hashes without retuning from 2026.
-4. On a later market-session append, compare 2026-08-31 historical hashes. A changed hash requires investigation (Yahoo history revision or code/semantic change); a new future row alone should not change it.
+3. Freeze the resulting fixed-start Short/Swing numeric snapshot and both cache hashes (coverage + OHLCV) without retuning from 2026.
+4. On a later market-session append, compare 2026-08-31 historical hashes. A changed OHLCV hash with unchanged coverage indicates source-data revision; a changed coverage hash indicates date/symbol-set drift; either requires investigation before accepting a new baseline.
 5. Record fixed-start runtime/artifact size and optimize plumbing only if needed.

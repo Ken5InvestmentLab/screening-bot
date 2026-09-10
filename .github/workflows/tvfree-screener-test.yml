@@ -53,6 +53,8 @@ jobs:
         run: pip install -r tvfree_screener/requirements.txt
       - name: Reproducibility manifest synthetic self-check
         run: python tvfree_screener/reproducibility_selftest.py
+      - name: Causal prefix and entry synthetic self-check
+        run: python tvfree_screener/causality_selftest.py
       - name: Purged walk-forward backtest
         run: >-
           python tvfree_screener/bootstrap.py

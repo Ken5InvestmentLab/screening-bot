@@ -2,91 +2,90 @@
 
 TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. Keep `HANDOFF.md` synchronized.
 
-## 1. Resolve/observe GitHub Actions runner-start blocker
-
-Latest observed PR-triggered runs `34541399127`, `34541906076`, and `34542011745` all failed before executable steps. Job metadata still shows no usable steps/logs. This is not evidence of a Python/model failure.
-
-Next run:
-- inspect whether the newest job reaches `actions/checkout`,
-- inspect job/check metadata for a usable account/quota/runner reason,
-- if still pre-step/no-runner, record the blocker and continue only test-safe research,
-- never touch production workflows as a workaround,
-- never alter model semantics to address runner allocation failure.
+## 1. Observe runner blocker without changing model semantics
+Recent PR-triggered jobs still fail before executable steps. Re-check only opportunistically. Never touch production workflows or model thresholds as a workaround.
 
 ## 2. Require all synthetic safety checks before heavy research
-
 The test workflow must first pass:
-- `reproducibility_selftest.py`: historical-source revision and append-only invariants,
-- `causality_selftest.py`: fabricated 2024/2025-only checks for feature prefix invariance, next-session-open -> 5BD semantics, Short monthly purge, and Swing semiannual purge,
-- `point_in_time_universe_selftest.py`: reverse membership reconstruction, code-reuse chronology, and fail-closed same-day event collision detection.
+- `reproducibility_selftest.py`,
+- `causality_selftest.py`,
+- `point_in_time_universe_selftest.py`,
+- `fundamental_overlay_selftest.py`.
 
-Do not bypass these checks to obtain performance output.
+## 3. Build point-in-time EDINET snapshot ingestion
+Goal: normalized historical snapshots keyed by `symbol` + `available_date`, where `available_date` is the filing/public date visible to the market.
 
-## 3. Validate official JPX point-in-time membership reconstruction
+Initial standardized fields:
+- shares outstanding,
+- assets,
+- equity,
+- revenue,
+- operating income,
+- net income,
+- operating cash flow.
 
-Official JPX stock pages expose year-specific new-listing and delisting archives for 2022 onward. TEST-only implementation:
-- `point_in_time_universe.py`: commit `d2e66370d237edd94880fd9f8a6e740ed9332d5a`
-- synthetic test: `bea62cb1d1847409e84d1e63b2c08038db435765`
-- workflow self-check integration: `7632a4cd6aa3c77153413251a6d4cdfdb6973c5b`
-- research-contract inclusion: `b88b04ebdc7e15c27eb7c6ae0ca34b3ed27a83a8`
+Requirements:
+- use EDINET API v2 only in TEST path,
+- require `EDINET_API_KEY` from environment/secrets; never commit the key,
+- retain document id, filing date, period end, and source provenance,
+- never backfill later filings into earlier signal dates,
+- emit requested/usable/missing-field coverage diagnostics.
 
-Method:
-1. anchor on the current JPX domestic-common snapshot,
-2. collect official JPX listing/delisting events from 2022 through the anchor date,
-3. reverse events to reconstruct membership on historical dates,
-4. reject, rather than guess, unknown market classifications or same-code same-day event collisions.
+## 4. Prototype historical dilution extraction separately
+Target normalized fields:
+- remaining warrant/new-share-option potential shares,
+- instrument type,
+- MS-warrant / exercise-price-reset flag where deterministically identifiable,
+- source filing/document id,
+- public availability date,
+- extraction confidence/coverage status.
 
-Acceptance gate before any backtest use:
-- live parser succeeds,
-- `unknown_market_rows == 0`,
-- `same_day_code_collisions == 0`,
-- archive years 2022 through current are represented,
-- no future-dated listing/delisting event is applied before its event date.
+Do not call a company dilution-safe when the source is missing. Missing must remain missing.
 
-Do NOT wire this prototype into Short/Swing until those checks pass.
+Predeclared dilution comparison grid in `fundamental_overlay.py`:
+- 20%, 35%, 50%, 100% remaining potential shares / shares outstanding.
+Do not select a threshold using 2026.
 
-## 4. Measure Yahoo coverage for reconstructed delisted members
+## 5. Validate financial-risk overlay before valuation scoring
+Transparent first-pass risk flags:
+- equity ratio < 10%,
+- operating loss,
+- net loss,
+- negative operating CF,
+- exclusion candidate when at least two risk flags are present.
 
-Membership reconstruction does not guarantee historical OHLCV exists in Yahoo.
+These are research lanes only, not accepted production rules. Missing values must not be silently treated as healthy.
 
-Before accepting point-in-time results:
-- enumerate reconstructed members that are absent from the current universe,
-- query/download their historical Yahoo OHLCV only in the test path,
-- report requested vs usable symbol counts and missing/error codes,
-- never silently exclude missing delisted symbols and then call the result survivorship-bias-free.
+## 6. Add valuation only after point-in-time accounting is reliable
+Potential later metrics:
+- PBR from signal-date market cap / latest publicly available equity,
+- PER only for positive earnings and causally available earnings,
+- cash/market-cap or EV-style measures if field coverage is stable.
+Avoid current-day valuation data in historical rows.
 
-If coverage is materially incomplete, document the limitation and investigate another free historical-price source before changing model semantics.
+## 7. Backtest overlays only after coverage gates pass
+Keep Short/Swing technical architecture frozen. Compare separately on 2024H1, 2024H2, 2025H1, 2025H2:
+- technical baseline,
+- dilution filter,
+- financial-risk filter,
+- combined dilution + financial risk,
+- later valuation score if data quality is adequate.
 
-## 5. Compare point-in-time vs current-survivor universe pre-2026
+Acceptance must consider mean, median, win rate, +10% rate, -10% rate, and retained sample size. Reject one-regime improvements, severe sample shrinkage, and gains caused by missing-data filtering. 2026 is reporting-only.
 
-Only after sections 3-4 pass:
-- keep all Short/Swing thresholds and architecture frozen,
-- run a separate test comparison using point-in-time membership,
-- evaluate 2024/2025 robustness and next-session-open outcomes,
-- treat 2026 only as contaminated fixed-side reporting, never threshold/model selection,
-- reject the point-in-time implementation if event/price coverage is unstable or not reproducible.
+## 8. Point-in-time universe and delisted-price validation
+Continue existing work:
+- validate official JPX listing/delisting parser,
+- require zero unresolved market rows/collisions before use,
+- measure Yahoo historical coverage for reconstructed delisted members,
+- never claim survivorship-bias-free results if delisted prices are materially missing.
 
-## 6. Confirm fixed-start history and freeze durable baseline
-
+## 9. Confirm fixed-start history and freeze durable baseline
 When a hosted runner actually starts:
 - require `Yahoo history mode: fixed start 2022-01-01 -> current`,
-- retain current-universe snapshot, point-in-time diagnostics, all model outputs, and `reproducibility_manifest.json`,
-- record Short Core / defensive lane for 2025H1, 2025H2, contaminated 2026 Mar-Aug,
-- record frozen Swing S at `score_R >= 0.20`,
-- keep Short Attack = none; Swing A = none,
-- record research-contract, universe, coverage, OHLCV, and Short/Swing output hashes,
-- record total runtime and artifact size.
+- retain all diagnostics/artifacts,
+- freeze Short Core / defensive / frozen Swing S metrics and manifest hashes,
+- keep Short Attack = none and Swing A = none unless separate pre-2026 evidence later supports them.
 
-The old rolling-3y run `34519284035` remains a snapshot only, not the durable baseline.
-
-## 7. Production integration — BLOCKED until user Go
-
-Never automatically:
-- merge PR #13 to main,
-- change production screening-bot,
-- send production Discord,
-- write production Spreadsheet,
-- replace Stable★6/Sniper/Mega,
-- disable TradingView/watchlist builder/updater.
-
-Only prepare test outputs and implementation plans until explicit user Go approval.
+## 10. Production integration — BLOCKED until user Go
+Never automatically merge PR #13, change main, send production Discord, write production Sheets, replace Stable★6/Sniper/Mega, or disable TradingView/watchlist tooling.

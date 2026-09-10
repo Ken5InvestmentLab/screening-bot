@@ -89,6 +89,9 @@ jobs:
       - name: Unified V3 research comparison
         if: always()
         run: python tvfree_screener/unified_comparison.py
+      - name: Build fixed-history reproducibility manifest
+        if: always()
+        run: python tvfree_screener/reproducibility_manifest.py
       - name: Upload test outputs
         if: always()
         uses: actions/upload-artifact@v4

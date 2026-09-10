@@ -1,0 +1,55 @@
+name: No-TV Stable Feature Parity V2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - research/audit_yahoo_stable_feature_parity_v2.py
+      - .github/workflows/no-tv-stable-feature-parity-v2.yml
+
+concurrency:
+  group: no-tv-stable-feature-parity-v2
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install numpy==2.3.1 pandas==2.3.0 requests==2.32.4 scikit-learn==1.7.2 google-auth google-auth-httplib2 google-api-python-client
+      - name: Write read-only Google credentials
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+      - name: Export production feature teacher read-only
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python research/export_no_tv_teacher.py
+      - name: Compile audit
+        run: python -m py_compile research/no_tv_v10_standalone.py research/audit_yahoo_stable_feature_parity.py research/audit_yahoo_stable_feature_parity_v2.py
+      - name: Audit official-daily hybrid Stable parity
+        run: |
+          python research/audit_yahoo_stable_feature_parity_v2.py \
+            --teacher research_artifacts/no_tv_teacher/teacher_bottom_confirmed.csv \
+            --start 2026-07-01 \
+            --end 2026-08-31 \
+            --max-symbols 200 \
+            --max-workers 20 \
+            --output-dir research_artifacts/stable_feature_parity_v2
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-stable-feature-parity-v2
+          path: research_artifacts/stable_feature_parity_v2/
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,51 @@
+name: No-TV Tenchi V24 Snapshot ML
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - research/no_tv_v24_snapshot_ml.py
+      - .github/workflows/no-tv-v24-snapshot-ml.yml
+
+concurrency:
+  group: no-tv-tenchi-v24-snapshot-ml
+  cancel-in-progress: true
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install numpy==2.3.1 pandas==2.3.0 scikit-learn==1.7.2 google-auth google-auth-httplib2 google-api-python-client
+      - name: Write read-only Google credentials
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+      - name: Export production BOTTOM feature snapshots read-only
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python research/export_no_tv_teacher.py
+      - name: Compile V24
+        run: python -m py_compile research/no_tv_v24_snapshot_ml.py
+      - name: Run rolling snapshot ML scorer
+        run: |
+          python research/no_tv_v24_snapshot_ml.py \
+            --teacher research_artifacts/no_tv_teacher/teacher_bottom_confirmed.csv \
+            --output-dir research_artifacts/v24_snapshot_ml
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-tenchi-v24-snapshot-ml
+          path: research_artifacts/v24_snapshot_ml/
+          if-no-files-found: ignore
+          retention-days: 14

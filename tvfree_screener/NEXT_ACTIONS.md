@@ -5,15 +5,17 @@ TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. 
 ## 1. Resolve/observe GitHub Actions runner-start blocker
 
 Current fixed-start verification is blocked before workflow steps begin:
-- run `34525453744`: failed before any step; no usable step logs; rerun requested.
-- run `34530881770`: failed before any step; empty steps list again.
+- run `34525453744`: failed before any step; no usable step logs.
+- run `34530881770`: failed before any step; empty steps list.
+- run `34530963918`: failed before any step with `steps=[]`, `runner_id=0`, blank runner name.
+- run `34531004386`: same pre-step failure with `steps=[]`, `runner_id=0`, blank runner name.
 
-This failure mode is not evidence of a Python/model failure. Do not alter model semantics to address it.
+This is strong evidence that no hosted runner was assigned. It is not evidence of a Python/model failure. Do not alter model semantics to address it.
 
 Next run:
-- inspect whether a job now reaches `actions/checkout`,
+- inspect whether a job reaches `actions/checkout`,
 - if it still fails pre-step, keep production untouched and record the blocker,
-- if GitHub exposes a concrete runner/account error, fix only test plumbing if safe and justified.
+- if GitHub exposes a concrete runner/account/quota error, fix only test plumbing if safe and justified.
 
 ## 2. Confirm fixed-start history in a successfully started job
 
@@ -46,10 +48,19 @@ The prior rolling-3y run `34519284035` is a valid snapshot only, not the durable
 
 `reproducibility_manifest.py` was added at `797a8578...` and workflow integration at `418c42b7...`.
 
+Important fix at commit `49ac8088a8160b6e8f4571374613b5d0343981d0`:
+- prior cache fingerprint covered only historical date/symbol pairs,
+- it now also hashes historical OHLCV values through `2026-08-31`,
+- this allows distinguishing calendar/universe drift from Yahoo historical price/volume revisions.
+
 On a later run after new market data arrives:
-- compare historical hashes through 2026-08-31,
+- compare historical date/symbol coverage hash,
+- compare historical OHLCV hash,
+- compare Short Core / defensive / Swing S output hashes,
 - unchanged hashes support append-only reproducibility,
-- changed hashes require investigation for Yahoo history revisions or intentional code/semantic changes before accepting new baselines.
+- changed OHLCV with unchanged coverage suggests source-data revision,
+- changed coverage suggests listing/calendar/universe drift,
+- any change requires investigation before accepting new baselines.
 
 ## 5. Operational-cost validation
 

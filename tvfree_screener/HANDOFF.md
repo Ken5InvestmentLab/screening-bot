@@ -18,7 +18,7 @@ Replace TradingView/Pine watchlist dependency with a free daily-OHLCV TSE common
 ## Infrastructure / reproducibility
 - Last fully successful research pipeline remains Actions run `34519284035` on rolling `period=3y`; runtime about 23m15s, artifact about 33.55 MB.
 - Rolling `period=3y` is not a durable baseline. Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`.
-- GitHub hosted-runner allocation remains blocked; recent PR-triggered jobs through `34543020376` fail before executable steps (`steps=null`). Do not alter model semantics because of this infrastructure failure.
+- GitHub hosted-runner allocation remains blocked; recent PR-triggered jobs through `34543080703` fail before executable steps (`steps=null`). The transition was abrupt: run #31 (`34519284035`) completed normally, while run #32 (`34525307787`) and later runs failed in 3–5 seconds before steps. This is highly consistent with an account-level Actions quota/budget/payment gate, but billing state is not directly readable here, so do not claim it as proven. Do not alter model semantics because of this infrastructure failure.
 - Manifest v3 fingerprints research code/config, current JPX universe, historical coverage/OHLCV, and Short/Swing outputs.
 - Synthetic checks cover append-only reproducibility, causal feature/label boundaries, point-in-time universe reconstruction, fundamental overlay behavior, and EDINET collector parsing/key safety.
 
@@ -80,17 +80,24 @@ Not yet accepted for performance use:
 - Valuation metrics such as PER/PBR require point-in-time market price and correctly aligned shares/equity/earnings; do not infer them from present-day values.
 - Warrant classification (especially MS warrants versus ordinary options/SO) still needs a robust historical extractor; do not pretend simple XBRL totals fully capture all dilution risk until validated.
 
+## Actions quota protection
+- Heavy TEST workflow auto-triggering from ordinary `tvfree_screener/**` commits has been disabled at commit `7a341579d668f9c667de88f659ef389b4af9db08`.
+- It now runs only when `tvfree_screener/RUN_HEAVY_TEST` is intentionally changed.
+- Duplicate heavy runs are protected by `concurrency` + `cancel-in-progress: true`; artifact retention reduced from 14 to 3 days at `d614ad8afc29bcffa2498da083797096c9c23a57`.
+- No existing production repository/workflow was changed.
+
 ## Blockers
-1. GitHub hosted runner allocation prevents fixed-start pipeline execution.
+1. GitHub hosted runner allocation prevents fixed-start pipeline execution until account-level Actions availability is restored.
 2. EDINET API requires an API key for programmatic live document acquisition.
 3. Historical warrant residual shares may require extracting filing-specific XBRL/text tables beyond simple standardized financial facts.
 4. Delisted-symbol historical price coverage remains unknown.
 
 ## Next concrete task
 1. Keep model thresholds frozen and re-check hosted runner only opportunistically.
-2. Live-validate the new TEST-only EDINET collector on a small pre-2026 sample once `EDINET_API_KEY` is available; inspect document selection, ZIP parsing, exact element-id coverage, and missing/ambiguous rates before broad collection.
-3. Before any performance backtest, define a strict same-day availability rule using retained `available_at` so a filing published after the signal decision time cannot leak into that day's signal.
-4. Separately prototype warrant/new-share-option extraction with confidence/coverage diagnostics; distinguish MS warrants where source disclosures allow it.
+2. Keep heavy TEST Actions gated until account-level Actions usage/budget is confirmed healthy. Ordinary research commits must not consume hosted-runner minutes.
+3. Live-validate the new TEST-only EDINET collector on a small pre-2026 sample once `EDINET_API_KEY` is available; inspect document selection, ZIP parsing, exact element-id coverage, and missing/ambiguous rates before broad collection.
+4. Before any performance backtest, keep `prior_day_only` as the conservative default unless an explicit operational `decision_at` timestamp is frozen; same-day filings require timestamped as-of logic.
+5. Separately prototype warrant/new-share-option extraction with confidence/coverage diagnostics; distinguish MS warrants where source disclosures allow it.
 5. Only after acceptable historical coverage, apply overlay to frozen Short/Swing picks and compare baseline vs dilution-only vs financial-risk-only vs combined on 2024H1/H2 and 2025H1/H2. Use 2026 reporting-only.
 6. Reject overlays that improve only one period, drastically reduce sample size, or rely on missing-data selection effects.
 7. Production integration remains blocked until explicit user Go.

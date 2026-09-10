@@ -1,0 +1,56 @@
+name: No-TV Tenchi V30 Purged Bakeoff
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - research/no_tv_v30_purged_bakeoff.py
+      - .github/workflows/no-tv-v30-purged-bakeoff.yml
+
+concurrency:
+  group: no-tv-tenchi-v30-purged-bakeoff
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/no-tv-distillation
+      - name: Clone exact public watchlist history
+        run: git clone --quiet https://github.com/Ken5InvestmentLab/tv-watchlist-builder.git tv-watchlist-builder-history
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install numpy==2.3.1 pandas==2.3.0 requests==2.32.4 scikit-learn==1.7.2 google-auth google-auth-httplib2 google-api-python-client
+      - name: Write read-only Google credentials
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+      - name: Export BOTTOM teacher for evaluation only
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python research/export_full_bottom_history.py --output research_artifacts/no_tv_teacher/full_bottom_history.csv
+      - name: Compile V30
+        run: python -m py_compile research/no_tv_v10_standalone.py research/no_tv_v11_independent_selector.py research/no_tv_v11_1_risk_guard.py research/no_tv_v13_official_daily.py research/no_tv_v14_pine_outcome.py research/no_tv_v17_unbiased_rolling.py research/no_tv_v18_rank_rolling.py research/no_tv_v25_consensus_expansion.py research/no_tv_v26_safe_consensus.py research/no_tv_v27_relative_target.py research/no_tv_v29_purged_rolling.py research/no_tv_v30_purged_bakeoff.py
+      - name: Run fair purged architecture bakeoff
+        run: |
+          python research/no_tv_v30_purged_bakeoff.py \
+            --teacher research_artifacts/no_tv_teacher/full_bottom_history.csv \
+            --watchlist-repo tv-watchlist-builder-history \
+            --max-symbols 350 \
+            --max-workers 16 \
+            --output-dir research_artifacts/v30_purged_bakeoff
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-tenchi-v30-purged-bakeoff
+          path: research_artifacts/v30_purged_bakeoff/
+          if-no-files-found: ignore
+          retention-days: 14

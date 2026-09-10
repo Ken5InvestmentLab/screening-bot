@@ -21,13 +21,13 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: experiment/no-tv-distillation
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: pip install numpy pandas openpyxl google-auth google-auth-httplib2 google-api-python-client
@@ -35,7 +35,7 @@ jobs:
       - name: Write read-only Google credentials
         run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
 
-      - name: Export teacher dataset
+      - name: Export Tenchi teacher dataset read-only
         env:
           PYTHONIOENCODING: utf-8
         run: python research/export_no_tv_teacher.py

@@ -48,7 +48,7 @@ jobs:
         run: pip install -r tvfree_screener/requirements.txt
       - name: Purged walk-forward backtest
         run: >-
-          python tvfree_screener/run.py
+          python tvfree_screener/bootstrap.py
           --mode backtest
           --period "$TVFREE_PERIOD"
           --price-cap "$TVFREE_PRICE_CAP"
@@ -57,7 +57,7 @@ jobs:
           --refresh
       - name: Score latest session from same downloaded cache
         run: >-
-          python tvfree_screener/run.py
+          python tvfree_screener/bootstrap.py
           --mode score
           --price-cap "$TVFREE_PRICE_CAP"
           --loss-penalty "$TVFREE_LOSS_PENALTY"

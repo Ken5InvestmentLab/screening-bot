@@ -20,7 +20,7 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 - Last fully successful research pipeline remains Actions run `34519284035` on rolling `period=3y`; runtime about 23m15s, artifact about 33.55 MB.
 - Rolling `period=3y` is not a durable baseline because old training rows disappear as wall-clock time advances.
 - Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`; normal `run.py` behavior is unchanged outside this bootstrap.
-- Fixed-start verification remains blocked by GitHub Actions hosted-runner allocation. Recent PR-triggered jobs, including `34541399127` and `34541906076`, fail before executable steps; job metadata exposes no usable steps/logs.
+- Fixed-start verification remains blocked by GitHub Actions hosted-runner allocation. Recent PR-triggered jobs, including `34541399127`, `34541906076`, and `34542011745`, fail before executable steps; job metadata exposes no usable steps/logs.
 
 ## Safety checks
 - `reproducibility_manifest.py` tracks research contract, current universe, historical coverage/OHLCV/output SHA-256 fingerprints.
@@ -60,7 +60,7 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 
 ## Completed in latest run
 - Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, and `V3_STATUS.md`; inspected Draft PR #13 and confirmed it remains open, Draft, unmerged, head `test/tvfree-screener-v1`.
-- Re-checked Actions. Run `34541399127` and later run `34541906076` both failed before executable steps; no Python/model failure is demonstrated.
+- Re-checked Actions. Runs `34541399127`, `34541906076`, and `34542011745` failed before executable steps; no Python/model failure is demonstrated.
 - Researched official JPX archives. Confirmed year-specific stock new-listing and delisting pages exist for 2022, 2023, 2024, 2025, plus current 2026 pages.
 - Implemented TEST-ONLY point-in-time membership reconstruction prototype at `d2e66370...`.
 - Added synthetic self-check at `bea62cb1...`, workflow safety-check integration at `7632a4cd...`, and research-contract coverage at `b88b04eb...`.

@@ -62,6 +62,11 @@ jobs:
           --price-cap "$TVFREE_PRICE_CAP"
           --loss-penalty "$TVFREE_LOSS_PENALTY"
           --topn 30
+      - name: V3 Swing research backtest from Yahoo cache
+        run: >-
+          python tvfree_screener/v3_swing.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
       - name: Upload test outputs
         if: always()
         uses: actions/upload-artifact@v4

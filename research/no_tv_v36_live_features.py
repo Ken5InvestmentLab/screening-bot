@@ -28,7 +28,7 @@ def eligible_universe(decision_date: str, workers: int):
                 m, err = None, type(e).__name__
             if m is not None:
                 if m["previous_close"] <= 1000 and m["previous_volume"] >= 10000:
-                    rows.append({"code": issue.code, "name": issue.name, "market": issue.market, **m})
+                    rows.append({"code": issue.code, "name": issue.name, "market": issue.market, "yahoo_symbol": issue.yahoo_symbol, **m})
             else:
                 errors[err or "unknown"] = errors.get(err or "unknown", 0) + 1
             if i % 500 == 0:
@@ -36,10 +36,12 @@ def eligible_universe(decision_date: str, workers: int):
     return excel_url, pd.DataFrame(rows), excluded, markets, errors
 
 
-def build_current_rows(code: str, name: str, market: str, decision_date: str):
+def build_current_rows(code: str, yahoo_symbol: str, name: str, market: str, decision_date: str):
+    # Yahoo Japan equities require the exchange suffix (normally .T). Keep the
+    # canonical JPX code separately for output/model identity.
     with ThreadPoolExecutor(max_workers=2) as ex:
-        fh = ex.submit(v13.fetch_interval, code, "1h", "1mo")
-        fd = ex.submit(v13.fetch_interval, code, "1d", "1y")
+        fh = ex.submit(v13.fetch_interval, yahoo_symbol, "1h", "1mo")
+        fd = ex.submit(v13.fetch_interval, yahoo_symbol, "1d", "1y")
         hc, he = fh.result(); dc, de = fd.result()
     if he:
         return None, "1h_" + str(he)
@@ -70,7 +72,8 @@ def build_current_rows(code: str, name: str, market: str, decision_date: str):
         rng = float(row.high - row.low)
         stable_score = int(sum(int(bool(tf.get(c, False))) for c in ["ema25", "macdpos", "stoch75", "bb80", "pre_down3", "gap_up"]))
         out.append({
-            "date": decision_date, "session": int(row.session), "symbol": code, "name": name, "market": market,
+            "date": decision_date, "session": int(row.session), "symbol": code, "yahoo_symbol": yahoo_symbol,
+            "name": name, "market": market,
             "entry": float(row.close), "session_volume": float(row.volume),
             "session13": int(row.session == 13), "log_price": float(np.log(max(float(row.close), 1e-9))),
             "session_ret": float(row.close / row.open - 1) if row.open else np.nan,
@@ -99,7 +102,7 @@ def main():
     frames, errors, ok = [], {}, 0
     with ThreadPoolExecutor(max_workers=a.max_workers) as ex:
         fut = {
-            ex.submit(build_current_rows, str(r.code), str(r.name), str(r.market), a.decision_date): str(r.code)
+            ex.submit(build_current_rows, str(r.code), str(r.yahoo_symbol), str(r.name), str(r.market), a.decision_date): str(r.code)
             for r in eligible.itertuples(index=False)
         }
         for i, f in enumerate(as_completed(fut), 1):
@@ -116,7 +119,7 @@ def main():
             if i % 100 == 0:
                 print(f"V36 features {i}/{len(eligible)} ok={ok} frames={len(frames)}", flush=True)
     if not frames:
-        raise RuntimeError("no live feature rows")
+        raise RuntimeError(f"no live feature rows; fetch_errors={errors}")
 
     data = pd.concat(frames, ignore_index=True)
     data = v11.enrich_cross_sectional(data)

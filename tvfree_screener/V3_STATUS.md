@@ -7,77 +7,62 @@
 - No production Discord/Spreadsheet writes.
 - No production Stable★6/Sniper/Mega/TradingView changes.
 - Realistic entry: next trading session open.
-- 2026 has already been inspected elsewhere in this research and is not pristine; never tune to it.
+- 2026 is contaminated; never tune to it.
+
+## Reproducibility finding
+GitHub Actions run `34519284035` successfully executed the full research pipeline. It also exposed that the previous Yahoo `period=3y` cache is rolling: as time advances, old rows fall out, changing historical training samples and therefore backtest numbers even when code is unchanged.
+
+Test-only fixed-start acquisition was added at commits `063a73b3...` and `458be814...`, using `2022-01-01 -> current`. No model architecture or threshold was changed. Numeric baselines below are the latest successful rolling-3y snapshot until the fixed-start rerun completes.
 
 ## V3 Short (5BD)
+Historical non-reproducible old reference: 2026 Mar-Aug n=29, mean +5.42%, median +2.06%, win 65.5%, +10% 13.8%, -10% 6.9%. Exact old parameters were never committed.
 
-Historical non-reproducible reference: 2026 Mar-Aug n=29, mean +5.42%, median +2.06%, win 65.5%, +10% 13.8%, -10% 6.9%. Exact old parameters were never committed.
+`v3_short_reconstruction.py` is now confirmed executable in Actions and implements the same 45 `run.py` features, monthly causal 180-tree XGBoost, prediction-day percentile normalization, Core `r_top10 - 2*r_loss10`, one-day same-symbol cooldown, next-open -> 5BD, inactive/rejected recent-outcome Meta, and no accepted Attack.
 
-### Exact-feature reconstruction
-Used the same 45 `run.py` features and XGBoost shape (180 trees, depth 3, learning rate .04, min_child_weight 25, reg_lambda 5, reg_alpha .2), with causal monthly training.
+Latest successful snapshot, run `34519284035`:
+- Core 2025H1: n=119 mean +0.46%, median +0.45%, win 58.8%, +10% 4.2%, -10% 3.4%.
+- Core 2025H2: n=124 mean +0.35%, median +0.28%, win 51.6%, +10% 1.6%, -10% 1.6%.
+- Core 2026 Mar-Aug contaminated: n=124 mean -0.56%, median -0.42%, win 44.4%, +10% 0.8%, -10% 0.8%.
+- Defensive `med_ret5 >= -1%` 2026 Mar-Aug: n=97 mean -0.11%, median 0%, win 48.5%, -10% 0%.
 
-2025-only Core: `r_top10 - 2*r_loss10`.
-- 2025H1 mean +0.59%, median +0.58%, win 58.0%, -10% 2.5%.
-- 2025H2 mean +0.94%, median +0.57%, win 58.9%, -10% 0%.
+Earlier research-note figures are not used as exact reproduction claims; the runner artifact is authoritative for its stated input snapshot. Await fixed-start rerun before freezing a durable numeric baseline.
 
-2025-only recent-outcome Meta: recent 30 Core outcomes, win >=55%, loss10 <=10%.
-- 2025H1 n=48 mean +1.05%.
-- 2025H2 n=76 mean +1.14%.
-- frozen 2026 Mar-Aug n=26 mean -1.27%, median -0.46%, win 42.3%.
-Rejected; do not retune to 2026.
-
-Contemporaneous `med_ret5 >= -1%` gate improved frozen 2026 Core to about n=97 / mean +0.17% / -10% 1.0%, but median stayed negative. Defensive supporting observation only.
-
-### Whole-universe Attack heads
-2025-selected `r_hit20-r_loss10`, `med_ret5>=-1%`, `r_hit10>=.85`:
-- 2025H1 n=102 mean +1.93%.
-- 2025H2 n=106 mean +2.10%.
-- frozen 2026 Mar-Aug n=97 mean +0.06%, median -0.97%, win 42.3%, -10% 7.2%.
-Rejected.
-
-### Distinct event-family Attack experiment
-`short_event_experiment.py` tested 10 fixed variants across five materially different event families using 2024-2025 only. Result: **0/10 variants passed** the pre-2026 robustness gate, so no 2026 candidate was opened. Short Attack remains **none/unaccepted**.
-
-### Reproducible Short runner
-Added `v3_short_reconstruction.py` at commit `5eae93dd...` and integrated it into the test workflow at `1f0461e2...`.
-
-It explicitly implements:
-- same 45 `run.py` features,
-- monthly causal 180-tree exact-shape XGBoost,
-- relative top-decile next-open->5BD target head,
-- -10% next-open->5BD loss head,
-- prediction-day percentile normalization,
-- Core `r_top10 - 2*r_loss10`,
-- one-selection-day same-symbol cooldown,
-- defensive supporting lane `med_ret5 >= -1%`,
-- recent-outcome Meta rejected/inactive,
-- Attack none/unaccepted,
-- JSON/CSV research artifacts only.
-
-Actions confirmation is pending. Until it succeeds and exact outputs are reconciled, prior Core numbers above remain research notes rather than a claim that the new runner has reproduced them exactly. If there is a discrepancy, investigate/document it rather than tuning thresholds against 2026.
+### Attack
+- Whole-universe Attack heads: rejected.
+- Distinct event-family Attack: 10/10 variants failed pre-2026 robustness; no 2026 candidate opened.
+- Short Attack = **none/unaccepted**.
 
 ## V3 Swing (10BD)
-Current frozen research candidate: `v3_swing_v2.py`.
-Architecture: MomCross -> causal semiannual event-quality model -> training empirical-CDF normalization -> Breadth Meta -> `score_R >= 0.20`.
+Frozen architecture: `v3_swing_v2.py`, MomCross -> causal semiannual quality model -> training CDF -> Breadth Meta -> `score_R >= 0.20`.
 
-Observed next-open -> 10BD:
-- 2025H1 n=33 mean +2.68%, median +2.12%, win 57.6%, +10% 15.2%, -10% 6.1%.
-- 2025H2 n=31 mean +1.95%, median -0.70%, win 45.2%, +10% 16.1%, -10% 6.5%.
-- 2026 Mar-Aug contaminated check n=30 mean +1.42%, median +1.63%, win 60%, +10% 10%, -10% 3.3%.
+Latest successful rolling-3y snapshot, run `34519284035`, at unchanged 0.20:
+- 2025H1: n=37 mean +6.36%, median -0.75%, win 45.9%, +10% 16.2%, -10% 5.4%.
+- 2025H2: n=23 mean +5.89%, median -0.84%, win 43.5%, +10% 13.0%, -10% 0%.
+- 2026 Mar-Aug contaminated: n=31 mean +1.00%, median +1.26%, win 54.8%, +10% 9.7%, -10% 3.2%.
 
-Swing S remains the strongest reproducible defensive candidate. Swing A remains unaccepted.
+The same run's current pre-2026 sweep selects 0.10 rather than 0.20, producing `locked_threshold_matches_best_pre2026=false`. **Do not retune.** The training-history drift invalidates direct comparison with the earlier threshold-selection snapshot. First establish the fixed-start history contract, then report the frozen 0.20 result consistently. Swing A remains none/unaccepted.
+
+## Unified comparison
+`unified_comparison.py` succeeded in run `34519284035`, correctly distinguishing historical references from reproducible-runner outputs and leaving unavailable metrics blank.
+
+## Operational snapshot
+Run `34519284035`:
+- total runtime about 23m15s,
+- rolling-3y artifact about 33.55 MB,
+- current job timeout 90 minutes.
 
 ## Current architecture decision
-- Short Core: reproducible design implemented; weak research/supporting lane pending Actions confirmation.
-- Short defensive market gate: supporting lane only.
+- Short Core: executable/reproducible code but weak; numeric baseline pending fixed-start rerun.
+- Short defensive gate: supporting only.
 - Short recent-outcome Meta: rejected.
 - Short Attack: none.
-- Swing S: frozen candidate.
+- Swing S: architecture and threshold 0.20 frozen; numeric baseline pending fixed-start rerun.
 - Swing A: none.
+- Production migration: blocked pending explicit user Go.
 
 ## Next
-1. Confirm the new Short runner in GitHub Actions and reconcile its artifact with prior research notes.
-2. Confirm/freeze Swing S reproducibility in Actions.
-3. Generate unified comparison against Stable★6 historical reference.
-4. Validate operational runtime/cost.
-5. Production migration remains blocked pending explicit user Go.
+1. Inspect the fixed-start Actions rerun and artifact.
+2. Confirm history starts at 2022-01-01 where symbols existed and pipeline succeeds.
+3. Record/freeze fixed-start Short/Swing/unified numbers without retuning to 2026.
+4. Later verify append-only historical stability as new sessions arrive.
+5. Reassess runtime/artifact size with the longer fixed-start cache.

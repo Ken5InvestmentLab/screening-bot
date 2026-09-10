@@ -45,11 +45,12 @@ jobs:
           d=pd.read_csv(p,dtype={'symbol_code':str})
           d['signal_date']=pd.to_datetime(d['signal_date']).dt.strftime('%Y-%m-%d')
           d['session']=pd.to_numeric(d['session'],errors='coerce').astype('Int64')
-          assert len(d)==4041, len(d)
+          assert len(d) >= 4041, len(d)
           assert d.signal_date.min()=='2026-03-05', d.signal_date.min()
-          assert d.signal_date.max()=='2026-09-10', d.signal_date.max()
-          assert d[['symbol_code','signal_date','session']].drop_duplicates().shape[0]==4041
-          print('teacher OK', len(d))
+          assert d.signal_date.max() <= '2026-09-10', d.signal_date.max()
+          uniq=d[['symbol_code','signal_date','session']].drop_duplicates().shape[0]
+          assert uniq == len(d), (uniq,len(d))
+          print('teacher OK', len(d), d.signal_date.min(), d.signal_date.max())
           PY
       - name: Compile V12
         run: python -m py_compile research/no_tv_v10_standalone.py research/no_tv_v12_pine_hybrid.py

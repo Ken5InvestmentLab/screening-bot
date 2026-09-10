@@ -59,6 +59,8 @@ jobs:
         run: python tvfree_screener/point_in_time_universe_selftest.py
       - name: Fundamental and dilution overlay synthetic self-check
         run: python tvfree_screener/fundamental_overlay_selftest.py
+      - name: EDINET collector synthetic self-check
+        run: python tvfree_screener/edinet_fundamental_collector_selftest.py
       - name: Purged walk-forward backtest
         run: >-
           python tvfree_screener/bootstrap.py

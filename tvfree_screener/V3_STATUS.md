@@ -14,19 +14,17 @@ The last fully successful research pipeline remains Actions run `34519284035`, w
 
 Test-only fixed-start acquisition was therefore added at commits `063a73b3...` and `458be814...`, using `2022-01-01 -> current`. No model architecture or threshold was changed.
 
-Fixed-start verification has not yet produced a started job:
-- run `34525453744` failed before any workflow step and exposed no step logs; a rerun was requested.
-- run `34530881770` likewise failed before any step with an empty steps list.
+Fixed-start verification still has not produced a started hosted-runner job. Recent runs through `34536324032` fail before any workflow step; job metadata shows `steps=[]`, `runner_id=0`, and blank runner name. These are runner/startup failures, not demonstrated Python/model failures. Do not modify model semantics in response.
 
-These are runner/startup failures, not demonstrated Python/model failures. Do not modify model semantics in response.
-
-A mechanical append-only check was added:
-- `reproducibility_manifest.py`: commit `797a8578...`
-- workflow integration: commit `418c42b7...`
+Mechanical append-only verification now uses manifest v2:
+- initial manifest: `797a8578...`
+- workflow integration: `418c42b7...`
+- OHLCV-value hashing fix: `49ac8088a8160b6e8f4571374613b5d0343981d0`
+- research-contract fingerprint: `dcf669a502763a934a0f5aa6c226ab0a2d4bd4de`
 - historical cutoff: `2026-08-31`
-- hashes: raw OHLCV date/symbol coverage, Short Core, Short defensive lane, Swing S.
+- hashes: research contract, raw coverage, raw OHLCV, Short Core, Short defensive lane, Swing S.
 
-Future fixed-start runs can now prove whether historical outputs remain unchanged when only newer market sessions are appended.
+The research-contract hash covers relevant test research code/workflow/requirements and explicit non-secret `TVFREE_*` inputs. Append-only historical comparisons are valid only when this contract hash matches. This separates semantic/config drift from Yahoo source-history revision and ordinary future-session appends.
 
 ## V3 Short (5BD)
 Historical non-reproducible old reference: 2026 Mar-Aug n=29, mean +5.42%, median +2.06%, win 65.5%, +10% 13.8%, -10% 6.9%. Exact old parameters were never committed.
@@ -74,6 +72,6 @@ Fixed-start cost remains unknown until a hosted runner actually starts the job.
 ## Next
 1. Re-check GitHub Actions runner availability and obtain the first actually-started fixed-history job.
 2. Confirm fixed history starts at 2022-01-01 where symbols existed and pipeline/manifest succeed.
-3. Freeze fixed-start Short/Swing numeric values and historical hashes without retuning to 2026.
-4. On a later appended session, compare cutoff hashes for historical stability.
+3. Freeze fixed-start Short/Swing numeric values and manifest-v2 contract/coverage/OHLCV/output hashes without retuning to 2026.
+4. On a later appended session, compare cutoff hashes only when the research-contract hash matches.
 5. Measure fixed-start runtime/artifact size.

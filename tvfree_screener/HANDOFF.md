@@ -9,78 +9,68 @@ TEST ONLY. Canonical handoff for scheduled runs and new chats.
 - NEVER merge to `main` without explicit user Go approval.
 - NEVER modify production Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater, or production workflows without explicit user Go approval.
 - Evaluate next-session-open -> horizon close.
-- Training/selection must be causal. 2026 is already contaminated and must not be used to tune thresholds.
+- Training/selection must be causal.
+- 2026 is contaminated and must not be used for threshold/model tuning.
 
 ## Goal
 Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE common-stock system without creating a visibly inferior Stable★6 replacement.
 
 ## Infrastructure / reproducibility
 - TSE domestic common-stock universe: about 3,700 symbols.
-- Last fully successful research pipeline: Actions run `34519284035` on rolling `period=3y`; all Short/Swing/comparison steps passed, runtime about 23m15s, artifact about 33.55 MB.
-- Critical reproducibility flaw found: rolling `period=3y` drops old training rows as time advances.
-- Test-only fixed-start acquisition was added in `bootstrap.py` (`063a73b3...`) and workflow (`458be814...`), defaulting to `2022-01-01 -> current`; no model architecture or threshold changed.
-- Fixed-start verification remains blocked by GitHub Actions hosted-runner startup failure, not a model/test exception. Latest observed run `34539341326` again completed failure with no executable steps; earlier jobs exposed `runner_id=0` / blank runner.
-- `reproducibility_manifest.py`: initial `797a8578...`; workflow integration `418c42b7...`; OHLCV-value hashing fix `49ac8088...`; manifest-v2 research-contract hash `dcf669a5...`.
-- `reproducibility_selftest.py`: `0a0f9489...`; research-contract inclusion `e1227f0e...`; workflow integration `f60df68d...`.
-- New causal-safety self-check `causality_selftest.py`: commit `9543975185767c4985e6afe1cee52a350cc00bc5`.
-- Research contract now includes the causal self-check: `79fb0af83a04c53281ee77c0b5bb36c7122f45e7`.
-- Test workflow runs it before heavy research: `de498ea0e4a808ec56f01067606285034a2e264b`.
-- Causal self-check uses fabricated 2024/2025 data only and verifies: historical feature prefix invariance under future-row append, exact next-session-open -> 5BD target semantics, Short monthly training purge, and Swing semiannual training purge. It does not tune models or inspect 2026 performance.
+- Last fully successful research pipeline remains Actions run `34519284035` on rolling `period=3y`; runtime about 23m15s, artifact about 33.55 MB.
+- Rolling `period=3y` was rejected as a durable baseline because old training rows disappear as wall-clock time advances.
+- Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`; normal `run.py` period behavior is unchanged outside this test bootstrap.
+- Fixed-start verification is still blocked by GitHub Actions runner allocation. Latest observed run `34541092751` failed before executable steps. Earlier jobs showed `runner_id=0`, blank runner name, and empty/no steps.
+- The latest check-run exposes one annotation, but the connected API cannot retrieve the annotation body. GitHub public/Japan status currently reports Actions operational, so the repeated no-runner failure is more consistent with repo/account/quota-specific infrastructure than a public Actions outage.
+
+## Safety checks
+- `reproducibility_manifest.py` tracks historical coverage/OHLCV/output SHA-256 fingerprints.
+- `reproducibility_selftest.py` checks historical-revision detection and post-cutoff append invariance.
+- `causality_selftest.py` uses fabricated 2024/2025 data only and checks feature prefix invariance, next-session-open -> 5BD semantics, Short monthly purge, and Swing semiannual purge.
+- Both self-checks are placed before the heavy research path in the test workflow.
+
+## New universe-drift guard
+- Commit `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47` makes the test bootstrap persist the exact current JPX universe used by a run as `tvfree_screener/out/jpx_universe_snapshot.csv`.
+- Commit `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b` upgrades the reproducibility manifest to v3 and fingerprints that universe snapshot.
+- Accepted finding: fixed-start prices alone do NOT guarantee historical reproducibility because the backtest currently starts from the run-date JPX listed universe. Future listings/delistings can change historical membership.
+- Important limitation: the new snapshot/hash detects this drift; it does NOT reconstruct point-in-time historical constituents and therefore does not remove survivorship/membership bias by itself.
+- Append-only comparisons are valid only when both `research_contract_sha256` and universe SHA-256 match; otherwise the run is not a pure future-row append comparison.
 
 ## Stable★6 historical reference
-2026 Mar-Aug 5BD: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%.
-10BD mean about +7.64%, win about 57.4%.
+2026 Mar-Aug 5BD historical reference: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%. 10BD mean about +7.64%, win about 57.4%.
 
 ## V3 Short 5BD reconstruction
-Historical non-reproducible old reference: 2026 Mar-Aug n=29, mean +5.42%, median +2.06%, win 65.5%, +10% 13.8%, -10% 6.9%. Exact old parameters were never committed; do not claim reproduction.
-
-`v3_short_reconstruction.py` implements the same 45 `run.py` features, monthly causal 180-tree XGBoost, prediction-day percentile normalization, Core `r_top10 - 2*r_loss10`, one-selection-day same-symbol cooldown, next-open -> 5BD, recent-outcome Meta inactive/rejected, Attack none/unaccepted, and JSON/CSV-only outputs.
-
-Latest fully successful snapshot remains run `34519284035` on rolling-3y input:
-- Core 2025H1: n=119, mean +0.46%, median +0.45%, win 58.8%, +10% 4.2%, -10% 3.4%.
-- Core 2025H2: n=124, mean +0.35%, median +0.28%, win 51.6%, +10% 1.6%, -10% 1.6%.
-- Core 2026 Mar-Aug contaminated: n=124, mean -0.56%, median -0.42%, win 44.4%, +10% 0.8%, -10% 0.8%.
-- Defensive `med_ret5 >= -1%` supporting lane 2026 Mar-Aug: n=97, mean -0.11%, median 0%, win 48.5%, +10% 1.0%, -10% 0%.
-
-Attack status:
-- Whole-universe +10/+20-style heads: rejected after pre-2026 selection failed to survive fixed 2026.
-- Distinct event-family experiment: 10/10 candidates failed the pre-2026 robustness gate; 2026 was not opened for them.
-- Current Short Attack: NONE / unaccepted.
+- Reproducible runner: same 45 `run.py` features, monthly causal 180-tree XGBoost, prediction-day percentile normalization, Core `r_top10 - 2*r_loss10`, one-selection-day same-symbol cooldown, next-open -> 5BD.
+- Recent-outcome Meta: rejected/inactive.
+- Attack: none/unaccepted.
+- Last successful rolling-3y snapshot: 2025H1 n=119 mean +0.46%; 2025H2 n=124 mean +0.35%; contaminated 2026 Mar-Aug n=124 mean -0.56%.
+- Durable fixed-start numeric baseline is still pending a started Actions job.
 
 ## V3 Swing 10BD
-Frozen architecture remains `v3_swing_v2.py`: MomCross -> causal semiannual quality model -> training empirical-CDF normalization -> Breadth Meta -> `score_R >= 0.20`.
-
-Latest fully successful rolling-3y snapshot at unchanged 0.20:
-- 2025H1: n=37, mean +6.36%, median -0.75%, win 45.9%, +10% 16.2%, -10% 5.4%.
-- 2025H2: n=23, mean +5.89%, median -0.84%, win 43.5%, +10% 13.0%, -10% 0%.
-- 2026 Mar-Aug contaminated: n=31, mean +1.00%, median +1.26%, win 54.8%, +10% 9.7%, -10% 3.2%.
-- Rolling-3y threshold sweep currently favors 0.10, but DO NOT retune from frozen 0.20; history-window drift was discovered afterward.
-- Swing A remains none/unaccepted.
-
-## Current architecture decision
-- Short Core: reproducible code, weak latest snapshot; durable numeric baseline pending fixed-start Actions success.
-- Short defensive market gate: supporting lane only.
-- Short recent-outcome Meta: rejected.
-- Short Attack: none.
-- Swing S: frozen architecture/threshold 0.20; durable numeric baseline pending fixed-start Actions success.
-- Swing A: none.
-- Production migration: blocked pending explicit user Go.
+- Frozen architecture: MomCross -> causal semiannual quality model -> training empirical-CDF normalization -> Breadth Meta -> `score_R >= 0.20`.
+- Do not retune from contaminated 2026 or from the rolling-window threshold sweep.
+- Last successful rolling-3y snapshot: 2025H1 n=37 mean +6.36%; 2025H2 n=23 mean +5.89%; contaminated 2026 Mar-Aug n=31 mean +1.00%.
+- Swing A: none/unaccepted.
+- Durable fixed-start numeric baseline is still pending a started Actions job.
 
 ## Completed in latest run
-- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, `V3_STATUS.md`, and inspected Draft PR #13.
-- PR #13 remained open, Draft, unmerged, and on `test/tvfree-screener-v1`.
-- Re-checked Actions: run `34539341326` still failed before executable steps; runner allocation remains the blocker.
-- Added `causality_selftest.py` (`9543975185767c4985e6afe1cee52a350cc00bc5`).
-- Added it to manifest-v2 research-contract hashing (`79fb0af83a04c53281ee77c0b5bb36c7122f45e7`).
-- Added it before heavy research in the test-only workflow (`de498ea0e4a808ec56f01067606285034a2e264b`).
-- Accepted finding: the explicit causal contracts represented by current Short/Swing code are now guarded by synthetic tests; no model-performance claim is made until Actions actually executes them and the fixed-start pipeline.
-- Rejected action: no threshold/model retuning while runner infrastructure is unavailable and 2026 is contaminated.
-- No production files/workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView, watchlist tooling, or `main` were touched.
+- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, `V3_STATUS.md`, inspected Draft PR #13, and confirmed it remained open/Draft/unmerged on `test/tvfree-screener-v1` before changes.
+- Re-checked Actions: latest observed run `34541092751` still failed before executable steps; no Python/model failure was demonstrated.
+- Checked GitHub public/Japan status; Actions was operational, reducing the likelihood of a global outage.
+- Identified current-listed-universe drift as a separate reproducibility risk.
+- Added exact JPX universe snapshot artifact at commit `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47`.
+- Added universe SHA-256 and manifest-v3 interpretation rules at commit `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b`.
+- Accepted: detect and block interpretation when run-date universe changes.
+- Rejected: treating a fixed Yahoo start date alone as sufficient proof of historical reproducibility.
+- No thresholds, features, model parameters, production workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView tooling, watchlist tooling, or `main` were changed.
+
+## Blockers
+1. GitHub hosted runner is not being assigned, preventing execution of the fixed-start pipeline and self-checks in Actions.
+2. Point-in-time historical JPX membership is not yet reconstructed; current research backtests use the run-date listed universe, so survivorship/membership bias remains a documented research limitation.
 
 ## Next concrete task
-1. Re-check hosted-runner availability and inspect the newest PR-triggered workflow job.
-2. Once a job reaches checkout, require both `reproducibility_selftest.py` and `causality_selftest.py` to pass before accepting the run.
-3. Confirm `Yahoo history mode: fixed start 2022-01-01 -> current`, then require all Short/Swing/comparison/manifest steps to succeed.
-4. Freeze the resulting fixed-start Short/Swing numeric snapshot plus manifest-v2 contract/coverage/OHLCV/output hashes without retuning from 2026.
-5. On a later market-session append, require matching `research_contract_sha256`, then compare historical hashes through `2026-08-31`.
-6. Record fixed-start runtime/artifact size and optimize plumbing only if necessary.
+1. Re-check runner allocation and inspect any newly exposed annotation/account/quota signal without changing model semantics.
+2. If runner starts, require reproducibility and causality self-check PASS first, then fixed `2022-01-01 -> current`, Short/Swing/comparison/manifest-v3 success.
+3. Freeze Short/Swing numeric baselines plus research-contract, universe, coverage, OHLCV, and output hashes without tuning from 2026.
+4. In parallel, research a free, causally defensible way to reconstruct point-in-time TSE common-stock membership for 2022+; reject any method that silently uses only today's survivors.
+5. Production integration remains blocked until explicit user Go.

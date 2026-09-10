@@ -2,8 +2,8 @@
 
 TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. Keep `HANDOFF.md` synchronized.
 
-## 1. Observe runner blocker without changing model semantics
-Recent PR-triggered jobs still fail before executable steps. Re-check only opportunistically. Never touch production workflows or model thresholds as a workaround.
+## 1. Protect existing private-repo Actions capacity
+Heavy TV-Free Actions are now gated behind intentional changes to `tvfree_screener/RUN_HEAVY_TEST` and duplicate runs are cancelled via workflow concurrency. Do not restore broad `tvfree_screener/**` PR triggering. Re-check runner availability only after account Actions usage/budget/payment state is confirmed healthy. Never touch production workflows or model thresholds as a workaround.
 
 ## 2. Require all synthetic safety checks before heavy research
 The test workflow must first pass:
@@ -36,7 +36,9 @@ Next validation requirements:
 - retain document id, filing date/time, period end, source member, and extraction status,
 - quantify missing and ambiguous coverage before broad acquisition,
 - do not silently broaden element aliases based on desired backtest results,
-- before performance use, define a strict same-day decision-time rule from `available_at` so after-close disclosures cannot affect an earlier same-day signal.
+- conservative default is now `prior_day_only`: same-day disclosures are excluded when a signal has only a date,
+- `same_day_if_timestamped` is allowed only when both signal `decision_at` and filing `available_at` are explicit,
+- never loosen this policy based on 2026 performance.
 
 ## 4. Prototype historical dilution extraction separately
 Target normalized fields:

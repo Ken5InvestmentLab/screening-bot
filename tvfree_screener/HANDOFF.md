@@ -13,69 +13,73 @@ TEST ONLY. Canonical handoff for scheduled runs and new chats.
 - 2026 is contaminated and must not be used for threshold/model tuning.
 
 ## Goal
-Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE common-stock system without creating a visibly inferior Stable★6 replacement.
+Replace TradingView/Pine watchlist dependency with a free daily-OHLCV TSE common-stock system while remaining competitive with Stable★6, and test transparent non-technical overlays only when causally valid.
 
 ## Infrastructure / reproducibility
-- TSE domestic common-stock universe: about 3,700 symbols.
 - Last fully successful research pipeline remains Actions run `34519284035` on rolling `period=3y`; runtime about 23m15s, artifact about 33.55 MB.
-- Rolling `period=3y` is not a durable baseline because old training rows disappear as wall-clock time advances.
-- Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`; normal `run.py` behavior is unchanged outside this bootstrap.
-- Fixed-start verification remains blocked by GitHub Actions hosted-runner allocation. Recent PR-triggered jobs, including `34541399127`, `34541906076`, and `34542011745`, fail before executable steps; job metadata exposes no usable steps/logs.
-
-## Safety checks
-- `reproducibility_manifest.py` tracks research contract, current universe, historical coverage/OHLCV/output SHA-256 fingerprints.
-- `reproducibility_selftest.py` checks historical-revision detection and post-cutoff append invariance.
-- `causality_selftest.py` uses fabricated 2024/2025 data only and checks feature prefix invariance, next-session-open -> 5BD semantics, Short monthly purge, and Swing semiannual purge.
-- `point_in_time_universe_selftest.py` now checks reverse membership reconstruction, including a code-reuse episode and fail-closed same-day collision detection.
-- These are test-only and do not write to production.
+- Rolling `period=3y` is not a durable baseline. Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`.
+- GitHub hosted-runner allocation remains blocked; recent PR-triggered jobs through `34542011745` fail before executable steps. Do not alter model semantics because of this infrastructure failure.
+- Manifest v3 fingerprints research code/config, current JPX universe, historical coverage/OHLCV, and Short/Swing outputs.
+- Synthetic checks cover append-only reproducibility, causal feature/label boundaries, and point-in-time universe reconstruction.
 
 ## Universe validity
-- Commit `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47` persists the exact run-date JPX universe as `jpx_universe_snapshot.csv`.
-- Commit `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b` added universe hashing to manifest v3.
-- Accepted finding: fixed-start Yahoo prices alone are insufficient because the old research path applies today's listed universe to all historical dates.
-- Official JPX provides year-specific stock new-listing and delisting archives for 2022 onward, so point-in-time TSE membership is reconstructable without silently using only today's survivors.
-- Commit `d2e66370d237edd94880fd9f8a6e740ed9332d5a` adds `point_in_time_universe.py`, a TEST-ONLY prototype that anchors on the current JPX domestic-common snapshot and reverses official JPX listing/delisting events back to a requested historical date.
-- Commit `bea62cb1d1847409e84d1e63b2c08038db435765` adds synthetic membership reconstruction tests.
-- Commit `7632a4cd6aa3c77153413251a6d4cdfdb6973c5b` runs the point-in-time synthetic test before heavy research once a runner is available.
-- Commit `b88b04ebdc7e15c27eb7c6ae0ca34b3ed27a83a8` includes the point-in-time code/tests in the research-contract fingerprint.
-- The prototype is intentionally fail-closed: unknown market classification or same-code same-day listing/delisting collisions block acceptance instead of being guessed.
-- IMPORTANT: the prototype is not yet wired into Short/Swing backtest filtering. First validate the live JPX parser and measure whether Yahoo still supplies OHLCV for delisted symbols.
+- Current-universe snapshot: `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47`.
+- Manifest universe hash: `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b`.
+- Point-in-time universe prototype: `d2e66370d237edd94880fd9f8a6e740ed9332d5a`; synthetic test: `bea62cb1d1847409e84d1e63b2c08038db435765`.
+- Official JPX listing/delisting archives make historical membership reconstruction plausible, but live parser validation and Yahoo delisted-symbol price coverage are still pending.
 
 ## Stable★6 historical reference
-2026 Mar-Aug 5BD historical reference: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%. 10BD mean about +7.64%, win about 57.4%.
+2026 Mar-Aug 5BD historical reference: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%. 10BD mean about +7.64%, win about 57.4%. 2026 is reporting-only and must not drive tuning.
 
-## V3 Short 5BD reconstruction
-- Reproducible runner: same 45 `run.py` features, monthly causal 180-tree XGBoost, prediction-day percentile normalization, Core `r_top10 - 2*r_loss10`, one-selection-day same-symbol cooldown, next-open -> 5BD.
-- Recent-outcome Meta: rejected/inactive.
-- Attack: none/unaccepted.
-- Last successful rolling-3y snapshot: 2025H1 n=119 mean +0.46%; 2025H2 n=124 mean +0.35%; contaminated 2026 Mar-Aug n=124 mean -0.56%.
-- Durable fixed-start numeric baseline is still pending a started Actions job.
+## V3 Short
+- Same 45 features, monthly causal XGBoost, prediction-day percentile normalization, Core `r_top10 - 2*r_loss10`, next-open -> 5BD.
+- Recent-outcome Meta rejected; Attack none/unaccepted.
+- Last successful rolling-3y: 2025H1 mean +0.46%; 2025H2 +0.35%; contaminated 2026 Mar-Aug -0.56%.
+- Durable fixed-start numeric baseline pending runner recovery.
 
-## V3 Swing 10BD
-- Frozen architecture: MomCross -> causal semiannual quality model -> training empirical-CDF normalization -> Breadth Meta -> `score_R >= 0.20`.
-- Do not retune from contaminated 2026 or from the rolling-window threshold sweep.
-- Last successful rolling-3y snapshot: 2025H1 n=37 mean +6.36%; 2025H2 n=23 mean +5.89%; contaminated 2026 Mar-Aug n=31 mean +1.00%.
-- Swing A: none/unaccepted.
-- Durable fixed-start numeric baseline is still pending a started Actions job.
+## V3 Swing
+- Frozen architecture: MomCross -> causal semiannual quality model -> training empirical CDF -> Breadth Meta -> `score_R >= 0.20`.
+- Do not retune from 2026 or rolling-window sweep.
+- Last successful rolling-3y: 2025H1 +6.36%; 2025H2 +5.89%; contaminated 2026 Mar-Aug +1.00%.
+- Swing A none/unaccepted. Durable fixed-start baseline pending.
 
-## Completed in latest run
-- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, and `V3_STATUS.md`; inspected Draft PR #13 and confirmed it remains open, Draft, unmerged, head `test/tvfree-screener-v1`.
-- Re-checked Actions. Runs `34541399127`, `34541906076`, and `34542011745` failed before executable steps; no Python/model failure is demonstrated.
-- Researched official JPX archives. Confirmed year-specific stock new-listing and delisting pages exist for 2022, 2023, 2024, 2025, plus current 2026 pages.
-- Implemented TEST-ONLY point-in-time membership reconstruction prototype at `d2e66370...`.
-- Added synthetic self-check at `bea62cb1...`, workflow safety-check integration at `7632a4cd...`, and research-contract coverage at `b88b04eb...`.
-- Accepted: reverse official JPX membership events is causally defensible in principle and avoids silently applying today's survivor set to every historical date.
-- Not yet accepted for model evaluation: live JPX parsing and delisted-symbol Yahoo coverage have not been validated on a running hosted runner.
-- No thresholds, features, model parameters, production workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView/watchlist tooling, or `main` were changed.
+## Dilution / fundamental overlay research
+User requested testing whether large outstanding stock-acquisition-right dilution and weak/expensive fundamentals can explain differences among otherwise similar technical signals.
+
+Accepted feasibility findings:
+- AI is not required. The overlay can be deterministic and reproducible.
+- EDINET API v2 is an official route to historical filings; API use requires registration/API key. Historical filings can support point-in-time normalized snapshots, but live ingestion is not yet implemented/validated.
+- Any fundamental/dilution value must carry `available_date` and may affect only signals on/after that public date. Current values must never be backfilled into earlier signals.
+
+TEST-only implementation completed in this run:
+- `fundamental_overlay.py` commit `a5dbe1ca4398903327a9c84fb5a1cbee19c6459c`.
+  - deterministic point-in-time as-of join,
+  - dilution ratio = remaining warrant shares / shares outstanding,
+  - predeclared dilution research grid 20%, 35%, 50%, 100%,
+  - transparent financial-risk flags: thin equity ratio, operating loss, net loss, negative operating CF,
+  - separate baseline / dilution / financial-risk / combined lanes,
+  - missing fundamental/dilution observations remain explicitly missing rather than being silently scored safe.
+- `fundamental_overlay_selftest.py` commit `860eed55ba8c47427f46ede4cf205fef3b80916f` verifies future disclosures do not affect earlier signals and verifies dilution/risk-lane behavior on fabricated data.
+- Test workflow self-check integration: `ce5ebe9b226474222978aaa4f470f900431de3bf`.
+- Research-contract inclusion: `42bd9e29dbfca27b02aaa0fd03bbc9c9018dd442`.
+
+Not yet accepted for performance use:
+- No EDINET live historical dataset has been built yet.
+- No 2024/2025 comparative backtest has been run yet.
+- Valuation metrics such as PER/PBR require point-in-time market price and correctly aligned shares/equity/earnings; do not infer them from present-day values.
+- Warrant classification (especially MS warrants versus ordinary options/SO) still needs a robust historical extractor; do not pretend simple XBRL totals fully capture all dilution risk until validated.
 
 ## Blockers
-1. GitHub hosted runner is not being assigned, preventing live fixed-start and parser validation.
-2. Yahoo historical coverage for JPX-delisted codes is unknown; membership reconstruction alone cannot recover prices Yahoo no longer serves.
+1. GitHub hosted runner allocation prevents fixed-start pipeline execution.
+2. EDINET API requires an API key for programmatic live document acquisition.
+3. Historical warrant residual shares may require extracting filing-specific XBRL/text tables beyond simple standardized financial facts.
+4. Delisted-symbol historical price coverage remains unknown.
 
 ## Next concrete task
-1. Re-check runner allocation. If it starts, require all three synthetic safety checks to pass first.
-2. Run `point_in_time_universe.py` against the live JPX current snapshot and require zero unknown-market rows and zero same-day code collisions before using it for backtests.
-3. Measure Yahoo OHLCV availability for reconstructed delisted members. Missing historical prices must be reported, not silently dropped.
-4. Only if 2-3 pass, add point-in-time membership filtering to a separate test comparison and compare pre-2026 results without tuning thresholds.
-5. Then run fixed `2022-01-01 -> current` Short/Swing/comparison/manifest and freeze numeric baselines/hashes.
-6. Production integration remains blocked until explicit user Go.
+1. Keep model thresholds frozen and re-check hosted runner only opportunistically.
+2. Build a TEST-only EDINET normalized-snapshot ingestion path that requires `EDINET_API_KEY` and stores submission/public availability date explicitly; never commit the key.
+3. Start with robust standardized financial facts (assets, equity, revenue, operating income, net income, operating CF, shares outstanding) and coverage diagnostics.
+4. Separately prototype warrant/new-share-option extraction with confidence/coverage diagnostics; distinguish MS warrants where source disclosures allow it.
+5. Only after acceptable historical coverage, apply overlay to frozen Short/Swing picks and compare baseline vs dilution-only vs financial-risk-only vs combined on 2024H1/H2 and 2025H1/H2. Use 2026 reporting-only.
+6. Reject overlays that improve only one period, drastically reduce sample size, or rely on missing-data selection effects.
+7. Production integration remains blocked until explicit user Go.

@@ -36,25 +36,25 @@ Contemporaneous `med_ret5 >= -1%` gate improved frozen 2026 Core to about n=97 /
 Rejected.
 
 ### Distinct event-family Attack experiment
-`short_event_experiment.py` tests 10 fixed variants across five materially different event families using 2024-2025 only for selection:
-- compression -> expansion,
-- capitulation -> confirmed reversal,
-- gap + volume shock,
-- low-volatility -> momentum ignition,
-- bounded-volatility breakout.
+`short_event_experiment.py` tested 10 fixed variants across five materially different event families using 2024-2025 only. Result: **0/10 variants passed** the pre-2026 robustness gate, so no 2026 candidate was opened. Short Attack remains **none/unaccepted**.
 
-Robustness gate: adequate sample in at least 3 pre-2026 half-years; positive mean in at least 3; nonnegative median in at least 3; no adequate half-year mean below -1%.
+### Reproducible Short runner
+Added `v3_short_reconstruction.py` at commit `5eae93dd...` and integrated it into the test workflow at `1f0461e2...`.
 
-Result: **0/10 variants passed**. Because nothing passed pre-2026, the experiment deliberately did not evaluate a locked candidate on 2026.
+It explicitly implements:
+- same 45 `run.py` features,
+- monthly causal 180-tree exact-shape XGBoost,
+- relative top-decile next-open->5BD target head,
+- -10% next-open->5BD loss head,
+- prediction-day percentile normalization,
+- Core `r_top10 - 2*r_loss10`,
+- one-selection-day same-symbol cooldown,
+- defensive supporting lane `med_ret5 >= -1%`,
+- recent-outcome Meta rejected/inactive,
+- Attack none/unaccepted,
+- JSON/CSV research artifacts only.
 
-Representative pre-2026 results (mean / median):
-- compression A: 2024H1 -1.45/-1.88%, 2024H2 -1.82/-4.54%, 2025H1 -1.30/-2.45%, 2025H2 +0.23/-3.07%.
-- capitulation A: -0.13/-1.13%, -1.10/-2.41%, -2.10/-1.60%, -1.55/-3.17%.
-- gap-volume A: -2.65/-4.78%, -5.67/-6.40%, -3.20/-4.11%, -5.46/-7.78%.
-- lowvol ignition A: +1.01/+0.25%, +0.24/-1.78%, -0.82/-2.03%, +0.59/-0.87%.
-- bounded breakout B: -0.76/-0.84%, -0.45/-0.89%, +0.54/+0.31%, +0.46/~0.00%.
-
-Conclusion: no credible Short Attack lane currently exists. Set **Short Attack = none/unaccepted** rather than overfitting.
+Actions confirmation is pending. Until it succeeds and exact outputs are reconciled, prior Core numbers above remain research notes rather than a claim that the new runner has reproduced them exactly. If there is a discrepancy, investigate/document it rather than tuning thresholds against 2026.
 
 ## V3 Swing (10BD)
 Current frozen research candidate: `v3_swing_v2.py`.
@@ -68,15 +68,16 @@ Observed next-open -> 10BD:
 Swing S remains the strongest reproducible defensive candidate. Swing A remains unaccepted.
 
 ## Current architecture decision
-- Short Core: reproducible but weak; retain only as research/supporting lane.
+- Short Core: reproducible design implemented; weak research/supporting lane pending Actions confirmation.
+- Short defensive market gate: supporting lane only.
 - Short recent-outcome Meta: rejected.
 - Short Attack: none.
 - Swing S: frozen candidate.
 - Swing A: none.
 
 ## Next
-1. Create reproducible `v3_short_reconstruction.py` expressing the above decision.
-2. Confirm Swing S reproducibility in Actions.
+1. Confirm the new Short runner in GitHub Actions and reconcile its artifact with prior research notes.
+2. Confirm/freeze Swing S reproducibility in Actions.
 3. Generate unified comparison against Stable★6 historical reference.
 4. Validate operational runtime/cost.
 5. Production migration remains blocked pending explicit user Go.

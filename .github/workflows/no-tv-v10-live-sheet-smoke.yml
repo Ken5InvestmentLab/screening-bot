@@ -7,6 +7,7 @@ on:
       - experiment/no-tv-distillation
     paths:
       - research/export_full_bottom_history.py
+      - research/no_tv_v10_standalone.py
       - .github/workflows/no-tv-v10-live-sheet-smoke.yml
 
 concurrency:
@@ -21,27 +22,23 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout read-only teacher repo branch
+      - name: Checkout isolated experiment branch
         uses: actions/checkout@v7
         with:
           ref: experiment/no-tv-distillation
           fetch-depth: 1
 
-      - name: Clone V10 experiment and exact watchlist history
-        run: |
-          git clone --quiet --branch experiment/no-tv-distillation-v10 --single-branch https://github.com/Ken5InvestmentLab/m-shiki-auto-screening.git m-shiki
-          git clone --quiet https://github.com/Ken5InvestmentLab/tv-watchlist-builder.git tv-watchlist-builder-history
+      - name: Clone exact public watchlist history
+        run: git clone --quiet https://github.com/Ken5InvestmentLab/tv-watchlist-builder.git tv-watchlist-builder-history
 
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: m-shiki/requirements-v3.txt
 
       - name: Install dependencies
         run: |
-          python -m pip install -r m-shiki/requirements-v3.txt
-          python -m pip install google-auth google-auth-httplib2 google-api-python-client
+          python -m pip install numpy==2.3.1 pandas==2.3.0 requests==2.32.4 scikit-learn==1.7.2 openpyxl==3.1.5 google-auth google-auth-httplib2 google-api-python-client
 
       - name: Write read-only Google credentials
         run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
@@ -51,7 +48,7 @@ jobs:
           PYTHONIOENCODING: utf-8
         run: |
           python research/export_full_bottom_history.py \
-            --output m-shiki/teacher_live/full_bottom_history.csv
+            --output research_artifacts/no_tv_teacher/full_bottom_history.csv
 
       - name: Validate teacher before model run
         run: |
@@ -59,9 +56,9 @@ jobs:
           import json
           import pandas as pd
           from pathlib import Path
-          p=Path('m-shiki/teacher_live/full_bottom_history.csv')
+          p=Path('research_artifacts/no_tv_teacher/full_bottom_history.csv')
           df=pd.read_csv(p,dtype={'symbol_code':str})
-          print(json.dumps({
+          audit={
             'rows':len(df),
             'symbols':int(df.symbol_code.nunique()),
             'date_min':str(df.signal_date.min()),
@@ -69,20 +66,23 @@ jobs:
             'duplicates':int(df.alert_id.duplicated().sum()),
             'monthly':df.groupby(df.signal_date.astype(str).str[:7]).size().astype(int).to_dict(),
             'sessions':df.session.value_counts().sort_index().astype(int).to_dict(),
-          },ensure_ascii=False,indent=2))
+          }
+          print(json.dumps(audit,ensure_ascii=False,indent=2))
           assert len(df)>=3900
           assert df.alert_id.duplicated().sum()==0
           PY
 
+      - name: Compile standalone V10
+        run: python -m py_compile research/no_tv_v10_standalone.py
+
       - name: Run V10 exact-watchlist smoke
-        working-directory: m-shiki
         run: |
-          python no_tv_v10_full_history.py \
-            --teacher teacher_live/full_bottom_history.csv \
-            --watchlist-repo ../tv-watchlist-builder-history \
+          python research/no_tv_v10_standalone.py \
+            --teacher research_artifacts/no_tv_teacher/full_bottom_history.csv \
+            --watchlist-repo tv-watchlist-builder-history \
             --max-symbols 350 \
             --max-workers 20 \
-            --output-dir reports_no_tv_v10_live
+            --output-dir research_artifacts/v10_smoke
 
       - name: Upload V10 smoke artifact
         if: always()
@@ -90,7 +90,7 @@ jobs:
         with:
           name: no-tv-v10-live-sheet-smoke
           path: |
-            m-shiki/reports_no_tv_v10_live/
-            m-shiki/teacher_live/full_bottom_history.summary.json
+            research_artifacts/v10_smoke/
+            research_artifacts/no_tv_teacher/full_bottom_history.summary.json
           if-no-files-found: ignore
           retention-days: 14

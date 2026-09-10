@@ -1,79 +1,63 @@
 # TV-Free Screener — Next Actions
 
-TEST ONLY. Execute from top to bottom unless a new result invalidates the next item. Keep `HANDOFF.md` synchronized.
+TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. Keep `HANDOFF.md` synchronized.
 
-## 1. Search for a genuinely different Short Attack event family
+## 1. Build reproducible V3 Short reconstruction runner
 
-The reconstructed whole-universe percentile Attack based on +10%/+20% heads was selected on 2025 but failed the frozen 2026 side and is rejected. Do NOT keep retuning its thresholds/weights to 2026.
+Current decision: `Short Attack = none / unaccepted`.
 
-Goal: find a sparse event-driven lane capable of large-winner capture while remaining causally valid and reasonably stable pre-2026.
+Why:
+- exact-feature recent-outcome Meta failed frozen 2026,
+- whole-universe +10/+20 Attack selected on 2025 failed frozen 2026,
+- 5 distinct event families x 2 fixed variants all failed the 2024-2025 robustness gate before 2026 evaluation.
 
-Constraints:
-- Same Yahoo daily TSE common-stock universe and next-open -> 5BD target.
-- Keep all work test-only.
-- Event definition must use only information observable at signal close.
-- Select event family and thresholds from pre-2026 periods only. Prefer 2024 + 2025 if data support adequate samples; use 2025H1/H2 at minimum.
-- 2026 Mar-Aug is contaminated fixed-side evidence only.
-- Preserve one-business-day same-symbol cooldown.
-- Avoid another small variation of `r_hit20-r_loss10` / `r_hit10` thresholds.
+Create `tvfree_screener/v3_short_reconstruction.py` with only defensible, reproducible test-only components. Do not recreate the historical +5.42% result by inventing missing parameters.
 
-Prioritize materially distinct hypotheses such as transition/event structures rather than static whole-universe ranks. Candidate families worth testing only if sample size permits:
-- multi-day compression -> expansion transition,
-- capitulation/reversal transition with confirmation,
-- gap/volume shock followed by controlled close-location structure,
-- volatility contraction -> momentum ignition,
-- new-high/new-range breakout after bounded prior volatility.
+Recommended representation:
+- causal monthly exact-feature Core using `r_top10 - 2*r_loss10`, selected on 2025,
+- optionally report the contemporaneous `med_ret5 >= -1%` defensive market gate as a supporting lane,
+- recent-outcome Meta = rejected/not active,
+- Attack = none,
+- one-selection-day same-symbol cooldown,
+- next-session-open -> 5BD evaluation,
+- JSON/CSV reports with 2025H1/H2 and contaminated fixed 2026 Mar-Aug clearly labeled.
 
-For each family report 2024H1/H2, 2025H1/H2 where available, then one frozen 2026 Mar-Aug check only after locking a candidate. Required: n, mean, median, win, +5%, +10%, +20%, -10%, max/min, monthly stability.
+If implementing the monthly XGBoost runner in Actions is too expensive, first preserve a reproducible checkpoint/report path and document the runtime blocker rather than weakening causal rules.
 
-Reject event families that depend on a single extreme winner, have materially negative median in repeated periods, or are only good in 2026.
+## 2. Reproduce/freeze Swing S in GitHub Actions
 
-## 2. Decide Short architecture explicitly
+Keep `v3_swing_v2.py` unchanged with `score_R >= 0.20`; do not tune it from 2026. Preserve the test artifact and confirm the report remains consistent.
 
-After event-family Attack search:
-- If no robust Attack survives, record `Short Attack = none` instead of forcing one.
-- Defensive whole-universe Core may remain a supporting lane only; its reconstructed 2026 edge is weak.
-- Do not revive the rejected recent-outcome Meta by tuning to 2026.
-- Deep Reversal fallback is allowed only if supported by a new pre-2026 event hypothesis.
+## 3. Unified Short/Swing comparison
 
-Produce a reproducible `v3_short_reconstruction.py` runner once the architecture is settled, with JSON/CSV reports and no production writes.
+Generate a test-only comparison covering 5BD, 10BD, 20BD, 40BD, n, mean, median, win rate, +10%, -10%, max/min, monthly breakdown.
 
-## 3. Freeze and reproduce Swing S
-
-`v3_swing_v2.py` remains the current 10BD S candidate. Do not tune its quality threshold from 2026.
-
-Run reproducibility in GitHub Actions and preserve report artifacts. Swing A remains unaccepted unless a new pre-2026-stable hypothesis emerges.
-
-## 4. Unified Short/Swing comparison
-
-Generate a test-only comparison covering 5BD, 10BD, 20BD, 40BD, n, mean, median, win rate, +10%, -10%, max/min, and monthly breakdown.
-
-Rows should include:
+Rows:
 - Stable★6 historical reference,
-- reconstructed Short defensive lane if retained,
-- Short Attack if any accepted,
-- Short combined if justified,
+- Short Core,
+- Short defensive market-gated lane if retained,
+- Short Attack = none,
 - Swing S,
-- Swing A only if accepted.
+- Swing A = none unless a future pre-2026-stable hypothesis is found.
 
-Label the old +5.42% Short V3 figures as historical non-reproducible reference, not as a current system result.
+Label the old Short +5.42% figures as historical non-reproducible reference.
 
-## 5. Operational-cost validation
+## 4. Operational-cost validation
 
-After model architecture is stable:
-- Measure GitHub Actions full-universe runtime.
-- Measure artifact/cache size.
-- Confirm GitHub free usage practicality.
-- Optimize feature generation by symbol batches / retained candidates rather than giant all-universe DataFrames.
+After the reproducible runners are stable:
+- measure full-universe Actions runtime,
+- artifact/cache size,
+- GitHub free-usage practicality,
+- optimize symbol batches/checkpoints without changing model semantics.
 
-## 6. Production integration — BLOCKED until user Go
+## 5. Production integration — BLOCKED until user Go
 
-Do NOT automatically:
+Never automatically:
 - merge PR #13 to main,
 - change production screening-bot,
-- send production Discord notifications,
+- send production Discord,
 - write production Spreadsheet,
 - replace Stable★6/Sniper/Mega,
-- disable TradingView/watchlist builders/updaters.
+- disable TradingView/watchlist builder/updater.
 
-Only prepare implementation plans and test outputs until explicit user Go approval.
+Only prepare test outputs and implementation plans until explicit user Go approval.

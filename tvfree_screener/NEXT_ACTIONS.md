@@ -15,36 +15,37 @@ Current frozen representation:
 - next-session-open -> 5BD evaluation,
 - JSON/CSV reports with 2025H1/H2 and contaminated fixed 2026 Mar-Aug clearly labeled.
 
-Next:
-- inspect the workflow run triggered by the new runner/workflow commits,
-- if successful, preserve/report its artifact and reconcile exact numbers with prior research notes,
-- if it fails or times out, fix checkpoint/runtime plumbing only; do not reduce model semantics or tune to 2026.
+Current verification state:
+- a workflow run containing the new Short step is in progress,
+- the existing Purged walk-forward backtest is still ahead of it in the sequential job,
+- do not call the Short runner validated until its step completes and its artifact is inspected.
+
+If successful: preserve/report its artifact and reconcile exact numbers with prior research notes.
+If it fails or times out: fix checkpoint/runtime plumbing only; do not reduce model semantics or tune to 2026.
 
 ## 2. Reproduce/freeze Swing S in GitHub Actions
 
 Keep `v3_swing_v2.py` unchanged with `score_R >= 0.20`; do not tune it from 2026. Preserve the test artifact and confirm the report remains consistent.
 
-## 3. Unified Short/Swing comparison
+## 3. Inspect unified Short/Swing comparison
 
-Generate a test-only comparison covering 5BD, 10BD, 20BD, 40BD, n, mean, median, win rate, +10%, -10%, max/min, monthly breakdown.
+`tvfree_screener/unified_comparison.py` is implemented and integrated into the workflow. It generates CSV/JSON from available runner reports and clearly labels historical references.
 
-Rows:
-- Stable★6 historical reference,
-- Short Core,
-- Short defensive market-gated lane if retained,
-- Short Attack = none,
-- Swing S,
-- Swing A = none unless a future pre-2026-stable hypothesis is found.
-
-Label the old Short +5.42% figures as historical non-reproducible reference.
+After the current research run completes:
+- verify Short Core and defensive lane rows,
+- verify Swing S 5/10/20/40BD rows,
+- verify Stable★6 and old Short references remain labelled historical/non-reproducible,
+- inspect monthly breakdowns,
+- leave genuinely unavailable metrics blank rather than filling assumptions.
 
 ## 4. Operational-cost validation
 
-After the reproducible runners are stable:
+After runner outputs are confirmed:
 - measure full-universe Actions runtime,
 - artifact/cache size,
 - GitHub free-usage practicality,
-- optimize symbol batches/checkpoints without changing model semantics.
+- specifically assess whether the sequential all-research workflow approaches/exceeds the 90-minute job limit,
+- optimize batching/checkpoints/job layout without changing model semantics.
 
 ## 5. Production integration — BLOCKED until user Go
 

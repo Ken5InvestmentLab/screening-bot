@@ -1,0 +1,49 @@
+name: No-TV Teacher Export
+
+on:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - research/export_no_tv_teacher.py
+      - .github/workflows/no-tv-teacher-export.yml
+  workflow_dispatch:
+
+concurrency:
+  group: no-tv-teacher-export
+  cancel-in-progress: true
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: experiment/no-tv-distillation
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install numpy pandas openpyxl google-auth google-auth-httplib2 google-api-python-client
+
+      - name: Write read-only Google credentials
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
+      - name: Export teacher dataset
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python research/export_no_tv_teacher.py
+
+      - name: Upload teacher artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-teacher-dataset
+          path: research_artifacts/no_tv_teacher/
+          if-no-files-found: error
+          retention-days: 14

@@ -174,18 +174,26 @@ def add_cross_sectional_factors(q: pd.DataFrame) -> pd.DataFrame:
 
 
 def select_one_per_day(q: pd.DataFrame, score: str, event_col: str | None = None) -> pd.DataFrame:
+    """Select daily top candidate; block only a symbol selected on the prior trading date."""
+    # Build the trading-date index before event filtering. Otherwise an Attack lane
+    # with no event for several sessions would incorrectly treat its previous event
+    # date as "yesterday" and apply an unintended long cooldown.
+    all_dates = pd.Index(pd.to_datetime(q["date"].dropna().unique())).sort_values()
+    date_idx = {pd.Timestamp(d): i for i, d in enumerate(all_dates)}
     z = q[q[event_col]].copy() if event_col else q.copy()
     out = []
-    prev_selected: set[str] = set()
-    for _, day in z.sort_values(["date", score], ascending=[True, False]).groupby("date", sort=True):
+    last_selected_idx: dict[str, int] = {}
+    for date, day in z.sort_values(["date", score], ascending=[True, False]).groupby("date", sort=True):
+        current_idx = date_idx[pd.Timestamp(date)]
         chosen = None
         for _, row in day.sort_values(score, ascending=False).iterrows():
-            if str(row.symbol) in prev_selected:
+            symbol = str(row.symbol)
+            if last_selected_idx.get(symbol) == current_idx - 1:
                 continue
             chosen = row
             break
-        prev_selected = {str(chosen.symbol)} if chosen is not None else set()
         if chosen is not None:
+            last_selected_idx[str(chosen.symbol)] = current_idx
             out.append(chosen)
     return pd.DataFrame(out).reset_index(drop=True)
 
@@ -228,7 +236,7 @@ def main() -> None:
     report = {
         "status": "research_only_no_production_writes",
         "entry": "next_session_open",
-        "cooldown": "same symbol blocked for next trading selection day only",
+        "cooldown": "same symbol blocked only when selected on the immediately prior trading date",
         "universe": {
             "price_floor": PRICE_FLOOR,
             "prev_close_cap": PRICE_CAP,

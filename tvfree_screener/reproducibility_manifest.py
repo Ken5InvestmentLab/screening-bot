@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Create a test-only reproducibility manifest for fixed-start TV-free research.
 
-The manifest records dataset coverage plus SHA-256 fingerprints for rows at or
-before a frozen historical cutoff. Later append-only runs can compare these
-fingerprints: adding newer sessions should not alter the historical slices.
+The manifest records dataset coverage, historical OHLCV/output fingerprints,
+and a research-code/configuration fingerprint. Later append-only runs can
+compare these values: adding newer sessions should not alter historical slices
+when source history and research semantics are unchanged.
 
 This tool does not write to production systems.
 """
@@ -11,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -22,6 +24,27 @@ FILES = [
     "v3_short_reconstruction_defensive.csv",
     "v3_swing_v2_s_picks.csv",
 ]
+CODE_FILES = [
+    "tvfree_screener/run.py",
+    "tvfree_screener/bootstrap.py",
+    "tvfree_screener/v3_short_reconstruction.py",
+    "tvfree_screener/v3_swing_v2.py",
+    "tvfree_screener/unified_comparison.py",
+    "tvfree_screener/reproducibility_manifest.py",
+    "tvfree_screener/requirements.txt",
+    ".github/workflows/tvfree-screener-test.yml",
+]
+CONFIG_ENV = [
+    "TVFREE_PERIOD",
+    "TVFREE_START_DATE",
+    "TVFREE_PRICE_CAP",
+    "TVFREE_LOSS_PENALTY",
+    "TVFREE_TOPK",
+]
+
+
+def sha256_bytes(payload: bytes) -> str:
+    return hashlib.sha256(payload).hexdigest()
 
 
 def canonical_hash(path: Path, cutoff: pd.Timestamp) -> dict:
@@ -42,7 +65,7 @@ def canonical_hash(path: Path, cutoff: pd.Timestamp) -> dict:
         "rows": int(len(df)),
         "historical_rows": int(len(hist)),
         "historical_cutoff": cutoff.strftime("%Y-%m-%d"),
-        "historical_sha256": hashlib.sha256(payload).hexdigest(),
+        "historical_sha256": sha256_bytes(payload),
         "min_date": None if df["date"].dropna().empty else df["date"].min().strftime("%Y-%m-%d"),
         "max_date": None if df["date"].dropna().empty else df["date"].max().strftime("%Y-%m-%d"),
     }
@@ -75,21 +98,54 @@ def cache_manifest(path: Path) -> dict:
         "max_date": None if valid.empty else valid["date"].max().strftime("%Y-%m-%d"),
         "historical_cutoff": CUTOFF.strftime("%Y-%m-%d"),
         "historical_rows": int(len(hist)),
-        "historical_date_symbol_sha256": hashlib.sha256(coverage_payload).hexdigest(),
-        "historical_ohlcv_sha256": hashlib.sha256(ohlcv_payload).hexdigest(),
+        "historical_date_symbol_sha256": sha256_bytes(coverage_payload),
+        "historical_ohlcv_sha256": sha256_bytes(ohlcv_payload),
         "fixed_start_contract": "2022-01-01 -> current; symbols listed later naturally start later",
+    }
+
+
+def research_contract_manifest() -> dict:
+    """Fingerprint test research semantics without reading or exposing secrets."""
+    file_hashes = {}
+    aggregate = hashlib.sha256()
+    for name in CODE_FILES:
+        path = Path(name)
+        if not path.exists():
+            file_hashes[name] = None
+            aggregate.update(f"{name}\0MISSING\n".encode("utf-8"))
+            continue
+        payload = path.read_bytes()
+        digest = sha256_bytes(payload)
+        file_hashes[name] = digest
+        aggregate.update(f"{name}\0{digest}\n".encode("utf-8"))
+
+    config = {name: os.environ.get(name) for name in CONFIG_ENV}
+    config_payload = json.dumps(config, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    config_sha = sha256_bytes(config_payload)
+    aggregate.update(b"CONFIG\0" + config_sha.encode("ascii") + b"\n")
+
+    return {
+        "code_files_sha256": file_hashes,
+        "safe_config": config,
+        "safe_config_sha256": config_sha,
+        "research_contract_sha256": aggregate.hexdigest(),
+        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics.",
     }
 
 
 def main() -> None:
     report = {
+        "manifest_version": 2,
         "status": "research_only_no_production_writes",
         "purpose": "append-only reproducibility fingerprint",
         "cache": cache_manifest(OUT / "tse_daily.csv"),
         "outputs": {name: canonical_hash(OUT / name, CUTOFF) for name in FILES},
+        "research_contract": research_contract_manifest(),
         "interpretation": (
-            "On later runs, historical date/symbol coverage and OHLCV hashes should remain unchanged "
-            "unless Yahoo revises historical source data or research code/semantics intentionally changes."
+            "For append-only verification, first require the research_contract_sha256 to match. "
+            "Then historical date/symbol coverage, OHLCV, and output hashes should remain unchanged. "
+            "A contract mismatch means code/config changed and results must not be compared as a pure append-only test; "
+            "an OHLCV-only mismatch can indicate Yahoo historical revision."
         ),
     }
     OUT.mkdir(parents=True, exist_ok=True)

@@ -23,11 +23,14 @@ on:
         description: Picks per trading day in walk-forward
         required: true
         default: "1"
+  # Quota-protection gate:
+  # ordinary research commits must NOT start a hosted runner.
+  # To intentionally run this heavy TEST workflow, update the dedicated
+  # trigger file tvfree_screener/RUN_HEAVY_TEST.
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - "tvfree_screener/**"
-      - ".github/workflows/tvfree-screener-test.yml"
+      - "tvfree_screener/RUN_HEAVY_TEST"
 
 permissions:
   contents: read

@@ -30,6 +30,10 @@ M式は目標ではない。アイデア源として参照する場合のみ可�
 ### V17
 銘柄サンプリングはMar05-Apr30のみで非リーク化したが、絶対score thresholdが月跨ぎで崩壊し、さらにdaily topの09/13 lookaheadが残っていた。最終採用禁止。
 
+### V20 run #1
+自動boolean列検出が outcome-derived の `win10` / `win_5bd` を特徴量として採用していたため、32件・平均+18.4%・+10%到達100%という結果は完全なtarget leakage。**全数値を無効扱い**する。
+V20 run #2以降はsignal-time特徴の明示allow-list方式へ変更し、`win10 / lose10 / win_5bd / confirmed_5bd` 等を禁止。未知列は自動採用しない。
+
 ### Old Stage2
 実TV BOTTOMで学習したoutcome selectorをYahoo候補へ移すとdistribution shift。Full-universeでも改善弱く、本線から降格。
 
@@ -53,9 +57,9 @@ M式は目標ではない。アイデア源として参照する場合のみ可�
 - 09用 / 13用モデルを分離。
 - p_win / p_hit10 / predicted return に加え p_loss10 を明示的に学習。
 
-### V20
+### V20 run #2+
 - actual Tenchi BOTTOMだけに限定した scoring-only rule miner。
-- production signal-time snapshotのboolean条件をAND探索。
+- **signal-time特徴のexplicit allow-listのみ**でAND探索。outcome-derived列は禁止。
 - Mar-Apr→May validation→Jun test、Mar-May→Jun→Jul、Mar-Jun→Jul→Aug。
 - current Stable★6を同一テスト窓で比較。
 

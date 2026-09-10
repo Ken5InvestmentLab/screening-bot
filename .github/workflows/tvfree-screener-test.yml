@@ -72,6 +72,10 @@ jobs:
           python tvfree_screener/v3_swing_v2.py
           --cache tvfree_screener/out/tse_daily.csv
           --symbol-batch 200
+      - name: V3 Short reproducible reconstruction
+        run: >-
+          python tvfree_screener/v3_short_reconstruction.py
+          --cache tvfree_screener/out/tse_daily.csv
       - name: V3 Short distinct event-family Attack research
         run: >-
           python tvfree_screener/short_event_experiment.py

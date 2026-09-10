@@ -1,0 +1,62 @@
+name: No-TV 4H Parity Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - research/audit_yahoo_4h_parity.py
+      - research/export_no_tv_teacher.py
+      - research/no_tv_v10_standalone.py
+      - .github/workflows/no-tv-4h-parity-audit.yml
+
+concurrency:
+  group: no-tv-4h-parity-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/no-tv-distillation
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install numpy==2.3.1 pandas==2.3.0 requests==2.32.4 scikit-learn==1.7.2 openpyxl==3.1.5 google-auth google-auth-httplib2 google-api-python-client
+
+      - name: Write read-only Google credentials
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
+      - name: Export production 4H teacher read-only
+        env:
+          PYTHONIOENCODING: utf-8
+        run: python research/export_no_tv_teacher.py
+
+      - name: Audit Yahoo 1H aggregation against production 4H
+        run: |
+          python research/audit_yahoo_4h_parity.py \
+            --production-4h research_artifacts/no_tv_teacher/teacher_ohlcv_4h_raw.csv \
+            --start 2026-03-05 \
+            --end 2026-08-31 \
+            --max-symbols 100 \
+            --max-workers 16 \
+            --output-dir research_artifacts/4h_parity
+
+      - name: Upload parity result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-4h-parity-audit
+          path: research_artifacts/4h_parity/
+          if-no-files-found: ignore
+          retention-days: 14

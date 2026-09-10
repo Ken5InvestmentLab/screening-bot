@@ -10,6 +10,7 @@ import io
 import os
 import re
 import time
+from pathlib import Path
 from urllib.parse import urljoin
 
 import pandas as pd
@@ -19,6 +20,7 @@ import yfinance as yf
 import run as core
 
 JPX_PAGE = "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
+OUT = Path("tvfree_screener/out")
 
 
 def dynamic_jpx_universe() -> pd.DataFrame:
@@ -49,8 +51,17 @@ def dynamic_jpx_universe() -> pd.DataFrame:
     out["code"] = out["code"].astype(str).str.strip()
     out = out[out["code"].str.match(r"^[0-9A-Z]{4}$", na=False)].drop_duplicates("code")
     out["ticker"] = out["code"] + ".T"
+    out = out.sort_values("code", kind="mergesort").reset_index(drop=True)
+
+    # Persist the exact current-listed universe used by this test run. Historical
+    # research currently uses the run-date universe, so listings/delistings can
+    # change the backtest population even when model semantics are unchanged.
+    # Keeping this artifact makes that source of drift explicit and auditable.
+    OUT.mkdir(parents=True, exist_ok=True)
+    out[["code", "name", "market", "ticker"]].to_csv(OUT / "jpx_universe_snapshot.csv", index=False)
     print(f"JPX domestic common-stock universe: {len(out)}")
-    return out.reset_index(drop=True)
+    print("JPX universe snapshot: tvfree_screener/out/jpx_universe_snapshot.csv")
+    return out
 
 
 def fixed_start_fetch_daily(universe: pd.DataFrame, period: str, batch: int = 80) -> pd.DataFrame:

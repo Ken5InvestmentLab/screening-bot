@@ -32,6 +32,7 @@ CODE_FILES = [
     "tvfree_screener/unified_comparison.py",
     "tvfree_screener/reproducibility_manifest.py",
     "tvfree_screener/reproducibility_selftest.py",
+    "tvfree_screener/causality_selftest.py",
     "tvfree_screener/requirements.txt",
     ".github/workflows/tvfree-screener-test.yml",
 ]
@@ -56,7 +57,6 @@ def canonical_hash(path: Path, cutoff: pd.Timestamp) -> dict:
         return {"exists": True, "rows": int(len(df)), "historical_hash": None, "note": "no date column"}
     df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.tz_localize(None).dt.normalize()
     hist = df[df["date"] <= cutoff].copy()
-    # Stable ordering and stable textual serialization for cross-run comparison.
     sort_cols = [c for c in ["date", "symbol", "model_period"] if c in hist.columns]
     if sort_cols:
         hist = hist.sort_values(sort_cols, kind="mergesort")
@@ -82,15 +82,8 @@ def cache_manifest(path: Path) -> dict:
         df[c] = pd.to_numeric(df[c], errors="coerce")
     valid = df.dropna(subset=["date"])
     hist = valid[valid["date"] <= CUTOFF].sort_values(["date", "symbol"], kind="mergesort")
-
-    # Keep a coverage-only hash for diagnosing listing/calendar changes, and an
-    # OHLCV hash that detects historical source-data revisions as well.
     coverage_payload = hist[["date", "symbol"]].to_csv(index=False, lineterminator="\n").encode("utf-8")
-    ohlcv_payload = hist[cols].to_csv(
-        index=False,
-        lineterminator="\n",
-        float_format="%.12g",
-    ).encode("utf-8")
+    ohlcv_payload = hist[cols].to_csv(index=False, lineterminator="\n", float_format="%.12g").encode("utf-8")
     return {
         "exists": True,
         "rows": int(len(df)),
@@ -130,7 +123,7 @@ def research_contract_manifest() -> dict:
         "safe_config": config,
         "safe_config_sha256": config_sha,
         "research_contract_sha256": aggregate.hexdigest(),
-        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics and reproducibility checks.",
+        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics and reproducibility/causality checks.",
     }
 
 

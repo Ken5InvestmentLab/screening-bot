@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -12,6 +13,25 @@ import numpy as np
 import pandas as pd
 
 import optimize_screener as opt
+
+_ORIGINAL_FETCH = opt.fetch
+
+def _retry_fetch(service, sheet):
+    last = None
+    for attempt in range(6):
+        try:
+            return _ORIGINAL_FETCH(service, sheet)
+        except Exception as exc:
+            last = exc
+            if attempt >= 5:
+                raise
+            delay = 2 ** attempt
+            print(f"Sheet read retry {attempt+1}/5 for {sheet}: {type(exc).__name__}; sleep {delay}s", flush=True)
+            time.sleep(delay)
+    raise last
+
+# build_mega_report_feature_frames() uses module-global fetch.
+opt.fetch = _retry_fetch
 
 
 OUT = Path("research_artifacts/no_tv_teacher")

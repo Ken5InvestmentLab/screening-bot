@@ -19,9 +19,10 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 - Yahoo 3y daily cache works in GitHub Actions.
 - Test-only workflow and artifacts are functioning.
 - XGBoost/scikit-learn available.
-- Latest previously inspected test run on head `d3712601...` succeeded.
-- Distinct Short event-family experiment added at commit `e8da88d8...`.
-- Workflow integration added at commit `fc441e61...`.
+- Distinct Short event-family experiment added at commit `e8da88d8...`; workflow integration at `fc441e61...`.
+- Reproducible Short reconstruction runner added at commit `5eae93dd...`.
+- Test workflow integration for that runner added at commit `1f0461e2...`.
+- Actions reproducibility/result confirmation for the new Short runner is still pending at this handoff; do not treat implementation alone as a validated result.
 
 ## Stable★6 historical reference
 2026 Mar-Aug 5BD: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%.
@@ -30,7 +31,7 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 ## V3 Short 5BD reconstruction
 Historical non-reproducible old reference: 2026 Mar-Aug n=29, mean +5.42%, median +2.06%, win 65.5%, +10% 13.8%, -10% 6.9%. Exact old parameters were never committed; do not claim reproduction.
 
-Exact-feature reconstruction used the same 45 `run.py` features and XGBoost shape (180 trees, depth 3, LR .04, min_child_weight 25, lambda 5, alpha .2). About 681k eligible rows / 2,059 symbols through 2026-09-10 were used.
+Exact-feature reconstruction used the same 45 `run.py` features and XGBoost shape (180 trees, depth 3, LR .04, min_child_weight 25, lambda 5, alpha .2). About 681k eligible rows / 2,059 symbols through 2026-09-10 were used during research.
 
 2025-only Core: `r_top10 - 2.0*r_loss10`.
 - 2025H1 mean +0.59%, median +0.58%, win 58.0%, -10% 2.5%.
@@ -52,23 +53,24 @@ A 2025-selected contemporaneous market gate `med_ret5 >= -1%` improved frozen 20
 Rejected. Do not tune the same heads around 2026.
 
 ### Distinct event-family Attack search — rejected before opening 2026
-A separate `short_event_experiment.py` tested 5 materially different event families x 2 fixed variants, selected only from 2024-2025:
-1. volatility compression -> expansion,
-2. capitulation -> confirmed reversal,
-3. gap + volume shock with controlled close,
-4. low-volatility -> momentum ignition,
-5. bounded-volatility breakout.
+A separate `short_event_experiment.py` tested 5 materially different event families x 2 fixed variants, selected only from 2024-2025: volatility compression -> expansion; capitulation -> confirmed reversal; gap + volume shock; low-volatility -> momentum ignition; bounded-volatility breakout.
 
-One-pick-per-day and one-selection-day same-symbol cooldown were preserved. Pre-2026 robustness required adequate samples in >=3 half-years, positive mean in >=3, nonnegative median in >=3, and no adequate half-year mean below -1%.
+Result: all 10 variants failed the pre-2026 robustness gate, so 2026 was deliberately not opened for candidate selection/evaluation. Current Short Attack decision: **NONE / unaccepted**.
 
-Result: all 10 variants failed the pre-2026 gate, so 2026 was deliberately not opened for candidate selection/evaluation. Representative findings:
-- compression/expansion variants had negative mean/median in nearly every half-year and high -10% rates.
-- capitulation/reversal was unstable and materially negative in 2025.
-- gap/volume shock was strongly negative across all four half-years.
-- low-vol ignition had lower loss rates but failed half-year mean/median stability.
-- bounded breakout B was the closest defensive shape (2025H1 +0.54%, 2025H2 +0.46%) but 2024H1/H2 were both negative, so it failed robustness.
+### Reproducible runner now implemented
+`v3_short_reconstruction.py` now expresses the defensible decision explicitly:
+- exact 45-feature monthly causal XGBoost,
+- top-decile 5BD return head and -10% loss-risk head,
+- prediction-day percentile normalization,
+- Core `r_top10 - 2*r_loss10`,
+- one-selection-day same-symbol cooldown,
+- next-session-open -> 5BD evaluation,
+- defensive supporting lane `med_ret5 >= -1%`,
+- recent-outcome Meta inactive/rejected,
+- Attack none/unaccepted,
+- JSON/CSV outputs only; no production writes.
 
-Current Short Attack decision: **NONE / unaccepted**. Do not force an Attack lane merely to emulate the old +5.42% reference.
+Important: the new runner must be checked in GitHub Actions before its reported numbers are treated as frozen/reproducible. If its results materially differ from the prior research notes, trust the reproducible runner and investigate/document the discrepancy instead of tuning to 2026.
 
 ## V3 Swing 10BD
 Frozen current candidate: `v3_swing_v2.py`.
@@ -89,8 +91,8 @@ Swing A remains unaccepted.
 - Short compression-expansion, capitulation-reversal, gap-volume, lowvol-ignition, and bounded-breakout fixed event variants tested in `short_event_experiment.py`.
 
 ## Next concrete task
-1. Treat `Short Attack = none` unless a materially new hypothesis appears.
-2. Build one reproducible `v3_short_reconstruction.py` representing only the defensible Short lane(s), with no production writes.
-3. Re-run/freeze Swing S in Actions.
-4. Produce unified Short/Swing/Stable★6 historical comparison.
-5. Then measure operational runtime/cost.
+1. Inspect the GitHub Actions run triggered by the Short runner/workflow commits. If successful, capture the Short report/artifact and reconcile it with the prior research notes. If it fails or exceeds runtime, fix only reproducibility/runtime plumbing without weakening causal/model semantics.
+2. Re-run/freeze Swing S in Actions and preserve its report.
+3. Produce unified Short/Swing/Stable★6 historical comparison.
+4. Measure operational runtime/cost.
+5. Production migration remains blocked until explicit user Go.

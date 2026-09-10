@@ -19,14 +19,13 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 - Last fully successful research pipeline: Actions run `34519284035` on rolling `period=3y`; all Short/Swing/comparison steps passed, runtime about 23m15s, artifact about 33.55 MB.
 - Critical reproducibility flaw found: rolling `period=3y` drops old training rows as time advances.
 - Test-only fixed-start acquisition was added in `bootstrap.py` (`063a73b3...`) and workflow (`458be814...`), defaulting to `2022-01-01 -> current`; no model architecture or threshold changed.
-- Fixed-start verification remains blocked by GitHub Actions hosted-runner startup failure, not a model/test exception. Recent jobs continue to fail before any workflow step with no runner assigned.
-- Commit `797a8578...` added `reproducibility_manifest.py`; commit `418c42b7...` added it to the test workflow.
-- Commit `49ac8088...` added full historical OHLCV hashing through frozen cutoff `2026-08-31` in addition to date/symbol coverage hashing.
-- Commit `dcf669a502763a934a0f5aa6c226ab0a2d4bd4de` upgraded the manifest to v2 with a `research_contract_sha256` over relevant test research code/workflow/requirements and explicit non-secret `TVFREE_*` inputs.
-- Commit `0a0f94894d79ec600c7cae1cc87b55d499ccc685` added `reproducibility_selftest.py`, a synthetic no-network self-check for historical revision detection and append-only invariants.
-- Commit `e1227f0e52cd8d736857227d758187120c61dc79` included that self-check in the research-contract fingerprint.
-- Commit `f60df68db3172e3417eb32861cef0d342cc6b595` runs the self-check before the heavy research pipeline once a hosted runner is available.
-- The synthetic self-check was also executed independently in-session and passed: value-only historical OHLCV revision changes only the OHLCV hash, post-cutoff append leaves historical hashes unchanged, and historical output revision changes the output hash.
+- Fixed-start verification remains blocked by GitHub Actions hosted-runner startup failure, not a model/test exception. Latest observed run `34539341326` again completed failure with no executable steps; earlier jobs exposed `runner_id=0` / blank runner.
+- `reproducibility_manifest.py`: initial `797a8578...`; workflow integration `418c42b7...`; OHLCV-value hashing fix `49ac8088...`; manifest-v2 research-contract hash `dcf669a5...`.
+- `reproducibility_selftest.py`: `0a0f9489...`; research-contract inclusion `e1227f0e...`; workflow integration `f60df68d...`.
+- New causal-safety self-check `causality_selftest.py`: commit `9543975185767c4985e6afe1cee52a350cc00bc5`.
+- Research contract now includes the causal self-check: `79fb0af83a04c53281ee77c0b5bb36c7122f45e7`.
+- Test workflow runs it before heavy research: `de498ea0e4a808ec56f01067606285034a2e264b`.
+- Causal self-check uses fabricated 2024/2025 data only and verifies: historical feature prefix invariance under future-row append, exact next-session-open -> 5BD target semantics, Short monthly training purge, and Swing semiannual training purge. It does not tune models or inspect 2026 performance.
 
 ## Stable★6 historical reference
 2026 Mar-Aug 5BD: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%.
@@ -68,15 +67,19 @@ Latest fully successful rolling-3y snapshot at unchanged 0.20:
 - Production migration: blocked pending explicit user Go.
 
 ## Completed in latest run
-- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, and `V3_STATUS.md` from `test/tvfree-screener-v1` and inspected Draft PR #13.
-- PR #13 remained open, Draft, unmerged, and isolated to `test/tvfree-screener-v1`; observed head before this run's changes was `049212fa6a1afb9a1dfd2fec7aefdd6f05646f4b`.
-- Latest observed workflow run `34536429235` again failed before executable steps; no evidence of a Python/model failure.
-- Added and independently executed the synthetic reproducibility self-check. PASS.
-- No thresholds, features, model parameters, 2026 tuning, production workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView, or `main` were changed.
+- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, `V3_STATUS.md`, and inspected Draft PR #13.
+- PR #13 remained open, Draft, unmerged, and on `test/tvfree-screener-v1`.
+- Re-checked Actions: run `34539341326` still failed before executable steps; runner allocation remains the blocker.
+- Added `causality_selftest.py` (`9543975185767c4985e6afe1cee52a350cc00bc5`).
+- Added it to manifest-v2 research-contract hashing (`79fb0af83a04c53281ee77c0b5bb36c7122f45e7`).
+- Added it before heavy research in the test-only workflow (`de498ea0e4a808ec56f01067606285034a2e264b`).
+- Accepted finding: the explicit causal contracts represented by current Short/Swing code are now guarded by synthetic tests; no model-performance claim is made until Actions actually executes them and the fixed-start pipeline.
+- Rejected action: no threshold/model retuning while runner infrastructure is unavailable and 2026 is contaminated.
+- No production files/workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView, watchlist tooling, or `main` were touched.
 
 ## Next concrete task
 1. Re-check hosted-runner availability and inspect the newest PR-triggered workflow job.
-2. Once a job reaches checkout, require the synthetic reproducibility self-check to pass first.
+2. Once a job reaches checkout, require both `reproducibility_selftest.py` and `causality_selftest.py` to pass before accepting the run.
 3. Confirm `Yahoo history mode: fixed start 2022-01-01 -> current`, then require all Short/Swing/comparison/manifest steps to succeed.
 4. Freeze the resulting fixed-start Short/Swing numeric snapshot plus manifest-v2 contract/coverage/OHLCV/output hashes without retuning from 2026.
 5. On a later market-session append, require matching `research_contract_sha256`, then compare historical hashes through `2026-08-31`.

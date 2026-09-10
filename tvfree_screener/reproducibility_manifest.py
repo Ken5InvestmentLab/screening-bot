@@ -51,11 +51,22 @@ def canonical_hash(path: Path, cutoff: pd.Timestamp) -> dict:
 def cache_manifest(path: Path) -> dict:
     if not path.exists():
         return {"exists": False}
-    df = pd.read_csv(path, usecols=["date", "symbol"], dtype={"symbol": str})
+    cols = ["date", "symbol", "open", "high", "low", "close", "volume"]
+    df = pd.read_csv(path, usecols=cols, dtype={"symbol": str})
     df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.tz_localize(None).dt.normalize()
+    for c in ["open", "high", "low", "close", "volume"]:
+        df[c] = pd.to_numeric(df[c], errors="coerce")
     valid = df.dropna(subset=["date"])
     hist = valid[valid["date"] <= CUTOFF].sort_values(["date", "symbol"], kind="mergesort")
-    payload = hist.to_csv(index=False, lineterminator="\n").encode("utf-8")
+
+    # Keep a coverage-only hash for diagnosing listing/calendar changes, and an
+    # OHLCV hash that detects historical source-data revisions as well.
+    coverage_payload = hist[["date", "symbol"]].to_csv(index=False, lineterminator="\n").encode("utf-8")
+    ohlcv_payload = hist[cols].to_csv(
+        index=False,
+        lineterminator="\n",
+        float_format="%.12g",
+    ).encode("utf-8")
     return {
         "exists": True,
         "rows": int(len(df)),
@@ -64,7 +75,8 @@ def cache_manifest(path: Path) -> dict:
         "max_date": None if valid.empty else valid["date"].max().strftime("%Y-%m-%d"),
         "historical_cutoff": CUTOFF.strftime("%Y-%m-%d"),
         "historical_rows": int(len(hist)),
-        "historical_date_symbol_sha256": hashlib.sha256(payload).hexdigest(),
+        "historical_date_symbol_sha256": hashlib.sha256(coverage_payload).hexdigest(),
+        "historical_ohlcv_sha256": hashlib.sha256(ohlcv_payload).hexdigest(),
         "fixed_start_contract": "2022-01-01 -> current; symbols listed later naturally start later",
     }
 
@@ -75,7 +87,10 @@ def main() -> None:
         "purpose": "append-only reproducibility fingerprint",
         "cache": cache_manifest(OUT / "tse_daily.csv"),
         "outputs": {name: canonical_hash(OUT / name, CUTOFF) for name in FILES},
-        "interpretation": "On later runs, historical hashes should remain unchanged unless Yahoo revises historical source data or research code/semantics intentionally changes.",
+        "interpretation": (
+            "On later runs, historical date/symbol coverage and OHLCV hashes should remain unchanged "
+            "unless Yahoo revises historical source data or research code/semantics intentionally changes."
+        ),
     }
     OUT.mkdir(parents=True, exist_ok=True)
     with open(OUT / "reproducibility_manifest.json", "w", encoding="utf-8") as f:

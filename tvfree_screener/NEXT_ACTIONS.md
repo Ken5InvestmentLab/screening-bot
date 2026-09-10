@@ -4,7 +4,7 @@ TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. 
 
 ## 1. Resolve/observe GitHub Actions runner-start blocker
 
-Latest observed PR-triggered runs `34541399127` and `34541906076` both failed before executable steps. Job metadata still shows no usable steps/logs. This is not evidence of a Python/model failure.
+Latest observed PR-triggered runs `34541399127`, `34541906076`, and `34542011745` all failed before executable steps. Job metadata still shows no usable steps/logs. This is not evidence of a Python/model failure.
 
 Next run:
 - inspect whether the newest job reaches `actions/checkout`,

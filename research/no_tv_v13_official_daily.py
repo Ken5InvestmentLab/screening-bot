@@ -50,7 +50,19 @@ def build_asof_official(daily,sessions,upto_idx):
     return pd.concat([past,current],ignore_index=True)
 
 
-def build_issue_candidates_v13(code,hour_chart,day_chart,start_date,end_date):
+def build_issue_candidates_v13(code,hour_chart,day_chart,start_date,end_date,enforce_daily_prefilter=True):
+    """Build 09/13 session candidates.
+
+    enforce_daily_prefilter=True preserves the original standalone/live behavior:
+    Yahoo prior close<=1000 and prior volume>=10000 are checked locally.
+
+    Historical exact-watchlist research may pass False because the historical
+    tv-watchlist-builder commit is the authoritative contemporaneous proof that
+    those two prefilters were satisfied. This avoids a second filter based on
+    Yahoo historical values that may be rewritten/adjusted after corporate actions.
+    Session volume>=5000 is always enforced because it is a signal-session filter,
+    not a watchlist-build filter.
+    """
     hourly=base.parse_1h_chart(hour_chart)
     daily=parse_daily(day_chart)
     if hourly is None or daily is None or hourly.empty or daily.empty:return None
@@ -64,7 +76,8 @@ def build_issue_candidates_v13(code,hour_chart,day_chart,start_date,end_date):
         di=int(daymap.loc[dt,"day_index"])
         if di<1:continue
         prev=d.iloc[di-1]
-        if not (float(prev.close)<=1000 and float(prev.volume)>=10000 and float(row.volume)>=5000):continue
+        if enforce_daily_prefilter and not (float(prev.close)<=1000 and float(prev.volume)>=10000):continue
+        if not (float(row.volume)>=5000):continue
         asof=build_asof_official(daily,sessions,i)
         if asof is None:continue
         tf=base.technical_features(asof)
@@ -79,11 +92,11 @@ def build_issue_candidates_v13(code,hour_chart,day_chart,start_date,end_date):
     return pd.DataFrame(rows)
 
 
-def fetch_one(code,start_date,end_date):
+def fetch_one(code,start_date,end_date,enforce_daily_prefilter=True):
     with ThreadPoolExecutor(max_workers=2) as ex:
         fh=ex.submit(fetch_interval,code,"1h","730d");fd=ex.submit(fetch_interval,code,"1d","730d")
         hc,he=fh.result();dc,de=fd.result()
     if he:return None,"1h_"+str(he)
     if de:return None,"1d_"+str(de)
-    fr=build_issue_candidates_v13(code,hc or {},dc or {},start_date,end_date)
+    fr=build_issue_candidates_v13(code,hc or {},dc or {},start_date,end_date,enforce_daily_prefilter=enforce_daily_prefilter)
     return fr,None if fr is not None else "no_data"

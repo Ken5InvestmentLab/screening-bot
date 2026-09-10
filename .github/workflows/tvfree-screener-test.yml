@@ -81,6 +81,9 @@ jobs:
           python tvfree_screener/short_event_experiment.py
           --cache tvfree_screener/out/tse_daily.csv
           --symbol-batch 200
+      - name: Unified V3 research comparison
+        if: always()
+        run: python tvfree_screener/unified_comparison.py
       - name: Upload test outputs
         if: always()
         uses: actions/upload-artifact@v4

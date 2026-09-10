@@ -1,0 +1,41 @@
+name: No-TV Bottom Distiller
+
+on:
+  push:
+    branches: [experiment/no-tv-distillation]
+    paths:
+      - research/train_bottom_distiller.py
+      - .github/workflows/no-tv-bottom-distiller.yml
+  workflow_dispatch:
+
+concurrency:
+  group: no-tv-bottom-distiller
+  cancel-in-progress: true
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install numpy pandas requests scikit-learn google-auth google-auth-httplib2 google-api-python-client openpyxl
+      - name: Write read-only Google credentials
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+      - run: python -m py_compile research/train_bottom_distiller.py
+      - name: Train Yahoo-only BOTTOM distiller
+        run: python research/train_bottom_distiller.py
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-bottom-distiller
+          path: research_artifacts/no_tv_distiller/
+          if-no-files-found: ignore
+          retention-days: 14

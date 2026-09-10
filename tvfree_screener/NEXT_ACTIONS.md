@@ -10,10 +10,16 @@ The test workflow must first pass:
 - `reproducibility_selftest.py`,
 - `causality_selftest.py`,
 - `point_in_time_universe_selftest.py`,
-- `fundamental_overlay_selftest.py`.
+- `fundamental_overlay_selftest.py`,
+- `edinet_fundamental_collector_selftest.py`.
 
-## 3. Build point-in-time EDINET snapshot ingestion
-Goal: normalized historical snapshots keyed by `symbol` + `available_date`, where `available_date` is the filing/public date visible to the market.
+## 3. Live-validate point-in-time EDINET snapshot ingestion
+Implementation now exists in `edinet_fundamental_collector.py`; do not expand aliases from guesses.
+
+Current outputs:
+- `edinet_documents.csv`: normalized source-document metadata,
+- `edinet_fundamental_snapshots.csv`: source-linked extracted facts,
+- `edinet_coverage.json`: requested/usable/missing/ambiguous diagnostics.
 
 Initial standardized fields:
 - shares outstanding,
@@ -24,12 +30,13 @@ Initial standardized fields:
 - net income,
 - operating cash flow.
 
-Requirements:
-- use EDINET API v2 only in TEST path,
-- require `EDINET_API_KEY` from environment/secrets; never commit the key,
-- retain document id, filing date, period end, and source provenance,
-- never backfill later filings into earlier signal dates,
-- emit requested/usable/missing-field coverage diagnostics.
+Next validation requirements:
+- use `EDINET_API_KEY` from environment/secret only; never commit/log it,
+- first run a small pre-2026 live sample and inspect exact element IDs/contexts rather than tuning on 2026,
+- retain document id, filing date/time, period end, source member, and extraction status,
+- quantify missing and ambiguous coverage before broad acquisition,
+- do not silently broaden element aliases based on desired backtest results,
+- before performance use, define a strict same-day decision-time rule from `available_at` so after-close disclosures cannot affect an earlier same-day signal.
 
 ## 4. Prototype historical dilution extraction separately
 Target normalized fields:

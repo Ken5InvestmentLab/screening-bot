@@ -12,147 +12,112 @@ This document records the handoff state without pretending that unrecovered para
 - Primary realistic entry is next trading session open.
 - 2026 has already been inspected during research, so it is not a pristine holdout.
 
-## V3 Short (5BD) — reference result from the previous research session
+## V3 Short (5BD)
 
-Known 2026 March-August result with one-business-day cooldown:
+Historical previous-session reference with one-business-day cooldown:
+- n=29
+- next-open -> 5BD mean +5.42%
+- median +2.06%
+- win 65.5%
+- +10% 13.8%
+- -10% 6.9%
 
-- n: 29
-- next-open -> 5BD mean: +5.42%
-- median: +2.06%
-- win rate: 65.5%
-- +10% rate: 13.8%
-- -10% rate: 6.9%
+The exact prior Short V3 parameters were never committed, so this remains a historical non-reproducible reference.
 
-Known architecture:
+### Exact-feature reconstruction
 
-1. Core: monthly-updated relative-ranking model.
-2. Meta: uses only already-confirmed recent Core outcomes; previous handoff states a recent-40 style gate.
-3. Attack: enabled only when Meta is ON; intended to catch large winners.
-4. Deep Reversal: fallback lane during Meta OFF periods.
-5. One-business-day same-symbol cooldown.
+A new reconstruction used the same 45 `run.py` features and the same XGBoost model shape (180 trees, depth 3, learning rate .04, min_child_weight 25, reg_lambda 5, reg_alpha .2). Monthly models were trained causally using only outcomes completed before each prediction month.
 
-Important: the exact Short V3 parameter set/thresholds was not committed to PR #13 and no PR comments contain it. Therefore this branch must not claim an exact reproduction yet. Reconstruct and revalidate it from data rather than inventing missing values.
+Core rule selected on 2025 only:
+`r_top10 - 2.0 * r_loss10`.
 
-## V3 Swing (10BD) research findings
+2025 Core evidence:
+- H1 mean about +0.59%, median +0.58%, win 58.0%, -10% 2.5%.
+- H2 mean about +0.94%, median +0.57%, win 58.9%, -10% 0%.
 
-Rejected during continuation:
+Confirmed-outcome Meta selected on 2025 only:
+recent 30 Core outcomes, win >=55%, loss10 <=10%.
 
-- Fixed XGBoost relative-ranking model: regime decay inside 2025H2.
-- Monthly-retrained multi-head classifiers using absolute probability scales: rejected.
-- Monthly-retrained classifiers converted to daily percentiles: rejected at useful sample sizes.
-- Continuous relative-rank XGB regression: rejected.
-- Static Trend T2 factor: strong in 2025H2 but failed in 2026; rejected.
-- Simple breadth regime switch: failed in 2026 when used as a standalone engine.
-- 10BD Meta gate based only on recent 10BD outcomes: too slow to recover after regime changes; rejected.
-- 5BD outcome-only Meta gate: reacts faster but still selected early bad trades and over-stopped recovery; rejected as a standalone gate.
-- Big-winner / +20% classifier Attack variants: good development numbers did not survive the fixed 2026 side; rejected.
-- Six intuitive 10BD Deep Reversal rule families: failed to remain positive across development and validation; rejected.
+Meta evidence:
+- 2025H1 n=48, mean +1.05%, median +0.79%, win 58.3%, -10% 4.2%.
+- 2025H2 n=76, mean +1.14%, median +0.74%, win 63.2%, -10% 0%.
+- frozen 2026 Mar-Aug n=26, mean -1.27%, median -0.46%, win 42.3%, +5% 0%, -10% 3.8%.
 
-Current reproducible baseline candidates in `v3_swing.py`:
+Conclusion: the earlier defensive reconstruction result could not be reproduced under the exact `run.py` feature/model setup. The exact reconstructed recent-outcome Meta is rejected rather than retuned to 2026.
 
-### Swing Core — Low-Vol Momentum
+A 2025-selected contemporaneous market gate `med_ret5 >= -1%` improved the frozen 2026 Core side to roughly n=97 / mean +0.17% / -10% 1.0%, but median stayed negative. This is at most a defensive supporting observation.
 
-Cross-sectional score:
+### Dedicated Short Attack heads
 
-- 25% ret10 percentile
-- 20% ret20 percentile
-- 15% pos60 percentile
-- 20% inverse ATR14% percentile
-- 10% inverse volr20 percentile
-- 10% MA20-gap percentile
+Dedicated monthly +10% and +20% heads were trained causally with the same feature/model shape. Scores were converted to daily cross-sectional percentiles rather than using raw retrained probabilities.
 
-Pre-2026 half-year mean 10BD returns observed during research:
+Best eligible 2025 frontier candidate:
+- score `r_hit20 - r_loss10`
+- `med_ret5 >= -1%`
+- `r_hit10 >= .85`
+- daily best candidate
+- one-selection-day same-symbol cooldown.
 
-- 2024H1: +1.35%
-- 2024H2: +0.06%
-- 2025H1: +0.60%
-- 2025H2: +2.06%
+2025:
+- H1 n=102, mean +1.93%, median 0%, win 47.1%, +10% 8.8%, +20% 2.9%, -10% 0%.
+- H2 n=106, mean +2.10%, median 0%, win 44.3%, +10% 11.3%, +20% 3.8%, -10% 3.8%.
 
-This is defensive and stable pre-2026, but 2026 March-August was only about +0.10%, so it is not strong enough alone.
+Frozen 2026 Mar-Aug:
+- n=97
+- mean +0.06%
+- median -0.97%
+- win 42.3%
+- +10% 9.3%
+- +20% 3.1%
+- -10% 7.2%
+- max +34.0%, min -18.2%.
 
-### Swing Attack baseline — MomCross transition event
+May 2026 alone was about -2.89% mean. This Attack candidate is REJECTED. Do not keep tuning its thresholds/weights to already-seen 2026 data.
 
-Event definition:
+Next Short direction: test genuinely different event families using pre-2026 evidence, such as compression->expansion, capitulation->confirmed reversal, controlled gap/volume shocks, volatility contraction->ignition, or bounded-volatility breakout. If none survives, explicitly accept `Short Attack = none` rather than forcing one.
 
-- previous 5-day return <= 0
-- current 5-day return >= +5%
-- current 1-day return >= +3%
-- 60-day range position >= 0.50
-- volume / 20-day average between 0.80 and 5.00
-- RSI14 <= 82
+## V3 Swing (10BD)
 
-Within event candidates, rank by the defensive Core score and select one per day with one-day same-symbol cooldown.
-
-Pre-2026 half-year mean 10BD returns observed during research:
-
-- 2024H1: +4.59%
-- 2024H2: +0.63%
-- 2025H1: +0.76%
-- 2025H2: +1.78%
-
-2026 March-August contaminated check from the earlier baseline:
-
-- mean: about +0.85%
-- +10% rate: about 19.1%
-- +20% rate: about 9.6%
-- -10% rate: about 20.2%
-
-Interpretation: MomCross retains an Attack-like large-winner profile, but loss risk is too high without a second-stage quality mechanism.
-
-## V3 Swing v2 — current leading 10BD candidate
-
-Implemented in `v3_swing_v2.py`.
+Current reproducible candidate remains `v3_swing_v2.py`.
 
 Architecture:
-
 1. MomCross event filter.
-2. Semiannual event-quality model; every training row's 10BD outcome must end before the prediction half-year begins.
-3. Return-regression prediction and -10% loss prediction are converted to empirical CDF percentiles using that period's training prediction distribution.
-4. `score_R = cdf_return - cdf_loss10`; raw model probabilities are never thresholded.
-5. Breadth Meta: require more than 40% of the TSE candidate universe to be above MA20 at signal close.
-6. Daily best MomCross event, with one-selection-day same-symbol cooldown.
-7. Swing S gate: `score_R >= 0.20`.
+2. Semiannual event-quality model using only fully known prior 10BD outcomes.
+3. Return and loss model outputs normalized with training empirical CDFs.
+4. `score_R = cdf_return - cdf_loss10`.
+5. Breadth Meta >40% above MA20.
+6. Daily best MomCross event with one-selection-day same-symbol cooldown.
+7. Locked Swing S gate `score_R >= 0.20`, selected pre-2026.
 
-The score threshold was checked only with pre-2026 periods using a coarse fixed sweep `[-0.50, -0.25, 0.00, 0.10, 0.20, 0.30]`. A minimum of 30 signals was required in both 2025H1 development and 2025H2 validation. Under the locked robust utility, 0.20 was the best eligible threshold before looking at the fixed-side report.
+Observed next-open -> 10BD:
+- 2025H1 n=33, mean +2.68%, median +2.12%, win 57.6%, +10% 15.2%, -10% 6.1%.
+- 2025H2 n=31, mean +1.95%, median -0.70%, win 45.2%, +10% 16.1%, -10% 6.5%.
+- 2026 Mar-Aug contaminated check n=30, mean +1.42%, median +1.63%, win 60%, +10% 10%, -10% 3.3%, max about +17.5%.
 
-Observed next-open -> 10BD results for the locked Swing S candidate:
+Swing S remains the most credible current defensive 10BD research candidate. Swing A is unaccepted; prior big-winner, Surge, Breakout and Deep-Reversal approaches were unstable.
 
-### 2025H1 development
+## Rejected approaches
 
-- n: 33
-- mean: +2.68%
-- median: +2.12%
-- win rate: 57.6%
-- +10% rate: 15.2%
-- -10% rate: 6.1%
-
-### 2025H2 validation
-
-- n: 31
-- mean: +1.95%
-- median: -0.70%
-- win rate: 45.2%
-- +10% rate: 16.1%
-- -10% rate: 6.5%
-
-### 2026 March-August contaminated fixed-side check
-
-- n: 30
-- mean: +1.42%
-- median: +1.63%
-- win rate: 60.0%
-- +10% rate: 10.0%
-- -10% rate: 3.3%
-- max: about +17.5%
-
-Interpretation: this is not a Stable★6-level large-winner engine. It is currently the most credible defensive 10BD Swing S candidate because its median/win/loss profile survives into 2026 much better than prior Swing models. It should remain research-only until a new untouched forward period exists.
-
-The same Swing S candidates weaken at 20BD and especially 40BD, so this lane should be treated as a 10BD-specific engine rather than a generic long-hold strategy.
+Do not repeat without a materially new hypothesis:
+- Pine / 天底極致 imitation V2.
+- Initial absolute-return XGBoost score dominated by outliers.
+- Multi-head models with absolute probability thresholds after retraining.
+- XGBRanker direct daily ranking.
+- Fixed Breakout-only logic.
+- Static Attack rules based on surge/volume/RSI sweet spots.
+- Long same-symbol cooldowns such as 20 days.
+- Fixed 10BD relative-ranking model.
+- Monthly-retrained Swing heads with absolute probability thresholds.
+- Rank regression Swing.
+- Static trend factor / simple breadth switch as standalone Swing solutions.
+- Simple Low-Vol Core recent-performance Meta for Swing.
+- Deep Reversal Swing fixed-rule variants tested so far.
+- Exact-feature Short recent-outcome Meta reconstructed above.
+- Short whole-universe percentile +20% Attack reconstructed above.
 
 ## Next research direction
 
-- Keep `v3_swing_v2.py` as the current Swing S candidate and do not retune it from 2026.
-- Continue searching for a separate Swing A / Attack lane; do not weaken Swing S merely to capture large winners.
-- Favor a genuinely different event family for Attack rather than increasingly tuning MomCross to the already-seen 2026 winners.
-- Preserve 5BD V3 Short separately; its exact missing parameters still need reconstruction/revalidation before claiming exact reproducibility.
-- Final promotion remains blocked until explicit user Go approval and a genuinely new forward period is available.
+- Search for a distinct event-driven Short Attack family using 2024/2025 where possible; lock before viewing fixed 2026 evidence.
+- If no robust Short Attack survives, record that explicitly instead of overfitting.
+- Keep `v3_swing_v2.py` frozen as current Swing S and do not tune it from 2026.
+- Final promotion remains blocked until explicit user Go approval and preferably a genuinely new forward period.

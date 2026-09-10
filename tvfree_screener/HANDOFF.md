@@ -19,11 +19,14 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 - Last fully successful research pipeline: Actions run `34519284035` on rolling `period=3y`; all Short/Swing/comparison steps passed, runtime about 23m15s, artifact about 33.55 MB.
 - Critical reproducibility flaw found: rolling `period=3y` drops old training rows as time advances.
 - Test-only fixed-start acquisition was added in `bootstrap.py` (`063a73b3...`) and workflow (`458be814...`), defaulting to `2022-01-01 -> current`; no model architecture or threshold changed.
-- Fixed-start verification is currently blocked by GitHub Actions runner startup failure, not a model/test exception. Runs `34525453744`, `34530881770`, `34530963918`, `34531004386`, `34536163042`, `34536183995`, and `34536324032` all failed before any workflow step. Recent jobs expose `steps=[]`, `runner_id=0`, and blank runner name, confirming no hosted runner was assigned.
-- Because jobs are not starting, do not treat these failures as evidence against fixed-start code or the models. Do not weaken model semantics to work around this blocker.
+- Fixed-start verification remains blocked by GitHub Actions hosted-runner startup failure, not a model/test exception. Recent jobs continue to fail before any workflow step with no runner assigned.
 - Commit `797a8578...` added `reproducibility_manifest.py`; commit `418c42b7...` added it to the test workflow.
-- Commit `49ac8088...` fixed an important manifest gap: cache history now records both date/symbol coverage SHA-256 and full historical OHLCV SHA-256 through frozen cutoff `2026-08-31`.
-- Commit `dcf669a502763a934a0f5aa6c226ab0a2d4bd4de` upgraded the manifest to v2 and added a research-contract fingerprint. It hashes the relevant test research code/workflow/requirements plus explicit non-secret `TVFREE_*` inputs. This prevents a code/config change from being mistaken for append-only data drift.
+- Commit `49ac8088...` added full historical OHLCV hashing through frozen cutoff `2026-08-31` in addition to date/symbol coverage hashing.
+- Commit `dcf669a502763a934a0f5aa6c226ab0a2d4bd4de` upgraded the manifest to v2 with a `research_contract_sha256` over relevant test research code/workflow/requirements and explicit non-secret `TVFREE_*` inputs.
+- Commit `0a0f94894d79ec600c7cae1cc87b55d499ccc685` added `reproducibility_selftest.py`, a synthetic no-network self-check for historical revision detection and append-only invariants.
+- Commit `e1227f0e52cd8d736857227d758187120c61dc79` included that self-check in the research-contract fingerprint.
+- Commit `f60df68db3172e3417eb32861cef0d342cc6b595` runs the self-check before the heavy research pipeline once a hosted runner is available.
+- The synthetic self-check was also executed independently in-session and passed: value-only historical OHLCV revision changes only the OHLCV hash, post-cutoff append leaves historical hashes unchanged, and historical output revision changes the output hash.
 
 ## Stable★6 historical reference
 2026 Mar-Aug 5BD: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%.
@@ -65,16 +68,16 @@ Latest fully successful rolling-3y snapshot at unchanged 0.20:
 - Production migration: blocked pending explicit user Go.
 
 ## Completed in latest run
-- Re-read HANDOFF/NEXT_ACTIONS/V3_STATUS and inspected Draft PR #13; it remains Draft, open, unmerged, head branch `test/tvfree-screener-v1`.
-- Re-checked fixed-start Actions. New run `34536324032` at research-contract commit `dcf669a...` again failed before any step with `steps=[]`, `runner_id=0`, blank runner name. Runner allocation remains the blocker.
-- Highest-priority safe task completed: upgraded `reproducibility_manifest.py` to manifest v2 at commit `dcf669a502763a934a0f5aa6c226ab0a2d4bd4de`.
-- Manifest v2 now fingerprints relevant research code, test workflow, requirements, and explicit non-secret `TVFREE_*` inputs as `research_contract_sha256` in addition to coverage/OHLCV/output hashes.
-- Interpretation rule is now explicit: compare append-only historical hashes only when the research-contract hash matches. A contract mismatch means semantics/config changed; an OHLCV-only mismatch can indicate Yahoo history revision.
-- No production files, workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView, or main branch were touched.
+- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, and `V3_STATUS.md` from `test/tvfree-screener-v1` and inspected Draft PR #13.
+- PR #13 remained open, Draft, unmerged, and isolated to `test/tvfree-screener-v1`; observed head before this run's changes was `049212fa6a1afb9a1dfd2fec7aefdd6f05646f4b`.
+- Latest observed workflow run `34536429235` again failed before executable steps; no evidence of a Python/model failure.
+- Added and independently executed the synthetic reproducibility self-check. PASS.
+- No thresholds, features, model parameters, 2026 tuning, production workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView, or `main` were changed.
 
 ## Next concrete task
-1. Re-check Actions runner availability. Do not change model semantics while `runner_id=0 / steps=[]` persists.
-2. Once a fixed-start job actually starts, confirm `Yahoo history mode: fixed start 2022-01-01 -> current` and all Short/Swing/comparison/manifest steps succeed.
-3. Freeze the resulting fixed-start Short/Swing numeric snapshot plus manifest-v2 contract/coverage/OHLCV/output hashes without retuning from 2026.
-4. On a later market-session append, require matching `research_contract_sha256` before interpreting historical hash stability. Then compare cutoff `2026-08-31` coverage, OHLCV, Short Core, Short defensive, and Swing S hashes.
-5. Record fixed-start runtime/artifact size and optimize plumbing only if needed.
+1. Re-check hosted-runner availability and inspect the newest PR-triggered workflow job.
+2. Once a job reaches checkout, require the synthetic reproducibility self-check to pass first.
+3. Confirm `Yahoo history mode: fixed start 2022-01-01 -> current`, then require all Short/Swing/comparison/manifest steps to succeed.
+4. Freeze the resulting fixed-start Short/Swing numeric snapshot plus manifest-v2 contract/coverage/OHLCV/output hashes without retuning from 2026.
+5. On a later market-session append, require matching `research_contract_sha256`, then compare historical hashes through `2026-08-31`.
+6. Record fixed-start runtime/artifact size and optimize plumbing only if necessary.

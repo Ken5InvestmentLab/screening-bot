@@ -106,10 +106,15 @@ def fit_gate(known: pd.DataFrame):
 
 
 def attach_gate(df: pd.DataFrame, models) -> pd.DataFrame:
-    if df.empty:
-        return df.copy()
-    logit, ridge = models
     o = df.copy()
+    if o.empty:
+        # NO TRADE is a normal outcome for a sparse fixed-consensus selector.
+        # Keep the prediction columns present so downstream fixed gates remain causal
+        # and simply emit zero rows instead of crashing.
+        o["regime_p_good"] = pd.Series(index=o.index, dtype=float)
+        o["regime_pred_median"] = pd.Series(index=o.index, dtype=float)
+        return o
+    logit, ridge = models
     X = o[GATE_FEATURES].astype(float)
     o["regime_p_good"] = logit.predict_proba(X)[:, 1]
     o["regime_pred_median"] = ridge.predict(X)

@@ -4,7 +4,7 @@ TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. 
 
 ## 1. Resolve/observe GitHub Actions runner-start blocker
 
-Current fixed-start verification is still blocked before workflow steps begin. Recent PR-triggered runs, including `34536429235`, fail before executable steps and do not demonstrate a Python/model exception.
+Current fixed-start verification is still blocked before workflow steps begin. Latest observed PR-triggered run `34539341326` again failed before executable steps and does not demonstrate a Python/model exception.
 
 Next run:
 - inspect whether the newest job reaches `actions/checkout`,
@@ -12,32 +12,37 @@ Next run:
 - if GitHub exposes a concrete runner/account/quota error, fix only test plumbing if safe and justified,
 - do not alter model semantics to address runner allocation failure.
 
-## 2. Require reproducibility self-check first
+## 2. Require both synthetic safety checks first
 
-Synthetic test-only guard added:
-- `reproducibility_selftest.py`: commit `0a0f94894d79ec600c7cae1cc87b55d499ccc685`
-- included in research contract: `e1227f0e52cd8d736857227d758187120c61dc79`
-- workflow integration before heavy research: `f60df68db3172e3417eb32861cef0d342cc6b595`
+Reproducibility guard:
+- `reproducibility_selftest.py`: `0a0f94894d79ec600c7cae1cc87b55d499ccc685`
+- workflow integration: `f60df68db3172e3417eb32861cef0d342cc6b595`
 
-The self-check was independently executed in-session and passed. It verifies:
-1. historical OHLCV value revision changes the OHLCV hash without changing date/symbol coverage,
-2. rows appended after `2026-08-31` do not change historical coverage/OHLCV/output hashes,
-3. historical model-output revision changes the output hash.
+Causality guard:
+- `causality_selftest.py`: `9543975185767c4985e6afe1cee52a350cc00bc5`
+- included in research-contract hash: `79fb0af83a04c53281ee77c0b5bb36c7122f45e7`
+- workflow integration before heavy research: `de498ea0e4a808ec56f01067606285034a2e264b`
 
-Once Actions starts, this step must pass before treating the run as a valid reproducibility run.
+The causal self-check uses fabricated 2024/2025 data only. It verifies:
+1. historical `run.py` feature values are prefix-invariant when later rows are appended,
+2. 5BD evaluation enters at the next trading session open and exits at the 5BD close,
+3. Short monthly training excludes labels whose `target_end_date` is on/after the prediction month start,
+4. Swing semiannual training excludes labels whose `target10_end` is on/after the prediction period start.
+
+Once Actions starts, both safety checks must pass before treating the run as valid. Do not bypass them to obtain attractive research numbers.
 
 ## 3. Confirm fixed-start history in a successfully started job
 
 Fixed-start acquisition is test-only:
-- `bootstrap.py` commit `063a73b3...`
-- workflow commit `458be814...`
+- `bootstrap.py`: `063a73b3...`
+- workflow: `458be814...`
 - default start: `2022-01-01`
-- normal `run.py` period behavior remains untouched.
+- normal production-adjacent `run.py` period behavior remains untouched outside the bootstrap path.
 
 When a job starts:
 - confirm `Yahoo history mode: fixed start 2022-01-01 -> current`,
 - confirm cache coverage and all Short/Swing/comparison steps succeed,
-- run `reproducibility_manifest.py` and retain `reproducibility_manifest.json`,
+- build and retain `reproducibility_manifest.json`,
 - record total runtime and artifact size.
 
 Do not change any model threshold based on 2026 output.
@@ -60,7 +65,8 @@ Important manifest commits:
 - workflow integration: `418c42b7...`
 - historical OHLCV-value hashing: `49ac8088a8160b6e8f4571374613b5d0343981d0`
 - research-contract fingerprint: `dcf669a502763a934a0f5aa6c226ab0a2d4bd4de`
-- synthetic invariant test: `0a0f94894d79ec600c7cae1cc87b55d499ccc685`
+- reproducibility synthetic invariant test: `0a0f94894d79ec600c7cae1cc87b55d499ccc685`
+- causal safety synthetic test: `9543975185767c4985e6afe1cee52a350cc00bc5`
 
 On a later run after new market data arrives:
 1. require matching `research_contract_sha256`; if it differs, do not interpret the run as a pure append-only comparison,

@@ -4,85 +4,82 @@ TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. 
 
 ## 1. Resolve/observe GitHub Actions runner-start blocker
 
-Current fixed-start verification is still blocked before workflow steps begin. Latest observed PR-triggered run `34539341326` again failed before executable steps and does not demonstrate a Python/model exception.
+Latest observed PR-triggered run `34541092751` still failed before executable steps. Earlier failed jobs exposed no assigned hosted runner (`runner_id=0`, blank runner name, no steps). The latest check-run contains one annotation, but the connected API cannot retrieve the annotation body.
+
+GitHub public/Japan status currently reports Actions operational. Treat the repeated failure as likely repo/account/quota-specific until GitHub exposes stronger evidence. Do not alter model semantics to address runner allocation failure.
 
 Next run:
 - inspect whether the newest job reaches `actions/checkout`,
-- if it still fails pre-step/no-runner, keep production untouched and record the blocker,
-- if GitHub exposes a concrete runner/account/quota error, fix only test plumbing if safe and justified,
-- do not alter model semantics to address runner allocation failure.
+- inspect job/check metadata for a usable account/quota/runner reason,
+- if still pre-step/no-runner, record the blocker and continue only test-safe research,
+- never touch production workflows as a workaround.
 
-## 2. Require both synthetic safety checks first
+## 2. Require synthetic safety checks before heavy research
 
-Reproducibility guard:
-- `reproducibility_selftest.py`: `0a0f94894d79ec600c7cae1cc87b55d499ccc685`
-- workflow integration: `f60df68db3172e3417eb32861cef0d342cc6b595`
+The test workflow must first pass:
+- `reproducibility_selftest.py`: historical-source revision and append-only invariants,
+- `causality_selftest.py`: fabricated 2024/2025-only checks for feature prefix invariance, next-session-open -> 5BD semantics, Short monthly purge, and Swing semiannual purge.
 
-Causality guard:
-- `causality_selftest.py`: `9543975185767c4985e6afe1cee52a350cc00bc5`
-- included in research-contract hash: `79fb0af83a04c53281ee77c0b5bb36c7122f45e7`
-- workflow integration before heavy research: `de498ea0e4a808ec56f01067606285034a2e264b`
+Do not bypass these checks to obtain attractive performance output.
 
-The causal self-check uses fabricated 2024/2025 data only. It verifies:
-1. historical `run.py` feature values are prefix-invariant when later rows are appended,
-2. 5BD evaluation enters at the next trading session open and exits at the 5BD close,
-3. Short monthly training excludes labels whose `target_end_date` is on/after the prediction month start,
-4. Swing semiannual training excludes labels whose `target10_end` is on/after the prediction period start.
+## 3. Confirm fixed-start history
 
-Once Actions starts, both safety checks must pass before treating the run as valid. Do not bypass them to obtain attractive research numbers.
-
-## 3. Confirm fixed-start history in a successfully started job
-
-Fixed-start acquisition is test-only:
-- `bootstrap.py`: `063a73b3...`
-- workflow: `458be814...`
-- default start: `2022-01-01`
-- normal production-adjacent `run.py` period behavior remains untouched outside the bootstrap path.
-
-When a job starts:
-- confirm `Yahoo history mode: fixed start 2022-01-01 -> current`,
+When a hosted runner actually starts:
+- require `Yahoo history mode: fixed start 2022-01-01 -> current`,
 - confirm cache coverage and all Short/Swing/comparison steps succeed,
-- build and retain `reproducibility_manifest.json`,
+- retain `jpx_universe_snapshot.csv`, `reproducibility_manifest.json`, and all model outputs,
 - record total runtime and artifact size.
 
-Do not change any model threshold based on 2026 output.
+No model threshold may be changed based on 2026 output.
 
-## 4. Freeze stable numeric baselines and manifest-v2 contract
+## 4. Freeze numeric baselines and manifest-v3 contract
 
-After fixed-start succeeds:
-- record exact Short Core / defensive lane for 2025H1, 2025H2, contaminated 2026 Mar-Aug,
-- record frozen Swing S at `score_R >= 0.20`,
-- keep Short Attack = none and Swing A = none,
-- keep Stable★6 / old Short rows historical/non-reproducible,
-- record manifest-v2 `research_contract_sha256`, coverage SHA-256, OHLCV SHA-256, and Short/Swing output hashes at cutoff `2026-08-31`.
+After fixed-start succeeds, record:
+- Short Core / defensive lane for 2025H1, 2025H2, and contaminated 2026 Mar-Aug,
+- frozen Swing S at `score_R >= 0.20`,
+- Short Attack = none; Swing A = none,
+- `research_contract_sha256`,
+- JPX universe SHA-256,
+- historical date/symbol coverage SHA-256,
+- historical OHLCV SHA-256,
+- Short/Swing output hashes through cutoff `2026-08-31`.
 
-The prior rolling-3y run `34519284035` is a valid snapshot only, not the durable baseline.
+The old rolling-3y run remains a snapshot only, not the durable baseline.
 
-## 5. Verify append-only reproducibility
+## 5. Address point-in-time universe validity
 
-Important manifest commits:
-- initial manifest: `797a8578...`
-- workflow integration: `418c42b7...`
-- historical OHLCV-value hashing: `49ac8088a8160b6e8f4571374613b5d0343981d0`
-- research-contract fingerprint: `dcf669a502763a934a0f5aa6c226ab0a2d4bd4de`
-- reproducibility synthetic invariant test: `0a0f94894d79ec600c7cae1cc87b55d499ccc685`
-- causal safety synthetic test: `9543975185767c4985e6afe1cee52a350cc00bc5`
+New guardrails:
+- commit `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47`: persist exact run-date JPX universe as `tvfree_screener/out/jpx_universe_snapshot.csv`.
+- commit `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b`: manifest v3 fingerprints the universe and requires matching universe + research-contract hashes before interpreting append-only stability.
+
+Important research limitation:
+- current backtests use the run-date JPX listed universe,
+- listings/delistings can therefore alter historical membership,
+- this creates survivorship/membership bias even with a fixed Yahoo start date,
+- snapshot hashing detects the problem but does not solve point-in-time membership.
+
+Next safe research task while Actions is blocked:
+- investigate a free, reproducible source/method for point-in-time TSE domestic common-stock membership from 2022 onward,
+- prefer official JPX listing/delisting history if reconstructable,
+- reject approaches that silently use only current survivors or introduce future membership knowledge.
+
+## 6. Append-only reproducibility interpretation
 
 On a later run after new market data arrives:
-1. require matching `research_contract_sha256`; if it differs, do not interpret the run as a pure append-only comparison,
-2. compare historical date/symbol coverage hash,
-3. compare historical OHLCV hash,
-4. compare Short Core / defensive / Swing S output hashes,
-5. unchanged hashes support append-only reproducibility,
-6. changed OHLCV with unchanged contract/coverage suggests source-data revision,
-7. changed coverage with unchanged contract suggests listing/calendar/universe drift,
-8. any mismatch requires investigation before accepting a new baseline.
+1. require matching `research_contract_sha256`,
+2. require matching JPX universe SHA-256 for a pure append-only comparison,
+3. compare historical date/symbol coverage hash,
+4. compare historical OHLCV hash,
+5. compare Short Core / defensive / Swing S output hashes,
+6. universe mismatch means membership drift, not pure price append,
+7. matching contract/universe/coverage but changed OHLCV suggests source-history revision,
+8. any unexplained mismatch blocks acceptance of a new baseline.
 
-## 6. Operational-cost validation
+## 7. Operational-cost validation
 
-Prior rolling-3y run `34519284035` took about 23m15s and produced ~33.55 MB under a 90-minute timeout. Fixed-start 2022 will be larger. Measure and optimize only batching/checkpoints/job layout if needed; do not weaken causal/model semantics.
+Prior rolling-3y run `34519284035` took about 23m15s and produced ~33.55 MB under a 90-minute timeout. Measure fixed-start cost only after a runner starts. Optimize batching/checkpoint/plumbing only; do not weaken causal/model semantics.
 
-## 7. Production integration — BLOCKED until user Go
+## 8. Production integration — BLOCKED until user Go
 
 Never automatically:
 - merge PR #13 to main,

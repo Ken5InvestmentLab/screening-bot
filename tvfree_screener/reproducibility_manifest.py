@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Create a test-only reproducibility manifest for fixed-start TV-free research.
 
-The manifest records dataset coverage, historical OHLCV/output fingerprints,
-and a research-code/configuration fingerprint. Later append-only runs can
-compare these values: adding newer sessions should not alter historical slices
-when source history and research semantics are unchanged.
+The manifest records dataset coverage, current JPX universe, historical OHLCV
+and model-output fingerprints, plus a research-code/configuration fingerprint.
+Later append-only runs can compare these values and distinguish source/universe
+drift from semantic changes.
 
 This tool does not write to production systems.
 """
@@ -72,6 +72,30 @@ def canonical_hash(path: Path, cutoff: pd.Timestamp) -> dict:
     }
 
 
+def universe_manifest(path: Path) -> dict:
+    """Fingerprint the exact current-listed JPX universe used by this run."""
+    if not path.exists():
+        return {"exists": False}
+    cols = ["code", "name", "market", "ticker"]
+    df = pd.read_csv(path, dtype=str)
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        return {"exists": True, "rows": int(len(df)), "sha256": None, "missing_columns": missing}
+    z = df[cols].fillna("").sort_values(["code", "ticker"], kind="mergesort").reset_index(drop=True)
+    payload = z.to_csv(index=False, lineterminator="\n").encode("utf-8")
+    return {
+        "exists": True,
+        "rows": int(len(z)),
+        "sha256": sha256_bytes(payload),
+        "policy": "run-date JPX domestic common-stock universe",
+        "warning": (
+            "Historical research currently uses the run-date listed universe. "
+            "Listings/delistings can therefore change historical backtest membership; "
+            "a universe-hash mismatch must not be treated as pure append-only market-data drift."
+        ),
+    }
+
+
 def cache_manifest(path: Path) -> dict:
     if not path.exists():
         return {"exists": False}
@@ -129,17 +153,18 @@ def research_contract_manifest() -> dict:
 
 def main() -> None:
     report = {
-        "manifest_version": 2,
+        "manifest_version": 3,
         "status": "research_only_no_production_writes",
-        "purpose": "append-only reproducibility fingerprint",
+        "purpose": "append-only reproducibility fingerprint with universe-drift detection",
+        "universe": universe_manifest(OUT / "jpx_universe_snapshot.csv"),
         "cache": cache_manifest(OUT / "tse_daily.csv"),
         "outputs": {name: canonical_hash(OUT / name, CUTOFF) for name in FILES},
         "research_contract": research_contract_manifest(),
         "interpretation": (
-            "For append-only verification, first require the research_contract_sha256 to match. "
+            "For append-only verification, first require the research_contract_sha256 and universe sha256 to match. "
             "Then historical date/symbol coverage, OHLCV, and output hashes should remain unchanged. "
-            "A contract mismatch means code/config changed and results must not be compared as a pure append-only test; "
-            "an OHLCV-only mismatch can indicate Yahoo historical revision."
+            "A contract mismatch means code/config changed; a universe mismatch means current-listed membership changed; "
+            "an OHLCV-only mismatch with matching contract/universe/coverage can indicate Yahoo historical revision."
         ),
     }
     OUT.mkdir(parents=True, exist_ok=True)

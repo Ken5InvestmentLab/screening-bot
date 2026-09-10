@@ -55,6 +55,10 @@ def normalize_snapshots(df: pd.DataFrame) -> pd.DataFrame:
     z["available_date"] = pd.to_datetime(z["available_date"], errors="coerce").dt.tz_localize(None).dt.normalize()
     if z["available_date"].isna().any():
         raise ValueError("snapshot contains invalid available_date")
+    if "available_at" in z.columns:
+        z["available_at"] = pd.to_datetime(z["available_at"], errors="coerce")
+        if getattr(z["available_at"].dt, "tz", None) is not None:
+            z["available_at"] = z["available_at"].dt.tz_convert("Asia/Tokyo").dt.tz_localize(None)
     numeric = [
         "shares_outstanding", "remaining_warrant_shares", "equity", "assets",
         "revenue", "operating_income", "net_income", "operating_cf",
@@ -65,8 +69,24 @@ def normalize_snapshots(df: pd.DataFrame) -> pd.DataFrame:
     return z.sort_values(["symbol", "available_date"], kind="mergesort").reset_index(drop=True)
 
 
-def attach_point_in_time_snapshot(signals: pd.DataFrame, snapshots: pd.DataFrame) -> pd.DataFrame:
-    """Attach latest public snapshot at each signal date; future disclosures cannot enter."""
+def attach_point_in_time_snapshot(
+    signals: pd.DataFrame,
+    snapshots: pd.DataFrame,
+    availability_policy: str = "prior_day_only",
+) -> pd.DataFrame:
+    """Attach the latest causally available snapshot.
+
+    prior_day_only is the conservative research default: a filing first
+    published on the signal date is NOT usable for that signal. This avoids
+    same-day timing leakage when a backtest row only carries a calendar date.
+
+    same_day_if_timestamped may be used only when signals contain an explicit
+    decision_at timestamp and snapshots contain available_at. Then an exact
+    timestamp as-of join is used.
+    """
+    if availability_policy not in {"prior_day_only", "same_day_if_timestamped"}:
+        raise ValueError(f"unknown availability_policy: {availability_policy}")
+
     s = signals.copy()
     s["symbol"] = s["symbol"].astype(str)
     s["date"] = pd.to_datetime(s["date"], errors="coerce").dt.tz_localize(None).dt.normalize()
@@ -74,27 +94,51 @@ def attach_point_in_time_snapshot(signals: pd.DataFrame, snapshots: pd.DataFrame
         raise ValueError("signal contains invalid date")
     f = normalize_snapshots(snapshots)
 
+    if availability_policy == "same_day_if_timestamped":
+        if "decision_at" not in s.columns:
+            raise ValueError("same_day_if_timestamped requires signal decision_at")
+        if "available_at" not in f.columns:
+            raise ValueError("same_day_if_timestamped requires snapshot available_at")
+        s["decision_at"] = pd.to_datetime(s["decision_at"], errors="coerce")
+        if s["decision_at"].isna().any():
+            raise ValueError("signal contains invalid decision_at")
+        if f["available_at"].isna().any():
+            raise ValueError("snapshot contains invalid available_at")
+
     parts = []
     for symbol, sg in s.groupby("symbol", sort=False):
-        fg = f[f["symbol"] == symbol]
-        sg = sg.sort_values("date", kind="mergesort")
+        fg = f[f["symbol"] == symbol].copy()
         if fg.empty:
             out = sg.copy()
             for c in [c for c in SNAPSHOT_REQUIRED if c not in ("symbol", "available_date")]:
                 out[c] = np.nan
             out["available_date"] = pd.NaT
-        else:
+            if "available_at" in f.columns:
+                out["available_at"] = pd.NaT
+        elif availability_policy == "prior_day_only":
+            sg = sg.sort_values("date", kind="mergesort")
+            fg["_eligible_from_date"] = fg["available_date"] + pd.Timedelta(days=1)
             out = pd.merge_asof(
                 sg,
-                fg.drop(columns=["symbol"]).sort_values("available_date"),
+                fg.drop(columns=["symbol"]).sort_values("_eligible_from_date"),
                 left_on="date",
-                right_on="available_date",
+                right_on="_eligible_from_date",
+                direction="backward",
+                allow_exact_matches=True,
+            ).drop(columns=["_eligible_from_date"])
+        else:
+            sg = sg.sort_values("decision_at", kind="mergesort")
+            fg = fg.sort_values("available_at", kind="mergesort")
+            out = pd.merge_asof(
+                sg,
+                fg.drop(columns=["symbol"]),
+                left_on="decision_at",
+                right_on="available_at",
                 direction="backward",
                 allow_exact_matches=True,
             )
         parts.append(out)
     return pd.concat(parts, ignore_index=True).sort_values(["date", "symbol"], kind="mergesort")
-
 
 def add_overlay_metrics(df: pd.DataFrame) -> pd.DataFrame:
     z = df.copy()

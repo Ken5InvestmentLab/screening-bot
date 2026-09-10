@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       period:
-        description: Yahoo daily history period
+        description: Yahoo daily history period (fallback when start_date is blank)
         required: true
         default: 3y
+      start_date:
+        description: Fixed Yahoo history start date for reproducible research
+        required: true
+        default: "2022-01-01"
       price_cap:
         description: Previous-close cap; 0 = no cap
         required: true
@@ -30,6 +34,7 @@ permissions:
 
 env:
   TVFREE_PERIOD: ${{ inputs.period || '3y' }}
+  TVFREE_START_DATE: ${{ inputs.start_date || '2022-01-01' }}
   TVFREE_PRICE_CAP: ${{ inputs.price_cap || '1000' }}
   TVFREE_LOSS_PENALTY: ${{ inputs.loss_penalty || '6' }}
   TVFREE_TOPK: ${{ inputs.topk || '1' }}

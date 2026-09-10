@@ -57,10 +57,15 @@ def main() -> int:
         raise RuntimeError("confirmed teacher frame is empty")
 
     confirmed = confirmed.copy()
-    stable_scores = opt.published_stable_score(
-        confirmed,
-        pd.Series(0, index=confirmed.index),
-    )
+    logic = opt.load_current_logic()
+    stable_conditions = list(logic[1]) if isinstance(logic, tuple) else list((logic or {}).get("conditions", []))
+    if not stable_conditions:
+        stable_conditions = ["ema25", "macdpos", "stoch75", "bb80", "pre_down3", "gap_up"]
+    fallback_scores = pd.Series(0, index=confirmed.index, dtype=int)
+    for condition in stable_conditions:
+        if condition in confirmed.columns:
+            fallback_scores = fallback_scores + confirmed[condition].fillna(False).astype(bool).astype(int)
+    stable_scores = opt.published_stable_score(confirmed, fallback_scores)
     confirmed["teacher_stable_score"] = stable_scores.astype(int)
     confirmed["teacher_stable6"] = confirmed["teacher_stable_score"] == 6
     confirmed["teacher_win5"] = pd.to_numeric(confirmed["perf_5bd"], errors="coerce") > 0

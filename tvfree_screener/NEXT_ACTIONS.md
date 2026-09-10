@@ -2,54 +2,60 @@
 
 TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. Keep `HANDOFF.md` synchronized.
 
-## 1. Confirm fixed-start history in GitHub Actions
+## 1. Resolve/observe GitHub Actions runner-start blocker
 
-The previous successful run `34519284035` proved all Short/Swing/comparison steps execute, but exposed a reproducibility flaw: Yahoo `period=3y` is a rolling window, so old training rows disappear over time and unchanged historical backtests drift.
+Current fixed-start verification is blocked before workflow steps begin:
+- run `34525453744`: failed before any step; no usable step logs; rerun requested.
+- run `34530881770`: failed before any step; empty steps list again.
 
-Fixed-start acquisition is now test-only:
+This failure mode is not evidence of a Python/model failure. Do not alter model semantics to address it.
+
+Next run:
+- inspect whether a job now reaches `actions/checkout`,
+- if it still fails pre-step, keep production untouched and record the blocker,
+- if GitHub exposes a concrete runner/account error, fix only test plumbing if safe and justified.
+
+## 2. Confirm fixed-start history in a successfully started job
+
+Fixed-start acquisition is test-only:
 - `bootstrap.py` commit `063a73b3...`
 - workflow commit `458be814...`
 - default start: `2022-01-01`
-- end: current market data
-- normal `run.py` period behavior is left untouched outside the test bootstrap.
+- normal `run.py` period behavior remains untouched.
 
-Next:
-- inspect the triggered Actions run,
-- confirm logs say `Yahoo history mode: fixed start 2022-01-01 -> current`,
-- confirm all steps succeed,
-- inspect Short, Swing S and unified comparison artifacts,
-- record runtime and artifact size.
+When a job starts:
+- confirm `Yahoo history mode: fixed start 2022-01-01 -> current`,
+- confirm cache coverage and all Short/Swing/comparison steps succeed,
+- run `reproducibility_manifest.py` and retain `reproducibility_manifest.json`,
+- record total runtime and artifact size.
 
-Do not change any model threshold based on the new 2026 numbers.
+Do not change any model threshold based on 2026 output.
 
-## 2. Freeze stable numeric baselines
-
-Latest successful rolling-3y snapshot (run `34519284035`) is valid for that data snapshot but not a long-term reproducibility anchor.
+## 3. Freeze stable numeric baselines and hashes
 
 After fixed-start succeeds:
-- record exact Short Core / defensive lane 2025H1, 2025H2, contaminated 2026 Mar-Aug,
+- record exact Short Core / defensive lane for 2025H1, 2025H2, contaminated 2026 Mar-Aug,
 - record frozen Swing S at `score_R >= 0.20`,
 - keep Short Attack = none and Swing A = none,
-- keep Stable★6 / old Short rows historical/non-reproducible.
+- keep Stable★6 / old Short rows historical/non-reproducible,
+- record SHA-256 fingerprints at historical cutoff `2026-08-31` from the manifest.
 
-Important: rolling-3y run 31 says the pre-2026 Swing threshold sweep currently favors 0.10 and `locked_threshold_matches_best_pre2026=false`. Do NOT retune from 0.20. Resolve the data-history contract first.
+The prior rolling-3y run `34519284035` is a valid snapshot only, not the durable baseline.
 
-## 3. Verify append-only reproducibility
+## 4. Verify append-only reproducibility
 
-On a later run after at least one new market session is added, verify historical fixed-start predictions/statistics do not change unexpectedly. New future rows may appear, but old training history must no longer disappear due to a rolling-window boundary.
+`reproducibility_manifest.py` was added at `797a8578...` and workflow integration at `418c42b7...`.
 
-## 4. Operational-cost validation
+On a later run after new market data arrives:
+- compare historical hashes through 2026-08-31,
+- unchanged hashes support append-only reproducibility,
+- changed hashes require investigation for Yahoo history revisions or intentional code/semantic changes before accepting new baselines.
 
-Run 34519284035 took about 23m15s total and produced a ~33.55 MB artifact with 3y input. Fixed-start 2022 will be larger; measure:
-- total Actions runtime,
-- download/backtest runtime,
-- Short reconstruction runtime,
-- artifact/cache size,
-- margin versus 90-minute job limit.
+## 5. Operational-cost validation
 
-Optimize batching/checkpoints/job layout only if needed; do not weaken causal/model semantics.
+Prior rolling-3y run `34519284035` took about 23m15s and produced ~33.55 MB under a 90-minute timeout. Fixed-start 2022 will be larger. Measure and optimize only batching/checkpoints/job layout if needed; do not weaken causal/model semantics.
 
-## 5. Production integration — BLOCKED until user Go
+## 6. Production integration — BLOCKED until user Go
 
 Never automatically:
 - merge PR #13 to main,

@@ -4,9 +4,9 @@ TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. 
 
 ## 1. Resolve/observe GitHub Actions runner-start blocker
 
-Latest observed PR-triggered run `34541092751` still failed before executable steps. Earlier failed jobs exposed no assigned hosted runner (`runner_id=0`, blank runner name, no steps). The latest check-run contains one annotation, but the connected API cannot retrieve the annotation body.
+Latest observed PR-triggered runs `34541092751` and `34541347039` both failed before executable steps. Earlier failed jobs exposed no assigned hosted runner (`runner_id=0`, blank runner name, no steps). The latest check-run contains one annotation, but the connected API cannot retrieve the annotation body.
 
-GitHub public/Japan status currently reports Actions operational. Treat the repeated failure as likely repo/account/quota-specific until GitHub exposes stronger evidence. Do not alter model semantics to address runner allocation failure.
+GitHub public/Japan status reported Actions operational during the latest check. Treat the repeated failure as likely repo/account/quota-specific until GitHub exposes stronger evidence. Do not alter model semantics to address runner allocation failure.
 
 Next run:
 - inspect whether the newest job reaches `actions/checkout`,

@@ -37,6 +37,8 @@ CODE_FILES = [
     "tvfree_screener/point_in_time_universe_selftest.py",
     "tvfree_screener/fundamental_overlay.py",
     "tvfree_screener/fundamental_overlay_selftest.py",
+    "tvfree_screener/edinet_fundamental_collector.py",
+    "tvfree_screener/edinet_fundamental_collector_selftest.py",
     "tvfree_screener/requirements.txt",
     ".github/workflows/tvfree-screener-test.yml",
 ]
@@ -151,7 +153,7 @@ def research_contract_manifest() -> dict:
         "safe_config": config,
         "safe_config_sha256": config_sha,
         "research_contract_sha256": aggregate.hexdigest(),
-        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics and reproducibility/causality/universe/fundamental-overlay checks.",
+        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics and reproducibility/causality/universe/fundamental-overlay/EDINET-ingestion checks.",
     }
 
 

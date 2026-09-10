@@ -31,6 +31,7 @@ CODE_FILES = [
     "tvfree_screener/v3_swing_v2.py",
     "tvfree_screener/unified_comparison.py",
     "tvfree_screener/reproducibility_manifest.py",
+    "tvfree_screener/reproducibility_selftest.py",
     "tvfree_screener/requirements.txt",
     ".github/workflows/tvfree-screener-test.yml",
 ]
@@ -129,7 +130,7 @@ def research_contract_manifest() -> dict:
         "safe_config": config,
         "safe_config_sha256": config_sha,
         "research_contract_sha256": aggregate.hexdigest(),
-        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics.",
+        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics and reproducibility checks.",
     }
 
 

@@ -62,17 +62,16 @@ jobs:
           --price-cap "$TVFREE_PRICE_CAP"
           --loss-penalty "$TVFREE_LOSS_PENALTY"
           --topn 30
-      - name: V3 Swing research backtest from Yahoo cache
+      - name: V3 Swing baseline research
         run: >-
           python tvfree_screener/v3_swing.py
           --cache tvfree_screener/out/tse_daily.csv
           --symbol-batch 200
-      - name: Frozen-model causal 10BD Swing experiment
+      - name: V3 Swing v2 causal quality and Breadth Meta
         run: >-
-          python tvfree_screener/swing_v1_experiment.py
+          python tvfree_screener/v3_swing_v2.py
           --cache tvfree_screener/out/tse_daily.csv
-          --price-cap "$TVFREE_PRICE_CAP"
-          --out tvfree_screener/out/swing_v1_report.json
+          --symbol-batch 200
       - name: Upload test outputs
         if: always()
         uses: actions/upload-artifact@v4

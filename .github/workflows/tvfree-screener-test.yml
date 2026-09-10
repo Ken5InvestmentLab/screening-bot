@@ -55,6 +55,8 @@ jobs:
         run: python tvfree_screener/reproducibility_selftest.py
       - name: Causal prefix and entry synthetic self-check
         run: python tvfree_screener/causality_selftest.py
+      - name: Point-in-time universe synthetic self-check
+        run: python tvfree_screener/point_in_time_universe_selftest.py
       - name: Purged walk-forward backtest
         run: >-
           python tvfree_screener/bootstrap.py

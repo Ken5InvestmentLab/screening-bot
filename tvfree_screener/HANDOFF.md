@@ -22,7 +22,8 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 - Distinct Short event-family experiment added at commit `e8da88d8...`; workflow integration at `fc441e61...`.
 - Reproducible Short reconstruction runner added at commit `5eae93dd...`.
 - Test workflow integration for that runner added at commit `1f0461e2...`.
-- Actions reproducibility/result confirmation for the new Short runner is still pending at this handoff; do not treat implementation alone as a validated result.
+- Unified comparison generator added at commit `5ad2ba88...`; workflow integration at `a1e7ead3...`.
+- Actions reproducibility/result confirmation for the new Short runner is still pending at this handoff. A current run has reached the existing Purged walk-forward step, while the new Short step is still pending. Do not treat implementation alone as validated output.
 
 ## Stable★6 historical reference
 2026 Mar-Aug 5BD: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%.
@@ -78,6 +79,9 @@ Architecture: MomCross -> causal semiannual quality model -> training CDF normal
 2026 Mar-Aug contaminated check: n~30, mean +1.42%, median +1.63%, win 60%, -10% 3.3%, max ~+17.5%.
 Swing A remains unaccepted.
 
+## Unified comparison
+`unified_comparison.py` is now implemented. It consumes only generated Short/Swing report JSON files plus explicitly labelled historical Stable★6/old-Short reference constants. It writes `v3_unified_comparison.csv` and `.json`, leaves unavailable metrics blank, and never upgrades historical reference values into reproducible claims. Workflow execution/result confirmation is pending behind the current research pipeline.
+
 ## Rejected families / methods
 - Pine imitation V2.
 - Absolute-return/outlier-dominated ML.
@@ -91,8 +95,8 @@ Swing A remains unaccepted.
 - Short compression-expansion, capitulation-reversal, gap-volume, lowvol-ignition, and bounded-breakout fixed event variants tested in `short_event_experiment.py`.
 
 ## Next concrete task
-1. Inspect the GitHub Actions run triggered by the Short runner/workflow commits. If successful, capture the Short report/artifact and reconcile it with the prior research notes. If it fails or exceeds runtime, fix only reproducibility/runtime plumbing without weakening causal/model semantics.
-2. Re-run/freeze Swing S in Actions and preserve its report.
-3. Produce unified Short/Swing/Stable★6 historical comparison.
-4. Measure operational runtime/cost.
+1. Inspect the GitHub Actions run(s) triggered by these commits. If Short succeeds, capture/reconcile its report. If it fails or exceeds runtime, fix only reproducibility/checkpoint/runtime plumbing without weakening causal/model semantics.
+2. Confirm/freeze Swing S from the same successful Actions artifact.
+3. Inspect the generated unified comparison artifact and reconcile any missing/inconsistent fields.
+4. Measure operational runtime/cost; the current sequential test workflow may become the main blocker if full research steps approach the 90-minute job limit.
 5. Production migration remains blocked until explicit user Go.

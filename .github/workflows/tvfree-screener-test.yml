@@ -19,9 +19,20 @@ on:
         description: Picks per trading day in walk-forward
         required: true
         default: "1"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "tvfree_screener/**"
+      - ".github/workflows/tvfree-screener-test.yml"
 
 permissions:
   contents: read
+
+env:
+  TVFREE_PERIOD: ${{ inputs.period || '3y' }}
+  TVFREE_PRICE_CAP: ${{ inputs.price_cap || '1000' }}
+  TVFREE_LOSS_PENALTY: ${{ inputs.loss_penalty || '6' }}
+  TVFREE_TOPK: ${{ inputs.topk || '1' }}
 
 jobs:
   test:
@@ -39,17 +50,17 @@ jobs:
         run: >-
           python tvfree_screener/run.py
           --mode backtest
-          --period "${{ inputs.period }}"
-          --price-cap "${{ inputs.price_cap }}"
-          --loss-penalty "${{ inputs.loss_penalty }}"
-          --topk "${{ inputs.topk }}"
+          --period "$TVFREE_PERIOD"
+          --price-cap "$TVFREE_PRICE_CAP"
+          --loss-penalty "$TVFREE_LOSS_PENALTY"
+          --topk "$TVFREE_TOPK"
           --refresh
       - name: Score latest session from same downloaded cache
         run: >-
           python tvfree_screener/run.py
           --mode score
-          --price-cap "${{ inputs.price_cap }}"
-          --loss-penalty "${{ inputs.loss_penalty }}"
+          --price-cap "$TVFREE_PRICE_CAP"
+          --loss-penalty "$TVFREE_LOSS_PENALTY"
           --topn 30
       - name: Upload test outputs
         if: always()

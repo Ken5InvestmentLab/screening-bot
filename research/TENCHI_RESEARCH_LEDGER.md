@@ -43,36 +43,68 @@ V20 run #2以降はsignal-time特徴の明示allow-list方式へ変更し、`win
 - production保存4H上でPine状態機械を再計算するとYahoo合成4Hより高Recall。小OHLC差によるstate transition連鎖が残る。
 - Pine状態は完全再現のためだけでなく、direct outcome modelの特徴量として使う価値がある。
 
-## 現在の正式評価候補
-### V18
-- 350銘柄はMar05-Apr30のwatchlist frequencyだけで固定。
-- Jun/Jul/Aug expanding rolling OOS。
-- 09/13を別々に意思決定し、09時は13時を見ない。
-- absolute probability thresholdを使わず、session内relative rankを使用。
-- weighted rank と multi-head consensusを比較。
-- fixed Pine/Stable baselinesも同じOOS窓で比較。
+## 2026-09-10 completed research results
+### V18 — current development leader
+Leakage-free universe + intraday-causal 09/13 + session-relative multi-head consensus。
+- V13 consensus Jun-Aug combined: n=23, avg +3.97%, median +1.18%, robust avg +3.37%, win 65.2%, +10% rate 34.8%, min -11.5%.
+- Monthly OOS: Jun n=6 avg +5.58%, Jul n=12 avg +2.05%, Aug n=5 avg +6.66%. All three months positive.
+- V13 weighted: n=64 avg +1.18%, win 57.1%.
+- V14 consensus: n=26 avg +1.51%; V14 weighted: n=84 avg +0.44%.
+- V18 Jun-Aug is now a reused development OOS because later designs were informed by these results. It is no longer a pristine final holdout.
 
-### V19
-- V18と同じ非リーク・intraday causal。
-- 09用 / 13用モデルを分離。
-- p_win / p_hit10 / predicted return に加え p_loss10 を明示的に学習。
+### V19 — session-separated tail model
+- V13: n=64 avg +0.85%, median +1.20%, win 62.3%, +10% rate 6.25%.
+- V14: n=64 avg +0.55%, win 52.5%.
+- Lower-tail head as a simple utility penalty did not beat V18 consensus. Keep only the idea of a tail veto.
 
-### V20 run #2+
-- actual Tenchi BOTTOMだけに限定した scoring-only rule miner。
-- **signal-time特徴のexplicit allow-listのみ**でAND探索。outcome-derived列は禁止。
-- Mar-Apr→May validation→Jun test、Mar-May→Jun→Jul、Mar-Jun→Jul→Aug。
-- current Stable★6を同一テスト窓で比較。
+### V20 run #2 — leakage-fixed boolean AND miner
+- Candidate: n=88 avg -2.83%, win 31.8%, +10% rate 1.14%.
+- Current Stable★6 on same Jun-Aug window: n=30 avg -1.32%, win 50.0%.
+- Pure boolean AND re-mining is not the path forward.
 
-### V21
-- Yahoo Pine BOTTOMだけをtrain/valid/test母集団にする。
-- TV actual BOTTOMで学習してYahooへ移すdistribution shiftを解消。
-- runtimeはTradingView不要。
+### V21 — Yahoo Pine-gated outcome model
+- V13: n=23 avg +0.29%, win 45.5%.
+- V14: n=41 avg +1.57%, win 63.2%.
+- Better than Pine fixed rules but below V18 direct consensus. Pine should remain a feature/secondary gate, not the sole candidate gate.
 
-### V22
-- gate候補: Pine / Stable>=4 / Stable>=5 / Pine OR Stable>=4 / Pine OR Stable>=5 / Pine AND Stable>=4。
-- gate/model/policyを前月validationだけで選び、次月testへ固定。
+### V22 — adaptive Pine/Stable candidate gate
+- Combined: n=25 avg +0.10%, win 58.3%, +10% rate 0%.
+- Adaptive gate did not improve the direct route.
 
-## 今後のPromotion条件
+### V23 — Stable★6 regime drift audit
+Actual production BOTTOM snapshots, same six Stable conditions:
+- Mar-May: n=25 avg +16.08%, median +3.8%, win 64.0%, +10% rate 32.0%.
+- Jun-Aug: n=30 avg -1.32%, median +0.1%, win 50.0%, +10% rate 6.67%.
+- Mar-Aug total: n=55 avg +6.59%, win 56.36%, +10% rate 18.18% — reproduces production headline.
+- Monthly Stable★6 avg: Mar +19.56%, Apr +25.66%, May +7.76%, Jun -7.70%, Jul +0.19%, Aug +1.43%.
+Conclusion: headline +6.6% is heavily front-loaded. Recent-regime robustness must be a primary promotion criterion.
+
+### V24 — actual-BOTTOM continuous snapshot ML
+- Candidate Jun-Aug: n=35 avg +0.80%, robust avg +0.19%, win 48.5%, +10% rate 5.71%.
+- Same-window current Stable★6: n=30 avg -1.32%.
+- Continuous production snapshot features improve recent average vs current, but remain far below V18 consensus.
+
+## Current development candidates
+### V25
+- Based on V18 V13 consensus.
+- 4 consensus aggregators: min / geometric / harmonic / spread-adjusted.
+- top1/top2 per session, no 09→13 lookahead.
+- Prior validation is split into first/second halves; unstable one-half-only policies are rejected.
+- Also tests a validation-ranked policy bag/vote ensemble.
+- Jun-Aug is development OOS, not final untouched holdout.
+
+### V26
+- V18-style consensus plus a fourth `p_loss10` head.
+- The lower-tail model is trained on prior data only; low predicted -10% risk must also rank well within the current session.
+- Tail model is used as a veto/consensus head instead of V19-style simple subtraction.
+
+## Current route priority
+1. V25/V26 direct Yahoo-only causal consensus.
+2. If one is clearly best, run full historical monitored universe rather than 350-symbol smoke.
+3. Freeze architecture and begin live forward shadow. New post-freeze data is the next true holdout.
+4. Pine reconstruction remains secondary feature/gate research; exact TV parity is no longer the primary objective.
+
+## Promotion conditions
 1. future label/returnを使わないuniverse selection。
 2. 09時判断が13時データを使わない完全因果。
 3. 複数月rolling OOSで一貫。

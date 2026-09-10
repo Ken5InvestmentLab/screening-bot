@@ -1,0 +1,46 @@
+name: No-TV Tenchi V36 Live Features
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - research/no_tv_v36_live_features.py
+      - .github/workflows/no-tv-v36-live-features.yml
+
+concurrency:
+  group: no-tv-tenchi-v36-live-features
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install numpy==2.3.1 pandas==2.3.0 requests==2.32.4 scikit-learn==1.7.2 openpyxl xlrd
+      - name: Compile
+        run: python -m py_compile research/no_tv_v10_standalone.py research/no_tv_v11_independent_selector.py research/no_tv_v13_official_daily.py research/no_tv_v34_jpx_universe.py research/no_tv_v35_live_prefilter.py research/no_tv_v36_live_features.py
+      - name: Build current 09/13 live features without TradingView
+        run: |
+          python research/no_tv_v36_live_features.py \
+            --decision-date 2026-09-10 \
+            --max-workers 24 \
+            --output-dir research_artifacts/v36_live_features
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: no-tv-tenchi-v36-live-features
+          path: research_artifacts/v36_live_features/
+          if-no-files-found: error
+          retention-days: 14

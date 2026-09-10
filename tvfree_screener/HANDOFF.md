@@ -18,24 +18,28 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 ## Infrastructure / reproducibility
 - TSE domestic common-stock universe: about 3,700 symbols.
 - Last fully successful research pipeline remains Actions run `34519284035` on rolling `period=3y`; runtime about 23m15s, artifact about 33.55 MB.
-- Rolling `period=3y` was rejected as a durable baseline because old training rows disappear as wall-clock time advances.
-- Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`; normal `run.py` period behavior is unchanged outside this test bootstrap.
-- Fixed-start verification is still blocked by GitHub Actions runner allocation. Run `34541092751` failed before executable steps. After the latest test-only changes, run `34541347039` briefly appeared queued but then also completed failure with no executable steps/job logs.
-- Earlier jobs showed `runner_id=0`, blank runner name, and empty/no steps. The latest check-run exposes one annotation, but the connected API cannot retrieve the annotation body.
-- GitHub public/Japan status reported Actions operational during this run, so repeated no-runner failures are more consistent with repo/account/quota-specific infrastructure than a public Actions outage.
+- Rolling `period=3y` is not a durable baseline because old training rows disappear as wall-clock time advances.
+- Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`; normal `run.py` behavior is unchanged outside this bootstrap.
+- Fixed-start verification remains blocked by GitHub Actions hosted-runner allocation. Recent PR-triggered jobs, including `34541399127` and `34541906076`, fail before executable steps; job metadata exposes no usable steps/logs.
 
 ## Safety checks
-- `reproducibility_manifest.py` tracks historical coverage/OHLCV/output SHA-256 fingerprints.
+- `reproducibility_manifest.py` tracks research contract, current universe, historical coverage/OHLCV/output SHA-256 fingerprints.
 - `reproducibility_selftest.py` checks historical-revision detection and post-cutoff append invariance.
 - `causality_selftest.py` uses fabricated 2024/2025 data only and checks feature prefix invariance, next-session-open -> 5BD semantics, Short monthly purge, and Swing semiannual purge.
-- Both self-checks are placed before the heavy research path in the test workflow.
+- `point_in_time_universe_selftest.py` now checks reverse membership reconstruction, including a code-reuse episode and fail-closed same-day collision detection.
+- These are test-only and do not write to production.
 
-## Universe-drift guard
-- Commit `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47` makes the test bootstrap persist the exact current JPX universe used by a run as `tvfree_screener/out/jpx_universe_snapshot.csv`.
-- Commit `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b` upgrades the reproducibility manifest to v3 and fingerprints that universe snapshot.
-- Accepted finding: fixed-start prices alone do NOT guarantee historical reproducibility because the backtest currently starts from the run-date JPX listed universe. Future listings/delistings can change historical membership.
-- Important limitation: the new snapshot/hash detects this drift; it does NOT reconstruct point-in-time historical constituents and therefore does not remove survivorship/membership bias by itself.
-- Append-only comparisons are valid only when both `research_contract_sha256` and universe SHA-256 match.
+## Universe validity
+- Commit `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47` persists the exact run-date JPX universe as `jpx_universe_snapshot.csv`.
+- Commit `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b` added universe hashing to manifest v3.
+- Accepted finding: fixed-start Yahoo prices alone are insufficient because the old research path applies today's listed universe to all historical dates.
+- Official JPX provides year-specific stock new-listing and delisting archives for 2022 onward, so point-in-time TSE membership is reconstructable without silently using only today's survivors.
+- Commit `d2e66370d237edd94880fd9f8a6e740ed9332d5a` adds `point_in_time_universe.py`, a TEST-ONLY prototype that anchors on the current JPX domestic-common snapshot and reverses official JPX listing/delisting events back to a requested historical date.
+- Commit `bea62cb1d1847409e84d1e63b2c08038db435765` adds synthetic membership reconstruction tests.
+- Commit `7632a4cd6aa3c77153413251a6d4cdfdb6973c5b` runs the point-in-time synthetic test before heavy research once a runner is available.
+- Commit `b88b04ebdc7e15c27eb7c6ae0ca34b3ed27a83a8` includes the point-in-time code/tests in the research-contract fingerprint.
+- The prototype is intentionally fail-closed: unknown market classification or same-code same-day listing/delisting collisions block acceptance instead of being guessed.
+- IMPORTANT: the prototype is not yet wired into Short/Swing backtest filtering. First validate the live JPX parser and measure whether Yahoo still supplies OHLCV for delisted symbols.
 
 ## Stable★6 historical reference
 2026 Mar-Aug 5BD historical reference: n=55, mean about +6.59%, median +1.50%, win 56.4%, +10% 18.2%, -10% 10.9%. 10BD mean about +7.64%, win about 57.4%.
@@ -55,24 +59,23 @@ Replace TradingView/Pine watchlist dependency with a free Yahoo-daily-OHLCV TSE 
 - Durable fixed-start numeric baseline is still pending a started Actions job.
 
 ## Completed in latest run
-- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, `V3_STATUS.md`, inspected Draft PR #13, and confirmed it remained open/Draft/unmerged on `test/tvfree-screener-v1` before changes.
-- Re-checked Actions: run `34541092751` failed before executable steps. New run `34541347039` also ended in the same pre-step failure mode.
-- Checked GitHub public/Japan status; Actions was operational, reducing the likelihood of a global outage.
-- Identified current-listed-universe drift as a separate reproducibility risk.
-- Added exact JPX universe snapshot artifact at commit `9e1bb3473ebbb2ccb3f768e7bf144b9969927f47`.
-- Added universe SHA-256 and manifest-v3 interpretation rules at commit `d50cb1eca97734acb4f4d5ed2f1ab97acd6c267b`.
-- Updated this handoff after the observed workflow result.
-- Accepted: detect and block interpretation when run-date universe changes.
-- Rejected: treating a fixed Yahoo start date alone as sufficient proof of historical reproducibility.
-- No thresholds, features, model parameters, production workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView tooling, watchlist tooling, or `main` were changed.
+- Re-read `HANDOFF.md`, `NEXT_ACTIONS.md`, and `V3_STATUS.md`; inspected Draft PR #13 and confirmed it remains open, Draft, unmerged, head `test/tvfree-screener-v1`.
+- Re-checked Actions. Run `34541399127` and later run `34541906076` both failed before executable steps; no Python/model failure is demonstrated.
+- Researched official JPX archives. Confirmed year-specific stock new-listing and delisting pages exist for 2022, 2023, 2024, 2025, plus current 2026 pages.
+- Implemented TEST-ONLY point-in-time membership reconstruction prototype at `d2e66370...`.
+- Added synthetic self-check at `bea62cb1...`, workflow safety-check integration at `7632a4cd...`, and research-contract coverage at `b88b04eb...`.
+- Accepted: reverse official JPX membership events is causally defensible in principle and avoids silently applying today's survivor set to every historical date.
+- Not yet accepted for model evaluation: live JPX parsing and delisted-symbol Yahoo coverage have not been validated on a running hosted runner.
+- No thresholds, features, model parameters, production workflows, Discord/Spreadsheet writes, Stable★6/Sniper/Mega, TradingView/watchlist tooling, or `main` were changed.
 
 ## Blockers
-1. GitHub hosted runner is not being assigned, preventing execution of the fixed-start pipeline and self-checks in Actions.
-2. Point-in-time historical JPX membership is not yet reconstructed; current research backtests use the run-date listed universe, so survivorship/membership bias remains a documented research limitation.
+1. GitHub hosted runner is not being assigned, preventing live fixed-start and parser validation.
+2. Yahoo historical coverage for JPX-delisted codes is unknown; membership reconstruction alone cannot recover prices Yahoo no longer serves.
 
 ## Next concrete task
-1. Re-check runner allocation and inspect any newly exposed annotation/account/quota signal without changing model semantics.
-2. If runner starts, require reproducibility and causality self-check PASS first, then fixed `2022-01-01 -> current`, Short/Swing/comparison/manifest-v3 success.
-3. Freeze Short/Swing numeric baselines plus research-contract, universe, coverage, OHLCV, and output hashes without tuning from 2026.
-4. While Actions remains blocked, research a free, causally defensible way to reconstruct point-in-time TSE common-stock membership for 2022+; reject any method that silently uses only today's survivors.
-5. Production integration remains blocked until explicit user Go.
+1. Re-check runner allocation. If it starts, require all three synthetic safety checks to pass first.
+2. Run `point_in_time_universe.py` against the live JPX current snapshot and require zero unknown-market rows and zero same-day code collisions before using it for backtests.
+3. Measure Yahoo OHLCV availability for reconstructed delisted members. Missing historical prices must be reported, not silently dropped.
+4. Only if 2-3 pass, add point-in-time membership filtering to a separate test comparison and compare pre-2026 results without tuning thresholds.
+5. Then run fixed `2022-01-01 -> current` Short/Swing/comparison/manifest and freeze numeric baselines/hashes.
+6. Production integration remains blocked until explicit user Go.

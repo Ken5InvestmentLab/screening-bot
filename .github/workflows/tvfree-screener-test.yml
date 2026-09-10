@@ -35,6 +35,11 @@ on:
 permissions:
   contents: read
 
+# Never allow duplicate heavy research runs to burn private Actions quota.
+concurrency:
+  group: tvfree-heavy-test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 env:
   TVFREE_PERIOD: ${{ inputs.period || '3y' }}
   TVFREE_START_DATE: ${{ inputs.start_date || '2022-01-01' }}
@@ -112,4 +117,4 @@ jobs:
           name: tvfree-screener-test-${{ github.run_id }}
           path: tvfree_screener/out/
           if-no-files-found: warn
-          retention-days: 14
+          retention-days: 3

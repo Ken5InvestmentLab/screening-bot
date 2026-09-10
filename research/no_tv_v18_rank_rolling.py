@@ -52,6 +52,22 @@ def evaluate(data,fold,variant):
     }
 
 
+def fixed_baselines(data):
+    tests=[]
+    for fold in FOLDS:
+        x=data[data.date.between(fold["test_start"],fold["test_end"]) & data.perf_5bd.notna()].copy()
+        x["fold"]=fold["id"]; tests.append(x)
+    t=pd.concat(tests,ignore_index=True)
+    rules={
+        "pine_bottom_all":t.pine_bottom>0,
+        "pine_stable_ge4":(t.pine_bottom>0)&(t.stable_score>=4),
+        "pine_stable_ge5":(t.pine_bottom>0)&(t.stable_score>=5),
+        "pine_stable_6":(t.pine_bottom>0)&(t.stable_score==6),
+        "actual_bottom_stable6_eval_only":(t.label==1)&(t.stable_score==6),
+    }
+    return {k:risk.risk_stats(t[m].copy()) for k,m in rules.items()}
+
+
 def main():
     ap=argparse.ArgumentParser()
     ap.add_argument("--teacher",required=True)
@@ -71,14 +87,15 @@ def main():
             r=evaluate(data,fold,variant)
             parts[variant].append(r.pop("selected")); rows.append(r)
     combined={k:risk.risk_stats(pd.concat(v,ignore_index=True)) for k,v in parts.items()}
+    baselines=fixed_baselines(data)
     result={
         "scope":"Leakage-free rank-only rolling smoke; no absolute score threshold; 350 symbols selected only from Mar05-Apr30 watchlist frequency",
         "sampling":{"cutoff":SAMPLE_CUTOFF,"max_symbols":a.max_symbols,"symbols":codes},
         "teacher_rows":len(teacher),"watchlists":wstat,"yahoo":yahoo,
-        "folds":rows,"combined_test":combined,"current_champion":base.CHAMPION,
+        "folds":rows,"combined_test":combined,"fixed_baselines":baselines,"current_champion":base.CHAMPION,
     }
     out=Path(a.output_dir); out.mkdir(parents=True,exist_ok=True)
     (out/"v18_rank_rolling.json").write_text(json.dumps(result,ensure_ascii=False,indent=2,default=str),encoding="utf-8")
-    print(json.dumps({"folds":rows,"combined_test":combined},ensure_ascii=False,indent=2,default=str))
+    print(json.dumps({"folds":rows,"combined_test":combined,"fixed_baselines":baselines},ensure_ascii=False,indent=2,default=str))
 
 if __name__=="__main__":main()

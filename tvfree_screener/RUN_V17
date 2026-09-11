@@ -1,3 +1,4 @@
-trigger: 2026-09-11 v17-lossaware-v1
-selection_source: 2023-2024 only
-rule: V16 + ma20_gap<=0.50
+trigger: 2026-09-11 v17-prime-v2
+watch: frozen V16
+prime_selection: 2022H2-2024H2 only
+2025_2026: reporting only

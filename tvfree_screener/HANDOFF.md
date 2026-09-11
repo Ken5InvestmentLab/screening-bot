@@ -63,7 +63,7 @@ Swing S frozen architecture: MomCross -> causal semiannual quality model -> trai
 - 2026 Mar-Aug reporting-only: n=27, mean +0.017%, median 0%, win 48.1%, +10% 7.41%, -10% 7.41%.
 Neither frozen V3 lane is accepted as a Stable★6 replacement.
 
-### Historical +5.42% Short reference
+### Historical +5.42% Short reference and recovery status
 The old non-reproducible 2026 Mar-Aug reference remains:
 - n=29
 - mean +5.42%
@@ -71,7 +71,18 @@ The old non-reproducible 2026 Mar-Aug reference remains:
 - win 65.5%
 - +10% rate 13.8%
 - -10% rate 6.9%
-Exact old thresholds were never committed. Do not claim exact reproduction or tune directly to 2026. A separate TEST-only targeted legacy-recovery workflow was added at commit `28ab0492ab1dee59e255b459f8543278cad1a9af`; inspect its pre-2026-driven result when complete.
+
+Exact old thresholds were never committed. A targeted TEST-only recovery workflow was added at `28ab0492ab1dee59e255b459f8543278cad1a9af` and run successfully as `34558192262`; artifact `10183354156`.
+
+The recovery preserved the known architecture and did not tune to 2026:
+- relative-ranking Core;
+- recent-40 confirmed-outcome Meta with four fixed rules (`r40_win50`, `r40_win55`, `r40_mean0_win50`, `r40_mean0_win55`);
+- fixed Attack families `lowvol_ignition_A/B` and `bounded_breakout_A/B`;
+- fixed Deep Reversal families `capitulation_reversal_A/B`;
+- one-business-day same-symbol cooldown;
+- 2024 development first, only qualifying candidates allowed to open 2025, and 2026 only after validation.
+
+Result: **all fixed combinations failed the 2024 development utility gate**. The artifact records `development_ranked=[]`, `validation_opened=[]`, `locked_candidate=null`. Therefore 2025 and 2026 were deliberately not opened. Reject this approximate recovery family; do not tune it to the known 2026 headline. The historical +5.42% result remains unrecovered, not disproved. Future recovery must come from exact archived parameters or materially different hypotheses selected from pre-2026 evidence.
 
 ## Run #114 independent technical findings
 These results are secondary until survivorship-aware delisted prices are available.
@@ -146,11 +157,11 @@ Live EDINET remains blocked on `EDINET_API_KEY`; key stays env/secret-only. PER/
 2. Stooq live coverage cannot be concluded until its deterministic pre-2026 probe actually runs with a manually obtained `STOOQ_APIKEY`.
 3. Live EDINET validation requires `EDINET_API_KEY`.
 4. Existing fixed-start Short/Swing performance remains materially below Stable★6 reference.
-5. The legacy +5.42% V3 exact parameter set is still unrecovered; targeted TEST-only recovery is active, but 2026 must not be used for fitting.
+5. The first causal approximation of the legacy +5.42% architecture failed 2024 development; exact old parameters remain unrecovered.
 
 ## Next concrete tasks
-1. Inspect the targeted legacy V3 recovery workflow started from commit `28ab0492ab1dee59e255b459f8543278cad1a9af`; accept/reject based on pre-2026 evidence, never by forcing the 2026 headline result.
-2. Confirm manifest-v4/fixed-baseline guard on a non-cancelled TEST run.
-3. When `STOOQ_APIKEY` is available, run the deterministic 24-event pre-2026 coverage probe and expand to all 460 only if evidence supports it.
-4. If Stooq stays blocked/unusable, add a TEST-only J-Quants Free overlapping-window coverage/sanity probe without pretending it solves 2022-2023 backfill.
+1. Confirm manifest-v4/fixed-baseline guard on a non-cancelled TEST run.
+2. When `STOOQ_APIKEY` is available, run the deterministic 24-event pre-2026 coverage probe and expand to all 460 only if evidence supports it.
+3. If Stooq stays blocked/unusable, add a TEST-only J-Quants Free overlapping-window coverage/sanity probe without pretending it solves 2022-2023 backfill.
+4. For legacy +5.42%, search for exact archived parameters or test materially different pre-2026-derived families; never rescue the rejected recovery family by fitting to 2026.
 5. Production integration remains blocked until explicit user Go.

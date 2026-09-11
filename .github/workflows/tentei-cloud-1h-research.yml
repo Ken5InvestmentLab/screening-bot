@@ -11,6 +11,11 @@ on:
         description: End date (JST, YYYY-MM-DD)
         required: true
         default: '2026-09-10'
+  push:
+    branches:
+      - research/tentei-cloud-mtf
+    paths:
+      - 'research/tentei_cloud/RUN_1H'
 
 permissions:
   contents: read
@@ -37,8 +42,8 @@ jobs:
         run: |
           python research/tentei_cloud/fetch_1h.py \
             --symbols research/tentei_cloud/symbols_4h_universe.txt \
-            --start '${{ inputs.start }}' \
-            --end '${{ inputs.end }}' \
+            --start '${{ inputs.start || '2026-02-01' }}' \
+            --end '${{ inputs.end || '2026-09-10' }}' \
             --shard-index '${{ matrix.shard }}' \
             --shard-count 8 \
             --output "out/ohlcv_1h_shard_${{ matrix.shard }}.csv" \

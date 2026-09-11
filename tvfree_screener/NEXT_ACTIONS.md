@@ -117,3 +117,13 @@ Next tail hypothesis: restore the full 45 `run.py` features and test a pure posi
 
 ## 12. Old rolling-3y cache forensics — CACHE ALONE REJECTED AS EXPLANATION
 Run `34560223482` / artifact `10184124215` re-ran the current exact-feature reconstruction on the actual early rolling-3y cache. 2026 Mar-Aug Core was -0.56% and defensive -0.11%. Therefore do not spend more time blaming the fixed-start cache for loss of the historical +5.42% edge; prioritize unrecovered logic and materially different tail-ranking hypotheses.
+
+
+## 13. V7 full-feature pure relative-tail — DETECTOR RETAINED, RAW LANE REJECTED
+Run `34560510106` / artifact `10184212775` restored all 45 `run.py` features and monthly relative extreme-winner labels.
+
+The raw lane failed 2024 because large-loss false positives remained excessive, but the tail detector itself produced a new useful finding:
+- full_top025_q999: n=192, +20% 15.1%, +50% 5.73%, +100% 1.04%, max +173.6%, but -10% 40.6%.
+- full_top1_q999: +20% 14.5%, +50% 7.53%, max +105.4%, but -10% 40.3%.
+
+2025/2026 were not opened. Retain the V7 Tail detector as a component. Next safe task: V8 downstream Quality/Meta filtering of V7 tail candidates using only causal win/loss heads, contemporaneous market state, and confirmed prior outcomes; choose on 2024, validate on 2025, open 2026 only after pass.

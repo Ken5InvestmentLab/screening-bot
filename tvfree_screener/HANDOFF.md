@@ -90,6 +90,7 @@ Post-#98 TEST-only fixes now on the branch:
 - `edaf96d05455352c27aa657f3f7d410e2fcfac18`: synchronize next-action documentation.
 - `b3be1f8fea2609e367b646c130d19219de396e79`: factor the required-event-year acceptance check into an explicit fail-closed helper and state `missing_event_years=[]` in the report acceptance rule.
 - `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`: add synthetic regression proving a missing archive year rejects reconstruction while complete 2022-2025 coverage passes.
+- `7518dc0af0e0027caa452b5221230e7faeb6c6c1`: TEST-workflow infrastructure only; exclude `tvfree_screener/**/*.md` from the heavy PR trigger so mandatory research handoff updates do not cancel/restart live validation.
 
 These fixes do not change event thresholds, score weights, model hyperparameters, 2026 selection rules, production code, or production writes.
 
@@ -104,11 +105,11 @@ A future TEST run must show all of the following before reconstructed membership
 Do not weaken this gate to obtain a green run. Never call results survivorship-bias-free until official delisting events are reconstructed and Yahoo usable/partial/missing historical-price coverage is measured.
 
 ## Current blockers
-1. JPX live parser/acceptance gate has not yet produced a completed revalidation. Run #105 (`34553838589`) was still pending when superseded by the new test-only commits; run #107 (`34554032750`, head `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`) is currently pending.
+1. JPX live parser/acceptance gate has not yet produced a completed post-fix revalidation. Runs #105-#108 were superseded/cancelled by subsequent branch commits; run #109 (`34554063655`) began on the prior docs head, and run #110 (`34554098082`, head `7518dc0af0e0027caa452b5221230e7faeb6c6c1`) is the current-head revalidation.
 2. Yahoo delisted-symbol price coverage remains pending until the JPX gate passes.
 3. First independent 2024 extension and first blind V4 performance result remain pending because #98 stopped upstream.
 4. Live EDINET validation requires `EDINET_API_KEY`.
 5. Existing fixed-start Short/Swing performance remains materially below Stable★6 historical reference.
 
 ## Next concrete task
-Inspect TEST run #107 (`34554032750`) when it completes and read the JPX acceptance report first. If and only if it passes, inspect Yahoo delisted-price coverage, independent 2024 extension, and the first blind V4 report. Reject weak/unstable findings; never retune from 2026. Production integration remains blocked until explicit user Go.
+Inspect TEST run #110 (`34554098082`) and read the JPX acceptance report first. If and only if it passes, inspect Yahoo delisted-price coverage, independent 2024 extension, and the first blind V4 report. Reject weak/unstable findings; never retune from 2026. Production integration remains blocked until explicit user Go.

@@ -19,8 +19,9 @@ Post-#98 TEST-only fixes now on the branch:
 - `1404952a30437a2651d80a29c61499defbd5da5f`: synthetic regressions for deterministic 2022+ archive generation and UTF-8/CP932 decoding.
 - `b3be1f8fea2609e367b646c130d19219de396e79`: explicit/testable missing-event-year fail-closed helper and acceptance-rule text.
 - `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`: regression for missing-year rejection and complete-year acceptance.
+- `7518dc0af0e0027caa452b5221230e7faeb6c6c1`: TEST CI ignores Markdown-only research documentation updates, preventing mandatory handoff writes from cancelling the heavy validation run.
 
-Current revalidation: run #107 (`34554032750`, head `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`) is pending. Treat this as an infrastructure/execution blocker only; do not infer a JPX pass/fail until the job produces the report.
+Current-head revalidation is run #110 (`34554098082`, head `7518dc0af0e0027caa452b5221230e7faeb6c6c1`). Runs #105-#108 were superseded/cancelled by later commits. Do not infer a JPX pass/fail until #110 produces the acceptance report.
 
 Next run must verify all of the following before any survivorship-bias claim:
 - `jpx_point_in_time_report.json` reports `valid_for_membership_reconstruction=true`;

@@ -103,3 +103,7 @@ Run `34560020106` / artifact `10183988857` tested a fully staged, fixed-run-80, 
 - blend_q9995: n=34, mean -0.80%, +20% 0%.
 
 Reject this absolute-tail classifier family. Next safe tail task: test a **cross-sectional relative extreme-winner ranking** hypothesis using only pre-2026 selection, because the historical +5.42% architecture was explicitly relative-ranking and absolute tail probabilities appear poorly calibrated across regimes.
+
+
+## 10. Legacy event-quality rank recovery — REJECTED
+Run `34560020086` / artifact `10184003302` passed technically but all fixed event-quality/Meta combinations failed 2024. No 2025/2026 opening occurred. Do not retune this family. Current next tail path is the broader V6 cross-sectional extreme-winner model (future daily top 1% / top 0.25%) with staged 2024 -> 2025 -> 2026 evaluation.

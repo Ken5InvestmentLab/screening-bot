@@ -1,0 +1,3 @@
+trigger: 2026-09-11 preserve-stable-teacher-v1
+source_run: 34456623439
+retention: 90 days

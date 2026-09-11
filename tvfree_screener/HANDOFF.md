@@ -165,3 +165,25 @@ Live EDINET remains blocked on `EDINET_API_KEY`; key stays env/secret-only. PER/
 3. If Stooq stays blocked/unusable, add a TEST-only J-Quants Free overlapping-window coverage/sanity probe without pretending it solves 2022-2023 backfill.
 4. For legacy +5.42%, search for exact archived parameters or test materially different pre-2026-derived families; never rescue the rejected recovery family by fitting to 2026.
 5. Production integration remains blocked until explicit user Go.
+
+
+## V5 right-tail winner research — DIRECT ABSOLUTE-TAIL MODEL REJECTED
+User explicitly accepts a positively skewed model where a small number of very large winners lift the mean, provided the same pattern is detectable prospectively. Therefore large winners are no longer penalized merely for making the mean tail-driven.
+
+TEST-only implementation:
+- `508e9200413b2fe98c36a2aefaba9d50d27daffa`: causal +20%/+50%/-10% right-tail model.
+- `560debea19e9251469ee8306dda4190ab54b40b8`: calibrate final tail gates only from causal training-score distributions.
+- `ca169e64822cd4afa0f1fd2a3fb0807d7676c1fc`: enforce staged blind opening: score 2024 only -> top2 -> score 2025 only if qualified -> score 2026 only after validation pass.
+- isolated workflow: `.github/workflows/tvfree-tail-winner-test.yml`.
+
+Authoritative run: `34560020106`, artifact `10183988857`, head `ca169e64822cd4afa0f1fd2a3fb0807d7676c1fc`.
+Input: retained fixed run-80 `tse_daily.csv`. Opportunity rows: 477,031; audit label counts across full available rows: +20% 6,874, +50% 1,037, -10% 18,390.
+
+All four predeclared variants failed 2024 development:
+- `tail20_q999`: 2024 pooled n=70, mean -0.93%, win 31.4%, +20% 0%.
+- `tail50_q999`: n=71, mean -0.44%, win 38.0%, +20% 0%.
+- `blend_q999`: n=70, mean -0.10%, win 27.1%, +20% 1.43%; one +48.3% winner existed but 2024H2 mean was negative.
+- `blend_q9995`: n=34, mean -0.80%, win 23.5%, +20% 0%.
+Thus `development_ranked=[]`, `validation_opened=[]`, `locked_candidate=null`; 2025 and 2026 were not scored by the final staged implementation.
+
+Decision: reject **absolute +20/+50 classification with extreme training-CDF gates** as this V5 family. This does NOT reject positive-skew/tail capture as a goal. Next tail hypothesis should be materially different and should restore the historical V3 clue of cross-sectional/relative ranking, e.g. daily relative extreme-winner labels rather than absolute +20/+50 labels.

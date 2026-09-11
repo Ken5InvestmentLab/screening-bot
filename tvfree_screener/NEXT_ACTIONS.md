@@ -12,53 +12,85 @@ Key result:
 - Swing S old rolling advantage did not reproduce: 2025H1 -0.14%, 2025H2 +2.68% (10BD).
 - therefore neither lane is accepted as a Stable★6 replacement yet.
 
-## 2. Missing-data safety — implemented, keep enforced
-The fundamental overlay now requires explicit coverage flags:
+## 2. Inspect current live TEST run #97 before changing workflow
+Actions run `34549403943` (run #97), head `80a42fc9d98796e1e0f17becaff5df825a71542f`, is currently in progress.
+
+Already PASS in that run:
+- reproducibility self-test,
+- causality self-test,
+- point-in-time universe self-test,
+- delisted Yahoo coverage self-test,
+- fundamental/dilution overlay self-test,
+- EDINET collector self-test,
+- EDINET dilution-audit self-test.
+
+At last inspection it was executing the fixed-start `Purged walk-forward backtest`. Do not cancel or supersede this run. When it completes, inspect:
+- `jpx_point_in_time_report.json`,
+- `jpx_membership_events.csv`,
+- `yahoo_delisted_price_coverage_report.json`,
+- `yahoo_delisted_price_coverage.csv`,
+- independent 2024 extension outputs,
+- reproducibility manifest.
+
+Require zero unknown-market rows and zero same-day listing/delisting collisions before using reconstructed membership. Quarantine code-reuse identity ambiguity rather than joining it to Yahoo ticker history.
+
+## 3. Missing-data safety — implemented, keep enforced
+The fundamental overlay requires explicit coverage flags:
 - `dilution_known`,
 - `financial_known`,
 - `combined_known`.
 
 Unknown/invalid observations cannot pass filtered lanes. Every filter has a coverage-matched known baseline, and risk count/exclusion stays nullable when required facts are missing.
 
-Current CI run #90 has already passed the synthetic fundamental/dilution self-test. Never revert to `missing = healthy` semantics.
+Never revert to `missing = healthy` semantics.
 
-## 3. EDINET dilution audit — evidence only
-`edinet_dilution_audit.py` now extracts evidence from exact known dilution-related EDINET text blocks and records share-count candidates, source excerpts/hashes, and moving-strike/MS evidence.
+## 4. EDINET dilution audit — evidence only
+`edinet_dilution_audit.py` extracts evidence from exact known dilution-related EDINET text blocks and records share-count candidates, source excerpts/hashes, and moving-strike/MS evidence.
 
 Hard rule:
 - every extracted number remains `accepted_remaining_potential_shares=False` until real historical filing table semantics are validated;
 - do not use balance-sheet monetary `SubscriptionRightsToShares` as residual share count;
 - do not infer financing/MS classification without source evidence.
 
-The collector now emits `edinet_dilution_evidence.csv` in addition to financial snapshots. Current CI run #90 has passed both collector and dilution-audit synthetic tests.
+The collector emits `edinet_dilution_evidence.csv` in addition to financial snapshots.
 
-## 4. Live-validate JPX point-in-time universe
-Run #90 includes live parsing of official JPX listing/delisting archives after the fixed-history cache is built.
+## 5. Correct V4 stage-boundary cooldown before first performance run
+`v4_event_quality_research.py` passed static causal review for its blind research order:
+1. expose 2024 development metrics for all four predeclared variants,
+2. lock exactly one variant from 2024 only,
+3. evaluate only that locked variant on 2025,
+4. compute 2026 only if the locked variant passes the predeclared 2025 gate.
 
-When it finishes:
-- inspect `jpx_point_in_time_report.json`,
-- require zero unknown-market rows and zero same-day collisions before using reconstructed membership,
-- identify temporal code reuse separately; code identity reuse must be quarantined rather than silently joined to Yahoo ticker history.
+Its half-year training purge is causal (`target5_end < prediction_period_start`). Existing `v4_event_quality_selftest.py` checks purge and ordinary cooldown semantics.
 
-## 5. Measure Yahoo delisted-symbol coverage
-Build a TEST-only coverage probe from official delisting events:
+However `select_variant()` is invoked independently for development, validation, and reporting stages, resetting same-symbol cooldown at the 2024/2025 and 2025/2026 boundaries. This is an execution-rule inconsistency, not future leakage.
+
+Before first V4 performance interpretation:
+- preserve cooldown state across stage boundaries, or select the locked variant over concatenated chronological scored stages after the lock is established;
+- add a synthetic test specifically spanning a half-year/year boundary;
+- change no event thresholds, variant score weights, gates, or validation thresholds based on 2025/2026 outcomes.
+
+After the active run #97 finishes, add the V4 self-test to the TEST workflow and only then add the V4 research step. Do not expose 2025 metrics for variants rejected by the 2024 lock.
+
+## 6. Measure Yahoo delisted-symbol coverage
+Use the TEST-only coverage probe from official delisting events:
 - candidate universe = TSE domestic delistings since 2022,
 - quarantine codes reused by a later issuer/listing episode,
 - download historical daily data for remaining delisted tickers,
 - record first/last Yahoo date, rows, whether prices exist near the official delisting date,
 - report missing/partial/usable counts.
 
-Do not claim survivorship-bias-free results until this coverage is measured.
+Do not claim survivorship-bias-free results until this coverage is measured and inspected.
 
-## 6. Extend frozen technical reporting to 2024
+## 7. Extend frozen technical reporting to 2024
 Without changing thresholds/features/model hyperparameters or looking at 2026 for selection:
-- add 2024H1 and 2024H2 prediction/report periods to Short Core and Swing S where causal training volume is sufficient,
-- verify 2025 outputs remain unchanged under the same data contract,
+- use the independent 2024 extension to report 2024H1 and 2024H2 where causal training volume is sufficient,
+- verify 2025 frozen outputs remain unchanged,
 - compare 2024H1/H2 + 2025H1/H2 as four pre-2026 regimes.
 
 If a period lacks enough causal training data, report it as unavailable rather than weakening the minimum-training rule.
 
-## 7. Live EDINET validation and overlay comparison
+## 8. Live EDINET validation and overlay comparison
 Once `EDINET_API_KEY` is available:
 - start with a small 2024/2025 sample,
 - validate exact accounting element IDs/contexts and dilution text-block evidence,
@@ -68,7 +100,7 @@ Once `EDINET_API_KEY` is available:
 
 Reject one-regime gains, severe sample shrinkage, missing-data artifacts, or unstable extraction.
 
-## 8. Production integration — BLOCKED until user Go
+## 9. Production integration — BLOCKED until user Go
 Never automatically:
 - merge PR #13 to `main`,
 - change production screening-bot workflows,

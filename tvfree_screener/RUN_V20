@@ -1,0 +1,3 @@
+trigger: 2026-09-11 v20-consensus-prime-v1
+selection_window: 2022H2 + 2023H1/H2 + 2024H1/H2
+no_2025_2026_selection: true

@@ -128,6 +128,21 @@ TEST-CI infrastructure notes:
 - `bbc7ed19ff46f98ef0beba9565e4071b6305bc94`: rejected/superseded malformed intermediate workflow edit; no research conclusion came from it.
 - `8b8b46feaa14465180b740dba69a597de29b7660`: corrected TEST-only per-update `changes` job plus job-level heavy concurrency. It uses the PR synchronize `before` and current head SHAs, so docs-only handoff updates can skip the heavy job rather than canceling active research.
 
+## Free historical-price source feasibility
+The Yahoo rejection changes the research bottleneck from membership reconstruction to one-time delisted-price backfill.
+
+Current candidate order:
+1. **Stooq historical Japan data — candidate, not yet accepted.** 2026 access requires a free API key obtained through an on-site CAPTCHA for CSV/API access; historical bulk Japan data is also documented by community users. Coverage of the official JPX delisting set is still unmeasured, so do not assume delisted symbols are retained.
+2. **J-Quants Free — valid official source but insufficient for the full 2022-start contract.** The official Free plan exposes two years excluding the most recent 12 weeks. It can be useful as an independent recent-period check, but cannot reconstruct all 2022-2023 delistings in September 2026.
+3. **JPX historical stock-price pages — authoritative manual fallback only.** JPX publishes historical stock-price files, but explicitly asks users to acquire those files manually and refrain from automated acquisition. Do not build an automated scraper against that archive.
+4. **Yahoo! JAPAN pages — not an automated fallback.** Delisted quote pages can remain visible, but Yahoo's published usage guidance restricts programmatic reuse outside its designated download service. Do not solve the research blocker by scraping those pages.
+
+Research architecture implication:
+- Existing Yahoo/current-universe OHLCV may remain the convenient live source if it continues to pass current-symbol checks.
+- Historical delistings need a one-time backfill source.
+- Once a backfill is secured, preserve daily OHLCV prospectively while symbols are still listed so future delistings cannot erase historical research data.
+- This archival idea is TEST-only until explicit user Go; do not add production storage/writes yet.
+
 ## Acceptance gate before survivorship claims
 A future TEST run must show all of the following before reconstructed membership is trusted:
 - `valid_for_membership_reconstruction=true`
@@ -139,7 +154,7 @@ A future TEST run must show all of the following before reconstructed membership
 Do not weaken this gate to obtain a green run. Never call results survivorship-bias-free until official delisting events are reconstructed and Yahoo usable/partial/missing historical-price coverage is measured.
 
 ## Current blockers
-1. Yahoo does not retain enough delisted-TSE history for a survivorship-aware 2022+ backtest: only 11/460 non-quarantined official delistings had usable prices near delisting in run #112.
+1. Yahoo does not retain enough delisted-TSE history for a survivorship-aware 2022+ backtest: only 11/460 non-quarantined official delistings had usable prices near delisting in run #112. Stooq is the leading free backfill candidate but requires a manually obtained free key/CAPTCHA before live coverage can be measured.
 2. A free historical OHLCV source/archival route for delisted Japanese stocks must be found and coverage-tested before survivorship-bias-free claims.
 3. Run #114 (`34554396869`, head `8b8b46feaa14465180b740dba69a597de29b7660`) is the current TEST workflow; its heavy model outputs remain secondary until the delisted-price coverage blocker is resolved.
 4. Live EDINET validation requires `EDINET_API_KEY`.

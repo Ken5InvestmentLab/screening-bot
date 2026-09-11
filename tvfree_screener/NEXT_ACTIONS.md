@@ -35,9 +35,23 @@ Usable/probed by year: 2022 0/76, 2023 0/60, 2024 0/94, 2025 0/124, 2026 11/106.
 Do not weaken the near-delisting gate. Yahoo alone is rejected for survivorship-aware historical OHLCV of delisted TSE names.
 
 ## 3. Find and coverage-test a free delisted-price source
-Highest priority. Reuse the exact official JPX delisting candidate set and identity quarantines from run #112. Implement only TEST-only probes. A candidate source must be evaluated by coverage before it is allowed into any historical backtest; transport failures and genuine missing data must remain separate.
+Highest priority. Reuse the exact official JPX delisting candidate set and identity quarantines from run #112.
 
-Prefer sources/routes that can realistically cover 2022 onward without paid credentials. If none is adequate, record the blocker rather than substituting today's survivor universe.
+Candidate order is now fixed for the next research pass:
+1. **Stooq:** first live candidate. Use a free `STOOQ_APIKEY` only via environment/GitHub Secret; never commit or log it. First run a deterministic small coverage probe across pre-2026 delistings, then expand to all 460 only if the source actually retains delisted histories and rate limits are workable. A bulk Japan archive may be preferable for a one-time backfill if it includes historical delisted symbols.
+2. **J-Quants Free:** official cross-check only. Its official window is two years excluding the latest 12 weeks, so it cannot fill the entire 2022-start history as of September 2026. Do not redefine the baseline start merely to make this source fit.
+3. **JPX historical stock-price files:** manual fallback only; JPX explicitly requests manual acquisition and asks users to refrain from automated acquisition. Do not implement a scraper.
+4. Do not scrape Yahoo! JAPAN quote/history pages as a workaround.
+
+Acceptance rules for any candidate:
+- evaluate coverage against the same 460 non-quarantined official delistings;
+- preserve code-reuse quarantine;
+- distinguish missing data from transport/auth/rate-limit failures;
+- require prices near the official delisting date;
+- compare overlapping OHLCV against an independent source for sanity;
+- do not use model performance or 2026 returns to choose a data provider.
+
+If no automation-friendly free source has adequate backfill coverage, record the blocker. Separately design TEST-only prospective archival so future listed-symbol OHLCV is retained before delisting, but do not add production writes without explicit user Go.
 
 ## 4. Inspect independent 2024 extension and frozen 2025 invariance
 Without changing thresholds/features/model hyperparameters, inspect 2024H1/H2 where causal training volume is sufficient and verify frozen 2025 outputs remain unchanged. Report unavailable periods rather than weakening minimum-training rules.

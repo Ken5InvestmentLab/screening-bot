@@ -56,6 +56,28 @@ def main() -> None:
     assert empty["coverage_status"] == "missing"
     assert empty["usable_near_delist"] is False
 
+    # Transport failure must not be mislabeled as genuine Yahoo-history absence.
+    probe_input = cand[cand["code"] == "A001"].copy()
+    original_download = d.yf.download
+    calls = {"n": 0}
+    def always_fail(*args, **kwargs):
+        calls["n"] += 1
+        raise RuntimeError("synthetic transport failure")
+    d.yf.download = always_fail
+    try:
+        probed = d.probe_yahoo(
+            probe_input,
+            start_date="2022-01-01",
+            batch_size=1,
+            request_pause=0.0,
+        )
+    finally:
+        d.yf.download = original_download
+    assert calls["n"] == 3
+    assert probed.iloc[0]["coverage_status"] == "probe_error"
+    assert probed.iloc[0]["usable_near_delist"] is False or not bool(probed.iloc[0]["usable_near_delist"])
+    assert "synthetic transport failure" in str(probed.iloc[0]["probe_error"])
+
     result = cand.copy()
     result["coverage_status"] = ["usable_near_delist", "identity_quarantined", "identity_quarantined"]
     result["usable_near_delist"] = [True, False, False]
@@ -64,6 +86,7 @@ def main() -> None:
     assert rep["identity_quarantined"] == 2
     assert rep["probed_events"] == 1
     assert rep["usable_near_delist"] == 1
+    assert rep["probe_errors"] == 0
     print("delisted_price_coverage_selftest: OK")
 
 

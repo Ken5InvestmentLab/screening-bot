@@ -1,0 +1,51 @@
+name: TV-free relative tail research TEST
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [synchronize, reopened]
+    paths:
+      - "tvfree_screener/v6_relative_tail_research.py"
+      - ".github/workflows/tvfree-relative-tail-test.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  relative-tail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Compile research runner
+        run: python -m py_compile tvfree_screener/v6_relative_tail_research.py
+      - name: Download frozen run-80 artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-screener-test-34545440155
+          path: tvfree_screener/out
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34545440155
+      - name: Run causal relative extreme-winner research
+        run: >-
+          python tvfree_screener/v6_relative_tail_research.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: Upload relative-tail evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-relative-tail-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v6_relative_tail_report.json
+            tvfree_screener/out/v6_relative_tail_locked_2026.csv
+          if-no-files-found: warn
+          retention-days: 7

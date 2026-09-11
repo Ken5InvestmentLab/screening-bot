@@ -8,6 +8,31 @@ import point_in_time_universe as pit
 
 
 def main() -> None:
+    # Archive discovery must not depend on fragile selector markup. Even with an
+    # empty landing page, deterministic 2022+ archive URLs must be generated for
+    # both JPX listing and delisting pages.
+    get_backup = pit._get
+    pit._get = lambda url: "<html><body>no archive links</body></html>"
+    try:
+        new_pages = pit.discover_archive_pages(pit.NEW_URL, 2022, 2026)
+        delist_pages = pit.discover_archive_pages(pit.DELIST_URL, 2022, 2026)
+    finally:
+        pit._get = get_backup
+    assert pit.NEW_URL in new_pages
+    assert pit.DELIST_URL in delist_pages
+    assert any(url.endswith("00-archives-01.html") for url in new_pages)
+    assert any(url.endswith("00-archives-04.html") for url in new_pages)
+    assert any(url.endswith("archives-01.html") for url in delist_pages)
+    assert any(url.endswith("archives-04.html") for url in delist_pages)
+    assert len(new_pages) == 5
+    assert len(delist_pages) == 5
+
+    # Encoding regression: prefer real UTF-8 bytes and retain a deterministic
+    # fallback for legacy Japanese encodings.
+    jp = "プライム市場"
+    assert pit._decode_html(jp.encode("utf-8"), "cp932") == jp
+    assert pit._decode_html(jp.encode("cp932"), "cp932") == jp
+
     # Live-parser regression: even if pandas.read_html cannot normalize the JPX
     # table, direct lxml <tr>/<td> parsing must recover the same strict event.
     synthetic_html = """

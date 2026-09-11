@@ -96,29 +96,22 @@ def prepare_1h(raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def attach_1h_context(cands: pd.DataFrame, h: pd.DataFrame) -> pd.DataFrame:
-    pieces = []
-    for sym, c in cands.groupby("symbol", sort=False):
-        r = h[h["symbol"].astype(str) == str(sym)].sort_values("timestamp")
-        if r.empty:
-            z = c.copy()
-            for col in ONE_H_FEATURES:
-                z[col] = np.nan
-            pieces.append(z)
-            continue
-        left = c.sort_values("last_ts").copy()
-        z = pd.merge_asof(
-            left,
-            r,
-            left_on="last_ts",
-            right_on="timestamp",
-            direction="backward",
-            allow_exact_matches=True,
-        )
-        if "symbol_x" in z.columns:
-            z["symbol"] = z["symbol_x"].astype("string")
-            z = z.drop(columns=[c for c in ["symbol_x", "symbol_y"] if c in z.columns])
-        pieces.append(z)
-    return pd.concat(pieces, ignore_index=True)
+    # merge_asof with a by-key avoids an O(symbols * rows) repeated full scan.
+    left = cands.copy()
+    right = h.copy()
+    left["symbol"] = left["symbol"].astype("string")
+    right["symbol"] = right["symbol"].astype("string")
+    left = left.sort_values(["last_ts", "symbol"]).reset_index(drop=True)
+    right = right.sort_values(["timestamp", "symbol"]).reset_index(drop=True)
+    return pd.merge_asof(
+        left,
+        right,
+        left_on="last_ts",
+        right_on="timestamp",
+        by="symbol",
+        direction="backward",
+        allow_exact_matches=True,
+    )
 
 
 def add_4h_features(c: pd.DataFrame) -> pd.DataFrame:

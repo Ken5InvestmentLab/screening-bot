@@ -88,6 +88,8 @@ Post-#98 TEST-only fixes now on the branch:
 - `48210fb6b3e3e81d6e5b9ef348d086d7e535fa4a`: fail closed unless unknown-market rows=0, same-day code collisions=0, and every required event year is present.
 - `1404952a30437a2651d80a29c61499defbd5da5f`: add synthetic regressions for deterministic 2022+ archive generation and UTF-8/CP932 decoding.
 - `edaf96d05455352c27aa657f3f7d410e2fcfac18`: synchronize next-action documentation.
+- `b3be1f8fea2609e367b646c130d19219de396e79`: factor the required-event-year acceptance check into an explicit fail-closed helper and state `missing_event_years=[]` in the report acceptance rule.
+- `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`: add synthetic regression proving a missing archive year rejects reconstruction while complete 2022-2025 coverage passes.
 
 These fixes do not change event thresholds, score weights, model hyperparameters, 2026 selection rules, production code, or production writes.
 
@@ -102,11 +104,11 @@ A future TEST run must show all of the following before reconstructed membership
 Do not weaken this gate to obtain a green run. Never call results survivorship-bias-free until official delisting events are reconstructed and Yahoo usable/partial/missing historical-price coverage is measured.
 
 ## Current blockers
-1. JPX live parser/acceptance gate has not yet been revalidated after the post-#98 fixes.
+1. JPX live parser/acceptance gate has not yet produced a completed revalidation. Run #105 (`34553838589`) was still pending when superseded by the new test-only commits; run #107 (`34554032750`, head `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`) is currently pending.
 2. Yahoo delisted-symbol price coverage remains pending until the JPX gate passes.
 3. First independent 2024 extension and first blind V4 performance result remain pending because #98 stopped upstream.
 4. Live EDINET validation requires `EDINET_API_KEY`.
 5. Existing fixed-start Short/Swing performance remains materially below Stable★6 historical reference.
 
 ## Next concrete task
-Re-run the TEST workflow on the current branch and inspect the JPX acceptance report first. If and only if it passes, inspect Yahoo delisted-price coverage, independent 2024 extension, and the first blind V4 report. Reject weak/unstable findings; never retune from 2026. Production integration remains blocked until explicit user Go.
+Inspect TEST run #107 (`34554032750`) when it completes and read the JPX acceptance report first. If and only if it passes, inspect Yahoo delisted-price coverage, independent 2024 extension, and the first blind V4 report. Reject weak/unstable findings; never retune from 2026. Production integration remains blocked until explicit user Go.

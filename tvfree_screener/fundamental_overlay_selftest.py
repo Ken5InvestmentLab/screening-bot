@@ -21,6 +21,14 @@ def main() -> None:
     ])
     z = fo.add_overlay_metrics(fo.attach_point_in_time_snapshot(signals, snapshots))
 
+    # Persisted boolean strings must parse without turning unknown into False.
+    bool_snapshots = snapshots.copy()
+    bool_snapshots["ms_warrant_flag"] = ["False", "True", None]
+    normalized_bool = fo.normalize_snapshots(bool_snapshots)
+    assert normalized_bool.iloc[0]["ms_warrant_flag"] == False
+    assert normalized_bool.iloc[1]["ms_warrant_flag"] == True
+    assert pd.isna(normalized_bool.iloc[2]["ms_warrant_flag"])
+
     a = z[(z.symbol == "1111") & (z.date == pd.Timestamp("2025-04-01"))].iloc[0]
     b = z[(z.symbol == "1111") & (z.date == pd.Timestamp("2025-06-01"))].iloc[0]
     assert a.available_date == pd.Timestamp("2025-03-15")
@@ -62,6 +70,18 @@ def main() -> None:
     assert "9999" not in set(mixed["dilution_le_0.35"]["symbol"])
     assert "9999" not in set(mixed["financial_risk_filter"]["symbol"])
     assert "9999" not in set(mixed["combined_dilution35_finrisk"]["symbol"])
+
+    # Invalid negative residual shares fail closed rather than appearing dilution-safe.
+    bad_snapshot = snapshots.iloc[[0]].copy()
+    bad_snapshot["symbol"] = "8888"
+    bad_snapshot["remaining_warrant_shares"] = -10
+    bad_signal = pd.DataFrame([{"date":"2025-04-01","symbol":"8888"}])
+    bad = fo.add_overlay_metrics(fo.attach_point_in_time_snapshot(bad_signal, bad_snapshot)).iloc[0]
+    assert not bool(bad.dilution_known)
+    assert pd.isna(bad.dilution_ratio)
+    bad_lanes = fo.build_lanes(bad_signal, bad_snapshot)
+    assert len(bad_lanes["dilution_known_baseline"]) == 0
+    assert len(bad_lanes["dilution_unknown"]) == 1
 
     # Same-day disclosure must be excluded by the conservative default.
     same_day_signals = pd.DataFrame([

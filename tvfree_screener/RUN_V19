@@ -1,0 +1,5 @@
+trigger: 2026-09-11 consensus-ignition-v1
+base: V18 consensus
+volr5_min: 1.4034296170763991
+threshold_source: 2023 median; 2024 validation passed
+2025_2026_use: reporting-only

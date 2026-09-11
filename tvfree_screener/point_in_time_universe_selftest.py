@@ -8,6 +8,34 @@ import point_in_time_universe as pit
 
 
 def main() -> None:
+    # Live-parser regression: even if pandas.read_html cannot normalize the JPX
+    # table, direct lxml <tr>/<td> parsing must recover the same strict event.
+    synthetic_html = """
+    <html><body><table>
+      <tr><th>上場日</th><th>会社名</th><th>コード</th><th>市場区分</th></tr>
+      <tr><td>2024/04/01</td><td>テスト株式会社</td><td>1A23</td><td>グロース</td></tr>
+    </table></body></html>
+    """
+    get_backup = pit._get
+    read_html_backup = pit.pd.read_html
+    pit._get = lambda url: synthetic_html
+    pit.pd.read_html = lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("synthetic pandas parser failure"))
+    try:
+        parsed, unknown_rows = pit.parse_event_page(
+            "https://example.invalid/jpx",
+            "listing",
+            2022,
+            pd.Timestamp("2025-12-31"),
+        )
+    finally:
+        pit._get = get_backup
+        pit.pd.read_html = read_html_backup
+    assert len(parsed) == 1
+    assert parsed[0].code == "1A23"
+    assert parsed[0].event_date == pd.Timestamp("2024-04-01")
+    assert parsed[0].market == "グロース"
+    assert unknown_rows == []
+
     anchor = pd.Timestamp("2025-12-31")
     current = {"A001", "C003"}
     events = pd.DataFrame([

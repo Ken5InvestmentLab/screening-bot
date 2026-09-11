@@ -34,6 +34,7 @@ on:
 permissions:
   contents: read
 
+# Fail-fast JPX live validation is intentionally before heavy research.
 # Keep only the newest heavy research run for this PR/ref.
 concurrency:
   group: tvfree-heavy-test-${{ github.event.pull_request.number || github.ref }}

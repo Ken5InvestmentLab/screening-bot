@@ -300,3 +300,47 @@ Original fixed run-80 artifact `10179500303` expires 2026-09-14, so a TEST-only 
 - trigger file: `tvfree_screener/RUN_PRESERVE_DATASET`
 
 Use preserved artifact `10264205130` for future research. Do not silently switch to a fresh Yahoo download when reproducibility against run #80 matters.
+
+
+## V11 payoff-aware conditional kNN — 2024 EXPLOSIVE, 2025 REJECTED
+Authoritative push run `34599912536`; artifact `10264000681`.
+
+Hypothesis:
+- preserve V7 Tail detector;
+- use historical causal Tail neighbors;
+- rank/filter by fixed payoff-aware utility
+  `2 * P(5BD >= +20%) - P(5BD <= -10%)`;
+- coefficient 2:1 comes from the minimum payoff magnitudes (+20 vs -10), not future fitting.
+
+Best development variant `u40_pos`:
+- 2024H1 n=13, mean +17.99%, median +5.08%, win 76.9%, +20% 38.5%, +50% 15.4%, -10% 15.4%.
+- 2024H2 n=33, mean +10.09%, median +1.25%, win 54.5%, +20% 30.3%, +50% 6.06%, -10% 18.2%.
+- 2024 pooled n=46, mean +12.32%, median +2.58%, win 60.9%, +20% 32.6%, +50% 8.70%, -10% 17.4%.
+This easily passed the 2024 development gate and opened 2025.
+
+2025 validation collapsed:
+- 2025H1 n=31, mean -4.84%, +20% 3.23%, -10% 32.3%.
+- 2025H2 n=28, mean -9.99%, +20% 7.14%, -10% 53.6%.
+- 2025 pooled n=59, mean -7.28%, +20% 5.08%, +50% 0%, -10% 42.4%.
+- `validation_pass=false`, `locked_candidate=null`; 2026 remained unopened.
+
+Decision:
+- reject V11 as final Quality layer;
+- do not loosen gates or tune on 2025;
+- repeated pattern V9/V11 = strong 2024 improvement followed by 2025 collapse, so stop iterating Quality thresholds until the underlying V7 Tail regime drift is audited.
+
+## Reusable causal V7 Tail cache — BUILT
+Run `34600083474` succeeded.
+Artifact `10264251140`: `tvfree-v7-causal-tail-cache-2023-2025`.
+Expires `2026-12-10T12:39:53Z`.
+
+Contents:
+- 2023: 267 causal extreme-Tail candidates
+- 2024: 557
+- 2025: 482
+- total: 1,306 rows
+- 67 columns including the full signal-time feature set, V7 Tail scores, target5_no/target_end_date, and research outcome labels.
+
+This cache is research-only. Outcome columns must never be used at prediction time except for rows whose `target_end_date` is already in the past.
+
+Next priority: diagnose V7 detector drift across 2023/2024/2025 before inventing more downstream Quality models.

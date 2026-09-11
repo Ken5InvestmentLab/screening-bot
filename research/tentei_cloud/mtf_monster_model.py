@@ -10,7 +10,7 @@ Protocol is predeclared:
 - Train/development: 2024-11-01 through 2025-06-30.
 - Validation: 2025-07-01 through 2025-12-31.
 - 2026 is reporting-only and only opened if the 2025 validation gate passes.
-- Tail target is >= +20% at 5BD. No loss probability is subtracted from rank.
+- Tail target is selected using TRAIN ONLY: choose the highest threshold in [20%,15%,10%,7.5%,5%] with >=8 positive and >=8 negative samples. No validation/2026 outcome is used for this choice. No loss probability is subtracted from rank.
 - User-facing tiers use OOB training-score CDF: Watch q70, Prime q90.
 """
 from __future__ import annotations
@@ -32,6 +32,8 @@ TRAIN_END = "2025-06-30"
 VAL_START = "2025-07-01"
 VAL_END = "2025-12-31"
 REPORT_START = "2026-01-01"
+TARGET_THRESHOLDS = [0.20, 0.15, 0.10, 0.075, 0.05]
+MIN_CLASS_N = 8
 
 
 FOUR_H_FEATURES = [
@@ -147,11 +149,11 @@ def make_candidate_pool(raw: pd.DataFrame) -> pd.DataFrame:
     return c
 
 
-def metrics(name: str, tier: str, period: str, q: pd.DataFrame) -> dict:
+def metrics(name: str, tier: str, period: str, q: pd.DataFrame, target_threshold: float) -> dict:
     r = q["ret5bd"].dropna().astype(float)
-    ans = {"model": name, "tier": tier, "period": period, "n": int(len(r))}
+    ans = {"model": name, "tier": tier, "period": period, "n": int(len(r)), "target_threshold": target_threshold}
     if r.empty:
-        for k in ["mean","median","win","ge10","ge20","ge30","le10","max","top1_removed","top3_removed","top5_removed"]:
+        for k in ["mean","median","win","ge10","ge20","ge30","ge_target","le10","max","top1_removed","top3_removed","top5_removed"]:
             ans[k] = None
         return ans
     rs = r.sort_values(ascending=False)
@@ -162,6 +164,7 @@ def metrics(name: str, tier: str, period: str, q: pd.DataFrame) -> dict:
         "ge10": float((r >= 0.10).mean()),
         "ge20": float((r >= 0.20).mean()),
         "ge30": float((r >= 0.30).mean()),
+        "ge_target": float((r >= target_threshold).mean()),
         "le10": float((r <= -0.10).mean()),
         "max": float(r.max()),
         "top1_removed": float(rs.iloc[1:].mean()) if len(rs)>1 else None,
@@ -171,14 +174,26 @@ def metrics(name: str, tier: str, period: str, q: pd.DataFrame) -> dict:
     return ans
 
 
-def fit_rf(train: pd.DataFrame, features: list[str], seed: int = 42):
+def choose_target(train: pd.DataFrame):
+    counts = {}
+    n = len(train)
+    for t in TARGET_THRESHOLDS:
+        pos = int((train["ret5bd"] >= t).sum())
+        neg = int(n - pos)
+        counts[f"{t:.3f}"] = {"positive": pos, "negative": neg, "rate": (pos / n if n else None)}
+        if pos >= MIN_CLASS_N and neg >= MIN_CLASS_N:
+            return t, counts
+    raise RuntimeError(f"no statistically usable tail target in TRAIN only: n={n}, counts={counts}")
+
+
+def fit_rf(train: pd.DataFrame, features: list[str], target_threshold: float, seed: int = 42):
     from sklearn.ensemble import RandomForestClassifier
     X = train[features].replace([np.inf,-np.inf], np.nan).copy()
     med = X.median(numeric_only=True)
     X = X.fillna(med).fillna(0.0)
-    y = (train["ret5bd"] >= 0.20).astype(int)
-    if y.sum() < 5 or (len(y)-y.sum()) < 5:
-        raise RuntimeError(f"insufficient tail classes: positives={int(y.sum())}, n={len(y)}")
+    y = (train["ret5bd"] >= target_threshold).astype(int)
+    if y.sum() < MIN_CLASS_N or (len(y)-y.sum()) < MIN_CLASS_N:
+        raise RuntimeError(f"insufficient tail classes after TRAIN-only target selection: threshold={target_threshold}, positives={int(y.sum())}, n={len(y)}")
     model = RandomForestClassifier(
         n_estimators=500,
         max_depth=5,
@@ -221,8 +236,8 @@ def validation_gate(base: dict, four_prime: dict, mtf_watch: dict, mtf_prime: di
         reasons.append("prime_n<8")
     if mtf_watch["mean"] is None or base["mean"] is None or mtf_watch["mean"] < base["mean"]:
         reasons.append("watch_mean<base")
-    if mtf_watch["ge20"] is None or base["ge20"] is None or mtf_watch["ge20"] < base["ge20"]:
-        reasons.append("watch_tail20<base")
+    if mtf_watch["ge_target"] is None or base["ge_target"] is None or mtf_watch["ge_target"] < base["ge_target"]:
+        reasons.append("watch_target_hit_rate<base")
     if mtf_prime["mean"] is None or four_prime["mean"] is None or mtf_prime["mean"] <= four_prime["mean"]:
         reasons.append("prime_mean_not_better_than_4h")
     if mtf_prime["le10"] is None or base["le10"] is None or mtf_prime["le10"] > base["le10"] + 0.05:
@@ -252,10 +267,12 @@ def main():
     val = c[(c["date"] >= VAL_START) & (c["date"] <= VAL_END)].copy()
     report = c[c["date"] >= REPORT_START].copy()
 
+    target_threshold, train_target_counts = choose_target(train)
+
     results = []
     model_info = {}
     for name, feats in [("4H_ONLY", FOUR_H_FEATURES), ("MTF", FOUR_H_FEATURES + ONE_H_FEATURES)]:
-        model, med, q70, q90, pos, ntrain = fit_rf(train, feats, 42)
+        model, med, q70, q90, pos, ntrain = fit_rf(train, feats, target_threshold, 42)
         model_info[name] = {
             "features": feats, "q70": q70, "q90": q90,
             "train_n": ntrain, "train_tail20": pos,
@@ -264,10 +281,10 @@ def main():
             frame[f"score_{name}"] = score(model, med, frame, feats)
 
         for period, frame in [("TRAIN",train),("VALIDATION",val)]:
-            results.append(metrics(name,"Watch",period,select(frame,f"score_{name}",q70)))
-            results.append(metrics(name,"Prime",period,select(frame,f"score_{name}",q90)))
+            results.append(metrics(name,"Watch",period,select(frame,f"score_{name}",q70),target_threshold))
+            results.append(metrics(name,"Prime",period,select(frame,f"score_{name}",q90),target_threshold))
 
-    base_val = metrics("BASE","TAIL_POOL","VALIDATION",val)
+    base_val = metrics("BASE","TAIL_POOL","VALIDATION",val,target_threshold)
     four_prime_val = next(x for x in results if x["model"]=="4H_ONLY" and x["tier"]=="Prime" and x["period"]=="VALIDATION")
     mtf_watch_val = next(x for x in results if x["model"]=="MTF" and x["tier"]=="Watch" and x["period"]=="VALIDATION")
     mtf_prime_val = next(x for x in results if x["model"]=="MTF" and x["tier"]=="Prime" and x["period"]=="VALIDATION")
@@ -277,8 +294,8 @@ def main():
     if passed:
         for name in ["4H_ONLY","MTF"]:
             info=model_info[name]
-            results.append(metrics(name,"Watch","REPORT_2026",select(report,f"score_{name}",info["q70"])))
-            results.append(metrics(name,"Prime","REPORT_2026",select(report,f"score_{name}",info["q90"])))
+            results.append(metrics(name,"Watch","REPORT_2026",select(report,f"score_{name}",info["q70"]),target_threshold))
+            results.append(metrics(name,"Prime","REPORT_2026",select(report,f"score_{name}",info["q90"]),target_threshold))
 
     summary = pd.DataFrame(results)
     summary.to_csv(out/"mtf_model_summary.csv",index=False)
@@ -303,11 +320,13 @@ def main():
         "report_2026_n": int(len(report)),
         "validation_gate_passed": bool(passed),
         "validation_gate_reasons": reasons,
+        "train_only_target_threshold": target_threshold,
+        "train_only_target_counts": train_target_counts,
         "model_info": model_info,
         "policy": {
             "candidate_gate": "reconstructed split-13:00 TAIL structure with range>=2%",
             "cooldown_business_days": 5,
-            "tail_target": "5BD >= +20%",
+            "tail_target": "TRAIN-only highest feasible threshold among +20/+15/+10/+7.5/+5%, requiring >=8 samples in each class",
             "watch_threshold": "70th percentile of OOB training probability",
             "prime_threshold": "90th percentile of OOB training probability",
             "2026": "reporting-only; not opened unless validation gate passes",

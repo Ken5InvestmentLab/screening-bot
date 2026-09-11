@@ -32,15 +32,36 @@ def main() -> None:
 
     lanes = fo.build_lanes(signals, snapshots)
     assert len(lanes["baseline"]) == 3
+    assert len(lanes["dilution_known_baseline"]) == 3
+    assert len(lanes["financial_known_baseline"]) == 3
+    assert len(lanes["combined_known_baseline"]) == 3
     assert len(lanes["dilution_le_0.35"]) == 2
     assert len(lanes["financial_risk_filter"]) == 2
     assert len(lanes["combined_dilution35_finrisk"]) == 2
 
-    # Missing fundamental data must not be silently converted into a safe numeric score.
+    # Missing fundamental data must remain unknown all the way through lane selection.
     missing = pd.DataFrame([{"date":"2025-04-01","symbol":"9999"}])
     m = fo.add_overlay_metrics(fo.attach_point_in_time_snapshot(missing, snapshots)).iloc[0]
     assert pd.isna(m.dilution_ratio)
     assert pd.isna(m.available_date)
+    assert not bool(m.dilution_known)
+    assert not bool(m.financial_known)
+    assert not bool(m.combined_known)
+    assert pd.isna(m.financial_risk_count)
+    assert pd.isna(m.financial_risk_exclude)
+
+    mixed_signals = pd.concat([signals, missing], ignore_index=True)
+    mixed = fo.build_lanes(mixed_signals, snapshots)
+    assert len(mixed["baseline"]) == 4
+    assert len(mixed["dilution_known_baseline"]) == 3
+    assert len(mixed["dilution_unknown"]) == 1
+    assert len(mixed["financial_known_baseline"]) == 3
+    assert len(mixed["financial_unknown"]) == 1
+    assert len(mixed["combined_known_baseline"]) == 3
+    assert len(mixed["combined_unknown"]) == 1
+    assert "9999" not in set(mixed["dilution_le_0.35"]["symbol"])
+    assert "9999" not in set(mixed["financial_risk_filter"]["symbol"])
+    assert "9999" not in set(mixed["combined_dilution35_finrisk"]["symbol"])
 
     # Same-day disclosure must be excluded by the conservative default.
     same_day_signals = pd.DataFrame([

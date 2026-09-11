@@ -82,6 +82,19 @@ jobs:
         run: python tvfree_screener/v3_pre2026_extension_selftest.py
       - name: Build current JPX universe snapshot preflight
         run: python tvfree_screener/jpx_current_snapshot.py
+      - name: Live-validate JPX point-in-time membership reconstruction
+        run: >-
+          python tvfree_screener/point_in_time_universe.py
+          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
+          --start 2022-01-01
+      - name: Measure Yahoo coverage for JPX delistings
+        run: >-
+          python tvfree_screener/delisted_price_coverage.py
+          --events tvfree_screener/out/jpx_membership_events.csv
+          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
+          --start 2022-01-01
+          --batch-size 50
+          --request-pause 0.5
       - name: Purged walk-forward backtest
         run: >-
           python tvfree_screener/bootstrap.py
@@ -98,19 +111,6 @@ jobs:
           --price-cap "$TVFREE_PRICE_CAP"
           --loss-penalty "$TVFREE_LOSS_PENALTY"
           --topn 30
-      - name: Live-validate JPX point-in-time membership reconstruction
-        run: >-
-          python tvfree_screener/point_in_time_universe.py
-          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
-          --start 2022-01-01
-      - name: Measure Yahoo coverage for JPX delistings
-        run: >-
-          python tvfree_screener/delisted_price_coverage.py
-          --events tvfree_screener/out/jpx_membership_events.csv
-          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
-          --start 2022-01-01
-          --batch-size 50
-          --request-pause 0.5
       - name: V3 Swing baseline research
         run: >-
           python tvfree_screener/v3_swing.py

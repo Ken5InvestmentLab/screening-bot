@@ -293,19 +293,20 @@ def main() -> None:
     events = add_event_union(q)
 
     pre = score_periods(events, PRE2026_PERIODS)
+    # Development phase: expose ONLY 2024 metrics for all variants.
+    # Validation-period metrics for rejected variants are deliberately not
+    # calculated/reported, preventing a post-hoc "pick the 2025 winner" choice.
     variants = {}
     selections = {}
     for name, spec in VARIANTS.items():
         picks = select_variant(pre, spec, pd.Index(q["date"]))
         selections[name] = picks
-        stats = {
-            label: period_stats(picks, a, b)
-            for label, a, b in PRE2026_PERIODS
-        }
-        util = development_utility(stats["2024H1"], stats["2024H2"])
+        dev_h1 = period_stats(picks, "2024-01-01", "2024-06-30")
+        dev_h2 = period_stats(picks, "2024-07-01", "2024-12-31")
+        util = development_utility(dev_h1, dev_h2)
         variants[name] = {
             "spec": spec,
-            "periods": stats,
+            "development_2024": {"2024H1": dev_h1, "2024H2": dev_h2},
             "development_utility_2024": util,
         }
 
@@ -321,9 +322,13 @@ def main() -> None:
         "architecture": "broad event union -> causal 3-head half-year quality -> train CDF -> locked score/gate",
         "entry": "next_session_open_to_5BD_close",
         "event_rows": int(len(events)),
-        "selection_rule": "variant selected using 2024 only; locked variant validated on 2025 before any 2026 scoring",
-        "variants": variants,
+        "selection_rule": (
+            "all variants expose 2024 development only; one variant is locked from 2024, "
+            "then only that variant's 2025 validation is opened; 2026 is opened only after pass"
+        ),
+        "variants_2024_development_only": variants,
         "locked_variant": locked,
+        "locked_2025_validation": None,
         "validation_pass_2025": False,
         "fixed_2026_MarAug": None,
     }
@@ -331,12 +336,14 @@ def main() -> None:
     locked_picks = pd.DataFrame()
     if locked is not None:
         locked_picks = selections[locked]
-        h1 = variants[locked]["periods"]["2025H1"]
-        h2 = variants[locked]["periods"]["2025H2"]
+        h1 = period_stats(locked_picks, "2025-01-01", "2025-06-30")
+        h2 = period_stats(locked_picks, "2025-07-01", "2025-12-31")
+        report["locked_2025_validation"] = {"2025H1": h1, "2025H2": h2}
         passed = validation_pass(h1, h2)
         report["validation_pass_2025"] = bool(passed)
 
         if passed:
+            # Only now construct/use the 2026 prediction periods.
             future = score_periods(events, REPORT_2026_PERIODS)
             future_picks = select_variant(future, VARIANTS[locked], pd.Index(q["date"]))
             fixed = future_picks[
@@ -349,7 +356,10 @@ def main() -> None:
                 for month, g in fixed.groupby(fixed["date"].dt.to_period("M"))
             }
         else:
-            report["fixed_2026_reason"] = "locked 2024-selected variant failed predeclared 2025 validation; 2026 not scored"
+            report["fixed_2026_reason"] = (
+                "locked 2024-selected variant failed predeclared 2025 validation; "
+                "2026 result was not scored or reported"
+            )
 
     OUT.mkdir(parents=True, exist_ok=True)
     if not locked_picks.empty:

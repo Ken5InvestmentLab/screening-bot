@@ -352,3 +352,29 @@ Decision:
 
 ## Naming
 Working product name: **天底極致 Cloud**
+
+
+## 2026 descriptive cross-check — weak-market + early-maturity Monster gate
+Added 2026-09-12 JST. Research-only; no production writes.
+
+A new descriptive cross-check connected the saved Cloud two-lane 2026 Monster picks to the persisted 4H/session OHLCV. This does **not** create a new 2026-fitted threshold. It combines two gates that already existed from pre-2026 research:
+- previous-day market gate: cross-sectional median 5D return <= 0 (same contrarian context used in V12/V13/V14-family research);
+- maturity gate: candidate 10D return <= 0.5735294117647058 (threshold previously sourced from the 2023 V18-consensus median in the separate V20 early-maturity experiment).
+
+Cloud Monster descriptive results:
+- all Monster: n63, mean +9.86%, median +3.33%, win 57.1%, >=20% 30.2%, <=-10% 22.2%, top-3-removed mean +5.79%.
+- previous-day weak market only: n49, mean +12.91%, win 61.2%, >=20% 36.7%, <=-10% 20.4%, top-3-removed mean +7.81%.
+- early-maturity only: n56, mean +11.03%, win 60.7%, >=20% 32.1%, <=-10% 21.4%, top-3-removed mean +6.50%.
+- **weak market + early maturity**: n43, mean **+14.56%**, median **+5.86%**, win **65.1%**, >=20% **39.5%**, <=-10% **18.6%**, top-3-removed mean **+8.81%**.
+
+Monthly weak+early Monster means: Mar +22.98%, Apr +25.92%, May +15.63%, Jun +4.80%, Jul +9.73% (n4, median negative), Aug +2.75% (n3). June is improved versus the severe V13/V14 failure pocket but is not solved; loss10 in June remains 36.4%.
+
+Stable + Monster union comparison on the saved 2026 Cloud picks:
+- Stable + all Monster: n210, mean +4.74%, win 61.0%, <=-10% 8.10%, >=20% 10.95%, top-3-removed mean +3.49%.
+- Stable + 09:00 Monster: n182, mean +5.11%, win 63.7%, <=-10% 6.04%, >=20% 9.89%, top-3-removed mean +3.79%.
+- **Stable + weak+early Monster**: n190, mean **+5.27%**, win **63.2%**, <=-10% **5.79%**, >=20% **11.05%**, top-3-removed mean **+3.89%**.
+
+Interpretation:
+- This is stronger than the arbitrary 09:00 hard filter and has a causal story consistent with earlier research: Monster is a contrarian/early-momentum lane, but already-matured 10D runners are lower quality.
+- Do not promote these 2026 descriptive numbers as validation. The next task is to reproduce the **same fixed two-gate structure** on pre-2026 / purge-safe Three-head Consensus (V29-family) picks, without changing thresholds.
+- Keep V31 secondary because its headline remains week-dependent.

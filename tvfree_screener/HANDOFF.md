@@ -80,9 +80,9 @@ Synthetic coverage is included in the current CI run; no thresholds were changed
 No threshold should change as part of this fix.
 
 ## Historical dilution extraction design
-Research this turn confirmed that balance-sheet `新株予約権` / `SubscriptionRightsToShares` is a monetary equity account and is NOT the residual potential-share count needed for dilution filtering.
+Research confirmed that balance-sheet `新株予約権` / `SubscriptionRightsToShares` is a monetary equity account and is NOT the residual potential-share count needed for dilution filtering.
 
-An audit-first deterministic extractor now exists in `edinet_dilution_audit.py`. It scans only exact known EDINET dilution-related text blocks, extracts nearby share-count tokens with source excerpts/hashes, marks moving-strike/MS evidence, and deliberately sets `accepted_remaining_potential_shares=False` for every candidate until real filing table semantics are validated.
+An audit-first deterministic extractor exists in `edinet_dilution_audit.py`. It scans only exact known EDINET dilution-related text blocks, extracts nearby share-count tokens with source excerpts/hashes, marks moving-strike/MS evidence, and deliberately sets `accepted_remaining_potential_shares=False` for every candidate until real filing table semantics are validated.
 
 Historical dilution still needs promotion from audit evidence to accepted residual-share facts only after live validation. At minimum store separately:
 - remaining potential shares, all warrant/options;
@@ -106,17 +106,32 @@ Once historical coverage is acceptable, compare on 2024H1, 2024H2, 2025H1, 2025H
 
 Acceptance must include mean, median, win rate, +10%, -10%, and retained sample size. Reject one-regime improvement, severe sample shrinkage, and any gain caused by missing-data selection. 2026 remains reporting-only.
 
+## V4 event-quality research audit
+- `v4_event_quality_research.py` is a TEST-only stronger technical architecture: broad OHLCV event union -> causal 3-head half-year models -> train-CDF normalization -> one of four predeclared score/gate variants.
+- Static audit in this run confirmed the intended blind order is implemented: only 2024 development predictions/metrics are exposed for all variants; one variant is locked from 2024; only that locked variant is evaluated on 2025; 2026 is not scored unless the locked variant passes the predeclared 2025 validation gate.
+- Training purge is causal: each half-year uses only rows with `target5_end < prediction_period_start`.
+- `v4_event_quality_selftest.py` already checks purge behavior, selection-day cooldown, missing-calendar fail-closed behavior, and deterministic 2025 gate logic; it is included in the research-contract hash.
+- New static-audit finding: `select_variant()` is called separately for development, validation, and 2026 stages, so its in-memory same-symbol cooldown state resets at stage boundaries. This is NOT future leakage and should not materially drive broad results, but it is an execution-rule inconsistency at 2024/2025 and 2025/2026 boundaries. Fix/test this before first V4 performance run; do not use the fix to tune thresholds.
+- Do not open/reject variants based on 2025 metrics other than the one locked from 2024, and never use 2026 to choose V4 settings.
+
+## Current live TEST run
+- Actions run `34549403943` (run #97), head `80a42fc9d98796e1e0f17becaff5df825a71542f`, is in progress.
+- All currently scheduled synthetic checks through EDINET dilution audit have passed, including reproducibility, causality, point-in-time universe, delisted Yahoo coverage, fundamental/dilution overlay, EDINET collector, and dilution-audit tests.
+- At last inspection, run #97 was in `Purged walk-forward backtest`; live JPX point-in-time parsing and Yahoo-delisted coverage steps were still pending.
+- Do not modify the active test workflow in a way that cancels this run; wait for its live universe/coverage artifacts before interpreting survivorship-bias risk.
+
 ## Current blockers
 1. Live EDINET acquisition still needs `EDINET_API_KEY`; the key must remain env/secret-only and never be committed/logged.
 2. Audit evidence has not yet been live-validated enough to promote any warrant share-count candidate to accepted residual dilution.
-3. Point-in-time JPX live parser validation is now included in the current TEST workflow, but delisted-symbol Yahoo price coverage still needs measurement.
+3. Point-in-time JPX live parser validation and delisted-symbol Yahoo price coverage are being exercised by run #97 and must be inspected after completion.
 4. Existing Short/Swing fixed-start results remain materially below Stable★6 historical reference; new research must improve pre-2026 robustness rather than tune to 2026.
+5. V4 cooldown continuity across half-year stage boundaries must be corrected before first performance interpretation.
 
 ## Next concrete tasks
-1. Let the current CI verify missing-data safety, EDINET dilution-audit integration, and live JPX archive parsing.
-2. Live-validate EDINET financial + dilution evidence on a small 2024/2025 sample once `EDINET_API_KEY` is available.
-3. Measure Yahoo coverage for reconstructed delisted members and explicitly quarantine code-reuse/identity ambiguity.
-4. Extend reporting to 2024H1/H2 as well as 2025H1/H2 without changing frozen thresholds based on 2026.
-5. Only after coverage gates pass, compare coverage-matched technical baseline vs dilution/financial/combined overlays. Reject weak/unstable effects.
-6. Continue searching for stronger causal technical architectures because fixed-start Swing S did not reproduce the old rolling advantage.
+1. Inspect run #97 after completion. Require live JPX parser diagnostics and Yahoo delisted-price coverage results before any point-in-time backtest claim.
+2. Correct V4 selection cooldown continuity across development/validation/reporting stage boundaries and extend its synthetic test before first V4 performance run.
+3. Add V4 self-test and then V4 research execution to the TEST workflow only after the active run finishes, preserving blind 2024 -> locked-2025 -> conditional-2026 order.
+4. Live-validate EDINET financial + dilution evidence on a small 2024/2025 sample once `EDINET_API_KEY` is available.
+5. Extend/inspect 2024H1/H2 frozen technical reporting and compare four pre-2026 regimes without changing thresholds based on 2026.
+6. Only after coverage gates pass, compare coverage-matched technical baseline vs dilution/financial/combined overlays. Reject weak/unstable effects.
 7. Production integration remains blocked until explicit user Go.

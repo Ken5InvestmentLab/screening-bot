@@ -212,7 +212,11 @@ def score_periods(events: pd.DataFrame, periods: list[tuple[str, str, str]]) -> 
     return pd.concat(parts, ignore_index=True)
 
 
-def select_variant(scored: pd.DataFrame, spec: dict[str, float]) -> pd.DataFrame:
+def select_variant(
+    scored: pd.DataFrame,
+    spec: dict[str, float],
+    trading_dates: pd.Index,
+) -> pd.DataFrame:
     z = scored.copy()
     z["v4_score"] = (
         spec["ret"] * z["cdf_ret"]
@@ -221,18 +225,25 @@ def select_variant(scored: pd.DataFrame, spec: dict[str, float]) -> pd.DataFrame
     )
     z = z[z["v4_score"] >= spec["gate"]]
     rows = []
-    prev_selected: set[str] = set()
-    for _, day in z.sort_values(
+    dates = pd.Index(pd.to_datetime(trading_dates).dropna().unique()).sort_values()
+    date_idx = {pd.Timestamp(d): i for i, d in enumerate(dates)}
+    last_selected_idx: dict[str, int] = {}
+
+    for date, day in z.sort_values(
         ["date", "v4_score"], ascending=[True, False]
     ).groupby("date", sort=True):
+        current_idx = date_idx.get(pd.Timestamp(date))
+        if current_idx is None:
+            raise RuntimeError(f"prediction date missing from trading-date index: {date}")
         chosen = None
         for _, row in day.sort_values("v4_score", ascending=False).iterrows():
-            if str(row["symbol"]) in prev_selected:
+            symbol = str(row["symbol"])
+            if last_selected_idx.get(symbol) == current_idx - 1:
                 continue
             chosen = row
             break
-        prev_selected = {str(chosen["symbol"])} if chosen is not None else set()
         if chosen is not None:
+            last_selected_idx[str(chosen["symbol"])] = current_idx
             rows.append(chosen)
     return pd.DataFrame(rows).reset_index(drop=True)
 
@@ -285,7 +296,7 @@ def main() -> None:
     variants = {}
     selections = {}
     for name, spec in VARIANTS.items():
-        picks = select_variant(pre, spec)
+        picks = select_variant(pre, spec, pd.Index(q["date"]))
         selections[name] = picks
         stats = {
             label: period_stats(picks, a, b)
@@ -327,7 +338,7 @@ def main() -> None:
 
         if passed:
             future = score_periods(events, REPORT_2026_PERIODS)
-            future_picks = select_variant(future, VARIANTS[locked])
+            future_picks = select_variant(future, VARIANTS[locked], pd.Index(q["date"]))
             fixed = future_picks[
                 (future_picks["date"] >= "2026-03-01")
                 & (future_picks["date"] <= "2026-08-31")

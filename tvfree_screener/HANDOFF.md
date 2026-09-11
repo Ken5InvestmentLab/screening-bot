@@ -400,3 +400,43 @@ Exploratory 2024/2025 reference before opening 2026:
 All four half-year means were positive in exploration.
 
 IMPORTANT: the range dimension was selected after 2025 had already been inspected, so **2025 is not validation for V13**. V13 was frozen in commit `20a9175d0ac2a7cfb3368b155d8c3274020c52f4` before its dedicated 2026 runner was triggered. Run `34601520325` is 2026 reporting-only; do not change V13 from that result.
+
+
+## V14 pre-2025 stable rank — CURRENT BEST CROSS-YEAR CANDIDATE
+Run `34603254170`; artifact `10265861249`.
+
+Feature/rule discovery used **2023-2024 only**:
+- V7 extreme Tail detector unchanged.
+- market gate: `med_ret5 <= 0`.
+- among same-day Tail candidates rank by lower relative `volr20` and lower relative `ret1`;
+- average the two percentile ranks;
+- tie-break by higher Tail CDF / Tail probability;
+- one-business-day same-symbol cooldown.
+
+Why these two features:
+- all 45 existing signal-time features were audited one at a time under the same market gate using only 2023H1, 2023H2, 2024H1, 2024H2.
+- only `volr20 low` and `ret1 low` produced positive mean in all four pre-2025 half-years.
+- combined pre-2025 means:
+  - 2023H1 +0.24%
+  - 2023H2 +0.34%
+  - 2024H1 +5.29%
+  - 2024H2 +1.56%
+  - pooled 2023-2024 +1.99%.
+
+Reporting after freeze:
+- 2025H1 n36 mean +7.04%, +20% 25.0%, +50% 13.9%, loss10 25.0%.
+- 2025H2 n33 mean +1.76%, +20% 15.2%, +50% 12.1%, loss10 54.5%.
+- 2025 pooled n69 mean **+4.52%**, +20% 20.3%, +50% 13.0%, loss10 39.1%.
+- 2026H1 n55 mean +2.47%.
+- 2026 Jan-Aug n58 mean **+2.93%**, +20% 20.7%, +50% 5.17%, loss10 41.4%.
+- 2026 Jan-Aug top-1-winner removed mean **+0.92%**.
+- 2026 Mar-Aug n46 mean -0.07% (essentially flat), +20% 17.4%, loss10 47.8%.
+- June 2026 remains the main failure pocket: n7 mean -22.4%, loss10 85.7%.
+
+Interpretation:
+- V14 is materially more stable than V9/V11/V13 and is the strongest candidate so far for a user-facing Monster lane.
+- It preserves prospective right-tail capture across years while reducing dependence on the single highest Tail score.
+- It is still too loss-heavy to call production-ready; especially 2025H2 and June 2026.
+- Fixed -10% stop was rejected because it cuts later Monster winners; -30% catastrophic stop is near-neutral and is not the missing edge.
+
+Next pre-2025-only market-gate audit found that adding `breadth_ret1_pos <= 0.50` improved pooled 2023-2024 mean from +1.99% to +2.88% while keeping all four pre-2025 half-years positive. This is frozen as V15 before its 2025/2026 reporting run.

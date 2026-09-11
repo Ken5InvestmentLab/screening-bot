@@ -12,8 +12,9 @@ def main() -> None:
     # table, direct lxml <tr>/<td> parsing must recover the same strict event.
     synthetic_html = """
     <html><body><table>
-      <tr><th>上場日</th><th>会社名</th><th>コード</th><th>市場区分</th></tr>
-      <tr><td>2024/04/01</td><td>テスト株式会社</td><td>1A23</td><td>グロース</td></tr>
+      <tr><th>上場日</th><th>会社名</th><th>コード</th><th>会社概要</th></tr>
+      <tr><td>2024/04/01</td><td>テスト株式会社</td><td>1A23</td><td></td></tr>
+      <tr><td>グロース</td><td></td><td>1500</td><td>OA100</td></tr>
     </table></body></html>
     """
     get_backup = pit._get

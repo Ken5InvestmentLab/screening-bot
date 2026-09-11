@@ -1,0 +1,56 @@
+name: No-TV Stable V41 Stress Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - "research/RUN_V41_STRESS"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pandas numpy
+      - name: Download V40 full-universe evidence
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-stable-v40-34614216028
+          path: v40
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34614216028
+      - name: Download preserved Stable teacher
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-stable-teacher-preserved
+          path: teacher
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34608845800
+      - name: Compile V41
+        run: python -m py_compile research/no_tv_v41_stress.py
+      - name: Run destructive stress audit
+        run: |
+          python research/no_tv_v41_stress.py             --min97 v40/v40_fixed_min97_both_selected.csv             --min98 v40/v40_fixed_min98_both_selected.csv             --stable6-teacher teacher/teacher_stable6_confirmed.csv             --output-dir research_artifacts/v41_stress
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-tv-stable-v41-${{ github.run_id }}
+          path: research_artifacts/v41_stress/**
+          if-no-files-found: warn
+          retention-days: 30

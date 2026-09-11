@@ -42,9 +42,11 @@ MODEL_FEATURES = [
     "evt_compression_release", "evt_pullback_resume", "event_count",
 ]
 
-PRE2026_PERIODS = [
+DEVELOPMENT_PERIODS = [
     ("2024H1", "2024-01-01", "2024-06-30"),
     ("2024H2", "2024-07-01", "2024-12-31"),
+]
+VALIDATION_PERIODS = [
     ("2025H1", "2025-01-01", "2025-06-30"),
     ("2025H2", "2025-07-01", "2025-12-31"),
 ]
@@ -292,14 +294,16 @@ def main() -> None:
     q = attach_target_end(q, raw)
     events = add_event_union(q)
 
-    pre = score_periods(events, PRE2026_PERIODS)
+    # Stage 1: compute DEVELOPMENT predictions only. Validation is not even
+    # scored until one variant has been locked from 2024.
+    dev = score_periods(events, DEVELOPMENT_PERIODS)
     # Development phase: expose ONLY 2024 metrics for all variants.
     # Validation-period metrics for rejected variants are deliberately not
     # calculated/reported, preventing a post-hoc "pick the 2025 winner" choice.
     variants = {}
     selections = {}
     for name, spec in VARIANTS.items():
-        picks = select_variant(pre, spec, pd.Index(q["date"]))
+        picks = select_variant(dev, spec, pd.Index(q["date"]))
         selections[name] = picks
         dev_h1 = period_stats(picks, "2024-01-01", "2024-06-30")
         dev_h2 = period_stats(picks, "2024-07-01", "2024-12-31")
@@ -335,15 +339,27 @@ def main() -> None:
 
     locked_picks = pd.DataFrame()
     if locked is not None:
-        locked_picks = selections[locked]
-        h1 = period_stats(locked_picks, "2025-01-01", "2025-06-30")
-        h2 = period_stats(locked_picks, "2025-07-01", "2025-12-31")
+        dev_locked = selections[locked]
+
+        # Stage 2: only after the 2024 lock exists do we compute 2025 validation
+        # predictions, and only the locked variant is applied to them.
+        validation = score_periods(events, VALIDATION_PERIODS)
+        validation_picks = select_variant(
+            validation, VARIANTS[locked], pd.Index(q["date"])
+        )
+        locked_picks = pd.concat(
+            [dev_locked, validation_picks], ignore_index=True
+        ).sort_values("date", kind="mergesort").reset_index(drop=True)
+
+        h1 = period_stats(validation_picks, "2025-01-01", "2025-06-30")
+        h2 = period_stats(validation_picks, "2025-07-01", "2025-12-31")
         report["locked_2025_validation"] = {"2025H1": h1, "2025H2": h2}
         passed = validation_pass(h1, h2)
         report["validation_pass_2025"] = bool(passed)
 
         if passed:
-            # Only now construct/use the 2026 prediction periods.
+            # Stage 3: only after the locked 2025 validation passes do we
+            # construct/use the 2026 prediction periods.
             future = score_periods(events, REPORT_2026_PERIODS)
             future_picks = select_variant(future, VARIANTS[locked], pd.Index(q["date"]))
             fixed = future_picks[

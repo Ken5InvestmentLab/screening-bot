@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install analysis dependencies
-        run: python -m pip install --disable-pip-version-check pandas numpy
+        run: python -m pip install --disable-pip-version-check pandas numpy scikit-learn
       - name: Download latest successful 1H fetch artifacts
         env:
           GH_TOKEN: ${{ github.token }}
@@ -55,6 +55,11 @@ jobs:
           python research/tentei_cloud/reconstruct_4h_from_1h.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --outdir out/reconstruction
+      - name: Causal 4H-only vs MTF Monster model
+        run: |
+          python research/tentei_cloud/mtf_monster_model.py \
+            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --outdir out/mtf
       - name: Record source fetch run
         run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
       - uses: actions/upload-artifact@v4

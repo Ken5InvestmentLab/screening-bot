@@ -1,0 +1,46 @@
+name: No-TV Stable Full-Year Parity
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - "research/RUN_STABLE_FULL_PARITY"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install dependencies
+        run: pip install pandas numpy requests
+      - name: Download frozen teacher export
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-teacher-dataset
+          path: teacher
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34456623439
+      - name: Run full-year Yahoo Stable parity audit
+        run: |
+          python research/audit_yahoo_stable_feature_parity_v2.py             --teacher teacher/teacher_bottom_confirmed.csv             --start 2025-09-11             --end 2026-09-10             --max-symbols 1500             --max-workers 24             --output-dir research_artifacts/stable_feature_parity_full
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-tv-stable-full-parity-${{ github.run_id }}
+          path: research_artifacts/stable_feature_parity_full/**
+          if-no-files-found: error
+          retention-days: 30

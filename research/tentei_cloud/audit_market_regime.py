@@ -14,6 +14,9 @@ Fixed, interpretable gates:
 - R5_B20: R5_POS and B20_50
 - R5_OR_B20: R5_POS or B20_50
 - B20_RISING: 20D breadth higher than 5 trading days earlier
+- R5_OR_RISING: keep if median 5D return is positive OR breadth is improving
+- R5_AND_RISING: stronger trend/recovery confirmation
+- RISK_OFF_ONLY: diagnostic bucket where median 5D <=0 AND breadth is not improving
 
 No threshold is fit to candidate outcomes.
 """
@@ -105,6 +108,7 @@ def gate_masks(x: pd.DataFrame):
     b5 = x["breadth5"] >= 0.50
     adv = x["adv_frac"] >= 0.50
     rising = x["breadth20_delta5"] > 0
+    risk_off = (~r5.fillna(False)) & (~rising.fillna(False))
     return {
         "ALL": pd.Series(True, index=x.index),
         "R5_POS": r5,
@@ -115,6 +119,9 @@ def gate_masks(x: pd.DataFrame):
         "R5_B20": r5 & b20,
         "R5_OR_B20": r5 | b20,
         "B20_RISING": rising,
+        "R5_OR_RISING": r5 | rising,
+        "R5_AND_RISING": r5 & rising,
+        "RISK_OFF_ONLY": risk_off,
     }
 
 

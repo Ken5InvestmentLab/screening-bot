@@ -62,11 +62,19 @@ def _get(url: str) -> str:
 def discover_archive_pages(base_url: str) -> list[str]:
     """Return current page plus all discoverable year archive pages."""
     html = _get(base_url)
-    hrefs = re.findall(r'href=["\']([^"\']*archives-\d+\.html)["\']', html, flags=re.I)
+    hrefs = re.findall(r'href=["\\']([^"\\']*archives-\\d+\\.html)["\\']', html, flags=re.I)
+    # JPX's back-number selector can store archive URLs in <option value=...>
+    # instead of anchors, so inspect both deterministic attributes.
+    values = re.findall(r'value=["\\']([^"\\']*archives-\\d+\\.html)["\\']', html, flags=re.I)
     urls = {base_url}
     urls.update(urljoin(base_url, h) for h in hrefs)
-    return sorted(urls)
-
+    urls.update(urljoin(base_url, v) for v in values)
+    out = sorted(urls)
+    print(
+        f"JPX archive discovery: base={base_url} "
+        f"html_bytes={len(html.encode('utf-8'))} pages={len(out)}"
+    )
+    return out
 
 def _row_cells(row: pd.Series) -> list[str]:
     vals: list[str] = []
@@ -135,6 +143,10 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
         tables = pd.read_html(io.StringIO(html))
     except ValueError:
         tables = []
+    print(
+        f"JPX parse page: event={event} url={url} "
+        f"html_chars={len(html)} pandas_tables={len(tables)}"
+    )
 
     for table in tables:
         for _, row in table.iterrows():
@@ -167,6 +179,21 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
                     cells.append(text)
             if cells:
                 raw_rows.append(cells)
+
+        rows_with_date = sum(_first_date(r) is not None for r in raw_rows)
+        rows_with_code = sum(_first_code(r) is not None for r in raw_rows)
+        rows_with_market = sum(bool(_market_text(r)) for r in raw_rows)
+        rows_with_date_code = sum(
+            _first_date(r) is not None and _first_code(r) is not None
+            for r in raw_rows
+        )
+        print(
+            f"JPX row diagnostics: event={event} rows={len(raw_rows)} "
+            f"date_rows={rows_with_date} code_rows={rows_with_code} "
+            f"market_rows={rows_with_market} date_code_rows={rows_with_date_code}"
+        )
+        for sample in [r for r in raw_rows if _first_date(r) is not None][:3]:
+            print("JPX date-row sample:", " | ".join(sample)[:500])
 
         for i, cells in enumerate(raw_rows):
             date = _first_date(cells)

@@ -32,6 +32,40 @@ def main() -> None:
     picks = v4.select_variant(scored, spec, pd.Index(trading_dates))
     assert list(picks["symbol"]) == ["AAA", "BBB", "AAA"]
 
+    # Stage-boundary continuity: if AAA is selected on the final 2024 trading
+    # session, it must still be blocked on the immediately following 2025
+    # trading session. This reproduces the development -> validation handoff.
+    boundary_dates = pd.to_datetime(["2024-12-30", "2025-01-06", "2025-01-07"])
+    dev_scored = pd.DataFrame([
+        {"date":"2024-12-30","symbol":"AAA","cdf_ret":0.95,"cdf_hit10":0.5,"cdf_loss10":0.05},
+        {"date":"2024-12-30","symbol":"BBB","cdf_ret":0.70,"cdf_hit10":0.5,"cdf_loss10":0.20},
+    ])
+    val_scored = pd.DataFrame([
+        {"date":"2025-01-06","symbol":"AAA","cdf_ret":0.99,"cdf_hit10":0.5,"cdf_loss10":0.01},
+        {"date":"2025-01-06","symbol":"BBB","cdf_ret":0.80,"cdf_hit10":0.5,"cdf_loss10":0.20},
+        {"date":"2025-01-07","symbol":"AAA","cdf_ret":0.98,"cdf_hit10":0.5,"cdf_loss10":0.02},
+        {"date":"2025-01-07","symbol":"CCC","cdf_ret":0.60,"cdf_hit10":0.5,"cdf_loss10":0.20},
+    ])
+    dev_scored["date"] = pd.to_datetime(dev_scored["date"])
+    val_scored["date"] = pd.to_datetime(val_scored["date"])
+    dev_picks, state = v4.select_variant(
+        dev_scored, spec, pd.Index(boundary_dates), return_state=True
+    )
+    val_picks, state = v4.select_variant(
+        val_scored,
+        spec,
+        pd.Index(boundary_dates),
+        initial_last_selected_idx=state,
+        return_state=True,
+    )
+    assert list(dev_picks["symbol"]) == ["AAA"]
+    assert list(val_picks["symbol"]) == ["BBB", "AAA"]
+
+    # Without carried state the first 2025 pick would incorrectly be AAA,
+    # proving the test actually covers the boundary-reset failure mode.
+    reset_picks = v4.select_variant(val_scored, spec, pd.Index(boundary_dates))
+    assert list(reset_picks["symbol"]) == ["AAA", "CCC"]
+
     # A missing prediction date in the supplied trading calendar must fail closed.
     bad = scored.iloc[[0]].copy()
     bad["date"] = pd.Timestamp("2025-01-13")

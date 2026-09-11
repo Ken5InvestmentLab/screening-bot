@@ -35,12 +35,25 @@ jobs:
           github-token: ${{ github.token }}
           repository: Ken5InvestmentLab/screening-bot
           run-id: 34608845800
+      - name: Normalize preserved teacher schema
+        run: |
+          python - <<'PY'
+          import numpy as np
+          import pandas as pd
+          p="teacher/teacher_bottom_confirmed.csv"
+          t=pd.read_csv(p, dtype={"symbol":str})
+          t["symbol_code"]=t["symbol"].astype(str).str.replace(r"\\.0$","",regex=True).str.strip()
+          t["signal_date"]=pd.to_datetime(t["date"],errors="coerce").dt.strftime("%Y-%m-%d")
+          rt=pd.to_datetime(t["received_at"],errors="coerce")
+          t["session"]=np.where(rt.dt.hour<14,9,13)
+          t.to_csv("teacher/teacher_bottom_normalized.csv",index=False)
+          PY
       - name: Compile V40
         run: |
           python -m py_compile             research/no_tv_v10_standalone.py             research/no_tv_v13_official_daily.py             research/no_tv_v11_independent_selector.py             research/no_tv_v11_1_risk_guard.py             research/no_tv_v18_rank_rolling.py             research/no_tv_v29_purged_rolling.py             research/no_tv_v31_prequential.py             research/no_tv_v32_watchlist_authoritative.py             research/no_tv_v40_full_universe_fixed.py
       - name: Run full-universe fixed audit
         run: |
-          python research/no_tv_v40_full_universe_fixed.py             --teacher teacher/teacher_bottom_confirmed.csv             --watchlist-repo tv-watchlist-builder-history             --max-symbols 0             --max-workers 24             --output-dir research_artifacts/v40_full_universe_fixed
+          python research/no_tv_v40_full_universe_fixed.py             --teacher teacher/teacher_bottom_normalized.csv             --watchlist-repo tv-watchlist-builder-history             --max-symbols 0             --max-workers 24             --output-dir research_artifacts/v40_full_universe_fixed
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4

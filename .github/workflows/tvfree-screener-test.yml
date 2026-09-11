@@ -80,6 +80,8 @@ jobs:
         run: python tvfree_screener/v4_event_quality_selftest.py
       - name: Independent 2024 extension synthetic self-check
         run: python tvfree_screener/v3_pre2026_extension_selftest.py
+      - name: Build current JPX universe snapshot preflight
+        run: python tvfree_screener/jpx_current_snapshot.py
       - name: Purged walk-forward backtest
         run: >-
           python tvfree_screener/bootstrap.py

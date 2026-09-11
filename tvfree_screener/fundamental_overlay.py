@@ -65,7 +65,8 @@ def normalize_snapshots(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for c in numeric:
         z[c] = pd.to_numeric(z[c], errors="coerce")
-    z["ms_warrant_flag"] = z["ms_warrant_flag"].fillna(False).astype(bool)
+    # Classification may itself be unknown. Never turn missing MS-warrant evidence into False.
+    z["ms_warrant_flag"] = z["ms_warrant_flag"].astype("boolean")
     return z.sort_values(["symbol", "available_date"], kind="mergesort").reset_index(drop=True)
 
 
@@ -141,34 +142,89 @@ def attach_point_in_time_snapshot(
     return pd.concat(parts, ignore_index=True).sort_values(["date", "symbol"], kind="mergesort")
 
 def add_overlay_metrics(df: pd.DataFrame) -> pd.DataFrame:
+    """Add transparent metrics while preserving unknown data as unknown."""
     z = df.copy()
-    denom = pd.to_numeric(z["shares_outstanding"], errors="coerce").replace(0, np.nan)
-    remaining = pd.to_numeric(z["remaining_warrant_shares"], errors="coerce")
-    z["dilution_ratio"] = remaining / denom
-    z["equity_ratio"] = pd.to_numeric(z["equity"], errors="coerce") / pd.to_numeric(z["assets"], errors="coerce").replace(0, np.nan)
-    z["operating_margin"] = pd.to_numeric(z["operating_income"], errors="coerce") / pd.to_numeric(z["revenue"], errors="coerce").replace(0, np.nan)
 
-    # Transparent risk flags rather than an opaque learned score.
-    z["risk_equity_thin"] = z["equity_ratio"] < MIN_EQUITY_RATIO
-    z["risk_operating_loss"] = pd.to_numeric(z["operating_income"], errors="coerce") < 0
-    z["risk_net_loss"] = pd.to_numeric(z["net_income"], errors="coerce") < 0
-    z["risk_negative_ocf"] = pd.to_numeric(z["operating_cf"], errors="coerce") < 0
+    shares = pd.to_numeric(z["shares_outstanding"], errors="coerce")
+    remaining = pd.to_numeric(z["remaining_warrant_shares"], errors="coerce")
+    assets = pd.to_numeric(z["assets"], errors="coerce")
+    equity = pd.to_numeric(z["equity"], errors="coerce")
+    revenue = pd.to_numeric(z["revenue"], errors="coerce")
+    operating_income = pd.to_numeric(z["operating_income"], errors="coerce")
+    net_income = pd.to_numeric(z["net_income"], errors="coerce")
+    operating_cf = pd.to_numeric(z["operating_cf"], errors="coerce")
+
+    z["dilution_known"] = (shares.notna() & (shares > 0) & remaining.notna()).astype("boolean")
+    z["financial_known"] = (
+        assets.notna()
+        & (assets > 0)
+        & equity.notna()
+        & operating_income.notna()
+        & net_income.notna()
+        & operating_cf.notna()
+    ).astype("boolean")
+    z["combined_known"] = (z["dilution_known"] & z["financial_known"]).astype("boolean")
+
+    z["dilution_ratio"] = remaining / shares.where(shares > 0)
+    z.loc[~z["dilution_known"].fillna(False), "dilution_ratio"] = np.nan
+    z["equity_ratio"] = equity / assets.where(assets > 0)
+    z["operating_margin"] = operating_income / revenue.replace(0, np.nan)
+
+    # Risk flags are nullable booleans. If the required financial snapshot is
+    # incomplete, the flags, count and exclusion decision remain unknown.
+    known = z["financial_known"].fillna(False)
+    for name, values in {
+        "risk_equity_thin": z["equity_ratio"] < MIN_EQUITY_RATIO,
+        "risk_operating_loss": operating_income < 0,
+        "risk_net_loss": net_income < 0,
+        "risk_negative_ocf": operating_cf < 0,
+    }.items():
+        out = pd.Series(pd.NA, index=z.index, dtype="boolean")
+        out.loc[known] = values.loc[known].astype(bool)
+        z[name] = out
+
     risk_cols = ["risk_equity_thin", "risk_operating_loss", "risk_net_loss", "risk_negative_ocf"]
-    z["financial_risk_count"] = z[risk_cols].fillna(False).sum(axis=1).astype(int)
-    z["financial_risk_exclude"] = z["financial_risk_count"] >= MAX_NEGATIVE_SIGNAL_COUNT
+    counts = z[risk_cols].astype("Int64").sum(axis=1, min_count=len(risk_cols)).astype("Int64")
+    z["financial_risk_count"] = counts
+    exclude = pd.Series(pd.NA, index=z.index, dtype="boolean")
+    exclude.loc[known] = (counts.loc[known] >= MAX_NEGATIVE_SIGNAL_COUNT).astype(bool)
+    z["financial_risk_exclude"] = exclude
     return z
 
 
 def build_lanes(signals: pd.DataFrame, snapshots: pd.DataFrame) -> dict[str, pd.DataFrame]:
+    """Build coverage-matched research lanes.
+
+    Unknown observations are never admitted to a filtered lane. Each filtered
+    lane has a matching baseline drawn from the exact population for which the
+    required overlay is known, preventing missing-data selection from looking
+    like alpha.
+    """
     z = add_overlay_metrics(attach_point_in_time_snapshot(signals, snapshots))
-    lanes: dict[str, pd.DataFrame] = {"baseline": z.copy()}
+    dilution_known = z["dilution_known"].fillna(False)
+    financial_known = z["financial_known"].fillna(False)
+    combined_known = z["combined_known"].fillna(False)
+    financial_safe = z["financial_risk_exclude"].eq(False).fillna(False)
+
+    lanes: dict[str, pd.DataFrame] = {
+        "baseline": z.copy(),
+        "dilution_known_baseline": z[dilution_known].copy(),
+        "dilution_unknown": z[~dilution_known].copy(),
+        "financial_known_baseline": z[financial_known].copy(),
+        "financial_unknown": z[~financial_known].copy(),
+        "combined_known_baseline": z[combined_known].copy(),
+        "combined_unknown": z[~combined_known].copy(),
+    }
     for limit in DILUTION_LIMITS:
-        # Missing dilution data is retained, not silently treated as safe.
-        lanes[f"dilution_le_{limit:.2f}"] = z[(z["dilution_ratio"].isna()) | (z["dilution_ratio"] <= limit)].copy()
-    lanes["financial_risk_filter"] = z[~z["financial_risk_exclude"]].copy()
+        lanes[f"dilution_le_{limit:.2f}"] = z[
+            dilution_known & (z["dilution_ratio"] <= limit)
+        ].copy()
+
+    lanes["financial_risk_filter"] = z[financial_known & financial_safe].copy()
     lanes["combined_dilution35_finrisk"] = z[
-        ((z["dilution_ratio"].isna()) | (z["dilution_ratio"] <= 0.35))
-        & (~z["financial_risk_exclude"])
+        combined_known
+        & (z["dilution_ratio"] <= 0.35)
+        & financial_safe
     ].copy()
     return lanes
 

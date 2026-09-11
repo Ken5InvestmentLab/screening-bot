@@ -46,6 +46,23 @@ SNAPSHOT_REQUIRED = [
 ]
 
 
+def _nullable_bool(series: pd.Series) -> pd.Series:
+    """Parse common persisted boolean forms without converting unknown to False."""
+    def one(value: object) -> object:
+        if value is None or pd.isna(value):
+            return pd.NA
+        if isinstance(value, (bool, np.bool_)):
+            return bool(value)
+        s = str(value).strip().lower()
+        if s in {"true", "1", "yes", "y"}:
+            return True
+        if s in {"false", "0", "no", "n"}:
+            return False
+        return pd.NA
+
+    return series.map(one).astype("boolean")
+
+
 def normalize_snapshots(df: pd.DataFrame) -> pd.DataFrame:
     missing = [c for c in SNAPSHOT_REQUIRED if c not in df.columns]
     if missing:
@@ -65,8 +82,9 @@ def normalize_snapshots(df: pd.DataFrame) -> pd.DataFrame:
     ]
     for c in numeric:
         z[c] = pd.to_numeric(z[c], errors="coerce")
-    # Classification may itself be unknown. Never turn missing MS-warrant evidence into False.
-    z["ms_warrant_flag"] = z["ms_warrant_flag"].astype("boolean")
+    # Classification may itself be unknown. Never turn missing or unrecognized
+    # MS-warrant evidence into False.
+    z["ms_warrant_flag"] = _nullable_bool(z["ms_warrant_flag"])
     return z.sort_values(["symbol", "available_date"], kind="mergesort").reset_index(drop=True)
 
 
@@ -154,7 +172,9 @@ def add_overlay_metrics(df: pd.DataFrame) -> pd.DataFrame:
     net_income = pd.to_numeric(z["net_income"], errors="coerce")
     operating_cf = pd.to_numeric(z["operating_cf"], errors="coerce")
 
-    z["dilution_known"] = (shares.notna() & (shares > 0) & remaining.notna()).astype("boolean")
+    z["dilution_known"] = (
+        shares.notna() & (shares > 0) & remaining.notna() & (remaining >= 0)
+    ).astype("boolean")
     z["financial_known"] = (
         assets.notna()
         & (assets > 0)

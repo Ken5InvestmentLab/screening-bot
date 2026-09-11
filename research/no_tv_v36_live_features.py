@@ -40,7 +40,7 @@ def build_current_rows(code: str, yahoo_symbol: str, name: str, market: str, dec
     # Yahoo Japan equities require the exchange suffix (normally .T). Keep the
     # canonical JPX code separately for output/model identity.
     with ThreadPoolExecutor(max_workers=2) as ex:
-        fh = ex.submit(v13.fetch_interval, code, "1h", "1mo")
+        fh = ex.submit(v13.fetch_interval, code, "1h", "3mo")
         fd = ex.submit(v13.fetch_interval, code, "1d", "1y")
         hc, he = fh.result(); dc, de = fd.result()
     if he:

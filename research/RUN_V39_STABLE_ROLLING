@@ -1,0 +1,3 @@
+trigger: v39-rolling-v1
+purged_5bd: true
+production_writes: false

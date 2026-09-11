@@ -53,22 +53,44 @@ def _headers() -> dict[str, str]:
     }
 
 
+def _decode_html(payload: bytes, fallback_encoding: str | None = None) -> str:
+    """Decode JPX HTML deterministically, preferring the site's UTF-8 content."""
+    try:
+        return payload.decode("utf-8")
+    except UnicodeDecodeError:
+        return payload.decode(fallback_encoding or "cp932", errors="strict")
+
+
 def _get(url: str) -> str:
     r = requests.get(url, headers=_headers(), timeout=60)
     r.raise_for_status()
-    return r.text
+    return _decode_html(r.content, r.apparent_encoding)
 
 
-def discover_archive_pages(base_url: str) -> list[str]:
-    """Return current page plus all discoverable year archive pages."""
+def discover_archive_pages(base_url: str, start_year: int, anchor_year: int) -> list[str]:
+    """Return current page plus expected JPX year archives.
+
+    JPX uses sequential annual archive suffixes: archive-01 is the immediately
+    preceding calendar year, archive-02 two years back, etc. We still inspect
+    explicit href/value attributes, but generate the required 2022+ archive URLs
+    deterministically so JavaScript/select markup changes cannot silently drop
+    historical years. A missing generated page raises later through _get.
+    """
     html = _get(base_url)
     hrefs = re.findall(r"href=['\\\"]([^'\\\"]*archives-\\d+\\.html)['\\\"]", html, flags=re.I)
-    # JPX's back-number selector can store archive URLs in <option value=...>
-    # instead of anchors, so inspect both deterministic attributes.
     values = re.findall(r"value=['\\\"]([^'\\\"]*archives-\\d+\\.html)['\\\"]", html, flags=re.I)
     urls = {base_url}
     urls.update(urljoin(base_url, h) for h in hrefs)
     urls.update(urljoin(base_url, v) for v in values)
+
+    years_back = max(anchor_year - start_year, 0)
+    for offset in range(1, years_back + 1):
+        if "/stocks/new/" in base_url:
+            name = f"00-archives-{offset:02d}.html"
+        else:
+            name = f"archives-{offset:02d}.html"
+        urls.add(urljoin(base_url, name))
+
     out = sorted(urls)
     print(
         f"JPX archive discovery: base={base_url} "
@@ -220,7 +242,7 @@ def collect_events(start_year: int, anchor_date: pd.Timestamp) -> tuple[pd.DataF
     all_events: list[Event] = []
     unknown: list[dict] = []
     for base, event in [(NEW_URL, "listing"), (DELIST_URL, "delisting")]:
-        for url in discover_archive_pages(base):
+        for url in discover_archive_pages(base, start_year, anchor_date.year):
             ev, un = parse_event_page(url, event, start_year, anchor_date)
             all_events.extend(ev)
             unknown.extend(un)

@@ -50,6 +50,11 @@ jobs:
           python research/tentei_cloud/evaluate_1h_precursors.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --outdir out/precursor
+      - name: Reconstruct 4H/session candidates from 1H
+        run: |
+          python research/tentei_cloud/reconstruct_4h_from_1h.py \
+            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --outdir out/reconstruction
       - name: Record source fetch run
         run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
       - uses: actions/upload-artifact@v4

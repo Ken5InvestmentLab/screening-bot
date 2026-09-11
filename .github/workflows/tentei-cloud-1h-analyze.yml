@@ -1,0 +1,54 @@
+name: Tentei Cloud 1H Research Analyze
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/tentei-cloud-mtf
+    paths:
+      - 'research/tentei_cloud/RUN_1H_ANALYZE'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/tentei-cloud-mtf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install analysis dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy
+      - name: Download latest successful 1H fetch artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow "tentei-cloud-1h-research.yml" \
+            --branch "research/tentei-cloud-mtf" \
+            --event push \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$RUN_ID"
+          echo "$RUN_ID" > latest_fetch_run_id.txt
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir downloaded
+      - name: Evaluate Core and Monster lanes
+        run: |
+          python research/tentei_cloud/evaluate_1h_universe.py \
+            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --outdir out
+          cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tentei-cloud-1h-analysis
+          path: out/*
+          if-no-files-found: error
+          retention-days: 14

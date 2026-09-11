@@ -194,3 +194,18 @@ Run `34560020086`, artifact `10184003302`, head `ca169e64822cd4afa0f1fd2a3fb0807
 Hypothesis: event-specific monthly causal ML -> training-score CDF -> recent-40 Meta -> Attack when ON / Deep Reversal when OFF.
 All 8 fixed combinations failed the 2024 development gate; `development_ranked=[]`, `validation_opened=[]`, `locked_candidate=null`. Typical 2024 pooled means ranged roughly -0.18% to +0.17%; no candidate captured a +20% winner. 2025/2026 remained unopened.
 Decision: reject this event-constrained relative-ranking reconstruction. The next relative-tail test removes the fixed event-lane restriction and predicts daily future top-1% / top-0.25% ranks across the broad eligible universe.
+
+
+## V6 cross-sectional relative-tail research — REJECTED
+Implementation `0271a508d2b98849df65d0953a03006fcaadfc19`; isolated workflow `87233fe0217b945ff7f1b802c5e751f23df2ec30`.
+Authoritative run `34560206590`, artifact `10184090465`, fixed run-80 input.
+
+Hypothesis: monthly causal models predict which eligible names will finish in the same-day future 5BD top 1% / top 0.25%, with training-CDF sparse gates. This restored the historical clue of monthly relative ranking but used the lighter 26-feature candidate set.
+
+All four variants failed 2024 development; `development_ranked=[]`, `validation_opened=[]`, `locked_candidate=null`; 2025/2026 remained unopened.
+- rel1_q999: 2024 pooled n=143, mean -1.05%, +20% 0%.
+- rel025_q999: n=156, mean -0.12%, +20% 0%.
+- relblend_q999: n=152, mean -0.72%, +20% 0%.
+- relblend_q9995: n=107, mean -0.78%, +20% 0%.
+
+Decision: reject this light-feature relative-tail family. The positive-skew objective remains valid. Next materially different test should use the full historical 45-feature set and avoid suppressing Attack candidates with a loss-probability penalty; risk should be enforced as a validation gate rather than directly subtracting explosive high-volatility candidates from the ranking.

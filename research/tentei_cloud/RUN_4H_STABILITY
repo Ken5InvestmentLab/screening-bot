@@ -1,0 +1,3 @@
+trigger: 2026-09-11 seed-stability-v1
+source_fetch_run: 34592896202
+protocol: fixed 4H-only model, 7 seeds, 2025-H2 only, no 2026 scoring

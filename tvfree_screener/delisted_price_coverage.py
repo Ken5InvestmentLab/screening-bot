@@ -168,7 +168,7 @@ def probe_yahoo(
     for c in [
         "price_rows", "first_price_date", "last_price_date_on_or_before_delist",
         "last_price_gap_days", "near_delist_rows", "post_delist_rows",
-        "coverage_status", "usable_near_delist",
+        "coverage_status", "usable_near_delist", "probe_error",
     ]:
         out[c] = pd.NA
 
@@ -182,24 +182,39 @@ def probe_yahoo(
         idxs = probe_idx[start:start + batch_size]
         tickers = out.loc[idxs, "ticker"].tolist()
         data = None
-        try:
-            data = yf.download(
-                tickers,
-                start=pd.Timestamp(start_date).strftime("%Y-%m-%d"),
-                end=end_date,
-                interval="1d",
-                group_by="ticker",
-                auto_adjust=False,
-                actions=False,
-                threads=True,
-                progress=False,
-                timeout=30,
-            )
-        except Exception:
+        errors: list[str] = []
+        for attempt in range(3):
+            try:
+                data = yf.download(
+                    tickers,
+                    start=pd.Timestamp(start_date).strftime("%Y-%m-%d"),
+                    end=end_date,
+                    interval="1d",
+                    group_by="ticker",
+                    auto_adjust=False,
+                    actions=False,
+                    threads=True,
+                    progress=False,
+                    timeout=30,
+                )
+                if data is not None and not data.empty:
+                    break
+            except Exception as exc:
+                errors.append(f"{type(exc).__name__}: {exc}")
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+
+        if data is None:
             data = pd.DataFrame()
+        transport_failed = bool(errors and data.empty)
 
         for idx in idxs:
             ticker = str(out.at[idx, "ticker"])
+            if transport_failed:
+                out.at[idx, "coverage_status"] = "probe_error"
+                out.at[idx, "usable_near_delist"] = False
+                out.at[idx, "probe_error"] = errors[-1]
+                continue
             frame = _extract_ticker_frame(data, ticker)
             assessed = assess_price_frame(frame, pd.Timestamp(out.at[idx, "delisting_date"]))
             for key, value in assessed.items():
@@ -223,6 +238,7 @@ def summarize(result: pd.DataFrame) -> dict:
         "identity_quarantined": int(result["identity_quarantined"].sum()) if not result.empty else 0,
         "probed_events": int((~result["identity_quarantined"]).sum()) if not result.empty else 0,
         "usable_near_delist": int(result["usable_near_delist"].fillna(False).sum()) if not result.empty else 0,
+        "probe_errors": int((result["coverage_status"] == "probe_error").sum()) if not result.empty else 0,
         "coverage_status_counts": {str(k): int(v) for k, v in counts.items()},
         "near_delist_window_calendar_days": NEAR_DELIST_CALENDAR_DAYS,
         "max_last_price_gap_days": MAX_LAST_PRICE_GAP_DAYS,
@@ -231,8 +247,8 @@ def summarize(result: pd.DataFrame) -> dict:
             "It does not yet prove complete OHLCV coverage for every historical membership day."
         ),
         "acceptance_rule": (
-            "identity-quarantined or suspicious post-delisting series must never be silently "
-            "joined into historical backtests"
+            "identity-quarantined, suspicious post-delisting, or probe-error rows must never be silently "
+            "joined into historical backtests; transport failures are not evidence of missing Yahoo history"
         ),
     }
 

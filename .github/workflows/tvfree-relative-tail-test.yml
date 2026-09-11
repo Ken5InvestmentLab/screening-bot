@@ -1,4 +1,5 @@
 name: TV-free relative tail research TEST
+# Isolated PR #13 research; no production writes.
 
 on:
   workflow_dispatch:

@@ -110,6 +110,43 @@ With 5BD cooldown, Feb-Aug:
 
 This is not yet competitive with the historical +5.42% V3 target. Keep separate SAFE and TAIL lanes rather than flattening them too early.
 
+
+### MONSTER lane — range threshold sweep
+Base conditions are the TAIL structure, but the session range threshold is raised to explicitly target explosive moves:
+- close <= EMA75
+- MACD histogram <= 0
+- close > Bollinger(20) midline
+- close <= open
+- session high-low range / close >= threshold
+- same production-like universe filters and 5BD symbol cooldown
+
+Range 4.0% exploratory version:
+- Feb-Aug n23
+- average +5.94%
+- median +1.02%
+- win rate 56.52%
+- >=10% 26.09%
+- >=20% 13.04%
+- >=30% 8.70%
+- <=-10% 4.35%
+- later Jul-Aug block n14, average +6.42%, median +1.42%, win 64.29%
+- top-1 removed all-period average +3.57%
+- top-3 removed +1.04%
+- top-5 removed -0.71%
+
+This is intentionally tail-dependent and is therefore similar in character to historical V3, but sample distribution is thin (early Train only 3 picks). It is NOT a final winner yet.
+
+Range sweep summary:
+- 2.5%: n66, avg +4.04%, win 46.97%, >=20% 7.58%, top-5 removed +0.25%
+- 3.0%: n47, avg +3.79%, win 48.94%, >=20% 8.51%, top-5 removed +0.12%
+- 3.5%: n36, avg +3.64%, win 50.00%, >=20% 8.33%, top-5 removed -0.59%
+- 4.0%: n23, avg +5.94%, win 56.52%, >=20% 13.04%, top-5 removed -0.71%
+- 4.5%: n17, avg +4.60%, win 52.94%
+- 5.0%: n15, avg +1.33%
+- 6.0%: n9, avg +0.61%
+
+Interpretation: 4% maximizes explosive average but 2.5-3% supplies more observations. Treat them as separate Monster / Monster-Lite candidates rather than choosing a single threshold from the already-inspected Jul-Aug block.
+
 ## Regime finding
 Simple market-regime filters changed behavior materially across Feb-Jun vs Jul-Aug. Several rules that looked excellent in early samples stopped firing later. Therefore:
 - do not hard-code a month/regime threshold just because it improves one block;

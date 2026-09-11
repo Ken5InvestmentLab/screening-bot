@@ -218,7 +218,9 @@ def select_variant(
     scored: pd.DataFrame,
     spec: dict[str, float],
     trading_dates: pd.Index,
-) -> pd.DataFrame:
+    initial_last_selected_idx: dict[str, int] | None = None,
+    return_state: bool = False,
+) -> pd.DataFrame | tuple[pd.DataFrame, dict[str, int]]:
     z = scored.copy()
     z["v4_score"] = (
         spec["ret"] * z["cdf_ret"]
@@ -229,7 +231,10 @@ def select_variant(
     rows = []
     dates = pd.Index(pd.to_datetime(trading_dates).dropna().unique()).sort_values()
     date_idx = {pd.Timestamp(d): i for i, d in enumerate(dates)}
-    last_selected_idx: dict[str, int] = {}
+    # Carry selection state across development/validation/reporting boundaries.
+    # The state stores global trading-calendar indices, so only an immediately
+    # prior trading-session selection blocks the same symbol.
+    last_selected_idx: dict[str, int] = dict(initial_last_selected_idx or {})
 
     for date, day in z.sort_values(
         ["date", "v4_score"], ascending=[True, False]
@@ -247,7 +252,10 @@ def select_variant(
         if chosen is not None:
             last_selected_idx[str(chosen["symbol"])] = current_idx
             rows.append(chosen)
-    return pd.DataFrame(rows).reset_index(drop=True)
+    picks = pd.DataFrame(rows).reset_index(drop=True)
+    if return_state:
+        return picks, last_selected_idx
+    return picks
 
 
 def period_stats(picks: pd.DataFrame, a: str, b: str) -> dict:
@@ -339,13 +347,22 @@ def main() -> None:
 
     locked_picks = pd.DataFrame()
     if locked is not None:
-        dev_locked = selections[locked]
+        # Re-select the locked development lane while retaining its terminal
+        # cooldown state for the first 2025 trading session. Development metrics
+        # above remain unchanged because this uses the same locked specification.
+        dev_locked, selection_state = select_variant(
+            dev, VARIANTS[locked], pd.Index(q["date"]), return_state=True
+        )
 
         # Stage 2: only after the 2024 lock exists do we compute 2025 validation
         # predictions, and only the locked variant is applied to them.
         validation = score_periods(events, VALIDATION_PERIODS)
-        validation_picks = select_variant(
-            validation, VARIANTS[locked], pd.Index(q["date"])
+        validation_picks, selection_state = select_variant(
+            validation,
+            VARIANTS[locked],
+            pd.Index(q["date"]),
+            initial_last_selected_idx=selection_state,
+            return_state=True,
         )
         locked_picks = pd.concat(
             [dev_locked, validation_picks], ignore_index=True
@@ -361,7 +378,13 @@ def main() -> None:
             # Stage 3: only after the locked 2025 validation passes do we
             # construct/use the 2026 prediction periods.
             future = score_periods(events, REPORT_2026_PERIODS)
-            future_picks = select_variant(future, VARIANTS[locked], pd.Index(q["date"]))
+            future_picks, selection_state = select_variant(
+                future,
+                VARIANTS[locked],
+                pd.Index(q["date"]),
+                initial_last_selected_idx=selection_state,
+                return_state=True,
+            )
             fixed = future_picks[
                 (future_picks["date"] >= "2026-03-01")
                 & (future_picks["date"] <= "2026-08-31")

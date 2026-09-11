@@ -23,19 +23,18 @@ on:
         description: Picks per trading day in walk-forward
         required: true
         default: "1"
-  # Quota-protection gate:
-  # ordinary research commits must NOT start a hosted runner.
-  # To intentionally run this heavy TEST workflow, update the dedicated
-  # trigger file tvfree_screener/RUN_HEAVY_TEST.
+  # Public-repository TEST workflow: standard GitHub-hosted runners are
+  # free, so research changes may run automatically again.
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - "tvfree_screener/RUN_HEAVY_TEST"
+      - "tvfree_screener/**"
+      - ".github/workflows/tvfree-screener-test.yml"
 
 permissions:
   contents: read
 
-# Never allow duplicate heavy research runs to burn private Actions quota.
+# Keep only the newest heavy research run for this PR/ref.
 concurrency:
   group: tvfree-heavy-test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

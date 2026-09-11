@@ -303,6 +303,26 @@ def validate_events(events: pd.DataFrame, unknown: pd.DataFrame) -> dict:
     }
 
 
+def apply_event_year_coverage_gate(
+    validation: dict,
+    events: pd.DataFrame,
+    start_year: int,
+    anchor_year: int,
+) -> dict:
+    """Fail closed when any required calendar year has no parsed JPX events."""
+    parsed_years = sorted(set(pd.to_datetime(events["event_date"]).dt.year.astype(int)))
+    required_years = list(range(start_year, anchor_year + 1))
+    missing_years = sorted(set(required_years) - set(parsed_years))
+    out = dict(validation)
+    out["parsed_event_years"] = parsed_years
+    out["required_event_years"] = required_years
+    out["missing_event_years"] = missing_years
+    out["valid_for_membership_reconstruction"] = bool(
+        out.get("valid_for_membership_reconstruction", False) and not missing_years
+    )
+    return out
+
+
 def members_as_of(current_codes: set[str], events: pd.DataFrame, as_of: pd.Timestamp, anchor_date: pd.Timestamp) -> set[str]:
     """Reverse official listing state changes from anchor_date back to as_of."""
     if as_of > anchor_date:
@@ -341,16 +361,11 @@ def main() -> None:
     )
 
     events, unknown = collect_events(start.year, anchor)
-    validation = validate_events(events, unknown)
-
-    parsed_years = sorted(set(pd.to_datetime(events["event_date"]).dt.year.astype(int)))
-    required_years = list(range(start.year, anchor.year + 1))
-    missing_years = sorted(set(required_years) - set(parsed_years))
-    validation["parsed_event_years"] = parsed_years
-    validation["required_event_years"] = required_years
-    validation["missing_event_years"] = missing_years
-    validation["valid_for_membership_reconstruction"] = bool(
-        validation["valid_for_membership_reconstruction"] and not missing_years
+    validation = apply_event_year_coverage_gate(
+        validate_events(events, unknown),
+        events,
+        start.year,
+        anchor.year,
     )
 
     OUT.mkdir(parents=True, exist_ok=True)
@@ -377,8 +392,9 @@ def main() -> None:
             "jpx_membership_monthly_counts.csv",
         ],
         "acceptance_rule": (
-            "membership state may be used only when unknown_market_rows=0 and "
-            "same_day_code_collisions=0; temporal code reuse must be quarantined "
+            "membership state may be used only when unknown_market_rows=0, "
+            "same_day_code_collisions=0, and missing_event_years=[]; "
+            "temporal code reuse must be quarantined "
             "before mapping historical members to Yahoo ticker identity"
         ),
         "limitation": (

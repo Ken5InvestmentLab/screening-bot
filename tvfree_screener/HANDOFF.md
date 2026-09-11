@@ -221,3 +221,19 @@ Results:
 - 2026 Mar-Aug defensive n=97, mean -0.11%, win 48.5%.
 
 Decision: the historical +5.42% result is not explained by the old rolling-3y cache alone. The missing edge must be in the unrecovered logic/labels/ranking/Meta/Attack construction, not merely the later fixed-start data contract.
+
+
+## V7 full-feature pure relative-tail research — TAIL DETECTION CONFIRMED, FINAL LANE REJECTED
+Implementation `5fd8cdb00cd4deb617b7d3edfc42ee6385a00891`; isolated workflow `cddceaf066c8870a00a9a80d66f06dc44c9f358c`.
+Authoritative run `34560510106`, artifact `10184212775`, fixed run-80 input.
+
+Hypothesis: restore the historical Short ingredients most directly: all 45 `run.py` signal-time features, monthly causal retraining, future same-day top-1% / top-0.25% relative labels, pure positive-tail ranking with no loss penalty in the Attack score, one-business-day same-symbol cooldown, next-open -> 5BD.
+
+All final variants failed the 2024 acceptance gate, so 2025 and 2026 remained unopened. However unlike V5/V6, V7 materially recovered **prospective right-tail concentration**:
+- `full_top025_q999`: 2024 pooled n=192, mean +0.12%, win 38.5%, +20% 15.1%, +50% 5.73%, +100% 1.04%, max +173.6%, -10% 40.6%.
+- `full_top1_q999`: n=186, mean -0.39%, +20% 14.5%, +50% 7.53%, +100% 1.08%, max +105.4%, -10% 40.3%.
+- `full_blend_q9995`: n=138, mean -0.62%, +20% 17.4%, +50% 5.07%, +100% 1.45%, max +173.6%, -10% 45.7%.
+
+Interpretation: daily OHLCV + the full 45-feature monthly relative model can materially concentrate future large winners, but raw tail ranking also admits too many large losers. Do **not** discard the Tail detector merely because its unfiltered mean is weak; preserve it as a research component. The next causal hypothesis is a separate downstream Quality/Meta layer that filters false positives while leaving Tail ranking itself untouched.
+
+The user's accepted objective is positive skew: a small number of very large winners may legitimately lift average return if the pattern is prospectively detectable. Future evaluations should report mean, +20/+50/+100 capture, loss10, and regime stability; median is secondary rather than a reason by itself to reject positive skew.

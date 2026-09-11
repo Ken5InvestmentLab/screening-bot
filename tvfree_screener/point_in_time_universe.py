@@ -105,14 +105,37 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
     """Parse code/date/market from JPX HTML tables without relying on fragile headers."""
     html = _get(url)
     events: list[Event] = []
-    unknown: list[dict] = []
+    resolved: set[tuple[pd.Timestamp, str, str]] = set()
+    unknown_by_key: dict[tuple[pd.Timestamp, str, str], dict] = {}
+
+    def record(date: pd.Timestamp, code: str, market: str) -> None:
+        key = (date, code, event)
+        if key in resolved:
+            return
+        if EXCLUDED_MARKET_RE.search(market):
+            unknown_by_key.pop(key, None)
+            resolved.add(key)
+            return
+        if DOMESTIC_MARKET_RE.search(market):
+            unknown_by_key.pop(key, None)
+            resolved.add(key)
+            events.append(Event(date, code, event, market, url))
+            return
+        # Keep an unresolved candidate only until another parser path resolves
+        # the exact same date/code/event with a valid market classification.
+        unknown_by_key[key] = {
+            "event_date": date.strftime("%Y-%m-%d"),
+            "code": code,
+            "event": event,
+            "market": market,
+            "source_url": url,
+        }
+
     try:
         tables = pd.read_html(io.StringIO(html))
     except ValueError:
         tables = []
 
-    seen: set[tuple[pd.Timestamp, str, str]] = set()
-    unknown_seen: set[tuple[pd.Timestamp, str, str]] = set()
     for table in tables:
         for _, row in table.iterrows():
             cells = _row_cells(row)
@@ -120,31 +143,16 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
             code = _first_code(cells)
             if date is None or code is None or date.year < start_year or date > end_date:
                 continue
-            market = _market_text(cells)
-            key = (date, code, event)
-            if key in seen:
-                continue
-            seen.add(key)
-            if EXCLUDED_MARKET_RE.search(market):
-                continue
-            if not DOMESTIC_MARKET_RE.search(market):
-                if key not in unknown_seen:
-                    unknown_seen.add(key)
-                    unknown.append({
-                        "event_date": date.strftime("%Y-%m-%d"),
-                        "code": code,
-                        "event": event,
-                        "market": market,
-                        "source_url": url,
-                    })
-                continue
-            events.append(Event(date, code, event, market, url))
+            record(date, code, _market_text(cells))
 
-    # JPX occasionally changes table markup in ways that pandas.read_html can
-    # normalize unexpectedly. Use the same official HTML as a deterministic
-    # second parser by reading direct table-row cells with lxml. This is a
-    # fallback/verification path, not a relaxed acceptance rule: market and date
-    # validation below remain identical and ambiguous rows still fail closed.
+    # JPX's stock pages can render one issuer across two physical table rows:
+    # row 1 contains date/company/code, while row 2 contains market and offer
+    # details. Parse direct HTML rows as a deterministic second path and pair
+    # only an immediately following row that has market text and no new date.
+    #
+    # Do NOT require "_first_code(next_row) is None": offer prices such as 1500
+    # are also four alphanumeric characters and would be falsely classified as
+    # security codes by the generic cell-level code recognizer.
     try:
         from lxml import html as lxml_html
 
@@ -154,17 +162,12 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
             cells: list[str] = []
             for cell in tr.xpath("./th|./td"):
                 text = " ".join(str(x).strip() for x in cell.itertext() if str(x).strip())
-                text = re.sub(r"\\s+", " ", text).strip()
+                text = re.sub(r"\s+", " ", text).strip()
                 if text:
                     cells.append(text)
             if cells:
                 raw_rows.append(cells)
 
-        # JPX's stock listing pages may render one issuer across two physical
-        # table rows: row 1 carries listing date/company/code while row 2 carries
-        # market classification. Pair only an immediately following row that
-        # has market text but no competing date/code. This is structural parsing,
-        # not fuzzy guessing; all normal date/code/market acceptance rules remain.
         for i, cells in enumerate(raw_rows):
             date = _first_date(cells)
             code = _first_code(cells)
@@ -175,36 +178,16 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
             if not market and i + 1 < len(raw_rows):
                 next_cells = raw_rows[i + 1]
                 next_date = _first_date(next_cells)
-                next_code = _first_code(next_cells)
                 next_market = _market_text(next_cells)
-                if next_date is None and next_code is None and next_market:
+                if next_date is None and next_market:
                     market = next_market
-
-            key = (date, code, event)
-            if key in seen:
-                continue
-            seen.add(key)
-            if EXCLUDED_MARKET_RE.search(market):
-                continue
-            if not DOMESTIC_MARKET_RE.search(market):
-                if key not in unknown_seen:
-                    unknown_seen.add(key)
-                    unknown.append({
-                        "event_date": date.strftime("%Y-%m-%d"),
-                        "code": code,
-                        "event": event,
-                        "market": market,
-                        "source_url": url,
-                    })
-                continue
-            events.append(Event(date, code, event, market, url))
+            record(date, code, market)
     except Exception as exc:
-        # Do not silently accept a parser failure. If pandas also found no
-        # usable events, collect_events will fail closed below.
+        # Do not silently accept a parser failure. If no usable events remain,
+        # collect_events fails closed below.
         print(f"WARN lxml JPX row parser failed for {url}: {type(exc).__name__}")
 
-    return events, unknown
-
+    return events, list(unknown_by_key.values())
 
 def collect_events(start_year: int, anchor_date: pd.Timestamp) -> tuple[pd.DataFrame, pd.DataFrame]:
     all_events: list[Event] = []

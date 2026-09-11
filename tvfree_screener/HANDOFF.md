@@ -209,3 +209,15 @@ All four variants failed 2024 development; `development_ranked=[]`, `validation_
 - relblend_q9995: n=107, mean -0.78%, +20% 0%.
 
 Decision: reject this light-feature relative-tail family. The positive-skew objective remains valid. Next materially different test should use the full historical 45-feature set and avoid suppressing Attack candidates with a loss-probability penalty; risk should be enforced as a validation gate rather than directly subtracting explosive high-volatility candidates from the ranking.
+
+
+## Legacy rolling-3y cache forensics — CACHE DIFFERENCE NOT THE MISSING EDGE
+Run `34560223482`, artifact `10184124215`, head `6509764acb761fdc1a1bfd0eed657a44d3a9afa1` successfully re-ran the reproducible 45-feature Short reconstruction on the actual rolling-3y `tse_daily.csv` retained from early run #7 (`34496517500`).
+
+Results:
+- 2025H1 Core n=119, mean +0.46%, win 58.8%.
+- 2025H2 Core n=124, mean +0.35%, win 51.6%.
+- 2026 Mar-Aug Core n=124, mean -0.56%, median -0.42%, win 44.4%.
+- 2026 Mar-Aug defensive n=97, mean -0.11%, win 48.5%.
+
+Decision: the historical +5.42% result is not explained by the old rolling-3y cache alone. The missing edge must be in the unrecovered logic/labels/ranking/Meta/Attack construction, not merely the later fixed-start data contract.

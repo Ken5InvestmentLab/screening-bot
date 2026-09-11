@@ -1,0 +1,51 @@
+name: No-TV Stable V40 Full Universe Fixed
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - "research/RUN_V40_FULL_UNIVERSE"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pandas numpy requests scikit-learn
+      - name: Clone public historical watchlist repo
+        run: git clone --quiet https://github.com/Ken5InvestmentLab/tv-watchlist-builder.git tv-watchlist-builder-history
+      - name: Download preserved Stable teacher
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-stable-teacher-preserved
+          path: teacher
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34608845800
+      - name: Compile V40
+        run: |
+          python -m py_compile             research/no_tv_v10_standalone.py             research/no_tv_v13_official_daily.py             research/no_tv_v11_independent_selector.py             research/no_tv_v11_1_risk_guard.py             research/no_tv_v18_rank_rolling.py             research/no_tv_v29_purged_rolling.py             research/no_tv_v31_prequential.py             research/no_tv_v32_watchlist_authoritative.py             research/no_tv_v40_full_universe_fixed.py
+      - name: Run full-universe fixed audit
+        run: |
+          python research/no_tv_v40_full_universe_fixed.py             --teacher teacher/teacher_bottom_confirmed.csv             --watchlist-repo tv-watchlist-builder-history             --max-symbols 0             --max-workers 24             --output-dir research_artifacts/v40_full_universe_fixed
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-tv-stable-v40-${{ github.run_id }}
+          path: research_artifacts/v40_full_universe_fixed/**
+          if-no-files-found: warn
+          retention-days: 30

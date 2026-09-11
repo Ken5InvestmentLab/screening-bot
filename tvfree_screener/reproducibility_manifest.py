@@ -2,9 +2,15 @@
 """Create a test-only reproducibility manifest for fixed-start TV-free research.
 
 The manifest records dataset coverage, current JPX universe, historical OHLCV
-and model-output fingerprints, plus a research-code/configuration fingerprint.
+and model-selection fingerprints, plus a research-code/configuration fingerprint.
 Later append-only runs can compare these values and distinguish source/universe
 drift from semantic changes.
+
+Forward entry/outcome columns are intentionally excluded from frozen output
+fingerprints. They can become populated after the signal-date cutoff as future
+sessions mature, which is legitimate reporting evolution rather than model
+selection drift. Date/symbol, model scores, features and other signal-time
+columns remain hashed, so actual selection/model changes are still detected.
 
 This tool does not write to production systems.
 """
@@ -14,6 +20,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 
 import pandas as pd
 
@@ -49,6 +56,8 @@ CODE_FILES = [
     "tvfree_screener/point_in_time_universe_selftest.py",
     "tvfree_screener/delisted_price_coverage.py",
     "tvfree_screener/delisted_price_coverage_selftest.py",
+    "tvfree_screener/stooq_delisted_price_coverage.py",
+    "tvfree_screener/stooq_delisted_price_coverage_selftest.py",
     "tvfree_screener/fundamental_overlay.py",
     "tvfree_screener/fundamental_overlay_selftest.py",
     "tvfree_screener/fundamental_overlay_evaluator.py",
@@ -68,9 +77,24 @@ CONFIG_ENV = [
     "TVFREE_TOPK",
 ]
 
+# These fields are observable only after the signal date and can legitimately
+# mature after the frozen cutoff. They must not define whether the model made
+# the same historical selections from identical signal-time inputs.
+FORWARD_OUTPUT_EXACT_COLUMNS = {"next_open", "target_end_date"}
+FORWARD_OUTPUT_COLUMN_RE = re.compile(r"^target\d+(?:_.*)?$")
+
 
 def sha256_bytes(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
+
+
+def selection_hash_columns(columns) -> tuple[list[str], list[str]]:
+    excluded = [
+        str(c) for c in columns
+        if str(c) in FORWARD_OUTPUT_EXACT_COLUMNS or FORWARD_OUTPUT_COLUMN_RE.match(str(c))
+    ]
+    kept = [str(c) for c in columns if str(c) not in set(excluded)]
+    return kept, excluded
 
 
 def canonical_hash(path: Path, cutoff: pd.Timestamp) -> dict:
@@ -84,13 +108,18 @@ def canonical_hash(path: Path, cutoff: pd.Timestamp) -> dict:
     sort_cols = [c for c in ["date", "symbol", "model_period"] if c in hist.columns]
     if sort_cols:
         hist = hist.sort_values(sort_cols, kind="mergesort")
-    payload = hist.to_csv(index=False, lineterminator="\n", float_format="%.12g").encode("utf-8")
+
+    kept, excluded = selection_hash_columns(hist.columns)
+    selection = hist[kept].copy()
+    payload = selection.to_csv(index=False, lineterminator="\n", float_format="%.12g").encode("utf-8")
     return {
         "exists": True,
         "rows": int(len(df)),
         "historical_rows": int(len(hist)),
         "historical_cutoff": cutoff.strftime("%Y-%m-%d"),
         "historical_sha256": sha256_bytes(payload),
+        "hash_scope": "signal-time/model-selection columns only; future entry/outcome labels excluded",
+        "excluded_forward_columns": excluded,
         "min_date": None if df["date"].dropna().empty else df["date"].min().strftime("%Y-%m-%d"),
         "max_date": None if df["date"].dropna().empty else df["date"].max().strftime("%Y-%m-%d"),
     }
@@ -171,24 +200,29 @@ def research_contract_manifest() -> dict:
         "safe_config": config,
         "safe_config_sha256": config_sha,
         "research_contract_sha256": aggregate.hexdigest(),
-        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics and reproducibility/causality/universe/fundamental-overlay/EDINET-ingestion/dilution-audit checks.",
+        "note": "Only explicit non-secret TVFREE_* research inputs are captured; code hashes cover frozen model semantics and reproducibility/causality/universe/data-source/fundamental-overlay/EDINET-ingestion/dilution-audit checks.",
     }
 
 
 def main() -> None:
     report = {
-        "manifest_version": 3,
+        "manifest_version": 4,
         "status": "research_only_no_production_writes",
         "purpose": "append-only reproducibility fingerprint with universe-drift detection",
+        "output_hash_policy": (
+            "Frozen model-output hashes fingerprint signal-time/model-selection columns only. "
+            "next_open and target* future labels are excluded because they can mature after the signal-date cutoff."
+        ),
         "universe": universe_manifest(OUT / "jpx_universe_snapshot.csv"),
         "cache": cache_manifest(OUT / "tse_daily.csv"),
         "outputs": {name: canonical_hash(OUT / name, CUTOFF) for name in FILES},
         "research_contract": research_contract_manifest(),
         "interpretation": (
             "For append-only verification, first require the research_contract_sha256 and universe sha256 to match. "
-            "Then historical date/symbol coverage, OHLCV, and output hashes should remain unchanged. "
+            "Then historical date/symbol coverage, OHLCV, and selection-output hashes should remain unchanged. "
             "A contract mismatch means code/config changed; a universe mismatch means current-listed membership changed; "
-            "an OHLCV-only mismatch with matching contract/universe/coverage can indicate Yahoo historical revision."
+            "an OHLCV-only mismatch with matching contract/universe/coverage can indicate Yahoo historical revision. "
+            "Future outcome-label maturation alone must not be classified as model-output drift."
         ),
     }
     OUT.mkdir(parents=True, exist_ok=True)

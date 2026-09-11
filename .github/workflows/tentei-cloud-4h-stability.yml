@@ -43,7 +43,12 @@ jobs:
         run: |
           python research/tentei_cloud/audit_4h_model_stability.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
-            --outdir out
+            --outdir out/stability
+      - name: Audit 7-seed ensemble thresholds
+        run: |
+          python research/tentei_cloud/audit_4h_ensemble.py \
+            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --outdir out/ensemble
       - uses: actions/upload-artifact@v4
         with:
           name: tentei-cloud-4h-stability

@@ -60,6 +60,8 @@ jobs:
         run: pip install -r tvfree_screener/requirements.txt
       - name: Reproducibility manifest synthetic self-check
         run: python tvfree_screener/reproducibility_selftest.py
+      - name: Fixed run-80 baseline guard synthetic self-check
+        run: python tvfree_screener/fixed_baseline_guard_selftest.py
       - name: Causal prefix and entry synthetic self-check
         run: python tvfree_screener/causality_selftest.py
       - name: Point-in-time universe synthetic self-check
@@ -140,6 +142,9 @@ jobs:
       - name: Build fixed-history reproducibility manifest
         if: always()
         run: python tvfree_screener/reproducibility_manifest.py
+      - name: Compare frozen run-80 baseline when inputs are identical
+        if: always()
+        run: python tvfree_screener/fixed_baseline_guard.py
       - name: Upload test outputs
         if: always()
         uses: actions/upload-artifact@v4

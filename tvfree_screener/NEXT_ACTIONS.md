@@ -10,71 +10,71 @@ TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. 
 - 2026 is contaminated/reporting-only and must never be used for threshold/model tuning.
 
 ## 1. JPX point-in-time membership — ACCEPTED
-Run #112 (`34554140015`, retained artifact `10181998903`) passed the live gate:
-- event rows 1,096;
-- unknown-market rows 0;
-- same-day code collisions 0;
-- required/parsed years 2022-2026 with no missing years;
-- `valid_for_membership_reconstruction=true`;
-- reused codes `3960` and `8303` are identified for identity quarantine.
-
-Use the reconstructed membership state only with price data whose issuer identity and historical coverage are independently valid.
+Run #112 (`34554140015`, retained artifact `10181998903`) passed the live gate: 1,096 official event rows, unknown-market rows 0, same-day code collisions 0, all required years 2022-2026 present, `valid_for_membership_reconstruction=true`. Reused codes `3960` and `8303` remain identity-quarantined.
 
 ## 2. Yahoo delisted-symbol coverage — REJECTED AS SUFFICIENT SOURCE
-The same run measured 463 official delisting events. Three were identity-quarantined; among 460 probed events only 11 (2.39%) had usable Yahoo prices near delisting, with zero probe transport errors.
+The same run measured 463 official delistings. Three were identity-quarantined; among 460 probed events only 11 (2.39%) had usable Yahoo prices near delisting, with zero transport errors. Status: missing 400, missing-before-delist 47, partial-old-or-sparse 2, usable 11. Do not weaken the gate or describe current-survivor Yahoo backtests as survivorship-bias-free.
 
-Status counts:
-- missing 400;
-- missing-before-delist 47;
-- partial-old-or-sparse 2;
-- usable-near-delist 11;
-- identity-quarantined 3.
+## 3. Stooq delisted-price probe — IMPLEMENTED, LIVE COVERAGE STILL PENDING
+Highest data-source priority.
 
-Usable/probed by year: 2022 0/76, 2023 0/60, 2024 0/94, 2025 0/124, 2026 11/106.
+TEST-only implementation commits:
+- `d6b42eddf1c872f6be532d88cb5bb0b8072a600d`: `stooq_delisted_price_coverage.py`.
+- `37ee3a4858b7e1a182dcee471e3da849b2fb93e6`: synthetic regression checks.
+- `fc86c5412859f17dd2215becf5bd8b4516ccd4df`: wire synthetic check and optional live probe into the TEST workflow.
 
-Do not weaken the near-delisting gate. Yahoo alone is rejected for survivorship-aware historical OHLCV of delisted TSE names.
+The probe reuses the exact JPX delisting-candidate construction and identity quarantine used for Yahoo. It selects a deterministic year-balanced 24-event sample from pre-2026 delistings without using returns. It distinguishes true `No data` from auth, HTTP, transport, parse, and rate/quota errors; requires complete OHLCV near the official delisting date; and never writes/logs the API key.
 
-## 3. Find and coverage-test a free delisted-price source
-Highest priority. Reuse the exact official JPX delisting candidate set and identity quarantines from run #112.
+Run #119 (`34557956808`) confirmed the new Stooq synthetic self-check PASS. That run was later cancelled by branch-update concurrency while Yahoo measurement was still running, so its Stooq live step was skipped. A skipped step is not evidence of missing Stooq history.
 
-Candidate order is now fixed for the next research pass:
-1. **Stooq:** first live candidate. Use a free `STOOQ_APIKEY` only via environment/GitHub Secret; never commit or log it. First run a deterministic small coverage probe across pre-2026 delistings, then expand to all 460 only if the source actually retains delisted histories and rate limits are workable. A bulk Japan archive may be preferable for a one-time backfill if it includes historical delisted symbols.
-2. **J-Quants Free:** official cross-check only. Its official window is two years excluding the latest 12 weeks, so it cannot fill the entire 2022-start history as of September 2026. Do not redefine the baseline start merely to make this source fit.
-3. **JPX historical stock-price files:** manual fallback only; JPX explicitly requests manual acquisition and asks users to refrain from automated acquisition. Do not implement a scraper.
-4. Do not scrape Yahoo! JAPAN quote/history pages as a workaround.
+Live Stooq acquisition requires a manually obtained free `STOOQ_APIKEY`; keep it only in environment/GitHub Secret. When available, run the fixed 24-event pre-2026 sample first. Expand to all 460 non-quarantined official delistings only if the sample shows actual retained OHLCV and workable auth/rate limits.
 
-Acceptance rules for any candidate:
-- evaluate coverage against the same 460 non-quarantined official delistings;
-- preserve code-reuse quarantine;
-- distinguish missing data from transport/auth/rate-limit failures;
-- require prices near the official delisting date;
-- compare overlapping OHLCV against an independent source for sanity;
-- do not use model performance or 2026 returns to choose a data provider.
+If Stooq cannot provide adequate automated backfill, next provider checks remain:
+1. J-Quants Free as an official overlapping-window cross-check only; its two-year history delayed 12 weeks cannot fill the full 2022-start contract in September 2026.
+2. JPX historical stock-price files as manual fallback only; do not automate scraping.
+3. Do not scrape Yahoo! JAPAN quote/history pages.
 
-If no automation-friendly free source has adequate backfill coverage, record the blocker. Separately design TEST-only prospective archival so future listed-symbol OHLCV is retained before delisting, but do not add production writes without explicit user Go.
+## 4. Reproducibility guard — FALSE POSITIVE FOUND AND FIXED
+Run #114 (`34554396869`, artifact `10182719509`) failed only at the final fixed-run-80 output guard even though universe, historical date/symbol coverage, and historical OHLCV hashes were identical to run #80.
 
-## 4. Inspect independent 2024 extension and frozen 2025 invariance
-Without changing thresholds/features/model hyperparameters, inspect 2024H1/H2 where causal training volume is sufficient and verify frozen 2025 outputs remain unchanged. Report unavailable periods rather than weakening minimum-training rules.
+Direct artifact comparison established:
+- Short Core and Short defensive output hashes were unchanged.
+- Swing S had exactly the same 101 selected `(date, symbol)` rows in run #80 and #114.
+- Only four forward-reporting cells differed because later sessions had matured: `target10_no`/`target10_end` for 2026-08-28, `target20_no` for 2026-08-14, and `target40_no` for 2026-07-15.
+- Therefore the failure was not model-selection drift.
 
-## 5. Inspect first blind V4 result
-V4 protocol remains predeclared and blind:
-1. expose 2024 development metrics for all four variants;
-2. lock exactly one variant from 2024 only;
-3. evaluate only that locked variant on 2025;
-4. compute 2026 only if the locked variant passes the predeclared 2025 gate.
+TEST-only fix commits:
+- `4055d38fb15fbb5436a317b7306c70ded2ac53c8`: manifest v4 hashes signal-time/model-selection columns while excluding `next_open` and `target*` future labels.
+- `901ed82ee17325229fec254707b532ad23fdc15d`: synthetic regression proving future-label maturation leaves the frozen selection hash unchanged while score/symbol changes still fail.
+- `7690c902b4f554ef78b3f9bfbd014855ea210515`: migrate run #80 baseline to selection-only hashes, retaining legacy full-row hashes for audit.
 
-The global trading-calendar cooldown continuity fix and year-boundary synthetic test are already in place. Reject weak or one-regime methods rather than retuning.
+New run-80 selection hashes, recomputed directly from the retained run #80 artifact:
+- Short Core `5750fa35da7f344498bae65e6b270c437bd286ae23aa0e3c7d71367824b64bf4`
+- Short defensive `4f057700a1152dbbd52281894b00468979cd7386781100106876dd0006fc3031`
+- Swing S `1b4e987c5d062c0da5f6201c4a57922ca5ce26e6566b238e2abffec35987b1b1`
 
-## 6. Fundamental / dilution overlay
-Live EDINET work remains blocked until `EDINET_API_KEY` is available as an environment/secret value. Never commit or log the key. Extracted warrant/share-count candidates remain audit evidence only until filing-table semantics are manually/live validated. Missing observations must remain explicit unknowns with coverage-matched baselines; never treat missing as healthy.
+Next: confirm these self-checks and the final guard on a non-cancelled TEST run. Do not interpret run #114 as model nondeterminism.
 
-Initial dilution thresholds remain predeclared at 20%, 35%, 50%, and 100% potential shares / shares outstanding. Selection may use only 2024H1/H2 and 2025H1/H2; 2026 stays reporting-only. Valuation/PER-PBR remains deferred until point-in-time treasury-share and period-profit alignment is reliable.
+## 5. 2024 extension / V4 conclusions from run #114 — REJECT WEAK PATHS
+These are secondary while delisted-price survivorship coverage is unresolved and must not be promoted to production claims.
 
-## 7. Production integration — BLOCKED until user Go
+Independent 2024 extension, unchanged frozen logic:
+- Short 2024H1 Core: n=120, mean about +0.72%; 2024H2 Core: n=125, mean about +0.26%, median negative, win 42.4%. Not strong/stable enough.
+- Swing 2024H1: n=55, mean about +3.09%; 2024H2: n=39, mean about +1.94% but median negative and -10% rate 12.8%. Mixed and unstable.
+
+Blind V4 behaved correctly: all four predeclared 2024 development variants failed the development utility requirement, so `locked_variant=null`; 2025 was not opened and 2026 was not evaluated. **Reject this V4 family as currently specified rather than retuning it.**
+
+## 6. Legacy +5.42% V3 recovery — KEEP ISOLATED
+The historical 2026 Mar-Aug reference remains n=29, mean +5.42%, median +2.06%, win 65.5%, but exact old thresholds were never committed. A separate TEST-only targeted legacy-recovery workflow was added on the branch at `28ab0492ab1dee59e255b459f8543278cad1a9af`. Let that recovery use pre-2026 evidence and archived/fixed data; do not tune thresholds to 2026 just to reproduce the headline number.
+
+## 7. Fundamental / dilution overlay
+Live EDINET work remains blocked until `EDINET_API_KEY` is available as an environment/secret value. Never commit/log it. Extracted warrant/share-count candidates remain audit evidence only until filing-table semantics are validated. Missing observations remain explicit unknowns with coverage-matched baselines. Initial dilution thresholds stay predeclared at 20%, 35%, 50%, and 100%; selection may use only pre-2026 evidence.
+
+## 8. Production integration — BLOCKED until user Go
 Never automatically merge PR #13, alter production workflows, send production Discord, write production Spreadsheet, replace Stable★6/Sniper/Mega, or disable/change production TradingView/watchlist components.
 
-## TEST-CI execution note
-- `7518dc0af0e0027caa452b5221230e7faeb6c6c1`: insufficient path-only docs exclusion.
-- `bbc7ed19ff46f98ef0beba9565e4071b6305bc94`: malformed intermediate edit, rejected/superseded.
-- `8b8b46feaa14465180b740dba69a597de29b7660`: corrected per-update lightweight gate and job-level heavy concurrency; current accepted TEST-workflow structure.
-- Run #114: `34554396869`; model-performance conclusions from it remain provisional while the delisted-price source blocker is unresolved.
+## Immediate next concrete tasks
+1. Allow the targeted legacy V3 recovery run to finish and inspect it without tuning to 2026.
+2. Confirm manifest-v4/fixed-baseline self-checks on a non-cancelled TEST run.
+3. When `STOOQ_APIKEY` is available, execute the deterministic 24-event pre-2026 Stooq probe; expand only on adequate evidence.
+4. If Stooq remains blocked/unusable, implement a TEST-only J-Quants Free overlapping-window coverage/sanity probe while explicitly retaining the full-2022 backfill blocker.

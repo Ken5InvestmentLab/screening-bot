@@ -12,25 +12,31 @@ Key result:
 - Swing S old rolling advantage did not reproduce: 2025H1 -0.14%, 2025H2 +2.68% (10BD).
 - therefore neither lane is accepted as a Stable★6 replacement yet.
 
-## 2. Inspect current live TEST run #97 before changing workflow
-Actions run `34549403943` (run #97), head `80a42fc9d98796e1e0f17becaff5df825a71542f`, is currently in progress.
+## 2. Inspect replacement TEST run #98
+Run #97 (`34549403943`) finished FAILURE only because live JPX parsing called `pandas.read_html()` without optional dependency `lxml`. The fixed-start backtest and all synthetic checks before that point had succeeded.
 
-Already PASS in that run:
-- reproducibility self-test,
-- causality self-test,
-- point-in-time universe self-test,
-- delisted Yahoo coverage self-test,
-- fundamental/dilution overlay self-test,
-- EDINET collector self-test,
-- EDINET dilution-audit self-test.
+Fixes:
+- `dcf6bef99e5ec113dcf8419801015b9a86c16e69`: add `lxml>=5,<7` to TEST requirements.
+- `cda2a6c4090587dd1e0a37211bf62af02f35ab71`: preserve V4 cooldown state across development/validation/reporting stage boundaries.
+- `7944d9ac0fbcb667924ac1b9924fc0093be9741a`: add synthetic 2024->2025 boundary regression test.
+- `5f6207c93ca5fe464e90b9c69b8a8bb174924c82`: run V4 self-test and first blind V4 research in TEST workflow.
 
-At last inspection it was executing the fixed-start `Purged walk-forward backtest`. Do not cancel or supersede this run. When it completes, inspect:
-- `jpx_point_in_time_report.json`,
-- `jpx_membership_events.csv`,
-- `yahoo_delisted_price_coverage_report.json`,
-- `yahoo_delisted_price_coverage.csv`,
-- independent 2024 extension outputs,
-- reproducibility manifest.
+Replacement run #98:
+- Actions run `34550900449`
+- head `5f6207c93ca5fe464e90b9c69b8a8bb174924c82`
+- currently in progress
+- dependency installation including lxml PASS
+- reproducibility, causality, point-in-time universe, delisted Yahoo coverage, fundamental/dilution, EDINET collector, EDINET dilution audit, and V4 cooldown self-tests PASS
+- at last inspection: fixed-start Purged walk-forward backtest in progress
+
+After completion inspect:
+- `jpx_point_in_time_report.json`
+- `jpx_membership_events.csv`
+- `yahoo_delisted_price_coverage_report.json`
+- `yahoo_delisted_price_coverage.csv`
+- independent 2024 extension outputs
+- `v4_event_quality_report.json`
+- reproducibility manifest
 
 Require zero unknown-market rows and zero same-day listing/delisting collisions before using reconstructed membership. Quarantine code-reuse identity ambiguity rather than joining it to Yahoo ticker history.
 
@@ -54,23 +60,21 @@ Hard rule:
 
 The collector emits `edinet_dilution_evidence.csv` in addition to financial snapshots.
 
-## 5. Correct V4 stage-boundary cooldown before first performance run
-`v4_event_quality_research.py` passed static causal review for its blind research order:
+## 5. V4 stage-boundary cooldown — corrected before first performance run
+The blind research order remains:
 1. expose 2024 development metrics for all four predeclared variants,
 2. lock exactly one variant from 2024 only,
 3. evaluate only that locked variant on 2025,
 4. compute 2026 only if the locked variant passes the predeclared 2025 gate.
 
-Its half-year training purge is causal (`target5_end < prediction_period_start`). Existing `v4_event_quality_selftest.py` checks purge and ordinary cooldown semantics.
+The half-year training purge remains causal (`target5_end < prediction_period_start`).
 
-However `select_variant()` is invoked independently for development, validation, and reporting stages, resetting same-symbol cooldown at the 2024/2025 and 2025/2026 boundaries. This is an execution-rule inconsistency, not future leakage.
+Resolved implementation inconsistency:
+- cooldown state now uses the global trading-calendar index and is carried from 2024 development into 2025 validation and, only after validation pass, into 2026 reporting;
+- a dedicated synthetic test spans the 2024/2025 boundary and proves the reset failure mode would select a different symbol;
+- V4 self-test is now required before heavy research in TEST workflow.
 
-Before first V4 performance interpretation:
-- preserve cooldown state across stage boundaries, or select the locked variant over concatenated chronological scored stages after the lock is established;
-- add a synthetic test specifically spanning a half-year/year boundary;
-- change no event thresholds, variant score weights, gates, or validation thresholds based on 2025/2026 outcomes.
-
-After the active run #97 finishes, add the V4 self-test to the TEST workflow and only then add the V4 research step. Do not expose 2025 metrics for variants rejected by the 2024 lock.
+No event threshold, score weight, gate, model hyperparameter, or validation threshold changed. Do not expose 2025 metrics for variants rejected by the 2024 lock and never use 2026 to choose V4 settings.
 
 ## 6. Measure Yahoo delisted-symbol coverage
 Use the TEST-only coverage probe from official delisting events:

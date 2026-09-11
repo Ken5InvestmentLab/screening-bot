@@ -1,0 +1,3 @@
+trigger: 2026-09-11 regime-v1
+source_fetch_run: 34592896202
+fixed gates: previous-day median returns, breadth, advance ratio; no fitted thresholds

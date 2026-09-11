@@ -45,10 +45,16 @@ jobs:
           python research/tentei_cloud/evaluate_1h_universe.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --outdir out
-          cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
+      - name: Evaluate 1H Monster precursor timing
+        run: |
+          python research/tentei_cloud/evaluate_1h_precursors.py \
+            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --outdir out/precursor
+      - name: Record source fetch run
+        run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
       - uses: actions/upload-artifact@v4
         with:
           name: tentei-cloud-1h-analysis
-          path: out/*
+          path: out/**
           if-no-files-found: error
           retention-days: 14

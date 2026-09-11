@@ -1,0 +1,62 @@
+name: Tentei Cloud Causal MTF Model
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/tentei-cloud-mtf
+    paths:
+      - 'research/tentei_cloud/RUN_MTF_MODEL'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/tentei-cloud-mtf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy scikit-learn
+      - name: Download latest successful extended 1H fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow "tentei-cloud-1h-research.yml" \
+            --branch "research/tentei-cloud-mtf" \
+            --event push \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$RUN_ID"
+          echo "$RUN_ID" > latest_fetch_run_id.txt
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir downloaded
+      - name: Audit fetch failures
+        run: |
+          python research/tentei_cloud/audit_fetch_failures.py \
+            --failure-glob 'downloaded/**/failures_*.json' \
+            --csv-glob 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --symbol-file research/tentei_cloud/symbols_4h_universe.txt \
+            --outdir out/audit
+      - name: Run causal 4H-only vs MTF comparison
+        run: |
+          python research/tentei_cloud/mtf_monster_model.py \
+            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --outdir out/mtf
+      - name: Record source fetch run
+        run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tentei-cloud-causal-mtf-model
+          path: out/**
+          if-no-files-found: error
+          retention-days: 14

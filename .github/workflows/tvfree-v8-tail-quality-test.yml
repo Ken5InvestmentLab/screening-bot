@@ -1,0 +1,50 @@
+name: TV-free V8 tail quality research TEST
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [synchronize, reopened]
+    paths:
+      - "tvfree_screener/v8_tail_quality_research.py"
+      - ".github/workflows/tvfree-v8-tail-quality-test.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  v8-tail-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Compile V8 research runner
+        run: python -m py_compile tvfree_screener/v8_tail_quality_research.py
+      - name: Download frozen run-80 artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-screener-test-34545440155
+          path: tvfree_screener/out
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34545440155
+      - name: Run V8 downstream Tail Quality and Meta research
+        run: >-
+          python tvfree_screener/v8_tail_quality_research.py
+          --cache tvfree_screener/out/tse_daily.csv
+      - name: Upload V8 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-v8-tail-quality-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v8_tail_quality_report.json
+            tvfree_screener/out/v8_tail_quality_locked_2026.csv
+          if-no-files-found: warn
+          retention-days: 7

@@ -1,0 +1,2 @@
+trigger: v42-uncapped-v1
+production_writes: false

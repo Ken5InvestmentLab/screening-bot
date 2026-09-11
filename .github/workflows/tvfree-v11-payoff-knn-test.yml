@@ -1,0 +1,52 @@
+name: TV-free V11 payoff-aware kNN TEST
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/tvfree-screener-v1
+    paths:
+      - "tvfree_screener/RUN_V11"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  v11-payoff-knn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/tvfree-screener-v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Compile V11 research runner
+        run: python -m py_compile tvfree_screener/v11_payoff_knn_research.py
+      - name: Download frozen run-80 artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-screener-test-34545440155
+          path: tvfree_screener/out
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34545440155
+      - name: Run V11 payoff-aware conditional kNN research
+        run: >-
+          python tvfree_screener/v11_payoff_knn_research.py
+          --cache tvfree_screener/out/tse_daily.csv
+      - name: Upload V11 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-v11-payoff-knn-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v11_payoff_knn_report.json
+            tvfree_screener/out/v11_payoff_knn_locked_2026.csv
+          if-no-files-found: warn
+          retention-days: 7

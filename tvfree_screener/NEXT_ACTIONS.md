@@ -113,3 +113,7 @@ Run `34560020086` / artifact `10184003302` passed technically but all fixed even
 Run `34560206590` / artifact `10184090465` used monthly causal same-day future top-1% / top-0.25% labels and fixed run-80 data. All variants failed 2024; none captured a +20% winner in the selected 2024 sets. 2025 and 2026 were not opened.
 
 Next tail hypothesis: restore the full 45 `run.py` features and test a pure positive-tail Attack score without subtracting loss probability. Keep -10% risk as a predeclared validation gate instead of ranking penalty. This is materially different from rejected V5/V6 and remains pre-2026 selected.
+
+
+## 12. Old rolling-3y cache forensics — CACHE ALONE REJECTED AS EXPLANATION
+Run `34560223482` / artifact `10184124215` re-ran the current exact-feature reconstruction on the actual early rolling-3y cache. 2026 Mar-Aug Core was -0.56% and defensive -0.11%. Therefore do not spend more time blaming the fixed-start cache for loss of the historical +5.42% edge; prioritize unrecovered logic and materially different tail-ranking hypotheses.

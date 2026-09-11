@@ -2,99 +2,98 @@
 
 TEST ONLY. Execute top-to-bottom unless new evidence invalidates the next item. Keep `HANDOFF.md` synchronized.
 
-## 1. Protect existing private-repo Actions capacity
-Heavy TV-Free Actions are now gated behind intentional changes to `tvfree_screener/RUN_HEAVY_TEST` and duplicate runs are cancelled via workflow concurrency. Do not restore broad `tvfree_screener/**` PR triggering. Re-check runner availability only after account Actions usage/budget/payment state is confirmed healthy. Never touch production workflows or model thresholds as a workaround.
+## 1. Finish the first genuinely running fixed-start verification
+Actions runner allocation recovered. Run `34545440155` on commit `5461eef6f35ea2cea2b4bc38ca7177c681681783` reached checkout and all five synthetic safety checks passed. At the latest observation, `Purged walk-forward backtest` was still in progress.
 
-## 2. Require all synthetic safety checks before heavy research
-The test workflow must first pass:
-- `reproducibility_selftest.py`,
-- `causality_selftest.py`,
-- `point_in_time_universe_selftest.py`,
-- `fundamental_overlay_selftest.py`,
-- `edinet_fundamental_collector_selftest.py`.
+Do not disturb or reinterpret this run. When it completes:
+- require overall success before freezing a durable baseline,
+- verify `Yahoo history mode: fixed start 2022-01-01 -> current`,
+- inspect Short/Swing/comparison outputs and `reproducibility_manifest.json`,
+- record research-contract, universe, historical coverage, OHLCV, and output hashes,
+- record runtime and artifact size,
+- keep all model thresholds frozen and treat 2026 as reporting-only.
 
-## 3. Live-validate point-in-time EDINET snapshot ingestion
-Implementation now exists in `edinet_fundamental_collector.py`; do not expand aliases from guesses.
+If it fails after executable steps, use the actual failing step/log as evidence; do not assume the old runner-allocation cause.
 
-Current outputs:
-- `edinet_documents.csv`: normalized source-document metadata,
-- `edinet_fundamental_snapshots.csv`: source-linked extracted facts,
-- `edinet_coverage.json`: requested/usable/missing/ambiguous diagnostics.
+## 2. Correct missing-data semantics in fundamental overlay BEFORE performance tests
+Current `fundamental_overlay.py` has an uncovered data-quality bug: missing financial facts can produce False risk flags, `financial_risk_count=0`, and pass `financial_risk_filter` as if healthy.
 
-Initial standardized fields:
-- shares outstanding,
-- assets,
-- equity,
-- revenue,
-- operating income,
-- net income,
-- operating cash flow.
+Required test-only correction:
+- add explicit `dilution_known`, `financial_known`, `combined_known`,
+- make risk count/exclusion unknown when required data is incomplete,
+- never convert missing into healthy,
+- retain an explicit unknown population rather than silently excluding it,
+- add coverage-matched baselines for every filtered comparison,
+- extend `fundamental_overlay_selftest.py` so fully missing rows cannot pass as known-safe.
 
-Next validation requirements:
-- use `EDINET_API_KEY` from environment/secret only; never commit/log it,
-- first run a small pre-2026 live sample and inspect exact element IDs/contexts rather than tuning on 2026,
-- retain document id, filing date/time, period end, source member, and extraction status,
-- quantify missing and ambiguous coverage before broad acquisition,
-- do not silently broaden element aliases based on desired backtest results,
-- conservative default is now `prior_day_only`: same-day disclosures are excluded when a signal has only a date,
-- `same_day_if_timestamped` is allowed only when both signal `decision_at` and filing `available_at` are explicit,
-- never loosen this policy based on 2026 performance.
+This is a data-quality/causality fix only. Do not change thresholds based on performance.
 
-## 4. Prototype historical dilution extraction separately
-Target normalized fields:
-- remaining warrant/new-share-option potential shares,
-- instrument type,
-- MS-warrant / exercise-price-reset flag where deterministically identifiable,
-- source filing/document id,
-- public availability date,
-- extraction confidence/coverage status.
+## 3. Live-validate point-in-time EDINET accounting ingestion
+Implementation exists in `edinet_fundamental_collector.py`. Use `EDINET_API_KEY` only from environment/secret; never commit or log it.
 
-Do not call a company dilution-safe when the source is missing. Missing must remain missing.
+First use a small pre-2026 sample and measure:
+- selected document IDs and form types,
+- exact XBRL element IDs/contexts used,
+- shares outstanding, assets, equity, revenue, operating income, net income, operating CF coverage,
+- missing and ambiguous rates,
+- `available_at`/`available_date` correctness.
 
-Predeclared dilution comparison grid in `fundamental_overlay.py`:
-- 20%, 35%, 50%, 100% remaining potential shares / shares outstanding.
-Do not select a threshold using 2026.
+Do not broaden aliases merely to improve backtest results. Conservative default remains `prior_day_only`; same-day data requires explicit `decision_at` and `available_at` timestamps.
 
-## 5. Validate financial-risk overlay before valuation scoring
-Transparent first-pass risk flags:
-- equity ratio < 10%,
-- operating loss,
-- net loss,
-- negative operating CF,
-- exclusion candidate when at least two risk flags are present.
+## 4. Build historical dilution extraction as a separate collector
+Do NOT use the balance-sheet monetary account `SubscriptionRightsToShares` as a proxy for residual dilution shares.
 
-These are research lanes only, not accepted production rules. Missing values must not be silently treated as healthy.
+Target EDINET section/table: `新株予約権等の状況` and related exercise-price-reset disclosures.
 
-## 6. Add valuation only after point-in-time accounting is reliable
-Potential later metrics:
-- PBR from signal-date market cap / latest publicly available equity,
-- PER only for positive earnings and causally available earnings,
-- cash/market-cap or EV-style measures if field coverage is stable.
-Avoid current-day valuation data in historical rows.
+Normalized outputs should retain:
+- remaining potential shares across all relevant warrants/options,
+- financing-type remaining potential shares when deterministically identifiable,
+- MS/exercise-price-reset remaining potential shares when deterministically identifiable,
+- warrant/instrument type,
+- fiscal-year-end versus filing-preceding-month-end values when separately disclosed,
+- source `doc_id`, member/table/evidence,
+- `available_at`, `available_date`, extraction status/confidence.
 
-## 7. Backtest overlays only after coverage gates pass
-Keep Short/Swing technical architecture frozen. Compare separately on 2024H1, 2024H2, 2025H1, 2025H2:
+Temporal rule: a newer value stated as filing-preceding-month-end is not market-available at that month-end unless separately disclosed then; when learned from the filing, it becomes usable only at the filing's public availability time.
+
+Initial dilution threshold grid remains predeclared: 20%, 35%, 50%, 100% potential shares / shares outstanding. Never select a threshold using 2026.
+
+## 5. Require coverage-matched overlay comparisons
+Once accounting/dilution coverage is acceptable, keep Short/Swing technical architecture frozen and compare on 2024H1, 2024H2, 2025H1, 2025H2:
 - technical baseline,
-- dilution filter,
-- financial-risk filter,
-- combined dilution + financial risk,
-- later valuation score if data quality is adequate.
+- dilution-known baseline vs dilution filter,
+- financial-known baseline vs financial-risk filter,
+- combined-known baseline vs combined filter,
+- valuation only later if point-in-time accounting/share alignment is reliable.
 
-Acceptance must consider mean, median, win rate, +10% rate, -10% rate, and retained sample size. Reject one-regime improvements, severe sample shrinkage, and gains caused by missing-data filtering. 2026 is reporting-only.
+Acceptance requires mean, median, win rate, +10% rate, -10% rate, and retained sample size. Reject:
+- one-regime improvements,
+- severe sample shrinkage,
+- gains caused by excluding missing-data rows,
+- unstable extraction coverage.
 
-## 8. Point-in-time universe and delisted-price validation
+2026 is reporting-only.
+
+## 6. Point-in-time universe and delisted-price validation
 Continue existing work:
 - validate official JPX listing/delisting parser,
 - require zero unresolved market rows/collisions before use,
 - measure Yahoo historical coverage for reconstructed delisted members,
 - never claim survivorship-bias-free results if delisted prices are materially missing.
 
-## 9. Confirm fixed-start history and freeze durable baseline
-When a hosted runner actually starts:
-- require `Yahoo history mode: fixed start 2022-01-01 -> current`,
-- retain all diagnostics/artifacts,
-- freeze Short Core / defensive / frozen Swing S metrics and manifest hashes,
-- keep Short Attack = none and Swing A = none unless separate pre-2026 evidence later supports them.
+## 7. Valuation scoring only after reliable accounting
+Potential later metrics:
+- PBR from signal-date market cap / latest causally available equity,
+- PER only for positive causally available earnings,
+- cash/market-cap or EV-style measures if coverage is stable.
 
-## 10. Production integration — BLOCKED until user Go
-Never automatically merge PR #13, change main, send production Discord, write production Sheets, replace Stable★6/Sniper/Mega, or disable TradingView/watchlist tooling.
+Never use present-day valuation values in historical rows.
+
+## 8. Production integration — BLOCKED until user Go
+Never automatically:
+- merge PR #13 to `main`,
+- change production screening-bot workflows,
+- send production Discord,
+- write production Spreadsheet,
+- replace Stable★6/Sniper/Mega,
+- disable or change production TradingView/watchlist builder/updater.

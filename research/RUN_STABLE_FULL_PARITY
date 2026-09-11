@@ -1,4 +1,4 @@
-trigger: 2026-09-11 full-year-stable-parity-v1
+trigger: 2026-09-11 full-year-stable-parity-v2
 teacher_run: 34456623439
 scope: 2025-09-11..2026-09-10
 max_symbols: 1500

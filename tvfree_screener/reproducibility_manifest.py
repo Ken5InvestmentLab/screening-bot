@@ -33,6 +33,8 @@ CODE_FILES = [
     "tvfree_screener/v3_short_reconstruction.py",
     "tvfree_screener/v3_swing_v2.py",
     "tvfree_screener/v3_pre2026_extension.py",
+    "tvfree_screener/v4_event_quality_research.py",
+    "tvfree_screener/v4_event_quality_selftest.py",
     "tvfree_screener/unified_comparison.py",
     "tvfree_screener/reproducibility_manifest.py",
     "tvfree_screener/reproducibility_selftest.py",

@@ -31,9 +31,20 @@ def main() -> None:
     assert pit.members_as_of({"D004"}, reuse, pd.Timestamp("2024-01-31"), anchor) == set()
     assert pit.members_as_of({"D004"}, reuse, pd.Timestamp("2022-12-30"), anchor) == {"D004"}
 
+    reuse_validation = pit.validate_events(
+        reuse.assign(market="プライム", source_url="x"),
+        pd.DataFrame(columns=["event_date", "code", "event", "market", "source_url"]),
+    )
+    assert reuse_validation["valid_for_membership_reconstruction"] is True
+    assert reuse_validation["temporal_code_reuse_count"] == 1
+    assert reuse_validation["temporal_code_reuse_codes"] == ["D004"]
+    assert reuse_validation["yahoo_price_identity_safe_without_quarantine"] is False
+
     unknown = pd.DataFrame(columns=["event_date", "code", "event", "market", "source_url"])
     v = pit.validate_events(events.assign(market="プライム", source_url="x"), unknown)
     assert v["valid_for_membership_reconstruction"] is True
+    assert v["temporal_code_reuse_count"] == 0
+    assert v["yahoo_price_identity_safe_without_quarantine"] is True
 
     collision_events = pd.DataFrame([
         {"event_date": pd.Timestamp("2024-01-01"), "code": "X999", "event": "listing"},

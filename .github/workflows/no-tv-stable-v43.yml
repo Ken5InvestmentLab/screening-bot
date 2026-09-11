@@ -1,0 +1,49 @@
+name: No-TV Stable V43 2025 Uncapped
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - "research/RUN_V43_2025_UNCAPPED"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pandas numpy requests scikit-learn
+      - name: Download preserved frozen daily dataset
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Compile V43
+        run: |
+          python -m py_compile             research/no_tv_v10_standalone.py             research/no_tv_v11_independent_selector.py             research/no_tv_v11_1_risk_guard.py             research/no_tv_v13_official_daily.py             research/no_tv_v18_rank_rolling.py             research/no_tv_v29_purged_rolling.py             research/no_tv_v43_2025_uncapped.py
+      - name: Run 2025 uncapped prequential audit
+        run: |
+          python research/no_tv_v43_2025_uncapped.py             --frozen-daily frozen/tse_daily.csv             --max-workers 16             --output-dir research_artifacts/v43_2025_uncapped
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-tv-stable-v43-${{ github.run_id }}
+          path: research_artifacts/v43_2025_uncapped/**
+          if-no-files-found: warn
+          retention-days: 30

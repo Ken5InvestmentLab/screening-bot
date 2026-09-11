@@ -245,13 +245,71 @@ Before opening extended historical results, `research/tentei_cloud/mtf_monster_m
 
 This is specifically designed to test whether 1H adds real incremental information instead of merely producing more signals.
 
+## Extended 1H history audit
+A longer Yahoo 1H research pull was completed successfully for all 8 shards:
+- source range actually returned: 2024-09-17 to 2026-09-10
+- CSV rows: 4,019,524
+- target symbols: 1,332
+- symbols seen: 1,315
+- missing symbols: 17
+- failed chunks: 272 across 61 symbols
+- persistent error groups: HTTP 400 = 153, HTTP 404 = 119
+
+This is adequate for broad research but the missing/failed-symbol audit must remain visible. Do not describe the historical universe as perfectly complete.
+
+## Causal pre-2026 MTF result — GENERIC 1H ADDITION REJECTED
+Workflow run `34593465081` used only pre-2026 validation for model selection. The 2026 reporting block was kept closed because the validation gate failed.
+
+Candidate pool:
+- reconstructed fixed 4H TAIL gate
+- 297 matured candidates in the full fetched span
+- TRAIN 2024-11-01..2025-06-30: n103
+- VALIDATION 2025-07-01..2025-12-31: n36
+- 2026 reporting candidates held closed by the gate: n151
+
+A +20% target was statistically impossible in TRAIN (1/103). A predeclared TRAIN-only feasibility rule therefore selected the highest return threshold with at least 8 positives and 8 negatives:
+- >=20%: 1/103
+- >=15%: 2/103
+- >=10%: 6/103
+- >=7.5%: 8/103
+- selected classification target: **>= +7.5% at 5BD**
+
+Validation base pool (n36):
+- avg +2.21%
+- median +1.19%
+- win 55.6%
+- >=10% 13.9%
+- >=20% 5.6%
+- <=-10% 2.8%
+
+4H-only model:
+- Watch n11: avg +5.03%, median +1.96%, win 63.6%, >=10% 36.4%, >=20% 18.2%, <=-10% 9.1%
+- Prime n5: avg +6.76%, median +1.96%, win 80.0%, >=10% 40.0%, >=20% 20.0%, <=-10% 0%
+
+MTF model (same RF architecture, adding recent 1H features):
+- Watch n14: avg +3.51%, median +1.79%, win 64.3%, >=10% 21.4%, >=20% 14.3%, <=-10% 7.1%
+- Prime n4: avg +2.94%, median +1.79%, win 75.0%, >=10% 25.0%, >=20% 0%, <=-10% 0%
+
+The fixed validation gate failed because:
+- MTF Watch n<15,
+- MTF Prime n<8,
+- MTF Prime mean did not beat 4H-only Prime.
+
+Decision:
+- **Reject generic 1H feature stacking for Monster scoring.**
+- Keep 1H out of the primary rank for now.
+- The 4H-only rank is materially more promising on this validation block, but n11/n5 is too small for production promotion.
+- 1H may still be investigated later as a narrowly defined veto/precursor feature, but only as a separate exploratory layer.
+- Do not open the withheld 2026 model report merely to rescue this result.
+
 ## Next research sequence
-1. Reconstruct or recover the full 4H Monster candidate table, including losers, so 1H features can be evaluated at the 4H candidate timestamp rather than on known winners only.
-2. Test recent-1H context windows at each 4H candidate: same session / prior 3h / 6h / 12h / prior trading day, using signal-time-only features.
-3. Build user-facing tiers from the full 4H candidate pool: **Monster Watch** = broader high-quality candidates, **Monster Prime** = stricter top score. Do not percentile-rank within a sparse exact-timestamp subset.
-4. Compare MTF score against the fixed 4H baselines on n, mean, median, >=10/20/30%, <=-10%, top1/3/5 removed mean, and monthly consistency.
-5. Keep **Core** separate; do not force Monster logic into the stable lane.
-6. Only after MTF scoring is robust, test dilution/warrant risk and fundamentals as optional graded overlays.
+1. Treat the **4H-only learned rank** as the current promising research branch; do not promote it yet because validation n is small.
+2. Quantify uncertainty on 4H-only Watch/Prime (bootstrap / monthly stability) without changing the already-fixed model.
+3. Run TRAIN-only 1H feature/veto ablation only if it can be defined without using the opened validation outcomes; otherwise wait for future forward data.
+4. Preserve user-facing tiers **Core / Monster Watch / Monster Prime**. Prime must be a stricter score tier over a sufficiently broad candidate pool, never an exact-timestamp percentile.
+5. Keep **Core** separate from Monster scoring.
+6. Investigate the 17 missing Yahoo symbols / persistent 400/404 failures before claiming full-universe historical coverage.
+7. Only after the 4H score is robust, test dilution/warrant risk and fundamentals as optional graded overlays.
 
 ## Naming
 Working product name: **天底極致 Cloud**

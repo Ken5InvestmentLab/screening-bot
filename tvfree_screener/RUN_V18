@@ -1,3 +1,4 @@
-trigger: 2026-09-11 v18-five-period-audit-v1
-selection_window: 2022H2 + 2023H1/H2 + 2024H1/H2
-no_2025_2026_selection: true
+trigger: 2026-09-11 v18-consensus-v2
+Watch: V16
+Prime: exact V14+V16 same-symbol agreement
+2025_2026: reporting only

@@ -17,6 +17,10 @@ Post-#98 TEST-only fixes now on the branch:
 - `160adc5d2aa7a8fb659915a2fe5c7cc1948f7c6b`: handle JPX two-row listing markup without misreading four-character offer prices as security codes.
 - `48210fb6b3e3e81d6e5b9ef348d086d7e535fa4a`: fail-closed live acceptance gate requiring no unknown-market rows, no same-day code collisions, and no missing event years.
 - `1404952a30437a2651d80a29c61499defbd5da5f`: synthetic regressions for deterministic 2022+ archive generation and UTF-8/CP932 decoding.
+- `b3be1f8fea2609e367b646c130d19219de396e79`: explicit/testable missing-event-year fail-closed helper and acceptance-rule text.
+- `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`: regression for missing-year rejection and complete-year acceptance.
+
+Current revalidation: run #107 (`34554032750`, head `ef3e08221154b1c3b2b8e0d1a80ed8920be0615b`) is pending. Treat this as an infrastructure/execution blocker only; do not infer a JPX pass/fail until the job produces the report.
 
 Next run must verify all of the following before any survivorship-bias claim:
 - `jpx_point_in_time_report.json` reports `valid_for_membership_reconstruction=true`;

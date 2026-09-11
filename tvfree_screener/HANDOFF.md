@@ -440,3 +440,57 @@ Interpretation:
 - Fixed -10% stop was rejected because it cuts later Monster winners; -30% catastrophic stop is near-neutral and is not the missing edge.
 
 Next pre-2025-only market-gate audit found that adding `breadth_ret1_pos <= 0.50` improved pooled 2023-2024 mean from +1.99% to +2.88% while keeping all four pre-2025 half-years positive. This is frozen as V15 before its 2025/2026 reporting run.
+
+
+## V15 weak-day gate — IMPROVES 2026 FAILURE POCKET, BUT BELOW V16
+Run `34603655438`.
+
+Frozen from 2023-2024 only:
+- V7 extreme Tail,
+- `med_ret5 <= 0`,
+- `breadth_ret1_pos <= 0.50`,
+- rank lower `volr20` + lower `ret1`.
+
+Reporting:
+- 2025 pooled n53 mean +1.09%, +20% 18.9%, loss10 45.3%.
+- 2026 Jan-Aug n36 mean +2.05%, +20% 19.4%, loss10 41.7%.
+- 2026 Mar-Aug n30 mean +2.53%.
+- June 2026 n5 mean -9.25%, materially better than V14's June collapse.
+
+Decision: useful regime clue, but not the simplest/best lane.
+
+## V16 single-feature volr20 rank — CURRENT STRONGEST SIMPLE CANDIDATE
+Run `34603792445`.
+
+Frozen from 2023-2024 only:
+- V7 extreme Tail,
+- `med_ret5 <= 0`,
+- choose same-day candidate with the **lowest volr20**,
+- Tail score only as tie-break,
+- one-business-day same-symbol cooldown.
+
+Reporting:
+- 2025H1 n37 mean +0.52%.
+- 2025H2 n33 mean +2.19%.
+- 2025 pooled n70 mean **+1.30%**, +20% 14.3%, +50% 10.0%, loss10 42.9%.
+- 2026H1 n55 mean **+3.47%**.
+- 2026 Jan-Aug n58 mean **+3.88%**, +20% 20.7%, +50% 5.17%, loss10 36.2%.
+- 2026 Jan-Aug top-1 removed mean **+1.89%**.
+- 2026 Mar-Aug n46 mean **+2.55%**; top-1 removed ~0%.
+- June 2026 remains bad: n7 mean -22.4%.
+
+Interpretation:
+- V16 is simpler than V14/V15 and has better 2026 robustness.
+- It is the current default Monster-lane candidate unless a pre-2025-selected loss gate clearly improves it.
+
+## V16 backward 2022 report — POSITIVE H2
+Run `34605714116`; artifact `10266990667`.
+Rule unchanged.
+
+Because the fixed dataset starts 2022-01-04, V7 only had enough prior data to emit Tail candidates from 2022-06-09.
+- 2022 total selected n31 mean +1.29%.
+- 2022H2 n29 mean **+2.55%**, +20% 13.8%, loss10 27.6%.
+- maximum winner +118.1%.
+- top-1 removed mean is negative, so 2022 still exhibits strong positive-skew / Monster dependence.
+
+This is a backward holdout, not a pristine forward holdout, but it supports the idea that the simple volr20 lane is not unique to 2024-2026.

@@ -62,10 +62,10 @@ def _get(url: str) -> str:
 def discover_archive_pages(base_url: str) -> list[str]:
     """Return current page plus all discoverable year archive pages."""
     html = _get(base_url)
-    hrefs = re.findall(r'href=["\\']([^"\\']*archives-\\d+\\.html)["\\']', html, flags=re.I)
+    hrefs = re.findall(r"href=['\\\"]([^'\\\"]*archives-\\d+\\.html)['\\\"]", html, flags=re.I)
     # JPX's back-number selector can store archive URLs in <option value=...>
     # instead of anchors, so inspect both deterministic attributes.
-    values = re.findall(r'value=["\\']([^"\\']*archives-\\d+\\.html)["\\']', html, flags=re.I)
+    values = re.findall(r"value=['\\\"]([^'\\\"]*archives-\\d+\\.html)['\\\"]", html, flags=re.I)
     urls = {base_url}
     urls.update(urljoin(base_url, h) for h in hrefs)
     urls.update(urljoin(base_url, v) for v in values)

@@ -64,8 +64,19 @@ Independent 2024 extension, unchanged frozen logic:
 
 Blind V4 behaved correctly: all four predeclared 2024 development variants failed the development utility requirement, so `locked_variant=null`; 2025 was not opened and 2026 was not evaluated. **Reject this V4 family as currently specified rather than retuning it.**
 
-## 6. Legacy +5.42% V3 recovery — KEEP ISOLATED
-The historical 2026 Mar-Aug reference remains n=29, mean +5.42%, median +2.06%, win 65.5%, but exact old thresholds were never committed. A separate TEST-only targeted legacy-recovery workflow was added on the branch at `28ab0492ab1dee59e255b459f8543278cad1a9af`. Let that recovery use pre-2026 evidence and archived/fixed data; do not tune thresholds to 2026 just to reproduce the headline number.
+## 6. Legacy +5.42% V3 recovery — FIRST FIXED RECONSTRUCTION REJECTED
+The historical 2026 Mar-Aug reference remains n=29, mean +5.42%, median +2.06%, win 65.5%, but exact old thresholds were never committed.
+
+Targeted recovery workflow run `34558192262` (artifact `10183354156`, head `28ab0492ab1dee59e255b459f8543278cad1a9af`) completed successfully and tested the known architecture without fitting to 2026:
+- relative-ranking Core;
+- four fixed recent-40 Meta rules;
+- four fixed Attack families (`lowvol_ignition_A/B`, `bounded_breakout_A/B`);
+- two Deep-Reversal variants (`capitulation_reversal_A/B`);
+- one-business-day same-symbol cooldown.
+
+All fixed combinations failed the 2024 development utility gate. `development_ranked=[]`, `validation_opened=[]`, `locked_candidate=null`. Therefore 2025 and 2026 were deliberately not opened. **Reject this reconstruction family. Do not tune its thresholds against the known +5.42% 2026 result.**
+
+The old +5.42% reference remains an unrecovered historical result, not disproved. Further recovery should only use genuinely new pre-2026 hypotheses/evidence or exact archived parameters if found.
 
 ## 7. Fundamental / dilution overlay
 Live EDINET work remains blocked until `EDINET_API_KEY` is available as an environment/secret value. Never commit/log it. Extracted warrant/share-count candidates remain audit evidence only until filing-table semantics are validated. Missing observations remain explicit unknowns with coverage-matched baselines. Initial dilution thresholds stay predeclared at 20%, 35%, 50%, and 100%; selection may use only pre-2026 evidence.
@@ -74,7 +85,7 @@ Live EDINET work remains blocked until `EDINET_API_KEY` is available as an envir
 Never automatically merge PR #13, alter production workflows, send production Discord, write production Spreadsheet, replace Stable★6/Sniper/Mega, or disable/change production TradingView/watchlist components.
 
 ## Immediate next concrete tasks
-1. Allow the targeted legacy V3 recovery run to finish and inspect it without tuning to 2026.
-2. Confirm manifest-v4/fixed-baseline self-checks on a non-cancelled TEST run.
-3. When `STOOQ_APIKEY` is available, execute the deterministic 24-event pre-2026 Stooq probe; expand only on adequate evidence.
-4. If Stooq remains blocked/unusable, implement a TEST-only J-Quants Free overlapping-window coverage/sanity probe while explicitly retaining the full-2022 backfill blocker.
+1. Confirm manifest-v4/fixed-baseline self-checks and final guard on a non-cancelled TEST run.
+2. When `STOOQ_APIKEY` is available, execute the deterministic 24-event pre-2026 Stooq probe; expand only on adequate evidence.
+3. If Stooq remains blocked/unusable, implement a TEST-only J-Quants Free overlapping-window coverage/sanity probe while explicitly retaining the full-2022 backfill blocker.
+4. For the legacy +5.42% line, search only for exact archived parameters or test materially different pre-2026-derived recovery families; never rescue the failed family by tuning to 2026.

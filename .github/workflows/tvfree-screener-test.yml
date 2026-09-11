@@ -68,6 +68,8 @@ jobs:
         run: python tvfree_screener/fundamental_overlay_selftest.py
       - name: EDINET collector synthetic self-check
         run: python tvfree_screener/edinet_fundamental_collector_selftest.py
+      - name: EDINET dilution audit synthetic self-check
+        run: python tvfree_screener/edinet_dilution_audit_selftest.py
       - name: Purged walk-forward backtest
         run: >-
           python tvfree_screener/bootstrap.py
@@ -84,6 +86,11 @@ jobs:
           --price-cap "$TVFREE_PRICE_CAP"
           --loss-penalty "$TVFREE_LOSS_PENALTY"
           --topn 30
+      - name: Live-validate JPX point-in-time membership reconstruction
+        run: >-
+          python tvfree_screener/point_in_time_universe.py
+          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
+          --start 2022-01-01
       - name: V3 Swing baseline research
         run: >-
           python tvfree_screener/v3_swing.py

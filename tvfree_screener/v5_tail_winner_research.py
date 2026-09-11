@@ -123,6 +123,7 @@ def fit_period(train: pd.DataFrame, pred: pd.DataFrame) -> pd.DataFrame:
     train = train.dropna(subset=FEATURES).copy()
     pred = pred.dropna(subset=FEATURES).copy()
     out = pred.copy()
+    train_cdfs: dict[str, np.ndarray] = {}
     for target in ["y_hit20","y_hit50","y_loss10"]:
         y = train[target].astype(int)
         if y.nunique() < 2:
@@ -131,8 +132,25 @@ def fit_period(train: pd.DataFrame, pred: pd.DataFrame) -> pd.DataFrame:
         m.fit(train[FEATURES], y, verbose=False)
         tr = m.predict_proba(train[FEATURES])[:, 1]
         pr = m.predict_proba(pred[FEATURES])[:, 1]
+        train_cdfs[target] = empirical_cdf(tr, tr)
         out[f"p_{target}"] = pr
         out[f"cdf_{target}"] = empirical_cdf(tr, pr)
+
+    # Final sparse tail gate is also calibrated ONLY against causal training
+    # scores. Never rank against the full prediction half-year.
+    for name, spec in VARIANTS.items():
+        tr_raw = (
+            spec["w20"] * train_cdfs["y_hit20"]
+            + spec["w50"] * train_cdfs["y_hit50"]
+            - spec["wloss"] * train_cdfs["y_loss10"]
+        )
+        pr_raw = (
+            spec["w20"] * out["cdf_y_hit20"].to_numpy()
+            + spec["w50"] * out["cdf_y_hit50"].to_numpy()
+            - spec["wloss"] * out["cdf_y_loss10"].to_numpy()
+        )
+        out[f"tail_raw__{name}"] = pr_raw
+        out[f"tail_q__{name}"] = empirical_cdf(tr_raw, pr_raw)
     return out
 
 
@@ -282,19 +300,9 @@ def main() -> None:
     # CDF heads; the variant blend itself is ranked on 2024 only.
     candidates = {}
     for name, spec in VARIANTS.items():
-        # Tail_raw uses head CDFs already normalized against each causal train set.
-        # Its final extreme gate is calibrated from 2024 itself only for
-        # development ranking, then the chosen numeric gate stays fixed.
         s = scored.copy()
-        s["tail_raw"] = (
-            spec["w20"] * s["cdf_y_hit20"]
-            + spec["w50"] * s["cdf_y_hit50"]
-            - spec["wloss"] * s["cdf_y_loss10"]
-        )
-        # Within each model period, convert the blended score to a cross-sectional
-        # percentile. This is observable on the prediction half and does not use
-        # forward returns.
-        s["tail_q"] = s.groupby("model_period")["tail_raw"].rank(pct=True, method="average")
+        s["tail_raw"] = s[f"tail_raw__{name}"]
+        s["tail_q"] = s[f"tail_q__{name}"]
         picks = select_sparse(s, spec["gate"], trading_dates)
         dev = stats_periods(picks, DEV_PERIODS)
         pool = summarize(picks[(picks["date"] >= "2024-01-01") & (picks["date"] <= "2024-12-31")]["target5_no"])

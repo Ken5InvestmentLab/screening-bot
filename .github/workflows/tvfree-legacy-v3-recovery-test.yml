@@ -6,6 +6,7 @@ on:
     paths:
       - "tvfree_screener/v3_short_legacy_recovery.py"
       - "tvfree_screener/v3_short_legacy_recovery_selftest.py"
+      - "tvfree_screener/v3_short_legacy_rank_recovery.py"
       - ".github/workflows/tvfree-legacy-v3-recovery-test.yml"
 
 permissions:
@@ -25,8 +26,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install minimal isolated dependencies
-        run: pip install pandas numpy
+      - name: Install isolated research dependencies
+        run: pip install -r tvfree_screener/requirements.txt
       - name: Download frozen run-114 research artifact
         uses: actions/download-artifact@v5
         with:
@@ -42,6 +43,11 @@ jobs:
           python tvfree_screener/v3_short_legacy_recovery.py
           --cache tvfree_screener/out/tse_daily.csv
           --symbol-batch 200
+      - name: Restore event-quality relative ranking
+        run: >-
+          python tvfree_screener/v3_short_legacy_rank_recovery.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
       - name: Upload recovery evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -50,5 +56,7 @@ jobs:
           path: |
             tvfree_screener/out/v3_short_legacy_recovery_report.json
             tvfree_screener/out/v3_short_legacy_recovery_locked_2026.csv
+            tvfree_screener/out/v3_short_legacy_rank_recovery_report.json
+            tvfree_screener/out/v3_short_legacy_rank_recovery_locked_2026.csv
           if-no-files-found: warn
           retention-days: 3

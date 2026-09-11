@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install pandas numpy requests
+        run: pip install pandas numpy requests scikit-learn
       - name: Download frozen teacher export
         uses: actions/download-artifact@v5
         with:

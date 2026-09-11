@@ -6,7 +6,7 @@ on:
       start:
         description: Start date (JST, YYYY-MM-DD)
         required: true
-        default: '2026-02-01'
+        default: '2024-09-16'
       end:
         description: End date (JST, YYYY-MM-DD)
         required: true
@@ -42,7 +42,7 @@ jobs:
         run: |
           python research/tentei_cloud/fetch_1h.py \
             --symbols research/tentei_cloud/symbols_4h_universe.txt \
-            --start '${{ inputs.start || '2026-02-01' }}' \
+            --start '${{ inputs.start || '2024-09-16' }}' \
             --end '${{ inputs.end || '2026-09-10' }}' \
             --shard-index '${{ matrix.shard }}' \
             --shard-count 8 \

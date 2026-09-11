@@ -1,0 +1,51 @@
+name: Tentei Cloud 1H Research Fetch
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: Start date (JST, YYYY-MM-DD)
+        required: true
+        default: '2026-02-01'
+      end:
+        description: End date (JST, YYYY-MM-DD)
+        required: true
+        default: '2026-09-10'
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUNBUFFERED: '1'
+
+jobs:
+  fetch:
+    name: shard-${{ matrix.shard }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/tentei-cloud-mtf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Fetch Yahoo 1H data
+        run: |
+          python research/tentei_cloud/fetch_1h.py \
+            --symbols research/tentei_cloud/symbols_4h_universe.txt \
+            --start '${{ inputs.start }}' \
+            --end '${{ inputs.end }}' \
+            --shard-index '${{ matrix.shard }}' \
+            --shard-count 8 \
+            --output "out/ohlcv_1h_shard_${{ matrix.shard }}.csv" \
+            --failures "out/failures_${{ matrix.shard }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tentei-cloud-1h-shard-${{ matrix.shard }}
+          path: out/*
+          if-no-files-found: error
+          retention-days: 14

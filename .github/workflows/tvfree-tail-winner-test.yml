@@ -1,0 +1,46 @@
+name: TV-free tail winner research TEST
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  tail-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Download frozen run-80 artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p tvfree_screener/out
+          gh run download 34545440155 \
+            -R Ken5InvestmentLab/screening-bot \
+            -n tvfree-screener-test-34545440155 \
+            -D tvfree_screener/out
+          test -s tvfree_screener/out/tse_daily.csv
+      - name: Run causal right-tail winner research
+        run: >-
+          python tvfree_screener/v5_tail_winner_research.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: Upload tail research outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-tail-winner-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v5_tail_winner_report.json
+            tvfree_screener/out/v5_tail_winner_locked_2026.csv
+          if-no-files-found: warn
+          retention-days: 7

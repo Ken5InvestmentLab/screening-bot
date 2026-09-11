@@ -16,12 +16,19 @@ TEST ONLY. Canonical handoff for scheduled runs and new chats.
 Replace TradingView/Pine watchlist dependency with a free daily-OHLCV TSE common-stock system while remaining competitive with Stable★6. Fundamental/dilution overlays are research-only and may be accepted only if pre-2026 evidence is robust.
 
 ## Runner / fixed-start status
-- Last fully successful research pipeline before runner recovery was Actions run `34519284035` on rolling `period=3y`; runtime about 23m15s, artifact about 33.55 MB.
-- Rolling `period=3y` is not a durable baseline. Test-only fixed-start acquisition uses `2022-01-01 -> current` via `bootstrap.py`; normal production behavior is unchanged.
-- IMPORTANT NEW STATUS: hosted runner allocation recovered on 2026-09-11. Actions run `34545440155` (head SHA `5461eef6f35ea2cea2b4bc38ca7177c681681783`) reached checkout and is genuinely executing.
-- In run `34545440155`, all five synthetic safety checks passed before heavy research: reproducibility, causality, point-in-time universe, fundamental/dilution overlay, and EDINET collector.
-- At the latest observation in this research turn, step `Purged walk-forward backtest` was still `in_progress`; no fixed-start numeric baseline or artifact hash has yet been accepted from that run. Do not claim completion until the run finishes.
-- The repo is public and commit `5461eef6...` restored normal TEST-only PR triggers for `tvfree_screener/**`; concurrency still cancels obsolete duplicate runs. This change affects only the test workflow, not production.
+- GitHub Actions runner allocation recovered after the repository was made public. TEST workflow commit `5461eef6...` restored normal research PR triggers; concurrency cancels obsolete duplicate runs.
+- First durable fixed-start pipeline: Actions run `34545440155`, head `5461eef6f35ea2cea2b4bc38ca7177c681681783`, overall SUCCESS.
+- Fixed Yahoo contract was verified as `2022-01-01 -> current`; 3,700 current JPX domestic common stocks produced 4,061,361 OHLCV rows, with 4,031,154 rows through the frozen 2026-08-31 historical cutoff.
+- Runtime was about 27m03s; artifact size 51,126,879 bytes (~48.8 MiB).
+- Manifest v3 fixed-start hashes from run #80:
+  - universe: `271033ea30220e1731537a2b453d2f5bfffb9fbc29d7d43a46f8efd1f9f54cbe`
+  - historical date/symbol coverage: `2686163d4e4342198590d34a8708c5c142a11441befdd74da3475bafd3e9a935`
+  - historical OHLCV: `475ae6166ed21220aaa7f9f98d5bfff6c2d221bf1e3571b59fc6656758f453ab`
+  - Short Core: `5fbb16417b3cd87afcbba824ada77d912124c9c623aba470a1f1fa849a9df757`
+  - Short defensive: `063b9c63bda60c298feb84e8e3d0d5f935f46da9dbc5900ba297bac21fbc723d`
+  - Swing S: `0907e351e914a278e9a41f57f627c7fdb6f10ca43301139c1ba14154b070ceac`
+  - research contract: `63b40267f9cdc6018aab701f36f79b1e675b35350a0ac5e6c35532f4c6046058`
+- These hashes belong to the frozen run-#80 research contract. Later overlay/audit changes intentionally change the research-contract hash and must not be mistaken for market-data drift.
 
 ## Reproducibility / universe
 - Manifest v3 fingerprints research code/config, current JPX universe, historical date/symbol coverage, historical OHLCV, and Short/Swing outputs.
@@ -32,14 +39,17 @@ Replace TradingView/Pine watchlist dependency with a free daily-OHLCV TSE common
 ## V3 Short
 - Same 45 features, monthly causal XGBoost, prediction-day percentile normalization, Core `r_top10 - 2*r_loss10`, next-open -> 5BD.
 - Recent-outcome Meta rejected; Attack none/unaccepted.
-- Last successful rolling-3y snapshot: 2025H1 mean +0.46%; 2025H2 +0.35%; contaminated 2026 Mar-Aug -0.56%.
-- Durable fixed-start numeric baseline pending completion of run `34545440155` or a later equivalent run.
+- Durable fixed-start run #80: 2025H1 n=119 mean +0.69%, median +0.45%, win 55.5%, +10% 3.36%, -10% 2.52%; 2025H2 n=124 mean +0.26%, median +0.58%, win 53.2%, +10% 0%, -10% 0%.
+- 2026 Mar-Aug reporting-only side report: n=124 mean +0.015%, median -0.13%, win 47.6%, +10% 1.61%, -10% 0.81%.
+- The old rolling-3y snapshot (+0.46% / +0.35%) remains historical context only; fixed-start run #80 is the durable numeric baseline.
 
 ## V3 Swing
 - Frozen architecture: MomCross -> causal semiannual quality model -> training empirical CDF -> Breadth Meta -> `score_R >= 0.20`.
 - Do not retune from 2026 or the old rolling-window threshold sweep.
-- Last successful rolling-3y snapshot: 2025H1 +6.36%; 2025H2 +5.89%; contaminated 2026 Mar-Aug +1.00%.
-- Swing A none/unaccepted. Durable fixed-start baseline pending.
+- Durable fixed-start run #80 at the unchanged frozen threshold 0.20: 2025H1 10BD n=36 mean -0.14%, median -1.96%, win 36.1%, +10% 11.1%, -10% 2.78%; 2025H2 n=24 mean +2.68%, median +0.90%, win 54.2%, +10% 12.5%, -10% 0%.
+- 2026 Mar-Aug reporting-only 10BD: n=27 mean +0.017%, median 0%, win 48.1%, +10% 7.41%, -10% 7.41%.
+- The old rolling +6% regime did not reproduce under the fixed-start contract. Swing S is therefore NOT accepted as durable Stable★6 replacement evidence. Do not retune from 2026.
+- Swing A remains none/unaccepted.
 
 ## Dilution / fundamental overlay
 User requested testing whether large outstanding stock-acquisition-right dilution and weak/expensive fundamentals explain differences among otherwise similar technical signals.
@@ -57,28 +67,24 @@ Causal policy:
 - same-day filing data may be used only with an explicit signal `decision_at` and filing `available_at`;
 - current data must never be backfilled into earlier signals.
 
-### Newly found data-quality issue
-A code review during the active fixed-start run found a real issue in `fundamental_overlay.py` that must be corrected BEFORE performance testing:
-- missing financial values compare False against risk thresholds;
-- current `financial_risk_count = ...fillna(False).sum()` can therefore assign a fully missing row a risk count of 0;
-- `financial_risk_filter` then effectively lets that row pass as if healthy;
-- the existing self-test checks that missing values stay NaN but does not yet test the downstream lane semantics.
-
-This contradicts the research rule `missing != healthy`. It is a data-quality bug, not a model-performance finding.
-
-Required fix after preserving the currently running fixed-start job:
-1. add explicit `dilution_known`, `financial_known`, and `combined_known` coverage flags;
-2. make `financial_risk_count` / `financial_risk_exclude` nullable/unknown when required financial facts are missing;
-3. keep unknown observations explicit rather than silently classifying them healthy;
-4. add coverage-matched baseline lanes (`*_known_baseline`) so apparent gains cannot come merely from dropping missing-data names;
-5. extend the synthetic self-test to require these semantics.
+### Missing-data safety correction
+Implemented after freezing run #80:
+- explicit `dilution_known`, `financial_known`, and `combined_known` flags;
+- nullable financial risk flags/count/exclusion when required facts are incomplete;
+- unknown rows are separated into explicit unknown lanes and cannot pass filtered lanes;
+- every filter has a coverage-matched known baseline;
+- invalid negative remaining-warrant shares fail closed;
+- persisted MS-warrant boolean strings are parsed without turning unknown into False.
+Synthetic coverage is included in the current CI run; no thresholds were changed.
 
 No threshold should change as part of this fix.
 
 ## Historical dilution extraction design
 Research this turn confirmed that balance-sheet `新株予約権` / `SubscriptionRightsToShares` is a monetary equity account and is NOT the residual potential-share count needed for dilution filtering.
 
-Historical dilution therefore needs a separate deterministic collector for the EDINET section/table `新株予約権等の状況`, preserving source evidence. At minimum store separately:
+An audit-first deterministic extractor now exists in `edinet_dilution_audit.py`. It scans only exact known EDINET dilution-related text blocks, extracts nearby share-count tokens with source excerpts/hashes, marks moving-strike/MS evidence, and deliberately sets `accepted_remaining_potential_shares=False` for every candidate until real filing table semantics are validated.
+
+Historical dilution still needs promotion from audit evidence to accepted residual-share facts only after live validation. At minimum store separately:
 - remaining potential shares, all warrant/options;
 - financing-type potential shares where deterministically classifiable;
 - exercise-price-reset / MS-warrant potential shares where deterministically identifiable;
@@ -101,16 +107,16 @@ Once historical coverage is acceptable, compare on 2024H1, 2024H2, 2025H1, 2025H
 Acceptance must include mean, median, win rate, +10%, -10%, and retained sample size. Reject one-regime improvement, severe sample shrinkage, and any gain caused by missing-data selection. 2026 remains reporting-only.
 
 ## Current blockers
-1. Fixed-start run `34545440155` is still executing; numeric baseline/artifacts cannot yet be frozen.
-2. Live EDINET acquisition needs `EDINET_API_KEY`; the key must remain env/secret-only and never be committed/logged.
-3. Historical residual warrant shares require a dedicated table/text extractor beyond standardized financial facts.
-4. Point-in-time universe live parser validation and delisted-symbol historical price coverage remain pending.
+1. Live EDINET acquisition still needs `EDINET_API_KEY`; the key must remain env/secret-only and never be committed/logged.
+2. Audit evidence has not yet been live-validated enough to promote any warrant share-count candidate to accepted residual dilution.
+3. Point-in-time JPX live parser validation is now included in the current TEST workflow, but delisted-symbol Yahoo price coverage still needs measurement.
+4. Existing Short/Swing fixed-start results remain materially below Stable★6 historical reference; new research must improve pre-2026 robustness rather than tune to 2026.
 
 ## Next concrete tasks
-1. Re-check and complete analysis of Actions run `34545440155`. If successful, require fixed-start mode, extract artifact, freeze Short/Swing baseline metrics and manifest hashes, runtime, artifact size, without retuning from 2026.
-2. Fix fundamental-overlay missing-data semantics and add coverage-matched baselines/self-tests before any fundamental performance comparison.
-3. Live-validate EDINET financial collector on a small pre-2026 sample once an API key is available; measure exact field coverage/missing/ambiguous rates.
-4. Prototype a separate deterministic EDINET dilution collector for `新株予約権等の状況`; distinguish financing/MS-type warrants only when source evidence supports it.
-5. Validate point-in-time JPX membership and delisted-price coverage.
-6. Only after coverage gates pass, run frozen technical baseline vs overlays on pre-2026 periods. Reject weak/unstable overlays.
+1. Let the current CI verify missing-data safety, EDINET dilution-audit integration, and live JPX archive parsing.
+2. Live-validate EDINET financial + dilution evidence on a small 2024/2025 sample once `EDINET_API_KEY` is available.
+3. Measure Yahoo coverage for reconstructed delisted members and explicitly quarantine code-reuse/identity ambiguity.
+4. Extend reporting to 2024H1/H2 as well as 2025H1/H2 without changing frozen thresholds based on 2026.
+5. Only after coverage gates pass, compare coverage-matched technical baseline vs dilution/financial/combined overlays. Reject weak/unstable effects.
+6. Continue searching for stronger causal technical architectures because fixed-start Swing S did not reproduce the old rolling advantage.
 7. Production integration remains blocked until explicit user Go.

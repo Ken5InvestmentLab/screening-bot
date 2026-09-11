@@ -89,3 +89,17 @@ Never automatically merge PR #13, alter production workflows, send production Di
 2. When `STOOQ_APIKEY` is available, execute the deterministic 24-event pre-2026 Stooq probe; expand only on adequate evidence.
 3. If Stooq remains blocked/unusable, implement a TEST-only J-Quants Free overlapping-window coverage/sanity probe while explicitly retaining the full-2022 backfill blocker.
 4. For the legacy +5.42% line, search only for exact archived parameters or test materially different pre-2026-derived recovery families; never rescue the failed family by tuning to 2026.
+
+
+## 9. V5 right-tail winner lane — FIRST DIRECT-TAIL FAMILY REJECTED
+The user explicitly accepts a small number of very large winners driving the mean if they can be detected prospectively. Do not penalize positive skew by itself.
+
+Run `34560020106` / artifact `10183988857` tested a fully staged, fixed-run-80, causal model with +20%, +50%, and -10% heads. The final implementation never opened 2025 because every fixed variant failed 2024, and therefore never scored 2026.
+
+2024 pooled:
+- tail20_q999: n=70, mean -0.93%, +20% 0%.
+- tail50_q999: n=71, mean -0.44%, +20% 0%.
+- blend_q999: n=70, mean -0.10%, +20% 1.43%, max +48.3%, but 2024H2 mean <0.
+- blend_q9995: n=34, mean -0.80%, +20% 0%.
+
+Reject this absolute-tail classifier family. Next safe tail task: test a **cross-sectional relative extreme-winner ranking** hypothesis using only pre-2026 selection, because the historical +5.42% architecture was explicitly relative-ranking and absolute tail probabilities appear poorly calibrated across regimes.

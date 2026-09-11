@@ -1,0 +1,62 @@
+name: TV-free V17 range-veto Monster research
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/tvfree-monster-v14
+    paths:
+      - "tvfree_screener/RUN_V17"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  v17-range-veto:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/tvfree-monster-v14
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install research dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Compile V17 runner
+        run: python -m py_compile tvfree_screener/v17_range_veto_rank.py
+      - name: Download preserved frozen run80 dataset
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: tvfree_screener/out
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Download causal Tail cache
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-v7-causal-tail-cache-2023-2025
+          path: tail_cache
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34600083474
+      - name: Run V17 range-veto research
+        run: >-
+          python tvfree_screener/v17_range_veto_rank.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --tail-cache tail_cache/v7_causal_tail_cache_2023_2025.csv
+      - name: Upload V17 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-v17-range-veto-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v17_rangeveto_report.json
+            tvfree_screener/out/v17_rangeveto_2025_picks.csv
+            tvfree_screener/out/v17_rangeveto_2026_picks.csv
+          if-no-files-found: warn
+          retention-days: 30

@@ -41,6 +41,59 @@ def main() -> None:
     except RuntimeError:
         pass
 
+    # Causal training boundary: labels ending on/after prediction-period start
+    # must never enter fit_half. Monkeypatch the expensive model fit to inspect
+    # exactly what score_periods passes in.
+    rows = []
+    feature_defaults = {name: 0.0 for name in v4.MODEL_FEATURES}
+    for i in range(1000):
+        rows.append({
+            **feature_defaults,
+            "date": pd.Timestamp("2023-01-01") + pd.Timedelta(days=i % 300),
+            "target5_end": pd.Timestamp("2023-12-20"),
+            "target5_no": 0.01,
+            "symbol": f"T{i:04d}",
+        })
+    # This tempting row has its outcome finishing inside the prediction half
+    # and must be purged from training.
+    rows.append({
+        **feature_defaults,
+        "date": pd.Timestamp("2023-12-29"),
+        "target5_end": pd.Timestamp("2024-01-03"),
+        "target5_no": 9.99,
+        "symbol": "LEAK",
+    })
+    rows.append({
+        **feature_defaults,
+        "date": pd.Timestamp("2024-01-10"),
+        "target5_end": pd.Timestamp("2024-01-17"),
+        "target5_no": 0.02,
+        "symbol": "PRED",
+    })
+    causal = pd.DataFrame(rows)
+
+    original_fit = v4.fit_half
+    seen = {}
+    def fake_fit(train: pd.DataFrame, pred: pd.DataFrame) -> pd.DataFrame:
+        seen["train_symbols"] = set(train["symbol"])
+        seen["pred_symbols"] = set(pred["symbol"])
+        out = pred.copy()
+        out["cdf_ret"] = 0.5
+        out["cdf_hit10"] = 0.5
+        out["cdf_loss10"] = 0.5
+        return out
+    v4.fit_half = fake_fit
+    try:
+        scored = v4.score_periods(
+            causal,
+            [("2024H1", "2024-01-01", "2024-06-30")],
+        )
+    finally:
+        v4.fit_half = original_fit
+    assert "LEAK" not in seen["train_symbols"]
+    assert "PRED" in seen["pred_symbols"]
+    assert set(scored["model_period"]) == {"2024H1"}
+
     # 2025 validation gate is deterministic and does not depend on 2026.
     good = {"n":20, "mean":0.01, "loss10_rate":0.05}
     bad_mean = {"n":20, "mean":0.0, "loss10_rate":0.05}

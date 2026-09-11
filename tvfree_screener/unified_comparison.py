@@ -17,6 +17,7 @@ import pandas as pd
 OUT = Path("tvfree_screener/out")
 SHORT_REPORT = OUT / "v3_short_reconstruction_report.json"
 SWING_REPORT = OUT / "v3_swing_v2_report.json"
+PRE2026_REPORT = OUT / "v3_pre2026_extension_report.json"
 
 
 def load_json(path: Path) -> dict[str, Any] | None:
@@ -122,10 +123,33 @@ def add_swing(rows: list[dict[str, Any]], report: dict[str, Any] | None) -> None
     ))
 
 
+def add_pre2026_extension(rows: list[dict[str, Any]], report: dict[str, Any] | None) -> None:
+    if report is None:
+        return
+    for period in ["2024H1_extension", "2024H2_extension"]:
+        short_period = report.get("short", {}).get(period, {})
+        rows.append(row(
+            "Short Core", period, "5BD", short_period.get("core_5BD"),
+            "v3_pre2026_extension.py using frozen Short functions; independent 2024 lane", True,
+        ))
+        rows.append(row(
+            "Short defensive market gate", period, "5BD", short_period.get("defensive_5BD"),
+            "v3_pre2026_extension.py; independent 2024 supporting lane", True,
+        ))
+        swing_period = report.get("swing", {}).get(period, {})
+        for horizon in ["5BD", "10BD", "20BD", "40BD"]:
+            rows.append(row(
+                "Swing S", period, horizon, swing_period.get(horizon),
+                "v3_pre2026_extension.py using frozen Swing functions; independent 2024 lane", True,
+            ))
+
+
 def main() -> None:
     short = load_json(SHORT_REPORT)
     swing = load_json(SWING_REPORT)
+    pre2026 = load_json(PRE2026_REPORT)
     rows = historical_rows()
+    add_pre2026_extension(rows, pre2026)
     add_short(rows, short)
     add_swing(rows, swing)
 
@@ -139,6 +163,7 @@ def main() -> None:
         "inputs": {
             "short_report_present": short is not None,
             "swing_report_present": swing is not None,
+            "pre2026_extension_present": pre2026 is not None,
         },
         "rows": rows,
         "monthly": {

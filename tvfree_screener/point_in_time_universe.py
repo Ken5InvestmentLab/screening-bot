@@ -149,20 +149,37 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
         from lxml import html as lxml_html
 
         root = lxml_html.fromstring(html)
+        raw_rows: list[list[str]] = []
         for tr in root.xpath("//tr"):
-            cells = []
+            cells: list[str] = []
             for cell in tr.xpath("./th|./td"):
                 text = " ".join(str(x).strip() for x in cell.itertext() if str(x).strip())
                 text = re.sub(r"\\s+", " ", text).strip()
                 if text:
                     cells.append(text)
-            if not cells:
-                continue
+            if cells:
+                raw_rows.append(cells)
+
+        # JPX's stock listing pages may render one issuer across two physical
+        # table rows: row 1 carries listing date/company/code while row 2 carries
+        # market classification. Pair only an immediately following row that
+        # has market text but no competing date/code. This is structural parsing,
+        # not fuzzy guessing; all normal date/code/market acceptance rules remain.
+        for i, cells in enumerate(raw_rows):
             date = _first_date(cells)
             code = _first_code(cells)
             if date is None or code is None or date.year < start_year or date > end_date:
                 continue
+
             market = _market_text(cells)
+            if not market and i + 1 < len(raw_rows):
+                next_cells = raw_rows[i + 1]
+                next_date = _first_date(next_cells)
+                next_code = _first_code(next_cells)
+                next_market = _market_text(next_cells)
+                if next_date is None and next_code is None and next_market:
+                    market = next_market
+
             key = (date, code, event)
             if key in seen:
                 continue

@@ -36,7 +36,7 @@ permissions:
   contents: read
 
 # Fail-fast JPX live validation is intentionally before heavy research.
-# A lightweight per-commit gate below prevents docs-only handoff commits from
+# A lightweight per-update gate below prevents docs-only handoff commits from
 # cancelling/restarting an already running heavy validation job.
 
 env:
@@ -81,118 +81,14 @@ jobs:
           echo "Changed files for this PR update:"
           cat /tmp/tvfree_changed_files.txt
 
-          if grep -Ev '^tvfree_screener/.*\.md    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-      - name: Install isolated test dependencies
-        run: pip install -r tvfree_screener/requirements.txt
-      - name: Reproducibility manifest synthetic self-check
-        run: python tvfree_screener/reproducibility_selftest.py
-      - name: Fixed run-80 baseline guard synthetic self-check
-        run: python tvfree_screener/fixed_baseline_guard_selftest.py
-      - name: Causal prefix and entry synthetic self-check
-        run: python tvfree_screener/causality_selftest.py
-      - name: Point-in-time universe synthetic self-check
-        run: python tvfree_screener/point_in_time_universe_selftest.py
-      - name: Delisted Yahoo coverage synthetic self-check
-        run: python tvfree_screener/delisted_price_coverage_selftest.py
-      - name: Fundamental and dilution overlay synthetic self-check
-        run: python tvfree_screener/fundamental_overlay_selftest.py
-      - name: Fundamental overlay evaluator synthetic self-check
-        run: python tvfree_screener/fundamental_overlay_evaluator_selftest.py
-      - name: EDINET collector synthetic self-check
-        run: python tvfree_screener/edinet_fundamental_collector_selftest.py
-      - name: EDINET dilution audit synthetic self-check
-        run: python tvfree_screener/edinet_dilution_audit_selftest.py
-      - name: V4 event-quality synthetic self-check
-        run: python tvfree_screener/v4_event_quality_selftest.py
-      - name: Independent 2024 extension synthetic self-check
-        run: python tvfree_screener/v3_pre2026_extension_selftest.py
-      - name: Build current JPX universe snapshot preflight
-        run: python tvfree_screener/jpx_current_snapshot.py
-      - name: Live-validate JPX point-in-time membership reconstruction
-        run: >-
-          python tvfree_screener/point_in_time_universe.py
-          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
-          --start 2022-01-01
-      - name: Measure Yahoo coverage for JPX delistings
-        run: >-
-          python tvfree_screener/delisted_price_coverage.py
-          --events tvfree_screener/out/jpx_membership_events.csv
-          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
-          --start 2022-01-01
-          --batch-size 50
-          --request-pause 0.5
-      - name: Purged walk-forward backtest
-        run: >-
-          python tvfree_screener/bootstrap.py
-          --mode backtest
-          --period "$TVFREE_PERIOD"
-          --price-cap "$TVFREE_PRICE_CAP"
-          --loss-penalty "$TVFREE_LOSS_PENALTY"
-          --topk "$TVFREE_TOPK"
-          --refresh
-      - name: Score latest session from same downloaded cache
-        run: >-
-          python tvfree_screener/bootstrap.py
-          --mode score
-          --price-cap "$TVFREE_PRICE_CAP"
-          --loss-penalty "$TVFREE_LOSS_PENALTY"
-          --topn 30
-      - name: V3 Swing baseline research
-        run: >-
-          python tvfree_screener/v3_swing.py
-          --cache tvfree_screener/out/tse_daily.csv
-          --symbol-batch 200
-      - name: V3 Swing v2 causal quality and Breadth Meta
-        run: >-
-          python tvfree_screener/v3_swing_v2.py
-          --cache tvfree_screener/out/tse_daily.csv
-          --symbol-batch 200
-      - name: V3 Short reproducible reconstruction
-        run: >-
-          python tvfree_screener/v3_short_reconstruction.py
-          --cache tvfree_screener/out/tse_daily.csv
-      - name: V3 Short distinct event-family Attack research
-        run: >-
-          python tvfree_screener/short_event_experiment.py
-          --cache tvfree_screener/out/tse_daily.csv
-          --symbol-batch 200
-      - name: Independent 2024 Short and Swing extension
-        run: >-
-          python tvfree_screener/v3_pre2026_extension.py
-          --cache tvfree_screener/out/tse_daily.csv
-          --symbol-batch 200
-      - name: V4 event-quality blind research
-        run: >-
-          python tvfree_screener/v4_event_quality_research.py
-          --cache tvfree_screener/out/tse_daily.csv
-          --symbol-batch 200
-      - name: Unified V3 research comparison
-        if: always()
-        run: python tvfree_screener/unified_comparison.py
-      - name: Build fixed-history reproducibility manifest
-        if: always()
-        run: python tvfree_screener/reproducibility_manifest.py
-      - name: Compare frozen run-80 baseline when inputs are identical
-        if: always()
-        run: python tvfree_screener/fixed_baseline_guard.py
-      - name: Upload test outputs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tvfree-screener-test-${{ github.run_id }}
-          path: tvfree_screener/out/
-          if-no-files-found: warn
-          retention-days: 3
- /tmp/tvfree_changed_files.txt | grep -q .; then
-            echo "run_heavy=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run_heavy=false" >> "$GITHUB_OUTPUT"
-          fi
+          run_heavy=false
+          while IFS= read -r changed_path; do
+            case "$changed_path" in
+              tvfree_screener/*.md) ;;
+              *) run_heavy=true; break ;;
+            esac
+          done < /tmp/tvfree_changed_files.txt
+          echo "run_heavy=$run_heavy" >> "$GITHUB_OUTPUT"
 
   test:
     needs: changes

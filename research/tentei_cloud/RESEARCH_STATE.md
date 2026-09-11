@@ -162,16 +162,65 @@ Research branch now contains:
 - `research/tentei_cloud/symbols_4h_universe.txt` (1,332-symbol same-universe comparison set)
 - `.github/workflows/tentei-cloud-1h-research.yml`
 
-The workflow uses 8 shards, retries transient Yahoo errors, stores failure JSON, and uploads per-shard CSV artifacts. It is manual-dispatch only. The connected GitHub tool currently exposes workflow read/retry operations but not starting a new workflow, so dispatch must occur through another available execution path or the GitHub UI/CLI.
+The workflow uses 8 shards, retries transient Yahoo errors, stores failure JSON, and uploads per-shard CSV artifacts. A research-branch-only push trigger is now available through `research/tentei_cloud/RUN_1H`; production workflows remain untouched.
+
+## 1H full-universe result — DIRECT 1H REPLACEMENT REJECTED
+Actions fetch run `34591970828` completed all 8 shards successfully.
+- 1H rows: 1,253,032
+- usable symbols: 1,315 / 1,332 target symbols
+- date range: 2026-02-02 to 2026-09-10
+- production-like eligible 1H bars: 451,702
+
+Direct 1H translation of the 4H SAFE/Core rule:
+- n291
+- average -0.13%
+- median -0.11%
+- win 47.8%
+- >=10% 5.15%
+- <=-10% 6.87%
+- Jul-Aug average -1.09%
+
+This is materially weaker and less stable than the existing 4H SAFE lane (+1.28% all-period, +1.25% Jul-Aug). **Do not replace 4H Core with this 1H rule.**
+
+Direct 1H translation of the 4H TAIL/Monster structure also failed:
+- Watch/Prime test output n70
+- average -2.28%
+- median -3.11%
+- win 35.7%
+- <=-10% 11.4%
+
+The first Watch/Prime implementation ranked the already-sparse Monster pool at each exact 1H timestamp. Watch and Prime therefore collapsed to the same set when a timestamp had only one candidate. Treat that tiering as invalid and do not use those results to define user-facing thresholds.
+
+Decision:
+- 1H is **not** a standalone replacement for 4H Core or 4H Monster.
+- Keep Core anchored to 4H/session + daily context.
+- Use 1H only as a possible MTF precursor/context feature around a 4H candidate.
+
+## 1H Monster precursor test — HIGH RECALL, LOW STANDALONE PRECISION
+Actions analysis run `34592471625` tested three fixed 1H momentum precursor families against the 1H universe and eight already-known Monster reference events. This is descriptive 2026 research, not untouched validation.
+
+Known-Monster recall within the preceding 7 calendar days:
+- fast: 8/8, median lead 143.5h
+- balanced: 8/8, median lead 117.0h
+- breakout: 6/8, median lead 142.5h
+
+But as standalone universe signals after the same production-like eligibility filter and 5BD cooldown:
+- fast: n5,366 matured, avg -0.90%, win 37.5%, <=-10% 12.1%
+- balanced: n3,369, avg -1.32%, win 36.3%, <=-10% 16.5%
+- breakout: n4,295, avg -0.84%, win 38.9%, <=-10% 11.2%
+
+Interpretation:
+- 1H activity clearly appears before the known Monster events, so 1H contains useful precursor information.
+- The precursor fires far too broadly and often several days too early; it is not a buy signal by itself.
+- The useful hypothesis is now narrower: **at the moment a 4H Monster candidate appears, score the recency/strength of recent 1H activation**. The 4H structure remains the gate.
 
 ## Next research sequence
-1. Fetch the 1H dataset for the same 1,332-symbol universe.
-2. Reconstruct the same production universe filters and 5BD labels on 1H.
-3. Evaluate 1H SAFE-like, 1H tail-capture, and independent reversal triggers.
-4. Compare 1H vs 4H vs Daily on identical dates/symbols.
-5. Test MTF: 1H early trigger -> 4H confirmation / veto -> Daily regime veto.
-6. Keep metrics: n, mean, median, win rate, >=10/20/30%, <=-10%, top1/3/5 removed mean, monthly consistency.
-7. Only after a robust trigger exists, test dilution/warrant risk and fundamentals as optional graded overlays.
+1. Reconstruct or recover the full 4H Monster candidate table, including losers, so 1H features can be evaluated at the 4H candidate timestamp rather than on known winners only.
+2. Test recent-1H context windows at each 4H candidate: same session / prior 3h / 6h / 12h / prior trading day, using signal-time-only features.
+3. Build user-facing tiers from the full 4H candidate pool: **Monster Watch** = broader high-quality candidates, **Monster Prime** = stricter top score. Do not percentile-rank within a sparse exact-timestamp subset.
+4. Compare MTF score against the fixed 4H baselines on n, mean, median, >=10/20/30%, <=-10%, top1/3/5 removed mean, and monthly consistency.
+5. Keep **Core** separate; do not force Monster logic into the stable lane.
+6. Only after MTF scoring is robust, test dilution/warrant risk and fundamentals as optional graded overlays.
 
 ## Naming
 Working product name: **天底極致 Cloud**

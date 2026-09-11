@@ -108,6 +108,41 @@ def main() -> None:
     assert v2["valid_for_membership_reconstruction"] is False
     assert v2["same_day_code_collisions"] == 1
 
+    # Required-year coverage is an independent fail-closed gate. A parser that
+    # silently loses a full archive year must never be accepted just because
+    # all remaining rows have known markets and no same-day collisions.
+    year_events = pd.DataFrame([
+        {"event_date": pd.Timestamp("2022-04-01"), "code": "Y001", "event": "listing"},
+        {"event_date": pd.Timestamp("2024-04-01"), "code": "Y002", "event": "listing"},
+        {"event_date": pd.Timestamp("2025-04-01"), "code": "Y003", "event": "listing"},
+    ]).assign(market="プライム", source_url="x")
+    base = pit.validate_events(year_events, unknown)
+    assert base["valid_for_membership_reconstruction"] is True
+    gated = pit.apply_event_year_coverage_gate(base, year_events, 2022, 2025)
+    assert gated["parsed_event_years"] == [2022, 2024, 2025]
+    assert gated["required_event_years"] == [2022, 2023, 2024, 2025]
+    assert gated["missing_event_years"] == [2023]
+    assert gated["valid_for_membership_reconstruction"] is False
+
+    complete_year_events = pd.concat([
+        year_events,
+        pd.DataFrame([{
+            "event_date": pd.Timestamp("2023-04-03"),
+            "code": "Y004",
+            "event": "listing",
+            "market": "プライム",
+            "source_url": "x",
+        }]),
+    ], ignore_index=True)
+    complete = pit.apply_event_year_coverage_gate(
+        pit.validate_events(complete_year_events, unknown),
+        complete_year_events,
+        2022,
+        2025,
+    )
+    assert complete["missing_event_years"] == []
+    assert complete["valid_for_membership_reconstruction"] is True
+
     print("point-in-time universe self-test: PASS")
 
 

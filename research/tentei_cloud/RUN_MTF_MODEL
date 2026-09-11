@@ -1,0 +1,3 @@
+trigger: 2026-09-11 causal-mtf-v1
+source_fetch_run: 34592896202
+protocol: train through 2025-06, validate 2025-H2, open 2026 only if validation gate passes

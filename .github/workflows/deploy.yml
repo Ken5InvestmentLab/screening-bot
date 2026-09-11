@@ -20,6 +20,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      DISCORD_APPROVAL_WEBHOOK_URL: ${{ secrets.DISCORD_APPROVAL_WEBHOOK_URL }}
     permissions:
       contents: write
     outputs:

@@ -232,10 +232,10 @@ COMPOSITE_VARIANT = "rate_adjusted"
 STRICT_WR  = False  # 勝率フロアは >= (同一勝率でも他指標で勝てば採用。Phase 1緩和)
 WR_FLOOR   = 0.0    # 勝率絶対下限 (0.0=無効)
 
-# 更新通知先Discord Webhook
-DISCORD_WEBHOOK_URL  = "https://discord.com/api/webhooks/1479431524674965729/sRCEG2lmoBLpEtZCdbf5N4kg2zEI7LHjtxxHm9g2Y1rFXPwoFSPDxpnOjsP0HAObSdyZ"
+# 更新通知先Discord Webhook（GitHub Actions / 実行環境のSecretから注入）
+DISCORD_WEBHOOK_URL  = os.environ.get("DISCORD_WEBHOOK_URL", "").strip()
 # 承認リクエスト送信先Discord Webhook（管理者チャンネル）
-APPROVAL_WEBHOOK_URL = "https://discord.com/api/webhooks/1480211740007600351/OWog6gutSvvUfJN6vbZgzI3AsJjMeIdcw_ho0pEGqwHVd_RRMnstqvMg8WGaLnK5jHwO"
+APPROVAL_WEBHOOK_URL = os.environ.get("DISCORD_APPROVAL_WEBHOOK_URL", "").strip()
 
 # ══════════════════════════════════════════════════════════════
 # 現行ロジック永続化

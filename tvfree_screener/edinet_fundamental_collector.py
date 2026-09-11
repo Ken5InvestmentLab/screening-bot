@@ -10,7 +10,9 @@ deterministically from EDINET's XBRL-to-CSV ZIP. Every output row retains the
 source document id and market-availability timestamp/date. Ambiguous or missing
 facts remain missing; they are never guessed or treated as healthy.
 
-Dilution / warrant extraction is intentionally NOT implemented here yet.
+Dilution-related text blocks are passed to an audit-first evidence extractor.
+Candidate share counts are retained for validation, but none is automatically
+accepted as residual dilution until real filing table semantics are proven.
 """
 from __future__ import annotations
 
@@ -28,6 +30,8 @@ import zipfile
 
 import pandas as pd
 import requests
+
+import edinet_dilution_audit as dilution_audit
 
 API_BASE = "https://api.edinet-fsa.go.jp/api/v2"
 DEFAULT_OUT = Path("tvfree_screener/out/edinet")
@@ -366,7 +370,7 @@ def collect(
     symbols: set[str] | None = None,
     request_interval: float = 1.0,
     max_docs: int | None = None,
-) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict]:
     documents: list[dict] = []
     for day in iter_days(start_date, end_date):
         raw_rows = client.list_documents(day)
@@ -393,7 +397,7 @@ def collect(
             "parse_errors": 0,
             "field_coverage": {field: {"ok": 0, "missing_or_ambiguous": 0} for field in FACT_SPECS},
         }
-        return docs_df, pd.DataFrame(), report
+        return docs_df, pd.DataFrame(), pd.DataFrame(), report
 
     docs_df = docs_df.sort_values(["available_at", "symbol", "doc_id"], kind="mergesort").drop_duplicates("doc_id")
     candidates = docs_df[docs_df["csv_flag"] == "1"].copy()
@@ -401,19 +405,31 @@ def collect(
         candidates = candidates.head(max_docs)
 
     snapshots: list[dict] = []
+    dilution_frames: list[pd.DataFrame] = []
     errors: list[dict] = []
     for _, doc in candidates.iterrows():
         try:
             payload = client.download_csv_zip(str(doc["doc_id"]))
             facts_df = read_xbrl_csv_zip(payload)
             facts = extract_standard_facts(facts_df)
-            snapshots.append({**doc.to_dict(), **facts})
+            doc_dict = doc.to_dict()
+            snapshots.append({**doc_dict, **facts})
+            dilution = dilution_audit.extract_dilution_evidence(facts_df, doc_dict)
+            if not dilution.empty:
+                dilution_frames.append(dilution)
         except Exception as exc:
             errors.append({"doc_id": str(doc["doc_id"]), "error": type(exc).__name__})
         if request_interval > 0:
             time.sleep(request_interval)
 
     snap_df = pd.DataFrame(snapshots)
+    dilution_df = (
+        pd.concat(dilution_frames, ignore_index=True)
+        if dilution_frames
+        else dilution_audit.extract_dilution_evidence(
+            pd.DataFrame(columns=["element_id", "context_id", "value"])
+        )
+    )
     coverage = {}
     for field in FACT_SPECS:
         status_col = f"{field}_status"
@@ -433,9 +449,18 @@ def collect(
         "parse_errors": int(len(errors)),
         "errors": errors,
         "field_coverage": coverage,
-        "note": "Missing or ambiguous facts remain unknown. Warrant/dilution extraction is not included in this collector yet.",
+        "dilution_evidence": dilution_audit.evidence_report(dilution_df),
+        "note": (
+            "Missing or ambiguous facts remain unknown. Dilution output is audit evidence only; "
+            "no candidate share count is accepted as residual dilution automatically."
+        ),
     }
-    return docs_df.reset_index(drop=True), snap_df.reset_index(drop=True), report
+    return (
+        docs_df.reset_index(drop=True),
+        snap_df.reset_index(drop=True),
+        dilution_df.reset_index(drop=True),
+        report,
+    )
 
 
 def main() -> None:
@@ -454,7 +479,7 @@ def main() -> None:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    docs, snapshots, report = collect(
+    docs, snapshots, dilution_evidence, report = collect(
         client,
         start_date=args.start_date,
         end_date=args.end_date,
@@ -464,6 +489,7 @@ def main() -> None:
     )
     docs.to_csv(out_dir / "edinet_documents.csv", index=False)
     snapshots.to_csv(out_dir / "edinet_fundamental_snapshots.csv", index=False)
+    dilution_evidence.to_csv(out_dir / "edinet_dilution_evidence.csv", index=False)
     with open(out_dir / "edinet_coverage.json", "w", encoding="utf-8") as fh:
         json.dump(report, fh, ensure_ascii=False, indent=2)
     print(json.dumps(report, ensure_ascii=False, indent=2))

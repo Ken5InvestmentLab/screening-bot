@@ -344,3 +344,59 @@ Contents:
 This cache is research-only. Outcome columns must never be used at prediction time except for rows whose `target_end_date` is already in the past.
 
 Next priority: diagnose V7 detector drift across 2023/2024/2025 before inventing more downstream Quality models.
+
+
+## Tail regime drift audit — ROOT CAUSE NARROWED
+Run `34600677389`; artifact `10264236784`.
+
+Raw V7 Tail detector / one-per-day results:
+- 2024H1 one-per-day mean +0.57%; 2024H2 -0.29%.
+- 2025H1 -2.28%; 2025H2 -7.29%.
+- 2025H2 raw Tail loss10 = 51.9%; one-per-day loss10 = 57.8%.
+
+Key drift:
+- 2024 -> 2025 Tail candidates moved toward stronger market breadth and greater extension:
+  - breadth_ma20 median 0.508 -> 0.613,
+  - raw tail_p median 0.834 -> 0.845,
+  - ret20 median 0.782 -> 0.922,
+  - ma20_gap median 0.425 -> 0.512,
+  - RSI14 median 72.5 -> 76.8.
+- Higher raw Tail probability was not better calibrated. In 2024 the lowest tail_p quartile had mean +3.33%, while higher quartiles were negative; 2025 high tail_p bins were also negative.
+- Therefore the failure is not simply weak market conditions. The detector increasingly ranks already-overextended momentum names as highest-confidence Tail candidates.
+
+Decision: stop assuming highest Tail probability is the best same-day candidate. Research the Tail gate as a detector and use an independent **pre-exhaustion relative rank** inside the Tail set.
+
+## V12 Pre-Exhaustion relative rank — CROSS-YEAR IMPROVEMENT
+Run `34601317002`; artifact `10264102497`.
+
+V12 does not add another outcome ML model. Within each same-day V7 extreme-Tail set it prefers lower relative values of:
+- 20D return,
+- 20D MA gap,
+- 20D volume ratio.
+
+`PREX3_ALL`:
+- 2024H1 +7.04%; 2024H2 +2.79%; pooled 2024 +4.73%.
+- 2025H1 +0.12%; 2025H2 -1.84%; pooled 2025 -0.83%.
+This is materially more stable than selecting highest Tail score.
+
+`PREX3_MED5_NONPOS` additionally requires cross-sectional median 5D return <= 0:
+- 2024H1 n48 +5.50%; 2024H2 n62 +5.49%; pooled 2024 n110 +5.49%.
+- 2025H1 n37 +5.76%; 2025H2 n37 -0.90%; pooled 2025 n74 +2.43%.
+- 2025 +20% rate 17.6%, +50% 9.46%, loss10 43.2%.
+
+Interpretation: the Tail detector behaves more like a contrarian/early-momentum detector than a broad bullish-regime detector. Avoiding already-extended same-day candidates is the strongest cross-year direction found so far.
+
+## V13 frozen Pre-Exhaustion+Range — 2026 REPORTING PENDING
+After V12 diagnostics, one final signal-time risk dimension was added before opening 2026:
+- same V7 extreme Tail gate,
+- market gate `med_ret5 <= 0`,
+- within-day lower relative ranks preferred for `ret20`, `ma20_gap`, `volr20`, and `range_pct`,
+- one-business-day same-symbol cooldown,
+- tie-break by Tail score.
+
+Exploratory 2024/2025 reference before opening 2026:
+- 2024H1 about +6.86%; 2024H2 about +3.05%; pooled about +4.71%.
+- 2025H1 about +5.74%; 2025H2 about +0.19%; pooled about +2.96%.
+All four half-year means were positive in exploration.
+
+IMPORTANT: the range dimension was selected after 2025 had already been inspected, so **2025 is not validation for V13**. V13 was frozen in commit `20a9175d0ac2a7cfb3368b155d8c3274020c52f4` before its dedicated 2026 runner was triggered. Run `34601520325` is 2026 reporting-only; do not change V13 from that result.

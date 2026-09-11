@@ -1,2 +1,2 @@
-trigger: 2026-09-11
-purpose: fetch 1H Yahoo research data for 1332-symbol comparison universe
+trigger: 2026-09-11 historical-pass-2
+purpose: fetch Yahoo 1H research history 2024-09-16 through 2026-09-10 for pre-2026 MTF development

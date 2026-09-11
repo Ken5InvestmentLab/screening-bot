@@ -293,7 +293,10 @@ Original fixed run-80 artifact `10179500303` expires 2026-09-14, so a TEST-only 
 - workflow: `.github/workflows/tvfree-preserve-dataset.yml`
 - source run: `34545440155`
 - destination artifact name: `tvfree-frozen-dataset-run80-preserved`
-- intended retention: 90 days
+- preservation run: `34599959356` — success
+- preserved artifact: `10264205130`
+- expires: `2026-12-10T12:38:23Z`
+- retention: 90 days
 - trigger file: `tvfree_screener/RUN_PRESERVE_DATASET`
 
-Use the preserved artifact for future research once the preservation run completes. Do not silently switch to a fresh Yahoo download when reproducibility against run #80 matters.
+Use preserved artifact `10264205130` for future research. Do not silently switch to a fresh Yahoo download when reproducibility against run #80 matters.

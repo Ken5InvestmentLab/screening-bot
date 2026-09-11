@@ -1,0 +1,3 @@
+trigger: 2026-09-11 v17-lossaware-v1
+selection_source: 2023-2024 only
+rule: V16 + ma20_gap<=0.50

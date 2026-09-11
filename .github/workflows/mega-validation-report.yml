@@ -41,6 +41,7 @@ jobs:
       contents: write
     env:
       REPORT_GATE_DEPLOY_ENABLED: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
 
     steps:
       - name: Checkout

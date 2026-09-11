@@ -111,27 +111,32 @@ Acceptance must include mean, median, win rate, +10%, -10%, and retained sample 
 - Static audit in this run confirmed the intended blind order is implemented: only 2024 development predictions/metrics are exposed for all variants; one variant is locked from 2024; only that locked variant is evaluated on 2025; 2026 is not scored unless the locked variant passes the predeclared 2025 validation gate.
 - Training purge is causal: each half-year uses only rows with `target5_end < prediction_period_start`.
 - `v4_event_quality_selftest.py` already checks purge behavior, selection-day cooldown, missing-calendar fail-closed behavior, and deterministic 2025 gate logic; it is included in the research-contract hash.
-- New static-audit finding: `select_variant()` is called separately for development, validation, and 2026 stages, so its in-memory same-symbol cooldown state resets at stage boundaries. This is NOT future leakage and should not materially drive broad results, but it is an execution-rule inconsistency at 2024/2025 and 2025/2026 boundaries. Fix/test this before first V4 performance run; do not use the fix to tune thresholds.
+- Static-audit finding: `select_variant()` previously reset its same-symbol cooldown state at development/validation/reporting boundaries. This was an execution-rule inconsistency, not future leakage.
+- RESOLVED before any V4 performance run: commit `cda2a6c4090587dd1e0a37211bf62af02f35ab71` carries global trading-calendar cooldown state across 2024 -> 2025 -> conditional 2026; commit `7944d9ac0fbcb667924ac1b9924fc0093be9741a` adds a synthetic year-boundary regression test.
+- No event thresholds, score weights, gates, model hyperparameters, or validation thresholds were changed by the cooldown fix.
 - Do not open/reject variants based on 2025 metrics other than the one locked from 2024, and never use 2026 to choose V4 settings.
 
 ## Current live TEST run
-- Actions run `34549403943` (run #97), head `80a42fc9d98796e1e0f17becaff5df825a71542f`, is in progress.
-- All currently scheduled synthetic checks through EDINET dilution audit have passed, including reproducibility, causality, point-in-time universe, delisted Yahoo coverage, fundamental/dilution overlay, EDINET collector, and dilution-audit tests.
-- At last inspection, run #97 was in `Purged walk-forward backtest`; live JPX point-in-time parsing and Yahoo-delisted coverage steps were still pending.
-- Do not modify the active test workflow in a way that cancels this run; wait for its live universe/coverage artifacts before interpreting survivorship-bias risk.
+- Actions run `34549403943` (run #97) completed FAILURE after the fixed-start backtest and latest-score steps succeeded.
+- Exact failure was infrastructure/plumbing, not model semantics: `point_in_time_universe.py` reached live JPX parsing, then `pandas.read_html()` raised `ImportError: Missing optional dependency 'lxml'`.
+- Because that step failed, Yahoo delisted-price coverage, V3/Swing reruns, independent 2024 extension, and V4 were skipped in run #97. The artifact still uploaded successfully as artifact ID `10180665805` (50,319,333 bytes).
+- Commit `dcf6bef99e5ec113dcf8419801015b9a86c16e69` adds `lxml>=5,<7` to TEST requirements only.
+- Commit `5f6207c93ca5fe464e90b9c69b8a8bb174924c82` integrates the corrected V4 self-test and first blind V4 research step into the TEST workflow.
+- Replacement Actions run `34550900449` (run #98), head `5f6207c93ca5fe464e90b9c69b8a8bb174924c82`, is currently in progress.
+- Confirmed PASS in run #98 so far: dependency install including lxml, reproducibility, causality, point-in-time universe, delisted Yahoo coverage synthetic test, fundamental/dilution overlay, EDINET collector, EDINET dilution audit, and the new V4 year-boundary cooldown self-test.
+- At last inspection run #98 was executing the fixed-start Purged walk-forward backtest. Do not change production or retune models while it runs.
 
 ## Current blockers
 1. Live EDINET acquisition still needs `EDINET_API_KEY`; the key must remain env/secret-only and never be committed/logged.
 2. Audit evidence has not yet been live-validated enough to promote any warrant share-count candidate to accepted residual dilution.
-3. Point-in-time JPX live parser validation and delisted-symbol Yahoo price coverage are being exercised by run #97 and must be inspected after completion.
+3. Point-in-time JPX live parser validation and delisted-symbol Yahoo price coverage are being re-run in #98 after fixing the missing lxml dependency.
 4. Existing Short/Swing fixed-start results remain materially below Stable★6 historical reference; new research must improve pre-2026 robustness rather than tune to 2026.
-5. V4 cooldown continuity across half-year stage boundaries must be corrected before first performance interpretation.
+5. V4 first blind performance result is pending run #98; cooldown continuity is already corrected and regression-tested.
 
 ## Next concrete tasks
-1. Inspect run #97 after completion. Require live JPX parser diagnostics and Yahoo delisted-price coverage results before any point-in-time backtest claim.
-2. Correct V4 selection cooldown continuity across development/validation/reporting stage boundaries and extend its synthetic test before first V4 performance run.
-3. Add V4 self-test and then V4 research execution to the TEST workflow only after the active run finishes, preserving blind 2024 -> locked-2025 -> conditional-2026 order.
+1. Inspect run #98 after completion. Require live JPX parser diagnostics and Yahoo delisted-price coverage results before any point-in-time/survivorship claim.
+2. If point-in-time parser validation passes, inspect unknown-market rows, same-day collisions, temporal code reuse quarantine, and Yahoo usable/partial/missing delisted-symbol counts.
+3. Inspect independent 2024 extension and first blind V4 report. For V4, accept/reject only from the predeclared 2024 lock -> locked 2025 validation flow; 2026 may be reported only if the locked variant passed without retuning.
 4. Live-validate EDINET financial + dilution evidence on a small 2024/2025 sample once `EDINET_API_KEY` is available.
-5. Extend/inspect 2024H1/H2 frozen technical reporting and compare four pre-2026 regimes without changing thresholds based on 2026.
-6. Only after coverage gates pass, compare coverage-matched technical baseline vs dilution/financial/combined overlays. Reject weak/unstable effects.
-7. Production integration remains blocked until explicit user Go.
+5. Only after coverage gates pass, compare coverage-matched technical baseline vs dilution/financial/combined overlays across 2024H1/H2 and 2025H1/H2. Reject weak/unstable effects.
+6. Production integration remains blocked until explicit user Go.

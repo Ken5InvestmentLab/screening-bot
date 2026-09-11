@@ -237,3 +237,63 @@ All final variants failed the 2024 acceptance gate, so 2025 and 2026 remained un
 Interpretation: daily OHLCV + the full 45-feature monthly relative model can materially concentrate future large winners, but raw tail ranking also admits too many large losers. Do **not** discard the Tail detector merely because its unfiltered mean is weak; preserve it as a research component. The next causal hypothesis is a separate downstream Quality/Meta layer that filters false positives while leaving Tail ranking itself untouched.
 
 The user's accepted objective is positive skew: a small number of very large winners may legitimately lift average return if the pattern is prospectively detectable. Future evaluations should report mean, +20/+50/+100 capture, loss10, and regime stability; median is secondary rather than a reason by itself to reject positive skew.
+
+
+## V9 conditional-on-Tail Quality — 2024 IMPROVED, 2025 REJECTED
+Authoritative push run `34598346729`; artifact `10263352589`.
+
+Hypothesis:
+- preserve the V7 extreme top-0.25% Tail detector unchanged;
+- train downstream Quality only on historical causal V7 Tail candidates;
+- conditional targets: 5BD >= +20% and 5BD <= -10%;
+- rank/filter by monster-vs-loss probability ratio;
+- staged protocol: 2023 Tail warmup -> 2024 development -> top2 -> 2025 validation -> 2026 only after validation pass.
+
+The strongest development variant was `ratio50`:
+- 2024H1 n=42, mean +4.69%, +20% 19.0%, -10% 26.2%.
+- 2024H2 n=61, mean +1.76%, +20% 18.0%, -10% 31.1%.
+- 2024 pooled n=103, mean +2.95%, +20% 18.45%, +50% 3.88%, -10% 29.13%.
+
+This was a real 2024 improvement versus raw V7: large-loss frequency fell materially while right-tail capture remained strong.
+
+2025 validation then failed decisively:
+- 2025H1 n=39, mean -0.40%, -10% 38.5%.
+- 2025H2 n=52, mean -5.45%, -10% 51.9%.
+- 2025 pooled n=91, mean -3.29%, +20% 9.89%, -10% 46.15%.
+- `validation_pass=false`, `locked_candidate=null`; 2026 remained unopened.
+
+Decision: reject the V9 learned conditional classifier as the final Quality layer. Keep the broader insight that **Quality must be learned/evaluated conditional on the Tail population**, not on all stocks.
+
+## V10 historical-neighbor Quality — PROMISING 2024, STRICT GATE MISSED
+Authoritative push run `34598608591`; artifact `10262863024`.
+
+Hypothesis:
+- preserve the same V7 extreme Tail detector;
+- no outcome classifier;
+- compare each current Tail candidate with previously completed causal Tail candidates in robust-standardized signal-time feature space;
+- use neighbor future returns for Quality;
+- fixed k=20/40 variants, with optional neighbor expected-return > 0 veto.
+
+Best-looking development row was `knn40_pos`:
+- 2024H1 n=28, mean +3.44%, +20% 21.4%, +50% 7.14%, -10% 32.14%.
+- 2024H2 n=52, mean +5.03%, +20% 23.1%, +50% 7.69%, -10% 30.77%.
+- 2024 pooled n=80, mean +4.47%, +20% 22.5%, +50% 7.5%, -10% 31.25%.
+
+This missed the predeclared development gate only because pooled loss10 was above the fixed 30% ceiling. The gate was **not** loosened after inspection; therefore `development_ranked=[]`, 2025 was not opened, and V10 was not accepted.
+
+Interpretation:
+- historical-neighbor conditioning appears materially useful;
+- ranking by neighbor **mean return** is vulnerable to right-tail outliers and is not the final formulation;
+- next test V11 uses the same causal neighbors but ranks by a payoff-aware local probability utility:
+  `2 * P(+20% or better) - P(-10% or worse)`.
+  The 2:1 coefficient is fixed from the outcome magnitudes (+20 vs -10), not fit to future results.
+
+## Frozen dataset preservation
+Original fixed run-80 artifact `10179500303` expires 2026-09-14, so a TEST-only preservation workflow was added:
+- workflow: `.github/workflows/tvfree-preserve-dataset.yml`
+- source run: `34545440155`
+- destination artifact name: `tvfree-frozen-dataset-run80-preserved`
+- intended retention: 90 days
+- trigger file: `tvfree_screener/RUN_PRESERVE_DATASET`
+
+Use the preserved artifact for future research once the preservation run completes. Do not silently switch to a fresh Yahoo download when reproducibility against run #80 matters.

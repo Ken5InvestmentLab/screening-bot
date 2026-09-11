@@ -109,9 +109,10 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
     try:
         tables = pd.read_html(io.StringIO(html))
     except ValueError:
-        return events, unknown
+        tables = []
 
     seen: set[tuple[pd.Timestamp, str, str]] = set()
+    unknown_seen: set[tuple[pd.Timestamp, str, str]] = set()
     for table in tables:
         for _, row in table.iterrows():
             cells = _row_cells(row)
@@ -127,15 +128,64 @@ def parse_event_page(url: str, event: str, start_year: int, end_date: pd.Timesta
             if EXCLUDED_MARKET_RE.search(market):
                 continue
             if not DOMESTIC_MARKET_RE.search(market):
-                unknown.append({
-                    "event_date": date.strftime("%Y-%m-%d"),
-                    "code": code,
-                    "event": event,
-                    "market": market,
-                    "source_url": url,
-                })
+                if key not in unknown_seen:
+                    unknown_seen.add(key)
+                    unknown.append({
+                        "event_date": date.strftime("%Y-%m-%d"),
+                        "code": code,
+                        "event": event,
+                        "market": market,
+                        "source_url": url,
+                    })
                 continue
             events.append(Event(date, code, event, market, url))
+
+    # JPX occasionally changes table markup in ways that pandas.read_html can
+    # normalize unexpectedly. Use the same official HTML as a deterministic
+    # second parser by reading direct table-row cells with lxml. This is a
+    # fallback/verification path, not a relaxed acceptance rule: market and date
+    # validation below remain identical and ambiguous rows still fail closed.
+    try:
+        from lxml import html as lxml_html
+
+        root = lxml_html.fromstring(html)
+        for tr in root.xpath("//tr"):
+            cells = []
+            for cell in tr.xpath("./th|./td"):
+                text = " ".join(str(x).strip() for x in cell.itertext() if str(x).strip())
+                text = re.sub(r"\\s+", " ", text).strip()
+                if text:
+                    cells.append(text)
+            if not cells:
+                continue
+            date = _first_date(cells)
+            code = _first_code(cells)
+            if date is None or code is None or date.year < start_year or date > end_date:
+                continue
+            market = _market_text(cells)
+            key = (date, code, event)
+            if key in seen:
+                continue
+            seen.add(key)
+            if EXCLUDED_MARKET_RE.search(market):
+                continue
+            if not DOMESTIC_MARKET_RE.search(market):
+                if key not in unknown_seen:
+                    unknown_seen.add(key)
+                    unknown.append({
+                        "event_date": date.strftime("%Y-%m-%d"),
+                        "code": code,
+                        "event": event,
+                        "market": market,
+                        "source_url": url,
+                    })
+                continue
+            events.append(Event(date, code, event, market, url))
+    except Exception as exc:
+        # Do not silently accept a parser failure. If pandas also found no
+        # usable events, collect_events will fail closed below.
+        print(f"WARN lxml JPX row parser failed for {url}: {type(exc).__name__}")
+
     return events, unknown
 
 

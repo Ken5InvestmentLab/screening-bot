@@ -1,0 +1,44 @@
+name: Tentei Cloud 1H Research
+
+on:
+  push:
+    branches:
+      - research/tentei-cloud-1h
+    paths:
+      - "research/cloud_1h_fetch.py"
+      - "research/cloud_1h_eval.py"
+      - ".github/workflows/tentei-cloud-1h-research.yml"
+  workflow_dispatch:
+
+jobs:
+  fetch-and-evaluate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Fetch genuine JPX 1h bars for known Monster examples
+        run: |
+          mkdir -p research/output
+          python research/cloud_1h_fetch.py             --symbols 6085,4052,8105,3444,5575,6666,2338,6217             --start 2026-03-01             --end 2026-09-10             --out research/output/cloud_1h_monsters.csv
+
+      - name: Evaluate 1h precursor timing
+        run: |
+          python research/cloud_1h_eval.py             --input research/output/cloud_1h_monsters.csv             --out research/output/cloud_1h_monster_precursors.csv
+
+      - name: Upload research outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: tentei-cloud-1h-monster-research
+          path: |
+            research/output/cloud_1h_monsters.csv
+            research/output/cloud_1h_monster_precursors.csv
+          retention-days: 7

@@ -1,0 +1,26 @@
+{
+  "baseline_name": "tvfree_fixed_start_run80",
+  "run_id": 34545440155,
+  "run_number": 80,
+  "head_sha": "5461eef6f35ea2cea2b4bc38ca7177c681681783",
+  "history_contract": "2022-01-01 -> current",
+  "historical_cutoff": "2026-08-31",
+  "universe_rows": 3700,
+  "cache_rows": 4061361,
+  "historical_rows": 4031154,
+  "hashes": {
+    "universe_sha256": "271033ea30220e1731537a2b453d2f5bfffb9fbc29d7d43a46f8efd1f9f54cbe",
+    "historical_date_symbol_sha256": "2686163d4e4342198590d34a8708c5c142a11441befdd74da3475bafd3e9a935",
+    "historical_ohlcv_sha256": "475ae6166ed21220aaa7f9f98d5bfff6c2d221bf1e3571b59fc6656758f453ab",
+    "v3_short_reconstruction_core.csv": "5fbb16417b3cd87afcbba824ada77d912124c9c623aba470a1f1fa849a9df757",
+    "v3_short_reconstruction_defensive.csv": "063b9c63bda60c298feb84e8e3d0d5f935f46da9dbc5900ba297bac21fbc723d",
+    "v3_swing_v2_s_picks.csv": "0907e351e914a278e9a41f57f627c7fdb6f10ca43301139c1ba14154b070ceac"
+  },
+  "metrics": {
+    "short_core_2025H1_mean": 0.006867731042589121,
+    "short_core_2025H2_mean": 0.00262217524883115,
+    "swing_s_2025H1_10BD_mean": -0.001426500953737768,
+    "swing_s_2025H2_10BD_mean": 0.026795530117740742
+  },
+  "policy": "If universe, historical date/symbol coverage, and historical OHLCV hashes all match this baseline, the frozen V3 output hashes must also match. If source hashes differ, classify as source/universe drift and investigate before attributing output changes to model semantics."
+}

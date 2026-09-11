@@ -1,0 +1,5 @@
+trigger: 2026-09-11 range-veto-v1
+selection_source: 2023 threshold + 2024 validation only
+base_lane: V14
+range_pct_max: 0.3040129098415149
+2025_2026_use: reporting-only

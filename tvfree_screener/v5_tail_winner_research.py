@@ -154,16 +154,11 @@ def fit_period(train: pd.DataFrame, pred: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def causal_scores(q: pd.DataFrame) -> pd.DataFrame:
+def causal_scores(
+    q: pd.DataFrame,
+    periods: list[tuple[str, str, str]],
+) -> pd.DataFrame:
     parts = []
-    periods = [
-        ("2024H1","2024-01-01","2024-06-30"),
-        ("2024H2","2024-07-01","2024-12-31"),
-        ("2025H1","2025-01-01","2025-06-30"),
-        ("2025H2","2025-07-01","2025-12-31"),
-        ("2026H1","2026-01-01","2026-06-30"),
-        ("2026H2","2026-07-01","2026-12-31"),
-    ]
     for label, a, b in periods:
         start, end = pd.Timestamp(a), pd.Timestamp(b)
         train = q[(q["target_end_date"] < start)].copy()
@@ -284,8 +279,8 @@ def main() -> None:
     args = ap.parse_args()
 
     raw = pd.read_csv(args.cache, parse_dates=["date"], dtype={"symbol": str})
-    for c in ["open","high","low","close","volume"]:
-        raw[c] = pd.to_numeric(raw[c], errors="coerce")
+    for col in ["open","high","low","close","volume"]:
+        raw[col] = pd.to_numeric(raw[col], errors="coerce")
     raw = raw.dropna(subset=["date","symbol","open","high","low","close","volume"])
     raw = raw.sort_values(["symbol","date"]).reset_index(drop=True)
     trading_dates = pd.Index(pd.to_datetime(raw["date"].unique())).sort_values()
@@ -293,81 +288,148 @@ def main() -> None:
     base = ev.build_candidates(raw, args.symbol_batch)
     q = attach_target_end(base, raw)
     q = build_opportunities(q)
-    scored = causal_scores(q)
 
-    # Reference distributions are always strictly earlier than each evaluated
-    # half-year. We use the scored training-side candidates only indirectly via
-    # CDF heads; the variant blend itself is ranked on 2024 only.
+    dev_model_periods = [
+        ("2024H1","2024-01-01","2024-06-30"),
+        ("2024H2","2024-07-01","2024-12-31"),
+    ]
+    val_model_periods = [
+        ("2025H1","2025-01-01","2025-06-30"),
+        ("2025H2","2025-07-01","2025-12-31"),
+    ]
+    future_model_periods = [
+        ("2026H1","2026-01-01","2026-06-30"),
+        ("2026H2","2026-07-01","2026-12-31"),
+    ]
+
+    # Stage 1: only 2024 is scored/exposed for variant development.
+    dev_scored = causal_scores(q, dev_model_periods)
     candidates = {}
     for name, spec in VARIANTS.items():
-        s = scored.copy()
+        s = dev_scored.copy()
         s["tail_raw"] = s[f"tail_raw__{name}"]
         s["tail_q"] = s[f"tail_q__{name}"]
         picks = select_sparse(s, spec["gate"], trading_dates)
         dev = stats_periods(picks, DEV_PERIODS)
-        pool = summarize(picks[(picks["date"] >= "2024-01-01") & (picks["date"] <= "2024-12-31")]["target5_no"])
+        pool = summarize(
+            picks[
+                (picks["date"] >= "2024-01-01")
+                & (picks["date"] <= "2024-12-31")
+            ]["target5_no"]
+        )
         candidates[name] = {
             "spec": spec,
-            "picks": picks,
             "development_2024": dev,
             "development_2024_pooled": pool,
             "development_utility": development_utility(dev, pool),
         }
 
     ranked = sorted(
-        [(c["development_utility"], name) for name,c in candidates.items() if c["development_utility"] is not None],
+        [
+            (item["development_utility"], name)
+            for name, item in candidates.items()
+            if item["development_utility"] is not None
+        ],
         reverse=True,
     )
-    opened = [name for _,name in ranked[:2]]
+    opened = [name for _, name in ranked[:2]]
+
+    # Stage 2: 2025 models/scores are not even constructed unless a 2024
+    # candidate qualified. Only the two 2024-selected variants are evaluated.
     accepted = []
-    for name in opened:
-        c = candidates[name]
-        val = stats_periods(c["picks"], VAL_PERIODS)
-        pool = summarize(c["picks"][(c["picks"]["date"] >= "2025-01-01") & (c["picks"]["date"] <= "2025-12-31")]["target5_no"])
-        c["validation_2025"] = val
-        c["validation_2025_pooled"] = pool
-        c["validation_pass"] = validation_pass(val, pool)
-        if c["validation_pass"]:
-            accepted.append((min(val["2025H1"]["mean"], val["2025H2"]["mean"]), pool["mean"], name))
+    dev_val_scored = None
+    if opened:
+        val_scored = causal_scores(q, val_model_periods)
+        dev_val_scored = pd.concat([dev_scored, val_scored], ignore_index=True)
+        for name in opened:
+            spec = VARIANTS[name]
+            s = dev_val_scored.copy()
+            s["tail_raw"] = s[f"tail_raw__{name}"]
+            s["tail_q"] = s[f"tail_q__{name}"]
+            picks = select_sparse(s, spec["gate"], trading_dates)
+            val = stats_periods(picks, VAL_PERIODS)
+            pool = summarize(
+                picks[
+                    (picks["date"] >= "2025-01-01")
+                    & (picks["date"] <= "2025-12-31")
+                ]["target5_no"]
+            )
+            candidates[name]["validation_2025"] = val
+            candidates[name]["validation_2025_pooled"] = pool
+            candidates[name]["validation_pass"] = validation_pass(val, pool)
+            if candidates[name]["validation_pass"]:
+                accepted.append(
+                    (
+                        min(val["2025H1"]["mean"], val["2025H2"]["mean"]),
+                        pool["mean"],
+                        name,
+                    )
+                )
 
     locked = sorted(accepted, reverse=True)[0][2] if accepted else None
+
     report = {
         "status": "research_only_no_production_writes",
         "purpose": "explicit right-tail capture; large winners are a valid source of positive skew",
         "entry": "next_session_open_to_5BD_close",
-        "protocol": "2024 development -> top2 only 2025 -> at most one lock -> 2026 only after validation pass",
+        "protocol": (
+            "score 2024 only -> top2 -> score 2025 only if qualified -> "
+            "lock at most one -> score 2026 only after validation pass"
+        ),
         "opportunity_rows": int(len(q)),
-        "positive_counts_training_and_eval": {
+        "positive_counts_all_rows_for_audit_only": {
             "hit20": int(q["y_hit20"].sum()),
             "hit50": int(q["y_hit50"].sum()),
             "loss10": int(q["y_loss10"].sum()),
         },
-        "development_ranked": [{"name":n,"utility":float(u)} for u,n in ranked],
+        "development_ranked": [
+            {"name": name, "utility": float(score)}
+            for score, name in ranked
+        ],
         "validation_opened": opened,
         "locked_candidate": locked,
         "candidates": {},
     }
 
-    for name,c in candidates.items():
-        item = {
-            "spec": c["spec"],
-            "development_2024": c["development_2024"],
-            "development_2024_pooled": c["development_2024_pooled"],
-            "development_utility": c["development_utility"],
+    # Stage 3: construct 2026 scores only for a fully locked candidate.
+    fixed_2026 = None
+    fixed_2026_monthly = None
+    if locked is not None:
+        future_scored = causal_scores(q, future_model_periods)
+        all_scored = pd.concat(
+            [dev_val_scored, future_scored], ignore_index=True
+        )
+        spec = VARIANTS[locked]
+        s = all_scored.copy()
+        s["tail_raw"] = s[f"tail_raw__{locked}"]
+        s["tail_q"] = s[f"tail_q__{locked}"]
+        picks = select_sparse(s, spec["gate"], trading_dates)
+        fixed = picks[
+            (picks["date"] >= "2026-03-01")
+            & (picks["date"] <= "2026-08-31")
+        ].copy()
+        fixed_2026 = summarize(fixed["target5_no"])
+        fixed_2026_monthly = {
+            str(month): summarize(group["target5_no"])
+            for month, group in fixed.groupby(fixed["date"].dt.to_period("M"))
+        }
+        fixed.to_csv(OUT / "v5_tail_winner_locked_2026.csv", index=False)
+
+    for name, item in candidates.items():
+        out = {
+            "spec": item["spec"],
+            "development_2024": item["development_2024"],
+            "development_2024_pooled": item["development_2024_pooled"],
+            "development_utility": item["development_utility"],
         }
         if name in opened:
-            item["validation_2025"] = c["validation_2025"]
-            item["validation_2025_pooled"] = c["validation_2025_pooled"]
-            item["validation_pass"] = c["validation_pass"]
+            out["validation_2025"] = item["validation_2025"]
+            out["validation_2025_pooled"] = item["validation_2025_pooled"]
+            out["validation_pass"] = item["validation_pass"]
         if name == locked:
-            fixed = c["picks"][(c["picks"]["date"] >= "2026-03-01") & (c["picks"]["date"] <= "2026-08-31")].copy()
-            item["fixed_2026_MarAug"] = summarize(fixed["target5_no"])
-            item["fixed_2026_monthly"] = {
-                str(m): summarize(g["target5_no"])
-                for m,g in fixed.groupby(fixed["date"].dt.to_period("M"))
-            }
-            fixed.to_csv(OUT / "v5_tail_winner_locked_2026.csv", index=False)
-        report["candidates"][name] = item
+            out["fixed_2026_MarAug"] = fixed_2026
+            out["fixed_2026_monthly"] = fixed_2026_monthly
+        report["candidates"][name] = out
 
     OUT.mkdir(parents=True, exist_ok=True)
     with open(OUT / "v5_tail_winner_report.json","w",encoding="utf-8") as fh:

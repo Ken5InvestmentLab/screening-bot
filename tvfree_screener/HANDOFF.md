@@ -116,6 +116,16 @@ Acceptance must include mean, median, win rate, +10%, -10%, and retained sample 
 - No event thresholds, score weights, gates, model hyperparameters, or validation thresholds were changed by the cooldown fix.
 - Do not open/reject variants based on 2025 metrics other than the one locked from 2024, and never use 2026 to choose V4 settings.
 
+## Additional safety hardening in latest session
+- Commit `b180b0673b0befe509a53abc206af371f2e3571f` adds `v4_event_quality_locked_pre2026.csv` to reproducibility-manifest historical output hashing.
+- Commit `8a29519ff4d51d9a56424023c94968ee034790ca` makes the coverage-matched fundamental-overlay evaluator self-test a required pre-heavy CI check on future runs.
+- Static audit of `fundamental_overlay_evaluator.py` found its matched-known-baseline design consistent with the missing-data policy: unknown rows cannot create apparent alpha by disappearing only from the filtered lane.
+- Commit `b4f9a8ccc3e4852d5060f201901094b5aad3bb02` separates Yahoo transport/probe failures from genuine missing delisted history and retries each batch up to three times.
+- Commit `5f6327bba94d1960cf7c692a9c6cd5fa2cf6ff36` adds a synthetic regression test proving repeated transport failure becomes `probe_error`, not `missing`.
+- Commit `c87de5673f3479b989355a78f0450d46305b9d3c` wires the frozen run-80 baseline guard self-test before heavy work and the actual baseline comparison after manifest generation on future runs.
+- Static audit of `v3_pre2026_extension.py` found no 2026 leakage: input is truncated at 2025-03-31, Short requires `target_end_date < prediction month start`, and Swing requires `target10_end < prediction half start`.
+- Valuation/PER-PBR scoring remains intentionally deferred: current issued-share and period-profit facts are not yet sufficient for a clean point-in-time valuation denominator without handling treasury shares/period length correctly.
+
 ## Current live TEST run
 - Actions run `34549403943` (run #97) completed FAILURE after the fixed-start backtest and latest-score steps succeeded.
 - Exact failure was infrastructure/plumbing, not model semantics: `point_in_time_universe.py` reached live JPX parsing, then `pandas.read_html()` raised `ImportError: Missing optional dependency 'lxml'`.

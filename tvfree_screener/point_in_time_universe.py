@@ -171,16 +171,36 @@ def collect_events(start_year: int, anchor_date: pd.Timestamp) -> tuple[pd.DataF
     return events, unknown_df
 
 
+def temporal_code_reuse_codes(events: pd.DataFrame) -> list[str]:
+    """Return codes that delist and later list again within the event history.
+
+    Membership state can still be reversed by date, but a reused four-character
+    code cannot safely be assumed to represent one Yahoo ticker identity across
+    both episodes.
+    """
+    reused: list[str] = []
+    for code, g in events.groupby("code", sort=True):
+        dels = pd.to_datetime(g.loc[g["event"] == "delisting", "event_date"]).tolist()
+        lists = pd.to_datetime(g.loc[g["event"] == "listing", "event_date"]).tolist()
+        if any(listed > delisted for delisted in dels for listed in lists):
+            reused.append(str(code))
+    return sorted(set(reused))
+
+
 def validate_events(events: pd.DataFrame, unknown: pd.DataFrame) -> dict:
     collisions = (
         events.groupby(["event_date", "code"])["event"].nunique().reset_index(name="event_types")
     )
     collisions = collisions[collisions["event_types"] > 1]
+    reused = temporal_code_reuse_codes(events)
     return {
         "event_rows": int(len(events)),
         "unknown_market_rows": int(len(unknown)),
         "same_day_code_collisions": int(len(collisions)),
+        "temporal_code_reuse_count": int(len(reused)),
+        "temporal_code_reuse_codes": reused,
         "valid_for_membership_reconstruction": bool(len(unknown) == 0 and len(collisions) == 0),
+        "yahoo_price_identity_safe_without_quarantine": bool(len(reused) == 0),
     }
 
 
@@ -246,8 +266,16 @@ def main() -> None:
             "jpx_membership_unknown_rows.csv",
             "jpx_membership_monthly_counts.csv",
         ],
-        "acceptance_rule": "do not use for backtest filtering unless unknown_market_rows=0 and same_day_code_collisions=0",
-        "limitation": "membership reconstruction does not guarantee Yahoo retains OHLCV for every delisted code; coverage must be measured separately",
+        "acceptance_rule": (
+            "membership state may be used only when unknown_market_rows=0 and "
+            "same_day_code_collisions=0; temporal code reuse must be quarantined "
+            "before mapping historical members to Yahoo ticker identity"
+        ),
+        "limitation": (
+            "membership reconstruction does not guarantee Yahoo retains OHLCV for every "
+            "delisted code, and a reused four-character code may represent multiple issuer "
+            "episodes; price coverage/identity must be measured separately"
+        ),
     }
     with open(OUT / "jpx_point_in_time_report.json", "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)

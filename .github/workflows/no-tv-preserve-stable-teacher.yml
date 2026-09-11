@@ -1,0 +1,42 @@
+name: Preserve No-TV Stable Teacher Dataset
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - "research/RUN_PRESERVE_STABLE_TEACHER"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  preserve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/no-tv-distillation
+      - name: Download teacher export
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-teacher-dataset
+          path: preserved
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34456623439
+      - name: Verify teacher dataset
+        run: |
+          test -f preserved/teacher_bottom_confirmed.csv
+          test -f preserved/teacher_stable6_confirmed.csv
+          sha256sum preserved/*.csv preserved/*.json | tee preserved/SHA256SUMS.txt
+      - name: Preserve teacher dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-tv-stable-teacher-preserved
+          path: preserved/**
+          if-no-files-found: error
+          retention-days: 90

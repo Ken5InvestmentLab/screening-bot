@@ -302,6 +302,45 @@ Decision:
 - 1H may still be investigated later as a narrowly defined veto/precursor feature, but only as a separate exploratory layer.
 - Do not open the withheld 2026 model report merely to rescue this result.
 
+## 4H ensemble stability and walk-forward
+A 7-seed stability audit confirmed that the fixed pre-2026 4H-only validation result was not primarily a random-seed accident:
+- Watch across 7 seeds: n10-14, mean +2.45% to +5.03%, mean across seeds +4.32%
+- Prime across 7 seeds: n5-7, mean +4.66% to +6.76%, mean across seeds +6.46%
+- pairwise selection Jaccard: Watch avg 84.1%, Prime avg 91.8%
+- seed42 bootstrap 95% CI still crosses zero because sample size is small (Watch n11 CI about -3.61%..+14.38%; Prime n5 about -0.79%..+16.10%)
+
+A 7-seed ensemble quantile sweep on the already-opened 2025-H2 validation block found:
+- q60 n16 avg +3.99%
+- q65 n13 avg +4.62%
+- q70/q75/q80 n10 avg +4.35%
+- q85 n6 avg +4.72%
+- q90 n5 avg +6.76%
+This made q65 a plausible Watch boundary and q90 a plausible Prime boundary, but this sweep is exploratory because validation had already been inspected.
+
+A stricter expanding walk-forward then fixed:
+- target >= +7.5% at 5BD,
+- Watch=q65,
+- Prime=q90,
+- 7-seed 4H-only ensemble,
+- training labels only when target_date < next test start.
+
+Walk-forward periods: 2025-H2, 2026 Jan-Feb, Mar-Apr, May-Jun, Jul-Aug.
+
+Result:
+- 2025-H2 remained strong (Watch n13 +4.62%, Prime n5 +6.76%)
+- 2026 Jan-Feb: Watch -1.64%, Prime -1.85%
+- 2026 Mar-Apr: Watch -2.40%, Prime -1.53%
+- 2026 May-Jun: Watch +1.60%, Prime one hit +27.0%
+- 2026 Jul-Aug: Watch +0.31%, Prime -2.67%
+- aggregate OOS base pool n185 avg +1.05%
+- aggregate OOS Watch n70 avg +0.44%
+- aggregate OOS Prime n20 avg +1.59%
+
+Decision:
+- **Reject the current learned 4H rank as a standalone production scoring engine.**
+- The 2025 validation strength was real enough to survive seed changes but did not survive changing market regimes.
+- The next research priority is a causal market-regime gate/veto using previous-day market breadth/trend, not further threshold tuning on the same 4H score.
+
 ## Next research sequence
 1. Treat the **4H-only learned rank** as the current promising research branch; do not promote it yet because validation n is small.
 2. Quantify uncertainty on 4H-only Watch/Prime (bootstrap / monthly stability) without changing the already-fixed model.

@@ -26,6 +26,7 @@ FILES = [
     "v3_short_2024_extension_core.csv",
     "v3_short_2024_extension_defensive.csv",
     "v3_swing_2024_extension_s.csv",
+    "v4_event_quality_locked_pre2026.csv",
 ]
 CODE_FILES = [
     "tvfree_screener/run.py",

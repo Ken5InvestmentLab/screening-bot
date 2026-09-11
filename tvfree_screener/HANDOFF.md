@@ -94,6 +94,40 @@ Post-#98 TEST-only fixes now on the branch:
 
 These fixes do not change event thresholds, score weights, model hyperparameters, 2026 selection rules, production code, or production writes.
 
+## Run #112 live data result — JPX accepted, Yahoo delisted history rejected
+Actions run `34554140015` (run #112), head `bad686013c293c0b23b19fc4e861632aae623817`, was later cancelled during the heavy backtest when a newer TEST-workflow commit took over. The cancellation does not invalidate steps that had already completed successfully; its retained artifact `10181998903` was inspected directly.
+
+JPX point-in-time membership report:
+- anchor date: 2026-09-11
+- current members: 3,700
+- official listing/delisting event rows: 1,096
+- `unknown_market_rows=0`
+- `same_day_code_collisions=0`
+- parsed/required years: 2022, 2023, 2024, 2025, 2026
+- `missing_event_years=[]`
+- `valid_for_membership_reconstruction=true`
+- temporal code reuse: 2 codes (`3960`, `8303`), therefore Yahoo ticker identity still requires quarantine.
+
+Decision: **ACCEPT** the JPX event reconstruction for historical membership state under the current fail-closed gate. This is not by itself a survivorship-bias-free price dataset.
+
+Yahoo official-delisting coverage report:
+- official delisting events: 463
+- identity quarantined: 3
+- probed events: 460
+- usable near delisting: 11 / 460 = 2.39%
+- probe errors: 0
+- missing: 400
+- missing before delisting: 47
+- partial old/sparse: 2
+- usable near delisting by delisting year: 2022 0/76, 2023 0/60, 2024 0/94, 2025 0/124, 2026 11/106.
+
+Decision: **REJECT** Yahoo as a sufficient source for historical OHLCV of delisted TSE names. The result is a data-coverage failure, not a reason to relax the acceptance rule. No result from a current-survivor-only Yahoo backtest may be described as survivorship-bias-free.
+
+TEST-CI infrastructure notes:
+- `7518dc0af0e0027caa452b5221230e7faeb6c6c1`: path-level Markdown exclusion alone was insufficient to prevent PR synchronize churn.
+- `bbc7ed19ff46f98ef0beba9565e4071b6305bc94`: rejected/superseded malformed intermediate workflow edit; no research conclusion came from it.
+- `8b8b46feaa14465180b740dba69a597de29b7660`: corrected TEST-only per-update `changes` job plus job-level heavy concurrency. It uses the PR synchronize `before` and current head SHAs, so docs-only handoff updates can skip the heavy job rather than canceling active research.
+
 ## Acceptance gate before survivorship claims
 A future TEST run must show all of the following before reconstructed membership is trusted:
 - `valid_for_membership_reconstruction=true`
@@ -105,11 +139,11 @@ A future TEST run must show all of the following before reconstructed membership
 Do not weaken this gate to obtain a green run. Never call results survivorship-bias-free until official delisting events are reconstructed and Yahoo usable/partial/missing historical-price coverage is measured.
 
 ## Current blockers
-1. JPX live parser/acceptance gate has not yet produced a completed post-fix revalidation. Runs #105-#108 were superseded/cancelled by subsequent branch commits; run #109 (`34554063655`) began on the prior docs head, and run #110 (`34554098082`, head `7518dc0af0e0027caa452b5221230e7faeb6c6c1`) is the current-head revalidation.
-2. Yahoo delisted-symbol price coverage remains pending until the JPX gate passes.
-3. First independent 2024 extension and first blind V4 performance result remain pending because #98 stopped upstream.
+1. Yahoo does not retain enough delisted-TSE history for a survivorship-aware 2022+ backtest: only 11/460 non-quarantined official delistings had usable prices near delisting in run #112.
+2. A free historical OHLCV source/archival route for delisted Japanese stocks must be found and coverage-tested before survivorship-bias-free claims.
+3. Run #114 (`34554396869`, head `8b8b46feaa14465180b740dba69a597de29b7660`) is the current TEST workflow; its heavy model outputs remain secondary until the delisted-price coverage blocker is resolved.
 4. Live EDINET validation requires `EDINET_API_KEY`.
 5. Existing fixed-start Short/Swing performance remains materially below Stable★6 historical reference.
 
 ## Next concrete task
-Inspect TEST run #110 (`34554098082`) and read the JPX acceptance report first. If and only if it passes, inspect Yahoo delisted-price coverage, independent 2024 extension, and the first blind V4 report. Reject weak/unstable findings; never retune from 2026. Production integration remains blocked until explicit user Go.
+Research and implement a TEST-only coverage probe for one or more genuinely free alternative historical-price sources or archival routes for the 460 non-quarantined official TSE delistings. Compare coverage using the same official JPX candidate set and the same near-delisting acceptance semantics. Do not tune model thresholds or use 2026 performance for selection. If no free source has adequate coverage, document that blocker explicitly rather than silently reverting to the current survivor universe. Production integration remains blocked until explicit user Go.

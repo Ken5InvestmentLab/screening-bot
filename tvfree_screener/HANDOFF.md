@@ -494,3 +494,64 @@ Because the fixed dataset starts 2022-01-04, V7 only had enough prior data to em
 - top-1 removed mean is negative, so 2022 still exhibits strong positive-skew / Monster dependence.
 
 This is a backward holdout, not a pristine forward holdout, but it supports the idea that the simple volr20 lane is not unique to 2024-2026.
+
+
+## V17 ma20-gap veto — REJECTED CROSS-YEAR
+Run `34605827073`.
+
+Frozen from 2023-2024 only:
+- V16 selection,
+- post-selection veto `ma20_gap <= 0.50`.
+
+Reporting:
+- 2025 pooled n41 mean **-0.39%**; 2025H1 **-5.61%**, H2 +4.12%.
+- 2026 Jan-Aug n35 mean **+4.21%**, loss10 28.6%, top-1 removed +2.61%.
+- 2026 Mar-Aug n29 mean **+3.54%**, top-1 removed +1.57%.
+
+Decision:
+- despite strong 2026 robustness, reject as the main lane because 2025H1 is materially negative.
+- do not add `ma20_gap` veto to V16.
+
+## V18 five-period single-feature audit — V16 FEATURE CONFIRMED
+Run `34606091168`; artifact `10267091479`.
+
+Selection-only data:
+- 2022H2,
+- 2023H1,
+- 2023H2,
+- 2024H1,
+- 2024H2.
+
+Audit:
+- all 45 signal-time features,
+- both LOW and HIGH same-day ranking directions,
+- fixed market gate `med_ret5 <= 0`,
+- 90 feature/direction tests total.
+
+Only **2 / 90** combinations were positive in all five periods:
+1. `volr20 LOW`
+   - pooled n201 mean +1.91%
+   - +20% 16.9%
+   - loss10 35.3%
+   - top-1 removed mean +1.33%
+   - period means: 2022H2 +2.55%, 2023H1 +0.28%, 2023H2 +0.11%, 2024H1 +3.73%, 2024H2 +2.33%.
+2. `ret1 LOW`
+   - pooled n201 mean +1.30%
+   - +20% 14.9%
+   - loss10 36.3%
+   - top-1 removed mean +0.72%.
+
+Conclusion:
+- `volr20 LOW` is not merely a 2023-2024 artifact; it is the strongest single-feature rank across the five available pre-2025 periods.
+- This strongly supports V16 as the default **Monster Watch** candidate.
+- Additional absolute vetoes tested so far generally reduce cross-year stability.
+- Next test: use the only other five-period-stable feature, `ret1 LOW`, as an independent same-day confirmation for a stricter **Monster Prime** tier rather than blending more features into Watch.
+
+## V19 ret1 absolute cap — REJECTED
+V19 was frozen after a five-period post-selection audit using `ret1 <= +20%`.
+Immediate reporting from the frozen V16 artifact:
+- 2025 pooled n55 mean **-0.74%**.
+- 2026 Jan-Aug n47 mean +1.93%.
+- 2026 Mar-Aug n36 mean +0.57%.
+
+Decision: reject the absolute ret1 cap. Keep ret1 only as a possible relative confirmation feature for Prime.

@@ -214,6 +214,37 @@ Interpretation:
 - The precursor fires far too broadly and often several days too early; it is not a buy signal by itself.
 - The useful hypothesis is now narrower: **at the moment a 4H Monster candidate appears, score the recency/strength of recent 1H activation**. The 4H structure remains the gate.
 
+## 4H reconstruction audit
+The original full 4H candidate table was not persisted as a reusable artifact, so two-session bars were reconstructed from genuine Yahoo 1H data as a recovery test.
+
+Observed genuine 1H clocks are 09:00 through 15:00. Three fixed split schemes were tested. Splitting at 12:30 or 13:00 is equivalent on this dataset and was materially closer to the known 4H aggregate baseline than splitting at 12:00.
+
+Best reconstruction (09:00-12:00 -> AM / 13:00-15:00 -> PM):
+- reconstructed TAIL: n117, avg +1.87% vs known original n215, avg +2.20%
+- reconstructed 4% Monster: n30, avg +2.09% vs known original n23, avg +5.94%
+
+Conclusion:
+- session semantics are plausible and the TAIL mean is close,
+- but candidate counts and Monster-tail behavior are not close enough to claim exact recovery,
+- therefore reconstructed 4H must NOT be presented as the original 4H signal set.
+- It is still useful as a controlled common baseline for measuring the *incremental value* of 1H context, because 4H-only and MTF can be compared on the identical reconstructed candidate pool.
+
+## Predeclared causal MTF comparison
+Before opening extended historical results, `research/tentei_cloud/mtf_monster_model.py` fixes this protocol:
+- fetch 1H history back to 2024-09-16 for warmup,
+- reconstructed 4H TAIL gate with 13:00 split and range >=2%,
+- 5BD same-symbol cooldown,
+- development/train: 2024-11-01 to 2025-06-30,
+- validation: 2025-07-01 to 2025-12-31,
+- target: 5BD >= +20%,
+- compare the same Random Forest architecture using 4H-only features vs 4H + recent 1H context,
+- Watch = >= training OOB probability 70th percentile,
+- Prime = >= training OOB probability 90th percentile,
+- do not subtract a loss model from tail rank,
+- 2026 remains reporting-only and is opened only if a fixed 2025 validation gate passes.
+
+This is specifically designed to test whether 1H adds real incremental information instead of merely producing more signals.
+
 ## Next research sequence
 1. Reconstruct or recover the full 4H Monster candidate table, including losers, so 1H features can be evaluated at the 4H candidate timestamp rather than on known winners only.
 2. Test recent-1H context windows at each 4H candidate: same session / prior 3h / 6h / 12h / prior trading day, using signal-time-only features.

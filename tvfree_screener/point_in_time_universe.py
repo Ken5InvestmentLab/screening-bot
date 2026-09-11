@@ -342,6 +342,17 @@ def main() -> None:
 
     events, unknown = collect_events(start.year, anchor)
     validation = validate_events(events, unknown)
+
+    parsed_years = sorted(set(pd.to_datetime(events["event_date"]).dt.year.astype(int)))
+    required_years = list(range(start.year, anchor.year + 1))
+    missing_years = sorted(set(required_years) - set(parsed_years))
+    validation["parsed_event_years"] = parsed_years
+    validation["required_event_years"] = required_years
+    validation["missing_event_years"] = missing_years
+    validation["valid_for_membership_reconstruction"] = bool(
+        validation["valid_for_membership_reconstruction"] and not missing_years
+    )
+
     OUT.mkdir(parents=True, exist_ok=True)
     events.to_csv(OUT / "jpx_membership_events.csv", index=False)
     unknown.to_csv(OUT / "jpx_membership_unknown_rows.csv", index=False)
@@ -379,6 +390,14 @@ def main() -> None:
     with open(OUT / "jpx_point_in_time_report.json", "w", encoding="utf-8") as f:
         json.dump(report, f, ensure_ascii=False, indent=2)
     print(json.dumps(report, ensure_ascii=False, indent=2))
+
+    if not validation["valid_for_membership_reconstruction"]:
+        raise RuntimeError(
+            "JPX point-in-time membership failed acceptance gate: "
+            f"unknown_market_rows={validation['unknown_market_rows']} "
+            f"same_day_code_collisions={validation['same_day_code_collisions']} "
+            f"missing_event_years={validation['missing_event_years']}"
+        )
 
 
 if __name__ == "__main__":

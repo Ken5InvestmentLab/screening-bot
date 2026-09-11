@@ -104,7 +104,19 @@ Once `EDINET_API_KEY` is available:
 
 Reject one-regime gains, severe sample shrinkage, missing-data artifacts, or unstable extraction.
 
-## 9. Production integration — BLOCKED until user Go
+## 9. Reproducibility and coverage safeguards added in latest session
+Future TEST runs must also enforce:
+- fundamental overlay evaluator synthetic self-test before heavy research;
+- V4 locked pre-2026 pick output included in reproducibility hashing;
+- frozen run-80 baseline guard self-test before heavy research;
+- frozen run-80 baseline comparison after manifest generation when input hashes are identical;
+- Yahoo delisted-history probe errors reported separately from genuine missing history, with up to three download attempts per batch.
+
+Do not interpret a `probe_error` as evidence that Yahoo lacks the ticker history.
+
+Valuation scoring remains deferred until point-in-time treasury-share / share-count alignment and duration-period profit semantics are explicit. Do not create an approximate PER/PBR lane merely to obtain another backtest variant.
+
+## 10. Production integration — BLOCKED until user Go
 Never automatically:
 - merge PR #13 to `main`,
 - change production screening-bot workflows,

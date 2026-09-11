@@ -107,3 +107,9 @@ Reject this absolute-tail classifier family. Next safe tail task: test a **cross
 
 ## 10. Legacy event-quality rank recovery — REJECTED
 Run `34560020086` / artifact `10184003302` passed technically but all fixed event-quality/Meta combinations failed 2024. No 2025/2026 opening occurred. Do not retune this family. Current next tail path is the broader V6 cross-sectional extreme-winner model (future daily top 1% / top 0.25%) with staged 2024 -> 2025 -> 2026 evaluation.
+
+
+## 11. V6 relative extreme-winner model — REJECTED
+Run `34560206590` / artifact `10184090465` used monthly causal same-day future top-1% / top-0.25% labels and fixed run-80 data. All variants failed 2024; none captured a +20% winner in the selected 2024 sets. 2025 and 2026 were not opened.
+
+Next tail hypothesis: restore the full 45 `run.py` features and test a pure positive-tail Attack score without subtracting loss probability. Keep -10% risk as a predeclared validation gate instead of ranking penalty. This is materially different from rejected V5/V6 and remains pre-2026 selected.

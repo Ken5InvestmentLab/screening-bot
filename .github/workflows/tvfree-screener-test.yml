@@ -29,6 +29,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - "tvfree_screener/**"
+      - "!tvfree_screener/**/*.md"
       - ".github/workflows/tvfree-screener-test.yml"
 
 permissions:

@@ -1,0 +1,51 @@
+name: No-TV Stable V39 Rolling Payoff
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - experiment/no-tv-distillation
+    paths:
+      - "research/RUN_V39_STABLE_ROLLING"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/no-tv-distillation
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pandas numpy requests scikit-learn
+      - name: Clone public historical watchlist repo
+        run: git clone --quiet https://github.com/Ken5InvestmentLab/tv-watchlist-builder.git tv-watchlist-builder-history
+      - name: Download preserved Stable teacher
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-stable-teacher-preserved
+          path: teacher
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34608845800
+      - name: Compile V39
+        run: |
+          python -m py_compile             research/no_tv_v10_standalone.py             research/no_tv_v13_official_daily.py             research/no_tv_v11_independent_selector.py             research/no_tv_v37_stable_bottom_gate.py             research/no_tv_v38_stable_payoff_rank.py             research/no_tv_v39_stable_rolling_payoff.py
+      - name: Run purged rolling payoff audit
+        run: |
+          python research/no_tv_v39_stable_rolling_payoff.py             --bottom-teacher teacher/teacher_bottom_confirmed.csv             --stable6-teacher teacher/teacher_stable6_confirmed.csv             --watchlist-repo tv-watchlist-builder-history             --max-symbols 500             --max-workers 20             --output-dir research_artifacts/v39_stable_rolling_payoff
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-tv-stable-v39-${{ github.run_id }}
+          path: research_artifacts/v39_stable_rolling_payoff/**
+          if-no-files-found: warn
+          retention-days: 30

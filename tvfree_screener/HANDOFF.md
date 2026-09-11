@@ -592,3 +592,39 @@ Evidence:
 - 2026 Jan-Aug top-1 removed +1.89%.
 
 Open issue: loss10 remains high and June 2026 is a failure pocket. Simple absolute vetoes and ret1 consensus generally reduce cross-year stability, so avoid adding them casually.
+
+
+## V21 September 2026 forward-style mini report — ONE MONSTER HIT
+Run `34606912203`; artifact `10266478492`.
+
+V16 rule was unchanged after the Jan-Aug research.
+Dataset end: 2026-09-11.
+
+September:
+- raw extreme-Tail candidates: 3
+- V16 selected: 1
+- matured selected: 1
+- selected signal date: 2026-09-02
+- symbol: **4052**
+- 5BD return: **+41.30%**
+- Tail CDF: 0.999403
+- Tail probability: 0.841351
+- volr20: 4.151849
+- market median 5D return: -0.59%
+
+Interpretation:
+- sample n=1 is far too small to score the strategy;
+- nevertheless, this is a useful forward-style observation because V16 was already frozen before September was inspected;
+- do not tune V16 from this single hit.
+
+## Role comparison versus current production modes
+Current published recent-365d benchmarks on `main`:
+- Stable ★6: n56, 5BD avg +6.1%, win 55.4%, <=-10% 7/56 (~12.5%).
+- Sniper: n40, 5BD avg +2.4%, win 65.8%, <=-10% 2/40 (5.0%).
+- Mega5: n10, 5BD avg +14.5%, win 50.0%.
+
+V16 Monster is structurally different:
+- 2026 Jan-Aug n58 avg +3.88%, +20% 20.7%, +50% 5.17%, loss10 36.2%.
+- therefore **V16 must not replace Stable ★6/Core**.
+- Stable/Core remains the lower-downside lane.
+- V16 is a complementary positive-skew / Monster-discovery lane.

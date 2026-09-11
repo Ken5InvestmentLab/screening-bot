@@ -1,0 +1,3 @@
+trigger: 2026-09-11 v38-payoff-v1
+objective: performance-first
+production_writes: false

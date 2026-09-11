@@ -555,3 +555,40 @@ Immediate reporting from the frozen V16 artifact:
 - 2026 Mar-Aug n36 mean +0.57%.
 
 Decision: reject the absolute ret1 cap. Keep ret1 only as a possible relative confirmation feature for Prime.
+
+
+## V20 consensus Prime audit — PRIME NOT SUPPORTED
+Run `34606501154`.
+
+Pre-2025 only:
+- Watch = V16 (`volr20 LOW`).
+- Prime hypotheses required the second five-period-stable feature `ret1 LOW` as same-day confirmation.
+
+Results:
+- Watch remained positive in all five periods; pooled n201 mean +1.91%, +20% 16.9%, loss10 35.3%, top-1 removed +1.33%.
+- PRIME_HALF pooled n108 mean +1.88% but 2023H1 -6.72% and 2023H2 -0.19%; not all-five-positive.
+- PRIME_TOP pooled n102 mean -0.09%; 2023H1 -5.73%, 2023H2 -0.19%, 2024H2 -0.80%.
+
+Decision:
+- do **not** force a Monster Prime tier from ret1 confirmation.
+- ret1 is independently stable as a single rank feature, but it does not confirm volr20 candidates in a robust way.
+- Keep the user-facing Monster lane simple for now: V16 Watch-style selection only. A Prime label should not exist until a genuinely robust second layer is found.
+
+## Current Monster research state
+The strongest reproducible deterministic lane remains **V16**:
+- V7 extreme Tail detector,
+- `med_ret5 <= 0`,
+- lowest same-day `volr20`,
+- Tail score tie-break,
+- one-business-day same-symbol cooldown.
+
+Evidence:
+- only `volr20 LOW` and `ret1 LOW` out of 90 feature/direction tests were positive in all five pre-2025 periods;
+- `volr20 LOW` was stronger;
+- 2022H2 +2.55%;
+- 2025 pooled +1.30%;
+- 2026 Jan-Aug +3.88%;
+- 2026 Mar-Aug +2.55%;
+- 2026 Jan-Aug top-1 removed +1.89%.
+
+Open issue: loss10 remains high and June 2026 is a failure pocket. Simple absolute vetoes and ret1 consensus generally reduce cross-year stability, so avoid adding them casually.

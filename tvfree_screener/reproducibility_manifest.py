@@ -31,6 +31,7 @@ FILES = [
 CODE_FILES = [
     "tvfree_screener/run.py",
     "tvfree_screener/bootstrap.py",
+    "tvfree_screener/jpx_current_snapshot.py",
     "tvfree_screener/v3_short_reconstruction.py",
     "tvfree_screener/v3_swing_v2.py",
     "tvfree_screener/v3_pre2026_extension.py",

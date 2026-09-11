@@ -187,3 +187,10 @@ All four predeclared variants failed 2024 development:
 Thus `development_ranked=[]`, `validation_opened=[]`, `locked_candidate=null`; 2025 and 2026 were not scored by the final staged implementation.
 
 Decision: reject **absolute +20/+50 classification with extreme training-CDF gates** as this V5 family. This does NOT reject positive-skew/tail capture as a goal. Next tail hypothesis should be materially different and should restore the historical V3 clue of cross-sectional/relative ranking, e.g. daily relative extreme-winner labels rather than absolute +20/+50 labels.
+
+
+## Legacy event-quality rank recovery — REJECTED
+Run `34560020086`, artifact `10184003302`, head `ca169e64822cd4afa0f1fd2a3fb0807d7676c1fc` completed successfully.
+Hypothesis: event-specific monthly causal ML -> training-score CDF -> recent-40 Meta -> Attack when ON / Deep Reversal when OFF.
+All 8 fixed combinations failed the 2024 development gate; `development_ranked=[]`, `validation_opened=[]`, `locked_candidate=null`. Typical 2024 pooled means ranged roughly -0.18% to +0.17%; no candidate captured a +20% winner. 2025/2026 remained unopened.
+Decision: reject this event-constrained relative-ranking reconstruction. The next relative-tail test removes the fixed event-lane restriction and predicts daily future top-1% / top-0.25% ranks across the broad eligible universe.

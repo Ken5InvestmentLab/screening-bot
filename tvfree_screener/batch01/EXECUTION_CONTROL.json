@@ -17,9 +17,9 @@
   "explicit_user_resume_required_after_latch": true,
   "automatic_resume_on_reset": false,
   "owned_jobs": [],
-  "milestone": "M6_READINESS_DOCUMENTED_NO_GO",
-  "next_action": "Run final tests, CLI audit/smoke checks, source hashes and repository diff checks; commit and push the complete research-only M1-M6 package on the isolated research branch. Do not change production.",
+  "milestone": "M6_PACKAGE_COMMITTED_PUSHED_NO_VIABLE_CANDIDATE",
+  "next_action": "This registered batch is complete with NO_VIABLE_CANDIDATE and production migration NO_GO. Any further scoring research requires a separately registered experiment and fresh evidence; do not modify production.",
   "goal_status_last_observed": "inProgress",
-  "goal_status_note": "M1-M5 evidence and local research CLI are complete; M6 readiness plan documents NO_GO. No viable Core candidate, Monster selection policy unresolved, same-definition parity unproven. No production modification, Codex-dependent runtime process, or daily-to-intraday fabrication. Weekly usage last observed 34% used / 66% remaining; pause latch false.",
+  "goal_status_note": "M1-M6 package committed and pushed on the isolated research branch. All three registered Core slots are consumed without a viable candidate; Monster remains exploratory without a passing Top-N policy; same-definition parity is unproven. Local research CLI is fail-closed and does not load market data. Production is unchanged; no Codex-dependent production processing or daily-to-intraday fabrication. Weekly usage last observed 35% used / 65% remaining; pause latch false.",
   "model_switch_verification_scope": "Persisted thread model and reasoning settings read back as gpt-5.6-luna / xhigh; current in-flight turn is not proof of execution model"
 }

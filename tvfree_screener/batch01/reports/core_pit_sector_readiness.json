@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-PIT-SECTOR-20260913-01",
+  "registered_family_slot": 2,
+  "decision": "INCONCLUSIVE_PIT_INDUSTRY_HISTORY_UNAVAILABLE",
+  "slot_consumed": true,
+  "outcome_data_opened": false,
+  "inventory_scope": [
+    "Complete screening-bot-tvfree-batch01 working-tree filename search for sector/industry history artifacts",
+    "Preserved research reference/cache and Fundamental V2 handoff readiness recorded in this experiment ledger",
+    "Official JPX company information service and monthly/listed-security information pages"
+  ],
+  "local_evidence": {
+    "historical_sector_or_industry_artifact_found": false,
+    "point_in_time_sector_membership_table_found": false,
+    "fundamental_handoff_path_present": false,
+    "available_preserved_market_data": "Daily OHLCV, XTKS session calendar, derived technical feature panel, and V7 Tail cache; no dated sector membership or industry-change table."
+  },
+  "official_source_audit": {
+    "accessed_on": "2026-09-13",
+    "current_company_information": "JPX company information service describes industry as a current company information item; its listed-content specification does not provide a dated historical industry-membership timeline.",
+    "listed_universe": "JPX listed-security page describes a latest-month-end list and a data-portal export with delisted names from only the latest year; this does not establish 2022-2025 point-in-time sector membership.",
+    "monthly_statistics": "JPX monthly statistics expose archived monthly materials and movement-company/security lists, but this audit did not establish a complete, stable symbol-to-industry history with effective dates and availability timestamps."
+  },
+  "sources": [
+    "https://www.jpx.co.jp/listing/co-search/01.html",
+    "https://www.jpx.co.jp/markets/statistics-equities/monthly/",
+    "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html"
+  ],
+  "required_for_reopening": [
+    "Pinned symbol-to-industry observations with valid_from/valid_to and publication/availability timestamps covering each historical signal date",
+    "Source terms and authorization compatible with research and any eventual production runtime",
+    "Independent symbol/code reuse and sector-reclassification audit"
+  ],
+  "reason": "The registered sector-lead/individual-lag family requires point-in-time industry assignment. Current classifications, issuer filings, or retrospective sector backfills would leak later information. No substitute mapping or predictive test was created."
+}

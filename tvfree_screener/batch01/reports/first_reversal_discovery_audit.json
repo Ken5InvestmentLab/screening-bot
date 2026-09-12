@@ -1,0 +1,1566 @@
+{
+  "schema_version": 1,
+  "experiment_id": "TVF-FR-FEATURE-20260913-01",
+  "phase": "discovery_2022H2_2023",
+  "phase_opened_at_utc": "2026-09-12T16:26:30.098552+00:00",
+  "created_at_utc": "2026-09-12T16:27:49.332293+00:00",
+  "access": {
+    "intent": "select_features",
+    "access": "DISCOVERY_SELECTION",
+    "spec_sha256": "615304da5e4437f75a993d6084c671a9f5516029ebf304d598b5f11d9b683422"
+  },
+  "spec_sha256": "a1181d16c71a78e2623eafca7b7fe1a962e00c8e65b6e6342ce999a1603f0c9f",
+  "candidate_pool_sha256": "5043505719c5680059314e5aa8c41d759bbaffbd8eb41c48f6e4cae7db73af95",
+  "candidate_pool_spec_sha256": "e29a565f5bb4594577dafe5746ccef786643bc18a422c199a79f2dbb52c53248",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "periods": {
+    "2022H2": {
+      "signals_before_purge": 13614,
+      "purged_signals": 1149,
+      "period_end": "2022-12-30"
+    },
+    "2023": {
+      "signals_before_purge": 25577,
+      "purged_signals": 0,
+      "period_end": "2023-12-29"
+    }
+  },
+  "labeled_signal_count": 38042,
+  "outcomes": {
+    "2022H2": {
+      "signal_level": {
+        "selected_count": 12465,
+        "resolved_count": 12243,
+        "unresolved_count": 222,
+        "unresolved_by_status": {
+          "ZERO_VOLUME_HOLDING_SESSION": 171,
+          "ENTRY_ZERO_OR_UNKNOWN_VOLUME": 51
+        },
+        "gross": {
+          "n": 12243,
+          "requested_count": 12465,
+          "resolved_count": 12243,
+          "draw_count": 324,
+          "win_rate": 0.6053360181223257,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": 0.008273700881080953,
+          "median": 0.00591715976331364,
+          "plus10_rate": 0.019112962509188924,
+          "plus20_rate": 0.002777097116719758,
+          "plus50_rate": 0.0003267173078493833,
+          "minus10_rate": 0.006289308176100629,
+          "minus20_rate": 0.0005717552887364208,
+          "mean_excluding_top1_winner": 0.008216080991619745,
+          "mean_excluding_top3_winners": 0.008123315779837008
+        },
+        "round_trip_cost_scenarios": {
+          "0": {
+            "n": 12243,
+            "requested_count": 12465,
+            "resolved_count": 12243,
+            "draw_count": 324,
+            "win_rate": 0.6053360181223257,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": 0.008273700881080953,
+            "median": 0.00591715976331364,
+            "plus10_rate": 0.019112962509188924,
+            "plus20_rate": 0.002777097116719758,
+            "plus50_rate": 0.0003267173078493833,
+            "minus10_rate": 0.006289308176100629,
+            "minus20_rate": 0.0005717552887364208,
+            "mean_excluding_top1_winner": 0.008216080991619745,
+            "mean_excluding_top3_winners": 0.008123315779837008
+          },
+          "0.005": {
+            "n": 12243,
+            "requested_count": 12465,
+            "resolved_count": 12243,
+            "draw_count": 1,
+            "win_rate": 0.5142133638294396,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": 0.0032737008810809535,
+            "median": 0.0009171597633136396,
+            "plus10_rate": 0.017397696642979663,
+            "plus20_rate": 0.0026954177897574125,
+            "plus50_rate": 0.0003267173078493833,
+            "minus10_rate": 0.00686106346483705,
+            "minus20_rate": 0.0006534346156987666,
+            "mean_excluding_top1_winner": 0.0032160809916197443,
+            "mean_excluding_top3_winners": 0.003123315779837007
+          },
+          "0.01": {
+            "n": 12243,
+            "requested_count": 12465,
+            "resolved_count": 12243,
+            "draw_count": 5,
+            "win_rate": 0.43601895734597157,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": -0.0017262991189190475,
+            "median": -0.0040828402366863605,
+            "plus10_rate": 0.015600751449808053,
+            "plus20_rate": 0.0025320591358327206,
+            "plus50_rate": 0.0003267173078493833,
+            "minus10_rate": 0.008903046638895696,
+            "minus20_rate": 0.0008984725965858042,
+            "mean_excluding_top1_winner": -0.0017839190083802567,
+            "mean_excluding_top3_winners": -0.0018766842201629935
+          }
+        }
+      },
+      "equal_weight_daily_candidate_cohort": {
+        "n": 0,
+        "requested_count": 12465,
+        "resolved_count": 0,
+        "draw_count": 0,
+        "win_rate": null,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": null,
+        "median": null,
+        "plus10_rate": null,
+        "plus20_rate": null,
+        "plus50_rate": null,
+        "minus10_rate": null,
+        "minus20_rate": null,
+        "mean_excluding_top1_winner": null,
+        "mean_excluding_top3_winners": null,
+        "active_days": 24,
+        "abstain_days": 1196,
+        "incomplete_days": 24,
+        "monthly": {},
+        "weekly": {},
+        "mean_excluding_best_month": null,
+        "weekly_block_bootstrap": {
+          "weeks": 0,
+          "observations": 0,
+          "repetitions": 2000,
+          "lower_95": null,
+          "upper_95": null,
+          "p_mean_le_zero": null
+        }
+      },
+      "daily_cohort_status_counts": {
+        "ABSTAIN": 1196,
+        "PARTIAL_UNRESOLVED": 24
+      }
+    },
+    "2023": {
+      "signal_level": {
+        "selected_count": 25577,
+        "resolved_count": 25262,
+        "unresolved_count": 315,
+        "unresolved_by_status": {
+          "ZERO_VOLUME_HOLDING_SESSION": 222,
+          "ENTRY_ZERO_OR_UNKNOWN_VOLUME": 92,
+          "POTENTIAL_SPLIT_OR_EXTREME_GAP": 1
+        },
+        "gross": {
+          "n": 25262,
+          "requested_count": 25577,
+          "resolved_count": 25262,
+          "draw_count": 526,
+          "win_rate": 0.5623382923673997,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": 0.005462591411825403,
+          "median": 0.004149377593360981,
+          "plus10_rate": 0.023790673739213047,
+          "plus20_rate": 0.004552291980049085,
+          "plus50_rate": 0.0004750217718312089,
+          "minus10_rate": 0.012588076953527037,
+          "minus20_rate": 0.0015834059061040297,
+          "mean_excluding_top1_winner": 0.005398322876947267,
+          "mean_excluding_top3_winners": 0.005344975866998354
+        },
+        "round_trip_cost_scenarios": {
+          "0": {
+            "n": 25262,
+            "requested_count": 25577,
+            "resolved_count": 25262,
+            "draw_count": 526,
+            "win_rate": 0.5623382923673997,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": 0.005462591411825403,
+            "median": 0.004149377593360981,
+            "plus10_rate": 0.023790673739213047,
+            "plus20_rate": 0.004552291980049085,
+            "plus50_rate": 0.0004750217718312089,
+            "minus10_rate": 0.012588076953527037,
+            "minus20_rate": 0.0015834059061040297,
+            "mean_excluding_top1_winner": 0.005398322876947267,
+            "mean_excluding_top3_winners": 0.005344975866998354
+          },
+          "0.005": {
+            "n": 25262,
+            "requested_count": 25577,
+            "resolved_count": 25262,
+            "draw_count": 3,
+            "win_rate": 0.4883011995724296,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": 0.0004625914118253992,
+            "median": -0.000850622406639019,
+            "plus10_rate": 0.021217639141794,
+            "plus20_rate": 0.0042751959464808805,
+            "plus50_rate": 0.0004750217718312089,
+            "minus10_rate": 0.015081941255640883,
+            "minus20_rate": 0.0017417464967144328,
+            "mean_excluding_top1_winner": 0.0003983228769472649,
+            "mean_excluding_top3_winners": 0.0003449758669983531
+          },
+          "0.01": {
+            "n": 25262,
+            "requested_count": 25577,
+            "resolved_count": 25262,
+            "draw_count": 11,
+            "win_rate": 0.41372618906181935,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": -0.0045374085881746,
+            "median": -0.005850622406639019,
+            "plus10_rate": 0.01919879661151136,
+            "plus20_rate": 0.004116855355870477,
+            "plus50_rate": 0.0004354366241786082,
+            "minus10_rate": 0.01753622041010213,
+            "minus20_rate": 0.001860501939672235,
+            "mean_excluding_top1_winner": -0.004601677123052736,
+            "mean_excluding_top3_winners": -0.004655024133001648
+          }
+        }
+      },
+      "equal_weight_daily_candidate_cohort": {
+        "n": 0,
+        "requested_count": 25577,
+        "resolved_count": 0,
+        "draw_count": 0,
+        "win_rate": null,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": null,
+        "median": null,
+        "plus10_rate": null,
+        "plus20_rate": null,
+        "plus50_rate": null,
+        "minus10_rate": null,
+        "minus20_rate": null,
+        "mean_excluding_top1_winner": null,
+        "mean_excluding_top3_winners": null,
+        "active_days": 39,
+        "abstain_days": 1181,
+        "incomplete_days": 39,
+        "monthly": {},
+        "weekly": {},
+        "mean_excluding_best_month": null,
+        "weekly_block_bootstrap": {
+          "weeks": 0,
+          "observations": 0,
+          "repetitions": 2000,
+          "lower_95": null,
+          "upper_95": null,
+          "p_mean_le_zero": null
+        }
+      },
+      "daily_cohort_status_counts": {
+        "ABSTAIN": 1181,
+        "PARTIAL_UNRESOLVED": 39
+      }
+    },
+    "discovery_pooled": {
+      "signal_level": {
+        "selected_count": 38042,
+        "resolved_count": 37505,
+        "unresolved_count": 537,
+        "unresolved_by_status": {
+          "ZERO_VOLUME_HOLDING_SESSION": 393,
+          "ENTRY_ZERO_OR_UNKNOWN_VOLUME": 143,
+          "POTENTIAL_SPLIT_OR_EXTREME_GAP": 1
+        },
+        "gross": {
+          "n": 37505,
+          "requested_count": 38042,
+          "resolved_count": 37505,
+          "draw_count": 850,
+          "win_rate": 0.5763197380984859,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": 0.00638024007819244,
+          "median": 0.004807692307692291,
+          "plus10_rate": 0.022263698173576856,
+          "plus20_rate": 0.003972803626183175,
+          "plus50_rate": 0.00042660978536195174,
+          "minus10_rate": 0.010531929076123183,
+          "minus20_rate": 0.0012531662445007332,
+          "mean_excluding_top1_winner": 0.006336976164719472,
+          "mean_excluding_top3_winners": 0.00630010344814025
+        },
+        "round_trip_cost_scenarios": {
+          "0": {
+            "n": 37505,
+            "requested_count": 38042,
+            "resolved_count": 37505,
+            "draw_count": 850,
+            "win_rate": 0.5763197380984859,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": 0.00638024007819244,
+            "median": 0.004807692307692291,
+            "plus10_rate": 0.022263698173576856,
+            "plus20_rate": 0.003972803626183175,
+            "plus50_rate": 0.00042660978536195174,
+            "minus10_rate": 0.010531929076123183,
+            "minus20_rate": 0.0012531662445007332,
+            "mean_excluding_top1_winner": 0.006336976164719472,
+            "mean_excluding_top3_winners": 0.00630010344814025
+          },
+          "0.005": {
+            "n": 37505,
+            "requested_count": 38042,
+            "resolved_count": 37505,
+            "draw_count": 4,
+            "win_rate": 0.4967600863976961,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": 0.0013802400781924376,
+            "median": -0.0001923076923077095,
+            "plus10_rate": 0.019970670577256367,
+            "plus20_rate": 0.0037594987335021995,
+            "plus50_rate": 0.00042660978536195174,
+            "minus10_rate": 0.012398346887081722,
+            "minus20_rate": 0.0013864818024263432,
+            "mean_excluding_top1_winner": 0.001336976164719469,
+            "mean_excluding_top3_winners": 0.0013001034481402488
+          },
+          "0.01": {
+            "n": 37505,
+            "requested_count": 38042,
+            "resolved_count": 37505,
+            "draw_count": 16,
+            "win_rate": 0.4210034943583451,
+            "win_rate_denominator_excludes_draws": true,
+            "mean": -0.0036197599218075623,
+            "median": -0.00519230769230771,
+            "plus10_rate": 0.01802426343154246,
+            "plus20_rate": 0.0035995200639914677,
+            "plus50_rate": 0.0003999466737768298,
+            "minus10_rate": 0.014718037594987335,
+            "minus20_rate": 0.001546460471937075,
+            "mean_excluding_top1_winner": -0.003663023835280531,
+            "mean_excluding_top3_winners": -0.003699896551859751
+          }
+        }
+      },
+      "equal_weight_daily_candidate_cohort": {
+        "n": 0,
+        "requested_count": 38042,
+        "resolved_count": 0,
+        "draw_count": 0,
+        "win_rate": null,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": null,
+        "median": null,
+        "plus10_rate": null,
+        "plus20_rate": null,
+        "plus50_rate": null,
+        "minus10_rate": null,
+        "minus20_rate": null,
+        "mean_excluding_top1_winner": null,
+        "mean_excluding_top3_winners": null,
+        "active_days": 63,
+        "abstain_days": 1157,
+        "incomplete_days": 63,
+        "monthly": {},
+        "weekly": {},
+        "mean_excluding_best_month": null,
+        "weekly_block_bootstrap": {
+          "weeks": 0,
+          "observations": 0,
+          "repetitions": 2000,
+          "lower_95": null,
+          "upper_95": null,
+          "p_mean_le_zero": null
+        }
+      },
+      "daily_cohort_status_counts": {
+        "ABSTAIN": 1157,
+        "PARTIAL_UNRESOLVED": 63
+      }
+    }
+  },
+  "feature_effects": {
+    "ret1": {
+      "2022H2": {
+        "feature": "ret1",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.01670250203460455,
+        "loser_median": 0.018978146836161613,
+        "median_delta_winner_minus_loser": -0.002275644801557064,
+        "cliffs_delta": -0.10450660450660454,
+        "auc_winner_higher": 0.44774669774669773,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "ret1",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.016759777441620827,
+        "loser_median": 0.017452485859394073,
+        "median_delta_winner_minus_loser": -0.0006927084177732468,
+        "cliffs_delta": -0.04564195941774196,
+        "auc_winner_higher": 0.477179020291129,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "ret1",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.016759777441620827,
+        "loser_median": 0.017699114978313446,
+        "median_delta_winner_minus_loser": -0.0009393375366926193,
+        "cliffs_delta": -0.05426817251572802,
+        "auc_winner_higher": 0.472865913742136,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "ret3": {
+      "2022H2": {
+        "feature": "ret3",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.0014916164218448102,
+        "loser_median": -0.011199465952813625,
+        "median_delta_winner_minus_loser": 0.009707849530968815,
+        "cliffs_delta": 0.16383616383616384,
+        "auc_winner_higher": 0.5819180819180819,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "ret3",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.008021390065550804,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": -0.008021390065550804,
+        "cliffs_delta": -0.1779057964189663,
+        "auc_winner_higher": 0.41104710179051684,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "ret3",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.006908803712576628,
+        "loser_median": -0.001291989698074758,
+        "median_delta_winner_minus_loser": -0.00561681401450187,
+        "cliffs_delta": -0.10337603274463736,
+        "auc_winner_higher": 0.4483119836276813,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "ret5": {
+      "2022H2": {
+        "feature": "ret5",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.025369517505168915,
+        "loser_median": -0.027152830734848976,
+        "median_delta_winner_minus_loser": 0.0017833132296800613,
+        "cliffs_delta": 0.07975357975357977,
+        "auc_winner_higher": 0.5398767898767899,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "ret5",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.024759285151958466,
+        "loser_median": -0.02861583698540926,
+        "median_delta_winner_minus_loser": 0.0038565518334507942,
+        "cliffs_delta": 0.06543078098347621,
+        "auc_winner_higher": 0.5327153904917381,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "ret5",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.025104602798819542,
+        "loser_median": -0.028496041893959045,
+        "median_delta_winner_minus_loser": 0.0033914390951395035,
+        "cliffs_delta": 0.07057682104146146,
+        "auc_winner_higher": 0.5352884105207307,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "ret10": {
+      "2022H2": {
+        "feature": "ret10",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.02389618381857872,
+        "loser_median": -0.03333333507180214,
+        "median_delta_winner_minus_loser": 0.00943715125322342,
+        "cliffs_delta": 0.08003108003107995,
+        "auc_winner_higher": 0.54001554001554,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "ret10",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.03116440400481224,
+        "loser_median": -0.033305682241916656,
+        "median_delta_winner_minus_loser": 0.002141278237104416,
+        "cliffs_delta": 0.019778356826672505,
+        "auc_winner_higher": 0.5098891784133363,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "ret10",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.029503105208277702,
+        "loser_median": -0.03332071006298065,
+        "median_delta_winner_minus_loser": 0.0038176048547029495,
+        "cliffs_delta": 0.036989312514212,
+        "auc_winner_higher": 0.518494656257106,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "ret20": {
+      "2022H2": {
+        "feature": "ret20",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.023319768719375134,
+        "loser_median": -0.022371364757418633,
+        "median_delta_winner_minus_loser": -0.000948403961956501,
+        "cliffs_delta": -0.04884004884004889,
+        "auc_winner_higher": 0.47557997557997556,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "ret20",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.033980581909418106,
+        "loser_median": -0.0437205545604229,
+        "median_delta_winner_minus_loser": 0.009739972651004791,
+        "cliffs_delta": 0.0461651963708285,
+        "auc_winner_higher": 0.5230825981854142,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "ret20",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.030163953080773354,
+        "loser_median": -0.04025423899292946,
+        "median_delta_winner_minus_loser": 0.010090285912156105,
+        "cliffs_delta": 0.03425452891684988,
+        "auc_winner_higher": 0.5171272644584249,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "ret40": {
+      "2022H2": {
+        "feature": "ret40",
+        "n_winners": 234,
+        "n_losers": 76,
+        "winner_median": 0.022549020126461983,
+        "loser_median": 0.02897033467888832,
+        "median_delta_winner_minus_loser": -0.006421314552426338,
+        "cliffs_delta": -0.018893387314439902,
+        "auc_winner_higher": 0.49055330634278005,
+        "winner_class_share": 0.7548387096774194
+      },
+      "2023": {
+        "feature": "ret40",
+        "n_winners": 594,
+        "n_losers": 315,
+        "winner_median": -0.013525377493351698,
+        "loser_median": -0.016331657767295837,
+        "median_delta_winner_minus_loser": 0.0028062802739441395,
+        "cliffs_delta": 0.011234033456255732,
+        "auc_winner_higher": 0.5056170167281279,
+        "winner_class_share": 0.6534653465346535
+      },
+      "discovery_pooled": {
+        "feature": "ret40",
+        "n_winners": 828,
+        "n_losers": 391,
+        "winner_median": -0.004925407702103257,
+        "loser_median": -0.00852270983159542,
+        "median_delta_winner_minus_loser": 0.0035973021294921637,
+        "cliffs_delta": 0.019546066693848285,
+        "auc_winner_higher": 0.5097730333469241,
+        "winner_class_share": 0.6792452830188679
+      }
+    },
+    "volr20_prevavg": {
+      "2022H2": {
+        "feature": "volr20_prevavg",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.7218484878540039,
+        "loser_median": 0.6876925230026245,
+        "median_delta_winner_minus_loser": 0.034155964851379395,
+        "cliffs_delta": 0.031968031968031996,
+        "auc_winner_higher": 0.515984015984016,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "volr20_prevavg",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.7106547951698303,
+        "loser_median": 0.705623596906662,
+        "median_delta_winner_minus_loser": 0.005031198263168335,
+        "cliffs_delta": 0.026146150545736102,
+        "auc_winner_higher": 0.513073075272868,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "volr20_prevavg",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.7153909206390381,
+        "loser_median": 0.7023019790649414,
+        "median_delta_winner_minus_loser": 0.01308894157409668,
+        "cliffs_delta": 0.026977942848480208,
+        "auc_winner_higher": 0.5134889714242401,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "volume_trend5_20": {
+      "2022H2": {
+        "feature": "volume_trend5_20",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.8990978896617889,
+        "loser_median": 0.9139636754989624,
+        "median_delta_winner_minus_loser": -0.014865785837173462,
+        "cliffs_delta": -0.030414030414030457,
+        "auc_winner_higher": 0.48479298479298477,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "volume_trend5_20",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.9213095903396606,
+        "loser_median": 0.896637350320816,
+        "median_delta_winner_minus_loser": 0.024672240018844604,
+        "cliffs_delta": 0.02954195837126794,
+        "auc_winner_higher": 0.514770979185634,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "volume_trend5_20",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.9190140962600708,
+        "loser_median": 0.8989236354827881,
+        "median_delta_winner_minus_loser": 0.020090460777282715,
+        "cliffs_delta": 0.013100886833927072,
+        "auc_winner_higher": 0.5065504434169635,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "log_dollar_volume": {
+      "2022H2": {
+        "feature": "log_dollar_volume",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 18.16852378845215,
+        "loser_median": 18.747102737426758,
+        "median_delta_winner_minus_loser": -0.5785789489746094,
+        "cliffs_delta": -0.148962148962149,
+        "auc_winner_higher": 0.4255189255189255,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "log_dollar_volume",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 18.303096771240234,
+        "loser_median": 18.21993064880371,
+        "median_delta_winner_minus_loser": 0.08316612243652344,
+        "cliffs_delta": 0.026282192153538553,
+        "auc_winner_higher": 0.5131410960767693,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "log_dollar_volume",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 18.25631332397461,
+        "loser_median": 18.260149002075195,
+        "median_delta_winner_minus_loser": -0.0038356781005859375,
+        "cliffs_delta": -0.014692640036382931,
+        "auc_winner_higher": 0.49265367998180853,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "dollar_volume_median20": {
+      "2022H2": {
+        "feature": "dollar_volume_median20",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 94794452.0,
+        "loser_median": 160683200.0,
+        "median_delta_winner_minus_loser": -65888748.0,
+        "cliffs_delta": -0.1471861471861472,
+        "auc_winner_higher": 0.4264069264069264,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "dollar_volume_median20",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 106557152.0,
+        "loser_median": 97159424.0,
+        "median_delta_winner_minus_loser": 9397728.0,
+        "cliffs_delta": 0.02520955639971123,
+        "auc_winner_higher": 0.5126047781998556,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "dollar_volume_median20",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 102053248.0,
+        "loser_median": 98555000.0,
+        "median_delta_winner_minus_loser": 3498248.0,
+        "cliffs_delta": -0.016272265595391522,
+        "auc_winner_higher": 0.49186386720230424,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "atr14p": {
+      "2022H2": {
+        "feature": "atr14p",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.03810284659266472,
+        "loser_median": 0.04254545271396637,
+        "median_delta_winner_minus_loser": -0.004442606121301651,
+        "cliffs_delta": -0.13730713730713728,
+        "auc_winner_higher": 0.43134643134643136,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "atr14p",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.03557386249303818,
+        "loser_median": 0.03626199811697006,
+        "median_delta_winner_minus_loser": -0.0006881356239318848,
+        "cliffs_delta": -0.08443997948911142,
+        "auc_winner_higher": 0.4577800102554443,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "atr14p",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.03624174743890762,
+        "loser_median": 0.037248026579618454,
+        "median_delta_winner_minus_loser": -0.0010062791407108307,
+        "cliffs_delta": -0.08340786780868648,
+        "auc_winner_higher": 0.45829606609565676,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "pos20": {
+      "2022H2": {
+        "feature": "pos20",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.3291354179382324,
+        "loser_median": 0.3205128312110901,
+        "median_delta_winner_minus_loser": 0.008622586727142334,
+        "cliffs_delta": 0.0020535020535019655,
+        "auc_winner_higher": 0.501026751026751,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "pos20",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.30136987566947937,
+        "loser_median": 0.29003794491291046,
+        "median_delta_winner_minus_loser": 0.011331930756568909,
+        "cliffs_delta": 0.02342531838968598,
+        "auc_winner_higher": 0.511712659194843,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "pos20",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.31620553135871887,
+        "loser_median": 0.2975708544254303,
+        "median_delta_winner_minus_loser": 0.018634676933288574,
+        "cliffs_delta": 0.027602516486015416,
+        "auc_winner_higher": 0.5138012582430077,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "pos40": {
+      "2022H2": {
+        "feature": "pos40",
+        "n_winners": 234,
+        "n_losers": 76,
+        "winner_median": 0.39046289026737213,
+        "loser_median": 0.3867497593164444,
+        "median_delta_winner_minus_loser": 0.0037131309509277344,
+        "cliffs_delta": -0.018218623481781382,
+        "auc_winner_higher": 0.4908906882591093,
+        "winner_class_share": 0.7548387096774194
+      },
+      "2023": {
+        "feature": "pos40",
+        "n_winners": 594,
+        "n_losers": 315,
+        "winner_median": 0.32156096398830414,
+        "loser_median": 0.29955947399139404,
+        "median_delta_winner_minus_loser": 0.022001489996910095,
+        "cliffs_delta": 0.025749559082892448,
+        "auc_winner_higher": 0.5128747795414462,
+        "winner_class_share": 0.6534653465346535
+      },
+      "discovery_pooled": {
+        "feature": "pos40",
+        "n_winners": 828,
+        "n_losers": 391,
+        "winner_median": 0.33653052151203156,
+        "loser_median": 0.3130081295967102,
+        "median_delta_winner_minus_loser": 0.02352239191532135,
+        "cliffs_delta": 0.025995527385497263,
+        "auc_winner_higher": 0.5129977636927486,
+        "winner_class_share": 0.6792452830188679
+      }
+    },
+    "pos60": {
+      "2022H2": {
+        "feature": "pos60",
+        "n_winners": 232,
+        "n_losers": 76,
+        "winner_median": 0.4571385085582733,
+        "loser_median": 0.39930063486099243,
+        "median_delta_winner_minus_loser": 0.057837873697280884,
+        "cliffs_delta": 0.06159255898366611,
+        "auc_winner_higher": 0.5307962794918331,
+        "winner_class_share": 0.7532467532467533
+      },
+      "2023": {
+        "feature": "pos60",
+        "n_winners": 591,
+        "n_losers": 313,
+        "winner_median": 0.37704917788505554,
+        "loser_median": 0.3131578862667084,
+        "median_delta_winner_minus_loser": 0.06389129161834717,
+        "cliffs_delta": 0.04873961391046744,
+        "auc_winner_higher": 0.5243698069552337,
+        "winner_class_share": 0.6537610619469026
+      },
+      "discovery_pooled": {
+        "feature": "pos60",
+        "n_winners": 823,
+        "n_losers": 389,
+        "winner_median": 0.3903743326663971,
+        "loser_median": 0.32758620381355286,
+        "median_delta_winner_minus_loser": 0.06278812885284424,
+        "cliffs_delta": 0.062421325203734446,
+        "auc_winner_higher": 0.5312106626018672,
+        "winner_class_share": 0.679042904290429
+      }
+    },
+    "dd20": {
+      "2022H2": {
+        "feature": "dd20",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.09476784616708755,
+        "loser_median": -0.10769230872392654,
+        "median_delta_winner_minus_loser": 0.01292446255683899,
+        "cliffs_delta": 0.11677211677211674,
+        "auc_winner_higher": 0.5583860583860584,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "dd20",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.09144849330186844,
+        "loser_median": -0.10166002810001373,
+        "median_delta_winner_minus_loser": 0.010211534798145294,
+        "cliffs_delta": 0.07775824359819583,
+        "auc_winner_higher": 0.5388791217990979,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "dd20",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.09312890470027924,
+        "loser_median": -0.1026865690946579,
+        "median_delta_winner_minus_loser": 0.009557664394378662,
+        "cliffs_delta": 0.08423254756310161,
+        "auc_winner_higher": 0.5421162737815508,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "dd40": {
+      "2022H2": {
+        "feature": "dd40",
+        "n_winners": 234,
+        "n_losers": 76,
+        "winner_median": -0.11734623461961746,
+        "loser_median": -0.13377860188484192,
+        "median_delta_winner_minus_loser": 0.016432367265224457,
+        "cliffs_delta": 0.08845029239766089,
+        "auc_winner_higher": 0.5442251461988304,
+        "winner_class_share": 0.7548387096774194
+      },
+      "2023": {
+        "feature": "dd40",
+        "n_winners": 594,
+        "n_losers": 315,
+        "winner_median": -0.1265212595462799,
+        "loser_median": -0.14152483642101288,
+        "median_delta_winner_minus_loser": 0.015003576874732971,
+        "cliffs_delta": 0.09903265458821009,
+        "auc_winner_higher": 0.549516327294105,
+        "winner_class_share": 0.6534653465346535
+      },
+      "discovery_pooled": {
+        "feature": "dd40",
+        "n_winners": 828,
+        "n_losers": 391,
+        "winner_median": -0.12461485713720322,
+        "loser_median": -0.1403571367263794,
+        "median_delta_winner_minus_loser": 0.015742279589176178,
+        "cliffs_delta": 0.09849945018965367,
+        "auc_winner_higher": 0.5492497250948268,
+        "winner_class_share": 0.6792452830188679
+      }
+    },
+    "dd60": {
+      "2022H2": {
+        "feature": "dd60",
+        "n_winners": 232,
+        "n_losers": 76,
+        "winner_median": -0.12767058610916138,
+        "loser_median": -0.1552049219608307,
+        "median_delta_winner_minus_loser": 0.02753433585166931,
+        "cliffs_delta": 0.17763157894736836,
+        "auc_winner_higher": 0.5888157894736842,
+        "winner_class_share": 0.7532467532467533
+      },
+      "2023": {
+        "feature": "dd60",
+        "n_winners": 591,
+        "n_losers": 313,
+        "winner_median": -0.1473684161901474,
+        "loser_median": -0.1805405467748642,
+        "median_delta_winner_minus_loser": 0.0331721305847168,
+        "cliffs_delta": 0.12453576815166789,
+        "auc_winner_higher": 0.562267884075834,
+        "winner_class_share": 0.6537610619469026
+      },
+      "discovery_pooled": {
+        "feature": "dd60",
+        "n_winners": 823,
+        "n_losers": 389,
+        "winner_median": -0.14309483766555786,
+        "loser_median": -0.17378640174865723,
+        "median_delta_winner_minus_loser": 0.030691564083099365,
+        "cliffs_delta": 0.13793351179302005,
+        "auc_winner_higher": 0.56896675589651,
+        "winner_class_share": 0.679042904290429
+      }
+    },
+    "gap": {
+      "2022H2": {
+        "feature": "gap",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.004451239248737693,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": 0.004451239248737693,
+        "cliffs_delta": 0.2840492840492841,
+        "auc_winner_higher": 0.642024642024642,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "gap",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.004281636327505112,
+        "loser_median": 0.004253057995811105,
+        "median_delta_winner_minus_loser": 2.857833169400692e-05,
+        "cliffs_delta": 0.007424732364298414,
+        "auc_winner_higher": 0.5037123661821492,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "gap",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.004281636327505112,
+        "loser_median": 0.0030292831361293793,
+        "median_delta_winner_minus_loser": 0.0012523531913757324,
+        "cliffs_delta": 0.06880618509815806,
+        "auc_winner_higher": 0.534403092549079,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "range_pct": {
+      "2022H2": {
+        "feature": "range_pct",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.0310690151527524,
+        "loser_median": 0.03726708143949509,
+        "median_delta_winner_minus_loser": -0.006198066286742687,
+        "cliffs_delta": -0.1618381618381618,
+        "auc_winner_higher": 0.4190809190809191,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "range_pct",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.028178242966532707,
+        "loser_median": 0.03087258618324995,
+        "median_delta_winner_minus_loser": -0.002694343216717243,
+        "cliffs_delta": -0.09471635324773175,
+        "auc_winner_higher": 0.4526418233761341,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "range_pct",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.029175784438848495,
+        "loser_median": 0.031735751777887344,
+        "median_delta_winner_minus_loser": -0.002559967339038849,
+        "cliffs_delta": -0.09414689608125526,
+        "auc_winner_higher": 0.45292655195937237,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "body_pct": {
+      "2022H2": {
+        "feature": "body_pct",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.4412692189216614,
+        "loser_median": 0.5714285969734192,
+        "median_delta_winner_minus_loser": -0.1301593780517578,
+        "cliffs_delta": -0.19763569763569766,
+        "auc_winner_higher": 0.40118215118215117,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "body_pct",
+        "n_winners": 599,
+        "n_losers": 318,
+        "winner_median": 0.5,
+        "loser_median": 0.505952388048172,
+        "median_delta_winner_minus_loser": -0.005952388048171997,
+        "cliffs_delta": -0.003422895601684184,
+        "auc_winner_higher": 0.4982885521991579,
+        "winner_class_share": 0.653217011995638
+      },
+      "discovery_pooled": {
+        "feature": "body_pct",
+        "n_winners": 833,
+        "n_losers": 395,
+        "winner_median": 0.47826087474823,
+        "loser_median": 0.5199999809265137,
+        "median_delta_winner_minus_loser": -0.04173910617828369,
+        "cliffs_delta": -0.05046575592262226,
+        "auc_winner_higher": 0.47476712203868887,
+        "winner_class_share": 0.6783387622149837
+      }
+    },
+    "close_location": {
+      "2022H2": {
+        "feature": "close_location",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.75,
+        "loser_median": 0.7727272510528564,
+        "median_delta_winner_minus_loser": -0.022727251052856445,
+        "cliffs_delta": -0.13752913752913754,
+        "auc_winner_higher": 0.43123543123543123,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "close_location",
+        "n_winners": 599,
+        "n_losers": 318,
+        "winner_median": 0.7708333134651184,
+        "loser_median": 0.7696728706359863,
+        "median_delta_winner_minus_loser": 0.00116044282913208,
+        "cliffs_delta": 0.023508782982119003,
+        "auc_winner_higher": 0.5117543914910595,
+        "winner_class_share": 0.653217011995638
+      },
+      "discovery_pooled": {
+        "feature": "close_location",
+        "n_winners": 833,
+        "n_losers": 395,
+        "winner_median": 0.7692307829856873,
+        "loser_median": 0.7701149582862854,
+        "median_delta_winner_minus_loser": -0.0008841753005981445,
+        "cliffs_delta": -0.014743112434847383,
+        "auc_winner_higher": 0.4926284437825763,
+        "winner_class_share": 0.6783387622149837
+      }
+    },
+    "red_count5": {
+      "2022H2": {
+        "feature": "red_count5",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 3.0,
+        "loser_median": 2.0,
+        "median_delta_winner_minus_loser": 1.0,
+        "cliffs_delta": 0.11588411588411596,
+        "auc_winner_higher": 0.557942057942058,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "red_count5",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 3.0,
+        "loser_median": 3.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.04467397105453186,
+        "auc_winner_higher": 0.5223369855272659,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "red_count5",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 3.0,
+        "loser_median": 3.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.055441522019252565,
+        "auc_winner_higher": 0.5277207610096263,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "down3": {
+      "2022H2": {
+        "feature": "down3",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 1.0,
+        "loser_median": 1.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": -0.024031524031523976,
+        "auc_winner_higher": 0.487984237984238,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "down3",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 2.0,
+        "loser_median": 1.0,
+        "median_delta_winner_minus_loser": 1.0,
+        "cliffs_delta": 0.16290982534350507,
+        "auc_winner_higher": 0.5814549126717525,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "down3",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 2.0,
+        "loser_median": 1.0,
+        "median_delta_winner_minus_loser": 1.0,
+        "cliffs_delta": 0.12351701659971193,
+        "auc_winner_higher": 0.561758508299856,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "down5": {
+      "2022H2": {
+        "feature": "down5",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 3.0,
+        "loser_median": 3.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.05544455544455551,
+        "auc_winner_higher": 0.5277222777222778,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "down5",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 3.0,
+        "loser_median": 3.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.02372356345294535,
+        "auc_winner_higher": 0.5118617817264727,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "down5",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 3.0,
+        "loser_median": 3.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.02917911013416208,
+        "auc_winner_higher": 0.514589555067081,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "consecutive_down": {
+      "2022H2": {
+        "feature": "consecutive_down",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.0,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.0,
+        "auc_winner_higher": 0.5,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "consecutive_down",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.0,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.0,
+        "auc_winner_higher": 0.5,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "consecutive_down",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.0,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.0,
+        "auc_winner_higher": 0.5,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "days_since_drop5": {
+      "2022H2": {
+        "feature": "days_since_drop5",
+        "n_winners": 224,
+        "n_losers": 76,
+        "winner_median": 26.0,
+        "loser_median": 12.5,
+        "median_delta_winner_minus_loser": 13.5,
+        "cliffs_delta": 0.2158717105263157,
+        "auc_winner_higher": 0.6079358552631579,
+        "winner_class_share": 0.7466666666666667
+      },
+      "2023": {
+        "feature": "days_since_drop5",
+        "n_winners": 577,
+        "n_losers": 314,
+        "winner_median": 28.0,
+        "loser_median": 20.0,
+        "median_delta_winner_minus_loser": 8.0,
+        "cliffs_delta": 0.08215677400125854,
+        "auc_winner_higher": 0.5410783870006293,
+        "winner_class_share": 0.6475869809203143
+      },
+      "discovery_pooled": {
+        "feature": "days_since_drop5",
+        "n_winners": 801,
+        "n_losers": 390,
+        "winner_median": 27.0,
+        "loser_median": 19.0,
+        "median_delta_winner_minus_loser": 8.0,
+        "cliffs_delta": 0.10259931495886554,
+        "auc_winner_higher": 0.5512996574794328,
+        "winner_class_share": 0.672544080604534
+      }
+    },
+    "ret1_minus_ret5_per5": {
+      "2022H2": {
+        "feature": "ret1_minus_ret5_per5",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.023214217275381088,
+        "loser_median": 0.025738418102264404,
+        "median_delta_winner_minus_loser": -0.002524200826883316,
+        "cliffs_delta": -0.10822510822510822,
+        "auc_winner_higher": 0.4458874458874459,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "ret1_minus_ret5_per5",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.02285921387374401,
+        "loser_median": 0.02385869435966015,
+        "median_delta_winner_minus_loser": -0.0009994804859161377,
+        "cliffs_delta": -0.05783861279419,
+        "auc_winner_higher": 0.471080693602905,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "ret1_minus_ret5_per5",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.0229768268764019,
+        "loser_median": 0.024354958906769753,
+        "median_delta_winner_minus_loser": -0.0013781320303678513,
+        "cliffs_delta": -0.0666929432274691,
+        "auc_winner_higher": 0.46665352838626545,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "dispersion20": {
+      "2022H2": {
+        "feature": "dispersion20",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.026344239711761475,
+        "loser_median": 0.028146281838417053,
+        "median_delta_winner_minus_loser": -0.0018020421266555786,
+        "cliffs_delta": -0.09179709179709183,
+        "auc_winner_higher": 0.4541014541014541,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "dispersion20",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.02403169870376587,
+        "loser_median": 0.024953290820121765,
+        "median_delta_winner_minus_loser": -0.000921592116355896,
+        "cliffs_delta": -0.0511411797946818,
+        "auc_winner_higher": 0.4744294101026591,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "dispersion20",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.02438068389892578,
+        "loser_median": 0.02518814243376255,
+        "median_delta_winner_minus_loser": -0.0008074585348367691,
+        "cliffs_delta": -0.051345410444932904,
+        "auc_winner_higher": 0.47432729477753355,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "market_median_ret1": {
+      "2022H2": {
+        "feature": "market_median_ret1",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": 0.003508772002533078,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": 0.003508772002533078,
+        "cliffs_delta": 0.3236763236763236,
+        "auc_winner_higher": 0.6618381618381618,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "market_median_ret1",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": 0.0041597336530685425,
+        "loser_median": 0.004514672793447971,
+        "median_delta_winner_minus_loser": -0.00035493914037942886,
+        "cliffs_delta": -0.01599012128632571,
+        "auc_winner_higher": 0.49200493935683715,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "market_median_ret1",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": 0.0041597336530685425,
+        "loser_median": 0.004379562102258205,
+        "median_delta_winner_minus_loser": -0.00021982844918966293,
+        "cliffs_delta": 0.035155006442810555,
+        "auc_winner_higher": 0.5175775032214053,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "market_median_ret5": {
+      "2022H2": {
+        "feature": "market_median_ret5",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.0142623046413064,
+        "loser_median": -0.01472754031419754,
+        "median_delta_winner_minus_loser": 0.00046523567289114,
+        "cliffs_delta": 0.14385614385614387,
+        "auc_winner_higher": 0.5719280719280719,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "market_median_ret5",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.010917030274868011,
+        "loser_median": -0.010697674006223679,
+        "median_delta_winner_minus_loser": -0.00021935626864433289,
+        "cliffs_delta": 0.1333730993417679,
+        "auc_winner_higher": 0.5666865496708839,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "market_median_ret5",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.011566772125661373,
+        "loser_median": -0.011566772125661373,
+        "median_delta_winner_minus_loser": 0.0,
+        "cliffs_delta": 0.13166072917456217,
+        "auc_winner_higher": 0.5658303645872811,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "market_median_ret1_lag1": {
+      "2022H2": {
+        "feature": "market_median_ret1_lag1",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.004914004821330309,
+        "loser_median": -0.0055555556900799274,
+        "median_delta_winner_minus_loser": 0.0006415508687496185,
+        "cliffs_delta": 0.03285603285603278,
+        "auc_winner_higher": 0.5164280164280164,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "market_median_ret1_lag1",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.007015083450824022,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": -0.007015083450824022,
+        "cliffs_delta": -0.2742127900040813,
+        "auc_winner_higher": 0.36289360499795936,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "market_median_ret1_lag1",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.0066592758521437645,
+        "loser_median": 0.0,
+        "median_delta_winner_minus_loser": -0.0066592758521437645,
+        "cliffs_delta": -0.22286667171985142,
+        "auc_winner_higher": 0.3885666641400743,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "market_median_ret5_lag1": {
+      "2022H2": {
+        "feature": "market_median_ret5_lag1",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.02037617564201355,
+        "loser_median": -0.018237082287669182,
+        "median_delta_winner_minus_loser": -0.002139093354344368,
+        "cliffs_delta": -0.15595515595515597,
+        "auc_winner_higher": 0.422022422022422,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "market_median_ret5_lag1",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.013205282390117645,
+        "loser_median": -0.017918534576892853,
+        "median_delta_winner_minus_loser": 0.0047132521867752075,
+        "cliffs_delta": 0.23154281647987118,
+        "auc_winner_higher": 0.6157714082399356,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "market_median_ret5_lag1",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.014938246458768845,
+        "loser_median": -0.017918534576892853,
+        "median_delta_winner_minus_loser": 0.002980288118124008,
+        "cliffs_delta": 0.15225346774804827,
+        "auc_winner_higher": 0.5761267338740241,
+        "winner_class_share": 0.6788617886178862
+      }
+    },
+    "rel_ret5_lag1": {
+      "2022H2": {
+        "feature": "rel_ret5_lag1",
+        "n_winners": 234,
+        "n_losers": 77,
+        "winner_median": -0.0031446581706404686,
+        "loser_median": -0.010334346443414688,
+        "median_delta_winner_minus_loser": 0.0071896882727742195,
+        "cliffs_delta": 0.12171162171162164,
+        "auc_winner_higher": 0.5608558108558108,
+        "winner_class_share": 0.752411575562701
+      },
+      "2023": {
+        "feature": "rel_ret5_lag1",
+        "n_winners": 601,
+        "n_losers": 318,
+        "winner_median": -0.0068823229521512985,
+        "loser_median": -0.006219292059540749,
+        "median_delta_winner_minus_loser": -0.0006630308926105499,
+        "cliffs_delta": -0.062464027459475324,
+        "auc_winner_higher": 0.46876798627026234,
+        "winner_class_share": 0.6539717083786725
+      },
+      "discovery_pooled": {
+        "feature": "rel_ret5_lag1",
+        "n_winners": 835,
+        "n_losers": 395,
+        "winner_median": -0.006177036091685295,
+        "loser_median": -0.006697025150060654,
+        "median_delta_winner_minus_loser": 0.0005199890583753586,
+        "cliffs_delta": -0.01879178352156452,
+        "auc_winner_higher": 0.49060410823921774,
+        "winner_class_share": 0.6788617886178862
+      }
+    }
+  },
+  "selected_features": [
+    {
+      "feature": "dd60",
+      "direction": "higher_for_winners",
+      "discovery_cliffs_delta": 0.13793351179302005,
+      "discovery_median_delta": 0.030691564083099365,
+      "tercile_edges": [
+        -0.131264790892601,
+        -0.07139494270086288
+      ]
+    },
+    {
+      "feature": "days_since_drop5",
+      "direction": "higher_for_winners",
+      "discovery_cliffs_delta": 0.10259931495886554,
+      "discovery_median_delta": 8.0,
+      "tercile_edges": [
+        32.0,
+        103.0
+      ]
+    }
+  ],
+  "decision": "LOCK_FEATURES_FOR_2024_DIRECTIONAL_CONFIRMATION",
+  "freeze_file": "first_reversal_feature_freeze.json",
+  "freeze_file_sha256": "e2d099e01a06fdf62945f17f0ba463e5635526476b84d29b2aa83dd1c7885ab0",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "caveat": "2024 aggregate First Reversal results were already present in the handoff; later feature-specific confirmation is historical and is not independent OOS evidence."
+}

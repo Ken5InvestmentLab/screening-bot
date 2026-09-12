@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "family_spec": {
+    "experiment_id": "CORE-RIDGE-20260913-04",
+    "family": "core_moderate_capped_return_ridge_v1",
+    "purpose": "Rank the full eligible daily TSE universe by a low-complexity estimate of moderate positive five-session returns.",
+    "universe": "Every source symbol/session passing positive, internally consistent signal-day OHLCV and all registered feature availability checks; no watchlist-frequency cap, no top-k pool truncation, no fixed maximum names per day.",
+    "feature_build": "Compute each symbol independently and append bounded Parquet row groups; market medians come from the full date-limited OHLCV set. The feature panel is a decision-only artifact.",
+    "label_scope": "Build outcomes only for every-fifth-session eligible training rows and all scored-period eligible candidate rows; retain the full candidate pool before ranking and selection.",
+    "feature_timestamp": "After the signal-date official-session close.",
+    "market_feature_lag_sessions": 0,
+    "features": [
+      "ret1",
+      "ret3",
+      "ret5",
+      "ret10",
+      "ret20",
+      "ret40",
+      "volr20_prevavg",
+      "atr14p",
+      "pos20",
+      "pos40",
+      "pos60",
+      "dd20",
+      "dd40",
+      "dd60",
+      "range_pct",
+      "body_pct",
+      "close_location",
+      "gap",
+      "down3",
+      "down5",
+      "consecutive_down",
+      "dispersion20",
+      "volume_trend5_20",
+      "market_median_ret1",
+      "market_median_ret5",
+      "rel_ret5_lag1"
+    ],
+    "feature_missingness": "A row is eligible only when every registered feature is finite; no outcome-dependent imputation or row substitution.",
+    "signal_quality": "All signal OHLCV finite; open/high/low/close positive; volume positive; high>=max(open,close); low<=min(open,close); high>=low.",
+    "target": "gross return from next XTKS session open to close of the fifth XTKS session including entry; training response=min(gross_return,0.30), with all negative responses retained unchanged.",
+    "target_cost": "Model fits the gross capped target. Policy evaluation separately reports round-trip cost sensitivities 0%, 0.5%, 1%; 0.5% is not measured execution cost.",
+    "training": {
+      "algorithm": "Ordinary Ridge regression solved from standardized feature cross-products; intercept unpenalized.",
+      "alpha": 10.0,
+      "winsorization": "Training-only per-feature 1st/99th percentile clipping.",
+      "scaling": "Training-only mean and population standard deviation after clipping; zero-variance features make the fold INCONCLUSIVE.",
+      "sample_dates": "One out of each five official sessions, fixed by absolute zero-based XTKS session_index modulo 5 equal to 0; all eligible symbols on sampled sessions.",
+      "schedule": "Expanding fit at first official XTKS session of each calendar quarter; fit data includes only sampled rows whose fifth-session label exit is strictly before the quarter's first session.",
+      "warmup": "2022-01-04 through 2022-06-30; warm-up is training only.",
+      "minimum_resolved_training_rows": 500
+    },
+    "ranking": [
+      [
+        "predicted_capped_return",
+        "descending"
+      ],
+      [
+        "symbol",
+        "ascending"
+      ]
+    ],
+    "selection_study": {
+      "top_n": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "cooldown": "One immediately prior XTKS session per independent Top-N policy; only actually selected names update that policy state; state is not reset at year boundary.",
+      "multiple_names_per_day": true,
+      "candidate_pool": "All eligible rows retained before ranking/cooldown/Top-N."
+    },
+    "discovery_gates": {
+      "core_signal_net_at_0_5pct": [
+        "mean>0",
+        "median>0",
+        "mean_excluding_top3_winners>0"
+      ],
+      "core_complete_daily_cohort_net_at_0_5pct": [
+        "mean>0",
+        "median>0",
+        "mean_excluding_top3_winners>0"
+      ],
+      "ranking_value_add": "On at least 20 common complete active dates, policy equal-weight daily cohort mean must exceed full candidate-pool equal-weight cohort mean.",
+      "tail_risk": "Policy signal-level -10% and -20% rates must not exceed the full candidate-pool rates.",
+      "frequency": "Report selected signal count divided by every calendar month in the registered discovery window; 5/month is reported as a separate objective flag, not silently used as a selection gate.",
+      "policy_choice": "Among all policies passing every listed gate, choose greatest net complete-cohort mean; exact ties choose smaller Top-N. If none pass, selection remains unresolved and no 2024 policy confirmation opens."
+    },
+    "periods": {
+      "discovery_selection": "2022-07-01 through 2023-12-31; purge any signal whose fifth-session exit is after the final 2023 XTKS session.",
+      "locked_confirmation": "2024 only after a discovery policy passes and its selection count is frozen; purge exits after the final 2024 XTKS session.",
+      "2025": "Do not open unless a discovery policy passes and frozen 2024 confirmation passes.",
+      "2026": "Report only; no selection or fit from 2026 outcomes."
+    },
+    "cost_scenarios": [
+      0.0,
+      0.005,
+      0.01
+    ],
+    "known_evidence_limit": "RETROSPECTIVE_PROVISIONAL; attempt03 opened discovery and may have partially read 2022H2-2023 outcome OHLCV, but produced no persisted result or policy metrics. Attempt04 is a memory-bounded engineering replay, not untouched OOS. The underlying Yahoo-derived universe is not proven point-in-time TSE membership, adjusted for all corporate actions, or executable at open/price limits."
+  },
+  "family_spec_sha256": "e71ae991ed4c79351f56782ea25d4eb92beb7605a65a5a48d306ca59f5044b15",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "code_sha256": {
+    "core_moderate_ridge.py": "6a1f96a186da00e478269b4eb21fc04978414691ebadb756e5e74b9604b23d86",
+    "core_moderate_ridge_audit.py": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "feature_panel.py": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "evaluation.py": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "selection.py": "fb4a04929452ae60b81d1a29691d62af171639caa6ed78e1a44131ca4f20c6be",
+    "session_calendar.py": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "temporal_policy.py": "cf96075cca0c95b0b5b2fde3315a466a3aac7508744fc8c4112642b5691e2a3c",
+    "artifact_store.py": "8f3bae624a8a8fc170be3ed9571fcee50360b12b9d861f88ad5b5a6ea1898644"
+  },
+  "frozen_at_utc": "2026-09-12T19:33:01.189780+00:00",
+  "phase_opened_at_utc": null,
+  "spec_sha256": "b85b6f38bae730fbe4b4066cdaac649a19965b2a3a3475ffb9662d44a2a91596",
+  "source_date_range_used_by_discovery": [
+    "2022-01-04",
+    "2023-12-31"
+  ],
+  "source_date_range_used_by_validation": [
+    "2022-01-04",
+    "2024-12-31"
+  ],
+  "no_2025_2026_outcomes_read": true
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-RIDGE-20260913-02",
+  "registered_spec": "core_moderate_ridge_spec_v2.json",
+  "spec_sha256": "a36b154ad0a1eb2c91e28643f612229acef2ece8061b25ef543aa3128dd325bb",
+  "family_spec_sha256": "ae765ade1670463784afa46eb1c80ef3115b527d4122810b00389a807bcc8d1b",
+  "decision": "ABORTED_AFTER_FEATURE_PANEL_BEFORE_OUTCOME_LABELS_OR_METRICS",
+  "reason": "After the decision-only feature panel had been atomically written, cleanup referenced an unbound local name (market) in _feature_panel. The run stopped before it returned the panel, loaded exit prices, built labels, fit a model, ranked candidates, or evaluated any policy.",
+  "feature_only_artifact": ".cache/core_moderate_v2_features_through_2023.parquet",
+  "feature_only_artifact_bytes": 234228009,
+  "frozen_code_snapshot": "reports/core_moderate_ridge_attempt02_source/",
+  "frozen_code_snapshot_manifest_sha256": "f766fe6909d3812fbc976231b48f80aef0b51c7b17563279e974b7d49bbdb5da",
+  "all_frozen_code_hashes_reverified": true,
+  "decision_features_read_through": "2023-12-29",
+  "future_label_prices_opened": false,
+  "candidate_pool_created": false,
+  "labels_created": false,
+  "model_fit_created": false,
+  "selection_or_performance_metrics_created": false,
+  "2024_2025_2026_outcomes_opened": false,
+  "action": "Preserve this implementation-abort receipt, byte-exact frozen code snapshot, and its feature-only file as provenance. Do not treat the run as a performance result or reuse its panel implicitly. Fix the cleanup defect, version all output paths, and register a separate experiment before rerunning discovery."
+}

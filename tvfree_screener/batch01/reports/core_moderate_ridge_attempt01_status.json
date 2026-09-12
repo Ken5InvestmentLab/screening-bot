@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-RIDGE-20260913-01",
+  "spec_sha256": "6f56fc4c0f914f6faec0285e915a393044003505bc5d71cabb52e4d7778dcfa7",
+  "registered_spec": "core_moderate_ridge_spec.json",
+  "decision": "ABORTED_BEFORE_OUTCOME_LABELS_OR_METRICS",
+  "reason": "Unbounded research feature-panel assembly exceeded 5 GiB working set before its Parquet panel was written. The process was stopped to protect the host.",
+  "observed_process_working_set_bytes_at_stop": 5465501696,
+  "outcomes_opened": false,
+  "selection_or_performance_metrics_created": false,
+  "candidate_or_label_artifacts_created": false,
+  "action": "Retain this immutable receipt; use a separately identified implementation that streams per-symbol features and bounded Parquet batches. This is an engineering abort, not a family performance rejection."
+}

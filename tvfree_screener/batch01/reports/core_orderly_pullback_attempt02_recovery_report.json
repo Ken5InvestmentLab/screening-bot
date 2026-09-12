@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "attempt_id": "CORE-ORDERLY-PULLBACK-20260913-02-REPORT-RECOVERY",
+  "parent_experiment_id": "CORE-ORDERLY-PULLBACK-20260913-01",
+  "family": "core_orderly_uptrend_pullback_rank_v1",
+  "parent_spec_sha256": "61e48a3e204be0fb8e9f3e4f1cf08d128ca4a7af76628c4c0d618c88ea054b3f",
+  "recovery_spec_sha256": "929002ce77242abfec38bcb9962c360bbb0e9f2692031c8ea9ca2320a65ecd8f",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "recovery_code_sha256": {
+    "core_orderly_pullback_recovery.py": "f3f90f417b66b991cb1defef0bc66b0bd05fc54d8078c7380c4ba68a10d07f47",
+    "core_orderly_pullback_audit.py": "7b4b45e13e0167a2c0db7b6beda3524138664a9855c8f89137057958d2a7b646",
+    "core_orderly_pullback.py": "f3967e85cae4ab5838f3fd03e3f6ec67863850b0cd0bca09047edaac98c686bf",
+    "core_moderate_ridge_audit.py": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "artifact_store.py": "8f3bae624a8a8fc170be3ed9571fcee50360b12b9d861f88ad5b5a6ea1898644",
+    "evaluation.py": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar.py": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "selection.py": "fb4a04929452ae60b81d1a29691d62af171639caa6ed78e1a44131ca4f20c6be"
+  },
+  "period": "2022H2-2023 discovery family-gate recovery",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL_ENGINEERING_REPLAY",
+  "prior_discovery_outcomes_already_opened": true,
+  "input_artifacts": {
+    "candidate_pool": {
+      "path": ".cache\\core_orderly_pullback_discovery_candidate_pool.parquet",
+      "rows": 207694,
+      "sha256": "2f9386bf4ee9e25f7302f22cf278c419146d32c2d24468c4778f4a20a5158cb5"
+    },
+    "ranked_pool": {
+      "path": ".cache\\core_orderly_pullback_discovery_ranked_pool.parquet",
+      "rows": 207694,
+      "sha256": "e0a4295a4d971071383918a82efc35c717f51ffd72c0c3354a8af1c5fcf69cae"
+    },
+    "outcome_labels": {
+      "path": ".cache\\core_orderly_pullback_discovery_labels.parquet",
+      "rows": 207694,
+      "sha256": "e27bc9931dd0a98d33c9dcacaab3c6fdd3ad33f46e367c50c4f18d948f791138"
+    }
+  },
+  "candidate_pool_rows": 207694,
+  "candidate_pool_unique_symbols": 3510,
+  "candidate_pool_active_dates": 365,
+  "candidate_pool_max_names_per_day": 1459,
+  "candidate_pool_mean_names_per_active_day": 569.0246575342466,
+  "candidate_pool_signal_metrics": {
+    "selected_count": 207694,
+    "resolved_count": 202177,
+    "unresolved_count": 5517,
+    "unresolved_by_status": {
+      "ZERO_VOLUME_HOLDING_SESSION": 3847,
+      "ENTRY_ZERO_OR_UNKNOWN_VOLUME": 1661,
+      "POTENTIAL_SPLIT_OR_EXTREME_GAP": 9
+    },
+    "gross": {
+      "n": 202177,
+      "requested_count": 207694,
+      "resolved_count": 202177,
+      "draw_count": 4345,
+      "win_rate": 0.5212048606898783,
+      "win_rate_denominator_excludes_draws": true,
+      "mean": 0.002866140614627095,
+      "median": 0.0012224938875304847,
+      "plus10_rate": 0.02689722371980987,
+      "plus20_rate": 0.005559485005712816,
+      "plus50_rate": 0.0003759082388204395,
+      "minus10_rate": 0.016243192845872678,
+      "minus20_rate": 0.0016569639474322004,
+      "mean_excluding_top1_winner": 0.0028599273647657675,
+      "mean_excluding_top3_winners": 0.0028481352455523154
+    },
+    "round_trip_cost_scenarios": {
+      "0": {
+        "n": 202177,
+        "requested_count": 207694,
+        "resolved_count": 202177,
+        "draw_count": 4345,
+        "win_rate": 0.5212048606898783,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": 0.002866140614627095,
+        "median": 0.0012224938875304847,
+        "plus10_rate": 0.02689722371980987,
+        "plus20_rate": 0.005559485005712816,
+        "plus50_rate": 0.0003759082388204395,
+        "minus10_rate": 0.016243192845872678,
+        "minus20_rate": 0.0016569639474322004,
+        "mean_excluding_top1_winner": 0.0028599273647657675,
+        "mean_excluding_top3_winners": 0.0028481352455523154
+      },
+      "0.005": {
+        "n": 202177,
+        "requested_count": 207694,
+        "resolved_count": 202177,
+        "draw_count": 31,
+        "win_rate": 0.4413196402600101,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": -0.0021338593853729073,
+        "median": -0.0037775061124695154,
+        "plus10_rate": 0.02438457391295746,
+        "plus20_rate": 0.005148953639632599,
+        "plus50_rate": 0.00034623127259777325,
+        "minus10_rate": 0.01882508890724464,
+        "minus20_rate": 0.0018399719058053092,
+        "mean_excluding_top1_winner": -0.002140072635234235,
+        "mean_excluding_top3_winners": -0.002151864754447687
+      },
+      "0.01": {
+        "n": 202177,
+        "requested_count": 207694,
+        "resolved_count": 202177,
+        "draw_count": 60,
+        "win_rate": 0.3702706848013774,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": -0.007133859385372908,
+        "median": -0.008777506112469515,
+        "plus10_rate": 0.022178586090405933,
+        "plus20_rate": 0.004876914782591492,
+        "plus50_rate": 0.00033633895052355114,
+        "minus10_rate": 0.021743323919140158,
+        "minus20_rate": 0.0020180337031413067,
+        "mean_excluding_top1_winner": -0.007140072635234235,
+        "mean_excluding_top3_winners": -0.007151864754447687
+      }
+    }
+  },
+  "candidate_pool_complete_daily_cohorts": {
+    "n": 0,
+    "requested_count": 207694,
+    "resolved_count": 0,
+    "draw_count": 0,
+    "win_rate": null,
+    "win_rate_denominator_excludes_draws": true,
+    "mean": null,
+    "median": null,
+    "plus10_rate": null,
+    "plus20_rate": null,
+    "plus50_rate": null,
+    "minus10_rate": null,
+    "minus20_rate": null,
+    "mean_excluding_top1_winner": null,
+    "mean_excluding_top3_winners": null,
+    "active_days": 365,
+    "abstain_days": 5,
+    "incomplete_days": 365,
+    "monthly": {},
+    "weekly": {},
+    "mean_excluding_best_month": null,
+    "weekly_block_bootstrap": {
+      "weeks": 0,
+      "observations": 0,
+      "repetitions": 2000,
+      "lower_95": null,
+      "upper_95": null,
+      "p_mean_le_zero": null
+    }
+  },
+  "candidate_pool_daily_coverage": {
+    "complete_days": 0,
+    "partial_unresolved_days": 365,
+    "abstain_days": 5
+  },
+  "family_gate_checks": {
+    "pool_signal_mean_positive": false,
+    "pool_signal_median_positive": false,
+    "pool_signal_mean_ex_top3_positive": false,
+    "pool_complete_cohort_mean_positive": false,
+    "pool_complete_cohort_median_positive": false,
+    "pool_complete_cohort_mean_ex_top3_positive": false
+  },
+  "family_decision": "INCONCLUSIVE_INCOMPLETE_POOL_COHORT_COVERAGE",
+  "selection_policy_decision": "NOT_EVALUATED_FAMILY_NOT_KEEP",
+  "selection_policy_reports": [],
+  "selection_policy_metrics_opened_by_recovery": false,
+  "2024_2025_2026_opened": false,
+  "prior_attempt_trace": "The runtime reached the discovery non-KEEP path and fell through to the report-2026 handler, which attempted to use the discovery sentinel Top-N value 0. PolicySpec correctly rejected N=0. The family gate therefore was not KEEP, but its exact decision (REJECT versus INCONCLUSIVE) is not recoverable from the emitted output alone.",
+  "policy_permission": "No Top-N outcomes may be evaluated from this recovery. A KEEP result would contradict the prior trace and fail closed.",
+  "production_boundary": "Research-only Python CLI; no production runtime, Codex, LLM, or external model is called.",
+  "decision": "INCONCLUSIVE_INCOMPLETE_POOL_COHORT_COVERAGE",
+  "execution_cost_note": "0.5% round-trip is a sensitivity assumption, not observed slippage, commissions, tax, or fill quality."
+}

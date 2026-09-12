@@ -1,0 +1,23 @@
+{
+  "calendar_id": "XTKS",
+  "generator": "exchange_calendars",
+  "generator_version": "4.13.2",
+  "source_urls": [
+    "https://www.jpx.co.jp/english/corporate/about-jpx/calendar/",
+    "https://www.jpx.co.jp/english/equities/trading/domestic/01.html"
+  ],
+  "date_range": {
+    "start": "2022-01-04",
+    "end": "2026-12-30"
+  },
+  "session_count": 1220,
+  "first_session": "2022-01-04",
+  "last_session": "2026-12-30",
+  "csv_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "generated_at_utc": "2026-09-12T14:17:29.302564+00:00",
+  "reviewed_holiday_sentinels": [
+    "2024-01-08",
+    "2026-09-22"
+  ],
+  "status": "frozen historical plus known 2026 forward sessions; refresh from reviewed JPX source before later forward runs"
+}

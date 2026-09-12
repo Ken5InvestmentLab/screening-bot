@@ -12,3 +12,6 @@
 - New volume averages exclude current session; inclusive legacy definitions belong to separate reproduction variants. Do not use future target availability for selection.
 - Three registered Core slots only; duplicate failures and missing PIT consume their slot. Fundamental source branch remains read-only; readiness requires all three checks plus pinned SHA/evidence.
 - Keep raw archives/matrices/models in ignored .cache/. Preserve experiments, hashes, exact commands, results and resume points. NO_VIABLE_CANDIDATE is valid; unfinished tests/engine/ledger/sync is not completion.
+- A lane may select multiple distinct symbols on the same session; retain the full preregistered candidate pool and compare only its registered Top-N policies. Never impose an implicit one-symbol/day cap.
+- Any production data-gap repair must run entirely in the ordinary production runtime without Codex or an LLM. If the source, authorization, timing, and validation cannot be established there, keep the gap unresolved; daily bars cannot be used to fabricate intraday 4-hour bars.
+- Build full-universe panels and labels with bounded memory. Prefer symbol/chunk streaming to holding multiple full-history feature-panel copies; stop an owned research job before uncontrolled host memory growth and record an engineering abort separately from a model-performance decision.

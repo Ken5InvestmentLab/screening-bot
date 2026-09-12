@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "experiment_id": "TVF-FR-FEATURE-20260913-01",
+  "spec_id": "first_reversal_discovery_feature_freeze_qualified_v1",
+  "spec_sha256": "edcabe7c3fc44c3fa00709511a2df9cbe1d82fe30ae4856c001672816c76d03d",
+  "created_at_utc": "2026-09-12T16:35:01.184731+00:00",
+  "discovery_phase_opened_at_utc": "2026-09-12T16:26:30.098552+00:00",
+  "access": {
+    "intent": "select_features",
+    "access": "DISCOVERY_SELECTION",
+    "spec_sha256": "615304da5e4437f75a993d6084c671a9f5516029ebf304d598b5f11d9b683422"
+  },
+  "candidate_pool_sha256": "5043505719c5680059314e5aa8c41d759bbaffbd8eb41c48f6e4cae7db73af95",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "first_reversal_spec_sha256": "e29a565f5bb4594577dafe5746ccef786643bc18a422c199a79f2dbb52c53248",
+  "feature_audit_spec_sha256": "615304da5e4437f75a993d6084c671a9f5516029ebf304d598b5f11d9b683422",
+  "features": [
+    {
+      "feature": "dd60",
+      "direction": "higher_for_winners",
+      "discovery_cliffs_delta": 0.13793351179302005,
+      "discovery_median_delta": 0.030691564083099365,
+      "tercile_edges": [
+        -0.131264790892601,
+        -0.07139494270086288
+      ]
+    }
+  ],
+  "feature_audit_spec": {
+    "spec_id": "first_reversal_winner_loser_feature_audit_v1",
+    "target": "next XTKS session open to fifth XTKS session close",
+    "winner": "gross 5-session return >= +10%",
+    "loser": "gross 5-session return <= -10%",
+    "discovery": {
+      "2022H2": "signal dates 2022-07-01 through final 2022 XTKS session; exit must remain in 2022",
+      "2023": "signal dates 2023-01-01 through final 2023 XTKS session; exit must remain in 2023",
+      "pooled": "union of the two separately purged discovery splits"
+    },
+    "feature_set": [
+      "ret1",
+      "ret3",
+      "ret5",
+      "ret10",
+      "ret20",
+      "ret40",
+      "volr20_prevavg",
+      "volume_trend5_20",
+      "log_dollar_volume",
+      "dollar_volume_median20",
+      "atr14p",
+      "pos20",
+      "pos40",
+      "pos60",
+      "dd20",
+      "dd40",
+      "dd60",
+      "gap",
+      "range_pct",
+      "body_pct",
+      "close_location",
+      "red_count5",
+      "down3",
+      "down5",
+      "consecutive_down",
+      "days_since_drop5",
+      "ret1_minus_ret5_per5",
+      "dispersion20",
+      "market_median_ret1",
+      "market_median_ret5",
+      "market_median_ret1_lag1",
+      "market_median_ret5_lag1",
+      "rel_ret5_lag1"
+    ],
+    "excluded_reconstruction_only_features": [
+      "volr5_inclusive",
+      "volr20_inclusive"
+    ],
+    "selection_rule": {
+      "minimum_winners_and_losers_per_split": 50,
+      "require_same_nonzero_cliffs_delta_and_median_delta_direction_in_2022H2_2023_and_pooled": true,
+      "maximum_selected_features": 2,
+      "sort": "absolute pooled Cliffs delta descending, feature name ascending",
+      "minimum_effect_threshold": null,
+      "p_values": "not used; rows have cross-sectional and repeated-symbol dependence"
+    },
+    "confirmation_rule": {
+      "freeze_tercile_cutpoints": "33.333% and 66.667% quantiles of all finite discovery candidate feature values, without labels",
+      "require_2024_and_2025": "selected feature class-effect direction and outer-band extreme-winner share both match discovery",
+      "minimum_winners_and_losers_in_each_outer_band": 50
+    },
+    "evidence_level": "RETROSPECTIVE_PROVISIONAL; historical years and aggregate strategy results have been previously observed"
+  },
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "caveat": "2024 aggregate First Reversal results were already present in the handoff; later feature-specific confirmation is historical and is not independent OOS evidence.",
+  "supersedes_freeze_sha256": "e2d099e01a06fdf62945f17f0ba463e5635526476b84d29b2aa83dd1c7885ab0",
+  "feature_quality_spec": {
+    "spec_id": "first_reversal_feature_coverage_semantics_review_v1",
+    "minimum_finite_feature_rate_each_discovery_split": 0.95,
+    "missingness_must_have_one_unambiguous_signal_time_interpretation": true,
+    "dropped_feature_replacement": "none within this batch; no discovery re-search",
+    "outcome_access": "forbidden; this phase may read only the frozen discovery report and signal-time candidate features"
+  },
+  "feature_quality_spec_sha256": "ea5d9d0311f54f2c932e4d5c1447fdb2c915915326b6f48f2e9d8b4679662275",
+  "quality_report_sha256": "1e87f233406bc9df57dbc0dace4f9de2ff16dfb2c40a3bdf29cd57a9cca6ddff",
+  "decision": "LOCK_QUALIFIED_FEATURES"
+}

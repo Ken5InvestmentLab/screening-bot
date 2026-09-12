@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-09-13",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "production_migration_decision": "NO_GO",
+  "same_definition_outperformance_over_current_bot_established": false,
+  "production_modified": false,
+  "codex_dependent_production_processing_implemented": false,
+  "daily_bars_used_to_reconstruct_intraday_bars": false,
+  "research_tests_passed": 65,
+  "core": {
+    "candidate": null,
+    "decision": "NO_VIABLE_CANDIDATE",
+    "registered_slots": {
+      "ridge": "REJECT_CORE_RIDGE_NO_TOP_N_POLICY_PASSED",
+      "pit_industry": "INCONCLUSIVE_PIT_INDUSTRY_HISTORY_UNAVAILABLE",
+      "orderly_pullback": "INCONCLUSIVE_INCOMPLETE_POOL_COHORT_COVERAGE"
+    }
+  },
+  "monster": {
+    "exploratory_pool": "weak+early+volr20-low",
+    "candidate_pool_decision": "KEEP_EXPLORATORY",
+    "top_n_policy_decision": "SELECTION_COUNT_UNRESOLVED",
+    "2024_policy_confirmation": false,
+    "2025_opened": false,
+    "2026_opened": false
+  },
+  "v29": {
+    "decision": "REFERENCE_ONLY_NOT_FULL_UNIVERSE_CANDIDATE",
+    "sample_n": 35,
+    "target_matches_tvfree_canonical": false
+  },
+  "fundamental_v2": {
+    "fixed_input_reproducibility": "PASS",
+    "independent_source_extraction": "NOT_VERIFIED",
+    "point_in_time_predictive_study": "NOT_STARTED"
+  },
+  "source_reports": [
+    "reports/first_reversal_topn_discovery.json",
+    "reports/first_reversal_validation_2024.json",
+    "reports/core_moderate_ridge_v4_discovery.json",
+    "reports/core_pit_sector_readiness.json",
+    "reports/core_orderly_pullback_attempt02_recovery_report.json",
+    "reports/monster_canonical_audit.json",
+    "reports/v29_canonical_audit.json"
+  ]
+}

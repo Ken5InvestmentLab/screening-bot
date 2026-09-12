@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-RIDGE-20260913-04",
+  "registered_spec": "core_moderate_ridge_spec_v4.json",
+  "spec_sha256": "b85b6f38bae730fbe4b4066cdaac649a19965b2a3a3475ffb9662d44a2a91596",
+  "decision": "REJECT_CORE_RIDGE_NO_TOP_N_POLICY_PASSED",
+  "result_report": "reports/core_moderate_ridge_v4_discovery.json",
+  "result_report_sha256": "28742e2dd8f929ffad516b0eacd3bdd200a7ce27ca257b92890cc194afd81923",
+  "candidate_pool_rows": 1215777,
+  "candidate_pool_max_names_per_day": 3452,
+  "candidate_pool_mean_names_per_active_day": 3330.895890410959,
+  "candidate_pool_resolved": 1192068,
+  "candidate_pool_unresolved": 23709,
+  "candidate_pool_daily_complete_days": 0,
+  "top_n_policies": {
+    "1": {"selected": 365, "resolved": 358, "net_mean_cost_0_005": -0.005608457020795487, "net_median_cost_0_005": -0.013592920762379386, "passes_all_gates": false},
+    "2": {"selected": 730, "resolved": 721, "net_mean_cost_0_005": -0.0043376201785654, "net_median_cost_0_005": -0.007777777777777768, "passes_all_gates": false},
+    "3": {"selected": 1095, "resolved": 1079, "net_mean_cost_0_005": -0.004420577997659649, "net_median_cost_0_005": -0.009025764895330132, "passes_all_gates": false},
+    "5": {"selected": 1825, "resolved": 1800, "net_mean_cost_0_005": -0.002974605741702368, "net_median_cost_0_005": -0.006776557643457799, "passes_all_gates": false}
+  },
+  "locked_top_n": null,
+  "2024_2025_2026_opened": false,
+  "memory_guard_max_observed_bytes": 4266409984,
+  "action": "Close this Core family as rejected. Keep the comprehensive report and separate full-pool/policy artifacts. Do not tune this Ridge family or open its 2024 confirmation; move to a distinct preregistered Core hypothesis if within the finite family budget."
+}

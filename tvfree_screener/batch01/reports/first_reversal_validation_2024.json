@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "experiment_id": "TVF-FR-FEATURE-20260913-01",
+  "phase": "locked_2024_directional_confirmation",
+  "phase_opened_at_utc": "2026-09-12T17:13:41.350621+00:00",
+  "created_at_utc": "2026-09-12T17:14:38.044580+00:00",
+  "access": {
+    "intent": "locked_validation",
+    "access": "LOCKED_CONFIRMATION",
+    "spec_sha256": "edcabe7c3fc44c3fa00709511a2df9cbe1d82fe30ae4856c001672816c76d03d"
+  },
+  "spec_sha256": "edcabe7c3fc44c3fa00709511a2df9cbe1d82fe30ae4856c001672816c76d03d",
+  "freeze_file_sha256": "d8cd70f6afe1c61ba7fbfe7e9676026fb0a2c114990de7c7b722361f5fafbd63",
+  "candidate_pool_sha256": "5043505719c5680059314e5aa8c41d759bbaffbd8eb41c48f6e4cae7db73af95",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "signal_count_before_purge": 26733,
+  "purged_signal_count": 0,
+  "labeled_signal_count": 26733,
+  "outcomes": {
+    "signal_level": {
+      "selected_count": 26733,
+      "resolved_count": 26371,
+      "unresolved_count": 362,
+      "unresolved_by_status": {
+        "ZERO_VOLUME_HOLDING_SESSION": 245,
+        "ENTRY_ZERO_OR_UNKNOWN_VOLUME": 110,
+        "INVALID_HOLDING_OHLC_RANGE": 5,
+        "POTENTIAL_SPLIT_OR_EXTREME_GAP": 2
+      },
+      "gross": {
+        "n": 26371,
+        "requested_count": 26733,
+        "resolved_count": 26371,
+        "draw_count": 556,
+        "win_rate": 0.5228742978888243,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": -0.007892514134231608,
+        "median": 0.0015936254980080111,
+        "plus10_rate": 0.023662356376322476,
+        "plus20_rate": 0.004512532706382011,
+        "plus50_rate": 0.0004929657578400516,
+        "minus10_rate": 0.07796443062454969,
+        "minus20_rate": 0.031398126730120206,
+        "mean_excluding_top1_winner": -0.007948051089740275,
+        "mean_excluding_top3_winners": -0.008029971787713766
+      },
+      "round_trip_cost_scenarios": {
+        "0": {
+          "n": 26371,
+          "requested_count": 26733,
+          "resolved_count": 26371,
+          "draw_count": 556,
+          "win_rate": 0.5228742978888243,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": -0.007892514134231608,
+          "median": 0.0015936254980080111,
+          "plus10_rate": 0.023662356376322476,
+          "plus20_rate": 0.004512532706382011,
+          "plus50_rate": 0.0004929657578400516,
+          "minus10_rate": 0.07796443062454969,
+          "minus20_rate": 0.031398126730120206,
+          "mean_excluding_top1_winner": -0.007948051089740275,
+          "mean_excluding_top3_winners": -0.008029971787713766
+        },
+        "0.005": {
+          "n": 26371,
+          "requested_count": 26733,
+          "resolved_count": 26371,
+          "draw_count": 5,
+          "win_rate": 0.4563073655465372,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": -0.012892514134231611,
+          "median": -0.003406374501991989,
+          "plus10_rate": 0.02028743695726366,
+          "plus20_rate": 0.004322930491828144,
+          "plus50_rate": 0.00045504531492927835,
+          "minus10_rate": 0.08156687270107314,
+          "minus20_rate": 0.03329414887565887,
+          "mean_excluding_top1_winner": -0.012948051089740278,
+          "mean_excluding_top3_winners": -0.013029971787713767
+        },
+        "0.01": {
+          "n": 26371,
+          "requested_count": 26733,
+          "resolved_count": 26371,
+          "draw_count": 10,
+          "win_rate": 0.3939531884222905,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": -0.017892514134231614,
+          "median": -0.008406374501991989,
+          "plus10_rate": 0.018353494368814227,
+          "plus20_rate": 0.004019566948541959,
+          "plus50_rate": 0.00045504531492927835,
+          "minus10_rate": 0.08607940540745516,
+          "minus20_rate": 0.0346592848204467,
+          "mean_excluding_top1_winner": -0.017948051089740277,
+          "mean_excluding_top3_winners": -0.018029971787713765
+        }
+      }
+    },
+    "equal_weight_daily_candidate_cohort": {
+      "n": 2,
+      "requested_count": 26733,
+      "resolved_count": 2,
+      "draw_count": 0,
+      "win_rate": 1.0,
+      "win_rate_denominator_excludes_draws": true,
+      "mean": 0.02248867546672504,
+      "median": 0.02248867546672504,
+      "plus10_rate": 0.0,
+      "plus20_rate": 0.0,
+      "plus50_rate": 0.0,
+      "minus10_rate": 0.0,
+      "minus20_rate": 0.0,
+      "mean_excluding_top1_winner": 0.021805021663828583,
+      "mean_excluding_top3_winners": null,
+      "active_days": 44,
+      "abstain_days": 1176,
+      "incomplete_days": 42,
+      "monthly": {
+        "2024-02": {
+          "n": 1,
+          "requested_count": 1,
+          "resolved_count": 1,
+          "draw_count": 0,
+          "win_rate": 1.0,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": 0.0231723292696215,
+          "median": 0.0231723292696215,
+          "plus10_rate": 0.0,
+          "plus20_rate": 0.0,
+          "plus50_rate": 0.0,
+          "minus10_rate": 0.0,
+          "minus20_rate": 0.0,
+          "mean_excluding_top1_winner": null,
+          "mean_excluding_top3_winners": null
+        },
+        "2024-08": {
+          "n": 1,
+          "requested_count": 1,
+          "resolved_count": 1,
+          "draw_count": 0,
+          "win_rate": 1.0,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": 0.021805021663828583,
+          "median": 0.021805021663828583,
+          "plus10_rate": 0.0,
+          "plus20_rate": 0.0,
+          "plus50_rate": 0.0,
+          "minus10_rate": 0.0,
+          "minus20_rate": 0.0,
+          "mean_excluding_top1_winner": null,
+          "mean_excluding_top3_winners": null
+        }
+      },
+      "weekly": {
+        "2024-W07": {
+          "n": 1,
+          "requested_count": 1,
+          "resolved_count": 1,
+          "draw_count": 0,
+          "win_rate": 1.0,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": 0.0231723292696215,
+          "median": 0.0231723292696215,
+          "plus10_rate": 0.0,
+          "plus20_rate": 0.0,
+          "plus50_rate": 0.0,
+          "minus10_rate": 0.0,
+          "minus20_rate": 0.0,
+          "mean_excluding_top1_winner": null,
+          "mean_excluding_top3_winners": null
+        },
+        "2024-W32": {
+          "n": 1,
+          "requested_count": 1,
+          "resolved_count": 1,
+          "draw_count": 0,
+          "win_rate": 1.0,
+          "win_rate_denominator_excludes_draws": true,
+          "mean": 0.021805021663828583,
+          "median": 0.021805021663828583,
+          "plus10_rate": 0.0,
+          "plus20_rate": 0.0,
+          "plus50_rate": 0.0,
+          "minus10_rate": 0.0,
+          "minus20_rate": 0.0,
+          "mean_excluding_top1_winner": null,
+          "mean_excluding_top3_winners": null
+        }
+      },
+      "mean_excluding_best_month": 0.021805021663828583,
+      "weekly_block_bootstrap": {
+        "weeks": 2,
+        "observations": 2,
+        "repetitions": 2000,
+        "seed": 20260912,
+        "lower_95": 0.021805021663828583,
+        "upper_95": 0.0231723292696215,
+        "p_mean_le_zero": 0.0
+      }
+    },
+    "daily_cohort_status_counts": {
+      "ABSTAIN": 1176,
+      "PARTIAL_UNRESOLVED": 42,
+      "COMPLETE": 2
+    }
+  },
+  "feature_effects": {
+    "dd60": {
+      "feature": "dd60",
+      "candidate_count": 26733,
+      "resolved_count": 26371,
+      "finite_feature_candidate_count": 26666,
+      "missing_feature_candidate_count": 67,
+      "finite_feature_rate": 0.9974937343358395,
+      "finite_feature_rate_among_resolved": 0.9974593303249782,
+      "n_winners": 615,
+      "n_losers": 2049,
+      "winner_median": -0.15730337798595428,
+      "loser_median": -0.11590470373630524,
+      "median_delta_winner_minus_loser": -0.04139867424964905,
+      "cliffs_delta": -0.23573109230360234,
+      "auc_winner_higher": 0.38213445384819883,
+      "winner_class_share": 0.23085585585585586
+    }
+  },
+  "discovery_tercile_outcomes": {
+    "dd60": {
+      "feature": "dd60",
+      "edges": [
+        -0.131264790892601,
+        -0.07139494270086288
+      ],
+      "candidate_count": 26733,
+      "finite_feature_candidate_count": 26666,
+      "missing_feature_candidate_count": 67,
+      "finite_feature_rate": 0.9974937343358395,
+      "bands": {
+        "low": {
+          "candidate_count": 11151,
+          "resolved_count": 11061,
+          "unresolved_count": 90,
+          "winner_count": 363,
+          "loser_count": 864,
+          "extreme_winner_share": 0.29584352078239606,
+          "mean_return": -0.006013803806117774,
+          "median_return": 0.0023068050749712743,
+          "plus10_rate": 0.03281800922158937,
+          "minus10_rate": 0.07811228641171684
+        },
+        "middle": {
+          "candidate_count": 8279,
+          "resolved_count": 8146,
+          "unresolved_count": 133,
+          "winner_count": 154,
+          "loser_count": 697,
+          "extreme_winner_share": 0.1809635722679201,
+          "mean_return": -0.010372488764257405,
+          "median_return": 0.0015705873771409973,
+          "plus10_rate": 0.018904984041247238,
+          "minus10_rate": 0.08556346673213848
+        },
+        "high": {
+          "candidate_count": 7236,
+          "resolved_count": 7097,
+          "unresolved_count": 139,
+          "winner_count": 98,
+          "loser_count": 488,
+          "extreme_winner_share": 0.16723549488054607,
+          "mean_return": -0.00811868377276916,
+          "median_return": 0.0010623229461756978,
+          "plus10_rate": 0.013808651542905453,
+          "minus10_rate": 0.06876144849936593
+        }
+      }
+    }
+  },
+  "directional_confirmation": {
+    "dd60": {
+      "effect_direction_matches": false,
+      "broad_band_direction_matches": false,
+      "sufficient_extreme_class_counts_in_both_outer_bands": true,
+      "confirmed": false
+    }
+  },
+  "confirmed_features": [],
+  "decision": "REJECT_FIRST_REVERSAL",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "caveat": "2024 aggregate First Reversal results were already present in the handoff; later feature-specific confirmation is historical and is not independent OOS evidence."
+}

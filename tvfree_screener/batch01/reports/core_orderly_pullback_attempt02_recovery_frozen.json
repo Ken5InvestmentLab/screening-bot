@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "attempt_id": "CORE-ORDERLY-PULLBACK-20260913-02-REPORT-RECOVERY",
+  "parent_experiment_id": "CORE-ORDERLY-PULLBACK-20260913-01",
+  "parent_spec_sha256": "61e48a3e204be0fb8e9f3e4f1cf08d128ca4a7af76628c4c0d618c88ea054b3f",
+  "parent_runner_sha256": "7b4b45e13e0167a2c0db7b6beda3524138664a9855c8f89137057958d2a7b646",
+  "family_spec_sha256": "7032b207ffa09152411923beb01a69f8bfa2f26e0a62791107163ea635774deb",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "recovery_implementation_sha256": {
+    "core_orderly_pullback_recovery.py": "f3f90f417b66b991cb1defef0bc66b0bd05fc54d8078c7380c4ba68a10d07f47",
+    "core_orderly_pullback_audit.py": "7b4b45e13e0167a2c0db7b6beda3524138664a9855c8f89137057958d2a7b646",
+    "core_orderly_pullback.py": "f3967e85cae4ab5838f3fd03e3f6ec67863850b0cd0bca09047edaac98c686bf",
+    "core_moderate_ridge_audit.py": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "artifact_store.py": "8f3bae624a8a8fc170be3ed9571fcee50360b12b9d861f88ad5b5a6ea1898644",
+    "evaluation.py": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar.py": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "selection.py": "fb4a04929452ae60b81d1a29691d62af171639caa6ed78e1a44131ca4f20c6be"
+  },
+  "expected_parent_artifacts": {
+    "candidate_pool": {
+      "path": ".cache\\core_orderly_pullback_discovery_candidate_pool.parquet",
+      "sha256": "2f9386bf4ee9e25f7302f22cf278c419146d32c2d24468c4778f4a20a5158cb5",
+      "rows": 207694
+    },
+    "ranked_pool": {
+      "path": ".cache\\core_orderly_pullback_discovery_ranked_pool.parquet",
+      "sha256": "e0a4295a4d971071383918a82efc35c717f51ffd72c0c3354a8af1c5fcf69cae",
+      "rows": 207694
+    },
+    "outcome_labels": {
+      "path": ".cache\\core_orderly_pullback_discovery_labels.parquet",
+      "sha256": "e27bc9931dd0a98d33c9dcacaab3c6fdd3ad33f46e367c50c4f18d948f791138",
+      "rows": 207694
+    }
+  },
+  "prior_discovery_outcomes_already_opened": true,
+  "discovery_evidence_class": "RETROSPECTIVE_PROVISIONAL_ENGINEERING_REPLAY",
+  "policy_outcomes_permitted": false,
+  "later_periods_permitted": false,
+  "spec_sha256": "929002ce77242abfec38bcb9962c360bbb0e9f2692031c8ea9ca2320a65ecd8f",
+  "frozen_at_utc": "2026-09-12T20:35:16.855598+00:00",
+  "freeze_reads_label_values": false
+}

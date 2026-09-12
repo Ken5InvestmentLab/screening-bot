@@ -1,0 +1,16 @@
+{
+  "code_sha256": {
+    "artifact_store.py": "683aba39a9039148252755fc2f482c1faa507112e289aa7105121d6c5c7cd96e",
+    "core_moderate_ridge.py": "bf2c64b41ad8319d3fa9a59036afdc4710c3710a6b9fd89342b6343b6fc8eefa",
+    "core_moderate_ridge_audit.py": "8b9bcce25208d9f12800afc4f50158da93bc35ad8e7c5083d9737d2902fecaba",
+    "evaluation.py": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "feature_panel.py": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "selection.py": "fb4a04929452ae60b81d1a29691d62af171639caa6ed78e1a44131ca4f20c6be",
+    "session_calendar.py": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "temporal_policy.py": "cf96075cca0c95b0b5b2fde3315a466a3aac7508744fc8c4112642b5691e2a3c"
+  },
+  "experiment_id": "CORE-RIDGE-20260913-02",
+  "schema_version": 1,
+  "source_kind": "byte-exact frozen implementation archive reconstructed only by reversing the subsequently registered attempt03 version/path/cleanup changes",
+  "spec_sha256": "a36b154ad0a1eb2c91e28643f612229acef2ece8061b25ef543aa3128dd325bb"
+}

@@ -10,6 +10,24 @@
 
 開始・継続ターン冒頭、計算単位/各milestoneの前後、作業中は原則60秒以内ごとにCodex app get_usage_limitsを読む。10080分週次窓のremaining=100-usedPercentを使い、複数の適用週次枠では最小値を採る。取得不能なら推測せず新しい重い単位を保留。停止時は自分のジョブをcheckpoint/停止し、再開位置保存と報告だけを行う。usage中断を研究完了や候補不成立と呼ばない。goalツールはpause/resumeを提供しないため、状態をcomplete/blockedに偽装せず永続ラッチで継続ターンも止める。
 
+## Goal-first adaptation — 2026-09-12 user clarification
+
+この計画は初期研究の道筋であり、最終目標より上位の固定仕様ではない。すべての仮説、ファミリー数、特徴量、候補生成、評価・選出方式は、データ品質監査と比較結果を踏まえて変更してよい。最終的な判断軸は、現在のスコアリングBotに対して成績で競える独自システムを作れるかである。計画の項目を埋めるためだけに弱い候補を継続しない。
+
+変更のたびに旧仕様・結果を上書きせず、新しいexperiment/spec ID、日時、変更理由、使用可能情報、影響を受ける期間を記録する。すでに結果を閲覧した期間はその後の選択に使った時点で探索データへ戻す。未閲覧の検証期間または凍結後の新しいforward期間を用意できない場合、改善を確認済みとは呼ばず暫定結果として残す。使用量停止、本番分離、先読み防止は引き続き必須。
+
+### 2026-09-13 — production-independent data-gap repair
+
+価格データの補完を検討する場合、その取得・検証・監査記録は本番実行環境だけで完結し、CodexやLLM/APIを呼び出さないことを必須条件とする。通常の本番ランナーから利用できるデータ供給元、権限、調整方式、対象市場日との対応を確認できない場合、補完機能を実装しない。確認不能な欠損は未解決のまま評価し、正常データに見せかけない。日足値で埋めたデータを4時間足・1時間足の価格経路やシグナル時刻の復元に使わない。
+
+### 2026-09-13 — separate First Reversal feature confirmation
+
+First ReversalのTop-N/ranker政策がdiscoveryのCore基準を通らなくても、すでに凍結済みのsignal-time `dd60` winner/loser方向だけは既存の確認規則で2024年に一度確認できる。これは特徴仮説の診断専用であり、2024年から順位・候補数・閾値を選び直さず、First Reversal戦略を昇格させない。政策比較が不成立なら、その戦略確認は行わない。
+
+### 2026-09-13 — retrospective phase-lock timestamp correction
+
+2024/2025の歴史データを2026年に分析する研究で、実際の仕様凍結時刻が2023年以前であることを要求すると、事実と異なる日時を保存することになる。`spec_frozen_at`は実際のUTC時刻を記録し、後段期間は同一実行内で凍結記録が作成された後に開かれたことを`phase_opened_at`との順序で確認する。これはデータを隠した真のOOSを作るものではない。過去に露出済みの年はRETROSPECTIVE_PROVISIONALとして扱い、真のforward期間とは区別する。
+
 ## M1 — Canonical foundation
 
 まずartifact 10148332198（V29、確認時期限2026-09-24）、10264205130（run80日足）、10264251140（V7 Tail cache）を保全し、run/SHA/zipとmember hash/範囲/取得日時を保存する。実行中Actionsを中断・重複実行しない。データはignored .cache/へ。時点別membership、上場廃止価格、分割調整、コード再利用、営業日欠損、価格/volume単位を監査し、無料取得範囲を全東証検証完了と呼ばない。
@@ -77,3 +95,28 @@ true-forward記録、将来Stable比較（実在first-FINALのみ、異なるtim
 ## 完了条件
 
 各milestoneでcommit、artifact manifest、追記ledger、resume pointを保存し研究branchへpushする。台帳にID/SHA/data/spec hashes/仮説/期間/params/全結果/decision/reason/commandを記録する。最終比較はレビュー01の項目一覧を満たす。pool/rank/policy比較、選出数推奨または未確定、Ranking Value Add、Fundamental readiness機械判定を含める。必要なengine/tests/全登録実験判定/保存/同期が未完了ならgoal完了にしない。利用残量による中断は未完了のままラッチ保存する。
+
+## 実行追記 — M2監査結果と次のCore登録
+
+- First Reversalはfeature方向が2024で反転し、Top-N選出政策もdiscovery gateを通らなかったため、このbatchでは棄却。2025救済検証・閾値微調整は行わない。
+- V29の35件/350銘柄標本は参考保存し、全ユニバース候補から降格する。銘柄数制限を外したV40の成績は大幅悪化。V29とcanonical batchのentry/exit定義も異なるため同じ表で優劣を比較しない。
+- Monster weak+early+volr20-lowは全候補poolの研究仮説としてKEEP。ただしTop1/2/3/5の各政策はdiscovery基準を通らず、N未確定。2024のpool診断だけを記録し、2025/2026は開かない。
+- ret10上限の出所は元V18 selector/consensus処理を再構成し、53 consensus行の中央値と一致した。ただしその旧処理は同日市場値・top4先行cutを使うため、旧provenanceとlag1/full-pool canonical定義を分離する。
+- Fundamental V2は同じ固定factsに対する3銘柄×3回の決定性PASSのみ確認。独立ソース抽出とsignal dateごとのPIT事実が無いため、予測価値研究/統合は保留し、技術Core研究を続ける。
+- 次はCore family 1を結果閲覧前に登録する。低複雑度expanding Ridge、予測対象=min(gross 5-session return, 30%)、マイナス値を保持、signal-timeの固定feature list、quarter-boundary refit、学習labelは当該日closeより前にexit済みのものだけ、warm-up=2022H1、discovery=2022H2–2023。全日足eligible universeをpoolとし、候補を1銘柄/日に制限しない。Top1/2/3/5は独立政策としてdiscovery gateを比較し、通過時だけ仕様を凍結して2024を開く。
+
+## 2026-09-13 — Core family slots 1–3 disposition and final registration
+
+- Core slot 1 is the registered moderate-return Ridge family, now `REJECT_CORE_RIDGE_NO_TOP_N_POLICY_PASSED`. Its attempt04 result is final for this family; do not tune it or open its 2024 confirmation.
+- Core slot 2 is the registered PIT industry-lead / individual-lag family. It is `INCONCLUSIVE_PIT_INDUSTRY_HISTORY_UNAVAILABLE` and consumes the slot. No point-in-time sector table was found in the checkout, preserved inputs, or recorded Fundamental handoff. JPX's currently documented company-information/list pages were reviewed, but a complete symbol-to-industry history with effective and availability dates was not established. See `reports/core_pit_sector_readiness.json`. Do not substitute current sector labels or manually backfill them.
+- Core slot 3 is registered as `CORE-ORDERLY-PULLBACK-20260913-01` in `core_orderly_pullback.py`: pool `ret20 > 0 AND ret5 < 0`; path efficiency is `ret20 / sum(abs(ret1), last 20 XTKS sessions)` with missing-session gaps invalidating the path; volume contraction is mean volume over sessions t-5..t-1 divided by mean t-20..t-1; score is the equal-weight average of within-date average percentile ranks (path efficiency high, volume ratio low). Ranking tie-breaks are path efficiency descending, volume ratio ascending, symbol ascending. No market filter, extra cut, or one-name/day cap. Independent Top1/2/3/5 policies may select multiple distinct symbols per day.
+- This family is historical/retrospective only. Its frozen discovery is 2022H2–2023; 2024 may be opened only after the registered family and a Top-N policy pass the unchanged gates. No tuning, new gate, or rescue period may be added after outcomes are opened; 2025 is locked behind 2024, and 2026 is report-only.
+- Research scripts may be run from the local CLI. They are not production features. Any future production scorer or data-gap repair must run in the ordinary production runtime with no Codex/LLM/API dependency; daily OHLCV must not fabricate missing intraday bars.
+- attempt01 accessed and persisted 207,694 discovery labels, computed the family gate in memory, then aborted before a metrics report because the non-KEEP discovery branch fell through to the report-only handler with `top_n=0`. The emitted trace proves the family did not take the KEEP branch, but does not distinguish REJECT from INCONCLUSIVE. Preserve `reports/core_orderly_pullback_attempt01_status.json`; do not call it a model-performance report. attempt02 may only be an identical-strategy engineering replay with a corrected explicit phase dispatch, a new runner/spec hash, and prior exposure disclosed. No 2024 open without a corrected report proving KEEP and a passing locked policy.
+## 2026-09-13 — attempt02 recovery and Core disposition
+
+- CORE-ORDERLY-PULLBACK-20260913-02-REPORT-RECOVERY reconstructs the exact preregistered family gate from attempt01 candidate/rank/label Parquet files after verifying their hashes and the original frozen runner. This is a retrospective engineering recovery, not a new model test.
+- The saved result is INCONCLUSIVE_INCOMPLETE_POOL_COHORT_COVERAGE: 207,694 candidates; 202,177 resolved labels; 5,517 unresolved; 365 partial days, zero complete days, five abstain days. At assumed 0.5% cost, measurable signal mean/median/top-three-excluded mean were -0.213% / -0.378% / -0.215%. Those registered checks fail; no Top-N outcomes were evaluated and no 2024–2026 period was opened.
+- Core slots 1–3 are consumed; the current batch has no viable Core candidate. Do not retroactively change a gate or treat known discovery history as OOS. A later Core family is permissible only if it is a distinct, justified mechanism with a new prospective evidence plan; it is not added just to keep iterating on the same failures.
+- The recovery code is a research-only local Python CLI and makes no Codex/LLM calls. No production fallback or scoring path was implemented. Yahoo daily bars cannot reconstruct missing hourly/4-hour bars; any future production repair must be executable and verifiable within the ordinary production runtime, otherwise the intraday gap stays unresolved.
+- Next: consolidate the Core/Monster/V29 leaderboard with timing and evidence limitations; verify the local CLI and all artifacts; record an explicit no-promotion/production-migration go/no-go. Keep production untouched.

@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "audit_id": "V29-CANONICAL-20260913",
+  "status": "PARTIAL_REPRODUCIBILITY_REFERENCE_ONLY",
+  "decision": "DEMOTE_AS_FULL_UNIVERSE_CORE_CANDIDATE",
+  "production_modified": false,
+  "artifact": {
+    "artifact_id": "10148332198",
+    "run_id": "34466986752",
+    "source_commit": "a6ccb4e8db6dc8dc39598b7e1694593b32647675",
+    "zip_sha256": "55af5133975e4ab3dfb444a661ba4c74c5cfe077403d8a00d0a1bf6a7db0379a",
+    "member": "v29_purged_rolling.json",
+    "member_sha256": "7c6d2a7d70e5d0cd3b82660311e36bdec5790bd651f1502479727654a7542d16"
+  },
+  "v29_fixed_min98_both": {
+    "population": "350-symbol historical watchlist-frequency sample; not the full TSE eligible universe",
+    "n": 35,
+    "mean": 0.048593978648363,
+    "median": 0.0289855072463767,
+    "robust_mean": 0.0506724490000814,
+    "win_rate": 0.558823529411765,
+    "plus10_count": 11,
+    "plus10_rate": 0.314285714285714,
+    "minimum": -0.21285140562249,
+    "p10": -0.079953314659197,
+    "minus20_count": 1,
+    "folds": [
+      {"fold": "F1", "n": 3, "mean": 0.0790},
+      {"fold": "F2", "n": 10, "mean": -0.0396},
+      {"fold": "F3", "n": 22, "mean": 0.0845}
+    ]
+  },
+  "full_universe_counterevidence": {
+    "version": "V40 Full Universe Fixed",
+    "run_id": "34614216028",
+    "population": "historical watchlist-union without the 350-symbol cap",
+    "fixed_min97": {"n": 41, "mean": -0.03051, "median": -0.05044, "win_rate": 0.2927, "plus10_rate": 0.0732},
+    "fixed_min98": {"n": 32, "mean": -0.03955, "median": -0.05910, "win_rate": 0.3125, "plus10_rate": 0.0625},
+    "yahoo_hourly_coverage": {"fetched": 1474, "requested": 1555, "positive_key_coverage": 0.8721},
+    "interpretation": "The V29 headline does not survive the cap-removal population change; this is the primary reason it is not a full-universe candidate."
+  },
+  "source_call_audit": {
+    "stable_score_input_confirmed": true,
+    "evidence": "V29 fit_attach calls v11.features(), v11.fit_models(train, cols), and attach(..., cols) for validation/test. v11.features includes stable_score and v11.fit_models fits train[fcols]. v10 technical_features computes stable_score as the sum of six technical Boolean conditions.",
+    "scope": "This confirms a derived technical stable_score feature in the V29 model. It does not prove that this feature is the production TradingView Stable★6 label or an identical reconstruction."
+  },
+  "target_mismatch": {
+    "v29": "Signal close to fifth future official-session close; perf_5bd = future_close_5 / signal_close - 1.",
+    "batch01_canonical": "Next official-session open to close of the fifth official session including entry, with daily-OHLCV actionability guards and 0/0.5/1% cost sensitivities.",
+    "comparison": "V29/V40 metrics are historical reference values and cannot be ranked directly against the batch01 Monster/First Reversal results."
+  },
+  "reproduction": {
+    "source_and_summary_available": true,
+    "raw_training_rows_available": false,
+    "teacher_watchlist_snapshot_available": false,
+    "hourly_and_daily_fetch_rows_available": false,
+    "exact_end_to_end_rerun_possible": false,
+    "reason": "The preserved artifact contains the summary report, not the exact sampled teacher/watchlist data or the original Yahoo responses used by the run."
+  },
+  "hourly_gap_and_supplementation": {
+    "observed": "V14 fetch_one requested Yahoo 1-hour and 1-day history. The preserved V29 run reports 22 1-hour HTTP errors and one hourly parse failure among 350 requested symbols; 327 succeeded.",
+    "old_behavior": "If the 1-hour request/parsing fails, or the 1-day request fails, fetch_one returns no symbol dataset. No daily-to-hourly/4-hour replacement path exists.",
+    "current_batch": "The canonical batch01 research consumes daily OHLCV directly and does not generate 4-hour bars.",
+    "decision": "No missing-hourly supplementation was implemented. Daily candles cannot reconstruct the 09:00/13:00 intraday sequence or exact 4-hour OHLCV; any future repair must run in the ordinary production runtime without Codex and preserve source/time semantics."
+  },
+  "benchmark_context": {
+    "production_stable6_2026-03-05_to_2026-08-31": {"n": 55, "mean": 0.06587, "median": 0.015, "win_rate": 0.5636, "plus10_rate": 0.1818, "plus20_rate": 0.1455, "minus10_rate": 0.1091},
+    "warning": "Production Stable★6 is a performance reference only. Match rate, symbol overlap, or logic similarity is not an objective. The 2026 record is report-only and was not used to change a research rule."
+  }
+}

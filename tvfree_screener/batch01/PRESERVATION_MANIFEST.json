@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "retrieved_at_utc": "2026-09-12T14:04:50.648909+00:00",
+  "artifact_api_checked_at_utc": "2026-09-12T16:09:39.263188+00:00",
+  "repository": "Ken5InvestmentLab/screening-bot",
+  "artifacts": [
+    {
+      "artifact_id": "10148332198",
+      "name": "no-tv-tenchi-v29-purged-rolling",
+      "zip_sha256": "55af5133975e4ab3dfb444a661ba4c74c5cfe077403d8a00d0a1bf6a7db0379a",
+      "zip_bytes": 5854,
+      "created_at": "2026-09-10T10:49:06Z",
+      "expires_at": "2026-09-24T10:49:05Z",
+      "artifact_run_id": "34466986752",
+      "artifact_run_sha": "a6ccb4e8db6dc8dc39598b7e1694593b32647675",
+      "source_run_id": "34466986752",
+      "member": "v29_purged_rolling.json",
+      "downloaded_at_utc": "2026-09-12T14:04:50.648909+00:00",
+      "member_sha256": "7c6d2a7d70e5d0cd3b82660311e36bdec5790bd651f1502479727654a7542d16",
+      "member_bytes": 44980,
+      "json_top_level_type": "dict",
+      "json_top_level_keys": [
+        "combined_test",
+        "current_champion",
+        "folds",
+        "purge_rule",
+        "sampling",
+        "scope",
+        "teacher_rows",
+        "watchlists",
+        "yahoo"
+      ]
+    },
+    {
+      "artifact_id": "10264205130",
+      "name": "tvfree-frozen-dataset-run80-preserved",
+      "zip_sha256": "095e58986d45bda0092be1767e1b44a4791bf3c617179791d0c99c6d7d01bcb0",
+      "zip_bytes": 49866286,
+      "created_at": "2026-09-11T12:39:18Z",
+      "expires_at": "2026-12-10T12:38:23Z",
+      "artifact_run_id": "34599959356",
+      "artifact_run_sha": "d03cdff1f27628f44f78d3787b0cc55bfa4bd271",
+      "source_run_id": "34545440155",
+      "source_run_sha": "5461eef6f35ea2cea2b4bc38ca7177c681681783",
+      "member": "tse_daily.csv",
+      "downloaded_at_utc": "2026-09-12T14:04:50.648909+00:00",
+      "member_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+      "member_bytes": 211670095,
+      "dataset_audit": {
+        "member": "tse_daily.csv",
+        "sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+        "bytes": 211670095,
+        "rows": 4061361,
+        "columns": [
+          "date",
+          "open",
+          "high",
+          "low",
+          "close",
+          "volume",
+          "symbol"
+        ],
+        "date_range": [
+          "2022-01-04",
+          "2026-09-11"
+        ],
+        "xtks_sessions": 1148,
+        "calendar_sessions_within_dataset_range": 1148,
+        "calendar_total_sessions": 1220,
+        "calendar_session_match": true,
+        "unique_symbols": 3700,
+        "rows_per_session_min_median_max": [
+          646,
+          3555,
+          3696
+        ],
+        "ohlc_or_volume_anomalies": {
+          "high_below_open_or_close": 642,
+          "low_above_open_or_close": 155
+        },
+        "anomalous_session_counts": {
+          "high_below_open_or_close|2022-05-17": 158,
+          "high_below_open_or_close|2024-04-04": 1,
+          "high_below_open_or_close|2024-06-05": 8,
+          "high_below_open_or_close|2024-11-15": 2,
+          "high_below_open_or_close|2025-05-23": 5,
+          "high_below_open_or_close|2026-09-11": 468,
+          "low_above_open_or_close|2022-05-17": 114,
+          "low_above_open_or_close|2024-06-05": 8,
+          "low_above_open_or_close|2024-11-15": 8,
+          "low_above_open_or_close|2025-05-23": 4,
+          "low_above_open_or_close|2026-09-11": 21
+        },
+        "anomaly_examples": {
+          "high_below_open_or_close": [
+            {
+              "line": 13437,
+              "date": "2022-05-17",
+              "symbol": "1383",
+              "open": 2560.0,
+              "high": 2565.0,
+              "low": 2557.0,
+              "close": 2567.0,
+              "volume": 1900.0
+            },
+            {
+              "line": 75490,
+              "date": "2022-05-17",
+              "symbol": "1768",
+              "open": 1012.0,
+              "high": 1012.0,
+              "low": 1006.0,
+              "close": 1018.0,
+              "volume": 700.0
+            },
+            {
+              "line": 87134,
+              "date": "2025-05-23",
+              "symbol": "1798",
+              "open": 769.0,
+              "high": 773.0,
+              "low": 769.0,
+              "close": 774.0,
+              "volume": 7500.0
+            },
+            {
+              "line": 128802,
+              "date": "2022-05-17",
+              "symbol": "1882",
+              "open": 505.0,
+              "high": 506.0,
+              "low": 500.0,
+              "close": 507.0,
+              "volume": 68000.0
+            },
+            {
+              "line": 160269,
+              "date": "2022-05-17",
+              "symbol": "1946",
+              "open": 620.0,
+              "high": 624.0,
+              "low": 614.0,
+              "close": 626.0,
+              "volume": 35500.0
+            },
+            {
+              "line": 161416,
+              "date": "2022-05-17",
+              "symbol": "1948",
+              "open": 827.0,
+              "high": 827.0,
+              "low": 827.0,
+              "close": 835.0,
+              "volume": 500.0
+            },
+            {
+              "line": 207649,
+              "date": "2022-05-17",
+              "symbol": "2117",
+              "open": 1707.0,
+              "high": 1729.0,
+              "low": 1707.0,
+              "close": 1731.0,
+              "volume": 6200.0
+            },
+            {
+              "line": 263528,
+              "date": "2022-05-17",
+              "symbol": "2217",
+              "open": 1040.0,
+              "high": 1046.6666259765625,
+              "low": 1038.3333740234375,
+              "close": 1050.0,
+              "volume": 15900.0
+            }
+          ],
+          "low_above_open_or_close": [
+            {
+              "line": 16351,
+              "date": "2022-05-17",
+              "symbol": "1401",
+              "open": 520.0,
+              "high": 520.0,
+              "low": 505.0,
+              "close": 502.0,
+              "volume": 4200.0
+            },
+            {
+              "line": 23839,
+              "date": "2022-05-17",
+              "symbol": "1420",
+              "open": 721.0,
+              "high": 721.0,
+              "low": 718.0,
+              "close": 717.0,
+              "volume": 6000.0
+            },
+            {
+              "line": 62841,
+              "date": "2022-05-17",
+              "symbol": "1719",
+              "open": 814.0,
+              "high": 814.0,
+              "low": 796.0,
+              "close": 795.0,
+              "volume": 657500.0
+            },
+            {
+              "line": 87541,
+              "date": "2022-05-17",
+              "symbol": "1799",
+              "open": 1310.0,
+              "high": 1330.0,
+              "low": 1292.0,
+              "close": 1291.0,
+              "volume": 3700.0
+            },
+            {
+              "line": 103599,
+              "date": "2022-05-17",
+              "symbol": "1826",
+              "open": 453.0,
+              "high": 453.0,
+              "low": 445.0,
+              "close": 444.0,
+              "volume": 19300.0
+            },
+            {
+              "line": 121365,
+              "date": "2022-05-17",
+              "symbol": "1867",
+              "open": 1403.0,
+              "high": 1403.0,
+              "low": 1402.0,
+              "close": 1401.0,
+              "volume": 200.0
+            },
+            {
+              "line": 129949,
+              "date": "2022-05-17",
+              "symbol": "1885",
+              "open": 645.25,
+              "high": 645.25,
+              "low": 613.0,
+              "close": 612.5,
+              "volume": 534400.0
+            },
+            {
+              "line": 136831,
+              "date": "2022-05-17",
+              "symbol": "1899",
+              "open": 2277.5,
+              "high": 2290.0,
+              "low": 2272.5,
+              "close": 2267.5,
+              "volume": 5200.0
+            }
+          ]
+        },
+        "limits": [
+          "Yahoo-derived current-survivor coverage is not full historical TSE membership.",
+          "OHLCV auto-adjustment and corporate-action reconstruction are not proven by this file.",
+          "Daily bars cannot establish queue priority, price-limit fills, or actual execution costs.",
+          "A CSV row is not proof that the security was listed or tradable on that date."
+        ]
+      },
+      "run80_normalized_baseline_comparison": {
+        "baseline_json_sha256": "f7d75f0ac16915959ba7e8f15dbe5c0b5cfccb568fd27446057e3e32e355e2a8",
+        "historical_cutoff": "2026-08-31",
+        "recomputed": {
+          "exists": true,
+          "rows": 4061361,
+          "symbols": 3700,
+          "min_date": "2022-01-04",
+          "max_date": "2026-09-11",
+          "historical_cutoff": "2026-08-31",
+          "historical_rows": 4031154,
+          "historical_date_symbol_sha256": "2686163d4e4342198590d34a8708c5c142a11441befdd74da3475bafd3e9a935",
+          "historical_ohlcv_sha256": "475ae6166ed21220aaa7f9f98d5bfff6c2d221bf1e3571b59fc6656758f453ab",
+          "fixed_start_contract": "2022-01-01 -> current; symbols listed later naturally start later"
+        },
+        "expected": {
+          "historical_rows": 4031154,
+          "historical_date_symbol_sha256": "2686163d4e4342198590d34a8708c5c142a11441befdd74da3475bafd3e9a935",
+          "historical_ohlcv_sha256": "475ae6166ed21220aaa7f9f98d5bfff6c2d221bf1e3571b59fc6656758f453ab"
+        },
+        "checks": {
+          "historical_rows": true,
+          "historical_date_symbol_sha256": true,
+          "historical_ohlcv_sha256": true
+        },
+        "status": "MATCH",
+        "verification_reused_after_member_and_baseline_sha256_match": true
+      }
+    },
+    {
+      "artifact_id": "10264251140",
+      "name": "tvfree-v7-causal-tail-cache-2023-2025",
+      "zip_sha256": "2f67833af2881754336c8f92cbf463ddf1cb995bd0fc808a962479d1bfd44198",
+      "zip_bytes": 443579,
+      "created_at": "2026-09-11T12:45:55Z",
+      "expires_at": "2026-12-10T12:39:53Z",
+      "artifact_run_id": "34600083474",
+      "artifact_run_sha": "ef8754d835ccb39faf783092f969417a3ea74ce9",
+      "source_run_id": "34600083474",
+      "source_run_sha": "ef8754d835ccb39faf783092f969417a3ea74ce9",
+      "member": "v7_causal_tail_cache_2023_2025.csv",
+      "downloaded_at_utc": "2026-09-12T14:04:50.648909+00:00",
+      "member_sha256": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+      "member_bytes": 1293015,
+      "table_audit": {
+        "rows": 1306,
+        "columns": 67,
+        "rows_by_year": {
+          "2023": 267,
+          "2024": 557,
+          "2025": 482
+        }
+      },
+      "source_metadata_sha256": "7f992eaf8944c00018fd03311f92a1204fdf7df6d390b4a11ecabf028daf0a59"
+    }
+  ]
+}

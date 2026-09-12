@@ -1,0 +1,5 @@
+# Batch01 working set, pinned for repeatable calendars and Parquet artifacts.
+numpy==2.3.5
+pandas==2.3.3
+pyarrow==21.0.0
+exchange-calendars==4.13.2

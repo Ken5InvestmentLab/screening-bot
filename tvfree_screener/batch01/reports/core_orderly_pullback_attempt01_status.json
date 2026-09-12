@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-ORDERLY-PULLBACK-20260913-01",
+  "engineering_attempt": 1,
+  "frozen_spec_sha256": "61e48a3e204be0fb8e9f3e4f1cf08d128ca4a7af76628c4c0d618c88ea054b3f",
+  "frozen_runner_sha256": "7b4b45e13e0167a2c0db7b6beda3524138664a9855c8f89137057958d2a7b646",
+  "status": "ABORTED_AFTER_DISCOVERY_LABEL_ACCESS_BEFORE_POLICY_REPORT",
+  "decision": "IMPLEMENTATION_ABORT_NOT_A_MODEL_PERFORMANCE_DECISION",
+  "period": "2022H2-2023 discovery",
+  "outcome_access": "The candidate label table was built, persisted, and summarized in memory. No summary metrics or family-gate component values were persisted or emitted.",
+  "control_flow_evidence": "The runtime reached the discovery non-KEEP path and fell through to the report-2026 handler, which attempted to use the discovery sentinel Top-N value 0. PolicySpec correctly rejected N=0. The family gate therefore was not KEEP, but its exact decision (REJECT versus INCONCLUSIVE) is not recoverable from the emitted output alone.",
+  "policy_evaluation": "No Top-N outcome policy report was completed. Top1/2/3/5 decision-only selections were created before outcome-price access and persisted; their labels/returns were not evaluated in a saved report.",
+  "artifacts": {
+    "candidate_pool": {"path": ".cache/core_orderly_pullback_discovery_candidate_pool.parquet", "rows": 207694, "sha256": "2f9386bf4ee9e25f7302f22cf278c419146d32c2d24468c4778f4a20a5158cb5"},
+    "ranked_pool": {"path": ".cache/core_orderly_pullback_discovery_ranked_pool.parquet", "rows": 207694, "sha256": "e0a4295a4d971071383918a82efc35c717f51ffd72c0c3354a8af1c5fcf69cae"},
+    "outcome_labels": {"path": ".cache/core_orderly_pullback_discovery_labels.parquet", "rows": 207694, "sha256": "e27bc9931dd0a98d33c9dcacaab3c6fdd3ad33f46e367c50c4f18d948f791138"},
+    "selected_top_n_rows": {
+      "1": {"rows": 365, "sha256": "a17c2c3c8ece1d895415c8ea3ddb5de9f5a47359aacf31848f12c51f62d404c8", "selection_sha256": "22e39fe99fb48531830945f181252788afdb90337dd83eb63f3e54519a7e9ecb"},
+      "2": {"rows": 730, "sha256": "6850e27d73d6bae7c7ce42aaf753f1436885750754402da542bf7c2f9a117003", "selection_sha256": "02095b36aaeb480cdf82ae962aa05ce83ec02749cb0534ad606f0e897b6c170b"},
+      "3": {"rows": 1095, "sha256": "60f896a79289799040fcf9ba9e54de2008b4883afced67e10c39a2e4822b592c", "selection_sha256": "dd1089a6a720c2528b46a7c3dc4716afc76028c943a2aa0f81ede48d431d2099"},
+      "5": {"rows": 1825, "sha256": "db10e04e17ab9c42f5790645aa80847e8813df6dcbd59862c953245f2bdb43bf", "selection_sha256": "3213469680e201b837997e88ea8216060d7f7fc0af4695df03f7e5d349e82792"}
+    }
+  },
+  "changes_for_attempt02": "Fix only phase dispatch so discovery non-KEEP writes a discovery report with no policy evaluation. Preserve candidate, ranking, target, cooldown, Top-N set, and all gates exactly. Use a new frozen runner hash and attempt-specific artifacts. The replay is not a fresh OOS test; all 2022H2-2023 discovery evidence remains RETROSPECTIVE_PROVISIONAL.",
+  "2024_2025_2026_opened": false,
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL"
+}

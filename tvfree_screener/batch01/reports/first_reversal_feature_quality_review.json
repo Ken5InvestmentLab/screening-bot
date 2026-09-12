@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "experiment_id": "TVF-FR-FEATURE-20260913-01-QUALITY-REVIEW",
+  "phase": "discovery_feature_availability_review",
+  "phase_opened_at_utc": "2026-09-12T16:35:00.749118+00:00",
+  "created_at_utc": "2026-09-12T16:35:01.179730+00:00",
+  "discovery_freeze_sha256": "e2d099e01a06fdf62945f17f0ba463e5635526476b84d29b2aa83dd1c7885ab0",
+  "candidate_pool_sha256": "5043505719c5680059314e5aa8c41d759bbaffbd8eb41c48f6e4cae7db73af95",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "quality_spec": {
+    "spec_id": "first_reversal_feature_coverage_semantics_review_v1",
+    "minimum_finite_feature_rate_each_discovery_split": 0.95,
+    "missingness_must_have_one_unambiguous_signal_time_interpretation": true,
+    "dropped_feature_replacement": "none within this batch; no discovery re-search",
+    "outcome_access": "forbidden; this phase may read only the frozen discovery report and signal-time candidate features"
+  },
+  "quality_spec_sha256": "ea5d9d0311f54f2c932e4d5c1447fdb2c915915326b6f48f2e9d8b4679662275",
+  "feature_reviews": {
+    "dd60": {
+      "direction_from_discovery": "higher_for_winners",
+      "coverage_by_discovery_split": {
+        "2022H2": {
+          "candidate_count": 13614,
+          "finite_count": 13570,
+          "missing_count": 44,
+          "finite_rate": 0.9967680329073013
+        },
+        "2023": {
+          "candidate_count": 25577,
+          "finite_count": 25504,
+          "missing_count": 73,
+          "finite_rate": 0.997145873245494
+        }
+      },
+      "accepted_for_confirmation": true,
+      "reasons": []
+    },
+    "days_since_drop5": {
+      "direction_from_discovery": "higher_for_winners",
+      "coverage_by_discovery_split": {
+        "2022H2": {
+          "candidate_count": 13614,
+          "finite_count": 10430,
+          "missing_count": 3184,
+          "finite_rate": 0.7661231085647128
+        },
+        "2023": {
+          "candidate_count": 25577,
+          "finite_count": 21701,
+          "missing_count": 3876,
+          "finite_rate": 0.8484575986237636
+        }
+      },
+      "accepted_for_confirmation": false,
+      "reasons": [
+        "finite_feature_rate_below_95_percent_in_a_discovery_split",
+        "NaN_conflates_no_prior_5_percent_drop_with_history_gap_reset"
+      ]
+    }
+  },
+  "accepted_features": [
+    {
+      "feature": "dd60",
+      "direction": "higher_for_winners",
+      "discovery_cliffs_delta": 0.13793351179302005,
+      "discovery_median_delta": 0.030691564083099365,
+      "tercile_edges": [
+        -0.131264790892601,
+        -0.07139494270086288
+      ]
+    }
+  ],
+  "replacement_search_performed": false,
+  "historical_exposure_note": "This availability rule was added after seeing the discovery feature ranking but before opening 2024; it is a protocol revision, not an independent holdout result.",
+  "decision": "LOCK_QUALIFIED_FEATURES"
+}

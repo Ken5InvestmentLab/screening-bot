@@ -1,0 +1,85 @@
+{
+  "spec_id": "monster_weak_early_volr20_low_canonical_v1",
+  "frozen_at_utc": "2026-09-12T17:52:43.095347+00:00",
+  "purpose": "Research-only independent Monster candidate family; never a production write.",
+  "scanned_universe": "V7 monthly causal top-0.25% Tail candidate rows retained in the frozen 2023-2025 cache; not the full TSE universe.",
+  "candidate_pool": "Every cached V7 Tail row with tail_cdf>=0.999, previous official-session cross-sectional median ret5<=0, and signal-date ret10<=0.5735294117647058. Keep all qualifying symbols and dates before ranking or selection.",
+  "eligible_universe_reference": "Same-date V7 Tail rows satisfying previous-session market median ret5<=0 before the ret10 maturity gate.",
+  "feature_timestamp": "Signal-date TSE close for individual features; market median is computed on the immediately preceding official XTKS session.",
+  "market_feature": "market_median_ret5_lag1, threshold<=0; previous-business-day only.",
+  "ret10_gate": {
+    "feature": "signal-date ret10",
+    "operator": "<=",
+    "value": 0.5735294117647058,
+    "provenance": {
+      "declared_source": "2023 V18 consensus median ret10",
+      "source_v18_sha256": "22a7eee92cb931219470bb9a3fa72e227976ea0adb51e1cab4659088c24ab72e",
+      "source_v20_sha256": "c9e17b8937b69850bf24d495ef342c728707a813cd371778b697125a681424f9",
+      "reconstruction": "AST-extracted exact cooldown_pick/select_v16/select_v17/consensus functions from V18; V16/V17 same-date market med_ret5<=0, original top4-before-cooldown behavior",
+      "rows": {
+        "v7_tail_2023": 267,
+        "v16_selected": 70,
+        "v17_selected": 62,
+        "exact_date_symbol_consensus": 53
+      },
+      "consensus_date_range": [
+        "2023-01-04",
+        "2023-12-20"
+      ],
+      "ret10_median_reconstructed": 0.5735294117647058,
+      "ret10_max_in_v20": 0.5735294117647058,
+      "matches_within_1e-12": true,
+      "known_limitation": "V7 tail cache begins in 2023, so this verifies source provenance but does not provide a pre-2023 discovery sample."
+    }
+  },
+  "ranking": [
+    [
+      "volr20",
+      "ascending"
+    ],
+    [
+      "tail_cdf",
+      "descending"
+    ],
+    [
+      "tail_p",
+      "descending"
+    ],
+    [
+      "symbol",
+      "ascending"
+    ]
+  ],
+  "missing_data": "Missing market gate is outside the candidate pool and counted. A candidate passing fixed gates but missing volr20 is retained in the pool and ranks last; no substitute candidate is inserted.",
+  "selection_count": "Not fixed during candidate generation. If discovery family gates pass, compare only Top1/Top2/Top3/Top5 and candidate-pool equal-weight reference.",
+  "cooldown": "One immediately preceding official XTKS session; independently simulated for each Top-N; only selected symbols update state; state carries across year/fold edges.",
+  "target": "Next official XTKS session open to close of the fifth official XTKS session after signal (the fifth session including entry). Daily OHLCV actionability checks; missing bars remain unresolved.",
+  "evaluation_order": [
+    "2023 discovery; labels exiting after 2023-12-29 are purged",
+    "freeze selection policy before opening 2024 labels",
+    "2024 directional confirmation; labels exiting after 2024-12-30 are purged",
+    "2025 locked replay only after a passing 2024 confirmation",
+    "2026 not opened"
+  ],
+  "cost_scenarios": [
+    0.0,
+    0.005,
+    0.01
+  ],
+  "cost_note": "Round-trip costs are sensitivity assumptions, not measured fills.",
+  "calendar": "Full XTKS official-session calendar, never weekday approximation.",
+  "input_hashes": {
+    "daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "market_sha256": "321c238cd89a63f25e790911484f8a8b6b88f8f5220232c5b0e4d8a3c58fa90c",
+    "tail_sha256": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+    "tail_metadata_sha256": "7f992eaf8944c00018fd03311f92a1204fdf7df6d390b4a11ecabf028daf0a59"
+  },
+  "audit_script_sha256": "3512e68c85f0220f05c41060bd4fbaafe7e9c6e53ec155b7b82394bdf12b9ce3",
+  "not_reproduced": [
+    "V7 Tail model training from raw prices; preserved model outcomes are not used for selection, only cached signal-time tail features."
+  ],
+  "implementation_complexity": "High for a production replacement: monthly causal 45-feature V7 model training/scoring, model/version storage and full-universe daily feature generation are not reproduced by this audit; this batch consumes only the frozen Tail feature cache.",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL; historical candidate family has prior exposure.",
+  "spec_sha256": "3398a83d1ac17dfc246c13208d80a7604d6c5cc4b56e8a16844bfd487a1c6a5c"
+}

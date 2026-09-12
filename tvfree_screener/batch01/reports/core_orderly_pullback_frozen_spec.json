@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-ORDERLY-PULLBACK-20260913-01",
+  "family_spec": {
+    "schema_version": 1,
+    "experiment_id": "CORE-ORDERLY-PULLBACK-20260913-01",
+    "family": "core_orderly_uptrend_pullback_rank_v1",
+    "purpose": "Rank moderate orderly pullbacks within a positive 20-session trend by path efficiency and recent volume contraction.",
+    "universe": "All preserved daily source symbol/session rows with valid signal-day OHLCV and finite required signal-time features; no watchlist cap, no one-name-per-day cap, no arbitrary liquidity or market-regime gate.",
+    "candidate_pool": "ret20 > 0 and ret5 < 0, with finite 20-session path efficiency and volume_trend5_20.",
+    "feature_timestamp": "After the signal-date XTKS close.",
+    "market_feature_lag_sessions": 0,
+    "features": {
+      "ret5": "Signal close / close 5 XTKS sessions earlier - 1.",
+      "ret20": "Signal close / close 20 XTKS sessions earlier - 1.",
+      "path_efficiency20": "ret20 divided by the sum of absolute close-to-close returns over the same 20 XTKS sessions; all 20 returns must be observed, with no forward fill.",
+      "volume_trend5_20": "Mean volume over the five sessions immediately before signal date divided by mean volume over the 20 sessions immediately before signal date; signal-day volume excluded."
+    },
+    "ranking": {
+      "score": "Arithmetic mean of the within-date average percentile rank of path_efficiency20 (higher is better) and volume_trend5_20 (lower is better).",
+      "tie_break": [
+        "path_efficiency20 descending",
+        "volume_trend5_20 ascending",
+        "symbol ascending"
+      ]
+    },
+    "target": "Gross return from next XTKS session open to close of the fifth XTKS session including entry; unresolved/actionability failures remain in the requested cohort.",
+    "selection": {
+      "top_n": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "cooldown": "One immediately prior XTKS session per independent Top-N policy; only actually selected symbols update that policy state; state carries across year boundaries.",
+      "multiple_names_per_day": true,
+      "candidate_pool_saved_before_outcome_access": true
+    },
+    "periods": {
+      "warmup": "2022-01-04 through 2022-06-30 for feature initialization only.",
+      "discovery": "2022-07-01 through the final XTKS session of 2023; candidates whose fifth-session exit is beyond the final 2023 session are purged.",
+      "confirmation": "2024 is opened only after discovery pool KEEP and one unchanged Top-N policy passes all frozen gates; historical and retrospective, never true OOS.",
+      "2025": "Locked replay only after unchanged 2024 confirmation passes.",
+      "2026": "Report only; no fitting, feature, candidate, rank, or policy selection from 2026 outcomes."
+    },
+    "family_gate": "At assumed 0.5% round-trip cost, candidate-pool signal mean, median, and top-three-winner-excluded mean must be positive; complete daily cohort mean, median, and top-three-winner-excluded mean must also be positive. Insufficient complete-cohort coverage is INCONCLUSIVE; unresolved rows are not dropped.",
+    "selection_policy_gate": "Apply the registered batch01 Core gates unchanged: positive net signal/cohort mean, median and top-three-winner-excluded means; at least 20 common complete active dates and positive paired pool-relative cohort value add; selected -10%/-20% rates no worse than the full pool. If the pool has no complete cohorts, value-add is not established and no N can pass.",
+    "data_quality": "Yahoo-derived current-universe daily history is not proven point-in-time membership, full delisted coverage, corporate-action adjusted, or executable at next open. All historical results are RETROSPECTIVE_PROVISIONAL.",
+    "no_tuning": "No threshold, feature weight, candidate rule, missingness rule, target, or Top-N changes after any discovery outcomes are opened.",
+    "production_boundary": "Research only. Any future scorer must run entirely in the ordinary production runtime without Codex, LLM, or external model calls. No production wiring is part of this experiment."
+  },
+  "family_spec_sha256": "7032b207ffa09152411923beb01a69f8bfa2f26e0a62791107163ea635774deb",
+  "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+  "implementation_sha256": {
+    "core_orderly_pullback.py": "f3967e85cae4ab5838f3fd03e3f6ec67863850b0cd0bca09047edaac98c686bf",
+    "core_orderly_pullback_audit.py": "7b4b45e13e0167a2c0db7b6beda3524138664a9855c8f89137057958d2a7b646",
+    "core_moderate_ridge_audit.py": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "core_moderate_ridge.py": "6a1f96a186da00e478269b4eb21fc04978414691ebadb756e5e74b9604b23d86",
+    "feature_panel.py": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "selection.py": "fb4a04929452ae60b81d1a29691d62af171639caa6ed78e1a44131ca4f20c6be",
+    "evaluation.py": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar.py": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "temporal_policy.py": "cf96075cca0c95b0b5b2fde3315a466a3aac7508744fc8c4112642b5691e2a3c",
+    "artifact_store.py": "8f3bae624a8a8fc170be3ed9571fcee50360b12b9d861f88ad5b5a6ea1898644",
+    "test_core_orderly_pullback.py": "0db607dc202440fc6bfa495a0643200b56cb37fc58daeff7e9495901ff951040"
+  },
+  "spec_sha256": "61e48a3e204be0fb8e9f3e4f1cf08d128ca4a7af76628c4c0d618c88ea054b3f",
+  "frozen_at_utc": "2026-09-12T20:17:10.173754+00:00",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "outcome_data_opened_by_freeze": false
+}

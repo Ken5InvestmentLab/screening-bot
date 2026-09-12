@@ -120,3 +120,13 @@ true-forward記録、将来Stable比較（実在first-FINALのみ、異なるtim
 - Core slots 1–3 are consumed; the current batch has no viable Core candidate. Do not retroactively change a gate or treat known discovery history as OOS. A later Core family is permissible only if it is a distinct, justified mechanism with a new prospective evidence plan; it is not added just to keep iterating on the same failures.
 - The recovery code is a research-only local Python CLI and makes no Codex/LLM calls. No production fallback or scoring path was implemented. Yahoo daily bars cannot reconstruct missing hourly/4-hour bars; any future production repair must be executable and verifiable within the ordinary production runtime, otherwise the intraday gap stays unresolved.
 - Next: consolidate the Core/Monster/V29 leaderboard with timing and evidence limitations; verify the local CLI and all artifacts; record an explicit no-promotion/production-migration go/no-go. Keep production untouched.
+## 2026-09-13 — M5 local research CLI and safe dry-run
+
+- Added the package command python -B -m tvfree_screener.batch01.cli audit|experiment|screen|evaluate|report. It is local-only: no Codex/LLM, external service, broker, production workflow, or market-data fetch.
+- audit verifies all seven pinned source-report hashes and JSON readability; experiment shows recorded statuses only; evaluate returns the machine-readable leaderboard; report displays the saved Markdown; screen returns NO_VIABLE_CANDIDATE with zero recommendations and explicitly does not load market data.
+- This validates command plumbing and the no-promotion guard. It is not a daily market screener, not a candidate scoring implementation, and not production-ready. No candidate or portfolio simulation is fabricated.
+- M5 verification completed: all 69 tests pass; all five CLI commands exit successfully with seven source-report hashes verified. Screen intentionally performs no data scan and returns no symbols because the research batch has no promotable policy.
+
+### 2026-09-13 — M6 conditional migration readiness (NO-GO)
+
+[PRODUCTION_MIGRATION_PLAN.md](PRODUCTION_MIGRATION_PLAN.md) records the current NO-GO, unmet data/candidate/comparison gates, Codex-free runtime requirement, no daily-to-intraday synthesis, and approval-gated staged cutover/rollback. No production integration was implemented. The existing 69-test local CLI package remains a research-only audit/report/no-candidate dry-run; it does not fetch market data or select symbols.

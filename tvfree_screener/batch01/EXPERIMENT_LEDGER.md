@@ -140,3 +140,17 @@ This ledger records research in `research/tvfree-canonical-batch01`. Historical 
 - Exact frozen gate decision is INCONCLUSIVE because complete daily cohort metrics are undefined. Separately, the three measurable pool-signal checks (net mean, median, top-three-excluded mean) were all false, so no family/policy can pass these frozen gates. No Top-N outcome report was evaluated by recovery; a contradictory KEEP result would fail closed. 2024/2025/2026 remain unopened.
 - Report: reports/core_orderly_pullback_attempt02_recovery_report.json, SHA-256 3ababcb811d068a0810f56596ccd64d688bfd2c7583f76683cb9f5cbcb3f1a31. All 65 research unit tests passed after adding the recovery branch tests.
 - Decision: do not promote orderly pullback; retain the exact registered result as INCONCLUSIVE with negative measurable signal checks. Core registered slots 1–3 are now consumed with no viable Core candidate. Do not alter their gates retroactively. Any further Core family requires a new independent mechanism and a prospective/forward evidence plan; the already exposed discovery years cannot become OOS.
+## M5-CLI-20260913 — pinned research report commands
+
+- Status: research-only CLI plumbing PASS; candidate scoring NOT_IMPLEMENTED_NO_VIABLE_CANDIDATE; production migration NO_GO.
+- Commands: python -B -m tvfree_screener.batch01.cli audit|experiment|screen|evaluate|report. The audit verifies seven pinned source reports. The screen subcommand deliberately performs no scan, loads no prices, and returns an empty recommendation list with status NO_VIABLE_CANDIDATE.
+- Initial report-display smoke test exposed a Windows cp932 encoding failure on U+2014. The renderer now backslash-escapes console-incompatible characters; the CP932 regression test passes.
+- This CLI uses ordinary Python and has no Codex/LLM/network/broker dependency. It is a local evidence viewer and safe dry-run, not a daily screener or production fallback.
+- Final M5 verification: all 69 research unit tests pass. audit, experiment, screen, evaluate, and report commands all exit 0; audit verifies seven pinned source reports. Screen remains a no-data, no-recommendation dry-run. CLI/test SHA-256 values are captured in the commit; leaderboard declares 69 tests.
+
+## 2026-09-13 — M6 readiness plan / NO-GO
+
+- ID: M6-MIGRATION-READINESS-20260913; kind: operational readiness documentation, not a scoring experiment; branch: research/tvfree-canonical-batch01.
+- Decision: NO_GO. Core has no viable candidate; Monster has no passing Top-N policy; current-Bot same-definition outperformance and Codex-free production data execution are unproven.
+- Artifact: PRODUCTION_MIGRATION_PLAN.md. Includes explicit data/runtime/PIT/comparison/dry-run gates, forbids daily-to-intraday fabrication, and makes production changes approval-gated with a rollback path.
+- Implementation boundary: research-only. No production files, Discord, Sheets, GAS, workflows, secrets, or data repair were changed.

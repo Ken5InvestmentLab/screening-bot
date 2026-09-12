@@ -17,9 +17,9 @@
   "explicit_user_resume_required_after_latch": true,
   "automatic_resume_on_reset": false,
   "owned_jobs": [],
-  "milestone": "M3_CORE_SLOTS_COMPLETE_NO_VIABLE_CORE",
-  "next_action": "Consolidate Core, Monster, and V29 results in one non-misleading comparison; validate the local research CLI/artifact lineage; finalize no-promotion and production-migration go/no-go. Do not open 2024+ for any failed or inconclusive family. Any later Core work requires a distinct mechanism and prospective evidence plan.",
+  "milestone": "M6_READINESS_DOCUMENTED_NO_GO",
+  "next_action": "Run final tests, CLI audit/smoke checks, source hashes and repository diff checks; commit and push the complete research-only M1-M6 package on the isolated research branch. Do not change production.",
   "goal_status_last_observed": "inProgress",
-  "goal_status_note": "M1 and current M2 audits are recorded. First Reversal rejected; V29 demoted as full-universe Core candidate; Monster weak+early+volr20-low pool retained as exploratory but its Top1/2/3/5 policies failed. Fundamental V2 fixed-input reproducibility passed, but independent extraction/PIT panel are not verified, so prediction research is blocked. Core slot 1 Ridge rejected after attempt04; slot 2 PIT-sector is inconclusive because historical point-in-time industry membership is unavailable; slot 3 orderly-pullback report recovery is inconclusive because all 365 active dates have partial label cohorts, with 0 complete days, and its three measurable 0.5%-cost pool signal checks are negative. No Top-N recovery metrics were evaluated and 2024/2025/2026 remain closed for those families. Attempt01 and attempt02 recovery artifacts are preserved and hash-verified. Production scoring/data repair must run without Codex; no Codex-dependent production feature or daily-bar fabrication was implemented. Weekly pause latch remains false; last observed weekly usage 34% / remaining 66%. No research process is active.",
+  "goal_status_note": "M1-M5 evidence and local research CLI are complete; M6 readiness plan documents NO_GO. No viable Core candidate, Monster selection policy unresolved, same-definition parity unproven. No production modification, Codex-dependent runtime process, or daily-to-intraday fabrication. Weekly usage last observed 34% used / 66% remaining; pause latch false.",
   "model_switch_verification_scope": "Persisted thread model and reasoning settings read back as gpt-5.6-luna / xhigh; current in-flight turn is not proof of execution model"
 }

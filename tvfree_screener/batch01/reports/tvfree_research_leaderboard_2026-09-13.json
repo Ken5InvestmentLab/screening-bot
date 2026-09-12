@@ -7,7 +7,7 @@
   "production_modified": false,
   "codex_dependent_production_processing_implemented": false,
   "daily_bars_used_to_reconstruct_intraday_bars": false,
-  "research_tests_passed": 65,
+  "research_tests_passed": 69,
   "core": {
     "candidate": null,
     "decision": "NO_VIABLE_CANDIDATE",
@@ -43,5 +43,15 @@
     "reports/core_orderly_pullback_attempt02_recovery_report.json",
     "reports/monster_canonical_audit.json",
     "reports/v29_canonical_audit.json"
-  ]
+  ],
+  "source_report_sha256": {
+    "reports/first_reversal_topn_discovery.json": "cb24397f55e39f1a39c90c7289bea8acbd414f7b0f5d42bca11ac185e2cd9649",
+    "reports/first_reversal_validation_2024.json": "a27189f20d880e6e275968daa982525bffff85a9135668d0cdec02fac88f2d24",
+    "reports/core_moderate_ridge_v4_discovery.json": "28742e2dd8f929ffad516b0eacd3bdd200a7ce27ca257b92890cc194afd81923",
+    "reports/core_pit_sector_readiness.json": "c4c61dbad39fb239d955f1aead16855fb5d5e4c0a610cb1b2d0812aaffdf9ca9",
+    "reports/core_orderly_pullback_attempt02_recovery_report.json": "3ababcb811d068a0810f56596ccd64d688bfd2c7583f76683cb9f5cbbc3f1a31",
+    "reports/monster_canonical_audit.json": "a290f1f335346a3e43e229a58c2596f62733ecab32d2a97df3b1b7c9cd85a86e",
+    "reports/v29_canonical_audit.json": "40683aa466431e6a76dabd939540151516b60c248ed670824ccdcaf1279b0ead"
+  },
+  "production_migration_plan": "PRODUCTION_MIGRATION_PLAN.md"
 }

@@ -3,14 +3,14 @@
   "plan_revision": "R2",
   "required_model": "gpt-5.6-luna",
   "required_reasoning": "xhigh",
-  "model_switch_verified": false,
+  "model_switch_verified": true,
   "thread_id": "01a094c0-4df4-7c62-86ca-e855359d9fde",
   "weekly_window_minutes": 10080,
   "pause_when_remaining_percent_lte": 50,
   "maximum_active_check_interval_seconds": 60,
   "check_before_and_after_work_units": true,
-  "last_observed_used_percent": 16,
-  "last_observed_remaining_percent": 84,
+  "last_observed_used_percent": 23,
+  "last_observed_remaining_percent": 77,
   "last_observed_reset_unix": 1789805360,
   "usage_source": "codex_app_get_usage_limits.rateLimitsByLimitId.codex.secondary",
   "budget_pause_latched": false,
@@ -18,7 +18,8 @@
   "automatic_resume_on_reset": false,
   "owned_jobs": [],
   "milestone": "M1",
-  "next_action": "Verify Luna xhigh turn; recheck usage; preserve artifacts and implement R2 foundation before new models",
+  "next_action": "Luna xhigh continuation: check weekly usage and latch; execute M1 artifact preservation and R2 foundation; existing goal usageLimited is platform-controlled",
   "goal_status_last_observed": "usageLimited",
-  "goal_status_note": "Do not fake complete/blocked as pause/resume; research is incomplete"
+  "goal_status_note": "Do not fake complete/blocked as pause/resume; research is incomplete",
+  "model_switch_verification_scope": "Persisted thread model and reasoning settings read back as gpt-5.6-luna / xhigh; current in-flight turn is not proof of execution model"
 }

@@ -101,3 +101,17 @@ The preserved run80 daily cache is reproducible but not point-in-time survivorsh
 Therefore V43/V44 2025 results can omit stocks that traded in 2025 but were delisted before the 2026-09-11 universe snapshot. V44 remains an internally fair comparison because all cooldown policies use the same frozen universe, but it is not yet a survivorship-free all-TSE historical proof.
 
 Do not attempt outcome-aware manual repair. If Consensus survives V44, promotion-grade validation requires the shared data-integrity lane to provide frozen point-in-time JPX membership. Detail: `research/CONSENSUS_UNIVERSE_PROVENANCE_2026-09-14.md`.
+
+
+## Training-target alignment dependency
+Current Consensus heads are trained on signal-bin-close -> D+5 return, while canonical comparison uses next-XTKS-open -> D+5.
+
+On the correct 5-session no-replacement 2025 sample:
+- signal-close mean +4.13%;
+- next-open mean +3.05%;
+- about 1.08 percentage points are lost between endpoints;
+- 13.46% of rows change return sign.
+
+The ranking relationship remains present, so V44's fixed-ranker comparison is still interpretable. Do not change its target mid-run.
+
+If Consensus survives V44, a future separately-versioned experiment should retrain the unchanged architecture on the canonical next-open target before any production claim. Do not use this redesign to rescue a failed V44. Detail: `research/CONSENSUS_TARGET_ALIGNMENT_AUDIT_2026-09-14.md`.

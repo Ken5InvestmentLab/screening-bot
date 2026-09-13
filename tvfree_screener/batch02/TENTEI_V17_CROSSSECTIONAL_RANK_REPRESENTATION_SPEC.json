@@ -1,0 +1,77 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V17-CROSSSECTIONAL-RANK-REPRESENTATION-20260913",
+  "status": "PREREGISTERED_BEFORE_V17_DRIFT_METRICS",
+  "role": "OUTCOME_FREE_REPRESENTATION_STABILITY_GATE",
+  "lane_split": {
+    "parallel_lane": "prospective shadow evidence/reporting + state-entry lane",
+    "this_lane": "V14/V15/V16 representation-stability research",
+    "duplicated_work": false
+  },
+  "candidate_generator": "V12 ALL signals unchanged",
+  "rank_universe": {
+    "base": "all complete causal AM/PM bins, not only V12 signals",
+    "prior_day_gates": "prior completed daily close <=1000 JPY and prior completed daily volume >=10000 shares",
+    "cohort": "same date + same bin_name",
+    "timing": "rank is computed only after the whole causal bin is complete; AM cutoff 13:00, PM conservative cutoff 16:00",
+    "formula": "average percentile rank ascending within cohort",
+    "current_day_final_daily_values_used": false
+  },
+  "retained_low_drift_features": [
+    "bar_log_return",
+    "upper_wick_pct",
+    "close_location",
+    "prev4_log_return_mean",
+    "bb_position",
+    "rsi12",
+    "rsi_delta",
+    "log_volume_rel20"
+  ],
+  "cross_sectional_rank_features": {
+    "source_features": [
+      "range_pct",
+      "prev4_range_mean",
+      "bb_width_pct",
+      "atr_pct",
+      "lower_wick_pct",
+      "dist_prior5_low_atr",
+      "prior5_rsi_min",
+      "prior5_band_min"
+    ],
+    "output_features": [
+      "xrank_range_pct",
+      "xrank_prev4_range_mean",
+      "xrank_bb_width_pct",
+      "xrank_atr_pct",
+      "xrank_lower_wick_pct",
+      "xrank_dist_prior5_low_atr",
+      "xrank_prior5_rsi_min",
+      "xrank_prior5_band_min"
+    ]
+  },
+  "final_feature_count": 16,
+  "cohorts": {
+    "train_like": "V12 event with prior-day gates and all 16 V17 features finite; candidate date<2025-01-01 and fifth-session exit date<2025-01-01; no return values read",
+    "h1": "same representation and gates; candidate date 2025-03-01 through 2025-06-30; no return values read"
+  },
+  "drift_metrics": {
+    "ks": "empirical CDF maximum distance",
+    "psi": "training-decile bins epsilon 1e-6",
+    "median_shift_iqr": "(H1 median - train median)/(train q75-q25)",
+    "severe": "KS>=0.20 OR PSI>=0.25 OR abs(median_shift_iqr)>=0.50",
+    "moderate": "KS>=0.10 OR PSI>=0.10 OR abs(median_shift_iqr)>=0.25",
+    "low": "otherwise"
+  },
+  "representation_gate": {
+    "pass": "zero SEVERE features AND at most four MODERATE features",
+    "fail": "do not open V17 strategy-return metrics",
+    "if_pass": "commit a separate V17 supervised-evaluation preregistration before any H1 return access"
+  },
+  "integrity": {
+    "strategy_returns_used_for_design": false,
+    "V14_H1_results_not_used_to_set_rank_thresholds": true,
+    "V16_drift_result_used_only_to_choose_market_relative_representation": true,
+    "H2_returns_opened": false,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

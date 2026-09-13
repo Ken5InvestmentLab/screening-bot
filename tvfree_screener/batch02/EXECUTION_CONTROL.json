@@ -16,9 +16,9 @@
   "last_usage_snapshot_utc": "2026-09-13 12:02:06 UTC",
   "maximum_active_check_interval_seconds": 60,
   "last_completed_experiment": {
-    "experiment_id": "CAUSAL-4H-MONSTER-V11-WEAK-REVERSAL-IGNITION-20260913",
-    "decision": "REJECT_CANDIDATE_GENERATION_H2_UNOPENED",
-    "report": "tvfree_screener/batch02/reports/causal_4h_monster_v11_weak_reversal_ignition_20260913.md"
+    "experiment_id": "TENTEI-INSPIRED-4H-V14-PRE2025-DUAL-CLASSIFIER-20260913",
+    "decision": "REJECT_AFTER_H1_H2_UNOPENED",
+    "report": "tvfree_screener/batch02/reports/tentei_inspired_4h_v14_pre2025_dual_classifier_20260913.md"
   },
   "registered_spec_sha256": "f140637250483332fa5db5e6067212175e0790eadb174323eb73788397f912ea",
   "registered_feature_count": 3,
@@ -30,7 +30,7 @@
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "13fb02c",
   "last_completed_candidate_pool_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
-  "next_action": "Recover the saved Tentei normal-mode Alert Pine source if available. Freeze an independent TV-free 4H mechanism family based on confirmed Bollinger/RSI/squeeze/persistence concepts before opening outcomes. Exact TradingView matching is not required. Keep 2026 outcomes closed and production untouched.",
+  "next_action": "Before starting another experiment, re-check the parallel ChatGPT lane and latest commits. If not duplicated there, run an outcome-free feature-distribution drift audit comparing V14's pre-2025 model-fit V12 events with 2025 H1 V12 feature-complete events. Do not open V14 H2 or 2026 outcomes.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,

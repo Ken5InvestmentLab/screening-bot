@@ -5,9 +5,9 @@ Research-only coordination artifact. Production is unchanged.
 ## Active parallel ownership — DO NOT DUPLICATE
 
 - `TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914`
-  - Active in the parallel event-specific chat.
-  - Mechanism: completed-session impulse continuation.
-  - This lane will not implement, evaluate, threshold-search, or rename that family while it is active.
+  - Ownership transferred to the active :12 Canonical/Event worker on 2026-09-14 because no dedicated automation/implementation existed and GitHub contained only the preregistered spec.
+  - This branch may now implement/evaluate the frozen spec exactly.
+  - Other chats/workers must not duplicate it while the :12 worker or current supervisor execution is active.
 
 - Prospective shadow / evidence-chain / append-only / freeze-integrity work
   - Owned by the parallel shadow/data-integrity chat.
@@ -63,3 +63,9 @@ Before a new event family is registered:
 5. prefer pre-2025 discovery when raw-history coverage permits.
 
 Until the active session-impulse experiment resolves, this lane should focus on exact reconciliation, reproducibility, or genuinely non-overlapping mechanism research.
+
+
+## Ownership reconciliation — 2026-09-14
+- The previously named "parallel event-specific chat" had no dedicated enabled automation and had not produced an implementation/result commit.
+- To satisfy automatic continuation without duplicating work, active ownership of the frozen session-impulse V20 experiment is now assigned to the :12 Canonical/Event worker and current supervisor execution.
+- The preregistered rule is unchanged; this is ownership/orchestration only, not a strategy modification.

@@ -28,12 +28,14 @@ FEATURES = RETAINED + list(RANK_MAP.values())
 
 def prior20_rank(values: np.ndarray) -> np.ndarray:
     out = np.full(len(values), np.nan)
-    for i in range(20, len(values)):
-        hist = values[i-20:i]
-        cur = values[i]
-        if not np.isfinite(cur) or not np.isfinite(hist).all():
-            continue
-        out[i] = (np.sum(hist < cur) + 0.5 * np.sum(hist == cur)) / 20.0
+    if len(values) < 21:
+        return out
+    windows = np.lib.stride_tricks.sliding_window_view(values, 21)
+    hist = windows[:, :20]
+    cur = windows[:, 20]
+    valid = np.isfinite(cur) & np.isfinite(hist).all(axis=1)
+    ranks = (np.sum(hist < cur[:, None], axis=1) + 0.5 * np.sum(hist == cur[:, None], axis=1)) / 20.0
+    out[20:] = np.where(valid, ranks, np.nan)
     return out
 
 

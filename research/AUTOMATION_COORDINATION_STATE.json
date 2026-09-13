@@ -1,12 +1,12 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T06:25:09+09:00",
+  "updated_at_jst": "2026-09-14T07:48:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
-    "branch_heads_changed_since_previous_state": false,
+    "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "All three active branch HEADs still equal last_processed_sha at the last Supervisor scan. Canonical :12 subsequently classified the already-known V20 coverage failure outcome-blind and advanced its branch; Core :24 then rechecked its lane and found no new SHA, workflow, or artifact requiring processing."
+    "note": "Cross-lane :48 follow-up found all three active branches ahead of the prior state. Canonical advanced only Shadow/Data prospective-eligibility/verified-append hardening; Core added detector-capacity diagnostics without changing rejection status; Consensus staged the clean V47 pipeline/contracts while authoritative daily materializer 34786578353 remains in_progress. No strategy outcomes were improperly opened and production paths remain untouched."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,21 +16,21 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "a99fbe42ae8c7fdea8cef24ace51578b0f25f77c",
-      "last_processed_sha": "a99fbe42ae8c7fdea8cef24ace51578b0f25f77c",
-      "last_processed_note": "Canonical :12 recovered the failed coverage job log for V20 H1 run 34774070956 without opening strategy outcomes. Frozen 1810-symbol count/SHA, duplicate guard, and date-window guard passed, but observed raw symbols were 1806, one Yahoo fetch failure remained, and 734 canonical-active symbol/dates lacked raw 1H. Four missing symbols (463A/464A/543A/547A) account for 476/734 missing dates and are successor codes introduced after the 2025H1 window while the canonical daily carries retrospective history under those later codes, establishing a point-in-time symbol-identity mismatch. The remaining 258 missing dates span sparse Yahoo intraday gaps. Outcome-blind classification and repair guardrails were frozen in V20_H1_RAW_COVERAGE_FAILURE_CLASSIFICATION_20260914.json; H1 outcomes and H2 remain unopened."
+      "last_seen_sha": "c9243484448c4645ee6452f0a5f5874ef3db6d19",
+      "last_processed_sha": "c9243484448c4645ee6452f0a5f5874ef3db6d19",
+      "last_processed_note": "Processed 9 commits after a99fbe42. Changes are confined to prospective-shadow/data-integrity hardening: explicit ELIGIBLE/data_sufficient/no-missing-fields guard, fail-closed empty batches, admission/verified-append replay hardening, synthetic E2E updates, and CLI receipt-manifest hash alignment. Focused guard/admission verification reported 16/16 PASS. This does not authorize real shadow launch and does not alter V20 signal logic. V20 H1 remains coverage-failed and outcomes/H2 remain unopened pending the preregistered outcome-blind raw repair."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
-      "last_processed_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
-      "last_processed_note": "Core :24 rechecked HEAD, handoff/research files, and recent Actions. No new SHA or new workflow/artifact was present beyond executable-entry audit 34774595196 SUCCESS. DEV 169/169 and 2025H2 140/140 remain full canonical execution coverage; 2026_YTD remains 116/118 with only report-only Yahoo 1H entry-bar gaps for 4586/4709. Current fixed Core and Failed-Breakdown Reclaim remain REJECT; locked reclaim H2 remains unopened. No adjacent retune or new mechanism was introduced; continue audit/reproducibility only until a genuinely different low-DOF mechanism is preregistered before outcomes."
+      "last_seen_sha": "a53549b579b27aaf410fbe729c5f0f7acb23ff55",
+      "last_processed_sha": "a53549b579b27aaf410fbe729c5f0f7acb23ff55",
+      "last_processed_note": "Processed one documentation-only commit adding fixed-Core capacity findings from workflow 34771393714. Evidence shows clustering can be extreme (2026 max concurrent 16; 2025H2 max 22; DEV max 57), so no hard capacity cap should be embedded in the signal engine; any capital allocator must remain downstream. This does not rescue the strategy: current fixed Core and Failed-Breakdown Reclaim remain REJECT and locked reclaim H2 remains unopened."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
-      "last_processed_sha": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
-      "last_processed_note": "Consensus added and froze the outcome-blind V47 clean PIT materialization contract at 4cfaf0a5. It binds accepted PIT membership replay run 34771221050 and accepted V46 split evidence run 34775030470, requires restored/delisted daily+intraday coverage receipts before scoring, separates PIT nominal absolute prices from causal split-normalized relative features, recomputes cross-sectional values on the clean PIT universe, keeps the canonical next-open to fifth-close target and frozen V11 3-head threshold 0.95, and compares exactly NOCAP vs CAP1000_PIT. No strategy outcomes were opened and no production paths changed."
+      "last_seen_sha": "2edd4d94ee9c8597130ec6453f0c44588560053e",
+      "last_processed_sha": "2edd4d94ee9c8597130ec6453f0c44588560053e",
+      "last_processed_note": "Processed the V47 clean-PIT staging series through 2edd4d94. New research-only workflows/tests/materializers cover authoritative daily PIT materialization, raw 1H fetch/coverage, clean features, DEV NOCAP-vs-CAP1000_PIT selection, and winner-only H2. DEV contract CI 34786915945 and H2 winner contract CI 34786981577 are SUCCESS. Authoritative daily run 34786578353 is still in_progress, so raw 1H must not start yet. V44 is explicitly classified DATA_REPRO_FAILURE_DO_NOT_INTERPRET; legacy V43/V44 returns remain non-promotion evidence."
     }
   },
   "guardrails": [
@@ -71,6 +71,13 @@
       "performance_interpreted": false,
       "next_rule": "Do not open H1 outcomes or H2. Implement only an outcome-blind raw repair stage under the frozen classification guardrails: verify/preregister successor-to-predecessor query aliases for the four impossible current-code histories, targeted-refetch remaining missing canonical-active symbol/dates, preserve exact frozen 1810 output symbols, then rerun the unchanged raw acceptance verifier. No V20 signal/threshold/TopN retune is allowed."
     },
+    "prospective_shadow_data_integrity": {
+      "status": "ELIGIBILITY_SKIP_BOUNDARY_HARDENED",
+      "latest_head": "c9243484448c4645ee6452f0a5f5874ef3db6d19",
+      "focused_verification": "16/16 PASS",
+      "real_shadow_launch_authorized": false,
+      "rule": "Every candidate must carry explicit ELIGIBLE/data_sufficient proof with no skip_reason or missing_fields; admission and verified append fail closed. Fresh launch authorization and freeze evidence are still required."
+    },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
       "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
@@ -78,8 +85,8 @@
       "execution_audit_run": 34774595196,
       "execution_audit_status": "completed/success",
       "execution_coverage": {"DEV":"169/169","H2_2025":"140/140","YTD_2026":"116/118"},
-      "last_repro_scan_jst": "2026-09-14T06:25:09+09:00",
-      "last_repro_scan_result": "NO_NEW_SHA_OR_ARTIFACT_KEEP_REJECTS",
+      "capacity_diagnostic_run": 34771393714,
+      "capacity_policy": "NO_HARD_SIGNAL_ENGINE_CAP; preserve every valid detector signal; downstream allocator separate",
       "next_rule": "No adjacent retune; audit/reproducibility only unless a genuinely different low-DOF mechanism is preregistered before outcomes."
     },
     "consensus_v44": {
@@ -100,18 +107,24 @@
       "coverage": "3700/3700"
     },
     "consensus_v47_price_policy": {
-      "latest_consensus_head": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
+      "latest_consensus_head": "2edd4d94ee9c8597130ec6453f0c44588560053e",
       "materialization_contract": "research/CONSENSUS_V47_DATA_MATERIALIZATION_CONTRACT_20260914.json",
       "materialization_contract_status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
+      "authoritative_daily_run": 34786578353,
+      "authoritative_daily_status": "in_progress",
+      "dev_contract_ci": 34786915945,
+      "dev_contract_status": "completed/success",
+      "h2_contract_ci": 34786981577,
+      "h2_contract_status": "completed/success",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
-      "rule": "Implement outcome-blind clean V47 materialization and pass PIT membership/daily/intraday/split coverage receipts before any strategy/model outcomes are computed or inspected. Keep 2026 outcomes closed for selection."
+      "rule": "Wait for authoritative daily run. If daily_coverage_pass=true, trigger raw1H with daily_run_id; otherwise use only the preregistered outcome-blind restored/delisted repair path. Then proceed raw coverage -> clean features -> DEV two-arm selection -> winner-only H2. Keep 2026 outcomes closed for selection."
     }
   },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
       "V20 raw coverage repair not yet accepted: point-in-time symbol alias verification plus 258 sparse missing active symbol/dates remain",
-      "Consensus V47 clean PIT materializer and coverage receipts not yet complete",
+      "Consensus V47 authoritative daily PIT materializer 34786578353 is still running; downstream raw/feature/performance stages remain gated",
       "No currently passing Core replacement candidate"
     ]
   }

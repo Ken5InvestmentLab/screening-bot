@@ -1,7 +1,7 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T01:33:00+09:00",
+  "updated_at_jst": "2026-09-14T01:35:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": [
@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "9302b5510ee05571dd4bf0d27b0912be90413c69",
-      "last_processed_sha": "9302b5510ee05571dd4bf0d27b0912be90413c69",
-      "last_processed_note": "Core failed-breakdown preconfirmation launched as run 34768879678. Workflow was corrected to use frozen source run 34592896202, trigger-SHA checkout and pinned dependencies. Push trigger can open preconfirmation only; locked H2 remains evaluator-gated."
+      "last_seen_sha": "95d296ecb5429e3e45046684fc2c5f9e668f2b51",
+      "last_processed_sha": "95d296ecb5429e3e45046684fc2c5f9e668f2b51",
+      "last_processed_note": "First Core reclaim preconfirmation run 34768879678 is invalid because it derived prior-day context from raw 1H instead of canonical daily. Performance must not be interpreted. Corrected contract test run 34768958344 passed. Corrected preconfirmation run 34768985489 uses frozen raw source 34592896202 plus canonical daily run 34599959356 and is authoritative."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -85,13 +85,16 @@
     },
     "core_failed_breakdown_reclaim": {
       "workflow": ".github/workflows/tentei-cloud-core-failed-breakdown-reclaim.yml",
-      "contract_test_run": 34767726209,
-      "contract_test_status": "completed/success",
-      "preconfirmation_run": 34768879678,
-      "preconfirmation_status": "queued",
-      "frozen_source_run": 34592896202,
-      "yahoo_refetch": false,
-      "locked_confirmation_rule": "Open only if preconfirmation artifact proves DEVELOPMENT and INTERNAL_VALIDATION both pass every frozen gate."
+      "invalid_preconfirmation_run": 34768879678,
+      "invalid_reason": "wrong daily-context implementation; raw-1H daily aggregation violated frozen prior-completed-XTKS-daily contract",
+      "corrected_contract_test_run": 34768958344,
+      "corrected_contract_test_status": "completed/success",
+      "authoritative_preconfirmation_run": 34768985489,
+      "authoritative_preconfirmation_status": "in_progress",
+      "frozen_raw_source_run": 34592896202,
+      "frozen_daily_source_run": 34599959356,
+      "frozen_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+      "locked_confirmation_rule": "Open only if corrected preconfirmation artifact proves DEVELOPMENT and INTERNAL_VALIDATION both pass every frozen gate."
     }
   },
   "supervisor_contract_sha256": "239adb8933e09a6d8f6917cbeadc0386a5a2725d"

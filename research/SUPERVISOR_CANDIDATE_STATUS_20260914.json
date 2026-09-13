@@ -1,6 +1,6 @@
 {
   "status_id": "SUPERVISOR-CANDIDATE-STATUS-20260914-01",
-  "updated_at_jst": "2026-09-14T01:13:00+09:00",
+  "updated_at_jst": "2026-09-14T01:19:00+09:00",
   "canonical_endpoint": "next official XTKS session open -> fifth official XTKS session close",
   "year_2026_policy": "REPORT_OR_ROBUSTNESS_ONLY_NEVER_SELECTION_OR_TUNING",
   "lanes": {
@@ -74,7 +74,16 @@
         "shared canonical raw-bin materializer/timing semantics",
         "point-in-time survivorship-neutral JPX membership validation"
       ],
-      "diagnostic_next": "V45 full-context ATR is outcome-free only and cannot rescue failed V44"
+      "diagnostic_next": "V45 full-context ATR is outcome-free only and cannot rescue failed V44",
+      "fetch_acceptance_guard": {
+        "path": "research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json",
+        "baseline_reproduction_pass_required": true,
+        "requested_symbols_equals": 1910,
+        "ok_symbols_min": 1850,
+        "candidate_symbols_min": 1793,
+        "candidate_rows_min": 519163,
+        "on_failure": "DO_NOT_INTERPRET_AND_RERUN_EXACT_FROZEN_EVALUATOR_AFTER_SUPERSEDED_RUNS_STOP"
+      }
     },
     "shadow_data_integrity": {
       "branch": "research/tvfree-canonical-batch02",

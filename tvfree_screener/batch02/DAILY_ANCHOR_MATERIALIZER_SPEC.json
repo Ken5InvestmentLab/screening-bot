@@ -1,0 +1,44 @@
+{
+  "spec_id": "DATA-QUALITY-DAILY-ANCHOR-MATERIALIZER-20260913-03",
+  "status": "FROZEN_BEFORE_NEW_STRATEGY_OUTCOMES",
+  "scope": "research-only existing cached Yahoo-derived hourly + daily data",
+  "objective": "separate post-close reconstruction quality from causal signal eligibility while preserving raw hourly rows",
+  "strategy_outcomes_used_for_policy": false,
+  "year_2026_strategy_returns_opened": false,
+  "raw_mutation_allowed": false,
+  "required_hour_starts_jst": [9, 10, 11, 12, 13, 14, 15],
+  "repair_ladder": [
+    "common OHLC scale correction",
+    "daily open/close anchor",
+    "daily high/low extrema anchor only with complete seven-slot coverage",
+    "proportional daily volume reconciliation only with complete coverage and compatible units",
+    "single tagged daily-resolution fallback when intraday reconstruction is not defensible"
+  ],
+  "common_scale_rule": {
+    "factor": "median(daily/hourly aggregate ratio for open, high, low, close)",
+    "eligible_when": "max(abs(each_ratio/factor - 1)) <= 0.02",
+    "reason": "fixed data-quality tolerance; not selected on strategy return"
+  },
+  "volume_rule": {
+    "factor": "daily_volume / sum(hourly_volume)",
+    "eligible_when": "complete seven-slot coverage and 0.5 <= factor <= 2.0",
+    "reason": "conservative same-share-unit compatibility gate already recorded in the pre-return data-quality diagnostic"
+  },
+  "tiers": {
+    "A_FULL_RECON_POSTCLOSE": "complete coverage + common-scale eligible + price anchors/extrema + compatible proportional volume reconciliation",
+    "B_PRICE_RECON_POSTCLOSE": "complete coverage + common-scale eligible + price anchors/extrema; volume remains untrusted",
+    "C_DAILY_RESOLUTION_FALLBACK": "valid daily row exists but defensible intraday reconstruction is unavailable; emit exactly one 1D row",
+    "D_UNUSABLE": "neither defensible intraday reconstruction nor valid daily fallback"
+  },
+  "causal_policy": {
+    "POSTCLOSE_RECON_ONLY": "default for rows repaired with same-day finalized daily OHLCV",
+    "POSTCLOSE_CAUSAL_OK": "allowed only when feature_cutoff_jst >= explicitly supplied daily_final_available_at_jst",
+    "RAW_CAUSAL_INTRADAY": "pre-close 4H/session features must use raw/cached intraday information available by cutoff plus prior-completed-session calibration only",
+    "forbidden": [
+      "using same-day finalized daily high/low/close/volume before its availability timestamp",
+      "duplicating one daily row into fake AM/PM or fake 4H rows"
+    ]
+  },
+  "next_research_use": "quality tiers may gate/annotate data, but final scoring features remain 4H/intraday-led; daily-only rows are never promoted as final scoring candidates",
+  "production_modified": false
+}

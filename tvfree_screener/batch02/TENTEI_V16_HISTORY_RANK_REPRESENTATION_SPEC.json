@@ -1,0 +1,77 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V16-HISTORY-RANK-REPRESENTATION-20260913",
+  "status": "PREREGISTERED_BEFORE_V16_DRIFT_METRICS",
+  "role": "OUTCOME_FREE_REPRESENTATION_STABILITY_GATE",
+  "lane_split": {
+    "parallel_lane": "prospective shadow evidence/reporting + state-entry lane",
+    "this_lane": "V14/V15 representation-stability research",
+    "duplicated_work": false
+  },
+  "candidate_generator": "V12 ALL signals unchanged",
+  "retained_low_drift_features": [
+    "bar_log_return",
+    "upper_wick_pct",
+    "close_location",
+    "prev4_log_return_mean",
+    "bb_position",
+    "rsi12",
+    "rsi_delta",
+    "log_volume_rel20"
+  ],
+  "rank_features": {
+    "history_scope": "previous 20 complete causal bins for same symbol + same bin_name; current bin excluded; computed before V12 signal filtering",
+    "rank_formula": "(count(prior < current) + 0.5*count(prior == current))/20",
+    "features": [
+      "range_pct_rank20",
+      "prev4_range_mean_rank20",
+      "bb_width_pct_rank20",
+      "atr_pct_rank20",
+      "lower_wick_pct_rank20",
+      "dist_prior5_low_atr_rank20",
+      "prior5_rsi_min_rank20",
+      "prior5_band_min_rank20"
+    ],
+    "source_features": [
+      "range_pct",
+      "prev4_range_mean",
+      "bb_width_pct",
+      "atr_pct",
+      "lower_wick_pct",
+      "dist_prior5_low_atr",
+      "prior5_rsi_min",
+      "prior5_band_min"
+    ]
+  },
+  "final_feature_count": 16,
+  "removed_from_v15": [
+    "range_rel20_log",
+    "prev4_range_rel20_log",
+    "bb_width_rel20_log",
+    "atr_rel20_log"
+  ],
+  "cohorts": {
+    "train_like": "V12 event + prior-day gates + all 16 V16 features finite + date<2025-01-01 + fifth-session exit date<2025-01-01; no return values read",
+    "h1": "same filters, candidate date 2025-03-01 through 2025-06-30; no return values read"
+  },
+  "drift_metrics": {
+    "ks": "empirical CDF maximum distance",
+    "psi": "training-decile bins epsilon 1e-6",
+    "median_shift_iqr": "(H1 median - train median)/(train q75-q25)",
+    "severe": "KS>=0.20 OR PSI>=0.25 OR abs(median_shift_iqr)>=0.50",
+    "moderate": "KS>=0.10 OR PSI>=0.10 OR abs(median_shift_iqr)>=0.25",
+    "low": "otherwise"
+  },
+  "representation_gate": {
+    "pass": "zero SEVERE features AND at most four MODERATE features",
+    "fail": "do not open V16 strategy-return metrics",
+    "if_pass": "commit separate supervised-evaluation preregistration before any H1 return access"
+  },
+  "integrity": {
+    "strategy_returns_used_for_design": false,
+    "V14_H1_results_known_but_not_used_for_rank_threshold_tuning": true,
+    "V15_drift_results_used_only_for_bounded_rank_representation_choice": true,
+    "H2_returns_opened": false,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

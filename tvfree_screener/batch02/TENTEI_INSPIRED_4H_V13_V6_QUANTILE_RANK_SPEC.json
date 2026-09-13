@@ -1,0 +1,62 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V13-V6-QUANTILE-RANK-20260913",
+  "status": "PREREGISTERED_BEFORE_V13_SELECTION_METRICS",
+  "role": "RETROSPECTIVE_EVENT_RANKING_DISCOVERY_ONLY",
+  "candidate_generator": "V12 ALL signals unchanged; no post-hoc trigger-path selection",
+  "ranking_input": "existing V6 monthly causal q10/q50/q90 predictions; no retraining and no feature changes",
+  "join_key": [
+    "symbol",
+    "date",
+    "bin_name"
+  ],
+  "selection": {
+    "cohort": "date + bin_name among V12 ALL signals only",
+    "eligible_set": "first nondominated Pareto front maximizing q90 and q10",
+    "rank_within_front": [
+      "q90 descending",
+      "q10 descending",
+      "symbol ascending"
+    ],
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "no_backfill_from_dominated_or_non_V12_rows": true,
+    "cooldown": "5 official XTKS sessions per symbol; AM before PM"
+  },
+  "periods": {
+    "h1": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_policy": "OPEN_ONLY_IF_AT_LEAST_ONE_FROZEN_H1_TOPN_PASSES",
+    "h2": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "gates": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "integrity": {
+    "prior_v12_h1_path_results_seen": true,
+    "no_trigger_path_selection_from_those_results": true,
+    "year_2026_outcomes_must_remain_closed": true,
+    "no_threshold_or_model_tuning_from_2025": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "production_modified": false
+}

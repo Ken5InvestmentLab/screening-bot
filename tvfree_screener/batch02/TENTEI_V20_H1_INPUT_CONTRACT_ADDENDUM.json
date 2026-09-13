@@ -1,0 +1,51 @@
+{
+  "addendum_id": "TENTEI-V20-SESSION-IMPULSE-H1-INPUT-CONTRACT-20260914",
+  "parent_spec": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "status": "FROZEN_BEFORE_V20_H1_OUTCOME_ACCESS",
+  "strategy_rule_changed": false,
+  "outcome_values_opened": false,
+  "canonical_daily": {
+    "source_run": 34599959356,
+    "artifact_id": 10264205130,
+    "sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0"
+  },
+  "h1_universe": {
+    "derivation": "union of symbols satisfying prior completed daily close<=1000 JPY and prior completed daily volume>=10000 on at least one official H1 signal session",
+    "h1_period": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "official_sessions": 82,
+    "unique_symbols": 1810,
+    "min_eligible_per_session": 993,
+    "max_eligible_per_session": 1669,
+    "sorted_symbol_list_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b"
+  },
+  "rejected_input": {
+    "source_run": 34592896202,
+    "symbol_count": 1332,
+    "decision": "INSUFFICIENT_FOR_V20_H1",
+    "reason": "1332 < 1810, so at least 478 H1-eligible symbols are absent and within-session signal-cohort ranks can be distorted"
+  },
+  "dedicated_raw_fetch": {
+    "start": "2025-01-06",
+    "end": "2025-06-30",
+    "interval": "1h",
+    "shards": 4,
+    "query_mode": "Yahoo explicit period1/period2; events=div,splits",
+    "acceptance": [
+      "expected symbol list count exactly 1810",
+      "expected symbol list SHA exact",
+      "observed raw symbol set exactly equals frozen universe",
+      "zero final fetch failures"
+    ],
+    "split_adjustment_note": "V20 intraday signal features are within-bar scale invariant; absolute prior-day gates and endpoint labels use frozen canonical daily"
+  },
+  "workflow": ".github/workflows/v20-session-impulse-h1.yml",
+  "contract_test_run": 34769637874,
+  "contract_test_status": "completed/success",
+  "execution_order": "Do not start dedicated Yahoo fetch while authoritative/superseded V44 Yahoo-heavy runs remain active. After they stop, trigger H1 workflow; coverage must pass before H1 outcome evaluation.",
+  "h2_rule": "Unchanged parent spec: H2 remains closed unless at least one frozen H1 TopN passes its H1 gate.",
+  "year_2026_outcomes_opened": false,
+  "production_modified": false
+}

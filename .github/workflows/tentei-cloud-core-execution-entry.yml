@@ -45,13 +45,39 @@ jobs:
           python research/tentei_cloud/audit_core_execution_entry.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --outdir out
-      - name: Show unmatched canonical entries
+      - name: Show unmatched canonical entries with reason
         run: |
           python - <<'PY'
+          import numpy as np
           import pandas as pd
+
           x=pd.read_csv("out/core_execution_rows.csv")
-          z=x[x["matched"].astype(str).str.lower().isin(["false","0"])]
-          print(z[["date","session","symbol","target_date","exec_date","ret5bd"]].to_string(index=False))
+          z=x[x["matched"].astype(str).str.lower().isin(["false","0"])].copy()
+          if z.empty:
+              print("NO_UNMATCHED_CANONICAL_ENTRIES")
+          else:
+              def classify(r):
+                  if pd.isna(r.get("exec_date")):
+                      return "NO_NEXT_XTKS_DATE"
+                  if pd.isna(r.get("exec_ts")):
+                      return "NO_RAW_1H_BAR_ON_EXEC_DATE"
+                  v=pd.to_numeric(pd.Series([r.get("exec_open")]),errors="coerce").iloc[0]
+                  if pd.isna(v):
+                      return "MISSING_EXEC_OPEN"
+                  if not np.isfinite(v) or v <= 0:
+                      return "NONPOSITIVE_OR_NONFINITE_EXEC_OPEN"
+                  t=pd.to_numeric(pd.Series([r.get("target_close")]),errors="coerce").iloc[0]
+                  if pd.isna(t):
+                      return "MISSING_TARGET_CLOSE"
+                  if not np.isfinite(t) or t <= 0:
+                      return "NONPOSITIVE_OR_NONFINITE_TARGET_CLOSE"
+                  return "UNCLASSIFIED_MATCH_FAILURE"
+              z["unmatched_reason"]=z.apply(classify,axis=1)
+              cols=["date","session","symbol","target_date","target_close","exec_date","exec_ts","exec_open","ret5bd","unmatched_reason"]
+              cols=[c for c in cols if c in z.columns]
+              print(z[cols].to_string(index=False))
+              print("\nREASON_COUNTS")
+              print(z["unmatched_reason"].value_counts(dropna=False).to_string())
           PY
       - name: Record source fetch run
         run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt

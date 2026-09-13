@@ -362,7 +362,7 @@ def materialize_daily_candidates(
     g = d.groupby(["symbol", "identity_epoch"], sort=False)
     d["prev_date"] = g["date"].shift(1)
     d["prev_close_adjusted"] = g["close"].shift(1)
-    d["prev_volume"] = g["volume"].shift(1)
+    d["prev_volume_adjusted"] = g["volume"].shift(1)
 
     q = d[d["date"].between(WINDOW_START, WINDOW_END)].copy()
     q["date_s"] = q["date"].dt.strftime("%Y-%m-%d")
@@ -388,18 +388,23 @@ def materialize_daily_candidates(
         q["prev_close_adjusted"]
         * q["future_split_factor_from_prev_date"]
     )
+    q["prev_volume_pit"] = (
+        q["prev_volume_adjusted"]
+        / q["future_split_factor_from_prev_date"]
+    )
 
     base = (
         q["pit_member"]
-        & (q["prev_volume"] >= 10000)
+        & (q["prev_volume_pit"] >= 10000)
         & q["prev_close_pit"].notna()
+        & q["prev_volume_pit"].notna()
     )
     q["eligible_nocap_daily"] = base
     q["eligible_cap1000_daily"] = base & (q["prev_close_pit"] <= 1000)
 
     cols = [
         "date_s", "symbol", "prev_date", "prev_close_adjusted",
-        "prev_close_pit", "prev_volume",
+        "prev_close_pit", "prev_volume_adjusted", "prev_volume_pit",
         "future_split_factor_from_prev_date",
         "eligible_nocap_daily", "eligible_cap1000_daily",
     ]

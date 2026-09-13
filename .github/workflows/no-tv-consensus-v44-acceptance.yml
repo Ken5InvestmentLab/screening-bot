@@ -1,0 +1,49 @@
+name: Consensus V44 Authoritative Acceptance Receipt
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download authoritative hardened V44 evidence
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-consensus-v44-34767664140
+          path: v44
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34767664140
+
+      - name: Verify acceptance guard without inspecting performance
+        run: |
+          python research/verify_consensus_v44_acceptance.py \
+            --v44-json v44/v44_consensus_topk_cooldown.json \
+            --output out/v44_acceptance_receipt.json
+
+      - name: Hash receipt
+        run: |
+          mkdir -p out
+          sha256sum out/v44_acceptance_receipt.json > out/SHA256SUMS.txt
+          git rev-parse HEAD > out/receipt_workflow_commit_sha.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v44-authoritative-acceptance-${{ github.run_id }}
+          path: out/**
+          if-no-files-found: error
+          retention-days: 90

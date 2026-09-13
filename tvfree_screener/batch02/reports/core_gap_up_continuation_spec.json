@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-GAP-UP-ACCEPTANCE-20260913-01",
+  "family": "core_gap_up_volume_acceptance_v1",
+  "registered_at_utc": "2026-09-13T06:45:31.683749+00:00",
+  "status": "FROZEN_BEFORE_THIS_EXPERIMENTS_OUTCOME_ACCESS",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "shared_frozen_family_spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+  "historical_exposure": "2022H2 and 2023 outcomes were seen in other experiments; results are retrospective discovery, not untouched OOS.",
+  "hypothesis": "A positive opening gap accompanied by unusually high signal-day volume, a bullish body, and a close near the session high may show institutional acceptance and short-horizon continuation.",
+  "candidate_pool": {
+    "universe": "Rows from the immutable feature-only daily XTKS panel with complete, internally valid positive-volume OHLCV. Historical membership is limited to symbols in the preserved Yahoo source; point-in-time delisted-symbol completeness is not guaranteed.",
+    "gap": "Prior-close-only open gap >= 0.015; use the frozen panel's `gap` feature.",
+    "volume": "Current volume / prior 20 official-session mean volume >= 1.5; current volume is excluded from the denominator.",
+    "candle_confirmation": "Positive body (close > open) and close location >= 0.7.",
+    "market_fundamental_or_future_filters": "None.",
+    "missingness": "Nonfinite signal-time features are outside the pool and counted; no session bridging or outcome-dependent substitution."
+  },
+  "score_and_selection": {
+    "score": "Equal-weight arithmetic mean of within-date percentile ranks (average ties) for gap, prior-average volume ratio, and close location; larger ranks are preferred.",
+    "tie_breaks": [
+      "mean percentile score descending",
+      "close location descending",
+      "prior-average volume ratio descending",
+      "gap descending",
+      "symbol ascending"
+    ],
+    "selection": "Top5 per official XTKS session; multiple names allowed; abstain when no event passes.",
+    "cooldown": "A selected symbol is suppressed on the immediately following official XTKS session; unselected candidates do not update cooldown."
+  },
+  "target": "Enter next official XTKS session open; exit close of fifth official XTKS session including entry, using the pinned canonical labels and daily actionability statuses.",
+  "periods": {
+    "2022H2_last_signal": "2022-12-23",
+    "2023_last_signal": "2023-12-22",
+    "last_discovery_exit": "2023-12-29",
+    "2024": "closed unless discovery gates pass; retrospective confirmation only",
+    "2025": "closed",
+    "2026": "report-only and closed to selection"
+  },
+  "discovery_gates_each_period": {
+    "resolved_selected_minimum": 75,
+    "selected_per_calendar_month_minimum": 5.0,
+    "signal_net": "mean > 0, median > 0, win rate > 0.50, and mean excluding top three winners > 0 at 0.5% assumed round-trip cost",
+    "label_coverage_minimum": 0.9,
+    "tail_risk": "-10% and -20% rates no higher than full event pool on same dates",
+    "monthly_stability": "at least half of resolved months positive",
+    "daily_cohorts": "at least 20 complete selected dates and net mean, median, and mean excluding top three dates all > 0",
+    "decision": "Both periods must pass every gate; otherwise reject without replacing thresholds or ranking."
+  },
+  "cost_assumption": {
+    "primary_round_trip": 0.005,
+    "sensitivity_scenarios": [
+      0.0,
+      0.005,
+      0.01
+    ],
+    "measured_live_cost": false
+  },
+  "data": {
+    "feature_panel_through": "2023-12-29",
+    "2024_plus_numeric_ohlcv_opened": false,
+    "canonical_label_source": "batch01/.cache/core_moderate_ridge_discovery_labels.parquet"
+  },
+  "input_sha256": {
+    "shared_family_spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+    "feature_panel_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "canonical_labels_sha256": "abf9c3181dfa1f86f78b75528eafaa27ba9bb9250db17b5b14e8970d60ad2732",
+    "canonical_labels_manifest_sha256": "e85edc74228c92a5922b0d54dc9c1712e42e0758febc2234e1586bcc6bc888ea",
+    "canonical_target_spec_sha256": "9bba8748f6f141cf045c9505fae0460faa5ff1f0713da5e3c5f31eca7223b8cf",
+    "canonical_target_spec_version_sha256": "6f56fc4c0f914f6faec0285e915a393044003505bc5d71cabb52e4d7778dcfa7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "xtks_calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "xtks_calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "candidate_selector": "724e0465c06085e5cbaa9c250c006251f9f580deded3ba6773757335fea86855",
+    "audit_runner": "c477733bfb3070802ba56951a78c34460c8ca1e03ffe0e2351909d93355a45e0",
+    "shared_frozen_spec_verifier_and_label_rekey": "3d07ffa56b61603b163c825f726ad02d28fa57ab7f4ec3f6474c055c50fa411f",
+    "canonical_label_rekey_family_source": "ce0dd1ee0e1b33478c0f27e02442d2d604902c6a96024ea8068b81495380c0b8",
+    "evaluation_metrics": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "one_to_one_report_summarizer": "ae341d211b154c5142ee11618a0527dff986d5d1da1bc2d7687ef85b8cb316b2"
+  },
+  "production_modified": false
+}

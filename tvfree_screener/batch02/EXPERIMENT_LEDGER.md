@@ -548,3 +548,19 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Interpretation: broad-universe V6 predictions are not suitable as the tail ranker for the sparse V12 event population.
 - Next: V14 event-specific dual classifiers trained only on resolved pre-2025 V12 events. One predicts >=+20% tail, one predicts <=-10% downside; selection uses a weight-free Pareto front.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-INSPIRED-4H-V14-PRE2025-DUAL-CLASSIFIER-20260913 — REJECT AFTER H1 / H2 UNOPENED
+
+- Parallel-lane check: the other ChatGPT lane owns `TENTEI-STATE-ENTRY-REPRESENTATION-20260913`; this lane continued V14 and did not duplicate that experiment.
+- Fixed canonical daily source recovered from artifact 10264205130; SHA-256 `6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0` exactly matched the frozen receipt.
+- Fast-parser equivalence before outcomes: pre-2025 V12 candidates after gates 7,099 / 1,065 symbols and H1 candidates after gates 8,245, both exact registered/official counts.
+- Input receipt correction recorded before H1 metrics: 7,099 is the pre-feature-finiteness event pool. The fixed 19-feature V14 model actually fits 4,924 finite resolved rows / 966 symbols. No model or threshold changed.
+- Pre-2025 model-fit prevalence: +20% target 1.056%; <=-10% target 2.660%. 2025 labels were not used for fit.
+- H1 Top1: n=163, mean -0.689%, median -1.717%, win 40.49%, +20% 4.91%, <=-10% 14.11%, Top1-excluded -1.147%; FAIL.
+- Top2/3/5 means -0.372/-0.582/-0.481%; +20% 3.42/2.16/1.68%; all FAIL.
+- Even at 0% cost, Top2/Top5 means are only +0.128/+0.019% and winner-excluded means remain negative.
+- Decision: reject V14; per preregistration V14 H2 remains unopened. Do not tune V14 against H1.
+- Next candidate task after parallel-lane recheck: outcome-free pre-2025 vs 2025-H1 V12 feature-distribution drift audit before designing another supervised ranker.
+- Report: `reports/tentei_inspired_4h_v14_pre2025_dual_classifier_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

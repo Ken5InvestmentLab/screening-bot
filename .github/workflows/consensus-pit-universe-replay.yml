@@ -56,7 +56,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          p = Path("run80_source/tvfree_screener/out/jpx_point_in_time_report.json")
+          p = Path("research_artifacts/pit_universe_replay/jpx_point_in_time_report.json")
           r = json.loads(p.read_text(encoding="utf-8"))
           v = r["validation"]
           assert v["unknown_market_rows"] == 0, v
@@ -66,11 +66,6 @@ jobs:
           PY
       - name: Collect and hash evidence
         run: |
-          mkdir -p research_artifacts/pit_universe_replay
-          cp run80_source/tvfree_screener/out/jpx_membership_events.csv research_artifacts/pit_universe_replay/
-          cp run80_source/tvfree_screener/out/jpx_membership_unknown_rows.csv research_artifacts/pit_universe_replay/
-          cp run80_source/tvfree_screener/out/jpx_membership_monthly_counts.csv research_artifacts/pit_universe_replay/
-          cp run80_source/tvfree_screener/out/jpx_point_in_time_report.json research_artifacts/pit_universe_replay/
           cd research_artifacts/pit_universe_replay
           find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
       - name: Upload evidence

@@ -1,4 +1,4 @@
-trigger: 2026-09-14 v47-daily-materializer-v5-identity-epoch
-purpose: authoritative outcome-blind PIT daily materialization; 100% restored daily coverage; terminal Yahoo fast-fail; listing-event identity epochs reset lag history
-supersedes_runs: 34786400424,34786578353,34787866773
+trigger: 2026-09-14 v47-daily-materializer-v6-pit-price-volume-identity
+purpose: authoritative outcome-blind PIT daily materialization; 100% restored daily coverage; PIT nominal price; PIT daily share volume; listing identity epochs; terminal Yahoo statuses fast-fail
+supersedes_runs: 34786400424,34786578353,34787866773,34788012403
 strategy_outcomes: forbidden

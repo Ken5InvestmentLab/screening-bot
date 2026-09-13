@@ -72,6 +72,14 @@ jobs:
         with:
           name: v20-h1-universe-${{ github.run_id }}
           path: universe
+      - name: Download frozen canonical daily for temporal coverage guard
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
       - name: Fetch frozen V20 H1 Yahoo 1H shard
         run: |
           mkdir -p raw
@@ -119,6 +127,7 @@ jobs:
           mkdir -p receipt
           python tvfree_screener/batch02/verify_v20_h1_raw_coverage.py \
             --symbols universe/v20_h1_symbols.txt \
+            --daily frozen/tse_daily.csv \
             --raw-glob 'raw/ohlcv_1h_shard_*.csv' \
             --failures-glob 'raw/failures_*.json' \
             --output receipt/v20_h1_raw_coverage_receipt.json

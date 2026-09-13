@@ -135,10 +135,15 @@ class V20SessionImpulseContractTests(unittest.TestCase):
             self.assertFalse(mod.h1_gate(q)["all_pass"], key)
 
     def test_h2_requires_explicit_passing_topn(self):
-        # Test CLI guard without touching market data by using argument parsing/main
-        # indirectly: the contract is also inspectable as H2 policies derived solely
-        # from --passing-topn. Keep a direct invariant check here.
-        self.assertEqual(mod.TOP_NS, [1,2,3,5])
+        self.assertEqual(mod.resolve_period_policies("h1", []), (mod.H1_START, mod.H1_END, [1,2,3,5]))
+        with self.assertRaisesRegex(RuntimeError, "explicit frozen"):
+            mod.resolve_period_policies("h2", [])
+        self.assertEqual(
+            mod.resolve_period_policies("h2", [5,2,2]),
+            (mod.H2_START, mod.H2_END, [2,5]),
+        )
+        with self.assertRaisesRegex(RuntimeError, "invalid H2"):
+            mod.resolve_period_policies("h2", [4])
 
 
 if __name__ == "__main__":

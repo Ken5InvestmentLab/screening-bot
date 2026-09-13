@@ -165,3 +165,28 @@ The single DEV-chosen cooldown passes H2 only if **all** are true:
 - max-symbol share <= 75% of cooldown0 H2 baseline share.
 
 If any condition fails, do not retune on H2. Demote current Consensus from Stable★6 replacement candidate to continuation/re-entry/pyramiding specialist research.
+
+
+## Authoritative V44 live-fetch acceptance guard
+
+Because invalid/superseded V44 runs were still concurrently fetching Yahoo 1H when authoritative run `34767664140` started, the outcome is not accepted solely because the workflow completes.
+
+Frozen pre-outcome guard:
+- `research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json`
+- guard commit: `10d2e193979fc5418364f0af5fb243752c4a8587`
+
+Reference receipt from preserved V43 artifact `10274083399`:
+- requested symbols: 1,910
+- ok symbols: 1,850
+- errors: HTTPError 59 / too_few_sessions 1
+- candidate rows: 519,163
+- candidate symbols: 1,793
+
+Before interpreting V44 outcomes, the authoritative artifact must satisfy all of:
+1. baseline reproduction receipt passed;
+2. requested symbols == 1,910;
+3. ok symbols >= 1,850;
+4. candidate symbols >= 1,793;
+5. candidate rows >= 519,163.
+
+If any receipt check fails, mark the run **fetch-degraded** and do not interpret its performance. Rerun the exact frozen evaluator only after the superseded Yahoo-heavy runs are no longer active. No model, ATR, cooldown, Top-K, or validation rule may change.

@@ -647,3 +647,15 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next after overlap recheck: evaluate V12 ALL, with no ML rank, under the already-established Core metrics as a retrospective baseline; any H2 use is refutation-only because V12 H1 is exposed.
 - Report: `reports/tentei_v18_crosssectional_quantile_h1_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-INSPIRED-4H-V19-V12-ALL-CORE-H2-REFUTATION-20260913 — REJECT STANDALONE CORE
+
+- V19 was preregistered as retrospective H2 refutation only because V12 H1 was already exposed. No ML ranking was added.
+- H2 raw signals 12,438; after five-session same-symbol cooldown 6,205; 124 active dates; 50.04 signals/active date.
+- At 0.5% cost: mean -0.502%, median -0.500%, win 41.05%, +20% 1.03%, <=-10% 3.63%, Top1-excluded -0.545%, Top3-excluded -0.574%, positive months 33.3%. Core gate FAIL.
+- At zero cost, mean is still ~0 (-0.002%), win 46.25%, Top3-excluded -0.074%.
+- Decision: reject V12 ALL as standalone Core mechanism. H1 positive central performance did not persist into H2.
+- Next after overlap recheck: outcome-free V17 feature/regime drift audit comparing H1 vs H2 V12 events. If features are stable but returns changed, treat as concept drift/missing state rather than simple covariate shift.
+- Report: `reports/tentei_v19_v12_all_core_h2_refutation_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

@@ -1,4 +1,4 @@
-trigger: exact run80 point-in-time JPX universe replay v3 wired-compat
+trigger: exact run80 point-in-time JPX universe replay v4 utf8-compat
 anchor_date: 2026-09-11
 strategy_outcomes: none
-invalidates_runs: 34770692285,34770857898 parser/workflow failures
+invalidates_runs: 34770692285,34770857898,34770912565 compatibility failures

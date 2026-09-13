@@ -434,3 +434,53 @@ The prior research priority of finding a single causal market-regime gate is now
 - Monster remains separate and tail-seeking; broad market regime has non-stationary interaction with Monster setups.
 - Market regime should be logged as context for future genuinely-forward evidence, not imposed as a shared blocker.
 - Do not reuse current Stable as a component of the replacement system; it remains benchmark-only.
+
+
+## 2026-09-14 independent Core continuation — simple pruning paths rejected
+
+This continuation stayed outside the parallel V12/V15 event-representation and legacy-intraday reconstruction work. Production was not modified.
+
+### Candidate-local single-feature audit
+
+Run `34765124157`, artifact `10320890234`, artifact SHA-256 `1c576a3c7cec5c53e3f87f755a3edc41dc54b07385e732eb8a4a28532ff13ef1`.
+
+Five fixed signal-time features were median-split using DEV only: RSI12, BB reclaim width, ATR14/close, reconstructed-session/previous-day volume ratio, and EMA75 gap. A side could advance only if BOTH DEV halves had n>=15, higher mean, no-worse median, and no-worse <=-10% rate.
+
+Result: **no feature/side qualified**. ATR-high improved mean/median in both halves but worsened the large-loss rate; RSI, BB reclaim, and EMA75-gap changed preferred direction between DEV halves; higher session/previous-day volume ratio improved mean but not all robustness gates.
+
+Decision: no hard local-quality filter. See `CORE_LOCAL_QUALITY_FINDINGS.md`.
+
+### Yahoo 1H historical coverage topology
+
+Run `34765338387`, artifact `10320545595`, artifact SHA-256 `022a8632015e467f859ce615ab826c6695355410b578f96889e9d9e396d56b05`.
+
+Across the 1,332-symbol comparison set:
+- 1,271 symbols had no failed chunks.
+- 44 had failures only before the first observed Yahoo 1H bar.
+- 17 were never observed.
+- 0 had a failed interval overlapping an observed-history span.
+
+The 44 before-first-only names comprise recent listings plus five legacy numeric codes with terminal-only history around delisting status. The 17 never-seen names are 2026 delistings. Therefore the Yahoo 1H panel has **no detected internal chunk holes where history exists**, but it is not point-in-time complete and has a delisting-linked survivorship hole. At least 22/1,332 target symbols have materially compromised historical intraday coverage from this effect.
+
+Do not claim full-universe or survivorship-free historical intraday coverage. Repair/reconciliation of legacy intraday sources belongs to the separate V12/V15 data-quality lane; this branch does not duplicate it. See `FETCH_COVERAGE_FINDINGS.md`.
+
+### Causal correlation-peer lag audit
+
+Run `34765505153`, artifact `10320032194`, artifact SHA-256 `63b1063fe068ed9cf090ee1b05dfec77001efda2a6857784437a8ff1bee0fafe`.
+
+Peers were selected using trailing 60 prior trading dates only, minimum 40 return overlaps, and the top five positively correlated symbols. No current-only industry map was used.
+
+Positive peer momentum was harmful in DEV_A but mildly beneficial in DEV_B:
+- DEV_A BASE ~0.00%; PEER1_POS -0.25%; PEER5_POS -1.40%.
+- DEV_B BASE +2.16%; PEER1_POS +2.22%; PEER5_POS +2.45%.
+
+No fixed peer gate passed the two-half robustness rule. Decision: **reject positive peer-momentum hard gating** and do not flip the sign post-hoc on the same opened data. See `CORE_PEER_LAG_FINDINGS.md`.
+
+### Core architecture update
+
+Three simple pruning paths are now closed for the fixed reconstructed Core:
+1. broad-market hard regime gates;
+2. simple single-feature local hard gates;
+3. positive correlation-peer momentum hard gates.
+
+The current evidence favors preserving Core breadth. The next independent Core task should quantify baseline stability/uncertainty rather than invent another threshold from already-opened outcomes.

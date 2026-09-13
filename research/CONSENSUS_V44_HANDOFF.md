@@ -151,3 +151,17 @@ After the corrected evaluator was already running, the workflow was hardened:
 Because run `34767664140` is the first run launched from the hardened workflow, it supersedes the older corrected-but-pre-hardening run `34766353425` for final research conclusions.
 
 At the time of this handoff update, GitHub still displayed the older runs as in-progress. Their eventual output must be ignored even if they finish successfully.
+
+
+## Frozen H2 pass/fail gate (added before authoritative replacement outcome access)
+Source: `research/consensus_v44_h2_validation_gate_addendum.json`.
+
+The single DEV-chosen cooldown passes H2 only if **all** are true:
+- n >= 20;
+- mean > 0;
+- mean >= 80% of cooldown0 H2 baseline mean;
+- median >= 0;
+- Top3-excluded mean > 0;
+- max-symbol share <= 75% of cooldown0 H2 baseline share.
+
+If any condition fails, do not retune on H2. Demote current Consensus from Stable★6 replacement candidate to continuation/re-entry/pyramiding specialist research.

@@ -1,6 +1,6 @@
 {
   "status_id": "SUPERVISOR-CANDIDATE-STATUS-20260914-01",
-  "updated_at_jst": "2026-09-14T01:19:00+09:00",
+  "updated_at_jst": "2026-09-14T01:39:00+09:00",
   "canonical_endpoint": "next official XTKS session open -> fifth official XTKS session close",
   "year_2026_policy": "REPORT_OR_ROBUSTNESS_ONLY_NEVER_SELECTION_OR_TUNING",
   "lanes": {
@@ -38,6 +38,7 @@
     },
     "core": {
       "branch": "research/tentei-cloud-mtf",
+      "status": "NO_ACTIVE_REPLACEMENT_CANDIDATE",
       "current_fixed_core": {
         "decision": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
         "canonical_replay_run": 34766143681,
@@ -46,18 +47,35 @@
         "h2_primary_cost_win": 0.4143,
         "h2_top3_removed": -0.00874
       },
-      "next_family": {
+      "failed_breakdown_reclaim": {
         "id": "CORE-FAILED-BREAKDOWN-RECLAIM-20260914-01",
-        "preregistered": true,
-        "evaluator_ready": true,
-        "manual_workflow_ready": true,
-        "contract_test_run": 34767726209,
-        "contract_test_status": "completed/success",
-        "execution_status": "STAGED_NOT_TRIGGERED",
-        "block_reason": "wait for authoritative hardened Consensus V44 run 34767664140 to finish; avoid concurrent Yahoo 1H heavy work",
-        "next_action": "dispatch preconfirmation only after V44 completion",
-        "locked_confirmation_guard": "DEV and INTERNAL_VALIDATION must both pass every frozen gate"
-      }
+        "corrected_authoritative_preconfirmation_run": 34768985489,
+        "invalid_run": 34768879678,
+        "invalid_reason": "wrong prior-day daily-context implementation",
+        "frozen_raw_source_run": 34592896202,
+        "frozen_daily_source_run": 34599959356,
+        "frozen_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+        "development": {
+          "n": 5252,
+          "net_mean": -0.007657316121648691,
+          "net_median": -0.008322259136212647,
+          "win": 0.41089108910891087,
+          "top3_removed_mean": -0.008019218274692225,
+          "gate": "FAIL"
+        },
+        "internal_validation": {
+          "n": 3285,
+          "net_mean": 0.0033063314267468384,
+          "net_median": -0.0018454258675079062,
+          "win": 0.4812785388127854,
+          "top3_removed_mean": 0.002828090476302308,
+          "gate": "FAIL"
+        },
+        "preconfirmation_pass": false,
+        "locked_2025h2_opened": false,
+        "decision": "REJECT_PRECONFIRMATION"
+      },
+      "next_action": "Do not retune rejected Core families. Continue only if a genuinely different low-DOF Core mechanism is preregistered before outcomes and does not overlap Event/Consensus."
     },
     "consensus": {
       "branch": "research/consensus-atr-regime-gate",
@@ -68,7 +86,7 @@
         34765427789,
         34766353425
       ],
-      "final_conclusion_rule": "only authoritative hardened run may support V44 conclusion after artifact receipt check",
+      "final_conclusion_rule": "After run 34767664140 completes, first run the dedicated acceptance workflow and require accepted=true before interpreting any performance; only then evaluate frozen H2/strict5 gates.",
       "promotion_dependencies_if_survives": [
         "separately versioned canonical next-open target retrain with architecture/hyperparameters initially frozen",
         "shared canonical raw-bin materializer/timing semantics",
@@ -83,6 +101,16 @@
         "candidate_symbols_min": 1793,
         "candidate_rows_min": 519163,
         "on_failure": "DO_NOT_INTERPRET_AND_RERUN_EXACT_FROZEN_EVALUATOR_AFTER_SUPERSEDED_RUNS_STOP"
+      },
+      "acceptance_workflow": ".github/workflows/no-tv-consensus-v44-acceptance.yml",
+      "strict5_workflow": ".github/workflows/no-tv-consensus-v44-strict5.yml",
+      "invalid_run_fetch_only_receipt": {
+        "run_id": 34765427789,
+        "requested_symbols": 1910,
+        "ok_symbols": 1850,
+        "candidate_symbols": 1793,
+        "candidate_rows": 519231,
+        "performance_interpreted": false
       }
     },
     "shadow_data_integrity": {
@@ -93,7 +121,9 @@
         "evidence-chain receipt",
         "snapshot staleness guard",
         "branch ancestry guard",
-        "authorization gate"
+        "authorization gate",
+        "post-freeze temporal guard",
+        "append-guard contract reconciliation"
       ],
       "production_authorized": false
     }
@@ -102,6 +132,7 @@
     "Do not modify production/main/Discord/Spreadsheet/Stable6/Sniper/Mega/TradingView/watchlist builder/updater without explicit user Go",
     "Do not promote from 2026 outcomes",
     "Do not reopen rejected families by renaming or post-hoc threshold/cooldown/cost changes",
-    "Do not run heavy Core Yahoo workflow concurrently with authoritative Consensus V44"
+    "Do not interpret authoritative Consensus V44 performance before its acceptance receipt passes",
+    "Do not open Core Failed-Breakdown locked 2025H2 after failed preconfirmation"
   ]
 }

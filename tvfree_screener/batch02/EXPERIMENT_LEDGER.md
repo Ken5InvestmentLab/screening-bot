@@ -204,9 +204,13 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - 真の休場日以外の無約定/停止/上場状態不明は、執行できたと推定して埋めず未解決として残す。各実験は選出要求数・解決数・未解決数/理由・年/月/銘柄別偏りを併記し、解決済み部分集合だけの成績が欠損偏りに左右されないことを確認する。欠損を解決しないままのバックテスト数値は「解決ラベルの成績」であって全シグナル母集団の正確な成績とは呼ばない。
 - 日足を1h/4hへ合成してproductionの欠損を埋める案は、ユーザーの既決指示どおり実装しない。上記の再取得/照合も、通常ジョブでCodexなしに動作し、認証・レート制限・データ利用条件を検証するまでは設計案に留める。
 
-## CORE-CMF-FLOW-ACCELERATION-20260913-01 — FROZEN, OUTCOME-FREE POOL NOT YET PREPARED
+## CORE-CMF-FLOW-ACCELERATION-20260913-01 — FROZEN, OUTCOME-FREE POOL PREPARED
 
 - 独立した仮説: 5日間の出来高加重終値位置が正で、20日状態より上向いている銘柄は、ギャップや単日の価格ブレイクに依存しない短期需要加速を示すか。
 - 2026-09-13 07:11 UTC時点で条件を凍結。仕様SHA-256 a96bee2b91733d5978142da37d2fbc8c7d59e8d56f60cb8b32b6f95bfb08c32d。特徴量は cmf5, cmf20, cmf_delta=cmf5-cmf20。CMF5>0かつdelta>0、delta降順でTop5/日、選択銘柄は次の公式営業日だけ抑制、複数銘柄/日を許し候補なしは見送り。閾値探索なし。
 - 評価は既存共通定義の次営業日始値から5営業日目終値。発見期間2022H2/2023、各期間75解決選出以上・90%ラベル解決率・正の平均/中央値/勝率50%超/Top3除外平均などの全ゲートを固定した。両期間を通過した場合のみ2024の方向確認を開く。2025は閉鎖、2026は報告のみ。2022H2/2023は他仮説で過去に見たため、未閲覧OOSではなく回顧的発見である。
 - 共有family spec 4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f とdaily/calendar/label/code hashを登録済み。2024年以降のOHLCV数値も、新仮説の結果ラベルも未閲覧。CMF専用4テストと既存ラベル生成10テストを含む対象24テストを実行し全件PASS。次は凍結ファイルとledgerをcommitした後だけ、アウトカムを使わずfeature-only候補poolを作る。
+
+- Feature-only preparation is complete. From 1,260,690 source rows, 1,224,060 passed daily OHLCV validation; 1,107,444 had complete consecutive 20-session flow windows; 446,974 rows met CMF5>0 and CMF5>CMF20 across 3,438 symbols and all 365 signal dates. Top5 plus one-session cooldown selected 1,825 rows on 365 days; no empty day. These counts do not use returns or labels.
+- Frozen decision digests: pool fb882439ad18d8ac31787f8ce074f4312cef75ed6261aefd0178669b4fdf38c1; ranked cd28c9abe0da088734758783b09a85dca9b9625cf3c16da33ebe39d0af4bdbb5; selected c3c2240aa3346c5ccf1c20cdaa5b91457b0b6fcf478df8aeeb7b40a17395a2eb. Receipt SHA-256 0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72. The Parquet decision artifacts are local ignored audit files.
+- No outcome labels or 2024+ numeric OHLCV were opened. Next: commit this receipt, independently recompute and compare all three decision digests, commit that reproduction receipt, then and only then open the preregistered 2022H2/2023 outcome labels.

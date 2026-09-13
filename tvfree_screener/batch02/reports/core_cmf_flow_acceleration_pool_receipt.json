@@ -1,0 +1,51 @@
+{
+  "experiment_id": "CORE-CMF-FLOW-ACCELERATION-20260913-01",
+  "spec_sha256": "a96bee2b91733d5978142da37d2fbc8c7d59e8d56f60cb8b32b6f95bfb08c32d",
+  "input_sha256": {
+    "shared_family_spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+    "feature_panel_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "canonical_labels_sha256": "abf9c3181dfa1f86f78b75528eafaa27ba9bb9250db17b5b14e8970d60ad2732",
+    "canonical_labels_manifest_sha256": "e85edc74228c92a5922b0d54dc9c1712e42e0758febc2234e1586bcc6bc888ea",
+    "canonical_target_spec_sha256": "9bba8748f6f141cf045c9505fae0460faa5ff1f0713da5e3c5f31eca7223b8cf",
+    "canonical_target_spec_version_sha256": "6f56fc4c0f914f6faec0285e915a393044003505bc5d71cabb52e4d7778dcfa7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "xtks_calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "xtks_calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "candidate_selector": "465cc72577ddf1712f12b1b934499100170c5704e8844523e7cbabf7c1b9f641",
+    "audit_runner": "adee194578300d74f06367ff8b70bae59facb284c7521816b361f470e5bffd73",
+    "shared_frozen_spec_verifier_and_label_rekey": "3d07ffa56b61603b163c825f726ad02d28fa57ab7f4ec3f6474c055c50fa411f",
+    "canonical_label_rekey_family_source": "ce0dd1ee0e1b33478c0f27e02442d2d604902c6a96024ea8068b81495380c0b8",
+    "evaluation_metrics": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "one_to_one_report_summarizer": "ae341d211b154c5142ee11618a0527dff986d5d1da1bc2d7687ef85b8cb316b2"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "valid_ohlcv_rows": 1224060,
+    "complete_consecutive_flow_rows": 1107444,
+    "positive_cmf5_rows": 546172,
+    "improving_flow_rows": 446974,
+    "candidate_rows": 446974,
+    "candidate_symbols": 3438,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 446974,
+    "selected_rows": 1825,
+    "selected_days": 365,
+    "zero_selection_days": 0
+  },
+  "decision_hashes": {
+    "pool": "fb882439ad18d8ac31787f8ce074f4312cef75ed6261aefd0178669b4fdf38c1",
+    "ranked": "cd28c9abe0da088734758783b09a85dca9b9625cf3c16da33ebe39d0af4bdbb5",
+    "selected": "c3c2240aa3346c5ccf1c20cdaa5b91457b0b6fcf478df8aeeb7b40a17395a2eb"
+  },
+  "artifact_sha256": {
+    "pool": "d40add91ab719ac0a84ecae2d1cf1c72dea15082ec41442b0305f553070f9cb1",
+    "ranked": "8f57ad7146299cc752ac34f5ce985b7060eae1571b8a0deacbf51d5096567174",
+    "selected": "aa36649c4d03f757e154500b3dfe23dff17a5318747f29f67e96b3bd9fa932ba"
+  },
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

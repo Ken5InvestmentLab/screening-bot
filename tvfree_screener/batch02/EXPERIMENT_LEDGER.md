@@ -714,3 +714,18 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Reproducer: `batch02/replay_monster_canonical_v2_all.py`.
 - Report: `reports/monster_canonical_v2_all_exact_replay_20260914.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION — INPUT CONTRACT FROZEN / H1 NOT OPENED
+
+- Ownership was reconciled to the active :12 Canonical/Event worker because the prior "parallel chat" had no dedicated automation and only the preregistered spec existed. No strategy rule changed.
+- Frozen evaluator implemented in `batch02/eval_tentei_v20_session_impulse.py`. Contract CI run `34769637874` completed SUCCESS.
+- Contract tests freeze threshold boundaries, prior-20 causal history, TopN-before-cooldown no-backfill behavior, exact +5-session re-entry semantics, canonical next-open -> signal+5-close label, H1 gate boundaries, H2 explicit passing-TopN authorization, and fail-closed raw coverage.
+- Outcome-free universe audit found the old run `34592896202` raw panel has only 1,332 symbols and is insufficient for V20 H1.
+- Frozen canonical daily H1 union under prior-day close<=1000 / volume>=10000 is **1,810 symbols** across 82 official H1 sessions; min/max eligible per session 993/1,669; sorted-symbol SHA `2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b`.
+- Therefore old 1,332 panel necessarily misses at least 478 eligible names and may distort within-session percentile ranking. V20 H1 MUST NOT use it.
+- Dedicated H1 workflow `.github/workflows/v20-session-impulse-h1.yml` is staged: canonical daily -> exact 1,810-symbol list -> four-shard Yahoo 1H fetch -> exact symbol coverage + zero final failures -> H1 evaluation. Coverage failure prevents outcome evaluation.
+- Yahoo query-mode split scaling is acceptable for this experiment because the V20 intraday signal uses scale-invariant within-bar features; absolute eligibility and endpoint labels come from frozen canonical daily. Point-in-time universe remains a later promotion dependency.
+- H1 has not been opened. Dedicated Yahoo fetch is intentionally not triggered while V44 Yahoo-heavy runs remain active.
+- Addendum: `batch02/TENTEI_V20_H1_INPUT_CONTRACT_ADDENDUM.json`.
+- 2026 outcomes opened: false. Production modified: false.

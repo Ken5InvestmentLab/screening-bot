@@ -216,3 +216,5 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - No outcome labels or 2024+ numeric OHLCV were opened. Next: commit this receipt, independently recompute and compare all three decision digests, commit that reproduction receipt, then and only then open the preregistered 2022H2/2023 outcome labels.
 
 - Independent reproduction completed after the preparation receipt commit. Pool/ranked/selected decision digests matched exactly; reproduction report SHA-256 bff85ed69c1ecb38a547859f6f5cfef076f9366e6a8dc07365ef70021e525210. It confirms outcome_values_opened=false and 2024_plus_numeric_ohlcv_opened=false. Commit this report before any outcome evaluation.
+
+- The outcome-free preparation receipt was committed as 13fb02c and the exact reproduction report was committed as 729fe15. Both verify before the evaluator opens any label values. The frozen 2022H2/2023 discovery evaluation is now authorized by its staged gate; no 2024+ outcome values may be read unless both discovery periods pass every gate.

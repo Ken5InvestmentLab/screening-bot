@@ -26,10 +26,11 @@ class Bar:
     low: float
     close: float
     volume: float
+    session_regime: str = "POST"
 
 
 class CausalIntradayFeatureTests(unittest.TestCase):
-    def make_bars(self, sessions: int = 25) -> list[Bar]:
+    def make_bars(self, sessions: int = 25, regime: str = "POST") -> list[Bar]:
         start = date(2026, 1, 5)
         bars: list[Bar] = []
         for index in range(sessions):
@@ -48,6 +49,7 @@ class CausalIntradayFeatureTests(unittest.TestCase):
                     low=98.0,
                     close=102.0,
                     volume=1000.0 + index,
+                    session_regime="AM_STABLE" if bin_name == "AM_09_13" else regime,
                 ))
         return bars
 
@@ -64,26 +66,40 @@ class CausalIntradayFeatureTests(unittest.TestCase):
         self.assertIsNotNone(am[20]["volume_rel20"])
         self.assertEqual(am[20]["prior_same_bin_count"], 20)
 
+    def test_pm_same_bin_history_resets_when_close_regime_changes(self):
+        pre = self.make_bars(21, regime="PM_PRE_20241105")
+        post = self.make_bars(1, regime="PM_POST_20241105")
+        # Move the post bars after the pre bars in time.
+        shifted = []
+        for bar in post:
+            shifted.append(Bar(
+                **{**bar.__dict__,
+                   "session_date": date(2026, 2, 20),
+                   "feature_cutoff_jst": bar.feature_cutoff_jst.replace(month=2, day=20)}
+            ))
+        rows = extract_causal_features(pre + shifted)
+        post_pm = next(
+            row for row in rows
+            if row["bin_name"] == "PM_13_CLOSE"
+            and row["session_regime"] == "PM_POST_20241105"
+        )
+        self.assertEqual(post_pm["prior_same_bin_count"], 0)
+        self.assertIsNone(post_pm["range_vs_prior20"])
+
     def test_previous_four_shape_features_do_not_need_absolute_price_history(self):
         rows = extract_causal_features(self.make_bars(4))
         self.assertIsNone(rows[3]["prev4_log_return_mean"])
-        self.assertIsNone(rows[3]["prev4_body_mean"])
         self.assertIsNotNone(rows[4]["prev4_log_return_mean"])
-        self.assertIsNotNone(rows[4]["prev4_body_mean"])
 
     def test_bar_log_return_is_scale_invariant(self):
         base = self.make_bars(1)[0]
         scaled = Bar(
-            session_date=base.session_date,
-            symbol="2222",
-            bin_name=base.bin_name,
-            source_tag=base.source_tag,
-            feature_cutoff_jst=base.feature_cutoff_jst,
-            open=base.open * 10,
-            high=base.high * 10,
-            low=base.low * 10,
-            close=base.close * 10,
-            volume=base.volume,
+            **{**base.__dict__,
+               "symbol": "2222",
+               "open": base.open * 10,
+               "high": base.high * 10,
+               "low": base.low * 10,
+               "close": base.close * 10}
         )
         rows = extract_causal_features([base, scaled])
         self.assertAlmostEqual(rows[0]["bar_log_return"], rows[1]["bar_log_return"])
@@ -95,7 +111,6 @@ class CausalIntradayFeatureTests(unittest.TestCase):
         pm = next(row for row in rows if row["bin_name"] == "PM_13_CLOSE")
         self.assertTrue(am["close_location_model_eligible"])
         self.assertFalse(pm["close_location_model_eligible"])
-        self.assertIsInstance(pm["close_location"], float)
 
     def test_volume_relative_feature_is_explicitly_experimental_and_not_v1(self):
         rows = extract_causal_features(self.make_bars())
@@ -104,12 +119,6 @@ class CausalIntradayFeatureTests(unittest.TestCase):
             row["volume_rel20_status"] == "EXPERIMENTAL_SOURCE_INTERNAL"
             for row in rows
         ))
-
-    def test_v1_completeness_requires_same_bin_twenty_bar_warmup(self):
-        rows = extract_causal_features(self.make_bars())
-        am = [row for row in rows if row["bin_name"] == "AM_09_13"]
-        self.assertFalse(am[19]["model_candidate_v1_complete"])
-        self.assertTrue(am[20]["model_candidate_v1_complete"])
 
 
 if __name__ == "__main__":

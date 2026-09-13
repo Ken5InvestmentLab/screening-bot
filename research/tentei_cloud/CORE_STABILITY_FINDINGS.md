@@ -113,3 +113,26 @@ Architecture implication:
 - preserve Monster as a separate positive-skew lane rather than asking Core to produce Monster-like returns.
 
 The next useful Core work should focus on execution/cost sensitivity and genuinely forward monitoring, not additional outcome-driven filtering of the already-opened history.
+
+
+## Execution-cost sensitivity addendum
+
+Final cost-log run:
+- trigger commit: `b4fbdb3576c46680e6b3e97c413f75362040b165`
+- workflow run: `34765954141`
+- costs are fixed round-trip assumptions, not measured fills.
+
+2026 Jan-Aug:
+- gross: mean **+1.56%**, bootstrap P(mean>0) **99.24%**, 95% CI **+0.29% to +2.86%**
+- 0.5% round-trip cost: mean **+1.06%**, median **-0.02%**, bootstrap P(mean>0) **95.12%**, 95% CI **-0.24% to +2.29%**
+- 1.0% round-trip cost: mean **+0.56%**, median **-0.52%**, bootstrap P(mean>0) **80.08%**, 95% CI **-0.76% to +1.84%**
+
+Because a constant assumed cost shifts the bootstrap mean distribution by the same amount, the gross 2026 95% lower bound (+0.286%) implies that a round-trip cost above roughly **0.29%** is enough to make the 95% mean interval cross zero.
+
+Interpretation:
+- the 2026 Core average has meaningful gross headroom;
+- +0.5% cost does not erase the point estimate, but it does erase the strictly-positive 95% bootstrap interval;
+- +1.0% cost leaves only a modest average edge and materially weakens confidence;
+- execution quality therefore matters enough that Core should be called **promising/stable gross, execution-sensitive net**, not production-proven net.
+
+2025H2 becomes clearly negative under 0.5% or 1.0% assumed costs, reinforcing that the 2026 strength should not be generalized backward.

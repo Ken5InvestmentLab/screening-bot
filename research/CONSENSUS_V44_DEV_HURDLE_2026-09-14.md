@@ -30,3 +30,27 @@ This is only a hurdle diagnostic:
 - no replacement outcome is inferred from this arithmetic.
 
 Interpretation: the frozen 80% DEV-retention requirement is demanding. A V44 pass would indicate genuinely strong alternative names rather than a cosmetic reduction in concentration.
+
+
+## Where the strict5 replacement demand comes from
+
+Within the 2025H1 fixed-min95 + frozen-ATR Top-1 baseline:
+- raw selected rows: 67
+- strict 5-session no-replacement rows: 30
+- suppressed rows needing replacement to keep the original opportunity count: 37
+
+Suppressed-row count by symbol:
+- **3350: 24 / 37 (64.9%)**
+- 2334: 4
+- 7318: 4
+- 3137: 1
+- 8107: 1
+- 2315: 1
+- 7409: 1
+- 6574: 1
+
+Therefore V44 is not mostly solving dozens of unrelated duplicate problems. Its largest test is whether the ranker can substitute credible alternatives while a single persistent winner (3350) is already occupied.
+
+This makes the test especially informative:
+- if replacements retain performance, Consensus has broader cross-sectional information than the Top-1 headline suggests;
+- if replacements collapse, the 2025H1 edge is strongly tied to repeated exposure to the same exceptional trend.

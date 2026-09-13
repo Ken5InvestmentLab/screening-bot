@@ -309,3 +309,32 @@ Frozen before clean-PIT strategy outcomes:
 - Old ATR 2.864 cap is not applied to the primary V47 result; any clean ATR OOD cap must later be re-estimated outcome-free from all clean contexts.
 - Same-symbol 5-session cooldown is an operational stress after primary evaluation, not a model-selection knob.
 - Restored-delisted OHLCV/intraday coverage must be reported fail-closed; missing coverage may not silently recreate survivorship bias.
+
+
+## Performance-first price policy — user direction 2026-09-14
+The historical JPY1,000 prior-close ceiling is no longer mandatory.
+
+Clean V47 will initially compare exactly:
+- **NOCAP** — no absolute prior-close ceiling;
+- **CAP1000_PIT** — point-in-time nominal prior close <= JPY1,000.
+
+Common model/data/target rules stay fixed. No 500/1500/2000 grid search is allowed in the initial comparison.
+
+Primary price-policy objective:
+- canonical next-open -> D+5 return;
+- strict one-position-per-symbol 5-session operational view;
+- 0.5% round-trip cost;
+- higher development mean is primary;
+- near-ties use Top3-excluded mean, then median, then simpler NOCAP.
+
+After DEV chooses one arm, only that arm's H2 is opened for the price-policy decision. H2 continuation gate is positive mean after 0.5% cost. Robustness/tail/concentration are mandatory diagnostics but are not automatic vetoes merely because rare monster winners are allowed.
+
+If both price arms are weak, do not search more price thresholds; revisit the model/family.
+
+PIT universe replay run **34771221050** is accepted:
+- 2025-01-01 members = 3,827 vs 3,700 anchor (+127);
+- unknown market rows = 0;
+- same-day code collisions = 0;
+- valid reconstruction = true.
+
+V46 split reconstruction remains required even for NOCAP because absolute model feature `log_price` must use point-in-time nominal semantics.

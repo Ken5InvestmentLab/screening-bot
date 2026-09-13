@@ -1,0 +1,9 @@
+trigger: 2026-09-14 core-local-quality-v1
+purpose: Core-internal quality only; avoid V12/V15 event representation and gap-up lane
+features:
+  - rsi12
+  - bb_reclaim
+  - atr14_pct
+  - session_prevday_vol_ratio
+  - ema75_gap
+selection: DEV median split; same-side consistency required in both DEV halves; freeze at most one feature

@@ -1,0 +1,138 @@
+{
+  "spec_id": "CONSENSUS-V47-CLEAN-PIT-TWO-STAGE-20260914",
+  "status": "PREREGISTERED_BEFORE_CLEAN_PIT_STRATEGY_OUTCOMES",
+  "branch": "research/consensus-atr-regime-gate",
+  "objective": "Rebuild Consensus on point-in-time JPX membership and point-in-time nominal absolute-price eligibility, then separate data-contract repair from canonical-target repair.",
+  "mandatory_inputs": {
+    "pit_membership_receipt": "accepted Consensus PIT Universe Replay artifact",
+    "split_receipt": "accepted V46 full-symbol split-event artifact/hash",
+    "daily_history": "run80 frozen daily for survivor symbols plus coverage-audited historical daily for restored delisted symbols",
+    "intraday_history": "causal Yahoo raw clock-bin source with frozen coverage receipt",
+    "no_current_only_universe": true
+  },
+  "point_in_time_candidate_contract": {
+    "membership": "symbol must be a JPX domestic common stock member as of the signal date",
+    "prior_close": "point-in-time nominal prior completed-day close <= JPY 1000",
+    "prior_volume": "historical prior completed-day volume >= 10000 shares; no split-factor transformation unless a separate source-validation receipt proves one is required",
+    "session_volume": "observed historical raw-bin volume >= 5000 shares",
+    "absolute_feature": "log_price must use point-in-time nominal current-bin price",
+    "relative_features": "keep causal split-normalized price series for ratio/return/technical features so corporate actions do not create artificial jumps",
+    "cross_sectional": "recompute all ranks, market medians, breadth and candidate count from the clean PIT-eligible date/session universe"
+  },
+  "model_frozen_from_v11": {
+    "features": "same feature family as v11, with locally reconstructed stable_score/technical_bits6 unchanged for experiment comparability",
+    "win_classifier": {
+      "type": "HistGradientBoostingClassifier",
+      "learning_rate": 0.035,
+      "max_iter": 220,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 80,
+      "l2_regularization": 3,
+      "random_state": 111,
+      "sample_weight": "balanced"
+    },
+    "hit10_classifier": {
+      "type": "HistGradientBoostingClassifier",
+      "learning_rate": 0.035,
+      "max_iter": 240,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 60,
+      "l2_regularization": 4,
+      "random_state": 112,
+      "sample_weight": "balanced"
+    },
+    "return_regressor": {
+      "type": "HistGradientBoostingRegressor",
+      "learning_rate": 0.03,
+      "max_iter": 220,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 80,
+      "l2_regularization": 4,
+      "random_state": 113,
+      "target_clip": [
+        -0.2,
+        0.3
+      ]
+    },
+    "selector": {
+      "type": "independent_3_head_consensus",
+      "mode": "min",
+      "threshold": 0.95,
+      "sessions": "both",
+      "guard": "none",
+      "online_cooldown": 0
+    }
+  },
+  "prequential_contract": {
+    "initial_history": "2024-10-01..2024-12-31 where clean PIT data coverage permits",
+    "evaluation": "2025-01-06..2025-12-30",
+    "block_size_signal_days": 5,
+    "purge": "training label exit must be strictly before block start",
+    "use_2026_for_selection": false
+  },
+  "stages": {
+    "V47A": {
+      "role": "DATA_CONTRACT_DECOMPOSITION_ONLY_NOT_PROMOTION",
+      "labels": "same legacy signal-bin-close -> D+5 official close labels as V43",
+      "architecture": "exact frozen model/selector above",
+      "purpose": "Isolate effect of PIT membership/eligibility/absolute-price repair without also changing the learning target.",
+      "restrictions": [
+        "No tuning from V47A returns.",
+        "Do not choose between V47A and V47B based on higher mean."
+      ]
+    },
+    "V47B": {
+      "role": "PRIMARY_CLEAN_CANDIDATE",
+      "labels": "next official XTKS-session open after signal date -> D+5 official close",
+      "win_target": ">0",
+      "hit10_target": ">=+10%",
+      "reg_target": "canonical return clipped to [-20%,+30%]",
+      "architecture": "same frozen model/selector above",
+      "evaluation_endpoint": "same canonical next-open -> D+5 close",
+      "restrictions": [
+        "No architecture/hyperparameter/threshold tuning on 2025 or 2026 outcomes."
+      ]
+    }
+  },
+  "atr_policy": {
+    "old_2_864_cap": "diagnostic only; not applied to V47A/B primary result",
+    "clean_reestimation": "may only be computed outcome-free from full clean eligible date/session contexts after V47 clean data materialization",
+    "no_2026_tuning": true
+  },
+  "operational_stress_after_primary": {
+    "strict_same_symbol_hold": "5 official trading sessions, one position per symbol",
+    "replacement": "NOT part of primary V47B; a later separately preregistered Top-K replacement test only if base V47B demonstrates edge",
+    "costs": [
+      0,
+      0.005,
+      0.01
+    ],
+    "report": [
+      "n",
+      "mean",
+      "median",
+      "win",
+      "hit10",
+      "hit20",
+      "loss10",
+      "loss20",
+      "top3_ex_mean",
+      "monthly/weekly/symbol concentration"
+    ]
+  },
+  "coverage_fail_closed": {
+    "membership_acceptance_required": true,
+    "split_event_coverage_min": 0.95,
+    "intraday_requested_vs_usable_must_be_reported": true,
+    "restored_delisted_daily_and_intraday_coverage_must_be_reported": true,
+    "rule": "No promotion claim if missing-data coverage can materially select the survivor subset. Coverage threshold/policy cannot be chosen from returns."
+  },
+  "prohibited": [
+    "Do not delete contaminated V43/V44 rows after scoring and call the remainder clean.",
+    "Do not reuse the old 2.864 ATR cap as a promotion gate without clean outcome-free re-estimation.",
+    "Do not tune thresholds or models on 2026.",
+    "Do not compare V47A vs V47B and pick whichever historical mean is higher.",
+    "Do not modify production."
+  ],
+  "production_modified": false
+}

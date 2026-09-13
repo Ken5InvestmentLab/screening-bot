@@ -195,3 +195,29 @@ This does not prove the ranking signal is useless:
 But for a practical one-position-per-symbol / finite-capital system, the unadjusted mean substantially overstates diversification and independent opportunity count.
 
 This makes V44 cooldown-with-replacement the decisive next test. If Top-K replacements preserve a strong mean when the currently-held symbol is blocked, Consensus can still become a useful diversified specialist. If replacement performance collapses, the current architecture should be demoted to a same-symbol continuation/pyramiding signal rather than a Stable★6 replacement.
+
+
+## Episode-position diagnostic — do not promote as a tuned rule
+
+Within the 43 non-overlapping 2025 symbol episodes, next-open -> D+5 performance differs sharply by prior Consensus-selection history:
+
+- episode first signal: n=43, mean +0.23%, Top3-ex -1.17%
+- any repeat signal (position >=2): n=58, mean **+13.27%**, median +13.75%, win 79.31%, +10% 62.07%, Top3-ex +11.43%
+- second signal only: n=15, mean -0.38%, Top3-ex -4.01%
+- third-or-later signal: n=43, mean **+18.03%**, median +15.16%, win 90.70%, +10% 79.07%, +20% 37.21%, <=-10% 0%, Top3-ex +15.86%
+
+2025 Jul-Dec:
+- first signal: n=19, mean +0.27%, Top3-ex -2.49%
+- repeat signal: n=15, mean +14.00%, Top3-ex +7.16%
+- second signal: n=6, mean -0.76%
+- third-or-later: n=9, mean +23.84%, all 9 positive
+
+This is a retrospective diagnostic and must **not** be converted directly into a promoted "third signal" rule because these outcomes are already open and heavily concentrated in a few symbols.
+
+Interpretation:
+- the current Consensus model is not primarily discovering strong new independent episodes;
+- its apparent edge is concentrated in repeated confirmation after a persistent winning move is underway;
+- if V44 cooldown-with-replacement succeeds, the underlying ranker may still be useful as a diversified selector;
+- if V44 fails, Consensus should be reclassified as a continuation/re-entry or pyramiding specialist rather than a Stable★6 replacement.
+
+A future continuation rule, if pursued, must be separately preregistered and tested on genuinely later data.

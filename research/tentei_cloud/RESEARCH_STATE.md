@@ -521,3 +521,31 @@ DEV and 2025H2 were essentially unchanged by next-open execution. Therefore the 
 A first implementation exposed a pandas datetime integer-unit bug and produced zero matched rows. That output was rejected, the lookup was fixed to timezone-aware Series.searchsorted, and a fail-closed >=90% coverage guard was added.
 
 Decision: fixed Core passes the executable-entry sanity check. See `CORE_EXECUTION_FINDINGS.md`.
+
+
+### Core / Monster complementarity audit
+
+Run `34770490191`, artifact `10321568115`, artifact SHA-256 `7c1712d8ff6a099277990c93ba4b240432c0538cda025e5a367a95f924e8c2ed`.
+
+Across 2025H2 and all four 2026 walk-forward blocks:
+- Core vs Monster Watch exact overlap (symbol+date+session): **0**
+- Core vs Monster Prime exact overlap: **0**
+- same-symbol same-date overlap even ignoring session: **0**
+
+The lanes are therefore genuinely distinct on the audited reconstructed baseline, not duplicate confidence tiers over the same names.
+
+Daily signal-count correlation Core vs Watch was generally near zero or negative (-0.02, -0.55, -0.38, -0.05, -0.61 by fold), with few common active days.
+
+However distinctness does not justify blind union:
+- fixed Monster Watch across 2026 folds: n57, weighted mean about -0.51%
+- fixed Monster Prime across 2026 folds: n15, weighted mean about -0.14%
+- Monster helped the union in the May-Jun tail-hit period but diluted Core in several other blocks.
+
+Decision:
+- **keep Core and Monster as separate named lanes**;
+- do not merge them into one score or undifferentiated signal class;
+- Core remains the steadier lane;
+- Monster remains a separate positive-skew/tail lane requiring stronger forward evidence;
+- preserve lane identity in eventual Discord/user-facing output.
+
+See `CORE_MONSTER_COMPLEMENTARITY_FINDINGS.md`.

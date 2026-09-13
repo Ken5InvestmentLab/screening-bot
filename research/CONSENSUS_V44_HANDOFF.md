@@ -77,3 +77,16 @@ Execution ordering:
 - do not run V45 concurrently with V44 because both reconstruct Yahoo 1H across roughly 1,900 symbols and concurrent fetching could create avoidable coverage/rate-limit drift;
 - once valid V44 is complete and receipt-checked, trigger V45 if the Consensus lane still has research value;
 - if V44 fails, V45 may still run as a diagnostic, but its result must not be used to rescue V44 via ATR retuning.
+
+
+## Cross-lane intraday semantics correction
+The canonical Batch02 data-integrity lane already established that Yahoo 1h timestamps are interval-start and that the 12:00-start row crosses the TSE lunch boundary. It intentionally treats 09/10/11/12 as a raw-source first clock bin rather than an exact exchange morning bar.
+
+Therefore, in V43/V44:
+- integer `session=9` means the first reconstructed Yahoo raw clock bin, **not an alert known at 09:00 JST**;
+- integer `session=13` means the second raw clock bin, not necessarily an alert known exactly at 13:00 JST;
+- old `synthetic_sessions()` is research reconstruction, not production-final exact TradingView/4H semantics.
+
+The current as-of builder is still causal with respect to finalized daily OHLC: it uses only completed prior days plus current raw sessions up to the candidate index. With canonical entry at next XTKS session open, this naming correction does not invalidate V44 return timing, but it blocks any direct production claim until a surviving Consensus model is migrated/retrained on the shared canonical raw-bin materializer.
+
+Detail: `research/CONSENSUS_INTRADAY_SEMANTICS_ALIGNMENT_2026-09-14.md`.

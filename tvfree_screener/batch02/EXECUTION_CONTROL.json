@@ -4,7 +4,7 @@
   "outcome_values_opened_before_freeze": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
-  "milestone": "M8_ALL_MARKET_CANDIDATE_POOL_REPRODUCED_PRE_OUTCOME",
+  "milestone": "M9_DISCOVERY_PHASE_OPENED_AFTER_POOL_COMMIT",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -29,8 +29,9 @@
   "candidate_pool_rows_sha256": "7894e8b6673d95c9dcc748eba23adb2f33376cacc9983ed1c77e0cfa813e47e8",
   "candidate_pool_artifact_sha256": "af2136ad0e54be39b58a48c415f12f5f4076622f0446ea045a94a83b67ec5100",
   "candidate_pool_reproduced": true,
+  "candidate_pool_commit": "e1e0f99",
   "outcome_values_opened_before_freeze": false,
-  "next_action": "Commit the reproduced 2,107,236-row feature-only candidate pool hashes and receipt before opening labels. Then open only separately purged 2022H2/2023 outcomes, select and freeze at most two features using the registered gates, and commit that discovery feature freeze before any 2024 outcome confirmation. Never use 2025+ in this audit. Recheck Fundamental V2 handoff after discovery.",
+  "next_action": "Run the preregistered discovery on separately purged 2022H2 and 2023 outcomes only. Freeze at most two features under the registered gates; commit the discovery report and feature freeze before opening any 2024 outcome confirmation. Never use 2025+ in this audit. Recheck Fundamental V2 handoff after discovery.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false
 }

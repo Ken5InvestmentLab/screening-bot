@@ -1,0 +1,3 @@
+trigger: 2026-09-14 fetch-coverage-audit-v1
+purpose: classify extended Yahoo 1H missing/failing symbols without changing model logic
+source: latest successful research/tentei-cloud-mtf 1H extended fetch

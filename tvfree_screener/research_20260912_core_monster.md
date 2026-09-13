@@ -163,3 +163,18 @@ A deterministic policy is now frozen in `batch02/DAILY_ANCHOR_MATERIALIZER_SPEC.
 Frozen tiers: `A_FULL_RECON_POSTCLOSE`, `B_PRICE_RECON_POSTCLOSE`, `C_DAILY_RESOLUTION_FALLBACK`, `D_UNUSABLE`. Focused local verification passed 6/6 tests, including raw immutability, one-row fallback, inconsistent-scale rejection, volume compatibility, and cutoff causality.
 
 Decision: the daily repair layer is now fixed as a tagged data-quality/post-close reconstruction boundary. Resume 4H/session feature research only with cutoff-eligible raw intraday inputs and prior-completed calibration. First measure usable coverage by tier/bin; only after that return to the causal relative-volume / 4H feature path. Production remains unchanged.
+
+## 2026-09-13 parallel lane — V12 outcome-free structure audit
+
+A separate lane was used to avoid colliding with the concurrently advancing V12/V13/V14 evaluation work. It audited the frozen V12 event generator on the already-authorized raw 1h shards without loading 5BD returns or any 2026 strategy outcome.
+
+- H1 (2025-03-01..06-30), before prior-daily price/volume gates and before cooldown: 169,328 complete bins, 10,217 V12 signal rows = **6.034%**; AM/PM 5,788/4,429.
+- H1 trigger flags: RSI recovery 4,396, trend flip 914, emergency reversal 6,220. Multi-path rows were 1,257 = **12.30%**.
+- **3,705/10,217 = 36.26%** of H1 signals had the same symbol also signaling in the immediately previous complete bin; 3,331 emergency-reversal rows followed another emergency-reversal bin.
+- H1 monthly firing rate varied materially: March 4.96%, April **11.23%**, May 3.22%, June 4.36%.
+- H2 structure only (no H2 returns): 268,045 complete bins, 15,596 signals = 5.818%; previous-complete-bin also signal **27.31%**.
+- Full 2025 structure only: 514,098 complete bins, 29,964 signals = 5.828%; previous-complete-bin also signal **31.28%**. Emergency flags appeared on 51.58% of signal rows and RSI recovery on 47.64%, overlaps allowed.
+
+Interpretation: V12 is structurally a persistent state detector as much as a sparse one-shot reversal event generator. This does not invalidate V12 and is not return evidence. Because official V12 return results became visible in the parallel lane only after this structural diagnostic had already been computed, these counts must not be used post hoc to validate V12, pick a trigger path, or alter V13/V14. A future state-entry/first-transition representation, if tested, must be separately preregistered and treated as a new retrospective hypothesis.
+
+Artifacts committed in `86a378e`: `batch02/TENTEI_V12_STRUCTURE_AUDIT_SPEC.json`, `batch02/audit_tentei_v12_structure_no_outcomes.py`, and `batch02/reports/tentei_v12_structure_audit_20260913.md`. Production remained unchanged.

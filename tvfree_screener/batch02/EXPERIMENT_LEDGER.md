@@ -496,3 +496,15 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next: data-quality audit and frozen test of source-internal same-bin relative volume using raw intraday history, with log transform and no same-day finalized daily-volume anchor.
 - Report: `reports/causal_4h_scoring_v9_prior_daily_context_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## CAUSAL-4H-SCORING-V10-RELATIVE-VOLUME-20260913 — REJECT AFTER H1 / H2 NOT OPENED
+
+- Preregistered before V10 evaluation. Added only causal source-internal log_volume_rel20 and its cohort rank to the 19-feature intraday panel; V9 daily context removed.
+- 2025 feature coverage remained 398,772/398,772 = 100%.
+- H1 Core all fail despite positive means: Top1 +2.62% but median -0.50% and Top3-excluded -0.46%.
+- H1 Monster all fail: Top1 mean -1.44%, +20% 9.76%; Top2 mean -0.49%, +20% 9.15%, Top1-excluded -0.82%.
+- Decision: reject V10 without H2. Relative volume remains data-quality-approved but not standalone predictive evidence.
+- Next: change candidate generation. Test a frozen causal 4H reversal/ignition event gate before scoring rather than ranking every eligible 4H bin.
+- Report: `reports/causal_4h_scoring_v10_relative_volume_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

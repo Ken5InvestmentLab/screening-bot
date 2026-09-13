@@ -8,6 +8,8 @@ on:
       - "research/evaluate_consensus_v44_strict5.py"
       - "research/audit_consensus_v44_ties.py"
       - "research/test_consensus_v44_strict_contract.py"
+      - "research/no_tv_v45_full_context_atr.py"
+      - "research/test_consensus_v45_contract.py"
       - ".github/workflows/consensus-v44-strict-contract-tests.yml"
   workflow_dispatch:
 
@@ -32,6 +34,10 @@ jobs:
           python -m py_compile \
             research/evaluate_consensus_v44_strict5.py \
             research/audit_consensus_v44_ties.py \
-            research/test_consensus_v44_strict_contract.py
-      - name: Run contract tests
+            research/test_consensus_v44_strict_contract.py \
+            research/no_tv_v45_full_context_atr.py \
+            research/test_consensus_v45_contract.py
+      - name: Run V44 contract tests
         run: PYTHONPATH=research python research/test_consensus_v44_strict_contract.py
+      - name: Run V45 contract tests
+        run: PYTHONPATH=research python research/test_consensus_v45_contract.py

@@ -2,9 +2,20 @@
 from __future__ import annotations
 
 from collections import defaultdict, deque
-from math import isfinite
+from math import isfinite, log, log1p
 from statistics import median
 from typing import Iterable
+
+
+MODEL_CANDIDATE_FEATURES_V1 = (
+    "bar_log_return",
+    "range_pct",
+    "upper_wick_pct",
+    "lower_wick_pct",
+    "prev4_log_return_mean",
+    "prev4_range_mean",
+    "log_range_vs_prior20",
+)
 
 
 def _bar_shape(bar: object) -> dict[str, float]:
@@ -16,6 +27,7 @@ def _bar_shape(bar: object) -> dict[str, float]:
         raise ValueError("invalid clock-bin OHLC")
     bar_range = high - low
     return {
+        "bar_log_return": log(close / op),
         "body_pct": close / op - 1.0,
         "range_pct": bar_range / op,
         "body_to_range": (close - op) / bar_range if bar_range > 0 else 0.0,
@@ -59,6 +71,8 @@ def extract_causal_features(bars: Iterable[object]) -> list[dict[str, object]]:
             # post-close reconstruction comparison, so keep it out of model
             # eligibility until the source audit improves.
             "close_location_model_eligible": bar.bin_name == "AM_09_13",
+            # Relative volume remains visible for diagnostics but is excluded
+            # from MODEL_CANDIDATE_FEATURES_V1 until source semantics improve.
             "volume_rel20_status": "EXPERIMENTAL_SOURCE_INTERNAL",
             "prior_shape_count": len(prior_shapes),
             "prior_same_bin_count": len(prior_ranges),
@@ -66,10 +80,18 @@ def extract_causal_features(bars: Iterable[object]) -> list[dict[str, object]]:
 
         if len(prior_shapes) >= 4:
             last4 = list(prior_shapes)[-4:]
+            row["prev4_log_return_mean"] = (
+                sum(item["bar_log_return"] for item in last4) / 4.0
+            )
             row["prev4_body_mean"] = sum(item["body_pct"] for item in last4) / 4.0
-            row["prev4_abs_body_mean"] = sum(abs(item["body_pct"]) for item in last4) / 4.0
-            row["prev4_range_mean"] = sum(item["range_pct"] for item in last4) / 4.0
+            row["prev4_abs_body_mean"] = sum(
+                abs(item["body_pct"]) for item in last4
+            ) / 4.0
+            row["prev4_range_mean"] = sum(
+                item["range_pct"] for item in last4
+            ) / 4.0
         else:
+            row["prev4_log_return_mean"] = None
             row["prev4_body_mean"] = None
             row["prev4_abs_body_mean"] = None
             row["prev4_range_mean"] = None
@@ -80,9 +102,15 @@ def extract_causal_features(bars: Iterable[object]) -> list[dict[str, object]]:
             row["range_vs_prior20"] = (
                 shape["range_pct"] / range_median if range_median > 0 else None
             )
+            row["log_range_vs_prior20"] = (
+                log1p(row["range_vs_prior20"])
+                if row["range_vs_prior20"] is not None
+                else None
+            )
         else:
             row["prior20_same_bin_range_median"] = None
             row["range_vs_prior20"] = None
+            row["log_range_vs_prior20"] = None
 
         if len(prior_volumes) == 20:
             volume_median = median(prior_volumes)
@@ -94,6 +122,9 @@ def extract_causal_features(bars: Iterable[object]) -> list[dict[str, object]]:
             row["prior20_same_bin_volume_median"] = None
             row["volume_rel20"] = None
 
+        row["model_candidate_v1_complete"] = all(
+            row.get(name) is not None for name in MODEL_CANDIDATE_FEATURES_V1
+        )
         output.append(row)
 
         history_shape[bar.symbol].append(shape)

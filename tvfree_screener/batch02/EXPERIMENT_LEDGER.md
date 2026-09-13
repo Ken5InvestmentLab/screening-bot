@@ -659,3 +659,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next after overlap recheck: outcome-free V17 feature/regime drift audit comparing H1 vs H2 V12 events. If features are stable but returns changed, treat as concept drift/missing state rather than simple covariate shift.
 - Report: `reports/tentei_v19_v12_all_core_h2_refutation_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-V17-H1-H2-SIGNALTIME-DRIFT-20260913-01 — MATERIAL TRIGGER-COMPOSITION SHIFT
+
+- Outcome-free audit after V19 H2 collapse; no return values used.
+- H1 8,227 events / 1,173 symbols / 82 dates; H2 12,418 / 1,154 / 124 dates. Event density stayed ~100/date.
+- Continuous V17 representation remained stable: 0 SEVERE, 2 MODERATE, 14 LOW.
+- Moderate continuous only: xrank_prior5_rsi_min (KS 0.118 / PSI 0.233) and xrank_prior5_band_min (KS 0.108 / PSI 0.205).
+- Trigger composition changed materially: Emergency Reversal 60.62% -> 44.44% (-16.17pt, SEVERE); RSI Recovery 44.09% -> 52.64% (+8.55pt, MODERATE); Trend Flip nearly stable.
+- Frozen decision: MATERIAL_SIGNALTIME_SHIFT due severe trigger-composition change.
+- Interpretation: broad V17 covariates are stable; next diagnostic should decompose H2 returns by the already-frozen V12 trigger paths to distinguish mixture drift from within-path concept drift.
+- Report: `reports/tentei_v17_h1_h2_signaltime_drift_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

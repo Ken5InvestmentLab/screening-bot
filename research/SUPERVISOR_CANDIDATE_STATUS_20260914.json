@@ -1,0 +1,98 @@
+{
+  "status_id": "SUPERVISOR-CANDIDATE-STATUS-20260914-01",
+  "updated_at_jst": "2026-09-14T01:13:00+09:00",
+  "canonical_endpoint": "next official XTKS session open -> fifth official XTKS session close",
+  "year_2026_policy": "REPORT_OR_ROBUSTNESS_ONLY_NEVER_SELECTION_OR_TUNING",
+  "lanes": {
+    "event_monster": {
+      "branch": "research/tvfree-canonical-batch02",
+      "status": "ACTIVE_PARALLEL_EXPERIMENT_PLUS_CLOSED_FAMILIES",
+      "active_experiment": {
+        "id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+        "owner": "parallel event-specific chat",
+        "duplicate_forbidden": true,
+        "result_status": "NOT_YET_RECORDED_AT_STATUS_FREEZE"
+      },
+      "closed": [
+        {
+          "family": "V12 Tentei-inspired reversal",
+          "decision": "REJECT_WITHIN_PATH_H2_DEGRADATION"
+        },
+        {
+          "family": "V17 dual classifier on V12",
+          "decision": "REJECT_H1"
+        },
+        {
+          "family": "V18 quantile ranking on V12",
+          "decision": "REJECT_H1"
+        },
+        {
+          "family": "4H compression-breakout V20",
+          "decision": "REJECT_2024Q4_DISCOVERY_2025_UNOPENED"
+        },
+        {
+          "family": "Monster canonical v2 ALL_WEAK_EARLY",
+          "decision": "LOCKED_2025_FAIL_TOP1_EXCLUDED_MEAN"
+        }
+      ]
+    },
+    "core": {
+      "branch": "research/tentei-cloud-mtf",
+      "current_fixed_core": {
+        "decision": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
+        "canonical_replay_run": 34766143681,
+        "h2_primary_cost_mean": -0.00452,
+        "h2_primary_cost_median": -0.00745,
+        "h2_primary_cost_win": 0.4143,
+        "h2_top3_removed": -0.00874
+      },
+      "next_family": {
+        "id": "CORE-FAILED-BREAKDOWN-RECLAIM-20260914-01",
+        "preregistered": true,
+        "evaluator_ready": true,
+        "manual_workflow_ready": true,
+        "contract_test_run": 34767726209,
+        "contract_test_status": "completed/success",
+        "execution_status": "STAGED_NOT_TRIGGERED",
+        "block_reason": "wait for authoritative hardened Consensus V44 run 34767664140 to finish; avoid concurrent Yahoo 1H heavy work",
+        "next_action": "dispatch preconfirmation only after V44 completion",
+        "locked_confirmation_guard": "DEV and INTERNAL_VALIDATION must both pass every frozen gate"
+      }
+    },
+    "consensus": {
+      "branch": "research/consensus-atr-regime-gate",
+      "active_experiment": "CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914",
+      "authoritative_run": 34767664140,
+      "authoritative_run_status": "in_progress",
+      "superseded_or_invalid_runs": [
+        34765427789,
+        34766353425
+      ],
+      "final_conclusion_rule": "only authoritative hardened run may support V44 conclusion after artifact receipt check",
+      "promotion_dependencies_if_survives": [
+        "separately versioned canonical next-open target retrain with architecture/hyperparameters initially frozen",
+        "shared canonical raw-bin materializer/timing semantics",
+        "point-in-time survivorship-neutral JPX membership validation"
+      ],
+      "diagnostic_next": "V45 full-context ATR is outcome-free only and cannot rescue failed V44"
+    },
+    "shadow_data_integrity": {
+      "branch": "research/tvfree-canonical-batch02",
+      "status": "INFRASTRUCTURE_ACTIVE",
+      "controls": [
+        "append-only prospective shadow",
+        "evidence-chain receipt",
+        "snapshot staleness guard",
+        "branch ancestry guard",
+        "authorization gate"
+      ],
+      "production_authorized": false
+    }
+  },
+  "global_no_go_conditions": [
+    "Do not modify production/main/Discord/Spreadsheet/Stable6/Sniper/Mega/TradingView/watchlist builder/updater without explicit user Go",
+    "Do not promote from 2026 outcomes",
+    "Do not reopen rejected families by renaming or post-hoc threshold/cooldown/cost changes",
+    "Do not run heavy Core Yahoo workflow concurrently with authoritative Consensus V44"
+  ]
+}

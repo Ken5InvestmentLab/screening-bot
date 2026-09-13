@@ -18,7 +18,10 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
    - V17 dual-classifier and V18 quantile ranking are rejected on opened H1 and must not be retuned there.
    - Distinct compression-breakout V20 was rejected in 2024Q4 discovery; 2025 remains unopened for that family.
    - Canonical Monster v2 `ALL_WEAK_EARLY` exact replay is also rejected as a passed policy: 2025 locked replay mean +2.19% and +20% 12.96%, but frozen 0.5%-cost Top1-winner-excluded mean was -0.21%.
-   - **Active parallel event experiment:** `TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914`. Other chats must not duplicate or pre-empt that experiment while it remains active.
+   - **Active event experiment:** `TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914`, now formally owned by the :12 Canonical/Event worker. The earlier "parallel chat" ownership was retired because no dedicated automation or implementation existed.
+   - V20 evaluator + contract tests are frozen; contract CI run `34769637874` passed.
+   - V20 H1 cannot use the old 1,332-symbol raw panel: canonical prior-day H1 eligibility union is **1,810 symbols across 82 sessions**, sorted-list SHA `2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b`. Dedicated fail-closed H1 raw workflow is staged.
+   - Do not duplicate V20 in another chat/worker. Do not start its dedicated Yahoo fetch until active V44 Yahoo-heavy runs stop.
    - Must not duplicate Core breadth/stability or Consensus specialist work.
 
 2. **Prospective shadow + data-integrity lane** — also branch `research/tvfree-canonical-batch02`.

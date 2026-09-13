@@ -729,3 +729,17 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - H1 has not been opened. Dedicated Yahoo fetch is intentionally not triggered while V44 Yahoo-heavy runs remain active.
 - Addendum: `batch02/TENTEI_V20_H1_INPUT_CONTRACT_ADDENDUM.json`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+### V20 H1 pre-execution hardening update — temporal coverage / query-mode boundary
+
+- No H1 strategy outcome opened.
+- Raw coverage was strengthened before execution. Exact symbol-set presence alone is no longer sufficient.
+- Required temporal guard: for every frozen-universe symbol/date from 2025-01-06..2025-06-30 where canonical daily has finite positive close and volume>0, raw Yahoo 1H must contain at least one row for the same symbol/date.
+- Also fail closed on any duplicate symbol/timestamp, any final fetch failure, any missing/extra symbol, or any raw date outside the frozen window.
+- Temporal/symbol coverage contract CI: run `34770212752` SUCCESS. Workflow-watch CI after H1 workflow edits: run `34770320623` SUCCESS.
+- Yahoo explicit-period split-adjustment semantics were cross-checked against the Consensus lane: absolute OHLC can differ by later split factors, but overlapping session shape ratios reproduce to numerical noise and session volume matched 89/89. Frozen V20 intraday inputs are scale-invariant ratios/quantiles; absolute eligibility/endpoint labels remain canonical-daily only.
+- Query-mode compatibility report: `reports/v20_raw_query_mode_compatibility_20260914.md`.
+- Machine-readable readiness receipt: `V20_H1_PREEXECUTION_READINESS_20260914.json`.
+- Execution is still blocked while V44 Yahoo-heavy runs `34767664140` and `34766353425` remain active. No dedicated V20 fetch has started.
+- 2026 outcomes opened: false. Production modified: false.

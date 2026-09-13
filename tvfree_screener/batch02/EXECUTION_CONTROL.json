@@ -3,7 +3,7 @@
   "budget_pause_latched": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-STOCHASTIC-CROSS-20260913-01",
-  "milestone": "M27_STOCHASTIC_SPEC_FROZEN",
+  "milestone": "M28_STOCHASTIC_POOL_PREPARED",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -13,7 +13,7 @@
   "owned_jobs": [],
   "production_modified": false,
   "last_observed_remaining_percent": 54,
-  "last_usage_snapshot_utc": "2026-09-13 06:10:48 UTC",
+  "last_usage_snapshot_utc": "2026-09-13 06:19:43 UTC",
   "maximum_active_check_interval_seconds": 60,
   "last_completed_experiment": {
     "experiment_id": "CORE-BOLLINGER-RECLAIM-20260913-01",
@@ -30,7 +30,7 @@
   "last_completed_candidate_pool_artifact_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "3517308",
-  "next_action": "Build and exactly reproduce the frozen stochastic-cross candidate pool; commit outcome-free receipts before labels. Evaluate only purge-safe 2022H2/2023, then reject or freeze separate confirmation. Stop and latch when weekly usedPercent reaches 50; do not auto-resume.",
+  "next_action": "Commit the outcome-free candidate receipt, rebuild candidate/rank/selection and require exact digest match; commit reproduction before opening only purge-safe 2022H2/2023 labels.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -45,9 +45,9 @@
   "discovery_outcomes_opened": false,
   "validation_outcomes_opened": false,
   "frozen_discovery_feature_names": [],
-  "active_candidate_pool_rows": null,
-  "active_candidate_pool_sha256": null,
-  "active_candidate_pool_receipt_sha256": null,
+  "active_candidate_pool_rows": 75348,
+  "active_candidate_pool_sha256": "6fd7838bd57e62bc5ef5c9e00d156331b31166822a8c8a74daeb05c823758d4e",
+  "active_candidate_pool_receipt_sha256": "24588dd6d7bd22cbab49fc3ca6a0280b191e7458ca237e130017195a230f850b",
   "active_candidate_pool_reproduced": false,
   "active_pool_receipt_committed": false,
   "active_pool_reproduction_sha256": null,
@@ -63,5 +63,5 @@
     "six event-conditioned setups; 29 causal features; fixed three-head ridge scoring"
   ],
   "original_discovery_report_invalidated_sha256": "0385737e936325a68db963114e3746ca43f3e7a8a2ebb3d3cbec1b981bcf14b1",
-  "frozen_selection_sha256": null
+  "frozen_selection_sha256": "958c977a5b466090ee853f544db986617ea06d39d06d86239e8e4da9dcfa013d"
 }

@@ -1,0 +1,48 @@
+{
+  "experiment_id": "CORE-STOCHASTIC-CROSS-20260913-01",
+  "spec_sha256": "853d89bfa70cab2812e035ffcae30188e998d6cfb98b627acc602e82c240e5d7",
+  "input_sha256": {
+    "shared_family_spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+    "feature_panel_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "canonical_labels_sha256": "abf9c3181dfa1f86f78b75528eafaa27ba9bb9250db17b5b14e8970d60ad2732",
+    "canonical_labels_manifest_sha256": "e85edc74228c92a5922b0d54dc9c1712e42e0758febc2234e1586bcc6bc888ea",
+    "canonical_target_spec_sha256": "9bba8748f6f141cf045c9505fae0460faa5ff1f0713da5e3c5f31eca7223b8cf",
+    "canonical_target_spec_version_sha256": "6f56fc4c0f914f6faec0285e915a393044003505bc5d71cabb52e4d7778dcfa7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "xtks_calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "xtks_calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "candidate_selector": "ce0dd1ee0e1b33478c0f27e02442d2d604902c6a96024ea8068b81495380c0b8",
+    "audit_runner": "3d07ffa56b61603b163c825f726ad02d28fa57ab7f4ec3f6474c055c50fa411f",
+    "evaluation_metrics": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "one_to_one_report_summarizer": "ae341d211b154c5142ee11618a0527dff986d5d1da1bc2d7687ef85b8cb316b2"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "complete_stochastic_rows": 1256695,
+    "oversold_cross_rows": 100410,
+    "candidate_rows": 75348,
+    "candidate_symbols": 3510,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 75348,
+    "selected_rows": 1825,
+    "selected_days": 365,
+    "zero_selection_days": 0
+  },
+  "decision_hashes": {
+    "pool": "6fd7838bd57e62bc5ef5c9e00d156331b31166822a8c8a74daeb05c823758d4e",
+    "ranked": "30cb14cd1e1b378392d6fbe5db405b319a1914eb0204ccefc501e392c067fe3e",
+    "selected": "958c977a5b466090ee853f544db986617ea06d39d06d86239e8e4da9dcfa013d"
+  },
+  "artifact_sha256": {
+    "pool": "5de0fae578703b06a98952ab872419b993a0de5a725cd2801e8c50ebe48ec042",
+    "ranked": "d2116948707cc59702529e5dd7a84e3e1b9b2392d82e95d63d5510221c0aa81e",
+    "selected": "41bc8a5831aea26496277ebea16bf8d5cf447987f80988fac860b482045709ce"
+  },
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

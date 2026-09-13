@@ -58,6 +58,11 @@ def build_contexts(data: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
     )
 
 
+def validate_fetch_receipt(fetch: dict) -> float:
+    coverage = validate_fetch_receipt(fetch)
+    return coverage
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--frozen-daily", required=True)

@@ -1,12 +1,12 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T06:11:19+09:00",
+  "updated_at_jst": "2026-09-14T06:25:09+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "All three active branch HEADs still equal last_processed_sha at the last Supervisor scan. Canonical :12 subsequently classified the already-known V20 coverage failure outcome-blind and advanced its branch; see canonical branch state below."
+    "note": "All three active branch HEADs still equal last_processed_sha at the last Supervisor scan. Canonical :12 subsequently classified the already-known V20 coverage failure outcome-blind and advanced its branch; Core :24 then rechecked its lane and found no new SHA, workflow, or artifact requiring processing."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -24,7 +24,7 @@
       "preferred_worker": "core",
       "last_seen_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
       "last_processed_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
-      "last_processed_note": "Core executable-entry rerun 34774595196 completed SUCCESS and was reviewed. DEV 169/169 and 2025H2 140/140 have full canonical execution coverage; 2026_YTD is 116/118. The two unmatched report-only rows are 4586 and 4709 on 2026-04-17, both with canonical exec_date 2026-04-20 but missing raw Yahoo 1H entry bar/open. Existing Core and Failed-Breakdown Reclaim REJECT decisions remain unchanged and no locked H2 was opened."
+      "last_processed_note": "Core :24 rechecked HEAD, handoff/research files, and recent Actions. No new SHA or new workflow/artifact was present beyond executable-entry audit 34774595196 SUCCESS. DEV 169/169 and 2025H2 140/140 remain full canonical execution coverage; 2026_YTD remains 116/118 with only report-only Yahoo 1H entry-bar gaps for 4586/4709. Current fixed Core and Failed-Breakdown Reclaim remain REJECT; locked reclaim H2 remains unopened. No adjacent retune or new mechanism was introduced; continue audit/reproducibility only until a genuinely different low-DOF mechanism is preregistered before outcomes."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -78,6 +78,8 @@
       "execution_audit_run": 34774595196,
       "execution_audit_status": "completed/success",
       "execution_coverage": {"DEV":"169/169","H2_2025":"140/140","YTD_2026":"116/118"},
+      "last_repro_scan_jst": "2026-09-14T06:25:09+09:00",
+      "last_repro_scan_result": "NO_NEW_SHA_OR_ARTIFACT_KEEP_REJECTS",
       "next_rule": "No adjacent retune; audit/reproducibility only unless a genuinely different low-DOF mechanism is preregistered before outcomes."
     },
     "consensus_v44": {

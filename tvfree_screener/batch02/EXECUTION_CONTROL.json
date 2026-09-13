@@ -31,7 +31,7 @@
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "13fb02c",
   "last_completed_candidate_pool_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
-  "next_action": "Implement cutoff-aware scale-invariant features from raw AM_09_13 and PM_13_CLOSE clock bins. Use only prior completed comparable bins for rolling statistics/relative volume. Measure feature coverage and missingness first; do not open strategy outcomes yet. Keep exact TradingView equivalence explicitly out of scope and do not modify production.",
+  "next_action": "Materialize the causal intraday feature panel on the authorized cached sample, audit per-feature distributions/outliers/missingness with no strategy returns, and freeze the first 4H candidate-feature panel. Then design a locked retrospective performance replay without using 2026 to tune.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -166,5 +166,14 @@
   "causal_trailing5_scale_all4_within_2pct_rate": 0.7648165569143932,
   "causal_trailing5_volume_median_ape": 0.1953416780814663,
   "current_day_daily_anchor_preclose_allowed": false,
-  "pm_raw_hourly_safe_cutoff_jst": "16:00 until provider latency is verified"
+  "pm_raw_hourly_safe_cutoff_jst": "16:00 until provider latency is verified",
+  "causal_intraday_feature_extractor": "tvfree_screener/batch02/causal_intraday_features.py",
+  "causal_intraday_complete_bins_sample": 2305,
+  "causal_intraday_prior4_feature_coverage_bins": 2273,
+  "causal_intraday_prior4_feature_coverage_rate": 0.986117136659436,
+  "causal_intraday_prior20_same_bin_coverage_bins": 1985,
+  "causal_intraday_prior20_same_bin_coverage_rate": 0.8611713665943601,
+  "cross_day_absolute_price_features_status": "DEFERRED_PENDING_SCALE_BREAK_HANDLING",
+  "pm_close_location_model_eligible": false,
+  "volume_rel20_status": "EXPERIMENTAL_SOURCE_INTERNAL"
 }

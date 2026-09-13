@@ -16,7 +16,7 @@ Pin the exact prospective-shadow authorization event after the final authorizati
 
 This makes later changes to any of those inputs detectable. The receipt authorizes evidence collection only and explicitly never authorizes production promotion.
 
-## Verification
+## Initial verification
 Focused local logic execution: **7/7 PASS**.
 
 Cases covered:
@@ -28,10 +28,21 @@ Cases covered:
 6. malformed/non-40-char HEAD rejected on creation
 7. receipt always records `production_authorized: false`
 
-## Integrity disposition
-`AUTHORIZATION_RECEIPT_INFRASTRUCTURE_READY`
+## Semantic hardening — 2026-09-14
+A follow-up integrity audit found that a receipt body could be changed and its self-hash recomputed while some semantic fields were not independently checked. In particular, the verifier did not explicitly require the receipt's `decision` to equal the current authorization decision, `production_authorized` to remain false, the receipt type to remain fixed, or `created_at` to remain nonempty.
 
-This does not start prospective shadow by itself. A real receipt must only be created from a current, successful authorization-gate result after the required source branch HEADs have been re-fetched immediately before authorization.
+The verifier now enforces those semantic invariants independently of the self-hash. Tests were expanded to cover recomputed-hash tampering for:
+- `decision`
+- `production_authorized`
+- `receipt_type`
+- empty `created_at`
+
+A direct logic replay of the hardened implementation passed the round-trip and all four recomputed-hash tamper cases. No strategy returns, model outputs, or 2026 outcomes were used.
+
+## Integrity disposition
+`AUTHORIZATION_RECEIPT_INFRASTRUCTURE_READY_HARDENED`
+
+This does not start prospective shadow by itself. A real receipt must only be created from a current, successful authorization-gate result after the required source branch HEADs have been re-fetched immediately before authorization. Any later evidence append must verify the pinned receipt against the then-current authorization inputs and source HEADs; staleness remains blocking rather than advisory.
 
 ## Outcome/production isolation
 - strategy returns used: false

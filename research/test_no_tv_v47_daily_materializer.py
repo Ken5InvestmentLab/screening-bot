@@ -79,6 +79,32 @@ def test_cap_is_subset_of_nocap():
     assert not ((out["eligible_cap1000_daily"]) & (~out["eligible_nocap_daily"])).any()
 
 
+
+def test_terminal_404_is_not_retried():
+    calls={"n":0}
+    original=v47.requests.get
+
+    class Resp:
+        status_code=404
+        def raise_for_status(self):
+            raise AssertionError("terminal 404 should return before raise_for_status")
+
+    def fake_get(*args,**kwargs):
+        calls["n"]+=1
+        return Resp()
+
+    v47.requests.get=fake_get
+    try:
+        fr,sp,err=v47.fetch_restored_one("9999")
+    finally:
+        v47.requests.get=original
+
+    assert calls["n"]==1
+    assert fr.empty
+    assert sp==[]
+    assert err=="http_404_terminal"
+
+
 def main():
     tests=[
         test_membership_reverse,

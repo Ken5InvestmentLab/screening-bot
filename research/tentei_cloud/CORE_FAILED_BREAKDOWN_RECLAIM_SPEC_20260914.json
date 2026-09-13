@@ -1,0 +1,85 @@
+{
+  "spec_id": "CORE-FAILED-BREAKDOWN-RECLAIM-20260914-01",
+  "status": "PREREGISTERED_BEFORE_OUTCOME_ACCESS",
+  "role": "NEW_LOW_DOF_CORE_EVENT_FAMILY",
+  "rationale": "Test a mechanistically different Core family based on intraday failed-breakdown recovery rather than pruning the rejected fixed Core.",
+  "ownership": {
+    "lane": "Core breadth/stability",
+    "branch": "research/tentei-cloud-mtf",
+    "must_not_duplicate": [
+      "Event V12/V17/V18 representation/ranking",
+      "prospective shadow/data-integrity",
+      "Consensus V44 cooldown replacement"
+    ]
+  },
+  "data_contract": {
+    "intraday_source": "existing authorized Yahoo 1H extended panel on this branch",
+    "bar_representation": "fixed reconstructed session bars with 13:00 split; do not claim parity with original legacy 4H",
+    "daily_context": "previous completed XTKS daily bar only",
+    "no_same_day_final_daily_lookahead": true,
+    "universe_filters": {
+      "prior_daily_close_lte_jpy": 1000,
+      "prior_daily_volume_gte_shares": 10000,
+      "candidate_session_volume_gte_shares": 5000
+    }
+  },
+  "candidate_family": {
+    "name": "FAILED_BREAKDOWN_RECLAIM",
+    "definition": [
+      "candidate session low < previous completed daily low",
+      "candidate session close > previous completed daily low",
+      "candidate session close > candidate session open"
+    ],
+    "free_numeric_thresholds": 0,
+    "interpretation": "price breaks the prior completed-day low intraday, rejects the breakdown, and closes the session back above that level with a bullish session body"
+  },
+  "selection_policy": {
+    "select_all_eligible_events": true,
+    "ranking": "NONE",
+    "top_n": "NONE",
+    "same_symbol_cooldown": "5 official XTKS sessions",
+    "am_before_pm_if_same_day": true,
+    "no_backfill_or_parameter_sweep": true
+  },
+  "endpoint": {
+    "entry": "next official XTKS session open",
+    "exit": "fifth official XTKS session close after entry",
+    "primary_round_trip_cost": 0.005,
+    "cost_sensitivity": [0.0, 0.01]
+  },
+  "periods": {
+    "development": ["2024-11-01", "2025-03-31"],
+    "internal_validation": ["2025-04-01", "2025-06-30"],
+    "locked_confirmation": ["2025-07-01", "2025-12-31"],
+    "2026_policy": "REPORT_ONLY_IF_PRE2026_GATES_PASS; NEVER_TUNE_OR_SELECT_FROM_2026"
+  },
+  "advance_rules": {
+    "development_and_internal_validation_both_required": true,
+    "per_block_min_resolved_n": 20,
+    "primary_cost_net_mean_gt": 0,
+    "primary_cost_net_median_gte": 0,
+    "primary_cost_win_rate_gt": 0.5,
+    "primary_cost_top3_removed_mean_gt": 0,
+    "gross_loss10_rate_lte": 0.10,
+    "if_any_preconfirmation_gate_fails": "REJECT_WITHOUT_OPENING_LOCKED_CONFIRMATION",
+    "if_all_preconfirmation_gates_pass": "OPEN_2025H2_LOCKED_CONFIRMATION_ONCE"
+  },
+  "locked_confirmation_gate": {
+    "min_resolved_n": 30,
+    "primary_cost_net_mean_gt": 0,
+    "primary_cost_net_median_gte": 0,
+    "primary_cost_win_rate_gt": 0.5,
+    "primary_cost_top3_removed_mean_gt": 0,
+    "gross_loss10_rate_lte": 0.10
+  },
+  "integrity": {
+    "existing_fixed_core_rejected": true,
+    "not_a_filter_on_rejected_fixed_core": true,
+    "broad_market_gate_reuse": false,
+    "single_feature_median_split_reuse": false,
+    "peer_momentum_gate_reuse": false,
+    "2026_outcomes_used_to_define_spec": false,
+    "production_modified": false
+  },
+  "next_execution": "Implement a deterministic evaluator from this exact spec. Run development and internal-validation blocks only first. Do not open 2025H2 unless every frozen preconfirmation gate passes."
+}

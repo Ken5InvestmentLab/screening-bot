@@ -470,3 +470,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Decision: reject V7. Next structural direction: weight-free Pareto selection on upside/downside predictions.
 - Report: `reports/causal_4h_monster_v7_median_viability_tail_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## CAUSAL-4H-MONSTER-V8-PARETO-FRONT-20260913 — H1 PASS / H2 FAIL / REJECT PRODUCTION
+
+- Preregistered before V8 metrics. Reused unchanged V6 monthly q10/q50/q90 predictions.
+- Frozen rule: first nondominated Pareto front on maximizing q90 and q10, q90-first rank within front, no backfill, same cooldown.
+- H1 Pareto front 3.79% of rows. Top2 n=328 passed all frozen Monster gates: mean +0.88%, +20% 10.06%, <=-10% 18.90%, Top1-excluded +0.56%. Top1/3/5 failed.
+- H2 Pareto front 5.20%. Top2 mean -1.28%, +20% 5.44%, <=-10% 22.78%, Top1-excluded -1.56%; all TopN fail.
+- Decision: reject V8 as standalone production architecture. Do not choose Top2 as a promoted policy from exposed H1.
+- Interpretation: Pareto structure is the first current causal-4H design to pass all Monster gates on a named retrospective period, but regime/time instability remains.
+- Next: diagnose causal signal-time regime/context differences between passing and failing periods before freezing any new regime-aware rule.
+- Report: `reports/causal_4h_monster_v8_pareto_front_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

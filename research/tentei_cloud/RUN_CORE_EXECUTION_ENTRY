@@ -1,5 +1,6 @@
-trigger: 2026-09-14 core-execution-entry-v1
-purpose: test signal-close optimism using first executable next Yahoo 1H bar OPEN
+trigger: 2026-09-14 core-execution-entry-v2
+purpose: rerun identical executable-entry audit after fixing pandas datetime unit mismatch
 signal_rule: unchanged fixed reconstructed Core
+entry_proxy: first Yahoo 1H bar strictly after signal-session last_ts; use OPEN
 target: unchanged existing 5-business-day target close
 costs: 0.0 / 0.5% / 1.0% round-trip assumptions

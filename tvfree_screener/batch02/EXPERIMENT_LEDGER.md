@@ -242,3 +242,11 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - Overall unresolved fell from 32/1,800 to 19/1,800: 16 zero-volume holding sessions and 3 entry sessions with zero/unknown volume. Do not fabricate those bars. The change diagnoses label-cache coverage and does not alter the original `REJECT_CMF_FLOW_ACCELERATION` decision.
 - The user now prefers Yahoo daily bars as a best-effort supplement and wants hourly-vs-daily quality checks. Use the already-local Yahoo-derived panel for research label repair. Yahoo's official help prohibits automated retrieval/commercial reuse; no new scraper or live API call was implemented. A Codex-free comparator is specified in `reports/missing_5bd_data_remediation.md`, but the worktree has no local 1h/4h panel to measure real discrepancies yet.
 - Reproducible local audit: `audit_cmf_local_label_coverage.py`; JSON/Markdown outputs are in `reports/cmf_local_label_coverage_recovery.*`. All source/spec/selection hashes are in the JSON receipt.
+
+## CORE-MONSTER-WEAK-EARLY-V20 — FINAL DISPOSITION (2026-09-13)
+
+- Rechecked the frozen report `tvfree_screener/batch01/reports/monster_canonical_audit.json` read-only. The `ret10 <= 0.5735294117647058` threshold provenance matches the reconstructed 2023 V18 consensus median to 1e-12; this verifies lineage, not predictive value.
+- The 2023 retrospective candidate pool contains 69 rows, 68 resolved. At the assumed 0.5% round-trip cost, mean was +2.20%, median -2.30%, win rate 39.7%, and Top3-excluded mean -2.08%.
+- The registered Top1, Top2, Top3, and Top5 policy rows each have `status=FAIL`. The JSON's `SELECTION_COUNT_UNRESOLVED` means no selection count passed the frozen gate; it is not a missing-label or missing-price condition. Final family disposition: `REJECT_NO_TOPN_POLICY_PASSED`. Do not tune or re-sweep ret10, volr20, candidate gates, ranking, or cooldown on these exposed years.
+- 2025/2026 remain unopened in this audit. The existing 2024 summary is retrospective evidence and does not rescue a failed 2023 selection gate. The candidate remains a historical Monster hypothesis, not a frozen production-ready scorer.
+- This is a decision clarification from already-frozen artifacts; it does not alter candidate membership, labels, thresholds, or reported metrics.

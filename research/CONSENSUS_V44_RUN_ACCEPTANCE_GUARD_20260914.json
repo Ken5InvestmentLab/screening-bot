@@ -1,0 +1,36 @@
+{
+  "guard_id": "CONSENSUS-V44-RUN-ACCEPTANCE-GUARD-20260914-01",
+  "status": "PREREGISTERED_BEFORE_AUTHORITATIVE_V44_RESULT_ACCESS",
+  "authoritative_run_id": 34767664140,
+  "reason": "Two older invalid/superseded V44 runs remained concurrently in progress, so live Yahoo 1H fetch coverage must not be worse than the preserved V43 reference before V44 outcomes are accepted.",
+  "reference": {
+    "source_run": 34617009116,
+    "source_artifact_id": 10274083399,
+    "source_artifact_sha256": "720e68a29d290302378ac61dd4ec6798aa5ce3b838e71cb367a3a4d8d84a8618",
+    "requested_symbols": 1910,
+    "ok_symbols": 1850,
+    "errors": {
+      "HTTPError": 59,
+      "too_few_sessions": 1
+    },
+    "candidate_rows": 519163,
+    "candidate_symbols": 1793
+  },
+  "mandatory_checks": [
+    "baseline_reproduction_receipt.passed must be true",
+    "hourly_fetch.requested_symbols must equal 1910",
+    "hourly_fetch.ok_symbols must be >= 1850",
+    "hourly_fetch.candidate_symbols must be >= 1793",
+    "hourly_fetch.candidate_rows must be >= 519163"
+  ],
+  "decision": {
+    "if_all_checks_pass": "V44 outcome may be interpreted under its existing frozen contract",
+    "if_any_check_fails": "DO_NOT_INTERPRET_V44_OUTCOME; mark run fetch-degraded and rerun the same frozen evaluator only after superseded Yahoo-heavy runs are no longer active",
+    "no_threshold_model_cooldown_or_policy_change": true
+  },
+  "integrity": {
+    "strategy_outcomes_used_to_set_guard": false,
+    "V44_outcomes_opened_before_guard": false,
+    "production_modified": false
+  }
+}

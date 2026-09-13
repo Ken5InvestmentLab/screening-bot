@@ -43,6 +43,12 @@ jobs:
       - name: Run V44 Top-K cooldown replacement audit
         run: |
           PYTHONPATH=research python research/no_tv_v44_consensus_topk_cooldown.py             --frozen-daily frozen/tse_daily.csv             --max-workers 16             --output-dir research_artifacts/v44_consensus_topk_cooldown
+      - name: Hash V44 evidence
+        if: always()
+        run: |
+          if [ -d research_artifacts/v44_consensus_topk_cooldown ]; then
+            find research_artifacts/v44_consensus_topk_cooldown -type f -print0               | sort -z               | xargs -0 sha256sum               > research_artifacts/v44_consensus_topk_cooldown/SHA256SUMS.txt
+          fi
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -50,4 +56,4 @@ jobs:
           name: no-tv-consensus-v44-${{ github.run_id }}
           path: research_artifacts/v44_consensus_topk_cooldown/**
           if-no-files-found: warn
-          retention-days: 30
+          retention-days: 90

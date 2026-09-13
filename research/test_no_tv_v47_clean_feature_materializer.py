@@ -25,6 +25,7 @@ def make_daily():
     })
     d["next_open"]=d["open"].shift(-1)
     d["d5_close"]=d["close"].shift(-5)
+    d["exit_date_5bd"]=d["date"].shift(-5)
     return d
 
 
@@ -61,6 +62,7 @@ def test_build_symbol_rows_uses_nominal_log_price_and_canonical_target():
     row=daily.set_index("date").loc[dt]
     expected=row["d5_close"]/row["next_open"]-1
     assert math.isclose(first["canonical_ret_5bd"],expected)
+    assert first["exit_date_5bd"] == row["exit_date_5bd"]
 
 
 def test_enrich_arm_filters_policy_before_cross_section():

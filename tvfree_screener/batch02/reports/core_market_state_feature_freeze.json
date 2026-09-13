@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
+  "git_sha": "7739e4688bfb584e07f3ca21356919f3bada3079",
+  "registered_spec_sha256": "8d5efa0280715ae4c46f2b4a2580b11319cf901d59f4e86783a7ed26bb9255cb",
+  "frozen_at_utc": "2026-09-13T03:19:17.116981+00:00",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "discovery_report_sha256": "eb85138b24f56afc8858ee5158f697899193b1c3bcd8df1613a9543cb6f68f33",
+  "features": [
+    {
+      "feature": "range_pct",
+      "direction": "lower_for_winners",
+      "pooled_cliffs_delta": -0.14621236058887022,
+      "pooled_median_delta": -0.005760077387094498,
+      "tercile_edges": [
+        0.013355592265725136,
+        0.02361111156642437
+      ]
+    },
+    {
+      "feature": "dispersion20",
+      "direction": "lower_for_winners",
+      "pooled_cliffs_delta": -0.13005406039584688,
+      "pooled_median_delta": -0.0031399913132190704,
+      "tercile_edges": [
+        0.011891510337591171,
+        0.01889415830373764
+      ]
+    }
+  ],
+  "selection_rule": {
+    "minimum_winners_and_losers": 50,
+    "minimum_finite_feature_rate_among_resolved_each_split": 0.95,
+    "require_same_nonzero_direction_for": [
+      "Cliffs delta",
+      "winner-minus-loser median delta"
+    ],
+    "required_splits": [
+      "2022H2",
+      "2023",
+      "discovery_pooled"
+    ],
+    "minimum_absolute_pooled_cliffs_delta": 0.1,
+    "maximum_features": 2,
+    "sort": "absolute pooled Cliffs delta descending, feature name ascending",
+    "tercile_edges": "33.333% and 66.667% quantiles of all finite 2022H2+2023 candidate signal-time values for each selected feature, without labels",
+    "p_values": "not used because observations repeat by symbol and overlap in time; independent-sample significance is not claimed",
+    "failure": "If no feature passes, reject this feature family without lowering coverage/effect/class gates or searching replacement features."
+  },
+  "2024_confirmation_only": true,
+  "2025_plus_features_or_outcomes_opened": false
+}

@@ -1,10 +1,9 @@
 {
   "last_observed_used_percent": 41,
   "budget_pause_latched": false,
-  "outcome_values_opened_before_freeze": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
-  "milestone": "M9_DISCOVERY_PHASE_OPENED_AFTER_POOL_COMMIT",
+  "milestone": "M10_DISCOVERY_FEATURES_FROZEN_PRE_2024",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -31,7 +30,15 @@
   "candidate_pool_reproduced": true,
   "candidate_pool_commit": "e1e0f99",
   "outcome_values_opened_before_freeze": false,
-  "next_action": "Run the preregistered discovery on separately purged 2022H2 and 2023 outcomes only. Freeze at most two features under the registered gates; commit the discovery report and feature freeze before opening any 2024 outcome confirmation. Never use 2025+ in this audit. Recheck Fundamental V2 handoff after discovery.",
+  "next_action": "Commit discovery reports, frozen feature specification, ledger, and this gate state. Only after that commit, run the preregistered 2024 direction confirmation without feature replacement or threshold tuning; do not open 2025+.",
   "codex_dependent_production_process_implemented": false,
-  "automatic_resume_on_reset": false
+  "automatic_resume_on_reset": false,
+  "discovery_outcomes_opened": true,
+  "validation_outcomes_opened": false,
+  "frozen_discovery_feature_names": [
+    "range_pct",
+    "dispersion20"
+  ],
+  "discovery_report_sha256": "eb85138b24f56afc8858ee5158f697899193b1c3bcd8df1613a9543cb6f68f33",
+  "feature_freeze_sha256": "a51aa151da8ff6cde61e32b7dc3af49a15621aeff7f7b3fa6d3daaa1de9b18b3"
 }

@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
+  "registered_at_utc": "2026-09-13T03:02:19+00:00",
+  "status": "FROZEN_BEFORE_NEW_FEATURE_PANEL_OR_OUTCOME_READ",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "hypothesis": "Across the preserved all-market daily universe, signal-time states of the strongest five-session winners may differ from the largest losers in directions that repeat across 2022H2 and 2023 and directionally confirm in 2024.",
+  "historical_exposure": "Earlier research has viewed returns and selected feature findings from these years in narrower families. This broad all-market population is a new descriptive audit, not untouched OOS; no claim of statistical independence is made.",
+  "inputs": {
+    "source_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "preservation_manifest_sha256": "4c8ae91d91477fd6f5699573fff1cefc1c83e9055ba4c9e1296b6b66444c69e4",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "data": {
+    "source": "tvfree_screener/batch01/.cache/artifacts/tse_daily.csv",
+    "source_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "preservation_manifest_sha256": "4c8ae91d91477fd6f5699573fff1cefc1c83e9055ba4c9e1296b6b66444c69e4",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0",
+    "feature_panel_start": "2022-01-04",
+    "feature_panel_through": "2024-12-30",
+    "feature_timestamp": "official XTKS session close; same-day features are usable only after that close",
+    "post_cutoff_source_rows": "filter using the date prefix before parsing OHLCV numbers; do not compute or retain 2025+ numeric features or outcomes"
+  },
+  "candidate_pool": {
+    "universe": "Every date/symbol row in the preserved daily source for the study dates that has complete finite positive signal-day OHLCV, high/low internally consistent with open/close, positive volume, and signal-day gap ratio open/prior official close in [0.60, 1.40]. No First Reversal prefilter, ranking, cooldown, or daily cap; retain all valid names per day.",
+    "signal_period": ["2022-07-01", "2024-12-20"],
+    "price_availability": "Daily input through 2024-12-30 only; the first 60 sessions are retained as feature warm-up.",
+    "point_in_time_universe_caveat": "This is the symbol history present in the preserved Yahoo daily source, not a reconstructed historical constituent list; delisting/survivorship coverage is not guaranteed.",
+    "multiple_names_per_day": true,
+    "future_or_outcome_fields": false
+  },
+  "features": [
+    "ret1", "ret3", "ret5", "ret10", "ret20", "ret40",
+    "volr20_prevavg", "volume_trend5_20", "log_dollar_volume", "dollar_volume_median20",
+    "atr14p", "pos20", "pos40", "pos60", "dd20", "dd40",
+    "gap", "range_pct", "body_pct", "close_location", "red_count5", "down3", "down5",
+    "consecutive_down", "ret1_minus_ret5_per5", "dispersion20",
+    "market_median_ret1", "market_median_ret5", "market_median_ret1_lag1",
+    "market_median_ret5_lag1", "rel_ret5_lag1"
+  ],
+  "context_only_excluded_features": {
+    "dd60": "Previously selected only within First Reversal and reversed direction in 2024; do not reintroduce as a fresh finding.",
+    "days_since_drop5": "Previously excluded because missingness semantics were ambiguous; no replacement search in that family.",
+    "volr5_inclusive": "Same-day-inclusive legacy volume ratio.",
+    "volr20_inclusive": "Same-day-inclusive legacy volume ratio."
+  },
+  "target": {
+    "definition": "Return = close on fifth XTKS session including entry / open on next XTKS session - 1.",
+    "winner": "gross_return >= +0.10",
+    "loser": "gross_return <= -0.10",
+    "canonical_builder": "core_moderate_ridge_audit.build_labels_for_eligible_signals",
+    "actionability": "Retain all signal rows; unresolved future daily bars, zero volume, invalid OHLC, or gap outside [0.60,1.40] are labeled unresolved, never replaced or dropped from the candidate receipt."
+  },
+  "periods": {
+    "2022H2_discovery": {
+      "signal_dates": ["2022-07-01", "2022-12-23"],
+      "last_exit": "2022-12-30",
+      "rule": "Every label exit remains within calendar year 2022."
+    },
+    "2023_discovery": {
+      "signal_dates": ["2023-01-01", "2023-12-22"],
+      "last_exit": "2023-12-29",
+      "rule": "Every label exit remains within calendar year 2023."
+    },
+    "2024_direction_confirmation": {
+      "signal_dates": ["2024-01-01", "2024-12-20"],
+      "last_exit": "2024-12-30",
+      "rule": "Only features frozen from 2022H2/2023 may be evaluated; no feature replacement or threshold changes. This period was previously exposed and is not true OOS."
+    },
+    "2025": "Closed for feature selection. It may be opened only by a separately committed frozen pseudo-OOS specification after 2024 confirmation passes.",
+    "2026": "Report-only; do not tune, select, or promote from 2026."
+  },
+  "discovery_selection_rule": {
+    "minimum_winners_and_losers": 50,
+    "minimum_finite_feature_rate_among_resolved_each_split": 0.95,
+    "require_same_nonzero_direction_for": ["Cliffs delta", "winner-minus-loser median delta"],
+    "required_splits": ["2022H2", "2023", "discovery_pooled"],
+    "minimum_absolute_pooled_cliffs_delta": 0.10,
+    "maximum_features": 2,
+    "sort": "absolute pooled Cliffs delta descending, feature name ascending",
+    "tercile_edges": "33.333% and 66.667% quantiles of all finite 2022H2+2023 candidate signal-time values for each selected feature, without labels",
+    "p_values": "not used because observations repeat by symbol and overlap in time; independent-sample significance is not claimed",
+    "failure": "If no feature passes, reject this feature family without lowering coverage/effect/class gates or searching replacement features."
+  },
+  "confirmation_rule": {
+    "features": "Only the up to two frozen from discovery.",
+    "require_effect_direction": "Both 2024 Cliffs delta and median delta must match the discovery direction.",
+    "require_broad_band_direction": "The frozen favorable outer tercile must have a higher >=+10% winner share among >=+10% winners and <=-10% losers than the opposite outer tercile.",
+    "minimum_winners_and_losers_in_each_outer_tercile": 50,
+    "pass": "Every selected discovery feature must pass all 2024 confirmation checks; otherwise reject without replacement search.",
+    "2025_plus_outcomes": "not opened in this experiment"
+  },
+  "benchmark_context": {
+    "current_bot_stable6": {"n": 55, "mean": 0.066, "median": 0.015, "win_rate": 0.564},
+    "directly_comparable": false,
+    "reason": "Current Bot uses TradingView BOTTOM signals with different signal timing and entry; this audit is a descriptive all-market daily-bar state analysis, not a candidate strategy."
+  },
+  "implementation_sha256": {
+    "feature_audit": "6603a426e7ecc26c45ef5a2abc65b42b41a7f176c62576abc3a67098caf2d978",
+    "audit_runner": "f2f3b777d56e8553a521e70dd3e96b7718212f9ebe5900b89a18133d8c123b58",
+    "feature_audit_tests": "827d51b4f6d9d929e12fdc01645ea57570563d45938b55b4d8699be46355344a",
+    "feature_panel": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "feature_separation": "750e4d4c78d738e079a561f98be7f99106b4e5be40fcd9a449b285b1cb12a150",
+    "artifact_store": "8f3bae624a8a8fc170be3ed9571fcee50360b12b9d861f88ad5b5a6ea1898644",
+    "canonical_label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "evaluation": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33"
+  },
+  "production_modified": false
+}

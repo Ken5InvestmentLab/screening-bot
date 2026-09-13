@@ -1,10 +1,10 @@
 {
-  "last_observed_used_percent": 40,
+  "last_observed_used_percent": 41,
   "budget_pause_latched": false,
   "outcome_values_opened_before_freeze": false,
   "pause_when_remaining_percent_lte": 50,
-  "experiment_id": "CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01",
-  "milestone": "M6_GAP_RECLAIM_REJECTED_NO_PARAMETER_TUNING",
+  "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
+  "milestone": "M7_ALL_MARKET_STATE_SPEC_FROZEN_BEFORE_DATA_READ",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -13,33 +13,18 @@
   "daily_to_intraday_synthesis_implemented": false,
   "owned_jobs": [],
   "production_modified": false,
-  "last_observed_remaining_percent": 60,
+  "last_observed_remaining_percent": 59,
   "maximum_active_check_interval_seconds": 60,
-  "candidate_counts": {
-    "source_rows_in_period": 1260690,
-    "clean_signal_bars": 1245061,
-    "invalid_signal_bars": 15629,
-    "finite_gap_and_close_location": 1223930,
-    "candidate_rows": 11419,
-    "candidate_symbols": 3102,
-    "candidate_bearing_days": 365,
-    "ranked_candidate_rows": 11419,
-    "selected_rows": 2361,
-    "active_selection_days": 365,
-    "empty_candidate_days": 0,
-    "empty_selection_days": 0,
-    "discovery_months_including_zero_months": 18,
-    "mean_selected_per_calendar_month": 131.16666666666666
+  "last_completed_experiment": {
+    "experiment_id": "CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01",
+    "decision": "REJECT_GAP_RECLAIM_DISCOVERY",
+    "local_commit": "5622aa1",
+    "report": "tvfree_screener/batch02/reports/core_gap_reclaim_discovery.json"
   },
-  "decision_hashes": {
-    "pool": "354b3de71b32a27f854e2855ad4a7d395b320dcdabf4b54a7e62d537fcff57b2",
-    "ranked": "df9a37a7d820bd29684c4813a3719d7be360f5ee051e28c1eabf8079f996d38b",
-    "selected": "3997f9d573cff0d18ade886b327b019207b20b56c13853ea3c7895cd62cd1d3c"
-  },
-  "decision_commit": "926f983",
-  "evaluation_decision": "REJECT_GAP_RECLAIM_DISCOVERY",
-  "evaluation_report": "tvfree_screener/batch02/reports/core_gap_reclaim_discovery.json",
-  "next_action": "Record the gap-reclaim rejection without tuning. Then register an independent all-market winner/loser signal-state audit using a frozen broad feature list, 2022H2/2023 discovery, and 2024 direction-only confirmation; do not use 2025 for feature selection and do not reopen First Reversal's rejected DD60 direction as a fresh finding. Recheck Fundamental V2 handoff at the next milestone.",
+  "registered_spec_sha256": "8d5efa0280715ae4c46f2b4a2580b11319cf901d59f4e86783a7ed26bb9255cb",
+  "registered_feature_count": 31,
+  "outcome_values_opened_before_freeze": false,
+  "next_action": "Commit this registered all-market winner/loser feature audit and its passing tests before reading the data. Then build only the feature panel through 2024-12-30, filtering later CSV rows by date prefix before numeric OHLCV parsing; prepare and reproduce the candidate-pool hash, commit that receipt, and only then open separately purged 2022H2/2023 outcomes. Freeze selected features before 2024 confirmation; never use 2025+ in this audit. Recheck Fundamental V2 handoff after discovery.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false
 }

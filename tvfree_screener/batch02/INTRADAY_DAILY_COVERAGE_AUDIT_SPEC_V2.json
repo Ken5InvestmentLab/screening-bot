@@ -1,0 +1,55 @@
+{
+  "experiment_id": "DATA-QUALITY-INTRADAY-DAILY-COVERAGE-20260913-01",
+  "registered_date": "2026-09-13",
+  "supersedes": "INTRADAY_DAILY_COVERAGE_AUDIT_SPEC.json",
+  "status": "IMPLEMENTED_WAITING_FOR_LOCAL_EXPORT",
+  "purpose": "Read-only inventory of missing/partial/invalid legacy four-hour symbol-session rows and exact-key daily OHLCV availability. This audit does not make legacy bars eligible as scoring features.",
+  "data_source_policy": {
+    "legacy_four_hour": "User-provided local CSV export or copy of existing values; read only; never write back.",
+    "daily": "Already-cached local daily OHLCV; no new retrieval.",
+    "calendar": "Frozen local official XTKS session calendar.",
+    "runtime": "Standard local Python only; no Codex runtime dependency, APIs, paid services, or external notification."
+  },
+  "key": "Normalized symbol plus official XTKS session date.",
+  "timestamp_policy": {
+    "naive_timestamp": "Interpret as Asia/Tokyo local time.",
+    "offset_aware_timestamp": "Convert to Asia/Tokyo before deriving date and slot.",
+    "expected_slots": [
+      "09:00 JST",
+      "13:00 JST"
+    ]
+  },
+  "four_hour_classification": {
+    "COMPLETE_EXPECTED_SLOTS": "Exactly one valid 09:00 and one valid 13:00 row and no other slot.",
+    "NO_4H_BARS": "Daily symbol/session exists but no corresponding intraday rows exist.",
+    "MISSING_MORNING_BAR": "13:00 is present but 09:00 is absent.",
+    "MISSING_AFTERNOON_BAR": "09:00 is present but 13:00 is absent.",
+    "DUPLICATE_OR_UNEXPECTED_4H_BARS": "Duplicate expected slots or timestamps outside expected slots.",
+    "INVALID_4H_OHLCV": "At least one present intraday row has invalid OHLCV."
+  },
+  "daily_classification": [
+    "AVAILABLE_VALID_OHLCV",
+    "AVAILABLE_ZERO_VOLUME",
+    "MISSING_DAILY_ROW",
+    "DUPLICATE_DAILY_KEY",
+    "INVALID_DAILY_OHLCV"
+  ],
+  "population": "All daily symbol/session pairs in the audited date span plus observed four-hour-only keys. A pair absent from both inputs needs a point-in-time security universe and cannot be inferred.",
+  "price_semantics": {
+    "daily_ohlcv": "Included to prove same-key availability only.",
+    "adjustment_consistency": "NOT_ASSESSED_BY_COVERAGE_AUDIT; source metadata must be checked separately.",
+    "permitted_use": "Coverage diagnostics only; no daily-to-intraday synthesis and no model feature promotion."
+  },
+  "outputs": [
+    "missing_four_hour_symbol_sessions.csv",
+    "four_hour_keys_without_daily.csv",
+    "summary.json with input SHA-256 values, counts, and scope limitations"
+  ],
+  "prohibited": [
+    "Modifying the source sheet or source export",
+    "Fetching data or using production credentials",
+    "Filling, forward-filling, or synthesizing intraday OHLC from daily bars",
+    "Claiming pairs absent from both sources were audited",
+    "Using this legacy coverage audit to qualify a scoring model"
+  ]
+}

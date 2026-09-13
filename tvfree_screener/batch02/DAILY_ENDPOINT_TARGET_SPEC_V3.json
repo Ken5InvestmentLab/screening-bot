@@ -1,0 +1,69 @@
+{
+  "experiment_id": "TARGET-DAILY-ENDPOINT-PATH-SEPARATION-20260913-03",
+  "registered_date": "2026-09-13",
+  "supersedes": "TARGET-DAILY-ENDPOINT-PATH-SEPARATION-20260913-02",
+  "superseded_spec_sha256": "cecb2d2647a3b042cb061d9019f2f239e8b1680b1f5cf7bd8d8d720a76624d86",
+  "reason_for_supersession": "User authorized revising the feature timeframe and bar boundaries when a better market-aligned design is supported.",
+  "status": "REGISTERED_BEFORE_NEW_ENDPOINT_RESULT_ACCESS",
+  "feature_representation_policy": {
+    "status": "NOT_FROZEN",
+    "principle": "Choose signal-time representation from evidence, actual market hours, and data quality; do not inherit a TradingView label by default.",
+    "families_to_compare": [
+      "TSE session-aligned morning and afternoon bars rebuilt from raw intraday observations",
+      "TradingView-compatible 09:00-12:59 and 13:00-to-official-close bins rebuilt from the same raw observations",
+      "intraday features reconciled with daily OHLCV where mathematically and temporally valid",
+      "daily features as a separate candidate family, never relabeled as intraday"
+    ],
+    "candidate_feature_timestamp": "Only completed observations available by the signal timestamp may be used.",
+    "legacy_intraday_artifact": "Do not use the special legacy ohlcv_4h values as model features and never mutate them. A read-only gap audit on an exported copy is allowed.",
+    "fresh_intraday_artifact": "Build any intraday panel used for scoring from raw intraday input under a versioned, exchange-aware specification and store it separately in ignored research artifacts.",
+    "selection_gate": "Freeze feature family and bar definitions before outcomes. Compare identical frozen symbol/session pools and identical endpoint targets."
+  },
+  "daily_data_role": [
+    "Next-official-session-open to fifth-session-close endpoint target",
+    "Same-symbol/same-session availability and intraday consistency audit",
+    "Source reconciliation or a separately tested daily-context feature only when available at signal time",
+    "Separate daily-feature candidate family"
+  ],
+  "daily_supplement_limits": {
+    "may_validate": "Full-day open/high/low/close/volume aggregated from intraday can be compared with the same-session daily bar after source adjustment semantics are aligned.",
+    "may_replace_when_available": "A same-session daily close can serve as the end-of-day close for a signal evaluated after that daily bar is final. Daily open may validate the session open.",
+    "cannot_reconstruct": "Daily high/low/close/volume cannot determine which intraday session or time produced an extreme or allocate total volume across morning and afternoon.",
+    "lookahead": "Same-day daily high, low, close, and total volume are unavailable to intraday signals before market close; using them earlier leaks future information.",
+    "derived_residual_volume": "Daily total minus independently validated complete morning volume may be tested as a separately source-tagged afternoon-volume diagnostic only when both sources share adjustment and coverage semantics and the residual is nonnegative. It must not be reported as observed hourly volume."
+  },
+  "target": {
+    "entry": "Open of the next official XTKS business session after the signal date.",
+    "exit": "Close of the fifth official XTKS business session after the signal date, counting the entry session as session one.",
+    "entry_exit_price_source": "Already available daily OHLCV only; no intraday fill price is inferred.",
+    "signal_time_effect": "Morning and afternoon signals on the same session use the same daily entry and exit dates/prices.",
+    "endpoint_return": "exit_close / entry_open - 1",
+    "label_definition_id": "v2_next_xtks_open_to_fifth_close_endpoint_mark_to_market",
+    "path_definition_id": "v1_next_xtks_open_to_fifth_close_with_daily_path_and_actionability_guards"
+  },
+  "endpoint_label": {
+    "required_prices": "Positive finite entry-session open and fifth-session close on exact official session dates.",
+    "intermediate_daily_bars": "Not required for endpoint mark-to-market; missing interior sessions remain explicitly path-incomplete.",
+    "volume": "Does not erase endpoint mark-to-market; zero or unknown endpoint/interior volume remains an execution-quality diagnostic.",
+    "missing_or_invalid_endpoint": "Unresolved status; never forward-fill or skip sessions."
+  },
+  "evaluation_scope": {
+    "unit_tests": "Synthetic daily bars, including same-session morning and afternoon signals and missing interior sessions.",
+    "retrospective_audit": "Previously exposed artifacts only; endpoint and strict-path metrics remain separate.",
+    "closed_periods": [
+      "2025",
+      "2026"
+    ],
+    "feature_choice": "Do not tune new bar definitions or feature supplementation on previously viewed 2025/2026 outcomes."
+  },
+  "prohibited": [
+    "Treating a daily-feature model as an intraday model",
+    "Treating unequal TSE session bars as equal-duration four-hour bars",
+    "Using legacy special-construction ohlcv_4h values as features or overwriting them",
+    "Mixing endpoint-only and strict-path metrics",
+    "Synthesizing missing intraday OHLC from daily OHLCV",
+    "Using final daily OHLCV before its market close",
+    "Opening 2025/2026 outcomes for new feature selection",
+    "External price fetch or account signup as part of this frozen label test"
+  ]
+}

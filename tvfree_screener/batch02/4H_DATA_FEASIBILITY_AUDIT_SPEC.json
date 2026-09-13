@@ -1,0 +1,69 @@
+{
+  "experiment_id": "DATA-QUALITY-4H-FEASIBILITY-20260913-01",
+  "assessment_date": "2026-09-13",
+  "status": "SOURCE_REVIEW_COMPLETE_LOCAL_CANDLE_AUDIT_WAITING_FOR_EXPORT",
+  "classification": "4H_INFEASIBLE",
+  "classification_scope": "All-TSE, multi-year historical signal research from 2022 onward, free/no-contract sources with repeatable ordinary-runtime use, among officially documented sources reviewed.",
+  "not_a_universal_claim": "This does not prove that no free source exists anywhere. A newly identified source can reopen the classification after actual coverage, permissions, history, and repeatability are verified.",
+  "constraints": [
+    "No external data subscription or contract",
+    "No Codex/LLM dependency in eventual data collection or production",
+    "No automated scraping absent source permission",
+    "Never mutate legacy data",
+    "No daily-to-intraday bar synthesis"
+  ],
+  "local_artifacts": {
+    "daily": "4,061,361-row Yahoo-derived daily CSV, SHA-256 6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "raw_intraday_or_legacy_4h_export": "Not present in the research worktree",
+    "consequence": "No real hourly-vs-daily consistency distributions, legacy 4h gap counts, or fresh session-bar backtest results can be stated."
+  },
+  "existing_runtime_observation": {
+    "source": "Read-only inspection of weekly_report_gas documentation and GAS source",
+    "path": "Yahoo 1-hour requests -> AM/PM aggregation -> legacy ohlcv_4h",
+    "retention": "365 days per project operating documentation",
+    "scope": "Current feed is tied to signal/repair workflows; all-TSE multi-year research coverage is unestablished.",
+    "qualification": "This proves recent 1-hour-derived AM/PM values are produced in ordinary GAS. It does not prove feed permission, full coverage, accuracy, or multi-year historical data.",
+    "mutation": "None"
+  },
+  "provider_review": [
+    {
+      "source": "JPX J-Quants API Free",
+      "finding": "Official plan table describes free daily OHLC with a 12-week delay; official 2026 enhancement says minute/tick is a paid add-on from Light or higher. Fails the no-cost intraday requirement."
+    },
+    {
+      "source": "Twelve Data Basic",
+      "finding": "Official docs list 4h interval, but Basic describes global trial symbols and 8 API credits/minute, 800/day; all-TSE, delisted, and multi-year free intraday coverage is not established."
+    },
+    {
+      "source": "Alpha Vantage",
+      "finding": "Intraday documentation offers historical depth but labels TIME_SERIES_INTRADAY as a premium endpoint."
+    },
+    {
+      "source": "Yahoo Finance",
+      "finding": "Current project code uses Yahoo 1h through ordinary GAS and documents 365-day retention for the derived legacy bars. Official terms prohibit automated collection without express prior permission. No permission evidence or all-TSE multi-year raw panel is in the research worktree."
+    }
+  ],
+  "daily_reconciliation": {
+    "status": "REGISTERED_NOT_RUN_NO_RAW_INTRADAY",
+    "reporting_limit": "Daily-vs-hourly comparisons measure provider-internal consistency and do not establish which side is ground truth.",
+    "allowed_supplement": "Validate full-day summary or use time-valid daily close/context; never infer per-session extremes or pre-close information."
+  },
+  "hybrid_assessment": {
+    "status": "UNPROVEN",
+    "hypothesis": "Daily broad-universe candidate generation plus recent session-aligned intraday reranking could lower retrieval burden.",
+    "gates": [
+      "Freeze candidates without future outcomes.",
+      "Measure eligible intraday-source coverage and missingness for every requested key.",
+      "Verify timestamps, adjustment basis, and Codex-free reproducibility.",
+      "Compare daily-only, intraday-only, and reconciled variants on the identical candidate pool and endpoint."
+    ]
+  },
+  "next_required_inputs": [
+    "Read-only export of legacy ohlcv_4h values for the requested gap inventory.",
+    "Raw 1-hour or finer OHLCV export with timestamp interval semantics for an independent rebuild and daily-consistency audit."
+  ],
+  "production_modified": false,
+  "network_market_data_fetched": false,
+  "paid_service_used": false,
+  "existing_intraday_data_mutated": false
+}

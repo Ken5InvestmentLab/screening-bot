@@ -250,3 +250,47 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - The registered Top1, Top2, Top3, and Top5 policy rows each have `status=FAIL`. The JSON's `SELECTION_COUNT_UNRESOLVED` means no selection count passed the frozen gate; it is not a missing-label or missing-price condition. Final family disposition: `REJECT_NO_TOPN_POLICY_PASSED`. Do not tune or re-sweep ret10, volr20, candidate gates, ranking, or cooldown on these exposed years.
 - 2025/2026 remain unopened in this audit. The existing 2024 summary is retrospective evidence and does not rescue a failed 2023 selection gate. The candidate remains a historical Monster hypothesis, not a frozen production-ready scorer.
 - This is a decision clarification from already-frozen artifacts; it does not alter candidate membership, labels, thresholds, or reported metrics.
+
+## TARGET-DAILY-ENDPOINT-PATH-SEPARATION-20260913-01 — REGISTERED
+
+- User approved one common daily endpoint for morning/afternoon signals: next XTKS session open to the fifth XTKS session close, with entry day counted as session one. The formula already exists in the strict batch01 labeler; this experiment adds a separately named endpoint-only result and keeps path/actionability completeness separate.
+- Frozen spec: tvfree_screener/batch02/DAILY_ENDPOINT_TARGET_SPEC.json; SHA-256 1250b7fae5eab0137de5bc4d0a7057c4e0683a1e37446bf25b33c08d0bca9f51.
+- Candidate membership/selection is frozen. Unit tests use synthetic daily bars. Any retrospective audit is limited to previously opened 2022H2-2023 CMF discovery artifacts; 2024-2026 stay closed. No daily-to-intraday synthesis or external data retrieval.
+- Stop latch explicitly cleared by the user's resume instruction. New pause threshold: 45% weekly remaining (55% used); latest observed: 50% used / 50% remaining.
+- Status: registered before endpoint-only result access; implementation and tests pending.
+
+## DATA-QUALITY-INTRADAY-DAILY-COVERAGE-20260913-01 — REGISTERED / INPUT MISSING
+
+- User requested a complete missing four-hour symbol/session inventory and same-key daily OHLCV check. The research worktree has a 4,061,361-row local daily CSV and frozen XTKS calendar, but no local four-hour export or four-hour candle panel; no production Sheet credentials or network fetch will be used.
+- Frozen spec: INTRADAY_DAILY_COVERAGE_AUDIT_SPEC.json. The audit script accepts local CSV exports, hashes each input, separates fully missing, one-slot missing, duplicate/unexpected, invalid 4-hour, and daily availability/validity statuses.
+- Expected pairs use the daily file's symbol/session rows plus observed four-hour-only keys; pairs absent from both sources need a point-in-time security universe and cannot be inferred from these two files.
+- Status: script and synthetic tests pending; complete real-data inventory cannot be reported until a local four-hour CSV export is available.
+
+## USER METHODOLOGY CLARIFICATION — FOUR-HOUR FEATURES REQUIRED
+
+- The user clarified that the TV-Free score features/ranking must remain four-hour based because daily feature performance had already been judged inadequate. The daily-only batch02 experiments are retrospective rejected research and do not satisfy or qualify as four-hour candidates.
+- Daily OHLCV in the newly registered endpoint work is for the common next-session-open/fifth-session-close evaluation target and same-day data-availability audit only. Any future feature fallback must be independently frozen and visibly source-tagged; no silent timeframe mixing.
+- DAILY_ENDPOINT_TARGET_SPEC.json was superseded by DAILY_ENDPOINT_TARGET_SPEC_V2.json before endpoint-only result access. V2 SHA-256: cecb2d2647a3b042cb061d9019f2f239e8b1680b1f5cf7bd8d8d720a76624d86.
+- Repository evidence: the preserved source artifact manifest contains a 4,061,361-row daily CSV but no raw four-hour export; the current batch02 feature panel and recent candidate experiments are daily-based. A full four-hour scoring audit cannot be claimed from those artifacts.
+
+## DATA-QUALITY-4H-FEASIBILITY-20260913-01 — SOURCE REVIEW COMPLETE / RAW INPUTS MISSING
+
+- User authorized changing timeframe/bar boundaries and suggested testing daily OHLCV as a validator or supplement for unreliable Yahoo hourly data. The feature representation is not frozen; compare TSE session bars, raw-rebuilt TradingView-compatible bins, intraday-plus-daily reconciliation, and a separate daily-feature family.
+- Official JPX hours are 09:00-11:30 and 12:30-15:30; the afternoon close changed from 15:00 to 15:30 on 2024-11-05, with a 15:25-15:30 closing auction. Session bars are market-aligned but not equal-duration four-hour bars.
+- Read-only source inspection found an existing ordinary-GAS route from Yahoo 1h to AM/PM values and documented 365-day legacy retention. It does not prove all-TSE multi-year coverage or data-source permission. The research worktree has a 4,061,361-row daily CSV but no raw hourly or legacy 4H export.
+- A same-provider daily-vs-hourly comparison measures internal consistency, not which feed is true. Daily full-session OHLCV can validate an intraday aggregate; it cannot recover per-session extremes/volume or be used before close. Same-day daily values before close would leak future data.
+- Free-source review: J-Quants Free is daily; JPX minute/tick is a paid add-on. Twelve Data documents 4h but Basic describes global trial symbols and 8 credits/min, 800/day; full TSE/delisted/multi-year free coverage is unestablished. Alpha Vantage marks intraday Premium. Yahoo terms prohibit automated data collection without express prior permission.
+- Decision 4H_INFEASIBLE is scoped to all-TSE multi-year research under the no-contract constraints among official sources reviewed, not a universal claim. Daily-plus-recent-intraday hybrid remains UNPROVEN; neither daily-only nor legacy 4H is selected as final.
+- V2 gap-audit and endpoint specs were superseded before real inputs/results by INTRADAY_DAILY_COVERAGE_AUDIT_SPEC_V2.json and DAILY_ENDPOINT_TARGET_SPEC_V3.json. HOURLY_DAILY_CONSISTENCY_AUDIT_SPEC.json registers per-field daily-vs-hourly source reconciliation.
+- If intraday is used, rebuild from raw input into separate ignored research artifacts. Never mutate or score from legacy ohlcv_4h. Read-only legacy gap audit uses a local exported copy. No production file, Sheet, workflow, account, API key, or external market-data service was touched.
+- Focused synthetic tests passed: 2 gap-audit tests, 5 endpoint/path-separation tests, and 6 hourly/daily consistency tests (13 total). The hourly/daily runner requires explicit bar interval and start/end timestamp semantics; lunch/close-crossing bars are included whole and flagged, never split. Real hourly-vs-daily distributions and missing symbol/session counts await local raw hourly and legacy 4H exports.
+- Reports/specs: reports/4h_data_feasibility_audit_20260913.md, 4H_DATA_FEASIBILITY_AUDIT_SPEC.json, HOURLY_DAILY_CONSISTENCY_AUDIT_SPEC.json, INTRADAY_BAR_DEFINITION_STUDY_SPEC.json, INTRADAY_DAILY_COVERAGE_AUDIT_SPEC_V2.json, DAILY_ENDPOINT_TARGET_SPEC_V3.json.
+
+## USER-SUPPLIED TV-FREE PRIOR-RESEARCH HANDOFF — ACCEPTED AS HISTORY, NOT CANONICAL SCORES
+
+- The independent end goal is a TradingView-free TSE screener that can compete with current Stable/Sniper/Mega performance; exact signal overlap is irrelevant. Keep Core and Monster as separate roles. Existing products/data/workflows remain unchanged.
+- Old V29 headline metrics are not canonical. Its limited-universe result does not survive the later full-universe V40 audit (negative), so reject V29 as a current Core candidate while retaining consensus/three-head ranking as an architecture clue. Do not claim Stable dependence without tracing actual feature/label/filter/ranking use of `stable_score`.
+- Monster `weak market + early ret10 + low volr20` remains the leading historical hypothesis, not a production-ready winner. Verify the `ret10 <= 0.5735294117647058` provenance from the 2023 V18 consensus collection before treating it as frozen. Prior one-pick/day numbers do not settle a multi-candidate pool.
+- Preserve every candidate-pool row and evaluate Top1/2/3/5 with independent chronological cooldown simulations plus candidate-pool equal-weight daily cohorts; these are not portfolio returns. Build a portfolio simulation only after a candidate survives these screens.
+- Core is incomplete. Do not relabel rejected families as new hypotheses. A genuinely new next set may include clipped-upside expected-return regression, point-in-time sector-lag (only with valid historical classifications), and orderly pullback in an intact uptrend. Keep First Reversal research-only unless it generalizes without 2025/2026 tuning.
+- Historical 2025 is seen and is not blind OOS; 2026 is reporting-only. Only post-freeze forward data can establish true forward performance. Any old candidate score must be re-evaluated if universe, cooldown, selection count, calendar, entry/exit, or label definition changes.

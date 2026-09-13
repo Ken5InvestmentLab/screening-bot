@@ -1,0 +1,45 @@
+{
+  "experiment_id": "DATA-QUALITY-INTRADAY-DAILY-COVERAGE-20260913-01",
+  "registered_at_utc": "2026-09-13T08:37:55Z",
+  "status": "IMPLEMENTATION_ONLY_WAITING_FOR_LOCAL_FOUR_HOUR_EXPORT",
+  "purpose": "For every locally represented daily symbol/session pair in the four-hour dataset date range, classify missing four-hour morning/afternoon bars and exact same-symbol/date daily OHLCV availability.",
+  "data_source_policy": {
+    "four_hour": "User-provided local CSV export of the existing 4-hour source; no production credentials or live Google Sheets access.",
+    "daily": "Already cached local daily OHLCV CSV; no network retrieval or Yahoo scraping.",
+    "calendar": "Frozen local XTKS official session CSV.",
+    "runtime": "Ordinary local Python only; standard library; no Codex, LLM, API, paid service, or external notification."
+  },
+  "key": "Normalized symbol plus official XTKS session date.",
+  "expected_intraday_slots": {
+    "morning": "Timestamp hour 09 local exchange time",
+    "afternoon": "Timestamp hour 13 local exchange time",
+    "complete_day": "Exactly one valid bar in each expected slot and no unexpected-slot or duplicate rows"
+  },
+  "population": "All unique symbol/session rows present in the local daily OHLCV source within the audited date span, plus observed four-hour-only keys. This cannot discover a symbol/session absent from both sources without a separate point-in-time listing universe.",
+  "daily_status": [
+    "AVAILABLE_VALID_OHLCV",
+    "AVAILABLE_ZERO_VOLUME",
+    "MISSING_DAILY_ROW",
+    "DUPLICATE_DAILY_KEY",
+    "INVALID_DAILY_OHLCV"
+  ],
+  "four_hour_status": [
+    "COMPLETE_EXPECTED_SLOTS",
+    "NO_4H_BARS",
+    "MISSING_MORNING_BAR",
+    "MISSING_AFTERNOON_BAR",
+    "DUPLICATE_OR_UNEXPECTED_4H_BARS",
+    "INVALID_4H_OHLCV"
+  ],
+  "outputs": [
+    "missing_four_hour_symbol_sessions.csv, including daily OHLCV and availability status",
+    "four_hour_keys_without_daily.csv",
+    "summary.json with input hashes, coverage counts, and scope limitations"
+  ],
+  "prohibited": [
+    "Fetching any external data or using production credentials",
+    "Filling, forward-filling, or synthesizing hourly/four-hour values from daily OHLCV",
+    "Treating daily price availability as proof of intraday signal feature availability or executable fill",
+    "Inferring symbol/session pairs absent from both supplied datasets"
+  ]
+}

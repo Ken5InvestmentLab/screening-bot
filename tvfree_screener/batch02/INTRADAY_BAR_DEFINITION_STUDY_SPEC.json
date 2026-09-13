@@ -1,0 +1,38 @@
+{
+  "experiment_id": "INTRADAY-BAR-DEFINITION-STUDY-20260913-01",
+  "registered_date": "2026-09-13",
+  "status": "REGISTERED_BEFORE_NEW_OUTCOME_ACCESS",
+  "purpose": "Compare market-session-aligned intraday representations with nominal TradingView bins and daily representations for an independent scorer.",
+  "candidate_definitions": [
+    {
+      "id": "TSE_SESSION_ALIGNED",
+      "morning": "09:00-11:30 JST",
+      "afternoon_pre_2024_11_05": "12:30-15:00 JST",
+      "afternoon_from_2024_11_05": "12:30-15:30 JST",
+      "note": "Actual XTKS sessions with unequal active durations; not equal-duration four-hour bars. Closing auction handling from 2024-11-05 is explicit."
+    },
+    {
+      "id": "TV_COMPATIBLE_RECONSTRUCTION",
+      "morning_bin": "09:00-12:59 JST",
+      "afternoon_bin": "13:00-to-official-close JST",
+      "note": "Rebuilt only from raw intraday input; legacy special-construction bars are not used as model features."
+    },
+    {
+      "id": "DAILY_FEATURES",
+      "definition": "Daily OHLCV features as a separate candidate family."
+    },
+    {
+      "id": "INTRADAY_DAILY_RECONCILED",
+      "definition": "Intraday features plus daily consistency checks and only signal-time-valid daily supplements; source-tag all reconstructed/validated fields."
+    }
+  ],
+  "input_requirement": "Raw intraday observations fine enough to assign the 11:30/12:30 session boundary without splitting an already aggregated bar. Hourly data is accepted only if its timestamp and bar-interval semantics prove exact boundary alignment.",
+  "artifact_policy": "Read raw inputs only; write fresh panels to separate ignored research artifacts with input hashes, transformation version, timezone, session calendar, and adjustment policy. Never mutate legacy data.",
+  "evaluation": {
+    "candidate_pool": "Same frozen symbol/session candidate pool across eligible representations.",
+    "target": "DAILY_ENDPOINT_TARGET_SPEC_V3.json; next official-session open to fifth-session close.",
+    "metrics": "Sample count, mean, median, win, +10/+20/+50, -10/-20, Top1/Top3 exclusion, month/week/symbol concentration, unresolved labels, and path/actionability separately.",
+    "validation": "Register features and bar definitions before outcome access; 2025/2026 report-only and unavailable for feature selection."
+  },
+  "decision": "No representation is promoted until an eligible raw intraday source and a fair same-candidate comparison are available."
+}

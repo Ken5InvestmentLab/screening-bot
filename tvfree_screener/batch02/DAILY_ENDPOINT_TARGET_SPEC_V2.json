@@ -1,0 +1,45 @@
+{
+  "experiment_id": "TARGET-DAILY-ENDPOINT-PATH-SEPARATION-20260913-02",
+  "registered_at_utc": "2026-09-13T08:40:00Z",
+  "supersedes": "TARGET-DAILY-ENDPOINT-PATH-SEPARATION-20260913-01",
+  "reason_for_supersession": "User clarified that TV-Free scoring features must be based on four-hour data; daily OHLCV is accepted here only for endpoint evaluation and data-gap auditing.",
+  "status": "REGISTERED_BEFORE_NEW_ENDPOINT_LABEL_ACCESS",
+  "feature_timeframe": "Four-hour bars are required for scoring features, ranks, and signal-time candidate selection. Daily-only feature experiments do not qualify as four-hour system candidates.",
+  "daily_data_role": [
+    "Next-official-session-open to fifth-session-close endpoint target",
+    "Same-symbol/same-session availability audit against missing four-hour bars",
+    "Any future feature fallback must have a separately frozen policy, source indicator, and validation; no silent timeframe mixing"
+  ],
+  "target": {
+    "entry": "Open of the next official XTKS business session after the signal date.",
+    "exit": "Close of the fifth official XTKS business session after the signal date, counting the entry session as session one.",
+    "entry_exit_price_source": "Already available daily OHLCV only; no 1-hour or 4-hour fill prices.",
+    "signal_time_effect": "Morning and afternoon signals on the same session use the same daily entry and exit dates/prices.",
+    "endpoint_return": "exit_close / entry_open - 1",
+    "label_definition_id": "v2_next_xtks_open_to_fifth_close_endpoint_mark_to_market",
+    "path_definition_id": "v1_next_xtks_open_to_fifth_close_with_daily_path_and_actionability_guards"
+  },
+  "endpoint_label": {
+    "required_prices": "Positive finite entry-session open and fifth-session close on the exact calendar dates.",
+    "intermediate_daily_bars": "Not required to calculate endpoint mark-to-market; missing interior sessions remain explicitly path-incomplete.",
+    "volume": "Does not erase the endpoint mark-to-market result; zero or unknown endpoint/interior volume is exposed as an execution-quality diagnostic.",
+    "missing_or_invalid_endpoint": "Keep row unresolved with a target-specific status; never forward-fill or jump sessions."
+  },
+  "path_and_execution_diagnostics": {
+    "strict_label": "Retain existing strict labeler unchanged; inspect all five official daily bars and preserve OHLCV, volume, gap, and split-size checks.",
+    "interpretation": "A resolved endpoint return is not proof of intraday path, queue priority, limit execution, liquidity, or executable fill. Endpoint and strict-path metrics must be reported separately."
+  },
+  "evaluation_scope": {
+    "unit_tests": "Synthetic daily bars, including separate morning and afternoon signals and missing interior sessions.",
+    "retrospective_audit": "Only previously exposed 2022H2 and 2023 results; no feature selection or model promotion.",
+    "closed_periods": ["2024", "2025", "2026"]
+  },
+  "prohibited": [
+    "Promoting a daily-feature model as the four-hour TV-Free candidate",
+    "Mixing endpoint-only and strict-path metrics",
+    "Synthesizing hourly or four-hour bars from daily OHLCV",
+    "Opening 2024, 2025, or 2026 outcomes for this audit",
+    "Changing candidate membership after seeing labels",
+    "External price fetching or Yahoo scraping"
+  ]
+}

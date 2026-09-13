@@ -1,0 +1,42 @@
+{
+  "experiment_id": "DATA-QUALITY-HOURLY-DAILY-CONSISTENCY-20260913-01",
+  "registered_date": "2026-09-13",
+  "status": "IMPLEMENTED_WAITING_FOR_LOCAL_RAW_HOURLY_EXPORT",
+  "runner": "audit_hourly_daily_consistency.py",
+  "synthetic_test_count": 6,
+  "hypothesis": "Yahoo-derived daily OHLCV is often a more reliable full-day summary than its hourly series; compare same-symbol/session values before using daily data to validate or supplement hourly-derived features.",
+  "not_ground_truth": "Agreement between daily and hourly feeds from the same provider is an internal consistency test, not independent proof that either feed is correct.",
+  "comparison": {
+    "daily_key": "Normalized symbol plus XTKS session date.",
+    "hourly_rebuild": "First valid open, maximum high, minimum low, last valid close, and sum of volume across valid bars whose explicit interval overlaps an official XTKS trading session. Require interval length and whether timestamps label interval starts or ends. Include a crossing bar whole, report it, and never split it.",
+    "fields": [
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume"
+    ],
+    "output": "Per symbol/session raw deltas, percent deltas where defined, timestamps/counts, missing/duplicate/invalid classifications, and aggregate exact-match/error distributions. Do not pick pass thresholds after seeing model outcomes."
+  },
+  "supplement_policy": {
+    "daily_can_validate": "Compare completed full-session intraday aggregate to the daily bar only after confirming common adjustment basis and timestamp semantics.",
+    "daily_can_supplement": "Use same-session daily close only for after-close signals; test daily features from prior sessions at intraday signal times. A daily total-volume residual may be evaluated only when the known session volume is complete and source bases agree.",
+    "cannot_supplement": "Do not infer morning/afternoon high, low, close, or volume allocation from full-day high/low/close/volume. Do not split a daily candle into synthetic intraday bars.",
+    "lookahead": "Same-day daily high, low, close, and total volume are prohibited for signals before the daily bar has completed."
+  },
+  "adjustments": "Corporate-action and adjusted/unadjusted semantics must be established before interpreting price mismatches; otherwise mark comparison UNASSESSABLE.",
+  "scope": "Only symbol/session keys represented in either supplied file; absence from both requires a point-in-time security universe.",
+  "runtime": "Ordinary local Python, deterministic, no Codex/API dependency; standard-library offline runner.",
+  "inputs_needed": [
+    "Local read-only raw 1-hour (or finer) OHLCV export with timestamps, explicit interval length, explicit start/end timestamp labeling, and source adjustment notes.",
+    "Already-cached local daily OHLCV CSV."
+  ],
+  "prohibited": [
+    "External market-data fetching or scraping",
+    "Changing legacy ohlcv_4h or the source spreadsheet",
+    "Assuming daily OHLCV is ground truth without adjustment checks",
+    "Using same-day daily values before their known-at time",
+    "Constructing session OHLC bars by splitting an hourly bar that crosses a boundary",
+    "Inferring bar length or timestamp labeling from data values"
+  ]
+}

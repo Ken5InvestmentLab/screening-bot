@@ -1,0 +1,47 @@
+{
+  "experiment_id": "CORE-SUPPORT-SWEEP-20260913-01",
+  "prepared_at_utc": "2026-09-13T05:20:16.560080+00:00",
+  "spec_sha256": "74ad269f4b53527b730f39eb337118d85d978d556b958eb9d5d60e8f98ca06c7",
+  "input_sha256": {
+    "feature_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "candidate_and_selection": "02c41f7dec5a1d95e5f5c9e77debc90d44828fdb5f3998c46d93e3dc96cc1378",
+    "audit_runner": "adc30818c7ddfd9d6bf44be5d00de79d2125d6aaabc336522856dfeec8be1c37",
+    "canonical_label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "evaluation": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "feature_panel": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "rows_with_complete_prior5_sessions": 1259974,
+    "support_undercut_and_reclaimed": 96511,
+    "candidate_rows": 43931,
+    "candidate_symbols": 3505,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 43931,
+    "selected_rows": 1825,
+    "selected_days": 365,
+    "candidate_days": 365,
+    "mean_selected_per_month_including_zero_months": 101.38888888888889
+  },
+  "decision_hashes": {
+    "pool": "a0b65c1628f5d0383dbc6c1bd5d6ec5077d1057058847ce103977f3435de29ec",
+    "ranked": "2c1b74d38e981d13786dd2a04cd6df5878b16424611687e15f7c0a7f56d5c953",
+    "selected": "22878879cecf5cbd7d56112ec4d4a56ec554a456a9c27e938c270b73c6d6cfc0"
+  },
+  "artifact_sha256": {
+    "pool": "ac758e838bb7efb2e3cbebb0e525eaa86ddcdef774027894d7b360d9b2955f94",
+    "ranked": "34b9f94ecb23ba091550222c8c132f8e18927e0278c9ea397798dfc47e879ad7",
+    "selected": "34d6937785546da3fe322a8c2e9a47ef16414da895247fb9619fa30c9d38c54c"
+  },
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false,
+  "production_modified": false
+}

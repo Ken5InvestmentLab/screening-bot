@@ -1,0 +1,27 @@
+{
+  "experiment_id": "CORE-SUPPORT-SWEEP-20260913-01",
+  "spec_sha256": "74ad269f4b53527b730f39eb337118d85d978d556b958eb9d5d60e8f98ca06c7",
+  "prepare_receipt_sha256": "62a7e28db55cb797d5cdde5dad36873c7a962432e2bafe10e26cb3b4de5c24c5",
+  "decision_hashes": {
+    "pool": "a0b65c1628f5d0383dbc6c1bd5d6ec5077d1057058847ce103977f3435de29ec",
+    "ranked": "2c1b74d38e981d13786dd2a04cd6df5878b16424611687e15f7c0a7f56d5c953",
+    "selected": "22878879cecf5cbd7d56112ec4d4a56ec554a456a9c27e938c270b73c6d6cfc0"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "rows_with_complete_prior5_sessions": 1259974,
+    "support_undercut_and_reclaimed": 96511,
+    "candidate_rows": 43931,
+    "candidate_symbols": 3505,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 43931,
+    "selected_rows": 1825,
+    "selected_days": 365,
+    "candidate_days": 365,
+    "mean_selected_per_month_including_zero_months": 101.38888888888889
+  },
+  "reproduced_exactly": true,
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

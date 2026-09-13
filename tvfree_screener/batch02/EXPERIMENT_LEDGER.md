@@ -193,3 +193,20 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - Complete daily cohorts: 80 in 2022H2 (119 active days, 39 incomplete) and 203 in 2023. Net daily-cohort mean / median / Top3-excluded mean were `-2.871% / -2.547% / -3.748%` and `-3.016% / -2.870% / -3.328%`. Weekly-block 95% intervals were `[-4.822%, -1.000%]` and `[-3.975%, -2.132%]`, with bootstrap P(mean <= 0) `0.9995` / `1.0000` (2,000 repetitions). Positive months were 0/6 and 0/12. Symbol concentration was low: top-one/top-five shares `1.13%/3.94%` and `0.53%/2.12%`; failure was broad, not a single-name artifact.
 - Decision: `REJECT_GAP_UP_ACCEPTANCE`. Both periods fail the positive return, win-rate, downside-relative-to-pool, positive-month, and complete-day gates. Do not alter the 1.5% gap, 1.5 volume ratio, 70% close position, ranking, cooldown, or Top5 after this result. 2024+ values remain unopened; production is unchanged.
 - Next action: select a materially different technical mechanism from the remaining ledger, register it before labels, and continue only while weekly usage stays below 50%.
+
+## DATA QUALITY — 5BDラベル欠損の扱いと再取得案 (2026-09-13)
+
+- ユーザー指摘どおり、公式XTKSカレンダー上の評価5セッションに銘柄の日足が1日でも欠けると、そのシグナルの5BD評価は現状の入力から確定できない。batch01/evaluation.py::build_five_session_labels はシグナルごとに1行を残し、次営業日から5営業日目まで各バーを検査する。1日目欠損は MISSING_ENTRY_BAR、2〜4日目欠損は MISSING_HOLDING_SESSION_BAR、5日目欠損は MISSING_EXIT_BAR とし、リターンを計算せず未解決にする。日付を飛ばす、前値で補う、他銘柄や将来値で代用する処理はない。中間日欠損は端点価格だけの単純な比率なら計算できる場合もあるが、経路の価格・出来高・分割等を確認できないため、現在のactionability定義は保守的に未解決としている。
+- 同ファイルは非数値/不正OHLCV、価格が範囲外、評価窓の出来高0も未解決扱いにする。既存の batch01/test_evaluation.py と batch01/test_core_moderate_ridge.py は entry/holding/exit の欠損を別ステータスにして、要求件数と未解決件数を保持するテストを含む。
+- 保存済みソース監査では、Yahoo由来CSVの取引日集合はXTKSカレンダーの1,148日と一致する一方、日ごとの銘柄行数は646〜3,696、中央値3,555、ユニーク銘柄は3,700。これは市場全体の暦日欠落がないことを示すだけで、特定銘柄の日足欠落理由を示さない。監査マニフェスト自身も、現存銘柄中心の母集団、過去の上場/売買可能性、価格調整・コーポレートアクションの完全性が未証明と記録している。
+- tvfree_screener/run.py::fetch_daily の確認では、Yahoo取得は例外またはバッチ全体が空のときにバッチ単位で最大3回試すが、非空バッチ内で特定tickerが無い/不完全な場合にそのtickerだけを照合・再取得する処理はない。これは研究プロトタイプの取得経路の所見であり、欠損が一時通信失敗だと断定する証拠ではない。データ行がない理由には取得欠落、上場前/上場廃止、売買停止、無約定等が残り、価格データ単体では区別できない。
+- 改善案は二段階とする。第一に、公式取引日とpoint-in-time上場期間が得られるなら期待される銘柄×営業日を作り、内側の欠損だけを同一Yahooソースへticker単位・短い重複期間で限定再取得し、取得日時/ソース/原本ハッシュを残す。第二に、それでも欠ける行は、Codexを使わず通常のスケジュール処理から取得できる独立した公式またはライセンス済み日足ソースと照合する。価格調整・権利落ち・分割・銘柄コード変更を同じ基準に正規化でき、独立実行と再現性を確認できるまでバックテスト用の採用も本番実装もしない。
+- 真の休場日以外の無約定/停止/上場状態不明は、執行できたと推定して埋めず未解決として残す。各実験は選出要求数・解決数・未解決数/理由・年/月/銘柄別偏りを併記し、解決済み部分集合だけの成績が欠損偏りに左右されないことを確認する。欠損を解決しないままのバックテスト数値は「解決ラベルの成績」であって全シグナル母集団の正確な成績とは呼ばない。
+- 日足を1h/4hへ合成してproductionの欠損を埋める案は、ユーザーの既決指示どおり実装しない。上記の再取得/照合も、通常ジョブでCodexなしに動作し、認証・レート制限・データ利用条件を検証するまでは設計案に留める。
+
+## CORE-CMF-FLOW-ACCELERATION-20260913-01 — FROZEN, OUTCOME-FREE POOL NOT YET PREPARED
+
+- 独立した仮説: 5日間の出来高加重終値位置が正で、20日状態より上向いている銘柄は、ギャップや単日の価格ブレイクに依存しない短期需要加速を示すか。
+- 2026-09-13 07:11 UTC時点で条件を凍結。仕様SHA-256 a96bee2b91733d5978142da37d2fbc8c7d59e8d56f60cb8b32b6f95bfb08c32d。特徴量は cmf5, cmf20, cmf_delta=cmf5-cmf20。CMF5>0かつdelta>0、delta降順でTop5/日、選択銘柄は次の公式営業日だけ抑制、複数銘柄/日を許し候補なしは見送り。閾値探索なし。
+- 評価は既存共通定義の次営業日始値から5営業日目終値。発見期間2022H2/2023、各期間75解決選出以上・90%ラベル解決率・正の平均/中央値/勝率50%超/Top3除外平均などの全ゲートを固定した。両期間を通過した場合のみ2024の方向確認を開く。2025は閉鎖、2026は報告のみ。2022H2/2023は他仮説で過去に見たため、未閲覧OOSではなく回顧的発見である。
+- 共有family spec 4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f とdaily/calendar/label/code hashを登録済み。2024年以降のOHLCV数値も、新仮説の結果ラベルも未閲覧。CMF専用4テストと既存ラベル生成10テストを含む対象24テストを実行し全件PASS。次は凍結ファイルとledgerをcommitした後だけ、アウトカムを使わずfeature-only候補poolを作る。

@@ -37,15 +37,35 @@
       "expected symbol list count exactly 1810",
       "expected symbol list SHA exact",
       "observed raw symbol set exactly equals frozen universe",
-      "zero final fetch failures"
+      "zero final fetch failures",
+      "for every frozen-universe symbol/date from 2025-01-06..2025-06-30 where canonical daily has finite positive close and volume>0, raw 1H contains at least one row for that symbol/date",
+      "zero duplicate symbol/timestamp rows",
+      "all raw dates stay inside the frozen 2025-01-06..2025-06-30 window"
     ],
-    "split_adjustment_note": "V20 intraday signal features are within-bar scale invariant; absolute prior-day gates and endpoint labels use frozen canonical daily"
+    "split_adjustment_note": "V20 intraday signal features are within-bar scale invariant; absolute prior-day gates and endpoint labels use frozen canonical daily",
+    "temporal_presence_guard": {
+      "definition": "canonical-daily active symbol/date must have >=1 raw 1H row",
+      "purpose": "prevent silent full-day holes from distorting trailing-20 session features and within-session ranks",
+      "outcome_values_used_to_set_guard": false,
+      "fail_closed": true
+    }
   },
   "workflow": ".github/workflows/v20-session-impulse-h1.yml",
-  "contract_test_run": 34769637874,
+  "contract_test_run": 34770212752,
   "contract_test_status": "completed/success",
   "execution_order": "Do not start dedicated Yahoo fetch while authoritative/superseded V44 Yahoo-heavy runs remain active. After they stop, trigger H1 workflow; coverage must pass before H1 outcome evaluation.",
   "h2_rule": "Unchanged parent spec: H2 remains closed unless at least one frozen H1 TopN passes its H1 gate.",
   "year_2026_outcomes_opened": false,
-  "production_modified": false
+  "production_modified": false,
+  "contract_test_scope": [
+    "frozen signal threshold boundaries",
+    "history excludes current bar",
+    "TopN then cooldown with no backfill",
+    "canonical next-open to fifth-close endpoint",
+    "H1 frozen gate boundaries",
+    "exact frozen symbol-set coverage",
+    "active symbol-date temporal presence",
+    "duplicate symbol/timestamp rejection",
+    "explicit H2 passing-TopN requirement"
+  ]
 }

@@ -1,0 +1,54 @@
+{
+  "spec_id": "CAUSAL-INTRADAY-FEATURE-ARCHITECTURE-20260913-01",
+  "objective": "Build TradingView-free intraday features without same-day finalized daily leakage.",
+  "strategy_outcomes_opened": false,
+  "price_rescale_policy": {
+    "current_day_daily_anchor_preclose": "FORBIDDEN",
+    "previous_session_factor": "NOT_REQUIRED_V1",
+    "rationale": "Previous-session scaling did not improve 1% aggregate agreement; trailing-5 improvement was marginal."
+  },
+  "volume_policy": {
+    "current_day_daily_total_preclose": "FORBIDDEN",
+    "prior_factor_absolute_rescale": "NOT_TRUSTED",
+    "preferred": "source-internal relative volume versus prior completed comparable bins",
+    "prior_completed_daily_volume_liquidity_filter": "ALLOWED"
+  },
+  "clock_bins": {
+    "AM_09_13": {
+      "required_start_hours": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "independent_quality_gate": true
+    },
+    "PM_13_CLOSE": {
+      "required_start_hours": [
+        13,
+        14,
+        15
+      ],
+      "independent_quality_gate": true
+    }
+  },
+  "exact_tradingview_equivalence_claimed": false,
+  "lunch_crossing_12h_interval_must_be_disclosed": true,
+  "preferred_feature_families": [
+    "body_return_or_log_return",
+    "normalized_range_or_atr",
+    "multi_bar_return",
+    "rsi_like_normalized_momentum",
+    "stochastic_or_bollinger_position",
+    "realized_volatility_or_compression_ratio",
+    "prior-bin-relative-volume"
+  ],
+  "hold_back_feature_families": [
+    "pm_close_location_until_source_stability_improves",
+    "absolute_intraday_volume_rescaled_from_same_day_daily",
+    "same_day_daily_anchored_intraday_prices_before_close"
+  ],
+  "postclose_reconstruction_role": "AUDIT_AND_ARCHIVAL_ONLY_UNLESS_DAILY_AVAILABILITY_BY_FEATURE_CUTOFF_IS_EXPLICIT",
+  "no_daily_to_fake_am_pm": true,
+  "no_production_changes": true
+}

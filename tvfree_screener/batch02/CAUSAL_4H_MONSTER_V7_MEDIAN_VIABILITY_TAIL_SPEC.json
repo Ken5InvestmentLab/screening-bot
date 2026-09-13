@@ -1,0 +1,60 @@
+{
+  "spec_id": "CAUSAL-4H-MONSTER-V7-MEDIAN-VIABILITY-TAIL-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V7_SELECTION_METRICS",
+  "role": "RETROSPECTIVE_STRUCTURAL_SELECTION_DISCOVERY_ONLY",
+  "integrity": {
+    "prior_2025_summary_results_seen": true,
+    "year_2025_can_promote": false,
+    "year_2026_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "input": "V6 monthly causal q10/q50/q90 scored rows; no model retraining or feature changes",
+  "unchanged": {
+    "features": "V5/V6 19 causal intraday + cross-sectional/context features",
+    "monthly_training_schedule": "V6 expanding causal monthly refit",
+    "models": "V5 q10/q50/q90 AM/PM quantile regressors",
+    "candidate_gates": "prior daily close <=1000 JPY and prior daily volume >=10000",
+    "cooldown": "5 official XTKS sessions per symbol",
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "primary_cost": 0.005
+  },
+  "monster_selection": {
+    "viability_gate": "predicted q50 >= 0",
+    "rank": "predicted q90 descending",
+    "tie_break": [
+      "predicted q50 descending",
+      "symbol ascending"
+    ],
+    "no_backfill": true,
+    "rationale": "require nonnegative predicted ordinary-case median before maximizing tail potential; avoids an arbitrary continuous risk penalty"
+  },
+  "core": "UNCHANGED_V6_REFERENCE_NOT_A_V7_HYPOTHESIS",
+  "periods": {
+    "h1_walkforward": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_walkforward": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "gates": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "decision": {
+    "pass_retrospective": "KEEP_FOR_PROSPECTIVE_SHADOW_ONLY_NOT_PROMOTION",
+    "fail": "REJECT_V7",
+    "q50_threshold_must_not_be_adjusted_from_2025_results": true
+  },
+  "production_modified": false
+}

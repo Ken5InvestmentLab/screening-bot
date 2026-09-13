@@ -60,3 +60,21 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - Consensus raw-bin labels are semantic reconstruction labels, not exact alert-clock promises.
 - Event-specific V12/V17/V18/compression-breakout and canonical Monster-v2 closed decisions must not be reopened by renaming or post-hoc threshold changes.
 - Immediately before any prospective-shadow authorization or cross-lane comparison, re-fetch all source-branch HEADs; stale readiness snapshots are blocking, not advisory.
+
+
+## Consensus cross-lane promotion dependencies — 2026-09-14 update
+Two data-contract limitations are now explicit and must be checked before any final integration claim:
+
+1. **Raw-bin timing semantics**
+   - Consensus V43/V44 integer `session=9` / `session=13` come from the older `synthetic_sessions()` reconstruction.
+   - Batch02 data-integrity already established that Yahoo timestamps are interval-start and the 12:00-start row crosses the lunch boundary.
+   - Therefore these labels are raw clock bins, not exact 09:00 / 13:00 executable alerts and not exact TradingView 4H bars.
+   - Canonical next-open evaluation remains temporally valid, but production promotion requires migration/retraining on the shared causal raw-bin materializer if Consensus survives.
+
+2. **Historical universe provenance**
+   - run80 was built from the 2026-09-11 current-listed JPX domestic common-stock snapshot (3,700 symbols), then historical Yahoo data was fetched for those symbols.
+   - It is reproducible but not a point-in-time survivorship-neutral 2025 universe.
+   - V44 remains an internally fair policy comparison; it is not sufficient evidence for a survivorship-free all-TSE claim.
+   - Final promotion requires outcome-independent point-in-time listing membership from the shared data-integrity path.
+
+Do not make the Consensus lane independently duplicate the Batch02 raw-clock or point-in-time-universe work. Treat them as integration dependencies.

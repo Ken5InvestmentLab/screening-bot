@@ -1,0 +1,27 @@
+{
+  "experiment_id": "CORE-CMF-FLOW-ACCELERATION-20260913-01",
+  "spec_sha256": "a96bee2b91733d5978142da37d2fbc8c7d59e8d56f60cb8b32b6f95bfb08c32d",
+  "prepare_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
+  "decision_hashes": {
+    "pool": "fb882439ad18d8ac31787f8ce074f4312cef75ed6261aefd0178669b4fdf38c1",
+    "ranked": "cd28c9abe0da088734758783b09a85dca9b9625cf3c16da33ebe39d0af4bdbb5",
+    "selected": "c3c2240aa3346c5ccf1c20cdaa5b91457b0b6fcf478df8aeeb7b40a17395a2eb"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "valid_ohlcv_rows": 1224060,
+    "complete_consecutive_flow_rows": 1107444,
+    "positive_cmf5_rows": 546172,
+    "improving_flow_rows": 446974,
+    "candidate_rows": 446974,
+    "candidate_symbols": 3438,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 446974,
+    "selected_rows": 1825,
+    "selected_days": 365,
+    "zero_selection_days": 0
+  },
+  "reproduced_exactly": true,
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

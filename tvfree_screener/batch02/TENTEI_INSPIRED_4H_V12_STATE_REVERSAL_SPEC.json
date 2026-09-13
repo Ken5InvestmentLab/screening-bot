@@ -1,0 +1,119 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V12-STATE-REVERSAL-20260913",
+  "status": "PREREGISTERED_BEFORE_V12_OUTCOME_ACCESS",
+  "classification": "INDEPENDENT_TENTEI_INSPIRED_NOT_EXACT_TRADINGVIEW_REPLICATION",
+  "provenance": {
+    "confirmed_alert_parameters": {
+      "lengthBB": 20,
+      "multBB": 2,
+      "rsiLen": 12,
+      "OB": 75,
+      "OS": 35,
+      "squeeze": 0.18,
+      "minBars": 5,
+      "emergATR": 2.5
+    },
+    "confirmed_legacy_trigger_families": [
+      "crossBuy",
+      "trigExitShort",
+      "trendFlipUp",
+      "forceReverseBuy"
+    ],
+    "confirmed_state_names": [
+      "lastSignal",
+      "extremePrice",
+      "lastSignalIndex",
+      "waitPullback"
+    ],
+    "exact_original_boolean_formulas_available": false,
+    "exact_match_required": false
+  },
+  "raw_bar_source": {
+    "source": "existing broad raw 1h artifact run 34592896202",
+    "am_hours": [
+      9,
+      10,
+      11,
+      12
+    ],
+    "pm_pre_20241105_hours": [
+      13,
+      14
+    ],
+    "pm_post_20241105_hours": [
+      13,
+      14,
+      15
+    ],
+    "daily_to_intraday_synthesis": false
+  },
+  "indicators": {
+    "bollinger": {
+      "length": 20,
+      "mult": 2,
+      "std_ddof": 0
+    },
+    "rsi": {
+      "length": 12,
+      "smoothing": "Wilder RMA"
+    },
+    "atr": {
+      "length": 14,
+      "smoothing": "Wilder RMA"
+    },
+    "band_position": "(close-lower)/(upper-lower)"
+  },
+  "setup": {
+    "lookback_complete_bins": 5,
+    "excludes_current_bin": true,
+    "condition": "any prior-5 complete bin has RSI12 <=35 OR Bollinger band_position <=0.18"
+  },
+  "trigger_paths": {
+    "rsi_recovery": "current RSI12 >35 AND previous RSI12 <=35",
+    "trend_flip": "current BB20 slope >0 AND previous slope <=0 AND current RSI12 >50 AND previous RSI12 <=50",
+    "emergency_reversal": "current close > min(low of prior 5 complete bins) + 2.5 * current ATR14"
+  },
+  "signal": "setup AND (rsi_recovery OR trend_flip OR emergency_reversal)",
+  "candidate_gates": {
+    "prior_completed_daily_close_lte_jpy": 1000,
+    "prior_completed_daily_volume_gte_shares": 10000
+  },
+  "dedup_cooldown": {
+    "same_symbol": 5,
+    "unit": "official XTKS sessions",
+    "ordering": "AM before PM within same date"
+  },
+  "evaluation": {
+    "target": "next official XTKS session open to fifth official XTKS session close",
+    "primary_cost": 0.005,
+    "h1_discovery": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_policy": "OPEN_ONLY_IF_FROZEN_ALL-SIGNAL OR A PREDEFINED TRIGGER-PATH COHORT PASSES H1",
+    "h2_retrospective": [
+      "2025-07-01",
+      "2025-12-31"
+    ],
+    "trigger_path_cohorts": [
+      "ALL",
+      "RSI_RECOVERY",
+      "TREND_FLIP",
+      "EMERGENCY_REVERSAL"
+    ],
+    "overlap_assignment": "a row may belong to multiple trigger-path diagnostics; ALL counts it once"
+  },
+  "monster_gate": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "integrity": {
+    "year_2026_strategy_outcomes_must_remain_closed": true,
+    "no_threshold_tuning_from_2025": true,
+    "no_claim_of_exact_old_tentei_match": true
+  },
+  "production_modified": false
+}

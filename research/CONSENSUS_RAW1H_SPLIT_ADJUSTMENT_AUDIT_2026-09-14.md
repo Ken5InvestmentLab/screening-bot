@@ -101,3 +101,21 @@ Decision:
 This audit does **not** show that V43 returns are wrong.
 
 The V43 selected rows align with the frozen daily price scale, and the relative session features match the existing raw panel. The finding is about exact reproducibility and provider adjustment semantics, especially for `log_price`.
+
+
+## V43 internal scale-consistency check
+
+All 112 V43 fixed-min95 selected rows were joined to the preserved run80 daily OHLCV on symbol/date.
+
+Result:
+- daily OHLCV match available: **112/112**
+- reconstructed session close (`entry`) inside the same-day frozen daily low/high range: **112/112**
+- out-of-range rows: **0**
+
+Therefore the observed query-mode split-adjustment mismatch is **not evidence that V43 itself mixes inconsistent price scales**.
+
+The V43 path is internally coherent:
+- historical completed-day context comes from the frozen daily panel;
+- its live/reconstructed current-session price scale is consistent with that frozen panel on every selected row checked.
+
+The reproducibility risk arises when attempting to substitute the Core explicit-period raw 1H archive for the V43 range-query 1H source without reproducing V43's corporate-action adjustment convention.

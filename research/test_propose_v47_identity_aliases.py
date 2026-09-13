@@ -22,7 +22,8 @@ def main():
     events=pd.DataFrame([
         {"event_date":"2025-11-28","code":"8940","event":"delisting"},
         {"event_date":"2025-12-01","code":"463A","event":"listing"},
-        {"event_date":"2025-11-28","code":"9999","event":"delisting"},
+        # Keep the unrelated predecessor outside the frozen 10-calendar-day shortlist window.
+        {"event_date":"2025-10-01","code":"9999","event":"delisting"},
         {"event_date":"2025-12-02","code":"7777","event":"listing"},
     ])
     events.to_csv(tmp/"events.csv",index=False)

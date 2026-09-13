@@ -246,6 +246,19 @@ def h1_gate(m: dict) -> dict:
     return checks
 
 
+def resolve_period_policies(period: str, passing_topn: list[int]) -> tuple[str, str, list[int]]:
+    if period == "h1":
+        return H1_START, H1_END, list(TOP_NS)
+    if period != "h2":
+        raise RuntimeError(f"unsupported period {period}")
+    policies = sorted(set(int(n) for n in passing_topn))
+    if not policies:
+        raise RuntimeError("H2 requires explicit frozen --passing-topn from H1")
+    if any(n not in TOP_NS for n in policies):
+        raise RuntimeError(f"invalid H2 TopN policy {policies}")
+    return H2_START, H2_END, policies
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--raw-glob", required=True)
@@ -260,16 +273,7 @@ def main() -> None:
     max_date = H1_END if a.period=="h1" else H2_END
     candidates, sessions, session_idx = build_candidates(a.raw_glob, daily, max_date)
 
-    if a.period=="h1":
-        start, end = H1_START, H1_END
-        policies = TOP_NS
-    else:
-        start, end = H2_START, H2_END
-        policies = sorted(set(a.passing_topn))
-        if not policies:
-            raise RuntimeError("H2 requires explicit frozen --passing-topn from H1")
-        if any(n not in TOP_NS for n in policies):
-            raise RuntimeError(f"invalid H2 TopN policy {policies}")
+    start, end, policies = resolve_period_policies(a.period, a.passing_topn)
 
     period_candidates = candidates[
         (candidates["date"] >= start) & (candidates["date"] <= end)

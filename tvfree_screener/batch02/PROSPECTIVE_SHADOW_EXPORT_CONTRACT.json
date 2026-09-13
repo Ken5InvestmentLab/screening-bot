@@ -1,0 +1,47 @@
+{
+  "contract_id": "PROSPECTIVE-SHADOW-EXPORT-20260914",
+  "purpose": "Define the minimum candidate-row export needed to bridge any separately frozen research model into the prospective shadow recorder without changing that model's selection logic.",
+  "scope": {
+    "research_only": true,
+    "model_logic_changes": false,
+    "selection_logic_changes": false,
+    "production_changes": false,
+    "network_fetches": false
+  },
+  "required_columns": [
+    "symbol",
+    "signal_date",
+    "bin_name",
+    "feature_cutoff",
+    "source_tag"
+  ],
+  "freeze_identity": {
+    "experiment_id": "must come from the immutable freeze manifest",
+    "model_freeze_id": "must come from the immutable freeze manifest",
+    "candidate_rows_must_not_override_freeze_identity": true
+  },
+  "optional_columns": [
+    "score",
+    "rank",
+    "payload_sha256"
+  ],
+  "source_rules": {
+    "allowed": ["RAW_CAUSAL_INTRADAY"],
+    "forbidden": ["POSTCLOSE_RECON_ONLY", "DAILY_RESOLUTION_FALLBACK"]
+  },
+  "candidate_key": [
+    "experiment_id",
+    "model_freeze_id",
+    "symbol",
+    "signal_date",
+    "bin_name"
+  ],
+  "timing_rule": "feature_cutoff must be the actual causal cutoff used for the candidate row; do not replace it with report-generation time or post-close reconstruction time.",
+  "selection_rule": "export rows only after the frozen model's own eligibility/ranking/cooldown policy has completed; this contract must not re-rank, threshold, filter, or create additional candidates.",
+  "current_compatibility_finding": {
+    "v14_fast_replay": "aggregate JSON only; selected candidate rows are constructed internally but not exported, so it is not directly shadow-recordable without a separate row-export surface after model freeze",
+    "action": "do not modify V14/V15/V16 selection logic in this lane; add row export only when a model is explicitly designated for prospective shadow"
+  },
+  "endpoint_target": "next official XTKS session open to fifth official XTKS session close",
+  "historical_2026_tuning_forbidden": true
+}

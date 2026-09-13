@@ -1,0 +1,25 @@
+{
+  "experiment_id": "CORE-BOLLINGER-RECLAIM-20260913-01",
+  "spec_sha256": "ed3e053d81ab20b8f999bc44b1d3960f686f3df134eb09e93dc7702108f856b4",
+  "prepare_receipt_sha256": "39714255d46b4fb22fcb310880578819c085fbfb84d8e4e2b4dfaff6da9562aa",
+  "decision_hashes": {
+    "pool": "d16c61111cb17588c8e087edbb6c2c17b1f608999fddc2ca87b809cdb65360bc",
+    "ranked": "cf65884039d3526fd8c34cedc4e787fbe446a10e97baf2f657f44902a27821d9",
+    "selected": "c6433cc205d50c225c235c451afc65d41dc77995bffaa0e32804cb77bab9e54a"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "rows_with_complete_prior20_sessions": 1257819,
+    "lower_band_undercut_and_reclaimed": 59117,
+    "candidate_rows": 43763,
+    "candidate_symbols": 3496,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 43763,
+    "selected_rows": 1825,
+    "selected_days": 365
+  },
+  "reproduced_exactly": true,
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

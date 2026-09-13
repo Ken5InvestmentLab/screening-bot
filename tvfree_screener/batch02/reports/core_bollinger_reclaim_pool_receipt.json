@@ -1,0 +1,44 @@
+{
+  "experiment_id": "CORE-BOLLINGER-RECLAIM-20260913-01",
+  "spec_sha256": "ed3e053d81ab20b8f999bc44b1d3960f686f3df134eb09e93dc7702108f856b4",
+  "inputs": {
+    "feature_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "candidate_and_policy": "6b61dd9286344e4b5def77aa8f79976cf83d904bba0d59c23df20dcd082bcec5",
+    "audit_runner": "2ee3de1ebe67d79552c8b6a1579bac2cdf4d37d17ed96a3ddbcbbef5c9249279",
+    "label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "evaluation": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "feature_panel": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "one_to_one_report_summarizer": "ae341d211b154c5142ee11618a0527dff986d5d1da1bc2d7687ef85b8cb316b2"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "rows_with_complete_prior20_sessions": 1257819,
+    "lower_band_undercut_and_reclaimed": 59117,
+    "candidate_rows": 43763,
+    "candidate_symbols": 3496,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 43763,
+    "selected_rows": 1825,
+    "selected_days": 365
+  },
+  "decision_hashes": {
+    "pool": "d16c61111cb17588c8e087edbb6c2c17b1f608999fddc2ca87b809cdb65360bc",
+    "ranked": "cf65884039d3526fd8c34cedc4e787fbe446a10e97baf2f657f44902a27821d9",
+    "selected": "c6433cc205d50c225c235c451afc65d41dc77995bffaa0e32804cb77bab9e54a"
+  },
+  "artifact_sha256": {
+    "pool": "bb113fe9411b11b311cfb5c6f076168636c49f8badbc9d743e3d7cb07f7240ef",
+    "ranked": "7502b9ab07597fa08c7e94b02d9be639438b9ac1629934d1dd0420dcb86ea5a6",
+    "selected": "437fd4bb2c08f3494f3c28f3e0107c2d1e3513ed4442589b0e42f3b4021ea3bd"
+  },
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

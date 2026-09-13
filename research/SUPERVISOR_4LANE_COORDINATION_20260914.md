@@ -75,3 +75,11 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 
 - **Point-in-time split eligibility blocker:** run80 daily OHLC was downloaded with yfinance/Yahoo on 2026-09-11. Yahoo OHLC is split-adjusted historically, so applying historical absolute-price gates such as prior close <= JPY 1,000 directly to the frozen present-basis OHLC can use future corporate-action information. This can create adjusted-only false positives after later forward splits and adjusted-only false negatives around later reverse splits. Until the outcome-free V46 audit reconstructs point-in-time nominal prior-close eligibility, no lane may claim promotion-grade evidence from a run80 backtest whose candidate universe depends on an absolute historical price threshold. Relative-return/shape diagnostics remain usable if their own contract is otherwise valid.
 - V46 is owned by the Consensus/data-integrity interface and must remain outcome-free. It may quantify universe changes and corporate-action factors but must not use strategy returns to choose a correction. If material, the corrected PIT eligibility contract must be propagated to any affected lane before final cross-lane arbitration.
+
+
+## PIT split-leakage quantified lower bound — 2026-09-14
+- Conservative corporate-action reconstruction on existing V43 selections confirms at least **71/112 (63.39%)** fixed-min95 rows were admitted by future-split-adjusted prior prices even though their point-in-time nominal prior close exceeded JPY 1,000.
+- Under the frozen ATR gate the lower bound is **67/101 (66.34%)**; H1 48/67 and H2 19/34.
+- This uses only confirmed split events and no strategy returns; the all-symbol V46 audit may find additional adjusted-only false positives and reverse-split PIT-only false negatives.
+- Therefore V44 is mechanics/concentration evidence only. It cannot restore promotion eligibility regardless of its return result.
+- Final cross-lane arbitration must distinguish any strategy whose absolute historical price gate has been rebuilt point-in-time from research still using present-basis split-adjusted run80 prices.

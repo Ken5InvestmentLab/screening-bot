@@ -1,0 +1,7 @@
+trigger: 2026-09-14 walkforward-regime-veto-v1
+purpose: independent Core/4H regime research lane; avoid V12/V14 state-entry overlap
+fixed_vetoes:
+  - VETO_RISK_OFF_MOMENTUM
+  - VETO_WEAK_NARROW_FALLING
+  - VETO_BREADTH_BREAKDOWN
+policy: no model retuning; no veto threshold fitting; prior-trading-day market context only

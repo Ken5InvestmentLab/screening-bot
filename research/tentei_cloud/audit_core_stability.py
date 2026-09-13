@@ -32,6 +32,7 @@ from mtf_monster_model import metrics
 TARGET=0.075
 BOOTSTRAP_REPS=5000
 SEED=20260914
+COSTS=[0.0,0.005,0.01]
 
 PERIODS=[
     ("DEV","2024-11-01","2025-06-30"),
@@ -89,7 +90,7 @@ def summarize_returns(r: pd.Series) -> dict:
     }
 
 
-def weekly_block_bootstrap(q: pd.DataFrame, reps: int, seed: int) -> dict:
+def weekly_block_bootstrap(q: pd.DataFrame, reps: int, seed: int, round_trip_cost: float = 0.0) -> dict:
     groups=[g["ret5bd"].dropna().astype(float).to_numpy() for _,g in q.groupby("iso_week",sort=True)]
     groups=[g for g in groups if len(g)]
     if not groups:
@@ -102,7 +103,7 @@ def weekly_block_bootstrap(q: pd.DataFrame, reps: int, seed: int) -> dict:
     wins=np.empty(reps)
     for i in range(reps):
         idx=rng.integers(0,nblocks,size=nblocks)
-        arr=np.concatenate([groups[j] for j in idx])
+        arr=np.concatenate([groups[j] for j in idx]) - round_trip_cost
         means[i]=arr.mean()
         medians[i]=np.median(arr)
         le10[i]=(arr<=-0.10).mean()
@@ -160,6 +161,7 @@ def main():
     monthly=[]
     lomo=[]
     uncertainty={}
+    cost_rows=[]
 
     for i,(name,start,end) in enumerate(PERIODS):
         q=core[period_mask(core,start,end)].copy()
@@ -172,6 +174,19 @@ def main():
         monthly.extend(monthly_table(q,name))
         lomo.extend(leave_one_month_out(q,name))
         uncertainty[name]=weekly_block_bootstrap(q,BOOTSTRAP_REPS,SEED+i)
+        for ci,cost in enumerate(COSTS):
+            z=q.copy()
+            z["net_ret5bd"]=z["ret5bd"].astype(float)-cost
+            sm=summarize_returns(z["net_ret5bd"])
+            boot=weekly_block_bootstrap(q,BOOTSTRAP_REPS,SEED+i+100*(ci+1),round_trip_cost=cost)
+            cost_rows.append({
+                "period":name,
+                "round_trip_cost":cost,
+                **sm,
+                "bootstrap_prob_mean_gt_0":boot.get("prob_mean_gt_0"),
+                "bootstrap_mean_ci95_low":boot.get("mean_ci95",[None,None])[0],
+                "bootstrap_mean_ci95_high":boot.get("mean_ci95",[None,None])[1],
+            })
 
     baseline_df=pd.DataFrame(baseline)
     monthly_df=pd.DataFrame(monthly)
@@ -179,6 +194,7 @@ def main():
     baseline_df.to_csv(out/"core_stability_baseline.csv",index=False)
     monthly_df.to_csv(out/"core_stability_monthly.csv",index=False)
     lomo_df.to_csv(out/"core_stability_leave_one_month_out.csv",index=False)
+    pd.DataFrame(cost_rows).to_csv(out/"core_cost_sensitivity.csv",index=False)
 
     # Compact robustness summary derived without any selection.
     robustness=[]
@@ -211,6 +227,7 @@ def main():
             "reps":BOOTSTRAP_REPS,
             "seed":SEED,
         },
+        "cost_sensitivity":{"round_trip_cost_scenarios":COSTS,"costs_are_assumptions_not_measured_execution":True},
         "selection_changes":False,
         "threshold_tuning":False,
         "production_writes":False,

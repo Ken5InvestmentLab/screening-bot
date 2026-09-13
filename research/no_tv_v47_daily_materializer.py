@@ -17,7 +17,7 @@ WINDOW_END = pd.Timestamp("2025-12-30")
 FETCH_START = "2024-05-01"
 FETCH_END_EXCLUSIVE = "2026-01-20"
 BATCH = 40
-MIN_RESTORED_DAILY_COVERAGE = 0.90
+MIN_RESTORED_DAILY_COVERAGE = 1.00
 
 
 def clean_symbol(x: object) -> str:
@@ -516,7 +516,6 @@ def main() -> None:
         },
         "daily_coverage_pass": bool(
             restored_receipt["coverage_fraction"] >= MIN_RESTORED_DAILY_COVERAGE
-            and not required_missing_nocap
         ),
         "daily_coverage_min": MIN_RESTORED_DAILY_COVERAGE,
         "strategy_returns_opened": False,
@@ -525,7 +524,9 @@ def main() -> None:
         "next_action": (
             "If daily_coverage_pass=true, shard-fetch intraday only for "
             "v47_required_intraday_nocap.txt (superset of CAP1000), then issue "
-            "an intraday coverage receipt before any strategy scoring."
+            "an intraday coverage receipt before any strategy scoring. If false, "
+            "repair missing restored/delisted daily histories before continuing; "
+            "do not silently drop missing names."
         ),
     }
 

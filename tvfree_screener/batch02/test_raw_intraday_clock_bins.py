@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import unittest
-from datetime import datetime
+from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
 from tvfree_screener.batch02.raw_intraday_clock_bins import build_clock_bins
@@ -10,9 +10,9 @@ JST = ZoneInfo("Asia/Tokyo")
 
 
 class RawIntradayClockBinTests(unittest.TestCase):
-    def row(self, hour: int, **overrides):
+    def row(self, hour: int, day: date = date(2026, 9, 11), **overrides):
         row = {
-            "timestamp": datetime(2026, 9, 11, hour, 0, tzinfo=JST),
+            "timestamp": datetime(day.year, day.month, day.day, hour, 0, tzinfo=JST),
             "symbol": "TYO:1111",
             "open": 100 + hour,
             "high": 102 + hour,
@@ -28,7 +28,7 @@ class RawIntradayClockBinTests(unittest.TestCase):
         bins, _ = build_clock_bins(rows)
         self.assertEqual([item.bin_name for item in bins], ["AM_09_13"])
 
-    def test_complete_am_and_pm_have_independent_cutoffs(self):
+    def test_post_extension_am_and_pm_have_independent_cutoffs(self):
         rows = [self.row(hour) for hour in [9, 10, 11, 12, 13, 14, 15]]
         bins, _ = build_clock_bins(rows)
         self.assertEqual(len(bins), 2)
@@ -38,8 +38,22 @@ class RawIntradayClockBinTests(unittest.TestCase):
         self.assertEqual(pm.row_count, 3)
         self.assertEqual(am.feature_cutoff_jst.hour, 13)
         self.assertEqual(pm.feature_cutoff_jst.hour, 16)
+        self.assertEqual(pm.session_regime, "PM_POST_20241105")
 
-    def test_closing_snapshot_is_not_a_required_volume_bar(self):
+    def test_pre_extension_pm_uses_13_and_14_not_15_snapshot(self):
+        day = date(2024, 10, 1)
+        rows = [self.row(hour, day=day) for hour in [9, 10, 11, 12, 13, 14]]
+        rows.append(self.row(
+            15, day=day, open=999, high=999, low=999, close=999, volume=0
+        ))
+        bins, _ = build_clock_bins(rows)
+        pm = next(item for item in bins if item.bin_name == "PM_13_CLOSE")
+        self.assertEqual(pm.row_count, 2)
+        self.assertEqual(pm.close, 115.0)
+        self.assertEqual(pm.feature_cutoff_jst.hour, 15)
+        self.assertEqual(pm.session_regime, "PM_PRE_20241105")
+
+    def test_closing_snapshot_flag_is_not_a_required_volume_bar(self):
         rows = [self.row(hour) for hour in [9, 10, 11, 12, 13, 14, 15]]
         rows.append(self.row(15, is_closing_snapshot=1, volume=0))
         bins, _ = build_clock_bins(rows)

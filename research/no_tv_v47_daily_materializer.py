@@ -320,13 +320,46 @@ def build_split_map(splits: pd.DataFrame) -> dict[str, list[tuple[pd.Timestamp, 
     return out
 
 
+
+def add_identity_epoch(
+    daily: pd.DataFrame,
+    events: pd.DataFrame,
+) -> pd.DataFrame:
+    """Reset historical continuity at every official listing event for a code.
+
+    Yahoo may stitch predecessor/reused-code history under a later code.
+    Epoch 0 is history before the first captured listing event; every listing
+    increments the epoch. Lagged eligibility fields must never cross epochs.
+    """
+    x = daily.copy()
+    listing_map: dict[str, list[pd.Timestamp]] = {}
+    q = events[events["event"] == "listing"].copy()
+    for code, g in q.groupby("code", sort=False):
+        listing_map[clean_symbol(code)] = sorted(
+            pd.Timestamp(v).normalize() for v in g["event_date"].tolist()
+        )
+
+    epochs = []
+    starts = []
+    for row in x[["symbol", "date"]].itertuples(index=False):
+        dates = listing_map.get(str(row.symbol), [])
+        prior = [dt for dt in dates if dt <= pd.Timestamp(row.date)]
+        epochs.append(len(prior))
+        starts.append(prior[-1] if prior else pd.NaT)
+    x["identity_epoch"] = epochs
+    x["identity_start"] = starts
+    return x
+
+
 def materialize_daily_candidates(
     daily: pd.DataFrame,
     memberships: dict[str, set[str]],
     split_map: dict[str, list[tuple[pd.Timestamp, float]]],
+    events: pd.DataFrame,
 ) -> tuple[pd.DataFrame, dict]:
-    d = daily.sort_values(["symbol", "date"]).copy()
-    g = d.groupby("symbol", sort=False)
+    d = add_identity_epoch(daily, events)
+    d = d.sort_values(["symbol", "identity_epoch", "date"]).copy()
+    g = d.groupby(["symbol", "identity_epoch"], sort=False)
     d["prev_date"] = g["date"].shift(1)
     d["prev_close_adjusted"] = g["close"].shift(1)
     d["prev_volume"] = g["volume"].shift(1)
@@ -487,6 +520,7 @@ def main() -> None:
         merged_daily,
         memberships,
         split_map,
+        events,
     )
 
     required_nocap = sorted(

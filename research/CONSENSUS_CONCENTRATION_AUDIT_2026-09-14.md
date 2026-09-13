@@ -286,3 +286,31 @@ Revised interpretation:
 - V44 cooldown-with-replacement remains the correct decisive test.
 
 The earlier "third-or-later signal" analysis is also **not valid as a production holding-policy rule**, because its positions were defined inside the same chained episode construction. It may still describe persistence in long trends, but it must not be used to claim that the third signal is independently tradable or superior.
+
+
+## Capital-capacity fairness check
+
+A separate 5BD exposure-count check shows that Consensus is **not** obviously worse than Stable★6 in raw simultaneous-position capacity. The main issue is symbol independence, not an impossible number of concurrent holdings.
+
+Using signal D -> enter D+1 -> exit D+5:
+
+Preserved Stable★6 teacher:
+- max simultaneous positions: 8
+- 95th percentile concurrent positions: 5
+- mean active positions across the covered trading-date span: 2.20
+
+Consensus raw ATR-gated 2025 signals:
+- max simultaneous positions: 10
+- 95th percentile: about 7.7
+- mean active positions: 2.04
+
+Consensus with correct 5-session same-symbol cooldown and no replacement:
+- max simultaneous positions: 7
+- 95th percentile: 4
+- mean active positions: 1.06
+
+Therefore the concern should be stated precisely:
+- raw Consensus does not require absurdly larger portfolio capacity than Stable★6;
+- it does reuse the **same symbols** far more often;
+- enforcing one-position-per-symbol reduces both trade count and performance;
+- V44 asks whether unused Top-K alternatives can fill that freed capacity without destroying edge.

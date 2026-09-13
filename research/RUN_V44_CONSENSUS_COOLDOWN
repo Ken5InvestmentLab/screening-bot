@@ -1,2 +1,3 @@
-trigger: 2026-09-14 consensus-v44-topk-cooldown
-purpose: top-k cooldown-with-replacement audit; research-only; no production writes
+trigger: 2026-09-14 consensus-v44-topk-cooldown-v2-locked-validation
+purpose: corrected two-stage Top-K cooldown audit; development chooses one policy before H2 replacement outcomes are reported; research-only
+invalidates_run: 34765427789

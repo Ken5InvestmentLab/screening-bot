@@ -282,3 +282,19 @@ Implication:
 - Do not delete contaminated rows after scoring and quote the remainder as a validated strategy. Eligibility changes alter training rows, cross-sectional ranks, market context, model scores and the set of candidates.
 - The next promotion-relevant path is V46 outcome-free full-universe PIT eligibility audit -> clean PIT rebuild/retrain (V47 or later) -> canonical next-open target evaluation.
 - Full survivorship-neutral JPX membership remains a separate unresolved dependency.
+
+
+## V46 PIT eligibility implementation status
+- Spec: `research/consensus_v46_pit_split_eligibility_preregister.json`
+- Evaluator: `research/no_tv_v46_pit_split_eligibility.py`
+- Synthetic contract: `research/test_no_tv_v46_pit_split_eligibility.py`
+- Contract CI run: **34770243519 — SUCCESS**
+- Heavy workflow: `.github/workflows/no-tv-consensus-v46.yml`
+- Heavy V46 run is intentionally **NOT TRIGGERED** while Yahoo-heavy V44 runs remain active.
+
+Priority after V44 fetch load stops:
+1. trigger V46 full all-symbol outcome-free split-event / PIT eligibility audit;
+2. freeze split-event artifact + hash;
+3. quantify adjusted-only false positives and PIT-only false negatives;
+4. if material (already strongly suggested by the 71/112 selected-row lower bound), design clean PIT Consensus retrain/rebuild;
+5. V45 full-context ATR remains useful but is lower priority than correcting the candidate universe.

@@ -483,3 +483,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next: diagnose causal signal-time regime/context differences between passing and failing periods before freezing any new regime-aware rule.
 - Report: `reports/causal_4h_monster_v8_pareto_front_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## CAUSAL-4H-SCORING-V9-PRIOR-DAILY-CONTEXT-20260913 — REJECT AFTER H1 / H2 NOT OPENED
+
+- Preregistered before V9 evaluation. Kept 19 causal intraday/cross-sectional features primary and added seven prior-completed-daily context features only.
+- Coverage remained 398,751/398,772 = 99.995%.
+- H1 Core all TopN fail. Top1 mean +1.30% but median -0.50%, win 45.1%, Top3-excluded -1.16%.
+- H1 Monster all TopN fail. Top1 mean -3.41%, +20% 10.98%, <=-10% 35.98%, Top1-excluded -3.95%; Top2 mean -1.62%, +20% 8.84%.
+- Decision: reject V9 without opening V9 H2 because H1 already fails every frozen policy.
+- Interpretation: generic prior-daily technical context worsens the Monster architecture. Do not expand daily-only context further; return to causal intraday feature research.
+- Next: data-quality audit and frozen test of source-internal same-bin relative volume using raw intraday history, with log transform and no same-day finalized daily-volume anchor.
+- Report: `reports/causal_4h_scoring_v9_prior_daily_context_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

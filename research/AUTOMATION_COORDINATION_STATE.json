@@ -1,7 +1,7 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T00:53:00+09:00",
+  "updated_at_jst": "2026-09-14T01:12:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": [
@@ -16,21 +16,21 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "6ecb94f1532f0f6b7493f864112c0c806b1639bc",
-      "last_processed_sha": "6ecb94f1532f0f6b7493f864112c0c806b1639bc",
-      "last_processed_note": "Supervisor reconciled Event lane closures/Monster v2 exact replay, shadow staleness guard, and synchronized the cross-lane contract. Active session-impulse V20 remains owned by the parallel event chat; do not duplicate."
+      "last_seen_sha": "607eda492ba3e9cc4122f1704d667288660950dd",
+      "last_processed_sha": "607eda492ba3e9cc4122f1704d667288660950dd",
+      "last_processed_note": "Supervisor contract synchronized to hardened V44 authority. Event lane remains non-overlap guarded; active session-impulse experiment is owned by the parallel event chat."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "c0b9498b1427afcb1a688dbdee399234ad6db5bd",
-      "last_processed_sha": "c0b9498b1427afcb1a688dbdee399234ad6db5bd",
-      "last_processed_note": "Failed-breakdown reclaim evaluator/workflow staged under frozen spec. Manual-dispatch only; default opens DEV+internal validation. Locked H2 is evaluator-blocked unless both preconfirmation blocks pass. Do not trigger while corrected Consensus V44 run 34766353425 is in progress to avoid concurrent Yahoo 1H fetch drift."
+      "last_seen_sha": "3911ad40b7a7820933dc98c0abeff1ec18e905aa",
+      "last_processed_sha": "3911ad40b7a7820933dc98c0abeff1ec18e905aa",
+      "last_processed_note": "Core reclaim evaluator is staged and contract-tested successfully (workflow run 34767726209). Do not launch Yahoo-heavy preconfirmation until authoritative hardened Consensus V44 run 34767664140 completes."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "4fe2d76359234863c0c72bc728497b8ba3c4287d",
-      "last_processed_sha": "4fe2d76359234863c0c72bc728497b8ba3c4287d",
-      "last_processed_note": "Supervisor reviewed raw-bin semantics, survivorship-universe limitation, training-target mismatch, and synchronized promotion dependencies. Corrected V44 run 34766353425 remains in_progress; do not treat it as completed."
+      "last_seen_sha": "f55207227517456a4bd8b90481e6f2c608846e82",
+      "last_processed_sha": "f55207227517456a4bd8b90481e6f2c608846e82",
+      "last_processed_note": "Consensus V44 run authority hardened. Only run 34767664140 may support final conclusions. Runs 34765427789 and 34766353425 are invalid/superseded even if they eventually complete."
     }
   },
   "guardrails": [
@@ -44,10 +44,15 @@
   ],
   "workflow_watch": {
     "consensus_v44": {
-      "run_id": 34766353425,
+      "run_id": 34767664140,
       "status": "in_progress",
       "conclusion": null,
-      "rule": "Inspect only after completion; only corrected locked-validation run is valid."
+      "authoritative": true,
+      "superseded_runs": [
+        34765427789,
+        34766353425
+      ],
+      "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation."
     },
     "core_canonical_endpoint": {
       "run_id": 34766143681,
@@ -58,8 +63,10 @@
     },
     "core_failed_breakdown_reclaim": {
       "workflow": ".github/workflows/tentei-cloud-core-failed-breakdown-reclaim.yml",
+      "contract_test_run": 34767726209,
+      "contract_test_status": "completed/success",
       "status": "STAGED_NOT_TRIGGERED",
-      "next_allowed_action": "After corrected Consensus V44 run 34766353425 completes, dispatch preconfirmation only.",
+      "next_allowed_action": "After authoritative hardened Consensus V44 run 34767664140 completes, dispatch preconfirmation only.",
       "locked_confirmation_rule": "Never dispatch unless preconfirmation artifact proves both frozen blocks pass."
     }
   },

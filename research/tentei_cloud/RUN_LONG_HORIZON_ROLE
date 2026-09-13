@@ -1,0 +1,4 @@
+trigger: 2026-09-14 long-horizon-role-v1
+purpose: evaluate fixed Core and fixed short-horizon Monster selections at 40BD to test Mega40 role coverage
+selection_changes: none
+benchmarks: current Mega40 Deep/Wick saved reports

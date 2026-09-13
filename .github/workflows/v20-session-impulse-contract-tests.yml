@@ -1,0 +1,41 @@
+name: V20 Session-Impulse Contract Tests
+
+on:
+  push:
+    branches:
+      - research/tvfree-canonical-batch02
+    paths:
+      - 'tvfree_screener/batch02/TENTEI_V20_SESSION_IMPULSE_CONTINUATION_SPEC.json'
+      - 'tvfree_screener/batch02/eval_tentei_v20_session_impulse.py'
+      - 'tvfree_screener/batch02/build_v20_h1_universe.py'
+      - 'tvfree_screener/batch02/verify_v20_h1_raw_coverage.py'
+      - 'tvfree_screener/batch02/test_tentei_v20_session_impulse.py'
+      - '.github/workflows/v20-session-impulse-contract-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check pandas==3.0.5 numpy==2.5.3 scikit-learn==1.9.1
+      - name: Compile V20 research code
+        run: |
+          python -m py_compile \
+            tvfree_screener/batch02/eval_tentei_v20_session_impulse.py \
+            tvfree_screener/batch02/build_v20_h1_universe.py \
+            tvfree_screener/batch02/fetch_v20_h1_1h.py \
+            tvfree_screener/batch02/verify_v20_h1_raw_coverage.py \
+            tvfree_screener/batch02/test_tentei_v20_session_impulse.py
+      - name: Run frozen contract tests
+        run: python tvfree_screener/batch02/test_tentei_v20_session_impulse.py

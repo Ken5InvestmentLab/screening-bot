@@ -1,0 +1,88 @@
+{
+  "receipt_id": "TENTEI-V20-H1-PREEXECUTION-READINESS-20260914",
+  "status": "READY_BUT_BLOCKED_ON_CONCURRENT_YAHOO_HEAVY_RUNS",
+  "strategy_outcomes_opened": false,
+  "production_modified": false,
+  "frozen_artifacts": {
+    "spec": {
+      "path": "tvfree_screener/batch02/TENTEI_V20_SESSION_IMPULSE_CONTINUATION_SPEC.json",
+      "blob_sha": "518bf63a976202253c053a5fc2f2ecbcf6f8bcbd"
+    },
+    "evaluator": {
+      "path": "tvfree_screener/batch02/eval_tentei_v20_session_impulse.py",
+      "blob_sha": "5dd1f600f4efcbb8f96feef7f407e77a7d99500e"
+    },
+    "input_addendum": {
+      "path": "tvfree_screener/batch02/TENTEI_V20_H1_INPUT_CONTRACT_ADDENDUM.json",
+      "blob_sha": "770746cd7348d7c18bb76b766bec339ee3211c4c"
+    },
+    "universe_builder": {
+      "path": "tvfree_screener/batch02/build_v20_h1_universe.py",
+      "blob_sha": "b4b1f3fd7ebf2cb9f490f413cebee9b9a5897469"
+    },
+    "fetcher": {
+      "path": "tvfree_screener/batch02/fetch_v20_h1_1h.py",
+      "blob_sha": "ea52fb0b8e46125e7607bc1f7c0b88556d646616"
+    },
+    "coverage_guard": {
+      "path": "tvfree_screener/batch02/verify_v20_h1_raw_coverage.py",
+      "blob_sha": "18327eeeb17e0ab5054d8ef598dd91e23496508f"
+    },
+    "tests": {
+      "path": "tvfree_screener/batch02/test_tentei_v20_session_impulse.py",
+      "blob_sha": "edfeb6f35150025948396992858ae4044ba88926"
+    },
+    "h1_workflow": {
+      "path": ".github/workflows/v20-session-impulse-h1.yml",
+      "blob_sha": "9d2733644f02c4a8bd37e4e314bc19ac89fe0746"
+    },
+    "contract_ci": {
+      "path": ".github/workflows/v20-session-impulse-contract-tests.yml",
+      "blob_sha": "089f362d2479c1a9d333a87868cea25e0fae3d23"
+    }
+  },
+  "canonical_daily": {
+    "source_run": 34599959356,
+    "sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0"
+  },
+  "h1_universe": {
+    "official_sessions": 82,
+    "symbols": 1810,
+    "symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
+    "universe_receipt_run": 34769844711,
+    "universe_receipt_status": "completed/success"
+  },
+  "raw_acceptance": [
+    "exact frozen 1810-symbol set",
+    "zero final fetch failures",
+    "every canonical-daily active frozen-universe symbol/date in 2025-01-06..2025-06-30 has >=1 raw 1H row",
+    "zero duplicate symbol/timestamp rows",
+    "all raw dates stay inside frozen fetch window"
+  ],
+  "contract_ci": {
+    "latest_semantic_run": 34770212752,
+    "status": "completed/success",
+    "workflow_watch_run": 34770320623,
+    "workflow_watch_status": "completed/success"
+  },
+  "yahoo_query_mode": {
+    "mode": "explicit period1/period2 1h events=div,splits",
+    "compatible_with_frozen_v20_features": true,
+    "reason": "V20 intraday features are scale-invariant ratios/quantiles; cross-lane overlap audit found session volume exact 89/89 and session-shape differences only numerical-noise scale. Absolute gates/labels use canonical daily.",
+    "report": "tvfree_screener/batch02/reports/v20_raw_query_mode_compatibility_20260914.md"
+  },
+  "launch_blocker": {
+    "rule": "Do not start dedicated V20 Yahoo fetch while both V44 Yahoo-heavy runs are still active.",
+    "runs": [
+      34767664140,
+      34766353425
+    ],
+    "last_observed_status": [
+      "in_progress",
+      "in_progress"
+    ]
+  },
+  "launch_action": "When both blocking V44 runs are no longer in_progress, trigger research/RUN_V20_SESSION_IMPULSE_H1 exactly once; coverage must pass before H1 outcome evaluation.",
+  "h2_rule": "H2 remains closed unless at least one unchanged H1 Top1/2/3/5 policy passes every frozen H1 gate.",
+  "year_2026_outcomes_opened": false
+}

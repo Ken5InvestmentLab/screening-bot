@@ -622,3 +622,15 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next: separately preregister the unchanged V14 dual-classifier/Pareto architecture using V17 features only, then evaluate H1. H2 only if a frozen H1 TopN passes.
 - Report: `reports/tentei_v17_crosssectional_rank_drift_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-INSPIRED-4H-V17-CROSSSECTIONAL-DUAL-CLASSIFIER-20260913 — REJECT AFTER H1 / H2 UNOPENED
+
+- V17 representation first passed its frozen outcome-free drift gate (0 severe / 1 moderate), then the supervised architecture was separately preregistered.
+- Same V14 model architecture and selection; only the stable V17 representation changed. Pre-2025 fit rows 4,924 / 966 symbols; +20% training prevalence 1.056%; 2025 labels not used for fit.
+- H1 Top1: n=163, mean -0.476%, median -1.642%, win 37.42%, +20% 6.13%, <=-10% 14.11%, Top1-excluded -0.894%; FAIL.
+- Top2/3 means -0.404/-0.134%; Top5 +0.061% but median -0.500%, +20% 2.75%, Top1-excluded -0.048%; all FAIL.
+- Decision: reject V17 supervised; per preregistration H2 remains unopened.
+- Interpretation: covariate drift was materially fixed, but direct +20% classification is too sparse/weak for robust ranking. Next hypothesis should use continuous/quantile return modeling on the same stable V17 representation.
+- Report: `reports/tentei_v17_crosssectional_dual_classifier_h1_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

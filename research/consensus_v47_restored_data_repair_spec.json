@@ -1,0 +1,32 @@
+{
+  "spec_id": "CONSENSUS-V47-RESTORED-DELISTED-DATA-REPAIR-20260914",
+  "status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
+  "purpose": "Prevent survivor-subset leakage when historical PIT members are absent from the 2026 current-listed frozen dataset.",
+  "required_population": "Every restored/delisted symbol that is a PIT domestic-common member on at least one 2024-10-01..2025-12-30 signal date.",
+  "daily_repair_order": [
+    "Direct Yahoo chart API request by historical code, one symbol per request, daily interval with split events.",
+    "If unavailable, classify whether the historical code was replaced by a successor/predecessor identity through merger/share-transfer/code change using official JPX/company evidence. Alias may be used only when economic/security identity continuity and date mapping are explicitly verified.",
+    "If no valid Yahoo identity path exists, search a free historical OHLCV source and preserve provider/source receipt. Do not use strategy returns to select the provider.",
+    "If required historical daily data still cannot be recovered, fail closed before V47 strategy scoring."
+  ],
+  "intraday_repair_order": [
+    "Direct Yahoo chart API range=730d interval=1h by the PIT historical code.",
+    "Verified query alias only when official identity continuity is documented and raw timestamps/relative price path can be mapped without inventing bars.",
+    "Targeted refetch of missing required symbol-dates.",
+    "No interpolation/backfill of missing OHLCV bars."
+  ],
+  "acceptance": {
+    "restored_symbol_daily_coverage": 1,
+    "silent_survivor_intersection": false,
+    "strategy_outcomes_before_acceptance": false,
+    "model_scores_before_acceptance": false
+  },
+  "prohibited": [
+    "Do not remove missing restored names and rerun performance.",
+    "Do not choose alias/provider based on return performance.",
+    "Do not change NOCAP/CAP1000 price-policy rules because a missing-data path is inconvenient.",
+    "Do not use 2026 returns for repair decisions.",
+    "Do not modify production."
+  ],
+  "production_modified": false
+}

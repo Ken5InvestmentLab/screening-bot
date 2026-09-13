@@ -48,7 +48,19 @@
       "purpose": "prevent silent full-day holes from distorting trailing-20 session features and within-session ranks",
       "outcome_values_used_to_set_guard": false,
       "fail_closed": true
-    }
+    },
+    "query_mode_compatibility": {
+      "cross_lane_source": "research/CONSENSUS_RAW1H_SPLIT_ADJUSTMENT_AUDIT_2026-09-14.md",
+      "finding": "explicit-period Yahoo 1H may differ from range-query absolute OHLC by split factors, while overlapping session shape ratios were numerically equivalent and volume matched 89/89",
+      "V20_compatible": true,
+      "reason": "all frozen V20 intraday features are within-bar or ratio/quantile based; absolute prior-day gates and return labels come from canonical daily",
+      "forbidden_without_new_contract": [
+        "absolute intraday price level",
+        "cross-bar absolute price differences",
+        "unversioned corporate-action-sensitive absolute features"
+      ]
+    },
+    "query_mode_compatibility_report": "tvfree_screener/batch02/reports/v20_raw_query_mode_compatibility_20260914.md"
   },
   "workflow": ".github/workflows/v20-session-impulse-h1.yml",
   "contract_test_run": 34770212752,

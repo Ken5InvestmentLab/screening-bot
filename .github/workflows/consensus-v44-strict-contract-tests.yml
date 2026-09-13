@@ -8,6 +8,7 @@ on:
       - "research/evaluate_consensus_v44_strict5.py"
       - "research/audit_consensus_v44_ties.py"
       - "research/test_consensus_v44_strict_contract.py"
+      - "research/verify_consensus_v44_acceptance.py"
       - "research/no_tv_v45_full_context_atr.py"
       - "research/test_consensus_v45_contract.py"
       - ".github/workflows/consensus-v44-strict-contract-tests.yml"
@@ -35,6 +36,7 @@ jobs:
             research/evaluate_consensus_v44_strict5.py \
             research/audit_consensus_v44_ties.py \
             research/test_consensus_v44_strict_contract.py \
+            research/verify_consensus_v44_acceptance.py \
             research/no_tv_v45_full_context_atr.py \
             research/test_consensus_v45_contract.py
       - name: Run V44 contract tests

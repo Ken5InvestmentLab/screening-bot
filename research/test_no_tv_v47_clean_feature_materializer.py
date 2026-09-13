@@ -24,6 +24,8 @@ def make_daily():
         "close":np.linspace(90.5,110.5,len(dates)),
         "volume":[20000]*len(dates),
     })
+    d["volume_adjusted"]=d["volume"].astype(float)
+    d["future_split_factor_daily"]=1.0
     d["next_open"]=d["open"].shift(-1)
     d["d5_close"]=d["close"].shift(-5)
     d["exit_date_5bd"]=d["date"].shift(-5)
@@ -100,6 +102,8 @@ def test_listing_epoch_prevents_prelisting_history_from_features_and_targets():
         "volume":[20000]*len(dates),
         "symbol":["S"]*len(dates),
     })
+    daily["volume_adjusted"]=daily["volume"].astype(float)
+    daily["future_split_factor_daily"]=1.0
     listing_date=daily.iloc[60]["date"]
     lmap={"S":[listing_date]}
     daily=v47.add_identity_epoch(daily,lmap)

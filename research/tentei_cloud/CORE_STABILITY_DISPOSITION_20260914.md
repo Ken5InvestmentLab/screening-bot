@@ -165,3 +165,20 @@ Disposition:
 - corrected contract-test fixtures were aligned in commit `784e57e1c366cf57e1cbfd5f9bc4a074e6cd1dc0`.
 
 No 2025H2 locked-confirmation outcome was opened by this invalid run.
+
+
+## Failed-breakdown reclaim final disposition
+
+Corrected authoritative preconfirmation run `34768985489` used the frozen raw 1H source and frozen canonical prior-day daily context.
+
+Frozen 0.5%-cost results:
+- DEVELOPMENT n=5,252: mean -0.766%, median -0.832%, win 41.09%, Top3-ex -0.802% — FAIL.
+- INTERNAL_VALIDATION n=3,285: mean +0.331%, median -0.185%, win 48.13%, Top3-ex +0.283% — FAIL because median and win thresholds fail.
+
+The frozen contract requires both blocks to pass every gate. They do not.
+
+**Decision: REJECT FAILED-BREAKDOWN RECLAIM. LOCKED 2025H2 REMAINS UNOPENED.**
+
+Do not retune its reclaim inequalities, liquidity filters, cooldown, session split, cost or add a ranker against the opened preconfirmation blocks.
+
+Detailed report: `research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_RESULT_20260914.md`.

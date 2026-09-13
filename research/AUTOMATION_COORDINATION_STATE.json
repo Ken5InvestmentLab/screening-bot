@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "8dcb012ca2938def40cf5e71e350426e89c2ac72",
-      "last_processed_sha": "8dcb012ca2938def40cf5e71e350426e89c2ac72",
-      "last_processed_note": "V20 H1 pre-execution audit hardened raw coverage from symbol-set presence to temporal completeness. Frozen guard now requires every canonical-daily active frozen-universe symbol/date in 2025-01-06..2025-06-30 to have >=1 raw 1H row, zero duplicate symbol/timestamps, zero failures, exact 1810 symbol set, and in-window dates. Contract CI 34770212752 succeeded. No V20 outcome opened."
+      "last_seen_sha": "a7207a7860f42b2666b2f4b740837f87164cdd19",
+      "last_processed_sha": "a7207a7860f42b2666b2f4b740837f87164cdd19",
+      "last_processed_note": "V20 H1 pre-execution audit complete. Readiness receipt and ledger updated. Raw acceptance now requires exact 1810 symbols, zero failures, every canonical-daily active frozen-universe symbol/date present in raw 1H, zero duplicate symbol/timestamps, and in-window dates. Query-mode split scaling is compatible only because frozen V20 intraday features are scale-invariant; absolute gates/labels remain canonical daily. No H1 outcome opened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -128,7 +128,16 @@
         "all canonical-daily active frozen-universe symbol/date pairs present in raw 1H",
         "zero duplicate symbol/timestamp rows",
         "all raw dates inside frozen window"
-      ]
+      ],
+      "readiness_receipt": "tvfree_screener/batch02/V20_H1_PREEXECUTION_READINESS_20260914.json",
+      "readiness_status": "READY_BUT_BLOCKED_ON_CONCURRENT_YAHOO_HEAVY_RUNS",
+      "latest_contract_ci": 34770320623,
+      "latest_contract_ci_status": "completed/success",
+      "blockers": [
+        34767664140,
+        34766353425
+      ],
+      "launch_rule": "Only after both blockers are no longer in_progress, trigger H1 exactly once. Coverage must satisfy exact symbols + temporal active-pair completeness + zero duplicates + zero failures before outcomes."
     }
   },
   "supervisor_contract_sha256": "239adb8933e09a6d8f6917cbeadc0386a5a2725d",

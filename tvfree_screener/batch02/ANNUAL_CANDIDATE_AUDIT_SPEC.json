@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "audit_id": "TVFREE-ANNUAL-CANDIDATE-AUDIT-20260913-01",
+  "registered_at_utc": "2026-09-12T23:29:06.358Z",
+  "status": "FROZEN_BEFORE_2025_ANNUAL_REPLAY",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "purpose": "Year-by-year reporting only for the user-identified leading Monster and Core references; no model selection or tuning.",
+  "monster": {
+    "existing_frozen_spec_id": "monster_weak_early_volr20_low_canonical_v1",
+    "existing_spec_sha256": "3398a83d1ac17dfc246c13208d80a7604d6c5cc4b56e8a16844bfd487a1c6a5c",
+    "source_period": "2023-01-01 through 2025-12-31",
+    "candidate_pool": "V7 tail_cdf>=0.999 AND immediately previous XTKS-session market median ret5<=0 AND signal-date ret10<=0.5735294117647058",
+    "ranking": ["volr20 ascending", "tail_cdf descending", "tail_p descending", "symbol ascending"],
+    "detection_policy": "Emit every passing candidate; multiple symbols/day; no Top-N cap. Apply one immediately prior official-XTKS-session same-symbol cooldown to all candidates detected on that prior session. Report raw pool and post-cooldown detections separately.",
+    "target": "Next official XTKS session open to close of the fifth official session including entry; canonical daily-OHLCV label.",
+    "year_coverage": {
+      "2022": "NOT_AVAILABLE: preserved V7 tail feature cache has no 2022 scores; do not reconstruct from daily OHLCV.",
+      "2023": "Frozen descriptive replay; prior candidate-family exposure exists.",
+      "2024": "Frozen descriptive replay; prior candidate-family exposure exists.",
+      "2025": "One user-requested retrospective report-only replay; prior A/B diagnostics had exposure. No tuning or selection from these results.",
+      "2026": "NOT_AVAILABLE: preserved V7 tail feature cache ends in 2025; do not infer scores from daily bars."
+    },
+    "outcome_columns_in_tail_cache": "Must not be loaded or used; derive labels from preserved daily OHLCV after freezing the audit spec."
+  },
+  "core": {
+    "reference": "V29 fixed_min98_both, the strongest numeric Core reference previously reported; not a full-universe candidate.",
+    "exact_annual_replay": "NOT_REPLAYABLE_FROM_PRESERVED_INPUTS unless raw historical hourly/four-hour signal inputs plus date-effective 350-symbol watchlist and teacher rows are recovered.",
+    "rule": "Do not approximate V29 with daily indicators or synthesize intraday bars. Keep its existing aggregate result separate; no annual symbol rows can be claimed."
+  },
+  "evaluation": {
+    "primary_round_trip_cost": 0.005,
+    "sensitivity_costs": [0.0, 0.01],
+    "report": "Signal-level metrics and equal-weight complete daily cohort separately, with unresolved/partial coverage disclosed; include +10/+20/+50/-10/-20, win, Top1/Top3 exclusion, monthly/weekly/symbol concentration.",
+    "unresolved": "Never drop or replace unresolved detections. Partial daily cohorts do not enter complete-cohort means.",
+    "cross_model_comparison": "No direct ranking: V29 and Monster have different signal populations and target timing."
+  },
+  "prior_exposure": "Prior reports have exposed 2023/2024 Monster results and some 2025 pairwise diagnostics. Every annual output is RETROSPECTIVE_PROVISIONAL, not true OOS.",
+  "source_sha256": {
+    "daily_ohlcv": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "monster_tail_features": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+    "monster_tail_metadata": "7f992eaf8944c00018fd03311f92a1204fdf7df6d390b4a11ecabf028daf0a59",
+    "monster_prior_audit": "a290f1f335346a3e43e229a58c2596f62733ecab32d2a97df3b1b7c9cd85a86e",
+    "monster_prior_frozen_spec_file": "a234200c6a8df23b1b82d41aac7e19920897f1e28da0723a9de230b787f7e505",
+    "v29_summary_artifact": "7c6d2a7d70e5d0cd3b82660311e36bdec5790bd651f1502479727654a7542d16",
+    "v29_prior_audit": "40683aa466431e6a76dabd939540151516b60c248ed670824ccdcaf1279b0ead",
+    "xtks_calendar": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "market_returns": "321c238cd89a63f25e790911484f8a8b6b88f8f5220232c5b0e4d8a3c58fa90c"
+  }
+}

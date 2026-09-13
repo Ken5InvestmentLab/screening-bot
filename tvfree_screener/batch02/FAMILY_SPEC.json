@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-TREND-COMPRESSION-20260913-01",
+  "family": "core_trend_compression",
+  "registered_at_utc": "2026-09-12T23:20:04.469Z",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "hypothesis": "Among names already in a positive 20-session trend with nonnegative 5-session return, a lower 5-to-20-session realized-volatility ratio identifies an orderly pause with better 5-session forward return distribution. This is a continuation thesis without a volume-trigger condition.",
+  "candidate_universe": "All available symbols in the preserved TSE daily panel meeting only signal-time data-quality and family pool conditions.",
+  "candidate_pool": {
+    "conditions": [
+      "Finite ret20 > 0 at the official session close.",
+      "Finite ret5 >= 0 at the official session close; no price-pullback condition.",
+      "The last 20 ret1 observations are finite and map to 20 consecutive official XTKS sessions.",
+      "Population standard deviation of the last 20 ret1 values is positive.",
+      "rv_ratio_5_20 = population_std(last 5 ret1) / population_std(last 20 ret1) is finite and < 1.0."
+    ],
+    "missing_or_bad_data": "Exclude from the candidate pool using only signal-time facts; preserve count and reason. Never bridge missing XTKS sessions."
+  },
+  "features": {
+    "timestamp": "Signal date official close; all inputs available by that close.",
+    "rv_ratio_5_20": "Population standard deviation (ddof=0) of ret1 over the latest 5 consecutive official sessions divided by the same over the latest 20 consecutive official sessions; ret1 is close-to-close. No volume, labels, post-signal prices, or intraday features.",
+    "ret20": "Existing causal close-to-close return through signal close, secondary tie-break only."
+  },
+  "ranking": {
+    "primary": "rv_ratio_5_20 ascending",
+    "tie_breaks": ["ret20 descending", "symbol ascending"],
+    "score": "Negative rv_ratio_5_20; no learned weights or fitted transforms."
+  },
+  "selection": {
+    "policies": [1, 2, 3, 5],
+    "cooldown": "One prior official XTKS session for symbols selected by that same independent policy; selected symbols only update state.",
+    "names_per_day": "Multiple symbols allowed up to each registered Top-N; no one-symbol/day cap.",
+    "empty_pool": "Abstain; do not substitute another signal or relax criteria."
+  },
+  "target": "Next official XTKS session open entry; close on the fifth official XTKS session including entry; canonical gross return, with round-trip cost sensitivities 0%, 0.5%, 1%. 0.5% is a research assumption, not measured execution cost.",
+  "periods": {
+    "warmup": "2022-01-04 through 2022-06-30",
+    "discovery_selection": "2022-07-01 through final 2023 signal date whose fifth-session exit is no later than the last 2023 official XTKS session.",
+    "locked_confirmation": "2024 only after the frozen discovery family and at least one Top-N policy pass all existing registered gates; specification cannot change. Historical exposure means RETROSPECTIVE_PROVISIONAL, not true OOS.",
+    "2025": "Do not open in this experiment.",
+    "2026": "Do not open for selection; report-only rule remains unchanged."
+  },
+  "family_gate": "Use the existing PLAN M2/M3 Core gate unchanged: signal/cohort net mean and median, plus winner-Top3-excluded net mean, must be positive at 0.5% assumed cost. Incomplete candidate-day cohorts remain unresolved and cannot be reweighted from resolved members; if coverage prevents the registered gate, return INCONCLUSIVE.",
+  "policy_gate": "Only if family gate is KEEP: compare independent Top1/2/3/5 under the existing M4 rule. Core pass requires positive net signal/cohort mean, median, and Top3-excluded mean; cohort mean improves over the same-active-date full-pool reference; loss10/loss20 do not worsen. Choose one passing N by discovery cohort mean, ties to smaller N. Otherwise SELECTION_COUNT_UNRESOLVED.",
+  "analysis_requirements": ["sample size", "active days", "candidates/day", "5BD mean/median/win", "+10/+20/+50/-10/-20", "Top1/Top3 exclusion", "month/week/symbol concentration", "weekly block bootstrap", "purged validation if fitted parameters exist", "reproducibility", "complexity"],
+  "data_lineage": {
+    "feature_artifact": "batch01/.cache/core_moderate_features_through_2023.parquet",
+    "feature_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "source_daily_ohlcv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "xtks_calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "outcome_source": "After freeze only, join canonical precomputed daily labels by date+symbol from batch01/.cache/core_moderate_ridge_discovery_labels.parquet; verify source SHA, target definition, uniqueness, coverage, and status. Re-key only for this experiment; unmatched/unresolved rows stay unresolved."
+  },
+  "prohibitions": ["Do not read outcome values before the spec and source hashes are frozen.", "Do not adjust the rv ratio window or cutoff after outcomes are opened.", "Do not inspect 2025/2026 outcomes.", "Do not turn retrospective history into a true-OOS claim.", "Do not use Yahoo daily OHLCV to synthesize missing hourly or 4-hour bars.", "Do not add any Codex/LLM/API dependency to research runtime or production.", "Do not modify production code, workflows, secrets, Discord, or spreadsheets."]
+}

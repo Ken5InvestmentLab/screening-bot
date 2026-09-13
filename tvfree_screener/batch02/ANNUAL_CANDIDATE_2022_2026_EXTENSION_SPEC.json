@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "extension_id": "TVFREE-ANNUAL-CANDIDATE-2022-2026-EXT-20260913-01",
+  "frozen_at_utc": "2026-09-13T00:22:06.626793+00:00",
+  "status": "FROZEN_BEFORE_2022_2026_EXTENSION_REPLAY",
+  "purpose": "User-requested descriptive extension of the frozen Monster candidate; no model, feature, threshold, or selection tuning.",
+  "parent_audit_id": "TVFREE-ANNUAL-CANDIDATE-AUDIT-20260913-01",
+  "parent_spec_sha256": "67f4724bf5dd1b2c497fc934eb44dfd1549aac112069e2e23717dc959b9a2670",
+  "monster_spec_sha256": "3398a83d1ac17dfc246c13208d80a7604d6c5cc4b56e8a16844bfd487a1c6a5c",
+  "years": {
+    "2022": "Full calendar-year retrospective diagnostic; later-derived fixed gates mean this is not OOS.",
+    "2026": "Partial year from 2026-01-01 through the last frozen daily-data date; forward outcomes unavailable after that date remain unresolved. Report only, no tuning."
+  },
+  "reconstruction": {
+    "algorithm": "Same v9.score_tail_month recipe: v7.model, y_top025, base.FEATURES, v7.cdf, monthly retraining.",
+    "train_purge": "target_end_date strictly earlier than model-month start.",
+    "minimum_train_rows": 30000,
+    "eligible_universe": "base.eligible_rows with price_cap=1000; prev_volume>=10000, volume>=5000, close>=20, prev_close<=1000 and all base.FEATURES present.",
+    "prediction_rows": "All eligible feature rows in the month, including recent rows with immature forward labels; those labels are excluded from scoring and used only for post-score evaluation.",
+    "model_parameters": {
+      "n_estimators": 160,
+      "max_depth": 3,
+      "learning_rate": 0.04,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8,
+      "min_child_weight": 18,
+      "reg_lambda": 6,
+      "reg_alpha": 0.3,
+      "scale_pos_weight": "min(negative/positive,80)",
+      "random_state": 42,
+      "n_jobs": 4
+    },
+    "tail_gate": 0.999,
+    "xgboost_version": "3.4.1"
+  },
+  "candidate_policy": {
+    "pool": "tail_cdf>=0.999 AND previous official XTKS-session market median ret5<=0 AND signal-date ret10<=0.5735294117647058.",
+    "rank": [
+      "volr20 ascending",
+      "tail_cdf descending",
+      "tail_p descending",
+      "symbol ascending"
+    ],
+    "daily_limit": "None; emit all qualifying non-cooldown candidates.",
+    "cooldown": "Same symbol detected on immediately previous official XTKS session; 2026 year boundary seeded from the frozen 2025-12-30 candidate cache.",
+    "target": "Next official XTKS open through fifth official XTKS close including entry, canonical daily-OHLCV labels.",
+    "costs": [
+      0.0,
+      0.005,
+      0.01
+    ]
+  },
+  "predeclared_check": {
+    "month": "2024-06",
+    "rule": "Compare generated tail-gate date/symbol set to frozen cache; tail_cdf exact and tail_p absolute difference <=1e-9.",
+    "drift": "If mismatch, retain results only as same-source reconstruction with runtime sensitivity disclosed; do not tune to force a match."
+  },
+  "use_of_results": "Report only. Do not promote/reject/tune any candidate using these annual results. Original frozen spec and report remain unchanged.",
+  "source_sha256": {
+    "daily": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "market": "321c238cd89a63f25e790911484f8a8b6b88f8f5220232c5b0e4d8a3c58fa90c",
+    "tail_cache": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+    "parent_spec": "67f4724bf5dd1b2c497fc934eb44dfd1549aac112069e2e23717dc959b9a2670",
+    "monster_spec": "a234200c6a8df23b1b82d41aac7e19920897f1e28da0723a9de230b787f7e505",
+    "run_py": "6549dcc52d8aeca95252688e0336dda0b553ceba2a305c360c4e6a8de66c2d7a",
+    "v7_py": "dae56e2e82cc07dd7dfbbc1c09431309cf9bcf358d3ae687e432815a5d510fb2",
+    "v9_py": "3750b4f421c990c0644f1667dd568d6cadd3e71193d425d99404ae9caef5d648",
+    "label_helpers": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "candidate_helpers": "3512e68c85f0220f05c41060bd4fbaafe7e9c6e53ec155b7b82394bdf12b9ce3",
+    "annual_helpers": "37cc7f03a99feb12258619cc1306a546336fc929e421b1e39647ec79a979798c",
+    "extension_script": "50b67b16ba54519f68f98690ce55a695c8d9be358bce6c9863239e9dcd83e4a7"
+  }
+}

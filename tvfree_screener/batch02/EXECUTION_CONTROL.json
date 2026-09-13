@@ -1,0 +1,21 @@
+{
+  "last_observed_used_percent": 35,
+  "budget_pause_latched": false,
+  "outcome_values_opened_before_freeze": false,
+  "pause_when_remaining_percent_lte": 50,
+  "experiment_id": "CORE-TREND-COMPRESSION-20260913-01",
+  "milestone": "M2_ANNUAL_AUDIT_SPEC_FROZEN",
+  "weekly_window_minutes": 10080,
+  "explicit_user_resume_required_after_latch": true,
+  "required_reasoning": "xhigh",
+  "schema_version": 1,
+  "required_model": "gpt-5.6-luna",
+  "daily_to_intraday_synthesis_implemented": false,
+  "owned_jobs": [],
+  "production_modified": false,
+  "last_observed_remaining_percent": 65,
+  "maximum_active_check_interval_seconds": 60,
+  "next_action": "Run exact all-candidates-per-day Monster yearly audit for cached 2023-2025 scores and canonical daily labels; emit unresolved years for missing 2022/2026. V29 exact yearly replay remains blocked by absent historical 4h/watchlist inputs; do not approximate.",
+  "codex_dependent_production_process_implemented": false,
+  "automatic_resume_on_reset": false
+}

@@ -564,3 +564,17 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next candidate task after parallel-lane recheck: outcome-free pre-2025 vs 2025-H1 V12 feature-distribution drift audit before designing another supervised ranker.
 - Report: `reports/tentei_inspired_4h_v14_pre2025_dual_classifier_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-V14-FEATURE-DRIFT-20260913-01 — MATERIAL_COVARIATE_SHIFT
+
+- Parallel-lane recheck found no duplicate drift audit; the other lane was working on prospective-shadow/export infrastructure and state-entry evidence.
+- Outcome-free comparison: V14 pre-2025 model-fit-like feature cohort 4,924 rows / 966 symbols vs 2025 H1 feature-complete V12 cohort 8,227 rows / 1,173 symbols. No strategy return column was used.
+- Frozen decision: MATERIAL_COVARIATE_SHIFT (4 severe continuous features + 1 severe trigger flag).
+- Severe continuous: prev4_range_mean KS 0.269 / PSI 0.395 / median shift +0.653 IQR; bb_width_pct 0.332 / 0.651 / +0.927; atr_pct 0.281 / 0.448 / +0.667; prior5_rsi_min PSI 0.270.
+- Emergency-reversal trigger share shifted from 47.54% to 60.62% (+13.07pt, severe). RSI-recovery share fell 6.99pt (moderate); trend-flip share was stable.
+- Relative volume stayed low-drift: median 0.789 -> 0.797, KS 0.031, PSI 0.014.
+- Interpretation: V14's fixed pre-2025 supervised representation is materially regime-sensitive, particularly to volatility level/state. This is diagnostic, not proof of causal performance failure.
+- Next after overlap recheck: preregister a regime-normalized V15 representation using causal relative/rank volatility features while keeping V12 candidate generation unchanged. Do not tune from H1 outcomes.
+- Report: `reports/tentei_v14_feature_drift_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

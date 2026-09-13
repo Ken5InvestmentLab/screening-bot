@@ -55,13 +55,15 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - Decision: reject trend compression as a Core policy family. Do not adjust its thresholds or ranking. The corrected numbers are retrospective repair evidence, not OOS and not production parity.
 - Verification: 69 batch01 tests plus all four batch02 trend-compression/recovery tests pass under package-qualified unittest discovery; the runner and frozen hashes reproduce.
 
-## CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01 — preregistration in progress
+## CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01 — discovery decisions frozen, outcomes unopened
 
 - Independent hypothesis: after an opening gap down of at least 1%, a bullish daily candle that recovers at least half but less than all of the gap and closes in the top quarter of its range may show seller absorption before a five-session rebound. The close remains below the prior close, distinguishing it from First Reversal's positive-ret1 setup.
 - Signal-time only: clean daily OHLCV, gap, and close location; no market-regime, volume, or fundamental filter. Score is the equal-weight mean of close-location and gap-reclaim fraction.
 - Selection is every score at or above the within-day 80th percentile, all ties included, one official XTKS-session same-symbol cooldown, unlimited names/day, and no substitution on empty days.
 - Target is next XTKS open to fifth XTKS session close with 0/0.5/1.0% round-trip cost sensitivities. Discovery is 2022H2 through 2023 only; those outcomes were viewed for other families, so this remains retrospective evidence. Later years require the registered staged gates; 2026 is report-only.
-- No candidate features or labels have been read for this family at registration. The candidate/rank/selection artifacts must be frozen and committed before labels are built.
+- Feature-only preparation completed from the bounded decision panel. There are 1,260,690 universe rows, 11,419 candidates across 3,102 symbols and all 365 active dates; q80/all-ties selection with one-session cooldown produced 2,361 rows (131.17 per calendar month), with multiple names allowed and zero empty selection days.
+- Frozen decision hashes: pool `354b3de71b32a27f854e2855ad4a7d395b320dcdabf4b54a7e62d537fcff57b2`; ranked `df9a37a7d820bd29684c4813a3719d7be360f5ee051e28c1eabf8079f996d38b`; selected `3997f9d573cff0d18ade886b327b019207b20b56c13853ea3c7895cd62cd1d3c`. Candidate/rank/selection recomputation and artifact hashes reproduced exactly before any labels were opened.
+- Verification: all seven focused batch02 unit tests pass. Preparation receipt says `outcome_values_opened=false` and `later_periods_opened=false`.
 - Fundamental V2 handoff is currently absent from this checkout; proceed independently and recheck at the next milestone.
 - Frozen spec: `reports/core_gap_reclaim_spec.json`; SHA-256 `aee0f9e2f79af99149c1d2b1993772778a6d2c3ecc19f44d30075f611fbb7926`.
-- Status: FROZEN_BEFORE_DISCOVERY_FEATURE_READ; next freeze candidate/rank/selection artifacts and commit them before opening labels. Weekly usage last observed 40% used / 60% remaining; pause latch remains false.
+- Status: decisions frozen and reproduced; candidate/rank/selection artifacts plus receipt are local `.cache` audit evidence and excluded from Git, while their hashes/counts are recorded here. This ledger update must be committed before evaluation opens labels. Weekly usage last observed 40% used / 60% remaining; pause latch remains false.

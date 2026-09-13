@@ -1,7 +1,7 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T04:14:00+09:00",
+  "updated_at_jst": "2026-09-14T04:45:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -17,14 +17,14 @@
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
-      "last_processed_sha": "a8bee6889f7ba44eecb45644ecac4aff05c51d16",
-      "last_processed_note": "Core :24 found the two 2026_YTD unmatched canonical execution rows were insufficiently classified in run 34771686835. Added reason-classification logging only (no signal/selection/tuning changes) and triggered run 34774595196 at head 14ccb6f2; run is in_progress. Do not treat 14ccb6f2 as fully processed until the rerun result is reviewed."
+      "last_processed_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
+      "last_processed_note": "Core executable-entry rerun 34774595196 completed SUCCESS and was reviewed. DEV 169/169 and 2025H2 140/140 have full canonical execution coverage; 2026_YTD is 116/118. The two unmatched report-only rows are 4586 and 4709 on 2026-04-17, both with canonical exec_date 2026-04-20 but missing raw Yahoo 1H entry bar/open. This is a data-coverage diagnostic only; existing Core and Failed-Breakdown Reclaim REJECT decisions remain unchanged and no locked H2 was opened."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "f0ffae6f95dda3f2db99f76dadceb2fc798de62f",
-      "last_processed_sha": "f0ffae6f95dda3f2db99f76dadceb2fc798de62f",
-      "last_processed_note": "Cross-lane :48 audited authoritative V44 run 34767664140: completed FAILURE by fail-closed baseline reproduction guard before performance interpretation (development baseline n=61 vs expected 67). No usable V44 evidence artifact was uploaded. Treat as DATA_REPRO_FAILURE / DO_NOT_INTERPRET, not strategy rejection. Superseded V44 run 34766353425 also completed and remains non-authoritative. V47 price-policy contract CI 34772226614 completed SUCCESS; duplicate test-file cleanup f0ffae6 is benign."
+      "last_seen_sha": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
+      "last_processed_sha": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
+      "last_processed_note": "Consensus V46 outcome-free PIT split eligibility run 34775030470 completed SUCCESS and was accepted for the V47 data contract at cc5897b2. Artifact hashes were recomputed and matched; split coverage was 3700/3700 with zero failed batches/duplicate event rows/nonpositive ratios, and no strategy returns/model scores were opened. Clean V47 may now be built from accepted PIT membership + V46 evidence, comparing exactly NOCAP vs CAP1000_PIT; no extra price-cap grid and no post-hoc row deletion."
     }
   },
   "guardrails": [
@@ -52,20 +52,26 @@
       "note": "Do not rerun blindly or inspect performance. Reconcile baseline mechanics/input identity first; acceptance cannot pass against missing/failed authoritative evidence."
     },
     "consensus_v46_pit_split_eligibility": {
-      "status": "READY_TO_LAUNCH_BY_CONSENSUS_OWNER",
+      "status": "ACCEPTED_FOR_V47_DATA_CONTRACT",
       "workflow": ".github/workflows/no-tv-consensus-v46.yml",
-      "contract_test_run": 34770243519,
-      "contract_test_status": "completed/success",
+      "run_id": 34775030470,
+      "run_status": "completed/success",
+      "run_head_sha": "040bc01f26d378e076a377161c76cbea0fc23744",
+      "acceptance_commit": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
+      "artifact": "no-tv-consensus-v46-34775030470",
+      "artifact_digest": "sha256:b2fb923039020511d89a11ea6d23058223cc0b4a8b4d718cc61b69ce8ce4d95c",
       "outcome_free": true,
       "strategy_returns_opened": false,
-      "launch_rule": "Previous Yahoo-heavy V44 blockers 34767664140 and 34766353425 are both no longer in_progress. Consensus owner may now launch V46, after checking no newer heavy run was started."
+      "model_scores_opened": false,
+      "coverage": "3700/3700",
+      "next_rule": "Build clean V47 materialization from accepted PIT membership replay plus accepted V46 split evidence. Compare exactly NOCAP vs CAP1000_PIT; do not add price-cap grids or treat post-hoc deletion of current-selected rows as clean."
     },
     "consensus_v47_price_policy": {
       "contract_test_run": 34772226614,
       "contract_test_status": "completed/success",
-      "latest_head": "f0ffae6f95dda3f2db99f76dadceb2fc798de62f",
+      "latest_consensus_head": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
-      "rule": "Do not build clean V47 until V46 PIT reconstruction/audit is complete."
+      "rule": "V46 is accepted. Next work is clean V47 data/materialization; keep 2026 outcomes closed for selection."
     },
     "core_canonical_endpoint": {
       "status": "completed",
@@ -93,11 +99,20 @@
       "previous_run": 34771686835,
       "previous_status": "completed/success",
       "latest_run": 34774595196,
-      "latest_status": "in_progress",
+      "latest_status": "completed/success",
       "head_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
       "purpose": "canonical next-session executable-entry audit with explicit unmatched reason classification",
       "selection_or_tuning": false,
-      "note": "Previous run had DEV/H2 full coverage and two unmatched 2026_YTD rows (4586, 4709 on 2026-04-17). New run classifies whether failure is missing exec bar/open/target or another coverage issue; 2026 remains report-only."
+      "coverage": {
+        "DEV": "169/169",
+        "H2_2025": "140/140",
+        "YTD_2026": "116/118"
+      },
+      "unmatched_2026_report_only": [
+        {"symbol": "4586", "signal_date": "2026-04-17", "exec_date": "2026-04-20", "reason": "NO_RAW_1H_ENTRY_BAR_OPEN"},
+        {"symbol": "4709", "signal_date": "2026-04-17", "exec_date": "2026-04-20", "reason": "NO_RAW_1H_ENTRY_BAR_OPEN"}
+      ],
+      "note": "Data-coverage diagnostic only. 2026 remains report-only; no Core reject decision is changed."
     },
     "v20_session_impulse": {
       "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",

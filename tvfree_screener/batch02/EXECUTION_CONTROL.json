@@ -3,7 +3,7 @@
   "budget_pause_latched": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
-  "milestone": "M12_SPEC_CODE_TESTED_BEFORE_OUTCOME_ACCESS",
+  "milestone": "M14_FEATURE_ONLY_POOL_RECEIPT_COMMITTED",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -29,12 +29,11 @@
   "last_completed_candidate_pool_artifact_sha256": "af2136ad0e54be39b58a48c415f12f5f4076622f0446ea045a94a83b67ec5100",
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "e1e0f99",
-  "outcome_values_opened_before_freeze": false,
-  "next_action": "Commit the frozen spec, implementation, tests, ledger, and control state. Generate the feature-only event pool and commit its receipt; independently rebuild and commit the matching reproduction report; only then open 2024 outcomes through the 2024-12-30 purge cutoff. Keep 2025+ closed and pause at weekly usage >=50% used.",
+  "next_action": "Independently rebuild the feature-only event pool and commit the matching reproduction report. Only after that commit and matching hashes may the 2024 outcomes through the 2024-12-30 purge cutoff be opened. Keep 2025+ closed and pause at weekly usage >=50% used.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
-  "discovery_outcomes_opened": true,
-  "validation_outcomes_opened": true,
+  "last_completed_discovery_outcomes_opened": true,
+  "last_completed_validation_outcomes_opened": true,
   "last_completed_frozen_discovery_feature_names": [
     "range_pct",
     "dispersion20"
@@ -42,9 +41,13 @@
   "last_completed_discovery_report_sha256": "eb85138b24f56afc8858ee5158f697899193b1c3bcd8df1613a9543cb6f68f33",
   "last_completed_feature_freeze_sha256": "a51aa151da8ff6cde61e32b7dc3af49a15621aeff7f7b3fa6d3daaa1de9b18b3",
   "last_completed_validation_report_sha256": "1e29d8fc98dfef9b57596944119bef0de2c55de53a5a9478c20e280da8f89fa6",
-  "active_candidate_pool_rows": null,
-  "active_candidate_pool_reproduced": false,
   "discovery_outcomes_opened": false,
   "validation_outcomes_opened": false,
-  "frozen_discovery_feature_names": []
+  "frozen_discovery_feature_names": [],
+  "active_candidate_pool_rows": 90006,
+  "active_candidate_pool_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
+  "active_candidate_pool_receipt_sha256": "d984b30766af6690fa3d1f77cbe97993a405a190fdd4fca4a6eb065792e65e2e",
+  "active_candidate_pool_reproduced": false,
+  "active_pool_receipt_committed": true,
+  "outcome_values_opened_before_freeze": false
 }

@@ -1,0 +1,32 @@
+{
+  "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
+  "git_sha": "f5517bdf02dc8b72f3fdae2fc37565bea452a9fc",
+  "spec_sha256": "02dea9242d7aec279fc0765d323c419bacd5b2c130b74fae426bfe57d9ccce8c",
+  "input_hashes": {
+    "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "preservation_manifest_sha256": "4c8ae91d91477fd6f5699573fff1cefc1c83e9055ba4c9e1296b6b66444c69e4",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_hashes": {
+    "multi_event_quality": "fb6dda126259e2bb2e6333f1259af59f23c48c3053cb8a81fb318532b2c7a205",
+    "research_tests": "b6155a1813a082e7eb20b89314e6dc9de21726af6eaa869e38e2dde9760f08b2",
+    "v4_model_reference": "f374018bb0d19414ee0a42997eb7fd0d3d7b5dccaea860649c838248d7cdcaac",
+    "feature_panel": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "canonical_label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "evaluation": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "artifact_store": "8f3bae624a8a8fc170be3ed9571fcee50360b12b9d861f88ad5b5a6ea1898644"
+  },
+  "event_pool_rows": 90006,
+  "event_pool_rows_by_year": {
+    "2022": 18679,
+    "2023": 37939,
+    "2024": 33388
+  },
+  "event_pool_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
+  "event_pool_rows_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
+  "labels_included": false,
+  "2025_plus_numeric_ohlcv_parsed": false,
+  "decision": "FEATURE_ONLY_POOL_FROZEN_BEFORE_OUTCOME_ACCESS"
+}

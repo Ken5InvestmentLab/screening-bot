@@ -1,0 +1,96 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V17-CROSSSECTIONAL-DUAL-CLASSIFIER-20260913",
+  "status": "PREREGISTERED_BEFORE_V17_H1_RETURN_ACCESS",
+  "role": "RETROSPECTIVE_SUPERVISED_EVALUATION_AFTER_OUTCOME_FREE_REPRESENTATION_PASS",
+  "lane_split": {
+    "parallel_lane": "prospective shadow evidence/reporting + state-entry lane",
+    "this_lane": "V17 supervised evaluation",
+    "duplicated_work": false
+  },
+  "candidate_generator": "V12 ALL signals unchanged",
+  "feature_representation": "TENTEI_V17_CROSSSECTIONAL_RANK_REPRESENTATION_SPEC.json",
+  "feature_count": 16,
+  "training": {
+    "candidate_date_max": "2024-12-31",
+    "label_maturity": "exit_date < 2025-01-01",
+    "endpoint_status": "RESOLVED",
+    "expected_rows": 4924,
+    "expected_symbols": 966,
+    "year_2025_labels_used_for_fit": false,
+    "year_2026_labels_used_for_fit": false
+  },
+  "models": {
+    "estimator": "HistGradientBoostingClassifier",
+    "tail_target": "ret5bd_gross >= 0.20",
+    "loss_target": "ret5bd_gross <= -0.10",
+    "parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 150,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 100,
+      "l2_regularization": 1,
+      "max_bins": 63,
+      "early_stopping": false,
+      "random_state": 0
+    },
+    "class_weighting": "balanced sample weights separately for each head"
+  },
+  "selection": {
+    "cohort": "same date + bin_name among V12 signal rows",
+    "objectives": [
+      "maximize p_tail20",
+      "minimize p_loss10"
+    ],
+    "eligible_set": "first nondominated Pareto front",
+    "rank_within_front": [
+      "p_tail20 descending",
+      "p_loss10 ascending",
+      "symbol ascending"
+    ],
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "no_backfill_from_dominated_or_non_V12_rows": true,
+    "cooldown": "5 official XTKS sessions per symbol; AM before PM"
+  },
+  "periods": {
+    "h1": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_policy": "OPEN_ONLY_IF_AT_LEAST_ONE_FROZEN_H1_TOPN_PASSES",
+    "h2": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "endpoint": "next official XTKS session open to fifth official XTKS session close",
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "monster_gate": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "decision": {
+    "if_h1_all_fail": "REJECT_V17_SUPERVISED_WITHOUT_H2",
+    "if_any_h1_pass": "OPEN_H2_RETROSPECTIVE_REFUTATION_ONLY",
+    "no_model_or_feature_tuning_from_h1": true
+  },
+  "integrity": {
+    "V17_representation_passed_outcome_free_gate": true,
+    "V14_H1_results_known_but_architecture_unchanged": true,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

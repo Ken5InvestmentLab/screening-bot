@@ -1,0 +1,100 @@
+name: Consensus V47 Clean Feature Materialization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_CLEAN_FEATURES"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  features:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Read source run ids
+        id: meta
+        shell: bash
+        run: |
+          DAILY="$(awk -F= '/^daily_run_id=/{print $2}' research/RUN_V47_CLEAN_FEATURES | tr -d '[:space:]')"
+          RAW="$(awk -F= '/^raw_run_id=/{print $2}' research/RUN_V47_CLEAN_FEATURES | tr -d '[:space:]')"
+          COV="$(awk -F= '/^coverage_run_id=/{print $2}' research/RUN_V47_CLEAN_FEATURES | tr -d '[:space:]')"
+          for X in DAILY RAW COV; do
+            eval V="\$$X"
+            test -n "$V" || { echo "missing $X" >&2; exit 1; }
+          done
+          echo "daily_run_id=$DAILY" >> "$GITHUB_OUTPUT"
+          echo "raw_run_id=$RAW" >> "$GITHUB_OUTPUT"
+          echo "coverage_run_id=$COV" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install frozen model/materialization dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 requests==2.34.2 scikit-learn==1.9.1 scipy==1.18.1 pyarrow
+      - name: Download frozen run80 daily
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Download V47 daily materialization
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-${{ steps.meta.outputs.daily_run_id }}
+          path: daily
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.daily_run_id }}
+      - name: Download V47 raw1h shards
+        uses: actions/download-artifact@v5
+        with:
+          pattern: consensus-v47-raw1h-${{ steps.meta.outputs.raw_run_id }}-shard-*
+          path: raw
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.raw_run_id }}
+      - name: Download V47 raw1h coverage receipt
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-raw1h-coverage-${{ steps.meta.outputs.coverage_run_id }}
+          path: coverage
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.coverage_run_id }}
+      - name: Compile and run feature contract
+        env:
+          PYTHONPATH: research
+        run: |
+          python -m py_compile             research/no_tv_v47_clean_feature_materializer.py             research/test_no_tv_v47_clean_feature_materializer.py
+          python research/test_no_tv_v47_clean_feature_materializer.py
+      - name: Materialize clean PIT features
+        env:
+          PYTHONPATH: research
+        run: |
+          python research/no_tv_v47_clean_feature_materializer.py             --frozen-daily frozen/tse_daily.csv             --restored-daily daily/v47_restored_daily.csv             --all-splits daily/v47_all_split_events.csv             --daily-candidates daily/v47_daily_candidate_symbol_dates.csv             --raw-dir raw             --raw-coverage-receipt coverage/v47_raw1h_coverage_receipt.json             --output-dir research_artifacts/v47_clean_features
+      - name: Hash evidence
+        run: |
+          cd research_artifacts/v47_clean_features
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0             | sort -z             | xargs -0 sha256sum > SHA256SUMS.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-clean-features-${{ github.run_id }}
+          path: research_artifacts/v47_clean_features/**
+          if-no-files-found: warn
+          retention-days: 90

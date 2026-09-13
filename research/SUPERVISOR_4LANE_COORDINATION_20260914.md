@@ -79,3 +79,10 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - Until the outcome-free Consensus/data-integrity V46 audit reconstructs point-in-time nominal prior-close eligibility, no lane may claim promotion-grade evidence from a run80 backtest whose candidate universe depends on an absolute historical price threshold.
 - Relative-return / price-shape diagnostics may remain usable when their own contract is valid, but absolute-price candidate membership is provisional.
 - Do not independently refetch/tune a split correction in this lane. V46 owns the outcome-free reconstruction. If V46 finds a material universe change, propagate the corrected point-in-time eligibility contract before final cross-lane arbitration.
+
+
+## Quantified PIT split-leakage lower bound — 2026-09-14
+- Consensus V43 selected-row audit using only confirmed corporate actions finds at least **71/112 (63.39%)** fixed-min95 rows and **67/101 (66.34%)** ATR-gated rows were admitted by future-split-adjusted prior prices although point-in-time nominal prior close exceeded JPY 1,000.
+- H1 lower bound: 48/67; H2: 19/34. No strategy returns were used to create this count.
+- Treat this as a cross-lane warning for any run80 experiment whose candidate membership uses an absolute historical price threshold. Relative-price features are not automatically invalid, but promotion-grade candidate-universe evidence is provisional until the PIT eligibility contract is rebuilt.
+- Do not independently retune or patch around this with outcomes. Consensus/data-integrity V46 owns the outcome-free split reconstruction.

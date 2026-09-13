@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-import no_tv_v43_2025_uncapped as v43
 
 HISTORY_START = "2024-10-01"
 HISTORY_END = "2024-12-31"
@@ -69,6 +68,8 @@ def main() -> None:
     ap.add_argument("--max-workers", type=int, default=16)
     ap.add_argument("--output-dir", default="research_artifacts/v45_full_context_atr")
     a = ap.parse_args()
+
+    import no_tv_v43_2025_uncapped as v43
 
     data, prefilter, fetch = v43.build_dataset(a.frozen_daily, a.max_workers)
     history_contexts = build_contexts(data, HISTORY_START, HISTORY_END)

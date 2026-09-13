@@ -549,3 +549,41 @@ Decision:
 - preserve lane identity in eventual Discord/user-facing output.
 
 See `CORE_MONSTER_COMPLEMENTARITY_FINDINGS.md`.
+
+
+### Core operational load / capacity / cluster context
+
+Operational-load run `34771263457`, artifact `10322007138`.
+
+2026 Jan-Aug:
+- 118 signals over 68 active signal days.
+- active-day median 1 signal, p95 4, max 11.
+- active-session p95 3, max 8.
+- only 2/68 active days had >=5 signals.
+- AM 43.2%, PM 56.8%.
+- weekly active-week mean 3.93 signals, max 15.
+
+Decision: alert volume does **not** justify pruning Core. Preserve every signal. For eventual Discord delivery, batch by completed Core session (AM / PM) and split messages only for presentation limits; never top-N truncate.
+
+Capacity run `34771393714`, artifact `10321544380`.
+
+With first executable next-bar date as entry and existing 5BD target date as exit:
+- 2026 concurrent positions: median 3, p90 8, p95 10, max 16.
+- 2025H2 max 22.
+- DEV stress episode max **57** concurrent positions after the April 2025 burst.
+
+Decision: do **not** put a fixed position-capacity filter inside the signal detector. Store/notify every Core candidate. Any future capital allocator is a separate downstream layer and must not redefine the Core signal set.
+
+Cluster-risk run `34787773571`, artifact `10326733411`.
+
+Fixed same-day density buckets showed non-stationary sign:
+- DEV 5+ candidate bucket mean +3.33%.
+- 2025H2 5+ bucket mean -1.30%.
+- 2026 Jan-Aug 5+ bucket mean +3.22%.
+
+Decision: signal density is **not** a validated quality/risk score. Do not suppress or score-down burst-day Core signals. A neutral `集中発生` context marker is acceptable for operational awareness only.
+
+Detailed records:
+- `CORE_OPERATIONAL_LOAD_FINDINGS.md`
+- `CORE_CAPACITY_FINDINGS.md`
+- `CORE_CLUSTER_RISK_FINDINGS.md`

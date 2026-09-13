@@ -1,0 +1,74 @@
+{
+  "spec_id": "BROAD-CAUSAL-INTRADAY-V1-20260913",
+  "status": "DATA_QUALITY_PASS_FEATURES_FROZEN",
+  "production_modified": false,
+  "new_market_data_requests": false,
+  "raw_source": {
+    "run_id": 34592896202,
+    "workflow": "Tentei Cloud 1H Research Fetch",
+    "head_sha": "a331b96c8b7391a146ed3a8d28dd5e66d6ae0679",
+    "artifacts": [
+      "tentei-cloud-1h-shard-0",
+      "tentei-cloud-1h-shard-1",
+      "tentei-cloud-1h-shard-2",
+      "tentei-cloud-1h-shard-3",
+      "tentei-cloud-1h-shard-4",
+      "tentei-cloud-1h-shard-5",
+      "tentei-cloud-1h-shard-6",
+      "tentei-cloud-1h-shard-7"
+    ],
+    "rows": 4019524,
+    "usable_symbols": 1315,
+    "target_symbols": 1332,
+    "start": "2024-09-17",
+    "end": "2026-09-10",
+    "manifest_sha256": "4d64471b7099b9e57485c8efd41d0dbbc6dca014e6e634b85bca56f04a502cda"
+  },
+  "historical_universe": {
+    "path": "research/tentei_cloud/symbols_4h_universe.txt",
+    "classification": "BROAD_4H_COMPARISON_SET_NOT_PROVEN_FULL_TSE",
+    "derivation_recipe_preserved": false
+  },
+  "exchange_close_rule": {
+    "change_date": "2024-11-05",
+    "pre_change_pm_required_hours": [
+      13,
+      14
+    ],
+    "post_change_pm_required_hours": [
+      13,
+      14,
+      15
+    ],
+    "rolling_pm_regimes_separate": true,
+    "evidence": {
+      "pre_15h_zero_flat_rate": 0.9343,
+      "post_15h_nonzero_nonflat_rate": 0.8392
+    }
+  },
+  "frozen_features": [
+    "bar_log_return",
+    "range_pct",
+    "upper_wick_pct",
+    "lower_wick_pct",
+    "prev4_log_return_mean",
+    "prev4_range_mean",
+    "log_range_vs_prior20"
+  ],
+  "broad_coverage": {
+    "raw_symbol_days": 618775,
+    "attempted_bins": 1237550,
+    "complete_bins": 1017531,
+    "v1_complete_bins": 941118,
+    "complete_bin_rate": 0.822214,
+    "v1_complete_of_complete_rate": 0.9249035,
+    "v1_complete_of_attempt_rate": 0.7604687
+  },
+  "outcome_integrity": {
+    "broad_audit_joined_outcomes": false,
+    "old_2026_summary_accidentally_exposed_during_source_discovery": true,
+    "frozen_feature_list_preceded_exposure": true,
+    "exposed_2026_may_select_rules": false,
+    "year_2026_role": "REPORT_ONLY"
+  }
+}

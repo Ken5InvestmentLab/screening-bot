@@ -1,0 +1,160 @@
+{
+  "spec_id": "CAUSAL-4H-SCORING-V4-CROSSSECTIONAL-REGIME-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V4_ROW_LEVEL_EVALUATION",
+  "role": "RETROSPECTIVE_ARCHITECTURE_DISCOVERY_ONLY",
+  "integrity": {
+    "v2_and_v3_h2_aggregate_results_already_seen": true,
+    "year_2025_h2_can_promote": false,
+    "year_2026_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "base_input": {
+    "candidate_panel": "same 2025 causal 4H candidate shards used by V2/V3",
+    "raw_features": [
+      "bar_log_return",
+      "range_pct",
+      "upper_wick_pct",
+      "lower_wick_pct",
+      "prev4_log_return_mean",
+      "prev4_range_mean",
+      "log_range_vs_prior20"
+    ],
+    "prior_day_gates": {
+      "close_lte_jpy": 1000,
+      "volume_gte_shares": 10000
+    }
+  },
+  "feature_representation": {
+    "raw_features_retained": true,
+    "cohort_definition": "eligible candidate rows within same date + bin_name before TopN/cooldown",
+    "percentile_rank_method": "average rank pct ascending",
+    "cross_sectional_ranks": [
+      "xrank_bar_log_return",
+      "xrank_range_pct",
+      "xrank_upper_wick_pct",
+      "xrank_lower_wick_pct",
+      "xrank_prev4_log_return_mean",
+      "xrank_prev4_range_mean",
+      "xrank_log_range_vs_prior20",
+      "xrank_bin_volume"
+    ],
+    "cohort_context": [
+      "xctx_breadth_positive",
+      "xctx_median_bar_log_return",
+      "xctx_median_range_pct",
+      "xctx_median_log_range_vs_prior20"
+    ],
+    "volume_rule": "bin_volume is not used as an absolute model feature; only same-source same-cohort percentile rank is used",
+    "current_day_final_daily_values_used": false,
+    "clipping": "NONE",
+    "imputation": "NONE"
+  },
+  "model": {
+    "estimator": "HistGradientBoostingClassifier",
+    "separate_by_bin_name": [
+      "AM_09_13",
+      "PM_13_CLOSE"
+    ],
+    "fixed_parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 150,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 200,
+      "l2_regularization": 1,
+      "max_bins": 63,
+      "early_stopping": false,
+      "random_state": 0
+    },
+    "class_balance": "balanced sample weights on training rows only"
+  },
+  "heads": {
+    "core": {
+      "gain_target": "ret5bd_gross > 0",
+      "loss_target": "ret5bd_gross <= -0.10",
+      "score": "logit(p_positive)-logit(p_loss10)"
+    },
+    "monster": {
+      "gain_target": "ret5bd_gross >= 0.20",
+      "loss_target": "ret5bd_gross <= -0.10 diagnostic only",
+      "score": "p_plus20 descending",
+      "tie_break": "p_loss10 ascending then symbol ascending",
+      "rationale": "Monster exists to preserve the right tail; locked loss-rate gates provide rejection if tail-first ranking becomes too dangerous."
+    }
+  },
+  "periods": {
+    "h1_fold1": {
+      "train_candidate_dates": [
+        "2025-01-01",
+        "2025-02-28"
+      ],
+      "train_label_maturity": "exit_date < 2025-03-01",
+      "eval": [
+        "2025-03-01",
+        "2025-04-30"
+      ]
+    },
+    "h1_fold2": {
+      "train_candidate_dates": [
+        "2025-01-01",
+        "2025-04-30"
+      ],
+      "train_label_maturity": "exit_date < 2025-05-01",
+      "eval": [
+        "2025-05-01",
+        "2025-06-30"
+      ]
+    },
+    "h2_retrospective": {
+      "train_candidate_dates": [
+        "2025-01-01",
+        "2025-06-30"
+      ],
+      "train_label_maturity": "exit_date < 2025-07-01",
+      "eval": [
+        "2025-07-01",
+        "2025-12-31"
+      ],
+      "role": "refutation only"
+    }
+  },
+  "selection": {
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "cohort": "date + bin_name",
+    "cooldown": "5 official XTKS sessions per symbol independently for each head and TopN; AM before PM"
+  },
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "comparability_gates": {
+    "core": {
+      "min_resolved_n": 50,
+      "net_mean_gt": 0,
+      "net_median_gte": 0,
+      "net_win_rate_gt": 0.5,
+      "top3_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.2
+    },
+    "monster": {
+      "min_resolved_n": 30,
+      "net_mean_gt": 0,
+      "gross_ge20_rate_gte": 0.1,
+      "top1_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.4
+    }
+  },
+  "decision": {
+    "if_h1_and_h2_all_fail": "REJECT_V4_ARCHITECTURE",
+    "if_retrospective_gates_pass": "KEEP_ONLY_FOR_PROSPECTIVE_SHADOW",
+    "no_parameter_tuning_from_h2": true
+  },
+  "production_modified": false
+}

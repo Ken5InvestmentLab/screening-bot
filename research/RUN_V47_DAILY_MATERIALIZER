@@ -1,0 +1,3 @@
+trigger: 2026-09-14 v47-daily-materializer-v1
+purpose: outcome-blind PIT daily coverage and exact NOCAP/CAP1000 intraday target lists
+strategy_outcomes: forbidden

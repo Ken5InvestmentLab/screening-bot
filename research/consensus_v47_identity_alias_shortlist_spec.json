@@ -1,0 +1,20 @@
+{
+  "spec_id": "CONSENSUS-V47-IDENTITY-ALIAS-SHORTLIST-20260914",
+  "status": "OUTCOME_FREE_HEURISTIC_ONLY",
+  "purpose": "Reduce manual search for restored/delisted historical codes that Yahoo no longer serves directly.",
+  "candidate_rule": [
+    "predecessor is missing from authoritative restored daily fetch",
+    "predecessor has an accepted JPX delisting event",
+    "successor candidate has a JPX listing event no earlier than one day before and no later than 10 calendar days after predecessor delisting",
+    "successor candidate is in the frozen current universe",
+    "Yahoo frozen current-code daily history exists before successor official listing date"
+  ],
+  "interpretation": "A row is only a shortlist clue that Yahoo may have stitched predecessor history into a successor code.",
+  "acceptance_requires": [
+    "official JPX/company evidence that predecessor and successor represent the same economic/security continuity for the relevant dates",
+    "explicit effective-date mapping",
+    "no return/model-score use"
+  ],
+  "automatic_aliasing": false,
+  "production_modified": false
+}

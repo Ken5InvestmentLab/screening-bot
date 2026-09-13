@@ -536,3 +536,15 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next: V13 keeps ALL V12 candidates unchanged and applies the already-existing V6 causal q10/q50/q90 predictions for Pareto tail ranking. Do not pick RSI or emergency path post hoc.
 - Report: `reports/tentei_inspired_4h_v12_state_reversal_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-INSPIRED-4H-V13-V6-QUANTILE-RANK-20260913 — REJECT AFTER H1 / H2 UNOPENED
+
+- Preregistered before V13 metrics. Kept all V12 events unchanged and applied existing V6 q10/q50/q90 Pareto ranking.
+- H1 scored V12 rows: 8,207.
+- Top1 n=164: mean +0.67%, median -1.87%, win 42.68%, +20% 6.10%, <=-10% 14.02%, Top1-excluded +0.22%; FAIL.
+- Top2 mean +0.47%, +20% 5.81%; Top3 +0.38% / 4.33%; Top5 +0.23% / 3.51%; all fail.
+- Decision: reject V13 without H2.
+- Interpretation: broad-universe V6 predictions are not suitable as the tail ranker for the sparse V12 event population.
+- Next: V14 event-specific dual classifiers trained only on resolved pre-2025 V12 events. One predicts >=+20% tail, one predicts <=-10% downside; selection uses a weight-free Pareto front.
+- 2026 outcomes opened: false. Production modified: false.

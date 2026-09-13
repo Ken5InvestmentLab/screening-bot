@@ -63,6 +63,28 @@ class FailedBreakdownReclaimContractTests(unittest.TestCase):
         self.assertFalse(mod.preconfirmation_blocks_pass(failed, passed))
         self.assertFalse(mod.preconfirmation_blocks_pass(failed, failed))
 
+    def test_previous_daily_context_comes_from_canonical_daily(self):
+        sessions = pd.DataFrame({
+            "symbol": ["1234"],
+            "date": ["2025-01-07"],
+            "open": [99.0], "high": [101.0], "low": [95.0], "close": [100.0],
+            "volume": [12000.0],
+        })
+        daily = pd.DataFrame({
+            "symbol": ["1234", "1234"],
+            "date": ["2025-01-06", "2025-01-07"],
+            "open": [100.0, 101.0],
+            "low": [88.0, 90.0],
+            "close": [98.0, 102.0],
+            "volume": [54321.0, 60000.0],
+        })
+        out, dates = mod.add_previous_daily_context(sessions, daily)
+        row = out.iloc[0]
+        self.assertEqual(dates, ["2025-01-06", "2025-01-07"])
+        self.assertEqual(float(row["prev_daily_low"]), 88.0)
+        self.assertEqual(float(row["prev_daily_close"]), 98.0)
+        self.assertEqual(float(row["prev_daily_volume"]), 54321.0)
+
     def test_canonical_endpoint_is_next_open_to_signal_plus_five_close(self):
         dates = [
             "2025-01-06",
@@ -93,10 +115,10 @@ class FailedBreakdownReclaimContractTests(unittest.TestCase):
             {
                 "symbol": ["1234"] * len(dates),
                 "date": dates,
-                "daily_open": [100, 110, 120, 130, 140, 150, 160],
-                "daily_low": [90] * len(dates),
-                "daily_close": [105, 115, 125, 135, 145, 165, 170],
-                "daily_volume": [50000] * len(dates),
+                "open": [100, 110, 120, 130, 140, 150, 160],
+                "low": [90] * len(dates),
+                "close": [105, 115, 125, 135, 145, 165, 170],
+                "volume": [50000] * len(dates),
             }
         )
         out = mod.attach_canonical_label(candidates, dates, daily)

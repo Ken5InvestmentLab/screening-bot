@@ -68,3 +68,14 @@ TradingViewの区切りを最終目的にしない。JPXの公式現行時間は
 ## 2026-09-13 read-only coverage addendum
 
 The connected `ohlcv_4h` tab was reconciled against same-day daily OHLCV for 2025-12-23 through 2026-09-11. There were 645,187 daily symbol/session pairs; 439,557 did not have a complete valid 09:00 and 13:00 pair, and 439,207 of those had numerically valid daily OHLCV. This is availability/basic-validity evidence only; absent bars cannot be distinguished as intentionally untracked versus failed retrieval. It does not establish hourly price accuracy or permit daily-to-4H synthesis. See `reports/intraday_daily_coverage_audit_20260913.md`.
+
+## 2026-09-13 read-only GAS source and provenance review
+
+The ordinary GAS path in weekly_report_gas/gas.txt confirms that the stored legacy 09:00/13:00 rows are not a clean, source-tagged raw-hourly dataset:
+
+- parseIntraResponse_ treats Yahoo timestamps as interval starts and bins 09:00/10:00/11:00/12:00 into AM, and 13:00/14:00/15:00/15:30 or 16:00 into PM. A 12:00 one-hour interval crosses the actual 11:30–12:30 TSE lunch break and cannot be split into valid session bars from this input.
+- A flat zero-volume 15:30/16:00 close snapshot can update the PM close without contributing volume. The legacy buckets therefore have special close-snapshot semantics.
+- The 1d gap fallback copies the same daily O/H/L/C into both AM and PM placeholder rows and divides daily volume 50/50. That supplies rows but does not reconstruct either session's true OHLCV.
+- The alert_id marker is not a reliable source label. The sheet has 8,610 GAP_REPAIR rows, but the GAS code also assigns GAP_REPAIR to rows refetched from Yahoo 1h and to the 1d-derived duplicated placeholders. Thus the two sources cannot be separated from this marker. Other values such as new_session and MIDDAY_<date> identify fetch/update batches, not the underlying feed.
+
+Consequently the existing connected sheet cannot support a defensible hourly-versus-daily accuracy comparison: its source provenance is mixed, raw hourly timestamps are absent, and the research repository has no raw 1h export. Do not infer the source from duplicate-looking OHLC values; legitimate illiquid sessions can also be flat. Record value-level accuracy as INCONCLUSIVE_SOURCE_PROVENANCE_MIXED. Do not score from this legacy sheet or mutate it. The agreed daily endpoint remains valid for outcome measurement, while any feature series must preserve its own timeframe and source.

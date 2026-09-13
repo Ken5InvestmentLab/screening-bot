@@ -1,5 +1,5 @@
 {
-  "last_observed_used_percent": 52,
+  "last_observed_used_percent": 53,
   "budget_pause_latched": false,
   "pause_when_remaining_percent_lte": 45,
   "experiment_id": "DATA-QUALITY-4H-FEASIBILITY-20260913-01",
@@ -12,14 +12,14 @@
   "daily_to_intraday_synthesis_implemented": false,
   "owned_jobs": [],
   "production_modified": false,
-  "last_observed_remaining_percent": 48,
-  "last_usage_snapshot_utc": "2026-09-13 10:42:51 UTC",
+  "last_observed_remaining_percent": 47,
+  "last_usage_snapshot_utc": "2026-09-13 11:04:50 UTC",
   "maximum_active_check_interval_seconds": 60,
   "last_completed_experiment": {
-    "decision": "COVERAGE_AUDIT_COMPLETE_DAILY_ENDPOINT_AVAILABLE_4H_SYNTHESIS_NOT_PERMITTED",
-    "experiment_id": "DATA-QUALITY-INTRADAY-DAILY-COVERAGE-20260913-01",
-    "report_sha256": "ffc373af8ec9561cc40f88f106d21f2560bbdb76e5cb13d502c1fffe7f122302",
-    "report": "tvfree_screener/batch02/reports/intraday_daily_coverage_audit_20260913.md"
+    "experiment_id": "DATA-QUALITY-4H-PROVENANCE-20260913-01",
+    "decision": "INCONCLUSIVE_SOURCE_PROVENANCE_MIXED",
+    "report": "tvfree_screener/batch02/reports/4h_data_feasibility_audit_20260913.md",
+    "report_sha256": "502d9cbf72b819c8ca05c29eb86963f131eec7c33ef965a7ca198570dab7fb3f"
   },
   "registered_spec_sha256": "f140637250483332fa5db5e6067212175e0790eadb174323eb73788397f912ea",
   "registered_feature_count": 3,
@@ -31,7 +31,7 @@
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "13fb02c",
   "last_completed_candidate_pool_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
-  "next_action": "Read the GAS/Yahoo 1-hour path and verify interval, timestamp, and adjustment semantics without changing production. Run the frozen hourly-daily value audit only on an authorized local raw 1-hour export if present. The current connected 4H coverage audit does not measure Yahoo 1-hour accuracy. Keep 2025/2026 returns closed; do not fetch/scrape Yahoo or synthesize intraday bars. If raw 1-hour data is absent, record value-level accuracy as INCONCLUSIVE and continue independent Core/Monster research.",
+  "next_action": "Keep the approved next-session-open to fifth-session-close daily endpoint separate from feature construction. The legacy sheet has no reliable provenance split and no raw 1h export is present, so do not use it for scoring or hourly-vs-daily value claims. Continue independent research candidates using available, source-clear data; any daily feature candidate stays a separately named daily model and cannot be promoted as 4H. Run the frozen hourly-daily audit only if a user-authorized raw 1h export becomes available; no Yahoo fetch/scrape, paid data, production change, or daily-to-intraday synthesis.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -107,5 +107,12 @@
   "intraday_daily_coverage_pairs": 645187,
   "intraday_daily_coverage_noncomplete_4h_pairs": 439557,
   "intraday_daily_coverage_daily_available_for_gaps": 439207,
-  "intraday_daily_coverage_report_sha256": "ffc373af8ec9561cc40f88f106d21f2560bbdb76e5cb13d502c1fffe7f122302"
+  "intraday_daily_coverage_report_sha256": "ffc373af8ec9561cc40f88f106d21f2560bbdb76e5cb13d502c1fffe7f122302",
+  "current_gas_hourly_timestamp_semantics_verified": true,
+  "current_gas_daily_fallback_copies_ohlc_into_both_sessions": true,
+  "legacy_4h_gap_failed_marker_rows": 4538,
+  "current_gas_hourly_12h_bucket_crosses_lunch": true,
+  "legacy_4h_1h_daily_value_accuracy": "INCONCLUSIVE_SOURCE_PROVENANCE_MIXED",
+  "legacy_4h_gap_repair_marker_rows": 8610,
+  "legacy_4h_gap_repair_marker_source_ambiguous": true
 }

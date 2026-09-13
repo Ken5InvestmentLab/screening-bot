@@ -93,3 +93,12 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - A rare monster-winner contribution is acceptable if generated causally and supported by the locked validation contract.
 - If both NOCAP and CAP1000_PIT are weak, revisit the model/family rather than tuning more price thresholds.
 - For this first price-policy comparison, prior/session volume gates remain fixed so only the price ceiling changes. They may be tested separately later under a new preregistration.
+
+
+## PIT daily-volume blocker — 2026-09-14
+- Removing the historical JPY1,000 ceiling does **not** by itself eliminate future-split leakage. Yahoo/run80 daily historical **volume** is also retrospectively represented on the post-split share-count basis.
+- Clean historical prior-volume eligibility must use: `PIT daily volume = frozen daily volume / cumulative future split factor(date)`.
+- In the frozen current-listed 3,700-symbol universe, the old prior-volume>=10,000 gate has 6,783 adjusted-only false-positive symbol-date rows in 2025 (1.025% of old passes), including 4,316 in H1 (1.355%).
+- Combined old CAP1000 price+volume eligibility has 19,127 old-only rows in 2025 (7.514% of old eligible), H1 12,930 (9.928%).
+- Raw Yahoo 1H volume uses a different convention: Consensus cross-checks found 22/22 future-split selected dates closer to PIT daily share-volume scale, so raw 1H volume must remain unchanged for session-volume/session-volume-ratio features.
+- Therefore any run80 research using an absolute historical daily volume gate must be considered provisional unless daily volume semantics are PIT-corrected. Do not independently tune around this with returns.

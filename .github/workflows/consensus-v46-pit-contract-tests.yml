@@ -1,0 +1,34 @@
+name: Consensus V46 PIT Split Contract Tests
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/no_tv_v46_pit_split_eligibility.py"
+      - "research/test_no_tv_v46_pit_split_eligibility.py"
+      - "research/consensus_v46_pit_split_eligibility_preregister.json"
+      - ".github/workflows/consensus-v46-pit-contract-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned source dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 yfinance==0.2.66
+      - name: Compile
+        run: |
+          python -m py_compile             research/no_tv_v46_pit_split_eligibility.py             research/test_no_tv_v46_pit_split_eligibility.py
+      - name: Run contract tests
+        run: python research/test_no_tv_v46_pit_split_eligibility.py

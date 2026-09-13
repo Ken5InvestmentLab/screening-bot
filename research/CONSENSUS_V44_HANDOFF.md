@@ -387,3 +387,27 @@ V46 split reconstruction remains required even for NOCAP because absolute model 
 
 ### Promotion boundary
 No current V43/V44 return result is promotion-grade after the PIT findings. Promotion-relevant evidence restarts only from accepted V47 clean PIT materialization.
+
+
+## Split-volume semantics — frozen before V47 outcomes
+Outcome-free audit found Yahoo daily and Yahoo raw 1H volume use different split conventions.
+
+Frozen rule:
+- PIT daily volume = frozen present-basis daily volume / cumulative future split factor(date).
+- prior completed-day volume gate >=10,000 uses PIT daily volume.
+- daily technical volume ratios (day_vol_ratio5/day_vol_ratio20) use PIT-restored daily volume.
+- raw Yahoo 1H volume remains **unchanged** for session volume >=5,000 and session_vol_ratio20.
+- do **not** divide raw 1H volume by future split factor.
+
+Receipt:
+- across 22 V43 selected symbol-dates with both sessions and a later split, 22/22 raw 1H session-volume sums were closer to reconstructed PIT daily-volume scale than to frozen adjusted daily volume.
+- strong example 6574 cumulative future factor=100: session sum / adjusted daily ~0.0094, session sum / PIT daily ~0.944.
+
+Files:
+- `research/consensus_v47_split_volume_semantics_addendum.json`
+- `research/CONSENSUS_V47_SPLIT_VOLUME_AUDIT_2026-09-14.md`
+
+### Current authoritative daily run
+Prior daily runs are superseded. Authoritative V47 daily run is **34788533946** (v6 PIT price + PIT daily volume + identity epochs + 100% restored-symbol requirement). Strategy outcomes remain forbidden.
+
+Clean-feature code is also updated so PIT daily volume feeds daily volume-ratio technicals while raw 1H volume is unchanged. Latest explicit PIT-volume feature contract is run from commit a3eeaec2567d9af7fac6219c0044c069c21521b7.

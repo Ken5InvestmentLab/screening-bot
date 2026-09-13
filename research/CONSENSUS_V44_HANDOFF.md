@@ -58,7 +58,8 @@ Correction:
 - only baseline and that one chosen cooldown may report H2 replacement outcomes;
 - losing cooldown H2 metrics are not emitted;
 - H2 Top-K candidate export is outcome-blind;
-- corrected run 34766353425 is the only valid V44 run.
+- corrected pre-hardening run 34766353425 is superseded for final conclusions by authoritative hardened run 34767664140;
+- **only run 34767664140 may support the final V44 conclusion** once completed and receipt-checked.
 
 
 ## V45 staged next action — not triggered while V44 is fetching Yahoo 1H
@@ -137,3 +138,16 @@ Required DEV reproduction receipt:
 If any receipt item fails, V44 must fail closed before any H2 conclusion is accepted.
 
 An outcome-free exact-tie prevalence audit has also been preregistered. It does not alter the running V44 policy.
+
+
+## V44 workflow reproducibility hardening
+After the corrected evaluator was already running, the workflow was hardened:
+- checkout is pinned to the triggering commit SHA instead of a moving branch ref;
+- package versions are pinned;
+- concurrency uses one branch-specific V44 group with cancel-in-progress for future hardened launches;
+- evidence files receive SHA-256 receipts before upload;
+- artifact retention is 90 days.
+
+Because run `34767664140` is the first run launched from the hardened workflow, it supersedes the older corrected-but-pre-hardening run `34766353425` for final research conclusions.
+
+At the time of this handoff update, GitHub still displayed the older runs as in-progress. Their eventual output must be ignored even if they finish successfully.

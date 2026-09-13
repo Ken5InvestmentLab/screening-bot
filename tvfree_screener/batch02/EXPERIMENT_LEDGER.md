@@ -419,3 +419,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Reproduction hashes: H1 fold1 c7a2ce88331ce8fc65522abaad94b4fc6311b944ef1b467ece04ed0f11b77dc8; H1 fold2 508e71a5e960fe307763ce43d5d1eb4ac05969a437c04a05d55b0d517add3fde; H2 4e38d1a946b4eacfcafd6818a4b4a7e8e1cef6a4c1d96b2b40a1d279f61d9522.
 - 2026 strategy outcomes opened: false. Production modified: false.
 - Next: causal cross-sectional/regime 4H representation; tail-first Monster objective; prospective evidence required for any promotion.
+
+
+## CAUSAL-4H-SCORING-V4-CROSSSECTIONAL-REGIME-20260913 — REJECT / NO_PROMOTION
+
+- Preregistered before V4 row-level evaluation. Added same-cohort percentile ranks and intraday cohort context; Core remained risk-adjusted, Monster became tail-first p(+20).
+- H1 fold1 Monster Top1 restored +20% rate to 10.98%, but mean -0.53% and Top1-excluded mean -1.43%; FAIL.
+- H1 fold2 Monster Top3/Top5 had positive means (+0.60/+0.76%) and positive Top1-excluded means, but +20% rates only 8.54/7.32%; FAIL.
+- H2 retrospective Monster Top1 achieved +20% rate 10.08% but mean -1.71%, median -4.28%, Top1-excluded mean -2.24%; FAIL. Core all policies also failed.
+- Interpretation: V3 was too defensive; V4 recovers tail capture but is too permissive. Do not interpolate/tune a risk penalty against H2.
+- Decision: reject V4. Next architecture will model q10/q50/q90 of 5BD return directly using causal 4H context.
+- Report: `reports/causal_4h_scoring_v4_crosssectional_regime_20260913.md`.
+- Reproduction hashes: fold1 ebb47f75daf78b5f5e01baacdcf999a3f71479ffad66747f19ade6d4cdd01adc; fold2 f046c1a883959c21cb3fff789d9a25ce1c7302ce386d2448536b0e8471784df4; H2 6a9a6d9c6e55fb17127eec7a1e04cbbb9606037c3ad5f4339f11b5dab8e734e3.
+- 2026 outcomes opened: false. Production modified: false.

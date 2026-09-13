@@ -331,3 +331,20 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Additional diagnostic on 1,087 complete symbol-sessions: OHLC daily/hourly ratios were within a 1% normalized common-factor spread on 478 (44.0%) and within 2% on 770 (70.8%). A median-of-four-OHLC ratio factor put all four daily/hourly aggregate fields within 1% on 574 (52.8%) and within 2% on 891 (82.0%). A close-only factor put open/high/low within 1% on 522 (48.0%; close exact by construction). Daily-volume/hourly-sum ratio median was 1.606 (p10 1.131, p90 2.541); 846 ratios were between 0.5 and 2. These selected same-provider data do not identify which feed is correct and do not validate intraday path accuracy.
 - Sample availability: 1,352/1,360 daily rows were numerically valid; 1,087 hourly sessions had all seven expected starts. A daily-resolution fallback appears to improve full-day availability, but does not restore intraday timing.
 - Status: coarse diagnostic complete; no correction variant actually applied. No 2026 returns or strategy outcomes were opened. Prior hourly/daily metrics remain diagnostics, not a decision against daily-led correction.
+
+
+## DATA-QUALITY-DAILY-ANCHOR-OPTIONS-20260913-02 — KEEP REPAIR / CORRECT CAUSAL USE
+
+- Scope: existing cached Yahoo-derived 1h sample only; 8 symbols, 1,325 observed symbol-sessions, 1,087 complete seven-slot sessions. No new Yahoo request and no strategy-return file opened.
+- Raw complete-session quality: all OHLC within 1% of same-provider daily aggregate on 494/1,087 (45.446%); within 2% on 814/1,087 (74.885%). Median volume APE was 37.723%; only 65/1,087 (5.98%) were within 5%.
+- Common OHLC scale repair improved all-OHLC-within-1% to 574/1,087 (52.806%) and within-2% to 838/1,087 (77.093%). Applied to 769 sessions; factor median 1.0, p10 0.995415, p90 1.005339, min 0.0986842, max 1.049973.
+- Daily open/close anchoring improved all-OHLC-within-1% to 985/1,087 (90.616%); adding extrema anchoring improved it to 1,074/1,087 (98.804%). This is post-close reconstruction consistency, not proof of the true intraday path.
+- Eligible proportional volume reconciliation improved median volume APE to 0 and volume-within-5% to 846/1,087 (77.829%). Median volume factor 1.605659; p10 1.131488; p90 2.530032.
+- 596/1,087 complete sessions met the current fully-corrected diagnostic; 455 were partial-review. Do not infer mutually-exclusive fallback-tier counts until the materializer freezes exact status precedence.
+- 6085 remains a stress/pathology case: raw all4<=1% 25.35%, scale 41.55%, fully-corrected 24.65%. Do not derive universal correction rules from this symbol.
+- **Important correction to the previous handoff:** any repair that uses the current day's finalized daily high/low/close/volume is not causally eligible for an earlier pre-close 4H feature. Reconstruction quality and signal-time causal eligibility are now separate dimensions.
+- Frozen policy: `INTRADAY_CAUSAL_QUALITY_TIER_SPEC.json`. Current-day final daily anchors are tagged `POSTCLOSE_RECON_ONLY` for earlier cutoffs. Only observations available by cutoff can carry `RAW_CAUSAL_INTRADAY`.
+- Daily fallback remains one daily-resolution record only. Never synthesize two AM/PM or 4H bars from one daily candle.
+- Decision: keep the repair ladder for archival/data-quality reconstruction; do not use its post-close consistency gain as evidence that pre-close scoring inputs are valid.
+- Report: `reports/daily_anchor_repair_audit_20260913.md`.
+- Next: implement deterministic materializer/source tags, then build cutoff-aware 4H/session features and measure coverage before any strategy-outcome test.

@@ -1,0 +1,2 @@
+trigger: 2026-09-14 consensus-v44-topk-cooldown
+purpose: top-k cooldown-with-replacement audit; research-only; no production writes

@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import requests
 
 
 NEW_ARCHIVES = [
@@ -53,6 +54,17 @@ def main() -> None:
     a = ap.parse_args()
 
     pit = load_exact_module(a.source_module)
+
+    # Compatibility layer ONLY: current JPX pages are UTF-8, while requests'
+    # guessed encoding can decode Japanese market labels as mojibake. The exact
+    # source parser/regex then rejects otherwise valid rows as unknown-market.
+    def get_utf8(url: str) -> str:
+        r = requests.get(url, headers=pit._headers(), timeout=60)
+        r.raise_for_status()
+        return r.content.decode("utf-8")
+
+    pit._get = get_utf8
+
     # Compatibility layer ONLY: current JPX archive selector no longer exposes
     # the old href shape expected by the 2026-09-11 source discovery regex.
     pit.discover_archive_pages = explicit_discovery

@@ -484,3 +484,17 @@ Three simple pruning paths are now closed for the fixed reconstructed Core:
 3. positive correlation-peer momentum hard gates.
 
 The current evidence favors preserving Core breadth. The next independent Core task should quantify baseline stability/uncertainty rather than invent another threshold from already-opened outcomes.
+
+
+### Core execution-cost sensitivity
+
+Final logged run `34765954141`.
+
+2026 Jan-Aug fixed Core:
+- gross mean +1.56%; bootstrap P(mean>0) 99.24%; 95% CI +0.29%..+2.86%.
+- assumed 0.5% round-trip cost: mean +1.06%; bootstrap P(mean>0) 95.12%; 95% CI -0.24%..+2.29%.
+- assumed 1.0% round-trip cost: mean +0.56%; bootstrap P(mean>0) 80.08%; 95% CI -0.76%..+1.84%.
+
+Because constant cost shifts the bootstrap mean distribution, the gross 2026 95% lower bound implies that round-trip cost above roughly 0.29% makes the 95% interval cross zero.
+
+Interpretation: Core remains positive by point estimate under 0.5%-1.0% assumed costs, but strict 95% robustness does not survive 0.5%. Treat Core as **promising/stable gross, execution-sensitive net**, not production-proven net.

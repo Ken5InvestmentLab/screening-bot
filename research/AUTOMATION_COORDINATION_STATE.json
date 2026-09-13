@@ -1,7 +1,13 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T05:48:00+09:00",
+  "updated_at_jst": "2026-09-14T05:57:00+09:00",
+  "supervisor_last_scan": {
+    "status": "COMPLETE",
+    "branch_heads_changed_since_previous_state": false,
+    "coordination_contract_reconciled": true,
+    "note": "All three active branch HEADs still equal last_processed_sha. No new lane Actions beyond already-processed runs. Coordination branch Supervisor document and candidate-status snapshot were stale relative to later lane findings; reconciled them to current V20 coverage-blocked, Core rejected, V44 data-repro-failed, V46 accepted, V47 clean-PIT-contract-frozen state."
+  },
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -18,7 +24,7 @@
       "preferred_worker": "core",
       "last_seen_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
       "last_processed_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
-      "last_processed_note": "Core executable-entry rerun 34774595196 completed SUCCESS and was reviewed. DEV 169/169 and 2025H2 140/140 have full canonical execution coverage; 2026_YTD is 116/118. The two unmatched report-only rows are 4586 and 4709 on 2026-04-17, both with canonical exec_date 2026-04-20 but missing raw Yahoo 1H entry bar/open. This is a data-coverage diagnostic only; existing Core and Failed-Breakdown Reclaim REJECT decisions remain unchanged and no locked H2 was opened."
+      "last_processed_note": "Core executable-entry rerun 34774595196 completed SUCCESS and was reviewed. DEV 169/169 and 2025H2 140/140 have full canonical execution coverage; 2026_YTD is 116/118. The two unmatched report-only rows are 4586 and 4709 on 2026-04-17, both with canonical exec_date 2026-04-20 but missing raw Yahoo 1H entry bar/open. Existing Core and Failed-Breakdown Reclaim REJECT decisions remain unchanged and no locked H2 was opened."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -33,94 +39,14 @@
     "Canonical comparison endpoint is next XTKS session open to fifth XTKS session close.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
     "Read research/SUPERVISOR_4LANE_COORDINATION_20260914.md before lane advancement.",
-    "A surviving Consensus candidate still requires canonical-target retraining, canonical raw-bin semantics, and point-in-time universe validation.",
-    "Run80 absolute historical price-threshold evidence is promotion-blocked until outcome-free point-in-time split eligibility is reconstructed."
+    "Rejected families may not be reopened by renaming or post-hoc retuning.",
+    "The legacy prior-close<=1000 rule is not globally mandatory; clean Consensus V47 compares exactly NOCAP vs CAP1000_PIT."
   ],
   "workflow_watch": {
-    "consensus_v44": {
-      "run_id": 34767664140,
-      "status": "completed",
-      "conclusion": "failure",
-      "authoritative": true,
-      "superseded_runs": [34765427789, 34766353425],
-      "decision": "DATA_REPRO_FAILURE_DO_NOT_INTERPRET",
-      "failure_reason": "fail-closed baseline drift: DEVELOPMENT baseline n=61 expected=67",
-      "performance_interpreted": false,
-      "usable_evidence_artifact_uploaded": false,
-      "acceptance_required_before_performance": true,
-      "strict5_requires_acceptance": true,
-      "note": "Do not rerun blindly or inspect performance. Reconcile baseline mechanics/input identity first; acceptance cannot pass against missing/failed authoritative evidence."
-    },
-    "consensus_v46_pit_split_eligibility": {
-      "status": "ACCEPTED_FOR_V47_DATA_CONTRACT",
-      "workflow": ".github/workflows/no-tv-consensus-v46.yml",
-      "run_id": 34775030470,
-      "run_status": "completed/success",
-      "run_head_sha": "040bc01f26d378e076a377161c76cbea0fc23744",
-      "acceptance_commit": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
-      "artifact": "no-tv-consensus-v46-34775030470",
-      "artifact_digest": "sha256:b2fb923039020511d89a11ea6d23058223cc0b4a8b4d718cc61b69ce8ce4d95c",
-      "outcome_free": true,
-      "strategy_returns_opened": false,
-      "model_scores_opened": false,
-      "coverage": "3700/3700",
-      "next_rule": "Build clean V47 materialization from accepted PIT membership replay plus accepted V46 split evidence. Compare exactly NOCAP vs CAP1000_PIT; do not add price-cap grids or treat post-hoc deletion of current-selected rows as clean."
-    },
-    "consensus_v47_price_policy": {
-      "contract_test_run": 34772226614,
-      "contract_test_status": "completed/success",
-      "latest_consensus_head": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
-      "materialization_contract": "research/CONSENSUS_V47_DATA_MATERIALIZATION_CONTRACT_20260914.json",
-      "materialization_contract_status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
-      "price_arms": ["NOCAP", "CAP1000_PIT"],
-      "rule": "V46 is accepted. Implement outcome-blind clean V47 materialization and pass PIT membership/daily/intraday/split coverage receipts before any strategy/model outcomes are computed or inspected. Keep 2026 outcomes closed for selection."
-    },
-    "core_canonical_endpoint": {
-      "status": "completed",
-      "decision": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE"
-    },
-    "core_failed_breakdown_reclaim": {
-      "authoritative_preconfirmation_run": 34768985489,
-      "preconfirmation_decision": "REJECT",
-      "locked_confirmation_opened": false
-    },
-    "core_capacity": {
-      "invalid_run": 34771393714,
-      "invalid_reason": "AM signals started occupancy at same-day PM raw bar instead of next official XTKS session open date",
-      "authoritative_run": 34771491740,
-      "authoritative_status": "completed/success",
-      "processed": true,
-      "selection_or_tuning": false,
-      "summary": {
-        "DEV_max_concurrent": 56,
-        "H2_2025_max_concurrent": 22,
-        "YTD_2026_max_concurrent": 15
-      }
-    },
-    "core_execution_entry": {
-      "previous_run": 34771686835,
-      "previous_status": "completed/success",
-      "latest_run": 34774595196,
-      "latest_status": "completed/success",
-      "head_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
-      "purpose": "canonical next-session executable-entry audit with explicit unmatched reason classification",
-      "selection_or_tuning": false,
-      "coverage": {
-        "DEV": "169/169",
-        "H2_2025": "140/140",
-        "YTD_2026": "116/118"
-      },
-      "unmatched_2026_report_only": [
-        {"symbol": "4586", "signal_date": "2026-04-17", "exec_date": "2026-04-20", "reason": "NO_RAW_1H_ENTRY_BAR_OPEN"},
-        {"symbol": "4709", "signal_date": "2026-04-17", "exec_date": "2026-04-20", "reason": "NO_RAW_1H_ENTRY_BAR_OPEN"}
-      ],
-      "note": "Data-coverage diagnostic only. 2026 remains report-only; no Core reject decision is changed."
-    },
     "v20_session_impulse": {
       "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
       "owner": "Canonical/Event :12 worker",
       "contract_test_run": 34769637874,
-      "contract_test_status": "completed/success",
       "diagnostic_patch_contract_test_run": 34777145113,
       "diagnostic_patch_contract_test_status": "completed/success",
       "canonical_h1_universe_symbols": 1810,
@@ -128,22 +54,51 @@
       "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
       "h1_run": 34774070956,
       "h1_status": "COVERAGE_FAILED_DO_NOT_INTERPRET",
-      "h1_head_sha": "dcf89beb06128ba688a349850767fecb493f9add",
       "raw_fetch_shards": "4/4 completed success",
-      "coverage_job": "failed in Fail-closed raw coverage receipt",
       "coverage_receipt_uploaded": false,
       "performance_interpreted": false,
-      "diagnostic_patch_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
-      "diagnostic_patch": "coverage artifact upload now uses if: always() so future/diagnostic fail-closed runs preserve the receipt",
-      "raw_acceptance": "exact frozen 1810 symbol set + zero final failures + temporal active-pair completeness + zero duplicate symbol/timestamp + raw dates within frozen window before opening H1 outcomes",
-      "next_rule": "Do not open H1 outcomes or H2. Recover/produce the raw coverage receipt first and identify which frozen acceptance condition failed; do not retune V20 to pass coverage.",
-      "year_2026_outcomes_opened": false
+      "next_rule": "Do not open H1 outcomes or H2. Recover/produce the raw coverage receipt first and identify which frozen acceptance condition failed; do not retune V20 to pass coverage."
+    },
+    "core": {
+      "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
+      "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
+      "locked_h2_opened": false,
+      "execution_audit_run": 34774595196,
+      "execution_audit_status": "completed/success",
+      "execution_coverage": {"DEV":"169/169","H2_2025":"140/140","YTD_2026":"116/118"},
+      "next_rule": "No adjacent retune; audit/reproducibility only unless a genuinely different low-DOF mechanism is preregistered before outcomes."
+    },
+    "consensus_v44": {
+      "run_id": 34767664140,
+      "status": "completed",
+      "conclusion": "failure",
+      "decision": "DATA_REPRO_FAILURE_DO_NOT_INTERPRET",
+      "failure_reason": "fail-closed baseline drift: DEVELOPMENT baseline n=61 expected=67",
+      "performance_interpreted": false
+    },
+    "consensus_v46_pit_split_eligibility": {
+      "status": "ACCEPTED_FOR_V47_DATA_CONTRACT",
+      "run_id": 34775030470,
+      "run_status": "completed/success",
+      "artifact": "no-tv-consensus-v46-34775030470",
+      "artifact_digest": "sha256:b2fb923039020511d89a11ea6d23058223cc0b4a8b4d718cc61b69ce8ce4d95c",
+      "outcome_free": true,
+      "coverage": "3700/3700"
+    },
+    "consensus_v47_price_policy": {
+      "latest_consensus_head": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
+      "materialization_contract": "research/CONSENSUS_V47_DATA_MATERIALIZATION_CONTRACT_20260914.json",
+      "materialization_contract_status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
+      "price_arms": ["NOCAP", "CAP1000_PIT"],
+      "rule": "Implement outcome-blind clean V47 materialization and pass PIT membership/daily/intraday/split coverage receipts before any strategy/model outcomes are computed or inspected. Keep 2026 outcomes closed for selection."
     }
   },
-  "core_lane_status": {
-    "current_fixed_core": "REJECTED_CANONICAL_H2",
-    "failed_breakdown_reclaim": "REJECTED_PRECONFIRMATION",
-    "locked_h2_for_reclaim_opened": false,
-    "next_rule": "Do not retune adjacent Core heuristics. Only genuinely different low-DOF preregistered mechanisms or audit/reproducibility work."
+  "cross_lane_status": {
+    "final_go_no_go_ready": false,
+    "blocking_items": [
+      "V20 raw coverage failure condition not yet classified",
+      "Consensus V47 clean PIT materializer and coverage receipts not yet complete",
+      "No currently passing Core replacement candidate"
+    ]
   }
 }

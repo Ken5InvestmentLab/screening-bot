@@ -36,13 +36,18 @@ jobs:
       - name: Install pinned dependencies
         run: python -m pip install --disable-pip-version-check pandas==3.0.5 numpy==2.5.3 scikit-learn==1.9.1
 
-      - name: Download frozen authorized extended 1H source
+      - name: Download frozen authorized research inputs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RUN_ID="34592896202"
-          echo "$RUN_ID" > source_fetch_run_id.txt
-          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir downloaded
+          RAW_RUN_ID="34592896202"
+          DAILY_RUN_ID="34599959356"
+          echo "$RAW_RUN_ID" > source_fetch_run_id.txt
+          echo "$DAILY_RUN_ID" > source_daily_run_id.txt
+          gh run download "$RAW_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir downloaded
+          gh run download "$DAILY_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --name "tvfree-frozen-dataset-run80-preserved" --dir frozen
+          test -f frozen/tse_daily.csv
 
       - name: Evaluate frozen failed-breakdown reclaim family
         shell: bash
@@ -58,12 +63,14 @@ jobs:
           echo "$REQUESTED_PHASE" > requested_phase.txt
           python research/tentei_cloud/eval_core_failed_breakdown_reclaim.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --daily frozen/tse_daily.csv \
             --outdir out \
             $EXTRA
 
       - name: Record source and execution receipts
         run: |
           cp source_fetch_run_id.txt out/source_fetch_run_id.txt
+          cp source_daily_run_id.txt out/source_daily_run_id.txt
           cp requested_phase.txt out/requested_phase.txt
           git rev-parse HEAD > out/evaluator_commit_sha.txt
           sha256sum research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json \

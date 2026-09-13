@@ -1,44 +1,44 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from prospective_shadow import ShadowCandidate, append_candidates, resolve_shadow_file
+from prospective_shadow import resolve_shadow_file
+from prospective_shadow_admission_gate import evaluate_shadow_admission
+from prospective_shadow_admission_receipt import build_admission_receipt
 from prospective_shadow_append_guard import compare_append_only_snapshots
-from prospective_shadow_postfreeze_guard import evaluate_postfreeze_rows
-from shadow_preflight import validate_shadow_export_rows
+from prospective_shadow_verified_append import verified_append
 
 
 def _candidate_rows() -> list[dict]:
+    common = {
+        "experiment_id": "SYNTHETIC-SHADOW-E2E",
+        "model_freeze_id": "SYNTHETIC-FREEZE-001",
+        "source_tag": "RAW_CAUSAL_INTRADAY",
+        "eligibility_status": "ELIGIBLE",
+        "data_sufficient": True,
+        "skip_reason": None,
+        "missing_fields": [],
+    }
     return [
         {
-            "experiment_id": "SYNTHETIC-SHADOW-E2E",
-            "model_freeze_id": "SYNTHETIC-FREEZE-001",
+            **common,
             "symbol": "1111.T",
             "signal_date": "2026-09-15",
             "bin_name": "AM_09_13",
             "feature_cutoff": "2026-09-15T13:00:00+09:00",
-            "source_tag": "RAW_CAUSAL_INTRADAY",
             "rank": 1,
         },
         {
-            "experiment_id": "SYNTHETIC-SHADOW-E2E",
-            "model_freeze_id": "SYNTHETIC-FREEZE-001",
+            **common,
             "symbol": "2222.T",
             "signal_date": "2026-09-16",
             "bin_name": "PM_13_CLOSE",
             "feature_cutoff": "2026-09-16T15:30:00+09:00",
-            "source_tag": "RAW_CAUSAL_INTRADAY",
             "rank": 2,
         },
     ]
-
-
-def _to_candidates(rows: list[dict]) -> list[ShadowCandidate]:
-    allowed = set(ShadowCandidate.__dataclass_fields__)
-    return [ShadowCandidate(**{k: v for k, v in row.items() if k in allowed}) for row in rows]
 
 
 def run_synthetic_shadow_e2e() -> dict:
@@ -46,18 +46,24 @@ def run_synthetic_shadow_e2e() -> dict:
         "experiment_id": "SYNTHETIC-SHADOW-E2E",
         "model_freeze_id": "SYNTHETIC-FREEZE-001",
         "frozen_at": "2026-09-14T00:00:00+09:00",
+        "model_spec_sha256": "a" * 64,
     }
     rows = _candidate_rows()
 
-    preflight = validate_shadow_export_rows(rows)
-    postfreeze = evaluate_postfreeze_rows(manifest, rows)
-    if preflight.get("status") != "PASS" or not postfreeze.get("postfreeze_valid"):
+    admission = evaluate_shadow_admission(manifest, rows)
+    if not admission.get("admitted"):
         return {
             "decision": "BLOCK_SYNTHETIC_E2E",
-            "stage": "candidate_guards",
-            "preflight": preflight,
-            "postfreeze": postfreeze,
+            "stage": "admission",
+            "admission": admission,
         }
+
+    receipt = build_admission_receipt(
+        manifest,
+        rows,
+        admission,
+        "2026-09-16T15:31:00+09:00",
+    )
 
     sessions = [
         "2026-09-15",
@@ -81,7 +87,15 @@ def run_synthetic_shadow_e2e() -> dict:
         resolved_path = root / "resolved.jsonl"
 
         old_lines: list[str] = []
-        append_result = append_candidates(shadow_path, _to_candidates(rows))
+        append_result = verified_append(shadow_path, manifest, rows, admission, receipt)
+        if not append_result.get("appended"):
+            return {
+                "decision": "BLOCK_SYNTHETIC_E2E",
+                "stage": "verified_append",
+                "admission": admission,
+                "append": append_result,
+            }
+
         new_lines = shadow_path.read_text(encoding="utf-8").splitlines()
         append_guard = compare_append_only_snapshots(old_lines, new_lines)
         if not append_guard.get("append_only_valid"):
@@ -92,7 +106,7 @@ def run_synthetic_shadow_e2e() -> dict:
                 "append_guard": append_guard,
             }
 
-        duplicate_result = append_candidates(shadow_path, _to_candidates(rows))
+        duplicate_result = verified_append(shadow_path, manifest, rows, admission, receipt)
         duplicate_lines = shadow_path.read_text(encoding="utf-8").splitlines()
         duplicate_guard = compare_append_only_snapshots(new_lines, duplicate_lines)
         if not duplicate_guard.get("append_only_valid"):
@@ -111,10 +125,11 @@ def run_synthetic_shadow_e2e() -> dict:
     unresolved = [row for row in resolved_rows if row.get("status") == "UNRESOLVED_ENDPOINT"]
 
     checks = {
-        "preflight_pass": preflight.get("status") == "PASS",
-        "postfreeze_pass": postfreeze.get("postfreeze_valid") is True,
-        "two_candidates_appended": append_result.get("added") == 2,
-        "duplicate_reappend_is_idempotent": duplicate_result.get("added") == 0 and duplicate_result.get("skipped_duplicate") == 2,
+        "admission_pass": admission.get("admitted") is True,
+        "eligibility_pass": admission.get("eligibility_guard", {}).get("eligibility_valid") is True,
+        "verified_append_pass": append_result.get("appended") is True,
+        "two_candidates_appended": append_result.get("append_result", {}).get("added") == 2,
+        "duplicate_reappend_is_idempotent": duplicate_result.get("append_result", {}).get("added") == 0 and duplicate_result.get("append_result", {}).get("skipped_duplicate") == 2,
         "append_only_history_preserved": append_guard.get("append_only_valid") is True and duplicate_guard.get("append_only_valid") is True,
         "one_row_resolved": len(resolved) == 1,
         "one_row_left_unresolved_without_imputation": len(unresolved) == 1,
@@ -125,8 +140,8 @@ def run_synthetic_shadow_e2e() -> dict:
     return {
         "decision": "SYNTHETIC_E2E_PASS" if ok else "SYNTHETIC_E2E_FAIL",
         "checks": checks,
-        "preflight": preflight,
-        "postfreeze": postfreeze,
+        "admission": admission,
+        "receipt": receipt,
         "append": append_result,
         "duplicate_append": duplicate_result,
         "append_guard": append_guard,
@@ -135,6 +150,9 @@ def run_synthetic_shadow_e2e() -> dict:
         "resolved_statuses": statuses,
         "integrity": {
             "synthetic_data_only": True,
+            "explicit_eligibility_required": True,
+            "receipt_required_before_append": True,
+            "live_admission_replayed_before_append": True,
             "opens_real_strategy_returns": False,
             "uses_2026_historical_outcomes_for_tuning": False,
             "changes_model": False,

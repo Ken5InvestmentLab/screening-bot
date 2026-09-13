@@ -498,3 +498,26 @@ Final logged run `34765954141`.
 Because constant cost shifts the bootstrap mean distribution, the gross 2026 95% lower bound implies that round-trip cost above roughly 0.29% makes the 95% interval cross zero.
 
 Interpretation: Core remains positive by point estimate under 0.5%-1.0% assumed costs, but strict 95% robustness does not survive 0.5%. Treat Core as **promising/stable gross, execution-sensitive net**, not production-proven net.
+
+
+### Core executable-entry audit
+
+Valid run `34770326228`, artifact `10322340573`, artifact SHA-256 `6d846e0f65a8a420c1e68fa12b0c51eb2869fd12ee855a7e021ca0aa4d484f48`.
+
+The standard label's signal-session-close entry was replaced by the first raw Yahoo 1H bar strictly after the session's last raw timestamp, using that next bar OPEN. The existing five-business-day target close was unchanged.
+
+Coverage was 100% (433/433 Core candidates across the studied blocks).
+
+2026 Jan-Aug:
+- signal-close entry mean +1.56%
+- executable next-open mean **+1.71%**
+- next-open top-3-removed mean +1.08%
+- <=-10% unchanged at 1.69%
+- assumed 0.5% round-trip cost: mean **+1.21%**, week-bootstrap P(mean>0) 97.52%, 95% CI **+0.002%..+2.43%**
+- assumed 1.0% round-trip cost: mean +0.71%, P(mean>0) 88.08%, 95% CI -0.45%..+1.88%
+
+DEV and 2025H2 were essentially unchanged by next-open execution. Therefore the 2026 Core strength is not an artifact of an impossible signal-close fill assumption.
+
+A first implementation exposed a pandas datetime integer-unit bug and produced zero matched rows. That output was rejected, the lookup was fixed to timezone-aware Series.searchsorted, and a fail-closed >=90% coverage guard was added.
+
+Decision: fixed Core passes the executable-entry sanity check. See `CORE_EXECUTION_FINDINGS.md`.

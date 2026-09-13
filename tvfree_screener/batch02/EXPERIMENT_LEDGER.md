@@ -458,3 +458,15 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Report: `reports/causal_4h_scoring_v6_monthly_walkforward_20260913.md`.
 - H1 hash f5c44e192dde2b951e46df29b28501168c79ed9bd4e22e12920472ead493ee15; H2 hash 02fe6a44c8c34901aa6aeedc39abd835211e85e7ddb807a301e9491317849a2c.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## CAUSAL-4H-MONSTER-V7-MEDIAN-VIABILITY-TAIL-20260913 — REJECT / NO_PROMOTION
+
+- Preregistered before V7 selection metrics. Reused V6 monthly q10/q50/q90 scored rows; no model/feature retraining.
+- Frozen structural rule: q50>=0 viability gate, then q90 descending, no backfill, same Top1/2/3/5 and cooldown.
+- H1: viable 54.93%. Top1 n=125, mean +1.31%, +20% 7.20%, <=-10% 12.0%, Top1-excluded +0.11%; FAIL. All TopN fail.
+- H2 retrospective: viable 42.19%. Top1 n=146, mean -1.66%, +20% 3.42%, <=-10% 19.86%, Top1-excluded -2.00%; all fail.
+- Interpretation: hard median viability removes too much right-tail and does not repair H2. Do not tune q50 threshold.
+- Decision: reject V7. Next structural direction: weight-free Pareto selection on upside/downside predictions.
+- Report: `reports/causal_4h_monster_v7_median_viability_tail_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

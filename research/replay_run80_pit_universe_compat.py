@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pandas as pd
@@ -29,6 +30,7 @@ def load_exact_module(path: Path):
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot import exact source module: {path}")
     mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod
     spec.loader.exec_module(mod)
     return mod
 

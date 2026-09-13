@@ -133,6 +133,8 @@ def fetch_restored_one(code: str) -> tuple[pd.DataFrame, list[dict], str | None]
                 },
                 timeout=30,
             )
+            if r.status_code in {400, 404, 410, 422}:
+                return pd.DataFrame(), [], f"http_{r.status_code}_terminal"
             if r.status_code in {429, 502, 503, 504}:
                 last = f"http_{r.status_code}"
                 time.sleep(1.0 * (attempt + 1))

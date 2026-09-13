@@ -1,0 +1,120 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V14-PRE2025-DUAL-CLASSIFIER-20260913",
+  "status": "PREREGISTERED_BEFORE_V14_2025_SELECTION_METRICS",
+  "role": "RETROSPECTIVE_EVENT_SPECIFIC_RANKING_DISCOVERY_ONLY",
+  "candidate_generator": "V12 ALL signals unchanged",
+  "training": {
+    "allowed_candidate_date_max": "2024-12-31",
+    "observed_training_span": [
+      "2024-09-26",
+      "2024-12-30"
+    ],
+    "expected_event_rows": 7099,
+    "expected_symbols": 1065,
+    "endpoint_requirement": "RESOLVED and exit_date < 2025-01-01",
+    "year_2025_labels_used_for_fit": false,
+    "year_2026_labels_used_for_fit": false
+  },
+  "features": [
+    "bar_log_return",
+    "range_pct",
+    "upper_wick_pct",
+    "lower_wick_pct",
+    "close_location",
+    "prev4_log_return_mean",
+    "prev4_range_mean",
+    "bb_position",
+    "bb_width_pct",
+    "rsi12",
+    "rsi_delta",
+    "atr_pct",
+    "dist_prior5_low_atr",
+    "prior5_rsi_min",
+    "prior5_band_min",
+    "log_volume_rel20",
+    "trigger_rsi_recovery",
+    "trigger_trend_flip",
+    "trigger_emergency_reversal"
+  ],
+  "feature_rules": {
+    "all_intraday_causal": true,
+    "current_day_final_daily_values_used": false,
+    "relative_volume": "log1p(current raw AM/PM bin volume / median previous 20 complete same-symbol same-bin volumes); no clipping",
+    "cross_sectional_features": false,
+    "imputation": "NONE; rows missing any feature are excluded"
+  },
+  "models": {
+    "estimator": "HistGradientBoostingClassifier",
+    "model_tail20": {
+      "target": "ret5bd_gross >= 0.20"
+    },
+    "model_loss10": {
+      "target": "ret5bd_gross <= -0.10"
+    },
+    "parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 150,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 100,
+      "l2_regularization": 1,
+      "max_bins": 63,
+      "early_stopping": false,
+      "random_state": 0
+    },
+    "class_weighting": "balanced sample weights independently per classifier",
+    "fit_once_pre2025": true
+  },
+  "selection": {
+    "objectives": [
+      "maximize p_tail20",
+      "minimize p_loss10"
+    ],
+    "eligible_set": "first nondominated Pareto front within each date + bin_name V12 cohort",
+    "rank_within_front": [
+      "p_tail20 descending",
+      "p_loss10 ascending",
+      "symbol ascending"
+    ],
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "no_backfill_from_dominated_or_non_V12_rows": true,
+    "cooldown": "5 official XTKS sessions per symbol; AM before PM"
+  },
+  "periods": {
+    "h1": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_policy": "OPEN_ONLY_IF_AT_LEAST_ONE_FROZEN_H1_TOPN_PASSES",
+    "h2": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "gates": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "integrity": {
+    "v12_h1_and_v13_h1_results_seen": true,
+    "year_2025_not_used_for_model_fit": true,
+    "year_2026_outcomes_must_remain_closed": true,
+    "no_threshold_tuning_from_2025": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "production_modified": false
+}

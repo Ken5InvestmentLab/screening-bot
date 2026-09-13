@@ -1,0 +1,83 @@
+name: Tentei Cloud Core Failed-Breakdown Reclaim
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "preconfirmation or locked_confirmation"
+        required: true
+        default: "preconfirmation"
+        type: choice
+        options:
+          - preconfirmation
+          - locked_confirmation
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/tentei-cloud-mtf
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy scikit-learn
+
+      - name: Download latest successful extended 1H fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow "tentei-cloud-1h-research.yml" \
+            --branch "research/tentei-cloud-mtf" \
+            --event push \
+            --status success \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$RUN_ID"
+          echo "$RUN_ID" > latest_fetch_run_id.txt
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir downloaded
+
+      - name: Evaluate frozen failed-breakdown reclaim family
+        shell: bash
+        run: |
+          EXTRA=""
+          if [ "${{ inputs.phase }}" = "locked_confirmation" ]; then
+            EXTRA="--open-locked"
+          fi
+          python research/tentei_cloud/eval_core_failed_breakdown_reclaim.py \
+            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --outdir out \
+            $EXTRA
+
+      - name: Record source and execution receipts
+        run: |
+          cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
+          printf '%s\n' "${{ inputs.phase }}" > out/requested_phase.txt
+          git rev-parse HEAD > out/evaluator_commit_sha.txt
+          sha256sum research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json \
+            > out/spec_sha256.txt
+          sha256sum research/tentei_cloud/eval_core_failed_breakdown_reclaim.py \
+            > out/evaluator_sha256.txt
+
+      - name: Show result
+        run: |
+          cat out/failed_breakdown_reclaim_result.json
+          cat out/failed_breakdown_reclaim_metrics.csv
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tentei-cloud-core-failed-breakdown-reclaim-${{ inputs.phase }}
+          path: out/**
+          if-no-files-found: error
+          retention-days: 90

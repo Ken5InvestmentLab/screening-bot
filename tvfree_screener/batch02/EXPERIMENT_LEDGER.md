@@ -390,3 +390,18 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Local materialized v1 panel SHA-256: `6fcc178be5d23d39126c053cc998a4cbca6ffedf07dc650c1c7875d22490b440`.
 - Spec: `CAUSAL_INTRADAY_FEATURE_PANEL_V1_SPEC.json`. Report: `reports/causal_intraday_feature_panel_v1_20260913.md`. Reproducible runner: `audit_causal_intraday_feature_panel.py`.
 - Important limitation: this eight-symbol Monster sample is selection-biased and is not an acceptable strategy-performance population. Next step is broader historical/universe raw-intraday source discovery before any outcome replay.
+
+
+## BROAD-CAUSAL-INTRADAY-V1-20260913 — DATA QUALITY PASS / SESSION-CLOSE CORRECTION
+
+- Recovered an existing raw 1h Actions dataset from run 34592896202; no new market-data request. Eight shards contain 4,019,524 rows, 1,315 usable symbols of a 1,332-symbol historical 4H comparison set, 2024-09-17 through 2026-09-10.
+- The historical 1,332-symbol list is a broad same-universe comparison set, not proven full-TSE history; its derivation recipe is not preserved. Do not overclaim historical all-TSE coverage.
+- Found and corrected a methodological bug in the old session reconstruction. Before the TSE close extension on 2024-11-05, 15:00-start rows are overwhelmingly close snapshots (93.43% flat + zero volume). After the extension, 83.92% are nonflat + nonzero. PM construction is now 13/14 pre-change and 13/14/15 post-change, with separate PM rolling regimes.
+- Broad raw audit: 618,775 symbol-days; 1,237,550 attempted bins; 1,017,531 complete bins; 941,118 v1-complete rows. Frozen v1 coverage is 92.49% of complete bins and 76.05% of all attempts.
+- V1 completeness among complete bins: 2024 50.08% (warmup + regime reset), 2025 99.24%, 2026 99.80%.
+- Frozen v1 features remain unchanged: bar_log_return, range_pct, upper_wick_pct, lower_wick_pct, prev4_log_return_mean, prev4_range_mean, log_range_vs_prior20. No automatic clipping of extreme bars.
+- Integrity note: while tracing the universe source, old research/tentei_cloud/RESEARCH_STATE.md exposed previously seen 2026 strategy summaries. This is recorded as source-discovery contamination. The v1 feature set was already frozen before that exposure; those summaries are forbidden from selecting features, thresholds, model architecture, cooldowns, or correction rules. 2026 remains report-only.
+- Broad raw audit itself did not join outcome columns.
+- Decision: data-quality pass. Move to a preregistered canonical feature-to-label scoring experiment using the batch02 next-session-open -> fifth-session-close endpoint, not the older candidate-close endpoint.
+- Report: reports/broad_causal_intraday_v1_audit_20260913.md
+- Receipt/spec: BROAD_CAUSAL_INTRADAY_V1_SPEC.json

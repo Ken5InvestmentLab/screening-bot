@@ -593,3 +593,18 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next after overlap recheck: replace volatility log-ratio features with bounded prior-history percentile ranks; keep V12 candidate generation and frozen low-drift retained features unchanged.
 - Report: `reports/tentei_v15_regime_normalized_drift_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-V16-HISTORY-RANK-DRIFT-20260913-01 — FAIL REPRESENTATION / RETURNS UNOPENED
+
+- Parallel-lane check confirmed no overlap; other lane remained on prospective-shadow evidence/reporting and ledger reconciliation.
+- Outcome-free cohorts: pre-2025 2,672 rows / 793 symbols; H1 8,207 rows / 1,166 symbols.
+- Frozen representation gate failed: 1 SEVERE + 5 MODERATE; required zero severe and <=4 moderate.
+- Severe: bb_width_pct_rank20 KS 0.2015 / PSI 0.1738 / median shift +0.417 IQR.
+- Moderate: atr_pct_rank20, prev4_range_mean_rank20, dist_prior5_low_atr_rank20, prior5_rsi_min_rank20, prior5_band_min_rank20.
+- Low-drift examples: range_pct_rank20, lower_wick_pct_rank20, bar_log_return, bb_position, rsi12, rsi_delta, log_volume_rel20.
+- Interpretation: same-symbol prior20 ranks reduce but do not remove broad market volatility-regime shift.
+- Decision: reject V16 before any strategy-return evaluation.
+- Next after overlap recheck: same-date + same-bin cross-sectional percentile representation to remove common market volatility level directly.
+- Report: `reports/tentei_v16_history_rank_drift_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

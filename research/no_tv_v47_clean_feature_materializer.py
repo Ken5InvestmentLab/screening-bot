@@ -84,10 +84,10 @@ def load_daily(
         future_factor(split_map,str(s),str(d))
         for s,d in zip(x["symbol"],x["date"])
     ]
-    # Preserve provider-adjusted daily volume here. At each signal timestamp,
-    # prior daily volumes are causally rebased to the signal-date share basis
-    # by removing only splits that are still in the future at that signal.
-    x["volume"]=x["volume_adjusted"]
+    x["volume"]=(
+        x["volume_adjusted"]
+        / pd.Series(x["future_split_factor_daily"],index=x.index,dtype=float)
+    )
     x=add_identity_epoch(x,listing_dates)
     x=x.sort_values(["symbol","identity_epoch","date"]).reset_index(drop=True)
     g = x.groupby(["symbol","identity_epoch"], sort=False)
@@ -182,6 +182,7 @@ def build_symbol_rows(
         d=daily[daily["identity_epoch"]==int(epoch)].copy()
         if d.empty or s.empty:
             continue
+        svolume=s["volume"].to_numpy(float)
         daymap=d.set_index("date")
         for i,row in s.iterrows():
             dt=str(row.date)
@@ -189,38 +190,20 @@ def build_symbol_rows(
                 continue
             if float(row.volume) < 5000:
                 continue
-
-            factor=future_factor(split_map,symbol,dt)
-
-            # Daily provider volume is on anchor/present share basis. Remove
-            # splits that are still future as of this signal date; splits that
-            # already happened remain, so past daily volumes are on the current
-            # signal-date share basis and comparable to raw current-session volume.
-            d_asof=d.copy()
-            d_asof["volume"]=d_asof["volume_adjusted"].astype(float)/factor
-            asof=v13.build_asof_official(d_asof,s,i)
+            asof=v13.build_asof_official(d,s,i)
             if asof is None:
                 continue
             tf=base.technical_features(asof)
             if tf is None:
                 continue
-
-            # Raw 1H source volume is stored unchanged. For the ratio only,
-            # causally rebase prior sessions to today's share basis. The quotient
-            # future_factor(prev)/future_factor(today) contains only splits that
-            # occurred between the prior session and today; splits after today
-            # cancel and therefore cannot leak future information.
-            prev=s.iloc[max(0,i-20):i]
-            prev_norm=[]
-            for pr in prev.itertuples(index=False):
-                pf=future_factor(split_map,symbol,str(pr.date))
-                prev_norm.append(float(pr.volume)*pf/factor)
+            prev20=svolume[max(0,i-20):i]
             svr=(
-                float(row.volume/np.mean(prev_norm))
-                if len(prev_norm)>=5 and np.mean(prev_norm)>0
+                float(row.volume/np.mean(prev20))
+                if len(prev20)>=5 and np.mean(prev20)>0
                 else np.nan
             )
             rng=float(row.high-row.low)
+            factor=future_factor(split_map,symbol,dt)
             entry_adjusted=float(row.close)
             entry_pit=entry_adjusted*factor
 
@@ -385,8 +368,8 @@ def main() -> None:
         "cap_is_subset_at_daily_policy_level":True,
         "feature_columns":feature_cols,
         "absolute_price_semantics":"log_price uses point-in-time nominal entry_pit",
-        "relative_technical_semantics":"split-normalized Yahoo price path; daily volume ratios causally rebase provider daily volume to each signal-date share basis",
-        "raw_1h_volume_semantics":"raw Yahoo 1H volume stored unchanged; session gate uses raw current shares; session_vol_ratio20 causally rebases only prior sessions to current signal-date share basis",
+        "relative_technical_semantics":"split-normalized Yahoo price path; daily volume ratios use PIT-restored daily share volume",
+        "raw_1h_volume_semantics":"Yahoo raw 1H volume used unchanged for session gate and session_vol_ratio20",
         "target_columns_materialized_in_development_only":[
             "canonical_ret_5bd",
             "legacy_ret_5bd",

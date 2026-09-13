@@ -24,8 +24,6 @@ def make_daily():
         "close":np.linspace(90.5,110.5,len(dates)),
         "volume":[20000]*len(dates),
     })
-    d["volume_adjusted"]=d["volume"].astype(float)
-    d["future_split_factor_daily"]=1.0
     d["next_open"]=d["open"].shift(-1)
     d["d5_close"]=d["close"].shift(-5)
     d["exit_date_5bd"]=d["date"].shift(-5)
@@ -102,8 +100,6 @@ def test_listing_epoch_prevents_prelisting_history_from_features_and_targets():
         "volume":[20000]*len(dates),
         "symbol":["S"]*len(dates),
     })
-    daily["volume_adjusted"]=daily["volume"].astype(float)
-    daily["future_split_factor_daily"]=1.0
     listing_date=daily.iloc[60]["date"]
     lmap={"S":[listing_date]}
     daily=v47.add_identity_epoch(daily,lmap)
@@ -151,62 +147,8 @@ def test_load_daily_restores_split_adjusted_volume_to_pit_scale():
         split_map={"X":[("2025-04-01",10.0)]}
         out=v47.load_daily(frozen,restored,{},split_map)
         assert out["volume_adjusted"].tolist()==[50000.0,60000.0]
-        assert out["volume"].tolist()==[50000.0,60000.0]
+        assert out["volume"].tolist()==[5000.0,6000.0]
         assert out["future_split_factor_daily"].tolist()==[10.0,10.0]
-
-
-
-def test_volume_ratios_are_rebased_to_signal_date_share_basis():
-    # Build enough daily history for technical_features. Provider daily volume
-    # is already split-adjusted to the post-split share basis.
-    dates=pd.bdate_range("2024-08-01",periods=110)
-    split_date=dates[100].strftime("%Y-%m-%d")
-    target_date=dates[104].strftime("%Y-%m-%d")
-
-    daily=pd.DataFrame({
-        "date":dates.strftime("%Y-%m-%d"),
-        "open":[100.0]*len(dates),
-        "high":[102.0]*len(dates),
-        "low":[99.0]*len(dates),
-        "close":[101.0]*len(dates),
-        "volume":[10000.0]*len(dates),
-        "volume_adjusted":[10000.0]*len(dates),
-        "future_split_factor_daily":[10.0 if d.strftime("%Y-%m-%d") < split_date else 1.0 for d in dates],
-        "symbol":["S"]*len(dates),
-        "identity_epoch":[0]*len(dates),
-    })
-    g=daily.groupby(["symbol","identity_epoch"],sort=False)
-    daily["next_open"]=g["open"].shift(-1)
-    daily["d5_close"]=g["close"].shift(-5)
-    daily["exit_date_5bd"]=g["date"].shift(-5)
-
-    # Raw 1H volume is actual share volume. Five prior pre-split sessions have
-    # 1,000 shares; after a 1->10 split the target session has 10,000 shares.
-    # Causal rebasing should make prior sessions comparable at 10,000 shares,
-    # producing a session volume ratio near 1 rather than 10.
-    raw_rows=[]
-    raw_dates=list(dates[95:105])
-    for day in raw_dates:
-        ds=day.strftime("%Y-%m-%d")
-        pre=ds < split_date
-        vol=1000.0 if pre else 10000.0
-        raw_rows.append({
-            "ts":pd.Timestamp(f"{ds} 09:00",tz="Asia/Tokyo"),
-            "date":ds,
-            "open":100.0,"high":102.0,"low":99.0,"close":101.0,
-            "volume":vol,
-        })
-    raw=pd.DataFrame(raw_rows)
-    split_map={"S":[(split_date,10.0)]}
-    out=v47.build_symbol_rows(
-        "S",raw,daily,{target_date},split_map,{}
-    )
-    assert len(out)==1
-    row=out.iloc[0]
-    assert abs(float(row["session_vol_ratio20"])-1.0) < 1e-9
-    # The as-of daily volume ratio also compares current raw share volume with
-    # prior daily volume on the same target-date share basis.
-    assert abs(float(row["day_vol_ratio20"])-1.0) < 1e-9
 
 
 def main():
@@ -216,7 +158,6 @@ def main():
         test_enrich_arm_filters_policy_before_cross_section,
         test_listing_epoch_prevents_prelisting_history_from_features_and_targets,
         test_load_daily_restores_split_adjusted_volume_to_pit_scale,
-        test_volume_ratios_are_rebased_to_signal_date_share_basis,
     ]
     for fn in tests:
         fn(); print("PASS",fn.__name__)

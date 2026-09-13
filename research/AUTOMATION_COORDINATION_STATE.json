@@ -1,7 +1,7 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T02:12:00+09:00",
+  "updated_at_jst": "2026-09-14T02:24:30+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -16,9 +16,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "f3c18b8e3a31e88d296af926a1fd9a299957a17c",
-      "last_processed_sha": "f3c18b8e3a31e88d296af926a1fd9a299957a17c",
-      "last_processed_note": "Cross-lane follow-up audited synchronization commit f3c18b8. It only synchronizes the already-authoritative Core failed-breakdown-reclaim rejection and the requirement that Consensus V44 pass the dedicated acceptance workflow before performance interpretation. No rejected Core family was reopened or retuned; current fixed Core and failed-breakdown reclaim remain rejected, with locked 2025H2 unopened."
+      "last_seen_sha": "d79ac47deaa99c747cc2a4b50996c15d2232bd70",
+      "last_processed_sha": "fac2d6029915ab5f11209dd9b46ab844e6dbc6c4",
+      "last_processed_note": "Core :24 recovered completed operational-load audit 34771263457 as descriptive UX evidence only; it does not reopen rejected Core performance. While auditing the new capacity workflow, found a pre-outcome contract bug: v1 run 34771393714 treated the first raw bar after an AM session as same-day PM entry, violating canonical next-XTKS-session-open date semantics. V1 is INVALID for canonical capacity interpretation. audit_core_capacity.py was corrected before inspecting v1 results, commit 508e4689, and RUN_CORE_CAPACITY retriggered at d79ac47d. Corrected authoritative run 34771491740 is in_progress. Do not interpret v1 capacity output. Current fixed Core and failed-breakdown reclaim remain rejected; no family retuning occurred."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -103,6 +103,23 @@
       "preconfirmation_decision": "REJECT",
       "locked_confirmation_opened": false,
       "report": "research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_RESULT_20260914.md"
+    },
+    "core_operational_load": {
+      "run_id": 34771263457,
+      "status": "completed/success",
+      "processed": true,
+      "decision": "DESCRIPTIVE_ONLY_DO_NOT_PRUNE_BY_ALERT_VOLUME",
+      "note": "UX evidence only; does not affect rejected Core performance status or selection rules."
+    },
+    "core_capacity": {
+      "invalid_run": 34771393714,
+      "invalid_reason": "AM signals started capacity occupancy at same-day PM raw bar instead of next official XTKS session open date",
+      "correction_commit": "508e46889532883bcc23021c94d565f2a020737d",
+      "trigger_commit": "d79ac47deaa99c747cc2a4b50996c15d2232bd70",
+      "authoritative_run": 34771491740,
+      "authoritative_status": "in_progress",
+      "outcomes_opened": false,
+      "selection_or_tuning": false
     },
     "v20_session_impulse": {
       "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",

@@ -1,18 +1,24 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T01:39:00+09:00",
+  "updated_at_jst": "2026-09-14T01:50:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
-    "worker_slots_jst": ["00", "12", "24", "36", "48"],
+    "worker_slots_jst": [
+      "00",
+      "12",
+      "24",
+      "36",
+      "48"
+    ],
     "rule": "Each worker scans all active research branches for substantive changes before working its preferred lane. Process at most one highest-priority substantive cross-lane change plus one safe preferred-lane next action per run. Do not duplicate work already claimed/recorded."
   },
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "a411686469cf8d00b9d54532286a9c0e68e65e9c",
-      "last_processed_sha": "a411686469cf8d00b9d54532286a9c0e68e65e9c",
-      "last_processed_note": "Shadow/Data integrity advanced without Event overlap: authorization receipt verifier now enforces semantic invariants even after self-hash recomputation; evidence-chain audit now consumes the real append-guard contract (`append_only_valid` + `APPEND_ONLY_OK`) instead of synthetic `ok`, exits non-zero on invalid chain, and tests use the real producer output. Active Event session-impulse experiment remains untouched under parallel ownership."
+      "last_seen_sha": "2571486e1d4a96db58509611fd35ef3e40c925e5",
+      "last_processed_sha": "2571486e1d4a96db58509611fd35ef3e40c925e5",
+      "last_processed_note": "Session-impulse V20 ownership transferred to active :12 worker. Frozen evaluator and contract CI are ready; run 34769637874 passed. Old 1,332-symbol raw panel is invalid for V20 H1 because canonical prior-day eligibility union is 1,810 symbols. Dedicated fail-closed H1 workflow staged; do not trigger Yahoo fetch until V44 runs 34767664140 and 34766353425 are no longer in_progress."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -42,7 +48,10 @@
       "status": "in_progress",
       "conclusion": null,
       "authoritative": true,
-      "superseded_runs": [34765427789, 34766353425],
+      "superseded_runs": [
+        34765427789,
+        34766353425
+      ],
       "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation.",
       "last_checked_at_jst": "2026-09-14T01:39:00+09:00",
       "last_checked_job_state": "audit job in_progress; setup/download/compile succeeded; V44 audit step in_progress; hash/upload evidence pending",
@@ -89,6 +98,24 @@
       "preconfirmation_decision": "REJECT",
       "locked_confirmation_opened": false,
       "report": "research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_RESULT_20260914.md"
+    },
+    "v20_session_impulse": {
+      "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+      "owner": "research worker :12 Canonical/Event",
+      "evaluator_commit": "de36c88c17fceb95bed178279e2bad5e4e823cbf",
+      "contract_test_run": 34769637874,
+      "contract_test_status": "completed/success",
+      "canonical_h1_universe_symbols": 1810,
+      "canonical_h1_universe_sessions": 82,
+      "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
+      "old_raw_panel_symbols": 1332,
+      "old_raw_panel_decision": "INSUFFICIENT",
+      "h1_workflow": ".github/workflows/v20-session-impulse-h1.yml",
+      "h1_status": "STAGED_NOT_TRIGGERED",
+      "trigger_block": "Wait until Consensus V44 Yahoo-heavy runs 34767664140 and 34766353425 are both not in_progress.",
+      "raw_acceptance": "exact 1810 symbol set + zero final fetch failures before H1 outcomes",
+      "h2_rule": "Only unchanged H1 passing TopN policies may be authorized for H2.",
+      "year_2026_outcomes_opened": false
     }
   },
   "supervisor_contract_sha256": "239adb8933e09a6d8f6917cbeadc0386a5a2725d",

@@ -158,6 +158,53 @@ class V20SessionImpulseContractTests(unittest.TestCase):
             coverage.EXPECTED_COUNT=old_count
             coverage.EXPECTED_SHA=old_sha
 
+    def test_temporal_coverage_rejects_missing_active_symbol_date(self):
+        expected_pairs={("A","2025-03-03"),("A","2025-03-04"),("B","2025-03-03")}
+        good=coverage.evaluate_temporal_presence(expected_pairs,set(expected_pairs))
+        self.assertTrue(good["all_expected_active_symbol_dates_present"])
+        self.assertEqual(good["missing_active_symbol_date_count"],0)
+
+        bad=coverage.evaluate_temporal_presence(
+            expected_pairs,
+            {("A","2025-03-03"),("B","2025-03-03")},
+        )
+        self.assertFalse(bad["all_expected_active_symbol_dates_present"])
+        self.assertEqual(bad["missing_active_symbol_date_count"],1)
+        self.assertEqual(
+            bad["missing_active_symbol_dates_sample"],
+            [{"symbol":"A","date":"2025-03-04"}],
+        )
+
+    def test_coverage_rejects_duplicate_symbol_timestamp(self):
+        expected=[f"S{i:04d}" for i in range(4)]
+        old_count=coverage.EXPECTED_COUNT
+        old_sha=coverage.EXPECTED_SHA
+        try:
+            coverage.EXPECTED_COUNT=4
+            coverage.EXPECTED_SHA=coverage.list_sha(expected)
+            temporal={
+                "all_expected_active_symbol_dates_present":True,
+                "expected_active_symbol_dates":4,
+                "observed_expected_symbol_dates":4,
+                "missing_active_symbol_date_count":0,
+                "missing_active_symbol_dates_sample":[],
+            }
+            good=coverage.evaluate_coverage(
+                expected,expected,[],temporal=temporal,
+                duplicate_symbol_timestamps=0,
+                raw_dates={"2025-03-03"},
+            )
+            self.assertTrue(good["accepted"])
+            dup=coverage.evaluate_coverage(
+                expected,expected,[],temporal=temporal,
+                duplicate_symbol_timestamps=1,
+                raw_dates={"2025-03-03"},
+            )
+            self.assertFalse(dup["accepted"])
+        finally:
+            coverage.EXPECTED_COUNT=old_count
+            coverage.EXPECTED_SHA=old_sha
+
     def test_h2_requires_explicit_passing_topn(self):
         self.assertEqual(mod.resolve_period_policies("h1", []), (mod.H1_START, mod.H1_END, [1,2,3,5]))
         with self.assertRaisesRegex(RuntimeError, "explicit frozen"):

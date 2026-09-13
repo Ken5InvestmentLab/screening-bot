@@ -6,11 +6,9 @@ import hashlib
 import json
 from pathlib import Path
 
-from tvfree_screener.batch02.prospective_shadow import (
-    ShadowCandidate,
-    append_candidates,
-    resolve_shadow_file,
-)
+from tvfree_screener.batch02.prospective_shadow import resolve_shadow_file
+from tvfree_screener.batch02.prospective_shadow_admission_gate import evaluate_shadow_admission
+from tvfree_screener.batch02.prospective_shadow_verified_append import verified_append
 
 
 def sha256_file(path: Path) -> str:
@@ -44,24 +42,53 @@ def load_candidate_rows(path: Path) -> list[dict]:
     raise ValueError("candidate input must be .csv or .jsonl")
 
 
-def candidate_from_row(row: dict, freeze: dict) -> ShadowCandidate:
+def _parse_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        text = value.strip().lower()
+        if text == "true":
+            return True
+        if text == "false":
+            return False
+    return value
+
+
+def normalize_candidate_row(row: dict, freeze: dict) -> dict:
     if row.get("experiment_id") and row["experiment_id"] != freeze["experiment_id"]:
         raise ValueError("candidate experiment_id does not match freeze manifest")
     if row.get("model_freeze_id") and row["model_freeze_id"] != freeze["model_freeze_id"]:
         raise ValueError("candidate model_freeze_id does not match freeze manifest")
-    payload_sha = row.get("payload_sha256") or None
-    return ShadowCandidate(
-        experiment_id=freeze["experiment_id"],
-        model_freeze_id=freeze["model_freeze_id"],
-        symbol=str(row["symbol"]).replace(".0", "").upper(),
-        signal_date=str(row["signal_date"])[:10],
-        bin_name=str(row["bin_name"]),
-        feature_cutoff=str(row["feature_cutoff"]),
-        source_tag=str(row["source_tag"]),
-        score=float(row["score"]) if row.get("score") not in (None, "") else None,
-        rank=int(row["rank"]) if row.get("rank") not in (None, "") else None,
-        payload_sha256=payload_sha,
-    )
+    out = dict(row)
+    out["experiment_id"] = freeze["experiment_id"]
+    out["model_freeze_id"] = freeze["model_freeze_id"]
+    out["symbol"] = str(row["symbol"]).replace(".0", "").upper()
+    out["signal_date"] = str(row["signal_date"])[:10]
+    out["bin_name"] = str(row["bin_name"])
+    out["feature_cutoff"] = str(row["feature_cutoff"])
+    out["source_tag"] = str(row["source_tag"])
+    if row.get("rank") not in (None, ""):
+        out["rank"] = int(row["rank"])
+    if row.get("score") not in (None, ""):
+        out["score"] = float(row["score"])
+    if "data_sufficient" in out:
+        out["data_sufficient"] = _parse_bool(out["data_sufficient"])
+    if isinstance(out.get("missing_fields"), str):
+        text = out["missing_fields"].strip()
+        if text == "":
+            out["missing_fields"] = ""
+        else:
+            try:
+                parsed = json.loads(text)
+            except json.JSONDecodeError:
+                parsed = text
+            out["missing_fields"] = parsed
+    return out
+
+
+def candidate_from_row(row: dict, freeze: dict):
+    """Backward-compatible normalization helper; returns a normalized candidate mapping."""
+    return normalize_candidate_row(row, freeze)
 
 
 def read_daily_csv(path: Path) -> tuple[list[dict], list[str]]:
@@ -86,19 +113,39 @@ def write_summary(path: Path, payload: dict) -> None:
 
 def cmd_ingest(args: argparse.Namespace) -> None:
     freeze = load_freeze_manifest(Path(args.freeze_manifest), args.freeze_sha256)
-    rows = load_candidate_rows(Path(args.candidates))
-    candidates = [candidate_from_row(row, freeze) for row in rows]
-    summary = append_candidates(Path(args.shadow), candidates)
+    raw_rows = load_candidate_rows(Path(args.candidates))
+    rows = [normalize_candidate_row(row, freeze) for row in raw_rows]
+    admission = json.loads(Path(args.admission).read_text(encoding="utf-8"))
+    receipt = json.loads(Path(args.receipt).read_text(encoding="utf-8"))
+
+    live_admission = evaluate_shadow_admission(freeze, rows)
+    if live_admission != admission:
+        out = {
+            "operation": "ingest",
+            "appended": False,
+            "decision": "BLOCK_CLI_ADMISSION_REPLAY_MISMATCH",
+            "experiment_id": freeze["experiment_id"],
+            "model_freeze_id": freeze["model_freeze_id"],
+            "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
+            "candidate_input_sha256": sha256_file(Path(args.candidates)),
+        }
+        write_summary(Path(args.summary), out)
+        print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
+        raise SystemExit(2)
+
+    result = verified_append(Path(args.shadow), freeze, rows, admission, receipt)
     out = {
         "operation": "ingest",
         "experiment_id": freeze["experiment_id"],
         "model_freeze_id": freeze["model_freeze_id"],
         "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
         "candidate_input_sha256": sha256_file(Path(args.candidates)),
-        **summary,
+        **result,
     }
     write_summary(Path(args.summary), out)
     print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
+    if not result.get("appended", False):
+        raise SystemExit(2)
 
 
 def cmd_resolve(args: argparse.Namespace) -> None:
@@ -122,10 +169,12 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Local-only prospective shadow evidence helper")
     sub = p.add_subparsers(dest="command", required=True)
 
-    ingest = sub.add_parser("ingest")
+    ingest = sub.add_parser("ingest", help="Verified ingest only; admission and receipt are mandatory")
     ingest.add_argument("--freeze-manifest", required=True)
     ingest.add_argument("--freeze-sha256")
     ingest.add_argument("--candidates", required=True)
+    ingest.add_argument("--admission", required=True)
+    ingest.add_argument("--receipt", required=True)
     ingest.add_argument("--shadow", required=True)
     ingest.add_argument("--summary", required=True)
     ingest.set_defaults(func=cmd_ingest)

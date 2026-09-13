@@ -1,0 +1,28 @@
+{
+  "spec_id": "CONSENSUS-V47-RAW1H-COVERAGE-ACCEPTANCE-20260914",
+  "status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
+  "population": "Daily PIT-eligible symbol-date pairs emitted by authoritative V47 daily materializer; NOCAP is superset and CAP1000_PIT is evaluated separately.",
+  "source": "Yahoo chart range=730d interval=1h raw bars, sharded/frozen before feature scoring",
+  "acceptance": {
+    "pair_coverage_min": 0.995,
+    "monthly_coverage_min": 0.99,
+    "completely_missing_required_symbols": 0,
+    "per_symbol_coverage_min_for_symbols_with_at_least_20_required_days": 0.95,
+    "restored_delisted_pair_coverage_min": 0.99,
+    "both_price_policy_arms_must_pass": true
+  },
+  "failure_action": [
+    "Emit missing symbol/date pairs.",
+    "Targeted refetch only the missing required pairs/codes without changing strategy/model rules.",
+    "Re-run the exact frozen acceptance contract.",
+    "Do not compute strategy returns/model scores until accepted."
+  ],
+  "prohibited": [
+    "Do not lower coverage thresholds after seeing strategy outcomes.",
+    "Do not drop hard-to-fetch symbols from the candidate universe.",
+    "Do not interpolate/backfill missing OHLCV bars.",
+    "Do not use returns to choose a data provider or query alias.",
+    "Do not modify production."
+  ],
+  "production_modified": false
+}

@@ -1,30 +1,30 @@
 {
-  "version": 2,
+  "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T02:24:30+09:00",
+  "updated_at_jst": "2026-09-14T02:48:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
-    "rule": "Each worker scans all active research branches for substantive changes before working its preferred lane. Process at most one highest-priority substantive cross-lane change plus one safe preferred-lane next action per run. Do not duplicate work already claimed/recorded."
+    "rule": "Each worker scans all active research branches for substantive changes before working its preferred lane. Do not duplicate SHA already processed."
   },
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "a77936932d0dbb41bf8ecc8809f28e41bc383075",
-      "last_processed_sha": "a77936932d0dbb41bf8ecc8809f28e41bc383075",
-      "last_processed_note": "Canonical :12 audited sync commit a7793693. It only propagates the outcome-free quantified PIT split-leakage lower bound into the supervisor contract: at least 71/112 fixed-min95 rows and 67/101 ATR-gated rows were admitted by future-split-adjusted prior prices despite nominal prior close > JPY1000. No V20 outcome or threshold was opened or changed. V20 H1 remains READY_BUT_BLOCKED because both Consensus V44 Yahoo-heavy runs 34767664140 and 34766353425 are still in_progress; H1 fetch was not triggered."
+      "last_seen_sha": "3a1ea299e42a51753869f2a3ec564a7e6d041f9e",
+      "last_processed_sha": "3a1ea299e42a51753869f2a3ec564a7e6d041f9e",
+      "last_processed_note": "Cross-lane :48 audited guarded prospective-shadow append verification. Six focused integrity/idempotency cases passed; no strategy outcomes, thresholds, production writes, or V20 logic changed."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "d79ac47deaa99c747cc2a4b50996c15d2232bd70",
-      "last_processed_sha": "fac2d6029915ab5f11209dd9b46ab844e6dbc6c4",
-      "last_processed_note": "Core :24 recovered completed operational-load audit 34771263457 as descriptive UX evidence only; it does not reopen rejected Core performance. While auditing the new capacity workflow, found a pre-outcome contract bug: v1 run 34771393714 treated the first raw bar after an AM session as same-day PM entry, violating canonical next-XTKS-session-open date semantics. V1 is INVALID for canonical capacity interpretation. audit_core_capacity.py was corrected before inspecting v1 results, commit 508e4689, and RUN_CORE_CAPACITY retriggered at d79ac47d. Corrected authoritative run 34771491740 is in_progress. Do not interpret v1 capacity output. Current fixed Core and failed-breakdown reclaim remain rejected; no family retuning occurred."
+      "last_seen_sha": "a8bee6889f7ba44eecb45644ecac4aff05c51d16",
+      "last_processed_sha": "a8bee6889f7ba44eecb45644ecac4aff05c51d16",
+      "last_processed_note": "Cross-lane :48 recovered corrected canonical Core capacity run 34771491740 SUCCESS and inspected artifact. Entry occupancy now starts on the next official XTKS trading date; DEV max concurrent=56, 2025H2 max=22, 2026_YTD max=15. This is descriptive capacity evidence only and does not reopen rejected Core performance. Also observed canonical execution audit run 34771686835 SUCCESS at a8bee688; its unmatched-log rerun is reproducibility/coverage work, not a new Core candidate."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "3c1644e2588d07f868427b1e059e477fd4117e55",
-      "last_processed_sha": "3c1644e2588d07f868427b1e059e477fd4117e55",
-      "last_processed_note": "Supervisor audited the new V46 point-in-time split-eligibility blocker and found the premise valid. Frozen run80 was produced with yfinance auto_adjust=False, but its 3350 data still contains split-adjusted historical OHLC: 2025-03-27 frozen close is 479.5 while the actual pre-split close was 4,795 before the 10-for-1 split. Therefore absolute historical price-cap eligibility can contain future corporate-action information. V46 outcome-free audit/contract is appropriate, but its Yahoo-heavy split fetch is not launched while authoritative V44 run 34767664140 and superseded 34766353425 remain in_progress. No V44 performance was interpreted."
+      "last_seen_sha": "f0ffae6f95dda3f2db99f76dadceb2fc798de62f",
+      "last_processed_sha": "f0ffae6f95dda3f2db99f76dadceb2fc798de62f",
+      "last_processed_note": "Cross-lane :48 audited authoritative V44 run 34767664140: completed FAILURE by fail-closed baseline reproduction guard before performance interpretation (development baseline n=61 vs expected 67). No usable V44 evidence artifact was uploaded. Treat as DATA_REPRO_FAILURE / DO_NOT_INTERPRET, not strategy rejection. Superseded V44 run 34766353425 also completed and remains non-authoritative. V47 price-policy contract CI 34772226614 completed SUCCESS; duplicate test-file cleanup f0ffae6 is benign."
     }
   },
   "guardrails": [
@@ -32,138 +32,88 @@
     "2026 outcome is report/robustness-only, never tuning/selection input.",
     "Canonical comparison endpoint is next XTKS session open to fifth XTKS session close.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
-    "Before editing a lane, verify no newer commit supersedes the state file and no other worker has already processed it.",
-    "Read research/SUPERVISOR_4LANE_COORDINATION_20260914.md before lane advancement; its latest synchronized copy supersedes stale lane assumptions.",
-    "A surviving Consensus V44 is necessary but not sufficient for promotion: canonical-target retraining, canonical raw-bin semantics, and point-in-time universe validation remain required.",
-    "Run80 absolute historical price-threshold evidence is promotion-blocked until outcome-free point-in-time split eligibility is reconstructed; do not use strategy outcomes to choose the correction."
+    "Read research/SUPERVISOR_4LANE_COORDINATION_20260914.md before lane advancement.",
+    "A surviving Consensus candidate still requires canonical-target retraining, canonical raw-bin semantics, and point-in-time universe validation.",
+    "Run80 absolute historical price-threshold evidence is promotion-blocked until outcome-free point-in-time split eligibility is reconstructed."
   ],
   "workflow_watch": {
     "consensus_v44": {
       "run_id": 34767664140,
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "failure",
       "authoritative": true,
       "superseded_runs": [34765427789, 34766353425],
-      "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation.",
-      "last_checked_at_jst": "2026-09-14T02:12:00+09:00",
-      "last_checked_job_state": "authoritative 34767664140 and superseded 34766353425 both remain in_progress. No acceptance, performance interpretation, V20 H1 fetch, or V46 Yahoo-heavy fetch while these blockers run.",
-      "acceptance_guard": {
-        "path": "research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json",
-        "baseline_reproduction_pass_required": true,
-        "requested_symbols_equals": 1910,
-        "ok_symbols_min": 1850,
-        "candidate_symbols_min": 1793,
-        "candidate_rows_min": 519163,
-        "on_failure": "DO_NOT_INTERPRET; rerun exact frozen evaluator after superseded heavy runs stop"
-      },
-      "acceptance_workflow": ".github/workflows/no-tv-consensus-v44-acceptance.yml",
+      "decision": "DATA_REPRO_FAILURE_DO_NOT_INTERPRET",
+      "failure_reason": "fail-closed baseline drift: DEVELOPMENT baseline n=61 expected=67",
+      "performance_interpreted": false,
+      "usable_evidence_artifact_uploaded": false,
       "acceptance_required_before_performance": true,
       "strict5_requires_acceptance": true,
-      "invalid_run_34765427789_fetch_only": {
-        "requested_symbols": 1910,
-        "ok_symbols": 1850,
-        "candidate_symbols": 1793,
-        "candidate_rows": 519231,
-        "passed_frozen_coverage_floor": true,
-        "performance_interpreted": false
-      }
+      "note": "Do not rerun blindly or inspect performance. Reconcile baseline mechanics/input identity first; acceptance cannot pass against missing/failed authoritative evidence."
     },
     "consensus_v46_pit_split_eligibility": {
-      "status": "STAGED_BLOCKED_ON_V44_YAHOO_HEAVY_RUNS",
-      "branch_head": "3c1644e2588d07f868427b1e059e477fd4117e55",
+      "status": "READY_TO_LAUNCH_BY_CONSENSUS_OWNER",
       "workflow": ".github/workflows/no-tv-consensus-v46.yml",
       "contract_test_run": 34770243519,
       "contract_test_status": "completed/success",
       "outcome_free": true,
       "strategy_returns_opened": false,
-      "premise_validated": true,
-      "premise_evidence": "Frozen run80 bootstrap used yfinance auto_adjust=False; preserved 3350 close on 2025-03-27 is 479.5 although external split records show the actual pre-split close was 4,795 before the 10-for-1 split. Historical absolute price gates therefore require PIT nominal reconstruction.",
-      "launch_rule": "Launch only after authoritative V44 34767664140 and superseded 34766353425 are both no longer in_progress. Do not inspect strategy returns to choose or validate the PIT correction.",
-      "known_limitation": "Correcting split-history leakage inside the current-listed run80 universe does not repair survivorship bias from symbols delisted before the 2026-09-11 JPX snapshot."
+      "launch_rule": "Previous Yahoo-heavy V44 blockers 34767664140 and 34766353425 are both no longer in_progress. Consensus owner may now launch V46, after checking no newer heavy run was started."
+    },
+    "consensus_v47_price_policy": {
+      "contract_test_run": 34772226614,
+      "contract_test_status": "completed/success",
+      "latest_head": "f0ffae6f95dda3f2db99f76dadceb2fc798de62f",
+      "price_arms": ["NOCAP", "CAP1000_PIT"],
+      "rule": "Do not build clean V47 until V46 PIT reconstruction/audit is complete."
     },
     "core_canonical_endpoint": {
-      "run_id": 34766143681,
       "status": "completed",
-      "conclusion": "success",
-      "processed": true,
       "decision": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE"
     },
     "core_failed_breakdown_reclaim": {
-      "workflow": ".github/workflows/tentei-cloud-core-failed-breakdown-reclaim.yml",
-      "invalid_preconfirmation_run": 34768879678,
-      "invalid_reason": "wrong daily-context implementation; raw-1H daily aggregation violated frozen prior-completed-XTKS-daily contract",
-      "corrected_contract_test_run": 34768958344,
-      "corrected_contract_test_status": "completed/success",
       "authoritative_preconfirmation_run": 34768985489,
-      "authoritative_preconfirmation_status": "completed/success",
-      "frozen_raw_source_run": 34592896202,
-      "frozen_daily_source_run": 34599959356,
-      "frozen_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
-      "locked_confirmation_rule": "Open only if corrected preconfirmation artifact proves DEVELOPMENT and INTERNAL_VALIDATION both pass every frozen gate.",
       "preconfirmation_decision": "REJECT",
-      "locked_confirmation_opened": false,
-      "report": "research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_RESULT_20260914.md"
-    },
-    "core_operational_load": {
-      "run_id": 34771263457,
-      "status": "completed/success",
-      "processed": true,
-      "decision": "DESCRIPTIVE_ONLY_DO_NOT_PRUNE_BY_ALERT_VOLUME",
-      "note": "UX evidence only; does not affect rejected Core performance status or selection rules."
+      "locked_confirmation_opened": false
     },
     "core_capacity": {
       "invalid_run": 34771393714,
-      "invalid_reason": "AM signals started capacity occupancy at same-day PM raw bar instead of next official XTKS session open date",
-      "correction_commit": "508e46889532883bcc23021c94d565f2a020737d",
-      "trigger_commit": "d79ac47deaa99c747cc2a4b50996c15d2232bd70",
+      "invalid_reason": "AM signals started occupancy at same-day PM raw bar instead of next official XTKS session open date",
       "authoritative_run": 34771491740,
-      "authoritative_status": "in_progress",
-      "outcomes_opened": false,
+      "authoritative_status": "completed/success",
+      "processed": true,
+      "selection_or_tuning": false,
+      "summary": {
+        "DEV_max_concurrent": 56,
+        "H2_2025_max_concurrent": 22,
+        "YTD_2026_max_concurrent": 15
+      }
+    },
+    "core_execution_entry": {
+      "latest_run": 34771686835,
+      "latest_status": "completed/success",
+      "head_sha": "a8bee6889f7ba44eecb45644ecac4aff05c51d16",
+      "purpose": "canonical next-session executable-entry coverage with unmatched-row logging",
       "selection_or_tuning": false
     },
     "v20_session_impulse": {
       "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
       "owner": "Canonical/Event :12 worker",
-      "evaluator_commit": "de36c88c17fceb95bed178279e2bad5e4e823cbf",
       "contract_test_run": 34769637874,
       "contract_test_status": "completed/success",
       "canonical_h1_universe_symbols": 1810,
       "canonical_h1_universe_sessions": 82,
       "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
-      "old_raw_panel_symbols": 1332,
-      "old_raw_panel_decision": "INSUFFICIENT",
-      "h1_workflow": ".github/workflows/v20-session-impulse-h1.yml",
-      "h1_status": "STAGED_NOT_TRIGGERED",
-      "trigger_block": "Wait until Consensus V44 Yahoo-heavy runs 34767664140 and 34766353425 are both not in_progress.",
-      "raw_acceptance": "exact 1810 symbol set + zero final fetch failures before H1 outcomes",
-      "h2_rule": "Only unchanged H1 passing TopN policies may be authorized for H2.",
-      "year_2026_outcomes_opened": false,
-      "status": "STAGED_WAITING_FOR_V44_YAHOO_RUNS_TO_STOP",
-      "h1_universe_symbols": 1810,
-      "h1_universe_receipt_run": 34769844711,
-      "temporal_coverage_contract_commit": "8dcb012ca2938def40cf5e71e350426e89c2ac72",
-      "temporal_coverage_contract_test_run": 34770212752,
-      "temporal_coverage_contract_test_status": "completed/success",
-      "required_before_h1_outcome": [
-        "exact frozen 1810 symbol set",
-        "zero final fetch failures",
-        "all canonical-daily active frozen-universe symbol/date pairs present in raw 1H",
-        "zero duplicate symbol/timestamp rows",
-        "all raw dates inside frozen window"
-      ],
-      "readiness_receipt": "tvfree_screener/batch02/V20_H1_PREEXECUTION_READINESS_20260914.json",
-      "readiness_status": "READY_BUT_BLOCKED_ON_CONCURRENT_YAHOO_HEAVY_RUNS",
-      "latest_contract_ci": 34770320623,
-      "latest_contract_ci_status": "completed/success",
-      "blockers": [34767664140, 34766353425],
-      "launch_rule": "Only after both blockers are no longer in_progress, trigger H1 exactly once. Coverage must satisfy exact symbols + temporal active-pair completeness + zero duplicates + zero failures before outcomes."
+      "h1_status": "READY_TO_LAUNCH_BY_CANONICAL_OWNER",
+      "launch_rule": "Previous Yahoo-heavy blockers 34767664140 and 34766353425 are both no longer in_progress. :12 owner may trigger exactly once after confirming no V20 H1 run already exists and no new conflicting heavy fetch is active.",
+      "raw_acceptance": "exact frozen 1810 symbol set + zero final failures + temporal active-pair completeness + zero duplicate symbol/timestamp + raw dates within frozen window before opening H1 outcomes",
+      "year_2026_outcomes_opened": false
     }
   },
-  "supervisor_contract_sha256": "239adb8933e09a6d8f6917cbeadc0386a5a2725d",
   "core_lane_status": {
     "current_fixed_core": "REJECTED_CANONICAL_H2",
     "failed_breakdown_reclaim": "REJECTED_PRECONFIRMATION",
     "locked_h2_for_reclaim_opened": false,
-    "next_rule": "Do not invent or retune adjacent Core heuristics. Only continue with a genuinely different low-DOF mechanism preregistered before outcomes and non-overlapping with Event/Consensus."
+    "next_rule": "Do not retune adjacent Core heuristics. Only genuinely different low-DOF preregistered mechanisms or audit/reproducibility work."
   }
 }

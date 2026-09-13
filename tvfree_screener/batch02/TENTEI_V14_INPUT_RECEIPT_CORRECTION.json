@@ -1,0 +1,28 @@
+{
+  "receipt_id": "TENTEI-V14-INPUT-RECEIPT-CORRECTION-20260913",
+  "experiment_id": "TENTEI-INSPIRED-4H-V14-PRE2025-DUAL-CLASSIFIER-20260913",
+  "status": "RECORDED_BEFORE_V14_H1_SELECTION_METRICS",
+  "fixed_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+  "raw_hourly_source_run_id": 34592896202,
+  "parser_equivalence_checks": {
+    "h1_v12_rows_after_prior_daily_gates": 8245,
+    "expected_h1_v12_rows_after_prior_daily_gates": 8245,
+    "pre2025_v12_rows_after_prior_daily_gates": 7099,
+    "expected_pre2025_v12_rows_after_prior_daily_gates": 7099,
+    "pre2025_symbols_after_prior_daily_gates": 1065,
+    "expected_pre2025_symbols_after_prior_daily_gates": 1065
+  },
+  "clarification": {
+    "spec_expected_event_rows_7099": "candidate pool before V14 feature-finiteness exclusion",
+    "actual_model_training_rows_after_19_feature_finiteness": 4924,
+    "actual_model_training_symbols_after_19_feature_finiteness": 966,
+    "model_or_threshold_change": false,
+    "outcome_driven_change": false
+  },
+  "other_chat_overlap_avoidance": {
+    "parallel_lane": "TENTEI-STATE-ENTRY-REPRESENTATION-20260913",
+    "this_lane": "V14 event-specific pre-2025 dual classifier",
+    "duplicated_experiment": false
+  },
+  "production_modified": false
+}

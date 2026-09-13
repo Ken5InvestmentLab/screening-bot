@@ -1,0 +1,53 @@
+{
+  "audit_id": "TENTEI-V17-H1-H2-SIGNALTIME-DRIFT-20260913-01",
+  "status": "PREREGISTERED_BEFORE_H1_H2_DRIFT_METRICS",
+  "lane": "Event-specific V12/V17/V18 lane",
+  "contract": "research/SUPERVISOR_4LANE_COORDINATION_20260914.md",
+  "purpose": "Diagnose whether the V12 H1-to-H2 return collapse is accompanied by signal-time covariate/composition drift under the stable V17 representation.",
+  "representation": "V17 16-feature cross-sectional representation",
+  "candidate_generator": "V12 ALL unchanged",
+  "cohorts": {
+    "h1": "2025-03-01 through 2025-06-30 V12 events; prior-day gates; all V17 features finite",
+    "h2": "2025-07-01 through 2025-12-31 same filters"
+  },
+  "continuous_drift": {
+    "metrics": [
+      "KS",
+      "PSI using H1 deciles epsilon 1e-6",
+      "median shift normalized by H1 IQR"
+    ],
+    "severe": "KS>=0.20 OR PSI>=0.25 OR abs(median_shift_iqr)>=0.50",
+    "moderate": "KS>=0.10 OR PSI>=0.10 OR abs(median_shift_iqr)>=0.25",
+    "low": "otherwise"
+  },
+  "trigger_composition": {
+    "flags": [
+      "rsi_recovery",
+      "trend_flip",
+      "emergency_reversal"
+    ],
+    "severe": "absolute H2-H1 rate change >=0.10",
+    "moderate": "absolute rate change >=0.05",
+    "low": "otherwise"
+  },
+  "diagnostics": [
+    "event rows",
+    "symbols",
+    "active dates",
+    "events per active date",
+    "AM share"
+  ],
+  "decision": {
+    "stable_signal_time": "0 severe continuous AND <=4 moderate continuous AND no severe trigger flag",
+    "partial_shift": "1-2 severe continuous OR >4 moderate continuous, with no severe trigger flag",
+    "material_shift": ">=3 severe continuous OR any severe trigger flag",
+    "interpretation_if_stable": "V12 H2 collapse is more consistent with concept drift/missing explanatory state than ordinary covariate drift",
+    "interpretation_if_shift": "signal-time regime/composition changed materially; further representation/context research may be justified"
+  },
+  "guardrails": {
+    "strategy_return_values_used": false,
+    "no_H2_threshold_or_model_tuning": true,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

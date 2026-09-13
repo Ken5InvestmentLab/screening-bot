@@ -45,6 +45,14 @@ jobs:
           python research/tentei_cloud/audit_core_execution_entry.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --outdir out
+      - name: Show unmatched canonical entries
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          x=pd.read_csv("out/core_execution_rows.csv")
+          z=x[x["matched"].astype(str).str.lower().isin(["false","0"])]
+          print(z[["date","session","symbol","target_date","exec_date","ret5bd"]].to_string(index=False))
+          PY
       - name: Record source fetch run
         run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
       - uses: actions/upload-artifact@v4

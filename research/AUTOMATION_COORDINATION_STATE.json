@@ -1,12 +1,12 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T05:57:00+09:00",
+  "updated_at_jst": "2026-09-14T06:11:19+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "All three active branch HEADs still equal last_processed_sha. No new lane Actions beyond already-processed runs. Coordination branch Supervisor document and candidate-status snapshot were stale relative to later lane findings; reconciled them to current V20 coverage-blocked, Core rejected, V44 data-repro-failed, V46 accepted, V47 clean-PIT-contract-frozen state."
+    "note": "All three active branch HEADs still equal last_processed_sha at the last Supervisor scan. Canonical :12 subsequently classified the already-known V20 coverage failure outcome-blind and advanced its branch; see canonical branch state below."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
-      "last_processed_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
-      "last_processed_note": "Canonical :12 audited V20 H1 run 34774070956. Universe + all four Yahoo fetch shards succeeded, but fail-closed coverage job failed before H1 evaluation and the original workflow skipped coverage artifact upload. H1 outcomes remain unopened. Patched research-only workflow so coverage receipt uploads with if: always() on future/diagnostic runs; no strategy logic, thresholds, production paths, or 2026 outcomes changed. Patch contract CI 34777145113 completed SUCCESS."
+      "last_seen_sha": "a99fbe42ae8c7fdea8cef24ace51578b0f25f77c",
+      "last_processed_sha": "a99fbe42ae8c7fdea8cef24ace51578b0f25f77c",
+      "last_processed_note": "Canonical :12 recovered the failed coverage job log for V20 H1 run 34774070956 without opening strategy outcomes. Frozen 1810-symbol count/SHA, duplicate guard, and date-window guard passed, but observed raw symbols were 1806, one Yahoo fetch failure remained, and 734 canonical-active symbol/dates lacked raw 1H. Four missing symbols (463A/464A/543A/547A) account for 476/734 missing dates and are successor codes introduced after the 2025H1 window while the canonical daily carries retrospective history under those later codes, establishing a point-in-time symbol-identity mismatch. The remaining 258 missing dates span sparse Yahoo intraday gaps. Outcome-blind classification and repair guardrails were frozen in V20_H1_RAW_COVERAGE_FAILURE_CLASSIFICATION_20260914.json; H1 outcomes and H2 remain unopened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -53,11 +53,23 @@
       "canonical_h1_universe_sessions": 82,
       "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
       "h1_run": 34774070956,
-      "h1_status": "COVERAGE_FAILED_DO_NOT_INTERPRET",
+      "h1_status": "COVERAGE_FAILED_CLASSIFIED_DO_NOT_INTERPRET",
       "raw_fetch_shards": "4/4 completed success",
       "coverage_receipt_uploaded": false,
+      "coverage_log_recovered": true,
+      "coverage_failure_classification": {
+        "expected_symbols": 1810,
+        "observed_symbols": 1806,
+        "missing_symbols": ["463A", "464A", "543A", "547A"],
+        "fetch_failure_count": 1,
+        "missing_active_symbol_dates": 734,
+        "missing_dates_from_four_future_successor_codes": 476,
+        "remaining_sparse_missing_dates": 258,
+        "symbols_with_any_missing_active_date": 176,
+        "point_in_time_symbol_identity_mismatch": true
+      },
       "performance_interpreted": false,
-      "next_rule": "Do not open H1 outcomes or H2. Recover/produce the raw coverage receipt first and identify which frozen acceptance condition failed; do not retune V20 to pass coverage."
+      "next_rule": "Do not open H1 outcomes or H2. Implement only an outcome-blind raw repair stage under the frozen classification guardrails: verify/preregister successor-to-predecessor query aliases for the four impossible current-code histories, targeted-refetch remaining missing canonical-active symbol/dates, preserve exact frozen 1810 output symbols, then rerun the unchanged raw acceptance verifier. No V20 signal/threshold/TopN retune is allowed."
     },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
@@ -96,7 +108,7 @@
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 raw coverage failure condition not yet classified",
+      "V20 raw coverage repair not yet accepted: point-in-time symbol alias verification plus 258 sparse missing active symbol/dates remain",
       "Consensus V47 clean PIT materializer and coverage receipts not yet complete",
       "No currently passing Core replacement candidate"
     ]

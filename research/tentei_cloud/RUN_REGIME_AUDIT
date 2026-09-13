@@ -1,3 +1,3 @@
-trigger: 2026-09-11 regime-v2
-source_fetch_run: 34592896202
-fixed gates: add recovery-aware R5_OR_RISING and diagnostic RISK_OFF bucket
+trigger: 2026-09-14 regime-v3 rerun
+purpose: independent lane; re-run causal previous-day market regime audit before designing any new veto
+fixed gates: unchanged from audit_market_regime.py; no outcome-fitted threshold changes

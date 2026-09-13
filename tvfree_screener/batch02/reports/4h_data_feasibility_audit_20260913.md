@@ -63,3 +63,8 @@ TradingViewの区切りを最終目的にしない。JPXの公式現行時間は
 全件照合には、既存値の読み取り専用exportが必要。1時間足の品質確認と新しいセッションバー構築には、raw 1時間足（境界が正確でなければ30分足以下）、足の長さ、timestampが足の開始/終了どちらを示すか、価格調整基準が必要。11:00–12:00や12:00–13:00のように昼休みをまたぐ足は日足比較へ丸ごと含めて境界またぎとして記録し、前場・後場の足へ分割しない。いずれも元シートや元ファイルは編集しない。
 
 詳しい定義は4H_DATA_FEASIBILITY_AUDIT_SPEC.json、HOURLY_DAILY_CONSISTENCY_AUDIT_SPEC.json、INTRADAY_BAR_DEFINITION_STUDY_SPEC.jsonに保存した。
+
+
+## 2026-09-13 read-only coverage addendum
+
+The connected `ohlcv_4h` tab was reconciled against same-day daily OHLCV for 2025-12-23 through 2026-09-11. There were 645,187 daily symbol/session pairs; 439,557 did not have a complete valid 09:00 and 13:00 pair, and 439,207 of those had numerically valid daily OHLCV. This is availability/basic-validity evidence only; absent bars cannot be distinguished as intentionally untracked versus failed retrieval. It does not establish hourly price accuracy or permit daily-to-4H synthesis. See `reports/intraday_daily_coverage_audit_20260913.md`.

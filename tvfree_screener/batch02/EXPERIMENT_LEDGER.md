@@ -698,3 +698,19 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next: stop blind adjacent-heuristic generation; re-audit the earlier Monster weak+early / volr20-low research structure under current causal 4H constraints.
 - Report: `reports/event_4h_v20_compression_breakout_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## MONSTER-CANONICAL-V2-ALL-WEAK-EARLY-EXACT-REPLAY-20260914 — LOCKED 2025 FAIL / POLICY REJECTED
+
+- Replay used the already-frozen batch01 v2 spec unchanged; this lane did not duplicate the parallel session-impulse V20 experiment.
+- Exact full-market lag1 ret5 gate was regenerated from canonical daily OHLCV, not approximated from Tail-cache date gaps. Pool receipt matched known canonical v1 counts exactly: 2023=69, 2024=138; 2025=67.
+- ALL policy with one-official-session same-symbol cooldown selected 55/109/54 rows in 2023/2024/2025.
+- 2023 at 0.5%: 54 resolved, mean +1.476%, +20% 18.52%, -10% 37.04%, Top1-excluded -0.494%, Top3-excluded -3.270%.
+- 2024 at 0.5%, canonical year cutoff: 105 resolved, mean +1.683%, +20% 15.24%, -10% 31.43%, Top1-excluded +0.569%, Top3-excluded -1.337%.
+- Locked 2025: 54/54 resolved, mean +2.190%, median -7.531%, win 37.04%, +20% 12.96%, -10% 35.19%, Top1-excluded **-0.212%**, Top3-excluded -2.902%.
+- Frozen 2025 gates: n PASS, mean PASS, +20 PASS, -10 PASS, Top1-excluded mean FAIL => overall FAIL.
+- Zero-cost Top1-excluded mean would be +0.288%, but the frozen decision cost is 0.5%; do not relax it post hoc.
+- Decision: reject canonical Monster v2 ALL_WEAK_EARLY as a passed policy. Do not rescue by Top-N/rank/cooldown/cost tuning on exposed 2023-2025.
+- Reproducer: `batch02/replay_monster_canonical_v2_all.py`.
+- Report: `reports/monster_canonical_v2_all_exact_replay_20260914.md`.
+- 2026 outcomes opened: false. Production modified: false.

@@ -30,7 +30,7 @@
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "13fb02c",
   "last_completed_candidate_pool_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
-  "next_action": "Re-check the parallel ChatGPT lane/latest commits. If not duplicated, preregister V15 regime-normalized V12 event representation. Keep V12 candidate generation unchanged; replace severe absolute volatility-state features with causal relative/rank forms before any H1 outcome evaluation. Keep H2/2026 closed.",
+  "next_action": "Re-check parallel lane. If not duplicated, preregister and audit V16 prior-history-rank representation: replace V15 volatility log-ratio features with bounded prior20 same-symbol same-bin empirical ranks, keep V12 candidate generation and low-drift features unchanged, and do not open strategy returns unless the frozen drift gate passes.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -228,8 +228,8 @@
   "feature_panel_v1_frozen_before_outcome_exposure": true,
   "broad_raw_audit_joined_outcomes": false,
   "last_completed_audit": {
-    "audit_id": "TENTEI-V14-FEATURE-DRIFT-20260913-01",
-    "decision": "MATERIAL_COVARIATE_SHIFT",
-    "report": "tvfree_screener/batch02/reports/tentei_v14_feature_drift_20260913.md"
+    "audit_id": "TENTEI-V15-REGIME-NORMALIZED-DRIFT-20260913-01",
+    "decision": "FAIL_REDESIGN_OUTCOME_FREE",
+    "report": "tvfree_screener/batch02/reports/tentei_v15_regime_normalized_drift_20260913.md"
   }
 }

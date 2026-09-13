@@ -43,7 +43,7 @@ def test_price_policy_arms_and_membership():
         "high": [105,115, 510,530, 205,215],
         "low": [95,105, 490,510, 195,205],
         "close": [100,110, 500,520, 200,210],
-        "volume": [20000,20000, 30000,30000, 40000,40000],
+        "volume": [20000,20000, 300000,300000, 40000,40000],
         "symbol": ["A","A","B","B","C","C"],
     })
     memberships = {
@@ -120,7 +120,32 @@ def test_listing_epoch_resets_prior_close_and_volume():
     # The following day may use the first post-listing completed day.
     d=out[out["date_s"]=="2025-06-03"].iloc[0]
     assert float(d["prev_close_adjusted"])==105.0
-    assert float(d["prev_volume"])==20000.0
+    assert float(d["prev_volume_pit"])==20000.0
+
+
+
+def test_split_adjusted_daily_volume_is_restored_before_gate():
+    daily = pd.DataFrame({
+        "date": pd.to_datetime(["2025-01-06","2025-01-07"]),
+        "open":[100,105],
+        "high":[110,115],
+        "low":[95,100],
+        "close":[100,105],
+        "volume":[50000,60000],
+        "symbol":["X","X"],
+    })
+    memberships={
+        "2025-01-06":{"X"},
+        "2025-01-07":{"X"},
+    }
+    splits={"X":[(pd.Timestamp("2025-04-01"),10.0)]}
+    events=pd.DataFrame(columns=["event_date","code","event"])
+    out,_=v47.materialize_daily_candidates(
+        daily,memberships,splits,events
+    )
+    # 50,000 present-basis shares / 10 = 5,000 PIT shares,
+    # so the Jan-7 row must fail the >=10,000 prior-volume gate.
+    assert "2025-01-07" not in set(out["date_s"])
 
 
 def test_terminal_404_is_not_retried():
@@ -155,6 +180,7 @@ def main():
         test_price_policy_arms_and_membership,
         test_cap_is_subset_of_nocap,
         test_listing_epoch_resets_prior_close_and_volume,
+        test_split_adjusted_daily_volume_is_restored_before_gate,
         test_terminal_404_is_not_retried,
     ]
     for fn in tests:

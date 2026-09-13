@@ -89,12 +89,11 @@ def attach_next_bar(core: pd.DataFrame, raw: pd.DataFrame) -> pd.DataFrame:
                 "exec_volume":np.nan,"entry_delay_hours":np.nan,
             })
             continue
-        ts=g["timestamp"].to_numpy()
-        # pandas Timestamp comparison via searchsorted on numpy datetime64 with tz
-        # is awkward; use Series search after UTC int conversion.
         needle=pd.Timestamp(r["last_ts"])
-        vals=g["timestamp"].astype("int64").to_numpy()
-        j=int(np.searchsorted(vals, needle.value, side="right"))
+        # Keep both operands in pandas' timezone-aware datetime dtype.
+        # Do not compare raw integer epochs: pandas 3 may store datetime64 in
+        # microseconds while Timestamp.value is nanoseconds.
+        j=int(g["timestamp"].searchsorted(needle, side="right"))
         if j>=len(g):
             rows.append({
                 "exec_ts":pd.NaT,"exec_open":np.nan,"exec_bar_close":np.nan,

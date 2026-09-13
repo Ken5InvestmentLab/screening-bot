@@ -200,12 +200,62 @@ def main() -> None:
     start = pd.Timestamp(a.start).normalize()
     anchor = pd.Timestamp(a.anchor_date).normalize()
     events, unknown = collect_events_compat(pit, start.year, anchor)
+
+    # Current JPX listing-table layout leaves market on a presentation row that
+    # is not always recoverable by the exact 2026-09-11 parser. Resolve only
+    # when domestic-common status is independently established:
+    #   (a) code exists in the preserved domestic-common anchor snapshot, or
+    #   (b) code has an accepted domestic-common delisting event.
+    # A listing on the anchor date for a code absent from the anchor snapshot
+    # is a no-op for all reconstructed dates < anchor and is recorded separately.
+    delisted_domestic_codes = set(
+        events.loc[events["event"] == "delisting", "code"].astype(str)
+    )
+    resolved = []
+    ignored_anchor = []
+    remain = []
+    for row in unknown.to_dict("records"):
+        code = str(row.get("code", "")).strip()
+        dt = pd.Timestamp(row["event_date"]).normalize()
+        if row.get("event") == "listing" and (
+            code in current_codes or code in delisted_domestic_codes
+        ):
+            resolved.append({
+                "event_date": dt,
+                "code": code,
+                "event": "listing",
+                "market": "domestic_common_validated_by_anchor_or_delisting",
+                "source_url": row["source_url"],
+            })
+        elif row.get("event") == "listing" and dt == anchor and code not in current_codes:
+            ignored_anchor.append({
+                **row,
+                "reason": "anchor_date_listing_absent_from_preserved_anchor_snapshot_noop",
+            })
+        else:
+            remain.append(row)
+
+    if resolved:
+        events = pd.concat([events, pd.DataFrame(resolved)], ignore_index=True)
+        events = (
+            events.drop_duplicates(["event_date", "code", "event"], keep="first")
+            .sort_values(["event_date", "code", "event"], kind="mergesort")
+            .reset_index(drop=True)
+        )
+    unknown = (
+        pd.DataFrame(remain)
+        if remain
+        else pd.DataFrame(columns=["event_date", "code", "event", "market", "source_url"])
+    )
     validation = pit.validate_events(events, unknown)
 
     out = a.output_dir
     out.mkdir(parents=True, exist_ok=True)
     events.to_csv(out / "jpx_membership_events.csv", index=False)
     unknown.to_csv(out / "jpx_membership_unknown_rows.csv", index=False)
+    pd.DataFrame(ignored_anchor).to_csv(
+        out / "jpx_membership_anchor_noop_rows.csv", index=False
+    )
 
     checkpoints = []
     detail = []
@@ -246,6 +296,11 @@ def main() -> None:
         "anchor_date": anchor.strftime("%Y-%m-%d"),
         "current_members": len(current_codes),
         "validation": validation,
+        "compatibility_receipt": {
+            "unknown_listing_rows_resolved_by_anchor_or_delisting": int(len(resolved)),
+            "anchor_date_snapshot_noop_rows": int(len(ignored_anchor)),
+            "remaining_unknown_rows": int(len(unknown)),
+        },
         "event_counts": {
             str(k): int(v)
             for k, v in events["event"].value_counts().to_dict().items()

@@ -49,4 +49,8 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - Corrected report is exploratory/retrospective only; it cannot promote a policy. Any later-period test needs its own frozen spec.
 - First pre-outcome spec write exposed a Windows newline/hash mismatch; no outcomes were opened. The runner now hashes the exact bytes written and the spec was re-frozen.
 - Frozen correction spec: `reports/core_trend_compression_label_recovery_spec.json`; SHA-256 `a4e3cc0ce6122cced22c9042a5b874c656ce2d14b804ceb780fe90e5a220b1b2`.
-- Status: FROZEN_BEFORE_CANONICAL_LABEL_REBUILD; next step is local commit, then canonical label rebuild.
+- Status: `REJECT_FROZEN_POLICIES`; full-pool canonical label rows rebuilt and hashed. Corrected report: `reports/core_trend_compression_label_recovery.md` / `.json`.
+- All unchanged Top1/2/3/5 policies had negative 0.5%-cost means (-0.14/-0.09/-0.08/-0.08%), -0.50% medians, and 39.1/40.7/40.8/40.6% wins. Resolved counts were 276/600/916/1,582 of 365/730/1,095/1,825 selected. Every Top3-excluded mean stayed negative; no policy passed the frozen retrospective gates.
+- The broad full-pool reference had 272,151/278,783 resolved labels; all 365 daily cohorts were partial because the entire TSE pool includes future zero-volume/unactionable bars. This does not block judging selected policies, but it prevents a full-pool complete-day comparison.
+- Decision: reject trend compression as a Core policy family. Do not adjust its thresholds or ranking. The corrected numbers are retrospective repair evidence, not OOS and not production parity.
+- Verification: 69 batch01 tests plus all four batch02 trend-compression/recovery tests pass under package-qualified unittest discovery; the runner and frozen hashes reproduce.

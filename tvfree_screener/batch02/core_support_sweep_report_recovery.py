@@ -105,7 +105,7 @@ def run() -> dict[str, object]:
         month_rows["net"] = pd.to_numeric(month_rows["gross_return"], errors="coerce") - COST
         month_rows["month"] = month_rows["date"].dt.to_period("M").astype(str)
         positive_month_share = float(sum(g["net"].mean() > 0 for _, g in month_rows.groupby("month", sort=True)) / max(month_rows["month"].nunique(), 1))
-        coverage = net["resolved_count"] / max(net["selected_count"], 1)
+        coverage = chosen_stats["resolved_count"] / max(chosen_stats["selected_count"], 1)
         freq = len(selected.loc[selected["date"].between(start, last)]) / max(len(pd.period_range(start.to_period("M"), last.to_period("M"), freq="M")), 1)
         gate = {
             "minimum_sample": net["resolved_count"] >= 75,

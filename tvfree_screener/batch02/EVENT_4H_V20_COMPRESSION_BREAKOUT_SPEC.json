@@ -1,0 +1,100 @@
+{
+  "spec_id": "EVENT-4H-V20-COMPRESSION-BREAKOUT-20260913",
+  "status": "PREREGISTERED_BEFORE_ANY_V20_OUTCOME_ACCESS",
+  "lane": "Event-specific V12/V17/V18 lane",
+  "contract": "research/SUPERVISOR_4LANE_COORDINATION_20260914.md",
+  "family": "genuinely_new_4h_compression_breakout",
+  "non_overlap": {
+    "not_V12_reversal": true,
+    "not_Core_failed_breakdown_reclaim": true,
+    "not_Consensus_V44": true,
+    "no_daily_only_signal": true
+  },
+  "raw_bar_source": {
+    "source": "existing broad raw Yahoo 1h artifact run 34592896202",
+    "bins": "same causal AM_09_13 and PM_13_CLOSE clock bins",
+    "daily_synthesis": false
+  },
+  "candidate_gates": {
+    "prior_daily_close_lte_jpy": 1000,
+    "prior_daily_volume_gte_shares": 10000
+  },
+  "signal_features": {
+    "market_relative_bb_width": "same-date + same-bin cross-sectional percentile among prior-day-gated complete bins",
+    "market_relative_range": "same-date + same-bin cross-sectional percentile",
+    "relative_volume": "log1p(current bin volume / median previous20 same-symbol same-bin volumes)",
+    "prior_high": "max high of previous 4 complete chronological bins for same symbol"
+  },
+  "frozen_signal_rule": [
+    "at least one of previous 4 complete bins had xrank_bb_width_pct <= 0.30",
+    "current close > max(high of previous 4 complete bins)",
+    "current bar_log_return > 0",
+    "current close_location >= 0.75",
+    "current xrank_range_pct >= 0.80",
+    "current log_volume_rel20 >= log(2), equivalent to current same-bin volume >= prior20 same-bin median"
+  ],
+  "rationale": "seek a distinct volatility-compression release with price breakout, expansion and participation; no oversold/reversal premise",
+  "selection": {
+    "ranking": "NONE",
+    "cooldown": "5 official XTKS sessions per symbol; AM before PM",
+    "no_topn_cap": true
+  },
+  "periods": {
+    "discovery": {
+      "signal_dates": [
+        "2024-10-01",
+        "2024-12-20"
+      ],
+      "label_maturity": "exit_date <= 2024-12-30",
+      "rationale": "use available pre-2025 raw 4H history first"
+    },
+    "confirmation_if_discovery_passes": {
+      "signal_dates": [
+        "2025-03-01",
+        "2025-06-30"
+      ],
+      "role": "retrospective confirmation only"
+    },
+    "h2_policy": "closed unless discovery and H1 confirmation both pass the same role gate"
+  },
+  "endpoint": "next official XTKS session open to fifth official XTKS session close",
+  "cost": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "core_gate": {
+    "min_resolved_n": 50,
+    "net_mean_gt": 0,
+    "net_median_gte": 0,
+    "net_win_rate_gt": 0.5,
+    "top3_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.2
+  },
+  "monster_gate": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "density_gate": {
+    "min_resolved_after_cooldown": 30,
+    "min_active_dates": 15,
+    "if_fail": "REJECT_TOO_SPARSE_WITHOUT_RETUNING_THRESHOLDS"
+  },
+  "decision": {
+    "if_neither_role_passes_discovery": "REJECT_V20_WITHOUT_OPENING_2025",
+    "if_core_passes": "freeze Core role and open only H1 confirmation",
+    "if_monster_passes": "freeze Monster role and open only H1 confirmation",
+    "if_both_pass": "report both roles but do not change signal rule",
+    "no_threshold_or_rule_tuning_from_outcomes": true
+  },
+  "integrity": {
+    "year_2025_outcomes_not_used_to_design_rule": true,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

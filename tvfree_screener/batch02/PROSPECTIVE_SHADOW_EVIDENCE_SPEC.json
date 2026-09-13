@@ -1,0 +1,25 @@
+{
+  "spec_id": "PROSPECTIVE-SHADOW-EVIDENCE-20260913",
+  "purpose": "Record genuinely post-freeze TV-Free 4H candidate evidence without changing model logic or production workflows.",
+  "scope": {
+    "research_only": true,
+    "model_or_threshold_changes": false,
+    "production_workflow_changes": false,
+    "network_fetches": false,
+    "daily_to_intraday_synthesis": false
+  },
+  "candidate_key": ["experiment_id", "model_freeze_id", "symbol", "signal_date", "bin_name"],
+  "required_candidate_fields": ["experiment_id", "model_freeze_id", "symbol", "signal_date", "bin_name", "feature_cutoff", "source_tag"],
+  "allowed_source_tags": ["RAW_CAUSAL_INTRADAY"],
+  "forbidden_source_tags": ["POSTCLOSE_RECON_ONLY", "DAILY_RESOLUTION_FALLBACK"],
+  "append_semantics": "append-only and idempotent by candidate key",
+  "evaluation_target": "next official XTKS session open to fifth official XTKS session close",
+  "maturity": "candidate remains PENDING_5BD until the fifth official session endpoint exists",
+  "unresolved_policy": "missing/nonpositive endpoint remains UNRESOLVED_ENDPOINT and is never imputed",
+  "integrity": {
+    "model_freeze_id_is_mandatory": true,
+    "2026_historical_results_do_not_select_or_tune_models": true,
+    "post_freeze_forward_evidence_must_be_distinguishable_from_retrospective_results": true,
+    "production_modified": false
+  }
+}

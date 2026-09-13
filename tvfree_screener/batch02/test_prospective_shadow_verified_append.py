@@ -27,6 +27,10 @@ class VerifiedAppendTests(unittest.TestCase):
                 "feature_cutoff": "2026-09-14T13:00:00+09:00",
                 "source_tag": "RAW_CAUSAL_INTRADAY",
                 "rank": 1,
+                "eligibility_status": "ELIGIBLE",
+                "data_sufficient": True,
+                "skip_reason": None,
+                "missing_fields": [],
             }
         ]
         self.admission = evaluate_shadow_admission(self.manifest, self.rows)
@@ -79,6 +83,15 @@ class VerifiedAppendTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "shadow.jsonl"
             bad_rows = [dict(self.rows[0], source_tag="POSTCLOSE_RECON_ONLY")]
+            result = verified_append(path, self.manifest, bad_rows, self.admission, self.receipt)
+            self.assertFalse(result["appended"])
+            self.assertEqual(result["decision"], "BLOCK_APPEND_ADMISSION_REPLAY_MISMATCH")
+            self.assertFalse(path.exists())
+
+    def test_missing_data_never_writes(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "shadow.jsonl"
+            bad_rows = [dict(self.rows[0], data_sufficient=False, skip_reason="missing_1h_bins")]
             result = verified_append(path, self.manifest, bad_rows, self.admission, self.receipt)
             self.assertFalse(result["appended"])
             self.assertEqual(result["decision"], "BLOCK_APPEND_ADMISSION_REPLAY_MISMATCH")

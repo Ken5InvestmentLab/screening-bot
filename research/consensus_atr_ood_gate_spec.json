@@ -1,0 +1,46 @@
+{
+  "spec_id": "CONSENSUS-MIN95-FROZEN-ATR-OOD-GATE-20260914",
+  "status": "RESEARCH_FROZEN_NOT_PRODUCTION",
+  "selector": {
+    "family": "independent_3_head_consensus",
+    "policy": "fixed_min95_both"
+  },
+  "regime_guard": {
+    "variable": "market_median_atr",
+    "definition": "median ATR14_pct across eligible date/session candidate universe",
+    "reference_cohort_current_research": "V43 selected min95 contexts, 2025-01-01..2025-06-30",
+    "quantile": 0.9,
+    "frozen_cap_pct": 2.8640659721217943,
+    "allow_rule": "market_median_atr <= frozen_cap_pct",
+    "fail_action": "NO_TRADE",
+    "online_adaptation": false,
+    "reset_policy": "new explicitly versioned model/research cycle only"
+  },
+  "evidence": {
+    "pre2026_validation": {
+      "period": "2025-07-01..2025-12-31",
+      "baseline_n": 37,
+      "baseline_mean_pct": 6.279642614573907,
+      "gated_n": 34,
+      "gated_mean_pct": 6.587262104461118
+    },
+    "descriptive_2026": {
+      "baseline_n": 69,
+      "baseline_mean_pct": -7.049772,
+      "gated_n": 0
+    },
+    "adaptive_q90_rejected": true,
+    "adaptive_reason": "persistent high-volatility observations raise the q90 reference and reopen the failed regime"
+  },
+  "limitations": [
+    "reference q90 currently comes from selected min95 contexts rather than the full eligible context universe",
+    "2026 is already inspected and is robustness evidence, not pristine OOS",
+    "production execution timing and survivorship constraints remain"
+  ],
+  "integration_contract": {
+    "normal_volatility": "Consensus may emit candidates",
+    "high_volatility_ood": "Consensus emits NO_TRADE",
+    "alternate_lane": "Monster/Core only if independently validated; otherwise NO_TRADE",
+    "production_modified": false
+  }
+}

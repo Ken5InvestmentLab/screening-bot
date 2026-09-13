@@ -1,3 +1,6 @@
 preconfirmation
-source_run=34592896202
+source_raw_run=34592896202
+source_daily_run=34599959356
+canonical_daily_sha256=6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0
 triggered_by=supervisor
+revision=2

@@ -1,4 +1,6 @@
-trigger: 2026-09-14 core-capacity-v1
-purpose: quantify concurrent Core position-slot demand under executable next-bar entry and fixed 5BD exit horizon
+trigger: 2026-09-14 core-capacity-v2-canonical-entry-date
+purpose: quantify concurrent Core position-slot demand under canonical next-XTKS-session-open date and fixed fifth-session-close horizon
 sizing: none
 filtering: none
+supersedes_run: 34771393714
+supersede_reason: v1 started AM signals at the same-day PM raw bar instead of the next official XTKS session open date

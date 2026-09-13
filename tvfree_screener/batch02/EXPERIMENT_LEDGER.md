@@ -405,3 +405,17 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Decision: data-quality pass. Move to a preregistered canonical feature-to-label scoring experiment using the batch02 next-session-open -> fifth-session-close endpoint, not the older candidate-close endpoint.
 - Report: reports/broad_causal_intraday_v1_audit_20260913.md
 - Receipt/spec: BROAD_CAUSAL_INTRADAY_V1_SPEC.json
+
+
+## CAUSAL-4H-SCORING-V3-NONLINEAR-RISK-20260913 — REJECT / NO_PROMOTION
+
+- Preregistered before V3 row-level H2 access. H2 aggregate V2 results were already known, so H2 is retrospective refutation only and cannot promote V3.
+- Architecture: separate AM/PM HistGradientBoosting gain/loss heads, fixed shallow-tree parameters, and equal-weight risk score logit(p_gain)-logit(p_loss10). Same seven causal 4H features, candidate gates, Top1/2/3/5 and cooldown as V2.
+- H1 fold1: every gate failed. Core Top1 mean -0.48%; Monster Top1 mean -0.51%, +20% rate 0%.
+- H1 fold2: Core Top2 mean +0.32% but median -0.37%/win 41.5%; Monster Top1 mean +0.69% but +20% only 3.66%. Every gate failed.
+- H2 retrospective: Core Top1 mean +0.21%, median -0.35%, win 45.6%, <=-10% 0%; all Core TopN failed. Monster Top1 mean -0.40%, +20% 2.42%, <=-10% 5.65%; Top2/3/5 +20% only 3.23/3.36/2.98%; all failed.
+- Interpretation: V3 strongly reduced downside but suppressed the right tail too much. Reject the architecture; do not tune risk weight against H2.
+- Report: `reports/causal_4h_scoring_v3_nonlinear_risk_20250913.md`.
+- Reproduction hashes: H1 fold1 c7a2ce88331ce8fc65522abaad94b4fc6311b944ef1b467ece04ed0f11b77dc8; H1 fold2 508e71a5e960fe307763ce43d5d1eb4ac05969a437c04a05d55b0d517add3fde; H2 4e38d1a946b4eacfcafd6818a4b4a7e8e1cef6a4c1d96b2b40a1d279f61d9522.
+- 2026 strategy outcomes opened: false. Production modified: false.
+- Next: causal cross-sectional/regime 4H representation; tail-first Monster objective; prospective evidence required for any promotion.

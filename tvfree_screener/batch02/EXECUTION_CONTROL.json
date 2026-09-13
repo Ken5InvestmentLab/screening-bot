@@ -3,7 +3,7 @@
   "budget_pause_latched": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
-  "milestone": "M14_FEATURE_ONLY_POOL_RECEIPT_COMMITTED",
+  "milestone": "M16_FEATURE_POOL_REPRODUCED_AND_COMMITTED",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -29,7 +29,7 @@
   "last_completed_candidate_pool_artifact_sha256": "af2136ad0e54be39b58a48c415f12f5f4076622f0446ea045a94a83b67ec5100",
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "e1e0f99",
-  "next_action": "Independently rebuild the feature-only event pool and commit the matching reproduction report. Only after that commit and matching hashes may the 2024 outcomes through the 2024-12-30 purge cutoff be opened. Keep 2025+ closed and pause at weekly usage >=50% used.",
+  "next_action": "Run the frozen 2024H1/H2 evaluation with labels through the 2024-12-30 purge cutoff. Do not open 2025 or 2026; pause immediately if weekly usage reaches 50% used.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -47,7 +47,9 @@
   "active_candidate_pool_rows": 90006,
   "active_candidate_pool_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
   "active_candidate_pool_receipt_sha256": "d984b30766af6690fa3d1f77cbe97993a405a190fdd4fca4a6eb065792e65e2e",
-  "active_candidate_pool_reproduced": false,
+  "active_candidate_pool_reproduced": true,
   "active_pool_receipt_committed": true,
+  "active_pool_reproduction_sha256": "401ac151663beca44a5c3f4e040ccd34410d810363d436d2c078f274b5d3e555",
+  "active_pool_reproduction_committed": true,
   "outcome_values_opened_before_freeze": false
 }

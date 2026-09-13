@@ -1,0 +1,19 @@
+{
+  "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
+  "git_sha": "83f9faf4a4b055c6f018a2d878e51c61f92e5362",
+  "input_hashes": {
+    "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "preservation_manifest_sha256": "4c8ae91d91477fd6f5699573fff1cefc1c83e9055ba4c9e1296b6b66444c69e4",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "registered_event_pool_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
+  "reproduced_event_pool_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
+  "registered_rows": 90006,
+  "reproduced_rows": 90006,
+  "row_count_match": true,
+  "byte_sha256_match": true,
+  "labels_included": false,
+  "2025_plus_numeric_ohlcv_parsed": false,
+  "reproducibility_pass": true
+}

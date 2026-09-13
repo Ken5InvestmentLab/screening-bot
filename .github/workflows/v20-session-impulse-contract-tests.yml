@@ -11,6 +11,7 @@ on:
       - 'tvfree_screener/batch02/verify_v20_h1_raw_coverage.py'
       - 'tvfree_screener/batch02/test_tentei_v20_session_impulse.py'
       - '.github/workflows/v20-session-impulse-contract-tests.yml'
+      - '.github/workflows/v20-session-impulse-h1.yml'
   workflow_dispatch:
 
 permissions:

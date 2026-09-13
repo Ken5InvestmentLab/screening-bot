@@ -7,6 +7,10 @@ from pathlib import Path
 from typing import Mapping
 
 
+RECEIPT_TYPE = "PROSPECTIVE_SHADOW_AUTHORIZATION_RECEIPT"
+SUPPORTED_DECISIONS = {"AUTHORIZE_PROSPECTIVE_SHADOW_START", "BLOCK_PROSPECTIVE_SHADOW_START"}
+
+
 def sha256_bytes(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
@@ -22,7 +26,7 @@ def build_authorization_receipt(
     created_at: str,
 ) -> dict:
     decision = str(authorization_result.get("decision", ""))
-    if decision not in {"AUTHORIZE_PROSPECTIVE_SHADOW_START", "BLOCK_PROSPECTIVE_SHADOW_START"}:
+    if decision not in SUPPORTED_DECISIONS:
         raise ValueError("authorization_result has unsupported decision")
     if not observed_heads:
         raise ValueError("observed_heads must be nonempty")
@@ -37,7 +41,7 @@ def build_authorization_receipt(
     authorization_sha256 = sha256_bytes(canonical_json_bytes(dict(authorization_result)))
     source_heads = dict(sorted((str(k), str(v)) for k, v in observed_heads.items()))
     core = {
-        "receipt_type": "PROSPECTIVE_SHADOW_AUTHORIZATION_RECEIPT",
+        "receipt_type": RECEIPT_TYPE,
         "created_at": created_at,
         "decision": decision,
         "authorization_result_sha256": authorization_sha256,
@@ -57,12 +61,32 @@ def verify_authorization_receipt(
     supervisor_contract_sha256: str,
 ) -> dict:
     errors: list[str] = []
+
+    expected_decision = str(authorization_result.get("decision", ""))
+    if expected_decision not in SUPPORTED_DECISIONS:
+        errors.append("authorization_result_unsupported_decision")
+    if receipt.get("receipt_type") != RECEIPT_TYPE:
+        errors.append("receipt_type_mismatch")
+    if receipt.get("decision") != expected_decision:
+        errors.append("decision_mismatch")
+    if receipt.get("production_authorized") is not False:
+        errors.append("production_authorized_must_be_false")
+    if not str(receipt.get("created_at", "")).strip():
+        errors.append("created_at_missing")
+
     expected_auth_sha = sha256_bytes(canonical_json_bytes(dict(authorization_result)))
     if receipt.get("authorization_result_sha256") != expected_auth_sha:
         errors.append("authorization_result_sha256_mismatch")
     if receipt.get("supervisor_contract_sha256") != supervisor_contract_sha256:
         errors.append("supervisor_contract_sha256_mismatch")
+
     expected_heads = dict(sorted((str(k), str(v)) for k, v in observed_heads.items()))
+    if not expected_heads:
+        errors.append("observed_heads_empty")
+    for branch, sha in expected_heads.items():
+        if not str(branch).strip() or len(str(sha)) != 40:
+            errors.append("observed_heads_invalid")
+            break
     if receipt.get("source_branch_heads") != expected_heads:
         errors.append("source_branch_heads_mismatch")
 

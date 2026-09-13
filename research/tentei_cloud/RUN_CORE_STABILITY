@@ -1,5 +1,4 @@
-trigger: 2026-09-14 core-stability-v2-cost
-purpose: quantify fixed Core stability and execution-cost sensitivity only; no selection or threshold tuning
+trigger: 2026-09-14 core-stability-v3-cost-log
+purpose: same fixed Core stability/cost calculation; print generated cost CSV for durable audit log
 bootstrap: 5000 week-cluster resamples, fixed seed 20260914
-periods: DEV / 2025H2 / 2026 Jan-Aug
 round_trip_cost_sensitivity: 0.0 / 0.5% / 1.0% assumptions, not measured costs

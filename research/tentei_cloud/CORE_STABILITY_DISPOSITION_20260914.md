@@ -92,3 +92,31 @@ Already rejected pruning paths remain closed:
 Now that the canonical endpoint repair is complete, that family may proceed only under its already-frozen contract. It must not inherit or retune the rejected fixed-Core thresholds from opened outcomes.
 
 Production remains unchanged.
+
+
+## Failed-breakdown reclaim staging status
+
+The preregistered new family is now **implemented but NOT TRIGGERED**.
+
+Frozen implementation:
+- spec: `research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json`
+- evaluator: `research/tentei_cloud/eval_core_failed_breakdown_reclaim.py`
+- workflow: `.github/workflows/tentei-cloud-core-failed-breakdown-reclaim.yml`
+- evaluator commit: `c5dc9b704b514e4c777e2fdd1d948b6de7c244fd`
+- workflow commit: `9c276a4499c0be89a59b0c7d96b8f62d06181430`
+
+Safety properties:
+- workflow is manual-dispatch only; no push trigger;
+- default phase opens DEVELOPMENT + INTERNAL_VALIDATION only;
+- LOCKED_CONFIRMATION is opened only with explicit `locked_confirmation` dispatch;
+- evaluator then independently blocks H2 unless both preconfirmation blocks pass every frozen gate;
+- 2026 is not computed by this evaluator;
+- no threshold sweep, rank, Top-N, or backfill exists.
+
+Execution ordering:
+- corrected Consensus V44 run `34766353425` is currently still fetching/reconstructing Yahoo 1H;
+- **do not trigger this Core workflow concurrently** with that run;
+- wait until the corrected V44 run is complete (success/failure both acceptable for resource scheduling), then launch only the `preconfirmation` phase;
+- do not open locked 2025H2 unless the produced preconfirmation artifact proves both frozen blocks passed.
+
+This staging step changes no production code or strategy thresholds.

@@ -1,0 +1,59 @@
+{
+  "contract_id": "CONSENSUS-V47-CLEAN-PIT-MATERIALIZATION-20260914",
+  "status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
+  "purpose": "Freeze the clean point-in-time materialization boundary before any V47 NOCAP/CAP1000_PIT strategy outcome is computed.",
+  "accepted_dependencies": {
+    "pit_membership_replay_run": 34771221050,
+    "pit_membership_replay": {
+      "anchor_2025_01_01_members": 3827,
+      "anchor_current_snapshot_members": 3700,
+      "restored_delta": 127,
+      "unknown_market_rows": 0,
+      "same_day_code_collisions": 0,
+      "valid_for_membership_reconstruction": true
+    },
+    "v46_split_acceptance_receipt": "research/CONSENSUS_V46_OUTCOME_FREE_ACCEPTANCE_20260914.json",
+    "v46_split_source_run": 34775030470,
+    "v46_split_event_sha256": "f3930087cbdf73dc0469e8ba9b90e3240d61b32a1c1412bf8fadd9a8649f5063"
+  },
+  "required_windows": {
+    "training_context_start": "2024-10-01",
+    "development_start": "2025-01-06",
+    "development_end": "2025-06-30",
+    "locked_validation_start": "2025-07-01",
+    "locked_validation_end": "2025-12-30",
+    "selection_uses_2026": false
+  },
+  "materialization_rules": {
+    "membership": "Use point-in-time JPX domestic common-stock membership for each signal date; do not fall back to the 2026-09-11 current-listed 3700-symbol snapshot.",
+    "daily": "Use coverage-audited historical daily data for every PIT member needed by the requested windows, including restored/delisted names. Report requested, usable, failed and missing symbol/date coverage before scoring.",
+    "intraday": "Use causal Yahoo raw clock-bin data with a frozen coverage receipt. Report requested, usable, failed and missing symbol/date coverage before scoring.",
+    "split_semantics": "Absolute nominal price fields use point-in-time split factors from the accepted V46 event set. Relative/technical price features may use causal split-normalized series.",
+    "absolute_features": "log_price and any absolute-price feature must use point-in-time nominal price. No present-basis adjusted absolute price is permitted.",
+    "prior_volume": "Historical prior completed-day volume >= 10000 shares; do not silently rescale volume from future split information.",
+    "session_volume": "Observed historical raw-bin volume >= 5000 shares.",
+    "cross_sectional": "Recompute ranks, breadth, market medians and candidate counts independently from the clean PIT-eligible universe. Do not reuse V43/V44 current-universe cross-sectional values.",
+    "target": "Canonical next official XTKS open after signal date -> fifth official XTKS-session close.",
+    "architecture": "Exact frozen V11 3-head architecture and selector threshold 0.95; primary ATR gate none."
+  },
+  "price_policy_arms": {
+    "NOCAP": "No absolute prior-close ceiling.",
+    "CAP1000_PIT": "Point-in-time nominal prior completed-day close <= JPY 1000."
+  },
+  "price_policy_arm_count": 2,
+  "coverage_fail_closed": [
+    "Do not compute or inspect strategy/model outcomes until PIT membership, daily, intraday and split-materialization receipts are written.",
+    "Missing restored/delisted-name data must be reported explicitly; do not silently intersect back to current survivors.",
+    "Do not choose a missing-data threshold from returns.",
+    "If missing-data coverage can materially select a survivor subset, stop before performance interpretation."
+  ],
+  "prohibited": [
+    "No post-hoc deletion of V43/V44 selected rows as a substitute for clean rebuild.",
+    "No JPY500/1500/2000 or other initial price-cap grid.",
+    "No old ATR 2.864 gate in the primary comparison.",
+    "No 2026 return use for threshold, price policy, ATR or family selection.",
+    "No production/main/workflow/Discord/Spreadsheet/Stable6/Sniper/Mega/TradingView/watchlist-builder/updater modification."
+  ],
+  "next_action": "Implement an outcome-blind V47 materializer/coverage receipt that first resolves PIT membership plus restored/delisted daily and intraday coverage, then emits clean candidate inputs for exactly NOCAP and CAP1000_PIT. Strategy scoring remains a later step after the coverage receipt passes.",
+  "production_modified": false
+}

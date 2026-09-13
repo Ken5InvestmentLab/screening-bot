@@ -235,3 +235,31 @@ Failure interpretation is also frozen in `CONSENSUS_V44_FAILURE_DISPOSITION_2026
   - <95% V43 candidate-symbol coverage fails.
 
 V45 full Yahoo/data audit remains untriggered until authoritative V44 finishes so it does not add concurrent historical Yahoo load.
+
+
+## Authoritative acceptance workflow — required before performance interpretation
+
+A dedicated receipt-only workflow is now staged:
+- workflow: `.github/workflows/no-tv-consensus-v44-acceptance.yml`
+- checker: `research/verify_consensus_v44_acceptance.py`
+- workflow commit: `b8babace54adc87a4eea2b8c271c54cf2b12e274`
+
+Required ordering after authoritative run `34767664140` completes:
+1. dispatch the acceptance workflow;
+2. require it to complete successfully;
+3. inspect only its `v44_acceptance_receipt.json` first;
+4. only if `accepted=true` may the authoritative V44 performance fields be interpreted;
+5. only after acceptance may strict5 post-run evaluation be dispatched.
+
+The acceptance checker reads only:
+- baseline reproduction pass;
+- requested_symbols;
+- ok_symbols;
+- candidate_symbols;
+- candidate_rows;
+- locked-validation invariant.
+
+It does not evaluate strategy-performance fields.
+
+Additional non-performance evidence:
+invalid run `34765427789` completed with requested=1910, ok=1850, candidate_symbols=1793, candidate_rows=519231, so that run's live fetch coverage met the frozen floor despite overlapping Yahoo activity. The run remains invalid for performance conclusions.

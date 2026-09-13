@@ -1,0 +1,28 @@
+{
+  "experiment_id": "CORE-GAP-UP-ACCEPTANCE-20260913-01",
+  "spec_sha256": "23f2b3a97d995fab44d5dfe283deccd6e52951a28c6ed68611657da86bb10c4f",
+  "prepare_receipt_sha256": "38bf8b9a73f9f5960c0a3e0a0c492378ef49774c8c048155afb7265ef3918dc7",
+  "decision_hashes": {
+    "pool": "6dc62fa73be0e56a5a3af76993b232ff29b3003019a232e5391ce9b126b5ae2f",
+    "ranked": "16ab99129fc45b48138ff8dc0bc4776eacad02419ecad53f4a1661afb6772d0f",
+    "selected": "bdd774d227bb5397e02007f626d4559d218df26de5177a80aaf16f57fee7d1b7"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "feature_complete_rows": 1221230,
+    "gap_threshold_rows": 79877,
+    "volume_threshold_rows": 26777,
+    "positive_body_rows": 13001,
+    "candidate_rows": 8057,
+    "candidate_symbols": 2734,
+    "candidate_bearing_days": 364,
+    "ranked_rows": 8057,
+    "selected_rows": 1783,
+    "selected_days": 364,
+    "zero_selection_days": 1
+  },
+  "reproduced_exactly": true,
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

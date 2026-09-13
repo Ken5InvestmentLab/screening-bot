@@ -147,3 +147,19 @@ Do not relax these gates after seeing the replay.
 
 No production code, production workflow, Discord, Sheets, Stable★6, Sniper, Mega, TradingView, watchlist-builder, or watchlist-updater setting was changed in this manual restart.
 
+## 2026-09-13 daily-anchor materializer freeze
+
+The data-quality handoff was resumed before further 4H model work. The previously recorded five-stage daily-anchor comparison was treated as reconstruction evidence only, not a strategy result. Its key complete-session figures remain: raw all-OHLC-within-1% 494/1,087 (45.446%); common-scale 574/1,087 (52.806%); open/close anchors 985/1,087 (90.616%); extrema anchors 1,074/1,087 (98.804%); eligible volume reconciliation 846/1,087 (77.829%). No 2026 strategy return was used.
+
+A deterministic policy is now frozen in `batch02/DAILY_ANCHOR_MATERIALIZER_SPEC.json` and implemented by `batch02/daily_anchor_materializer.py`:
+- raw 1h rows are immutable;
+- common OHLC scale uses the median O/H/L/C ratio and requires <=2% normalized factor spread;
+- daily open/close and H/L extrema anchoring require complete seven-slot coverage plus defensible common scale;
+- volume is scaled only when the completed-day ratio is 0.5..2.0;
+- failed intraday reconstruction emits exactly one tagged 1D fallback, never fake AM/PM/4H rows;
+- same-day finalized daily anchors are `POSTCLOSE_RECON_ONLY` before an explicitly supplied final-daily availability timestamp;
+- daily-only fallback is not eligible to become the final 4H scoring representation.
+
+Frozen tiers: `A_FULL_RECON_POSTCLOSE`, `B_PRICE_RECON_POSTCLOSE`, `C_DAILY_RESOLUTION_FALLBACK`, `D_UNUSABLE`. Focused local verification passed 6/6 tests, including raw immutability, one-row fallback, inconsistent-scale rejection, volume compatibility, and cutoff causality.
+
+Decision: the daily repair layer is now fixed as a tagged data-quality/post-close reconstruction boundary. Resume 4H/session feature research only with cutoff-eligible raw intraday inputs and prior-completed calibration. First measure usable coverage by tier/bin; only after that return to the causal relative-volume / 4H feature path. Production remains unchanged.

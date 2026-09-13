@@ -298,3 +298,14 @@ Priority after V44 fetch load stops:
 3. quantify adjusted-only false positives and PIT-only false negatives;
 4. if material (already strongly suggested by the 71/112 selected-row lower bound), design clean PIT Consensus retrain/rebuild;
 5. V45 full-context ATR remains useful but is lower priority than correcting the candidate universe.
+
+
+## V47 clean PIT preregistration
+Frozen before clean-PIT strategy outcomes:
+- spec: `research/consensus_v47_clean_pit_preregister.json`
+- V47A = decomposition only: clean PIT universe/eligibility + old signal-close label + exact frozen V11 architecture/min95 selector.
+- V47B = primary candidate: same clean data and same frozen architecture/min95 selector, but trained directly on canonical next-XTKS-open -> D+5-close returns.
+- Do not choose A vs B by historical mean. V47A cannot be promoted.
+- Old ATR 2.864 cap is not applied to the primary V47 result; any clean ATR OOD cap must later be re-estimated outcome-free from all clean contexts.
+- Same-symbol 5-session cooldown is an operational stress after primary evaluation, not a model-selection knob.
+- Restored-delisted OHLCV/intraday coverage must be reported fail-closed; missing coverage may not silently recreate survivorship bias.

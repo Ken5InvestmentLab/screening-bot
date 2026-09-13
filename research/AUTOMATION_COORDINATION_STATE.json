@@ -1,7 +1,7 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T05:03:00+09:00",
+  "updated_at_jst": "2026-09-14T05:48:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -22,9 +22,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
-      "last_processed_sha": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
-      "last_processed_note": "Consensus V46 outcome-free PIT split eligibility run 34775030470 completed SUCCESS and was accepted for the V47 data contract at cc5897b2. Artifact hashes were recomputed and matched; split coverage was 3700/3700 with zero failed batches/duplicate event rows/nonpositive ratios, and no strategy returns/model scores were opened. Clean V47 may now be built from accepted PIT membership + V46 evidence, comparing exactly NOCAP vs CAP1000_PIT; no extra price-cap grid and no post-hoc row deletion."
+      "last_seen_sha": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
+      "last_processed_sha": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
+      "last_processed_note": "Consensus added and froze the outcome-blind V47 clean PIT materialization contract at 4cfaf0a5. It binds accepted PIT membership replay run 34771221050 and accepted V46 split evidence run 34775030470, requires restored/delisted daily+intraday coverage receipts before scoring, separates PIT nominal absolute prices from causal split-normalized relative features, recomputes cross-sectional values on the clean PIT universe, keeps the canonical next-open to fifth-close target and frozen V11 3-head threshold 0.95, and compares exactly NOCAP vs CAP1000_PIT. No strategy outcomes were opened and no production paths changed."
     }
   },
   "guardrails": [
@@ -69,9 +69,11 @@
     "consensus_v47_price_policy": {
       "contract_test_run": 34772226614,
       "contract_test_status": "completed/success",
-      "latest_consensus_head": "cc5897b2ed26321a0e0b488cf6c8203163235ea3",
+      "latest_consensus_head": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
+      "materialization_contract": "research/CONSENSUS_V47_DATA_MATERIALIZATION_CONTRACT_20260914.json",
+      "materialization_contract_status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
-      "rule": "V46 is accepted. Next work is clean V47 data/materialization; keep 2026 outcomes closed for selection."
+      "rule": "V46 is accepted. Implement outcome-blind clean V47 materialization and pass PIT membership/daily/intraday/split coverage receipts before any strategy/model outcomes are computed or inspected. Keep 2026 outcomes closed for selection."
     },
     "core_canonical_endpoint": {
       "status": "completed",

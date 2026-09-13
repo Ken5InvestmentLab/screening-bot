@@ -66,3 +66,5 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - Immediately before any prospective-shadow authorization or cross-lane comparison, re-fetch all source-branch HEADs; stale readiness snapshots are blocking, not advisory.
 
 - Consensus promotion dependency clarified: surviving V44 evidence is necessary but not sufficient; canonical-target training, canonical raw-bin semantics, and point-in-time universe membership remain mandatory before a production claim.
+
+- Consensus authoritative V44 live-fetch acceptance guard: before reading performance from run `34767664140`, verify `research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json`. Required receipts: baseline reproduction pass; requested_symbols=1910; ok_symbols>=1850; candidate_symbols>=1793; candidate_rows>=519163. Any failure => mark fetch-degraded and rerun the exact frozen evaluator later; do not interpret outcomes.

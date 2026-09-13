@@ -1,0 +1,110 @@
+{
+  "spec_id": "CAUSAL-4H-SCORING-V9-PRIOR-DAILY-CONTEXT-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V9_ROW_LEVEL_EVALUATION",
+  "role": "RETROSPECTIVE_FEATURE_ARCHITECTURE_DISCOVERY_ONLY",
+  "objective": "Keep causal 4H/intraday features primary while adding low-dimensional prior-completed-daily context to distinguish trend/volatility/liquidity regimes.",
+  "integrity": {
+    "prior_2025_results_seen": true,
+    "year_2025_can_promote": false,
+    "year_2026_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "primary_feature_block": {
+    "source": "V4/V5/V6 causal intraday + same-cohort representation",
+    "count": 19,
+    "role": "PRIMARY"
+  },
+  "supplemental_prior_daily_block": {
+    "source": "canonical daily panel; values computed at candidate prior_date only",
+    "count": 7,
+    "role": "SUPPLEMENTAL_CONTEXT_NOT_DAILY_ONLY_SIGNAL",
+    "features": [
+      "d1_log_return",
+      "d5_log_return",
+      "d20_log_return",
+      "d20_realized_vol",
+      "d20_close_position",
+      "d5_vs20_volume_log_ratio",
+      "d1_range_pct"
+    ],
+    "formulas": {
+      "d1_log_return": "log(close_t/close_t-1)",
+      "d5_log_return": "log(close_t/close_t-5)",
+      "d20_log_return": "log(close_t/close_t-20)",
+      "d20_realized_vol": "population std of the 20 one-session log returns ending at prior_date",
+      "d20_close_position": "(close_t-min(low,last20))/(max(high,last20)-min(low,last20)); invalid if denominator <=0",
+      "d5_vs20_volume_log_ratio": "log(mean(volume,last5)/mean(volume,last20)); invalid if either mean <=0",
+      "d1_range_pct": "(high_t-low_t)/close_t"
+    },
+    "same_day_candidate_daily_values_allowed": false,
+    "imputation": "NONE"
+  },
+  "model": {
+    "schedule": "V6 monthly expanding causal refit",
+    "estimator": "V5 q10/q50/q90 HistGradientBoostingRegressor",
+    "parameters": "UNCHANGED_FROM_V5",
+    "separate_by_bin_name": true,
+    "no_return_clipping": true
+  },
+  "heads": {
+    "core": {
+      "score": "q50",
+      "selection": "Top1/2/3/5 by q50 with standard cooldown"
+    },
+    "monster": {
+      "selection": "V8 first Pareto front maximizing q90 and q10, then q90 descending, no dominated-row backfill",
+      "top_n": [
+        1,
+        2,
+        3,
+        5
+      ]
+    }
+  },
+  "candidate_gates": {
+    "prior_daily_close_lte_jpy": 1000,
+    "prior_daily_volume_gte_shares": 10000,
+    "require_all_26_features": true,
+    "no_current_day_daily_anchor": true
+  },
+  "periods": {
+    "h1_walkforward": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_walkforward": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "comparability_gates": {
+    "core": {
+      "min_resolved_n": 50,
+      "net_mean_gt": 0,
+      "net_median_gte": 0,
+      "net_win_rate_gt": 0.5,
+      "top3_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.2
+    },
+    "monster": {
+      "min_resolved_n": 30,
+      "net_mean_gt": 0,
+      "gross_ge20_rate_gte": 0.1,
+      "top1_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.4
+    }
+  },
+  "decision": {
+    "pass_retrospective": "KEEP_FOR_PROSPECTIVE_SHADOW_ONLY_NOT_PROMOTION",
+    "fail": "REJECT_V9",
+    "no_feature_or_threshold_tuning_from_h2": true
+  },
+  "production_modified": false
+}

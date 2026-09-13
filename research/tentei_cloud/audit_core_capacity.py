@@ -3,11 +3,12 @@
 
 Research-only. No signal-rule, sizing, or production changes.
 
-Entry proxy:
-- first raw Yahoo 1H bar strictly after the completed signal session;
-- use that bar's date as executable entry date.
+Canonical entry-date contract:
+- the next official XTKS trading date strictly after the completed signal date;
+- capacity accounting starts on that next trading date, matching the supervisor's
+  next-XTKS-session-open evaluation contract at the date level.
 
-Exit proxy:
+Exit contract:
 - existing five-business-day target_date at that day's close.
 
 Concurrency:
@@ -23,7 +24,6 @@ import argparse
 import json
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 from reconstruct_4h_from_1h import load, aggregate, enrich_session, add_daily_context, cooldown
@@ -55,27 +55,21 @@ def make_core_pool(raw):
     q["target_date_dt"]=pd.to_datetime(q["target_date"],errors="coerce")
     return q,dates
 
-def attach_exec_date(core,raw):
-    by_symbol={}
-    for sym,g in raw.sort_values("timestamp").groupby("symbol",sort=False):
-        by_symbol[str(sym)]=g[["timestamp","open"]].reset_index(drop=True)
-
+def attach_exec_date(core, dates):
+    """Attach canonical next-XTKS trading date; never use same-day PM for an AM signal."""
+    trading_dates=pd.to_datetime(pd.Series(sorted(set(dates))),errors="coerce").dropna().sort_values().reset_index(drop=True)
     rows=[]
+    vals=trading_dates.values
     for _,r in core.iterrows():
-        g=by_symbol.get(str(r["symbol"]))
-        if g is None or g.empty or pd.isna(r["last_ts"]):
-            rows.append({"exec_ts":pd.NaT,"exec_date":None})
+        d=pd.Timestamp(r["date_dt"])
+        j=int(vals.searchsorted(d.to_datetime64(),side="right"))
+        if j>=len(trading_dates):
+            rows.append({"exec_date":None})
             continue
-        needle=pd.Timestamp(r["last_ts"])
-        j=int(g["timestamp"].searchsorted(needle,side="right"))
-        if j>=len(g):
-            rows.append({"exec_ts":pd.NaT,"exec_date":None})
-            continue
-        ts=pd.Timestamp(g.iloc[j]["timestamp"])
-        rows.append({"exec_ts":ts,"exec_date":ts.date().isoformat()})
+        rows.append({"exec_date":trading_dates.iloc[j].date().isoformat()})
     x=pd.concat([core.reset_index(drop=True),pd.DataFrame(rows)],axis=1)
     x["exec_date_dt"]=pd.to_datetime(x["exec_date"],errors="coerce")
-    return x
+    return x, trading_dates
 
 def qv(s,p):
     return float(s.quantile(p)) if len(s) else None
@@ -89,12 +83,10 @@ def main():
     out=Path(a.outdir); out.mkdir(parents=True,exist_ok=True)
     raw=load(a.inputs)
     core,dates=make_core_pool(raw)
-    x=attach_exec_date(core,raw)
+    x,trading_dates=attach_exec_date(core,dates)
     match=float(x["exec_date_dt"].notna().mean()) if len(x) else 0
-    if match<0.90:
-        raise RuntimeError(f"execution-date coverage guard failed: {match:.4f}")
-
-    trading_dates=pd.to_datetime(pd.Series(sorted(set(dates))),errors="coerce").dropna().sort_values()
+    if match<0.99:
+        raise RuntimeError(f"canonical next-session date coverage guard failed: {match:.4f}")
 
     summary=[]
     daily_all=[]
@@ -171,13 +163,13 @@ def main():
     top.to_csv(out/"core_capacity_top_days.csv",index=False)
 
     meta={
-        "entry_proxy":"first raw Yahoo 1H bar after completed signal session; slot starts on its date",
-        "exit_proxy":"existing 5BD target_date close; target date counted as occupied through close",
+        "entry_contract":"next official XTKS trading date strictly after signal date; slot starts at next-session open date",
+        "exit_contract":"existing 5BD target_date close; target date counted as occupied through close",
         "position_unit":"one slot per Core signal; no sizing assumptions",
         "capacity_filtering":False,
         "signal_rule_changes":False,
         "production_writes":False,
-        "status":"DESCRIPTIVE_CAPITAL_CAPACITY_AUDIT",
+        "status":"DESCRIPTIVE_CANONICAL_DATE_CAPACITY_AUDIT",
     }
     (out/"core_capacity_meta.json").write_text(json.dumps(meta,ensure_ascii=False,indent=2),encoding="utf-8")
 

@@ -49,11 +49,14 @@ def audit_evidence_chain(
         and set(by_freeze.keys()) == {expected_key}
     )
 
+    append_only_valid = append_guard.get("append_only_valid") is True
+    append_decision_valid = append_guard.get("decision") == "APPEND_ONLY_OK"
+
     checks = {
         "manifest_identity_present": bool(experiment_id) and bool(freeze_id),
         "manifest_hashes_valid": _is_sha256(manifest_sha) and _is_sha256(model_spec_sha),
         "continuity_same_freeze": continuity.get("decision") == "CONTINUE_SAME_FREEZE",
-        "append_only_integrity": append_guard.get("ok") is True,
+        "append_only_integrity": append_only_valid and append_decision_valid,
         "report_scope_prospective_only": report.get("scope") == "PROSPECTIVE_SHADOW_ONLY",
         "report_tuning_disabled": report.get("selection_or_threshold_tuning_allowed") is False,
         "report_single_freeze_partition": report_freeze_partition_ok,
@@ -107,6 +110,8 @@ def main() -> None:
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(raw + "\n", encoding="utf-8")
+    if not result["ok"]:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

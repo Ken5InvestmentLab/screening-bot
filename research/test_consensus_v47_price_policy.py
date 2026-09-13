@@ -26,10 +26,26 @@ def test_clear_mean_win():
     assert v47.choose_dev(d)["winner"] == "NOCAP"
 
 
+def test_mean_boundary_exact_0p50_uses_mean():
+    d = {
+        "NOCAP": s(50, 4.0, -10.0, -10.0),
+        "CAP1000_PIT": s(40, 3.5, 10.0, 10.0),
+    }
+    assert v47.choose_dev(d)["winner"] == "NOCAP"
+
+
 def test_top3_breaks_mean_tie():
     d = {
         "NOCAP": s(50, 4.0, 2.5, 1.0),
         "CAP1000_PIT": s(40, 3.7, 1.5, 5.0),
+    }
+    assert v47.choose_dev(d)["winner"] == "NOCAP"
+
+
+def test_top3_boundary_exact_0p25_uses_top3():
+    d = {
+        "NOCAP": s(50, 4.0, 2.25, -10.0),
+        "CAP1000_PIT": s(40, 3.9, 2.00, 10.0),
     }
     assert v47.choose_dev(d)["winner"] == "NOCAP"
 
@@ -47,7 +63,9 @@ def test_full_tie_prefers_nocap():
         "NOCAP": s(50, 4.0, 2.0, 1.0),
         "CAP1000_PIT": s(40, 4.0, 2.0, 1.0),
     }
-    assert v47.choose_dev(d)["winner"] == "NOCAP"
+    out = v47.choose_dev(d)
+    assert out["winner"] == "NOCAP"
+    assert out["nonwinner_h2_must_remain_unopened"] is True
 
 
 def test_small_n_fails_closed():
@@ -74,6 +92,15 @@ def test_validation_requires_same_arm_and_positive_mean():
     )
     assert ok["continued_research_pass"] is True
 
+    zero = v47.validate_winner(
+        "NOCAP",
+        {
+            "arm": "NOCAP",
+            "mean_net_0p5_pct": 0.0,
+        },
+    )
+    assert zero["continued_research_pass"] is False
+
     bad = v47.validate_winner(
         "CAP1000_PIT",
         {
@@ -83,11 +110,26 @@ def test_validation_requires_same_arm_and_positive_mean():
     )
     assert bad["continued_research_pass"] is False
 
+    try:
+        v47.validate_winner(
+            "NOCAP",
+            {
+                "arm": "CAP1000_PIT",
+                "mean_net_0p5_pct": 1.0,
+            },
+        )
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("validation must reject the losing arm")
+
 
 def main():
     tests = [
         test_clear_mean_win,
+        test_mean_boundary_exact_0p50_uses_mean,
         test_top3_breaks_mean_tie,
+        test_top3_boundary_exact_0p25_uses_top3,
         test_median_breaks_deep_tie,
         test_full_tie_prefers_nocap,
         test_small_n_fails_closed,

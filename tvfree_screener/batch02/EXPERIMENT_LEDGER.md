@@ -672,3 +672,17 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Interpretation: broad V17 covariates are stable; next diagnostic should decompose H2 returns by the already-frozen V12 trigger paths to distinguish mixture drift from within-path concept drift.
 - Report: `reports/tentei_v17_h1_h2_signaltime_drift_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-V12-H2-TRIGGER-PATH-DECOMPOSITION-20260913-01 — WITHIN_PATH_DEGRADATION / V12 REVERSAL FAMILY CLOSED
+
+- Frozen V12 trigger definitions only; no threshold or cooldown change.
+- H2 RSI_RECOVERY n=4,776: mean -0.484%, median -0.500%, win 41.75%, +20% 1.05%, Top3-excluded -0.531%; FAIL.
+- H2 TREND_FLIP n=1,212: mean -0.548%, median -0.713%, win 39.60%; FAIL.
+- H2 EMERGENCY_REVERSAL n=2,475: mean -1.249%, median -1.197%, win 35.92%, +20% 0.93%, Top3-excluded -1.363%; FAIL. Even 0% cost mean remains -0.749%.
+- Frozen decision: WITHIN_PATH_DEGRADATION_SUPPORTED. Trigger-mixture shift alone does not explain V19 collapse.
+- The previously strong H1 RSI/Emergency paths themselves lose edge in H2.
+- V12 reversal family is closed for threshold/reweight rescue on exposed outcomes. Do not rename/re-tune it.
+- Next after lane-overlap check: preregister a genuinely distinct 4H event mechanism if event-specific research continues.
+- Report: `reports/tentei_v12_h2_trigger_path_decomposition_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

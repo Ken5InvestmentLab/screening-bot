@@ -1,0 +1,35 @@
+{
+  "spec_id": "CONSENSUS-PIT-UNIVERSE-REPLAY-20260914",
+  "status": "PREREGISTERED_OUTCOME_FREE",
+  "purpose": "Replay the exact run80 source point_in_time_universe.py that was only self-tested, using the preserved run80 JPX current-universe snapshot, to quantify survivorship membership differences without inventing a new universe method.",
+  "exact_source": {
+    "commit": "5461eef6f35ea2cea2b4bc38ca7177c681681783",
+    "module": "tvfree_screener/point_in_time_universe.py",
+    "source_run": 34545440155,
+    "source_artifact_id": 10179500303,
+    "current_snapshot": "jpx_universe_snapshot.csv",
+    "anchor_date": "2026-09-11"
+  },
+  "method": "Reverse official JPX listing/delisting events from the 2026-09-11 current domestic-common snapshot back to historical dates.",
+  "start": "2022-01-01",
+  "outputs": [
+    "jpx_membership_events.csv",
+    "jpx_membership_unknown_rows.csv",
+    "jpx_membership_monthly_counts.csv",
+    "jpx_point_in_time_report.json",
+    "SHA256SUMS.txt"
+  ],
+  "acceptance": [
+    "unknown_market_rows == 0",
+    "same_day_code_collisions == 0",
+    "valid_for_membership_reconstruction == true"
+  ],
+  "restrictions": [
+    "No strategy returns or model scores.",
+    "No Yahoo price fetch.",
+    "Do not modify the original run80 source module.",
+    "This is a dependency receipt; prospective-shadow/data-integrity lane remains owner of production-grade universe policy.",
+    "Historical OHLC coverage for restored delisted names must be measured separately."
+  ],
+  "production_modified": false
+}

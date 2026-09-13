@@ -1,0 +1,24 @@
+{
+  "spec_id": "CONSENSUS-V47-SPLIT-VOLUME-SEMANTICS-V2-20260914",
+  "status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
+  "supersedes_feature_semantics_in": "research/consensus_v47_split_volume_semantics_addendum.json",
+  "reason": "Separate raw storage semantics, absolute share-count eligibility, and causal ratio normalization. This refinement is based only on provider/data semantics, before V47 model outcomes.",
+  "frozen_rules": {
+    "prior_daily_absolute_volume_gate": "PIT actual shares on the previous completed day = frozen provider daily volume / cumulative future split factor(previous day); require >=10000.",
+    "raw_1h_storage": "Store Yahoo raw 1H volume unchanged.",
+    "session_absolute_volume_gate": "Use current raw synthetic-session share volume unchanged; require >=5000.",
+    "daily_volume_ratio_features": "At signal date t, rebase all prior provider daily volumes to t share-count basis by dividing provider adjusted daily volume by cumulative split factor strictly after t. This removes future-after-t splits while retaining splits already occurred by t.",
+    "intraday_session_volume_ratio20": "For each prior raw session at date d, multiply raw volume by future_factor(d)/future_factor(t). Future splits after t cancel; only splits occurring between d and t normalize prior volume to t share basis. Current session raw volume is unchanged.",
+    "price_relative_features": "Continue using split-normalized price path; uniform future scale cancels from relative technicals.",
+    "absolute_log_price": "Use PIT nominal signal-bin price."
+  },
+  "causal_invariant": "No feature uses a corporate action that is still in the future relative to the signal timestamp. Split factors after the signal cancel/remove uniformly rather than enter as information.",
+  "diagnostics": [
+    "Provider raw 1H source itself remains unmodified in frozen artifacts.",
+    "A split within the ratio lookback must not create a purely mechanical 10x/100x volume ratio jump after causal normalization.",
+    "Contract test explicitly covers a 1->10 split."
+  ],
+  "strategy_returns_opened": false,
+  "model_scores_opened": false,
+  "production_modified": false
+}

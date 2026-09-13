@@ -1,0 +1,7 @@
+trigger: 2026-09-14 long-daily-baseline-v1
+purpose: first dedicated Mega40-role TV-free baseline using frozen published semantic rules
+modes: DEEP / WICK
+universes: CAP1000 / NO_PRICE_CAP
+primary_entry: next-day first Yahoo 1H open
+cooldown: 5 business dates
+threshold_sweep: none

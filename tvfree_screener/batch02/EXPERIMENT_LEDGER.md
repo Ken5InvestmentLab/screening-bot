@@ -363,3 +363,15 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - PM 15:00 interval-start bar is conservatively assigned a 16:00 feature cutoff until provider availability latency is verified; do not assume 15:30 availability.
 - 12:00 interval crosses the lunch break but is kept only as part of the named 09:00-13:00 raw-source clock bin; exact TradingView equivalence is explicitly not claimed.
 - Next: implement causal scale-invariant feature extraction from these bins, using prior completed comparable bins for rolling features, then measure usable coverage before any outcome evaluation.
+
+
+### CAUSAL-INTRADAY-FEATURE-IMPLEMENTATION-20260913-04
+
+- Implemented `causal_intraday_features.py` on top of the raw clock-bin builder.
+- Initial model-safe feature set is intentionally scale-invariant: body_pct, range_pct, body_to_range, upper/lower wick pct, plus rolling prior-shape/range baselines. These do not require current-day finalized daily anchors.
+- PM close_location is calculated for diagnostics but explicitly marked model-ineligible because its raw-vs-postclose stability was materially weaker than AM.
+- `volume_rel20` uses only prior 20 completed comparable bins, but remains tagged `EXPERIMENTAL_SOURCE_INTERNAL` until raw volume semantics are better understood.
+- Same-bin 20-history features have coverage on 1,985/2,305 complete raw bins (86.12%) in the current 8-symbol sample. Prior-4 shape features cover 2,273/2,305 (98.61%).
+- Cross-day absolute price-return/RSI features are deliberately deferred for now: the raw series contains several very large adjacent gaps, including the known 6085 adjustment/split pathology, and simple magnitude clipping would also remove genuine Monster-style gap moves.
+- Isolated pre-commit feature checks passed 4/4 cases.
+- Next research: run the feature extractor on the cached sample, inspect per-feature distributions/outliers and missingness without returns, then freeze the first causal 4H candidate-feature panel before any performance replay.

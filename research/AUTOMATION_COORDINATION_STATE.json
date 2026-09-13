@@ -1,7 +1,7 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T01:12:00+09:00",
+  "updated_at_jst": "2026-09-14T01:18:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": [
@@ -16,21 +16,21 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "607eda492ba3e9cc4122f1704d667288660950dd",
-      "last_processed_sha": "607eda492ba3e9cc4122f1704d667288660950dd",
+      "last_seen_sha": "1e61dae3779b4bf4869aa75612bfde7cd307b070",
+      "last_processed_sha": "1e61dae3779b4bf4869aa75612bfde7cd307b070",
       "last_processed_note": "Supervisor contract synchronized to hardened V44 authority. Event lane remains non-overlap guarded; active session-impulse experiment is owned by the parallel event chat."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "3911ad40b7a7820933dc98c0abeff1ec18e905aa",
-      "last_processed_sha": "3911ad40b7a7820933dc98c0abeff1ec18e905aa",
+      "last_seen_sha": "71efc96692ec4f83769b8b788618d6c832fc316d",
+      "last_processed_sha": "71efc96692ec4f83769b8b788618d6c832fc316d",
       "last_processed_note": "Core reclaim evaluator is staged and contract-tested successfully (workflow run 34767726209). Do not launch Yahoo-heavy preconfirmation until authoritative hardened Consensus V44 run 34767664140 completes."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "f55207227517456a4bd8b90481e6f2c608846e82",
-      "last_processed_sha": "f55207227517456a4bd8b90481e6f2c608846e82",
-      "last_processed_note": "Consensus V44 run authority hardened. Only run 34767664140 may support final conclusions. Runs 34765427789 and 34766353425 are invalid/superseded even if they eventually complete."
+      "last_seen_sha": "8eb63fe9f82e5e0a9fcdcf34deee71bb4c6f665b",
+      "last_processed_sha": "8eb63fe9f82e5e0a9fcdcf34deee71bb4c6f665b",
+      "last_processed_note": "Authoritative hardened V44 run 34767664140 remains sole authority. Pre-outcome live-fetch acceptance guard frozen: baseline reproduction pass, requested=1910, ok>=1850, candidate_symbols>=1793, candidate_rows>=519163. Performance must not be interpreted before receipt check."
     }
   },
   "guardrails": [
@@ -52,7 +52,16 @@
         34765427789,
         34766353425
       ],
-      "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation."
+      "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation.",
+      "acceptance_guard": {
+        "path": "research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json",
+        "baseline_reproduction_pass_required": true,
+        "requested_symbols_equals": 1910,
+        "ok_symbols_min": 1850,
+        "candidate_symbols_min": 1793,
+        "candidate_rows_min": 519163,
+        "on_failure": "DO_NOT_INTERPRET; rerun exact frozen evaluator after superseded heavy runs stop"
+      }
     },
     "core_canonical_endpoint": {
       "run_id": 34766143681,

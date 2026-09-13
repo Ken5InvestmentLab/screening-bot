@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
+  "family": "causal_multi_event_quality_top5_v1",
+  "status_at_freeze": "PRE_REGISTERED_OUTCOMES_NOT_OPENED",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "objective": "Research an independent Core candidate with multiple daily detections, positive net mean and median, useful right-tail capture, bounded large losses, and no single-name/month/week dependence sufficient to explain the result.",
+  "input_hashes": {
+    "source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "preservation_manifest_sha256": "4c8ae91d91477fd6f5699573fff1cefc1c83e9055ba4c9e1296b6b66444c69e4",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_hashes": {
+    "multi_event_quality": "fb6dda126259e2bb2e6333f1259af59f23c48c3053cb8a81fb318532b2c7a205",
+    "research_tests": "b6155a1813a082e7eb20b89314e6dc9de21726af6eaa869e38e2dde9760f08b2",
+    "v4_model_reference": "f374018bb0d19414ee0a42997eb7fd0d3d7b5dccaea860649c838248d7cdcaac",
+    "feature_panel": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "canonical_label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "evaluation": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "artifact_store": "8f3bae624a8a8fc170be3ed9571fcee50360b12b9d861f88ad5b5a6ea1898644"
+  },
+  "universe": {
+    "signal_dates": ["2022-07-01", "2024-12-20"],
+    "all_tse_daily_source_symbols": true,
+    "per_signal_requirements": [
+      "positive finite OHLC; high/low consistent with open/close; positive volume",
+      "current close >= 20 JPY; previous-close <= 1000 JPY",
+      "current volume >= 5000 shares; preceding-session volume >= 10000 shares",
+      "current open / previous close in [0.60, 1.40]",
+      "required causal features are finite",
+      "at least one of the six frozen event rules fires"
+    ],
+    "missing_or_invalid_rows": "Ineligible for candidate generation; no future outcome is consulted. The receipt records resulting event-pool rows and year counts, not a per-reason census of every excluded source row."
+  },
+  "feature_contract": {
+    "timestamp": "Signal-date daily close; only bars dated at or before the signal date.",
+    "feature_source": "Preserved daily OHLCV source; calculate with tvfree_screener.batch01.feature_panel.build_feature_panel and XTKS sessions.",
+    "transformations": [
+      "volr5 and volr20 use the canonical current-inclusive panel features",
+      "volr10 is current volume divided by current-inclusive rolling 10-session mean volume and is used only when the last 10 XTKS sessions are consecutive source bars",
+      "rv_ratio is prior-session rolling-10 return volatility divided by prior-session rolling-40 return volatility",
+      "range_expansion is current range_pct divided by prior 10-session mean range_pct and is used only when those prior 10 sessions are consecutive source bars",
+      "break20 and break60 compare close with the preceding 20/60-session high, and are missing if any required XTKS session is absent",
+      "ret5, ret20, volr20 and pos60 are percentile-ranked cross-sectionally among same-day rows that pass the universe quality rules"
+    ],
+    "model_features": [
+      "ret1", "ret3", "ret5", "ret10", "ret20", "ret40", "prev_ret5",
+      "volr5", "volr10", "volr20", "rv_ratio", "range_expansion",
+      "close_loc", "gap", "pos20", "pos60", "break20", "break60",
+      "ret5_pct", "ret20_pct", "volr20_pct", "pos60_pct",
+      "evt_reversal", "evt_ignition", "evt_breakout", "evt_gap_hold",
+      "evt_compression_release", "evt_pullback_resume", "event_count"
+    ],
+    "forbidden": ["labels", "future returns", "exit prices", "2025 or 2026 outcome values", "current or later revisions to signal-date values"]
+  },
+  "events": {
+    "evt_reversal": "prev_ret5 <= -0.04 AND ret1 >= 0.01 AND close_loc >= 0.55 AND gap >= -0.06",
+    "evt_ignition": "ret5 in [0.02, 0.15] AND ret1 >= 0.015 AND volr20 >= 1.10 AND pos60 >= 0.50 AND close_loc >= 0.55",
+    "evt_breakout": "break20 in [0.00, 0.08] AND volr20 in [1.0, 5.0] AND close_loc >= 0.60",
+    "evt_gap_hold": "gap in [0.01, 0.12] AND ret1 > 0 AND close_loc >= 0.60",
+    "evt_compression_release": "rv_ratio <= 1.0 AND range_expansion >= 1.15 AND ret1 >= 0.015 AND volr20 >= 1.10 AND close_loc >= 0.55",
+    "evt_pullback_resume": "ret20 >= 0.08 AND prev_ret5 <= 0.0 AND ret1 >= 0.015 AND pos60 >= 0.50",
+    "union_rule": "A row is eligible when one or more rules fire; all fired event flags and event_count are retained."
+  },
+  "target": {
+    "entry": "Next XTKS session open after signal close.",
+    "exit": "Fifth XTKS session close after signal date.",
+    "return": "exit_price / entry_price - 1; use existing build_labels_for_eligible_signals implementation and its unresolved status handling.",
+    "purge": "At each model fit date, every training label must have exit_date strictly before the prediction period start.",
+    "cost_scenarios": [0.0, 0.005, 0.01],
+    "primary_cost": 0.005
+  },
+  "model": {
+    "heads": {
+      "return_quality": "Ridge linear regression on gross return clipped to [-0.30, 0.50].",
+      "winner_probability_proxy": "Ridge linear regression on 1[gross_return >= 0.10].",
+      "large_loss_probability_proxy": "Ridge linear regression on 1[gross_return <= -0.10]."
+    },
+    "implementation": "Deterministic NumPy ridge; standardize with training-period means and scales only; clip standardized features to [-10, 10]; alpha=30; fixed closed-form solve; no external model runtime or network dependency.",
+    "score_scale": "Convert each prediction head to same-signal-day percentile ranks over the full eligible event pool before combining.",
+    "minimum_training_rows": 1000
+  },
+  "score_variants": {
+    "balanced": {"formula": "1.00*cdf_ret + 0.00*cdf_hit10 - 1.00*cdf_loss10", "gate": 0.15},
+    "winner_aware": {"formula": "1.00*cdf_ret + 0.50*cdf_hit10 - 1.00*cdf_loss10", "gate": 0.20},
+    "defensive": {"formula": "1.00*cdf_ret + 0.25*cdf_hit10 - 1.50*cdf_loss10", "gate": 0.10},
+    "balanced_high_gate": {"formula": "1.00*cdf_ret + 0.00*cdf_hit10 - 1.00*cdf_loss10", "gate": 0.30}
+  },
+  "selection": {
+    "qualifying_names_per_day": "Up to five; multiple names/day are allowed. Select all above the fixed variant gate, sorted by score descending then symbol ascending, truncated to five.",
+    "cooldown": "A selected symbol is suppressed on the immediately following XTKS session; it may qualify again from session+2.",
+    "calendar": "Frozen official XTKS session calendar; weekends and exchange holidays are not sessions.",
+    "empty_day": "No selection; abstention remains in daily-cohort metrics.",
+    "tie_break": "score descending, then symbol ascending"
+  },
+  "evaluation": {
+    "periods": ["2024H1", "2024H2"],
+    "period_dates": {
+      "2024H1": ["2024-01-01", "2024-06-30"],
+      "2024H2": ["2024-07-01", "2024-12-20"]
+    },
+    "data_access": "Read features and labels only through the 2024-12-30 purge cutoff. Stream raw rows and filter by date text before parsing; 2025+ numeric OHLCV is not parsed.",
+    "selection_gate_each_half": {
+      "resolved_rows_min": 30,
+      "net_mean_gt": 0.0,
+      "net_median_gt": 0.0,
+      "net_win_rate_min": 0.55,
+      "plus10_rate_min": 0.10,
+      "minus10_rate_max": 0.15,
+      "mean_excluding_top3_winners_gt": 0.0,
+      "complete_daily_cohorts_min": 20,
+      "daily_cohort_mean_gt": 0.0,
+      "daily_cohort_median_gt": 0.0
+    },
+    "variant_choice": "Only variants passing all fixed gates in both halves are eligible. Select the eligible variant with maximum predeclared robust_utility; do not change formula, gate or model after seeing results.",
+    "reported_metrics": [
+      "selected and resolved sample size", "5-session mean and median", "win rate",
+      "+10/+20/+50 rates", "-10/-20 rates", "Top1/Top3 winner exclusion",
+      "monthly and weekly dependence", "complete daily cohorts and block bootstrap",
+      "symbol concentration", "unresolved statuses", "feature/model input and report hashes",
+      "independent feature-pool reproduction result",
+      "reproducibility", "implementation complexity"
+    ],
+    "concentration_warning": "No variant is promoted on one top symbol, one best month, mean alone, or a small sample. Monster-style right-tail tolerance is not used to weaken this Core gate."
+  },
+  "implementation_complexity": "Six event rules, 29 features, three NumPy ridge heads, four fixed score variants, two 2024 half-year refits, and no extra Python package or production integration.",
+  "phases": {
+    "current": "Register and test implementation, generate feature-only event pool, commit pool receipt, independently reproduce and commit its report, then open only 2024 outcome labels.",
+    "2025": "Closed. If a 2024 variant survives, first commit a separate fixed 2025 freeze; no result in this report alone authorizes opening 2025.",
+    "2026": "Report-only and closed for tuning or selection.",
+    "promotion": "Not eligible for promotion to production. A later independent frozen validation and same-definition comparison against V29/current benchmark are required."
+  },
+  "known_limitations": [
+    "All historical market periods have been viewed elsewhere in the broader research; this is retrospective evidence, not pristine OOS.",
+    "This source does not contain intraday execution order or limit-queue evidence; next-open fill is a proxy.",
+    "A five-name daily cap is a frozen research selection rule, not a production notification limit.",
+    "No V29 or current-bot result is pooled unless its canonical target, costs, sample, and entry timing are demonstrably identical."
+  ]
+}

@@ -33,3 +33,7 @@ The package is ordinary local Python and must run with no Codex/LLM/API, network
 ## Stop criteria for this family
 
 `REJECT`, `INCONCLUSIVE`, or `SELECTION_COUNT_UNRESOLVED` is a valid completed experiment disposition. Do not tune this family afterward. Any next family receives a new ID and frozen evidence contract.
+
+## Continuation status
+
+This plan is the historical preregistration for `CORE-TREND-COMPRESSION-20260913-01`, not the active research plan. That family and the later all-market state audit have completed; their decisions are in `EXPERIMENT_LEDGER.md`. The active experiment and next gated actions are recorded in `EXECUTION_CONTROL.json` and its own frozen spec. Continue with the newest registered experiment rather than reopening a rejected family.

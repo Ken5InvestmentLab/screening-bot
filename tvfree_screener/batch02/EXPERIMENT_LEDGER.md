@@ -348,3 +348,18 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Decision: keep the repair ladder for archival/data-quality reconstruction; do not use its post-close consistency gain as evidence that pre-close scoring inputs are valid.
 - Report: `reports/daily_anchor_repair_audit_20260913.md`.
 - Next: implement deterministic materializer/source tags, then build cutoff-aware 4H/session features and measure coverage before any strategy-outcome test.
+
+
+## CAUSAL-INTRADAY-FEATURE-AUDIT-20260913-03 — PIVOT TO RAW SCALE-INVARIANT 4H FEATURES
+
+- No strategy outcomes opened. This is data-quality/causal-availability work only.
+- Causal price calibration test on the 1,087 complete sessions: raw all4<=1% 45.45%; previous-session scale 44.21%; trailing-5 prior scale median 46.10%. At 2%: raw 74.89%; previous-session 73.40%; trailing-5 76.48%. Prior-only rescaling is not a meaningful v1 improvement.
+- Scale factor day-to-day is usually stable (median absolute change 0.20%, p90 1.17%, p99 2.77%) but rare breaks remain. Prefer scale-invariant features rather than mandatory absolute-price repair.
+- Causal volume calibration remains noisy: previous-session factor median APE 21.93%; trailing-5 prior median APE 19.53%; trailing-5 within-5% only 13.92%, p90 APE 50.72%. Do not treat this as exact absolute-volume repair.
+- Raw per-bin completeness is better than whole-day completeness: 1,332 observed raw symbol-sessions; AM 09/10/11/12 complete 1,150 (86.34%); PM 13/14/15 complete 1,155 (86.71%); both complete 1,087 (81.61%). Gate AM/PM independently.
+- Raw-vs-postclose-reconstructed normalized feature stability on 2,102 bin pairs: body_pct Spearman 0.901, range_pct 0.984, close_location 0.826. AM close_location was 0.981 but PM only 0.694. Uniform whole-day volume scaling leaves within-day share unchanged, but current-day full-day share is not causal for the AM cutoff.
+- Architecture freeze: `CAUSAL_INTRADAY_FEATURE_ARCHITECTURE_SPEC.json`. Prefer returns, normalized range/ATR, normalized momentum/position, compression/realized-volatility and prior-bin-relative-volume features. Hold PM close-location and same-day-daily-rescaled absolute volume back.
+- Implemented `intraday_causal_guard.py` and `raw_intraday_clock_bins.py` with tests. Isolated pre-commit checks passed 7/7 causal-guard cases and 5/5 clock-bin cases.
+- PM 15:00 interval-start bar is conservatively assigned a 16:00 feature cutoff until provider availability latency is verified; do not assume 15:30 availability.
+- 12:00 interval crosses the lunch break but is kept only as part of the named 09:00-13:00 raw-source clock bin; exact TradingView equivalence is explicitly not claimed.
+- Next: implement causal scale-invariant feature extraction from these bins, using prior completed comparable bins for rolling features, then measure usable coverage before any outcome evaluation.

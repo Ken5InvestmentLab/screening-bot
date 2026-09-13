@@ -83,3 +83,13 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - This uses only confirmed split events and no strategy returns; the all-symbol V46 audit may find additional adjusted-only false positives and reverse-split PIT-only false negatives.
 - Therefore V44 is mechanics/concentration evidence only. It cannot restore promotion eligibility regardless of its return result.
 - Final cross-lane arbitration must distinguish any strategy whose absolute historical price gate has been rebuilt point-in-time from research still using present-basis split-adjusted run80 prices.
+
+
+## Price-cap policy correction — performance first — 2026-09-14
+- The historical prior-close <= JPY 1,000 rule is **not a global requirement of the replacement system**. It came from the legacy workflow and is now an experimental policy only.
+- Clean PIT Consensus V47 must compare exactly two initially preregistered price-policy arms under the same model/data/target contract: **NOCAP** versus **CAP1000_PIT**.
+- Do not grid-search 500/1500/2000/etc. from opened outcomes. Keep the JPY1,000 ceiling only if it earns its place on clean locked performance.
+- Performance is the primary objective. Robustness/concentration metrics are mandatory diagnostics to detect fake/outlier-only edge, but the research must not deliberately sacrifice strong causal right-tail performance merely to look smoother.
+- A rare monster-winner contribution is acceptable if generated causally and supported by the locked validation contract.
+- If both NOCAP and CAP1000_PIT are weak, revisit the model/family rather than tuning more price thresholds.
+- For this first price-policy comparison, prior/session volume gates remain fixed so only the price ceiling changes. They may be tested separately later under a new preregistration.

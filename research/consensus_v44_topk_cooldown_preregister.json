@@ -1,0 +1,63 @@
+{
+  "experiment_id": "CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914",
+  "status": "PREREGISTERED_BEFORE_REPLACEMENT_OUTCOMES",
+  "branch": "research/consensus-atr-regime-gate",
+  "objective": "Reduce repeated-symbol concentration without throwing away the underlying Consensus opportunity set.",
+  "fixed_parent": {
+    "selector": "independent 3-head Consensus",
+    "threshold": 0.95,
+    "sessions": "both",
+    "guard": "none",
+    "atr_ood_cap_pct": 2.8640659721217943,
+    "atr_cap_online_adaptation": false
+  },
+  "candidate_pool": {
+    "top_k_per_date_session": 10,
+    "rank_column": "cons_min",
+    "threshold_applied_before_top_k": true,
+    "atr_gate_applied_before_top_k": true
+  },
+  "cooldown_policies": [
+    0,
+    3,
+    5
+  ],
+  "cooldown_definition": "Trading-day index difference. Same symbol is blocked while current_day_index - last_selected_day_index < cooldown_days; same-day reselection is blocked for cooldown>0.",
+  "replacement_rule": "For each date/session in chronological order, choose the highest cons_min candidate not blocked by cooldown. If all Top-K candidates are blocked, emit NO TRADE.",
+  "entry_return": "D+1 daily open -> D+5 daily close",
+  "development_period": "2025-01-06..2025-06-30",
+  "validation_period": "2025-07-01..2025-12-30",
+  "selection_rule": {
+    "eligible_cooldowns": [
+      3,
+      5
+    ],
+    "minimum_development_retention": "next-open mean >= 80% of cooldown0 baseline",
+    "diversification_requirement": "max-symbol share reduced by at least 25% relative to cooldown0",
+    "chooser": "among eligible policies choose higher Top3-excluded mean; tie -> lower max-symbol share",
+    "if_none_eligible": "NO_PROMOTION"
+  },
+  "report_metrics": [
+    "n",
+    "mean",
+    "median",
+    "win",
+    "hit10",
+    "hit20",
+    "loss10",
+    "loss20",
+    "top3_excluded_mean",
+    "unique_symbols",
+    "max_symbol_share",
+    "top2_symbol_share",
+    "top5_symbol_share",
+    "HHI",
+    "best_week_removed",
+    "best_month_removed"
+  ],
+  "restrictions": {
+    "use_2026_to_choose_cooldown": false,
+    "production_writes": false,
+    "modify_monster_core_v15_batch02": false
+  }
+}

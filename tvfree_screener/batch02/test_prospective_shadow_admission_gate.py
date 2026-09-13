@@ -18,6 +18,10 @@ def row(**kw):
         "feature_cutoff": "2026-09-14T13:00:00+09:00",
         "source_tag": "RAW_CAUSAL_INTRADAY",
         "rank": 1,
+        "eligibility_status": "ELIGIBLE",
+        "data_sufficient": True,
+        "skip_reason": None,
+        "missing_fields": [],
     }
     base.update(kw)
     return base
@@ -46,6 +50,7 @@ def test_empty_batch_blocks():
     out = evaluate_shadow_admission(MANIFEST, [])
     assert out["admitted"] is False
     assert "postfreeze_guard_failed" in out["errors"]
+    assert "eligibility_guard_failed" in out["errors"]
 
 
 def test_duplicate_candidate_key_blocks():
@@ -67,8 +72,24 @@ def test_freeze_identity_mismatch_blocks():
     assert "postfreeze_guard_failed" in out["errors"]
 
 
-def test_integrity_declares_atomic_dual_gate():
+def test_missing_data_blocks():
+    out = evaluate_shadow_admission(MANIFEST, [row(data_sufficient=False, skip_reason="missing_1h_bins")])
+    assert out["admitted"] is False
+    assert "eligibility_guard_failed" in out["errors"]
+    assert out["eligibility_guard"]["decision"] == "BLOCK_INELIGIBLE_SHADOW_ROWS"
+
+
+def test_missing_eligibility_proof_blocks():
+    r = row()
+    r.pop("eligibility_status")
+    out = evaluate_shadow_admission(MANIFEST, [r])
+    assert out["admitted"] is False
+    assert "eligibility_guard_failed" in out["errors"]
+
+
+def test_integrity_declares_atomic_triple_gate():
     out = evaluate_shadow_admission(MANIFEST, [row()])
-    assert out["integrity"]["requires_both_causal_and_postfreeze_checks"] is True
+    assert out["integrity"]["requires_causal_postfreeze_and_eligibility_checks"] is True
+    assert out["integrity"]["requires_explicit_data_sufficiency_proof"] is True
     assert out["integrity"]["batch_is_atomic"] is True
     assert out["integrity"]["production_modified"] is False

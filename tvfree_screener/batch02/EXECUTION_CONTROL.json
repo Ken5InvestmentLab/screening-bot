@@ -16,9 +16,9 @@
   "last_usage_snapshot_utc": "2026-09-13 12:02:06 UTC",
   "maximum_active_check_interval_seconds": 60,
   "last_completed_experiment": {
-    "experiment_id": "CAUSAL-4H-MONSTER-V7-MEDIAN-VIABILITY-TAIL-20260913",
-    "decision": "REJECT_NO_PROMOTION",
-    "report": "tvfree_screener/batch02/reports/causal_4h_monster_v7_median_viability_tail_20260913.md"
+    "experiment_id": "CAUSAL-4H-MONSTER-V11-WEAK-REVERSAL-IGNITION-20260913",
+    "decision": "REJECT_CANDIDATE_GENERATION_H2_UNOPENED",
+    "report": "tvfree_screener/batch02/reports/causal_4h_monster_v11_weak_reversal_ignition_20260913.md"
   },
   "registered_spec_sha256": "f140637250483332fa5db5e6067212175e0790eadb174323eb73788397f912ea",
   "registered_feature_count": 3,
@@ -30,7 +30,7 @@
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "13fb02c",
   "last_completed_candidate_pool_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
-  "next_action": "Preregister and evaluate a weight-free Monster Pareto architecture using the unchanged V6 monthly causal quantile scores. Preserve candidates that are not dominated on higher q90 and higher q10; rank the Pareto front tail-first without tuning a scalar risk coefficient. Keep 2026 closed and production untouched.",
+  "next_action": "Recover the saved Tentei normal-mode Alert Pine source if available. Freeze an independent TV-free 4H mechanism family based on confirmed Bollinger/RSI/squeeze/persistence concepts before opening outcomes. Exact TradingView matching is not required. Keep 2026 outcomes closed and production untouched.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -45,7 +45,7 @@
   "last_completed_validation_report_sha256": null,
   "discovery_outcomes_opened": false,
   "validation_outcomes_opened": false,
-  "active_experiment_id": "CAUSAL-4H-MONSTER-V8-PARETO-20260913",
+  "active_experiment_id": "TENTEI-MECHANISM-RECONSTRUCTION-V12-20260913",
   "active_frozen_spec_sha256": "f140637250483332fa5db5e6067212175e0790eadb174323eb73788397f912ea",
   "frozen_discovery_feature_names": [],
   "active_candidate_pool_rows": null,

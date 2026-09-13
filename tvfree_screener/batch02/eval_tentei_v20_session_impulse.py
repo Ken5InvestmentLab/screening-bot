@@ -70,6 +70,28 @@ def add_history_features(bins: pd.DataFrame) -> pd.DataFrame:
     return x
 
 
+def session_impulse_mask(bins: pd.DataFrame) -> pd.Series:
+    """Exact frozen V20 signal predicate; pure helper for contract tests."""
+    finite = np.isfinite(
+        bins[[
+            "session_return", "close_location", "true_range_pct",
+            "prev20_tr_median", "prev20_ret_q75", "volume_ratio20",
+            "prior_daily_close", "prior_daily_volume", "volume",
+        ]]
+    ).all(axis=1)
+    return (
+        finite
+        & (bins["prior_daily_close"] <= 1000)
+        & (bins["prior_daily_volume"] >= 10000)
+        & (bins["volume"] >= 5000)
+        & (bins["session_return"] > 0)
+        & (bins["close_location"] >= 0.75)
+        & (bins["true_range_pct"] >= bins["prev20_tr_median"])
+        & (bins["session_return"] >= bins["prev20_ret_q75"])
+        & (bins["volume_ratio20"] >= 1.0)
+    )
+
+
 def attach_prior_daily(bins: pd.DataFrame, daily: pd.DataFrame) -> tuple[pd.DataFrame, list[str], dict[str,int]]:
     sessions = sorted(daily["date"].dropna().unique().tolist())
     idx = {d:i for i,d in enumerate(sessions)}
@@ -92,25 +114,7 @@ def build_candidates(raw_glob: str, daily: pd.DataFrame, max_date: str) -> tuple
     bins = add_history_features(bins)
     bins, sessions, session_idx = attach_prior_daily(bins, daily)
 
-    finite = np.isfinite(
-        bins[[
-            "session_return", "close_location", "true_range_pct",
-            "prev20_tr_median", "prev20_ret_q75", "volume_ratio20",
-            "prior_daily_close", "prior_daily_volume", "volume",
-        ]]
-    ).all(axis=1)
-
-    eligible = bins.loc[
-        finite
-        & (bins["prior_daily_close"] <= 1000)
-        & (bins["prior_daily_volume"] >= 10000)
-        & (bins["volume"] >= 5000)
-        & (bins["session_return"] > 0)
-        & (bins["close_location"] >= 0.75)
-        & (bins["true_range_pct"] >= bins["prev20_tr_median"])
-        & (bins["session_return"] >= bins["prev20_ret_q75"])
-        & (bins["volume_ratio20"] >= 1.0)
-    ].copy()
+    eligible = bins.loc[session_impulse_mask(bins)].copy()
 
     if eligible.empty:
         return eligible, sessions, session_idx

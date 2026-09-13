@@ -72,3 +72,10 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - Consensus promotion dependency clarified: surviving V44 evidence is necessary but not sufficient; canonical-target training, canonical raw-bin semantics, and point-in-time universe membership remain mandatory before a production claim.
 
 - Consensus authoritative V44 live-fetch acceptance guard: before reading performance from run `34767664140`, verify `research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json`. Required receipts: baseline reproduction pass; requested_symbols=1910; ok_symbols>=1850; candidate_symbols>=1793; candidate_rows>=519163. Any failure => mark fetch-degraded and rerun the exact frozen evaluator later; do not interpret outcomes.
+
+
+## Point-in-time split eligibility blocker — 2026-09-14
+- run80 daily OHLC was downloaded from Yahoo/yfinance on 2026-09-11 and historical OHLC is split-adjusted. Historical absolute-price eligibility such as prior close <= JPY 1,000 can therefore incorporate stock splits that occurred later than the historical signal date.
+- Until the outcome-free Consensus/data-integrity V46 audit reconstructs point-in-time nominal prior-close eligibility, no lane may claim promotion-grade evidence from a run80 backtest whose candidate universe depends on an absolute historical price threshold.
+- Relative-return / price-shape diagnostics may remain usable when their own contract is valid, but absolute-price candidate membership is provisional.
+- Do not independently refetch/tune a split correction in this lane. V46 owns the outcome-free reconstruction. If V46 finds a material universe change, propagate the corrected point-in-time eligibility contract before final cross-lane arbitration.

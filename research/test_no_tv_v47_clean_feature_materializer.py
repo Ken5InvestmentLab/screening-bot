@@ -26,6 +26,7 @@ def make_daily():
     d["next_open"]=d["open"].shift(-1)
     d["d5_close"]=d["close"].shift(-5)
     d["exit_date_5bd"]=d["date"].shift(-5)
+    d["identity_epoch"]=0
     return d
 
 
@@ -54,7 +55,7 @@ def test_build_symbol_rows_uses_nominal_log_price_and_canonical_target():
         "volume":[6000,7000,8000,9000],
     })
     sm={"X":[("2026-01-01",10.0)]}
-    out=v47.build_symbol_rows("X",raw,daily,{dt},sm)
+    out=v47.build_symbol_rows("X",raw,daily,{dt},sm,{})
     assert len(out)==2
     first=out.sort_values("session").iloc[0]
     assert math.isclose(first["entry_pit"],first["entry_adjusted"]*10.0)
@@ -86,11 +87,49 @@ def test_enrich_arm_filters_policy_before_cross_section():
     assert out["market_candidate_count"].eq(2.0).all()
 
 
+
+def test_listing_epoch_prevents_prelisting_history_from_features_and_targets():
+    dates=pd.bdate_range("2024-08-01",periods=140)
+    daily=pd.DataFrame({
+        "date":dates.strftime("%Y-%m-%d"),
+        "open":np.linspace(90,120,len(dates)),
+        "high":np.linspace(91,121,len(dates)),
+        "low":np.linspace(89,119,len(dates)),
+        "close":np.linspace(90.5,120.5,len(dates)),
+        "volume":[20000]*len(dates),
+        "symbol":["S"]*len(dates),
+    })
+    listing_date=daily.iloc[60]["date"]
+    lmap={"S":[listing_date]}
+    daily=v47.add_identity_epoch(daily,lmap)
+    g=daily.groupby(["symbol","identity_epoch"],sort=False)
+    daily["next_open"]=g["open"].shift(-1)
+    daily["d5_close"]=g["close"].shift(-5)
+    daily["exit_date_5bd"]=g["date"].shift(-5)
+
+    # First post-listing days must not have enough identity-local history to
+    # satisfy the 80-day technical minimum, despite abundant prelisting rows.
+    dt=daily[daily["date"]>=listing_date].iloc[5]["date"]
+    raw_dates=pd.bdate_range(pd.Timestamp(listing_date),periods=10)
+    rows=[]
+    for day in raw_dates:
+        for hour in [9,10,13,14]:
+            rows.append({
+                "ts":pd.Timestamp(f"{day.strftime('%Y-%m-%d')} {hour}:00",tz="Asia/Tokyo"),
+                "date":day.strftime("%Y-%m-%d"),
+                "open":100.0,"high":102.0,"low":99.0,"close":101.0,"volume":6000.0,
+            })
+    raw=pd.DataFrame(rows)
+    out=v47.build_symbol_rows("S",raw,daily,{dt},{},lmap)
+    assert out.empty
+
+
 def main():
     tests=[
         test_future_factor_boundary,
         test_build_symbol_rows_uses_nominal_log_price_and_canonical_target,
         test_enrich_arm_filters_policy_before_cross_section,
+        test_listing_epoch_prevents_prelisting_history_from_features_and_targets,
     ]
     for fn in tests:
         fn(); print("PASS",fn.__name__)

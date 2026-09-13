@@ -5,11 +5,12 @@ Updated: 2026-09-14 JST
 ## Active experiment
 - Experiment: CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914
 - Branch: research/consensus-atr-regime-gate
-- Valid GitHub Actions run: 34766353425
+- Authoritative hardened GitHub Actions run: 34767664140
+- Superseded locked-validation run: 34766353425 (does not include later baseline/dependency/SHA hardening; do not use conclusions)
 - Invalid/superseded run: 34765427789 (opened all H2 cooldown metrics before the preregistered development choice; do not use results)
 - Workflow: No-TV Consensus V44 TopK Cooldown
-- Trigger commit: d11e69056e0c5e34c48d0253e629655eaf45d5a7
-- Current state when recorded: corrected locked-validation run in_progress
+- Trigger commit: fe24a4b2b350a94a20d0c90c04d36ef975e62870
+- Current state when recorded: authoritative hardened run in_progress
 - Production writes: false
 
 ## This lane owns
@@ -115,3 +116,24 @@ On the correct 5-session no-replacement 2025 sample:
 The ranking relationship remains present, so V44's fixed-ranker comparison is still interpretable. Do not change its target mid-run.
 
 If Consensus survives V44, a future separately-versioned experiment should retrain the unchanged architecture on the canonical next-open target before any production claim. Do not use this redesign to rescue a failed V44. Detail: `research/CONSENSUS_TARGET_ALIGNMENT_AUDIT_2026-09-14.md`.
+
+
+## V44 hardening v3
+Run 34766353425 was started before the later reproducibility hardening landed, so it is also superseded for conclusions.
+
+Only run **34767664140** is authoritative. Its trigger commit includes:
+- locked H2 validation behavior;
+- V43 DEV baseline reproduction guard;
+- pinned V43 dependency versions;
+- checkout by `github.sha`;
+- evidence hashing;
+- workflow concurrency for later runs.
+
+Required DEV reproduction receipt:
+- cooldown0 n = 67
+- mean_pct = 8.424148981560009
+- max_symbol_share = 0.44776119402985076
+
+If any receipt item fails, V44 must fail closed before any H2 conclusion is accepted.
+
+An outcome-free exact-tie prevalence audit has also been preregistered. It does not alter the running V44 policy.

@@ -37,13 +37,16 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
    - `CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json` is a genuinely new, outcome-unopened Core family and may proceed only under its frozen contract; it must not inherit post-hoc retuning from the rejected fixed Core.
 
 4. **Consensus specialist lane** — branch `research/consensus-atr-regime-gate`.
-   - Owns fixed-min95 Consensus, frozen ATR OOD guard, realistic next-open execution, concentration/overlap diagnostics, V44 cooldown-with-replacement, and staged outcome-free V45 full-context ATR audit.
+   - Owns fixed-min95 Consensus, frozen ATR OOD guard, realistic next-open execution, concentration/overlap diagnostics, V44 cooldown-with-replacement, and staged outcome-free V45 context audits.
    - Current +7.72% headline is materially inflated by repeated same-symbol selections, but the earlier chained "episode-first near flat" diagnostic was too strict for a true 5BD holding policy.
-   - Correct one-position-per-symbol five-session cooldown with re-entry gives 2025 n=52 mean +3.05%, Top3-ex +1.21%; 2025H2 n=22 mean +3.58%, Top3-ex -0.81%. V44 replacement remains decisive for diversification/generalization.
-   - The first V44 run that opened all H2 cooldown metrics is invalid/superseded. Only the corrected locked-validation V44 run may support conclusions.
+   - Correct one-position-per-symbol five-session cooldown with re-entry gives 2025 n=52 mean +3.05%, Top3-ex +1.21%; 2025H2 n=22 mean +3.58%, Top3-ex -0.81%. Corrected V44 replacement remains decisive for diversification/generalization.
+   - The first V44 run that opened all H2 cooldown metrics is invalid/superseded. Only corrected run `34766353425` may support V44 conclusions; it is still in progress at this reconciliation point.
    - Intraday naming correction: integer session `9` / `13` denotes reconstructed Yahoo raw clock bins, **not** an alert known exactly at 09:00 / 13:00 JST. Shared Batch02 causal raw-bin semantics control production claims.
-   - Even if V44 survives, direct production migration is blocked until the surviving model is migrated/retrained on the canonical raw-bin materializer and timing contract.
-   - V45 is outcome-free context auditing only and must not rescue a failed V44 by ATR retuning.
+   - Historical universe limitation: V43/V44 use the **2026-09-11 current-listed domestic common-stock universe** backfilled historically. This is reproducible but not point-in-time survivorship-neutral. A surviving Consensus model still needs promotion-grade point-in-time JPX universe validation.
+   - Training-target mismatch: current Consensus heads were trained on **signal-bin-close -> D+5 close**, while canonical comparison is **next-XTKS-open -> D+5 close**. On the 2025 five-session no-replacement sample, mean falls from +4.13% to +3.05% and 13.46% of rows change sign.
+   - V44 remains interpretable because its policies use one fixed model/ranking and one canonical evaluation endpoint. **Do not change the training target mid-V44.**
+   - If V44 survives, any production candidate requires a separately versioned canonical-target retrain with architecture/hyperparameters initially frozen, plus canonical raw-bin materialization and point-in-time universe validation. These dependencies cannot be used to rescue a failed V44.
+   - V45 is outcome-free context auditing only and must not rescue V44 through ATR retuning.
    - If corrected V44 collapses, demote Consensus to continuation/re-entry/pyramiding research rather than a Stable★6 replacement.
 
 ## Cross-lane arbitration
@@ -61,3 +64,5 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - Consensus raw-bin labels are semantic reconstruction labels, not exact alert-clock promises.
 - Event-specific V12/V17/V18/compression-breakout and canonical Monster-v2 closed decisions must not be reopened by renaming or post-hoc threshold changes.
 - Immediately before any prospective-shadow authorization or cross-lane comparison, re-fetch all source-branch HEADs; stale readiness snapshots are blocking, not advisory.
+
+- Consensus promotion dependency clarified: surviving V44 evidence is necessary but not sufficient; canonical-target training, canonical raw-bin semantics, and point-in-time universe membership remain mandatory before a production claim.

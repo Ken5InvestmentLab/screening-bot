@@ -1,5 +1,5 @@
-trigger: 2026-09-14 core-execution-entry-v3-canonical-next-session
-purpose: rerun fixed Core execution audit under supervisor canonical next-XTKS-session-open contract
+trigger: 2026-09-14 core-execution-entry-v4-canonical-unmatched-log
+purpose: identical canonical next-XTKS-session-open audit; expose unmatched rows for coverage classification
 signal_rule: unchanged fixed reconstructed Core
 entry_contract: next official observed XTKS trading date strictly after signal date, first Yahoo 1H bar OPEN
 target: unchanged existing 5-business-day target close

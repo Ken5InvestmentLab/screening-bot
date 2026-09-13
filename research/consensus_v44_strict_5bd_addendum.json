@@ -1,0 +1,36 @@
+{
+  "spec_id": "CONSENSUS-V44-STRICT-5BD-NO-OVERLAP-ADDENDUM-20260914",
+  "parent_experiment": "CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914",
+  "status": "PREREGISTERED_BEFORE_AUTHORITATIVE_V44_OUTCOME_ACCESS",
+  "rationale": "A 3-trading-day cooldown can reselect the same symbol before a fixed 5BD evaluation position has exited. It may reduce concentration but does not establish a strict one-position-per-symbol 5BD policy.",
+  "interpretation": {
+    "cooldown_3": "partial diversification / possible re-entry or pyramiding diagnostic only; cannot qualify the current family as a strict Stable★6 replacement candidate",
+    "cooldown_5": "strict no-overlap candidate for D+1-open -> D+5-close evaluation; may qualify if frozen gates pass"
+  },
+  "strict_policy": {
+    "cooldown_days": 5,
+    "development_eligibility": [
+      "DEV next-open mean >= 80% of cooldown0 DEV baseline",
+      "DEV max-symbol share <= 75% of cooldown0 DEV baseline share"
+    ],
+    "if_dev_ineligible": "STRICT_NO_OVERLAP_FAIL; do not open 5-day H2 outcome",
+    "if_dev_eligible": "Evaluate exactly the 5-day policy on H2, even if the original 3/5 chooser prefers 3 days. Use the validation-blind Top-K pool so nonchosen H2 outcomes remain unopened until this rule authorizes the 5-day evaluation."
+  },
+  "h2_gate": {
+    "min_n": 20,
+    "mean_positive": true,
+    "minimum_mean_retention_vs_cooldown0_validation": 0.8,
+    "median_gte_pct": 0,
+    "top3_excluded_mean_gt_pct": 0,
+    "max_symbol_share_lte_fraction_of_cooldown0_validation": 0.75,
+    "pass_rule": "ALL"
+  },
+  "failure_action": "No post-hoc cooldown/TopK/threshold/ATR/model/session/tie-break tuning on H2. Demote strict replacement claim; continuation/re-entry specialist may remain.",
+  "restrictions": [
+    "Do not use 2026 outcomes.",
+    "Do not treat cooldown3 as strict no-overlap evidence.",
+    "Do not open cooldown5 H2 if its DEV eligibility fails.",
+    "Do not modify production."
+  ],
+  "production_modified": false
+}

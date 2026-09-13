@@ -1,0 +1,172 @@
+{
+  "spec_id": "CAUSAL-4H-SCORING-V1-20260913",
+  "status": "PREREGISTERED_BEFORE_CANONICAL_LABEL_ACCESS",
+  "objective": "Evaluate the frozen causal 4H/session feature panel with separate stability and right-tail heads without using 2026 for tuning.",
+  "production_modified": false,
+  "frozen_feature_source": "CAUSAL_INTRADAY_FEATURE_PANEL_V1_SPEC.json",
+  "features": [
+    "bar_log_return",
+    "range_pct",
+    "upper_wick_pct",
+    "lower_wick_pct",
+    "prev4_log_return_mean",
+    "prev4_range_mean",
+    "log_range_vs_prior20"
+  ],
+  "candidate_requirements": {
+    "model_candidate_v1_complete": true,
+    "prior_completed_daily_close_lte_jpy": 1000,
+    "prior_completed_daily_volume_gte_shares": 10000,
+    "primary_candidate_bin_volume_gate": null,
+    "sensitivity_candidate_bin_volume_gte_shares": 5000,
+    "sensitivity_may_change_primary_choice": false,
+    "no_imputation": true,
+    "no_feature_clipping": true
+  },
+  "target": {
+    "canonical_spec": "DAILY_ENDPOINT_TARGET_SPEC_V3.json",
+    "entry": "next official XTKS session open after candidate date",
+    "exit": "fifth official XTKS session close, with entry session counted as day 1",
+    "endpoint_return": "exit_close / entry_open - 1",
+    "strict_path_actionability": "reported separately and never substituted for endpoint resolution",
+    "no_forward_fill": true,
+    "no_jump_to_later_session": true
+  },
+  "label_source_policy": {
+    "preferred_existing_daily_panel_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "substitution_without_new_spec": false,
+    "raw_1h_derived_daily_endpoint_allowed_under_this_spec": false
+  },
+  "periods": {
+    "context_only": [
+      "2024-09-17",
+      "2024-12-31"
+    ],
+    "train": [
+      "2025-01-01",
+      "2025-06-30"
+    ],
+    "locked_validation": [
+      "2025-07-01",
+      "2025-12-31"
+    ],
+    "report_only_2026": [
+      "2026-01-01",
+      "2026-09-10"
+    ],
+    "prospective_shadow": "post-freeze future data when available"
+  },
+  "preprocessing": {
+    "scaler": "RobustScaler",
+    "scaler_fit": "training rows only",
+    "quantile_range": [
+      25,
+      75
+    ],
+    "feature_transforms": "exactly as frozen; no data-driven clipping"
+  },
+  "heads": {
+    "core": {
+      "primary_target": "ret5bd_gross > 0",
+      "loss_diagnostic_target": "ret5bd_gross <= -0.10",
+      "model": "LogisticRegression L2",
+      "params": {
+        "C": 1,
+        "solver": "lbfgs",
+        "max_iter": 1000,
+        "class_weight": "balanced"
+      },
+      "rank": [
+        "p_positive descending",
+        "p_loss10 ascending",
+        "symbol ascending"
+      ]
+    },
+    "monster": {
+      "primary_target": "ret5bd_gross >= 0.20",
+      "loss_diagnostic_target": "ret5bd_gross <= -0.10",
+      "model": "LogisticRegression L2",
+      "params": {
+        "C": 1,
+        "solver": "lbfgs",
+        "max_iter": 1000,
+        "class_weight": "balanced"
+      },
+      "rank": [
+        "p_plus20 descending",
+        "p_loss10 ascending",
+        "symbol ascending"
+      ]
+    }
+  },
+  "live_cohort_semantics": {
+    "cohorts": "each candidate date + bin_name cutoff independently",
+    "am_pm_not_ranked_together": true,
+    "selection_top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "cooldown": "5 official XTKS sessions per symbol, maintained independently for every head/topN policy",
+    "earlier_same_day_pick_blocks_later_same_day_pick_for_that_policy": true
+  },
+  "cost_sensitivity": {
+    "primary_round_trip_cost": 0.005,
+    "report_also": [
+      0,
+      0.01
+    ]
+  },
+  "metrics": [
+    "requested",
+    "resolved",
+    "unresolved",
+    "net_mean",
+    "net_median",
+    "net_win_rate",
+    "gross_ge10_rate",
+    "gross_ge20_rate",
+    "gross_ge50_rate",
+    "gross_le10_rate",
+    "gross_le20_rate",
+    "top1_removed_net_mean",
+    "top3_removed_net_mean",
+    "top5_removed_net_mean",
+    "monthly_positive_mean_fraction",
+    "symbol_concentration",
+    "strict_path_resolution"
+  ],
+  "locked_validation_gates": {
+    "core": {
+      "min_resolved_n": 50,
+      "net_mean_gt": 0,
+      "net_median_gte": 0,
+      "net_win_rate_gt": 0.5,
+      "top3_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.2
+    },
+    "monster": {
+      "min_resolved_n": 30,
+      "net_mean_gt": 0,
+      "gross_ge20_rate_gte": 0.1,
+      "top1_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.4
+    }
+  },
+  "policy_choice_on_2025_validation": {
+    "core": "among passing TopN policies choose highest top3-removed net mean; ties: higher net median, lower loss10 rate, smaller N",
+    "monster": "among passing TopN policies choose highest gross >=20% rate; ties: higher top1-removed net mean, lower loss10 rate, smaller N",
+    "if_none_pass": "NO_PROMOTION; do not tune thresholds against 2025 or 2026"
+  },
+  "report_only_2026_protocol": {
+    "refit_after_validation": "After TopN choice, refit fixed model architecture on all resolved 2025 training+validation rows.",
+    "tuning_on_2026": false,
+    "policy_changes_after_2026_read": false
+  },
+  "contamination_guard": {
+    "old_2026_summary_was_accidentally_seen_during_source_discovery": true,
+    "frozen_features_precede_exposure": true,
+    "this_spec_may_not_use_old_2026_summary": true
+  }
+}

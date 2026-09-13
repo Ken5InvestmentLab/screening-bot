@@ -686,3 +686,15 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next after lane-overlap check: preregister a genuinely distinct 4H event mechanism if event-specific research continues.
 - Report: `reports/tentei_v12_h2_trigger_path_decomposition_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## EVENT-4H-V20-COMPRESSION-BREAKOUT-20260913 — REJECT DISCOVERY / 2025 UNOPENED
+
+- Distinct non-reversal 4H compression->breakout family, preregistered before outcomes.
+- 2024Q4 discovery: 161 raw signals, 148 after cooldown, 136 symbols, 43 active dates. Density passed.
+- At 0.5% cost: mean -1.017%, median -1.670%, win 33.78%, +20% 2.03%, <=-10% 3.38%, Top1-excluded -1.382%, Top3-excluded -1.735%, positive months 0%.
+- Core and Monster gates both fail. Even 0% cost mean -0.517%.
+- Decision: reject V20; do not open 2025 and do not threshold-tune the family.
+- Next: stop blind adjacent-heuristic generation; re-audit the earlier Monster weak+early / volr20-low research structure under current causal 4H constraints.
+- Report: `reports/event_4h_v20_compression_breakout_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

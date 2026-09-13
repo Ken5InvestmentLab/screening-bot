@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
+  "git_sha": "8d06c42809a034d58db387dd3381b526d7b08b19",
+  "decision": "REJECT_ALL_MARKET_STATE_FEATURES",
+  "evidence_level": "RETROSPECTIVE_DIRECTIONAL_CONFIRMATION",
+  "registered_spec_sha256": "8d5efa0280715ae4c46f2b4a2580b11319cf901d59f4e86783a7ed26bb9255cb",
+  "discovery_report_sha256": "eb85138b24f56afc8858ee5158f697899193b1c3bcd8df1613a9543cb6f68f33",
+  "feature_freeze_sha256": "a51aa151da8ff6cde61e32b7dc3af49a15621aeff7f7b3fa6d3daaa1de9b18b3",
+  "confirmation_labels_sha256": "30ed342737d793334898d92307311b78ed41d2b329b07ea51c6e6c1552119414",
+  "period": [
+    "2024-01-01",
+    "2024-12-20"
+  ],
+  "signal_rows": 844820,
+  "resolved_rows": 828077,
+  "winners_ge_10": 24756,
+  "losers_le_minus10": 22529,
+  "overall_return_summary": {
+    "selected_count": 844820,
+    "resolved_count": 828077,
+    "unresolved_count": 16743,
+    "unresolved_by_status": {
+      "ZERO_VOLUME_HOLDING_SESSION": 12048,
+      "ENTRY_ZERO_OR_UNKNOWN_VOLUME": 4498,
+      "POTENTIAL_SPLIT_OR_EXTREME_GAP": 70,
+      "INVALID_HOLDING_OHLCV": 69,
+      "INVALID_ENTRY_OHLCV": 26,
+      "INVALID_EXIT_OHLCV": 22,
+      "MISSING_HOLDING_SESSION_BAR": 6,
+      "MISSING_EXIT_BAR": 2,
+      "MISSING_ENTRY_BAR": 2
+    },
+    "gross": {
+      "n": 828077,
+      "requested_count": 844820,
+      "resolved_count": 828077,
+      "draw_count": 20156,
+      "win_rate": 0.48797097736041023,
+      "win_rate_denominator_excludes_draws": true,
+      "mean": 0.0004433900775291436,
+      "median": 0.0,
+      "plus10_rate": 0.02989577056239939,
+      "plus20_rate": 0.006709520974498748,
+      "plus50_rate": 0.0007644216661010993,
+      "minus10_rate": 0.027206407133636125,
+      "minus20_rate": 0.005144449127315455,
+      "mean_excluding_top1_winner": 0.00044104304811982053,
+      "mean_excluding_top3_winners": 0.00043683802287784376
+    },
+    "round_trip_cost_scenarios": {
+      "0": {
+        "n": 828077,
+        "requested_count": 844820,
+        "resolved_count": 828077,
+        "draw_count": 20156,
+        "win_rate": 0.48797097736041023,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": 0.0004433900775291436,
+        "median": 0.0,
+        "plus10_rate": 0.02989577056239939,
+        "plus20_rate": 0.006709520974498748,
+        "plus50_rate": 0.0007644216661010993,
+        "minus10_rate": 0.027206407133636125,
+        "minus20_rate": 0.005144449127315455,
+        "mean_excluding_top1_winner": 0.00044104304811982053,
+        "mean_excluding_top3_winners": 0.00043683802287784376
+      },
+      "0.005": {
+        "n": 828077,
+        "requested_count": 844820,
+        "resolved_count": 828077,
+        "draw_count": 160,
+        "win_rate": 0.4142927370738854,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": -0.004556609922470857,
+        "median": -0.005,
+        "plus10_rate": 0.0270832301827004,
+        "plus20_rate": 0.006396748128495297,
+        "plus50_rate": 0.0007366464712822599,
+        "minus10_rate": 0.030386063131810206,
+        "minus20_rate": 0.005610589353405541,
+        "mean_excluding_top1_winner": -0.004558956951880183,
+        "mean_excluding_top3_winners": -0.004563161977122159
+      },
+      "0.01": {
+        "n": 828077,
+        "requested_count": 844820,
+        "resolved_count": 828077,
+        "draw_count": 258,
+        "win_rate": 0.35076991467941665,
+        "win_rate_denominator_excludes_draws": true,
+        "mean": -0.009556609922470859,
+        "median": -0.01,
+        "plus10_rate": 0.024658334913299124,
+        "plus20_rate": 0.006042916298846605,
+        "plus50_rate": 0.0007185322137917127,
+        "minus10_rate": 0.033963025177610295,
+        "minus20_rate": 0.006047746767510751,
+        "mean_excluding_top1_winner": -0.009558956951880183,
+        "mean_excluding_top3_winners": -0.00956316197712216
+      }
+    }
+  },
+  "frozen_feature_results": [
+    {
+      "feature": "range_pct",
+      "discovery_direction": "lower_for_winners",
+      "effect": {
+        "feature": "range_pct",
+        "candidate_count": 844820,
+        "resolved_count": 828077,
+        "finite_feature_candidate_count": 844820,
+        "missing_feature_candidate_count": 0,
+        "finite_feature_rate": 1.0,
+        "finite_feature_rate_among_resolved": 1.0,
+        "n_winners": 24756,
+        "n_losers": 22529,
+        "winner_median": 0.037364592775702477,
+        "loser_median": 0.03220858797430992,
+        "median_delta_winner_minus_loser": 0.005156004801392555,
+        "cliffs_delta": 0.10374247641220857,
+        "auc_winner_higher": 0.5518712382061043,
+        "winner_class_share": 0.5235486940890346
+      },
+      "broad_bands": {
+        "feature": "range_pct",
+        "edges": [
+          0.013355592265725136,
+          0.02361111156642437
+        ],
+        "candidate_count": 844820,
+        "finite_feature_candidate_count": 844820,
+        "missing_feature_candidate_count": 0,
+        "finite_feature_rate": 1.0,
+        "bands": {
+          "low": {
+            "candidate_count": 230946,
+            "resolved_count": 220231,
+            "unresolved_count": 10715,
+            "winner_count": 1840,
+            "loser_count": 2322,
+            "extreme_winner_share": 0.44209514656415183,
+            "mean_return": -0.0008890512656083231,
+            "median_return": -0.0006887052341597588,
+            "plus10_rate": 0.008354863756691836,
+            "minus10_rate": 0.010543474805999155
+          },
+          "middle": {
+            "candidate_count": 282913,
+            "resolved_count": 279578,
+            "unresolved_count": 3335,
+            "winner_count": 4791,
+            "loser_count": 5037,
+            "extreme_winner_share": 0.4874847374847375,
+            "mean_return": -0.0004703880979014879,
+            "median_return": -0.00024423132511192103,
+            "plus10_rate": 0.01713654150183491,
+            "minus10_rate": 0.01801643906172875
+          },
+          "high": {
+            "candidate_count": 330961,
+            "resolved_count": 328268,
+            "unresolved_count": 2693,
+            "winner_count": 18125,
+            "loser_count": 15170,
+            "extreme_winner_share": 0.5443760324373029,
+            "mean_return": 0.0021155517386446114,
+            "median_return": 0.0,
+            "plus10_rate": 0.0552140324369113,
+            "minus10_rate": 0.046212241217541764
+          }
+        }
+      },
+      "confirmation_checks": {
+        "effect_direction_matches": false,
+        "broad_band_direction_matches": false,
+        "sufficient_winner_and_loser_counts_in_both_outer_bands": true,
+        "confirmed": false
+      }
+    },
+    {
+      "feature": "dispersion20",
+      "discovery_direction": "lower_for_winners",
+      "effect": {
+        "feature": "dispersion20",
+        "candidate_count": 844820,
+        "resolved_count": 828077,
+        "finite_feature_candidate_count": 843391,
+        "missing_feature_candidate_count": 1429,
+        "finite_feature_rate": 0.9983085154234038,
+        "finite_feature_rate_among_resolved": 0.9982743150697339,
+        "n_winners": 24552,
+        "n_losers": 22252,
+        "winner_median": 0.030160631984472275,
+        "loser_median": 0.02362919319421053,
+        "median_delta_winner_minus_loser": 0.0065314387902617455,
+        "cliffs_delta": 0.15879134350000323,
+        "auc_winner_higher": 0.5793956717500016,
+        "winner_class_share": 0.5245705495256816
+      },
+      "broad_bands": {
+        "feature": "dispersion20",
+        "edges": [
+          0.011891510337591171,
+          0.01889415830373764
+        ],
+        "candidate_count": 844820,
+        "finite_feature_candidate_count": 843391,
+        "missing_feature_candidate_count": 1429,
+        "finite_feature_rate": 0.9983085154234038,
+        "bands": {
+          "low": {
+            "candidate_count": 230081,
+            "resolved_count": 222558,
+            "unresolved_count": 7523,
+            "winner_count": 1700,
+            "loser_count": 2979,
+            "extreme_winner_share": 0.3633254969010472,
+            "mean_return": -0.001346951266545803,
+            "median_return": 0.0,
+            "plus10_rate": 0.007638458289524528,
+            "minus10_rate": 0.0133852748497021
+          },
+          "middle": {
+            "candidate_count": 265752,
+            "resolved_count": 259988,
+            "unresolved_count": 5764,
+            "winner_count": 4245,
+            "loser_count": 5219,
+            "extreme_winner_share": 0.448541842772612,
+            "mean_return": -0.0006695328975833682,
+            "median_return": -0.0005268703898840821,
+            "plus10_rate": 0.016327676661999784,
+            "minus10_rate": 0.020074003415542257
+          },
+          "high": {
+            "candidate_count": 347558,
+            "resolved_count": 344102,
+            "unresolved_count": 3456,
+            "winner_count": 18607,
+            "loser_count": 14054,
+            "extreme_winner_share": 0.5697008664768378,
+            "mean_return": 0.002469566176134046,
+            "median_return": 0.0,
+            "plus10_rate": 0.05407408268478533,
+            "minus10_rate": 0.04084254087450814
+          }
+        }
+      },
+      "confirmation_checks": {
+        "effect_direction_matches": false,
+        "broad_band_direction_matches": false,
+        "sufficient_winner_and_loser_counts_in_both_outer_bands": true,
+        "confirmed": false
+      }
+    }
+  ],
+  "2025_plus_features_or_outcomes_opened": false,
+  "production_modified": false
+}

@@ -3,7 +3,7 @@
   "budget_pause_latched": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
-  "milestone": "M10_DISCOVERY_FEATURES_FROZEN_PRE_2024",
+  "milestone": "M11_2024_DIRECTION_CONFIRMATION_REJECTED",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -15,10 +15,10 @@
   "last_observed_remaining_percent": 59,
   "maximum_active_check_interval_seconds": 60,
   "last_completed_experiment": {
-    "experiment_id": "CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01",
-    "decision": "REJECT_GAP_RECLAIM_DISCOVERY",
-    "local_commit": "5622aa1",
-    "report": "tvfree_screener/batch02/reports/core_gap_reclaim_discovery.json"
+    "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
+    "decision": "REJECT_ALL_MARKET_STATE_FEATURES",
+    "report": "tvfree_screener/batch02/reports/core_market_state_confirmation_2024.json",
+    "report_sha256": "1e29d8fc98dfef9b57596944119bef0de2c55de53a5a9478c20e280da8f89fa6"
   },
   "registered_spec_sha256": "8d5efa0280715ae4c46f2b4a2580b11319cf901d59f4e86783a7ed26bb9255cb",
   "registered_feature_count": 31,
@@ -30,15 +30,16 @@
   "candidate_pool_reproduced": true,
   "candidate_pool_commit": "e1e0f99",
   "outcome_values_opened_before_freeze": false,
-  "next_action": "Commit discovery reports, frozen feature specification, ledger, and this gate state. Only after that commit, run the preregistered 2024 direction confirmation without feature replacement or threshold tuning; do not open 2025+.",
+  "next_action": "Commit the frozen 2024 rejection report, ledger, and gate state. Then preregister and implement a distinct trend-pullback interaction hypothesis before any of its outcomes are opened; never reverse or retune the rejected range_pct/dispersion20 finding. Keep 2025+ closed until a separate frozen gate.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "discovery_outcomes_opened": true,
-  "validation_outcomes_opened": false,
+  "validation_outcomes_opened": true,
   "frozen_discovery_feature_names": [
     "range_pct",
     "dispersion20"
   ],
   "discovery_report_sha256": "eb85138b24f56afc8858ee5158f697899193b1c3bcd8df1613a9543cb6f68f33",
-  "feature_freeze_sha256": "a51aa151da8ff6cde61e32b7dc3af49a15621aeff7f7b3fa6d3daaa1de9b18b3"
+  "feature_freeze_sha256": "a51aa151da8ff6cde61e32b7dc3af49a15621aeff7f7b3fa6d3daaa1de9b18b3",
+  "validation_report_sha256": "1e29d8fc98dfef9b57596944119bef0de2c55de53a5a9478c20e280da8f89fa6"
 }

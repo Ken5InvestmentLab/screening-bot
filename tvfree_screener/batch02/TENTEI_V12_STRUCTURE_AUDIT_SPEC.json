@@ -1,0 +1,30 @@
+{
+  "audit_id": "TENTEI-V12-STRUCTURE-NO-OUTCOMES-20260913",
+  "purpose": "Audit V12 event-generator density, trigger overlap, AM/PM balance, monthly concentration, and repeated-state firing without opening any return labels.",
+  "source": "existing raw Yahoo-derived 1h Actions run 34592896202, eight shards",
+  "periods": {
+    "warmup_start": "2024-12-01",
+    "h1": ["2025-03-01", "2025-06-30"],
+    "h2_structure_only": ["2025-07-01", "2025-12-31"],
+    "year2025_structure_only": ["2025-01-01", "2025-12-31"]
+  },
+  "scope": {
+    "uses_v12_frozen_signal_logic": true,
+    "applies_prior_daily_price_volume_gate": false,
+    "applies_cooldown": false,
+    "reads_5bd_or_strategy_returns": false,
+    "reads_2026_strategy_outcomes": false,
+    "daily_to_intraday_synthesis": false
+  },
+  "metrics": [
+    "complete_bin_count",
+    "signal_count_and_rate",
+    "trigger_path_counts_and_overlap",
+    "AM_PM_distribution",
+    "monthly_signal_rate",
+    "same_symbol_previous_complete_bin_signal_rate",
+    "same_symbol_previous_complete_bin_emergency_count"
+  ],
+  "interpretation_guardrail": "Structural diagnostics may motivate a distinct preregistered experiment but must not be used as evidence of return performance or as post-hoc validation of V12/V13/V14.",
+  "production_modified": false
+}

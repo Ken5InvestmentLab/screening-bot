@@ -1,0 +1,7 @@
+{
+  "experiment_id": "REPLACE_WITH_EXPERIMENT_ID",
+  "model_freeze_id": "REPLACE_WITH_IMMUTABLE_FREEZE_ID",
+  "frozen_at": "YYYY-MM-DDTHH:MM:SS+09:00",
+  "model_spec_sha256": "REPLACE_WITH_64_HEX_SHA256",
+  "notes": "Freeze this file before prospective candidate collection. Do not reuse model_freeze_id after any model, threshold, feature, ranking, cooldown, or eligibility change."
+}

@@ -3,7 +3,14 @@
 This branch is a research-only coordination channel for the staggered ChatGPT workers.
 
 ## Why
-Native scheduled tasks can run at most once per hour. Four research workers are therefore staggered at :00, :15, :30 and :45 JST. Every worker first scans all active research branches and this shared state, so substantive GitHub updates can be noticed within about 15 minutes rather than waiting up to an hour for a lane-specific worker.
+Native scheduled tasks can run at most once per hour per task. Five research workers are therefore staggered at :00, :12, :24, :36 and :48 JST. Every worker first scans all active research branches and this shared state, so substantive GitHub updates can normally be noticed within about 12 minutes rather than waiting up to an hour for a lane-specific worker.
+
+## Worker roles
+- :00 — cross-lane supervisor
+- :12 — Canonical Batch02 / Event + Shadow/Data preferred worker
+- :24 — Core breadth/stability preferred worker
+- :36 — Consensus specialist preferred worker
+- :48 — cross-lane follow-up / result collector
 
 ## Rules
 - This is not a production branch.
@@ -13,4 +20,5 @@ Native scheduled tasks can run at most once per hour. Four research workers are 
 - After processing, update the state with the processed SHA and a short note.
 - If another worker already processed the same SHA, do not repeat that work.
 - Prefer the worker's assigned lane when there is no cross-lane GitHub update waiting.
+- The :48 worker fills gaps such as completed-but-uncollected Actions/artifacts or work left waiting by another worker.
 - Do not use this mechanism to touch production/main or production integrations.

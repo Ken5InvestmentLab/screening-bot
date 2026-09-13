@@ -1,0 +1,33 @@
+name: Consensus V47 Daily Materializer Contract Tests
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/no_tv_v47_daily_materializer.py"
+      - "research/test_no_tv_v47_daily_materializer.py"
+      - ".github/workflows/consensus-v47-daily-materializer-contract-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 yfinance==0.2.66
+      - name: Compile
+        run: |
+          python -m py_compile             research/no_tv_v47_daily_materializer.py             research/test_no_tv_v47_daily_materializer.py
+      - name: Run contract
+        run: python research/test_no_tv_v47_daily_materializer.py

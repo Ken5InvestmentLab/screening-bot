@@ -1,0 +1,74 @@
+name: Consensus V47 Daily PIT Materialization
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_DAILY_MATERIALIZER"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: consensus-v47-daily-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 requests==2.34.2 yfinance==0.2.66
+      - name: Download frozen run80 daily
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Download accepted PIT membership
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-pit-universe-34771221050
+          path: pit
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34771221050
+      - name: Download accepted V46 splits
+        uses: actions/download-artifact@v5
+        with:
+          name: no-tv-consensus-v46-34775030470
+          path: v46
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34775030470
+      - name: Compile and synthetic contract
+        run: |
+          python -m py_compile             research/no_tv_v47_daily_materializer.py             research/test_no_tv_v47_daily_materializer.py
+          python research/test_no_tv_v47_daily_materializer.py
+      - name: Run outcome-blind daily materializer
+        run: |
+          python research/no_tv_v47_daily_materializer.py             --frozen-daily frozen/tse_daily.csv             --membership-events pit/jpx_membership_events.csv             --v46-splits v46/v46_split_events.csv             --output-dir research_artifacts/v47_daily
+      - name: Hash evidence
+        run: |
+          cd research_artifacts/v47_daily
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0             | sort -z             | xargs -0 sha256sum > SHA256SUMS.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-daily-${{ github.run_id }}
+          path: research_artifacts/v47_daily/**
+          if-no-files-found: warn
+          retention-days: 90

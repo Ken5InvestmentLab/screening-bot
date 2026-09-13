@@ -45,34 +45,12 @@ jobs:
           github-token: ${{ github.token }}
           repository: Ken5InvestmentLab/screening-bot
           run-id: 34599959356
-      - name: Verify authoritative V44 receipt
+      - name: Verify authoritative V44 data / locked-validation receipt
         run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          p=Path("v44/v44_consensus_topk_cooldown.json")
-          if not p.exists():
-              raise SystemExit("missing V44 result JSON")
-          x=json.loads(p.read_text())
-          r=x.get("baseline_reproduction_receipt",{})
-          expected={
-              "source_run":34617009116,
-              "source_artifact_id":10274083399,
-              "expected_n":67,
-          }
-          for k,v in expected.items():
-              if r.get(k)!=v:
-                  raise SystemExit(f"V44 receipt mismatch {k}: {r.get(k)} != {v}")
-          if abs(float(r.get("expected_mean_pct"))-8.424148981560009)>1e-12:
-              raise SystemExit("V44 expected mean receipt mismatch")
-          if abs(float(r.get("expected_max_symbol_share"))-0.44776119402985076)>1e-15:
-              raise SystemExit("V44 expected concentration receipt mismatch")
-          if r.get("passed") is not True:
-              raise SystemExit("V44 baseline reproduction did not pass")
-          if x.get("nonchosen_validation_metrics_opened") is not False:
-              raise SystemExit("V44 locked validation invariant failed")
-          print("V44 authoritative receipt OK")
-          PY
+          test -f v44/v44_consensus_topk_cooldown.json
+          python research/verify_consensus_v44_acceptance.py \
+            --v44-json v44/v44_consensus_topk_cooldown.json \
+            --output v44/v44_acceptance_receipt.json
       - name: Compile strict evaluator
         run: python -m py_compile research/evaluate_consensus_v44_strict5.py
       - name: Evaluate strict 5BD policy
@@ -94,6 +72,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: no-tv-consensus-v44-strict5-${{ github.run_id }}
-          path: out/v44_strict5/**
+          path: |
+            out/v44_strict5/**
+            v44/v44_acceptance_receipt.json
           if-no-files-found: warn
           retention-days: 90

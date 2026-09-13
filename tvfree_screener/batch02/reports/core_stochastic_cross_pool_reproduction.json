@@ -1,0 +1,26 @@
+{
+  "experiment_id": "CORE-STOCHASTIC-CROSS-20260913-01",
+  "spec_sha256": "853d89bfa70cab2812e035ffcae30188e998d6cfb98b627acc602e82c240e5d7",
+  "prepare_receipt_sha256": "24588dd6d7bd22cbab49fc3ca6a0280b191e7458ca237e130017195a230f850b",
+  "decision_hashes": {
+    "pool": "6fd7838bd57e62bc5ef5c9e00d156331b31166822a8c8a74daeb05c823758d4e",
+    "ranked": "30cb14cd1e1b378392d6fbe5db405b319a1914eb0204ccefc501e392c067fe3e",
+    "selected": "958c977a5b466090ee853f544db986617ea06d39d06d86239e8e4da9dcfa013d"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "complete_stochastic_rows": 1256695,
+    "oversold_cross_rows": 100410,
+    "candidate_rows": 75348,
+    "candidate_symbols": 3510,
+    "candidate_bearing_days": 365,
+    "ranked_rows": 75348,
+    "selected_rows": 1825,
+    "selected_days": 365,
+    "zero_selection_days": 0
+  },
+  "reproduced_exactly": true,
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

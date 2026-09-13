@@ -1,7 +1,7 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T02:48:00+09:00",
+  "updated_at_jst": "2026-09-14T03:26:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -16,9 +16,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "a8bee6889f7ba44eecb45644ecac4aff05c51d16",
+      "last_seen_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
       "last_processed_sha": "a8bee6889f7ba44eecb45644ecac4aff05c51d16",
-      "last_processed_note": "Cross-lane :48 recovered corrected canonical Core capacity run 34771491740 SUCCESS and inspected artifact. Entry occupancy now starts on the next official XTKS trading date; DEV max concurrent=56, 2025H2 max=22, 2026_YTD max=15. This is descriptive capacity evidence only and does not reopen rejected Core performance. Also observed canonical execution audit run 34771686835 SUCCESS at a8bee688; its unmatched-log rerun is reproducibility/coverage work, not a new Core candidate."
+      "last_processed_note": "Core :24 found the two 2026_YTD unmatched canonical execution rows were insufficiently classified in run 34771686835. Added reason-classification logging only (no signal/selection/tuning changes) and triggered run 34774595196 at head 14ccb6f2; run is in_progress. Do not treat 14ccb6f2 as fully processed until the rerun result is reviewed."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -90,11 +90,14 @@
       }
     },
     "core_execution_entry": {
-      "latest_run": 34771686835,
-      "latest_status": "completed/success",
-      "head_sha": "a8bee6889f7ba44eecb45644ecac4aff05c51d16",
-      "purpose": "canonical next-session executable-entry coverage with unmatched-row logging",
-      "selection_or_tuning": false
+      "previous_run": 34771686835,
+      "previous_status": "completed/success",
+      "latest_run": 34774595196,
+      "latest_status": "in_progress",
+      "head_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
+      "purpose": "canonical next-session executable-entry audit with explicit unmatched reason classification",
+      "selection_or_tuning": false,
+      "note": "Previous run had DEV/H2 full coverage and two unmatched 2026_YTD rows (4586, 4709 on 2026-04-17). New run classifies whether failure is missing exec bar/open/target or another coverage issue; 2026 remains report-only."
     },
     "v20_session_impulse": {
       "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",

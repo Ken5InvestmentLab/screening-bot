@@ -1,0 +1,34 @@
+name: Consensus V47 Raw1H Coverage Contract Tests
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/verify_consensus_v47_raw1h_coverage.py"
+      - "research/test_verify_consensus_v47_raw1h_coverage.py"
+      - "research/consensus_v47_raw1h_coverage_acceptance.json"
+      - ".github/workflows/consensus-v47-raw1h-coverage-contract-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3
+      - name: Compile
+        run: |
+          python -m py_compile             research/verify_consensus_v47_raw1h_coverage.py             research/test_verify_consensus_v47_raw1h_coverage.py
+      - name: Run contract
+        run: python research/test_verify_consensus_v47_raw1h_coverage.py

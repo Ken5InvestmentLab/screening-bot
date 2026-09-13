@@ -1,5 +1,7 @@
 from prospective_shadow_authorization_receipt import (
     build_authorization_receipt,
+    canonical_json_bytes,
+    sha256_bytes,
     verify_authorization_receipt,
 )
 
@@ -18,6 +20,12 @@ def heads():
         "research/tentei-cloud-mtf": "b" * 40,
         "research/tvfree-canonical-batch02": "a" * 40,
     }
+
+
+def rehash(receipt):
+    body = dict(receipt)
+    body.pop("receipt_sha256", None)
+    receipt["receipt_sha256"] = sha256_bytes(canonical_json_bytes(body))
 
 
 def test_roundtrip_verifies():
@@ -43,6 +51,7 @@ def test_authorization_result_change_invalidates():
     r = build_authorization_receipt(auth(), heads(), "d" * 64, "2026-09-14T01:07:00+09:00")
     out = verify_authorization_receipt(r, auth("BLOCK_PROSPECTIVE_SHADOW_START"), heads(), "d" * 64)
     assert "authorization_result_sha256_mismatch" in out["errors"]
+    assert "decision_mismatch" in out["errors"]
 
 
 def test_receipt_tamper_invalidates_self_hash():
@@ -50,6 +59,38 @@ def test_receipt_tamper_invalidates_self_hash():
     r["created_at"] = "2026-09-14T01:08:00+09:00"
     out = verify_authorization_receipt(r, auth(), heads(), "d" * 64)
     assert "receipt_sha256_mismatch" in out["errors"]
+
+
+def test_semantic_decision_tamper_rejected_even_after_rehash():
+    r = build_authorization_receipt(auth(), heads(), "d" * 64, "2026-09-14T01:07:00+09:00")
+    r["decision"] = "BLOCK_PROSPECTIVE_SHADOW_START"
+    rehash(r)
+    out = verify_authorization_receipt(r, auth(), heads(), "d" * 64)
+    assert "decision_mismatch" in out["errors"]
+
+
+def test_production_authorization_tamper_rejected_even_after_rehash():
+    r = build_authorization_receipt(auth(), heads(), "d" * 64, "2026-09-14T01:07:00+09:00")
+    r["production_authorized"] = True
+    rehash(r)
+    out = verify_authorization_receipt(r, auth(), heads(), "d" * 64)
+    assert "production_authorized_must_be_false" in out["errors"]
+
+
+def test_receipt_type_tamper_rejected_even_after_rehash():
+    r = build_authorization_receipt(auth(), heads(), "d" * 64, "2026-09-14T01:07:00+09:00")
+    r["receipt_type"] = "OTHER_RECEIPT"
+    rehash(r)
+    out = verify_authorization_receipt(r, auth(), heads(), "d" * 64)
+    assert "receipt_type_mismatch" in out["errors"]
+
+
+def test_created_at_missing_rejected_even_after_rehash():
+    r = build_authorization_receipt(auth(), heads(), "d" * 64, "2026-09-14T01:07:00+09:00")
+    r["created_at"] = ""
+    rehash(r)
+    out = verify_authorization_receipt(r, auth(), heads(), "d" * 64)
+    assert "created_at_missing" in out["errors"]
 
 
 def test_invalid_head_rejected_on_create():

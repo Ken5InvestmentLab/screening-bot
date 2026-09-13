@@ -50,6 +50,14 @@ jobs:
           github-token: ${{ github.token }}
           repository: Ken5InvestmentLab/screening-bot
           run-id: 34599959356
+      - name: Download accepted PIT membership
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-pit-universe-34771221050
+          path: pit
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34771221050
       - name: Download V47 daily materialization
         uses: actions/download-artifact@v5
         with:

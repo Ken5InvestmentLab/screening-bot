@@ -1,7 +1,7 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T01:27:00+09:00",
+  "updated_at_jst": "2026-09-14T01:33:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": [
@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "71efc96692ec4f83769b8b788618d6c832fc316d",
-      "last_processed_sha": "71efc96692ec4f83769b8b788618d6c832fc316d",
-      "last_processed_note": "Core reclaim evaluator is staged and contract-tested successfully (workflow run 34767726209). At 2026-09-14 01:24 JST, authoritative hardened Consensus V44 run 34767664140 is still in_progress (audit job step 'Run V44 Top-K cooldown replacement audit' in_progress), so Core preconfirmation was correctly not dispatched."
+      "last_seen_sha": "9302b5510ee05571dd4bf0d27b0912be90413c69",
+      "last_processed_sha": "9302b5510ee05571dd4bf0d27b0912be90413c69",
+      "last_processed_note": "Core failed-breakdown preconfirmation launched as run 34768879678. Workflow was corrected to use frozen source run 34592896202, trigger-SHA checkout and pinned dependencies. Push trigger can open preconfirmation only; locked H2 remains evaluator-gated."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -87,11 +87,11 @@
       "workflow": ".github/workflows/tentei-cloud-core-failed-breakdown-reclaim.yml",
       "contract_test_run": 34767726209,
       "contract_test_status": "completed/success",
-      "status": "STAGED_NOT_TRIGGERED",
-      "next_allowed_action": "After authoritative hardened Consensus V44 run 34767664140 completes, dispatch preconfirmation only.",
-      "last_gate_check_at_jst": "2026-09-14T01:24:43+09:00",
-      "last_gate_check_result": "BLOCKED_WAITING_FOR_V44_34767664140",
-      "locked_confirmation_rule": "Never dispatch unless preconfirmation artifact proves both frozen blocks pass."
+      "preconfirmation_run": 34768879678,
+      "preconfirmation_status": "queued",
+      "frozen_source_run": 34592896202,
+      "yahoo_refetch": false,
+      "locked_confirmation_rule": "Open only if preconfirmation artifact proves DEVELOPMENT and INTERNAL_VALIDATION both pass every frozen gate."
     }
   },
   "supervisor_contract_sha256": "239adb8933e09a6d8f6917cbeadc0386a5a2725d"

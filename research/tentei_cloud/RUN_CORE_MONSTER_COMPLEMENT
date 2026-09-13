@@ -1,0 +1,5 @@
+trigger: 2026-09-14 core-monster-complement-v1
+purpose: quantify fixed Core vs fixed walk-forward Monster Watch/Prime overlap and complementarity
+optimization: none
+keys: exact symbol+date+session and same-symbol same-date
+outputs: overlap, unique-lane metrics, exact-dedup unions, daily count/return correlations

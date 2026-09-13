@@ -1,0 +1,4 @@
+trigger: 2026-09-14 core-stability-v1
+purpose: quantify fixed Core stability only; no selection or threshold tuning
+bootstrap: 5000 week-cluster resamples, fixed seed 20260914
+periods: DEV / 2025H2 / 2026 Jan-Aug

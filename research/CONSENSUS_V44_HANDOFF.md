@@ -263,3 +263,22 @@ It does not evaluate strategy-performance fields.
 
 Additional non-performance evidence:
 invalid run `34765427789` completed with requested=1910, ok=1850, candidate_symbols=1793, candidate_rows=519231, so that run's live fetch coverage met the frozen floor despite overlapping Yahoo activity. The run remains invalid for performance conclusions.
+
+
+## CRITICAL PIT split-leakage status change — 2026-09-14
+The point-in-time split audit is now a **blocking data-contract issue**, not a future nice-to-have.
+
+Conservative selected-row lower bound using only independently confirmed split events:
+- V43 fixed-min95: **71 / 112 (63.39%)** selected rows are confirmed adjusted-only false positives for the historical prior-close <= JPY 1,000 gate.
+- Frozen ATR-gated subset: **67 / 101 (66.34%)** confirmed false positives.
+- 2025H1 ATR-gated: 48 / 67 (71.64%).
+- 2025H2 ATR-gated: 19 / 34 (55.88%).
+
+This count uses no strategy returns and intentionally leaves unverified symbols unchanged, so it is a lower bound.
+
+Implication:
+- Run 34767664140 may still be reviewed for **replacement mechanics / concentration behavior inside the old adjusted-price universe** after its normal acceptance receipts.
+- It can no longer support a promotion-grade Stable★6 replacement claim even if every V44 performance gate passes.
+- Do not delete contaminated rows after scoring and quote the remainder as a validated strategy. Eligibility changes alter training rows, cross-sectional ranks, market context, model scores and the set of candidates.
+- The next promotion-relevant path is V46 outcome-free full-universe PIT eligibility audit -> clean PIT rebuild/retrain (V47 or later) -> canonical next-open target evaluation.
+- Full survivorship-neutral JPX membership remains a separate unresolved dependency.

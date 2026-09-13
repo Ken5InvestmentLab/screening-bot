@@ -4,7 +4,10 @@ import unittest
 from datetime import date, datetime
 from zoneinfo import ZoneInfo
 
-from tvfree_screener.batch02.intraday_causal_guard import classify_causal_use
+from tvfree_screener.batch02.intraday_causal_guard import (
+    classify_causal_use,
+    classify_materialized_feature_input,
+)
 
 JST = ZoneInfo("Asia/Tokyo")
 
@@ -72,6 +75,34 @@ class IntradayCausalGuardTests(unittest.TestCase):
             daily_available_at=self.dt(15),
         )
         self.assertFalse(decision.eligible)
+
+    def test_materialized_daily_fallback_is_rejected_at_4h_boundary(self):
+        decision = classify_materialized_feature_input({
+            "resolution": "1D",
+            "source_tag": "C_DAILY_RESOLUTION_FALLBACK",
+            "causal_use": "DAILY_ONLY_AFTER_FINAL_AVAILABLE",
+        })
+        self.assertFalse(decision.eligible)
+        self.assertEqual(decision.status, "DAILY_RESOLUTION_NOT_INTRADAY")
+
+    def test_materialized_postclose_reconstruction_is_rejected_at_4h_boundary(self):
+        decision = classify_materialized_feature_input({
+            "resolution": "1H",
+            "causal_signal_eligibility": "POSTCLOSE_RECON_ONLY",
+        })
+        self.assertFalse(decision.eligible)
+
+    def test_materialized_raw_causal_intraday_is_allowed(self):
+        decision = classify_materialized_feature_input({
+            "resolution": "1H",
+            "causal_signal_eligibility": "RAW_CAUSAL_INTRADAY",
+        })
+        self.assertTrue(decision.eligible)
+
+    def test_unknown_materialized_status_fails_closed(self):
+        decision = classify_materialized_feature_input({"resolution": "1H"})
+        self.assertFalse(decision.eligible)
+        self.assertEqual(decision.status, "UNKNOWN_CAUSAL_MATERIALIZATION_STATUS")
 
 
 if __name__ == "__main__":

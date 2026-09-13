@@ -40,9 +40,10 @@ def _bar_shape(bar: object) -> dict[str, float]:
 def extract_causal_features(bars: Iterable[object]) -> list[dict[str, object]]:
     """Build only cutoff-safe, mostly scale-invariant features.
 
-    Rolling baselines use only already-completed bars. Volume-relative features
-    remain explicitly experimental because raw-source volume semantics are not
-    yet fully reconciled.
+    Rolling baselines use only already-completed bars. Same-bin rolling
+    baselines also respect the exchange-close regime so pre/post 2024-11-05
+    PM bars are never mixed. Volume-relative features remain explicitly
+    experimental because raw-source volume semantics are not fully reconciled.
     """
     ordered = sorted(
         bars,
@@ -55,7 +56,8 @@ def extract_causal_features(bars: Iterable[object]) -> list[dict[str, object]]:
 
     for bar in ordered:
         shape = _bar_shape(bar)
-        same_bin_key = (bar.symbol, bar.bin_name)
+        session_regime = getattr(bar, "session_regime", "UNSPECIFIED")
+        same_bin_key = (bar.symbol, bar.bin_name, session_regime)
         prior_shapes = history_shape[bar.symbol]
         prior_ranges = history_same_range[same_bin_key]
         prior_volumes = history_same_volume[same_bin_key]
@@ -64,15 +66,11 @@ def extract_causal_features(bars: Iterable[object]) -> list[dict[str, object]]:
             "session_date": bar.session_date.isoformat(),
             "symbol": bar.symbol,
             "bin_name": bar.bin_name,
+            "session_regime": session_regime,
             "feature_cutoff_jst": bar.feature_cutoff_jst.isoformat(),
             "source_tag": bar.source_tag,
             **shape,
-            # PM close-location was materially less stable under the
-            # post-close reconstruction comparison, so keep it out of model
-            # eligibility until the source audit improves.
             "close_location_model_eligible": bar.bin_name == "AM_09_13",
-            # Relative volume remains visible for diagnostics but is excluded
-            # from MODEL_CANDIDATE_FEATURES_V1 until source semantics improve.
             "volume_rel20_status": "EXPERIMENTAL_SOURCE_INTERNAL",
             "prior_shape_count": len(prior_shapes),
             "prior_same_bin_count": len(prior_ranges),

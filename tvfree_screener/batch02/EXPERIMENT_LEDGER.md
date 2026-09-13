@@ -432,3 +432,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Report: `reports/causal_4h_scoring_v4_crosssectional_regime_20260913.md`.
 - Reproduction hashes: fold1 ebb47f75daf78b5f5e01baacdcf999a3f71479ffad66747f19ade6d4cdd01adc; fold2 f046c1a883959c21cb3fff789d9a25ce1c7302ce386d2448536b0e8471784df4; H2 6a9a6d9c6e55fb17127eec7a1e04cbbb9606037c3ad5f4339f11b5dab8e734e3.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## CAUSAL-4H-SCORING-V5-QUANTILE-DISTRIBUTION-20260913 — REJECT STATIC MODEL / NO_PROMOTION
+
+- Preregistered before V5 row-level evaluation. Replaced classification probabilities with fixed q10/q50/q90 HistGradientBoosting regressors on the same causal 4H + cross-sectional context features.
+- Core score=q50. Monster score=q90+min(q10,0). No return clipping or tuned risk coefficient.
+- H1 fold1 Monster Top1 mean +1.78% but Top1-excluded mean -0.04% and +20% only 3.66%; FAIL.
+- H1 fold2 Monster Top1 mean +3.35%, Top1-excluded +2.03%, +20% 9.76%, <=-10% 9.76%; narrowly misses only the right-tail gate. Monster Top5 mean +1.14%, Top1-excluded +0.96%; +20% 6.83%. All formally FAIL.
+- H2 retrospective Monster Top1 mean -0.05%, +20% 6.05%, <=-10% 16.94%, Top1-excluded -0.48%; all policies FAIL. Core all policies FAIL.
+- Interpretation: quantile modeling is promising in later H1 but the fixed model degrades across H2. Next hypothesis changes only retraining cadence to causal monthly expanding walk-forward; V5 model/feature/hyperparameters stay fixed.
+- Report: `reports/causal_4h_scoring_v5_quantile_distribution_20260913.md`.
+- Reproduction hashes: fold1 ad16fbc3ea3c7b370cf92fd0cf78af293f7d668795d10863ddf1e347492c9d4d; fold2 36b6e34fa67c35cfae07a34542b45cdcdcb83799b25237156f9144ecc3f47e2b; H2 09a9152fa4a676072a9756af3c0d9dea42e70873f3d7162bfd2de4b7e4b74447.
+- 2026 outcomes opened: false. Production modified: false.

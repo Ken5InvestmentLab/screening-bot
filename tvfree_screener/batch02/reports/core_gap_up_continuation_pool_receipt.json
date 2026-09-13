@@ -1,0 +1,52 @@
+{
+  "experiment_id": "CORE-GAP-UP-ACCEPTANCE-20260913-01",
+  "spec_sha256": "23f2b3a97d995fab44d5dfe283deccd6e52951a28c6ed68611657da86bb10c4f",
+  "input_sha256": {
+    "shared_family_spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+    "feature_panel_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "canonical_labels_sha256": "abf9c3181dfa1f86f78b75528eafaa27ba9bb9250db17b5b14e8970d60ad2732",
+    "canonical_labels_manifest_sha256": "e85edc74228c92a5922b0d54dc9c1712e42e0758febc2234e1586bcc6bc888ea",
+    "canonical_target_spec_sha256": "9bba8748f6f141cf045c9505fae0460faa5ff1f0713da5e3c5f31eca7223b8cf",
+    "canonical_target_spec_version_sha256": "6f56fc4c0f914f6faec0285e915a393044003505bc5d71cabb52e4d7778dcfa7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "xtks_calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "xtks_calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "candidate_selector": "724e0465c06085e5cbaa9c250c006251f9f580deded3ba6773757335fea86855",
+    "audit_runner": "c477733bfb3070802ba56951a78c34460c8ca1e03ffe0e2351909d93355a45e0",
+    "shared_frozen_spec_verifier_and_label_rekey": "3d07ffa56b61603b163c825f726ad02d28fa57ab7f4ec3f6474c055c50fa411f",
+    "canonical_label_rekey_family_source": "ce0dd1ee0e1b33478c0f27e02442d2d604902c6a96024ea8068b81495380c0b8",
+    "evaluation_metrics": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "one_to_one_report_summarizer": "ae341d211b154c5142ee11618a0527dff986d5d1da1bc2d7687ef85b8cb316b2"
+  },
+  "counts": {
+    "source_rows_in_period": 1260690,
+    "clean_signal_bars": 1245061,
+    "feature_complete_rows": 1221230,
+    "gap_threshold_rows": 79877,
+    "volume_threshold_rows": 26777,
+    "positive_body_rows": 13001,
+    "candidate_rows": 8057,
+    "candidate_symbols": 2734,
+    "candidate_bearing_days": 364,
+    "ranked_rows": 8057,
+    "selected_rows": 1783,
+    "selected_days": 364,
+    "zero_selection_days": 1
+  },
+  "decision_hashes": {
+    "pool": "6dc62fa73be0e56a5a3af76993b232ff29b3003019a232e5391ce9b126b5ae2f",
+    "ranked": "16ab99129fc45b48138ff8dc0bc4776eacad02419ecad53f4a1661afb6772d0f",
+    "selected": "bdd774d227bb5397e02007f626d4559d218df26de5177a80aaf16f57fee7d1b7"
+  },
+  "artifact_sha256": {
+    "pool": "1bf860a7fb3b062d2877266fd6bf7125a441e6f3cf1a04a184263a7c9da4192c",
+    "ranked": "cf17eddedb5782dcf811cfdaac693edc7c903ab2d55e6932659a95a4c677b6da",
+    "selected": "839afbd1705a4eb6596bd0b1e097f1e279f510eea0f32b20b7e96a7dcd36b8bb"
+  },
+  "outcome_values_opened": false,
+  "2024_plus_numeric_ohlcv_opened": false
+}

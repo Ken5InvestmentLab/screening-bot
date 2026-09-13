@@ -250,42 +250,62 @@ def main() -> None:
     cap=enrich_arm(base_rows,cap_pairs)
 
     feature_cols=v11.features()
-    mandatory=[
+    feature_base_cols=[
         "date","session","symbol","entry_adjusted","entry_pit",
-        "future_split_factor","session_volume",
-        "canonical_ret_5bd","legacy_ret_5bd","exit_date_5bd",
+        "future_split_factor","session_volume","exit_date_5bd",
         *feature_cols,
     ]
-    missing=[x for x in mandatory if x not in nocap.columns]
+    dev_cols=[
+        *feature_base_cols,
+        "canonical_ret_5bd","legacy_ret_5bd",
+    ]
+    missing=[x for x in dev_cols if x not in nocap.columns]
     if missing:
         raise RuntimeError(f"missing NOCAP columns {missing}")
 
     out=a.output_dir
     out.mkdir(parents=True,exist_ok=True)
-    nocap[mandatory].to_parquet(out/"v47_nocap_features.parquet",index=False)
-    cap[mandatory].to_parquet(out/"v47_cap1000_features.parquet",index=False)
 
-    def stats(x):
+    def write_arm(name: str, x: pd.DataFrame):
+        dates=pd.to_datetime(x["date"])
+        dev=x[dates <= pd.Timestamp("2025-06-30")].copy()
+        h2=x[dates >= pd.Timestamp("2025-07-01")].copy()
+        dev[dev_cols].to_parquet(
+            out/f"v47_{name}_dev_features.parquet",index=False
+        )
+        # Locked validation artifact deliberately omits both return targets.
+        h2[feature_base_cols].to_parquet(
+            out/f"v47_{name}_validation_blind.parquet",index=False
+        )
+        return dev,h2
+
+    nocap_dev,nocap_h2=write_arm("nocap",nocap)
+    cap_dev,cap_h2=write_arm("cap1000",cap)
+
+    def stats(dev,h2):
         return {
-            "rows":int(len(x)),
-            "symbols":int(x["symbol"].nunique()) if len(x) else 0,
-            "dates":int(x["date"].nunique()) if len(x) else 0,
-            "date_sessions":int(x.groupby(["date","session"]).ngroups) if len(x) else 0,
-            "rows_with_canonical_label":int(x["canonical_ret_5bd"].notna().sum()) if len(x) else 0,
+            "dev_rows":int(len(dev)),
+            "dev_symbols":int(dev["symbol"].nunique()) if len(dev) else 0,
+            "dev_dates":int(dev["date"].nunique()) if len(dev) else 0,
+            "dev_rows_with_canonical_label":int(dev["canonical_ret_5bd"].notna().sum()) if len(dev) else 0,
+            "validation_blind_rows":int(len(h2)),
+            "validation_blind_symbols":int(h2["symbol"].nunique()) if len(h2) else 0,
+            "validation_blind_dates":int(h2["date"].nunique()) if len(h2) else 0,
         }
 
     report={
         "scope":"clean PIT V47 feature materialization after raw coverage acceptance",
-        "NOCAP":stats(nocap),
-        "CAP1000_PIT":stats(cap),
+        "NOCAP":stats(nocap_dev,nocap_h2),
+        "CAP1000_PIT":stats(cap_dev,cap_h2),
         "cap_is_subset_at_daily_policy_level":True,
         "feature_columns":feature_cols,
         "absolute_price_semantics":"log_price uses point-in-time nominal entry_pit",
         "relative_technical_semantics":"split-normalized Yahoo price path",
-        "target_columns_materialized":[
+        "target_columns_materialized_in_development_only":[
             "canonical_ret_5bd",
             "legacy_ret_5bd",
         ],
+        "locked_validation_target_columns_emitted":False,
         "strategy_selection_performed":False,
         "model_fit_performed":False,
         "2026_rows_included":False,

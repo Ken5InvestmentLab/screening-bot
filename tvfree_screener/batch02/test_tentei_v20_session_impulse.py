@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tvfree_screener.batch02 import eval_tentei_v20_session_impulse as mod
+from tvfree_screener.batch02 import verify_v20_h1_raw_coverage as coverage
 
 
 class V20SessionImpulseContractTests(unittest.TestCase):
@@ -133,6 +134,29 @@ class V20SessionImpulseContractTests(unittest.TestCase):
         for key,val in bads:
             q = dict(good); q[key]=val
             self.assertFalse(mod.h1_gate(q)["all_pass"], key)
+
+    def test_raw_coverage_guard_is_fail_closed(self):
+        expected=[f"S{i:04d}" for i in range(4)]
+        old_count=coverage.EXPECTED_COUNT
+        old_sha=coverage.EXPECTED_SHA
+        try:
+            coverage.EXPECTED_COUNT=4
+            coverage.EXPECTED_SHA=coverage.list_sha(expected)
+            good=coverage.evaluate_coverage(expected,expected,[])
+            self.assertTrue(good["accepted"])
+
+            missing=coverage.evaluate_coverage(expected,expected[:-1],[])
+            self.assertFalse(missing["accepted"])
+            self.assertEqual(missing["missing_symbols"],[expected[-1]])
+
+            failed=coverage.evaluate_coverage(expected,expected,[{"symbol":expected[0]}])
+            self.assertFalse(failed["accepted"])
+
+            extra=coverage.evaluate_coverage(expected,expected+["EXTRA"],[])
+            self.assertFalse(extra["accepted"])
+        finally:
+            coverage.EXPECTED_COUNT=old_count
+            coverage.EXPECTED_SHA=old_sha
 
     def test_h2_requires_explicit_passing_topn(self):
         self.assertEqual(mod.resolve_period_policies("h1", []), (mod.H1_START, mod.H1_END, [1,2,3,5]))

@@ -521,3 +521,18 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next: return to a sparse Bollinger/RSI/squeeze/persistence 4H mechanism family inspired by the existing Tentei architecture, without requiring exact TradingView signal matching.
 - Report: `reports/causal_4h_monster_v11_weak_reversal_ignition_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-INSPIRED-4H-V12-STATE-REVERSAL-20260913 — MONSTER GATE FAIL / CANDIDATE GENERATOR PROMISING / H2 UNOPENED
+
+- Preregistered before outcome access and explicitly not claimed as exact TradingView/Tentei replication.
+- 2025 candidate rows after prior-day gates: 23,959. H1 raw signal rows: 8,245.
+- H1 ALL after cooldown n=3,583: mean +1.43%, median +0.58%, win 55.04%, +20% 1.98%, <=-10% 4.30%, Top1-excluded +1.31%. Fails only the +20% Monster-tail gate.
+- RSI_RECOVERY n=2,662: mean +1.90%, median +1.09%, win 59.17%, +20% 2.14%, Top1-excluded +1.74%.
+- TREND_FLIP n=674: mean -0.44%, median -0.77%, win 40.80%.
+- EMERGENCY_REVERSAL n=1,874: mean +2.13%, median +1.82%, win 62.06%, +20% 1.71%, <=-10% 3.09%, Top1-excluded +2.09%.
+- Decision: V12 Monster gate fail; per preregistration V12 H2 remains unopened.
+- Interpretation: V12 is the first current sparse 4H mechanism with clearly positive central and robustness statistics, but it does not concentrate enough +20% outcomes.
+- Next: V13 keeps ALL V12 candidates unchanged and applies the already-existing V6 causal q10/q50/q90 predictions for Pareto tail ranking. Do not pick RSI or emergency path post hoc.
+- Report: `reports/tentei_inspired_4h_v12_state_reversal_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

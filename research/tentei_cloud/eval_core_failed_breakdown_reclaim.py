@@ -94,6 +94,20 @@ def add_previous_daily_context(
     return x, dates, daily
 
 
+def failed_breakdown_reclaim_mask(eligible: pd.DataFrame) -> pd.Series:
+    """Exact frozen candidate predicate; kept pure for contract testing."""
+    return (
+        (eligible["low"] < eligible["prev_daily_low"])
+        & (eligible["close"] > eligible["prev_daily_low"])
+        & (eligible["close"] > eligible["open"])
+    )
+
+
+def preconfirmation_blocks_pass(dev: dict, val: dict) -> bool:
+    """True only when both frozen preconfirmation blocks pass every gate."""
+    return bool(dev["frozen_gate"]["all_pass"] and val["frozen_gate"]["all_pass"])
+
+
 def make_candidates(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str], pd.DataFrame]:
     # Frozen representation: 13:00 split / split_minute=780.
     sessions = aggregate(raw, 780)
@@ -106,11 +120,7 @@ def make_candidates(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str], pd.Data
         & sessions["prev_daily_low"].notna()
     ].copy()
 
-    reclaim = (
-        (eligible["low"] < eligible["prev_daily_low"])
-        & (eligible["close"] > eligible["prev_daily_low"])
-        & (eligible["close"] > eligible["open"])
-    )
+    reclaim = failed_breakdown_reclaim_mask(eligible)
     selected = cooldown(eligible.loc[reclaim].copy(), dates, 5)
     return selected, dates, daily
 
@@ -196,9 +206,7 @@ def main() -> None:
 
     dev = period_result(labeled, "DEVELOPMENT")
     val = period_result(labeled, "INTERNAL_VALIDATION")
-    preconfirmation_pass = bool(
-        dev["frozen_gate"]["all_pass"] and val["frozen_gate"]["all_pass"]
-    )
+    preconfirmation_pass = preconfirmation_blocks_pass(dev, val)
 
     result = {
         "experiment_id": "CORE-FAILED-BREAKDOWN-RECLAIM-20260914-01",

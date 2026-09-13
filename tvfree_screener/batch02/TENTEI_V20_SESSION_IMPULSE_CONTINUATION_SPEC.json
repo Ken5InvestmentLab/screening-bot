@@ -1,0 +1,95 @@
+{
+  "spec_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "status": "PREREGISTERED_BEFORE_V20_OUTCOME_ACCESS",
+  "role": "RETROSPECTIVE_DISTINCT_EVENT_FAMILY_DISCOVERY",
+  "rationale": "V12 reversal paths degraded within-path in 2025H2 and are closed. V20 tests a distinct continuation mechanism based on a completed intraday impulse, not reversal/reclaim/rescue of V12.",
+  "lane_ownership": {
+    "owner": "Event-specific lane on research/tvfree-canonical-batch02",
+    "must_not_duplicate": [
+      "Core breadth/stability pruning on research/tentei-cloud-mtf",
+      "Consensus min95 / ATR OOD / V44 cooldown work",
+      "prospective shadow and daily-anchor integrity work"
+    ]
+  },
+  "anti_reuse_contract": {
+    "v12_trigger_flags_used": false,
+    "v12_thresholds_used": false,
+    "v17_or_v18_model_scores_used": false,
+    "reversal_or_gap_reclaim_gate_used": false,
+    "same_opened_outcomes_used_to_choose_thresholds": false
+  },
+  "data_contract": {
+    "bar_basis": "completed causal 4H/session representation only",
+    "daily_usage": "previous completed daily close/volume eligibility only; no same-day finalized daily anchors before availability",
+    "universe": "JPX individual-stock research universe with existing production-like prior-day close <= 1000 JPY and prior-day volume >= 10000 shares",
+    "candidate_session_volume_min": 5000,
+    "no_daily_to_intraday_fabrication": true
+  },
+  "event_mechanism": {
+    "name": "session impulse continuation",
+    "definition": "A completed session bar showing positive directional impulse and broad-range close strength relative to its own recent completed-session history. This is continuation after demonstrated demand, not an oversold/reversal trigger.",
+    "warmup_completed_sessions": 20,
+    "signal_conditions": [
+      "session_return = close / open - 1 > 0",
+      "close_location = (close - low) / max(high - low, epsilon) >= 0.75",
+      "true_range_pct = (high - low) / close is at or above its trailing-20 completed-session median",
+      "session_return is at or above its trailing-20 completed-session 75th percentile",
+      "session_volume / trailing-20 completed-session median volume >= 1.0"
+    ],
+    "score": "mean percentile rank within the signal cohort of session_return, close_location, true_range_pct, and volume_ratio; all descending",
+    "selection_policies": [
+      "Top1 per completed session timestamp",
+      "Top2 per completed session timestamp",
+      "Top3 per completed session timestamp",
+      "Top5 per completed session timestamp"
+    ],
+    "ties": "stable symbol ascending after score descending",
+    "cooldown": "5 official XTKS sessions per symbol; independent cooldown state for each TopN policy",
+    "no_backfill": true
+  },
+  "periods": {
+    "discovery_h1": ["2025-03-01", "2025-06-30"],
+    "discovery_status": "retrospective; period has been exposed by other families, so this is not pristine OOS",
+    "h2": ["2025-07-01", "2025-12-31"],
+    "h2_open_policy": "OPEN_ONLY_IF_AT_LEAST_ONE_FROZEN_H1_POLICY_PASSES_ITS_GATE",
+    "year_2026": "CLOSED_FOR_SELECTION_AND_TUNING; report-only only under a separately frozen later contract"
+  },
+  "endpoint": "next official XTKS session open to fifth official XTKS session close",
+  "costs": {
+    "primary_round_trip": 0.005,
+    "sensitivity": [0.0, 0.01]
+  },
+  "h1_gate": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "net_median_gte": 0,
+    "net_win_rate_gt": 0.5,
+    "top3_removed_net_mean_gt": 0,
+    "gross_ge10_rate_gte": 0.1,
+    "gross_le10_rate_lte": 0.2
+  },
+  "decision": {
+    "if_all_h1_policies_fail": "REJECT_V20_WITHOUT_H2",
+    "if_any_h1_policy_passes": "OPEN_H2_RETROSPECTIVE_REFUTATION_ONLY_FOR_THE_UNCHANGED_PASSING_POLICIES",
+    "no_threshold_feature_score_or_topn_tuning_from_h1": true,
+    "no_rescue_using_2026": true,
+    "production_promotion_from_this_experiment_alone": false
+  },
+  "required_reporting": [
+    "candidate and selected counts",
+    "resolved coverage",
+    "net mean median win rate",
+    "+10 +20 +50 and <=-10 <=-20 rates",
+    "Top1/Top3/Top5 winner-excluded means where sample permits",
+    "monthly and weekly concentration",
+    "symbol concentration",
+    "cost sensitivity",
+    "exact candidate/selection artifact hashes"
+  ],
+  "integrity": {
+    "v12_family_closed_before_this_registration": true,
+    "v20_is_not_a_v12_reweight_or_trigger_subset": true,
+    "year_2026_outcomes_opened_for_v20": false,
+    "production_modified": false
+  }
+}

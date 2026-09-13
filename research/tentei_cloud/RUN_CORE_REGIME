@@ -1,4 +1,5 @@
-trigger: 2026-09-14 reconstructed-core-regime-v1
+trigger: 2026-09-14 reconstructed-core-regime-v2
 purpose: separate Core lane; avoid V12/V14/state-entry overlap
 core_rule: fixed reconstructed 4H SAFE/Core definition only
 regime_policy: previous trading day only; fixed interpretable gates; no outcome-fitted thresholds
+reporting_update: add direct 2026-01-01..2026-08-31 aggregate; no rule change

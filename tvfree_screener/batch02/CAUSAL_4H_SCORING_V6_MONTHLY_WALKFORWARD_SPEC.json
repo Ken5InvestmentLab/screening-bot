@@ -1,0 +1,52 @@
+{
+  "spec_id": "CAUSAL-4H-SCORING-V6-MONTHLY-WALKFORWARD-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V6_ROW_LEVEL_EVALUATION",
+  "role": "RETROSPECTIVE_PRODUCTION_LIKE_WALKFORWARD_DISCOVERY",
+  "integrity": {
+    "2025h2_prior_summaries_seen": true,
+    "h2_can_promote": false,
+    "year_2026_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "unchanged_from_v5": [
+    "same 19 causal 4H/cross-sectional/context features",
+    "same q10/q50/q90 HistGradientBoostingRegressor hyperparameters",
+    "same quantile non-crossing sort",
+    "Core score=q50",
+    "Monster score=q90+min(q10,0)",
+    "same prior-day price/liquidity gates",
+    "same Top1/2/3/5 and 5-session cooldown",
+    "same 0.5% primary cost and comparability gates"
+  ],
+  "only_architecture_change": "monthly expanding causal refit",
+  "monthly_refit_rule": {
+    "at_each_month_start": "fit new AM/PM q10/q50/q90 models",
+    "training_candidate_start": "2025-01-01",
+    "training_candidate_end": "strictly before evaluation month start",
+    "label_maturity": "exit_date strictly before evaluation month start",
+    "parameter_selection": "NONE",
+    "feature_selection": "NONE",
+    "current_month_outcomes_used_for_model": false
+  },
+  "evaluation_periods": {
+    "h1_walkforward": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_walkforward": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "cooldown": {
+    "persists_across_month_boundaries_within_each_evaluation_period": true,
+    "reset_at_start_of_each_named_evaluation_period": true
+  },
+  "runtime_goal": "ordinary CPU Python; no Codex/LLM/runtime market-data dependency",
+  "decision": {
+    "if_retrospective_fail": "REJECT_MONTHLY_V6",
+    "if_retrospective_pass": "KEEP_FOR_PROSPECTIVE_SHADOW_ONLY_NOT_PROMOTION",
+    "no_cadence_or_parameter_tuning_from_h2": true
+  },
+  "production_modified": false
+}

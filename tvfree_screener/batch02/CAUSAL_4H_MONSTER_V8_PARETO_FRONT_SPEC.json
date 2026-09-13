@@ -1,0 +1,66 @@
+{
+  "spec_id": "CAUSAL-4H-MONSTER-V8-PARETO-FRONT-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V8_SELECTION_METRICS",
+  "role": "RETROSPECTIVE_STRUCTURAL_SELECTION_DISCOVERY_ONLY",
+  "integrity": {
+    "prior_2025_results_seen": true,
+    "year_2025_can_promote": false,
+    "year_2026_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "input": "unchanged V6 monthly causal q10/q50/q90 scored rows",
+  "model_changes": "NONE",
+  "selection": {
+    "cohort": "date + bin_name",
+    "objectives": [
+      "maximize predicted q90",
+      "maximize predicted q10"
+    ],
+    "dominance": "A dominates B iff q90_A>=q90_B and q10_A>=q10_B and at least one inequality is strict",
+    "eligible_set": "first nondominated Pareto front only",
+    "rank_within_front": [
+      "q90 descending",
+      "q10 descending",
+      "symbol ascending"
+    ],
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "no_backfill_from_dominated_rows": true,
+    "cooldown": "5 official XTKS sessions per symbol; AM before PM"
+  },
+  "rationale": "remove candidates unambiguously worse on both predicted upside and predicted downside without fitting a scalar risk coefficient or a threshold",
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "gates": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "periods": {
+    "h1_walkforward": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_walkforward": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "decision": {
+    "pass_retrospective": "KEEP_FOR_PROSPECTIVE_SHADOW_ONLY_NOT_PROMOTION",
+    "fail": "REJECT_V8",
+    "no_rule_tuning_from_2025": true
+  },
+  "production_modified": false
+}

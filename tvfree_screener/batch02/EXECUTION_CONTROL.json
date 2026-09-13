@@ -30,7 +30,7 @@
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "13fb02c",
   "last_completed_candidate_pool_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
-  "next_action": "Re-check parallel lane. If not duplicated, preregister and audit V16 prior-history-rank representation: replace V15 volatility log-ratio features with bounded prior20 same-symbol same-bin empirical ranks, keep V12 candidate generation and low-drift features unchanged, and do not open strategy returns unless the frozen drift gate passes.",
+  "next_action": "Before any new event-specific experiment, re-check EVENT_LANE_DISPOSITION_20260914.md, the supervisor 4-lane contract, and latest commits on all active branches. Do not duplicate the active session-impulse continuation experiment. While it remains active, restrict this lane to exact reconciliation/reproducibility or a demonstrably non-overlapping mechanism preregistered before outcomes. Keep 2026 closed.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -231,5 +231,27 @@
     "audit_id": "TENTEI-V15-REGIME-NORMALIZED-DRIFT-20260913-01",
     "decision": "FAIL_REDESIGN_OUTCOME_FREE",
     "report": "tvfree_screener/batch02/reports/tentei_v15_regime_normalized_drift_20260913.md"
+  },
+  "event_lane_state": {
+    "updated_utc": "2026-09-13T15:48:00Z",
+    "supervisor_contract": "research/SUPERVISOR_4LANE_COORDINATION_20260914.md",
+    "disposition": "tvfree_screener/batch02/EVENT_LANE_DISPOSITION_20260914.md",
+    "active_parallel_experiment": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+    "active_parallel_owner": "other event-specific ChatGPT lane",
+    "do_not_duplicate_active_parallel": true,
+    "closed_families": [
+      "V12 Tentei-inspired reversal: within-path H2 degradation",
+      "V17/V18 learned ranking on V12: H1 rejected",
+      "V20 compression-breakout: 2024Q4 discovery rejected",
+      "Monster canonical v2 ALL_WEAK_EARLY: locked 2025 gate failed"
+    ],
+    "last_exact_reconciliation": {
+      "experiment_id": "MONSTER-CANONICAL-V2-ALL-WEAK-EARLY-EXACT-REPLAY-20260914",
+      "report": "tvfree_screener/batch02/reports/monster_canonical_v2_all_exact_replay_20260914.md",
+      "machine_report": "tvfree_screener/batch02/reports/monster_canonical_v2_all_exact_replay_20260914.json",
+      "decision": "LOCKED_2025_FAIL_POLICY_REJECTED"
+    },
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
   }
 }

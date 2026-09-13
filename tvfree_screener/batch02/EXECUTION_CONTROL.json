@@ -1,9 +1,9 @@
 {
-  "last_observed_used_percent": 43,
+  "last_observed_used_percent": 44,
   "budget_pause_latched": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-SUPPORT-SWEEP-20260913-01",
-  "milestone": "M19_SUPPORT_SWEEP_POOL_REPRODUCED_PRE_OUTCOME",
+  "milestone": "M21_SUPPORT_SWEEP_REPORT_JOIN_INVALIDATED",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -12,7 +12,7 @@
   "daily_to_intraday_synthesis_implemented": false,
   "owned_jobs": [],
   "production_modified": false,
-  "last_observed_remaining_percent": 57,
+  "last_observed_remaining_percent": 56,
   "maximum_active_check_interval_seconds": 60,
   "last_completed_experiment": {
     "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
@@ -29,7 +29,7 @@
   "last_completed_candidate_pool_artifact_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "cb37ba0",
-  "next_action": "Commit the support-sweep outcome-free pool receipt and exact-reproduction report. Then evaluate only purge-safe 2022H2 and 2023 labels; stop at 50% weekly usage used.",
+  "next_action": "Commit the report-side one-to-one label-join recovery code and tests, reprocess only the same frozen 2022H2/2023 labels, preserve the invalid report, and document a corrected decision. Do not open 2024+; latch immediately at 50% weekly usage used.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -38,7 +38,7 @@
   "last_completed_discovery_report_sha256": "a0c0103f6c1ccd45d284701770ab6c8c619532c898cc6ea2c39ded5c3db8ae4f",
   "last_completed_feature_freeze_sha256": null,
   "last_completed_validation_report_sha256": "a0c0103f6c1ccd45d284701770ab6c8c619532c898cc6ea2c39ded5c3db8ae4f",
-  "discovery_outcomes_opened": false,
+  "discovery_outcomes_opened": true,
   "validation_outcomes_opened": false,
   "frozen_discovery_feature_names": [
     "close_location",
@@ -48,9 +48,9 @@
   "active_candidate_pool_sha256": "a0b65c1628f5d0383dbc6c1bd5d6ec5077d1057058847ce103977f3435de29ec",
   "active_candidate_pool_receipt_sha256": "62a7e28db55cb797d5cdde5dad36873c7a962432e2bafe10e26cb3b4de5c24c5",
   "active_candidate_pool_reproduced": true,
-  "active_pool_receipt_committed": false,
+  "active_pool_receipt_committed": true,
   "active_pool_reproduction_sha256": "6da19259c717dc999621d454d540d6129513831c55de89dee3a8a37d4b655c10",
-  "active_pool_reproduction_committed": false,
+  "active_pool_reproduction_committed": true,
   "outcome_values_opened_before_freeze": false,
   "previous_completed_experiment": {
     "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
@@ -60,5 +60,7 @@
   },
   "last_completed_feature_names": [
     "six event-conditioned setups; 29 causal features; fixed three-head ridge scoring"
-  ]
+  ],
+  "original_discovery_report_invalidated_sha256": "0385737e936325a68db963114e3746ca43f3e7a8a2ebb3d3cbec1b981bcf14b1",
+  "frozen_selection_sha256": "22878879cecf5cbd7d56112ec4d4a56ec554a456a9c27e938c270b73c6d6cfc0"
 }

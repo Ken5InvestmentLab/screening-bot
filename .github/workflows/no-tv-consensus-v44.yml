@@ -47,7 +47,7 @@ jobs:
         if: always()
         run: |
           if [ -d research_artifacts/v44_consensus_topk_cooldown ]; then
-            find research_artifacts/v44_consensus_topk_cooldown -type f -print0               | sort -z               | xargs -0 sha256sum               > research_artifacts/v44_consensus_topk_cooldown/SHA256SUMS.txt
+            find research_artifacts/v44_consensus_topk_cooldown -type f ! -name SHA256SUMS.txt -print0               | sort -z               | xargs -0 sha256sum               > research_artifacts/v44_consensus_topk_cooldown/SHA256SUMS.txt
           fi
       - name: Upload evidence
         if: always()

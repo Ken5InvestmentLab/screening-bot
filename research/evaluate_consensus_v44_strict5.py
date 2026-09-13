@@ -98,6 +98,33 @@ def attach_returns(sel: pd.DataFrame, mapped: pd.DataFrame) -> pd.DataFrame:
     return x
 
 
+def selection_diagnostics(d: pd.DataFrame) -> dict:
+    if d.empty:
+        return {
+            "selected_rows": 0,
+            "replacement_fraction": None,
+            "replacement_rank_mean": None,
+            "replacement_rank_median": None,
+            "replacement_rank_max": None,
+        }
+    r = pd.to_numeric(d.get("replacement_rank"), errors="coerce").dropna()
+    if r.empty:
+        return {
+            "selected_rows": int(len(d)),
+            "replacement_fraction": None,
+            "replacement_rank_mean": None,
+            "replacement_rank_median": None,
+            "replacement_rank_max": None,
+        }
+    return {
+        "selected_rows": int(len(d)),
+        "replacement_fraction": float(np.mean(r.to_numpy(float) > 1)),
+        "replacement_rank_mean": float(r.mean()),
+        "replacement_rank_median": float(r.median()),
+        "replacement_rank_max": int(r.max()),
+    }
+
+
 def stats(d: pd.DataFrame) -> dict:
     x = d.copy()
     x["ret_nextopen_5bd"] = pd.to_numeric(x["ret_nextopen_5bd"], errors="coerce")
@@ -215,6 +242,11 @@ def main() -> None:
         "h2_outcome_opened": True,
         "baseline_h2": base_stats,
         "strict5_h2": strict_stats,
+        "baseline_h2_selection": selection_diagnostics(baseline_h2),
+        "strict5_h2_selection": selection_diagnostics(strict_h2),
+        "h2_group_fill_rate_vs_baseline": (
+            float(len(strict_h2) / len(baseline_h2)) if len(baseline_h2) else None
+        ),
         "h2_gate": gate,
         "decision": (
             "STRICT_NO_OVERLAP_PASS"

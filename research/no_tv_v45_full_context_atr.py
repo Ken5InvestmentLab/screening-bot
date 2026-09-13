@@ -9,6 +9,8 @@ import pandas as pd
 
 import no_tv_v43_2025_uncapped as v43
 
+HISTORY_START = "2024-10-01"
+HISTORY_END = "2024-12-31"
 REF_START = "2025-01-06"
 REF_END = "2025-06-30"
 OLD_SELECTED_CONTEXT_CAP = 2.8640659721217943
@@ -32,9 +34,9 @@ def quantiles(x: pd.Series) -> dict:
     }
 
 
-def build_contexts(data: pd.DataFrame) -> pd.DataFrame:
+def build_contexts(data: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
     x = data.loc[
-        pd.to_datetime(data["date"]).between(REF_START, REF_END),
+        pd.to_datetime(data["date"]).between(start, end),
         ["date", "session", "market_median_atr", "market_candidate_count"],
     ].copy()
     x["date"] = pd.to_datetime(x["date"]).dt.strftime("%Y-%m-%d")
@@ -64,7 +66,8 @@ def main() -> None:
     a = ap.parse_args()
 
     data, prefilter, fetch = v43.build_dataset(a.frozen_daily, a.max_workers)
-    contexts = build_contexts(data)
+    history_contexts = build_contexts(data, HISTORY_START, HISTORY_END)
+    contexts = build_contexts(data, REF_START, REF_END)
 
     if int(fetch.get("requested_symbols", -1)) != EXPECTED_REQUESTED_SYMBOLS:
         raise RuntimeError(
@@ -92,20 +95,32 @@ def main() -> None:
         g = contexts[contexts["month"] <= m]
         expanding[str(m)] = quantiles(g["market_median_atr"])
 
+    history_overall = quantiles(history_contexts["market_median_atr"])
     overall = quantiles(contexts["market_median_atr"])
     full_q90 = float(overall["q90"])
 
     result = {
         "audit_id": "CONSENSUS-V45-FULL-CONTEXT-ATR-REFERENCE-20260914",
         "scope": "outcome-free distribution audit; one full eligible date/session context = one vote",
+        "initial_history_period": [HISTORY_START, HISTORY_END],
         "reference_period": [REF_START, REF_END],
+        "reference_role": "pre-deployment calibration/reference distribution; not literal model-training rows",
         "prefilter": prefilter,
         "hourly_fetch": fetch,
         "coverage_fraction_vs_v43_candidate_symbols": coverage,
-        "context_rows": int(len(contexts)),
-        "unique_dates": int(contexts["date"].nunique()),
-        "sessions": sorted(int(v) for v in contexts["session"].unique()),
-        "full_context_atr": overall,
+        "initial_history": {
+            "context_rows": int(len(history_contexts)),
+            "unique_dates": int(history_contexts["date"].nunique()),
+            "sessions": sorted(int(v) for v in history_contexts["session"].unique()),
+            "full_context_atr": history_overall,
+            "candidate_count": quantiles(history_contexts["market_candidate_count"]),
+        },
+        "calibration": {
+            "context_rows": int(len(contexts)),
+            "unique_dates": int(contexts["date"].nunique()),
+            "sessions": sorted(int(v) for v in contexts["session"].unique()),
+            "full_context_atr": overall,
+        },
         "monthly": monthly,
         "expanding_by_month": expanding,
         "candidate_count": quantiles(contexts["market_candidate_count"]),
@@ -124,6 +139,7 @@ def main() -> None:
 
     out = Path(a.output_dir)
     out.mkdir(parents=True, exist_ok=True)
+    history_contexts.to_csv(out / "v45_initial_history_full_context_atr.csv", index=False)
     contexts.drop(columns=["month"]).to_csv(out / "v45_full_context_atr.csv", index=False)
     (out / "v45_full_context_atr.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2, default=str),

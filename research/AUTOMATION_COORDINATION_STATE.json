@@ -1,7 +1,7 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T03:26:00+09:00",
+  "updated_at_jst": "2026-09-14T04:14:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -10,9 +10,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "3a1ea299e42a51753869f2a3ec564a7e6d041f9e",
-      "last_processed_sha": "3a1ea299e42a51753869f2a3ec564a7e6d041f9e",
-      "last_processed_note": "Cross-lane :48 audited guarded prospective-shadow append verification. Six focused integrity/idempotency cases passed; no strategy outcomes, thresholds, production writes, or V20 logic changed."
+      "last_seen_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
+      "last_processed_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
+      "last_processed_note": "Canonical :12 audited V20 H1 run 34774070956. Universe + all four Yahoo fetch shards succeeded, but fail-closed coverage job failed before H1 evaluation and the original workflow skipped coverage artifact upload. H1 outcomes remain unopened. Patched research-only workflow so coverage receipt uploads with if: always() on future/diagnostic runs; no strategy logic, thresholds, production paths, or 2026 outcomes changed."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -107,9 +107,17 @@
       "canonical_h1_universe_symbols": 1810,
       "canonical_h1_universe_sessions": 82,
       "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
-      "h1_status": "READY_TO_LAUNCH_BY_CANONICAL_OWNER",
-      "launch_rule": "Previous Yahoo-heavy blockers 34767664140 and 34766353425 are both no longer in_progress. :12 owner may trigger exactly once after confirming no V20 H1 run already exists and no new conflicting heavy fetch is active.",
+      "h1_run": 34774070956,
+      "h1_status": "COVERAGE_FAILED_DO_NOT_INTERPRET",
+      "h1_head_sha": "dcf89beb06128ba688a349850767fecb493f9add",
+      "raw_fetch_shards": "4/4 completed success",
+      "coverage_job": "failed in Fail-closed raw coverage receipt",
+      "coverage_receipt_uploaded": false,
+      "performance_interpreted": false,
+      "diagnostic_patch_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
+      "diagnostic_patch": "coverage artifact upload now uses if: always() so future/diagnostic fail-closed runs preserve the receipt",
       "raw_acceptance": "exact frozen 1810 symbol set + zero final failures + temporal active-pair completeness + zero duplicate symbol/timestamp + raw dates within frozen window before opening H1 outcomes",
+      "next_rule": "Do not open H1 outcomes or H2. Recover/produce the raw coverage receipt first and identify which frozen acceptance condition failed; do not retune V20 to pass coverage.",
       "year_2026_outcomes_opened": false
     }
   },

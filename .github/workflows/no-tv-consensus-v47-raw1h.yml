@@ -1,0 +1,72 @@
+name: Consensus V47 Raw1H Freeze
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_RAW1H_FETCH"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: consensus-v47-raw1h-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned dependencies
+        run: pip install pandas==2.3.3 requests==2.34.2
+      - name: Read daily materializer run id
+        id: meta
+        shell: bash
+        run: |
+          RUN_ID="$(awk -F= '/^daily_run_id=/{print $2}' research/RUN_V47_RAW1H_FETCH | tr -d '[:space:]')"
+          if [ -z "$RUN_ID" ]; then
+            echo "missing daily_run_id" >&2
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+      - name: Download accepted daily materializer artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-${{ steps.meta.outputs.run_id }}
+          path: daily
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.run_id }}
+      - name: Compile and test shard fetcher
+        run: |
+          python -m py_compile             research/no_tv_v47_intraday_fetch_shard.py             research/test_no_tv_v47_intraday_fetch_shard.py
+          python research/test_no_tv_v47_intraday_fetch_shard.py
+      - name: Fetch raw 1H shard
+        run: |
+          python research/no_tv_v47_intraday_fetch_shard.py             --symbols-file daily/v47_required_intraday_nocap.txt             --shard-index ${{ matrix.shard }}             --shard-count 12             --output-dir research_artifacts/v47_raw1h_shard_${{ matrix.shard }}
+      - name: Hash shard
+        run: |
+          cd research_artifacts/v47_raw1h_shard_${{ matrix.shard }}
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0             | sort -z             | xargs -0 sha256sum > SHA256SUMS.txt
+      - name: Upload shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-raw1h-${{ github.run_id }}-shard-${{ matrix.shard }}
+          path: research_artifacts/v47_raw1h_shard_${{ matrix.shard }}/**
+          if-no-files-found: warn
+          retention-days: 90

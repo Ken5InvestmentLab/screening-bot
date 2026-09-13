@@ -1,7 +1,7 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T02:05:00+09:00",
+  "updated_at_jst": "2026-09-14T02:12:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -10,9 +10,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "a7207a7860f42b2666b2f4b740837f87164cdd19",
-      "last_processed_sha": "a7207a7860f42b2666b2f4b740837f87164cdd19",
-      "last_processed_note": "V20 H1 pre-execution audit complete. Readiness receipt and ledger updated. Raw acceptance now requires exact 1810 symbols, zero failures, every canonical-daily active frozen-universe symbol/date present in raw 1H, zero duplicate symbol/timestamps, and in-window dates. Query-mode split scaling is compatible only because frozen V20 intraday features are scale-invariant; absolute gates/labels remain canonical daily. No H1 outcome opened."
+      "last_seen_sha": "a77936932d0dbb41bf8ecc8809f28e41bc383075",
+      "last_processed_sha": "a77936932d0dbb41bf8ecc8809f28e41bc383075",
+      "last_processed_note": "Canonical :12 audited sync commit a7793693. It only propagates the outcome-free quantified PIT split-leakage lower bound into the supervisor contract: at least 71/112 fixed-min95 rows and 67/101 ATR-gated rows were admitted by future-split-adjusted prior prices despite nominal prior close > JPY1000. No V20 outcome or threshold was opened or changed. V20 H1 remains READY_BUT_BLOCKED because both Consensus V44 Yahoo-heavy runs 34767664140 and 34766353425 are still in_progress; H1 fetch was not triggered."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -45,8 +45,8 @@
       "authoritative": true,
       "superseded_runs": [34765427789, 34766353425],
       "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation.",
-      "last_checked_at_jst": "2026-09-14T02:03:00+09:00",
-      "last_checked_job_state": "authoritative 34767664140 remains in_progress at Run V44 Top-K cooldown replacement audit; setup/download/compile succeeded and hash/upload are pending. Superseded 34766353425 also remains in_progress. No acceptance, performance interpretation, V20 H1 fetch, or V46 Yahoo-heavy fetch while these blockers run.",
+      "last_checked_at_jst": "2026-09-14T02:12:00+09:00",
+      "last_checked_job_state": "authoritative 34767664140 and superseded 34766353425 both remain in_progress. No acceptance, performance interpretation, V20 H1 fetch, or V46 Yahoo-heavy fetch while these blockers run.",
       "acceptance_guard": {
         "path": "research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json",
         "baseline_reproduction_pass_required": true,

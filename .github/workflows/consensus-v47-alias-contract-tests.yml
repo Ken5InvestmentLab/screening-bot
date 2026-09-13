@@ -1,0 +1,33 @@
+name: Consensus V47 Identity Alias Contract Tests
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/propose_v47_identity_aliases.py"
+      - "research/test_propose_v47_identity_aliases.py"
+      - "research/consensus_v47_identity_alias_shortlist_spec.json"
+      - ".github/workflows/consensus-v47-alias-contract-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install pandas==2.3.3
+      - name: Compile and run
+        run: |
+          python -m py_compile research/propose_v47_identity_aliases.py research/test_propose_v47_identity_aliases.py
+          python research/test_propose_v47_identity_aliases.py

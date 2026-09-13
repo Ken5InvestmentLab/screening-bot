@@ -40,6 +40,7 @@ def load_daily(frozen: Path, restored: Path) -> pd.DataFrame:
     g = x.groupby("symbol", sort=False)
     x["next_open"] = g["open"].shift(-1)
     x["d5_close"] = g["close"].shift(-5)
+    x["exit_date_5bd"] = g["date"].shift(-5)
     return x
 
 
@@ -145,6 +146,7 @@ def build_symbol_rows(
 
         nx=daymap.loc[dt,"next_open"]
         d5=daymap.loc[dt,"d5_close"]
+        exit_date=daymap.loc[dt,"exit_date_5bd"]
         canonical=(
             float(d5/nx-1)
             if pd.notna(nx) and pd.notna(d5) and float(nx)>0
@@ -172,6 +174,7 @@ def build_symbol_rows(
             "session_vol_ratio20":svr,
             "canonical_ret_5bd":canonical,
             "legacy_ret_5bd":legacy,
+            "exit_date_5bd":str(exit_date) if pd.notna(exit_date) else "",
             **tf,
         }
         rows.append(rec)
@@ -214,7 +217,7 @@ def main() -> None:
     nocap_pairs,cap_pairs=load_candidate_sets(a.daily_candidates)
 
     daily_by_symbol={
-        str(sym):g[["date","open","high","low","close","volume","next_open","d5_close"]]
+        str(sym):g[["date","open","high","low","close","volume","next_open","d5_close","exit_date_5bd"]]
         .sort_values("date")
         .reset_index(drop=True)
         for sym,g in daily.groupby("symbol",sort=False)
@@ -250,7 +253,7 @@ def main() -> None:
     mandatory=[
         "date","session","symbol","entry_adjusted","entry_pit",
         "future_split_factor","session_volume",
-        "canonical_ret_5bd","legacy_ret_5bd",
+        "canonical_ret_5bd","legacy_ret_5bd","exit_date_5bd",
         *feature_cols,
     ]
     missing=[x for x in mandatory if x not in nocap.columns]

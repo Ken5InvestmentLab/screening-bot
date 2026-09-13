@@ -175,6 +175,11 @@ def main():
     raw=load(a.inputs)
     core=make_core_pool(raw)
     x=attach_next_bar(core,raw)
+    matched_rate=float(x["matched"].mean()) if len(x) else 0.0
+    if matched_rate < 0.90:
+        raise RuntimeError(
+            f"executable-entry coverage guard failed: matched_rate={matched_rate:.4f} < 0.90"
+        )
 
     coverage=[]
     compare=[]

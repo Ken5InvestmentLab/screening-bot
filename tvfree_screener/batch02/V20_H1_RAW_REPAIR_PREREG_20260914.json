@@ -1,0 +1,71 @@
+{
+  "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "contract": "V20_H1_RAW_REPAIR_PREREG_20260914",
+  "status": "FROZEN_BEFORE_H1_OUTCOME_ACCESS",
+  "purpose": "Repair only the fail-closed raw Yahoo 1H coverage defects from run 34774070956 without changing the frozen V20 signal, ranker, TopN gates, canonical daily eligibility, label endpoint, or opening any H1/H2 outcome.",
+  "frozen_h1_universe": {
+    "symbols": 1810,
+    "sessions": 82,
+    "sorted_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
+    "window_start": "2025-01-06",
+    "window_end": "2025-06-30"
+  },
+  "source_failure_receipt": {
+    "run_id": 34774070956,
+    "expected_symbols": 1810,
+    "observed_symbols": 1806,
+    "missing_symbols": ["463A", "464A", "543A", "547A"],
+    "fetch_failure_count": 1,
+    "missing_active_symbol_dates": 734,
+    "missing_dates_attributed_to_four_future_successor_codes": 476,
+    "remaining_sparse_missing_dates": 258,
+    "symbols_with_any_missing_active_date": 176,
+    "performance_interpreted": false
+  },
+  "repair_rules": {
+    "outcome_blind": true,
+    "allowed_inputs": [
+      "frozen 1810-symbol universe and canonical daily active symbol/date requirements",
+      "raw Yahoo 1H fetch status/coverage metadata",
+      "public point-in-time symbol identity/listing/code-change evidence",
+      "raw Yahoo 1H bars fetched without strategy-return access"
+    ],
+    "forbidden_inputs": [
+      "V20 H1 strategy returns",
+      "H2 outcomes",
+      "2026 strategy outcomes",
+      "return-informed alias choice",
+      "return-informed refetch prioritization"
+    ],
+    "identity_repair": {
+      "rule": "A frozen output symbol may query a predecessor/alias only after the mapping is independently verified from point-in-time identity/listing/code-change evidence. Query identity and output identity must be recorded separately. Never infer an alias from price/return similarity.",
+      "current_unresolved_symbols": ["463A", "464A", "543A", "547A"],
+      "no_silent_drop": true
+    },
+    "sparse_refetch": {
+      "scope": "Only canonical-active frozen-universe symbol/date pairs missing from the original raw panel after approved identity repair.",
+      "method": "Targeted Yahoo 1H refetch with bounded overlap around the missing date; merge only raw source bars belonging to the frozen H1 window.",
+      "no_interpolation": true,
+      "no_bar_synthesis": true,
+      "no_forward_fill": true
+    },
+    "merge_identity": "All repaired rows must be normalized back to the original frozen V20 output symbol; retain query_symbol/source_identity audit fields where applicable.",
+    "split_semantics": "Yahoo explicit-period split scaling remains allowed only for the already-frozen scale-invariant V20 intraday ratios/quantiles. No absolute intraday-price feature may be introduced. Absolute prior-day gate and canonical 5BD label remain canonical-daily only.",
+    "daily_pit_volume_warning": "Do not modify V20's already-frozen canonical daily gate inside this repair. The cross-lane PIT daily-volume issue is a promotion-data warning and must be handled under a separately versioned contract rather than silently altering this frozen H1 experiment."
+  },
+  "unchanged_acceptance_gate": {
+    "exact_frozen_symbol_set": 1810,
+    "zero_final_fetch_failures": true,
+    "all_canonical_active_symbol_dates_have_raw_1h": true,
+    "zero_duplicate_symbol_timestamp": true,
+    "raw_dates_within_frozen_window_only": true,
+    "on_any_failure": "STOP_BEFORE_H1_OUTCOME_INTERPRETATION"
+  },
+  "post_acceptance_only": {
+    "evaluate_frozen_topn": [1, 2, 3, 5],
+    "if_all_fail": "REJECT_WITH_H2_UNOPENED",
+    "if_any_pass": "Only passing policy may proceed to a separately frozen H2 contract using the same TopN.",
+    "h2_open_now": false
+  },
+  "production_changes": false
+}

@@ -1,0 +1,76 @@
+{
+  "experiment_id": "MONSTER-CANONICAL-V2-ALL-WEAK-EARLY-EXACT-REPLAY-20260914",
+  "status": "LOCKED_2025_FAIL_POLICY_REJECTED",
+  "parent_spec": "tvfree_screener/batch01/reports/monster_canonical_v2_all_policy_spec.json",
+  "reproducer": "tvfree_screener/batch02/replay_monster_canonical_v2_all.py",
+  "inputs": {
+    "tail_sha256": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+    "daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68"
+  },
+  "pool_receipt": {
+    "2023": {
+      "pool_rows": 69,
+      "pool_dates": 51,
+      "selected_after_cooldown": 55,
+      "resolved_after_year_purge": 54
+    },
+    "2024": {
+      "pool_rows": 138,
+      "pool_dates": 77,
+      "selected_after_cooldown": 109,
+      "resolved_after_year_purge": 105
+    },
+    "2025": {
+      "pool_rows": 67,
+      "pool_dates": 42,
+      "selected_after_cooldown": 54,
+      "resolved_after_year_purge": 54
+    }
+  },
+  "metrics_cost_0_005": {
+    "2023": {
+      "mean": 0.014760209466724718,
+      "median": -0.015133287764866717,
+      "win_rate": 0.4074074074074074,
+      "plus20_rate": 0.18518518518518517,
+      "minus10_rate": 0.37037037037037035,
+      "mean_excluding_top1_winner": -0.004943171654035109,
+      "mean_excluding_top3_winners": -0.03270005304206258
+    },
+    "2024": {
+      "mean": 0.016831304710156463,
+      "median": -0.03586419753086422,
+      "win_rate": 0.42857142857142855,
+      "plus20_rate": 0.1523809523809524,
+      "minus10_rate": 0.3142857142857143,
+      "mean_excluding_top1_winner": 0.005689725375104543,
+      "mean_excluding_top3_winners": -0.013370110098708752
+    },
+    "2025": {
+      "mean": 0.02189836227872866,
+      "median": -0.075314775853698,
+      "win_rate": 0.37037037037037035,
+      "plus20_rate": 0.12962962962962962,
+      "minus10_rate": 0.35185185185185186,
+      "mean_excluding_top1_winner": -0.0021224233386538146,
+      "mean_excluding_top3_winners": -0.029017584148918796
+    }
+  },
+  "locked_2025_gate": {
+    "resolved_n_min_30": true,
+    "mean_gt_0": true,
+    "plus20_rate_min_0_10": true,
+    "minus10_rate_max_0_40": true,
+    "mean_excluding_top1_winner_gt_0": false,
+    "all_pass": false
+  },
+  "cost_sensitivity_note": {
+    "cost_0_top1_excluded_mean_2025": 0.00287757666134619,
+    "frozen_decision_cost": 0.005,
+    "decision": "DO_NOT_RELAX_POST_HOC"
+  },
+  "evidence_role": "retrospective exact replay; not prospective/OOS",
+  "year_2026_outcomes_opened": false,
+  "production_modified": false
+}

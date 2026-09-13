@@ -220,3 +220,18 @@ If cooldown5 fails DEV eligibility, do not open its H2 outcome. If it passes, ev
 Failure interpretation is also frozen in `CONSENSUS_V44_FAILURE_DISPOSITION_2026-09-14.md`:
 - baseline/data receipt failure = DATA_REPRO_FAILURE, not strategy evidence;
 - only after baseline reproduction can return-policy failures be called STRATEGY_FAIL.
+
+
+## V45 contract verification
+- workflow: Consensus V44 Strict Contract Tests (extended to V45 helpers)
+- successful run: **34768430860**
+- conclusion: SUCCESS
+- prior failed helper-test runs: 34768326827 (missing lightweight dependency due eager import), 34768383325 (helper refactor recursion); both were test-infrastructure failures and were fixed before any V45 full-data run.
+- verified:
+  - one distinct date/session context = one vote;
+  - internally inconsistent market context fails closed;
+  - ATR q90 is unweighted by candidate count;
+  - requested-universe drift fails;
+  - <95% V43 candidate-symbol coverage fails.
+
+V45 full Yahoo/data audit remains untriggered until authoritative V44 finishes so it does not add concurrent historical Yahoo load.

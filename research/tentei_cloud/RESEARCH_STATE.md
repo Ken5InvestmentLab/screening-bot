@@ -587,3 +587,49 @@ Detailed records:
 - `CORE_OPERATIONAL_LOAD_FINDINGS.md`
 - `CORE_CAPACITY_FINDINGS.md`
 - `CORE_CLUSTER_RISK_FINDINGS.md`
+
+
+### Current-system benchmark and missing long-horizon role
+
+Current benchmark-gap run `34787973886`, artifact `10326869014`.
+
+Saved report snapshot generated 2026-09-11 14:14:31 JST:
+- Stable★6: 5BD/+10%, n56, mean +6.1%, win 55.4%.
+- Sniper: 5BD positive-return target, n40, mean +2.4%, win 65.8%.
+- Mega5: 5BD/+20%, n10, mean +14.5%.
+- Mega40 Deep: 40BD/+30%, n26, mean +17.6%.
+- Mega40 Wick: 40BD/+50%, n8, mean +10.6%.
+
+On Stable's parsed confirmed-date window 2026-03-05..2026-09-03:
+- Stable★6 n56 mean +6.06%, >=20% 14.29%, <=-10% 12.50%, top-5-removed mean -0.31%.
+- fixed Core executable-next-open n88 mean +1.68%, >=20% 2.27%, <=-10% 1.14%, top-5-removed mean +0.55%.
+
+Interpretation: Core supplies a much more robust floor but not Stable's positive tail. Monster must supply the missing upside. With Core fixed at n88/+1.68%, a no-overlap Monster set of roughly 43 signals would need about +15.0% mean to make the simple union reach Stable's +6.06% headline mean. The already-recorded descriptive weak+early Monster n43/+14.56% is the right order of magnitude but is not a validated common-window union.
+
+See `CURRENT_SYSTEM_BENCHMARK_GAP_20260914.md`.
+
+Long-horizon role run `34788118628`, artifact `10327581179`.
+
+Fixed current Cloud lanes do not cover Mega40:
+- Core 2026 matured 40BD: n103 mean +2.88%, >=30% 8.74%.
+- learned Monster Watch 2026 matured: n42 mean -5.29%.
+- learned Monster Prime 2026 matured: n11 mean -0.40%.
+
+Decision: a dedicated long-horizon lane is required. See `LONG_HORIZON_ROLE_GAP_20260914.md`.
+
+### Dedicated long-horizon direct-semantic baseline — rejected
+
+Run `34788285067`, artifact `10327507225`, artifact SHA-256 `c7b49e043865a3e4677d07310334975eb66c955f386e8bd26c274b0378b67321`.
+
+Published Mega40 Deep/Wick semantics were applied directly to the TV-free daily universe, without a TradingView/BOTTOM entrance. Formulas and CAP1000/NO_PRICE_CAP variants were frozen before opening results.
+
+Executable next-day-open:
+- CAP1000 Deep DEV 2025H1: n561 +18.47%, but VALID 2025H2 n289 **-0.44%**, 2026 matured n475 **-0.86%**.
+- CAP1000 Wick DEV n101 +10.48%, VALID n79 +3.03% with median -8.0% / top5-removed -7.16%, and 2026 n111 **-1.00%**.
+- removing the price cap worsened the main out-of-period blocks: Deep VALID -2.04%, 2026 -1.65%; Wick VALID -0.03%, 2026 -1.84%.
+
+Decision: **reject direct daily application of the four Mega40 overlay conditions**. Event timing is essential. Do not threshold-tune these opened results.
+
+The parallel canonical/V20 lane owns TV-free event reconstruction/PIT/source contracts. This branch will consume a frozen event stream for long-horizon overlays if one exists, not build a competing event detector.
+
+See `LONG_DAILY_BASELINE_FINDINGS.md`.

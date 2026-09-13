@@ -1,0 +1,3 @@
+trigger: 2026-09-14 current-benchmark-gap-v1
+purpose: freeze current Stable/Sniper/Mega benchmark snapshot and compare Stable S6 vs fixed Core on Stable confirmed-date window
+rules: no tuning, descriptive product-level comparison only

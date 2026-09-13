@@ -1,0 +1,5 @@
+trigger: 2026-09-14 event-long-overlay-v1
+purpose: consume frozen canonical V7 annual detections as event entrance for fixed Mega40 Deep/Wick 40BD overlays
+event_blob_sha: 06bf7736cdedf16f6c50f4e4ba0d715394c31588
+event_logic_reimplementation: false
+overlay_threshold_sweep: none

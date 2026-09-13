@@ -1,0 +1,35 @@
+name: Consensus V47 DEV Evaluator Contract Tests
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/no_tv_v47_dev_price_policy.py"
+      - "research/test_no_tv_v47_dev_price_policy.py"
+      - ".github/workflows/consensus-v47-dev-contract-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install frozen-model dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 requests==2.34.2 scikit-learn==1.9.1 scipy==1.18.1
+      - name: Compile
+        run: |
+          python -m py_compile             research/no_tv_v47_dev_price_policy.py             research/test_no_tv_v47_dev_price_policy.py             research/select_consensus_v47_price_policy.py
+      - name: Run contract
+        env:
+          PYTHONPATH: research
+        run: python research/test_no_tv_v47_dev_price_policy.py

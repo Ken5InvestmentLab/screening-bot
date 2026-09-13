@@ -1,12 +1,12 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T08:03:00+09:00",
+  "updated_at_jst": "2026-09-14T08:09:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Supervisor processed all three branches beyond the 07:48 state. Canonical closed the legacy prospective-shadow CLI direct-ingest bypass without changing V20. Core completed benchmark/long-horizon diagnostics and rejected direct daily Mega40 semantics; this 40BD diagnostic is not a canonical 5BD replacement candidate. Consensus exposed additional PIT identity/volume data-contract issues; v3/v4 daily runs were cancelled/superseded. The alias shortlist synthetic CI fixture was corrected without changing its frozen heuristic and rerun 34788435072 passed; the corrected PIT daily-volume semantics contract also passed on run 34788439332. No strategy outcome gate was bypassed and production paths remain untouched."
+    "note": "Canonical/Event worker processed the one unprocessed supervisor-only canonical SHA and froze an outcome-blind V20 H1 raw-repair contract at 85cfb6a8. No V20 performance/H2 was opened. The repair is limited to independently verified predecessor/query aliases plus targeted refetch of missing canonical-active symbol/date pairs, preserving the exact frozen 1,810 output-symbol universe and unchanged acceptance verifier. Other lane conclusions remain unchanged and production paths remain untouched."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "0ea767fa1e72f022c0e0003db1b96ec027beb02e",
-      "last_processed_sha": "0ea767fa1e72f022c0e0003db1b96ec027beb02e",
-      "last_processed_note": "Processed two commits after c9243484. Shadow/Data documented and tested a verified-only CLI ingest boundary: immutable freeze hash, admission, receipt replay and verified_append are required; focused logical verification 5/5 PASS. This does not authorize real shadow launch and does not alter V20. V20 H1 remains coverage-failed with outcomes/H2 unopened pending outcome-blind raw repair."
+      "last_seen_sha": "85cfb6a8fc39c1c56201060ee725abcd26fb0fac",
+      "last_processed_sha": "85cfb6a8fc39c1c56201060ee725abcd26fb0fac",
+      "last_processed_note": "Processed the single supervisor-contract commit after 0ea767fa, then advanced V20 without opening outcomes by freezing tvfree_screener/batch02/V20_H1_RAW_REPAIR_PREREG_20260914.json. Repair may only use independently verified predecessor/query identities and targeted Yahoo refetch of missing canonical-active symbol/date pairs; no interpolation/synthesis/silent drop, output identity remains the exact frozen 1,810-symbol set, and the original raw acceptance verifier remains unchanged. H1/H2 outcomes remain unopened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -66,8 +66,10 @@
         "symbols_with_any_missing_active_date": 176,
         "point_in_time_symbol_identity_mismatch": true
       },
+      "raw_repair_preregister_commit": "85cfb6a8fc39c1c56201060ee725abcd26fb0fac",
+      "raw_repair_preregister": "tvfree_screener/batch02/V20_H1_RAW_REPAIR_PREREG_20260914.json",
       "performance_interpreted": false,
-      "next_rule": "Do not open H1 outcomes or H2. Implement only the preregistered outcome-blind raw repair, preserve exact frozen 1810 output symbols, and rerun the unchanged raw acceptance verifier."
+      "next_rule": "Implement the frozen outcome-blind repair: verify predecessor/query identities independently, targeted-refetch only missing canonical-active symbol/date pairs, normalize repaired rows back to the exact frozen 1,810 output symbols, then rerun the unchanged raw acceptance verifier. Any acceptance failure stops before H1 outcome interpretation; no V20 retune."
     },
     "prospective_shadow_data_integrity": {
       "status": "CLI_DIRECT_INGEST_BYPASS_CLOSED",
@@ -125,7 +127,7 @@
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 raw coverage repair not yet accepted: verified predecessor aliases plus 258 sparse missing active symbol/dates remain",
+      "V20 raw coverage repair not yet accepted: frozen repair contract now exists, but verified predecessor/query identities plus 258 sparse missing active symbol/dates still require repair and unchanged acceptance rerun",
       "Consensus V47 authoritative daily PIT materialization has not passed yet; v3/v4 were cancelled/superseded even though corrected identity/volume contracts now pass",
       "No currently passing canonical 5BD Core replacement candidate"
     ]

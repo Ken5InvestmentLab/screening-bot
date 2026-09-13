@@ -1,5 +1,6 @@
 import unittest
 
+from tvfree_screener.batch02.prospective_shadow_append_guard import compare_append_only_snapshots
 from tvfree_screener.batch02.prospective_shadow_evidence_chain_audit import audit_evidence_chain
 
 
@@ -11,7 +12,7 @@ def base():
         "model_spec_sha256": "b" * 64,
     }
     continuity = {"decision": "CONTINUE_SAME_FREEZE"}
-    append_guard = {"ok": True}
+    append_guard = compare_append_only_snapshots(["a"], ["a", "b"])
     maturity = {
         "mature": False,
         "counts": {"total_rows": 50, "resolved_rows": 40},
@@ -49,7 +50,17 @@ class EvidenceChainAuditTests(unittest.TestCase):
 
     def test_append_only_failure_blocks(self):
         args = list(base())
-        args[2]["ok"] = False
+        args[2] = compare_append_only_snapshots(["a", "b"], ["a"])
+        self.assertFalse(audit_evidence_chain(*args)["ok"])
+
+    def test_append_decision_contract_is_required(self):
+        args = list(base())
+        args[2]["decision"] = "OTHER"
+        self.assertFalse(audit_evidence_chain(*args)["ok"])
+
+    def test_legacy_mock_ok_flag_does_not_bypass_real_contract(self):
+        args = list(base())
+        args[2] = {"ok": True}
         self.assertFalse(audit_evidence_chain(*args)["ok"])
 
     def test_report_tuning_flag_blocks(self):

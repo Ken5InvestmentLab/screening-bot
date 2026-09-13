@@ -23,12 +23,11 @@ The audit composes the already-separated shadow safeguards into one read-only ev
 
 The audit never uses return magnitudes to decide whether the evidence chain is valid and never authorizes promotion.
 
-## Verification
+## Initial verification
 
 Local equivalent unit execution: **8/8 PASS**.
 
 Covered failures:
-
 - immature evidence when maturity is required;
 - freeze partition mismatch;
 - maturity/report count mismatch;
@@ -38,12 +37,25 @@ Covered failures:
 - malformed model-spec SHA;
 - valid pre-maturity evidence chain when maturity is not required.
 
+## Contract reconciliation — 2026-09-14
+
+A follow-up wiring audit found a real producer/consumer schema mismatch: `prospective_shadow_append_guard.py` emits `append_only_valid` plus decision `APPEND_ONLY_OK`, while the evidence-chain audit was reading a synthetic `ok` flag. The unit fixture had reproduced the synthetic field instead of consuming the real append-guard output, so a valid real guard result would have been stopped incorrectly.
+
+Fixed:
+- evidence-chain audit now requires the real fields `append_only_valid is true` and `decision == APPEND_ONLY_OK`;
+- the CLI now exits non-zero when the composed evidence chain is invalid, so it can act as a blocking preflight rather than a report-only warning;
+- tests now create append-guard input through `compare_append_only_snapshots()` itself;
+- a legacy `{\"ok\": true}` mock is explicitly rejected;
+- a mismatched append decision is explicitly rejected.
+
+Direct contract replay passed the valid real-output path and blocked historical truncation, legacy synthetic `ok`, and decision mismatch. No model outcomes or return magnitudes were used.
+
 ## Concurrency / lane isolation
 
-Before this step, the parallel research lane had moved beyond V20 and later recorded an exact Monster-v2 locked-replay failure. This shadow-infrastructure lane did not edit or evaluate V17/V20/Monster model logic or outcomes.
+The parallel Event experiment remains separately owned. This Shadow/Data step did not edit or evaluate active Event logic or outcomes.
 
 ## Operational meaning
 
-A future frozen candidate can now be reviewed through a single provenance gate before any performance interpretation. If identity, continuity, append-only history, partitioning, or counts disagree, the decision is `STOP_EVIDENCE_REVIEW` rather than silently continuing the same evidence series.
+A future frozen candidate can now be reviewed through a provenance gate that consumes the actual append-guard contract. If identity, continuity, append-only history, partitioning, counts, or the append decision disagree, the decision is `STOP_EVIDENCE_REVIEW` and the CLI returns failure rather than silently continuing.
 
 Production modified: **false**.

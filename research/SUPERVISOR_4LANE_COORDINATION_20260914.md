@@ -34,7 +34,7 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
    - Even at 0% cost, 2025H2 median is -0.245%, win 45.71%, Top1-ex -0.200% and Top3-ex -0.374%. Therefore the weakness is not just the cost assumption.
    - Decision: **REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE** under the canonical endpoint. Do not use the stronger 2026 report-only block to rescue or retune it.
    - Already rejected pruning paths remain closed: broad-market hard gates, simple local single-feature hard gates, and positive peer-momentum hard gates.
-   - `CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json` is a genuinely new, outcome-unopened Core family and may proceed only under its frozen contract; it must not inherit post-hoc retuning from the rejected fixed Core.
+   - `CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json` has now been evaluated correctly under the frozen canonical daily context and is **REJECTED at preconfirmation**. Corrected run `34768985489`: DEVELOPMENT mean -0.766%, median -0.832%, win 41.09%; INTERNAL_VALIDATION mean +0.331% but median -0.185%, win 48.13%. Both frozen blocks fail; locked 2025H2 remains unopened. Do not retune or reopen this family.
 
 4. **Consensus specialist lane** — branch `research/consensus-atr-regime-gate`.
    - Owns fixed-min95 Consensus, frozen ATR OOD guard, realistic next-open execution, concentration/overlap diagnostics, V44 cooldown-with-replacement, and staged outcome-free V45 context audits.
@@ -47,6 +47,7 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
    - V44 remains interpretable because its policies use one fixed model/ranking and one canonical evaluation endpoint. **Do not change the training target mid-V44.**
    - If V44 survives, any production candidate requires a separately versioned canonical-target retrain with architecture/hyperparameters initially frozen, plus canonical raw-bin materialization and point-in-time universe validation. These dependencies cannot be used to rescue a failed V44.
    - V45 is outcome-free context auditing only and must not rescue V44 through ATR retuning.
+   - Authoritative V44 performance must not be interpreted immediately on completion. First run `.github/workflows/no-tv-consensus-v44-acceptance.yml` and require `accepted=true` for baseline reproduction, live-fetch coverage and locked-validation invariants. Strict5 post-run is allowed only after that acceptance receipt passes.
    - If corrected V44 collapses, demote Consensus to continuation/re-entry/pyramiding research rather than a Stable★6 replacement.
 
 ## Cross-lane arbitration

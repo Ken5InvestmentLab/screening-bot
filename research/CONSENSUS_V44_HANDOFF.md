@@ -338,3 +338,52 @@ PIT universe replay run **34771221050** is accepted:
 - valid reconstruction = true.
 
 V46 split reconstruction remains required even for NOCAP because absolute model feature `log_price` must use point-in-time nominal semantics.
+
+
+## Clean PIT pipeline status — 2026-09-14 07:xx JST
+
+### Accepted dependencies
+- PIT membership replay run **34771221050**: accepted; 2025-01-01 membership 3,827 vs current anchor 3,700.
+- V46 full-symbol split audit run **34775030470**: accepted.
+  - 3,700/3,700 split-source coverage.
+  - 592 split events / 563 symbols.
+  - 2025 adjusted-only false-positive price-eligibility rows: 18,303 / 254,541 = 7.19%.
+  - 2025H1: 12,336 / 130,235 = 9.47%.
+- V47 price policy is no longer legacy-fixed. Exactly two frozen arms:
+  - NOCAP
+  - CAP1000_PIT
+
+### V47 daily materialization correction
+- Run 34786400424 is superseded: it used multi-ticker yfinance restore and a 90% restored-symbol threshold.
+- Its outcome-free receipt nevertheless showed the problem: PIT union 3,920 symbols, 251 restored/delisted symbols, bulk yfinance recovered only 2/251.
+- This must **not** be interpreted as 249 names having no history; batch invalid-symbol contamination is plausible.
+- Authoritative implementation now fetches each restored historical code individually through Yahoo chart API.
+- Restored daily symbol coverage is frozen at **100% required**. Missing restored names may not be silently dropped.
+- Authoritative V47D run: **34786578353** (in progress when recorded).
+
+### Raw 1H pipeline
+- Current-survivor capacity estimate before restored data:
+  - NOCAP: about 3,637 symbols, median ~2,681 eligible symbols/day.
+  - CAP1000_PIT: about 1,769 symbols, median ~953/day.
+- Raw 1H fetcher is frozen as 12 deterministic shards, Yahoo range=730d interval=1h, storing only 2024-09-01..2025-12-30.
+- Raw shard contract CI passed.
+- Raw fetch may start only after authoritative V47D daily_coverage_pass=true.
+- Raw acceptance is preregistered outcome-free:
+  - pair coverage >=99.5%
+  - monthly coverage >=99.0%
+  - no completely missing required symbol
+  - >=95% per-symbol coverage for symbols requiring >=20 days
+  - restored/delisted required-pair coverage >=99.0%
+- Failed raw coverage triggers targeted refetch only; no strategy scoring.
+
+### Clean feature pipeline
+- Feature materializer is implemented but must not run until raw coverage acceptance passes.
+- NOCAP and CAP1000 are enriched separately; cross-sectional ranks/market medians are rebuilt from each clean PIT universe.
+- `log_price` uses point-in-time nominal current-bin price.
+- relative technical features use split-normalized price path.
+- canonical label = next official XTKS open -> D+5 close.
+- legacy signal-bin-close label is retained only for decomposition diagnostics.
+- no V47 model fit / strategy selection has been run yet.
+
+### Promotion boundary
+No current V43/V44 return result is promotion-grade after the PIT findings. Promotion-relevant evidence restarts only from accepted V47 clean PIT materialization.

@@ -31,7 +31,7 @@
   "last_completed_candidate_pool_reproduced": true,
   "last_completed_candidate_pool_commit": "13fb02c",
   "last_completed_candidate_pool_receipt_sha256": "0ed8ab75e94abf7f4ff7769336fa6746137a141bd6365bf189aff3aaa6034f72",
-  "next_action": "Search existing GitHub research assets and Actions artifacts for a broader historical raw-hourly/intraday population. Do not use the eight-symbol Monster sample for performance judgment. Do not treat legacy mixed-provenance ohlcv_4h as ground truth. If broader raw data exists, run the frozen v1 feature materializer first and audit coverage before any outcome replay.",
+  "next_action": "Freeze the canonical retrospective scoring experiment before opening corresponding labels. Use the batch02 next-official-XTKS-session open -> fifth-official-session close endpoint. Keep 2026 report-only. Locate an existing daily OHLCV/label source without new external fetch, then join only after the scoring/model rules and gates are committed.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
@@ -46,7 +46,7 @@
   "last_completed_validation_report_sha256": null,
   "discovery_outcomes_opened": false,
   "validation_outcomes_opened": false,
-  "active_experiment_id": "CAUSAL-INTRADAY-FEATURE-PANEL-V1-20260913",
+  "active_experiment_id": "BROAD-CAUSAL-INTRADAY-V1-20260913",
   "active_frozen_spec_sha256": "f140637250483332fa5db5e6067212175e0790eadb174323eb73788397f912ea",
   "frozen_discovery_feature_names": [],
   "active_candidate_pool_rows": null,
@@ -196,5 +196,36 @@
     "log_range_vs_prior20"
   ],
   "strategy_outcomes_opened_for_feature_panel_v1": false,
-  "precursor_file_opened_for_feature_panel_v1": false
+  "precursor_file_opened_for_feature_panel_v1": false,
+  "broad_raw_run_id": "34592896202",
+  "broad_raw_rows": 4019524,
+  "broad_raw_target_symbols": 1332,
+  "broad_raw_usable_symbols": 1315,
+  "broad_raw_start": "2024-09-17",
+  "broad_raw_end": "2026-09-10",
+  "broad_raw_manifest_sha256": "4d64471b7099b9e57485c8efd41d0dbbc6dca014e6e634b85bca56f04a502cda",
+  "historical_intraday_universe_classification": "BROAD_4H_COMPARISON_SET_NOT_PROVEN_FULL_TSE",
+  "historical_intraday_universe_derivation_preserved": false,
+  "exchange_close_extension_date": "2024-11-05",
+  "pm_clock_bin_pre_extension_hours": [
+    13,
+    14
+  ],
+  "pm_clock_bin_post_extension_hours": [
+    13,
+    14,
+    15
+  ],
+  "pm_rolling_regimes_separated": true,
+  "broad_attempted_bins": 1237550,
+  "broad_complete_bins": 1017531,
+  "broad_v1_complete_bins": 941118,
+  "broad_v1_complete_of_complete_rate": 0.9249035,
+  "broad_v1_complete_of_attempt_rate": 0.7604687,
+  "broad_2025_v1_complete_of_complete_rate": 0.992443,
+  "broad_2026_v1_complete_of_complete_rate": 0.997953,
+  "source_discovery_2026_outcome_summary_exposed": true,
+  "source_discovery_2026_outcome_summary_used_for_rule_selection": false,
+  "feature_panel_v1_frozen_before_outcome_exposure": true,
+  "broad_raw_audit_joined_outcomes": false
 }

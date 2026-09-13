@@ -1,0 +1,5 @@
+trigger: 2026-09-14 core-peer-lag-v1
+purpose: independent sector-lag proxy using trailing correlation peers; no current-only industry map
+peer_policy: trailing 60 prior sessions, min 40 overlap, top 5 positive-correlation peers
+gates: peer prior 1D positive / prior 5D positive / both positive
+selection: must improve mean and median without worsening <=-10% in both DEV halves

@@ -445,3 +445,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Report: `reports/causal_4h_scoring_v5_quantile_distribution_20260913.md`.
 - Reproduction hashes: fold1 ad16fbc3ea3c7b370cf92fd0cf78af293f7d668795d10863ddf1e347492c9d4d; fold2 36b6e34fa67c35cfae07a34542b45cdcdcb83799b25237156f9144ecc3f47e2b; H2 09a9152fa4a676072a9756af3c0d9dea42e70873f3d7162bfd2de4b7e4b74447.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## CAUSAL-4H-SCORING-V6-MONTHLY-WALKFORWARD-20260913 — REJECT / NO_PROMOTION
+
+- Preregistered before V6 row-level evaluation. Only change from V5: monthly expanding causal retraining; all features, q10/q50/q90 models, hyperparameters, scores, TopN, cooldown and gates unchanged.
+- Causal maturity verified every month: each monthly training max exit date is strictly before the evaluation month start.
+- H1 Mar-Jun Monster Top1: n=164, mean +1.28%, +20% 6.71%, <=-10% 10.98%, Top1-excluded +0.38%; FAIL. Core Top1 mean +1.73% but median -0.50%, win 44.5%, Top3-excluded -1.17%; FAIL.
+- H2 Jul-Dec Monster Top1: n=248, mean -1.87%, +20% 4.03%, <=-10% 17.34%, Top1-excluded -2.09%; Top5 mean -0.54%, +20% 4.76%; all FAIL. Core all policies fail.
+- Interpretation: model staleness alone is not the main cause. Do not tune cadence from H2.
+- Next structural hypothesis: Monster viability gate q50>=0 followed by q90 tail ranking, avoiding a fitted risk coefficient.
+- Report: `reports/causal_4h_scoring_v6_monthly_walkforward_20260913.md`.
+- H1 hash f5c44e192dde2b951e46df29b28501168c79ed9bd4e22e12920472ead493ee15; H2 hash 02fe6a44c8c34901aa6aeedc39abd835211e85e7ddb807a301e9491317849a2c.
+- 2026 outcomes opened: false. Production modified: false.

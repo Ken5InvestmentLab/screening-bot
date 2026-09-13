@@ -58,3 +58,22 @@ Correction:
 - losing cooldown H2 metrics are not emitted;
 - H2 Top-K candidate export is outcome-blind;
 - corrected run 34766353425 is the only valid V44 run.
+
+
+## V45 staged next action — not triggered while V44 is fetching Yahoo 1H
+A non-overlapping outcome-free follow-up is now preregistered and implemented:
+- spec: research/consensus_v45_full_context_atr_preregister.json
+- evaluator: research/no_tv_v45_full_context_atr.py
+- workflow: .github/workflows/no-tv-consensus-v45.yml
+- status: NOT TRIGGERED
+
+Purpose:
+- current 2.8640659721 ATR cap came from min95-selected contexts only;
+- V45 recomputes Jan-Jun 2025 ATR distribution from every distinct eligible date/session, one context = one vote;
+- evaluator reads no strategy-return outcome and opens neither 2025H2 nor 2026 outcomes;
+- V45 cannot promote/reject Consensus and cannot silently replace the current cap.
+
+Execution ordering:
+- do not run V45 concurrently with V44 because both reconstruct Yahoo 1H across roughly 1,900 symbols and concurrent fetching could create avoidable coverage/rate-limit drift;
+- once valid V44 is complete and receipt-checked, trigger V45 if the Consensus lane still has research value;
+- if V44 fails, V45 may still run as a diagnostic, but its result must not be used to rescue V44 via ATR retuning.

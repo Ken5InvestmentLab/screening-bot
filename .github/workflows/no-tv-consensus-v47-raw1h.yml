@@ -51,6 +51,22 @@ jobs:
           github-token: ${{ github.token }}
           repository: Ken5InvestmentLab/screening-bot
           run-id: ${{ steps.meta.outputs.run_id }}
+      - name: Verify daily coverage passed
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("daily/v47_daily_materialization_receipt.json")
+          d = json.loads(p.read_text(encoding="utf-8"))
+          if not d.get("daily_coverage_pass"):
+              raise SystemExit(
+                  "daily materializer did not pass fail-closed coverage: "
+                  + json.dumps(d.get("restored_daily_fetch", {}), ensure_ascii=False)
+              )
+          if d.get("strategy_returns_opened") or d.get("model_scores_opened"):
+              raise SystemExit("daily materializer isolation contract violated")
+          print("daily coverage receipt accepted")
+          PY
       - name: Compile and test shard fetcher
         run: |
           python -m py_compile             research/no_tv_v47_intraday_fetch_shard.py             research/test_no_tv_v47_intraday_fetch_shard.py

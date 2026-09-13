@@ -1,0 +1,64 @@
+{
+  "spec_id": "TENTEI-STATE-ENTRY-REPRESENTATION-20260913",
+  "status": "FROZEN_AFTER_OUTCOME_FREE_STRUCTURE_AUDIT_BEFORE_STATE_ENTRY_RETURN_EVALUATION",
+  "classification": "NEW_RETROSPECTIVE_HYPOTHESIS_NOT_A_V12_REINTERPRETATION",
+  "parent_generator": "TENTEI-INSPIRED-4H-V12-STATE-REVERSAL-20260913",
+  "motivation_source": "outcome-free V12 structure audit showed persistent consecutive signals",
+  "representation": {
+    "definition": "V12 signal AND immediately previous complete causal bin for the same symbol is not a V12 signal",
+    "previous_bin_scope": "immediately previous available complete AM/PM causal bin for the same symbol in chronological order",
+    "missing_previous_bin": "first observed complete bin cannot be state-entry unless V12 warmup/state is otherwise valid; evaluator must fail closed on ambiguous predecessor history",
+    "trigger_paths": "unchanged V12 ALL; no post-hoc RSI/emergency path choice",
+    "daily_to_intraday_synthesis": false
+  },
+  "candidate_gates": {
+    "prior_completed_daily_close_lte_jpy": 1000,
+    "prior_completed_daily_volume_gte_shares": 10000,
+    "ordering": "build causal V12 state -> state-entry filter -> prior-completed-daily gates -> chronological cooldown"
+  },
+  "cooldown": {
+    "same_symbol": 5,
+    "unit": "official XTKS sessions",
+    "ordering": "AM before PM within same date",
+    "retain_parent_rule": true
+  },
+  "evaluation": {
+    "target": "next official XTKS session open to fifth official XTKS session close",
+    "primary_cost": 0.005,
+    "h1_retrospective": ["2025-03-01", "2025-06-30"],
+    "h2_retrospective_gate": "may be opened only under a separately committed evaluation receipt; no promotion claim because 2025 is already historically exposed",
+    "h2": ["2025-07-01", "2025-12-31"],
+    "prospective_requirement": "any promotion requires post-freeze shadow data"
+  },
+  "monster_gate": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.10,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.40
+  },
+  "integrity": {
+    "parent_v12_h1_aggregate_results_are_already_exposed": true,
+    "structure_audit_was_computed_without_outcomes": true,
+    "do_not_claim_h1_as_oos": true,
+    "year_2026_strategy_outcomes_must_remain_closed": true,
+    "do_not_modify_v13_or_v14": true,
+    "no_trigger_path_selection": true,
+    "no_threshold_tuning_from_2025": true
+  },
+  "outcome_free_structure_reference": {
+    "h1_v12_signals_before_daily_gate_and_cooldown": 10217,
+    "h1_previous_complete_bin_also_signal": 3705,
+    "h1_state_entry_rows_implied": 6512,
+    "h1_retained_pct": 63.73788783400215,
+    "h2_v12_signals_structure_only": 15596,
+    "h2_previous_complete_bin_also_signal": 4260,
+    "h2_state_entry_rows_implied": 11336,
+    "h2_retained_pct": 72.68530456527315,
+    "y2025_v12_signals_structure_only": 29964,
+    "y2025_previous_complete_bin_also_signal": 9373,
+    "y2025_state_entry_rows_implied": 20591,
+    "y2025_retained_pct": 68.71912962221332
+  },
+  "production_modified": false
+}

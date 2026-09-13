@@ -3,7 +3,7 @@
   "budget_pause_latched": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
-  "milestone": "M16_FEATURE_POOL_REPRODUCED_AND_COMMITTED",
+  "milestone": "M17_MULTI_EVENT_CORE_REJECTED",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -15,34 +15,31 @@
   "last_observed_remaining_percent": 57,
   "maximum_active_check_interval_seconds": 60,
   "last_completed_experiment": {
-    "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
-    "decision": "REJECT_ALL_MARKET_STATE_FEATURES",
-    "report": "tvfree_screener/batch02/reports/core_market_state_confirmation_2024.json",
-    "report_sha256": "1e29d8fc98dfef9b57596944119bef0de2c55de53a5a9478c20e280da8f89fa6"
+    "experiment_id": "CORE-MULTI-EVENT-QUALITY-20260913-01",
+    "decision": "REJECT_MULTI_EVENT_QUALITY",
+    "report": "tvfree_screener/batch02/reports/core_multi_event_quality_2024_development.json",
+    "report_sha256": "a0c0103f6c1ccd45d284701770ab6c8c619532c898cc6ea2c39ded5c3db8ae4f"
   },
   "registered_spec_sha256": "02dea9242d7aec279fc0765d323c419bacd5b2c130b74fae426bfe57d9ccce8c",
   "registered_feature_count": 29,
   "last_completed_feature_panel_sha256": "37dd48dbc1ac1b7e1128a6cfb990100333704720506d9cae18d8a74405d19682",
   "last_completed_feature_panel_manifest_sha256": "c3cf2f92214a8eaaceb5a0f706a1a02d2f7ee8f7473554d4b15ea5dd7b73dfd6",
-  "last_completed_candidate_pool_rows": 2107236,
-  "last_completed_candidate_pool_rows_sha256": "7894e8b6673d95c9dcc748eba23adb2f33376cacc9983ed1c77e0cfa813e47e8",
-  "last_completed_candidate_pool_artifact_sha256": "af2136ad0e54be39b58a48c415f12f5f4076622f0446ea045a94a83b67ec5100",
+  "last_completed_candidate_pool_rows": 90006,
+  "last_completed_candidate_pool_rows_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
+  "last_completed_candidate_pool_artifact_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
   "last_completed_candidate_pool_reproduced": true,
-  "last_completed_candidate_pool_commit": "e1e0f99",
-  "next_action": "Run the frozen 2024H1/H2 evaluation with labels through the 2024-12-30 purge cutoff. Do not open 2025 or 2026; pause immediately if weekly usage reaches 50% used.",
+  "last_completed_candidate_pool_commit": "cb37ba0",
+  "next_action": "Select a materially distinct Core hypothesis; preregister and test gates before outcome access. Do not tune rejected families or open 2025/2026. Recheck weekly usage at least every 60 seconds and latch pause at 50% used.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false,
   "last_completed_discovery_outcomes_opened": true,
   "last_completed_validation_outcomes_opened": true,
-  "last_completed_frozen_discovery_feature_names": [
-    "range_pct",
-    "dispersion20"
-  ],
-  "last_completed_discovery_report_sha256": "eb85138b24f56afc8858ee5158f697899193b1c3bcd8df1613a9543cb6f68f33",
-  "last_completed_feature_freeze_sha256": "a51aa151da8ff6cde61e32b7dc3af49a15621aeff7f7b3fa6d3daaa1de9b18b3",
-  "last_completed_validation_report_sha256": "1e29d8fc98dfef9b57596944119bef0de2c55de53a5a9478c20e280da8f89fa6",
-  "discovery_outcomes_opened": false,
-  "validation_outcomes_opened": false,
+  "last_completed_frozen_discovery_feature_names": [],
+  "last_completed_discovery_report_sha256": "a0c0103f6c1ccd45d284701770ab6c8c619532c898cc6ea2c39ded5c3db8ae4f",
+  "last_completed_feature_freeze_sha256": null,
+  "last_completed_validation_report_sha256": "a0c0103f6c1ccd45d284701770ab6c8c619532c898cc6ea2c39ded5c3db8ae4f",
+  "discovery_outcomes_opened": true,
+  "validation_outcomes_opened": true,
   "frozen_discovery_feature_names": [],
   "active_candidate_pool_rows": 90006,
   "active_candidate_pool_sha256": "638167d7a2edb802d3de202a582585efb847cb6cb252591c5e0bea15dbe372db",
@@ -51,5 +48,14 @@
   "active_pool_receipt_committed": true,
   "active_pool_reproduction_sha256": "401ac151663beca44a5c3f4e040ccd34410d810363d436d2c078f274b5d3e555",
   "active_pool_reproduction_committed": true,
-  "outcome_values_opened_before_freeze": false
+  "outcome_values_opened_before_freeze": false,
+  "previous_completed_experiment": {
+    "experiment_id": "CORE-ALL-MARKET-STATE-20260913-01",
+    "decision": "REJECT_ALL_MARKET_STATE_FEATURES",
+    "report": "tvfree_screener/batch02/reports/core_market_state_confirmation_2024.json",
+    "report_sha256": "1e29d8fc98dfef9b57596944119bef0de2c55de53a5a9478c20e280da8f89fa6"
+  },
+  "last_completed_feature_names": [
+    "six event-conditioned setups; 29 causal features; fixed three-head ridge scoring"
+  ]
 }

@@ -1,10 +1,10 @@
 {
-  "last_observed_used_percent": 35,
+  "last_observed_used_percent": 40,
   "budget_pause_latched": false,
   "outcome_values_opened_before_freeze": false,
   "pause_when_remaining_percent_lte": 50,
-  "experiment_id": "CORE-TREND-COMPRESSION-20260913-01",
-  "milestone": "M2_ANNUAL_AUDIT_SPEC_FROZEN",
+  "experiment_id": "CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01",
+  "milestone": "M3_GAP_RECLAIM_SPEC_FROZEN_BEFORE_FEATURE_READ",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -13,9 +13,9 @@
   "daily_to_intraday_synthesis_implemented": false,
   "owned_jobs": [],
   "production_modified": false,
-  "last_observed_remaining_percent": 65,
+  "last_observed_remaining_percent": 60,
   "maximum_active_check_interval_seconds": 60,
-  "next_action": "Run exact all-candidates-per-day Monster yearly audit for cached 2023-2025 scores and canonical daily labels; emit unresolved years for missing 2022/2026. V29 exact yearly replay remains blocked by absent historical 4h/watchlist inputs; do not approximate.",
+  "next_action": "Build the frozen 2022H2-2023 gap-down partial-reclaim candidate pool, q80 score ranking, and unlimited multiple-name selections from decision-only daily features. Reproduce and commit their hashes before opening labels. Reject without tuning if the registered gate fails; recheck Fundamental V2 handoff at next milestone.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false
 }

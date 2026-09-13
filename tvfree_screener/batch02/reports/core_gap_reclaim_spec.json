@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01",
+  "family": "core_gap_down_partial_reclaim_v1",
+  "registered_at_utc": "2026-09-13T02:27:42.972819+00:00",
+  "status": "FROZEN_BEFORE_DISCOVERY_FEATURE_READ",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "hypothesis": "A daily gap-down that recovers at least half, but not all, of its opening gap and closes in the top quarter of its range may reflect absorption of opening sell pressure before a multi-session rebound.",
+  "historical_exposure": "2022H2-2023 returns have been viewed in other families and are not an untouched OOS sample. This is one preregistered retrospective screen; do not tune it toward these outcomes.",
+  "data": {
+    "feature_panel": "tvfree_screener/batch01/.cache/core_moderate_features_through_2023.parquet",
+    "feature_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "source_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "feature_timestamp": "official XTKS session close; every used field is available by that close",
+    "ohlcv_source_cutoff": "2023-12-29",
+    "2024_plus_numeric_ohlcv_opened": false
+  },
+  "candidate_pool": {
+    "universe": "Every symbol/session in the frozen daily feature panel with complete, internally consistent positive signal-day OHLCV and finite gap/close-location inputs; no current-list substitution is applied within this dataset.",
+    "gap": "open / prior official XTKS close - 1 <= -0.01",
+    "close_location": "(close - low) / (high - low) >= 0.75",
+    "partial_reclaim": "0 < (close - open) / (prior close - open), with fraction >= 0.5 and < 1.0; this implies close remains below prior close and excludes the First Reversal positive-ret1 setup.",
+    "no_market_regime_filter": true,
+    "no_volume_or_fundamental_filter": true,
+    "no_future_or_outcome_fields": true
+  },
+  "score_and_selection": {
+    "score": "Equal-weight arithmetic mean of close_location and gap_reclaim_fraction; no fitted weights.",
+    "daily_threshold": "Within each XTKS date's complete frozen candidate pool, select every score >= the linear empirical 80% quantile. Include all ties; no Top-N cap.",
+    "tie_breaks": [
+      "score descending",
+      "gap_reclaim_fraction descending",
+      "close_location descending",
+      "symbol ascending"
+    ],
+    "cooldown": "One immediately prior official XTKS session per selected symbol; only actually selected rows update cooldown state.",
+    "multiple_names_per_day": true,
+    "empty_day": "Abstain; do not substitute another signal or lower the threshold."
+  },
+  "target": "Signal date official close is used only for signal-time features; enter at next official XTKS session open and exit at close of the fifth XTKS session including entry. Return = exit close / entry open - 1.",
+  "actionability": "Reuse the frozen core_moderate_ridge_audit.build_labels_for_eligible_signals builder. Retain each selected/candidate row, including missing bars, zero/unknown volume, invalid OHLC, or extreme-gap statuses; no row substitution.",
+  "periods": {
+    "discovery_start": "2022-07-01",
+    "last_signal": "2023-12-22",
+    "last_exit": "2023-12-29",
+    "2024": "Open only if frozen discovery gate passes; retrospective confirmation, never called untouched OOS.",
+    "2025": "Open only after separate 2024 pass and separate frozen replay; prior cross-family exposure must be disclosed.",
+    "2026": "Report-only; never tune or promote from 2026."
+  },
+  "cost_scenarios": [
+    0.0,
+    0.005,
+    0.01
+  ],
+  "primary_round_trip_cost_assumption": 0.005,
+  "discovery_gates": {
+    "resolved_signals_minimum": 75,
+    "average_selected_signals_per_calendar_month_minimum": 5.0,
+    "signal_net_at_0_5pct": [
+      "mean > 0",
+      "median > 0",
+      "win rate > 0.50",
+      "mean excluding top three winners > 0"
+    ],
+    "resolved_label_coverage_minimum": 0.9,
+    "negative_tail_vs_candidate_pool": [
+      "-10% rate no higher",
+      "-20% rate no higher"
+    ],
+    "monthly_robustness": "At least half of months with resolved selections have positive net mean.",
+    "complete_daily_cohort": "At least 20 complete selected-date cohorts and positive net mean, median, and top-three-excluded mean; report partial and abstain dates without reweighting.",
+    "decision": "Only a pass may open a separately frozen 2024 confirmation. No parameter adjustment follows a failure."
+  },
+  "benchmark_context": {
+    "current_bot_stable6": {
+      "n": 55,
+      "mean": 0.066,
+      "median": 0.015,
+      "win_rate": 0.564
+    },
+    "directly_comparable": false,
+    "reason": "Current Bot statistics use TradingView BOTTOM events and a different signal/entry timestamp; this study uses all-TSE daily events and next-session-open entry."
+  },
+  "inputs": {
+    "feature_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "hypothesis": "38bf7e41a430d695de1ace777c246d39000602a6f951f52355beb6b020a3c8db",
+    "audit_runner": "04fe6f9578b08cbfcebe25ba5a1299199842c02b787f69fed716808f7005dfea",
+    "frozen_label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "candidate_metrics": "07d584b3bcd66da889bd26a4ee6d4688ac9e63b95e5a23fe5ffb5c4ccec9ee7a",
+    "evaluation_helper": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "feature_panel": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f"
+  },
+  "production_modified": false
+}

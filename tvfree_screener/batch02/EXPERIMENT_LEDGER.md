@@ -54,3 +54,14 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - The broad full-pool reference had 272,151/278,783 resolved labels; all 365 daily cohorts were partial because the entire TSE pool includes future zero-volume/unactionable bars. This does not block judging selected policies, but it prevents a full-pool complete-day comparison.
 - Decision: reject trend compression as a Core policy family. Do not adjust its thresholds or ranking. The corrected numbers are retrospective repair evidence, not OOS and not production parity.
 - Verification: 69 batch01 tests plus all four batch02 trend-compression/recovery tests pass under package-qualified unittest discovery; the runner and frozen hashes reproduce.
+
+## CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01 — preregistration in progress
+
+- Independent hypothesis: after an opening gap down of at least 1%, a bullish daily candle that recovers at least half but less than all of the gap and closes in the top quarter of its range may show seller absorption before a five-session rebound. The close remains below the prior close, distinguishing it from First Reversal's positive-ret1 setup.
+- Signal-time only: clean daily OHLCV, gap, and close location; no market-regime, volume, or fundamental filter. Score is the equal-weight mean of close-location and gap-reclaim fraction.
+- Selection is every score at or above the within-day 80th percentile, all ties included, one official XTKS-session same-symbol cooldown, unlimited names/day, and no substitution on empty days.
+- Target is next XTKS open to fifth XTKS session close with 0/0.5/1.0% round-trip cost sensitivities. Discovery is 2022H2 through 2023 only; those outcomes were viewed for other families, so this remains retrospective evidence. Later years require the registered staged gates; 2026 is report-only.
+- No candidate features or labels have been read for this family at registration. The candidate/rank/selection artifacts must be frozen and committed before labels are built.
+- Fundamental V2 handoff is currently absent from this checkout; proceed independently and recheck at the next milestone.
+- Frozen spec: `reports/core_gap_reclaim_spec.json`; SHA-256 `aee0f9e2f79af99149c1d2b1993772778a6d2c3ecc19f44d30075f611fbb7926`.
+- Status: FROZEN_BEFORE_DISCOVERY_FEATURE_READ; next freeze candidate/rank/selection artifacts and commit them before opening labels. Weekly usage last observed 40% used / 60% remaining; pause latch remains false.

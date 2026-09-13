@@ -244,6 +244,20 @@ def choose_policy(dev: dict[str, dict]) -> dict:
     }
 
 
+def validation_blind_export(d: pd.DataFrame) -> pd.DataFrame:
+    # Do not publish replacement-candidate outcomes before the preregistered
+    # development gate chooses one cooldown policy.
+    drop = [
+        "perf_5bd",
+        "exit_date_5bd",
+        "exit_date_norm",
+        "next_open",
+        "d5_close",
+        "ret_nextopen_5bd",
+    ]
+    return d.drop(columns=[c for c in drop if c in d.columns], errors="ignore")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--frozen-daily", required=True)
@@ -261,43 +275,70 @@ def main() -> None:
     pool = build_topk_pool(data)
     pool, day_index = attach_execution(pool, a.frozen_daily)
 
-    selections = {
-        cd: select_with_replacement(pool, day_index, cd)
+    pool_dates = pd.to_datetime(pool["date"])
+    dev_pool = pool[pool_dates <= DEV_END].copy()
+    valid_pool = pool[pool_dates >= VALID_START].copy()
+
+    # Stage 1: only development metrics for all preregistered cooldowns.
+    dev_selections = {
+        cd: select_with_replacement(dev_pool, day_index, cd)
         for cd in COOLDOWNS
     }
-
-    dev = {}
-    valid = {}
-    all_stats = {}
-    for cd, selected in selections.items():
-        d = selected[pd.to_datetime(selected["date"]) <= DEV_END].copy()
-        v = selected[pd.to_datetime(selected["date"]) >= VALID_START].copy()
-        dev[str(cd)] = perf_stats(d)
-        valid[str(cd)] = perf_stats(v)
-        all_stats[str(cd)] = perf_stats(selected)
-
+    dev = {
+        str(cd): perf_stats(selected)
+        for cd, selected in dev_selections.items()
+    }
     decision = choose_policy(dev)
+
+    # Stage 2: open validation metrics for baseline and the ONE policy selected
+    # from development. Never report 2025H2 outcomes for losing cooldowns.
     validation_decision = None
+    validation_outputs: dict[str, pd.DataFrame] = {}
     if decision["decision"] == "VALIDATE":
-        cd = str(decision["cooldown_days"])
+        chosen_cd = int(decision["cooldown_days"])
+        baseline_full = select_with_replacement(pool, day_index, 0)
+        chosen_full = select_with_replacement(pool, day_index, chosen_cd)
+        baseline_valid = baseline_full[
+            pd.to_datetime(baseline_full["date"]) >= VALID_START
+        ].copy()
+        chosen_valid = chosen_full[
+            pd.to_datetime(chosen_full["date"]) >= VALID_START
+        ].copy()
         validation_decision = {
-            "cooldown_days": int(cd),
-            "validation_stats": valid[cd],
-            "baseline_validation_stats": valid["0"],
+            "cooldown_days": chosen_cd,
+            "validation_stats": perf_stats(chosen_valid),
+            "baseline_validation_stats": perf_stats(baseline_valid),
         }
+        validation_outputs["baseline"] = baseline_valid
+        validation_outputs[f"cooldown_{chosen_cd}"] = chosen_valid
 
     out = Path(a.output_dir)
     out.mkdir(parents=True, exist_ok=True)
-    pool.to_csv(out / "v44_topk_pool.csv", index=False)
-    for cd, selected in selections.items():
+
+    # Development is open; validation candidate pool is exported blind.
+    dev_pool.to_csv(out / "v44_topk_pool_development.csv", index=False)
+    validation_blind_export(valid_pool).to_csv(
+        out / "v44_topk_pool_validation_blind.csv",
+        index=False,
+    )
+    for cd, selected in dev_selections.items():
         selected.to_csv(
-            out / f"v44_selected_cooldown_{cd}.csv",
+            out / f"v44_development_selected_cooldown_{cd}.csv",
+            index=False,
+        )
+    for name, selected in validation_outputs.items():
+        selected.to_csv(
+            out / f"v44_validation_selected_{name}.csv",
             index=False,
         )
 
     result = {
         "scope": "2025 uncapped prequential fixed-min95 Consensus Top-K cooldown-with-replacement audit",
-        "warning": "2025 outcomes were previously inspected at Top-1 level; replacement outcomes are retrospective evidence, not pristine OOS.",
+        "warning": (
+            "2025 Top-1 outcomes were previously inspected. Replacement outcomes "
+            "are retrospective evidence, but nonchosen H2 cooldown outcomes are "
+            "kept unopened by this evaluator."
+        ),
         "fixed": {
             "consensus_threshold": CONS_THRESHOLD,
             "top_k": TOP_K,
@@ -307,13 +348,14 @@ def main() -> None:
         },
         "prefilter": prefilter,
         "hourly_fetch": fetch,
-        "topk_rows": int(len(pool)),
-        "topk_groups": int(pool.groupby(["date", "session"]).ngroups),
+        "topk_rows_all": int(len(pool)),
+        "topk_groups_all": int(pool.groupby(["date", "session"]).ngroups),
+        "topk_rows_development": int(len(dev_pool)),
+        "topk_rows_validation_blind": int(len(valid_pool)),
         "development": dev,
-        "validation": valid,
-        "all_2025": all_stats,
         "preregistered_decision": decision,
         "validation_decision": validation_decision,
+        "nonchosen_validation_metrics_opened": False,
         "production_writes": False,
     }
     (out / "v44_consensus_topk_cooldown.json").write_text(

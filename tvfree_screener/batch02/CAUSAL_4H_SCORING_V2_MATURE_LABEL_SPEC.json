@@ -1,0 +1,95 @@
+{
+  "spec_id": "CAUSAL-4H-SCORING-V2-MATURE-LABEL-20260913",
+  "status": "PREREGISTERED_AFTER_V1_INVALIDATION_BEFORE_V2_OUTCOME_ACCESS",
+  "supersedes_for_causal_validation": "CAUSAL-4H-SCORING-V1-20260913",
+  "correction_reason": "V1 trained on candidate dates through 2025-06-30 even when their fifth-session endpoint matured after the locked validation start 2025-07-01. A model notionally available at the validation start cannot use those not-yet-mature labels.",
+  "v1_outcomes_already_seen": true,
+  "v1_outcomes_may_influence_v2": false,
+  "changes_from_v1": [
+    "Training rows must have exit_date strictly before 2025-07-01 in addition to candidate date being within 2025H1.",
+    "V1 is retained as invalid causal-validation evidence and must not be used to tune features, model parameters, ranks, cooldown, TopN set, costs, or gates."
+  ],
+  "unchanged_feature_source": "CAUSAL_INTRADAY_FEATURE_PANEL_V1_SPEC.json",
+  "unchanged_features": [
+    "bar_log_return",
+    "range_pct",
+    "upper_wick_pct",
+    "lower_wick_pct",
+    "prev4_log_return_mean",
+    "prev4_range_mean",
+    "log_range_vs_prior20"
+  ],
+  "candidate_requirements_unchanged": {
+    "model_candidate_v1_complete": true,
+    "prior_completed_daily_close_lte_jpy": 1000,
+    "prior_completed_daily_volume_gte_shares": 10000,
+    "primary_candidate_bin_volume_gate": null,
+    "sensitivity_candidate_bin_volume_gte_shares": 5000,
+    "sensitivity_may_change_primary_choice": false,
+    "no_imputation": true,
+    "no_feature_clipping": true
+  },
+  "target_unchanged": {
+    "canonical_spec": "DAILY_ENDPOINT_TARGET_SPEC_V3.json",
+    "entry": "next official XTKS session open after candidate date",
+    "exit": "fifth official XTKS session close, with entry session counted as day 1",
+    "endpoint_return": "exit_close / entry_open - 1"
+  },
+  "periods": {
+    "train_candidate_dates": ["2025-01-01", "2025-06-30"],
+    "train_label_maturity_cutoff": "exit_date < 2025-07-01",
+    "locked_validation_candidate_dates": ["2025-07-01", "2025-12-31"],
+    "report_only_2026": ["2026-01-01", "2026-09-10"]
+  },
+  "preprocessing_unchanged": {
+    "scaler": "RobustScaler",
+    "scaler_fit": "mature training rows only",
+    "quantile_range": [25, 75],
+    "feature_transforms": "exactly as frozen; no data-driven clipping"
+  },
+  "models_and_ranks_unchanged": {
+    "core": {
+      "primary_target": "ret5bd_gross > 0",
+      "loss_target": "ret5bd_gross <= -0.10",
+      "model": "LogisticRegression L2, C=1, lbfgs, max_iter=1000, class_weight=balanced",
+      "rank": ["p_positive descending", "p_loss10 ascending", "symbol ascending"]
+    },
+    "monster": {
+      "primary_target": "ret5bd_gross >= 0.20",
+      "loss_target": "ret5bd_gross <= -0.10",
+      "model": "LogisticRegression L2, C=1, lbfgs, max_iter=1000, class_weight=balanced",
+      "rank": ["p_plus20 descending", "p_loss10 ascending", "symbol ascending"]
+    }
+  },
+  "selection_unchanged": {
+    "cohort": "candidate date + bin_name independently",
+    "top_n": [1, 2, 3, 5],
+    "cooldown": "5 official XTKS sessions per symbol independently for each head/TopN; earlier same-day selection blocks later same-day selection",
+    "primary_round_trip_cost": 0.005,
+    "cost_sensitivity": [0, 0.01]
+  },
+  "locked_validation_gates_unchanged": {
+    "core": {
+      "min_resolved_n": 50,
+      "net_mean_gt": 0,
+      "net_median_gte": 0,
+      "net_win_rate_gt": 0.5,
+      "top3_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.2
+    },
+    "monster": {
+      "min_resolved_n": 30,
+      "net_mean_gt": 0,
+      "gross_ge20_rate_gte": 0.1,
+      "top1_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.4
+    }
+  },
+  "policy_choice_unchanged": {
+    "core": "among passing TopN policies choose highest top3-removed net mean; ties higher net median, lower loss10, smaller N",
+    "monster": "among passing TopN policies choose highest gross >=20% rate; ties higher top1-removed net mean, lower loss10, smaller N",
+    "if_none_pass": "NO_PROMOTION; no tuning against validation or 2026"
+  },
+  "2026_tuning": false,
+  "production_modified": false
+}

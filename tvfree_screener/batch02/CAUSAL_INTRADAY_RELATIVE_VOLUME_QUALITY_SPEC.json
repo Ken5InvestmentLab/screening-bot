@@ -1,0 +1,52 @@
+{
+  "audit_id": "CAUSAL-INTRADAY-RELATIVE-VOLUME-QUALITY-20260913-01",
+  "status": "DATA_QUALITY_AUDIT_ONLY_NO_STRATEGY_OUTCOMES",
+  "source": {
+    "raw_run_id": 34592896202,
+    "raw_rows": 4019524,
+    "usable_symbols": 1315,
+    "manifest_sha256": "4d64471b7099b9e57485c8efd41d0dbbc6dca014e6e634b85bca56f04a502cda"
+  },
+  "feature": {
+    "name": "log_volume_rel20",
+    "raw_ratio": "current raw clock-bin volume / median(previous 20 complete same-symbol same-bin same-regime raw clock-bin volumes)",
+    "transform": "log1p(raw_ratio)",
+    "current_day_final_daily_volume_used": false,
+    "pm_regime_reset_at": "2024-11-05",
+    "clipping": "NONE"
+  },
+  "results": {
+    "complete_bins": 1017531,
+    "feature_bins": 941126,
+    "coverage_of_complete": 0.9249113786213884,
+    "ratio_median": 0.9619590265550566,
+    "ratio_p95": 5.1706755085984035,
+    "ratio_p99": 22.845930994704002,
+    "ratio_p999": 188.62878787878788,
+    "ratio_max": 3969.277777777778,
+    "log1p_median": 0.6739434774151474,
+    "log1p_p95": 1.8198083145550874,
+    "log1p_p99": 3.171613594459598,
+    "log1p_p999": 5.245068273333769,
+    "log1p_max": 8.286591340447051,
+    "regime_medians": {
+      "AM_STABLE": 0.6696288465665805,
+      "PM_PRE_20241105": 0.6762831826575861,
+      "PM_POST_20241105": 0.6782705536643338
+    },
+    "monthly_median_ranges": {
+      "2025": [
+        0.5498360725956999,
+        0.7463774928263696
+      ],
+      "2026_through_09_10": [
+        0.6090640633494039,
+        0.736319352425154
+      ]
+    }
+  },
+  "decision": "DATA_QUALITY_PASS_FOR_CAUSAL_EXPERIMENTAL_FEATURE",
+  "caveat": "source-internal relative volume is not proof of exchange-truth volume; use only as causal same-source ratio/rank, not absolute volume reconstruction",
+  "strategy_outcomes_opened": false,
+  "production_modified": false
+}

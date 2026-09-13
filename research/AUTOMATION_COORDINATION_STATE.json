@@ -1,7 +1,7 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T04:45:00+09:00",
+  "updated_at_jst": "2026-09-14T05:03:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
@@ -12,7 +12,7 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
       "last_processed_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
-      "last_processed_note": "Canonical :12 audited V20 H1 run 34774070956. Universe + all four Yahoo fetch shards succeeded, but fail-closed coverage job failed before H1 evaluation and the original workflow skipped coverage artifact upload. H1 outcomes remain unopened. Patched research-only workflow so coverage receipt uploads with if: always() on future/diagnostic runs; no strategy logic, thresholds, production paths, or 2026 outcomes changed."
+      "last_processed_note": "Canonical :12 audited V20 H1 run 34774070956. Universe + all four Yahoo fetch shards succeeded, but fail-closed coverage job failed before H1 evaluation and the original workflow skipped coverage artifact upload. H1 outcomes remain unopened. Patched research-only workflow so coverage receipt uploads with if: always() on future/diagnostic runs; no strategy logic, thresholds, production paths, or 2026 outcomes changed. Patch contract CI 34777145113 completed SUCCESS."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -119,6 +119,8 @@
       "owner": "Canonical/Event :12 worker",
       "contract_test_run": 34769637874,
       "contract_test_status": "completed/success",
+      "diagnostic_patch_contract_test_run": 34777145113,
+      "diagnostic_patch_contract_test_status": "completed/success",
       "canonical_h1_universe_symbols": 1810,
       "canonical_h1_universe_sessions": 82,
       "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",

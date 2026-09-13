@@ -1,0 +1,93 @@
+{
+  "spec_id": "CAUSAL-4H-SCORING-V10-RELATIVE-VOLUME-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V10_ROW_LEVEL_EVALUATION",
+  "role": "RETROSPECTIVE_INTRADAY_FEATURE_DISCOVERY_ONLY",
+  "integrity": {
+    "prior_2025_results_seen": true,
+    "year_2025_can_promote": false,
+    "year_2026_strategy_outcomes_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "feature_panel": {
+    "base": "V4/V5/V6 19 causal intraday + same-cohort features",
+    "remove_v9_prior_daily_context": true,
+    "additions": [
+      "log_volume_rel20",
+      "xrank_log_volume_rel20"
+    ],
+    "total_features": 21,
+    "relative_volume_definition": "log1p(current raw clock-bin volume / median(previous 20 complete same-symbol same-bin same-regime raw clock-bin volumes))",
+    "cross_sectional_rank": "average percentile rank ascending within same date + bin_name eligible candidate cohort",
+    "current_day_final_daily_volume_used": false,
+    "clipping": "NONE",
+    "imputation": "NONE"
+  },
+  "data_quality_basis": "CAUSAL_INTRADAY_RELATIVE_VOLUME_QUALITY_SPEC.json",
+  "model": {
+    "schedule": "V6 monthly expanding causal refit",
+    "estimator": "unchanged V5 q10/q50/q90 HistGradientBoostingRegressor",
+    "parameters": "UNCHANGED",
+    "separate_by_bin_name": true
+  },
+  "heads": {
+    "core": {
+      "score": "q50",
+      "selection": "Top1/2/3/5 with standard cooldown"
+    },
+    "monster": {
+      "selection": "V8 first Pareto front maximizing q90 and q10; rank q90 desc then q10 desc; no dominated-row backfill",
+      "top_n": [
+        1,
+        2,
+        3,
+        5
+      ]
+    }
+  },
+  "candidate_gates": {
+    "prior_daily_close_lte_jpy": 1000,
+    "prior_daily_volume_gte_shares": 10000,
+    "require_all_21_features": true
+  },
+  "periods": {
+    "h1_walkforward": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_policy": "OPEN_ONLY_IF_H1_HAS_AT_LEAST_ONE_PASSING_FROZEN_POLICY",
+    "h2_walkforward": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "comparability_gates": {
+    "core": {
+      "min_resolved_n": 50,
+      "net_mean_gt": 0,
+      "net_median_gte": 0,
+      "net_win_rate_gt": 0.5,
+      "top3_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.2
+    },
+    "monster": {
+      "min_resolved_n": 30,
+      "net_mean_gt": 0,
+      "gross_ge20_rate_gte": 0.1,
+      "top1_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.4
+    }
+  },
+  "decision": {
+    "if_h1_all_fail": "REJECT_V10_WITHOUT_H2",
+    "if_any_h1_pass": "RUN_H2_RETROSPECTIVE_REFUTATION_ONLY",
+    "no_feature_or_threshold_tuning_from_h2": true
+  },
+  "production_modified": false
+}

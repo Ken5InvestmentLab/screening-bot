@@ -4,7 +4,7 @@
   "outcome_values_opened_before_freeze": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01",
-  "milestone": "M5_GAP_RECLAIM_DECISIONS_COMMITTED_BEFORE_OUTCOMES",
+  "milestone": "M6_GAP_RECLAIM_REJECTED_NO_PARAMETER_TUNING",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -37,7 +37,9 @@
     "selected": "3997f9d573cff0d18ade886b327b019207b20b56c13853ea3c7895cd62cd1d3c"
   },
   "decision_commit": "926f983",
-  "next_action": "Evaluate the frozen gap-reclaim policy on 2022H2-2023 only after verifying decision commit 926f983 and the current weekly usage. Reject without tuning if any registered gate fails. Recheck Fundamental V2 handoff at the next milestone.",
+  "evaluation_decision": "REJECT_GAP_RECLAIM_DISCOVERY",
+  "evaluation_report": "tvfree_screener/batch02/reports/core_gap_reclaim_discovery.json",
+  "next_action": "Record the gap-reclaim rejection without tuning. Then register an independent all-market winner/loser signal-state audit using a frozen broad feature list, 2022H2/2023 discovery, and 2024 direction-only confirmation; do not use 2025 for feature selection and do not reopen First Reversal's rejected DD60 direction as a fresh finding. Recheck Fundamental V2 handoff at the next milestone.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false
 }

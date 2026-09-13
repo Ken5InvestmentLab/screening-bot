@@ -1,0 +1,99 @@
+{
+  "spec_id": "CAUSAL-4H-MONSTER-V11-WEAK-REVERSAL-IGNITION-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V11_OUTCOME_EVALUATION",
+  "role": "RETROSPECTIVE_EVENT-GATE_ARCHITECTURE_DISCOVERY_ONLY",
+  "objective": "Stop ranking every eligible 4H bin. Detect a causal weak-to-strength ignition event first, then rank only event rows.",
+  "integrity": {
+    "prior_2025_results_seen": true,
+    "year_2025_can_promote": false,
+    "year_2026_strategy_outcomes_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "event_gate": {
+    "name": "WEAK_REVERSAL_IGNITION",
+    "rules": [
+      "xctx_breadth_positive <= 0.50",
+      "prev4_log_return_mean <= 0",
+      "bar_log_return > 0",
+      "range_pct >= prev4_range_mean",
+      "log_volume_rel20 >= log(2), equivalent to current same-bin volume >= prior20 same-bin median"
+    ],
+    "rationale": [
+      "broader eligible cohort is not majority-positive",
+      "symbol entered the bar with nonpositive recent 4H drift",
+      "current bar turns positive",
+      "current range expands versus recent 4H range",
+      "source-internal relative volume confirms participation"
+    ],
+    "daily_only_signal": false,
+    "current_day_final_daily_values_used": false,
+    "feature_only_population_2025": {
+      "rows": 13873,
+      "rate_of_all_candidates": 0.03478930316070336,
+      "active_dates": 232,
+      "symbols": 1210,
+      "AM_rows": 8366,
+      "PM_rows": 5507
+    }
+  },
+  "feature_panel": {
+    "features": "V10 21 causal intraday/cross-sectional/relative-volume features",
+    "daily_context_v9_features": false
+  },
+  "model": {
+    "training_population": "event-gate rows only",
+    "schedule": "monthly expanding causal refit",
+    "estimator": "q10/q50/q90 HistGradientBoostingRegressor",
+    "parameters": "UNCHANGED_FROM_V5_V10",
+    "separate_by_bin_name": true,
+    "return_clipping": "NONE"
+  },
+  "monster_selection": {
+    "eligibility": "event gate only",
+    "score_structure": "V8 first Pareto front maximizing predicted q90 and q10",
+    "rank_within_front": [
+      "q90 descending",
+      "q10 descending",
+      "symbol ascending"
+    ],
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "no_backfill_from_non_event_or_dominated_rows": true,
+    "cooldown": "5 official XTKS sessions per symbol; AM before PM"
+  },
+  "periods": {
+    "h1_walkforward": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_policy": "OPEN_ONLY_IF_AT_LEAST_ONE_H1_POLICY_PASSES",
+    "h2_walkforward": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "gates": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "decision": {
+    "if_h1_all_fail": "REJECT_V11_WITHOUT_H2",
+    "if_any_h1_pass": "RUN_H2_RETROSPECTIVE_REFUTATION_ONLY",
+    "no_gate_or_parameter_tuning_from_h2": true
+  },
+  "production_modified": false
+}

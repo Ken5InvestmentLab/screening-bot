@@ -1,149 +1,76 @@
 {
-  "status_id": "SUPERVISOR-CANDIDATE-STATUS-20260914-01",
-  "updated_at_jst": "2026-09-14T01:50:00+09:00",
+  "status_id": "SUPERVISOR-CANDIDATE-STATUS-20260914-02",
+  "updated_at_jst": "2026-09-14T05:57:00+09:00",
   "canonical_endpoint": "next official XTKS session open -> fifth official XTKS session close",
   "year_2026_policy": "REPORT_OR_ROBUSTNESS_ONLY_NEVER_SELECTION_OR_TUNING",
   "lanes": {
     "event_monster": {
       "branch": "research/tvfree-canonical-batch02",
-      "status": "ACTIVE_V20_INPUT_STAGED",
-      "active_experiment": {
-        "id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
-        "owner": ":12 Canonical/Event worker",
-        "duplicate_forbidden": true,
-        "evaluator_ready": true,
-        "contract_test_run": 34769637874,
-        "contract_test_status": "completed/success",
-        "h1_outcomes_opened": false,
-        "h1_input": {
-          "canonical_eligible_union_symbols": 1810,
-          "official_h1_sessions": 82,
-          "symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
-          "old_1332_panel_rejected": true,
-          "dedicated_workflow": ".github/workflows/v20-session-impulse-h1.yml",
-          "status": "WAITING_FOR_V44_YAHOO_RUNS_TO_STOP"
-        }
-      },
-      "closed": [
-        {
-          "family": "V12 Tentei-inspired reversal",
-          "decision": "REJECT_WITHIN_PATH_H2_DEGRADATION"
-        },
-        {
-          "family": "V17 dual classifier on V12",
-          "decision": "REJECT_H1"
-        },
-        {
-          "family": "V18 quantile ranking on V12",
-          "decision": "REJECT_H1"
-        },
-        {
-          "family": "4H compression-breakout V20",
-          "decision": "REJECT_2024Q4_DISCOVERY_2025_UNOPENED"
-        },
-        {
-          "family": "Monster canonical v2 ALL_WEAK_EARLY",
-          "decision": "LOCKED_2025_FAIL_TOP1_EXCLUDED_MEAN"
-        }
-      ]
+      "head_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
+      "status": "ACTIVE_V20_COVERAGE_BLOCKED",
+      "active_experiment": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+      "owner": ":12 Canonical/Event worker",
+      "h1_universe_symbols": 1810,
+      "h1_sessions": 82,
+      "h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
+      "h1_run": 34774070956,
+      "h1_run_status": "COVERAGE_FAILED_DO_NOT_INTERPRET",
+      "raw_fetch_shards": "4/4 success",
+      "coverage_receipt_uploaded_on_original_run": false,
+      "diagnostic_patch_sha": "51aea85af95c0a2d7f695d87a2501bfecf91e729",
+      "diagnostic_patch_contract_ci": 34777145113,
+      "diagnostic_patch_contract_ci_status": "success",
+      "h1_outcomes_opened": false,
+      "h2_opened": false,
+      "next_action": "Recover or reproduce the fail-closed raw coverage receipt and identify the failed frozen acceptance condition before opening H1 outcomes. Do not retune V20 to pass coverage.",
+      "closed_families": ["V12","V17","V18","compression-breakout","canonical Monster-v2"]
     },
     "core": {
       "branch": "research/tentei-cloud-mtf",
+      "head_sha": "14ccb6f2b2a31aceb52d7a6d3602f6e3e001a202",
       "status": "NO_ACTIVE_REPLACEMENT_CANDIDATE",
-      "current_fixed_core": {
-        "decision": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
-        "canonical_replay_run": 34766143681,
-        "h2_primary_cost_mean": -0.00452,
-        "h2_primary_cost_median": -0.00745,
-        "h2_primary_cost_win": 0.4143,
-        "h2_top3_removed": -0.00874
-      },
-      "failed_breakdown_reclaim": {
-        "id": "CORE-FAILED-BREAKDOWN-RECLAIM-20260914-01",
-        "corrected_authoritative_preconfirmation_run": 34768985489,
-        "invalid_run": 34768879678,
-        "invalid_reason": "wrong prior-day daily-context implementation",
-        "frozen_raw_source_run": 34592896202,
-        "frozen_daily_source_run": 34599959356,
-        "frozen_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
-        "development": {
-          "n": 5252,
-          "net_mean": -0.007657316121648691,
-          "net_median": -0.008322259136212647,
-          "win": 0.41089108910891087,
-          "top3_removed_mean": -0.008019218274692225,
-          "gate": "FAIL"
-        },
-        "internal_validation": {
-          "n": 3285,
-          "net_mean": 0.0033063314267468384,
-          "net_median": -0.0018454258675079062,
-          "win": 0.4812785388127854,
-          "top3_removed_mean": 0.002828090476302308,
-          "gate": "FAIL"
-        },
-        "preconfirmation_pass": false,
-        "locked_2025h2_opened": false,
-        "decision": "REJECT_PRECONFIRMATION"
-      },
-      "next_action": "Do not retune rejected Core families. Continue only if a genuinely different low-DOF Core mechanism is preregistered before outcomes and does not overlap Event/Consensus."
+      "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
+      "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
+      "failed_breakdown_locked_h2_opened": false,
+      "latest_execution_audit_run": 34774595196,
+      "latest_execution_audit_status": "success",
+      "coverage": {"DEV":"169/169","H2_2025":"140/140","YTD_2026":"116/118"},
+      "report_only_unmatched": [
+        {"symbol":"4586","exec_date":"2026-04-20","reason":"NO_RAW_1H_ENTRY_BAR_OPEN"},
+        {"symbol":"4709","exec_date":"2026-04-20","reason":"NO_RAW_1H_ENTRY_BAR_OPEN"}
+      ],
+      "next_action": "No adjacent retune. Continue with audit/reproducibility unless a genuinely different low-DOF mechanism is preregistered before outcomes."
     },
     "consensus": {
       "branch": "research/consensus-atr-regime-gate",
-      "active_experiment": "CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914",
-      "authoritative_run": 34767664140,
-      "authoritative_run_status": "in_progress",
-      "superseded_or_invalid_runs": [
-        34765427789,
-        34766353425
-      ],
-      "final_conclusion_rule": "After run 34767664140 completes, first run the dedicated acceptance workflow and require accepted=true before interpreting any performance; only then evaluate frozen H2/strict5 gates.",
-      "promotion_dependencies_if_survives": [
-        "separately versioned canonical next-open target retrain with architecture/hyperparameters initially frozen",
-        "shared canonical raw-bin materializer/timing semantics",
-        "point-in-time survivorship-neutral JPX membership validation"
-      ],
-      "diagnostic_next": "V45 full-context ATR is outcome-free only and cannot rescue failed V44",
-      "fetch_acceptance_guard": {
-        "path": "research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json",
-        "baseline_reproduction_pass_required": true,
-        "requested_symbols_equals": 1910,
-        "ok_symbols_min": 1850,
-        "candidate_symbols_min": 1793,
-        "candidate_rows_min": 519163,
-        "on_failure": "DO_NOT_INTERPRET_AND_RERUN_EXACT_FROZEN_EVALUATOR_AFTER_SUPERSEDED_RUNS_STOP"
-      },
-      "acceptance_workflow": ".github/workflows/no-tv-consensus-v44-acceptance.yml",
-      "strict5_workflow": ".github/workflows/no-tv-consensus-v44-strict5.yml",
-      "invalid_run_fetch_only_receipt": {
-        "run_id": 34765427789,
-        "requested_symbols": 1910,
-        "ok_symbols": 1850,
-        "candidate_symbols": 1793,
-        "candidate_rows": 519231,
-        "performance_interpreted": false
-      }
+      "head_sha": "4cfaf0a53d0ac57699da22fcefafd35d1af6c7da",
+      "status": "V47_CLEAN_PIT_MATERIALIZATION_CONTRACT_FROZEN",
+      "v44_authoritative_run": 34767664140,
+      "v44_decision": "DATA_REPRO_FAILURE_DO_NOT_INTERPRET",
+      "v44_failure_reason": "DEVELOPMENT baseline n=61 expected=67",
+      "v46_run": 34775030470,
+      "v46_status": "ACCEPTED_FOR_V47_DATA_CONTRACT",
+      "v46_coverage": "3700/3700",
+      "v47_materialization_contract": "research/CONSENSUS_V47_DATA_MATERIALIZATION_CONTRACT_20260914.json",
+      "v47_price_arms": ["NOCAP","CAP1000_PIT"],
+      "v47_outcomes_opened": false,
+      "next_action": "Implement outcome-blind clean V47 materializer and pass PIT membership/daily/intraday/split coverage receipts before computing or inspecting strategy outcomes."
     },
     "shadow_data_integrity": {
       "branch": "research/tvfree-canonical-batch02",
       "status": "INFRASTRUCTURE_ACTIVE",
-      "controls": [
-        "append-only prospective shadow",
-        "evidence-chain receipt",
-        "snapshot staleness guard",
-        "branch ancestry guard",
-        "authorization gate",
-        "post-freeze temporal guard",
-        "append-guard contract reconciliation"
-      ],
-      "production_authorized": false
+      "production_authorized": false,
+      "controls": ["append-only prospective shadow","freeze/integrity guards","staleness guard","temporal guard","causal intraday data quality"]
     }
   },
-  "global_no_go_conditions": [
-    "Do not modify production/main/Discord/Spreadsheet/Stable6/Sniper/Mega/TradingView/watchlist builder/updater without explicit user Go",
-    "Do not promote from 2026 outcomes",
-    "Do not reopen rejected families by renaming or post-hoc threshold/cooldown/cost changes",
-    "Do not interpret authoritative Consensus V44 performance before its acceptance receipt passes",
-    "Do not open Core Failed-Breakdown locked 2025H2 after failed preconfirmation"
-  ]
+  "cross_lane": {
+    "final_scoring": "4H/intraday-led",
+    "production_changes_allowed": false,
+    "final_go_no_go_ready": false,
+    "blocking_items": [
+      "V20 raw coverage acceptance failure not yet classified",
+      "Consensus clean V47 PIT materializer/coverage receipt not yet implemented or evaluated",
+      "No active Core replacement candidate currently passes"
+    ]
+  }
 }

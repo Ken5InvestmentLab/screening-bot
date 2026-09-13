@@ -1,0 +1,30 @@
+{
+  "spec_id": "CONSENSUS-V44-TIE-PREVALENCE-AUDIT-20260914",
+  "status": "PREREGISTERED_OUTCOME_FREE",
+  "parent_experiment": "CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914",
+  "purpose": "Measure whether V44 replacement ordering is materially affected by exact cons_min ties. Do not use returns to choose a tie-break.",
+  "input": "V44 Top-K candidate pool before outcome columns are consulted",
+  "group_unit": [
+    "date",
+    "session"
+  ],
+  "metrics": [
+    "groups",
+    "groups_with_top1_cons_min_tie",
+    "top1_tie_group_size_distribution",
+    "groups_with_any_tie_within_top10",
+    "fraction_of_candidate_rows_in_exact_cons_min_ties",
+    "fraction_of selected replacement decisions whose chosen cons_min is tied with another currently eligible candidate"
+  ],
+  "interpretation": {
+    "no_or_rare_ties": "V44 symbol-code final tie-break is operationally negligible.",
+    "material_ties": "V44 remains descriptive but cannot be promoted until a new outcome-blind deterministic secondary score is preregistered and tested on later data."
+  },
+  "restrictions": [
+    "Do not compare historical returns across alternative tie-breaks in this audit.",
+    "Do not select cons_geo/r_ret/p_hit10/etc. as a new tie-break from V44 outcomes.",
+    "Do not alter the running authoritative V44 experiment.",
+    "2026 outcomes are not used."
+  ],
+  "production_modified": false
+}

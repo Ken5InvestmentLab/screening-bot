@@ -25,15 +25,14 @@
       "reconstructed signal-session volume >= 5000 shares",
       "required causal technical features available"
     ],
-    "statistic": "market_median_atr = median ATR14_pct across all eligible candidate rows in that date/session"
+    "statistic": "market_median_atr = median ATR14_pct across all eligible candidate rows in that date/session",
+    "role": "pre-deployment calibration/reference distribution; not claimed to be identical to every model fit cohort"
   },
   "frozen_distribution_outputs": [
-    "q50",
-    "q85",
-    "q90",
-    "q95",
-    "monthly_q90",
-    "expanding_q90_by_month",
+    "initial_history_q50_q85_q90_q95",
+    "calibration_q50_q85_q90_q95",
+    "calibration_monthly_q90",
+    "calibration_expanding_q90_by_month",
     "candidate_count_distribution"
   ],
   "current_selected_context_reference_pct": 2.8640659721217943,
@@ -53,10 +52,19 @@
     "minimum_candidate_symbol_coverage_fraction_vs_v43": 0.95
   },
   "decision_contract": [
+    "Use the term calibration/reference distribution; do not call Jan-Jun 2025 the literal model-training distribution.",
     "This run is distribution-only and cannot promote or reject Consensus.",
     "Do not replace the frozen 2.864 cap merely because the full-context q90 differs.",
     "If V44 fails, retain V45 only as diagnostic evidence and do not rescue Consensus by changing the ATR cap.",
     "If V44 passes, preregister a separate pre-2026 validation of the outcome-free full-context q90 before considering it as ATR reference v2."
   ],
-  "production_modified": false
+  "production_modified": false,
+  "additional_outcome_free_context": {
+    "period": [
+      "2024-10-01",
+      "2024-12-31"
+    ],
+    "role": "initial-history full-context distribution for comparison only",
+    "rule": "one distinct eligible date/session context = one vote"
+  }
 }

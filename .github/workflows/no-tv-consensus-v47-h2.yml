@@ -1,0 +1,101 @@
+name: Consensus V47B Winner H2 Validation
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_H2_WINNER"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Read source run ids
+        id: meta
+        run: |
+          FEATURE="$(awk -F= '/^feature_run_id=/{print $2}' research/RUN_V47_H2_WINNER | tr -d '[:space:]')"
+          DEV="$(awk -F= '/^dev_run_id=/{print $2}' research/RUN_V47_H2_WINNER | tr -d '[:space:]')"
+          DAILY="$(awk -F= '/^daily_run_id=/{print $2}' research/RUN_V47_H2_WINNER | tr -d '[:space:]')"
+          test -n "$FEATURE" && test -n "$DEV" && test -n "$DAILY" || exit 1
+          echo "feature_run_id=$FEATURE" >> "$GITHUB_OUTPUT"
+          echo "dev_run_id=$DEV" >> "$GITHUB_OUTPUT"
+          echo "daily_run_id=$DAILY" >> "$GITHUB_OUTPUT"
+      - name: Install frozen-model dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 requests==2.34.2 scikit-learn==1.9.1 scipy==1.18.1 pyarrow
+      - name: Download features
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-clean-features-${{ steps.meta.outputs.feature_run_id }}
+          path: features
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.feature_run_id }}
+      - name: Download DEV decision
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-dev-${{ steps.meta.outputs.dev_run_id }}
+          path: dev
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.dev_run_id }}
+      - name: Download V47 daily materialization
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-${{ steps.meta.outputs.daily_run_id }}
+          path: daily
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.daily_run_id }}
+      - name: Download frozen daily
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Resolve winner and validate H2 only for winner
+        shell: bash
+        env:
+          PYTHONPATH: research
+        run: |
+          WINNER="$(python - <<'PY'
+          import json
+          d=json.load(open("dev/v47_dev_price_policy.json",encoding="utf-8"))
+          print(d["decision"]["winner"])
+          PY
+          )"
+          if [ "$WINNER" = "NOCAP" ]; then
+            DEVF="features/v47_nocap_dev_features.parquet"
+            H2F="features/v47_nocap_validation_blind.parquet"
+            SEL="dev/v47_dev_selected_nocap.csv"
+          elif [ "$WINNER" = "CAP1000_PIT" ]; then
+            DEVF="features/v47_cap1000_dev_features.parquet"
+            H2F="features/v47_cap1000_validation_blind.parquet"
+            SEL="dev/v47_dev_selected_cap1000_pit.csv"
+          else
+            echo "invalid winner $WINNER" >&2
+            exit 1
+          fi
+          python research/no_tv_v47_h2_winner_validation.py             --dev-json dev/v47_dev_price_policy.json             --arm "$WINNER"             --dev-features "$DEVF"             --validation-blind "$H2F"             --dev-selected "$SEL"             --frozen-daily frozen/tse_daily.csv             --restored-daily daily/v47_restored_daily.csv             --output-dir research_artifacts/v47_h2
+      - name: Upload H2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-h2-${{ github.run_id }}
+          path: research_artifacts/v47_h2/**
+          if-no-files-found: warn
+          retention-days: 90

@@ -608,3 +608,17 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next after overlap recheck: same-date + same-bin cross-sectional percentile representation to remove common market volatility level directly.
 - Report: `reports/tentei_v16_history_rank_drift_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-V17-CROSSSECTIONAL-RANK-DRIFT-20260913-01 — PASS REPRESENTATION / RETURNS STILL UNOPENED
+
+- Parallel-lane check confirmed no overlap; the other lane remained on prospective-shadow evidence/reporting and ledger reconciliation.
+- Outcome-free cross-sectional rank universe: 283,750 gated complete bins / 181 dates / 1,248 symbols.
+- V12 feature-complete cohorts: pre-2025 4,924 rows / 966 symbols; H1 8,227 rows / 1,173 symbols.
+- Frozen representation gate passed: 0 SEVERE + 1 MODERATE + 15 LOW.
+- Previously severe V16 volatility dimensions became LOW: xrank_bb_width_pct KS 0.061/PSI 0.027; xrank_atr_pct 0.033/0.009; xrank_prev4_range_mean 0.035/0.010.
+- Only moderate feature: xrank_prior5_rsi_min, PSI 0.1365.
+- Decision: PASS_TO_SUPERVISED_PREREGISTRATION. No V17 return metric was opened during the representation audit.
+- Next: separately preregister the unchanged V14 dual-classifier/Pareto architecture using V17 features only, then evaluate H1. H2 only if a frozen H1 TopN passes.
+- Report: `reports/tentei_v17_crosssectional_rank_drift_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

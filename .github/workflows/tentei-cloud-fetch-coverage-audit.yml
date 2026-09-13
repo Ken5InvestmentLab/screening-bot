@@ -47,10 +47,17 @@ jobs:
             --csv-glob 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --symbol-file research/tentei_cloud/symbols_4h_universe.txt \
             --outdir out
+          python research/tentei_cloud/audit_fetch_failure_topology.py \
+            --failure-glob 'downloaded/**/failures_*.json' \
+            --csv-glob 'downloaded/**/ohlcv_1h_shard_*.csv' \
+            --symbol-file research/tentei_cloud/symbols_4h_universe.txt \
+            --outdir out
           echo '--- missing symbols ---'
           cat out/fetch_missing_symbols.txt || true
-          echo '--- failures by symbol (top 100) ---'
-          head -101 out/fetch_failures_by_symbol.csv || true
+          echo '--- failure topology categories ---'
+          cat out/fetch_failure_topology_categories.csv || true
+          echo '--- affected symbols ---'
+          cat out/fetch_failure_topology_affected.csv || true
       - name: Record source fetch run
         run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
       - uses: actions/upload-artifact@v4

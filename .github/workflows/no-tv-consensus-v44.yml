@@ -24,7 +24,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install pandas numpy requests scikit-learn
+        run: pip install pandas==3.0.5 numpy==2.5.3 requests==2.34.2 scikit-learn==1.9.1 scipy==1.18.1
       - name: Download preserved frozen daily dataset
         uses: actions/download-artifact@v5
         with:

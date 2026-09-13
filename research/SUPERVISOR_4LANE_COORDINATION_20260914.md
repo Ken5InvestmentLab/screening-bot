@@ -12,11 +12,17 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
 - Preserve all preregistration/freeze artifacts. A rejected family may not be resurrected by renaming and retuning it on already-opened outcomes.
 
 ## The four active lanes
-1. **Event-specific V12/V17/V18 lane** — branch `research/tvfree-canonical-batch02`.
-   - Owns V12 event generation, V17 cross-sectional representation, V18 quantile evaluation.
-   - V17 classifier H1 is rejected; do not tune it on opened H1.
-   - V18 is a new frozen target-family experiment. Open H2 only if a frozen H1 policy passes its preregistered gate.
-   - Must not duplicate Core breadth pruning or Consensus V44.
+1. **Event-specific / Monster lane** — branch `research/tvfree-canonical-batch02`.
+   - Owns causal 4H event-family research, V17 stable cross-sectional representation, and Monster/event-specific reconciliation.
+   - V12 reversal family is **closed** after 2025H2 within-path degradation: RSI Recovery and Emergency Reversal themselves lost edge. Do not rescue it by threshold tuning, trigger reweighting, or renaming.
+   - V17 dual-classifier and V18 quantile ranking are rejected on opened H1 and must not be retuned there.
+   - Distinct compression-breakout V20 was rejected in 2024Q4 discovery; 2025 remains unopened for that family.
+   - Canonical Monster v2 `ALL_WEAK_EARLY` exact replay is also rejected as a passed policy: 2025 locked replay mean +2.19% and +20% 12.96%, but frozen 0.5%-cost Top1-winner-excluded mean was -0.21%.
+   - **Active event experiment:** `TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914`, now formally owned by the :12 Canonical/Event worker. The earlier "parallel chat" ownership was retired because no dedicated automation or implementation existed.
+   - V20 evaluator + contract tests are frozen; contract CI run `34769637874` passed.
+   - V20 H1 cannot use the old 1,332-symbol raw panel: canonical prior-day H1 eligibility union is **1,810 symbols across 82 sessions**, sorted-list SHA `2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b`.
+   - V20 dedicated H1 run `34774070956` completed with all four Yahoo fetch shards successful but fail-closed raw coverage verification failed before H1 evaluation. H1 outcomes remain unopened; do not interpret performance or open H2 until the frozen acceptance failure is diagnosed.
+   - Must not duplicate Core breadth/stability or Consensus specialist work.
 
 2. **Prospective shadow + data-integrity lane** — also branch `research/tvfree-canonical-batch02`.
    - Owns append-only prospective shadow evidence, freeze/integrity guards, daily-anchor reconstruction boundaries, and causal intraday-data quality.
@@ -24,16 +30,26 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
    - Daily-only fallback is never the final 4H scoring representation.
 
 3. **Core breadth/stability lane** — branch `research/tentei-cloud-mtf`.
-   - Owns fixed reconstructed Core/SAFE stability, uncertainty and breadth diagnostics.
-   - Broad-market hard gates, simple local single-feature hard gates, and positive peer-momentum hard gates are already rejected. Do not keep threshold-searching those opened results.
-   - Latest fixed-Core stability audit (run 34765762025) is a corrective finding: DEV n=169 mean +1.31%; 2025H2 n=140 mean +0.08%, median -0.24%, win 45.0%, Top3-ex mean -0.35%; 2026YTD n=118 mean +1.56% is report-only. Therefore the current fixed Core is **not a passed replacement candidate**. Do not use the stronger 2026 block to promote it.
-   - Next work must either (a) document uncertainty/rejection cleanly or (b) preregister a genuinely new low-DOF Core hypothesis before opening its outcomes.
+   - Owns fixed reconstructed Core/SAFE stability, uncertainty, breadth diagnostics, and the separately preregistered failed-breakdown-reclaim Core family.
+   - Canonical endpoint repair is **complete** on the exact unchanged fixed-Core candidate set: next official XTKS-session open -> fifth official XTKS-session close.
+   - Canonical DEV at 0.5% cost: n=169, mean +0.712%, median +0.509%, win 55.62%, Top3-ex +0.393%.
+   - Canonical 2025H2 at 0.5% cost: n=140, mean **-0.452%**, median **-0.745%**, win **41.43%**, Top1-ex **-0.700%**, Top3-ex **-0.874%**.
+   - Even at 0% cost, 2025H2 median is -0.245%, win 45.71%, Top1-ex -0.200% and Top3-ex -0.374%. Therefore the weakness is not just the cost assumption.
+   - Decision: **REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE** under the canonical endpoint. Do not use the stronger 2026 report-only block to rescue or retune it.
+   - Already rejected pruning paths remain closed: broad-market hard gates, simple local single-feature hard gates, and positive peer-momentum hard gates.
+   - `CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json` has now been evaluated correctly under the frozen canonical daily context and is **REJECTED at preconfirmation**. Corrected run `34768985489`: DEVELOPMENT mean -0.766%, median -0.832%, win 41.09%; INTERNAL_VALIDATION mean +0.331% but median -0.185%, win 48.13%. Both frozen blocks fail; locked 2025H2 remains unopened. Do not retune or reopen this family.
+   - Core executable-entry audit `34774595196` is complete: DEV 169/169, 2025H2 140/140, 2026_YTD 116/118. The only unmatched rows are 4586 and 4709 for 2026-04-20 due to missing raw Yahoo 1H entry-bar/open data; this is report-only coverage diagnosis and does not change rejection decisions.
 
 4. **Consensus specialist lane** — branch `research/consensus-atr-regime-gate`.
-   - Owns fixed-min95 Consensus, frozen ATR OOD guard, realistic next-open execution, concentration/episode diagnostics and V44 cooldown-with-replacement.
-   - Frozen ATR q90 is a model-version OOD guard, not an adaptive rolling timing rule. Do not tune the cap from 2026.
-   - Current headline is heavily concentrated in repeated same-symbol episodes; episode-first mean is near flat. V44 is decisive.
-   - If V44 preserves edge with replacements, Consensus remains a candidate specialist. If V44 collapses, demote it to continuation/re-entry/pyramiding research, not a Stable★6 replacement.
+   - Owns fixed-min95 Consensus, frozen ATR OOD guard, realistic next-open execution, concentration/overlap diagnostics, V44 cooldown-with-replacement, and staged outcome-free V45 context audits.
+   - Authoritative V44 run `34767664140` ended in `DATA_REPRO_FAILURE_DO_NOT_INTERPRET` because DEVELOPMENT baseline n=61 differed from expected 67. No V44 performance promotion evidence is valid from that run.
+   - Historical universe limitation and split-adjusted absolute-price leakage are promotion blockers for legacy current-listed/run80 evidence.
+   - V46 outcome-free PIT split eligibility audit run `34775030470` is accepted for the V47 data contract: 3700/3700 split coverage, no strategy returns/model scores opened, evidence artifact preserved.
+   - Clean V47 materialization must be rebuilt from accepted PIT membership replay plus accepted V46 split evidence. Do not treat post-hoc deletion of current-selected rows as clean.
+   - The historical prior-close <= JPY 1,000 rule is **not a global requirement**. V47 compares exactly **NOCAP** versus **CAP1000_PIT** under the same clean PIT model/data/target contract; do not grid-search additional price caps.
+   - Performance is primary. Robustness/tail/concentration diagnostics remain mandatory, but causal rare monster winners are not an automatic rejection reason.
+   - V47 outcomes must remain closed until PIT membership/daily/intraday/split coverage receipts pass. 2026 outcomes remain report/robustness-only.
+   - V45 full-context ATR remains after V46/V47 and cannot rescue failed evidence through retuning.
 
 ## Cross-lane arbitration
 - Core is the breadth/stability role; Monster/event-specific work is the right-tail role; Consensus is a specialist role conditional on diversification/generalization.
@@ -42,3 +58,10 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
 
 ## Supervisor correction rule
 Before advancing any lane, read this file plus that lane's latest handoff/log. If the lane conflicts with this contract, fix the lane's log/spec first, record the correction, then continue. Do not silently keep an older premise.
+
+## 2026-09-14 reconciliation
+- Event V12/V17/V18/compression-breakout/canonical Monster-v2 are closed/rejected and may not be reopened by renaming or post-hoc retuning.
+- Active Event experiment is V20 Session-Impulse; H1 is blocked on raw coverage acceptance, not performance.
+- Core current fixed and Failed-Breakdown Reclaim are rejected; locked reclaim H2 remains unopened.
+- Consensus V44 authoritative run is a data-reproduction failure and must not be interpreted for promotion. V46 is accepted outcome-free infrastructure evidence; V47 clean PIT rebuild is the active promotion path.
+- Before final arbitration, re-fetch every active branch HEAD and require comparable endpoint/universe/cost/selection contracts.

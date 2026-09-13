@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import math
 import unittest
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from tvfree_screener.batch02.causal_intraday_features import extract_causal_features
+from tvfree_screener.batch02.causal_intraday_features import (
+    MODEL_CANDIDATE_FEATURES_V1,
+    extract_causal_features,
+)
 
 JST = ZoneInfo("Asia/Tokyo")
 
@@ -36,7 +40,9 @@ class CausalIntradayFeatureTests(unittest.TestCase):
                     symbol="1111",
                     bin_name=bin_name,
                     source_tag="RAW_CAUSAL_INTRADAY",
-                    feature_cutoff_jst=datetime.combine(day, datetime.min.time(), tzinfo=JST).replace(hour=hour),
+                    feature_cutoff_jst=datetime.combine(
+                        day, datetime.min.time(), tzinfo=JST
+                    ).replace(hour=hour),
                     open=100.0,
                     high=105.0,
                     low=98.0,
@@ -49,14 +55,39 @@ class CausalIntradayFeatureTests(unittest.TestCase):
         rows = extract_causal_features(self.make_bars())
         am = [row for row in rows if row["bin_name"] == "AM_09_13"]
         self.assertIsNone(am[19]["range_vs_prior20"])
+        self.assertIsNone(am[19]["log_range_vs_prior20"])
         self.assertIsNotNone(am[20]["range_vs_prior20"])
+        self.assertAlmostEqual(
+            am[20]["log_range_vs_prior20"],
+            math.log1p(am[20]["range_vs_prior20"]),
+        )
         self.assertIsNotNone(am[20]["volume_rel20"])
         self.assertEqual(am[20]["prior_same_bin_count"], 20)
 
     def test_previous_four_shape_features_do_not_need_absolute_price_history(self):
         rows = extract_causal_features(self.make_bars(4))
+        self.assertIsNone(rows[3]["prev4_log_return_mean"])
         self.assertIsNone(rows[3]["prev4_body_mean"])
+        self.assertIsNotNone(rows[4]["prev4_log_return_mean"])
         self.assertIsNotNone(rows[4]["prev4_body_mean"])
+
+    def test_bar_log_return_is_scale_invariant(self):
+        base = self.make_bars(1)[0]
+        scaled = Bar(
+            session_date=base.session_date,
+            symbol="2222",
+            bin_name=base.bin_name,
+            source_tag=base.source_tag,
+            feature_cutoff_jst=base.feature_cutoff_jst,
+            open=base.open * 10,
+            high=base.high * 10,
+            low=base.low * 10,
+            close=base.close * 10,
+            volume=base.volume,
+        )
+        rows = extract_causal_features([base, scaled])
+        self.assertAlmostEqual(rows[0]["bar_log_return"], rows[1]["bar_log_return"])
+        self.assertAlmostEqual(rows[0]["range_pct"], rows[1]["range_pct"])
 
     def test_pm_close_location_is_computed_but_not_model_eligible(self):
         rows = extract_causal_features(self.make_bars(1))
@@ -66,12 +97,19 @@ class CausalIntradayFeatureTests(unittest.TestCase):
         self.assertFalse(pm["close_location_model_eligible"])
         self.assertIsInstance(pm["close_location"], float)
 
-    def test_volume_relative_feature_is_explicitly_experimental(self):
+    def test_volume_relative_feature_is_explicitly_experimental_and_not_v1(self):
         rows = extract_causal_features(self.make_bars())
+        self.assertNotIn("volume_rel20", MODEL_CANDIDATE_FEATURES_V1)
         self.assertTrue(all(
             row["volume_rel20_status"] == "EXPERIMENTAL_SOURCE_INTERNAL"
             for row in rows
         ))
+
+    def test_v1_completeness_requires_same_bin_twenty_bar_warmup(self):
+        rows = extract_causal_features(self.make_bars())
+        am = [row for row in rows if row["bin_name"] == "AM_09_13"]
+        self.assertFalse(am[19]["model_candidate_v1_complete"])
+        self.assertTrue(am[20]["model_candidate_v1_complete"])
 
 
 if __name__ == "__main__":

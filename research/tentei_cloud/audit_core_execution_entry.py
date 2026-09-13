@@ -7,13 +7,13 @@ Problem:
 The standard research label ret5bd uses the reconstructed signal-session CLOSE as
 the entry price. A real alert can only be acted on after that session is complete.
 
-This audit therefore attaches, for each fixed Core candidate, the first raw Yahoo
-1H bar strictly AFTER the signal session's last raw timestamp and uses that bar's
-OPEN as a causal executable-entry proxy.
+Canonical execution contract:
+- determine the next official observed XTKS trading date strictly AFTER the
+  signal date, regardless of AM/PM;
+- use the first raw Yahoo 1H bar on that next trading date and its OPEN.
 
-Examples under the fixed 13:00 split:
-- AM signal: first next bar is normally the 13:00 JST bar.
-- PM signal: first next bar is normally the next trading day's opening bar.
+Therefore AM signals are NOT allowed to enter same-day at 13:00 in this audit.
+This matches the supervisor/parallel-lane next-XTKS-session-open contract.
 
 The target remains the same pre-existing 5-business-day target close so this is
 an entry-timing sensitivity test, not a horizon redefinition.
@@ -70,39 +70,41 @@ def make_core_pool(raw: pd.DataFrame) -> pd.DataFrame:
     q["date_dt"]=pd.to_datetime(q["date"],errors="coerce")
     iso=q["date_dt"].dt.isocalendar()
     q["iso_week"]=iso["year"].astype(str)+"-W"+iso["week"].astype(str).str.zfill(2)
-    return q
+    return q,dates
 
 
-def attach_next_bar(core: pd.DataFrame, raw: pd.DataFrame) -> pd.DataFrame:
+def attach_next_session_open(core: pd.DataFrame, raw: pd.DataFrame, dates: list[str]) -> pd.DataFrame:
     # Raw is already normalized to JST in load().
-    by_symbol={}
+    trading_dates=sorted(set(str(d) for d in dates))
+    next_map={
+        d:(trading_dates[i+1] if i+1<len(trading_dates) else None)
+        for i,d in enumerate(trading_dates)
+    }
+
+    first_bar={}
     for sym,g in raw.sort_values("timestamp").groupby("symbol",sort=False):
-        by_symbol[str(sym)]=g[["timestamp","open","close","volume"]].reset_index(drop=True)
+        z=(g.sort_values("timestamp")
+             .groupby("date",as_index=False)
+             .first())
+        first_bar[str(sym)]=z.set_index("date")[["timestamp","open","close","volume"]]
 
     rows=[]
     for _,r in core.iterrows():
         sym=str(r["symbol"])
-        g=by_symbol.get(sym)
-        if g is None or g.empty or pd.isna(r["last_ts"]):
+        exec_date=next_map.get(str(r["date"]))
+        g=first_bar.get(sym)
+        if exec_date is None or g is None or exec_date not in g.index:
             rows.append({
-                "exec_ts":pd.NaT,"exec_open":np.nan,"exec_bar_close":np.nan,
-                "exec_volume":np.nan,"entry_delay_hours":np.nan,
+                "exec_date":exec_date,"exec_ts":pd.NaT,"exec_open":np.nan,
+                "exec_bar_close":np.nan,"exec_volume":np.nan,
+                "entry_delay_hours":np.nan,
             })
             continue
-        needle=pd.Timestamp(r["last_ts"])
-        # Keep both operands in pandas' timezone-aware datetime dtype.
-        # Do not compare raw integer epochs: pandas 3 may store datetime64 in
-        # microseconds while Timestamp.value is nanoseconds.
-        j=int(g["timestamp"].searchsorted(needle, side="right"))
-        if j>=len(g):
-            rows.append({
-                "exec_ts":pd.NaT,"exec_open":np.nan,"exec_bar_close":np.nan,
-                "exec_volume":np.nan,"entry_delay_hours":np.nan,
-            })
-            continue
-        z=g.iloc[j]
+        z=g.loc[exec_date]
         exec_ts=pd.Timestamp(z["timestamp"])
+        needle=pd.Timestamp(r["last_ts"])
         rows.append({
+            "exec_date":exec_date,
             "exec_ts":exec_ts,
             "exec_open":float(z["open"]),
             "exec_bar_close":float(z["close"]),
@@ -111,7 +113,7 @@ def attach_next_bar(core: pd.DataFrame, raw: pd.DataFrame) -> pd.DataFrame:
         })
 
     x=pd.concat([core.reset_index(drop=True),pd.DataFrame(rows)],axis=1)
-    x["ret5bd_next_open"]=x["target_close"]/x["exec_open"]-1.0
+    x["ret5bd_next_session_open"]=x["target_close"]/x["exec_open"]-1.0
     x["entry_gap_vs_signal_close"]=x["exec_open"]/x["close"]-1.0
     x["matched"]=x["exec_open"].notna()&x["target_close"].notna()
     return x
@@ -173,8 +175,8 @@ def main():
 
     out=Path(a.outdir); out.mkdir(parents=True,exist_ok=True)
     raw=load(a.inputs)
-    core=make_core_pool(raw)
-    x=attach_next_bar(core,raw)
+    core,dates=make_core_pool(raw)
+    x=attach_next_session_open(core,raw,dates)
     matched_rate=float(x["matched"].mean()) if len(x) else 0.0
     if matched_rate < 0.90:
         raise RuntimeError(
@@ -207,30 +209,30 @@ def main():
             ("PM",matched[matched["session"]=="PM"]),
         ]:
             sig=summarize(sub["ret5bd"])
-            exe=summarize(sub["ret5bd_next_open"])
+            exe=summarize(sub["ret5bd_next_session_open"])
             compare.append({
                 "period":name,
                 "scope":scope,
                 "matched_n":int(len(sub)),
                 "signal_close_mean":sig.get("mean"),
-                "next_open_mean":exe.get("mean"),
-                "mean_delta_next_open_minus_signal":(
+                "next_session_open_mean":exe.get("mean"),
+                "mean_delta_next_session_open_minus_signal":(
                     exe.get("mean")-sig.get("mean")
                     if exe.get("mean") is not None and sig.get("mean") is not None else None
                 ),
                 "signal_close_median":sig.get("median"),
-                "next_open_median":exe.get("median"),
+                "next_session_open_median":exe.get("median"),
                 "signal_close_win":sig.get("win"),
-                "next_open_win":exe.get("win"),
+                "next_session_open_win":exe.get("win"),
                 "signal_close_le10":sig.get("le10"),
-                "next_open_le10":exe.get("le10"),
-                "next_open_top3_removed":exe.get("top3_removed"),
+                "next_session_open_le10":exe.get("le10"),
+                "next_session_open_top3_removed":exe.get("top3_removed"),
             })
 
         for ci,cost in enumerate(COSTS):
-            r=matched["ret5bd_next_open"]-cost
+            r=matched["ret5bd_next_session_open"]-cost
             sm=summarize(r)
-            boot=week_bootstrap(matched,"ret5bd_next_open",cost,SEED+pi*10+ci)
+            boot=week_bootstrap(matched,"ret5bd_next_session_open",cost,SEED+pi*10+ci)
             cost_rows.append({
                 "period":name,
                 "round_trip_cost":cost,
@@ -248,8 +250,8 @@ def main():
 
     keep=[
         "date","session","session_time","last_ts","symbol","close","target_date","target_close",
-        "ret5bd","exec_ts","exec_open","exec_bar_close","entry_delay_hours",
-        "entry_gap_vs_signal_close","ret5bd_next_open","matched",
+        "ret5bd","exec_date","exec_ts","exec_open","exec_bar_close","entry_delay_hours",
+        "entry_gap_vs_signal_close","ret5bd_next_session_open","matched",
     ]
     x[[k for k in keep if k in x.columns]].to_csv(out/"core_execution_rows.csv",index=False)
 
@@ -257,14 +259,14 @@ def main():
         "raw_start":str(raw["date"].min()),
         "raw_end":str(raw["date"].max()),
         "core_pool_n":int(len(x)),
-        "entry_proxy":"first raw Yahoo 1H bar strictly after signal session last_ts; use its OPEN",
+        "entry_contract":"next official observed XTKS trading date strictly after signal date; use first raw Yahoo 1H bar OPEN on that date",
         "target":"unchanged existing five-business-day target close",
         "matched_comparison":True,
         "cost_scenarios":COSTS,
         "bootstrap":"5000 whole-ISO-week cluster resamples",
         "signal_rule_changes":False,
         "production_writes":False,
-        "status":"RETROSPECTIVE_CAUSAL_EXECUTION_SENSITIVITY",
+        "status":"RETROSPECTIVE_CANONICAL_NEXT_SESSION_EXECUTION_SENSITIVITY",
     }
     (out/"core_execution_meta.json").write_text(json.dumps(meta,ensure_ascii=False,indent=2),encoding="utf-8")
 

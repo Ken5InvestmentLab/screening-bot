@@ -134,6 +134,7 @@ jobs:
           find raw -type f -print0 | sort -z | xargs -0 sha256sum > receipt/raw_SHA256SUMS.txt
           git rev-parse HEAD > receipt/workflow_commit_sha.txt
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: v20-h1-coverage-${{ github.run_id }}
           path: receipt/**

@@ -1,0 +1,60 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V19-V12-ALL-CORE-H2-REFUTATION-20260913",
+  "status": "PREREGISTERED_BEFORE_V19_H2_ACCESS",
+  "role": "RETROSPECTIVE_H2_REFUTATION_ONLY",
+  "lane_split": {
+    "parallel_lane": "prospective shadow evidence/reporting + state-entry lane",
+    "this_lane": "V12 ALL Core baseline H2 refutation",
+    "duplicated_work": false
+  },
+  "rationale": "V12 ALL H1 was already exposed and showed positive central tendency, while V17/V18 learned rankers degraded it. Test whether the raw structural V12 event stream itself remains Core-positive in H2.",
+  "candidate_generator": "V12 ALL signals unchanged",
+  "selection": {
+    "ranking": "NONE",
+    "top_n": "NONE",
+    "cooldown": "same 5 official XTKS sessions per symbol; AM before PM",
+    "prior_day_gates": "close<=1000 JPY and volume>=10000 shares"
+  },
+  "period": {
+    "h2": [
+      "2025-07-01",
+      "2025-12-31"
+    ],
+    "evidence_role": "retrospective refutation only; cannot promote because V12 H1 and other 2025 outcomes are already exposed"
+  },
+  "endpoint": "next official XTKS session open to fifth official XTKS session close",
+  "cost": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "core_gate": {
+    "min_resolved_n": 50,
+    "net_mean_gt": 0,
+    "net_median_gte": 0,
+    "net_win_rate_gt": 0.5,
+    "top3_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.2
+  },
+  "secondary_report_only": [
+    "gross_ge10_rate",
+    "gross_ge20_rate",
+    "gross_ge50_rate",
+    "monthly_positive_mean_fraction",
+    "signals_per_active_date",
+    "symbol concentration"
+  ],
+  "decision": {
+    "pass": "RETAIN_V12_ALL_AS_CORE_MECHANISM_FOR_PROSPECTIVE_SHADOW_ONLY",
+    "fail": "REJECT_V12_ALL_AS_STANDALONE_CORE_MECHANISM",
+    "no_threshold_or_trigger_tuning_from_h2": true
+  },
+  "integrity": {
+    "V12_H1_results_already_seen": true,
+    "V12_H2_results_not_yet_opened_in_this_lane": true,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

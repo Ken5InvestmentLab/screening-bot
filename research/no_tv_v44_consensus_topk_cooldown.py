@@ -18,6 +18,9 @@ TOP_K = 10
 COOLDOWNS = (0, 3, 5)
 DEV_END = "2025-06-30"
 VALID_START = "2025-07-01"
+EXPECTED_DEV_BASE_N = 67
+EXPECTED_DEV_BASE_MEAN_PCT = 8.424148981560009
+EXPECTED_DEV_BASE_MAX_SYMBOL_SHARE = 0.44776119402985076
 
 
 def topk_consensus(scored: pd.DataFrame) -> pd.DataFrame:
@@ -203,6 +206,32 @@ def perf_stats(d: pd.DataFrame) -> dict:
     }
 
 
+def verify_development_baseline(st: dict) -> None:
+    # Receipt from preserved V43 artifact 10274083399
+    # sha256:720e68a29d290302378ac61dd4ec6798aa5ce3b838e71cb367a3a4d8d84a8618
+    if int(st.get("n", -1)) != EXPECTED_DEV_BASE_N:
+        raise RuntimeError(
+            f"V44 baseline drift: n={st.get('n')} expected={EXPECTED_DEV_BASE_N}"
+        )
+    if abs(float(st.get("mean_pct", np.nan)) - EXPECTED_DEV_BASE_MEAN_PCT) > 1e-9:
+        raise RuntimeError(
+            "V44 baseline drift: mean_pct="
+            f"{st.get('mean_pct')} expected={EXPECTED_DEV_BASE_MEAN_PCT}"
+        )
+    if (
+        abs(
+            float(st.get("max_symbol_share", np.nan))
+            - EXPECTED_DEV_BASE_MAX_SYMBOL_SHARE
+        )
+        > 1e-12
+    ):
+        raise RuntimeError(
+            "V44 baseline drift: max_symbol_share="
+            f"{st.get('max_symbol_share')} "
+            f"expected={EXPECTED_DEV_BASE_MAX_SYMBOL_SHARE}"
+        )
+
+
 def choose_policy(dev: dict[str, dict]) -> dict:
     base = dev["0"]
     eligible = []
@@ -288,6 +317,7 @@ def main() -> None:
         str(cd): perf_stats(selected)
         for cd, selected in dev_selections.items()
     }
+    verify_development_baseline(dev["0"])
     decision = choose_policy(dev)
 
     # Stage 2: open validation metrics for baseline and the ONE policy selected
@@ -353,6 +383,15 @@ def main() -> None:
         "topk_rows_development": int(len(dev_pool)),
         "topk_rows_validation_blind": int(len(valid_pool)),
         "development": dev,
+        "baseline_reproduction_receipt": {
+            "source_run": 34617009116,
+            "source_artifact_id": 10274083399,
+            "source_artifact_sha256": "720e68a29d290302378ac61dd4ec6798aa5ce3b838e71cb367a3a4d8d84a8618",
+            "expected_n": EXPECTED_DEV_BASE_N,
+            "expected_mean_pct": EXPECTED_DEV_BASE_MEAN_PCT,
+            "expected_max_symbol_share": EXPECTED_DEV_BASE_MAX_SYMBOL_SHARE,
+            "passed": True,
+        },
         "preregistered_decision": decision,
         "validation_decision": validation_decision,
         "nonchosen_validation_metrics_opened": False,

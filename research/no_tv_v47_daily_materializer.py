@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import yfinance as yf
+import requests
 
 ANCHOR_DATE = pd.Timestamp("2026-09-11")
 WINDOW_START = pd.Timestamp("2024-10-01")
@@ -85,145 +85,160 @@ def split_factor(
     return float(f)
 
 
-def extract_actions(
-    data: pd.DataFrame,
-    tickers: list[str],
-) -> list[dict]:
-    rows: list[dict] = []
-    if data is None or data.empty:
-        return rows
+def _epoch(date_s: str) -> int:
+    return int(pd.Timestamp(date_s, tz="UTC").timestamp())
 
-    if isinstance(data.columns, pd.MultiIndex):
-        l0 = set(map(str, data.columns.get_level_values(0)))
-        l1 = set(map(str, data.columns.get_level_values(1)))
-        outer = any(t in l0 for t in tickers)
-        for ticker in tickers:
-            try:
-                if outer:
-                    if ticker not in l0:
-                        continue
-                    z = data[ticker]
-                else:
-                    if ticker not in l1:
-                        continue
-                    z = data.xs(ticker, axis=1, level=1)
-            except Exception:
-                continue
-            sc = next(
-                (c for c in z.columns if str(c).lower() == "stock splits"),
-                None,
+
+def _split_ratio_from_event(ev: dict) -> float | None:
+    try:
+        num = float(ev.get("numerator"))
+        den = float(ev.get("denominator"))
+        if num > 0 and den > 0:
+            return num / den
+    except Exception:
+        pass
+    text = str(ev.get("splitRatio") or "").strip()
+    if ":" in text:
+        try:
+            a, b = text.split(":", 1)
+            a = float(a)
+            b = float(b)
+            if a > 0 and b > 0:
+                return a / b
+        except Exception:
+            pass
+    return None
+
+
+def fetch_restored_one(code: str) -> tuple[pd.DataFrame, list[dict], str | None]:
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{code}.T"
+    last = None
+    for attempt in range(5):
+        try:
+            r = requests.get(
+                url,
+                params={
+                    "period1": _epoch(FETCH_START),
+                    "period2": _epoch(FETCH_END_EXCLUSIVE),
+                    "interval": "1d",
+                    "events": "div,splits",
+                    "includePrePost": "false",
+                },
+                headers={
+                    "User-Agent": (
+                        "Mozilla/5.0 (X11; Linux x86_64) "
+                        "AppleWebKit/537.36 Chrome/140 Safari/537.36"
+                    ),
+                    "Accept": "application/json,text/plain,*/*",
+                },
+                timeout=30,
             )
-            if sc is None:
+            if r.status_code in {429, 502, 503, 504}:
+                last = f"http_{r.status_code}"
+                time.sleep(1.0 * (attempt + 1))
                 continue
-            s = pd.to_numeric(z[sc], errors="coerce").fillna(0.0)
-            for idx, value in s[s != 0].items():
+            r.raise_for_status()
+            payload = r.json()
+            err = payload.get("chart", {}).get("error")
+            if err:
+                return pd.DataFrame(), [], (
+                    err.get("description") or "chart_error"
+                )
+            result = (payload.get("chart", {}).get("result") or [None])[0]
+            if not result:
+                return pd.DataFrame(), [], "no_result"
+            q = result.get("indicators", {}).get("quote", [{}])[0]
+            ts = result.get("timestamp") or []
+            keys = ["open", "high", "low", "close", "volume"]
+            n = min([len(ts)] + [len(q.get(k) or []) for k in keys])
+            rows = []
+            for i in range(n):
+                vals = [q.get(k, [None] * n)[i] for k in keys]
+                if any(v is None for v in vals):
+                    continue
+                o, h, lo, cl, vol = map(float, vals)
+                if cl <= 0 or h <= 0 or lo <= 0 or h < lo or vol < 0:
+                    continue
+                dt = (
+                    pd.to_datetime(int(ts[i]), unit="s", utc=True)
+                    .tz_convert("Asia/Tokyo")
+                    .tz_localize(None)
+                    .normalize()
+                )
                 rows.append({
-                    "symbol": ticker.removesuffix(".T"),
-                    "event_date": pd.Timestamp(idx).tz_localize(None).normalize(),
-                    "split_ratio": float(value),
+                    "date": dt,
+                    "open": o,
+                    "high": h,
+                    "low": lo,
+                    "close": cl,
+                    "volume": vol,
+                    "symbol": code,
                 })
-    return rows
 
+            split_rows = []
+            for ev in (result.get("events", {}).get("splits") or {}).values():
+                ratio = _split_ratio_from_event(ev)
+                if ratio is None:
+                    continue
+                dt = (
+                    pd.to_datetime(int(ev["date"]), unit="s", utc=True)
+                    .tz_convert("Asia/Tokyo")
+                    .tz_localize(None)
+                    .normalize()
+                )
+                split_rows.append({
+                    "symbol": code,
+                    "event_date": dt,
+                    "split_ratio": float(ratio),
+                })
 
-def extract_daily(
-    data: pd.DataFrame,
-    tickers: list[str],
-) -> list[pd.DataFrame]:
-    frames: list[pd.DataFrame] = []
-    if data is None or data.empty:
-        return frames
-    if isinstance(data.columns, pd.MultiIndex):
-        l0 = set(map(str, data.columns.get_level_values(0)))
-        l1 = set(map(str, data.columns.get_level_values(1)))
-        outer = any(t in l0 for t in tickers)
-        for ticker in tickers:
-            try:
-                if outer:
-                    if ticker not in l0:
-                        continue
-                    z = data[ticker].copy()
-                else:
-                    if ticker not in l1:
-                        continue
-                    z = data.xs(ticker, axis=1, level=1).copy()
-            except Exception:
-                continue
-            z = z.rename(columns={c: str(c).lower() for c in z.columns})
-            need = ["open", "high", "low", "close", "volume"]
-            if not all(c in z.columns for c in need):
-                continue
-            q = z[need].dropna(subset=["close"]).reset_index()
-            if q.empty:
-                continue
-            q = q.rename(columns={q.columns[0]: "date"})
-            q["date"] = pd.to_datetime(q["date"]).dt.tz_localize(None).dt.normalize()
-            q["symbol"] = ticker.removesuffix(".T")
-            frames.append(q[["date", *need, "symbol"]])
-    return frames
+            fr = pd.DataFrame(rows)
+            if fr.empty:
+                return fr, split_rows, "no_daily_rows"
+            return fr, split_rows, None
+        except Exception as exc:
+            last = f"{type(exc).__name__}: {exc}"
+            time.sleep(0.8 * (attempt + 1))
+    return pd.DataFrame(), [], last or "fetch_failed"
 
 
 def batched_download_restored(
     symbols: list[str],
     batch: int,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+    # Delisted symbols are fetched independently. A single invalid/delisted
+    # ticker must never blank an entire multi-ticker request.
     daily_frames: list[pd.DataFrame] = []
     split_rows: list[dict] = []
     requested = set(symbols)
     usable: set[str] = set()
     failures: list[dict] = []
 
-    tickers = [s + ".T" for s in symbols]
-    parts = [tickers[i:i+batch] for i in range(0, len(tickers), batch)]
-    for no, part in enumerate(parts, 1):
-        data = None
-        last = None
-        for attempt in range(3):
-            try:
-                data = yf.download(
-                    part,
-                    start=FETCH_START,
-                    end=FETCH_END_EXCLUSIVE,
-                    interval="1d",
-                    group_by="ticker",
-                    auto_adjust=False,
-                    actions=True,
-                    threads=True,
-                    progress=False,
-                    timeout=30,
-                )
-                if data is not None and not data.empty:
-                    break
-            except Exception as e:
-                last = f"{type(e).__name__}: {e}"
-            time.sleep(2 ** attempt)
-
-        if data is None or data.empty:
-            failures.append({
-                "batch": no,
-                "tickers": part,
-                "error": last or "empty",
-            })
-            continue
-
-        frames = extract_daily(data, part)
-        daily_frames.extend(frames)
-        usable.update(
-            clean_symbol(x)
-            for fr in frames
-            for x in fr["symbol"].unique().tolist()
-        )
-        split_rows.extend(extract_actions(data, part))
-        print(
-            f"restored daily batch {no}/{len(parts)} "
-            f"usable={len(usable)}/{len(requested)}",
-            flush=True,
-        )
+    for i, code in enumerate(sorted(symbols), 1):
+        fr, sp, err = fetch_restored_one(code)
+        if not fr.empty:
+            daily_frames.append(fr)
+            usable.add(code)
+        if sp:
+            split_rows.extend(sp)
+        if err is not None:
+            failures.append({"symbol": code, "error": err})
+        if i % 25 == 0:
+            print(
+                f"restored direct daily {i}/{len(symbols)} "
+                f"usable={len(usable)}",
+                flush=True,
+            )
+        time.sleep(0.03)
 
     daily = (
         pd.concat(daily_frames, ignore_index=True)
         if daily_frames
         else pd.DataFrame(
-            columns=["date", "open", "high", "low", "close", "volume", "symbol"]
+            columns=[
+                "date", "open", "high", "low",
+                "close", "volume", "symbol",
+            ]
         )
     )
     splits = pd.DataFrame(
@@ -233,7 +248,9 @@ def batched_download_restored(
     if not splits.empty:
         splits["symbol"] = splits["symbol"].map(clean_symbol)
         splits["event_date"] = pd.to_datetime(splits["event_date"])
-        splits["split_ratio"] = pd.to_numeric(splits["split_ratio"], errors="coerce")
+        splits["split_ratio"] = pd.to_numeric(
+            splits["split_ratio"], errors="coerce"
+        )
         splits = (
             splits.dropna()
             .drop_duplicates(["symbol", "event_date", "split_ratio"])
@@ -248,8 +265,9 @@ def batched_download_restored(
             float(len(usable) / len(requested)) if requested else 1.0
         ),
         "missing_symbols": sorted(requested - usable),
-        "failed_batches": failures,
+        "failures": failures,
         "restored_split_events": int(len(splits)),
+        "fetch_mode": "individual Yahoo chart API daily requests",
     }
     return daily, splits, receipt
 

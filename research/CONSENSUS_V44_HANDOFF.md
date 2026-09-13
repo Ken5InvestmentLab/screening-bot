@@ -204,3 +204,19 @@ Strict cooldown5 DEV eligibility reuses the original frozen gates:
 - max-symbol share <= 75% of cooldown0 DEV baseline.
 
 If cooldown5 fails DEV eligibility, do not open its H2 outcome. If it passes, evaluate exactly cooldown5 on the validation-blind pool using the already frozen H2 gate, even if the original 3/5 chooser prefers cooldown3.
+
+
+## Strict5 contract verification
+- workflow: Consensus V44 Strict Contract Tests
+- run: 34768248451
+- conclusion: SUCCESS
+- tested:
+  - exact 5-trading-day re-entry boundary;
+  - DEV 80% mean-retention boundary;
+  - DEV 25% max-symbol-share reduction boundary;
+  - H2 all-conditions-required gate;
+  - exact cons_min tie prevalence logic.
+
+Failure interpretation is also frozen in `CONSENSUS_V44_FAILURE_DISPOSITION_2026-09-14.md`:
+- baseline/data receipt failure = DATA_REPRO_FAILURE, not strategy evidence;
+- only after baseline reproduction can return-policy failures be called STRATEGY_FAIL.

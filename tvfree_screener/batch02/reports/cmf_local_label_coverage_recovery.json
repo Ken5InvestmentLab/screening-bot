@@ -1,0 +1,76 @@
+{
+  "experiment_id": "DATA-QUALITY-CMF-LOCAL-LABEL-COVERAGE-20260913-01",
+  "parent_experiment_id": "CORE-CMF-FLOW-ACCELERATION-20260913-01",
+  "scope": "Frozen selected signals in 2022H2 and 2023 only; local cached OHLCV only; no external data or 2024+ values.",
+  "selected_count": 1800,
+  "canonical_label_source_missing_count": 13,
+  "rebuilt_status_for_missing_source_rows": {
+    "RESOLVED": 13
+  },
+  "existing_cached_labels_match_rebuild": {
+    "label_status": true,
+    "label_resolved": true,
+    "entry_date": true,
+    "exit_date": true,
+    "entry_price": true,
+    "exit_price": true,
+    "gross_return": true
+  },
+  "resolved_value_comparison_rows": 1768,
+  "period_metrics_at_assumed_0_5pct_round_trip_cost": {
+    "2022H2": {
+      "requested": 595,
+      "cached": {
+        "resolved": 587,
+        "unresolved": 8,
+        "mean": -0.009344021417181296,
+        "median": -0.008355704697986629,
+        "win_rate": 0.32764505119453924,
+        "plus10_rate": 0.015332197614991482,
+        "minus10_rate": 0.027257240204429302
+      },
+      "rebuilt": {
+        "resolved": 589,
+        "unresolved": 6,
+        "mean": -0.009540591231353916,
+        "median": -0.008558718861209954,
+        "win_rate": 0.32653061224489793,
+        "plus10_rate": 0.015280135823429542,
+        "minus10_rate": 0.028862478777589132
+      }
+    },
+    "2023": {
+      "requested": 1205,
+      "cached": {
+        "resolved": 1181,
+        "unresolved": 24,
+        "mean": -0.0028619027740036797,
+        "median": -0.007132196162046962,
+        "win_rate": 0.33784928027095684,
+        "plus10_rate": 0.02032176121930567,
+        "minus10_rate": 0.016088060965283656
+      },
+      "rebuilt": {
+        "resolved": 1192,
+        "unresolved": 13,
+        "mean": -0.0024958661227228937,
+        "median": -0.007064639127494272,
+        "win_rate": 0.34060402684563756,
+        "plus10_rate": 0.02348993288590604,
+        "minus10_rate": 0.016778523489932886
+      }
+    }
+  },
+  "input_sha256": {
+    "feature_panel": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "selected_artifact": "aa36649c4d03f757e154500b3dfe23dff17a5318747f29f67e96b3bd9fa932ba",
+    "canonical_label_artifact": "abf9c3181dfa1f86f78b75528eafaa27ba9bb9250db17b5b14e8970d60ad2732",
+    "calendar": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "cmf_spec": "a96bee2b91733d5978142da37d2fbc8c7d59e8d56f60cb8b32b6f95bfb08c32d",
+    "canonical_label_join_digest": "33e4e70ffdcde739e6223226cdd67251b015690d04062473a32f5300ea284324"
+  },
+  "decision": "DIAGNOSE_LABEL_COVERAGE_ONLY; original CMF rejection and thresholds are unchanged.",
+  "external_data_fetched": false,
+  "production_modified": false
+}

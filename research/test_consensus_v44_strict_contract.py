@@ -4,6 +4,7 @@ import pandas as pd
 
 import evaluate_consensus_v44_strict5 as strict5
 import audit_consensus_v44_ties as ties
+import verify_consensus_v44_acceptance as accept
 
 
 def test_cooldown_reentry_exact_day5():
@@ -94,6 +95,45 @@ def test_exact_tie_audit():
     assert out["candidate_rows_in_exact_cons_min_ties"] == 2
 
 
+def test_v44_acceptance_guard_exact_boundaries():
+    good = {
+        "baseline_reproduction_receipt": {"passed": True},
+        "hourly_fetch": {
+            "requested_symbols": 1910,
+            "ok_symbols": 1850,
+            "candidate_symbols": 1793,
+            "candidate_rows": 519163,
+        },
+        "nonchosen_validation_metrics_opened": False,
+    }
+    receipt = accept.evaluate_acceptance(good)
+    assert receipt["accepted"] is True
+    assert receipt["performance_fields_inspected"] is False
+
+    cases = [
+        ("requested_symbols", 1909),
+        ("ok_symbols", 1849),
+        ("candidate_symbols", 1792),
+        ("candidate_rows", 519162),
+    ]
+    for key, bad in cases:
+        q = {
+            "baseline_reproduction_receipt": {"passed": True},
+            "hourly_fetch": dict(good["hourly_fetch"]),
+            "nonchosen_validation_metrics_opened": False,
+        }
+        q["hourly_fetch"][key] = bad
+        assert accept.evaluate_acceptance(q)["accepted"] is False, key
+
+    q = dict(good)
+    q["baseline_reproduction_receipt"] = {"passed": False}
+    assert accept.evaluate_acceptance(q)["accepted"] is False
+
+    q = dict(good)
+    q["nonchosen_validation_metrics_opened"] = True
+    assert accept.evaluate_acceptance(q)["accepted"] is False
+
+
 def main():
     tests = [
         test_cooldown_reentry_exact_day5,
@@ -101,6 +141,7 @@ def main():
         test_dev_eligibility_rejects_either_failure,
         test_h2_gate_all_conditions_required,
         test_exact_tie_audit,
+        test_v44_acceptance_guard_exact_boundaries,
     ]
     for fn in tests:
         fn()

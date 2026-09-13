@@ -22,7 +22,48 @@ def clean_symbol(x: object) -> str:
     return s
 
 
-def load_daily(frozen: Path, restored: Path) -> pd.DataFrame:
+
+def load_events(path: Path) -> pd.DataFrame:
+    e=pd.read_csv(path,dtype={"code":str})
+    e["code"]=e["code"].map(clean_symbol)
+    e["event_date"]=pd.to_datetime(e["event_date"],errors="coerce").dt.strftime("%Y-%m-%d")
+    e=e.dropna(subset=["code","event_date","event"])
+    return e
+
+
+def listing_map(events: pd.DataFrame) -> dict[str,list[str]]:
+    out={}
+    q=events[events["event"]=="listing"].copy()
+    for code,g in q.groupby("code",sort=False):
+        out[str(code)]=sorted(g["event_date"].astype(str).tolist())
+    return out
+
+
+def identity_epoch_for_date(
+    listing_dates: dict[str,list[str]],
+    symbol: str,
+    date_s: str,
+) -> int:
+    return sum(1 for dt in listing_dates.get(str(symbol),[]) if dt <= str(date_s))
+
+
+def add_identity_epoch(
+    df: pd.DataFrame,
+    listing_dates: dict[str,list[str]],
+) -> pd.DataFrame:
+    x=df.copy()
+    x["identity_epoch"]=[
+        identity_epoch_for_date(listing_dates,str(s),str(d))
+        for s,d in zip(x["symbol"],x["date"])
+    ]
+    return x
+
+
+def load_daily(
+    frozen: Path,
+    restored: Path,
+    listing_dates: dict[str,list[str]],
+) -> pd.DataFrame:
     cols = ["date","open","high","low","close","volume","symbol"]
     d = pd.read_csv(frozen, usecols=cols, dtype={"symbol":str}, low_memory=False)
     r = pd.read_csv(restored, usecols=cols, dtype={"symbol":str}, low_memory=False)
@@ -37,7 +78,9 @@ def load_daily(frozen: Path, restored: Path) -> pd.DataFrame:
         .drop_duplicates(["symbol","date"], keep="last")
         .reset_index(drop=True)
     )
-    g = x.groupby("symbol", sort=False)
+    x=add_identity_epoch(x,listing_dates)
+    x=x.sort_values(["symbol","identity_epoch","date"]).reset_index(drop=True)
+    g = x.groupby(["symbol","identity_epoch"], sort=False)
     x["next_open"] = g["open"].shift(-1)
     x["d5_close"] = g["close"].shift(-5)
     x["exit_date_5bd"] = g["date"].shift(-5)
@@ -112,72 +155,83 @@ def build_symbol_rows(
     daily: pd.DataFrame,
     nocap_dates: set[str],
     split_map: dict[str,list[tuple[str,float]]],
+    listing_dates: dict[str,list[str]],
 ) -> pd.DataFrame:
     if not nocap_dates or daily.empty or raw.empty:
         return pd.DataFrame()
     sessions=base.synthetic_sessions(raw).reset_index(drop=True)
     if sessions.empty:
         return pd.DataFrame()
-    svolume=sessions["volume"].to_numpy(float)
-    daymap=daily.set_index("date")
+    sessions["identity_epoch"]=[
+        identity_epoch_for_date(listing_dates,symbol,str(dt))
+        for dt in sessions["date"].astype(str)
+    ]
     rows=[]
-    for i,row in sessions.iterrows():
-        dt=str(row.date)
-        if dt not in nocap_dates or dt not in daymap.index:
+    for epoch,sessions_epoch in sessions.groupby("identity_epoch",sort=True):
+        s=sessions_epoch.reset_index(drop=True)
+        d=daily[daily["identity_epoch"]==int(epoch)].copy()
+        if d.empty or s.empty:
             continue
-        if float(row.volume) < 5000:
-            continue
-        asof=v13.build_asof_official(daily,sessions,i)
-        if asof is None:
-            continue
-        tf=base.technical_features(asof)
-        if tf is None:
-            continue
-        prev20=svolume[max(0,i-20):i]
-        svr=(
-            float(row.volume/np.mean(prev20))
-            if len(prev20)>=5 and np.mean(prev20)>0
-            else np.nan
-        )
-        rng=float(row.high-row.low)
-        factor=future_factor(split_map,symbol,dt)
-        entry_adjusted=float(row.close)
-        entry_pit=entry_adjusted*factor
+        svolume=s["volume"].to_numpy(float)
+        daymap=d.set_index("date")
+        for i,row in s.iterrows():
+            dt=str(row.date)
+            if dt not in nocap_dates or dt not in daymap.index:
+                continue
+            if float(row.volume) < 5000:
+                continue
+            asof=v13.build_asof_official(d,s,i)
+            if asof is None:
+                continue
+            tf=base.technical_features(asof)
+            if tf is None:
+                continue
+            prev20=svolume[max(0,i-20):i]
+            svr=(
+                float(row.volume/np.mean(prev20))
+                if len(prev20)>=5 and np.mean(prev20)>0
+                else np.nan
+            )
+            rng=float(row.high-row.low)
+            factor=future_factor(split_map,symbol,dt)
+            entry_adjusted=float(row.close)
+            entry_pit=entry_adjusted*factor
 
-        nx=daymap.loc[dt,"next_open"]
-        d5=daymap.loc[dt,"d5_close"]
-        exit_date=daymap.loc[dt,"exit_date_5bd"]
-        canonical=(
-            float(d5/nx-1)
-            if pd.notna(nx) and pd.notna(d5) and float(nx)>0
-            else np.nan
-        )
-        legacy=(
-            float(d5/entry_adjusted-1)
-            if pd.notna(d5) and entry_adjusted>0
-            else np.nan
-        )
-        rec={
-            "date":dt,
-            "session":int(row.session),
-            "symbol":symbol,
-            "entry_adjusted":entry_adjusted,
-            "entry_pit":entry_pit,
-            "future_split_factor":factor,
-            "session_volume":float(row.volume),
-            "session13":int(row.session==13),
-            "log_price":float(np.log(max(entry_pit,1e-9))),
-            "session_ret":float(row.close/row.open-1) if row.open else np.nan,
-            "session_range_pct":float(rng/row.open) if row.open else np.nan,
-            "session_body_pct":float((row.close-row.open)/row.open) if row.open else np.nan,
-            "session_close_loc":float((row.close-row.low)/rng) if rng>0 else .5,
-            "session_vol_ratio20":svr,
-            "canonical_ret_5bd":canonical,
-            "legacy_ret_5bd":legacy,
-            "exit_date_5bd":str(exit_date) if pd.notna(exit_date) else "",
-            **tf,
-        }
-        rows.append(rec)
+            nx=daymap.loc[dt,"next_open"]
+            d5=daymap.loc[dt,"d5_close"]
+            exit_date=daymap.loc[dt,"exit_date_5bd"]
+            canonical=(
+                float(d5/nx-1)
+                if pd.notna(nx) and pd.notna(d5) and float(nx)>0
+                else np.nan
+            )
+            legacy=(
+                float(d5/entry_adjusted-1)
+                if pd.notna(d5) and entry_adjusted>0
+                else np.nan
+            )
+            rec={
+                "date":dt,
+                "session":int(row.session),
+                "symbol":symbol,
+                "identity_epoch":int(epoch),
+                "entry_adjusted":entry_adjusted,
+                "entry_pit":entry_pit,
+                "future_split_factor":factor,
+                "session_volume":float(row.volume),
+                "session13":int(row.session==13),
+                "log_price":float(np.log(max(entry_pit,1e-9))),
+                "session_ret":float(row.close/row.open-1) if row.open else np.nan,
+                "session_range_pct":float(rng/row.open) if row.open else np.nan,
+                "session_body_pct":float((row.close-row.open)/row.open) if row.open else np.nan,
+                "session_close_loc":float((row.close-row.low)/rng) if rng>0 else .5,
+                "session_vol_ratio20":svr,
+                "canonical_ret_5bd":canonical,
+                "legacy_ret_5bd":legacy,
+                "exit_date_5bd":str(exit_date) if pd.notna(exit_date) else "",
+                **tf,
+            }
+            rows.append(rec)
     return pd.DataFrame(rows)
 
 
@@ -201,6 +255,7 @@ def main() -> None:
     ap.add_argument("--restored-daily",required=True,type=Path)
     ap.add_argument("--all-splits",required=True,type=Path)
     ap.add_argument("--daily-candidates",required=True,type=Path)
+    ap.add_argument("--membership-events",required=True,type=Path)
     ap.add_argument("--raw-dir",required=True,type=Path)
     ap.add_argument("--raw-coverage-receipt",required=True,type=Path)
     ap.add_argument("--output-dir",required=True,type=Path)
@@ -212,12 +267,14 @@ def main() -> None:
     if cov.get("strategy_returns_opened") or cov.get("model_scores_opened"):
         raise RuntimeError("coverage isolation contract violated")
 
-    daily=load_daily(a.frozen_daily,a.restored_daily)
+    events=load_events(a.membership_events)
+    lmap=listing_map(events)
+    daily=load_daily(a.frozen_daily,a.restored_daily,lmap)
     split_map=load_split_map(a.all_splits)
     nocap_pairs,cap_pairs=load_candidate_sets(a.daily_candidates)
 
     daily_by_symbol={
-        str(sym):g[["date","open","high","low","close","volume","next_open","d5_close","exit_date_5bd"]]
+        str(sym):g[["date","open","high","low","close","volume","identity_epoch","next_open","d5_close","exit_date_5bd"]]
         .sort_values("date")
         .reset_index(drop=True)
         for sym,g in daily.groupby("symbol",sort=False)
@@ -236,6 +293,7 @@ def main() -> None:
             daily_by_symbol.get(sym,pd.DataFrame()),
             nocap_dates_by_symbol.get(sym,set()),
             split_map,
+            lmap,
         )
         if not fr.empty:
             frames.append(fr)
@@ -251,7 +309,7 @@ def main() -> None:
 
     feature_cols=v11.features()
     feature_base_cols=[
-        "date","session","symbol","entry_adjusted","entry_pit",
+        "date","session","symbol","identity_epoch","entry_adjusted","entry_pit",
         "future_split_factor","session_volume","exit_date_5bd",
         *feature_cols,
     ]

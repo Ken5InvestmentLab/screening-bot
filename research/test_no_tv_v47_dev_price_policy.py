@@ -52,11 +52,27 @@ def test_development_evaluator_rejects_h2_rows_before_fit():
     raise AssertionError("expected H2 lock failure")
 
 
+
+def test_strict5_does_not_cross_identity_epoch():
+    d=pd.DataFrame({
+        "date":["2025-01-06","2025-01-07"],
+        "session":[9,9],
+        "symbol":["A","A"],
+        "identity_epoch":[0,1],
+        "cons_min":[.99,.99],
+        "canonical_ret_5bd":[.1,.2],
+    })
+    ix={"2025-01-06":0,"2025-01-07":1}
+    out=v.strict5_no_replacement(d,ix)
+    assert out["date"].tolist()==["2025-01-06","2025-01-07"]
+
+
 def main():
     tests=[
         test_strict5_uses_actual_trading_index,
         test_stats_subtracts_half_percent_cost,
         test_development_evaluator_rejects_h2_rows_before_fit,
+        test_strict5_does_not_cross_identity_epoch,
     ]
     for fn in tests:
         fn(); print("PASS",fn.__name__)

@@ -1,16 +1,10 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T01:38:00+09:00",
+  "updated_at_jst": "2026-09-14T01:39:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
-    "worker_slots_jst": [
-      "00",
-      "12",
-      "24",
-      "36",
-      "48"
-    ],
+    "worker_slots_jst": ["00", "12", "24", "36", "48"],
     "rule": "Each worker scans all active research branches for substantive changes before working its preferred lane. Process at most one highest-priority substantive cross-lane change plus one safe preferred-lane next action per run. Do not duplicate work already claimed/recorded."
   },
   "branches": {
@@ -28,9 +22,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "f51fa847cf100fa187bb266289f896b75cbf077a",
-      "last_processed_sha": "f51fa847cf100fa187bb266289f896b75cbf077a",
-      "last_processed_note": "Authoritative V44 receipt path hardened. Strict5 workflow now fail-closes on the full live-fetch acceptance guard. Invalid run 34765427789 coverage-only receipt met the frozen floor, but performance remains invalid. Dedicated acceptance workflow must run after 34767664140 completes and before any performance interpretation."
+      "last_seen_sha": "2e47bf8b14c7f9ce591022129c40e5862362f9de",
+      "last_processed_sha": "2e47bf8b14c7f9ce591022129c40e5862362f9de",
+      "last_processed_note": "Inspected latest synchronization commit: supervisor now records Core reclaim rejection and explicitly requires the dedicated V44 acceptance workflow before any authoritative performance interpretation. Authoritative V44 run 34767664140 is still in progress at the frozen audit step; hash/upload pending. No acceptance dispatch or performance interpretation is allowed yet."
     }
   },
   "guardrails": [
@@ -48,13 +42,10 @@
       "status": "in_progress",
       "conclusion": null,
       "authoritative": true,
-      "superseded_runs": [
-        34765427789,
-        34766353425
-      ],
+      "superseded_runs": [34765427789, 34766353425],
       "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation.",
-      "last_checked_at_jst": "2026-09-14T01:24:43+09:00",
-      "last_checked_job_state": "audit job in_progress; V44 audit step in_progress; hash/upload evidence pending",
+      "last_checked_at_jst": "2026-09-14T01:39:00+09:00",
+      "last_checked_job_state": "audit job in_progress; setup/download/compile succeeded; V44 audit step in_progress; hash/upload evidence pending",
       "acceptance_guard": {
         "path": "research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json",
         "baseline_reproduction_pass_required": true,

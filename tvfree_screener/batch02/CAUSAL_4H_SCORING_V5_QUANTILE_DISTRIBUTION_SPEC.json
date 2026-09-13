@@ -1,0 +1,162 @@
+{
+  "spec_id": "CAUSAL-4H-SCORING-V5-QUANTILE-DISTRIBUTION-20260913",
+  "status": "DISCOVERY_PREREGISTERED_BEFORE_V5_ROW_LEVEL_EVALUATION",
+  "role": "RETROSPECTIVE_ARCHITECTURE_DISCOVERY_ONLY",
+  "integrity": {
+    "prior_2025h2_results_seen": true,
+    "h2_can_promote": false,
+    "year_2026_must_remain_closed": true,
+    "future_promotion_requires": "prospective post-freeze shadow"
+  },
+  "feature_source": "V4 causal raw 4H + same-cohort rank/context representation",
+  "features": {
+    "raw": [
+      "bar_log_return",
+      "range_pct",
+      "upper_wick_pct",
+      "lower_wick_pct",
+      "prev4_log_return_mean",
+      "prev4_range_mean",
+      "log_range_vs_prior20"
+    ],
+    "cross_sectional_ranks": [
+      "xrank_bar_log_return",
+      "xrank_range_pct",
+      "xrank_upper_wick_pct",
+      "xrank_lower_wick_pct",
+      "xrank_prev4_log_return_mean",
+      "xrank_prev4_range_mean",
+      "xrank_log_range_vs_prior20",
+      "xrank_bin_volume"
+    ],
+    "cohort_context": [
+      "xctx_breadth_positive",
+      "xctx_median_bar_log_return",
+      "xctx_median_range_pct",
+      "xctx_median_log_range_vs_prior20"
+    ]
+  },
+  "target": "continuous gross next-open to fifth-session-close 5BD return",
+  "model": {
+    "estimator": "HistGradientBoostingRegressor",
+    "separate_by_bin_name": [
+      "AM_09_13",
+      "PM_13_CLOSE"
+    ],
+    "quantiles": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "fixed_parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 150,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 200,
+      "l2_regularization": 1,
+      "max_bins": 63,
+      "early_stopping": false,
+      "random_state": 0
+    },
+    "return_clipping": "NONE",
+    "scaling": "NONE",
+    "quantile_crossing_postprocess": "sort the three predictions per row ascending to q10<=q50<=q90"
+  },
+  "heads": {
+    "core": {
+      "score": "predicted q50",
+      "rationale": "directly target stable central return / median rather than binary win probability"
+    },
+    "monster": {
+      "score": "q90 + min(q10, 0)",
+      "tie_break": [
+        "q90 descending",
+        "q50 descending",
+        "symbol ascending"
+      ],
+      "rationale": "unit-consistent upper-tail potential minus predicted downside magnitude without a tuned probability penalty"
+    }
+  },
+  "candidate_requirements": {
+    "prior_completed_daily_close_lte_jpy": 1000,
+    "prior_completed_daily_volume_gte_shares": 10000,
+    "no_hard_current_bin_volume_gate": true,
+    "no_imputation": true
+  },
+  "periods": {
+    "h1_fold1": {
+      "train": [
+        "2025-01-01",
+        "2025-02-28"
+      ],
+      "maturity": "exit_date < 2025-03-01",
+      "eval": [
+        "2025-03-01",
+        "2025-04-30"
+      ]
+    },
+    "h1_fold2": {
+      "train": [
+        "2025-01-01",
+        "2025-04-30"
+      ],
+      "maturity": "exit_date < 2025-05-01",
+      "eval": [
+        "2025-05-01",
+        "2025-06-30"
+      ]
+    },
+    "h2_retrospective": {
+      "train": [
+        "2025-01-01",
+        "2025-06-30"
+      ],
+      "maturity": "exit_date < 2025-07-01",
+      "eval": [
+        "2025-07-01",
+        "2025-12-31"
+      ],
+      "role": "refutation only"
+    }
+  },
+  "selection": {
+    "top_n": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "cohort": "date + bin_name",
+    "cooldown": "5 official XTKS sessions per symbol independently for each head and TopN; AM before PM"
+  },
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "comparability_gates": {
+    "core": {
+      "min_resolved_n": 50,
+      "net_mean_gt": 0,
+      "net_median_gte": 0,
+      "net_win_rate_gt": 0.5,
+      "top3_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.2
+    },
+    "monster": {
+      "min_resolved_n": 30,
+      "net_mean_gt": 0,
+      "gross_ge20_rate_gte": 0.1,
+      "top1_removed_net_mean_gt": 0,
+      "gross_le10_rate_lte": 0.4
+    }
+  },
+  "decision": {
+    "if_all_fail": "REJECT_V5_ARCHITECTURE",
+    "if_retrospective_pass": "KEEP_FOR_PROSPECTIVE_SHADOW_ONLY",
+    "no_parameter_tuning_from_h2": true
+  },
+  "production_modified": false
+}

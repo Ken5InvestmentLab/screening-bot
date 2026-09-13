@@ -1,0 +1,37 @@
+{
+  "spec_id": "TENTEI-V12-CORE-RETROSPECTIVE-20260913",
+  "status": "FROZEN_AFTER_H1_EXPOSURE_BEFORE_H2_CORE_READOUT",
+  "classification": "POST_HOC_RETROSPECTIVE_HYPOTHESIS_REFUTATION_ONLY",
+  "motivation": "V12 ALL H1 already showed positive central tendency and low downside while failing only the Monster right-tail gate; test whether the unchanged ALL event population behaves like a Core candidate rather than a Monster candidate.",
+  "parent_generator": "TENTEI-INSPIRED-4H-V12-STATE-REVERSAL-20260913",
+  "candidate_definition": {
+    "trigger_paths": "V12 ALL unchanged; no RSI/emergency/trend path selection or reweighting",
+    "prior_completed_daily_close_lte_jpy": 1000,
+    "prior_completed_daily_volume_gte_shares": 10000,
+    "same_symbol_cooldown_xtks_sessions": 5,
+    "daily_to_intraday_synthesis": false
+  },
+  "target": "next official XTKS session open to fifth official XTKS session close",
+  "primary_cost": 0.005,
+  "core_gate": {
+    "min_resolved_n": 50,
+    "net_mean_gt": 0,
+    "net_median_gte": 0,
+    "net_win_rate_gt": 0.5,
+    "top3_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.2
+  },
+  "periods": {
+    "h1_context_already_exposed": ["2025-03-01", "2025-06-30"],
+    "h2_retrospective_refutation": ["2025-07-01", "2025-12-31"]
+  },
+  "decision_rule": "H2 must pass every frozen Core gate to remain a research candidate. Any failure rejects this Core interpretation. Passing H2 cannot promote because both H1 and H2 are historically exposed; promotion requires prospective post-freeze shadow evidence.",
+  "integrity": {
+    "h1_used_only_as_post_hoc_motivation": true,
+    "h2_not_yet_opened_for_this_core_hypothesis_at_freeze": true,
+    "2026_strategy_outcomes_must_remain_closed": true,
+    "do_not_modify_v14_or_monster_lane": true,
+    "no_threshold_tuning_from_h2": true,
+    "production_modified": false
+  }
+}

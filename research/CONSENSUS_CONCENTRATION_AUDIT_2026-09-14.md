@@ -236,3 +236,53 @@ ATR-gated 2025:
 - one row per symbol/day: n=29, mean **+7.13%**, Top3-ex +3.18%
 
 Therefore the concentration problem is **not primarily 09:00/13:00 duplicate counting**. The larger issue is repeated selection of the same symbol across multiple trading days inside one continuing 5BD move.
+
+
+## CORRECTION — chained episode audit superseded
+
+The earlier "43 episode / +0.23% episode-first" section above used a **chained-gap episode definition**: a continuing stream of signals with each adjacent gap <5 sessions was treated as one episode indefinitely. That is too strict for a real 5BD holding policy because a position opened from signal day D can be closed at D+5 and the symbol can then be entered again.
+
+Therefore the 43-episode and "episode-first +0.23%" figures are retained only as a persistence diagnostic and are **superseded for capital/position interpretation**.
+
+Correct causal one-position-per-symbol stress:
+- select the first eligible Top-1 signal;
+- block the same symbol while the existing 5BD position is active;
+- once 5 official trading sessions have elapsed from the selected signal date, allow re-entry;
+- no replacement candidate is used in this stress.
+
+2025 full-year:
+- raw gated signals: n=101, mean +7.72%, Top3-ex +6.52%
+- 5-session same-symbol cooldown, no replacement: n=52
+- mean **+3.05%**
+- median +0.29%
+- win 50.00%
+- +10% 19.23%
+- +20% 9.62%
+- <=-10% 9.62%
+- Top3-ex mean **+1.21%**
+- unique symbols 29
+- max-symbol share 11.54%
+
+2025 Jul-Dec:
+- raw gated: n=34, mean +6.33%, Top3-ex +2.94%
+- 5-session same-symbol cooldown, no replacement: n=22
+- mean **+3.58%**
+- median +0.29%
+- win 50.00%
+- +10% 18.18%
+- +20% 13.64%
+- <=-10% 13.64%
+- Top3-ex mean **-0.81%**
+
+Additional frozen cooldown stresses:
+- 2 sessions: 2025 n=64 mean +5.04%, Top3-ex +3.22%; H2 n=25 mean +5.30%, Top3-ex +1.75%.
+- 3 sessions: 2025 n=56 mean +3.76%, Top3-ex +1.86%; H2 n=23 mean +4.11%, Top3-ex +0.01%.
+- 5 sessions: figures above.
+
+Revised interpretation:
+- the earlier claim that a one-position-per-symbol implementation reduces Consensus to near-flat was **too pessimistic**;
+- nevertheless, a realistic 5-session no-overlap policy roughly halves the full-year headline mean (+7.72% -> +3.05%) and weakens robust H2 performance;
+- concentration/overlap remains a real issue, but Consensus still retains some positive edge before replacement;
+- V44 cooldown-with-replacement remains the correct decisive test.
+
+The earlier "third-or-later signal" analysis is also **not valid as a production holding-policy rule**, because its positions were defined inside the same chained episode construction. It may still describe persistence in long trends, but it must not be used to claim that the third signal is independently tradable or superior.

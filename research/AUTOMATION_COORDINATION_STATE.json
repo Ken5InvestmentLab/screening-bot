@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "6dd089b04db901579fcd0f90ecb8a657ff486acb",
-      "last_processed_sha": "6dd089b04db901579fcd0f90ecb8a657ff486acb",
-      "last_processed_note": "Supervisor recovered completed canonical endpoint run 34766143681 and finalized current fixed Core as rejected replacement candidate; failed-breakdown-reclaim remains separate outcome-unopened family."
+      "last_seen_sha": "c0b9498b1427afcb1a688dbdee399234ad6db5bd",
+      "last_processed_sha": "c0b9498b1427afcb1a688dbdee399234ad6db5bd",
+      "last_processed_note": "Failed-breakdown reclaim evaluator/workflow staged under frozen spec. Manual-dispatch only; default opens DEV+internal validation. Locked H2 is evaluator-blocked unless both preconfirmation blocks pass. Do not trigger while corrected Consensus V44 run 34766353425 is in progress to avoid concurrent Yahoo 1H fetch drift."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -55,6 +55,12 @@
       "conclusion": "success",
       "processed": true,
       "decision": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE"
+    },
+    "core_failed_breakdown_reclaim": {
+      "workflow": ".github/workflows/tentei-cloud-core-failed-breakdown-reclaim.yml",
+      "status": "STAGED_NOT_TRIGGERED",
+      "next_allowed_action": "After corrected Consensus V44 run 34766353425 completes, dispatch preconfirmation only.",
+      "locked_confirmation_rule": "Never dispatch unless preconfirmation artifact proves both frozen blocks pass."
     }
   },
   "supervisor_contract_sha256": "239adb8933e09a6d8f6917cbeadc0386a5a2725d"

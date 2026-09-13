@@ -58,9 +58,17 @@ def build_contexts(data: pd.DataFrame, start: str, end: str) -> pd.DataFrame:
 
 
 def validate_fetch_receipt(fetch: dict) -> float:
-    coverage = validate_fetch_receipt(fetch)
+    if int(fetch.get("requested_symbols", -1)) != EXPECTED_REQUESTED_SYMBOLS:
+        raise RuntimeError(
+            f"universe drift: requested_symbols={fetch.get('requested_symbols')} "
+            f"expected={EXPECTED_REQUESTED_SYMBOLS}"
+        )
+    coverage = float(fetch.get("candidate_symbols", 0)) / V43_CANDIDATE_SYMBOLS
+    if coverage < MIN_COVERAGE_FRAC:
+        raise RuntimeError(
+            f"coverage too low vs V43 receipt: {coverage:.4f} < {MIN_COVERAGE_FRAC:.4f}"
+        )
     return coverage
-
 
 def main() -> None:
     ap = argparse.ArgumentParser()
@@ -75,16 +83,7 @@ def main() -> None:
     history_contexts = build_contexts(data, HISTORY_START, HISTORY_END)
     contexts = build_contexts(data, REF_START, REF_END)
 
-    if int(fetch.get("requested_symbols", -1)) != EXPECTED_REQUESTED_SYMBOLS:
-        raise RuntimeError(
-            f"universe drift: requested_symbols={fetch.get('requested_symbols')} "
-            f"expected={EXPECTED_REQUESTED_SYMBOLS}"
-        )
-    coverage = float(fetch.get("candidate_symbols", 0)) / V43_CANDIDATE_SYMBOLS
-    if coverage < MIN_COVERAGE_FRAC:
-        raise RuntimeError(
-            f"coverage too low vs V43 receipt: {coverage:.4f} < {MIN_COVERAGE_FRAC:.4f}"
-        )
+    coverage = validate_fetch_receipt(fetch)
 
     contexts["month"] = contexts["date"].str[:7]
     monthly = {

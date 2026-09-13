@@ -1,0 +1,61 @@
+{
+  "spec_id": "CONSENSUS-V46-POINT-IN-TIME-SPLIT-ELIGIBILITY-20260914",
+  "status": "PREREGISTERED_OUTCOME_FREE_NOT_TRIGGERED",
+  "branch": "research/consensus-atr-regime-gate",
+  "purpose": "Quantify and reconstruct the <=1000 JPY prior-close eligibility on the historical nominal price scale instead of Yahoo's present-day split-adjusted scale.",
+  "source_daily": {
+    "artifact": "tvfree-frozen-dataset-run80-preserved",
+    "source_run": 34545440155,
+    "source_commit": "5461eef6f35ea2cea2b4bc38ca7177c681681783",
+    "yfinance_version": "0.2.66",
+    "auto_adjust": false,
+    "actions": false,
+    "known_behavior": "Yahoo quote OHLC remains split-adjusted even with auto_adjust=False; run80 did not persist split events."
+  },
+  "split_source": {
+    "library": "yfinance==0.2.66",
+    "method": "yf.download batched, actions=True, auto_adjust=False",
+    "requested_start": "2024-01-01",
+    "requested_end_exclusive": "2026-09-12",
+    "required_output": "symbol,event_date,split_ratio",
+    "no_price_refetch_use": "OHLC returned during the actions query must not replace frozen run80 OHLC."
+  },
+  "reconstruction": {
+    "formula": "pit_price(date) = frozen_split_adjusted_price(date) * product(split_ratio for split_event_date > date and <= frozen_daily_max_date)",
+    "eligibility_date": "previous completed daily date",
+    "rule": "pit_prev_close <= 1000 AND historical prev_volume >= 10000",
+    "volume_rule": "do not apply future split factor to frozen volume in V46; measure price-threshold leakage separately",
+    "split_on_signal_day": "included when restoring previous-day close because event_date > previous_day"
+  },
+  "periods": {
+    "primary": "2025-01-01..2025-12-31",
+    "development": "2025-01-01..2025-06-30",
+    "validation": "2025-07-01..2025-12-31",
+    "descriptive_2026": "report-only; never tune reconstruction"
+  },
+  "outputs": [
+    "split_event_table_and_hash",
+    "symbols_with_splits",
+    "adjusted_eligible_symbol_date_rows",
+    "pit_eligible_symbol_date_rows",
+    "false_positive_adjusted_only_rows",
+    "false_negative_pit_only_rows",
+    "unique_symbol_and_date counts by period",
+    "current-adjusted vs PIT prior-close ratio examples",
+    "known-symbol receipts for 3350,2334,6574,7273,4935,6039 when available"
+  ],
+  "hard_fail": [
+    "split download coverage below 95% of frozen daily symbols",
+    "invalid/nonpositive split ratio",
+    "future-factor discontinuity synthetic tests fail",
+    "known forward-split synthetic reconstruction fails"
+  ],
+  "restrictions": [
+    "No strategy returns, model scores, V44 replacement outcomes, or 2026 returns are used to choose a reconstruction.",
+    "Do not alter production.",
+    "Do not launch while Yahoo-heavy V44/V20 fetches are active.",
+    "V46 quantifies eligibility only; it does not claim the final survivorship-free universe because run80 is based on the 2026-09-11 current-listed JPX snapshot."
+  ],
+  "next_if_material": "Build V47 PIT-eligible Consensus rerun: reconstruct PIT log_price, rebuild monitor_dates from PIT prior-close, fetch required 1H, retrain from scratch, and re-evaluate under canonical next-open endpoint.",
+  "production_modified": false
+}

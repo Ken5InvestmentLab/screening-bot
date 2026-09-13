@@ -127,7 +127,7 @@ q90 remains a reasonable preregistered distribution cutoff; q95 is too permissiv
 
 ## Revised decision
 
-Treat the ATR rule as a **frozen training-distribution OOD circuit breaker**, not an adaptive market-timing filter.
+Treat the ATR rule as a **frozen pre-deployment calibration-distribution OOD circuit breaker**, not an adaptive market-timing filter.
 
 Recommended research specification:
 1. Consensus min95 remains the candidate selector.
@@ -164,3 +164,14 @@ This is consistent with the observed failure mechanism: 2026 is a covariate-shif
    - normal-volatility/in-distribution -> Consensus;
    - high-volatility/OOD -> Monster/Core if that lane independently passes, otherwise NO TRADE.
 5. Keep production unchanged until prospective/shadow evidence exists.
+
+
+## Terminology correction: calibration distribution, not literal model-training distribution
+
+The 2.8640659721 cap was computed from Jan-Jun 2025 min95-selected market contexts. It did not use 2026 outcomes and did not optimize a return threshold, but Jan-Jun 2025 is **not identical to the row set used to fit every prequential model**.
+
+Therefore:
+- call the source a frozen **pre-deployment calibration/reference distribution**;
+- do not claim the value is the q90 of the exact model-training feature distribution;
+- V45 will additionally report the full-context Oct-Dec 2024 initial-history ATR distribution and the full-context Jan-Jun 2025 calibration distribution, without strategy outcomes;
+- no threshold is changed from this terminology correction.

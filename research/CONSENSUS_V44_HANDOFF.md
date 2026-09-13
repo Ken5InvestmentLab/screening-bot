@@ -190,3 +190,17 @@ Before interpreting V44 outcomes, the authoritative artifact must satisfy all of
 5. candidate rows >= 519,163.
 
 If any receipt check fails, mark the run **fetch-degraded** and do not interpret its performance. Rerun the exact frozen evaluator only after the superseded Yahoo-heavy runs are no longer active. No model, ATR, cooldown, Top-K, or validation rule may change.
+
+
+## Strict 5BD no-overlap interpretation
+Source: `research/consensus_v44_strict_5bd_addendum.json`.
+
+A 3-session cooldown may reduce concentration but can reselect a symbol before a D+1-open -> D+5-close position has exited. Therefore:
+- cooldown3 is descriptive partial-diversification / re-entry evidence only;
+- only cooldown5 can qualify the current Consensus family under a strict one-position-per-symbol 5BD interpretation.
+
+Strict cooldown5 DEV eligibility reuses the original frozen gates:
+- mean >= 80% of cooldown0 DEV baseline;
+- max-symbol share <= 75% of cooldown0 DEV baseline.
+
+If cooldown5 fails DEV eligibility, do not open its H2 outcome. If it passes, evaluate exactly cooldown5 on the validation-blind pool using the already frozen H2 gate, even if the original 3/5 chooser prefers cooldown3.

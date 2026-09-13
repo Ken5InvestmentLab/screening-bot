@@ -221,3 +221,18 @@ Interpretation:
 - if V44 fails, Consensus should be reclassified as a continuation/re-entry or pyramiding specialist rather than a Stable★6 replacement.
 
 A future continuation rule, if pursued, must be separately preregistered and tested on genuinely later data.
+
+
+## Same-day duplication is not the main cause
+
+Because both 09:00 and 13:00 selections on the same symbol/day share the same next-day-open and D+5 daily-close return, a same-day duplicate check was also run.
+
+ATR-gated 2025:
+- raw: n=101, next-open mean +7.72%, Top3-ex +6.52%
+- one row per symbol/day: n=80, mean **+6.23%**, Top3-ex +4.65%
+
+2025 Jul-Dec:
+- raw: n=34, mean +6.33%, Top3-ex +2.94%
+- one row per symbol/day: n=29, mean **+7.13%**, Top3-ex +3.18%
+
+Therefore the concentration problem is **not primarily 09:00/13:00 duplicate counting**. The larger issue is repeated selection of the same symbol across multiple trading days inside one continuing 5BD move.

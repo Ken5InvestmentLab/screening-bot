@@ -120,3 +120,29 @@ Execution ordering:
 - do not open locked 2025H2 unless the produced preconfirmation artifact proves both frozen blocks passed.
 
 This staging step changes no production code or strategy thresholds.
+
+
+## Failed-breakdown reclaim contract-test receipt
+
+Lightweight contract test workflow:
+- workflow: `Tentei Cloud Core Reclaim Contract Tests`
+- run: `34767726209`
+- result: **completed / success**
+- tested HEAD: `4883e0da68a3a5829ce636046cf6245a9bc03c3d`
+
+The tests freeze the following pre-outcome invariants:
+1. candidate rule uses strict inequalities exactly as preregistered:
+   - session low < previous completed daily low;
+   - session close > previous completed daily low;
+   - session close > session open;
+2. primary gate boundaries are exact:
+   - mean and Top3-removed mean are strictly >0;
+   - median may equal 0;
+   - win must be strictly >50%;
+   - gross <=-10% rate may equal 10% but not exceed it;
+3. locked confirmation requires **both** DEVELOPMENT and INTERNAL_VALIDATION to pass every frozen gate;
+4. canonical endpoint maps signal day to next official-session open and signal+5 official-session close.
+
+This test run uses no market download and opens no strategy outcomes.
+
+Execution status remains **STAGED_NOT_TRIGGERED** until authoritative hardened Consensus V44 run `34767664140` completes.

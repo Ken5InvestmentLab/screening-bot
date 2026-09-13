@@ -1,0 +1,88 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V15-REGIME-NORMALIZED-REPRESENTATION-20260913",
+  "status": "PREREGISTERED_BEFORE_V15_DRIFT_METRICS",
+  "role": "OUTCOME_FREE_REPRESENTATION_STABILITY_GATE_BEFORE_ANY_V15_RETURN_EVALUATION",
+  "lane_split": {
+    "parallel_lane": "V12 state-entry / prospective shadow CLI and export contracts",
+    "this_lane": "V14 drift diagnosis -> V15 regime-normalized representation",
+    "duplicated_work": false
+  },
+  "parent": {
+    "candidate_generator": "V12 ALL signals unchanged",
+    "prior_daily_gates": "close<=1000 JPY and volume>=10000 shares",
+    "motivation": "V14 outcome-free audit found material covariate shift in absolute volatility/state features"
+  },
+  "retained_low_drift_features": [
+    "bar_log_return",
+    "upper_wick_pct",
+    "close_location",
+    "prev4_log_return_mean",
+    "bb_position",
+    "rsi12",
+    "rsi_delta",
+    "log_volume_rel20"
+  ],
+  "removed_from_model_representation": {
+    "severe_absolute_features": [
+      "prev4_range_mean",
+      "bb_width_pct",
+      "atr_pct",
+      "prior5_rsi_min"
+    ],
+    "moderate_absolute_features": [
+      "range_pct",
+      "lower_wick_pct",
+      "dist_prior5_low_atr",
+      "prior5_band_min"
+    ],
+    "trigger_identity_flags": [
+      "trigger_rsi_recovery",
+      "trigger_trend_flip",
+      "trigger_emergency_reversal"
+    ],
+    "rationale": "candidate-generation paths stay V12 unchanged, but model representation is path-agnostic and avoids features that were moderate/severe in the frozen outcome-free V14 drift audit"
+  },
+  "normalized_replacements": {
+    "history_scope": "previous 20 complete causal bins for same symbol and same bin_name, computed before V12 signal filtering; current bin excluded",
+    "epsilon": 1e-9,
+    "features": {
+      "range_rel20_log": "log((range_pct + eps)/(median(previous20 same-bin range_pct)+eps))",
+      "prev4_range_rel20_log": "log((prev4_range_mean + eps)/(median(previous20 same-bin prev4_range_mean)+eps))",
+      "bb_width_rel20_log": "log((bb_width_pct + eps)/(median(previous20 same-bin bb_width_pct)+eps))",
+      "atr_rel20_log": "log((atr_pct + eps)/(median(previous20 same-bin atr_pct)+eps))",
+      "lower_wick_rank20": "empirical percentile rank of current lower_wick_pct against previous20 same-bin values; rank=(count(prior<x)+0.5*count(prior==x))/20",
+      "dist_prior5_low_atr_rank20": "same empirical prior20 rank",
+      "prior5_rsi_min_rank20": "same empirical prior20 rank",
+      "prior5_band_min_rank20": "same empirical prior20 rank"
+    }
+  },
+  "final_feature_count": 16,
+  "cohorts": {
+    "train_like": "V12 candidate, prior-day gates, all 16 V15 features finite, date<2025-01-01, exit_date<2025-01-01 only for maturity membership; no return values read",
+    "h1": "same representation and gates, candidate date 2025-03-01 through 2025-06-30; no return values read"
+  },
+  "drift_metrics": {
+    "continuous": [
+      "KS",
+      "PSI using train deciles epsilon 1e-6",
+      "median shift normalized by train IQR",
+      "H1 outside train p01-p99 rate"
+    ],
+    "severe": "KS>=0.20 OR PSI>=0.25 OR abs(median_shift_iqr)>=0.50",
+    "moderate": "KS>=0.10 OR PSI>=0.10 OR abs(median_shift_iqr)>=0.25",
+    "low": "otherwise"
+  },
+  "representation_gate": {
+    "pass": "zero severe features AND at most four moderate features",
+    "fail": "do not open V15 strategy-return metrics; redesign representation outcome-free",
+    "if_pass": "preregister a separate V15 supervised evaluation receipt before any H1 return metrics"
+  },
+  "integrity": {
+    "strategy_returns_used_for_representation_design": false,
+    "V14_H1_results_known_but_not_used_to_choose_individual_features": true,
+    "feature_changes_are_based_on_frozen_V14_drift_tiers": true,
+    "H2_returns_opened": false,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

@@ -216,18 +216,24 @@ def main():
     if actual!=EXPECTED_DAILY_SHA: raise RuntimeError(f"daily SHA mismatch {actual}")
     bins=build_bins_fast(a.raw_glob,"2025-06-30")
     events=add_state_and_features(bins)
-    events=events[events["signal"] & np.isfinite(events[FEATURES]).all(axis=1)].copy()
+    events=events[events["signal"]].copy()
     daily=load_daily_window(daily_path)
     events,session_idx=attach_gates_labels(events,daily)
+    pre2025_pool=events[events["date"]<"2025-01-01"].copy()
+    h1_pool=events[(events["date"]>="2025-03-01")&(events["date"]<="2025-06-30")].copy()
+    if len(pre2025_pool)!=7099 or pre2025_pool["symbol"].nunique()!=1065:
+        raise RuntimeError(f"pre-2025 candidate receipt mismatch rows={len(pre2025_pool)} symbols={pre2025_pool['symbol'].nunique()}")
+    if len(h1_pool)!=8245:
+        raise RuntimeError(f"H1 candidate receipt mismatch rows={len(h1_pool)}")
+    finite=np.isfinite(events[FEATURES]).all(axis=1)
+    events=events.loc[finite].copy()
     train=events[(events["date"]<"2025-01-01")&(events["exit_date"]<"2025-01-01")&(events["endpoint_status"]=="RESOLVED")].copy()
-    if len(train)!=7099 or train["symbol"].nunique()!=1065:
-        raise RuntimeError(f"pre-2025 receipt mismatch rows={len(train)} symbols={train['symbol'].nunique()}")
     train["target_tail20"]=(train["ret5bd_gross"]>=.20).astype(int)
     train["target_loss10"]=(train["ret5bd_gross"]<=-.10).astype(int)
     valid=events[(events["date"]>="2025-03-01")&(events["date"]<="2025-06-30")].copy()
     valid["p_tail20"]=fit_prob(train,valid,"target_tail20")
     valid["p_loss10"]=fit_prob(train,valid,"target_loss10")
-    out={"experiment_id":"TENTEI-INSPIRED-4H-V14-PRE2025-DUAL-CLASSIFIER-20260913","replay":"FAST_EQUIVALENT_TIMESTAMP_PARSER","daily_sha256":actual,"train_rows":len(train),"train_symbols":int(train["symbol"].nunique()),"train_tail20_rate":float(train["target_tail20"].mean()),"train_loss10_rate":float(train["target_loss10"].mean()),"valid_rows":len(valid),"2025_labels_used_for_fit":False,"2026_outcomes_opened":False,"results":{}}
+    out={"experiment_id":"TENTEI-INSPIRED-4H-V14-PRE2025-DUAL-CLASSIFIER-20260913","replay":"FAST_EQUIVALENT_TIMESTAMP_PARSER","daily_sha256":actual,"pre2025_candidate_rows":len(pre2025_pool),"pre2025_candidate_symbols":int(pre2025_pool["symbol"].nunique()),"h1_candidate_rows_before_feature_finiteness":len(h1_pool),"train_rows":len(train),"train_symbols":int(train["symbol"].nunique()),"train_tail20_rate":float(train["target_tail20"].mean()),"train_loss10_rate":float(train["target_loss10"].mean()),"valid_rows":len(valid),"2025_labels_used_for_fit":False,"2026_outcomes_opened":False,"results":{}}
     for n in TOP_NS:
         s=select(valid,session_idx,n); m=metrics(s,.005); m["passes_v14_gate"]=passes(m); m["cost0"]=metrics(s,0); m["cost1pct"]=metrics(s,.01); out["results"][str(n)]=m
     Path(a.output).write_text(json.dumps(out,ensure_ascii=False,indent=2,sort_keys=True),encoding="utf-8")

@@ -1,3 +1,4 @@
-trigger: exact run80 point-in-time JPX universe replay
+trigger: exact run80 point-in-time JPX universe replay v2 archive-compat
 anchor_date: 2026-09-11
 strategy_outcomes: none
+invalidates_run: 34770692285 parser-discovery failure

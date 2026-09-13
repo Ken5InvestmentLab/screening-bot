@@ -4,7 +4,7 @@
   "outcome_values_opened_before_freeze": false,
   "pause_when_remaining_percent_lte": 50,
   "experiment_id": "CORE-GAP-DOWN-PARTIAL-RECLAIM-20260913-01",
-  "milestone": "M4_GAP_RECLAIM_DECISIONS_REPRODUCED_BEFORE_OUTCOMES",
+  "milestone": "M5_GAP_RECLAIM_DECISIONS_COMMITTED_BEFORE_OUTCOMES",
   "weekly_window_minutes": 10080,
   "explicit_user_resume_required_after_latch": true,
   "required_reasoning": "xhigh",
@@ -36,7 +36,8 @@
     "ranked": "df9a37a7d820bd29684c4813a3719d7be360f5ee051e28c1eabf8079f996d38b",
     "selected": "3997f9d573cff0d18ade886b327b019207b20b56c13853ea3c7895cd62cd1d3c"
   },
-  "next_action": "Commit the frozen gap-reclaim feature-only candidate/rank/selection hashes and test evidence before opening labels. Then evaluate only the registered 2022H2-2023 discovery; reject without tuning if any frozen gate fails. Recheck Fundamental V2 handoff at the next milestone.",
+  "decision_commit": "926f983",
+  "next_action": "Evaluate the frozen gap-reclaim policy on 2022H2-2023 only after verifying decision commit 926f983 and the current weekly usage. Reject without tuning if any registered gate fails. Recheck Fundamental V2 handoff at the next milestone.",
   "codex_dependent_production_process_implemented": false,
   "automatic_resume_on_reset": false
 }

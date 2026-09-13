@@ -36,13 +36,16 @@ Prior-only calibration improves the aggregate error but remains far too noisy to
 
 ## 3. Gate AM/PM bins independently instead of requiring a complete whole day
 
-Raw observed symbol-sessions: 1,332.
+Raw row-type reconciliation:
+- 1,332 unique symbol/date keys exist when every row type is counted.
+- 1,324 keys contain normal hourly rows and are the correct intraday-bin denominator.
+- 8 additional keys (all 2026-09-11) contain closing snapshots only; they are not valid standalone intraday sessions.
 
 Using clock bins consistent with the currently observed 09:00/13:00 legacy boundary:
-- AM-like bin requires the observed 09,10,11,12 starts: 1,150 complete (86.34%)
-- PM-like bin requires 13,14,15 starts: 1,155 complete (86.71%)
-- both bins complete: 1,087 (81.61%)
-- closing-snapshot rows observed: 8; they are not required as a normal volume bar.
+- AM-like bin requires the observed 09,10,11,12 starts: 1,150 complete (86.86% of 1,324 normal intraday sessions)
+- PM-like bin requires 13,14,15 starts: 1,155 complete (87.24%)
+- both bins complete: 1,087 (82.10%)
+- closing-snapshot-only keys: 8; they are not promoted into normal volume bars.
 
 Requiring all seven starts before using either bin unnecessarily discards 63 otherwise-complete AM bins and 68 otherwise-complete PM bins.
 

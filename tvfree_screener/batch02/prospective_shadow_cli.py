@@ -32,6 +32,12 @@ def load_freeze_manifest(path: Path, expected_sha256: str | None = None) -> dict
     return data
 
 
+def _receipt_manifest(freeze: dict) -> dict:
+    data = dict(freeze)
+    data.pop("freeze_manifest_sha256", None)
+    return data
+
+
 def load_candidate_rows(path: Path) -> list[dict]:
     suffix = path.suffix.lower()
     if suffix == ".jsonl":
@@ -113,19 +119,20 @@ def write_summary(path: Path, payload: dict) -> None:
 
 def cmd_ingest(args: argparse.Namespace) -> None:
     freeze = load_freeze_manifest(Path(args.freeze_manifest), args.freeze_sha256)
+    manifest = _receipt_manifest(freeze)
     raw_rows = load_candidate_rows(Path(args.candidates))
-    rows = [normalize_candidate_row(row, freeze) for row in raw_rows]
+    rows = [normalize_candidate_row(row, manifest) for row in raw_rows]
     admission = json.loads(Path(args.admission).read_text(encoding="utf-8"))
     receipt = json.loads(Path(args.receipt).read_text(encoding="utf-8"))
 
-    live_admission = evaluate_shadow_admission(freeze, rows)
+    live_admission = evaluate_shadow_admission(manifest, rows)
     if live_admission != admission:
         out = {
             "operation": "ingest",
             "appended": False,
             "decision": "BLOCK_CLI_ADMISSION_REPLAY_MISMATCH",
-            "experiment_id": freeze["experiment_id"],
-            "model_freeze_id": freeze["model_freeze_id"],
+            "experiment_id": manifest["experiment_id"],
+            "model_freeze_id": manifest["model_freeze_id"],
             "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
             "candidate_input_sha256": sha256_file(Path(args.candidates)),
         }
@@ -133,11 +140,11 @@ def cmd_ingest(args: argparse.Namespace) -> None:
         print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
         raise SystemExit(2)
 
-    result = verified_append(Path(args.shadow), freeze, rows, admission, receipt)
+    result = verified_append(Path(args.shadow), manifest, rows, admission, receipt)
     out = {
         "operation": "ingest",
-        "experiment_id": freeze["experiment_id"],
-        "model_freeze_id": freeze["model_freeze_id"],
+        "experiment_id": manifest["experiment_id"],
+        "model_freeze_id": manifest["model_freeze_id"],
         "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
         "candidate_input_sha256": sha256_file(Path(args.candidates)),
         **result,

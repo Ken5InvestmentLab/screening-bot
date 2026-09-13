@@ -1,16 +1,10 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T01:24:00+09:00",
+  "updated_at_jst": "2026-09-14T01:24:43+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
-    "worker_slots_jst": [
-      "00",
-      "12",
-      "24",
-      "36",
-      "48"
-    ],
+    "worker_slots_jst": ["00", "12", "24", "36", "48"],
     "rule": "Each worker scans all active research branches for substantive changes before working its preferred lane. Process at most one highest-priority substantive cross-lane change plus one safe preferred-lane next action per run. Do not duplicate work already claimed/recorded."
   },
   "branches": {
@@ -24,7 +18,7 @@
       "preferred_worker": "core",
       "last_seen_sha": "71efc96692ec4f83769b8b788618d6c832fc316d",
       "last_processed_sha": "71efc96692ec4f83769b8b788618d6c832fc316d",
-      "last_processed_note": "Core reclaim evaluator is staged and contract-tested successfully (workflow run 34767726209). Do not launch Yahoo-heavy preconfirmation until authoritative hardened Consensus V44 run 34767664140 completes."
+      "last_processed_note": "Core reclaim evaluator is staged and contract-tested successfully (workflow run 34767726209). At 2026-09-14 01:24 JST, authoritative hardened Consensus V44 run 34767664140 is still in_progress (audit job step 'Run V44 Top-K cooldown replacement audit' in_progress), so Core preconfirmation was correctly not dispatched."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -48,11 +42,10 @@
       "status": "in_progress",
       "conclusion": null,
       "authoritative": true,
-      "superseded_runs": [
-        34765427789,
-        34766353425
-      ],
+      "superseded_runs": [34765427789, 34766353425],
       "rule": "Only this hardened run may support final V44 conclusions. Receipt-check artifact before interpretation.",
+      "last_checked_at_jst": "2026-09-14T01:24:43+09:00",
+      "last_checked_job_state": "audit job in_progress; V44 audit step in_progress; hash/upload evidence pending",
       "acceptance_guard": {
         "path": "research/CONSENSUS_V44_RUN_ACCEPTANCE_GUARD_20260914.json",
         "baseline_reproduction_pass_required": true,
@@ -76,6 +69,8 @@
       "contract_test_status": "completed/success",
       "status": "STAGED_NOT_TRIGGERED",
       "next_allowed_action": "After authoritative hardened Consensus V44 run 34767664140 completes, dispatch preconfirmation only.",
+      "last_gate_check_at_jst": "2026-09-14T01:24:43+09:00",
+      "last_gate_check_result": "BLOCKED_WAITING_FOR_V44_34767664140",
       "locked_confirmation_rule": "Never dispatch unless preconfirmation artifact proves both frozen blocks pass."
     }
   },

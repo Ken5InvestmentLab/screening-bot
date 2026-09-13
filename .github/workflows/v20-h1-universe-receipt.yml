@@ -1,0 +1,50 @@
+name: V20 H1 Universe Receipt
+
+on:
+  push:
+    branches:
+      - research/tvfree-canonical-batch02
+    paths:
+      - 'research/RUN_V20_H1_UNIVERSE_RECEIPT'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check pandas==3.0.5 numpy==2.5.3
+      - name: Download frozen canonical daily
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Reproduce V20 H1 universe receipt
+        run: |
+          mkdir -p out
+          python tvfree_screener/batch02/build_v20_h1_universe.py \
+            --daily frozen/tse_daily.csv \
+            --symbols-output out/v20_h1_symbols.txt \
+            --receipt-output out/v20_h1_universe_receipt.json
+          sha256sum out/v20_h1_symbols.txt > out/SHA256SUMS.txt
+          git rev-parse HEAD > out/workflow_commit_sha.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v20-h1-universe-receipt-${{ github.run_id }}
+          path: out/**
+          if-no-files-found: error
+          retention-days: 90

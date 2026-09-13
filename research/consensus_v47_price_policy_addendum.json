@@ -1,0 +1,68 @@
+{
+  "spec_id": "CONSENSUS-V47-PRICE-POLICY-PERFORMANCE-FIRST-ADDENDUM-20260914",
+  "status": "PREREGISTERED_BEFORE_CLEAN_PIT_STRATEGY_OUTCOMES",
+  "supersedes": {
+    "file": "research/consensus_v47_clean_pit_preregister.json",
+    "field": "point_in_time_candidate_contract.prior_close",
+    "old_rule": "point-in-time nominal prior completed-day close <= JPY 1000",
+    "new_rule": "price ceiling is an experimental policy, not a mandatory eligibility condition"
+  },
+  "user_goal": "Performance first. Keep a JPY1000 cap only if it improves clean out-of-sample performance versus no price ceiling.",
+  "common_contract": {
+    "membership": "point-in-time JPX domestic common-stock membership",
+    "prior_volume": ">=10000 historical shares",
+    "session_volume": ">=5000 historical raw-bin shares",
+    "absolute_features": "use point-in-time nominal prices for log_price / any absolute-price feature",
+    "relative_features": "use causal split-normalized series for ratios/returns/technicals",
+    "target": "next official XTKS open after signal date -> D+5 official close",
+    "architecture": "exact frozen V11 3-head model/selector from consensus_v47_clean_pit_preregister.json",
+    "selector_threshold": 0.95,
+    "sessions": "both",
+    "atr_gate": "none in primary comparison; old 2.864 cap is diagnostic only",
+    "production_writes": false
+  },
+  "price_policy_arms": {
+    "NOCAP": {
+      "rule": "no absolute prior-close ceiling",
+      "role": "simplest performance-first arm"
+    },
+    "CAP1000_PIT": {
+      "rule": "point-in-time nominal prior completed-day close <= JPY 1000",
+      "role": "legacy-like price-focus arm retained only if it earns its place on clean data"
+    }
+  },
+  "prohibited_initial_search": [
+    "Do not test JPY500, JPY1500, JPY2000 or other price ceilings in the initial decision.",
+    "Do not add a price floor from the already-opened contaminated price-bucket analysis.",
+    "Do not choose a cap using V43/V44 contaminated returns.",
+    "Do not use 2026 returns to choose the price policy."
+  ],
+  "selection_protocol": {
+    "development": "2025-01-06..2025-06-30 clean PIT prequential outputs",
+    "validation": "2025-07-01..2025-12-30 locked clean PIT block",
+    "operational_view": "one position per symbol; 5 official trading-session no-overlap stress; no replacement",
+    "transaction_cost_primary": 0.005,
+    "primary_metric": "mean canonical 5BD return after 0.5% round-trip cost",
+    "development_choice": [
+      "Require at least 20 valid development trades under the operational view.",
+      "Choose the arm with higher development primary_metric.",
+      "If absolute mean difference < 0.50 percentage points, choose higher Top3-excluded mean.",
+      "If still tied within 0.25 percentage points, choose higher median.",
+      "If still tied, choose NOCAP because it is the simpler rule."
+    ],
+    "locked_validation": [
+      "After the development winner is frozen, open H2 performance for the winner.",
+      "Do not use the losing arm's H2 return to switch policies.",
+      "Validation passes for continued research if H2 mean after 0.5% cost > 0.",
+      "Top3-excluded mean, median, hit10/hit20, loss10/loss20, symbol concentration and monthly/weekly concentration are mandatory diagnostics but are not automatic vetoes solely because the system is allowed to capture rare monster winners."
+    ]
+  },
+  "performance_philosophy": [
+    "Headline performance is the primary objective.",
+    "Robustness diagnostics are used to detect fake performance / concentration, not to force a low-volatility low-return system.",
+    "A rare large-winner contribution is acceptable if it is generated causally and survives the locked validation contract.",
+    "Simplicity wins ties: do not retain the JPY1000 restriction unless it demonstrably improves clean performance."
+  ],
+  "follow_up_only_if_both_weak": "If both NOCAP and CAP1000_PIT fail clean H2, do not grid-search price caps. Revisit the model/family, not the price threshold.",
+  "production_modified": false
+}

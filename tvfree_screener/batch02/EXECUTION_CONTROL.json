@@ -19,7 +19,7 @@
     "experiment_id": "DATA-QUALITY-4H-PROVENANCE-20260913-01",
     "decision": "INCONCLUSIVE_SOURCE_PROVENANCE_MIXED",
     "report": "tvfree_screener/batch02/reports/4h_data_feasibility_audit_20260913.md",
-    "report_sha256": "502d9cbf72b819c8ca05c29eb86963f131eec7c33ef965a7ca198570dab7fb3f"
+    "report_sha256": "a72b3081725047060e27566cf2aae6c2b0bb4c93a1786794a102633056312b61"
   },
   "registered_spec_sha256": "f140637250483332fa5db5e6067212175e0790eadb174323eb73788397f912ea",
   "registered_feature_count": 3,
@@ -114,5 +114,8 @@
   "current_gas_hourly_12h_bucket_crosses_lunch": true,
   "legacy_4h_1h_daily_value_accuracy": "INCONCLUSIVE_SOURCE_PROVENANCE_MIXED",
   "legacy_4h_gap_repair_marker_rows": 8610,
-  "legacy_4h_gap_repair_marker_source_ambiguous": true
+  "legacy_4h_gap_repair_marker_source_ambiguous": true,
+  "read_only_gas_source_git_sha": "f2fb9df22565e29890a91c16c5063acb2f5d4cb1",
+  "legacy_4h_projection_sha256": "32c5e53f77487d17545abdbe80205289a53af532f37ae8f517c29c5f8b86402a",
+  "read_only_gas_txt_sha256": "0ab6326c0eeca1090fc9cbbc116794481982db0e5fdf45afccd6a138a1ee9b46"
 }

@@ -1,0 +1,32 @@
+name: Consensus V47 Price Policy Contract Tests
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/consensus_v47_price_policy_addendum.json"
+      - "research/select_consensus_v47_price_policy.py"
+      - "research/test_consensus_v47_price_policy.py"
+      - ".github/workflows/consensus-v47-price-policy-contract-tests.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile
+        run: |
+          python -m py_compile             research/select_consensus_v47_price_policy.py             research/test_consensus_v47_price_policy.py
+      - name: Run frozen selector contract
+        run: python research/test_consensus_v47_price_policy.py

@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "experiment_id": "CORE-BOLLINGER-RECLAIM-20260913-01",
+  "family": "core_prior20_lower_bollinger_reclaim_v1",
+  "registered_at_utc": "2026-09-13T05:41:36.156329+00:00",
+  "status": "FROZEN_BEFORE_DISCOVERY_OUTCOME_ACCESS",
+  "evidence_level": "RETROSPECTIVE_PROVISIONAL",
+  "historical_exposure": "2022H2-2023 outcomes have been viewed in other unrelated strategy families; results are retrospective, not untouched OOS. No threshold changes after evaluation.",
+  "hypothesis": "An intraday excursion below the prior-close-only 20-session lower Bollinger band, followed by a close back above that band in the upper half of the session range, may identify a volatility-normalized failed breakdown.",
+  "candidate_pool": {
+    "universe": "Rows in the frozen Yahoo daily OHLCV panel with complete, internally valid positive-volume bars.",
+    "band": "Prior lower band = mean of the immediately preceding 20 official-session closes minus 2 population standard deviations; the signal-day close is excluded from band estimation.",
+    "event": "Signal-day low < prior lower band and signal-day close > prior lower band.",
+    "close_location_minimum": 0.5,
+    "full_official_session_history_required": true,
+    "no_gap_market_volume_or_fundamental_filter": true,
+    "no_future_or_outcome_fields": true
+  },
+  "score_and_selection": {
+    "score": "Equal-weight mean of signal-day close location and (close - prior lower band)/(high - low).",
+    "selection": "Score descending, at most 5 names per XTKS session, up to five eligible candidates; abstain if empty.",
+    "tie_breaks": [
+      "score descending",
+      "close_location descending",
+      "band_reclaim_quality descending",
+      "symbol ascending"
+    ],
+    "cooldown": "One immediately following official XTKS session per selected symbol; only selected rows update cooldown.",
+    "multiple_names_per_day": true
+  },
+  "target": "Signal-date OHLCV setup; enter next official XTKS session open and exit fifth official XTKS session close, with 0.5% primary round-trip cost assumption.",
+  "periods": {
+    "2022H2_last_signal": "2022-12-23",
+    "2023_last_signal": "2023-12-22",
+    "last_exit": "2023-12-29",
+    "2024": "closed",
+    "2025": "closed",
+    "2026": "report-only and closed to selection"
+  },
+  "gates_each_discovery_period": {
+    "resolved_selected_minimum": 75,
+    "mean_selected_per_calendar_month_minimum": 5.0,
+    "net_mean_median_and_top3_excluded_mean": "all > 0 and win rate > 0.50",
+    "label_coverage_minimum": 0.9,
+    "minus10_minus20_rates": "no higher than the complete candidate pool on the same dates",
+    "positive_months": "at least half of resolved selection months",
+    "complete_daily_cohorts": "at least 20 complete dates; net mean, median, and top3-excluded mean all > 0",
+    "family_decision": "Both 2022H2 and 2023 must pass every gate; otherwise reject without replacement parameters."
+  },
+  "cost_assumption": {
+    "round_trip": 0.005,
+    "sensitivity_scenarios": [
+      0.0,
+      0.005,
+      0.01
+    ],
+    "measured_live_cost": false
+  },
+  "data": {
+    "feature_end": "2023-12-29",
+    "2024_plus_numeric_ohlcv_opened": false
+  },
+  "input_sha256": {
+    "feature_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "feature_manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "daily_source_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "calendar_manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0"
+  },
+  "implementation_sha256": {
+    "candidate_and_policy": "6b61dd9286344e4b5def77aa8f79976cf83d904bba0d59c23df20dcd082bcec5",
+    "audit_runner": "2ee3de1ebe67d79552c8b6a1579bac2cdf4d37d17ed96a3ddbcbbef5c9249279",
+    "label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "evaluation": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "feature_panel": "d2785c85f9305e69eb2b135490ba84dad32771cc8d9095ba9662f5b43dc93c8f",
+    "one_to_one_report_summarizer": "ae341d211b154c5142ee11618a0527dff986d5d1da1bc2d7687ef85b8cb316b2"
+  },
+  "production_modified": false
+}

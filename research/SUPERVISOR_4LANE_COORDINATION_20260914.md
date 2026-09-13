@@ -28,12 +28,13 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
 
 3. **Core breadth/stability lane** — branch `research/tentei-cloud-mtf`.
    - Owns fixed reconstructed Core/SAFE stability, uncertainty, breadth diagnostics, and the separately preregistered failed-breakdown-reclaim Core family.
-   - IMPORTANT ENDPOINT CORRECTION: the earlier fixed-Core stability run used **signal-session close -> fifth XTKS-session close**, not the canonical next-open endpoint. Therefore its prior rejection is **not** a canonical replacement decision.
-   - Canonical disposition is currently **PENDING_NEXT_OPEN_REPLAY**. The exact unchanged fixed-Core candidate set must be relabeled with next official XTKS-session open -> fifth official XTKS-session close before promotion/rejection.
-   - Legacy signal-close evidence remains descriptive only: DEV n=169 mean +1.31%; 2025H2 n=140 mean +0.08%, median -0.24%, win 45.0%, Top3-ex -0.35%; 2026YTD +1.56% is report-only.
+   - Canonical endpoint repair is **complete** on the exact unchanged fixed-Core candidate set: next official XTKS-session open -> fifth official XTKS-session close.
+   - Canonical DEV at 0.5% cost: n=169, mean +0.712%, median +0.509%, win 55.62%, Top3-ex +0.393%.
+   - Canonical 2025H2 at 0.5% cost: n=140, mean **-0.452%**, median **-0.745%**, win **41.43%**, Top1-ex **-0.700%**, Top3-ex **-0.874%**.
+   - Even at 0% cost, 2025H2 median is -0.245%, win 45.71%, Top1-ex -0.200% and Top3-ex -0.374%. Therefore the weakness is not just the cost assumption.
+   - Decision: **REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE** under the canonical endpoint. Do not use the stronger 2026 report-only block to rescue or retune it.
    - Already rejected pruning paths remain closed: broad-market hard gates, simple local single-feature hard gates, and positive peer-momentum hard gates.
-   - `CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json` remains outcome-unopened, but execution is deferred until the canonical endpoint repair for current fixed Core completes.
-   - Do not use 2026 to rescue, tune, or promote Core.
+   - `CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json` is a genuinely new, outcome-unopened Core family and may proceed only under its frozen contract; it must not inherit post-hoc retuning from the rejected fixed Core.
 
 4. **Consensus specialist lane** — branch `research/consensus-atr-regime-gate`.
    - Owns fixed-min95 Consensus, frozen ATR OOD guard, realistic next-open execution, concentration/overlap diagnostics, V44 cooldown-with-replacement, and staged outcome-free V45 full-context ATR audit.
@@ -56,25 +57,7 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 
 ## 2026-09-14 supervisor reconciliation addendum
 - This coordination file supersedes older per-lane wording where it conflicts with newer branch-local corrective findings.
-- Core canonical status is **PENDING_NEXT_OPEN_REPLAY**, not rejected, until the endpoint-repair run completes.
+- Core canonical endpoint repair is complete; the current fixed reconstructed Core is **rejected as a replacement candidate** after 2025H2 fails robustness under next-open -> fifth-close. The separate failed-breakdown-reclaim family remains outcome-unopened.
 - Consensus raw-bin labels are semantic reconstruction labels, not exact alert-clock promises.
 - Event-specific V12/V17/V18/compression-breakout and canonical Monster-v2 closed decisions must not be reopened by renaming or post-hoc threshold changes.
 - Immediately before any prospective-shadow authorization or cross-lane comparison, re-fetch all source-branch HEADs; stale readiness snapshots are blocking, not advisory.
-
-
-## Consensus cross-lane promotion dependencies — 2026-09-14 update
-Two data-contract limitations are now explicit and must be checked before any final integration claim:
-
-1. **Raw-bin timing semantics**
-   - Consensus V43/V44 integer `session=9` / `session=13` come from the older `synthetic_sessions()` reconstruction.
-   - Batch02 data-integrity already established that Yahoo timestamps are interval-start and the 12:00-start row crosses the lunch boundary.
-   - Therefore these labels are raw clock bins, not exact 09:00 / 13:00 executable alerts and not exact TradingView 4H bars.
-   - Canonical next-open evaluation remains temporally valid, but production promotion requires migration/retraining on the shared causal raw-bin materializer if Consensus survives.
-
-2. **Historical universe provenance**
-   - run80 was built from the 2026-09-11 current-listed JPX domestic common-stock snapshot (3,700 symbols), then historical Yahoo data was fetched for those symbols.
-   - It is reproducible but not a point-in-time survivorship-neutral 2025 universe.
-   - V44 remains an internally fair policy comparison; it is not sufficient evidence for a survivorship-free all-TSE claim.
-   - Final promotion requires outcome-independent point-in-time listing membership from the shared data-integrity path.
-
-Do not make the Consensus lane independently duplicate the Batch02 raw-clock or point-in-time-universe work. Treat them as integration dependencies.

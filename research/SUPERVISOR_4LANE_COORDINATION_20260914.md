@@ -86,3 +86,13 @@ Before advancing any lane, read this file plus that lane's latest handoff/log. I
 - H1 lower bound: 48/67; H2: 19/34. No strategy returns were used to create this count.
 - Treat this as a cross-lane warning for any run80 experiment whose candidate membership uses an absolute historical price threshold. Relative-price features are not automatically invalid, but promotion-grade candidate-universe evidence is provisional until the PIT eligibility contract is rebuilt.
 - Do not independently retune or patch around this with outcomes. Consensus/data-integrity V46 owns the outcome-free split reconstruction.
+
+
+## Price-cap policy correction — performance first — 2026-09-14
+- The historical prior-close <= JPY 1,000 rule is **not a global requirement of the replacement system**. It came from the legacy workflow and is now an experimental policy only.
+- Clean PIT Consensus V47 must compare exactly two initially preregistered price-policy arms under the same model/data/target contract: **NOCAP** versus **CAP1000_PIT**.
+- Do not grid-search 500/1500/2000/etc. from opened outcomes. Keep the JPY1,000 ceiling only if it earns its place on clean locked performance.
+- Performance is the primary objective. Robustness/concentration metrics are mandatory diagnostics to detect fake/outlier-only edge, but the research must not deliberately sacrifice strong causal right-tail performance merely to look smoother.
+- A rare monster-winner contribution is acceptable if generated causally and supported by the locked validation contract.
+- If both NOCAP and CAP1000_PIT are weak, revisit the model/family rather than tuning more price thresholds.
+- For this first price-policy comparison, prior/session volume gates remain fixed so only the price ceiling changes. They may be tested separately later under a new preregistration.

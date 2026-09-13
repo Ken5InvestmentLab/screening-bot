@@ -102,14 +102,16 @@ def strict5_no_replacement(
     for idx, row in x.iterrows():
         dt = str(row["date"])[:10]
         sym = str(row["symbol"])
+        epoch = int(row["identity_epoch"]) if "identity_epoch" in row.index else 0
+        key = (sym, epoch)
         if dt not in day_ix:
             raise RuntimeError(f"missing trading day {dt}")
         di = day_ix[dt]
-        prior = last.get(sym)
+        prior = last.get(key)
         if prior is not None and di - prior < 5:
             continue
         keep.append(idx)
-        last[sym] = di
+        last[key] = di
     return x.loc[keep].copy()
 
 

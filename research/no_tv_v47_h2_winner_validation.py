@@ -100,7 +100,8 @@ def strict5_with_carry(
         for row in z.itertuples(index=False):
             dt=str(row.date)[:10]
             if dt in day_ix:
-                last[str(row.symbol)]=day_ix[dt]
+                epoch=int(getattr(row,"identity_epoch",0))
+                last[(str(row.symbol),epoch)]=day_ix[dt]
 
     keep=[]
     x=h2_selected.sort_values(
@@ -110,12 +111,14 @@ def strict5_with_carry(
     for idx,row in x.iterrows():
         dt=str(row["date"])[:10]
         sym=str(row["symbol"])
+        epoch=int(row["identity_epoch"]) if "identity_epoch" in row.index else 0
+        key=(sym,epoch)
         di=day_ix[dt]
-        prior=last.get(sym)
+        prior=last.get(key)
         if prior is not None and di-prior<5:
             continue
         keep.append(idx)
-        last[sym]=di
+        last[key]=di
     return x.loc[keep].copy()
 
 

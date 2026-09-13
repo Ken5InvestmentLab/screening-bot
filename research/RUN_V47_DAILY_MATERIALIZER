@@ -1,4 +1,4 @@
-trigger: 2026-09-14 v47-daily-materializer-v3-individual-restored-fetch
-purpose: authoritative outcome-blind PIT daily materialization; 100% restored-symbol daily coverage required
-supersedes_run: 34786400424
+trigger: 2026-09-14 v47-daily-materializer-v4-terminal-fastfail
+purpose: authoritative outcome-blind PIT daily materialization; 100% restored-symbol daily coverage required; terminal Yahoo 400/404/410/422 no retry
+supersedes_runs: 34786400424,34786578353
 strategy_outcomes: forbidden

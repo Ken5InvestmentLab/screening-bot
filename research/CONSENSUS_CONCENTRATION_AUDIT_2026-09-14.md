@@ -314,3 +314,39 @@ Therefore the concern should be stated precisely:
 - it does reuse the **same symbols** far more often;
 - enforcing one-position-per-symbol reduces both trade count and performance;
 - V44 asks whether unused Top-K alternatives can fill that freed capacity without destroying edge.
+
+
+## Repeated-symbol structure: same-day duplication vs multi-day persistence
+
+Using the ATR-gated 2025 min95 selected rows:
+
+### 3350
+- selected rows: 30
+- unique signal days: **18**
+- session 09 rows: 12
+- session 13 rows: 18
+- days with both sessions selected: 12
+
+### 2334
+- selected rows: 15
+- unique signal days: **11**
+- session 09 rows: 6
+- session 13 rows: 9
+- days with both sessions selected: 4
+
+### 7318
+- selected rows: 8
+- unique signal days: 7
+- only one day has both sessions.
+
+### 6574
+- selected rows: 6
+- unique signal days: 4
+- two days have both sessions.
+
+Interpretation:
+- same-day 09/13 duplication contributes, especially for 3350;
+- it is **not** sufficient to explain the concentration;
+- the dominant structural issue is repeated selection of the same symbol across multiple trading days during persistent trends;
+- therefore deduplicating same-day alerts alone would not solve the generalization/capital-allocation problem;
+- cooldown-with-replacement remains the relevant test.

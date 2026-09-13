@@ -1,3 +1,4 @@
-trigger: 2026-09-14 consensus-v44-topk-cooldown-v2-locked-validation
-purpose: corrected two-stage Top-K cooldown audit; development chooses one policy before H2 replacement outcomes are reported; research-only
-invalidates_run: 34765427789
+trigger: 2026-09-14 consensus-v44-topk-cooldown-v3-hardened
+purpose: authoritative V44 run with locked validation + V43 baseline reproduction guard + pinned V43 dependencies + github.sha checkout
+invalidates_runs: 34765427789,34766353425
+required_dev_receipt: n=67 mean_pct=8.424148981560009 max_symbol_share=0.44776119402985076

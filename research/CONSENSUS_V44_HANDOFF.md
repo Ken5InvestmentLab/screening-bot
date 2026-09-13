@@ -90,3 +90,14 @@ Therefore, in V43/V44:
 The current as-of builder is still causal with respect to finalized daily OHLC: it uses only completed prior days plus current raw sessions up to the candidate index. With canonical entry at next XTKS session open, this naming correction does not invalidate V44 return timing, but it blocks any direct production claim until a surviving Consensus model is migrated/retrained on the shared canonical raw-bin materializer.
 
 Detail: `research/CONSENSUS_INTRADAY_SEMANTICS_ALIGNMENT_2026-09-14.md`.
+
+
+## Universe provenance correction
+The preserved run80 daily cache is reproducible but not point-in-time survivorship-neutral:
+- source run 34545440155 fetched the **2026-09-11 run-date JPX current-listed domestic common-stock universe** (3,700 symbols);
+- historical Yahoo data from 2022 onward was then fetched only for those run-date symbols;
+- source manifest itself warns that listings/delistings can change historical backtest membership.
+
+Therefore V43/V44 2025 results can omit stocks that traded in 2025 but were delisted before the 2026-09-11 universe snapshot. V44 remains an internally fair comparison because all cooldown policies use the same frozen universe, but it is not yet a survivorship-free all-TSE historical proof.
+
+Do not attempt outcome-aware manual repair. If Consensus survives V44, promotion-grade validation requires the shared data-integrity lane to provide frozen point-in-time JPX membership. Detail: `research/CONSENSUS_UNIVERSE_PROVENANCE_2026-09-14.md`.

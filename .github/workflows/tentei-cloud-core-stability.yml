@@ -45,6 +45,8 @@ jobs:
           python research/tentei_cloud/audit_core_stability.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --outdir out
+      - name: Show cost sensitivity
+        run: cat out/core_cost_sensitivity.csv
       - name: Record source fetch run
         run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
       - uses: actions/upload-artifact@v4

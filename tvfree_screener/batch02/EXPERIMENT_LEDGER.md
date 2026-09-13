@@ -508,3 +508,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next: change candidate generation. Test a frozen causal 4H reversal/ignition event gate before scoring rather than ranking every eligible 4H bin.
 - Report: `reports/causal_4h_scoring_v10_relative_volume_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## CAUSAL-4H-MONSTER-V11-WEAK-REVERSAL-IGNITION-20260913 — REJECT CANDIDATE GENERATION / H2 NOT OPENED
+
+- Preregistered before outcome evaluation. Frozen causal gate: cohort breadth<=50%, prior4 mean return<=0, current bar positive, range expansion, same-bin relative volume>=1x prior20 median.
+- Feature-only population: 13,873 rows (3.48%), 232 dates, 1,210 symbols.
+- H1 ranked policies all fail: Top1 n=124 mean -0.83%, +20% 7.26%, <=-10% 22.58%, Top1-excluded -1.71%; Top3 mean -0.49%, +20% 5.11%.
+- Gate-population diagnostic confirms the problem exists before ranking. Base H1 population: mean about -0.01%, median -0.37%, win 46.12%, +20% 1.53%, <=-10% 5.09%. Frozen event pool: mean -1.06%, median -1.08%, win 37.28%, +20% 1.92%, <=-10% 7.67%.
+- Decision: reject V11 at candidate-generation level. Per preregistration, V11 H2 remains unopened.
+- Do not tune event thresholds against exposed H1 outcomes.
+- Next: return to a sparse Bollinger/RSI/squeeze/persistence 4H mechanism family inspired by the existing Tentei architecture, without requiring exact TradingView signal matching.
+- Report: `reports/causal_4h_monster_v11_weak_reversal_ignition_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

@@ -5,10 +5,11 @@ Updated: 2026-09-14 JST
 ## Active experiment
 - Experiment: CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914
 - Branch: research/consensus-atr-regime-gate
-- GitHub Actions run: 34765427789
+- Valid GitHub Actions run: 34766353425
+- Invalid/superseded run: 34765427789 (opened all H2 cooldown metrics before the preregistered development choice; do not use results)
 - Workflow: No-TV Consensus V44 TopK Cooldown
-- Trigger commit: c6e2ff2c70b0e659dfb8f2c1a1af204bb37c091c
-- Current state when recorded: in_progress
+- Trigger commit: d11e69056e0c5e34c48d0253e629655eaf45d5a7
+- Current state when recorded: corrected locked-validation run in_progress
 - Production writes: false
 
 ## This lane owns
@@ -44,3 +45,16 @@ Do not independently rerun or retune:
 8. Same-day 09/13 duplication is not the main issue; multi-day repeat selection is.
 9. Preserved Stable★6 benchmark is far less symbol-concentrated (55 trades / 54 symbols).
 10. V44 is the decisive test of whether alternate ranked names can preserve more of the edge under one-position-per-symbol style constraints.
+
+
+## V44 integrity correction
+The first V44 evaluator computed H2 metrics for cooldown 0/3/5 before applying the preregistered development chooser. It did not use those H2 metrics to choose a cooldown, but merely opening/reporting them violated the locked-validation intent.
+
+Correction:
+- run 34765427789 is invalidated for research conclusions;
+- evaluator commit 9ac2c78e79e2f535f3fbed04703c3188b7b0640b computes DEV metrics for 0/3/5 only;
+- DEV chooses at most one of cooldown 3/5 using the frozen preregistration;
+- only baseline and that one chosen cooldown may report H2 replacement outcomes;
+- losing cooldown H2 metrics are not emitted;
+- H2 Top-K candidate export is outcome-blind;
+- corrected run 34766353425 is the only valid V44 run.

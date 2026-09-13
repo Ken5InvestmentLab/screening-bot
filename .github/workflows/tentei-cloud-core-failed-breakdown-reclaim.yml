@@ -1,6 +1,11 @@
 name: Tentei Cloud Core Failed-Breakdown Reclaim
 
 on:
+  push:
+    branches:
+      - research/tentei-cloud-mtf
+    paths:
+      - "research/tentei_cloud/RUN_CORE_FAILED_BREAKDOWN_RECLAIM"
   workflow_dispatch:
     inputs:
       phase:
@@ -22,39 +27,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: research/tentei-cloud-mtf
+          ref: ${{ github.sha }}
 
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: python -m pip install --disable-pip-version-check pandas numpy scikit-learn
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check pandas==3.0.5 numpy==2.5.3 scikit-learn==1.9.1
 
-      - name: Download latest successful extended 1H fetch
+      - name: Download frozen authorized extended 1H source
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          RUN_ID="$(gh run list \
-            --repo "$GITHUB_REPOSITORY" \
-            --workflow "tentei-cloud-1h-research.yml" \
-            --branch "research/tentei-cloud-mtf" \
-            --event push \
-            --status success \
-            --limit 1 \
-            --json databaseId \
-            --jq '.[0].databaseId')"
-          test -n "$RUN_ID"
-          echo "$RUN_ID" > latest_fetch_run_id.txt
+          RUN_ID="34592896202"
+          echo "$RUN_ID" > source_fetch_run_id.txt
           gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir downloaded
 
       - name: Evaluate frozen failed-breakdown reclaim family
         shell: bash
         run: |
+          REQUESTED_PHASE="preconfirmation"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            REQUESTED_PHASE="${{ inputs.phase }}"
+          fi
           EXTRA=""
-          if [ "${{ inputs.phase }}" = "locked_confirmation" ]; then
+          if [ "$REQUESTED_PHASE" = "locked_confirmation" ]; then
             EXTRA="--open-locked"
           fi
+          echo "$REQUESTED_PHASE" > requested_phase.txt
           python research/tentei_cloud/eval_core_failed_breakdown_reclaim.py \
             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
             --outdir out \
@@ -62,8 +63,8 @@ jobs:
 
       - name: Record source and execution receipts
         run: |
-          cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
-          printf '%s\n' "${{ inputs.phase }}" > out/requested_phase.txt
+          cp source_fetch_run_id.txt out/source_fetch_run_id.txt
+          cp requested_phase.txt out/requested_phase.txt
           git rev-parse HEAD > out/evaluator_commit_sha.txt
           sha256sum research/tentei_cloud/CORE_FAILED_BREAKDOWN_RECLAIM_SPEC_20260914.json \
             > out/spec_sha256.txt
@@ -77,7 +78,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tentei-cloud-core-failed-breakdown-reclaim-${{ inputs.phase }}
+          name: tentei-cloud-core-failed-breakdown-reclaim-${{ github.run_id }}
           path: out/**
           if-no-files-found: error
           retention-days: 90

@@ -63,6 +63,7 @@ def load_daily(
     frozen: Path,
     restored: Path,
     listing_dates: dict[str,list[str]],
+    split_map: dict[str,list[tuple[str,float]]],
 ) -> pd.DataFrame:
     cols = ["date","open","high","low","close","volume","symbol"]
     d = pd.read_csv(frozen, usecols=cols, dtype={"symbol":str}, low_memory=False)
@@ -77,6 +78,15 @@ def load_daily(
         .sort_values(["symbol","date"])
         .drop_duplicates(["symbol","date"], keep="last")
         .reset_index(drop=True)
+    )
+    x["volume_adjusted"]=x["volume"].astype(float)
+    x["future_split_factor_daily"]=[
+        future_factor(split_map,str(s),str(d))
+        for s,d in zip(x["symbol"],x["date"])
+    ]
+    x["volume"]=(
+        x["volume_adjusted"]
+        / pd.Series(x["future_split_factor_daily"],index=x.index,dtype=float)
     )
     x=add_identity_epoch(x,listing_dates)
     x=x.sort_values(["symbol","identity_epoch","date"]).reset_index(drop=True)
@@ -269,12 +279,12 @@ def main() -> None:
 
     events=load_events(a.membership_events)
     lmap=listing_map(events)
-    daily=load_daily(a.frozen_daily,a.restored_daily,lmap)
     split_map=load_split_map(a.all_splits)
+    daily=load_daily(a.frozen_daily,a.restored_daily,lmap,split_map)
     nocap_pairs,cap_pairs=load_candidate_sets(a.daily_candidates)
 
     daily_by_symbol={
-        str(sym):g[["date","open","high","low","close","volume","identity_epoch","next_open","d5_close","exit_date_5bd"]]
+        str(sym):g[["date","open","high","low","close","volume","volume_adjusted","future_split_factor_daily","identity_epoch","next_open","d5_close","exit_date_5bd"]]
         .sort_values("date")
         .reset_index(drop=True)
         for sym,g in daily.groupby("symbol",sort=False)
@@ -358,7 +368,8 @@ def main() -> None:
         "cap_is_subset_at_daily_policy_level":True,
         "feature_columns":feature_cols,
         "absolute_price_semantics":"log_price uses point-in-time nominal entry_pit",
-        "relative_technical_semantics":"split-normalized Yahoo price path",
+        "relative_technical_semantics":"split-normalized Yahoo price path; daily volume ratios use PIT-restored daily share volume",
+        "raw_1h_volume_semantics":"Yahoo raw 1H volume used unchanged for session gate and session_vol_ratio20",
         "target_columns_materialized_in_development_only":[
             "canonical_ret_5bd",
             "legacy_ret_5bd",

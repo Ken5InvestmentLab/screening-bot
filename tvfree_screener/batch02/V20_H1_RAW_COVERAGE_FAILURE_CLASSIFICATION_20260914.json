@@ -1,0 +1,80 @@
+{
+  "receipt_id": "V20-H1-RAW-COVERAGE-FAILURE-CLASSIFICATION-20260914",
+  "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "source_run_id": 34774070956,
+  "source_head_sha": "dcf89beb06128ba688a349850767fecb493f9add",
+  "classification_status": "OUTCOME_BLIND_DATA_FAILURE_CLASSIFIED",
+  "strategy_outcomes_read": false,
+  "h1_outcomes_opened": false,
+  "h2_opened": false,
+  "observed": {
+    "expected_symbols": 1810,
+    "observed_symbols": 1806,
+    "missing_symbols": ["463A", "464A", "543A", "547A"],
+    "fetch_failure_count": 1,
+    "fetch_failure": {
+      "symbol": "365A",
+      "window": ["2025-01-06", "2025-04-25"],
+      "error": "HTTP 400",
+      "note": "365A has later H1 raw rows and all 7 canonical-active H1 dates were present, so this recorded HTTP 400 is still a zero-final-failures contract violation but not a temporal-presence deficit for 365A."
+    },
+    "expected_active_symbol_dates": 213921,
+    "observed_expected_symbol_dates": 213187,
+    "missing_active_symbol_dates": 734,
+    "missing_active_symbol_dates_from_four_missing_symbols": 476,
+    "remaining_missing_active_symbol_dates_after_four_missing_symbols": 258,
+    "symbols_with_any_missing_active_date": 176,
+    "zero_duplicate_symbol_timestamps": true,
+    "raw_dates_inside_frozen_window": true
+  },
+  "root_cause_classification": {
+    "primary": "POINT_IN_TIME_SYMBOL_IDENTITY_MISMATCH_PLUS_SPARSE_YAHOO_INTRADAY_GAPS",
+    "four_missing_symbol_note": "The frozen canonical daily file carries 2025 and earlier history under codes 463A/464A/543A/547A, while public listing records show those codes were introduced only after the frozen 2025H1 window. Yahoo therefore has no 2025H1 intraday history under those successor codes.",
+    "public_identity_evidence": [
+      {
+        "successor_code": "463A",
+        "successor": "Intellex Holdings",
+        "effective_listing": "2025-12-01",
+        "predecessor_code": "8940",
+        "source": "https://jp.investing.com/news/stock-market-news/article-1309399"
+      },
+      {
+        "successor_code": "464A",
+        "successor": "QPS Holdings",
+        "effective_listing": "2025-12-01",
+        "predecessor_code": "5595",
+        "source": "https://www.pecul-invest.com/%E3%80%90464a%E3%80%91qps%E3%83%9B%E3%83%BC%E3%83%AB%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%82%B9%EF%BC%88qps%E7%A0%94%E7%A9%B6%E6%89%80%EF%BC%89%E6%B1%BA%E7%AE%97%E3%83%A1%E3%83%A2%E3%80%82%E6%8A%80/"
+      },
+      {
+        "successor_code": "543A",
+        "successor": "ARCHION",
+        "effective_listing": "2026-04-01",
+        "predecessor_reference": "7205 Hino Motors is a principal predecessor; mapping must be treated as a data-repair hypothesis and verified before use",
+        "source": "https://www.hino-global.com/corp/for_investors/disclosure/assets/1fc98e4bde76e96060e0bb5d94cfdcf3.pdf"
+      },
+      {
+        "successor_code": "547A",
+        "successor": "Muninova Holdings",
+        "effective_listing": "2026-04-01",
+        "predecessor_code": "8515",
+        "source": "https://japanir.jp/company/company-8515/ir/8515-20260302-01_wp_corporate_restructuring/"
+      }
+    ]
+  },
+  "frozen_repair_guardrails": {
+    "do_not_change_v20_signal_logic": true,
+    "do_not_change_topn_or_thresholds": true,
+    "do_not_read_h1_strategy_outcomes_before_raw_acceptance": true,
+    "do_not_open_h2": true,
+    "do_not_use_2026_returns": true,
+    "absolute_prior_day_gate_and_5bd_label_remain_canonical_daily_only": true,
+    "intraday_repair_may_only_feed_frozen_scale_invariant_ratios_quantiles": true,
+    "absolute_intraday_price_features_forbidden": true,
+    "repair_must_preserve_exact_frozen_1810_output_symbol_set": true,
+    "successor_predecessor_aliases_must_be_preregistered_and_verified_without_strategy_outcomes": true,
+    "sparse_missing_symbol_dates_must_be_targeted_refetched_and_merged_without_backfilling_price_values": true,
+    "final_acceptance_still_requires_zero_fetch_failures_and_all_original_raw_acceptance_checks": true
+  },
+  "next_action": "Implement an outcome-blind raw repair stage: verify/preregister successor-to-predecessor query aliases for the four impossible current-code histories, targeted-refetch the remaining missing canonical-active symbol/dates, relabel only query aliases back to the frozen canonical output symbols, rerun the unchanged raw acceptance verifier, and open no H1 performance unless every acceptance check passes.",
+  "production_modified": false
+}

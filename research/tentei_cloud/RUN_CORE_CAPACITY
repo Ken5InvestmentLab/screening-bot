@@ -1,0 +1,4 @@
+trigger: 2026-09-14 core-capacity-v1
+purpose: quantify concurrent Core position-slot demand under executable next-bar entry and fixed 5BD exit horizon
+sizing: none
+filtering: none

@@ -146,3 +146,22 @@ The tests freeze the following pre-outcome invariants:
 This test run uses no market download and opens no strategy outcomes.
 
 Execution status remains **STAGED_NOT_TRIGGERED** until authoritative hardened Consensus V44 run `34767664140` completes.
+
+
+## Failed-breakdown preconfirmation integrity correction
+
+Run `34768879678` completed successfully at the workflow level but is **INVALID FOR RESEARCH CONCLUSIONS**.
+
+Reason discovered before its performance was interpreted:
+- evaluator commit in that run derived previous-day low/close/volume by aggregating the raw 1H panel;
+- the frozen spec requires **previous completed XTKS daily bar** context;
+- this can change the candidate universe and therefore violates the preregistered data contract.
+
+Disposition:
+- do not inspect or use the run's performance metrics;
+- do not treat the run as a strategy failure or success;
+- corrected evaluator commit `37e422240690d6ebed849d2c7a491ed70e0d9627` reads prior-day context from the frozen canonical daily source;
+- corrected workflow commit `047787fd9a69ef678172b8d748e0036759d9426b` pins raw source run `34592896202` and canonical daily artifact run `34599959356`;
+- corrected contract-test fixtures were aligned in commit `784e57e1c366cf57e1cbfd5f9bc4a074e6cd1dc0`.
+
+No 2025H2 locked-confirmation outcome was opened by this invalid run.

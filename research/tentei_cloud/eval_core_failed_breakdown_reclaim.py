@@ -11,6 +11,7 @@ preconfirmation blocks pass every frozen gate.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from reconstruct_4h_from_1h import load, aggregate, cooldown
 
 COSTS = [0.0, 0.005, 0.01]
 PRIMARY_COST = 0.005
+EXPECTED_DAILY_SHA256 = "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0"
 PERIODS = {
     "DEVELOPMENT": ("2024-11-01", "2025-03-31"),
     "INTERNAL_VALIDATION": ("2025-04-01", "2025-06-30"),
@@ -66,33 +68,53 @@ def frozen_gate(summary_primary: dict, min_n: int) -> dict:
     return checks
 
 
-def add_previous_daily_context(
-    sessions: pd.DataFrame, raw: pd.DataFrame
-) -> tuple[pd.DataFrame, list[str], pd.DataFrame]:
-    daily = (
-        raw.sort_values("timestamp")
-        .groupby(["symbol", "date"], as_index=False)
-        .agg(
-            daily_open=("open", "first"),
-            daily_low=("low", "min"),
-            daily_close=("close", "last"),
-            daily_volume=("volume", "sum"),
-        )
-        .sort_values(["symbol", "date"])
-    )
-    daily["prev_daily_low"] = daily.groupby("symbol")["daily_low"].shift(1)
-    daily["prev_daily_close"] = daily.groupby("symbol")["daily_close"].shift(1)
-    daily["prev_daily_volume"] = daily.groupby("symbol")["daily_volume"].shift(1)
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for block in iter(lambda: f.read(1 << 20), b""):
+            h.update(block)
+    return h.hexdigest()
 
-    dates = sorted(daily["date"].dropna().unique().tolist())
+
+def load_canonical_daily(path: Path) -> pd.DataFrame:
+    actual = sha256_file(path)
+    if actual != EXPECTED_DAILY_SHA256:
+        raise RuntimeError(
+            f"canonical daily SHA mismatch: {actual} != {EXPECTED_DAILY_SHA256}"
+        )
+    daily = pd.read_csv(
+        path,
+        usecols=["date", "symbol", "open", "low", "close", "volume"],
+        dtype={"date": "string", "symbol": "string"},
+        low_memory=False,
+    )
+    daily["date"] = daily["date"].astype(str).str[:10]
+    daily["symbol"] = (
+        daily["symbol"].astype(str).str.replace(r"\.0$", "", regex=True).str.strip()
+    )
+    for col in ("open", "low", "close", "volume"):
+        daily[col] = pd.to_numeric(daily[col], errors="coerce")
+    daily = daily.sort_values(["symbol", "date"]).reset_index(drop=True)
+    return daily
+
+
+def add_previous_daily_context(
+    sessions: pd.DataFrame, daily: pd.DataFrame
+) -> tuple[pd.DataFrame, list[str]]:
+    d = daily.copy()
+    g = d.groupby("symbol", sort=False)
+    d["prev_daily_low"] = g["low"].shift(1)
+    d["prev_daily_close"] = g["close"].shift(1)
+    d["prev_daily_volume"] = g["volume"].shift(1)
+
+    dates = sorted(d["date"].dropna().unique().tolist())
     x = sessions.merge(
-        daily[["symbol", "date", "prev_daily_low", "prev_daily_close", "prev_daily_volume"]],
+        d[["symbol", "date", "prev_daily_low", "prev_daily_close", "prev_daily_volume"]],
         on=["symbol", "date"],
         how="left",
         validate="many_to_one",
     )
-    return x, dates, daily
-
+    return x, dates
 
 def failed_breakdown_reclaim_mask(eligible: pd.DataFrame) -> pd.Series:
     """Exact frozen candidate predicate; kept pure for contract testing."""
@@ -108,10 +130,13 @@ def preconfirmation_blocks_pass(dev: dict, val: dict) -> bool:
     return bool(dev["frozen_gate"]["all_pass"] and val["frozen_gate"]["all_pass"])
 
 
-def make_candidates(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str], pd.DataFrame]:
+def make_candidates(
+    raw: pd.DataFrame, daily: pd.DataFrame
+) -> tuple[pd.DataFrame, list[str]]:
     # Frozen representation: 13:00 split / split_minute=780.
+    # Previous-day context comes only from the frozen canonical daily source.
     sessions = aggregate(raw, 780)
-    sessions, dates, daily = add_previous_daily_context(sessions, raw)
+    sessions, dates = add_previous_daily_context(sessions, daily)
 
     eligible = sessions[
         (sessions["prev_daily_close"] <= 1000)
@@ -122,7 +147,7 @@ def make_candidates(raw: pd.DataFrame) -> tuple[pd.DataFrame, list[str], pd.Data
 
     reclaim = failed_breakdown_reclaim_mask(eligible)
     selected = cooldown(eligible.loc[reclaim].copy(), dates, 5)
-    return selected, dates, daily
+    return selected, dates
 
 
 def attach_canonical_label(
@@ -142,11 +167,11 @@ def attach_canonical_label(
     x["entry_date"] = x["date"].map(entry_map)
     x["exit_date"] = x["date"].map(exit_map)
 
-    entry = daily[["symbol", "date", "daily_open"]].rename(
-        columns={"date": "entry_date", "daily_open": "entry_open"}
+    entry = daily[["symbol", "date", "open"]].rename(
+        columns={"date": "entry_date", "open": "entry_open"}
     )
-    exit_ = daily[["symbol", "date", "daily_close"]].rename(
-        columns={"date": "exit_date", "daily_close": "exit_close"}
+    exit_ = daily[["symbol", "date", "close"]].rename(
+        columns={"date": "exit_date", "close": "exit_close"}
     )
     x = x.merge(entry, on=["symbol", "entry_date"], how="left", validate="many_to_one")
     x = x.merge(exit_, on=["symbol", "exit_date"], how="left", validate="many_to_one")
@@ -193,6 +218,7 @@ def period_result(labeled: pd.DataFrame, name: str) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--inputs", action="append", required=True)
+    ap.add_argument("--daily", required=True, type=Path)
     ap.add_argument("--outdir", required=True)
     ap.add_argument("--open-locked", action="store_true")
     a = ap.parse_args()
@@ -201,7 +227,8 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
 
     raw = load(a.inputs)
-    candidates, dates, daily = make_candidates(raw)
+    daily = load_canonical_daily(a.daily)
+    candidates, dates = make_candidates(raw, daily)
     labeled = attach_canonical_label(candidates, dates, daily)
 
     dev = period_result(labeled, "DEVELOPMENT")
@@ -212,6 +239,8 @@ def main() -> None:
         "experiment_id": "CORE-FAILED-BREAKDOWN-RECLAIM-20260914-01",
         "status": "PRECONFIRMATION_ONLY" if not a.open_locked else "LOCKED_CONFIRMATION_REQUESTED",
         "candidate_rule_changed": False,
+        "canonical_daily_sha256": EXPECTED_DAILY_SHA256,
+        "daily_context_source": "frozen canonical daily prior completed bar only",
         "threshold_sweep": False,
         "ranking": "NONE",
         "top_n": "NONE",

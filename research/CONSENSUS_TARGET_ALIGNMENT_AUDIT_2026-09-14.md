@@ -22,7 +22,7 @@ n=101.
 
 - signal-close -> D+5 mean: **+8.28%**
 - next-open -> D+5 mean: **+7.72%**
-- difference: **1.08? No: +0.56 percentage points** in favor of signal-close entry
+- difference: **+0.56 percentage points** in favor of signal-close entry
 - mean overnight move from signal close to next open: +0.52%
 - median overnight move: +0.42%
 - median absolute overnight move: 1.96%

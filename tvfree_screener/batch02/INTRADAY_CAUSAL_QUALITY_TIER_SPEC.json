@@ -1,0 +1,54 @@
+{
+  "spec_id": "INTRADAY-CAUSAL-QUALITY-TIERS-20260913-01",
+  "purpose": "Separate post-close reconstruction quality from causal intraday signal eligibility.",
+  "strategy_outcomes_may_be_used_to_choose_rules": false,
+  "raw_hourly_overwrite": false,
+  "daily_to_fake_am_pm_synthesis": false,
+  "dimensions": {
+    "reconstruction_quality": [
+      "A_FULL_RECON_POSTCLOSE",
+      "B_PRICE_RECON_POSTCLOSE",
+      "C_DAILY_RESOLUTION_FALLBACK"
+    ],
+    "causal_signal_eligibility": [
+      "RAW_CAUSAL_INTRADAY",
+      "POSTCLOSE_RECON_ONLY",
+      "DAILY_RESOLUTION_ONLY"
+    ]
+  },
+  "rules": {
+    "A_FULL_RECON_POSTCLOSE": [
+      "expected intraday slots complete",
+      "daily OHLCV valid after official close",
+      "price repair follows frozen scale -> open/close -> extrema ladder",
+      "volume reconciliation only when hourly profile is complete and units are defensible"
+    ],
+    "B_PRICE_RECON_POSTCLOSE": [
+      "price path can be reconciled but volume or another required intraday field is not defensible",
+      "must not silently enable volume-derived features"
+    ],
+    "C_DAILY_RESOLUTION_FALLBACK": [
+      "intraday path is not defensible",
+      "retain one daily-resolution record only",
+      "never split one daily candle into synthetic AM/PM or 4H bars"
+    ],
+    "RAW_CAUSAL_INTRADAY": [
+      "feature uses only observations available by its cutoff timestamp",
+      "same-day finalized daily high/low/close/volume forbidden before official close",
+      "prior completed sessions may be used for persistent calibration if frozen in advance"
+    ],
+    "POSTCLOSE_RECON_ONLY": [
+      "any repair using current-day finalized daily high/low/close/volume before a hypothetical earlier cutoff receives this tag",
+      "not eligible for pre-close 4H scoring"
+    ]
+  },
+  "audit_reference": "DATA-QUALITY-DAILY-ANCHOR-OPTIONS-20260913-02",
+  "sample_complete_sessions": 1087,
+  "fully_corrected_intraday_sessions": 596,
+  "partial_review_sessions": 455,
+  "notes": [
+    "Reconstruction consistency is not proof of true intraday path accuracy.",
+    "6085 is a known scale/pathology stress case and must not define universal rules.",
+    "No strategy returns were used for the tier policy."
+  ]
+}

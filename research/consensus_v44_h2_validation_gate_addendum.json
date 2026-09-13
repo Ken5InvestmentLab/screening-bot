@@ -1,0 +1,34 @@
+{
+  "spec_id": "CONSENSUS-V44-H2-VALIDATION-GATE-ADDENDUM-20260914",
+  "parent_experiment": "CONSENSUS-V44-TOPK-COOLDOWN-REPLACEMENT-20260914",
+  "status": "PREREGISTERED_BEFORE_AUTHORITATIVE_H2_REPLACEMENT_OUTCOME_ACCESS",
+  "authoritative_run": 34767664140,
+  "rationale": "The original preregistration fixed DEV policy selection but did not state an explicit H2 pass/fail gate. This addendum extends the same DEV retention/diversification principles before authoritative H2 replacement outcomes are opened.",
+  "validation_period": "2025-07-01..2025-12-30",
+  "applies_to": "the single cooldown selected by the frozen DEV chooser; nonchosen cooldown H2 remains unopened",
+  "pass_gate": {
+    "min_n": 20,
+    "mean_positive": true,
+    "minimum_mean_retention_vs_cooldown0_validation": 0.8,
+    "median_gte_pct": 0,
+    "top3_excluded_mean_gt_pct": 0,
+    "max_symbol_share_lte_fraction_of_cooldown0_validation": 0.75
+  },
+  "pass_rule": "ALL conditions must pass.",
+  "failure_action": [
+    "Do not retune Top-K, cooldown, threshold, ATR cap, model heads, session mode or tie-break on opened H2 outcomes.",
+    "Demote current Consensus from Stable★6 replacement candidate to continuation/re-entry/pyramiding specialist research.",
+    "Keep V45 outcome-free ATR reference audit useful as a data-contract diagnostic, but do not use it to rescue V44."
+  ],
+  "success_action": [
+    "Retain Consensus as a candidate normal-volatility specialist, not production-ready.",
+    "Run the already-preregistered outcome-free V45 full-context ATR reference audit.",
+    "Require later canonical-target retraining and prospective/shadow evidence before production consideration."
+  ],
+  "notes": [
+    "The 80% retention and 25% concentration-reduction values are inherited directly from the original DEV selection rule rather than chosen from H2 replacement outcomes.",
+    "Baseline H2 Top-1 results were historically inspected, but authoritative replacement H2 outcomes have not been used to set this gate.",
+    "2026 outcomes are not part of this gate."
+  ],
+  "production_modified": false
+}

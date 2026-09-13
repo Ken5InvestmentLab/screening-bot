@@ -356,7 +356,7 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Causal price calibration test on the 1,087 complete sessions: raw all4<=1% 45.45%; previous-session scale 44.21%; trailing-5 prior scale median 46.10%. At 2%: raw 74.89%; previous-session 73.40%; trailing-5 76.48%. Prior-only rescaling is not a meaningful v1 improvement.
 - Scale factor day-to-day is usually stable (median absolute change 0.20%, p90 1.17%, p99 2.77%) but rare breaks remain. Prefer scale-invariant features rather than mandatory absolute-price repair.
 - Causal volume calibration remains noisy: previous-session factor median APE 21.93%; trailing-5 prior median APE 19.53%; trailing-5 within-5% only 13.92%, p90 APE 50.72%. Do not treat this as exact absolute-volume repair.
-- Raw per-bin completeness is better than whole-day completeness: 1,332 observed raw symbol-sessions; AM 09/10/11/12 complete 1,150 (86.34%); PM 13/14/15 complete 1,155 (86.71%); both complete 1,087 (81.61%). Gate AM/PM independently.
+- Raw row-type correction: 1,332 unique symbol/date keys exist across all row types, but 8 are 2026-09-11 closing-snapshot-only keys. The clock-bin denominator is therefore 1,324 normal intraday symbol-sessions. AM 09/10/11/12 complete 1,150 (86.86%); PM 13/14/15 complete 1,155 (87.24%); both complete 1,087 (82.10%). Gate AM/PM independently and never promote snapshot-only keys into fake 4H bars.
 - Raw-vs-postclose-reconstructed normalized feature stability on 2,102 bin pairs: body_pct Spearman 0.901, range_pct 0.984, close_location 0.826. AM close_location was 0.981 but PM only 0.694. Uniform whole-day volume scaling leaves within-day share unchanged, but current-day full-day share is not causal for the AM cutoff.
 - Architecture freeze: `CAUSAL_INTRADAY_FEATURE_ARCHITECTURE_SPEC.json`. Prefer returns, normalized range/ATR, normalized momentum/position, compression/realized-volatility and prior-bin-relative-volume features. Hold PM close-location and same-day-daily-rescaled absolute volume back.
 - Implemented `intraday_causal_guard.py` and `raw_intraday_clock_bins.py` with tests. Isolated pre-commit checks passed 7/7 causal-guard cases and 5/5 clock-bin cases.
@@ -375,3 +375,18 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Cross-day absolute price-return/RSI features are deliberately deferred for now: the raw series contains several very large adjacent gaps, including the known 6085 adjustment/split pathology, and simple magnitude clipping would also remove genuine Monster-style gap moves.
 - Isolated pre-commit feature checks passed 4/4 cases.
 - Next research: run the feature extractor on the cached sample, inspect per-feature distributions/outliers and missingness without returns, then freeze the first causal 4H candidate-feature panel before any performance replay.
+
+
+## CAUSAL-INTRADAY-FEATURE-PANEL-V1-20260913 — FROZEN BEFORE OUTCOMES
+
+- Only `cloud_1h_monsters.csv` from Actions artifact run 34586861016 was read. The colocated precursor/outcome file was not opened.
+- Count definition fixed: 1,332 all-row symbol/date keys = 1,324 normal-intraday keys + 8 closing-snapshot-only keys on 2026-09-11. The feature builder uses 1,324 as its denominator.
+- Independent complete raw bins: AM 1,150; PM 1,155; total 2,305. Missing-required-hour attempts: 343.
+- Frozen v1 candidate features: `bar_log_return`, `range_pct`, `upper_wick_pct`, `lower_wick_pct`, `prev4_log_return_mean`, `prev4_range_mean`, `log_range_vs_prior20`.
+- All are scale-invariant or within-bin normalized and use no current-day finalized daily anchor. `bar_log_return` replaces raw body_pct for symmetry; `log_range_vs_prior20` log-compresses the heavy positive tail without clipping genuine expansions.
+- Redundancy-only exclusions made without outcomes: body_pct vs body_to_range Spearman 0.928; prev4_abs_body_mean vs prev4_range_mean 0.872. The redundant alternatives are not in v1.
+- `close_location` remains diagnostic-only because PM source stability was weak. `volume_rel20` remains diagnostic-only because volume semantics are unresolved and its sample max reached 335.45.
+- No clipping and no imputation. Requiring 20 prior same-bin observations yields 1,985/2,305 v1-complete rows (86.12%); all 320 missing rows are the exact warmup cost across 8 symbols × 2 bins × 20 observations.
+- Local materialized v1 panel SHA-256: `6fcc178be5d23d39126c053cc998a4cbca6ffedf07dc650c1c7875d22490b440`.
+- Spec: `CAUSAL_INTRADAY_FEATURE_PANEL_V1_SPEC.json`. Report: `reports/causal_intraday_feature_panel_v1_20260913.md`. Reproducible runner: `audit_causal_intraday_feature_panel.py`.
+- Important limitation: this eight-symbol Monster sample is selection-biased and is not an acceptable strategy-performance population. Next step is broader historical/universe raw-intraday source discovery before any outcome replay.

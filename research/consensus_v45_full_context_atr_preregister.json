@@ -1,0 +1,62 @@
+{
+  "spec_id": "CONSENSUS-V45-FULL-CONTEXT-ATR-REFERENCE-20260914",
+  "status": "PREREGISTERED_OUTCOME_FREE_NOT_TRIGGERED",
+  "branch": "research/consensus-atr-regime-gate",
+  "purpose": "Audit whether the current 2.864% ATR OOD cap is biased by being estimated only from date/session contexts in which min95 Consensus selected a trade.",
+  "ownership": {
+    "lane": "Consensus specialist",
+    "does_not_overlap": [
+      "Canonical Batch02 event representation",
+      "Core failed-breakdown/breadth work",
+      "Monster weak+early ranking",
+      "V44 cooldown replacement"
+    ]
+  },
+  "source_builder": "research/no_tv_v43_2025_uncapped.py::build_dataset",
+  "reference_population": {
+    "period": [
+      "2025-01-06",
+      "2025-06-30"
+    ],
+    "unit": "one distinct eligible date/session context = one vote",
+    "eligibility": [
+      "prior completed daily close <= 1000 JPY",
+      "prior completed daily volume >= 10000 shares",
+      "reconstructed signal-session volume >= 5000 shares",
+      "required causal technical features available"
+    ],
+    "statistic": "market_median_atr = median ATR14_pct across all eligible candidate rows in that date/session"
+  },
+  "frozen_distribution_outputs": [
+    "q50",
+    "q85",
+    "q90",
+    "q95",
+    "monthly_q90",
+    "expanding_q90_by_month",
+    "candidate_count_distribution"
+  ],
+  "current_selected_context_reference_pct": 2.8640659721217943,
+  "use_of_current_cap": "comparison only; do not force equality and do not tune full-context quantile to match outcomes",
+  "outcome_integrity": {
+    "strategy_return_columns_read_by_evaluator": false,
+    "2025H2_outcomes_opened": false,
+    "2026_outcomes_opened": false,
+    "threshold_optimization_on_returns": false
+  },
+  "coverage_receipt": {
+    "source_v43_run": 34617009116,
+    "source_v43_artifact_id": 10274083399,
+    "source_v43_artifact_sha256": "720e68a29d290302378ac61dd4ec6798aa5ce3b838e71cb367a3a4d8d84a8618",
+    "expected_requested_symbols": 1910,
+    "historical_candidate_symbols": 1793,
+    "minimum_candidate_symbol_coverage_fraction_vs_v43": 0.95
+  },
+  "decision_contract": [
+    "This run is distribution-only and cannot promote or reject Consensus.",
+    "Do not replace the frozen 2.864 cap merely because the full-context q90 differs.",
+    "If V44 fails, retain V45 only as diagnostic evidence and do not rescue Consensus by changing the ATR cap.",
+    "If V44 passes, preregister a separate pre-2026 validation of the outcome-free full-context q90 before considering it as ATR reference v2."
+  ],
+  "production_modified": false
+}

@@ -1,0 +1,124 @@
+{
+  "spec_id": "TENTEI-INSPIRED-4H-V18-CROSSSECTIONAL-QUANTILE-20260913",
+  "status": "PREREGISTERED_BEFORE_V18_H1_RETURN_ACCESS",
+  "role": "RETROSPECTIVE_EVENT_SPECIFIC_QUANTILE_DISCOVERY",
+  "lane_split": {
+    "parallel_lane": "prospective shadow evidence/reporting + state-entry lane",
+    "this_lane": "V18 event-specific quantile evaluation",
+    "duplicated_work": false
+  },
+  "candidate_generator": "V12 ALL signals unchanged",
+  "feature_representation": "V17 cross-sectional rank representation, 16 features, which passed the outcome-free drift gate",
+  "training": {
+    "candidate_date_max": "2024-12-31",
+    "label_maturity": "exit_date < 2025-01-01",
+    "endpoint_status": "RESOLVED",
+    "expected_rows": 4924,
+    "expected_symbols": 966,
+    "target": "continuous gross 5BD return",
+    "year_2025_labels_used_for_fit": false,
+    "year_2026_labels_used_for_fit": false
+  },
+  "model": {
+    "estimator": "HistGradientBoostingRegressor",
+    "separate_quantiles": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "parameters": {
+      "learning_rate": 0.05,
+      "max_iter": 150,
+      "max_leaf_nodes": 15,
+      "min_samples_leaf": 100,
+      "l2_regularization": 1,
+      "max_bins": 63,
+      "early_stopping": false,
+      "random_state": 0
+    },
+    "return_clipping": "NONE",
+    "scaling": "NONE",
+    "quantile_crossing_postprocess": "sort q10/q50/q90 predictions ascending per row"
+  },
+  "heads": {
+    "core": {
+      "score": "q50 descending",
+      "top_n": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "rationale": "directly rank predicted ordinary-case return"
+    },
+    "monster": {
+      "objectives": [
+        "maximize q90",
+        "maximize q50",
+        "maximize q10"
+      ],
+      "eligible_set": "first nondominated three-objective Pareto front within date+bin cohort",
+      "rank_within_front": [
+        "q90 descending",
+        "q50 descending",
+        "q10 descending",
+        "symbol ascending"
+      ],
+      "top_n": [
+        1,
+        2,
+        3,
+        5
+      ],
+      "no_backfill_from_dominated_or_non_V12_rows": true,
+      "rationale": "preserve right-tail potential while requiring no other event to be better on all upper/central/downside quantiles"
+    }
+  },
+  "cooldown": "5 official XTKS sessions per symbol; AM before PM",
+  "periods": {
+    "h1": [
+      "2025-03-01",
+      "2025-06-30"
+    ],
+    "h2_policy": "OPEN_ONLY_IF_AT_LEAST_ONE FROZEN Core or Monster H1 TopN PASSES ITS GATE",
+    "h2": [
+      "2025-07-01",
+      "2025-12-31"
+    ]
+  },
+  "endpoint": "next official XTKS session open to fifth official XTKS session close",
+  "costs": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "core_gate": {
+    "min_resolved_n": 50,
+    "net_mean_gt": 0,
+    "net_median_gte": 0,
+    "net_win_rate_gt": 0.5,
+    "top3_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.2
+  },
+  "monster_gate": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "gross_ge20_rate_gte": 0.1,
+    "top1_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.4
+  },
+  "decision": {
+    "if_all_h1_policies_fail": "REJECT_V18_WITHOUT_H2",
+    "if_any_h1_policy_passes": "OPEN_H2_RETROSPECTIVE_REFUTATION_ONLY",
+    "no_model_feature_or_quantile_tuning_from_h1": true
+  },
+  "integrity": {
+    "V17_representation_passed_outcome_free_gate": true,
+    "V17_classifier_H1_failure_known": true,
+    "V18_changes_supervised_target_family_not_representation": true,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

@@ -378,3 +378,59 @@ Interpretation:
 - This is stronger than the arbitrary 09:00 hard filter and has a causal story consistent with earlier research: Monster is a contrarian/early-momentum lane, but already-matured 10D runners are lower quality.
 - Do not promote these 2026 descriptive numbers as validation. The next task is to reproduce the **same fixed two-gate structure** on pre-2026 / purge-safe Three-head Consensus (V29-family) picks, without changing thresholds.
 - Keep V31 secondary because its headline remains week-dependent.
+
+
+## 2026-09-14 independent lane update — global regime gates rejected
+
+This work was intentionally isolated from the parallel V12 state-entry and V14/structure lanes. Production was not modified.
+
+### Fixed walk-forward Monster Watch/Prime + previous-day regime veto
+
+Run `34764604761`, artifact `10319184830`, artifact SHA-256 `38375ca380fd602d9bc0b80db9378e4daebd0e1036e7bacc731d2b0b264bd40d`.
+
+The already-fixed 4H walk-forward ensemble was reconstructed without changing features/model/seeds/Watch q65/Prime q90. Three fixed previous-day regime vetoes were applied retrospectively.
+
+Aggregate:
+- Watch baseline n70 mean +0.44%. Broad risk-off veto n45 mean +0.51%: only +0.07pt while removing 36% of picks; top-3-removed mean worsened. Other vetoes reduced mean.
+- Prime baseline n20 mean +1.59%. Broad risk-off veto n15 mean +2.53%, but Jul-Aug worsened from -2.67% to -4.15% and the sample is too small/non-stationary.
+- The veto sign changed by period. In particular Watch improved in Mar-Apr and Jul-Aug but worsened in 2025H2, Jan-Feb, and May-Jun.
+
+Decision: **no hard market-regime veto for Watch or Prime**. Retain the Prime risk-off veto only as a forward-observation hypothesis; do not tune it on the already-opened periods. Detailed record: `WALKFORWARD_REGIME_VETO_FINDINGS.md`.
+
+### Fixed reconstructed Core + previous-day regime gates
+
+Final run `34764868293`, artifact `10319769611`, artifact SHA-256 `002e3da9d23a305a1a1c9d1564c584be0d83574d4a4bd61bb6fa7a6bec243a1b`.
+
+Fixed reconstructed Core/SAFE definition: production-like universe filters, RSI12<45, previous three session closes descending, close>BB20 mid, ATR14/close<5%, 5BD same-symbol cooldown. This is the common split-13:00 reconstruction, not an exact claim about original 4H signals.
+
+2026 Jan-Aug ungated Core:
+- n118
+- mean **+1.56%**
+- median **+0.48%**
+- win **53.4%**
+- >=10% **8.47%**
+- >=20% **1.69%**
+- <=-10% **1.69%**
+- top-1 removed **+1.27%**
+- top-3 removed **+0.92%**
+- top-5 removed **+0.66%**
+
+Fixed regime gates all reduced mean:
+- NOT_RISK_OFF n89 +1.17%
+- R5_POS n61 +0.80%
+- B5_50 n73 +0.73%
+- R20_POS n41 +1.11%
+- R5_AND_RISING n59 +0.82%
+
+R20_POS removed <=-10% cases in 2026 but was negative in DEV and produced zero May-Jun candidates, so it is not a usable global gate.
+
+Decision: **keep Core ungated by broad market regime**. Detailed record: `CORE_REGIME_FINDINGS.md`.
+
+### Architecture consequence
+
+The prior research priority of finding a single causal market-regime gate is now closed as a hard-filter path.
+
+- Core remains the steadier lane and should be improved internally rather than by a global market ON/OFF switch.
+- Monster remains separate and tail-seeking; broad market regime has non-stationary interaction with Monster setups.
+- Market regime should be logged as context for future genuinely-forward evidence, not imposed as a shared blocker.
+- Do not reuse current Stable as a component of the replacement system; it remains benchmark-only.

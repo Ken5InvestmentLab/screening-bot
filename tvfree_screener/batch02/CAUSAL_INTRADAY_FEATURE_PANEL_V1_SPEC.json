@@ -1,0 +1,83 @@
+{
+  "spec_id": "CAUSAL-INTRADAY-FEATURE-PANEL-V1-20260913",
+  "status": "FROZEN_BEFORE_STRATEGY_OUTCOMES",
+  "objective": "Freeze the first causal TradingView-free intraday candidate feature panel using data-quality evidence only.",
+  "raw_input": {
+    "artifact_run_id": 34586861016,
+    "artifact_name": "tentei-cloud-1h-monster-research",
+    "file": "cloud_1h_monsters.csv",
+    "sha256": "cb33bb893291a31d57973d981a5db8f010ca34f2db80804a92e7be5ad5e7776b",
+    "strategy_precursor_file_must_not_be_opened": true
+  },
+  "session_count_definition": {
+    "all_unique_symbol_dates_including_snapshot_only": 1332,
+    "normal_intraday_symbol_dates": 1324,
+    "snapshot_only_symbol_dates": 8,
+    "snapshot_only_date": "2026-09-11",
+    "feature_builder_denominator": "normal_intraday_symbol_dates only"
+  },
+  "clock_bins": {
+    "AM_09_13": {
+      "required_start_hours": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "complete_bins": 1150
+    },
+    "PM_13_CLOSE": {
+      "required_start_hours": [
+        13,
+        14,
+        15
+      ],
+      "complete_bins": 1155
+    },
+    "exact_tradingview_equivalence_claimed": false,
+    "current_day_final_daily_anchor_allowed_preclose": false
+  },
+  "model_candidate_features_v1": [
+    "bar_log_return",
+    "range_pct",
+    "upper_wick_pct",
+    "lower_wick_pct",
+    "prev4_log_return_mean",
+    "prev4_range_mean",
+    "log_range_vs_prior20"
+  ],
+  "selection_rationale": {
+    "scale_invariant_or_within_bar_normalized": true,
+    "current_day_final_daily_values_used": false,
+    "absolute_intraday_volume_used": false,
+    "no_strategy_return_used": true,
+    "redundancy_removed": [
+      "body_to_range excluded because rank correlation with body/body-return is very high",
+      "prev4_abs_body_mean excluded because it is strongly redundant with prev4_range_mean"
+    ],
+    "held_back": [
+      "close_location: PM source stability insufficient",
+      "volume_rel20: source-internal volume semantics and extreme tail remain unresolved"
+    ],
+    "transforms": [
+      "bar_log_return replaces raw body_pct as the primary signed return feature",
+      "log_range_vs_prior20=log1p(range_vs_prior20) reduces heavy positive tail without clipping genuine expansions"
+    ],
+    "clipping": "NONE for v1; preserve genuine Monster-style extremes"
+  },
+  "warmup": {
+    "prior_same_bin_bars_required": 20,
+    "candidate_complete_rows": 1985,
+    "total_complete_bins": 2305,
+    "candidate_complete_rate": 0.8611713665943601,
+    "missing_rows_due_to_warmup": 320,
+    "imputation": "NONE"
+  },
+  "local_reproduction": {
+    "raw_feature_panel_sha256_before_v1_transforms": "3379e84202f525622428c71ba25a776b6e87fc880968ccca6ee170e45f71d252",
+    "v1_feature_panel_sha256": "6fcc178be5d23d39126c053cc998a4cbca6ffedf07dc650c1c7875d22490b440",
+    "outcome_or_precursor_opened": false
+  },
+  "next_gate": "Broader historical/universe intraday coverage must be located or produced causally before interpreting strategy performance. The eight-symbol Monster sample is not representative training or validation data.",
+  "production_changes": false
+}

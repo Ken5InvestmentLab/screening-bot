@@ -1,0 +1,54 @@
+{
+  "audit_id": "TENTEI-V14-FEATURE-DRIFT-20260913-01",
+  "status": "PREREGISTERED_BEFORE_DRIFT_METRICS",
+  "purpose": "Outcome-free diagnosis of whether V14's pre-2025 model-fit V12 events are covariate-shifted versus 2025 H1 V12 events.",
+  "lane_split": {
+    "parallel_lane": "prospective shadow CLI/export contract and state-entry evidence lane",
+    "this_lane": "V14 feature-distribution drift audit",
+    "duplicated_work": false
+  },
+  "inputs": {
+    "raw_hourly_run_id": 34592896202,
+    "canonical_daily_artifact_id": 10264205130,
+    "canonical_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "v12_candidate_generator": "TENTEI-INSPIRED-4H-V12-STATE-REVERSAL-20260913",
+    "v14_features": "exact 19-feature V14 panel"
+  },
+  "cohorts": {
+    "train_like": "V12 event; prior-day close<=1000 and prior-day volume>=10000; all 19 features finite; candidate date<2025-01-01; fifth-session exit date<2025-01-01. No return values loaded.",
+    "h1": "same V12/gates/feature-finiteness; candidate date 2025-03-01 through 2025-06-30. No return values loaded."
+  },
+  "continuous_metrics": {
+    "ks_statistic": "maximum empirical CDF distance; no p-value used",
+    "psi": "training-decile bins with epsilon 1e-6 and collapsed duplicate edges",
+    "median_shift_iqr": "(H1 median - train median)/(train q75-q25)",
+    "h1_outside_train_p01_p99_rate": "fraction outside training 1st-99th percentile interval"
+  },
+  "binary_metrics": {
+    "rate_difference": "H1 true-rate minus train true-rate"
+  },
+  "fixed_drift_tiers": {
+    "continuous": {
+      "severe": "KS>=0.20 OR PSI>=0.25 OR abs(median_shift_iqr)>=0.50",
+      "moderate": "KS>=0.10 OR PSI>=0.10 OR abs(median_shift_iqr)>=0.25",
+      "low": "otherwise"
+    },
+    "binary": {
+      "severe": "absolute rate difference >=0.10",
+      "moderate": "absolute rate difference >=0.05",
+      "low": "otherwise"
+    }
+  },
+  "summary_decision": {
+    "material_covariate_shift": "at least 3 severe continuous features OR any trigger flag severe",
+    "partial_shift": "1-2 severe continuous features and no trigger flag severe",
+    "no_broad_shift": "no severe continuous features and no trigger flag severe"
+  },
+  "guardrails": {
+    "strategy_returns_opened": false,
+    "h2_returns_opened": false,
+    "year_2026_outcomes_opened": false,
+    "no_threshold_or_model_tuning": true,
+    "no_production_changes": true
+  }
+}

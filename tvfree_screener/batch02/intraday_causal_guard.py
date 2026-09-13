@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime, time
+from typing import Mapping
 from zoneinfo import ZoneInfo
 
 XTKS_TZ = ZoneInfo("Asia/Tokyo")
@@ -71,3 +72,27 @@ def classify_causal_use(
         return CausalDecision(False, "INVALID_DAILY_AVAILABILITY_BEFORE_OFFICIAL_CLOSE")
 
     return CausalDecision(True, "SAME_SESSION_FINAL_DAILY_AVAILABLE_BY_CUTOFF")
+
+
+def classify_materialized_feature_input(row: Mapping[str, object]) -> CausalDecision:
+    """Fail closed when a materialized data-quality row reaches a 4H feature boundary.
+
+    The daily-anchor materializer emits explicit resolution and causal tags.
+    This guard prevents callers from accidentally treating a post-close repair
+    or a single daily fallback as a causal intraday/4H observation.
+    """
+    resolution = str(row.get("resolution", "")).strip().upper()
+    status = str(row.get("causal_signal_eligibility", row.get("causal_use", ""))).strip().upper()
+    source = str(row.get("source_tag", "")).strip().upper()
+
+    if resolution == "1D" or "C_DAILY_RESOLUTION_FALLBACK" in source:
+        return CausalDecision(False, "DAILY_RESOLUTION_NOT_INTRADAY")
+    if status == "POSTCLOSE_RECON_ONLY" or "POSTCLOSE_RECON_ONLY" in source:
+        return CausalDecision(False, "POSTCLOSE_RECON_NOT_CAUSAL_FOR_INTRADAY")
+    if status == "DAILY_ONLY_AFTER_FINAL_AVAILABLE":
+        return CausalDecision(False, "DAILY_RESOLUTION_NOT_INTRADAY")
+    if status in {"POSTCLOSE_CAUSAL_OK", "RAW_CAUSAL_INTRADAY"}:
+        return CausalDecision(True, status)
+    if "RAW_CAUSAL_INTRADAY" in source:
+        return CausalDecision(True, "RAW_CAUSAL_INTRADAY")
+    return CausalDecision(False, "UNKNOWN_CAUSAL_MATERIALIZATION_STATUS")

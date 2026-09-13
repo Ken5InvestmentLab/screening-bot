@@ -83,3 +83,40 @@ Consequently the existing connected sheet cannot support a defensible hourly-ver
 Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_report_gas HEAD f2fb9df22565e29890a91c16c5063acb2f5d4cb1; gas.txt SHA-256 0ab6326c0eeca1090fc9cbbc116794481982db0e5fdf45afccd6a138a1ee9b46; connected legacy 4H projection SHA-256 32c5e53f77487d17545abdbe80205289a53af532f37ae8f517c29c5f8b86402a; daily panel SHA-256 6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0.
 
 Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_report_gas HEAD f2fb9df22565e29890a91c16c5063acb2f5d4cb1; gas.txt SHA-256 0ab6326c0eeca1090fc9cbbc116794481982db0e5fdf45afccd6a138a1ee9b46; connected legacy 4H projection SHA-256 32c5e53f77487d17545abdbe80205289a53af532f37ae8f517c29c5f8b86402a; daily panel SHA-256 6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0.
+
+## 2026-09-13 bounded raw-1h versus daily sample audit
+
+A previously completed research Actions artifact was available until 2026-09-18; it was downloaded read-only, and only its raw 1-hour CSV was analyzed. The companion precursor/performance CSV was not opened. No workflow was dispatched and no Yahoo request was made. This is a reporting-only data-quality check on eight previously selected Monster example symbols, not a representative TSE sample and not a strategy evaluation.
+
+- Raw hourly rows: 8,709 across 8 symbols, 2026-01-05 through 2026-09-11. The hour-start aggregation was compared with the matching cached daily rows for the same symbols and dates using the frozen 60-minute/start-timestamp audit.
+- 1,324 symbol-session pairs were comparable; 36 were not. A full seven expected start-times appeared in 1,087 of the 1,324 hourly sessions. Eight flat 15:30 closing snapshots were treated as outside the session by the generic aggregator, so this audit did not apply the GAS PM-close snapshot override.
+- Absolute price differences were usually small in this selected sample: within 1% for open 830/1,324 (62.7%), high 1,142/1,324 (86.3%), low 1,203/1,324 (90.9%), and close 1,076/1,324 (81.3%). The median absolute percentage differences were 0.41%, 0%, 0%, and 0.34%, respectively. These are same-provider consistency statistics, not evidence that daily values are ground truth.
+- Volume was much less consistent: only 2/1,324 exact matches, 76/1,324 within 5%, and median absolute percentage difference 37.7%. Incomplete hourly slots, intraday volume semantics, and adjustment differences remain unresolved.
+- The large arithmetic mean price error is dominated by a 10x scale mismatch in 47 comparable sessions for symbol 6085 from 2026-01-05 through 2026-03-31; 38 of those sessions show the same approximate factor across all four OHLC fields. The company disclosure states a 1:10 split effective 2026-04-24 ([disclosure PDF](https://f.irbank.net/pdf/20260402/140120260402597454.pdf)). The date pattern is not enough to establish that this event fully explains the earlier mismatch or which feed is correctly adjusted. Preserve it as an unresolved adjustment/provenance issue; do not remove or normalize those rows post hoc.
+
+Decision: `INCONCLUSIVE_ADJUSTMENT_AND_VOLUME_SEMANTICS`. In this small, selection-biased sample, most daily and hourly price aggregates agree closely, but hourly completeness and volume differ materially, and a concentrated 10x adjustment anomaly remains. Daily OHLCV can support the separately frozen next-session-open/fifth-session-close endpoint and can flag whole-day aggregate inconsistencies; it cannot recover morning/afternoon-specific extremes or volume, and it is not validated as a general repair source for raw hourly feature bars. No 2026 returns, rankings, strategy rules, or thresholds were inspected or changed. Raw rows and comparison rows remain in ignored `.cache/` only.
+
+## User-steered daily-led correction study (coarse diagnostics complete; repair variants not run)
+
+The user clarified that Yahoo 1h can be unreliable and the goal is to use daily OHLCV as an approximate correction/fallback, not to treat hourly values as ground truth and score their agreement. Exact AM/PM reconstruction is not a prerequisite. The eight-symbol comparison above only characterizes discrepancies; it does not prove which feed is generally correct or whether a repair improves screening returns.
+
+Compare a frozen, broad correction ladder on cached raw inputs while preserving the unmodified 1h rows:
+
+1. Apply a common OHLC scale adjustment only when daily and complete-hourly OHLC imply the same stable multiplicative factor; retain source/factor and leave unresolved corporate-action anomalies untouched.
+2. Test daily open/close anchoring for first/last hourly bars, only after session close and with compatible adjustment basis.
+3. Test daily high/low anchoring to observed hourly extrema only when expected slots are complete; do not invent a timestamp if the extreme may have occurred in a missing slot.
+4. Test proportional daily-total-volume reconciliation only when hourly coverage is complete and share units/adjustments align.
+5. Use one tagged whole-day daily-resolution fallback for dates still incomplete or unreliable. Do not copy a daily candle into separate AM and PM rows.
+
+First measure data quality and resolvable coverage, not strategy returns. Store corrected variants separately with method/factor/source tags. A completed same-day daily bar is available only after close; using it for an earlier intraday signal would leak future information. The sample remains 2026 reporting/data-quality-only. This is a registered research hypothesis, not an approved production implementation or proof of Codex-independent runtime feasibility.
+
+### Quick scale and volume diagnostic on complete sample sessions
+
+A lightweight read-only calculation used only the cached eight-symbol sample. It selected 1,087 symbol-sessions containing all seven expected hourly starts (closing snapshots excluded), then compared the four ratios `daily OHLC / hourly-aggregated OHLC`. This remains an internal consistency diagnostic, not an independent ground-truth test.
+
+- The four price ratios were within a 1% normalized spread of one common multiplier on 478/1,087 sessions (44.0%), and within 2% on 770/1,087 (70.8%). The close-derived factor was near 10x or 0.1x on 31/1,087 sessions; no rows were corrected or dropped.
+- Scaling all hourly OHLC by `daily close / hourly aggregate close` would put open/high/low within 1% of daily OHLC on 522/1,087 sessions (48.0%); close is exact by construction. A robust factor equal to the median of the four daily/hourly O/H/L/C ratios would put all four aggregate fields within 1% on 574/1,087 (52.8%) and within 2% on 891/1,087 (82.0%). This suggests a practical same-day price-level correction may be testable on a broad subset, but it does not validate the adjusted hourly timestamps or intraday price path.
+- Daily-volume / summed-hourly-volume ratio median was 1.606; p10 1.131, p90 2.541; 846/1,087 ratios were between 0.5 and 2. Reconciliation could materially change the hourly profile and needs its own validity gate.
+- In the 1,360-session selected sample, 1,352 daily rows were numerically valid while 1,087 hourly sessions had all seven slots. A tagged daily fallback could improve full-day coverage, but cannot recover intraday timing.
+
+No correction was applied, no return was opened, and no 2026 strategy threshold/model was changed. These diagnostics support testing a hybrid repair ladder rather than choosing whole-day fallback as the only solution.

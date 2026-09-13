@@ -1,27 +1,36 @@
 {
   "version": 2,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T00:51:00+09:00",
+  "updated_at_jst": "2026-09-14T00:53:00+09:00",
   "scan_policy": {
     "cadence_target_minutes": 12,
-    "worker_slots_jst": ["00","12","24","36","48"],
+    "worker_slots_jst": [
+      "00",
+      "12",
+      "24",
+      "36",
+      "48"
+    ],
     "rule": "Each worker scans all active research branches for substantive changes before working its preferred lane. Process at most one highest-priority substantive cross-lane change plus one safe preferred-lane next action per run. Do not duplicate work already claimed/recorded."
   },
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "e5a61fd49ad31814abf119bf65aababe29d881a5",
-      "last_processed_sha": null
+      "last_seen_sha": "6ecb94f1532f0f6b7493f864112c0c806b1639bc",
+      "last_processed_sha": "6ecb94f1532f0f6b7493f864112c0c806b1639bc",
+      "last_processed_note": "Supervisor reconciled Event lane closures/Monster v2 exact replay, shadow staleness guard, and synchronized the cross-lane contract. Active session-impulse V20 remains owned by the parallel event chat; do not duplicate."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "d20f0b27c0d6b89ed234c579bf2811c98b1a7381",
-      "last_processed_sha": null
+      "last_seen_sha": "6dd089b04db901579fcd0f90ecb8a657ff486acb",
+      "last_processed_sha": "6dd089b04db901579fcd0f90ecb8a657ff486acb",
+      "last_processed_note": "Supervisor recovered completed canonical endpoint run 34766143681 and finalized current fixed Core as rejected replacement candidate; failed-breakdown-reclaim remains separate outcome-unopened family."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "c4c5149e83ac4a235c3c310181b36c102b748c52",
-      "last_processed_sha": null
+      "last_seen_sha": "4fe2d76359234863c0c72bc728497b8ba3c4287d",
+      "last_processed_sha": "4fe2d76359234863c0c72bc728497b8ba3c4287d",
+      "last_processed_note": "Supervisor reviewed raw-bin semantics, survivorship-universe limitation, training-target mismatch, and synchronized promotion dependencies. Corrected V44 run 34766353425 remains in_progress; do not treat it as completed."
     }
   },
   "guardrails": [
@@ -29,6 +38,24 @@
     "2026 outcome is report/robustness-only, never tuning/selection input.",
     "Canonical comparison endpoint is next XTKS session open to fifth XTKS session close.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
-    "Before editing a lane, verify no newer commit supersedes the state file and no other worker has already processed it."
-  ]
+    "Before editing a lane, verify no newer commit supersedes the state file and no other worker has already processed it.",
+    "Read research/SUPERVISOR_4LANE_COORDINATION_20260914.md before lane advancement; its latest synchronized copy supersedes stale lane assumptions.",
+    "A surviving Consensus V44 is necessary but not sufficient for promotion: canonical-target retraining, canonical raw-bin semantics, and point-in-time universe validation remain required."
+  ],
+  "workflow_watch": {
+    "consensus_v44": {
+      "run_id": 34766353425,
+      "status": "in_progress",
+      "conclusion": null,
+      "rule": "Inspect only after completion; only corrected locked-validation run is valid."
+    },
+    "core_canonical_endpoint": {
+      "run_id": 34766143681,
+      "status": "completed",
+      "conclusion": "success",
+      "processed": true,
+      "decision": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE"
+    }
+  },
+  "supervisor_contract_sha256": "239adb8933e09a6d8f6917cbeadc0386a5a2725d"
 }

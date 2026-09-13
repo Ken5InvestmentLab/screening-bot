@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "spec_id": "monster_weak_early_all_candidates_canonical_v2",
+  "frozen_date_jst": "2026-09-13",
+  "status": "FROZEN_BEFORE_2025_LOCKED_REPLAY",
+  "production_modified": false,
+  "purpose": "Research-only follow-up to canonical Monster v1. Test whether the weak+early candidate-family edge survives when the failed volr20 Top-N selection layer is removed.",
+  "parent_evidence": {
+    "branch": "research/tvfree-canonical-batch02",
+    "parent_spec": "tvfree_screener/batch01/reports/monster_canonical_spec.json",
+    "parent_spec_sha256": "3398a83d1ac17dfc246c13208d80a7604d6c5cc4b56e8a16844bfd487a1c6a5c",
+    "parent_audit": "tvfree_screener/batch01/reports/monster_canonical_audit.json",
+    "parent_audit_blob_sha": "283140c4b7635622b58ea36e3398684809580f6a",
+    "decision_context": "The v1 candidate pool passed its 2023 family gate, but every registered Top1/Top2/Top3/Top5 policy failed and chosen_top_n remained null."
+  },
+  "fixed_candidate_family": {
+    "source_population": "Preserved causal V7 Tail candidates",
+    "tail_cdf_min": 0.999,
+    "market_gate": "previous official XTKS session cross-sectional median ret5 <= 0",
+    "signal_ret10_max": 0.5735294117647058,
+    "ret10_threshold_provenance": "2023 V18 consensus median ret10, as already frozen in canonical v1",
+    "note": "No 2026 outcome may be used to alter these gates."
+  },
+  "v2_selection_policy": {
+    "name": "ALL_WEAK_EARLY",
+    "daily_rank": "none",
+    "daily_cap": "none",
+    "volr20_rank_removed": true,
+    "tie_break": "symbol ascending for deterministic output only; not a selection criterion",
+    "same_symbol_cooldown": "one immediately preceding official XTKS session; apply after family eligibility, independently of return labels",
+    "rationale": "Canonical v1 showed lower performance after Top-N ranking than in the full qualifying pool. V2 tests whether the selection layer, rather than the family gate, was destroying useful right-tail breadth."
+  },
+  "evaluation": {
+    "target": "next official XTKS session open to close of the fifth official XTKS session including entry",
+    "cost_scenarios": [
+      0,
+      0.005,
+      0.01
+    ],
+    "development_evidence": [
+      "2023",
+      "2024"
+    ],
+    "development_warning": "Both years have already been inspected. They are mechanism-development evidence, not OOS validation.",
+    "locked_replay": "2025",
+    "locked_replay_warning": "2025 outcomes have prior family-level exposure in older V12-V15 research, so this is a locked retrospective replay, not pristine OOS.",
+    "reporting_only": "2026 historical outcomes remain reporting-only and must not be used to tune the policy.",
+    "prospective_shadow": "After this freeze, future sessions may be logged without rule changes; 5-session outcomes may be evaluated only after they mature."
+  },
+  "predeclared_locked_replay_gates_at_cost_0_005": {
+    "resolved_n_min": 30,
+    "mean_return_gt": 0,
+    "plus20_rate_min": 0.1,
+    "minus10_rate_max": 0.4,
+    "mean_excluding_top1_winner_gt": 0,
+    "rule": "Do not relax these gates after opening the 2025 locked replay."
+  },
+  "reference_only_not_v2_results": {
+    "2023_parent_pool_net_0_5pct": {
+      "resolved_n": 68,
+      "mean": 0.02198070917547469,
+      "median": -0.023026349948078947,
+      "plus20_rate": 0.17647058823529413,
+      "minus10_rate": 0.35294117647058826,
+      "mean_excluding_top1_winner": 0.006502221120377366,
+      "mean_excluding_top3_winners": -0.020818303990126102
+    },
+    "2024_parent_pool_net_0_5pct": {
+      "resolved_n": 133,
+      "mean": 0.01840242408078671,
+      "median": -0.02549906849306138,
+      "plus20_rate": 0.15037593984962405,
+      "minus10_rate": 0.3233082706766917,
+      "mean_excluding_top1_winner": 0.009636112478705126,
+      "mean_excluding_top3_winners": -0.005257814014539147
+    },
+    "warning": "These are parent-pool diagnostics before the v2 cooldown replay. They motivate the hypothesis but are not v2 backtest results."
+  },
+  "production_boundary": "Never merge to main, alter production Stable/Sniper/Mega, TradingView, Discord, Sheets, watchlist-builder/updater, or production workflows without explicit user Go.",
+  "next_execution": [
+    "Replay ALL_WEAK_EARLY with the frozen one-session same-symbol cooldown on 2023-2024 and record exact metrics.",
+    "Without changing rules, execute the locked 2025 replay and evaluate the predeclared gates.",
+    "Keep 2026 historical results reporting-only.",
+    "Prepare an ordinary-runtime prospective shadow scorer so post-freeze signals can accumulate genuinely forward evidence."
+  ]
+}

@@ -44,6 +44,129 @@ def explicit_discovery(base_url: str) -> list[str]:
     raise RuntimeError(f"unexpected JPX base URL: {base_url}")
 
 
+def parse_listing_two_row_compat(pit, url: str, start_year: int, end_date: pd.Timestamp):
+    """Current JPX listing tables split issue/date/code and market over two HTML rows."""
+    import io
+
+    html = pit._get(url)
+    events = []
+    unknown = []
+    try:
+        tables = pd.read_html(io.StringIO(html))
+    except ValueError:
+        return events, unknown
+
+    seen = set()
+    for table in tables:
+        pending = None
+        for _, row in table.iterrows():
+            cells = pit._row_cells(row)
+            date = pit._first_date(cells)
+            code = pit._first_code(cells)
+            market = pit._market_text(cells)
+
+            if date is not None and code is not None and date.year >= start_year and date <= end_date:
+                # Flush an unresolved prior listing row before replacing it.
+                if pending is not None:
+                    unknown.append(pending)
+                pending = {
+                    "event_date": date,
+                    "code": code,
+                    "event": "listing",
+                    "market": market,
+                    "source_url": url,
+                }
+                if market:
+                    key = (date, code, "listing")
+                    if not pit.EXCLUDED_MARKET_RE.search(market) and pit.DOMESTIC_MARKET_RE.search(market) and key not in seen:
+                        events.append(pit.Event(date, code, "listing", market, url))
+                        seen.add(key)
+                    elif not pit.EXCLUDED_MARKET_RE.search(market):
+                        unknown.append({
+                            "event_date": date.strftime("%Y-%m-%d"),
+                            "code": code,
+                            "event": "listing",
+                            "market": market,
+                            "source_url": url,
+                        })
+                    pending = None
+                continue
+
+            # New JPX layout places market segment on the following row.
+            if pending is not None and market:
+                date = pending["event_date"]
+                code = pending["code"]
+                key = (date, code, "listing")
+                if pit.EXCLUDED_MARKET_RE.search(market):
+                    pending = None
+                    continue
+                if pit.DOMESTIC_MARKET_RE.search(market):
+                    if key not in seen:
+                        events.append(pit.Event(date, code, "listing", market, url))
+                        seen.add(key)
+                else:
+                    unknown.append({
+                        "event_date": date.strftime("%Y-%m-%d"),
+                        "code": code,
+                        "event": "listing",
+                        "market": market,
+                        "source_url": url,
+                    })
+                pending = None
+
+        if pending is not None:
+            unknown.append({
+                "event_date": pending["event_date"].strftime("%Y-%m-%d"),
+                "code": pending["code"],
+                "event": "listing",
+                "market": pending["market"],
+                "source_url": url,
+            })
+
+    return events, unknown
+
+
+def collect_events_compat(pit, start_year: int, anchor: pd.Timestamp):
+    all_events = []
+    unknown = []
+
+    for url in NEW_ARCHIVES:
+        ev, un = parse_listing_two_row_compat(pit, url, start_year, anchor)
+        all_events.extend(ev)
+        unknown.extend(un)
+
+    for url in DELIST_ARCHIVES:
+        ev, un = pit.parse_event_page(url, "delisting", start_year, anchor)
+        all_events.extend(ev)
+        unknown.extend(un)
+
+    uniq = {}
+    for e in all_events:
+        uniq[(e.event_date, e.code, e.event)] = e
+
+    events = pd.DataFrame([
+        {
+            "event_date": e.event_date,
+            "code": e.code,
+            "event": e.event,
+            "market": e.market,
+            "source_url": e.source_url,
+        }
+        for e in uniq.values()
+    ])
+    if events.empty:
+        raise RuntimeError("no JPX listing/delisting events parsed")
+    events = events.sort_values(
+        ["event_date", "code", "event"], kind="mergesort"
+    ).reset_index(drop=True)
+
+    unknown_df = (
+        pd.DataFrame(unknown).drop_duplicates()
+        if unknown
+        else pd.DataFrame(columns=["event_date", "code", "event", "market", "source_url"])
+    )
+    return events, unknown_df
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source-module", required=True, type=Path)
@@ -76,7 +199,7 @@ def main() -> None:
 
     start = pd.Timestamp(a.start).normalize()
     anchor = pd.Timestamp(a.anchor_date).normalize()
-    events, unknown = pit.collect_events(start.year, anchor)
+    events, unknown = collect_events_compat(pit, start.year, anchor)
     validation = pit.validate_events(events, unknown)
 
     out = a.output_dir

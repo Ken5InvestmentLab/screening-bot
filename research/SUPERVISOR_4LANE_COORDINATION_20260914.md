@@ -32,7 +32,7 @@ This file is the cross-lane coordination contract for the four parallel ChatGPT 
 4. **Consensus specialist lane** — branch `research/consensus-atr-regime-gate`.
    - Owns fixed-min95 Consensus, frozen ATR OOD guard, realistic next-open execution, concentration/episode diagnostics and V44 cooldown-with-replacement.
    - Frozen ATR q90 is a model-version OOD guard, not an adaptive rolling timing rule. Do not tune the cap from 2026.
-   - Current headline is heavily concentrated in repeated same-symbol episodes; episode-first mean is near flat. V44 is decisive.
+   - Current headline is heavily concentrated in repeated same-symbol signals. Correction: the earlier chained-episode "episode-first near flat" diagnostic was too strict for a real 5BD holding policy. A correct 5-session one-position-per-symbol cooldown with re-entry after exit yields 2025 n=52 mean +3.05%, Top3-ex +1.21% and 2025H2 n=22 mean +3.58%, Top3-ex -0.81%. Overlap still materially inflates the +7.72% headline, but does not reduce the edge to zero. V44 replacement remains decisive.
    - If V44 preserves edge with replacements, Consensus remains a candidate specialist. If V44 collapses, demote it to continuation/re-entry/pyramiding research, not a Stable★6 replacement.
 
 ## Cross-lane arbitration

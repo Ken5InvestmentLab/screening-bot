@@ -1,0 +1,75 @@
+{
+  "receipt_id": "CONSENSUS-V46-OUTCOME-FREE-ACCEPTANCE-20260914",
+  "status": "ACCEPTED_FOR_V47_DATA_CONTRACT",
+  "source_run_id": 34775030470,
+  "source_head_sha": "040bc01f26d378e076a377161c76cbea0fc23744",
+  "artifact": {
+    "name": "no-tv-consensus-v46-34775030470",
+    "github_artifact_digest": "sha256:b2fb923039020511d89a11ea6d23058223cc0b4a8b4d718cc61b69ce8ce4d95c",
+    "files": {
+      "v46_split_events.csv": "f3930087cbdf73dc0469e8ba9b90e3240d61b32a1c1412bf8fadd9a8649f5063",
+      "v46_pit_split_eligibility.json": "68704d834d4d77b5663c16b5ec2df89daf21c65701650b6514657dea147bf004",
+      "v46_eligibility_changes_2025.csv": "02c32f7caf2859081012456a2fee0b854054ac6024c856d1faf9071e87f792ab"
+    },
+    "hashes_recomputed_match": true
+  },
+  "contract_checks": {
+    "split_symbol_requested": 3700,
+    "split_symbol_covered": 3700,
+    "coverage_fraction": 1.0,
+    "coverage_min_required": 0.95,
+    "failed_batches": 0,
+    "split_events": 592,
+    "symbols_with_splits": 563,
+    "duplicate_symbol_event_date_rows": 0,
+    "invalid_or_nonpositive_split_ratios": 0,
+    "strategy_returns_opened": false,
+    "model_scores_opened": false,
+    "production_writes": false,
+    "accepted": true
+  },
+  "outcome_free_eligibility_delta": {
+    "2025_all": {
+      "adjusted_eligible_rows": 254541,
+      "pit_eligible_rows": 236371,
+      "adjusted_only_false_positive_rows": 18303,
+      "pit_only_false_negative_rows": 133,
+      "adjusted_only_symbols": 196,
+      "pit_only_symbols": 3,
+      "adjusted_only_fraction_of_adjusted_eligible": 0.07190590121041404
+    },
+    "2025_h1": {
+      "adjusted_eligible_rows": 130235,
+      "pit_eligible_rows": 117976,
+      "adjusted_only_false_positive_rows": 12336,
+      "pit_only_false_negative_rows": 77,
+      "adjusted_only_symbols": 189,
+      "pit_only_symbols": 2,
+      "adjusted_only_fraction_of_adjusted_eligible": 0.09472108112258609
+    },
+    "2025_h2": {
+      "adjusted_eligible_rows": 124306,
+      "pit_eligible_rows": 118395,
+      "adjusted_only_false_positive_rows": 5967,
+      "pit_only_false_negative_rows": 56,
+      "adjusted_only_symbols": 107,
+      "pit_only_symbols": 3,
+      "adjusted_only_fraction_of_adjusted_eligible": 0.04800250993516001
+    },
+    "2026_descriptive_only": {
+      "adjusted_eligible_rows": 158427,
+      "pit_eligible_rows": 156749,
+      "adjusted_only_false_positive_rows": 1678,
+      "pit_only_false_negative_rows": 0
+    }
+  },
+  "interpretation": [
+    "V46 confirms that present-basis split-adjusted absolute historical prices materially alter the <=JPY1000 eligibility set.",
+    "This receipt is outcome-free and does not evaluate strategy performance.",
+    "V46 repairs only future-split leakage inside the run80 current-listed survivor universe; it does not repair survivorship bias.",
+    "Clean V47 must rebuild eligibility/features/cross-sectional context before scoring; post-hoc deletion of V43/V44 selected rows is not clean.",
+    "The historical <=JPY1000 cap is not mandatory. V47 initial price-policy comparison remains exactly NOCAP versus CAP1000_PIT under the frozen addendum."
+  ],
+  "next_action": "Build clean V47 data/materialization path from accepted PIT membership replay plus this accepted V46 split receipt, then compare exactly NOCAP and CAP1000_PIT under the frozen V47 price-policy contract. Do not open 2026 outcomes for selection and do not run extra price-cap grids.",
+  "production_modified": false
+}

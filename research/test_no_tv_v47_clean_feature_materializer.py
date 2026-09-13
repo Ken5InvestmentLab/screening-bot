@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import tempfile
 import sys
 from pathlib import Path
 
@@ -124,12 +125,39 @@ def test_listing_epoch_prevents_prelisting_history_from_features_and_targets():
     assert out.empty
 
 
+
+def test_load_daily_restores_split_adjusted_volume_to_pit_scale():
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        frozen=root/"frozen.csv"
+        restored=root/"restored.csv"
+
+        d=pd.DataFrame({
+            "date":["2025-01-06","2025-01-07"],
+            "open":[100.0,101.0],
+            "high":[102.0,103.0],
+            "low":[99.0,100.0],
+            "close":[101.0,102.0],
+            "volume":[50000.0,60000.0],
+            "symbol":["X","X"],
+        })
+        d.to_csv(frozen,index=False)
+        pd.DataFrame(columns=d.columns).to_csv(restored,index=False)
+
+        split_map={"X":[("2025-04-01",10.0)]}
+        out=v47.load_daily(frozen,restored,{},split_map)
+        assert out["volume_adjusted"].tolist()==[50000.0,60000.0]
+        assert out["volume"].tolist()==[5000.0,6000.0]
+        assert out["future_split_factor_daily"].tolist()==[10.0,10.0]
+
+
 def main():
     tests=[
         test_future_factor_boundary,
         test_build_symbol_rows_uses_nominal_log_price_and_canonical_target,
         test_enrich_arm_filters_policy_before_cross_section,
         test_listing_epoch_prevents_prelisting_history_from_features_and_targets,
+        test_load_daily_restores_split_adjusted_volume_to_pit_scale,
     ]
     for fn in tests:
         fn(); print("PASS",fn.__name__)

@@ -578,3 +578,18 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Next after overlap recheck: preregister a regime-normalized V15 representation using causal relative/rank volatility features while keeping V12 candidate generation unchanged. Do not tune from H1 outcomes.
 - Report: `reports/tentei_v14_feature_drift_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-V15-REGIME-NORMALIZED-DRIFT-20260913-01 — FAIL REPRESENTATION / RETURNS UNOPENED
+
+- Parallel-lane check confirmed no overlap: other lane was on prospective-shadow evidence/reporting and ledger reconciliation.
+- Outcome-free V15 drift audit used no strategy return values.
+- Cohorts after V12 gates + all 16 V15 features finite: pre-2025 2,672 rows / 793 symbols; H1 8,207 rows / 1,166 symbols.
+- Frozen representation gate failed: 3 SEVERE + 4 MODERATE features; gate required zero severe and <=4 moderate.
+- Severe: atr_rel20_log KS 0.315 / PSI 0.588 / median shift +0.633 IQR; bb_width_rel20_log 0.284 / 0.496 / +0.578; prev4_range_rel20_log 0.262 / 0.392 / +0.601.
+- Moderate: range_rel20_log, dist_prior5_low_atr_rank20, prior5_rsi_min_rank20, prior5_band_min_rank20.
+- Low-drift examples include bar_log_return, bb_position, rsi12, rsi_delta, log_volume_rel20 and lower_wick_rank20.
+- Decision: reject V15 representation before any strategy-return evaluation. H1/H2 V15 returns remain unopened.
+- Next after overlap recheck: replace volatility log-ratio features with bounded prior-history percentile ranks; keep V12 candidate generation and frozen low-drift retained features unchanged.
+- Report: `reports/tentei_v15_regime_normalized_drift_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

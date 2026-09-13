@@ -178,3 +178,23 @@ A separate lane was used to avoid colliding with the concurrently advancing V12/
 Interpretation: V12 is structurally a persistent state detector as much as a sparse one-shot reversal event generator. This does not invalidate V12 and is not return evidence. Because official V12 return results became visible in the parallel lane only after this structural diagnostic had already been computed, these counts must not be used post hoc to validate V12, pick a trigger path, or alter V13/V14. A future state-entry/first-transition representation, if tested, must be separately preregistered and treated as a new retrospective hypothesis.
 
 Artifacts committed in `86a378e`: `batch02/TENTEI_V12_STRUCTURE_AUDIT_SPEC.json`, `batch02/audit_tentei_v12_structure_no_outcomes.py`, and `batch02/reports/tentei_v12_structure_audit_20260913.md`. Production remained unchanged.
+
+## 2026-09-13 parallel lane — frozen V12 state-entry H1 evaluation
+
+The outcome-free structure audit motivated a separately frozen `state_entry = V12 signal AND NOT previous complete-bin V12 signal` representation. This was treated as a new retrospective hypothesis and did not modify V12/V13/V14.
+
+The first reconstruction produced 6,521 H1 state-entry rows and was rejected before result acceptance because it did not reproduce the frozen 6,512-row structural reference. The discrepancy was traced to warm-up scope: the frozen structure audit used raw rows beginning **2024-12-01**, while the first rebuild had included earlier September-November observations. Because RSI/ATR state is recursive, warm-up scope matters. After restoring the frozen 2024-12-01 warm-up, H1 reproduced exactly at **6,512** state-entry rows.
+
+Frozen sequence: V12 causal state -> first-transition filter -> prior completed daily close <=1,000 JPY and volume >=10,000 shares -> five-XTKS-session same-symbol cooldown -> next-session-open to fifth-session-close endpoint.
+
+H1 results after 0.5% assumed round-trip cost:
+- 6,512 structural state-entry rows -> 5,330 after prior-day gates -> 3,445 after cooldown; all 3,445 endpoint labels resolved.
+- mean **+1.4647%**, median **+0.6385%**, win **55.27%**.
+- +10% **9.06%**, +20% **2.03%**, +50% **0.087%**.
+- <=-10% **4.41%**, <=-20% **0.58%**.
+- best-one-excluded mean **+1.3354%**, best-three-excluded **+1.2987%**.
+- mean cost sensitivity: +1.9647% at 0% cost, +0.9647% at 1% cost.
+
+Decision: **REJECT_AS_MONSTER / DO_NOT_OPEN_H2_FOR_THIS_HYPOTHESIS**. The central tendency and downside are good, but the frozen Monster right-tail gate requires +20% >=10%; state-entry achieved only 2.03%. This is not a near miss, so H2 remains unopened and no threshold/path/cooldown/gate tuning is allowed from this result.
+
+Reproducible evaluator: `batch02/eval_tentei_state_entry_h1.py`. Result report: `batch02/reports/tentei_state_entry_h1_20260913.md`. 2026 strategy outcomes remained unopened. Production remained unchanged.

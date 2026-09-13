@@ -117,6 +117,14 @@ jobs:
         with:
           name: v20-h1-universe-${{ github.run_id }}
           path: universe
+      - name: Download frozen canonical daily for temporal coverage guard
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
       - uses: actions/download-artifact@v5
         with:
           pattern: v20-h1-raw-shard-*-${{ github.run_id }}

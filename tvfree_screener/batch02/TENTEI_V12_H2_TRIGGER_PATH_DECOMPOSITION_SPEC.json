@@ -1,0 +1,66 @@
+{
+  "audit_id": "TENTEI-V12-H2-TRIGGER-PATH-DECOMPOSITION-20260913-01",
+  "status": "PREREGISTERED_BEFORE_PATH_LEVEL_H2_METRICS",
+  "lane": "Event-specific V12/V17/V18 lane",
+  "purpose": "Distinguish V12 mixture drift from within-trigger concept drift after V19 H2 collapse.",
+  "trigger_paths": {
+    "RSI_RECOVERY": "V12 frozen setup AND rsi_recovery",
+    "TREND_FLIP": "V12 frozen setup AND trend_flip",
+    "EMERGENCY_REVERSAL": "V12 frozen setup AND emergency_reversal"
+  },
+  "selection": {
+    "prior_day_gates": "same V12 close<=1000 and volume>=10000",
+    "cooldown": "same 5 official XTKS sessions per symbol, applied independently inside each trigger-path diagnostic",
+    "ranking": "NONE",
+    "overlap": "a raw event may belong to multiple trigger diagnostics exactly as in V12 H1 reporting"
+  },
+  "period": [
+    "2025-07-01",
+    "2025-12-31"
+  ],
+  "endpoint": "next XTKS session open to fifth XTKS session close",
+  "cost": {
+    "primary": 0.005,
+    "sensitivity": [
+      0,
+      0.01
+    ]
+  },
+  "metrics": [
+    "n",
+    "net mean",
+    "net median",
+    "win rate",
+    "gross >=10",
+    "gross >=20",
+    "gross <=-10",
+    "Top1-excluded mean",
+    "Top3-excluded mean",
+    "monthly positive fraction"
+  ],
+  "core_quality_gate": {
+    "min_resolved_n": 50,
+    "net_mean_gt": 0,
+    "net_median_gte": 0,
+    "net_win_rate_gt": 0.5,
+    "top3_removed_net_mean_gt": 0,
+    "gross_le10_rate_lte": 0.2
+  },
+  "diagnostic_rule": {
+    "mixture_drift_supported": "RSI_RECOVERY and EMERGENCY_REVERSAL both still pass Core quality in H2 while ALL failed",
+    "within_path_degradation_supported": "either RSI_RECOVERY or EMERGENCY_REVERSAL fails Core quality in H2",
+    "no_promotion_from_this_audit": true,
+    "no_threshold_or_trigger_tuning": true
+  },
+  "known_context": {
+    "H1_RSI_RECOVERY": "mean +1.90%, median +1.09%, win 59.17%",
+    "H1_EMERGENCY_REVERSAL": "mean +2.13%, median +1.82%, win 62.06%",
+    "H1_TREND_FLIP": "mean -0.44%, median -0.77%, win 40.80%"
+  },
+  "integrity": {
+    "H2_ALL_already_opened_by_V19": true,
+    "path_level_H2_not_yet_opened_in_this_lane": true,
+    "year_2026_outcomes_opened": false,
+    "production_modified": false
+  }
+}

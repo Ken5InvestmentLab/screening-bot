@@ -1,0 +1,30 @@
+{
+  "spec_id": "CONSENSUS-V47-SPLIT-VOLUME-SEMANTICS-20260914",
+  "status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
+  "finding": {
+    "daily_volume": "Yahoo/run80 daily historical volume is split-adjusted on the present share-count basis.",
+    "intraday_1h_volume": "Yahoo 1H session volume is on a point-in-time/nominal share-count scale, not multiplied by later split factors.",
+    "evidence": [
+      "3350 around its 1->10 split: frozen daily pre-split volume is 10x the unadjusted historical-volume presentation paired with unadjusted prices.",
+      "Cross-sectional V43 receipt: 22/22 selected symbol-dates with two sessions and a future split factor were closer in log-error to daily_volume/future_split_factor than to adjusted daily_volume.",
+      "Examples: 6574 future factor=100, raw1H/day adjusted-volume ratio about 0.0094 while raw1H/PIT-daily ratio about 0.944; 2334 factor=10 raw1H/PIT ratios around 0.75-1.42."
+    ]
+  },
+  "frozen_semantics": {
+    "daily_volume_pit": "daily_volume_adjusted / future_split_factor(date)",
+    "prior_volume_gate": "previous completed-day PIT volume >= 10000",
+    "daily_volume_features": "technical day_vol_ratio5/day_vol_ratio20 use PIT-restored daily volume",
+    "raw_1h_volume": "use Yahoo raw 1H volume unchanged",
+    "session_volume_gate": "raw synthetic-session volume >= 5000",
+    "session_vol_ratio20": "use raw 1H session volumes unchanged",
+    "price_pit": "adjusted price * future_split_factor(date)"
+  },
+  "prohibited": [
+    "Do not divide raw 1H volume by split factor.",
+    "Do not keep split-adjusted daily volume in prior-volume eligibility or daily volume-ratio features.",
+    "Do not choose volume semantics from strategy returns.",
+    "Do not modify production."
+  ],
+  "strategy_returns_opened": false,
+  "production_modified": false
+}

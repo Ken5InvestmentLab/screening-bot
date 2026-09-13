@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "diagnostic_id": "CORE-TREND-COMPRESSION-LABEL-RECOVERY-20260913",
+  "registered_at_utc": "2026-09-13T02:05:26.574279+00:00",
+  "status": "FROZEN_BEFORE_CANONICAL_LABEL_REBUILD",
+  "evidence_level": "RETROSPECTIVE_REPAIR_DIAGNOSTIC",
+  "reason": "The first Top-N readout joined policy choices to a label artifact scoped to a different model's eligible rows. LABEL_ROW_MISSING values are coverage failures, not non-tradable outcomes; the prior resolved-only policy summaries are invalid for strategy judgment.",
+  "scope": "Rebuild the existing five-session outcomes for every row in the frozen full pool, then re-evaluate the same frozen Top1/2/3/5 selections jointly. No feature, threshold, candidate pool, ranking, tie-break, cooldown, Top-N, or period changes. No promotion is permitted.",
+  "family_spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+  "prior_topn_diagnostic_spec_sha256": "13337f1c5c29c159464d024ce69b218d75577fb2b0fc21d6bac3f19a6f1c5ef7",
+  "prior_incomplete_label_artifact": {
+    "path": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot-tvfree-batch01\\tvfree_screener\\batch01\\.cache\\core_moderate_ridge_discovery_labels.parquet",
+    "sha256": "abf9c3181dfa1f86f78b75528eafaa27ba9bb9250db17b5b14e8970d60ad2732",
+    "used_as_corrected_outcome_source": false,
+    "prior_policy_summaries_valid": false,
+    "reason": "Its labels were scoped to another candidate model's feature-eligible signals and omitted otherwise valid trend-compression candidates."
+  },
+  "decision_hashes": {
+    "pool": "980656f3d36677fca3fcb0c5f3fc1d959ad7d2447adde8540a2dd2ba1b674d1b",
+    "ranked": "c7359b01e92ce087f09751fc51c3afaaae8b7c91cf4bc7770f0fd099652124da",
+    "selected": "e30f65f2a451df474c720f16f45edf42a1cef8c2f725b4924303211a16b7d6bb"
+  },
+  "policy_hashes": {
+    "1": {
+      "policy_sha256": "b0df05e53b04cbe3173edd226dceea5cccadbf7e055ed7e6f2069b2751c90cc1",
+      "selection_sha256": "668e25b575ef2afb88bef802025b234a6c1539666b0da237d7d0189ebad34b35"
+    },
+    "2": {
+      "policy_sha256": "4fd4662276aebacdce4c38bccd0f1d5161caf0936e5aa798965ca90ed486fd2f",
+      "selection_sha256": "976a0d6a2212128153b74f7122e848de27f54c070c001c58fc2c68140ccef381"
+    },
+    "3": {
+      "policy_sha256": "20d231d14dee57e00d7d2ac8ca0505f36fe4c15bec203168ea3948fcb85e7e74",
+      "selection_sha256": "21beff216075754981f0fd6ef01286e3a7f1fdfd619d4af04e093228906df39a"
+    },
+    "5": {
+      "policy_sha256": "a858a3b41dedefff764cb0c2f7718b439b7ee6996d4ce452da68b4ff5674862d",
+      "selection_sha256": "3182a4192f07b1d6d7c59bd745410593acc787642d7655b0473af118f1e3bf4c"
+    }
+  },
+  "decision_file_hashes": {
+    "pool": "ae8e8411d7fcd18c3d86dcf5ea216865f92d1bedc7c547c6b44c62f287c1754c",
+    "ranked": "19f22bf755a53d869d04638f7bb6406e01d65945fc953f42e7444ee93fd92961",
+    "selected": "5e5255b94212a53a0bc6d6e81dfac73edbd78c97e2594e2593d73bb93dea9fcd"
+  },
+  "price_input": {
+    "path": "tvfree_screener/batch01/.cache/core_moderate_features_through_2023.parquet",
+    "sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "manifest_sha256": "d40748bc303dbd801f876d08c1eee6c025d69da3129741170a34d87c370060e7",
+    "source_daily_csv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "source_daily_csv_rows": 4061361,
+    "bounded_through": "2023-12-29",
+    "feature_panel_rows": 1681815,
+    "labels_included": false,
+    "later_numeric_ohlcv_values_included_or_opened": false
+  },
+  "calendar": {
+    "path": "tvfree_screener/batch01/reference/xtks_sessions.csv",
+    "sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68",
+    "manifest_sha256": "13df1b61384736ca25df7c0e33e7d2575fe8e9492bd2a98bf0a3ec54505ebea0",
+    "calendar_id": "XTKS"
+  },
+  "period": {
+    "first_signal": "2022-07-01",
+    "last_signal": "2023-12-22",
+    "last_exit": "2023-12-29",
+    "post_2023_outcome_access": "PROHIBITED"
+  },
+  "target": "Signal date close is used only as a validity check; enter at the next official XTKS session open and exit at the fifth official XTKS session close including entry. Return = exit close / entry open - 1.",
+  "actionability": "Use the frozen core_moderate_ridge_audit.build_labels_for_eligible_signals implementation. Require all five future daily bars, finite positive OHLC prices, internally consistent OHLC ranges, positive volume, and each overnight open/previous close ratio in [0.60,1.40]. Preserve every unresolved status; no row substitution.",
+  "round_trip_costs": [
+    0.0,
+    0.005,
+    0.01
+  ],
+  "cost_primary": 0.005,
+  "top_n_policies": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "policy_change_after_freeze": false,
+  "selection_join": "date,symbol; verify one-to-one keys and exact next-session/fifth-session label dates; zero missing generated labels is required before evaluation.",
+  "existing_outcome_access": {
+    "prior_incomplete_policy_numeric_summaries_seen": true,
+    "corrected_summary_is_untouched_oos": false,
+    "promotion_allowed": false
+  },
+  "implementation_sha256": {
+    "recovery_runner": "8eeb889d96c6414a9a917ec691e6958cb2ac17fca3e9f05d86b195b715dfc102",
+    "frozen_family_audit": "07d584b3bcd66da889bd26a4ee6d4688ac9e63b95e5a23fe5ffb5c4ccec9ee7a",
+    "label_builder": "e5779ad9d3995f6010644cb84481b738875cc45cecdfa202af4b1409273723d0",
+    "evaluation_helper": "dd46b4a40590f94a491711f3e16c9543a06e13f87bdbe1a51c65ab1ef3e7ae33",
+    "session_calendar": "8ad70bc2b686469557b2ef84fe13913cbae021cab0d661fb2ccce33300dcb045",
+    "selection_helper": "fb4a04929452ae60b81d1a29691d62af171639caa6ed78e1a44131ca4f20c6be"
+  },
+  "production_modified": false
+}

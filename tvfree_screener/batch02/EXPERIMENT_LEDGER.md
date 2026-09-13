@@ -31,11 +31,22 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - Frozen extension registrations V1/V2 were superseded before requested-year outcome evaluation; they produced no 2022/2026 return summaries. V3 is the authoritative extension and report.
 
 
-## CORE-TREND-COMPRESSION-TOPN-DIAGNOSTIC-20260913 — REGISTERED BEFORE POLICY METRIC READ
+## CORE-TREND-COMPRESSION-TOPN-DIAGNOSTIC-20260913 — INVALID LABEL-COVERAGE READOUT
 
-- User-directed methodology deviation, registered after the original full-pool outcome summary was read. The original experiment's Top1/2/3/5 membership and ranking had been frozen and hashed before any labels; none of these four policy-level summaries had been inspected.
+- User-directed methodology deviation, registered after the original full-pool outcome summary was read. The original experiment's Top1/2/3/5 membership and ranking had been frozen and hashed before any labels.
 - Reason: the frozen full-pool gate is INCONCLUSIVE because every active date contains at least one unresolved row. The all-universe pool is a reference population rather than an implementable score; requiring every stock on every date to resolve prevents assessment of the already-fixed daily policies.
-- Diagnostic only: open all four existing Top-N policy outcomes in one report, no N selection, no thresholds, no feature/rank/cooldown changes, no 2024/2025/2026 access, and no promotion. Resolved-only figures must be paired with requested/resolved/unresolved counts and complete/partial daily coverage.
+- A first Top1/2/3/5 readout was generated, but label joins were incomplete: labels were built only for another model's eligible candidates. `LABEL_ROW_MISSING` therefore means missing evaluation coverage, not a proven non-tradable outcome. All policy-level resolved-only metrics in that readout are invalid for strategy judgment; the original artifacts are preserved with an adjacent invalidation notice.
+- No N selection, thresholds, feature/rank/cooldown changes, later-period access, or promotion occurred. The prior diagnostic spec and output remain audit evidence only.
 - Candidate-pool, ranked-pool, and combined Top1/2/3/5 selection hashes are pinned in the companion spec. The first failed evaluation attempt and subsequent join-key recovery are preserved in the recovery receipt; the original 2022H2-2023 results are retrospective/exploratory, not OOS.
 - Current Bot comparison is context only: the local 2026-09-09 report lists Stable ★6 n=55, mean +6.6%, median +1.5%, win 56.4%. Its BOTTOM-signal population and signal-close target differ from this all-TSE/next-session-open target, so direct score claims are prohibited.
-- Status: REGISTERED; policy-specific outcome summaries not yet opened.
+- Status: SUPERSEDED_INVALID_LABEL_COVERAGE; correction is registered separately before rebuilding labels.
+
+## CORE-TREND-COMPRESSION-LABEL-RECOVERY-20260913 — CORRECTION IN PROGRESS
+
+- The frozen Top1/2/3/5 candidate decisions remain unchanged. Rebuild canonical labels for every one of the 278,783 candidate-pool rows using the saved decision-only daily OHLCV panel ending 2023-12-29.
+- Target and actionability checks reuse the pinned five-session label builder: next XTKS open to fifth XTKS close, positive-volume/valid OHLCV checks, and unresolved labels retained.
+- The original label parquet scoped to Core Moderate Ridge is expressly excluded as the corrected source. No numeric outcomes after 2023 may be opened.
+- Corrected report is exploratory/retrospective only; it cannot promote a policy. Any later-period test needs its own frozen spec.
+- First pre-outcome spec write exposed a Windows newline/hash mismatch; no outcomes were opened. The runner now hashes the exact bytes written and the spec was re-frozen.
+- Frozen correction spec: `reports/core_trend_compression_label_recovery_spec.json`; SHA-256 `a4e3cc0ce6122cced22c9042a5b874c656ce2d14b804ceb780fe90e5a220b1b2`.
+- Status: FROZEN_BEFORE_CANONICAL_LABEL_REBUILD; next step is local commit, then canonical label rebuild.

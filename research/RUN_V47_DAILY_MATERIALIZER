@@ -1,3 +1,4 @@
-trigger: 2026-09-14 v47-daily-materializer-v1
-purpose: outcome-blind PIT daily coverage and exact NOCAP/CAP1000 intraday target lists
+trigger: 2026-09-14 v47-daily-materializer-v3-individual-restored-fetch
+purpose: authoritative outcome-blind PIT daily materialization; 100% restored-symbol daily coverage required
+supersedes_run: 34786400424
 strategy_outcomes: forbidden

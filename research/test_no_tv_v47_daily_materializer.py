@@ -53,7 +53,8 @@ def test_price_policy_arms_and_membership():
     sm = {
         "B": [(pd.Timestamp("2025-04-01"), 10.0)],
     }
-    out, stats = v47.materialize_daily_candidates(daily, memberships, sm)
+    events = pd.DataFrame(columns=["event_date","code","event"])
+    out, stats = v47.materialize_daily_candidates(daily, memberships, sm, events)
     d = out[out["date_s"] == "2025-01-07"].set_index("symbol")
     assert bool(d.loc["A","eligible_nocap_daily"]) is True
     assert bool(d.loc["A","eligible_cap1000_daily"]) is True
@@ -75,9 +76,51 @@ def test_cap_is_subset_of_nocap():
         "symbol": ["A","A","B","B","C","C"],
     })
     memberships={"2025-01-06":{"A","B","C"},"2025-01-07":{"A","B","C"}}
-    out,_=v47.materialize_daily_candidates(daily,memberships,{})
+    events = pd.DataFrame(columns=["event_date","code","event"])
+    out,_=v47.materialize_daily_candidates(daily,memberships,{},events)
     assert not ((out["eligible_cap1000_daily"]) & (~out["eligible_nocap_daily"])).any()
 
+
+
+
+def test_listing_epoch_resets_prior_close_and_volume():
+    daily = pd.DataFrame({
+        "date": pd.to_datetime([
+            "2025-05-30",
+            "2025-06-02",
+            "2025-06-03",
+        ]),
+        "open":[500,100,105],
+        "high":[510,110,115],
+        "low":[490,95,100],
+        "close":[500,105,110],
+        "volume":[50000,20000,30000],
+        "symbol":["S","S","S"],
+    })
+    events = pd.DataFrame([
+        {
+            "event_date": pd.Timestamp("2025-06-02"),
+            "code":"S",
+            "event":"listing",
+        }
+    ])
+    memberships={
+        "2025-05-30":set(),
+        "2025-06-02":{"S"},
+        "2025-06-03":{"S"},
+    }
+    out,_=v47.materialize_daily_candidates(
+        daily,
+        memberships,
+        {},
+        events,
+    )
+    # Listing day must not inherit the pre-listing stitched row.
+    assert "2025-06-02" not in set(out["date_s"])
+    # The following day may use the first post-listing completed day.
+    d=out[out["date_s"]=="2025-06-03"].iloc[0]
+    assert float(d["prev_close_adjusted"])==105.0
+    assert float(d["prev_volume"])==20000.0
 
 
 def test_terminal_404_is_not_retried():
@@ -111,6 +154,8 @@ def main():
         test_split_factor_boundaries,
         test_price_policy_arms_and_membership,
         test_cap_is_subset_of_nocap,
+        test_listing_epoch_resets_prior_close_and_volume,
+        test_terminal_404_is_not_retried,
     ]
     for fn in tests:
         fn()

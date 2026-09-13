@@ -115,3 +115,28 @@ Consensus remains interesting as a **specialist signal** because:
 - the frozen ATR OOD gate prevents the observed 2026 collapse.
 
 But the current selector may be exploiting persistent single-symbol runs rather than consistently finding independent opportunities across the market. Diversification/generalization must be demonstrated before promotion.
+
+
+## Benchmark concentration vs preserved Stable★6
+
+Preserved exact Stable★6 teacher (2026-03-05..2026-08-31):
+- n=55
+- unique symbols=54
+- max symbol count=2
+- max symbol share=3.64%
+- top-2 symbol share=5.45%
+- top-5 symbol share=10.91%
+- HHI=0.0188
+- trades belonging to repeated symbols=3.64%
+
+Consensus fixed-min95, 2025 ATR-gated:
+- n=101
+- unique symbols=29
+- max symbol count=30
+- max symbol share=29.70%
+- top-2 symbol share=44.55%
+- top-5 symbol share=62.38%
+- HHI=0.1297
+- trades belonging to repeated symbols=83.17%
+
+The periods are not identical, so this is not a direct performance comparison. It is a structural diagnostic: legacy Stable★6 is naturally diversified across symbols, while current Consensus repeatedly reselects persistent winners. The diversification concern is therefore materially larger than in the benchmark system.

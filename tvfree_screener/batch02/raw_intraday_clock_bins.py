@@ -8,6 +8,7 @@ from typing import Iterable, Mapping
 from zoneinfo import ZoneInfo
 
 XTKS_TZ = ZoneInfo("Asia/Tokyo")
+CLOSE_EXTENSION_DATE = date(2024, 11, 5)
 
 
 @dataclass(frozen=True)
@@ -15,6 +16,7 @@ class ClockBin:
     session_date: date
     symbol: str
     bin_name: str
+    session_regime: str
     source_tag: str
     feature_cutoff_jst: datetime
     open: float
@@ -25,10 +27,23 @@ class ClockBin:
     row_count: int
 
 
-BIN_HOURS = {
-    "AM_09_13": (9, 10, 11, 12),
-    "PM_13_CLOSE": (13, 14, 15),
-}
+def _required_hours(day: date, bin_name: str) -> tuple[int, ...]:
+    if bin_name == "AM_09_13":
+        return (9, 10, 11, 12)
+    if bin_name != "PM_13_CLOSE":
+        raise ValueError(f"unknown bin_name: {bin_name}")
+    # Before the TSE close extension, the 14:00 interval reaches the 15:00
+    # close. Yahoo 15:00 rows in the audited raw sample are overwhelmingly
+    # flat/zero-volume close snapshots and must not be required as a trading
+    # interval. From 2024-11-05 onward the 15:00 interval contains genuine
+    # trading during the extended close.
+    return (13, 14) if day < CLOSE_EXTENSION_DATE else (13, 14, 15)
+
+
+def _session_regime(day: date, bin_name: str) -> str:
+    if bin_name == "AM_09_13":
+        return "AM_STABLE"
+    return "PM_PRE_20241105" if day < CLOSE_EXTENSION_DATE else "PM_POST_20241105"
 
 
 def _number(value: object) -> float | None:
@@ -81,10 +96,15 @@ def _valid_bar(row: Mapping[str, object]) -> bool:
 
 
 def _cutoff(day: date, bin_name: str) -> datetime:
-    # Raw source timestamps are interval starts. The AM 12:00 bar completes at
-    # 13:00. The PM 15:00 bar is conservatively treated as unavailable until
-    # 16:00 until provider publication latency is verified.
-    cutoff = time(13, 0) if bin_name == "AM_09_13" else time(16, 0)
+    if bin_name == "AM_09_13":
+        cutoff = time(13, 0)
+    elif day < CLOSE_EXTENSION_DATE:
+        cutoff = time(15, 0)
+    else:
+        # The post-extension 15:00 interval is conservatively treated as
+        # unavailable until 16:00 until provider publication latency is
+        # independently verified.
+        cutoff = time(16, 0)
     return datetime.combine(day, cutoff, tzinfo=XTKS_TZ)
 
 
@@ -112,7 +132,8 @@ def build_clock_bins(
             if stamp.minute == 0 and stamp.second == 0:
                 by_hour.setdefault(stamp.hour, []).append((stamp, row))
 
-        for bin_name, hours in BIN_HOURS.items():
+        for bin_name in ("AM_09_13", "PM_13_CLOSE"):
+            hours = _required_hours(day, bin_name)
             selected: list[tuple[datetime, Mapping[str, object]]] = []
             status = "COMPLETE"
             for hour in hours:
@@ -132,6 +153,7 @@ def build_clock_bins(
                 "session_date": day.isoformat(),
                 "symbol": symbol,
                 "bin_name": bin_name,
+                "session_regime": _session_regime(day, bin_name),
                 "status": status,
                 "required_hours": list(hours),
                 "feature_cutoff_jst": _cutoff(day, bin_name).isoformat(),
@@ -145,6 +167,7 @@ def build_clock_bins(
                 session_date=day,
                 symbol=symbol,
                 bin_name=bin_name,
+                session_regime=_session_regime(day, bin_name),
                 source_tag="RAW_CAUSAL_INTRADAY",
                 feature_cutoff_jst=_cutoff(day, bin_name),
                 open=float(first["open"]),

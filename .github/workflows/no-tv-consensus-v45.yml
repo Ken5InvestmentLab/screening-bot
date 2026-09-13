@@ -58,7 +58,7 @@ jobs:
         if: always()
         run: |
           if [ -d research_artifacts/v45_full_context_atr ]; then
-            find research_artifacts/v45_full_context_atr -type f -print0               | sort -z               | xargs -0 sha256sum               > research_artifacts/v45_full_context_atr/SHA256SUMS.txt
+            find research_artifacts/v45_full_context_atr -type f ! -name SHA256SUMS.txt -print0               | sort -z               | xargs -0 sha256sum               > research_artifacts/v45_full_context_atr/SHA256SUMS.txt
           fi
       - name: Upload evidence
         if: always()

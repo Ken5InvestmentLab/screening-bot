@@ -1,0 +1,62 @@
+name: Consensus V47B DEV Price Policy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_DEV_PRICE_POLICY"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  dev:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Read feature run id
+        id: meta
+        run: |
+          RUN_ID="$(awk -F= '/^feature_run_id=/{print $2}' research/RUN_V47_DEV_PRICE_POLICY | tr -d '[:space:]')"
+          test -n "$RUN_ID" || exit 1
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+      - name: Install frozen-model dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 requests==2.34.2 scikit-learn==1.9.1 scipy==1.18.1 pyarrow
+      - name: Download clean features
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-clean-features-${{ steps.meta.outputs.run_id }}
+          path: features
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.run_id }}
+      - name: Download frozen daily calendar
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Run locked development comparison
+        env:
+          PYTHONPATH: research
+        run: |
+          python research/no_tv_v47_dev_price_policy.py             --nocap-dev features/v47_nocap_dev_features.parquet             --cap1000-dev features/v47_cap1000_dev_features.parquet             --frozen-daily frozen/tse_daily.csv             --output-dir research_artifacts/v47_dev
+      - name: Upload DEV evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-dev-${{ github.run_id }}
+          path: research_artifacts/v47_dev/**
+          if-no-files-found: warn
+          retention-days: 90

@@ -634,3 +634,16 @@ Source receipt for DATA-QUALITY-4H-PROVENANCE-20260913-01: read-only weekly_repo
 - Interpretation: covariate drift was materially fixed, but direct +20% classification is too sparse/weak for robust ranking. Next hypothesis should use continuous/quantile return modeling on the same stable V17 representation.
 - Report: `reports/tentei_v17_crosssectional_dual_classifier_h1_20260913.md`.
 - 2026 outcomes opened: false. Production modified: false.
+
+
+## TENTEI-INSPIRED-4H-V18-CROSSSECTIONAL-QUANTILE-20260913 — REJECT AFTER H1 / H2 UNOPENED
+
+- V18 reused the stable V17 representation and replaced sparse +20 classification with fixed q10/q50/q90 regression; pre-2025 fit rows 4,924 / 966 symbols; 2025 labels not used for fit.
+- Quantile crossing raw rate only 0.0365%.
+- Core all TopN fail. Top1 mean -0.063%, median -0.500%, win 44.51%, Top3-excluded -0.339%; Top5 mean -0.221%.
+- Monster all TopN fail. Top1 mean -0.518%, +20% 3.05%, <=-10% 14.02%, Top1-excluded -0.933%; Top5 mean -0.325%, +20% 1.89%.
+- Decision: reject V18; H2 remains unopened.
+- Interpretation: V17 fixed covariate drift, but both classifier and quantile ranking degrade the V12 event population. The structural event generator itself is currently stronger than learned ranking.
+- Next after overlap recheck: evaluate V12 ALL, with no ML rank, under the already-established Core metrics as a retrospective baseline; any H2 use is refutation-only because V12 H1 is exposed.
+- Report: `reports/tentei_v18_crosssectional_quantile_h1_20260913.md`.
+- 2026 outcomes opened: false. Production modified: false.

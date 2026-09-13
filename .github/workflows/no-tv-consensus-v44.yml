@@ -1,0 +1,49 @@
+name: No-TV Consensus V44 TopK Cooldown
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V44_CONSENSUS_COOLDOWN"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/consensus-atr-regime-gate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pandas numpy requests scikit-learn
+      - name: Download preserved frozen daily dataset
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Compile V44
+        run: |
+          python -m py_compile             research/no_tv_v10_standalone.py             research/no_tv_v11_independent_selector.py             research/no_tv_v11_1_risk_guard.py             research/no_tv_v13_official_daily.py             research/no_tv_v18_rank_rolling.py             research/no_tv_v29_purged_rolling.py             research/no_tv_v43_2025_uncapped.py             research/no_tv_v44_consensus_topk_cooldown.py
+      - name: Run V44 Top-K cooldown replacement audit
+        run: |
+          PYTHONPATH=research python research/no_tv_v44_consensus_topk_cooldown.py             --frozen-daily frozen/tse_daily.csv             --max-workers 16             --output-dir research_artifacts/v44_consensus_topk_cooldown
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: no-tv-consensus-v44-${{ github.run_id }}
+          path: research_artifacts/v44_consensus_topk_cooldown/**
+          if-no-files-found: warn
+          retention-days: 30

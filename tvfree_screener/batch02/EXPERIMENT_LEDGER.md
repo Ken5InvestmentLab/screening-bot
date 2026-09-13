@@ -29,3 +29,13 @@ All results are RETROSPECTIVE_PROVISIONAL unless a genuinely unviewed future per
 - Core V29 annual results remain unavailable: preserved dated symbols, teacher rows, and historical hourly/four-hour inputs are absent. Do not approximate them from daily OHLCV.
 - Outputs: reports/annual_candidate_evaluation_2022_2026_extended.md, matching JSON, all-year detected-symbol CSV, and all-pool CSV.
 - Frozen extension registrations V1/V2 were superseded before requested-year outcome evaluation; they produced no 2022/2026 return summaries. V3 is the authoritative extension and report.
+
+
+## CORE-TREND-COMPRESSION-TOPN-DIAGNOSTIC-20260913 — REGISTERED BEFORE POLICY METRIC READ
+
+- User-directed methodology deviation, registered after the original full-pool outcome summary was read. The original experiment's Top1/2/3/5 membership and ranking had been frozen and hashed before any labels; none of these four policy-level summaries had been inspected.
+- Reason: the frozen full-pool gate is INCONCLUSIVE because every active date contains at least one unresolved row. The all-universe pool is a reference population rather than an implementable score; requiring every stock on every date to resolve prevents assessment of the already-fixed daily policies.
+- Diagnostic only: open all four existing Top-N policy outcomes in one report, no N selection, no thresholds, no feature/rank/cooldown changes, no 2024/2025/2026 access, and no promotion. Resolved-only figures must be paired with requested/resolved/unresolved counts and complete/partial daily coverage.
+- Candidate-pool, ranked-pool, and combined Top1/2/3/5 selection hashes are pinned in the companion spec. The first failed evaluation attempt and subsequent join-key recovery are preserved in the recovery receipt; the original 2022H2-2023 results are retrospective/exploratory, not OOS.
+- Current Bot comparison is context only: the local 2026-09-09 report lists Stable ★6 n=55, mean +6.6%, median +1.5%, win 56.4%. Its BOTTOM-signal population and signal-close target differ from this all-TSE/next-session-open target, so direct score claims are prohibited.
+- Status: REGISTERED; policy-specific outcome summaries not yet opened.

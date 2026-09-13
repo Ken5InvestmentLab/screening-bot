@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "diagnostic_id": "CORE-TREND-COMPRESSION-TOPN-DIAGNOSTIC-20260913",
+  "registered_at_utc": "2026-09-13T01:41:12.064197+00:00",
+  "status": "FROZEN_BEFORE_POLICY_METRIC_READ",
+  "evidence_level": "RETROSPECTIVE_EXPLORATORY",
+  "reason": "The original full-pool gate is inconclusive because every active date has unresolved rows. The four daily policies were independently frozen and hashed before numeric outcomes; none of their policy-level summaries had been inspected.",
+  "deviation_scope": "One-time joint diagnostic of all already-frozen Top1/2/3/5 outputs. No N selection, promotion, new threshold, feature/rank/cooldown change, or later-period access.",
+  "family_spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+  "diagnostic_runner_sha256": "846c20c4b9cfbacedb931be2f9b2838d9112eba7feaa676b93b2dc85eb082d9a",
+  "input_hashes": {
+    "spec_sha256": "4303a8033dfdffbd97eed21fca1b92b1b4012c3a0d4548be1eb78051d0e26e1f",
+    "feature_sha256": "f66bf52ab73a4764c9b4c55857877970f536a6d96485d70282b00b6ee6a4bec4",
+    "label_artifact_sha256": "abf9c3181dfa1f86f78b75528eafaa27ba9bb9250db17b5b14e8970d60ad2732",
+    "calendar_sha256": "74ab2aaf72a0c055af31b461dd1b5776cf83eebc9576830954248aa03f518f68"
+  },
+  "prepared_decision_hashes": {
+    "pool": "980656f3d36677fca3fcb0c5f3fc1d959ad7d2447adde8540a2dd2ba1b674d1b",
+    "ranked": "c7359b01e92ce087f09751fc51c3afaaae8b7c91cf4bc7770f0fd099652124da",
+    "selected": "e30f65f2a451df474c720f16f45edf42a1cef8c2f725b4924303211a16b7d6bb"
+  },
+  "prepared_file_hashes": {
+    "pool": "ae8e8411d7fcd18c3d86dcf5ea216865f92d1bedc7c547c6b44c62f287c1754c",
+    "ranked": "19f22bf755a53d869d04638f7bb6406e01d65945fc953f42e7444ee93fd92961",
+    "selected": "5e5255b94212a53a0bc6d6e81dfac73edbd78c97e2594e2593d73bb93dea9fcd"
+  },
+  "recovery_receipt_sha256": "f0baf6973deb1f4efe6a91bf6cc8957c69e59f7cd28cc910d4de43ee74248cdc",
+  "policies": [
+    1,
+    2,
+    3,
+    5
+  ],
+  "target": "Next XTKS session open through fifth XTKS session close including entry",
+  "period": {
+    "start": "2022-07-01",
+    "last_signal": "2023-12-22",
+    "exit_no_later_than": "2023-12-29"
+  },
+  "cost": {
+    "primary_round_trip_assumption": 0.005,
+    "sensitivities": [
+      0.0,
+      0.005,
+      0.01
+    ]
+  },
+  "report_all": {
+    "sample_size": true,
+    "resolved_unresolved_and_status": true,
+    "mean_median_win": true,
+    "plus10_plus20_plus50_minus10_minus20": true,
+    "top1_top3_exclusion": true,
+    "month_week_dependence": true,
+    "symbol_concentration": true,
+    "daily_cohort_completeness": true,
+    "weekly_block_bootstrap": true
+  },
+  "missingness": "Keep every selected row in requested counts; report outcome metrics only on resolved labels and disclose coverage. This is not a promotion gate.",
+  "later_periods": {
+    "2024": "CLOSED",
+    "2025": "CLOSED",
+    "2026": "CLOSED"
+  },
+  "current_system_benchmark_context": {
+    "source": "reports/mega_validation_report_latest.md generated 2026-09-09",
+    "mode": "Stable ★6",
+    "n": 55,
+    "mean": 0.066,
+    "median": 0.015,
+    "win_rate": 0.564,
+    "directly_comparable": false,
+    "reason": "TradingView BOTTOM-signal population and signal-close target differ from all-TSE next-open candidate target."
+  },
+  "initial_failed_evaluation": {
+    "numeric_labels_accessed": true,
+    "summary_emitted_or_persisted": false,
+    "status": "engineering abort before output"
+  },
+  "production_modified": false
+}

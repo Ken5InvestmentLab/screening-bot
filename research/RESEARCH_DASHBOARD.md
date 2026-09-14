@@ -1,8 +1,7 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 18:12 JST  
-> **更新元:** coordination STATE + active research branch HEADs + Phase-2 fresh validation  
-> **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpointは next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
+> **最終更新基準:** 2026-09-14 18:15 JST  
+> **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ---
 
@@ -12,11 +11,11 @@
 |---|---|
 | 最終GO候補 | **0件** |
 | Active research branches | **4本** |
-| Phase-2 | **2022 fresh validationを開封。弱点確認のためNO-GO / root-cause auditへ** |
+| Weak+Early Phase-2 | **2022 fresh validation FAILED ROBUSTNESS**。outcome-blind構造監査まで完了 |
 | 2023-25暫定首位 | **DUAL_TOP1_AGREEMENT**、勝率改善候補 **G3 NO_ACUTE_SELLOFF** |
-| Consensus V47 | clean Daily PIT PASS / formal raw retry中 / midterm diagnostic実行中 |
-| V20 | cost0 coverage-bypassed診断が全TopN負、DEPRIORITIZE |
-| Cloud exact forensic | **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。歴史値n=63/+9.86%は再現値ではない |
+| Consensus V47 | formal raw retry中 / midterm diagnostic `34824194221` 実行中、performance未出力 |
+| V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
+| Cloud exact forensic | **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
 | OSS / EDINET | selected-ZIP exact-byte freezeまでCI固定、real EDINETは外部key待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
@@ -24,106 +23,118 @@
 
 ## 1. Weak+Early Phase-2
 
-### Frozen 2023-2025 results — cost 0%
+### Frozen 2023-2025 — cost 0%
 
 | Candidate | n | Mean | Median | Win | Top3-ex |
 |---|---:|---:|---:|---:|---:|
 | body_pct LOW | 172 | +6.54% | +0.99% | 50.58% | +4.60% |
 | volr20 LOW | 172 | +6.33% | +1.06% | 51.74% | +4.38% |
-| mean-rank(volr20, body_pct) | 172 | +6.89% | +1.45% | 52.33% | +4.95% |
+| mean-rank | 172 | +6.89% | +1.45% | 52.33% | +4.95% |
 | **DUAL_TOP1_AGREEMENT** | **140** | **+7.17%** | **+1.25%** | **52.14%** | **+4.79%** |
-| **DUAL + G3 NO_ACUTE_SELLOFF** | **117** | **+7.98%** | **+1.74%** | **53.85%** | **+5.14%** |
+| **DUAL + G3** | **117** | **+7.98%** | **+1.74%** | **53.85%** | **+5.14%** |
 
-G3は `med_ret1 >= -1%`。この閾値は2025開封前にfreeze済みで、結果を見た後のretuneは禁止。
+G3 = `med_ret1 >= -1%`。freeze済みでretune禁止。
 
-### 2022 fresh validation — OPENED / FAILED ROBUSTNESS
+### 2022 fresh validation — exact preserved source
 
-Exact sourceを復元できたためfallback Round2へは進まず、条件無変更でfresh validationを実施した。
-
-- source: frozen run-80 preserved artifact `10264205130`
-- source run: `34545440155`
-- raw date range: 2022-01-04 -> 2026-09-11
-- 2022 raw rows: **825,735**
+- preserved run-80 artifact: `10264205130`
+- raw 2022 rows: **825,735**
 - same V7/V9 full-45-feature monthly causal Tail generator
-- existing minimum training history `>=30,000` を維持
-- 2022 Jan-Mayはhistory不足でNO MODEL、first computable month = June
-- June-Dec extreme Tail pool = **89 rows**
-- frozen weak+early gate後 = **29 rows / 23 signal dates**
+- existing `train >= 30,000` rule unchanged
+- Jan-May: history不足でNO MODEL
+- first computable month: June 2022
+- June-Dec extreme Tail pool: **89 rows**
+- frozen weak+early gate後: **29 rows / 23 signal dates**
 
 | Candidate | n | Mean | Median | Win | Top3-ex |
 |---|---:|---:|---:|---:|---:|
 | body_pct LOW | 23 | +1.77% | -6.37% | 26.09% | -7.51% |
 | volr20 LOW | 23 | +1.95% | -6.19% | 26.09% | -7.31% |
 | mean-rank | 23 | +1.73% | -6.37% | 26.09% | -7.56% |
-| DUAL_TOP1_AGREEMENT | 21 | +2.62% | -6.19% | 28.57% | -7.55% |
+| DUAL_TOP1 | 21 | +2.62% | -6.19% | 28.57% | -7.55% |
 | **DUAL + G3** | **17** | **+6.08%** | **-6.00%** | **29.41%** | **-6.26%** |
 
-**Fresh-validation decision:** FAIL ROBUSTNESS。平均プラスは大当たり依存で、中央値・勝率・Top3-exは全候補で弱い。2022を見て `ret10`、`med_ret5`、G3 -1%、Tail gate、ranker weightを調整しない。
+**判定:** fresh blockはFAIL ROBUSTNESS。平均プラスは右裾依存で、中央値・勝率・Top3-exが全候補で弱い。2022を見て既存閾値を変更しない。
 
 ### Descriptive 2022 computable block + 2023-2025
 
 | Candidate | n | Mean | Median | Win | Top3-ex |
 |---|---:|---:|---:|---:|---:|
-| body_pct LOW | 195 | +5.98% | -0.39% | 47.69% | +4.20% |
-| volr20 LOW | 195 | +5.81% | 0.00% | 48.72% | +4.03% |
+| body | 195 | +5.98% | -0.39% | 47.69% | +4.20% |
+| volr20 | 195 | +5.81% | 0.00% | 48.72% | +4.03% |
 | mean-rank | 195 | +6.28% | 0.00% | 49.23% | +4.51% |
-| DUAL_TOP1_AGREEMENT | 161 | +6.57% | 0.00% | 49.07% | +4.43% |
+| DUAL | 161 | +6.57% | 0.00% | 49.07% | +4.43% |
 | **DUAL + G3** | **134** | **+7.74%** | **+1.06%** | **50.75%** | **+5.17%** |
 
-G3はdescriptive aggregateでは最上位だが、fresh 2022 win 29.41%のためproduction候補へpromotionしない。
+G3はdescriptive aggregateでは最上位だが、2022 win 29.41%のためpromotionしない。
 
-詳細: `research/WEAK_EARLY_PHASE2_2022_FRESH_VALIDATION_20260914.md`
+### 2022 vs 2023-25 outcome-blind structural audit — COMPLETE
 
-### Phase-2 next action
+Target/outcomeを使わず、frozen weak+early候補集団のsignal-time分布だけを比較した。
 
-**追加の勝率ゲート探索を一旦停止。** まず2022と2023-25の差をoutcome-blindに監査する。優先対象は model warm-up、candidate population、market regime availability。2022の損失を見て新閾値を作らない。新しいgate familyを試す場合は監査後に別途preregisterする。
+| Signal-time feature | 2022 median | 2023-25 median | Shift / 2023-25 IQR |
+|---|---:|---:|---:|
+| range_pct | 0.1377 | 0.1820 | -0.512 |
+| med_ret1 | -0.0029 | 0.0000 | -0.349 |
+| gap | -0.0179 | +0.0050 | -0.331 |
+| breadth_ret1_pos | 0.3382 | 0.4299 | -0.317 |
+| volr5 | 1.0839 | 1.5111 | -0.317 |
+| breadth_ma20 | 0.3602 | 0.4332 | -0.316 |
+| ret1 | -0.0036 | +0.0526 | -0.292 |
+| rsi14 | 69.38 | 64.85 | +0.272 |
+
+Candidate scarcity:
+- 2022: 23 signal dates, candidates/day mean **1.26**, single-candidate days **73.9%**
+- 2023-25: 172 dates, mean **1.59**, single-candidate days **62.2%**
+
+**Outcome-blind interpretation:** 2022は市場breadth・即時momentum・gap・volume acceleration・rangeが弱く、rankerが選べる候補数も少ない。一方tail_pは低くなくRSIはむしろ高い。単純な「Tail score不足」ではなく、**population/regime mismatch**の可能性が高い。
+
+この差から新しい閾値は作らない。次は model warm-up/calibration、candidate scarcity、2023H2/2025H2にも同じ構造差が現れるかをoutcome-blindで監査する。
+
+詳細:
+- `research/WEAK_EARLY_PHASE2_2022_FRESH_VALIDATION_20260914.md`
+- `research/WEAK_EARLY_PHASE2_2022_STRUCTURAL_AUDIT_20260914.md`
 
 ---
 
-## 2. Active lane status
+## 2. Active lanes
 
-| Lane | HEAD / state | Status | Next |
+| Lane | HEAD | Status | Next |
 |---|---|---|---|
-| Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合だけ734 gap repair |
-| Core/Cloud | `da67fe92...` | Core families REJECT / Cloud exact replay unavailable | 新しい同時代identity evidenceが出た場合だけ再開 |
-| Consensus V47 | `8a461bf9...` | raw retry + midterm diagnostic ACTIVE | run完了後、cost0 diagnosticを回収。重複trigger禁止 |
-| OSS/Validation | `faba5b48...` | CI-green through selected-ZIP exact-byte freeze | key利用可能時にreal EDINET acquisition |
+| Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合のみgap reconciliation |
+| Core/Cloud | `da67fe92...` | Core reject / Cloud exact replay unavailable | 新しい同時代identity evidenceがある場合だけ再開 |
+| Consensus V47 | `8a461bf9...` | retry + midterm diagnostic ACTIVE | run完了後cost0結果を回収、duplicate trigger禁止 |
+| OSS/Validation | `faba5b48...` | selected-ZIP byte freeze CI-green | external key利用可能時にreal EDINET acquisition |
 
 ---
 
 ## 3. Cloud exact forensic
 
-新しいCore/Cloud HEAD `da67fe92e493504842babac108df8f2be45c2658` を回収済み。
+新HEAD `da67fe92e493504842babac108df8f2be45c2658` を回収済み。
 
-- historical headline: n=63 / 5BD mean +9.86% / median +3.33% / win 57.1%
-- exact-match contractをfreeze
-- broad reconstruction: 696 rows
-- original A timestamps: 62/63のみ復元
-- identity-critical model / exact 575 Watch pool / transforms / training-calibration detailsが不足
+- historical headline n=63 / mean +9.86% / median +3.33% / win 57.1%
+- exact-match spec freeze済み
+- broad reconstruction 696 rows
+- original A timestamps 62/63のみ
+- exact 575 Watch pool / identity-critical model / transforms / calibration等が不足
 - disposition: **HISTORICAL_EXACT_REPRO_UNAVAILABLE**
-- model-family guessing禁止
-- exact reproduction未成立なのでunused-period portabilityは実行しない
-
-歴史値を現行候補ランキングのpromotion evidenceとして扱わない。
+- no portability test / no model-family guessing
 
 ---
 
 ## 4. Consensus V47
 
-- latest processed HEAD: `8a461bf987453422e705a08024c0f1a462068801`
-- Daily PIT acceptance: PASS
-- formal raw initial acceptance: FAIL (0 usable pair)
-- targeted retry: `34810592135` active
-- midterm diagnostic: `34824194221` **in progress** as of this scan
-- preserved partial seed coverage: NOCAP 35.3898%, CAP1000_PIT 83.1124%, restored pair 0%
-- performanceはまだ未出力。出るまで候補順位を推測しない
-- diagnosticはcost0、missing補間なし、正式promotion evidenceとは分離
+- latest processed HEAD `8a461bf987453422e705a08024c0f1a462068801`
+- Daily PIT acceptance PASS
+- formal raw initial acceptance FAIL
+- targeted retry `34810592135` active
+- midterm diagnostic `34824194221` **in progress** at latest scan
+- preserved partial seed: NOCAP 35.3898%, CAP1000_PIT 83.1124%, restored pair 0%
+- performance未出力。結果前に順位を推測しない
 
 ---
 
-## 5. V20 cost0 midterm diagnostic
-
-Coverage caveat: 1,810 symbols / 82 sessionsのうち734 active symbol/date gaps。coverage gateだけbypassし、補間・synthetic bars・threshold/ranker/TopN/cooldown変更なし。
+## 5. V20 cost0 diagnostic
 
 | TopN | n | Mean | Median | Win | Top3-ex |
 |---:|---:|---:|---:|---:|---:|
@@ -132,42 +143,23 @@ Coverage caveat: 1,810 symbols / 82 sessionsのうち734 active symbol/date gaps
 | 3 | 442 | -1.118% | -1.289% | 40.05% | -1.613% |
 | 5 | 705 | -0.538% | -0.955% | 41.84% | -0.854% |
 
-Disposition: **DEPRIORITIZE**。opened outcomeを見てretuneしない。
+734 active symbol/date gaps remain。opened diagnosticを見てretuneしない。
 
 ---
 
-## 6. OSS / Validation
+## 6. Current P0
 
-- HEAD `faba5b48f1831b16f08c74895f772ca0089f765c`
-- purged/embargoed CV audit: ready
-- PSR/DSR multiple-trial sensitivity: ready
-- Optuna Discovery期間外 fail-closed + trial retention: ready
-- EDINET metadata snapshot / deterministic selector: ready
-- selected real-doc ZIP exact-byte freeze boundary: CI-green (`34819456421`)
-- blocker: external `EDINET_API_KEY` for real acquisition
+- [x] frozen 2022 source recovery
+- [x] unchanged causal V7 generator reconstruction
+- [x] frozen Phase-2 candidates fresh validation
+- [x] 2022 robustness failure recording
+- [x] 2022 vs 2023-25 signal-time structural audit
+- [ ] **model warm-up / calibration effect audit**
+- [ ] **candidate-scarcity structure audit**
+- [ ] **2023H2 / 2025H2で同じoutcome-blind shiftsが再現するか確認**
+- [ ] V47 diagnostic `34824194221` completion collection
+- [ ] V47 formal retry `34810592135` monitoring
 
----
+## 7. GO / NO-GO
 
-## 7. Current P0 / P1
-
-### P0
-- [x] 2022 frozen sourceを復元
-- [x] same causal V7 generatorで2022 cacheを再構築
-- [x] frozen Phase-2 5候補を無調整fresh validation
-- [x] 2022 fresh blockのrobustness failureを記録
-- [ ] **2022 vs 2023-25 outcome-blind structural audit**
-- [ ] V47 diagnostic `34824194221` 完了時に結果回収
-- [ ] V47 formal retry `34810592135` 完了監視
-
-### P1
-- [ ] structural audit後にのみ、必要なら新regime familyを事前登録
-- [ ] 2022 observed lossesを使ったthreshold grid searchは禁止
-- [ ] Cloud exact forensicは新しいidentity evidenceが無い限りclosed
-
----
-
-## 8. GO / NO-GO
-
-**NO-GO / 研究継続。**
-
-2023-25ではWeak+Early + DUAL/G3が高い平均と右裾を維持する一方、fresh 2022 computable blockで勝率・中央値・tail-exclusion robustnessが崩れた。現段階では「平均+7%台」を理由にproductionへ進めない。次は勝率を後付けで上げるのではなく、期間差の構造原因を先に監査する。
+**NO-GO / 研究継続。** Phase-2は2023-25の高平均だけではpromotionしない。2022 fresh validationの崩れを説明できる構造原因を先に監査し、結果を見た閾値最適化は行わない。

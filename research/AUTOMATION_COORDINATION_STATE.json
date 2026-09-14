@@ -1,9 +1,9 @@
 {
-  "updated_at_jst": "2026-09-15T02:34:00+09:00",
+  "updated_at_jst": "2026-09-15T03:35:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "aab9438c0fd2415bf7bffe594d494ebb84d0af19",
+  "latest_head_before_state_write": "848cb233c6780c92c0513ebd5e3122885d7964ae",
   "coordination": {
     "supervisor_coordination_checked": true,
     "research_dashboard_checked": true,
@@ -73,7 +73,7 @@
         "failure": "81/81 http_429"
       }
     },
-    "explicitly_observed_active_shards": [3],
+    "explicitly_observed_active_shards": [2, 3],
     "active_step": "Fetch raw 1H shard",
     "daily_coverage_check": "PASS",
     "fetcher_contract_tests": "PASS",
@@ -84,8 +84,8 @@
     "diagnosis_log": "research/CONSENSUS_V47_RAW48_429_DIAGNOSIS_20260915.md",
     "merge_acceptance_spec": "research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md",
     "merge_acceptance_spec_commit": "4304be47319ccedbd7827dc471b08fe2541d5926",
-    "remaining_matrix_state": "queued/in_progress under max-parallel=2"
+    "remaining_matrix_state": "queued/in_progress under max-parallel=2; only shard 0/1 artifacts visible at 03:35 JST"
   },
-  "blocker": "Formal raw1H acceptance is blocked by systemic Yahoo HTTP 429 and the authoritative 48-shard run is still non-terminal. Shards 0 and 1 completed mechanically but each returned 0/81 symbols and zero raw rows; this is transport failure, not strategy evidence.",
+  "blocker": "Formal raw1H acceptance is blocked by systemic Yahoo HTTP 429 and the authoritative 48-shard run is still non-terminal. Shards 0 and 1 completed mechanically but each returned 0/81 symbols and zero raw rows; shards 2 and 3 are still fetching, so there is not yet evidence that transport has recovered. This is transport failure, not strategy evidence.",
   "next_action": "Do not duplicate-trigger run 34849054884. When it is terminal, enumerate all 48 shard artifacts/receipts, admit only genuinely observed rows under CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md, merge with preserved seed raw using source/artifact/file-digest provenance, and rerun the unchanged frozen acceptance verifier. If acceptance fails, emit exact missing symbol/date pairs and retry only those pairs after transport health returns using the systemic-429 fail-fast preflight."
 }

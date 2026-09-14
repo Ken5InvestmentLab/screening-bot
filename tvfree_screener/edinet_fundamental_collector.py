@@ -56,16 +56,29 @@ FACT_SPECS = {
     "shares_outstanding": {
         "kind": "instant",
         "prefer_nonconsolidated": True,
-        # Prefer the current-year summary-table fact when present. Real EDINET
-        # annual filings also commonly expose the issued-share count only at
-        # FilingDateInstant, so that context is an explicit audited fallback.
+        # Frozen priority is semantic, not a generic element-first ordering:
+        #   1) summary-table issued shares at CurrentYear;
+        #   2) fiscal-year-end issued shares at CurrentYear;
+        #   3) fiscal-year-end issued shares at FilingDateInstant.
+        # A summary-table fact at FilingDateInstant is intentionally ineligible.
         "elements": (
             "jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults",
             "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc",
             "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares",
         ),
-        "context_prefixes": ("CurrentYear", "FilingDateInstant"),
-        "element_priority_first": True,
+        "priority_groups": (
+            (
+                ("jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults", "CurrentYear"),
+            ),
+            (
+                ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc", "CurrentYear"),
+                ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares", "CurrentYear"),
+            ),
+            (
+                ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc", "FilingDateInstant"),
+                ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares", "FilingDateInstant"),
+            ),
+        ),
     },
     "assets": {
         "kind": "instant",
@@ -338,6 +351,41 @@ def extract_fact(df: pd.DataFrame, field: str) -> dict:
     cand = df[df["element_id"].isin(spec["elements"])].copy()
     if cand.empty:
         return {"value": None, "status": "missing", "element_id": None, "context_id": None, "source_member": None}
+
+    # Some fields need semantic element/context priority rather than the generic
+    # context ranking below. For issued shares, inspect each frozen priority
+    # group as a whole; conflicting numeric values inside the same priority
+    # fail closed instead of being hidden by a secondary context tie-break.
+    priority_groups = spec.get("priority_groups")
+    if priority_groups:
+        for group in priority_groups:
+            eligible = []
+            for idx, row in cand.iterrows():
+                element_id = str(row["element_id"])
+                context_id = str(row["context_id"])
+                if not any(
+                    element_id == allowed_element and context_id.startswith(context_prefix)
+                    for allowed_element, context_prefix in group
+                ):
+                    continue
+                numeric = parse_numeric(row["value"])
+                if numeric is None:
+                    continue
+                eligible.append((idx, numeric))
+            if not eligible:
+                continue
+            unique_values = {value for _, value in eligible}
+            if len(unique_values) != 1:
+                return {"value": None, "status": "ambiguous", "element_id": None, "context_id": None, "source_member": None}
+            chosen = cand.loc[eligible[0][0]]
+            return {
+                "value": eligible[0][1],
+                "status": "ok",
+                "element_id": str(chosen["element_id"]),
+                "context_id": str(chosen["context_id"]),
+                "source_member": str(chosen.get("source_member") or ""),
+            }
+        return {"value": None, "status": "missing_eligible_context", "element_id": None, "context_id": None, "source_member": None}
 
     ranked = []
     prefixes = tuple(spec.get("context_prefixes", ("CurrentYear",)))

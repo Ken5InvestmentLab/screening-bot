@@ -1,7 +1,7 @@
 {
   "version": 9,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T15:41:00+09:00",
+  "updated_at_jst": "2026-09-14T16:07:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_NO_NEW_LANE",
     "branch_heads_changed_since_previous_state": false,
@@ -19,12 +19,12 @@
   },
   "cross_lane_followup_last_scan": {
     "status": "COMPLETE_WITH_OSS_PROGRESS",
-    "scanned_at_jst": "2026-09-14T14:59:00+09:00",
-    "canonical_head": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
+    "scanned_at_jst": "2026-09-14T16:07:00+09:00",
+    "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-    "consensus_head": "9bbdef6fead6d1494b0b10030b466a2bdb0a22a8",
-    "oss_head": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
-    "note": "Reviewed the new 8-commit Consensus delta without duplicate acquisition: formal V47 raw1H acceptance is accepted=false with zero raw symbol-dates and retry 34810592135 remains active. Advanced OSS outcome-blind EDINET provenance by adding a full-calendar-day metadata snapshot freezer, raw per-day SHA256/hash-chain receipt, fail-closed tests, CI wiring, handoff, and research-spec documentation. Snapshot CI 34811269556 completed SUCCESS."
+    "consensus_head": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
+    "oss_head": "9966bde4534be91bc20ef471cf3b6e0abe860846",
+    "note": "No unprocessed Canonical/Core/Consensus SHA required duplicate work. Consensus retry 34810592135 remains active with fetch(0)/fetch(1) in progress and ten shards queued under max-parallel=2. OSS lane advanced the outcome-blind EDINET path by adding a resumable official-v2 metadata acquisition helper, fail-closed tests, CI coverage, acquisition spec, handoff, and log. CI run 34816055006 completed SUCCESS; real 2023-2025 bytes and same-ZIP parser results remain unopened."
   },
   "canonical_worker_last_scan": {
     "status": "COMPLETE_WAITING_ON_ACCEPTED_CONSENSUS_RETRY",
@@ -67,9 +67,9 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
-      "last_processed_sha": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
-      "last_processed_note": "14:59 :48 worker added outcome-blind EDINET metadata provenance before real sample selection. edinet_metadata_snapshot.py now requires every calendar day in the frozen 2023-2025 interval, validates EDINET metadata status/required fields, rejects duplicate doc IDs, hashes each raw daily JSON and a deterministic hash chain, and emits normalized metadata without parser/accounting/strategy inputs. Fail-closed tests and OSS CI wiring added; run 34811269556 SUCCESS. Handoff and OSS research spec now document the boundary. Real parser comparison remains unopened and production unchanged."
+      "last_seen_sha": "9966bde4534be91bc20ef471cf3b6e0abe860846",
+      "last_processed_sha": "9966bde4534be91bc20ef471cf3b6e0abe860846",
+      "last_processed_note": "16:07 :48 worker implemented the previously missing outcome-blind EDINET network acquisition boundary: official v2 date/type=2/Subscription-Key helper, external env key only, atomic one-file-per-day writes, resumable skip-existing behavior, malformed/non-200 fail-closed tests, CI wiring, acquisition spec, handoff and log. OSS CI run 34816055006 SUCCESS. No real parser comparison or strategy outcome opened; next step is full 2023-2025 raw metadata materialization then frozen snapshot/hash-chain."
     }
   },
   "guardrails": [
@@ -154,7 +154,7 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 15:41 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2; run-level endpoint still reports queued",
+      "missing_universe_retry_status": "active acquisition at 16:07 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2; run-level endpoint still reports queued",
       "missing_universe_retry_active_jobs": 2,
       "missing_universe_retry_queued_jobs": 10,
       "price_arms": ["NOCAP", "CAP1000_PIT"],
@@ -165,16 +165,18 @@
       "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion rerun the exact frozen coverage verifier against retry artifacts before any feature/performance inspection. If still rejected, retry only newly emitted missing symbol/date codes with thresholds unchanged and no interpolation."
     },
     "oss_validation": {
-      "head": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
+      "head": "9966bde4534be91bc20ef471cf3b6e0abe860846",
       "preregistration_ci_run": 34807402370,
       "preregistration_ci_status": "completed/success",
       "selector_ci_run": 34807566909,
       "selector_ci_status": "completed/success",
       "metadata_snapshot_ci_run": 34811269556,
       "metadata_snapshot_ci_status": "completed/success",
-      "edinet_real_sample": "PREREGISTERED_SELECTOR_AND_METADATA_PROVENANCE_TESTED_NOT_YET_EXECUTED",
+      "metadata_acquisition_ci_run": 34816055006,
+      "metadata_acquisition_ci_status": "completed/success",
+      "edinet_real_sample": "PREREGISTERED_SELECTOR_SNAPSHOT_AND_ACQUISITION_BOUNDARY_TESTED_NOT_YET_EXECUTED",
       "strategy_outcomes_opened": false,
-      "next_rule": "Materialize complete raw daily EDINET metadata JSON for every 2023-01-01..2025-12-31 calendar day, freeze per-day/hash-chain receipt with edinet_metadata_snapshot.py, then run the frozen selector exactly once. Freeze selected doc IDs and exact ZIP hashes before same-ZIP custom-vs-edinet-tools comparison; never resample around parser failures."
+      "next_rule": "Use the tested acquisition helper with an external EDINET API key to materialize exact raw daily JSON for every 2023-01-01..2025-12-31 calendar day. Then freeze per-day/hash-chain receipt with edinet_metadata_snapshot.py before running the frozen selector exactly once. Freeze selected doc IDs and exact ZIP hashes before same-ZIP custom-vs-edinet-tools comparison; never resample around parser failures."
     }
   },
   "cross_lane_status": {
@@ -183,7 +185,7 @@
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Consensus V47 has not yet produced a frozen-accepted repair source.",
       "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is now actively acquiring two shards at a time under staged throttled/backoff transport and must pass the unchanged coverage verifier before features/performance open.",
       "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected. Historical Cloud Monster is forensic-only and not reproducible.",
-      "OSS EDINET sample boundary, selector, and metadata snapshot audit layer are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized and the real same-ZIP parser comparison remains unopened."
+      "OSS EDINET sample boundary, selector, metadata snapshot layer, and metadata acquisition boundary are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized and the real same-ZIP parser comparison remains unopened."
     ]
   },
   "dynamic_lane_policy": {

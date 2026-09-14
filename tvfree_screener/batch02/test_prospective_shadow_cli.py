@@ -101,7 +101,7 @@ class ProspectiveShadowCliTests(unittest.TestCase):
             )
 
             def write_daily(path: Path, exit_close: str) -> None:
-                dates = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22"]
+                dates = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-24","2026-09-25"]
                 with path.open("w", encoding="utf-8", newline="") as f:
                     w = csv.DictWriter(f, fieldnames=["symbol", "date", "open", "close"])
                     w.writeheader()
@@ -110,7 +110,7 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                             "symbol": "1234",
                             "date": date,
                             "open": "100" if date == "2026-09-16" else "110",
-                            "close": exit_close if date == "2026-09-22" else str(101 + i),
+                            "close": exit_close if date == "2026-09-25" else str(101 + i),
                         })
 
             daily1 = root / "daily1.csv"

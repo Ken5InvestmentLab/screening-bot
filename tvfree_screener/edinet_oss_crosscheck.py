@@ -42,6 +42,20 @@ SHARE_ELEMENTS = (
     "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares",
 )
 
+SHARE_PRIORITY_GROUPS = (
+    (
+        ("jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults", "CurrentYear"),
+    ),
+    (
+        ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc", "CurrentYear"),
+        ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares", "CurrentYear"),
+    ),
+    (
+        ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc", "FilingDateInstant"),
+        ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares", "FilingDateInstant"),
+    ),
+)
+
 
 def _number(value: Any) -> float | None:
     if value is None:
@@ -62,59 +76,58 @@ def _values_match(left: float | None, right: float | None) -> bool | None:
 
 
 def _oss_issued_shares(raw_facts: list[Any]) -> dict[str, object]:
-    """Select an issued-share fact from edinet-tools' independently parsed raw facts.
+    """Select issued shares from edinet-tools raw facts using the frozen semantic priority.
 
-    Priority is fixed before comparison:
-    1) CurrentYear summary-table issued shares;
+    Priority:
+    1) summary-table issued shares at CurrentYear;
     2) fiscal-year-end issued shares at CurrentYear;
     3) fiscal-year-end issued shares at FilingDateInstant.
 
-    Multiple conflicting values at the same priority fail closed.
+    Conflicting values inside one priority group fail closed.
     """
-    candidates: list[tuple[tuple[int, int], Any, float]] = []
+    facts = []
     for fact in raw_facts:
         element_id = str(getattr(fact, "element_id", "") or "")
         if element_id not in SHARE_ELEMENTS:
             continue
-        context = str(getattr(fact, "context_id", "") or "")
+        context_id = str(getattr(fact, "context_id", "") or "")
         numeric = custom.parse_numeric(getattr(fact, "value", None))
         if numeric is None:
             continue
+        facts.append((fact, element_id, context_id, float(numeric)))
 
-        element_rank = SHARE_ELEMENTS.index(element_id)
-        if context.startswith("CurrentYear"):
-            context_rank = 0
-        elif context.startswith("FilingDateInstant"):
-            context_rank = 1
-        else:
+    for group in SHARE_PRIORITY_GROUPS:
+        eligible = [
+            item
+            for item in facts
+            if any(
+                item[1] == allowed_element and item[2].startswith(context_prefix)
+                for allowed_element, context_prefix in group
+            )
+        ]
+        if not eligible:
             continue
-        candidates.append(((element_rank, context_rank), fact, float(numeric)))
-
-    if not candidates:
+        values = {item[3] for item in eligible}
+        if len(values) != 1:
+            return {
+                "value": None,
+                "status": "ambiguous",
+                "element_id": None,
+                "context_id": None,
+            }
+        chosen = eligible[0]
         return {
-            "value": None,
-            "status": "missing",
-            "element_id": None,
-            "context_id": None,
+            "value": chosen[3],
+            "status": "ok",
+            "element_id": chosen[1],
+            "context_id": chosen[2],
         }
 
-    candidates.sort(key=lambda item: item[0])
-    best_key = candidates[0][0]
-    best = [item for item in candidates if item[0] == best_key]
-    values = {item[2] for item in best}
-    if len(values) != 1:
-        return {
-            "value": None,
-            "status": "ambiguous",
-            "element_id": None,
-            "context_id": None,
-        }
-    chosen = best[0]
     return {
-        "value": chosen[2],
-        "status": "ok",
-        "element_id": str(getattr(chosen[1], "element_id", "") or ""),
-        "context_id": str(getattr(chosen[1], "context_id", "") or ""),
+        "value": None,
+        "status": "missing",
+        "element_id": None,
+        "context_id": None,
     }
 
 

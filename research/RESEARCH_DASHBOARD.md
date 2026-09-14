@@ -1,12 +1,12 @@
 # Research Dashboard
 
-Last updated: 2026-09-14 23:41 JST
+Last updated: 2026-09-15 00:38 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
 ## Consensus V47 status
 - Progress: **74%** (research-progress estimate; not promotion probability)
-- Latest observed HEAD before this dashboard write: `bfcdd71fdf82bdd40bf69926556c5f8295610fa6`
+- Latest observed HEAD before this dashboard write: `fc96b80148c51dc8c1c093807b7800f83719e42a`
 - Promotion-relevant path: **V47 clean PIT only**
 - V43/V44: leakage/reproduction-contaminated; not promotion evidence
 - Price arms: exactly `NOCAP` and `CAP1000_PIT`
@@ -34,16 +34,17 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - Run `34849054884` — Consensus V47 Raw1H Freeze
 - Trigger HEAD: `7849ad975d1e0420e250ab4d5f411ce136f9d867`
 - Configuration: **48 shards, max-parallel=2, shard-count=48**
-- Status at 2026-09-14 23:41 JST: matrix active
+- Status at 2026-09-15 00:38 JST: matrix active; GitHub run summary still reports queued while active matrix jobs execute
 - shard 0: **in_progress**, accepted Daily artifact download/coverage check + fetcher contract tests passed; raw 1H fetch running
 - shard 1: **in_progress**, accepted Daily artifact download/coverage check + fetcher contract tests passed; raw 1H fetch running
+- elapsed wall clock since run start: about **134 minutes**, still below prior 180-minute cancellation boundary
 - first visible workflow artifact count: **0**
 - remaining visible matrix jobs: queued under max-parallel=2
 - Duplicate trigger: **prohibited / not triggered**
 - Frozen raw acceptance unchanged: pair>=99.5%, monthly>=99%, completely missing required symbol=0, symbols requiring >=20 days must be >=95%, restored pair>=99%
 - No interpolation and no threshold lowering
 - Runtime checkpoint: `research/CONSENSUS_V47_RAW48_RUNTIME_CHECK_20260914_2341.md`
-- Current interpretation: first pair has exceeded roughly one hour but has not reached the prior 180-minute cancellation boundary; allow current run to continue unchanged
+- Current interpretation: no completed shard or usable artifact yet; transport mitigation has not proven success or failure. Continue unchanged until a completed shard or the 180-minute failure receipt exists.
 - If this run still fails coverage, retry only missing symbol/date pairs
 
 ## Midterm diagnostic — NOT promotion evidence
@@ -114,12 +115,12 @@ CAP1000_PIT H2: **UNOPENED**
 - Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater remain untouched
 
 ## Blocker
-Formal raw 1H acquisition remains the active blocker. The prior 12-shard retry exceeded the 180-minute shard runtime. The current 48-shard retry is still fetching shard 0/1 after roughly one hour and has not yet produced an artifact, but it has not reached the failure boundary.
+Formal raw 1H acquisition remains the active blocker. The prior 12-shard retry exceeded the 180-minute shard runtime. The current 48-shard retry still has shard 0/1 fetching after about 134 minutes and has produced no artifact. This is not yet a formal failure because neither active shard has reached the prior 180-minute boundary.
 
 ## Next action
 1. Do **not** duplicate-trigger run `34849054884`.
 2. Inspect the first completed 48-shard artifact for real row payload, artifact size, and timeout/rate-limit behavior.
-3. Allow the current matrix to proceed under max-parallel=2 until a completed shard or 180-minute failure receipt exists.
+3. If shard 0/1 reaches the 180-minute boundary without payload, preserve that as transport-failure evidence before changing only the acquisition mechanics.
 4. On completion, merge only observed raw plus preserved seed data with provenance and rerun frozen formal acceptance.
 5. If formal acceptance fails, construct missing symbol/date-only targeted retry; never lower thresholds or interpolate.
 6. Only after formal raw acceptance may promotion clean features/formal H1/H2 proceed.

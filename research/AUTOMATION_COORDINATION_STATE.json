@@ -1,7 +1,7 @@
 {
-  "version": 20,
+  "version": 21,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T19:09:00+09:00",
+  "updated_at_jst": "2026-09-14T19:17:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_PHASE2_HALF_YEAR_STRUCTURAL_AUDIT_ROUND2_STAYS_CLOSED",
     "scanned_at_jst": "2026-09-14T19:08:00+09:00",
@@ -19,19 +19,19 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new SHA at 19:08. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "No new SHA at 19:17. V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
       "last_processed_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
-      "last_processed_note": "No new SHA at 19:08. HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen; no model-family guessing or portability."
+      "last_processed_note": "No new SHA at 19:17. HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen; no model-family guessing or portability."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "2b63fa00846d8d8918fd87e59cda69b6c8ddafab",
-      "last_processed_sha": "2b63fa00846d8d8918fd87e59cda69b6c8ddafab",
-      "last_processed_note": "No new SHA at 19:08. Midterm H1 cost0 diagnostic remains NOCAP frozen-criterion leader only; formal raw acceptance remains blocked and H2 unopened."
+      "last_seen_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
+      "last_processed_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
+      "last_processed_note": "H1 cost0 midterm result already processed. User-authorized diagnostic sequence advanced without retune: pre-open NOCAP-only H2 contract frozen, cost0 diagnostic runner/workflow added, and unique run 34832358609 launched. CAP1000_PIT H2 and 2026 remain closed; formal promotion acceptance remains blocked."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -47,7 +47,8 @@
     "All new backtests/diagnostics/comparisons use transaction cost 0%; existing costed outputs are legacy evidence only.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
     "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning.",
-    "Consensus V47 promotion path is NOCAP vs CAP1000_PIT only after clean PIT data acceptance; no price-cap grid search."
+    "Consensus V47 promotion path is NOCAP vs CAP1000_PIT only after clean PIT data acceptance; no price-cap grid search.",
+    "Midterm diagnostics may bypass formal coverage only under explicit diagnostic labeling; opened H1/H2 periods are no longer untouched and may not drive same-family retuning."
   ],
   "workflow_watch": {
     "weak_early_phase2": {
@@ -120,12 +121,12 @@
       "coverage_acceptance_run": 34810234454,
       "frozen_coverage_acceptance_pass": false,
       "missing_universe_retry_run": 34810592135,
-      "formal_retry_status": "active_partial_timeout_fetch0_fetch1_at_180m_fetch2_fetch3_in_progress_others_queued",
+      "formal_retry_status": "active_partial_timeout_fetch0_fetch1_at_180m_other_shards_not_complete",
       "future_retry_layout_commit": "7aa230a0434136cf33589a2fdda010113d57db62",
       "future_retry_shards": 48,
       "future_retry_max_parallel": 2,
       "midterm_diagnostic_run": 34824194221,
-      "midterm_diagnostic_status": "SUCCESS_H1_OPENED_NOCAP_DIAGNOSTIC_LEADER_H2_UNOPENED",
+      "midterm_diagnostic_status": "SUCCESS_H1_OPENED_NOCAP_DIAGNOSTIC_LEADER",
       "midterm_artifact_digest": "sha256:c46e90cba472c291a7db068ff1dadb0959764dcef97eb006dd6c3b918779f866",
       "midterm_period": ["2025-01-06", "2025-06-30"],
       "midterm_endpoint": "next official XTKS open -> D+5 close",
@@ -135,12 +136,19 @@
       "diagnostic_h1_leader": "NOCAP",
       "diagnostic_h1_opened": true,
       "diagnostic_h1_untouched_holdout": false,
+      "diagnostic_h2_preopen_spec": "research/CONSENSUS_V47_MIDTERM_H2_DIAGNOSTIC_SPEC_20260914.json",
+      "diagnostic_h2_trigger_commit": "008fd87386f252cb5f7289ef4e303604d8f56c76",
+      "diagnostic_h2_run": 34832358609,
+      "diagnostic_h2_status": "IN_PROGRESS_NOCAP_ONLY_COST0",
+      "diagnostic_h2_arm": "NOCAP",
+      "diagnostic_h2_period": ["2025-07-01", "2025-12-30"],
       "diagnostic_h2_opened": false,
+      "diagnostic_cap1000_h2_opened": false,
       "formal_features_opened": false,
       "formal_h1_opened": false,
       "formal_h2_opened": false,
       "promotion_evidence": false,
-      "next_rule": "No duplicate triggers. Formal: let 34810592135 terminate naturally, merge valid outputs with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using staged 48-shard layout. Diagnostic: if H2 is opened, open only frozen H1 leader NOCAP under the unchanged cost0 contract; do not retune or open CAP H2 as rescue."
+      "next_rule": "Collect run 34832358609 when complete and record cost0 NOCAP H2 metrics as diagnostic-only; never open CAP1000_PIT H2 as rescue and never retune from opened H1/H2. Formal path stays separate: let 34810592135 terminate naturally, merge valid outputs with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using staged 48-shard layout."
     },
     "oss_validation": {
       "head": "91831b03a955801f7f75de05ca0f8e69b824ea20",
@@ -153,10 +161,10 @@
     }
   },
   "next_global_actions": [
+    "Consensus diagnostic: collect unique NOCAP-only H2 run 34832358609 when complete; record cost0 metrics as MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE and mark 2025H2 opened/not untouched; do not open CAP1000_PIT H2 as rescue.",
+    "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
     "Phase-2: audit preserved model warm-up/calibration metadata and monthly model_period/training-count context without outcome-derived thresholds.",
     "Phase-2: Round2 remains closed until a causal market-level factor can explain more than the 2023H2 weak-market case; do not post-hoc fit 2025H2.",
-    "Consensus diagnostic: H1 opened with NOCAP diagnostic leader; if continuing, H2 may be opened for NOCAP only under unchanged frozen cost0 contract, with no retune.",
-    "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
     "Cloud: remain closed unless genuinely new exact identity evidence appears.",
     "OSS: real EDINET acquisition only when external key is available."
   ]

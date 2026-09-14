@@ -1,0 +1,5 @@
+trigger: 2026-09-14 v47-restored-daily-direct-rate-safe-retry
+source_v6_run: 34788533946
+source_canary_run: 34796452026
+population: exact 251 v6 missing restored/delisted historical codes
+strategy_outcomes: forbidden

@@ -1,7 +1,7 @@
 {
-  "version": 36,
+  "version": 37,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T23:29:00+09:00",
+  "updated_at_jst": "2026-09-14T23:30:00+09:00",
   "supervisor_last_scan": {
     "status": "OSS_TRIAL_LEDGER_PRIMITIVE_VERIFIED_BINDING_PENDING",
     "scanned_at_jst": "2026-09-14T23:29:00+09:00",
@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "c41cb8978b806c194f1b380331cd28bb75e772c4",
-      "last_processed_sha": "c41cb8978b806c194f1b380331cd28bb75e772c4",
-      "last_processed_note": "Outcome-blind endpoint reproducibility audit complete. Pin XTKS calendar and fail closed on incomplete endpoint rows before any new canonical relabeling. Cloud exact replay remains unavailable."
+      "last_seen_sha": "6e7dfa45e200dfa43e19a98ebc9b9110b4295b25",
+      "last_processed_sha": "6e7dfa45e200dfa43e19a98ebc9b9110b4295b25",
+      "last_processed_note": "Pinned XTKS/vendor endpoint provenance primitive and frozen contract added. Exact timestamp endpoints, manifest SHA-256, duplicate/missing endpoint fail-closed and no observed-row fallback are covered by synthetic tests. Formal relabeling remains blocked until a real manifest/source receipt is bound and evaluator wiring/CI pass. Cloud exact replay remains unavailable."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -78,8 +78,11 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "latest_audit_head": "c41cb8978b806c194f1b380331cd28bb75e772c4",
-      "endpoint_repro_audit": "Observed raw-date calendar and first/last-available endpoint reconstruction are insufficient for canonical provenance; pin XTKS calendar and endpoint-row completeness receipt before new relabeling."
+      "latest_audit_head": "6e7dfa45e200dfa43e19a98ebc9b9110b4295b25",
+      "endpoint_repro_audit": "Pinned XTKS/vendor exact-endpoint primitive is frozen with manifest SHA-256 and fail-closed semantics; formal evaluator wiring remains blocked until real manifest/source receipt and CI are available.",
+      "endpoint_provenance_status": "PRIMITIVE_FROZEN_SYNTHETIC_TESTED_WIRING_PENDING",
+      "latest_core_action": 34799307163,
+      "latest_core_action_status": "success_legacy_rejected_family"
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -109,7 +112,7 @@
     "Phase-2: continue outcome-blind population/scarcity audit; Round2 remains closed and no post-hoc gate retune is allowed.",
     "Consensus: run 34849054884 remains active/queued; do not duplicate-trigger. Inspect first usable artifacts when they appear, then frozen acceptance after completion.",
     "Canonical/Shadow: continue staleness/temporal integrity audit without opening strategy outcomes.",
-    "Core: freeze pinned XTKS calendar plus endpoint-row completeness/fail-closed provenance before any new canonical relabeling.",
+    "Core: generate/freeze a real XTKS + vendor endpoint manifest and immutable source receipt, then wire audit_core_canonical_endpoint.py to the fail-closed endpoint_provenance primitive and require CI before any performance recomputation.",
     "OSS: bind run_study/DSR to immutable completed-trial receipt; all new performance cost0-only.",
     "Cloud: exact replay stays closed absent genuinely contemporaneous identity-critical evidence."
   ]

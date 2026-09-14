@@ -7,6 +7,27 @@
 
 ---
 
+## 中締め判断 — 2026-09-14 16:44 JST
+
+**ユーザー承認により未開封バックテストを診断目的で開封するモードへ移行。** 一度開いたH1/H2は今後 untouched holdout とは扱わず、診断値を見て同familyをretuneしない。
+
+### 中締め暫定王者
+1. **weak+early + body_pct LOW** — 2023-2024 n=128 / mean +6.46% / median +1.25% / Top3-ex +4.03%; 2025 n=44 / mean +6.78% / Top3-ex +0.03%.
+2. **weak+early + volr20 LOW** — 2023-2024 n=128 / mean +6.24% / median +1.06% / Top3-ex +3.81%; 2025 n=44 / mean +6.58% / Top3-ex -0.19%.
+3. **weak+early + volr20/body combined rank** — 2023-2024 mean +7.16% / Top3-ex +4.75%; 2025 mean +6.09% / Top3-ex -0.71%.
+
+### 新規開封: V20 coverage-bypassed H1 diagnostic
+734 symbol/date gapを残したまま、閾値・ranker・TopN・endpointを変更せず診断。0.5% cost:
+- Top1 n=156 / mean **-1.85%** / median -3.13% / win 34.6% / Top3-ex -3.17%
+- Top3 n=442 / mean **-1.62%** / median -1.79% / win 38.7% / Top3-ex -2.11%
+- Top5 n=705 / mean **-1.04%** / median -1.46% / win 40.0% / Top3-ex -1.35%
+
+**中締め判定:** V20はDEPRIORITIZE。V47はretry 34810592135のrawがまだ無いため `NOT_COMPUTABLE_NO_INPUT_DATA`。広い新規探索は停止し、body_pct LOW / volr20 LOWの統一コスト比較とV47診断のみ継続する。
+
+詳細: `research/MIDTERM_COMPARISON_20260914.md`
+
+---
+
 ## 0. 全体サマリー
 
 | 項目 | 現在 |

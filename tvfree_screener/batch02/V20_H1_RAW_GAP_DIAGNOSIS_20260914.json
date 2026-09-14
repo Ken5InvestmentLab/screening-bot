@@ -1,0 +1,41 @@
+{
+  "diagnosis_id": "V20-H1-RAW-GAP-DIAGNOSIS-20260914-V1",
+  "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "source_run_id": 34791959735,
+  "source_artifact_id": 10327932766,
+  "strategy_outcomes_read": false,
+  "h1_h2_outcomes_opened": false,
+  "frozen_expected_symbols": 1810,
+  "observed_symbols": 1806,
+  "missing_active_symbol_date_pairs": 734,
+  "repair_rows_added": 0,
+  "repair_pairs_repaired": 0,
+  "repair_pairs_unrepaired": 734,
+  "failure_partition": {
+    "http_404_pairs": 476,
+    "successful_query_but_zero_rows_pairs": 258
+  },
+  "http_404_identity_clusters": [
+    {"output_symbol": "463A", "query_symbol": "8940", "pairs": 119},
+    {"output_symbol": "464A", "query_symbol": "5595", "pairs": 119},
+    {"output_symbol": "543A", "query_symbol": "7205", "pairs": 119},
+    {"output_symbol": "547A", "query_symbol": "8515", "pairs": 119}
+  ],
+  "missing_pair_symbol_count": 176,
+  "interpretation": [
+    "The 476 HTTP 404 failures are fully concentrated in the four frozen predecessor-identity mappings; this is not a broad transient Yahoo transport failure.",
+    "The remaining 258 gaps returned no HTTP error but also no 1H rows for the exact missing symbol/date query, so repeating the identical endpoint/request contract is not expected to improve coverage.",
+    "The frozen raw acceptance therefore remains failed and V20 H1/H2 strategy outcomes must remain closed."
+  ],
+  "next_safe_action": {
+    "action": "AUDIT_EXISTING_OUTCOME_BLIND_YAHOO_RAW_ARTIFACTS_FOR_EXACT_MISSING_PAIRS",
+    "preferred_candidate": "Consensus V47 accepted raw1H freeze artifact, after its frozen coverage acceptance completes",
+    "requirements": [
+      "Reuse only original Yahoo raw 1H rows; no interpolation, synthetic bars, daily-to-intraday fabrication, or threshold relaxation.",
+      "Require exact output-symbol/date identity or an independently frozen verified identity mapping before copying rows.",
+      "Do not inspect V47 or V20 strategy returns, model scores, labels, or performance while performing the recovery audit.",
+      "After any recovery, rerun the unchanged V20 fail-closed raw acceptance verifier before opening H1 outcomes."
+    ]
+  },
+  "production_modified": false
+}

@@ -1,12 +1,12 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 04:33 JST
+Last updated: 2026-09-15 05:37 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
 ## Consensus V47 status
 - Progress: **76%** (research-progress estimate; not promotion probability)
-- Latest observed HEAD before this dashboard write: `169e7053e333cc09fac2473727e0d1842fdebf4e`
+- Latest observed HEAD before this dashboard write: `6e7aa4739111168d5a75c60ae098ced565e1b212`
 - Promotion-relevant path: **V47 clean PIT only**
 - V43/V44: leakage/reproduction-contaminated; not promotion evidence
 - Price arms: exactly `NOCAP` and `CAP1000_PIT`
@@ -34,17 +34,17 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - Run `34849054884` — Consensus V47 Raw1H Freeze
 - Trigger HEAD: `7849ad975d1e0420e250ab4d5f411ce136f9d867`
 - Configuration: **48 shards, max-parallel=2, shard-count=48**
-- GitHub run-level status at this observation: **queued/non-terminal matrix**
+- GitHub run-level status at this observation: **in_progress / non-terminal matrix**
 - shard 0: workflow **SUCCESS**, artifact `10357093848` (1647 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
 - shard 1: workflow **SUCCESS**, artifact `10357611796` (1646 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
 - shard 2: workflow **SUCCESS**, artifact `10363982190` (1652 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
 - shard 3: workflow **SUCCESS**, artifact `10364352429` (1650 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
-- shards 4 and 5: explicitly observed **in_progress** at `Fetch raw 1H shard`
-- remaining matrix jobs: queued under max-parallel=2; **four artifacts** are visible so far
-- Completed total: **324 requested symbols / 0 ok / 0 raw rows / 324 HTTP 429**
+- No new artifact beyond shards 0-3 is visible at **2026-09-15 05:37 JST**; artifact count remains **4**.
+- remaining matrix jobs: queued/in-progress under max-parallel=2
+- Completed total represented by visible artifacts: **324 requested symbols / 0 ok / 0 raw rows / 324 HTTP 429**
 - Duplicate trigger: **prohibited / not triggered**
 - Formal interpretation: workflow completion is not data success. Completed shards 0-3 contribute **zero usable raw rows**.
-- Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**, now reproduced across the first four consecutive shards.
+- Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**, reproduced across the first four consecutive completed shards.
 - Frozen raw acceptance unchanged: pair>=99.5%, monthly>=99%, completely missing required symbol=0, symbols requiring >=20 days >=95%, restored pair>=99%
 - No interpolation and no threshold lowering.
 - On completed shards 0-3 alone: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
@@ -137,7 +137,7 @@ CAP1000_PIT H2: **UNOPENED**
 - Formal arm comparison remains blocked on raw acceptance + clean PIT feature materialization.
 
 ## Cross-lane coordination
-- Supervisor coordination re-read at start of this run.
+- Supervisor coordination intent/state re-checked at start of this run; the previously referenced `research/AUTOMATION_SUPERVISOR_MESSAGE.md` path is not present on this branch, so no content was inferred from a missing file.
 - `RESEARCH_DASHBOARD.md` re-read at start of this run.
 - `CONSENSUS_V44_HANDOFF.md` re-read at start of this run.
 - Canonical/Event overlap: none.
@@ -146,7 +146,7 @@ CAP1000_PIT H2: **UNOPENED**
 - Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater remain untouched.
 
 ## Blocker
-Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. The first four consecutive shards of run `34849054884` all completed mechanically but returned zero rows for every requested symbol: **324/324 final HTTP 429**. Shards 4 and 5 are fetching and only four artifacts are visible, so transport recovery has not yet been demonstrated. This is transport failure, not strategy evidence.
+Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. The first four consecutive completed shards of run `34849054884` returned zero rows for every requested symbol: **324/324 final HTTP 429**. The run remains non-terminal and only four shard artifacts are visible as of 05:37 JST, so transport recovery has not yet been demonstrated. This is transport failure, not strategy evidence.
 
 ## Next action
 1. Do **not** duplicate-trigger run `34849054884`.

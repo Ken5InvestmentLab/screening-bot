@@ -1,12 +1,12 @@
 {
-  "version": 48,
+  "version": 49,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T02:29:00+09:00",
+  "updated_at_jst": "2026-09-15T03:03:00+09:00",
   "supervisor_last_scan": {
-    "status": "CORE24_OHLCV_SUPPLEMENT_CONTRACT_IMPLEMENTED_CI_GREEN",
-    "scanned_at_jst": "2026-09-15T02:29:00+09:00",
+    "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
+    "scanned_at_jst": "2026-09-15T03:03:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Core24 implemented the preregistered fail-closed OHLCV supplementation verifier and frozen source policy without opening performance. Contract CI 34874773548 and follow-up guard CI 34874848913 both succeeded. Alpha Vantage free is registered as low-priority daily-only fallback; Stooq remains non-formal until overlap/provenance/timestamp/adjustment verification; Google Finance snapshots remain non-formal corroboration only. Existing Core rejects stay closed and Cloud exact replay remains unavailable."
+    "note": "Supervisor absorbed new Parallel Wave-1 schema-freeze handoff c7d5e0b0 and Consensus coordination head 848cb233 without duplicate execution. Parallel source schema is now frozen and performance remains unopened; next blocker is an independently pinned XTKS calendar plus endpoint completeness receipt. Consensus raw48 remains nonterminal with shards 2/3 fetching and systemic Yahoo HTTP429; no duplicate trigger. Phase-2 frozen ranking/G3/fresh FAIL/Round2 CLOSED unchanged."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -18,31 +18,36 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
       "last_processed_sha": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
-      "last_processed_note": "Shadow/Data endpoint completeness is now enforced inside the verified resolution/write boundary. Before any resolved replacement, an outcome-blind immutable completeness receipt is emitted; mature missing/invalid next-open or D+5-close inputs fail closed with the existing resolved file untouched. Exact replay is idempotent and changed input produces a distinct append-only receipt. CI 34873808933 SUCCESS. No performance opened."
+      "task_state": "ACTIVE",
+      "last_processed_note": "Shadow/Data endpoint completeness enforced inside verified resolution/write boundary; CI 34873808933 SUCCESS. Next: exact provenance-chain hash binding. No performance opened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
       "last_processed_sha": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
-      "last_processed_note": "Outcome-blind OHLCV supplement contract implemented. Predeclared missing inventory, provenance/raw SHA, causality, OHLCV validity, deterministic source/timeframe eligibility and conflict fail-closed rules are enforced. CI 34874773548 + 34874848913 SUCCESS. Alpha Vantage free is daily-only low-priority; Stooq and Google snapshot are not formal intraday sources yet. No performance opened; Cloud exact replay unavailable."
+      "task_state": "ACTIVE_DATA_REPAIR",
+      "last_processed_note": "Outcome-blind OHLCV supplement contract implemented and CI GREEN. Real missing inventory/fallback raw/verifier/coverage delta remain. Cloud exact replay itself is HOLD/CLOSE_CANDIDATE."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "ce96115aa87e1ba3e343a87a0f71bd941abebed5",
-      "last_processed_sha": "ce96115aa87e1ba3e343a87a0f71bd941abebed5",
-      "last_processed_note": "Raw48 retry 34849054884 audited through systemic Yahoo 429 diagnosis. Shards 0/1 workflow-success artifacts have zero usable rows (81/81 HTTP429 each); shards 2/3 still fetching. New future-retry all-429 circuit breaker is acquisition-only and outcome-blind. Formal raw acceptance remains NOT PASS; do not duplicate-trigger or interpret transport failure as performance."
+      "last_seen_sha": "848cb233c6780c92c0513ebd5e3122885d7964ae",
+      "last_processed_sha": "848cb233c6780c92c0513ebd5e3122885d7964ae",
+      "task_state": "EXTERNAL_WAIT_ACTIVE_RUN",
+      "last_processed_note": "New coordination head absorbed. Raw48 run 34849054884 remains nonterminal; shards 0/1 zero usable rows from 81/81 HTTP429, shards 2/3 currently fetching, remaining matrix queued. Merge acceptance spec pinned. Do not duplicate-trigger."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
       "last_processed_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
+      "task_state": "ACTIVE",
       "last_processed_note": "Immutable completed-trial ledger/receipt primitive verified; run_study-to-DSR receipt binding remains next."
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
-      "last_seen_sha": "8cfcee630164ae022c98100cd9339eaa20bbe84d",
-      "last_processed_sha": "8cfcee630164ae022c98100cd9339eaa20bbe84d",
-      "last_processed_note": "Wave-1 source provenance bound; exact schema + pinned XTKS endpoint completeness receipt remain pending before one-shot cost0 A1/B1/E1 evaluation."
+      "last_seen_sha": "c7d5e0b023b5331cfba62186aeae2949e765e3cf",
+      "last_processed_sha": "c7d5e0b023b5331cfba62186aeae2949e765e3cf",
+      "task_state": "ACTIVE",
+      "last_processed_note": "Wave-1 exact source schema frozen outcome-blind. Receipt binds preserved tse_daily.csv SHA 6adfb626..., 4,061,361 rows and exact header date/open/high/low/close/volume/symbol. Performance remains unopened. Next: independently pin XTKS calendar and endpoint-session completeness receipt before one-shot cost0 evaluation."
     }
   },
   "guardrails": [
@@ -53,76 +58,92 @@
     "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning."
   ],
   "workflow_watch": {
+    "weak_early_phase2": {
+      "status": "FRESH_2022_FAILED_ROUND2_CLOSED",
+      "task_state": "WRAP_UP",
+      "leader": "DUAL+G3",
+      "leader_2023_25": {"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},
+      "g3_threshold": "med_ret1 >= -0.01 FROZEN",
+      "fresh_2022": "FAILED_ROBUSTNESS",
+      "round2": "CLOSED"
+    },
     "v20_session_impulse": {
-      "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
+      "status": "DEPRIORITIZED_CLOSED_ACTIVE_QUEUE",
+      "task_state": "CLOSED",
       "formal_promotion_eligible": false,
       "cost_pct_points": 0.0
     },
     "shadow_data_integrity": {
       "status": "VERIFIED_RESOLUTION_PREWRITE_COMPLETENESS_RECEIPT_CI_GREEN",
+      "task_state": "ACTIVE",
       "head": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
-      "implementation_head": "74585479f8a7c2a7bbce760653a8f3ef0616b853",
       "latest_ci_run": 34873808933,
       "latest_ci_status": "success",
       "performance_opened": false,
-      "expected_through_date_required": true,
-      "endpoint_pair_completeness_required": true,
-      "prewrite_completeness_receipt_required": true,
-      "receipt_append_only": true,
-      "next_rule": "Audit the provenance chain from daily endpoint manifest and pinned XTKS calendar through completeness receipt to resolved output/legacy resolution receipt; require exact hash binding and preserve fail-closed append-only semantics without opening strategy outcomes."
+      "next_rule": "Bind daily endpoint manifest + independently pinned XTKS calendar -> immutable completeness receipt -> resolved output/resolution receipt with exact hashes."
     },
     "consensus_v47": {
+      "task_state": "EXTERNAL_WAIT",
       "daily_coverage_pass": true,
       "frozen_coverage_acceptance_pass": false,
       "formal_retry_run": 34849054884,
       "formal_retry_status": "ACTIVE_SYSTEMIC_HTTP429_BLOCKED",
-      "completed_zero_row_shards": [0, 1],
-      "completed_artifacts": [10357093848, 10357611796],
-      "active_fetch_shards": [2, 3],
+      "completed_zero_row_shards": [0,1],
+      "active_fetch_shards": [2,3],
       "promotion_evidence": false,
-      "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393}
+      "midterm_nocap_h2": {"n":37,"mean_pct":3.0295,"median_pct":0.3817,"win_pct":51.35,"top3_ex_pct":-0.5393}
     },
     "parallel_wave1": {
-      "status": "SOURCE_BYTES_BOUND_SCHEMA_ENDPOINT_RECEIPT_PENDING_PERFORMANCE_UNOPENED",
-      "head": "8cfcee630164ae022c98100cd9339eaa20bbe84d",
-      "selected_families": ["A_COMPRESSION_EXPANSION", "B_RELATIVE_REVERSAL", "E_PRIOR_STRUCTURE_PROXIMITY"],
+      "status": "SOURCE_BYTES_BOUND_EXACT_SCHEMA_FROZEN_ENDPOINT_RECEIPT_PENDING_PERFORMANCE_UNOPENED",
+      "task_state": "ACTIVE",
+      "head": "c7d5e0b023b5331cfba62186aeae2949e765e3cf",
+      "schema_receipt": "research/PARALLEL_WAVE1_SCHEMA_RECEIPT_20260915.json",
+      "source_csv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+      "source_rows": 4061361,
+      "selected_families": ["A_COMPRESSION_EXPANSION","B_RELATIVE_REVERSAL","E_PRIOR_STRUCTURE_PROXIMITY"],
       "performance_opened": false
     },
     "core": {
+      "task_state": "ACTIVE_PROVENANCE",
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
-      "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
+      "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE_HOLD_CLOSE_CANDIDATE",
       "endpoint_provenance_status": "IMMUTABLE_SOURCE_RECEIPT_PRIMITIVE_CI_GREEN",
       "head": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
-      "supplement_implementation_head": "d2f24b99d66c2cbfa6dbc3f1aa6e1d623973c3be",
-      "latest_ci_run": 34874848913,
-      "latest_ci_status": "success",
       "performance_opened": false
     },
     "ohlcv_supplement": {
+      "task_state": "ACTIVE",
       "status": "FAIL_CLOSED_CONTRACT_IMPLEMENTED_CI_GREEN_REAL_GAP_HANDOFF_PENDING",
-      "supervisor_note": "research/SUPERVISOR_OHLCV_SUPPLEMENT_ACCEPTANCE_20260915_0202.md",
-      "source_policy": "research/tentei_cloud/OHLCV_SUPPLEMENT_SOURCE_POLICY_20260915.json",
-      "contract_ci_runs": [34874773548, 34874848913],
       "formal_dataset_adoption": false,
       "performance_recompute_allowed": false,
       "alpha_vantage_free_role": "LOW_PRIORITY_DAILY_ONLY",
       "stooq_role": "CANDIDATE_NOT_FORMAL_ELIGIBLE",
-      "googlefinance_snapshot_role": "CORROBORATION_ONLY_NOT_FORMAL_INTRADAY",
-      "required_handoff": ["missing_pair_inventory", "source_hierarchy", "per_pair_provenance", "accepted_rejected_conflicted_counts", "immutable_source_receipts", "deterministic_verifier", "coverage_delta"],
-      "prohibitions": ["interpolation", "forward_fill_back_fill", "daily_to_intraday_synthesis", "outcome_informed_source_selection", "silent_native_supplement_merge"]
+      "googlefinance_snapshot_role": "CORROBORATION_ONLY_NOT_FORMAL_INTRADAY"
+    },
+    "cloud_exact_forensic": {
+      "task_state": "HOLD_CLOSE_CANDIDATE",
+      "status": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
+      "reopen_condition": "new contemporaneous identity-critical evidence only"
     },
     "oss_validation": {
+      "task_state": "ACTIVE",
       "head": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
       "cost0_optuna_contract_status": "IMPLEMENTATION_VERIFIED_CI_GREEN",
       "trial_ledger_status": "PRIMITIVE_VERIFIED_BINDING_PENDING"
+    },
+    "edinet_same_zip": {
+      "task_state": "EXTERNAL_INPUT_WAIT",
+      "status": "REAL_API_KEY_OR_PINNED_REAL_ZIP_REQUIRED"
     }
   },
   "next_global_actions": [
-    "Core24 OHLCV supplement: generate exact real missing-pair inventory, acquire fallback source bytes under the frozen source policy, emit immutable receipts, run the deterministic verifier, and hand off accepted/rejected/conflicted counts plus coverage delta before any performance recomputation.",
-    "Canonical/Shadow: audit and bind the full endpoint provenance chain (daily manifest + pinned XTKS calendar -> immutable prewrite completeness receipt -> resolved output/resolution receipt) without opening outcomes.",
-    "Parallel Wave-1: exact schema + pinned XTKS endpoint-session completeness receipt, then one cost0 batch only.",
-    "Consensus: do not duplicate-trigger run 34849054884; preserve zero-row 429 receipts, wait for the active run to become terminal, then merge only genuinely observed rows plus preserved seed and rerun the unchanged frozen verifier. If Yahoo later becomes healthy and acceptance still fails, retry missing pairs only with the new systemic-429 fail-fast guard.",
-    "Core: generate/freeze the real XTKS + raw-vendor endpoint manifest, emit/verify immutable source receipt from the actual fetch artifact, then wire audit_core_canonical_endpoint.py to the fail-closed endpoint primitive before recomputation.",
-    "OSS: bind run_study/DSR to immutable completed-trial receipt."
+    "Parallel Wave-1: independently pin XTKS calendar artifact/version/SHA, implement signal->next session open->fifth session close mapping, emit endpoint completeness receipt, then one cost0 batch only.",
+    "Core24 OHLCV supplement: generate exact real missing-pair inventory, acquire fallback source bytes under frozen policy, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
+    "Canonical/Shadow: bind full endpoint provenance chain outcome-blind.",
+    "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",
+    "Core: freeze real XTKS/raw-vendor endpoint manifest and wire canonical evaluator to fail-closed provenance primitive before recomputation.",
+    "OSS: bind run_study/DSR to immutable completed-trial receipt.",
+    "Cloud exact forensic: keep out of active work unless new contemporaneous identity-critical evidence appears.",
+    "V20: keep closed/deprioritized; do not spend worker cycles unless genuinely new evidence changes the premise."
   ]
 }

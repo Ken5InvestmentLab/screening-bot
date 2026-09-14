@@ -5,10 +5,11 @@ The harness is deliberately narrow:
 * only candidate dates from 2022-07-01 through 2023-12-31 are accepted;
 * label/evaluation timestamps must also resolve by 2023-12-31;
 * walk-forward folds train only on earlier dates and purge overlapping labels;
-* the candidate universe, features, target threshold, top-N and trading cost are
-  fixed inputs -- Optuna tunes only LogisticRegression C;
+* the candidate universe, features, target threshold and top-N are fixed outside
+  Optuna, and transaction cost is frozen at exactly 0%;
+* Optuna tunes only LogisticRegression C;
 * the optimization objective is the per-active-date Sharpe of a fixed top-N
-  cohort return stream;
+  cohort gross-return stream;
 * every completed trial's Sharpe is retained so purgedcv can report a DSR
   sensitivity for the selected trial.
 
@@ -281,7 +282,7 @@ def run_study(
     feature_cutoff_column: str | None = None,
     target_threshold: float = 0.0,
     top_n: int = 1,
-    round_trip_cost: float = 0.005,
+    round_trip_cost: float = 0.0,
     n_splits: int = 4,
     test_dates: int = 20,
     n_trials: int = 30,
@@ -292,8 +293,8 @@ def run_study(
     """Run the one-parameter discovery search and return an auditable summary."""
     if top_n < 1:
         raise ValueError("top_n must be >= 1")
-    if not (0 <= round_trip_cost < 1):
-        raise ValueError("round_trip_cost must be in [0, 1)")
+    if float(round_trip_cost) != 0.0:
+        raise ValueError("new Optuna discovery/performance is cost0-only; round_trip_cost must equal 0")
     if n_trials < 2:
         raise ValueError("n_trials must be >= 2")
     if not (0 < c_low < c_high):
@@ -412,7 +413,8 @@ def run_study(
         "target": f"{return_column} > {float(target_threshold)}",
         "selection": {
             "top_n": int(top_n),
-            "round_trip_cost": float(round_trip_cost),
+            "round_trip_cost": 0.0,
+            "cost_policy": "COST0_ONLY",
         },
         "walk_forward": {
             "n_splits": int(n_splits),
@@ -436,6 +438,7 @@ def run_study(
         "selection_bias": selection_bias,
         "selection_bias_error": selection_bias_error,
         "guardrails": {
+            "transaction_cost_policy": "COST0_ONLY",
             "uses_2024_for_selection": False,
             "uses_2025_for_selection": False,
             "uses_2026_for_selection": False,
@@ -460,7 +463,12 @@ def main() -> None:
     p.add_argument("--feature-cutoff-column")
     p.add_argument("--target-threshold", type=float, default=0.0)
     p.add_argument("--top-n", type=int, default=1)
-    p.add_argument("--round-trip-cost", type=float, default=0.005)
+    p.add_argument(
+        "--round-trip-cost",
+        type=float,
+        default=0.0,
+        help="frozen research contract: must be exactly 0.0; non-zero values fail closed",
+    )
     p.add_argument("--n-splits", type=int, default=4)
     p.add_argument("--test-dates", type=int, default=20)
     p.add_argument("--n-trials", type=int, default=30)

@@ -1,12 +1,12 @@
 {
   "version": 5,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T11:52:00+09:00",
+  "updated_at_jst": "2026-09-14T12:02:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
-    "branch_heads_changed_since_previous_state": true,
+    "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "11:50 cross-lane follow-up processed Canonical/Shadow head 25b0ae42, Core head 7ce65d88, and Consensus through accepted daily PIT rebuild plus trigger a0ff4cf0. Shadow/Data immutable resolution receipt CI 34799006401 passed 42/42. Core three-family Precision batch 34799307163 rejected all three in DEVELOPMENT only and Core is now coordination/consumer-only. Consensus external daily run 34799835035 passed daily_coverage_pass=true outcome-blind; raw1H 12-shard run 34800587082 was triggered and is queued. No strategy outcomes/model scores were opened."
+    "note": "12:02 supervisor scan verified active heads unchanged: Canonical/Shadow 25b0ae42, Core 7ce65d88, Consensus a0ff4cf0. All equal their last_processed_sha, so no SHA was reprocessed. Consensus V47 raw1H freeze run 34800587082 remains queued on the accepted daily PIT parent; no duplicate trigger was issued and no strategy outcomes/model scores were opened. V20 remains fail-closed at 1806/1810 with 734 canonical-active symbol/date gaps, and Core remains coordination/consumer-only after DEVELOPMENT rejection of all three Precision families."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,

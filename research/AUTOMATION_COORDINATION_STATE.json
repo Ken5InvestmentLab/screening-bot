@@ -1,7 +1,7 @@
 {
-  "version": 11,
+  "version": 12,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T16:50:00+09:00",
+  "updated_at_jst": "2026-09-14T16:53:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_WITH_STATE_RECONCILIATION",
     "branch_heads_changed_since_previous_state": true,
@@ -18,20 +18,20 @@
     "note": "Rejected Core families remain closed to retuning. Separately, by explicit user request, the historical Cloud Monster n=63 / 5BD mean +9.86% headline is now queued for an exact forensic reproducibility audit: freeze an exact-match reconstruction spec from historical implementation/artifacts, reproduce the original period first, and only if exact reproduction succeeds apply the unchanged logic to genuinely unused periods. This is audit/reproducibility work only and does not restore the family as a promotion candidate."
   },
   "cross_lane_followup_last_scan": {
-    "status": "COMPLETE_WITH_OSS_PROGRESS",
-    "scanned_at_jst": "2026-09-14T16:50:00+09:00",
+    "status": "COMPLETE_WITH_OSS_PROGRESS_AND_DASHBOARD_RECONCILIATION",
+    "scanned_at_jst": "2026-09-14T16:53:00+09:00",
     "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
     "consensus_head": "01299302461872a748693313e4de9c63cdcd32b8",
     "oss_head": "faba5b48f1831b16f08c74895f772ca0089f765c",
-    "note": "All Canonical/Core/Consensus HEADs matched their processed STATE values at scan start, so no duplicate experiment was performed. Consensus retry 34810592135 still has fetch(0)/fetch(1) in raw 1H fetch and ten shards queued. OSS advanced outcome-blind EDINET validation by adding an exact selected-ZIP byte-freeze layer that fails closed on set drift/corrupt archives, freezes per-doc SHA256 plus an aggregate digest before parser opening, and preserves no-replacement/outcome-sealed rules. CI 34819456421 completed SUCCESS. Complete 2023-2025 real metadata, selected real doc IDs/ZIPs, real parser outputs, strategy outcomes and 2026 outcomes remain unopened; external EDINET API-key access is the execution blocker."
+    "note": "All Canonical/Core/Consensus HEADs matched their processed STATE values at scan start, so no duplicate experiment was performed. Consensus retry 34810592135 still has fetch(0)/fetch(1) in raw 1H fetch and ten shards queued. OSS added an exact selected-ZIP byte-freeze layer; CI 34819456421 SUCCESS. Cross-lane dashboard reconciliation also preserved the user-authorized midterm diagnostic: V20 coverage-bypassed Top1/Top3/Top5 means are -1.846/-1.618/-1.038% at 0.5% cost, so V20 is DEPRIORITIZE and this opened period is not an untouched holdout. Formal V20 acceptance remains blocked by 734 gaps. Real EDINET metadata/parser outcomes remain unopened; external EDINET API-key access is the execution blocker."
   },
   "canonical_worker_last_scan": {
     "status": "COMPLETE_WAITING_ON_ACCEPTED_CONSENSUS_RETRY",
     "scanned_at_jst": "2026-09-14T15:15:00+09:00",
     "canonical_head_before": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
     "canonical_head_after": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "note": "Re-fetched coordination contract, canonical HEAD/ledger, and V47 retry run 34810592135. Canonical HEAD matched prior last_processed_sha, so no duplicate V20 work was performed. The retry currently has 12 shard jobs: fetch(0) and fetch(1) are in progress at the raw-1H fetch step and the other 10 are queued. Recorded outcome-blind receipt V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json. Do not duplicate-trigger; V20 H1/H2 outcomes remain closed until Consensus frozen raw coverage acceptance passes."
+    "note": "Re-fetched coordination contract, canonical HEAD/ledger, and V47 retry run 34810592135. Canonical HEAD matched prior last_processed_sha, so no duplicate V20 work was performed. The retry currently has 12 shard jobs: fetch(0) and fetch(1) are in progress at the raw-1H fetch step and the other 10 are queued. Recorded outcome-blind receipt V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json. Do not duplicate-trigger; formal V20 raw acceptance remains blocked until Consensus frozen raw coverage acceptance passes."
   },
   "consensus_worker_last_scan": {
     "status": "ACTIVE_RETRY_PLUS_PRESERVED_RAW_SEED_AUDIT",
@@ -51,7 +51,7 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "15:15 :12 worker found no unprocessed canonical work at the old HEAD, then recorded a fresh outcome-blind V47 retry-watch receipt. Consensus retry 34810592135 has 2 shard jobs actively fetching and 10 queued; it is not accepted evidence yet. V20 still has 734 missing active symbol/date pairs and H1/H2 performance remains unopened."
+      "last_processed_note": "No new canonical SHA at 16:53. V20 formal raw acceptance still has 734 missing active symbol/date pairs. Separately, the user-authorized coverage-bypassed midterm diagnostic is already opened and negative across TopN, so that diagnostic period is no longer an untouched holdout and V20 is DEPRIORITIZE; do not retune it."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -99,8 +99,15 @@
       "consensus_v47_source_gate_receipt": "tvfree_screener/batch02/V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json",
       "consensus_v47_retry_watch_receipt": "tvfree_screener/batch02/V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json",
       "consensus_v47_run_34800587082_usable_for_repair": false,
-      "performance_interpreted": false,
-      "next_rule": "Keep H1/H2 outcomes closed. Wait for Consensus to produce a raw1H artifact that passes its frozen coverage acceptance after targeted refetch. Only then audit exactly the 734 missing V20 pairs and rerun the unchanged V20 raw verifier. No threshold lowering, interpolation/synthetic bars, or V20 retune."
+      "formal_performance_interpreted": false,
+      "midterm_diagnostic_opened": true,
+      "midterm_diagnostic_status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
+      "midterm_diagnostic_cost_pct_points": 0.5,
+      "midterm_diagnostic_top1_mean_pct": -1.846,
+      "midterm_diagnostic_top3_mean_pct": -1.618,
+      "midterm_diagnostic_top5_mean_pct": -1.038,
+      "midterm_diagnostic_holdout_status": "OPENED_NOT_UNTOUCHED",
+      "next_rule": "Do not retune V20 from the opened diagnostic. Formal raw acceptance remains blocked by 734 gaps. If Consensus later produces frozen-accepted raw, repair only those exact gaps and rerun the unchanged verifier as coverage reconciliation, not as a fresh untouched holdout."
     },
     "prospective_shadow_data_integrity": {
       "latest_head": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
@@ -157,7 +164,7 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 16:50 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
+      "missing_universe_retry_status": "active acquisition at 16:53 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
       "missing_universe_retry_active_jobs": 2,
       "missing_universe_retry_queued_jobs": 10,
       "preserved_raw_seed_run": 34592896202,
@@ -174,7 +181,7 @@
       "clean_features_opened": false,
       "dev_h1_opened": false,
       "h2_opened": false,
-      "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion combine only immutable retry bars and preserved run34592896202 bars with artifact/digest provenance, deduplicate exact symbol/timestamp, and rerun the unchanged frozen coverage verifier before any feature/performance inspection. If rejected, acquire only the newly emitted missing symbol/date set; thresholds unchanged and no interpolation."
+      "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion combine only immutable retry bars and preserved run34592896202 bars with artifact/digest provenance, deduplicate exact symbol/timestamp, and rerun the unchanged frozen coverage verifier before feature inspection. Under the user-authorized midterm diagnostic policy, performance may be opened once real raw input exists, but any opened diagnostic period ceases to be an untouched holdout."
     },
     "oss_validation": {
       "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
@@ -194,12 +201,27 @@
       "next_rule": "Use the tested acquisition helper with an external EDINET API key to materialize exact raw daily JSON for every 2023-01-01..2025-12-31 calendar day. Freeze the full metadata hash-chain receipt, run the preregistered selector exactly once, then materialize exactly the selected ZIP set and run edinet_selected_zip_freeze.py before passing the identical SHA256-frozen bytes to custom and edinet-tools parsers. Never resample around parser failures or use strategy outcomes to arbitrate disagreements."
     }
   },
+  "midterm_diagnostic": {
+    "policy": "USER_AUTHORIZED_DIAGNOSTIC_OPENING_NOT_PROMOTION_EVIDENCE",
+    "opened_periods_are_untouched_holdouts": false,
+    "broad_blind_exploration": "STOP",
+    "observed_rank_1": "weak+early + body_pct LOW",
+    "observed_rank_2": "weak+early + volr20 LOW",
+    "observed_rank_3": "weak+early + mean-rank(volr20, body_pct)",
+    "v20_disposition": "DEPRIORITIZE",
+    "v47_disposition": "NOT_COMPUTABLE_NO_INPUT_DATA_UNTIL_RETRY_EMITS_RAW",
+    "next_high_information_checks": [
+      "Unify body_pct LOW and volr20 LOW under 0.5% cost and the same canonical endpoint with row-level metrics.",
+      "Finish V47 retry and open diagnostic performance once real raw input exists, while preserving formal acceptance separation.",
+      "Continue old Cloud exact recovery only if genuinely new source evidence can reconstruct the exact historical model."
+    ]
+  },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Consensus V47 has not yet produced a frozen-accepted repair source.",
-      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is actively acquiring two shards at a time. Preserved Yahoo raw seed run34592896202 contains 35.4% of NOCAP and 83.1% of CAP1000_PIT required pairs but 0% restored coverage, so it can reduce redundant requests only after provenance-preserving merge and unchanged acceptance verification.",
-      "No currently passing canonical 5BD Core/Precision replacement candidate. Separately, historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending; this audit does not reopen rejected Core families for retuning or promotion.",
+      "V20 formal exact raw acceptance still has 734 canonical-active symbol/date gaps. Its coverage-bypassed diagnostic is already opened and negative across TopN, so V20 is DEPRIORITIZE and may not be retuned from that diagnostic.",
+      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is actively acquiring two shards at a time. Preserved Yahoo raw seed run34592896202 contains 35.4% of NOCAP and 83.1% of CAP1000_PIT required pairs but 0% restored coverage.",
+      "No currently passing canonical 5BD Core/Precision replacement candidate. Separately, historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending; the historical headline is not current promotion evidence.",
       "OSS EDINET sample-selection, metadata snapshot/acquisition, and selected-ZIP exact-byte freeze boundaries are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized because the runtime lacks an external EDINET API key; real selected doc IDs/ZIP hashes and same-ZIP parser comparison remain unopened."
     ]
   },

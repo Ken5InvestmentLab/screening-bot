@@ -6,7 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from tvfree_screener.batch02.prospective_shadow import resolve_shadow_file
+from tvfree_screener.batch02.prospective_shadow_verified_resolve import verified_resolve_shadow_file
 from tvfree_screener.batch02.prospective_shadow_admission_gate import evaluate_shadow_admission
 from tvfree_screener.batch02.prospective_shadow_verified_append import verified_append
 
@@ -158,7 +158,7 @@ def cmd_ingest(args: argparse.Namespace) -> None:
 def cmd_resolve(args: argparse.Namespace) -> None:
     freeze = load_freeze_manifest(Path(args.freeze_manifest), args.freeze_sha256)
     daily_rows, sessions = read_daily_csv(Path(args.daily))
-    summary = resolve_shadow_file(Path(args.shadow), Path(args.resolved), daily_rows, sessions)
+    result = verified_resolve_shadow_file(Path(args.shadow), Path(args.resolved), daily_rows, sessions)
     out = {
         "operation": "resolve",
         "experiment_id": freeze["experiment_id"],
@@ -166,10 +166,12 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
         "shadow_input_sha256": sha256_file(Path(args.shadow)),
         "daily_input_sha256": sha256_file(Path(args.daily)),
-        **summary,
+        **result,
     }
     write_summary(Path(args.summary), out)
     print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
+    if not result.get("resolved_written", False):
+        raise SystemExit(2)
 
 
 def build_parser() -> argparse.ArgumentParser:

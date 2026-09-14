@@ -20,10 +20,11 @@ jobs:
   fetch:
     strategy:
       fail-fast: false
+      max-parallel: 2
       matrix:
         shard: [0,1,2,3,4,5,6,7,8,9,10,11]
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -69,15 +70,23 @@ jobs:
           PY
       - name: Compile and test shard fetcher
         run: |
-          python -m py_compile             research/no_tv_v47_intraday_fetch_shard.py             research/test_no_tv_v47_intraday_fetch_shard.py
+          python -m py_compile \
+            research/no_tv_v47_intraday_fetch_shard.py \
+            research/test_no_tv_v47_intraday_fetch_shard.py
           python research/test_no_tv_v47_intraday_fetch_shard.py
       - name: Fetch raw 1H shard
         run: |
-          python research/no_tv_v47_intraday_fetch_shard.py             --symbols-file daily/v47_required_intraday_nocap.txt             --shard-index ${{ matrix.shard }}             --shard-count 12             --output-dir research_artifacts/v47_raw1h_shard_${{ matrix.shard }}
+          python research/no_tv_v47_intraday_fetch_shard.py \
+            --symbols-file daily/v47_required_intraday_nocap.txt \
+            --shard-index ${{ matrix.shard }} \
+            --shard-count 12 \
+            --output-dir research_artifacts/v47_raw1h_shard_${{ matrix.shard }}
       - name: Hash shard
         run: |
           cd research_artifacts/v47_raw1h_shard_${{ matrix.shard }}
-          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0             | sort -z             | xargs -0 sha256sum > SHA256SUMS.txt
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > SHA256SUMS.txt
       - name: Upload shard
         if: always()
         uses: actions/upload-artifact@v4

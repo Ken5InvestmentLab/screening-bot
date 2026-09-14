@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 01:12 JST  
+> **最終更新:** 2026-09-15 01:28 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **正式promotion evidenceと中締め診断は分離する。**
 
@@ -14,7 +14,7 @@
 | 2023-25暫定首位 | **DUAL + G3** mean +7.98% / median +1.74% / win 53.85% / Top3-ex +5.14% |
 | Parallel Wave-1 | source bytes/provenance bound / performance未開封 |
 | Consensus V47 | formal raw acceptance未PASS / diagnostic NOCAP H2のみ開封 |
-| Core / Cloud | fixed Core reject維持 / Cloud exact replay unavailable |
+| Core / Cloud | fixed Core reject維持 / endpoint source-receipt primitive **CI GREEN** / Cloud exact replay unavailable |
 | OSS / Validation | cost0 + immutable trial-ledger primitive GREEN |
 | 最終判定 | **NO-GO / 研究継続** |
 
@@ -33,21 +33,9 @@
 
 **Decision: DEPRIORITIZE.** opened resultを見たthreshold/TopN/ranker/cooldown変更は禁止。
 
-### Shadow/Data integrity — 今回前進
+### Shadow/Data integrity
 
-Canonical HEAD `962a062bc8a46eb32df65cfa737676463ec3ea1a`。
-
-新規 `prospective_shadow_endpoint_completeness_guard.py` を追加し、frozen prospective selection ledgerに対して、成熟済み候補の必要endpointをperformance非開封で事前監査する境界を実装した。
-
-- exact **next XTKS session open** の symbol/date/open が必要
-- exact **fifth XTKS session close** の symbol/date/close が必要
-- required pair欠損、required symbol全欠損、非finite/非positive価格、calendar重複、signal_dateがpinned calendar外なら **fail-closed**
-- まだ5営業日成熟していない候補は `pending` として扱いfailureにしない
-- gross returnは計算しない
-- threshold/ranker/cooldown/strategy logicは変更しない
-- production変更なし
-
-Prospective Shadow CI **`34867054366` SUCCESS**。次はこのguardをverified resolution/write boundaryへ配線し、受理前のimmutable completeness receiptを作る。
+Canonical HEAD `74953f93945996fd9c29eb9af60927add720a3d9`。frozen prospective selection ledgerに対するsymbol-set + exact endpoint-session completeness guardはCI GREEN。成熟済み候補のnext XTKS open / fifth XTKS closeが欠ける場合はfail-closed、未成熟候補はpending。gross returnは開かない。Prospective Shadow CI **`34867054366` SUCCESS**。次はverified resolution/write boundaryへ配線しimmutable completeness receiptを作る。
 
 ## 2. Weak+Early Phase-2 — frozen cost0
 
@@ -79,14 +67,38 @@ A1/B1/E1 manifestとsource bytes/provenanceは固定済み。performance未開�
 
 ## 5. Core / Cloud / OSS
 
-Core fixed candidateはREJECT維持。Cloud historical exact replayは `HISTORICAL_EXACT_REPRO_UNAVAILABLE`。OSSはcost0 Optuna contractとimmutable completed-trial ledger primitiveがGREENで、DSR receipt binding待ち。
+### Core endpoint provenance — 今回前進
+
+Core/Cloud latest HEAD: `adca8963302644857e4bb05f668e660c84bffb82`。
+
+- Fixed Core / Failed-Breakdown Reclaim / Prior-Close Reclaim / Precision 3-family等の既reject familyは閉鎖維持、retuneなし。
+- `endpoint_provenance.py` にimmutable raw-source receiptを追加。raw fileのexact SHA-256/size、source Actions run ID、artifact名、vendor identity、pinned calendar SHA-256を束縛し、receipt自体もSHA-256固定。
+- raw bytes、file set、size、metadata、calendar SHAにdriftがあればfail-closed。
+- outcome/returnを使わず検証可能。
+- dedicated CI **`34868543771` SUCCESS**。
+- 今回performance再計算なし。したがって新しいn/平均/中央値/勝率/tail値はなく、ランキング・GO/NO-GOへの影響なし。
+
+**残blocker:** real XTKS + raw-vendor endpoint manifestを生成/freezeし、actual fetch artifactからsource receiptをemit/verifyし、`audit_core_canonical_endpoint.py` をobserved-date + first/last-row方式からfail-closed `resolve_canonical_endpoints` へ配線する。そのCIが通るまでformal Core returnを再計算しない。
+
+### Cloud Monster forensic
+
+完全一致段階は **`HISTORICAL_EXACT_REPRO_UNAVAILABLE`** を維持。新しい同時代一次証拠なし。model-family guessing / portability replayは再開していない。
+
+- **歴史値（legacy evidence）:** `n=63 / 5BD平均 +9.86%`
+- **新しい完全一致再現結果:** なし
+
+歴史値と新規再現値を混同しない。exact model / exact 575 Watch pool等の新証拠が出ない限り、Cloudをpromotion候補へ戻さない。
+
+### OSS / Validation
+
+cost0 Optuna contractとimmutable completed-trial ledger primitiveがGREEN。DSR receipt binding待ち。
 
 ## 6. 残タスク
 
 1. **Canonical/Shadow:** endpoint completeness guardをverified resolution/write boundaryへ配線し、immutable completeness receiptを追加。
 2. **Parallel Wave-1:** exact schema + pinned XTKS endpoint-session receipt → one-shot A1/B1/E1 cost0。
 3. **Consensus:** formal raw retryを重複起動せず、usable artifact後にfrozen acceptance。
-4. **Core:** real XTKS/vendor manifest + immutable source receipt + evaluator wiring/CI。
+4. **Core:** real XTKS/vendor manifest freeze → actual source receipt emit/verify → canonical evaluatorをfail-closed primitiveへ配線 → CI → その後のみcost0再計算。
 5. **OSS:** `run_study`/DSR completed-trial receipt binding。
 
 production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterは変更しない。

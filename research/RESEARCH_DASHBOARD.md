@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 00:25 JST  
+> **最終更新:** 2026-09-15 00:58 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **固定リンク:** https://github.com/Ken5InvestmentLab/screening-bot/blob/research/automation-coordination/research/RESEARCH_DASHBOARD.md
 
@@ -14,12 +14,12 @@
 | Active research branches | **5本** |
 | Weak+Early Phase-2 | 2022 fresh validation **FAILED ROBUSTNESS**。G3凍結、Round2閉鎖 |
 | 2023-25暫定首位 | **DUAL + G3** mean +7.98% / median +1.74% / win 53.85% / Top3-ex +5.14% |
-| Parallel Wave-1 | **新規独立レーン登録済み**。A/B/Eをoutcome未開封で選定し、exact manifest凍結済み |
-| Consensus V47 | 48-shard retry `34849054884` active。fetch(0)/fetch(1) raw取得中、accepted artifact 0 |
+| Parallel Wave-1 | **A/B/E manifest凍結済み、source bytes/provenance receiptまでbind。performance未開封** |
+| Consensus V47 | 48-shard retry `34849054884` active。fetch(0)/fetch(1) raw取得中、visible artifact 0 |
 | V20 | **DEPRIORITIZE** |
 | Shadow/Data | endpoint `expected_through_date` completeness guard **CI GREEN** |
-| Core / Cloud | fixed Core reject維持。Cloud exact replay unavailable。endpoint provenance primitiveは凍結済み、real receipt/wiring待ち |
-| OSS / Validation | cost0 + immutable trial ledger primitive GREEN。DSR receipt binding待ち |
+| Core / Cloud | fixed Core reject維持。Cloud exact replay unavailable。real receipt/wiring待ち |
+| OSS / Validation | cost0 + immutable trial-ledger primitive GREEN。DSR receipt binding待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
 ---
@@ -28,11 +28,11 @@
 
 | Lane | HEAD | Status | Next |
 |---|---|---|---|
-| Canonical/Event + Shadow/Data | `208e1358...` | V20 deprioritized / endpoint completeness guard GREEN | frozen prospective ledgerに対するsymbol-set・endpoint-session completenessをoutcome-blind監査 |
+| Canonical/Event + Shadow/Data | `208e1358...` | V20 deprioritized / endpoint completeness guard GREEN | frozen prospective ledgerのsymbol-set・endpoint-session completeness監査 |
 | Core/Cloud | `6e7dfa45...` | reject維持 / endpoint provenance primitive frozen | real XTKS/vendor manifest + immutable source receipt + evaluator wiring/CI |
 | Consensus V47 | `fc96b801...` | raw48 retry active | 重複起動せずusable artifact/timeout receipt監査→frozen acceptance |
 | OSS/Validation | `7704641d...` | immutable completed-trial receipt primitive verified | `run_study`/DSRをreceipt-bound化 |
-| **Parallel Condition Exploration** | **`7e164ae6...`** | **A1/B1/E1 manifest frozen / performance unopened** | preserved-source/schema receiptをbind→1回だけcost0 batch |
+| **Parallel Condition Exploration** | **`8cfcee63...`** | **source bytes/provenance receipt bound / performance unopened** | exact schema + pinned XTKS endpoint receipt→A1/B1/E1 fail-closed→one-shot cost0 batch |
 
 processed済みSHAは再処理しない。production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterには触れない。
 
@@ -49,7 +49,7 @@ processed済みSHAは再処理しない。production/main、本番workflow、Dis
 | 5 | volr20 LOW | 172 | +6.33% | +1.06% | 51.74% | +4.38% | frozen comparator |
 
 ### G3状態
-`NO_ACUTE_SELLOFF = previous-session med_ret1 >= -1%`。-1% thresholdは**永久にこのopened evidenceに対してretuneしない**。
+`NO_ACUTE_SELLOFF = previous-session med_ret1 >= -1%`。-1% thresholdはopened evidenceに対してretuneしない。
 
 - 2023-24: n83 / mean +7.38% / median +1.74% / win 55.42% / Top3-ex +3.62%
 - unchanged 2025: n34 / mean +9.43% / median +0.37% / win 50.00% / Top3-ex +0.77%
@@ -59,90 +59,89 @@ processed済みSHAは再処理しない。production/main、本番workflow、Dis
 
 ## 3. 2022 fresh validation
 
-Preserved causal sourceからfresh validationを構築できたため、2022 surrogateは使っていない。
+Preserved causal sourceからfresh validationを構築済み。2022 surrogateは不使用。
 
 | Candidate | n | Mean | Median | Win | Top3-ex |
 |---|---:|---:|---:|---:|---:|
 | DUAL_TOP1 | 21 | +2.62% | -6.19% | 28.57% | -7.55% |
 | DUAL + G3 | 17 | +6.08% | -6.00% | 29.41% | -6.26% |
 
-**判定: FAILED ROBUSTNESS**。平均はtail winnerで残るが、中央値・勝率・Top3-exが崩れる。2022結果を見てWeak+Early threshold/gate/rankerを変更しない。
-
-現在のWeak+Early作業はpopulation scarcity / forced-choice / model-period差の**outcome-blind root-cause監査のみ**。
+**判定: FAILED ROBUSTNESS**。平均はtail winnerで残るが中央値・勝率・Top3-exが崩れる。2022結果を見てWeak+Early threshold/gate/rankerは変更しない。現在はpopulation scarcity / forced-choice / model-period差の**outcome-blind root-cause監査のみ**。
 
 ---
 
 ## 4. Regime Round2
 
-**CLOSED**。
-
-理由: 事前ルールは「2022 fresh validationが不可能な場合のみRound2」。実際には2022 freshを構築できたため、新しいmarket gateを2022結果を見て作らない。Round1の `breadth_ma20` / `breadth_ret1_pos` / `med_ret1` thresholdも変更しない。
+**CLOSED**。事前ルールが「2022 fresh validationが不可能な場合のみRound2」で、実際には2022 freshを構築できたため。Round1の `breadth_ma20` / `breadth_ret1_pos` / `med_ret1` thresholdも変更しない。
 
 ---
 
 ## 5. Parallel Condition Exploration — Wave 1
 
-Weak+Earlyとは**完全分離した新規探索**として登録。2022 Weak+Early fresh outcomeをtuning inputにしない。
+Weak+Earlyとは完全分離。2022 Weak+Early fresh outcomeをtuning inputにしない。
 
-### Readiness audit
-| Family | 判定 | Wave 1 |
-|---|---|---|
-| A Compression -> expansion | DERIVABLE-CAUSALLY | **SELECT** |
-| B Relative reversal vs causal market | DERIVABLE-CAUSALLY | **SELECT** |
-| C Gap / overnight | same-open timing ambiguity | DEFER |
-| D Liquidity / turnover shock | volr20 redundancy risk | DEFER |
-| E Distance to prior structure | DERIVABLE-CAUSALLY | **SELECT** |
-
-### Frozen manifest — performance未開封
+### Frozen families — performance未開封
 - **A1:** prior 5-session range compression / prior20 median <= 0.75 AND signal-session range / prior20 median >= 1.25
 - **B1:** candidate 5-session relative return vs same-date market median <= -5pp AND signal-day relative return >= 0
 - **E1:** signal close is 0%〜5% above strictly-prior 20-session low
 
-Dense threshold grid、weight tuning、opened resultを見たA2/B2/E2追加は禁止。次にexact preserved-source artifact/run、SHA-256、schema、row/date range、XTKS endpoint receiptをbindし、fail-closed implementation後に**一括1回だけ**cost0 performanceを開く。
+C Gap/overnightはsame-open timing ambiguityでDEFER。D Liquidity/turnoverはopened `volr20 LOW`とのsemantic redundancy riskでDEFER。Dense threshold grid、weight tuning、opened result後のA2/B2/E2追加は禁止。
+
+### Source provenance receipt — 今回前進
+`research/PARALLEL_WAVE1_SOURCE_RECEIPT_20260915.md` を追加し、dataset bytesのlineageを明示的にbindした。
+
+- **original source-data run:** `34545440155`
+- source artifact ID: `10179500303`
+- source artifact ZIP SHA-256: `85cf79fea74f9a122bf0b6b5c1e94d1fda80d468e68ac0d8c774e1a69010bfc4`
+- **preservation/hosting run:** `34599959356`
+- preserved artifact ID: `10264205130`
+- preserved artifact ZIP SHA-256: `095e58986d45bda0092be1767e1b44a4791bf3c617179791d0c99c6d7d01bcb0`
+- `tse_daily.csv` SHA-256: `6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0`
+- rows: `4,061,361`
+- symbols: `3,700`
+- date range: `2022-01-04` → `2026-09-11`
+
+重要: `34599959356`は**preservation host run**、実データ起点は`34545440155`。今後はこの2つを混同しない。2026はdataset内に存在してもselection/tuningには使わずreport/robustness-only。
+
+現在状態は **SOURCE_BYTES_BOUND / SCHEMA+XTKS ENDPOINT RECEIPT PENDING / PERFORMANCE UNOPENED**。次にexact required-column schemaとpinned XTKS session/endpoint completenessをfail-closedでbindしてから、A1/B1/E1を一括1回だけcost0評価する。
 
 Stable advancement screen: win>=55%, mean>=+4%, median>0, Top3-ex>=+3%, sufficient n。  
 Monster advancement screen: mean>=+6%, Top3-ex>=+4%, sufficient n + win/median/tail concentration明示。
-
-これらはresearch advancementでありproduction GO基準ではない。
 
 ---
 
 ## 6. Consensus V47
 
-Formal raw acceptanceは未PASS。48-shard retry run `34849054884` はsingle-activeのまま。
+Formal raw acceptanceは未PASS。48-shard retry run `34849054884` はsingle-active。
 
-現在:
 - `fetch(0)` / `fetch(1)` が raw 1H shard取得中
-- visible accepted artifacts = 0
-- 残りshardはqueue待ち
-- strategy/model/threshold/price-arm/cooldownは変更なし
+- visible artifacts = 0
 - duplicate trigger禁止
+- strategy/model/threshold/price-arm/cooldown変更なし
 
-既存diagnostic-only NOCAP H2: n37 / mean +3.03% / median +0.38% / win 51.35% / Top3-ex -0.54%。**promotion evidenceではない**。
-
-実raw artifactが得られた場合だけpayload/provenance監査後、frozen acceptanceを再実行し、0% diagnosticを比較表へ追加する。
+既存diagnostic-only NOCAP H2: n37 / mean +3.03% / median +0.38% / win 51.35% / Top3-ex -0.54%。promotion evidenceではない。実raw artifact取得後のみpayload/provenance監査→frozen acceptance→0% diagnostic追加。
 
 ---
 
 ## 7. Other lanes
 
 ### Canonical / Shadow
-Endpoint provenanceをさらにfail-closed化。`acquired_at` がcontained market-data最新日より前なら拒否する既存guardに加え、manifestへ明示的な `expected_through_date` を必須化した。`acquired_at` が期待日より前、またはCSVの `last_date` が期待日を覆わない場合は拒否するため、**取得時刻だけ新しいが中身が途中まで/古いstale CSV**をhash整合だけで通せなくなった。CLI fixtureも新契約へ合わせ、Prospective Shadow CI `34861810023` **SUCCESS**。この作業ではperformance/outcomeを新規開封していない。V20はdeprioritizedのまま。
+`expected_through_date`をmanifest必須化し、acquired_atが期待日より前またはCSV last_dateが期待日を覆わない場合fail-closed。Prospective Shadow CI `34861810023` SUCCESS。performance未開封、V20はdeprioritized。
 
 ### Core / Cloud
-Fixed Coreはreplacement candidateとしてreject維持。旧Cloud Monster n63 / historical mean +9.86%はlegacy evidenceのみで、exact replayは **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。pinned XTKS/vendor exact endpoint primitiveは凍結済みだが、real manifest/source receipt + evaluator wiring/CI前にperformance再計算しない。
+Fixed Core reject維持。旧Cloud Monster n63 / historical mean +9.86%はlegacy evidenceのみ。exact replayは **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。real XTKS/vendor manifest/source receipt + evaluator wiring/CI前に再計算しない。
 
 ### OSS / Validation
-Optuna cost0-onlyはGREEN。immutable completed-trial ledger/receipt primitiveもCI `34855659820` SUCCESS。次はDSR入力をreceipt-boundにしてmissing/extra/reordered/modified trialをintegration levelでもfail-closed。EDINET real same-ZIPはexternal `EDINET_API_KEY`待ち。
+Optuna cost0-only GREEN。immutable completed-trial ledger/receipt primitive CI `34855659820` SUCCESS。次はDSR入力をreceipt-bound化。EDINET real same-ZIPはexternal `EDINET_API_KEY`待ち。
 
 ---
 
 ## 8. 残タスク
 
-1. **Parallel Wave-1:** preserved-source/schema receipt bind → A1/B1/E1 fail-closed implementation → untouched confirmationを残してsingle cost0 batch。
+1. **Parallel Wave-1:** exact schema + pinned XTKS endpoint-session completeness receipt → A1/B1/E1 fail-closed → one-shot cost0 batch。2026はreport-only。
 2. **Weak+Early:** Round2閉鎖維持。population scarcity / forced-choiceをoutcome-blind監査。
-3. **Consensus:** run `34849054884` を重複起動せずfirst usable artifactまたはtimeout receiptを回収し、終了後frozen acceptance。
-4. **Canonical/Shadow:** frozen prospective selection ledgerに対するsymbol-set / endpoint-session completenessをoutcome-blind監査。
+3. **Consensus:** run `34849054884` を重複起動せずfirst usable artifactまたはtimeout receipt回収→frozen acceptance。
+4. **Canonical/Shadow:** frozen prospective selection ledgerに対するsymbol-set / endpoint-session completeness監査。
 5. **Core:** real XTKS/vendor manifest + source receipt + evaluator wiring/CI。
 6. **OSS:** `run_study`/DSR completed-trial receipt binding。
 7. Formal/comparable evidenceが揃ったlaneだけでcross-lane arbitration。
@@ -153,6 +152,4 @@ Optuna cost0-onlyはGREEN。immutable completed-trial ledger/receipt primitive�
 
 **NO-GO / 研究継続**
 
-Weak+Earlyは2023-25で強いが2022 fresh robustness fail。Round2は規約どおり閉鎖。並列新探索はperformanceをまだ開けずにA/B/Eのcausal readinessとexact manifest凍結まで進行した。V47はformal raw待ち。Core/Cloud/OSSもprovenance工程が残る。Shadow/Dataはendpoint chronologyに加えてexplicit expected-through completenessまでCI-green化した。
-
-新規performance比較はすべて **cost 0%**、winは **gross return > 0**。
+Weak+Earlyは2023-25で強いが2022 fresh robustness fail。G3は凍結、Round2は規約どおり閉鎖。並列Wave-1はperformanceを開けずにA/B/E manifestに加え、今回dataset source bytes/provenanceまで固定した。V47はformal raw待ち。新規performance比較はすべて **cost 0%**、winは **gross return > 0**。

@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 18:22 JST  
+> **最終更新基準:** 2026-09-14 18:38 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ---
@@ -13,9 +13,9 @@
 | Active research branches | **4本** |
 | Weak+Early Phase-2 | **2022 fresh validation FAILED ROBUSTNESS**。outcome-blind構造監査まで完了 |
 | 2023-25暫定首位 | **DUAL_TOP1_AGREEMENT**、勝率改善候補 **G3 NO_ACUTE_SELLOFF** |
-| Consensus V47 | formal raw retry中 / midterm diagnostic `34824194221` 実行中、performance未出力 |
+| Consensus V47 | formal raw retry `34810592135` は12-shard構成で180分timeout発生。現runは重複triggerせず継続監視。future retryは48-shardへ修復済み。midterm diagnostic `34824194221` はH1 cost0比較実行中 |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
-| Core/Cloud forensic | Core既reject維持 / Cloud **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。18:22再現性・endpoint監査更新 |
+| Core/Cloud forensic | Core既reject維持 / Cloud **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
 | OSS / EDINET | selected-ZIP exact-byte freezeまでCI固定、real EDINETは外部key待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
@@ -98,8 +98,8 @@ Candidate scarcity:
 | Lane | HEAD | Status | Next |
 |---|---|---|---|
 | Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合のみgap reconciliation |
-| Core/Cloud | `0886fd65...` | Core reject / Cloud exact replay unavailable / endpoint audit current | 新しい同時代identity evidenceがある場合だけCloud再開。なければcross-lane reproducibility/endpoint監査 |
-| Consensus V47 | `8a461bf9...` | retry + midterm diagnostic ACTIVE | run完了後cost0結果を回収、duplicate trigger禁止 |
+| Core/Cloud | `0886fd65...` | Core reject / Cloud exact replay unavailable | 新しい同時代identity evidenceがある場合だけCloud再開 |
+| Consensus V47 | `1eb0408c...` | formal retry ACTIVEだが初期2 shardが180分timeout。midterm diagnostic ACTIVE | diagnostic完了後cost0結果回収。formal現runはduplicate trigger禁止。次回formal retryは48 shard構成 |
 | OSS/Validation | `faba5b48...` | selected-ZIP byte freeze CI-green | external key利用可能時にreal EDINET acquisition |
 
 ---
@@ -108,38 +108,58 @@ Candidate scarcity:
 
 最新HEAD `0886fd65f9413dc2591a47475364e736516dbf93`。
 
-### 既reject Core
 - current fixed Core: REJECT
 - Failed-Breakdown Reclaim: REJECT
 - Prior-Close Reclaim: REJECT
 - Precision 3-family batch: REJECT
-- 既reject familyはretune/relabelで再開しない
+- 旧Cloud Monster historical evidence: n=63 / mean +9.86% / median +3.33% / win 57.1%
+- exact reproduction disposition: **HISTORICAL_EXACT_REPRO_UNAVAILABLE**
+- model-family guessing / surrogate replayは禁止
 
-### 旧Cloud Monster historical forensic
-- **歴史値（legacy evidence）:** n=63 / mean +9.86% / median +3.33% / win 57.1%
-- exact-match spec freeze済み
-- broad reconstruction: 696 rows
-- original A timestamps recovered: 62/63
-- exact 575 Watch pool / identity-critical model / features / transforms / calibration / training manifestが不足
-- 18:22再監査で新しい同時代一次証拠は確認できず
-- disposition: **HISTORICAL_EXACT_REPRO_UNAVAILABLE**
-- portability test: **未実施**（元期間exact reproduction未達のため）
-- model-family guessing / surrogate replay: **禁止継続**
-- latest headに紐づくPR-triggered workflow run: **なし**。新規performance計算なし
-
-候補ランキングへの影響: **なし**。旧Cloud Monsterをpromotion候補へ戻さない。
+候補ランキングへの影響: **なし**。
 
 ---
 
 ## 4. Consensus V47
 
-- latest processed HEAD `8a461bf987453422e705a08024c0f1a462068801`
-- Daily PIT acceptance PASS
-- formal raw initial acceptance FAIL
-- targeted retry `34810592135` active
-- midterm diagnostic `34824194221` **in progress** at latest scan
-- preserved partial seed: NOCAP 35.3898%, CAP1000_PIT 83.1124%, restored pair 0%
-- performance未出力。結果前に順位を推測しない
+### Formal promotion path
+
+- latest HEAD: `1eb0408cd3ad2d44c2e0c3feb12551857f325be6`
+- Daily PIT acceptance: **PASS**
+- formal raw initial acceptance: **FAIL**
+- formal raw retry: `34810592135` — **ACTIVE / PARTIALLY TIMED OUT**
+- retry trigger SHA: `6fcf600245e0a04b3d8bc9c3f6c566a81c9fa03d`
+- `fetch (0)` / `fetch (1)`: 180分timeoutでcancel。uploadされたartifactはtimeout時点の極小artifactで、正式coverage evidenceとしては不足
+- `fetch (2)` / `fetch (3)`: 18:38 JST時点で取得中。他8 shardはqueued
+- duplicate trigger: **禁止継続**
+- future-only transport repair: commit `7aa230a0434136cf33589a2fdda010113d57db62` で12 -> 48 deterministic shards、max-parallel=2を維持。現runはtrigger SHA固定なので影響なし
+- preserved partial seed: NOCAP **35.3898%**、CAP1000_PIT **83.1124%**、restored pair **0%**
+- formal raw acceptance: **未PASS**
+- formal clean features / H1 / H2: **未開封**
+- formal NOCAP vs CAP1000_PIT comparison: **未開封**
+
+### MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE — cost 0%
+
+- run `34824194221`: **in_progress**
+- pre-open contract/hash/coverage freeze: **PASS**
+- partial PIT feature materialization: **PASS**
+- frozen H1 cost0 comparison: **実行中**
+- H1 performance fields: **未出力**
+- H2: **未開封**
+- endpoint: next XTKS open -> fifth XTKS close
+- cost: **0%**
+- coverage caveat: preserved partial rawのみ。formal acceptance未達。診断値はpromotion evidenceではない
+- opened diagnosticを見た同family retune: **禁止**
+
+### Blocker / next action
+
+1. `34824194221` のH1診断完了を回収し、NOCAP/CAP1000_PITを同じfrozen contract・cost0で記録する。
+2. `34810592135` は重複起動せず完走/timeoutを待つ。
+3. 現run + preserved seedをmergeしてfrozen verifierを再実行する。
+4. FAILならemitted missing symbol/dateだけをtargeted refetchする。次回retryは48-shard transport layoutを使う。
+5. threshold緩和・補間・追加price-cap grid searchは禁止。
+
+候補ランキングへの影響: **まだなし**。H1 performance未出力のため推測しない。
 
 ---
 
@@ -165,12 +185,13 @@ Candidate scarcity:
 - [x] 2022 vs 2023-25 signal-time structural audit
 - [x] Cloud exact-repro spec freeze / exact evidence availability判定
 - [x] Core/Cloud cost0 + canonical endpoint labeling audit
-- [ ] **model warm-up / calibration effect audit**
-- [ ] **candidate-scarcity structure audit**
-- [ ] **2023H2 / 2025H2で同じoutcome-blind shiftsが再現するか確認**
-- [ ] V47 diagnostic `34824194221` completion collection
-- [ ] V47 formal retry `34810592135` monitoring
+- [x] **V47 formal retry 180分timeout原因を確定し、future retryを48 shardへtransport-only修復**
+- [ ] model warm-up / calibration effect audit
+- [ ] candidate-scarcity structure audit
+- [ ] 2023H2 / 2025H2で同じoutcome-blind shiftsが再現するか確認
+- [ ] **V47 diagnostic `34824194221` completion collection**
+- [ ] **V47 formal retry `34810592135` completion/timeout collection -> seed merge -> exact acceptance**
 
 ## 7. GO / NO-GO
 
-**NO-GO / 研究継続。** Cloud exact replayは一次証拠が新規発見されない限り閉じたまま。Coreは既reject familyを救済retuneせず、次はcross-lane reproducibility/endpoint監査、または結果を見る前にpreregisterした genuinely different low-DOF mechanism のみ許可する。Phase-2は2023-25の高平均だけではpromotionしない。
+**NO-GO / 研究継続。** Consensus V47は正式raw acceptance未PASS。中締めH1診断はまだ実行中で、performance未出力。formalとdiagnosticを混同せず、診断値を見たretuneは禁止する。

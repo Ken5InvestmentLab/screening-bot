@@ -1,12 +1,12 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 02:34 JST
+Last updated: 2026-09-15 03:35 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
 ## Consensus V47 status
 - Progress: **76%** (research-progress estimate; not promotion probability)
-- Latest observed HEAD before this dashboard write: `4304be47319ccedbd7827dc471b08fe2541d5926`
+- Latest observed HEAD before this dashboard write: `f2bc6f3c97292930ccaefae9035e182dee33d821`
 - Promotion-relevant path: **V47 clean PIT only**
 - V43/V44: leakage/reproduction-contaminated; not promotion evidence
 - Price arms: exactly `NOCAP` and `CAP1000_PIT`
@@ -37,8 +37,8 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - GitHub run-level status at this observation: **queued** while the matrix still has work active/queued
 - shard 0: workflow **SUCCESS**, artifact `10357093848` (1647 bytes ZIP), but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
 - shard 1: workflow **SUCCESS**, artifact `10357611796` (1646 bytes ZIP), but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
-- shard 3: explicitly observed **in_progress** at `Fetch raw 1H shard` in the latest jobs receipt
-- remaining matrix jobs: queued/in-progress under max-parallel=2; only two artifacts are visible so far
+- shards 2 and 3: explicitly observed **in_progress** at `Fetch raw 1H shard`
+- remaining matrix jobs: queued under max-parallel=2; only two artifacts are visible so far
 - Duplicate trigger: **prohibited / not triggered**
 - Formal interpretation: workflow completion is not data success. Completed shard 0/1 contribute **zero usable raw rows**.
 - Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**
@@ -55,8 +55,8 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - This changes transport mechanics only. NOCAP/CAP1000_PIT, threshold, ranker, cooldown, endpoint, features, model, and acceptance thresholds remain frozen.
 - On shard 0/1 zero-row artifacts alone: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
 
-### Raw merge + formal acceptance contract frozen this run
-- New spec: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`
+### Raw merge + formal acceptance contract frozen
+- Spec: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`
 - Freeze commit: `4304be47319ccedbd7827dc471b08fe2541d5926`
 - When run `34849054884` is terminal, only genuinely observed shard raw rows may be merged with preserved seed raw.
 - Workflow `success` with zero rows is provenance/failure evidence only, never market data.
@@ -143,7 +143,7 @@ CAP1000_PIT H2: **UNOPENED**
 - Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater remain untouched
 
 ## Blocker
-Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. Shards 0 and 1 of run `34849054884` both completed mechanically but returned zero rows for all 81 symbols each. The matrix is still non-terminal, so no final merged acceptance can yet be computed. This is transport failure, not strategy evidence.
+Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. Shards 0 and 1 of run `34849054884` both completed mechanically but returned zero rows for all 81 symbols each. Shards 2 and 3 are still fetching and only the original two artifacts are visible, so transport recovery has not yet been demonstrated. This is transport failure, not strategy evidence.
 
 ## Next action
 1. Do **not** duplicate-trigger run `34849054884`.

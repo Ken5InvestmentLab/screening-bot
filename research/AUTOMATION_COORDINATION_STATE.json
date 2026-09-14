@@ -1,12 +1,12 @@
 {
   "version": 4,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T10:58:00+09:00",
+  "updated_at_jst": "2026-09-14T11:27:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "10:58 supervisor processed Canonical/Shadow head c5ea4d3f and Consensus head a137ef8b without reopening performance. Shadow/Data added continuity-safe resolution write-boundary tests and pinned XTKS session-calendar guard; V20 remains fail-closed at 1806/1810 and 734 missing active symbol/date pairs. Consensus exact-251 rate-safe direct Yahoo retry run 34796618901 completed SUCCESS: controls 7203 were HTTP200 at start/end, 2/251 codes (3079,5660) are directly usable, 249/251 are terminal HTTP under normal provider conditions, unresolved/provider failures 0. V47 daily PIT acceptance remains closed pending official JPX/company identity-continuity repair for the 249 terminal codes and rematerialization; raw1H/features/performance remain unopened. Core unchanged/rejected."
+    "note": "10:58 supervisor processed Canonical/Shadow head c5ea4d3f and Consensus head a137ef8b without reopening performance. Shadow/Data added continuity-safe resolution write-boundary tests and pinned XTKS session-calendar guard; V20 remains fail-closed at 1806/1810 and 734 missing active symbol/date pairs. Consensus exact-251 rate-safe direct Yahoo retry run 34796618901 completed SUCCESS: controls 7203 were HTTP200 at start/end, 2/251 codes (3079,5660) are directly usable, 249/251 are terminal HTTP under normal provider conditions, unresolved/provider failures 0. V47 daily PIT acceptance remains closed pending official JPX/company identity-continuity repair for the 249 terminal codes and rematerialization; raw1H/features/performance remain unopened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
-      "last_processed_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
-      "last_processed_note": "No new Core delta. Current fixed Core and Failed-Breakdown Reclaim remain REJECT; locked H2 unopened. No adjacent retune."
+      "last_seen_sha": "b3d6c3200ef175c61f71a1b3220d626c6aaa9c93",
+      "last_processed_sha": "b3d6c3200ef175c61f71a1b3220d626c6aaa9c93",
+      "last_processed_note": "Processed new preregistered genuinely different low-DOF Precision prior-close reclaim family. Workflow 34799151144 SUCCESS; preregistration 6344001654fa8c3afe1d436a05e23d57efaa70bd. DEVELOPMENT n=3809 at 0.5% cost mean -0.56%, median -0.71%, win 41.3%, Top3-ex -0.63%; INTERNAL_VALIDATION n=2318 mean +0.35%, median slightly negative, win 49.96%. Frozen gates fail, so PRIOR_CLOSE_RECLAIM is REJECTED at preconfirmation. Locked 2025H2 and 2026 remained unopened. Do not retune/rescue this family."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -68,8 +68,12 @@
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
       "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
+      "precision_prior_close_reclaim": "REJECT_PRECONFIRMATION",
+      "precision_prior_close_reclaim_run": 34799151144,
       "locked_h2_opened": false,
-      "next_rule": "Audit/reproducibility only unless a genuinely different low-DOF 5BD mechanism is preregistered before outcomes."
+      "precision_locked_h2_opened": false,
+      "precision_2026_opened": false,
+      "next_rule": "Audit/reproducibility only unless another genuinely different low-DOF 5BD mechanism is preregistered before outcomes. Failed-Breakdown Reclaim and Prior-Close Reclaim are both closed and may not be rescued by thresholds, session splits, rankers, or renaming."
     },
     "consensus_v44": {
       "run_id": 34767664140,
@@ -98,7 +102,7 @@
     "blocking_items": [
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened.",
       "Consensus V47 daily PIT acceptance still fails: 249 terminal historical codes require official identity-continuity repair before raw1H/features/performance may open.",
-      "No currently passing canonical 5BD Core replacement candidate."
+      "No currently passing canonical 5BD Core replacement candidate; fixed Core, Failed-Breakdown Reclaim, and Prior-Close Reclaim are rejected."
     ]
   }
 }

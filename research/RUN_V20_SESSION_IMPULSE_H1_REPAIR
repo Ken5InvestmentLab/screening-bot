@@ -1,0 +1,5 @@
+trigger: 2026-09-14 V20 H1 outcome-blind raw repair
+source_run: 34774070956
+contract: tvfree_screener/batch02/V20_H1_RAW_REPAIR_PREREG_20260914.json
+identity_map: tvfree_screener/batch02/V20_H1_VERIFIED_PREDECESSOR_MAP_20260914.json
+strategy_outcomes: forbidden until unchanged raw acceptance passes

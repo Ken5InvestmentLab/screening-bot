@@ -1,12 +1,12 @@
 {
-  "version": 47,
+  "version": 48,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T02:18:00+09:00",
+  "updated_at_jst": "2026-09-15T02:29:00+09:00",
   "supervisor_last_scan": {
-    "status": "CORE24_OHLCV_SUPPLEMENT_ACCEPTANCE_BOUNDARY_PREREGISTERED",
-    "scanned_at_jst": "2026-09-15T02:02:00+09:00",
+    "status": "CORE24_OHLCV_SUPPLEMENT_CONTRACT_IMPLEMENTED_CI_GREEN",
+    "scanned_at_jst": "2026-09-15T02:29:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All STATE-registered active research branch HEADs still match last_processed_sha; no SHA was reprocessed. Core24 OHLCV supplementation was integrated as a data-plane task only by preregistering a fail-closed provenance/causality/XTKS/OHLC consistency acceptance boundary before any supplemented row can enter formal research. V47 run 34849054884 remains the only active raw48 retry: shards 0/1 completed with zero usable rows under systemic Yahoo HTTP429, shards 2/3 are still fetching, later shards queued. Weak+Early frozen ranking/G3/Round2 are unchanged; Parallel Wave-1 performance remains unopened."
+    "note": "Core24 implemented the preregistered fail-closed OHLCV supplementation verifier and frozen source policy without opening performance. Contract CI 34874773548 and follow-up guard CI 34874848913 both succeeded. Alpha Vantage free is registered as low-priority daily-only fallback; Stooq remains non-formal until overlap/provenance/timestamp/adjustment verification; Google Finance snapshots remain non-formal corroboration only. Existing Core rejects stay closed and Cloud exact replay remains unavailable."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "adca8963302644857e4bb05f668e660c84bffb82",
-      "last_processed_sha": "adca8963302644857e4bb05f668e660c84bffb82",
-      "last_processed_note": "Immutable raw-source receipt primitive now binds exact bytes/size, source run/artifact/vendor and pinned calendar SHA; dedicated endpoint provenance CI 34868543771 SUCCESS. No performance recomputed. Real XTKS/vendor manifest generation plus actual workflow receipt/evaluator wiring remain before formal relabeling. Cloud exact replay unavailable."
+      "last_seen_sha": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
+      "last_processed_sha": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
+      "last_processed_note": "Outcome-blind OHLCV supplement contract implemented. Predeclared missing inventory, provenance/raw SHA, causality, OHLCV validity, deterministic source/timeframe eligibility and conflict fail-closed rules are enforced. CI 34874773548 + 34874848913 SUCCESS. Alpha Vantage free is daily-only low-priority; Stooq and Google snapshot are not formal intraday sources yet. No performance opened; Cloud exact replay unavailable."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -92,16 +92,22 @@
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
       "endpoint_provenance_status": "IMMUTABLE_SOURCE_RECEIPT_PRIMITIVE_CI_GREEN",
-      "head": "adca8963302644857e4bb05f668e660c84bffb82",
-      "latest_ci_run": 34868543771,
+      "head": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
+      "supplement_implementation_head": "d2f24b99d66c2cbfa6dbc3f1aa6e1d623973c3be",
+      "latest_ci_run": 34874848913,
       "latest_ci_status": "success",
       "performance_opened": false
     },
     "ohlcv_supplement": {
-      "status": "ACCEPTANCE_BOUNDARY_PREREGISTERED_DATA_PLANE_ONLY",
+      "status": "FAIL_CLOSED_CONTRACT_IMPLEMENTED_CI_GREEN_REAL_GAP_HANDOFF_PENDING",
       "supervisor_note": "research/SUPERVISOR_OHLCV_SUPPLEMENT_ACCEPTANCE_20260915_0202.md",
+      "source_policy": "research/tentei_cloud/OHLCV_SUPPLEMENT_SOURCE_POLICY_20260915.json",
+      "contract_ci_runs": [34874773548, 34874848913],
       "formal_dataset_adoption": false,
       "performance_recompute_allowed": false,
+      "alpha_vantage_free_role": "LOW_PRIORITY_DAILY_ONLY",
+      "stooq_role": "CANDIDATE_NOT_FORMAL_ELIGIBLE",
+      "googlefinance_snapshot_role": "CORROBORATION_ONLY_NOT_FORMAL_INTRADAY",
       "required_handoff": ["missing_pair_inventory", "source_hierarchy", "per_pair_provenance", "accepted_rejected_conflicted_counts", "immutable_source_receipts", "deterministic_verifier", "coverage_delta"],
       "prohibitions": ["interpolation", "forward_fill_back_fill", "daily_to_intraday_synthesis", "outcome_informed_source_selection", "silent_native_supplement_merge"]
     },
@@ -112,7 +118,7 @@
     }
   },
   "next_global_actions": [
-    "Core24 OHLCV supplement: complete supplementation only under the preregistered fail-closed data-plane contract; Supervisor adoption requires the full provenance/verifier/coverage-delta handoff before any strategy performance recomputation.",
+    "Core24 OHLCV supplement: generate exact real missing-pair inventory, acquire fallback source bytes under the frozen source policy, emit immutable receipts, run the deterministic verifier, and hand off accepted/rejected/conflicted counts plus coverage delta before any performance recomputation.",
     "Canonical/Shadow: audit and bind the full endpoint provenance chain (daily manifest + pinned XTKS calendar -> immutable prewrite completeness receipt -> resolved output/resolution receipt) without opening outcomes.",
     "Parallel Wave-1: exact schema + pinned XTKS endpoint-session completeness receipt, then one cost0 batch only.",
     "Consensus: do not duplicate-trigger run 34849054884; preserve zero-row 429 receipts, wait for the active run to become terminal, then merge only genuinely observed rows plus preserved seed and rerun the unchanged frozen verifier. If Yahoo later becomes healthy and acceptance still fails, retry missing pairs only with the new systemic-429 fail-fast guard.",

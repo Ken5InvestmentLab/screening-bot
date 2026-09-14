@@ -1,6 +1,6 @@
 # Consensus V47 clean PIT handoff
 
-Updated: 2026-09-14 20:33 JST
+Updated: 2026-09-15 01:46 JST
 Branch: `research/consensus-atr-regime-gate`
 Scope: research-only. Production/main/Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater untouched.
 
@@ -33,14 +33,19 @@ All new V47 backtests, diagnostics, and NOCAP/CAP1000_PIT comparisons use **0% r
 - missing required symbol/date pairs = 0
 
 ## Formal raw 1H status
-First raw run `34800587082` was transport-rate-limited. Frozen acceptance run `34810234454` correctly emitted `accepted=false` with zero usable pairs from that run. This is a data-acquisition failure, not strategy evidence.
+Earlier raw run `34800587082` was transport-rate-limited. Frozen acceptance run `34810234454` correctly emitted `accepted=false` with zero usable pairs from that run. This is a data-acquisition failure, not strategy evidence.
 
-Formal missing-universe retry `34810592135` remains active and must not be duplicate-triggered. Current job-level status at 20:33 JST:
-- `fetch (0)` and `fetch (1)` reached the 180-minute boundary and are cancelled/completed with upload step succeeding but fetch step cancelled;
-- `fetch (2)` and `fetch (3)` are in progress in `Fetch raw 1H shard`;
-- remaining shard jobs are queued under the intentional `max-parallel: 2` policy.
+The 12-shard missing-universe retry `34810592135` is now terminal `completed/cancelled`; its first shards hit the 180-minute boundary and did not yield useful raw rows. It is superseded as transport evidence, not strategy evidence.
 
-Future missing-only retries are already hardened to a 48-shard layout with max-parallel 2 to reduce per-job timeout risk. Do not lower acceptance thresholds or broaden provider semantics to rescue transport failure.
+Current authoritative retry is `34849054884`, triggered from SHA `7849ad975d1e0420e250ab4d5f411ce136f9d867`, with 48 shards and max-parallel 2. At the 2026-09-15 01:46 JST checkpoint:
+- shard 0 completed workflow SUCCESS and uploaded artifact `10357093848`, but payload inspection found **81/81 symbols HTTP 429, ok_symbols=0, total_rows=0**;
+- shard 1 completed workflow SUCCESS and uploaded artifact `10357611796`, also **81/81 symbols HTTP 429, ok_symbols=0, total_rows=0**;
+- shards 2/3 are in progress in `Fetch raw 1H shard`; later shards remain queued;
+- therefore the 48-shard layout has removed the immediate 180-minute completion symptom for the first two shards, but **has not solved raw acquisition**. The active blocker is systemic Yahoo HTTP 429.
+
+The zero-row shard 0/1 artifacts contribute no formal raw data. On those retry artifacts alone performance is `NOT_COMPUTABLE_NO_INPUT_DATA`. Existing midterm results remain unchanged because they use previously preserved partial raw.
+
+A future missing-only retry is now hardened with an outcome-blind systemic-429 circuit breaker in `research/no_tv_v47_intraday_fetch_shard.py`: two symbols x both Yahoo hosts are preflighted; if all four probes are HTTP 429, the shard records `transport_circuit_open/systemic_http_429` and stops quickly rather than spending hours retrying every symbol. This changes acquisition mechanics only; no data threshold, model, ranker, price arm, cooldown, endpoint, or strategy rule is changed. The currently active run is pinned to its older trigger SHA and is not duplicate-triggered.
 
 Frozen formal acceptance remains:
 - pair coverage >= 99.5%
@@ -92,7 +97,7 @@ Label: `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`.
 Frozen H1 mean-first chooser therefore selected NOCAP for diagnostic H2 opening. This selection cannot be changed after seeing H2.
 
 ## Midterm NOCAP H2 diagnostic — completed
-Run `34832358609` completed SUCCESS at 2026-09-14 20:26 JST-equivalent run completion window. Artifact `consensus-v47-midterm-h2-diagnostic-34832358609`, digest `sha256:2ceea9b8a20eed60b1e65e19963f1f2e51974a8f2e2b14ed315032ef4ffda8e9`.
+Run `34832358609` completed SUCCESS. Artifact `consensus-v47-midterm-h2-diagnostic-34832358609`, digest `sha256:2ceea9b8a20eed60b1e65e19963f1f2e51974a8f2e2b14ed315032ef4ffda8e9`.
 
 The run re-materialized partial PIT features from the same preserved raw seed, did not interpolate missing pairs, kept 2026 closed, and opened **NOCAP only** on H2. CAP1000_PIT H2 remains closed; it must not be opened as a rescue after seeing NOCAP H2.
 
@@ -122,7 +127,7 @@ Interpretation: H2 mean/median/win and Top1-ex are positive, but Top3-ex is nega
 
 ## Formal vs diagnostic status
 - Formal Daily PIT acceptance: **PASS**.
-- Formal raw 1H acceptance: **NOT PASS / acquisition still active**.
+- Formal raw 1H acceptance: **NOT PASS / systemic Yahoo HTTP 429 blocker**.
 - Formal clean feature materialization: **not authorized yet**.
 - Formal H1: **unopened**.
 - Formal H2: **unopened**.
@@ -132,10 +137,12 @@ Interpretation: H2 mean/median/win and Top1-ex are positive, but Top3-ex is nega
 - 2026: **closed for selection**.
 
 ## Frozen next action
-1. Do not duplicate-trigger formal retry `34810592135` while active.
-2. Continue monitoring retry artifacts and collect immutable shard outputs as they finish.
-3. When the retry ends, merge retry raw + preserved raw with explicit provenance and rerun the exact frozen raw verifier.
-4. If formal acceptance still fails, target only newly missing symbol/date pairs/codes using the already hardened 48-shard layout. No threshold lowering/interpolation.
+1. Do not duplicate-trigger active run `34849054884`.
+2. Preserve completed shard receipts; do not treat workflow SUCCESS with zero rows as data success.
+3. When the current run is terminal, merge only genuinely observed raw rows plus preserved raw seed with explicit provenance and rerun the exact frozen verifier.
+4. If formal acceptance still fails, target only missing symbol/date pairs after Yahoo transport is healthy; use the new systemic-429 fail-fast circuit breaker. No threshold lowering/interpolation.
 5. Only after formal raw acceptance PASS may promotion-grade clean features be materialized and formal NOCAP/CAP1000_PIT comparison begin.
 6. Do not retune V47 from opened midterm H1/H2. Do not open CAP1000_PIT H2 as a rescue.
 7. V45 ATR remains deferred until V47 formal path is resolved.
+
+Detailed transport receipt: `research/CONSENSUS_V47_RAW48_429_DIAGNOSIS_20260915.md`.

@@ -1,46 +1,13 @@
 {
-  "version": 14,
+  "version": 15,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T17:45:00+09:00",
+  "updated_at_jst": "2026-09-14T18:12:00+09:00",
   "supervisor_last_scan": {
-    "status": "COMPLETE_WITH_STATE_RECONCILIATION",
+    "status": "COMPLETE_WITH_PHASE2_2022_FRESH_VALIDATION_AND_CLOUD_RECONCILIATION",
+    "scanned_at_jst": "2026-09-14T18:12:00+09:00",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "16:24 supervisor re-fetched all active research/* HEADs and enumerated the full research/* set. Canonical 480bc9b5, Core 7d195335, and Consensus 70ca3ca4 exactly matched last_processed_sha at that scan. OSS was subsequently reconciled by :48."
-  },
-  "core_worker_last_scan": {
-    "status": "CLOUD_EXACT_REPRO_FORENSIC_PENDING",
-    "scanned_at_jst": "2026-09-14T16:24:00+09:00",
-    "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-    "core_head_changed": false,
-    "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "consensus_head": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
-    "note": "Rejected Core families remain closed to retuning. Historical Cloud Monster n=63 / 5BD mean +9.86% is queued only for exact forensic reproducibility audit; it is not reopened as promotion candidate."
-  },
-  "cross_lane_followup_last_scan": {
-    "status": "COMPLETE_WITH_OSS_PROGRESS_AND_DASHBOARD_RECONCILIATION",
-    "scanned_at_jst": "2026-09-14T16:53:00+09:00",
-    "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-    "consensus_head": "01299302461872a748693313e4de9c63cdcd32b8",
-    "oss_head": "faba5b48f1831b16f08c74895f772ca0089f765c",
-    "note": "OSS selected-ZIP byte-freeze CI 34819456421 succeeded. The earlier 0.5%-cost V20 diagnostic is now legacy only and was superseded for current ranking by the existing cost-0% diagnostic recorded in MIDTERM_COMPARISON and RESEARCH_DASHBOARD."
-  },
-  "canonical_worker_last_scan": {
-    "status": "COMPLETE_ZERO_COST_MIDTERM_RECONCILED_WAITING_ON_V47_RETRY",
-    "scanned_at_jst": "2026-09-14T17:09:00+09:00",
-    "canonical_head_before": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "canonical_head_after": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "note": "Re-read coordination STATE/README, Supervisor contract, RESEARCH_DASHBOARD, canonical HEAD/ledger and current Actions. Canonical HEAD exactly matched last_processed_sha, so no duplicate experiment was run. Existing user-authorized V20 coverage-bypassed diagnostic was already available at cost 0%; reconciled STATE/dashboard to that authoritative diagnostic rather than recomputing. Formal V20 acceptance remains blocked by 734 active symbol/date gaps and the opened diagnostic period is not an untouched holdout. V47 retry 34810592135 remains active with fetch(0)/fetch(1) in raw 1H fetch and ten shards queued; no duplicate trigger."
-  },
-  "consensus_worker_last_scan": {
-    "status": "MIDTERM_DIAGNOSTIC_ACTIVE_AND_FORMAL_RETRY_ACTIVE",
-    "scanned_at_jst": "2026-09-14T17:45:00+09:00",
-    "consensus_head_before": "01299302461872a748693313e4de9c63cdcd32b8",
-    "consensus_head_after": "8a461bf987453422e705a08024c0f1a462068801",
-    "retry_run": 34810592135,
-    "midterm_diagnostic_run": 34824194221,
-    "note": "User-authorized cost-0 V47 midterm diagnostic was frozen before outcome access with source hashes/coverage and launched from preserved immutable Yahoo raw seed. Diagnostic run 34824194221 has downloaded frozen daily, PIT membership, authoritative V47 daily and preserved seed and is preparing partial raw; performance has not yet been emitted. Formal retry 34810592135 remains separate and active; no duplicate trigger."
+    "note": "Re-fetched all registered active branch HEADs. Canonical/Consensus/OSS matched processed SHAs. Core advanced to da67fe92 and was reconciled: exact Cloud replay disposition is HISTORICAL_EXACT_REPRO_UNAVAILABLE. Recovered frozen run-80 artifact 10264205130 and ran unchanged V7 generator on the computable 2022 block. Phase-2 fresh validation failed robustness; no post-hoc retune or fallback Round2 was run."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -52,25 +19,25 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "17:09 scan: no new canonical SHA. Existing V20 cost-0% coverage-bypassed diagnostic already opened and negative across TopN, so no duplicate calculation. Formal exact raw acceptance still has 734 missing active symbol/date pairs. V20 remains DEPRIORITIZE and must not be retuned from opened outcomes."
+      "last_processed_note": "No new SHA at 18:12 supervisor scan. V20 cost0 diagnostic remains DEPRIORITIZE and must not be retuned."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-      "last_processed_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-      "last_processed_note": "No new branch SHA at last cross-lane reconciliation. Rejected families remain closed; Cloud exact-repro forensic is separate audit-only work."
+      "last_seen_sha": "da67fe92e493504842babac108df8f2be45c2658",
+      "last_processed_sha": "da67fe92e493504842babac108df8f2be45c2658",
+      "last_processed_note": "18:12 supervisor processed two new Cloud forensic commits. Exact-match spec frozen; broad reconstruction has 696 rows and recovers only 62/63 A timestamps. Disposition HISTORICAL_EXACT_REPRO_UNAVAILABLE; no portability and no model-family guessing unless genuinely new contemporaneous identity evidence appears."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "8a461bf987453422e705a08024c0f1a462068801",
       "last_processed_sha": "8a461bf987453422e705a08024c0f1a462068801",
-      "last_processed_note": "17:45 Consensus scan: formal retry 34810592135 remains active. User-authorized V47 partial-seed midterm diagnostic contract/hash/coverage was frozen before performance and run 34824194221 launched at cost 0%; performance not yet emitted, H2 remains unopened, no same-family retune allowed after opening."
+      "last_processed_note": "18:12 supervisor rechecked diagnostic run 34824194221; still in_progress and performance not emitted. Formal retry remains separate; no duplicate trigger."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
       "last_processed_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
-      "last_processed_note": "Selected-ZIP exact-byte freeze boundary is CI-green at run 34819456421; real EDINET metadata/parser outcomes remain unopened."
+      "last_processed_note": "No new SHA at 18:12 supervisor scan. Selected-ZIP exact-byte freeze boundary remains CI-green at run 34819456421; real EDINET data remains key-blocked."
     }
   },
   "guardrails": [
@@ -79,174 +46,102 @@
     "Canonical comparable endpoint is next XTKS session open to fifth XTKS session close.",
     "All new backtests/diagnostics/comparisons use transaction cost 0%; existing 0.5%/1% outputs are legacy evidence only.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
-    "Rejected families may not be reopened by renaming or post-hoc retuning.",
-    "Any period opened for MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE is no longer an untouched holdout and may not be used for same-family retuning.",
-    "Consensus V47 promotion path is exactly NOCAP vs CAP1000_PIT after clean PIT data acceptance; no price-cap grid search.",
-    "Yahoo raw 1H volume remains unchanged; PIT daily volume uses split-adjusted daily volume divided by cumulative future split factor."
+    "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning.",
+    "Consensus V47 promotion path is NOCAP vs CAP1000_PIT only after clean PIT data acceptance; no price-cap grid search."
   ],
   "workflow_watch": {
-    "v20_session_impulse": {
-      "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
-      "owner": "Canonical/Event :12 worker",
-      "contract_test_run": 34770320623,
-      "canonical_h1_universe_symbols": 1810,
-      "canonical_h1_universe_sessions": 82,
-      "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
-      "raw_repair_run": 34791959735,
-      "raw_repair_status": "completed/failure",
-      "raw_repaired_artifact_id": 10327932766,
-      "canonical_daily_artifact_id": 10264205130,
-      "canonical_daily_artifact_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
-      "observed_symbols": 1806,
-      "missing_active_symbol_dates": 734,
-      "repair_rows_added": 0,
-      "http_404_pairs": 476,
-      "silent_zero_row_pairs": 258,
-      "formal_performance_interpreted": false,
-      "formal_promotion_eligible": false,
-      "midterm_diagnostic_opened": true,
-      "midterm_diagnostic_status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
-      "midterm_diagnostic_cost_pct_points": 0.0,
-      "midterm_diagnostic_endpoint": "next XTKS open -> fifth XTKS close",
-      "midterm_diagnostic_coverage_caveat": "734 active symbol/date gaps remain; coverage gate bypassed only; no interpolation, synthetic bars, threshold relaxation, ranker change, TopN change, cooldown change, or condition change.",
-      "midterm_diagnostic_holdout_status": "OPENED_NOT_UNTOUCHED",
-      "midterm_diagnostic_top1": {"n":156,"mean_pct":-1.346,"median_pct":-2.627,"win_pct":35.90,"plus10_pct":14.74,"plus20_pct":7.69,"plus50_pct":2.56,"minus10_pct":24.36,"minus20_pct":10.26,"top1_ex_mean_pct":-1.860,"top3_ex_mean_pct":-2.669},
-      "midterm_diagnostic_top2": {"n":307,"mean_pct":-1.573,"median_pct":-1.294,"win_pct":40.07,"plus10_pct":11.40,"plus20_pct":4.89,"plus50_pct":1.30,"minus10_pct":19.87,"minus20_pct":8.14,"top1_ex_mean_pct":-1.834,"top3_ex_mean_pct":-2.241},
-      "midterm_diagnostic_top3": {"n":442,"mean_pct":-1.118,"median_pct":-1.289,"win_pct":40.05,"plus10_pct":11.54,"plus20_pct":3.85,"plus50_pct":1.13,"minus10_pct":17.19,"minus20_pct":5.88,"top1_ex_mean_pct":-1.298,"top3_ex_mean_pct":-1.613},
-      "midterm_diagnostic_top5": {"n":705,"mean_pct":-0.538,"median_pct":-0.955,"win_pct":41.84,"plus10_pct":10.07,"plus20_pct":3.55,"plus50_pct":1.13,"minus10_pct":14.33,"minus20_pct":3.97,"top1_ex_mean_pct":-0.650,"top3_ex_mean_pct":-0.854},
-      "next_rule": "Do not retune V20 from the opened diagnostic. Formal raw acceptance remains blocked by 734 gaps. If Consensus later produces frozen-accepted raw, repair only those exact gaps and rerun the unchanged verifier as coverage reconciliation, not as a fresh untouched holdout."
+    "weak_early_phase2": {
+      "status": "FRESH_2022_VALIDATION_FAILED_ROBUSTNESS_ROOT_CAUSE_AUDIT_NEXT",
+      "frozen_basis": {
+        "market_gate": "med_ret5 <= 0 on signal-date completed daily context",
+        "candidate_gate": "ret10 <= 0.5735294117647058",
+        "one_candidate_per_day": true,
+        "endpoint": "next XTKS open -> fifth XTKS close",
+        "cost_pct_points": 0.0
+      },
+      "baseline_2023_2025": {
+        "body": {"n":172,"mean_pct":6.54,"median_pct":0.99,"win_pct":50.58,"top3_ex_pct":4.60},
+        "volr20": {"n":172,"mean_pct":6.33,"median_pct":1.06,"win_pct":51.74,"top3_ex_pct":4.38},
+        "mean_rank": {"n":172,"mean_pct":6.89,"median_pct":1.45,"win_pct":52.33,"top3_ex_pct":4.95},
+        "dual_top1": {"n":140,"mean_pct":7.17,"median_pct":1.25,"win_pct":52.14,"top3_ex_pct":4.79},
+        "dual_g3": {"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14}
+      },
+      "g3_rule": "med_ret1 >= -0.01; frozen; no retune",
+      "fresh_2022_source": {
+        "artifact_id": 10264205130,
+        "source_run": 34545440155,
+        "raw_2022_rows": 825735,
+        "generator": "unchanged V7/V9 full-45-feature monthly causal Tail",
+        "existing_min_train_rows": 30000,
+        "first_computable_month": "2022-06",
+        "extreme_tail_rows_jun_dec": 89,
+        "weak_early_rows": 29,
+        "weak_early_signal_dates": 23
+      },
+      "fresh_2022": {
+        "body": {"n":23,"mean_pct":1.77,"median_pct":-6.37,"win_pct":26.09,"top3_ex_pct":-7.51},
+        "volr20": {"n":23,"mean_pct":1.95,"median_pct":-6.19,"win_pct":26.09,"top3_ex_pct":-7.31},
+        "mean_rank": {"n":23,"mean_pct":1.73,"median_pct":-6.37,"win_pct":26.09,"top3_ex_pct":-7.56},
+        "dual_top1": {"n":21,"mean_pct":2.62,"median_pct":-6.19,"win_pct":28.57,"top3_ex_pct":-7.55},
+        "dual_g3": {"n":17,"mean_pct":6.08,"median_pct":-6.00,"win_pct":29.41,"top3_ex_pct":-6.26}
+      },
+      "descriptive_2022_2025": {
+        "body": {"n":195,"mean_pct":5.98,"median_pct":-0.39,"win_pct":47.69,"top3_ex_pct":4.20},
+        "volr20": {"n":195,"mean_pct":5.81,"median_pct":0.00,"win_pct":48.72,"top3_ex_pct":4.03},
+        "mean_rank": {"n":195,"mean_pct":6.28,"median_pct":0.00,"win_pct":49.23,"top3_ex_pct":4.51},
+        "dual_top1": {"n":161,"mean_pct":6.57,"median_pct":0.00,"win_pct":49.07,"top3_ex_pct":4.43},
+        "dual_g3": {"n":134,"mean_pct":7.74,"median_pct":1.06,"win_pct":50.75,"top3_ex_pct":5.17}
+      },
+      "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
+      "next_rule": "Because fresh 2022 was computable, do not invoke the fallback Round2 intended only for missing 2022. First audit outcome-blind structural differences: model warm-up, candidate population and market-regime availability. Do not tune observed 2022 losses."
     },
-    "prospective_shadow_data_integrity": {
-      "latest_head": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
-      "resolution_continuity_ci_run": 34795293067,
-      "resolution_continuity_ci_status": "completed/success",
-      "xtks_calendar_guard_ci_run": 34795620704,
-      "xtks_calendar_guard_ci_status": "completed/success",
-      "immutable_resolution_receipt_ci_run": 34799006401,
-      "immutable_resolution_receipt_ci_status": "completed/success",
-      "real_shadow_launch_authorized": false
+    "v20_session_impulse": {
+      "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
+      "missing_active_symbol_dates": 734,
+      "formal_promotion_eligible": false,
+      "cost_pct_points": 0.0,
+      "top1": {"n":156,"mean_pct":-1.346,"median_pct":-2.627,"win_pct":35.90,"top3_ex_pct":-2.669},
+      "top5": {"n":705,"mean_pct":-0.538,"median_pct":-0.955,"win_pct":41.84,"top3_ex_pct":-0.854},
+      "next_rule": "Do not retune. Repair exact gaps only if Consensus later yields accepted frozen raw."
     },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
       "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
       "precision_prior_close_reclaim": "REJECT_PRECONFIRMATION",
-      "precision_prior_close_reclaim_run": 34799151144,
       "precision_three_family_batch": "REJECT_DEVELOPMENT",
-      "precision_three_family_run": 34799307163,
-      "old_cloud_monster_forensic": "EXACT_REPRO_AUDIT_PENDING_NOT_PROMOTION_REOPENING",
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
-      "old_cloud_monster_exact_repro_stage": "SPEC_RECONSTRUCTION_PENDING",
-      "execution_mode": "COORDINATION_CONSUMER_AND_EXACT_REPRO_FORENSIC",
-      "locked_h2_opened": false,
-      "precision_locked_h2_opened": false,
-      "precision_2026_opened": false,
-      "next_rule": "Keep rejected Core families closed. Cloud forensic only: reconstruct exact historical spec, reproduce original n=63/+9.86% first, then unchanged unused-period portability only on exact reproduction."
-    },
-    "consensus_v44": {
-      "run_id": 34767664140,
-      "status": "completed",
-      "conclusion": "failure",
-      "decision": "DATA_REPRO_FAILURE_DO_NOT_INTERPRET",
-      "performance_interpreted": false
+      "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
+      "old_cloud_monster_exact_repro_stage": "FROZEN_UNAVAILABLE_MISSING_IDENTITY_CRITICAL_EVIDENCE",
+      "broad_reconstruction_rows": 696,
+      "recovered_a_timestamps": "62/63",
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original script/notebook/serialized model/exact feature table/training manifest appears. Do not guess model family."
     },
     "consensus_v47": {
-      "daily_v6_run": 34788533946,
-      "external_restore_merge_run": 34799650589,
-      "external_daily_run": 34799835035,
       "daily_coverage_pass": true,
-      "daily_coverage_min": 1,
-      "required_intraday_nocap_symbols": 3885,
-      "required_intraday_cap1000_pit_symbols": 1886,
-      "raw1h_run": 34800587082,
-      "raw1h_status": "completed",
-      "raw1h_conclusion": "success",
-      "raw1h_workflow_success_is_acceptance": false,
-      "raw1h_decisive_failure_evidence": "formal acceptance run 34810234454: raw_unique_symbol_dates=0; NOCAP and CAP1000_PIT pair coverage=0%; all required symbols completely missing",
       "coverage_acceptance_run": 34810234454,
       "frozen_coverage_acceptance_pass": false,
-      "rate_limit_contract_test_run": 34806715208,
-      "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 17:45 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
-      "missing_universe_retry_active_jobs": 2,
-      "missing_universe_retry_queued_jobs": 10,
-      "preserved_raw_seed_run": 34592896202,
-      "preserved_raw_seed_symbols_with_rows": 1315,
-      "preserved_raw_seed_unique_symbol_dates": 618775,
-      "preserved_raw_seed_nocap_present_pairs": 301897,
-      "preserved_raw_seed_nocap_pair_coverage": 0.35389849026036824,
-      "preserved_raw_seed_cap1000_present_pairs": 258339,
-      "preserved_raw_seed_cap1000_pair_coverage": 0.831123665271482,
-      "preserved_raw_seed_restored_pair_coverage": 0.0,
-      "preserved_raw_seed_is_acceptance": false,
-      "price_arms": ["NOCAP", "CAP1000_PIT"],
-      "midterm_diagnostic_spec": "research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json",
       "midterm_diagnostic_run": 34824194221,
-      "midterm_diagnostic_status": "in_progress: source artifacts downloaded; preparing partial raw pool",
-      "midterm_diagnostic_label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
-      "midterm_diagnostic_cost_pct_points": 0.0,
-      "midterm_diagnostic_endpoint": "next official XTKS open -> D+5 close",
-      "midterm_diagnostic_coverage_nocap": 0.35389849026036824,
-      "midterm_diagnostic_coverage_cap1000_pit": 0.831123665271482,
-      "midterm_diagnostic_restored_pair_coverage": 0.0,
-      "midterm_diagnostic_performance_emitted": false,
-      "performance_opened": false,
-      "clean_features_opened": false,
-      "dev_h1_opened": false,
-      "h2_opened": false,
-      "next_rule": "Recover diagnostic run 34824194221 first; if performance emits, mark H1 OPENED_NOT_UNTOUCHED and record cost-0 metrics without retuning. Independently do not duplicate-trigger formal retry 34810592135. After formal retry completion merge only immutable retry bars and preserved run34592896202 bars with provenance and rerun unchanged frozen coverage verifier for promotion."
+      "midterm_diagnostic_status": "in_progress_at_18_12_JST_performance_not_emitted",
+      "preserved_raw_seed_run": 34592896202,
+      "preserved_raw_seed_nocap_pair_coverage": 0.35389849026036824,
+      "preserved_raw_seed_cap1000_pair_coverage": 0.831124,
+      "restored_pair_coverage": 0.0,
+      "next_rule": "No duplicate triggers. Collect cost0 diagnostic only after it completes; keep formal promotion separate."
     },
     "oss_validation": {
       "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
-      "preregistration_ci_run": 34807402370,
-      "preregistration_ci_status": "completed/success",
-      "selector_ci_run": 34807566909,
-      "selector_ci_status": "completed/success",
-      "metadata_snapshot_ci_run": 34811269556,
-      "metadata_snapshot_ci_status": "completed/success",
-      "metadata_acquisition_ci_run": 34816055006,
-      "metadata_acquisition_ci_status": "completed/success",
-      "selected_zip_freeze_ci_run": 34819456421,
-      "selected_zip_freeze_ci_status": "completed/success",
-      "edinet_real_sample": "PREREGISTERED_METADATA_SNAPSHOT_ACQUISITION_AND_SELECTED_ZIP_FREEZE_BOUNDARIES_TESTED_NOT_YET_EXECUTED",
-      "strategy_outcomes_opened": false,
-      "parser_outputs_opened": false,
-      "next_rule": "Use the tested acquisition helper with external EDINET API key, freeze raw metadata and selected ZIP bytes, then compare parsers on identical SHA256-frozen bytes."
+      "selected_zip_exact_byte_freeze_ci_run": 34819456421,
+      "selected_zip_exact_byte_freeze_ci_status": "success",
+      "real_edinet_blocker": "external EDINET_API_KEY"
     }
   },
-  "midterm_diagnostic": {
-    "policy": "USER_AUTHORIZED_DIAGNOSTIC_OPENING_NOT_PROMOTION_EVIDENCE",
-    "cost_pct_points": 0.0,
-    "opened_periods_are_untouched_holdouts": false,
-    "broad_blind_exploration": "STOP",
-    "observed_rank_1": "weak+early + body_pct LOW",
-    "observed_rank_2": "weak+early + volr20 LOW",
-    "observed_rank_3": "weak+early + mean-rank(volr20, body_pct)",
-    "v20_disposition": "DEPRIORITIZE",
-    "v47_disposition": "DIAGNOSTIC_IN_PROGRESS_PARTIAL_IMMUTABLE_SEED_COST0",
-    "next_high_information_checks": [
-      "Recover V47 midterm diagnostic run 34824194221 and record gross cost-0 metrics with exact partial-coverage caveat; do not retune after opening.",
-      "Finish V47 formal retry 34810592135 and keep promotion acceptance independent from the diagnostic opening.",
-      "Continue old Cloud exact recovery only if genuinely new source evidence can reconstruct exact historical model.",
-      "Use EDINET real metadata acquisition only when external key is available; keep parser comparison byte-identical and outcome-blind."
-    ]
-  },
-  "cross_lane_status": {
-    "final_go_no_go_ready": false,
-    "blocking_items": [
-      "V20 formal exact raw acceptance still has 734 canonical-active symbol/date gaps. Its coverage-bypassed cost-0% diagnostic is opened and negative across all TopN; V20 is DEPRIORITIZE and may not be retuned from that diagnostic.",
-      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance failed. Missing-universe retry 34810592135 remains actively acquiring two shards at a time; ten remain queued at 17:45 JST.",
-      "Consensus V47 partial-seed diagnostic run 34824194221 is active at cost 0%; performance has not yet emitted and therefore has no ranking impact yet.",
-      "No currently passing canonical 5BD Core/Precision replacement candidate. Historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending and is not current promotion evidence.",
-      "OSS EDINET outcome-blind boundaries are CI-green, but complete 2023-2025 real metadata still requires external EDINET API key."
-    ]
-  },
-  "dynamic_lane_policy": {
-    "enabled": true,
-    "discovery_owner": "supervisor :00",
-    "fallback_worker": "cross-lane+OSS :48",
-    "auto_register_rule": "Register a STATE-missing research/* branch only when recent substantive research commits plus handoff/log/spec evidence show it is active and independent; ignore archived/superseded/closed-only and coordination branches.",
-    "fixed_lane_count_assumption": false
-  }
+  "next_global_actions": [
+    "Phase-2: outcome-blind structural audit of 2022 vs 2023-2025 before any new win-rate gate search.",
+    "Consensus: collect V47 midterm diagnostic after run 34824194221 completes; do not duplicate trigger.",
+    "Consensus formal: continue observing retry 34810592135.",
+    "Cloud: remain closed unless genuinely new exact identity evidence appears.",
+    "OSS: real EDINET acquisition only when external key is available."
+  ]
 }

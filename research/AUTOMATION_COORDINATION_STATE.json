@@ -1,22 +1,16 @@
 {
   "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T13:03:00+09:00",
+  "updated_at_jst": "2026-09-14T13:04:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
-    "branch_heads_changed_since_previous_state": true,
+    "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "12:50 cross-lane follow-up verified Canonical/Shadow ef0f725e and Core 7ce65d88 unchanged and already processed. Consensus advanced by two documentation/log commits to 28c272b0; the delta was inspected and preserves the frozen V47 contract. Raw1H run 34800587082 advanced from queued to in_progress, with all 12 jobs inside Fetch raw 1H shard after successful accepted-daily verification and fetcher compile/test. No duplicate trigger, performance opening, H2 opening, or production change was made."
+    "note": "13:04 supervisor verified Canonical ef0f725e, Core 7ce65d88, and Consensus 28c272b0 unchanged and already processed. Consensus V47 raw1H run 34800587082 remains in_progress with all 12 jobs still in Fetch raw 1H shard, so no acceptance/performance/H2 artifacts were opened. The newly registered OSS/Validation lane HEAD 3818de53 was substantively audited; its EDINET issued-share priority correction is outcome-blind, fail-closed on same-priority conflicts, and production remains unchanged."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
-    "worker_slots_jst": [
-      "00",
-      "12",
-      "24",
-      "36",
-      "48"
-    ],
+    "worker_slots_jst": ["00", "12", "24", "36", "48"],
     "rule": "Each worker scans all STATE-registered active research branches before its preferred lane. The :00 supervisor also discovers new substantive research/* lanes not yet in STATE and assigns unowned lanes to :48 fallback ownership. Do not duplicate SHA already processed."
   },
   "branches": {
@@ -41,8 +35,8 @@
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "3818de53041b8fe7baddbda6e25971af1ebbfaed",
-      "last_processed_sha": null,
-      "last_processed_note": "Registered as active independent OSS/Validation lane at 13:03 JST. Dedicated sixth task was not created because the account has a five-active-task limit; :48 now owns this lane plus cross-lane follow-up. First substantive processing remains pending and must advance from the real branch HEAD without duplicating other lanes."
+      "last_processed_sha": "3818de53041b8fe7baddbda6e25971af1ebbfaed",
+      "last_processed_note": "Supervisor audited the independent OSS/Validation lane at HEAD 3818de53. The lane uses purgedcv 0.1.6, Optuna 5.0.0 discovery-only, and edinet-tools 0.8.4 outcome-blind cross-checks. Latest EDINET correction enforces explicit frozen issued-share semantic priority, disallows summary/FilingDateInstant, and fails closed on conflicting same-priority facts. No strategy outcome or production path was touched. :48 owns continued autonomous work under the five-task cap."
     }
   },
   "guardrails": [
@@ -114,10 +108,7 @@
       "raw1h_status": "in_progress",
       "raw1h_jobs_observed": 12,
       "raw1h_jobs_stage": "Fetch raw 1H shard",
-      "price_arms": [
-        "NOCAP",
-        "CAP1000_PIT"
-      ],
+      "price_arms": ["NOCAP", "CAP1000_PIT"],
       "performance_opened": false,
       "next_rule": "Wait for raw1H run 34800587082 to complete. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. Only after PASS may clean feature materialization begin."
     }

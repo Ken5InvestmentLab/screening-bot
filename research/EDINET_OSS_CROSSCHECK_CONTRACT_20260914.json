@@ -1,0 +1,39 @@
+{
+  "contract_id": "EDINET-OSS-CROSSCHECK-V1-20260914",
+  "status": "PREREGISTERED_OUTCOME_BLIND",
+  "purpose": "Compare the custom point-in-time EDINET extractor with edinet-tools on identical source ZIP bytes before using any parser difference in research.",
+  "production_modified": false,
+  "strategy_outcomes_opened": false,
+  "oss": {
+    "package": "edinet-tools",
+    "version": "0.8.4",
+    "license": "MIT"
+  },
+  "source_policy": {
+    "same_xbrl_to_csv_zip_for_both_parsers": true,
+    "availability_source": "Existing custom EDINET submit_datetime/available_at contract remains authoritative.",
+    "parser_disagreement_rule": "Fail closed for research admission. Never choose whichever parser value improves strategy performance."
+  },
+  "field_pairs": {
+    "assets": "total_assets",
+    "equity": "net_assets_total",
+    "revenue": "net_sales",
+    "operating_income": "operating_income",
+    "net_income": "net_income_owners",
+    "operating_cf": "operating_cash_flow",
+    "shares_outstanding": "edinet-tools raw_facts under the frozen issued-share element/context priority"
+  },
+  "issued_share_policy": {
+    "priority_1": "jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults at CurrentYear...",
+    "priority_2": "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc at CurrentYear...",
+    "priority_3": "same fiscal-year-end element at FilingDateInstant...",
+    "ambiguity": "Multiple conflicting values at the same frozen priority are unknown/ambiguous.",
+    "reason": "Real EDINET filings commonly place fiscal-year-end issued-share facts at FilingDateInstant, while the prior custom generic context filter accepted only CurrentYear."
+  },
+  "initial_execution": {
+    "synthetic_ci_first": true,
+    "real_historical_sample_may_follow": true,
+    "real_sample_must_be_preregistered_before_comparison": true,
+    "no_strategy_return_columns_permitted": true
+  }
+}

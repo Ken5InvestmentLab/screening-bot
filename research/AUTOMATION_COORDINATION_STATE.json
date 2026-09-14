@@ -1,12 +1,12 @@
 {
-  "version": 42,
+  "version": 43,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T01:12:00+09:00",
+  "updated_at_jst": "2026-09-15T01:13:00+09:00",
   "supervisor_last_scan": {
     "status": "CANONICAL_SHADOW_ENDPOINT_SYMBOL_SESSION_COMPLETENESS_GUARD_GREEN",
-    "scanned_at_jst": "2026-09-15T01:12:00+09:00",
+    "scanned_at_jst": "2026-09-15T01:13:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Canonical/Shadow advanced outcome-blind: added a fail-closed audit binding frozen prospective shadow candidates to exact next-XTKS-open and fifth-XTKS-close symbol/date endpoint availability. Missing pairs, missing symbols, non-positive/non-finite required prices, duplicate session dates, or signal dates outside the pinned calendar block resolution. Not-yet-mature candidates remain pending rather than failing. CI 34867054366 SUCCESS. No returns/performance opened and no production paths touched."
+    "note": "Canonical/Shadow advanced outcome-blind: added a fail-closed audit binding frozen prospective shadow candidates to exact next-XTKS-open and fifth-XTKS-close symbol/date endpoint availability, plus a research-only contract note. Missing pairs, missing symbols, non-positive/non-finite required prices, duplicate session dates, or signal dates outside the pinned calendar block resolution. Not-yet-mature candidates remain pending rather than failing. CI 34867054366 SUCCESS. No returns/performance opened and no production paths touched."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "962a062bc8a46eb32df65cfa737676463ec3ea1a",
-      "last_processed_sha": "962a062bc8a46eb32df65cfa737676463ec3ea1a",
-      "last_processed_note": "Shadow/Data symbol-set + endpoint-session completeness boundary implemented and CI-green. Exact mature-candidate next-open/D+5-close pairs must exist with finite positive required prices before resolution; no outcomes opened."
+      "last_seen_sha": "74953f93945996fd9c29eb9af60927add720a3d9",
+      "last_processed_sha": "74953f93945996fd9c29eb9af60927add720a3d9",
+      "last_processed_note": "Shadow/Data symbol-set + endpoint-session completeness boundary implemented, CI-green, and documented. Exact mature-candidate next-open/D+5-close pairs must exist with finite positive required prices before resolution; no outcomes opened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -60,7 +60,8 @@
     },
     "shadow_data_integrity": {
       "status": "SYMBOL_SET_ENDPOINT_SESSION_COMPLETENESS_GUARD_CI_GREEN",
-      "head": "962a062bc8a46eb32df65cfa737676463ec3ea1a",
+      "head": "74953f93945996fd9c29eb9af60927add720a3d9",
+      "implementation_head": "962a062bc8a46eb32df65cfa737676463ec3ea1a",
       "latest_ci_run": 34867054366,
       "latest_ci_status": "success",
       "performance_opened": false,

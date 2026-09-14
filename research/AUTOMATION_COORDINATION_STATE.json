@@ -1,7 +1,7 @@
 {
-  "version": 22,
+  "version": 23,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T19:24:00+09:00",
+  "updated_at_jst": "2026-09-14T19:36:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_PHASE2_HALF_YEAR_STRUCTURAL_AUDIT_ROUND2_STAYS_CLOSED",
     "scanned_at_jst": "2026-09-14T19:08:00+09:00",
@@ -31,7 +31,7 @@
       "preferred_worker": "consensus",
       "last_seen_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
       "last_processed_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
-      "last_processed_note": "H1 cost0 midterm result already processed. User-authorized diagnostic sequence advanced without retune: pre-open NOCAP-only H2 contract frozen, cost0 diagnostic runner/workflow added, and unique run 34832358609 launched. CAP1000_PIT H2 and 2026 remain closed; formal promotion acceptance remains blocked."
+      "last_processed_note": "19:36 scan: unique H2 diagnostic run 34832358609 is still in progress. Pre-open contract and all source downloads passed; current step is partial PIT feature materialization (step 10/13) before NOCAP-only H2 opening. CAP1000_PIT H2 and 2026 remain closed; no retune. Formal retry 34810592135 remains the same unique run with prior partial timeouts; duplicate trigger not issued."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -140,7 +140,9 @@
       "diagnostic_h2_preopen_spec": "research/CONSENSUS_V47_MIDTERM_H2_DIAGNOSTIC_SPEC_20260914.json",
       "diagnostic_h2_trigger_commit": "008fd87386f252cb5f7289ef4e303604d8f56c76",
       "diagnostic_h2_run": 34832358609,
-      "diagnostic_h2_status": "IN_PROGRESS_NOCAP_ONLY_COST0",
+      "diagnostic_h2_status": "IN_PROGRESS_FEATURE_MATERIALIZATION_NOCAP_ONLY_COST0",
+      "diagnostic_h2_current_step": "10/13 Materialize partial PIT features without promotion acceptance",
+      "diagnostic_h2_preopen_contract_passed": true,
       "diagnostic_h2_arm": "NOCAP",
       "diagnostic_h2_period": ["2025-07-01", "2025-12-30"],
       "diagnostic_h2_opened": false,
@@ -149,7 +151,7 @@
       "formal_h1_opened": false,
       "formal_h2_opened": false,
       "promotion_evidence": false,
-      "next_rule": "Collect run 34832358609 when complete and record cost0 NOCAP H2 metrics as diagnostic-only; never open CAP1000_PIT H2 as rescue and never retune from opened H1/H2. Formal path stays separate: let 34810592135 terminate naturally, merge valid outputs with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using staged 48-shard layout."
+      "next_rule": "Collect run 34832358609 when feature materialization and NOCAP-only H2 opening complete; record cost0 metrics as diagnostic-only and mark H2 opened/not untouched. Never open CAP1000_PIT H2 as rescue and never retune from opened H1/H2. Formal path stays separate: let 34810592135 terminate naturally, merge valid outputs with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using staged 48-shard layout."
     },
     "oss_validation": {
       "head": "91831b03a955801f7f75de05ca0f8e69b824ea20",
@@ -162,7 +164,7 @@
     }
   },
   "next_global_actions": [
-    "Consensus diagnostic: collect unique NOCAP-only H2 run 34832358609 when complete; record cost0 metrics as MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE and mark 2025H2 opened/not untouched; do not open CAP1000_PIT H2 as rescue.",
+    "Consensus diagnostic: collect unique NOCAP-only H2 run 34832358609 after partial PIT feature materialization; record cost0 metrics as MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE and mark 2025H2 opened/not untouched; do not open CAP1000_PIT H2 as rescue.",
     "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
     "Phase-2: audit preserved model warm-up/calibration metadata and monthly model_period/training-count context without outcome-derived thresholds.",
     "Phase-2: Round2 remains closed until a causal market-level factor can explain more than the 2023H2 weak-market case; do not post-hoc fit 2025H2.",

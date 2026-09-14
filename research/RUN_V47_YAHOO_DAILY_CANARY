@@ -1,0 +1,4 @@
+trigger: 2026-09-14 v47-yahoo-daily-rate-limit-canary
+source_v6_run: 34788533946
+scope: outcome-blind direct Yahoo availability only
+strategy_outcomes: forbidden

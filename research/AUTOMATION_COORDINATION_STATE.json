@@ -1,7 +1,7 @@
 {
   "version": 5,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T12:02:00+09:00",
+  "updated_at_jst": "2026-09-14T12:13:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": false,
@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
-      "last_processed_sha": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
-      "last_processed_note": "Processed 12 commits after c5ea4d3f. Shadow/Data added daily endpoint provenance guards and immutable self-hashed resolution receipts. Integrated CI 34799006401 SUCCESS, 42/42. V20 remains fail-closed at 1806/1810 with 734 missing canonical-active symbol/date pairs; H1/H2 outcomes remain unopened."
+      "last_seen_sha": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
+      "last_processed_sha": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
+      "last_processed_note": "Canonical :12 re-opened only outcome-blind V20 raw-repair evidence. Run 34791959735 remains fail-closed: 734 missing active symbol/date pairs, 0 repair rows added. Diagnosis pinned in V20_H1_RAW_GAP_DIAGNOSIS_20260914.json: 476 failures are exactly four predecessor-identity clusters (463A->8940, 464A->5595, 543A->7205, 547A->8515), 119 pairs each, all HTTP 404; the remaining 258 gaps returned no HTTP error but zero 1H rows. No strategy outcomes opened. Next safe recovery source is an accepted outcome-blind Yahoo raw artifact such as Consensus V47 raw1H after its own frozen coverage acceptance."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -54,8 +54,11 @@
       "raw_repair_status": "completed/failure",
       "observed_symbols": 1806,
       "missing_active_symbol_dates": 734,
+      "repair_rows_added": 0,
+      "http_404_pairs": 476,
+      "silent_zero_row_pairs": 258,
       "performance_interpreted": false,
-      "next_rule": "Keep H1/H2 outcomes closed. Diagnose outcome-blind historical raw-data recovery only; no threshold lowering, interpolation/synthetic bars, or V20 retune."
+      "next_rule": "Keep H1/H2 outcomes closed. Do not repeat the identical Yahoo targeted query contract: it added zero rows. Wait for an independently accepted outcome-blind Yahoo raw source (prefer Consensus V47 raw1H after its frozen coverage acceptance), audit only the exact missing V20 pairs, then rerun the unchanged V20 raw verifier. No threshold lowering, interpolation/synthetic bars, or V20 retune."
     },
     "prospective_shadow_data_integrity": {
       "latest_head": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
@@ -105,8 +108,8 @@
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened.",
-      "Consensus V47 daily PIT acceptance now passes, but raw1H promotion-grade coverage run 34800587082 is still pending and must pass frozen acceptance before features/performance open.",
+      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Failure modes are now partitioned outcome-blind into 476 predecessor-identity HTTP 404 pairs and 258 successful-query/zero-row pairs.",
+      "Consensus V47 daily PIT acceptance now passes, but raw1H promotion-grade coverage run 34800587082 is still pending and must pass frozen acceptance before features/performance open; if accepted, its Yahoo raw artifact becomes the preferred non-performance V20 gap-recovery audit source.",
       "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected."
     ]
   }

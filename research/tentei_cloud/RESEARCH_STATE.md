@@ -633,3 +633,43 @@ Decision: **reject direct daily application of the four Mega40 overlay condition
 The parallel canonical/V20 lane owns TV-free event reconstruction/PIT/source contracts. This branch will consume a frozen event stream for long-horizon overlays if one exists, not build a competing event detector.
 
 See `LONG_DAILY_BASELINE_FINDINGS.md`.
+
+
+## 2026-09-14 current coordination status — role coverage supersedes earlier Core-KEEP snapshot
+
+Current authoritative coordination file:
+`research/tentei_cloud/ROLE_COVERAGE_AND_RESEARCH_PRIORITY_20260914.md`.
+
+Where older notes call the fixed reconstructed Core a KEEP / research-ready replacement lane, that promotion status is **superseded** by the later canonical-endpoint evidence:
+- canonical DEV remained positive;
+- canonical 2025H2 was essentially flat gross and negative after 0.5% stress;
+- therefore `REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE` remains the current status.
+- The fixed Core may still be used as a robust-floor research baseline / diagnostics reference.
+
+Raw1H PIT lineage clarification:
+- run `34798921728`, artifact `10330772110` passed;
+- this reconstructed Core derives prior close / prior volume / session volume from explicit-period raw1H;
+- shared V47 receipts establish raw1H volume as PIT share-count scale;
+- do not apply frozen-daily split-volume correction again to this path;
+- this data-lineage clarification does not reverse the performance rejection.
+
+Current benchmark-role coverage:
+- Stable-like 5BD headline/tail: not qualified; future clean Monster/event lane is the main bottleneck.
+- Sniper-like 5BD high-hit precision: **uncovered**.
+- Mega5 short-tail: not proven; may ultimately be covered by a forward-qualified Monster family.
+- Mega40 long horizon: **uncovered**; direct daily baseline rejected and canonical event timing is required.
+
+Sniper-role exploration on this branch is now closed for simple candle-event enumeration:
+- `PRIOR_CLOSE_RECLAIM` preregistered and rejected before 2025H2/2026 were opened.
+- Three-family preregistered DEV-only batch (`PRIOR_HIGH_BREAKOUT`, `TWO_DAY_PULLBACK_RECLAIM`, `INSIDE_RANGE_STRENGTH`) produced zero qualifying family.
+- Internal validation remained closed for the three-family batch; 2025H2 and 2026 remained closed.
+- Do not add neighboring candle thresholds to rescue these failures.
+
+Priority:
+1. Let canonical-batch02 / Consensus finish clean PIT, survivorship and prospective-shadow infrastructure.
+2. Forward-qualify the tail/Monster event lane.
+3. Revisit Sniper precision only with a materially different clean representation/data source.
+4. Revisit Mega40 only as a consumer of a frozen canonical event stream.
+5. Final common-window benchmark only after individual lanes have valid evidence.
+
+Do not duplicate upstream V20/Consensus data repair or shadow-provenance work from this branch.

@@ -1,30 +1,8 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 16:39 JST  
-> **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + 各active laneのhandoff / Actions  
-> **目的:** 研究の進捗・候補・バックテスト・ブロッカーを1ページで把握する。  
-> **注意:** 進捗率は「研究の成功確率」ではなく、各レーンで事前定義したマイルストーン消化率の目安。
-
----
-
-## 中締め判断 — 2026-09-14 16:44 JST
-
-**ユーザー承認により未開封バックテストを診断目的で開封するモードへ移行。** 一度開いたH1/H2は今後 untouched holdout とは扱わず、診断値を見て同familyをretuneしない。
-
-### 中締め暫定王者
-1. **weak+early + body_pct LOW** — 2023-2024 n=128 / mean +6.46% / median +1.25% / Top3-ex +4.03%; 2025 n=44 / mean +6.78% / Top3-ex +0.03%.
-2. **weak+early + volr20 LOW** — 2023-2024 n=128 / mean +6.24% / median +1.06% / Top3-ex +3.81%; 2025 n=44 / mean +6.58% / Top3-ex -0.19%.
-3. **weak+early + volr20/body combined rank** — 2023-2024 mean +7.16% / Top3-ex +4.75%; 2025 mean +6.09% / Top3-ex -0.71%.
-
-### 新規開封: V20 coverage-bypassed H1 diagnostic
-734 symbol/date gapを残したまま、閾値・ranker・TopN・endpointを変更せず診断。0.5% cost:
-- Top1 n=156 / mean **-1.85%** / median -3.13% / win 34.6% / Top3-ex -3.17%
-- Top3 n=442 / mean **-1.62%** / median -1.79% / win 38.7% / Top3-ex -2.11%
-- Top5 n=705 / mean **-1.04%** / median -1.46% / win 40.0% / Top3-ex -1.35%
-
-**中締め判定:** V20はDEPRIORITIZE。V47はretry 34810592135のrawがまだ無いため `NOT_COMPUTABLE_NO_INPUT_DATA`。広い新規探索は停止し、body_pct LOW / volr20 LOWの統一コスト比較とV47診断のみ継続する。
-
-詳細: `research/MIDTERM_COMPARISON_20260914.md`
+> **最終更新基準:** 2026-09-14 16:52 JST  
+> **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + active lane handoff / Actions + `research/MIDTERM_COMPARISON_20260914.md`  
+> **注意:** 進捗率は成功確率ではなく、事前定義した研究マイルストーンの消化率。診断開封と正式promotion evidenceは分離する。
 
 ---
 
@@ -34,87 +12,138 @@
 |---|---|
 | 最終GO候補 | **まだ0件** |
 | Active research branches | **4本** |
-| 定期worker | **5枠 (:00 / :12 / :24 / :36 / :48)** |
-| 現在の本命 | **1位 Consensus V47 / 2位 V20 Session-Impulse** |
-| 成績まで正式に開けた本命 | **まだ無し** |
-| 最大の歴史的参考値 | **旧Cloud Monster: n=63 / 5BD平均 +9.86%** |
-| Cloud完全一致再現 | **再検証を正式に再開。現在は exact spec復元待ち** |
-| 未完了タスク | **24項目**（P0:5 / P1 V20:5 / P1 Cloud:4 / P2 OSS:6 / 最終:4） |
+| 現在の実観測暫定首位 | **weak+early + body_pct LOW** |
+| 正式promotion evidenceでGO可能な候補 | **0件** |
+| V47 | **clean Daily PIT PASS / raw retry中 / performance未計算** |
+| V20 | **coverage-bypassed診断を開封、全TopN負でDEPRIORITIZE** |
+| 旧Cloud Monster | **歴史値 n=63 / 5BD平均 +9.86%**。exact-repro forensicとは別扱い |
+| OSS / EDINET | **metadata→selector→selected-ZIP exact-byte freezeまでCI固定** |
 | 最終判定 | **NO-GO / 研究継続** |
 
 ### 全体進捗
-`███████████░░░░░░░░░` **約56%**
+`████████████░░░░░░░░` **約58%**
 
-- 基盤・評価契約・リーク防止: かなり完了
-- 本命候補のrawデータ受入: 未完
-- 本命候補H1/H2評価: 未開封
-- Cloud Monster完全一致forensic: 再開、元条件spec復元前
-- EDINET: 実データ取得前のacquisition/snapshot/selector境界までCI固定済み
+- 評価契約・リーク防止・監査基盤: 高進捗
+- 有力な実観測条件: あり。ただし正式promotion evidenceへの統一評価が未完
+- V47 raw受入: 未完
+- EDINET real same-ZIP比較: 未実施
 - 最終比較 / GO-NO-GO: 未実施
 
 ---
 
-## 1. 5 worker状態
+## 1. 重要な方針変更と開封状態
 
-| Worker | 担当 | 現在の状態 | 最新確認 |
+ユーザー明示承認により、未開封H1/H2/outcomeを**中締め診断目的では開封可**とする。開封済み期間は以後 untouched holdout と扱わず、診断値を見て同familyをretuneしない。正式promotion判定と `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE` は分離する。
+
+| 対象 | 診断開封 | 正式promotion evidence | 備考 |
 |---|---|---|---|
-| **:00 Supervisor** | 横断監督 / 未割当lane / Dashboard | 🟢 **監査完了** | 16:24 — 全research/*を再列挙、OSS handoff-only差分をSTATEへ同期、新規laneなし |
-| **:12 Canonical** | V20 / Shadow | 🟡 **WAITING** | V47 accepted raw待ち。V20は734 gap、H1/H2未開封 |
-| **:24 Core** | Core + Cloud exact forensic | 🟠 **FORENSIC PENDING** | Core rejectは維持。Cloud n=63/+9.86%完全一致spec復元→元期間再現が次 |
-| **:36 Consensus** | V47 | 🟡 **RAW RETRY ACTIVE + SEED AUDIT COMPLETE** | retry `34810592135`: fetch(0)/fetch(1) raw取得中、10 shard queued。既存Yahoo raw seed監査完了 |
-| **:48 Cross-lane + OSS** | 結果回収 / OSS | 🟢 **PROGRESSED** | EDINET official-v2 acquisition boundary + CI `34816055006` SUCCESS |
+| weak+early body_pct / volr20系 | ✅ 既存観測値あり | ❌ 未統一 | canonical endpoint + 0.5% costのrow-level統一評価が次 |
+| V20 Session-Impulse | ✅ coverage-bypassed診断開封 | ❌ 不可 | 734 gapを残した診断。全TopN負、DEPRIORITIZE |
+| Consensus V47 | ❌ performance未計算 | ❌ 未開封 | retryが実rawを出すまで物理的に計算不可 |
+| Cloud exact forensic | 歴史値のみ既知 | ❌ | exact reproductionが先。歴史値を再現結果と混同しない |
 
 ---
 
-## 2. レーン別ステータス
+## 2. 暫定ランキング — 実観測performance
 
-| レーン | 状態 | 目安進捗 | 現在地 | 次アクション |
+### 1位 weak+early + body_pct LOW
+- 2023-2024: **n=128 / mean +6.46% / median +1.25% / Top3-ex +4.03%**
+- 2025 descriptive: **n=44 / mean +6.78% / Top3-ex +0.03%**
+- legacy reportはgross。単純0.5pt round-trip感応度ではmean約 **+5.96% / +6.28%**だが、正式比較にはrow-level再計算が必要。
+- **Disposition:** CURRENT BEST OBSERVED IMPLEMENTABLE CONDITION
+
+### 2位 weak+early + volr20 LOW
+- 2023-2024: **n=128 / mean +6.24% / median +1.06% / Top3-ex +3.81%**
+- 2025 descriptive: **n=44 / mean +6.58% / Top3-ex -0.19%**
+- 単純0.5pt mean感応度: 約 **+5.74% / +6.08%**
+- **Disposition:** VERY CLOSE SECOND
+
+### 3位 weak+early + mean-rank(volr20, body_pct)
+- 2023-2024: **n=128 / mean +7.16% / median +1.81% / Top3-ex +4.75%**
+- 2025: **n=44 / mean +6.09% / Top3-ex -0.71%**
+- headlineは最強だが2025 Top3 robustnessはbody_pct LOWに劣る。
+
+### 4位以降の参考
+- V29 fixed_min98_both: historical n=35 / mean +4.86% / median +2.90%。population/endpointが異なり再現不能。
+- 旧Cloud Monster Priority A: historical n=63 / mean +9.86%。exact probability model消失、実装不能のため**歴史的参考値**。
+- weak+early × V31 full-JPX: pre-2026 n=69 / mean +3.77%だがApril 2025依存が強く、April除外で約+0.04%。
+
+**注意:** このランキングは中締め診断ランキングであり、正式GO順位ではない。
+
+---
+
+## 3. 正式promotion path / lane status
+
+| レーン | 状態 | マイルストーン進捗 | 現在地 | 次アクション |
 |---|---:|---:|---|---|
-| **Consensus V47** | 🟡 本命 / RAW RETRY ACTIVE | **67%** | Daily PIT PASS、初回raw acceptance FAIL、hardened retryで2 shard取得中。既存Yahoo raw seedでNOCAP 35.4% / CAP1000_PIT 83.1% pair coverageを確認 | retry完了後、retry + preserved rawをprovenance付きでmergeして同じfrozen verifierを再実行 |
-| **V20 Session-Impulse** | 🟡 本命 / COVERAGE BLOCKED | **55%** | 1,810銘柄×82セッション凍結済み、734 symbol/date不足 | V47でaccepted rawができたら734件だけ監査・修復 |
-| **Core replacement** | 🔴 現候補REJECT | **評価自体は90%** | Fixed Core等を正式評価し棄却 | reject familyはretuneしない |
-| **Cloud exact forensic** | 🟠 再現性監査 | **10%** | 歴史値 n=63/+9.86%は既知。完全一致実装は未復元 | exact-match spec凍結→元期間完全再現→成功時のみ別期間へ無調整横展開 |
-| **OSS / Validation** | 🟢 基盤進行 | **65%** | Purged/DSR/Optuna + EDINET acquisition/snapshot/selector境界をCI固定 | 2023-2025 raw metadata取得→snapshot hash freeze→同一ZIP比較 |
+| **Consensus V47** | 🟡 RAW RETRY ACTIVE | **67%** | Daily PIT PASS。初回raw acceptance FAIL。retry `34810592135` は2 shard取得中・10 queued。preserved seedはNOCAP 35.4% / CAP1000_PIT 83.1%、restored 0% | retry完了→preserved seedとprovenance付きmerge→frozen verifier。実rawが得られ次第diagnostic performance可 |
+| **V20 Session-Impulse** | 🟠 DEPRIORITIZE / COVERAGE BLOCKED | **55%** | 1,810 symbols / 82 sessions、734 gap。coverage bypass診断は全TopN負 | formal repairはV47 accepted rawができた場合のみ。隣接retuneしない |
+| **Core replacement** | 🔴 REJECT | **90%** | Fixed Core / reclaim / precision系を棄却 | closed。新規隣接heuristic探索停止 |
+| **Cloud exact forensic** | 🟠 FORENSIC | **10%** | 歴史値 n=63/+9.86%のみ。exact spec未復元 | exact spec→元期間完全一致→成功時のみ未使用期間へ無調整展開 |
+| **OSS / Validation** | 🟢 基盤進行 | **70%** | Purged/DSR/Optuna + EDINET metadata acquisition/snapshot/selector + selected-ZIP exact-byte freezeをCI固定 | external keyでreal metadata取得→snapshot→selector→ZIP freeze→same-ZIP parser比較 |
 | **Shadow / Data Integrity** | 🟢 基盤 | **80%** | calendar/integrity/immutable receipt CI成功 | real shadow launchは未承認 |
 
 ---
 
-## 3. 有望候補ランキング
+## 4. V20中締め診断 — 正式promotion evidenceではない
 
-| 順位 | 条件 / family | 判定 | バックテスト | コメント |
-|---:|---|---|---|---|
-| **1** | **Consensus V47 — NOCAP / CAP1000_PIT** | 🟡 未評価 | **未開封** | clean PIT pipeline。raw retry進行中。既存raw seed再利用で次回retry負荷を削減可能 |
-| **2** | **V20 Session-Impulse Continuation** | 🟡 未評価 | **未開封** | 4H/intraday主軸のEvent/Monster候補。734欠損が blocker |
-| **3** | **旧Cloud Monster exact reconstruction** | 🟠 Historical forensic | **歴史値 n=63 / 平均 +9.86%** | 完全一致再現を再検証中。元期間を完全再現できた場合だけ、無調整で未使用期間へ横展開 |
-| 4 | Canonical Monster v2 | 🔴 REJECT | 2025 locked 平均 **+2.19%** | frozen 0.5% cost Top1-winner-excluded mean **-0.21%**で棄却 |
-| 5 | Fixed Core | 🔴 REJECT | DEV +0.712% / 2025H2 **-0.452%** | 2025H2中央値 -0.745%、勝率41.43% |
-| 6 | Failed-Breakdown Reclaim | 🔴 REJECT | DEV **-0.766%** / Internal +0.331% | median/win rateがgate未達 |
-| 7 | Prior-Close Reclaim | 🔴 REJECT | DEVELOPMENT gate FAIL | H2未開封 |
-| 8 | Precision 3-family | 🔴 REJECT | DEVELOPMENTで全family負 | 隣接retune禁止 |
+734 symbol/date gapを残し、閾値・ranker・TopN・canonical endpointを変更せず0.5% costで診断した結果:
+
+| TopN | n | mean | median | win | Top3-ex |
+|---:|---:|---:|---:|---:|---:|
+| Top1 | 156 | **-1.846%** | -3.127% | 34.62% | -3.169% |
+| Top2 | 307 | **-2.073%** | -1.794% | 38.11% | -2.741% |
+| Top3 | 442 | **-1.618%** | -1.789% | 38.69% | -2.113% |
+| Top5 | 705 | **-1.038%** | -1.455% | 40.00% | -1.354% |
+
+**判定:** `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE` / **DEPRIORITIZE**。gapで正確な順位は変わり得るが、現状はV20を本命2位として扱わない。
 
 ---
 
-## 4. 既知バックテスト結果
+## 5. 旧Cloud Monster — 歴史値とexact forensicを分離
 
-### 旧Cloud Monster — 歴史値と再現性監査を分離
-**歴史的ヘッドライン**
+### 歴史的ヘッドライン
 - n = **63**
 - 5BD平均 = **+9.86%**
-- この数値自体は historical headline であり、現時点のpromotion evidenceではない
+- median +3.33%、win 57.1%、+20% 30.2%、Top5-ex +4.03%
 
-**完全一致forensicの現在地**
-1. ⏳ 当時の実装・設定・score・学習/評価期間・candidate selection・cooldown・entry/exit・cost・A/B確率帯を復元
+### exact reproducibility forensic
+1. ⏳ 当時の実装・設定・score・学習/評価期間・selection・cooldown・endpoint・cost・確率帯を復元
 2. 🔒 exact-match specを凍結
-3. 🔒 元期間で **n=63 / +9.86%** を完全再現
-4. 🔒 成功した場合のみ、条件をretuneせず未使用期間へ横展開
-5. 🔒 n / 平均 / 中央値 / 勝率 / +10/+20/+50 / -10/-20 / Top1・Top3除外 / 月週依存でportability判定
+3. 🔒 元期間で **n=63 / +9.86%** を完全一致再現
+4. 🔒 成功した場合のみ条件無変更で未使用期間へ横展開
+5. 🔒 portabilityをn / mean / median / win / tails / Top1・Top3除外 / 月週依存で判定
 
-**重要:** 近縁条件 / surrogate の好成績を「完全再現」とは扱わない。2026はreport-only。
+**重要:** surrogateや近縁条件の好成績を「完全再現」と呼ばない。2026はreport-only。
 
-### Fixed Core — canonical endpoint
-| 区間 | n | 平均 | 中央値 | 勝率 | Top3除外 |
+---
+
+## 6. OSS / Validation 詳細
+
+- **最新HEAD:** `faba5b48f1831b16f08c74895f772ca0089f765c`
+- ✅ purged/embargoed CV audit
+- ✅ PSR / DSR multiple-trial sensitivity
+- ✅ Optuna Discovery期間外fail-closed + trial retention
+- ✅ EDINET real-sample preregistration / deterministic selector
+- ✅ full-calendar metadata snapshot + SHA256/hash-chain validator
+- ✅ official EDINET v2 resumable acquisition helper — CI `34816055006` SUCCESS
+- ✅ selected real-doc ZIP exact-byte freeze helper + fail-closed tests — CI `34819456421` **SUCCESS**
+- 🔒 real 2023-2025 metadata bytes = 未取得
+- 🔒 selected real doc IDs = 未固定
+- 🔒 selected real ZIP hashes = 未固定
+- 🔒 custom vs edinet-tools real same-ZIP outputs = 未開封
+- 🔒 strategy outcomes / 2026 outcomes = 未開封
+
+**blocker:** real EDINET pathの実行には外部 `EDINET_API_KEY` が必要。キーが無い状態では実データを捏造せず、outcome-blind境界だけを先に固定済み。
+
+---
+
+## 7. 既知の正式バックテスト / reject evidence
+
+### Fixed Core — canonical endpoint / 0.5% cost
+| 区間 | n | 平均 | 中央値 | 勝率 | Top3-ex |
 |---|---:|---:|---:|---:|---:|
-| DEV | 169 | **+0.712%** | +0.509% | 55.62% | +0.393% |
+| DEV | 169 | +0.712% | +0.509% | 55.62% | +0.393% |
 | 2025 H2 | 140 | **-0.452%** | -0.745% | 41.43% | -0.874% |
 
 **判定:** REJECT
@@ -129,106 +158,42 @@
 
 ---
 
-## 5. 本命候補の進捗
+## 8. 残タスク
 
-### Consensus V47
-`█████████████░░░░░░░` **67%**
+### P0
+- [ ] Consensus retry `34810592135` 完了監視（重複起動禁止）
+- [ ] retry + preserved raw seedをprovenance付きmergeしてfrozen verifier再実行
+- [ ] V47実rawが得られ次第、diagnostic performanceを開く。formal acceptanceとは分離
+- [ ] body_pct LOW / volr20 LOWを同じcanonical endpoint・0.5% cost・row-level metricsで統一比較
 
-- **最新HEAD:** `01299302461872a748693313e4de9c63cdcd32b8`
-- **最新関連Action:** retry `34810592135`
-- **16:39 JST確認:** run-level表示はqueuedだが、job-levelでは `fetch(0)` / `fetch(1)` が `Fetch raw 1H shard` でin_progress、残り10 shardは意図した `max-parallel: 2` によりqueued
-- ✅ PIT universe / Daily PIT coverage PASS
-- ✅ split evidence 3,700 / 3,700
-- ❌ 初回raw 1H frozen acceptance
-- ⏳ targeted retry = **active acquisition**
-- ✅ preserved raw seed audit = **complete**: run `34592896202` から exact historical Yahoo barsを監査
-  - NOCAP: **301,897 / 853,061 = 35.3898%** pair coverage、monthly min 33.9002%、restored 0%
-  - CAP1000_PIT: **258,339 / 310,831 = 83.1124%** pair coverage、monthly min 77.3420%、restored 0%
-  - seed単体はacceptance FAILだが、次のmissing-only retry前に再利用可能
-- 🔒 clean features / DEV H1 / H2 / 2026 selection = **未開封**
-- **NOCAP vs CAP1000_PIT:** raw acceptance前、performance比較未開始
+### P1
+- [ ] V47 accepted rawが得られた場合のみV20 exact 734 gap repair / verifier再実行
+- [ ] Cloud exact-match reconstruction spec freeze
+- [ ] Cloud元期間 n=63/+9.86% exact reproduction
+- [ ] exact reproduction成功時のみ未使用期間へ無調整portability確認
 
-**blocker:** retry完了後に retry artifact + preserved raw seedをprovenance付きでmergeし、frozen raw acceptanceを再実行すること。候補ランキングは1位維持。
+### P2 — OSS
+- [ ] external API keyで2023-2025全calendar day raw JSON取得
+- [ ] metadata snapshot per-day SHA256 + hash-chain freeze
+- [ ] preregistered selectorを1回だけ実行してdoc IDs freeze
+- [ ] selected ZIPsをexact-byte freeze helperでSHA256固定
+- [ ] custom parser vs edinet-toolsを**同一ZIP bytes**で比較
+- [ ] Purged CV / PSR / DSRを将来の正式promotion評価へ接続
 
-### V20 Session-Impulse
-`███████████░░░░░░░░░` **55%**
-
-- **最新HEAD:** `480bc9b5b62270f13f7e7de0accda008e6757bf9`
-- ✅ spec/evaluator/contract freeze
-- ✅ 1,810 symbols / 82 sessions freeze
-- ❌ exact raw acceptance
-- ⏳ **734 missing symbol/date**（476 predecessor identity/HTTP404、258 query success/0 rows）
-- 🔒 H1 / H2 / 2026 report = **未開封**
-- **次:** V47 retry artifactがfrozen acceptance PASSした場合のみ734件を監査・修復し、V20 verifierを変更せず再実行。
-
-### OSS / Validation
-`█████████████░░░░░░░` **65%**
-
-- **最新HEAD:** `0837d299eff60698d0e2ec36c659a36bbc078542`
-- ✅ purged/embargoed CV audit layer
-- ✅ PSR / DSR multiple-trial sensitivity
-- ✅ Optuna discovery period fail-closed contract
-- ✅ EDINET real-sample selector preregistration
-- ✅ full-calendar metadata snapshot/hash-chain validator
-- ✅ official EDINET v2 acquisition helper + resume/fail-closed contract
-- ✅ acquisition CI `34816055006` = **SUCCESS**
-- 🔒 real 2023-2025 metadata bytes = 未取得
-- 🔒 selected real doc IDs = 未固定
-- 🔒 same-ZIP custom vs edinet-tools comparison = 未開封
-- 🔒 strategy outcomes = 未開封
-
----
-
-## 6. 現在の残タスク — 24 open
-
-### P0 — 最優先（5）
-- [ ] Consensus retry `34810592135` を完了まで監視（重複起動禁止）
-- [ ] retry + preserved raw seedをprovenance付きでmergeし V47 frozen raw coverage verifier再実行
-- [ ] PASSなら clean features materialize
-- [ ] V47 DEV H1で NOCAP vs CAP1000_PIT 比較
-- [ ] DEV winnerだけH2を開く
-
-### P1 — V20（5）
-- [ ] accepted V47 raw artifactをV20修復ソースとして監査
-- [ ] exact 734 gapだけ修復
-- [ ] V20 raw verifier再実行
-- [ ] PASSならH1評価
-- [ ] H1 PASS policyだけH2へ
-
-### P1 — Cloud Monster exact forensic（4）
-- [ ] exact-match reconstruction specを凍結
-- [ ] 元期間で n=63 / +9.86% を完全再現
-- [ ] 完全再現できた場合のみ未使用期間へ無調整横展開
-- [ ] portabilityを期間別統計・tail・Top1/Top3除外・月週依存で判定
-
-### P2 — OSS / Validation（6）
-- [ ] external API keyで2023-2025全calendar day raw JSONを取得
-- [ ] `edinet_metadata_snapshot.py` でper-day SHA256 + hash-chain freeze
-- [ ] selected doc IDs freeze
-- [ ] ZIP hash freeze
-- [ ] custom parser vs edinet-tools same-ZIP比較
-- [ ] Purged CV / PSR / DSRをpromotion評価へ接続
-
-### 最終（4）
-- [ ] V47 / V20 / reproducible Cloud / benchmarkを同じ比較表へ
+### 最終
+- [ ] 実装可能候補を同一endpoint / cost / selection policyで比較
 - [ ] performance + robustness + availability比較
 - [ ] GO / NO-GO
 - [ ] 本番移行はユーザー明示承認後のみ
 
 ---
 
-## 7. ブロッカー
+## 9. 現在のブロッカー / next action
 
-1. **Consensus V47 raw 1H:** retry `34810592135` は16:39 JST時点で2 shard取得中・10 queued。acceptance前。preserved raw seedはNOCAP 35.4% / CAP1000_PIT 83.1% pair coverageを持つが、restored 0%で単体acceptance不可。
-2. **V20 raw 1H:** 734 symbol/date不足。
-3. **Core replacement:** 現在の正式候補はすべてREJECT。
-4. **旧Cloud Monster:** 歴史値 n=63/+9.86% はあるが、完全一致実装の復元→元期間完全再現→未使用期間portabilityが未完。
-5. **EDINET:** acquisition/snapshot/selector境界はCI-greenだが、2023-2025実raw metadata取得とsame-ZIP parser comparisonは未実行。
+1. **V47:** retry `34810592135` は16:50 JST時点でfetch(0)/fetch(1)取得中、10 queued。重複起動しない。
+2. **V20:** 734 gap。診断は負でDEPRIORITIZE、retuneしない。
+3. **Cloud:** exact implementation未復元。歴史値はpromotion evidenceではない。
+4. **EDINET:** external API keyが無いためreal acquisition未実行。ただしselected-ZIP byte identity boundaryまでCI-green。
+5. **最優先の高情報量チェック:** body_pct LOW / volr20 LOWの統一コスト比較、V47 retry回収、Cloud exact source evidence、EDINET real metadata acquisition（キー利用可能時）。
 
----
-
-## 8. 自動更新ルール
-
-各lane workerは終了時に最終更新時刻、5 worker状態、進捗率、HEAD、Actions、raw acceptance、H1/H2開封状態、Cloud exact forensic段階、blocker、次アクション、候補ランキング影響を更新する。正式バックテストが新規に開封された場合のみ期間・n・平均・中央値・勝率・+10/+20/+50・-10/-20・Top1/Top3除外・endpoint/costを可能な範囲で追記する。
-
-**成績をまだ開けてはいけない候補は「未開封」と表示し、推測値を載せない。**
+**GO/NO-GO:** **NO-GO / 研究継続**。広いblind explorationは停止し、上記high-information checksへ集中する。

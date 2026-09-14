@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 18:40 JST  
+> **最終更新基準:** 2026-09-14 19:08 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ---
@@ -11,12 +11,13 @@
 |---|---|
 | 最終GO候補 | **0件** |
 | Active research branches | **4本** |
-| Weak+Early Phase-2 | **2022 fresh validation FAILED ROBUSTNESS**。outcome-blind構造監査まで完了 |
+| Weak+Early Phase-2 | **2022 fresh validation FAILED ROBUSTNESS**。2023H2/2025H2横断のoutcome-blind構造監査まで完了 |
 | 2023-25暫定首位 | **DUAL_TOP1_AGREEMENT**、勝率改善候補 **G3 NO_ACUTE_SELLOFF** |
+| Phase-2 Round2 | **NOT ACTIVATED**。2023H2と2025H2を同時説明する単純なmarket weakness gateは未発見 |
 | Consensus V47 | 中締めH1 cost0診断完了。**NOCAPが平均で暫定リード**だがpartial coverageでpromotion evidenceではない。formal raw retryは180分timeout問題を確認、future retryは48 shardへ修復済み |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
 | Core/Cloud forensic | Core既reject維持 / Cloud **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
-| OSS / EDINET | selected-ZIP exact-byte freezeまでCI固定、real EDINETは外部key待ち |
+| OSS / EDINET | selected-manifest/ZIP exact-byte境界＋cost0 Optuna契約までCI固定、real EDINETは外部key待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
 ---
@@ -89,6 +90,26 @@ Candidate scarcity:
 
 **Outcome-blind interpretation:** 2022は市場breadth・即時momentum・gap・volume acceleration・rangeが弱く、rankerが選べる候補数も少ない。一方tail_pは低くなくRSIはむしろ高い。単純な「Tail score不足」ではなく、**population/regime mismatch**の可能性が高い。
 
+### 2023H2 / 2025H2 mechanism audit — NEW
+
+不調halfを良好halfとoutcome-blindに比較した。詳細は `research/WEAK_EARLY_PHASE2_STRUCTURAL_AUDIT_20260914_1900.md`。
+
+| Half | candidates/day | single-candidate | breadth_ma20 | breadth_ret1_pos | range_pct | volr5 | tail_p |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2023H1 | 2.17 | 60.00% | 0.459 | 0.384 | 0.117 | 1.224 | 0.821 |
+| **2023H2** | **1.27** | **81.82%** | **0.416** | **0.378** | **0.068** | **1.029** | 0.820 |
+| 2024H1 | 2.62 | 34.48% | 0.558 | 0.421 | 0.093 | 1.172 | 0.820 |
+| 2024H2 | 2.61 | 39.39% | 0.519 | 0.422 | 0.070 | 1.187 | 0.828 |
+| 2025H1 | 2.82 | 39.29% | 0.592 | 0.464 | 0.089 | 1.195 | 0.847 |
+| **2025H2** | **1.79** | **63.16%** | **0.633** | **0.499** | **0.073** | **1.190** | 0.834 |
+
+**Key finding:**
+- 2023H2は2022型の「弱breadth + 小range + 候補不足」にかなり近い。
+- 2025H2は候補不足はあるが、breadthはむしろ全halfで最強側。よって同じmarket-weakness原因ではない。
+- tail_p中央値は各halfで約0.82-0.85と安定。不調halfだけscore levelが低い証拠はない。
+- body_pctは両不調halfで高いがcandidate-level clueなので、現在のfreeze方針では新gate/rankerへ昇格しない。
+- **Round2は未起動。** 2023H2/2025H2を同時説明するmarket-level因子を後付けで捏造しない。
+
 ---
 
 ## 2. Active lanes
@@ -98,7 +119,7 @@ Candidate scarcity:
 | Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合のみgap reconciliation |
 | Core/Cloud | `0886fd65...` | Core reject / Cloud exact replay unavailable | 新しい同時代identity evidenceがある場合だけCloud再開 |
 | Consensus V47 | `2b63fa00...` | H1 diagnostic SUCCESS / formal retry partial timeout | H2を開くならfrozen H1 leader NOCAPのみ。formalは現run完了後seed merge→exact acceptance |
-| OSS/Validation | `faba5b48...` | selected-ZIP byte freeze CI-green | external key利用可能時にreal EDINET acquisition |
+| OSS/Validation | `91831b03...` | selected-manifest/ZIP byte freeze + cost0 Optuna contract hardening CI-green | external key利用可能時にreal EDINET acquisition |
 
 ---
 
@@ -197,16 +218,17 @@ Holdout state:
 - [x] frozen Phase-2 candidates fresh validation
 - [x] 2022 robustness failure recording
 - [x] 2022 vs 2023-25 signal-time structural audit
+- [x] candidate-scarcity structure audit
+- [x] 2023H2 / 2025H2 outcome-blind shift audit
 - [x] Cloud exact-repro spec freeze / exact evidence availability判定
 - [x] Core/Cloud cost0 + canonical endpoint labeling audit
 - [x] **V47 formal retry timeout原因確定 / future retry 48 shard修復**
 - [x] **V47 midterm H1 cost0 comparison completion collection**
+- [ ] model warm-up / calibration metadata audit
 - [ ] V47 diagnostic H2 NOCAP-only（開く場合）
 - [ ] V47 formal retry completion/timeout collection -> seed merge -> exact acceptance
-- [ ] model warm-up / calibration effect audit
-- [ ] candidate-scarcity structure audit
-- [ ] 2023H2 / 2025H2 outcome-blind shift audit
+- [ ] Phase-2 Round2 prereg（同時説明可能なcausal market variableが理論的に得られた場合のみ）
 
 ## 7. GO / NO-GO
 
-**NO-GO / 研究継続。** Consensus V47のH1中締めではNOCAPが平均で勝ったが、coverage-bypassed diagnosticでありformal promotion evidenceではない。正式raw acceptanceは未PASS。H1結果を見たretuneは禁止し、formal pathとdiagnostic pathを分離する。
+**NO-GO / 研究継続。** Weak+Earlyは2022 fresh blockで安定性FAIL。2023H2は2022型のmarket weakness/scarcityだが、2025H2は高breadthのため単一の弱地合いgateでは共通原因を説明できない。Round2は後付け探索を避けるため未起動。Consensus V47のH1中締めではNOCAPが平均で勝ったが、coverage-bypassed diagnosticでありformal promotion evidenceではない。正式raw acceptanceは未PASS。

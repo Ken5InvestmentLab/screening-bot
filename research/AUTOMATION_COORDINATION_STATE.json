@@ -1,12 +1,12 @@
 {
-  "version": 56,
+  "version": 57,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T04:45:00+09:00",
+  "updated_at_jst": "2026-09-15T05:00:00+09:00",
   "supervisor_last_scan": {
-    "status": "PARALLEL_XTKS_PINNED_CONSENSUS_SHARDS_0_3_429_ABSORBED",
-    "scanned_at_jst": "2026-09-15T04:45:00+09:00",
+    "status": "NO_NEW_ACTIVE_HEADS_CLOSE_DEAD_WORK",
+    "scanned_at_jst": "2026-09-15T05:00:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": ":48 follow-up absorbed Consensus coordination-only head fd7f7c5d (shards 0-3 all zero-row HTTP429), then advanced Parallel Wave-1 by pinning independent XTKS calendar bytes and implementing an outcome-blind endpoint completeness verifier. Performance remains unopened."
+    "note": "All STATE-registered active lane HEADs still equal processed SHAs. To avoid wasting worker cycles, Weak+Early Phase-2 frozen validation is now CLOSED after completed 2022 fresh robustness failure and Round2 closure; Cloud exact forensic is also CLOSED unless genuinely new contemporaneous identity-critical evidence appears. V20 remains CLOSED. Active capacity stays focused on Parallel, Core24 data repair/Core provenance, Canonical/Shadow, OSS and Consensus terminal follow-up."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -14,41 +14,11 @@
     "rule": "Each worker scans all STATE-registered active research branches before its preferred lane. Do not duplicate SHA already processed."
   },
   "branches": {
-    "research/tvfree-canonical-batch02": {
-      "preferred_worker": "canonical",
-      "last_seen_sha": "2fe2981f43a8c80a510ca446241ad44ed6e2c6eb",
-      "last_processed_sha": "2fe2981f43a8c80a510ca446241ad44ed6e2c6eb",
-      "task_state": "ACTIVE",
-      "last_processed_note": "Frozen Shadow/Data provenance contract is now implemented at the verified resolve boundary. CLI requires verified daily manifest + pinned XTKS calendar artifacts; completeness receipt binds daily manifest/calendar/selection-ledger SHAs; resolution receipt binds completeness receipt + resolved output. CI 34886599423 SUCCESS. No performance opened or strategy logic changed."
-    },
-    "research/tentei-cloud-mtf": {
-      "preferred_worker": "core",
-      "last_seen_sha": "fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc",
-      "last_processed_sha": "fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc",
-      "task_state": "ACTIVE_DATA_REPAIR",
-      "last_processed_note": "Added SHA-bound real missing-inventory runner; exact expected/observed input bytes and emitted inventory are receipt-bound. CI 34886738844 SUCCESS. Preserved artifact 10264205130 is daily-only and artifact 10330772110 is receipt-only; both were audited and rejected as substitutes for the real raw1H observed bytes. Real expected endpoint-key universe + raw1H artifact still need pinning before the one-shot gap run."
-    },
-    "research/consensus-atr-regime-gate": {
-      "preferred_worker": "consensus",
-      "last_seen_sha": "fd7f7c5d26f154a760dd9a025bb242620bce0dc9",
-      "last_processed_sha": "fd7f7c5d26f154a760dd9a025bb242620bce0dc9",
-      "task_state": "EXTERNAL_WAIT_ACTIVE_RUN",
-      "last_processed_note": "Processed two coordination/dashboard-only commits through fd7f7c5d. Raw48 run 34849054884 remains nonterminal/queued; shards 0-3 each returned 0/81 ok, zero raw rows and 81/81 HTTP429 (324/324 total), four tiny artifacts visible; shards 4/5 were next active. No strategy/performance change and no duplicate trigger."
-    },
-    "research/oss-validation-tooling": {
-      "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "d2eccd40b0e37a8a50d8a598869fcecbd0510cfc",
-      "last_processed_sha": "d2eccd40b0e37a8a50d8a598869fcecbd0510cfc",
-      "task_state": "ACTIVE",
-      "last_processed_note": "Receipt-bound DSR control fully verified: implementation CI 34883481600 SUCCESS, contract rerun 34883717045 SUCCESS, final handoff synchronized at d2eccd40. No strategy outcome opened. Move to another outcome-blind validation task next."
-    },
-    "research/parallel-condition-exploration": {
-      "preferred_worker": "cross-lane-via-48",
-      "last_seen_sha": "858998cceb10f263d181233a20c55c5bc4f92aa6",
-      "last_processed_sha": "858998cceb10f263d181233a20c55c5bc4f92aa6",
-      "task_state": "ACTIVE",
-      "last_processed_note": "Wave-1 now binds an independent XTKS 2022-2026 calendar (1,220 sessions; SHA 58e67bd2...) and an outcome-blind endpoint completeness verifier. The verifier binds calendar/daily/pick-ledger bytes and fails closed on missing next-open/fifth-close endpoints without computing returns. Performance remains unopened. Next: derive/freeze causal A1/B1/E1 pick ledger, emit actual endpoint completeness receipt, then one-shot cost0 evaluation only."
-    }
+    "research/tvfree-canonical-batch02": {"preferred_worker":"canonical","last_seen_sha":"2fe2981f43a8c80a510ca446241ad44ed6e2c6eb","last_processed_sha":"2fe2981f43a8c80a510ca446241ad44ed6e2c6eb","task_state":"ACTIVE","last_processed_note":"Frozen Shadow/Data provenance contract implemented at verified resolve boundary; CI 34886599423 SUCCESS; performance unopened."},
+    "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc","last_processed_sha":"fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc","task_state":"ACTIVE_DATA_REPAIR","last_processed_note":"SHA-bound real missing-inventory runner CI 34886738844 SUCCESS. Real expected endpoint-key universe + raw1H artifact still need pinning before one-shot gap run. Cloud exact forensic itself is CLOSED; this branch remains active only for Core24 data repair/Core provenance."},
+    "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"fd7f7c5d26f154a760dd9a025bb242620bce0dc9","last_processed_sha":"fd7f7c5d26f154a760dd9a025bb242620bce0dc9","task_state":"EXTERNAL_WAIT_ACTIVE_RUN","last_processed_note":"Raw48 run 34849054884 nonterminal; shards 0-3 zero-row HTTP429. No duplicate trigger."},
+    "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","last_processed_sha":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","task_state":"ACTIVE","last_processed_note":"Receipt-bound DSR control verified; move to next outcome-blind validation task."},
+    "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"ACTIVE","last_processed_note":"Independent XTKS calendar + outcome-blind endpoint verifier frozen. Next causal pick ledger -> completeness receipt -> one-shot cost0 evaluation."}
   },
   "guardrails": [
     "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
@@ -58,105 +28,24 @@
     "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning."
   ],
   "workflow_watch": {
-    "weak_early_phase2": {
-      "status": "FRESH_2022_FAILED_ROUND2_CLOSED",
-      "task_state": "WRAP_UP",
-      "leader": "DUAL+G3",
-      "leader_2023_25": {"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},
-      "g3_threshold": "med_ret1 >= -0.01 FROZEN",
-      "fresh_2022": "FAILED_ROBUSTNESS",
-      "round2": "CLOSED"
-    },
-    "v20_session_impulse": {
-      "status": "DEPRIORITIZED_CLOSED_ACTIVE_QUEUE",
-      "task_state": "CLOSED",
-      "formal_promotion_eligible": false,
-      "cost_pct_points": 0.0
-    },
-    "shadow_data_integrity": {
-      "status": "HASH_PROVENANCE_CHAIN_IMPLEMENTED_CI_GREEN",
-      "task_state": "ACTIVE",
-      "head": "2fe2981f43a8c80a510ca446241ad44ed6e2c6eb",
-      "latest_ci_run": 34886599423,
-      "latest_ci_status": "success",
-      "performance_opened": false,
-      "chain": "daily endpoint manifest + pinned XTKS calendar + frozen selection ledger -> completeness receipt -> resolved output -> resolution receipt",
-      "next_rule": "Add focused end-to-end tamper tests for each explicit chain link or move to the next outcome-blind Shadow/Data integrity control; do not reopen performance."
-    },
-    "consensus_v47": {
-      "task_state": "EXTERNAL_WAIT",
-      "head": "fd7f7c5d26f154a760dd9a025bb242620bce0dc9",
-      "daily_coverage_pass": true,
-      "frozen_coverage_acceptance_pass": false,
-      "formal_retry_run": 34849054884,
-      "formal_retry_status": "ACTIVE_SYSTEMIC_HTTP429_BLOCKED",
-      "completed_zero_row_shards": [0,1,2,3],
-      "active_fetch_shards": [4,5],
-      "promotion_evidence": false,
-      "midterm_nocap_h2": {"n":37,"mean_pct":3.0295,"median_pct":0.3817,"win_pct":51.35,"top3_ex_pct":-0.5393}
-    },
-    "parallel_wave1": {
-      "status": "SOURCE_SCHEMA_XTKS_PINNED_ENDPOINT_VERIFIER_IMPLEMENTED_PICK_LEDGER_PENDING_PERFORMANCE_UNOPENED",
-      "task_state": "ACTIVE",
-      "head": "858998cceb10f263d181233a20c55c5bc4f92aa6",
-      "schema_receipt": "research/PARALLEL_WAVE1_SCHEMA_RECEIPT_20260915.json",
-      "calendar_receipt": "research/PARALLEL_WAVE1_XTKS_CALENDAR_RECEIPT_20260915.json",
-      "calendar_sha256": "58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b",
-      "calendar_sessions": 1220,
-      "endpoint_verifier": "research/parallel_wave1_endpoint_receipt.py",
-      "source_csv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
-      "source_rows": 4061361,
-      "selected_families": ["A_COMPRESSION_EXPANSION","B_RELATIVE_REVERSAL","E_PRIOR_STRUCTURE_PROXIMITY"],
-      "performance_opened": false
-    },
-    "core": {
-      "task_state": "ACTIVE_PROVENANCE",
-      "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
-      "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE_HOLD_CLOSE_CANDIDATE",
-      "endpoint_provenance_status": "IMMUTABLE_SOURCE_RECEIPT_PRIMITIVE_CI_GREEN",
-      "head": "fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc",
-      "performance_opened": false
-    },
-    "ohlcv_supplement": {
-      "task_state": "ACTIVE",
-      "status": "SHA_BOUND_REAL_INVENTORY_RUNNER_CI_GREEN_INPUT_ARTIFACT_PIN_PENDING",
-      "formal_dataset_adoption": false,
-      "performance_recompute_allowed": false,
-      "latest_ci_run": 34886738844,
-      "latest_ci_status": "success",
-      "alpha_vantage_free_role": "LOW_PRIORITY_DAILY_ONLY",
-      "stooq_role": "CANDIDATE_NOT_FORMAL_ELIGIBLE",
-      "googlefinance_snapshot_role": "CORROBORATION_ONLY_NOT_FORMAL_INTRADAY"
-    },
-    "cloud_exact_forensic": {
-      "task_state": "HOLD_CLOSE_CANDIDATE",
-      "status": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "reopen_condition": "new contemporaneous identity-critical evidence only"
-    },
-    "oss_validation": {
-      "task_state": "ACTIVE",
-      "head": "d2eccd40b0e37a8a50d8a598869fcecbd0510cfc",
-      "cost0_optuna_contract_status": "IMPLEMENTATION_VERIFIED_CI_GREEN",
-      "trial_ledger_status": "RECEIPT_BOUND_DSR_VERIFIED_CI_GREEN",
-      "binding_ci_run": 34883481600,
-      "binding_ci_status": "success",
-      "contract_rerun": 34883717045,
-      "contract_rerun_status": "success",
-      "performance_opened": false
-    },
-    "edinet_same_zip": {
-      "task_state": "EXTERNAL_INPUT_WAIT",
-      "status": "REAL_API_KEY_OR_PINNED_REAL_ZIP_REQUIRED"
-    }
+    "weak_early_phase2": {"status":"FRESH_2022_FAILED_ROUND2_CLOSED","task_state":"CLOSED","leader":"DUAL+G3","leader_2023_25":{"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},"g3_threshold":"med_ret1 >= -0.01 FROZEN","fresh_2022":"FAILED_ROBUSTNESS","round2":"CLOSED","reopen_condition":"none under frozen Phase-2; retain as research record/comparator only"},
+    "v20_session_impulse": {"status":"DEPRIORITIZED_CLOSED_ACTIVE_QUEUE","task_state":"CLOSED","formal_promotion_eligible":false,"cost_pct_points":0.0},
+    "shadow_data_integrity": {"status":"HASH_PROVENANCE_CHAIN_IMPLEMENTED_CI_GREEN","task_state":"ACTIVE","head":"2fe2981f43a8c80a510ca446241ad44ed6e2c6eb","latest_ci_run":34886599423,"latest_ci_status":"success","performance_opened":false,"next_rule":"Add focused link-tamper regression or next outcome-blind integrity control."},
+    "consensus_v47": {"task_state":"EXTERNAL_WAIT","head":"fd7f7c5d26f154a760dd9a025bb242620bce0dc9","daily_coverage_pass":true,"frozen_coverage_acceptance_pass":false,"formal_retry_run":34849054884,"formal_retry_status":"ACTIVE_SYSTEMIC_HTTP429_BLOCKED","completed_zero_row_shards":[0,1,2,3],"active_fetch_shards":[4,5],"promotion_evidence":false,"midterm_nocap_h2":{"n":37,"mean_pct":3.0295,"median_pct":0.3817,"win_pct":51.35,"top3_ex_pct":-0.5393}},
+    "parallel_wave1": {"status":"SOURCE_SCHEMA_XTKS_PINNED_ENDPOINT_VERIFIER_IMPLEMENTED_PICK_LEDGER_PENDING_PERFORMANCE_UNOPENED","task_state":"ACTIVE","head":"858998cceb10f263d181233a20c55c5bc4f92aa6","calendar_sha256":"58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b","calendar_sessions":1220,"source_csv_sha256":"6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0","source_rows":4061361,"selected_families":["A_COMPRESSION_EXPANSION","B_RELATIVE_REVERSAL","E_PRIOR_STRUCTURE_PROXIMITY"],"performance_opened":false},
+    "core": {"task_state":"ACTIVE_PROVENANCE","current_fixed_core":"REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE","old_cloud_monster_forensic":"CLOSED_HISTORICAL_EXACT_REPRO_UNAVAILABLE","endpoint_provenance_status":"IMMUTABLE_SOURCE_RECEIPT_PRIMITIVE_CI_GREEN","head":"fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc","performance_opened":false},
+    "ohlcv_supplement": {"task_state":"ACTIVE","status":"SHA_BOUND_REAL_INVENTORY_RUNNER_CI_GREEN_INPUT_ARTIFACT_PIN_PENDING","formal_dataset_adoption":false,"performance_recompute_allowed":false,"latest_ci_run":34886738844,"latest_ci_status":"success","alpha_vantage_free_role":"LOW_PRIORITY_DAILY_ONLY","stooq_role":"CANDIDATE_NOT_FORMAL_ELIGIBLE","googlefinance_snapshot_role":"CORROBORATION_ONLY_NOT_FORMAL_INTRADAY"},
+    "cloud_exact_forensic": {"task_state":"CLOSED","status":"HISTORICAL_EXACT_REPRO_UNAVAILABLE","reopen_condition":"new contemporaneous identity-critical evidence only","active_worker_cycles":false},
+    "oss_validation": {"task_state":"ACTIVE","head":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","cost0_optuna_contract_status":"IMPLEMENTATION_VERIFIED_CI_GREEN","trial_ledger_status":"RECEIPT_BOUND_DSR_VERIFIED_CI_GREEN","binding_ci_run":34883481600,"binding_ci_status":"success","contract_rerun":34883717045,"contract_rerun_status":"success","performance_opened":false},
+    "edinet_same_zip": {"task_state":"EXTERNAL_INPUT_WAIT","status":"REAL_API_KEY_OR_PINNED_REAL_ZIP_REQUIRED"}
   },
   "next_global_actions": [
-    "Parallel Wave-1: derive A1/B1/E1 causal picks from the frozen daily source without returns, freeze the pick-ledger bytes/SHA, run the pinned-calendar endpoint completeness verifier, then execute one cost0 batch only after PASS.",
-    "Core24 OHLCV supplement: locate/pin exact real expected endpoint-key input and exact raw1H observed artifact bytes, execute SHA-bound missing-inventory runner once, acquire fallback raw only for declared gaps, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
-    "Canonical/Shadow: full endpoint provenance hash chain is implemented and CI-green; add explicit link-tamper regression coverage or advance to another outcome-blind integrity control without performance opening.",
-    "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",
-    "Core: freeze real XTKS/raw-vendor endpoint manifest and wire canonical evaluator to fail-closed provenance primitive before recomputation.",
-    "OSS: receipt-bound DSR control is complete and CI-green. Move to the next outcome-blind validation control instead of repeating this task.",
-    "Cloud exact forensic: keep out of active work unless new contemporaneous identity-critical evidence appears.",
-    "V20: keep closed/deprioritized; do not spend worker cycles unless genuinely new evidence changes the premise."
+    "Parallel Wave-1: derive causal A1/B1/E1 pick ledger without returns, freeze SHA, run endpoint completeness receipt, then one cost0 batch after PASS.",
+    "Core24 OHLCV supplement: pin exact real expected endpoint-key input + raw1H observed artifact, execute one-shot missing inventory, acquire fallback only for declared gaps, verify and hand off coverage delta before performance recomputation.",
+    "Canonical/Shadow: add explicit link-tamper regression or next outcome-blind integrity control without opening performance.",
+    "Consensus: no duplicate trigger; after run 34849054884 terminal, merge genuinely observed rows only and rerun frozen acceptance.",
+    "Core: freeze real XTKS/raw-vendor manifest and bind canonical evaluator before recomputation.",
+    "OSS: move to next outcome-blind validation control.",
+    "Weak+Early Phase-2, Cloud exact forensic and V20: CLOSED; consume no worker cycles unless their explicit reopen condition is met."
   ]
 }

@@ -1,0 +1,142 @@
+name: Consensus V47 Midterm Diagnostic
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_MIDTERM_DIAGNOSTIC"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install frozen model/materialization dependencies
+        run: pip install pandas==2.3.3 numpy==2.5.3 requests==2.34.2 scikit-learn==1.9.1 scipy==1.18.1 pyarrow
+      - name: Download frozen run80 daily
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Download accepted PIT membership
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-pit-universe-34771221050
+          path: pit
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34771221050
+      - name: Download authoritative V47 daily materialization
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-34799835035
+          path: daily
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34799835035
+      - name: Download preserved immutable Yahoo raw seed
+        uses: actions/download-artifact@v5
+        with:
+          pattern: tentei-cloud-1h-shard-*
+          path: raw_seed
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34592896202
+      - name: Verify pre-open diagnostic contract and prepare raw seed
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import pandas as pd
+
+          spec=json.loads(Path('research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json').read_text())
+          assert spec['label']=='MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE'
+          assert spec['cost_round_trip']==0.0
+          assert spec['promotion_evidence'] is False
+          out=Path('raw_diag'); out.mkdir(exist_ok=True)
+          files=sorted(Path('raw_seed').glob('ohlcv_1h_shard_*.csv'))
+          if not files:
+              raise RuntimeError('no preserved raw seed files')
+          for i,p in enumerate(files):
+              d=pd.read_csv(p,dtype={'symbol':str},low_memory=False)
+              if 'timestamp' not in d.columns:
+                  raise RuntimeError(f'missing timestamp in {p}')
+              ts=pd.to_datetime(d['timestamp'],errors='coerce',utc=True).dt.tz_convert('Asia/Tokyo')
+              d['ts_jst']=ts.astype(str)
+              d['date']=ts.dt.strftime('%Y-%m-%d')
+              cols=['symbol','ts_jst','date','open','high','low','close','volume']
+              d[cols].to_csv(out/f'v47_raw1h_shard_{i}.csv.gz',index=False,compression='gzip')
+          cov={
+              'label':'MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE',
+              'shadow_accepted':True,
+              'promotion_grade':False,
+              'formal_raw_acceptance_pass':False,
+              'strategy_returns_opened':False,
+              'model_scores_opened':False,
+              'raw_source_run_id':34592896202,
+              'NOCAP':spec['preserved_raw_seed']['known_seed_coverage']['NOCAP'],
+              'CAP1000_PIT':spec['preserved_raw_seed']['known_seed_coverage']['CAP1000_PIT'],
+              'coverage_caveat':'partial preserved Yahoo seed; missing pairs remain missing; no interpolation or synthetic bars'
+          }
+          Path('v47_midterm_coverage.json').write_text(json.dumps(cov,indent=2),encoding='utf-8')
+          PY
+      - name: Materialize partial PIT features without promotion acceptance
+        env:
+          PYTHONPATH: research
+        run: |
+          python research/no_tv_v47_clean_feature_materializer.py \
+            --frozen-daily frozen/tse_daily.csv \
+            --restored-daily daily/v47_restored_daily.csv \
+            --all-splits daily/v47_all_split_events.csv \
+            --daily-candidates daily/v47_daily_candidate_symbol_dates.csv \
+            --membership-events pit/jpx_membership_events.csv \
+            --raw-dir raw_diag \
+            --raw-coverage-receipt v47_midterm_coverage.json \
+            --allow-survivor-shadow \
+            --output-dir research_artifacts/v47_midterm_features
+      - name: Run frozen H1 comparison at cost 0 percent
+        env:
+          PYTHONPATH: research
+        run: |
+          python research/no_tv_v47_midterm_diagnostic.py \
+            --nocap-dev research_artifacts/v47_midterm_features/v47_nocap_dev_features.parquet \
+            --cap1000-dev research_artifacts/v47_midterm_features/v47_cap1000_dev_features.parquet \
+            --frozen-daily frozen/tse_daily.csv \
+            --coverage-json v47_midterm_coverage.json \
+            --preopen-spec research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json \
+            --output-dir research_artifacts/v47_midterm_diagnostic
+      - name: Copy pre-open evidence and hash all outputs
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p research_artifacts/v47_midterm_diagnostic
+          cp research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json research_artifacts/v47_midterm_diagnostic/preopen_spec.json
+          cp v47_midterm_coverage.json research_artifacts/v47_midterm_diagnostic/preopen_coverage.json || true
+          cp research_artifacts/v47_midterm_features/v47_clean_feature_materialization.json research_artifacts/v47_midterm_diagnostic/feature_materialization.json || true
+          cd research_artifacts/v47_midterm_diagnostic
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-midterm-diagnostic-${{ github.run_id }}
+          path: research_artifacts/v47_midterm_diagnostic/**
+          if-no-files-found: warn
+          retention-days: 90

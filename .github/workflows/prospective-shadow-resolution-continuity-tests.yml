@@ -1,0 +1,26 @@
+name: Prospective Shadow Resolution Continuity Tests
+
+on:
+  push:
+    branches:
+      - research/tvfree-canonical-batch02
+    paths:
+      - 'tvfree_screener/batch02/prospective_shadow_resolution_continuity_guard.py'
+      - 'tvfree_screener/batch02/test_prospective_shadow_resolution_continuity_guard.py'
+      - '.github/workflows/prospective-shadow-resolution-continuity-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run resolution continuity contract tests
+        working-directory: tvfree_screener/batch02
+        run: python -m unittest -v test_prospective_shadow_resolution_continuity_guard.py

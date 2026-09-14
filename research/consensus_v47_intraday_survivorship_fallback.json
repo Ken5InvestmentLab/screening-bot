@@ -1,0 +1,43 @@
+{
+  "spec_id": "CONSENSUS-V47-INTRADAY-SURVIVORSHIP-FALLBACK-20260914",
+  "status": "PREREGISTERED_BEFORE_V47_STRATEGY_OUTCOMES",
+  "purpose": "Keep research moving if historical 1H for delisted PIT members is structurally unavailable from free sources, without pretending survivor-biased evidence is clean.",
+  "promotion_grade_path": {
+    "name": "FULL_PIT_INTRADAY",
+    "requirements": [
+      "Use PIT membership and PIT daily price/volume semantics.",
+      "Raw 1H candidate-date coverage must satisfy the existing frozen acceptance contract: pair>=99.5%, monthly>=99%, no completely missing required symbol, >=95% per-symbol for symbols with >=20 required days, restored/delisted pair coverage>=99%.",
+      "No silent survivor intersection.",
+      "Only this path may support a promotion-grade Stable replacement claim from historical backtest evidence."
+    ]
+  },
+  "fallback_path": {
+    "name": "V47S_SURVIVOR_SHADOW",
+    "trigger": "Full PIT intraday acceptance fails specifically because historical 1H for delisted/replaced PIT members cannot be recovered from approved free sources.",
+    "construction": [
+      "Keep the corrected PIT membership, PIT daily price, PIT daily volume, identity epochs, canonical next-open target, frozen V11 architecture and exact NOCAP/CAP1000 policies.",
+      "Restrict model materialization to symbols for which raw 1H history is actually available; do not fabricate or interpolate missing intraday bars.",
+      "Report the omitted restored/delisted daily-eligible symbol-date share for each arm, H1/H2 separately, before opening returns.",
+      "Run the same H1 development and winner-only H2 mechanics only as research/shadow evidence."
+    ],
+    "interpretation": [
+      "May be used to compare architecture behavior, NOCAP vs CAP1000 directionally, concentration, and whether the corrected target still has edge.",
+      "Must be labelled survivorship-biased / non-promotion-grade.",
+      "Must not finalize the price-cap policy solely from this shadow backtest.",
+      "Any candidate emerging from shadow evidence requires forward-live validation on the then-current complete universe before production replacement."
+    ]
+  },
+  "forward_validation": {
+    "role": "Clean path around historical delisted-1H unavailability.",
+    "rule": "Freeze candidate logic before forward observations; collect current-universe signals and realized canonical returns prospectively. No retrospective deletion/tuning of failed forward signals.",
+    "production_writes": false
+  },
+  "prohibited": [
+    "Do not lower the full-PIT 1H coverage thresholds after seeing results.",
+    "Do not treat missing delisted symbols as if they were ineligible merely because intraday data are unavailable.",
+    "Do not impute 1H bars from daily OHLC.",
+    "Do not promote from V47S_SURVIVOR_SHADOW alone.",
+    "Do not use 2026 historical returns to select a missing-data workaround."
+  ],
+  "production_modified": false
+}

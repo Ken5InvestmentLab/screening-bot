@@ -121,6 +121,7 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                     source_name="Yahoo chart direct",
                     source_kind="REMOTE_MARKET_DATA",
                     acquired_at="2026-09-25T18:00:00+09:00",
+                    expected_through_date="2026-09-25",
                     price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
                 )
                 manifest_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -198,6 +199,7 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                 source_name="Yahoo chart direct",
                 source_kind="REMOTE_MARKET_DATA",
                 acquired_at="2026-09-25T18:00:00+09:00",
+                expected_through_date="2026-09-25",
                 price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
             )
             payload["csv_sha256"] = "0" * 64

@@ -12,7 +12,7 @@
 |---|---|
 | 最終GO候補 | **まだ0件** |
 | Active research branches | **4本** |
-| 現在のPhase-2暫定首位 | **DUAL_TOP1_AGREEMENT（body_pct Top1 = volr20 Top1の日だけ採用）** |
+| 現在のPhase-2暫定首位 | **DUAL_TOP1_AGREEMENT**。勝率改善候補として **G3 NO_ACUTE_SELLOFF** を併走 |
 | 正式promotion evidenceでGO可能な候補 | **0件** |
 | V47 | **clean Daily PIT PASS / formal raw retry中 / partial-seed midterm diagnostic実行中** |
 | V20 | **coverage-bypassed診断をcost 0%で開封、全TopN負でDEPRIORITIZE** |
@@ -83,6 +83,16 @@ Consensus V47については、run `34824194221` がH1 performanceを実際に�
 **注意:** このランキングは中締め/Phase-2診断ランキングであり、production GO順位ではない。Consensus V47の診断値はまだ未出力なのでランキングへ未反映。
 
 ---
+
+
+### Phase-2 Regime Round 1 — 勝率改善
+- preregistered 4 gatesを総当たりせず固定検証。
+- **G3 NO_ACUTE_SELLOFF** = `med_ret1 >= -1%` が唯一の実用near-pass。
+- 2023-24: **n=83 / mean +7.38% / median +1.74% / win 55.42% / Top3-ex +3.62%**
+- unchanged 2025 confirmation: **n=34 / mean +9.43% / median +0.37% / win 50.00% / Top3-ex +0.77%**
+- 2023-25 total: **n=117 / mean +7.98% / median +1.74% / win 53.85% / Top3-ex +5.14%**
+- 目標の勝率55〜60%にはまだ未達。2023H2/2025H2の弱さが残る。
+- **-1%閾値は結果を見て再調整しない。**
 
 ## 3. 正式promotion path / lane status
 

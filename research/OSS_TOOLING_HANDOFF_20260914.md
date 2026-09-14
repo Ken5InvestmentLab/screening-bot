@@ -1,4 +1,4 @@
-# OSS/Validation handoff — 2026-09-14 14:55 JST
+# OSS/Validation handoff — 2026-09-14 14:56 JST
 
 Branch: `research/oss-validation-tooling`  
 Scope: research-only. Production/main and all production integrations remain untouched.
@@ -38,19 +38,18 @@ The snapshot layer deliberately performs **no network acquisition**. It consumes
 
 This keeps credential/retry concerns outside the audit boundary and prevents a partially downloaded 2023-2025 metadata set from being mislabeled as complete. No real parser comparison or strategy outcome has been opened.
 
-CI run `34811269556` for the new snapshot layer is currently **in progress**. If it fails, only infrastructure/contract defects may be repaired; no sample or parser rule may be changed in response to accounting/strategy outcomes.
+CI run `34811269556` for the new snapshot layer completed **SUCCESS**. The snapshot/fail-closed contract is therefore green before any real EDINET sample is opened.
 
 ## Cross-lane follow-up
 
-Consensus branch SHA `9bbdef6fead6d1494b0b10030b466a2bdb0a22a8` was reviewed as the only new unprocessed active-lane SHA at the start of this pass. It contains research-only V47 raw1H/rate-limit follow-up. V47 raw1H run `34810592135` remains queued/in progress, so there is no completed artifact to collect yet. No duplicate Consensus data acquisition was launched from the OSS lane.
+Consensus branch SHA `9bbdef6fead6d1494b0b10030b466a2bdb0a22a8` was reviewed as the only new unprocessed active-lane SHA at the start of this pass. The 8-commit delta formalizes V47 raw1H coverage failure (`accepted=false`, zero raw symbol-dates), hardens the verifier against empty gzip shards, and triggers missing-universe retry run `34810592135`. That run remains queued/in progress, so there is no completed retry artifact to collect yet. No duplicate Consensus data acquisition was launched from the OSS lane.
 
 ## Next safe action
 
-1. Collect isolated OSS CI run `34811269556`; repair only snapshot/infrastructure defects if needed.
-2. Materialize exact raw EDINET document-list JSON for every calendar day from 2023-01-01 through 2025-12-31 using an acquisition step separate from the audit parser.
-3. Run `edinet_metadata_snapshot.py` to freeze per-day SHA256 values, aggregate hash-chain receipt, and normalized metadata CSV.
-4. Feed that frozen normalized metadata CSV to `edinet_oss_sample_selector.py` exactly once and freeze selected doc IDs plus input/sample hashes.
-5. Fetch/materialize the exact selected XBRL-to-CSV ZIP bytes without replacement around parser failures; freeze each ZIP SHA256 before opening parser comparison.
-6. Run custom and `edinet-tools` parsers against identical bytes. Treat all mismatches/one-sided missing values as audit findings; never choose a parser based on strategy outcome.
+1. Materialize exact raw EDINET document-list JSON for every calendar day from 2023-01-01 through 2025-12-31 using an acquisition step separate from the audit parser.
+2. Run `edinet_metadata_snapshot.py` to freeze per-day SHA256 values, aggregate hash-chain receipt, and normalized metadata CSV.
+3. Feed that frozen normalized metadata CSV to `edinet_oss_sample_selector.py` exactly once and freeze selected doc IDs plus input/sample hashes.
+4. Fetch/materialize the exact selected XBRL-to-CSV ZIP bytes without replacement around parser failures; freeze each ZIP SHA256 before opening parser comparison.
+5. Run custom and `edinet-tools` parsers against identical bytes. Treat all mismatches/one-sided missing values as audit findings; never choose a parser based on strategy outcome.
 
 Optuna/purgedcv work remains available for the next genuinely new family, but no rejected or outcome-opened family is being reopened here.

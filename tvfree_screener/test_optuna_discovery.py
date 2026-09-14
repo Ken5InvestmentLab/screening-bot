@@ -40,17 +40,34 @@ def test_optuna_discovery_runs_only_on_locked_discovery_period() -> None:
         test_dates=15,
         n_trials=8,
         top_n=1,
-        round_trip_cost=0.001,
+        round_trip_cost=0.0,
     )
 
     assert summary["status"] == "DISCOVERY_ONLY_NOT_PROMOTED"
     assert summary["guardrails"]["uses_2024_for_selection"] is False
     assert summary["guardrails"]["promotion_authorized"] is False
+    assert summary["guardrails"]["transaction_cost_policy"] == "COST0_ONLY"
+    assert summary["selection"]["round_trip_cost"] == 0.0
+    assert summary["selection"]["cost_policy"] == "COST0_ONLY"
     assert summary["search"]["only_optimized_parameter"] == "C"
     assert summary["search"]["n_trials_completed"] >= 2
     assert len(trials) == 8
     assert summary["best_trial"]["C"] > 0
     assert all(row["temporal_leakage_free"] for row in summary["walk_forward"]["audit"])
+
+
+def test_optuna_discovery_rejects_nonzero_transaction_cost() -> None:
+    panel = _synthetic_panel()
+    with pytest.raises(ValueError, match="cost0-only"):
+        run_study(
+            panel,
+            feature_columns=["f1", "f2"],
+            n_splits=3,
+            test_dates=15,
+            n_trials=4,
+            top_n=1,
+            round_trip_cost=0.001,
+        )
 
 
 def test_optuna_discovery_rejects_2024_candidate_or_label() -> None:

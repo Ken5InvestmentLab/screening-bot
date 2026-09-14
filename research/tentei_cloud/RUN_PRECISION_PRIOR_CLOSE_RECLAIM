@@ -1,0 +1,5 @@
+trigger: 2026-09-14 precision-prior-close-reclaim-preconfirm-v1
+spec: PRECISION-PRIOR-CLOSE-RECLAIM-20260914-01
+open: DEVELOPMENT + INTERNAL_VALIDATION only
+locked_confirmation: CLOSED
+2026: CLOSED

@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 05:35 JST  
+> **最終更新:** 2026-09-15 05:58 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -16,7 +16,7 @@
 | Weak+Early Phase-2 frozen検証 | ⚫ **CLOSED** | **100%** | 2023-25 ranking + 2022 fresh完了。robustness FAIL、G3凍結、Round2 CLOSED。比較記録としてのみ保持 |
 | Parallel Wave-1 新条件探索 | 🟢 **稼働中** | **72%** | source/schema + 独立XTKS calendar固定、endpoint verifier実装。causal pick ledger → receipt → one-shot cost0が残り |
 | Core24 OHLCV補完 | 🟢 **稼働中** | **60%** | missing-inventory runnerに加えraw1H 8-shard byte-manifest/fail-closed契約を実装。real 8-shard artifact bytes + exact expected endpoint keys pin → inventory → fallback verifier → coverage deltaが残り |
-| Consensus V47 raw 1H取得・formal acceptance | 🟠 **外部待機** | **66%** | raw48非terminal。shard 0-3は324/324 HTTP429・usable raw 0。重複trigger禁止 |
+| Consensus V47 raw 1H取得・formal acceptance | 🟠 **外部待機 / run稼働中** | **66%** | 05:58確認: raw48非terminal。shard 0-3は324/324 HTTP429・usable raw 0、shard 4/5はFetch raw 1H継続中。重複trigger禁止 |
 | Canonical/Shadow endpoint integrity | 🟢 **稼働中** | **82%** | full hash-provenance chain + schema-v2 link-tamper regressionをCI GREEN化。次はresolution-receipt replay/rollback・cross-run continuityのoutcome-blind監査 |
 | Core endpoint provenance | 🟢 **稼働中** | **74%** | raw1H shard-set byte manifestを追加。real XTKS/vendor/raw artifact receipt + evaluator配線が残り |
 | Cloud Monster exact forensic | ⚫ **CLOSED** | **100%** | exact replay一次証拠なし。新しい同時代identity-critical証拠が出た場合だけ再開 |
@@ -35,7 +35,7 @@
 | Weak+Early Phase-2 | **CLOSED**。DUAL+G3が2023-25首位だが2022 fresh FAILED ROBUSTNESS。retune/Round2再開なし |
 | 2023-25首位（比較記録） | n117 / mean **+7.98%** / median **+1.74%** / win **53.85%** / Top3-ex **+5.14%** |
 | Parallel Wave-1 | source/schema/独立XTKS calendar/endpoint verifier固定。performance未開封 |
-| Consensus V47 | raw48 transport blocker / formal acceptance未PASS |
+| Consensus V47 | 05:37 coordination HEAD `7be0268` をSupervisor吸収。raw48 transport blocker継続 / formal acceptance未PASS / performance evidenceなし |
 | Canonical/Shadow | full hash-provenance chain + schema-v2 full link-tamper regression / CI **34893503640 SUCCESS** / performance未開封 |
 | Core24 OHLCV | exact 8-shard raw1H byte-manifest primitive実装。real artifact bytes/expected keys pin待ち、performance未開封 |
 | OSS | immutable completed-trial receipt → DSR binding verified / CI GREEN |
@@ -67,7 +67,7 @@ G3 `med_ret1 >= -1%` は凍結。2022 fresh: DUAL n21 mean +2.62% / median -6.19
 
 **P1:** Canonicalはresolution-receipt replay/rollback・cross-run chain continuityをoutcome-blindで監査。Core endpoint evaluator binding。OSSは次のoutcome-blind validation controlへ。
 
-**外部待機:** EDINET real input。待機確認だけにworker cycleを使わない。
+**外部待機:** EDINET real input。Consensus V47はauthoritative raw48 run自体は継続中だがtransport recovery待ち。待機確認だけに他worker cycleを使わない。
 
 **CLOSED:** Weak+Early Phase-2、Cloud exact forensic、V20。新証拠/明示reopen条件が無い限りactive queueへ戻さない。
 

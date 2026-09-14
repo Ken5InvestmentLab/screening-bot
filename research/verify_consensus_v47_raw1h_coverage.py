@@ -20,20 +20,29 @@ def load_available_pairs(raw_dir: Path) -> pd.DataFrame:
     if not files:
         raise RuntimeError("no raw1h shard files found")
     for p in files:
-        for chunk in pd.read_csv(
-            p,
-            usecols=["symbol", "date"],
-            dtype={"symbol": str, "date": str},
-            chunksize=500_000,
-        ):
-            chunk["symbol"] = (
-                chunk["symbol"]
-                .astype(str)
-                .str.replace(r"\.0$", "", regex=True)
-                .str.strip()
+        try:
+            chunks = pd.read_csv(
+                p,
+                usecols=["symbol", "date"],
+                dtype={"symbol": str, "date": str},
+                chunksize=500_000,
             )
-            chunk["date"] = chunk["date"].astype(str).str[:10]
-            parts.append(chunk.drop_duplicates(["symbol", "date"]))
+            for chunk in chunks:
+                chunk["symbol"] = (
+                    chunk["symbol"]
+                    .astype(str)
+                    .str.replace(r"\.0$", "", regex=True)
+                    .str.strip()
+                )
+                chunk["date"] = chunk["date"].astype(str).str[:10]
+                parts.append(chunk.drop_duplicates(["symbol", "date"]))
+        except pd.errors.EmptyDataError:
+            # An empty shard is transport/data-coverage evidence, not a verifier crash.
+            # Treat it as contributing zero available pairs so the frozen coverage
+            # thresholds fail closed and the missing-pair artifacts can be emitted.
+            continue
+    if not parts:
+        return pd.DataFrame(columns=["symbol", "date"])
     out = (
         pd.concat(parts, ignore_index=True)
         .drop_duplicates(["symbol", "date"])

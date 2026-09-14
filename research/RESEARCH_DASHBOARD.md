@@ -1,163 +1,61 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 05:37 JST
+Last updated: 2026-09-15 06:34 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
 ## Consensus V47 status
 - Progress: **76%** (research-progress estimate; not promotion probability)
-- Latest observed HEAD before this dashboard write: `6e7aa4739111168d5a75c60ae098ced565e1b212`
-- Promotion-relevant path: **V47 clean PIT only**
-- V43/V44: leakage/reproduction-contaminated; not promotion evidence
-- Price arms: exactly `NOCAP` and `CAP1000_PIT`
-- Endpoint: next official XTKS open -> D+5 close
-- New calculations: **cost 0% only**; win = gross return > 0
-- 2026 selection/tuning: prohibited
+- Promotion-relevant path: **V47 clean PIT only**; V43/V44 are not promotion evidence.
+- Frozen arms: `NOCAP` / `CAP1000_PIT`; no additional price-cap grid search.
+- Endpoint: **next official XTKS open -> D+5 close**.
+- New calculations: **cost 0% only**; win = gross return > 0.
+- 2026 selection/tuning prohibited.
+- Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater untouched.
 
-## Data acceptance
-- PIT universe run `34771221050`: accepted
-- V46 run `34775030470`: accepted
-- Authoritative Daily PIT materialization: run `34788533946`; accepted
-- Daily acceptance: **PASS**
-- Formal raw 1H acceptance: **NOT PASSED**
-- Formal clean features: **NOT OPENED for promotion**
-- Formal H1/H2 performance: **UNOPENED / not promotion evidence**
+## Formal acceptance
+- Daily PIT: **PASS**.
+- Raw 1H: **NOT PASSED**.
+- Clean features / formal H1 / formal H2: **UNOPENED FOR PROMOTION**.
+- Formal performance ranking: **no change**.
 
-## Raw retry state
-### Superseded retry
-- Run `34810592135` — Consensus V47 Raw1H Freeze
-- Final status: **completed / cancelled**
-- Earlier 12-shard attempt hit the 180-minute fetch boundary and did not yield meaningful raw payloads.
-- Transport-failure evidence only; no strategy conclusion.
+## Raw retry
+- Superseded run `34810592135`: completed/cancelled; do not duplicate-trigger.
+- Current authoritative run `34849054884`, trigger HEAD `7849ad975d1e0420e250ab4d5f411ce136f9d867`: **in progress / non-terminal**.
+- Configuration: 48 shards, max-parallel=2, frozen acceptance unchanged.
+- shards 0-3: workflow SUCCESS but **324/324 requested symbols HTTP 429, 0 ok, 0 raw rows**; artifacts 4 total.
+- At 06:34 JST there is **no new artifact** beyond shards 0-3.
+- shards **4 and 5 are in progress** at `Fetch raw 1H shard`; later matrix jobs remain queued.
+- Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**. Zero-row retry data status: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
+- No interpolation, threshold lowering, strategy retune, or duplicate trigger.
+- Frozen merge contract: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`.
+- After terminal state: enumerate receipts -> admit only genuinely observed rows -> provenance merge with preserved seed raw -> rerun unchanged frozen acceptance -> emit exact missing `(symbol,date)` pairs if still failing.
 
-### Current authoritative retry
-- Run `34849054884` — Consensus V47 Raw1H Freeze
-- Trigger HEAD: `7849ad975d1e0420e250ab4d5f411ce136f9d867`
-- Configuration: **48 shards, max-parallel=2, shard-count=48**
-- GitHub run-level status at this observation: **in_progress / non-terminal matrix**
-- shard 0: workflow **SUCCESS**, artifact `10357093848` (1647 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
-- shard 1: workflow **SUCCESS**, artifact `10357611796` (1646 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
-- shard 2: workflow **SUCCESS**, artifact `10363982190` (1652 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
-- shard 3: workflow **SUCCESS**, artifact `10364352429` (1650 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
-- No new artifact beyond shards 0-3 is visible at **2026-09-15 05:37 JST**; artifact count remains **4**.
-- remaining matrix jobs: queued/in-progress under max-parallel=2
-- Completed total represented by visible artifacts: **324 requested symbols / 0 ok / 0 raw rows / 324 HTTP 429**
-- Duplicate trigger: **prohibited / not triggered**
-- Formal interpretation: workflow completion is not data success. Completed shards 0-3 contribute **zero usable raw rows**.
-- Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**, reproduced across the first four consecutive completed shards.
-- Frozen raw acceptance unchanged: pair>=99.5%, monthly>=99%, completely missing required symbol=0, symbols requiring >=20 days >=95%, restored pair>=99%
-- No interpolation and no threshold lowering.
-- On completed shards 0-3 alone: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
-- Detailed receipt: `research/CONSENSUS_V47_RAW48_429_DIAGNOSIS_20260915.md`
+## Midterm diagnostic — `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`
+All figures are **cost 0%**, win = gross return > 0, endpoint next XTKS open -> D+5 close. Opened H1/H2 periods are no longer untouched holdouts; same-family retune prohibited.
 
-### Targeted retry hardening
-- No new retry has been triggered while `34849054884` is active.
-- Future missing-only retry mechanics include the already implemented outcome-blind systemic-429 preflight:
-  - first two shard symbols x both Yahoo chart hosts = four probes;
-  - if all four are HTTP 429, write `transport_circuit_open/systemic_http_429` receipts and fail fast instead of spending hours retrying every symbol;
-  - if the preflight is not unanimously 429, existing fetch/retry behavior remains.
-- This changes transport mechanics only. NOCAP/CAP1000_PIT, threshold, ranker, cooldown, endpoint, features, model, and acceptance thresholds remain frozen.
+### 2025 H1 NOCAP — partial raw
+- coverage **35.3898%**; period **2025-01-06..2025-06-30**
+- n **50**; mean **+0.1074%**; median **-2.7270%**; win **36.00%**
+- +10 **16.00%**; +20 **8.00%**; +50 **0.00%**; -10 **12.00%**; -20 **2.00%**
+- Top1-ex mean **-0.7566%**; Top3-ex mean **-2.0148%**
+- caveat: partial / coverage-bypassed diagnostic only.
 
-### Raw merge + formal acceptance contract frozen
-- Spec: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`
-- Freeze commit: `4304be47319ccedbd7827dc471b08fe2541d5926`
-- When run `34849054884` is terminal, only genuinely observed shard raw rows may be merged with preserved seed raw.
-- Workflow `success` with zero rows is provenance/failure evidence only, never market data.
-- Duplicate `(symbol, ts_jst)` rows must agree exactly after canonical type normalization; conflicts fail closed.
-- Retained rows must preserve source/run/artifact/shard/file-SHA provenance.
-- Formal coverage thresholds remain unchanged; failed coverage produces an exact missing `(symbol,date)` set for missing-only retry.
-- This freeze used no strategy outcomes and does not open formal performance.
+### 2025 H1 CAP1000_PIT — partial raw
+- coverage **83.1124%**; period **2025-01-06..2025-06-30**
+- n **60**; mean **-1.1568%**; median **-0.4011%**; win **46.67%**
+- +10 **13.33%**; +20 **0.00%**; +50 **0.00%**
+- -10/-20 and Top1-ex: not recorded in current authoritative H1 receipt; Top3-ex mean **-2.0601%**
+- caveat: partial / coverage-bypassed diagnostic only.
 
-## Midterm diagnostic — NOT promotion evidence
-Label: `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`
-All figures below are **cost 0%** and use gross return > 0 for win rate.
+### 2025 H2 NOCAP — partial raw
+- period **2025-07-01..2025-12-30**
+- n **37**; mean **+3.0295%**; median **+0.3817%**; win **51.35%**
+- +10 **27.03%**; +20 **16.22%**; +50 **2.70%**; -10 **13.51%**; -20 **2.70%**
+- Top1-ex mean **+1.5562%**; Top3-ex mean **-0.5393%**
+- caveat: partial raw / coverage-bypassed; material top-winner dependence; not promotion evidence.
 
-### 2025 H1 arm comparison, partial raw
-#### NOCAP
-- raw pair coverage: **35.3898%**
-- period: **2025-01-06..2025-06-30**
-- n = **50**
-- mean **+0.1074%**
-- median **-2.7270%**
-- win **36.00%**
-- +10 **16.00%**
-- +20 **8.00%**
-- +50 **0.00%**
-- -10 **12.00%**
-- -20 **2.00%**
-- Top1-ex mean **-0.7566%**
-- Top3-ex mean **-2.0148%**
-- endpoint: next XTKS open -> D+5 close
-- caveat: partial/coverage-bypassed diagnostic only
+CAP1000_PIT H2: **UNOPENED**. 2026: **UNOPENED for selection/tuning**.
 
-#### CAP1000_PIT
-- raw pair coverage: **83.1124%**
-- period: **2025-01-06..2025-06-30**
-- n = **60**
-- mean **-1.1568%**
-- median **-0.4011%**
-- win **46.67%**
-- +10 **13.33%**
-- +20 **0.00%**
-- +50 **0.00%**
-- -10/-20: not recorded in the current authoritative H1 receipt available to this dashboard
-- Top1-ex: not recorded in the current authoritative H1 receipt available to this dashboard
-- Top3-ex mean **-2.0601%**
-- endpoint: next XTKS open -> D+5 close
-- caveat: partial/coverage-bypassed diagnostic only
-
-H1 diagnostic chooser: **NOCAP** advanced only under the frozen mean-first rule. H1 is opened and cannot be treated as untouched holdout. Same-family retune prohibited.
-
-### 2025 H2 NOCAP diagnostic
-Run `34832358609`: SUCCESS
-- period: **2025-07-01..2025-12-30**
-- n = **37**
-- mean **+3.0295%**
-- median **+0.3817%**
-- win **51.35%**
-- +10 **27.03%**
-- +20 **16.22%**
-- +50 **2.70%**
-- -10 **13.51%**
-- -20 **2.70%**
-- Top1-ex mean **+1.5562%**
-- Top3-ex mean **-0.5393%**
-- endpoint: next XTKS open -> D+5 close
-- caveat: partial raw / coverage-bypassed; H2 now opened and is not untouched holdout
-- interpretation: positive mean/median but material top-winner dependence; not sufficient for promotion
-
-CAP1000_PIT H2: **UNOPENED**
-2026: **UNOPENED for selection/tuning**
-
-## NOCAP vs CAP1000_PIT comparison stage
-- H1 midterm diagnostic comparison completed on partial raw.
-- NOCAP won the frozen H1 diagnostic chooser on mean, but robustness diagnostics are weak.
-- Only NOCAP H2 diagnostic was opened.
-- No additional price-cap grid search permitted.
-- Formal arm comparison remains blocked on raw acceptance + clean PIT feature materialization.
-
-## Cross-lane coordination
-- Supervisor coordination intent/state re-checked at start of this run; the previously referenced `research/AUTOMATION_SUPERVISOR_MESSAGE.md` path is not present on this branch, so no content was inferred from a missing file.
-- `RESEARCH_DASHBOARD.md` re-read at start of this run.
-- `CONSENSUS_V44_HANDOFF.md` re-read at start of this run.
-- Canonical/Event overlap: none.
-- Core overlap: none.
-- Monster overlap: none.
-- Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater remain untouched.
-
-## Blocker
-Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. The first four consecutive completed shards of run `34849054884` returned zero rows for every requested symbol: **324/324 final HTTP 429**. The run remains non-terminal and only four shard artifacts are visible as of 05:37 JST, so transport recovery has not yet been demonstrated. This is transport failure, not strategy evidence.
-
-## Next action
-1. Do **not** duplicate-trigger run `34849054884`.
-2. Preserve all shard receipts; workflow SUCCESS with zero raw rows must not be counted as data success.
-3. When the active pinned run is terminal, enumerate all 48 shard artifacts/receipts and admit only genuinely observed raw rows under `CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`.
-4. Merge admitted rows with preserved seed raw using source/artifact/digest provenance and rerun the unchanged frozen formal coverage verifier.
-5. If formal acceptance fails, emit the exact missing `(symbol,date)` set and retry only those pairs after Yahoo transport is healthy, using the systemic-429 fail-fast preflight; never lower thresholds or interpolate.
-6. Only after formal raw acceptance may promotion clean features/formal H1/H2 proceed.
-
-## Candidate ranking impact
-- **No promotion ranking change.**
-- Formal performance remains unopened.
-- Zero-row shards add no performance evidence.
-- Midterm-only diagnostic ranking remains: NOCAP is provisionally more interesting than CAP1000_PIT, but partial coverage and Top3-ex fragility prohibit promotion inference.
+## Blocker / next action
+Formal raw acquisition remains blocked by Yahoo transport rate limiting. Continue the already-running pinned matrix without duplicate trigger. The next evidence-bearing event is either a non-zero raw artifact from shards 4/5 or terminal completion of run `34849054884`; only then proceed with the frozen provenance merge and formal acceptance rerun.

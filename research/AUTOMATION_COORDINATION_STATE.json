@@ -1,12 +1,12 @@
 {
-  "version": 37,
+  "version": 38,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T23:30:00+09:00",
+  "updated_at_jst": "2026-09-14T23:49:00+09:00",
   "supervisor_last_scan": {
-    "status": "OSS_TRIAL_LEDGER_PRIMITIVE_VERIFIED_BINDING_PENDING",
-    "scanned_at_jst": "2026-09-14T23:29:00+09:00",
+    "status": "CONSENSUS_RAW48_CHECKPOINT_COLLECTED_OSS_BINDING_PENDING",
+    "scanned_at_jst": "2026-09-14T23:49:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All STATE-registered lanes were checked before OSS work. No unprocessed Canonical/Core/Consensus SHA was found at scan start. Consensus formal 48-shard retry 34849054884 remains queued/active with no accepted raw artifact and was not duplicated. OSS added deterministic SHA-256 completed-trial ledger/receipt primitives plus tamper tests; CI 34855659820 SUCCESS. DSR binding inside run_study is still pending, so provenance control is not yet complete."
+    "note": "All STATE-registered lanes were checked. Canonical/Core/OSS HEADs matched processed SHA. Consensus advanced from 0d4aabac to fc96b801 via three runtime/state/dashboard checkpoint commits; audited as coordination-only with no model/contract change. Formal run 34849054884 remains queued, visible artifact count 0, and no duplicate trigger was issued. OSS trial-ledger primitive remains verified; run_study-to-DSR receipt binding remains pending."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -28,9 +28,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
-      "last_processed_sha": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
-      "last_processed_note": "23:05 supervisor processed state-sync commit 0d4aabac. 48-shard run 34849054884 remains active/queued with no accepted raw artifact. No duplicate trigger and frozen contracts unchanged."
+      "last_seen_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
+      "last_processed_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
+      "last_processed_note": "23:49 cross-lane worker audited three raw48 runtime/state/dashboard checkpoint commits through fc96b801. No model/frozen-contract change. Run 34849054884 remains queued with 0 visible artifacts; no duplicate trigger."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -90,13 +90,13 @@
       "superseded_retry_run": 34810592135,
       "superseded_retry_status": "cancelled_after_repeated_180min_timeouts",
       "formal_retry_run": 34849054884,
-      "formal_retry_status": "active_or_queued_48_shard_no_accepted_artifact",
+      "formal_retry_status": "queued_48_shard_no_accepted_artifact",
       "retry_trigger_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
-      "lane_head": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
+      "lane_head": "fc96b80148c51dc8c1c093807b7800f83719e42a",
       "artifact_count_observed": 0,
       "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393},
       "promotion_evidence": false,
-      "next_rule": "Do not duplicate-trigger run 34849054884. Inspect first usable artifacts when they appear, then frozen acceptance after completion."
+      "next_rule": "Do not duplicate-trigger run 34849054884. Inspect first usable artifact or preserve timeout receipt; run frozen acceptance only after completion."
     },
     "oss_validation": {
       "head": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
@@ -110,7 +110,7 @@
   },
   "next_global_actions": [
     "Phase-2: continue outcome-blind population/scarcity audit; Round2 remains closed and no post-hoc gate retune is allowed.",
-    "Consensus: run 34849054884 remains active/queued; do not duplicate-trigger. Inspect first usable artifacts when they appear, then frozen acceptance after completion.",
+    "Consensus: run 34849054884 remains queued; do not duplicate-trigger. Inspect first usable artifact or timeout receipt, then frozen acceptance after completion.",
     "Canonical/Shadow: continue staleness/temporal integrity audit without opening strategy outcomes.",
     "Core: generate/freeze a real XTKS + vendor endpoint manifest and immutable source receipt, then wire audit_core_canonical_endpoint.py to the fail-closed endpoint_provenance primitive and require CI before any performance recomputation.",
     "OSS: bind run_study/DSR to immutable completed-trial receipt; all new performance cost0-only.",

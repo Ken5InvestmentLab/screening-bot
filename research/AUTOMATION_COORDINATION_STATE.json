@@ -1,13 +1,13 @@
 {
-  "version": 25,
+  "version": 26,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T20:29:00+09:00",
+  "updated_at_jst": "2026-09-14T20:33:00+09:00",
   "supervisor_last_scan": {
-    "status": "COMPLETE_PHASE2_MODEL_MATURITY_AUDIT_SIMPLE_WARMUP_HYPOTHESIS_WEAKENED_ROUND2_CLOSED",
-    "scanned_at_jst": "2026-09-14T20:20:00+09:00",
+    "status": "CONSENSUS_V47_MIDTERM_H2_DIAGNOSTIC_COLLECTED_FORMAL_PATH_STILL_BLOCKED",
+    "scanned_at_jst": "2026-09-14T20:33:00+09:00",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "All registered active branches re-fetched. Only OSS advanced to 6e9045e9; it found a cost0 Optuna implementation mismatch and is fail-closed. Weak+Early 2022 monthly model-maturity audit shows training grows from 40,602 rows/116 top0.25 positives in Jun to 189,183/541 by Dec with stable positive rate ~0.286-0.293%, so simple undersized-training is insufficient to explain the 2022 robustness failure. Round2 remains closed. Consensus unique H2 diagnostic has advanced to the frozen NOCAP H2 opening step but is still in progress; no H2 result opened by supervisor."
+    "note": "Consensus H2 diagnostic run 34832358609 completed successfully and was collected under MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE. NOCAP H2 cost0: n=37, mean +3.0295%, median +0.3817%, win 51.35%, +10 27.03%, +20 16.22%, +50 2.70%, -10 13.51%, -20 2.70%, Top1-ex +1.5562%, Top3-ex -0.5393%. Formal raw acceptance remains false; CAP1000_PIT H2 and 2026 remain closed; same-family retune prohibited. Formal retry 34810592135 remains active with fetch2/fetch3 in progress and earlier fetch0/fetch1 timed out/cancelled at the 180m boundary."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -29,9 +29,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
-      "last_processed_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
-      "last_processed_note": "20:xx scan: unique H2 diagnostic run 34832358609 still in progress. Steps 1-10 succeeded; step 11 frozen NOCAP H2 cost0 opening is in progress. CAP1000_PIT H2 and 2026 remain closed; no retune. Formal retry 34810592135 remains separate."
+      "last_seen_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
+      "last_processed_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
+      "last_processed_note": "20:33 Consensus processed H2 diagnostic run 34832358609 SUCCESS. NOCAP H2 cost0 opened as diagnostic-only: n37 mean +3.0295 median +0.3817 win 51.35 Top1-ex +1.5562 Top3-ex -0.5393. Formal raw not accepted; CAP1000 H2/2026 closed; no retune. Formal retry 34810592135 remains separate and active."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -141,7 +141,7 @@
       "coverage_acceptance_run": 34810234454,
       "frozen_coverage_acceptance_pass": false,
       "missing_universe_retry_run": 34810592135,
-      "formal_retry_status": "active_partial_timeout_fetch0_fetch1_at_180m_other_shards_not_complete",
+      "formal_retry_status": "ACTIVE_FETCH2_FETCH3_IN_PROGRESS_FETCH0_FETCH1_CANCELLED_AT_180M_REMAINING_QUEUED",
       "future_retry_layout_commit": "7aa230a0434136cf33589a2fdda010113d57db62",
       "future_retry_shards": 48,
       "future_retry_max_parallel": 2,
@@ -159,18 +159,22 @@
       "diagnostic_h2_preopen_spec": "research/CONSENSUS_V47_MIDTERM_H2_DIAGNOSTIC_SPEC_20260914.json",
       "diagnostic_h2_trigger_commit": "008fd87386f252cb5f7289ef4e303604d8f56c76",
       "diagnostic_h2_run": 34832358609,
-      "diagnostic_h2_status": "IN_PROGRESS_NOCAP_H2_OPENING_COST0",
-      "diagnostic_h2_current_step": "11/13 Open frozen H1 leader NOCAP on H2 at cost 0 percent",
+      "diagnostic_h2_status": "SUCCESS_NOCAP_H2_OPENED_COST0_DIAGNOSTIC_ONLY",
+      "diagnostic_h2_artifact_digest": "sha256:2ceea9b8a20eed60b1e65e19963f1f2e51974a8f2e2b14ed315032ef4ffda8e9",
       "diagnostic_h2_preopen_contract_passed": true,
       "diagnostic_h2_arm": "NOCAP",
       "diagnostic_h2_period": ["2025-07-01", "2025-12-30"],
-      "diagnostic_h2_opened": false,
+      "diagnostic_h2_pair_coverage_basis": 0.35389849026036824,
+      "diagnostic_h2": {"n": 37, "mean_pct": 3.0295471355036465, "median_pct": 0.3816793893129722, "win_pct": 51.35135135135135, "hit10_pct": 27.027027027027028, "hit20_pct": 16.216216216216218, "hit50_pct": 2.7027027027027026, "loss10_pct": 13.513513513513514, "loss20_pct": 2.7027027027027026, "top1_ex_pct": 1.5561615068124388, "top3_ex_pct": -0.5393286008098716, "unique_symbols": 10, "max_symbol_share": 0.35135135135135137},
+      "diagnostic_h2_opened": true,
+      "diagnostic_h2_untouched_holdout": false,
       "diagnostic_cap1000_h2_opened": false,
       "formal_features_opened": false,
       "formal_h1_opened": false,
       "formal_h2_opened": false,
       "promotion_evidence": false,
-      "next_rule": "Collect run 34832358609 only after NOCAP H2 opening completes; record as diagnostic-only and mark H2 opened/not untouched. Never open CAP1000_PIT H2 as rescue. Formal path stays separate."
+      "progress_pct_estimate": 72,
+      "next_rule": "Do not retune from opened H1/H2 and do not open CAP1000_PIT H2 as rescue. Continue observing unique retry 34810592135; after termination merge valid retry outputs with preserved seed and rerun exact frozen acceptance before any formal features/performance."
     },
     "oss_validation": {
       "head": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
@@ -187,7 +191,7 @@
   },
   "next_global_actions": [
     "Phase-2: map existing frozen 2022 picks by model_period and compare monthly tail_p/tail_cdf/candidate scarcity against training maturity as diagnostic-only; do not retune or activate Round2 from this.",
-    "Consensus diagnostic: collect unique NOCAP-only H2 run 34832358609 after step 11 completes; record cost0 metrics as MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE; do not open CAP1000_PIT H2 as rescue.",
+    "Consensus diagnostic: H1 and NOCAP H2 are now opened diagnostic-only; no same-family retune and no CAP1000_PIT H2 rescue.",
     "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before formal features.",
     "OSS: fix Optuna API/CLI/tests to cost0-only and require isolated CI green before any new discovery/performance; then harden trial-ledger provenance.",
     "Core: continue stale research cost/endpoint contract audit; do not rerun rejected families solely to regenerate metrics.",

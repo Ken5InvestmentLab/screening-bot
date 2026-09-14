@@ -1,5 +1,7 @@
 # 天底極致 Cloud — architecture decision snapshot — 2026-09-14 JST
 
+> **SUPERSEDED STATUS NOTICE:** This snapshot predates the canonical-endpoint rejection of the fixed reconstructed Core and the later role-gap audits. Preserve it as historical evidence, but use `ROLE_COVERAGE_AND_RESEARCH_PRIORITY_20260914.md` for the current coordination status.
+
 Research coordination document. This does not change production.
 
 ## Goal

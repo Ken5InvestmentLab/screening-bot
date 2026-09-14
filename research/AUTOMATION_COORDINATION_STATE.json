@@ -1,7 +1,7 @@
 {
-  "version": 7,
+  "version": 8,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T14:57:00+09:00",
+  "updated_at_jst": "2026-09-14T14:59:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_NO_NEW_LANE",
     "branch_heads_changed_since_previous_state": false,
@@ -19,12 +19,12 @@
   },
   "cross_lane_followup_last_scan": {
     "status": "COMPLETE_WITH_OSS_PROGRESS",
-    "scanned_at_jst": "2026-09-14T14:57:00+09:00",
+    "scanned_at_jst": "2026-09-14T14:59:00+09:00",
     "canonical_head": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
     "consensus_head": "9bbdef6fead6d1494b0b10030b466a2bdb0a22a8",
-    "oss_head": "f5e2f55881bdbbd4356cbe9fa3098295a47a7d47",
-    "note": "Reviewed the new 8-commit Consensus delta without duplicate acquisition: formal V47 raw1H acceptance is accepted=false with zero raw symbol-dates and retry 34810592135 remains active. Advanced OSS outcome-blind EDINET provenance by adding a full-calendar-day metadata snapshot freezer, raw per-day SHA256/hash-chain receipt, fail-closed tests, CI wiring, and handoff. Snapshot CI 34811269556 completed SUCCESS."
+    "oss_head": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
+    "note": "Reviewed the new 8-commit Consensus delta without duplicate acquisition: formal V47 raw1H acceptance is accepted=false with zero raw symbol-dates and retry 34810592135 remains active. Advanced OSS outcome-blind EDINET provenance by adding a full-calendar-day metadata snapshot freezer, raw per-day SHA256/hash-chain receipt, fail-closed tests, CI wiring, handoff, and research-spec documentation. Snapshot CI 34811269556 completed SUCCESS."
   },
   "canonical_worker_last_scan": {
     "status": "COMPLETE_WITH_NEW_CROSS_SOURCE_BLOCKER_RECEIPT",
@@ -59,9 +59,9 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "f5e2f55881bdbbd4356cbe9fa3098295a47a7d47",
-      "last_processed_sha": "f5e2f55881bdbbd4356cbe9fa3098295a47a7d47",
-      "last_processed_note": "14:57 :48 worker added outcome-blind EDINET metadata provenance before real sample selection. edinet_metadata_snapshot.py now requires every calendar day in the frozen 2023-2025 interval, validates EDINET metadata status/required fields, rejects duplicate doc IDs, hashes each raw daily JSON and a deterministic hash chain, and emits normalized metadata without parser/accounting/strategy inputs. Fail-closed tests and OSS CI wiring added; run 34811269556 SUCCESS. Real parser comparison remains unopened and production unchanged."
+      "last_seen_sha": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
+      "last_processed_sha": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
+      "last_processed_note": "14:59 :48 worker added outcome-blind EDINET metadata provenance before real sample selection. edinet_metadata_snapshot.py now requires every calendar day in the frozen 2023-2025 interval, validates EDINET metadata status/required fields, rejects duplicate doc IDs, hashes each raw daily JSON and a deterministic hash chain, and emits normalized metadata without parser/accounting/strategy inputs. Fail-closed tests and OSS CI wiring added; run 34811269556 SUCCESS. Handoff and OSS research spec now document the boundary. Real parser comparison remains unopened and production unchanged."
     }
   },
   "guardrails": [
@@ -151,7 +151,7 @@
       "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion rerun the exact frozen coverage verifier against retry artifacts before any feature/performance inspection. If still rejected, retry only newly emitted missing symbol/date codes with thresholds unchanged and no interpolation."
     },
     "oss_validation": {
-      "head": "f5e2f55881bdbbd4356cbe9fa3098295a47a7d47",
+      "head": "fe32647a352f4d2af0b2bc0eecd4189d2c16f917",
       "preregistration_ci_run": 34807402370,
       "preregistration_ci_status": "completed/success",
       "selector_ci_run": 34807566909,

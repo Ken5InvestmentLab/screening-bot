@@ -36,13 +36,18 @@ from purgedcv import (
 )
 
 
-def _finite_vector(values: Sequence[float] | pd.Series, *, name: str) -> np.ndarray:
+def _finite_vector(
+    values: Sequence[float] | pd.Series,
+    *,
+    name: str,
+    allow_zero_variance: bool = False,
+) -> np.ndarray:
     arr = pd.to_numeric(pd.Series(values), errors="coerce").to_numpy(dtype=float)
     if arr.ndim != 1 or arr.size < 2:
         raise ValueError(f"{name} must contain at least two observations")
     if not np.isfinite(arr).all():
         raise ValueError(f"{name} contains missing or non-finite values")
-    if float(arr.std(ddof=0)) == 0.0:
+    if not allow_zero_variance and float(arr.std(ddof=0)) == 0.0:
         raise ValueError(f"{name} has zero variance")
     return arr
 
@@ -113,7 +118,11 @@ def selection_bias_summary(
     if trial_sharpes is None:
         return out
 
-    trials = _finite_vector(trial_sharpes, name="trial_sharpes")
+    trials = _finite_vector(
+        trial_sharpes,
+        name="trial_sharpes",
+        allow_zero_variance=True,
+    )
     if trial_sharpes_annualized and bars_per_year is None:
         raise ValueError("bars_per_year is required when trial Sharpes are annualized")
     if bars_per_year is not None and bars_per_year <= 0:

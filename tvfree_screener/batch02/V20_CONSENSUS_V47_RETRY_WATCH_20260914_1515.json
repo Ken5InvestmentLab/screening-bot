@@ -1,0 +1,38 @@
+{
+  "observed_at_jst": "2026-09-14T15:15:00+09:00",
+  "purpose": "Outcome-blind watch receipt for the only currently eligible cross-source repair path for V20 raw H1 gaps.",
+  "v20_experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "v20_missing_active_symbol_dates": 734,
+  "v20_performance_opened": false,
+  "consensus_retry_run_id": 34810592135,
+  "consensus_retry_workflow": "Consensus V47 Raw1H Freeze",
+  "consensus_retry_run_status_observed": "queued_with_active_jobs",
+  "jobs_observed": 12,
+  "jobs_in_progress": 2,
+  "jobs_queued": 10,
+  "jobs_completed": 0,
+  "active_jobs": [
+    {
+      "job_id": 103870979349,
+      "name": "fetch (0)",
+      "active_step": "Fetch raw 1H shard"
+    },
+    {
+      "job_id": 103870979404,
+      "name": "fetch (1)",
+      "active_step": "Fetch raw 1H shard"
+    }
+  ],
+  "decision": "WAIT_DO_NOT_DUPLICATE_TRIGGER",
+  "acceptance_rule": "Do not consume retry artifacts for V20 until Consensus reruns the unchanged frozen V47 raw1H coverage verifier and it passes. Workflow/job success alone is not acceptance.",
+  "v20_next_rule": "If and only if Consensus produces a frozen-accepted raw1H artifact, audit exactly the 734 missing V20 symbol/date pairs against that artifact and rerun the unchanged V20 raw verifier before opening H1 outcomes.",
+  "prohibited": [
+    "duplicate-triggering Consensus retry run 34810592135 while active",
+    "interpreting V20 H1/H2 performance before raw acceptance",
+    "threshold lowering",
+    "interpolation or synthetic intraday bars",
+    "V20 retuning",
+    "using 2026 outcomes for selection"
+  ],
+  "production_changed": false
+}

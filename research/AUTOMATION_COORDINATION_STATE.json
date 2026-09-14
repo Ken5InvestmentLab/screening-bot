@@ -1,9 +1,9 @@
 {
-  "updated_at_jst": "2026-09-14T23:41:00+09:00",
+  "updated_at_jst": "2026-09-15T00:38:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "c8631bb4a16e7d873d957b3dd0d4bc82e1c89a86",
+  "latest_head_before_state_write": "9e4846cb1cbe683458cea0775c3fdc05f367636c",
   "coordination": {
     "supervisor_coordination_checked": true,
     "research_dashboard_checked": true,
@@ -57,10 +57,12 @@
     "daily_coverage_check": "PASS_ON_ACTIVE_SHARDS",
     "fetcher_contract_tests": "PASS_ON_ACTIVE_SHARDS",
     "visible_artifact_count": 0,
+    "elapsed_wall_clock_minutes_approx": 134,
+    "prior_failure_boundary_minutes": 180,
     "runtime_checkpoint": "research/CONSENSUS_V47_RAW48_RUNTIME_CHECK_20260914_2341.md",
-    "runtime_interpretation": "first pair >~1h wall clock, below prior 180m failure boundary; continue unchanged",
+    "runtime_interpretation": "shard 0/1 remain in raw fetch at ~134m with no artifact; still below prior 180m failure boundary, so continue unchanged and do not duplicate-trigger",
     "remaining_matrix_state": "queued"
   },
-  "blocker": "Formal raw1H acceptance remains pending while 48-shard transport mitigation executes; shard 0/1 are still fetching and no artifact exists yet.",
-  "next_action": "Do not duplicate-trigger run 34849054884. Inspect the first completed shard artifact for real payload and transport behavior, or preserve a 180-minute failure receipt if it times out. On run completion merge observed raw plus preserved seed data with provenance and rerun frozen acceptance. If acceptance fails, retry missing symbol/date pairs only without interpolation or threshold lowering."
+  "blocker": "Formal raw1H acceptance remains pending while 48-shard transport mitigation executes; shard 0/1 are still fetching at about 134 minutes and no artifact exists yet.",
+  "next_action": "Do not duplicate-trigger run 34849054884. Inspect the first completed shard artifact for real payload and transport behavior. If active shards reach 180 minutes without payload, preserve the failure receipt before modifying acquisition mechanics only. On run completion merge observed raw plus preserved seed data with provenance and rerun frozen acceptance; if acceptance fails, retry missing symbol/date pairs only without interpolation or threshold lowering."
 }

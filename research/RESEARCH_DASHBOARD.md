@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-14 23:29 JST  
+> **最終更新:** 2026-09-14 23:30 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **固定リンク:** https://github.com/Ken5InvestmentLab/screening-bot/blob/research/automation-coordination/research/RESEARCH_DASHBOARD.md
 
@@ -12,13 +12,13 @@
 |---|---|
 | 最終GO候補 | **0件** |
 | Active research branches | **4本** |
-| 全体マイルストーン進捗 | **約62%** — 成功確率ではなく研究工程の消化率 |
+| 全体マイルストーン進捗 | **約63%** — 成功確率ではなく研究工程の消化率 |
 | Weak+Early Phase-2 | 2022 fresh validation **FAILED ROBUSTNESS**。Round2は閉鎖 |
 | 2023-25暫定首位 | **DUAL + G3** mean +7.98% / win 53.85% / Top3-ex +5.14%（ただし2022 fresh fail） |
 | Consensus V47 | 48-shard retry `34849054884` はactive/queued。accepted raw artifactはまだ0件 |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
 | Shadow/Data | endpoint acquisition chronology guard CI GREEN。run `34848598262` SUCCESS |
-| Core / Cloud | Core既reject維持。Cloud exact replay **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。XTKS calendar / endpoint-row completeness未固定 |
+| Core / Cloud | Core既reject維持。Cloud exact replay **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。pinned XTKS/vendor endpoint primitiveを凍結、real manifest/source receiptとevaluator wiringは未完 |
 | OSS / Validation | cost0実装GREEN。immutable completed-trial ledger primitive CI `34855659820` SUCCESS、`run_study`/DSR bindingは未完 |
 | 最終判定 | **NO-GO / 研究継続** |
 
@@ -27,7 +27,7 @@
 | Lane | 進捗 | 意味 |
 |---|---:|---|
 | Canonical/Event + Shadow/Data | 約64% | V20診断済み、Shadow temporal guard GREEN。staleness / endpoint completeness監査が残る |
-| Core/Cloud | 約52% | reject/forensic整理済み。pinned XTKS calendar + endpoint completeness receiptが残る |
+| Core/Cloud | **約56%** | reject/forensic整理済み。fail-closed endpoint provenance primitive凍結済み。real manifest/source receipt + evaluator wiring/CIが残る |
 | Consensus V47 | 約58% | daily PIT pass済み。formal raw acceptanceが未達でH2 promotion判定不可 |
 | OSS/Validation | **約80%** | cost0・EDINET freeze・trial-ledger primitiveまで固定。DSR receipt bindingとreal EDINET same-ZIPが残る |
 
@@ -40,15 +40,15 @@
 | Lane | HEAD | Status | Latest run | Next |
 |---|---|---|---|---|
 | Canonical/Event + Shadow/Data | `7606b72f...` | V20 DEPRIORITIZE / Shadow temporal guard CI green | `34848598262` SUCCESS | staleness / temporal integrityをoutcome-blind監査 |
-| Core/Cloud | `c41cb897...` | Core reject / Cloud exact replay unavailable / endpoint provenance audit | `34799307163` legacy | pinned XTKS calendar + endpoint completeness receiptを凍結 |
+| Core/Cloud | **`6e7dfa45...`** | Core reject / Cloud exact replay unavailable / pinned endpoint provenance primitive frozen | `34799307163` legacy SUCCESS | real XTKS+vendor manifest/source receiptを凍結→evaluator wiring→dedicated CI |
 | Consensus V47 | `0d4aabac...` | 48-shard raw retry active/queued / formal raw未PASS | `34849054884` active/queued | 重複起動せずusable artifact待ち→payload監査→終了後frozen acceptance |
 | OSS/Validation | **`7704641d...`** | immutable trial-ledger primitive VERIFIED / DSR binding pending | `34855659820` SUCCESS | `run_study`をreceipt-bound DSRへ接続しintegration test |
 
-### 23:29 横断更新
+### 23:30 Core / Cloud更新
 
-全STATE登録laneを確認。開始時点でCanonical / Core / Consensus / OSSに未処理HEADなし。Consensus `34849054884` は重複起動していない。
+開始時Core HEAD `c41cb897...` はSTATEのlast_seen/last_processedと一致し、processed済みSHAの重複処理なし。最新Core Actionは引き続き `34799307163` SUCCESSで、今回の文書/研究primitive pushから新Action/artifactは発生していない。
 
-OSSではcompleted Optuna trialsをtrial番号順で決定的ledger化し、study metadata + 全completed rowsをcanonical JSON / SHA-256へ固定するprimitiveを追加。missing / extra / reorder / duplicate / modify / non-COMPLETE / non-finiteをfail-closedする。CI `34855659820` SUCCESS。戦略outcomeは新規開封していない。
+Core endpoint再現性監査を1段階進め、`endpoint_provenance.py` とsynthetic unit testを追加。XTKS/vendor endpoint manifestをcalendar name/version + exact open/close raw-bar timestampで固定し、canonical JSONのSHA-256でidentityを縛る。signal+1 / signal+5はmanifest順序だけで決め、missing/duplicate/non-positive endpointはFAIL_CLOSED。observed-dateやfirst/last available rowへのfallbackは禁止。戦略performanceは再計算していない。
 
 ---
 
@@ -113,9 +113,18 @@ Frozen basis:
 | 旧Cloud Monster 歴史値 | 63 | +9.86% | legacy historical evidence |
 | exact replay | — | — | **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
 
-同時代のexact watch pool / serialized model / feature transforms / training manifestが欠落。現代surrogateで旧Cloudを再現したことにはしない。
+同時代のexact watch pool / serialized model / feature transforms / training manifestが欠落。現代surrogateで旧Cloudを再現したことにはしない。今回も新しい同時代一次証拠はなく、model-family guessingやportability replayは実施していない。
 
-Core endpoint監査では、rawで観測されたdate集合やfirst/last available rowだけで5BD endpointを作ると、市場全体欠損日やpartial sessionでcanonical mappingが崩れるリスクを確認。新しいcanonical relabeling前にpinned XTKS calendar/version/hashとrequired endpoint-row completenessをfail-closedで固定する。
+Core endpoint監査は**primitive凍結段階へ進行**。新しい `endpoint_provenance.py` は次をfail-closedで固定する。
+
+- `calendar_name=XTKS`、一定のcalendar version、strict sorted unique session dates;
+- 各sessionのvendor-specific `open_bar_ts` / `close_bar_ts`;
+- manifest canonical JSONのSHA-256;
+- signal+1をentry、signal+5をexitとしてmanifest位置でmapping;
+- exact symbol/timestamp endpointのみ採用し、missing/duplicate/non-positive endpointはFAIL_CLOSED;
+- observed-date shifting / first-last available row fallbackは禁止。
+
+Synthetic fixtureでは非取引日gap、missing exact close、hash tamper、duplicate endpoint、unsorted calendarを検証済み。**ただしreal pinned XTKS/vendor manifest、immutable source run/artifact receipt、既存evaluatorへのwiring、dedicated CIは未完**。したがって新しいCore performanceはまだformal comparable evidenceとして計算しない。
 
 ---
 
@@ -156,7 +165,7 @@ EDINET real same-ZIPは外部 `EDINET_API_KEY` がblocker。synthetic/same-ZIP/h
 
 ### P1
 - **Weak+Early:** Round2閉鎖維持。2022 / 2023H2 / 2025H2のpopulation scarcity / forced-choice構造をoutcome-blindで監査。
-- **Core:** pinned XTKS calendar + endpoint completeness receiptを凍結。
+- **Core:** real pinned XTKS + raw-vendor endpoint manifestとimmutable source receiptを凍結し、`audit_core_canonical_endpoint.py` を新fail-closed primitiveへwiring、dedicated CI PASS後にのみcost0再計算を許可。
 - **OSS:** `run_study` selection_bias/DSR inputをimmutable completed-trial receiptへbindingし、receiptをsummaryへ永続化。
 - **EDINET:** real same-ZIP cross-checkは外部 `EDINET_API_KEY` 待ち。
 - **Cloud:** 新しい同時代一次証拠が出た場合だけexact replay再開。
@@ -176,6 +185,7 @@ EDINET real same-ZIPは外部 `EDINET_API_KEY` がblocker。synthetic/same-ZIP/h
 - Consensusはformal raw acceptance未PASSで、48-shard raw retry実行待ち/進行中。
 - Core / V20はreject / deprioritize。
 - Cloud exact replayは一次証拠欠落でclosed。
+- Core endpoint provenanceはprimitive凍結まで進んだが、real manifest/source receipt + evaluator wiring/CI未完。
 - OSSはtrial-ledger primitiveまでGREENだが、DSR consumption bindingが未完了。
 
 新規評価はすべて **cost 0%**、勝率は **gross return > 0**。過去のcosted結果はlegacy evidenceのみで、新しい順位・GO/NO-GOに使わない。

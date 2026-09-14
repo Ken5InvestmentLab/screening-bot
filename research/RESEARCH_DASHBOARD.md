@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 15:41 JST  
+> **最終更新基準:** 2026-09-14 16:07 JST  
 > **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + 各active laneのhandoff / Actions  
 > **目的:** 研究の進捗・候補・バックテスト・ブロッカーを1ページで把握する。  
 > **注意:** 進捗率は「研究の成功確率」ではなく、各レーンで事前定義したマイルストーン消化率の目安。
@@ -20,11 +20,12 @@
 | 最終判定 | **NO-GO / 研究継続** |
 
 ### 全体進捗
-`███████████░░░░░░░░░` **約55%**
+`███████████░░░░░░░░░` **約56%**
 
 - 基盤・評価契約・リーク防止: かなり完了
 - 本命候補のrawデータ受入: 未完
 - 本命候補H1/H2評価: 未開封
+- EDINETは実データ取得前のacquisition/snapshot/selector境界までCI固定済み
 - 最終比較 / GO-NO-GO: 未実施
 
 ---
@@ -36,7 +37,7 @@
 | **Consensus V47** | 🟡 本命 / RAW RETRY ACTIVE | **66%** | Daily PIT PASS、初回raw acceptance FAIL、hardened retryで2 shardが実取得中 | retry `34810592135` 完了後、同じfrozen verifierを再実行 |
 | **V20 Session-Impulse** | 🟡 本命 / COVERAGE BLOCKED | **55%** | 1,810銘柄×82セッション凍結済み、734 symbol/date不足 | V47でaccepted rawができたら734件だけ監査・修復 |
 | **Core** | 🔴 現候補REJECT | **評価自体は90%** | Fixed Core等を正式評価し棄却 | 新しい独立機構が無い限りcoordination/consumerのみ |
-| **OSS / Validation** | 🟢 基盤進行 | **60%** | Purged/DSR/Optuna/EDINET provenance整備 | 2023-2025 metadata凍結→同一ZIP比較 |
+| **OSS / Validation** | 🟢 基盤進行 | **65%** | Purged/DSR/Optuna + EDINET acquisition/snapshot/selector境界をCI固定 | 2023-2025 raw metadata取得→snapshot hash freeze→同一ZIP比較 |
 | **Shadow / Data Integrity** | 🟢 基盤 | **80%** | calendar/integrity/immutable receipt CI成功 | real shadow launchは未承認 |
 
 ---
@@ -125,6 +126,22 @@
 - 🔒 H2
 - 🔒 2026 report
 
+### OSS / Validation
+`█████████████░░░░░░░` **65%**
+
+- **最新HEAD:** `9966bde4534be91bc20ef471cf3b6e0abe860846`
+- ✅ purged/embargoed CV audit layer
+- ✅ PSR / DSR multiple-trial sensitivity
+- ✅ Optuna discovery period fail-closed contract
+- ✅ EDINET real-sample selector preregistration
+- ✅ full-calendar metadata snapshot/hash-chain validator
+- ✅ official EDINET v2 acquisition helper + resume/fail-closed contract
+- ✅ acquisition CI `34816055006` = **SUCCESS**
+- 🔒 real 2023-2025 metadata bytes = 未取得
+- 🔒 selected real doc IDs = 未固定
+- 🔒 same-ZIP custom vs edinet-tools comparison = 未開封
+- 🔒 strategy outcomes = 未開封
+
 ---
 
 ## 5. 現在の残タスク
@@ -144,7 +161,9 @@
 - [ ] H1 PASS policyだけH2へ
 
 ### P2 — OSS / Validation
-- [ ] 2023-2025 EDINET metadata full snapshot
+- [x] EDINET metadata acquisition helper / fail-closed CI
+- [ ] external API keyで2023-2025全calendar day raw JSONを取得
+- [ ] `edinet_metadata_snapshot.py` でper-day SHA256 + hash-chain freeze
 - [ ] selected doc IDs freeze
 - [ ] ZIP hash freeze
 - [ ] custom parser vs edinet-tools same-ZIP比較
@@ -172,7 +191,7 @@
 4. **旧Cloud Monster**
    - 歴史値+9.86%は再現性不足のためcurrent promotion candidateではない。
 5. **EDINET**
-   - 実historical same-ZIP parser comparison前。
+   - acquisition/snapshot/selector境界はCI-greenだが、2023-2025実raw metadata取得とsame-ZIP parser comparisonは未実行。
 
 ---
 

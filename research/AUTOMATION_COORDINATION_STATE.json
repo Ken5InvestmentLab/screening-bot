@@ -1,13 +1,13 @@
 {
-  "version": 18,
+  "version": 19,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T18:38:00+09:00",
+  "updated_at_jst": "2026-09-14T18:41:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_PHASE2_2022_FRESH_FAILURE_PLUS_OUTCOME_BLIND_STRUCTURAL_AUDIT",
     "scanned_at_jst": "2026-09-14T18:15:00+09:00",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Canonical/Consensus/OSS matched processed SHAs at supervisor scan. Core exact Cloud replay remains unavailable. Consensus has since advanced only in transport/runtime hardening: formal retry first two shards hit the frozen 180-minute job ceiling; future retry layout is split 12->48 without triggering a duplicate run or changing strategy semantics."
+    "note": "Consensus advanced after supervisor scan: V47 midterm H1 diagnostic completed successfully under the pre-open frozen cost0 contract; NOCAP leads CAP1000_PIT on mean but both are weak on tail-excluded/central diagnostics and evidence remains partial-coverage/non-promotion. Formal raw retry remains separate and unique; first two 12-shard jobs timed out at 180m, so future-only transport layout is staged at 48 shards without changing strategy semantics."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -25,13 +25,13 @@
       "preferred_worker": "core",
       "last_seen_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
       "last_processed_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
-      "last_processed_note": "18:22 Core+Cloud audit: no new contemporaneous exact-model evidence; HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen, no model-family guessing or portability. Added reproducibility/endpoint handoff; no new backtest or ranking evidence."
+      "last_processed_note": "18:22 Core+Cloud audit: no new contemporaneous exact-model evidence; HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen, no model-family guessing or portability."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "1eb0408cd3ad2d44c2e0c3feb12551857f325be6",
-      "last_processed_sha": "1eb0408cd3ad2d44c2e0c3feb12551857f325be6",
-      "last_processed_note": "18:38 Consensus: diagnostic 34824194221 has pre-open freeze + partial PIT features PASS and is still executing frozen H1 cost0 comparison. Formal retry 34810592135 remains unique; fetch(0)/(1) hit 180m timeout, fetch(2)/(3) continue. Future-only workflow repaired to 48 shards at commit 7aa230a0; no duplicate trigger and no strategy semantic change."
+      "last_seen_sha": "2b63fa00846d8d8918fd87e59cda69b6c8ddafab",
+      "last_processed_sha": "2b63fa00846d8d8918fd87e59cda69b6c8ddafab",
+      "last_processed_note": "18:41 Consensus: midterm diagnostic run 34824194221 SUCCESS. H1 cost0 partial diagnostic: NOCAP n50 mean +0.1074%, median -2.7270%, win 36.0%, Top3-ex -2.0148%; CAP1000_PIT n60 mean -1.1568%, median -0.4011%, win 46.67%, Top3-ex -2.0601%. NOCAP is frozen-criterion diagnostic leader only; formal promotion remains blocked by raw acceptance. H2 remains unopened. Formal retry 34810592135 is still unique: fetch0/fetch1 timed out, fetch2/fetch3 in progress, remaining queued. Future-only retry layout staged at 48 shards."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -85,35 +85,8 @@
         "dual_top1": {"n":21,"mean_pct":2.62,"median_pct":-6.19,"win_pct":28.57,"top3_ex_pct":-7.55},
         "dual_g3": {"n":17,"mean_pct":6.08,"median_pct":-6.00,"win_pct":29.41,"top3_ex_pct":-6.26}
       },
-      "descriptive_2022_2025": {
-        "body": {"n":195,"mean_pct":5.98,"median_pct":-0.39,"win_pct":47.69,"top3_ex_pct":4.20},
-        "volr20": {"n":195,"mean_pct":5.81,"median_pct":0.00,"win_pct":48.72,"top3_ex_pct":4.03},
-        "mean_rank": {"n":195,"mean_pct":6.28,"median_pct":0.00,"win_pct":49.23,"top3_ex_pct":4.51},
-        "dual_top1": {"n":161,"mean_pct":6.57,"median_pct":0.00,"win_pct":49.07,"top3_ex_pct":4.43},
-        "dual_g3": {"n":134,"mean_pct":7.74,"median_pct":1.06,"win_pct":50.75,"top3_ex_pct":5.17}
-      },
-      "structural_audit": {
-        "outcomes_used": false,
-        "population_2022_rows": 29,
-        "population_2023_2025_rows": 273,
-        "largest_shifts_iqr_units": {
-          "range_pct": -0.512,
-          "med_ret1": -0.349,
-          "gap": -0.331,
-          "breadth_ret1_pos": -0.317,
-          "volr5": -0.317,
-          "breadth_ma20": -0.316,
-          "ret1": -0.292,
-          "rsi14": 0.272
-        },
-        "candidate_per_day_mean_2022": 1.26,
-        "candidate_per_day_mean_2023_2025": 1.59,
-        "single_candidate_day_share_2022": 0.739,
-        "single_candidate_day_share_2023_2025": 0.622,
-        "interpretation": "population/regime mismatch hypothesis: weaker breadth/immediate participation and less cross-sectional choice in 2022; tail_p itself is not lower and RSI is higher. This is not a new gate."
-      },
       "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
-      "next_rule": "Audit model warm-up/calibration, candidate scarcity, and whether the same signal-time shifts occur in 2023H2/2025H2. Do not derive thresholds from opened 2022 outcomes. Any new regime family requires separate preregistration after structural audit."
+      "next_rule": "Audit model warm-up/calibration, candidate scarcity, and whether the same signal-time shifts occur in 2023H2/2025H2. Do not derive thresholds from opened 2022 outcomes."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
@@ -132,33 +105,35 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "broad_reconstruction_rows": 696,
-      "recovered_a_timestamps": "62/63",
       "latest_audit_head": "0886fd65f9413dc2591a47475364e736516dbf93",
-      "latest_audit_action": "No new contemporaneous identity evidence; exact replay remains closed. Reproducibility/endpoint handoff added; no new performance computation.",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing. Otherwise return to cross-lane reproducibility/endpoint audit."
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
       "coverage_acceptance_run": 34810234454,
       "frozen_coverage_acceptance_pass": false,
       "missing_universe_retry_run": 34810592135,
-      "formal_retry_status": "active_partial_timeout_fetch0_fetch1_at_180m_fetch2_fetch3_in_progress",
+      "formal_retry_status": "active_partial_timeout_fetch0_fetch1_at_180m_fetch2_fetch3_in_progress_others_queued",
       "future_retry_layout_commit": "7aa230a0434136cf33589a2fdda010113d57db62",
       "future_retry_shards": 48,
       "future_retry_max_parallel": 2,
       "midterm_diagnostic_run": 34824194221,
-      "midterm_diagnostic_status": "in_progress_h1_cost0_comparison_performance_not_emitted",
-      "midterm_preopen_contract_pass": true,
-      "midterm_partial_features_materialized": true,
-      "preserved_raw_seed_run": 34592896202,
-      "preserved_raw_seed_nocap_pair_coverage": 0.35389849026036824,
-      "preserved_raw_seed_cap1000_pair_coverage": 0.831124,
-      "restored_pair_coverage": 0.0,
+      "midterm_diagnostic_status": "SUCCESS_H1_OPENED_NOCAP_DIAGNOSTIC_LEADER_H2_UNOPENED",
+      "midterm_artifact_digest": "sha256:c46e90cba472c291a7db068ff1dadb0959764dcef97eb006dd6c3b918779f866",
+      "midterm_period": ["2025-01-06", "2025-06-30"],
+      "midterm_endpoint": "next official XTKS open -> D+5 close",
+      "midterm_cost_pct_points": 0.0,
+      "midterm_nocap": {"pair_coverage":0.35389849026036824,"n":50,"mean_pct":0.10744972905193252,"median_pct":-2.726957498101118,"win_pct":36.0,"hit10_pct":16.0,"hit20_pct":8.0,"hit50_pct":0.0,"loss10_pct":12.0,"loss20_pct":2.0,"top1_ex_pct":-0.7566215444765227,"top3_ex_pct":-2.014754685550924},
+      "midterm_cap1000_pit": {"pair_coverage":0.831124,"n":60,"mean_pct":-1.1567950581879312,"median_pct":-0.4010670838729802,"win_pct":46.666666666666664,"hit10_pct":13.333333333333334,"hit20_pct":0.0,"hit50_pct":0.0,"loss10_pct":11.666666666666666,"loss20_pct":3.3333333333333335,"top1_ex_pct":-1.4639075726595594,"top3_ex_pct":-2.0600557608045857},
+      "diagnostic_h1_leader": "NOCAP",
+      "diagnostic_h1_opened": true,
+      "diagnostic_h1_untouched_holdout": false,
+      "diagnostic_h2_opened": false,
       "formal_features_opened": false,
       "formal_h1_opened": false,
       "formal_h2_opened": false,
-      "next_rule": "No duplicate triggers. Collect cost0 diagnostic only after completion. Let current formal retry terminate naturally, merge valid artifacts with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using the staged 48-shard transport layout."
+      "promotion_evidence": false,
+      "next_rule": "No duplicate triggers. Formal: let 34810592135 terminate naturally, merge valid outputs with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using staged 48-shard layout. Diagnostic: if H2 is opened, open only frozen H1 leader NOCAP under the unchanged cost0 contract; do not retune or open CAP H2 as rescue."
     },
     "oss_validation": {
       "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
@@ -170,9 +145,9 @@
   "next_global_actions": [
     "Phase-2: audit model warm-up/calibration without using outcome thresholds.",
     "Phase-2: audit candidate scarcity and compare signal-time structural shifts in 2023H2/2025H2.",
-    "Consensus diagnostic: collect V47 cost0 H1 comparison after 34824194221 completes; do not retune after opened results.",
+    "Consensus diagnostic: H1 opened with NOCAP diagnostic leader; if continuing, H2 may be opened for NOCAP only under unchanged frozen cost0 contract, with no retune.",
     "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
-    "Cloud: remain closed unless genuinely new exact identity evidence appears; otherwise Core worker performs reproducibility/endpoint audit only.",
+    "Cloud: remain closed unless genuinely new exact identity evidence appears.",
     "OSS: real EDINET acquisition only when external key is available."
   ]
 }

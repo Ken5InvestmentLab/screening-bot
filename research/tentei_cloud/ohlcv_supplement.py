@@ -71,11 +71,7 @@ def canonical_source_policy(policy: Mapping[str, Mapping]) -> dict[str, SourceRu
         allowed = tuple(str(x).strip().lower() for x in cfg.get("allowed_timeframes", ()))
         if not allowed:
             raise ValueError(f"source {source} has no allowed_timeframes")
-        out[source] = SourceRule(
-            priority=priority,
-            formal_eligible=bool(cfg.get("formal_eligible", False)),
-            allowed_timeframes=allowed,
-        )
+        out[source] = SourceRule(priority=priority, formal_eligible=bool(cfg.get("formal_eligible", False)), allowed_timeframes=allowed)
     return out
 
 
@@ -97,12 +93,46 @@ def canonical_missing_inventory(inventory: pd.DataFrame) -> pd.DataFrame:
     return x.sort_values(["symbol", "timestamp", "timeframe"]).reset_index(drop=True)
 
 
+def build_missing_inventory(expected: pd.DataFrame, observed: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Outcome-blind exact missing-pair inventory from expected endpoint keys vs observed keys.
+
+    `expected` must contain symbol/timestamp/timeframe/decision_ts. `observed` only needs
+    symbol/timestamp/timeframe. Extra observed rows never create inventory rows.
+    """
+    exp = canonical_missing_inventory(expected)
+    required_obs = ["symbol", "timestamp", "timeframe"]
+    missing = [c for c in required_obs if c not in observed.columns]
+    if missing:
+        raise ValueError(f"observed rows missing columns: {missing}")
+    obs = observed.loc[:, required_obs].copy()
+    obs["symbol"] = obs["symbol"].astype("string").str.replace(".T", "", regex=False).str.strip()
+    obs["timestamp"] = _iso_utc(obs["timestamp"], "observed.timestamp")
+    obs["timeframe"] = obs["timeframe"].astype("string").str.strip().str.lower()
+    if obs.duplicated(required_obs).any():
+        raise ValueError("observed rows contain duplicate symbol/timestamp/timeframe")
+    exp_keys = set(map(tuple, exp[required_obs].itertuples(index=False, name=None)))
+    obs_keys = set(map(tuple, obs[required_obs].itertuples(index=False, name=None)))
+    missing_keys = exp_keys - obs_keys
+    inventory = exp[exp[required_obs].apply(tuple, axis=1).isin(missing_keys)].copy().reset_index(drop=True)
+    payload = {
+        "contract_version": SUPPLEMENT_CONTRACT_VERSION,
+        "expected_n": int(len(exp_keys)),
+        "observed_expected_n": int(len(exp_keys & obs_keys)),
+        "missing_n": int(len(missing_keys)),
+        "unexpected_observed_n": int(len(obs_keys - exp_keys)),
+        "outcome_informed": False,
+        "performance_opened": False,
+    }
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    payload["receipt_sha256"] = hashlib.sha256(encoded).hexdigest()
+    return inventory, payload
+
+
 def canonical_supplement_rows(rows: pd.DataFrame, source_policy: Mapping[str, Mapping]) -> pd.DataFrame:
     policy = canonical_source_policy(source_policy)
     missing = [c for c in REQUIRED_SUPPLEMENT_COLUMNS if c not in rows.columns]
     if missing:
         raise ValueError(f"supplement rows missing columns: {missing}")
-
     x = rows.loc[:, REQUIRED_SUPPLEMENT_COLUMNS].copy()
     x["symbol"] = x["symbol"].astype("string").str.replace(".T", "", regex=False).str.strip()
     x["timestamp"] = _iso_utc(x["timestamp"], "supplement.timestamp")
@@ -110,7 +140,6 @@ def canonical_supplement_rows(rows: pd.DataFrame, source_policy: Mapping[str, Ma
     x["latest_market_ts"] = _iso_utc(x["latest_market_ts"], "supplement.latest_market_ts")
     x["timeframe"] = x["timeframe"].astype("string").str.strip().str.lower()
     x["source"] = x["source"].astype("string").str.strip()
-
     for c in ("open", "high", "low", "close", "volume"):
         x[c] = pd.to_numeric(x[c], errors="coerce")
     if x[["open", "high", "low", "close", "volume"]].isna().any().any():
@@ -129,15 +158,12 @@ def canonical_supplement_rows(rows: pd.DataFrame, source_policy: Mapping[str, Ma
         raise ValueError("acquired_at precedes latest_market_ts")
     if not x["raw_sha256"].map(_sha256_hex).all():
         raise ValueError("supplement raw_sha256 must be a 64-character hex digest")
-
     unknown = sorted(set(x["source"].tolist()) - set(policy))
     if unknown:
         raise ValueError(f"supplement contains unregistered sources: {unknown}")
-
     def source_ok(row: pd.Series) -> bool:
         rule = policy[str(row["source"])]
         return rule.formal_eligible and str(row["timeframe"]) in rule.allowed_timeframes
-
     x["source_formal_eligible"] = x.apply(source_ok, axis=1)
     x["source_priority"] = x["source"].map(lambda s: policy[str(s)].priority)
     return x.sort_values(["symbol", "timestamp", "timeframe", "source_priority", "source"]).reset_index(drop=True)
@@ -147,104 +173,45 @@ def _row_value_tuple(row: pd.Series) -> tuple[float, float, float, float, float]
     return tuple(float(row[c]) for c in ("open", "high", "low", "close", "volume"))
 
 
-def verify_and_select_supplements(
-    inventory: pd.DataFrame,
-    supplement_rows: pd.DataFrame,
-    source_policy: Mapping[str, Mapping],
-) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    """Select only deterministic, provenance-complete supplements for predeclared missing pairs.
-
-    This is deliberately outcome-blind. Rows that were not in the pre-supplement missing
-    inventory are rejected. Multiple eligible sources for one pair must agree exactly on
-    OHLCV; otherwise the pair is conflicted and excluded rather than averaged or selected
-    by source priority.
-    """
+def verify_and_select_supplements(inventory: pd.DataFrame, supplement_rows: pd.DataFrame, source_policy: Mapping[str, Mapping]) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     inv = canonical_missing_inventory(inventory)
     supp = canonical_supplement_rows(supplement_rows, source_policy)
     policy = canonical_source_policy(source_policy)
-
     key_cols = ["symbol", "timestamp", "timeframe"]
     inv_keys = set(map(tuple, inv[key_cols].itertuples(index=False, name=None)))
-    decision_by_key = {
-        tuple(r[c] for c in key_cols): r["decision_ts"]
-        for _, r in inv.iterrows()
-    }
-
+    decision_by_key = {tuple(r[c] for c in key_cols): r["decision_ts"] for _, r in inv.iterrows()}
     audit_rows: list[dict] = []
     selected_rows: list[dict] = []
-
     for key, group in supp.groupby(key_cols, sort=True, dropna=False):
         key = tuple(key) if isinstance(key, tuple) else (key,)
         if key not in inv_keys:
-            for _, row in group.iterrows():
-                audit_rows.append({**row.to_dict(), "acceptance": "REJECT_NOT_IN_MISSING_INVENTORY"})
+            for _, row in group.iterrows(): audit_rows.append({**row.to_dict(), "acceptance": "REJECT_NOT_IN_MISSING_INVENTORY"})
             continue
-
         decision_ts = pd.Timestamp(decision_by_key[key])
         eligible = group[group["source_formal_eligible"]].copy()
         if eligible.empty:
-            for _, row in group.iterrows():
-                audit_rows.append({**row.to_dict(), "acceptance": "REJECT_SOURCE_NOT_FORMAL_ELIGIBLE"})
+            for _, row in group.iterrows(): audit_rows.append({**row.to_dict(), "acceptance": "REJECT_SOURCE_NOT_FORMAL_ELIGIBLE"})
             continue
-
-        # Historical repair may be acquired later, but the market interval represented by
-        # the row must itself not extend past the original decision timestamp.
-        eligible = eligible[
-            pd.to_datetime(eligible["latest_market_ts"], utc=True) <= decision_ts
-        ].copy()
+        eligible = eligible[pd.to_datetime(eligible["latest_market_ts"], utc=True) <= decision_ts].copy()
         if eligible.empty:
-            for _, row in group.iterrows():
-                audit_rows.append({**row.to_dict(), "acceptance": "REJECT_CAUSALITY"})
+            for _, row in group.iterrows(): audit_rows.append({**row.to_dict(), "acceptance": "REJECT_CAUSALITY"})
             continue
-
         distinct_values = {_row_value_tuple(row) for _, row in eligible.iterrows()}
         if len(distinct_values) > 1:
-            for _, row in group.iterrows():
-                audit_rows.append({**row.to_dict(), "acceptance": "CONFLICT_FAIL_CLOSED"})
+            for _, row in group.iterrows(): audit_rows.append({**row.to_dict(), "acceptance": "CONFLICT_FAIL_CLOSED"})
             continue
-
         winner = eligible.sort_values(["source_priority", "source"]).iloc[0]
-        selected = winner.to_dict()
-        selected["provenance"] = "supplemented"
-        selected["acceptance"] = "ACCEPT"
-        selected_rows.append(selected)
+        selected = winner.to_dict(); selected["provenance"] = "supplemented"; selected["acceptance"] = "ACCEPT"; selected_rows.append(selected)
         winner_source = str(winner["source"])
         for _, row in group.iterrows():
             status = "ACCEPT" if str(row["source"]) == winner_source else "AGREEING_ALTERNATE_NOT_SELECTED"
-            if not bool(row["source_formal_eligible"]):
-                status = "REJECT_SOURCE_NOT_FORMAL_ELIGIBLE"
+            if not bool(row["source_formal_eligible"]): status = "REJECT_SOURCE_NOT_FORMAL_ELIGIBLE"
             audit_rows.append({**row.to_dict(), "acceptance": status})
-
-    selected = pd.DataFrame(selected_rows)
-    audit = pd.DataFrame(audit_rows)
+    selected = pd.DataFrame(selected_rows); audit = pd.DataFrame(audit_rows)
     accepted_keys = set(map(tuple, selected[key_cols].itertuples(index=False, name=None))) if not selected.empty else set()
     unresolved = len(inv_keys - accepted_keys)
-    conflict_n = 0 if audit.empty else int(
-        audit.loc[audit["acceptance"] == "CONFLICT_FAIL_CLOSED", key_cols].drop_duplicates().shape[0]
-    )
-
-    receipt_payload = {
-        "contract_version": SUPPLEMENT_CONTRACT_VERSION,
-        "status": "PASS" if unresolved == 0 else "FAIL_CLOSED",
-        "inventory_n": int(len(inv)),
-        "accepted_n": int(len(accepted_keys)),
-        "unresolved_n": int(unresolved),
-        "conflicted_pair_n": conflict_n,
-        "source_hierarchy": [
-            {
-                "source": source,
-                "priority": rule.priority,
-                "formal_eligible": rule.formal_eligible,
-                "allowed_timeframes": list(rule.allowed_timeframes),
-            }
-            for source, rule in sorted(policy.items(), key=lambda kv: kv[1].priority)
-        ],
-        "interpolation": False,
-        "forward_fill_back_fill": False,
-        "daily_to_intraday_synthesis": False,
-        "outcome_informed_selection": False,
-        "performance_opened": False,
-    }
+    conflict_n = 0 if audit.empty else int(audit.loc[audit["acceptance"] == "CONFLICT_FAIL_CLOSED", key_cols].drop_duplicates().shape[0])
+    receipt_payload = {"contract_version": SUPPLEMENT_CONTRACT_VERSION,"status": "PASS" if unresolved == 0 else "FAIL_CLOSED","inventory_n": int(len(inv)),"accepted_n": int(len(accepted_keys)),"unresolved_n": int(unresolved),"conflicted_pair_n": conflict_n,"source_hierarchy": [{"source": source,"priority": rule.priority,"formal_eligible": rule.formal_eligible,"allowed_timeframes": list(rule.allowed_timeframes)} for source, rule in sorted(policy.items(), key=lambda kv: kv[1].priority)],"interpolation": False,"forward_fill_back_fill": False,"daily_to_intraday_synthesis": False,"outcome_informed_selection": False,"performance_opened": False}
     encoded = json.dumps(receipt_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     receipt_payload["receipt_sha256"] = hashlib.sha256(encoded).hexdigest()
     return selected, audit, receipt_payload
@@ -252,20 +219,10 @@ def verify_and_select_supplements(
 
 def source_file_receipt(path: str | Path, *, source: str, acquired_at: str) -> dict:
     p = Path(path)
-    if not p.is_file():
-        raise ValueError(f"source file does not exist: {p}")
+    if not p.is_file(): raise ValueError(f"source file does not exist: {p}")
     h = hashlib.sha256(p.read_bytes()).hexdigest()
     acquired = pd.to_datetime(pd.Series([acquired_at]), utc=True, errors="coerce")
-    if acquired.isna().any():
-        raise ValueError("acquired_at is invalid")
-    payload = {
-        "source": str(source),
-        "name": p.name,
-        "size_bytes": int(p.stat().st_size),
-        "sha256": h,
-        "acquired_at": acquired.dt.strftime("%Y-%m-%dT%H:%M:%SZ").iloc[0],
-    }
-    payload["receipt_sha256"] = hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
+    if acquired.isna().any(): raise ValueError("acquired_at is invalid")
+    payload = {"source": str(source),"name": p.name,"size_bytes": int(p.stat().st_size),"sha256": h,"acquired_at": acquired.dt.strftime("%Y-%m-%dT%H:%M:%SZ").iloc[0]}
+    payload["receipt_sha256"] = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     return payload

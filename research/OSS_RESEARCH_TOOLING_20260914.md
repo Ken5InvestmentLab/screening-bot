@@ -14,7 +14,7 @@ universe, label construction, temporal policy, or existing weekly block
 bootstrap. It must not touch production/main, Discord, Spreadsheet, Stable★6,
 Sniper, Mega, TradingView, watchlist-builder, or watchlist-updater.
 
-Latest integrated CI: **run 34796320767 — SUCCESS** on Python 3.12.
+Latest integrated CI: **run 34796460950 — SUCCESS** on Python 3.12 (8 pytest checks passed; existing EDINET collector self-test also passed).
 
 ## purgedcv
 
@@ -81,7 +81,7 @@ The frozen contract is:
 `research/EDINET_OSS_CROSSCHECK_CONTRACT_20260914.json`.
 
 Synthetic same-ZIP tests and the existing custom EDINET self-test both pass in
-CI run 34796320767. Production behavior is unchanged because this work remains
+CI run 34796460950. Production behavior is unchanged because this work remains
 on the isolated research branch.
 
 ## Other OSS reviewed

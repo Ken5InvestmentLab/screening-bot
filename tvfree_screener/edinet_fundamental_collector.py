@@ -56,10 +56,16 @@ FACT_SPECS = {
     "shares_outstanding": {
         "kind": "instant",
         "prefer_nonconsolidated": True,
+        # Prefer the current-year summary-table fact when present. Real EDINET
+        # annual filings also commonly expose the issued-share count only at
+        # FilingDateInstant, so that context is an explicit audited fallback.
         "elements": (
+            "jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults",
             "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc",
             "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares",
         ),
+        "context_prefixes": ("CurrentYear", "FilingDateInstant"),
+        "element_priority_first": True,
     },
     "assets": {
         "kind": "instant",
@@ -307,14 +313,24 @@ def parse_numeric(value: object) -> float | None:
     return -x if negative else x
 
 
-def _context_rank(context_id: str, prefer_nonconsolidated: bool) -> tuple[int, int] | None:
+def _context_rank(
+    context_id: str,
+    prefer_nonconsolidated: bool,
+    prefixes: tuple[str, ...] = ("CurrentYear",),
+) -> tuple[int, int, int] | None:
     ctx = str(context_id or "")
-    if not ctx.startswith("CurrentYear"):
+    prefix_rank = next(
+        (index for index, prefix in enumerate(prefixes) if ctx.startswith(prefix)),
+        None,
+    )
+    if prefix_rank is None:
         return None
     noncon = "NonConsolidatedMember" in ctx
     if prefer_nonconsolidated:
-        return (0 if noncon else 1, len(ctx))
-    return (1 if noncon else 0, len(ctx))
+        ownership_rank = 0 if noncon else 1
+    else:
+        ownership_rank = 1 if noncon else 0
+    return (prefix_rank, ownership_rank, len(ctx))
 
 
 def extract_fact(df: pd.DataFrame, field: str) -> dict:
@@ -324,26 +340,34 @@ def extract_fact(df: pd.DataFrame, field: str) -> dict:
         return {"value": None, "status": "missing", "element_id": None, "context_id": None, "source_member": None}
 
     ranked = []
+    prefixes = tuple(spec.get("context_prefixes", ("CurrentYear",)))
+    element_priority_first = bool(spec.get("element_priority_first", False))
     for idx, row in cand.iterrows():
-        rank = _context_rank(str(row["context_id"]), bool(spec["prefer_nonconsolidated"]))
+        rank = _context_rank(
+            str(row["context_id"]),
+            bool(spec["prefer_nonconsolidated"]),
+            prefixes=prefixes,
+        )
         if rank is None:
             continue
         numeric = parse_numeric(row["value"])
         if numeric is None:
             continue
-        ranked.append((rank, spec["elements"].index(row["element_id"]), idx, numeric))
+        element_rank = spec["elements"].index(row["element_id"])
+        key = (element_rank, *rank) if element_priority_first else (*rank, element_rank)
+        ranked.append((key, idx, numeric))
     if not ranked:
-        return {"value": None, "status": "missing_current_year", "element_id": None, "context_id": None, "source_member": None}
+        return {"value": None, "status": "missing_eligible_context", "element_id": None, "context_id": None, "source_member": None}
 
-    ranked.sort(key=lambda x: (x[0], x[1], x[2]))
-    best_key = (ranked[0][0], ranked[0][1])
-    best = [r for r in ranked if (r[0], r[1]) == best_key]
-    unique_values = {r[3] for r in best}
+    ranked.sort(key=lambda x: (x[0], x[1]))
+    best_key = ranked[0][0]
+    best = [r for r in ranked if r[0] == best_key]
+    unique_values = {r[2] for r in best}
     if len(unique_values) != 1:
         return {"value": None, "status": "ambiguous", "element_id": None, "context_id": None, "source_member": None}
-    chosen = cand.loc[best[0][2]]
+    chosen = cand.loc[best[0][1]]
     return {
-        "value": best[0][3],
+        "value": best[0][2],
         "status": "ok",
         "element_id": str(chosen["element_id"]),
         "context_id": str(chosen["context_id"]),

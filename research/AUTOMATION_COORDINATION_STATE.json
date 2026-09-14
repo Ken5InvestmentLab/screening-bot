@@ -1,7 +1,7 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T10:00:00+09:00",
+  "updated_at_jst": "2026-09-14T10:15:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "61704886f9299e5849a35c5b51465fd52ac771d7",
-      "last_processed_sha": "61704886f9299e5849a35c5b51465fd52ac771d7",
-      "last_processed_note": "Processed completed V20 repair run 34791959735 without outcome access. Unchanged raw acceptance failed: expected universe/SHA exact, observed symbols 1806/1810, missing symbols 463A/464A/543A/547A, expected canonical-active symbol/date pairs 213921 vs observed 213187, leaving 734 gaps; zero duplicate symbol/timestamps and all raw dates remain inside the frozen window. Targeted repair added zero rows. H1/H2 outcomes remain unopened; next work stays outcome-blind and belongs to the :12 owner."
+      "last_seen_sha": "83a64ff84531665e04e3ff5110ce731a53e17a18",
+      "last_processed_sha": "83a64ff84531665e04e3ff5110ce731a53e17a18",
+      "last_processed_note": "Processed three new Shadow/Data integrity commits after 61704886 without reading V20 outcomes. Added resolution-snapshot continuity guard ba3a7020, contract tests 82ec671a, dedicated CI 8e708d6e; run 34795293067 completed SUCCESS. Guard freezes admitted candidate identity/prefix, forbids RESOLVED regression or endpoint/result mutation, permits only causal pending/unresolved->resolved transitions, and checks return arithmetic. Recorded audit at research/SHADOW_RESOLUTION_CONTINUITY_GUARD_20260914.md in 83a64ff8. V20 remains fail-closed at 1806/1810 and 734 missing active symbol/date pairs; H1/H2 outcomes unopened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -85,11 +85,16 @@
       "next_rule": "Keep H1/H2 outcomes closed. The :12 owner must diagnose an outcome-blind historical raw-data recovery path and distinguish provider absence from true no-session-bar cases for the 734 missing active symbol/date pairs. Do not lower thresholds, interpolate/synthesize bars, or retune V20."
     },
     "prospective_shadow_data_integrity": {
-      "status": "CLI_DIRECT_INGEST_BYPASS_CLOSED",
-      "latest_head": "0ea767fa1e72f022c0e0003db1b96ec027beb02e",
-      "focused_verification": "verified-ingest 5/5 PASS; earlier guard/admission 16/16 PASS",
+      "status": "CLI_DIRECT_INGEST_BYPASS_CLOSED_AND_RESOLUTION_CONTINUITY_GUARD_PASS",
+      "latest_head": "83a64ff84531665e04e3ff5110ce731a53e17a18",
+      "focused_verification": "verified-ingest 5/5 PASS; earlier guard/admission 16/16 PASS; resolution continuity CI run 34795293067 SUCCESS",
+      "resolution_continuity_guard_commit": "ba3a7020cfedbf7c24091dbf854ac6d29e1616f4",
+      "resolution_continuity_test_commit": "82ec671aa3b782c1a78385a696308f96cc70fb27",
+      "resolution_continuity_ci_commit": "8e708d6e7b180e257872bfcb390cb23ad54c0bef",
+      "resolution_continuity_ci_run": 34795293067,
+      "resolution_continuity_ci_status": "completed/success",
       "real_shadow_launch_authorized": false,
-      "rule": "Fresh source HEADs, supervisor authorization, immutable model freeze, eligible candidate export, admission receipt and verified append remain mandatory before real prospective shadow."
+      "rule": "Fresh source HEADs, supervisor authorization, immutable model freeze, eligible candidate export, admission receipt, verified append, and resolution-snapshot continuity validation remain mandatory before accepting prospective shadow evidence."
     },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",

@@ -1,12 +1,12 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T09:25:00+09:00",
+  "updated_at_jst": "2026-09-14T10:00:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Core :24 worker found no unprocessed Core workflow/HEAD delta, so it did not duplicate prior experiments. It advanced reproducibility instead by freezing a Core PIT daily-volume migration contract aligned with the shared clean-PIT data semantics: historical Yahoo daily volume must be restored to point-in-time share counts for absolute prior-day gates and daily-volume ratios, while raw Yahoo 1H volume remains unchanged. Existing fixed Core and Failed-Breakdown Reclaim rejection decisions remain closed; locked reclaim H2 remains unopened."
+    "note": "10:00 supervisor reconciled stale coordination metadata against actual branch HEADs and completed Actions. Event V20 repair run 34791959735 is completed/failure at unchanged raw acceptance with outcomes still unopened: exact universe/SHA pass, observed 1806/1810, 734 active symbol/date gaps remain, zero duplicate timestamps. Consensus actual head is 92218001; authoritative V47 daily v6 workflow completed but frozen acceptance failed because restored/delisted direct Yahoo recovery was 0/251 under HTTP 429, so raw1H/features/performance remain closed pending rate-limit-safe direct retry. Core head 2429a6f9 remains already processed and both fixed Core and Failed-Breakdown Reclaim remain rejected. No promotion-grade performance was newly opened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -18,19 +18,19 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "61704886f9299e5849a35c5b51465fd52ac771d7",
       "last_processed_sha": "61704886f9299e5849a35c5b51465fd52ac771d7",
-      "last_processed_note": "Advanced the frozen V20 H1 repair without outcome access. Added an outcome-blind verified predecessor map from JPX/TSE evidence (463A->8940, 464A->5595, 543A->7205, 547A->8515), implemented targeted missing-pair refetch, staged a repair-only workflow, and triggered run 34791959735. The workflow stops at the unchanged fail-closed raw acceptance verifier; no H1 evaluator is invoked."
+      "last_processed_note": "Processed completed V20 repair run 34791959735 without outcome access. Unchanged raw acceptance failed: expected universe/SHA exact, observed symbols 1806/1810, missing symbols 463A/464A/543A/547A, expected canonical-active symbol/date pairs 213921 vs observed 213187, leaving 734 gaps; zero duplicate symbol/timestamps and all raw dates remain inside the frozen window. Targeted repair added zero rows. H1/H2 outcomes remain unopened; next work stays outcome-blind and belongs to the :12 owner."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
       "last_processed_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
-      "last_processed_note": "No new Core workflow/HEAD delta existed after dbdf167e, so no rejected family was rerun. Added CORE_PIT_DAILY_VOLUME_MIGRATION_AUDIT_20260914.md to freeze future Core data semantics: PIT daily volume = provider-adjusted historical daily volume divided by cumulative future split factor; absolute prior-day volume gates and daily-volume ratios must use PIT daily volume; raw Yahoo 1H volume and intraday volume gates/ratios remain unchanged. Existing fixed Core and Failed-Breakdown Reclaim remain REJECT; this data-lineage issue is not a rescue/retune permission and locked H2 remains unopened."
+      "last_processed_note": "No new Core workflow/HEAD delta after the PIT daily-volume migration audit. Existing fixed Core and Failed-Breakdown Reclaim remain REJECT; locked H2 remains unopened. Future Core work remains audit/reproducibility-only unless a genuinely different low-DOF 5BD mechanism is preregistered before outcomes."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "163b0880ae9aca861db225d073205d9c0fa545d6",
-      "last_processed_sha": "163b0880ae9aca861db225d073205d9c0fa545d6",
-      "last_processed_note": "Processed V47 clean-PIT hardening beyond 2edd4d94. New symbol-identity audit found current-code prelisting histories and requires predecessor restoration/verified aliases. Daily v3 run 34786578353 and v4 run 34787866773 are cancelled/superseded; raw1H/performance remain closed. PIT daily-volume restoration semantics now pass contract run 34788439332. Alias shortlist CI 34788120251 failed only because its synthetic unrelated predecessor also met the frozen 10-day heuristic; fixture was isolated without changing the heuristic, commit bdbfcb7b, rerun 34788435072 SUCCESS. Next authoritative daily run must satisfy the corrected PIT identity/volume contract before downstream work."
+      "last_seen_sha": "92218001d86890e99e6108ec729dc6cb5acc2443",
+      "last_processed_sha": "92218001d86890e99e6108ec729dc6cb5acc2443",
+      "last_processed_note": "Processed the V47 clean-PIT hardening through head 92218001. Authoritative daily v6 run 34788533946 completed workflow-success but frozen daily acceptance failed: restored/delisted direct Yahoo recovery was 0/251 under HTTP 429. Treat this as provider rate limiting, not historical-code absence and not permission for automatic aliases/provider substitution. Raw1H/features/performance stay closed. Clean Feature Contract run 34790368989 remains SUCCESS under frozen raw-1H-volume-unchanged semantics. Next action is the preregistered rate-limit-safe direct Yahoo historical-code retry."
     }
   },
   "guardrails": [
@@ -59,7 +59,7 @@
         "expected_symbols": 1810,
         "observed_symbols": 1806,
         "missing_symbols": ["463A", "464A", "543A", "547A"],
-        "fetch_failure_count": 1,
+        "fetch_failure_count": 476,
         "missing_active_symbol_dates": 734,
         "missing_dates_from_four_future_successor_codes": 476,
         "remaining_sparse_missing_dates": 258,
@@ -79,9 +79,10 @@
       "raw_repair_workflow_commit": "c9b5cbc8762556398a37c34b6688b8fffe06ff18",
       "raw_repair_trigger_commit": "61704886f9299e5849a35c5b51465fd52ac771d7",
       "raw_repair_run": 34791959735,
-      "raw_repair_status": "in_progress",
+      "raw_repair_status": "completed/failure",
+      "raw_repair_rows_added": 0,
       "performance_interpreted": false,
-      "next_rule": "Wait for repair run 34791959735. Inspect only repair audit and unchanged raw acceptance receipt first. If accepted=true, separately freeze the permission to evaluate the already-frozen H1 Top1/2/3/5 policy; if acceptance fails, keep outcomes closed and repair only the remaining missing symbol/date pairs without threshold relaxation, interpolation, or retuning."
+      "next_rule": "Keep H1/H2 outcomes closed. The :12 owner must diagnose an outcome-blind historical raw-data recovery path and distinguish provider absence from true no-session-bar cases for the 734 missing active symbol/date pairs. Do not lower thresholds, interpolate/synthesize bars, or retune V20."
     },
     "prospective_shadow_data_integrity": {
       "status": "CLI_DIRECT_INGEST_BYPASS_CLOSED",
@@ -123,13 +124,16 @@
       "coverage": "3700/3700"
     },
     "consensus_v47_price_policy": {
-      "latest_consensus_head": "163b0880ae9aca861db225d073205d9c0fa545d6",
+      "latest_consensus_head": "92218001d86890e99e6108ec729dc6cb5acc2443",
       "materialization_contract": "research/CONSENSUS_V47_DATA_MATERIALIZATION_CONTRACT_20260914.json",
       "materialization_contract_status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
       "daily_v3_run": 34786578353,
       "daily_v3_status": "completed/cancelled/superseded",
       "daily_v4_run": 34787866773,
       "daily_v4_status": "completed/cancelled/superseded",
+      "daily_v6_run": 34788533946,
+      "daily_v6_workflow_status": "completed/success",
+      "daily_v6_acceptance": "FAIL_CLOSED_HTTP_429_RESTORED_0_OF_251",
       "alias_contract_failed_run": 34788120251,
       "alias_fixture_fix_commit": "bdbfcb7b8da4bf8a5eb4d7b6f017c107a2de0cd0",
       "alias_contract_rerun": 34788435072,
@@ -137,15 +141,17 @@
       "daily_volume_contract_superseded_failure": 34788427818,
       "daily_volume_contract_run": 34788439332,
       "daily_volume_contract_status": "completed/success",
+      "clean_feature_contract_run": 34790368989,
+      "clean_feature_contract_status": "completed/success",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
-      "rule": "Keep raw1H/features/performance closed until a new authoritative daily PIT materialization passes 100% restored/delisted symbol coverage with corrected PIT identity and PIT volume semantics. Then proceed raw coverage -> clean features -> DEV two-arm selection -> winner-only H2."
+      "rule": "Keep raw1H/features/performance closed until a rate-limit-safe direct Yahoo retry satisfies the frozen daily PIT coverage contract. Do not infer historical-code absence from HTTP 429 and do not auto-promote aliases/provider substitution. After daily acceptance, proceed raw coverage -> clean features -> DEV two-arm selection -> winner-only H2."
     }
   },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 raw coverage repair run 34791959735 is in progress; verified predecessor identities are now frozen, but unchanged acceptance must pass before H1 outcome access",
-      "Consensus V47 authoritative daily PIT materialization has not passed yet; v3/v4 were cancelled/superseded even though corrected identity/volume contracts now pass",
+      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain and targeted repair added zero rows; H1 outcomes remain unopened",
+      "Consensus V47 authoritative daily PIT acceptance has not passed: restored/delisted direct Yahoo recovery was 0/251 under HTTP 429; raw1H/features/performance remain closed pending rate-limit-safe direct retry",
       "No currently passing canonical 5BD Core replacement candidate"
     ]
   }

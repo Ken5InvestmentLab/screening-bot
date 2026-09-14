@@ -1,12 +1,12 @@
 {
-  "version": 50,
+  "version": 51,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T03:29:00+09:00",
+  "updated_at_jst": "2026-09-15T03:56:00+09:00",
   "supervisor_last_scan": {
     "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
     "scanned_at_jst": "2026-09-15T03:03:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Supervisor absorbed new Parallel Wave-1 schema-freeze handoff c7d5e0b0 and Consensus coordination head 848cb233 without duplicate execution. Parallel source schema is now frozen and performance remains unopened; next blocker is an independently pinned XTKS calendar plus endpoint completeness receipt. Consensus raw48 remains nonterminal with shards 2/3 fetching and systemic Yahoo HTTP429; no duplicate trigger. Phase-2 frozen ranking/G3/fresh FAIL/Round2 CLOSED unchanged."
+    "note": "Supervisor absorbed new Parallel Wave-1 schema-freeze handoff c7d5e0b0 and earlier Consensus coordination head. :48 follow-up subsequently absorbed newer Canonical provenance-contract head and Consensus dashboard-only head, and advanced OSS receipt-bound DSR integration."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,10 +16,10 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
-      "last_processed_sha": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
+      "last_seen_sha": "030287cb02337fe24e497b3fccf659a7cb57a5d6",
+      "last_processed_sha": "030287cb02337fe24e497b3fccf659a7cb57a5d6",
       "task_state": "ACTIVE",
-      "last_processed_note": "Shadow/Data endpoint completeness enforced inside verified resolution/write boundary; CI 34873808933 SUCCESS. Next: exact provenance-chain hash binding. No performance opened."
+      "last_processed_note": "New head adds only frozen outcome-blind Shadow/Data hash-provenance-chain contract. No performance opened; prior completeness CI 34873808933 remains green. Next: implement exact manifest/calendar/completeness/resolution hash chain without strategy changes."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -30,17 +30,17 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "848cb233c6780c92c0513ebd5e3122885d7964ae",
-      "last_processed_sha": "848cb233c6780c92c0513ebd5e3122885d7964ae",
+      "last_seen_sha": "b9579857c598730bc7e3dbad35517fd5c6dc98a4",
+      "last_processed_sha": "b9579857c598730bc7e3dbad35517fd5c6dc98a4",
       "task_state": "EXTERNAL_WAIT_ACTIVE_RUN",
-      "last_processed_note": "New coordination head absorbed. Raw48 run 34849054884 remains nonterminal; shards 0/1 zero usable rows from 81/81 HTTP429, shards 2/3 currently fetching, remaining matrix queued. Merge acceptance spec pinned. Do not duplicate-trigger."
+      "last_processed_note": "Newest head is dashboard-only status refresh. Raw48 run 34849054884 remains nonterminal; shards 0/1 zero usable rows from 81/81 HTTP429, shards 2/3 fetching, rest queued. No strategy/performance change and no duplicate trigger."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
-      "last_processed_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
+      "last_seen_sha": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
+      "last_processed_sha": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
       "task_state": "ACTIVE",
-      "last_processed_note": "Immutable completed-trial ledger/receipt primitive verified; run_study-to-DSR receipt binding remains next."
+      "last_processed_note": "run_study now builds immutable completed-trial ledger/receipt, validates via trial_sharpes_from_receipt, and only then feeds exact Sharpe vector into selection_bias_summary. Integration CI 34883481600 SUCCESS. Contract updated; contract-only rerun 34883717045 was in progress at state write. No strategy outcome opened."
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
@@ -74,16 +74,17 @@
       "cost_pct_points": 0.0
     },
     "shadow_data_integrity": {
-      "status": "VERIFIED_RESOLUTION_PREWRITE_COMPLETENESS_RECEIPT_CI_GREEN",
+      "status": "HASH_PROVENANCE_CHAIN_CONTRACT_FROZEN_IMPLEMENTATION_PENDING",
       "task_state": "ACTIVE",
-      "head": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
+      "head": "030287cb02337fe24e497b3fccf659a7cb57a5d6",
       "latest_ci_run": 34873808933,
       "latest_ci_status": "success",
       "performance_opened": false,
-      "next_rule": "Bind daily endpoint manifest + independently pinned XTKS calendar -> immutable completeness receipt -> resolved output/resolution receipt with exact hashes."
+      "next_rule": "Implement frozen daily endpoint manifest + independently pinned XTKS calendar + selection ledger -> completeness receipt -> resolved output/resolution receipt exact hash chain."
     },
     "consensus_v47": {
       "task_state": "EXTERNAL_WAIT",
+      "head": "b9579857c598730bc7e3dbad35517fd5c6dc98a4",
       "daily_coverage_pass": true,
       "frozen_coverage_acceptance_pass": false,
       "formal_retry_run": 34849054884,
@@ -129,9 +130,14 @@
     },
     "oss_validation": {
       "task_state": "ACTIVE",
-      "head": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
+      "head": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
       "cost0_optuna_contract_status": "IMPLEMENTATION_VERIFIED_CI_GREEN",
-      "trial_ledger_status": "PRIMITIVE_VERIFIED_BINDING_PENDING"
+      "trial_ledger_status": "RECEIPT_BOUND_DSR_VERIFIED_CI_GREEN",
+      "binding_ci_run": 34883481600,
+      "binding_ci_status": "success",
+      "contract_rerun": 34883717045,
+      "contract_rerun_status": "in_progress",
+      "performance_opened": false
     },
     "edinet_same_zip": {
       "task_state": "EXTERNAL_INPUT_WAIT",
@@ -141,10 +147,10 @@
   "next_global_actions": [
     "Parallel Wave-1: independently pin XTKS calendar artifact/version/SHA, implement signal->next session open->fifth session close mapping, emit endpoint completeness receipt, then one cost0 batch only.",
     "Core24 OHLCV supplement: pin real expected endpoint universe + observed dataset, run exact missing-inventory builder, acquire fallback source bytes under frozen policy, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
-    "Canonical/Shadow: bind full endpoint provenance chain outcome-blind.",
+    "Canonical/Shadow: implement the newly frozen full endpoint provenance hash chain outcome-blind.",
     "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",
     "Core: freeze real XTKS/raw-vendor endpoint manifest and wire canonical evaluator to fail-closed provenance primitive before recomputation.",
-    "OSS: bind run_study/DSR to immutable completed-trial receipt.",
+    "OSS: collect contract-only CI 34883717045; receipt-bound DSR implementation itself is already verified by 34883481600. Then move to the next outcome-blind validation control instead of repeating this task.",
     "Cloud exact forensic: keep out of active work unless new contemporaneous identity-critical evidence appears.",
     "V20: keep closed/deprioritized; do not spend worker cycles unless genuinely new evidence changes the premise."
   ]

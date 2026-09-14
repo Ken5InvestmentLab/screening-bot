@@ -1,12 +1,12 @@
 {
-  "version": 38,
+  "version": 39,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T23:49:00+09:00",
+  "updated_at_jst": "2026-09-15T00:08:00+09:00",
   "supervisor_last_scan": {
-    "status": "CONSENSUS_RAW48_CHECKPOINT_COLLECTED_OSS_BINDING_PENDING",
-    "scanned_at_jst": "2026-09-14T23:49:00+09:00",
+    "status": "PARALLEL_WAVE1_MANIFEST_FROZEN_V47_ACTIVE_WEAK_EARLY_ROUND2_CLOSED",
+    "scanned_at_jst": "2026-09-15T00:08:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All STATE-registered lanes were checked. Canonical/Core/OSS HEADs matched processed SHA. Consensus advanced from 0d4aabac to fc96b801 via three runtime/state/dashboard checkpoint commits; audited as coordination-only with no model/contract change. Formal run 34849054884 remains queued, visible artifact count 0, and no duplicate trigger was issued. OSS trial-ledger primitive remains verified; run_study-to-DSR receipt binding remains pending."
+    "note": "All STATE-registered lane HEADs were checked and dynamic research/* discovery found the independent new lane research/parallel-condition-exploration. Existing Canonical/Core/Consensus/OSS processed SHAs were not duplicated. The new lane advanced from initialization to a causal readiness audit and frozen pre-performance A1/B1/E1 manifest without opening outcomes. Consensus run 34849054884 remains active with fetch(0)/fetch(1) in raw 1H acquisition and 0 visible artifacts; no duplicate trigger. Weak+Early Round2 remains closed and no post-hoc gate retune occurred."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -24,32 +24,42 @@
       "preferred_worker": "core",
       "last_seen_sha": "6e7dfa45e200dfa43e19a98ebc9b9110b4295b25",
       "last_processed_sha": "6e7dfa45e200dfa43e19a98ebc9b9110b4295b25",
-      "last_processed_note": "Pinned XTKS/vendor endpoint provenance primitive and frozen contract added. Exact timestamp endpoints, manifest SHA-256, duplicate/missing endpoint fail-closed and no observed-row fallback are covered by synthetic tests. Formal relabeling remains blocked until a real manifest/source receipt is bound and evaluator wiring/CI pass. Cloud exact replay remains unavailable."
+      "last_processed_note": "Pinned XTKS/vendor endpoint provenance primitive frozen and synthetic-tested. Real manifest/source receipt plus evaluator wiring/CI remain required before formal relabeling. Cloud exact replay unavailable."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
       "last_processed_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
-      "last_processed_note": "23:49 cross-lane worker audited three raw48 runtime/state/dashboard checkpoint commits through fc96b801. No model/frozen-contract change. Run 34849054884 remains queued with 0 visible artifacts; no duplicate trigger."
+      "last_processed_note": "Raw48 coordination checkpoints processed through fc96b801. Formal run 34849054884 active; fetch(0)/fetch(1) currently acquiring raw 1H and artifact count remains 0. Frozen strategy/model/threshold/price-arm/cooldown unchanged."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
       "last_processed_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
-      "last_processed_note": "Immutable completed-trial ledger/receipt primitive added. Missing/extra/reordered/duplicate/modified/non-COMPLETE/non-finite rows fail closed. CI 34855659820 SUCCESS. run_study-to-DSR receipt binding remains next."
+      "last_processed_note": "Immutable completed-trial ledger/receipt primitive verified; CI 34855659820 SUCCESS. run_study-to-DSR receipt binding remains next."
+    },
+    "research/parallel-condition-exploration": {
+      "preferred_worker": "cross-lane-via-48",
+      "last_seen_sha": "7e164ae65c16f282f7c40737ac0ac64a8a45824b",
+      "last_processed_sha": "7e164ae65c16f282f7c40737ac0ac64a8a45824b",
+      "last_processed_note": "New independent Wave-1 exploration lane registered. Causal readiness audit selected A compression-expansion, B market-relative reversal, E prior-structure proximity; C gap deferred for same-open timing ambiguity and D turnover deferred for volr20 redundancy risk. Exact A1/B1/E1 thresholds were frozen before performance; outcomes remain unopened."
     }
   },
   "guardrails": [
     "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
     "2026 outcome is report/robustness-only, never tuning/selection input.",
     "Canonical comparable endpoint is next XTKS session open to fifth XTKS session close.",
-    "All new backtests/diagnostics/comparisons use transaction cost 0%; existing costed outputs are legacy evidence only.",
-    "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning."
+    "All new backtests/diagnostics/comparisons use transaction cost 0%; win = gross return > 0; existing costed outputs are legacy evidence only.",
+    "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning.",
+    "Parallel Wave-1 is isolated from opened Weak+Early evidence; 2022 Weak+Early fresh outcomes cannot tune it."
   ],
   "workflow_watch": {
     "weak_early_phase2": {
       "status": "FRESH_2022_FAILED_MODEL_PERIOD_AUDIT_COMPLETE_ROUND2_CLOSED",
       "baseline_2023_2025": {
+        "body": {"n": 172, "mean_pct": 6.54, "median_pct": 0.99, "win_pct": 50.58, "top3_ex_pct": 4.60},
+        "vol": {"n": 172, "mean_pct": 6.33, "median_pct": 1.06, "win_pct": 51.74, "top3_ex_pct": 4.38},
+        "mean_rank": {"n": 172, "mean_pct": 6.89, "median_pct": 1.45, "win_pct": 52.33, "top3_ex_pct": 4.95},
         "dual_top1": {"n": 140, "mean_pct": 7.17, "median_pct": 1.25, "win_pct": 52.14, "top3_ex_pct": 4.79},
         "dual_g3": {"n": 117, "mean_pct": 7.98, "median_pct": 1.74, "win_pct": 53.85, "top3_ex_pct": 5.14}
       },
@@ -57,12 +67,25 @@
         "dual_top1": {"n": 21, "mean_pct": 2.62, "median_pct": -6.19, "win_pct": 28.57, "top3_ex_pct": -7.55},
         "dual_g3": {"n": 17, "mean_pct": 6.08, "median_pct": -6.0, "win_pct": 29.41, "top3_ex_pct": -6.26}
       },
+      "g3_rule": "med_ret1 >= -0.01; frozen; no retune",
+      "regime_round2": "CLOSED because 2022 fresh validation was possible",
       "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
-      "next_rule": "Continue outcome-blind population/scarcity/forced-choice audit only; do not create a new gate from opened 2022/2023H2/2025H2 outcomes."
+      "next_rule": "Continue outcome-blind population/scarcity/forced-choice audit only."
+    },
+    "parallel_wave1": {
+      "status": "READINESS_AUDITED_MANIFEST_FROZEN_PERFORMANCE_UNOPENED",
+      "head": "7e164ae65c16f282f7c40737ac0ac64a8a45824b",
+      "selected_families": ["A_COMPRESSION_EXPANSION", "B_RELATIVE_REVERSAL", "E_PRIOR_STRUCTURE_PROXIMITY"],
+      "deferred": {
+        "C_GAP_OVERNIGHT": "same-open execution timing ambiguity",
+        "D_LIQUIDITY_TURNOVER": "semantic redundancy risk versus opened volr20 LOW"
+      },
+      "manifest": "research/PARALLEL_WAVE1_FROZEN_MANIFEST_20260915.md",
+      "performance_opened": false,
+      "next_rule": "Bind immutable preserved-source/schema receipt, implement A1/B1/E1 fail-closed, then execute one cost0 batch with no retuning and preserve an untouched confirmation block."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
-      "missing_active_symbol_dates": 734,
       "formal_promotion_eligible": false,
       "cost_pct_points": 0.0
     },
@@ -78,25 +101,18 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "latest_audit_head": "6e7dfa45e200dfa43e19a98ebc9b9110b4295b25",
-      "endpoint_repro_audit": "Pinned XTKS/vendor exact-endpoint primitive is frozen with manifest SHA-256 and fail-closed semantics; formal evaluator wiring remains blocked until real manifest/source receipt and CI are available.",
-      "endpoint_provenance_status": "PRIMITIVE_FROZEN_SYNTHETIC_TESTED_WIRING_PENDING",
-      "latest_core_action": 34799307163,
-      "latest_core_action_status": "success_legacy_rejected_family"
+      "endpoint_provenance_status": "PRIMITIVE_FROZEN_SYNTHETIC_TESTED_WIRING_PENDING"
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
       "frozen_coverage_acceptance_pass": false,
-      "superseded_retry_run": 34810592135,
-      "superseded_retry_status": "cancelled_after_repeated_180min_timeouts",
       "formal_retry_run": 34849054884,
-      "formal_retry_status": "queued_48_shard_no_accepted_artifact",
-      "retry_trigger_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
+      "formal_retry_status": "ACTIVE_48_SHARD_FETCH_0_1_IN_PROGRESS_NO_ACCEPTED_ARTIFACT",
       "lane_head": "fc96b80148c51dc8c1c093807b7800f83719e42a",
       "artifact_count_observed": 0,
       "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393},
       "promotion_evidence": false,
-      "next_rule": "Do not duplicate-trigger run 34849054884. Inspect first usable artifact or preserve timeout receipt; run frozen acceptance only after completion."
+      "next_rule": "Do not duplicate-trigger run 34849054884. Inspect first usable artifact or timeout receipt, then frozen acceptance after completion."
     },
     "oss_validation": {
       "head": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
@@ -104,15 +120,15 @@
       "trial_ledger_status": "PRIMITIVE_VERIFIED_BINDING_PENDING",
       "latest_ci_run": 34855659820,
       "latest_ci_status": "success",
-      "real_edinet_blocker": "external EDINET_API_KEY",
-      "next_rule": "Wire optuna_discovery.run_study DSR input to trial_sharpes_from_receipt and persist receipt; then integration-test tamper fail-closed."
+      "real_edinet_blocker": "external EDINET_API_KEY"
     }
   },
   "next_global_actions": [
+    "Parallel Wave-1: bind exact preserved-source/schema receipt, implement frozen A1/B1/E1 fail-closed and run one cost0 batch without retuning; preserve confirmation holdout.",
     "Phase-2: continue outcome-blind population/scarcity audit; Round2 remains closed and no post-hoc gate retune is allowed.",
-    "Consensus: run 34849054884 remains queued; do not duplicate-trigger. Inspect first usable artifact or timeout receipt, then frozen acceptance after completion.",
+    "Consensus: keep run 34849054884 single-active; inspect first usable artifact or timeout receipt, then frozen acceptance after completion.",
     "Canonical/Shadow: continue staleness/temporal integrity audit without opening strategy outcomes.",
-    "Core: generate/freeze a real XTKS + vendor endpoint manifest and immutable source receipt, then wire audit_core_canonical_endpoint.py to the fail-closed endpoint_provenance primitive and require CI before any performance recomputation.",
+    "Core: bind real XTKS/vendor manifest + immutable source receipt and evaluator wiring/CI before recomputation.",
     "OSS: bind run_study/DSR to immutable completed-trial receipt; all new performance cost0-only.",
     "Cloud: exact replay stays closed absent genuinely contemporaneous identity-critical evidence."
   ]

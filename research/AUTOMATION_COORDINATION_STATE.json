@@ -1,9 +1,9 @@
 {
-  "updated_at_jst": "2026-09-15T06:34:00+09:00",
+  "updated_at_jst": "2026-09-15T08:33:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "7be02687629d41dbd8fb3ee94e182ed13cf02b0f",
+  "latest_head_before_state_write": "b04751e164ade7ed113a03c8087b6d50e0294209",
   "coordination": {
     "supervisor_coordination_checked": true,
     "research_dashboard_checked": true,
@@ -38,21 +38,21 @@
     "strategy": "48 shards, max-parallel=2, shard-count=48, unchanged frozen acceptance",
     "duplicate_trigger_forbidden": true,
     "duplicate_triggered": false,
-    "completed_shards_with_visible_artifacts": [0,1,2,3],
-    "active_shards": [4,5],
-    "completed_requested_symbols_total": 324,
+    "completed_shards_with_visible_artifacts": [0,1,2,3,4,5],
+    "active_shards": [6,7],
+    "completed_requested_symbols_total": 486,
     "completed_ok_symbols_total": 0,
     "completed_raw_rows_total": 0,
-    "completed_http429_symbols_total": 324,
-    "visible_artifact_count": 4,
-    "new_artifact_since_previous_observation": false,
-    "observed_at_jst": "2026-09-15T06:34:00+09:00",
-    "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429_CONFIRMED_ACROSS_FIRST_FOUR_COMPLETED_SHARDS",
+    "completed_http429_symbols_total": 486,
+    "visible_artifact_count": 6,
+    "new_artifact_since_previous_observation": true,
+    "observed_at_jst": "2026-09-15T08:33:00+09:00",
+    "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429_CONFIRMED_ACROSS_FIRST_SIX_COMPLETED_SHARDS",
     "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA",
     "future_missing_only_retry_hardening": "two symbols x two Yahoo hosts preflight; all four HTTP 429 => transport_circuit_open/systemic_http_429 fail-fast; no threshold change and no interpolation",
     "merge_acceptance_spec": "research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md",
-    "remaining_matrix_state": "shards 4 and 5 are in_progress in Fetch raw 1H shard; later shards remain queued; artifact count remains four"
+    "remaining_matrix_state": "shards 6 and 7 are in_progress in Fetch raw 1H shard; later shards remain queued; six artifacts are visible"
   },
-  "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP 429 and the authoritative 48-shard run is still non-terminal. The four visible completed shard artifacts represent 324/324 requested symbols ending in HTTP 429 and zero usable raw rows. No new artifact is visible at 06:34 JST. This is transport failure, not strategy evidence.",
-  "next_action": "Do not duplicate-trigger run 34849054884. Continue observing shards 4/5. When terminal, enumerate all shard artifacts/receipts, admit only genuinely observed rows under the frozen merge spec, merge with preserved seed raw using provenance, and rerun unchanged frozen acceptance."
+  "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP 429 and the authoritative 48-shard run is still non-terminal. The six visible completed shard artifacts represent 486/486 requested symbols ending in HTTP 429 and zero usable raw rows. This is transport failure, not strategy evidence.",
+  "next_action": "Do not duplicate-trigger run 34849054884. Continue observing shards 6/7. When terminal, enumerate all shard artifacts/receipts, admit only genuinely observed rows under the frozen merge spec, merge with preserved seed raw using provenance, and rerun unchanged frozen acceptance."
 }

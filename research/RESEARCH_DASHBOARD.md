@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 16:07 JST  
+> **最終更新基準:** 2026-09-14 16:08 JST  
 > **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + 各active laneのhandoff / Actions  
 > **目的:** 研究の進捗・候補・バックテスト・ブロッカーを1ページで把握する。  
 > **注意:** 進捗率は「研究の成功確率」ではなく、各レーンで事前定義したマイルストーン消化率の目安。
@@ -129,7 +129,7 @@
 ### OSS / Validation
 `█████████████░░░░░░░` **65%**
 
-- **最新HEAD:** `9966bde4534be91bc20ef471cf3b6e0abe860846`
+- **最新HEAD:** `0837d299eff60698d0e2ec36c659a36bbc078542`
 - ✅ purged/embargoed CV audit layer
 - ✅ PSR / DSR multiple-trial sensitivity
 - ✅ Optuna discovery period fail-closed contract

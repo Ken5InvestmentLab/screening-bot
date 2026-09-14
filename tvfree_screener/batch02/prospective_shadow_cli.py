@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from tvfree_screener.batch02.prospective_shadow_verified_resolve import verified_resolve_shadow_file
+from tvfree_screener.batch02.prospective_shadow_session_calendar_guard import validate_xtks_calendar
 from tvfree_screener.batch02.prospective_shadow_admission_gate import evaluate_shadow_admission
 from tvfree_screener.batch02.prospective_shadow_verified_append import verified_append
 
@@ -36,6 +37,21 @@ def _receipt_manifest(freeze: dict) -> dict:
     data = dict(freeze)
     data.pop("freeze_manifest_sha256", None)
     return data
+
+
+def _default_xtks_calendar_paths() -> tuple[Path, Path]:
+    tvfree_root = Path(__file__).resolve().parents[1]
+    reference = tvfree_root / "batch01" / "reference"
+    return reference / "xtks_sessions.csv", reference / "xtks_sessions.manifest.json"
+
+
+def _shadow_signal_dates(path: Path) -> list[str]:
+    dates: list[str] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            row = json.loads(line)
+            dates.append(str(row["signal_date"])[:10])
+    return sorted(set(dates))
 
 
 def load_candidate_rows(path: Path) -> list[dict]:
@@ -157,7 +173,31 @@ def cmd_ingest(args: argparse.Namespace) -> None:
 
 def cmd_resolve(args: argparse.Namespace) -> None:
     freeze = load_freeze_manifest(Path(args.freeze_manifest), args.freeze_sha256)
-    daily_rows, sessions = read_daily_csv(Path(args.daily))
+    daily_rows, _ = read_daily_csv(Path(args.daily))
+    default_sessions_csv, default_sessions_manifest = _default_xtks_calendar_paths()
+    sessions_csv = Path(getattr(args, "sessions_csv", None) or default_sessions_csv)
+    sessions_manifest = Path(getattr(args, "sessions_manifest", None) or default_sessions_manifest)
+    sessions, calendar = validate_xtks_calendar(
+        sessions_csv,
+        sessions_manifest,
+        _shadow_signal_dates(Path(args.shadow)),
+    )
+    if not calendar.get("calendar_valid", False):
+        out = {
+            "operation": "resolve",
+            "resolved_written": False,
+            "decision": "BLOCK_CLI_SESSION_CALENDAR",
+            "experiment_id": freeze["experiment_id"],
+            "model_freeze_id": freeze["model_freeze_id"],
+            "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
+            "shadow_input_sha256": sha256_file(Path(args.shadow)),
+            "daily_input_sha256": sha256_file(Path(args.daily)),
+            "session_calendar": calendar,
+        }
+        write_summary(Path(args.summary), out)
+        print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
+        raise SystemExit(2)
+
     result = verified_resolve_shadow_file(Path(args.shadow), Path(args.resolved), daily_rows, sessions)
     out = {
         "operation": "resolve",
@@ -166,6 +206,7 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
         "shadow_input_sha256": sha256_file(Path(args.shadow)),
         "daily_input_sha256": sha256_file(Path(args.daily)),
+        "session_calendar": calendar,
         **result,
     }
     write_summary(Path(args.summary), out)
@@ -194,6 +235,8 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("--shadow", required=True)
     resolve.add_argument("--daily", required=True)
     resolve.add_argument("--resolved", required=True)
+    resolve.add_argument("--sessions-csv")
+    resolve.add_argument("--sessions-manifest")
     resolve.add_argument("--summary", required=True)
     resolve.set_defaults(func=cmd_resolve)
     return p

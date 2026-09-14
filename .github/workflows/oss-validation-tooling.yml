@@ -1,0 +1,33 @@
+name: OSS validation tooling TEST
+
+on:
+  push:
+    branches:
+      - research/oss-validation-tooling
+    paths:
+      - "tvfree_screener/oss_validation.py"
+      - "tvfree_screener/oss_validation_requirements.txt"
+      - "tvfree_screener/test_oss_validation.py"
+      - ".github/workflows/oss-validation-tooling.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install base and OSS validation dependencies
+        run: |
+          pip install -r tvfree_screener/requirements.txt
+          pip install -r tvfree_screener/oss_validation_requirements.txt
+          pip install "pytest>=8,<9"
+      - name: Run isolated OSS validation tests
+        run: python -m pytest tvfree_screener/test_oss_validation.py -q

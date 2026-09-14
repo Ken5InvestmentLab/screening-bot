@@ -43,8 +43,14 @@ class VerifiedResolveTests(unittest.TestCase):
             self.assertTrue(result["resolved_written"])
             self.assertEqual(result["decision"], "VERIFIED_RESOLUTION_WRITE_COMPLETE")
             self.assertTrue(out.exists())
+            receipt_path = Path(result["endpoint_completeness_receipt_path"])
+            self.assertTrue(receipt_path.exists())
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertTrue(receipt["endpoint_completeness_valid"])
+            self.assertFalse(receipt["strategy_outcomes_opened"])
+            self.assertEqual(receipt["receipt_sha256"], result["endpoint_completeness_receipt_sha256"])
 
-    def test_same_resolution_rerun_is_allowed(self):
+    def test_same_resolution_rerun_is_allowed_and_receipt_is_idempotent(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             shadow = self._shadow(root)
@@ -56,10 +62,13 @@ class VerifiedResolveTests(unittest.TestCase):
             ]
             first = verified_resolve_shadow_file(shadow, out, daily, sessions)
             snapshot = out.read_bytes()
+            receipt_snapshot = Path(first["endpoint_completeness_receipt_path"]).read_bytes()
             second = verified_resolve_shadow_file(shadow, out, daily, sessions)
             self.assertTrue(first["resolved_written"])
             self.assertTrue(second["resolved_written"])
             self.assertEqual(snapshot, out.read_bytes())
+            self.assertEqual(first["endpoint_completeness_receipt_path"], second["endpoint_completeness_receipt_path"])
+            self.assertEqual(receipt_snapshot, Path(second["endpoint_completeness_receipt_path"]).read_bytes())
 
     def test_changed_resolved_endpoint_blocks_and_preserves_file(self):
         with tempfile.TemporaryDirectory() as td:
@@ -81,6 +90,7 @@ class VerifiedResolveTests(unittest.TestCase):
             self.assertFalse(result["resolved_written"])
             self.assertEqual(result["decision"], "BLOCK_RESOLUTION_CONTINUITY_FAILURE")
             self.assertEqual(snapshot, out.read_bytes())
+            self.assertTrue(Path(result["endpoint_completeness_receipt_path"]).exists())
 
     def test_pending_can_advance_to_resolved(self):
         with tempfile.TemporaryDirectory() as td:
@@ -100,33 +110,29 @@ class VerifiedResolveTests(unittest.TestCase):
             second = verified_resolve_shadow_file(shadow, out, daily, full_sessions)
             self.assertTrue(second["resolved_written"])
             self.assertEqual(json.loads(out.read_text().splitlines()[0])["status"], "RESOLVED")
+            self.assertNotEqual(first["endpoint_completeness_receipt_path"], second["endpoint_completeness_receipt_path"])
 
-    def test_unresolved_can_advance_to_resolved_but_dates_must_match(self):
+    def test_mature_missing_endpoint_fails_closed_and_emits_receipt(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             shadow = self._shadow(root)
             out = root / "resolved.jsonl"
             sessions = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22"]
-            first = verified_resolve_shadow_file(
+            result = verified_resolve_shadow_file(
                 shadow,
                 out,
                 [{"symbol":"1111.T","date":"2026-09-16","open":100.0,"close":101.0}],
                 sessions,
             )
-            self.assertTrue(first["resolved_written"])
-            self.assertEqual(json.loads(out.read_text().splitlines()[0])["status"], "UNRESOLVED_ENDPOINT")
-
-            second = verified_resolve_shadow_file(
-                shadow,
-                out,
-                [
-                    {"symbol":"1111.T","date":"2026-09-16","open":100.0,"close":101.0},
-                    {"symbol":"1111.T","date":"2026-09-22","open":119.0,"close":120.0},
-                ],
-                sessions,
-            )
-            self.assertTrue(second["resolved_written"])
-            self.assertEqual(json.loads(out.read_text().splitlines()[0])["status"], "RESOLVED")
+            self.assertFalse(result["resolved_written"])
+            self.assertEqual(result["decision"], "BLOCK_ENDPOINT_COMPLETENESS_FAILURE")
+            self.assertFalse(out.exists())
+            receipt_path = Path(result["endpoint_completeness_receipt_path"])
+            self.assertTrue(receipt_path.exists())
+            receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            self.assertFalse(receipt["endpoint_completeness_valid"])
+            self.assertEqual(receipt["missing_required_endpoint_pair_count"], 1)
+            self.assertFalse(receipt["strategy_outcomes_opened"])
 
 
 if __name__ == "__main__":

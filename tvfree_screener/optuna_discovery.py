@@ -232,7 +232,6 @@ def evaluate_c(
                     "model",
                     LogisticRegression(
                         C=float(c_value),
-                        penalty="l2",
                         solver="lbfgs",
                         max_iter=1000,
                         class_weight="balanced",

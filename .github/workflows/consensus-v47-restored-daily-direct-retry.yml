@@ -1,0 +1,57 @@
+name: Consensus V47 Restored Daily Direct Retry
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_RESTORED_DAILY_DIRECT_RETRY"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: consensus-v47-restored-daily-direct-retry-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned dependency
+        run: pip install requests==2.34.2
+      - name: Download authoritative V47 daily v6 receipt
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-34788533946
+          path: source_v6
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34788533946
+      - name: Run exact-251 direct Yahoo retry
+        run: |
+          python research/no_tv_v47_restored_daily_direct_retry.py \
+            --v6-receipt source_v6/v47_daily_materialization_receipt.json \
+            --output-dir research_artifacts/v47_restored_daily_direct_retry \
+            --sleep-seconds 3.5
+      - name: Hash evidence
+        run: |
+          cd research_artifacts/v47_restored_daily_direct_retry
+          find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-restored-daily-direct-retry-${{ github.run_id }}
+          path: research_artifacts/v47_restored_daily_direct_retry/**
+          if-no-files-found: error
+          retention-days: 90

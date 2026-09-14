@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 08:02 JST  
+> **最終更新:** 2026-09-15 08:24 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -15,14 +15,14 @@
 |---|---|---:|---|
 | Weak+Early Phase-2 frozen検証 | ⚫ **CLOSED** | **100%** | 2023-25 ranking + 2022 fresh完了。robustness FAIL、G3凍結、Round2 CLOSED。比較記録としてのみ保持 |
 | Parallel Wave-1 新条件探索 | 🟢 **稼働中** | **72%** | source/schema + 独立XTKS calendar固定、endpoint verifier実装。causal pick ledger → receipt → one-shot cost0が残り |
-| Core24 OHLCV補完 | 🟢 **稼働中 / ローカル作業優先** | **70%** | real raw1H 8-shard byte pin PASS。exact-hour activity evidenceは未取得だが、その前に **official-JPX PIT source receipt固定 → XTKS CSV/manifest固定** を先に実施する。外部activity待ちだけでcycleを消費しない |
+| Core24 OHLCV補完 | 🟢 **稼働中 / ローカル作業優先** | **73%** | real raw1H 8-shard byte pin PASS。**XTKS 1,220-session CSV/receiptをCoreへ正式pin済み**。次はofficial-JPX PIT source/input receipt固定、その後にindependent exact-hour activity evidence探索 |
 | Consensus V47 raw 1H取得・formal acceptance | 🟠 **外部待機 / run稼働中** | **66%** | raw48非terminal、shard 0-3は324/324 HTTP429・usable raw 0、shard 4/5はFetch raw 1H継続中。同じ待機確認だけでは1run使わない |
 | Canonical/Shadow endpoint integrity | 🟢 **稼働中** | **82%** | full hash-provenance chain + schema-v2 link-tamper regressionをCI GREEN化。次はresolution-receipt replay/rollback・cross-run continuityのoutcome-blind監査 |
-| Core endpoint provenance | 🟢 **稼働中 / ローカル作業優先** | **82%** | observed raw1H byte identity固定済み。Supervisorが作業順を **JPX PIT receipt → XTKS bytes → independent exact-hour activity source** に固定。Cartesian expected-key生成は禁止 |
+| Core endpoint provenance | 🟢 **稼働中 / ローカル作業優先** | **85%** | observed raw1H byte identity固定 + **Core XTKS byte identity固定済み**。JPX PIT receipt → independent exact-hour activity sourceが残り。Cartesian expected-key生成は禁止 |
 | Cloud Monster exact forensic | ⚫ **CLOSED** | **100%** | exact replay一次証拠なし。新しい同時代identity-critical証拠が出た場合だけ再開 |
 | OSS / Validation | 🟢 **稼働中** | **86%** | receipt-bound DSRまでGREEN。次のoutcome-blind validation controlへ |
 | EDINET same-ZIP cross-check | 🟠 **外部入力待ち** | **35%** | real API keyまたはpinned real ZIP待ち。同じ確認にworker cycleを使わない |
-| Supervisor coordination / dashboard | 🟢 **常時稼働** | **94%** | 08:02にCore24の外部activity blocker前に残っていたローカルprovenance作業を再配分。STATE v65 + work-order note更新 |
+| Supervisor coordination / dashboard | 🟢 **常時稼働** | **94%** | STATE v66。Core24のXTKS pin完了を反映し、次のローカル作業をJPX PIT receipt固定へ一本化 |
 | V20 Session-Impulse | ⚫ **CLOSED / deprioritized** | **100%** | promotion候補から除外。worker cycleを使わない |
 
 **状態:** 🟢 稼働中 / 🟡 整理中 / 🟠 外部待機 / ⚪ 保留 / ⚫ CLOSED / 🔴 STALE。2回連続で同じSHA・同じblocker確認だけならSTALE候補とし、workerを別の安全なpending taskへ再配分する。外部待機laneは新artifact/terminal変化が無い限り監視だけで1runを消費しない。
@@ -37,7 +37,7 @@
 | Parallel Wave-1 | source/schema/独立XTKS calendar/endpoint verifier固定。performance未開封 |
 | Consensus V47 | raw48 transport blocker継続 / formal acceptance未PASS / performance evidenceなし |
 | Canonical/Shadow | full hash-provenance chain + schema-v2 full link-tamper regression / CI **34893503640 SUCCESS** / performance未開封 |
-| Core24 OHLCV | **real observed raw1H 8-shard byte pin PASS**。run `34592896202`、4,019,524 rows、bundle SHA `de7710ad…`。exact-hour activity evidenceの外部blocker待ちに入る前に、official-JPX PIT source receiptsとadopted XTKS CSV/manifest bytesを先に固定するwork orderへ変更。performance未開封 |
+| Core24 OHLCV | **real observed raw1H 8-shard byte pin PASS**。run `34592896202`、4,019,524 rows、bundle SHA `de7710ad…`。さらにXTKS CSVをCore receiptへ正式pin: SHA `58e67bd2…`、1,220 sessions。JPX PIT receiptsとexact-hour activity evidenceが残り。performance未開封 |
 | OSS | immutable completed-trial receipt → DSR binding verified / CI GREEN |
 | Cloud exact | **CLOSED**。新しいidentity-critical evidenceのみ再開条件 |
 | V20 | **CLOSED / DEPRIORITIZED** |
@@ -63,16 +63,16 @@ G3 `med_ret1 >= -1%` は凍結。2022 fresh: DUAL n21 mean +2.62% / median -6.19
 
 ## 2. 現在のactive queue
 
-**P0:** Parallel causal A1/B1/E1 pick ledger固定→actual endpoint completeness receipt→one-shot cost0。Core24は **official-JPX PIT source/input receipt固定 → adopted XTKS CSV/manifest bytes固定 → independent exact-hour activity evidence探索** の順へ変更。**PIT member × XTKS session × required hour のCartesian生成は禁止**。activity evidenceがPASSした場合だけexpected CSVをSHA固定→one-shot missing inventory→宣言gapだけfallback検証。Consensusはraw48 terminalまたは新しいnon-zero artifactが出た時だけformal merge/acceptanceへ進む。
+**P0:** Parallel causal A1/B1/E1 pick ledger固定→actual endpoint completeness receipt→one-shot cost0。Core24は **official-JPX PIT source/input receipt固定 → independent exact-hour activity evidence探索**。XTKS bytesはCore pin完了。**PIT member × XTKS session × required hour のCartesian生成は禁止**。activity evidenceがPASSした場合だけexpected CSVをSHA固定→one-shot missing inventory→宣言gapだけfallback検証。Consensusはraw48 terminalまたは新しいnon-zero artifactが出た時だけformal merge/acceptanceへ進む。
 
 **P1:** Canonicalはresolution-receipt replay/rollback・cross-run chain continuityをoutcome-blindで監査。Core endpoint evaluator binding。OSSは次のoutcome-blind validation controlへ。
 
-**外部待機:** EDINET real input。Consensus V47はauthoritative raw48 run自体は継続中だがtransport recovery待ち。Core24のexact-hour activity sourceも将来的な外部blocker候補だが、JPX/XTKS receipt pinningが残る間は外部待機扱いにしない。
+**外部待機:** EDINET real input。Consensus V47はauthoritative raw48 run自体は継続中だがtransport recovery待ち。Core24のexact-hour activity sourceは、JPX PIT receipt pinning完了後に外部blockerとして扱う。
 
 **CLOSED:** Weak+Early Phase-2、Cloud exact forensic、V20。新証拠/明示reopen条件が無い限りactive queueへ戻さない。
 
 ## 3. GO / NO-GO
 
-**NO-GO / 研究継続。GO候補0件。** Parallelはperformance未開封、Consensusはformal raw acceptance未PASS、既存Phase-2 leaderはfresh robustness FAIL。Core24のraw byte pinとprovenance work orderはdata-integrity進捗でありperformance改善ではない。検証インフラ改善をperformance改善と混同しない。
+**NO-GO / 研究継続。GO候補0件。** Parallelはperformance未開封、Consensusはformal raw acceptance未PASS、既存Phase-2 leaderはfresh robustness FAIL。Core24のraw byte pinとXTKS provenance pinはdata-integrity進捗でありperformance改善ではない。検証インフラ改善をperformance改善と混同しない。
 
 production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterは変更しない。

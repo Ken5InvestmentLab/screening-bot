@@ -1,13 +1,13 @@
 {
-  "version": 19,
+  "version": 20,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T18:41:00+09:00",
+  "updated_at_jst": "2026-09-14T19:09:00+09:00",
   "supervisor_last_scan": {
-    "status": "COMPLETE_PHASE2_2022_FRESH_FAILURE_PLUS_OUTCOME_BLIND_STRUCTURAL_AUDIT",
-    "scanned_at_jst": "2026-09-14T18:15:00+09:00",
+    "status": "COMPLETE_PHASE2_HALF_YEAR_STRUCTURAL_AUDIT_ROUND2_STAYS_CLOSED",
+    "scanned_at_jst": "2026-09-14T19:08:00+09:00",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Consensus advanced after supervisor scan: V47 midterm H1 diagnostic completed successfully under the pre-open frozen cost0 contract; NOCAP leads CAP1000_PIT on mean but both are weak on tail-excluded/central diagnostics and evidence remains partial-coverage/non-promotion. Formal raw retry remains separate and unique; first two 12-shard jobs timed out at 180m, so future-only transport layout is staged at 48 shards without changing strategy semantics."
+    "note": "Weak+Early outcome-blind half-year audit completed: 2023H2 resembles 2022 on weak breadth/range and acute candidate scarcity, but 2025H2 has strong breadth despite weaker results, so one simple market-weakness gate does not explain both. tail_p level is stable across halves. Round2 remains closed pending a causal explanation. OSS advanced to 91831b03 with selected-manifest boundary and cost0 Optuna contract hardening; no strategy outcomes opened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -19,25 +19,25 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new SHA at 18:15. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "No new SHA at 19:08. V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
       "last_processed_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
-      "last_processed_note": "18:22 Core+Cloud audit: no new contemporaneous exact-model evidence; HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen, no model-family guessing or portability."
+      "last_processed_note": "No new SHA at 19:08. HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen; no model-family guessing or portability."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "2b63fa00846d8d8918fd87e59cda69b6c8ddafab",
       "last_processed_sha": "2b63fa00846d8d8918fd87e59cda69b6c8ddafab",
-      "last_processed_note": "18:41 Consensus: midterm diagnostic run 34824194221 SUCCESS. H1 cost0 partial diagnostic: NOCAP n50 mean +0.1074%, median -2.7270%, win 36.0%, Top3-ex -2.0148%; CAP1000_PIT n60 mean -1.1568%, median -0.4011%, win 46.67%, Top3-ex -2.0601%. NOCAP is frozen-criterion diagnostic leader only; formal promotion remains blocked by raw acceptance. H2 remains unopened. Formal retry 34810592135 is still unique: fetch0/fetch1 timed out, fetch2/fetch3 in progress, remaining queued. Future-only retry layout staged at 48 shards."
+      "last_processed_note": "No new SHA at 19:08. Midterm H1 cost0 diagnostic remains NOCAP frozen-criterion leader only; formal raw acceptance remains blocked and H2 unopened."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
-      "last_processed_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
-      "last_processed_note": "No new SHA. Selected-ZIP exact-byte freeze CI 34819456421 remains green; real EDINET acquisition key-blocked."
+      "last_seen_sha": "91831b03a955801f7f75de05ca0f8e69b824ea20",
+      "last_processed_sha": "91831b03a955801f7f75de05ca0f8e69b824ea20",
+      "last_processed_note": "Processed new OSS head through 91831b03. Immutable selected-document manifest build boundary is CI-green and cost0 Optuna contract hardening is recorded; no strategy outcome opened. Real EDINET acquisition remains external-key blocked."
     }
   },
   "guardrails": [
@@ -51,7 +51,7 @@
   ],
   "workflow_watch": {
     "weak_early_phase2": {
-      "status": "FRESH_2022_FAILED_ROBUSTNESS_STRUCTURAL_AUDIT_COMPLETE",
+      "status": "FRESH_2022_FAILED_HALF_YEAR_STRUCTURAL_AUDIT_COMPLETE_ROUND2_CLOSED",
       "frozen_basis": {
         "market_gate": "med_ret5 <= 0 on signal-date completed daily context",
         "candidate_gate": "ret10 <= 0.5735294117647058",
@@ -85,8 +85,15 @@
         "dual_top1": {"n":21,"mean_pct":2.62,"median_pct":-6.19,"win_pct":28.57,"top3_ex_pct":-7.55},
         "dual_g3": {"n":17,"mean_pct":6.08,"median_pct":-6.00,"win_pct":29.41,"top3_ex_pct":-6.26}
       },
+      "half_year_structural_audit": {
+        "report": "research/WEAK_EARLY_PHASE2_STRUCTURAL_AUDIT_20260914_1900.md",
+        "2023H2": {"candidates_per_day":1.27,"single_candidate_pct":81.82,"breadth_ma20":0.4158,"breadth_ret1_pos":0.3776,"range_pct":0.0683,"volr5":1.0288,"tail_p":0.8202},
+        "2025H2": {"candidates_per_day":1.79,"single_candidate_pct":63.16,"breadth_ma20":0.6327,"breadth_ret1_pos":0.4989,"range_pct":0.0733,"volr5":1.1902,"tail_p":0.8335},
+        "finding": "2023H2 resembles 2022 weak-market/scarcity structure; 2025H2 does not because breadth is strong. Candidate scarcity is a partial but insufficient explanation. tail_p level does not separate bad halves.",
+        "round2": "NOT_ACTIVATED_NO_COMMON_CAUSAL_MARKET_GATE"
+      },
       "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
-      "next_rule": "Audit model warm-up/calibration, candidate scarcity, and whether the same signal-time shifts occur in 2023H2/2025H2. Do not derive thresholds from opened 2022 outcomes."
+      "next_rule": "Audit preserved model warm-up/calibration metadata and monthly model_period/training-count context without using outcomes. Do not create a single weak-market Round2 gate from 2023H2 because it cannot explain 2025H2."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
@@ -136,15 +143,18 @@
       "next_rule": "No duplicate triggers. Formal: let 34810592135 terminate naturally, merge valid outputs with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using staged 48-shard layout. Diagnostic: if H2 is opened, open only frozen H1 leader NOCAP under the unchanged cost0 contract; do not retune or open CAP H2 as rescue."
     },
     "oss_validation": {
-      "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
+      "head": "91831b03a955801f7f75de05ca0f8e69b824ea20",
       "selected_zip_exact_byte_freeze_ci_run": 34819456421,
       "selected_zip_exact_byte_freeze_ci_status": "success",
+      "selected_manifest_ci_run": 34827279060,
+      "selected_manifest_ci_status": "success",
+      "cost0_optuna_contract_hardened": true,
       "real_edinet_blocker": "external EDINET_API_KEY"
     }
   },
   "next_global_actions": [
-    "Phase-2: audit model warm-up/calibration without using outcome thresholds.",
-    "Phase-2: audit candidate scarcity and compare signal-time structural shifts in 2023H2/2025H2.",
+    "Phase-2: audit preserved model warm-up/calibration metadata and monthly model_period/training-count context without outcome-derived thresholds.",
+    "Phase-2: Round2 remains closed until a causal market-level factor can explain more than the 2023H2 weak-market case; do not post-hoc fit 2025H2.",
     "Consensus diagnostic: H1 opened with NOCAP diagnostic leader; if continuing, H2 may be opened for NOCAP only under unchanged frozen cost0 contract, with no retune.",
     "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
     "Cloud: remain closed unless genuinely new exact identity evidence appears.",

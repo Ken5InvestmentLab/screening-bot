@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 16:26 JST  
+> **最終更新基準:** 2026-09-14 16:39 JST  
 > **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + 各active laneのhandoff / Actions  
 > **目的:** 研究の進捗・候補・バックテスト・ブロッカーを1ページで把握する。  
 > **注意:** 進捗率は「研究の成功確率」ではなく、各レーンで事前定義したマイルストーン消化率の目安。
@@ -40,7 +40,7 @@
 | **:00 Supervisor** | 横断監督 / 未割当lane / Dashboard | 🟢 **監査完了** | 16:24 — 全research/*を再列挙、OSS handoff-only差分をSTATEへ同期、新規laneなし |
 | **:12 Canonical** | V20 / Shadow | 🟡 **WAITING** | V47 accepted raw待ち。V20は734 gap、H1/H2未開封 |
 | **:24 Core** | Core + Cloud exact forensic | 🟠 **FORENSIC PENDING** | Core rejectは維持。Cloud n=63/+9.86%完全一致spec復元→元期間再現が次 |
-| **:36 Consensus** | V47 | 🟡 **RAW RETRY ACTIVE** | retry `34810592135`: fetch(0)/fetch(1) raw取得中、10 shard queued |
+| **:36 Consensus** | V47 | 🟡 **RAW RETRY ACTIVE + SEED AUDIT COMPLETE** | retry `34810592135`: fetch(0)/fetch(1) raw取得中、10 shard queued。既存Yahoo raw seed監査完了 |
 | **:48 Cross-lane + OSS** | 結果回収 / OSS | 🟢 **PROGRESSED** | EDINET official-v2 acquisition boundary + CI `34816055006` SUCCESS |
 
 ---
@@ -49,7 +49,7 @@
 
 | レーン | 状態 | 目安進捗 | 現在地 | 次アクション |
 |---|---:|---:|---|---|
-| **Consensus V47** | 🟡 本命 / RAW RETRY ACTIVE | **66%** | Daily PIT PASS、初回raw acceptance FAIL、hardened retryで2 shard実取得中 | retry `34810592135` 完了後、同じfrozen verifierを再実行 |
+| **Consensus V47** | 🟡 本命 / RAW RETRY ACTIVE | **67%** | Daily PIT PASS、初回raw acceptance FAIL、hardened retryで2 shard取得中。既存Yahoo raw seedでNOCAP 35.4% / CAP1000_PIT 83.1% pair coverageを確認 | retry完了後、retry + preserved rawをprovenance付きでmergeして同じfrozen verifierを再実行 |
 | **V20 Session-Impulse** | 🟡 本命 / COVERAGE BLOCKED | **55%** | 1,810銘柄×82セッション凍結済み、734 symbol/date不足 | V47でaccepted rawができたら734件だけ監査・修復 |
 | **Core replacement** | 🔴 現候補REJECT | **評価自体は90%** | Fixed Core等を正式評価し棄却 | reject familyはretuneしない |
 | **Cloud exact forensic** | 🟠 再現性監査 | **10%** | 歴史値 n=63/+9.86%は既知。完全一致実装は未復元 | exact-match spec凍結→元期間完全再現→成功時のみ別期間へ無調整横展開 |
@@ -62,7 +62,7 @@
 
 | 順位 | 条件 / family | 判定 | バックテスト | コメント |
 |---:|---|---|---|---|
-| **1** | **Consensus V47 — NOCAP / CAP1000_PIT** | 🟡 未評価 | **未開封** | 最もクリーンなPIT pipeline。raw retry実行中 |
+| **1** | **Consensus V47 — NOCAP / CAP1000_PIT** | 🟡 未評価 | **未開封** | clean PIT pipeline。raw retry進行中。既存raw seed再利用で次回retry負荷を削減可能 |
 | **2** | **V20 Session-Impulse Continuation** | 🟡 未評価 | **未開封** | 4H/intraday主軸のEvent/Monster候補。734欠損が blocker |
 | **3** | **旧Cloud Monster exact reconstruction** | 🟠 Historical forensic | **歴史値 n=63 / 平均 +9.86%** | 完全一致再現を再検証中。元期間を完全再現できた場合だけ、無調整で未使用期間へ横展開 |
 | 4 | Canonical Monster v2 | 🔴 REJECT | 2025 locked 平均 **+2.19%** | frozen 0.5% cost Top1-winner-excluded mean **-0.21%**で棄却 |
@@ -111,19 +111,23 @@
 ## 5. 本命候補の進捗
 
 ### Consensus V47
-`█████████████░░░░░░░` **66%**
+`█████████████░░░░░░░` **67%**
 
-- **最新HEAD:** `70ca3ca4d04d9ea9bc864e3133163ffe5199ea96`
+- **最新HEAD:** `01299302461872a748693313e4de9c63cdcd32b8`
 - **最新関連Action:** retry `34810592135`
-- **16:26 JST確認:** run-level表示はqueuedだが、job-levelでは `fetch(0)` / `fetch(1)` が `Fetch raw 1H shard` でin_progress、残り10 shardは意図した `max-parallel: 2` によりqueued
+- **16:39 JST確認:** run-level表示はqueuedだが、job-levelでは `fetch(0)` / `fetch(1)` が `Fetch raw 1H shard` でin_progress、残り10 shardは意図した `max-parallel: 2` によりqueued
 - ✅ PIT universe / Daily PIT coverage PASS
 - ✅ split evidence 3,700 / 3,700
 - ❌ 初回raw 1H frozen acceptance
 - ⏳ targeted retry = **active acquisition**
+- ✅ preserved raw seed audit = **complete**: run `34592896202` から exact historical Yahoo barsを監査
+  - NOCAP: **301,897 / 853,061 = 35.3898%** pair coverage、monthly min 33.9002%、restored 0%
+  - CAP1000_PIT: **258,339 / 310,831 = 83.1124%** pair coverage、monthly min 77.3420%、restored 0%
+  - seed単体はacceptance FAILだが、次のmissing-only retry前に再利用可能
 - 🔒 clean features / DEV H1 / H2 / 2026 selection = **未開封**
 - **NOCAP vs CAP1000_PIT:** raw acceptance前、performance比較未開始
 
-**blocker:** retry完了後のfrozen raw acceptance。候補ランキングは1位維持。
+**blocker:** retry完了後に retry artifact + preserved raw seedをprovenance付きでmergeし、frozen raw acceptanceを再実行すること。候補ランキングは1位維持。
 
 ### V20 Session-Impulse
 `███████████░░░░░░░░░` **55%**
@@ -158,7 +162,7 @@
 
 ### P0 — 最優先（5）
 - [ ] Consensus retry `34810592135` を完了まで監視（重複起動禁止）
-- [ ] V47 frozen raw coverage verifier 再実行
+- [ ] retry + preserved raw seedをprovenance付きでmergeし V47 frozen raw coverage verifier再実行
 - [ ] PASSなら clean features materialize
 - [ ] V47 DEV H1で NOCAP vs CAP1000_PIT 比較
 - [ ] DEV winnerだけH2を開く
@@ -194,7 +198,7 @@
 
 ## 7. ブロッカー
 
-1. **Consensus V47 raw 1H:** retry `34810592135` は16:26 JST時点で2 shard取得中・10 queued。acceptance前。
+1. **Consensus V47 raw 1H:** retry `34810592135` は16:39 JST時点で2 shard取得中・10 queued。acceptance前。preserved raw seedはNOCAP 35.4% / CAP1000_PIT 83.1% pair coverageを持つが、restored 0%で単体acceptance不可。
 2. **V20 raw 1H:** 734 symbol/date不足。
 3. **Core replacement:** 現在の正式候補はすべてREJECT。
 4. **旧Cloud Monster:** 歴史値 n=63/+9.86% はあるが、完全一致実装の復元→元期間完全再現→未使用期間portabilityが未完。

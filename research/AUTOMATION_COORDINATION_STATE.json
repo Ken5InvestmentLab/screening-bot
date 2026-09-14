@@ -1,12 +1,12 @@
 {
-  "version": 32,
+  "version": 33,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T22:22:00+09:00",
+  "updated_at_jst": "2026-09-14T22:26:00+09:00",
   "supervisor_last_scan": {
-    "status": "WEAK_EARLY_2022_MODEL_PERIOD_AUDIT_COMPLETE_WARMUP_PRIMARY_CAUSE_REJECTED",
-    "scanned_at_jst": "2026-09-14T21:15:00+09:00",
+    "status": "V47_48_SHARD_RETRY_TRIGGERED_WEAK_EARLY_ROUND2_CLOSED",
+    "scanned_at_jst": "2026-09-14T22:26:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Weak+Early Round2 remains closed; no post-hoc gate retune. This :48 update resolves the OSS Optuna cost0 implementation gap and collects new Consensus coordination-only commits."
+    "note": "All registered lane HEADs were scanned. Canonical/Core/OSS had no unprocessed HEAD. Consensus prior 12-shard raw1H run 34810592135 repeatedly hit 180-minute shard timeouts and is now cancelled by concurrency; existing 48-shard workflow was triggered as run 34849054884 without changing frozen strategy/model/threshold/price-arm/cooldown contracts. Weak+Early Round2 remains closed; no post-hoc gate retune."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -28,9 +28,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "4c202b164f28c0302ddc18cde6451779d08a108e",
-      "last_processed_sha": "4c202b164f28c0302ddc18cde6451779d08a108e",
-      "last_processed_note": "21:59 cross-lane collection processed two coordination-only commits (858847e8..., 4c202b16...). No model/threshold/price-arm/cooldown change. Formal V47 raw retry 34810592135 remains active/queued; no duplicate trigger; promotion evidence still blocked."
+      "last_seen_sha": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
+      "last_processed_sha": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
+      "last_processed_note": "Supervisor confirmed prior 12-shard run 34810592135 had repeated 180-minute shard timeouts and triggered the already-prepared 48-shard raw1H workflow via commit 7849ad97. New run 34849054884 is pending; old run is cancelled by concurrency. Frozen strategy/model/threshold/price-arm/cooldown contracts unchanged."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -91,13 +91,16 @@
     "consensus_v47": {
       "daily_coverage_pass": true,
       "frozen_coverage_acceptance_pass": false,
-      "formal_retry_run": 34810592135,
-      "formal_retry_status": "queued_active_matrix",
+      "superseded_retry_run": 34810592135,
+      "superseded_retry_status": "cancelled_after_repeated_180min_timeouts",
+      "formal_retry_run": 34849054884,
+      "formal_retry_status": "pending_48_shard_matrix",
+      "retry_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
       "observed_timeout_shards": [0, 1, 2, 3],
       "observed_timeout_artifact_bytes_each": 166,
       "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393},
       "promotion_evidence": false,
-      "next_rule": "Do not duplicate-trigger while 34810592135 is active. After it ceases, inspect final artifacts then use the already-prepared 48-shard missing-only retry without changing frozen strategy/model/threshold/price-arm/cooldown contracts."
+      "next_rule": "Do not duplicate-trigger run 34849054884 while active. After it ceases, inspect all shard artifacts; merge only usable real raw with provenance, rerun frozen acceptance, and keep formal promotion closed unless acceptance passes."
     },
     "oss_validation": {
       "head": "098653c2238ccdd5418f7be821ff2237d775a112",
@@ -141,7 +144,7 @@
   "next_global_actions": [
     "Canonical/Shadow: chronology guard is CI-green; continue staleness/temporal integrity audit without opening strategy outcomes or retuning rejected/opened families.",
     "Phase-2: continue outcome-blind population/scarcity audit; do not create post-hoc gates from opened outcomes.",
-    "Consensus: formal raw acceptance must pass before promotion evidence; do not duplicate-trigger active retry 34810592135.",
+    "Consensus: run 34849054884 is the active 48-shard retry; do not duplicate-trigger. On completion inspect artifacts and rerun frozen acceptance before any promotion evidence.",
     "OSS: bind PSR/DSR consumption to immutable completed-trial ledger/provenance receipt; keep all new discovery/performance cost0-only.",
     "OSS/EDINET: real historical metadata/same-ZIP execution remains blocked on external EDINET_API_KEY; preserve preregistered no-replacement sampling and hash-chain rules.",
     "Core: keep rejected families closed; continue reproducibility/endpoint audit.",

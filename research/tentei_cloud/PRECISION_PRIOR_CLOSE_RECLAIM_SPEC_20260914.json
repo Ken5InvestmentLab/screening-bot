@@ -1,0 +1,87 @@
+{
+  "spec_id": "PRECISION-PRIOR-CLOSE-RECLAIM-20260914-01",
+  "status": "PREREGISTERED_BEFORE_OUTCOME_ACCESS",
+  "role": "NEW_SHORT_HORIZON_HIGH_HIT_RATE_LANE",
+  "product_role_target": "Sniper-like 5BD precision behavior without cloning legacy Sniper logic",
+  "ownership": {
+    "branch": "research/tentei-cloud-mtf",
+    "must_not_duplicate": [
+      "fixed reconstructed Core",
+      "FAILED_BREAKDOWN_RECLAIM",
+      "V20/canonical event representation",
+      "Monster tail ranking",
+      "Mega40 long-horizon research"
+    ]
+  },
+  "data_contract": {
+    "source": "existing explicit-period Yahoo raw 1H extended panel",
+    "absolute_price_semantics": "raw1H historical nominal scale; no frozen-daily split transform",
+    "volume_semantics": "raw1H volume unchanged PIT share-count scale",
+    "daily_context": "aggregate previous completed XTKS date from raw1H only",
+    "session_representation": "13:00 split reconstructed sessions",
+    "no_same_day_final_daily_lookahead": true
+  },
+  "universe_filters": {
+    "prior_daily_close_lte_jpy": 1000,
+    "prior_daily_volume_gte_shares": 10000,
+    "candidate_session_volume_gte_shares": 5000
+  },
+  "candidate_family": {
+    "name": "PRIOR_CLOSE_RECLAIM",
+    "definition": [
+      "previous completed daily close < previous completed daily open",
+      "candidate session open < previous completed daily close",
+      "candidate session close > previous completed daily close",
+      "candidate session close > candidate session open"
+    ],
+    "free_numeric_thresholds": 0,
+    "interpretation": "a stock that finished the prior day weak starts the candidate session below that prior close, then reclaims it and closes the session bullish"
+  },
+  "selection_policy": {
+    "select_all_eligible_events": true,
+    "ranking": "NONE",
+    "top_n": "NONE",
+    "same_symbol_cooldown": "5 official XTKS dates",
+    "am_before_pm_if_same_day": true,
+    "parameter_sweep": false
+  },
+  "endpoint": {
+    "entry": "next official observed XTKS date open",
+    "exit": "signal date + 5 official observed XTKS dates close",
+    "primary_round_trip_cost": 0.005,
+    "cost_sensitivity": [0.0, 0.01]
+  },
+  "periods": {
+    "development": ["2024-11-01", "2025-03-31"],
+    "internal_validation": ["2025-04-01", "2025-06-30"],
+    "locked_confirmation": ["2025-07-01", "2025-12-31"],
+    "2026_policy": "REPORT_ONLY_IF_LOCKED_CONFIRMATION_PASSES; NEVER_TUNE_OR_SELECT_FROM_2026"
+  },
+  "advance_rules": {
+    "per_preconfirmation_block_min_resolved_n": 20,
+    "primary_cost_net_mean_gt": 0,
+    "primary_cost_net_median_gt": 0,
+    "primary_cost_net_win_rate_gte": 0.60,
+    "primary_cost_top3_removed_mean_gt": 0,
+    "gross_loss10_rate_lte": 0.08,
+    "both_development_and_internal_validation_required": true,
+    "if_any_preconfirmation_gate_fails": "REJECT_WITHOUT_OPENING_2025H2"
+  },
+  "locked_confirmation_gate": {
+    "min_resolved_n": 30,
+    "primary_cost_net_mean_gt": 0,
+    "primary_cost_net_median_gt": 0,
+    "primary_cost_net_win_rate_gte": 0.60,
+    "primary_cost_top3_removed_mean_gt": 0,
+    "gross_loss10_rate_lte": 0.08
+  },
+  "integrity": {
+    "legacy_sniper_conditions_reused": false,
+    "existing_core_thresholds_reused_as_signal_logic": false,
+    "failed_breakdown_reclaim_reused": false,
+    "2025H2_outcomes_used_to_define_spec": false,
+    "2026_outcomes_used_to_define_spec": false,
+    "production_modified": false
+  },
+  "next_execution": "Implement deterministic evaluator. Open DEVELOPMENT and INTERNAL_VALIDATION only. Open LOCKED_CONFIRMATION only if both pass every frozen gate."
+}

@@ -2,12 +2,14 @@
 
 Supporting branch: `research/oss-validation-tooling`
 
-Latest tested code head before this handoff: `050f5dc833f156fd3041c386082126487ab6d30e`
-(latest branch also contains documentation-only follow-up).
+Original integrated head: `050f5dc833f156fd3041c386082126487ab6d30e` (CI `34796460950` SUCCESS).
 
-CI run: `34796460950` — SUCCESS
-- 8 isolated pytest checks passed
-- existing EDINET fundamental collector self-test passed
+Supervisor audit correction applied afterward:
+- custom issued-share priority fix: `e701196f812d969902ec805c9ad7b09dfa328878`
+- OSS raw-fact priority alignment: `d7c2d539708d6613757a081ee2592a35ea76e257`
+- regression tests: `9e568d7cf51a4ad05b358d08827a94f99410820c`
+
+Use the corrected branch head, not the original 050f5dc implementation, for future EDINET research.
 
 ## Available tools
 
@@ -67,3 +69,19 @@ their rejected/opened families. The next genuinely new low-DOF family may start
 from or selectively port this tooling before outcomes are opened.
 
 Production/main and production integrations remain untouched.
+
+
+### Supervisor correction to issued-share priority
+
+The first implementation used element-first generic ranking and could allow a
+summary-table `FilingDateInstant...` fact to outrank a fiscal-year-end
+`CurrentYear...` fact. That contradicted the frozen contract even though both
+custom and OSS parsers could agree on the same wrong choice.
+
+Correct frozen priority is enforced explicitly:
+1. summary-table issued shares at CurrentYear only;
+2. either fiscal-year-end issued-share alias at CurrentYear;
+3. either fiscal-year-end issued-share alias at FilingDateInstant.
+
+Conflicting values inside one priority fail closed. Do not port the pre-fix
+selection code to other research branches.

@@ -1,0 +1,6 @@
+label=MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE
+arm=NOCAP
+h1_source_run=34824194221
+cost_round_trip=0.0
+opened_period=2025-07-01..2025-12-30
+promotion_evidence=false

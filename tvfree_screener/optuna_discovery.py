@@ -1,20 +1,9 @@
 """Optuna discovery-only harness for a new TV-Free research family.
 
-The harness is deliberately narrow:
-
-* only candidate dates from 2022-07-01 through 2023-12-31 are accepted;
-* label/evaluation timestamps must also resolve by 2023-12-31;
-* walk-forward folds train only on earlier dates and purge overlapping labels;
-* the candidate universe, features, target threshold and top-N are fixed outside
-  Optuna, and transaction cost is frozen at exactly 0%;
-* Optuna tunes only LogisticRegression C;
-* the optimization objective is the per-active-date Sharpe of a fixed top-N
-  cohort gross-return stream;
-* every completed trial's Sharpe is retained so purgedcv can report a DSR
-  sensitivity for the selected trial.
-
-This is research infrastructure. It does not reopen any rejected family and
-must not consume 2024/2025/2026 outcomes for parameter selection.
+Research-only. Discovery is restricted to 2022-07-01..2023-12-31, transaction
+cost is fixed at 0%, Optuna tunes only LogisticRegression C, and PSR/DSR must
+consume the immutable completed-trial receipt rather than an ad-hoc Sharpe
+vector. Later-period outcomes are not selection inputs.
 """
 
 from __future__ import annotations
@@ -35,13 +24,20 @@ from sklearn.preprocessing import RobustScaler
 
 try:
     from tvfree_screener.oss_validation import selection_bias_summary
+    from tvfree_screener.optuna_trial_ledger import (
+        build_completed_trial_ledger,
+        trial_sharpes_from_receipt,
+    )
 except ModuleNotFoundError:  # direct script execution
     from oss_validation import selection_bias_summary
+    from optuna_trial_ledger import build_completed_trial_ledger, trial_sharpes_from_receipt
 
 
 DISCOVERY_START = pd.Timestamp("2022-07-01")
 DISCOVERY_END = pd.Timestamp("2023-12-31")
 DEFAULT_SEED = 20260914
+STUDY_NAME = "tvfree-discovery-only-logreg-c"
+SAMPLER_NAME = "Optuna TPESampler"
 
 
 def validate_discovery_frame(
@@ -53,7 +49,6 @@ def validate_discovery_frame(
     return_column: str = "endpoint_gross_return",
     feature_cutoff_column: str | None = None,
 ) -> pd.DataFrame:
-    """Fail closed if any selection input reaches outside the discovery window."""
     features = tuple(feature_columns)
     required = {prediction_column, evaluation_column, return_column, *features}
     missing = sorted(required.difference(frame.columns))
@@ -83,15 +78,13 @@ def validate_discovery_frame(
         cutoff = pd.to_datetime(z[feature_cutoff_column], errors="raise")
         if cutoff.isna().any():
             raise ValueError("feature cutoff contains missing timestamps")
-        cutoff_day = cutoff.dt.tz_localize(None).dt.normalize()
-        if (cutoff_day > prediction_day).any():
+        if (cutoff.dt.tz_localize(None).dt.normalize() > prediction_day).any():
             raise ValueError("feature cutoff occurs after candidate date")
 
     for column in features:
         z[column] = pd.to_numeric(z[column], errors="coerce")
     z[return_column] = pd.to_numeric(z[return_column], errors="coerce")
-    numeric = [*features, return_column]
-    if not np.isfinite(z[numeric].to_numpy(dtype=float)).all():
+    if not np.isfinite(z[[*features, return_column]].to_numpy(dtype=float)).all():
         raise ValueError("discovery input contains missing/non-finite features or returns")
 
     if "label_resolved" in z.columns and not z["label_resolved"].fillna(False).astype(bool).all():
@@ -103,8 +96,7 @@ def validate_discovery_frame(
     if "symbol" in z.columns:
         z["symbol"] = z["symbol"].astype("string")
         sort_columns.append("symbol")
-    z = z.sort_values(sort_columns, kind="stable").reset_index(drop=True)
-    return z
+    return z.sort_values(sort_columns, kind="stable").reset_index(drop=True)
 
 
 def build_date_level_walkforward(
@@ -115,7 +107,6 @@ def build_date_level_walkforward(
     n_splits: int,
     test_dates: int,
 ) -> tuple[list[tuple[np.ndarray, np.ndarray]], pd.DataFrame]:
-    """Create causal folds without splitting one candidate date across train/test."""
     day_frame = (
         frame.groupby(prediction_column, sort=True, as_index=False)[evaluation_column]
         .max()
@@ -180,13 +171,8 @@ def _return_metrics(values: pd.Series) -> dict[str, float | int | None]:
     x = pd.Series(values, dtype=float)
     if x.empty:
         return {
-            "active_days": 0,
-            "mean": None,
-            "median": None,
-            "win_rate": None,
-            "minus10_rate": None,
-            "plus20_rate": None,
-            "top3_removed_mean": None,
+            "active_days": 0, "mean": None, "median": None, "win_rate": None,
+            "minus10_rate": None, "plus20_rate": None, "top3_removed_mean": None,
             "sharpe_per_active_day": None,
         }
     std = float(x.std(ddof=0))
@@ -215,32 +201,21 @@ def evaluate_c(
     top_n: int,
     round_trip_cost: float,
 ) -> tuple[pd.Series, dict[str, object]]:
-    """Evaluate one fixed-C model as a purged walk-forward top-N strategy."""
     oos_daily: list[pd.Series] = []
     fold_meta: list[dict[str, object]] = []
-
     for fold, (train_idx, test_idx) in enumerate(splits):
         train = frame.iloc[train_idx].copy()
         test = frame.iloc[test_idx].copy()
         y = (train[return_column] > float(target_threshold)).astype(int)
         if y.nunique() < 2:
             raise ValueError(f"fold {fold} training target has only one class")
-
-        model = Pipeline(
-            steps=[
-                ("scale", RobustScaler(quantile_range=(25.0, 75.0))),
-                (
-                    "model",
-                    LogisticRegression(
-                        C=float(c_value),
-                        solver="lbfgs",
-                        max_iter=1000,
-                        class_weight="balanced",
-                        random_state=DEFAULT_SEED,
-                    ),
-                ),
-            ]
-        )
+        model = Pipeline([
+            ("scale", RobustScaler(quantile_range=(25.0, 75.0))),
+            ("model", LogisticRegression(
+                C=float(c_value), solver="lbfgs", max_iter=1000,
+                class_weight="balanced", random_state=DEFAULT_SEED,
+            )),
+        ])
         model.fit(train[feature_columns], y)
         scored = test.copy()
         scored["_prob_positive"] = model.predict_proba(test[feature_columns])[:, 1]
@@ -252,18 +227,13 @@ def evaluate_c(
             round_trip_cost=round_trip_cost,
         )
         oos_daily.append(daily)
-        fold_meta.append(
-            {
-                "fold": int(fold),
-                "train_rows": int(len(train)),
-                "test_rows": int(len(test)),
-                "train_max_date": str(pd.Timestamp(train[prediction_column].max()).date()),
-                "test_min_date": str(pd.Timestamp(test[prediction_column].min()).date()),
-                "test_max_date": str(pd.Timestamp(test[prediction_column].max()).date()),
-                "active_days": int(len(daily)),
-            }
-        )
-
+        fold_meta.append({
+            "fold": int(fold), "train_rows": int(len(train)), "test_rows": int(len(test)),
+            "train_max_date": str(pd.Timestamp(train[prediction_column].max()).date()),
+            "test_min_date": str(pd.Timestamp(test[prediction_column].min()).date()),
+            "test_max_date": str(pd.Timestamp(test[prediction_column].max()).date()),
+            "active_days": int(len(daily)),
+        })
     combined = pd.concat(oos_daily).sort_index()
     if combined.index.duplicated().any():
         raise AssertionError("walk-forward folds produced duplicate OOS dates")
@@ -290,7 +260,6 @@ def run_study(
     c_high: float = 100.0,
     seed: int = DEFAULT_SEED,
 ) -> tuple[dict[str, object], pd.DataFrame]:
-    """Run the one-parameter discovery search and return an auditable summary."""
     if top_n < 1:
         raise ValueError("top_n must be >= 1")
     if float(round_trip_cost) != 0.0:
@@ -316,11 +285,9 @@ def run_study(
         test_dates=test_dates,
     )
 
-    trial_returns: dict[int, pd.Series] = {}
-
     def objective(trial: optuna.Trial) -> float:
         c_value = trial.suggest_float("C", float(c_low), float(c_high), log=True)
-        daily, metrics = evaluate_c(
+        _, metrics = evaluate_c(
             data,
             feature_columns=feature_columns,
             splits=splits,
@@ -334,16 +301,9 @@ def run_study(
         sharpe = metrics["sharpe_per_active_day"]
         if sharpe is None or not np.isfinite(float(sharpe)):
             raise optuna.TrialPruned("undefined OOS daily Sharpe")
-        trial_returns[trial.number] = daily
         for key in (
-            "active_days",
-            "mean",
-            "median",
-            "win_rate",
-            "minus10_rate",
-            "plus20_rate",
-            "top3_removed_mean",
-            "sharpe_per_active_day",
+            "active_days", "mean", "median", "win_rate", "minus10_rate",
+            "plus20_rate", "top3_removed_mean", "sharpe_per_active_day",
         ):
             trial.set_user_attr(key, metrics[key])
         return float(sharpe)
@@ -352,7 +312,7 @@ def run_study(
     study = optuna.create_study(
         direction="maximize",
         sampler=optuna.samplers.TPESampler(seed=int(seed)),
-        study_name="tvfree-discovery-only-logreg-c",
+        study_name=STUDY_NAME,
     )
     study.optimize(objective, n_trials=int(n_trials), show_progress_bar=False)
 
@@ -372,23 +332,27 @@ def run_study(
         round_trip_cost=round_trip_cost,
     )
 
-    trial_sharpes = [
-        float(t.user_attrs["sharpe_per_active_day"])
-        for t in sorted(completed, key=lambda x: x.number)
-    ]
+    # Provenance-critical binding: DSR cannot consume an ad-hoc trial Sharpe
+    # vector. Build the deterministic ledger, verify its receipt, and only then
+    # extract the exact completed-trial population for selection-bias metrics.
+    ledger_rows, ledger_receipt = build_completed_trial_ledger(
+        completed,
+        study_name=STUDY_NAME,
+        sampler=SAMPLER_NAME,
+        seed=int(seed),
+        n_trials_requested=int(n_trials),
+    )
+    trial_sharpes = trial_sharpes_from_receipt(ledger_rows, ledger_receipt)
     try:
-        selection_bias = selection_bias_summary(
-            best_daily,
-            trial_sharpes=trial_sharpes,
-        )
+        selection_bias = selection_bias_summary(best_daily, trial_sharpes=trial_sharpes)
         selection_bias_error = None
     except ValueError as exc:
         selection_bias = None
         selection_bias_error = f"{type(exc).__name__}: {exc}"
 
-    trial_rows = []
+    trial_rows: list[dict[str, object]] = []
     for t in study.trials:
-        row = {
+        row: dict[str, object] = {
             "trial": int(t.number),
             "state": str(t.state.name),
             "objective_sharpe": float(t.value) if t.value is not None else np.nan,
@@ -411,18 +375,13 @@ def run_study(
         "unique_candidate_dates": int(data[prediction_column].nunique()),
         "features": list(feature_columns),
         "target": f"{return_column} > {float(target_threshold)}",
-        "selection": {
-            "top_n": int(top_n),
-            "round_trip_cost": 0.0,
-            "cost_policy": "COST0_ONLY",
-        },
+        "selection": {"top_n": int(top_n), "round_trip_cost": 0.0, "cost_policy": "COST0_ONLY"},
         "walk_forward": {
-            "n_splits": int(n_splits),
-            "test_dates": int(test_dates),
+            "n_splits": int(n_splits), "test_dates": int(test_dates),
             "audit": split_audit.to_dict(orient="records"),
         },
         "search": {
-            "sampler": "Optuna TPESampler",
+            "sampler": SAMPLER_NAME,
             "seed": int(seed),
             "n_trials_requested": int(n_trials),
             "n_trials_completed": int(len(completed)),
@@ -430,10 +389,13 @@ def run_study(
             "only_optimized_parameter": "C",
         },
         "best_trial": {
-            "number": int(best.number),
-            "C": float(best.params["C"]),
-            "objective_sharpe_per_active_day": float(best.value),
-            "metrics": best_metrics,
+            "number": int(best.number), "C": float(best.params["C"]),
+            "objective_sharpe_per_active_day": float(best.value), "metrics": best_metrics,
+        },
+        "completed_trial_ledger": {
+            "receipt": ledger_receipt,
+            "rows": ledger_rows,
+            "dsr_input_source": "trial_sharpes_from_receipt",
         },
         "selection_bias": selection_bias,
         "selection_bias_error": selection_bias_error,
@@ -463,12 +425,8 @@ def main() -> None:
     p.add_argument("--feature-cutoff-column")
     p.add_argument("--target-threshold", type=float, default=0.0)
     p.add_argument("--top-n", type=int, default=1)
-    p.add_argument(
-        "--round-trip-cost",
-        type=float,
-        default=0.0,
-        help="frozen research contract: must be exactly 0.0; non-zero values fail closed",
-    )
+    p.add_argument("--round-trip-cost", type=float, default=0.0,
+                   help="frozen research contract: must be exactly 0.0; non-zero values fail closed")
     p.add_argument("--n-splits", type=int, default=4)
     p.add_argument("--test-dates", type=int, default=20)
     p.add_argument("--n-trials", type=int, default=30)
@@ -498,10 +456,7 @@ def main() -> None:
         c_high=a.c_high,
         seed=a.seed,
     )
-    summary["input"] = {
-        "path": str(a.input),
-        "sha256": _sha256(a.input),
-    }
+    summary["input"] = {"path": str(a.input), "sha256": _sha256(a.input)}
     out = Path(a.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")

@@ -111,3 +111,49 @@ def test_edinet_tools_agrees_on_same_zip_without_strategy_outcomes() -> None:
     # both implementations, so every compared accounting fact should agree.
     assert result["all_compared_fields_agree"] is True
     assert result["mismatch_fields"] == []
+
+def test_filing_date_summary_does_not_outrank_current_year_fiscal_fact() -> None:
+    rows = _financial_rows() + [
+        [
+            "jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults",
+            "summary filing-date only", "FilingDateInstant_OrdinaryShareMember", "提出日時点",
+            "個別", "時点", "shares", "株", "9999",
+        ],
+        [
+            "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc",
+            "fiscal current-year", "CurrentYearInstant_OrdinaryShareMember", "当期",
+            "個別", "時点", "shares", "株", "1100",
+        ],
+    ]
+    payload = _zip(rows)
+    parsed = custom.read_xbrl_csv_zip(payload)
+    facts = custom.extract_standard_facts(parsed)
+
+    assert facts["shares_outstanding"] == 1100.0
+    assert facts["shares_outstanding_context_id"].startswith("CurrentYear")
+
+    result = crosscheck_zip(payload, doc_id="S100PRIORITY")
+    assert result["comparisons"]["shares_outstanding"]["status"] == "MATCH"
+    assert result["comparisons"]["shares_outstanding"]["custom_value"] == 1100.0
+    assert result["comparisons"]["shares_outstanding"]["oss_value"] == 1100.0
+
+
+def test_conflicting_same_priority_fiscal_share_facts_fail_closed() -> None:
+    rows = _financial_rows() + [
+        [
+            "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc",
+            "fiscal current-year a", "CurrentYearInstant_OrdinaryShareMember", "当期",
+            "個別", "時点", "shares", "株", "1100",
+        ],
+        [
+            "jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares",
+            "fiscal current-year b", "CurrentYearInstant_OrdinaryShareMember", "当期",
+            "個別", "時点", "shares", "株", "1200",
+        ],
+    ]
+    parsed = custom.read_xbrl_csv_zip(_zip(rows))
+    facts = custom.extract_standard_facts(parsed)
+
+    assert facts["shares_outstanding"] is None
+    assert facts["shares_outstanding_status"] == "ambiguous"
+

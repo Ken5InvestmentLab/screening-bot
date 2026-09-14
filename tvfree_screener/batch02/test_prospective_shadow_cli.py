@@ -14,6 +14,7 @@ from tvfree_screener.batch02.prospective_shadow_cli import (
     cmd_resolve,
 )
 from tvfree_screener.batch02.prospective_shadow import ShadowCandidate, append_candidates
+from tvfree_screener.batch02.prospective_shadow_daily_endpoint_guard import build_daily_endpoint_manifest
 
 
 class ProspectiveShadowCliTests(unittest.TestCase):
@@ -113,31 +114,109 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                             "close": exit_close if date == "2026-09-25" else str(101 + i),
                         })
 
+            def write_daily_manifest(daily_path: Path, manifest_path: Path) -> None:
+                payload = build_daily_endpoint_manifest(
+                    daily_path,
+                    dataset_id=daily_path.stem,
+                    source_name="Yahoo chart direct",
+                    source_kind="REMOTE_MARKET_DATA",
+                    acquired_at="2026-09-25T18:00:00+09:00",
+                    price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
+                )
+                manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
             daily1 = root / "daily1.csv"
+            daily1_manifest = root / "daily1.manifest.json"
             write_daily(daily1, "120")
+            write_daily_manifest(daily1, daily1_manifest)
             cmd_resolve(Namespace(
                 freeze_manifest=str(manifest_path),
                 freeze_sha256=None,
                 shadow=str(shadow),
                 daily=str(daily1),
+                daily_manifest=str(daily1_manifest),
+                sessions_csv=None,
+                sessions_manifest=None,
                 resolved=str(resolved),
                 summary=str(summary),
             ))
             snapshot = resolved.read_bytes()
 
             daily2 = root / "daily2.csv"
+            daily2_manifest = root / "daily2.manifest.json"
             write_daily(daily2, "121")
+            write_daily_manifest(daily2, daily2_manifest)
             with self.assertRaises(SystemExit) as cm:
                 cmd_resolve(Namespace(
                     freeze_manifest=str(manifest_path),
                     freeze_sha256=None,
                     shadow=str(shadow),
                     daily=str(daily2),
+                    daily_manifest=str(daily2_manifest),
+                    sessions_csv=None,
+                    sessions_manifest=None,
                     resolved=str(resolved),
                     summary=str(summary),
                 ))
             self.assertEqual(cm.exception.code, 2)
             self.assertEqual(resolved.read_bytes(), snapshot)
+
+
+    def test_resolve_cli_blocks_tampered_daily_manifest_before_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manifest_path = root / "freeze.json"
+            self._manifest(manifest_path)
+            shadow = root / "shadow.jsonl"
+            resolved = root / "resolved.jsonl"
+            summary = root / "summary.json"
+            append_candidates(
+                shadow,
+                [ShadowCandidate(
+                    experiment_id="EXP-1",
+                    model_freeze_id="FREEZE-1",
+                    symbol="1234",
+                    signal_date="2026-09-15",
+                    bin_name="AM_09_13",
+                    feature_cutoff="2026-09-15T13:00:00+09:00",
+                    source_tag="RAW_CAUSAL_INTRADAY",
+                    rank=1,
+                )],
+            )
+            daily = root / "daily.csv"
+            with daily.open("w", encoding="utf-8", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=["symbol","date","open","close"])
+                w.writeheader()
+                w.writerow({"symbol":"1234","date":"2026-09-16","open":"100","close":"101"})
+                w.writerow({"symbol":"1234","date":"2026-09-25","open":"119","close":"120"})
+            daily_manifest = root / "daily.manifest.json"
+            payload = build_daily_endpoint_manifest(
+                daily,
+                dataset_id="daily-endpoint",
+                source_name="Yahoo chart direct",
+                source_kind="REMOTE_MARKET_DATA",
+                acquired_at="2026-09-25T18:00:00+09:00",
+                price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
+            )
+            payload["csv_sha256"] = "0" * 64
+            daily_manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaises(SystemExit) as cm:
+                cmd_resolve(Namespace(
+                    freeze_manifest=str(manifest_path),
+                    freeze_sha256=None,
+                    shadow=str(shadow),
+                    daily=str(daily),
+                    daily_manifest=str(daily_manifest),
+                    sessions_csv=None,
+                    sessions_manifest=None,
+                    resolved=str(resolved),
+                    summary=str(summary),
+                ))
+            self.assertEqual(cm.exception.code, 2)
+            self.assertFalse(resolved.exists())
+            summary_payload = json.loads(summary.read_text(encoding="utf-8"))
+            self.assertEqual(summary_payload["decision"], "BLOCK_CLI_DAILY_ENDPOINT_DATASET")
 
 
 if __name__ == "__main__":

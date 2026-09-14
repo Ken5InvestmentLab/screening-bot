@@ -1,12 +1,12 @@
 {
-  "version": 3,
+  "version": 4,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T10:15:00+09:00",
+  "updated_at_jst": "2026-09-14T10:58:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "10:00 supervisor reconciled stale coordination metadata against actual branch HEADs and completed Actions. Event V20 repair run 34791959735 is completed/failure at unchanged raw acceptance with outcomes still unopened: exact universe/SHA pass, observed 1806/1810, 734 active symbol/date gaps remain, zero duplicate timestamps. Consensus actual head is 92218001; authoritative V47 daily v6 workflow completed but frozen acceptance failed because restored/delisted direct Yahoo recovery was 0/251 under HTTP 429, so raw1H/features/performance remain closed pending rate-limit-safe direct retry. Core head 2429a6f9 remains already processed and both fixed Core and Failed-Breakdown Reclaim remain rejected. No promotion-grade performance was newly opened."
+    "note": "10:58 supervisor processed Canonical/Shadow head c5ea4d3f and Consensus head a137ef8b without reopening performance. Shadow/Data added continuity-safe resolution write-boundary tests and pinned XTKS session-calendar guard; V20 remains fail-closed at 1806/1810 and 734 missing active symbol/date pairs. Consensus exact-251 rate-safe direct Yahoo retry run 34796618901 completed SUCCESS: controls 7203 were HTTP200 at start/end, 2/251 codes (3079,5660) are directly usable, 249/251 are terminal HTTP under normal provider conditions, unresolved/provider failures 0. V47 daily PIT acceptance remains closed pending official JPX/company identity-continuity repair for the 249 terminal codes and rematerialization; raw1H/features/performance remain unopened. Core unchanged/rejected."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,21 +16,21 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "83a64ff84531665e04e3ff5110ce731a53e17a18",
-      "last_processed_sha": "83a64ff84531665e04e3ff5110ce731a53e17a18",
-      "last_processed_note": "Processed three new Shadow/Data integrity commits after 61704886 without reading V20 outcomes. Added resolution-snapshot continuity guard ba3a7020, contract tests 82ec671a, dedicated CI 8e708d6e; run 34795293067 completed SUCCESS. Guard freezes admitted candidate identity/prefix, forbids RESOLVED regression or endpoint/result mutation, permits only causal pending/unresolved->resolved transitions, and checks return arithmetic. Recorded audit at research/SHADOW_RESOLUTION_CONTINUITY_GUARD_20260914.md in 83a64ff8. V20 remains fail-closed at 1806/1810 and 734 missing active symbol/date pairs; H1/H2 outcomes unopened."
+      "last_seen_sha": "c5ea4d3fe0d12fbb9effc341a24a406dad4285d8",
+      "last_processed_sha": "c5ea4d3fe0d12fbb9effc341a24a406dad4285d8",
+      "last_processed_note": "Processed 10 commits after 83a64ff8. Shadow/Data only: continuity-safe resolve CLI/write boundary plus pinned XTKS calendar guard. Dedicated XTKS calendar CI 34795620704 SUCCESS. No V20 outcome opened; V20 stays blocked at 1806/1810 and 734 missing canonical-active symbol/date pairs."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
       "last_processed_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
-      "last_processed_note": "No new Core workflow/HEAD delta after the PIT daily-volume migration audit. Existing fixed Core and Failed-Breakdown Reclaim remain REJECT; locked H2 remains unopened. Future Core work remains audit/reproducibility-only unless a genuinely different low-DOF 5BD mechanism is preregistered before outcomes."
+      "last_processed_note": "No new Core delta. Current fixed Core and Failed-Breakdown Reclaim remain REJECT; locked H2 unopened. No adjacent retune."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "92218001d86890e99e6108ec729dc6cb5acc2443",
-      "last_processed_sha": "92218001d86890e99e6108ec729dc6cb5acc2443",
-      "last_processed_note": "Processed the V47 clean-PIT hardening through head 92218001. Authoritative daily v6 run 34788533946 completed workflow-success but frozen daily acceptance failed: restored/delisted direct Yahoo recovery was 0/251 under HTTP 429. Treat this as provider rate limiting, not historical-code absence and not permission for automatic aliases/provider substitution. Raw1H/features/performance stay closed. Clean Feature Contract run 34790368989 remains SUCCESS under frozen raw-1H-volume-unchanged semantics. Next action is the preregistered rate-limit-safe direct Yahoo historical-code retry."
+      "last_seen_sha": "a137ef8b1e48968997f8d2f32a719d308aaa533f",
+      "last_processed_sha": "a137ef8b1e48968997f8d2f32a719d308aaa533f",
+      "last_processed_note": "Processed 8 commits after 92218001 and collected exact-251 direct retry run 34796618901. Workflow SUCCESS. Artifact receipt: requested 251, controls start/end HTTP200 with 420 rows, usable direct codes 3079 and 5660, terminal HTTP 249, unresolved/provider failures 0, no strategy outcomes/model scores read. Next step is official JPX/company identity-continuity verification for only the 249 terminal codes, then rebuild daily acceptance. No automatic alias heuristic/provider substitution."
     }
   },
   "guardrails": [
@@ -38,126 +38,67 @@
     "2026 outcome is report/robustness-only, never tuning/selection input.",
     "Canonical comparable endpoint is next XTKS session open to fifth XTKS session close.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
-    "Read research/SUPERVISOR_4LANE_COORDINATION_20260914.md before lane advancement.",
     "Rejected families may not be reopened by renaming or post-hoc retuning.",
-    "The legacy prior-close<=1000 rule is not globally mandatory; clean Consensus V47 compares exactly NOCAP vs CAP1000_PIT.",
-    "Any 40BD Mega40-role diagnostics are separate from the canonical 5BD four-lane ranking and may not be used to override its GO/NO-GO."
+    "Consensus V47 promotion path is exactly NOCAP vs CAP1000_PIT after clean PIT data acceptance; no price-cap grid search.",
+    "Yahoo raw 1H volume remains unchanged; PIT daily volume uses split-adjusted daily volume divided by cumulative future split factor."
   ],
   "workflow_watch": {
     "v20_session_impulse": {
       "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
       "owner": "Canonical/Event :12 worker",
-      "contract_test_run": 34769637874,
-      "diagnostic_patch_contract_test_run": 34777145113,
-      "diagnostic_patch_contract_test_status": "completed/success",
+      "contract_test_run": 34770320623,
       "canonical_h1_universe_symbols": 1810,
       "canonical_h1_universe_sessions": 82,
       "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
-      "h1_run": 34774070956,
-      "h1_status": "COVERAGE_FAILED_CLASSIFIED_DO_NOT_INTERPRET",
-      "coverage_failure_classification": {
-        "expected_symbols": 1810,
-        "observed_symbols": 1806,
-        "missing_symbols": ["463A", "464A", "543A", "547A"],
-        "fetch_failure_count": 476,
-        "missing_active_symbol_dates": 734,
-        "missing_dates_from_four_future_successor_codes": 476,
-        "remaining_sparse_missing_dates": 258,
-        "symbols_with_any_missing_active_date": 176,
-        "point_in_time_symbol_identity_mismatch": true
-      },
-      "raw_repair_preregister_commit": "85cfb6a8fc39c1c56201060ee725abcd26fb0fac",
-      "raw_repair_preregister": "tvfree_screener/batch02/V20_H1_RAW_REPAIR_PREREG_20260914.json",
-      "verified_predecessor_map_commit": "3ae1195ae2c9ab121c1bd89f56c2161472d2910b",
-      "verified_predecessor_map": {
-        "463A": "8940",
-        "464A": "5595",
-        "543A": "7205",
-        "547A": "8515"
-      },
-      "raw_repair_implementation_commit": "6fc3db0b1990f5d5e39d6066303841d0d0df9f8e",
-      "raw_repair_workflow_commit": "c9b5cbc8762556398a37c34b6688b8fffe06ff18",
-      "raw_repair_trigger_commit": "61704886f9299e5849a35c5b51465fd52ac771d7",
       "raw_repair_run": 34791959735,
       "raw_repair_status": "completed/failure",
-      "raw_repair_rows_added": 0,
+      "observed_symbols": 1806,
+      "missing_active_symbol_dates": 734,
       "performance_interpreted": false,
-      "next_rule": "Keep H1/H2 outcomes closed. The :12 owner must diagnose an outcome-blind historical raw-data recovery path and distinguish provider absence from true no-session-bar cases for the 734 missing active symbol/date pairs. Do not lower thresholds, interpolate/synthesize bars, or retune V20."
+      "next_rule": "Keep H1/H2 outcomes closed. Diagnose outcome-blind historical raw-data recovery only; no threshold lowering, interpolation/synthetic bars, or V20 retune."
     },
     "prospective_shadow_data_integrity": {
-      "status": "CLI_DIRECT_INGEST_BYPASS_CLOSED_AND_RESOLUTION_CONTINUITY_GUARD_PASS",
-      "latest_head": "83a64ff84531665e04e3ff5110ce731a53e17a18",
-      "focused_verification": "verified-ingest 5/5 PASS; earlier guard/admission 16/16 PASS; resolution continuity CI run 34795293067 SUCCESS",
-      "resolution_continuity_guard_commit": "ba3a7020cfedbf7c24091dbf854ac6d29e1616f4",
-      "resolution_continuity_test_commit": "82ec671aa3b782c1a78385a696308f96cc70fb27",
-      "resolution_continuity_ci_commit": "8e708d6e7b180e257872bfcb390cb23ad54c0bef",
+      "latest_head": "c5ea4d3fe0d12fbb9effc341a24a406dad4285d8",
       "resolution_continuity_ci_run": 34795293067,
       "resolution_continuity_ci_status": "completed/success",
-      "real_shadow_launch_authorized": false,
-      "rule": "Fresh source HEADs, supervisor authorization, immutable model freeze, eligible candidate export, admission receipt, verified append, and resolution-snapshot continuity validation remain mandatory before accepting prospective shadow evidence."
+      "xtks_calendar_guard_ci_run": 34795620704,
+      "xtks_calendar_guard_ci_status": "completed/success",
+      "real_shadow_launch_authorized": false
     },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
       "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
       "locked_h2_opened": false,
-      "execution_audit_run": 34774595196,
-      "cluster_risk_run": 34787773571,
-      "cluster_policy": "DO_NOT_GATE_OR_SCORE_BY_SIGNAL_DENSITY",
-      "long_horizon_role_run": 34788118628,
-      "long_daily_baseline_run": 34788285067,
-      "long_daily_baseline_decision": "REJECT_DIRECT_DAILY_MEGA40_SEMANTICS",
-      "event_long_overlay_run": 34788539483,
-      "event_long_overlay_decision": "DIAGNOSTIC_ONLY_NOT_CORE_EVIDENCE",
-      "event_long_overlay_note": "2025 event rows lack date join keys; 2026 report-only EVENT_ONLY n=35 mean -15.53%, Deep overlap n=1 +72.92% cannot be selection evidence",
-      "pit_daily_volume_audit_commit": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
-      "pit_daily_volume_policy": "PIT daily volume for absolute daily gates/ratios; raw Yahoo 1H volume unchanged for intraday gates/ratios",
-      "next_rule": "For canonical Core, no adjacent retune; audit/reproducibility only unless a genuinely different low-DOF 5BD mechanism is preregistered. Any future mechanism must pin PIT daily-volume construction before outcomes. Do not repair Canonical event history inside Core. Keep separate 40BD role work out of the canonical 5BD final ranking."
+      "next_rule": "Audit/reproducibility only unless a genuinely different low-DOF 5BD mechanism is preregistered before outcomes."
     },
     "consensus_v44": {
       "run_id": 34767664140,
       "status": "completed",
       "conclusion": "failure",
       "decision": "DATA_REPRO_FAILURE_DO_NOT_INTERPRET",
-      "failure_reason": "fail-closed baseline drift: DEVELOPMENT baseline n=61 expected=67",
       "performance_interpreted": false
     },
-    "consensus_v46_pit_split_eligibility": {
-      "status": "ACCEPTED_FOR_V47_DATA_CONTRACT",
-      "run_id": 34775030470,
-      "run_status": "completed/success",
-      "outcome_free": true,
-      "coverage": "3700/3700"
-    },
-    "consensus_v47_price_policy": {
-      "latest_consensus_head": "92218001d86890e99e6108ec729dc6cb5acc2443",
-      "materialization_contract": "research/CONSENSUS_V47_DATA_MATERIALIZATION_CONTRACT_20260914.json",
-      "materialization_contract_status": "FROZEN_BEFORE_V47_STRATEGY_OUTCOMES",
-      "daily_v3_run": 34786578353,
-      "daily_v3_status": "completed/cancelled/superseded",
-      "daily_v4_run": 34787866773,
-      "daily_v4_status": "completed/cancelled/superseded",
+    "consensus_v47": {
       "daily_v6_run": 34788533946,
-      "daily_v6_workflow_status": "completed/success",
-      "daily_v6_acceptance": "FAIL_CLOSED_HTTP_429_RESTORED_0_OF_251",
-      "alias_contract_failed_run": 34788120251,
-      "alias_fixture_fix_commit": "bdbfcb7b8da4bf8a5eb4d7b6f017c107a2de0cd0",
-      "alias_contract_rerun": 34788435072,
-      "alias_contract_rerun_status": "completed/success",
-      "daily_volume_contract_superseded_failure": 34788427818,
-      "daily_volume_contract_run": 34788439332,
-      "daily_volume_contract_status": "completed/success",
-      "clean_feature_contract_run": 34790368989,
-      "clean_feature_contract_status": "completed/success",
+      "daily_v6_acceptance": "FAIL_CLOSED_RESTORED_CODES_UNRESOLVED",
+      "direct_retry_run": 34796618901,
+      "direct_retry_status": "completed/success",
+      "direct_retry_requested": 251,
+      "direct_retry_usable": ["3079", "5660"],
+      "direct_retry_terminal_count": 249,
+      "direct_retry_unresolved_count": 0,
+      "provider_controls": "7203 HTTP200 at start/end, 420 rows each",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
-      "rule": "Keep raw1H/features/performance closed until a rate-limit-safe direct Yahoo retry satisfies the frozen daily PIT coverage contract. Do not infer historical-code absence from HTTP 429 and do not auto-promote aliases/provider substitution. After daily acceptance, proceed raw coverage -> clean features -> DEV two-arm selection -> winner-only H2."
+      "performance_opened": false,
+      "next_rule": "Only the 249 terminal codes may advance to official JPX/company identity-continuity verification. No automatic alias heuristic or provider substitution. Incorporate the 2 direct-usable codes, repair terminal identities outcome-blind, rerun clean daily acceptance, and only after PASS proceed raw1H -> clean features -> DEV two-arm selection -> winner-only H2."
     }
   },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain and targeted repair added zero rows; H1 outcomes remain unopened",
-      "Consensus V47 authoritative daily PIT acceptance has not passed: restored/delisted direct Yahoo recovery was 0/251 under HTTP 429; raw1H/features/performance remain closed pending rate-limit-safe direct retry",
-      "No currently passing canonical 5BD Core replacement candidate"
+      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened.",
+      "Consensus V47 daily PIT acceptance still fails: 249 terminal historical codes require official identity-continuity repair before raw1H/features/performance may open.",
+      "No currently passing canonical 5BD Core replacement candidate."
     ]
   }
 }

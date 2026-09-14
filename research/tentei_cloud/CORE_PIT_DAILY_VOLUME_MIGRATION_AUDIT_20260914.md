@@ -39,3 +39,22 @@ Before any genuinely different low-DOF canonical 5BD Core mechanism is allowed t
 Until such a distinct mechanism exists, Core remains on integrity/reproducibility/endpoint audit duty.
 
 Production/main, production workflows, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder and updater remain untouched.
+
+
+## Raw1H reconstructed-Core lineage addendum
+
+A later outcome-free lineage audit on this branch clarified an important scope distinction.
+
+The fixed reconstructed Core implemented by `reconstruct_4h_from_1h.py` does **not** source its absolute prior-close / prior-volume gates from the frozen Yahoo daily panel:
+- prior daily close is the last explicit-period raw 1H close on the prior date;
+- prior daily volume is the sum of explicit-period raw 1H volume on the prior date;
+- session volume is summed raw 1H volume.
+
+The shared V47 receipts separately establish that raw 1H volume is already on point-in-time share-count scale, and the explicit-period raw 1H price archive preserves historical nominal split scale on audited split-affected rows.
+
+Therefore the daily-volume PIT migration requirement applies when a Core implementation consumes the frozen **daily** provider fields. It must **not** be applied a second time to this raw1H-derived reconstructed Core path.
+
+Outcome-free lineage run `34798921728` passed all guards. See:
+`research/tentei_cloud/CORE_RAW1H_PIT_LINEAGE_FINDINGS_20260914.md`.
+
+This addendum does **not** change `REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE`; that decision remains based on the already-opened canonical performance evidence, not on a newly claimed raw1H daily-volume contamination.

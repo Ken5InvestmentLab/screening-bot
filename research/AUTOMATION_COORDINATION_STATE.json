@@ -1,7 +1,7 @@
 {
-  "version": 53,
+  "version": 54,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T03:59:00+09:00",
+  "updated_at_jst": "2026-09-15T04:24:00+09:00",
   "supervisor_last_scan": {
     "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
     "scanned_at_jst": "2026-09-15T03:03:00+09:00",
@@ -16,10 +16,10 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "030287cb02337fe24e497b3fccf659a7cb57a5d6",
-      "last_processed_sha": "030287cb02337fe24e497b3fccf659a7cb57a5d6",
+      "last_seen_sha": "2fe2981f43a8c80a510ca446241ad44ed6e2c6eb",
+      "last_processed_sha": "2fe2981f43a8c80a510ca446241ad44ed6e2c6eb",
       "task_state": "ACTIVE",
-      "last_processed_note": "New head adds only frozen outcome-blind Shadow/Data hash-provenance-chain contract. No performance opened; prior completeness CI 34873808933 remains green. Next: implement exact manifest/calendar/completeness/resolution hash chain without strategy changes."
+      "last_processed_note": "Frozen Shadow/Data provenance contract is now implemented at the verified resolve boundary. CLI requires verified daily manifest + pinned XTKS calendar artifacts; completeness receipt binds daily manifest/calendar/selection-ledger SHAs; resolution receipt binds completeness receipt + resolved output. CI 34886599423 SUCCESS. No performance opened or strategy logic changed."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -74,13 +74,14 @@
       "cost_pct_points": 0.0
     },
     "shadow_data_integrity": {
-      "status": "HASH_PROVENANCE_CHAIN_CONTRACT_FROZEN_IMPLEMENTATION_PENDING",
+      "status": "HASH_PROVENANCE_CHAIN_IMPLEMENTED_CI_GREEN",
       "task_state": "ACTIVE",
-      "head": "030287cb02337fe24e497b3fccf659a7cb57a5d6",
-      "latest_ci_run": 34873808933,
+      "head": "2fe2981f43a8c80a510ca446241ad44ed6e2c6eb",
+      "latest_ci_run": 34886599423,
       "latest_ci_status": "success",
       "performance_opened": false,
-      "next_rule": "Implement frozen daily endpoint manifest + independently pinned XTKS calendar + selection ledger -> completeness receipt -> resolved output/resolution receipt exact hash chain."
+      "chain": "daily endpoint manifest + pinned XTKS calendar + frozen selection ledger -> completeness receipt -> resolved output -> resolution receipt",
+      "next_rule": "Add focused end-to-end tamper tests for each explicit chain link or move to the next outcome-blind Shadow/Data integrity control; do not reopen performance."
     },
     "consensus_v47": {
       "task_state": "EXTERNAL_WAIT",
@@ -147,7 +148,7 @@
   "next_global_actions": [
     "Parallel Wave-1: independently pin XTKS calendar artifact/version/SHA, implement signal->next session open->fifth session close mapping, emit endpoint completeness receipt, then one cost0 batch only.",
     "Core24 OHLCV supplement: pin real expected endpoint universe + observed dataset, run exact missing-inventory builder, acquire fallback source bytes under frozen policy, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
-    "Canonical/Shadow: implement the newly frozen full endpoint provenance hash chain outcome-blind.",
+    "Canonical/Shadow: full endpoint provenance hash chain is implemented and CI-green; add explicit link-tamper regression coverage or advance to another outcome-blind integrity control without performance opening.",
     "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",
     "Core: freeze real XTKS/raw-vendor endpoint manifest and wire canonical evaluator to fail-closed provenance primitive before recomputation.",
     "OSS: receipt-bound DSR control is complete and CI-green. Move to the next outcome-blind validation control instead of repeating this task.",

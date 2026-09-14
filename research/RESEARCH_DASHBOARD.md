@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 03:57 JST  
+> **最終更新:** 2026-09-15 03:58 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -20,7 +20,7 @@
 | Canonical/Shadow endpoint integrity | 🟢 **稼働中** | **74%** | completeness guard GREENに加え、exact hash-provenance-chain contractを凍結。実装・CIが残り |
 | Core endpoint provenance | 🟢 **稼働中** | **70%** | provenance primitive GREEN。real XTKS/vendor manifest + actual receipt + evaluator配線が残り |
 | Cloud Monster exact forensic | ⚪ **保留 / 閉鎖候補** | **76%** | exact replay一次証拠なし。新しいidentity-critical証拠が無ければactive workから外す |
-| OSS / Validation | 🟢 **稼働中** | **86%** | cost0 + immutable trial ledger + **run_study→receipt検証→DSR bindingまでCI GREEN**。次のoutcome-blind validation controlへ |
+| OSS / Validation | 🟢 **稼働中** | **86%** | cost0 + immutable trial ledger + **run_study→receipt検証→DSR bindingまで契約再CI含めGREEN**。次のoutcome-blind validation controlへ |
 | EDINET same-ZIP cross-check | 🟠 **外部入力待ち** | **35%** | real API keyまたはpinned real ZIP待ち |
 | Supervisor coordination / dashboard | 🟢 **常時稼働** | **88%** | 新HEAD吸収・task state管理・自動再配分を運用中 |
 | V20 Session-Impulse | ⚫ **CLOSED / deprioritized** | **100%** | promotion候補から除外。新証拠が無ければworker cycleを使わない |
@@ -37,7 +37,7 @@
 | Parallel Wave-1 | source bytes + exact schema frozen / performance未開封 |
 | Consensus V47 | raw48 transport blocker / formal acceptance未PASS |
 | Canonical/Shadow | hash-provenance-chain契約凍結 / performance未開封 |
-| OSS | immutable completed-trial receipt → DSR consumption binding verified / performance未開封 |
+| OSS | immutable completed-trial receipt → DSR consumption binding **verified / CI GREEN** / performance未開封 |
 | Cloud exact | HOLD / close candidate |
 | V20 | **CLOSED / DEPRIORITIZED** |
 | 最終判定 | **NO-GO / 研究継続** |
@@ -85,7 +85,7 @@ HEAD `b9579857c598730bc7e3dbad35517fd5c6dc98a4`。Run `34849054884` は非termin
 
 **Core endpoint provenance:** immutable source receipt primitive GREEN。real XTKS/raw-vendor manifest、actual fetch receipt、canonical evaluator fail-closed配線が残る。
 
-**OSS / Validation:** `run_study()` はcompleted Optuna trialsからcanonical ledger + SHA-256 receiptを構築し、`trial_sharpes_from_receipt()` の検証を通ったSharpe vectorだけを `selection_bias_summary()` / DSRへ渡す。summaryにcanonical rows + receipt + `dsr_input_source` を永続化。実装commit `6011e740...`、integration test commit `811467f5...`、CI **`34883481600` SUCCESS**。契約HEAD `82706784...` のcontract-only再CI `34883717045` はこの更新時点でin progress。cost0、Discovery 2022-07-01..2023-12-31、later-period selection禁止は維持。戦略performanceは新規開封していない。
+**OSS / Validation:** `run_study()` はcompleted Optuna trialsからcanonical ledger + SHA-256 receiptを構築し、`trial_sharpes_from_receipt()` の検証を通ったSharpe vectorだけを `selection_bias_summary()` / DSRへ渡す。summaryにcanonical rows + receipt + `dsr_input_source` を永続化。実装commit `6011e740...`、integration test commit `811467f5...`、CI `34883481600` **SUCCESS**。契約HEAD `82706784...` の再CI `34883717045` も **SUCCESS**。cost0、Discovery 2022-07-01..2023-12-31、later-period selection禁止は維持。戦略performanceは新規開封していない。
 
 **EDINET:** real API keyまたはpinned real ZIP待ち。same-ZIP不一致はoutcome-blind audit findingとして扱い、成績でparserを選ばない。外部待機中は同じ確認を繰り返さない。
 
@@ -93,7 +93,7 @@ HEAD `b9579857c598730bc7e3dbad35517fd5c6dc98a4`。Run `34849054884` は非termin
 
 **P0:** Parallel XTKS calendar/endpoint receipt、Core24 real missing inventory/fallback verification、Consensus raw48 terminal後formal merge/acceptance。
 
-**P1:** Canonical frozen provenance-chain実装、Core endpoint evaluator binding、OSS contract-only CI `34883717045`回収後に次のoutcome-blind validation controlへ移行。
+**P1:** Canonical frozen provenance-chain実装、Core endpoint evaluator binding、OSSはreceipt-bound DSR control完了のため次のoutcome-blind validation controlへ移行。
 
 **P2 / 外部待機:** EDINET real input。Cloud exactは新しい同時代identity-critical evidenceが出るまでHOLD。V20はclosed/deprioritized。
 

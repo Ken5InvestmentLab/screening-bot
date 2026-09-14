@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Canonical endpoint repair for the fixed reconstructed Core candidate set.
+"""Canonical endpoint audit for the fixed reconstructed Core candidate set.
 
 Research-only. Candidate logic is unchanged. This script changes only the label:
 entry = next official observed XTKS session open;
 exit = fifth official observed XTKS session close after entry (signal date + 5 sessions).
 
-2026 is emitted report-only and must not be used for selection or tuning.
+Current research contract (2026-09-14):
+- all newly computed performance uses transaction cost 0% only;
+- win = gross return > 0;
+- 2026 is report-only and must not be used for selection or tuning;
+- legacy costed evidence may be retained elsewhere but is never recomputed here.
 """
 from __future__ import annotations
 
@@ -22,7 +26,7 @@ PERIODS = [
     ("2025H2", "2025-07-01", "2025-12-31"),
     ("2026_YTD_REPORT_ONLY", "2026-01-01", "2026-08-31"),
 ]
-COSTS = [0.0, 0.005, 0.01]
+COST_PCT_POINTS = 0.0
 
 
 def summarize(r: pd.Series) -> dict:
@@ -37,12 +41,13 @@ def summarize(r: pd.Series) -> dict:
         "win": float((r > 0).mean()),
         "ge10": float((r >= 0.10).mean()),
         "ge20": float((r >= 0.20).mean()),
+        "ge50": float((r >= 0.50).mean()),
         "le10": float((r <= -0.10).mean()),
+        "le20": float((r <= -0.20).mean()),
         "max": float(r.max()),
         "min": float(r.min()),
         "top1_removed": float(rs.iloc[1:].mean()) if len(rs) > 1 else None,
         "top3_removed": float(rs.iloc[3:].mean()) if len(rs) > 3 else None,
-        "top5_removed": float(rs.iloc[5:].mean()) if len(rs) > 5 else None,
     }
 
 
@@ -92,6 +97,23 @@ def attach_canonical_label(q: pd.DataFrame, raw: pd.DataFrame, dates: list[str])
     return x
 
 
+def dependence_tables(resolved: pd.DataFrame, period: str) -> tuple[pd.DataFrame, pd.DataFrame]:
+    z = resolved.copy()
+    z["month"] = z["date_dt"].dt.to_period("M").astype(str)
+    iso = z["date_dt"].dt.isocalendar()
+    z["week"] = iso["year"].astype(str) + "-W" + iso["week"].astype(str).str.zfill(2)
+
+    month_rows = []
+    for key, g in z.groupby("month", sort=True):
+        month_rows.append({"period": period, "month": key, **summarize(g["canonical_ret5bd"])})
+
+    week_rows = []
+    for key, g in z.groupby("week", sort=True):
+        week_rows.append({"period": period, "week": key, **summarize(g["canonical_ret5bd"])})
+
+    return pd.DataFrame(month_rows), pd.DataFrame(week_rows)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--inputs", action="append", required=True)
@@ -105,33 +127,44 @@ def main() -> None:
     labeled = attach_canonical_label(core, raw, dates)
 
     rows = []
+    monthly_parts = []
+    weekly_parts = []
     for name, start, end in PERIODS:
         z = labeled[(labeled["date_dt"] >= pd.Timestamp(start)) & (labeled["date_dt"] <= pd.Timestamp(end))].copy()
         unresolved = int(z["canonical_ret5bd"].isna().sum())
         resolved = z[z["canonical_ret5bd"].notna()].copy()
-        for cost in COSTS:
-            rows.append({
-                "period": name,
-                "round_trip_cost": cost,
-                "selected_n": int(len(z)),
-                "resolved_n": int(len(resolved)),
-                "unresolved_n": unresolved,
-                **summarize(resolved["canonical_ret5bd"] - cost),
-            })
+        rows.append({
+            "period": name,
+            "round_trip_cost": COST_PCT_POINTS,
+            "selected_n": int(len(z)),
+            "resolved_n": int(len(resolved)),
+            "unresolved_n": unresolved,
+            **summarize(resolved["canonical_ret5bd"]),
+        })
+        m, w = dependence_tables(resolved, name)
+        if not m.empty:
+            monthly_parts.append(m)
+        if not w.empty:
+            weekly_parts.append(w)
 
     result = pd.DataFrame(rows)
     result.to_csv(out / "core_canonical_endpoint_metrics.csv", index=False)
+    pd.concat(monthly_parts, ignore_index=True).to_csv(out / "core_canonical_endpoint_monthly.csv", index=False) if monthly_parts else None
+    pd.concat(weekly_parts, ignore_index=True).to_csv(out / "core_canonical_endpoint_weekly.csv", index=False) if weekly_parts else None
     labeled[[
         "symbol", "date", "session", "session_time", "entry_date", "exit_date",
         "entry_open", "exit_close", "canonical_ret5bd"
     ]].to_csv(out / "core_canonical_endpoint_rows.csv", index=False)
 
     meta = {
-        "status": "CANONICAL_ENDPOINT_REPAIR_ONLY",
+        "status": "CANONICAL_ENDPOINT_AUDIT_COST0_ONLY",
         "candidate_selection_changed": False,
         "threshold_tuning": False,
         "entry": "next observed official XTKS session open",
         "exit": "signal date + 5 official XTKS sessions close (fifth holding session close)",
+        "round_trip_cost": COST_PCT_POINTS,
+        "win_definition": "gross return > 0",
+        "legacy_costed_recomputation": False,
         "2026_policy": "REPORT_ONLY",
         "production_writes": False,
         "raw_start": str(raw["date"].min()),

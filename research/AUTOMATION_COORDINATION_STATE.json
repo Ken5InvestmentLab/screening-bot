@@ -1,12 +1,12 @@
 {
-  "version": 44,
+  "version": 45,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T01:28:00+09:00",
+  "updated_at_jst": "2026-09-15T01:53:00+09:00",
   "supervisor_last_scan": {
-    "status": "CANONICAL_SHADOW_ENDPOINT_SYMBOL_SESSION_COMPLETENESS_GUARD_GREEN",
-    "scanned_at_jst": "2026-09-15T01:13:00+09:00",
+    "status": "CONSENSUS_V47_RAW48_SYSTEMIC_HTTP429_AUDITED",
+    "scanned_at_jst": "2026-09-15T01:53:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Canonical/Shadow advanced outcome-blind: added a fail-closed audit binding frozen prospective shadow candidates to exact next-XTKS-open and fifth-XTKS-close symbol/date endpoint availability, plus a research-only contract note. Missing pairs, missing symbols, non-positive/non-finite required prices, duplicate session dates, or signal dates outside the pinned calendar block resolution. Not-yet-mature candidates remain pending rather than failing. CI 34867054366 SUCCESS. No returns/performance opened and no production paths touched."
+    "note": "Cross-lane :48 audit processed Consensus HEAD ce96115aa87e1ba3e343a87a0f71bd941abebed5. Formal raw48 run 34849054884 remains the only active retry. Shards 0/1 completed workflow SUCCESS but artifacts 10357093848/10357611796 contain 81/81 Yahoo HTTP429, ok_symbols=0, total_rows=0; shards 2/3 remain in Fetch raw 1H and later shards queued. This is systemic transport failure, not strategy evidence. Future missing-only retry is hardened with an outcome-blind 2-symbol x 2-host all-429 circuit breaker, but the active run is pinned to its older SHA and was not duplicate-triggered."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -28,9 +28,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
-      "last_processed_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
-      "last_processed_note": "Raw48 formal retry remains single-active; do not duplicate-trigger. Frozen strategy/model/threshold/price-arm/cooldown unchanged."
+      "last_seen_sha": "ce96115aa87e1ba3e343a87a0f71bd941abebed5",
+      "last_processed_sha": "ce96115aa87e1ba3e343a87a0f71bd941abebed5",
+      "last_processed_note": "Raw48 retry 34849054884 audited through systemic Yahoo 429 diagnosis. Shards 0/1 workflow-success artifacts have zero usable rows (81/81 HTTP429 each); shards 2/3 still fetching. New future-retry all-429 circuit breaker is acquisition-only and outcome-blind. Formal raw acceptance remains NOT PASS; do not duplicate-trigger or interpret transport failure as performance."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -73,6 +73,10 @@
       "daily_coverage_pass": true,
       "frozen_coverage_acceptance_pass": false,
       "formal_retry_run": 34849054884,
+      "formal_retry_status": "ACTIVE_SYSTEMIC_HTTP429_BLOCKED",
+      "completed_zero_row_shards": [0, 1],
+      "completed_artifacts": [10357093848, 10357611796],
+      "active_fetch_shards": [2, 3],
       "promotion_evidence": false,
       "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393}
     },
@@ -100,7 +104,7 @@
   "next_global_actions": [
     "Canonical/Shadow: wire endpoint-completeness guard into verified resolution boundary and produce immutable completeness receipt without opening outcomes.",
     "Parallel Wave-1: exact schema + pinned XTKS endpoint-session completeness receipt, then one cost0 batch only.",
-    "Consensus: keep formal retry single-active and run frozen acceptance only after usable artifacts exist.",
+    "Consensus: do not duplicate-trigger run 34849054884; preserve zero-row 429 receipts, wait for the active run to become terminal, then merge only genuinely observed rows plus preserved seed and rerun the unchanged frozen verifier. If Yahoo later becomes healthy and acceptance still fails, retry missing pairs only with the new systemic-429 fail-fast guard.",
     "Core: generate/freeze the real XTKS + raw-vendor endpoint manifest, emit/verify immutable source receipt from the actual fetch artifact, then wire audit_core_canonical_endpoint.py to the fail-closed endpoint primitive before recomputation.",
     "OSS: bind run_study/DSR to immutable completed-trial receipt."
   ]

@@ -1,7 +1,7 @@
 {
   "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T13:53:00+09:00",
+  "updated_at_jst": "2026-09-14T13:55:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": false,
@@ -19,12 +19,12 @@
   },
   "cross_lane_followup_last_scan": {
     "status": "COMPLETE_WITH_OSS_PROGRESS",
-    "scanned_at_jst": "2026-09-14T13:53:00+09:00",
+    "scanned_at_jst": "2026-09-14T13:55:00+09:00",
     "canonical_head": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
     "consensus_head": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
     "oss_head": "4810bd3efdf39b2cea185935fdda5325c09f6429",
-    "note": "Processed new Core forensic-only documentation and Consensus transport-only 429 mitigation without reopening rejected families or outcomes. OSS EDINET real-sample preregistration CI 34807402370 completed SUCCESS. Implemented deterministic metadata-only sample selector plus fail-closed tests and CI wiring; selector CI 34807566909 is in_progress. Consensus V47 raw1H run 34800587082 remains in_progress with 8 completed shard jobs and 4 still fetching; job success is not coverage acceptance because shard-level 429 failures are present."
+    "note": "Processed new Core forensic-only documentation and Consensus transport-only 429 mitigation without reopening rejected families or outcomes. OSS EDINET real-sample preregistration CI 34807402370 and selector CI 34807566909 both completed SUCCESS. Deterministic metadata-only sample selector, fail-closed tests and CI wiring are now green. Consensus V47 raw1H run 34800587082 remains in_progress with 8 completed shard jobs and 4 still fetching; job success is not coverage acceptance because shard-level 429 failures are present."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -54,7 +54,7 @@
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "4810bd3efdf39b2cea185935fdda5325c09f6429",
       "last_processed_sha": "4810bd3efdf39b2cea185935fdda5325c09f6429",
-      "last_processed_note": "13:53 :48 worker progressed from preregistration to executable outcome-blind EDINET sample freezing. The real-sample contract remains 2023-2025, doc types 120/130, quarter x doc-type strata, first two unique docs by submit time/doc ID, metadata-only, no replacement around failures, complete metadata coverage required. Added edinet_oss_sample_selector.py (6b46dda3), tests (2d0e5177), CI wiring (a642bee0), and OSS branch handoff (4810bd3e). Preregistration CI 34807402370 SUCCESS; selector CI 34807566909 in_progress. No real parser result or strategy outcome opened; production unchanged."
+      "last_processed_note": "13:55 :48 worker progressed from preregistration to tested executable outcome-blind EDINET sample freezing. The real-sample contract remains 2023-2025, doc types 120/130, quarter x doc-type strata, first two unique docs by submit time/doc ID, metadata-only, no replacement around failures, complete metadata coverage required. Added edinet_oss_sample_selector.py (6b46dda3), tests (2d0e5177), CI wiring (a642bee0), and OSS branch handoff (4810bd3e). Preregistration CI 34807402370 SUCCESS and selector CI 34807566909 SUCCESS. No real parser result or strategy outcome opened; production unchanged."
     }
   },
   "guardrails": [
@@ -140,10 +140,10 @@
       "preregistration_ci_run": 34807402370,
       "preregistration_ci_status": "completed/success",
       "selector_ci_run": 34807566909,
-      "selector_ci_status": "in_progress",
-      "edinet_real_sample": "PREREGISTERED_SELECTOR_IMPLEMENTED_NOT_YET_EXECUTED",
+      "selector_ci_status": "completed/success",
+      "edinet_real_sample": "PREREGISTERED_SELECTOR_IMPLEMENTED_TESTED_NOT_YET_EXECUTED",
       "strategy_outcomes_opened": false,
-      "next_rule": "Collect selector CI 34807566909. If green, run the frozen selector only against a metadata source proving complete 2023-2025 coverage; freeze selected doc IDs and input/sample hashes before fetching selected ZIPs. Then hash exact ZIP bytes and run same-ZIP custom-vs-edinet-tools comparisons without resampling around failures."
+      "next_rule": "Run the frozen selector only against a metadata source proving complete 2023-2025 coverage; freeze selected doc IDs and input/sample hashes before fetching selected ZIPs. Then hash exact ZIP bytes and run same-ZIP custom-vs-edinet-tools comparisons without resampling around failures."
     }
   },
   "cross_lane_status": {
@@ -152,7 +152,7 @@
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Failure modes are partitioned outcome-blind into 476 predecessor-identity HTTP 404 pairs and 258 successful-query/zero-row pairs.",
       "Consensus V47 daily PIT acceptance passes but raw1H promotion-grade run 34800587082 is still in progress and has observed shard-level HTTP 429 failures; frozen acceptance must pass before features/performance open. Staged future transport mitigation does not change the active trigger-SHA run.",
       "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected. Historical Cloud Monster is forensic-only and not reproducible.",
-      "OSS EDINET real historical sample boundary and selector are frozen but the real sample has not been executed. Selector CI 34807566909 is still running."
+      "OSS EDINET real historical sample boundary and selector are frozen and CI-green, but the real sample has not yet been executed against a complete 2023-2025 metadata source."
     ]
   },
   "dynamic_lane_policy": {

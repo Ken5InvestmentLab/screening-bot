@@ -1,0 +1,86 @@
+{
+  "updated_at_jst": "2026-09-14",
+  "branch": "research/tentei-cloud-mtf",
+  "mode": "COORDINATION_AND_CONSUMER_ONLY",
+  "production_writes": false,
+  "current_status": {
+    "fixed_reconstructed_core": "REJECT_REPLACEMENT_CANDIDATE_KEEP_AS_DIAGNOSTIC_BASELINE",
+    "learned_4h_monster_rank": "REJECT_STANDALONE_PRODUCTION",
+    "sniper_precision_role": "UNCOVERED_SIMPLE_RAW1H_EVENT_SEARCH_CLOSED",
+    "mega5_role": "UNPROVEN_MAY_BE_COVERED_BY_FORWARD_MONSTER",
+    "mega40_role": "UNCOVERED_DIRECT_DAILY_BASELINE_REJECTED",
+    "promotion_grade_v47": "UPSTREAM_NOT_YET_READY"
+  },
+  "active_upstream_owners": {
+    "canonical_batch02": {
+      "branch": "research/tvfree-canonical-batch02",
+      "owns": [
+        "V20 temporal/PIT contracts",
+        "prospective shadow",
+        "immutable resolution receipts",
+        "canonical event representation"
+      ]
+    },
+    "consensus_v47": {
+      "branch": "research/consensus-atr-regime-gate",
+      "owns": [
+        "clean PIT daily restoration",
+        "delisted/restored survivorship repair",
+        "promotion-grade raw1H coverage",
+        "clean feature materialization",
+        "upstream model/selector evaluation"
+      ]
+    }
+  },
+  "do_not_start": [
+    "new fixed-Core threshold pruning",
+    "new broad-market hard gate sweep",
+    "new peer-lag sweep",
+    "new adjacent candle/reclaim Precision rule",
+    "competing V20 event detector",
+    "competing restored/delisted data pipeline",
+    "direct daily Mega40 clone",
+    "blind Core+Monster union optimization",
+    "2025H2 opening for rejected Precision families",
+    "2026 opening for rejected Precision families"
+  ],
+  "resume_conditions": [
+    {
+      "id": "V47_PRECISION_CONSUMER",
+      "requires": [
+        "promotion-grade V47 clean PIT daily acceptance",
+        "promotion-grade V47 raw1H coverage acceptance",
+        "promotion-grade clean feature receipt",
+        "upstream selector policy frozen before locked H2 labels",
+        "legitimate locked 2025H2 selected-set outcomes"
+      ],
+      "then": "Apply PRECISION_V47_CONSUMER_CONTRACT_20260914.md without training a competing model."
+    },
+    {
+      "id": "MONSTER_ROLE_COMPARISON",
+      "requires": [
+        "forward-qualified Monster/event lane",
+        "canonical executable endpoint",
+        "provenance/PIT acceptance"
+      ],
+      "then": "Run common-window tail-role comparison and test Stable/Mega5 coverage."
+    },
+    {
+      "id": "MEGA40_CONSUMER",
+      "requires": [
+        "frozen canonical event stream suitable for long-horizon outcome attachment"
+      ],
+      "then": "Evaluate a dedicated long-horizon consumer; do not rebuild event detection here."
+    }
+  ],
+  "authoritative_coordination_docs": [
+    "research/tentei_cloud/ROLE_COVERAGE_AND_RESEARCH_PRIORITY_20260914.md",
+    "research/tentei_cloud/RESEARCH_OWNERSHIP_MATRIX_20260914.md",
+    "research/tentei_cloud/PRECISION_V47_CONSUMER_CONTRACT_20260914.md",
+    "research/tentei_cloud/FINAL_REPLACEMENT_COMPARISON_PROTOCOL_20260914.md"
+  ],
+  "historical_snapshot_superseded": [
+    "research/tentei_cloud/ARCHITECTURE_DECISION_20260914.md"
+  ],
+  "next_action_policy": "Check upstream branch readiness first. If no resume condition is satisfied, do not invent another retrospective rule; perform only integrity, reproducibility, or coordination work."
+}

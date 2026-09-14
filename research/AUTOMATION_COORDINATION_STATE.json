@@ -1,12 +1,21 @@
 {
   "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T13:04:00+09:00",
+  "updated_at_jst": "2026-09-14T13:25:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
     "note": "13:04 supervisor verified Canonical ef0f725e, Core 7ce65d88, and Consensus 28c272b0 unchanged and already processed. Consensus V47 raw1H run 34800587082 remains in_progress with all 12 jobs still in Fetch raw 1H shard, so no acceptance/performance/H2 artifacts were opened. The newly registered OSS/Validation lane HEAD 3818de53 was substantively audited; its EDINET issued-share priority correction is outcome-blind, fail-closed on same-priority conflicts, and production remains unchanged."
+  },
+  "core_worker_last_scan": {
+    "status": "COMPLETE_NO_RESUME",
+    "scanned_at_jst": "2026-09-14T13:25:00+09:00",
+    "core_head": "7ce65d8826881d52212cb245c88f8be22947b1f5",
+    "core_head_changed": false,
+    "canonical_head": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
+    "consensus_head": "28c272b02c20684f989ab3afb046f51a47344c6a",
+    "note": "Core HEAD matches last_seen/last_processed, so no duplicate processing was performed. Core execution control remains COORDINATION_AND_CONSUMER_ONLY. Consensus V47 raw1H run 34800587082 is still in_progress, so the V47 Precision consumer resume condition is not satisfied. V20 remains blocked on 734 raw gaps. Final comparison protocol remains consistent with canonical next-XTKS-open to fifth-XTKS-close and 0.5% cost stress. No new Core family was started and no production path was touched."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -24,7 +33,7 @@
       "preferred_worker": "core",
       "last_seen_sha": "7ce65d8826881d52212cb245c88f8be22947b1f5",
       "last_processed_sha": "7ce65d8826881d52212cb245c88f8be22947b1f5",
-      "last_processed_note": "Processed 12 commits after b3d6c320. Preregistered Precision three-family DEVELOPMENT-only batch run 34799307163 rejected PRIOR_HIGH_BREAKOUT (-0.41% mean), TWO_DAY_PULLBACK_RECLAIM (-0.48%), and INSIDE_RANGE_STRENGTH (-0.35%) at 0.5% cost; internal validation/H2/2026 unopened. EXECUTION_CONTROL freezes this lane to coordination/consumer-only until upstream promotion-grade data/event streams satisfy resume conditions."
+      "last_processed_note": "Processed 12 commits after b3d6c320. Preregistered Precision three-family DEVELOPMENT-only batch run 34799307163 rejected PRIOR_HIGH_BREAKOUT (-0.41% mean), TWO_DAY_PULLBACK_RECLAIM (-0.48%), and INSIDE_RANGE_STRENGTH (-0.35%) at 0.5% cost; internal validation/H2/2026 unopened. EXECUTION_CONTROL freezes this lane to coordination/consumer-only until upstream promotion-grade data/event streams satisfy resume conditions. 13:25 rescan found no new Core SHA and no resume condition satisfied."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",

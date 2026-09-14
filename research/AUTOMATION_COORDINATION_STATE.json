@@ -1,7 +1,7 @@
 {
-  "version": 49,
+  "version": 50,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T03:03:00+09:00",
+  "updated_at_jst": "2026-09-15T03:29:00+09:00",
   "supervisor_last_scan": {
     "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
     "scanned_at_jst": "2026-09-15T03:03:00+09:00",
@@ -23,10 +23,10 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
-      "last_processed_sha": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
+      "last_seen_sha": "a0e4086bfa1adc4a65e236b38bd98f49e958c4ad",
+      "last_processed_sha": "a0e4086bfa1adc4a65e236b38bd98f49e958c4ad",
       "task_state": "ACTIVE_DATA_REPAIR",
-      "last_processed_note": "Outcome-blind OHLCV supplement contract implemented and CI GREEN. Real missing inventory/fallback raw/verifier/coverage delta remain. Cloud exact replay itself is HOLD/CLOSE_CANDIDATE."
+      "last_processed_note": "Outcome-blind exact missing-inventory builder added and covered by CI run 34881004528 SUCCESS. Real expected endpoint universe + observed dataset still need to be pinned/run; fallback raw/verifier/coverage delta remain. Cloud exact replay itself remains HOLD/CLOSE_CANDIDATE."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -108,14 +108,16 @@
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE_HOLD_CLOSE_CANDIDATE",
       "endpoint_provenance_status": "IMMUTABLE_SOURCE_RECEIPT_PRIMITIVE_CI_GREEN",
-      "head": "4fd4b58dfce6d57c829a4cb79ca91f320cb76053",
+      "head": "a0e4086bfa1adc4a65e236b38bd98f49e958c4ad",
       "performance_opened": false
     },
     "ohlcv_supplement": {
       "task_state": "ACTIVE",
-      "status": "FAIL_CLOSED_CONTRACT_IMPLEMENTED_CI_GREEN_REAL_GAP_HANDOFF_PENDING",
+      "status": "FAIL_CLOSED_CONTRACT_PLUS_EXACT_MISSING_INVENTORY_BUILDER_CI_GREEN_REAL_GAP_RUN_PENDING",
       "formal_dataset_adoption": false,
       "performance_recompute_allowed": false,
+      "latest_ci_run": 34881004528,
+      "latest_ci_status": "success",
       "alpha_vantage_free_role": "LOW_PRIORITY_DAILY_ONLY",
       "stooq_role": "CANDIDATE_NOT_FORMAL_ELIGIBLE",
       "googlefinance_snapshot_role": "CORROBORATION_ONLY_NOT_FORMAL_INTRADAY"
@@ -138,7 +140,7 @@
   },
   "next_global_actions": [
     "Parallel Wave-1: independently pin XTKS calendar artifact/version/SHA, implement signal->next session open->fifth session close mapping, emit endpoint completeness receipt, then one cost0 batch only.",
-    "Core24 OHLCV supplement: generate exact real missing-pair inventory, acquire fallback source bytes under frozen policy, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
+    "Core24 OHLCV supplement: pin real expected endpoint universe + observed dataset, run exact missing-inventory builder, acquire fallback source bytes under frozen policy, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
     "Canonical/Shadow: bind full endpoint provenance chain outcome-blind.",
     "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",
     "Core: freeze real XTKS/raw-vendor endpoint manifest and wire canonical evaluator to fail-closed provenance primitive before recomputation.",

@@ -1,0 +1,61 @@
+{
+  "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "contract": "V20_H1_VERIFIED_PREDECESSOR_MAP_20260914",
+  "status": "FROZEN_OUTCOME_BLIND",
+  "purpose": "Resolve only the four future-code identities that caused 476 missing canonical-active symbol/date pairs in V20 H1 raw coverage. No strategy returns, H2 outcomes, 2026 outcomes, or price-similarity matching were used.",
+  "frozen_window": ["2025-01-06", "2025-06-30"],
+  "mappings": [
+    {
+      "output_symbol": "463A",
+      "query_symbol_for_h1_2025": "8940",
+      "continuity_type": "single-stock-transfer / wholly-owning parent",
+      "effective_new_listing": "2025-12-01",
+      "evidence": [
+        "https://www.jpx.co.jp/english/listing/stocks/new/vk0khi0000002xw2-att/12INTELLEXHOLDINGS-OutlineEN.pdf"
+      ],
+      "evidence_note": "TSE states INTELLEX HOLDINGS is the wholly-owning parent established by listed INTELLEX Co.,Ltd. code 8940 via stock transfer; new listing scheduled 2025-12-01."
+    },
+    {
+      "output_symbol": "464A",
+      "query_symbol_for_h1_2025": "5595",
+      "continuity_type": "single-stock-transfer / wholly-owning parent",
+      "effective_new_listing": "2025-12-01",
+      "evidence": [
+        "https://www2.jpx.co.jp/disc/55950/140120251104586504.pdf",
+        "https://www.jpx.co.jp/english/listing/stocks/new/vk0khi0000002xzt-att/12QPSHoldings-OutlineEN.pdf"
+      ],
+      "evidence_note": "QPS Research code 5595 disclosed the wholly-owning-parent stock transfer; TSE listing outline confirms QPS Holdings as parent of listed 5595 and listing 2025-12-01."
+    },
+    {
+      "output_symbol": "543A",
+      "query_symbol_for_h1_2025": "7205",
+      "continuity_type": "stock-swap parent / Hino listed predecessor leg",
+      "effective_new_listing": "2026-04-01",
+      "evidence": [
+        "https://www.jpx.co.jp/english/listing/stocks/new/vk0khi000000uffr-att/04ARCHION-OutlineEN.pdf",
+        "https://www.jpx.co.jp/news/2020/20260305-01.html"
+      ],
+      "evidence_note": "TSE states ARCHION is the wholly-owning parent via stock swap with listed Hino Motors code 7205; JPX index notice replaces 7205 with 543A effective 2026-04-01. Mitsubishi Fuso was not a TSE-listed predecessor, so the historical TSE query identity is 7205 only."
+    },
+    {
+      "output_symbol": "547A",
+      "query_symbol_for_h1_2025": "8515",
+      "continuity_type": "single-stock-transfer / wholly-owning parent",
+      "effective_new_listing": "2026-04-01",
+      "evidence": [
+        "https://www.jpx.co.jp/english/listing/stocks/new/vk0khi000000ug5b-att/04MuninovaHoldings-OutlineEN.pdf",
+        "https://www.jpx.co.jp/english/news/6030/vk0khi000000u42k-att/deta_e.pdf"
+      ],
+      "evidence_note": "TSE states Muninova Holdings is the wholly-owning parent established by listed AIFUL code 8515 via stock transfer; JPX-Nikkei 400 notice replaces 8515 with 547A effective 2026-04-01."
+    }
+  ],
+  "repair_semantics": {
+    "query_identity_separate_from_output_identity": true,
+    "normalize_repaired_rows_to_frozen_output_symbol": true,
+    "retain_query_symbol_audit_field": true,
+    "return_informed_alias_selection": false,
+    "price_similarity_alias_selection": false,
+    "no_silent_drop": true
+  },
+  "next_action": "Use only these verified query identities for the 476 future-code missing pairs, then targeted-refetch the remaining sparse missing canonical-active symbol/date pairs. Rerun the unchanged V20 raw acceptance verifier before any H1 outcome access."
+}

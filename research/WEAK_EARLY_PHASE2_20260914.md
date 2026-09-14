@@ -113,3 +113,52 @@ P2:
 4. volr20 LOW — central-tendency/stability comparator
 
 これはfinal production GOではない。
+
+
+## Regime Gate Round 1 — preregistered
+
+Preregistration:
+- `research/WEAK_EARLY_PHASE2_REGIME_PREREG_20260914.md`
+- selection note before 2025 open:
+  `research/WEAK_EARLY_PHASE2_REGIME_SELECTION_20260914.md`
+
+### 2023-2024 discovery
+
+| Gate | n | Mean | Median | Win | Top3-ex |
+|---|---:|---:|---:|---:|---:|
+| BASE DUAL_TOP1 | 103 | +6.88% | +1.39% | 53.40% | +3.86% |
+| G1 TREND_SUPPORT | 27 | +12.46% | +2.39% | 62.96% | +1.97% |
+| G2 NO_PANIC_DAY | 46 | +3.51% | +1.32% | 52.17% | -1.76% |
+| **G3 NO_ACUTE_SELLOFF** | **83** | **+7.38%** | **+1.74%** | **55.42%** | **+3.62%** |
+| G4 TREND_AND_NO_PANIC | 18 | +13.65% | +2.43% | 66.67% | +0.57% |
+
+Strict discovery target (mean>=6%, win>=55%, Top3-ex>=4%, n>=60) was met by 0 gates.
+G3 was frozen as the sole near-pass for one unchanged 2025 confirmation because it passed n/mean/win and missed Top3-ex by only 0.38pp.
+
+### G3 unchanged 2025 confirmation
+
+Rule: `med_ret1 >= -0.01`. No retune after opening 2025.
+
+| Period | n | Mean | Median | Win | +10 | +20 | +50 | -10 | -20 | Top1-ex | Top3-ex |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 2025 | 34 | **+9.43%** | **+0.37%** | **50.00%** | 38.24% | 20.59% | 8.82% | 26.47% | 5.88% | +5.78% | +0.77% |
+| **2023-2025 total** | **117** | **+7.98%** | **+1.74%** | **53.85%** | 31.62% | 18.80% | 9.40% | 28.21% | 9.40% | +6.93% | **+5.14%** |
+
+### Half-year stability for G3
+
+| Half | n | Mean | Median | Win |
+|---|---:|---:|---:|---:|
+| 2023H1 | 19 | +9.65% | +2.58% | 63.16% |
+| 2023H2 | 17 | +0.74% | -5.85% | 35.29% |
+| 2024H1 | 21 | +11.03% | +5.25% | 71.43% |
+| 2024H2 | 26 | +7.11% | +0.22% | 50.00% |
+| 2025H1 | 21 | +9.77% | +5.85% | 61.90% |
+| 2025H2 | 13 | +8.89% | -7.29% | 30.77% |
+
+Interpretation:
+- G3 improves full-period mean, median, win and Top3-ex versus DUAL_TOP1 baseline.
+- 2025 confirmation meets its frozen minimum line: win>=50%, mean>0, n>=15.
+- **but full-period win is 53.85%, still below the desired 55-60% range.**
+- 2023H2 / 2025H2 weakness remains. Therefore G3 is a useful secondary candidate, not final winner.
+- Do not tune the -1% threshold after seeing this result.
+- Next round, if any, must preregister qualitatively different causal regime variables before outcomes are opened.

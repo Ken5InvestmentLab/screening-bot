@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 19:17 JST  
+> **最終更新基準:** 2026-09-14 19:24 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ---
@@ -16,7 +16,7 @@
 | Phase-2 Round2 | **NOT ACTIVATED**。2023H2と2025H2を同時説明する単純なmarket weakness gateは未発見 |
 | Consensus V47 | 中締めH1 cost0診断完了。**NOCAPが平均で暫定リード**。H1結果を見る前の契約を固定したうえで、NOCAPだけのH2 cost0中締め診断 `34832358609` を実行中。formal raw acceptanceは未PASS |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
-| Core/Cloud forensic | Core既reject維持 / Cloud **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
+| Core/Cloud forensic | Core既reject維持 / Cloud **HISTORICAL_EXACT_REPRO_UNAVAILABLE** / Core canonical endpoint監査スクリプトを**cost0-onlyへ修復済み** |
 | OSS / EDINET | selected-manifest/ZIP exact-byte境界＋cost0 Optuna契約までCI固定、real EDINETは外部key待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
@@ -117,7 +117,7 @@ Candidate scarcity:
 | Lane | HEAD | Status | Next |
 |---|---|---|---|
 | Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合のみgap reconciliation |
-| Core/Cloud | `0886fd65...` | Core reject / Cloud exact replay unavailable | 新しい同時代identity evidenceがある場合だけCloud再開 |
+| Core/Cloud | `291cbdd4...` | Core reject / Cloud exact replay unavailable / cost0 endpoint contract repaired | stale cost/endpoint契約監査を継続。新Cloud evidenceが無ければexact replayは閉鎖維持 |
 | Consensus V47 | `008fd873...` | H1 diagnostic SUCCESS / NOCAP H2 diagnostic IN PROGRESS / formal retry partial timeout | H2 run `34832358609` 完了後にcost0診断回収。formalは現run完了後seed merge→exact acceptance |
 | OSS/Validation | `91831b03...` | selected-manifest/ZIP byte freeze + cost0 Optuna contract hardening CI-green | external key利用可能時にreal EDINET acquisition |
 
@@ -125,7 +125,7 @@ Candidate scarcity:
 
 ## 3. Core + Cloud forensic
 
-最新HEAD `0886fd65f9413dc2591a47475364e736516dbf93`。
+最新HEAD `291cbdd41f98d24da29a5b2f0195893c5b8ae884`。
 
 - current fixed Core: REJECT
 - Failed-Breakdown Reclaim: REJECT
@@ -134,6 +134,10 @@ Candidate scarcity:
 - 旧Cloud Monster historical evidence: n=63 / mean +9.86% / median +3.33% / win 57.1%
 - exact reproduction disposition: **HISTORICAL_EXACT_REPRO_UNAVAILABLE**
 - model-family guessing / surrogate replayは禁止
+- forensic進捗段階: **spec凍結 → 元期間 exact replay unavailable で停止**。別期間横展開は未実施
+- cross-lane reproducibility audit: `audit_core_canonical_endpoint.py` に残っていた0.5%/1%再計算経路を検出し、`f1a1bd23...` で**新規計算cost0-only**へ修復
+- 同修復で +50% / -20% / Top1・Top3除外 / 月別・週別依存の出力契約も追加
+- 修復はコード契約のみで、新バックテストは起動していない。最新Action run/status: **該当なし（trigger未変更）**
 
 候補ランキングへの影響: **なし**。
 
@@ -234,6 +238,7 @@ Pre-open contract was frozen before H2 outcomes at `research/CONSENSUS_V47_MIDTE
 - [x] 2023H2 / 2025H2 outcome-blind shift audit
 - [x] Cloud exact-repro spec freeze / exact evidence availability判定
 - [x] Core/Cloud cost0 + canonical endpoint labeling audit
+- [x] **Core stale 0.5%/1% recomputation path removal + cost0 endpoint output contract hardening**
 - [x] **V47 formal retry timeout原因確定 / future retry 48 shard修復**
 - [x] **V47 midterm H1 cost0 comparison completion collection**
 - [x] **V47 NOCAP-only H2 diagnostic pre-open contract freeze + launch**
@@ -244,4 +249,4 @@ Pre-open contract was frozen before H2 outcomes at `research/CONSENSUS_V47_MIDTE
 
 ## 7. GO / NO-GO
 
-**NO-GO / 研究継続。** Weak+Earlyは2022 fresh blockで安定性FAIL。2023H2は2022型のmarket weakness/scarcityだが、2025H2は高breadthのため単一の弱地合いgateでは共通原因を説明できない。Round2は後付け探索を避けるため未起動。Consensus V47のH1中締めではNOCAPが平均で勝ったが、coverage-bypassed diagnosticでありformal promotion evidenceではない。NOCAP H2 cost0中締め診断は固定契約のまま実行中。正式raw acceptanceは未PASS。
+**NO-GO / 研究継続。** Weak+Earlyは2022 fresh blockで安定性FAIL。2023H2は2022型のmarket weakness/scarcityだが、2025H2は高breadthのため単一の弱地合いgateでは共通原因を説明できない。Round2は後付け探索を避けるため未起動。Consensus V47のH1中締めではNOCAPが平均で勝ったが、coverage-bypassed diagnosticでありformal promotion evidenceではない。NOCAP H2 cost0中締め診断は固定契約のまま実行中。正式raw acceptanceは未PASS。Core/Cloudは既reject / exact replay unavailableを維持し、今回のcost0 endpoint修復は再現性契約の修正であって新しいperformance evidenceではない。

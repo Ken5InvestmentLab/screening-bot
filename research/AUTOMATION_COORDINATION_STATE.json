@@ -1,7 +1,7 @@
 {
-  "version": 31,
+  "version": 32,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T22:21:00+09:00",
+  "updated_at_jst": "2026-09-14T22:22:00+09:00",
   "supervisor_last_scan": {
     "status": "WEAK_EARLY_2022_MODEL_PERIOD_AUDIT_COMPLETE_WARMUP_PRIMARY_CAUSE_REJECTED",
     "scanned_at_jst": "2026-09-14T21:15:00+09:00",
@@ -18,7 +18,7 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "7606b72f33d456d363fb374520e63354ce10c67b",
       "last_processed_sha": "7606b72f33d456d363fb374520e63354ce10c67b",
-      "last_processed_note": "Shadow/Data temporal integrity advanced: endpoint manifests now fail closed when acquired_at predates the latest contained market-data date. Added creation/validation regression tests. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "Shadow/Data temporal integrity advanced: endpoint manifests now fail closed when acquired_at predates the latest contained market-data date. Creation/validation regression tests added and CI 34848598262 SUCCESS. V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -66,11 +66,11 @@
       "cost_pct_points": 0.0
     },
     "shadow_data_integrity": {
-      "status": "ENDPOINT_ACQUISITION_CHRONOLOGY_GUARD_ADDED_CI_PENDING",
+      "status": "ENDPOINT_ACQUISITION_CHRONOLOGY_GUARD_CI_GREEN",
       "head": "7606b72f33d456d363fb374520e63354ce10c67b",
       "latest_ci_run": 34848598262,
-      "latest_ci_status": "in_progress",
-      "change": "Daily endpoint provenance now rejects manifests whose acquired_at calendar date precedes the latest market-data date contained in the pinned CSV; both manifest creation and verification are fail-closed.",
+      "latest_ci_status": "success",
+      "change": "Daily endpoint provenance rejects manifests whose acquired_at calendar date precedes the latest market-data date contained in the pinned CSV; both manifest creation and verification fail closed.",
       "performance_opened": false
     },
     "core": {
@@ -128,17 +128,18 @@
     "ranking_changed": false
   },
   "canonical_worker_last_scan": {
-    "scanned_at_jst": "2026-09-14T22:21:00+09:00",
+    "scanned_at_jst": "2026-09-14T22:22:00+09:00",
     "start_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
     "end_head": "7606b72f33d456d363fb374520e63354ce10c67b",
     "duplicate_sha_processed": false,
     "v20_changed": false,
     "shadow_temporal_guard_added": true,
+    "shadow_temporal_guard_ci": "success",
     "new_backtest": false,
     "ranking_changed": false
   },
   "next_global_actions": [
-    "Canonical/Shadow: collect CI 34848598262; if green, keep acquisition chronology fail-closed and continue staleness/temporal integrity audit without strategy retuning.",
+    "Canonical/Shadow: chronology guard is CI-green; continue staleness/temporal integrity audit without opening strategy outcomes or retuning rejected/opened families.",
     "Phase-2: continue outcome-blind population/scarcity audit; do not create post-hoc gates from opened outcomes.",
     "Consensus: formal raw acceptance must pass before promotion evidence; do not duplicate-trigger active retry 34810592135.",
     "OSS: bind PSR/DSR consumption to immutable completed-trial ledger/provenance receipt; keep all new discovery/performance cost0-only.",

@@ -1,7 +1,7 @@
 {
   "version": 10,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T16:24:00+09:00",
+  "updated_at_jst": "2026-09-14T16:39:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_WITH_STATE_RECONCILIATION",
     "branch_heads_changed_since_previous_state": true,
@@ -34,12 +34,12 @@
     "note": "Re-fetched coordination contract, canonical HEAD/ledger, and V47 retry run 34810592135. Canonical HEAD matched prior last_processed_sha, so no duplicate V20 work was performed. The retry currently has 12 shard jobs: fetch(0) and fetch(1) are in progress at the raw-1H fetch step and the other 10 are queued. Recorded outcome-blind receipt V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json. Do not duplicate-trigger; V20 H1/H2 outcomes remain closed until Consensus frozen raw coverage acceptance passes."
   },
   "consensus_worker_last_scan": {
-    "status": "ACTIVE_RETRY_ACQUISITION_NO_DUPLICATE",
-    "scanned_at_jst": "2026-09-14T15:41:00+09:00",
-    "consensus_head_before": "9bbdef6fead6d1494b0b10030b466a2bdb0a22a8",
-    "consensus_head_after": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
+    "status": "ACTIVE_RETRY_PLUS_PRESERVED_RAW_SEED_AUDIT",
+    "scanned_at_jst": "2026-09-14T16:39:00+09:00",
+    "consensus_head_before": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
+    "consensus_head_after": "01299302461872a748693313e4de9c63cdcd32b8",
     "retry_run": 34810592135,
-    "note": "Re-read Supervisor, Consensus V44/V47 handoffs, dashboard, branch HEAD and Actions. Run-level API still labeled retry 34810592135 queued, but job-level state showed fetch(0) and fetch(1) in_progress at Fetch raw 1H shard while the other 10 jobs are queued under intentional max-parallel=2. Both active jobs already passed daily artifact download/verification and fetcher compile/contract steps. Updated V47 handoff and added worker log; no duplicate trigger and no performance opened."
+    "note": "Re-read Supervisor, dashboard, V44/V47 handoffs, branch HEAD and Actions. Retry 34810592135 remains active at job level with fetch(0)/fetch(1) in raw 1H fetch and ten queued; no duplicate trigger. In parallel, completed an outcome-blind audit of preserved Yahoo raw1H run 34592896202 against authoritative V47 daily pairs: NOCAP seed covers 301897/853061 = 35.3898% pairs, CAP1000_PIT covers 258339/310831 = 83.1124%; restored pair coverage is 0% for both, so seed alone is not accepted. Updated V47 handoff, dedicated seed audit, dashboard and coordination state. Performance/features/H1/H2 remain sealed."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -61,9 +61,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
-      "last_processed_sha": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
-      "last_processed_note": "15:41 Consensus worker advanced the retry state from merely queued/scheduled to verified active acquisition using job-level evidence: fetch(0) and fetch(1) are in progress at raw 1H fetching, ten jobs are queued due max-parallel=2, prerequisite daily verification and fetcher contract steps passed. Handoff/log/dashboard/state updated; no duplicate trigger and performance remains sealed."
+      "last_seen_sha": "01299302461872a748693313e4de9c63cdcd32b8",
+      "last_processed_sha": "01299302461872a748693313e4de9c63cdcd32b8",
+      "last_processed_note": "16:39 Consensus worker kept the active retry untouched and advanced the acquisition plan by auditing preserved Yahoo raw1H run 34592896202 against exact V47 required pairs. Existing immutable bars cover 35.3898% of NOCAP and 83.1124% of CAP1000_PIT pairs but 0% of restored pairs, so they are seed-only, not acceptance. Next verifier should use retry + provenance-preserved seed before any further missing-only Yahoo acquisition. Features/performance remain sealed."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -157,15 +157,24 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 16:24 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2; run-level endpoint still reports queued",
+      "missing_universe_retry_status": "active acquisition at 16:39 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2; run-level endpoint still reports queued",
       "missing_universe_retry_active_jobs": 2,
       "missing_universe_retry_queued_jobs": 10,
+      "preserved_raw_seed_run": 34592896202,
+      "preserved_raw_seed_symbols_with_rows": 1315,
+      "preserved_raw_seed_unique_symbol_dates": 618775,
+      "preserved_raw_seed_nocap_present_pairs": 301897,
+      "preserved_raw_seed_nocap_pair_coverage": 0.35389849026036824,
+      "preserved_raw_seed_cap1000_present_pairs": 258339,
+      "preserved_raw_seed_cap1000_pair_coverage": 0.831123665271482,
+      "preserved_raw_seed_restored_pair_coverage": 0.0,
+      "preserved_raw_seed_is_acceptance": false,
       "price_arms": ["NOCAP", "CAP1000_PIT"],
       "performance_opened": false,
       "clean_features_opened": false,
       "dev_h1_opened": false,
       "h2_opened": false,
-      "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion rerun the exact frozen coverage verifier against retry artifacts before any feature/performance inspection. If still rejected, retry only newly emitted missing symbol/date codes with thresholds unchanged and no interpolation."
+      "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion combine only immutable retry bars and preserved run34592896202 bars with artifact/digest provenance, deduplicate exact symbol/timestamp, and rerun the unchanged frozen coverage verifier before any feature/performance inspection. If rejected, acquire only the newly emitted missing symbol/date set; thresholds unchanged and no interpolation."
     },
     "oss_validation": {
       "head": "0837d299eff60698d0e2ec36c659a36bbc078542",
@@ -186,7 +195,7 @@
     "final_go_no_go_ready": false,
     "blocking_items": [
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Consensus V47 has not yet produced a frozen-accepted repair source.",
-      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is actively acquiring two shards at a time under staged throttled/backoff transport and must pass the unchanged coverage verifier before features/performance open.",
+      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is actively acquiring two shards at a time. Preserved Yahoo raw seed run34592896202 contains 35.4% of NOCAP and 83.1% of CAP1000_PIT required pairs but 0% restored coverage, so it can reduce redundant requests only after provenance-preserving merge and unchanged acceptance verification.",
       "No currently passing canonical 5BD Core/Precision replacement candidate. Separately, historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending; this audit does not reopen rejected Core families for retuning or promotion.",
       "OSS EDINET sample boundary, selector, metadata snapshot layer, and metadata acquisition boundary are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized and the real same-ZIP parser comparison remains unopened."
     ]

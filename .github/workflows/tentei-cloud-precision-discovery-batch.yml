@@ -1,0 +1,47 @@
+name: Tentei Cloud Precision Discovery Batch
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/tentei-cloud-mtf
+    paths:
+      - 'research/tentei_cloud/RUN_PRECISION_DISCOVERY_BATCH'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/tentei-cloud-mtf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas numpy
+      - name: Download latest successful extended 1H fetch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID="$(gh run list             --repo "$GITHUB_REPOSITORY"             --workflow "tentei-cloud-1h-research.yml"             --branch "research/tentei-cloud-mtf"             --event push             --status success             --limit 1             --json databaseId             --jq '.[0].databaseId')"
+          test -n "$RUN_ID"
+          echo "$RUN_ID" > latest_fetch_run_id.txt
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir downloaded
+      - name: Evaluate DEV families only
+        run: |
+          python research/tentei_cloud/eval_precision_discovery_batch.py             --inputs 'downloaded/**/ohlcv_1h_shard_*.csv'             --outdir out
+      - name: Show result
+        run: cat out/precision_discovery_batch_result.json
+      - name: Record source fetch run
+        run: cp latest_fetch_run_id.txt out/latest_fetch_run_id.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tentei-cloud-precision-discovery-batch
+          path: out/**
+          if-no-files-found: error
+          retention-days: 30

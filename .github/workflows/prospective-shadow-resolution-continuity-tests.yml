@@ -7,6 +7,8 @@ on:
     paths:
       - 'tvfree_screener/batch02/prospective_shadow_resolution_continuity_guard.py'
       - 'tvfree_screener/batch02/test_prospective_shadow_resolution_continuity_guard.py'
+      - 'tvfree_screener/batch02/prospective_shadow_resolution_chain_guard.py'
+      - 'tvfree_screener/batch02/test_prospective_shadow_resolution_chain_guard.py'
       - 'tvfree_screener/batch02/prospective_shadow_verified_resolve.py'
       - 'tvfree_screener/batch02/test_prospective_shadow_verified_resolve.py'
       - 'tvfree_screener/batch02/prospective_shadow_cli.py'
@@ -39,4 +41,4 @@ jobs:
         working-directory: tvfree_screener/batch02
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m unittest -v test_prospective_shadow_resolution_continuity_guard.py test_prospective_shadow_verified_resolve.py test_prospective_shadow_session_calendar_guard.py test_prospective_shadow_daily_endpoint_guard.py test_prospective_shadow_endpoint_completeness_guard.py test_prospective_shadow_resolution_receipt.py test_prospective_shadow_cli.py
+        run: python -m unittest -v test_prospective_shadow_resolution_continuity_guard.py test_prospective_shadow_resolution_chain_guard.py test_prospective_shadow_verified_resolve.py test_prospective_shadow_session_calendar_guard.py test_prospective_shadow_daily_endpoint_guard.py test_prospective_shadow_endpoint_completeness_guard.py test_prospective_shadow_resolution_receipt.py test_prospective_shadow_cli.py

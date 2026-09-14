@@ -259,6 +259,22 @@ def enrich_arm(base_rows: pd.DataFrame, eligible_pairs: set[tuple[str,str]]) -> 
     return x
 
 
+def validate_coverage_receipt(cov: dict, shadow_mode: bool) -> bool:
+    if shadow_mode:
+        if not cov.get("shadow_accepted"):
+            raise RuntimeError("survivor-shadow raw1h coverage not accepted")
+        if cov.get("promotion_grade") is not False:
+            raise RuntimeError("shadow receipt must explicitly be non-promotion")
+        promotion_grade=False
+    else:
+        if not cov.get("accepted"):
+            raise RuntimeError("full-PIT raw1h coverage not accepted")
+        promotion_grade=True
+    if cov.get("strategy_returns_opened") or cov.get("model_scores_opened"):
+        raise RuntimeError("coverage isolation contract violated")
+    return promotion_grade
+
+
 def main() -> None:
     ap=argparse.ArgumentParser()
     ap.add_argument("--frozen-daily",required=True,type=Path)
@@ -274,16 +290,7 @@ def main() -> None:
 
     cov=json.loads(a.raw_coverage_receipt.read_text(encoding="utf-8"))
     shadow_mode=bool(a.allow_survivor_shadow)
-    if shadow_mode:
-        if not cov.get("shadow_accepted"):
-            raise RuntimeError("survivor-shadow raw1h coverage not accepted")
-        if cov.get("promotion_grade") is not False:
-            raise RuntimeError("shadow receipt must explicitly be non-promotion")
-    else:
-        if not cov.get("accepted"):
-            raise RuntimeError("full-PIT raw1h coverage not accepted")
-    if cov.get("strategy_returns_opened") or cov.get("model_scores_opened"):
-        raise RuntimeError("coverage isolation contract violated")
+    promotion_grade=validate_coverage_receipt(cov,shadow_mode)
 
     events=load_events(a.membership_events)
     lmap=listing_map(events)
@@ -386,7 +393,7 @@ def main() -> None:
         "strategy_selection_performed":False,
         "model_fit_performed":False,
         "survivor_shadow_mode":shadow_mode,
-        "promotion_grade":not shadow_mode,
+        "promotion_grade":promotion_grade,
         "2026_rows_included":False,
         "production_writes":False,
     }

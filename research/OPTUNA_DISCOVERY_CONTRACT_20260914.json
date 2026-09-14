@@ -1,0 +1,54 @@
+{
+  "contract_id": "OSS-OPTUNA-DISCOVERY-V1-20260914",
+  "status": "PREREGISTERED_INFRASTRUCTURE_ONLY",
+  "purpose": "Use Optuna only to accelerate low-DOF discovery inside the already-authorized discovery period while retaining purged walk-forward and multiple-testing evidence.",
+  "production_modified": false,
+  "rejected_families_may_be_reopened": false,
+  "eligible_family_rule": "Only a genuinely new family with its own frozen feature/candidate contract may use this harness. Existing rejected or outcome-opened families may not be fed into it for rescue tuning.",
+  "time_policy": {
+    "candidate_start": "2022-07-01",
+    "candidate_end": "2023-12-31",
+    "label_must_resolve_by": "2023-12-31",
+    "2024_selection_use": false,
+    "2025_selection_use": false,
+    "2026_selection_use": false,
+    "validation_after_selection": "Freeze the selected configuration before opening later-period validation evidence."
+  },
+  "fixed_before_search": {
+    "feature_set": "Supplied by a separate preregistered family spec; Optuna may not choose features.",
+    "candidate_universe": "Supplied by a separate preregistered family spec.",
+    "target_threshold": "Fixed outside Optuna.",
+    "top_n": "Fixed outside Optuna.",
+    "round_trip_cost": "Fixed outside Optuna.",
+    "entry_exit_semantics": "Canonical next official XTKS session open to fifth official XTKS session close for comparable 5BD research."
+  },
+  "search_v1": {
+    "model": "RobustScaler(25,75) + LogisticRegression L2 balanced",
+    "sampler": "Optuna TPESampler",
+    "optuna_version": "5.0.0",
+    "seed": 20260914,
+    "trials": 30,
+    "optimized_parameters": {
+      "C": {
+        "low": 0.001,
+        "high": 100.0,
+        "scale": "log"
+      }
+    },
+    "objective": "Purged walk-forward out-of-sample per-active-date Sharpe of the fixed top-N cohort return stream.",
+    "walk_forward": "Date-grouped expanding walk-forward using purgedcv; label-horizon overlap must audit to zero."
+  },
+  "multiple_testing_evidence": {
+    "retain_every_completed_trial": true,
+    "retain_trial_sharpe_dispersion": true,
+    "report_psr": true,
+    "report_dsr_raw_trial_count": true,
+    "report_dsr_effective_trial_count": true,
+    "effective_trial_count_is_heuristic": true,
+    "dsr_is_automatic_promotion_gate": false
+  },
+  "promotion": {
+    "authorized_by_this_contract": false,
+    "rule": "This contract validates research infrastructure only. A candidate still needs its own frozen family specification and locked later-period validation."
+  }
+}

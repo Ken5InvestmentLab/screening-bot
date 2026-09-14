@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 04:24 JST  
+> **最終更新:** 2026-09-15 04:31 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -15,7 +15,7 @@
 |---|---|---:|---|
 | Weak+Early Phase-2 frozen検証 | 🟡 **整理中** | **90%** | 2023-25 ranking + 2022 fresh完了。robustness FAIL、G3凍結、Round2 CLOSED |
 | Parallel Wave-1 新条件探索 | 🟢 **稼働中** | **62%** | exact source schema freeze完了。独立XTKS calendar固定 → endpoint completeness receipt → one-shot cost0開封 |
-| Core24 OHLCV補完 | 🟢 **稼働中** | **50%** | exact missing-inventory builder CI GREEN。real dataset inventory → fallback raw → verifier → coverage deltaが残り |
+| Core24 OHLCV補完 | 🟢 **稼働中** | **55%** | missing-inventory builder + SHA-bound実行runner CI GREEN。real expected/raw1H pin → fallback raw → verifier → coverage deltaが残り |
 | Consensus V47 raw 1H取得・formal acceptance | 🟠 **外部待機** | **66%** | raw48非terminal。shard 0/1全429、2/3 fetch中。merge acceptance spec固定済み |
 | Canonical/Shadow endpoint integrity | 🟢 **稼働中** | **79%** | full hash-provenance chainをverified resolve boundaryへ実装。CI `34886599423` SUCCESS。link-tamper回帰/次のoutcome-blind controlへ |
 | Core endpoint provenance | 🟢 **稼働中** | **70%** | provenance primitive GREEN。real XTKS/vendor manifest + actual receipt + evaluator配線が残り |
@@ -37,6 +37,7 @@
 | Parallel Wave-1 | source bytes + exact schema frozen / performance未開封 |
 | Consensus V47 | raw48 transport blocker / formal acceptance未PASS |
 | Canonical/Shadow | full hash-provenance chain **実装済み / CI GREEN** / performance未開封 |
+| Core24 OHLCV | SHA-bound real-inventory runner **実装済み / CI GREEN** / real raw1H input pin待ち |
 | OSS | immutable completed-trial receipt → DSR consumption binding **verified / CI GREEN** / performance未開封 |
 | Cloud exact | HOLD / close candidate |
 | V20 | **CLOSED / DEPRIORITIZED** |
@@ -81,7 +82,7 @@ HEAD `b9579857c598730bc7e3dbad35517fd5c6dc98a4`。Run `34849054884` は非termin
 
 **Canonical/Shadow:** HEAD `2fe2981f43a8c80a510ca446241ad44ed6e2c6eb`。freeze済み `daily endpoint manifest → pinned XTKS calendar → frozen selection ledger → completeness receipt → resolved output → resolution receipt` chainをverified resolve boundaryへ実装。CLIはverified daily manifestとpinned calendar artifactを必須化し、completeness receiptは3 upstream SHAを明示的にbind、resolution receiptはcompleteness receipt自己SHAとresolved output SHAをbindする。欠損artifactはresolved write前にfail-closed。旧fixture互換を維持しつつ、実運用CLIではchain enforcement=true。最終CI `34886599423` **SUCCESS**。strategy logic / performanceは未変更・未開封。
 
-**Core24 OHLCV補完:** `build_missing_inventory(expected, observed)` はCI `34881004528` SUCCESS。real missing inventory、fallback raw receipt、accepted/rejected/conflicted counts、coverage deltaが揃うまでformal dataset採用・performance再計算禁止。
+**Core24 OHLCV補完:** HEAD `fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc`。`build_missing_inventory(expected, observed)` に加え、exact expected/observed CSV bytesを事前SHA-bindし、`missing_inventory.csv` とreceiptもSHA-bindする real-inventory runnerを追加。CI `34886738844` **SUCCESS**。artifact `10264205130` はdaily-only、artifact `10330772110` はlineage receipt-onlyであり、formal raw1H observed inputの代替には使わない。real expected endpoint-key universe + exact raw1H bytesのpin、fallback raw receipt、accepted/rejected/conflicted counts、coverage deltaが揃うまでformal dataset採用・performance再計算禁止。
 
 **Core endpoint provenance:** immutable source receipt primitive GREEN。real XTKS/raw-vendor manifest、actual fetch receipt、canonical evaluator fail-closed配線が残る。
 
@@ -91,7 +92,7 @@ HEAD `b9579857c598730bc7e3dbad35517fd5c6dc98a4`。Run `34849054884` は非termin
 
 ## 5. P0 / P1 / P2
 
-**P0:** Parallel XTKS calendar/endpoint receipt、Core24 real missing inventory/fallback verification、Consensus raw48 terminal後formal merge/acceptance。
+**P0:** Parallel XTKS calendar/endpoint receipt、Core24 exact expected/raw1H input pin → one-shot missing inventory → fallback verification、Consensus raw48 terminal後formal merge/acceptance。
 
 **P1:** Canonical hash chainは実装・CI GREEN。次はexplicit link-tamper regressionまたは別のoutcome-blind Shadow/Data integrity control。Core endpoint evaluator binding、OSSはreceipt-bound DSR control完了のため次のoutcome-blind validation controlへ移行。
 

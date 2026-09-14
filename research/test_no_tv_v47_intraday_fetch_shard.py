@@ -57,11 +57,33 @@ def test_parse_rows_drops_outside_window_and_invalid():
     assert len(out) == 0
 
 
+def test_systemic_429_requires_all_four_probes():
+    assert v47.systemic_429_from_probe(["http_429"] * 4)
+    assert not v47.systemic_429_from_probe(["http_429"] * 3)
+    assert not v47.systemic_429_from_probe(
+        ["http_429", "http_429", "http_200", "http_429"]
+    )
+
+
+def test_preflight_is_transport_only(monkeypatch=None):
+    original = v47.probe_transport_status
+    try:
+        v47.probe_transport_status = lambda code, host: "http_429"
+        out = v47.run_transport_preflight(["1000", "1001", "1002"])
+        assert out["probe_count"] == 4
+        assert out["systemic_http_429"] is True
+        assert {x["symbol"] for x in out["observations"]} == {"1000", "1001"}
+    finally:
+        v47.probe_transport_status = original
+
+
 def main():
     tests=[
         test_shards_partition_exactly,
         test_parse_rows_keeps_short_histories,
         test_parse_rows_drops_outside_window_and_invalid,
+        test_systemic_429_requires_all_four_probes,
+        test_preflight_is_transport_only,
     ]
     for fn in tests:
         fn()

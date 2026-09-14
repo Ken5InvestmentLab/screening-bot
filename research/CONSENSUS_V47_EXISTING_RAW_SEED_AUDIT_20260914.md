@@ -20,7 +20,7 @@ Eight still-live artifacts were downloaded and audited read-only:
 - shard 4 artifact `10196451479`, digest `sha256:dc48120319252a460009213e36faf286815869f91162a492bc75dedc89e62c34`
 - shard 5 artifact `10196398807`, digest `sha256:c476912bd559cdf310cdbf1e5b18ad7ed68950aa1b3bd21819398449f6638c54`
 - shard 6 artifact `10196399262`, digest `sha256:459f4303e7b6d873fd6e1c67a32a71e6b39d39982dc4e256b177d9d5f8ed428c`
-- shard 7 artifact `10196438873`, digest `sha256:3123938c92c1b16d0ac2f18adc5f7cd0e357fa72` is **not** the correct digest; the authoritative digest is `sha256:3123938c92c1b16d0ac2b34ea6776cb949283e1fe9a692b54843cd8315d84f2d`.
+- shard 7 artifact `10196438873`, digest `sha256:3123938c92c1b16d0ac2b34ea6776cb949283e1fe9a692b54843cd8315d84f2d`
 
 Authoritative V47 daily artifact: run `34799835035`, artifact `10331600267`, digest `sha256:ac9d3cc54ba72b6578cbd1b0e650b781b793331c4ee21074a1f9211677b204a6`.
 

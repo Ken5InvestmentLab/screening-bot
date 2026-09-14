@@ -137,6 +137,7 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                 daily_manifest=str(daily1_manifest),
                 sessions_csv=None,
                 sessions_manifest=None,
+                resolution_receipt=str(root / "resolution1.receipt.json"),
                 resolved=str(resolved),
                 summary=str(summary),
             ))
@@ -155,6 +156,7 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                     daily_manifest=str(daily2_manifest),
                     sessions_csv=None,
                     sessions_manifest=None,
+                    resolution_receipt=str(root / "resolution2.receipt.json"),
                     resolved=str(resolved),
                     summary=str(summary),
                 ))
@@ -210,6 +212,7 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                     daily_manifest=str(daily_manifest),
                     sessions_csv=None,
                     sessions_manifest=None,
+                    resolution_receipt=str(root / "tampered.receipt.json"),
                     resolved=str(resolved),
                     summary=str(summary),
                 ))
@@ -217,6 +220,34 @@ class ProspectiveShadowCliTests(unittest.TestCase):
             self.assertFalse(resolved.exists())
             summary_payload = json.loads(summary.read_text(encoding="utf-8"))
             self.assertEqual(summary_payload["decision"], "BLOCK_CLI_DAILY_ENDPOINT_DATASET")
+
+
+    def test_resolve_cli_refuses_existing_resolution_receipt_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manifest_path = root / "freeze.json"
+            self._manifest(manifest_path)
+            shadow = root / "shadow.jsonl"
+            resolved = root / "resolved.jsonl"
+            summary = root / "summary.json"
+            receipt_path = root / "receipt.json"
+            receipt_path.write_text("already", encoding="utf-8")
+            with self.assertRaises(SystemExit) as cm:
+                cmd_resolve(Namespace(
+                    freeze_manifest=str(manifest_path),
+                    freeze_sha256=None,
+                    shadow=str(shadow),
+                    daily=str(root / "daily.csv"),
+                    daily_manifest=str(root / "daily.manifest.json"),
+                    sessions_csv=None,
+                    sessions_manifest=None,
+                    resolution_receipt=str(receipt_path),
+                    resolved=str(resolved),
+                    summary=str(summary),
+                ))
+            self.assertEqual(cm.exception.code, 2)
+            self.assertEqual(receipt_path.read_text(encoding="utf-8"), "already")
+            self.assertFalse(resolved.exists())
 
 
 if __name__ == "__main__":

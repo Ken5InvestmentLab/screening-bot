@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 18:38 JST  
+> **最終更新基準:** 2026-09-14 18:40 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ---
@@ -13,7 +13,7 @@
 | Active research branches | **4本** |
 | Weak+Early Phase-2 | **2022 fresh validation FAILED ROBUSTNESS**。outcome-blind構造監査まで完了 |
 | 2023-25暫定首位 | **DUAL_TOP1_AGREEMENT**、勝率改善候補 **G3 NO_ACUTE_SELLOFF** |
-| Consensus V47 | formal raw retry `34810592135` は12-shard構成で180分timeout発生。現runは重複triggerせず継続監視。future retryは48-shardへ修復済み。midterm diagnostic `34824194221` はH1 cost0比較実行中 |
+| Consensus V47 | 中締めH1 cost0診断完了。**NOCAPが平均で暫定リード**だがpartial coverageでpromotion evidenceではない。formal raw retryは180分timeout問題を確認、future retryは48 shardへ修復済み |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
 | Core/Cloud forensic | Core既reject維持 / Cloud **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
 | OSS / EDINET | selected-ZIP exact-byte freezeまでCI固定、real EDINETは外部key待ち |
@@ -89,8 +89,6 @@ Candidate scarcity:
 
 **Outcome-blind interpretation:** 2022は市場breadth・即時momentum・gap・volume acceleration・rangeが弱く、rankerが選べる候補数も少ない。一方tail_pは低くなくRSIはむしろ高い。単純な「Tail score不足」ではなく、**population/regime mismatch**の可能性が高い。
 
-この差から新しい閾値は作らない。次は model warm-up/calibration、candidate scarcity、2023H2/2025H2にも同じ構造差が現れるかをoutcome-blindで監査する。
-
 ---
 
 ## 2. Active lanes
@@ -99,7 +97,7 @@ Candidate scarcity:
 |---|---|---|---|
 | Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合のみgap reconciliation |
 | Core/Cloud | `0886fd65...` | Core reject / Cloud exact replay unavailable | 新しい同時代identity evidenceがある場合だけCloud再開 |
-| Consensus V47 | `1eb0408c...` | formal retry ACTIVEだが初期2 shardが180分timeout。midterm diagnostic ACTIVE | diagnostic完了後cost0結果回収。formal現runはduplicate trigger禁止。次回formal retryは48 shard構成 |
+| Consensus V47 | `2b63fa00...` | H1 diagnostic SUCCESS / formal retry partial timeout | H2を開くならfrozen H1 leader NOCAPのみ。formalは現run完了後seed merge→exact acceptance |
 | OSS/Validation | `faba5b48...` | selected-ZIP byte freeze CI-green | external key利用可能時にreal EDINET acquisition |
 
 ---
@@ -124,42 +122,58 @@ Candidate scarcity:
 
 ### Formal promotion path
 
-- latest HEAD: `1eb0408cd3ad2d44c2e0c3feb12551857f325be6`
+- latest HEAD: `2b63fa00846d8d8918fd87e59cda69b6c8ddafab`
 - Daily PIT acceptance: **PASS**
 - formal raw initial acceptance: **FAIL**
 - formal raw retry: `34810592135` — **ACTIVE / PARTIALLY TIMED OUT**
-- retry trigger SHA: `6fcf600245e0a04b3d8bc9c3f6c566a81c9fa03d`
-- `fetch (0)` / `fetch (1)`: 180分timeoutでcancel。uploadされたartifactはtimeout時点の極小artifactで、正式coverage evidenceとしては不足
-- `fetch (2)` / `fetch (3)`: 18:38 JST時点で取得中。他8 shardはqueued
+- `fetch (0)` / `fetch (1)`: 180分timeoutでcancel
+- `fetch (2)` / `fetch (3)`: 最新確認時点で取得中、残りはqueued
 - duplicate trigger: **禁止継続**
-- future-only transport repair: commit `7aa230a0434136cf33589a2fdda010113d57db62` で12 -> 48 deterministic shards、max-parallel=2を維持。現runはtrigger SHA固定なので影響なし
+- future-only transport repair: commit `7aa230a0434136cf33589a2fdda010113d57db62` で12 -> 48 deterministic shards、max-parallel=2維持。現runには影響なし
 - preserved partial seed: NOCAP **35.3898%**、CAP1000_PIT **83.1124%**、restored pair **0%**
 - formal raw acceptance: **未PASS**
 - formal clean features / H1 / H2: **未開封**
-- formal NOCAP vs CAP1000_PIT comparison: **未開封**
 
-### MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE — cost 0%
+### MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE — H1 cost 0%
 
-- run `34824194221`: **in_progress**
-- pre-open contract/hash/coverage freeze: **PASS**
-- partial PIT feature materialization: **PASS**
-- frozen H1 cost0 comparison: **実行中**
-- H1 performance fields: **未出力**
-- H2: **未開封**
-- endpoint: next XTKS open -> fifth XTKS close
+Workflow `34824194221`: **SUCCESS**  
+Artifact SHA256: `c46e90cba472c291a7db068ff1dadb0959764dcef97eb006dd6c3b918779f866`
+
+- period: **2025-01-06..2025-06-30**
+- endpoint: next XTKS open -> D+5 close
 - cost: **0%**
-- coverage caveat: preserved partial rawのみ。formal acceptance未達。診断値はpromotion evidenceではない
-- opened diagnosticを見た同family retune: **禁止**
+- strict same-symbol cooldown: **5 XTKS sessions**
+- replacement: **false**
+- V11 frozen 3-head / min consensus / threshold 0.95 / guard none / sessions both
+
+| Arm | Coverage | n | Mean | Median | Win | +10 | +20 | +50 | -10 | -20 | Top1-ex | Top3-ex |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **NOCAP** | **35.3898%** | 50 | **+0.1074%** | -2.7270% | 36.00% | 16.00% | 8.00% | 0.00% | 12.00% | 2.00% | -0.7566% | -2.0148% |
+| CAP1000_PIT | **83.1124%** | 60 | **-1.1568%** | -0.4011% | 46.67% | 13.33% | 0.00% | 0.00% | 11.67% | 3.33% | -1.4639% | -2.0601% |
+
+Coverage caveat:
+- NOCAP monthly minimum 33.9002%、completely missing required symbols 2,592、restored pair 0%
+- CAP1000_PIT monthly minimum 77.3420%、completely missing required symbols 642、restored pair 0%
+- missing pairは補間・synthetic化していない
+
+**H1 diagnostic decision:** frozen primary criterionのdevelopment meanでは **NOCAP leader**。ただしformal acceptance未達でpopulation coverageもarm間で大きく異なるため、これはpromotion evidenceではない。
+
+Robustness diagnosis: NOCAPもmedian / Top1-ex / Top3-exが負。CAP1000_PITはmean / Top1-ex / Top3-exが負。両armとも強い正式候補と判断できる状態ではない。結果を見たprice-cap grid searchや同family retuneは禁止。
+
+Holdout state:
+- H1: **開封済み・untouchedではない**
+- H2: **未開封**
+- 2026: **未開封（このdiagnostic）**
 
 ### Blocker / next action
 
-1. `34824194221` のH1診断完了を回収し、NOCAP/CAP1000_PITを同じfrozen contract・cost0で記録する。
-2. `34810592135` は重複起動せず完走/timeoutを待つ。
-3. 現run + preserved seedをmergeしてfrozen verifierを再実行する。
-4. FAILならemitted missing symbol/dateだけをtargeted refetchする。次回retryは48-shard transport layoutを使う。
-5. threshold緩和・補間・追加price-cap grid searchは禁止。
+1. formal `34810592135` は重複起動せず終了まで監視。
+2. valid retry artifacts + preserved seedをmergeしてfrozen acceptanceを再実行。
+3. FAILならemitted missing symbol/dateだけtargeted refetch。次回transport layoutは48 shard。
+4. diagnostic sequenceを続ける場合、**H2はH1 leader NOCAPのみ**同一frozen contract・cost0で開く。CAP1000_PIT H2をrescue目的で開かない。
+5. threshold/ranker/cooldown/price arm/model familyのretuneは禁止。
 
-候補ランキングへの影響: **まだなし**。H1 performance未出力のため推測しない。
+候補ランキングへの影響: **NOCAPがConsensus内の中締め診断で暫定1位**。ただし正式候補ランキングには昇格なし。
 
 ---
 
@@ -185,13 +199,14 @@ Candidate scarcity:
 - [x] 2022 vs 2023-25 signal-time structural audit
 - [x] Cloud exact-repro spec freeze / exact evidence availability判定
 - [x] Core/Cloud cost0 + canonical endpoint labeling audit
-- [x] **V47 formal retry 180分timeout原因を確定し、future retryを48 shardへtransport-only修復**
+- [x] **V47 formal retry timeout原因確定 / future retry 48 shard修復**
+- [x] **V47 midterm H1 cost0 comparison completion collection**
+- [ ] V47 diagnostic H2 NOCAP-only（開く場合）
+- [ ] V47 formal retry completion/timeout collection -> seed merge -> exact acceptance
 - [ ] model warm-up / calibration effect audit
 - [ ] candidate-scarcity structure audit
-- [ ] 2023H2 / 2025H2で同じoutcome-blind shiftsが再現するか確認
-- [ ] **V47 diagnostic `34824194221` completion collection**
-- [ ] **V47 formal retry `34810592135` completion/timeout collection -> seed merge -> exact acceptance**
+- [ ] 2023H2 / 2025H2 outcome-blind shift audit
 
 ## 7. GO / NO-GO
 
-**NO-GO / 研究継続。** Consensus V47は正式raw acceptance未PASS。中締めH1診断はまだ実行中で、performance未出力。formalとdiagnosticを混同せず、診断値を見たretuneは禁止する。
+**NO-GO / 研究継続。** Consensus V47のH1中締めではNOCAPが平均で勝ったが、coverage-bypassed diagnosticでありformal promotion evidenceではない。正式raw acceptanceは未PASS。H1結果を見たretuneは禁止し、formal pathとdiagnostic pathを分離する。

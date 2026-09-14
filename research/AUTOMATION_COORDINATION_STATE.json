@@ -1,7 +1,7 @@
 {
-  "version": 52,
+  "version": 53,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T03:58:00+09:00",
+  "updated_at_jst": "2026-09-15T03:59:00+09:00",
   "supervisor_last_scan": {
     "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
     "scanned_at_jst": "2026-09-15T03:03:00+09:00",
@@ -37,10 +37,10 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
-      "last_processed_sha": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
+      "last_seen_sha": "d2eccd40b0e37a8a50d8a598869fcecbd0510cfc",
+      "last_processed_sha": "d2eccd40b0e37a8a50d8a598869fcecbd0510cfc",
       "task_state": "ACTIVE",
-      "last_processed_note": "run_study builds immutable completed-trial ledger/receipt, validates via trial_sharpes_from_receipt, and only then feeds exact Sharpe vector into selection_bias_summary. Integration CI 34883481600 SUCCESS and contract rerun 34883717045 SUCCESS. No strategy outcome opened."
+      "last_processed_note": "Receipt-bound DSR control fully verified: implementation CI 34883481600 SUCCESS, contract rerun 34883717045 SUCCESS, final handoff synchronized at d2eccd40. No strategy outcome opened. Move to another outcome-blind validation task next."
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
@@ -130,7 +130,7 @@
     },
     "oss_validation": {
       "task_state": "ACTIVE",
-      "head": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
+      "head": "d2eccd40b0e37a8a50d8a598869fcecbd0510cfc",
       "cost0_optuna_contract_status": "IMPLEMENTATION_VERIFIED_CI_GREEN",
       "trial_ledger_status": "RECEIPT_BOUND_DSR_VERIFIED_CI_GREEN",
       "binding_ci_run": 34883481600,

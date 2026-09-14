@@ -2,7 +2,7 @@
 
 > **最終更新基準:** 2026-09-14 16:52 JST  
 > **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + active lane handoff / Actions + `research/MIDTERM_COMPARISON_20260914.md`  
-> **注意:** 進捗率は成功確率ではなく、事前定義した研究マイルストーンの消化率。診断開封と正式promotion evidenceは分離する。
+> **注意:** 進捗率は成功確率ではなく、事前定義した研究マイルストーンの消化率。診断開封と正式promotion evidenceは分離する。**今後の全比較・ランキングは取引コスト0%で統一**する。
 
 ---
 
@@ -37,7 +37,7 @@
 
 | 対象 | 診断開封 | 正式promotion evidence | 備考 |
 |---|---|---|---|
-| weak+early body_pct / volr20系 | ✅ 既存観測値あり | ❌ 未統一 | canonical endpoint + 0.5% costのrow-level統一評価が次 |
+| weak+early body_pct / volr20系 | ✅ row-level再計算済み | ❌ 未統一 | canonical endpoint / **cost 0%**で勝率含む統一評価済み |
 | V20 Session-Impulse | ✅ coverage-bypassed診断開封 | ❌ 不可 | 734 gapを残した診断。全TopN負、DEPRIORITIZE |
 | Consensus V47 | ❌ performance未計算 | ❌ 未開封 | retryが実rawを出すまで物理的に計算不可 |
 | Cloud exact forensic | 歴史値のみ既知 | ❌ | exact reproductionが先。歴史値を再現結果と混同しない |
@@ -47,21 +47,25 @@
 ## 2. 暫定ランキング — 実観測performance
 
 ### 1位 weak+early + body_pct LOW
-- 2023-2024: **n=128 / mean +6.46% / median +1.25% / Top3-ex +4.03%**
-- 2025 descriptive: **n=44 / mean +6.78% / Top3-ex +0.03%**
-- legacy reportはgross。単純0.5pt round-trip感応度ではmean約 **+5.96% / +6.28%**だが、正式比較にはrow-level再計算が必要。
+- 2023-2024: **n=128 / mean +6.46% / median +1.25% / win 52.34% / Top3-ex +4.03%**
+- 2025 descriptive: **n=44 / mean +6.78% / median -3.76% / win 45.45% / Top3-ex +0.03%**
+- 2023-2025 total: **n=172 / mean +6.54% / median +0.99% / win 50.58% / Top3-ex +4.60%**
+- **cost 0%**
 - **Disposition:** CURRENT BEST OBSERVED IMPLEMENTABLE CONDITION
 
 ### 2位 weak+early + volr20 LOW
-- 2023-2024: **n=128 / mean +6.24% / median +1.06% / Top3-ex +3.81%**
-- 2025 descriptive: **n=44 / mean +6.58% / Top3-ex -0.19%**
-- 単純0.5pt mean感応度: 約 **+5.74% / +6.08%**
+- 2023-2024: **n=128 / mean +6.24% / median +1.06% / win 52.34% / Top3-ex +3.81%**
+- 2025 descriptive: **n=44 / mean +6.58% / median +0.37% / win 50.00% / Top3-ex -0.19%**
+- 2023-2025 total: **n=172 / mean +6.33% / median +1.06% / win 51.74% / Top3-ex +4.38%**
+- **cost 0%**
 - **Disposition:** VERY CLOSE SECOND
 
 ### 3位 weak+early + mean-rank(volr20, body_pct)
-- 2023-2024: **n=128 / mean +7.16% / median +1.81% / Top3-ex +4.75%**
-- 2025: **n=44 / mean +6.09% / Top3-ex -0.71%**
-- headlineは最強だが2025 Top3 robustnessはbody_pct LOWに劣る。
+- 2023-2024: **n=128 / mean +7.16% / median +1.81% / win 54.69% / Top3-ex +4.75%**
+- 2025: **n=44 / mean +6.09% / median -4.04% / win 45.45% / Top3-ex -0.71%**
+- 2023-2025 total: **n=172 / mean +6.89% / median +1.45% / win 52.33% / Top3-ex +4.95%**
+- **cost 0%**
+- headlineは最強だが2025の中央値・Top3 robustnessは弱い。
 
 ### 4位以降の参考
 - V29 fixed_min98_both: historical n=35 / mean +4.86% / median +2.90%。population/endpointが異なり再現不能。
@@ -87,14 +91,14 @@
 
 ## 4. V20中締め診断 — 正式promotion evidenceではない
 
-734 symbol/date gapを残し、閾値・ranker・TopN・canonical endpointを変更せず0.5% costで診断した結果:
+734 symbol/date gapを残し、閾値・ranker・TopN・canonical endpointを変更せず**cost 0%**で診断した結果:
 
 | TopN | n | mean | median | win | Top3-ex |
 |---:|---:|---:|---:|---:|---:|
-| Top1 | 156 | **-1.846%** | -3.127% | 34.62% | -3.169% |
-| Top2 | 307 | **-2.073%** | -1.794% | 38.11% | -2.741% |
-| Top3 | 442 | **-1.618%** | -1.789% | 38.69% | -2.113% |
-| Top5 | 705 | **-1.038%** | -1.455% | 40.00% | -1.354% |
+| Top1 | 156 | **-1.346%** | -2.627% | 35.90% | -2.669% |
+| Top2 | 307 | **-1.573%** | -1.294% | 40.07% | -2.241% |
+| Top3 | 442 | **-1.118%** | -1.289% | 40.05% | -1.613% |
+| Top5 | 705 | **-0.538%** | -0.955% | 41.84% | -0.854% |
 
 **判定:** `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE` / **DEPRIORITIZE**。gapで正確な順位は変わり得るが、現状はV20を本命2位として扱わない。
 
@@ -164,7 +168,7 @@
 - [ ] Consensus retry `34810592135` 完了監視（重複起動禁止）
 - [ ] retry + preserved raw seedをprovenance付きmergeしてfrozen verifier再実行
 - [ ] V47実rawが得られ次第、diagnostic performanceを開く。formal acceptanceとは分離
-- [ ] body_pct LOW / volr20 LOWを同じcanonical endpoint・0.5% cost・row-level metricsで統一比較
+- [x] body_pct LOW / volr20 LOW / combined rankをcanonical endpoint・**cost 0%**・row-level metricsで統一比較（勝率まで再計算済み）
 
 ### P1
 - [ ] V47 accepted rawが得られた場合のみV20 exact 734 gap repair / verifier再実行
@@ -194,6 +198,6 @@
 2. **V20:** 734 gap。診断は負でDEPRIORITIZE、retuneしない。
 3. **Cloud:** exact implementation未復元。歴史値はpromotion evidenceではない。
 4. **EDINET:** external API keyが無いためreal acquisition未実行。ただしselected-ZIP byte identity boundaryまでCI-green。
-5. **最優先の高情報量チェック:** body_pct LOW / volr20 LOWの統一コスト比較、V47 retry回収、Cloud exact source evidence、EDINET real metadata acquisition（キー利用可能時）。
+5. **最優先の高情報量チェック:** V47 retry回収、Cloud exact source evidence、EDINET real metadata acquisition（キー利用可能時）。body_pct/volr20/combinedのcost 0%統一比較は完了。
 
 **GO/NO-GO:** **NO-GO / 研究継続**。広いblind explorationは停止し、上記high-information checksへ集中する。

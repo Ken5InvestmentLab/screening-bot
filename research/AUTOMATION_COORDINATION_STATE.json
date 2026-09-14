@@ -1,10 +1,13 @@
 {
-  "updated_at_jst": "2026-09-14T21:42:00+09:00",
+  "updated_at_jst": "2026-09-14T22:39:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "858847e8348488b541c3174e3d12032dc26a1d82",
+  "latest_head_before_state_write": "ec03760ff71587040c120f9acfdcc5b4ba216fcd",
   "coordination": {
+    "supervisor_coordination_checked": true,
+    "research_dashboard_checked": true,
+    "consensus_v44_handoff_checked": true,
     "canonical_event_overlap": false,
     "core_overlap": false,
     "monster_overlap": false,
@@ -42,14 +45,19 @@
     }
   },
   "raw_retry": {
-    "run_id": 34810592135,
+    "superseded_run_id": 34810592135,
+    "superseded_run_final": "completed_cancelled",
+    "current_run_id": 34849054884,
+    "trigger_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
+    "strategy": "48 shards, max-parallel=2, shard-count=48, unchanged frozen acceptance",
     "duplicate_trigger_forbidden": true,
-    "observed_completed_shards": [0, 1, 2, 3],
-    "completed_shard_outcome": "cancelled_at_180m_fetch_boundary",
-    "artifact_size_bytes_each_observed": 166,
-    "usable_payload_observed": false,
-    "prepared_next_strategy": "48 shards, max-parallel=2, missing-only, unchanged frozen acceptance"
+    "duplicate_triggered": false,
+    "observed_active_shards": [0, 1],
+    "active_step": "Fetch raw 1H shard",
+    "daily_coverage_check": "PASS_ON_ACTIVE_SHARDS",
+    "fetcher_contract_tests": "PASS_ON_ACTIVE_SHARDS",
+    "remaining_matrix_state": "queued"
   },
-  "blocker": "Yahoo historical raw1H throughput/rate limiting exceeds 180-minute shard budget in current retry",
-  "next_action": "Wait for current retry to cease being active, inspect final artifacts, then trigger already-prepared 48-shard missing-only retry without changing strategy/model/threshold/price-arm/cooldown contracts."
+  "blocker": "Formal raw1H acceptance remains pending while 48-shard transport mitigation executes; prior 12-shard retry exceeded 180-minute shard budget.",
+  "next_action": "Do not duplicate-trigger run 34849054884. Inspect first completed 48-shard artifacts for real payload and transport behavior; on run completion merge observed raw plus preserved seed data with provenance and rerun frozen acceptance. If acceptance fails, retry missing symbol/date pairs only without interpolation or threshold lowering."
 }

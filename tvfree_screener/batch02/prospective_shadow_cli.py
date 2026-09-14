@@ -8,6 +8,7 @@ from pathlib import Path
 
 from tvfree_screener.batch02.prospective_shadow_verified_resolve import verified_resolve_shadow_file
 from tvfree_screener.batch02.prospective_shadow_session_calendar_guard import validate_xtks_calendar
+from tvfree_screener.batch02.prospective_shadow_daily_endpoint_guard import validate_daily_endpoint_dataset
 from tvfree_screener.batch02.prospective_shadow_admission_gate import evaluate_shadow_admission
 from tvfree_screener.batch02.prospective_shadow_verified_append import verified_append
 
@@ -173,6 +174,26 @@ def cmd_ingest(args: argparse.Namespace) -> None:
 
 def cmd_resolve(args: argparse.Namespace) -> None:
     freeze = load_freeze_manifest(Path(args.freeze_manifest), args.freeze_sha256)
+    daily_manifest_path = Path(args.daily_manifest)
+    daily_manifest = json.loads(daily_manifest_path.read_text(encoding="utf-8"))
+    daily_provenance = validate_daily_endpoint_dataset(Path(args.daily), daily_manifest)
+    if not daily_provenance.get("endpoint_dataset_valid", False):
+        out = {
+            "operation": "resolve",
+            "resolved_written": False,
+            "decision": "BLOCK_CLI_DAILY_ENDPOINT_DATASET",
+            "experiment_id": freeze["experiment_id"],
+            "model_freeze_id": freeze["model_freeze_id"],
+            "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
+            "shadow_input_sha256": sha256_file(Path(args.shadow)),
+            "daily_input_sha256": sha256_file(Path(args.daily)),
+            "daily_manifest_sha256": sha256_file(daily_manifest_path),
+            "daily_endpoint_provenance": daily_provenance,
+        }
+        write_summary(Path(args.summary), out)
+        print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
+        raise SystemExit(2)
+
     daily_rows, _ = read_daily_csv(Path(args.daily))
     default_sessions_csv, default_sessions_manifest = _default_xtks_calendar_paths()
     sessions_csv = Path(getattr(args, "sessions_csv", None) or default_sessions_csv)
@@ -192,6 +213,8 @@ def cmd_resolve(args: argparse.Namespace) -> None:
             "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
             "shadow_input_sha256": sha256_file(Path(args.shadow)),
             "daily_input_sha256": sha256_file(Path(args.daily)),
+            "daily_manifest_sha256": sha256_file(daily_manifest_path),
+            "daily_endpoint_provenance": daily_provenance,
             "session_calendar": calendar,
         }
         write_summary(Path(args.summary), out)
@@ -206,6 +229,8 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
         "shadow_input_sha256": sha256_file(Path(args.shadow)),
         "daily_input_sha256": sha256_file(Path(args.daily)),
+        "daily_manifest_sha256": sha256_file(daily_manifest_path),
+        "daily_endpoint_provenance": daily_provenance,
         "session_calendar": calendar,
         **result,
     }
@@ -234,6 +259,7 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("--freeze-sha256")
     resolve.add_argument("--shadow", required=True)
     resolve.add_argument("--daily", required=True)
+    resolve.add_argument("--daily-manifest", required=True)
     resolve.add_argument("--resolved", required=True)
     resolve.add_argument("--sessions-csv")
     resolve.add_argument("--sessions-manifest")

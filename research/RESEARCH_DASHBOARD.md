@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-14 20:29 JST  
+> **最終更新:** 2026-09-14 20:33 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **固定リンク:** https://github.com/Ken5InvestmentLab/screening-bot/blob/research/automation-coordination/research/RESEARCH_DASHBOARD.md
 
@@ -15,7 +15,7 @@
 | Weak+Early Phase-2 | **2022 fresh validation FAILED ROBUSTNESS**。構造監査＋model maturity監査まで完了 |
 | 2023-25暫定首位 | **DUAL_TOP1_AGREEMENT**、勝率/平均改善候補 **DUAL + G3 NO_ACUTE_SELLOFF** |
 | Phase-2 Round2 | **NOT ACTIVATED**。単純weak-market gateも単純warm-up不足も共通原因として不十分 |
-| Consensus V47 | H1 cost0中締め診断済み。NOCAP-only H2診断 `34832358609` は**step 11/13: H2 opening実行中**。formal raw acceptanceは未PASS |
+| Consensus V47 | **中締めH1/H2 diagnostic完了**。NOCAP H2 cost0 = n37 / mean +3.03% / median +0.38% / win 51.35% / Top3-ex -0.54%。formal raw acceptanceは未PASS |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
 | Core / Cloud | Core reject維持。forward/final比較contractも**cost0-onlyへ整合済み** / Cloud exact replay **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
 | OSS / Validation | **Optuna cost0契約と実装に不一致を検出。新規Optuna実行はfail-closed**。EDINET real pathは外部key待ち |
@@ -56,22 +56,22 @@ G3 = `med_ret1 >= -1%`。freeze済みでretune禁止。
 
 **判定:** fresh blockはFAIL ROBUSTNESS。2022を見て既存thresholdを変更しない。
 
-### 2022 model maturity audit — NEW
+### 2022 model maturity audit
 
 保存済みrawからV7/V9の月次causal学習母数と`y_top025`正例数をoutcome-blindで再構築した。
 
 | Model period | Train rows | Top0.25 positives | Positive rate | Computable |
 |---|---:|---:|---:|---|
 | 2022-05 | 17,532 | 48 | 0.274% | NO |
-| **2022-06** | **40,602** | **116** | **0.286%** | YES |
+| **2022-06** | **40,602** | **116** | 0.286% | YES |
 | 2022-07 | 67,528 | 198 | 0.293% | YES |
 | 2022-08 | 91,462 | 265 | 0.290% | YES |
 | 2022-09 | 117,301 | 335 | 0.286% | YES |
 | 2022-10 | 141,014 | 403 | 0.286% | YES |
 | 2022-11 | 165,509 | 475 | 0.287% | YES |
-| **2022-12** | **189,183** | **541** | **0.286%** | YES |
+| **2022-12** | **189,183** | **541** | 0.286% | YES |
 
-**新しい結論:** Juneは確かにearly-stageだが、Sepで117k、Decで189kまで学習行が増え、正例数も335→541まで増える。positive rateも約0.286〜0.293%で安定。したがって、**2022 Jun-Decの弱さを単純な「学習件数不足」で説明する仮説は弱い。**
+**結論:** Juneはearly-stageだがSepで117k、Decで189kまで学習行が増え、正例数も335→541まで増える。positive rateも約0.286〜0.293%で安定。したがって、**2022 Jun-Decの弱さを単純な「学習件数不足」で説明する仮説は弱い。**
 
 詳細: `research/WEAK_EARLY_PHASE2_MODEL_MATURITY_AUDIT_20260914_2000.md`
 
@@ -100,30 +100,70 @@ G3 = `med_ret1 >= -1%`。freeze済みでretune禁止。
 |---|---|---|---|
 | Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合のみgap reconciliation |
 | Core/Cloud | `48987e82...` | Core reject / Cloud exact replay unavailable / cost0 contract audit前進 | remaining stale cost/endpoint contract監査。rejected familyは再実行しない |
-| Consensus V47 | `008fd873...` | H1 diagnostic済 / **NOCAP H2 step11実行中** / formal raw未PASS | run `34832358609`完了後に診断回収。CAP1000 H2 rescue禁止 |
+| Consensus V47 | `263b91af...` | **H1/H2 diagnostic完了 / formal raw未PASS** | formal retry `34810592135`を重複起動せず監視→終了後merge+frozen acceptance。CAP1000 H2 rescue禁止 |
 | OSS/Validation | `6e9045e9...` | **Optuna cost0 implementation gap BLOCKED** | API/CLI/testsをcost0-onlyへ修正→isolated CI green後のみ再開 |
 
 ---
 
 ## 3. Consensus V47 — diagnostic only
 
+### Formal path
+
+- Daily PIT acceptance: **PASS** (`34799835035`)
+- Raw frozen acceptance: **FAIL / NOT PASS** (`34810234454`)
+- Formal retry: `34810592135` active。run-levelはqueued表示だがjob-levelでは `fetch (2)` / `fetch (3)` が1H取得中、`fetch (0)` / `fetch (1)` は180分境界でcancelled。残りはmax-parallel 2でqueued。
+- future missing-only retry layout: **48 shards / max-parallel 2**
+- formal clean features/H1/H2: **未開封**
+
 ### H1 cost0 midterm diagnostic
 
-| Arm | Coverage | n | Mean | Median | Win | Top3-ex |
-|---|---:|---:|---:|---:|---:|---:|
-| **NOCAP** | 35.3898% | 50 | **+0.1074%** | -2.7270% | 36.00% | -2.0148% |
-| CAP1000_PIT | 83.1124% | 60 | -1.1568% | -0.4011% | 46.67% | -2.0601% |
+Label: `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`
 
-- H1は`MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`。
-- H1 leaderは平均値基準でNOCAP。
-- NOCAP-only H2 run `34832358609`: pre-open contract PASS、feature materialization PASS、**H2 opening step実行中**。
-- H2結果が出るまで推測しない。
-- CAP1000_PIT H2をrescueとして開かない。
-- Formal promotion pathはraw acceptance PASSまで別管理。
+| Arm | Coverage | n | Mean | Median | Win | +10 | +20 | +50 | -10 | -20 | Top1-ex | Top3-ex |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **NOCAP** | 35.3898% | 50 | **+0.1074%** | -2.7270% | 36.00% | 16.00% | 8.00% | 0.00% | 12.00% | 2.00% | -0.7566% | -2.0148% |
+| CAP1000_PIT | 83.1124% | 60 | -1.1568% | -0.4011% | 46.67% | 13.33% | 0.00% | 0.00% | — | — | — | -2.0601% |
+
+- period: 2025-01-06..2025-06-30
+- endpoint: next official XTKS open -> D+5 close
+- cost: **0%**
+- H1 leaderはfrozen mean-first ruleでNOCAP。
+- H1はすでにopened。これを見て同family retuneは禁止。
+
+### NOCAP H2 cost0 midterm diagnostic — completed
+
+Run `34832358609`: **SUCCESS**。Artifact digest `sha256:2ceea9b8a20eed60b1e65e19963f1f2e51974a8f2e2b14ed315032ef4ffda8e9`。
+
+| Arm | Coverage caveat | Period | n | Mean | Median | Win | +10 | +20 | +50 | -10 | -20 | Top1-ex | Top3-ex |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| **NOCAP** | preserved partial raw / formal acceptance未PASS / pair coverage basis 35.3898% | 2025-07-01..2025-12-30 | **37** | **+3.0295%** | **+0.3817%** | **51.35%** | **27.03%** | **16.22%** | **2.70%** | **13.51%** | **2.70%** | **+1.5562%** | **-0.5393%** |
+
+Additional diagnostics:
+- strict same-symbol cooldown: 5 sessions
+- cooldown state carried from H1: yes
+- unique symbols: 10
+- max-symbol share: 35.14%
+- missing pair interpolation: no
+- synthetic bars: no
+- CAP1000_PIT H2: **未開封 / rescueとして開かない**
+- 2026: **未開封**
+
+**Interpretation:** H2 mean/median/win/Top1-ex are positive, but Top3-ex is negative。partial coverage上では右裾・上位winner依存が残るためfake-edge/concentration warning。performance-first方針上これだけでfamily rejectはしないが、正式promotion evidenceには使わない。同family retuneは禁止。
+
+### Consensus V47 progress
+
+- 進捗目安: **72%**
+- Daily: PASS
+- Formal raw: NOT PASS / retry active
+- Midterm H1: opened
+- Midterm NOCAP H2: opened
+- Formal features/H1/H2: unopened
+- NOCAP vs CAP1000_PIT formal comparison: not started
+- Candidate ranking impact: **production/formal ranking変更なし**。研究優先度としてはNOCAPを引き続き観察対象に維持するが、Top3-ex負とcoverage不足を明示的な警告として保持。
 
 ---
 
-## 4. OSS / Validation — NEW BLOCKER
+## 4. OSS / Validation — BLOCKER
 
 最新HEAD `6e9045e91323b3cc25d88dedd3a7e9e943f8ae58`。
 
@@ -171,7 +211,7 @@ EDINET real-data pathは別件で外部 `EDINET_API_KEY` 待ち。
 3. mean-rank — mean +6.89% / win 52.33% / Top3-ex +4.95%。
 4. body_pct LOW / volr20 LOW — comparator。
 
-**重要:** これはproduction GO順位ではない。2022 fresh robustnessを通過した候補はまだ0件。今回のCore contract修正はperformance evidenceではないためランキング影響なし。
+Consensus NOCAP H2 diagnosticは平均+3.03%だが、formal raw acceptance前・coverage-bypassed・Top3-ex負のため**このproduction-oriented順位には昇格させない**。
 
 ### Current decision
 
@@ -181,9 +221,9 @@ EDINET real-data pathは別件で外部 `EDINET_API_KEY` 待ち。
 - Weak+Earlyは2023-25で魅力的だが2022 fresh blockで安定性FAIL。
 - simple weak-market gateでは2023H2/2025H2を同時説明できない。
 - simple warm-up不足でも2022全体を説明できない。
-- Consensus formal raw acceptance未PASS。
+- Consensus midterm NOCAP H2は平均正だがcoverage-bypassedでTop3-ex負。formal raw acceptance未PASS。
 - Core/V20はreject/deprioritize済み。
 - Cloud exact replayは一次証拠不足でclosed。
 - OSS Optunaはcost0実装ギャップ修正待ち。
 
-次の高情報量チェックは **Phase-2 model-period診断** と **Consensus NOCAP H2診断回収**。Core/Cloud laneはremaining stale cost/endpoint contract監査を継続する。
+次の高情報量チェックは **Consensus formal retry終了→raw merge→frozen acceptance** と **Phase-2 model-period診断**。Consensusは同family retuneやCAP1000 H2 rescueを行わない。

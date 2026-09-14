@@ -459,6 +459,44 @@ def synthetic_checks() -> None:
     assert math.isclose(split_factor(sm, "X", pd.Timestamp("2025-04-01")), 1.0)
 
 
+def load_external_restored_daily(
+    path: Path,
+    receipt_path: Path,
+    expected_symbols: list[str],
+) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
+    receipt=json.loads(receipt_path.read_text(encoding="utf-8"))
+    if not receipt.get("accepted_for_daily_rebuild"):
+        raise RuntimeError("external restored daily receipt not accepted")
+    d=pd.read_csv(path,dtype={"symbol":str},low_memory=False)
+    d["symbol"]=d["symbol"].map(clean_symbol)
+    d["date"]=pd.to_datetime(d["date"],errors="coerce").dt.normalize()
+    for col in ["open","high","low","close","volume"]:
+        d[col]=pd.to_numeric(d[col],errors="coerce")
+    d=(d.dropna(subset=["date","symbol","open","high","low","close","volume"])
+         .drop_duplicates(["symbol","date"],keep="last")
+         .sort_values(["symbol","date"]).reset_index(drop=True))
+    got=set(d["symbol"].unique())
+    expected=set(expected_symbols)
+    missing=sorted(expected-got)
+    extra=sorted(got-expected)
+    if missing:
+        raise RuntimeError(f"external restored daily missing symbols: {missing[:20]}")
+    # External 96ut rows are point-in-time nominal OHLCV. Do not create
+    # synthetic split events for them; factor=1 preserves nominal semantics.
+    splits=pd.DataFrame(columns=["symbol","event_date","split_ratio"])
+    out_receipt={
+        "requested_restored_symbols":len(expected),
+        "usable_restored_symbols":len(expected),
+        "coverage_fraction":1.0,
+        "missing_symbols":[],
+        "extra_symbols":extra,
+        "restored_split_events":0,
+        "fetch_mode":"external accepted PIT nominal daily artifact",
+        "source_receipt":receipt,
+    }
+    return d,splits,out_receipt
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--frozen-daily", required=True, type=Path)
@@ -466,6 +504,8 @@ def main() -> None:
     ap.add_argument("--v46-splits", required=True, type=Path)
     ap.add_argument("--output-dir", required=True, type=Path)
     ap.add_argument("--batch", type=int, default=BATCH)
+    ap.add_argument("--external-restored-daily", type=Path)
+    ap.add_argument("--external-restored-receipt", type=Path)
     a = ap.parse_args()
 
     synthetic_checks()
@@ -488,10 +528,21 @@ def main() -> None:
     pit_union = set().union(*memberships.values()) if memberships else set()
     restored = sorted(pit_union - current_codes)
 
-    restored_daily, restored_splits, restored_receipt = batched_download_restored(
-        restored,
-        a.batch,
-    )
+    if (a.external_restored_daily is None) != (a.external_restored_receipt is None):
+        raise RuntimeError(
+            "external restored daily and receipt must be supplied together"
+        )
+    if a.external_restored_daily is not None:
+        restored_daily, restored_splits, restored_receipt = load_external_restored_daily(
+            a.external_restored_daily,
+            a.external_restored_receipt,
+            restored,
+        )
+    else:
+        restored_daily, restored_splits, restored_receipt = batched_download_restored(
+            restored,
+            a.batch,
+        )
 
     merged_daily = pd.concat(
         [frozen, restored_daily],

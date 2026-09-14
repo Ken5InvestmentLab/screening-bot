@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-14 22:02 JST  
+> **最終更新:** 2026-09-14 22:21 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **固定リンク:** https://github.com/Ken5InvestmentLab/screening-bot/blob/research/automation-coordination/research/RESEARCH_DASHBOARD.md
 
@@ -12,11 +12,12 @@
 |---|---|
 | 最終GO候補 | **0件** |
 | Active research branches | **4本** |
-| 全体マイルストーン進捗 | **約60%** — 成功確率ではなく、事前定義済み研究工程の消化率 |
+| 全体マイルストーン進捗 | **約61%** — 成功確率ではなく、事前定義済み研究工程の消化率 |
 | Weak+Early Phase-2 | 2022 fresh validation **FAILED ROBUSTNESS**。Round2は閉鎖 |
 | 2023-25暫定首位 | **DUAL + G3** mean +7.98% / win 53.85% / Top3-ex +5.14%（ただし2022 fresh fail） |
 | Consensus V47 | H1/H2はdiagnostic-only。NOCAP H2 cost0 = n37 / mean +3.03% / median +0.38% / win 51.35% / Top3-ex -0.54%。formal raw acceptance未PASS |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
+| Shadow/Data | **endpoint acquisition chronology guard追加**。取得日時がCSV内の最新データ日より前ならfail-closed。CI `34848598262` 実行中 |
 | Core / Cloud | Core既reject維持。Cloud exact replay **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
 | OSS / Validation | **Optuna cost0実装ギャップ解消 / CI 34846417896 SUCCESS**。次はtrial-ledger provenance固定 |
 | 最終判定 | **NO-GO / 研究継続** |
@@ -25,7 +26,7 @@
 
 | Lane | 進捗率 | 現在地 |
 |---|---:|---|
-| Canonical/Event + Shadow/Data | 約70% | V20中締め診断まで完了しDEPRIORITIZE。既reject familyは再開しない |
+| Canonical/Event + Shadow/Data | 約72% | V20はDEPRIORITIZE。Shadow endpoint provenanceにacquisition chronology fail-closed guardを追加 |
 | Core/Cloud | 約90% | Core reject確定、Cloud exact replayは同時代一次証拠欠落までforensic監査済み |
 | Consensus V47 | 約73% | daily/PIT契約済み、formal raw取得・acceptanceがblocker |
 | OSS/Validation | 約75% | Optuna cost0境界をCI固定。trial-ledger provenanceとEDINET実データsame-ZIPが残る |
@@ -38,14 +39,16 @@
 
 | Lane | HEAD | Status | Latest run | Next |
 |---|---|---|---|---|
-| Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | — | rejected/opened familyを救済retuneせずdata/repro監査 |
+| Canonical/Event + Shadow/Data | `7606b72f...` | V20 DEPRIORITIZE / Shadow temporal guard追加 | `34848598262` IN PROGRESS | CI回収後、staleness/temporal integrityをoutcome-blindで継続 |
 | **Core/Cloud** | **`30ddf912...`** | Core reject / Cloud exact replay unavailable | `34799307163` SUCCESS | 新しい同時代一次証拠のみ探索。無ければ再現性・endpoint監査 |
 | Consensus V47 | `4c202b16...` | diagnostic完了 / formal raw未PASS | `34810592135` **active/queued matrix** | active runを重複起動せず終了後artifact回収→frozen acceptance |
 | OSS/Validation | `098653c2...` | **Optuna cost0 implementation VERIFIED** | `34846417896` **SUCCESS** | completed-trial ledger/provenanceを改変不能化→PSR/DSR入力をreceiptへ拘束 |
 
-### 今回の横断回収
+### 今回のCanonical/Shadow更新
 
-Consensus branchは前回processed SHA `263b91af...` から2 commit進んだが、内容はbranch-local dashboard/stateの**coordination-only更新**。モデル、閾値、price arm、cooldown、selection policyの変更はない。formal raw retry `34810592135` は引き続きactiveで、観測済みshard 0–3は180分境界で終了し各artifact 166 bytesのためusable rawではない。重複retryは起動していない。
+既存のProspective Shadow daily endpoint guardは `acquired_at` がtimezone-awareであることは検証していたが、CSV内の最新market-data dateより取得日時が前でもmanifestを受理できる余地があった。これをtemporal provenance holeとして修正し、**`acquired_at` のcalendar date < pinned CSVの`last_date`ならmanifest作成時・検証時ともfail-closed**にした。strategy outcome、閾値、TopN、ranker、cooldown、endpointは一切変更していない。新規backtestもない。
+
+既存continuity CIでは候補削除・並べ替え、resolved endpoint改変、resolved→unresolved回帰、daily SHA改変、receipt改変など42 testsがgreenだった。今回のchronology guard用にcreation/validationの2 regression testsを追加し、run `34848598262` を実行中。直前の実装commitに対するrun `34848560630` はSUCCESS。
 
 ---
 
@@ -109,7 +112,7 @@ coverage-bypassed中締め診断はcost0でも全TopNが負で**DEPRIORITIZE**�
 
 ## 5. OSS / Validation
 
-### 今回解消したP0
+### 今回解消済みのP0
 
 Frozen contractではOptuna discovery/performanceはcost0必須だったが、実装API/CLIが0.5% defaultかつ非zero costを許容していた。これを以下で解消した。
 
@@ -145,6 +148,7 @@ EDINET実歴史same-ZIP cross-checkは、metadata no-replacement selector / dail
 
 ### P0
 - **Consensus V47 raw acquisition / frozen acceptance:** run `34810592135` active中。重複起動禁止。終了後artifactを回収し、usable real rawのみprovenance付きでmergeしてfrozen acceptanceを再実行。
+- **Shadow temporal integrity:** `34848598262` の結果回収。greenならacquisition chronology guardを固定し、次のstaleness/temporal provenance holeをoutcome-blindで監査。
 
 ### P1
 - **OSS trial-ledger provenance:** completed Optuna trial集合をimmutable receiptへ固定しPSR/DSR入力を拘束。
@@ -166,6 +170,7 @@ EDINET実歴史same-ZIP cross-checkは、metadata no-replacement selector / dail
 - Consensusはformal raw acceptance未PASS。
 - Core/V20はreject/deprioritize。
 - Cloud exact replayは一次証拠欠落でclosed。
+- Shadow/Dataはprovenance guardを強化中で、performance rankingには影響なし。
 - OSSのcost0実装ギャップは解消したが、multiple-testing provenanceとEDINET実same-ZIP監査が未完了。
 
 新規評価はすべて **cost 0%**、勝率は **gross return > 0**。過去の0.5%/1% costed結果はlegacy evidenceのみで、新しい順位・GO/NO-GOに使わない。

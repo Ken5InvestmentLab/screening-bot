@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 00:08 JST  
+> **最終更新:** 2026-09-15 00:25 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **固定リンク:** https://github.com/Ken5InvestmentLab/screening-bot/blob/research/automation-coordination/research/RESEARCH_DASHBOARD.md
 
@@ -17,7 +17,7 @@
 | Parallel Wave-1 | **新規独立レーン登録済み**。A/B/Eをoutcome未開封で選定し、exact manifest凍結済み |
 | Consensus V47 | 48-shard retry `34849054884` active。fetch(0)/fetch(1) raw取得中、accepted artifact 0 |
 | V20 | **DEPRIORITIZE** |
-| Shadow/Data | endpoint acquisition chronology guard CI GREEN |
+| Shadow/Data | endpoint `expected_through_date` completeness guard **CI GREEN** |
 | Core / Cloud | fixed Core reject維持。Cloud exact replay unavailable。endpoint provenance primitiveは凍結済み、real receipt/wiring待ち |
 | OSS / Validation | cost0 + immutable trial ledger primitive GREEN。DSR receipt binding待ち |
 | 最終判定 | **NO-GO / 研究継続** |
@@ -28,7 +28,7 @@
 
 | Lane | HEAD | Status | Next |
 |---|---|---|---|
-| Canonical/Event + Shadow/Data | `7606b72f...` | V20 deprioritized / temporal guard GREEN | staleness・endpoint completenessをoutcome-blind監査 |
+| Canonical/Event + Shadow/Data | `208e1358...` | V20 deprioritized / endpoint completeness guard GREEN | frozen prospective ledgerに対するsymbol-set・endpoint-session completenessをoutcome-blind監査 |
 | Core/Cloud | `6e7dfa45...` | reject維持 / endpoint provenance primitive frozen | real XTKS/vendor manifest + immutable source receipt + evaluator wiring/CI |
 | Consensus V47 | `fc96b801...` | raw48 retry active | 重複起動せずusable artifact/timeout receipt監査→frozen acceptance |
 | OSS/Validation | `7704641d...` | immutable completed-trial receipt primitive verified | `run_study`/DSRをreceipt-bound化 |
@@ -127,7 +127,7 @@ Formal raw acceptanceは未PASS。48-shard retry run `34849054884` はsingle-act
 ## 7. Other lanes
 
 ### Canonical / Shadow
-Endpoint manifestは`acquired_at`がcontained market-data最新日より前ならfail-closed。CI `34848598262` SUCCESS。V20はdeprioritizedのまま。
+Endpoint provenanceをさらにfail-closed化。`acquired_at` がcontained market-data最新日より前なら拒否する既存guardに加え、manifestへ明示的な `expected_through_date` を必須化した。`acquired_at` が期待日より前、またはCSVの `last_date` が期待日を覆わない場合は拒否するため、**取得時刻だけ新しいが中身が途中まで/古いstale CSV**をhash整合だけで通せなくなった。CLI fixtureも新契約へ合わせ、Prospective Shadow CI `34861810023` **SUCCESS**。この作業ではperformance/outcomeを新規開封していない。V20はdeprioritizedのまま。
 
 ### Core / Cloud
 Fixed Coreはreplacement candidateとしてreject維持。旧Cloud Monster n63 / historical mean +9.86%はlegacy evidenceのみで、exact replayは **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。pinned XTKS/vendor exact endpoint primitiveは凍結済みだが、real manifest/source receipt + evaluator wiring/CI前にperformance再計算しない。
@@ -142,7 +142,7 @@ Optuna cost0-onlyはGREEN。immutable completed-trial ledger/receipt primitive�
 1. **Parallel Wave-1:** preserved-source/schema receipt bind → A1/B1/E1 fail-closed implementation → untouched confirmationを残してsingle cost0 batch。
 2. **Weak+Early:** Round2閉鎖維持。population scarcity / forced-choiceをoutcome-blind監査。
 3. **Consensus:** run `34849054884` を重複起動せずfirst usable artifactまたはtimeout receiptを回収し、終了後frozen acceptance。
-4. **Canonical/Shadow:** staleness / temporal integrity / endpoint completeness監査。
+4. **Canonical/Shadow:** frozen prospective selection ledgerに対するsymbol-set / endpoint-session completenessをoutcome-blind監査。
 5. **Core:** real XTKS/vendor manifest + source receipt + evaluator wiring/CI。
 6. **OSS:** `run_study`/DSR completed-trial receipt binding。
 7. Formal/comparable evidenceが揃ったlaneだけでcross-lane arbitration。
@@ -153,6 +153,6 @@ Optuna cost0-onlyはGREEN。immutable completed-trial ledger/receipt primitive�
 
 **NO-GO / 研究継続**
 
-Weak+Earlyは2023-25で強いが2022 fresh robustness fail。Round2は規約どおり閉鎖。並列新探索はperformanceをまだ開けずにA/B/Eのcausal readinessとexact manifest凍結まで進行した。V47はformal raw待ち。Core/Cloud/OSSもprovenance工程が残る。
+Weak+Earlyは2023-25で強いが2022 fresh robustness fail。Round2は規約どおり閉鎖。並列新探索はperformanceをまだ開けずにA/B/Eのcausal readinessとexact manifest凍結まで進行した。V47はformal raw待ち。Core/Cloud/OSSもprovenance工程が残る。Shadow/Dataはendpoint chronologyに加えてexplicit expected-through completenessまでCI-green化した。
 
 新規performance比較はすべて **cost 0%**、winは **gross return > 0**。

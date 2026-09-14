@@ -1,0 +1,92 @@
+name: V20 Session-Impulse H1 Raw Repair
+
+on:
+  push:
+    branches:
+      - research/tvfree-canonical-batch02
+    paths:
+      - 'research/RUN_V20_SESSION_IMPULSE_H1_REPAIR'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: v20-session-impulse-h1-repair
+  cancel-in-progress: false
+
+jobs:
+  repair_and_verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned dependencies
+        run: python -m pip install --disable-pip-version-check pandas==3.0.5 numpy==2.5.3
+      - name: Download original frozen V20 H1 universe
+        uses: actions/download-artifact@v5
+        with:
+          name: v20-h1-universe-34774070956
+          path: universe
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34774070956
+      - name: Download original V20 H1 raw shards
+        uses: actions/download-artifact@v5
+        with:
+          pattern: v20-h1-raw-shard-*-34774070956
+          path: raw_original
+          merge-multiple: true
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34774070956
+      - name: Download frozen canonical daily
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: frozen
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Outcome-blind targeted raw repair
+        run: |
+          mkdir -p repaired receipt
+          python tvfree_screener/batch02/repair_v20_h1_raw.py \
+            --symbols universe/v20_h1_symbols.txt \
+            --daily frozen/tse_daily.csv \
+            --raw-glob 'raw_original/ohlcv_1h_shard_*.csv' \
+            --identity-map tvfree_screener/batch02/V20_H1_VERIFIED_PREDECESSOR_MAP_20260914.json \
+            --output repaired/v20_h1_raw_repaired.csv \
+            --audit repaired/v20_h1_raw_repair_audit.json \
+            --failures repaired/v20_h1_raw_repair_failures.json
+      - name: Unchanged fail-closed raw acceptance verifier
+        run: |
+          python tvfree_screener/batch02/verify_v20_h1_raw_coverage.py \
+            --symbols universe/v20_h1_symbols.txt \
+            --daily frozen/tse_daily.csv \
+            --raw-glob 'repaired/v20_h1_raw_repaired.csv' \
+            --failures-glob 'repaired/v20_h1_raw_repair_failures.json' \
+            --output receipt/v20_h1_raw_coverage_receipt.json
+      - name: Evidence hashes
+        if: always()
+        run: |
+          sha256sum tvfree_screener/batch02/V20_H1_RAW_REPAIR_PREREG_20260914.json > receipt/repair_contract_sha256.txt
+          sha256sum tvfree_screener/batch02/V20_H1_VERIFIED_PREDECESSOR_MAP_20260914.json > receipt/predecessor_map_sha256.txt
+          sha256sum tvfree_screener/batch02/repair_v20_h1_raw.py > receipt/repair_code_sha256.txt
+          find repaired -type f -print0 | sort -z | xargs -0 sha256sum > receipt/repaired_SHA256SUMS.txt || true
+          git rev-parse HEAD > receipt/workflow_commit_sha.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v20-h1-raw-repair-${{ github.run_id }}
+          path: |
+            repaired/**
+            receipt/**
+          if-no-files-found: error
+          retention-days: 90

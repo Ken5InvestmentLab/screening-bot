@@ -12,7 +12,7 @@
 |---|---|
 | 最終GO候補 | **まだ0件** |
 | Active research branches | **4本** |
-| 現在の実観測暫定首位 | **weak+early + body_pct LOW** |
+| 現在のPhase-2暫定首位 | **DUAL_TOP1_AGREEMENT（body_pct Top1 = volr20 Top1の日だけ採用）** |
 | 正式promotion evidenceでGO可能な候補 | **0件** |
 | V47 | **clean Daily PIT PASS / raw retry中 / performance未計算** |
 | V20 | **coverage-bypassed診断をcost 0%で開封、全TopN負でDEPRIORITIZE** |
@@ -46,34 +46,41 @@
 
 ## 2. 暫定ランキング — 実観測performance
 
-### 1位 weak+early + body_pct LOW
-- 2023-2024: **n=128 / mean +6.46% / median +1.25% / win 52.34% / +10 29.69% / +20 17.97% / +50 7.81% / -10 28.12% / -20 7.81% / Top1-ex +5.64% / Top3-ex +4.03%**
-- 2025 descriptive: **n=44 / mean +6.78% / median -3.76% / win 45.45% / +10 36.36% / +20 20.45% / +50 6.82% / -10 31.82% / -20 6.82% / Top1-ex +3.92% / Top3-ex +0.03%**
-- 2023-2025 total: **n=172 / mean +6.54% / median +0.99% / win 50.58% / +10 31.40% / +20 18.60% / +50 7.56% / -10 29.07% / -20 7.56% / Top1-ex +5.82% / Top3-ex +4.60%**
-- endpoint: next XTKS open -> fifth XTKS close / **cost 0%**
-- **Disposition:** CURRENT BEST OBSERVED IMPLEMENTABLE CONDITION
+### 1位 DUAL_TOP1_AGREEMENT — Phase-2 primary challenger
+- 定義: weak+early候補群で **body_pct ascending Top1 と volr20 ascending Top1 が同一symbolの日だけ採用**。不一致日はNO TRADE。
+- 2023-2024: **n=103 / mean +6.88% / median +1.39% / win 53.40% / Top3-ex +3.86%**
+- 2025: **n=37 / mean +7.97% / median -2.40% / win 48.65% / Top3-ex -0.06%**
+- 2023-2025 total: **n=140 / mean +7.17% / median +1.25% / win 52.14% / Top3-ex +4.79%**
+- cost **0%**
+- **Disposition:** PHASE-2 PRIMARY CHALLENGER。平均は現基盤3条件を上回るが、2023H2/2025H2のregime弱点は残る。
 
-### 2位 weak+early + volr20 LOW
-- 2023-2024: **n=128 / mean +6.24% / median +1.06% / win 52.34% / +10 29.69% / +20 18.75% / +50 8.59% / -10 25.78% / -20 7.81% / Top1-ex +5.41% / Top3-ex +3.81%**
-- 2025 descriptive: **n=44 / mean +6.58% / median +0.37% / win 50.00% / +10 36.36% / +20 18.18% / +50 6.82% / -10 31.82% / -20 6.82% / Top1-ex +3.71% / Top3-ex -0.19%**
-- 2023-2025 total: **n=172 / mean +6.33% / median +1.06% / win 51.74% / +10 31.40% / +20 18.60% / +50 8.14% / -10 27.33% / -20 7.56% / Top1-ex +5.60% / Top3-ex +4.38%**
-- endpoint: next XTKS open -> fifth XTKS close / **cost 0%**
-- **Disposition:** VERY CLOSE SECOND
+### 2位 weak+early + mean-rank(volr20, body_pct)
+- 2023-2025 total: **n=172 / mean +6.89% / median +1.45% / win 52.33% / Top3-ex +4.95%**
+- cost **0%**
+- **Disposition:** BASELINE LEADER
 
-### 3位 weak+early + mean-rank(volr20, body_pct)
-- 2023-2024: **n=128 / mean +7.16% / median +1.81% / win 54.69% / +10 31.25% / +20 19.53% / +50 8.59% / -10 25.78% / -20 7.81% / Top1-ex +6.35% / Top3-ex +4.75%**
-- 2025: **n=44 / mean +6.09% / median -4.04% / win 45.45% / +10 34.09% / +20 18.18% / +50 6.82% / -10 34.09% / -20 6.82% / Top1-ex +3.20% / Top3-ex -0.71%**
-- 2023-2025 total: **n=172 / mean +6.89% / median +1.45% / win 52.33% / +10 31.98% / +20 19.19% / +50 8.14% / -10 27.91% / -20 7.56% / Top1-ex +6.17% / Top3-ex +4.95%**
-- endpoint: next XTKS open -> fifth XTKS close / **cost 0%**
-- headlineは最強だが2025の中央値・Top3 robustnessは弱い。
+### 3位 weak+early + body_pct LOW
+- 2023-2025 total: **n=172 / mean +6.54% / median +0.99% / win 50.58% / Top3-ex +4.60%**
+- cost **0%**
+- **Disposition:** RIGHT-TAIL BASELINE
 
-### 4位以降の参考
-- V29 fixed_min98_both: historical n=35 / mean +4.86% / median +2.90%。population/endpointが異なり再現不能。
-- 旧Cloud Monster Priority A: historical n=63 / mean +9.86%。exact probability model消失、実装不能のため**歴史的参考値**。
-- weak+early × V31 full-JPX: pre-2026 n=69 / mean +3.77%だがApril 2025依存が強く、April除外で約+0.04%。
+### 4位 weak+early + volr20 LOW
+- 2023-2025 total: **n=172 / mean +6.33% / median +1.06% / win 51.74% / Top3-ex +4.38%**
+- cost **0%**
+- **Disposition:** STABILITY COMPARATOR
 
-**注意:** このランキングは中締め診断ランキングであり、正式GO順位ではない。
+### 共通弱点
+- 2023H2は全候補で弱い。
+- 2025H2は平均プラスでも勝率/中央値が弱い。
+- 次の主要課題はranker追加ではなく **causal market-regime / NO-TRADE判定**。
 
+### Phase-2方針
+- 広いfeature/ranker探索は停止。
+- research/WEAK_EARLY_PHASE2_20260914.md をfreeze basisにする。
+- 可能なら **2022をfresh validation** として4候補を無調整で再評価。
+- breadth_ma20<=0.5 overlayは探索上は確認したが全期間で明確改善せず、promotionしない。
+
+**注意:** このランキングは中締め/Phase-2診断ランキングであり、production GO順位ではない。
 ---
 
 ## 3. 正式promotion path / lane status

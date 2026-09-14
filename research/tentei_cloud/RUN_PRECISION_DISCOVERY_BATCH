@@ -1,0 +1,6 @@
+trigger: 2026-09-14 precision-discovery-batch-v1
+spec: PRECISION-BATCH-20260914-01
+open: DEVELOPMENT only
+internal_validation: CLOSED
+2025H2: CLOSED
+2026: CLOSED

@@ -4,11 +4,13 @@ import argparse
 import csv
 import hashlib
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 from tvfree_screener.batch02.prospective_shadow_verified_resolve import verified_resolve_shadow_file
 from tvfree_screener.batch02.prospective_shadow_session_calendar_guard import validate_xtks_calendar
 from tvfree_screener.batch02.prospective_shadow_daily_endpoint_guard import validate_daily_endpoint_dataset
+from tvfree_screener.batch02.prospective_shadow_resolution_receipt import build_resolution_receipt, write_immutable_receipt
 from tvfree_screener.batch02.prospective_shadow_admission_gate import evaluate_shadow_admission
 from tvfree_screener.batch02.prospective_shadow_verified_append import verified_append
 
@@ -173,7 +175,21 @@ def cmd_ingest(args: argparse.Namespace) -> None:
 
 
 def cmd_resolve(args: argparse.Namespace) -> None:
-    freeze = load_freeze_manifest(Path(args.freeze_manifest), args.freeze_sha256)
+    freeze_manifest_path = Path(args.freeze_manifest)
+    freeze = load_freeze_manifest(freeze_manifest_path, args.freeze_sha256)
+    resolution_receipt_path = Path(args.resolution_receipt)
+    if resolution_receipt_path.exists():
+        out = {
+            "operation": "resolve",
+            "resolved_written": False,
+            "decision": "BLOCK_CLI_RESOLUTION_RECEIPT_ALREADY_EXISTS",
+            "experiment_id": freeze["experiment_id"],
+            "model_freeze_id": freeze["model_freeze_id"],
+            "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
+        }
+        write_summary(Path(args.summary), out)
+        print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
+        raise SystemExit(2)
     daily_manifest_path = Path(args.daily_manifest)
     daily_manifest = json.loads(daily_manifest_path.read_text(encoding="utf-8"))
     daily_provenance = validate_daily_endpoint_dataset(Path(args.daily), daily_manifest)
@@ -222,6 +238,23 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         raise SystemExit(2)
 
     result = verified_resolve_shadow_file(Path(args.shadow), Path(args.resolved), daily_rows, sessions)
+    if result.get("resolved_written", False):
+        receipt = build_resolution_receipt(
+            freeze_manifest=freeze,
+            freeze_manifest_path=freeze_manifest_path,
+            shadow_path=Path(args.shadow),
+            daily_path=Path(args.daily),
+            daily_manifest_path=daily_manifest_path,
+            sessions_csv_path=sessions_csv,
+            sessions_manifest_path=sessions_manifest,
+            resolved_path=Path(args.resolved),
+            resolve_result=result,
+            created_at=datetime.now(timezone.utc).isoformat(),
+        )
+        write_immutable_receipt(resolution_receipt_path, receipt)
+    else:
+        receipt = None
+
     out = {
         "operation": "resolve",
         "experiment_id": freeze["experiment_id"],
@@ -232,6 +265,8 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         "daily_manifest_sha256": sha256_file(daily_manifest_path),
         "daily_endpoint_provenance": daily_provenance,
         "session_calendar": calendar,
+        "resolution_receipt_sha256": None if receipt is None else receipt["receipt_sha256"],
+        "resolution_receipt_path": str(resolution_receipt_path),
         **result,
     }
     write_summary(Path(args.summary), out)
@@ -263,6 +298,7 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("--resolved", required=True)
     resolve.add_argument("--sessions-csv")
     resolve.add_argument("--sessions-manifest")
+    resolve.add_argument("--resolution-receipt", required=True)
     resolve.add_argument("--summary", required=True)
     resolve.set_defaults(func=cmd_resolve)
     return p

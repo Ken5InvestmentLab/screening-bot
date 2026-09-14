@@ -1,12 +1,12 @@
 {
-  "version": 34,
+  "version": 35,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T22:49:00+09:00",
+  "updated_at_jst": "2026-09-14T23:05:00+09:00",
   "supervisor_last_scan": {
-    "status": "V47_48_SHARD_RETRY_TRIGGERED_WEAK_EARLY_ROUND2_CLOSED",
-    "scanned_at_jst": "2026-09-14T22:26:00+09:00",
+    "status": "CONSENSUS_NEW_SHA_PROCESSED_V47_48_SHARD_ACTIVE_WEAK_EARLY_ROUND2_CLOSED",
+    "scanned_at_jst": "2026-09-14T23:05:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All registered lane HEADs were scanned. Canonical/Core/OSS had no unprocessed HEAD. Consensus prior 12-shard raw1H run 34810592135 repeatedly hit 180-minute shard timeouts and is now cancelled by concurrency; existing 48-shard workflow was triggered as run 34849054884 without changing frozen strategy/model/threshold/price-arm/cooldown contracts. Weak+Early Round2 remains closed; no post-hoc gate retune."
+    "note": "All registered lane HEADs were scanned. Canonical/Core/OSS had no unprocessed HEAD. Consensus advanced from 7849ad97 to 0d4aabac with a state-only sync for the active 48-shard retry; diff was inspected and contains no strategy/model/threshold/price-arm/cooldown change. Run 34849054884 remains active with fetch(0)/fetch(1) in Fetch raw 1H shard and no artifacts yet. No duplicate trigger. Weak+Early Round2 remains closed after 2022 fresh robustness failure; no post-hoc gate retune."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -18,25 +18,25 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "7606b72f33d456d363fb374520e63354ce10c67b",
       "last_processed_sha": "7606b72f33d456d363fb374520e63354ce10c67b",
-      "last_processed_note": "Shadow/Data temporal integrity advanced: endpoint manifests now fail closed when acquired_at predates the latest contained market-data date. Creation/validation regression tests added and CI 34848598262 SUCCESS. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "Shadow/Data temporal integrity advanced: endpoint manifests fail closed when acquired_at predates latest contained market-data date. CI 34848598262 SUCCESS."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "c41cb8978b806c194f1b380331cd28bb75e772c4",
       "last_processed_sha": "c41cb8978b806c194f1b380331cd28bb75e772c4",
-      "last_processed_note": "22:47 outcome-blind endpoint reproducibility audit completed. Existing evaluator is cost0-only but maps endpoints from observed raw dates and first/last available raw rows; pinned XTKS calendar plus endpoint-row completeness/fail-closed provenance must be frozen before any new canonical relabeling. No backtest, no rejected-family reopen, Cloud exact replay still unavailable."
+      "last_processed_note": "Outcome-blind endpoint reproducibility audit complete. Pin XTKS calendar and fail closed on incomplete endpoint rows before any new canonical relabeling. Cloud exact replay remains unavailable."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
-      "last_processed_sha": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
-      "last_processed_note": "Supervisor confirmed prior 12-shard run 34810592135 had repeated 180-minute shard timeouts and triggered the already-prepared 48-shard raw1H workflow via commit 7849ad97. New run 34849054884 is pending; old run is cancelled by concurrency. Frozen strategy/model/threshold/price-arm/cooldown contracts unchanged."
+      "last_seen_sha": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
+      "last_processed_sha": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
+      "last_processed_note": "23:05 supervisor processed state-sync commit 0d4aabac. 48-shard run 34849054884 remains active; fetch(0)/fetch(1) are in raw fetch, remaining visible jobs queued, artifacts=0. No duplicate trigger and frozen contracts unchanged."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "098653c2238ccdd5418f7be821ff2237d775a112",
       "last_processed_sha": "098653c2238ccdd5418f7be821ff2237d775a112",
-      "last_processed_note": "P0 Optuna cost0 contract/implementation mismatch resolved. API/CLI default to 0.0, nonzero cost fails closed, explicit rejection test added, isolated CI 34846417896 SUCCESS. Next: immutable completed-trial ledger/provenance before DSR consumption."
+      "last_processed_note": "P0 Optuna cost0 mismatch resolved; API/CLI cost0-only and CI 34846417896 SUCCESS. Next immutable completed-trial ledger/provenance."
     }
   },
   "guardrails": [
@@ -57,7 +57,8 @@
         "dual_top1": {"n": 21, "mean_pct": 2.62, "median_pct": -6.19, "win_pct": 28.57, "top3_ex_pct": -7.55},
         "dual_g3": {"n": 17, "mean_pct": 6.08, "median_pct": -6.0, "win_pct": 29.41, "top3_ex_pct": -6.26}
       },
-      "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION"
+      "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
+      "next_rule": "Continue outcome-blind population/scarcity/forced-choice audit only; do not create a new gate from opened 2022/2023H2/2025H2 outcomes."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
@@ -70,24 +71,15 @@
       "head": "7606b72f33d456d363fb374520e63354ce10c67b",
       "latest_ci_run": 34848598262,
       "latest_ci_status": "success",
-      "change": "Daily endpoint provenance rejects manifests whose acquired_at calendar date precedes the latest market-data date contained in the pinned CSV; both manifest creation and verification fail closed.",
       "performance_opened": false
     },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
-      "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
-      "precision_prior_close_reclaim": "REJECT_PRECONFIRMATION",
-      "precision_three_family_batch": "REJECT_DEVELOPMENT",
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
       "latest_audit_head": "c41cb8978b806c194f1b380331cd28bb75e772c4",
-      "latest_action_run": 34799307163,
-      "latest_action_status": "success",
-      "new_forensic_log": "research/tentei_cloud/CORE_ENDPOINT_REPRO_AUDIT_20260914_2247.md",
-      "evidence_surface_finding": "No .pkl/.pickle/.joblib/.onnx/.pt/.pth/.sav/.ipynb in current branch tree. mtf_monster_model.py first appears 2026-09-11 at 0de654b4..., so it is modern research code and not an exact historical replay source.",
-      "endpoint_repro_audit": "Observed raw-date calendar and first/last-available endpoint reconstruction are not sufficient provenance for canonical comparability; pin XTKS calendar and fail closed on incomplete required endpoint rows before any new relabeling.",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous identity-critical evidence appears; no model-family guessing or portability replay. Freeze data-only XTKS calendar/endpoint completeness receipt before any new canonical relabeling; do not reopen rejected families."
+      "endpoint_repro_audit": "Observed raw-date calendar and first/last-available endpoint reconstruction are insufficient for canonical provenance; pin XTKS calendar and endpoint-row completeness receipt before new relabeling."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -95,13 +87,14 @@
       "superseded_retry_run": 34810592135,
       "superseded_retry_status": "cancelled_after_repeated_180min_timeouts",
       "formal_retry_run": 34849054884,
-      "formal_retry_status": "pending_48_shard_matrix",
-      "retry_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
-      "observed_timeout_shards": [0, 1, 2, 3],
-      "observed_timeout_artifact_bytes_each": 166,
+      "formal_retry_status": "active_48_shard_fetch_no_artifacts_yet",
+      "retry_trigger_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
+      "lane_head": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
+      "active_shards_observed": [0, 1],
+      "artifact_count_observed": 0,
       "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393},
       "promotion_evidence": false,
-      "next_rule": "Do not duplicate-trigger run 34849054884 while active. After it ceases, inspect all shard artifacts; merge only usable real raw with provenance, rerun frozen acceptance, and keep formal promotion closed unless acceptance passes."
+      "next_rule": "Do not duplicate-trigger run 34849054884. On first completed artifacts inspect payload/provenance; after run completion merge only usable real raw and rerun frozen acceptance."
     },
     "oss_validation": {
       "head": "098653c2238ccdd5418f7be821ff2237d775a112",
@@ -109,46 +102,15 @@
       "latest_ci_run": 34846417896,
       "latest_ci_status": "success",
       "real_edinet_blocker": "external EDINET_API_KEY",
-      "next_rule": "Bind PSR/DSR input to an immutable completed-trial ledger/provenance receipt; missing/extra/reordered/modified completed trials must fail closed."
+      "next_rule": "Bind PSR/DSR input to immutable completed-trial ledger/provenance receipt."
     }
   },
-  "core_worker_last_scan": {
-    "scanned_at_jst": "2026-09-14T22:49:00+09:00",
-    "start_head": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
-    "end_head": "c41cb8978b806c194f1b380331cd28bb75e772c4",
-    "duplicate_sha_processed": false,
-    "cloud_stage": "EXACT_REPRO_UNAVAILABLE_ENDPOINT_PROVENANCE_AUDIT",
-    "new_backtest": false,
-    "ranking_changed": false
-  },
-  "oss_worker_last_scan": {
-    "scanned_at_jst": "2026-09-14T22:01:30+09:00",
-    "start_head": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-    "end_head": "098653c2238ccdd5418f7be821ff2237d775a112",
-    "duplicate_sha_processed": false,
-    "cross_lane_consensus_processed": true,
-    "cost0_gap_resolved": true,
-    "new_backtest": false,
-    "ranking_changed": false
-  },
-  "canonical_worker_last_scan": {
-    "scanned_at_jst": "2026-09-14T22:22:00+09:00",
-    "start_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "end_head": "7606b72f33d456d363fb374520e63354ce10c67b",
-    "duplicate_sha_processed": false,
-    "v20_changed": false,
-    "shadow_temporal_guard_added": true,
-    "shadow_temporal_guard_ci": "success",
-    "new_backtest": false,
-    "ranking_changed": false
-  },
   "next_global_actions": [
-    "Canonical/Shadow: chronology guard is CI-green; continue staleness/temporal integrity audit without opening strategy outcomes or retuning rejected/opened families.",
-    "Phase-2: continue outcome-blind population/scarcity audit; do not create post-hoc gates from opened outcomes.",
-    "Consensus: run 34849054884 is the active 48-shard retry; do not duplicate-trigger. On completion inspect artifacts and rerun frozen acceptance before any promotion evidence.",
-    "OSS: bind PSR/DSR consumption to immutable completed-trial ledger/provenance receipt; keep all new discovery/performance cost0-only.",
-    "OSS/EDINET: real historical metadata/same-ZIP execution remains blocked on external EDINET_API_KEY; preserve preregistered no-replacement sampling and hash-chain rules.",
-    "Core: rejected families stay closed; freeze pinned XTKS calendar plus endpoint-row completeness/fail-closed provenance before any new canonical relabeling.",
-    "Cloud: reopen exact replay only on genuinely contemporaneous identity-critical evidence; modern MTF surrogate code is explicitly excluded."
+    "Phase-2: continue outcome-blind population/scarcity audit; Round2 remains closed and no post-hoc gate retune is allowed.",
+    "Consensus: run 34849054884 remains active; do not duplicate-trigger. Inspect first artifacts when they appear, then frozen acceptance after completion.",
+    "Canonical/Shadow: continue staleness/temporal integrity audit without opening strategy outcomes.",
+    "Core: freeze pinned XTKS calendar plus endpoint-row completeness/fail-closed provenance before any new canonical relabeling.",
+    "OSS: immutable completed-trial ledger/provenance before DSR consumption; all new performance cost0-only.",
+    "Cloud: exact replay stays closed absent genuinely contemporaneous identity-critical evidence."
   ]
 }

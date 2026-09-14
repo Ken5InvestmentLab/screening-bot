@@ -1,12 +1,12 @@
 {
-  "version": 60,
+  "version": 61,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T05:34:00+09:00",
+  "updated_at_jst": "2026-09-15T05:58:00+09:00",
   "supervisor_last_scan": {
-    "status": "NO_NEW_ACTIVE_HEADS_CLOSE_DEAD_WORK",
-    "scanned_at_jst": "2026-09-15T05:00:00+09:00",
+    "status": "ABSORBED_NEW_V47_COORDINATION_HEAD_NO_STRATEGY_EVIDENCE",
+    "scanned_at_jst": "2026-09-15T05:58:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All STATE-registered active lane HEADs were reconciled at 05:00. Core24 subsequently advanced only the outcome-blind raw1H artifact provenance path; rejected families and Cloud exact remain closed."
+    "note": "Consensus lane advanced from fd7f7c5 to 7be0268 with coordination-only transport state. Authoritative raw48 run remains nonterminal; shards 0-3 completed mechanically but yielded 324/324 HTTP429 and zero usable rows; shards 4-5 remain in progress. No performance opened. Other registered active lane HEADs unchanged and already processed."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,7 +16,7 @@
   "branches": {
     "research/tvfree-canonical-batch02": {"preferred_worker":"canonical","last_seen_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","last_processed_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","task_state":"ACTIVE","last_processed_note":"Schema-v2 full Shadow/Data provenance link-tamper regression added across selection ledger, daily manifest, XTKS calendar CSV/manifest, completeness receipt and resolve_result; CI 34893503640 SUCCESS; performance unopened. Exact continuation: inspect prospective_shadow_resolution_receipt replay/rollback and cross-run chain continuity, then add the smallest outcome-blind fail-closed regression without opening performance."},
     "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"3b4a612358a9b8e9b872fc6a14457cdedeaa9385","last_processed_sha":"3b4a612358a9b8e9b872fc6a14457cdedeaa9385","task_state":"ACTIVE_DATA_REPAIR","last_processed_note":"Added fail-closed exact-byte manifest for all eight raw1H fetch shards plus tests/workflow wiring. Contract CI 34893121437 SUCCESS. Real retained 8-shard bytes and exact expected endpoint-key universe still need pinning before one-shot missing inventory; performance unopened."},
-    "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"fd7f7c5d26f154a760dd9a025bb242620bce0dc9","last_processed_sha":"fd7f7c5d26f154a760dd9a025bb242620bce0dc9","task_state":"EXTERNAL_WAIT_ACTIVE_RUN","last_processed_note":"Raw48 run 34849054884 nonterminal; shards 0-3 zero-row HTTP429. No duplicate trigger."},
+    "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"7be02687629d41dbd8fb3ee94e182ed13cf02b0f","last_processed_sha":"7be02687629d41dbd8fb3ee94e182ed13cf02b0f","task_state":"EXTERNAL_WAIT_ACTIVE_RUN","last_processed_note":"Absorbed 05:37 coordination-only update. Raw48 run 34849054884 remains in_progress/nonterminal; only shards 0-3 have visible completed artifacts, totaling 324/324 HTTP429 and zero usable rows. Jobs 4/5 are still fetching. No duplicate trigger and no strategy/performance evidence."},
     "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","last_processed_sha":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","task_state":"ACTIVE","last_processed_note":"Receipt-bound DSR control verified; move to next outcome-blind validation task."},
     "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"ACTIVE","last_processed_note":"Independent XTKS calendar + outcome-blind endpoint verifier frozen. Next causal pick ledger -> completeness receipt -> one-shot cost0 evaluation."}
   },
@@ -31,7 +31,7 @@
     "weak_early_phase2": {"status":"FRESH_2022_FAILED_ROUND2_CLOSED","task_state":"CLOSED","leader":"DUAL+G3","leader_2023_25":{"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},"g3_threshold":"med_ret1 >= -0.01 FROZEN","fresh_2022":"FAILED_ROBUSTNESS","round2":"CLOSED","reopen_condition":"none under frozen Phase-2; retain as research record/comparator only"},
     "v20_session_impulse": {"status":"DEPRIORITIZED_CLOSED_ACTIVE_QUEUE","task_state":"CLOSED","formal_promotion_eligible":false,"cost_pct_points":0.0},
     "shadow_data_integrity": {"status":"FULL_PROVENANCE_TAMPER_REGRESSION_CI_GREEN","task_state":"ACTIVE","head":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","latest_ci_run":34893503640,"latest_ci_status":"success","performance_opened":false,"next_rule":"Exact continuation: audit resolution-receipt replay/rollback and cross-run chain continuity; add only an outcome-blind fail-closed regression/control, with no performance opening."},
-    "consensus_v47": {"task_state":"EXTERNAL_WAIT","head":"fd7f7c5d26f154a760dd9a025bb242620bce0dc9","daily_coverage_pass":true,"frozen_coverage_acceptance_pass":false,"formal_retry_run":34849054884,"formal_retry_status":"ACTIVE_SYSTEMIC_HTTP429_BLOCKED","completed_zero_row_shards":[0,1,2,3],"active_fetch_shards":[4,5],"promotion_evidence":false,"midterm_nocap_h2":{"n":37,"mean_pct":3.0295,"median_pct":0.3817,"win_pct":51.35,"top3_ex_pct":-0.5393}},
+    "consensus_v47": {"task_state":"EXTERNAL_WAIT","head":"7be02687629d41dbd8fb3ee94e182ed13cf02b0f","daily_coverage_pass":true,"frozen_coverage_acceptance_pass":false,"formal_retry_run":34849054884,"formal_retry_status":"ACTIVE_SYSTEMIC_HTTP429_BLOCKED","completed_zero_row_shards":[0,1,2,3],"active_fetch_shards":[4,5],"visible_artifact_count":4,"new_artifact_since_0537":false,"promotion_evidence":false,"midterm_nocap_h2":{"n":37,"mean_pct":3.0295,"median_pct":0.3817,"win_pct":51.35,"top3_ex_pct":-0.5393}},
     "parallel_wave1": {"status":"SOURCE_SCHEMA_XTKS_PINNED_ENDPOINT_VERIFIER_IMPLEMENTED_PICK_LEDGER_PENDING_PERFORMANCE_UNOPENED","task_state":"ACTIVE","head":"858998cceb10f263d181233a20c55c5bc4f92aa6","calendar_sha256":"58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b","calendar_sessions":1220,"source_csv_sha256":"6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0","source_rows":4061361,"selected_families":["A_COMPRESSION_EXPANSION","B_RELATIVE_REVERSAL","E_PRIOR_STRUCTURE_PROXIMITY"],"performance_opened":false},
     "core": {"task_state":"ACTIVE_PROVENANCE","current_fixed_core":"REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE","old_cloud_monster_forensic":"CLOSED_HISTORICAL_EXACT_REPRO_UNAVAILABLE","endpoint_provenance_status":"RAW1H_8SHARD_BYTE_MANIFEST_CI_GREEN_REAL_BYTES_PENDING","head":"3b4a612358a9b8e9b872fc6a14457cdedeaa9385","performance_opened":false},
     "ohlcv_supplement": {"task_state":"ACTIVE","status":"RAW1H_8SHARD_BYTE_MANIFEST_CI_GREEN_REAL_ARTIFACT_AND_EXPECTED_KEYS_PIN_PENDING","formal_dataset_adoption":false,"performance_recompute_allowed":false,"latest_ci_run":34893121437,"latest_ci_status":"success","alpha_vantage_free_role":"LOW_PRIORITY_DAILY_ONLY","stooq_role":"CANDIDATE_NOT_FORMAL_ELIGIBLE","googlefinance_snapshot_role":"CORROBORATION_ONLY_NOT_FORMAL_INTRADAY"},
@@ -43,7 +43,7 @@
     "Parallel Wave-1: derive causal A1/B1/E1 pick ledger without returns, freeze SHA, run endpoint completeness receipt, then one cost0 batch after PASS.",
     "Core24 OHLCV supplement: locate/download exact retained successful raw1H 8-shard artifact set, run byte manifest, pin exact expected endpoint-key input, then one-shot missing inventory; acquire fallback only for declared gaps and verify coverage delta before performance recomputation.",
     "Canonical/Shadow exact continuation: inspect prospective_shadow_resolution_receipt replay/rollback and cross-run chain continuity; add the smallest outcome-blind fail-closed regression/control; do not open performance.",
-    "Consensus: no duplicate trigger; after run 34849054884 terminal, merge genuinely observed rows only and rerun frozen acceptance.",
+    "Consensus: no duplicate trigger; after run 34849054884 terminal, enumerate all shard artifacts, merge genuinely observed rows only and rerun frozen acceptance. Current 0-3 artifacts are transport-failure evidence only.",
     "Core: bind canonical evaluator only after real XTKS/vendor/raw receipt provenance is complete.",
     "OSS: move to next outcome-blind validation control.",
     "Weak+Early Phase-2, Cloud exact forensic and V20: CLOSED; consume no worker cycles unless their explicit reopen condition is met."

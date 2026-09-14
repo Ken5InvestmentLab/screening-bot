@@ -1,3 +1,3 @@
-trigger: 2026-09-14 core-raw1h-pit-lineage-v1
-purpose: outcome-free lineage guard for reconstructed Core absolute price/volume gates
+trigger: 2026-09-14 core-raw1h-pit-lineage-v2
+purpose: rerun outcome-free lineage guard after synthetic fixture correction
 promotion_effect: none

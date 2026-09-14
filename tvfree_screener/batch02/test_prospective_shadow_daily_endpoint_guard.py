@@ -42,6 +42,7 @@ class DailyEndpointGuardTests(unittest.TestCase):
             self.assertTrue(out["endpoint_dataset_valid"])
             self.assertEqual(out["row_count"],3)
             self.assertEqual(out["symbol_count"],2)
+            self.assertTrue(out["integrity"]["acquisition_not_before_last_data_date"])
 
     def test_sha_mismatch_blocks(self):
         with tempfile.TemporaryDirectory() as td:
@@ -79,6 +80,28 @@ class DailyEndpointGuardTests(unittest.TestCase):
             out=validate_daily_endpoint_dataset(daily,manifest)
             self.assertFalse(out["endpoint_dataset_valid"])
             self.assertTrue(any("timezone-aware" in e for e in out["errors"]))
+
+    def test_manifest_creation_blocks_acquisition_before_data(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); daily=root/"daily.csv"; self._write_daily(daily)
+            with self.assertRaisesRegex(ValueError, "acquired_at_precedes_last_data_date"):
+                build_daily_endpoint_manifest(
+                    daily,
+                    dataset_id="daily-endpoint-impossible",
+                    source_name="Yahoo chart direct",
+                    source_kind="REMOTE_MARKET_DATA",
+                    acquired_at="2026-09-24T23:59:59+09:00",
+                    price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
+                )
+
+    def test_validation_blocks_acquisition_before_data(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); daily=root/"daily.csv"; self._write_daily(daily)
+            manifest=self._manifest(daily)
+            manifest["acquired_at"]="2026-09-24T23:59:59+09:00"
+            out=validate_daily_endpoint_dataset(daily,manifest)
+            self.assertFalse(out["endpoint_dataset_valid"])
+            self.assertIn("acquired_at_precedes_last_data_date",out["errors"])
 
     def test_placeholder_provenance_blocks(self):
         with tempfile.TemporaryDirectory() as td:

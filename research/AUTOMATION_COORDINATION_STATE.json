@@ -1,7 +1,7 @@
 {
-  "version": 13,
+  "version": 14,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T17:09:00+09:00",
+  "updated_at_jst": "2026-09-14T17:45:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_WITH_STATE_RECONCILIATION",
     "branch_heads_changed_since_previous_state": true,
@@ -34,12 +34,13 @@
     "note": "Re-read coordination STATE/README, Supervisor contract, RESEARCH_DASHBOARD, canonical HEAD/ledger and current Actions. Canonical HEAD exactly matched last_processed_sha, so no duplicate experiment was run. Existing user-authorized V20 coverage-bypassed diagnostic was already available at cost 0%; reconciled STATE/dashboard to that authoritative diagnostic rather than recomputing. Formal V20 acceptance remains blocked by 734 active symbol/date gaps and the opened diagnostic period is not an untouched holdout. V47 retry 34810592135 remains active with fetch(0)/fetch(1) in raw 1H fetch and ten shards queued; no duplicate trigger."
   },
   "consensus_worker_last_scan": {
-    "status": "ACTIVE_RETRY_PLUS_PRESERVED_RAW_SEED_AUDIT",
-    "scanned_at_jst": "2026-09-14T16:39:00+09:00",
-    "consensus_head_before": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
-    "consensus_head_after": "01299302461872a748693313e4de9c63cdcd32b8",
+    "status": "MIDTERM_DIAGNOSTIC_ACTIVE_AND_FORMAL_RETRY_ACTIVE",
+    "scanned_at_jst": "2026-09-14T17:45:00+09:00",
+    "consensus_head_before": "01299302461872a748693313e4de9c63cdcd32b8",
+    "consensus_head_after": "8a461bf987453422e705a08024c0f1a462068801",
     "retry_run": 34810592135,
-    "note": "Retry remains active. Preserved Yahoo raw1H run 34592896202 covers 35.3898% of NOCAP and 83.1124% of CAP1000_PIT required pairs, but 0% of restored pairs; seed-only, not acceptance."
+    "midterm_diagnostic_run": 34824194221,
+    "note": "User-authorized cost-0 V47 midterm diagnostic was frozen before outcome access with source hashes/coverage and launched from preserved immutable Yahoo raw seed. Diagnostic run 34824194221 has downloaded frozen daily, PIT membership, authoritative V47 daily and preserved seed and is preparing partial raw; performance has not yet been emitted. Formal retry 34810592135 remains separate and active; no duplicate trigger."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -61,9 +62,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "01299302461872a748693313e4de9c63cdcd32b8",
-      "last_processed_sha": "01299302461872a748693313e4de9c63cdcd32b8",
-      "last_processed_note": "Consensus retry 34810592135 remains active. Preserved immutable raw seed is partial and not accepted; next verifier must combine provenance-preserved retry + seed without substitution."
+      "last_seen_sha": "8a461bf987453422e705a08024c0f1a462068801",
+      "last_processed_sha": "8a461bf987453422e705a08024c0f1a462068801",
+      "last_processed_note": "17:45 Consensus scan: formal retry 34810592135 remains active. User-authorized V47 partial-seed midterm diagnostic contract/hash/coverage was frozen before performance and run 34824194221 launched at cost 0%; performance not yet emitted, H2 remains unopened, no same-family retune allowed after opening."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -167,7 +168,7 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 17:09 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
+      "missing_universe_retry_status": "active acquisition at 17:45 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
       "missing_universe_retry_active_jobs": 2,
       "missing_universe_retry_queued_jobs": 10,
       "preserved_raw_seed_run": 34592896202,
@@ -180,11 +181,21 @@
       "preserved_raw_seed_restored_pair_coverage": 0.0,
       "preserved_raw_seed_is_acceptance": false,
       "price_arms": ["NOCAP", "CAP1000_PIT"],
+      "midterm_diagnostic_spec": "research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json",
+      "midterm_diagnostic_run": 34824194221,
+      "midterm_diagnostic_status": "in_progress: source artifacts downloaded; preparing partial raw pool",
+      "midterm_diagnostic_label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
+      "midterm_diagnostic_cost_pct_points": 0.0,
+      "midterm_diagnostic_endpoint": "next official XTKS open -> D+5 close",
+      "midterm_diagnostic_coverage_nocap": 0.35389849026036824,
+      "midterm_diagnostic_coverage_cap1000_pit": 0.831123665271482,
+      "midterm_diagnostic_restored_pair_coverage": 0.0,
+      "midterm_diagnostic_performance_emitted": false,
       "performance_opened": false,
       "clean_features_opened": false,
       "dev_h1_opened": false,
       "h2_opened": false,
-      "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion combine only immutable retry bars and preserved run34592896202 bars with provenance, deduplicate exact symbol/timestamp, and rerun unchanged frozen coverage verifier before formal promotion. Midterm diagnostic performance may be opened at cost 0% once real raw input exists; any opened period ceases to be untouched holdout."
+      "next_rule": "Recover diagnostic run 34824194221 first; if performance emits, mark H1 OPENED_NOT_UNTOUCHED and record cost-0 metrics without retuning. Independently do not duplicate-trigger formal retry 34810592135. After formal retry completion merge only immutable retry bars and preserved run34592896202 bars with provenance and rerun unchanged frozen coverage verifier for promotion."
     },
     "oss_validation": {
       "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
@@ -213,9 +224,10 @@
     "observed_rank_2": "weak+early + volr20 LOW",
     "observed_rank_3": "weak+early + mean-rank(volr20, body_pct)",
     "v20_disposition": "DEPRIORITIZE",
-    "v47_disposition": "NOT_COMPUTABLE_NO_INPUT_DATA_UNTIL_RETRY_EMITS_RAW",
+    "v47_disposition": "DIAGNOSTIC_IN_PROGRESS_PARTIAL_IMMUTABLE_SEED_COST0",
     "next_high_information_checks": [
-      "Finish V47 retry and open cost-0% diagnostic performance once real raw input exists, preserving formal acceptance separation.",
+      "Recover V47 midterm diagnostic run 34824194221 and record gross cost-0 metrics with exact partial-coverage caveat; do not retune after opening.",
+      "Finish V47 formal retry 34810592135 and keep promotion acceptance independent from the diagnostic opening.",
       "Continue old Cloud exact recovery only if genuinely new source evidence can reconstruct exact historical model.",
       "Use EDINET real metadata acquisition only when external key is available; keep parser comparison byte-identical and outcome-blind."
     ]
@@ -224,7 +236,8 @@
     "final_go_no_go_ready": false,
     "blocking_items": [
       "V20 formal exact raw acceptance still has 734 canonical-active symbol/date gaps. Its coverage-bypassed cost-0% diagnostic is opened and negative across all TopN; V20 is DEPRIORITIZE and may not be retuned from that diagnostic.",
-      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance failed. Missing-universe retry 34810592135 is actively acquiring two shards at a time; ten remain queued at 17:09 JST.",
+      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance failed. Missing-universe retry 34810592135 remains actively acquiring two shards at a time; ten remain queued at 17:45 JST.",
+      "Consensus V47 partial-seed diagnostic run 34824194221 is active at cost 0%; performance has not yet emitted and therefore has no ranking impact yet.",
       "No currently passing canonical 5BD Core/Precision replacement candidate. Historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending and is not current promotion evidence.",
       "OSS EDINET outcome-blind boundaries are CI-green, but complete 2023-2025 real metadata still requires external EDINET API key."
     ]

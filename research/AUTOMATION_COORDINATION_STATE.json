@@ -1,0 +1,55 @@
+{
+  "updated_at_jst": "2026-09-14T21:42:00+09:00",
+  "lane": "Consensus specialist",
+  "branch": "research/consensus-atr-regime-gate",
+  "promotion_path": "V47 clean PIT pipeline only",
+  "latest_head_before_state_write": "858847e8348488b541c3174e3d12032dc26a1d82",
+  "coordination": {
+    "canonical_event_overlap": false,
+    "core_overlap": false,
+    "monster_overlap": false,
+    "production_touched": false
+  },
+  "formal": {
+    "daily_acceptance": "PASS",
+    "raw_acceptance": "NOT_PASSED",
+    "clean_features": "UNOPENED_FOR_PROMOTION",
+    "h1": "UNOPENED_FOR_PROMOTION",
+    "h2": "UNOPENED_FOR_PROMOTION"
+  },
+  "midterm_diagnostic": {
+    "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
+    "cost_pct": 0.0,
+    "h1_opened": true,
+    "h2_nocap_opened": true,
+    "h2_cap1000_pit_opened": false,
+    "same_family_retune_allowed": false,
+    "nocap_h2": {
+      "period": "2025-07-01/2025-12-30",
+      "n": 37,
+      "mean_pct": 3.03,
+      "median_pct": 0.38,
+      "win_pct": 51.35,
+      "plus10_pct": 27.03,
+      "plus20_pct": 16.22,
+      "plus50_pct": 2.70,
+      "minus10_pct": 13.51,
+      "minus20_pct": 2.70,
+      "top1_ex_mean_pct": 1.56,
+      "top3_ex_mean_pct": -0.54,
+      "endpoint": "next XTKS open -> D+5 close",
+      "coverage_caveat": "partial raw / coverage-bypassed"
+    }
+  },
+  "raw_retry": {
+    "run_id": 34810592135,
+    "duplicate_trigger_forbidden": true,
+    "observed_completed_shards": [0, 1, 2, 3],
+    "completed_shard_outcome": "cancelled_at_180m_fetch_boundary",
+    "artifact_size_bytes_each_observed": 166,
+    "usable_payload_observed": false,
+    "prepared_next_strategy": "48 shards, max-parallel=2, missing-only, unchanged frozen acceptance"
+  },
+  "blocker": "Yahoo historical raw1H throughput/rate limiting exceeds 180-minute shard budget in current retry",
+  "next_action": "Wait for current retry to cease being active, inspect final artifacts, then trigger already-prepared 48-shard missing-only retry without changing strategy/model/threshold/price-arm/cooldown contracts."
+}

@@ -1,12 +1,12 @@
 {
-  "version": 35,
+  "version": 36,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T23:05:00+09:00",
+  "updated_at_jst": "2026-09-14T23:29:00+09:00",
   "supervisor_last_scan": {
-    "status": "CONSENSUS_NEW_SHA_PROCESSED_V47_48_SHARD_ACTIVE_WEAK_EARLY_ROUND2_CLOSED",
-    "scanned_at_jst": "2026-09-14T23:05:00+09:00",
+    "status": "OSS_TRIAL_LEDGER_PRIMITIVE_VERIFIED_BINDING_PENDING",
+    "scanned_at_jst": "2026-09-14T23:29:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All registered lane HEADs were scanned. Canonical/Core/OSS had no unprocessed HEAD. Consensus advanced from 7849ad97 to 0d4aabac with a state-only sync for the active 48-shard retry; diff was inspected and contains no strategy/model/threshold/price-arm/cooldown change. Run 34849054884 remains active with fetch(0)/fetch(1) in Fetch raw 1H shard and no artifacts yet. No duplicate trigger. Weak+Early Round2 remains closed after 2022 fresh robustness failure; no post-hoc gate retune."
+    "note": "All STATE-registered lanes were checked before OSS work. No unprocessed Canonical/Core/Consensus SHA was found at scan start. Consensus formal 48-shard retry 34849054884 remains queued/active with no accepted raw artifact and was not duplicated. OSS added deterministic SHA-256 completed-trial ledger/receipt primitives plus tamper tests; CI 34855659820 SUCCESS. DSR binding inside run_study is still pending, so provenance control is not yet complete."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -30,13 +30,13 @@
       "preferred_worker": "consensus",
       "last_seen_sha": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
       "last_processed_sha": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
-      "last_processed_note": "23:05 supervisor processed state-sync commit 0d4aabac. 48-shard run 34849054884 remains active; fetch(0)/fetch(1) are in raw fetch, remaining visible jobs queued, artifacts=0. No duplicate trigger and frozen contracts unchanged."
+      "last_processed_note": "23:05 supervisor processed state-sync commit 0d4aabac. 48-shard run 34849054884 remains active/queued with no accepted raw artifact. No duplicate trigger and frozen contracts unchanged."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "098653c2238ccdd5418f7be821ff2237d775a112",
-      "last_processed_sha": "098653c2238ccdd5418f7be821ff2237d775a112",
-      "last_processed_note": "P0 Optuna cost0 mismatch resolved; API/CLI cost0-only and CI 34846417896 SUCCESS. Next immutable completed-trial ledger/provenance."
+      "last_seen_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
+      "last_processed_sha": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
+      "last_processed_note": "Immutable completed-trial ledger/receipt primitive added. Missing/extra/reordered/duplicate/modified/non-COMPLETE/non-finite rows fail closed. CI 34855659820 SUCCESS. run_study-to-DSR receipt binding remains next."
     }
   },
   "guardrails": [
@@ -87,30 +87,30 @@
       "superseded_retry_run": 34810592135,
       "superseded_retry_status": "cancelled_after_repeated_180min_timeouts",
       "formal_retry_run": 34849054884,
-      "formal_retry_status": "active_48_shard_fetch_no_artifacts_yet",
+      "formal_retry_status": "active_or_queued_48_shard_no_accepted_artifact",
       "retry_trigger_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
       "lane_head": "0d4aabac17641c347a79cbb1c59cbe01fe582718",
-      "active_shards_observed": [0, 1],
       "artifact_count_observed": 0,
       "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393},
       "promotion_evidence": false,
-      "next_rule": "Do not duplicate-trigger run 34849054884. On first completed artifacts inspect payload/provenance; after run completion merge only usable real raw and rerun frozen acceptance."
+      "next_rule": "Do not duplicate-trigger run 34849054884. Inspect first usable artifacts when they appear, then frozen acceptance after completion."
     },
     "oss_validation": {
-      "head": "098653c2238ccdd5418f7be821ff2237d775a112",
+      "head": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
       "cost0_optuna_contract_status": "IMPLEMENTATION_VERIFIED_CI_GREEN",
-      "latest_ci_run": 34846417896,
+      "trial_ledger_status": "PRIMITIVE_VERIFIED_BINDING_PENDING",
+      "latest_ci_run": 34855659820,
       "latest_ci_status": "success",
       "real_edinet_blocker": "external EDINET_API_KEY",
-      "next_rule": "Bind PSR/DSR input to immutable completed-trial ledger/provenance receipt."
+      "next_rule": "Wire optuna_discovery.run_study DSR input to trial_sharpes_from_receipt and persist receipt; then integration-test tamper fail-closed."
     }
   },
   "next_global_actions": [
     "Phase-2: continue outcome-blind population/scarcity audit; Round2 remains closed and no post-hoc gate retune is allowed.",
-    "Consensus: run 34849054884 remains active; do not duplicate-trigger. Inspect first artifacts when they appear, then frozen acceptance after completion.",
+    "Consensus: run 34849054884 remains active/queued; do not duplicate-trigger. Inspect first usable artifacts when they appear, then frozen acceptance after completion.",
     "Canonical/Shadow: continue staleness/temporal integrity audit without opening strategy outcomes.",
     "Core: freeze pinned XTKS calendar plus endpoint-row completeness/fail-closed provenance before any new canonical relabeling.",
-    "OSS: immutable completed-trial ledger/provenance before DSR consumption; all new performance cost0-only.",
+    "OSS: bind run_study/DSR to immutable completed-trial receipt; all new performance cost0-only.",
     "Cloud: exact replay stays closed absent genuinely contemporaneous identity-critical evidence."
   ]
 }

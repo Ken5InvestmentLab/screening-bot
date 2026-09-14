@@ -1,13 +1,13 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 05:00 JST  
+> **最終更新:** 2026-09-15 05:30 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
 
-**研究全体の進捗率: 約69%**
+**研究全体の進捗率: 約70%**
 
-`██████████████░░░░░░ 69%`
+`██████████████░░░░░░ 70%`
 
 ### タスク別進捗・稼働状態
 
@@ -15,10 +15,10 @@
 |---|---|---:|---|
 | Weak+Early Phase-2 frozen検証 | ⚫ **CLOSED** | **100%** | 2023-25 ranking + 2022 fresh完了。robustness FAIL、G3凍結、Round2 CLOSED。比較記録としてのみ保持 |
 | Parallel Wave-1 新条件探索 | 🟢 **稼働中** | **72%** | source/schema + 独立XTKS calendar固定、endpoint verifier実装。causal pick ledger → receipt → one-shot cost0が残り |
-| Core24 OHLCV補完 | 🟢 **稼働中** | **55%** | missing-inventory runner CI GREEN。real expected/raw1H pin → fallback raw → verifier → coverage deltaが残り |
+| Core24 OHLCV補完 | 🟢 **稼働中** | **60%** | missing-inventory runnerに加えraw1H 8-shard byte-manifest/fail-closed契約を実装。real 8-shard artifact bytes + exact expected endpoint keys pin → inventory → fallback verifier → coverage deltaが残り |
 | Consensus V47 raw 1H取得・formal acceptance | 🟠 **外部待機** | **66%** | raw48非terminal。shard 0-3は324/324 HTTP429・usable raw 0。重複trigger禁止 |
 | Canonical/Shadow endpoint integrity | 🟢 **稼働中** | **79%** | full hash-provenance chain実装/CI GREEN。link-tamper回帰または次のoutcome-blind controlへ |
-| Core endpoint provenance | 🟢 **稼働中** | **70%** | provenance primitive GREEN。real XTKS/vendor manifest + actual receipt + evaluator配線が残り |
+| Core endpoint provenance | 🟢 **稼働中** | **74%** | raw1H shard-set byte manifestを追加。real XTKS/vendor/raw artifact receipt + evaluator配線が残り |
 | Cloud Monster exact forensic | ⚫ **CLOSED** | **100%** | exact replay一次証拠なし。新しい同時代identity-critical証拠が出た場合だけ再開 |
 | OSS / Validation | 🟢 **稼働中** | **86%** | receipt-bound DSRまでGREEN。次のoutcome-blind validation controlへ |
 | EDINET same-ZIP cross-check | 🟠 **外部入力待ち** | **35%** | real API keyまたはpinned real ZIP待ち。同じ確認にworker cycleを使わない |
@@ -37,7 +37,7 @@
 | Parallel Wave-1 | source/schema/独立XTKS calendar/endpoint verifier固定。performance未開封 |
 | Consensus V47 | raw48 transport blocker / formal acceptance未PASS |
 | Canonical/Shadow | full hash-provenance chain実装済み / CI GREEN |
-| Core24 OHLCV | SHA-bound real-inventory runner CI GREEN / real raw1H input pin待ち |
+| Core24 OHLCV | exact 8-shard raw1H byte-manifest primitive実装。real artifact bytes/expected keys pin待ち、performance未開封 |
 | OSS | immutable completed-trial receipt → DSR binding verified / CI GREEN |
 | Cloud exact | **CLOSED**。新しいidentity-critical evidenceのみ再開条件 |
 | V20 | **CLOSED / DEPRIORITIZED** |
@@ -57,7 +57,7 @@ G3 `med_ret1 >= -1%` は凍結。2022 fresh: DUAL n21 mean +2.62% / median -6.19
 
 ## 2. 現在のactive queue
 
-**P0:** Parallel causal A1/B1/E1 pick ledger固定→actual endpoint completeness receipt→one-shot cost0。Core24 exact expected/raw1H input pin→one-shot missing inventory→fallback verification。Consensusはraw48 terminal後だけformal merge/acceptance。
+**P0:** Parallel causal A1/B1/E1 pick ledger固定→actual endpoint completeness receipt→one-shot cost0。Core24はexact retained raw1H 8-shard artifact setを特定/byte-manifest化→exact expected endpoint-key input固定→one-shot missing inventory→fallback検証。Consensusはraw48 terminal後だけformal merge/acceptance。
 
 **P1:** Canonical link-tamper regression/次のoutcome-blind integrity control。Core endpoint evaluator binding。OSSは次のoutcome-blind validation controlへ。
 

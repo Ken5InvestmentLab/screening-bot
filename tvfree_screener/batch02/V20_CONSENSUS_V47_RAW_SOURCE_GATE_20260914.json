@@ -1,0 +1,43 @@
+{
+  "experiment_id": "TENTEI-4H-V20-SESSION-IMPULSE-CONTINUATION-20260914",
+  "scope": "outcome-blind cross-source raw repair eligibility gate",
+  "created_at_jst": "2026-09-14T14:12:00+09:00",
+  "v20_raw_repair_run": 34791959735,
+  "v20_missing_active_symbol_dates": 734,
+  "v20_http_404_pairs": 476,
+  "v20_silent_zero_row_pairs": 258,
+  "candidate_source": {
+    "lane": "Consensus V47 raw1H",
+    "workflow_run": 34800587082,
+    "workflow_status": "completed",
+    "workflow_conclusion": "success",
+    "trigger_sha": "a0ff4cf07158977081c0ef161cb4e60520906602",
+    "frozen_coverage_acceptance_required": true,
+    "coverage_acceptance_observed": false,
+    "decisive_outcome_blind_failure_evidence": {
+      "job": "fetch (0)",
+      "job_id": 103842307866,
+      "requested_symbols": 324,
+      "ok_symbols": 0,
+      "non_ok_symbols": 324,
+      "total_rows": 0,
+      "artifact_id": 10334056392,
+      "artifact_name": "consensus-v47-raw1h-34800587082-shard-0"
+    }
+  },
+  "decision": "REJECT_SOURCE_FOR_V20_REPAIR_UNTIL_V47_FROZEN_COVERAGE_ACCEPTANCE_PASSES",
+  "reason": "Workflow-level SUCCESS only means all shard jobs completed and artifacts were uploaded. Frozen V47 acceptance requires zero completely missing required symbols and >=99.5% required-pair coverage. A whole 324-symbol shard returned 0 successful symbols and 0 rows, so this run cannot satisfy that acceptance and must not be consumed as a V20 repair source.",
+  "v20_outcomes_opened": false,
+  "v20_h2_opened": false,
+  "consensus_strategy_returns_opened": false,
+  "production_writes": false,
+  "next_safe_action": "Wait for the Consensus lane to perform frozen coverage acceptance and targeted refetch using the staged throttled/backoff transport policy. Only an accepted outcome-blind raw artifact may be audited against exactly the 734 V20 missing symbol/date pairs; then rerun the unchanged V20 raw verifier before any H1 performance readout.",
+  "prohibited": [
+    "consume run 34800587082 solely because the GitHub workflow conclusion is success",
+    "repeat the unchanged V20 Yahoo targeted query contract that added zero rows",
+    "lower raw coverage thresholds",
+    "interpolate or synthesize 1H bars",
+    "retune V20 using H1/H2 outcomes",
+    "open 2026 strategy outcomes"
+  ]
+}

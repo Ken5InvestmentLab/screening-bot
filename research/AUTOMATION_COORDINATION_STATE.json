@@ -1,7 +1,7 @@
 {
-  "version": 39,
+  "version": 40,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T00:08:00+09:00",
+  "updated_at_jst": "2026-09-15T00:25:00+09:00",
   "supervisor_last_scan": {
     "status": "PARALLEL_WAVE1_MANIFEST_FROZEN_V47_ACTIVE_WEAK_EARLY_ROUND2_CLOSED",
     "scanned_at_jst": "2026-09-15T00:08:00+09:00",
@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "7606b72f33d456d363fb374520e63354ce10c67b",
-      "last_processed_sha": "7606b72f33d456d363fb374520e63354ce10c67b",
-      "last_processed_note": "Shadow/Data temporal integrity advanced: endpoint manifests fail closed when acquired_at predates latest contained market-data date. CI 34848598262 SUCCESS."
+      "last_seen_sha": "208e1358151330153db81584ca7d2bb709ec5c17",
+      "last_processed_sha": "208e1358151330153db81584ca7d2bb709ec5c17",
+      "last_processed_note": "Shadow/Data endpoint completeness advanced: daily endpoint manifests now require explicit expected_through_date and fail closed when acquisition precedes that boundary or CSV last_date does not cover it. CLI fixtures aligned after fail-closed API change; CI 34861810023 SUCCESS. No performance opened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -90,11 +90,13 @@
       "cost_pct_points": 0.0
     },
     "shadow_data_integrity": {
-      "status": "ENDPOINT_ACQUISITION_CHRONOLOGY_GUARD_CI_GREEN",
-      "head": "7606b72f33d456d363fb374520e63354ce10c67b",
-      "latest_ci_run": 34848598262,
+      "status": "ENDPOINT_EXPECTED_THROUGH_COMPLETENESS_GUARD_CI_GREEN",
+      "head": "208e1358151330153db81584ca7d2bb709ec5c17",
+      "latest_ci_run": 34861810023,
       "latest_ci_status": "success",
-      "performance_opened": false
+      "performance_opened": false,
+      "expected_through_date_required": true,
+      "next_rule": "Audit symbol-set/endpoint-session completeness against the frozen prospective selection ledger without opening strategy outcomes."
     },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
@@ -127,7 +129,7 @@
     "Parallel Wave-1: bind exact preserved-source/schema receipt, implement frozen A1/B1/E1 fail-closed and run one cost0 batch without retuning; preserve confirmation holdout.",
     "Phase-2: continue outcome-blind population/scarcity audit; Round2 remains closed and no post-hoc gate retune is allowed.",
     "Consensus: keep run 34849054884 single-active; inspect first usable artifact or timeout receipt, then frozen acceptance after completion.",
-    "Canonical/Shadow: continue staleness/temporal integrity audit without opening strategy outcomes.",
+    "Canonical/Shadow: audit symbol-set and endpoint-session completeness against the frozen prospective selection ledger; explicit expected_through_date guard is now CI-green.",
     "Core: bind real XTKS/vendor manifest + immutable source receipt and evaluator wiring/CI before recomputation.",
     "OSS: bind run_study/DSR to immutable completed-trial receipt; all new performance cost0-only.",
     "Cloud: exact replay stays closed absent genuinely contemporaneous identity-critical evidence."

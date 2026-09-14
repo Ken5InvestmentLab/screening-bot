@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 16:08 JST  
+> **最終更新基準:** 2026-09-14 16:26 JST  
 > **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + 各active laneのhandoff / Actions  
 > **目的:** 研究の進捗・候補・バックテスト・ブロッカーを1ページで把握する。  
 > **注意:** 進捗率は「研究の成功確率」ではなく、各レーンで事前定義したマイルストーン消化率の目安。
@@ -60,11 +60,9 @@
 ## 3. 既知バックテスト結果
 
 ### 旧Cloud Monster
-**歴史的ヘッドライン**
 - n = **63**
 - 5BD平均 = **+9.86%**
 - 現在の扱い = **historical signal / forensic only / 現行promotion候補ではない**
-- 近縁条件 / surrogate の結果を「完全再現」とは扱わない
 
 ### Fixed Core — canonical endpoint
 | 区間 | n | 平均 | 中央値 | 勝率 | Top3除外 |
@@ -91,130 +89,56 @@
 
 - **最新HEAD:** `70ca3ca4d04d9ea9bc864e3133163ffe5199ea96`
 - **最新関連Action:** retry `34810592135`
-- **Action実体:** run-level表示はqueuedだが、job-levelでは `fetch(0)` / `fetch(1)` が `Fetch raw 1H shard` でin_progress、残り10 shardは意図した `max-parallel: 2` によりqueued
-- ✅ PIT universe
-- ✅ split evidence 3,700 / 3,700
-- ✅ Daily PIT coverage = PASS
-- ✅ NOCAP / CAP1000_PIT の2armに固定
-- ✅ rate-limit/backoff contract CI
+- **16:26 JST確認:** run-levelはqueuedのまま。job-levelは `fetch(0)` / `fetch(1)` が `Fetch raw 1H shard` でin_progress、残り10 shardは `max-parallel: 2` によりqueued。状態変化なし。
+- ✅ PIT universe / Daily PIT coverage PASS
 - ❌ 初回raw 1H frozen acceptance
-- ⏳ missing-universe targeted retry `34810592135` = **active acquisition**
-- 🔒 clean features = 未開封
-- 🔒 DEV H1 performance = 未開封
-- 🔒 H2 performance = 未開封
-- 🔒 2026 selection outcome = 未開封
-- **NOCAP vs CAP1000_PIT比較段階:** raw acceptance前、performance比較未開始
+- ⏳ targeted retry = **active acquisition**
+- 🔒 clean features / DEV H1 / H2 / 2026 selection = **未開封**
 
-**Daily acceptance:** PASS (`34799835035`)  
-**直近formal raw acceptance:** FAIL (`34810234454`) — `raw_unique_symbol_dates=0`、両arm pair coverage=0%。  
-**targeted retry:** ACTIVE (`34810592135`)。日足artifact取得・daily gate verification・fetcher contractはactive shardで通過済み。  
-**blocker:** retry完了後のfrozen raw acceptance。  
-**候補ランキングへの影響:** 1位維持。ただしraw acceptance PASSまでは成績評価・promotion判断を一切行わない。
+**blocker:** retry完了後のfrozen raw acceptance。候補ランキングは1位維持。
 
 ### V20 Session-Impulse
 `███████████░░░░░░░░░` **55%**
 
-- ✅ spec freeze
-- ✅ evaluator / contract test
+- **最新HEAD:** `480bc9b5b62270f13f7e7de0accda008e6757bf9`
+- ✅ spec/evaluator/contract freeze
 - ✅ 1,810 symbols / 82 sessions freeze
-- ✅ raw gap診断
 - ❌ exact raw acceptance
-- ⏳ 734 missing symbol/date
-  - 476 = predecessor identity / HTTP 404
-  - 258 = successful queryだが0 rows
-- 🔒 H1
-- 🔒 H2
-- 🔒 2026 report
+- ⏳ **734 missing symbol/date**（476 predecessor identity/HTTP404、258 query success/0 rows）
+- 🔒 H1 / H2 / 2026 report = **未開封**
+- **次:** V47 retry artifactがfrozen acceptance PASSした場合のみ734件を監査・修復し、V20 verifierを変更せず再実行。
 
-### OSS / Validation
-`█████████████░░░░░░░` **65%**
+### Shadow / Data Integrity
+`████████████████░░░░` **80%**
 
-- **最新HEAD:** `0837d299eff60698d0e2ec36c659a36bbc078542`
-- ✅ purged/embargoed CV audit layer
-- ✅ PSR / DSR multiple-trial sensitivity
-- ✅ Optuna discovery period fail-closed contract
-- ✅ EDINET real-sample selector preregistration
-- ✅ full-calendar metadata snapshot/hash-chain validator
-- ✅ official EDINET v2 acquisition helper + resume/fail-closed contract
-- ✅ acquisition CI `34816055006` = **SUCCESS**
-- 🔒 real 2023-2025 metadata bytes = 未取得
-- 🔒 selected real doc IDs = 未固定
-- 🔒 same-ZIP custom vs edinet-tools comparison = 未開封
-- 🔒 strategy outcomes = 未開封
+- **最新HEAD:** `25b0ae42b0e3a8de80599405ae1bee235d4b3e28`
+- resolution continuity `34795293067` SUCCESS
+- XTKS calendar guard `34795620704` SUCCESS
+- immutable resolution receipt `34799006401` SUCCESS
+- real shadow launch = **未承認**
 
 ---
 
 ## 5. 現在の残タスク
 
-### P0 — 最優先
-- [ ] Consensus retry `34810592135` を完了まで監視（重複起動禁止）
-- [ ] V47 frozen raw coverage verifier 再実行
-- [ ] PASSなら clean features materialize
-- [ ] V47 DEV H1で NOCAP vs CAP1000_PIT 比較
-- [ ] DEV winnerだけH2を開く
-
-### P1 — V20
-- [ ] accepted V47 raw artifactをV20修復ソースとして監査
-- [ ] exact 734 gapだけ修復
-- [ ] V20 raw verifier再実行
-- [ ] PASSならH1評価
-- [ ] H1 PASS policyだけH2へ
-
-### P2 — OSS / Validation
-- [x] EDINET metadata acquisition helper / fail-closed CI
-- [ ] external API keyで2023-2025全calendar day raw JSONを取得
-- [ ] `edinet_metadata_snapshot.py` でper-day SHA256 + hash-chain freeze
-- [ ] selected doc IDs freeze
-- [ ] ZIP hash freeze
-- [ ] custom parser vs edinet-tools same-ZIP比較
-- [ ] Purged CV / PSR / DSRをpromotion評価へ接続
-
-### 最終
-- [ ] V47 / V20 / benchmarkを同じ比較表へ
-- [ ] performance + robustness + availability比較
-- [ ] GO / NO-GO
-- [ ] 本番移行はユーザー明示承認後のみ
+- Consensus retry `34810592135` を重複起動せず完了まで監視し、完了後に同一frozen raw coverage verifierを再実行。
+- PASS時のみclean features→DEV H1→winner H2。V20はaccepted rawを使ってexact 734 gapだけ監査・修復。
+- V20 H1 Top1/2/3/5 frozen gateは変更しない。全FAILならH2未開封REJECT、PASS policyのみH2へ。
+- Shadow/Dataはappend-only/integrity/staleness/temporal guardのみ。production/main、本番系は変更しない。
 
 ---
 
 ## 6. ブロッカー
 
-1. **Consensus V47 raw 1H**
-   - Dailyはクリーン。
-   - 初回formal raw acceptanceは0%でFAIL。
-   - hardened targeted retry `34810592135` は現在2 shard実取得中、10 shard待機中。
-   - 完了後に同じfrozen verifierを通すまでfeatures/performanceは開かない。
-2. **V20 raw 1H**
-   - 734 symbol/date不足。
-3. **Core**
-   - 現在の正式候補はすべてREJECT。
-4. **旧Cloud Monster**
-   - 歴史値+9.86%は再現性不足のためcurrent promotion candidateではない。
-5. **EDINET**
-   - acquisition/snapshot/selector境界はCI-greenだが、2023-2025実raw metadata取得とsame-ZIP parser comparisonは未実行。
+1. **Consensus V47 raw 1H:** retry `34810592135` は16:26 JST時点でも2 shard取得中・10 queued。acceptance前。
+2. **V20 raw 1H:** 734 symbol/date不足。
+3. **V20 performance:** raw acceptance未達のためH1/H2とも未開封。
+4. **Shadow:** integrity CIはgreenだがreal launch未承認。
 
 ---
 
 ## 7. 自動更新ルール
 
-このダッシュボードはSupervisor/各lane workerが以下を最新STATE/各laneから再計算して更新する。
-
-- 最終更新時刻
-- レーン数 / 状態
-- マイルストーン型進捗率
-- Active / Blocked / Rejected / Passed
-- 候補ランキング
-- 最新HEAD
-- 最新Actions run ID / status
-- Daily/raw acceptance
-- targeted retry
-- clean features / H1 / H2開封状態
-- NOCAP / CAP1000_PIT比較段階
-- バックテスト結果
-- 残タスク
-- ブロッカー
-- 次アクション
-- 候補ランキングへの影響
-- 最終GO/NO-GO
+各lane workerは終了時に最終更新時刻、進捗率、HEAD、Actions、raw acceptance、H1/H2開封状態、blocker、次アクション、候補ランキング影響を更新する。正式バックテストが新規に開封された場合のみ期間・n・平均・中央値・勝率・+10/+20/+50・-10/-20・Top1/Top3除外・endpoint/costを可能な範囲で追記する。
 
 **成績をまだ開けてはいけない候補は「未開封」と表示し、推測値を載せない。**

@@ -1,9 +1,9 @@
 {
-  "updated_at_jst": "2026-09-15T00:38:00+09:00",
+  "updated_at_jst": "2026-09-15T01:47:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "9e4846cb1cbe683458cea0775c3fdc05f367636c",
+  "latest_head_before_state_write": "5ac1155f9d820eed5897dd445607596a2c0b4a82",
   "coordination": {
     "supervisor_coordination_checked": true,
     "research_dashboard_checked": true,
@@ -52,17 +52,35 @@
     "strategy": "48 shards, max-parallel=2, shard-count=48, unchanged frozen acceptance",
     "duplicate_trigger_forbidden": true,
     "duplicate_triggered": false,
-    "observed_active_shards": [0, 1],
+    "completed_shards": [0, 1],
+    "completed_shard_workflow_conclusion": "success",
+    "completed_shard_payload": {
+      "shard_0": {
+        "artifact_id": 10357093848,
+        "requested_symbols": 81,
+        "ok_symbols": 0,
+        "total_rows": 0,
+        "failure": "81/81 http_429"
+      },
+      "shard_1": {
+        "artifact_id": 10357611796,
+        "requested_symbols": 81,
+        "ok_symbols": 0,
+        "total_rows": 0,
+        "failure": "81/81 http_429"
+      }
+    },
+    "observed_active_shards": [2, 3],
     "active_step": "Fetch raw 1H shard",
-    "daily_coverage_check": "PASS_ON_ACTIVE_SHARDS",
-    "fetcher_contract_tests": "PASS_ON_ACTIVE_SHARDS",
-    "visible_artifact_count": 0,
-    "elapsed_wall_clock_minutes_approx": 134,
-    "prior_failure_boundary_minutes": 180,
-    "runtime_checkpoint": "research/CONSENSUS_V47_RAW48_RUNTIME_CHECK_20260914_2341.md",
-    "runtime_interpretation": "shard 0/1 remain in raw fetch at ~134m with no artifact; still below prior 180m failure boundary, so continue unchanged and do not duplicate-trigger",
-    "remaining_matrix_state": "queued"
+    "daily_coverage_check": "PASS",
+    "fetcher_contract_tests": "PASS",
+    "visible_artifact_count": 2,
+    "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429",
+    "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA",
+    "future_missing_only_retry_hardening": "two symbols x two Yahoo hosts preflight; all four HTTP 429 => transport_circuit_open/systemic_http_429 fail-fast; no threshold change and no interpolation",
+    "diagnosis_log": "research/CONSENSUS_V47_RAW48_429_DIAGNOSIS_20260915.md",
+    "remaining_matrix_state": "queued/in_progress under max-parallel=2"
   },
-  "blocker": "Formal raw1H acceptance remains pending while 48-shard transport mitigation executes; shard 0/1 are still fetching at about 134 minutes and no artifact exists yet.",
-  "next_action": "Do not duplicate-trigger run 34849054884. Inspect the first completed shard artifact for real payload and transport behavior. If active shards reach 180 minutes without payload, preserve the failure receipt before modifying acquisition mechanics only. On run completion merge observed raw plus preserved seed data with provenance and rerun frozen acceptance; if acceptance fails, retry missing symbol/date pairs only without interpolation or threshold lowering."
+  "blocker": "Formal raw1H acceptance is blocked by systemic Yahoo HTTP 429. Shards 0 and 1 completed mechanically but each returned 0/81 symbols and zero raw rows; this is transport failure, not strategy evidence.",
+  "next_action": "Do not duplicate-trigger run 34849054884. Preserve shard receipts. When the pinned run is terminal, merge only genuinely observed raw rows with preserved seed data using provenance and rerun frozen acceptance. If acceptance fails, retry only missing symbol/date pairs after Yahoo transport is healthy using the new systemic-429 fail-fast circuit breaker; never interpolate or lower thresholds."
 }

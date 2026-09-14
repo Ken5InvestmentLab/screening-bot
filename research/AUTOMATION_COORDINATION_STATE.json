@@ -1,12 +1,12 @@
 {
   "version": 5,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T12:13:00+09:00",
+  "updated_at_jst": "2026-09-14T12:50:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
-    "branch_heads_changed_since_previous_state": false,
+    "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "12:02 supervisor scan verified active heads unchanged: Canonical/Shadow 25b0ae42, Core 7ce65d88, Consensus a0ff4cf0. All equal their last_processed_sha, so no SHA was reprocessed. Consensus V47 raw1H freeze run 34800587082 remains queued on the accepted daily PIT parent; no duplicate trigger was issued and no strategy outcomes/model scores were opened. V20 remains fail-closed at 1806/1810 with 734 canonical-active symbol/date gaps, and Core remains coordination/consumer-only after DEVELOPMENT rejection of all three Precision families."
+    "note": "12:50 cross-lane follow-up verified Canonical/Shadow ef0f725e and Core 7ce65d88 unchanged and already processed. Consensus advanced by two documentation/log commits to 28c272b0; the delta was inspected and preserves the frozen V47 contract. Raw1H run 34800587082 advanced from queued to in_progress, with all 12 jobs inside Fetch raw 1H shard after successful accepted-daily verification and fetcher compile/test. No duplicate trigger, performance opening, H2 opening, or production change was made."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -28,9 +28,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "a0ff4cf07158977081c0ef161cb4e60520906602",
-      "last_processed_sha": "a0ff4cf07158977081c0ef161cb4e60520906602",
-      "last_processed_note": "Processed restored/delisted recovery through accepted external daily PIT rebuild. 96ut merge audit 34799650589 recovered all 251 required symbols outcome-blind. Daily rebuild 34799835035 SUCCESS: daily_coverage_pass=true, daily_coverage_min=1.0, NOCAP required intraday symbols=3885, CAP1000_PIT=1886, no required restored symbols missing, no returns/scores opened. Created RUN_V47_RAW1H_FETCH with daily_run_id=34799835035; raw1H 12-shard run 34800587082 queued."
+      "last_seen_sha": "28c272b02c20684f989ab3afb046f51a47344c6a",
+      "last_processed_sha": "28c272b02c20684f989ab3afb046f51a47344c6a",
+      "last_processed_note": "Processed two post-trigger documentation/log commits after a0ff4cf0. They preserve the accepted external daily PIT source 34799835035 and frozen V47 raw1H acceptance contract. Raw1H run 34800587082 is now in_progress; all 12 fetch jobs passed accepted-daily verification and compile/test and are inside raw shard acquisition. No returns/scores/H2/2026 selection outcome opened and no duplicate trigger issued."
     }
   },
   "guardrails": [
@@ -99,17 +99,19 @@
       "required_intraday_nocap_symbols": 3885,
       "required_intraday_cap1000_pit_symbols": 1886,
       "raw1h_run": 34800587082,
-      "raw1h_status": "queued",
+      "raw1h_status": "in_progress",
+      "raw1h_jobs_observed": 12,
+      "raw1h_jobs_stage": "Fetch raw 1H shard",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
       "performance_opened": false,
-      "next_rule": "Wait for raw1H run 34800587082. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. Only after PASS may clean feature materialization begin."
+      "next_rule": "Wait for raw1H run 34800587082 to complete. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. Only after PASS may clean feature materialization begin."
     }
   },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Failure modes are now partitioned outcome-blind into 476 predecessor-identity HTTP 404 pairs and 258 successful-query/zero-row pairs.",
-      "Consensus V47 daily PIT acceptance now passes, but raw1H promotion-grade coverage run 34800587082 is still pending and must pass frozen acceptance before features/performance open; if accepted, its Yahoo raw artifact becomes the preferred non-performance V20 gap-recovery audit source.",
+      "Consensus V47 daily PIT acceptance passes and raw1H promotion-grade coverage run 34800587082 is actively fetching 12 shards; frozen acceptance must pass before features/performance open. If accepted, its Yahoo raw artifact becomes the preferred non-performance V20 gap-recovery audit source.",
       "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected."
     ]
   }

@@ -1,6 +1,6 @@
 {
   "contract_id": "OSS-OPTUNA-DISCOVERY-V1-20260914",
-  "status": "PREREGISTERED_INFRASTRUCTURE_ONLY_COST0_IMPLEMENTATION_VERIFIED",
+  "status": "PREREGISTERED_INFRASTRUCTURE_ONLY_COST0_AND_LEDGER_PRIMITIVE_VERIFIED",
   "purpose": "Use Optuna only to accelerate low-DOF discovery inside the already-authorized discovery period while retaining purged walk-forward and multiple-testing evidence.",
   "production_modified": false,
   "rejected_families_may_be_reopened": false,
@@ -47,7 +47,9 @@
     "report_dsr_raw_trial_count": true,
     "report_dsr_effective_trial_count": true,
     "effective_trial_count_is_heuristic": true,
-    "dsr_is_automatic_promotion_gate": false
+    "dsr_is_automatic_promotion_gate": false,
+    "completed_trial_ledger_rule": "Completed trials must be represented in deterministic trial-number order, hashed with SHA-256 together with frozen study metadata, and validated before the trial-Sharpe vector may be consumed by DSR.",
+    "tamper_policy": "Missing, extra, reordered, duplicated, modified, non-COMPLETE, or non-finite trial rows fail closed."
   },
   "implementation_audit_20260914_1945": {
     "finding": "tvfree_screener/optuna_discovery.py still defaulted run_study/CLI round_trip_cost to 0.005 and accepted nonzero costs, while this frozen contract requires 0%. Existing synthetic test also explicitly passed 0.001.",
@@ -68,6 +70,21 @@
     "synthetic_nonzero_rejection_test": true,
     "outcome_opened": false,
     "next_control": "Bind DSR input to an immutable completed-trial ledger/provenance receipt so trial count and Sharpe dispersion cannot be supplied ad hoc."
+  },
+  "trial_ledger_control_20260914_2327": {
+    "status": "PRIMITIVE_VERIFIED_BINDING_PENDING",
+    "implementation_file": "tvfree_screener/optuna_trial_ledger.py",
+    "test_file": "tvfree_screener/test_optuna_trial_ledger.py",
+    "implementation_commit": "94a03cc534c7a219f9e3bfbe5d7992aff1eb4cf8",
+    "test_commit": "941ef03599900222f5fb73d09d5a4286a1701c94",
+    "workflow_commit": "0fafde6c13102a582ca33f2b7e42acb2a4274cd5",
+    "ci_run": 34855659820,
+    "ci_conclusion": "success",
+    "hash": "SHA-256 canonical JSON",
+    "deterministic_order": "ascending Optuna trial number",
+    "rejects": ["missing", "extra", "reordered", "duplicate", "modified", "non-COMPLETE", "non-finite"],
+    "outcome_opened": false,
+    "remaining_binding": "Wire optuna_discovery.run_study selection_bias/DSR consumption to trial_sharpes_from_receipt and persist the receipt in discovery output before declaring the provenance control complete."
   },
   "promotion": {
     "authorized_by_this_contract": false,

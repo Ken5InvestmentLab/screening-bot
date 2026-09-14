@@ -1,7 +1,7 @@
 {
-  "version": 21,
+  "version": 22,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T19:17:00+09:00",
+  "updated_at_jst": "2026-09-14T19:24:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_PHASE2_HALF_YEAR_STRUCTURAL_AUDIT_ROUND2_STAYS_CLOSED",
     "scanned_at_jst": "2026-09-14T19:08:00+09:00",
@@ -23,9 +23,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
-      "last_processed_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
-      "last_processed_note": "No new SHA at 19:17. HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen; no model-family guessing or portability."
+      "last_seen_sha": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
+      "last_processed_sha": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
+      "last_processed_note": "19:24 cross-lane reproducibility audit found stale canonical Core script still capable of recomputing 0.5%/1% costs. Repaired on f1a1bd23 and documented on 291cbdd4: future new endpoint audit is cost0-only, win=gross>0, includes +50/-20 and month/week dependence. No backtest triggered. Cloud exact replay remains unavailable/closed."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -113,8 +113,9 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "latest_audit_head": "0886fd65f9413dc2591a47475364e736516dbf93",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing."
+      "latest_audit_head": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
+      "cost0_endpoint_contract_hardened_commit": "f1a1bd23d7e7286b9390d84ffaf18069043c53e8",
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing. Continue cross-lane stale cost/endpoint contract audit without rerunning rejected families."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -165,6 +166,7 @@
     "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
     "Phase-2: audit preserved model warm-up/calibration metadata and monthly model_period/training-count context without outcome-derived thresholds.",
     "Phase-2: Round2 remains closed until a causal market-level factor can explain more than the 2023H2 weak-market case; do not post-hoc fit 2025H2.",
+    "Core: continue stale research cost/endpoint contract audit; do not rerun rejected families solely to regenerate metrics.",
     "Cloud: remain closed unless genuinely new exact identity evidence appears.",
     "OSS: real EDINET acquisition only when external key is available."
   ]

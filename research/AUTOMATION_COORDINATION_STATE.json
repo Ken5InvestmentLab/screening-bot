@@ -1,13 +1,13 @@
 {
-  "version": 17,
+  "version": 18,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T18:22:00+09:00",
+  "updated_at_jst": "2026-09-14T18:38:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_PHASE2_2022_FRESH_FAILURE_PLUS_OUTCOME_BLIND_STRUCTURAL_AUDIT",
     "scanned_at_jst": "2026-09-14T18:15:00+09:00",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Canonical/Consensus/OSS matched processed SHAs. Core da67fe92 was processed and Cloud exact replay frozen unavailable. Frozen run-80 source artifact 10264205130 was recovered, unchanged V7 generator produced a computable Jun-Dec 2022 fresh block, and Phase-2 failed robustness. A follow-up structural audit used signal-time features only and found 2022 population/regime mismatch indicators; no threshold or gate was added."
+    "note": "Canonical/Consensus/OSS matched processed SHAs at supervisor scan. Core exact Cloud replay remains unavailable. Consensus has since advanced only in transport/runtime hardening: formal retry first two shards hit the frozen 180-minute job ceiling; future retry layout is split 12->48 without triggering a duplicate run or changing strategy semantics."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -29,9 +29,9 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "8a461bf987453422e705a08024c0f1a462068801",
-      "last_processed_sha": "8a461bf987453422e705a08024c0f1a462068801",
-      "last_processed_note": "Diagnostic run 34824194221 still in_progress at latest scan; performance not emitted. Formal retry remains separate; duplicate trigger prohibited."
+      "last_seen_sha": "1eb0408cd3ad2d44c2e0c3feb12551857f325be6",
+      "last_processed_sha": "1eb0408cd3ad2d44c2e0c3feb12551857f325be6",
+      "last_processed_note": "18:38 Consensus: diagnostic 34824194221 has pre-open freeze + partial PIT features PASS and is still executing frozen H1 cost0 comparison. Formal retry 34810592135 remains unique; fetch(0)/(1) hit 180m timeout, fetch(2)/(3) continue. Future-only workflow repaired to 48 shards at commit 7aa230a0; no duplicate trigger and no strategy semantic change."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -143,13 +143,22 @@
       "coverage_acceptance_run": 34810234454,
       "frozen_coverage_acceptance_pass": false,
       "missing_universe_retry_run": 34810592135,
+      "formal_retry_status": "active_partial_timeout_fetch0_fetch1_at_180m_fetch2_fetch3_in_progress",
+      "future_retry_layout_commit": "7aa230a0434136cf33589a2fdda010113d57db62",
+      "future_retry_shards": 48,
+      "future_retry_max_parallel": 2,
       "midterm_diagnostic_run": 34824194221,
-      "midterm_diagnostic_status": "in_progress_at_latest_scan_performance_not_emitted",
+      "midterm_diagnostic_status": "in_progress_h1_cost0_comparison_performance_not_emitted",
+      "midterm_preopen_contract_pass": true,
+      "midterm_partial_features_materialized": true,
       "preserved_raw_seed_run": 34592896202,
       "preserved_raw_seed_nocap_pair_coverage": 0.35389849026036824,
       "preserved_raw_seed_cap1000_pair_coverage": 0.831124,
       "restored_pair_coverage": 0.0,
-      "next_rule": "No duplicate triggers. Collect cost0 diagnostic only after completion; formal promotion stays separate."
+      "formal_features_opened": false,
+      "formal_h1_opened": false,
+      "formal_h2_opened": false,
+      "next_rule": "No duplicate triggers. Collect cost0 diagnostic only after completion. Let current formal retry terminate naturally, merge valid artifacts with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using the staged 48-shard transport layout."
     },
     "oss_validation": {
       "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
@@ -161,8 +170,8 @@
   "next_global_actions": [
     "Phase-2: audit model warm-up/calibration without using outcome thresholds.",
     "Phase-2: audit candidate scarcity and compare signal-time structural shifts in 2023H2/2025H2.",
-    "Consensus: collect V47 midterm diagnostic after 34824194221 completes; do not duplicate trigger.",
-    "Consensus formal: continue observing retry 34810592135.",
+    "Consensus diagnostic: collect V47 cost0 H1 comparison after 34824194221 completes; do not retune after opened results.",
+    "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
     "Cloud: remain closed unless genuinely new exact identity evidence appears; otherwise Core worker performs reproducibility/endpoint audit only.",
     "OSS: real EDINET acquisition only when external key is available."
   ]

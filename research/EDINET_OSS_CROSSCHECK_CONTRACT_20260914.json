@@ -35,5 +35,38 @@
     "real_historical_sample_may_follow": true,
     "real_sample_must_be_preregistered_before_comparison": true,
     "no_strategy_return_columns_permitted": true
+  },
+  "real_historical_sample_v1": {
+    "status": "PREREGISTERED_NOT_YET_EXECUTED",
+    "selection_inputs": "EDINET document metadata only; parser outputs, accounting values, strategy candidates, scores, returns, labels and 2026 market outcomes are forbidden selection inputs.",
+    "eligible_doc_type_codes": ["120", "130"],
+    "submit_datetime_start": "2023-01-01T00:00:00+09:00",
+    "submit_datetime_end": "2025-12-31T23:59:59+09:00",
+    "sampling_unit": "calendar quarter x doc_type_code",
+    "deterministic_rule": "Within each calendar quarter and eligible doc_type_code, sort eligible metadata rows by submit_datetime ascending then doc_id ascending and select the first 2 unique doc_id values. Do not replace a selected document because either parser fails or disagrees.",
+    "deduplication": "doc_id exact; retain the first metadata row after deterministic sort.",
+    "corrections": "Doc type 130 is sampled independently rather than replacing its related 120 filing.",
+    "maximum_expected_documents": 48,
+    "minimum_execution_requirement": "Execute only if the metadata source covers the full preregistered 2023-01-01 through 2025-12-31 interval; otherwise fail closed and record the coverage gap without changing the sample rule.",
+    "same_zip_requirement": true,
+    "allowed_output_fields": [
+      "doc_id",
+      "doc_type_code",
+      "submit_datetime",
+      "custom parser field/value/context/status",
+      "OSS parser field/value/context/status",
+      "match status",
+      "parser/extraction flags"
+    ],
+    "forbidden_output_fields": [
+      "strategy return",
+      "future return",
+      "signal score",
+      "candidate rank",
+      "trade label",
+      "promotion decision based on strategy outcome"
+    ],
+    "disagreement_policy": "Every mismatch or one-sided missing value is an audit finding. Neither implementation becomes authoritative merely because it agrees with a backtest or produces more favorable research results.",
+    "post_execution_rule": "Freeze the selected doc_id list and source ZIP hashes before reviewing aggregate mismatch rates. Any parser correction discovered from the sample must be semantic/source-grounded and regression-tested; the same frozen sample is then rerun without resampling."
   }
 }

@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 02:02 JST  
+> **最終更新:** 2026-09-15 02:18 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **正式promotion evidenceと中締め診断は分離する。**
 
@@ -9,7 +9,7 @@
 | 項目 | 現在 |
 |---|---|
 | 最終GO候補 | **0件** |
-| Canonical/Event + Shadow/Data | V20 **DEPRIORITIZE** / Shadow endpoint completeness guard **CI GREEN** |
+| Canonical/Event + Shadow/Data | V20 **DEPRIORITIZE** / Shadow prewrite completeness receipt boundary **CI GREEN** |
 | Weak+Early Phase-2 | 2022 fresh validation **FAILED ROBUSTNESS**。G3凍結、Round2閉鎖 |
 | 2023-25暫定首位 | **DUAL + G3** mean +7.98% / median +1.74% / win 53.85% / Top3-ex +5.14% |
 | Parallel Wave-1 | source bytes/provenance bound / performance未開封 |
@@ -26,7 +26,7 @@
 | 範囲 | 進捗 |
 |---|---:|
 | 全体 | **約62%** |
-| Canonical/Event + Shadow/Data | 約70% |
+| Canonical/Event + Shadow/Data | 約72% |
 | Weak+Early Phase-2 | 約90%（fresh robustnessまで開封済み、候補はFAIL） |
 | Consensus V47 | 約65% |
 | Parallel Wave-1 | 約55% |
@@ -50,7 +50,11 @@
 
 ### Shadow/Data integrity
 
-Canonical HEAD `74953f93945996fd9c29eb9af60927add720a3d9`。frozen prospective selection ledgerに対するsymbol-set + exact endpoint-session completeness guardはCI GREEN。成熟済み候補のnext XTKS open / fifth XTKS closeが欠ける場合はfail-closed、未成熟候補はpending。gross returnは開かない。Prospective Shadow CI **`34867054366` SUCCESS**。次はverified resolution/write boundaryへ配線しimmutable completeness receiptを作る。
+Canonical HEAD `0d93b87bfa8abf1009efa94bf81d68277825dc98`。既存のfrozen prospective symbol-set + exact endpoint-session completeness guardを、verified resolution/write boundaryへ直接配線した。成熟済み候補のnext XTKS open / fifth XTKS closeが欠ける、非finite、非positive、またはdaily symbol/dateが重複する場合は、**resolved outputを書き換える前に fail-closed** する。
+
+各resolution attemptは outcome-blind な `PROSPECTIVE_SHADOW_ENDPOINT_COMPLETENESS_RECEIPT` をresolved write前にimmutable生成する。receiptはshadow input SHA、daily rows SHA、session calendar SHA、completeness result SHA、mature/pending/required/missing/invalid counts、canonical endpoint contractを固定し、strategy outcome / gross returnを含めない。同一入力の再実行は同一receiptをidempotent再利用し、入力が変わればreceipt SHA由来の別ファイルをappend-onlyで作る。FAIL時はreceiptだけを残し既存resolved historyは不変。PASS後のみ従来のstaged resolve + continuity guard + resolved replaceへ進む。
+
+Prospective Shadow CI **`34873808933` SUCCESS**。今回performanceは開いていない。次はdaily endpoint manifest + pinned XTKS calendar → prewrite completeness receipt → resolved output / legacy resolution receiptの**provenance-chain exact hash binding**をoutcome-blindで監査する。
 
 ## 2. Weak+Early Phase-2 — frozen cost0
 
@@ -156,7 +160,7 @@ OSS HEAD `7704641db12a7ed593b794cf87002c4a7bae1b7f`。cost0 Optuna contractとim
 2. **Consensus transport/formal acceptance:** run `34849054884`を重複起動しない。terminal後にgenuinely observed raw rowsのみをpreserved seedとprovenance付きmergeし、unchanged frozen verifierを再実行。Yahoo回復後も不足ならmissing pairsのみをnew 429 circuit breaker付きで再取得。
 
 ### P1
-1. **Canonical/Shadow:** endpoint completeness guardをverified resolution/write boundaryへ配線し、immutable completeness receiptを追加。
+1. **Canonical/Shadow:** daily endpoint manifest + pinned XTKS calendar → immutable prewrite completeness receipt → resolved output / legacy resolution receiptのprovenance-chain exact hash bindingを監査し、driftをfail-closedにする。
 2. **Parallel Wave-1:** exact schema + pinned XTKS endpoint-session receipt → one-shot A1/B1/E1 cost0。
 3. **Core:** real XTKS/vendor manifest freeze → actual source receipt emit/verify → canonical evaluatorをfail-closed primitiveへ配線 → CI → その後のみcost0再計算。
 4. **OSS:** `run_study`/DSRをimmutable completed-trial receiptへbindingし、summaryへreceiptを永続化、integration testを追加。

@@ -1,0 +1,57 @@
+name: Consensus V47 96ut Daily Restore
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_96UT_RESTORE"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  restore:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install pandas==2.3.3 requests==2.34.2 lxml
+      - name: Read source run
+        id: meta
+        run: |
+          RUN_ID="$(awk -F= '/^daily_run_id=/{print $2}' research/RUN_V47_96UT_RESTORE | tr -d '[:space:]')"
+          test -n "$RUN_ID" || exit 1
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+      - name: Download V47 daily receipt
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-${{ steps.meta.outputs.run_id }}
+          path: daily
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.run_id }}
+      - name: Restore shard
+        run: |
+          python research/fetch_v47_96ut_daily_shard.py             --daily-receipt daily/v47_daily_materialization_receipt.json             --shard-index ${{ matrix.shard }}             --shard-count 10             --output-dir research_artifacts/v47_96ut_${{ matrix.shard }}
+      - name: Upload shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-96ut-${{ github.run_id }}-shard-${{ matrix.shard }}
+          path: research_artifacts/v47_96ut_${{ matrix.shard }}/**
+          if-no-files-found: warn
+          retention-days: 90

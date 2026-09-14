@@ -22,6 +22,8 @@ KEEP_END = pd.Timestamp("2025-12-31", tz="Asia/Tokyo")
 SHARD_COUNT_DEFAULT = 12
 REQUEST_PACE_SECONDS = 0.55
 MAX_ATTEMPTS = 8
+SYSTEMIC_429_PROBE_SYMBOLS = 2
+SYSTEMIC_429_MIN_PROBES = 4
 
 
 def clean_symbol(x: object) -> str:
@@ -52,8 +54,7 @@ def backoff_seconds(attempt: int, retry_after: str | None = None) -> float:
     return base + random.uniform(0.0, 0.75)
 
 
-def fetch_chart(code: str) -> tuple[dict | None, str | None]:
-    last = None
+def make_session() -> requests.Session:
     session = requests.Session()
     session.headers.update({
         "User-Agent": UA,
@@ -61,6 +62,53 @@ def fetch_chart(code: str) -> tuple[dict | None, str | None]:
         "Accept-Language": "ja,en-US;q=0.8,en;q=0.6",
         "Connection": "keep-alive",
     })
+    return session
+
+
+def probe_transport_status(code: str, host: str) -> str:
+    """One-shot outcome-blind transport probe used only to avoid hours of 429 retries."""
+    session = make_session()
+    try:
+        r = session.get(
+            host.format(symbol=quote(code, safe="")),
+            params={"range": "730d", "interval": "1h"},
+            timeout=30,
+        )
+        return f"http_{r.status_code}"
+    except Exception as exc:
+        return type(exc).__name__
+
+
+def systemic_429_from_probe(statuses: list[str]) -> bool:
+    return (
+        len(statuses) >= SYSTEMIC_429_MIN_PROBES
+        and all(x == "http_429" for x in statuses)
+    )
+
+
+def run_transport_preflight(symbols: list[str]) -> dict:
+    probe_symbols = symbols[:SYSTEMIC_429_PROBE_SYMBOLS]
+    statuses = []
+    observations = []
+    for code in probe_symbols:
+        for host in YAHOO_HOSTS:
+            status = probe_transport_status(code, host)
+            statuses.append(status)
+            observations.append({
+                "symbol": code,
+                "host": host.split("/v8/")[0],
+                "status": status,
+            })
+    return {
+        "probe_count": len(statuses),
+        "observations": observations,
+        "systemic_http_429": systemic_429_from_probe(statuses),
+    }
+
+
+def fetch_chart(code: str) -> tuple[dict | None, str | None]:
+    last = None
+    session = make_session()
     for attempt in range(MAX_ATTEMPTS):
         host = YAHOO_HOSTS[attempt % len(YAHOO_HOSTS)]
         try:
@@ -166,49 +214,65 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     raw_path = out / f"v47_raw1h_shard_{a.shard_index:02d}.csv.gz"
 
+    preflight = run_transport_preflight(symbols) if symbols else {
+        "probe_count": 0,
+        "observations": [],
+        "systemic_http_429": False,
+    }
+    circuit_open = bool(preflight["systemic_http_429"])
+
     receipts = []
     total_rows = 0
     with gzip.open(raw_path, "wt", encoding="utf-8", newline="") as gz:
         wrote_header = False
-        for i, code in enumerate(symbols, 1):
-            chart, err = fetch_chart(code)
-            if chart is None:
+        if circuit_open:
+            for code in symbols:
                 receipts.append({
                     "symbol": code,
-                    "status": "fetch_error",
-                    "error": err,
+                    "status": "transport_circuit_open",
+                    "error": "systemic_http_429",
                     "rows": 0,
                 })
-                continue
+        else:
+            for i, code in enumerate(symbols, 1):
+                chart, err = fetch_chart(code)
+                if chart is None:
+                    receipts.append({
+                        "symbol": code,
+                        "status": "fetch_error",
+                        "error": err,
+                        "rows": 0,
+                    })
+                    continue
 
-            fr = parse_rows(code, chart)
-            if fr.empty:
+                fr = parse_rows(code, chart)
+                if fr.empty:
+                    receipts.append({
+                        "symbol": code,
+                        "status": "no_rows_in_window",
+                        "error": None,
+                        "rows": 0,
+                    })
+                    continue
+
+                fr.to_csv(gz, index=False, header=not wrote_header)
+                wrote_header = True
+                total_rows += len(fr)
                 receipts.append({
                     "symbol": code,
-                    "status": "no_rows_in_window",
+                    "status": "ok",
                     "error": None,
-                    "rows": 0,
+                    "rows": int(len(fr)),
+                    "first_date": str(fr["date"].min()),
+                    "last_date": str(fr["date"].max()),
                 })
-                continue
-
-            fr.to_csv(gz, index=False, header=not wrote_header)
-            wrote_header = True
-            total_rows += len(fr)
-            receipts.append({
-                "symbol": code,
-                "status": "ok",
-                "error": None,
-                "rows": int(len(fr)),
-                "first_date": str(fr["date"].min()),
-                "last_date": str(fr["date"].max()),
-            })
-            if i % 25 == 0:
-                print(
-                    f"shard {a.shard_index}/{a.shard_count} "
-                    f"{i}/{len(symbols)} rows={total_rows}",
-                    flush=True,
-                )
-            time.sleep(REQUEST_PACE_SECONDS)
+                if i % 25 == 0:
+                    print(
+                        f"shard {a.shard_index}/{a.shard_count} "
+                        f"{i}/{len(symbols)} rows={total_rows}",
+                        flush=True,
+                    )
+                time.sleep(REQUEST_PACE_SECONDS)
 
     r = pd.DataFrame(receipts)
     receipt_csv = out / f"v47_raw1h_shard_{a.shard_index:02d}_receipt.csv"
@@ -231,7 +295,14 @@ def main() -> None:
             "max_attempts": MAX_ATTEMPTS,
             "request_pace_seconds": REQUEST_PACE_SECONDS,
             "retry_statuses": [429, 502, 503, 504],
+            "systemic_429_preflight": {
+                "probe_symbols": SYSTEMIC_429_PROBE_SYMBOLS,
+                "minimum_probes": SYSTEMIC_429_MIN_PROBES,
+                "fail_fast_only": True,
+            },
         },
+        "transport_preflight": preflight,
+        "transport_circuit_open": circuit_open,
         "strategy_returns_opened": False,
         "model_scores_opened": False,
         "production_writes": False,

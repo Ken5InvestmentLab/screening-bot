@@ -1,7 +1,7 @@
 {
-  "version": 46,
+  "version": 47,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T02:02:00+09:00",
+  "updated_at_jst": "2026-09-15T02:18:00+09:00",
   "supervisor_last_scan": {
     "status": "CORE24_OHLCV_SUPPLEMENT_ACCEPTANCE_BOUNDARY_PREREGISTERED",
     "scanned_at_jst": "2026-09-15T02:02:00+09:00",
@@ -16,9 +16,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "74953f93945996fd9c29eb9af60927add720a3d9",
-      "last_processed_sha": "74953f93945996fd9c29eb9af60927add720a3d9",
-      "last_processed_note": "Shadow/Data symbol-set + endpoint-session completeness boundary implemented, CI-green, and documented. Exact mature-candidate next-open/D+5-close pairs must exist with finite positive required prices before resolution; no outcomes opened."
+      "last_seen_sha": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
+      "last_processed_sha": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
+      "last_processed_note": "Shadow/Data endpoint completeness is now enforced inside the verified resolution/write boundary. Before any resolved replacement, an outcome-blind immutable completeness receipt is emitted; mature missing/invalid next-open or D+5-close inputs fail closed with the existing resolved file untouched. Exact replay is idempotent and changed input produces a distinct append-only receipt. CI 34873808933 SUCCESS. No performance opened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -59,15 +59,17 @@
       "cost_pct_points": 0.0
     },
     "shadow_data_integrity": {
-      "status": "SYMBOL_SET_ENDPOINT_SESSION_COMPLETENESS_GUARD_CI_GREEN",
-      "head": "74953f93945996fd9c29eb9af60927add720a3d9",
-      "implementation_head": "962a062bc8a46eb32df65cfa737676463ec3ea1a",
-      "latest_ci_run": 34867054366,
+      "status": "VERIFIED_RESOLUTION_PREWRITE_COMPLETENESS_RECEIPT_CI_GREEN",
+      "head": "0d93b87bfa8abf1009efa94bf81d68277825dc98",
+      "implementation_head": "74585479f8a7c2a7bbce760653a8f3ef0616b853",
+      "latest_ci_run": 34873808933,
       "latest_ci_status": "success",
       "performance_opened": false,
       "expected_through_date_required": true,
       "endpoint_pair_completeness_required": true,
-      "next_rule": "Wire this audit into the verified resolution CLI/write boundary and emit a pinned completeness receipt before any new resolved output is accepted."
+      "prewrite_completeness_receipt_required": true,
+      "receipt_append_only": true,
+      "next_rule": "Audit the provenance chain from daily endpoint manifest and pinned XTKS calendar through completeness receipt to resolved output/legacy resolution receipt; require exact hash binding and preserve fail-closed append-only semantics without opening strategy outcomes."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -111,7 +113,7 @@
   },
   "next_global_actions": [
     "Core24 OHLCV supplement: complete supplementation only under the preregistered fail-closed data-plane contract; Supervisor adoption requires the full provenance/verifier/coverage-delta handoff before any strategy performance recomputation.",
-    "Canonical/Shadow: wire endpoint-completeness guard into verified resolution boundary and produce immutable completeness receipt without opening outcomes.",
+    "Canonical/Shadow: audit and bind the full endpoint provenance chain (daily manifest + pinned XTKS calendar -> immutable prewrite completeness receipt -> resolved output/resolution receipt) without opening outcomes.",
     "Parallel Wave-1: exact schema + pinned XTKS endpoint-session completeness receipt, then one cost0 batch only.",
     "Consensus: do not duplicate-trigger run 34849054884; preserve zero-row 429 receipts, wait for the active run to become terminal, then merge only genuinely observed rows plus preserved seed and rerun the unchanged frozen verifier. If Yahoo later becomes healthy and acceptance still fails, retry missing pairs only with the new systemic-429 fail-fast guard.",
     "Core: generate/freeze the real XTKS + raw-vendor endpoint manifest, emit/verify immutable source receipt from the actual fetch artifact, then wire audit_core_canonical_endpoint.py to the fail-closed endpoint primitive before recomputation.",

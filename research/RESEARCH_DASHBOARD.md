@@ -12,20 +12,22 @@
 
 > この進捗率は「GOできる確率」ではなく、Supervisorが管理する研究マイルストーンの消化率。各laneの検証・データ整備・provenance・fresh robustness・formal acceptanceまでを含む。
 
-### タスク別進捗
+### タスク別進捗・稼働状態
 
-| タスク | 進捗 | 現在地 / 完了条件 |
-|---|---:|---|
-| Weak+Early Phase-2 frozen検証 | **90%** | 2023-25 ranking + 2022 fresh開封済み。robustness FAILを確定し、G3凍結/Round2閉鎖。残りは原因監査・最終整理 |
-| Parallel Wave-1 新条件探索 | **55%** | A1/B1/E1 prereg + source provenance固定済み。schema/XTKS receipt → one-shot cost0開封が残り |
-| Core24 OHLCV補完 | **45%** | fail-closed verifier/source policy/CI完了。real missing inventory → fallback raw取得 → verifier → coverage deltaが残り |
-| Consensus V47 raw 1H取得・formal acceptance | **65%** | 48-shard retry進行。Yahoo HTTP429 transport blocker。usable raw merge + frozen acceptanceが残り |
-| Canonical/Shadow endpoint integrity | **72%** | completeness guard CI GREEN。daily manifest/calendar/immutable prewrite receipt/hash bindingが残り |
-| Core endpoint provenance | **70%** | provenance primitive CI GREEN。real XTKS/vendor manifest + actual receipt + evaluator配線が残り |
-| Cloud Monster exact forensic | **76%** | historical evidence整理済み。exact replayは一次証拠不足でblocked。新証拠が無ければclosed整理へ |
-| OSS / Validation | **80%** | cost0 + immutable trial-ledger GREEN。run_study→DSR receipt bindingが残り |
-| EDINET same-ZIP cross-check | **35%** | prereg済み。real metadata/doc/ZIP SHA固定 → parser実比較が残り |
-| Supervisor coordination / dashboard | **85%** | active lane/processed SHA/GO-NO-GO管理稼働中。各lane terminal時の最終統合が残り |
+| タスク | 状態 | 進捗 | 現在地 / 完了条件 |
+|---|---|---:|---|
+| Weak+Early Phase-2 frozen検証 | 🟡 **整理中** | **90%** | 2023-25 ranking + 2022 fresh開封済み。robustness FAILを確定し、G3凍結/Round2閉鎖。残りは原因監査・最終整理 |
+| Parallel Wave-1 新条件探索 | 🟢 **稼働中** | **55%** | A1/B1/E1 prereg + source provenance固定済み。schema/XTKS receipt → one-shot cost0開封が残り |
+| Core24 OHLCV補完 | 🟢 **稼働中** | **45%** | fail-closed verifier/source policy/CI完了。real missing inventory → fallback raw取得 → verifier → coverage deltaが残り |
+| Consensus V47 raw 1H取得・formal acceptance | 🟠 **外部待機** | **65%** | 48-shard retry進行中。Yahoo HTTP429 transport blocker。usable raw merge + frozen acceptanceが残り |
+| Canonical/Shadow endpoint integrity | 🟢 **稼働中** | **72%** | completeness guard CI GREEN。daily manifest/calendar/immutable prewrite receipt/hash bindingが残り |
+| Core endpoint provenance | 🟢 **稼働中** | **70%** | provenance primitive CI GREEN。real XTKS/vendor manifest + actual receipt + evaluator配線が残り |
+| Cloud Monster exact forensic | ⚪ **保留 / 閉鎖候補** | **76%** | historical evidence整理済み。exact replayは一次証拠不足でblocked。新証拠が無ければclosed整理へ |
+| OSS / Validation | 🟢 **稼働中** | **80%** | cost0 + immutable trial-ledger GREEN。run_study→DSR receipt bindingが残り |
+| EDINET same-ZIP cross-check | 🟠 **外部入力待ち** | **35%** | prereg済み。real metadata/doc/ZIP SHA固定 → parser実比較が残り |
+| Supervisor coordination / dashboard | 🟢 **常時稼働** | **85%** | active lane/processed SHA/GO-NO-GO管理稼働中。各lane terminal時の最終統合が残り |
+
+**状態の意味:** 🟢 稼働中 = 次の自動実行で前進可能 / 🟡 整理中 = 主要検証は終了し最終整理段階 / 🟠 外部待機 = 外部データ・workflow・API等の待ち / ⚪ 保留 = 新証拠や再開条件が無い限り進めない。2回連続で実質進展が無いものは今後 `🔴 STALE` として表示し、別タスクへ自動再配分する。
 
 > タスク進捗率も「成功確率」ではなく、各タスクで事前に必要とされるマイルストーンの消化率。blocked/FAILでも、検証工程を完了すれば進捗は増える。
 

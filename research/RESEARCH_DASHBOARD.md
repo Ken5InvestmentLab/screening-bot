@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 01:53 JST  
+> **最終更新:** 2026-09-15 02:02 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **正式promotion evidenceと中締め診断は分離する。**
 
@@ -15,6 +15,7 @@
 | Parallel Wave-1 | source bytes/provenance bound / performance未開封 |
 | Consensus V47 | formal raw acceptance未PASS / raw48はsystemic Yahoo HTTP429 blocker / diagnostic NOCAP H2のみ開封 |
 | Core / Cloud | fixed Core reject維持 / endpoint source-receipt primitive **CI GREEN** / Cloud exact replay unavailable |
+| Core24 OHLCV補完 | **data-plane acceptance boundary preregistered** / formal dataset adoption未許可 / performance再計算禁止 |
 | OSS / Validation | cost0 + immutable trial-ledger primitive GREEN / DSR receipt binding待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
@@ -63,6 +64,8 @@ Canonical HEAD `74953f93945996fd9c29eb9af60927add720a3d9`。frozen prospective s
 
 2022 fresh: DUAL_TOP1 n21 mean +2.62% / median -6.19% / win 28.57% / Top3-ex -7.55%。DUAL+G3 n17 mean +6.08% / median -6.00% / win 29.41% / Top3-ex -6.26%。**FAILED ROBUSTNESS**。retune禁止。
 
+G3 `med_ret1 >= -1%` は凍結継続。結果を見たthreshold変更は禁止。2022 fresh validationが実行可能だったため、ユーザー指定どおりRegime Round2は **CLOSED** のまま。candidate-level新ranker探索も停止継続。
+
 ## 3. Consensus V47
 
 Formal raw acceptanceは未PASS。正式promotion evidenceではない。
@@ -72,7 +75,7 @@ Formal raw acceptanceは未PASS。正式promotion evidenceではない。
 - authoritative retry: **`34849054884`**（48 shards / max-parallel 2）
 - shard 0: workflow SUCCESS / artifact **`10357093848`** / **81/81 symbols HTTP429 / ok_symbols=0 / total_rows=0**
 - shard 1: workflow SUCCESS / artifact **`10357611796`** / **81/81 symbols HTTP429 / ok_symbols=0 / total_rows=0**
-- shard 2/3: `Fetch raw 1H shard` 実行中（01:53 JST確認時点）
+- shard 2/3: `Fetch raw 1H shard` 実行中（02:02 JST確認時点）
 - later shards: queued
 - artifactが存在しても0-rowなのでformal raw data successとは数えない。
 - blockerは **systemic Yahoo HTTP429**。戦略性能の失敗ではない。
@@ -99,7 +102,7 @@ Formal frozen acceptanceは従来どおり pair coverage >=99.5%、monthly >=99%
 
 Branch `research/parallel-condition-exploration` HEAD `8cfcee630164ae022c98100cd9339eaa20bbe84d`。A1/B1/E1 manifestとsource bytes/provenanceは固定済み。performance未開封。exact schema + pinned XTKS endpoint-session completeness receipt後に one-shot cost0 batchのみ実行。2026はreport-only。
 
-## 5. Core / Cloud / OSS
+## 5. Core / Cloud / OHLCV Supplement / OSS
 
 ### Core endpoint provenance
 
@@ -113,6 +116,25 @@ Core/Cloud latest HEAD: `adca8963302644857e4bb05f668e660c84bffb82`。
 - 今回performance再計算なし。したがって新しいn/平均/中央値/勝率/tail値はなく、ランキング・GO/NO-GOへの影響なし。
 
 **残blocker:** real XTKS + raw-vendor endpoint manifestを生成/freezeし、actual fetch artifactからsource receiptをemit/verifyし、`audit_core_canonical_endpoint.py` をobserved-date + first/last-row方式からfail-closed `resolve_canonical_endpoints` へ配線する。そのCIが通るまでformal Core returnを再計算しない。
+
+### Core24 OHLCV supplementation — Supervisor acceptance boundary
+
+Core24側で進行中の「足りないOHLCVを別経路で補完する」作業は、研究条件変更ではなく**data-plane repair**として扱う。Supervisor側で `research/SUPERVISOR_OHLCV_SUPPLEMENT_ACCEPTANCE_20260915_0202.md` を結果を見る前に固定した。
+
+Formal research datasetへ補完rowを採用する前に、少なくとも以下を必須とする：
+
+- missing pair inventory（補完前）
+- vendor/source hierarchyとacquisition method
+- per-pair native/supplement provenance + acquisition timestamp
+- immutable source payload/file receipt（可能な場合SHA-256）
+- OHLC整合性・XTKS calendar/session整合性
+- future-information非使用
+- accepted/rejected/conflicted件数とcoverage delta
+- deterministic verifier PASS
+
+**禁止:** interpolation、OHLCのforward/back fill、daily barからintradayを合成、performanceを見たsource選択、nativeと補完値のsilent merge。conflictは平均せずfail-closed。
+
+このdata-plane receiptがPASSするまでは補完datasetによるstrategy performance再計算をformal evidenceにしない。V47のsystemic HTTP429は引き続きtransport blockerであり、戦略FAILではない。
 
 ### Cloud Monster forensic
 
@@ -130,7 +152,8 @@ OSS HEAD `7704641db12a7ed593b794cf87002c4a7bae1b7f`。cost0 Optuna contractとim
 ## 6. 優先残タスク
 
 ### P0
-1. **Consensus transport/formal acceptance:** run `34849054884`を重複起動しない。terminal後にgenuinely observed raw rowsのみをpreserved seedとprovenance付きmergeし、unchanged frozen verifierを再実行。Yahoo回復後も不足ならmissing pairsのみをnew 429 circuit breaker付きで再取得。
+1. **Core24 OHLCV supplement:** 補完処理はpreregistered data-plane contract下で継続可。Supervisor採用にはmissing inventory/source hierarchy/per-pair provenance/receipt/verifier/coverage deltaのhandoffが必要。PASS前はperformance再計算禁止。
+2. **Consensus transport/formal acceptance:** run `34849054884`を重複起動しない。terminal後にgenuinely observed raw rowsのみをpreserved seedとprovenance付きmergeし、unchanged frozen verifierを再実行。Yahoo回復後も不足ならmissing pairsのみをnew 429 circuit breaker付きで再取得。
 
 ### P1
 1. **Canonical/Shadow:** endpoint completeness guardをverified resolution/write boundaryへ配線し、immutable completeness receiptを追加。

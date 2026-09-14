@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 02:18 JST  
+> **最終更新:** 2026-09-15 02:29 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **正式promotion evidenceと中締め診断は分離する。**
 
@@ -14,24 +14,22 @@
 | 2023-25暫定首位 | **DUAL + G3** mean +7.98% / median +1.74% / win 53.85% / Top3-ex +5.14% |
 | Parallel Wave-1 | source bytes/provenance bound / performance未開封 |
 | Consensus V47 | formal raw acceptance未PASS / raw48はsystemic Yahoo HTTP429 blocker / diagnostic NOCAP H2のみ開封 |
-| Core / Cloud | fixed Core reject維持 / endpoint source-receipt primitive **CI GREEN** / Cloud exact replay unavailable |
-| Core24 OHLCV補完 | **data-plane acceptance boundary preregistered** / formal dataset adoption未許可 / performance再計算禁止 |
+| Core / Cloud | fixed Core reject維持 / endpoint provenance + OHLCV supplement contract **CI GREEN** / Cloud exact replay unavailable |
+| Core24 OHLCV補完 | **fail-closed verifier実装済み** / source policy凍結 / real missing-pair handoff待ち / performance再計算禁止 |
 | OSS / Validation | cost0 + immutable trial-ledger primitive GREEN / DSR receipt binding待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
 ### マイルストーン消化率
 
-以下は成功確率ではなく、各レーンで事前定義した検証・実装マイルストーンの消化率の目安。
-
 | 範囲 | 進捗 |
 |---|---:|
-| 全体 | **約62%** |
+| 全体 | **約63%** |
 | Canonical/Event + Shadow/Data | 約72% |
 | Weak+Early Phase-2 | 約90%（fresh robustnessまで開封済み、候補はFAIL） |
 | Consensus V47 | 約65% |
 | Parallel Wave-1 | 約55% |
-| Core / Cloud forensic | 約70% |
-| OSS / Validation | **約80%** |
+| Core / Cloud forensic | **約73%** |
+| OSS / Validation | 約80% |
 
 ## 1. Canonical/Event + Shadow/Data
 
@@ -50,11 +48,9 @@
 
 ### Shadow/Data integrity
 
-Canonical HEAD `0d93b87bfa8abf1009efa94bf81d68277825dc98`。既存のfrozen prospective symbol-set + exact endpoint-session completeness guardを、verified resolution/write boundaryへ直接配線した。成熟済み候補のnext XTKS open / fifth XTKS closeが欠ける、非finite、非positive、またはdaily symbol/dateが重複する場合は、**resolved outputを書き換える前に fail-closed** する。
+Canonical HEAD `0d93b87bfa8abf1009efa94bf81d68277825dc98`。frozen prospective symbol-set + exact endpoint-session completeness guardをverified resolution/write boundaryへ配線済み。成熟済み候補のnext XTKS open / fifth XTKS closeが欠ける、非finite、非positive、またはdaily symbol/dateが重複する場合はresolved outputを書き換える前にfail-closed。
 
-各resolution attemptは outcome-blind な `PROSPECTIVE_SHADOW_ENDPOINT_COMPLETENESS_RECEIPT` をresolved write前にimmutable生成する。receiptはshadow input SHA、daily rows SHA、session calendar SHA、completeness result SHA、mature/pending/required/missing/invalid counts、canonical endpoint contractを固定し、strategy outcome / gross returnを含めない。同一入力の再実行は同一receiptをidempotent再利用し、入力が変わればreceipt SHA由来の別ファイルをappend-onlyで作る。FAIL時はreceiptだけを残し既存resolved historyは不変。PASS後のみ従来のstaged resolve + continuity guard + resolved replaceへ進む。
-
-Prospective Shadow CI **`34873808933` SUCCESS**。今回performanceは開いていない。次はdaily endpoint manifest + pinned XTKS calendar → prewrite completeness receipt → resolved output / legacy resolution receiptの**provenance-chain exact hash binding**をoutcome-blindで監査する。
+Prospective Shadow CI **`34873808933` SUCCESS**。performance未開封。次はdaily endpoint manifest + pinned XTKS calendar → prewrite completeness receipt → resolved output / legacy resolution receiptのprovenance-chain exact hash bindingをoutcome-blindで監査する。
 
 ## 2. Weak+Early Phase-2 — frozen cost0
 
@@ -66,26 +62,20 @@ Prospective Shadow CI **`34873808933` SUCCESS**。今回performanceは開いて�
 | 4 | body_pct LOW | 172 | +6.54% | +0.99% | 50.58% | +4.60% | frozen baseline |
 | 5 | volr20 LOW | 172 | +6.33% | +1.06% | 51.74% | +4.38% | frozen comparator |
 
-2022 fresh: DUAL_TOP1 n21 mean +2.62% / median -6.19% / win 28.57% / Top3-ex -7.55%。DUAL+G3 n17 mean +6.08% / median -6.00% / win 29.41% / Top3-ex -6.26%。**FAILED ROBUSTNESS**。retune禁止。
-
-G3 `med_ret1 >= -1%` は凍結継続。結果を見たthreshold変更は禁止。2022 fresh validationが実行可能だったため、ユーザー指定どおりRegime Round2は **CLOSED** のまま。candidate-level新ranker探索も停止継続。
+2022 fresh: DUAL_TOP1 n21 mean +2.62% / median -6.19% / win 28.57% / Top3-ex -7.55%。DUAL+G3 n17 mean +6.08% / median -6.00% / win 29.41% / Top3-ex -6.26%。**FAILED ROBUSTNESS**。retune禁止。G3 `med_ret1 >= -1%` は凍結継続、Round2はCLOSED。
 
 ## 3. Consensus V47
 
 Formal raw acceptanceは未PASS。正式promotion evidenceではない。
 
-### Formal raw48 transport status
-
 - authoritative retry: **`34849054884`**（48 shards / max-parallel 2）
-- shard 0: workflow SUCCESS / artifact **`10357093848`** / **81/81 symbols HTTP429 / ok_symbols=0 / total_rows=0**
-- shard 1: workflow SUCCESS / artifact **`10357611796`** / **81/81 symbols HTTP429 / ok_symbols=0 / total_rows=0**
-- shard 2/3: `Fetch raw 1H shard` 実行中（02:02 JST確認時点）
-- later shards: queued
-- artifactが存在しても0-rowなのでformal raw data successとは数えない。
-- blockerは **systemic Yahoo HTTP429**。戦略性能の失敗ではない。
-- future missing-only retryには2 symbols × 2 Yahoo hostsのall-429 fail-fast circuit breakerを追加済み。ただし現在runは旧trigger SHAに固定されているため途中差し替え・重複triggerしない。
+- shard 0: artifact `10357093848` / 81/81 HTTP429 / ok_symbols=0 / total_rows=0
+- shard 1: artifact `10357611796` / 81/81 HTTP429 / ok_symbols=0 / total_rows=0
+- state v47時点でshard 2/3 fetch中、later shards queued
+- blockerはsystemic Yahoo HTTP429。戦略性能FAILではない。
+- current runは重複triggerしない。future missing-only retryはall-429 fail-fast guard付き。
 
-Formal frozen acceptanceは従来どおり pair coverage >=99.5%、monthly >=99%、completely missing required symbols=0、>=20 dates対象symbol coverage >=95%、restored-pair >=99%。閾値緩和・interpolation・synthetic barは禁止。
+Formal frozen acceptance: pair coverage >=99.5%、monthly >=99%、completely missing required symbols=0、>=20 dates対象symbol coverage >=95%、restored-pair >=99%。閾値緩和・interpolation・synthetic barは禁止。
 
 中締め diagnostic-only NOCAP H2（2025-07-01〜2025-12-30、cost 0%、next XTKS open -> D+5 close）:
 
@@ -93,52 +83,43 @@ Formal frozen acceptanceは従来どおり pair coverage >=99.5%、monthly >=99%
 |---:|---:|---:|---:|---:|---|
 | 37 | **+3.0295%** | **+0.3817%** | **51.35%** | **-0.5393%** | MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE |
 
-### H1/H2開封状態
-
-| 区分 | H1 | H2 |
-|---|---|---|
-| Formal clean V47 | **未開封** | **未開封** |
-| Midterm NOCAP diagnostic | 開封済み | 開封済み |
-| Midterm CAP1000_PIT diagnostic | H1開封済み | **閉鎖維持（rescue開封禁止）** |
-| 2026 | selection用途は閉鎖 | report/robustness-only |
+Formal clean V47 H1/H2は未開封。2026はreport/robustness-only。
 
 ## 4. Parallel Wave-1
 
-Branch `research/parallel-condition-exploration` HEAD `8cfcee630164ae022c98100cd9339eaa20bbe84d`。A1/B1/E1 manifestとsource bytes/provenanceは固定済み。performance未開封。exact schema + pinned XTKS endpoint-session completeness receipt後に one-shot cost0 batchのみ実行。2026はreport-only。
+Branch `research/parallel-condition-exploration` HEAD `8cfcee630164ae022c98100cd9339eaa20bbe84d`。A1/B1/E1 manifestとsource bytes/provenanceは固定済み。performance未開封。exact schema + pinned XTKS endpoint-session completeness receipt後にone-shot cost0 batchのみ実行。2026はreport-only。
 
 ## 5. Core / Cloud / OHLCV Supplement / OSS
 
 ### Core endpoint provenance
 
-Core/Cloud latest HEAD: `adca8963302644857e4bb05f668e660c84bffb82`。
+Core/Cloud latest HEAD: `4fd4b58dfce6d57c829a4cb79ca91f320cb76053`。supplement verifier implementation headは `d2f24b99d66c2cbfa6dbc3f1aa6e1d623973c3be`。
 
 - Fixed Core / Failed-Breakdown Reclaim / Prior-Close Reclaim / Precision 3-family等の既reject familyは閉鎖維持、retuneなし。
-- `endpoint_provenance.py` にimmutable raw-source receiptを追加。raw fileのexact SHA-256/size、source Actions run ID、artifact名、vendor identity、pinned calendar SHA-256を束縛し、receipt自体もSHA-256固定。
-- raw bytes、file set、size、metadata、calendar SHAにdriftがあればfail-closed。
-- outcome/returnを使わず検証可能。
-- dedicated CI **`34868543771` SUCCESS**。
-- 今回performance再計算なし。したがって新しいn/平均/中央値/勝率/tail値はなく、ランキング・GO/NO-GOへの影響なし。
+- `endpoint_provenance.py` のimmutable raw-source receiptはraw file exact SHA-256/size、source run/artifact/vendor、pinned calendar SHAを束縛。driftはfail-closed。
+- endpoint provenance CI `34868543771` SUCCESS。
+- real XTKS + raw-vendor endpoint manifest生成/freeze、actual fetch artifact source receipt、`audit_core_canonical_endpoint.py` のfail-closed `resolve_canonical_endpoints` 配線は残blocker。
+- formal Core returnはまだ再計算しない。
 
-**残blocker:** real XTKS + raw-vendor endpoint manifestを生成/freezeし、actual fetch artifactからsource receiptをemit/verifyし、`audit_core_canonical_endpoint.py` をobserved-date + first/last-row方式からfail-closed `resolve_canonical_endpoints` へ配線する。そのCIが通るまでformal Core returnを再計算しない。
+### Core24 OHLCV supplementation — implementation CI GREEN
 
-### Core24 OHLCV supplementation — Supervisor acceptance boundary
+Supervisor prereg `research/SUPERVISOR_OHLCV_SUPPLEMENT_ACCEPTANCE_20260915_0202.md` に沿って、研究用fail-closed verifier `ohlcv_supplement.py`、source policy `OHLCV_SUPPLEMENT_SOURCE_POLICY_20260915.json`、unit tests、専用workflowを追加した。
 
-Core24側で進行中の「足りないOHLCVを別経路で補完する」作業は、研究条件変更ではなく**data-plane repair**として扱う。Supervisor側で `research/SUPERVISOR_OHLCV_SUPPLEMENT_ACCEPTANCE_20260915_0202.md` を結果を見る前に固定した。
+**CI:**
+- `34874773548` SUCCESS — 初回contract implementation
+- `34874848913` SUCCESS — source priority guard含むfollow-up
 
-Formal research datasetへ補完rowを採用する前に、少なくとも以下を必須とする：
+Verifierはpre-supplement missing inventoryに無いrowを拒否し、symbol/timestamp/timeframe、raw SHA-256、acquired_at、latest_market_ts、OHLCV整合性、source/timeframe eligibility、causalityを確認する。eligible source同士が同一pairで異なるOHLCVを返した場合は**CONFLICT_FAIL_CLOSED**。平均・補間・後知恵source選択はしない。
 
-- missing pair inventory（補完前）
-- vendor/source hierarchyとacquisition method
-- per-pair native/supplement provenance + acquisition timestamp
-- immutable source payload/file receipt（可能な場合SHA-256）
-- OHLC整合性・XTKS calendar/session整合性
-- future-information非使用
-- accepted/rejected/conflicted件数とcoverage delta
-- deterministic verifier PASS
+Frozen source policy:
+- `yahoo_chart_api_native`: native exact observed path。Yahoo Japan HTML scrapingは追加しない。
+- `stooq_intraday_candidate`: **formal_eligible=false**。overlap agreement / timestamp-session / adjustment / raw receipt確認後にのみ昇格検討。
+- `alpha_vantage_free`: **低優先度・1dのみformal fallback**。1H/4H補完へのdaily-to-intraday synthesisは禁止。
+- `alpha_vantage_intraday_premium`: entitlement/provenance未確認のためdisabled。
+- `googlefinance_snapshot`: corroboration/future snapshotのみ。formal historical intradayには使わない。
+- Kabutan automated scrapingは禁止。
 
-**禁止:** interpolation、OHLCのforward/back fill、daily barからintradayを合成、performanceを見たsource選択、nativeと補完値のsilent merge。conflictは平均せずfail-closed。
-
-このdata-plane receiptがPASSするまでは補完datasetによるstrategy performance再計算をformal evidenceにしない。V47のsystemic HTTP429は引き続きtransport blockerであり、戦略FAILではない。
+**まだformal adoption不可。** 次はreal missing-pair inventoryを生成し、実際のfallback raw bytes/receiptsを取得、accepted/rejected/conflicted件数とcoverage deltaを出し、deterministic verifier PASSをSupervisorへ渡す。そこまでstrategy performanceは再計算しない。
 
 ### Cloud Monster forensic
 
@@ -147,25 +128,25 @@ Formal research datasetへ補完rowを採用する前に、少なくとも以下
 - **歴史値（legacy evidence）:** `n=63 / 5BD平均 +9.86%`
 - **新しい完全一致再現結果:** なし
 
-歴史値と新規再現値を混同しない。exact model / exact 575 Watch pool等の新証拠が出ない限り、Cloudをpromotion候補へ戻さない。
+歴史値と新規再現値を混同しない。exact model / exact 575 Watch pool等の新証拠が出ない限りCloudをpromotion候補へ戻さない。
 
 ### OSS / Validation
 
-OSS HEAD `7704641db12a7ed593b794cf87002c4a7bae1b7f`。cost0 Optuna contractとimmutable completed-trial ledger primitiveがGREEN。`run_study()`はまだcompleted trial user_attrsからSharpe配列を直接生成してDSRへ渡しており、immutable receipt-bound consumptionへのintegration bindingが残る。新規performanceは開いていない。
+OSS HEAD `7704641db12a7ed593b794cf87002c4a7bae1b7f`。cost0 Optuna contractとimmutable completed-trial ledger primitiveがGREEN。`run_study()`→DSRのimmutable receipt bindingが残る。新規performance未開封。
 
 ## 6. 優先残タスク
 
 ### P0
-1. **Core24 OHLCV supplement:** 補完処理はpreregistered data-plane contract下で継続可。Supervisor採用にはmissing inventory/source hierarchy/per-pair provenance/receipt/verifier/coverage deltaのhandoffが必要。PASS前はperformance再計算禁止。
-2. **Consensus transport/formal acceptance:** run `34849054884`を重複起動しない。terminal後にgenuinely observed raw rowsのみをpreserved seedとprovenance付きmergeし、unchanged frozen verifierを再実行。Yahoo回復後も不足ならmissing pairsのみをnew 429 circuit breaker付きで再取得。
+1. **Core24 OHLCV supplement:** real missing-pair inventory → frozen source policyでfallback取得 → per-source raw receipt → verifier → accepted/rejected/conflicted counts + coverage delta。PASS前はperformance再計算禁止。
+2. **Consensus transport/formal acceptance:** run `34849054884`を重複起動しない。terminal後にgenuinely observed rowsのみをpreserved seedとprovenance付きmergeし、unchanged frozen verifierを再実行。
 
 ### P1
-1. **Canonical/Shadow:** daily endpoint manifest + pinned XTKS calendar → immutable prewrite completeness receipt → resolved output / legacy resolution receiptのprovenance-chain exact hash bindingを監査し、driftをfail-closedにする。
+1. **Canonical/Shadow:** daily endpoint manifest + pinned XTKS calendar → immutable prewrite completeness receipt → resolved output / legacy resolution receiptのexact hash binding。
 2. **Parallel Wave-1:** exact schema + pinned XTKS endpoint-session receipt → one-shot A1/B1/E1 cost0。
 3. **Core:** real XTKS/vendor manifest freeze → actual source receipt emit/verify → canonical evaluatorをfail-closed primitiveへ配線 → CI → その後のみcost0再計算。
-4. **OSS:** `run_study`/DSRをimmutable completed-trial receiptへbindingし、summaryへreceiptを永続化、integration testを追加。
+4. **OSS:** `run_study`/DSRをimmutable completed-trial receiptへbinding。
 
 ### P2
-1. **EDINET same-ZIP real cross-check:** preregister済み2023-2025 metadata snapshot/selected doc IDs/ZIP SHA固定後のみ実比較。外部EDINET API key/data取得境界が満たされるまでsynthetic/contract validationのみ。parser不一致はoutcome-blind audit findingとして扱う。
+1. **EDINET same-ZIP real cross-check:** prereg済み2023-2025 metadata snapshot/selected doc IDs/ZIP SHA固定後のみ実比較。parser不一致はoutcome-blind audit finding扱い。
 
 production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterは変更しない。

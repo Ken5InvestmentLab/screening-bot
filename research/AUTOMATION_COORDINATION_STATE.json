@@ -1,13 +1,13 @@
 {
-  "version": 26,
+  "version": 27,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T20:33:00+09:00",
+  "updated_at_jst": "2026-09-14T21:15:00+09:00",
   "supervisor_last_scan": {
-    "status": "CONSENSUS_V47_MIDTERM_H2_DIAGNOSTIC_COLLECTED_FORMAL_PATH_STILL_BLOCKED",
-    "scanned_at_jst": "2026-09-14T20:33:00+09:00",
-    "branch_heads_changed_since_previous_state": true,
+    "status": "WEAK_EARLY_2022_MODEL_PERIOD_AUDIT_COMPLETE_WARMUP_PRIMARY_CAUSE_REJECTED",
+    "scanned_at_jst": "2026-09-14T21:15:00+09:00",
+    "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "Consensus H2 diagnostic run 34832358609 completed successfully and was collected under MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE. NOCAP H2 cost0: n=37, mean +3.0295%, median +0.3817%, win 51.35%, +10 27.03%, +20 16.22%, +50 2.70%, -10 13.51%, -20 2.70%, Top1-ex +1.5562%, Top3-ex -0.5393%. Formal raw acceptance remains false; CAP1000_PIT H2 and 2026 remain closed; same-family retune prohibited. Formal retry 34810592135 remains active with fetch2/fetch3 in progress and earlier fetch0/fetch1 timed out/cancelled at the 180m boundary."
+    "note": "All four active research lane HEADs unchanged from v26 and no processed SHA was duplicated. Weak+Early frozen 2022 reconstruction was revalidated against authoritative aggregate metrics and decomposed by model_period. Even after training exceeds 100k rows, DUAL Sep-Dec n13 mean +9.75% but median -0.39%, win 46.15%, Top3-ex -6.43%; G3 n11 mean +13.67%, median -0.39%, win 45.45%, Top3-ex -5.07%. December remains weak despite 189,183 training rows / 541 positives. Simple warm-up is rejected as the primary explanation. Artifact provenance corrected: artifact 10264205130 belongs to run 34599959356, not 34545440155. Round2 remains closed."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -19,25 +19,25 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new SHA at 20:xx. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "No new SHA at 21:xx. V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
       "last_processed_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
-      "last_processed_note": "20:25 Core audit processed. Found stale 0.5% requirements in the forward evaluation and final replacement comparison contracts; hardened both to new-computation cost0-only without changing signal logic or rerunning rejected families. Cloud exact replay remains unavailable/closed."
+      "last_processed_note": "No new SHA at 21:xx. Core reject/Cloud exact replay unavailable and cost0-only contract hardening remain current."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
       "last_processed_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
-      "last_processed_note": "20:33 Consensus processed H2 diagnostic run 34832358609 SUCCESS. NOCAP H2 cost0 opened as diagnostic-only: n37 mean +3.0295 median +0.3817 win 51.35 Top1-ex +1.5562 Top3-ex -0.5393. Formal raw not accepted; CAP1000 H2/2026 closed; no retune. Formal retry 34810592135 remains separate and active."
+      "last_processed_note": "No new SHA at 21:xx. NOCAP H2 diagnostic remains n37 mean +3.0295 median +0.3817 win 51.35 Top3-ex -0.5393; formal raw not accepted; no retune."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
       "last_processed_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-      "last_processed_note": "Processed new OSS head 6e9045e9. Audit found Optuna implementation still defaults/allows nonzero round-trip cost despite frozen cost0 contract. New Optuna discovery/performance is fail-closed until API/CLI/tests are cost0-only and OSS CI passes. No strategy outcome opened."
+      "last_processed_note": "No new SHA at 21:xx. New Optuna discovery/performance remains fail-closed until cost0-only API/CLI/tests and isolated CI green."
     }
   },
   "guardrails": [
@@ -52,7 +52,7 @@
   ],
   "workflow_watch": {
     "weak_early_phase2": {
-      "status": "FRESH_2022_FAILED_MODEL_MATURITY_AUDIT_COMPLETE_ROUND2_CLOSED",
+      "status": "FRESH_2022_FAILED_MODEL_PERIOD_AUDIT_COMPLETE_ROUND2_CLOSED",
       "frozen_basis": {
         "market_gate": "med_ret5 <= 0 on signal-date completed daily context",
         "candidate_gate": "ret10 <= 0.5735294117647058",
@@ -70,7 +70,8 @@
       "g3_rule": "med_ret1 >= -0.01; frozen; no retune",
       "fresh_2022_source": {
         "artifact_id": 10264205130,
-        "source_run": 34545440155,
+        "source_run": 34599959356,
+        "artifact_digest": "sha256:095e58986d45bda0092be1767e1b44a4791bf3c617179791d0c99c6d7d01bcb0",
         "raw_2022_rows": 825735,
         "generator": "unchanged V7/V9 full-45-feature monthly causal Tail",
         "min_train_rows": 30000,
@@ -95,7 +96,6 @@
       },
       "model_maturity_audit": {
         "report": "research/WEAK_EARLY_PHASE2_MODEL_MATURITY_AUDIT_20260914_2000.md",
-        "method": "outcome-blind exact V7/V9 monthly expanding training-count and label-count reconstruction from preserved run-80 raw",
         "monthly": {
           "2022-05": {"train_rows": 17532, "top025_pos": 48, "positive_rate_pct": 0.274, "computable": false},
           "2022-06": {"train_rows": 40602, "top025_pos": 116, "positive_rate_pct": 0.286, "computable": true},
@@ -106,12 +106,23 @@
           "2022-11": {"train_rows": 165509, "top025_pos": 475, "positive_rate_pct": 0.287, "computable": true},
           "2022-12": {"train_rows": 189183, "top025_pos": 541, "positive_rate_pct": 0.286, "computable": true}
         },
-        "finding": "June is early-stage, but training grows to 189k/541 positives by December while the top0.25 label rate stays ~0.286-0.293%; simple undersized-training cannot explain the whole Jun-Dec robustness failure.",
-        "simple_warmup_hypothesis": "WEAKENED_NOT_SUFFICIENT",
+        "finding": "Training grows from 40.6k/116 positives in June to 189.2k/541 in December with stable positive base rate; sample-size-only explanation is insufficient.",
+        "simple_warmup_hypothesis": "REJECTED_AS_PRIMARY_EXPLANATION",
         "round2": "STAYS_CLOSED"
       },
+      "model_period_audit": {
+        "report": "research/WEAK_EARLY_PHASE2_MODEL_PERIOD_AUDIT_20260914_2100.md",
+        "reconstruction_exact_match": true,
+        "early_dual": {"period": "2022-06..2022-08", "n": 8, "mean_pct": -8.95, "median_pct": -7.69, "win_pct": 0.0, "top3_ex_pct": -11.96},
+        "mature_dual": {"period": "2022-09..2022-12", "n": 13, "mean_pct": 9.75, "median_pct": -0.39, "win_pct": 46.15, "top3_ex_pct": -6.43},
+        "early_g3": {"period": "2022-07..2022-08", "n": 6, "mean_pct": -7.85, "median_pct": -7.69, "win_pct": 0.0, "top3_ex_pct": -11.67},
+        "mature_g3": {"period": "2022-09..2022-12", "n": 11, "mean_pct": 13.67, "median_pct": -0.39, "win_pct": 45.45, "top3_ex_pct": -5.07},
+        "december_dual": {"train_rows": 189183, "top025_pos": 541, "n": 8, "mean_pct": -4.0, "median_pct": -6.09, "win_pct": 25.0, "top3_ex_pct": -9.54},
+        "december_g3": {"train_rows": 189183, "top025_pos": 541, "n": 7, "mean_pct": -6.21, "median_pct": -6.19, "win_pct": 14.29, "top3_ex_pct": -10.43},
+        "finding": "Mature-period raw mean becomes positive only through a few large winners while median stays negative, win stays below 50%, and Top3-ex stays strongly negative. Persistent right-tail dependence and thin candidate population remain root-cause clues; do not turn candidate count into a post-hoc gate."
+      },
       "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
-      "next_rule": "Use existing frozen 2022 picks for model_period diagnostics and compare tail_p/tail_cdf/candidate scarcity versus training maturity. Diagnostic only; no threshold changes and no Round2 gate until causally preregistered."
+      "next_rule": "Run outcome-blind population/scarcity audit across 2022, 2023H2 and 2025H2 (candidate-count distribution, forced-choice share, symbol concentration, market structure). Do not create a new gate from opened outcome evidence. Round2 remains closed unless a qualitatively different market-level hypothesis is theoretically justified and preregistered before testing."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
@@ -190,8 +201,8 @@
     }
   },
   "next_global_actions": [
-    "Phase-2: map existing frozen 2022 picks by model_period and compare monthly tail_p/tail_cdf/candidate scarcity against training maturity as diagnostic-only; do not retune or activate Round2 from this.",
-    "Consensus diagnostic: H1 and NOCAP H2 are now opened diagnostic-only; no same-family retune and no CAP1000_PIT H2 rescue.",
+    "Phase-2: run outcome-blind population/scarcity audit across 2022, 2023H2 and 2025H2; do not retune or create a post-hoc gate from opened outcomes.",
+    "Consensus diagnostic: H1 and NOCAP H2 are opened diagnostic-only; no same-family retune and no CAP1000_PIT H2 rescue.",
     "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before formal features.",
     "OSS: fix Optuna API/CLI/tests to cost0-only and require isolated CI green before any new discovery/performance; then harden trial-ledger provenance.",
     "Core: continue stale research cost/endpoint contract audit; do not rerun rejected families solely to regenerate metrics.",

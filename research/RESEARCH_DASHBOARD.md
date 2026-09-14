@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 03:03 JST  
+> **最終更新:** 2026-09-15 03:29 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -14,8 +14,8 @@
 | タスク | 状態 | 進捗 | 現在地 / 完了条件 |
 |---|---|---:|---|
 | Weak+Early Phase-2 frozen検証 | 🟡 **整理中** | **90%** | 2023-25 ranking + 2022 fresh完了。robustness FAIL、G3凍結、Round2 CLOSED |
-| Parallel Wave-1 新条件探索 | 🟢 **稼働中** | **62%** | **exact source schema freeze完了**。独立XTKS calendar固定 → endpoint completeness receipt → one-shot cost0開封 |
-| Core24 OHLCV補完 | 🟢 **稼働中** | **45%** | fail-closed verifier/source policy/CI完了。real missing inventory → fallback raw → verifier → coverage delta |
+| Parallel Wave-1 新条件探索 | 🟢 **稼働中** | **62%** | exact source schema freeze完了。独立XTKS calendar固定 → endpoint completeness receipt → one-shot cost0開封 |
+| Core24 OHLCV補完 | 🟢 **稼働中** | **50%** | fail-closed verifier/source policy/CIに加え、expected−observedからexact missing inventoryを作るoutcome-blind builderを追加。run 34881004528 SUCCESS。次はreal datasetでinventory生成 → fallback raw → verifier → coverage delta |
 | Consensus V47 raw 1H取得・formal acceptance | 🟠 **外部待機** | **66%** | raw48非terminal。shard 0/1全429、2/3 fetch中。merge acceptance spec固定済み |
 | Canonical/Shadow endpoint integrity | 🟢 **稼働中** | **72%** | completeness guard GREEN。manifest/calendar/receipt/output exact hash bindingが残り |
 | Core endpoint provenance | 🟢 **稼働中** | **70%** | provenance primitive GREEN。real XTKS/vendor manifest + actual receipt + evaluator配線が残り |
@@ -36,7 +36,7 @@
 | 2023-25首位 | n117 / mean **+7.98%** / median **+1.74%** / win **53.85%** / Top3-ex **+5.14%** |
 | Parallel Wave-1 | source bytes + exact schema frozen / performance未開封 |
 | Consensus V47 | raw48 transport blocker / formal acceptance未PASS |
-| Core24 OHLCV | contract CI GREEN / real gap handoff待ち / performance再計算禁止 |
+| Core24 OHLCV | HEAD `4e038e4e...` / exact missing-inventory builder + contract tests GREEN / real gap handoff待ち / performance再計算禁止 |
 | Cloud exact | HOLD / close candidate |
 | V20 | **CLOSED / DEPRIORITIZED** |
 | 最終判定 | **NO-GO / 研究継続** |
@@ -73,7 +73,7 @@ Diagnostic-only NOCAP H2: n37 / mean +3.0295% / median +0.3817% / win 51.35% / T
 
 ## 4. Data / Provenance / Validation
 
-**Core24 OHLCV補完:** fail-closed contract CI GREEN。Yahoo native優先、Alpha Vantage freeはdaily-only低優先度、Stooqはformal未承認、Google Finance snapshotはcorroboration-only。real missing-pair inventory、fallback raw receipt、accepted/rejected/conflicted counts、coverage deltaが揃うまでformal datasetへ採用せずperformance再計算もしない。
+**Core24 OHLCV補完:** source policy / fail-closed verifierに加え、`build_missing_inventory(expected, observed)` を実装。expected endpoint keyからobserved keyをexact subtractionし、symbol `.T` / timeframe case / UTC timestampをcanonicalize、observed重複はfail-closed、unexpected observed rowsはinventoryへ混入させずreceiptで別計上する。CI run `34881004528` SUCCESS。Yahoo native優先、Alpha Vantage freeはdaily-only低優先度、Stooqはformal未承認、Google Finance snapshotはcorroboration-only。real missing-pair inventory、fallback raw receipt、accepted/rejected/conflicted counts、coverage deltaが揃うまでformal datasetへ採用せずperformance再計算もしない。
 
 **Canonical/Shadow:** prewrite endpoint completeness guard GREEN。次はdaily manifest + independently pinned XTKS calendar → immutable receipt → resolved output/resolution receiptのexact hash binding。
 
@@ -87,7 +87,7 @@ Diagnostic-only NOCAP H2: n37 / mean +3.0295% / median +0.3817% / win 51.35% / T
 
 ## 5. 自動継続キュー
 
-P0: Parallel XTKS calendar/endpoint receipt、Core24 real missing inventory/fallback verification、Consensus raw48 terminal後のformal merge/acceptance。
+P0: Parallel XTKS calendar/endpoint receipt、Core24 real missing inventory生成/fallback verification、Consensus raw48 terminal後のformal merge/acceptance。
 
 P1: Canonical provenance-chain binding、Core endpoint evaluator binding、OSS DSR receipt binding。
 

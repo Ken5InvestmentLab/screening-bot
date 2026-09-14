@@ -1,0 +1,34 @@
+name: Consensus V47 Yahoo Delisted Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_YAHOO_DELISTED_PROBE"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install requests==2.34.2
+      - name: Run query2 crumb probe
+        run: python research/probe_v47_yahoo_delisted.py | tee probe.log
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-yahoo-probe-${{ github.run_id }}
+          path: probe.log
+          retention-days: 30

@@ -1,7 +1,7 @@
 {
-  "version": 24,
+  "version": 25,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T20:20:00+09:00",
+  "updated_at_jst": "2026-09-14T20:29:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_PHASE2_MODEL_MATURITY_AUDIT_SIMPLE_WARMUP_HYPOTHESIS_WEAKENED_ROUND2_CLOSED",
     "scanned_at_jst": "2026-09-14T20:20:00+09:00",
@@ -23,9 +23,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
-      "last_processed_sha": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
-      "last_processed_note": "No new SHA. Core cost0 endpoint contract repair remains recorded; Cloud exact replay remains unavailable/closed."
+      "last_seen_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
+      "last_processed_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
+      "last_processed_note": "20:25 Core audit processed. Found stale 0.5% requirements in the forward evaluation and final replacement comparison contracts; hardened both to new-computation cost0-only without changing signal logic or rerunning rejected families. Cloud exact replay remains unavailable/closed."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -130,8 +130,10 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "latest_audit_head": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
+      "latest_audit_head": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
       "cost0_endpoint_contract_hardened_commit": "f1a1bd23d7e7286b9390d84ffaf18069043c53e8",
+      "cost0_forward_contract_hardened_commit": "c13231739c3fd28a2b52f1d274f21eff45b1a296",
+      "cost0_final_comparison_hardened_commit": "7e1ce41468c89df0c1cd1a43653ab0aefa48c876",
       "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing. Continue stale cost/endpoint contract audit without rerunning rejected families."
     },
     "consensus_v47": {

@@ -1,0 +1,33 @@
+name: Consensus V47 96ut Daily Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_96UT_PROBE"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install pandas==2.3.3 requests==2.34.2 lxml
+      - name: Run 96ut probe
+        run: python research/probe_v47_96ut_daily.py | tee probe96ut.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-96ut-probe-${{ github.run_id }}
+          path: probe96ut.log
+          retention-days: 30

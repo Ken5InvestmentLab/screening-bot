@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
+from typing import Iterable
 
 import pandas as pd
 
@@ -13,6 +15,7 @@ REQUIRED_CALENDAR_COLUMNS = (
     "close_bar_ts",
 )
 REQUIRED_RAW_COLUMNS = ("symbol", "timestamp", "open", "close")
+SOURCE_RECEIPT_VERSION = 1
 
 
 def _iso_utc(series: pd.Series) -> pd.Series:
@@ -77,6 +80,109 @@ def verify_calendar_manifest(calendar: pd.DataFrame, expected_sha256: str) -> pd
     if actual != expected_sha256:
         raise ValueError(f"calendar SHA-256 mismatch: expected={expected_sha256} actual={actual}")
     return x
+
+
+def file_sha256(path: str | Path) -> str:
+    p = Path(path)
+    h = hashlib.sha256()
+    with p.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _canonical_receipt_payload(payload: dict) -> bytes:
+    return json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+
+
+def source_receipt_sha256(receipt: dict) -> str:
+    payload = {k: v for k, v in receipt.items() if k != "receipt_sha256"}
+    return hashlib.sha256(_canonical_receipt_payload(payload)).hexdigest()
+
+
+def build_source_receipt(
+    raw_paths: Iterable[str | Path],
+    *,
+    source_run_id: str,
+    source_artifact_name: str,
+    vendor: str,
+    calendar_sha256: str,
+) -> dict:
+    """Bind exact raw source bytes and calendar identity without opening outcomes."""
+    paths = [Path(p) for p in raw_paths]
+    if not paths:
+        raise ValueError("source receipt requires at least one raw file")
+    if not source_run_id.strip() or not source_artifact_name.strip() or not vendor.strip():
+        raise ValueError("source_run_id/source_artifact_name/vendor must be nonblank")
+    if len(calendar_sha256) != 64:
+        raise ValueError("calendar_sha256 must be a 64-character SHA-256 hex digest")
+
+    files = []
+    seen_names: set[str] = set()
+    for p in sorted(paths, key=lambda x: x.name):
+        if not p.is_file():
+            raise ValueError(f"source file does not exist: {p}")
+        if p.name in seen_names:
+            raise ValueError(f"duplicate source basename in receipt: {p.name}")
+        seen_names.add(p.name)
+        files.append(
+            {
+                "name": p.name,
+                "size_bytes": int(p.stat().st_size),
+                "sha256": file_sha256(p),
+            }
+        )
+
+    receipt = {
+        "receipt_version": SOURCE_RECEIPT_VERSION,
+        "source_run_id": str(source_run_id),
+        "source_artifact_name": source_artifact_name,
+        "vendor": vendor,
+        "calendar_sha256": calendar_sha256.lower(),
+        "files": files,
+        "performance_opened": False,
+    }
+    receipt["receipt_sha256"] = source_receipt_sha256(receipt)
+    return receipt
+
+
+def verify_source_receipt(
+    raw_paths: Iterable[str | Path],
+    receipt: dict,
+    *,
+    expected_calendar_sha256: str | None = None,
+) -> dict:
+    """Fail closed if source bytes, metadata, or receipt digest drift."""
+    if receipt.get("receipt_version") != SOURCE_RECEIPT_VERSION:
+        raise ValueError("unsupported source receipt version")
+    expected_receipt_sha = receipt.get("receipt_sha256")
+    if not expected_receipt_sha or source_receipt_sha256(receipt) != expected_receipt_sha:
+        raise ValueError("source receipt SHA-256 mismatch")
+    if expected_calendar_sha256 is not None and receipt.get("calendar_sha256") != expected_calendar_sha256.lower():
+        raise ValueError("source receipt calendar SHA-256 mismatch")
+
+    actual_by_name = {Path(p).name: Path(p) for p in raw_paths}
+    expected_files = receipt.get("files")
+    if not isinstance(expected_files, list) or not expected_files:
+        raise ValueError("source receipt contains no files")
+    if set(actual_by_name) != {x.get("name") for x in expected_files}:
+        raise ValueError("source receipt file set mismatch")
+
+    for item in expected_files:
+        p = actual_by_name[item["name"]]
+        if not p.is_file():
+            raise ValueError(f"source file does not exist: {p}")
+        if int(p.stat().st_size) != int(item["size_bytes"]):
+            raise ValueError(f"source size mismatch: {p.name}")
+        if file_sha256(p) != item["sha256"]:
+            raise ValueError(f"source SHA-256 mismatch: {p.name}")
+
+    return receipt
 
 
 def _normalize_raw(raw: pd.DataFrame) -> pd.DataFrame:

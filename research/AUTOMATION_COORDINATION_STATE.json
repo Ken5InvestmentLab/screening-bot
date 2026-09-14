@@ -1,13 +1,13 @@
 {
-  "version": 23,
+  "version": 24,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T19:36:00+09:00",
+  "updated_at_jst": "2026-09-14T20:20:00+09:00",
   "supervisor_last_scan": {
-    "status": "COMPLETE_PHASE2_HALF_YEAR_STRUCTURAL_AUDIT_ROUND2_STAYS_CLOSED",
-    "scanned_at_jst": "2026-09-14T19:08:00+09:00",
+    "status": "COMPLETE_PHASE2_MODEL_MATURITY_AUDIT_SIMPLE_WARMUP_HYPOTHESIS_WEAKENED_ROUND2_CLOSED",
+    "scanned_at_jst": "2026-09-14T20:20:00+09:00",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Weak+Early outcome-blind half-year audit completed: 2023H2 resembles 2022 on weak breadth/range and acute candidate scarcity, but 2025H2 has strong breadth despite weaker results, so one simple market-weakness gate does not explain both. tail_p level is stable across halves. Round2 remains closed pending a causal explanation. OSS advanced to 91831b03 with selected-manifest boundary and cost0 Optuna contract hardening; no strategy outcomes opened."
+    "note": "All registered active branches re-fetched. Only OSS advanced to 6e9045e9; it found a cost0 Optuna implementation mismatch and is fail-closed. Weak+Early 2022 monthly model-maturity audit shows training grows from 40,602 rows/116 top0.25 positives in Jun to 189,183/541 by Dec with stable positive rate ~0.286-0.293%, so simple undersized-training is insufficient to explain the 2022 robustness failure. Round2 remains closed. Consensus unique H2 diagnostic has advanced to the frozen NOCAP H2 opening step but is still in progress; no H2 result opened by supervisor."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -19,25 +19,25 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new SHA at 19:17. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "No new SHA at 20:xx. V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
       "last_processed_sha": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
-      "last_processed_note": "19:24 cross-lane reproducibility audit found stale canonical Core script still capable of recomputing 0.5%/1% costs. Repaired on f1a1bd23 and documented on 291cbdd4: future new endpoint audit is cost0-only, win=gross>0, includes +50/-20 and month/week dependence. No backtest triggered. Cloud exact replay remains unavailable/closed."
+      "last_processed_note": "No new SHA. Core cost0 endpoint contract repair remains recorded; Cloud exact replay remains unavailable/closed."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
       "last_processed_sha": "008fd87386f252cb5f7289ef4e303604d8f56c76",
-      "last_processed_note": "19:36 scan: unique H2 diagnostic run 34832358609 is still in progress. Pre-open contract and all source downloads passed; current step is partial PIT feature materialization (step 10/13) before NOCAP-only H2 opening. CAP1000_PIT H2 and 2026 remain closed; no retune. Formal retry 34810592135 remains the same unique run with prior partial timeouts; duplicate trigger not issued."
+      "last_processed_note": "20:xx scan: unique H2 diagnostic run 34832358609 still in progress. Steps 1-10 succeeded; step 11 frozen NOCAP H2 cost0 opening is in progress. CAP1000_PIT H2 and 2026 remain closed; no retune. Formal retry 34810592135 remains separate."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "91831b03a955801f7f75de05ca0f8e69b824ea20",
-      "last_processed_sha": "91831b03a955801f7f75de05ca0f8e69b824ea20",
-      "last_processed_note": "Processed new OSS head through 91831b03. Immutable selected-document manifest build boundary is CI-green and cost0 Optuna contract hardening is recorded; no strategy outcome opened. Real EDINET acquisition remains external-key blocked."
+      "last_seen_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
+      "last_processed_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
+      "last_processed_note": "Processed new OSS head 6e9045e9. Audit found Optuna implementation still defaults/allows nonzero round-trip cost despite frozen cost0 contract. New Optuna discovery/performance is fail-closed until API/CLI/tests are cost0-only and OSS CI passes. No strategy outcome opened."
     }
   },
   "guardrails": [
@@ -52,7 +52,7 @@
   ],
   "workflow_watch": {
     "weak_early_phase2": {
-      "status": "FRESH_2022_FAILED_HALF_YEAR_STRUCTURAL_AUDIT_COMPLETE_ROUND2_CLOSED",
+      "status": "FRESH_2022_FAILED_MODEL_MATURITY_AUDIT_COMPLETE_ROUND2_CLOSED",
       "frozen_basis": {
         "market_gate": "med_ret5 <= 0 on signal-date completed daily context",
         "candidate_gate": "ret10 <= 0.5735294117647058",
@@ -61,11 +61,11 @@
         "cost_pct_points": 0.0
       },
       "baseline_2023_2025": {
-        "body": {"n":172,"mean_pct":6.54,"median_pct":0.99,"win_pct":50.58,"top3_ex_pct":4.60},
-        "volr20": {"n":172,"mean_pct":6.33,"median_pct":1.06,"win_pct":51.74,"top3_ex_pct":4.38},
-        "mean_rank": {"n":172,"mean_pct":6.89,"median_pct":1.45,"win_pct":52.33,"top3_ex_pct":4.95},
-        "dual_top1": {"n":140,"mean_pct":7.17,"median_pct":1.25,"win_pct":52.14,"top3_ex_pct":4.79},
-        "dual_g3": {"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14}
+        "body": {"n": 172, "mean_pct": 6.54, "median_pct": 0.99, "win_pct": 50.58, "top3_ex_pct": 4.6},
+        "volr20": {"n": 172, "mean_pct": 6.33, "median_pct": 1.06, "win_pct": 51.74, "top3_ex_pct": 4.38},
+        "mean_rank": {"n": 172, "mean_pct": 6.89, "median_pct": 1.45, "win_pct": 52.33, "top3_ex_pct": 4.95},
+        "dual_top1": {"n": 140, "mean_pct": 7.17, "median_pct": 1.25, "win_pct": 52.14, "top3_ex_pct": 4.79},
+        "dual_g3": {"n": 117, "mean_pct": 7.98, "median_pct": 1.74, "win_pct": 53.85, "top3_ex_pct": 5.14}
       },
       "g3_rule": "med_ret1 >= -0.01; frozen; no retune",
       "fresh_2022_source": {
@@ -80,29 +80,46 @@
         "signal_dates": 23
       },
       "fresh_2022": {
-        "body": {"n":23,"mean_pct":1.77,"median_pct":-6.37,"win_pct":26.09,"top3_ex_pct":-7.51},
-        "volr20": {"n":23,"mean_pct":1.95,"median_pct":-6.19,"win_pct":26.09,"top3_ex_pct":-7.31},
-        "mean_rank": {"n":23,"mean_pct":1.73,"median_pct":-6.37,"win_pct":26.09,"top3_ex_pct":-7.56},
-        "dual_top1": {"n":21,"mean_pct":2.62,"median_pct":-6.19,"win_pct":28.57,"top3_ex_pct":-7.55},
-        "dual_g3": {"n":17,"mean_pct":6.08,"median_pct":-6.00,"win_pct":29.41,"top3_ex_pct":-6.26}
+        "body": {"n": 23, "mean_pct": 1.77, "median_pct": -6.37, "win_pct": 26.09, "top3_ex_pct": -7.51},
+        "volr20": {"n": 23, "mean_pct": 1.95, "median_pct": -6.19, "win_pct": 26.09, "top3_ex_pct": -7.31},
+        "mean_rank": {"n": 23, "mean_pct": 1.73, "median_pct": -6.37, "win_pct": 26.09, "top3_ex_pct": -7.56},
+        "dual_top1": {"n": 21, "mean_pct": 2.62, "median_pct": -6.19, "win_pct": 28.57, "top3_ex_pct": -7.55},
+        "dual_g3": {"n": 17, "mean_pct": 6.08, "median_pct": -6.0, "win_pct": 29.41, "top3_ex_pct": -6.26}
       },
       "half_year_structural_audit": {
         "report": "research/WEAK_EARLY_PHASE2_STRUCTURAL_AUDIT_20260914_1900.md",
-        "2023H2": {"candidates_per_day":1.27,"single_candidate_pct":81.82,"breadth_ma20":0.4158,"breadth_ret1_pos":0.3776,"range_pct":0.0683,"volr5":1.0288,"tail_p":0.8202},
-        "2025H2": {"candidates_per_day":1.79,"single_candidate_pct":63.16,"breadth_ma20":0.6327,"breadth_ret1_pos":0.4989,"range_pct":0.0733,"volr5":1.1902,"tail_p":0.8335},
-        "finding": "2023H2 resembles 2022 weak-market/scarcity structure; 2025H2 does not because breadth is strong. Candidate scarcity is a partial but insufficient explanation. tail_p level does not separate bad halves.",
+        "2023H2": {"candidates_per_day": 1.27, "single_candidate_pct": 81.82, "breadth_ma20": 0.4158, "breadth_ret1_pos": 0.3776, "range_pct": 0.0683, "volr5": 1.0288, "tail_p": 0.8202},
+        "2025H2": {"candidates_per_day": 1.79, "single_candidate_pct": 63.16, "breadth_ma20": 0.6327, "breadth_ret1_pos": 0.4989, "range_pct": 0.0733, "volr5": 1.1902, "tail_p": 0.8335},
+        "finding": "2023H2 resembles 2022 weak-market/scarcity structure; 2025H2 does not because breadth is strong. Candidate scarcity is partial but insufficient; tail_p does not separate bad halves.",
         "round2": "NOT_ACTIVATED_NO_COMMON_CAUSAL_MARKET_GATE"
       },
+      "model_maturity_audit": {
+        "report": "research/WEAK_EARLY_PHASE2_MODEL_MATURITY_AUDIT_20260914_2000.md",
+        "method": "outcome-blind exact V7/V9 monthly expanding training-count and label-count reconstruction from preserved run-80 raw",
+        "monthly": {
+          "2022-05": {"train_rows": 17532, "top025_pos": 48, "positive_rate_pct": 0.274, "computable": false},
+          "2022-06": {"train_rows": 40602, "top025_pos": 116, "positive_rate_pct": 0.286, "computable": true},
+          "2022-07": {"train_rows": 67528, "top025_pos": 198, "positive_rate_pct": 0.293, "computable": true},
+          "2022-08": {"train_rows": 91462, "top025_pos": 265, "positive_rate_pct": 0.29, "computable": true},
+          "2022-09": {"train_rows": 117301, "top025_pos": 335, "positive_rate_pct": 0.286, "computable": true},
+          "2022-10": {"train_rows": 141014, "top025_pos": 403, "positive_rate_pct": 0.286, "computable": true},
+          "2022-11": {"train_rows": 165509, "top025_pos": 475, "positive_rate_pct": 0.287, "computable": true},
+          "2022-12": {"train_rows": 189183, "top025_pos": 541, "positive_rate_pct": 0.286, "computable": true}
+        },
+        "finding": "June is early-stage, but training grows to 189k/541 positives by December while the top0.25 label rate stays ~0.286-0.293%; simple undersized-training cannot explain the whole Jun-Dec robustness failure.",
+        "simple_warmup_hypothesis": "WEAKENED_NOT_SUFFICIENT",
+        "round2": "STAYS_CLOSED"
+      },
       "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
-      "next_rule": "Audit preserved model warm-up/calibration metadata and monthly model_period/training-count context without using outcomes. Do not create a single weak-market Round2 gate from 2023H2 because it cannot explain 2025H2."
+      "next_rule": "Use existing frozen 2022 picks for model_period diagnostics and compare tail_p/tail_cdf/candidate scarcity versus training maturity. Diagnostic only; no threshold changes and no Round2 gate until causally preregistered."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
       "missing_active_symbol_dates": 734,
       "formal_promotion_eligible": false,
       "cost_pct_points": 0.0,
-      "top1": {"n":156,"mean_pct":-1.346,"median_pct":-2.627,"win_pct":35.90,"top3_ex_pct":-2.669},
-      "top5": {"n":705,"mean_pct":-0.538,"median_pct":-0.955,"win_pct":41.84,"top3_ex_pct":-0.854},
+      "top1": {"n": 156, "mean_pct": -1.346, "median_pct": -2.627, "win_pct": 35.9, "top3_ex_pct": -2.669},
+      "top5": {"n": 705, "mean_pct": -0.538, "median_pct": -0.955, "win_pct": 41.84, "top3_ex_pct": -0.854},
       "next_rule": "Do not retune. Repair exact gaps only if Consensus later yields accepted frozen raw."
     },
     "core": {
@@ -115,7 +132,7 @@
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
       "latest_audit_head": "291cbdd41f98d24da29a5b2f0195893c5b8ae884",
       "cost0_endpoint_contract_hardened_commit": "f1a1bd23d7e7286b9390d84ffaf18069043c53e8",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing. Continue cross-lane stale cost/endpoint contract audit without rerunning rejected families."
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing. Continue stale cost/endpoint contract audit without rerunning rejected families."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -132,16 +149,16 @@
       "midterm_period": ["2025-01-06", "2025-06-30"],
       "midterm_endpoint": "next official XTKS open -> D+5 close",
       "midterm_cost_pct_points": 0.0,
-      "midterm_nocap": {"pair_coverage":0.35389849026036824,"n":50,"mean_pct":0.10744972905193252,"median_pct":-2.726957498101118,"win_pct":36.0,"hit10_pct":16.0,"hit20_pct":8.0,"hit50_pct":0.0,"loss10_pct":12.0,"loss20_pct":2.0,"top1_ex_pct":-0.7566215444765227,"top3_ex_pct":-2.014754685550924},
-      "midterm_cap1000_pit": {"pair_coverage":0.831124,"n":60,"mean_pct":-1.1567950581879312,"median_pct":-0.4010670838729802,"win_pct":46.666666666666664,"hit10_pct":13.333333333333334,"hit20_pct":0.0,"hit50_pct":0.0,"loss10_pct":11.666666666666666,"loss20_pct":3.3333333333333335,"top1_ex_pct":-1.4639075726595594,"top3_ex_pct":-2.0600557608045857},
+      "midterm_nocap": {"pair_coverage": 0.35389849026036824, "n": 50, "mean_pct": 0.10744972905193252, "median_pct": -2.726957498101118, "win_pct": 36.0, "hit10_pct": 16.0, "hit20_pct": 8.0, "hit50_pct": 0.0, "loss10_pct": 12.0, "loss20_pct": 2.0, "top1_ex_pct": -0.7566215444765227, "top3_ex_pct": -2.014754685550924},
+      "midterm_cap1000_pit": {"pair_coverage": 0.831124, "n": 60, "mean_pct": -1.1567950581879312, "median_pct": -0.4010670838729802, "win_pct": 46.666666666666664, "hit10_pct": 13.333333333333334, "hit20_pct": 0.0, "hit50_pct": 0.0, "loss10_pct": 11.666666666666666, "loss20_pct": 3.3333333333333335, "top1_ex_pct": -1.4639075726595594, "top3_ex_pct": -2.0600557608045857},
       "diagnostic_h1_leader": "NOCAP",
       "diagnostic_h1_opened": true,
       "diagnostic_h1_untouched_holdout": false,
       "diagnostic_h2_preopen_spec": "research/CONSENSUS_V47_MIDTERM_H2_DIAGNOSTIC_SPEC_20260914.json",
       "diagnostic_h2_trigger_commit": "008fd87386f252cb5f7289ef4e303604d8f56c76",
       "diagnostic_h2_run": 34832358609,
-      "diagnostic_h2_status": "IN_PROGRESS_FEATURE_MATERIALIZATION_NOCAP_ONLY_COST0",
-      "diagnostic_h2_current_step": "10/13 Materialize partial PIT features without promotion acceptance",
+      "diagnostic_h2_status": "IN_PROGRESS_NOCAP_H2_OPENING_COST0",
+      "diagnostic_h2_current_step": "11/13 Open frozen H1 leader NOCAP on H2 at cost 0 percent",
       "diagnostic_h2_preopen_contract_passed": true,
       "diagnostic_h2_arm": "NOCAP",
       "diagnostic_h2_period": ["2025-07-01", "2025-12-30"],
@@ -151,25 +168,28 @@
       "formal_h1_opened": false,
       "formal_h2_opened": false,
       "promotion_evidence": false,
-      "next_rule": "Collect run 34832358609 when feature materialization and NOCAP-only H2 opening complete; record cost0 metrics as diagnostic-only and mark H2 opened/not untouched. Never open CAP1000_PIT H2 as rescue and never retune from opened H1/H2. Formal path stays separate: let 34810592135 terminate naturally, merge valid outputs with preserved seed, rerun exact frozen acceptance, then targeted-refetch emitted missing symbol/date only using staged 48-shard layout."
+      "next_rule": "Collect run 34832358609 only after NOCAP H2 opening completes; record as diagnostic-only and mark H2 opened/not untouched. Never open CAP1000_PIT H2 as rescue. Formal path stays separate."
     },
     "oss_validation": {
-      "head": "91831b03a955801f7f75de05ca0f8e69b824ea20",
+      "head": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
       "selected_zip_exact_byte_freeze_ci_run": 34819456421,
       "selected_zip_exact_byte_freeze_ci_status": "success",
       "selected_manifest_ci_run": 34827279060,
       "selected_manifest_ci_status": "success",
-      "cost0_optuna_contract_hardened": true,
+      "cost0_optuna_contract_status": "IMPLEMENTATION_GAP_BLOCKED",
+      "cost0_optuna_contract_hardened": false,
+      "implementation_gap": "optuna_discovery.py still defaults/allows nonzero round_trip_cost; tests still exercise nonzero cost",
+      "next_rule": "Do not run new Optuna discovery/performance until API/CLI default to 0.0, reject any nonzero cost, tests assert it, and isolated OSS CI passes.",
       "real_edinet_blocker": "external EDINET_API_KEY"
     }
   },
   "next_global_actions": [
-    "Consensus diagnostic: collect unique NOCAP-only H2 run 34832358609 after partial PIT feature materialization; record cost0 metrics as MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE and mark 2025H2 opened/not untouched; do not open CAP1000_PIT H2 as rescue.",
-    "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before any formal features.",
-    "Phase-2: audit preserved model warm-up/calibration metadata and monthly model_period/training-count context without outcome-derived thresholds.",
-    "Phase-2: Round2 remains closed until a causal market-level factor can explain more than the 2023H2 weak-market case; do not post-hoc fit 2025H2.",
+    "Phase-2: map existing frozen 2022 picks by model_period and compare monthly tail_p/tail_cdf/candidate scarcity against training maturity as diagnostic-only; do not retune or activate Round2 from this.",
+    "Consensus diagnostic: collect unique NOCAP-only H2 run 34832358609 after step 11 completes; record cost0 metrics as MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE; do not open CAP1000_PIT H2 as rescue.",
+    "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before formal features.",
+    "OSS: fix Optuna API/CLI/tests to cost0-only and require isolated CI green before any new discovery/performance; then harden trial-ledger provenance.",
     "Core: continue stale research cost/endpoint contract audit; do not rerun rejected families solely to regenerate metrics.",
     "Cloud: remain closed unless genuinely new exact identity evidence appears.",
-    "OSS: real EDINET acquisition only when external key is available."
+    "OSS EDINET: real acquisition only when external key is available."
   ]
 }

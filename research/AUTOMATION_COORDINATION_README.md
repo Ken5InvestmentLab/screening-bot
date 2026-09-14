@@ -2,6 +2,12 @@
 
 This branch is a research-only coordination channel for the staggered ChatGPT workers.
 
+## Dashboard
+- Human-readable status board: `research/RESEARCH_DASHBOARD.md`
+- Machine-readable state: `research/AUTOMATION_COORDINATION_STATE.json`
+- The :00 supervisor refreshes the dashboard every run.
+- The :48 cross-lane/OSS worker also refreshes it whenever substantive state, candidate, Actions, backtest, or task status changes.
+
 ## Why
 Native scheduled tasks can run at most once per hour per task. Five research workers are therefore staggered at :00, :12, :24, :36 and :48 JST. Every worker first scans all active research branches and this shared state, so substantive GitHub updates can normally be noticed within about 12 minutes rather than waiting up to an hour for a lane-specific worker.
 

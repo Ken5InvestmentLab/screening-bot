@@ -110,3 +110,24 @@ on the isolated research branch.
 OSS is adopted only when it improves evidence quality or implementation
 reliability. It is not permission to reopen rejected families, tune on 2026,
 or silently change canonical endpoint semantics.
+
+
+## Post-audit correction: issued-share priority
+
+A supervisor audit found that the first implementation did not exactly enforce the
+frozen three-level issued-share priority. Because the generic extractor sorted
+element rank before context rank, a
+`TotalNumberOfIssuedSharesSummaryOfBusinessResults` fact at
+`FilingDateInstant...` could outrank a fiscal-year-end issued-share fact at
+`CurrentYear...`, even though the frozen contract allows the summary-table fact
+only at CurrentYear.
+
+Research-only correction:
+- custom extractor now evaluates explicit semantic priority groups;
+- summary/FilingDateInstant is ineligible;
+- both fiscal-year-end aliases share the same CurrentYear priority and conflicting
+  numeric values at that priority fail closed;
+- the edinet-tools raw-fact cross-check applies the same frozen semantic policy;
+- regression tests cover the previously-missing conflict case.
+
+No strategy outcomes were used and production remains unchanged.

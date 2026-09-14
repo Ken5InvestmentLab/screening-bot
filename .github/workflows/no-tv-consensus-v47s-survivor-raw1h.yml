@@ -1,0 +1,73 @@
+name: Consensus V47S Survivor Raw1H Freeze
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47S_SURVIVOR_RAW1H"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: consensus-v47s-survivor-raw1h-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0,1,2,3,4,5,6,7,8,9,10,11]
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: pip install pandas==2.3.3 requests==2.34.2
+      - name: Read survivor daily run id
+        id: meta
+        run: |
+          RUN_ID="$(awk -F= '/^daily_run_id=/{print $2}' research/RUN_V47S_SURVIVOR_RAW1H | tr -d '[:space:]')"
+          test -n "$RUN_ID" || exit 1
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+      - name: Download survivor daily candidate artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-${{ steps.meta.outputs.run_id }}
+          path: daily
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.meta.outputs.run_id }}
+      - name: Verify shadow-only source contract
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open("daily/v47_daily_materialization_receipt.json",encoding="utf-8"))
+          if d.get("strategy_returns_opened") or d.get("model_scores_opened"):
+              raise SystemExit("outcome isolation violated")
+          if d.get("daily_coverage_pass"):
+              raise SystemExit("this workflow is only for the explicitly incomplete survivor-shadow source")
+          if d.get("current_frozen_symbols") != 3700:
+              raise SystemExit("unexpected survivor source universe")
+          print("survivor-shadow source accepted as NON-PROMOTION only")
+          PY
+      - name: Fetch raw1H survivor shard
+        run: |
+          python research/no_tv_v47_intraday_fetch_shard.py             --symbols-file daily/v47_required_intraday_nocap.txt             --shard-index ${{ matrix.shard }}             --shard-count 12             --output-dir research_artifacts/v47s_raw1h_${{ matrix.shard }}
+      - name: Upload shard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47s-raw1h-${{ github.run_id }}-shard-${{ matrix.shard }}
+          path: research_artifacts/v47s_raw1h_${{ matrix.shard }}/**
+          if-no-files-found: warn
+          retention-days: 90

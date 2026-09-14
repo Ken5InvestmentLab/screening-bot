@@ -151,6 +151,33 @@ def test_load_daily_restores_split_adjusted_volume_to_pit_scale():
         assert out["future_split_factor_daily"].tolist()==[10.0,10.0]
 
 
+
+def test_coverage_receipt_full_vs_shadow_contract():
+    full={
+        "accepted":True,
+        "strategy_returns_opened":False,
+        "model_scores_opened":False,
+    }
+    assert v47.validate_coverage_receipt(full,False) is True
+
+    shadow={
+        "shadow_accepted":True,
+        "promotion_grade":False,
+        "strategy_returns_opened":False,
+        "model_scores_opened":False,
+    }
+    assert v47.validate_coverage_receipt(shadow,True) is False
+
+    bad=dict(shadow)
+    bad["promotion_grade"]=True
+    try:
+        v47.validate_coverage_receipt(bad,True)
+    except RuntimeError:
+        pass
+    else:
+        raise AssertionError("shadow must never be promotion-grade")
+
+
 def main():
     tests=[
         test_future_factor_boundary,
@@ -158,6 +185,7 @@ def main():
         test_enrich_arm_filters_policy_before_cross_section,
         test_listing_epoch_prevents_prelisting_history_from_features_and_targets,
         test_load_daily_restores_split_adjusted_volume_to_pit_scale,
+        test_coverage_receipt_full_vs_shadow_contract,
     ]
     for fn in tests:
         fn(); print("PASS",fn.__name__)

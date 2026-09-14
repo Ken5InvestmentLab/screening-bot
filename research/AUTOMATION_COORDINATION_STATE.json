@@ -1,12 +1,12 @@
 {
-  "version": 45,
+  "version": 46,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T01:53:00+09:00",
+  "updated_at_jst": "2026-09-15T02:02:00+09:00",
   "supervisor_last_scan": {
-    "status": "CONSENSUS_V47_RAW48_SYSTEMIC_HTTP429_AUDITED",
-    "scanned_at_jst": "2026-09-15T01:53:00+09:00",
+    "status": "CORE24_OHLCV_SUPPLEMENT_ACCEPTANCE_BOUNDARY_PREREGISTERED",
+    "scanned_at_jst": "2026-09-15T02:02:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Cross-lane :48 audit processed Consensus HEAD ce96115aa87e1ba3e343a87a0f71bd941abebed5. Formal raw48 run 34849054884 remains the only active retry. Shards 0/1 completed workflow SUCCESS but artifacts 10357093848/10357611796 contain 81/81 Yahoo HTTP429, ok_symbols=0, total_rows=0; shards 2/3 remain in Fetch raw 1H and later shards queued. This is systemic transport failure, not strategy evidence. Future missing-only retry is hardened with an outcome-blind 2-symbol x 2-host all-429 circuit breaker, but the active run is pinned to its older SHA and was not duplicate-triggered."
+    "note": "All STATE-registered active research branch HEADs still match last_processed_sha; no SHA was reprocessed. Core24 OHLCV supplementation was integrated as a data-plane task only by preregistering a fail-closed provenance/causality/XTKS/OHLC consistency acceptance boundary before any supplemented row can enter formal research. V47 run 34849054884 remains the only active raw48 retry: shards 0/1 completed with zero usable rows under systemic Yahoo HTTP429, shards 2/3 are still fetching, later shards queued. Weak+Early frozen ranking/G3/Round2 are unchanged; Parallel Wave-1 performance remains unopened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -95,6 +95,14 @@
       "latest_ci_status": "success",
       "performance_opened": false
     },
+    "ohlcv_supplement": {
+      "status": "ACCEPTANCE_BOUNDARY_PREREGISTERED_DATA_PLANE_ONLY",
+      "supervisor_note": "research/SUPERVISOR_OHLCV_SUPPLEMENT_ACCEPTANCE_20260915_0202.md",
+      "formal_dataset_adoption": false,
+      "performance_recompute_allowed": false,
+      "required_handoff": ["missing_pair_inventory", "source_hierarchy", "per_pair_provenance", "accepted_rejected_conflicted_counts", "immutable_source_receipts", "deterministic_verifier", "coverage_delta"],
+      "prohibitions": ["interpolation", "forward_fill_back_fill", "daily_to_intraday_synthesis", "outcome_informed_source_selection", "silent_native_supplement_merge"]
+    },
     "oss_validation": {
       "head": "7704641db12a7ed593b794cf87002c4a7bae1b7f",
       "cost0_optuna_contract_status": "IMPLEMENTATION_VERIFIED_CI_GREEN",
@@ -102,6 +110,7 @@
     }
   },
   "next_global_actions": [
+    "Core24 OHLCV supplement: complete supplementation only under the preregistered fail-closed data-plane contract; Supervisor adoption requires the full provenance/verifier/coverage-delta handoff before any strategy performance recomputation.",
     "Canonical/Shadow: wire endpoint-completeness guard into verified resolution boundary and produce immutable completeness receipt without opening outcomes.",
     "Parallel Wave-1: exact schema + pinned XTKS endpoint-session completeness receipt, then one cost0 batch only.",
     "Consensus: do not duplicate-trigger run 34849054884; preserve zero-row 429 receipts, wait for the active run to become terminal, then merge only genuinely observed rows plus preserved seed and rerun the unchanged frozen verifier. If Yahoo later becomes healthy and acceptance still fails, retry missing pairs only with the new systemic-429 fail-fast guard.",

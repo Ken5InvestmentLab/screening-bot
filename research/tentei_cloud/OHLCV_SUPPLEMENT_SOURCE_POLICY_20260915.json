@@ -1,0 +1,46 @@
+{
+  "contract_version": 1,
+  "frozen_at_jst": "2026-09-15T02:24:00+09:00",
+  "purpose": "Outcome-blind data-plane supplementation only. This policy does not authorize strategy retuning or performance recomputation.",
+  "sources": {
+    "yahoo_chart_api_native": {
+      "priority": 0,
+      "formal_eligible": true,
+      "allowed_timeframes": ["1m", "5m", "15m", "30m", "60m", "1h", "1d"],
+      "notes": "Existing native vendor path. No new Yahoo HTML scraping is authorized."
+    },
+    "stooq_intraday_candidate": {
+      "priority": 10,
+      "formal_eligible": false,
+      "allowed_timeframes": ["5m", "60m", "1h", "1d"],
+      "notes": "Candidate only until exact acquisition method, raw-byte receipt, overlap agreement, timestamp semantics, adjustment policy, and XTKS session mapping are verified."
+    },
+    "alpha_vantage_free": {
+      "priority": 20,
+      "formal_eligible": true,
+      "allowed_timeframes": ["1d"],
+      "notes": "Low-priority fallback. Free quota is conserved for unresolved symbols. Free daily endpoint may repair exact daily gaps only; it must not synthesize intraday/4H bars."
+    },
+    "alpha_vantage_intraday_premium": {
+      "priority": 21,
+      "formal_eligible": false,
+      "allowed_timeframes": ["1m", "5m", "15m", "30m", "60m", "1h"],
+      "notes": "Disabled by default because current research assumes no premium entitlement. May become eligible only after explicit entitlement and provenance verification."
+    },
+    "googlefinance_snapshot": {
+      "priority": 30,
+      "formal_eligible": false,
+      "allowed_timeframes": ["snapshot"],
+      "notes": "Approximate corroboration/future collection only. Delayed quote snapshots are never treated as authoritative historical intraday OHLCV."
+    }
+  },
+  "global_prohibitions": [
+    "interpolation",
+    "forward_fill_back_fill",
+    "daily_to_intraday_synthesis",
+    "outcome_informed_source_selection",
+    "silent_native_supplement_merge",
+    "kabutan_automated_scraping",
+    "yahoo_finance_japan_html_scraping"
+  ]
+}

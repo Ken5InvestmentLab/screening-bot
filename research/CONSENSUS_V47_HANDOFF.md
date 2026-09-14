@@ -1,6 +1,6 @@
 # Consensus V47 clean PIT handoff
 
-Updated: 2026-09-14 15:41 JST
+Updated: 2026-09-14 16:39 JST
 Branch: `research/consensus-atr-regime-gate`
 Scope: research-only. Production/main/Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater untouched.
 
@@ -59,14 +59,26 @@ The missing-pair artifacts therefore identify the entire required candidate-date
 ## Current action: retry only the missing universe
 Because `raw_unique_symbol_dates=0`, every required symbol/date pair is missing; the missing-symbol union is therefore the full required NOCAP symbol set. Commit `6fcf600245e0a04b3d8bc9c3f6c566a81c9fa03d` triggered retry run `34810592135` using the hardened transport policy and `max-parallel: 2`.
 
-At the 2026-09-14 15:41 JST worker scan, GitHub's run-level endpoint still reported `queued`, but job-level inspection showed the workflow had materially advanced into acquisition: `fetch (0)` and `fetch (1)` were both `in_progress` at step `Fetch raw 1H shard`; the other ten shard jobs remained queued by the intentional `max-parallel: 2` cap. In both active jobs the daily materializer artifact was downloaded and verified, and the shard fetcher compile/contract step had already passed before entering raw acquisition. No duplicate retry was launched.
+At the 2026-09-14 16:39 JST worker scan, GitHub's run-level endpoint still reported `queued`, while job-level inspection still showed `fetch (0)` and `fetch (1)` both `in_progress` at step `Fetch raw 1H shard`; the other ten shard jobs remained queued by the intentional `max-parallel: 2` cap. In both active jobs the daily materializer artifact was downloaded and verified, and the shard fetcher compile/contract step had already passed before entering raw acquisition. No duplicate retry was launched.
 
-This is the missing-only retry in the only practical Yahoo form: each missing symbol is requested once and Yahoo returns its available 730d 1H chart; no non-missing symbol exists to exclude. The acceptance scope remains the emitted candidate-date pairs only. No threshold lowering, interpolation, candidate dropping, alias substitution, or return-aware provider choice is allowed.
+This is the missing-only retry in the only practical Yahoo form: each missing symbol is requested once and Yahoo returns its available 730d 1H chart; no non-missing symbol existed in the failed first V47 raw pool to exclude. The acceptance scope remains the emitted candidate-date pairs only. No threshold lowering, interpolation, candidate dropping, alias substitution, or return-aware provider choice is allowed.
+
+## Existing preserved Yahoo raw seed audit
+A new outcome-blind audit was completed against preserved Core-lane Yahoo raw 1H run `34592896202` (eight artifacts, 1,315 symbols with raw rows, 618,775 deduplicated symbol/date pairs) and authoritative V47 daily run `34799835035`.
+
+The preserved panel alone does **not** pass V47 acceptance, but it contains reusable exact historical Yahoo bars:
+- `NOCAP`: 301,897 / 853,061 required pairs present = **35.3898%**; monthly minimum **33.9002%**; completely missing required symbols **2,592**; restored pair coverage **0%**.
+- `CAP1000_PIT`: 258,339 / 310,831 required pairs present = **83.1124%**; monthly minimum **77.3420%**; completely missing required symbols **642**; restored pair coverage **0%**.
+
+This means a later missing-only retry should not unnecessarily re-request exact pairs already preserved in immutable Yahoo artifacts. The old panel is a seed only, not accepted evidence. Any merge must preserve artifact/digest provenance, deduplicate exact `(symbol,timestamp)`, forbid interpolation/synthetic bars, and rerun the unchanged frozen coverage verifier before features or performance open.
+
+Detailed receipt: `research/CONSENSUS_V47_EXISTING_RAW_SEED_AUDIT_20260914.md`.
 
 ## Frozen next action
 1. Do not duplicate-trigger while raw retry `34810592135` is active.
-2. After it finishes, rerun the exact frozen coverage verifier against retry artifacts; do not inspect strategy/model outcomes first.
-3. If coverage still fails, retry only the newly emitted missing symbol/date set/codes. Keep all thresholds unchanged and do not interpolate.
-4. Only if both `NOCAP` and `CAP1000_PIT` pass may clean feature materialization start. Recompute cross-sectional features separately per arm; PIT nominal `log_price`, split-normalized relative-price technicals, PIT daily-volume technicals, unchanged raw-1H-volume technicals.
-5. H2 return targets remain sealed. DEV H1 remains strict5/no replacement/0.5% round-trip cost, mean first; near tie Top3-ex -> median -> NOCAP.
-6. V45 ATR remains deferred until V47 completes.
+2. After it finishes, combine only immutable raw bars from the completed retry and preserved run `34592896202`, with explicit source/artifact/digest provenance.
+3. Rerun the exact frozen coverage verifier on that merged outcome-blind raw pool; do not inspect strategy/model outcomes first.
+4. If coverage still fails, retry only the newly emitted missing `(symbol,date)` set/codes. Do not re-request pairs already present in the merged pool. Keep all thresholds unchanged and do not interpolate.
+5. Only if both `NOCAP` and `CAP1000_PIT` pass may clean feature materialization start. Recompute cross-sectional features separately per arm; PIT nominal `log_price`, split-normalized relative-price technicals, PIT daily-volume technicals, unchanged raw-1H-volume technicals.
+6. H2 return targets remain sealed. DEV H1 remains strict5/no replacement/0.5% round-trip cost, mean first; near tie Top3-ex -> median -> NOCAP.
+7. V45 ATR remains deferred until V47 completes.

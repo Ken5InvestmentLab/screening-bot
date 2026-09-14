@@ -1,0 +1,30 @@
+name: Tentei Cloud Core Endpoint Provenance Tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - research/tentei-cloud-mtf
+    paths:
+      - 'research/tentei_cloud/endpoint_provenance.py'
+      - 'research/tentei_cloud/test_endpoint_provenance.py'
+      - '.github/workflows/tentei-cloud-core-endpoint-provenance-tests.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: research/tentei-cloud-mtf
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: python -m pip install --disable-pip-version-check pandas
+      - name: Run endpoint provenance contract tests
+        working-directory: research/tentei_cloud
+        run: python -m unittest -v test_endpoint_provenance.py

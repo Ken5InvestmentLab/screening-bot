@@ -1,11 +1,14 @@
 # Consensus V47 clean PIT handoff
 
-Updated: 2026-09-14 16:39 JST
+Updated: 2026-09-14 20:33 JST
 Branch: `research/consensus-atr-regime-gate`
 Scope: research-only. Production/main/Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater untouched.
 
 ## Promotion boundary
-Only V47 clean PIT evidence is promotion-relevant. V43/V44 returns remain non-promotion evidence because of point-in-time split/universe leakage.
+Only V47 clean PIT evidence after frozen raw acceptance is promotion-relevant. V43/V44 returns remain non-promotion evidence because of point-in-time split/universe leakage. The user-authorized midterm diagnostic path is explicitly separate and may open partial-coverage performance only under `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`.
+
+## Current cost policy
+All new V47 backtests, diagnostics, and NOCAP/CAP1000_PIT comparisons use **0% round-trip transaction cost only**. Win rate means gross canonical return > 0. Historical 0.5%/1% results are legacy evidence only and must not drive new ranking or GO/NO-GO decisions.
 
 ## Frozen contracts
 - PIT universe replay: run `34771221050` accepted.
@@ -18,7 +21,8 @@ Only V47 clean PIT evidence is promotion-relevant. V43/V44 returns remain non-pr
 - Prior-volume gate and daily-volume ratio technicals use PIT daily volume.
 - Yahoo raw 1H volume stays unchanged for session-volume gate and session-volume ratio technicals; never divide raw 1H volume by split factor.
 - Listing identity epochs isolate prelisting history from feature/target/cooldown state.
-- H2 feature artifact must remain blind to return targets.
+- Missing raw pairs are never interpolated and synthetic bars are forbidden.
+- Once H1/H2 is opened diagnostically, that period is no longer untouched and same-family retuning is forbidden.
 
 ## Authoritative daily source
 96ut restoration run `34798987098` recovered 251/251 historical/restored symbols and merge audit `34799650589` passed. Final V47 daily PIT materialization run `34799835035` is authoritative and passed all daily gates:
@@ -27,58 +31,111 @@ Only V47 clean PIT evidence is promotion-relevant. V43/V44 returns remain non-pr
 - `restored_daily_coverage_pass=true`
 - missing required symbols = 0
 - missing required symbol/date pairs = 0
-- strategy returns/model scores unopened.
 
-## First raw 1H attempt
-Raw freeze run `34800587082` completed GitHub-level SUCCESS across all 12 shards, but transport was Yahoo-rate-limited. An inspected shard had 0/324 successful symbols and 324/324 `http_429`. Workflow success was never treated as coverage acceptance.
+## Formal raw 1H status
+First raw run `34800587082` was transport-rate-limited. Frozen acceptance run `34810234454` correctly emitted `accepted=false` with zero usable pairs from that run. This is a data-acquisition failure, not strategy evidence.
 
-Transport-only hardening for subsequent retries:
-- commit `2880cc20165ef35705290330052e40d5c3ba1975`: query1/query2 alternation, persistent session, Retry-After support, bounded exponential backoff, 8 attempts, 0.55s pacing.
-- contract test run `34806715208`: SUCCESS.
-- commit `e61fcdfc4fb2f18eee41dde5ae79474e38b2a5be`: future raw workflow `max-parallel: 2`, timeout 180 min.
+Formal missing-universe retry `34810592135` remains active and must not be duplicate-triggered. Current job-level status at 20:33 JST:
+- `fetch (0)` and `fetch (1)` reached the 180-minute boundary and are cancelled/completed with upload step succeeding but fetch step cancelled;
+- `fetch (2)` and `fetch (3)` are in progress in `Fetch raw 1H shard`;
+- remaining shard jobs are queued under the intentional `max-parallel: 2` policy.
 
-No eligibility/model/target/feature/threshold semantics changed.
+Future missing-only retries are already hardened to a 48-shard layout with max-parallel 2 to reduce per-job timeout risk. Do not lower acceptance thresholds or broaden provider semantics to rescue transport failure.
 
-## Formal raw coverage acceptance
-Initial verifier run `34810149461` is **invalid as acceptance evidence** because the verifier crashed on an empty gzip shard (`pandas.errors.EmptyDataError`) before frozen coverage could be evaluated.
+Frozen formal acceptance remains:
+- pair coverage >= 99.5%
+- monthly coverage >= 99%
+- completely missing required symbols = 0
+- symbols requiring >=20 dates must have >=95% coverage
+- restored-pair coverage >=99%
 
-The verifier was fixed in commit `efc4a0c463a6246b884fd73ad0320256b6ce2949` so an empty shard contributes zero available pairs and the verifier fails closed rather than crashing. Contract test run `34810228288` passed SUCCESS.
+## Existing preserved Yahoo raw seed
+Preserved run `34592896202` provides immutable exact historical Yahoo bars but is not formal V47 acceptance evidence by itself:
+- NOCAP required-pair coverage: **35.3898%**
+- CAP1000_PIT required-pair coverage: **83.1124%**
+- restored historical identity coverage: 0%
 
-The exact same frozen acceptance was rerun as `Consensus V47 Raw1H Coverage Acceptance` run `34810234454`; workflow conclusion SUCCESS means the receipt was emitted, not that coverage passed. Artifact digest: `sha256:83c35186addada392a3117f7f97eaca2d7b189670ceee306bb2284328c8a06c3`.
+Any formal merged pool must preserve source/artifact/digest provenance, deduplicate exact `(symbol,timestamp)`, forbid interpolation/synthetic bars, and rerun the unchanged frozen verifier.
 
-Formal receipt:
-- top-level `accepted=false`
-- `raw_unique_symbol_dates=0`
-- `NOCAP`: required 853,061; present 0; missing 853,061; pair coverage 0.0%; required symbols 3,885; completely missing symbols 3,885; monthly minimum 0.0%; restored required pairs 40,048; restored pair coverage 0.0%; accepted=false.
-- `CAP1000_PIT`: required 310,831; present 0; missing 310,831; pair coverage 0.0%; required symbols 1,886; completely missing symbols 1,886; monthly minimum 0.0%; restored required pairs 15,492; restored pair coverage 0.0%; accepted=false.
-- all five frozen checks failed for both arms.
-- strategy returns opened=false; model scores opened=false; production writes=false.
+## Midterm H1 diagnostic — NOT promotion evidence
+Run `34824194221` opened H1 under the user-authorized diagnostic exception using preserved partial raw only, cost 0%, canonical next-open -> D+5, frozen threshold/ranker/arms/cooldown, no interpolation.
 
-The missing-pair artifacts therefore identify the entire required candidate-date set as missing. This is a pure transport/data-acquisition failure, not strategy evidence.
+Label: `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`.
 
-## Current action: retry only the missing universe
-Because `raw_unique_symbol_dates=0`, every required symbol/date pair is missing; the missing-symbol union is therefore the full required NOCAP symbol set. Commit `6fcf600245e0a04b3d8bc9c3f6c566a81c9fa03d` triggered retry run `34810592135` using the hardened transport policy and `max-parallel: 2`.
+### NOCAP H1
+- pair coverage: **35.3898%**
+- period: 2025-01-06..2025-06-30
+- n=50
+- mean **+0.1074%**
+- median **-2.7270%**
+- win **36.00%**
+- +10% **16.00%**
+- +20% **8.00%**
+- +50% **0.00%**
+- -10% **12.00%**
+- -20% **2.00%**
+- Top1-ex **-0.7566%**
+- Top3-ex **-2.0148%**
 
-At the 2026-09-14 16:39 JST worker scan, GitHub's run-level endpoint still reported `queued`, while job-level inspection still showed `fetch (0)` and `fetch (1)` both `in_progress` at step `Fetch raw 1H shard`; the other ten shard jobs remained queued by the intentional `max-parallel: 2` cap. In both active jobs the daily materializer artifact was downloaded and verified, and the shard fetcher compile/contract step had already passed before entering raw acquisition. No duplicate retry was launched.
+### CAP1000_PIT H1
+- pair coverage: **83.1124%**
+- period: 2025-01-06..2025-06-30
+- n=60
+- mean **-1.1568%**
+- median **-0.4011%**
+- win **46.67%**
+- +10% **13.33%**
+- +20% **0.00%**
+- +50% **0.00%**
+- Top3-ex **-2.0601%**
 
-This is the missing-only retry in the only practical Yahoo form: each missing symbol is requested once and Yahoo returns its available 730d 1H chart; no non-missing symbol existed in the failed first V47 raw pool to exclude. The acceptance scope remains the emitted candidate-date pairs only. No threshold lowering, interpolation, candidate dropping, alias substitution, or return-aware provider choice is allowed.
+Frozen H1 mean-first chooser therefore selected NOCAP for diagnostic H2 opening. This selection cannot be changed after seeing H2.
 
-## Existing preserved Yahoo raw seed audit
-A new outcome-blind audit was completed against preserved Core-lane Yahoo raw 1H run `34592896202` (eight artifacts, 1,315 symbols with raw rows, 618,775 deduplicated symbol/date pairs) and authoritative V47 daily run `34799835035`.
+## Midterm NOCAP H2 diagnostic — completed
+Run `34832358609` completed SUCCESS at 2026-09-14 20:26 JST-equivalent run completion window. Artifact `consensus-v47-midterm-h2-diagnostic-34832358609`, digest `sha256:2ceea9b8a20eed60b1e65e19963f1f2e51974a8f2e2b14ed315032ef4ffda8e9`.
 
-The preserved panel alone does **not** pass V47 acceptance, but it contains reusable exact historical Yahoo bars:
-- `NOCAP`: 301,897 / 853,061 required pairs present = **35.3898%**; monthly minimum **33.9002%**; completely missing required symbols **2,592**; restored pair coverage **0%**.
-- `CAP1000_PIT`: 258,339 / 310,831 required pairs present = **83.1124%**; monthly minimum **77.3420%**; completely missing required symbols **642**; restored pair coverage **0%**.
+The run re-materialized partial PIT features from the same preserved raw seed, did not interpolate missing pairs, kept 2026 closed, and opened **NOCAP only** on H2. CAP1000_PIT H2 remains closed; it must not be opened as a rescue after seeing NOCAP H2.
 
-This means a later missing-only retry should not unnecessarily re-request exact pairs already preserved in immutable Yahoo artifacts. The old panel is a seed only, not accepted evidence. Any merge must preserve artifact/digest provenance, deduplicate exact `(symbol,timestamp)`, forbid interpolation/synthetic bars, and rerun the unchanged frozen coverage verifier before features or performance open.
+Label: `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`.
+Coverage caveat: preserved partial Yahoo seed; formal raw acceptance is still false. The NOCAP raw-pair coverage basis remains **35.3898%**, so this is coverage-bypassed diagnostic evidence only.
 
-Detailed receipt: `research/CONSENSUS_V47_EXISTING_RAW_SEED_AUDIT_20260914.md`.
+### NOCAP H2 cost-0 result
+- period: **2025-07-01..2025-12-30**
+- endpoint: **next official XTKS open -> D+5 close**
+- cost: **0%**
+- strict same-symbol cooldown: **5 sessions**, with H1 cooldown state carried into H2
+- n = **37**
+- mean = **+3.0295%**
+- median = **+0.3817%**
+- win = **51.35%**
+- +10% = **27.03%**
+- +20% = **16.22%**
+- +50% = **2.70%**
+- -10% = **13.51%**
+- -20% = **2.70%**
+- Top1-ex = **+1.5562%**
+- Top3-ex = **-0.5393%**
+- unique symbols = **10**
+- max-symbol share = **35.14%**
+
+Interpretation: H2 mean/median/win and Top1-ex are positive, but Top3-ex is negative, so the partial-coverage H2 diagnostic shows material right-tail/top-winner dependence. This does **not** reject the family by itself under the user's performance-first rule, but it is an explicit fake-edge/concentration warning. No same-family retune is permitted because H1 and H2 are now opened.
+
+## Formal vs diagnostic status
+- Formal Daily PIT acceptance: **PASS**.
+- Formal raw 1H acceptance: **NOT PASS / acquisition still active**.
+- Formal clean feature materialization: **not authorized yet**.
+- Formal H1: **unopened**.
+- Formal H2: **unopened**.
+- Midterm H1: **opened, diagnostic only**.
+- Midterm NOCAP H2: **opened, diagnostic only**.
+- Midterm CAP1000_PIT H2: **closed and must remain closed**.
+- 2026: **closed for selection**.
 
 ## Frozen next action
-1. Do not duplicate-trigger while raw retry `34810592135` is active.
-2. After it finishes, combine only immutable raw bars from the completed retry and preserved run `34592896202`, with explicit source/artifact/digest provenance.
-3. Rerun the exact frozen coverage verifier on that merged outcome-blind raw pool; do not inspect strategy/model outcomes first.
-4. If coverage still fails, retry only the newly emitted missing `(symbol,date)` set/codes. Do not re-request pairs already present in the merged pool. Keep all thresholds unchanged and do not interpolate.
-5. Only if both `NOCAP` and `CAP1000_PIT` pass may clean feature materialization start. Recompute cross-sectional features separately per arm; PIT nominal `log_price`, split-normalized relative-price technicals, PIT daily-volume technicals, unchanged raw-1H-volume technicals.
-6. H2 return targets remain sealed. DEV H1 remains strict5/no replacement/0.5% round-trip cost, mean first; near tie Top3-ex -> median -> NOCAP.
-7. V45 ATR remains deferred until V47 completes.
+1. Do not duplicate-trigger formal retry `34810592135` while active.
+2. Continue monitoring retry artifacts and collect immutable shard outputs as they finish.
+3. When the retry ends, merge retry raw + preserved raw with explicit provenance and rerun the exact frozen raw verifier.
+4. If formal acceptance still fails, target only newly missing symbol/date pairs/codes using the already hardened 48-shard layout. No threshold lowering/interpolation.
+5. Only after formal raw acceptance PASS may promotion-grade clean features be materialized and formal NOCAP/CAP1000_PIT comparison begin.
+6. Do not retune V47 from opened midterm H1/H2. Do not open CAP1000_PIT H2 as a rescue.
+7. V45 ATR remains deferred until V47 formal path is resolved.

@@ -1,12 +1,12 @@
 {
-  "version": 4,
+  "version": 5,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T11:27:00+09:00",
+  "updated_at_jst": "2026-09-14T11:52:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "10:58 supervisor processed Canonical/Shadow head c5ea4d3f and Consensus head a137ef8b without reopening performance. Shadow/Data added continuity-safe resolution write-boundary tests and pinned XTKS session-calendar guard; V20 remains fail-closed at 1806/1810 and 734 missing active symbol/date pairs. Consensus exact-251 rate-safe direct Yahoo retry run 34796618901 completed SUCCESS: controls 7203 were HTTP200 at start/end, 2/251 codes (3079,5660) are directly usable, 249/251 are terminal HTTP under normal provider conditions, unresolved/provider failures 0. V47 daily PIT acceptance remains closed pending official JPX/company identity-continuity repair for the 249 terminal codes and rematerialization; raw1H/features/performance remain unopened."
+    "note": "11:50 cross-lane follow-up processed Canonical/Shadow head 25b0ae42, Core head 7ce65d88, and Consensus through accepted daily PIT rebuild plus trigger a0ff4cf0. Shadow/Data immutable resolution receipt CI 34799006401 passed 42/42. Core three-family Precision batch 34799307163 rejected all three in DEVELOPMENT only and Core is now coordination/consumer-only. Consensus external daily run 34799835035 passed daily_coverage_pass=true outcome-blind; raw1H 12-shard run 34800587082 was triggered and is queued. No strategy outcomes/model scores were opened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -16,21 +16,21 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "c5ea4d3fe0d12fbb9effc341a24a406dad4285d8",
-      "last_processed_sha": "c5ea4d3fe0d12fbb9effc341a24a406dad4285d8",
-      "last_processed_note": "Processed 10 commits after 83a64ff8. Shadow/Data only: continuity-safe resolve CLI/write boundary plus pinned XTKS calendar guard. Dedicated XTKS calendar CI 34795620704 SUCCESS. No V20 outcome opened; V20 stays blocked at 1806/1810 and 734 missing canonical-active symbol/date pairs."
+      "last_seen_sha": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
+      "last_processed_sha": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
+      "last_processed_note": "Processed 12 commits after c5ea4d3f. Shadow/Data added daily endpoint provenance guards and immutable self-hashed resolution receipts. Integrated CI 34799006401 SUCCESS, 42/42. V20 remains fail-closed at 1806/1810 with 734 missing canonical-active symbol/date pairs; H1/H2 outcomes remain unopened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "b3d6c3200ef175c61f71a1b3220d626c6aaa9c93",
-      "last_processed_sha": "b3d6c3200ef175c61f71a1b3220d626c6aaa9c93",
-      "last_processed_note": "Processed new preregistered genuinely different low-DOF Precision prior-close reclaim family. Workflow 34799151144 SUCCESS; preregistration 6344001654fa8c3afe1d436a05e23d57efaa70bd. DEVELOPMENT n=3809 at 0.5% cost mean -0.56%, median -0.71%, win 41.3%, Top3-ex -0.63%; INTERNAL_VALIDATION n=2318 mean +0.35%, median slightly negative, win 49.96%. Frozen gates fail, so PRIOR_CLOSE_RECLAIM is REJECTED at preconfirmation. Locked 2025H2 and 2026 remained unopened. Do not retune/rescue this family."
+      "last_seen_sha": "7ce65d8826881d52212cb245c88f8be22947b1f5",
+      "last_processed_sha": "7ce65d8826881d52212cb245c88f8be22947b1f5",
+      "last_processed_note": "Processed 12 commits after b3d6c320. Preregistered Precision three-family DEVELOPMENT-only batch run 34799307163 rejected PRIOR_HIGH_BREAKOUT (-0.41% mean), TWO_DAY_PULLBACK_RECLAIM (-0.48%), and INSIDE_RANGE_STRENGTH (-0.35%) at 0.5% cost; internal validation/H2/2026 unopened. EXECUTION_CONTROL freezes this lane to coordination/consumer-only until upstream promotion-grade data/event streams satisfy resume conditions."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "a137ef8b1e48968997f8d2f32a719d308aaa533f",
-      "last_processed_sha": "a137ef8b1e48968997f8d2f32a719d308aaa533f",
-      "last_processed_note": "Processed 8 commits after 92218001 and collected exact-251 direct retry run 34796618901. Workflow SUCCESS. Artifact receipt: requested 251, controls start/end HTTP200 with 420 rows, usable direct codes 3079 and 5660, terminal HTTP 249, unresolved/provider failures 0, no strategy outcomes/model scores read. Next step is official JPX/company identity-continuity verification for only the 249 terminal codes, then rebuild daily acceptance. No automatic alias heuristic/provider substitution."
+      "last_seen_sha": "a0ff4cf07158977081c0ef161cb4e60520906602",
+      "last_processed_sha": "a0ff4cf07158977081c0ef161cb4e60520906602",
+      "last_processed_note": "Processed restored/delisted recovery through accepted external daily PIT rebuild. 96ut merge audit 34799650589 recovered all 251 required symbols outcome-blind. Daily rebuild 34799835035 SUCCESS: daily_coverage_pass=true, daily_coverage_min=1.0, NOCAP required intraday symbols=3885, CAP1000_PIT=1886, no required restored symbols missing, no returns/scores opened. Created RUN_V47_RAW1H_FETCH with daily_run_id=34799835035; raw1H 12-shard run 34800587082 queued."
     }
   },
   "guardrails": [
@@ -58,11 +58,13 @@
       "next_rule": "Keep H1/H2 outcomes closed. Diagnose outcome-blind historical raw-data recovery only; no threshold lowering, interpolation/synthetic bars, or V20 retune."
     },
     "prospective_shadow_data_integrity": {
-      "latest_head": "c5ea4d3fe0d12fbb9effc341a24a406dad4285d8",
+      "latest_head": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
       "resolution_continuity_ci_run": 34795293067,
       "resolution_continuity_ci_status": "completed/success",
       "xtks_calendar_guard_ci_run": 34795620704,
       "xtks_calendar_guard_ci_status": "completed/success",
+      "immutable_resolution_receipt_ci_run": 34799006401,
+      "immutable_resolution_receipt_ci_status": "completed/success",
       "real_shadow_launch_authorized": false
     },
     "core": {
@@ -70,10 +72,13 @@
       "failed_breakdown_reclaim": "REJECT_PRECONFIRMATION",
       "precision_prior_close_reclaim": "REJECT_PRECONFIRMATION",
       "precision_prior_close_reclaim_run": 34799151144,
+      "precision_three_family_batch": "REJECT_DEVELOPMENT",
+      "precision_three_family_run": 34799307163,
+      "execution_mode": "COORDINATION_AND_CONSUMER_ONLY",
       "locked_h2_opened": false,
       "precision_locked_h2_opened": false,
       "precision_2026_opened": false,
-      "next_rule": "Audit/reproducibility only unless another genuinely different low-DOF 5BD mechanism is preregistered before outcomes. Failed-Breakdown Reclaim and Prior-Close Reclaim are both closed and may not be rescued by thresholds, session splits, rankers, or renaming."
+      "next_rule": "Do not enumerate adjacent historical candle/reclaim rules. Resume only when a frozen upstream V47/event/forward evidence stream satisfies an explicit consumer contract; otherwise integrity/reproducibility/coordination only."
     },
     "consensus_v44": {
       "run_id": 34767664140,
@@ -84,25 +89,25 @@
     },
     "consensus_v47": {
       "daily_v6_run": 34788533946,
-      "daily_v6_acceptance": "FAIL_CLOSED_RESTORED_CODES_UNRESOLVED",
-      "direct_retry_run": 34796618901,
-      "direct_retry_status": "completed/success",
-      "direct_retry_requested": 251,
-      "direct_retry_usable": ["3079", "5660"],
-      "direct_retry_terminal_count": 249,
-      "direct_retry_unresolved_count": 0,
-      "provider_controls": "7203 HTTP200 at start/end, 420 rows each",
+      "external_restore_merge_run": 34799650589,
+      "external_daily_run": 34799835035,
+      "daily_coverage_pass": true,
+      "daily_coverage_min": 1.0,
+      "required_intraday_nocap_symbols": 3885,
+      "required_intraday_cap1000_pit_symbols": 1886,
+      "raw1h_run": 34800587082,
+      "raw1h_status": "queued",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
       "performance_opened": false,
-      "next_rule": "Only the 249 terminal codes may advance to official JPX/company identity-continuity verification. No automatic alias heuristic or provider substitution. Incorporate the 2 direct-usable codes, repair terminal identities outcome-blind, rerun clean daily acceptance, and only after PASS proceed raw1H -> clean features -> DEV two-arm selection -> winner-only H2."
+      "next_rule": "Wait for raw1H run 34800587082. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. Only after PASS may clean feature materialization begin."
     }
   },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened.",
-      "Consensus V47 daily PIT acceptance still fails: 249 terminal historical codes require official identity-continuity repair before raw1H/features/performance may open.",
-      "No currently passing canonical 5BD Core replacement candidate; fixed Core, Failed-Breakdown Reclaim, and Prior-Close Reclaim are rejected."
+      "Consensus V47 daily PIT acceptance now passes, but raw1H promotion-grade coverage run 34800587082 is still pending and must pass frozen acceptance before features/performance open.",
+      "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected."
     ]
   }
 }

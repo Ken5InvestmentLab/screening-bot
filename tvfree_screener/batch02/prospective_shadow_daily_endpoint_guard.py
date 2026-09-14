@@ -34,6 +34,16 @@ def _parse_aware_iso(value: object, field: str) -> datetime:
     return dt
 
 
+def _parse_iso_date(value: object, field: str):
+    text = str(value or "").strip()
+    if not text:
+        raise ValueError(f"{field} is required")
+    try:
+        return datetime.strptime(text, "%Y-%m-%d").date()
+    except ValueError as exc:
+        raise ValueError(f"{field} must be YYYY-MM-DD") from exc
+
+
 def _normalize_symbol(value: object) -> str:
     return str(value or "").strip().replace(".0", "").upper()
 
@@ -43,6 +53,13 @@ def _acquisition_precedes_data(acquired_at: datetime, last_date: str | None) -> 
         return False
     data_last_date = datetime.strptime(last_date, "%Y-%m-%d").date()
     return acquired_at.date() < data_last_date
+
+
+def _expected_through_not_covered(expected_through_date, last_date: str | None) -> bool:
+    if not last_date:
+        return True
+    data_last_date = datetime.strptime(last_date, "%Y-%m-%d").date()
+    return data_last_date < expected_through_date
 
 
 def _scan_daily_csv(path: Path) -> tuple[list[dict], dict]:
@@ -131,6 +148,7 @@ def build_daily_endpoint_manifest(
     source_name: str,
     source_kind: str,
     acquired_at: str,
+    expected_through_date: str,
     price_adjustment_semantics: str,
 ) -> dict:
     for field, value in {
@@ -143,11 +161,16 @@ def build_daily_endpoint_manifest(
         if text.upper() in PLACEHOLDERS:
             raise ValueError(f"{field} must be explicit and non-placeholder")
     acquired_dt = _parse_aware_iso(acquired_at, "acquired_at")
+    expected_through = _parse_iso_date(expected_through_date, "expected_through_date")
+    if acquired_dt.date() < expected_through:
+        raise ValueError("acquired_at_precedes_expected_through_date")
     _, stats = _scan_daily_csv(csv_path)
     if stats["errors"]:
         raise ValueError("daily endpoint CSV is not structurally valid: " + ";".join(stats["errors"][:10]))
     if _acquisition_precedes_data(acquired_dt, stats["last_date"]):
         raise ValueError("acquired_at_precedes_last_data_date")
+    if _expected_through_not_covered(expected_through, stats["last_date"]):
+        raise ValueError("expected_through_date_not_covered")
 
     return {
         "manifest_version": 1,
@@ -156,6 +179,7 @@ def build_daily_endpoint_manifest(
         "source_name": str(source_name).strip(),
         "source_kind": str(source_kind).strip(),
         "acquired_at": str(acquired_at),
+        "expected_through_date": str(expected_through_date).strip(),
         "price_adjustment_semantics": str(price_adjustment_semantics).strip(),
         "csv_sha256": _sha256_file(csv_path),
         "row_count": stats["row_count"],
@@ -185,6 +209,14 @@ def validate_daily_endpoint_dataset(csv_path: Path, manifest: Mapping) -> dict:
     except ValueError as exc:
         errors.append(str(exc))
 
+    expected_through = None
+    try:
+        expected_through = _parse_iso_date(manifest.get("expected_through_date"), "expected_through_date")
+    except ValueError as exc:
+        errors.append(str(exc))
+    if acquired_dt is not None and expected_through is not None and acquired_dt.date() < expected_through:
+        errors.append("acquired_at_precedes_expected_through_date")
+
     expected_sha = str(manifest.get("csv_sha256", "")).strip().lower()
     if not SHA256_RE.fullmatch(expected_sha):
         errors.append("manifest_csv_sha256_invalid")
@@ -196,6 +228,8 @@ def validate_daily_endpoint_dataset(csv_path: Path, manifest: Mapping) -> dict:
     errors.extend(stats["errors"])
     if acquired_dt is not None and _acquisition_precedes_data(acquired_dt, stats["last_date"]):
         errors.append("acquired_at_precedes_last_data_date")
+    if expected_through is not None and _expected_through_not_covered(expected_through, stats["last_date"]):
+        errors.append("expected_through_date_not_covered")
 
     expected = {
         "row_count": stats["row_count"],
@@ -220,6 +254,7 @@ def validate_daily_endpoint_dataset(csv_path: Path, manifest: Mapping) -> dict:
         "source_name": manifest.get("source_name"),
         "source_kind": manifest.get("source_kind"),
         "acquired_at": manifest.get("acquired_at"),
+        "expected_through_date": manifest.get("expected_through_date"),
         "price_adjustment_semantics": manifest.get("price_adjustment_semantics"),
         "csv_sha256": actual_sha,
         "row_count": stats["row_count"],
@@ -232,6 +267,8 @@ def validate_daily_endpoint_dataset(csv_path: Path, manifest: Mapping) -> dict:
             "dataset_provenance_required": True,
             "acquisition_time_timezone_aware": True,
             "acquisition_not_before_last_data_date": True,
+            "expected_through_date_declared": True,
+            "expected_through_date_covered": True,
             "symbol_date_uniqueness_required": True,
             "positive_finite_present_prices_required": True,
             "price_adjustment_semantics_declared": True,
@@ -250,6 +287,7 @@ def main() -> None:
     create.add_argument("--source-name", required=True)
     create.add_argument("--source-kind", required=True)
     create.add_argument("--acquired-at", required=True)
+    create.add_argument("--expected-through-date", required=True)
     create.add_argument("--price-adjustment-semantics", required=True)
     create.add_argument("--output", type=Path, required=True)
 
@@ -265,6 +303,7 @@ def main() -> None:
             source_name=args.source_name,
             source_kind=args.source_kind,
             acquired_at=args.acquired_at,
+            expected_through_date=args.expected_through_date,
             price_adjustment_semantics=args.price_adjustment_semantics,
         )
         raw = json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n"

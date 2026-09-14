@@ -1,0 +1,57 @@
+name: Consensus V47 Yahoo Daily Canary
+
+on:
+  push:
+    branches:
+      - research/consensus-atr-regime-gate
+    paths:
+      - "research/RUN_V47_YAHOO_DAILY_CANARY"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: consensus-v47-yahoo-daily-canary-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned dependency
+        run: pip install requests==2.34.2
+      - name: Download authoritative V47 daily v6 receipt
+        uses: actions/download-artifact@v5
+        with:
+          name: consensus-v47-daily-34788533946
+          path: source_v6
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34788533946
+      - name: Run outcome-blind provider canary
+        run: |
+          python research/no_tv_v47_yahoo_daily_canary.py \
+            --v6-receipt source_v6/v47_daily_materialization_receipt.json \
+            --output research_artifacts/v47_yahoo_canary/v47_yahoo_daily_canary.json \
+            --sleep-seconds 6
+      - name: Hash evidence
+        run: |
+          cd research_artifacts/v47_yahoo_canary
+          sha256sum v47_yahoo_daily_canary.json > SHA256SUMS.txt
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: consensus-v47-yahoo-daily-canary-${{ github.run_id }}
+          path: research_artifacts/v47_yahoo_canary/**
+          if-no-files-found: error
+          retention-days: 90

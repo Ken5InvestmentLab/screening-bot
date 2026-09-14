@@ -1,12 +1,12 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 03:35 JST
+Last updated: 2026-09-15 04:33 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
 ## Consensus V47 status
 - Progress: **76%** (research-progress estimate; not promotion probability)
-- Latest observed HEAD before this dashboard write: `f2bc6f3c97292930ccaefae9035e182dee33d821`
+- Latest observed HEAD before this dashboard write: `169e7053e333cc09fac2473727e0d1842fdebf4e`
 - Promotion-relevant path: **V47 clean PIT only**
 - V43/V44: leakage/reproduction-contaminated; not promotion evidence
 - Price arms: exactly `NOCAP` and `CAP1000_PIT`
@@ -27,23 +27,27 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 ### Superseded retry
 - Run `34810592135` — Consensus V47 Raw1H Freeze
 - Final status: **completed / cancelled**
-- First observed shards hit the 180-minute fetch boundary and did not yield meaningful raw payloads
-- Transport-failure evidence only; no strategy conclusion
+- Earlier 12-shard attempt hit the 180-minute fetch boundary and did not yield meaningful raw payloads.
+- Transport-failure evidence only; no strategy conclusion.
 
 ### Current authoritative retry
 - Run `34849054884` — Consensus V47 Raw1H Freeze
 - Trigger HEAD: `7849ad975d1e0420e250ab4d5f411ce136f9d867`
 - Configuration: **48 shards, max-parallel=2, shard-count=48**
-- GitHub run-level status at this observation: **queued** while the matrix still has work active/queued
-- shard 0: workflow **SUCCESS**, artifact `10357093848` (1647 bytes ZIP), but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
-- shard 1: workflow **SUCCESS**, artifact `10357611796` (1646 bytes ZIP), but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
-- shards 2 and 3: explicitly observed **in_progress** at `Fetch raw 1H shard`
-- remaining matrix jobs: queued under max-parallel=2; only two artifacts are visible so far
+- GitHub run-level status at this observation: **queued/non-terminal matrix**
+- shard 0: workflow **SUCCESS**, artifact `10357093848` (1647 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
+- shard 1: workflow **SUCCESS**, artifact `10357611796` (1646 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
+- shard 2: workflow **SUCCESS**, artifact `10363982190` (1652 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
+- shard 3: workflow **SUCCESS**, artifact `10364352429` (1650 bytes ZIP), raw payload **0 rows**, `0/81` ok, **81/81 HTTP 429**
+- shards 4 and 5: explicitly observed **in_progress** at `Fetch raw 1H shard`
+- remaining matrix jobs: queued under max-parallel=2; **four artifacts** are visible so far
+- Completed total: **324 requested symbols / 0 ok / 0 raw rows / 324 HTTP 429**
 - Duplicate trigger: **prohibited / not triggered**
-- Formal interpretation: workflow completion is not data success. Completed shard 0/1 contribute **zero usable raw rows**.
-- Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**
+- Formal interpretation: workflow completion is not data success. Completed shards 0-3 contribute **zero usable raw rows**.
+- Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**, now reproduced across the first four consecutive shards.
 - Frozen raw acceptance unchanged: pair>=99.5%, monthly>=99%, completely missing required symbol=0, symbols requiring >=20 days >=95%, restored pair>=99%
-- No interpolation and no threshold lowering
+- No interpolation and no threshold lowering.
+- On completed shards 0-3 alone: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
 - Detailed receipt: `research/CONSENSUS_V47_RAW48_429_DIAGNOSIS_20260915.md`
 
 ### Targeted retry hardening
@@ -53,7 +57,6 @@ Lane: Consensus specialist / V47 clean PIT pipeline
   - if all four are HTTP 429, write `transport_circuit_open/systemic_http_429` receipts and fail fast instead of spending hours retrying every symbol;
   - if the preflight is not unanimously 429, existing fetch/retry behavior remains.
 - This changes transport mechanics only. NOCAP/CAP1000_PIT, threshold, ranker, cooldown, endpoint, features, model, and acceptance thresholds remain frozen.
-- On shard 0/1 zero-row artifacts alone: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
 
 ### Raw merge + formal acceptance contract frozen
 - Spec: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`
@@ -127,23 +130,23 @@ CAP1000_PIT H2: **UNOPENED**
 2026: **UNOPENED for selection/tuning**
 
 ## NOCAP vs CAP1000_PIT comparison stage
-- H1 midterm diagnostic comparison completed on partial raw
-- NOCAP won the frozen H1 diagnostic chooser on mean, but robustness diagnostics are weak
-- Only NOCAP H2 diagnostic was opened
-- No additional price-cap grid search permitted
-- Formal arm comparison remains blocked on raw acceptance + clean PIT feature materialization
+- H1 midterm diagnostic comparison completed on partial raw.
+- NOCAP won the frozen H1 diagnostic chooser on mean, but robustness diagnostics are weak.
+- Only NOCAP H2 diagnostic was opened.
+- No additional price-cap grid search permitted.
+- Formal arm comparison remains blocked on raw acceptance + clean PIT feature materialization.
 
 ## Cross-lane coordination
-- Supervisor coordination re-read at start of this run
-- `RESEARCH_DASHBOARD.md` re-read at start of this run
-- `CONSENSUS_V44_HANDOFF.md` re-read at start of this run
-- Canonical/Event overlap: none
-- Core overlap: none
-- Monster overlap: none
-- Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater remain untouched
+- Supervisor coordination re-read at start of this run.
+- `RESEARCH_DASHBOARD.md` re-read at start of this run.
+- `CONSENSUS_V44_HANDOFF.md` re-read at start of this run.
+- Canonical/Event overlap: none.
+- Core overlap: none.
+- Monster overlap: none.
+- Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater remain untouched.
 
 ## Blocker
-Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. Shards 0 and 1 of run `34849054884` both completed mechanically but returned zero rows for all 81 symbols each. Shards 2 and 3 are still fetching and only the original two artifacts are visible, so transport recovery has not yet been demonstrated. This is transport failure, not strategy evidence.
+Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. The first four consecutive shards of run `34849054884` all completed mechanically but returned zero rows for every requested symbol: **324/324 final HTTP 429**. Shards 4 and 5 are fetching and only four artifacts are visible, so transport recovery has not yet been demonstrated. This is transport failure, not strategy evidence.
 
 ## Next action
 1. Do **not** duplicate-trigger run `34849054884`.

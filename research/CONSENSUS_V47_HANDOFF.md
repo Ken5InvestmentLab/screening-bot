@@ -1,6 +1,6 @@
 # Consensus V47 clean PIT handoff
 
-Updated: 2026-09-14 12:36 JST
+Updated: 2026-09-14 13:35 JST
 Branch: `research/consensus-atr-regime-gate`
 Scope: research-only. Production/main/Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater untouched.
 
@@ -36,7 +36,7 @@ Authoritative v6 daily materializer run `34788533946` identified 251 restored/de
 - no strategy returns or model scores were opened.
 
 ## Authoritative V47 daily PIT materialization
-`Consensus V47 Daily PIT Materialization External` run `34799835035` completed SUCCESS and is now the authoritative V47 daily source.
+`Consensus V47 Daily PIT Materialization External` run `34799835035` completed SUCCESS and is the authoritative V47 daily source.
 
 Outcome-blind acceptance receipt passed all daily gates:
 - `daily_coverage_pass=true`
@@ -46,27 +46,40 @@ Outcome-blind acceptance receipt passed all daily gates:
 - `missing_required_symbol_dates=0`
 - strategy returns/model scores remained unopened.
 
-This supersedes the earlier in-progress status and authorizes raw 1H acquisition under the already-frozen contract.
-
 ## Current action: frozen raw 1H acquisition
-Commit `a0ff4cf07158977081c0ef161cb4e60520906602` updated `research/RUN_V47_RAW1H_FETCH` with `daily_run_id=34799835035` and triggered `Consensus V47 Raw1H Freeze` run `34800587082`.
+Commit `a0ff4cf07158977081c0ef161cb4e60520906602` triggered `Consensus V47 Raw1H Freeze` run `34800587082` from daily run `34799835035`.
 
-At 12:36 JST run `34800587082` is `queued`. Do not create a duplicate trigger while this run is queued/in progress.
+At 13:35 JST the run is still in progress. Job-level progress at inspection time:
+- completed SUCCESS: shards 1,3,4,7,8,9,10,11
+- still running: shards 0,2,5,6
+- do not duplicate-trigger while this run is active.
 
-The raw acceptance contract was re-audited before opening any strategy outcomes and matches the frozen requirements for both price-policy arms:
+Important transport finding: completed shard 1 uploaded a valid receipt/artifact but contained **0/324 successful symbols** and **324/324 `http_429` fetch errors**. This is provider rate limiting, not strategy evidence. No returns or model scores were opened. Other completed artifacts were similarly tiny and therefore require the formal coverage pass before any downstream use.
+
+The frozen raw acceptance contract remains unchanged for both price-policy arms:
 - pair coverage >= 99.5%
 - monthly minimum coverage >= 99.0%
 - zero completely missing required symbols
 - >=95% per-symbol coverage for symbols with >=20 required days
 - restored/delisted required-pair coverage >=99.0%
 - both `NOCAP` and `CAP1000_PIT` must pass
-- on failure emit missing symbol/date pairs and targeted-refetch only those pairs/codes
+- failure emits missing symbol/date pairs and permits targeted-refetch only those pairs/codes
 - no threshold lowering, candidate dropping, interpolation/backfill, provider/alias choice from returns, or production changes.
 
+## Outcome-blind rate-limit mitigation now staged
+Transport-only hardening was committed for future retry/refetch; it does not alter the active run because checkout is pinned to its trigger SHA.
+
+- `2880cc20165ef35705290330052e40d5c3ba1975`: raw fetcher now alternates Yahoo query1/query2 hosts, uses a persistent session, honors Retry-After, applies bounded exponential backoff, raises attempts from 5 to 8, adds 0.55-second post-success pacing, and records the transport policy in the shard summary.
+- `e61fcdfc4fb2f18eee41dde5ae79474e38b2a5be`: future raw workflow executions are throttled to `max-parallel: 2` and timeout 180 minutes to avoid another 12-shard burst.
+- Incident log: `research/CONSENSUS_V47_RAW1H_RATE_LIMIT_2026-09-14.md`.
+
+These are data-acquisition reliability changes only. Eligibility, price-policy arms, model, target, feature semantics, and all acceptance thresholds remain frozen.
+
 ## Next action
-1. Wait for run `34800587082` to leave queued/running state; do not duplicate-trigger it.
-2. On completion, inspect `v47_raw1h_coverage_receipt.json` and the emitted missing-pair files before opening any feature/model outcome.
-3. If `accepted=false`, targeted-refetch only missing symbol/date pairs, then rerun the exact frozen coverage verifier. Do not lower thresholds or interpolate.
-4. If `accepted=true`, freeze raw artifact hashes and proceed to V47 clean feature materialization only. Recompute cross-sectional features separately for `NOCAP` and `CAP1000_PIT`; use PIT nominal `log_price`, split-normalized relative-price technicals, PIT daily-volume technicals, and unchanged raw-1H-volume technicals.
-5. Keep H2 return targets sealed. DEV H1 selection remains strict5/no replacement/0.5% round-trip cost with mean first, then Top3-ex, median, and NOCAP as the final near-tie tiebreak.
-6. V45 ATR remains deferred until V47 is complete.
+1. Let run `34800587082` finish; do not duplicate-trigger it.
+2. Then run the existing outcome-blind raw coverage acceptance with daily run `34799835035` and raw run `34800587082`.
+3. Inspect `v47_raw1h_coverage_receipt.json` and emitted missing-pair files before opening any feature/model outcome.
+4. If `accepted=false`, targeted-refetch only emitted missing symbol/date pairs/codes using the staged throttled/backoff transport policy, then rerun the exact frozen coverage verifier. Do not lower thresholds or interpolate.
+5. If `accepted=true`, freeze raw artifact hashes and proceed to V47 clean feature materialization only. Recompute cross-sectional features separately for `NOCAP` and `CAP1000_PIT`; use PIT nominal `log_price`, split-normalized relative-price technicals, PIT daily-volume technicals, and unchanged raw-1H-volume technicals.
+6. Keep H2 return targets sealed. DEV H1 selection remains strict5/no replacement/0.5% round-trip cost with mean first, then Top3-ex, median, and NOCAP as final near-tie tiebreak.
+7. V45 ATR remains deferred until V47 is complete.

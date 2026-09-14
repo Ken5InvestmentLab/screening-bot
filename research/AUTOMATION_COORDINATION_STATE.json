@@ -1,12 +1,12 @@
 {
-  "version": 55,
+  "version": 56,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T04:30:00+09:00",
+  "updated_at_jst": "2026-09-15T04:45:00+09:00",
   "supervisor_last_scan": {
-    "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
-    "scanned_at_jst": "2026-09-15T03:03:00+09:00",
+    "status": "PARALLEL_XTKS_PINNED_CONSENSUS_SHARDS_0_3_429_ABSORBED",
+    "scanned_at_jst": "2026-09-15T04:45:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Supervisor absorbed Parallel Wave-1 schema-freeze handoff and earlier Consensus coordination head. :48 follow-up absorbed newer Canonical provenance-contract head and Consensus dashboard-only head, then completed and verified OSS receipt-bound DSR integration."
+    "note": ":48 follow-up absorbed Consensus coordination-only head fd7f7c5d (shards 0-3 all zero-row HTTP429), then advanced Parallel Wave-1 by pinning independent XTKS calendar bytes and implementing an outcome-blind endpoint completeness verifier. Performance remains unopened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -30,10 +30,10 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "b9579857c598730bc7e3dbad35517fd5c6dc98a4",
-      "last_processed_sha": "b9579857c598730bc7e3dbad35517fd5c6dc98a4",
+      "last_seen_sha": "fd7f7c5d26f154a760dd9a025bb242620bce0dc9",
+      "last_processed_sha": "fd7f7c5d26f154a760dd9a025bb242620bce0dc9",
       "task_state": "EXTERNAL_WAIT_ACTIVE_RUN",
-      "last_processed_note": "Newest head is dashboard-only status refresh. Raw48 run 34849054884 remains nonterminal; shards 0/1 zero usable rows from 81/81 HTTP429, shards 2/3 fetching, rest queued. No strategy/performance change and no duplicate trigger."
+      "last_processed_note": "Processed two coordination/dashboard-only commits through fd7f7c5d. Raw48 run 34849054884 remains nonterminal/queued; shards 0-3 each returned 0/81 ok, zero raw rows and 81/81 HTTP429 (324/324 total), four tiny artifacts visible; shards 4/5 were next active. No strategy/performance change and no duplicate trigger."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -44,10 +44,10 @@
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
-      "last_seen_sha": "c7d5e0b023b5331cfba62186aeae2949e765e3cf",
-      "last_processed_sha": "c7d5e0b023b5331cfba62186aeae2949e765e3cf",
+      "last_seen_sha": "858998cceb10f263d181233a20c55c5bc4f92aa6",
+      "last_processed_sha": "858998cceb10f263d181233a20c55c5bc4f92aa6",
       "task_state": "ACTIVE",
-      "last_processed_note": "Wave-1 exact source schema frozen outcome-blind. Receipt binds preserved tse_daily.csv SHA 6adfb626..., 4,061,361 rows and exact header date/open/high/low/close/volume/symbol. Performance remains unopened. Next: independently pin XTKS calendar and endpoint-session completeness receipt before one-shot cost0 evaluation."
+      "last_processed_note": "Wave-1 now binds an independent XTKS 2022-2026 calendar (1,220 sessions; SHA 58e67bd2...) and an outcome-blind endpoint completeness verifier. The verifier binds calendar/daily/pick-ledger bytes and fails closed on missing next-open/fifth-close endpoints without computing returns. Performance remains unopened. Next: derive/freeze causal A1/B1/E1 pick ledger, emit actual endpoint completeness receipt, then one-shot cost0 evaluation only."
     }
   },
   "guardrails": [
@@ -85,21 +85,25 @@
     },
     "consensus_v47": {
       "task_state": "EXTERNAL_WAIT",
-      "head": "b9579857c598730bc7e3dbad35517fd5c6dc98a4",
+      "head": "fd7f7c5d26f154a760dd9a025bb242620bce0dc9",
       "daily_coverage_pass": true,
       "frozen_coverage_acceptance_pass": false,
       "formal_retry_run": 34849054884,
       "formal_retry_status": "ACTIVE_SYSTEMIC_HTTP429_BLOCKED",
-      "completed_zero_row_shards": [0,1],
-      "active_fetch_shards": [2,3],
+      "completed_zero_row_shards": [0,1,2,3],
+      "active_fetch_shards": [4,5],
       "promotion_evidence": false,
       "midterm_nocap_h2": {"n":37,"mean_pct":3.0295,"median_pct":0.3817,"win_pct":51.35,"top3_ex_pct":-0.5393}
     },
     "parallel_wave1": {
-      "status": "SOURCE_BYTES_BOUND_EXACT_SCHEMA_FROZEN_ENDPOINT_RECEIPT_PENDING_PERFORMANCE_UNOPENED",
+      "status": "SOURCE_SCHEMA_XTKS_PINNED_ENDPOINT_VERIFIER_IMPLEMENTED_PICK_LEDGER_PENDING_PERFORMANCE_UNOPENED",
       "task_state": "ACTIVE",
-      "head": "c7d5e0b023b5331cfba62186aeae2949e765e3cf",
+      "head": "858998cceb10f263d181233a20c55c5bc4f92aa6",
       "schema_receipt": "research/PARALLEL_WAVE1_SCHEMA_RECEIPT_20260915.json",
+      "calendar_receipt": "research/PARALLEL_WAVE1_XTKS_CALENDAR_RECEIPT_20260915.json",
+      "calendar_sha256": "58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b",
+      "calendar_sessions": 1220,
+      "endpoint_verifier": "research/parallel_wave1_endpoint_receipt.py",
       "source_csv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
       "source_rows": 4061361,
       "selected_families": ["A_COMPRESSION_EXPANSION","B_RELATIVE_REVERSAL","E_PRIOR_STRUCTURE_PROXIMITY"],
@@ -146,7 +150,7 @@
     }
   },
   "next_global_actions": [
-    "Parallel Wave-1: independently pin XTKS calendar artifact/version/SHA, implement signal->next session open->fifth session close mapping, emit endpoint completeness receipt, then one cost0 batch only.",
+    "Parallel Wave-1: derive A1/B1/E1 causal picks from the frozen daily source without returns, freeze the pick-ledger bytes/SHA, run the pinned-calendar endpoint completeness verifier, then execute one cost0 batch only after PASS.",
     "Core24 OHLCV supplement: locate/pin exact real expected endpoint-key input and exact raw1H observed artifact bytes, execute SHA-bound missing-inventory runner once, acquire fallback raw only for declared gaps, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
     "Canonical/Shadow: full endpoint provenance hash chain is implemented and CI-green; add explicit link-tamper regression coverage or advance to another outcome-blind integrity control without performance opening.",
     "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",

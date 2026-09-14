@@ -1,12 +1,12 @@
 {
   "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T13:55:00+09:00",
+  "updated_at_jst": "2026-09-14T13:59:00+09:00",
   "supervisor_last_scan": {
-    "status": "COMPLETE",
+    "status": "COMPLETE_NO_NEW_LANE",
     "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "13:04 supervisor verified Canonical ef0f725e, Core 7ce65d88, and Consensus 28c272b0 unchanged and already processed. Consensus V47 raw1H run 34800587082 remains in_progress with all 12 jobs still in Fetch raw 1H shard, so no acceptance/performance/H2 artifacts were opened. The newly registered OSS/Validation lane HEAD 3818de53 was substantively audited; its EDINET issued-share priority correction is outcome-blind, fail-closed on same-priority conflicts, and production remains unchanged."
+    "note": "13:59 supervisor re-fetched all STATE active lane HEADs and enumerated all research/* branches. Canonical ef0f725e, Core 7d195335, Consensus 2b9f81ca, and OSS 4810bd3e all exactly match last_processed_sha, so no duplicate lane work was performed. Unregistered tentei-cloud-1h explicitly says superseded, tvfree-canonical-batch01 says final disposition, tvfree-monster-v14 is stale legacy research, and tvfree-skill-suite has no independent active handoff/log/spec evidence, so none were auto-registered. Consensus V47 raw1H run 34800587082 remains in_progress; no coverage acceptance, performance, H2, or 2026 selection outcome was opened."
   },
   "core_worker_last_scan": {
     "status": "COMPLETE_NO_RESUME",

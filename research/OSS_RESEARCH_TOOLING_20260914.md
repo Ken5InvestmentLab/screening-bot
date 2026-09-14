@@ -14,7 +14,7 @@ universe, label construction, temporal policy, or existing weekly block
 bootstrap. It must not touch production/main, Discord, Spreadsheet, Stable★6,
 Sniper, Mega, TradingView, watchlist-builder, or watchlist-updater.
 
-Latest integrated CI: **run 34796460950 — SUCCESS** on Python 3.12 (8 pytest checks passed; existing EDINET collector self-test also passed).
+Latest integrated CI before the real-sample preregistration: **run 34796460950 — SUCCESS** on Python 3.12 (8 pytest checks passed; existing EDINET collector self-test also passed).
 
 ## purgedcv
 
@@ -84,6 +84,27 @@ Synthetic same-ZIP tests and the existing custom EDINET self-test both pass in
 CI run 34796460950. Production behavior is unchanged because this work remains
 on the isolated research branch.
 
+### Real historical cross-check is now preregistered
+
+Before looking at any real parser comparison, the real-sample selection rule is
+now frozen inside `EDINET_OSS_CROSSCHECK_CONTRACT_20260914.json`.
+
+The v1 sample uses **metadata only** and covers 2023-01-01 through 2025-12-31:
+- eligible document types are 120 and 130;
+- the sampling stratum is calendar quarter x document type;
+- inside each stratum, sort by submit datetime then doc ID and take the first
+  two unique doc IDs;
+- do not replace a selected filing because a parser fails, is missing a field,
+  or disagrees;
+- require full metadata coverage for the frozen period or fail closed;
+- freeze selected doc IDs and source ZIP hashes before reviewing mismatch rates;
+- parser/accounting values, strategy returns, candidate ranks, labels, and 2026
+  market outcomes are forbidden sampling inputs.
+
+This creates the required outcome-blind boundary for the next step: execute the
+same-ZIP real historical parser comparison without resampling around failures.
+No real comparison result has been opened yet.
+
 ## Other OSS reviewed
 
 - `exchange-calendars`: already adopted in Batch01; keep the frozen,
@@ -110,7 +131,6 @@ on the isolated research branch.
 OSS is adopted only when it improves evidence quality or implementation
 reliability. It is not permission to reopen rejected families, tune on 2026,
 or silently change canonical endpoint semantics.
-
 
 ## Post-audit correction: issued-share priority
 

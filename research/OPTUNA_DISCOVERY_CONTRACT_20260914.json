@@ -1,6 +1,6 @@
 {
   "contract_id": "OSS-OPTUNA-DISCOVERY-V1-20260914",
-  "status": "PREREGISTERED_INFRASTRUCTURE_ONLY_IMPLEMENTATION_GAP_BLOCKED",
+  "status": "PREREGISTERED_INFRASTRUCTURE_ONLY_COST0_IMPLEMENTATION_VERIFIED",
   "purpose": "Use Optuna only to accelerate low-DOF discovery inside the already-authorized discovery period while retaining purged walk-forward and multiple-testing evidence.",
   "production_modified": false,
   "rejected_families_may_be_reopened": false,
@@ -50,11 +50,24 @@
     "dsr_is_automatic_promotion_gate": false
   },
   "implementation_audit_20260914_1945": {
-    "finding": "tvfree_screener/optuna_discovery.py still defaults run_study/CLI round_trip_cost to 0.005 and accepts nonzero costs, while this frozen contract requires 0%. Existing synthetic test also explicitly passes 0.001.",
+    "finding": "tvfree_screener/optuna_discovery.py still defaulted run_study/CLI round_trip_cost to 0.005 and accepted nonzero costs, while this frozen contract requires 0%. Existing synthetic test also explicitly passed 0.001.",
     "severity": "P0_CONTRACT_IMPLEMENTATION_MISMATCH",
     "outcome_opened": false,
     "fail_closed_rule": "Do not run new Optuna discovery/performance until implementation defaults to 0.0, rejects any nonzero round_trip_cost, tests assert the rejection, and OSS validation CI passes.",
     "required_next_action": "Patch optuna_discovery.py and test_optuna_discovery.py to enforce cost0 at API and CLI boundaries; then preserve all completed-trial ledger provenance before DSR consumption."
+  },
+  "implementation_resolution_20260914_2159": {
+    "status": "RESOLVED",
+    "implementation_commit": "54ead8c1fc610a843913888f0eb34f3aff2dd001",
+    "test_commit": "e586236bb061930081e466d5c56ae243218d3233",
+    "ci_run": 34846417896,
+    "ci_conclusion": "success",
+    "api_default_cost": 0.0,
+    "cli_default_cost": 0.0,
+    "nonzero_cost_fail_closed": true,
+    "synthetic_nonzero_rejection_test": true,
+    "outcome_opened": false,
+    "next_control": "Bind DSR input to an immutable completed-trial ledger/provenance receipt so trial count and Sharpe dispersion cannot be supplied ad hoc."
   },
   "promotion": {
     "authorized_by_this_contract": false,

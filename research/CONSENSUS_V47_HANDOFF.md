@@ -1,6 +1,6 @@
 # Consensus V47 clean PIT handoff
 
-Updated: 2026-09-14 14:35 JST
+Updated: 2026-09-14 14:43 JST
 Branch: `research/consensus-atr-regime-gate`
 Scope: research-only. Production/main/Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater untouched.
 
@@ -15,73 +15,56 @@ Only V47 clean PIT evidence is promotion-relevant. V43/V44 returns remain non-pr
 - V11 3-head architecture / threshold 0.95 frozen for first clean comparison.
 - 2026 outcomes forbidden for selection.
 - PIT daily volume = frozen adjusted daily volume / cumulative future split factor.
-- Prior volume gate and daily volume-ratio technicals use PIT daily volume.
-- Yahoo raw 1H volume stays unchanged for session-volume gate and session-volume-ratio technicals; never divide raw 1H volume by split factor.
+- Prior-volume gate and daily-volume ratio technicals use PIT daily volume.
+- Yahoo raw 1H volume stays unchanged for session-volume gate and session-volume ratio technicals; never divide raw 1H volume by split factor.
 - Listing identity epochs isolate prelisting history from feature/target/cooldown state.
 - H2 feature artifact must remain blind to return targets.
 
-## Restored/delisted daily repair
-Authoritative v6 daily materializer run `34788533946` identified 251 restored/delisted symbols needing external recovery.
-
-96ut restoration run `34798987098` was merged/audited by run `34799650589` (SUCCESS):
-- expected symbols: 251
-- recovered symbols: 251
-- missing symbols: 0
-- extra symbols: 0
-- merged rows: 109,230
-- median required-date coverage: 100%
-- minimum required-date coverage: 39.0625%
-- 11 symbols were below 90% required-date coverage before the final rebuild: 1841, 2754, 3847, 5395, 6060, 6416, 8038, 8072, 8208, 8886, 9852
-- merge receipt `accepted_for_daily_rebuild=true` meant symbol-set recovery only; the downstream final daily coverage gate remained authoritative.
-- no strategy returns or model scores were opened.
-
-## Authoritative V47 daily PIT materialization
-`Consensus V47 Daily PIT Materialization External` run `34799835035` completed SUCCESS and is the authoritative V47 daily source.
-
-Outcome-blind acceptance receipt passed all daily gates:
+## Authoritative daily source
+96ut restoration run `34798987098` recovered 251/251 historical/restored symbols and merge audit `34799650589` passed. Final V47 daily PIT materialization run `34799835035` is authoritative and passed all daily gates:
 - `daily_coverage_pass=true`
 - `required_coverage_pass=true`
 - `restored_daily_coverage_pass=true`
-- `missing_required_symbols=0`
-- `missing_required_symbol_dates=0`
-- strategy returns/model scores remained unopened.
+- missing required symbols = 0
+- missing required symbol/date pairs = 0
+- strategy returns/model scores unopened.
 
-## Raw 1H acquisition result and transport finding
-Commit `a0ff4cf07158977081c0ef161cb4e60520906602` triggered `Consensus V47 Raw1H Freeze` run `34800587082` from daily run `34799835035`.
+## First raw 1H attempt
+Raw freeze run `34800587082` completed GitHub-level SUCCESS across all 12 shards, but transport was Yahoo-rate-limited. An inspected shard had 0/324 successful symbols and 324/324 `http_429`. Workflow success was never treated as coverage acceptance.
 
-Run `34800587082` completed with workflow conclusion SUCCESS, all 12 shard jobs completed, and all 12 shard artifacts were uploaded. Workflow success is not coverage acceptance. Several artifacts are only about 2.2 KB and the previously inspected shard 1 contained **0/324 successful symbols** with **324/324 `http_429` fetch errors**, so the formal frozen coverage verifier is authoritative before any downstream use.
-
-The frozen raw acceptance contract remains unchanged for both price-policy arms:
-- pair coverage >= 99.5%
-- monthly minimum coverage >= 99.0%
-- zero completely missing required symbols
-- >=95% per-symbol coverage for symbols with >=20 required days
-- restored/delisted required-pair coverage >=99.0%
-- both `NOCAP` and `CAP1000_PIT` must pass
-- failure emits missing symbol/date pairs and permits targeted-refetch only those pairs/codes
-- no threshold lowering, candidate dropping, interpolation/backfill, provider/alias choice from returns, or production changes.
-
-## Outcome-blind rate-limit mitigation staged
-Transport-only hardening is committed for future retry/refetch and did not alter the completed pinned run `34800587082`.
-
-- `2880cc20165ef35705290330052e40d5c3ba1975`: raw fetcher alternates Yahoo query1/query2 hosts, uses a persistent session, honors Retry-After, applies bounded exponential backoff, raises attempts from 5 to 8, adds 0.55-second post-success pacing, and records the transport policy in the shard summary.
+Transport-only hardening for subsequent retries:
+- commit `2880cc20165ef35705290330052e40d5c3ba1975`: query1/query2 alternation, persistent session, Retry-After support, bounded exponential backoff, 8 attempts, 0.55s pacing.
 - contract test run `34806715208`: SUCCESS.
-- `e61fcdfc4fb2f18eee41dde5ae79474e38b2a5be`: future raw workflow executions throttled to `max-parallel: 2` and timeout 180 minutes.
-- Incident log: `research/CONSENSUS_V47_RAW1H_RATE_LIMIT_2026-09-14.md`.
+- commit `e61fcdfc4fb2f18eee41dde5ae79474e38b2a5be`: future raw workflow `max-parallel: 2`, timeout 180 min.
 
-These are data-acquisition reliability changes only. Eligibility, price-policy arms, model, target, feature semantics, and all acceptance thresholds remain frozen.
+No eligibility/model/target/feature/threshold semantics changed.
 
-## Current action: raw coverage acceptance
-After confirming run `34800587082` finished, commit `ffeb985be58ab1041d23d250544b531fb915df06` created `research/RUN_V47_RAW1H_COVERAGE` with:
-- `daily_run_id=34799835035`
-- `raw_run_id=34800587082`
+## Formal raw coverage acceptance
+Initial verifier run `34810149461` is **invalid as acceptance evidence** because the verifier crashed on an empty gzip shard (`pandas.errors.EmptyDataError`) before frozen coverage could be evaluated.
 
-This triggered `Consensus V47 Raw1H Coverage Acceptance` run `34810149461`. At the latest inspection it is `in_progress`; checkout and source-run parsing passed and dependency installation was running. No strategy return/model-score outcome has been opened.
+The verifier was fixed in commit `efc4a0c463a6246b884fd73ad0320256b6ce2949` so an empty shard contributes zero available pairs and the verifier fails closed rather than crashing. Contract test run `34810228288` passed SUCCESS.
 
-## Next action
-1. Wait for run `34810149461` to finish; do not duplicate-trigger it.
-2. Inspect only `v47_raw1h_coverage_receipt.json` plus emitted missing-pair/code files before opening any feature/model outcome.
-3. If `accepted=false`, targeted-refetch only emitted missing symbol/date pairs/codes using the staged throttled/backoff transport policy, then rerun the exact frozen coverage verifier. Do not lower thresholds or interpolate.
-4. If `accepted=true`, freeze raw artifact hashes and proceed to V47 clean feature materialization only. Recompute cross-sectional features separately for `NOCAP` and `CAP1000_PIT`; use PIT nominal `log_price`, split-normalized relative-price technicals, PIT daily-volume technicals, and unchanged raw-1H-volume technicals.
-5. Keep H2 return targets sealed. DEV H1 selection remains strict5/no replacement/0.5% round-trip cost with mean first, then Top3-ex, median, and NOCAP as final near-tie tiebreak.
-6. V45 ATR remains deferred until V47 is complete.
+The exact same frozen acceptance was rerun as `Consensus V47 Raw1H Coverage Acceptance` run `34810234454`; workflow conclusion SUCCESS means the receipt was emitted, not that coverage passed. Artifact digest: `sha256:83c35186addada392a3117f7f97eaca2d7b189670ceee306bb2284328c8a06c3`.
+
+Formal receipt:
+- top-level `accepted=false`
+- `raw_unique_symbol_dates=0`
+- `NOCAP`: required 853,061; present 0; missing 853,061; pair coverage 0.0%; required symbols 3,885; completely missing symbols 3,885; monthly minimum 0.0%; restored required pairs 40,048; restored pair coverage 0.0%; accepted=false.
+- `CAP1000_PIT`: required 310,831; present 0; missing 310,831; pair coverage 0.0%; required symbols 1,886; completely missing symbols 1,886; monthly minimum 0.0%; restored required pairs 15,492; restored pair coverage 0.0%; accepted=false.
+- all five frozen checks failed for both arms.
+- strategy returns opened=false; model scores opened=false; production writes=false.
+
+The missing-pair artifacts therefore identify the entire required candidate-date set as missing. This is a pure transport/data-acquisition failure, not strategy evidence.
+
+## Current action: retry only the missing universe
+Because `raw_unique_symbol_dates=0`, every required symbol/date pair is missing; the missing-symbol union is therefore the full required NOCAP symbol set. Commit `6fcf600245e0a04b3d8bc9c3f6c566a81c9fa03d` triggered retry run `34810592135` using the hardened transport policy and `max-parallel: 2`.
+
+This is the missing-only retry in the only practical Yahoo form: each missing symbol is requested once and Yahoo returns its available 730d 1H chart; no non-missing symbol exists to exclude. The acceptance scope remains the emitted candidate-date pairs only. No threshold lowering, interpolation, candidate dropping, alias substitution, or return-aware provider choice is allowed.
+
+## Frozen next action
+1. Do not duplicate-trigger while raw retry `34810592135` is active.
+2. After it finishes, rerun the exact frozen coverage verifier against retry artifacts; do not inspect strategy/model outcomes first.
+3. If coverage still fails, retry only the newly emitted missing symbol/date set/codes. Keep all thresholds unchanged and do not interpolate.
+4. Only if both `NOCAP` and `CAP1000_PIT` pass may clean feature materialization start. Recompute cross-sectional features separately per arm; PIT nominal `log_price`, split-normalized relative-price technicals, PIT daily-volume technicals, unchanged raw-1H-volume technicals.
+5. H2 return targets remain sealed. DEV H1 remains strict5/no replacement/0.5% round-trip cost, mean first; near tie Top3-ex -> median -> NOCAP.
+6. V45 ATR remains deferred until V47 completes.

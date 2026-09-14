@@ -1,7 +1,7 @@
 {
-  "version": 10,
+  "version": 11,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T16:39:00+09:00",
+  "updated_at_jst": "2026-09-14T16:50:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_WITH_STATE_RECONCILIATION",
     "branch_heads_changed_since_previous_state": true,
@@ -19,12 +19,12 @@
   },
   "cross_lane_followup_last_scan": {
     "status": "COMPLETE_WITH_OSS_PROGRESS",
-    "scanned_at_jst": "2026-09-14T16:07:00+09:00",
+    "scanned_at_jst": "2026-09-14T16:50:00+09:00",
     "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-    "consensus_head": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
-    "oss_head": "9966bde4534be91bc20ef471cf3b6e0abe860846",
-    "note": "No unprocessed Canonical/Core/Consensus SHA required duplicate work. Consensus retry 34810592135 remains active with fetch(0)/fetch(1) in progress and ten shards queued under max-parallel=2. OSS lane advanced the outcome-blind EDINET path by adding a resumable official-v2 metadata acquisition helper, fail-closed tests, CI coverage, acquisition spec, handoff, and log. CI run 34816055006 completed SUCCESS; real 2023-2025 bytes and same-ZIP parser results remain unopened."
+    "consensus_head": "01299302461872a748693313e4de9c63cdcd32b8",
+    "oss_head": "faba5b48f1831b16f08c74895f772ca0089f765c",
+    "note": "All Canonical/Core/Consensus HEADs matched their processed STATE values at scan start, so no duplicate experiment was performed. Consensus retry 34810592135 still has fetch(0)/fetch(1) in raw 1H fetch and ten shards queued. OSS advanced outcome-blind EDINET validation by adding an exact selected-ZIP byte-freeze layer that fails closed on set drift/corrupt archives, freezes per-doc SHA256 plus an aggregate digest before parser opening, and preserves no-replacement/outcome-sealed rules. CI 34819456421 completed SUCCESS. Complete 2023-2025 real metadata, selected real doc IDs/ZIPs, real parser outputs, strategy outcomes and 2026 outcomes remain unopened; external EDINET API-key access is the execution blocker."
   },
   "canonical_worker_last_scan": {
     "status": "COMPLETE_WAITING_ON_ACCEPTED_CONSENSUS_RETRY",
@@ -67,9 +67,9 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "0837d299eff60698d0e2ec36c659a36bbc078542",
-      "last_processed_sha": "0837d299eff60698d0e2ec36c659a36bbc078542",
-      "last_processed_note": "16:24 supervisor reconciled the one-commit delta from 9966bde4 to 0837d299. Compare shows only OSS_TOOLING_HANDOFF_20260914.md changed; inspection confirms it documents the already-processed official EDINET v2 resumable acquisition boundary and CI 34816055006 SUCCESS, with no new parser outcome or experiment. Marked processed without duplicate work."
+      "last_seen_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
+      "last_processed_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
+      "last_processed_note": "16:50 :48 worker implemented and CI-validated an outcome-blind selected-ZIP exact-byte freeze boundary. Helper/tests/spec/log/handoff now require the exact selected doc-ID ZIP set, valid non-empty archives, per-doc SHA256 and aggregate digest, no-replacement=true, strategy outcomes closed, and parser outputs closed before same-ZIP comparison. CI 34819456421 SUCCESS. Real metadata/doc IDs/ZIPs/parser outputs remain unopened."
     }
   },
   "guardrails": [
@@ -157,7 +157,7 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 16:39 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2; run-level endpoint still reports queued",
+      "missing_universe_retry_status": "active acquisition at 16:50 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
       "missing_universe_retry_active_jobs": 2,
       "missing_universe_retry_queued_jobs": 10,
       "preserved_raw_seed_run": 34592896202,
@@ -177,7 +177,7 @@
       "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion combine only immutable retry bars and preserved run34592896202 bars with artifact/digest provenance, deduplicate exact symbol/timestamp, and rerun the unchanged frozen coverage verifier before any feature/performance inspection. If rejected, acquire only the newly emitted missing symbol/date set; thresholds unchanged and no interpolation."
     },
     "oss_validation": {
-      "head": "0837d299eff60698d0e2ec36c659a36bbc078542",
+      "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
       "preregistration_ci_run": 34807402370,
       "preregistration_ci_status": "completed/success",
       "selector_ci_run": 34807566909,
@@ -186,9 +186,12 @@
       "metadata_snapshot_ci_status": "completed/success",
       "metadata_acquisition_ci_run": 34816055006,
       "metadata_acquisition_ci_status": "completed/success",
-      "edinet_real_sample": "PREREGISTERED_SELECTOR_SNAPSHOT_AND_ACQUISITION_BOUNDARY_TESTED_NOT_YET_EXECUTED",
+      "selected_zip_freeze_ci_run": 34819456421,
+      "selected_zip_freeze_ci_status": "completed/success",
+      "edinet_real_sample": "PREREGISTERED_METADATA_SNAPSHOT_ACQUISITION_AND_SELECTED_ZIP_FREEZE_BOUNDARIES_TESTED_NOT_YET_EXECUTED",
       "strategy_outcomes_opened": false,
-      "next_rule": "Use the tested acquisition helper with an external EDINET API key to materialize exact raw daily JSON for every 2023-01-01..2025-12-31 calendar day. Then freeze per-day/hash-chain receipt with edinet_metadata_snapshot.py before running the frozen selector exactly once. Freeze selected doc IDs and exact ZIP hashes before same-ZIP custom-vs-edinet-tools comparison; never resample around parser failures."
+      "parser_outputs_opened": false,
+      "next_rule": "Use the tested acquisition helper with an external EDINET API key to materialize exact raw daily JSON for every 2023-01-01..2025-12-31 calendar day. Freeze the full metadata hash-chain receipt, run the preregistered selector exactly once, then materialize exactly the selected ZIP set and run edinet_selected_zip_freeze.py before passing the identical SHA256-frozen bytes to custom and edinet-tools parsers. Never resample around parser failures or use strategy outcomes to arbitrate disagreements."
     }
   },
   "cross_lane_status": {
@@ -197,7 +200,7 @@
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Consensus V47 has not yet produced a frozen-accepted repair source.",
       "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is actively acquiring two shards at a time. Preserved Yahoo raw seed run34592896202 contains 35.4% of NOCAP and 83.1% of CAP1000_PIT required pairs but 0% restored coverage, so it can reduce redundant requests only after provenance-preserving merge and unchanged acceptance verification.",
       "No currently passing canonical 5BD Core/Precision replacement candidate. Separately, historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending; this audit does not reopen rejected Core families for retuning or promotion.",
-      "OSS EDINET sample boundary, selector, metadata snapshot layer, and metadata acquisition boundary are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized and the real same-ZIP parser comparison remains unopened."
+      "OSS EDINET sample-selection, metadata snapshot/acquisition, and selected-ZIP exact-byte freeze boundaries are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized because the runtime lacks an external EDINET API key; real selected doc IDs/ZIP hashes and same-ZIP parser comparison remain unopened."
     ]
   },
   "dynamic_lane_policy": {

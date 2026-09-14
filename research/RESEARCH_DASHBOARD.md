@@ -4,6 +4,14 @@
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **正式promotion evidenceと中締め診断は分離する。**
 
+## 📈 全体進捗
+
+**研究全体の進捗率: 約63%**
+
+`█████████████░░░░░░░ 63%`
+
+> この進捗率は「GOできる確率」ではなく、Supervisorが管理する研究マイルストーンの消化率。各laneの検証・データ整備・provenance・fresh robustness・formal acceptanceまでを含む。
+
 ## 0. 全体サマリー
 
 | 項目 | 現在 |

@@ -1,8 +1,8 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 17:09 JST  
+> **最終更新基準:** 2026-09-14 17:45 JST  
 > **更新元:** `research/AUTOMATION_COORDINATION_STATE.json` + active lane handoff / Actions + `research/MIDTERM_COMPARISON_20260914.md`  
-> **注意:** 進捗率は成功確率ではなく、事前定義した研究マイルストーンの消化率。診断開封と正式promotion evidenceは分離する。**今後の全バックテスト・診断・比較・ランキングは取引コスト0%で統一**する。既存0.5%/1%結果はlegacy audit evidenceのみで、新しい順位・判定には使わない。
+> **注意:** 進捗率は成功確率ではなく研究マイルストーン消化率。診断開封と正式promotion evidenceは分離する。**今後の全バックテスト・診断・比較・ランキングは取引コスト0%で統一**。既存0.5%/1%結果はlegacy audit evidenceのみで、新しい順位・判定には使わない。
 
 ---
 
@@ -14,18 +14,19 @@
 | Active research branches | **4本** |
 | 現在のPhase-2暫定首位 | **DUAL_TOP1_AGREEMENT（body_pct Top1 = volr20 Top1の日だけ採用）** |
 | 正式promotion evidenceでGO可能な候補 | **0件** |
-| V47 | **clean Daily PIT PASS / raw retry中 / performance未計算** |
+| V47 | **clean Daily PIT PASS / formal raw retry中 / partial-seed midterm diagnostic実行中** |
 | V20 | **coverage-bypassed診断をcost 0%で開封、全TopN負でDEPRIORITIZE** |
 | 旧Cloud Monster | **歴史値 n=63 / 5BD平均 +9.86%**。exact-repro forensicとは別扱い |
 | OSS / EDINET | **metadata→selector→selected-ZIP exact-byte freezeまでCI固定** |
 | 最終判定 | **NO-GO / 研究継続** |
 
 ### 全体進捗
-`████████████░░░░░░░░` **約58%**
+`████████████░░░░░░░░` **約59%**
 
 - 評価契約・リーク防止・監査基盤: 高進捗
 - 有力な実観測条件: あり。ただし正式promotion evidenceへの統一評価が未完
-- V47 raw受入: 未完
+- V47 raw正式受入: 未完
+- V47中締め診断: pre-open contract/hash/coverage凍結済み、run `34824194221` 実行中
 - EDINET real same-ZIP比較: 未実施
 - 最終比較 / GO-NO-GO: 未実施
 
@@ -39,8 +40,10 @@
 |---|---|---|---|
 | weak+early body_pct / volr20系 | ✅ row-level再計算済み | ❌ 未統一 | canonical endpoint / **cost 0%**で統一評価済み |
 | V20 Session-Impulse | ✅ coverage-bypassed診断開封 | ❌ 不可 | 734 gapを残した診断。全TopN負、DEPRIORITIZE |
-| Consensus V47 | ❌ performance未計算 | ❌ 未開封 | retryが実rawを出すまで物理的に計算不可 |
+| Consensus V47 | ⏳ **診断run実行中、performance未出力** | ❌ raw acceptance未達 | pre-open spec/hash/coverage凍結済み。partial immutable seedのみ、欠損補間なし |
 | Cloud exact forensic | 歴史値のみ既知 | ❌ | exact reproductionが先。歴史値を再現結果と混同しない |
+
+Consensus V47については、run `34824194221` がH1 performanceを実際に出力した時点でH1を `OPENED_NOT_UNTOUCHED` と記録する。それまではperformance未開封。H2は引き続き未開封。
 
 ---
 
@@ -69,36 +72,52 @@
 - cost **0%**
 - **Disposition:** STABILITY COMPARATOR
 
-### 共通弱点
+### 共通弱点 / Phase-2方針
 - 2023H2は全候補で弱い。
 - 2025H2は平均プラスでも勝率/中央値が弱い。
 - 次の主要課題はranker追加ではなく **causal market-regime / NO-TRADE判定**。
-
-### Phase-2方針
 - 広いfeature/ranker探索は停止。
-- research/WEAK_EARLY_PHASE2_20260914.md をfreeze basisにする。
+- `research/WEAK_EARLY_PHASE2_20260914.md` をfreeze basisにする。
 - 可能なら **2022をfresh validation** として4候補を無調整で再評価。
-- breadth_ma20<=0.5 overlayは探索上は確認したが全期間で明確改善せず、promotionしない。
 
-**注意:** このランキングは中締め/Phase-2診断ランキングであり、production GO順位ではない。
+**注意:** このランキングは中締め/Phase-2診断ランキングであり、production GO順位ではない。Consensus V47の診断値はまだ未出力なのでランキングへ未反映。
+
 ---
 
 ## 3. 正式promotion path / lane status
 
 | レーン | 状態 | マイルストーン進捗 | 現在地 | 次アクション |
 |---|---:|---:|---|---|
-| **Consensus V47** | 🟡 RAW RETRY ACTIVE | **67%** | Daily PIT PASS。初回raw acceptance FAIL。retry `34810592135` は17:09 JST時点でfetch(0)/fetch(1)がraw 1H取得中、10 queued。preserved seedはNOCAP 35.4% / CAP1000_PIT 83.1%、restored 0% | retry完了→preserved seedとprovenance付きmerge→frozen verifier。実rawが得られ次第diagnostic performance可 |
+| **Consensus V47** | 🟡 RAW RETRY + MIDTERM DIAGNOSTIC ACTIVE | **69%** | Daily PIT PASS。初回raw acceptance FAIL。formal retry `34810592135` はfetch(0)/fetch(1)取得中・10 queued。preserved seed NOCAP 35.3898% / CAP1000_PIT 83.1124% / restored 0%。pre-open diagnostic spec/hash凍結済み、run `34824194221` 実行中 | diagnostic結果回収→cost0 H1 metrics記録（非promotion）。並行してformal retry完了→seedとprovenance付きmerge→frozen verifier |
 | **V20 Session-Impulse** | 🟠 DEPRIORITIZE / COVERAGE BLOCKED | **55%** | 1,810 symbols / 82 sessions、734 gap。coverage bypass診断はcost 0%でも全TopN負 | formal repairはV47 accepted rawができた場合のみ。隣接retuneしない |
 | **Core replacement** | 🔴 REJECT | **90%** | Fixed Core / reclaim / precision系を棄却 | closed。新規隣接heuristic探索停止 |
 | **Cloud exact forensic** | 🟠 FORENSIC | **10%** | 歴史値 n=63/+9.86%のみ。exact spec未復元 | exact spec→元期間完全一致→成功時のみ未使用期間へ無調整展開 |
 | **OSS / Validation** | 🟢 基盤進行 | **70%** | Purged/DSR/Optuna + EDINET metadata acquisition/snapshot/selector + selected-ZIP exact-byte freezeをCI固定 | external keyでreal metadata取得→snapshot→selector→ZIP freeze→same-ZIP parser比較 |
 | **Shadow / Data Integrity** | 🟢 基盤 | **80%** | calendar/integrity/immutable receipt CI成功 | real shadow launchは未承認 |
 
+### Consensus V47 詳細
+- **最新HEAD:** `8a461bf987453422e705a08024c0f1a462068801`
+- **Daily acceptance:** PASS — authoritative external daily run `34799835035`
+- **Formal raw acceptance:** FAIL — acceptance run `34810234454`、初回V47 rawは0 usable pair
+- **Formal targeted retry:** `34810592135` active。重複trigger禁止
+- **Midterm diagnostic pre-open spec:** `research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json`
+- **Midterm diagnostic run:** `34824194221` in progress
+- **Diagnostic raw source:** preserved immutable Yahoo seed run `34592896202`
+- **Coverage caveat:** NOCAP 301,897/853,061 = **35.3898%**、CAP1000_PIT 258,339/310,831 = **83.1124%**、restored pair **0%**。missingはそのまま欠損、補間・synthetic barなし
+- **Features:** diagnostic run内でpartial PIT features materialization待ち
+- **H1:** performance **未出力**。出力されたらH1は `OPENED_NOT_UNTOUCHED`
+- **H2:** **未開封**
+- **2026:** selection用途 **未開封**
+- **NOCAP vs CAP1000_PIT比較:** **実行中 / performance未開封**
+- **cost:** **0%のみ**。win = gross canonical return > 0
+- **endpoint:** next official XTKS open -> D+5 close
+- **候補ランキングへの影響:** まだなし。正式値/診断値が出るまで推測しない
+
 ---
 
 ## 4. V20中締め診断 — `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`
 
-- period: frozen H1 diagnostic period represented by the existing repaired raw artifact / 2026は不使用
+- period: frozen H1 diagnostic period represented by existing repaired raw artifact / 2026は不使用
 - endpoint: **next XTKS open -> fifth XTKS close**
 - cost: **0%**
 - coverage caveat: frozen universe **1,810 symbols / 82 sessions**のうち **734 active symbol/date gaps** を欠損のまま残し、coverage gateだけをbypass。補間・synthetic bars・閾値低下・条件変更なし。
@@ -178,11 +197,13 @@
 ## 8. 残タスク
 
 ### P0
-- [ ] Consensus retry `34810592135` 完了監視（重複起動禁止）
+- [ ] Consensus formal retry `34810592135` 完了監視（重複起動禁止）
+- [ ] **Consensus V47 midterm diagnostic `34824194221` 結果回収**。cost 0%、formal evidenceと分離、開封後retune禁止
 - [ ] retry + preserved raw seedをprovenance付きmergeしてfrozen verifier再実行
-- [ ] V47実rawが得られ次第、cost 0% diagnostic performanceを開く。formal acceptanceとは分離
+- [ ] diagnostic成功時、NOCAP/CAP1000_PITの期間・n・平均・中央値・勝率・+10/+20/+50・-10/-20・Top1/Top3除外をcoverage caveat付きで追記
+- [x] V47 midterm pre-open spec/hash/coverageをperformance前に凍結
 - [x] body_pct LOW / volr20 LOW / combined rankをcanonical endpoint・cost 0%・row-level metricsで統一比較
-- [x] V20 existing midterm diagnosticをcost 0%へ統一し、tails/Top1/Top3-ex/endpoint/coverage caveatをダッシュボードへ反映
+- [x] V20 existing midterm diagnosticをcost 0%へ統一し、tails/Top1/Top3-ex/endpoint/coverage caveatを反映
 
 ### P1
 - [ ] V47 accepted rawが得られた場合のみV20 exact 734 gap repair / verifier再実行
@@ -208,10 +229,11 @@
 
 ## 9. 現在のブロッカー / next action
 
-1. **V47:** retry `34810592135` は17:09 JST時点でfetch(0)/fetch(1)取得中、10 queued。重複起動しない。
-2. **V20:** 734 gap。cost 0%診断は負でDEPRIORITIZE、retuneしない。
-3. **Cloud:** exact implementation未復元。歴史値はpromotion evidenceではない。
-4. **EDINET:** external API keyが無いためreal acquisition未実行。ただしselected-ZIP byte identity boundaryまでCI-green。
-5. **最優先の高情報量チェック:** V47 retry回収、Cloud exact source evidence、EDINET real metadata acquisition（キー利用可能時）。
+1. **V47 formal:** retry `34810592135` はfetch(0)/fetch(1)取得中、10 queued。重複起動しない。
+2. **V47 diagnostic:** `34824194221` はpre-open contract確認/partial raw準備まで進行。performanceはまだ未出力。結果が出るまで候補順位を推測しない。
+3. **V20:** 734 gap。cost 0%診断は負でDEPRIORITIZE、retuneしない。
+4. **Cloud:** exact implementation未復元。歴史値はpromotion evidenceではない。
+5. **EDINET:** external API keyが無いためreal acquisition未実行。ただしselected-ZIP byte identity boundaryまでCI-green。
+6. **最優先の高情報量チェック:** V47 diagnostic結果回収 → V47 formal retry回収 → Cloud exact source evidence → EDINET real metadata acquisition（キー利用可能時）。
 
 **GO/NO-GO:** **NO-GO / 研究継続**。広いblind explorationは停止し、上記high-information checksへ集中する。

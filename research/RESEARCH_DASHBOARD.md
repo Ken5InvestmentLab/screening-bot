@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新基準:** 2026-09-14 18:15 JST  
+> **最終更新基準:** 2026-09-14 18:22 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ---
@@ -15,7 +15,7 @@
 | 2023-25暫定首位 | **DUAL_TOP1_AGREEMENT**、勝率改善候補 **G3 NO_ACUTE_SELLOFF** |
 | Consensus V47 | formal raw retry中 / midterm diagnostic `34824194221` 実行中、performance未出力 |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
-| Cloud exact forensic | **HISTORICAL_EXACT_REPRO_UNAVAILABLE** |
+| Core/Cloud forensic | Core既reject維持 / Cloud **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。18:22再現性・endpoint監査更新 |
 | OSS / EDINET | selected-ZIP exact-byte freezeまでCI固定、real EDINETは外部key待ち |
 | 最終判定 | **NO-GO / 研究継続** |
 
@@ -91,10 +91,6 @@ Candidate scarcity:
 
 この差から新しい閾値は作らない。次は model warm-up/calibration、candidate scarcity、2023H2/2025H2にも同じ構造差が現れるかをoutcome-blindで監査する。
 
-詳細:
-- `research/WEAK_EARLY_PHASE2_2022_FRESH_VALIDATION_20260914.md`
-- `research/WEAK_EARLY_PHASE2_2022_STRUCTURAL_AUDIT_20260914.md`
-
 ---
 
 ## 2. Active lanes
@@ -102,23 +98,36 @@ Candidate scarcity:
 | Lane | HEAD | Status | Next |
 |---|---|---|---|
 | Canonical/Event | `480bc9b5...` | V20 DEPRIORITIZE | V47 accepted rawが自然に得られた場合のみgap reconciliation |
-| Core/Cloud | `da67fe92...` | Core reject / Cloud exact replay unavailable | 新しい同時代identity evidenceがある場合だけ再開 |
+| Core/Cloud | `0886fd65...` | Core reject / Cloud exact replay unavailable / endpoint audit current | 新しい同時代identity evidenceがある場合だけCloud再開。なければcross-lane reproducibility/endpoint監査 |
 | Consensus V47 | `8a461bf9...` | retry + midterm diagnostic ACTIVE | run完了後cost0結果を回収、duplicate trigger禁止 |
 | OSS/Validation | `faba5b48...` | selected-ZIP byte freeze CI-green | external key利用可能時にreal EDINET acquisition |
 
 ---
 
-## 3. Cloud exact forensic
+## 3. Core + Cloud forensic
 
-新HEAD `da67fe92e493504842babac108df8f2be45c2658` を回収済み。
+最新HEAD `0886fd65f9413dc2591a47475364e736516dbf93`。
 
-- historical headline n=63 / mean +9.86% / median +3.33% / win 57.1%
+### 既reject Core
+- current fixed Core: REJECT
+- Failed-Breakdown Reclaim: REJECT
+- Prior-Close Reclaim: REJECT
+- Precision 3-family batch: REJECT
+- 既reject familyはretune/relabelで再開しない
+
+### 旧Cloud Monster historical forensic
+- **歴史値（legacy evidence）:** n=63 / mean +9.86% / median +3.33% / win 57.1%
 - exact-match spec freeze済み
-- broad reconstruction 696 rows
-- original A timestamps 62/63のみ
-- exact 575 Watch pool / identity-critical model / transforms / calibration等が不足
+- broad reconstruction: 696 rows
+- original A timestamps recovered: 62/63
+- exact 575 Watch pool / identity-critical model / features / transforms / calibration / training manifestが不足
+- 18:22再監査で新しい同時代一次証拠は確認できず
 - disposition: **HISTORICAL_EXACT_REPRO_UNAVAILABLE**
-- no portability test / no model-family guessing
+- portability test: **未実施**（元期間exact reproduction未達のため）
+- model-family guessing / surrogate replay: **禁止継続**
+- latest headに紐づくPR-triggered workflow run: **なし**。新規performance計算なし
+
+候補ランキングへの影響: **なし**。旧Cloud Monsterをpromotion候補へ戻さない。
 
 ---
 
@@ -154,6 +163,8 @@ Candidate scarcity:
 - [x] frozen Phase-2 candidates fresh validation
 - [x] 2022 robustness failure recording
 - [x] 2022 vs 2023-25 signal-time structural audit
+- [x] Cloud exact-repro spec freeze / exact evidence availability判定
+- [x] Core/Cloud cost0 + canonical endpoint labeling audit
 - [ ] **model warm-up / calibration effect audit**
 - [ ] **candidate-scarcity structure audit**
 - [ ] **2023H2 / 2025H2で同じoutcome-blind shiftsが再現するか確認**
@@ -162,4 +173,4 @@ Candidate scarcity:
 
 ## 7. GO / NO-GO
 
-**NO-GO / 研究継続。** Phase-2は2023-25の高平均だけではpromotionしない。2022 fresh validationの崩れを説明できる構造原因を先に監査し、結果を見た閾値最適化は行わない。
+**NO-GO / 研究継続。** Cloud exact replayは一次証拠が新規発見されない限り閉じたまま。Coreは既reject familyを救済retuneせず、次はcross-lane reproducibility/endpoint監査、または結果を見る前にpreregisterした genuinely different low-DOF mechanism のみ許可する。Phase-2は2023-25の高平均だけではpromotionしない。

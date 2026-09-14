@@ -1,13 +1,13 @@
 {
-  "version": 15,
+  "version": 16,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T18:12:00+09:00",
+  "updated_at_jst": "2026-09-14T18:15:00+09:00",
   "supervisor_last_scan": {
-    "status": "COMPLETE_WITH_PHASE2_2022_FRESH_VALIDATION_AND_CLOUD_RECONCILIATION",
-    "scanned_at_jst": "2026-09-14T18:12:00+09:00",
+    "status": "COMPLETE_PHASE2_2022_FRESH_FAILURE_PLUS_OUTCOME_BLIND_STRUCTURAL_AUDIT",
+    "scanned_at_jst": "2026-09-14T18:15:00+09:00",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Re-fetched all registered active branch HEADs. Canonical/Consensus/OSS matched processed SHAs. Core advanced to da67fe92 and was reconciled: exact Cloud replay disposition is HISTORICAL_EXACT_REPRO_UNAVAILABLE. Recovered frozen run-80 artifact 10264205130 and ran unchanged V7 generator on the computable 2022 block. Phase-2 fresh validation failed robustness; no post-hoc retune or fallback Round2 was run."
+    "note": "Canonical/Consensus/OSS matched processed SHAs. Core da67fe92 was processed and Cloud exact replay frozen unavailable. Frozen run-80 source artifact 10264205130 was recovered, unchanged V7 generator produced a computable Jun-Dec 2022 fresh block, and Phase-2 failed robustness. A follow-up structural audit used signal-time features only and found 2022 population/regime mismatch indicators; no threshold or gate was added."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -19,39 +19,39 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new SHA at 18:12 supervisor scan. V20 cost0 diagnostic remains DEPRIORITIZE and must not be retuned."
+      "last_processed_note": "No new SHA at 18:15. V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "da67fe92e493504842babac108df8f2be45c2658",
       "last_processed_sha": "da67fe92e493504842babac108df8f2be45c2658",
-      "last_processed_note": "18:12 supervisor processed two new Cloud forensic commits. Exact-match spec frozen; broad reconstruction has 696 rows and recovers only 62/63 A timestamps. Disposition HISTORICAL_EXACT_REPRO_UNAVAILABLE; no portability and no model-family guessing unless genuinely new contemporaneous identity evidence appears."
+      "last_processed_note": "Processed exact-repro freeze: broad reconstruction 696 rows, only 62/63 A timestamps, identity-critical evidence missing. HISTORICAL_EXACT_REPRO_UNAVAILABLE; no portability/model-family guessing."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "8a461bf987453422e705a08024c0f1a462068801",
       "last_processed_sha": "8a461bf987453422e705a08024c0f1a462068801",
-      "last_processed_note": "18:12 supervisor rechecked diagnostic run 34824194221; still in_progress and performance not emitted. Formal retry remains separate; no duplicate trigger."
+      "last_processed_note": "Diagnostic run 34824194221 still in_progress at latest scan; performance not emitted. Formal retry remains separate; duplicate trigger prohibited."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
       "last_processed_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
-      "last_processed_note": "No new SHA at 18:12 supervisor scan. Selected-ZIP exact-byte freeze boundary remains CI-green at run 34819456421; real EDINET data remains key-blocked."
+      "last_processed_note": "No new SHA. Selected-ZIP exact-byte freeze CI 34819456421 remains green; real EDINET acquisition key-blocked."
     }
   },
   "guardrails": [
     "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
     "2026 outcome is report/robustness-only, never tuning/selection input.",
     "Canonical comparable endpoint is next XTKS session open to fifth XTKS session close.",
-    "All new backtests/diagnostics/comparisons use transaction cost 0%; existing 0.5%/1% outputs are legacy evidence only.",
+    "All new backtests/diagnostics/comparisons use transaction cost 0%; existing costed outputs are legacy evidence only.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
     "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning.",
     "Consensus V47 promotion path is NOCAP vs CAP1000_PIT only after clean PIT data acceptance; no price-cap grid search."
   ],
   "workflow_watch": {
     "weak_early_phase2": {
-      "status": "FRESH_2022_VALIDATION_FAILED_ROBUSTNESS_ROOT_CAUSE_AUDIT_NEXT",
+      "status": "FRESH_2022_FAILED_ROBUSTNESS_STRUCTURAL_AUDIT_COMPLETE",
       "frozen_basis": {
         "market_gate": "med_ret5 <= 0 on signal-date completed daily context",
         "candidate_gate": "ret10 <= 0.5735294117647058",
@@ -72,11 +72,11 @@
         "source_run": 34545440155,
         "raw_2022_rows": 825735,
         "generator": "unchanged V7/V9 full-45-feature monthly causal Tail",
-        "existing_min_train_rows": 30000,
+        "min_train_rows": 30000,
         "first_computable_month": "2022-06",
         "extreme_tail_rows_jun_dec": 89,
         "weak_early_rows": 29,
-        "weak_early_signal_dates": 23
+        "signal_dates": 23
       },
       "fresh_2022": {
         "body": {"n":23,"mean_pct":1.77,"median_pct":-6.37,"win_pct":26.09,"top3_ex_pct":-7.51},
@@ -92,8 +92,28 @@
         "dual_top1": {"n":161,"mean_pct":6.57,"median_pct":0.00,"win_pct":49.07,"top3_ex_pct":4.43},
         "dual_g3": {"n":134,"mean_pct":7.74,"median_pct":1.06,"win_pct":50.75,"top3_ex_pct":5.17}
       },
+      "structural_audit": {
+        "outcomes_used": false,
+        "population_2022_rows": 29,
+        "population_2023_2025_rows": 273,
+        "largest_shifts_iqr_units": {
+          "range_pct": -0.512,
+          "med_ret1": -0.349,
+          "gap": -0.331,
+          "breadth_ret1_pos": -0.317,
+          "volr5": -0.317,
+          "breadth_ma20": -0.316,
+          "ret1": -0.292,
+          "rsi14": 0.272
+        },
+        "candidate_per_day_mean_2022": 1.26,
+        "candidate_per_day_mean_2023_2025": 1.59,
+        "single_candidate_day_share_2022": 0.739,
+        "single_candidate_day_share_2023_2025": 0.622,
+        "interpretation": "population/regime mismatch hypothesis: weaker breadth/immediate participation and less cross-sectional choice in 2022; tail_p itself is not lower and RSI is higher. This is not a new gate."
+      },
       "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
-      "next_rule": "Because fresh 2022 was computable, do not invoke the fallback Round2 intended only for missing 2022. First audit outcome-blind structural differences: model warm-up, candidate population and market-regime availability. Do not tune observed 2022 losses."
+      "next_rule": "Audit model warm-up/calibration, candidate scarcity, and whether the same signal-time shifts occur in 2023H2/2025H2. Do not derive thresholds from opened 2022 outcomes. Any new regime family requires separate preregistration after structural audit."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
@@ -112,10 +132,9 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "old_cloud_monster_exact_repro_stage": "FROZEN_UNAVAILABLE_MISSING_IDENTITY_CRITICAL_EVIDENCE",
       "broad_reconstruction_rows": 696,
       "recovered_a_timestamps": "62/63",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original script/notebook/serialized model/exact feature table/training manifest appears. Do not guess model family."
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -123,12 +142,12 @@
       "frozen_coverage_acceptance_pass": false,
       "missing_universe_retry_run": 34810592135,
       "midterm_diagnostic_run": 34824194221,
-      "midterm_diagnostic_status": "in_progress_at_18_12_JST_performance_not_emitted",
+      "midterm_diagnostic_status": "in_progress_at_latest_scan_performance_not_emitted",
       "preserved_raw_seed_run": 34592896202,
       "preserved_raw_seed_nocap_pair_coverage": 0.35389849026036824,
       "preserved_raw_seed_cap1000_pair_coverage": 0.831124,
       "restored_pair_coverage": 0.0,
-      "next_rule": "No duplicate triggers. Collect cost0 diagnostic only after it completes; keep formal promotion separate."
+      "next_rule": "No duplicate triggers. Collect cost0 diagnostic only after completion; formal promotion stays separate."
     },
     "oss_validation": {
       "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
@@ -138,8 +157,9 @@
     }
   },
   "next_global_actions": [
-    "Phase-2: outcome-blind structural audit of 2022 vs 2023-2025 before any new win-rate gate search.",
-    "Consensus: collect V47 midterm diagnostic after run 34824194221 completes; do not duplicate trigger.",
+    "Phase-2: audit model warm-up/calibration without using outcome thresholds.",
+    "Phase-2: audit candidate scarcity and compare signal-time structural shifts in 2023H2/2025H2.",
+    "Consensus: collect V47 midterm diagnostic after 34824194221 completes; do not duplicate trigger.",
     "Consensus formal: continue observing retry 34810592135.",
     "Cloud: remain closed unless genuinely new exact identity evidence appears.",
     "OSS: real EDINET acquisition only when external key is available."

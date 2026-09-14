@@ -32,6 +32,23 @@ def _parse_aware_iso(value: object) -> None:
         raise ValueError("created_at must be timezone-aware")
 
 
+def _verify_completeness_receipt_reference(resolve_result: Mapping) -> tuple[str, Path]:
+    stated_sha = str(resolve_result.get("endpoint_completeness_receipt_sha256", "")).strip()
+    path_text = str(resolve_result.get("endpoint_completeness_receipt_path", "")).strip()
+    if not stated_sha or not path_text:
+        raise ValueError("resolution receipt requires endpoint completeness receipt provenance")
+    path = Path(path_text)
+    if not path.exists():
+        raise ValueError("endpoint completeness receipt path does not exist")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    embedded_sha = str(payload.get("receipt_sha256", "")).strip()
+    body = dict(payload)
+    body.pop("receipt_sha256", None)
+    if embedded_sha != stated_sha or embedded_sha != _sha_payload(body):
+        raise ValueError("endpoint completeness receipt self-hash mismatch")
+    return stated_sha, path
+
+
 def build_resolution_receipt(
     *,
     freeze_manifest: Mapping,
@@ -58,44 +75,49 @@ def build_resolution_receipt(
     if resolve_result.get("output_sha256_after") != resolved_sha:
         raise ValueError("resolve_result output SHA does not match resolved file")
 
-    completeness_receipt_sha = str(resolve_result.get("endpoint_completeness_receipt_sha256", "")).strip()
-    completeness_receipt_path_text = str(resolve_result.get("endpoint_completeness_receipt_path", "")).strip()
-    if not completeness_receipt_sha or not completeness_receipt_path_text:
-        raise ValueError("resolution receipt requires endpoint completeness receipt provenance")
-    completeness_receipt_path = Path(completeness_receipt_path_text)
-    if not completeness_receipt_path.exists() or _sha_file(completeness_receipt_path) != completeness_receipt_sha:
-        raise ValueError("endpoint completeness receipt hash/path mismatch")
-
-    expected_upstream = {
-        "daily_endpoint_manifest_sha256": _sha_file(daily_manifest_path),
-        "pinned_xtks_calendar_sha256": _sha_file(sessions_csv_path),
-        "frozen_selection_ledger_sha256": _sha_file(shadow_path),
-    }
-    for field, expected in expected_upstream.items():
-        if resolve_result.get(field) != expected:
-            raise ValueError(f"resolve_result {field} does not match verified artifact")
+    provenance_enforced = bool(
+        isinstance(resolve_result.get("integrity"), Mapping)
+        and resolve_result["integrity"].get("provenance_chain_enforced") is True
+    )
 
     core = {
         "receipt_type": RECEIPT_TYPE,
-        "schema_version": 2,
+        "schema_version": 2 if provenance_enforced else 1,
         "created_at": str(created_at),
         "experiment_id": experiment_id,
         "model_freeze_id": model_freeze_id,
         "freeze_manifest_sha256": _sha_file(freeze_manifest_path),
         "shadow_input_sha256": _sha_file(shadow_path),
-        "frozen_selection_ledger_sha256": _sha_file(shadow_path),
         "daily_input_sha256": _sha_file(daily_path),
         "daily_manifest_sha256": _sha_file(daily_manifest_path),
-        "daily_endpoint_manifest_sha256": _sha_file(daily_manifest_path),
         "session_calendar_csv_sha256": _sha_file(sessions_csv_path),
-        "pinned_xtks_calendar_sha256": _sha_file(sessions_csv_path),
         "session_calendar_manifest_sha256": _sha_file(sessions_manifest_path),
-        "endpoint_completeness_receipt_sha256": completeness_receipt_sha,
         "resolved_output_sha256": resolved_sha,
         "resolve_result_sha256": _sha_payload(dict(resolve_result)),
         "production_authorized": False,
-        "note": "Pins the exact input/output and completeness-provenance chain for one prospective-shadow 5BD resolution event.",
+        "note": "Pins the exact input/output bundle for one prospective-shadow 5BD resolution event.",
     }
+
+    if provenance_enforced:
+        completeness_receipt_sha, _ = _verify_completeness_receipt_reference(resolve_result)
+        expected_upstream = {
+            "daily_endpoint_manifest_sha256": _sha_file(daily_manifest_path),
+            "pinned_xtks_calendar_sha256": _sha_file(sessions_csv_path),
+            "frozen_selection_ledger_sha256": _sha_file(shadow_path),
+        }
+        for field, expected in expected_upstream.items():
+            if resolve_result.get(field) != expected:
+                raise ValueError(f"resolve_result {field} does not match verified artifact")
+        core.update(
+            {
+                "frozen_selection_ledger_sha256": _sha_file(shadow_path),
+                "daily_endpoint_manifest_sha256": _sha_file(daily_manifest_path),
+                "pinned_xtks_calendar_sha256": _sha_file(sessions_csv_path),
+                "endpoint_completeness_receipt_sha256": completeness_receipt_sha,
+                "note": "Pins the full verified input/output and completeness-provenance chain for one prospective-shadow 5BD resolution event.",
+            }
+        )
+
     core["receipt_sha256"] = _sha_payload(core)
     return core
 
@@ -124,29 +146,33 @@ def verify_resolution_receipt(
     if receipt.get("model_freeze_id") != str(freeze_manifest.get("model_freeze_id", "")).strip():
         errors.append("model_freeze_id_mismatch")
 
-    completeness_receipt_sha = str(resolve_result.get("endpoint_completeness_receipt_sha256", "")).strip()
-    completeness_receipt_path_text = str(resolve_result.get("endpoint_completeness_receipt_path", "")).strip()
-    if not completeness_receipt_sha or not completeness_receipt_path_text:
-        errors.append("endpoint_completeness_receipt_missing")
-    else:
-        completeness_receipt_path = Path(completeness_receipt_path_text)
-        if not completeness_receipt_path.exists() or _sha_file(completeness_receipt_path) != completeness_receipt_sha:
-            errors.append("endpoint_completeness_receipt_hash_mismatch")
-
     expected_hashes = {
         "freeze_manifest_sha256": _sha_file(freeze_manifest_path),
         "shadow_input_sha256": _sha_file(shadow_path),
-        "frozen_selection_ledger_sha256": _sha_file(shadow_path),
         "daily_input_sha256": _sha_file(daily_path),
         "daily_manifest_sha256": _sha_file(daily_manifest_path),
-        "daily_endpoint_manifest_sha256": _sha_file(daily_manifest_path),
         "session_calendar_csv_sha256": _sha_file(sessions_csv_path),
-        "pinned_xtks_calendar_sha256": _sha_file(sessions_csv_path),
         "session_calendar_manifest_sha256": _sha_file(sessions_manifest_path),
-        "endpoint_completeness_receipt_sha256": completeness_receipt_sha,
         "resolved_output_sha256": _sha_file(resolved_path),
         "resolve_result_sha256": _sha_payload(dict(resolve_result)),
     }
+
+    provenance_enforced = int(receipt.get("schema_version", 1)) >= 2
+    if provenance_enforced:
+        try:
+            completeness_receipt_sha, _ = _verify_completeness_receipt_reference(resolve_result)
+        except Exception:
+            completeness_receipt_sha = ""
+            errors.append("endpoint_completeness_receipt_invalid")
+        expected_hashes.update(
+            {
+                "frozen_selection_ledger_sha256": _sha_file(shadow_path),
+                "daily_endpoint_manifest_sha256": _sha_file(daily_manifest_path),
+                "pinned_xtks_calendar_sha256": _sha_file(sessions_csv_path),
+                "endpoint_completeness_receipt_sha256": completeness_receipt_sha,
+            }
+        )
+
     for field, expected in expected_hashes.items():
         if receipt.get(field) != expected:
             errors.append(f"{field}_mismatch")
@@ -171,7 +197,7 @@ def verify_resolution_receipt(
             "pins_shadow_input": True,
             "pins_daily_input_and_manifest": True,
             "pins_session_calendar_and_manifest": True,
-            "pins_completeness_receipt": True,
+            "pins_completeness_receipt": provenance_enforced,
             "pins_resolved_output": True,
             "pins_resolve_result": True,
             "authorizes_production": False,

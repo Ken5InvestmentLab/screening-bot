@@ -1,0 +1,27 @@
+{
+  "contract_version": 1,
+  "status": "CORE_XTKS_CALENDAR_BYTES_PINNED_PERFORMANCE_UNOPENED",
+  "adopted_from_branch": "research/parallel-condition-exploration",
+  "source_commit_csv": "cd667f598bcdd980cb186350f4ecb49f1e57661e",
+  "source_commit_receipt": "69f49c879fec2eded3dfd84d7bf1f8f249b865aa",
+  "source_artifact_path": "research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv",
+  "source_receipt_path": "research/PARALLEL_WAVE1_XTKS_CALENDAR_RECEIPT_20260915.json",
+  "artifact_sha256": "58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b",
+  "artifact_git_blob_sha": "20851350a1cd593b31546997f91c3b272c65c7d9",
+  "calendar": "XTKS",
+  "calendar_generator": {
+    "package": "exchange_calendars",
+    "version": "4.13.1",
+    "method": "get_calendar('XTKS').sessions_in_range('2022-01-01','2026-12-31')"
+  },
+  "coverage": {
+    "first_session": "2022-01-04",
+    "last_session": "2026-12-30",
+    "session_count": 1220
+  },
+  "core_usage_rule": "Session membership evidence only. It must be combined with pinned PIT membership and independent exact-hour activity evidence. Cartesian symbol x session x hour expansion remains forbidden.",
+  "performance_opened": false,
+  "transaction_cost_pct_for_future_new_performance": 0.0,
+  "win_definition": "gross_return > 0",
+  "outcome_2026": "REPORT_ROBUSTNESS_ONLY"
+}

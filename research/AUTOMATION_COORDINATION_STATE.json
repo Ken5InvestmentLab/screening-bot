@@ -1,7 +1,7 @@
 {
   "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T13:25:00+09:00",
+  "updated_at_jst": "2026-09-14T13:49:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": false,
@@ -15,7 +15,16 @@
     "core_head_changed": false,
     "canonical_head": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
     "consensus_head": "28c272b02c20684f989ab3afb046f51a47344c6a",
-    "note": "Core HEAD matches last_seen/last_processed, so no duplicate processing was performed. Core execution control remains COORDINATION_AND_CONSUMER_ONLY. Consensus V47 raw1H run 34800587082 is still in_progress, so the V47 Precision consumer resume condition is not satisfied. V20 remains blocked on 734 raw gaps. Final comparison protocol remains consistent with canonical next-XTKS-open to fifth-XTKS-close and 0.5% cost stress. No new Core family was started and no production path was touched."
+    "note": "Core HEAD matched last_seen/last_processed at the :24 scan, so no duplicate processing was performed then. Core execution control remains COORDINATION_AND_CONSUMER_ONLY."
+  },
+  "cross_lane_followup_last_scan": {
+    "status": "COMPLETE_WITH_OSS_PROGRESS",
+    "scanned_at_jst": "2026-09-14T13:49:00+09:00",
+    "canonical_head": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
+    "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
+    "consensus_head": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
+    "oss_head": "b0435407ded352716a9bd245b093b60f3ae381dd",
+    "note": "Processed new Core forensic-only documentation and Consensus transport-only 429 mitigation without reopening rejected families or outcomes. Advanced OSS lane by preregistering a deterministic metadata-only 2023-2025 real EDINET same-ZIP sample before any parser result is opened. OSS CI 34807402370 is in_progress. Consensus V47 raw1H run 34800587082 remains in_progress with 8 completed shard jobs and 4 still fetching; job success is not coverage acceptance because shard-level 429 failures are present."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -31,21 +40,21 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "7ce65d8826881d52212cb245c88f8be22947b1f5",
-      "last_processed_sha": "7ce65d8826881d52212cb245c88f8be22947b1f5",
-      "last_processed_note": "Processed 12 commits after b3d6c320. Preregistered Precision three-family DEVELOPMENT-only batch run 34799307163 rejected PRIOR_HIGH_BREAKOUT (-0.41% mean), TWO_DAY_PULLBACK_RECLAIM (-0.48%), and INSIDE_RANGE_STRENGTH (-0.35%) at 0.5% cost; internal validation/H2/2026 unopened. EXECUTION_CONTROL freezes this lane to coordination/consumer-only until upstream promotion-grade data/event streams satisfy resume conditions. 13:25 rescan found no new Core SHA and no resume condition satisfied."
+      "last_seen_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
+      "last_processed_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
+      "last_processed_note": "13:49 cross-lane pass processed the single new forensic documentation commit after 7ce65d88. OLD_CLOUD_MONSTER_FORENSIC_20260914.md explicitly demotes the historical +9.86% Cloud Monster headline to historical signal / not reproducible / not a current promotion candidate. The old model used 2026 development evidence and its surrogate failed a frozen 2025 portability sanity check; it is not eligible as a modern candidate and is not to be retuned. No H2 or new Core family opened; execution remains coordination/consumer-only."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "28c272b02c20684f989ab3afb046f51a47344c6a",
-      "last_processed_sha": "28c272b02c20684f989ab3afb046f51a47344c6a",
-      "last_processed_note": "Processed two post-trigger documentation/log commits after a0ff4cf0. They preserve the accepted external daily PIT source 34799835035 and frozen V47 raw1H acceptance contract. Raw1H run 34800587082 is now in_progress; all 12 fetch jobs passed accepted-daily verification and compile/test and are inside raw shard acquisition. No returns/scores/H2/2026 selection outcome opened and no duplicate trigger issued."
+      "last_seen_sha": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
+      "last_processed_sha": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
+      "last_processed_note": "13:49 cross-lane pass processed four commits after 28c272b0. They stage transport-only Yahoo 429 mitigation for future retry/refetch: host alternation, Retry-After handling, bounded backoff, pacing, attempts=8, workflow max-parallel=2; contract tests run 34806715208 SUCCESS. Active raw1H run 34800587082 is still pinned to the old trigger SHA and remains in_progress; 8 shard jobs completed and 4 (0,2,5,6) were still fetching. At least one completed shard receipt had 0/324 successes with 324 HTTP 429 errors, so frozen coverage acceptance remains unopened and mandatory. No duplicate trigger, returns, scores, H2, or 2026 selection outcome opened."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "3818de53041b8fe7baddbda6e25971af1ebbfaed",
-      "last_processed_sha": "3818de53041b8fe7baddbda6e25971af1ebbfaed",
-      "last_processed_note": "Supervisor audited the independent OSS/Validation lane at HEAD 3818de53. The lane uses purgedcv 0.1.6, Optuna 5.0.0 discovery-only, and edinet-tools 0.8.4 outcome-blind cross-checks. Latest EDINET correction enforces explicit frozen issued-share semantic priority, disallows summary/FilingDateInstant, and fails closed on conflicting same-priority facts. No strategy outcome or production path was touched. :48 owns continued autonomous work under the five-task cap."
+      "last_seen_sha": "b0435407ded352716a9bd245b093b60f3ae381dd",
+      "last_processed_sha": "b0435407ded352716a9bd245b093b60f3ae381dd",
+      "last_processed_note": "13:49 :48 worker advanced the outcome-blind EDINET lane. Contract now preregisters the real historical same-ZIP sample before comparison: 2023-01-01..2025-12-31, doc types 120/130, calendar-quarter x doc-type strata, first two unique doc IDs by submit_datetime then doc_id, metadata-only selection, no replacement around parser failure/disagreement, full-period metadata coverage required, selected doc IDs + ZIP hashes frozen before mismatch review. Strategy returns/ranks/labels/scores and 2026 outcomes are forbidden sample inputs. Commits 8d4188e6 and b0435407. OSS CI 34807402370 is in_progress. No real parser comparison opened and production remains unchanged."
     }
   },
   "guardrails": [
@@ -92,11 +101,12 @@
       "precision_prior_close_reclaim_run": 34799151144,
       "precision_three_family_batch": "REJECT_DEVELOPMENT",
       "precision_three_family_run": 34799307163,
+      "old_cloud_monster_forensic": "HISTORICAL_SIGNAL_NOT_REPRODUCIBLE_NOT_CURRENT_PROMOTION_CANDIDATE",
       "execution_mode": "COORDINATION_AND_CONSUMER_ONLY",
       "locked_h2_opened": false,
       "precision_locked_h2_opened": false,
       "precision_2026_opened": false,
-      "next_rule": "Do not enumerate adjacent historical candle/reclaim rules. Resume only when a frozen upstream V47/event/forward evidence stream satisfies an explicit consumer contract; otherwise integrity/reproducibility/coordination only."
+      "next_rule": "Do not enumerate adjacent historical candle/reclaim rules or guess the lost old Cloud Monster model. Resume only when a frozen upstream V47/event/forward evidence stream satisfies an explicit consumer contract; otherwise integrity/reproducibility/coordination only."
     },
     "consensus_v44": {
       "run_id": 34767664140,
@@ -116,18 +126,31 @@
       "raw1h_run": 34800587082,
       "raw1h_status": "in_progress",
       "raw1h_jobs_observed": 12,
-      "raw1h_jobs_stage": "Fetch raw 1H shard",
+      "raw1h_jobs_completed": 8,
+      "raw1h_jobs_in_progress": 4,
+      "raw1h_jobs_stage": "Fetch raw 1H shard / shard-level transport failures include HTTP 429",
+      "rate_limit_contract_test_run": 34806715208,
+      "rate_limit_contract_test_status": "completed/success",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
       "performance_opened": false,
-      "next_rule": "Wait for raw1H run 34800587082 to complete. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. Only after PASS may clean feature materialization begin."
+      "next_rule": "Wait for raw1H run 34800587082 to complete. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. If rejected, targeted-refetch only emitted missing pairs using the already-staged throttled/backoff transport policy. Only after PASS may clean feature materialization begin."
+    },
+    "oss_validation": {
+      "head": "b0435407ded352716a9bd245b093b60f3ae381dd",
+      "latest_ci_run": 34807402370,
+      "latest_ci_status": "in_progress",
+      "edinet_real_sample": "PREREGISTERED_NOT_YET_EXECUTED",
+      "strategy_outcomes_opened": false,
+      "next_rule": "Collect CI first. Then implement/execute the frozen metadata-only 2023-2025 EDINET sample selector against a complete metadata source, freeze selected doc IDs and ZIP hashes, and run same-ZIP custom-vs-edinet-tools comparisons without resampling around failures."
     }
   },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Failure modes are now partitioned outcome-blind into 476 predecessor-identity HTTP 404 pairs and 258 successful-query/zero-row pairs.",
-      "Consensus V47 daily PIT acceptance passes and raw1H promotion-grade coverage run 34800587082 is actively fetching 12 shards; frozen acceptance must pass before features/performance open. If accepted, its Yahoo raw artifact becomes the preferred non-performance V20 gap-recovery audit source.",
-      "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected."
+      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Failure modes are partitioned outcome-blind into 476 predecessor-identity HTTP 404 pairs and 258 successful-query/zero-row pairs.",
+      "Consensus V47 daily PIT acceptance passes but raw1H promotion-grade run 34800587082 is still in progress and has observed shard-level HTTP 429 failures; frozen acceptance must pass before features/performance open. Staged future transport mitigation does not change the active trigger-SHA run.",
+      "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected. Historical Cloud Monster is forensic-only and not reproducible.",
+      "OSS EDINET real historical cross-check is now preregistered but not executed; CI 34807402370 must be collected before the next sample-selection step."
     ]
   },
   "dynamic_lane_policy": {

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import math
+import json
+import tempfile
 import sys
 from pathlib import Path
 
@@ -173,6 +175,38 @@ def test_terminal_404_is_not_retried():
     assert err=="http_404_terminal"
 
 
+
+def test_external_restored_daily_requires_complete_accepted_receipt():
+    with tempfile.TemporaryDirectory() as td:
+        root=Path(td)
+        daily=root/"restored.csv"
+        receipt=root/"receipt.json"
+        pd.DataFrame({
+            "date":["2025-01-06","2025-01-06"],
+            "open":[100,200],"high":[110,210],"low":[90,190],
+            "close":[105,205],"volume":[20000,30000],
+            "symbol":["A","B"],
+        }).to_csv(daily,index=False)
+        receipt.write_text(json.dumps({
+            "accepted_for_daily_rebuild":True
+        }),encoding="utf-8")
+        d,s,r=v47.load_external_restored_daily(
+            daily,receipt,["A","B"]
+        )
+        assert set(d["symbol"])=={"A","B"}
+        assert len(s)==0
+        assert r["coverage_fraction"]==1.0
+
+        try:
+            v47.load_external_restored_daily(
+                daily,receipt,["A","B","C"]
+            )
+        except RuntimeError:
+            pass
+        else:
+            raise AssertionError("expected missing external symbol failure")
+
+
 def main():
     tests=[
         test_membership_reverse,
@@ -182,6 +216,7 @@ def main():
         test_listing_epoch_resets_prior_close_and_volume,
         test_split_adjusted_daily_volume_is_restored_before_gate,
         test_terminal_404_is_not_retried,
+        test_external_restored_daily_requires_complete_accepted_receipt,
     ]
     for fn in tests:
         fn()

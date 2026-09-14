@@ -1,7 +1,7 @@
 {
   "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T14:12:00+09:00",
+  "updated_at_jst": "2026-09-14T14:26:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_NO_NEW_LANE",
     "branch_heads_changed_since_previous_state": false,
@@ -10,12 +10,12 @@
   },
   "core_worker_last_scan": {
     "status": "COMPLETE_NO_RESUME",
-    "scanned_at_jst": "2026-09-14T13:25:00+09:00",
-    "core_head": "7ce65d8826881d52212cb245c88f8be22947b1f5",
+    "scanned_at_jst": "2026-09-14T14:26:00+09:00",
+    "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
     "core_head_changed": false,
-    "canonical_head": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
-    "consensus_head": "28c272b02c20684f989ab3afb046f51a47344c6a",
-    "note": "Core HEAD matched last_seen/last_processed at the :24 scan, so no duplicate processing was performed then. Core execution control remains COORDINATION_AND_CONSUMER_ONLY."
+    "canonical_head": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
+    "consensus_head": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
+    "note": "Core HEAD exactly matches STATE last_seen_sha/last_processed_sha. Latest Core Actions are already collected (Precision discovery run 34799307163 SUCCESS at workflow level but frozen DEVELOPMENT decision REJECT; Prior-Close Reclaim 34799151144 likewise REJECT). No genuinely different preregistered low-DOF Core mechanism or accepted upstream consumer evidence is available, so no rejected family was reopened and no duplicate SHA processing was performed. Core remains COORDINATION_AND_CONSUMER_ONLY; locked H2 and 2026 selection outcomes stay closed."
   },
   "cross_lane_followup_last_scan": {
     "status": "COMPLETE_WITH_OSS_PROGRESS",

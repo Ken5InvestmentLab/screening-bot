@@ -38,6 +38,13 @@ def _normalize_symbol(value: object) -> str:
     return str(value or "").strip().replace(".0", "").upper()
 
 
+def _acquisition_precedes_data(acquired_at: datetime, last_date: str | None) -> bool:
+    if not last_date:
+        return False
+    data_last_date = datetime.strptime(last_date, "%Y-%m-%d").date()
+    return acquired_at.date() < data_last_date
+
+
 def _scan_daily_csv(path: Path) -> tuple[list[dict], dict]:
     rows: list[dict] = []
     errors: list[str] = []
@@ -135,10 +142,12 @@ def build_daily_endpoint_manifest(
         text = str(value or "").strip()
         if text.upper() in PLACEHOLDERS:
             raise ValueError(f"{field} must be explicit and non-placeholder")
-    _parse_aware_iso(acquired_at, "acquired_at")
+    acquired_dt = _parse_aware_iso(acquired_at, "acquired_at")
     _, stats = _scan_daily_csv(csv_path)
     if stats["errors"]:
         raise ValueError("daily endpoint CSV is not structurally valid: " + ";".join(stats["errors"][:10]))
+    if _acquisition_precedes_data(acquired_dt, stats["last_date"]):
+        raise ValueError("acquired_at_precedes_last_data_date")
 
     return {
         "manifest_version": 1,
@@ -170,8 +179,9 @@ def validate_daily_endpoint_dataset(csv_path: Path, manifest: Mapping) -> dict:
         if value.upper() in PLACEHOLDERS:
             errors.append(f"{field}_missing_or_placeholder")
 
+    acquired_dt = None
     try:
-        _parse_aware_iso(manifest.get("acquired_at"), "acquired_at")
+        acquired_dt = _parse_aware_iso(manifest.get("acquired_at"), "acquired_at")
     except ValueError as exc:
         errors.append(str(exc))
 
@@ -184,6 +194,8 @@ def validate_daily_endpoint_dataset(csv_path: Path, manifest: Mapping) -> dict:
 
     rows, stats = _scan_daily_csv(csv_path)
     errors.extend(stats["errors"])
+    if acquired_dt is not None and _acquisition_precedes_data(acquired_dt, stats["last_date"]):
+        errors.append("acquired_at_precedes_last_data_date")
 
     expected = {
         "row_count": stats["row_count"],
@@ -219,6 +231,7 @@ def validate_daily_endpoint_dataset(csv_path: Path, manifest: Mapping) -> dict:
             "exact_csv_sha_pinned": True,
             "dataset_provenance_required": True,
             "acquisition_time_timezone_aware": True,
+            "acquisition_not_before_last_data_date": True,
             "symbol_date_uniqueness_required": True,
             "positive_finite_present_prices_required": True,
             "price_adjustment_semantics_declared": True,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import unittest
@@ -29,16 +30,20 @@ class VerifiedResolveTests(unittest.TestCase):
         )
         return path
 
+    def _resolved_inputs(self):
+        sessions = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22"]
+        daily = [
+            {"symbol":"1111.T","date":"2026-09-16","open":100.0,"close":101.0},
+            {"symbol":"1111.T","date":"2026-09-22","open":119.0,"close":120.0},
+        ]
+        return sessions, daily
+
     def test_first_verified_resolution_write(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             shadow = self._shadow(root)
             out = root / "resolved.jsonl"
-            sessions = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22"]
-            daily = [
-                {"symbol":"1111.T","date":"2026-09-16","open":100.0,"close":101.0},
-                {"symbol":"1111.T","date":"2026-09-22","open":119.0,"close":120.0},
-            ]
+            sessions, daily = self._resolved_inputs()
             result = verified_resolve_shadow_file(shadow, out, daily, sessions)
             self.assertTrue(result["resolved_written"])
             self.assertEqual(result["decision"], "VERIFIED_RESOLUTION_WRITE_COMPLETE")
@@ -50,16 +55,63 @@ class VerifiedResolveTests(unittest.TestCase):
             self.assertFalse(receipt["strategy_outcomes_opened"])
             self.assertEqual(receipt["receipt_sha256"], result["endpoint_completeness_receipt_sha256"])
 
+    def test_required_provenance_artifacts_are_bound_before_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shadow = self._shadow(root)
+            out = root / "resolved.jsonl"
+            sessions, daily = self._resolved_inputs()
+            daily_manifest = root / "daily.manifest.json"
+            sessions_csv = root / "sessions.csv"
+            sessions_manifest = root / "sessions.manifest.json"
+            daily_manifest.write_text('{"endpoint_dataset_valid":true}\n', encoding="utf-8")
+            sessions_csv.write_text("date\n" + "\n".join(sessions) + "\n", encoding="utf-8")
+            sessions_manifest.write_text('{"calendar_valid":true}\n', encoding="utf-8")
+
+            result = verified_resolve_shadow_file(
+                shadow,
+                out,
+                daily,
+                sessions,
+                daily_manifest_path=daily_manifest,
+                sessions_csv_path=sessions_csv,
+                sessions_manifest_path=sessions_manifest,
+                require_provenance_chain=True,
+            )
+            self.assertTrue(result["resolved_written"])
+            self.assertTrue(result["integrity"]["provenance_chain_enforced"])
+            receipt = json.loads(Path(result["endpoint_completeness_receipt_path"]).read_text(encoding="utf-8"))
+            self.assertTrue(receipt["provenance_chain_enforced"])
+            self.assertEqual(receipt["daily_endpoint_manifest_sha256"], hashlib.sha256(daily_manifest.read_bytes()).hexdigest())
+            self.assertEqual(receipt["pinned_xtks_calendar_sha256"], hashlib.sha256(sessions_csv.read_bytes()).hexdigest())
+            self.assertEqual(receipt["frozen_selection_ledger_sha256"], hashlib.sha256(shadow.read_bytes()).hexdigest())
+
+    def test_required_provenance_missing_artifact_blocks_before_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shadow = self._shadow(root)
+            out = root / "resolved.jsonl"
+            sessions, daily = self._resolved_inputs()
+            result = verified_resolve_shadow_file(
+                shadow,
+                out,
+                daily,
+                sessions,
+                daily_manifest_path=root / "missing.manifest.json",
+                sessions_csv_path=root / "missing.sessions.csv",
+                sessions_manifest_path=root / "missing.sessions.manifest.json",
+                require_provenance_chain=True,
+            )
+            self.assertFalse(result["resolved_written"])
+            self.assertEqual(result["decision"], "BLOCK_PROVENANCE_CHAIN_MISSING_ARTIFACT")
+            self.assertFalse(out.exists())
+
     def test_same_resolution_rerun_is_allowed_and_receipt_is_idempotent(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             shadow = self._shadow(root)
             out = root / "resolved.jsonl"
-            sessions = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22"]
-            daily = [
-                {"symbol":"1111.T","date":"2026-09-16","open":100.0,"close":101.0},
-                {"symbol":"1111.T","date":"2026-09-22","open":119.0,"close":120.0},
-            ]
+            sessions, daily = self._resolved_inputs()
             first = verified_resolve_shadow_file(shadow, out, daily, sessions)
             snapshot = out.read_bytes()
             receipt_snapshot = Path(first["endpoint_completeness_receipt_path"]).read_bytes()
@@ -75,11 +127,7 @@ class VerifiedResolveTests(unittest.TestCase):
             root = Path(td)
             shadow = self._shadow(root)
             out = root / "resolved.jsonl"
-            sessions = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22"]
-            daily = [
-                {"symbol":"1111.T","date":"2026-09-16","open":100.0,"close":101.0},
-                {"symbol":"1111.T","date":"2026-09-22","open":119.0,"close":120.0},
-            ]
+            sessions, daily = self._resolved_inputs()
             verified_resolve_shadow_file(shadow, out, daily, sessions)
             snapshot = out.read_bytes()
             changed = [
@@ -102,11 +150,7 @@ class VerifiedResolveTests(unittest.TestCase):
             self.assertTrue(first["resolved_written"])
             self.assertEqual(json.loads(out.read_text().splitlines()[0])["status"], "PENDING_5BD")
 
-            full_sessions = ["2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22"]
-            daily = [
-                {"symbol":"1111.T","date":"2026-09-16","open":100.0,"close":101.0},
-                {"symbol":"1111.T","date":"2026-09-22","open":119.0,"close":120.0},
-            ]
+            full_sessions, daily = self._resolved_inputs()
             second = verified_resolve_shadow_file(shadow, out, daily, full_sessions)
             self.assertTrue(second["resolved_written"])
             self.assertEqual(json.loads(out.read_text().splitlines()[0])["status"], "RESOLVED")

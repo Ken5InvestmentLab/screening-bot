@@ -1,0 +1,55 @@
+{
+  "contract_version": 1,
+  "status": "SCHEMA_FROZEN_PERFORMANCE_UNOPENED",
+  "source": {
+    "original_run_id": 34545440155,
+    "original_artifact_id": 10179500303,
+    "preservation_run_id": 34599959356,
+    "preserved_artifact_id": 10264205130,
+    "csv_name": "tse_daily.csv",
+    "csv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "data_rows": 4061361
+  },
+  "observed_header_exact": ["date", "open", "high", "low", "close", "volume", "symbol"],
+  "required_columns_exact": ["date", "open", "high", "low", "close", "volume", "symbol"],
+  "required_types": {
+    "date": "YYYY-MM-DD",
+    "open": "finite_positive_number",
+    "high": "finite_positive_number",
+    "low": "finite_positive_number",
+    "close": "finite_positive_number",
+    "volume": "finite_nonnegative_number",
+    "symbol": "nonempty_string"
+  },
+  "row_invariants": [
+    "high >= max(open, close, low)",
+    "low <= min(open, close, high)",
+    "unique(symbol,date)",
+    "rows sorted or sortable deterministically by date,symbol without deduplication"
+  ],
+  "wave1_feature_inputs": {
+    "A1_COMPRESSION_EXPANSION": ["date", "high", "low", "close", "symbol"],
+    "B1_RELATIVE_REVERSAL": ["date", "close", "symbol"],
+    "E1_PRIOR_STRUCTURE_PROXIMITY": ["date", "low", "close", "symbol"],
+    "canonical_endpoint": ["date", "open", "close", "symbol"]
+  },
+  "fail_closed": [
+    "source CSV SHA-256 mismatch",
+    "header mismatch or extra/missing column",
+    "duplicate symbol/date",
+    "invalid date",
+    "non-finite or non-positive OHLC",
+    "negative/non-finite volume",
+    "OHLC ordering violation",
+    "missing pinned XTKS calendar receipt",
+    "missing next-open or fifth-close endpoint for any evaluated pick"
+  ],
+  "selection_guardrails": {
+    "transaction_cost_pct": 0.0,
+    "win_definition": "gross_return > 0",
+    "outcome_2026": "REPORT_ROBUSTNESS_ONLY",
+    "performance_opened": false,
+    "threshold_retune_after_open": false
+  },
+  "next_required_receipt": "PINNED_XTKS_CALENDAR_AND_ENDPOINT_SESSION_COMPLETENESS"
+}

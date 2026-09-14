@@ -1,12 +1,12 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 01:48 JST
+Last updated: 2026-09-15 02:34 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
 ## Consensus V47 status
-- Progress: **75%** (research-progress estimate; not promotion probability)
-- Latest observed HEAD before this dashboard write: `d809bb200ec342eb58dd673b3d991fb4d7decd34`
+- Progress: **76%** (research-progress estimate; not promotion probability)
+- Latest observed HEAD before this dashboard write: `4304be47319ccedbd7827dc471b08fe2541d5926`
 - Promotion-relevant path: **V47 clean PIT only**
 - V43/V44: leakage/reproduction-contaminated; not promotion evidence
 - Price arms: exactly `NOCAP` and `CAP1000_PIT`
@@ -17,7 +17,7 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 ## Data acceptance
 - PIT universe run `34771221050`: accepted
 - V46 run `34775030470`: accepted
-- Authoritative Daily PIT materialization: accepted
+- Authoritative Daily PIT materialization: run `34788533946`; accepted
 - Daily acceptance: **PASS**
 - Formal raw 1H acceptance: **NOT PASSED**
 - Formal clean features: **NOT OPENED for promotion**
@@ -34,11 +34,11 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - Run `34849054884` — Consensus V47 Raw1H Freeze
 - Trigger HEAD: `7849ad975d1e0420e250ab4d5f411ce136f9d867`
 - Configuration: **48 shards, max-parallel=2, shard-count=48**
-- shard 0: workflow **SUCCESS**, artifact `10357093848`, but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
-- shard 1: workflow **SUCCESS**, artifact `10357611796`, but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
-- shard 2: **in_progress** at raw 1H fetch at last observation
-- shard 3: **in_progress** at raw 1H fetch at last observation
-- later shards: queued under max-parallel=2
+- GitHub run-level status at this observation: **queued** while the matrix still has work active/queued
+- shard 0: workflow **SUCCESS**, artifact `10357093848` (1647 bytes ZIP), but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
+- shard 1: workflow **SUCCESS**, artifact `10357611796` (1646 bytes ZIP), but raw payload **0 rows**, `0/81` ok symbols, **81/81 HTTP 429**
+- shard 3: explicitly observed **in_progress** at `Fetch raw 1H shard` in the latest jobs receipt
+- remaining matrix jobs: queued/in-progress under max-parallel=2; only two artifacts are visible so far
 - Duplicate trigger: **prohibited / not triggered**
 - Formal interpretation: workflow completion is not data success. Completed shard 0/1 contribute **zero usable raw rows**.
 - Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**
@@ -48,12 +48,22 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 
 ### Targeted retry hardening
 - No new retry has been triggered while `34849054884` is active.
-- Future missing-only retry mechanics now include an outcome-blind systemic-429 preflight:
+- Future missing-only retry mechanics include the already implemented outcome-blind systemic-429 preflight:
   - first two shard symbols x both Yahoo chart hosts = four probes;
   - if all four are HTTP 429, write `transport_circuit_open/systemic_http_429` receipts and fail fast instead of spending hours retrying every symbol;
   - if the preflight is not unanimously 429, existing fetch/retry behavior remains.
 - This changes transport mechanics only. NOCAP/CAP1000_PIT, threshold, ranker, cooldown, endpoint, features, model, and acceptance thresholds remain frozen.
-- On the new shard 0/1 zero-row artifacts alone: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
+- On shard 0/1 zero-row artifacts alone: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
+
+### Raw merge + formal acceptance contract frozen this run
+- New spec: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`
+- Freeze commit: `4304be47319ccedbd7827dc471b08fe2541d5926`
+- When run `34849054884` is terminal, only genuinely observed shard raw rows may be merged with preserved seed raw.
+- Workflow `success` with zero rows is provenance/failure evidence only, never market data.
+- Duplicate `(symbol, ts_jst)` rows must agree exactly after canonical type normalization; conflicts fail closed.
+- Retained rows must preserve source/run/artifact/shard/file-SHA provenance.
+- Formal coverage thresholds remain unchanged; failed coverage produces an exact missing `(symbol,date)` set for missing-only retry.
+- This freeze used no strategy outcomes and does not open formal performance.
 
 ## Midterm diagnostic — NOT promotion evidence
 Label: `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`
@@ -133,18 +143,18 @@ CAP1000_PIT H2: **UNOPENED**
 - Production/main, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater remain untouched
 
 ## Blocker
-Formal raw 1H acquisition is now specifically blocked by **systemic Yahoo HTTP 429**, not merely shard timeout. Shards 0 and 1 of run `34849054884` both completed mechanically but returned zero rows for all 81 symbols each. This is transport failure, not strategy evidence.
+Formal raw 1H acquisition remains blocked by **systemic Yahoo HTTP 429**. Shards 0 and 1 of run `34849054884` both completed mechanically but returned zero rows for all 81 symbols each. The matrix is still non-terminal, so no final merged acceptance can yet be computed. This is transport failure, not strategy evidence.
 
 ## Next action
 1. Do **not** duplicate-trigger run `34849054884`.
-2. Preserve shard receipts; workflow SUCCESS with zero raw rows must not be counted as data success.
-3. When the active pinned run is terminal, merge only genuinely observed raw rows plus preserved seed raw with source/artifact/digest provenance.
-4. Rerun the unchanged frozen formal coverage verifier.
-5. If formal acceptance fails, retry only missing symbol/date pairs after Yahoo transport is healthy, using the new systemic-429 fail-fast preflight; never lower thresholds or interpolate.
+2. Preserve all shard receipts; workflow SUCCESS with zero raw rows must not be counted as data success.
+3. When the active pinned run is terminal, enumerate all 48 shard artifacts/receipts and admit only genuinely observed raw rows under `CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`.
+4. Merge admitted rows with preserved seed raw using source/artifact/digest provenance and rerun the unchanged frozen formal coverage verifier.
+5. If formal acceptance fails, emit the exact missing `(symbol,date)` set and retry only those pairs after Yahoo transport is healthy, using the systemic-429 fail-fast preflight; never lower thresholds or interpolate.
 6. Only after formal raw acceptance may promotion clean features/formal H1/H2 proceed.
 
 ## Candidate ranking impact
 - **No promotion ranking change.**
 - Formal performance remains unopened.
-- The newly completed zero-row shards add no performance evidence.
+- Zero-row shards add no performance evidence.
 - Midterm-only diagnostic ranking remains: NOCAP is provisionally more interesting than CAP1000_PIT, but partial coverage and Top3-ex fragility prohibit promotion inference.

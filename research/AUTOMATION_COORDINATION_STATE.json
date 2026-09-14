@@ -1,7 +1,7 @@
 {
-  "version": 16,
+  "version": 17,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T18:15:00+09:00",
+  "updated_at_jst": "2026-09-14T18:22:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_PHASE2_2022_FRESH_FAILURE_PLUS_OUTCOME_BLIND_STRUCTURAL_AUDIT",
     "scanned_at_jst": "2026-09-14T18:15:00+09:00",
@@ -23,9 +23,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "da67fe92e493504842babac108df8f2be45c2658",
-      "last_processed_sha": "da67fe92e493504842babac108df8f2be45c2658",
-      "last_processed_note": "Processed exact-repro freeze: broad reconstruction 696 rows, only 62/63 A timestamps, identity-critical evidence missing. HISTORICAL_EXACT_REPRO_UNAVAILABLE; no portability/model-family guessing."
+      "last_seen_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
+      "last_processed_sha": "0886fd65f9413dc2591a47475364e736516dbf93",
+      "last_processed_note": "18:22 Core+Cloud audit: no new contemporaneous exact-model evidence; HISTORICAL_EXACT_REPRO_UNAVAILABLE remains frozen, no model-family guessing or portability. Added reproducibility/endpoint handoff; no new backtest or ranking evidence."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -134,7 +134,9 @@
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
       "broad_reconstruction_rows": 696,
       "recovered_a_timestamps": "62/63",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing."
+      "latest_audit_head": "0886fd65f9413dc2591a47475364e736516dbf93",
+      "latest_audit_action": "No new contemporaneous identity evidence; exact replay remains closed. Reproducibility/endpoint handoff added; no new performance computation.",
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing. Otherwise return to cross-lane reproducibility/endpoint audit."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -161,7 +163,7 @@
     "Phase-2: audit candidate scarcity and compare signal-time structural shifts in 2023H2/2025H2.",
     "Consensus: collect V47 midterm diagnostic after 34824194221 completes; do not duplicate trigger.",
     "Consensus formal: continue observing retry 34810592135.",
-    "Cloud: remain closed unless genuinely new exact identity evidence appears.",
+    "Cloud: remain closed unless genuinely new exact identity evidence appears; otherwise Core worker performs reproducibility/endpoint audit only.",
     "OSS: real EDINET acquisition only when external key is available."
   ]
 }

@@ -1,12 +1,12 @@
 {
-  "version": 12,
+  "version": 13,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T16:53:00+09:00",
+  "updated_at_jst": "2026-09-14T17:09:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_WITH_STATE_RECONCILIATION",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "16:24 supervisor re-fetched all active research/* HEADs and enumerated the full research/* set. Canonical 480bc9b5, Core 7d195335, and Consensus 70ca3ca4 exactly match last_processed_sha. OSS actual HEAD 0837d299 is one commit ahead of STATE 9966bde4; compare shows a single handoff-only update to OSS_TOOLING_HANDOFF_20260914.md, inspected and consistent with the already-processed EDINET acquisition boundary, so it is now marked processed without duplicate experimentation. Unregistered tentei-cloud-1h remains superseded, tvfree-canonical-batch01 final, tvfree-monster-v14 legacy/stale, and tvfree-skill-suite lacks independent active handoff/log/spec evidence; no new lane registered. Consensus retry 34810592135 remains active at job level with fetch(0)/fetch(1) in raw 1H fetch and ten shards queued."
+    "note": "16:24 supervisor re-fetched all active research/* HEADs and enumerated the full research/* set. Canonical 480bc9b5, Core 7d195335, and Consensus 70ca3ca4 exactly matched last_processed_sha at that scan. OSS was subsequently reconciled by :48."
   },
   "core_worker_last_scan": {
     "status": "CLOUD_EXACT_REPRO_FORENSIC_PENDING",
@@ -15,7 +15,7 @@
     "core_head_changed": false,
     "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
     "consensus_head": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
-    "note": "Rejected Core families remain closed to retuning. Separately, by explicit user request, the historical Cloud Monster n=63 / 5BD mean +9.86% headline is now queued for an exact forensic reproducibility audit: freeze an exact-match reconstruction spec from historical implementation/artifacts, reproduce the original period first, and only if exact reproduction succeeds apply the unchanged logic to genuinely unused periods. This is audit/reproducibility work only and does not restore the family as a promotion candidate."
+    "note": "Rejected Core families remain closed to retuning. Historical Cloud Monster n=63 / 5BD mean +9.86% is queued only for exact forensic reproducibility audit; it is not reopened as promotion candidate."
   },
   "cross_lane_followup_last_scan": {
     "status": "COMPLETE_WITH_OSS_PROGRESS_AND_DASHBOARD_RECONCILIATION",
@@ -24,14 +24,14 @@
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
     "consensus_head": "01299302461872a748693313e4de9c63cdcd32b8",
     "oss_head": "faba5b48f1831b16f08c74895f772ca0089f765c",
-    "note": "All Canonical/Core/Consensus HEADs matched their processed STATE values at scan start, so no duplicate experiment was performed. Consensus retry 34810592135 still has fetch(0)/fetch(1) in raw 1H fetch and ten shards queued. OSS added an exact selected-ZIP byte-freeze layer; CI 34819456421 SUCCESS. Cross-lane dashboard reconciliation also preserved the user-authorized midterm diagnostic: V20 coverage-bypassed Top1/Top3/Top5 means are -1.846/-1.618/-1.038% at 0.5% cost, so V20 is DEPRIORITIZE and this opened period is not an untouched holdout. Formal V20 acceptance remains blocked by 734 gaps. Real EDINET metadata/parser outcomes remain unopened; external EDINET API-key access is the execution blocker."
+    "note": "OSS selected-ZIP byte-freeze CI 34819456421 succeeded. The earlier 0.5%-cost V20 diagnostic is now legacy only and was superseded for current ranking by the existing cost-0% diagnostic recorded in MIDTERM_COMPARISON and RESEARCH_DASHBOARD."
   },
   "canonical_worker_last_scan": {
-    "status": "COMPLETE_WAITING_ON_ACCEPTED_CONSENSUS_RETRY",
-    "scanned_at_jst": "2026-09-14T15:15:00+09:00",
-    "canonical_head_before": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
+    "status": "COMPLETE_ZERO_COST_MIDTERM_RECONCILED_WAITING_ON_V47_RETRY",
+    "scanned_at_jst": "2026-09-14T17:09:00+09:00",
+    "canonical_head_before": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
     "canonical_head_after": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "note": "Re-fetched coordination contract, canonical HEAD/ledger, and V47 retry run 34810592135. Canonical HEAD matched prior last_processed_sha, so no duplicate V20 work was performed. The retry currently has 12 shard jobs: fetch(0) and fetch(1) are in progress at the raw-1H fetch step and the other 10 are queued. Recorded outcome-blind receipt V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json. Do not duplicate-trigger; formal V20 raw acceptance remains blocked until Consensus frozen raw coverage acceptance passes."
+    "note": "Re-read coordination STATE/README, Supervisor contract, RESEARCH_DASHBOARD, canonical HEAD/ledger and current Actions. Canonical HEAD exactly matched last_processed_sha, so no duplicate experiment was run. Existing user-authorized V20 coverage-bypassed diagnostic was already available at cost 0%; reconciled STATE/dashboard to that authoritative diagnostic rather than recomputing. Formal V20 acceptance remains blocked by 734 active symbol/date gaps and the opened diagnostic period is not an untouched holdout. V47 retry 34810592135 remains active with fetch(0)/fetch(1) in raw 1H fetch and ten shards queued; no duplicate trigger."
   },
   "consensus_worker_last_scan": {
     "status": "ACTIVE_RETRY_PLUS_PRESERVED_RAW_SEED_AUDIT",
@@ -39,45 +39,47 @@
     "consensus_head_before": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
     "consensus_head_after": "01299302461872a748693313e4de9c63cdcd32b8",
     "retry_run": 34810592135,
-    "note": "Re-read Supervisor, dashboard, V44/V47 handoffs, branch HEAD and Actions. Retry 34810592135 remains active at job level with fetch(0)/fetch(1) in raw 1H fetch and ten queued; no duplicate trigger. In parallel, completed an outcome-blind audit of preserved Yahoo raw1H run 34592896202 against authoritative V47 daily pairs: NOCAP seed covers 301897/853061 = 35.3898% pairs, CAP1000_PIT covers 258339/310831 = 83.1124%; restored pair coverage is 0% for both, so seed alone is not accepted. Updated V47 handoff, dedicated seed audit, dashboard and coordination state. Performance/features/H1/H2 remain sealed."
+    "note": "Retry remains active. Preserved Yahoo raw1H run 34592896202 covers 35.3898% of NOCAP and 83.1124% of CAP1000_PIT required pairs, but 0% of restored pairs; seed-only, not acceptance."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
     "worker_slots_jst": ["00", "12", "24", "36", "48"],
-    "rule": "Each worker scans all STATE-registered active research branches before its preferred lane. The :00 supervisor also discovers new substantive research/* lanes not yet in STATE and assigns unowned lanes to :48 fallback ownership. Do not duplicate SHA already processed."
+    "rule": "Each worker scans all STATE-registered active research branches before its preferred lane. Do not duplicate SHA already processed."
   },
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new canonical SHA at 16:53. V20 formal raw acceptance still has 734 missing active symbol/date pairs. Separately, the user-authorized coverage-bypassed midterm diagnostic is already opened and negative across TopN, so that diagnostic period is no longer an untouched holdout and V20 is DEPRIORITIZE; do not retune it."
+      "last_processed_note": "17:09 scan: no new canonical SHA. Existing V20 cost-0% coverage-bypassed diagnostic already opened and negative across TopN, so no duplicate calculation. Formal exact raw acceptance still has 734 missing active symbol/date pairs. V20 remains DEPRIORITIZE and must not be retuned from opened outcomes."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
       "last_processed_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-      "last_processed_note": "No new branch SHA. Existing reject decisions remain intact. Exact Cloud Monster n=63 / +9.86% reproducibility is now a separately authorized forensic audit, not a retune or promotion reopening: reconstruct exact historical implementation/spec, reproduce original period first, then unchanged out-of-period portability only if exact reproduction succeeds."
+      "last_processed_note": "No new branch SHA at last cross-lane reconciliation. Rejected families remain closed; Cloud exact-repro forensic is separate audit-only work."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "01299302461872a748693313e4de9c63cdcd32b8",
       "last_processed_sha": "01299302461872a748693313e4de9c63cdcd32b8",
-      "last_processed_note": "16:39 Consensus worker kept the active retry untouched and advanced the acquisition plan by auditing preserved Yahoo raw1H run 34592896202 against exact V47 required pairs. Existing immutable bars cover 35.3898% of NOCAP and 83.1124% of CAP1000_PIT pairs but 0% of restored pairs, so they are seed-only, not acceptance. Next verifier should use retry + provenance-preserved seed before any further missing-only Yahoo acquisition. Features/performance remain sealed."
+      "last_processed_note": "Consensus retry 34810592135 remains active. Preserved immutable raw seed is partial and not accepted; next verifier must combine provenance-preserved retry + seed without substitution."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
       "last_processed_sha": "faba5b48f1831b16f08c74895f772ca0089f765c",
-      "last_processed_note": "16:50 :48 worker implemented and CI-validated an outcome-blind selected-ZIP exact-byte freeze boundary. Helper/tests/spec/log/handoff now require the exact selected doc-ID ZIP set, valid non-empty archives, per-doc SHA256 and aggregate digest, no-replacement=true, strategy outcomes closed, and parser outputs closed before same-ZIP comparison. CI 34819456421 SUCCESS. Real metadata/doc IDs/ZIPs/parser outputs remain unopened."
+      "last_processed_note": "Selected-ZIP exact-byte freeze boundary is CI-green at run 34819456421; real EDINET metadata/parser outcomes remain unopened."
     }
   },
   "guardrails": [
     "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
     "2026 outcome is report/robustness-only, never tuning/selection input.",
     "Canonical comparable endpoint is next XTKS session open to fifth XTKS session close.",
+    "All new backtests/diagnostics/comparisons use transaction cost 0%; existing 0.5%/1% outputs are legacy evidence only.",
     "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
     "Rejected families may not be reopened by renaming or post-hoc retuning.",
+    "Any period opened for MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE is no longer an untouched holdout and may not be used for same-family retuning.",
     "Consensus V47 promotion path is exactly NOCAP vs CAP1000_PIT after clean PIT data acceptance; no price-cap grid search.",
     "Yahoo raw 1H volume remains unchanged; PIT daily volume uses split-adjusted daily volume divided by cumulative future split factor."
   ],
@@ -91,22 +93,26 @@
       "canonical_h1_symbol_sha256": "2437e240d549074594b8584a9e2403a153c20a377bcc9b842dc7f8b538d1516b",
       "raw_repair_run": 34791959735,
       "raw_repair_status": "completed/failure",
+      "raw_repaired_artifact_id": 10327932766,
+      "canonical_daily_artifact_id": 10264205130,
+      "canonical_daily_artifact_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
       "observed_symbols": 1806,
       "missing_active_symbol_dates": 734,
       "repair_rows_added": 0,
       "http_404_pairs": 476,
       "silent_zero_row_pairs": 258,
-      "consensus_v47_source_gate_receipt": "tvfree_screener/batch02/V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json",
-      "consensus_v47_retry_watch_receipt": "tvfree_screener/batch02/V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json",
-      "consensus_v47_run_34800587082_usable_for_repair": false,
       "formal_performance_interpreted": false,
+      "formal_promotion_eligible": false,
       "midterm_diagnostic_opened": true,
       "midterm_diagnostic_status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
-      "midterm_diagnostic_cost_pct_points": 0.5,
-      "midterm_diagnostic_top1_mean_pct": -1.846,
-      "midterm_diagnostic_top3_mean_pct": -1.618,
-      "midterm_diagnostic_top5_mean_pct": -1.038,
+      "midterm_diagnostic_cost_pct_points": 0.0,
+      "midterm_diagnostic_endpoint": "next XTKS open -> fifth XTKS close",
+      "midterm_diagnostic_coverage_caveat": "734 active symbol/date gaps remain; coverage gate bypassed only; no interpolation, synthetic bars, threshold relaxation, ranker change, TopN change, cooldown change, or condition change.",
       "midterm_diagnostic_holdout_status": "OPENED_NOT_UNTOUCHED",
+      "midterm_diagnostic_top1": {"n":156,"mean_pct":-1.346,"median_pct":-2.627,"win_pct":35.90,"plus10_pct":14.74,"plus20_pct":7.69,"plus50_pct":2.56,"minus10_pct":24.36,"minus20_pct":10.26,"top1_ex_mean_pct":-1.860,"top3_ex_mean_pct":-2.669},
+      "midterm_diagnostic_top2": {"n":307,"mean_pct":-1.573,"median_pct":-1.294,"win_pct":40.07,"plus10_pct":11.40,"plus20_pct":4.89,"plus50_pct":1.30,"minus10_pct":19.87,"minus20_pct":8.14,"top1_ex_mean_pct":-1.834,"top3_ex_mean_pct":-2.241},
+      "midterm_diagnostic_top3": {"n":442,"mean_pct":-1.118,"median_pct":-1.289,"win_pct":40.05,"plus10_pct":11.54,"plus20_pct":3.85,"plus50_pct":1.13,"minus10_pct":17.19,"minus20_pct":5.88,"top1_ex_mean_pct":-1.298,"top3_ex_mean_pct":-1.613},
+      "midterm_diagnostic_top5": {"n":705,"mean_pct":-0.538,"median_pct":-0.955,"win_pct":41.84,"plus10_pct":10.07,"plus20_pct":3.55,"plus50_pct":1.13,"minus10_pct":14.33,"minus20_pct":3.97,"top1_ex_mean_pct":-0.650,"top3_ex_mean_pct":-0.854},
       "next_rule": "Do not retune V20 from the opened diagnostic. Formal raw acceptance remains blocked by 734 gaps. If Consensus later produces frozen-accepted raw, repair only those exact gaps and rerun the unchanged verifier as coverage reconciliation, not as a fresh untouched holdout."
     },
     "prospective_shadow_data_integrity": {
@@ -134,7 +140,7 @@
       "locked_h2_opened": false,
       "precision_locked_h2_opened": false,
       "precision_2026_opened": false,
-      "next_rule": "Keep rejected Core families closed. For Cloud Monster forensic only: freeze exact historical implementation/selection/endpoint/cost specification, reproduce original n=63/+9.86% period exactly, and only on exact reproduction run unchanged logic on genuinely unused periods. Do not tune thresholds from portability outcomes and do not use 2026 for selection."
+      "next_rule": "Keep rejected Core families closed. Cloud forensic only: reconstruct exact historical spec, reproduce original n=63/+9.86% first, then unchanged unused-period portability only on exact reproduction."
     },
     "consensus_v44": {
       "run_id": 34767664140,
@@ -154,9 +160,6 @@
       "raw1h_run": 34800587082,
       "raw1h_status": "completed",
       "raw1h_conclusion": "success",
-      "raw1h_jobs_observed": 12,
-      "raw1h_jobs_completed": 12,
-      "raw1h_jobs_in_progress": 0,
       "raw1h_workflow_success_is_acceptance": false,
       "raw1h_decisive_failure_evidence": "formal acceptance run 34810234454: raw_unique_symbol_dates=0; NOCAP and CAP1000_PIT pair coverage=0%; all required symbols completely missing",
       "coverage_acceptance_run": 34810234454,
@@ -164,7 +167,7 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 16:53 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
+      "missing_universe_retry_status": "active acquisition at 17:09 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2",
       "missing_universe_retry_active_jobs": 2,
       "missing_universe_retry_queued_jobs": 10,
       "preserved_raw_seed_run": 34592896202,
@@ -181,7 +184,7 @@
       "clean_features_opened": false,
       "dev_h1_opened": false,
       "h2_opened": false,
-      "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion combine only immutable retry bars and preserved run34592896202 bars with artifact/digest provenance, deduplicate exact symbol/timestamp, and rerun the unchanged frozen coverage verifier before feature inspection. Under the user-authorized midterm diagnostic policy, performance may be opened once real raw input exists, but any opened diagnostic period ceases to be an untouched holdout."
+      "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion combine only immutable retry bars and preserved run34592896202 bars with provenance, deduplicate exact symbol/timestamp, and rerun unchanged frozen coverage verifier before formal promotion. Midterm diagnostic performance may be opened at cost 0% once real raw input exists; any opened period ceases to be untouched holdout."
     },
     "oss_validation": {
       "head": "faba5b48f1831b16f08c74895f772ca0089f765c",
@@ -198,11 +201,12 @@
       "edinet_real_sample": "PREREGISTERED_METADATA_SNAPSHOT_ACQUISITION_AND_SELECTED_ZIP_FREEZE_BOUNDARIES_TESTED_NOT_YET_EXECUTED",
       "strategy_outcomes_opened": false,
       "parser_outputs_opened": false,
-      "next_rule": "Use the tested acquisition helper with an external EDINET API key to materialize exact raw daily JSON for every 2023-01-01..2025-12-31 calendar day. Freeze the full metadata hash-chain receipt, run the preregistered selector exactly once, then materialize exactly the selected ZIP set and run edinet_selected_zip_freeze.py before passing the identical SHA256-frozen bytes to custom and edinet-tools parsers. Never resample around parser failures or use strategy outcomes to arbitrate disagreements."
+      "next_rule": "Use the tested acquisition helper with external EDINET API key, freeze raw metadata and selected ZIP bytes, then compare parsers on identical SHA256-frozen bytes."
     }
   },
   "midterm_diagnostic": {
     "policy": "USER_AUTHORIZED_DIAGNOSTIC_OPENING_NOT_PROMOTION_EVIDENCE",
+    "cost_pct_points": 0.0,
     "opened_periods_are_untouched_holdouts": false,
     "broad_blind_exploration": "STOP",
     "observed_rank_1": "weak+early + body_pct LOW",
@@ -211,25 +215,25 @@
     "v20_disposition": "DEPRIORITIZE",
     "v47_disposition": "NOT_COMPUTABLE_NO_INPUT_DATA_UNTIL_RETRY_EMITS_RAW",
     "next_high_information_checks": [
-      "Unify body_pct LOW and volr20 LOW under 0.5% cost and the same canonical endpoint with row-level metrics.",
-      "Finish V47 retry and open diagnostic performance once real raw input exists, while preserving formal acceptance separation.",
-      "Continue old Cloud exact recovery only if genuinely new source evidence can reconstruct the exact historical model."
+      "Finish V47 retry and open cost-0% diagnostic performance once real raw input exists, preserving formal acceptance separation.",
+      "Continue old Cloud exact recovery only if genuinely new source evidence can reconstruct exact historical model.",
+      "Use EDINET real metadata acquisition only when external key is available; keep parser comparison byte-identical and outcome-blind."
     ]
   },
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 formal exact raw acceptance still has 734 canonical-active symbol/date gaps. Its coverage-bypassed diagnostic is already opened and negative across TopN, so V20 is DEPRIORITIZE and may not be retuned from that diagnostic.",
-      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is actively acquiring two shards at a time. Preserved Yahoo raw seed run34592896202 contains 35.4% of NOCAP and 83.1% of CAP1000_PIT required pairs but 0% restored coverage.",
-      "No currently passing canonical 5BD Core/Precision replacement candidate. Separately, historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending; the historical headline is not current promotion evidence.",
-      "OSS EDINET sample-selection, metadata snapshot/acquisition, and selected-ZIP exact-byte freeze boundaries are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized because the runtime lacks an external EDINET API key; real selected doc IDs/ZIP hashes and same-ZIP parser comparison remain unopened."
+      "V20 formal exact raw acceptance still has 734 canonical-active symbol/date gaps. Its coverage-bypassed cost-0% diagnostic is opened and negative across all TopN; V20 is DEPRIORITIZE and may not be retuned from that diagnostic.",
+      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance failed. Missing-universe retry 34810592135 is actively acquiring two shards at a time; ten remain queued at 17:09 JST.",
+      "No currently passing canonical 5BD Core/Precision replacement candidate. Historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending and is not current promotion evidence.",
+      "OSS EDINET outcome-blind boundaries are CI-green, but complete 2023-2025 real metadata still requires external EDINET API key."
     ]
   },
   "dynamic_lane_policy": {
     "enabled": true,
     "discovery_owner": "supervisor :00",
     "fallback_worker": "cross-lane+OSS :48",
-    "auto_register_rule": "Register a STATE-missing research/* branch only when recent substantive research commits plus handoff/log/spec evidence show it is an active independent lane; ignore archived/superseded/closed-only and coordination branches.",
+    "auto_register_rule": "Register a STATE-missing research/* branch only when recent substantive research commits plus handoff/log/spec evidence show it is active and independent; ignore archived/superseded/closed-only and coordination branches.",
     "fixed_lane_count_assumption": false
   }
 }

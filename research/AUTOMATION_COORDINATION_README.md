@@ -10,7 +10,7 @@ Native scheduled tasks can run at most once per hour per task. Five research wor
 - :12 — Canonical Batch02 / Event + Shadow/Data preferred worker
 - :24 — Core breadth/stability preferred worker
 - :36 — Consensus specialist preferred worker
-- :48 — cross-lane follow-up / result collector
+- :48 — cross-lane follow-up / result collector + OSS/Validation + fallback owner for newly discovered unowned active research lanes
 
 ## Rules
 - This is not a production branch.
@@ -22,3 +22,10 @@ Native scheduled tasks can run at most once per hour per task. Five research wor
 - Prefer the worker's assigned lane when there is no cross-lane GitHub update waiting.
 - The :48 worker fills gaps such as completed-but-uncollected Actions/artifacts or work left waiting by another worker.
 - Do not use this mechanism to touch production/main or production integrations.
+
+## Dynamic lane discovery
+- The :00 supervisor must not assume a fixed lane count.
+- It scans `research/*` for substantive active lanes not yet registered in STATE.
+- A new lane is auto-registered only when recent research commits plus handoff/log/spec evidence show it is active and independent.
+- Archived, superseded, closed-only, production, and coordination-only branches are not auto-adopted.
+- If no dedicated worker slot exists, ownership falls back to :48 so the lane still progresses without human prompts.

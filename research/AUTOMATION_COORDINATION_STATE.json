@@ -1,12 +1,12 @@
 {
   "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T13:59:00+09:00",
+  "updated_at_jst": "2026-09-14T14:12:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_NO_NEW_LANE",
     "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "13:59 supervisor re-fetched all STATE active lane HEADs and enumerated all research/* branches. Canonical ef0f725e, Core 7d195335, Consensus 2b9f81ca, and OSS 4810bd3e all exactly match last_processed_sha, so no duplicate lane work was performed. Unregistered tentei-cloud-1h explicitly says superseded, tvfree-canonical-batch01 says final disposition, tvfree-monster-v14 is stale legacy research, and tvfree-skill-suite has no independent active handoff/log/spec evidence, so none were auto-registered. Consensus V47 raw1H run 34800587082 remains in_progress; no coverage acceptance, performance, H2, or 2026 selection outcome was opened."
+    "note": "13:59 supervisor re-fetched all STATE active lane HEADs and enumerated all research/* branches. Canonical ef0f725e, Core 7d195335, Consensus 2b9f81ca, and OSS 4810bd3e all exactly match last_processed_sha, so no duplicate lane work was performed. Unregistered tentei-cloud-1h explicitly says superseded, tvfree-canonical-batch01 says final disposition, tvfree-monster-v14 is stale legacy research, and tvfree-skill-suite has no independent active handoff/log/spec evidence, so none were auto-registered."
   },
   "core_worker_last_scan": {
     "status": "COMPLETE_NO_RESUME",
@@ -24,7 +24,14 @@
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
     "consensus_head": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
     "oss_head": "4810bd3efdf39b2cea185935fdda5325c09f6429",
-    "note": "Processed new Core forensic-only documentation and Consensus transport-only 429 mitigation without reopening rejected families or outcomes. OSS EDINET real-sample preregistration CI 34807402370 and selector CI 34807566909 both completed SUCCESS. Deterministic metadata-only sample selector, fail-closed tests and CI wiring are now green. Consensus V47 raw1H run 34800587082 remains in_progress with 8 completed shard jobs and 4 still fetching; job success is not coverage acceptance because shard-level 429 failures are present."
+    "note": "Processed new Core forensic-only documentation and Consensus transport-only 429 mitigation without reopening rejected families or outcomes. OSS EDINET real-sample preregistration CI 34807402370 and selector CI 34807566909 both completed SUCCESS."
+  },
+  "canonical_worker_last_scan": {
+    "status": "COMPLETE_WITH_NEW_CROSS_SOURCE_BLOCKER_RECEIPT",
+    "scanned_at_jst": "2026-09-14T14:12:00+09:00",
+    "canonical_head_before": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
+    "canonical_head_after": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
+    "note": "Consensus V47 raw1H run 34800587082 completed at workflow level with conclusion success, but shard 0 requested 324 symbols and returned 0 ok symbols / 0 rows. Because V47 frozen acceptance requires zero completely missing required symbols and >=99.5% pair coverage, this run is not an accepted raw source and cannot be consumed for the 734 missing V20 pairs. Added V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json. V20 H1/H2 outcomes remain closed."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -34,9 +41,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
-      "last_processed_sha": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
-      "last_processed_note": "Canonical :12 re-opened only outcome-blind V20 raw-repair evidence. Run 34791959735 remains fail-closed: 734 missing active symbol/date pairs, 0 repair rows added. Diagnosis pinned in V20_H1_RAW_GAP_DIAGNOSIS_20260914.json: 476 failures are exactly four predecessor-identity clusters (463A->8940, 464A->5595, 543A->7205, 547A->8515), 119 pairs each, all HTTP 404; the remaining 258 gaps returned no HTTP error but zero 1H rows. No strategy outcomes opened. Next safe recovery source is an accepted outcome-blind Yahoo raw artifact such as Consensus V47 raw1H after its own frozen coverage acceptance."
+      "last_seen_sha": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
+      "last_processed_sha": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
+      "last_processed_note": "Canonical :12 evaluated only outcome-blind cross-source repair eligibility. Consensus V47 raw1H run 34800587082 completed workflow-success, but shard 0 is 0/324 successful symbols and 0 rows, which is decisively incompatible with V47 frozen coverage acceptance. Receipt V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json rejects this run as a V20 repair source until Consensus produces a frozen-accepted raw artifact. V20 still has 734 missing active symbol/date pairs; no H1/H2 performance opened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -48,13 +55,13 @@
       "preferred_worker": "consensus",
       "last_seen_sha": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
       "last_processed_sha": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
-      "last_processed_note": "13:49 cross-lane pass processed four commits after 28c272b0. They stage transport-only Yahoo 429 mitigation for future retry/refetch: host alternation, Retry-After handling, bounded backoff, pacing, attempts=8, workflow max-parallel=2; contract tests run 34806715208 SUCCESS. Active raw1H run 34800587082 is still pinned to the old trigger SHA and remains in_progress; 8 shard jobs completed and 4 (0,2,5,6) were still fetching. At least one completed shard receipt had 0/324 successes with 324 HTTP 429 errors, so frozen coverage acceptance remains unopened and mandatory. No duplicate trigger, returns, scores, H2, or 2026 selection outcome opened."
+      "last_processed_note": "13:49 cross-lane pass processed transport-only Yahoo 429 mitigation. Run 34800587082 has since completed workflow-success, but raw acceptance is not implied: shard 0 is 0/324 ok and 0 rows. Consensus owner must run frozen coverage acceptance and, on rejection, targeted-refetch only emitted missing pairs using the staged throttled/backoff policy. No returns, scores, H2, or 2026 selection outcome opened."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "4810bd3efdf39b2cea185935fdda5325c09f6429",
       "last_processed_sha": "4810bd3efdf39b2cea185935fdda5325c09f6429",
-      "last_processed_note": "13:55 :48 worker progressed from preregistration to tested executable outcome-blind EDINET sample freezing. The real-sample contract remains 2023-2025, doc types 120/130, quarter x doc-type strata, first two unique docs by submit time/doc ID, metadata-only, no replacement around failures, complete metadata coverage required. Added edinet_oss_sample_selector.py (6b46dda3), tests (2d0e5177), CI wiring (a642bee0), and OSS branch handoff (4810bd3e). Preregistration CI 34807402370 SUCCESS and selector CI 34807566909 SUCCESS. No real parser result or strategy outcome opened; production unchanged."
+      "last_processed_note": "13:55 :48 worker progressed from preregistration to tested executable outcome-blind EDINET sample freezing. The real-sample contract remains 2023-2025, doc types 120/130, quarter x doc-type strata, first two unique docs by submit time/doc ID, metadata-only, no replacement around failures, complete metadata coverage required. Added edinet_oss_sample_selector.py, tests, CI wiring, and OSS branch handoff. Preregistration CI 34807402370 SUCCESS and selector CI 34807566909 SUCCESS. No real parser result or strategy outcome opened; production unchanged."
     }
   },
   "guardrails": [
@@ -81,8 +88,10 @@
       "repair_rows_added": 0,
       "http_404_pairs": 476,
       "silent_zero_row_pairs": 258,
+      "consensus_v47_source_gate_receipt": "tvfree_screener/batch02/V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json",
+      "consensus_v47_run_34800587082_usable_for_repair": false,
       "performance_interpreted": false,
-      "next_rule": "Keep H1/H2 outcomes closed. Do not repeat the identical Yahoo targeted query contract: it added zero rows. Wait for an independently accepted outcome-blind Yahoo raw source (prefer Consensus V47 raw1H after its frozen coverage acceptance), audit only the exact missing V20 pairs, then rerun the unchanged V20 raw verifier. No threshold lowering, interpolation/synthetic bars, or V20 retune."
+      "next_rule": "Keep H1/H2 outcomes closed. Wait for Consensus to produce a raw1H artifact that passes its frozen coverage acceptance after targeted refetch. Only then audit exactly the 734 missing V20 pairs and rerun the unchanged V20 raw verifier. No threshold lowering, interpolation/synthetic bars, or V20 retune."
     },
     "prospective_shadow_data_integrity": {
       "latest_head": "25b0ae42b0e3a8de80599405ae1bee235d4b3e28",
@@ -124,16 +133,19 @@
       "required_intraday_nocap_symbols": 3885,
       "required_intraday_cap1000_pit_symbols": 1886,
       "raw1h_run": 34800587082,
-      "raw1h_status": "in_progress",
+      "raw1h_status": "completed",
+      "raw1h_conclusion": "success",
       "raw1h_jobs_observed": 12,
-      "raw1h_jobs_completed": 8,
-      "raw1h_jobs_in_progress": 4,
-      "raw1h_jobs_stage": "Fetch raw 1H shard / shard-level transport failures include HTTP 429",
+      "raw1h_jobs_completed": 12,
+      "raw1h_jobs_in_progress": 0,
+      "raw1h_workflow_success_is_acceptance": false,
+      "raw1h_decisive_failure_evidence": "shard 0 requested 324 symbols, ok_symbols=0, total_rows=0",
+      "frozen_coverage_acceptance_pass": false,
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
       "performance_opened": false,
-      "next_rule": "Wait for raw1H run 34800587082 to complete. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. If rejected, targeted-refetch only emitted missing pairs using the already-staged throttled/backoff transport policy. Only after PASS may clean feature materialization begin."
+      "next_rule": "Consensus owner must inspect all outcome-free shard receipts, emit frozen coverage acceptance, and because shard 0 already proves rejection, targeted-refetch only the emitted missing pairs using the staged throttled/backoff transport policy. Only after a later PASS may clean feature materialization begin."
     },
     "oss_validation": {
       "head": "4810bd3efdf39b2cea185935fdda5325c09f6429",
@@ -149,8 +161,8 @@
   "cross_lane_status": {
     "final_go_no_go_ready": false,
     "blocking_items": [
-      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Failure modes are partitioned outcome-blind into 476 predecessor-identity HTTP 404 pairs and 258 successful-query/zero-row pairs.",
-      "Consensus V47 daily PIT acceptance passes but raw1H promotion-grade run 34800587082 is still in progress and has observed shard-level HTTP 429 failures; frozen acceptance must pass before features/performance open. Staged future transport mitigation does not change the active trigger-SHA run.",
+      "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. The newly completed Consensus V47 raw1H run is not an accepted repair source because shard 0 returned 0/324 successful symbols and 0 rows.",
+      "Consensus V47 daily PIT acceptance passes, but raw1H run 34800587082 fails the frozen acceptance boundary despite workflow conclusion success. Targeted refetch under the staged throttled/backoff transport policy is required before features/performance open.",
       "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected. Historical Cloud Monster is forensic-only and not reproducible.",
       "OSS EDINET real historical sample boundary and selector are frozen and CI-green, but the real sample has not yet been executed against a complete 2023-2025 metadata source."
     ]

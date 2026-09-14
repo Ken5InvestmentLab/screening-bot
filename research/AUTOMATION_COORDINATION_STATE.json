@@ -1,7 +1,7 @@
 {
   "version": 8,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T14:59:00+09:00",
+  "updated_at_jst": "2026-09-14T15:15:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE_NO_NEW_LANE",
     "branch_heads_changed_since_previous_state": false,
@@ -27,11 +27,11 @@
     "note": "Reviewed the new 8-commit Consensus delta without duplicate acquisition: formal V47 raw1H acceptance is accepted=false with zero raw symbol-dates and retry 34810592135 remains active. Advanced OSS outcome-blind EDINET provenance by adding a full-calendar-day metadata snapshot freezer, raw per-day SHA256/hash-chain receipt, fail-closed tests, CI wiring, handoff, and research-spec documentation. Snapshot CI 34811269556 completed SUCCESS."
   },
   "canonical_worker_last_scan": {
-    "status": "COMPLETE_WITH_NEW_CROSS_SOURCE_BLOCKER_RECEIPT",
-    "scanned_at_jst": "2026-09-14T14:12:00+09:00",
-    "canonical_head_before": "ef0f725ea0f2f1cd3ad4e70852e3fef3b66ec231",
-    "canonical_head_after": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
-    "note": "Consensus V47 raw1H run 34800587082 completed at workflow level with conclusion success, but shard 0 requested 324 symbols and returned 0 ok symbols / 0 rows. Because V47 frozen acceptance requires zero completely missing required symbols and >=99.5% pair coverage, this run is not an accepted raw source and cannot be consumed for the 734 missing V20 pairs. Added V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json. V20 H1/H2 outcomes remain closed."
+    "status": "COMPLETE_WAITING_ON_ACCEPTED_CONSENSUS_RETRY",
+    "scanned_at_jst": "2026-09-14T15:15:00+09:00",
+    "canonical_head_before": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
+    "canonical_head_after": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
+    "note": "Re-fetched coordination contract, canonical HEAD/ledger, and V47 retry run 34810592135. Canonical HEAD matched prior last_processed_sha, so no duplicate V20 work was performed. The retry currently has 12 shard jobs: fetch(0) and fetch(1) are in progress at the raw-1H fetch step and the other 10 are queued. Recorded outcome-blind receipt V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json. Do not duplicate-trigger; V20 H1/H2 outcomes remain closed until Consensus frozen raw coverage acceptance passes."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -41,9 +41,9 @@
   "branches": {
     "research/tvfree-canonical-batch02": {
       "preferred_worker": "canonical",
-      "last_seen_sha": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
-      "last_processed_sha": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
-      "last_processed_note": "Canonical :12 evaluated only outcome-blind cross-source repair eligibility. Consensus V47 raw1H run 34800587082 completed workflow-success, but shard 0 is 0/324 successful symbols and 0 rows, which is decisively incompatible with V47 frozen coverage acceptance. Receipt V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json rejects this run as a V20 repair source until Consensus produces a frozen-accepted raw artifact. V20 still has 734 missing active symbol/date pairs; no H1/H2 performance opened."
+      "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
+      "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
+      "last_processed_note": "15:15 :12 worker found no unprocessed canonical work at the old HEAD, then recorded a fresh outcome-blind V47 retry-watch receipt. Consensus retry 34810592135 has 2 shard jobs actively fetching and 10 queued; it is not accepted evidence yet. V20 still has 734 missing active symbol/date pairs and H1/H2 performance remains unopened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -89,6 +89,7 @@
       "http_404_pairs": 476,
       "silent_zero_row_pairs": 258,
       "consensus_v47_source_gate_receipt": "tvfree_screener/batch02/V20_CONSENSUS_V47_RAW_SOURCE_GATE_20260914.json",
+      "consensus_v47_retry_watch_receipt": "tvfree_screener/batch02/V20_CONSENSUS_V47_RETRY_WATCH_20260914_1515.json",
       "consensus_v47_run_34800587082_usable_for_repair": false,
       "performance_interpreted": false,
       "next_rule": "Keep H1/H2 outcomes closed. Wait for Consensus to produce a raw1H artifact that passes its frozen coverage acceptance after targeted refetch. Only then audit exactly the 734 missing V20 pairs and rerun the unchanged V20 raw verifier. No threshold lowering, interpolation/synthetic bars, or V20 retune."
@@ -145,7 +146,7 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active",
+      "missing_universe_retry_status": "active: 2 shard jobs in progress, 10 queued at 15:15 JST",
       "price_arms": ["NOCAP", "CAP1000_PIT"],
       "performance_opened": false,
       "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion rerun the exact frozen coverage verifier against retry artifacts before any feature/performance inspection. If still rejected, retry only newly emitted missing symbol/date codes with thresholds unchanged and no interpolation."

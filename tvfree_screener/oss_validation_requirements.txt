@@ -1,3 +1,5 @@
-# Optional research-only validation layer.
-# Do not add this dependency to production/watchlist workflows.
+# Optional research-only OSS tooling.
+# Do not add these dependencies to production/watchlist workflows.
 purgedcv==0.1.6
+optuna==5.0.0
+edinet-tools==0.8.4

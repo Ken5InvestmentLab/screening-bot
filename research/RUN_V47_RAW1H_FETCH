@@ -1,1 +1,4 @@
 daily_run_id=34799835035
+retry_from_coverage_run_id=34810234454
+retry_scope=all_required_symbols_because_raw_unique_symbol_dates_zero
+transport_revision=dual-host-backoff-maxparallel2

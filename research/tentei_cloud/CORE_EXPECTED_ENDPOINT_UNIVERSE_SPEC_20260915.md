@@ -20,8 +20,11 @@ An expected 1H endpoint key may be admitted only when all four layers pass:
    - do not infer listing/delisting boundaries from first/last Yahoo observation.
 
 2. **XTKS session calendar**
-   - exact session date must exist in a pinned XTKS calendar receipt;
-   - calendar generator/version, source URLs, CSV SHA-256 and date range must be frozen;
+   - Core-adopted receipt: `CORE_XTKS_CALENDAR_PIN_20260915.json`;
+   - exact CSV SHA-256: `58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b`;
+   - 1,220 sessions from 2022-01-04 through 2026-12-30;
+   - source branch commits are pinned in the Core receipt; generator is `exchange_calendars 4.13.1` with `XTKS` sessions-in-range;
+   - exact session date must exist in this pinned calendar;
    - weekends/holidays may not be inferred from observed Yahoo rows.
 
 3. **Raw-hour semantic contract**
@@ -56,8 +59,8 @@ Once the exact expected CSV is generated and SHA-pinned, run `missing_inventory_
 
 ## Current evidence disposition
 - exact observed Yahoo raw1H: PASS / pinned;
-- official JPX point-in-time reconstruction code exists elsewhere in research and is outcome-blind in design, but its actual source receipts must be frozen for Core before adoption;
-- frozen XTKS calendar evidence exists elsewhere in research, but Core must pin the exact CSV/manifest bytes it adopts;
+- official JPX point-in-time reconstruction code exists elsewhere in research and is outcome-blind in design, but its actual source receipts still must be frozen for Core before adoption;
+- XTKS calendar: **PASS / Core-pinned** via `CORE_XTKS_CALENDAR_PIN_20260915.json`;
 - exact interval-level independent activity evidence for the full recovered period has **not yet been pinned**;
 - therefore formal missing inventory remains CLOSED. This is a provenance blocker, not a performance result.
 

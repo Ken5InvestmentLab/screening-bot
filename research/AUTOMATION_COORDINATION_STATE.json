@@ -1,21 +1,21 @@
 {
-  "version": 9,
+  "version": 10,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T16:07:00+09:00",
+  "updated_at_jst": "2026-09-14T16:24:00+09:00",
   "supervisor_last_scan": {
-    "status": "COMPLETE_NO_NEW_LANE",
-    "branch_heads_changed_since_previous_state": false,
+    "status": "COMPLETE_WITH_STATE_RECONCILIATION",
+    "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "13:59 supervisor re-fetched all STATE active lane HEADs and enumerated all research/* branches. Canonical ef0f725e, Core 7d195335, Consensus 2b9f81ca, and OSS 4810bd3e all exactly matched then-current last_processed_sha, so no duplicate lane work was performed. Unregistered tentei-cloud-1h explicitly says superseded, tvfree-canonical-batch01 says final disposition, tvfree-monster-v14 is stale legacy research, and tvfree-skill-suite has no independent active handoff/log/spec evidence, so none were auto-registered."
+    "note": "16:24 supervisor re-fetched all active research/* HEADs and enumerated the full research/* set. Canonical 480bc9b5, Core 7d195335, and Consensus 70ca3ca4 exactly match last_processed_sha. OSS actual HEAD 0837d299 is one commit ahead of STATE 9966bde4; compare shows a single handoff-only update to OSS_TOOLING_HANDOFF_20260914.md, inspected and consistent with the already-processed EDINET acquisition boundary, so it is now marked processed without duplicate experimentation. Unregistered tentei-cloud-1h remains superseded, tvfree-canonical-batch01 final, tvfree-monster-v14 legacy/stale, and tvfree-skill-suite lacks independent active handoff/log/spec evidence; no new lane registered. Consensus retry 34810592135 remains active at job level with fetch(0)/fetch(1) in raw 1H fetch and ten shards queued."
   },
   "core_worker_last_scan": {
-    "status": "COMPLETE_NO_RESUME",
-    "scanned_at_jst": "2026-09-14T14:26:00+09:00",
+    "status": "CLOUD_EXACT_REPRO_FORENSIC_PENDING",
+    "scanned_at_jst": "2026-09-14T16:24:00+09:00",
     "core_head": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
     "core_head_changed": false,
-    "canonical_head": "8715782f26af9d5c3fc8e414d3d099263cb7f27c",
-    "consensus_head": "2b9f81ca23677ed61171b96e2d9f6fcee688cd01",
-    "note": "Core HEAD exactly matched STATE last_seen_sha/last_processed_sha. Latest Core Actions are already collected (Precision discovery run 34799307163 SUCCESS at workflow level but frozen DEVELOPMENT decision REJECT; Prior-Close Reclaim 34799151144 likewise REJECT). No genuinely different preregistered low-DOF Core mechanism or accepted upstream consumer evidence is available, so no rejected family was reopened and no duplicate SHA processing was performed. Core remains COORDINATION_AND_CONSUMER_ONLY; locked H2 and 2026 selection outcomes stay closed."
+    "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
+    "consensus_head": "70ca3ca4d04d9ea9bc864e3133163ffe5199ea96",
+    "note": "Rejected Core families remain closed to retuning. Separately, by explicit user request, the historical Cloud Monster n=63 / 5BD mean +9.86% headline is now queued for an exact forensic reproducibility audit: freeze an exact-match reconstruction spec from historical implementation/artifacts, reproduce the original period first, and only if exact reproduction succeeds apply the unchanged logic to genuinely unused periods. This is audit/reproducibility work only and does not restore the family as a promotion candidate."
   },
   "cross_lane_followup_last_scan": {
     "status": "COMPLETE_WITH_OSS_PROGRESS",
@@ -57,7 +57,7 @@
       "preferred_worker": "core",
       "last_seen_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
       "last_processed_sha": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-      "last_processed_note": "13:49 cross-lane pass processed the single new forensic documentation commit after 7ce65d88. OLD_CLOUD_MONSTER_FORENSIC_20260914.md explicitly demotes the historical +9.86% Cloud Monster headline to historical signal / not reproducible / not a current promotion candidate. The old model used 2026 development evidence and its surrogate failed a frozen 2025 portability sanity check; it is not eligible as a modern candidate and is not to be retuned. No H2 or new Core family opened; execution remains coordination/consumer-only."
+      "last_processed_note": "No new branch SHA. Existing reject decisions remain intact. Exact Cloud Monster n=63 / +9.86% reproducibility is now a separately authorized forensic audit, not a retune or promotion reopening: reconstruct exact historical implementation/spec, reproduce original period first, then unchanged out-of-period portability only if exact reproduction succeeds."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -67,9 +67,9 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "9966bde4534be91bc20ef471cf3b6e0abe860846",
-      "last_processed_sha": "9966bde4534be91bc20ef471cf3b6e0abe860846",
-      "last_processed_note": "16:07 :48 worker implemented the previously missing outcome-blind EDINET network acquisition boundary: official v2 date/type=2/Subscription-Key helper, external env key only, atomic one-file-per-day writes, resumable skip-existing behavior, malformed/non-200 fail-closed tests, CI wiring, acquisition spec, handoff and log. OSS CI run 34816055006 SUCCESS. No real parser comparison or strategy outcome opened; next step is full 2023-2025 raw metadata materialization then frozen snapshot/hash-chain."
+      "last_seen_sha": "0837d299eff60698d0e2ec36c659a36bbc078542",
+      "last_processed_sha": "0837d299eff60698d0e2ec36c659a36bbc078542",
+      "last_processed_note": "16:24 supervisor reconciled the one-commit delta from 9966bde4 to 0837d299. Compare shows only OSS_TOOLING_HANDOFF_20260914.md changed; inspection confirms it documents the already-processed official EDINET v2 resumable acquisition boundary and CI 34816055006 SUCCESS, with no new parser outcome or experiment. Marked processed without duplicate work."
     }
   },
   "guardrails": [
@@ -119,12 +119,15 @@
       "precision_prior_close_reclaim_run": 34799151144,
       "precision_three_family_batch": "REJECT_DEVELOPMENT",
       "precision_three_family_run": 34799307163,
-      "old_cloud_monster_forensic": "HISTORICAL_SIGNAL_NOT_REPRODUCIBLE_NOT_CURRENT_PROMOTION_CANDIDATE",
-      "execution_mode": "COORDINATION_AND_CONSUMER_ONLY",
+      "old_cloud_monster_forensic": "EXACT_REPRO_AUDIT_PENDING_NOT_PROMOTION_REOPENING",
+      "old_cloud_monster_historical_n": 63,
+      "old_cloud_monster_historical_mean_5bd_pct": 9.86,
+      "old_cloud_monster_exact_repro_stage": "SPEC_RECONSTRUCTION_PENDING",
+      "execution_mode": "COORDINATION_CONSUMER_AND_EXACT_REPRO_FORENSIC",
       "locked_h2_opened": false,
       "precision_locked_h2_opened": false,
       "precision_2026_opened": false,
-      "next_rule": "Do not enumerate adjacent historical candle/reclaim rules or guess the lost old Cloud Monster model. Resume only when a frozen upstream V47/event/forward evidence stream satisfies an explicit consumer contract; otherwise integrity/reproducibility/coordination only."
+      "next_rule": "Keep rejected Core families closed. For Cloud Monster forensic only: freeze exact historical implementation/selection/endpoint/cost specification, reproduce original n=63/+9.86% period exactly, and only on exact reproduction run unchanged logic on genuinely unused periods. Do not tune thresholds from portability outcomes and do not use 2026 for selection."
     },
     "consensus_v44": {
       "run_id": 34767664140,
@@ -154,7 +157,7 @@
       "rate_limit_contract_test_run": 34806715208,
       "rate_limit_contract_test_status": "completed/success",
       "missing_universe_retry_run": 34810592135,
-      "missing_universe_retry_status": "active acquisition at 16:07 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2; run-level endpoint still reports queued",
+      "missing_universe_retry_status": "active acquisition at 16:24 JST: fetch(0) and fetch(1) in_progress at raw 1H fetch; 10 queued under max-parallel=2; run-level endpoint still reports queued",
       "missing_universe_retry_active_jobs": 2,
       "missing_universe_retry_queued_jobs": 10,
       "price_arms": ["NOCAP", "CAP1000_PIT"],
@@ -165,7 +168,7 @@
       "next_rule": "Do not duplicate-trigger run 34810592135 while active. After completion rerun the exact frozen coverage verifier against retry artifacts before any feature/performance inspection. If still rejected, retry only newly emitted missing symbol/date codes with thresholds unchanged and no interpolation."
     },
     "oss_validation": {
-      "head": "9966bde4534be91bc20ef471cf3b6e0abe860846",
+      "head": "0837d299eff60698d0e2ec36c659a36bbc078542",
       "preregistration_ci_run": 34807402370,
       "preregistration_ci_status": "completed/success",
       "selector_ci_run": 34807566909,
@@ -183,8 +186,8 @@
     "final_go_no_go_ready": false,
     "blocking_items": [
       "V20 exact raw acceptance still fails: 734 canonical-active symbol/date gaps remain; H1/H2 outcomes remain unopened. Consensus V47 has not yet produced a frozen-accepted repair source.",
-      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is now actively acquiring two shards at a time under staged throttled/backoff transport and must pass the unchanged coverage verifier before features/performance open.",
-      "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected. Historical Cloud Monster is forensic-only and not reproducible.",
+      "Consensus V47 daily PIT acceptance passes, but formal raw1H acceptance run 34810234454 is rejected with zero raw symbol-dates. Missing-universe retry 34810592135 is actively acquiring two shards at a time under staged throttled/backoff transport and must pass the unchanged coverage verifier before features/performance open.",
+      "No currently passing canonical 5BD Core/Precision replacement candidate. Separately, historical Cloud Monster n=63/+9.86% exact-reproduction forensic is pending; this audit does not reopen rejected Core families for retuning or promotion.",
       "OSS EDINET sample boundary, selector, metadata snapshot layer, and metadata acquisition boundary are frozen and CI-green, but complete 2023-2025 raw metadata has not yet been materialized and the real same-ZIP parser comparison remains unopened."
     ]
   },

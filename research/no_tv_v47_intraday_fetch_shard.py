@@ -4,6 +4,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import random
 import time
 from pathlib import Path
 from urllib.parse import quote
@@ -11,11 +12,16 @@ from urllib.parse import quote
 import pandas as pd
 import requests
 
-YAHOO = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.T"
+YAHOO_HOSTS = (
+    "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}.T",
+    "https://query2.finance.yahoo.com/v8/finance/chart/{symbol}.T",
+)
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36"
 KEEP_START = pd.Timestamp("2024-09-01", tz="Asia/Tokyo")
 KEEP_END = pd.Timestamp("2025-12-31", tz="Asia/Tokyo")
 SHARD_COUNT_DEFAULT = 12
+REQUEST_PACE_SECONDS = 0.55
+MAX_ATTEMPTS = 8
 
 
 def clean_symbol(x: object) -> str:
@@ -32,22 +38,40 @@ def shard_symbols(symbols: list[str], shard_index: int, shard_count: int) -> lis
     return [s for i, s in enumerate(ordered) if i % shard_count == shard_index]
 
 
+def backoff_seconds(attempt: int, retry_after: str | None = None) -> float:
+    if retry_after:
+        try:
+            v = float(retry_after)
+            if 0 < v <= 60:
+                return v
+        except ValueError:
+            pass
+    # Bounded exponential backoff with small jitter. This is transport-only and
+    # never depends on strategy outcomes or symbol performance.
+    base = min(30.0, 2.0 ** attempt)
+    return base + random.uniform(0.0, 0.75)
+
+
 def fetch_chart(code: str) -> tuple[dict | None, str | None]:
     last = None
-    for attempt in range(5):
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": UA,
+        "Accept": "application/json,text/plain,*/*",
+        "Accept-Language": "ja,en-US;q=0.8,en;q=0.6",
+        "Connection": "keep-alive",
+    })
+    for attempt in range(MAX_ATTEMPTS):
+        host = YAHOO_HOSTS[attempt % len(YAHOO_HOSTS)]
         try:
-            r = requests.get(
-                YAHOO.format(symbol=quote(code, safe="")),
+            r = session.get(
+                host.format(symbol=quote(code, safe="")),
                 params={"range": "730d", "interval": "1h"},
-                headers={
-                    "User-Agent": UA,
-                    "Accept": "application/json,text/plain,*/*",
-                },
                 timeout=30,
             )
             if r.status_code in {429, 502, 503, 504}:
                 last = f"http_{r.status_code}"
-                time.sleep(1.0 * (attempt + 1))
+                time.sleep(backoff_seconds(attempt, r.headers.get("Retry-After")))
                 continue
             r.raise_for_status()
             payload = r.json()
@@ -71,7 +95,7 @@ def fetch_chart(code: str) -> tuple[dict | None, str | None]:
             }, None
         except Exception as exc:
             last = type(exc).__name__
-            time.sleep(0.8 * (attempt + 1))
+            time.sleep(backoff_seconds(attempt))
     return None, last or "fetch_failed"
 
 
@@ -184,7 +208,7 @@ def main() -> None:
                     f"{i}/{len(symbols)} rows={total_rows}",
                     flush=True,
                 )
-            time.sleep(0.02)
+            time.sleep(REQUEST_PACE_SECONDS)
 
     r = pd.DataFrame(receipts)
     receipt_csv = out / f"v47_raw1h_shard_{a.shard_index:02d}_receipt.csv"
@@ -202,6 +226,12 @@ def main() -> None:
         "total_rows": int(total_rows),
         "date_window": ["2024-09-01", "2025-12-30"],
         "source": "Yahoo chart range=730d interval=1h",
+        "transport_policy": {
+            "hosts": list(YAHOO_HOSTS),
+            "max_attempts": MAX_ATTEMPTS,
+            "request_pace_seconds": REQUEST_PACE_SECONDS,
+            "retry_statuses": [429, 502, 503, 504],
+        },
         "strategy_returns_opened": False,
         "model_scores_opened": False,
         "production_writes": False,

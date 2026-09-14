@@ -1,12 +1,12 @@
 {
-  "version": 40,
+  "version": 41,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T00:25:00+09:00",
+  "updated_at_jst": "2026-09-15T00:58:00+09:00",
   "supervisor_last_scan": {
-    "status": "PARALLEL_WAVE1_MANIFEST_FROZEN_V47_ACTIVE_WEAK_EARLY_ROUND2_CLOSED",
-    "scanned_at_jst": "2026-09-15T00:08:00+09:00",
+    "status": "PARALLEL_WAVE1_SOURCE_BYTES_BOUND_V47_ACTIVE_WEAK_EARLY_ROUND2_CLOSED",
+    "scanned_at_jst": "2026-09-15T00:58:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All STATE-registered lane HEADs were checked and dynamic research/* discovery found the independent new lane research/parallel-condition-exploration. Existing Canonical/Core/Consensus/OSS processed SHAs were not duplicated. The new lane advanced from initialization to a causal readiness audit and frozen pre-performance A1/B1/E1 manifest without opening outcomes. Consensus run 34849054884 remains active with fetch(0)/fetch(1) in raw 1H acquisition and 0 visible artifacts; no duplicate trigger. Weak+Early Round2 remains closed and no post-hoc gate retune occurred."
+    "note": "All STATE-registered active lane HEADs/handoffs and relevant Actions/artifacts were checked; already-processed Canonical/Core/Consensus/OSS SHAs were not duplicated. Parallel Wave-1 advanced one stage without opening performance: the preserved dataset bytes/provenance were bound to source run 34545440155 -> preservation run 34599959356, artifact IDs/digests and tse_daily.csv SHA/row/date receipt were recorded. Schema + pinned XTKS endpoint completeness receipt remain mandatory before the one-shot A1/B1/E1 cost0 batch. Consensus run 34849054884 remains active with fetch(0)/fetch(1) acquiring raw 1H and 0 visible artifacts; no duplicate trigger. Weak+Early Round2 remains closed; G3 and all opened thresholds unchanged."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -18,7 +18,7 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "208e1358151330153db81584ca7d2bb709ec5c17",
       "last_processed_sha": "208e1358151330153db81584ca7d2bb709ec5c17",
-      "last_processed_note": "Shadow/Data endpoint completeness advanced: daily endpoint manifests now require explicit expected_through_date and fail closed when acquisition precedes that boundary or CSV last_date does not cover it. CLI fixtures aligned after fail-closed API change; CI 34861810023 SUCCESS. No performance opened."
+      "last_processed_note": "Shadow/Data endpoint completeness advanced: daily endpoint manifests require explicit expected_through_date and fail closed when acquisition predates it or CSV last_date does not cover it. CI 34861810023 SUCCESS. No performance opened."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
@@ -30,7 +30,7 @@
       "preferred_worker": "consensus",
       "last_seen_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
       "last_processed_sha": "fc96b80148c51dc8c1c093807b7800f83719e42a",
-      "last_processed_note": "Raw48 coordination checkpoints processed through fc96b801. Formal run 34849054884 active; fetch(0)/fetch(1) currently acquiring raw 1H and artifact count remains 0. Frozen strategy/model/threshold/price-arm/cooldown unchanged."
+      "last_processed_note": "Raw48 coordination checkpoints processed through fc96b801. Formal run 34849054884 remains active; fetch(0)/fetch(1) acquiring raw 1H, visible artifact count 0. Frozen strategy/model/threshold/price-arm/cooldown unchanged."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
@@ -40,9 +40,9 @@
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
-      "last_seen_sha": "7e164ae65c16f282f7c40737ac0ac64a8a45824b",
-      "last_processed_sha": "7e164ae65c16f282f7c40737ac0ac64a8a45824b",
-      "last_processed_note": "New independent Wave-1 exploration lane registered. Causal readiness audit selected A compression-expansion, B market-relative reversal, E prior-structure proximity; C gap deferred for same-open timing ambiguity and D turnover deferred for volr20 redundancy risk. Exact A1/B1/E1 thresholds were frozen before performance; outcomes remain unopened."
+      "last_seen_sha": "8cfcee630164ae022c98100cd9339eaa20bbe84d",
+      "last_processed_sha": "8cfcee630164ae022c98100cd9339eaa20bbe84d",
+      "last_processed_note": "Wave-1 source provenance advanced without performance opening. Added PARALLEL_WAVE1_SOURCE_RECEIPT_20260915.md: original data run 34545440155/artifact 10179500303 -> preservation run 34599959356/artifact 10264205130; preserved CSV SHA 6adfb626... and row/date/hash receipts bound. Exact schema + pinned XTKS endpoint completeness receipt still pending before one-shot A1/B1/E1 cost0 evaluation."
     }
   },
   "guardrails": [
@@ -73,16 +73,27 @@
       "next_rule": "Continue outcome-blind population/scarcity/forced-choice audit only."
     },
     "parallel_wave1": {
-      "status": "READINESS_AUDITED_MANIFEST_FROZEN_PERFORMANCE_UNOPENED",
-      "head": "7e164ae65c16f282f7c40737ac0ac64a8a45824b",
+      "status": "SOURCE_BYTES_BOUND_SCHEMA_ENDPOINT_RECEIPT_PENDING_PERFORMANCE_UNOPENED",
+      "head": "8cfcee630164ae022c98100cd9339eaa20bbe84d",
       "selected_families": ["A_COMPRESSION_EXPANSION", "B_RELATIVE_REVERSAL", "E_PRIOR_STRUCTURE_PROXIMITY"],
       "deferred": {
         "C_GAP_OVERNIGHT": "same-open execution timing ambiguity",
         "D_LIQUIDITY_TURNOVER": "semantic redundancy risk versus opened volr20 LOW"
       },
       "manifest": "research/PARALLEL_WAVE1_FROZEN_MANIFEST_20260915.md",
+      "source_receipt": "research/PARALLEL_WAVE1_SOURCE_RECEIPT_20260915.md",
+      "source_data_run": 34545440155,
+      "source_artifact_id": 10179500303,
+      "source_artifact_sha256": "85cf79fea74f9a122bf0b6b5c1e94d1fda80d468e68ac0d8c774e1a69010bfc4",
+      "preservation_run": 34599959356,
+      "preserved_artifact_id": 10264205130,
+      "preserved_artifact_sha256": "095e58986d45bda0092be1767e1b44a4791bf3c617179791d0c99c6d7d01bcb0",
+      "preserved_csv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+      "preserved_rows": 4061361,
+      "preserved_min_date": "2022-01-04",
+      "preserved_max_date": "2026-09-11",
       "performance_opened": false,
-      "next_rule": "Bind immutable preserved-source/schema receipt, implement A1/B1/E1 fail-closed, then execute one cost0 batch with no retuning and preserve an untouched confirmation block."
+      "next_rule": "Bind exact schema and pinned XTKS endpoint-session completeness receipt; then implement frozen A1/B1/E1 fail-closed and execute one cost0 batch with no retuning, keeping 2026 report-only."
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
@@ -126,10 +137,10 @@
     }
   },
   "next_global_actions": [
-    "Parallel Wave-1: bind exact preserved-source/schema receipt, implement frozen A1/B1/E1 fail-closed and run one cost0 batch without retuning; preserve confirmation holdout.",
+    "Parallel Wave-1: exact schema + pinned XTKS endpoint-session completeness receipt -> frozen A1/B1/E1 fail-closed implementation -> one cost0 batch only; 2026 stays report-only.",
     "Phase-2: continue outcome-blind population/scarcity audit; Round2 remains closed and no post-hoc gate retune is allowed.",
     "Consensus: keep run 34849054884 single-active; inspect first usable artifact or timeout receipt, then frozen acceptance after completion.",
-    "Canonical/Shadow: audit symbol-set and endpoint-session completeness against the frozen prospective selection ledger; explicit expected_through_date guard is now CI-green.",
+    "Canonical/Shadow: audit symbol-set and endpoint-session completeness against the frozen prospective selection ledger; explicit expected_through_date guard is CI-green.",
     "Core: bind real XTKS/vendor manifest + immutable source receipt and evaluator wiring/CI before recomputation.",
     "OSS: bind run_study/DSR to immutable completed-trial receipt; all new performance cost0-only.",
     "Cloud: exact replay stays closed absent genuinely contemporaneous identity-critical evidence."

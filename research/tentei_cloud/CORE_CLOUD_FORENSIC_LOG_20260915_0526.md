@@ -22,10 +22,12 @@ Implementation commits in this run:
 - `b5bc98aad9fb8a8b2296fd549a72125df70c46d8` — tests
 - `1ba21b0c94f9920e555ca5b70ab084239834203e` — workflow wiring
 
-At the time of this handoff, GitHub combined-status had not yet exposed a check result for `1ba21b0c...`; no CI success is claimed until a real check/run is visible.
+## CI
+- Actions run `34893121437`: **SUCCESS** for `Tentei Cloud OHLCV Supplement Contract Tests` on `1ba21b0c94f9920e555ca5b70ab084239834203e`.
+- This validates the new manifest/fail-closed unit contract only; it is not evidence of data coverage or strategy performance.
 
 ## Artifact lineage finding retained
 The formal raw observed input must be the actual eight `tentei-cloud-1h-shard-*` artifact CSVs produced by the 1H fetch workflow. The previously inspected lineage artifact `10330772110` contains only a lineage receipt and cannot substitute for those bytes; the daily artifact `10264205130` also cannot substitute for intraday raw1H.
 
 ## Decision / next step
-The exact-byte pinning primitive is now implemented, but formal adoption remains blocked until the actual retained eight-shard raw1H artifact set is located/downloaded and the exact expected endpoint-key universe is pinned. After that: run the manifest once, construct observed endpoint keys only from the pinned bytes, run the one-shot missing inventory, acquire fallback bytes only for declared gaps under the frozen source policy, verify accepted/rejected/conflicted counts and coverage delta, and only then consider performance recomputation.
+The exact-byte pinning primitive is now implemented and CI-green, but formal adoption remains blocked until the actual retained eight-shard raw1H artifact set is located/downloaded and the exact expected endpoint-key universe is pinned. After that: run the manifest once, construct observed endpoint keys only from the pinned bytes, run the one-shot missing inventory, acquire fallback bytes only for declared gaps under the frozen source policy, verify accepted/rejected/conflicted counts and coverage delta, and only then consider performance recomputation.

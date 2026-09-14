@@ -1,0 +1,93 @@
+{
+  "spec_id": "PRECISION-BATCH-20260914-01",
+  "status": "PREREGISTERED_BEFORE_BATCH_OUTCOME_ACCESS",
+  "role": "SHORT_HORIZON_HIGH_HIT_RATE_DISCOVERY_BATCH",
+  "data_contract": {
+    "source": "explicit-period Yahoo raw 1H extended panel",
+    "daily_context": "previous completed XTKS dates aggregated from the same raw1H source",
+    "absolute_price": "raw historical nominal scale",
+    "volume": "raw1H PIT share-count scale unchanged",
+    "session_split_minute": 780,
+    "universe_filters": {
+      "prior_daily_close_lte_jpy": 1000,
+      "prior_daily_volume_gte_shares": 10000,
+      "candidate_session_volume_gte_shares": 5000
+    }
+  },
+  "families": {
+    "PRIOR_HIGH_BREAKOUT": [
+      "candidate session open <= previous completed daily high",
+      "candidate session close > previous completed daily high",
+      "candidate session close > candidate session open"
+    ],
+    "TWO_DAY_PULLBACK_RECLAIM": [
+      "previous completed daily close < daily close two completed dates ago",
+      "candidate session close > previous completed daily close",
+      "candidate session close > candidate session open"
+    ],
+    "INSIDE_RANGE_STRENGTH": [
+      "candidate session low >= previous completed daily low",
+      "candidate session high <= previous completed daily high",
+      "candidate session close > midpoint(previous completed daily high, previous completed daily low)",
+      "candidate session close > candidate session open"
+    ]
+  },
+  "family_numeric_thresholds": 0,
+  "selection_policy": {
+    "same_symbol_cooldown": "5 official XTKS dates independently inside each family",
+    "ranking_inside_family": "NONE",
+    "top_n": "NONE"
+  },
+  "endpoint": {
+    "entry": "next observed XTKS date open",
+    "exit": "signal date + 5 observed XTKS dates close",
+    "primary_round_trip_cost": 0.005
+  },
+  "periods": {
+    "development_selection": ["2024-11-01", "2025-03-31"],
+    "internal_validation_locked_until_winner_selected": ["2025-04-01", "2025-06-30"],
+    "locked_confirmation": ["2025-07-01", "2025-12-31"],
+    "2026": "CLOSED_UNTIL_LOCKED_CONFIRMATION_PASSES"
+  },
+  "development_gate_per_family": {
+    "min_resolved_n": 50,
+    "net_mean_gt": 0,
+    "net_median_gt": 0,
+    "net_win_rate_gte": 0.60,
+    "net_top3_removed_mean_gt": 0,
+    "gross_loss10_rate_lte": 0.08
+  },
+  "winner_selection": {
+    "eligible_only_if_all_development_gates_pass": true,
+    "sort": [
+      "net_win_rate descending",
+      "net_median descending",
+      "net_mean descending",
+      "family_name ascending"
+    ],
+    "advance_count": 1,
+    "if_none_pass": "REJECT_BATCH_AND_KEEP_INTERNAL_VALIDATION_CLOSED"
+  },
+  "internal_validation_gate_for_selected_winner": {
+    "min_resolved_n": 30,
+    "net_mean_gt": 0,
+    "net_median_gt": 0,
+    "net_win_rate_gte": 0.60,
+    "net_top3_removed_mean_gt": 0,
+    "gross_loss10_rate_lte": 0.08
+  },
+  "multiple_testing_control": {
+    "families_preregistered_together": 3,
+    "only_one_winner_may_advance": true,
+    "internal_validation_not_opened_for_losers": true,
+    "prior_close_reclaim_failed_trial_counted_separately": true
+  },
+  "integrity": {
+    "legacy_sniper_logic_reused": false,
+    "failed_breakdown_reclaim_reused": false,
+    "prior_close_reclaim_reused": false,
+    "2025H2_outcomes_used": false,
+    "2026_outcomes_used": false,
+    "production_modified": false
+  }
+}

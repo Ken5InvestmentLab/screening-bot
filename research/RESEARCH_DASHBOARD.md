@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-14 23:05 JST  
+> **最終更新:** 2026-09-14 23:29 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **固定リンク:** https://github.com/Ken5InvestmentLab/screening-bot/blob/research/automation-coordination/research/RESEARCH_DASHBOARD.md
 
@@ -12,15 +12,26 @@
 |---|---|
 | 最終GO候補 | **0件** |
 | Active research branches | **4本** |
-| 全体マイルストーン進捗 | **約61%** — 成功確率ではなく研究工程の消化率 |
+| 全体マイルストーン進捗 | **約62%** — 成功確率ではなく研究工程の消化率 |
 | Weak+Early Phase-2 | 2022 fresh validation **FAILED ROBUSTNESS**。Round2は閉鎖 |
 | 2023-25暫定首位 | **DUAL + G3** mean +7.98% / win 53.85% / Top3-ex +5.14%（ただし2022 fresh fail） |
-| Consensus V47 | 旧12-shard run `34810592135` は180分timeout反復でcancel。48-shard retry `34849054884` はactive。23:05時点でfetch(0)/fetch(1)がraw取得中、artifactはまだ0件 |
+| Consensus V47 | 48-shard retry `34849054884` はactive/queued。accepted raw artifactはまだ0件 |
 | V20 | cost0診断が全TopN負、**DEPRIORITIZE** |
 | Shadow/Data | endpoint acquisition chronology guard CI GREEN。run `34848598262` SUCCESS |
-| Core / Cloud | Core既reject維持。Cloud exact replay **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。XTKS calendar / endpoint-row completeness未固定を監査で確認 |
-| OSS / Validation | Optuna cost0実装ギャップ解消 / CI `34846417896` SUCCESS。次はtrial-ledger provenance |
+| Core / Cloud | Core既reject維持。Cloud exact replay **HISTORICAL_EXACT_REPRO_UNAVAILABLE**。XTKS calendar / endpoint-row completeness未固定 |
+| OSS / Validation | cost0実装GREEN。immutable completed-trial ledger primitive CI `34855659820` SUCCESS、`run_study`/DSR bindingは未完 |
 | 最終判定 | **NO-GO / 研究継続** |
+
+### レーン別マイルストーン消化率
+
+| Lane | 進捗 | 意味 |
+|---|---:|---|
+| Canonical/Event + Shadow/Data | 約64% | V20診断済み、Shadow temporal guard GREEN。staleness / endpoint completeness監査が残る |
+| Core/Cloud | 約52% | reject/forensic整理済み。pinned XTKS calendar + endpoint completeness receiptが残る |
+| Consensus V47 | 約58% | daily PIT pass済み。formal raw acceptanceが未達でH2 promotion判定不可 |
+| OSS/Validation | **約80%** | cost0・EDINET freeze・trial-ledger primitiveまで固定。DSR receipt bindingとreal EDINET same-ZIPが残る |
+
+進捗率は成功確率ではなく、各laneで事前に必要とした研究・監査工程の消化率。
 
 ---
 
@@ -30,14 +41,14 @@
 |---|---|---|---|---|
 | Canonical/Event + Shadow/Data | `7606b72f...` | V20 DEPRIORITIZE / Shadow temporal guard CI green | `34848598262` SUCCESS | staleness / temporal integrityをoutcome-blind監査 |
 | Core/Cloud | `c41cb897...` | Core reject / Cloud exact replay unavailable / endpoint provenance audit | `34799307163` legacy | pinned XTKS calendar + endpoint completeness receiptを凍結 |
-| Consensus V47 | **`0d4aabac...`** | **48-shard raw retry active / formal raw未PASS** | `34849054884` active | 重複起動せずfirst artifact待ち→payload監査→終了後frozen acceptance |
-| OSS/Validation | `098653c2...` | Optuna cost0 implementation VERIFIED | `34846417896` SUCCESS | completed-trial ledger/provenanceを改変不能化 |
+| Consensus V47 | `0d4aabac...` | 48-shard raw retry active/queued / formal raw未PASS | `34849054884` active/queued | 重複起動せずusable artifact待ち→payload監査→終了後frozen acceptance |
+| OSS/Validation | **`7704641d...`** | immutable trial-ledger primitive VERIFIED / DSR binding pending | `34855659820` SUCCESS | `run_study`をreceipt-bound DSRへ接続しintegration test |
 
-### 23:05 Supervisor更新
+### 23:29 横断更新
 
-Consensus branchに未処理HEAD `0d4aabac...` を検出してdiff確認済み。これは48-shard retryの状態同期のみで、strategy / model / threshold / price-arm / cooldownは変更していない。run `34849054884` はfetch(0) / fetch(1)が `Fetch raw 1H shard` 実行中で、visible remaining jobsはqueued。artifactはまだ0件。重複triggerはしていない。
+全STATE登録laneを確認。開始時点でCanonical / Core / Consensus / OSSに未処理HEADなし。Consensus `34849054884` は重複起動していない。
 
-Canonical / Core / OSSはSTATE記録済みSHAと一致し、重複処理なし。
+OSSではcompleted Optuna trialsをtrial番号順で決定的ledger化し、study metadata + 全completed rowsをcanonical JSON / SHA-256へ固定するprimitiveを追加。missing / extra / reorder / duplicate / modify / non-COMPLETE / non-finiteをfail-closedする。CI `34855659820` SUCCESS。戦略outcomeは新規開封していない。
 
 ---
 
@@ -110,24 +121,44 @@ Core endpoint監査では、rawで観測されたdate集合やfirst/last availab
 
 ## 6. OSS / Validation
 
-Optunaはcost0-onlyへ修正済み。非zero `round_trip_cost` はfail-closed、CI `34846417896` SUCCESS。
+Optunaはcost0-onlyへ修正済み。非zero `round_trip_cost` はfail-closed。
 
-次工程はcompleted trial全件を決定的順序でledger化・hash化し、missing / extra / reorder / modifyをrejectして、PSR/DSRをad-hoc vectorではなくreceiptだけから消費させる。
+今回、completed trial provenanceの第一段を完了:
+- deterministic ascending trial-number ledger;
+- frozen study metadata + completed rowsのcanonical JSON / SHA-256 receipt;
+- missing / extra / reordered / duplicate / modified / non-COMPLETE / non-finiteをreject;
+- receipt検証後のみtrial-Sharpe vectorを返す `trial_sharpes_from_receipt()`;
+- isolated CI `34855659820` **SUCCESS**。
 
-EDINET real same-ZIPは外部 `EDINET_API_KEY` がblocker。
+ただし `optuna_discovery.run_study()` はまだDSRへ直接trial-Sharpe listを渡しているため、provenance controlは**PRIMITIVE_VERIFIED_BINDING_PENDING**。次工程でreceipt-bound consumptionへ接続する。
+
+EDINET real same-ZIPは外部 `EDINET_API_KEY` がblocker。synthetic/same-ZIP/hash-chain guardは維持。
 
 ---
 
-## 7. 残タスク / blocker
+## 7. H1/H2開封状態
+
+| Lane/Candidate | H1 | H2 | Promotion evidence |
+|---|---|---|---|
+| Weak+Early | opened | fresh robustness opened | **NO** — robustness fail |
+| V20 | 中締め診断 opened | unopened/不適格 | **NO** |
+| Consensus V47 NOCAP | diagnostic opened | diagnostic opened | **NO** — formal raw acceptance未PASS |
+| Consensus CAP1000_PIT | diagnostic H1 opened | **unopened** | **NO** |
+| OSS infrastructure | performance対象外 | performance対象外 | infrastructure only |
+
+---
+
+## 8. 残タスク / blocker
 
 ### P0
-- **Consensus V47:** run `34849054884` を重複起動しない。first artifact出現時にreal payload / provenanceを監査し、完了後usable rawだけmergeしてfrozen acceptanceを再実行。
+- **Consensus V47:** run `34849054884` を重複起動しない。usable artifact出現時にreal payload / provenanceを監査し、完了後frozen acceptanceを再実行。
 - **Shadow/Data:** chronology guard後のstaleness / endpoint completeness境界をoutcome-blind監査。
 
 ### P1
 - **Weak+Early:** Round2閉鎖維持。2022 / 2023H2 / 2025H2のpopulation scarcity / forced-choice構造をoutcome-blindで監査。
 - **Core:** pinned XTKS calendar + endpoint completeness receiptを凍結。
-- **OSS:** immutable completed-trial ledger / provenance。
+- **OSS:** `run_study` selection_bias/DSR inputをimmutable completed-trial receiptへbindingし、receiptをsummaryへ永続化。
+- **EDINET:** real same-ZIP cross-checkは外部 `EDINET_API_KEY` 待ち。
 - **Cloud:** 新しい同時代一次証拠が出た場合だけexact replay再開。
 
 ### P2
@@ -136,15 +167,15 @@ EDINET real same-ZIPは外部 `EDINET_API_KEY` がblocker。
 
 ---
 
-## 8. Current decision
+## 9. Current decision
 
 **NO-GO / 研究継続**
 
 主因:
 - Weak+Earlyは2023-25で高性能だが2022 fresh robustness fail。
-- Consensusはformal raw acceptance未PASSで、48-shard raw retry実行中。
+- Consensusはformal raw acceptance未PASSで、48-shard raw retry実行待ち/進行中。
 - Core / V20はreject / deprioritize。
 - Cloud exact replayは一次証拠欠落でclosed。
-- OSSはcost0契約解消済みだがmultiple-testing provenance未完了。
+- OSSはtrial-ledger primitiveまでGREENだが、DSR consumption bindingが未完了。
 
 新規評価はすべて **cost 0%**、勝率は **gross return > 0**。過去のcosted結果はlegacy evidenceのみで、新しい順位・GO/NO-GOに使わない。

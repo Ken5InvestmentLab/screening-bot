@@ -1,4 +1,5 @@
 daily_run_id=34799835035
 retry_from_coverage_run_id=34810234454
 retry_scope=all_required_symbols_because_raw_unique_symbol_dates_zero
-transport_revision=dual-host-backoff-maxparallel2
+transport_revision=dual-host-backoff-maxparallel2-shards48
+retry_reason=prior_12_shard_jobs_repeatedly_hit_180min_timeout; use existing 48-shard workflow without changing frozen strategy/model/threshold/price-arm/cooldown contracts

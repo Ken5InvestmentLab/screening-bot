@@ -151,3 +151,26 @@ Research-only correction:
 - regression tests cover the previously-missing conflict case.
 
 No strategy outcomes were used and production remains unchanged.
+
+## EDINET metadata provenance boundary
+
+The real-sample selector now has a separate fail-closed provenance layer in
+`tvfree_screener/edinet_metadata_snapshot.py`. This layer is intentionally
+network-free and accepts only exact raw daily EDINET document-list JSON files.
+For the frozen 2023-01-01..2025-12-31 sample interval it requires one file for
+every calendar day before declaring coverage complete.
+
+For each daily response it validates successful metadata status, requires
+`docID`, `docTypeCode`, and `submitDateTime`, rejects duplicate doc IDs across
+the snapshot, preserves an explicit source date, records the raw response
+SHA256, and builds a deterministic date-ordered hash-chain receipt. The
+normalized output contains metadata only; parser facts, accounting values,
+strategy labels, returns, model scores, and 2026 outcomes cannot enter this
+stage.
+
+This boundary prevents a partial download, retry-biased subset, or parser-aware
+sample from masquerading as the preregistered full metadata source. CI run
+`34811269556` passed the missing-day, non-success-status, malformed-row,
+duplicate-ID, timezone, and outcome-blind receipt tests. The next step is to
+materialize all frozen-period raw daily metadata, freeze the snapshot receipt,
+and only then execute the already-frozen selector once.

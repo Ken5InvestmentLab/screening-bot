@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-14 21:xx JST  
+> **最終更新:** 2026-09-14 21:22 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。  
 > **固定リンク:** https://github.com/Ken5InvestmentLab/screening-bot/blob/research/automation-coordination/research/RESEARCH_DASHBOARD.md
 
@@ -109,7 +109,7 @@ G3 = `med_ret1 >= -1%`。freeze済みでretune禁止。
 | Consensus V47 | `263b91af...` | **H1/H2 diagnostic完了 / formal raw未PASS** | formal retry `34810592135`を重複起動せず監視→終了後merge+frozen acceptance |
 | OSS/Validation | `6e9045e9...` | **Optuna cost0 implementation gap BLOCKED** | API/CLI/testsをcost0-onlyへ修正→isolated CI green後のみ再開 |
 
-21時台の横断HEAD再確認では4レーンとも前回STATEから変更なし。processed SHAの重複処理なし。
+21:22 JSTの横断HEAD再確認では4レーンとも前回STATEから変更なし。processed SHAの重複処理なし。
 
 ---
 
@@ -119,7 +119,7 @@ G3 = `med_ret1 >= -1%`。freeze済みでretune禁止。
 
 - Daily PIT acceptance: **PASS** (`34799835035`)
 - Raw frozen acceptance: **FAIL / NOT PASS** (`34810234454`)
-- Formal retry: `34810592135` active。fetch (2)/(3)進行、fetch (0)/(1)は180分境界でcancelled。重複起動禁止。
+- Formal retry: `34810592135` active。**fetch (4)/(5)進行中、fetch (0)/(1)/(2)/(3)は180分境界でcancelled、残りはqueued**。重複起動禁止。
 - future retry layout: **48 shards / max-parallel 2**
 - formal clean features/H1/H2: **未開封**
 

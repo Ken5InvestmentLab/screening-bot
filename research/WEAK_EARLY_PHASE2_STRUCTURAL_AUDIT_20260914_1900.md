@@ -18,17 +18,19 @@
 
 ## 2022 fresh-validation reference
 
-Preserved run-80 rawを既存V7/V9 generatorで再生成し、30k training-row minimumを維持したため、2022はJUN-DECのみ評価可能。
+Preserved run-80 rawを既存V7/V9 generatorで再生成し、30k training-row minimumを維持したため、2022はJUN-DECのみ評価可能。以下は最新coordination STATEに保存されたauthoritative regeneration値を使用する。
 
 | Candidate | n | Mean | Median | Win | Top3-ex |
 |---|---:|---:|---:|---:|---:|
-| body_pct LOW | 48 | -2.27% | -4.53% | 37.50% | -7.20% |
-| volr20 LOW | 48 | -1.42% | -4.86% | 31.25% | -5.94% |
-| mean-rank | 48 | -0.48% | -4.04% | 37.50% | -5.36% |
+| body_pct LOW | 23 | +1.77% | -6.37% | 26.09% | -7.51% |
+| volr20 LOW | 23 | +1.95% | -6.19% | 26.09% | -7.31% |
+| mean-rank | 23 | +1.73% | -6.37% | 26.09% | -7.56% |
 | DUAL_TOP1_AGREEMENT | 21 | +2.62% | -6.19% | 28.57% | -7.55% |
 | DUAL + G3 | 17 | +6.08% | -6.00% | 29.41% | -6.26% |
 
 G3は平均だけ正でも中央値・勝率・Top3-exが崩れており、fresh validationとしてNO-GO。
+
+> Reconciliation note: 監査作成時に中間集計 `n=48` を誤って参照したため、authoritative coordination STATEの再生成値 `n=23` へ即時訂正した。以後は上表を正とする。
 
 ## Outcome-blind 2022 structural reference
 

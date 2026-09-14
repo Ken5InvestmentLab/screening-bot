@@ -1,4 +1,4 @@
-# OSS/Validation handoff — 2026-09-14 14:56 JST
+# OSS/Validation handoff — 2026-09-14 16:06 JST
 
 Branch: `research/oss-validation-tooling`  
 Scope: research-only. Production/main and all production integrations remain untouched.
@@ -10,7 +10,7 @@ Scope: research-only. Production/main and all production integrations remain unt
 
 ## EDINET real-sample boundary
 
-Commit `8d4188e6e67a56a837bba4903dbdc1911ccda332` preregistered the real historical sample before opening any real parser comparison:
+The real historical sample was preregistered before opening any real parser comparison:
 
 - 2023-01-01 through 2025-12-31;
 - document types 120 and 130;
@@ -22,34 +22,39 @@ Commit `8d4188e6e67a56a837bba4903dbdc1911ccda332` preregistered the real histori
 - selected doc IDs and source ZIP hashes are frozen before mismatch review;
 - strategy returns, ranks, labels, model scores, accounting values and 2026 market outcomes are forbidden sample-selection inputs.
 
-The preregistration CI run `34807402370` completed **SUCCESS**. The deterministic selector CI run `34807566909` also completed **SUCCESS**.
+Preregistration CI `34807402370` and deterministic selector CI `34807566909` completed **SUCCESS**.
 
 ## Metadata selector + snapshot audit layer
 
-The deterministic selector in `tvfree_screener/edinet_oss_sample_selector.py` remains the only component allowed to choose the real filing sample.
+`tvfree_screener/edinet_metadata_snapshot.py` consumes exact raw daily EDINET JSON responses named `YYYY-MM-DD.json`, requires every calendar day in the frozen interval, hashes every raw response, builds a deterministic daily hash chain, normalizes only `docID` / `docTypeCode` / `submitDateTime` plus source date, and emits a manifest with `strategy_outcomes_opened=false` and `parser_outputs_used_for_selection=false`.
 
-This run added a provenance layer before that selector:
+Snapshot/fail-closed CI `34811269556` completed **SUCCESS**. No real parser comparison or strategy outcome has been opened.
 
-- `561fddb1c0ae33b7128fe2f9886f652982c0e305` adds `tvfree_screener/edinet_metadata_snapshot.py`;
-- `bb6b424906c6ef5bf3384ae9f2fc851925906ad7` adds fail-closed tests for missing calendar days, non-200 metadata status, malformed required fields, duplicate doc IDs, deterministic timezone normalization, and outcome-blind manifest flags;
-- `1de1597af88be852fb264a30cbf6cc60f0b5042f` wires the snapshot tests into isolated OSS CI.
+## Acquisition boundary added in this pass
 
-The snapshot layer deliberately performs **no network acquisition**. It consumes exact raw daily EDINET JSON responses named `YYYY-MM-DD.json`, requires every calendar day in the frozen interval, hashes every raw response, builds a deterministic daily hash chain, normalizes only `docID` / `docTypeCode` / `submitDateTime` plus source date, and emits a manifest with `strategy_outcomes_opened=false` and `parser_outputs_used_for_selection=false`.
+To make the next step executable without contaminating the audit layer, this pass added a separate network acquisition helper:
 
-This keeps credential/retry concerns outside the audit boundary and prevents a partially downloaded 2023-2025 metadata set from being mislabeled as complete. No real parser comparison or strategy outcome has been opened.
+- `tvfree_screener/edinet_metadata_acquire.py` calls the official EDINET v2 `documents.json` endpoint with `date`, `type=2`, and `Subscription-Key` query parameters;
+- the API key is read only from an environment variable and is never written to repository files;
+- one exact raw response is persisted per calendar day using atomic temp-file replacement;
+- existing files are skipped by default so interrupted acquisitions can resume without silently overwriting prior bytes;
+- malformed responses and non-200 EDINET metadata status fail closed;
+- `tvfree_screener/test_edinet_metadata_acquire.py` locks required-query construction, fail-closed payload validation, resumability, and missing-key refusal;
+- isolated OSS CI was extended to run these tests. CI run `34816055006` is currently in progress.
 
-CI run `34811269556` for the new snapshot layer completed **SUCCESS**. The snapshot/fail-closed contract is therefore green before any real EDINET sample is opened.
+The acquisition helper still does **not** perform sample selection, parse accounting facts, inspect strategy outcomes, or read 2026 market outcomes. Acquisition bytes must pass `edinet_metadata_snapshot.py` before they are eligible for the frozen selector.
 
 ## Cross-lane follow-up
 
-Consensus branch SHA `9bbdef6fead6d1494b0b10030b466a2bdb0a22a8` was reviewed as the only new unprocessed active-lane SHA at the start of this pass. The 8-commit delta formalizes V47 raw1H coverage failure (`accepted=false`, zero raw symbol-dates), hardens the verifier against empty gzip shards, and triggers missing-universe retry run `34810592135`. That run remains queued/in progress, so there is no completed retry artifact to collect yet. No duplicate Consensus data acquisition was launched from the OSS lane.
+At this pass start, all STATE-registered branch HEADs matched their recorded processed state except for no new lane commits requiring duplicate work. Consensus retry run `34810592135` remains active at job level with `fetch (0)` and `fetch (1)` in the raw-1H fetch step and the other ten shards queued under the intentional max-parallel=2 constraint. No duplicate Consensus acquisition was triggered and V47 features/H1/H2 remain sealed.
 
 ## Next safe action
 
-1. Materialize exact raw EDINET document-list JSON for every calendar day from 2023-01-01 through 2025-12-31 using an acquisition step separate from the audit parser.
-2. Run `edinet_metadata_snapshot.py` to freeze per-day SHA256 values, aggregate hash-chain receipt, and normalized metadata CSV.
-3. Feed that frozen normalized metadata CSV to `edinet_oss_sample_selector.py` exactly once and freeze selected doc IDs plus input/sample hashes.
-4. Fetch/materialize the exact selected XBRL-to-CSV ZIP bytes without replacement around parser failures; freeze each ZIP SHA256 before opening parser comparison.
-5. Run custom and `edinet-tools` parsers against identical bytes. Treat all mismatches/one-sided missing values as audit findings; never choose a parser based on strategy outcome.
+1. Wait for OSS CI `34816055006`; if green, treat the acquisition boundary as tested.
+2. Run the acquisition helper with an externally supplied EDINET API key to materialize exact raw document-list JSON for every calendar day from 2023-01-01 through 2025-12-31. Do not commit the API key.
+3. Run `edinet_metadata_snapshot.py` to freeze per-day SHA256 values, aggregate hash-chain receipt, and normalized metadata CSV.
+4. Feed that frozen normalized metadata CSV to `edinet_oss_sample_selector.py` exactly once and freeze selected doc IDs plus input/sample hashes.
+5. Fetch/materialize exact selected XBRL-to-CSV ZIP bytes without replacement around parser failures; freeze each ZIP SHA256 before opening parser comparison.
+6. Run custom and `edinet-tools` parsers against identical bytes. Treat all mismatches/one-sided missing values as audit findings; never choose a parser based on strategy outcome.
 
 Optuna/purgedcv work remains available for the next genuinely new family, but no rejected or outcome-opened family is being reopened here.

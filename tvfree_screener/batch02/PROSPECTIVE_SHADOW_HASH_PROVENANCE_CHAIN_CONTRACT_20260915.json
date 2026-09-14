@@ -1,0 +1,39 @@
+{
+  "contract_id": "PROSPECTIVE-SHADOW-HASH-PROVENANCE-CHAIN-20260915",
+  "lane": "Canonical/Event + Shadow/Data",
+  "status": "FROZEN_OUTCOME_BLIND_CONTRACT",
+  "created_date_jst": "2026-09-15",
+  "purpose": "Fail closed unless each resolved prospective-shadow row can be traced through immutable hashes from the daily endpoint source and pinned XTKS calendar to completeness and resolution receipts.",
+  "performance_policy": {
+    "transaction_cost_pct": 0.0,
+    "win_definition": "gross_return > 0",
+    "opens_performance": false,
+    "2026_policy": "report/robustness-only"
+  },
+  "required_chain": [
+    "daily_endpoint_manifest_sha256",
+    "pinned_xtks_calendar_sha256",
+    "frozen_selection_ledger_sha256",
+    "completeness_receipt_sha256",
+    "resolved_output_sha256",
+    "resolution_receipt_sha256"
+  ],
+  "fail_closed_rules": [
+    "daily endpoint manifest must itself have passed source integrity, expected_through_date, and staleness checks",
+    "pinned XTKS calendar bytes/hash used for maturity and endpoint session mapping must be recorded",
+    "selection ledger bytes/hash used for the attempt must be recorded",
+    "completeness receipt must bind the exact three upstream hashes before any resolved output write",
+    "resolved output hash must be computed after append-only/idempotent resolution and recorded in the resolution receipt",
+    "resolution receipt must bind the completeness receipt hash and resolved output hash",
+    "any hash mismatch, missing receipt, stale/truncated daily source, missing endpoint, duplicate calendar session, or invalid price blocks resolution",
+    "FAIL attempts may append an immutable failure receipt but must not mutate prior resolved history"
+  ],
+  "non_goals": [
+    "no threshold/TopN/ranker/cooldown retune",
+    "no interpolation or synthetic bars",
+    "no production/main or production workflow changes",
+    "no Discord/Spreadsheet/Stable/Sniper/Mega/TradingView/watchlist-builder/updater changes",
+    "no reopening or rescue retune of rejected families"
+  ],
+  "implementation_note": "This contract freezes the provenance requirement before implementation. Existing completeness receipts currently bind normalized daily rows and sessions; follow-up implementation must bind the verified daily endpoint manifest and pinned calendar artifacts explicitly, then add resolved-output and resolution-receipt hashes without changing strategy logic or outcomes."
+}

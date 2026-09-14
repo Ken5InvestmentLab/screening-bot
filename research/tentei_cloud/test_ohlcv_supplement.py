@@ -2,12 +2,11 @@ import unittest
 
 import pandas as pd
 
-from ohlcv_supplement import verify_and_select_supplements
+from ohlcv_supplement import canonical_source_policy, verify_and_select_supplements
 
 
 SHA_A = "a" * 64
 SHA_B = "b" * 64
-SHA_C = "c" * 64
 
 
 POLICY = {
@@ -176,6 +175,16 @@ class OHLCVSupplementTests(unittest.TestCase):
         x["latest_market_ts"] = "2025-08-01T05:01:00Z"
         with self.assertRaisesRegex(ValueError, "latest_market_ts is after"):
             verify_and_select_supplements(inventory(), pd.DataFrame([x]), POLICY)
+
+    def test_source_priorities_must_be_unique(self):
+        policy = dict(POLICY)
+        policy["duplicate_priority"] = {
+            "priority": 20,
+            "formal_eligible": True,
+            "allowed_timeframes": ["1d"],
+        }
+        with self.assertRaisesRegex(ValueError, "priorities must be unique"):
+            canonical_source_policy(policy)
 
 
 if __name__ == "__main__":

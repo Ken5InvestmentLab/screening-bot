@@ -27,4 +27,6 @@ jobs:
           python-version: '3.12'
       - name: Run resolution continuity contract tests
         working-directory: tvfree_screener/batch02
+        env:
+          PYTHONPATH: ${{ github.workspace }}
         run: python -m unittest -v test_prospective_shadow_resolution_continuity_guard.py test_prospective_shadow_verified_resolve.py test_prospective_shadow_cli.py

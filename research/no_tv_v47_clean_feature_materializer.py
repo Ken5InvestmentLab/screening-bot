@@ -269,11 +269,19 @@ def main() -> None:
     ap.add_argument("--raw-dir",required=True,type=Path)
     ap.add_argument("--raw-coverage-receipt",required=True,type=Path)
     ap.add_argument("--output-dir",required=True,type=Path)
+    ap.add_argument("--allow-survivor-shadow",action="store_true")
     a=ap.parse_args()
 
     cov=json.loads(a.raw_coverage_receipt.read_text(encoding="utf-8"))
-    if not cov.get("accepted"):
-        raise RuntimeError("raw1h coverage not accepted")
+    shadow_mode=bool(a.allow_survivor_shadow)
+    if shadow_mode:
+        if not cov.get("shadow_accepted"):
+            raise RuntimeError("survivor-shadow raw1h coverage not accepted")
+        if cov.get("promotion_grade") is not False:
+            raise RuntimeError("shadow receipt must explicitly be non-promotion")
+    else:
+        if not cov.get("accepted"):
+            raise RuntimeError("full-PIT raw1h coverage not accepted")
     if cov.get("strategy_returns_opened") or cov.get("model_scores_opened"):
         raise RuntimeError("coverage isolation contract violated")
 
@@ -377,6 +385,8 @@ def main() -> None:
         "locked_validation_target_columns_emitted":False,
         "strategy_selection_performed":False,
         "model_fit_performed":False,
+        "survivor_shadow_mode":shadow_mode,
+        "promotion_grade":not shadow_mode,
         "2026_rows_included":False,
         "production_writes":False,
     }

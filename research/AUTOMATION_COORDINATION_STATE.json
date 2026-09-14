@@ -1,12 +1,12 @@
 {
-  "version": 66,
+  "version": 67,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T08:24:00+09:00",
+  "updated_at_jst": "2026-09-15T08:46:00+09:00",
   "supervisor_last_scan": {
-    "status": "CORE24_ACTIONABLE_PROVENANCE_REORDERED_BEFORE_EXTERNAL_ACTIVITY_WAIT",
-    "scanned_at_jst": "2026-09-15T08:02:00+09:00",
+    "status": "OSS_PIT_GAP_RECORDED_PARALLEL_HASH_IDENTITY_RECONCILED",
+    "scanned_at_jst": "2026-09-15T08:46:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Cross-lane review kept all already-processed SHA deduped. Core24 remains fail-closed on expected hourly activity. XTKS adoption is now Core-pinned; official-JPX PIT source/input receipts remain the next locally actionable provenance step before independent exact-hour activity evidence. No performance was opened and no guardrail changed."
+    "note": "Cross-lane review kept processed SHAs deduped. OSS and Parallel actual HEADs matched STATE at scan start. Parallel calendar SHA concern was reconciled as an artifact-identity mismatch: the authoritative pinned one-column calendar remains SHA256 58e67bd2...; the separately saved xtks_sessions.csv representation must not be treated as the same bytes. OSS then advanced to the next outcome-blind validation control and found that feature_cutoff_column is optional/default None, so the generic Optuna harness does not fail closed on PIT feature-availability evidence when callers omit it. Audit commit 65e10483 records the gap; performance remains unopened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -17,8 +17,8 @@
     "research/tvfree-canonical-batch02": {"preferred_worker":"canonical","last_seen_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","last_processed_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","task_state":"ACTIVE","last_processed_note":"Schema-v2 full Shadow/Data provenance link-tamper regression added across selection ledger, daily manifest, XTKS calendar CSV/manifest, completeness receipt and resolve_result; CI 34893503640 SUCCESS; performance unopened. Exact continuation: inspect prospective_shadow_resolution_receipt replay/rollback and cross-run chain continuity, then add the smallest outcome-blind fail-closed regression without opening performance."},
     "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","last_processed_sha":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","task_state":"ACTIVE_DATA_REPAIR","last_processed_note":"Core24 adopted and pinned the independent XTKS calendar into Core: 1,220 sessions, CSV SHA256 58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b, source commits cd667f5/69f49c8. Expected-universe spec now marks XTKS PASS/Core-pinned. JPX PIT source/input receipts remain next; independent exact-hour activity evidence still required. Formal missing inventory and performance remain closed."},
     "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"b04751e164ade7ed113a03c8087b6d50e0294209","last_processed_sha":"b04751e164ade7ed113a03c8087b6d50e0294209","task_state":"EXTERNAL_WAIT_ACTIVE_RUN","last_processed_note":"Absorbed 06:34 JST dashboard-only refresh. Raw48 run 34849054884 remains nonterminal; shards 0-3 still total 324/324 HTTP429 and zero usable rows, shards 4/5 remain fetching. No new raw artifact, no duplicate trigger, no strategy/performance evidence."},
-    "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","last_processed_sha":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","task_state":"ACTIVE","last_processed_note":"Receipt-bound DSR control verified; move to next outcome-blind validation task."},
-    "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"ACTIVE","last_processed_note":"Independent XTKS calendar + outcome-blind endpoint verifier frozen. Next causal pick ledger -> completeness receipt -> one-shot cost0 evaluation."}
+    "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"65e10483b4e1e41a68ec94883dec5c8916698d40","last_processed_sha":"65e10483b4e1e41a68ec94883dec5c8916698d40","task_state":"ACTIVE_PIT_GAP","last_processed_note":"Next outcome-blind control found PIT fail-open boundary: feature_cutoff_column is optional/default None in validate_discovery_frame/run_study, so omitted cutoff evidence is accepted. Audit 65e10483 records required fail-closed patch/tests. Receipt-bound DSR remains verified; performance unopened."},
+    "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"ACTIVE","last_processed_note":"Independent XTKS calendar + outcome-blind endpoint verifier frozen. Authoritative pinned calendar is research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv SHA256 58e67bd2...; prior 74ab... observation was a different saved representation, not pinned-artifact drift. Next causal pick ledger -> completeness receipt -> one-shot cost0 evaluation."}
   },
   "guardrails": [
     "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
@@ -36,7 +36,7 @@
     "core": {"task_state":"ACTIVE_PROVENANCE","current_fixed_core":"REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE","old_cloud_monster_forensic":"CLOSED_HISTORICAL_EXACT_REPRO_UNAVAILABLE","endpoint_provenance_status":"RAW1H_PIN_PASS_XTKS_CORE_PIN_PASS_JPX_PIT_PENDING_ACTIVITY_PENDING","head":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","performance_opened":false},
     "ohlcv_supplement": {"task_state":"ACTIVE","status":"RAW1H_PIN_PASS_XTKS_CORE_PIN_PASS_JPX_PIT_PENDING_ACTIVITY_PENDING","formal_dataset_adoption":false,"performance_recompute_allowed":false,"raw1h_source_run":34592896202,"raw1h_bundle_sha256":"de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18","raw1h_total_rows":4019524,"artifact_expiry_date":"2026-09-25","expected_key_membership_contract":"JPX_PIT_IDENTIFIED_RECEIPTS_PENDING","expected_key_calendar_contract":"XTKS_CORE_PIN_PASS_SHA256_58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b","expected_key_hour_semantics":"AM_09_10_11_12_PM_13_14_PRE_20241105_PM_13_14_15_POST","expected_key_activity_evidence":"REQUIRED_NOT_YET_PINNED","supervisor_work_order":"PIN_JPX_PIT_RECEIPTS_THEN_ACTIVITY_SOURCE_SEARCH","alpha_vantage_free_role":"LOW_PRIORITY_DAILY_ONLY","stooq_role":"CANDIDATE_NOT_FORMAL_ELIGIBLE","googlefinance_snapshot_role":"CORROBORATION_ONLY_NOT_FORMAL_INTRADAY"},
     "cloud_exact_forensic": {"task_state":"CLOSED","status":"HISTORICAL_EXACT_REPRO_UNAVAILABLE","reopen_condition":"new contemporaneous identity-critical evidence only","active_worker_cycles":false},
-    "oss_validation": {"task_state":"ACTIVE","head":"d2eccd40b0e37a8a50d8a598869fcecbd0510cfc","cost0_optuna_contract_status":"IMPLEMENTATION_VERIFIED_CI_GREEN","trial_ledger_status":"RECEIPT_BOUND_DSR_VERIFIED_CI_GREEN","binding_ci_run":34883481600,"binding_ci_status":"success","contract_rerun":34883717045,"contract_rerun_status":"success","performance_opened":false},
+    "oss_validation": {"task_state":"ACTIVE_PIT_GAP","head":"65e10483b4e1e41a68ec94883dec5c8916698d40","cost0_optuna_contract_status":"IMPLEMENTATION_VERIFIED_CI_GREEN","trial_ledger_status":"RECEIPT_BOUND_DSR_VERIFIED_CI_GREEN","pit_feature_cutoff_status":"GAP_RECORDED_FAIL_CLOSED_PATCH_PENDING","binding_ci_run":34883481600,"binding_ci_status":"success","contract_rerun":34883717045,"contract_rerun_status":"success","performance_opened":false},
     "edinet_same_zip": {"task_state":"EXTERNAL_INPUT_WAIT","status":"REAL_API_KEY_OR_PINNED_REAL_ZIP_REQUIRED"}
   },
   "next_global_actions": [
@@ -45,7 +45,7 @@
     "Canonical/Shadow exact continuation: inspect prospective_shadow_resolution_receipt replay/rollback and cross-run chain continuity; add the smallest outcome-blind fail-closed regression/control; do not open performance.",
     "Consensus: no duplicate trigger; after run 34849054884 terminal, enumerate all shard artifacts, merge genuinely observed rows only and rerun frozen acceptance. Until a new artifact/terminal state appears, do not burn a full worker cycle on this wait state.",
     "Core: bind canonical evaluator only after real XTKS/vendor/raw receipt provenance is complete.",
-    "OSS: move to next outcome-blind validation control.",
+    "OSS: require explicit PIT feature-availability evidence at run_study boundary (or equally strong immutable PIT receipt), reject omission/future-dated cutoff, add regression tests, then run isolated OSS validation CI. Do not repeat receipt-bound DSR work.",
     "Weak+Early Phase-2, Cloud exact forensic and V20: CLOSED; consume no worker cycles unless their explicit reopen condition is met."
   ]
 }

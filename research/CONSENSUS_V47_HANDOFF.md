@@ -1,6 +1,6 @@
 # Consensus V47 clean PIT handoff
 
-Updated: 2026-09-14 14:43 JST
+Updated: 2026-09-14 15:41 JST
 Branch: `research/consensus-atr-regime-gate`
 Scope: research-only. Production/main/Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater untouched.
 
@@ -58,6 +58,8 @@ The missing-pair artifacts therefore identify the entire required candidate-date
 
 ## Current action: retry only the missing universe
 Because `raw_unique_symbol_dates=0`, every required symbol/date pair is missing; the missing-symbol union is therefore the full required NOCAP symbol set. Commit `6fcf600245e0a04b3d8bc9c3f6c566a81c9fa03d` triggered retry run `34810592135` using the hardened transport policy and `max-parallel: 2`.
+
+At the 2026-09-14 15:41 JST worker scan, GitHub's run-level endpoint still reported `queued`, but job-level inspection showed the workflow had materially advanced into acquisition: `fetch (0)` and `fetch (1)` were both `in_progress` at step `Fetch raw 1H shard`; the other ten shard jobs remained queued by the intentional `max-parallel: 2` cap. In both active jobs the daily materializer artifact was downloaded and verified, and the shard fetcher compile/contract step had already passed before entering raw acquisition. No duplicate retry was launched.
 
 This is the missing-only retry in the only practical Yahoo form: each missing symbol is requested once and Yahoo returns its available 730d 1H chart; no non-missing symbol exists to exclude. The acceptance scope remains the emitted candidate-date pairs only. No threshold lowering, interpolation, candidate dropping, alias substitution, or return-aware provider choice is allowed.
 

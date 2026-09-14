@@ -1,12 +1,12 @@
 {
-  "version": 29,
+  "version": 30,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T21:43:47+09:00",
+  "updated_at_jst": "2026-09-14T22:01:30+09:00",
   "supervisor_last_scan": {
     "status": "WEAK_EARLY_2022_MODEL_PERIOD_AUDIT_COMPLETE_WARMUP_PRIMARY_CAUSE_REJECTED",
     "scanned_at_jst": "2026-09-14T21:15:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Weak+Early Round2 remains closed; no post-hoc gate retune. This :24 update advances only Core/Cloud forensic provenance."
+    "note": "Weak+Early Round2 remains closed; no post-hoc gate retune. This :48 update resolves the OSS Optuna cost0 implementation gap and collects new Consensus coordination-only commits."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -28,15 +28,15 @@
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
-      "last_seen_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
-      "last_processed_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
-      "last_processed_note": "NOCAP H2 diagnostic remains n37 mean +3.0295 median +0.3817 win 51.35 Top3-ex -0.5393; formal raw retry remains separate from promotion evidence."
+      "last_seen_sha": "4c202b164f28c0302ddc18cde6451779d08a108e",
+      "last_processed_sha": "4c202b164f28c0302ddc18cde6451779d08a108e",
+      "last_processed_note": "21:59 cross-lane collection processed two coordination-only commits (858847e8..., 4c202b16...). No model/threshold/price-arm/cooldown change. Formal V47 raw retry 34810592135 remains active/queued; no duplicate trigger; promotion evidence still blocked."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-      "last_processed_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-      "last_processed_note": "New Optuna discovery/performance remains fail-closed until cost0-only API/CLI/tests and isolated CI green."
+      "last_seen_sha": "098653c2238ccdd5418f7be821ff2237d775a112",
+      "last_processed_sha": "098653c2238ccdd5418f7be821ff2237d775a112",
+      "last_processed_note": "P0 Optuna cost0 contract/implementation mismatch resolved. API/CLI default to 0.0, nonzero cost fails closed, explicit rejection test added, isolated CI 34846417896 SUCCESS. Next: immutable completed-trial ledger/provenance before DSR consumption."
     }
   },
   "guardrails": [
@@ -84,13 +84,20 @@
       "daily_coverage_pass": true,
       "frozen_coverage_acceptance_pass": false,
       "formal_retry_run": 34810592135,
+      "formal_retry_status": "queued_active_matrix",
+      "observed_timeout_shards": [0, 1, 2, 3],
+      "observed_timeout_artifact_bytes_each": 166,
       "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393},
-      "promotion_evidence": false
+      "promotion_evidence": false,
+      "next_rule": "Do not duplicate-trigger while 34810592135 is active. After it ceases, inspect final artifacts then use the already-prepared 48-shard missing-only retry without changing frozen strategy/model/threshold/price-arm/cooldown contracts."
     },
     "oss_validation": {
-      "head": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-      "cost0_optuna_contract_status": "IMPLEMENTATION_GAP_BLOCKED",
-      "real_edinet_blocker": "external EDINET_API_KEY"
+      "head": "098653c2238ccdd5418f7be821ff2237d775a112",
+      "cost0_optuna_contract_status": "IMPLEMENTATION_VERIFIED_CI_GREEN",
+      "latest_ci_run": 34846417896,
+      "latest_ci_status": "success",
+      "real_edinet_blocker": "external EDINET_API_KEY",
+      "next_rule": "Bind PSR/DSR input to an immutable completed-trial ledger/provenance receipt; missing/extra/reordered/modified completed trials must fail closed."
     }
   },
   "core_worker_last_scan": {
@@ -102,10 +109,21 @@
     "new_backtest": false,
     "ranking_changed": false
   },
+  "oss_worker_last_scan": {
+    "scanned_at_jst": "2026-09-14T22:01:30+09:00",
+    "start_head": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
+    "end_head": "098653c2238ccdd5418f7be821ff2237d775a112",
+    "duplicate_sha_processed": false,
+    "cross_lane_consensus_processed": true,
+    "cost0_gap_resolved": true,
+    "new_backtest": false,
+    "ranking_changed": false
+  },
   "next_global_actions": [
     "Phase-2: continue outcome-blind population/scarcity audit; do not create post-hoc gates from opened outcomes.",
-    "Consensus: formal raw acceptance must pass before promotion evidence.",
-    "OSS: fix Optuna API/CLI/tests to cost0-only before new discovery/performance.",
+    "Consensus: formal raw acceptance must pass before promotion evidence; do not duplicate-trigger active retry 34810592135.",
+    "OSS: bind PSR/DSR consumption to immutable completed-trial ledger/provenance receipt; keep all new discovery/performance cost0-only.",
+    "OSS/EDINET: real historical metadata/same-ZIP execution remains blocked on external EDINET_API_KEY; preserve preregistered no-replacement sampling and hash-chain rules.",
     "Core: keep rejected families closed; continue reproducibility/endpoint audit.",
     "Cloud: reopen exact replay only on genuinely contemporaneous identity-critical evidence; modern MTF surrogate code is explicitly excluded."
   ]

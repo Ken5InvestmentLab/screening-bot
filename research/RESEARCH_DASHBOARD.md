@@ -1,6 +1,6 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 06:34 JST
+Last updated: 2026-09-15 08:33 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
@@ -23,11 +23,12 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - Superseded run `34810592135`: completed/cancelled; do not duplicate-trigger.
 - Current authoritative run `34849054884`, trigger HEAD `7849ad975d1e0420e250ab4d5f411ce136f9d867`: **in progress / non-terminal**.
 - Configuration: 48 shards, max-parallel=2, frozen acceptance unchanged.
-- shards 0-3: workflow SUCCESS but **324/324 requested symbols HTTP 429, 0 ok, 0 raw rows**; artifacts 4 total.
-- At 06:34 JST there is **no new artifact** beyond shards 0-3.
-- shards **4 and 5 are in progress** at `Fetch raw 1H shard`; later matrix jobs remain queued.
+- shards 0-5: workflow SUCCESS but **486/486 requested symbols HTTP 429, 0 ok, 0 raw rows**; artifacts 6 total.
+- shard 4 receipt independently inspected: **81/81 `fetch_error,http_429`, 0 rows**.
+- shard 5 receipt independently inspected: **81/81 `fetch_error,http_429`, 0 rows**.
+- At 08:33 JST shards **6 and 7 are in progress** at `Fetch raw 1H shard`; later matrix jobs remain queued.
 - Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**. Zero-row retry data status: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
-- No interpolation, threshold lowering, strategy retune, or duplicate trigger.
+- No interpolation, threshold lowering, strategy retune, additional price-cap search, or duplicate trigger.
 - Frozen merge contract: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`.
 - After terminal state: enumerate receipts -> admit only genuinely observed rows -> provenance merge with preserved seed raw -> rerun unchanged frozen acceptance -> emit exact missing `(symbol,date)` pairs if still failing.
 
@@ -58,4 +59,4 @@ All figures are **cost 0%**, win = gross return > 0, endpoint next XTKS open -> 
 CAP1000_PIT H2: **UNOPENED**. 2026: **UNOPENED for selection/tuning**.
 
 ## Blocker / next action
-Formal raw acquisition remains blocked by Yahoo transport rate limiting. Continue the already-running pinned matrix without duplicate trigger. The next evidence-bearing event is either a non-zero raw artifact from shards 4/5 or terminal completion of run `34849054884`; only then proceed with the frozen provenance merge and formal acceptance rerun.
+Formal raw acquisition remains blocked by Yahoo transport rate limiting. Continue the already-running pinned matrix without duplicate trigger. The first six completed shards now independently confirm 486/486 HTTP 429 and zero usable rows. The next evidence-bearing event is either a non-zero raw artifact from shards 6/7 or terminal completion of run `34849054884`; only then proceed with the frozen provenance merge and formal acceptance rerun.

@@ -237,7 +237,16 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
         raise SystemExit(2)
 
-    result = verified_resolve_shadow_file(Path(args.shadow), Path(args.resolved), daily_rows, sessions)
+    result = verified_resolve_shadow_file(
+        Path(args.shadow),
+        Path(args.resolved),
+        daily_rows,
+        sessions,
+        daily_manifest_path=daily_manifest_path,
+        sessions_csv_path=sessions_csv,
+        sessions_manifest_path=sessions_manifest,
+        require_provenance_chain=True,
+    )
     if result.get("resolved_written", False):
         receipt = build_resolution_receipt(
             freeze_manifest=freeze,

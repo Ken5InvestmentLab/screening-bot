@@ -19,7 +19,9 @@
     "candidate_universe": "Supplied by a separate preregistered family spec.",
     "target_threshold": "Fixed outside Optuna.",
     "top_n": "Fixed outside Optuna.",
-    "round_trip_cost": "Fixed outside Optuna.",
+    "round_trip_cost_pct_points": 0.0,
+    "cost_policy": "All new discovery/performance metrics use transaction cost 0%. Historical 0.5%/1% outputs are legacy evidence only and may not rank candidates or determine GO/NO-GO.",
+    "win_definition": "gross return > 0",
     "entry_exit_semantics": "Canonical next official XTKS session open to fifth official XTKS session close for comparable 5BD research."
   },
   "search_v1": {
@@ -35,7 +37,7 @@
         "scale": "log"
       }
     },
-    "objective": "Purged walk-forward out-of-sample per-active-date Sharpe of the fixed top-N cohort return stream.",
+    "objective": "Purged walk-forward out-of-sample per-active-date Sharpe of the fixed top-N cohort gross-return stream at transaction cost 0%.",
     "walk_forward": "Date-grouped expanding walk-forward using purgedcv; label-horizon overlap must audit to zero."
   },
   "multiple_testing_evidence": {

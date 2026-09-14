@@ -1,7 +1,7 @@
 {
-  "version": 33,
+  "version": 34,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T22:26:00+09:00",
+  "updated_at_jst": "2026-09-14T22:49:00+09:00",
   "supervisor_last_scan": {
     "status": "V47_48_SHARD_RETRY_TRIGGERED_WEAK_EARLY_ROUND2_CLOSED",
     "scanned_at_jst": "2026-09-14T22:26:00+09:00",
@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
-      "last_processed_sha": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
-      "last_processed_note": "21:43 forensic provenance audit completed. Current tree contains no serialized/notebook artifact able to restore the old Cloud model; mtf_monster_model.py lineage starts 2026-09-11 and is not contemporaneous evidence. Cloud exact replay remains unavailable; no retune/backtest."
+      "last_seen_sha": "c41cb8978b806c194f1b380331cd28bb75e772c4",
+      "last_processed_sha": "c41cb8978b806c194f1b380331cd28bb75e772c4",
+      "last_processed_note": "22:47 outcome-blind endpoint reproducibility audit completed. Existing evaluator is cost0-only but maps endpoints from observed raw dates and first/last available raw rows; pinned XTKS calendar plus endpoint-row completeness/fail-closed provenance must be frozen before any new canonical relabeling. No backtest, no rejected-family reopen, Cloud exact replay still unavailable."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -81,12 +81,13 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "latest_audit_head": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
+      "latest_audit_head": "c41cb8978b806c194f1b380331cd28bb75e772c4",
       "latest_action_run": 34799307163,
       "latest_action_status": "success",
-      "new_forensic_log": "research/tentei_cloud/CORE_CLOUD_FORENSIC_LOG_20260914_2143.md",
+      "new_forensic_log": "research/tentei_cloud/CORE_ENDPOINT_REPRO_AUDIT_20260914_2247.md",
       "evidence_surface_finding": "No .pkl/.pickle/.joblib/.onnx/.pt/.pth/.sav/.ipynb in current branch tree. mtf_monster_model.py first appears 2026-09-11 at 0de654b4..., so it is modern research code and not an exact historical replay source.",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous identity-critical evidence appears; no model-family guessing or portability replay. Continue cross-lane reproducibility/endpoint audit without reopening rejected families."
+      "endpoint_repro_audit": "Observed raw-date calendar and first/last-available endpoint reconstruction are not sufficient provenance for canonical comparability; pin XTKS calendar and fail closed on incomplete required endpoint rows before any new relabeling.",
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous identity-critical evidence appears; no model-family guessing or portability replay. Freeze data-only XTKS calendar/endpoint completeness receipt before any new canonical relabeling; do not reopen rejected families."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
@@ -112,11 +113,11 @@
     }
   },
   "core_worker_last_scan": {
-    "scanned_at_jst": "2026-09-14T21:43:47+09:00",
-    "start_head": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
-    "end_head": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
+    "scanned_at_jst": "2026-09-14T22:49:00+09:00",
+    "start_head": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
+    "end_head": "c41cb8978b806c194f1b380331cd28bb75e772c4",
     "duplicate_sha_processed": false,
-    "cloud_stage": "EXACT_REPRO_UNAVAILABLE_PRIMARY_EVIDENCE_PROVENANCE_AUDITED",
+    "cloud_stage": "EXACT_REPRO_UNAVAILABLE_ENDPOINT_PROVENANCE_AUDIT",
     "new_backtest": false,
     "ranking_changed": false
   },
@@ -147,7 +148,7 @@
     "Consensus: run 34849054884 is the active 48-shard retry; do not duplicate-trigger. On completion inspect artifacts and rerun frozen acceptance before any promotion evidence.",
     "OSS: bind PSR/DSR consumption to immutable completed-trial ledger/provenance receipt; keep all new discovery/performance cost0-only.",
     "OSS/EDINET: real historical metadata/same-ZIP execution remains blocked on external EDINET_API_KEY; preserve preregistered no-replacement sampling and hash-chain rules.",
-    "Core: keep rejected families closed; continue reproducibility/endpoint audit.",
+    "Core: rejected families stay closed; freeze pinned XTKS calendar plus endpoint-row completeness/fail-closed provenance before any new canonical relabeling.",
     "Cloud: reopen exact replay only on genuinely contemporaneous identity-critical evidence; modern MTF surrogate code is explicitly excluded."
   ]
 }

@@ -30,11 +30,13 @@ Primary forward return:
 - entry = first executable intraday bar OPEN strictly after the completed Core signal session;
 - exit = existing 5-business-day target-date close.
 
-Also record:
-- gross return;
-- net return under a fixed **0.5% round-trip cost stress assumption**.
+Current cost policy for all newly computed evidence:
+- transaction cost = **0% only**;
+- win = gross return > 0;
+- do not newly compute 0.5% / 1% cost-stressed variants;
+- previously produced costed outputs may be preserved as legacy evidence but must not drive new ranking or GO/NO-GO decisions.
 
-The 0.5% value is a stress scenario, not a claim about actual execution cost. Actual observed slippage should be stored separately when available.
+Actual observed slippage may be stored separately as execution metadata when available, but it is not to be subtracted from the research-return series unless a later user-approved contract explicitly replaces this frozen policy prospectively.
 
 ## Eligibility
 
@@ -74,16 +76,17 @@ At each checkpoint report all of:
 - active weeks;
 - gross mean;
 - gross median;
-- win rate;
+- win rate = gross return > 0;
 - >= +10%;
 - >= +20%;
+- >= +50%;
 - <= -10%;
+- <= -20%;
 - top-1 / top-3 / top-5 winner-removed gross mean;
-- 0.5%-cost net mean;
-- 0.5%-cost net median;
 - whole-ISO-week cluster bootstrap P(mean > 0);
 - 95% week-cluster bootstrap interval for gross mean;
-- 95% week-cluster bootstrap interval for 0.5%-cost net mean;
+- monthly dependence;
+- ISO-week dependence;
 - maximum same-day signal count;
 - maximum concurrent 5BD position-slot demand.
 
@@ -96,8 +99,7 @@ At n>=30 and >=8 active weeks:
 **CONTINUE / NO PROMOTION** unless all are true:
 - gross mean > 0;
 - top-3-removed gross mean > 0;
-- <= -10% rate <= 7.5%;
-- 0.5%-cost net mean > 0.
+- <= -10% rate <= 7.5%.
 
 Passing the early checkpoint only means the Core thesis remains alive. It does not authorize production promotion.
 
@@ -107,14 +109,14 @@ If any condition fails, continue collecting to the main checkpoint unless there 
 
 At n>=60 and >=16 active weeks, Core qualifies as a forward-supported steady lane only if ALL are true:
 
-1. **0.5%-cost net mean > 0**.
+1. **gross mean > 0**.
 2. **gross top-5-winner-removed mean > 0**.
 3. **<= -10% rate <= 5%**.
 4. **week-cluster bootstrap P(gross mean > 0) >= 90%**.
 5. No provenance / PIT / executable-entry coverage failure is unresolved.
 
 Interpretation:
-- net-positive mean protects against an edge too small to survive realistic friction stress;
+- positive gross mean is the current frozen research-return requirement under the user-mandated cost0 policy;
 - top-5 removal protects against turning Core into a hidden Monster/tail lane;
 - <=-10% <=5% preserves the intended lower-downside role;
 - week-cluster probability guards against one short calendar pocket carrying the result.
@@ -124,10 +126,10 @@ Interpretation:
 Do not require:
 - gross mean >= historical 2026 +1.71%;
 - 95% bootstrap lower bound > 0;
-- median > 0 after the 0.5% cost stress;
-- a minimum >=20% tail rate.
+- a minimum >=20% tail rate;
+- any newly computed nonzero-cost metric.
 
-Those would over-anchor forward Core to one favorable historical block or incorrectly demand Monster-like behavior from the steady lane.
+Those would over-anchor forward Core to one favorable historical block, incorrectly demand Monster-like behavior from the steady lane, or violate the current cost0-only research contract.
 
 ## Failure interpretation
 
@@ -149,6 +151,8 @@ Final replacement-system comparison against current Stable★6/Sniper/Mega shoul
 
 ## Current status at freeze
 
-Historical reconstructed evidence supports Core as a promising steady lane, especially in 2026, but this contract explicitly treats that history as already-opened retrospective evidence.
+Historical reconstructed evidence is already-opened retrospective evidence and the current fixed Core has subsequently been rejected under the canonical endpoint. This contract remains only as the rule for any genuinely future Core observation stream that retains the frozen signal definition.
 
-**Forward status at freeze: NOT YET QUALIFIED.**
+**Forward status: NOT YET QUALIFIED.**
+
+Production modified: false.

@@ -1,0 +1,41 @@
+{
+  "contract_version": 1,
+  "status": "XTKS_CALENDAR_BYTES_PINNED_PERFORMANCE_UNOPENED",
+  "artifact_path": "research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv",
+  "artifact_sha256": "58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b",
+  "calendar": "XTKS",
+  "calendar_generator": {
+    "package": "exchange_calendars",
+    "version": "4.13.1",
+    "method": "get_calendar('XTKS').sessions_in_range('2022-01-01','2026-12-31')",
+    "note": "Generation source is independent of preserved price-row presence; the committed CSV bytes + SHA are the formal pinned calendar."
+  },
+  "coverage": {
+    "first_session": "2022-01-04",
+    "last_session": "2026-12-30",
+    "session_count": 1220
+  },
+  "endpoint_contract": {
+    "signal_session": "must be an exact pinned XTKS session",
+    "entry_session": "next pinned XTKS session strictly after signal_session",
+    "exit_session": "fifth pinned XTKS session counting entry_session as session 1",
+    "entry_price_column": "open",
+    "exit_price_column": "close"
+  },
+  "source_binding": {
+    "daily_csv_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "daily_rows": 4061361,
+    "daily_min_date": "2022-01-04",
+    "daily_max_date": "2026-09-11",
+    "exact_header": ["date", "open", "high", "low", "close", "volume", "symbol"]
+  },
+  "selection_guardrails": {
+    "transaction_cost_pct": 0.0,
+    "win_definition": "gross_return > 0",
+    "performance_opened": false,
+    "threshold_retune_after_open": false,
+    "outcome_2026": "REPORT_ROBUSTNESS_ONLY",
+    "candidate_tiebreak": "symbol ascending because bound source header has no tail_p"
+  },
+  "next_required_step": "derive A1/B1/E1 picks causally, bind pick ledger SHA, require every pick to have next-open and fifth-close rows, emit endpoint completeness receipt before performance evaluation"
+}

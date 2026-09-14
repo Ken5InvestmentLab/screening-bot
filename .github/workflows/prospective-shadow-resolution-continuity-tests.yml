@@ -11,6 +11,10 @@ on:
       - 'tvfree_screener/batch02/test_prospective_shadow_verified_resolve.py'
       - 'tvfree_screener/batch02/prospective_shadow_cli.py'
       - 'tvfree_screener/batch02/test_prospective_shadow_cli.py'
+      - 'tvfree_screener/batch02/prospective_shadow_session_calendar_guard.py'
+      - 'tvfree_screener/batch02/test_prospective_shadow_session_calendar_guard.py'
+      - 'tvfree_screener/batch01/reference/xtks_sessions.csv'
+      - 'tvfree_screener/batch01/reference/xtks_sessions.manifest.json'
       - '.github/workflows/prospective-shadow-resolution-continuity-tests.yml'
   workflow_dispatch:
 
@@ -29,4 +33,4 @@ jobs:
         working-directory: tvfree_screener/batch02
         env:
           PYTHONPATH: ${{ github.workspace }}
-        run: python -m unittest -v test_prospective_shadow_resolution_continuity_guard.py test_prospective_shadow_verified_resolve.py test_prospective_shadow_cli.py
+        run: python -m unittest -v test_prospective_shadow_resolution_continuity_guard.py test_prospective_shadow_verified_resolve.py test_prospective_shadow_session_calendar_guard.py test_prospective_shadow_cli.py

@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import tvfree_screener.optuna_discovery as optuna_discovery
 from tvfree_screener.optuna_discovery import run_study, validate_discovery_frame
+from tvfree_screener.optuna_trial_ledger import trial_sharpes_from_receipt as real_trial_sharpes_from_receipt
 
 
 def _synthetic_panel() -> pd.DataFrame:
@@ -17,17 +19,15 @@ def _synthetic_panel() -> pd.DataFrame:
             f2 = rng.normal()
             noise = rng.normal(scale=0.025)
             ret = 0.018 * f1 - 0.006 * f2 + noise
-            rows.append(
-                {
-                    "date": day,
-                    "exit_date": day + pd.offsets.BDay(5),
-                    "symbol": f"{1000 + symbol_index}",
-                    "f1": f1,
-                    "f2": f2,
-                    "endpoint_gross_return": ret,
-                    "endpoint_label_resolved": True,
-                }
-            )
+            rows.append({
+                "date": day,
+                "exit_date": day + pd.offsets.BDay(5),
+                "symbol": f"{1000 + symbol_index}",
+                "f1": f1,
+                "f2": f2,
+                "endpoint_gross_return": ret,
+                "endpoint_label_resolved": True,
+            })
     return pd.DataFrame(rows)
 
 
@@ -42,7 +42,6 @@ def test_optuna_discovery_runs_only_on_locked_discovery_period() -> None:
         top_n=1,
         round_trip_cost=0.0,
     )
-
     assert summary["status"] == "DISCOVERY_ONLY_NOT_PROMOTED"
     assert summary["guardrails"]["uses_2024_for_selection"] is False
     assert summary["guardrails"]["promotion_authorized"] is False
@@ -54,6 +53,36 @@ def test_optuna_discovery_runs_only_on_locked_discovery_period() -> None:
     assert len(trials) == 8
     assert summary["best_trial"]["C"] > 0
     assert all(row["temporal_leakage_free"] for row in summary["walk_forward"]["audit"])
+
+    ledger = summary["completed_trial_ledger"]
+    receipt = ledger["receipt"]
+    assert ledger["dsr_input_source"] == "trial_sharpes_from_receipt"
+    assert receipt["completed_trial_count"] == summary["search"]["n_trials_completed"]
+    assert receipt["completed_trial_numbers"] == sorted(receipt["completed_trial_numbers"])
+    assert len(receipt["ledger_sha256"]) == 64
+    assert len(ledger["rows"]) == receipt["completed_trial_count"]
+
+
+def test_run_study_routes_selection_bias_through_receipt_validator(monkeypatch: pytest.MonkeyPatch) -> None:
+    panel = _synthetic_panel()
+    calls = {"count": 0}
+
+    def tracked(rows, receipt):
+        calls["count"] += 1
+        return real_trial_sharpes_from_receipt(rows, receipt)
+
+    monkeypatch.setattr(optuna_discovery, "trial_sharpes_from_receipt", tracked)
+    summary, _ = run_study(
+        panel,
+        feature_columns=["f1", "f2"],
+        n_splits=3,
+        test_dates=15,
+        n_trials=4,
+        top_n=1,
+        round_trip_cost=0.0,
+    )
+    assert calls["count"] == 1
+    assert summary["completed_trial_ledger"]["dsr_input_source"] == "trial_sharpes_from_receipt"
 
 
 def test_optuna_discovery_rejects_nonzero_transaction_cost() -> None:
@@ -72,29 +101,19 @@ def test_optuna_discovery_rejects_nonzero_transaction_cost() -> None:
 
 def test_optuna_discovery_rejects_2024_candidate_or_label() -> None:
     panel = _synthetic_panel()
-
     bad_candidate = panel.copy()
     bad_candidate.loc[0, "date"] = pd.Timestamp("2024-01-05")
     with pytest.raises(ValueError, match="candidate dates"):
-        validate_discovery_frame(
-            bad_candidate,
-            feature_columns=["f1", "f2"],
-        )
+        validate_discovery_frame(bad_candidate, feature_columns=["f1", "f2"])
 
     bad_label = panel.copy()
     bad_label.loc[0, "exit_date"] = pd.Timestamp("2024-01-05")
     with pytest.raises(ValueError, match="labels must resolve"):
-        validate_discovery_frame(
-            bad_label,
-            feature_columns=["f1", "f2"],
-        )
+        validate_discovery_frame(bad_label, feature_columns=["f1", "f2"])
 
 
 def test_optuna_discovery_rejects_unresolved_rows() -> None:
     panel = _synthetic_panel()
     panel.loc[0, "endpoint_label_resolved"] = False
     with pytest.raises(ValueError, match="unresolved endpoint"):
-        validate_discovery_frame(
-            panel,
-            feature_columns=["f1", "f2"],
-        )
+        validate_discovery_frame(panel, feature_columns=["f1", "f2"])

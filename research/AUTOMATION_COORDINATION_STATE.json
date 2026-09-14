@@ -1,12 +1,12 @@
 {
   "version": 3,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T09:13:00+09:00",
+  "updated_at_jst": "2026-09-14T09:25:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
     "coordination_contract_reconciled": true,
-    "note": "Canonical/Event worker advanced only the frozen outcome-blind V20 raw repair. JPX/TSE public listing documents independently verify the four future-code query identities 463A->8940, 464A->5595, 543A->7205, 547A->8515. A dedicated repair script/workflow now refetches only missing canonical-active symbol/date pairs, normalizes rows back to the exact frozen output identity, and reruns the unchanged raw acceptance verifier. Repair run 34791959735 is in_progress; H1/H2 outcomes remain unopened."
+    "note": "Core :24 worker found no unprocessed Core workflow/HEAD delta, so it did not duplicate prior experiments. It advanced reproducibility instead by freezing a Core PIT daily-volume migration contract aligned with the shared clean-PIT data semantics: historical Yahoo daily volume must be restored to point-in-time share counts for absolute prior-day gates and daily-volume ratios, while raw Yahoo 1H volume remains unchanged. Existing fixed Core and Failed-Breakdown Reclaim rejection decisions remain closed; locked reclaim H2 remains unopened."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -22,9 +22,9 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "dbdf167efabd9c1eabfaf4cc3676ec4726d8863d",
-      "last_processed_sha": "dbdf167efabd9c1eabfaf4cc3676ec4726d8863d",
-      "last_processed_note": "Processed four commits after 47c64234. Workflow 34788539483/event-long-overlay completed successfully, but it is not canonical Core evidence: 2025 canonical event rows have blank date keys so 0 rows join daily context, while 2026 matured EVENT_ONLY n=35 is report-only and the sole Deep overlay is n=1 (+72.92%), unusable for selection. Disposition is DIAGNOSTIC_ONLY_NOT_CORE_EVIDENCE in CORE_EVENT_LONG_OVERLAY_DISPOSITION_20260914.md. PIT daily-volume leakage blocker was also inherited; do not tune around it with returns. Current fixed Core and Failed-Breakdown Reclaim remain REJECT and locked H2 remains unopened."
+      "last_seen_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
+      "last_processed_sha": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
+      "last_processed_note": "No new Core workflow/HEAD delta existed after dbdf167e, so no rejected family was rerun. Added CORE_PIT_DAILY_VOLUME_MIGRATION_AUDIT_20260914.md to freeze future Core data semantics: PIT daily volume = provider-adjusted historical daily volume divided by cumulative future split factor; absolute prior-day volume gates and daily-volume ratios must use PIT daily volume; raw Yahoo 1H volume and intraday volume gates/ratios remain unchanged. Existing fixed Core and Failed-Breakdown Reclaim remain REJECT; this data-lineage issue is not a rescue/retune permission and locked H2 remains unopened."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -103,7 +103,9 @@
       "event_long_overlay_run": 34788539483,
       "event_long_overlay_decision": "DIAGNOSTIC_ONLY_NOT_CORE_EVIDENCE",
       "event_long_overlay_note": "2025 event rows lack date join keys; 2026 report-only EVENT_ONLY n=35 mean -15.53%, Deep overlap n=1 +72.92% cannot be selection evidence",
-      "next_rule": "For canonical Core, no adjacent retune; audit/reproducibility only unless a genuinely different low-DOF 5BD mechanism is preregistered. Do not repair Canonical event history inside Core. Historical absolute daily-volume-gated evidence is provisional until PIT daily-volume semantics are corrected. Keep separate 40BD role work out of the canonical 5BD final ranking."
+      "pit_daily_volume_audit_commit": "2429a6f9dcd9cd1f73b501efe510bb29fc0cc33f",
+      "pit_daily_volume_policy": "PIT daily volume for absolute daily gates/ratios; raw Yahoo 1H volume unchanged for intraday gates/ratios",
+      "next_rule": "For canonical Core, no adjacent retune; audit/reproducibility only unless a genuinely different low-DOF 5BD mechanism is preregistered. Any future mechanism must pin PIT daily-volume construction before outcomes. Do not repair Canonical event history inside Core. Keep separate 40BD role work out of the canonical 5BD final ranking."
     },
     "consensus_v44": {
       "run_id": 34767664140,

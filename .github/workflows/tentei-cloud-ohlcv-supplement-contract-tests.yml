@@ -7,9 +7,11 @@ on:
     paths:
       - 'research/tentei_cloud/ohlcv_supplement.py'
       - 'research/tentei_cloud/missing_inventory_runner.py'
+      - 'research/tentei_cloud/raw1h_artifact_manifest.py'
       - 'research/tentei_cloud/test_ohlcv_supplement.py'
       - 'research/tentei_cloud/test_missing_inventory.py'
       - 'research/tentei_cloud/test_missing_inventory_runner.py'
+      - 'research/tentei_cloud/test_raw1h_artifact_manifest.py'
       - 'research/tentei_cloud/OHLCV_SUPPLEMENT_SOURCE_POLICY_20260915.json'
       - '.github/workflows/tentei-cloud-ohlcv-supplement-contract-tests.yml'
   workflow_dispatch:

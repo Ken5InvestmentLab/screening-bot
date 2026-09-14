@@ -85,10 +85,10 @@ def main():
         {"symbol":"9999","date":"2025-04-01","timestamp":pd.Timestamp("2025-04-01 13:00",tz="Asia/Tokyo"),"open":93.0,"high":95.0,"low":92.0,"close":94.0,"volume":9000},
     ])
     sessions=pd.DataFrame([
-        {"symbol":"9999","date":"2025-03-31","session":"AM"},
-        {"symbol":"9999","date":"2025-03-31","session":"PM"},
-        {"symbol":"9999","date":"2025-04-01","session":"AM"},
-        {"symbol":"9999","date":"2025-04-01","session":"PM"},
+        {"symbol":"9999","date":"2025-03-31","session":"AM","close":905.0},
+        {"symbol":"9999","date":"2025-03-31","session":"PM","close":915.0},
+        {"symbol":"9999","date":"2025-04-01","session":"AM","close":93.0},
+        {"symbol":"9999","date":"2025-04-01","session":"PM","close":94.0},
     ])
     enriched,dates=recon.add_daily_context(sessions,raw)
     apr1=enriched[enriched["date"]=="2025-04-01"].iloc[0]

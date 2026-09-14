@@ -73,10 +73,15 @@ def build_endpoint_completeness_receipt(
 
 
 def write_immutable_endpoint_completeness_receipt(path: Path, receipt: Mapping) -> None:
-    """Create exactly once; never overwrite an earlier completeness decision."""
+    """Create once. Exact replay is idempotent; conflicting overwrite is forbidden."""
+    payload = _canonical_bytes(dict(receipt))
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():
+        if path.read_bytes() == payload:
+            return
+        raise FileExistsError(f"conflicting endpoint completeness receipt already exists: {path}")
     with path.open("xb") as f:
-        f.write(_canonical_bytes(dict(receipt)))
+        f.write(payload)
 
 
 def verified_resolve_shadow_file(
@@ -119,8 +124,13 @@ def verified_resolve_shadow_file(
         sessions=session_list,
         completeness=completeness,
     )
-    if completeness_receipt_path is not None:
-        write_immutable_endpoint_completeness_receipt(completeness_receipt_path, completeness_receipt)
+    if completeness_receipt_path is None:
+        receipt_dir = output_path.parent / ".prospective_shadow_receipts"
+        completeness_receipt_path = receipt_dir / (
+            f"{output_path.name}.endpoint-completeness."
+            f"{completeness_receipt['receipt_sha256']}.json"
+        )
+    write_immutable_endpoint_completeness_receipt(completeness_receipt_path, completeness_receipt)
 
     if not completeness.get("endpoint_completeness_valid", False):
         return {
@@ -128,12 +138,13 @@ def verified_resolve_shadow_file(
             "decision": "BLOCK_ENDPOINT_COMPLETENESS_FAILURE",
             "endpoint_completeness": completeness,
             "endpoint_completeness_receipt_sha256": completeness_receipt["receipt_sha256"],
-            "endpoint_completeness_receipt_path": None if completeness_receipt_path is None else str(completeness_receipt_path),
+            "endpoint_completeness_receipt_path": str(completeness_receipt_path),
             "output_sha256_before": before_sha,
             "output_sha256_after": _sha256(output_path),
             "integrity": {
                 "endpoint_completeness_checked_before_resolution": True,
-                "completeness_receipt_emitted_before_resolved_write": completeness_receipt_path is not None,
+                "completeness_receipt_emitted_before_resolved_write": True,
+                "completeness_receipts_append_only": True,
                 "resolved_history_preserved_on_failure": True,
                 "strategy_outcomes_opened_by_completeness_gate": False,
                 "production_modified": False,
@@ -155,13 +166,14 @@ def verified_resolve_shadow_file(
                 "continuity": continuity,
                 "endpoint_completeness": completeness,
                 "endpoint_completeness_receipt_sha256": completeness_receipt["receipt_sha256"],
-                "endpoint_completeness_receipt_path": None if completeness_receipt_path is None else str(completeness_receipt_path),
+                "endpoint_completeness_receipt_path": str(completeness_receipt_path),
                 "output_sha256_before": before_sha,
                 "output_sha256_after": _sha256(output_path),
                 "integrity": {
                     "staged_before_replace": True,
                     "endpoint_completeness_checked_before_resolution": True,
-                    "completeness_receipt_emitted_before_resolved_write": completeness_receipt_path is not None,
+                    "completeness_receipt_emitted_before_resolved_write": True,
+                    "completeness_receipts_append_only": True,
                     "resolved_history_preserved_on_failure": True,
                     "production_modified": False,
                 },
@@ -177,13 +189,14 @@ def verified_resolve_shadow_file(
         "continuity": continuity,
         "endpoint_completeness": completeness,
         "endpoint_completeness_receipt_sha256": completeness_receipt["receipt_sha256"],
-        "endpoint_completeness_receipt_path": None if completeness_receipt_path is None else str(completeness_receipt_path),
+        "endpoint_completeness_receipt_path": str(completeness_receipt_path),
         "output_sha256_before": before_sha,
         "output_sha256_after": after_sha,
         "integrity": {
             "staged_before_replace": True,
             "endpoint_completeness_checked_before_resolution": True,
-            "completeness_receipt_emitted_before_resolved_write": completeness_receipt_path is not None,
+            "completeness_receipt_emitted_before_resolved_write": True,
+            "completeness_receipts_append_only": True,
             "continuity_required_before_replace": True,
             "resolved_rows_immutable_after_first_resolution": True,
             "production_modified": False,

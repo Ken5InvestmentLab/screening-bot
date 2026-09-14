@@ -1,12 +1,12 @@
 {
-  "version": 51,
+  "version": 52,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T03:56:00+09:00",
+  "updated_at_jst": "2026-09-15T03:58:00+09:00",
   "supervisor_last_scan": {
     "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
     "scanned_at_jst": "2026-09-15T03:03:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Supervisor absorbed new Parallel Wave-1 schema-freeze handoff c7d5e0b0 and earlier Consensus coordination head. :48 follow-up subsequently absorbed newer Canonical provenance-contract head and Consensus dashboard-only head, and advanced OSS receipt-bound DSR integration."
+    "note": "Supervisor absorbed Parallel Wave-1 schema-freeze handoff and earlier Consensus coordination head. :48 follow-up absorbed newer Canonical provenance-contract head and Consensus dashboard-only head, then completed and verified OSS receipt-bound DSR integration."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -40,7 +40,7 @@
       "last_seen_sha": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
       "last_processed_sha": "8270678462bcbb2a10929ab5db07fac892ebc5b2",
       "task_state": "ACTIVE",
-      "last_processed_note": "run_study now builds immutable completed-trial ledger/receipt, validates via trial_sharpes_from_receipt, and only then feeds exact Sharpe vector into selection_bias_summary. Integration CI 34883481600 SUCCESS. Contract updated; contract-only rerun 34883717045 was in progress at state write. No strategy outcome opened."
+      "last_processed_note": "run_study builds immutable completed-trial ledger/receipt, validates via trial_sharpes_from_receipt, and only then feeds exact Sharpe vector into selection_bias_summary. Integration CI 34883481600 SUCCESS and contract rerun 34883717045 SUCCESS. No strategy outcome opened."
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
@@ -136,7 +136,7 @@
       "binding_ci_run": 34883481600,
       "binding_ci_status": "success",
       "contract_rerun": 34883717045,
-      "contract_rerun_status": "in_progress",
+      "contract_rerun_status": "success",
       "performance_opened": false
     },
     "edinet_same_zip": {
@@ -150,7 +150,7 @@
     "Canonical/Shadow: implement the newly frozen full endpoint provenance hash chain outcome-blind.",
     "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",
     "Core: freeze real XTKS/raw-vendor endpoint manifest and wire canonical evaluator to fail-closed provenance primitive before recomputation.",
-    "OSS: collect contract-only CI 34883717045; receipt-bound DSR implementation itself is already verified by 34883481600. Then move to the next outcome-blind validation control instead of repeating this task.",
+    "OSS: receipt-bound DSR control is complete and CI-green. Move to the next outcome-blind validation control instead of repeating this task.",
     "Cloud exact forensic: keep out of active work unless new contemporaneous identity-critical evidence appears.",
     "V20: keep closed/deprioritized; do not spend worker cycles unless genuinely new evidence changes the premise."
   ]

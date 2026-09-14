@@ -1,13 +1,12 @@
 {
-  "version": 28,
+  "version": 29,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T21:22:50+09:00",
+  "updated_at_jst": "2026-09-14T21:43:47+09:00",
   "supervisor_last_scan": {
     "status": "WEAK_EARLY_2022_MODEL_PERIOD_AUDIT_COMPLETE_WARMUP_PRIMARY_CAUSE_REJECTED",
     "scanned_at_jst": "2026-09-14T21:15:00+09:00",
-    "branch_heads_changed_since_previous_state": false,
     "coordination_contract_reconciled": true,
-    "note": "All four active research lane HEADs unchanged from v26 and no processed SHA was duplicated. Weak+Early frozen 2022 reconstruction was revalidated against authoritative aggregate metrics and decomposed by model_period. Even after training exceeds 100k rows, DUAL Sep-Dec n13 mean +9.75% but median -0.39%, win 46.15%, Top3-ex -6.43%; G3 n11 mean +13.67%, median -0.39%, win 45.45%, Top3-ex -5.07%. December remains weak despite 189,183 training rows / 541 positives. Simple warm-up is rejected as the primary explanation. Artifact provenance corrected: artifact 10264205130 belongs to run 34599959356, not 34545440155. Round2 remains closed."
+    "note": "Weak+Early Round2 remains closed; no post-hoc gate retune. This :24 update advances only Core/Cloud forensic provenance."
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
@@ -19,25 +18,25 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new SHA at 21:22. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
-      "last_processed_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
-      "last_processed_note": "No new SHA at 21:22. Core reject/Cloud exact replay unavailable and cost0-only contract hardening remain current."
+      "last_seen_sha": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
+      "last_processed_sha": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
+      "last_processed_note": "21:43 forensic provenance audit completed. Current tree contains no serialized/notebook artifact able to restore the old Cloud model; mtf_monster_model.py lineage starts 2026-09-11 and is not contemporaneous evidence. Cloud exact replay remains unavailable; no retune/backtest."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
       "last_processed_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
-      "last_processed_note": "No new SHA at 21:22. NOCAP H2 diagnostic remains n37 mean +3.0295 median +0.3817 win 51.35 Top3-ex -0.5393; formal raw retry still active; no retune."
+      "last_processed_note": "NOCAP H2 diagnostic remains n37 mean +3.0295 median +0.3817 win 51.35 Top3-ex -0.5393; formal raw retry remains separate from promotion evidence."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
       "last_processed_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-      "last_processed_note": "No new SHA at 21:22. New Optuna discovery/performance remains fail-closed until cost0-only API/CLI/tests and isolated CI green."
+      "last_processed_note": "New Optuna discovery/performance remains fail-closed until cost0-only API/CLI/tests and isolated CI green."
     }
   },
   "guardrails": [
@@ -45,104 +44,26 @@
     "2026 outcome is report/robustness-only, never tuning/selection input.",
     "Canonical comparable endpoint is next XTKS session open to fifth XTKS session close.",
     "All new backtests/diagnostics/comparisons use transaction cost 0%; existing costed outputs are legacy evidence only.",
-    "4H/intraday-led final scoring; daily is context/label/repair/fallback only.",
-    "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning.",
-    "Consensus V47 promotion path is NOCAP vs CAP1000_PIT only after clean PIT data acceptance; no price-cap grid search.",
-    "Midterm diagnostics may bypass formal coverage only under explicit diagnostic labeling; opened H1/H2 periods are no longer untouched and may not drive same-family retuning."
+    "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning."
   ],
-  "canonical_worker_last_scan": {
-    "scanned_at_jst": "2026-09-14T21:22:50+09:00",
-    "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-    "duplicate_sha_processed": false,
-    "v20_status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
-    "v47_h2_diagnostic_run": 34832358609,
-    "v47_h2_diagnostic_conclusion": "success",
-    "v47_formal_retry_run": 34810592135,
-    "v47_formal_retry_job_state": "fetch4_fetch5_in_progress_fetch0_fetch1_fetch2_fetch3_cancelled_remaining_queued",
-    "action": "No duplicate trigger, no new backtest, no retune. Continue formal retry observation until termination, then exact merge+acceptance only."
-  },
   "workflow_watch": {
     "weak_early_phase2": {
       "status": "FRESH_2022_FAILED_MODEL_PERIOD_AUDIT_COMPLETE_ROUND2_CLOSED",
-      "frozen_basis": {
-        "market_gate": "med_ret5 <= 0 on signal-date completed daily context",
-        "candidate_gate": "ret10 <= 0.5735294117647058",
-        "one_candidate_per_day": true,
-        "endpoint": "next XTKS open -> fifth XTKS close",
-        "cost_pct_points": 0.0
-      },
       "baseline_2023_2025": {
-        "body": {"n": 172, "mean_pct": 6.54, "median_pct": 0.99, "win_pct": 50.58, "top3_ex_pct": 4.6},
-        "volr20": {"n": 172, "mean_pct": 6.33, "median_pct": 1.06, "win_pct": 51.74, "top3_ex_pct": 4.38},
-        "mean_rank": {"n": 172, "mean_pct": 6.89, "median_pct": 1.45, "win_pct": 52.33, "top3_ex_pct": 4.95},
         "dual_top1": {"n": 140, "mean_pct": 7.17, "median_pct": 1.25, "win_pct": 52.14, "top3_ex_pct": 4.79},
         "dual_g3": {"n": 117, "mean_pct": 7.98, "median_pct": 1.74, "win_pct": 53.85, "top3_ex_pct": 5.14}
       },
-      "g3_rule": "med_ret1 >= -0.01; frozen; no retune",
-      "fresh_2022_source": {
-        "artifact_id": 10264205130,
-        "source_run": 34599959356,
-        "artifact_digest": "sha256:095e58986d45bda0092be1767e1b44a4791bf3c617179791d0c99c6d7d01bcb0",
-        "raw_2022_rows": 825735,
-        "generator": "unchanged V7/V9 full-45-feature monthly causal Tail",
-        "min_train_rows": 30000,
-        "first_computable_month": "2022-06",
-        "extreme_tail_rows_jun_dec": 89,
-        "weak_early_rows": 29,
-        "signal_dates": 23
-      },
       "fresh_2022": {
-        "body": {"n": 23, "mean_pct": 1.77, "median_pct": -6.37, "win_pct": 26.09, "top3_ex_pct": -7.51},
-        "volr20": {"n": 23, "mean_pct": 1.95, "median_pct": -6.19, "win_pct": 26.09, "top3_ex_pct": -7.31},
-        "mean_rank": {"n": 23, "mean_pct": 1.73, "median_pct": -6.37, "win_pct": 26.09, "top3_ex_pct": -7.56},
         "dual_top1": {"n": 21, "mean_pct": 2.62, "median_pct": -6.19, "win_pct": 28.57, "top3_ex_pct": -7.55},
         "dual_g3": {"n": 17, "mean_pct": 6.08, "median_pct": -6.0, "win_pct": 29.41, "top3_ex_pct": -6.26}
       },
-      "half_year_structural_audit": {
-        "report": "research/WEAK_EARLY_PHASE2_STRUCTURAL_AUDIT_20260914_1900.md",
-        "2023H2": {"candidates_per_day": 1.27, "single_candidate_pct": 81.82, "breadth_ma20": 0.4158, "breadth_ret1_pos": 0.3776, "range_pct": 0.0683, "volr5": 1.0288, "tail_p": 0.8202},
-        "2025H2": {"candidates_per_day": 1.79, "single_candidate_pct": 63.16, "breadth_ma20": 0.6327, "breadth_ret1_pos": 0.4989, "range_pct": 0.0733, "volr5": 1.1902, "tail_p": 0.8335},
-        "finding": "2023H2 resembles 2022 weak-market/scarcity structure; 2025H2 does not because breadth is strong. Candidate scarcity is partial but insufficient; tail_p does not separate bad halves.",
-        "round2": "NOT_ACTIVATED_NO_COMMON_CAUSAL_MARKET_GATE"
-      },
-      "model_maturity_audit": {
-        "report": "research/WEAK_EARLY_PHASE2_MODEL_MATURITY_AUDIT_20260914_2000.md",
-        "monthly": {
-          "2022-05": {"train_rows": 17532, "top025_pos": 48, "positive_rate_pct": 0.274, "computable": false},
-          "2022-06": {"train_rows": 40602, "top025_pos": 116, "positive_rate_pct": 0.286, "computable": true},
-          "2022-07": {"train_rows": 67528, "top025_pos": 198, "positive_rate_pct": 0.293, "computable": true},
-          "2022-08": {"train_rows": 91462, "top025_pos": 265, "positive_rate_pct": 0.29, "computable": true},
-          "2022-09": {"train_rows": 117301, "top025_pos": 335, "positive_rate_pct": 0.286, "computable": true},
-          "2022-10": {"train_rows": 141014, "top025_pos": 403, "positive_rate_pct": 0.286, "computable": true},
-          "2022-11": {"train_rows": 165509, "top025_pos": 475, "positive_rate_pct": 0.287, "computable": true},
-          "2022-12": {"train_rows": 189183, "top025_pos": 541, "positive_rate_pct": 0.286, "computable": true}
-        },
-        "finding": "Training grows from 40.6k/116 positives in June to 189.2k/541 in December with stable positive base rate; sample-size-only explanation is insufficient.",
-        "simple_warmup_hypothesis": "REJECTED_AS_PRIMARY_EXPLANATION",
-        "round2": "STAYS_CLOSED"
-      },
-      "model_period_audit": {
-        "report": "research/WEAK_EARLY_PHASE2_MODEL_PERIOD_AUDIT_20260914_2100.md",
-        "reconstruction_exact_match": true,
-        "early_dual": {"period": "2022-06..2022-08", "n": 8, "mean_pct": -8.95, "median_pct": -7.69, "win_pct": 0.0, "top3_ex_pct": -11.96},
-        "mature_dual": {"period": "2022-09..2022-12", "n": 13, "mean_pct": 9.75, "median_pct": -0.39, "win_pct": 46.15, "top3_ex_pct": -6.43},
-        "early_g3": {"period": "2022-07..2022-08", "n": 6, "mean_pct": -7.85, "median_pct": -7.69, "win_pct": 0.0, "top3_ex_pct": -11.67},
-        "mature_g3": {"period": "2022-09..2022-12", "n": 11, "mean_pct": 13.67, "median_pct": -0.39, "win_pct": 45.45, "top3_ex_pct": -5.07},
-        "december_dual": {"train_rows": 189183, "top025_pos": 541, "n": 8, "mean_pct": -4.0, "median_pct": -6.09, "win_pct": 25.0, "top3_ex_pct": -9.54},
-        "december_g3": {"train_rows": 189183, "top025_pos": 541, "n": 7, "mean_pct": -6.21, "median_pct": -6.19, "win_pct": 14.29, "top3_ex_pct": -10.43},
-        "finding": "Mature-period raw mean becomes positive only through a few large winners while median stays negative, win stays below 50%, and Top3-ex stays strongly negative. Persistent right-tail dependence and thin candidate population remain root-cause clues; do not turn candidate count into a post-hoc gate."
-      },
-      "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION",
-      "next_rule": "Run outcome-blind population/scarcity audit across 2022, 2023H2 and 2025H2 (candidate-count distribution, forced-choice share, symbol concentration, market structure). Do not create a new gate from opened outcome evidence. Round2 remains closed unless a qualitatively different market-level hypothesis is theoretically justified and preregistered before testing."
+      "decision": "NO_GO_ROOT_CAUSE_AUDIT_BEFORE_MORE_WIN_RATE_OPTIMIZATION"
     },
     "v20_session_impulse": {
       "status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
       "missing_active_symbol_dates": 734,
       "formal_promotion_eligible": false,
-      "cost_pct_points": 0.0,
-      "top1": {"n": 156, "mean_pct": -1.346, "median_pct": -2.627, "win_pct": 35.9, "top3_ex_pct": -2.669},
-      "top5": {"n": 705, "mean_pct": -0.538, "median_pct": -0.955, "win_pct": 41.84, "top3_ex_pct": -0.854},
-      "next_rule": "Do not retune. Repair exact gaps only if Consensus later yields accepted frozen raw."
+      "cost_pct_points": 0.0
     },
     "core": {
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
@@ -152,72 +73,40 @@
       "old_cloud_monster_historical_n": 63,
       "old_cloud_monster_historical_mean_5bd_pct": 9.86,
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
-      "latest_audit_head": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
-      "cost0_endpoint_contract_hardened_commit": "f1a1bd23d7e7286b9390d84ffaf18069043c53e8",
-      "cost0_forward_contract_hardened_commit": "c13231739c3fd28a2b52f1d274f21eff45b1a296",
-      "cost0_final_comparison_hardened_commit": "7e1ce41468c89df0c1cd1a43653ab0aefa48c876",
-      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous original evidence appears; no model-family guessing. Continue stale cost/endpoint contract audit without rerunning rejected families."
+      "latest_audit_head": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
+      "latest_action_run": 34799307163,
+      "latest_action_status": "success",
+      "new_forensic_log": "research/tentei_cloud/CORE_CLOUD_FORENSIC_LOG_20260914_2143.md",
+      "evidence_surface_finding": "No .pkl/.pickle/.joblib/.onnx/.pt/.pth/.sav/.ipynb in current branch tree. mtf_monster_model.py first appears 2026-09-11 at 0de654b4..., so it is modern research code and not an exact historical replay source.",
+      "next_rule": "Keep exact replay closed unless genuinely new contemporaneous identity-critical evidence appears; no model-family guessing or portability replay. Continue cross-lane reproducibility/endpoint audit without reopening rejected families."
     },
     "consensus_v47": {
       "daily_coverage_pass": true,
-      "coverage_acceptance_run": 34810234454,
       "frozen_coverage_acceptance_pass": false,
-      "missing_universe_retry_run": 34810592135,
-      "formal_retry_status": "ACTIVE_FETCH4_FETCH5_IN_PROGRESS_FETCH0_FETCH1_FETCH2_FETCH3_CANCELLED_AT_180M_REMAINING_QUEUED",
-      "future_retry_layout_commit": "7aa230a0434136cf33589a2fdda010113d57db62",
-      "future_retry_shards": 48,
-      "future_retry_max_parallel": 2,
-      "midterm_diagnostic_run": 34824194221,
-      "midterm_diagnostic_status": "SUCCESS_H1_OPENED_NOCAP_DIAGNOSTIC_LEADER",
-      "midterm_artifact_digest": "sha256:c46e90cba472c291a7db068ff1dadb0959764dcef97eb006dd6c3b918779f866",
-      "midterm_period": ["2025-01-06", "2025-06-30"],
-      "midterm_endpoint": "next official XTKS open -> D+5 close",
-      "midterm_cost_pct_points": 0.0,
-      "midterm_nocap": {"pair_coverage": 0.35389849026036824, "n": 50, "mean_pct": 0.10744972905193252, "median_pct": -2.726957498101118, "win_pct": 36.0, "hit10_pct": 16.0, "hit20_pct": 8.0, "hit50_pct": 0.0, "loss10_pct": 12.0, "loss20_pct": 2.0, "top1_ex_pct": -0.7566215444765227, "top3_ex_pct": -2.014754685550924},
-      "midterm_cap1000_pit": {"pair_coverage": 0.831124, "n": 60, "mean_pct": -1.1567950581879312, "median_pct": -0.4010670838729802, "win_pct": 46.666666666666664, "hit10_pct": 13.333333333333334, "hit20_pct": 0.0, "hit50_pct": 0.0, "loss10_pct": 11.666666666666666, "loss20_pct": 3.3333333333333335, "top1_ex_pct": -1.4639075726595594, "top3_ex_pct": -2.0600557608045857},
-      "diagnostic_h1_leader": "NOCAP",
-      "diagnostic_h1_opened": true,
-      "diagnostic_h1_untouched_holdout": false,
-      "diagnostic_h2_preopen_spec": "research/CONSENSUS_V47_MIDTERM_H2_DIAGNOSTIC_SPEC_20260914.json",
-      "diagnostic_h2_trigger_commit": "008fd87386f252cb5f7289ef4e303604d8f56c76",
-      "diagnostic_h2_run": 34832358609,
-      "diagnostic_h2_status": "SUCCESS_NOCAP_H2_OPENED_COST0_DIAGNOSTIC_ONLY",
-      "diagnostic_h2_artifact_digest": "sha256:2ceea9b8a20eed60b1e65e19963f1f2e51974a8f2e2b14ed315032ef4ffda8e9",
-      "diagnostic_h2_preopen_contract_passed": true,
-      "diagnostic_h2_arm": "NOCAP",
-      "diagnostic_h2_period": ["2025-07-01", "2025-12-30"],
-      "diagnostic_h2_pair_coverage_basis": 0.35389849026036824,
-      "diagnostic_h2": {"n": 37, "mean_pct": 3.0295471355036465, "median_pct": 0.3816793893129722, "win_pct": 51.35135135135135, "hit10_pct": 27.027027027027028, "hit20_pct": 16.216216216216218, "hit50_pct": 2.7027027027027026, "loss10_pct": 13.513513513513514, "loss20_pct": 2.7027027027027026, "top1_ex_pct": 1.5561615068124388, "top3_ex_pct": -0.5393286008098716, "unique_symbols": 10, "max_symbol_share": 0.35135135135135137},
-      "diagnostic_h2_opened": true,
-      "diagnostic_h2_untouched_holdout": false,
-      "diagnostic_cap1000_h2_opened": false,
-      "formal_features_opened": false,
-      "formal_h1_opened": false,
-      "formal_h2_opened": false,
-      "promotion_evidence": false,
-      "progress_pct_estimate": 72,
-      "next_rule": "Do not retune from opened H1/H2 and do not open CAP1000_PIT H2 as rescue. Continue observing unique retry 34810592135; after termination merge valid retry outputs with preserved seed and rerun exact frozen acceptance before any formal features/performance."
+      "formal_retry_run": 34810592135,
+      "midterm_nocap_h2": {"n": 37, "mean_pct": 3.0295, "median_pct": 0.3817, "win_pct": 51.35, "top3_ex_pct": -0.5393},
+      "promotion_evidence": false
     },
     "oss_validation": {
       "head": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-      "selected_zip_exact_byte_freeze_ci_run": 34819456421,
-      "selected_zip_exact_byte_freeze_ci_status": "success",
-      "selected_manifest_ci_run": 34827279060,
-      "selected_manifest_ci_status": "success",
       "cost0_optuna_contract_status": "IMPLEMENTATION_GAP_BLOCKED",
-      "cost0_optuna_contract_hardened": false,
-      "implementation_gap": "optuna_discovery.py still defaults/allows nonzero round_trip_cost; tests still exercise nonzero cost",
-      "next_rule": "Do not run new Optuna discovery/performance until API/CLI default to 0.0, reject any nonzero cost, tests assert it, and isolated OSS CI passes.",
       "real_edinet_blocker": "external EDINET_API_KEY"
     }
   },
+  "core_worker_last_scan": {
+    "scanned_at_jst": "2026-09-14T21:43:47+09:00",
+    "start_head": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
+    "end_head": "30ddf9120188fd62cc5d29d2ab235df58b4e94e0",
+    "duplicate_sha_processed": false,
+    "cloud_stage": "EXACT_REPRO_UNAVAILABLE_PRIMARY_EVIDENCE_PROVENANCE_AUDITED",
+    "new_backtest": false,
+    "ranking_changed": false
+  },
   "next_global_actions": [
-    "Phase-2: run outcome-blind population/scarcity audit across 2022, 2023H2 and 2025H2; do not retune or create a post-hoc gate from opened outcomes.",
-    "Consensus diagnostic: H1 and NOCAP H2 are opened diagnostic-only; no same-family retune and no CAP1000_PIT H2 rescue.",
-    "Consensus formal: continue observing unique retry 34810592135; fetch4/fetch5 are active while fetch0-3 are cancelled at the time boundary; after termination merge valid outputs with preserved seed and rerun exact acceptance before formal features.",
-    "OSS: fix Optuna API/CLI/tests to cost0-only and require isolated CI green before any new discovery/performance; then harden trial-ledger provenance.",
-    "Core: continue stale research cost/endpoint contract audit; do not rerun rejected families solely to regenerate metrics.",
-    "Cloud: remain closed unless genuinely new exact identity evidence appears.",
-    "OSS EDINET: real acquisition only when external key is available."
+    "Phase-2: continue outcome-blind population/scarcity audit; do not create post-hoc gates from opened outcomes.",
+    "Consensus: formal raw acceptance must pass before promotion evidence.",
+    "OSS: fix Optuna API/CLI/tests to cost0-only before new discovery/performance.",
+    "Core: keep rejected families closed; continue reproducibility/endpoint audit.",
+    "Cloud: reopen exact replay only on genuinely contemporaneous identity-critical evidence; modern MTF surrogate code is explicitly excluded."
   ]
 }

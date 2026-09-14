@@ -1,7 +1,7 @@
 {
-  "version": 5,
+  "version": 6,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T12:50:00+09:00",
+  "updated_at_jst": "2026-09-14T13:03:00+09:00",
   "supervisor_last_scan": {
     "status": "COMPLETE",
     "branch_heads_changed_since_previous_state": true,
@@ -10,8 +10,14 @@
   },
   "scan_policy": {
     "cadence_target_minutes": 12,
-    "worker_slots_jst": ["00", "12", "24", "36", "48"],
-    "rule": "Each worker scans all active research branches for substantive changes before working its preferred lane. Do not duplicate SHA already processed."
+    "worker_slots_jst": [
+      "00",
+      "12",
+      "24",
+      "36",
+      "48"
+    ],
+    "rule": "Each worker scans all STATE-registered active research branches before its preferred lane. The :00 supervisor also discovers new substantive research/* lanes not yet in STATE and assigns unowned lanes to :48 fallback ownership. Do not duplicate SHA already processed."
   },
   "branches": {
     "research/tvfree-canonical-batch02": {
@@ -31,6 +37,12 @@
       "last_seen_sha": "28c272b02c20684f989ab3afb046f51a47344c6a",
       "last_processed_sha": "28c272b02c20684f989ab3afb046f51a47344c6a",
       "last_processed_note": "Processed two post-trigger documentation/log commits after a0ff4cf0. They preserve the accepted external daily PIT source 34799835035 and frozen V47 raw1H acceptance contract. Raw1H run 34800587082 is now in_progress; all 12 fetch jobs passed accepted-daily verification and compile/test and are inside raw shard acquisition. No returns/scores/H2/2026 selection outcome opened and no duplicate trigger issued."
+    },
+    "research/oss-validation-tooling": {
+      "preferred_worker": "oss-validation-via-48",
+      "last_seen_sha": "3818de53041b8fe7baddbda6e25971af1ebbfaed",
+      "last_processed_sha": null,
+      "last_processed_note": "Registered as active independent OSS/Validation lane at 13:03 JST. Dedicated sixth task was not created because the account has a five-active-task limit; :48 now owns this lane plus cross-lane follow-up. First substantive processing remains pending and must advance from the real branch HEAD without duplicating other lanes."
     }
   },
   "guardrails": [
@@ -95,14 +107,17 @@
       "external_restore_merge_run": 34799650589,
       "external_daily_run": 34799835035,
       "daily_coverage_pass": true,
-      "daily_coverage_min": 1.0,
+      "daily_coverage_min": 1,
       "required_intraday_nocap_symbols": 3885,
       "required_intraday_cap1000_pit_symbols": 1886,
       "raw1h_run": 34800587082,
       "raw1h_status": "in_progress",
       "raw1h_jobs_observed": 12,
       "raw1h_jobs_stage": "Fetch raw 1H shard",
-      "price_arms": ["NOCAP", "CAP1000_PIT"],
+      "price_arms": [
+        "NOCAP",
+        "CAP1000_PIT"
+      ],
       "performance_opened": false,
       "next_rule": "Wait for raw1H run 34800587082 to complete. Then inspect outcome-free shard receipts and run frozen coverage acceptance first: pair>=99.5%, monthly>=99%, completely missing required symbol=0, per-symbol>=95% for symbols requiring>=20 days, restored required-pair>=99%. Only after PASS may clean feature materialization begin."
     }
@@ -114,5 +129,12 @@
       "Consensus V47 daily PIT acceptance passes and raw1H promotion-grade coverage run 34800587082 is actively fetching 12 shards; frozen acceptance must pass before features/performance open. If accepted, its Yahoo raw artifact becomes the preferred non-performance V20 gap-recovery audit source.",
       "No currently passing canonical 5BD Core/Precision replacement candidate; fixed Core, Failed-Breakdown Reclaim, Prior-Close Reclaim, and the three-family Precision discovery batch are rejected."
     ]
+  },
+  "dynamic_lane_policy": {
+    "enabled": true,
+    "discovery_owner": "supervisor :00",
+    "fallback_worker": "cross-lane+OSS :48",
+    "auto_register_rule": "Register a STATE-missing research/* branch only when recent substantive research commits plus handoff/log/spec evidence show it is an active independent lane; ignore archived/superseded/closed-only and coordination branches.",
+    "fixed_lane_count_assumption": false
   }
 }

@@ -1,0 +1,44 @@
+{
+  "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
+  "authorized_by_user": "2026-09-14",
+  "purpose": "open only the frozen H1 diagnostic leader NOCAP on H2 for midterm comparison",
+  "promotion_evidence": false,
+  "formal_acceptance_requirement_unchanged": true,
+  "source_h1_diagnostic_run": 34824194221,
+  "source_h1_artifact_digest": "sha256:c46e90cba472c291a7db068ff1dadb0959764dcef97eb006dd6c3b918779f866",
+  "h1_leader_fixed_before_h2_open": "NOCAP",
+  "h1_leader_rule": "frozen primary criterion development mean; no post-H1 retune",
+  "losing_arm_h2_opened": false,
+  "h2_period": ["2025-07-01", "2025-12-30"],
+  "opened_period_consequence": "H2 becomes opened and is no longer an untouched holdout; same-family threshold/TopN/ranker/cooldown/price-arm retuning is forbidden",
+  "cost_round_trip": 0.0,
+  "win_definition": "gross canonical return > 0",
+  "endpoint": "next official XTKS open -> D+5 close",
+  "model_contract": {
+    "architecture": "V11 frozen 3-head",
+    "consensus_mode": "min",
+    "threshold": 0.95,
+    "guard": "none",
+    "sessions": "both",
+    "strict_same_symbol_cooldown_sessions": 5,
+    "replacement": false,
+    "cooldown_state_carried_from_h1": true
+  },
+  "data_contract": {
+    "daily_run_id": 34799835035,
+    "preserved_raw_seed_run_id": 34592896202,
+    "formal_raw_acceptance_pass": false,
+    "coverage_bypass_for_diagnostic_only": true,
+    "missing_pairs_remain_missing": true,
+    "interpolation": false,
+    "synthetic_bars": false,
+    "threshold_lowering": false
+  },
+  "selection_restrictions": {
+    "open_only": "NOCAP",
+    "open_CAP1000_PIT_H2": false,
+    "use_2026_for_selection": false,
+    "price_cap_grid_search": false,
+    "same_family_retune_after_open": false
+  }
+}

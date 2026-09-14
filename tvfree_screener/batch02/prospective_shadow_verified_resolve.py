@@ -46,16 +46,32 @@ def build_endpoint_completeness_receipt(
     daily_rows: Sequence[Mapping],
     sessions: Sequence[str],
     completeness: Mapping,
+    daily_manifest_path: Path | None = None,
+    sessions_csv_path: Path | None = None,
+    sessions_manifest_path: Path | None = None,
 ) -> dict:
-    """Build an outcome-blind receipt for the exact pre-write completeness decision."""
+    """Build an outcome-blind receipt for the exact pre-write completeness decision.
+
+    When the verified CLI boundary supplies artifact paths, the receipt explicitly binds
+    the frozen selection ledger, verified daily endpoint manifest, and pinned XTKS
+    calendar artifacts. The legacy in-memory hashes remain for audit continuity only.
+    """
+    provenance_enforced = all(
+        path is not None for path in (daily_manifest_path, sessions_csv_path, sessions_manifest_path)
+    )
     core = {
         "receipt_type": COMPLETENESS_RECEIPT_TYPE,
-        "schema_version": 1,
+        "schema_version": 2,
         "decision": str(completeness.get("decision", "")),
         "endpoint_completeness_valid": completeness.get("endpoint_completeness_valid") is True,
         "shadow_input_sha256": _sha256(input_path),
+        "frozen_selection_ledger_sha256": _sha256(input_path),
         "daily_rows_sha256": _sha_payload(list(daily_rows)),
         "session_calendar_sha256": _sha_payload(list(sessions)),
+        "daily_endpoint_manifest_sha256": None if daily_manifest_path is None else _sha256(daily_manifest_path),
+        "pinned_xtks_calendar_sha256": None if sessions_csv_path is None else _sha256(sessions_csv_path),
+        "pinned_xtks_calendar_manifest_sha256": None if sessions_manifest_path is None else _sha256(sessions_manifest_path),
+        "provenance_chain_enforced": provenance_enforced,
         "completeness_result_sha256": _sha_payload(dict(completeness)),
         "mature_candidate_count": int(completeness.get("mature_candidate_count", 0)),
         "pending_candidate_count": int(completeness.get("pending_candidate_count", 0)),
@@ -68,6 +84,16 @@ def build_endpoint_completeness_receipt(
         "gross_returns_computed": False,
         "production_authorized": False,
     }
+    if provenance_enforced and not all(
+        core[field]
+        for field in (
+            "daily_endpoint_manifest_sha256",
+            "pinned_xtks_calendar_sha256",
+            "pinned_xtks_calendar_manifest_sha256",
+            "frozen_selection_ledger_sha256",
+        )
+    ):
+        raise ValueError("verified provenance artifacts must exist before completeness receipt")
     core["receipt_sha256"] = _sha_payload(core)
     return core
 
@@ -91,9 +117,28 @@ def verified_resolve_shadow_file(
     sessions: Sequence[str],
     *,
     completeness_receipt_path: Path | None = None,
+    daily_manifest_path: Path | None = None,
+    sessions_csv_path: Path | None = None,
+    sessions_manifest_path: Path | None = None,
+    require_provenance_chain: bool = False,
 ) -> dict:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     before_sha = _sha256(output_path)
+
+    provenance_paths = (daily_manifest_path, sessions_csv_path, sessions_manifest_path)
+    if require_provenance_chain and not all(path is not None and path.exists() for path in provenance_paths):
+        return {
+            "resolved_written": False,
+            "decision": "BLOCK_PROVENANCE_CHAIN_MISSING_ARTIFACT",
+            "output_sha256_before": before_sha,
+            "output_sha256_after": _sha256(output_path),
+            "integrity": {
+                "provenance_chain_required": True,
+                "resolved_history_preserved_on_failure": True,
+                "strategy_outcomes_opened_by_provenance_gate": False,
+                "production_modified": False,
+            },
+        }
 
     materialized_daily_rows = [dict(row) for row in daily_rows]
     session_list = [str(value) for value in sessions]
@@ -123,7 +168,24 @@ def verified_resolve_shadow_file(
         daily_rows=materialized_daily_rows,
         sessions=session_list,
         completeness=completeness,
+        daily_manifest_path=daily_manifest_path,
+        sessions_csv_path=sessions_csv_path,
+        sessions_manifest_path=sessions_manifest_path,
     )
+    if require_provenance_chain and completeness_receipt.get("provenance_chain_enforced") is not True:
+        return {
+            "resolved_written": False,
+            "decision": "BLOCK_PROVENANCE_CHAIN_NOT_ENFORCED",
+            "output_sha256_before": before_sha,
+            "output_sha256_after": _sha256(output_path),
+            "integrity": {
+                "provenance_chain_required": True,
+                "resolved_history_preserved_on_failure": True,
+                "strategy_outcomes_opened_by_provenance_gate": False,
+                "production_modified": False,
+            },
+        }
+
     if completeness_receipt_path is None:
         receipt_dir = output_path.parent / ".prospective_shadow_receipts"
         completeness_receipt_path = receipt_dir / (
@@ -145,6 +207,7 @@ def verified_resolve_shadow_file(
                 "endpoint_completeness_checked_before_resolution": True,
                 "completeness_receipt_emitted_before_resolved_write": True,
                 "completeness_receipts_append_only": True,
+                "provenance_chain_enforced": completeness_receipt["provenance_chain_enforced"],
                 "resolved_history_preserved_on_failure": True,
                 "strategy_outcomes_opened_by_completeness_gate": False,
                 "production_modified": False,
@@ -174,6 +237,7 @@ def verified_resolve_shadow_file(
                     "endpoint_completeness_checked_before_resolution": True,
                     "completeness_receipt_emitted_before_resolved_write": True,
                     "completeness_receipts_append_only": True,
+                    "provenance_chain_enforced": completeness_receipt["provenance_chain_enforced"],
                     "resolved_history_preserved_on_failure": True,
                     "production_modified": False,
                 },
@@ -190,6 +254,9 @@ def verified_resolve_shadow_file(
         "endpoint_completeness": completeness,
         "endpoint_completeness_receipt_sha256": completeness_receipt["receipt_sha256"],
         "endpoint_completeness_receipt_path": str(completeness_receipt_path),
+        "daily_endpoint_manifest_sha256": completeness_receipt["daily_endpoint_manifest_sha256"],
+        "pinned_xtks_calendar_sha256": completeness_receipt["pinned_xtks_calendar_sha256"],
+        "frozen_selection_ledger_sha256": completeness_receipt["frozen_selection_ledger_sha256"],
         "output_sha256_before": before_sha,
         "output_sha256_after": after_sha,
         "integrity": {
@@ -197,6 +264,7 @@ def verified_resolve_shadow_file(
             "endpoint_completeness_checked_before_resolution": True,
             "completeness_receipt_emitted_before_resolved_write": True,
             "completeness_receipts_append_only": True,
+            "provenance_chain_enforced": completeness_receipt["provenance_chain_enforced"],
             "continuity_required_before_replace": True,
             "resolved_rows_immutable_after_first_resolution": True,
             "production_modified": False,

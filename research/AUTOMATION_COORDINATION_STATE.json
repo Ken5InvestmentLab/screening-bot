@@ -1,7 +1,7 @@
 {
-  "version": 27,
+  "version": 28,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-14T21:15:00+09:00",
+  "updated_at_jst": "2026-09-14T21:22:50+09:00",
   "supervisor_last_scan": {
     "status": "WEAK_EARLY_2022_MODEL_PERIOD_AUDIT_COMPLETE_WARMUP_PRIMARY_CAUSE_REJECTED",
     "scanned_at_jst": "2026-09-14T21:15:00+09:00",
@@ -19,25 +19,25 @@
       "preferred_worker": "canonical",
       "last_seen_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
       "last_processed_sha": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
-      "last_processed_note": "No new SHA at 21:xx. V20 remains DEPRIORITIZE; no opened-outcome retune."
+      "last_processed_note": "No new SHA at 21:22. V20 remains DEPRIORITIZE; no opened-outcome retune."
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
       "last_seen_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
       "last_processed_sha": "48987e8268799d4d7d0c915e8dd8ae6f1f6b8153",
-      "last_processed_note": "No new SHA at 21:xx. Core reject/Cloud exact replay unavailable and cost0-only contract hardening remain current."
+      "last_processed_note": "No new SHA at 21:22. Core reject/Cloud exact replay unavailable and cost0-only contract hardening remain current."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
       "last_seen_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
       "last_processed_sha": "263b91afdffbf0c38a3318f80394a95a4b506f44",
-      "last_processed_note": "No new SHA at 21:xx. NOCAP H2 diagnostic remains n37 mean +3.0295 median +0.3817 win 51.35 Top3-ex -0.5393; formal raw not accepted; no retune."
+      "last_processed_note": "No new SHA at 21:22. NOCAP H2 diagnostic remains n37 mean +3.0295 median +0.3817 win 51.35 Top3-ex -0.5393; formal raw retry still active; no retune."
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
       "last_seen_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
       "last_processed_sha": "6e9045e91323b3cc25d88dedd3a7e9e943f8ae58",
-      "last_processed_note": "No new SHA at 21:xx. New Optuna discovery/performance remains fail-closed until cost0-only API/CLI/tests and isolated CI green."
+      "last_processed_note": "No new SHA at 21:22. New Optuna discovery/performance remains fail-closed until cost0-only API/CLI/tests and isolated CI green."
     }
   },
   "guardrails": [
@@ -50,6 +50,17 @@
     "Consensus V47 promotion path is NOCAP vs CAP1000_PIT only after clean PIT data acceptance; no price-cap grid search.",
     "Midterm diagnostics may bypass formal coverage only under explicit diagnostic labeling; opened H1/H2 periods are no longer untouched and may not drive same-family retuning."
   ],
+  "canonical_worker_last_scan": {
+    "scanned_at_jst": "2026-09-14T21:22:50+09:00",
+    "canonical_head": "480bc9b5b62270f13f7e7de0accda008e6757bf9",
+    "duplicate_sha_processed": false,
+    "v20_status": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE_DEPRIORITIZE",
+    "v47_h2_diagnostic_run": 34832358609,
+    "v47_h2_diagnostic_conclusion": "success",
+    "v47_formal_retry_run": 34810592135,
+    "v47_formal_retry_job_state": "fetch4_fetch5_in_progress_fetch0_fetch1_fetch2_fetch3_cancelled_remaining_queued",
+    "action": "No duplicate trigger, no new backtest, no retune. Continue formal retry observation until termination, then exact merge+acceptance only."
+  },
   "workflow_watch": {
     "weak_early_phase2": {
       "status": "FRESH_2022_FAILED_MODEL_PERIOD_AUDIT_COMPLETE_ROUND2_CLOSED",
@@ -152,7 +163,7 @@
       "coverage_acceptance_run": 34810234454,
       "frozen_coverage_acceptance_pass": false,
       "missing_universe_retry_run": 34810592135,
-      "formal_retry_status": "ACTIVE_FETCH2_FETCH3_IN_PROGRESS_FETCH0_FETCH1_CANCELLED_AT_180M_REMAINING_QUEUED",
+      "formal_retry_status": "ACTIVE_FETCH4_FETCH5_IN_PROGRESS_FETCH0_FETCH1_FETCH2_FETCH3_CANCELLED_AT_180M_REMAINING_QUEUED",
       "future_retry_layout_commit": "7aa230a0434136cf33589a2fdda010113d57db62",
       "future_retry_shards": 48,
       "future_retry_max_parallel": 2,
@@ -203,7 +214,7 @@
   "next_global_actions": [
     "Phase-2: run outcome-blind population/scarcity audit across 2022, 2023H2 and 2025H2; do not retune or create a post-hoc gate from opened outcomes.",
     "Consensus diagnostic: H1 and NOCAP H2 are opened diagnostic-only; no same-family retune and no CAP1000_PIT H2 rescue.",
-    "Consensus formal: continue observing unique retry 34810592135; after termination merge valid outputs with preserved seed and rerun exact acceptance before formal features.",
+    "Consensus formal: continue observing unique retry 34810592135; fetch4/fetch5 are active while fetch0-3 are cancelled at the time boundary; after termination merge valid outputs with preserved seed and rerun exact acceptance before formal features.",
     "OSS: fix Optuna API/CLI/tests to cost0-only and require isolated CI green before any new discovery/performance; then harden trial-ledger provenance.",
     "Core: continue stale research cost/endpoint contract audit; do not rerun rejected families solely to regenerate metrics.",
     "Cloud: remain closed unless genuinely new exact identity evidence appears.",

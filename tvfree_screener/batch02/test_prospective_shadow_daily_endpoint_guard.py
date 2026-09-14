@@ -31,6 +31,7 @@ class DailyEndpointGuardTests(unittest.TestCase):
             source_name="Yahoo chart direct",
             source_kind="REMOTE_MARKET_DATA",
             acquired_at="2026-09-25T18:00:00+09:00",
+            expected_through_date="2026-09-25",
             price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
         )
 
@@ -43,6 +44,7 @@ class DailyEndpointGuardTests(unittest.TestCase):
             self.assertEqual(out["row_count"],3)
             self.assertEqual(out["symbol_count"],2)
             self.assertTrue(out["integrity"]["acquisition_not_before_last_data_date"])
+            self.assertTrue(out["integrity"]["expected_through_date_covered"])
 
     def test_sha_mismatch_blocks(self):
         with tempfile.TemporaryDirectory() as td:
@@ -91,6 +93,7 @@ class DailyEndpointGuardTests(unittest.TestCase):
                     source_name="Yahoo chart direct",
                     source_kind="REMOTE_MARKET_DATA",
                     acquired_at="2026-09-24T23:59:59+09:00",
+                    expected_through_date="2026-09-24",
                     price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
                 )
 
@@ -102,6 +105,39 @@ class DailyEndpointGuardTests(unittest.TestCase):
             out=validate_daily_endpoint_dataset(daily,manifest)
             self.assertFalse(out["endpoint_dataset_valid"])
             self.assertIn("acquired_at_precedes_last_data_date",out["errors"])
+
+    def test_manifest_creation_blocks_incomplete_expected_through_date(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); daily=root/"daily.csv"; self._write_daily(daily)
+            with self.assertRaisesRegex(ValueError, "expected_through_date_not_covered"):
+                build_daily_endpoint_manifest(
+                    daily,
+                    dataset_id="daily-endpoint-incomplete",
+                    source_name="Yahoo chart direct",
+                    source_kind="REMOTE_MARKET_DATA",
+                    acquired_at="2026-09-26T18:00:00+09:00",
+                    expected_through_date="2026-09-26",
+                    price_adjustment_semantics="PROVIDER_HISTORICAL_SPLIT_ADJUSTED_OHLC",
+                )
+
+    def test_validation_blocks_incomplete_expected_through_date(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); daily=root/"daily.csv"; self._write_daily(daily)
+            manifest=self._manifest(daily)
+            manifest["expected_through_date"]="2026-09-26"
+            manifest["acquired_at"]="2026-09-26T18:00:00+09:00"
+            out=validate_daily_endpoint_dataset(daily,manifest)
+            self.assertFalse(out["endpoint_dataset_valid"])
+            self.assertIn("expected_through_date_not_covered",out["errors"])
+
+    def test_missing_expected_through_date_blocks(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); daily=root/"daily.csv"; self._write_daily(daily)
+            manifest=self._manifest(daily)
+            manifest.pop("expected_through_date")
+            out=validate_daily_endpoint_dataset(daily,manifest)
+            self.assertFalse(out["endpoint_dataset_valid"])
+            self.assertTrue(any("expected_through_date is required" in e for e in out["errors"]))
 
     def test_placeholder_provenance_blocks(self):
         with tempfile.TemporaryDirectory() as td:
@@ -122,7 +158,7 @@ class DailyEndpointGuardTests(unittest.TestCase):
     def test_blank_prices_can_be_pinned_as_unresolved_source_rows(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td); daily=root/"daily.csv"
-            self._write_daily(daily,[{"symbol":"1111.T","date":"2026-09-16","open":"","close":""}])
+            self._write_daily(daily,[{"symbol":"1111.T","date":"2026-09-25","open":"","close":""}])
             manifest=self._manifest(daily)
             out=validate_daily_endpoint_dataset(daily,manifest)
             self.assertTrue(out["endpoint_dataset_valid"])

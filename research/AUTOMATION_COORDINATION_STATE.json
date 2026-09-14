@@ -1,7 +1,7 @@
 {
-  "version": 54,
+  "version": 55,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T04:24:00+09:00",
+  "updated_at_jst": "2026-09-15T04:30:00+09:00",
   "supervisor_last_scan": {
     "status": "PARALLEL_SCHEMA_FROZEN_CONSENSUS_NEW_HEAD_ABSORBED",
     "scanned_at_jst": "2026-09-15T03:03:00+09:00",
@@ -23,10 +23,10 @@
     },
     "research/tentei-cloud-mtf": {
       "preferred_worker": "core",
-      "last_seen_sha": "a0e4086bfa1adc4a65e236b38bd98f49e958c4ad",
-      "last_processed_sha": "a0e4086bfa1adc4a65e236b38bd98f49e958c4ad",
+      "last_seen_sha": "fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc",
+      "last_processed_sha": "fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc",
       "task_state": "ACTIVE_DATA_REPAIR",
-      "last_processed_note": "Outcome-blind exact missing-inventory builder added and covered by CI run 34881004528 SUCCESS. Real expected endpoint universe + observed dataset still need to be pinned/run; fallback raw/verifier/coverage delta remain. Cloud exact replay itself remains HOLD/CLOSE_CANDIDATE."
+      "last_processed_note": "Added SHA-bound real missing-inventory runner; exact expected/observed input bytes and emitted inventory are receipt-bound. CI 34886738844 SUCCESS. Preserved artifact 10264205130 is daily-only and artifact 10330772110 is receipt-only; both were audited and rejected as substitutes for the real raw1H observed bytes. Real expected endpoint-key universe + raw1H artifact still need pinning before the one-shot gap run."
     },
     "research/consensus-atr-regime-gate": {
       "preferred_worker": "consensus",
@@ -110,15 +110,15 @@
       "current_fixed_core": "REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE",
       "old_cloud_monster_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE_HOLD_CLOSE_CANDIDATE",
       "endpoint_provenance_status": "IMMUTABLE_SOURCE_RECEIPT_PRIMITIVE_CI_GREEN",
-      "head": "a0e4086bfa1adc4a65e236b38bd98f49e958c4ad",
+      "head": "fcc86fbd15b821cc3b17f3f71845afde8bdf5cbc",
       "performance_opened": false
     },
     "ohlcv_supplement": {
       "task_state": "ACTIVE",
-      "status": "FAIL_CLOSED_CONTRACT_PLUS_EXACT_MISSING_INVENTORY_BUILDER_CI_GREEN_REAL_GAP_RUN_PENDING",
+      "status": "SHA_BOUND_REAL_INVENTORY_RUNNER_CI_GREEN_INPUT_ARTIFACT_PIN_PENDING",
       "formal_dataset_adoption": false,
       "performance_recompute_allowed": false,
-      "latest_ci_run": 34881004528,
+      "latest_ci_run": 34886738844,
       "latest_ci_status": "success",
       "alpha_vantage_free_role": "LOW_PRIORITY_DAILY_ONLY",
       "stooq_role": "CANDIDATE_NOT_FORMAL_ELIGIBLE",
@@ -147,7 +147,7 @@
   },
   "next_global_actions": [
     "Parallel Wave-1: independently pin XTKS calendar artifact/version/SHA, implement signal->next session open->fifth session close mapping, emit endpoint completeness receipt, then one cost0 batch only.",
-    "Core24 OHLCV supplement: pin real expected endpoint universe + observed dataset, run exact missing-inventory builder, acquire fallback source bytes under frozen policy, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
+    "Core24 OHLCV supplement: locate/pin exact real expected endpoint-key input and exact raw1H observed artifact bytes, execute SHA-bound missing-inventory runner once, acquire fallback raw only for declared gaps, emit immutable receipts, run deterministic verifier, hand off counts + coverage delta before performance recomputation.",
     "Canonical/Shadow: full endpoint provenance hash chain is implemented and CI-green; add explicit link-tamper regression coverage or advance to another outcome-blind integrity control without performance opening.",
     "Consensus: no duplicate trigger; wait for run 34849054884 terminal, then enumerate all shard receipts and merge only genuinely observed rows under pinned merge spec before frozen acceptance rerun.",
     "Core: freeze real XTKS/raw-vendor endpoint manifest and wire canonical evaluator to fail-closed provenance primitive before recomputation.",

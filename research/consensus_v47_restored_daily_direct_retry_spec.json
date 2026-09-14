@@ -1,0 +1,23 @@
+{
+  "spec_id": "CONSENSUS-V47-RESTORED-DAILY-DIRECT-RETRY-20260914",
+  "status": "FROZEN_OUTCOME_BLIND",
+  "source_v6_run": 34788533946,
+  "source_canary_run": 34796452026,
+  "required_population": "exact 251 symbols in v6 restored_daily_fetch.missing_symbols",
+  "provider": "Yahoo chart API direct historical-code request",
+  "host": "query1.finance.yahoo.com",
+  "request_spacing_seconds": 3.5,
+  "provider_control_symbol": "7203",
+  "terminal_http_statuses": [400, 404, 410, 422],
+  "retryable_http_statuses": [429, 502, 503, 504],
+  "rules": [
+    "Strategy outcomes and model scores remain unread.",
+    "Provider control must be usable before the exact-251 retry begins.",
+    "429/502/503/504 remain provider failures and may not be interpreted as historical-code unavailability.",
+    "Only terminal/unavailable historical codes after a valid provider attempt may advance to official JPX/company identity-continuity verification.",
+    "No alias is automatically accepted.",
+    "No survivor intersection, interpolation, threshold relaxation, price-cap search, or 2026 selection is allowed."
+  ],
+  "next_if_complete": "Partition exact 251 into usable direct, terminal/unavailable identity-review queue, and unresolved provider failures. Merge nothing into V47 daily until identity/provider contract is satisfied for 100% restored daily coverage.",
+  "production_modified": false
+}

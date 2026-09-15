@@ -1,17 +1,17 @@
 {
-  "version": 78,
+  "version": 79,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T16:10:00+09:00",
+  "updated_at_jst": "2026-09-15T16:17:00+09:00",
   "supervisor_last_scan": {
-    "status": "AUTOMATION_GAP_DETECTED_CORE_CONSENSUS_REARMED_SUPERVISOR_REARMED",
-    "scanned_at_jst": "2026-09-15T16:10:00+09:00",
+    "status": "MANUAL_RUN_ADVANCED_EDINET_DUPLICATE_AUDIT_RETRY_RUNNING",
+    "scanned_at_jst": "2026-09-15T16:17:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Actual automation last_run times show a scheduler gap. Core last ran 14:22 JST and Consensus 14:36 JST, both >90 minutes by 16:09 and therefore STOP_SUSPECTED. Supervisor last ran 14:58 JST and missed its next expected slot but remained <90 minutes, so DELAY_SUSPECTED. Canonical last ran 15:14 JST and OSS+Parallel ran 16:06 JST. Core/Consensus/Supervisor were explicitly re-armed with Asia/Tokyo DTSTART at 16:24/16:36/17:00 while preserving hourly exact cadence. GitHub branch inactivity alone was not used for this diagnosis."
+    "note": "Manual one-shot continuation executed. EDINET run 34936903153 had actually terminated FAIL at 15:35 JST on repeated doc_id observations, not on API acquisition. Exact 2023-2025 artifacts were audited outcome-blind: 216,094 normalized non-inert rows; 1,017 repeated doc IDs / 2,056 repeated observations; every repeat preserves submitDateTime; only 7 repeated doc IDs touch preregistered 120/130 and all are 120->120 with identical submitDateTime; 56 type-changing repeats are non-eligible. Snapshot now retains sample-safe repeated observations with receipts and fails closed on conflicting submitDateTime or any eligible 120/130 doc-type conflict. Regression tests and a fresh full-freeze retry are running. Consensus also produced a new automation last_run at 16:11 after re-arm; Core is due 16:24, Supervisor 17:00."
   },
   "automation_heartbeat": {
-    "checked_at_jst": "2026-09-15T16:10:00+09:00",
+    "checked_at_jst": "2026-09-15T16:17:00+09:00",
     "stop_threshold_minutes": 90,
-    "stopped_or_stale_automations": 2,
+    "stopped_or_stale_automations": 1,
     "workers": {
       "supervisor": {
         "enabled": true,
@@ -21,7 +21,7 @@
       "canonical": {
         "enabled": true,
         "last_run_jst": "15:14",
-        "status": "GREEN_NEXT_16:14"
+        "status": "GREEN_WITHIN_90M"
       },
       "core": {
         "enabled": true,
@@ -30,8 +30,8 @@
       },
       "consensus": {
         "enabled": true,
-        "last_run_jst": "14:36",
-        "status": "RED_STOP_SUSPECTED_REARMED_NEXT_16:36"
+        "last_run_jst": "16:11",
+        "status": "GREEN_RECOVERED_AFTER_REARM"
       },
       "oss_parallel": {
         "enabled": true,
@@ -75,10 +75,10 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "00df55b88d0a2862d5c35c3193e0c3189489e663",
-      "last_processed_sha": "00df55b88d0a2862d5c35c3193e0c3189489e663",
-      "task_state": "ACTIVE_EDINET_RETRY_AFTER_EXACT_FIXTURE",
-      "next_action": "Inspect terminal state/artifacts of full freeze retry 34936903153. If PASS, freeze 2023-2025 metadata manifest/sample receipt, then selected ZIP byte SHA freeze -> same-ZIP parser cross-check. If FAIL, inspect and freeze the exact next raw shape before any predicate change."
+      "last_seen_sha": "dd1cd33d77d6fa0278bfceb11cbadc0ce9e5dd79",
+      "last_processed_sha": "dd1cd33d77d6fa0278bfceb11cbadc0ce9e5dd79",
+      "task_state": "ACTIVE_EDINET_RETRY_AFTER_DUPLICATE_AUDIT",
+      "next_action": "Inspect OSS test 34940882491 and full EDINET freeze 34940882530 terminal results. If PASS, freeze metadata/sample receipts then selected ZIP bytes/SHA -> same-ZIP parser cross-check. If FAIL, inspect exact next failing invariant before any policy change."
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
@@ -115,18 +115,21 @@
       "performance_opened": false
     },
     "oss_validation": {
-      "task_state": "ACTIVE_EDINET_RETRY_AFTER_EXACT_FIXTURE_PLUS_PIT_P0",
-      "edinet_previous_retry_run": 34922234308,
-      "edinet_previous_retry_conclusion": "FAIL_SECOND_NULL_SHAPE",
-      "edinet_exact_fixture_doc_id": "S100PXGH",
-      "edinet_exact_fixture_daily_sha256": "a2dd6ebd77d4aa5819e267eec072575e050d2d6c60eea7dfc5bdd8873668039c",
-      "edinet_2023_inert_rows": 32935,
-      "edinet_patch_commit": "819d63bbad4c995d8f6345280ce67df0e455effb",
-      "edinet_fixture_commit": "90265c5ecc0b2e3d96d1c85f39eb665e9d4535fc",
-      "edinet_audit_commit": "00df55b88d0a2862d5c35c3193e0c3189489e663",
-      "oss_test_run": 34936903249,
-      "oss_test_conclusion": "success",
-      "edinet_retry_run": 34936903153,
+      "task_state": "ACTIVE_EDINET_RETRY_AFTER_DUPLICATE_AUDIT_PLUS_PIT_P0",
+      "edinet_previous_retry_run": 34936903153,
+      "edinet_previous_retry_conclusion": "FAIL_REPEATED_DOC_ID_OBSERVATIONS",
+      "normalized_non_inert_rows": 216094,
+      "repeated_doc_id_count": 1017,
+      "repeated_observation_rows": 2056,
+      "eligible_repeated_doc_id_count": 7,
+      "eligible_repeat_shape": "all 120->120, identical submitDateTime",
+      "noneligible_type_changing_repeat_doc_ids": 56,
+      "duplicate_policy_commit": "e05a17714e3d7e809d27a1eeb5abbfe1c44b9fe6",
+      "duplicate_test_commit": "43fcdaa2dde2fb22be257828d930a1d0bdfba94b",
+      "duplicate_audit_commit": "dd1cd33d77d6fa0278bfceb11cbadc0ce9e5dd79",
+      "oss_test_run": 34940882491,
+      "oss_test_status": "IN_PROGRESS",
+      "edinet_retry_run": 34940882530,
       "edinet_retry_status": "IN_PROGRESS",
       "performance_opened": false
     },
@@ -166,7 +169,7 @@
     "Automation recovery: verify Core 16:24 and Consensus 16:36 actually execute after re-arm; verify Supervisor 17:00. If any misses again, treat as scheduler-level fault and manually advance/reassign its lane.",
     "Core24: exact official JPX PIT bytes/SHA receipt -> independent exact-hour activity evidence.",
     "Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.",
-    "OSS/EDINET: full freeze retry 34936903153 terminal audit -> metadata/sample receipt -> selected ZIP SHA freeze -> same-ZIP parser cross-check.",
+    "OSS/EDINET: inspect 34940882491 + 34940882530 terminal results -> metadata/sample receipt -> selected ZIP SHA freeze -> same-ZIP parser cross-check.",
     "Canonical: next outcome-blind shadow integrity action after CI chain guard PASS.",
     "Consensus: Yahoo wait is STALE; audit Core24 pinned raw1H compatibility outcome-blind before any new acquisition retry.",
     "Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."

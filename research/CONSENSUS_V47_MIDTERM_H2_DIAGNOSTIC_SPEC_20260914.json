@@ -1,14 +1,15 @@
 {
   "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
   "authorized_by_user": "2026-09-14",
-  "purpose": "open only the frozen H1 diagnostic leader NOCAP on H2 for midterm comparison",
+  "purpose": "open only the corrected frozen H1 diagnostic leader CAP1000_PIT on H2 for midterm comparison",
   "promotion_evidence": false,
   "formal_acceptance_requirement_unchanged": true,
-  "source_h1_diagnostic_run": 34824194221,
-  "source_h1_artifact_digest": "sha256:c46e90cba472c291a7db068ff1dadb0959764dcef97eb006dd6c3b918779f866",
-  "h1_leader_fixed_before_h2_open": "NOCAP",
+  "source_h1_diagnostic_run": 34943802848,
+  "source_h1_artifact_digest": "sha256:e22b84ce4d9f10872060fabfc6af1f7636e62077c4b03298b46237ae587d0c9b",
+  "source_price_basis_correction": "CONSENSUS_V47_MIDTERM_CORE24_PRICE_BASIS_CORRECTION_V1",
+  "h1_leader_fixed_before_h2_open": "CAP1000_PIT",
   "h1_leader_rule": "frozen primary criterion development mean; no post-H1 retune",
-  "losing_arm_h2_opened": false,
+  "losing_arm_h2_opened_under_corrected_basis": false,
   "h2_period": ["2025-07-01", "2025-12-30"],
   "opened_period_consequence": "H2 becomes opened and is no longer an untouched holdout; same-family threshold/TopN/ranker/cooldown/price-arm retuning is forbidden",
   "cost_round_trip": 0.0,
@@ -32,11 +33,12 @@
     "missing_pairs_remain_missing": true,
     "interpolation": false,
     "synthetic_bars": false,
-    "threshold_lowering": false
+    "threshold_lowering": false,
+    "core24_price_basis_normalization_required": true
   },
   "selection_restrictions": {
-    "open_only": "NOCAP",
-    "open_CAP1000_PIT_H2": false,
+    "open_only": "CAP1000_PIT",
+    "open_NOCAP_H2_under_corrected_basis": false,
     "use_2026_for_selection": false,
     "price_cap_grid_search": false,
     "same_family_retune_after_open": false

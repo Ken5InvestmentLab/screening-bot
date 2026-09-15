@@ -18,6 +18,10 @@
 
 GitHub最終commit時刻だけでは停止判定しない。task-level停滞とautomation heartbeatは分離する。
 
+## 👤 ユーザー作業待ち
+
+**現在0件。** EDINET_API_KEYは設定・疎通確認済み。Parallel/Consensus/EDINET repair/Core24/Canonicalはいずれもworker側または外部transport/data取得側の課題で、ユーザー操作は不要。新しいSecret・API key・手動ファイル提供などが必須になった場合だけここを「要対応」に変更する。
+
 ## 📈 全体進捗
 
 **研究全体の進捗率: 約72%**

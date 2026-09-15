@@ -76,7 +76,8 @@ G3 `med_ret1 >= -1%` は凍結。2022 fresh: DUAL n21 mean +2.62% / median -6.19
 
 **P1:** Canonicalはresolution-receipt replay/rollback・cross-run chain continuityをoutcome-blindで監査。Core endpoint evaluator binding。
 
-**外部待機:** EDINET real input、Consensus transport recovery。外部待機だけでworker cycleを消費しない。
+**ユーザー作業待ち:** **0件**。EDINET API keyは設定・疎通確認済みで、追加操作不要。  
+**外部待機:** Consensus transport recoveryのみ。Core24のexact-hour activity evidence探索はworker側タスクでありユーザー作業待ちではない。外部待機だけでworker cycleを消費しない。
 
 **CLOSED:** Weak+Early Phase-2、Cloud exact forensic、V20。
 

@@ -6,7 +6,7 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 
 ## Consensus V47 status
 - Progress: **79%** (research-progress estimate; not promotion probability).
-- Latest HEAD before this dashboard write: `6d31d4f8ef76c088246235c7d8a2ffd53995af8e`.
+- Latest HEAD before this dashboard write: `26d7d3fce573ade567dcf7d788d02443a6ea59af`.
 - Promotion-relevant path: **V47 clean PIT only**. V43/V44 are not promotion evidence.
 - Arms: exactly `NOCAP` / `CAP1000_PIT`; no extra price-cap grid.
 - Endpoint: **next official XTKS open -> D+5 close**.
@@ -92,7 +92,7 @@ Holdout state is not reset:
 - Source pin verification: passed.
 - Core24 OHLC price-basis normalization: passed.
 - Current step: **partial clean feature materialization in progress**.
-- Corrected H1 performance: **NOT YET OPENED**.
+- Corrected H1 performance: **NOT YET OPENED**; run `34943802848` remains in corrected partial feature materialization.
 - Current diagnostic ranking: **PENDING CORRECTED H1**.
 - H2 must not be rerun/opened from the old invalid H1 leader lock.
 

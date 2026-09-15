@@ -1,0 +1,157 @@
+name: EDINET same-ZIP OSS crosscheck research
+
+on:
+  push:
+    branches:
+      - research/oss-validation-tooling
+    paths:
+      - ".github/workflows/edinet-same-zip-crosscheck-research.yml"
+      - "research/EDINET_REAL_ZIP_FREEZE_LOCK_20260915.json"
+      - "tvfree_screener/edinet_oss_crosscheck.py"
+      - "tvfree_screener/edinet_fundamental_collector.py"
+      - "tvfree_screener/oss_validation_requirements.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  same-zip-crosscheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      PYTHONPATH: .:tvfree_screener
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install base and OSS parser dependencies
+        run: |
+          pip install -r tvfree_screener/requirements.txt
+          pip install -r tvfree_screener/oss_validation_requirements.txt
+
+      - name: Download exact pre-parser frozen ZIP artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: edinet-parser-comparable-zips-frozen-v1
+          path: /tmp/edinet-zips
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34943585921
+
+      - name: Verify committed pre-parser lock against artifact
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          lock = json.loads(Path("research/EDINET_REAL_ZIP_FREEZE_LOCK_20260915.json").read_text())
+          root = Path("/tmp/edinet-zips")
+          raw_receipt = (root / "selected_zip_freeze_receipt.json").read_bytes()
+          got_receipt_sha = hashlib.sha256(raw_receipt).hexdigest()
+          frozen = json.loads(raw_receipt)
+          z = lock["zip_freeze"]
+          assert lock["status"] == "REAL_ZIP_BYTES_FROZEN_PREPARSER"
+          assert lock["strategy_outcomes_opened"] is False
+          assert lock["parser_outputs_opened"] is False
+          assert lock["no_replacement_rule"] is True
+          assert got_receipt_sha == z["embedded_freeze_receipt_sha256"]
+          assert frozen["aggregate_sha256_chain"] == z["aggregate_zip_sha256_chain"]
+          assert frozen["selected_documents"] == 44
+          assert frozen["parser_outputs_opened"] is False
+          assert set(lock["doc_type_code_by_id"]) == set(frozen["selected_doc_ids"])
+          for item in frozen["files"]:
+              p = root / item["filename"]
+              assert p.is_file()
+              assert hashlib.sha256(p.read_bytes()).hexdigest() == item["sha256"]
+          print("EDINET_PREPARSER_LOCK_PASS=1")
+          PY
+
+      - name: Run both parsers on exact frozen bytes
+        shell: bash
+        run: |
+          mkdir -p /tmp/edinet-crosscheck
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          from tvfree_screener.edinet_oss_crosscheck import crosscheck_zip
+
+          lock = json.loads(Path("research/EDINET_REAL_ZIP_FREEZE_LOCK_20260915.json").read_text())
+          root = Path("/tmp/edinet-zips")
+          frozen = json.loads((root / "selected_zip_freeze_receipt.json").read_text())
+          out_root = Path("/tmp/edinet-crosscheck")
+          results = []
+          field_status = Counter()
+          for doc_id in frozen["selected_doc_ids"]:
+              doc_type = lock["doc_type_code_by_id"][doc_id]
+              try:
+                  result = crosscheck_zip(
+                      (root / f"{doc_id}.zip").read_bytes(),
+                      doc_id=doc_id,
+                      doc_type_code=doc_type,
+                  )
+                  status = "MATCH_ALL" if result["all_compared_fields_agree"] else "AUDIT_FINDING"
+                  for field, detail in result["comparisons"].items():
+                      field_status[f"{field}:{detail['status']}"] += 1
+                  record = {
+                      "doc_id": doc_id,
+                      "doc_type_code": doc_type,
+                      "execution_status": status,
+                      "crosscheck": result,
+                  }
+              except Exception as exc:
+                  record = {
+                      "doc_id": doc_id,
+                      "doc_type_code": doc_type,
+                      "execution_status": "CROSSCHECK_EXCEPTION_AUDIT_FINDING",
+                      "exception_type": type(exc).__name__,
+                      "exception_message": str(exc)[:1000],
+                      "strategy_outcomes_opened": False,
+                  }
+              (out_root / f"{doc_id}.json").write_text(
+                  json.dumps(record, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n",
+                  encoding="utf-8",
+              )
+              results.append(record)
+
+          exceptions = [r["doc_id"] for r in results if r["execution_status"] == "CROSSCHECK_EXCEPTION_AUDIT_FINDING"]
+          findings = [r["doc_id"] for r in results if r["execution_status"] == "AUDIT_FINDING"]
+          matches = [r["doc_id"] for r in results if r["execution_status"] == "MATCH_ALL"]
+          summary = {
+              "status": "AUDIT_COMPLETE_WITH_FINDINGS" if (exceptions or findings) else "AUDIT_COMPLETE_ALL_MATCH",
+              "primary_sample_documents": 48,
+              "parser_comparable_documents": 44,
+              "source_unavailable_documents": 4,
+              "completed_crosschecks": len(results) - len(exceptions),
+              "crosscheck_exceptions": len(exceptions),
+              "documents_with_parser_findings": len(findings),
+              "documents_all_compared_fields_agree": len(matches),
+              "exception_doc_ids": exceptions,
+              "parser_finding_doc_ids": findings,
+              "all_match_doc_ids": matches,
+              "field_status_counts": dict(sorted(field_status.items())),
+              "strategy_outcomes_opened": False,
+              "selection_changed_after_parser_outputs": False,
+              "no_replacement_rule": True,
+              "decision_rule": "Mismatches, one-sided missing values, and parser exceptions are audit findings. Never choose a parser because it improves strategy performance.",
+          }
+          (out_root / "crosscheck_summary.json").write_text(
+              json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload same-ZIP crosscheck audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: edinet-same-zip-crosscheck-v1
+          path: /tmp/edinet-crosscheck/*
+          if-no-files-found: error
+          retention-days: 30

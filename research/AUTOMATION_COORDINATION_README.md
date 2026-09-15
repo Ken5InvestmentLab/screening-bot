@@ -29,13 +29,13 @@ Native scheduled tasks can run at most once per hour per task. Five research wor
 - The :48 worker fills gaps such as completed-but-uncollected Actions/artifacts or work left waiting by another worker.
 - Do not use this mechanism to touch production/main or production integrations.
 
-## Core24 PIT forensic note (2026-09-16 05:23)
-- JPX source bytes are pinned in immutable artifact `10411777912`.
-- Dates must be parsed row-wise with both `%b. %d, %Y` and `%b %d, %Y`; JPX writes `May` without a period. Unknown non-empty dates fail closed.
-- Prior `375 = 134 + 241` is superseded: corrected through 2026-09-10 is `397 = 134 listings + 263 delistings`.
-- Reverse replay `(2024-09-17, 2026-08-31]` uses `134 listings + 261 delistings + 81 transfers = 476` events.
-- From anchor 3,707, strict replay produced target 3,834 with zero quarantine/conflict; sorted membership SHA-256 `9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e`.
-- Next: freeze machine-readable PIT receipt, then independent exact-hour activity evidence. Do not derive expected hourly keys from membership alone.
+## Core24 PIT forensic note (2026-09-16 06:24)
+- Machine-readable PIT receipt is now frozen at `research/tentei_cloud/CORE_JPX_PIT_MEMBERSHIP_RECEIPT_20260916.json` on `research/tentei-cloud-mtf`.
+- JPX source bytes are pinned; dates are parsed row-wise with `%b. %d, %Y` and `%b %d, %Y`; unknown non-empty dates fail closed.
+- Correct through 2026-09-10 is `397 = 134 listings + 263 delistings`; old 375/241 evidence is superseded.
+- Reverse replay `(2024-09-17, 2026-08-31]` is `134 + 261 + 81 = 476` events.
+- Anchor 3,707 -> target 3,834, zero quarantine/conflict, sorted membership SHA-256 `9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e`.
+- Next: independent exact-hour activity evidence/receipt. Do not derive expected hourly keys from membership alone.
 
 ## Dynamic lane discovery
 - The :00 supervisor must not assume a fixed lane count.

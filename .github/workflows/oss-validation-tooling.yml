@@ -15,6 +15,7 @@ on:
       - "tvfree_screener/edinet_metadata_acquire.py"
       - "tvfree_screener/edinet_selected_zip_freeze.py"
       - "tvfree_screener/edinet_fundamental_collector.py"
+      - "tvfree_screener/edinet_fundamental_collector_selftest.py"
       - "tvfree_screener/test_oss_validation.py"
       - "tvfree_screener/test_optuna_discovery.py"
       - "tvfree_screener/test_optuna_trial_ledger.py"

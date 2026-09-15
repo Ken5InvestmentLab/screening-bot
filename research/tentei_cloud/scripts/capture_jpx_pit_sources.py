@@ -13,6 +13,9 @@ SOURCES = {
     "delisted_current": "https://www.jpx.co.jp/english/listing/stocks/delisted/index.html",
     "delisted_2025": "https://www.jpx.co.jp/english/listing/stocks/delisted/archives-01.html",
     "delisted_2024": "https://www.jpx.co.jp/english/listing/stocks/delisted/archives-02.html",
+    "transfer_current": "https://www.jpx.co.jp/english/listing/stocks/transfers/index.html",
+    "transfer_2025": "https://www.jpx.co.jp/english/listing/stocks/transfers/00-archives-01.html",
+    "transfer_2024": "https://www.jpx.co.jp/english/listing/stocks/transfers/00-archives-02.html",
     "listed_issues_page": "https://www.jpx.co.jp/english/markets/statistics-equities/misc/01.html",
 }
 OUT = pathlib.Path("research/tentei_cloud/artifacts/jpx_pit_source_capture")
@@ -52,6 +55,6 @@ book_row["discovered_from_page_sha256"]=next(r["sha256"] for r in rows if r["nam
 book_row["excluded_correction_workbooks"]=[x for x in books if x not in current]
 rows.append(book_row)
 
-receipt={"contract":"official JPX listing/delisting plus listed-issues anchor page/current workbook byte capture; correction workbook excluded; research-only","sources":rows}
+receipt={"contract":"official JPX listing/delisting/segment-transfer plus listed-issues anchor page/current workbook byte capture; correction workbook excluded; research-only","sources":rows}
 (OUT/"receipt.json").write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 print(json.dumps(receipt,ensure_ascii=False,indent=2))

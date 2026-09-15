@@ -1,0 +1,112 @@
+name: EDINET parser-comparable ZIP freeze research
+
+on:
+  push:
+    branches:
+      - research/oss-validation-tooling
+    paths:
+      - ".github/workflows/edinet-comparable-zip-freeze-research.yml"
+      - "research/EDINET_REAL_SAMPLE_SOURCE_AVAILABILITY_AUDIT_20260915.json"
+      - "tvfree_screener/edinet_selected_zip_freeze.py"
+      - "tvfree_screener/edinet_fundamental_collector.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze-parser-comparable-zips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+      PYTHONPATH: .:tvfree_screener
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install research dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Mask and validate EDINET secret
+        shell: bash
+        run: |
+          test -n "$EDINET_API_KEY" || { echo "EDINET_API_KEY secret is missing"; exit 1; }
+          echo "::add-mask::$EDINET_API_KEY"
+      - name: Download exact source-available selected ZIP set
+        shell: bash
+        run: |
+          mkdir -p /tmp/edinet-comparable-zips
+          python - <<'PY'
+          import json, os, time, zipfile
+          from pathlib import Path
+          from tvfree_screener.edinet_fundamental_collector import EdinetClient
+
+          receipt_path = Path("research/EDINET_REAL_SAMPLE_SOURCE_AVAILABILITY_AUDIT_20260915.json")
+          receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+          ids = receipt.get("selected_doc_ids")
+          unavailable = receipt.get("unavailable_selected_documents")
+          if (
+              receipt.get("status") != "PARSER_COMPARABLE_SOURCE_SUBSET_LOCKED_OUTCOME_BLIND"
+              or receipt.get("primary_sample_documents") != 48
+              or not isinstance(ids, list) or len(ids) != 44 or len(set(ids)) != 44
+              or not isinstance(unavailable, list) or len(unavailable) != 4
+              or receipt.get("strategy_outcomes_opened") is not False
+              or receipt.get("parser_outputs_opened") is not False
+              or receipt.get("no_replacement_rule") is not True
+          ):
+              raise RuntimeError("source-availability receipt failed closed validation")
+
+          client = EdinetClient(os.environ["EDINET_API_KEY"])
+          root = Path("/tmp/edinet-comparable-zips")
+          for idx, doc_id in enumerate(ids):
+              last_error = None
+              for attempt in range(1, 4):
+                  try:
+                      payload = client.download_csv_zip(str(doc_id))
+                      break
+                  except Exception as exc:
+                      last_error = exc
+                      if attempt == 3:
+                          raise
+                      time.sleep(2.0 * attempt)
+              path = root / f"{doc_id}.zip"
+              path.write_bytes(payload)
+              if not zipfile.is_zipfile(path):
+                  raise RuntimeError(f"{doc_id}: EDINET response is not a ZIP")
+              with zipfile.ZipFile(path) as zf:
+                  bad = zf.testzip()
+                  if bad is not None:
+                      raise RuntimeError(f"{doc_id}: corrupt ZIP member {bad}")
+                  if not zf.namelist():
+                      raise RuntimeError(f"{doc_id}: empty ZIP")
+              print(f"EDINET_COMPARABLE_ZIP_OK={doc_id} bytes={len(payload)}")
+              if idx + 1 < len(ids):
+                  time.sleep(0.75)
+          print("EDINET_COMPARABLE_ZIP_COUNT=44")
+          PY
+      - name: Freeze exact bytes before parser outputs
+        shell: bash
+        run: |
+          python tvfree_screener/edinet_selected_zip_freeze.py \
+            --sample-receipt research/EDINET_REAL_SAMPLE_SOURCE_AVAILABILITY_AUDIT_20260915.json \
+            --zip-dir /tmp/edinet-comparable-zips \
+            --receipt-output /tmp/edinet-comparable-zips/selected_zip_freeze_receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path("/tmp/edinet-comparable-zips/selected_zip_freeze_receipt.json").read_text())
+          assert r["selected_documents"] == 44
+          assert r["strategy_outcomes_opened"] is False
+          assert r["parser_outputs_opened"] is False
+          print("EDINET_COMPARABLE_ZIP_FREEZE_PASS=1")
+          print("EDINET_COMPARABLE_ZIP_AGGREGATE_SHA256=" + r["aggregate_sha256_chain"])
+          PY
+      - name: Upload exact frozen comparable ZIP bytes and receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: edinet-parser-comparable-zips-frozen-v1
+          path: /tmp/edinet-comparable-zips/*
+          if-no-files-found: error
+          retention-days: 30

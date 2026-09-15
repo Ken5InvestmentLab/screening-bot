@@ -58,46 +58,55 @@ jobs:
           github-token: ${{ github.token }}
           repository: Ken5InvestmentLab/screening-bot
           run-id: 34592896202
-      - name: Verify pre-open diagnostic contract and prepare raw seed
-        shell: bash
+      - name: Verify frozen corrected diagnostic contract
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          import pandas as pd
-
           spec=json.loads(Path('research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json').read_text())
+          corr=json.loads(Path('research/CONSENSUS_V47_MIDTERM_PRICE_BASIS_CORRECTION_20260915.json').read_text())
           assert spec['label']=='MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE'
           assert spec['cost_round_trip']==0.0
           assert spec['promotion_evidence'] is False
-          out=Path('raw_diag'); out.mkdir(exist_ok=True)
-          files=sorted(Path('raw_seed').glob('ohlcv_1h_shard_*.csv'))
-          if not files:
-              raise RuntimeError('no preserved raw seed files')
-          for i,p in enumerate(files):
-              d=pd.read_csv(p,dtype={'symbol':str},low_memory=False)
-              if 'timestamp' not in d.columns:
-                  raise RuntimeError(f'missing timestamp in {p}')
-              ts=pd.to_datetime(d['timestamp'],errors='coerce',utc=True).dt.tz_convert('Asia/Tokyo')
-              d['ts_jst']=ts.astype(str)
-              d['date']=ts.dt.strftime('%Y-%m-%d')
-              cols=['symbol','ts_jst','date','open','high','low','close','volume']
-              d[cols].to_csv(out/f'v47_raw1h_shard_{i}.csv.gz',index=False,compression='gzip')
+          assert corr['correction_id']=='CONSENSUS_V47_MIDTERM_CORE24_PRICE_BASIS_CORRECTION_V1'
+          assert corr['formal_promotion_evidence'] is False
+          assert corr['frozen_model_contract']['threshold']==0.95
+          assert corr['frozen_model_contract']['cost_round_trip']==0.0
+          assert corr['holdout_consequence']['same_family_retune_allowed'] is False
+          print('corrected diagnostic pre-open contract: PASS')
+          PY
+      - name: Verify Core24 source pin and normalize price basis
+        env:
+          PYTHONPATH: research
+        run: |
+          python research/normalize_core24_raw1h_for_v47.py \
+            --input-dir raw_seed \
+            --all-splits daily/v47_all_split_events.csv \
+            --pin-json research/consensus_v47_core24_raw_pin.json \
+            --output-dir raw_diag
+      - name: Prepare unchanged partial coverage receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          spec=json.loads(Path('research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json').read_text())
           cov={
               'label':'MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE',
+              'input_correction':'CONSENSUS_V47_MIDTERM_CORE24_PRICE_BASIS_CORRECTION_V1',
               'shadow_accepted':True,
               'promotion_grade':False,
               'formal_raw_acceptance_pass':False,
               'strategy_returns_opened':False,
               'model_scores_opened':False,
               'raw_source_run_id':34592896202,
+              'source_pin_verified':True,
               'NOCAP':spec['preserved_raw_seed']['known_seed_coverage']['NOCAP'],
               'CAP1000_PIT':spec['preserved_raw_seed']['known_seed_coverage']['CAP1000_PIT'],
-              'coverage_caveat':'partial preserved Yahoo seed; missing pairs remain missing; no interpolation or synthetic bars'
+              'coverage_caveat':'partial preserved Yahoo seed; deterministic OHLC price-basis normalization only; missing pairs remain missing; no interpolation or synthetic bars'
           }
           Path('v47_midterm_coverage.json').write_text(json.dumps(cov,indent=2),encoding='utf-8')
           PY
-      - name: Materialize partial PIT features without promotion acceptance
+      - name: Materialize corrected partial PIT features without promotion acceptance
         env:
           PYTHONPATH: research
         run: |
@@ -111,7 +120,7 @@ jobs:
             --raw-coverage-receipt v47_midterm_coverage.json \
             --allow-survivor-shadow \
             --output-dir research_artifacts/v47_midterm_features
-      - name: Run frozen H1 comparison at cost 0 percent
+      - name: Run unchanged frozen H1 comparison at cost 0 percent
         env:
           PYTHONPATH: research
         run: |
@@ -128,11 +137,14 @@ jobs:
         run: |
           mkdir -p research_artifacts/v47_midterm_diagnostic
           cp research/CONSENSUS_V47_MIDTERM_DIAGNOSTIC_SPEC_20260914.json research_artifacts/v47_midterm_diagnostic/preopen_spec.json
+          cp research/CONSENSUS_V47_MIDTERM_PRICE_BASIS_CORRECTION_20260915.json research_artifacts/v47_midterm_diagnostic/price_basis_correction_spec.json
+          cp research/consensus_v47_core24_raw_pin.json research_artifacts/v47_midterm_diagnostic/core24_source_pin.json
+          cp raw_diag/core24_v47_normalization_receipt.json research_artifacts/v47_midterm_diagnostic/core24_normalization_receipt.json || true
           cp v47_midterm_coverage.json research_artifacts/v47_midterm_diagnostic/preopen_coverage.json || true
           cp research_artifacts/v47_midterm_features/v47_clean_feature_materialization.json research_artifacts/v47_midterm_diagnostic/feature_materialization.json || true
           cd research_artifacts/v47_midterm_diagnostic
           find . -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
-      - name: Upload diagnostic evidence
+      - name: Upload corrected diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:

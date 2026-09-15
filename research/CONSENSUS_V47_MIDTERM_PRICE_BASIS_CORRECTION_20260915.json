@@ -1,0 +1,50 @@
+{
+  "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
+  "correction_id": "CONSENSUS_V47_MIDTERM_CORE24_PRICE_BASIS_CORRECTION_V1",
+  "frozen_at_jst": "2026-09-15T16:39:00+09:00",
+  "reason": "Core run34592896202 explicit-period raw OHLC is PIT nominal; prior diagnostic passed it directly to a materializer expecting split-normalized adjusted OHLC, causing double future-split scaling in log_price for pre-split rows.",
+  "original_h1_run_id": 34824194221,
+  "original_h1_status": "MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS",
+  "original_nocap_h2_status": "MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS",
+  "holdout_consequence": {
+    "h1_opened": true,
+    "nocap_h2_opened": true,
+    "cap1000_pit_h2_opened": false,
+    "same_family_retune_allowed": false
+  },
+  "source": {
+    "run_id": 34592896202,
+    "source_head_sha": "a331b96c8b7391a146ed3a8d28dd5e66d6ae0679",
+    "pin_file": "research/consensus_v47_core24_raw_pin.json",
+    "bundle_sha256": "de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18"
+  },
+  "deterministic_input_repair": {
+    "price_rule": "OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date)",
+    "raw_1h_volume": "UNCHANGED",
+    "timestamps": "UNCHANGED after canonical JST parsing",
+    "missing_rows": "UNCHANGED_MISSING_NO_INTERPOLATION",
+    "normalizer": "research/normalize_core24_raw1h_for_v47.py"
+  },
+  "frozen_model_contract": {
+    "architecture": "V11 frozen 3-head",
+    "consensus_mode": "min",
+    "threshold": 0.95,
+    "guard": "none",
+    "sessions": "both",
+    "strict_same_symbol_cooldown_sessions": 5,
+    "replacement": false,
+    "price_arms": [
+      "NOCAP",
+      "CAP1000_PIT"
+    ],
+    "endpoint": "next official XTKS open -> D+5 close",
+    "cost_round_trip": 0,
+    "win_definition": "gross canonical return > 0",
+    "use_2026_for_selection": false,
+    "price_cap_grid_search": false
+  },
+  "corrected_h1_rule": "Recompute both frozen arms only after source SHA pin and normalizer contract pass. Choose by unchanged frozen DEV rule; do not alter any model/family setting from opened outcomes.",
+  "formal_promotion_evidence": false,
+  "formal_raw_acceptance_requirement_unchanged": true,
+  "production_writes": false
+}

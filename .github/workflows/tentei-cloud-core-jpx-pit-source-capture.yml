@@ -1,0 +1,28 @@
+name: tentei-cloud-core-jpx-pit-source-capture
+on:
+  push:
+    branches: [research/tentei-cloud-mtf]
+    paths:
+      - 'research/tentei_cloud/scripts/capture_jpx_pit_sources.py'
+      - '.github/workflows/tentei-cloud-core-jpx-pit-source-capture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Capture exact official JPX bytes
+        run: python research/tentei_cloud/scripts/capture_jpx_pit_sources.py
+      - name: Upload immutable capture artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: core24-jpx-pit-source-capture-${{ github.sha }}
+          path: research/tentei_cloud/artifacts/jpx_pit_source_capture/
+          if-no-files-found: error
+          retention-days: 30

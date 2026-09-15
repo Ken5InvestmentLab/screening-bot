@@ -1,0 +1,58 @@
+{
+  "status": "PASS_STRICT_REVERSE_REPLAY",
+  "contract_version": "core24-jpx-pit-v1-may-date-corrected",
+  "target_date": "2024-09-17",
+  "anchor": {
+    "effective_date": "2026-08-31",
+    "eligible_count": 3707,
+    "eligibility": ["Prime Market (Domestic)", "Standard Market (Domestic)", "Growth Market (Domestic)"],
+    "artifact_id": 10398473275,
+    "workflow_run_id": 34974864648
+  },
+  "listing_delisting_source_receipt": {
+    "path": "research/tentei_cloud/CORE_JPX_PIT_SOURCE_RECEIPT_20260915.json",
+    "artifact_id": 10393968557,
+    "artifact_digest": "sha256:551411e95e30a4d20c3dd0cc90dff49099885cd1f1da07f3304d8af7445390e0",
+    "source_sha256": {
+      "new_current": "c0b25c56c73c22b77256bac247713612c946c79ec980694c9ef996a09ee9b4e5",
+      "new_2025": "8408aaff65781dec2beb79bca6c087d4b904c6eed8f24fdff90f89b7bb30def4",
+      "new_2024": "86d1e00866cdb4faa3cf814bf06ea16f106e09167bf2c01d74a2c6b15e584b91",
+      "delisted_current": "fab54e3414c9a7f1a2e30b1d58f59368e1f0b8c97f9c824740dcccc4febace23",
+      "delisted_2025": "a343d542a4a8d9d85db2e29dbd94e52dfeae15e8ddd60976f4947d44d43ef0d9",
+      "delisted_2024": "fb32c3f5accbef5599e5654a272064c6292a5a863a7911a44e05f75fd2fa7c42"
+    }
+  },
+  "segment_transfer_provenance": {
+    "artifact_id": 10411777912,
+    "artifact_digest": "sha256:2d1b761e51a8cd70ba8501a5c1ed0df8a09ad4b17fa5456483967108728df7e7",
+    "source_sha256": {
+      "transfer_current": "85be65e0d8750e0b1d66c73072d7a0381d9661b2e670b77f2f095de069253a2a",
+      "transfer_2025": "ade24579c26a6ac35a16dc247c2b880b622738069e0806a0bbab15b1e6919145",
+      "transfer_2024": "dcd590127c90e7ef1f0c499e7fd4d5bc3ca1e06c31d55fdf1d3798391dc35f71"
+    }
+  },
+  "parser_contract": {
+    "date_parsing": "row-wise only; accept %b. %d, %Y and %b %d, %Y; unknown non-empty date fails closed",
+    "vectorized_date_coercion": false,
+    "reverse_window": "(2024-09-17, 2026-08-31]",
+    "strict_transition_assertions": true
+  },
+  "event_counts": {
+    "listing": 134,
+    "delisting": 261,
+    "segment_transfer": 81,
+    "total": 476,
+    "listing_delisting_through_2026_09_10_report_only": {"listing": 134, "delisting": 263, "total": 397}
+  },
+  "result": {
+    "target_membership_count": 3834,
+    "membership_serialization": "sorted CODE,SEGMENT\\n",
+    "membership_sha256": "9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e",
+    "quarantine_count": 0,
+    "identity_conflict_count": 0,
+    "transition_conflict_count": 0
+  },
+  "next_gate": "Independent exact-hour activity evidence. Membership must not be used to manufacture expected hourly keys.",
+  "cloud_exact_forensic": "HISTORICAL_EXACT_REPRO_UNAVAILABLE",
+  "performance_contract": "Any future new performance is transaction-cost 0%; win = gross return > 0. No performance opened by this receipt."
+}

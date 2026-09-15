@@ -91,25 +91,58 @@ def test_snapshot_fails_closed_on_non_success_status_and_malformed_row(tmp_path)
         freeze_metadata_snapshot(tmp_path, start="2023-01-01", end="2023-01-01")
 
 
-def test_snapshot_rejects_duplicate_doc_id_across_days(tmp_path):
+def test_snapshot_retains_sample_safe_duplicate_doc_observations_and_records_receipt(tmp_path):
     row = {
         "docID": "SAME",
         "docTypeCode": "120",
         "submitDateTime": "2023-01-01 09:00",
     }
     _write_day(tmp_path, "2023-01-01", [row])
+    _write_day(tmp_path, "2023-01-02", [row])
+
+    frame, manifest = freeze_metadata_snapshot(
+        tmp_path,
+        start="2023-01-01",
+        end="2023-01-02",
+    )
+
+    assert frame["doc_id"].tolist() == ["SAME", "SAME"]
+    receipt = manifest["duplicate_document_observations"]
+    assert receipt["duplicate_doc_id_count"] == 1
+    assert receipt["duplicate_observation_rows"] == 2
+    assert receipt["eligible_duplicate_doc_id_count"] == 1
+    assert len(receipt["duplicate_observation_sha256"]) == 64
+
+
+def test_snapshot_rejects_duplicate_doc_id_with_conflicting_submit_datetime(tmp_path):
+    _write_day(
+        tmp_path,
+        "2023-01-01",
+        [{"docID": "SAME", "docTypeCode": "120", "submitDateTime": "2023-01-01 09:00"}],
+    )
     _write_day(
         tmp_path,
         "2023-01-02",
-        [
-            {
-                **row,
-                "submitDateTime": "2023-01-02 09:00",
-            }
-        ],
+        [{"docID": "SAME", "docTypeCode": "120", "submitDateTime": "2023-01-02 09:00"}],
     )
 
-    with pytest.raises(ValueError, match="duplicate doc_id"):
+    with pytest.raises(ValueError, match="conflicting submit_datetime"):
+        freeze_metadata_snapshot(tmp_path, start="2023-01-01", end="2023-01-02")
+
+
+def test_snapshot_rejects_duplicate_eligible_doc_id_with_conflicting_doc_type(tmp_path):
+    _write_day(
+        tmp_path,
+        "2023-01-01",
+        [{"docID": "SAME", "docTypeCode": "120", "submitDateTime": "2023-01-01 09:00"}],
+    )
+    _write_day(
+        tmp_path,
+        "2023-01-02",
+        [{"docID": "SAME", "docTypeCode": "130", "submitDateTime": "2023-01-01 09:00"}],
+    )
+
+    with pytest.raises(ValueError, match="conflicting doc_type_code"):
         freeze_metadata_snapshot(tmp_path, start="2023-01-01", end="2023-01-02")
 
 

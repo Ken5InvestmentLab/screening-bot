@@ -1,12 +1,12 @@
 {
-  "version": 94,
+  "version": 95,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T22:59:00+09:00",
+  "updated_at_jst": "2026-09-15T23:24:00+09:00",
   "supervisor_last_scan": {
     "status": "OSS_PARALLEL_DISABLED_DETECTED_REARMED_CORE_ANCHOR_CAPTURE_RECONCILED",
     "scanned_at_jst": "2026-09-15T22:59:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Heartbeat audit found OSS+Parallel :48 actually disabled despite prior dashboard GREEN; re-armed for 23:48 JST hourly exact cadence. Core advanced beyond STATE: corrected JPX data_e.xlsx capture run 34974864648 SUCCESS; exact workbook 227579 bytes SHA256 4d10497c2aa03bcca0b92f0673d3ab19ecc6aca6a9c9a70a3e19cd490f1d8754, artifact 10398473275 digest sha256:b788cabf1a82706ea3be9925f96b6d9ef5133bcf7776f8bbe769c86e5b194516. Rejected correction workbook remains excluded. Next Core action is workbook header/effective-month-end verification then frozen parser/eligibility contract and 375-event reverse replay."
+    "note": "Core24 verified immutable JPX data_e.xlsx header/effective date from artifact 10398473275 and froze parser/eligibility contract. Anchor effective date 2026-08-31; domestic Prime/Standard/Growth exact-label filter yields 3707 codes. Next is deterministic reverse replay of frozen 375-event ledger to 2024-09-17 with quarantine receipt."
   },
   "automation_heartbeat": {
     "checked_at_jst": "2026-09-15T22:59:00+09:00",
@@ -15,7 +15,7 @@
     "workers": {
       "supervisor": {"enabled": true, "last_run_jst": "22:02", "status": "GREEN_CURRENT_RUN"},
       "canonical": {"enabled": true, "last_run_jst": "22:10", "status": "GREEN"},
-      "core": {"enabled": true, "last_run_jst": "22:26", "status": "GREEN"},
+      "core": {"enabled": true, "last_run_jst": "23:24", "status": "GREEN"},
       "consensus": {"enabled": true, "last_run_jst": "22:38", "status": "GREEN"},
       "oss_parallel": {"enabled": true, "last_run_jst": "22:46", "status": "RECOVERED_REARMED_NEXT_23:48"}
     }
@@ -23,7 +23,7 @@
   "scan_policy": {"cadence_target_minutes":12,"worker_slots_jst":["00","12","24","36","48"],"rule":"Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."},
   "branches": {
     "research/tvfree-canonical-batch02":{"preferred_worker":"canonical","last_seen_sha":"90f56dcd426e8d1a85cfd8f38eee5a8afda9d471","last_processed_sha":"90f56dcd426e8d1a85cfd8f38eee5a8afda9d471","task_state":"ACTIVE_OUTCOME_BLIND_INTEGRITY","next_action":"Continue outcome-blind Shadow/Data integrity."},
-    "research/tentei-cloud-mtf":{"preferred_worker":"core","last_seen_sha":"9f1d05a12fb6d3be5936f5bf4929fd75448ff620","last_processed_sha":"9f1d05a12fb6d3be5936f5bf4929fd75448ff620","task_state":"ACTIVE_DATA_REPAIR_JPX_CURRENT_ANCHOR_BYTES_PINNED","next_action":"Verify data_e.xlsx workbook header/effective month-end from immutable artifact 10398473275; freeze parser/eligibility contract; reverse-replay frozen 375-event ledger to 2024-09-17; quarantine conflicts and freeze PIT membership receipt before exact-hour activity evidence."},
+    "research/tentei-cloud-mtf":{"preferred_worker":"core","last_seen_sha":"5ea40f52e6bd967406446ebc2574d6c06628a71b","last_processed_sha":"5ea40f52e6bd967406446ebc2574d6c06628a71b","task_state":"ACTIVE_DATA_REPAIR_JPX_PARSER_CONTRACT_FROZEN","next_action":"Deterministically reverse-replay frozen 375-event ledger from 2026-08-31 eligible anchor to 2024-09-17; quarantine conflicts/impossible transitions; freeze PIT membership receipt and SHA before independent exact-hour activity evidence."},
     "research/consensus-atr-regime-gate":{"preferred_worker":"consensus","last_seen_sha":"27e9e1e13362f866ad52db4ecb9f6cac38956a53","last_processed_sha":"27e9e1e13362f866ad52db4ecb9f6cac38956a53","task_state":"ACTIVE_CORRECTED_H1_DIAGNOSTIC_COMPLETE_H2_PREREG_PENDING_FORMAL_RAW_BLOCKED","next_action":"Preserve corrected H1 receipt and preregister/repair corrected H2 diagnostic to open CAP1000_PIT only, carrying H1 cooldown state and identical frozen price-basis normalization/cost0 contract."},
     "research/oss-validation-tooling":{"preferred_worker":"oss-validation-via-48","last_seen_sha":"f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1","last_processed_sha":"f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1","task_state":"ACTIVE_EDINET_FINDINGS_DISPOSITION_POLICY_FROZEN_WORKER_REARMED","next_action":"Taxonomy 27 findings by source-grounded cause; unresolved remain fail-closed."},
     "research/parallel-condition-exploration":{"preferred_worker":"cross-lane-via-48","last_seen_sha":"57d285370898b13ee93e7cb941667e2550ac6950","last_processed_sha":"57d285370898b13ee93e7cb941667e2550ac6950","task_state":"STALE_P0_ACTION_REASSERTED_WORKER_REARMED","next_action":"Generate causal A1/B1/E1 pick ledger without reading returns, freeze SHA, then completeness receipt; only after PASS one-shot cost0."}
@@ -36,11 +36,11 @@
     "oss_validation":{"task_state":"ACTIVE_EDINET_FINDINGS_DISPOSITION_POLICY_FROZEN_WORKER_REARMED","performance_opened":false},
     "consensus_v47":{"task_state":"ACTIVE_CORRECTED_H1_DIAGNOSTIC_COMPLETE_H2_PREREG_PENDING_FORMAL_RAW_BLOCKED","corrected_h1_run_id":34943802848,"corrected_h1_conclusion":"SUCCESS","period":"2025-01-06..2025-06-30","endpoint":"next XTKS open -> D+5 close","cost_pct":0,"diagnostic_leader":"CAP1000_PIT","nocap":{"pair_coverage_pct":35.3898,"n":43,"mean_pct":1.3817,"median_pct":-0.7375,"win_pct":39.53,"top3_ex_pct":-1.0890},"cap1000_pit":{"pair_coverage_pct":83.1124,"n":41,"mean_pct":1.7117,"median_pct":-2.0305,"win_pct":43.90,"top3_ex_pct":-1.3069},"formal_raw_acceptance":false,"promotion_evidence":false},
     "canonical_shadow":{"task_state":"ACTIVE_OUTCOME_BLIND_INTEGRITY","performance_opened":false},
-    "core":{"task_state":"ACTIVE_PROVENANCE_JPX_CURRENT_ANCHOR_BYTES_PINNED","jpx_listed_issues_page_sha256":"19dd761cdf1ef75ce02e84a398c97dc2be4ee44021824756b6450a906cfe9389","jpx_current_workbook_run_id":34974864648,"jpx_current_workbook_artifact_id":10398473275,"jpx_current_workbook_artifact_digest":"sha256:b788cabf1a82706ea3be9925f96b6d9ef5133bcf7776f8bbe769c86e5b194516","jpx_current_workbook_bytes":227579,"jpx_current_workbook_sha256":"4d10497c2aa03bcca0b92f0673d3ab19ecc6aca6a9c9a70a3e19cd490f1d8754","jpx_event_count":375,"jpx_listing_count":134,"jpx_delisting_count":241,"jpx_identity_conflicts":0,"performance_opened":false},
+    "core":{"task_state":"ACTIVE_PROVENANCE_JPX_PARSER_CONTRACT_FROZEN","jpx_listed_issues_page_sha256":"19dd761cdf1ef75ce02e84a398c97dc2be4ee44021824756b6450a906cfe9389","jpx_current_workbook_run_id":34974864648,"jpx_current_workbook_artifact_id":10398473275,"jpx_current_workbook_artifact_digest":"sha256:b788cabf1a82706ea3be9925f96b6d9ef5133bcf7776f8bbe769c86e5b194516","jpx_current_workbook_bytes":227579,"jpx_current_workbook_sha256":"4d10497c2aa03bcca0b92f0673d3ab19ecc6aca6a9c9a70a3e19cd490f1d8754","jpx_anchor_effective_date":"2026-08-31","jpx_anchor_eligible_count":3707,"jpx_event_count":375,"jpx_listing_count":134,"jpx_delisting_count":241,"jpx_identity_conflicts":0,"performance_opened":false},
     "cloud_exact_forensic":{"task_state":"CLOSED","conclusion":"HISTORICAL_EXACT_REPRO_UNAVAILABLE"},
     "v20_session_impulse":{"task_state":"CLOSED"}
   },
-  "progress":{"overall_pct":81,"weak_early_phase2_pct":100,"parallel_wave1_pct":72,"core24_ohlcv_pct":87,"consensus_v47_pct":78,"canonical_shadow_pct":89,"core_endpoint_provenance_pct":97,"cloud_exact_forensic_pct":100,"oss_validation_pct":98,"v20_pct":100},
-  "next_global_actions":["Core24: verify pinned data_e.xlsx header/effective month-end -> freeze parser/eligibility -> reverse-replay 375-event ledger -> PIT membership receipt.","Consensus: corrected H2 prereg/repair -> CAP1000_PIT only, unchanged normalization/cost0; formal raw path stays sealed.","Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","OSS/EDINET: source-grounded taxonomy; unresolved findings fail-closed.","Canonical: continue outcome-blind integrity.","Heartbeat: verify re-armed OSS+Parallel actually runs at 23:48; if missed again treat scheduler-level fault."],
+  "progress":{"overall_pct":81,"weak_early_phase2_pct":100,"parallel_wave1_pct":72,"core24_ohlcv_pct":88,"consensus_v47_pct":78,"canonical_shadow_pct":89,"core_endpoint_provenance_pct":98,"cloud_exact_forensic_pct":100,"oss_validation_pct":98,"v20_pct":100},
+  "next_global_actions":["Core24: reverse-replay frozen 375-event ledger from 2026-08-31 anchor -> quarantine -> 2024-09-17 PIT membership receipt.","Consensus: corrected H2 prereg/repair -> CAP1000_PIT only, unchanged normalization/cost0; formal raw path stays sealed.","Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","OSS/EDINET: source-grounded taxonomy; unresolved findings fail-closed.","Canonical: continue outcome-blind integrity.","Heartbeat: verify re-armed OSS+Parallel actually runs at 23:48; if missed again treat scheduler-level fault."],
   "go_no_go":"NO-GO_RESEARCH_CONTINUES"
 }

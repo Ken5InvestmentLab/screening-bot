@@ -38,7 +38,6 @@ def _is_edinet_null_tombstone(item: dict[str, object]) -> bool:
     zero_flags = ("xbrlFlag", "pdfFlag", "attachDocFlag", "englishDocFlag", "csvFlag", "legalStatus")
     return (
         item.get("docTypeCode") is None
-        and item.get("submitDateTime") is None
         and str(item.get("disclosureStatus", "")) == "0"
         and all(str(item.get(name, "")) == "0" for name in zero_flags)
     )
@@ -212,7 +211,7 @@ def freeze_metadata_snapshot(
         "excluded_document_list_rows": {
             "edinet_null_tombstone_count": len(excluded_tombstones),
             "edinet_null_tombstone_sha256": _sha256_bytes("\n".join(excluded_tombstones).encode("utf-8")),
-            "policy": "skip only documented null-metadata rows with disclosureStatus=0 and all content/legal flags=0; all other malformed rows fail closed",
+            "policy": "skip only inert EDINET document-list rows with docTypeCode=null, disclosureStatus=0, and all content/legal flags=0; submitDateTime may be null or retained; all other malformed rows fail closed",
         },
         "strategy_outcomes_opened": False,
         "parser_outputs_used_for_selection": False,

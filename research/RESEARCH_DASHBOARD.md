@@ -1,6 +1,6 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 22:35+ JST  
+Last updated: 2026-09-16 04:35+ JST  
 Branch: `research/consensus-atr-regime-gate`  
 Lane: Consensus specialist / V47 clean PIT pipeline
 
@@ -52,15 +52,28 @@ Coverage caveat: partial preserved Yahoo seed only; missing pairs remain missing
 
 **Corrected diagnostic H1 leader: `CAP1000_PIT`.** This is diagnostic only, not promotion evidence. H1 is opened/not untouched.
 
-## Corrected H2 diagnostic status
-- Pre-open spec now pins corrected H1 run `34943802848`, digest `sha256:e22b84ce4d9f10872060fabfc6af1f7636e62077c4b03298b46237ae587d0c9b`, and **CAP1000_PIT only**.
-- H2 workflow now requires the same Core24 SHA pin and deterministic adjusted-price normalization used by corrected H1.
-- Cost remains **0%**, endpoint remains next XTKS open -> D+5, strict5 cooldown state is carried from H1, and no threshold/ranker/cooldown/price-arm retune is permitted.
-- Trigger marker commit: `bdc01fbc6480ee999dd9c63a452389c4ba9f4846`.
-- At this checkpoint the corrected CAP1000_PIT H2 performance has **not yet been opened/reported**; wait for the new diagnostic run/artifact and receipt-check it before reading metrics.
+## Corrected CAP1000_PIT H2 — `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`
+Run `34976174775` completed **SUCCESS**. Artifact digest `sha256:ad2bd2388425aaad55ed8485f5f20dfefbf62014c1f746e464851d9c093d7688`. Pre-open contract fixed CAP1000_PIT from corrected H1 before H2 was opened; NOCAP H2 was not opened under the corrected basis. Cost 0%, same threshold/ranker/price arm, strict5 cooldown state carried from H1, no replacement and no retune.
+
+Period 2025-07-01..2025-12-30; endpoint next XTKS open -> D+5 close.
+
+| arm | coverage | n | mean | median | win | +10 | +20 | +50 | -10 | -20 | Top1-ex | Top3-ex |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| CAP1000_PIT | 83.1124%* | 26 | +3.8194% | 0.0000% | 30.77% | 19.23% | 7.69% | 3.85% | 15.38% | 3.85% | -0.6236% | -3.0563% |
+
+`*` Coverage is the frozen required-pair coverage of the preserved Core24 seed used by the corrected diagnostic, not formal raw acceptance. The run explicitly bypassed formal coverage for diagnostic use only. Missing pairs stayed missing; no interpolation or synthetic bars. Unique symbols=22; max-symbol share=11.54%.
+
+Interpretation: the positive H2 mean is **tail-dependent**. Removing the best trade turns mean negative, and removing the top three worsens it further. H2 therefore does not provide robust broad-based support despite a higher headline mean than H1. This is diagnostic evidence only and cannot promote the family.
+
+H2 is now opened/not untouched. Same-family retuning from these results remains prohibited; no additional price-cap grid is allowed and 2026 remains sealed from selection/tuning.
+
+## Current disposition
+- Formal promotion: **NO CHANGE / BLOCKED** until unchanged V47 raw acceptance passes both arms.
+- Midterm diagnostic: CAP1000_PIT survived H1-to-H2 at the headline mean level but failed robustness to tail exclusion; treat as **weak / concentrated diagnostic support**, not a reason to relax data gates.
+- V47 may still be worth completing as a clean PIT falsification/confirmation exercise because CAP1000_PIT has materially higher preserved-seed coverage than NOCAP, but the diagnostic does not justify additional tuning or acquisition-by-outcome choices.
 
 ## Next action
-1. Observe corrected CAP1000_PIT H2 diagnostic registration/completion and inspect pre-open/hash/coverage receipts first.
-2. If physically computable, report H2 period, n, mean, median, win, +10/+20/+50, -10/-20, Top1/Top3-ex, endpoint and coverage caveat at cost 0%; otherwise mark `NOT_COMPUTABLE_NO_INPUT_DATA`.
-3. Do not retune from H1/H2 and do not open the other arm under the corrected basis.
-4. Do not duplicate-trigger authoritative raw run `34849054884`; formal path remains sealed until unchanged raw acceptance passes both arms.
+1. Freeze corrected H1/H2 as opened diagnostic evidence; no same-family retune and no corrected-basis NOCAP H2 opening.
+2. Continue outcome-blind formal-data work only: verify whether any already-observed/provenance-compatible raw can close the unchanged required-pair gap, otherwise follow only preregistered legal/free acquisition-only routes.
+3. Do not duplicate-trigger authoritative raw run `34849054884` while it remains queued/non-terminal.
+4. Keep formal performance sealed until unchanged raw acceptance passes; if formal raw never becomes physically available, retain `NOT_COMPUTABLE_NO_INPUT_DATA` rather than weakening acceptance.

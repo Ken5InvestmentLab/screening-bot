@@ -55,3 +55,41 @@ Exact regression fixture commit: `90265c5ecc0b2e3d96d1c85f39eb665e9d4535fc`
 OSS validation test run `34936903249`: **PASS**.
 
 Full 2023-2025 metadata freeze retry `34936903153` is running. Do not loosen the predicate further without inspecting and freezing any new exact failing raw shape first.
+
+
+## Repeated docID observation audit
+
+The next full-freeze failure was not a network/API failure. Run `34936903153` acquired all three year artifacts successfully, then failed on repeated `doc_id` values.
+
+Outcome-blind scan of the exact 2023-2025 artifacts found:
+
+- normalized non-inert rows: **216,094**
+- repeated doc IDs: **1,017**
+- repeated observation rows: **2,056**
+- every repeated doc ID keeps the **same submitDateTime**
+- doc IDs touching preregistered doc types 120/130: **7**
+- all 7 eligible repeated doc IDs are **120 -> 120** with identical submitDateTime
+- no 120/130 repeated doc ID changes eligible status
+- 56 repeated doc IDs change docType across observations, but none touch 120/130
+
+Representative rows show EDINET emitting the same document again when `opeDateTime` / `docInfoEditStatus` changes. The frozen sample selector already sorts and deduplicates by `doc_id` after restricting to doc types 120/130.
+
+### Narrow duplicate policy
+
+The snapshot therefore no longer rejects all repeated doc IDs. It retains the repeated observations and records a receipt, while failing closed if either:
+
+1. a repeated doc ID has conflicting `submitDateTime`, or
+2. a repeated doc ID touches preregistered type 120/130 and its doc type is not identical across all observations.
+
+This preserves the real EDINET document-list history while preventing any ambiguity that could alter the preregistered sample.
+
+Implementation commit: `e05a17714e3d7e809d27a1eeb5abbfe1c44b9fe6`
+
+Regression-test commit: `43fcdaa2dde2fb22be257828d930a1d0bdfba94b`
+
+Triggered validation runs:
+
+- OSS validation: `34940882491`
+- full EDINET metadata freeze: `34940882530`
+
+No returns, strategy labels, or performance outcomes were opened.

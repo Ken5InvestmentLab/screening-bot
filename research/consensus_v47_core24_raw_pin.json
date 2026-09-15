@@ -1,0 +1,51 @@
+{
+  "contract": "CONSENSUS_V47_CORE24_RAW_PIN_V1",
+  "source_run_id": 34592896202,
+  "source_head_sha": "a331b96c8b7391a146ed3a8d28dd5e66d6ae0679",
+  "bundle_sha256": "de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18",
+  "files": [
+    {
+      "file_name": "ohlcv_1h_shard_0.csv",
+      "sha256": "17303bb3d63d9e76e3442f3d2518fc88a945a1fb0704374c4f347d32f6a90b19",
+      "rows": 507431
+    },
+    {
+      "file_name": "ohlcv_1h_shard_1.csv",
+      "sha256": "693267fc070ae2269cd80ba96327e9c3fc5b3c0824e41541883452eb2efc2694",
+      "rows": 520041
+    },
+    {
+      "file_name": "ohlcv_1h_shard_2.csv",
+      "sha256": "8ef50f267651b4aa6e0817167c17bee52f02fb419cefc5ee756ecb68cbbd863c",
+      "rows": 505396
+    },
+    {
+      "file_name": "ohlcv_1h_shard_3.csv",
+      "sha256": "83fc0c04cce2be84f9a3f90d8b818777e29e04c8c92e9573d18f9af1eb075fb8",
+      "rows": 511177
+    },
+    {
+      "file_name": "ohlcv_1h_shard_4.csv",
+      "sha256": "10b8a1452c03cba330b242d87cd260583e9d85593d29f8327552926a49811a10",
+      "rows": 480397
+    },
+    {
+      "file_name": "ohlcv_1h_shard_5.csv",
+      "sha256": "9df36651e4f8a45e6ca812ac8ac53d7747701d6578c7be93054e9d0bb058d86f",
+      "rows": 503324
+    },
+    {
+      "file_name": "ohlcv_1h_shard_6.csv",
+      "sha256": "1a1e838a9fc6ac36ca0e0254b3aa16aa416d227323eb7d1e607b40e4e4a3d76e",
+      "rows": 501513
+    },
+    {
+      "file_name": "ohlcv_1h_shard_7.csv",
+      "sha256": "036fc87fa9ece266e521cdd57147bb00bb10992384f1736a712dd3bb8b26d16c",
+      "rows": 490245
+    }
+  ],
+  "strategy_returns_opened": false,
+  "model_scores_opened": false,
+  "production_writes": false
+}

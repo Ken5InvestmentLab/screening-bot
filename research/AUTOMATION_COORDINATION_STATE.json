@@ -1,21 +1,10 @@
 {
-  "updated_at_jst": "2026-09-15T18:36:00+09:00",
+  "updated_at_jst": "2026-09-15T22:35:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "coordination": {
-    "supervisor_coordination_checked": true,
-    "research_dashboard_checked": true,
-    "consensus_v44_handoff_checked": true,
-    "production_touched": false
-  },
-  "formal": {
-    "daily_acceptance": "PASS",
-    "raw_acceptance": "NOT_PASSED",
-    "clean_features": "UNOPENED_FOR_PROMOTION",
-    "h1": "UNOPENED_FOR_PROMOTION",
-    "h2": "UNOPENED_FOR_PROMOTION"
-  },
+  "coordination": {"supervisor_coordination_checked": true, "research_dashboard_checked": true, "consensus_v44_handoff_checked": true, "production_touched": false},
+  "formal": {"daily_acceptance": "PASS", "raw_acceptance": "NOT_PASSED", "clean_features": "UNOPENED_FOR_PROMOTION", "h1": "UNOPENED_FOR_PROMOTION", "h2": "UNOPENED_FOR_PROMOTION"},
   "midterm_diagnostic": {
     "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
     "corrected_h1_run_id": 34943802848,
@@ -34,25 +23,15 @@
     "h2_nocap_opened_under_invalid_old_h1": true,
     "h2_nocap_old_result_ranking_use_allowed": false,
     "h2_cap1000_pit_opened": false,
+    "h2_cap1000_pit_preregistered": true,
+    "h2_trigger_commit": "bdc01fbc6480ee999dd9c63a452389c4ba9f4846",
     "same_family_retune_allowed": false,
     "price_cap_grid_search_allowed": false,
     "2026_selection_allowed": false,
-    "coverage_caveat": "partial preserved Yahoo seed; missing pairs remain missing; no interpolation or synthetic bars"
+    "coverage_caveat": "partial preserved Yahoo seed; corrected Core24 price basis; missing pairs remain missing; no interpolation or synthetic bars"
   },
-  "raw_retry": {
-    "current_run_id": 34849054884,
-    "status_latest_api": "QUEUED_NONTERMINAL",
-    "duplicate_trigger_forbidden": true,
-    "duplicate_triggered": false,
-    "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429",
-    "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA"
-  },
-  "core24_raw_reuse": {
-    "source_run_id": 34592896202,
-    "bundle_sha256": "de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18",
-    "normalization": "OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date); raw 1H volume unchanged",
-    "formal_acceptance_by_itself": false
-  },
+  "raw_retry": {"current_run_id": 34849054884, "status_latest_api": "QUEUED_NONTERMINAL", "duplicate_trigger_forbidden": true, "duplicate_triggered": false, "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429", "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA"},
+  "core24_raw_reuse": {"source_run_id": 34592896202, "bundle_sha256": "de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18", "normalization": "OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date); raw 1H volume unchanged", "formal_acceptance_by_itself": false},
   "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP429 and incomplete required-pair coverage.",
-  "next_action": "Preregister and repair corrected H2 diagnostic to open CAP1000_PIT only under the unchanged frozen contract and corrected source normalization; do not duplicate-trigger raw run 34849054884."
+  "next_action": "Observe corrected CAP1000_PIT H2 diagnostic registration/completion, then receipt-check and report cost-0 H2 metrics without retuning; do not duplicate-trigger raw run 34849054884."
 }

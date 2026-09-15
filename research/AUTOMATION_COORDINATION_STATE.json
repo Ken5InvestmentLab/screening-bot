@@ -1,23 +1,23 @@
 {
-  "version": 84,
+  "version": 85,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T18:24:00+09:00",
+  "updated_at_jst": "2026-09-15T18:57:00+09:00",
   "supervisor_last_scan": {
-    "status": "ADVANCED_EDINET_FULL_FREEZE_PASS_SAMPLE_ARTIFACT_FROZEN",
-    "scanned_at_jst": "2026-09-15T17:57:00+09:00",
+    "status": "ADVANCED_EDINET_SAME_ZIP_AUDIT_COLLECTED_WITH_FINDINGS",
+    "scanned_at_jst": "2026-09-15T18:57:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Recovered terminal result of EDINET full-freeze run 34944519021: SUCCESS. Frozen metadata/sample artifact id 10387200654, artifact digest sha256:91f9c36947a6e215848708c34ebe4bc6841777aad302826fd06fa4de464586f6. Year artifact digests retained."
+    "note": "Collected previously unprocessed OSS same-ZIP crosscheck run 34944902155 and artifact 10386890723 (digest sha256:2affc141851b7701490866be5ddfd35b740ac15e3a0bd48670d2aba3127f96a7). 48 primary sample docs: 44 comparable, 4 source unavailable, 17 all-fields agree, 27 parser findings, 0 parser exceptions. Field audit: assets/equity/operating_income 41 MATCH + 3 custom-missing/OSS-value; net_income 17 MATCH + 24 OSS-missing/custom-value + 3 both-missing; operating_cf 23 MATCH + 21 both-missing; revenue 22 MATCH + 22 both-missing; shares 22 MATCH + 22 both-missing. No strategy outcomes opened and selection did not change after parser outputs. OSS CI run 34944942675 at head f423b5d7 passed."
   },
   "automation_heartbeat": {
-    "checked_at_jst": "2026-09-15T18:24:00+09:00",
+    "checked_at_jst": "2026-09-15T18:57:00+09:00",
     "stop_threshold_minutes": 90,
     "stopped_or_stale_automations": 0,
     "workers": {
-      "supervisor": {"enabled": true, "last_run_jst": "17:00", "status": "GREEN_CURRENT_RUN"},
-      "canonical": {"enabled": true, "last_run_jst": "17:15", "status": "GREEN"},
-      "core": {"enabled": true, "last_run_jst": "18:24", "status": "GREEN"},
-      "consensus": {"enabled": true, "last_run_jst": "17:36", "status": "GREEN"},
-      "oss_parallel": {"enabled": true, "last_run_jst": "17:46", "status": "GREEN"}
+      "supervisor": {"enabled": true, "last_run_jst": "18:58", "status": "GREEN_CURRENT_RUN"},
+      "canonical": {"enabled": true, "last_run_jst": "18:10", "status": "GREEN"},
+      "core": {"enabled": true, "last_run_jst": "18:23", "status": "GREEN"},
+      "consensus": {"enabled": true, "last_run_jst": "18:38", "status": "GREEN"},
+      "oss_parallel": {"enabled": true, "last_run_jst": "18:46", "status": "GREEN"}
     }
   },
   "scan_policy": {"cadence_target_minutes": 12, "worker_slots_jst": ["00","12","24","36","48"], "rule": "Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."},
@@ -25,20 +25,20 @@
     "research/tvfree-canonical-batch02": {"preferred_worker":"canonical","last_seen_sha":"90f56dcd426e8d1a85cfd8f38eee5a8afda9d471","last_processed_sha":"90f56dcd426e8d1a85cfd8f38eee5a8afda9d471","task_state":"ACTIVE_RESOLUTION_CHAIN_DURABLE_PREWRITE_ENFORCED_CI_GREEN","next_action":"Continue outcome-blind Shadow/Data integrity; do not reopen performance or V20."},
     "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"9506c2a6c96e6be9342cf1f7ab534f1ee959ab5a","last_processed_sha":"9506c2a6c96e6be9342cf1f7ab534f1ee959ab5a","task_state":"ACTIVE_DATA_REPAIR_PIT_BYTE_TRANSPORT_PENDING","next_action":"Resolve official JPX archive/raw byte transport without guessing URLs; SHA-pin exact anchor/event inputs, then deterministic membership receipt; then independent exact-hour activity evidence."},
     "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363","last_processed_sha":"5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363","task_state":"STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED","next_action":"Do not duplicate-trigger Yahoo. Compare V47 frozen inventory against Core24 SHA-pinned raw1H manifest outcome-blindly."},
-    "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"4514891ac00daf2fd72df97874b2dbbd52a4b4ea","last_processed_sha":"4514891ac00daf2fd72df97874b2dbbd52a4b4ea","task_state":"ACTIVE_EDINET_METADATA_FREEZE_PASS_ZIP_CROSSCHECK_NEXT","next_action":"Use frozen sample artifact 10387200654; freeze exact selected EDINET ZIP bytes/SHA then run same-ZIP custom-vs-edinet-tools parser cross-check outcome-blindly."},
+    "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1","last_processed_sha":"f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1","task_state":"ACTIVE_EDINET_SAME_ZIP_AUDIT_COMPLETE_WITH_FINDINGS","next_action":"Classify the 27 parser findings by audited taxonomy and decide availability-policy-safe dispositions only; do not select parser/value by performance. Preserve 4 source-unavailable docs and no-replacement rule."},
     "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"STALE_P0_ACTION_ASSIGNED","next_action":"Generate causal A1/B1/E1 pick ledger without reading returns, freeze ledger SHA, then completeness receipt; only after PASS one-shot cost0 performance."}
   },
   "guardrails": ["Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.","2026 outcome is report/robustness-only.","Canonical endpoint is next XTKS open to fifth XTKS close.","All new performance uses transaction cost 0%; win = gross return > 0.","No post-hoc rescue retuning."],
   "workflow_watch": {
     "weak_early_phase2": {"task_state":"CLOSED","leader":"DUAL+G3","leader_2023_25":{"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},"g3_threshold":"med_ret1 >= -0.01 FROZEN","fresh_2022":"FAILED_ROBUSTNESS","round2":"CLOSED"},
     "parallel_wave1": {"task_state":"STALE_P0_ACTION_ASSIGNED","performance_opened":false},
-    "oss_validation": {"task_state":"ACTIVE_EDINET_METADATA_FREEZE_PASS_ZIP_CROSSCHECK_NEXT","edinet_freeze_run":34944519021,"edinet_freeze_conclusion":"SUCCESS","frozen_sample_artifact_id":10387200654,"frozen_sample_artifact_digest":"sha256:91f9c36947a6e215848708c34ebe4bc6841777aad302826fd06fa4de464586f6","year_artifact_digests":{"2023":"sha256:ce850fa081dc921001f87e174dd11589ddf53b3d194d7ab872fae2dd8bd34afd","2024":"sha256:1148638c4a95cb1698db2ec862a2de773ab50803c2b48656eb826b78f892de8c","2025":"sha256:ed144178a347584e1f9c18ff4c269b64b5d7bfa4ec5582abe57fa92817b9f4f3"},"performance_opened":false},
+    "oss_validation": {"task_state":"ACTIVE_EDINET_SAME_ZIP_AUDIT_COMPLETE_WITH_FINDINGS","edinet_freeze_run":34944519021,"edinet_freeze_conclusion":"SUCCESS","frozen_sample_artifact_id":10387200654,"frozen_sample_artifact_digest":"sha256:91f9c36947a6e215848708c34ebe4bc6841777aad302826fd06fa4de464586f6","same_zip_run":34944902155,"same_zip_artifact_id":10386890723,"same_zip_artifact_digest":"sha256:2affc141851b7701490866be5ddfd35b740ac15e3a0bd48670d2aba3127f96a7","primary_sample_documents":48,"parser_comparable_documents":44,"source_unavailable_documents":4,"documents_all_compared_fields_agree":17,"documents_with_parser_findings":27,"crosscheck_exceptions":0,"selection_changed_after_parser_outputs":false,"strategy_outcomes_opened":false,"performance_opened":false},
     "consensus_v47": {"task_state":"STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED","usable_raw_rows":0,"diagnostic_status":"NOT_COMPUTABLE_NO_INPUT_DATA","promotion_evidence":false,"authoritative_run_id":34849054884},
     "canonical_shadow": {"task_state":"ACTIVE_RESOLUTION_CHAIN_DURABLE_PREWRITE_ENFORCED_CI_GREEN","performance_opened":false},
     "core": {"task_state":"ACTIVE_PROVENANCE_PIT_BYTE_TRANSPORT_PENDING","performance_opened":false},
     "cloud_exact_forensic": {"task_state":"CLOSED","conclusion":"HISTORICAL_EXACT_REPRO_UNAVAILABLE"},
     "v20_session_impulse": {"task_state":"CLOSED"}
   },
-  "next_global_actions": ["Core24: resolve official JPX archive/raw byte transport -> SHA-pin PIT inputs -> deterministic membership receipt -> independent exact-hour activity evidence.","Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","OSS/EDINET: selected ZIP byte SHA freeze -> same-ZIP parser cross-check using frozen sample artifact.","Canonical: next outcome-blind Shadow/Data integrity action.","Consensus: Core24 raw1H compatibility audit before any new acquisition retry.","Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."],
+  "next_global_actions": ["Core24: resolve official JPX archive/raw byte transport -> SHA-pin PIT inputs -> deterministic membership receipt -> independent exact-hour activity evidence.","Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","OSS/EDINET: classify 27 same-ZIP parser findings outcome-blindly and freeze availability-safe dispositions; no parser replacement by performance.","Canonical: next outcome-blind Shadow/Data integrity action.","Consensus: Core24 raw1H compatibility audit before any new acquisition retry.","Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."],
   "go_no_go": "NO-GO_RESEARCH_CONTINUES"
 }

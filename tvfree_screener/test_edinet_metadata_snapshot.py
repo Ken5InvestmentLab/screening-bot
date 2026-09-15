@@ -111,3 +111,66 @@ def test_snapshot_rejects_duplicate_doc_id_across_days(tmp_path):
 
     with pytest.raises(ValueError, match="duplicate doc_id"):
         freeze_metadata_snapshot(tmp_path, start="2023-01-01", end="2023-01-02")
+
+
+def test_snapshot_skips_documented_null_tombstone_and_records_receipt(tmp_path):
+    _write_day(
+        tmp_path,
+        "2023-01-01",
+        [
+            {
+                "docID": "S-TOMBSTONE",
+                "docTypeCode": None,
+                "submitDateTime": None,
+                "withdrawalStatus": "2",
+                "parentDocID": "S-PARENT",
+                "disclosureStatus": "0",
+                "xbrlFlag": "0",
+                "pdfFlag": "0",
+                "attachDocFlag": "0",
+                "englishDocFlag": "0",
+                "csvFlag": "0",
+                "legalStatus": "0",
+            },
+            {
+                "docID": "S1001",
+                "docTypeCode": "120",
+                "submitDateTime": "2023-01-01 09:10",
+            },
+        ],
+    )
+
+    frame, manifest = freeze_metadata_snapshot(
+        tmp_path,
+        start="2023-01-01",
+        end="2023-01-01",
+    )
+
+    assert frame["doc_id"].tolist() == ["S1001"]
+    excluded = manifest["excluded_document_list_rows"]
+    assert excluded["edinet_null_tombstone_count"] == 1
+    assert len(excluded["edinet_null_tombstone_sha256"]) == 64
+
+
+def test_snapshot_still_fails_closed_on_non_tombstone_missing_submit_datetime(tmp_path):
+    _write_day(
+        tmp_path,
+        "2023-01-01",
+        [
+            {
+                "docID": "S-BAD",
+                "docTypeCode": "120",
+                "submitDateTime": None,
+                "disclosureStatus": "0",
+                "xbrlFlag": "1",
+                "pdfFlag": "1",
+                "attachDocFlag": "0",
+                "englishDocFlag": "0",
+                "csvFlag": "1",
+                "legalStatus": "1",
+            }
+        ],
+    )
+
+    with pytest.raises(ValueError, match="missing docID/docTypeCode/submitDateTime"):
+        freeze_metadata_snapshot(tmp_path, start="2023-01-01", end="2023-01-01")

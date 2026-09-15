@@ -27,7 +27,7 @@ GitHub最終commit時刻だけでは停止判定しない。task-level停滞とa
 | Weak+Early Phase-2 frozen検証 | ⚫ CLOSED | 100% | 2022 fresh robustness FAIL、retune禁止、Round2 CLOSED |
 | Parallel Wave-1 | 🔴 STALE / P0 | 72% | causal A1/B1/E1 pick ledger SHA固定 → completeness receipt → one-shot cost0 |
 | Core24 OHLCV補完 | 🟢 稼働中 | 75% | official JPX PIT source route特定済み。exact input bytes/SHA pin → independent exact-hour activity evidence |
-| Consensus V47 | 🟠 外部transport待ち＋進行 | 67% | 新HEAD `5a205f4e…`監査済み。8 shard可視、usable raw=0、systemic Yahoo HTTP429。診断値は `NOT_COMPUTABLE_NO_INPUT_DATA` |
+| Consensus V47 | 🟠 **transport STALE / reuse監査へ再配分** | 67% | formal raw1H run `34849054884` はusable raw=0のまま長時間停滞。単純待機を打切り、V47 frozen inventoryとCore24のSHA-pinned observed raw1Hの互換性をoutcome-blind監査へ。threshold緩和・duplicate retry禁止 |
 | Canonical/Shadow endpoint integrity | 🟢 稼働中 | 84% | 新HEAD `fe0e89c5…`監査済み。cross-run shadow receipt chain guardをCIへ接続、run `34902927347` PASS |
 | Core endpoint provenance | 🟢 稼働中 | 87% | JPX source route確認済み。byte-pinned PIT receiptとexact-hour activity sourceが残り |
 | Cloud Monster exact forensic | ⚫ CLOSED | 100% | `HISTORICAL_EXACT_REPRO_UNAVAILABLE`。新しいidentity-critical一次証拠時のみ再開 |

@@ -1,6 +1,7 @@
 label=MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE
-triggered_at_jst=2026-09-14T17:37:45+09:00
+triggered_at_jst=2026-09-15T16:39:00+09:00
 daily_run_id=34799835035
 raw_seed_run_id=34592896202
-formal_retry_run_id=34810592135
+formal_retry_run_id=34849054884
+correction_id=CONSENSUS_V47_MIDTERM_CORE24_PRICE_BASIS_CORRECTION_V1
 cost_round_trip=0.0

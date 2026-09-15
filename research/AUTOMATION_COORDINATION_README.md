@@ -35,7 +35,13 @@ Native scheduled tasks can run at most once per hour per task. Five research wor
 - Correct through 2026-09-10 is `397 = 134 listings + 263 delistings`; old 375/241 evidence is superseded.
 - Reverse replay `(2024-09-17, 2026-08-31]` is `134 + 261 + 81 = 476` events.
 - Anchor 3,707 -> target 3,834, zero quarantine/conflict, sorted membership SHA-256 `9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e`.
-- Next: independent exact-hour activity evidence/receipt. Do not derive expected hourly keys from membership alone.
+
+## Core24 exact-hour activity note (2026-09-16 07:24)
+- Official JPX/JPXI `Historical Real-Time Market Data (Including Tick Data)` / FLEX Historical is identified as a semantically sufficient independent execution-level activity witness.
+- It covers TSE listed cash equities and provides historical real-time/tick data; post-2021-05-24 delivery uses timestamped PCAP.
+- Core spec: `research/tentei_cloud/CORE_EXACT_HOUR_ACTIVITY_SOURCE_SPEC_20260916.md`.
+- State is `SEMANTIC_SOURCE_IDENTIFIED_ACCESS_NOT_ACQUIRED`: paid/contract access, no raw FLEX bytes currently pinned.
+- Formal expected keys and missing inventory remain sealed until independent raw execution bytes + SHA/spec/parser receipt are frozen. Membership×calendar×hour and Yahoo self-witness remain forbidden.
 
 ## Dynamic lane discovery
 - The :00 supervisor must not assume a fixed lane count.

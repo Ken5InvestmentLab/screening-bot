@@ -1,9 +1,9 @@
 {
-  "updated_at_jst": "2026-09-15T10:33:00+09:00",
+  "updated_at_jst": "2026-09-15T16:39:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "b90214ca95c03ee6aa807bc23a3cf722cdde63b9",
+  "latest_head_before_state_write": "b38e4d13f3618aef0829a2a9bb0ee057bd178693",
   "coordination": {
     "supervisor_coordination_checked": true,
     "research_dashboard_checked": true,
@@ -21,13 +21,17 @@
     "h2": "UNOPENED_FOR_PROMOTION"
   },
   "midterm_diagnostic": {
-    "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
-    "cost_pct": 0.0,
+    "label": "MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS",
+    "original_label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
+    "cost_pct": 0,
     "h1_opened": true,
     "h2_nocap_opened": true,
     "h2_cap1000_pit_opened": false,
     "same_family_retune_allowed": false,
-    "nocap_h2": {"period":"2025-07-01/2025-12-30","n":37,"mean_pct":3.03,"median_pct":0.38,"win_pct":51.35,"plus10_pct":27.03,"plus20_pct":16.22,"plus50_pct":2.70,"minus10_pct":13.51,"minus20_pct":2.70,"top1_ex_mean_pct":1.56,"top3_ex_mean_pct":-0.54,"endpoint":"next XTKS open -> D+5 close","coverage_caveat":"partial raw / coverage-bypassed"}
+    "ranking_use_allowed": false,
+    "invalidation_reason": "Core run34592896202 explicit-period raw OHLC is PIT nominal; midterm workflow passed it directly into V47 materializer that expects split-normalized adjusted OHLC before multiplying by future split factor for PIT log_price.",
+    "corrected_recompute_allowed": "exact same frozen family/threshold/ranker/cooldown only; input-semantics correction, no retune",
+    "historical_metrics_retained_for_audit_only": true
   },
   "raw_retry": {
     "superseded_run_id": 34810592135,
@@ -38,20 +42,78 @@
     "strategy": "48 shards, max-parallel=2, shard-count=48, unchanged frozen acceptance",
     "duplicate_trigger_forbidden": true,
     "duplicate_triggered": false,
-    "completed_shards_with_visible_artifacts": [0,1,2,3,4,5,6,7],
-    "active_shards": [8,9],
+    "completed_shards_with_visible_artifacts": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "active_shards": [
+      12,
+      13
+    ],
     "completed_requested_symbols_total": 648,
     "completed_ok_symbols_total": 0,
     "completed_raw_rows_total": 0,
     "independently_confirmed_http429_symbols_total": 567,
-    "visible_artifact_count": 8,
-    "observed_at_jst": "2026-09-15T10:33:00+09:00",
+    "visible_artifact_count": 12,
+    "observed_at_jst": "2026-09-15T16:39:00+09:00",
     "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429; SHARD6 INDEPENDENTLY CONFIRMS 81/81 HTTP429",
     "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA",
     "future_missing_only_retry_hardening": "two symbols x two Yahoo hosts preflight; all four HTTP 429 => transport_circuit_open/systemic_http_429 fail-fast; no threshold change and no interpolation",
     "merge_acceptance_spec": "research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md",
-    "remaining_matrix_state": "shards 8 and 9 are in_progress in Fetch raw 1H shard; later shards remain queued; eight artifacts visible"
+    "remaining_matrix_state": "shards 0-11 completed with 12 visible small artifacts; shards 12 and 13 are in_progress at Fetch raw 1H shard; later shards queued"
   },
-  "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP 429 and the authoritative 48-shard run is still non-terminal. Eight completed shards have zero usable raw rows; shard 6 independently confirms 81/81 HTTP429. This is transport failure, not strategy evidence.",
-  "next_action": "Do not duplicate-trigger run 34849054884. Continue observing shards 8/9. When terminal, enumerate all shard artifacts/receipts, admit only genuinely observed rows under the frozen merge spec, merge with preserved seed raw using provenance, and rerun unchanged frozen acceptance."
+  "blocker": "Formal raw1H acceptance remains blocked by Yahoo HTTP429 / incomplete required-pair coverage. Core24 raw identity is now resolved and reusable only after deterministic price-basis normalization; its coverage alone is insufficient and restored-pair coverage is 0%.",
+  "next_action": "Do not duplicate-trigger run 34849054884. Use the CI-passed Core24->V47 OHLC basis normalizer for the preserved seed, keep raw volume unchanged, and rerun the unchanged frozen H1 diagnostic contract only as corrected diagnostic evidence if executed. Formal path remains sealed until provenance merge plus unchanged raw acceptance passes both arms.",
+  "core24_raw_reuse": {
+    "source_run_id": 34592896202,
+    "source_head": "a331b96c8b7391a146ed3a8d28dd5e66d6ae0679",
+    "bundle_sha256": "de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18",
+    "total_rows": 4019524,
+    "observed_symbols": 1315,
+    "timestamp_envelope_jst": [
+      "2024-09-17 09:00:00+0900",
+      "2026-09-10 15:00:00+0900"
+    ],
+    "identity_match": "MATCHES_EXISTING_V47_SEED_ARTIFACT_IDS_AND_ZIP_DIGESTS",
+    "compatibility": "PARTIAL_PROVENANCE_SEED_AFTER_DETERMINISTIC_PRICE_BASIS_NORMALIZATION",
+    "raw_volume": "UNCHANGED",
+    "price_rule": "OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date)",
+    "contract_ci": {
+      "run_id": 34943423800,
+      "job_id": 104297144102,
+      "conclusion": "SUCCESS",
+      "head_sha": "f3e266e4f1167a1a62dbec1615b3cf78c7764b86"
+    },
+    "coverage": {
+      "NOCAP": {
+        "required_pairs": 853061,
+        "present_pairs": 301897,
+        "pair_coverage_pct": 35.3898,
+        "monthly_min_pct": 33.9002,
+        "completely_missing_required_symbols": 2592,
+        "restored_pair_coverage_pct": 0
+      },
+      "CAP1000_PIT": {
+        "required_pairs": 310831,
+        "present_pairs": 258339,
+        "pair_coverage_pct": 83.1124,
+        "monthly_min_pct": 77.342,
+        "completely_missing_required_symbols": 642,
+        "restored_pair_coverage_pct": 0
+      }
+    },
+    "formal_acceptance_by_itself": false,
+    "spec": "research/CONSENSUS_V47_CORE24_RAW_REUSE_COMPATIBILITY_20260915.md",
+    "normalizer": "research/normalize_core24_raw1h_for_v47.py"
+  }
 }

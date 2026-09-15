@@ -1,16 +1,12 @@
 {
-  "updated_at_jst": "2026-09-15T16:39:00+09:00",
+  "updated_at_jst": "2026-09-15T18:36:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "44fd86d5015c38fe56c728068c45a1108adaef89",
   "coordination": {
     "supervisor_coordination_checked": true,
     "research_dashboard_checked": true,
     "consensus_v44_handoff_checked": true,
-    "canonical_event_overlap": false,
-    "core_overlap": false,
-    "monster_overlap": false,
     "production_touched": false
   },
   "formal": {
@@ -21,116 +17,42 @@
     "h2": "UNOPENED_FOR_PROMOTION"
   },
   "midterm_diagnostic": {
-    "label": "MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS",
-    "original_label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
-    "old_h1_run_id": 34824194221,
+    "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
     "corrected_h1_run_id": 34943802848,
-    "corrected_h1_status": "IN_PROGRESS_FEATURE_MATERIALIZATION",
+    "corrected_h1_conclusion": "SUCCESS",
+    "artifact_digest": "sha256:e22b84ce4d9f10872060fabfc6af1f7636e62077c4b03298b46237ae587d0c9b",
+    "period": ["2025-01-06", "2025-06-30"],
+    "endpoint": "next official XTKS open -> D+5 close",
     "cost_pct": 0,
+    "win_definition": "gross canonical_ret_5bd > 0",
+    "coverage": {
+      "NOCAP": {"pair_coverage_pct": 35.3898, "n": 43, "mean_pct": 1.3817350226, "median_pct": -0.7374631268, "win_pct": 39.5348837209, "hit10_pct": 18.6046511628, "hit20_pct": 13.9534883721, "hit50_pct": 0.0, "loss10_pct": 11.6279069767, "loss20_pct": 4.6511627907, "top1_ex_pct": 0.2759172472, "top3_ex_pct": -1.0889650924},
+      "CAP1000_PIT": {"pair_coverage_pct": 83.1124, "n": 41, "mean_pct": 1.7116919699, "median_pct": -2.0304568528, "win_pct": 43.9024390244, "hit10_pct": 14.6341463415, "hit20_pct": 7.3170731707, "hit50_pct": 2.4390243902, "loss10_pct": 9.7560975610, "loss20_pct": 0.0, "top1_ex_pct": 0.2878176024, "top3_ex_pct": -1.3069471183}
+    },
+    "corrected_h1_leader": "CAP1000_PIT",
     "h1_opened": true,
-    "h2_nocap_opened": true,
+    "h2_nocap_opened_under_invalid_old_h1": true,
+    "h2_nocap_old_result_ranking_use_allowed": false,
     "h2_cap1000_pit_opened": false,
     "same_family_retune_allowed": false,
-    "old_results_ranking_use_allowed": false,
-    "corrected_ranking_status": "PENDING_CORRECTED_H1",
-    "invalidation_reason": "Core run34592896202 explicit-period raw OHLC is PIT nominal; old diagnostic passed it directly into a V47 materializer expecting adjusted OHLC, double-applying future split scale in log_price on affected rows.",
-    "correction_rule": "OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date); raw Yahoo 1H volume unchanged",
-    "corrected_recompute_contract": "exact unchanged V11/min/.95/guard-none/both-sessions/strict5/no-replacement/two-arm/cost0; no same-family retune"
+    "price_cap_grid_search_allowed": false,
+    "2026_selection_allowed": false,
+    "coverage_caveat": "partial preserved Yahoo seed; missing pairs remain missing; no interpolation or synthetic bars"
   },
   "raw_retry": {
-    "superseded_run_id": 34810592135,
-    "superseded_run_final": "completed_cancelled",
     "current_run_id": 34849054884,
-    "current_run_level_status": "IN_PROGRESS_NONTERMINAL",
-    "trigger_head": "7849ad975d1e0420e250ab4d5f411ce136f9d867",
-    "strategy": "48 shards, max-parallel=2, shard-count=48, unchanged frozen acceptance",
+    "status_latest_api": "QUEUED_NONTERMINAL",
     "duplicate_trigger_forbidden": true,
     "duplicate_triggered": false,
-    "completed_shards_with_visible_artifacts": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11
-    ],
-    "active_shards": [
-      12,
-      13
-    ],
-    "completed_requested_symbols_total": 648,
-    "completed_ok_symbols_total": 0,
-    "completed_raw_rows_total": 0,
-    "independently_confirmed_http429_symbols_total": 567,
-    "visible_artifact_count": 12,
-    "observed_at_jst": "2026-09-15T16:39:00+09:00",
-    "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429; SHARDS 10/11 ALSO 162/162 HTTP429",
-    "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA",
-    "future_missing_only_retry_hardening": "two symbols x two Yahoo hosts preflight; all four HTTP 429 => transport_circuit_open/systemic_http_429 fail-fast; no threshold change and no interpolation",
-    "merge_acceptance_spec": "research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md",
-    "remaining_matrix_state": "shards 0-11 completed; shards 12 and 13 in progress; later matrix jobs queued",
-    "shard10_11_independent_check": {
-      "requested_symbols": 162,
-      "ok_symbols": 0,
-      "http429_symbols": 162,
-      "raw_rows": 0
-    }
+    "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429",
+    "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA"
   },
-  "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP429 and incomplete required-pair coverage. Core24 source identity is resolved and normalization is contract-tested, but the seed covers only 35.3898% NOCAP / 83.1124% CAP1000_PIT and 0% restored pairs.",
-  "next_action": "Continue corrected H1 run 34943802848 to completion under the frozen cost0 contract; then record corrected H1 metrics and choose the diagnostic leader with the unchanged DEV rule. Do not rerun H2 from the old invalid leader lock. Do not duplicate-trigger raw run 34849054884; formal path remains sealed until unchanged raw acceptance passes both arms.",
   "core24_raw_reuse": {
     "source_run_id": 34592896202,
-    "source_head": "a331b96c8b7391a146ed3a8d28dd5e66d6ae0679",
     "bundle_sha256": "de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18",
-    "total_rows": 4019524,
-    "observed_symbols": 1315,
-    "timestamp_envelope_jst": [
-      "2024-09-17 09:00:00+0900",
-      "2026-09-10 15:00:00+0900"
-    ],
-    "identity_match": "MATCHES_EXISTING_V47_SEED",
-    "compatibility": "PARTIAL_PROVENANCE_SEED_AFTER_DETERMINISTIC_PRICE_BASIS_NORMALIZATION",
-    "raw_volume": "UNCHANGED",
-    "source_pin_file": "research/consensus_v47_core24_raw_pin.json",
-    "normalizer": "research/normalize_core24_raw1h_for_v47.py",
-    "contract_ci": [
-      {
-        "run_id": 34943423800,
-        "conclusion": "SUCCESS"
-      },
-      {
-        "run_id": 34943685294,
-        "conclusion": "SUCCESS",
-        "note": "pin-required normalizer CI"
-      }
-    ],
-    "coverage": {
-      "NOCAP": {
-        "required_pairs": 853061,
-        "present_pairs": 301897,
-        "pair_coverage_pct": 35.3898,
-        "monthly_min_pct": 33.9002,
-        "completely_missing_required_symbols": 2592,
-        "restored_pair_coverage_pct": 0
-      },
-      "CAP1000_PIT": {
-        "required_pairs": 310831,
-        "present_pairs": 258339,
-        "pair_coverage_pct": 83.1124,
-        "monthly_min_pct": 77.342,
-        "completely_missing_required_symbols": 642,
-        "restored_pair_coverage_pct": 0
-      }
-    },
+    "normalization": "OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date); raw 1H volume unchanged",
     "formal_acceptance_by_itself": false
   },
-  "existing_source_audit": {
-    "v43_run_34617009116": "artifact inspected: summary JSON plus selected CSVs only; no full raw1H, not usable for V47 formal raw coverage"
-  }
+  "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP429 and incomplete required-pair coverage.",
+  "next_action": "Preregister and repair corrected H2 diagnostic to open CAP1000_PIT only under the unchanged frozen contract and corrected source normalization; do not duplicate-trigger raw run 34849054884."
 }

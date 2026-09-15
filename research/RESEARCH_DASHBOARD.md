@@ -1,22 +1,26 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 15:26 JST  
+> **最終更新:** 2026-09-15 16:10 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## ⏱ 自動研究ハートビート
 
-> **確認時刻:** 2026-09-15 15:26 JST  
-> 5本すべて **ENABLED**、90分超の停止疑い **0本**。
+> **確認時刻:** 2026-09-15 16:10 JST  
+> 5本すべて **ENABLED**。ただし実run時刻監査で **Core / Consensus の2本が90分超＝🔴停止疑い**。Supervisorも次slot欠落のため🟠遅延疑い。3本とも再arm済み。
 
 | Worker | 直近実行(JST) | 状態 |
 |---|---:|---|
-| Supervisor :00 | 14:58 | 🟢 GREEN |
-| Canonical :12 | 15:14 | 🟢 GREEN |
-| Core :24 | 14:22 | 🟢 GREEN（90分以内） |
-| Consensus :36 | 14:36 | 🟢 GREEN |
-| OSS+Parallel :48 | 14:48 | 🟢 GREEN |
+| Supervisor :00 | 14:58 | 🟠 遅延疑い・再arm、次回17:00 |
+| Canonical :12 | 15:14 | 🟢 GREEN、次回16:14 |
+| Core :24 | 14:22 | 🔴 90分超・停止疑い、再arm、次回16:24 |
+| Consensus :36 | 14:36 | 🔴 90分超・停止疑い、再arm、次回16:36 |
+| OSS+Parallel :48 | 16:06 | 🟢 GREEN |
 
 GitHub最終commit時刻だけでは停止判定しない。task-level停滞とautomation heartbeatは分離する。
+### ⚠️ 16:10 自動実行ギャップ検知
+
+ダッシュボードの見た目だけでなくautomationの実`last_run_time`を確認したところ、Coreは14:22、Consensusは14:36から次runがなく、16:09時点で90分閾値を超えていた。Supervisorも14:58以降の次slotが欠落。**Core 16:24 / Consensus 16:36 / Supervisor 17:00** をAsia/Tokyo明示で再armした。Canonicalは15:14、OSS+Parallelは16:06に実runあり。次3slotの実行有無をheartbeatで再確認し、再度欠落する場合はscheduler-level faultとして手動前進/再配分する。
+
 
 ## 👤 ユーザー作業待ち
 

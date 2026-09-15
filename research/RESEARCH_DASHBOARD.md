@@ -1,49 +1,65 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 23:24 JST  
+> **最終更新:** 2026-09-15 23:57 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## ⏱ 自動研究ハートビート
 
-> **確認時刻:** 2026-09-15 23:24 JST  
-> Core :24 は正常進行。前回Supervisor監査で再armしたOSS+Parallel :48は23:48 actual run要確認。
+> **確認時刻:** 2026-09-15 23:57 JST  
+> 5本すべてenabled・90分以内。再armしたOSS+Parallel :48は23:52 actual runを確認し復旧確定。
 
 | Worker | 直近実行(JST) | 状態 |
 |---|---:|---|
-| Supervisor :00 | 22:02 | 🟢 GREEN |
-| Canonical :12 | 22:10 | 🟢 GREEN |
-| Core :24 | 23:24 | 🟢 GREEN / JPX parser contract frozen |
-| Consensus :36 | 22:38 | 🟢 GREEN |
-| OSS+Parallel :48 | 22:46 | 🟠 再arm済み、23:48 actual run待ち |
+| Supervisor :00 | 23:00 | 🟢 GREEN / current scan |
+| Canonical :12 | 23:15 | 🟢 GREEN |
+| Core :24 | 23:26 | 🟢 GREEN |
+| Consensus :36 | 23:39 | 🟢 GREEN |
+| OSS+Parallel :48 | 23:52 | 🟢 GREEN / re-arm recovery confirmed |
 
 ## 📈 全体進捗
 
-**研究全体の進捗率: 約81%**
+**研究全体の進捗率: 約82%**
 
 | タスク | 状態 | 進捗 | 現在地 / 完了条件 |
 |---|---|---:|---|
 | Weak+Early Phase-2 frozen検証 | ⚫ CLOSED | 100% | 2022 fresh robustness FAIL、surrogate/retune禁止、Round2 CLOSED |
-| Parallel Wave-1 | 🔴 STALE / worker再arm | 72% | causal A1/B1/E1 pick ledger → completeness receipt → one-shot cost0 |
-| Core24 OHLCV補完 | 🟢 稼働中 | 88% | JPX `data_e.xlsx` exact bytes/SHA + header/effective date + eligibility parser固定済み → 375-event reverse replay → PIT receipt |
-| Consensus V47 | 🟢 corrected H1 diagnostic完了 / formal raw BLOCKED | 78% | CAP1000_PITのみcorrected H2 prereg/repair |
+| Parallel Wave-1 | 🔴 STALE / worker復旧 | 72% | causal A1/B1/E1 pick ledger → completeness receipt → one-shot cost0 |
+| Core24 OHLCV補完 | 🟢 稼働中 | 88% | JPX anchor/parser固定済み → 375-event reverse replay → PIT receipt |
+| Consensus V47 | 🟢 corrected H2 diagnostic完了 / formal raw BLOCKED | 84% | H2 receipt固定。same-family retune/NOCAP H2開封禁止、formal raw acceptanceのみ継続可 |
 | Canonical/Shadow endpoint integrity | 🟢 稼働中 | 89% | outcome-blind integrity継続 |
 | Core endpoint provenance | 🟢 parser contract PASS | 98% | anchor 2026-08-31、eligible domestic individual equities 3,707。次はPIT membership receipt |
 | Cloud Monster exact forensic | ⚫ CLOSED | 100% | HISTORICAL_EXACT_REPRO_UNAVAILABLE |
-| OSS / Validation | 🟠 worker再arm / policy固定 | 98% | 27 findings source-grounded taxonomy。unresolvedはfail-closed |
+| OSS / Validation | 🟢 worker復旧 / policy固定 | 98% | 27 findings source-grounded taxonomy。unresolvedはfail-closed |
 | V20 Session-Impulse | ⚫ CLOSED | 100% | active queue外 |
 
-## Core24 今回の前進
-Actions run `34974864648` / artifact `10398473275` のimmutable `data_e.xlsx` を直接検査。227,579 bytes / SHA-256 `4d10497c2aa03bcca0b92f0673d3ab19ecc6aca6a9c9a70a3e19cd490f1d8754`。Workbookは1 sheet / 4,442 rows incl. header / 10 columns。`Effective Date` は `20260831` で、parserは全non-empty rowで単一日付を要求するfail-closed契約に固定。
+## Consensus V47 今回の前進
+STATEが未回収だったConsensus実HEAD `7059322a1c85f9db87a035003490ecd1545aa565` と corrected H2 run `34976174775` を回収。runはSUCCESS、artifact `10402109524` / digest `sha256:ad2bd2388425aaad55ed8485f5f20dfefbf62014c1f746e464851d9c093d7688`。
 
-国内個別株anchor eligibilityもexact labelで固定：Prime 1,556 + Standard 1,555 + Growth 596 = **3,707**。ETF/ETN、PRO、REIT等、Foreign、Equity Contribution Securities、unknown labelは除外/quarantine。2022 correction workbookは引き続きexcluded。
+H1で事前固定したleader **CAP1000_PITのみ**を、同じprice-basis normalization・cooldown carry・cost 0%契約のまま2025H2へ開封。結果は `n=26 / mean +3.82% / median 0.00% / win 30.77% / +10 19.23% / +20 7.69% / +50 3.85% / -10 15.38% / -20 3.85% / Top1-ex -0.62% / Top3-ex -3.06%`。
 
-Core branchはparser spec / log / handoffを更新しHEAD `5ea40f52e6bd967406446ebc2574d6c06628a71b`。次は凍結済み375-event ledgerを2026-08-31から2024-09-17へdeterministic reverse replayし、conflict quarantineとmembership SHA/receiptを固定する。membershipだけからhourly expected keysは生成しない。
+これは `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`。formal raw acceptanceはFAILのまま、NOCAP H2はcorrected basisで未開封。2025H2を見た後のsame-family threshold/TopN/ranker/cooldown/price-cap retuneは禁止。H2の弱いwin/Top3-exはrobustness warningとして固定する。
 
-## Frozen comparator
-DUAL+G3 (`med_ret1 >= -1%`) は n=117 / mean +7.98% / median +1.74% / win 53.85% / Top3-ex +5.14%。2022 fresh robustness FAIL固定、surrogate/retune禁止、Regime Round2 CLOSED。
+## Core24 現在地
+Actions run `34974864648` / artifact `10398473275` のimmutable `data_e.xlsx` は227,579 bytes / SHA-256 `4d10497c2aa03bcca0b92f0673d3ab19ecc6aca6a9c9a70a3e19cd490f1d8754`。Effective Date `20260831`、国内Prime/Standard/Growth exact-label eligibilityは3,707。次は凍結375-event ledgerを2024-09-17までreverse replayしPIT membership receiptを固定。
 
-## Cloud forensic
-旧Cloud Monster exact modelは `HISTORICAL_EXACT_REPRO_UNAVAILABLE` の結論維持。新証拠なし、model-family guessing/retuneなし。
+## Frozen comparator / Phase-2順位
+1. **DUAL_TOP1_AGREEMENT** — frozen primary challenger
+2. mean-rank(volr20, body_pct)
+3. body_pct LOW
+4. volr20 LOW
+
+DUAL+G3 (`med_ret1 >= -1%`) は n=117 / mean +7.98% / median +1.74% / win 53.85% / Top3-ex +5.14%。G3 thresholdは固定。2022 fresh validationはROBUSTNESS FAIL固定・surrogate/retune禁止。Regime Round2はCLOSEDのまま再開しない。
+
+## STALE / BLOCKED / CLOSED
+- 🔴 Parallel Wave-1: STALE。次actionはcausal A1/B1/E1 pick ledger freeze → completeness receipt。
+- 🟠 Consensus formal raw acceptance: BLOCKED。corrected H2 diagnosticは完了したがpromotion evidenceではない。
+- ⚫ Weak+Early Phase-2 frozen validation: CLOSED。
+- ⚫ Regime Round2: CLOSED_DO_NOT_REOPEN。
+- ⚫ Cloud exact forensic: CLOSED / exact reproduction unavailable。
+- ⚫ V20: CLOSED / deprioritized active queue外。
+
+## 残タスク
+P0: Core24 PIT membership receipt、Parallel causal pick ledger、OSS EDINET 27 findings taxonomy。P1: Consensus formal raw acceptance/provenance（条件緩和なし）、Canonical outcome-blind integrity。
 
 ## Guardrails
 production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterは変更なし。新規performanceはcost 0%のみ、win=gross return>0。2026はreport/robustness-only。

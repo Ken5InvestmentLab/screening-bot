@@ -7,6 +7,8 @@ on:
     paths:
       - "research/no_tv_v47_clean_feature_materializer.py"
       - "research/test_no_tv_v47_clean_feature_materializer.py"
+      - "research/normalize_core24_raw1h_for_v47.py"
+      - "research/test_normalize_core24_raw1h_for_v47.py"
       - ".github/workflows/consensus-v47-clean-feature-contract-tests.yml"
   workflow_dispatch:
 
@@ -28,8 +30,16 @@ jobs:
         run: pip install pandas==2.3.3 numpy==2.5.3 requests==2.34.2 scikit-learn==1.9.1 scipy==1.18.1
       - name: Compile
         run: |
-          python -m py_compile             research/no_tv_v47_clean_feature_materializer.py             research/test_no_tv_v47_clean_feature_materializer.py
-      - name: Run contract
+          python -m py_compile \
+            research/no_tv_v47_clean_feature_materializer.py \
+            research/test_no_tv_v47_clean_feature_materializer.py \
+            research/normalize_core24_raw1h_for_v47.py \
+            research/test_normalize_core24_raw1h_for_v47.py
+      - name: Run clean feature contract
         env:
           PYTHONPATH: research
         run: python research/test_no_tv_v47_clean_feature_materializer.py
+      - name: Run Core24 raw reuse normalization contract
+        env:
+          PYTHONPATH: research
+        run: python research/test_normalize_core24_raw1h_for_v47.py

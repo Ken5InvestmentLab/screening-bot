@@ -4,7 +4,7 @@ import hashlib
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Iterable, Mapping, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 
 from prospective_shadow import resolve_shadow_file
 from prospective_shadow_endpoint_completeness_guard import audit_endpoint_completeness
@@ -121,6 +121,7 @@ def verified_resolve_shadow_file(
     sessions_csv_path: Path | None = None,
     sessions_manifest_path: Path | None = None,
     require_provenance_chain: bool = False,
+    pre_replace_guard: Callable[[Path, Mapping], Mapping] | None = None,
 ) -> dict:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     before_sha = _sha256(output_path)
@@ -243,30 +244,66 @@ def verified_resolve_shadow_file(
                 },
             }
 
+        staged_sha = _sha256(staged)
+        provisional_result = {
+            "resolved_written": True,
+            "decision": "VERIFIED_RESOLUTION_WRITE_COMPLETE",
+            "resolution": resolution,
+            "continuity": continuity,
+            "endpoint_completeness": completeness,
+            "endpoint_completeness_receipt_sha256": completeness_receipt["receipt_sha256"],
+            "endpoint_completeness_receipt_path": str(completeness_receipt_path),
+            "daily_endpoint_manifest_sha256": completeness_receipt["daily_endpoint_manifest_sha256"],
+            "pinned_xtks_calendar_sha256": completeness_receipt["pinned_xtks_calendar_sha256"],
+            "frozen_selection_ledger_sha256": completeness_receipt["frozen_selection_ledger_sha256"],
+            "output_sha256_before": before_sha,
+            "output_sha256_after": staged_sha,
+            "integrity": {
+                "staged_before_replace": True,
+                "endpoint_completeness_checked_before_resolution": True,
+                "completeness_receipt_emitted_before_resolved_write": True,
+                "completeness_receipts_append_only": True,
+                "provenance_chain_enforced": completeness_receipt["provenance_chain_enforced"],
+                "continuity_required_before_replace": True,
+                "resolution_chain_guard_required_before_replace": pre_replace_guard is not None,
+                "resolved_rows_immutable_after_first_resolution": True,
+                "production_modified": False,
+            },
+        }
+
+        if pre_replace_guard is not None:
+            try:
+                guard_result = dict(pre_replace_guard(staged, provisional_result))
+            except Exception as exc:
+                return {
+                    "resolved_written": False,
+                    "decision": "BLOCK_PRE_REPLACE_CHAIN_GUARD_ERROR",
+                    "error": f"{type(exc).__name__}:{exc}",
+                    "output_sha256_before": before_sha,
+                    "output_sha256_after": _sha256(output_path),
+                    "integrity": {
+                        "resolution_chain_guard_checked_before_replace": True,
+                        "resolved_history_preserved_on_failure": True,
+                        "production_modified": False,
+                    },
+                }
+            if guard_result.get("allow_replace") is not True:
+                return {
+                    "resolved_written": False,
+                    "decision": "BLOCK_PRE_REPLACE_CHAIN_GUARD",
+                    "chain_guard": guard_result,
+                    "output_sha256_before": before_sha,
+                    "output_sha256_after": _sha256(output_path),
+                    "integrity": {
+                        "resolution_chain_guard_checked_before_replace": True,
+                        "resolved_history_preserved_on_failure": True,
+                        "production_modified": False,
+                    },
+                }
+
         staged.replace(output_path)
 
     after_sha = _sha256(output_path)
-    return {
-        "resolved_written": True,
-        "decision": "VERIFIED_RESOLUTION_WRITE_COMPLETE",
-        "resolution": resolution,
-        "continuity": continuity,
-        "endpoint_completeness": completeness,
-        "endpoint_completeness_receipt_sha256": completeness_receipt["receipt_sha256"],
-        "endpoint_completeness_receipt_path": str(completeness_receipt_path),
-        "daily_endpoint_manifest_sha256": completeness_receipt["daily_endpoint_manifest_sha256"],
-        "pinned_xtks_calendar_sha256": completeness_receipt["pinned_xtks_calendar_sha256"],
-        "frozen_selection_ledger_sha256": completeness_receipt["frozen_selection_ledger_sha256"],
-        "output_sha256_before": before_sha,
-        "output_sha256_after": after_sha,
-        "integrity": {
-            "staged_before_replace": True,
-            "endpoint_completeness_checked_before_resolution": True,
-            "completeness_receipt_emitted_before_resolved_write": True,
-            "completeness_receipts_append_only": True,
-            "provenance_chain_enforced": completeness_receipt["provenance_chain_enforced"],
-            "continuity_required_before_replace": True,
-            "resolved_rows_immutable_after_first_resolution": True,
-            "production_modified": False,
-        },
-    }
+    if after_sha != provisional_result["output_sha256_after"]:
+        raise RuntimeError("resolved output hash changed during staged replace")
+    return provisional_result

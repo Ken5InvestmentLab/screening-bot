@@ -35,7 +35,9 @@ def sha256_file(path: Path) -> str:
 
 
 def load_calendar(path: Path) -> tuple[list[str], dict[str, int]]:
-    actual_sha256 = sha256_file(path)\n    if actual_sha256 != CALENDAR_SHA256:\n        raise SystemExit(f"FAIL_CLOSED: pinned XTKS calendar SHA-256 mismatch: actual={actual_sha256} expected={CALENDAR_SHA256}")
+    actual_sha256 = sha256_file(path)
+    if actual_sha256 != CALENDAR_SHA256:
+        raise SystemExit(f"FAIL_CLOSED: pinned XTKS calendar SHA-256 mismatch: actual={actual_sha256} expected={CALENDAR_SHA256}")
     cal = pd.read_csv(path, dtype={"session": "string"})
     if list(cal.columns) != ["session"]:
         raise SystemExit(f"FAIL_CLOSED: calendar header mismatch: {list(cal.columns)!r}")

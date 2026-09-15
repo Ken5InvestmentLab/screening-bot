@@ -1,12 +1,12 @@
 {
-  "version": 70,
+  "version": 71,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T11:23:00+09:00",
+  "updated_at_jst": "2026-09-15T11:44:00+09:00",
   "supervisor_last_scan": {
     "status": "HEARTBEAT_GREEN_TASK_STALE_ROUTING_RECORDED",
     "scanned_at_jst": "2026-09-15T10:58:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All five research automations are enabled and none exceeds the 90-minute stop threshold. Actual branch HEAD checks confirmed OSS 65e10483 and Parallel 858998cc still equal their processed SHAs. This is task-level stagnation, not automation stoppage. Parallel is explicitly routed to the outcome-blind causal A1/B1/E1 pick-ledger freeze; OSS is explicitly routed to the PIT fail-closed patch/tests. Phase-2 remains CLOSED with DUAL+G3 frozen comparator and 2022 robustness FAIL. EDINET same-ZIP is now PARKED (non-blocking auxiliary audit) until a real API key or pinned ZIP is supplied. EDINET_API_KEY was configured and verified by smoke run 34920894545 SUCCESS; full 2023-2025 metadata freeze run 34920977538 has been started."
+    "note": "All five research automations are enabled and none exceeds the 90-minute stop threshold. Actual branch HEAD checks confirmed OSS 65e10483 and Parallel 858998cc still equal their processed SHAs. This is task-level stagnation, not automation stoppage. Parallel is explicitly routed to the outcome-blind causal A1/B1/E1 pick-ledger freeze; OSS is explicitly routed to the PIT fail-closed patch/tests. Phase-2 remains CLOSED with DUAL+G3 frozen comparator and 2022 robustness FAIL. EDINET same-ZIP is now PARKED (non-blocking auxiliary audit) until a real API key or pinned ZIP is supplied. EDINET_API_KEY was configured and verified by smoke run 34920894545 SUCCESS; full 2023-2025 metadata freeze run 34920977538 has been started. EDINET run 34920977538 acquired 2023/2024/2025 successfully but freeze hit a documented null-metadata tombstone row. Snapshot handling was patched fail-closed except for the exact inert tombstone shape; regression tests and retry 34922234308 are running."
   },
   "automation_heartbeat": {
     "checked_at_jst": "2026-09-15T10:58:00+09:00",
@@ -75,11 +75,11 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "d5770c3c061add16c2bb01afe1529333a62585d8",
-      "last_processed_sha": "d5770c3c061add16c2bb01afe1529333a62585d8",
-      "task_state": "ACTIVE_EDINET_ACQUISITION_AND_OSS_P0",
+      "last_seen_sha": "7f50cbf4e233432473b10de54f3c5ee21e9a4d15",
+      "last_processed_sha": "7f50cbf4e233432473b10de54f3c5ee21e9a4d15",
+      "task_state": "ACTIVE_EDINET_NULL_TOMBSTONE_FIX_RETRY",
       "stale_reason": "same processed HEAD across repeated scans after PIT gap identification",
-      "next_action": "EDINET full 2023-2025 metadata freeze run 34920977538: wait for terminal, then inspect frozen metadata/sample receipts and continue to selected ZIP byte freeze/same-ZIP cross-check. In parallel, OSS PIT fail-closed patch/tests remain P0."
+      "next_action": "Wait for OSS tests 34922214549/34922225597 and EDINET metadata freeze retry 34922234308. If PASS, inspect frozen metadata/sample receipts then continue selected ZIP SHA freeze and same-ZIP parser cross-check."
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
@@ -151,9 +151,14 @@
       "smoke_date": "2024-06-28",
       "smoke_results_count": 2425,
       "smoke_payload_sha256": "1fbe57ec5d59548878a7d59bd600df67083a91313279ccfdd89d1a02aa442e88",
-      "full_metadata_run_id": 34920977538,
-      "full_metadata_run_status": "queued",
-      "next_action": "On terminal PASS, freeze 2023-2025 metadata manifest/sample receipt, then fetch exact selected ZIPs and SHA-freeze before parser comparison."
+      "full_metadata_run_id": 34922234308,
+      "full_metadata_run_status": "IN_PROGRESS_AFTER_NULL_TOMBSTONE_FIX",
+      "next_action": "On terminal PASS, freeze 2023-2025 metadata manifest/sample receipt, then fetch exact selected ZIPs and SHA-freeze before parser comparison.",
+      "full_metadata_previous_run_id": 34920977538,
+      "full_metadata_previous_run_status": "FAILED_FREEZE_ON_DOCUMENTED_NULL_TOMBSTONE",
+      "null_tombstone_policy": "Skip only EDINET documented null-metadata tombstone rows with disclosureStatus=0 and all content/legal flags=0; all other malformed rows remain fail-closed.",
+      "snapshot_fix_head": "a6741ce29be7ed2fbe37edbf5621d7bc0676355b",
+      "snapshot_test_head": "f1032663f23ef94178547e8481cda5b5ac1acecb"
     }
   },
   "next_global_actions": [

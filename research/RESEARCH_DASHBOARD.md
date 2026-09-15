@@ -20,9 +20,9 @@
 
 ## 📈 全体進捗
 
-**研究全体の進捗率: 約71%**
+**研究全体の進捗率: 約72%**
 
-`██████████████░░░░░░ 71%`
+`██████████████░░░░░░ 72%`
 
 ### タスク別進捗・稼働状態
 
@@ -36,7 +36,7 @@
 | Core endpoint provenance | 🟢 **稼働中 / ローカル作業優先** | **85%** | observed raw1H byte identity + Core XTKS byte identity固定済み。JPX PIT receipt → independent exact-hour activity sourceが残り。Cartesian expected-key生成は禁止 |
 | Cloud Monster exact forensic | ⚫ **CLOSED** | **100%** | exact replay一次証拠なし。新しい同時代identity-critical証拠が出た場合だけ再開 |
 | OSS / Validation | 🔴 **P0 STALE候補 / 修正action明示済み** | **84%** | HEAD `65e10483…` 据置。`feature_cutoff_column`省略時のPIT fail-open gapは記録済み。次actionは run_study境界で明示cutoff/同等immutable PIT receiptを必須化し、省略・null/不正・future cutoffを拒否する回帰test → isolated CI |
-| EDINET same-ZIP cross-check | ⚪ **PARKED / 外部入力待ち** | **35%** | 現行GO判定を塞がない補助監査。API keyまたはpinned real ZIPが入るまでactive queueから外す。入力が来たらsame-ZIP実比較を再開 |
+| EDINET same-ZIP cross-check | 🟢 **稼働中 / metadata取得開始** | **45%** | `EDINET_API_KEY` smoke **PASS**（run `34920894545`、2024-06-28: 2,425 results、payload SHA `1fbe57ec…`）。現在2023-2025全日metadata freeze run `34920977538` を実行中。PASS後にsample doc_id固定→selected ZIP SHA固定→same-ZIP parser比較へ進む |
 | Supervisor coordination / dashboard | 🟢 **常時稼働** | **96%** | heartbeatを実worker実行とGitHub Actionsに分離し、task-level STALE候補を明示 |
 | V20 Session-Impulse | ⚫ **CLOSED / deprioritized** | **100%** | promotion候補から除外。worker cycleを使わない |
 

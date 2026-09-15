@@ -147,6 +147,27 @@ class VerifiedResolveTests(unittest.TestCase):
             self.assertTrue(calls[0][0])
             self.assertFalse(out.exists())
 
+    def test_pre_replace_chain_guard_exception_preserves_resolved_history(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shadow = self._shadow(root)
+            out = root / "resolved.jsonl"
+            sessions, daily = self._resolved_inputs()
+
+            def guard(_staged_path, _provisional_result):
+                raise RuntimeError("sidecar persistence failed")
+
+            result = verified_resolve_shadow_file(
+                shadow,
+                out,
+                daily,
+                sessions,
+                pre_replace_guard=guard,
+            )
+            self.assertFalse(result["resolved_written"])
+            self.assertEqual(result["decision"], "BLOCK_PRE_REPLACE_CHAIN_GUARD_ERROR")
+            self.assertFalse(out.exists())
+
     def test_changed_resolved_endpoint_blocks_and_preserves_file(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

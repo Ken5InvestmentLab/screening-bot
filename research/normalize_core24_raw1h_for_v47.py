@@ -22,6 +22,28 @@ def sha256_file(path: Path) -> str:
     return h.hexdigest()
 
 
+def verify_source_pin(files: list[Path], pin_path: Path) -> dict:
+    pin = json.loads(pin_path.read_text(encoding="utf-8"))
+    if pin.get("contract") != "CONSENSUS_V47_CORE24_RAW_PIN_V1":
+        raise ValueError("unexpected Core24 pin contract")
+    expected = {
+        str(x["file_name"]): str(x["sha256"])
+        for x in pin.get("files", [])
+    }
+    actual_names = {p.name for p in files}
+    if actual_names != set(expected):
+        raise ValueError(
+            f"Core24 raw file set mismatch expected={sorted(expected)} actual={sorted(actual_names)}"
+        )
+    for p in files:
+        got = sha256_file(p)
+        if got != expected[p.name]:
+            raise ValueError(
+                f"Core24 raw SHA mismatch {p.name}: expected={expected[p.name]} got={got}"
+            )
+    return pin
+
+
 def normalize_frame(
     df: pd.DataFrame,
     split_map: dict[str, list[tuple[str, float]]],
@@ -98,6 +120,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--input-dir", required=True, type=Path)
     ap.add_argument("--all-splits", required=True, type=Path)
+    ap.add_argument("--pin-json", required=True, type=Path)
     ap.add_argument("--output-dir", required=True, type=Path)
     args = ap.parse_args()
 
@@ -105,6 +128,7 @@ def main() -> None:
     if not files:
         raise SystemExit("no Core24 raw shard CSVs")
 
+    pin = verify_source_pin(files, args.pin_json)
     split_map = load_split_map(args.all_splits)
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -135,7 +159,10 @@ def main() -> None:
     payload = {
         "contract": "CONSENSUS_V47_CORE24_RAW_PRICE_BASIS_NORMALIZATION_V1",
         "scope": "OUTCOME_BLIND_PROVENANCE_COMPATIBLE_REUSE",
-        "source_run_id": 34592896202,
+        "source_run_id": int(pin["source_run_id"]),
+        "source_head_sha": str(pin["source_head_sha"]),
+        "source_bundle_sha256": str(pin["bundle_sha256"]),
+        "source_pin_verified": True,
         "rule": (
             "OHLC_out = OHLC_core24_nominal / "
             "cumulative_future_split_factor(symbol,date); volume unchanged"

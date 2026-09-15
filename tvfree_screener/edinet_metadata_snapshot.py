@@ -98,7 +98,10 @@ def freeze_metadata_snapshot(
 
     Expected file naming is ``YYYY-MM-DD.json`` for every calendar day in the
     requested interval. Missing days, malformed JSON, non-success metadata status,
-    malformed result rows, and duplicate doc IDs fail closed.
+    and malformed result rows fail closed. Repeated doc IDs are allowed only when
+    they are outcome-blindly sample-safe: submitDateTime must be identical across
+    observations, and any doc ID touching preregistered types 120/130 must keep one
+    identical eligible doc type across all observations.
     """
 
     start_date = _parse_date(start, name="start")
@@ -182,9 +185,42 @@ def freeze_metadata_snapshot(
             )
 
     frame = pd.DataFrame(rows, columns=["doc_id", "doc_type_code", "submit_datetime", "source_date"])
+
+    duplicate_doc_ids = 0
+    duplicate_observation_rows = 0
+    eligible_duplicate_doc_ids = 0
+    duplicate_material: list[str] = []
     if not frame.empty and frame["doc_id"].duplicated().any():
-        duplicates = sorted(frame.loc[frame["doc_id"].duplicated(keep=False), "doc_id"].unique().tolist())
-        raise ValueError(f"duplicate doc_id across daily EDINET metadata snapshot: {duplicates[:5]}")
+        duplicated = frame.loc[frame["doc_id"].duplicated(keep=False)].copy()
+        duplicate_doc_ids = int(duplicated["doc_id"].nunique())
+        duplicate_observation_rows = int(len(duplicated))
+        for doc_id, group in duplicated.groupby("doc_id", sort=True):
+            submit_values = sorted(group["submit_datetime"].astype(str).unique().tolist())
+            if len(submit_values) != 1:
+                raise ValueError(
+                    f"duplicate doc_id has conflicting submit_datetime: {doc_id} -> {submit_values[:3]}"
+                )
+            doc_types = sorted(group["doc_type_code"].astype(str).unique().tolist())
+            eligible_types = sorted({value for value in doc_types if value in {"120", "130"}})
+            if eligible_types:
+                eligible_duplicate_doc_ids += 1
+                if len(doc_types) != 1:
+                    raise ValueError(
+                        f"duplicate eligible doc_id has conflicting doc_type_code: {doc_id} -> {doc_types}"
+                    )
+            for row in group.sort_values(
+                ["source_date", "doc_type_code", "submit_datetime"], kind="stable"
+            ).itertuples(index=False):
+                duplicate_material.append(
+                    "|".join(
+                        [
+                            str(row.doc_id),
+                            str(row.source_date),
+                            str(row.doc_type_code),
+                            str(row.submit_datetime),
+                        ]
+                    )
+                )
 
     # Stable row order makes the emitted CSV hash reproducible independently of
     # filesystem enumeration order.
@@ -212,6 +248,13 @@ def freeze_metadata_snapshot(
             "edinet_null_tombstone_count": len(excluded_tombstones),
             "edinet_null_tombstone_sha256": _sha256_bytes("\n".join(excluded_tombstones).encode("utf-8")),
             "policy": "skip only inert EDINET document-list rows with docTypeCode=null, disclosureStatus=0, and all content/legal flags=0; submitDateTime may be null or retained; all other malformed rows fail closed",
+        },
+        "duplicate_document_observations": {
+            "duplicate_doc_id_count": duplicate_doc_ids,
+            "duplicate_observation_rows": duplicate_observation_rows,
+            "eligible_duplicate_doc_id_count": eligible_duplicate_doc_ids,
+            "duplicate_observation_sha256": _sha256_bytes("\n".join(duplicate_material).encode("utf-8")),
+            "policy": "retain repeated document-list observations; require identical submitDateTime for each doc_id; if any observation is preregistered docType 120/130, require one identical doc_type_code across all observations; selector performs deterministic doc_id dedup after sorting",
         },
         "strategy_outcomes_opened": False,
         "parser_outputs_used_for_selection": False,

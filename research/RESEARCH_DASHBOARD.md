@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 16:17 JST  
+> **最終更新:** 2026-09-15 16:47 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## ⏱ 自動研究ハートビート
@@ -36,7 +36,7 @@ GitHub最終commit時刻だけでは停止判定しない。task-level停滞とa
 | Parallel Wave-1 | 🔴 STALE / P0 | 72% | causal A1/B1/E1 pick ledger SHA固定 → completeness receipt → one-shot cost0 |
 | Core24 OHLCV補完 | 🟢 稼働中 | 75% | official JPX PIT source route特定済み。exact input bytes/SHA pin → independent exact-hour activity evidence |
 | Consensus V47 | 🟠 transport STALE / reuse監査へ再配分 | 67% | formal raw1H run `34849054884` はusable raw=0。単純待機は打切り、V47 frozen inventoryとCore24 SHA-pinned raw1H互換性をoutcome-blind監査。duplicate retry・threshold緩和禁止 |
-| Canonical/Shadow endpoint integrity | 🟢 稼働中 | 84% | `fe0e89c5…` processed済み。cross-run shadow receipt chain guard CI `34902927347` PASS |
+| Canonical/Shadow endpoint integrity | 🟢 稼働中 | 88% | `90f56dcd…` processed済み。resolution receipt + cross-run chainをresolved書込み前にdurable化。CI `34943418395` PASS |
 | Core endpoint provenance | 🟢 稼働中 | 87% | JPX source route確認済み。byte-pinned PIT receiptとexact-hour activity sourceが残り |
 | Cloud Monster exact forensic | ⚫ CLOSED | 100% | `HISTORICAL_EXACT_REPRO_UNAVAILABLE`。新しいidentity-critical一次証拠時のみ再開 |
 | OSS / Validation | 🟢 手動前進・再実行中 | 90% | retry `34936903153` はAPI取得成功後、repeat `doc_id` でFAILしていた。2023-2025実artifactをoutcome-blind監査し、1,017 repeated doc IDs / 2,056 observationsを確認。120/130に触れる7件は全て120→120・同一submitDateTime。sample-safe repeatのみreceipt付き許可し、conflictはfail-closed。OSS test `34940882491` とfull freeze `34940882530` 実行中 |
@@ -62,10 +62,14 @@ G3 = `med_ret1 >= -1%` は**凍結維持**。2022 fresh validationは**FAILED RO
 
 automation側ではConsensusが再arm後16:11に実run復帰。Core 16:24 / Supervisor 17:00は引き続き実run確認対象。
 
+### Canonical/Shadow 16:47 JST前進
+
+cross-run resolution chainを**実際のresolved write boundaryへ強制配線**した。既存chainを検証し、staged resolved bytesに対するresolution receiptと次chain linkを作成・全chain検証したうえで、receipt + chain linkを先にdurable保存できた場合だけ `staged.replace(resolved)` を許可する。既存chain tailと現在resolved SHAが一致しない場合、chain tamper、sidecar persistence errorはいずれもresolved履歴を変更せずfail-closed。最終Canonical HEAD `90f56dcd…`、最終contract CI `34943418395` **SUCCESS**。performance/H1/H2/2026 outcomeは新規開封なし。
+
 ## 残タスク
 
 P0: Parallel causal pick ledger、OSS/EDINET `34940882491` / `34940882530` terminal監査→sample receipt/selected ZIP SHA固定、Core24 official-JPX exact bytes/SHA pin。  
-P1: Canonical次のoutcome-blind shadow integrity、Consensus Core24 raw1H互換性監査。  
+P1: Canonicalはdurable prewrite chain後のcrash/orphan recovery semanticsをoutcome-blind監査、Consensus Core24 raw1H互換性監査。  
 CLOSED: Weak+Early Phase-2、Cloud exact forensic、V20。
 
 ## GO / NO-GO

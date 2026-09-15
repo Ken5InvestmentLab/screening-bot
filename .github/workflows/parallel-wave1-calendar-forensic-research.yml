@@ -1,0 +1,105 @@
+name: Parallel Wave1 XTKS calendar forensic
+
+on:
+  push:
+    branches:
+      - research/parallel-condition-exploration
+    paths:
+      - ".github/workflows/parallel-wave1-calendar-forensic-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  calendar-forensic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install exact calendar generator
+        run: pip install "exchange-calendars==4.13.1"
+      - name: Compare committed bytes and sessions to independent regeneration
+        shell: bash
+        run: |
+          mkdir -p /tmp/parallel-calendar-forensic
+          python - <<'PY'
+          import csv
+          import hashlib
+          import json
+          from pathlib import Path
+          import exchange_calendars as xcals
+
+          path = Path("research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv")
+          raw = path.read_bytes()
+          committed_sha = hashlib.sha256(raw).hexdigest()
+
+          with path.open(newline="", encoding="utf-8") as f:
+              rows = list(csv.reader(f))
+          if not rows or rows[0] != ["session"]:
+              raise SystemExit(f"FAIL_CLOSED: committed calendar header={rows[0] if rows else None!r}")
+          committed = [r[0] for r in rows[1:] if r]
+
+          cal = xcals.get_calendar("XTKS")
+          generated = [
+              str(x.date())
+              for x in cal.sessions_in_range("2022-01-01", "2026-12-31")
+          ]
+          canonical = ("session\n" + "\n".join(generated) + "\n").encode("utf-8")
+          generated_sha = hashlib.sha256(canonical).hexdigest()
+
+          committed_set = set(committed)
+          generated_set = set(generated)
+          missing_from_committed = sorted(generated_set - committed_set)
+          extra_in_committed = sorted(committed_set - generated_set)
+          order_equal = committed == generated
+          length_equal = len(committed) == len(generated)
+          mismatch_positions = []
+          for i, (a, b) in enumerate(zip(committed, generated)):
+              if a != b:
+                  mismatch_positions.append({
+                      "index": i,
+                      "committed": a,
+                      "generated": b,
+                  })
+                  if len(mismatch_positions) >= 30:
+                      break
+
+          report = {
+              "status": "MATCH" if (committed_sha == generated_sha and order_equal) else "CALENDAR_PROVENANCE_MISMATCH",
+              "performance_opened": False,
+              "strategy_outcomes_opened": False,
+              "package": "exchange_calendars",
+              "package_version": "4.13.1",
+              "calendar": "XTKS",
+              "range": ["2022-01-01", "2026-12-31"],
+              "committed_sha256": committed_sha,
+              "receipt_expected_sha256": "58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b",
+              "regenerated_canonical_sha256": generated_sha,
+              "committed_session_count": len(committed),
+              "regenerated_session_count": len(generated),
+              "committed_first": committed[0] if committed else None,
+              "committed_last": committed[-1] if committed else None,
+              "regenerated_first": generated[0] if generated else None,
+              "regenerated_last": generated[-1] if generated else None,
+              "order_equal": order_equal,
+              "length_equal": length_equal,
+              "missing_from_committed": missing_from_committed,
+              "extra_in_committed": extra_in_committed,
+              "first_mismatch_positions": mismatch_positions,
+              "decision_rule": "Do not alter the pinned receipt/hash until the semantic source of any session mismatch is understood; no performance may be opened while mismatched."
+          }
+          out = Path("/tmp/parallel-calendar-forensic/calendar_forensic.json")
+          out.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+          PY
+      - name: Upload outcome-blind calendar forensic receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: parallel-wave1-calendar-forensic
+          path: /tmp/parallel-calendar-forensic/calendar_forensic.json
+          if-no-files-found: error
+          retention-days: 30

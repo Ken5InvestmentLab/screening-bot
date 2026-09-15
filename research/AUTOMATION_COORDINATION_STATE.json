@@ -1,41 +1,41 @@
 {
-  "version": 77,
+  "version": 78,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T15:26:00+09:00",
+  "updated_at_jst": "2026-09-15T16:10:00+09:00",
   "supervisor_last_scan": {
-    "status": "EDINET_SECOND_NULL_SHAPE_AUDITED_PATCHED_RETRY_RUNNING_HEARTBEAT_GREEN",
-    "scanned_at_jst": "2026-09-15T15:26:00+09:00",
+    "status": "AUTOMATION_GAP_DETECTED_CORE_CONSENSUS_REARMED_SUPERVISOR_REARMED",
+    "scanned_at_jst": "2026-09-15T16:10:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Manual continuation advanced OSS/EDINET. Exact failing raw row from run 34922234308 artifact 10378661856 was inspected (2023-01-10 result[292], docID S100PXGH): docTypeCode=null, submitDateTime retained, disclosureStatus=0, all content/legal flags=0. 2023 artifact scan found 32,935 inert null-shape rows (32,852 withdrawal0/no timestamp; 52 withdrawal2/no timestamp; 31 withdrawal1/timestamp retained). Predicate was minimally widened only for docTypeCode=null + disclosureStatus=0 + all content/legal flags=0; all other malformed rows remain fail-closed. Exact regression fixture and audit note were committed. OSS test run 34936903249 PASS; full freeze retry 34936903153 is running. Other active lane HEADs remain processed."
+    "note": "Actual automation last_run times show a scheduler gap. Core last ran 14:22 JST and Consensus 14:36 JST, both >90 minutes by 16:09 and therefore STOP_SUSPECTED. Supervisor last ran 14:58 JST and missed its next expected slot but remained <90 minutes, so DELAY_SUSPECTED. Canonical last ran 15:14 JST and OSS+Parallel ran 16:06 JST. Core/Consensus/Supervisor were explicitly re-armed with Asia/Tokyo DTSTART at 16:24/16:36/17:00 while preserving hourly exact cadence. GitHub branch inactivity alone was not used for this diagnosis."
   },
   "automation_heartbeat": {
-    "checked_at_jst": "2026-09-15T15:26:00+09:00",
+    "checked_at_jst": "2026-09-15T16:10:00+09:00",
     "stop_threshold_minutes": 90,
-    "stopped_or_stale_automations": 0,
+    "stopped_or_stale_automations": 2,
     "workers": {
       "supervisor": {
         "enabled": true,
         "last_run_jst": "14:58",
-        "status": "GREEN"
+        "status": "ORANGE_DELAY_SUSPECTED_REARMED_NEXT_17:00"
       },
       "canonical": {
         "enabled": true,
         "last_run_jst": "15:14",
-        "status": "GREEN"
+        "status": "GREEN_NEXT_16:14"
       },
       "core": {
         "enabled": true,
         "last_run_jst": "14:22",
-        "status": "GREEN_WITHIN_90M"
+        "status": "RED_STOP_SUSPECTED_REARMED_NEXT_16:24"
       },
       "consensus": {
         "enabled": true,
         "last_run_jst": "14:36",
-        "status": "GREEN"
+        "status": "RED_STOP_SUSPECTED_REARMED_NEXT_16:36"
       },
       "oss_parallel": {
         "enabled": true,
-        "last_run_jst": "14:48",
+        "last_run_jst": "16:06",
         "status": "GREEN"
       }
     }
@@ -163,6 +163,7 @@
     }
   },
   "next_global_actions": [
+    "Automation recovery: verify Core 16:24 and Consensus 16:36 actually execute after re-arm; verify Supervisor 17:00. If any misses again, treat as scheduler-level fault and manually advance/reassign its lane.",
     "Core24: exact official JPX PIT bytes/SHA receipt -> independent exact-hour activity evidence.",
     "Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.",
     "OSS/EDINET: full freeze retry 34936903153 terminal audit -> metadata/sample receipt -> selected ZIP SHA freeze -> same-ZIP parser cross-check.",

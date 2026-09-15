@@ -43,6 +43,13 @@ Native scheduled tasks can run at most once per hour per task. Five research wor
 - State is `SEMANTIC_SOURCE_IDENTIFIED_ACCESS_NOT_ACQUIRED`: paid/contract access, no raw FLEX bytes currently pinned.
 - Formal expected keys and missing inventory remain sealed until independent raw execution bytes + SHA/spec/parser receipt are frozen. Membership×calendar×hour and Yahoo self-witness remain forbidden.
 
+## Core24 lower-cost official alternative (2026-09-16 08:24)
+- JPX/JPXI J-Quants API added equity tick and minute-bar data on 2026-01-19.
+- JPXI announced the high-frequency add-on at JPY 5,500/month including tax for Light Plan or higher, making it a materially cheaper official witness candidate than FLEX Historical.
+- Current state: `LOWER_COST_OFFICIAL_CANDIDATE_HISTORY_COVERAGE_UNVERIFIED`; public evidence inspected so far does not prove lookback to required 2024-09-17.
+- Spec: `research/tentei_cloud/CORE_EXACT_HOUR_JQUANTS_ALTERNATIVE_SPEC_20260916.md`.
+- Next: pin official endpoint/history-retention specification; only if coverage is sufficient acquire/pin raw sample and validate execution/minute activity semantics. Expected keys remain sealed.
+
 ## Dynamic lane discovery
 - The :00 supervisor must not assume a fixed lane count.
 - It scans `research/*` for substantive active lanes not yet registered in STATE.

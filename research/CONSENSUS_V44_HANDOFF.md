@@ -411,3 +411,38 @@ Files:
 Prior daily runs are superseded. Authoritative V47 daily run is **34788533946** (v6 PIT price + PIT daily volume + identity epochs + 100% restored-symbol requirement). Strategy outcomes remain forbidden.
 
 Clean-feature code is also updated so PIT daily volume feeds daily volume-ratio technicals while raw 1H volume is unchanged. Latest explicit PIT-volume feature contract is run from commit a3eeaec2567d9af7fac6219c0044c069c21521b7.
+
+
+## V47 Core24 raw reuse compatibility correction — 2026-09-15 16:39 JST
+
+Outcome-blind cross-lane provenance audit identified the Core24 SHA-pinned observed raw1H source and matched it to the V47 preserved seed:
+- source run `34592896202`, source HEAD `a331b96c8b7391a146ed3a8d28dd5e66d6ae0679`;
+- eight artifact IDs and ZIP digests exactly match the existing V47 seed audit;
+- Core24 additionally freezes every raw CSV SHA-256 and bundle SHA `de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18`;
+- 4,019,524 observed rows, 1,315 observed symbols, timestamp envelope 2024-09-17 09:00 JST through 2026-09-10 15:00 JST.
+
+Compatibility is **partial and conditional**:
+- timestamps/session reconstruction and raw 1H volume are compatible;
+- Core explicit-period prices are PIT nominal, while the current V47 clean materializer expects split-normalized/adjusted raw prices and multiplies by future split factor to recover PIT nominal `log_price`;
+- therefore Core seed OHLC must first be divided by the exact V47 cumulative future split factor for each symbol/date; raw 1H volume must remain unchanged.
+
+Frozen V47 coverage from this seed remains insufficient for formal acceptance:
+- NOCAP 301,897 / 853,061 = 35.3898%; restored pair coverage 0%;
+- CAP1000_PIT 258,339 / 310,831 = 83.1124%; restored pair coverage 0%.
+
+New files:
+- `research/CONSENSUS_V47_CORE24_RAW_REUSE_COMPATIBILITY_20260915.md`
+- `research/normalize_core24_raw1h_for_v47.py`
+- `research/test_normalize_core24_raw1h_for_v47.py`
+
+Research CI run `34943423800` / job `104297144102` passed on commit `f3e266e4f1167a1a62dbec1615b3cf78c7764b86`.
+
+Important diagnostic correction:
+- H1 run `34824194221` and the derived NOCAP H2 midterm diagnostic used the unnormalized Core explicit-period price basis.
+- Their printed metrics are retained only as audit history and reclassified `MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS`.
+- They must not drive price-arm ranking or GO/NO-GO.
+- H1 and NOCAP H2 remain opened; same-family retuning remains forbidden.
+- CAP1000_PIT H2 remains unopened unless the unchanged frozen H1 chooser on corrected inputs selects it.
+- A corrected cost-0 diagnostic may recompute the exact same frozen family after deterministic normalization; this is data-integrity repair, not retuning.
+
+Formal raw acceptance is still NOT PASSED and formal clean features/H1/H2 remain unopened.

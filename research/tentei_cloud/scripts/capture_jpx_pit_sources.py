@@ -37,17 +37,21 @@ for name,url in SOURCES.items():
     body,row=fetch_bytes(name,url,".html")
     bodies[name]=body; rows.append(row)
 
-# Discover the workbook only from the exact captured JPX publication-page bytes.
+# Discover only from the exact captured JPX publication-page bytes. The page also
+# links a historical correction workbook (jyoujyou(updated)_e.xlsx); that object
+# is explicitly NOT the current listed-issues universe and must never be selected.
 page=bodies["listed_issues_page"].decode("utf-8","ignore")
 hrefs=[html.unescape(x) for x in re.findall(r'href=["\']([^"\']+)["\']',page,re.I)]
-books=[x for x in hrefs if x.lower().endswith((".xlsx",".xls")) and ("jyoujyou" in x.lower() or "listed" in x.lower())]
-if len(books)!=1:
-    raise RuntimeError(f"fail-closed: expected exactly one listed-issues workbook href, got {books}")
-book_url=urllib.parse.urljoin(SOURCES["listed_issues_page"],books[0])
+books=[x for x in hrefs if x.lower().endswith((".xlsx",".xls"))]
+current=[x for x in books if x.lower().endswith("/data_e.xlsx")]
+if len(current)!=1:
+    raise RuntimeError(f"fail-closed: expected exactly one current listed-issues data_e workbook, got all={books}, current={current}")
+book_url=urllib.parse.urljoin(SOURCES["listed_issues_page"],current[0])
 _,book_row=fetch_bytes("listed_issues_workbook",book_url,".xlsx" if book_url.lower().endswith(".xlsx") else ".xls")
 book_row["discovered_from_page_sha256"]=next(r["sha256"] for r in rows if r["name"]=="listed_issues_page")
+book_row["excluded_correction_workbooks"]=[x for x in books if x not in current]
 rows.append(book_row)
 
-receipt={"contract":"official JPX listing/delisting plus listed-issues anchor page/workbook byte capture; research-only","sources":rows}
+receipt={"contract":"official JPX listing/delisting plus listed-issues anchor page/current workbook byte capture; correction workbook excluded; research-only","sources":rows}
 (OUT/"receipt.json").write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 print(json.dumps(receipt,ensure_ascii=False,indent=2))

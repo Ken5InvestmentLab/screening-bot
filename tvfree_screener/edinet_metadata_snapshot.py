@@ -22,6 +22,29 @@ DEFAULT_START = date(2023, 1, 1)
 DEFAULT_END = date(2025, 12, 31)
 
 
+def _optional_text(value: object) -> str:
+    """Normalize nullable EDINET scalar text without turning JSON null into 'None'."""
+    return "" if value is None else str(value).strip()
+
+
+def _is_edinet_null_tombstone(item: dict[str, object]) -> bool:
+    """Recognize the documented withdrawn/unavailable placeholder row shape.
+
+    EDINET document-list history can retain a docID while nulling filing metadata
+    and setting all downloadable-content/legal flags to 0. These rows cannot be
+    part of the preregistered docType 120/130 sample. Any other malformed shape
+    still fails closed.
+    """
+    zero_flags = ("xbrlFlag", "pdfFlag", "attachDocFlag", "englishDocFlag", "csvFlag", "legalStatus")
+    return (
+        item.get("docTypeCode") is None
+        and item.get("submitDateTime") is None
+        and str(item.get("disclosureStatus", "")) == "0"
+        and all(str(item.get(name, "")) == "0" for name in zero_flags)
+    )
+
+
+
 def _sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -96,6 +119,7 @@ def freeze_metadata_snapshot(
 
     rows: list[dict[str, object]] = []
     daily_files: list[dict[str, object]] = []
+    excluded_tombstones: list[str] = []
     for source_date in expected_dates:
         path = root / f"{source_date.isoformat()}.json"
         raw = path.read_bytes()
@@ -117,10 +141,24 @@ def freeze_metadata_snapshot(
         for idx, item in enumerate(results):
             if not isinstance(item, dict):
                 raise ValueError(f"{source_date}: result row {idx} must be an object")
-            doc_id = str(item.get("docID", "")).strip()
-            doc_type_code = str(item.get("docTypeCode", "")).strip()
-            submit_datetime = str(item.get("submitDateTime", "")).strip()
-            if not doc_id or not doc_type_code or not submit_datetime:
+            doc_id = _optional_text(item.get("docID"))
+            doc_type_code = _optional_text(item.get("docTypeCode"))
+            submit_datetime = _optional_text(item.get("submitDateTime"))
+            if not doc_id:
+                raise ValueError(f"{source_date}: result row {idx} missing docID")
+            if not doc_type_code or not submit_datetime:
+                if _is_edinet_null_tombstone(item):
+                    excluded_tombstones.append(
+                        "|".join(
+                            [
+                                source_date.isoformat(),
+                                doc_id,
+                                _optional_text(item.get("withdrawalStatus")),
+                                _optional_text(item.get("parentDocID")),
+                            ]
+                        )
+                    )
+                    continue
                 raise ValueError(
                     f"{source_date}: result row {idx} missing docID/docTypeCode/submitDateTime"
                 )
@@ -171,6 +209,11 @@ def freeze_metadata_snapshot(
         "raw_daily_hash_chain_sha256": _sha256_bytes(aggregate_material),
         "normalized_rows": int(len(frame)),
         "normalized_columns": ["doc_id", "doc_type_code", "submit_datetime", "source_date"],
+        "excluded_document_list_rows": {
+            "edinet_null_tombstone_count": len(excluded_tombstones),
+            "edinet_null_tombstone_sha256": _sha256_bytes("\n".join(excluded_tombstones).encode("utf-8")),
+            "policy": "skip only documented null-metadata rows with disclosureStatus=0 and all content/legal flags=0; all other malformed rows fail closed",
+        },
         "strategy_outcomes_opened": False,
         "parser_outputs_used_for_selection": False,
     }

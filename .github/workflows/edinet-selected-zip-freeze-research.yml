@@ -1,0 +1,117 @@
+name: EDINET selected ZIP freeze research
+
+on:
+  push:
+    branches:
+      - research/oss-validation-tooling
+    paths:
+      - ".github/workflows/edinet-selected-zip-freeze-research.yml"
+      - "research/EDINET_REAL_SAMPLE_LOCK_20260915.json"
+      - "tvfree_screener/edinet_selected_zip_freeze.py"
+      - "tvfree_screener/edinet_fundamental_collector.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  freeze-selected-zips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+      PYTHONPATH: .:tvfree_screener
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install research dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+
+      - name: Mask and validate EDINET secret
+        shell: bash
+        run: |
+          if [ -z "$EDINET_API_KEY" ]; then
+            echo "EDINET_API_KEY secret is missing"
+            exit 1
+          fi
+          echo "::add-mask::$EDINET_API_KEY"
+
+      - name: Download exact locked EDINET XBRL-to-CSV ZIP set
+        shell: bash
+        run: |
+          mkdir -p /tmp/edinet-selected-zips
+          python - <<'PY'
+          import json
+          import os
+          import time
+          import zipfile
+          from pathlib import Path
+
+          from tvfree_screener.edinet_fundamental_collector import EdinetClient
+
+          lock_path = Path("research/EDINET_REAL_SAMPLE_LOCK_20260915.json")
+          lock = json.loads(lock_path.read_text(encoding="utf-8"))
+          ids = lock.get("selected_doc_ids")
+          if (
+              lock.get("status") != "REAL_SAMPLE_LOCKED_OUTCOME_BLIND"
+              or lock.get("strategy_outcomes_opened") is not False
+              or lock.get("parser_outputs_opened") is not False
+              or lock.get("no_replacement_rule") is not True
+              or not isinstance(ids, list)
+              or len(ids) != 48
+              or len(set(ids)) != len(ids)
+          ):
+              raise RuntimeError("real sample lock failed closed validation")
+
+          client = EdinetClient(os.environ["EDINET_API_KEY"])
+          root = Path("/tmp/edinet-selected-zips")
+          for idx, doc_id in enumerate(ids):
+              payload = client.download_csv_zip(str(doc_id))
+              path = root / f"{doc_id}.zip"
+              path.write_bytes(payload)
+              if not zipfile.is_zipfile(path):
+                  raise RuntimeError(f"{doc_id}: EDINET response is not a ZIP")
+              with zipfile.ZipFile(path) as zf:
+                  bad = zf.testzip()
+                  if bad is not None:
+                      raise RuntimeError(f"{doc_id}: corrupt ZIP member {bad}")
+                  if not zf.namelist():
+                      raise RuntimeError(f"{doc_id}: empty ZIP")
+              print(f"EDINET_SELECTED_ZIP_OK={doc_id} bytes={len(payload)}")
+              if idx + 1 < len(ids):
+                  time.sleep(0.75)
+          print(f"EDINET_SELECTED_ZIP_COUNT={len(ids)}")
+          PY
+
+      - name: Freeze selected ZIP hashes before any parser output
+        shell: bash
+        run: |
+          python tvfree_screener/edinet_selected_zip_freeze.py \
+            --sample-receipt research/EDINET_REAL_SAMPLE_LOCK_20260915.json \
+            --zip-dir /tmp/edinet-selected-zips \
+            --receipt-output /tmp/edinet-selected-zips/selected_zip_freeze_receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("/tmp/edinet-selected-zips/selected_zip_freeze_receipt.json")
+          r = json.loads(p.read_text())
+          assert r["status"] == "SELECTED_ZIPS_FROZEN_OUTCOME_BLIND"
+          assert r["selected_documents"] == 48
+          assert r["strategy_outcomes_opened"] is False
+          assert r["parser_outputs_opened"] is False
+          print("EDINET_SELECTED_ZIP_FREEZE_PASS=1")
+          print("EDINET_SELECTED_ZIP_AGGREGATE_SHA256=" + r["aggregate_sha256_chain"])
+          PY
+
+      - name: Upload exact frozen ZIP bytes and receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: edinet-selected-zips-frozen-v1
+          path: /tmp/edinet-selected-zips/*
+          if-no-files-found: error
+          retention-days: 30

@@ -1,29 +1,29 @@
 {
-  "version": 81,
+  "version": 82,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T17:02:00+09:00",
+  "updated_at_jst": "2026-09-15T17:27:00+09:00",
   "supervisor_last_scan": {
     "status": "ADVANCED_EDINET_TIMEZONE_INVARIANT_FRESH_RETRY_RUNNING",
     "scanned_at_jst": "2026-09-15T17:02:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Full freeze 34940882530 acquired all year artifacts then failed on docID S1006Y3L because duplicate equality compared timezone-rendered strings (+09:00 vs +09:18) instead of normalized instants. Fixed outcome-blindly by comparing parsed timestamps as UTC instants while retaining emitted Asia/Tokyo representation and eligible 120/130 fail-closed conflict guard. Commit 77116de3; audit 4514891a. Fresh OSS 34944518975 and full freeze 34944519021 are running. Heartbeat: all five enabled; Core recovered with last run 16:47, Consensus 16:11, OSS+Parallel 16:48, Canonical 15:14, Supervisor current run."
+    "note": "Full freeze 34940882530 acquired all year artifacts then failed on docID S1006Y3L because duplicate equality compared timezone-rendered strings (+09:00 vs +09:18) instead of normalized instants. Fixed outcome-blindly by comparing parsed timestamps as UTC instants while retaining emitted Asia/Tokyo representation and eligible 120/130 fail-closed conflict guard. Commit 77116de3; audit 4514891a. Fresh OSS 34944518975 and full freeze 34944519021 are running."
   },
   "automation_heartbeat": {
-    "checked_at_jst": "2026-09-15T17:02:00+09:00",
+    "checked_at_jst": "2026-09-15T17:27:00+09:00",
     "stop_threshold_minutes": 90,
     "stopped_or_stale_automations": 0,
     "workers": {
-      "supervisor": {"enabled": true, "last_run_jst": "17:00", "status": "GREEN_CURRENT_RUN"},
-      "canonical": {"enabled": true, "last_run_jst": "15:14", "status": "GREEN_WITHIN_90M_NEXT_17:12"},
-      "core": {"enabled": true, "last_run_jst": "16:47", "status": "GREEN_RECOVERED_AFTER_REARM"},
-      "consensus": {"enabled": true, "last_run_jst": "16:11", "status": "GREEN_RECOVERED_AFTER_REARM"},
+      "supervisor": {"enabled": true, "last_run_jst": "17:00", "status": "GREEN"},
+      "canonical": {"enabled": true, "last_run_jst": "15:14", "status": "GREEN_NEXT_RUN_CHECK_PENDING"},
+      "core": {"enabled": true, "last_run_jst": "17:26", "status": "GREEN_CURRENT_RUN_ADVANCED"},
+      "consensus": {"enabled": true, "last_run_jst": "16:11", "status": "GREEN"},
       "oss_parallel": {"enabled": true, "last_run_jst": "16:48", "status": "GREEN"}
     }
   },
   "scan_policy": {"cadence_target_minutes": 12, "worker_slots_jst": ["00","12","24","36","48"], "rule": "Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."},
   "branches": {
     "research/tvfree-canonical-batch02": {"preferred_worker":"canonical","last_seen_sha":"90f56dcd426e8d1a85cfd8f38eee5a8afda9d471","last_processed_sha":"90f56dcd426e8d1a85cfd8f38eee5a8afda9d471","task_state":"ACTIVE_RESOLUTION_CHAIN_DURABLE_PREWRITE_ENFORCED_CI_GREEN","next_action":"Continue outcome-blind Shadow/Data integrity. Next audit crash/orphan recovery semantics for a prewritten chain tail if final resolved replace itself fails; do not reopen performance or V20."},
-    "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"97106b9f9489f01545285481ba25ce87aad7fae2","last_processed_sha":"97106b9f9489f01545285481ba25ce87aad7fae2","task_state":"ACTIVE_DATA_REPAIR","next_action":"Acquire and SHA-pin exact official JPX PIT inputs for 2024-09-17..2026-09-10 and deterministic membership receipt; then independent exact-hour activity evidence. No Cartesian expected keys."},
+    "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"402c2ebc00abd75f3f5305030cbef52028d482ea","last_processed_sha":"402c2ebc00abd75f3f5305030cbef52028d482ea","task_state":"ACTIVE_DATA_REPAIR_PIT_BYTE_PIN_CONTRACT_FROZEN","next_action":"Acquire exact official JPX anchor all-issues bytes plus historical listing/delisting event bytes for 2024-09-17..2026-09-10; SHA-pin every input, build deterministic normalized event ledger + membership receipt; then independent exact-hour activity evidence. No Cartesian expected keys."},
     "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363","last_processed_sha":"5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363","task_state":"STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED","next_action":"Do not duplicate-trigger Yahoo run 34849054884. Outcome-blindly compare V47 frozen required inventory against SHA-pinned Core24 observed raw1H manifest for provenance/calendar/timestamp/coverage compatibility."},
     "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"4514891ac00daf2fd72df97874b2dbbd52a4b4ea","last_processed_sha":"4514891ac00daf2fd72df97874b2dbbd52a4b4ea","task_state":"ACTIVE_EDINET_RETRY_AFTER_TIMEZONE_INVARIANT_FIX","next_action":"Inspect OSS 34944518975 and full freeze 34944519021. If PASS, freeze metadata/sample receipts then selected ZIP byte SHA -> same-ZIP parser cross-check; if FAIL inspect exact next invariant before policy change."},
     "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"STALE_P0_ACTION_ASSIGNED","next_action":"Generate causal A1/B1/E1 pick ledger without reading returns, freeze ledger SHA, then completeness receipt; only after PASS one-shot cost0 performance."}
@@ -35,10 +35,10 @@
     "oss_validation": {"task_state":"ACTIVE_EDINET_RETRY_AFTER_TIMEZONE_INVARIANT_FIX_PLUS_PIT_P0","prior_run":34940882530,"prior_conclusion":"FAIL_TIMEZONE_RENDERING_FALSE_CONFLICT","failing_doc_id":"S1006Y3L","fix_commit":"77116de3e4d5ea19540d06eb9983f1d5b879ab0e","audit_commit":"4514891ac00daf2fd72df97874b2dbbd52a4b4ea","oss_test_run":34944518975,"oss_test_status":"IN_PROGRESS","edinet_retry_run":34944519021,"edinet_retry_status":"IN_PROGRESS","performance_opened":false},
     "consensus_v47": {"task_state":"STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED","visible_shards":8,"usable_raw_rows":0,"diagnostic_status":"NOT_COMPUTABLE_NO_INPUT_DATA","promotion_evidence":false,"authoritative_run_id":34849054884,"passive_wait_only":false,"assigned_recovery":"Core24 pinned raw1H compatibility audit before any new source/retry"},
     "canonical_shadow": {"task_state":"ACTIVE_RESOLUTION_CHAIN_DURABLE_PREWRITE_ENFORCED_CI_GREEN","head":"90f56dcd426e8d1a85cfd8f38eee5a8afda9d471","ci_run":34943418395,"ci_conclusion":"success","performance_opened":false},
-    "core": {"task_state":"ACTIVE_PROVENANCE_JPX_SOURCE_ROUTE_IDENTIFIED_BYTE_PIN_PENDING","performance_opened":false},
+    "core": {"task_state":"ACTIVE_PROVENANCE_PIT_BYTE_PIN_CONTRACT_FROZEN_INPUT_BYTES_PENDING","performance_opened":false},
     "cloud_exact_forensic": {"task_state":"CLOSED","conclusion":"HISTORICAL_EXACT_REPRO_UNAVAILABLE"},
     "v20_session_impulse": {"task_state":"CLOSED"}
   },
-  "next_global_actions": ["Core24: exact official JPX PIT bytes/SHA receipt -> independent exact-hour activity evidence.","Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","OSS/EDINET: inspect 34944518975 + 34944519021 -> metadata/sample receipt -> selected ZIP SHA freeze -> same-ZIP parser cross-check.","Canonical: outcome-blind crash/orphan recovery semantics for durable prewrite resolution chain.","Consensus: audit Core24 pinned raw1H compatibility outcome-blind before any new acquisition retry.","Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."],
+  "next_global_actions": ["Core24: acquire exact official JPX PIT input bytes/SHA -> deterministic event ledger + membership receipt -> independent exact-hour activity evidence.","Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","OSS/EDINET: inspect 34944518975 + 34944519021 -> metadata/sample receipt -> selected ZIP SHA freeze -> same-ZIP parser cross-check.","Canonical: outcome-blind crash/orphan recovery semantics for durable prewrite resolution chain.","Consensus: audit Core24 pinned raw1H compatibility outcome-blind before any new acquisition retry.","Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."],
   "go_no_go": "NO-GO_RESEARCH_CONTINUES"
 }

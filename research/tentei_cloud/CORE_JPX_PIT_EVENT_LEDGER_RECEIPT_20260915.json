@@ -1,0 +1,10 @@
+{
+  "status": "PASS_NORMALIZED_EVENT_LEDGER_DERIVATION",
+  "source_receipt": "research/tentei_cloud/CORE_JPX_PIT_SOURCE_RECEIPT_20260915.json",
+  "window": {"start":"2024-09-17","end":"2026-09-10"},
+  "normalization": {"event_types":["LISTING","DELISTING"],"market_segments":["Prime","Standard","Growth"],"dedupe_key":["event_date","event_type","code","issue_name","market_segment"]},
+  "counts": {"events":375,"listings":134,"delistings":241,"identity_conflicts":0},
+  "derived_ledger_sha256": "5babf8d153f243e4be3bab6c8ef2c0f45ff773ca744917329cd97f551788ff28",
+  "membership_gate": "PENDING_ANCHOR_UNIVERSE_BYTES",
+  "note": "The six SHA-pinned JPX HTML sources were parsed deterministically. No conflicting issue-name/market-segment payload was found for identical (date,type,code) keys. This receipt does NOT claim PIT membership PASS: listing/delisting events alone cannot establish the complete universe already listed at the window start. A byte-pinned official-JPX anchor universe is still required before forward/backward event replay and membership receipt. The repository CSV path was reserved in this run; canonical publication of full derived rows remains pending a byte-identical writer path."
+}

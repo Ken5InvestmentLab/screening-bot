@@ -1,0 +1,140 @@
+name: EDINET metadata freeze research
+
+on:
+  push:
+    branches:
+      - research/oss-validation-tooling
+    paths:
+      - ".github/workflows/edinet-metadata-freeze-research.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acquire:
+    name: acquire-${{ matrix.year }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - year: "2023"
+            start: "2023-01-01"
+            end: "2023-12-31"
+          - year: "2024"
+            start: "2024-01-01"
+            end: "2024-12-31"
+          - year: "2025"
+            start: "2025-01-01"
+            end: "2025-12-31"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+      PYTHONPATH: .:tvfree_screener
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mask and validate EDINET secret
+        shell: bash
+        run: |
+          if [ -z "$EDINET_API_KEY" ]; then
+            echo "EDINET_API_KEY secret is missing"
+            exit 1
+          fi
+          echo "::add-mask::$EDINET_API_KEY"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Acquire frozen EDINET daily metadata
+        shell: bash
+        run: |
+          OUT="/tmp/edinet-${{ matrix.year }}"
+          mkdir -p "$OUT"
+          python tvfree_screener/edinet_metadata_acquire.py             --output-dir "$OUT"             --start "${{ matrix.start }}"             --end "${{ matrix.end }}"             --sleep-seconds 0.35
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          year = "${{ matrix.year }}"
+          root = Path(f"/tmp/edinet-{year}")
+          files = sorted(root.glob("*.json"))
+          h = hashlib.sha256()
+          rows = 0
+          for p in files:
+              b = p.read_bytes()
+              h.update(p.name.encode())
+              h.update(b"\0")
+              h.update(hashlib.sha256(b).digest())
+              rows += len(json.loads(b).get("results", []))
+          print(f"EDINET_YEAR={year}")
+          print(f"EDINET_DAYS={len(files)}")
+          print(f"EDINET_RESULT_ROWS={rows}")
+          print(f"EDINET_YEAR_HASH_CHAIN={h.hexdigest()}")
+          PY
+
+      - name: Upload year raw metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: edinet-metadata-${{ matrix.year }}
+          path: /tmp/edinet-${{ matrix.year }}/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  freeze:
+    needs: acquire
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: .:tvfree_screener
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install frozen snapshot dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+
+      - name: Download all raw year artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: edinet-metadata-*
+          path: /tmp/edinet-all
+          merge-multiple: true
+
+      - name: Freeze complete 2023-2025 metadata snapshot
+        shell: bash
+        run: |
+          mkdir -p /tmp/edinet-frozen
+          python tvfree_screener/edinet_metadata_snapshot.py             --input-dir /tmp/edinet-all             --start 2023-01-01             --end 2025-12-31             --metadata-output /tmp/edinet-frozen/metadata.csv             --manifest-output /tmp/edinet-frozen/metadata_manifest.json
+
+      - name: Freeze preregistered real sample before parser outputs
+        shell: bash
+        run: |
+          python tvfree_screener/edinet_oss_sample_selector.py             --metadata /tmp/edinet-frozen/metadata.csv             --source-coverage-start 2023-01-01T00:00:00+09:00             --source-coverage-end 2025-12-31T23:59:59+09:00             --sample-output /tmp/edinet-frozen/selected_sample.csv             --receipt-output /tmp/edinet-frozen/selected_sample_receipt.json
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root = Path("/tmp/edinet-frozen")
+          m = json.loads((root/"metadata_manifest.json").read_text())
+          s = json.loads((root/"selected_sample_receipt.json").read_text())
+          print("EDINET_FULL_PERIOD_PASS=" + str(m["coverage"]["full_period_pass"]))
+          print("EDINET_OBSERVED_DAYS=" + str(m["coverage"]["observed_calendar_days"]))
+          print("EDINET_NORMALIZED_ROWS=" + str(m["normalized_rows"]))
+          print("EDINET_RAW_CHAIN=" + str(m["raw_daily_hash_chain_sha256"]))
+          print("EDINET_SELECTED_DOCUMENTS=" + str(s["selected_documents"]))
+          print("EDINET_SAMPLE_SHA256=" + hashlib.sha256((root/"selected_sample.csv").read_bytes()).hexdigest())
+          PY
+
+      - name: Upload frozen metadata and sample receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: edinet-frozen-metadata-and-sample
+          path: /tmp/edinet-frozen/*
+          if-no-files-found: error
+          retention-days: 30

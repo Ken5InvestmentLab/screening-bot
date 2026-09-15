@@ -122,6 +122,31 @@ class VerifiedResolveTests(unittest.TestCase):
             self.assertEqual(first["endpoint_completeness_receipt_path"], second["endpoint_completeness_receipt_path"])
             self.assertEqual(receipt_snapshot, Path(second["endpoint_completeness_receipt_path"]).read_bytes())
 
+    def test_pre_replace_chain_guard_blocks_before_resolved_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            shadow = self._shadow(root)
+            out = root / "resolved.jsonl"
+            sessions, daily = self._resolved_inputs()
+            calls = []
+
+            def guard(staged_path, provisional_result):
+                calls.append((staged_path.exists(), provisional_result["output_sha256_after"]))
+                return {"allow_replace": False, "decision": "TEST_BLOCK"}
+
+            result = verified_resolve_shadow_file(
+                shadow,
+                out,
+                daily,
+                sessions,
+                pre_replace_guard=guard,
+            )
+            self.assertFalse(result["resolved_written"])
+            self.assertEqual(result["decision"], "BLOCK_PRE_REPLACE_CHAIN_GUARD")
+            self.assertEqual(len(calls), 1)
+            self.assertTrue(calls[0][0])
+            self.assertFalse(out.exists())
+
     def test_changed_resolved_endpoint_blocks_and_preserves_file(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

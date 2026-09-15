@@ -3,7 +3,7 @@
 Research-only; no strategy/performance logic.
 """
 from __future__ import annotations
-import hashlib, json, pathlib, time, urllib.request
+import hashlib, html, json, pathlib, re, time, urllib.parse, urllib.request
 from datetime import datetime, timezone
 
 SOURCES = {
@@ -13,30 +13,41 @@ SOURCES = {
     "delisted_current": "https://www.jpx.co.jp/english/listing/stocks/delisted/index.html",
     "delisted_2025": "https://www.jpx.co.jp/english/listing/stocks/delisted/archives-01.html",
     "delisted_2024": "https://www.jpx.co.jp/english/listing/stocks/delisted/archives-02.html",
-    # Official JPX page that publishes the previous-month-end TSE-listed-issues workbook.
-    # Capture the page bytes first so the workbook href itself is provenance-pinned;
-    # a later deterministic step may capture the discovered workbook bytes.
     "listed_issues_page": "https://www.jpx.co.jp/english/markets/statistics-equities/misc/01.html",
 }
 OUT = pathlib.Path("research/tentei_cloud/artifacts/jpx_pit_source_capture")
 OUT.mkdir(parents=True, exist_ok=True)
-rows=[]
-for name,url in SOURCES.items():
+
+def fetch_bytes(name: str, url: str, suffix: str):
     req=urllib.request.Request(url, headers={"User-Agent":"Mozilla/5.0 research provenance capture"})
-    last=None
     for attempt in range(3):
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 body=r.read(); final_url=r.geturl(); status=getattr(r,"status",200)
             break
-        except Exception as e:
-            last=e
+        except Exception:
             if attempt==2: raise
             time.sleep(2**attempt)
-    suffix = ".html"
-    path=OUT/f"{name}{suffix}"
-    path.write_bytes(body)
-    rows.append({"name":name,"source_url":url,"final_url":final_url,"http_status":status,"bytes":len(body),"sha256":hashlib.sha256(body).hexdigest(),"captured_at_utc":datetime.now(timezone.utc).isoformat()})
-receipt={"contract":"official JPX listing/delisting plus listed-issues anchor-page byte capture; research-only","sources":rows}
+    (OUT/f"{name}{suffix}").write_bytes(body)
+    row={"name":name,"source_url":url,"final_url":final_url,"http_status":status,"bytes":len(body),"sha256":hashlib.sha256(body).hexdigest(),"captured_at_utc":datetime.now(timezone.utc).isoformat()}
+    return body,row
+
+rows=[]; bodies={}
+for name,url in SOURCES.items():
+    body,row=fetch_bytes(name,url,".html")
+    bodies[name]=body; rows.append(row)
+
+# Discover the workbook only from the exact captured JPX publication-page bytes.
+page=bodies["listed_issues_page"].decode("utf-8","ignore")
+hrefs=[html.unescape(x) for x in re.findall(r'href=["\']([^"\']+)["\']',page,re.I)]
+books=[x for x in hrefs if x.lower().endswith((".xlsx",".xls")) and ("jyoujyou" in x.lower() or "listed" in x.lower())]
+if len(books)!=1:
+    raise RuntimeError(f"fail-closed: expected exactly one listed-issues workbook href, got {books}")
+book_url=urllib.parse.urljoin(SOURCES["listed_issues_page"],books[0])
+_,book_row=fetch_bytes("listed_issues_workbook",book_url,".xlsx" if book_url.lower().endswith(".xlsx") else ".xls")
+book_row["discovered_from_page_sha256"]=next(r["sha256"] for r in rows if r["name"]=="listed_issues_page")
+rows.append(book_row)
+
+receipt={"contract":"official JPX listing/delisting plus listed-issues anchor page/workbook byte capture; research-only","sources":rows}
 (OUT/"receipt.json").write_text(json.dumps(receipt,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 print(json.dumps(receipt,ensure_ascii=False,indent=2))

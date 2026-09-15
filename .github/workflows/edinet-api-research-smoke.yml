@@ -1,0 +1,61 @@
+name: EDINET API research smoke
+
+on:
+  push:
+    branches:
+      - research/oss-validation-tooling
+    paths:
+      - ".github/workflows/edinet-api-research-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EDINET_API_KEY: ${{ secrets.EDINET_API_KEY }}
+      PYTHONPATH: .:tvfree_screener
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mask and validate EDINET secret
+        shell: bash
+        run: |
+          if [ -z "$EDINET_API_KEY" ]; then
+            echo "EDINET_API_KEY secret is missing"
+            exit 1
+          fi
+          echo "::add-mask::$EDINET_API_KEY"
+          echo "EDINET_API_KEY_PRESENT=1"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch one outcome-blind metadata day
+        shell: bash
+        run: |
+          mkdir -p /tmp/edinet-smoke
+          python tvfree_screener/edinet_metadata_acquire.py             --output-dir /tmp/edinet-smoke             --start 2024-06-28             --end 2024-06-28             --sleep-seconds 0
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          p = Path("/tmp/edinet-smoke/2024-06-28.json")
+          raw = p.read_bytes()
+          obj = json.loads(raw)
+          print("EDINET_SMOKE_HTTP_PAYLOAD_OK=1")
+          print("EDINET_SMOKE_RESULTS_COUNT=" + str(len(obj.get("results", []))))
+          print("EDINET_SMOKE_SHA256=" + hashlib.sha256(raw).hexdigest())
+          print("EDINET_SMOKE_BYTES=" + str(len(raw)))
+          PY
+
+      - name: Upload raw smoke receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: edinet-smoke-2024-06-28
+          path: /tmp/edinet-smoke/2024-06-28.json
+          if-no-files-found: error
+          retention-days: 7

@@ -15,6 +15,7 @@ from tvfree_screener.batch02.prospective_shadow_cli import (
 )
 from tvfree_screener.batch02.prospective_shadow import ShadowCandidate, append_candidates
 from tvfree_screener.batch02.prospective_shadow_daily_endpoint_guard import build_daily_endpoint_manifest
+from tvfree_screener.batch02.prospective_shadow_resolution_chain_guard import verify_chain
 
 
 class ProspectiveShadowCliTests(unittest.TestCase):
@@ -143,6 +144,11 @@ class ProspectiveShadowCliTests(unittest.TestCase):
                 summary=str(summary),
             ))
             snapshot = resolved.read_bytes()
+            chain_path = Path(str(resolved) + ".resolution-chain.jsonl")
+            self.assertTrue(chain_path.exists())
+            chain_rows = [json.loads(line) for line in chain_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+            self.assertEqual(len(chain_rows), 1)
+            self.assertTrue(verify_chain(chain_rows)["valid"])
 
             daily2 = root / "daily2.csv"
             daily2_manifest = root / "daily2.manifest.json"
@@ -222,6 +228,35 @@ class ProspectiveShadowCliTests(unittest.TestCase):
             self.assertFalse(resolved.exists())
             summary_payload = json.loads(summary.read_text(encoding="utf-8"))
             self.assertEqual(summary_payload["decision"], "BLOCK_CLI_DAILY_ENDPOINT_DATASET")
+
+
+    def test_resolve_cli_blocks_invalid_existing_resolution_chain_before_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manifest_path = root / "freeze.json"
+            self._manifest(manifest_path)
+            resolved = root / "resolved.jsonl"
+            chain_path = Path(str(resolved) + ".resolution-chain.jsonl")
+            chain_path.write_text('{"receipt_type":"BROKEN"}\n', encoding="utf-8")
+            summary = root / "summary.json"
+
+            with self.assertRaises(SystemExit) as cm:
+                cmd_resolve(Namespace(
+                    freeze_manifest=str(manifest_path),
+                    freeze_sha256=None,
+                    shadow=str(root / "shadow.jsonl"),
+                    daily=str(root / "daily.csv"),
+                    daily_manifest=str(root / "daily.manifest.json"),
+                    sessions_csv=None,
+                    sessions_manifest=None,
+                    resolution_receipt=str(root / "resolution.receipt.json"),
+                    resolved=str(resolved),
+                    summary=str(summary),
+                ))
+            self.assertEqual(cm.exception.code, 2)
+            self.assertFalse(resolved.exists())
+            payload = json.loads(summary.read_text(encoding="utf-8"))
+            self.assertEqual(payload["decision"], "BLOCK_CLI_RESOLUTION_CHAIN_INVALID")
 
 
     def test_resolve_cli_refuses_existing_resolution_receipt_path(self):

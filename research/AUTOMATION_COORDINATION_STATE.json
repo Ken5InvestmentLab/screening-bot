@@ -1,51 +1,45 @@
 {
-  "version": 67,
+  "version": 68,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T08:46:00+09:00",
+  "updated_at_jst": "2026-09-15T10:58:00+09:00",
   "supervisor_last_scan": {
-    "status": "OSS_PIT_GAP_RECORDED_PARALLEL_HASH_IDENTITY_RECONCILED",
-    "scanned_at_jst": "2026-09-15T08:46:00+09:00",
+    "status": "HEARTBEAT_GREEN_TASK_STALE_ROUTING_RECORDED",
+    "scanned_at_jst": "2026-09-15T10:58:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "Cross-lane review kept processed SHAs deduped. OSS and Parallel actual HEADs matched STATE at scan start. Parallel calendar SHA concern was reconciled as an artifact-identity mismatch: the authoritative pinned one-column calendar remains SHA256 58e67bd2...; the separately saved xtks_sessions.csv representation must not be treated as the same bytes. OSS then advanced to the next outcome-blind validation control and found that feature_cutoff_column is optional/default None, so the generic Optuna harness does not fail closed on PIT feature-availability evidence when callers omit it. Audit commit 65e10483 records the gap; performance remains unopened."
+    "note": "All five research automations are enabled and none exceeds the 90-minute stop threshold. Actual branch HEAD checks confirmed OSS 65e10483 and Parallel 858998cc still equal their processed SHAs. This is task-level stagnation, not automation stoppage. Parallel is explicitly routed to the outcome-blind causal A1/B1/E1 pick-ledger freeze; OSS is explicitly routed to the PIT fail-closed patch/tests. Phase-2 remains CLOSED with DUAL+G3 frozen comparator and 2022 robustness FAIL."
   },
-  "scan_policy": {
-    "cadence_target_minutes": 12,
-    "worker_slots_jst": ["00", "12", "24", "36", "48"],
-    "rule": "Each worker scans all STATE-registered active research branches before its preferred lane. Do not duplicate SHA already processed. External-wait lanes must not consume the whole run when another safe pending task is available."
+  "automation_heartbeat": {
+    "checked_at_jst":"2026-09-15T10:58:00+09:00",
+    "stop_threshold_minutes":90,
+    "stopped_or_stale_automations":0,
+    "workers":{
+      "supervisor":{"enabled":true,"last_run_jst":"2026-09-15T10:03:01+09:00","status":"RUNNING_CURRENT_SLOT"},
+      "canonical":{"enabled":true,"last_run_jst":"2026-09-15T10:14:01+09:00","status":"GREEN"},
+      "core":{"enabled":true,"last_run_jst":"2026-09-15T10:26:49+09:00","status":"GREEN"},
+      "consensus":{"enabled":true,"last_run_jst":"2026-09-15T10:34:16+09:00","status":"GREEN_EXTERNAL_WAIT"},
+      "oss_parallel":{"enabled":true,"last_run_jst":"2026-09-15T10:45:50+09:00","status":"GREEN_TASK_STALE_ROUTING_REQUIRED"}
+    }
   },
+  "scan_policy": {"cadence_target_minutes":12,"worker_slots_jst":["00","12","24","36","48"],"rule":"Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."},
   "branches": {
-    "research/tvfree-canonical-batch02": {"preferred_worker":"canonical","last_seen_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","last_processed_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","task_state":"ACTIVE","last_processed_note":"Schema-v2 full Shadow/Data provenance link-tamper regression added across selection ledger, daily manifest, XTKS calendar CSV/manifest, completeness receipt and resolve_result; CI 34893503640 SUCCESS; performance unopened. Exact continuation: inspect prospective_shadow_resolution_receipt replay/rollback and cross-run chain continuity, then add the smallest outcome-blind fail-closed regression without opening performance."},
-    "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","last_processed_sha":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","task_state":"ACTIVE_DATA_REPAIR","last_processed_note":"Core24 adopted and pinned the independent XTKS calendar into Core: 1,220 sessions, CSV SHA256 58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b, source commits cd667f5/69f49c8. Expected-universe spec now marks XTKS PASS/Core-pinned. JPX PIT source/input receipts remain next; independent exact-hour activity evidence still required. Formal missing inventory and performance remain closed."},
-    "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"b04751e164ade7ed113a03c8087b6d50e0294209","last_processed_sha":"b04751e164ade7ed113a03c8087b6d50e0294209","task_state":"EXTERNAL_WAIT_ACTIVE_RUN","last_processed_note":"Absorbed 06:34 JST dashboard-only refresh. Raw48 run 34849054884 remains nonterminal; shards 0-3 still total 324/324 HTTP429 and zero usable rows, shards 4/5 remain fetching. No new raw artifact, no duplicate trigger, no strategy/performance evidence."},
-    "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"65e10483b4e1e41a68ec94883dec5c8916698d40","last_processed_sha":"65e10483b4e1e41a68ec94883dec5c8916698d40","task_state":"ACTIVE_PIT_GAP","last_processed_note":"Next outcome-blind control found PIT fail-open boundary: feature_cutoff_column is optional/default None in validate_discovery_frame/run_study, so omitted cutoff evidence is accepted. Audit 65e10483 records required fail-closed patch/tests. Receipt-bound DSR remains verified; performance unopened."},
-    "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"ACTIVE","last_processed_note":"Independent XTKS calendar + outcome-blind endpoint verifier frozen. Authoritative pinned calendar is research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv SHA256 58e67bd2...; prior 74ab... observation was a different saved representation, not pinned-artifact drift. Next causal pick ledger -> completeness receipt -> one-shot cost0 evaluation."}
+    "research/tvfree-canonical-batch02":{"preferred_worker":"canonical","last_seen_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","last_processed_sha":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","task_state":"ACTIVE","next_action":"Audit prospective_shadow_resolution_receipt replay/rollback and cross-run chain continuity outcome-blind; performance unopened."},
+    "research/tentei-cloud-mtf":{"preferred_worker":"core","last_seen_sha":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","last_processed_sha":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","task_state":"ACTIVE_DATA_REPAIR","next_action":"Pin official-JPX PIT source/input receipts, then search independent exact-hour activity evidence; no Cartesian expected keys."},
+    "research/consensus-atr-regime-gate":{"preferred_worker":"consensus","last_seen_sha":"b04751e164ade7ed113a03c8087b6d50e0294209","last_processed_sha":"b04751e164ade7ed113a03c8087b6d50e0294209","task_state":"EXTERNAL_WAIT","next_action":"Only advance formal merge/acceptance on terminal raw48 or new non-zero raw artifact; no duplicate trigger."},
+    "research/oss-validation-tooling":{"preferred_worker":"oss-validation-via-48","last_seen_sha":"65e10483b4e1e41a68ec94883dec5c8916698d40","last_processed_sha":"65e10483b4e1e41a68ec94883dec5c8916698d40","task_state":"STALE_P0_ACTION_ASSIGNED","stale_reason":"same processed HEAD across repeated scans after PIT gap identification","next_action":"Patch run_study boundary to require explicit feature availability/cutoff evidence or immutable PIT receipt; reject omission/null-invalid/future cutoff; add regression tests and isolated CI. Performance remains unopened."},
+    "research/parallel-condition-exploration":{"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"STALE_P0_ACTION_ASSIGNED","stale_reason":"same processed HEAD across repeated scans after endpoint verifier freeze","next_action":"Generate causal A1/B1/E1 pick ledger without reading returns, freeze ledger SHA, then endpoint completeness receipt; only after PASS open one-shot cost0 performance."}
   },
-  "guardrails": [
-    "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
-    "2026 outcome is report/robustness-only, never tuning/selection input.",
-    "Canonical comparable endpoint is next XTKS session open to fifth XTKS session close.",
-    "All new backtests/diagnostics/comparisons use transaction cost 0%; win = gross return > 0; existing costed outputs are legacy evidence only.",
-    "Rejected/opened families may not be rescued by post-hoc threshold, ranker, gate, cooldown, endpoint, or weight retuning."
-  ],
+  "guardrails":["Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.","2026 outcome is report/robustness-only.","Canonical endpoint is next XTKS open to fifth XTKS close.","All new performance uses transaction cost 0%; win = gross return > 0.","No post-hoc rescue retuning."],
   "workflow_watch": {
-    "weak_early_phase2": {"status":"FRESH_2022_FAILED_ROUND2_CLOSED","task_state":"CLOSED","leader":"DUAL+G3","leader_2023_25":{"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},"g3_threshold":"med_ret1 >= -0.01 FROZEN","fresh_2022":"FAILED_ROBUSTNESS","round2":"CLOSED","reopen_condition":"none under frozen Phase-2; retain as research record/comparator only"},
-    "v20_session_impulse": {"status":"DEPRIORITIZED_CLOSED_ACTIVE_QUEUE","task_state":"CLOSED","formal_promotion_eligible":false,"cost_pct_points":0.0},
-    "shadow_data_integrity": {"status":"FULL_PROVENANCE_TAMPER_REGRESSION_CI_GREEN","task_state":"ACTIVE","head":"5895bc304255125e2ea54fac22d7ab384e1b4c4f","latest_ci_run":34893503640,"latest_ci_status":"success","performance_opened":false,"next_rule":"Exact continuation: audit resolution-receipt replay/rollback and cross-run chain continuity; add only an outcome-blind fail-closed regression/control, with no performance opening."},
-    "consensus_v47": {"task_state":"EXTERNAL_WAIT","head":"b04751e164ade7ed113a03c8087b6d50e0294209","daily_coverage_pass":true,"frozen_coverage_acceptance_pass":false,"formal_retry_run":34849054884,"formal_retry_status":"ACTIVE_SYSTEMIC_HTTP429_BLOCKED","completed_zero_row_shards":[0,1,2,3],"active_fetch_shards":[4,5],"visible_artifact_count":4,"new_artifact_since_0634":false,"promotion_evidence":false,"stale_monitoring_cycles":2,"monitoring_rule":"Do not spend a full worker cycle rechecking this wait state; inspect once, then advance another safe pending task unless a new artifact or terminal run appears.","midterm_nocap_h2":{"n":37,"mean_pct":3.0295,"median_pct":0.3817,"win_pct":51.35,"top3_ex_pct":-0.5393}},
-    "parallel_wave1": {"status":"SOURCE_SCHEMA_XTKS_PINNED_ENDPOINT_VERIFIER_IMPLEMENTED_PICK_LEDGER_PENDING_PERFORMANCE_UNOPENED","task_state":"ACTIVE","head":"858998cceb10f263d181233a20c55c5bc4f92aa6","calendar_sha256":"58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b","calendar_sessions":1220,"source_csv_sha256":"6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0","source_rows":4061361,"selected_families":["A_COMPRESSION_EXPANSION","B_RELATIVE_REVERSAL","E_PRIOR_STRUCTURE_PROXIMITY"],"performance_opened":false},
-    "core": {"task_state":"ACTIVE_PROVENANCE","current_fixed_core":"REJECT_CURRENT_FIXED_CORE_AS_REPLACEMENT_CANDIDATE","old_cloud_monster_forensic":"CLOSED_HISTORICAL_EXACT_REPRO_UNAVAILABLE","endpoint_provenance_status":"RAW1H_PIN_PASS_XTKS_CORE_PIN_PASS_JPX_PIT_PENDING_ACTIVITY_PENDING","head":"90c55dc4d3137bfe40bb5c094d661c87f16b0724","performance_opened":false},
-    "ohlcv_supplement": {"task_state":"ACTIVE","status":"RAW1H_PIN_PASS_XTKS_CORE_PIN_PASS_JPX_PIT_PENDING_ACTIVITY_PENDING","formal_dataset_adoption":false,"performance_recompute_allowed":false,"raw1h_source_run":34592896202,"raw1h_bundle_sha256":"de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18","raw1h_total_rows":4019524,"artifact_expiry_date":"2026-09-25","expected_key_membership_contract":"JPX_PIT_IDENTIFIED_RECEIPTS_PENDING","expected_key_calendar_contract":"XTKS_CORE_PIN_PASS_SHA256_58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b","expected_key_hour_semantics":"AM_09_10_11_12_PM_13_14_PRE_20241105_PM_13_14_15_POST","expected_key_activity_evidence":"REQUIRED_NOT_YET_PINNED","supervisor_work_order":"PIN_JPX_PIT_RECEIPTS_THEN_ACTIVITY_SOURCE_SEARCH","alpha_vantage_free_role":"LOW_PRIORITY_DAILY_ONLY","stooq_role":"CANDIDATE_NOT_FORMAL_ELIGIBLE","googlefinance_snapshot_role":"CORROBORATION_ONLY_NOT_FORMAL_INTRADAY"},
-    "cloud_exact_forensic": {"task_state":"CLOSED","status":"HISTORICAL_EXACT_REPRO_UNAVAILABLE","reopen_condition":"new contemporaneous identity-critical evidence only","active_worker_cycles":false},
-    "oss_validation": {"task_state":"ACTIVE_PIT_GAP","head":"65e10483b4e1e41a68ec94883dec5c8916698d40","cost0_optuna_contract_status":"IMPLEMENTATION_VERIFIED_CI_GREEN","trial_ledger_status":"RECEIPT_BOUND_DSR_VERIFIED_CI_GREEN","pit_feature_cutoff_status":"GAP_RECORDED_FAIL_CLOSED_PATCH_PENDING","binding_ci_run":34883481600,"binding_ci_status":"success","contract_rerun":34883717045,"contract_rerun_status":"success","performance_opened":false},
-    "edinet_same_zip": {"task_state":"EXTERNAL_INPUT_WAIT","status":"REAL_API_KEY_OR_PINNED_REAL_ZIP_REQUIRED"}
+    "weak_early_phase2":{"task_state":"CLOSED","leader":"DUAL+G3","leader_2023_25":{"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},"g3_threshold":"med_ret1 >= -0.01 FROZEN","fresh_2022":"FAILED_ROBUSTNESS","round2":"CLOSED"},
+    "parallel_wave1":{"task_state":"STALE_P0_ACTION_ASSIGNED","head":"858998cceb10f263d181233a20c55c5bc4f92aa6","performance_opened":false},
+    "oss_validation":{"task_state":"STALE_P0_ACTION_ASSIGNED","head":"65e10483b4e1e41a68ec94883dec5c8916698d40","pit_feature_cutoff_status":"GAP_RECORDED_FAIL_CLOSED_PATCH_PENDING","performance_opened":false},
+    "consensus_v47":{"task_state":"EXTERNAL_WAIT","formal_retry_status":"ACTIVE_SYSTEMIC_HTTP429_BLOCKED","promotion_evidence":false},
+    "core":{"task_state":"ACTIVE_PROVENANCE","performance_opened":false},
+    "shadow_data_integrity":{"task_state":"ACTIVE","performance_opened":false},
+    "cloud_exact_forensic":{"task_state":"CLOSED"},
+    "v20_session_impulse":{"task_state":"CLOSED"},
+    "edinet_same_zip":{"task_state":"EXTERNAL_INPUT_WAIT"}
   },
-  "next_global_actions": [
-    "Parallel Wave-1: derive causal A1/B1/E1 pick ledger without returns, freeze SHA, run endpoint completeness receipt, then one cost0 batch after PASS.",
-    "Core24 OHLCV supplement: XTKS bytes are now Core-pinned. Next pin the already-identified official-JPX PIT source/input receipts, then continue independent exact-hour activity evidence search. Do not infer expected hourly bars from membership × sessions × hours or from the audited Yahoo file. Only after activity evidence passes may the expected CSV be SHA-pinned and missing_inventory_runner run once; fallback is then limited to declared gaps.",
-    "Canonical/Shadow exact continuation: inspect prospective_shadow_resolution_receipt replay/rollback and cross-run chain continuity; add the smallest outcome-blind fail-closed regression/control; do not open performance.",
-    "Consensus: no duplicate trigger; after run 34849054884 terminal, enumerate all shard artifacts, merge genuinely observed rows only and rerun frozen acceptance. Until a new artifact/terminal state appears, do not burn a full worker cycle on this wait state.",
-    "Core: bind canonical evaluator only after real XTKS/vendor/raw receipt provenance is complete.",
-    "OSS: require explicit PIT feature-availability evidence at run_study boundary (or equally strong immutable PIT receipt), reject omission/future-dated cutoff, add regression tests, then run isolated OSS validation CI. Do not repeat receipt-bound DSR work.",
-    "Weak+Early Phase-2, Cloud exact forensic and V20: CLOSED; consume no worker cycles unless their explicit reopen condition is met."
-  ]
+  "next_global_actions":["P0 Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","P0 OSS: PIT fail-closed patch/tests -> isolated CI.","Core24: JPX PIT receipts -> independent activity evidence.","Canonical: replay/rollback and cross-run continuity audit.","Consensus: wait for new real raw/terminal state while worker advances another safe task.","Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."],
+  "go_no_go":"NO-GO_RESEARCH_CONTINUES"
 }

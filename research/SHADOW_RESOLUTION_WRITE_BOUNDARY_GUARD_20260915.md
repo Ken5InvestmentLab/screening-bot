@@ -21,7 +21,7 @@ The verified resolver now supports a pre-replace guard over the staged resolved 
 An invalid/tampered existing chain fails closed before daily resolution can mutate the resolved output.
 
 ## Persistence
-After a successful guarded replace, the CLI writes the immutable resolution receipt and appends the verified chain link to the resolution-chain JSONL. The default chain path is derived from the resolved output path, so separate resolution receipt files still participate in one cross-run chain.
+The immutable resolution receipt and next chain link are persisted **before** the resolved JSONL replace. Only after both durable sidecars succeed does the guard return ALLOW and permit the staged resolved bytes to replace the prior output. If sidecar persistence raises, the resolver fails closed and preserves prior resolved history. The default chain path is derived from the resolved output path, so separate resolution receipt files still participate in one cross-run chain. When a chain already exists, its tail output SHA must match the current resolved file before any new resolution attempt.
 
 ## Regression coverage
 - pre-replace guard denial leaves no resolved output write;
@@ -35,9 +35,13 @@ Implementation commits:
 - `f2b17e6b35f881ee631af476d64d516de7059140`
 - `abbeb338696cb1a0ab4ab5c9d18049d385c913f1`
 - `90f0863b0b061353c70a6394f2eb3d6e9dac294a`
+- `5e47e4f00a386a5b0a801a93c86d22ddd03334a1` — persist receipt + chain before resolved replace
+- `64fc7f7c820f2cfbf0395191449ee7d15f48c24a` — fail-closed regression for prewrite persistence errors
 
 GitHub Actions:
 - `34943281926` — **SUCCESS**
+- `34943400594` — **SUCCESS**
+- `34943418395` — **SUCCESS**
 
 ## Status
 `RESOLUTION_CHAIN_ENFORCED_AT_PREWRITE_BOUNDARY_CI_GREEN`

@@ -1,0 +1,91 @@
+name: Parallel Wave1 causal picks + endpoint receipt
+
+on:
+  push:
+    branches:
+      - research/parallel-condition-exploration
+    paths:
+      - ".github/workflows/parallel-wave1-picks-receipt-research.yml"
+      - "research/parallel_wave1_generate_picks.py"
+      - "research/parallel_wave1_endpoint_receipt.py"
+      - "research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv"
+      - "research/PARALLEL_WAVE1_XTKS_CALENDAR_RECEIPT_20260915.json"
+      - "research/PARALLEL_WAVE1_FROZEN_MANIFEST_20260915.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  causal-picks-and-endpoints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: .:tvfree_screener
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install frozen research dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+
+      - name: Download exact preserved Wave1 daily source
+        uses: actions/download-artifact@v4
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: /tmp/parallel-wave1-source
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+
+      - name: Verify source receipt before feature construction
+        shell: bash
+        run: |
+          test -f /tmp/parallel-wave1-source/tse_daily.csv
+          echo "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0  /tmp/parallel-wave1-source/tse_daily.csv" | sha256sum -c -
+          test "$(wc -l < /tmp/parallel-wave1-source/tse_daily.csv)" -eq 4061362
+
+      - name: Generate A1 B1 E1 causal pick ledger without returns
+        shell: bash
+        run: |
+          mkdir -p /tmp/parallel-wave1
+          python research/parallel_wave1_generate_picks.py \
+            --daily /tmp/parallel-wave1-source/tse_daily.csv \
+            --calendar research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv \
+            --picks-out /tmp/parallel-wave1/picks.csv \
+            --receipt-out /tmp/parallel-wave1/pick_generation_receipt.json
+
+      - name: Verify canonical endpoint-session completeness without returns
+        shell: bash
+        run: |
+          python research/parallel_wave1_endpoint_receipt.py \
+            --calendar research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv \
+            --daily /tmp/parallel-wave1-source/tse_daily.csv \
+            --picks /tmp/parallel-wave1/picks.csv \
+            --out /tmp/parallel-wave1/endpoint_completeness_receipt.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          g = json.loads(Path("/tmp/parallel-wave1/pick_generation_receipt.json").read_text())
+          e = json.loads(Path("/tmp/parallel-wave1/endpoint_completeness_receipt.json").read_text())
+          assert g["performance_opened"] is False and g["return_computed"] is False
+          assert e["performance_opened"] is False and e["return_computed"] is False
+          assert e["status"] == "PASS_ENDPOINT_SESSION_COMPLETENESS"
+          assert e["pick_ledger"]["sha256"] == g["pick_ledger"]["sha256"]
+          print("PARALLEL_WAVE1_PICK_LEDGER_SHA256=" + g["pick_ledger"]["sha256"])
+          print("PARALLEL_WAVE1_PICK_COUNT=" + str(g["pick_count"]))
+          print("PARALLEL_WAVE1_ENDPOINT_RECEIPT_PASS=1")
+          PY
+
+      - name: Upload outcome-blind Wave1 receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: parallel-wave1-causal-picks-endpoint-receipt
+          path: /tmp/parallel-wave1/*
+          if-no-files-found: error
+          retention-days: 30

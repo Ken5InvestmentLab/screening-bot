@@ -1,6 +1,6 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 08:33 JST
+Last updated: 2026-09-15 10:33 JST
 Branch: `research/consensus-atr-regime-gate`
 Lane: Consensus specialist / V47 clean PIT pipeline
 
@@ -23,10 +23,11 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - Superseded run `34810592135`: completed/cancelled; do not duplicate-trigger.
 - Current authoritative run `34849054884`, trigger HEAD `7849ad975d1e0420e250ab4d5f411ce136f9d867`: **in progress / non-terminal**.
 - Configuration: 48 shards, max-parallel=2, frozen acceptance unchanged.
-- shards 0-5: workflow SUCCESS but **486/486 requested symbols HTTP 429, 0 ok, 0 raw rows**; artifacts 6 total.
-- shard 4 receipt independently inspected: **81/81 `fetch_error,http_429`, 0 rows**.
-- shard 5 receipt independently inspected: **81/81 `fetch_error,http_429`, 0 rows**.
-- At 08:33 JST shards **6 and 7 are in progress** at `Fetch raw 1H shard`; later matrix jobs remain queued.
+- shards 0-7: workflow SUCCESS; **648 requested symbols, 0 ok, 0 raw rows**. Artifacts 8 total.
+- shards 0-5 were independently confirmed as **486/486 HTTP 429**.
+- shard 6 artifact independently opened at 10:33 JST: **81/81 `fetch_error,http_429`, 0 rows**; summary says strategy returns/model scores unopened and production writes false.
+- shard 7 artifact is visible and essentially the same small failure-artifact size; its receipt has not yet been independently opened in this observation, so it is not counted as independently confirmed HTTP429 here.
+- At 10:33 JST shards **8 and 9 are in progress** at `Fetch raw 1H shard`; later matrix jobs remain queued.
 - Current transport diagnosis: **SYSTEMIC_YAHOO_HTTP_429**. Zero-row retry data status: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
 - No interpolation, threshold lowering, strategy retune, additional price-cap search, or duplicate trigger.
 - Frozen merge contract: `research/CONSENSUS_V47_RAW_MERGE_ACCEPTANCE_SPEC_20260915.md`.
@@ -59,4 +60,4 @@ All figures are **cost 0%**, win = gross return > 0, endpoint next XTKS open -> 
 CAP1000_PIT H2: **UNOPENED**. 2026: **UNOPENED for selection/tuning**.
 
 ## Blocker / next action
-Formal raw acquisition remains blocked by Yahoo transport rate limiting. Continue the already-running pinned matrix without duplicate trigger. The first six completed shards now independently confirm 486/486 HTTP 429 and zero usable rows. The next evidence-bearing event is either a non-zero raw artifact from shards 6/7 or terminal completion of run `34849054884`; only then proceed with the frozen provenance merge and formal acceptance rerun.
+Formal raw acquisition remains blocked by Yahoo transport rate limiting. Continue the already-running pinned matrix without duplicate trigger. Eight shards have now completed with zero usable rows; shard 6 independently confirms the same all-429 failure mode. The next evidence-bearing event is either a non-zero raw artifact from shards 8/9 or terminal completion of run `34849054884`; only then proceed with the frozen provenance merge and formal acceptance rerun.

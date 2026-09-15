@@ -76,6 +76,26 @@ def main() -> None:
     assert facts["operating_cf"] == 400_000.0
     assert facts["revenue_status"] == "ok"
 
+    # Real-file-derived alias contract (S100TYEA): OperatingRevenue1 is a
+    # CurrentYearDuration revenue fact. This fixture is outcome-blind and must
+    # not weaken the existing ambiguity guard.
+    operating_revenue_rows = [
+        ["jppfs_cor:OperatingRevenue1", "operating revenue", "CurrentYearDuration", "当期", "連結", "期間", "JPY", "円", "49687000000"],
+    ]
+    operating_revenue = e.extract_standard_facts(e.read_xbrl_csv_zip(make_zip(operating_revenue_rows)))
+    assert operating_revenue["revenue"] == 49_687_000_000.0
+    assert operating_revenue["revenue_status"] == "ok"
+    assert operating_revenue["revenue_element_id"] == "jppfs_cor:OperatingRevenue1"
+
+    operating_revenue_ambiguous_rows = operating_revenue_rows + [
+        ["jppfs_cor:OperatingRevenue1", "operating revenue duplicate", "CurrentYearDuration", "当期", "連結", "期間", "JPY", "円", "49687000001"],
+    ]
+    operating_revenue_ambiguous = e.extract_standard_facts(
+        e.read_xbrl_csv_zip(make_zip(operating_revenue_ambiguous_rows))
+    )
+    assert operating_revenue_ambiguous["revenue"] is None
+    assert operating_revenue_ambiguous["revenue_status"] == "ambiguous"
+
     # Two same-priority current-year values conflict -> do not guess.
     ambiguous_rows = rows + [
         ["jppfs_cor:NetSales", "sales duplicate", "CurrentYearDuration", "当期", "連結", "期間", "JPY", "円", "7100000"],

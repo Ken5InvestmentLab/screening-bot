@@ -1,5 +1,5 @@
 {
-  "updated_at_jst": "2026-09-15T22:35:00+09:00",
+  "updated_at_jst": "2026-09-16T04:35:00+09:00",
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
@@ -9,12 +9,12 @@
     "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
     "corrected_h1_run_id": 34943802848,
     "corrected_h1_conclusion": "SUCCESS",
-    "artifact_digest": "sha256:e22b84ce4d9f10872060fabfc6af1f7636e62077c4b03298b46237ae587d0c9b",
-    "period": ["2025-01-06", "2025-06-30"],
+    "h1_artifact_digest": "sha256:e22b84ce4d9f10872060fabfc6af1f7636e62077c4b03298b46237ae587d0c9b",
+    "h1_period": ["2025-01-06", "2025-06-30"],
     "endpoint": "next official XTKS open -> D+5 close",
     "cost_pct": 0,
     "win_definition": "gross canonical_ret_5bd > 0",
-    "coverage": {
+    "h1": {
       "NOCAP": {"pair_coverage_pct": 35.3898, "n": 43, "mean_pct": 1.3817350226, "median_pct": -0.7374631268, "win_pct": 39.5348837209, "hit10_pct": 18.6046511628, "hit20_pct": 13.9534883721, "hit50_pct": 0.0, "loss10_pct": 11.6279069767, "loss20_pct": 4.6511627907, "top1_ex_pct": 0.2759172472, "top3_ex_pct": -1.0889650924},
       "CAP1000_PIT": {"pair_coverage_pct": 83.1124, "n": 41, "mean_pct": 1.7116919699, "median_pct": -2.0304568528, "win_pct": 43.9024390244, "hit10_pct": 14.6341463415, "hit20_pct": 7.3170731707, "hit50_pct": 2.4390243902, "loss10_pct": 9.7560975610, "loss20_pct": 0.0, "top1_ex_pct": 0.2878176024, "top3_ex_pct": -1.3069471183}
     },
@@ -22,9 +22,14 @@
     "h1_opened": true,
     "h2_nocap_opened_under_invalid_old_h1": true,
     "h2_nocap_old_result_ranking_use_allowed": false,
-    "h2_cap1000_pit_opened": false,
-    "h2_cap1000_pit_preregistered": true,
-    "h2_trigger_commit": "bdc01fbc6480ee999dd9c63a452389c4ba9f4846",
+    "h2_cap1000_pit_run_id": 34976174775,
+    "h2_cap1000_pit_conclusion": "SUCCESS",
+    "h2_artifact_digest": "sha256:ad2bd2388425aaad55ed8485f5f20dfefbf62014c1f746e464851d9c093d7688",
+    "h2_period": ["2025-07-01", "2025-12-30"],
+    "h2_cap1000_pit_opened": true,
+    "h2_cap1000_pit": {"pair_coverage_pct": 83.1124, "n": 26, "mean_pct": 3.8194495707, "median_pct": 0.0, "win_pct": 30.7692307692, "hit10_pct": 19.2307692308, "hit20_pct": 7.6923076923, "hit50_pct": 3.8461538462, "loss10_pct": 15.3846153846, "loss20_pct": 3.8461538462, "top1_ex_pct": -0.6236210423, "top3_ex_pct": -3.0563238037, "unique_symbols": 22, "max_symbol_share": 0.1153846154},
+    "h2_remains_untouched_holdout": false,
+    "other_arm_h2_opened_under_corrected_basis": false,
     "same_family_retune_allowed": false,
     "price_cap_grid_search_allowed": false,
     "2026_selection_allowed": false,
@@ -33,5 +38,5 @@
   "raw_retry": {"current_run_id": 34849054884, "status_latest_api": "QUEUED_NONTERMINAL", "duplicate_trigger_forbidden": true, "duplicate_triggered": false, "transport_diagnosis": "SYSTEMIC_YAHOO_HTTP_429", "zero_row_retry_performance_status": "NOT_COMPUTABLE_NO_INPUT_DATA"},
   "core24_raw_reuse": {"source_run_id": 34592896202, "bundle_sha256": "de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18", "normalization": "OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date); raw 1H volume unchanged", "formal_acceptance_by_itself": false},
   "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP429 and incomplete required-pair coverage.",
-  "next_action": "Observe corrected CAP1000_PIT H2 diagnostic registration/completion, then receipt-check and report cost-0 H2 metrics without retuning; do not duplicate-trigger raw run 34849054884."
+  "next_action": "Freeze corrected H1/H2 diagnostic as opened evidence; do not retune. Build an outcome-blind GO/NO-GO disposition for whether V47 merits continued formal raw acquisition, while leaving formal acceptance thresholds unchanged and not duplicate-triggering raw run 34849054884."
 }

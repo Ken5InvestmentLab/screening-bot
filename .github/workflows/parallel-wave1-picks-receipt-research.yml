@@ -32,7 +32,9 @@ jobs:
           cache: pip
 
       - name: Install frozen research dependencies
-        run: pip install -r tvfree_screener/requirements.txt
+        run: |
+          pip install -r tvfree_screener/requirements.txt
+          pip install "exchange-calendars==4.13.1"
 
       - name: Download exact preserved Wave1 daily source
         uses: actions/download-artifact@v4
@@ -50,13 +52,25 @@ jobs:
           echo "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0  /tmp/parallel-wave1-source/tse_daily.csv" | sha256sum -c -
           test "$(wc -l < /tmp/parallel-wave1-source/tse_daily.csv)" -eq 4061362
 
-      - name: Generate A1 B1 E1 causal pick ledger without returns
+      - name: Regenerate independently verified pinned XTKS calendar
         shell: bash
         run: |
           mkdir -p /tmp/parallel-wave1
+          python - <<'PY'
+          from pathlib import Path
+          import exchange_calendars as xcals
+          cal = xcals.get_calendar("XTKS")
+          sessions = [str(x.date()) for x in cal.sessions_in_range("2022-01-01", "2026-12-31")]
+          Path("/tmp/parallel-wave1/xtks_calendar.csv").write_text("session\n" + "\n".join(sessions) + "\n", encoding="utf-8")
+          PY
+          echo "58e67bd20be08d04c143fa7e8f707bb3b82c21c2de2af9dfd7c2a05a406de71b  /tmp/parallel-wave1/xtks_calendar.csv" | sha256sum -c -
+
+      - name: Generate A1 B1 E1 causal pick ledger without returns
+        shell: bash
+        run: |
           python research/parallel_wave1_generate_picks.py \
             --daily /tmp/parallel-wave1-source/tse_daily.csv \
-            --calendar research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv \
+            --calendar /tmp/parallel-wave1/xtks_calendar.csv \
             --picks-out /tmp/parallel-wave1/picks.csv \
             --receipt-out /tmp/parallel-wave1/pick_generation_receipt.json
 
@@ -64,7 +78,7 @@ jobs:
         shell: bash
         run: |
           python research/parallel_wave1_endpoint_receipt.py \
-            --calendar research/PARALLEL_WAVE1_XTKS_CALENDAR_2022_2026.csv \
+            --calendar /tmp/parallel-wave1/xtks_calendar.csv \
             --daily /tmp/parallel-wave1-source/tse_daily.csv \
             --picks /tmp/parallel-wave1/picks.csv \
             --out /tmp/parallel-wave1/endpoint_completeness_receipt.json

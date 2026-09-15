@@ -29,11 +29,13 @@ Native scheduled tasks can run at most once per hour per task. Five research wor
 - The :48 worker fills gaps such as completed-but-uncollected Actions/artifacts or work left waiting by another worker.
 - Do not use this mechanism to touch production/main or production integrations.
 
-## Core24 PIT forensic note (2026-09-16)
-- JPX transfer source bytes are pinned in immutable artifact `10411777912`.
-- Transfer dates must be parsed row-wise/exactly; vectorized mixed-format inference produced an invalid exploratory count of 75. Frozen in-window count through the `2026-08-31` anchor is 81.
-- Re-audit of the same pinned listing/delisting bytes restored the original `134 + 241 = 375` count through `2026-09-10`; exploratory 395/261-delist evidence is superseded.
-- PIT remains fail-closed until the 81 transfer events are integrated into conflict-checked reverse replay and a membership SHA/quarantine receipt is frozen.
+## Core24 PIT forensic note (2026-09-16 05:23)
+- JPX source bytes are pinned in immutable artifact `10411777912`.
+- Dates must be parsed row-wise with both `%b. %d, %Y` and `%b %d, %Y`; JPX writes `May` without a period. Unknown non-empty dates fail closed.
+- Prior `375 = 134 + 241` is superseded: corrected through 2026-09-10 is `397 = 134 listings + 263 delistings`.
+- Reverse replay `(2024-09-17, 2026-08-31]` uses `134 listings + 261 delistings + 81 transfers = 476` events.
+- From anchor 3,707, strict replay produced target 3,834 with zero quarantine/conflict; sorted membership SHA-256 `9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e`.
+- Next: freeze machine-readable PIT receipt, then independent exact-hour activity evidence. Do not derive expected hourly keys from membership alone.
 
 ## Dynamic lane discovery
 - The :00 supervisor must not assume a fixed lane count.

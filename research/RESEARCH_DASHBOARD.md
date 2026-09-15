@@ -1,6 +1,6 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 18:36+ JST  
+Last updated: 2026-09-15 22:35+ JST  
 Branch: `research/consensus-atr-regime-gate`  
 Lane: Consensus specialist / V47 clean PIT pipeline
 
@@ -50,10 +50,17 @@ Period 2025-01-06..2025-06-30; endpoint next XTKS open -> D+5 close.
 
 Coverage caveat: partial preserved Yahoo seed only; missing pairs remain missing; no interpolation or synthetic bars. Formal raw acceptance is still FAIL/not passed.
 
-**Corrected diagnostic H1 leader: `CAP1000_PIT`.** This is diagnostic only, not promotion evidence. H1 is opened/not untouched. CAP1000_PIT H2 remains unopened. The prior NOCAP H2 was chosen from the invalid old H1 and is not current ranking evidence.
+**Corrected diagnostic H1 leader: `CAP1000_PIT`.** This is diagnostic only, not promotion evidence. H1 is opened/not untouched.
+
+## Corrected H2 diagnostic status
+- Pre-open spec now pins corrected H1 run `34943802848`, digest `sha256:e22b84ce4d9f10872060fabfc6af1f7636e62077c4b03298b46237ae587d0c9b`, and **CAP1000_PIT only**.
+- H2 workflow now requires the same Core24 SHA pin and deterministic adjusted-price normalization used by corrected H1.
+- Cost remains **0%**, endpoint remains next XTKS open -> D+5, strict5 cooldown state is carried from H1, and no threshold/ranker/cooldown/price-arm retune is permitted.
+- Trigger marker commit: `bdc01fbc6480ee999dd9c63a452389c4ba9f4846`.
+- At this checkpoint the corrected CAP1000_PIT H2 performance has **not yet been opened/reported**; wait for the new diagnostic run/artifact and receipt-check it before reading metrics.
 
 ## Next action
-1. Preserve corrected H1 receipt `research/CONSENSUS_V47_MIDTERM_H1_CORRECTED_RESULT_20260915.md`.
-2. Repair/preregister the H2 diagnostic path so it opens **CAP1000_PIT only**, carries H1 cooldown state, uses the same frozen price-basis normalization and cost 0%, and does not retune anything from H1.
-3. Do not duplicate-trigger authoritative raw run `34849054884`.
-4. Formal path remains sealed until unchanged raw acceptance passes both arms.
+1. Observe corrected CAP1000_PIT H2 diagnostic registration/completion and inspect pre-open/hash/coverage receipts first.
+2. If physically computable, report H2 period, n, mean, median, win, +10/+20/+50, -10/-20, Top1/Top3-ex, endpoint and coverage caveat at cost 0%; otherwise mark `NOT_COMPUTABLE_NO_INPUT_DATA`.
+3. Do not retune from H1/H2 and do not open the other arm under the corrected basis.
+4. Do not duplicate-trigger authoritative raw run `34849054884`; formal path remains sealed until unchanged raw acceptance passes both arms.

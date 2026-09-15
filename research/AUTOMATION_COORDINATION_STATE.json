@@ -1,12 +1,12 @@
 {
-  "version": 69,
+  "version": 70,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T10:45:00+09:00",
+  "updated_at_jst": "2026-09-15T11:23:00+09:00",
   "supervisor_last_scan": {
     "status": "HEARTBEAT_GREEN_TASK_STALE_ROUTING_RECORDED",
     "scanned_at_jst": "2026-09-15T10:58:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All five research automations are enabled and none exceeds the 90-minute stop threshold. Actual branch HEAD checks confirmed OSS 65e10483 and Parallel 858998cc still equal their processed SHAs. This is task-level stagnation, not automation stoppage. Parallel is explicitly routed to the outcome-blind causal A1/B1/E1 pick-ledger freeze; OSS is explicitly routed to the PIT fail-closed patch/tests. Phase-2 remains CLOSED with DUAL+G3 frozen comparator and 2022 robustness FAIL. EDINET same-ZIP is now PARKED (non-blocking auxiliary audit) until a real API key or pinned ZIP is supplied."
+    "note": "All five research automations are enabled and none exceeds the 90-minute stop threshold. Actual branch HEAD checks confirmed OSS 65e10483 and Parallel 858998cc still equal their processed SHAs. This is task-level stagnation, not automation stoppage. Parallel is explicitly routed to the outcome-blind causal A1/B1/E1 pick-ledger freeze; OSS is explicitly routed to the PIT fail-closed patch/tests. Phase-2 remains CLOSED with DUAL+G3 frozen comparator and 2022 robustness FAIL. EDINET same-ZIP is now PARKED (non-blocking auxiliary audit) until a real API key or pinned ZIP is supplied. EDINET_API_KEY was configured and verified by smoke run 34920894545 SUCCESS; full 2023-2025 metadata freeze run 34920977538 has been started."
   },
   "automation_heartbeat": {
     "checked_at_jst": "2026-09-15T10:58:00+09:00",
@@ -75,11 +75,11 @@
     },
     "research/oss-validation-tooling": {
       "preferred_worker": "oss-validation-via-48",
-      "last_seen_sha": "65e10483b4e1e41a68ec94883dec5c8916698d40",
-      "last_processed_sha": "65e10483b4e1e41a68ec94883dec5c8916698d40",
-      "task_state": "STALE_P0_ACTION_ASSIGNED",
+      "last_seen_sha": "d5770c3c061add16c2bb01afe1529333a62585d8",
+      "last_processed_sha": "d5770c3c061add16c2bb01afe1529333a62585d8",
+      "task_state": "ACTIVE_EDINET_ACQUISITION_AND_OSS_P0",
       "stale_reason": "same processed HEAD across repeated scans after PIT gap identification",
-      "next_action": "Patch run_study boundary to require explicit feature availability/cutoff evidence or immutable PIT receipt; reject omission/null-invalid/future cutoff; add regression tests and isolated CI. Performance remains unopened."
+      "next_action": "EDINET full 2023-2025 metadata freeze run 34920977538: wait for terminal, then inspect frozen metadata/sample receipts and continue to selected ZIP byte freeze/same-ZIP cross-check. In parallel, OSS PIT fail-closed patch/tests remain P0."
     },
     "research/parallel-condition-exploration": {
       "preferred_worker": "cross-lane-via-48",
@@ -143,10 +143,17 @@
       "task_state": "CLOSED"
     },
     "edinet_same_zip": {
-      "task_state": "PARKED_EXTERNAL_INPUT",
+      "task_state": "ACTIVE_METADATA_ACQUISITION",
       "blocking_go": false,
-      "reopen_condition": "EDINET API key or pinned real EDINET ZIP becomes available",
-      "next_action": "On reopen, freeze document metadata/doc ID/raw ZIP SHA first, then run same-ZIP parser cross-check outcome-blind."
+      "api_key_secret_status": "CONFIGURED_AND_SMOKE_VERIFIED",
+      "smoke_run_id": 34920894545,
+      "smoke_conclusion": "success",
+      "smoke_date": "2024-06-28",
+      "smoke_results_count": 2425,
+      "smoke_payload_sha256": "1fbe57ec5d59548878a7d59bd600df67083a91313279ccfdd89d1a02aa442e88",
+      "full_metadata_run_id": 34920977538,
+      "full_metadata_run_status": "queued",
+      "next_action": "On terminal PASS, freeze 2023-2025 metadata manifest/sample receipt, then fetch exact selected ZIPs and SHA-freeze before parser comparison."
     }
   },
   "next_global_actions": [
@@ -156,7 +163,7 @@
     "Canonical: replay/rollback and cross-run continuity audit.",
     "Consensus: wait for new real raw/terminal state while worker advances another safe task.",
     "Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED.",
-    "EDINET same-ZIP is PARKED and consumes no worker cycle until real API key or pinned ZIP arrives."
+    "EDINET: full 2023-2025 metadata freeze run 34920977538 is queued after successful secret/API smoke; inspect terminal artifacts, then selected ZIP freeze -> same-ZIP cross-check."
   ],
   "go_no_go": "NO-GO_RESEARCH_CONTINUES"
 }

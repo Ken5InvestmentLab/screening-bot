@@ -1,0 +1,28 @@
+{
+  "status": "OUTCOME_BLIND_REAL_ALIAS_FIXTURE",
+  "source": {
+    "doc_id": "S100TYEA",
+    "doc_type_code": "120",
+    "frozen_zip_sha256": "8ee13034a170adf00e760406cabfe3e025888f7f8ac66beda6097f436138c1ee",
+    "zip_freeze_run_id": 34943585921,
+    "zip_artifact_id": 10385897929,
+    "aggregate_zip_sha256_chain": "146c82a288fc0df63851d6f4eaf4954687f89c75bcd862320ce5f8a647cd44bf"
+  },
+  "observed_fact": {
+    "element_id": "jppfs_cor:OperatingRevenue1",
+    "context_id": "CurrentYearDuration",
+    "value": 49687000000,
+    "source_member": "XBRL_TO_CSV/jpcrp030000-asr-001_E04199-000_2024-03-31_01_2024-07-01.csv"
+  },
+  "oss_crosscheck": {
+    "field": "revenue",
+    "mapped_oss_metric": "net_sales",
+    "oss_value": 49687000000,
+    "prior_status": "CUSTOM_MISSING_OSS_VALUE",
+    "crosscheck_run_id": 34944052995,
+    "crosscheck_artifact_id": 10385469806
+  },
+  "acceptance_scope": "Add only jppfs_cor:OperatingRevenue1 as an explicit revenue alias; do not broaden contexts, do not resolve multi-member ambiguity, do not change net-income semantics.",
+  "strategy_outcomes_opened": false,
+  "parser_choice_based_on_performance": false
+}

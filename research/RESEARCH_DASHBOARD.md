@@ -1,18 +1,16 @@
 # Research Dashboard
 
-Last updated: 2026-09-15 16:39+ JST  
+Last updated: 2026-09-15 18:36+ JST  
 Branch: `research/consensus-atr-regime-gate`  
 Lane: Consensus specialist / V47 clean PIT pipeline
 
-## Consensus V47 status
-- Progress: **79%** (research-progress estimate; not promotion probability).
-- Latest HEAD before this dashboard write: `26d7d3fce573ade567dcf7d788d02443a6ea59af`.
+## Contract / safety
 - Promotion-relevant path: **V47 clean PIT only**. V43/V44 are not promotion evidence.
-- Arms: exactly `NOCAP` / `CAP1000_PIT`; no extra price-cap grid.
+- Arms: exactly `NOCAP` / `CAP1000_PIT`; no additional price-cap grid.
 - Endpoint: **next official XTKS open -> D+5 close**.
 - New calculations: **cost 0% only**; win = gross return > 0.
-- 2026 selection/tuning: prohibited.
-- Production/main, production workflow, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater: untouched.
+- 2026 selection/tuning prohibited. Same-family retune after an opened diagnostic prohibited.
+- Production/main, production workflow, Discord, Spreadsheet, Stable★6, Sniper, Mega, TradingView, watchlist-builder/updater untouched.
 
 ## Formal acceptance
 - Daily PIT: **PASS**.
@@ -22,86 +20,40 @@ Lane: Consensus specialist / V47 clean PIT pipeline
 - Formal H2: **UNOPENED FOR PROMOTION**.
 - Formal candidate ranking: **NO CHANGE**.
 
-## Core24 observed raw reuse
-- Source identity resolved: Core24 pin is the same preserved Yahoo raw seed run **34592896202** already audited by V47.
-- Source HEAD: `a331b96c8b7391a146ed3a8d28dd5e66d6ae0679`.
-- Bundle SHA-256: `de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18`.
-- Observed bundle: **4,019,524 rows / 1,315 symbols**, 2024-09-17 09:00 JST .. 2026-09-10 15:00 JST.
-- Timestamp/session shape and raw 1H volume are compatible with V47.
-- Direct price ingestion is not compatible: Core explicit-period OHLC is PIT nominal while V47 feature materializer expects split-normalized/adjusted OHLC before recovering PIT nominal `log_price`.
-- Frozen repair: `OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date)`; raw 1H volume unchanged.
-- Source raw pin: `research/consensus_v47_core24_raw_pin.json`.
-- Compatibility spec: `research/CONSENSUS_V47_CORE24_RAW_REUSE_COMPATIBILITY_20260915.md`.
-- Normalizer: `research/normalize_core24_raw1h_for_v47.py`.
-- Contract CI **34943423800 SUCCESS**; SHA-pin-required CI **34943685294 SUCCESS**.
-- Seed-only coverage remains insufficient:
-  - NOCAP: **301,897 / 853,061 = 35.3898%**, monthly min 33.9002%, completely missing symbols 2,592, restored pair coverage 0%.
-  - CAP1000_PIT: **258,339 / 310,831 = 83.1124%**, monthly min 77.3420%, completely missing symbols 642, restored pair coverage 0%.
-
 ## Authoritative raw retry
-- Superseded run `34810592135`: completed/cancelled; no duplicate trigger.
-- Current run `34849054884`, trigger SHA `7849ad975d1e0420e250ab4d5f411ce136f9d867`: **non-terminal**.
-- Matrix state at latest check: shards **0-11 completed**, **12/13 in progress**, later shards queued; **12 artifacts visible**.
-- Shards 10/11 were independently opened this cycle: **162 / 162 requested symbols = HTTP429, ok=0, raw rows=0**.
-- Earlier independently opened shards show the same systemic failure pattern.
-- Current retry-only performance state: **`NOT_COMPUTABLE_NO_INPUT_DATA`**.
-- No threshold reduction, interpolation, synthetic bars, source-by-outcome selection, or duplicate Yahoo bulk retry.
+- Run `34849054884` remains non-terminal/queued at latest API check; **do not duplicate-trigger**.
+- Independently opened completed shards continue to show systemic Yahoo HTTP429 and zero usable rows.
+- Retry-only performance: `NOT_COMPUTABLE_NO_INPUT_DATA`.
+- Formal thresholds remain unchanged; no interpolation, synthetic bars, or source-by-outcome selection.
 
-## Midterm diagnostic integrity correction
-The old H1 and NOCAP-H2 printed diagnostics used Core explicit-period nominal OHLC directly in the V47 materializer. That double-applied future split factors to the absolute `log_price` path on affected rows.
+## Core24 observed raw reuse
+- Same preserved Yahoo seed run `34592896202`, source HEAD `a331b96c8b7391a146ed3a8d28dd5e66d6ae0679`.
+- Bundle SHA-256 `de7710adaf52ba5a1fb783e7bde35feea9528294be557ef4e011dc4be7e8ed18`; 4,019,524 rows / 1,315 symbols.
+- Deterministic frozen correction: `OHLC_adjusted = OHLC_core24_nominal / cumulative_future_split_factor(symbol,date)`; raw 1H volume unchanged.
+- Contract CI `34943423800` SUCCESS; pin-required CI `34943685294` SUCCESS.
+- Seed-only coverage remains insufficient for formal acceptance:
+  - NOCAP: **301,897 / 853,061 = 35.3898%**, monthly min 33.9002%, 2,592 completely missing symbols, restored pairs 0%.
+  - CAP1000_PIT: **258,339 / 310,831 = 83.1124%**, monthly min 77.3420%, 642 completely missing symbols, restored pairs 0%.
 
-Classification of the old printed results:
-**`MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS`**
+## Midterm diagnostic integrity
+Old H1 and old NOCAP-H2 diagnostics are classified `MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS` because Core nominal OHLC was passed directly to a materializer expecting adjusted OHLC. They remain audit trace only and cannot drive ranking or GO/NO-GO. H1 and NOCAP H2 remain opened/not untouched; holdout status is not reset.
 
-They are retained only for audit trace and **must not drive arm ranking or GO/NO-GO**.
+## Corrected midterm H1 — `MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE`
+Corrected run `34943802848` completed **SUCCESS**. Artifact digest `sha256:e22b84ce4d9f10872060fabfc6af1f7636e62077c4b03298b46237ae587d0c9b`. Frozen contract unchanged: V11 3-head / min / .95 / guard none / both sessions / strict5 / no replacement / cost 0%.
 
-Holdout state is not reset:
-- H1: **OPENED / NOT UNTOUCHED**.
-- NOCAP H2: **OPENED / NOT UNTOUCHED**.
-- CAP1000_PIT H2: **UNOPENED**.
-- Same-family retune: **FORBIDDEN**.
-- 2026: **UNOPENED FOR SELECTION/TUNING**.
+Period 2025-01-06..2025-06-30; endpoint next XTKS open -> D+5 close.
 
-### Historical invalid H1 NOCAP — audit only
-- coverage 35.3898%; period 2025-01-06..2025-06-30
-- n 50; mean +0.1074%; median -2.7270%; win 36.00%
-- +10 16.00%; +20 8.00%; +50 0.00%; -10 12.00%; -20 2.00%
-- Top1-ex -0.7566%; Top3-ex -2.0148%
-- endpoint next XTKS open -> D+5 close; cost 0%
-- **INVALID FOR RANKING — SOURCE PRICE BASIS**
+| arm | coverage | n | mean | median | win | +10 | +20 | +50 | -10 | -20 | Top1-ex | Top3-ex |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| NOCAP | 35.3898% | 43 | +1.3817% | -0.7375% | 39.53% | 18.60% | 13.95% | 0.00% | 11.63% | 4.65% | +0.2759% | -1.0890% |
+| CAP1000_PIT | 83.1124% | 41 | +1.7117% | -2.0305% | 43.90% | 14.63% | 7.32% | 2.44% | 9.76% | 0.00% | +0.2878% | -1.3069% |
 
-### Historical invalid H1 CAP1000_PIT — audit only
-- coverage 83.1124%; period 2025-01-06..2025-06-30
-- n 60; mean -1.1568%; median -0.4011%; win 46.67%
-- +10 13.33%; +20 0.00%; +50 0.00%; Top3-ex -2.0601%
-- endpoint next XTKS open -> D+5 close; cost 0%
-- **INVALID FOR RANKING — SOURCE PRICE BASIS**
+Coverage caveat: partial preserved Yahoo seed only; missing pairs remain missing; no interpolation or synthetic bars. Formal raw acceptance is still FAIL/not passed.
 
-### Historical invalid H2 NOCAP — audit only
-- period 2025-07-01..2025-12-30
-- n 37; mean +3.0295%; median +0.3817%; win 51.35%
-- +10 27.03%; +20 16.22%; +50 2.70%; -10 13.51%; -20 2.70%
-- Top1-ex +1.5562%; Top3-ex -0.5393%
-- endpoint next XTKS open -> D+5 close; cost 0%
-- **INVALID FOR RANKING — SOURCE PRICE BASIS**
+**Corrected diagnostic H1 leader: `CAP1000_PIT`.** This is diagnostic only, not promotion evidence. H1 is opened/not untouched. CAP1000_PIT H2 remains unopened. The prior NOCAP H2 was chosen from the invalid old H1 and is not current ranking evidence.
 
-## Corrected midterm H1
-- Correction freeze: `research/CONSENSUS_V47_MIDTERM_PRICE_BASIS_CORRECTION_20260915.json`.
-- Corrected run: **34943802848**, trigger commit `6d31d4f8ef76c088246235c7d8a2ffd53995af8e`.
-- Contract unchanged: V11 frozen 3-head / min / threshold .95 / guard none / both sessions / strict5 / no replacement / exactly two price arms / cost 0%.
-- Source pin verification: passed.
-- Core24 OHLC price-basis normalization: passed.
-- Current step: **partial clean feature materialization in progress**.
-- Corrected H1 performance: **NOT YET OPENED**; run `34943802848` remains in corrected partial feature materialization.
-- Current diagnostic ranking: **PENDING CORRECTED H1**.
-- H2 must not be rerun/opened from the old invalid H1 leader lock.
-
-## Existing-source audit
-- V43 artifact run `34617009116` was inspected: artifact contains summary JSON plus selected-trade CSVs only, **not full raw 1H**, so it cannot fill V47 formal raw coverage.
-- Core24 remains the only currently verified reusable observed raw bundle in this lane; it is partial and requires the frozen deterministic price-basis normalization.
-
-## Blocker / next action
-1. Do not duplicate-trigger raw run `34849054884`.
-2. Complete corrected H1 run `34943802848`; use only its unchanged frozen chooser to identify the diagnostic arm leader.
-3. If/when H2 is recomputed, open only the corrected H1 winner and use the same source normalization; do not retune from already-opened outcomes.
-4. Formal path stays sealed until provenance-compatible observed raw is merged and the unchanged formal raw acceptance passes both arms.
+## Next action
+1. Preserve corrected H1 receipt `research/CONSENSUS_V47_MIDTERM_H1_CORRECTED_RESULT_20260915.md`.
+2. Repair/preregister the H2 diagnostic path so it opens **CAP1000_PIT only**, carries H1 cooldown state, uses the same frozen price-basis normalization and cost 0%, and does not retune anything from H1.
+3. Do not duplicate-trigger authoritative raw run `34849054884`.
+4. Formal path remains sealed until unchanged raw acceptance passes both arms.

@@ -29,6 +29,12 @@ Native scheduled tasks can run at most once per hour per task. Five research wor
 - The :48 worker fills gaps such as completed-but-uncollected Actions/artifacts or work left waiting by another worker.
 - Do not use this mechanism to touch production/main or production integrations.
 
+## Core24 PIT forensic note (2026-09-16)
+- JPX transfer source bytes are pinned in immutable artifact `10411777912`.
+- Transfer dates must be parsed row-wise/exactly; vectorized mixed-format inference produced an invalid exploratory count of 75. Frozen in-window count through the `2026-08-31` anchor is 81.
+- Re-audit of the same pinned listing/delisting bytes restored the original `134 + 241 = 375` count through `2026-09-10`; exploratory 395/261-delist evidence is superseded.
+- PIT remains fail-closed until the 81 transfer events are integrated into conflict-checked reverse replay and a membership SHA/quarantine receipt is frozen.
+
 ## Dynamic lane discovery
 - The :00 supervisor must not assume a fixed lane count.
 - It scans `research/*` for substantive active lanes not yet registered in STATE.

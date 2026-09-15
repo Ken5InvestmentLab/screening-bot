@@ -1,7 +1,22 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-15 08:46 JST  
+> **最終更新:** 2026-09-15 10:42 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
+
+## ⏱ 自動研究ハートビート
+
+> **確認時刻:** 2026-09-15 10:42 JST  
+> 5本の研究automationはすべて **ENABLED**。7:12以降も実行継続中。
+
+| Worker | 定刻 | 直近実行(JST) | 状態 |
+|---|---:|---:|---|
+| Supervisor + WeakEarly | :00 | **10:03** | 🟢 稼働 |
+| Canonical + Shadow | :12 | **10:14** | 🟢 稼働 |
+| Core + Cloud/Core24 | :24 | **10:26** | 🟢 稼働 |
+| Consensus V47 | :36 | **10:34** | 🟠 稼働中 / 外部429待ち |
+| OSS + Parallel | :48 | **09:45** | 🟢 稼働 |
+
+> Dashboard/STATEは「実質的な研究変化」があるrunで主に更新されるため、GitHub上の最終更新時刻だけではworker停止を判定しない。今後Supervisorは各巡回でこのheartbeatも更新する。
 
 ## 📈 全体進捗
 

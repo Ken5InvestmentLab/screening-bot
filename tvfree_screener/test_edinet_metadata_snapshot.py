@@ -174,3 +174,58 @@ def test_snapshot_still_fails_closed_on_non_tombstone_missing_submit_datetime(tm
 
     with pytest.raises(ValueError, match="missing docID/docTypeCode/submitDateTime"):
         freeze_metadata_snapshot(tmp_path, start="2023-01-01", end="2023-01-01")
+
+
+def test_snapshot_skips_real_timestamped_inert_tombstone_shape(tmp_path):
+    _write_day(
+        tmp_path,
+        "2023-01-10",
+        [
+            {
+                "seqNumber": 293,
+                "docID": "S100PXGH",
+                "edinetCode": None,
+                "secCode": None,
+                "JCN": None,
+                "filerName": None,
+                "fundCode": None,
+                "ordinanceCode": None,
+                "formCode": None,
+                "docTypeCode": None,
+                "periodStart": None,
+                "periodEnd": None,
+                "submitDateTime": "2023-01-10 15:30",
+                "docDescription": None,
+                "issuerEdinetCode": None,
+                "subjectEdinetCode": None,
+                "subsidiaryEdinetCode": None,
+                "currentReportReason": None,
+                "parentDocID": "S100PV94",
+                "opeDateTime": None,
+                "withdrawalStatus": "1",
+                "docInfoEditStatus": "0",
+                "disclosureStatus": "0",
+                "xbrlFlag": "0",
+                "pdfFlag": "0",
+                "attachDocFlag": "0",
+                "englishDocFlag": "0",
+                "csvFlag": "0",
+                "legalStatus": "0",
+            },
+            {
+                "docID": "S100VALID",
+                "docTypeCode": "120",
+                "submitDateTime": "2023-01-10 15:31",
+            },
+        ],
+    )
+
+    frame, manifest = freeze_metadata_snapshot(
+        tmp_path,
+        start="2023-01-10",
+        end="2023-01-10",
+    )
+
+    assert frame["doc_id"].tolist() == ["S100VALID"]
+    excluded = manifest["excluded_document_list_rows"]
+    assert excluded["edinet_null_tombstone_count"] == 1

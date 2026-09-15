@@ -1,44 +1,174 @@
 {
-  "version": 76,
+  "version": 77,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-15T14:00:00+09:00",
+  "updated_at_jst": "2026-09-15T15:26:00+09:00",
   "supervisor_last_scan": {
-    "status": "NO_NEW_ACTIVE_HEADS_HEARTBEAT_GREEN_STALE_ROUTING_CONFIRMED",
-    "scanned_at_jst": "2026-09-15T14:00:00+09:00",
+    "status": "EDINET_SECOND_NULL_SHAPE_AUDITED_PATCHED_RETRY_RUNNING_HEARTBEAT_GREEN",
+    "scanned_at_jst": "2026-09-15T15:26:00+09:00",
     "coordination_contract_reconciled": true,
-    "note": "All five active research branch HEADs remain equal to their last_processed_sha, so no processed SHA was duplicated. Automation heartbeat is green from actual automation last-run times, not commit timestamps. Consensus V47 passive Yahoo wait remains explicitly stale and reassigned to Core24 raw1H compatibility audit; Parallel remains stale with causal pick-ledger P0 assigned. EDINET second-null-shape repair remains owner-assigned."
+    "note": "Manual continuation advanced OSS/EDINET. Exact failing raw row from run 34922234308 artifact 10378661856 was inspected (2023-01-10 result[292], docID S100PXGH): docTypeCode=null, submitDateTime retained, disclosureStatus=0, all content/legal flags=0. 2023 artifact scan found 32,935 inert null-shape rows (32,852 withdrawal0/no timestamp; 52 withdrawal2/no timestamp; 31 withdrawal1/timestamp retained). Predicate was minimally widened only for docTypeCode=null + disclosureStatus=0 + all content/legal flags=0; all other malformed rows remain fail-closed. Exact regression fixture and audit note were committed. OSS test run 34936903249 PASS; full freeze retry 34936903153 is running. Other active lane HEADs remain processed."
   },
   "automation_heartbeat": {
-    "checked_at_jst": "2026-09-15T14:00:00+09:00",
+    "checked_at_jst": "2026-09-15T15:26:00+09:00",
     "stop_threshold_minutes": 90,
     "stopped_or_stale_automations": 0,
     "workers": {
-      "supervisor": {"enabled": true, "last_run_jst": "14:00", "status": "GREEN_CURRENT_RUN"},
-      "canonical": {"enabled": true, "last_run_jst": "13:14", "status": "GREEN"},
-      "core": {"enabled": true, "last_run_jst": "13:23", "status": "GREEN"},
-      "consensus": {"enabled": true, "last_run_jst": "13:38", "status": "GREEN"},
-      "oss_parallel": {"enabled": true, "last_run_jst": "13:47", "status": "GREEN"}
+      "supervisor": {
+        "enabled": true,
+        "last_run_jst": "14:58",
+        "status": "GREEN"
+      },
+      "canonical": {
+        "enabled": true,
+        "last_run_jst": "15:14",
+        "status": "GREEN"
+      },
+      "core": {
+        "enabled": true,
+        "last_run_jst": "14:22",
+        "status": "GREEN_WITHIN_90M"
+      },
+      "consensus": {
+        "enabled": true,
+        "last_run_jst": "14:36",
+        "status": "GREEN"
+      },
+      "oss_parallel": {
+        "enabled": true,
+        "last_run_jst": "14:48",
+        "status": "GREEN"
+      }
     }
   },
-  "scan_policy": {"cadence_target_minutes": 12, "worker_slots_jst": ["00","12","24","36","48"], "rule": "Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."},
+  "scan_policy": {
+    "cadence_target_minutes": 12,
+    "worker_slots_jst": [
+      "00",
+      "12",
+      "24",
+      "36",
+      "48"
+    ],
+    "rule": "Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."
+  },
   "branches": {
-    "research/tvfree-canonical-batch02": {"preferred_worker":"canonical","last_seen_sha":"fe0e89c5191317121c2c6f7a1db84d1044028dcf","last_processed_sha":"fe0e89c5191317121c2c6f7a1db84d1044028dcf","task_state":"ACTIVE_CI_CHAIN_GUARD_GREEN","next_action":"Canonical owner may continue the next outcome-blind shadow integrity action; do not repeat fe0e89c5 audit."},
-    "research/tentei-cloud-mtf": {"preferred_worker":"core","last_seen_sha":"97106b9f9489f01545285481ba25ce87aad7fae2","last_processed_sha":"97106b9f9489f01545285481ba25ce87aad7fae2","task_state":"ACTIVE_DATA_REPAIR","next_action":"Acquire and SHA-pin exact official JPX PIT inputs for 2024-09-17..2026-09-10 and deterministic membership receipt; then independent exact-hour activity evidence. No Cartesian expected keys."},
-    "research/consensus-atr-regime-gate": {"preferred_worker":"consensus","last_seen_sha":"5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363","last_processed_sha":"5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363","task_state":"STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED","next_action":"Do not duplicate-trigger Yahoo run 34849054884. Outcome-blindly compare V47 frozen required symbol/date/session inventory against the SHA-pinned Core24 observed raw1H manifest for provenance/calendar/timestamp/coverage compatibility. If compatible, spec/receipt a formal-verifier reuse path with unchanged thresholds; if incompatible, preregister an alternate acquisition-only source path."},
-    "research/oss-validation-tooling": {"preferred_worker":"oss-validation-via-48","last_seen_sha":"7f50cbf4e233432473b10de54f3c5ee21e9a4d15","last_processed_sha":"7f50cbf4e233432473b10de54f3c5ee21e9a4d15","task_state":"ACTIVE_EDINET_SECOND_NULL_SHAPE_REPAIR","next_action":"Inspect exact failing raw shape before any broad skip policy; freeze it as a regression fixture, implement the narrowest valid normalization/exclusion rule, preserve fail-closed, then rerun freeze."},
-    "research/parallel-condition-exploration": {"preferred_worker":"cross-lane-via-48","last_seen_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","last_processed_sha":"858998cceb10f263d181233a20c55c5bc4f92aa6","task_state":"STALE_P0_ACTION_ASSIGNED","next_action":"Generate causal A1/B1/E1 pick ledger without reading returns, freeze ledger SHA, then completeness receipt; only after PASS one-shot cost0 performance."}
+    "research/tvfree-canonical-batch02": {
+      "preferred_worker": "canonical",
+      "last_seen_sha": "fe0e89c5191317121c2c6f7a1db84d1044028dcf",
+      "last_processed_sha": "fe0e89c5191317121c2c6f7a1db84d1044028dcf",
+      "task_state": "ACTIVE_CI_CHAIN_GUARD_GREEN",
+      "next_action": "Canonical owner may continue the next outcome-blind shadow integrity action; do not repeat fe0e89c5 audit."
+    },
+    "research/tentei-cloud-mtf": {
+      "preferred_worker": "core",
+      "last_seen_sha": "97106b9f9489f01545285481ba25ce87aad7fae2",
+      "last_processed_sha": "97106b9f9489f01545285481ba25ce87aad7fae2",
+      "task_state": "ACTIVE_DATA_REPAIR",
+      "next_action": "Acquire and SHA-pin exact official JPX PIT inputs for 2024-09-17..2026-09-10 and deterministic membership receipt; then independent exact-hour activity evidence. No Cartesian expected keys."
+    },
+    "research/consensus-atr-regime-gate": {
+      "preferred_worker": "consensus",
+      "last_seen_sha": "5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363",
+      "last_processed_sha": "5a205f4e106d6fd340e28d85a7c2e4a2c3a6b363",
+      "task_state": "STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED",
+      "next_action": "Do not duplicate-trigger Yahoo run 34849054884. Outcome-blindly compare V47 frozen required symbol/date/session inventory against the SHA-pinned Core24 observed raw1H manifest for provenance/calendar/timestamp/coverage compatibility. If compatible, spec/receipt a formal-verifier reuse path with unchanged thresholds; if incompatible, preregister an alternate acquisition-only source path."
+    },
+    "research/oss-validation-tooling": {
+      "preferred_worker": "oss-validation-via-48",
+      "last_seen_sha": "00df55b88d0a2862d5c35c3193e0c3189489e663",
+      "last_processed_sha": "00df55b88d0a2862d5c35c3193e0c3189489e663",
+      "task_state": "ACTIVE_EDINET_RETRY_AFTER_EXACT_FIXTURE",
+      "next_action": "Inspect terminal state/artifacts of full freeze retry 34936903153. If PASS, freeze 2023-2025 metadata manifest/sample receipt, then selected ZIP byte SHA freeze -> same-ZIP parser cross-check. If FAIL, inspect and freeze the exact next raw shape before any predicate change."
+    },
+    "research/parallel-condition-exploration": {
+      "preferred_worker": "cross-lane-via-48",
+      "last_seen_sha": "858998cceb10f263d181233a20c55c5bc4f92aa6",
+      "last_processed_sha": "858998cceb10f263d181233a20c55c5bc4f92aa6",
+      "task_state": "STALE_P0_ACTION_ASSIGNED",
+      "next_action": "Generate causal A1/B1/E1 pick ledger without reading returns, freeze ledger SHA, then completeness receipt; only after PASS one-shot cost0 performance."
+    }
   },
-  "guardrails": ["Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.","2026 outcome is report/robustness-only.","Canonical endpoint is next XTKS open to fifth XTKS close.","All new performance uses transaction cost 0%; win = gross return > 0.","No post-hoc rescue retuning."],
+  "guardrails": [
+    "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
+    "2026 outcome is report/robustness-only.",
+    "Canonical endpoint is next XTKS open to fifth XTKS close.",
+    "All new performance uses transaction cost 0%; win = gross return > 0.",
+    "No post-hoc rescue retuning."
+  ],
   "workflow_watch": {
-    "weak_early_phase2": {"task_state":"CLOSED","leader":"DUAL+G3","leader_2023_25":{"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_pct":5.14},"g3_threshold":"med_ret1 >= -0.01 FROZEN","fresh_2022":"FAILED_ROBUSTNESS","round2":"CLOSED"},
-    "parallel_wave1": {"task_state":"STALE_P0_ACTION_ASSIGNED","performance_opened":false},
-    "oss_validation": {"task_state":"ACTIVE_EDINET_REPAIR_PLUS_PIT_P0","edinet_retry_run":34922234308,"edinet_retry_conclusion":"FAIL_SECOND_NULL_SHAPE","performance_opened":false},
-    "consensus_v47": {"task_state":"STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED","visible_shards":8,"usable_raw_rows":0,"diagnostic_status":"NOT_COMPUTABLE_NO_INPUT_DATA","promotion_evidence":false,"authoritative_run_id":34849054884,"authoritative_run_status":"QUEUED_WITH_LONG_RUNNING_FETCHES","observed_job_snapshot":"10 completed success, 2 in_progress fetch, 18 queued on visible page","wait_condition":"new non-zero observed raw artifact or terminal state","passive_wait_only":false,"assigned_recovery":"Core24 pinned raw1H compatibility audit before any new source/retry"},
-    "canonical_shadow": {"task_state":"ACTIVE_CI_CHAIN_GUARD_GREEN","head":"fe0e89c5191317121c2c6f7a1db84d1044028dcf","ci_run":34902927347,"ci_conclusion":"success","performance_opened":false},
-    "core": {"task_state":"ACTIVE_PROVENANCE_JPX_SOURCE_ROUTE_IDENTIFIED_BYTE_PIN_PENDING","performance_opened":false},
-    "cloud_exact_forensic": {"task_state":"CLOSED","conclusion":"HISTORICAL_EXACT_REPRO_UNAVAILABLE"},
-    "v20_session_impulse": {"task_state":"CLOSED"}
+    "weak_early_phase2": {
+      "task_state": "CLOSED",
+      "leader": "DUAL+G3",
+      "leader_2023_25": {
+        "n": 117,
+        "mean_pct": 7.98,
+        "median_pct": 1.74,
+        "win_pct": 53.85,
+        "top3_ex_pct": 5.14
+      },
+      "g3_threshold": "med_ret1 >= -0.01 FROZEN",
+      "fresh_2022": "FAILED_ROBUSTNESS",
+      "round2": "CLOSED"
+    },
+    "parallel_wave1": {
+      "task_state": "STALE_P0_ACTION_ASSIGNED",
+      "performance_opened": false
+    },
+    "oss_validation": {
+      "task_state": "ACTIVE_EDINET_RETRY_AFTER_EXACT_FIXTURE_PLUS_PIT_P0",
+      "edinet_previous_retry_run": 34922234308,
+      "edinet_previous_retry_conclusion": "FAIL_SECOND_NULL_SHAPE",
+      "edinet_exact_fixture_doc_id": "S100PXGH",
+      "edinet_exact_fixture_daily_sha256": "a2dd6ebd77d4aa5819e267eec072575e050d2d6c60eea7dfc5bdd8873668039c",
+      "edinet_2023_inert_rows": 32935,
+      "edinet_patch_commit": "819d63bbad4c995d8f6345280ce67df0e455effb",
+      "edinet_fixture_commit": "90265c5ecc0b2e3d96d1c85f39eb665e9d4535fc",
+      "edinet_audit_commit": "00df55b88d0a2862d5c35c3193e0c3189489e663",
+      "oss_test_run": 34936903249,
+      "oss_test_conclusion": "success",
+      "edinet_retry_run": 34936903153,
+      "edinet_retry_status": "IN_PROGRESS",
+      "performance_opened": false
+    },
+    "consensus_v47": {
+      "task_state": "STALE_EXTERNAL_TRANSPORT_REUSE_AUDIT_ASSIGNED",
+      "visible_shards": 8,
+      "usable_raw_rows": 0,
+      "diagnostic_status": "NOT_COMPUTABLE_NO_INPUT_DATA",
+      "promotion_evidence": false,
+      "authoritative_run_id": 34849054884,
+      "authoritative_run_status": "QUEUED_WITH_LONG_RUNNING_FETCHES",
+      "observed_job_snapshot": "10 completed success, 2 in_progress fetch, 18 queued on visible page",
+      "wait_condition": "new non-zero observed raw artifact or terminal state",
+      "passive_wait_only": false,
+      "assigned_recovery": "Core24 pinned raw1H compatibility audit before any new source/retry"
+    },
+    "canonical_shadow": {
+      "task_state": "ACTIVE_CI_CHAIN_GUARD_GREEN",
+      "head": "fe0e89c5191317121c2c6f7a1db84d1044028dcf",
+      "ci_run": 34902927347,
+      "ci_conclusion": "success",
+      "performance_opened": false
+    },
+    "core": {
+      "task_state": "ACTIVE_PROVENANCE_JPX_SOURCE_ROUTE_IDENTIFIED_BYTE_PIN_PENDING",
+      "performance_opened": false
+    },
+    "cloud_exact_forensic": {
+      "task_state": "CLOSED",
+      "conclusion": "HISTORICAL_EXACT_REPRO_UNAVAILABLE"
+    },
+    "v20_session_impulse": {
+      "task_state": "CLOSED"
+    }
   },
-  "next_global_actions": ["Core24: exact official JPX PIT bytes/SHA receipt -> independent exact-hour activity evidence.","Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.","OSS/EDINET: exact second failing row shape -> fixture -> minimal fail-closed patch -> rerun freeze.","Canonical: next outcome-blind shadow integrity action after CI chain guard PASS.","Consensus: Yahoo wait is STALE; audit Core24 pinned raw1H compatibility outcome-blind before any new acquisition retry.","Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."],
+  "next_global_actions": [
+    "Core24: exact official JPX PIT bytes/SHA receipt -> independent exact-hour activity evidence.",
+    "Parallel: causal pick ledger freeze -> completeness receipt -> one-shot cost0.",
+    "OSS/EDINET: full freeze retry 34936903153 terminal audit -> metadata/sample receipt -> selected ZIP SHA freeze -> same-ZIP parser cross-check.",
+    "Canonical: next outcome-blind shadow integrity action after CI chain guard PASS.",
+    "Consensus: Yahoo wait is STALE; audit Core24 pinned raw1H compatibility outcome-blind before any new acquisition retry.",
+    "Weak+Early Phase-2, Cloud exact forensic, V20 remain CLOSED."
+  ],
   "go_no_go": "NO-GO_RESEARCH_CONTINUES"
 }

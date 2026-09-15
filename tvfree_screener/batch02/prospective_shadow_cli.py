@@ -11,6 +11,7 @@ from tvfree_screener.batch02.prospective_shadow_verified_resolve import verified
 from tvfree_screener.batch02.prospective_shadow_session_calendar_guard import validate_xtks_calendar
 from tvfree_screener.batch02.prospective_shadow_daily_endpoint_guard import validate_daily_endpoint_dataset
 from tvfree_screener.batch02.prospective_shadow_resolution_receipt import build_resolution_receipt, write_immutable_receipt
+from tvfree_screener.batch02.prospective_shadow_resolution_chain_guard import build_chain_link, verify_chain
 from tvfree_screener.batch02.prospective_shadow_admission_gate import evaluate_shadow_admission
 from tvfree_screener.batch02.prospective_shadow_verified_append import verified_append
 
@@ -135,6 +136,26 @@ def write_summary(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
 
+def _load_resolution_chain(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    rows: list[dict] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            item = json.loads(line)
+            if not isinstance(item, dict):
+                raise ValueError("resolution chain rows must be JSON objects")
+            rows.append(item)
+    return rows
+
+
+def _append_resolution_chain_link(path: Path, link: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = (json.dumps(link, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+    with path.open("ab") as f:
+        f.write(payload)
+
+
 
 def cmd_ingest(args: argparse.Namespace) -> None:
     freeze = load_freeze_manifest(Path(args.freeze_manifest), args.freeze_sha256)
@@ -190,6 +211,31 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         write_summary(Path(args.summary), out)
         print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
         raise SystemExit(2)
+    resolution_chain_path = Path(
+        getattr(args, "resolution_chain", None)
+        or (str(Path(args.resolved)) + ".resolution-chain.jsonl")
+    )
+    try:
+        existing_resolution_chain = _load_resolution_chain(resolution_chain_path)
+        if existing_resolution_chain:
+            chain_audit = verify_chain(existing_resolution_chain)
+            if not chain_audit.get("valid", False):
+                raise ValueError("existing resolution chain failed verification")
+    except Exception as exc:
+        out = {
+            "operation": "resolve",
+            "resolved_written": False,
+            "decision": "BLOCK_CLI_RESOLUTION_CHAIN_INVALID",
+            "experiment_id": freeze["experiment_id"],
+            "model_freeze_id": freeze["model_freeze_id"],
+            "freeze_manifest_sha256": freeze["freeze_manifest_sha256"],
+            "resolution_chain_path": str(resolution_chain_path),
+            "error": f"{type(exc).__name__}:{exc}",
+        }
+        write_summary(Path(args.summary), out)
+        print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
+        raise SystemExit(2)
+
     daily_manifest_path = Path(args.daily_manifest)
     daily_manifest = json.loads(daily_manifest_path.read_text(encoding="utf-8"))
     daily_provenance = validate_daily_endpoint_dataset(Path(args.daily), daily_manifest)
@@ -237,6 +283,40 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         print(json.dumps(out, ensure_ascii=False, indent=2, sort_keys=True))
         raise SystemExit(2)
 
+    created_at = datetime.now(timezone.utc).isoformat()
+    prepared_chain_artifacts: dict = {}
+
+    def resolution_chain_pre_replace_guard(staged_resolved_path: Path, provisional_result: dict) -> dict:
+        receipt = build_resolution_receipt(
+            freeze_manifest=freeze,
+            freeze_manifest_path=freeze_manifest_path,
+            shadow_path=Path(args.shadow),
+            daily_path=Path(args.daily),
+            daily_manifest_path=daily_manifest_path,
+            sessions_csv_path=sessions_csv,
+            sessions_manifest_path=sessions_manifest,
+            resolved_path=staged_resolved_path,
+            resolve_result=provisional_result,
+            created_at=created_at,
+        )
+        previous_link = existing_resolution_chain[-1] if existing_resolution_chain else None
+        link = build_chain_link(resolution_receipt=receipt, previous_link=previous_link)
+        chain_audit = verify_chain([*existing_resolution_chain, link])
+        if not chain_audit.get("valid", False):
+            return {
+                "allow_replace": False,
+                "decision": "BLOCK_RESOLUTION_CHAIN_PREWRITE_AUDIT",
+                "errors": list(chain_audit.get("errors", [])),
+            }
+        prepared_chain_artifacts["receipt"] = receipt
+        prepared_chain_artifacts["link"] = link
+        return {
+            "allow_replace": True,
+            "decision": "ALLOW_RESOLUTION_REPLACE_AFTER_CHAIN_AUDIT",
+            "resolution_receipt_sha256": receipt["receipt_sha256"],
+            "chain_link_sha256": link["chain_link_sha256"],
+        }
+
     result = verified_resolve_shadow_file(
         Path(args.shadow),
         Path(args.resolved),
@@ -246,23 +326,18 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         sessions_csv_path=sessions_csv,
         sessions_manifest_path=sessions_manifest,
         require_provenance_chain=True,
+        pre_replace_guard=resolution_chain_pre_replace_guard,
     )
     if result.get("resolved_written", False):
-        receipt = build_resolution_receipt(
-            freeze_manifest=freeze,
-            freeze_manifest_path=freeze_manifest_path,
-            shadow_path=Path(args.shadow),
-            daily_path=Path(args.daily),
-            daily_manifest_path=daily_manifest_path,
-            sessions_csv_path=sessions_csv,
-            sessions_manifest_path=sessions_manifest,
-            resolved_path=Path(args.resolved),
-            resolve_result=result,
-            created_at=datetime.now(timezone.utc).isoformat(),
-        )
+        receipt = prepared_chain_artifacts.get("receipt")
+        chain_link = prepared_chain_artifacts.get("link")
+        if receipt is None or chain_link is None:
+            raise RuntimeError("resolution chain artifacts were not prepared before resolved write")
         write_immutable_receipt(resolution_receipt_path, receipt)
+        _append_resolution_chain_link(resolution_chain_path, chain_link)
     else:
         receipt = None
+        chain_link = None
 
     out = {
         "operation": "resolve",
@@ -276,6 +351,8 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         "session_calendar": calendar,
         "resolution_receipt_sha256": None if receipt is None else receipt["receipt_sha256"],
         "resolution_receipt_path": str(resolution_receipt_path),
+        "resolution_chain_path": str(resolution_chain_path),
+        "resolution_chain_link_sha256": None if chain_link is None else chain_link["chain_link_sha256"],
         **result,
     }
     write_summary(Path(args.summary), out)
@@ -308,6 +385,7 @@ def build_parser() -> argparse.ArgumentParser:
     resolve.add_argument("--sessions-csv")
     resolve.add_argument("--sessions-manifest")
     resolve.add_argument("--resolution-receipt", required=True)
+    resolve.add_argument("--resolution-chain")
     resolve.add_argument("--summary", required=True)
     resolve.set_defaults(func=cmd_resolve)
     return p

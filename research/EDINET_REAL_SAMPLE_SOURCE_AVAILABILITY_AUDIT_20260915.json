@@ -1,0 +1,132 @@
+{
+  "status": "PARSER_COMPARABLE_SOURCE_SUBSET_LOCKED_OUTCOME_BLIND",
+  "primary_sample_lock": "research/EDINET_REAL_SAMPLE_LOCK_20260915.json",
+  "primary_sample_documents": 48,
+  "source_availability_audit": {
+    "metadata_artifacts": [
+      {
+        "year": 2023,
+        "artifact_id": 10384869703,
+        "digest": "sha256:63f2abcffedf7777e82e184b1de57d54eedb519492f834ef529316d866dc6e61"
+      },
+      {
+        "year": 2024,
+        "artifact_id": 10384728646,
+        "digest": "sha256:301966d70aa72a748d1f949c40b527ed1e6e58e58f06365686fddae45faf70a8"
+      },
+      {
+        "year": 2025,
+        "artifact_id": 10385451559,
+        "digest": "sha256:d2c5066aba2d55e5f8e2626644981f47e236dd75aad739ad795e3f8b892876ed"
+      }
+    ],
+    "selected_metadata_observation_sha256": "ed81018e78a65d1bff51f2a21a0dcb6e384aabcd457ee05eb2ce99a22025c708",
+    "criterion": "csvFlag == 1 AND xbrlFlag == 1 on the exact frozen selected metadata observation; no parser outputs or strategy outcomes",
+    "available_documents": 44,
+    "unavailable_documents": 4,
+    "full_sample_source_coverage_pct": 91.6666666667,
+    "failed_full48_acquisition_run": 34943233640,
+    "first_observed_404_doc_id": "S100T45P"
+  },
+  "selected_doc_ids": [
+    "S100PTWI",
+    "S100PE6T",
+    "S100PX1E",
+    "S100PX3S",
+    "S100QF0X",
+    "S100QEAA",
+    "S100QJ75",
+    "S100QIAE",
+    "S100RB4M",
+    "S100R1JI",
+    "S100RB71",
+    "S100RB8V",
+    "S100RVMV",
+    "S100RWZI",
+    "S100RY68",
+    "S100RYD8",
+    "S100S2SI",
+    "S100SE6S",
+    "S100SKJT",
+    "S100SK6G",
+    "S100SREY",
+    "S100T1VU",
+    "S100T6XF",
+    "S100TYEA",
+    "S100TVMM",
+    "S100TXUQ",
+    "S100TYJQ",
+    "S100TZS0",
+    "S100U8X6",
+    "S100UGV2",
+    "S100V0SP",
+    "S100UXL5",
+    "S100V0Y3",
+    "S100V0YM",
+    "S100VIZJ",
+    "S100VEQO",
+    "S100VJFR",
+    "S100VJGM",
+    "S100W07H",
+    "S100W8YZ",
+    "S100W9GK",
+    "S100WPX8",
+    "S100WOBT",
+    "S100WSI2"
+  ],
+  "unavailable_selected_documents": [
+    {
+      "doc_id": "S100T45P",
+      "source_date": "2024-04-01",
+      "doc_type_code": "130",
+      "submit_datetime": "2024-04-01 10:06",
+      "csv_flag": "0",
+      "xbrl_flag": "0",
+      "pdf_flag": "1",
+      "parent_doc_id": "S100SGOE",
+      "form_code": "09A001",
+      "reason": "frozen metadata advertises no XBRL/CSV; type=5 returned EDINET 404 in run 34943233640"
+    },
+    {
+      "doc_id": "S100UGOG",
+      "source_date": "2024-10-01",
+      "doc_type_code": "130",
+      "submit_datetime": "2024-10-01 16:07",
+      "csv_flag": "0",
+      "xbrl_flag": "0",
+      "pdf_flag": "1",
+      "parent_doc_id": "S100TX75",
+      "form_code": "080001",
+      "reason": "frozen metadata advertises no XBRL/CSV"
+    },
+    {
+      "doc_id": "S100W9BM",
+      "source_date": "2025-07-01",
+      "doc_type_code": "130",
+      "submit_datetime": "2025-07-01 09:50",
+      "csv_flag": "0",
+      "xbrl_flag": "0",
+      "pdf_flag": "1",
+      "parent_doc_id": "S100VUM4",
+      "form_code": "09E001",
+      "reason": "frozen metadata advertises no XBRL/CSV"
+    },
+    {
+      "doc_id": "S100WSHJ",
+      "source_date": "2025-10-01",
+      "doc_type_code": "130",
+      "submit_datetime": "2025-10-01 10:34",
+      "csv_flag": "0",
+      "xbrl_flag": "0",
+      "pdf_flag": "1",
+      "parent_doc_id": "S100W92Z",
+      "form_code": "080001",
+      "reason": "frozen metadata advertises no XBRL/CSV"
+    }
+  ],
+  "primary_sample_status": "UNCHANGED_48_DOC_SAMPLE; 4 source-unavailable rows remain explicit audit findings and are not replaced",
+  "comparison_policy": "Only the fixed 44 source-available selected documents may enter the parser-comparison diagnostic. Report parser results with denominator 44 AND source coverage 44/48. Never substitute parent documents or later filings.",
+  "strategy_outcomes_opened": false,
+  "parser_outputs_opened": false,
+  "no_replacement_rule": true
+}

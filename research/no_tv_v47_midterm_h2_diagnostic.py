@@ -13,8 +13,9 @@ from no_tv_v47_midterm_diagnostic import gross_stats
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--nocap-dev", required=True, type=Path)
-    ap.add_argument("--nocap-validation-blind", required=True, type=Path)
+    ap.add_argument("--arm", required=True, choices=["NOCAP", "CAP1000_PIT"])
+    ap.add_argument("--dev-features", required=True, type=Path)
+    ap.add_argument("--validation-blind", required=True, type=Path)
     ap.add_argument("--frozen-daily", required=True, type=Path)
     ap.add_argument("--restored-daily", required=True, type=Path)
     ap.add_argument("--preopen-spec", required=True, type=Path)
@@ -26,15 +27,16 @@ def main() -> None:
         raise RuntimeError("missing diagnostic-only label")
     if spec.get("promotion_evidence") is not False:
         raise RuntimeError("diagnostic cannot be promotion evidence")
-    if spec.get("h1_leader_fixed_before_h2_open") != "NOCAP":
-        raise RuntimeError("H2 diagnostic may open only frozen H1 leader NOCAP")
+    leader = spec.get("h1_leader_fixed_before_h2_open")
+    if leader != a.arm:
+        raise RuntimeError(f"requested arm {a.arm} != frozen corrected H1 leader {leader}")
+    if spec.get("selection_restrictions", {}).get("open_only") != a.arm:
+        raise RuntimeError("preopen spec open_only does not match requested arm")
     if spec.get("cost_round_trip") != 0.0:
         raise RuntimeError("H2 diagnostic must use cost 0%")
-    if spec.get("selection_restrictions", {}).get("open_CAP1000_PIT_H2") is not False:
-        raise RuntimeError("CAP1000_PIT H2 must stay closed")
 
-    devf = pd.read_parquet(a.nocap_dev)
-    blind = pd.read_parquet(a.nocap_validation_blind)
+    devf = pd.read_parquet(a.dev_features)
+    blind = pd.read_parquet(a.validation_blind)
     if "canonical_ret_5bd" in blind.columns or "legacy_ret_5bd" in blind.columns:
         raise RuntimeError("validation-blind input already contains target returns")
 
@@ -43,7 +45,7 @@ def main() -> None:
     history = pd.concat([devf, h2f], ignore_index=True, sort=False)
 
     day_ix = dev.trading_day_index(a.frozen_daily)
-    dev_raw = dev.prequential_select(devf, "NOCAP")
+    dev_raw = dev.prequential_select(devf, a.arm)
     dev_selected = dev.strict5_no_replacement(dev_raw, day_ix)
 
     h2_raw = h2.prequential_h2(history)
@@ -52,10 +54,10 @@ def main() -> None:
 
     out = a.output_dir
     out.mkdir(parents=True, exist_ok=True)
-    h2_selected.to_csv(out / "v47_midterm_h2_selected_nocap.csv", index=False)
+    h2_selected.to_csv(out / f"v47_midterm_h2_selected_{a.arm.lower()}.csv", index=False)
     payload = {
         "label": "MIDTERM_DIAGNOSTIC_NOT_PROMOTION_EVIDENCE",
-        "arm": "NOCAP",
+        "arm": a.arm,
         "validation_period": [h2.VALID_START, h2.VALID_END],
         "endpoint": "next official XTKS open -> D+5 close",
         "cost_round_trip": 0.0,
@@ -66,11 +68,11 @@ def main() -> None:
         "coverage_bypassed": True,
         "missing_pairs_interpolated": False,
         "synthetic_bars": False,
-        "h1_leader_fixed_before_h2_open": "NOCAP",
+        "h1_leader_fixed_before_h2_open": leader,
         "h2": metrics,
         "h2_now_opened_for_diagnostic": True,
         "h2_remains_untouched_holdout": False,
-        "cap1000_pit_h2_opened": False,
+        "other_arm_h2_opened_under_corrected_basis": False,
         "2026_opened": False,
         "retune_same_family_after_open": False,
         "promotion_evidence": False,

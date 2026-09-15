@@ -104,6 +104,7 @@ FACT_SPECS = {
         "elements": (
             "jppfs_cor:NetSales",
             "jppfs_cor:Revenue",
+            "jppfs_cor:OperatingRevenue1",
             "ifrs-full:Revenue",
             "jpcrp_cor:NetSalesSummaryOfBusinessResults",
             "jpcrp_cor:RevenueSummaryOfBusinessResults",

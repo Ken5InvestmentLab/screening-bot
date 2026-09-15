@@ -446,3 +446,34 @@ Important diagnostic correction:
 - A corrected cost-0 diagnostic may recompute the exact same frozen family after deterministic normalization; this is data-integrity repair, not retuning.
 
 Formal raw acceptance is still NOT PASSED and formal clean features/H1/H2 remain unopened.
+
+
+## V47 corrected midterm H1 rerun — 2026-09-15
+
+The prior midterm H1 and NOCAP-H2 printed metrics are retained only as audit history and are now `MIDTERM_DIAGNOSTIC_INVALID_SOURCE_PRICE_BASIS`. The invalidation is due to an input-semantics mismatch discovered outcome-blind: Core run `34592896202` stores explicit-period Yahoo OHLC on PIT nominal split scale, while the V47 feature materializer expects split-normalized/adjusted raw OHLC before multiplying by future split factor for PIT `log_price`.
+
+A deterministic repair is now frozen:
+- exact Core24 source raw CSV identities pinned in `research/consensus_v47_core24_raw_pin.json`;
+- Core OHLC is divided by V47 cumulative future split factor(symbol,date);
+- raw Yahoo 1H volume remains unchanged;
+- missing rows remain missing; no interpolation;
+- source and normalized output hashes are recorded;
+- V11/min/.95/strict5/no-replacement/two-arm contract is unchanged;
+- cost remains 0%; 2026 remains unavailable for selection.
+
+Contract CI:
+- `34943423800`: SUCCESS
+- `34943685294`: SUCCESS with source-pin-required normalizer
+
+Corrected H1 diagnostic run `34943802848` was triggered from commit `6d31d4f8ef76c088246235c7d8a2ffd53995af8e`.
+Current state when recorded:
+- source pin verification: PASS;
+- Core24 price-basis normalization: PASS;
+- partial clean feature materialization: in progress;
+- corrected H1 performance: unopened at this point.
+
+Do not rerun H2 using the old NOCAP leader lock. H1 and NOCAP H2 remain opened historically and cannot become untouched again. After corrected H1 completes, use only the unchanged frozen H1 chooser; then recompute/open only that corrected H1 winner on H2, with no same-family retuning.
+
+Formal V47 status remains separate: Daily PASS, raw1H NOT PASSED, formal clean features/H1/H2 unopened. The Core24 seed is provenance-compatible only after normalization and still covers only 35.3898% NOCAP / 83.1124% CAP1000_PIT required pairs, with 0% restored-pair coverage, so it cannot satisfy formal raw acceptance by itself.
+
+The V43 run `34617009116` retained artifact was inspected and contains summary/selected CSV outputs only, not full raw 1H, so it is not a formal raw-coverage source.

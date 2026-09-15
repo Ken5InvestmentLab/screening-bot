@@ -1,0 +1,17 @@
+{
+  "status": "PASS_EXACT_BYTE_CAPTURE",
+  "workflow_run_id": 34963204525,
+  "workflow_head_sha": "c6db3e7ca4eddcc37b2ba065527603ada6304f69",
+  "artifact_id": 10393968557,
+  "artifact_digest": "sha256:551411e95e30a4d20c3dd0cc90dff49099885cd1f1da07f3304d8af7445390e0",
+  "artifact_size_bytes": 81044,
+  "sources": [
+    {"name":"new_current","bytes":140186,"sha256":"c0b25c56c73c22b77256bac247713612c946c79ec980694c9ef996a09ee9b4e5"},
+    {"name":"new_2025","bytes":216343,"sha256":"8408aaff65781dec2beb79bca6c087d4b904c6eed8f24fdff90f89b7bb30def4"},
+    {"name":"new_2024","bytes":289506,"sha256":"86d1e00866cdb4faa3cf814bf06ea16f106e09167bf2c01d74a2c6b15e584b91"},
+    {"name":"delisted_current","bytes":87600,"sha256":"fab54e3414c9a7f1a2e30b1d58f59368e1f0b8c97f9c824740dcccc4febace23"},
+    {"name":"delisted_2025","bytes":82452,"sha256":"a343d542a4a8d9d85db2e29dbd94e52dfeae15e8ddd60976f4947d44d43ef0d9"},
+    {"name":"delisted_2024","bytes":66077,"sha256":"fb32c3f5accbef5599e5654a272064c6292a5a863a7911a44e05f75fd2fa7c42"}
+  ],
+  "note": "Exact official JPX response bytes captured with HTTP 200 for all six sources. This passes the byte-capture sub-gate only; PIT membership remains pending deterministic event ledger/conflict quarantine/membership receipt."
+}

@@ -6,6 +6,10 @@ on:
       - research/oss-validation-tooling
     paths:
       - ".github/workflows/edinet-metadata-freeze-research.yml"
+      - "tvfree_screener/edinet_metadata_acquire.py"
+      - "tvfree_screener/edinet_metadata_snapshot.py"
+      - "tvfree_screener/edinet_oss_sample_selector.py"
+      - "tvfree_screener/test_edinet_metadata_snapshot.py"
   workflow_dispatch:
 
 permissions:

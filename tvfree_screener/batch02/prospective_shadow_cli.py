@@ -221,6 +221,11 @@ def cmd_resolve(args: argparse.Namespace) -> None:
             chain_audit = verify_chain(existing_resolution_chain)
             if not chain_audit.get("valid", False):
                 raise ValueError("existing resolution chain failed verification")
+            resolved_path = Path(args.resolved)
+            if not resolved_path.exists():
+                raise ValueError("resolution chain exists but resolved output is missing")
+            if existing_resolution_chain[-1].get("resolved_output_sha256") != sha256_file(resolved_path):
+                raise ValueError("resolution chain head does not match current resolved output")
     except Exception as exc:
         out = {
             "operation": "resolve",
@@ -308,11 +313,13 @@ def cmd_resolve(args: argparse.Namespace) -> None:
                 "decision": "BLOCK_RESOLUTION_CHAIN_PREWRITE_AUDIT",
                 "errors": list(chain_audit.get("errors", [])),
             }
+        write_immutable_receipt(resolution_receipt_path, receipt)
+        _append_resolution_chain_link(resolution_chain_path, link)
         prepared_chain_artifacts["receipt"] = receipt
         prepared_chain_artifacts["link"] = link
         return {
             "allow_replace": True,
-            "decision": "ALLOW_RESOLUTION_REPLACE_AFTER_CHAIN_AUDIT",
+            "decision": "ALLOW_RESOLUTION_REPLACE_AFTER_DURABLE_CHAIN_AUDIT",
             "resolution_receipt_sha256": receipt["receipt_sha256"],
             "chain_link_sha256": link["chain_link_sha256"],
         }
@@ -332,9 +339,7 @@ def cmd_resolve(args: argparse.Namespace) -> None:
         receipt = prepared_chain_artifacts.get("receipt")
         chain_link = prepared_chain_artifacts.get("link")
         if receipt is None or chain_link is None:
-            raise RuntimeError("resolution chain artifacts were not prepared before resolved write")
-        write_immutable_receipt(resolution_receipt_path, receipt)
-        _append_resolution_chain_link(resolution_chain_path, chain_link)
+            raise RuntimeError("durable resolution chain artifacts were not prepared before resolved write")
     else:
         receipt = None
         chain_link = None

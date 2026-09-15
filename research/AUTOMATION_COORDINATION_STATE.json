@@ -3,7 +3,7 @@
   "lane": "Consensus specialist",
   "branch": "research/consensus-atr-regime-gate",
   "promotion_path": "V47 clean PIT pipeline only",
-  "latest_head_before_state_write": "a08ac3ac6d309da7b69b2c62367b95766a3a2afc",
+  "latest_head_before_state_write": "44fd86d5015c38fe56c728068c45a1108adaef89",
   "coordination": {
     "supervisor_coordination_checked": true,
     "research_dashboard_checked": true,
@@ -83,7 +83,7 @@
     }
   },
   "blocker": "Formal raw1H acceptance remains blocked by systemic Yahoo HTTP429 and incomplete required-pair coverage. Core24 source identity is resolved and normalization is contract-tested, but the seed covers only 35.3898% NOCAP / 83.1124% CAP1000_PIT and 0% restored pairs.",
-  "next_action": "Finish corrected H1 run 34943802848 under the unchanged frozen cost0 contract. Do not use old H1/H2 metrics for ranking. Do not rerun H2 until corrected H1 winner is known. Keep formal path sealed until provenance merge plus unchanged raw acceptance passes both arms; do not duplicate-trigger raw run 34849054884.",
+  "next_action": "Continue corrected H1 run 34943802848 to completion under the frozen cost0 contract; then record corrected H1 metrics and choose the diagnostic leader with the unchanged DEV rule. Do not rerun H2 from the old invalid leader lock. Do not duplicate-trigger raw run 34849054884; formal path remains sealed until unchanged raw acceptance passes both arms.",
   "core24_raw_reuse": {
     "source_run_id": 34592896202,
     "source_head": "a331b96c8b7391a146ed3a8d28dd5e66d6ae0679",

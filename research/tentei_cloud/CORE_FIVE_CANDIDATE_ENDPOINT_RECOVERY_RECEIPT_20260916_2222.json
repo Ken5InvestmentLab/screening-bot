@@ -1,0 +1,43 @@
+{
+  "status": "ENDPOINT_AUDIT_RAW_READY_EXACT_PRIMARY_TRADE_ROWS_NOT_YET_RECOVERED",
+  "generated_at_jst": "2026-09-16T22:22:54+09:00",
+  "daily_raw": {
+    "artifact_id": 10264205130,
+    "tse_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "rows": 4061361,
+    "null_open": 0,
+    "null_close": 0,
+    "ohlc_order_invalid_rows": 797
+  },
+  "primary_candidates": [
+    "body_pct LOW",
+    "volr20 LOW",
+    "mean-rank(volr20, body_pct)",
+    "DUAL_TOP1_AGREEMENT",
+    "DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"
+  ],
+  "frozen_anchor_source": "research/SUPERVISOR_MULTI_CANDIDATE_FULL_PERIOD_20260916.md",
+  "historical_phase2_source": "research/WEAK_EARLY_PHASE2_20260914.md",
+  "recovery_evidence": {
+    "phase2_freeze_commit": "4b37f18d7601f8fd6ff42155879faff5b7d1e9e3",
+    "phase2_freeze_parent": "a3549a05e3610c0a8e2d8d1e0968f8b5ee244d57",
+    "freeze_commit_changed_files": ["research/WEAK_EARLY_PHASE2_20260914.md"],
+    "exact_trade_rows_committed_with_freeze": false,
+    "coordination_tree_exact_primary_trade_ledger_found": false,
+    "note": "The freeze commit added only the summary markdown; no per-trade ledger was committed with it. Repository tree contains annual_candidate_detections_2022_2026.csv, but it belongs to the separate annual-candidate lane and is not substituted for the five Weak+Early primary candidates."
+  },
+  "candidate_endpoint_coverage": {
+    "body_pct LOW": {"true_missing": null, "affected_trades": null, "state": "EXACT_ROWS_REQUIRED"},
+    "volr20 LOW": {"true_missing": null, "affected_trades": null, "state": "EXACT_ROWS_REQUIRED"},
+    "mean-rank(volr20, body_pct)": {"true_missing": null, "affected_trades": null, "state": "EXACT_ROWS_REQUIRED"},
+    "DUAL_TOP1_AGREEMENT": {"true_missing": null, "affected_trades": null, "state": "EXACT_ROWS_REQUIRED"},
+    "DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF": {"true_missing": null, "affected_trades": null, "state": "EXACT_ROWS_REQUIRED"}
+  },
+  "guardrails": {
+    "surrogate_rows_used": false,
+    "annual_candidate_lane_substituted": false,
+    "silent_ohlc_repair": false,
+    "hourly_activity": "SEALED_SEPARATE"
+  },
+  "next_action": "Recover deterministic Weak+Early Phase2 generator inputs or historical exact rows from commit/artifact history; immediately intersect first recovered candidate with pinned daily raw, then repeat for remaining candidates."
+}

@@ -12,9 +12,11 @@ improves a backtest.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 from pathlib import Path
 from typing import Any
+import zipfile
 
 import numpy as np
 
@@ -65,6 +67,34 @@ SHARE_PRIORITY_GROUPS = (
         ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares", "FilingDateInstant"),
     ),
 )
+
+
+def _corporate_domain_disposition(payload: bytes) -> dict[str, object]:
+    """Fail-close investment-fund/multi-fund filings before corporate comparison.
+
+    This uses only source identity markers in the frozen ZIP. It never inspects
+    accounting values, parser agreement, or strategy outcomes.
+    """
+    with zipfile.ZipFile(io.BytesIO(payload)) as zf:
+        csv_names = [name for name in zf.namelist() if name.lower().endswith(".csv")]
+        basenames = [Path(name).name.lower() for name in csv_names]
+        jpsps = [name for name in basenames if "jpsps070000" in name]
+        if not jpsps:
+            return {"status": "CORPORATE_DOMAIN", "reason": None, "source_csv_count": len(csv_names)}
+        # jpsps070000 is the investment-fund securities-report taxonomy. A ZIP
+        # containing numbered financial-statement components must not be
+        # collapsed into one listed-company fundamental row.
+        numbered_components = [
+            name for name in jpsps
+            if any(f"-{i:03d}_" in name for i in range(1, 1000))
+        ]
+        return {
+            "status": "OUT_OF_DOMAIN_MULTI_FUND_FILING",
+            "reason": "jpsps070000 investment-fund filing with numbered component CSVs",
+            "source_csv_count": len(csv_names),
+            "jpsps070000_csv_count": len(jpsps),
+            "numbered_component_count": len(numbered_components),
+        }
 
 
 def _number(value: Any) -> float | None:
@@ -138,9 +168,26 @@ def _oss_issued_shares(raw_facts: list[Any]) -> dict[str, object]:
 
 
 def crosscheck_zip(payload: bytes, *, doc_id: str = "OSS-CROSSCHECK", doc_type_code: str = "120") -> dict[str, object]:
-    """Parse one ZIP twice and compare financial/source facts."""
+    """Parse one corporate-domain ZIP twice and compare financial/source facts."""
     if str(doc_type_code) not in {"120", "130"}:
         raise ValueError("initial cross-check is restricted to securities reports 120/130")
+
+    domain = _corporate_domain_disposition(payload)
+    if domain["status"] != "CORPORATE_DOMAIN":
+        return {
+            "doc_id": str(doc_id),
+            "doc_type_code": str(doc_type_code),
+            "domain_status": domain["status"],
+            "domain_reason": domain["reason"],
+            "domain_evidence": domain,
+            "comparisons": {},
+            "mismatch_fields": [],
+            "all_compared_fields_agree": False,
+            "excluded_from_corporate_comparability": True,
+            "outcome_data_opened": False,
+            "availability_policy_changed": False,
+            "decision_rule": "Out-of-domain investment-fund filings are fail-closed and never collapsed into one corporate fundamental row.",
+        }
 
     custom_frame = custom.read_xbrl_csv_zip(payload)
     custom_facts = custom.extract_standard_facts(custom_frame)
@@ -163,8 +210,6 @@ def crosscheck_zip(payload: bytes, *, doc_id: str = "OSS-CROSSCHECK", doc_type_c
             "status": _comparison(left, right),
         }
 
-    # Basis-aware, source-semantic net-income comparison. Unknown elements are
-    # an audit finding, never guessed/coalesced across ownership bases.
     net_element = custom_facts.get("net_income_element_id")
     net_oss_name = _net_income_oss_field(net_element)
     net_left = _number(custom_facts.get("net_income"))
@@ -210,11 +255,13 @@ def crosscheck_zip(payload: bytes, *, doc_id: str = "OSS-CROSSCHECK", doc_type_c
     return {
         "doc_id": str(doc_id),
         "doc_type_code": str(doc_type_code),
+        "domain_status": "CORPORATE_DOMAIN",
         "custom_parser": "screening-bot edinet_fundamental_collector",
         "oss_parser": "edinet-tools",
         "comparisons": comparisons,
         "mismatch_fields": mismatch_fields,
         "all_compared_fields_agree": not mismatch_fields,
+        "excluded_from_corporate_comparability": False,
         "oss_extraction_flags": oss_flags,
         "outcome_data_opened": False,
         "availability_policy_changed": False,

@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-16 09:24 JST  
+> **最終更新:** 2026-09-16 12:11 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -12,18 +12,19 @@
 | Parallel Wave-1 | 🟡 ACTIVE | 78% | outcome-blind OHLC integrity audit。source-grounded disposition後にledger再実行 |
 | Core24 OHLCV completeness | 🟡 実数監査P0 | 97% | **欠損ゼロ未確認**。exhaustive daily raw corpusの取得済み/pin証拠を先に確定し、XTKS×PITでO/H/L/C/V field監査。hourlyは独立activity raw未取得のためSEALED |
 | Consensus V47 | 🟢 formal raw BLOCKED | 84% | same-family retune禁止、formal raw acceptanceのみ |
-| Canonical/Shadow endpoint integrity | 🟢 recovery classifier実装 | 92% | resolver wiring + append-only recovery evidence + crash regression |
+| Canonical/Shadow endpoint integrity | 🟢 append-only recovery evidence追加 | 93% | resolver startup wiring + end-to-end sidecar-ahead crash regression |
 | Core endpoint provenance | 🟡 source semantics確定 | 99% | independent raw execution/activity bytesのpin |
 | Cloud Monster exact forensic | ⚫ CLOSED | 100% | HISTORICAL_EXACT_REPRO_UNAVAILABLE |
 | OSS / Validation | 🟢 policy固定 | 98% | 27 findings source-grounded taxonomy |
 | V20 Session-Impulse | ⚫ CLOSED | 100% | active queue外 |
 
-## Core24 OHLCV実数監査 — 今回の前進
-P0をprovider候補探索から**実データcompleteness audit**へ切替。`CORE_OHLCV_COMPLETENESS_AUDIT_SPEC_20260916.md`を追加し、daily expected/observed/missing(symbol,date,field,class)、年/月集計、source補完matrix、trade-impact、2022-2026 DUAL+G3 endpoint影響、receipt hashを必須化した。
+## Canonical/Shadow — 今回の前進
+既存のoutcome-blind recovery classifierに、`committed / sidecar_ahead_interrupted / invalid_tampered / uninitialized` 判定をappend-only evidenceとして固定する recovery protocol を追加した。recordはstrategy outcomeを開かず、gross returnを計算せず、production authorizationを与えず、immutable chainを書換えない。exact replayのみidempotent、既存recordと内容が競合する場合はfail-closedする regression test を追加した。
 
-現時点では、repository/Actions証拠から研究期間全体を覆う取得済みdaily raw corpusをこのrun内で確定できていないため、**daily true-missing件数は未確定、missing=0とは扱わない**。上場前/廃止後/独立証拠付きno-activityのみ正常欠損、その他unknownはfail-closed。Google Finance / Alpha Vantage / J-Quants / FLEXはraw取得・pin済みでない限り補完済みに数えない。
+Canonical HEADは `9fde775bac3449c5f5cf0cbbfc7babf9dc38ecfc`。次はこのclassifier + immutable recovery recordをresearch-only resolver startupへ配線し、sidecar永続化後・resolved replace前のcrashを実際に模擬して、再起動時にsidecar-aheadを識別してappend-only recovery/abort evidenceを残すend-to-end regressionを閉じる。performance/H1/H2/2026 outcomeはこの工程では開かない。
 
-exact-hour/activityは独立raw witness未取得のため引き続きSEALED。membership×calendar×hourの期待行捏造は禁止。次は実際のCore daily raw artifactを特定・SHA固定してfield-level ledgerを実行し、そのconfirmed missingだけをcanonical entry/exitとDUAL+G3 endpointへintersectionする。
+## Core24 OHLCV実数監査
+P0はprovider候補探索ではなく**実データcompleteness audit**。現時点では研究期間全体を覆う取得済みdaily raw corpusが確定していないため、daily true-missing件数は未確定でmissing=0とは扱わない。exact-hour/activityは独立raw witness未取得のためSEALED。
 
 ## Phase-2 frozen順位 / ユーザー評価基準
 首位は **DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF**。G3 threshold `med_ret1>=-1%` は固定、結果を見たretuneは禁止。
@@ -38,4 +39,4 @@ PIT membership receiptは固定済み：anchor 3,707 → target 3,834、476 repl
 production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterは変更なし。新規performanceはcost 0%のみ、win=gross return>0。2026はreport/robustness-only。
 
 ## GO / NO-GO
-**Phase-2研究候補は維持。production GOではなく研究継続。** Core OHLCVについては実数receiptが出るまで欠損ゼロ判定を保留する。
+**Phase-2研究候補は維持。production GOではなく研究継続。** Canonical/Shadowはperformance sealedのままprovenance recovery integrityを継続する。

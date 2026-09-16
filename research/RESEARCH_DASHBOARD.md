@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-16 23:49 JST  
+> **最終更新:** 2026-09-17 00:48 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -14,7 +14,7 @@
 | Core24 OHLCV completeness | 🟢 **P0 endpoint補助** | **99%** | 5候補2023-25 endpoint true missing=0、797 invalid rowsとのintersection=0。2022 endpoint待ち |
 | Consensus V47 | 🟡 P1 / formal raw BLOCKED | 84% | corrected H2 diagnostic opened、retune禁止 |
 | Canonical/Shadow endpoint integrity | 🟢 P1 | 93% | P0を直接unblockしない追加拡張は後回し |
-| OSS / Validation | 🟢 P1 | 99% | Class C解決。Class B2 corporate-domain gate実装済み、same-ZIP rerun queued |
+| OSS / Validation | 🟢 P1 | 99% | same-ZIP実測でcorporate 23件all-match / jpsps investment-fund 21件domain exclusion。summary semantics修正rerun待ち |
 | Cloud Monster exact forensic | ⚫ legacy/reference | 100% | exact model unavailable、参考枠保持 |
 
 ## 🎯 P0 — 5候補を脱落させず全期間比較
@@ -30,17 +30,21 @@ Actions run `34600083474` / artifact `10264251140` の preserved `v7_causal_tail
 - DUAL_TOP1: 140 / 280 / **0** / 0 / 0
 - DUAL+G3: 117 / 234 / **0** / 0 / 0
 
-したがって**凍結2023-2025 performance endpointへのOHLC直接欠損影響は5候補すべて0**。既知のOHLC ordering violation 797 rowsも5候補のentry/exit endpointへ1件も着地しない。receiptは `research/tentei_cloud/CORE_FIVE_CANDIDATE_ENDPOINT_COVERAGE_RECEIPT_20260916_2324.json`。これは2022/2026を開いた主張ではない。
-
-次P0: 2022 fresh-validationの凍結/recoverable causal rowsを回収し同じendpoint監査を実施。2026はSupervisorのdeterministic historical recovery条件を満たすまで開かない。
+したがって凍結2023-2025 performance endpointへのOHLC直接欠損影響は5候補すべて0。既知のOHLC ordering violation 797 rowsも5候補のentry/exit endpointへ1件も着地しない。次P0は2022 fresh-validation rows回収と同endpoint監査。2026はhistorical recovery条件を満たすまで開かない。
 
 ## Parallel
 実HEAD `5a5a22f138d6ebecdc5f172f00907ff06a1a2f41` はprocessed済みと一致。旧failed run 34998500020のcalendar/source receiptは再監査しない。source-grounded OHLC dispositionが得られるまでSTALE/P1、returns/performance未開封。今回も新SHAなしのためOSSへ再配分。
 
-## OSS EDINET — Class B2 corporate-domain gate implemented
-Class B2原因は `jpsps070000` investment-fund / multi-fund filingで確定済み。research-only `edinet_oss_crosscheck.py` に、accounting値・parser一致・performanceを一切見ず、ZIP内の `jpsps070000` + numbered component CSV identityだけで `OUT_OF_DOMAIN_MULTI_FUND_FILING` とするfail-closed gateをcommit `34c2dda798da5a22b59afe3595c542cfb7accb64` で実装した。
+## OSS EDINET — same-ZIP domain partition corrected
+run `35111074253` はSUCCESS、artifact `10452048515` / SHA-256 `79ed32fc372222e951af46ec0a94fbd818d53b12958945f143829c6a8cc06747` を回収した。ここで従来の期待値「41 corporate + 3 multi-fund」が誤りと判明した。
 
-同commitでsame-ZIP workflow run `35111074253` が起動し、23:49 JST時点はqueued。期待receiptは **41 corporate-domain docs all-match + 3 explicit out-of-domain exclusions**。3件をparser matchへ偽装せず、corporate comparability母数から明示除外する。runが異なる結果なら残差をfail-closed分類する。returns/performance未開封。
+凍結44 ZIPの実測は **23 corporate-domain docs all-match + 21 `jpsps070000` investment-fund-domain exclusions + corporate parser findings 0**。旧summaryはdomain exclusionを`AUDIT_FINDING`へ数えていたため、21件をparser findingのように表示していたが、これはsummary semanticsの問題。accounting値・parser一致・performanceではなくsource taxonomy identityだけでdomainを分ける。
+
+research-only修正:
+- `32af600c...`: domain statusを単一/複数fund共通の `OUT_OF_DOMAIN_INVESTMENT_FUND_FILING` に修正。multi-component有無はevidenceとして別記。
+- `1041fbc6...`: workflow summaryを `DOMAIN_EXCLUDED` とcorporate parser findingへ明示分離。corporate-domainだけfield statusを集計。
+
+この修正commitでsame-ZIP rerunを待つ。期待は **corporate 23 / all-match 23 / parser finding 0 / domain exclusion 21**。異なれば残差のみfail-closed。returns/performance未開封。
 
 ## Guardrails
 production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updater変更なし。新規performance cost0%、win=gross return>0、2026 report-only。retune禁止。exact-hour/activityはSEALED separate。

@@ -1,46 +1,89 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-16 13:00 JST  
+> **最終更新:** 2026-09-16 15:24 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
-**研究全体の進捗率: 約84%**
+**研究全体の進捗率: 約83%**
+
+> 比較対象をDUAL+G3単独から5候補へ拡張したため、完了済み作業が戻ったのではなくP0スコープ増加により84%→83%へ再計算。
 
 | タスク | 状態 | 進捗 | 現在地 / 完了条件 |
 |---|---|---:|---|
-| Weak+Early Phase-2 frozen検証 | 🟢 候補維持 | 100% | 2022単年warningだが2022 computable + 2023-25 aggregateはプラス。retune禁止 |
-| **DUAL+G3 2026 / 年別表** | 🔴 **P0** | 70% | frozen per-trade rowsのSHA pinまたはexact reproducer一致確認 → 2026を同条件で開く |
-| Parallel Wave-1 | 🟡 P1へ一時降格 | 78% | P0結果確定まで周辺監査を増やさない |
-| Core24 OHLCV completeness | 🟡 **P0 endpoint先行** | 97% | まずDUAL+G3 entry/exit O/C true-missing件数を確定。全市場監査はその後 |
-| Consensus V47 | 🟢 P1 / formal raw BLOCKED | 84% | P0結果確定までmonitoring優先度を下げる |
-| Canonical/Shadow endpoint integrity | 🟢 P1へ一時降格 | 93% | P0結果確定まで追加recovery拡張を止める |
+| Weak+Early Phase-2 frozen検証 | 🟢 凍結済み | 100% | 既開封結果をretuneしない |
+| **5候補 2022-2026 全期間比較** | 🔴 **P0** | **60%** | exact trade rowsまたはdeterministic reproducerで凍結結果再現 → 年別表 → 2026 report-only |
+| Parallel Wave-1 | 🟡 P1 | 78% | OHLC integrity issueは保持。P0比較中にperformanceを開かない |
+| Core24 OHLCV completeness | 🟡 **P0 endpoint補助** | 97% | 5候補のentry/exit O/C true-missing影響を照合 |
+| Consensus V47 | 🟡 P1 / formal raw BLOCKED | 84% | corrected H2 diagnostic opened。tail-dependent、同family retune禁止 |
+| Canonical/Shadow endpoint integrity | 🟢 P1 | 93% | P0比較を直接unblockしない追加拡張は後回し |
 | Core endpoint provenance | 🟡 source semantics確定 | 99% | independent raw execution/activity bytesのpin |
-| Cloud Monster exact forensic | ⚫ CLOSED | 100% | HISTORICAL_EXACT_REPRO_UNAVAILABLE |
-| OSS / Validation | 🟢 P1へ一時降格 | 98% | 27 findings source-grounded taxonomy |
+| Cloud Monster exact forensic | ⚫ legacy/reference | 100% | exact model unavailable。参考枠として保持 |
+| OSS / Validation | 🟢 P1 | 98% | EDINET 27 findings source-grounded taxonomy |
 | V20 Session-Impulse | ⚫ CLOSED | 100% | active queue外 |
 
-## 🎯 結果優先P0 — 13:00切替
-ユーザー向け成果物を次の3つに限定して最短で閉じる。
-1. **DUAL_TOP1_AGREEMENT + G3** の2026成績（5BD exit確定済みのみ、report-only）
-2. 同一凍結条件の **2022 / 2023 / 2024 / 2025 / 2026 年別表 + 2022-26 aggregate**（n/mean/median/win/+10/+20/-10/-20/max up/max down/Top3-ex）
-3. **OHLCV欠損のDUAL+G3 endpoint影響件数**を先に確定し、その後に全体missing ledgerを閉じる
+## 🎯 新P0 — 5候補を脱落させず全期間比較
 
-今回の具体的前進：既存の `tvfree-v13-frozen-2026` runnerを確認したが、これは `med_ret5<=0` + 4-feature rank の別V13ロジックであり、**DUAL+G3の代用には使えない**と確定。誤った2026数値を出す近道を排除した。次は、凍結済み2023-25 n117を生成したexact DUAL+G3 trade rowsをhistorical branch/Actions artifactから回収し、SHA pinする。回収不能なら凍結定義+preserved causal datasetからdeterministic reproducerを作り、**2023-25が n117 / mean+7.98% / median+1.74% / win53.85% / Top3-ex+5.14% に完全一致した場合のみ**2026を開く。
+ユーザー判断により、DUAL+G3だけを先に最終候補扱いする方針を撤回。  
+同じpreserved causal Weak+Early baseで凍結済みの以下5条件を、同じendpoint・cost契約で横並び比較する。
+
+1. **body_pct LOW**
+2. **volr20 LOW**
+3. **mean-rank(volr20, body_pct)**
+4. **DUAL_TOP1_AGREEMENT**
+5. **DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF**（`med_ret1 >= -1%`固定）
+
+変更禁止:
+- threshold
+- ranker / weight
+- G3 gate
+- signal period
+- endpoint
+- cost / win definition
+
+2022は既開封fresh robustness blockでありtuning禁止。2026はreport/robustness-only。
+
+### 凍結済みhistorical anchors
+
+| Candidate | 2022 computable | 2022 mean | 2023-25 n | 2023-25 mean | median | win | Top3-ex |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| body_pct LOW | n23 | +1.77% | 172 | +6.54% | +0.99% | 50.58% | +4.60% |
+| volr20 LOW | n23 | +1.95% | 172 | +6.33% | +1.06% | 51.74% | +4.38% |
+| mean-rank | n23 | +1.73% | 172 | +6.89% | +1.45% | 52.33% | +4.95% |
+| DUAL_TOP1 | n21 | +2.62% | 140 | +7.17% | +1.25% | 52.14% | +4.79% |
+| DUAL + G3 | n17 | +6.08% | 117 | +7.98% | +1.74% | 53.85% | +5.14% |
+
+### 完了条件
+
+まず過去artifact/branchからexact trade rowsを回収する。回収不能なら1本のdeterministic reproducerで5候補を再生成する。
+
+2026を開く前に、各候補について少なくとも既知の2022 computable blockと2023-25凍結結果が一致すること。historical trade rowsが回収できる場合は `signal_date + symbol + candidate` の完全一致を要求する。
+
+その後に同じコード・同じsourceで以下を生成する。
+
+- 2022 / 2023 / 2024 / 2025 / 2026
+- 2022-2026 aggregate
+- n / mean / median / win / +10 / +20 / -10 / -20 / max up / max down / Top1-ex / Top3-ex
+- exact entry/exit価格が固定できた場合のみ100株ずつの損益も参考値として併記
+
+**単年度マイナスだけでは脱落させない。** 全期間aggregateと年別安定性、中央値、勝率、Top3-ex、下方tailを合わせて比較する。
+
+## 参考枠 — 脱落ではなく正規化待ち
+
+- **Old Cloud Monster Priority A** — legacy n63 / mean +9.86%。exact probability model消失のためprimary表へは未投入。
+- **V29 fixed_min98_both** — target/populationが異なり、historical 350-name watchlist。exact replay可能になるまで参考。
+- **weak+early × V31 full-JPX** — historical結果は保持。April 2025依存が強いため、同一契約へのrow-level正規化まで参考。
+- **Consensus CAP1000_PIT** — corrected H2 run 34976174775はSUCCESSだがcoverage契約が別で、Top1/Top3-exでtail依存。Weak+Early 5候補の直接順位には混ぜない。
 
 ## Core24 OHLCV実数監査
-全市場のraw corpus確定を2026年次表の前提にしない。まずDUAL+G3全tradeの `next XTKS open` と `fifth XTKS close` に必要なO/Cだけを既存取得rawと照合し、true missingと影響tradeをreceipt化する。ここが0なら「年次performance endpointへのOHLCV直接影響0」を先に確定する。上場前/廃止後/売買停止等の正常no-dataとtrue missingは分離。exact-hour/activityは別項目SEALEDで、daily endpoint監査を止める理由にしない。
+endpoint影響監査もDUAL+G3だけでなく、5候補すべての `next XTKS open` / `fifth XTKS close` に必要なO/Cへ拡張する。true missingと正常no-dataを分離し、補間・synthetic barは禁止。
 
-## Phase-2 frozen順位 / ユーザー評価基準
-首位は **DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF**。G3 threshold `med_ret1>=-1%` は固定、結果を見たretuneは禁止。
-- 2023-25: n117 / mean +7.98% / median +1.74% / win 53.85% / +10 31.62% / +20 18.80% / -10 28.21% / -20 9.40% / Top3-ex +5.14%
-- 2022 fresh computable block: n17 / mean +6.08% / median -6.00% / win 29.41% / Top3-ex -6.26%
-- 2022 computable + 2023-25 aggregate: n134 / mean +7.74% / median +1.06% / win 50.75% / Top3-ex +5.17%
-
-## Core24 frozen PIT
-PIT membership receiptは固定済み：anchor 3,707 → target 3,834、476 replay events（listing134 / delisting261 / transfer81）、quarantine 0、membership SHA-256 `9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e`。
+## Coordination
+- multi-candidate frozen spec: `research/SUPERVISOR_MULTI_CANDIDATE_FULL_PERIOD_20260916.md`
+- Consensus branch new HEAD `28389b7be8f1a8c95720b844ce5ce72aaedae35c` は今回processed済み。
+- corrected CAP1000_PIT H2: run `34976174775` SUCCESS、formal raw promotion evidenceではなくdiagnosticのみ。
 
 ## Guardrails
-production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterは変更なし。新規performanceはcost 0%のみ、win=gross return>0。2026はreport/robustness-only。Phase-2 Round2 CLOSED。新規条件探索・retune禁止。
+production/main、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder/updaterは変更なし。新規performanceはcost 0%のみ、win=gross return>0。2026はreport/robustness-only。新規条件探索・retune禁止。
 
 ## GO / NO-GO
-**Phase-2研究候補は維持。production GOではなく研究継続。** 今は周辺研究より2026年次結果・年別表・endpoint OHLCV欠損実数を優先する。
+**研究継続 / production NO-GO。** 最終候補を1本へ絞る前に、凍結済み5候補の同一条件2022-2026比較を完了する。

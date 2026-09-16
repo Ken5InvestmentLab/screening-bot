@@ -37,9 +37,6 @@ FIELD_MAP = {
     "operating_cf": "operating_cash_flow",
 }
 
-# Net income is intentionally excluded from FIELD_MAP. edinet-tools 0.8.x keeps
-# total-basis and owners-of-parent income separate, so the comparison target must
-# be chosen from the custom source element semantics before values are compared.
 NET_INCOME_OSS_FIELD_BY_ELEMENT = {
     "jppfs_cor:ProfitLoss": "net_income_total",
     "jppfs_cor:ProfitLossAttributableToOwnersOfParent": "net_income_owners",
@@ -70,10 +67,12 @@ SHARE_PRIORITY_GROUPS = (
 
 
 def _corporate_domain_disposition(payload: bytes) -> dict[str, object]:
-    """Fail-close investment-fund/multi-fund filings before corporate comparison.
+    """Fail-close investment-fund filings before listed-company comparison.
 
-    This uses only source identity markers in the frozen ZIP. It never inspects
-    accounting values, parser agreement, or strategy outcomes.
+    jpsps070000 is source taxonomy identity for investment-fund securities
+    reports. The corporate-fundamental adapter must not collapse either a
+    single-fund or multi-fund jpsps filing into one listed-company row. This
+    classification uses no accounting values, parser agreement, or outcomes.
     """
     with zipfile.ZipFile(io.BytesIO(payload)) as zf:
         csv_names = [name for name in zf.namelist() if name.lower().endswith(".csv")]
@@ -81,19 +80,17 @@ def _corporate_domain_disposition(payload: bytes) -> dict[str, object]:
         jpsps = [name for name in basenames if "jpsps070000" in name]
         if not jpsps:
             return {"status": "CORPORATE_DOMAIN", "reason": None, "source_csv_count": len(csv_names)}
-        # jpsps070000 is the investment-fund securities-report taxonomy. A ZIP
-        # containing numbered financial-statement components must not be
-        # collapsed into one listed-company fundamental row.
         numbered_components = [
             name for name in jpsps
             if any(f"-{i:03d}_" in name for i in range(1, 1000))
         ]
         return {
-            "status": "OUT_OF_DOMAIN_MULTI_FUND_FILING",
-            "reason": "jpsps070000 investment-fund filing with numbered component CSVs",
+            "status": "OUT_OF_DOMAIN_INVESTMENT_FUND_FILING",
+            "reason": "jpsps070000 investment-fund securities-report taxonomy is outside listed-company fundamental domain",
             "source_csv_count": len(csv_names),
             "jpsps070000_csv_count": len(jpsps),
             "numbered_component_count": len(numbered_components),
+            "multi_component": len(numbered_components) > 1,
         }
 
 
@@ -116,7 +113,6 @@ def _values_match(left: float | None, right: float | None) -> bool | None:
 
 
 def _net_income_oss_field(element_id: Any) -> str | None:
-    """Return the semantically matching OSS net-income field, or fail closed."""
     element = str(element_id or "")
     if element in NET_INCOME_OSS_FIELD_BY_ELEMENT:
         return NET_INCOME_OSS_FIELD_BY_ELEMENT[element]
@@ -138,7 +134,6 @@ def _comparison(left: float | None, right: float | None) -> str:
 
 
 def _oss_issued_shares(raw_facts: list[Any]) -> dict[str, object]:
-    """Select issued shares from edinet-tools raw facts using the frozen semantic priority."""
     facts = []
     for fact in raw_facts:
         element_id = str(getattr(fact, "element_id", "") or "")
@@ -168,7 +163,6 @@ def _oss_issued_shares(raw_facts: list[Any]) -> dict[str, object]:
 
 
 def crosscheck_zip(payload: bytes, *, doc_id: str = "OSS-CROSSCHECK", doc_type_code: str = "120") -> dict[str, object]:
-    """Parse one corporate-domain ZIP twice and compare financial/source facts."""
     if str(doc_type_code) not in {"120", "130"}:
         raise ValueError("initial cross-check is restricted to securities reports 120/130")
 
@@ -186,7 +180,7 @@ def crosscheck_zip(payload: bytes, *, doc_id: str = "OSS-CROSSCHECK", doc_type_c
             "excluded_from_corporate_comparability": True,
             "outcome_data_opened": False,
             "availability_policy_changed": False,
-            "decision_rule": "Out-of-domain investment-fund filings are fail-closed and never collapsed into one corporate fundamental row.",
+            "decision_rule": "Investment-fund filings are explicit domain exclusions, not parser mismatches, and are never collapsed into a listed-company fundamental row.",
         }
 
     custom_frame = custom.read_xbrl_csv_zip(payload)

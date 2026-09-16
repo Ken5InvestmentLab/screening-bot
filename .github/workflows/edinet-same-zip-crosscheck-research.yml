@@ -90,9 +90,12 @@ jobs:
               doc_type = lock["doc_type_code_by_id"][doc_id]
               try:
                   result = crosscheck_zip((root / f"{doc_id}.zip").read_bytes(), doc_id=doc_id, doc_type_code=doc_type)
-                  status = "MATCH_ALL" if result["all_compared_fields_agree"] else "AUDIT_FINDING"
-                  for field, detail in result["comparisons"].items():
-                      field_status[f"{field}:{detail['status']}"] += 1
+                  if result.get("excluded_from_corporate_comparability"):
+                      status = "DOMAIN_EXCLUDED"
+                  else:
+                      status = "MATCH_ALL" if result["all_compared_fields_agree"] else "AUDIT_FINDING"
+                      for field, detail in result["comparisons"].items():
+                          field_status[f"{field}:{detail['status']}"] += 1
                   record = {"doc_id":doc_id,"doc_type_code":doc_type,"execution_status":status,"crosscheck":result}
               except Exception as exc:
                   record = {"doc_id":doc_id,"doc_type_code":doc_type,"execution_status":"CROSSCHECK_EXCEPTION_AUDIT_FINDING","exception_type":type(exc).__name__,"exception_message":str(exc)[:1000],"strategy_outcomes_opened":False}
@@ -100,8 +103,29 @@ jobs:
               results.append(record)
           exceptions=[r["doc_id"] for r in results if r["execution_status"]=="CROSSCHECK_EXCEPTION_AUDIT_FINDING"]
           findings=[r["doc_id"] for r in results if r["execution_status"]=="AUDIT_FINDING"]
+          exclusions=[r["doc_id"] for r in results if r["execution_status"]=="DOMAIN_EXCLUDED"]
           matches=[r["doc_id"] for r in results if r["execution_status"]=="MATCH_ALL"]
-          summary={"status":"AUDIT_COMPLETE_WITH_FINDINGS" if (exceptions or findings) else "AUDIT_COMPLETE_ALL_MATCH","primary_sample_documents":48,"parser_comparable_documents":44,"source_unavailable_documents":4,"completed_crosschecks":len(results)-len(exceptions),"crosscheck_exceptions":len(exceptions),"documents_with_parser_findings":len(findings),"documents_all_compared_fields_agree":len(matches),"exception_doc_ids":exceptions,"parser_finding_doc_ids":findings,"all_match_doc_ids":matches,"field_status_counts":dict(sorted(field_status.items())),"strategy_outcomes_opened":False,"selection_changed_after_parser_outputs":False,"no_replacement_rule":True,"decision_rule":"Mismatches, one-sided missing values, and parser exceptions are audit findings. Never choose a parser because it improves strategy performance."}
+          summary={
+            "status":"AUDIT_COMPLETE_WITH_FINDINGS" if (exceptions or findings) else "AUDIT_COMPLETE_CORPORATE_ALL_MATCH_WITH_DOMAIN_EXCLUSIONS",
+            "primary_sample_documents":48,
+            "frozen_zip_documents":44,
+            "source_unavailable_documents":4,
+            "corporate_domain_documents":len(matches)+len(findings),
+            "domain_excluded_documents":len(exclusions),
+            "completed_crosschecks":len(results)-len(exceptions),
+            "crosscheck_exceptions":len(exceptions),
+            "corporate_parser_finding_documents":len(findings),
+            "corporate_documents_all_compared_fields_agree":len(matches),
+            "exception_doc_ids":exceptions,
+            "corporate_parser_finding_doc_ids":findings,
+            "domain_excluded_doc_ids":exclusions,
+            "all_match_doc_ids":matches,
+            "field_status_counts_corporate_only":dict(sorted(field_status.items())),
+            "strategy_outcomes_opened":False,
+            "selection_changed_after_parser_outputs":False,
+            "no_replacement_rule":True,
+            "decision_rule":"Domain exclusions use source taxonomy identity only. Within corporate-domain documents, mismatches and exceptions are audit findings; never choose a parser because it improves strategy performance."
+          }
           (out_root / "crosscheck_summary.json").write_text(json.dumps(summary,ensure_ascii=False,indent=2,sort_keys=True)+"\n",encoding="utf-8")
           print(json.dumps(summary,ensure_ascii=False,indent=2,sort_keys=True))
           PY

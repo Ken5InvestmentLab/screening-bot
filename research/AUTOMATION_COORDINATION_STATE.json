@@ -1,21 +1,203 @@
 {
-  "version": 110,
+  "version": 111,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-16T12:11:00+09:00",
-  "supervisor_last_scan": {"status":"PHASE2_FULL_PERIOD_POSITIVE_RETAIN_CANDIDATE_PARALLEL_NEW_INTEGRITY_AUDIT","scanned_at_jst":"2026-09-16T08:57:00+09:00","coordination_contract_reconciled":true},
-  "scan_policy":{"cadence_target_minutes":12,"worker_slots_jst":["00","12","24","36","48"],"rule":"Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."},
-  "branches":{
-    "research/tvfree-canonical-batch02":{"preferred_worker":"canonical","last_seen_sha":"9fde775bac3449c5f5cf0cbbfc7babf9dc38ecfc","last_processed_sha":"9fde775bac3449c5f5cf0cbbfc7babf9dc38ecfc","task_state":"ACTIVE_OUTCOME_BLIND_APPEND_ONLY_RECOVERY_EVIDENCE_ADDED","next_action":"Wire recovery classifier + immutable recovery record into research-only resolver startup; add end-to-end crash simulation for sidecar-ahead interruption. No performance open."},
-    "research/tentei-cloud-mtf":{"preferred_worker":"core","last_seen_sha":"90982348435eb539ad98068101daad1e53f732f3","last_processed_sha":"90982348435eb539ad98068101daad1e53f732f3","task_state":"ACTIVE_OHLCV_COMPLETENESS_AUDIT_DAILY_RAW_NOT_ESTABLISHED_HOURLY_SEALED","next_action":"Locate/acquire and pin actual Core daily OHLCV raw artifacts; run O/H/L/C/V field-level audit against XTKS × PIT membership. Do not fabricate expected hourly keys; hourly remains sealed until independent activity raw bytes are acquired. Intersect confirmed missing rows with canonical trades and 2022-2026 DUAL+G3 endpoints."},
-    "research/consensus-atr-regime-gate":{"preferred_worker":"consensus","last_seen_sha":"7059322a1c85f9db87a035003490ecd1545aa565","last_processed_sha":"7059322a1c85f9db87a035003490ecd1545aa565","task_state":"CORRECTED_H2_DIAGNOSTIC_COMPLETE_FORMAL_RAW_BLOCKED_NO_RETUNE","next_action":"Formal raw acceptance/provenance only; no same-family retune."},
-    "research/oss-validation-tooling":{"preferred_worker":"oss-validation-via-48","last_seen_sha":"f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1","last_processed_sha":"f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1","task_state":"ACTIVE_EDINET_FINDINGS_DISPOSITION_POLICY_FROZEN","next_action":"Taxonomy 27 findings by source-grounded cause; unresolved fail-closed."},
-    "research/parallel-condition-exploration":{"preferred_worker":"cross-lane-via-48","last_seen_sha":"5a5a22f138d6ebecdc5f172f00907ff06a1a2f41","last_processed_sha":"5a5a22f138d6ebecdc5f172f00907ff06a1a2f41","task_state":"ACTIVE_OUTCOME_BLIND_OHLC_INTEGRITY_AUDIT_ADDED","next_action":"Run/freeze OHLC integrity receipt; classify source-generation cause and preregister fail-closed disposition before causal ledger rerun. Do not silently repair/drop rows; performance remains sealed."}
+  "updated_at_jst": "2026-09-16T15:24:00+09:00",
+  "supervisor_last_scan": {
+    "status": "PHASE2_FIVE_CANDIDATE_FULL_PERIOD_COMPARISON_FROZEN",
+    "scanned_at_jst": "2026-09-16T15:24:00+09:00",
+    "coordination_contract_reconciled": true,
+    "spec": "research/SUPERVISOR_MULTI_CANDIDATE_FULL_PERIOD_20260916.md"
   },
-  "guardrails":["Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.","2026 outcome is report/robustness-only.","Canonical endpoint is next XTKS open to fifth XTKS close.","All new performance uses transaction cost 0%; win = gross return > 0.","No post-hoc rescue retuning.","A single-year robustness failure is not automatic rejection if the frozen full-period aggregate remains profitable."],
-  "workflow_watch":{"weak_early_phase2":{"task_state":"FROZEN_CANDIDATE_RETAINED_FULL_PERIOD_POSITIVE","performance_opened":true,"retune_allowed":false},"parallel_wave1":{"task_state":"ACTIVE_OUTCOME_BLIND_OHLC_INTEGRITY_AUDIT_ADDED","performance_opened":false,"latest_sha":"5a5a22f138d6ebecdc5f172f00907ff06a1a2f41","prior_failed_run_id":34998500020,"prior_failed_step":8},"oss_validation":{"task_state":"ACTIVE_EDINET_FINDINGS_DISPOSITION_POLICY_FROZEN","performance_opened":false},"consensus_v47":{"task_state":"CORRECTED_H2_DIAGNOSTIC_COMPLETE_FORMAL_RAW_BLOCKED_NO_RETUNE","performance_opened":true,"retune_allowed":false},"canonical_shadow":{"task_state":"ACTIVE_OUTCOME_BLIND_APPEND_ONLY_RECOVERY_EVIDENCE_ADDED","performance_opened":false},"core":{"task_state":"ACTIVE_OHLCV_COMPLETENESS_AUDIT_DAILY_RAW_NOT_ESTABLISHED_HOURLY_SEALED","performance_opened":false,"missing_zero_claim":false,"daily_missing_count":null,"hourly_missing_count":null,"daily_raw_evidence":"NOT_YET_ESTABLISHED_FOR_EXHAUSTIVE_AUDIT","hourly_activity_evidence":"NOT_ACQUIRED_SEALED","anchor_count":3707,"target_count":3834,"membership_sha256":"9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e","replay_event_counts":{"listing":134,"delisting":261,"transfer":81,"total":476},"quarantine_count":0},"cloud_exact_forensic":{"task_state":"CLOSED"},"v20_session_impulse":{"task_state":"CLOSED"}},
-  "progress":{"overall_pct":84,"weak_early_phase2_pct":100,"parallel_wave1_pct":78,"core24_ohlcv_pct":97,"consensus_v47_pct":84,"canonical_shadow_pct":93,"core_endpoint_provenance_pct":99,"cloud_exact_forensic_pct":100,"oss_validation_pct":98,"v20_pct":100},
-  "heartbeat":{"checked_at_jst":"2026-09-16T12:11:00+09:00","supervisor":"enabled; last 08:57 JST","canonical":"enabled; current 12:11 JST","core":"enabled; last 09:24 JST","consensus":"enabled; last 08:35 JST","oss_parallel":"enabled; last 08:49 JST","stale_over_90m":[]},
-  "phase2_frozen":{"leader":"DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF","period_2023_2025":{"n":117,"mean_pct":7.98,"median_pct":1.74,"win_pct":53.85,"top3_ex_mean_pct":5.14},"fresh_2022":{"n":17,"mean_pct":6.08,"median_pct":-6.00,"win_pct":29.41,"top3_ex_mean_pct":-6.26,"status":"ROBUSTNESS_WARNING_NOT_AUTOMATIC_REJECTION"},"combined_2022_computable_plus_2023_2025":{"n":134,"mean_pct":7.74,"median_pct":1.06,"win_pct":50.75,"top3_ex_mean_pct":5.17,"status":"POSITIVE_FULL_PERIOD_AGGREGATE_CANDIDATE_RETAINED"},"regime_round2":"CLOSED","retune_allowed":false},
-  "next_global_actions":["Phase2: preserve frozen DUAL+G3; extend combined table with +10/+20/-10/-20/max up/down from the same frozen rows if available, without retune.","Parallel: run/freeze outcome-blind OHLC integrity receipt and source-grounded disposition before ledger rerun.","Core24: empirical OHLCV completeness audit from acquired raw only; daily raw corpus must be pinned before counts, exact-hour remains sealed pending independent activity bytes.","Canonical: wire append-only recovery evidence into resolver startup + end-to-end crash regression; performance sealed.","OSS: EDINET 27 findings taxonomy.","Consensus: formal raw path only."],
-  "go_no_go":"PHASE2_CANDIDATE_RETAINED_RESEARCH_CONTINUES_NOT_PRODUCTION_GO"
+  "scan_policy": {
+    "cadence_target_minutes": 12,
+    "worker_slots_jst": [
+      "00",
+      "12",
+      "24",
+      "36",
+      "48"
+    ],
+    "rule": "Do not duplicate processed SHA. Separate automation heartbeat from task-level progress. External-wait lanes must not consume the whole run when another safe pending task exists."
+  },
+  "branches": {
+    "research/tvfree-canonical-batch02": {
+      "preferred_worker": "canonical",
+      "last_seen_sha": "9fde775bac3449c5f5cf0cbbfc7babf9dc38ecfc",
+      "last_processed_sha": "9fde775bac3449c5f5cf0cbbfc7babf9dc38ecfc",
+      "task_state": "ACTIVE_OUTCOME_BLIND_APPEND_ONLY_RECOVERY_EVIDENCE_ADDED",
+      "next_action": "Wire recovery classifier + immutable recovery record into research-only resolver startup; add end-to-end crash simulation for sidecar-ahead interruption. No performance open."
+    },
+    "research/tentei-cloud-mtf": {
+      "preferred_worker": "core",
+      "last_seen_sha": "90982348435eb539ad98068101daad1e53f732f3",
+      "last_processed_sha": "90982348435eb539ad98068101daad1e53f732f3",
+      "task_state": "ACTIVE_OHLCV_COMPLETENESS_AUDIT_DAILY_RAW_NOT_ESTABLISHED_HOURLY_SEALED",
+      "next_action": "Locate/acquire and pin actual Core daily OHLCV raw artifacts; run O/H/L/C/V field-level audit against XTKS × PIT membership. Do not fabricate expected hourly keys; hourly remains sealed until independent activity raw bytes are acquired. Intersect confirmed missing rows with canonical trades and 2022-2026 DUAL+G3 endpoints."
+    },
+    "research/consensus-atr-regime-gate": {
+      "preferred_worker": "consensus",
+      "last_seen_sha": "28389b7be8f1a8c95720b844ce5ce72aaedae35c",
+      "last_processed_sha": "28389b7be8f1a8c95720b844ce5ce72aaedae35c",
+      "task_state": "CORRECTED_H2_DIAGNOSTIC_OPENED_TAIL_DEPENDENT_FORMAL_RAW_BLOCKED_NO_RETUNE",
+      "next_action": "Formal raw acceptance/provenance only; no same-family retune."
+    },
+    "research/oss-validation-tooling": {
+      "preferred_worker": "oss-validation-via-48",
+      "last_seen_sha": "f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1",
+      "last_processed_sha": "f423b5d7178f6fd0dfedc3249dd293ffb9abfbc1",
+      "task_state": "ACTIVE_EDINET_FINDINGS_DISPOSITION_POLICY_FROZEN",
+      "next_action": "Taxonomy 27 findings by source-grounded cause; unresolved fail-closed."
+    },
+    "research/parallel-condition-exploration": {
+      "preferred_worker": "cross-lane-via-48",
+      "last_seen_sha": "5a5a22f138d6ebecdc5f172f00907ff06a1a2f41",
+      "last_processed_sha": "5a5a22f138d6ebecdc5f172f00907ff06a1a2f41",
+      "task_state": "ACTIVE_OUTCOME_BLIND_OHLC_INTEGRITY_AUDIT_ADDED",
+      "next_action": "Run/freeze OHLC integrity receipt; classify source-generation cause and preregister fail-closed disposition before causal ledger rerun. Do not silently repair/drop rows; performance remains sealed."
+    }
+  },
+  "guardrails": [
+    "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
+    "2026 outcome is report/robustness-only.",
+    "Canonical endpoint is next XTKS open to fifth XTKS close.",
+    "All new performance uses transaction cost 0%; win = gross return > 0.",
+    "No post-hoc rescue retuning.",
+    "A single-year robustness failure is not automatic rejection if the frozen full-period aggregate remains profitable."
+  ],
+  "workflow_watch": {
+    "weak_early_phase2": {
+      "task_state": "FROZEN_FIVE_CANDIDATE_FULL_PERIOD_COMPARISON_P0",
+      "performance_opened": true,
+      "retune_allowed": false
+    },
+    "parallel_wave1": {
+      "task_state": "ACTIVE_OUTCOME_BLIND_OHLC_INTEGRITY_AUDIT_ADDED",
+      "performance_opened": false,
+      "latest_sha": "5a5a22f138d6ebecdc5f172f00907ff06a1a2f41",
+      "prior_failed_run_id": 34998500020,
+      "prior_failed_step": 8
+    },
+    "oss_validation": {
+      "task_state": "ACTIVE_EDINET_FINDINGS_DISPOSITION_POLICY_FROZEN",
+      "performance_opened": false
+    },
+    "consensus_v47": {
+      "task_state": "CORRECTED_H2_DIAGNOSTIC_OPENED_TAIL_DEPENDENT_FORMAL_RAW_BLOCKED_NO_RETUNE",
+      "performance_opened": true,
+      "retune_allowed": false
+    },
+    "canonical_shadow": {
+      "task_state": "ACTIVE_OUTCOME_BLIND_APPEND_ONLY_RECOVERY_EVIDENCE_ADDED",
+      "performance_opened": false
+    },
+    "core": {
+      "task_state": "ACTIVE_OHLCV_COMPLETENESS_AUDIT_DAILY_RAW_NOT_ESTABLISHED_HOURLY_SEALED",
+      "performance_opened": false,
+      "missing_zero_claim": false,
+      "daily_missing_count": null,
+      "hourly_missing_count": null,
+      "daily_raw_evidence": "NOT_YET_ESTABLISHED_FOR_EXHAUSTIVE_AUDIT",
+      "hourly_activity_evidence": "NOT_ACQUIRED_SEALED",
+      "anchor_count": 3707,
+      "target_count": 3834,
+      "membership_sha256": "9f54f11242b0c6b510de44b3b9adc900a9892d43ed084b70b9d9eda1cec1332e",
+      "replay_event_counts": {
+        "listing": 134,
+        "delisting": 261,
+        "transfer": 81,
+        "total": 476
+      },
+      "quarantine_count": 0
+    },
+    "cloud_exact_forensic": {
+      "task_state": "CLOSED"
+    },
+    "v20_session_impulse": {
+      "task_state": "CLOSED"
+    }
+  },
+  "progress": {
+    "overall_pct": 83,
+    "weak_early_phase2_pct": 100,
+    "parallel_wave1_pct": 78,
+    "core24_ohlcv_pct": 97,
+    "consensus_v47_pct": 84,
+    "canonical_shadow_pct": 93,
+    "core_endpoint_provenance_pct": 99,
+    "cloud_exact_forensic_pct": 100,
+    "oss_validation_pct": 98,
+    "v20_pct": 100,
+    "phase2_multi_candidate_full_period_pct": 60
+  },
+  "heartbeat": {
+    "checked_at_jst": "2026-09-16T15:24:00+09:00",
+    "supervisor": "enabled; last 08:57 JST",
+    "canonical": "enabled; current 12:11 JST",
+    "core": "enabled; last 09:24 JST",
+    "consensus": "enabled; last 08:35 JST",
+    "oss_parallel": "enabled; last 08:49 JST",
+    "stale_over_90m": []
+  },
+  "phase2_frozen": {
+    "leader": "DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF",
+    "period_2023_2025": {
+      "n": 117,
+      "mean_pct": 7.98,
+      "median_pct": 1.74,
+      "win_pct": 53.85,
+      "top3_ex_mean_pct": 5.14
+    },
+    "fresh_2022": {
+      "n": 17,
+      "mean_pct": 6.08,
+      "median_pct": -6,
+      "win_pct": 29.41,
+      "top3_ex_mean_pct": -6.26,
+      "status": "ROBUSTNESS_WARNING_NOT_AUTOMATIC_REJECTION"
+    },
+    "combined_2022_computable_plus_2023_2025": {
+      "n": 134,
+      "mean_pct": 7.74,
+      "median_pct": 1.06,
+      "win_pct": 50.75,
+      "top3_ex_mean_pct": 5.17,
+      "status": "POSITIVE_FULL_PERIOD_AGGREGATE_CANDIDATE_RETAINED"
+    },
+    "regime_round2": "CLOSED",
+    "retune_allowed": false
+  },
+  "next_global_actions": [
+    "P0 Phase2: recover exact trade rows or deterministic reproducer for all five frozen primary candidates; require historical anchor match before opening 2026.",
+    "P0 Phase2: produce candidate x year 2022/2023/2024/2025/2026 + aggregate table at cost0 with n/mean/median/win/+10/+20/-10/-20/max up/max down/Top1-ex/Top3-ex; 2026 report-only.",
+    "P0 Core24: intersect true-missing endpoint O/C rows with all five primary candidate ledgers, not DUAL+G3 only.",
+    "Parallel: keep integrity work P1 while multi-candidate result P0 is unresolved; no performance open.",
+    "OSS: EDINET 27 findings taxonomy remains P1; unresolved fail-closed.",
+    "Consensus: corrected H2 diagnostic is opened/tail-dependent; formal raw path only, no retune."
+  ],
+  "go_no_go": "FIVE_CANDIDATE_FULL_PERIOD_COMPARISON_FROZEN_RESEARCH_CONTINUES_NOT_PRODUCTION_GO",
+  "phase2_comparison_pool": {
+    "status": "FROZEN_PRIMARY_POOL_NO_RETUNE",
+    "candidates": [
+      "body_pct LOW",
+      "volr20 LOW",
+      "mean-rank(volr20, body_pct)",
+      "DUAL_TOP1_AGREEMENT",
+      "DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"
+    ],
+    "common_endpoint": "next XTKS open -> fifth XTKS close",
+    "transaction_cost_pct": 0,
+    "win_definition": "gross return > 0",
+    "year_policy": {
+      "2022": "fresh/opened computable robustness block; no tuning",
+      "2026": "report/robustness-only",
+      "2023_2025": "frozen historical anchors"
+    },
+    "exact_recovery_required_before_2026": true,
+    "reference_only_retained": [
+      "Old Cloud Monster Priority A",
+      "V29 fixed_min98_both",
+      "weak+early x V31 full-JPX",
+      "Consensus CAP1000_PIT"
+    ]
+  }
 }

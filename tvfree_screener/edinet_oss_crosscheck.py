@@ -32,9 +32,21 @@ FIELD_MAP = {
     "equity": "net_assets_total",
     "revenue": "net_sales",
     "operating_income": "operating_income",
-    "net_income": "net_income_owners",
     "operating_cf": "operating_cash_flow",
 }
+
+# Net income is intentionally excluded from FIELD_MAP. edinet-tools 0.8.x keeps
+# total-basis and owners-of-parent income separate, so the comparison target must
+# be chosen from the custom source element semantics before values are compared.
+NET_INCOME_OSS_FIELD_BY_ELEMENT = {
+    "jppfs_cor:ProfitLoss": "net_income_total",
+    "jppfs_cor:ProfitLossAttributableToOwnersOfParent": "net_income_owners",
+}
+OWNERS_NET_INCOME_ELEMENT_SUFFIXES = (
+    "ProfitLossAttributableToOwnersOfParent",
+    "ProfitLossAttributableToOwnersOfParentIFRS",
+    "ProfitLossAttributableToOwnersOfParentUSGAAP",
+)
 
 SHARE_ELEMENTS = (
     "jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults",
@@ -43,9 +55,7 @@ SHARE_ELEMENTS = (
 )
 
 SHARE_PRIORITY_GROUPS = (
-    (
-        ("jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults", "CurrentYear"),
-    ),
+    (("jpcrp_cor:TotalNumberOfIssuedSharesSummaryOfBusinessResults", "CurrentYear"),),
     (
         ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfSharesEtc", "CurrentYear"),
         ("jpcrp_cor:NumberOfIssuedSharesAsOfFiscalYearEndIssuedSharesTotalNumberOfShares", "CurrentYear"),
@@ -75,16 +85,30 @@ def _values_match(left: float | None, right: float | None) -> bool | None:
     return bool(np.isclose(left, right, rtol=1e-9, atol=0.5))
 
 
+def _net_income_oss_field(element_id: Any) -> str | None:
+    """Return the semantically matching OSS net-income field, or fail closed."""
+    element = str(element_id or "")
+    if element in NET_INCOME_OSS_FIELD_BY_ELEMENT:
+        return NET_INCOME_OSS_FIELD_BY_ELEMENT[element]
+    local_name = element.split(":", 1)[-1]
+    if any(local_name.endswith(suffix) for suffix in OWNERS_NET_INCOME_ELEMENT_SUFFIXES):
+        return "net_income_owners"
+    return None
+
+
+def _comparison(left: float | None, right: float | None) -> str:
+    match = _values_match(left, right)
+    if match:
+        return "MATCH" if left is not None else "BOTH_MISSING"
+    if left is None:
+        return "CUSTOM_MISSING_OSS_VALUE"
+    if right is None:
+        return "OSS_MISSING_CUSTOM_VALUE"
+    return "VALUE_MISMATCH"
+
+
 def _oss_issued_shares(raw_facts: list[Any]) -> dict[str, object]:
-    """Select issued shares from edinet-tools raw facts using the frozen semantic priority.
-
-    Priority:
-    1) summary-table issued shares at CurrentYear;
-    2) fiscal-year-end issued shares at CurrentYear;
-    3) fiscal-year-end issued shares at FilingDateInstant.
-
-    Conflicting values inside one priority group fail closed.
-    """
+    """Select issued shares from edinet-tools raw facts using the frozen semantic priority."""
     facts = []
     for fact in raw_facts:
         element_id = str(getattr(fact, "element_id", "") or "")
@@ -98,74 +122,37 @@ def _oss_issued_shares(raw_facts: list[Any]) -> dict[str, object]:
 
     for group in SHARE_PRIORITY_GROUPS:
         eligible = [
-            item
-            for item in facts
-            if any(
-                item[1] == allowed_element and item[2].startswith(context_prefix)
-                for allowed_element, context_prefix in group
-            )
+            item for item in facts
+            if any(item[1] == allowed_element and item[2].startswith(context_prefix)
+                   for allowed_element, context_prefix in group)
         ]
         if not eligible:
             continue
         values = {item[3] for item in eligible}
         if len(values) != 1:
-            return {
-                "value": None,
-                "status": "ambiguous",
-                "element_id": None,
-                "context_id": None,
-            }
+            return {"value": None, "status": "ambiguous", "element_id": None, "context_id": None}
         chosen = eligible[0]
-        return {
-            "value": chosen[3],
-            "status": "ok",
-            "element_id": chosen[1],
-            "context_id": chosen[2],
-        }
+        return {"value": chosen[3], "status": "ok", "element_id": chosen[1], "context_id": chosen[2]}
 
-    return {
-        "value": None,
-        "status": "missing",
-        "element_id": None,
-        "context_id": None,
-    }
+    return {"value": None, "status": "missing", "element_id": None, "context_id": None}
 
 
-def crosscheck_zip(
-    payload: bytes,
-    *,
-    doc_id: str = "OSS-CROSSCHECK",
-    doc_type_code: str = "120",
-) -> dict[str, object]:
+def crosscheck_zip(payload: bytes, *, doc_id: str = "OSS-CROSSCHECK", doc_type_code: str = "120") -> dict[str, object]:
     """Parse one ZIP twice and compare financial/source facts."""
     if str(doc_type_code) not in {"120", "130"}:
         raise ValueError("initial cross-check is restricted to securities reports 120/130")
 
     custom_frame = custom.read_xbrl_csv_zip(payload)
     custom_facts = custom.extract_standard_facts(custom_frame)
-
     oss_csv_files = extract_csv_from_zip(payload)
     if not oss_csv_files:
         raise ValueError("edinet-tools extracted no CSV files from ZIP")
-    report = parse_securities_report(
-        csv_files=oss_csv_files,
-        doc_id=str(doc_id),
-        doc_type_code=str(doc_type_code),
-    )
+    report = parse_securities_report(csv_files=oss_csv_files, doc_id=str(doc_id), doc_type_code=str(doc_type_code))
 
     comparisons: dict[str, dict[str, object]] = {}
     for custom_name, oss_name in FIELD_MAP.items():
         left = _number(custom_facts.get(custom_name))
         right = _number(getattr(report, oss_name, None))
-        match = _values_match(left, right)
-        if match:
-            status = "MATCH" if left is not None else "BOTH_MISSING"
-        elif left is None:
-            status = "CUSTOM_MISSING_OSS_VALUE"
-        elif right is None:
-            status = "OSS_MISSING_CUSTOM_VALUE"
-        else:
-            status = "VALUE_MISMATCH"
         comparisons[custom_name] = {
             "custom_value": left,
             "custom_status": custom_facts.get(f"{custom_name}_status"),
@@ -173,8 +160,29 @@ def crosscheck_zip(
             "custom_context_id": custom_facts.get(f"{custom_name}_context_id"),
             "oss_field": oss_name,
             "oss_value": right,
-            "status": status,
+            "status": _comparison(left, right),
         }
+
+    # Basis-aware, source-semantic net-income comparison. Unknown elements are
+    # an audit finding, never guessed/coalesced across ownership bases.
+    net_element = custom_facts.get("net_income_element_id")
+    net_oss_name = _net_income_oss_field(net_element)
+    net_left = _number(custom_facts.get("net_income"))
+    if net_oss_name is None and net_left is not None:
+        net_right = None
+        net_status = "UNCLASSIFIED_NET_INCOME_BASIS"
+    else:
+        net_right = _number(getattr(report, net_oss_name, None)) if net_oss_name else None
+        net_status = _comparison(net_left, net_right)
+    comparisons["net_income"] = {
+        "custom_value": net_left,
+        "custom_status": custom_facts.get("net_income_status"),
+        "custom_element_id": net_element,
+        "custom_context_id": custom_facts.get("net_income_context_id"),
+        "oss_field": net_oss_name,
+        "oss_value": net_right,
+        "status": net_status,
+    }
 
     custom_shares = {
         "value": _number(custom_facts.get("shares_outstanding")),
@@ -183,18 +191,6 @@ def crosscheck_zip(
         "context_id": custom_facts.get("shares_outstanding_context_id"),
     }
     oss_shares = _oss_issued_shares(report.raw_facts)
-    shares_match = _values_match(
-        _number(custom_shares["value"]),
-        _number(oss_shares["value"]),
-    )
-    if shares_match:
-        share_status = "MATCH" if custom_shares["value"] is not None else "BOTH_MISSING"
-    elif custom_shares["value"] is None:
-        share_status = "CUSTOM_MISSING_OSS_VALUE"
-    elif oss_shares["value"] is None:
-        share_status = "OSS_MISSING_CUSTOM_VALUE"
-    else:
-        share_status = "VALUE_MISMATCH"
     comparisons["shares_outstanding"] = {
         "custom_value": custom_shares["value"],
         "custom_status": custom_shares["status"],
@@ -204,18 +200,13 @@ def crosscheck_zip(
         "oss_status": oss_shares["status"],
         "oss_element_id": oss_shares["element_id"],
         "oss_context_id": oss_shares["context_id"],
-        "status": share_status,
+        "status": _comparison(_number(custom_shares["value"]), _number(oss_shares["value"])),
     }
 
-    mismatch_fields = [
-        name
-        for name, comparison in comparisons.items()
-        if comparison["status"] not in {"MATCH", "BOTH_MISSING"}
-    ]
-    oss_flags = [
-        flag.to_dict() if hasattr(flag, "to_dict") else str(flag)
-        for flag in getattr(report, "extraction_flags", [])
-    ]
+    mismatch_fields = [name for name, comparison in comparisons.items()
+                       if comparison["status"] not in {"MATCH", "BOTH_MISSING"}]
+    oss_flags = [flag.to_dict() if hasattr(flag, "to_dict") else str(flag)
+                 for flag in getattr(report, "extraction_flags", [])]
     return {
         "doc_id": str(doc_id),
         "doc_type_code": str(doc_type_code),
@@ -227,10 +218,7 @@ def crosscheck_zip(
         "oss_extraction_flags": oss_flags,
         "outcome_data_opened": False,
         "availability_policy_changed": False,
-        "decision_rule": (
-            "Parser disagreement is an audit finding only. Never choose a value "
-            "because it improves strategy performance."
-        ),
+        "decision_rule": "Parser disagreement is an audit finding only. Never choose a value because it improves strategy performance.",
     }
 
 
@@ -241,15 +229,10 @@ def main() -> None:
     p.add_argument("--doc-type-code", default="120")
     p.add_argument("--output", required=True)
     a = p.parse_args()
-
-    payload = Path(a.zip).read_bytes()
-    result = crosscheck_zip(payload, doc_id=a.doc_id, doc_type_code=a.doc_type_code)
+    result = crosscheck_zip(Path(a.zip).read_bytes(), doc_id=a.doc_id, doc_type_code=a.doc_type_code)
     out = Path(a.output)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(
-        json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n",
-        encoding="utf-8",
-    )
+    out.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True, default=str) + "\n", encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True, default=str))
 
 

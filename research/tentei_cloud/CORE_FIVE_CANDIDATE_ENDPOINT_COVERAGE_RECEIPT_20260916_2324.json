@@ -1,0 +1,35 @@
+{
+  "status": "FIVE_FROZEN_2023_2025_ENDPOINTS_COVERED_ZERO_TRUE_MISSING",
+  "generated_at_jst": "2026-09-16T23:24:00+09:00",
+  "contract": "signal T -> next observed XTKS session open -> frozen target_end_date fifth-session close; transaction cost 0%",
+  "source_evidence": {
+    "daily_artifact_id": 10264205130,
+    "daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "tail_cache_run_id": 34600083474,
+    "tail_cache_artifact_id": 10264251140,
+    "tail_cache_artifact_digest": "sha256:2f67833af2881754336c8f92cbf463ddf1cb995bd0fc808a962479d1bfd44198",
+    "tail_cache_csv_sha256": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+    "tail_cache_rows": 1306,
+    "period": "2023-01-01..2025-12-31"
+  },
+  "deterministic_recovery": {
+    "common_gate": "med_ret5 <= 0 AND ret10 <= 0.5735294117647058",
+    "body_pct_LOW": "per-date minimum body_pct; tie-break tail_p descending",
+    "volr20_LOW": "per-date minimum volr20; tie-break tail_p descending",
+    "mean_rank": "per-date ascending ordinal ranks of body_pct and volr20, minimize arithmetic mean; tie-break tail_p descending",
+    "DUAL_TOP1_AGREEMENT": "body_pct LOW symbol == volr20 LOW symbol",
+    "DUAL_G3": "DUAL_TOP1_AGREEMENT AND med_ret1 >= -0.01",
+    "anchor_match": "exact n/mean/median/win matched frozen Phase2 2023-2025 summaries for all five candidates"
+  },
+  "coverage": {
+    "body_pct LOW": {"trades":172,"by_year":{"2023":50,"2024":78,"2025":44},"required_oc_fields":344,"true_missing_fields":0,"affected_trades":0,"ohlc_order_invalid_endpoint_rows":0},
+    "volr20 LOW": {"trades":172,"by_year":{"2023":50,"2024":78,"2025":44},"required_oc_fields":344,"true_missing_fields":0,"affected_trades":0,"ohlc_order_invalid_endpoint_rows":0},
+    "mean-rank(volr20, body_pct)": {"trades":172,"by_year":{"2023":50,"2024":78,"2025":44},"required_oc_fields":344,"true_missing_fields":0,"affected_trades":0,"ohlc_order_invalid_endpoint_rows":0},
+    "DUAL_TOP1_AGREEMENT": {"trades":140,"by_year":{"2023":46,"2024":57,"2025":37},"required_oc_fields":280,"true_missing_fields":0,"affected_trades":0,"ohlc_order_invalid_endpoint_rows":0},
+    "DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF": {"trades":117,"by_year":{"2023":36,"2024":47,"2025":34},"required_oc_fields":234,"true_missing_fields":0,"affected_trades":0,"ohlc_order_invalid_endpoint_rows":0}
+  },
+  "missing_symbol_date_field_ledger": [],
+  "performance_impact": "For frozen 2023-2025 historical anchors, direct endpoint O/C missing impact is zero for all five candidates. The known 797 corpus OHLC-order-invalid rows do not intersect any of these entry/exit endpoint rows.",
+  "scope_limits": "This receipt does not open 2026 and does not claim 2022 coverage. 2022 fresh block requires its frozen/recoverable causal candidate rows. exact-hour/activity remains SEALED_SEPARATE.",
+  "guardrails": {"production_writes":false,"surrogate_logic":false,"silent_repair":false,"2026_opened":false}
+}

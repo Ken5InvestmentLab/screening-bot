@@ -22,7 +22,7 @@ Recovered one-sided row counts:
 | `operating_income:CUSTOM_MISSING_OSS_VALUE` | 3 | 3 |
 | **Total** | **33** | **27 unique docs** |
 
-The three custom-missing documents are `S100QF0X`, `S100RWZI`, and `S100UXL5`; each contributes the same three fields (assets/equity/operating_income). The 24 net-income findings occur on 24 other documents, so the two groups partition the frozen 27-document denominator.
+The three custom-missing documents are `S100QF0X`, `S100RWZI`, and `S100UXL5`; each contributes the same three one-sided fields (assets/equity/operating_income). The 24 net-income findings occur on 24 other documents, so the two groups partition the frozen 27-document denominator.
 
 ## Source-grounded taxonomy progress
 
@@ -44,6 +44,22 @@ The recovered receipts show exactly three documents (`S100QF0X`, `S100RWZI`, `S1
 
 This is not an alias omission: the custom side did not report `missing`; it reported `ambiguous`. Therefore these rows are classified as **context/member selection ambiguity**. No OSS value is accepted merely because it is present. Resolution requires inspecting the same-ZIP XBRL contexts/members and preregistering a deterministic context-selection rule or retaining ambiguity. Until then all 9 rows remain fail-closed.
 
+#### Class B1 — document-level correlated ambiguity signature
+
+**Disposition: SOURCE-RECEIPT-GROUNDED / NARROWED / STILL UNRESOLVED_FAIL_CLOSED.**
+
+Direct inspection of the frozen per-document receipts shows an identical cross-field signature in all three Class B documents, not three independent field-specific failures:
+
+| doc_id | assets | equity | operating_income | net_income | OSS values present for one-sided fields |
+|---|---|---|---|---|---|
+| `S100QF0X` | custom `ambiguous` | custom `ambiguous` | custom `ambiguous` | custom `ambiguous`, OSS null (`BOTH_MISSING`) | assets `8,028,504,889`; equity `7,978,470,707`; op income `-375,135,451` |
+| `S100RWZI` | custom `ambiguous` | custom `ambiguous` | custom `ambiguous` | custom `ambiguous`, OSS null (`BOTH_MISSING`) | assets `2,274,610,761`; equity `2,187,481,293`; op income `-142,493,605` |
+| `S100UXL5` | custom `ambiguous` | custom `ambiguous` | custom `ambiguous` | custom `ambiguous`, OSS null (`BOTH_MISSING`) | assets `3,684,568,452`; equity `3,676,944,688`; op income `236,382,778` |
+
+In the same receipts, revenue and operating cash flow are reported by the custom parser as `missing`, not `ambiguous`. This distinction matters: the ambiguity spans both instant-type balance-sheet fields (assets/equity) and duration-type income fields (operating_income/net_income), while unrelated absent fields retain `missing` status. The safest current interpretation is therefore **document-level context/member collision affecting multiple mapped concepts**, rather than a missing concept alias or a single-field extractor defect.
+
+This narrows the next source inspection: enumerate candidate contexts/members for these four ambiguous mapped concepts in each of the three frozen source ZIPs and test whether one deterministic context preference resolves all mapped concepts consistently. Do not accept the OSS values, and do not add a field-specific alias, until that source-XBRL check is complete. The 9 one-sided rows plus the three `BOTH_MISSING` net-income ambiguity observations remain fail-closed.
+
 ### Class C — ProfitLoss vs OSS net-income semantic coverage
 
 **Disposition: SOURCE-GROUNDED CLASSIFIED / UNRESOLVED_FAIL_CLOSED.**
@@ -56,12 +72,12 @@ This is therefore not 24 unrelated missing-data events. It is one repeated **sem
 
 The post-fix 27-document finding denominator is now completely partitioned at the structural/source-receipt level:
 
-- **3 docs / 9 rows — Class B context/member ambiguity — unresolved fail-closed**
+- **3 docs / 9 one-sided rows — Class B/B1 document-level correlated context/member ambiguity — unresolved fail-closed**
 - **24 docs / 24 rows — Class C ProfitLoss/net_income_owners semantic coverage — unresolved fail-closed**
 - **27 docs / 33 one-sided rows total**
 
-This is a taxonomy completion, not a semantic resolution. No finding has been cleared merely by grouping it, and no parser was selected using downstream strategy performance.
+This is a taxonomy completion and narrowing, not a semantic resolution. No finding has been cleared merely by grouping it, and no parser was selected using downstream strategy performance.
 
 ## Next action
 
-For Class B, inspect same-ZIP context/member candidates for `S100QF0X`, `S100RWZI`, and `S100UXL5` and freeze a deterministic context-selection disposition or retain ambiguity. For Class C, inspect representative same-ZIP XBRL facts and the OSS `net_income_owners` mapping semantics to determine whether non-consolidated `ProfitLoss` is intentionally unsupported or safely equivalent in a constrained context. Any code change requires a regression fixture plus same-ZIP rerun. Unresolved remains fail-closed.
+For Class B/B1, acquire/inspect the actual same-ZIP source XBRL contexts and members for `S100QF0X`, `S100RWZI`, and `S100UXL5`; compare candidate contexts across assets/equity/operating_income/net_income and freeze a deterministic cross-field context-selection disposition or retain ambiguity. For Class C, inspect representative same-ZIP XBRL facts and the OSS `net_income_owners` mapping semantics to determine whether non-consolidated `ProfitLoss` is intentionally unsupported or safely equivalent in a constrained context. Any code change requires a regression fixture plus same-ZIP rerun. Unresolved remains fail-closed.

@@ -1,0 +1,39 @@
+{
+  "status": "DAILY_RAW_CORPUS_RECOVERED_ENDPOINT_INTERSECTION_PENDING",
+  "generated_at_jst": "2026-09-16T21:24:00+09:00",
+  "source": {
+    "workflow_run_id": 34599959356,
+    "artifact_id": 10264205130,
+    "artifact_name": "tvfree-frozen-dataset-run80-preserved",
+    "artifact_sha256": "095e58986d45bda0092be1767e1b44a4791bf3c617179791d0c99c6d7d01bcb0",
+    "tse_daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "tse_daily_lines_including_header": 4061362,
+    "head_branch": "test/tvfree-screener-v1",
+    "head_sha": "d03cdff1f27628f44f78d3787b0cc55bfa4bd271"
+  },
+  "observed_corpus": {
+    "data_rows": 4061361,
+    "date_min": "2022-01-04",
+    "date_max": "2026-09-11",
+    "unique_symbol_strings": 3701,
+    "null_field_counts": {"open":0,"high":0,"low":0,"close":0,"volume":0},
+    "nonpositive_endpoint_counts": {"open":0,"close":0},
+    "ohlc_order_invalid_rows": 797,
+    "ohlc_order_invalid_by_date": {
+      "2022-05-17":272,
+      "2024-04-04":1,
+      "2024-06-05":16,
+      "2024-11-15":10,
+      "2025-05-23":9,
+      "2026-09-11":489
+    }
+  },
+  "interpretation": {
+    "missing_zero_claim": false,
+    "endpoint_true_missing_count": null,
+    "reason": "Frozen five-candidate exact trade ledgers have not yet been intersected. Null O/C is zero in observed rows, but absence of a required symbol-date row and OHLC-order-invalid endpoint rows must be checked against each exact candidate ledger before declaring endpoint coverage.",
+    "normal_no_data_classification": "not inferred",
+    "hourly_activity": "SEALED_SEPARATE_FROM_DAILY"
+  },
+  "next_action": "Recover exact trade rows for any one frozen primary candidate, derive next-XTKS-open/fifth-XTKS-close dates, and intersect required O/C keys against this pinned corpus; report absent rows and any endpoint landing on the 797 OHLC-order-invalid rows."
+}

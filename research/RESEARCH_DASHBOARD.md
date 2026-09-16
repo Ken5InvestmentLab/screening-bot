@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-16 19:49 JST  
+> **最終更新:** 2026-09-16 20:50 JST  
 > **比較契約:** 新規performanceは取引コスト0%、win = gross return > 0。canonical endpoint = next XTKS open -> fifth XTKS close。2026 outcomeはreport/robustness-only。
 
 ## 📈 全体進捗
@@ -14,7 +14,7 @@
 | Core24 OHLCV completeness | 🟡 **P0 endpoint補助** | 97% | 5候補のentry/exit O/C true-missing影響を照合 |
 | Consensus V47 | 🟡 P1 / formal raw BLOCKED | 84% | corrected H2 diagnostic opened、retune禁止 |
 | Canonical/Shadow endpoint integrity | 🟢 P1 | 93% | P0を直接unblockしない追加拡張は後回し |
-| OSS / Validation | 🟢 P1 | **99%** | **Class C 24件の原因解決。Class B2のみsemantic mapping未確立でfail-closed** |
+| OSS / Validation | 🟢 P1 | **99%** | **Class C basis-aware adapter実装済み・same-ZIP rerun中。Class B2はfail-closed** |
 | Cloud Monster exact forensic | ⚫ legacy/reference | 100% | exact model unavailable、参考枠保持 |
 
 ## 🎯 P0 — 5候補を脱落させず全期間比較
@@ -23,19 +23,16 @@ primary poolは `body_pct LOW` / `volr20 LOW` / `mean-rank(volr20, body_pct)` / 
 ## Parallel Wave-1 — STALE継続
 実HEAD `5a5a22f138d6ebecdc5f172f00907ff06a1a2f41` はprocessed SHAと一致、新SHAなし。旧failed run/calendar/source forensicは再確認せず、source-grounded OHLC dispositionまでP1 STALE。performance未開封、silent repair/drop禁止。
 
-## OSS / EDINET — Class C semantic cause resolved
-最新の成功same-ZIP run `35081622646` / artifact `10440293333`（digest `sha256:147181ed5fd58df53d223f107d3539520a578c11055092705dc84db5f889cb55`）を回収し、Class C 24 docs / 24 rowsを再確認した。全24件が custom `jppfs_cor:ProfitLoss` / `CurrentYearDuration_NonConsolidatedMember` を OSS `net_income_owners` と比較した `OSS_MISSING_CUSTOM_VALUE` だった。
+## OSS / EDINET — Class C basis-aware mappingを実装
+Class C 24 docs / 24 rowsのsource-grounded原因は、custom `jppfs_cor:ProfitLoss`（total basis）をOSS `net_income_owners`へ比較していたresearch adapterのownership-basis mismatch。
 
-固定OSS dependencyは `edinet-tools==0.8.4`。upstream 0.8.0+仕様ではnet incomeはownership basisで明示分離され、`jppfs_cor:ProfitLoss` は **total basis → `net_income_total`**、owners-attributable elementsだけが **`net_income_owners`** を埋める。cross-basis coalescingは明示的に禁止されている。
+research-only `tvfree_screener/edinet_oss_crosscheck.py` をcommit `700de43b199ace40920df441764af03ca9b59a64` で修正した。固定rule:
+- `jppfs_cor:ProfitLoss` → `net_income_total`
+- owners-attributable element → `net_income_owners`
+- basis不明かつcustom値あり → `UNCLASSIFIED_NET_INCOME_BASIS` としてfail-closed
+- 値やperformanceを見てbasisを選ばない
 
-したがってClass Cは「OSS parserが同じfactを24件取りこぼした」のではなく、**こちらのresearch crosscheck adapterがtotal-basis custom factをowners-basis OSS fieldへ誤対応させたsemantic mapping mismatch** とsource-groundedに確定した。
-
-固定disposition:
-- `jppfs_cor:ProfitLoss` → `report.net_income_total`
-- owners-attributable net-income element → `report.net_income_owners`
-- basis不明 → fail-closed、推測/coalesce禁止
-
-taxonomy: `research/EDINET_CLASS_C_OWNERSHIP_BASIS_DISPOSITION_20260916.md`、OSS HEAD `072ca5a0b94322e4225841ba87435ae48d3ab558`。次はresearch-only adapterへbasis-aware mappingを実装し、同じfrozen ZIPを再実行する。残差があればfail-closed。
+このcommitでsame-ZIP workflow run `35092381577` が起動済み。20:50 JST時点ではin-progressで、exact frozen pre-parser ZIPを再利用する。完了後にClass C残差を確認し、cleanならcorrected receiptをfreeze、残差があればそのままfail-closed。
 
 ### Class B2 — 未解決継続
 `S100QF0X / S100RWZI / S100UXL5` は複数embedded `G...` reportによるmulti-source context collision。filing identityからexactly one reportへ対応する独立semantic mappingが証明できるまで3 docs / 9 rowsはfail-closed。first/last/max/min/OSS値による選択は禁止。

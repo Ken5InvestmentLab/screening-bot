@@ -1,36 +1,38 @@
 {
-  "version": 125,
+  "version": 126,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T07:00:00+09:00",
+  "updated_at_jst": "2026-09-18T07:58:00+09:00",
   "writeback_repair": {"status":"REPAIRED_GITHUB_CONTENTS_API_WRITE_CONFIRMED","production_touched":false},
-  "supervisor_last_scan": {"status":"P0_REALLOCATED_ALT_ROWS_PRIMARY_COMPARISON_META_SPLIT","scanned_at_jst":"2026-09-18T07:00:00+09:00","coordination_contract_reconciled":true},
+  "supervisor_last_scan": {"status":"P0_FALSE_LINEAGE_EXCLUDED_AND_2022_PHASE2_RECOVERY_RESTARTED","scanned_at_jst":"2026-09-18T07:58:00+09:00","coordination_contract_reconciled":true},
   "worker_last_run": {
-    ":12": {"last_known_jst":"2026-09-18T06:12:25+09:00","task":"Meta exact-chain recovery","status":"ACTIVE","evidence_commit":null},
-    ":24": {"last_known_jst":"2026-09-18T06:23:00+09:00","task":"alternate-family canonical rows","status":"REALLOCATED_FROM_COMPLETED_ADMISSIBILITY","evidence_commit":"d9db14ab5621bc12a60e810ceca72326b772edfa"},
-    ":36": {"last_known_jst":"2026-09-18T05:35:20+09:00","task":"primary comparison cells","status":"RESTARTED_P0","evidence_commit":null},
-    ":48": {"last_known_jst":"2026-09-18T06:52:09+09:00","task":"Meta rank-before-candidate-count chain","status":"ACTIVE_SPLIT_AXIS","evidence_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d"},
-    ":00": {"last_known_jst":"2026-09-18T07:00:00+09:00","task":"Supervisor scan","status":"REASSIGNMENT_AND_WRITEBACK","evidence_commit":null}
+    ":12": {"last_known_jst":"2026-09-18T07:15:48+09:00","task":"Meta exact-chain recovery","status":"ACTIVE","evidence_commit":null},
+    ":24": {"last_known_jst":"2026-09-18T07:22:08+09:00","task":"alternate-family canonical rows","status":"ACTIVE","evidence_commit":"d9db14ab5621bc12a60e810ceca72326b772edfa"},
+    ":36": {"last_known_jst":"2026-09-18T07:57:41+09:00","task":"2022 Phase2 code-chain recovery","status":"RESTARTED_AFTER_BLOCK","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
+    ":48": {"last_known_jst":"2026-09-18T07:57:54+09:00","task":"2022 Phase2 artifact-chain recovery","status":"RESTARTED_AFTER_BLOCK","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
+    ":00": {"last_known_jst":"2026-09-18T07:58:00+09:00","task":"Supervisor scan/manual forensic","status":"SUBSTANTIVE_MISMATCH_RESOLVED_AND_REALLOCATED","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"}
   },
   "p0_reallocation": {
     "strict_3pt":"PARKED_REFERENCE_ONLY",
-    "2022_primary":"EXACT_SEARCH_STOPPED_SUMMARY_ONLY_DECISION_FROZEN",
+    "2022_primary":"SUMMARY_ONLY_FOR_4_OF_5; EXACT_PRIMARY_ROWS_STILL_UNRESOLVED",
     "2022_summary_receipt_commit":"d72fe3bd345823c1b02abffc6f5588d6f69c82db",
+    "v16_backward_2022":"ENDPOINT_EXACT_FOR_OWN_CONTRACT_BUT_EXCLUDED_AS_PRIMARY_PHASE2_VOLR20_SOURCE",
+    "v16_backward_audit_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13",
     "alternate_family":"ADMISSIBILITY_COMPLETE_NOW_CANONICAL_ROWS_ONLY",
     "alternate_family_commit":"d9db14ab5621bc12a60e810ceca72326b772edfa",
     "primary_comparison":"CANDIDATE_BY_CANDIDATE_EXISTING_EVIDENCE_ONLY",
     "meta_input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d",
-    "meta_axis_split": {":12":"least-missing breadth/range axis",":48":"rank-before-candidate-count only"}
+    "meta_axis_split": {":12":"least-missing breadth/range axis",":48":"temporarily reassigned to 2022 Phase2 artifact chain"}
   },
   "historical_contract": {
     "primary_candidates":["body_pct LOW","volr20 LOW","mean-rank(volr20, body_pct)","DUAL_TOP1_AGREEMENT","DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"],
     "endpoint":"signal T -> next XTKS open -> fifth XTKS close","transaction_cost_pct":0,"win_definition":"gross return > 0",
     "period_2023_2025":"EXACT_ALREADY_FIXED_DO_NOT_RECOMPUTE",
-    "year_2022":"SUMMARY_ONLY_BOUNDARY_FOR_MISSING_ROWS; DO_NOT MIX SUMMARY_ONLY INTO META_DISCOVERY"
+    "year_2022":"FROZEN PRIMARY DOCUMENT HAS 89 TAIL -> 29 GATE ROWS -> 23 SIGNAL DATES; exact generator/artifact chain still being recovered. V16 backward n=31 is a different contract and excluded."
   },
   "meta_regime_switching": {"status":"PREREGISTERED_INPUT_PROVENANCE_PARTIALLY_PINNED_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
-  "last_hour_substantive_result":"No new pinned SHA observed in coordination STATE; supervisor removed repeated admissibility work, restarted comparison lane, and split Meta axes to avoid duplication.",
-  "largest_blocker":"Exact row-level/source chains are still missing for alternate-family canonical rows and Meta causal joins; primary comparison row-required metrics remain pending.",
-  "p0_remaining":["alternate-family canonical rows","primary-5 comparison missing row-required metrics including +20/-20/max/100-share P/L","complete at least one Meta causal input chain","freeze Meta mapping using pre-2026 eligible exact data","only then one-shot open 2026"],
+  "last_hour_substantive_result":"Recovered V16 backward-2022 artifact 10266990667 and pinned daily corpus 10264205130; mechanically proved 31/31 endpoint/date/open/return consistency with zero endpoint missing, then proved it is NOT the current primary Phase2 volr20 ledger because it omits the frozen ret10 gate and has n=31 vs primary n=23. False lineage excluded in commit d4404984b25d2b24fdb246edbba998dc4bb21a13.",
+  "largest_blocker":"Recover the exact historical Phase2 2022 generator/artifact chain that produced 89 extreme Tail candidates -> 29 frozen weak+early gate rows -> 23 signal dates. Current V16 backward artifact is now conclusively excluded as a substitute.",
+  "p0_remaining":["recover Phase2 2022 primary exact generator/artifact chain","alternate-family canonical rows","primary-5 comparison missing row-required metrics including +20/-20/max/100-share P/L","complete at least one Meta causal input chain","freeze Meta mapping using pre-2026 eligible exact data","only then one-shot open 2026"],
   "progress":{"overall_pct":84,"phase2_multi_candidate_full_period_pct":68,"meta_regime_switching_pct":10},
   "go_no_go":"RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
 }

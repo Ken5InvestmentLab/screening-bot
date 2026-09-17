@@ -1,0 +1,24 @@
+{
+  "status": "FAIL_CLOSED_PINNED_INPUT_CHAIN_NOT_ESTABLISHED",
+  "prereg_path": "research/META_REGIME_SWITCHING_PREREG_20260917.md",
+  "prereg_blob_sha": "9224a074a4ee19d3da9a69fe875c883c6f62c5af",
+  "inspected_branch": "research/automation-coordination",
+  "inspected_head": "91a4c238d23997b0f709be528bf6fb4a9740c340",
+  "inspected_tree": "3b2d42eaaa2e59bbd59eb4aa65ecd9e7dc895924",
+  "coverage": {
+    "2023": "NOT_EVALUABLE",
+    "2024": "NOT_EVALUABLE",
+    "2025": "NOT_EVALUABLE",
+    "2026": "SEALED_NOT_OPENED"
+  },
+  "missing": [
+    "exact pinned primary-5 trade-row SHA/path",
+    "matching causal breadth_ma20 series SHA/path",
+    "matching causal range_pct series SHA/path",
+    "matching pre-rank candidate-count universe SHA/path"
+  ],
+  "forbidden_substitution": true,
+  "return_metrics_recomputed": false,
+  "meta_performance_computed": false,
+  "receipt": "research/META_LABEL_COVERAGE_FAIL_CLOSED_20260918_0047.md"
+}

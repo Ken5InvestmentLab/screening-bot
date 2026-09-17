@@ -1,62 +1,36 @@
 {
-  "version": 124,
+  "version": 125,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T04:09:35+09:00",
-  "writeback_repair": {
-    "status": "REPAIRED_GITHUB_CONTENTS_API_WRITE_CONFIRMED",
-    "cause": "workers were writing substantive receipts to test/research branches while AUTOMATION_COORDINATION_STATE.json remained on research/automation-coordination at the 2026-09-17 09:38 JST snapshot; the dashboard had later supervisor-only updates but STATE writeback was not being performed",
-    "previous_state_blob_sha": "c5c215d099b25a15ecf25ea4a0c8523fe51090bc",
-    "previous_coordination_head": "5edf1d0174d7f0eb50fb69c35f7fa9eedb6f7df5",
-    "write_path": "GitHub contents API update_file on research/automation-coordination",
-    "production_touched": false
-  },
-  "supervisor_last_scan": {
-    "status": "P0_REALLOCATED_2022_SUMMARY_ONLY_ALT_ADMISSIBILITY_G3_EXISTING_VALUE_META_INPUT_MANIFEST",
-    "scanned_at_jst": "2026-09-18T04:09:35+09:00",
-    "coordination_contract_reconciled": true
-  },
+  "updated_at_jst": "2026-09-18T07:00:00+09:00",
+  "writeback_repair": {"status":"REPAIRED_GITHUB_CONTENTS_API_WRITE_CONFIRMED","production_touched":false},
+  "supervisor_last_scan": {"status":"P0_REALLOCATED_ALT_ROWS_PRIMARY_COMPARISON_META_SPLIT","scanned_at_jst":"2026-09-18T07:00:00+09:00","coordination_contract_reconciled":true},
   "worker_last_run": {
-    ":12": {"last_known_jst": "2026-09-18T04:09:35+09:00", "task": "2022 summary-only decision", "status": "COMPLETE", "evidence_commit": "d72fe3bd345823c1b02abffc6f5588d6f69c82db"},
-    ":24": {"last_known_jst": "2026-09-18T02:24:47+09:00", "task": "alternate-family admissibility", "status": "RECEIPT_COMMITTED", "evidence_commit": "d9db14ab5621bc12a60e810ceca72326b772edfa"},
-    ":36": {"last_known_jst": "2026-09-18T02:02:00+09:00", "task": "G3 existing-value receipt", "status": "SUPERVISOR_REALLOCATED_EXISTING_VALUE_ONLY", "evidence_commit": null},
-    ":48": {"last_known_jst": "2026-09-18T01:51:32+09:00", "task": "Meta input manifest", "status": "PROVENANCE_MANIFEST_COMMITTED", "evidence_commit": "b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d"},
-    ":00": {"last_known_jst": "2026-09-18T02:02:34+09:00", "task": "Supervisor scan", "status": "REASSIGNMENT", "evidence_commit": "5edf1d0174d7f0eb50fb69c35f7fa9eedb6f7df5"}
+    ":12": {"last_known_jst":"2026-09-18T06:12:25+09:00","task":"Meta exact-chain recovery","status":"ACTIVE","evidence_commit":null},
+    ":24": {"last_known_jst":"2026-09-18T06:23:00+09:00","task":"alternate-family canonical rows","status":"REALLOCATED_FROM_COMPLETED_ADMISSIBILITY","evidence_commit":"d9db14ab5621bc12a60e810ceca72326b772edfa"},
+    ":36": {"last_known_jst":"2026-09-18T05:35:20+09:00","task":"primary comparison cells","status":"RESTARTED_P0","evidence_commit":null},
+    ":48": {"last_known_jst":"2026-09-18T06:52:09+09:00","task":"Meta rank-before-candidate-count chain","status":"ACTIVE_SPLIT_AXIS","evidence_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d"},
+    ":00": {"last_known_jst":"2026-09-18T07:00:00+09:00","task":"Supervisor scan","status":"REASSIGNMENT_AND_WRITEBACK","evidence_commit":null}
   },
   "p0_reallocation": {
-    "strict_3pt": "PARKED_REFERENCE_ONLY",
-    "2022_primary": "EXACT_SEARCH_STOPPED_SUMMARY_ONLY_DECISION_FROZEN",
-    "2022_summary_receipt": "research/PHASE2_2022_SUMMARY_ONLY_DECISION_RECEIPT_20260918.md",
-    "2022_summary_receipt_commit": "d72fe3bd345823c1b02abffc6f5588d6f69c82db",
-    "alternate_family": "ADMISSIBILITY_RECEIPT_COMMITTED",
-    "alternate_family_commit": "d9db14ab5621bc12a60e810ceca72326b772edfa",
-    "g3": "EXISTING_VALUE_RECEIPT_ONLY_NO_NEW_PERFORMANCE",
-    "meta_input_manifest": "PINNED_PROVENANCE_MANIFEST",
-    "meta_input_manifest_commit": "b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d"
+    "strict_3pt":"PARKED_REFERENCE_ONLY",
+    "2022_primary":"EXACT_SEARCH_STOPPED_SUMMARY_ONLY_DECISION_FROZEN",
+    "2022_summary_receipt_commit":"d72fe3bd345823c1b02abffc6f5588d6f69c82db",
+    "alternate_family":"ADMISSIBILITY_COMPLETE_NOW_CANONICAL_ROWS_ONLY",
+    "alternate_family_commit":"d9db14ab5621bc12a60e810ceca72326b772edfa",
+    "primary_comparison":"CANDIDATE_BY_CANDIDATE_EXISTING_EVIDENCE_ONLY",
+    "meta_input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d",
+    "meta_axis_split": {":12":"least-missing breadth/range axis",":48":"rank-before-candidate-count only"}
   },
   "historical_contract": {
-    "primary_candidates": ["body_pct LOW", "volr20 LOW", "mean-rank(volr20, body_pct)", "DUAL_TOP1_AGREEMENT", "DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"],
-    "endpoint": "signal T -> next XTKS open -> fifth XTKS close",
-    "transaction_cost_pct": 0,
-    "win_definition": "gross return > 0",
-    "period_2023_2025": "EXACT_ALREADY_FIXED_DO_NOT_RECOMPUTE",
-    "year_2022": "SUMMARY_ONLY_BOUNDARY_FOR_MISSING_ROWS; DO_NOT MIX SUMMARY_ONLY INTO META_DISCOVERY"
+    "primary_candidates":["body_pct LOW","volr20 LOW","mean-rank(volr20, body_pct)","DUAL_TOP1_AGREEMENT","DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"],
+    "endpoint":"signal T -> next XTKS open -> fifth XTKS close","transaction_cost_pct":0,"win_definition":"gross return > 0",
+    "period_2023_2025":"EXACT_ALREADY_FIXED_DO_NOT_RECOMPUTE",
+    "year_2022":"SUMMARY_ONLY_BOUNDARY_FOR_MISSING_ROWS; DO_NOT MIX SUMMARY_ONLY INTO META_DISCOVERY"
   },
-  "meta_regime_switching": {
-    "status": "PREREGISTERED_INPUT_PROVENANCE_PARTIALLY_PINNED_MAPPING_NOT_FROZEN",
-    "prereg": "research/META_REGIME_SWITCHING_PREREG_20260917.md",
-    "prereg_commit": "a586e98d0d7c6dbed471cf9fde419d9760e1f050",
-    "input_manifest_commit": "b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d",
-    "summary_only_2022_allowed_for_meta": false,
-    "holdout": "2026_SEALED",
-    "open_condition": "Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"
-  },
-  "guardrails": [
-    "Do not touch production/main or production Discord/Spreadsheet/Stable★6/Sniper/Mega/TradingView/watchlist-builder/updater.",
-    "Do not recompute 2023-2025 exact historical rows during this coordination repair.",
-    "Do not open 2026 outcomes until Meta mapping is SHA-frozen and STATE explicitly permits opening.",
-    "Do not mix 2022 SUMMARY_ONLY values into Meta discovery.",
-    "No post-hoc rescue retuning."
-  ],
-  "progress": {"overall_pct": 84, "phase2_multi_candidate_full_period_pct": 68, "meta_regime_switching_pct": 10},
-  "go_no_go": "RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
+  "meta_regime_switching": {"status":"PREREGISTERED_INPUT_PROVENANCE_PARTIALLY_PINNED_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
+  "last_hour_substantive_result":"No new pinned SHA observed in coordination STATE; supervisor removed repeated admissibility work, restarted comparison lane, and split Meta axes to avoid duplication.",
+  "largest_blocker":"Exact row-level/source chains are still missing for alternate-family canonical rows and Meta causal joins; primary comparison row-required metrics remain pending.",
+  "p0_remaining":["alternate-family canonical rows","primary-5 comparison missing row-required metrics including +20/-20/max/100-share P/L","complete at least one Meta causal input chain","freeze Meta mapping using pre-2026 eligible exact data","only then one-shot open 2026"],
+  "progress":{"overall_pct":84,"phase2_multi_candidate_full_period_pct":68,"meta_regime_switching_pct":10},
+  "go_no_go":"RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
 }

@@ -33,3 +33,7 @@ The reproducer refuses input SHA drift, unresolved top ties, endpoint-price drif
 15. 2023-2024 exact headline n=128 and all three recorded means/medians/tail metrics reproduce to floating precision.
 16. 2025 exact n=44 and recorded means reproduce; 2026 is neither read nor generated.
 17. Production/main, workflows, Discord, Sheets, Stable, Sniper, Mega, TradingView, and watchlists are untouched.
+
+## 2022 boundary
+
+The exact identity above covers the preserved 2023-2025 Tail artifact. Applying the frozen generator and gate to 2022 is runtime-sensitive and does not reproduce the historical 89/29/23 summary. The two unmodified fixed-spec results are preserved in `2022_runtime_sensitivity/`; do not select or retune either result by closeness to that summary.

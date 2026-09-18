@@ -145,9 +145,19 @@ H. 10-20 line handoff linking A-G
 - Recovered input-side evidence: Actions artifact `10266329903`, run `34608845800`, `teacher_ohlcv_4h_raw.csv`, SHA-256 `f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2`.
 - Classification: raw 4H corpus is exact input evidence; Watch/priority rule fragments are probable lineage; the legacy n=63 selection/model/canonical rows remain missing.
 - Current Cloud status: `EXACT_NOT_YET_RECOVERED`. No parameter search or signature fitting was performed.
+- ChatGPT conversation `6aa764a5-8648-83e8-818a-3fa0c5352f1f` was read as a distinct evidence surface. It retains historical file-citation references to the 63-row source and 19-score comparison, plus sample scores, but `read_thread` exposed no attachment resource or downloadable file. This confirms the provenance claim but does not recover row data.
+- A fail-closed evidence pack now exists at `research/repro_packs/cloud_monster_legacy_exact_v1/`; its verifier authenticates the recovered teacher input and exits nonzero while the two identity CSVs and score generator/model remain missing.
 
 ### Do not repeat
 - Do not repeat default-branch-only code search; all listed research refs/history were queried.
 - Do not repeat non-expired artifact-name enumeration for the same run set unless new runs/artifacts appear.
 - Do not rerun local filename search in repo/Product/Downloads/Documents without a new path or cache lead.
 - Do not treat current 1H artifacts or the broad 696-row reconstruction as the legacy n=63 result.
+
+### Fixed-spec 2022 replay — exact historical identity NOT recovered
+- The pinned V7/V9 source blobs on the working branch exactly match the validation receipt.
+- Windows Python 3.12 with the pinned 2026 Actions dependency versions produced 94 raw Tail rows, 30 gated rows, 22 gated dates.
+- WSL2 Linux Python 3.12 with `numpy 2.5.3`, `pandas 2.3.3`, `scikit-learn 1.9.1`, `xgboost 3.4.1`, `requests 2.34.2`, and `yfinance 0.2.66` produced 95 raw Tail rows, 25 gated rows, 20 gated dates.
+- Neither matches the historical comparison 89/29/23. No threshold, feature, seed, or input was changed to improve the match.
+- Both raw/gated ledgers and their hashes are saved under `research/repro_packs/weak_early_exact_v1/2022_runtime_sensitivity/`.
+- Classification: fixed-spec execution is exact; historical 2022 row identity remains `EXACT_NOT_YET_RECOVERED` because XGBoost/platform lineage is insufficiently pinned.

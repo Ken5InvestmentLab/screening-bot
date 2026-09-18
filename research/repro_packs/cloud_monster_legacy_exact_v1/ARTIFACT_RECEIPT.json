@@ -1,0 +1,31 @@
+{
+  "identity": "CLOUD_MONSTER_LEGACY_EXACT_V1",
+  "status": "EXACT_NOT_YET_RECOVERED",
+  "frozen_specs": [
+    {
+      "commit": "9c4aed248cb3dd680a5608cd62b00fe294e254e1",
+      "path": "research/tentei_cloud/OLD_CLOUD_MONSTER_EXACT_REPRO_SPEC_20260914.md"
+    },
+    {
+      "commit": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
+      "path": "research/tentei_cloud/OLD_CLOUD_MONSTER_FORENSIC_20260914.md"
+    }
+  ],
+  "recovered_input": {
+    "artifact_id": 10266329903,
+    "artifact_name": "no-tv-stable-teacher-preserved",
+    "run_id": 34608845800,
+    "source_commit": "f54fbd02",
+    "path": "teacher_ohlcv_4h_raw.csv",
+    "sha256": "f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2"
+  },
+  "missing_identity_artifacts": [
+    "cloud_two_lane_union_jpx.csv",
+    "cloud_priorityA_monsters_compare_teacher.csv",
+    "original score generator or serialized fitted model",
+    "exact watch-pool implementation"
+  ],
+  "canonical_trade_rows": null,
+  "canonical_metrics": null
+}
+

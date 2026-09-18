@@ -1,23 +1,23 @@
 {
-  "version": 129,
+  "version": 130,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T11:00:00+09:00",
+  "updated_at_jst": "2026-09-18T13:00:00+09:00",
   "writeback_repair": {"status":"REPAIRED_GITHUB_CONTENTS_API_WRITE_CONFIRMED","production_touched":false},
-  "supervisor_last_scan": {"status":"TWO_LANES_RESTARTED_AND_NARROWED_AFTER_NO_PROGRESS","scanned_at_jst":"2026-09-18T11:00:00+09:00","coordination_contract_reconciled":true},
+  "supervisor_last_scan": {"status":"SOURCE_POOL_EXACT_REALLOCATION_AFTER_2022_STALL","scanned_at_jst":"2026-09-18T13:00:00+09:00","coordination_contract_reconciled":true},
   "worker_last_run": {
-    ":12": {"last_known_jst":"2026-09-18T10:09:41+09:00","task":"Meta exact-chain recovery","status":"ACTIVE_NO_NEW_EVIDENCE","evidence_commit":null},
-    ":24": {"last_known_jst":"2026-09-18T10:24:51+09:00","task":"primary comparison missing metrics","status":"ACTIVE_NO_NEW_EVIDENCE","evidence_commit":null},
-    ":36": {"last_known_jst":"2026-09-18T10:37:14+09:00","task":"V16 alternate-family admissibility","status":"RESTARTED_11:00_AFTER_AUTOSTOP","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
-    ":48": {"last_known_jst":"2026-09-18T10:45:55+09:00","task":"2022 generator minimal missing element","status":"RESTARTED_11:00_AFTER_AUTOSTOP","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
-    ":00": {"last_known_jst":"2026-09-18T11:00:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"}
+    ":12": {"last_known_jst":"2026-09-18T12:14:16+09:00","task":"Meta exact-chain recovery","status":"ACTIVE_NO_NEW_EVIDENCE","evidence_commit":null},
+    ":24": {"last_known_jst":"2026-09-18T12:26:18+09:00","task":"primary comparison missing metrics","status":"ACTIVE_NO_NEW_EVIDENCE","evidence_commit":null},
+    ":36": {"last_known_jst":"2026-09-18T12:36:37+09:00","task":"SOURCE_POOL_EXACT canonical rows","status":"RESTARTED_13:00_AFTER_AUTOSTOP_AND_REALLOCATED","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
+    ":48": {"last_known_jst":"2026-09-18T12:48:21+09:00","task":"2022 generator minimal missing element","status":"ACTIVE_NO_NEW_ROWS","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
+    ":00": {"last_known_jst":"2026-09-18T13:00:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"}
   },
   "p0_reallocation": {
     "strict_3pt":"PARKED_REFERENCE_ONLY",
-    "2022_primary":"EXACT_PRIMARY_ROWS_STILL_UNRESOLVED; after two no-progress runs lane :48 narrowed to one minimal missing generator element; if NONE again park artifact recovery and redirect to SOURCE_POOL_EXACT",
+    "2022_primary":"EXACT_PRIMARY_ROWS_STILL_UNRESOLVED; :48 retains one narrow minimal-missing-element lane only",
     "2022_summary_receipt_commit":"d72fe3bd345823c1b02abffc6f5588d6f69c82db",
-    "v16_backward_2022":"ENDPOINT_EXACT_FOR_OWN_CONTRACT; EXCLUDED_AS_PRIMARY",
+    "v16_backward_2022":"ENDPOINT_EXACT_FOR_OWN_CONTRACT; EXCLUDED_AS_PRIMARY; no further dedicated lane",
     "v16_backward_audit_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13",
-    "alternate_family":"V16 admissibility GO/NO-GO forced on :36; no indefinite normalization",
+    "alternate_family":"After 2+ runs without primary rows, :36 reallocated to SOURCE_POOL_EXACT canonical rows using existing alternate-family forensic receipts",
     "primary_comparison":"MISSING_ROW_METRICS_2023_2025_ACTIVE_ON_:24",
     "meta_input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d",
     "meta_axis_split": {":12":"least-missing Meta causal axis",":48":"2022 generator minimal missing element only"}
@@ -29,9 +29,9 @@
     "year_2022":"FROZEN PRIMARY DOCUMENT HAS 89 TAIL -> 29 GATE ROWS -> 23 SIGNAL DATES; exact generator/artifact chain still unresolved. V16 backward n=31 remains a different contract."
   },
   "meta_regime_switching": {"status":"PREREGISTERED_INPUT_PROVENANCE_PARTIALLY_PINNED_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
-  "last_hour_substantive_result":"No new worker research SHA, trade rows, comparison cell, candidate admissibility receipt, or Meta label in the 10:00 hour. Lanes :36 and :48 auto-stopped. Supervisor restarted both with narrower terminal decisions: :36 must force V16 alternate-family admissibility GO/NO-GO; :48 must identify and pin exactly one minimal missing element in the authoritative 89->29->23 generator chain. Progress remains unchanged because these are reallocations, not research evidence.",
-  "largest_blocker":"Primary 2022 exact chain remains unresolved after two no-progress runs. Immediate gate is one pinned missing generator element; if lane :48 returns NONE again, artifact recovery is PARKED and capacity moves to alternate SOURCE_POOL_EXACT while another independent lane preserves 2022 evidence recovery. Secondary blockers: V16 alternate-family admissibility, first primary comparison cell, first complete Meta causal input chain.",
-  "p0_remaining":["pin one missing Phase2 2022 generator element then reproduce 29 rows / 23 dates, or park recovery after another NONE","force alternate-family admissibility and normalize exact 2022-2025 rows","fill primary-5 row-required comparison metrics for fixed 2023-2025 rows","complete at least one Meta causal input chain","freeze Meta mapping using pre-2026 eligible exact data","only then one-shot open 2026"],
+  "last_hour_substantive_result":"No new trade rows, comparison cell, candidate admissibility receipt, or Meta label was confirmed in the 12:00 hour. This triggers the explicit 2-run stall rule: :36 is moved off V16 repetition to an independent SOURCE_POOL_EXACT canonical-rows lane. :48 alone preserves the narrow 2022 primary evidence-recovery path. Progress percentage remains unchanged because reallocation is not research evidence.",
+  "largest_blocker":"Primary 2022 exact chain remains unresolved. Independent P0 escape route is now SOURCE_POOL_EXACT canonical rows on :36, while :48 keeps only the minimal 89->29->23 evidence recovery. Secondary blockers are first primary comparison cell and first complete Meta causal input chain.",
+  "p0_remaining":["pin one missing Phase2 2022 generator element then reproduce 29 rows / 23 dates","normalize an exact alternate SOURCE_POOL candidate across 2022-2025","fill primary-5 row-required comparison metrics for fixed 2023-2025 rows","complete at least one Meta causal input chain","freeze Meta mapping using pre-2026 eligible exact data","only then one-shot open 2026"],
   "progress":{"overall_pct":84,"phase2_multi_candidate_full_period_pct":68,"meta_regime_switching_pct":10},
   "go_no_go":"RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
 }

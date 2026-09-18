@@ -1,26 +1,26 @@
 {
-  "version": 127,
+  "version": 128,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T09:00:00+09:00",
+  "updated_at_jst": "2026-09-18T10:00:00+09:00",
   "writeback_repair": {"status":"REPAIRED_GITHUB_CONTENTS_API_WRITE_CONFIRMED","production_touched":false},
-  "supervisor_last_scan": {"status":"P0_LANES_REBALANCED_AFTER_WORKER24_STOP","scanned_at_jst":"2026-09-18T09:00:00+09:00","coordination_contract_reconciled":true},
+  "supervisor_last_scan": {"status":"P0_LANE48_RESTARTED_AFTER_AUTOSTOP","scanned_at_jst":"2026-09-18T10:00:00+09:00","coordination_contract_reconciled":true},
   "worker_last_run": {
-    ":12": {"last_known_jst":"2026-09-18T08:10:24+09:00","task":"Meta exact-chain recovery","status":"ACTIVE","evidence_commit":null},
-    ":24": {"last_known_jst":"2026-09-18T08:26:21+09:00","task":"primary comparison missing metrics","status":"RESTARTED_09:00_AFTER_STOP","evidence_commit":null},
-    ":36": {"last_known_jst":"2026-09-18T08:35:00+09:00","task":"V16 alternate-family rows normalization","status":"ACTIVE","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
-    ":48": {"last_known_jst":"2026-09-18T08:47:31+09:00","task":"2022 Phase2 artifact-chain recovery","status":"ACTIVE","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
-    ":00": {"last_known_jst":"2026-09-18T09:00:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"}
+    ":12": {"last_known_jst":"2026-09-18T09:14:36+09:00","task":"Meta exact-chain recovery","status":"ACTIVE_NO_NEW_EVIDENCE","evidence_commit":null},
+    ":24": {"last_known_jst":"2026-09-18T09:22:57+09:00","task":"primary comparison missing metrics","status":"ACTIVE_NO_NEW_EVIDENCE","evidence_commit":null},
+    ":36": {"last_known_jst":"2026-09-18T09:37:22+09:00","task":"V16 alternate-family rows normalization","status":"ACTIVE_NO_NEW_EVIDENCE","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
+    ":48": {"last_known_jst":"2026-09-18T09:48:28+09:00","task":"2022 primary rows reconstruction","status":"RESTARTED_10:00_AFTER_AUTOSTOP","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"},
+    ":00": {"last_known_jst":"2026-09-18T10:00:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13"}
   },
   "p0_reallocation": {
     "strict_3pt":"PARKED_REFERENCE_ONLY",
-    "2022_primary":"EXACT_PRIMARY_ROWS_STILL_UNRESOLVED; authoritative target 89 Tail -> 29 gate rows -> 23 signal dates",
+    "2022_primary":"EXACT_PRIMARY_ROWS_STILL_UNRESOLVED; authoritative target 89 Tail -> 29 gate rows -> 23 signal dates; lane :48 restarted to execute generator rather than repeat artifact search",
     "2022_summary_receipt_commit":"d72fe3bd345823c1b02abffc6f5588d6f69c82db",
-    "v16_backward_2022":"ENDPOINT_EXACT_FOR_OWN_CONTRACT; EXCLUDED_AS_PRIMARY; NOW EVALUATED_AS_ALTERNATE_FAMILY",
+    "v16_backward_2022":"ENDPOINT_EXACT_FOR_OWN_CONTRACT; EXCLUDED_AS_PRIMARY; EVALUATED_AS_ALTERNATE_FAMILY",
     "v16_backward_audit_commit":"d4404984b25d2b24fdb246edbba998dc4bb21a13",
     "alternate_family":"V16_BACKWARD_CANONICAL_ROWS_NORMALIZATION_ACTIVE_ON_:36",
     "primary_comparison":"MISSING_ROW_METRICS_2023_2025_ACTIVE_ON_:24",
     "meta_input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d",
-    "meta_axis_split": {":12":"least-missing Meta causal axis",":48":"2022 Phase2 artifact chain"}
+    "meta_axis_split": {":12":"least-missing Meta causal axis",":48":"2022 primary exact rows reconstruction"}
   },
   "historical_contract": {
     "primary_candidates":["body_pct LOW","volr20 LOW","mean-rank(volr20, body_pct)","DUAL_TOP1_AGREEMENT","DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"],
@@ -29,9 +29,9 @@
     "year_2022":"FROZEN PRIMARY DOCUMENT HAS 89 TAIL -> 29 GATE ROWS -> 23 SIGNAL DATES; exact generator/artifact chain still being recovered. V16 backward n=31 is a different contract and excluded from primary."
   },
   "meta_regime_switching": {"status":"PREREGISTERED_INPUT_PROVENANCE_PARTIALLY_PINNED_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
-  "last_hour_substantive_result":"No new research SHA after the 07:58 false-lineage exclusion. Worker :24 had auto-stopped, so it was restarted and moved off alternate-family duplication onto independent primary-5 missing comparison metrics for already-fixed 2023-2025 exact rows. :36 continues V16 alternate-family normalization; :48 continues primary-2022 artifact recovery; :12 continues Meta exact-chain.",
-  "largest_blocker":"Primary 2022 exact chain remains unresolved: recover the generator/artifact producing 89 extreme Tail candidates -> 29 frozen weak+early gate rows -> 23 signal dates. In parallel, obtain at least one exact alternate-family 2023-2025 rows SHA and at least one new comparison cell or Meta input chain.",
-  "p0_remaining":["recover Phase2 2022 primary exact generator/artifact chain","normalize exact alternate-family rows across 2022-2025","fill primary-5 row-required comparison metrics for fixed 2023-2025 rows","complete at least one Meta causal input chain","freeze Meta mapping using pre-2026 eligible exact data","only then one-shot open 2026"],
+  "last_hour_substantive_result":"No new worker research SHA, trade rows, comparison cell, or Meta label in the 09:00 hour. Worker :48 auto-stopped after another artifact-chain attempt, triggering immediate restart and strategy change: execute the known pinned daily corpus through the known V7/V9 Phase-2 generator path to reproduce 29 gated rows / 23 signal dates instead of repeating broad artifact search. Other three lanes remain independent.",
+  "largest_blocker":"Primary 2022 exact chain remains unresolved: reproduce the 89 extreme Tail candidates -> 29 frozen weak+early gate rows -> 23 signal dates. Secondary blockers are first exact alternate-family 2023-2025 rows SHA, first new primary comparison cell, and first complete Meta causal input chain.",
+  "p0_remaining":["reproduce Phase2 2022 primary 29 rows / 23 dates and normalize primary 5 rows","normalize exact alternate-family rows across 2022-2025","fill primary-5 row-required comparison metrics for fixed 2023-2025 rows","complete at least one Meta causal input chain","freeze Meta mapping using pre-2026 eligible exact data","only then one-shot open 2026"],
   "progress":{"overall_pct":84,"phase2_multi_candidate_full_period_pct":68,"meta_regime_switching_pct":10},
   "go_no_go":"RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
 }

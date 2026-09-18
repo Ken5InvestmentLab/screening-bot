@@ -161,3 +161,26 @@ H. 10-20 line handoff linking A-G
 - Neither matches the historical comparison 89/29/23. No threshold, feature, seed, or input was changed to improve the match.
 - Both raw/gated ledgers and their hashes are saved under `research/repro_packs/weak_early_exact_v1/2022_runtime_sensitivity/`.
 - Classification: fixed-spec execution is exact; historical 2022 row identity remains `EXACT_NOT_YET_RECOVERED` because XGBoost/platform lineage is insufficiently pinned.
+
+### Weak+Early Phase-2 structural selectors — EXACT
+- Historical source for `DUAL_TOP1_AGREEMENT`: commit `4b37f18d7601f8fd6ff42155879faff5b7d1e9e3`, `research/WEAK_EARLY_PHASE2_20260914.md`.
+- Historical G3 preregistration: commit `bb7e9dcddcf1ff9e931f0e2f92925d6f761cf7e5`, exact expression `previous-session med_ret1 >= -0.01`.
+- Frozen G3 selection before 2025 open: commit `aed2690c5972edff99b0b06a26f8cb37b86165c1`.
+- DUAL is the identity intersection of independently selected volr20 LOW Top1 and body_pct LOW Top1 on the same date; disagreement is NO TRADE.
+- Reproducer now emits exact DUAL canonical rows: n=140, mean +7.17%, median +1.25%, win 52.14%, Top3-ex +4.79%, SHA `b4f9fff630577492198732c91275f2fafb0114e78a519074393d13e03ab88031`.
+- It also emits exact DUAL+G3 rows: n=117, mean +7.98%, median +1.74%, win 53.85%, Top3-ex +5.14%, SHA `e98d4d82e81d05ac3b3ffae7f6dc91fa1bcd567d58c24403ae5568406ec8de27`.
+- Commit `38edc77234e5bc283a55e14028a2b88e136c1ec4` pins code, rows, metrics, rule source commits, and output hashes.
+
+### Outcome-blind TV-free shadow boundary
+- Added `research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py`.
+- It reads only signal-time Tail fields and never loads labels, entry/exit prices, or realized returns.
+- Historical assertion reproduces selector counts 172 / 172 / 172 / 140 / 117 and all date+symbol identities match the canonical trade-row files.
+- This makes the selection layer forward-shadow-ready once a causally generated monthly Tail pool is supplied; it does not make the upstream model runtime deterministic and does not authorize production use.
+
+### 2022 reverse-lookup clarification
+- The apparent 2022 CSV rows found in the latest filename/content scan resolve to the already-saved Linux runtime replay under `2022_runtime_sensitivity/`, not to the missing historical 89-row ledger.
+- No new historical 89/29/23 identity artifact was recovered. Do not repeat this same row-signature search unless a new path/ref/artifact appears.
+
+### ChatGPT UI evidence-surface incident
+- While attempting to locate legacy Cloud file citations in the old ChatGPT conversation, browser find did not activate and the search text `Bitcoin Japan` was accidentally submitted as a new message.
+- The response was immediately stopped. No attachment, automation, repository file, production setting, or external message channel was changed. Browser/UI exploration was stopped and all subsequent work used repository/history only.

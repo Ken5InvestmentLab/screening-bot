@@ -14,6 +14,16 @@ py research/repro_packs/weak_early_exact_v1/reproduce.py --tail-cache .cache/rec
 
 The reproducer refuses input SHA drift, unresolved top ties, endpoint-price drift, row-count drift, and historical metric drift.
 
+## Outcome-blind shadow selection
+
+`select_shadow_candidates.py` is the research-only operational boundary for a future TV-free shadow. It accepts an already-causal V7 Tail pool and reads only signal-time fields; it does not load entry prices, exits, labels, or realized returns.
+
+```powershell
+py research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py --tail-pool .cache/recovery/artifact_10264251140/v7_causal_tail_cache_2023_2025.csv --output .cache/weak_early_shadow_candidates.csv --assert-historical-2023-2025
+```
+
+The historical assertion must return counts 172 / 172 / 172 / 140 / 117 for the three base selectors, DUAL, and DUAL+G3. For a forward run, omit the historical assertion and supply a causally generated Tail pool; this selector still does not authorize production use or outcome-based retuning.
+
 ## A-H handoff receipt
 
 1. Identity is `WEAK_EARLY_EXACT_V1`; it is a legacy research replay, not a production candidate.

@@ -12,6 +12,11 @@
 
 ## 今回の実成果
 
+- `WEAK_EARLY_EXACT_V1`をPhase-2の5 selectorまで拡張し、DUAL n=140とDUAL+G3 n=117のcanonical rowsをexact固定。
+- DUAL+G3は2023-2025でmean +7.98%、median +1.74%、win 53.85%、Top3-ex +5.14%を再現。
+- outcome列を読まないresearch-only shadow selectorを追加し、5 selectorすべてでcanonical date+symbol identity一致を確認。
+- `research/TVFREE_REPLACEMENT_READINESS_20260918.md`に、現行production scoringとのapples-to-apples比較へ進むための未完bridgeを固定。現時点は`FORWARD_SHADOW_READY / PRODUCTION NO-GO`。
+
 - 復元専用ledgerを新規作成: `0527fd106f0c3c2c74156e4ef98a5f97073d2b4f`
   - `research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`
 - weak+earlyの核を既存sourceから再確認:

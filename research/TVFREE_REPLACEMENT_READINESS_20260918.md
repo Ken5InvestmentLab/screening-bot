@@ -1,0 +1,49 @@
+# TV-Free replacement readiness — 2026-09-18
+
+Status: **FORWARD_SHADOW_READY / PRODUCTION NO-GO / 2026 OUTCOMES SEALED**
+
+## Objective
+
+TradingView signal dependencyを外し、現行production scoringと同一のcanonical endpointで正面比較できる独立システムを作る。比較前に候補生成ルールを固定し、2026 outcomeでselector、threshold、gateを選び直さない。
+
+## What is now executable
+
+- Exact historical identity: `WEAK_EARLY_EXACT_V1`。
+- Input: causal monthly V7 Tail population。
+- Fixed candidate gate: `med_ret5 <= 0 AND ret10 <= 0.5735294117647058`。
+- Five frozen selectors: volr20 LOW, body_pct LOW, mean-rank, DUAL_TOP1_AGREEMENT, DUAL+G3 (`med_ret1 >= -0.01`)。
+- Historical endpoint: signal T -> next official XTKS open -> fifth official XTKS close, cost 0%, win = gross > 0。
+- Candidate-only entrypoint: `research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py`。
+- The entrypoint reads signal-time fields only and reproduces all five historical candidate identities exactly; no target, entry, exit, or realized-return column is read.
+
+## Frozen historical position
+
+| Selector | 2023-2025 n | Mean | Median | Win | Top3-ex |
+|---|---:|---:|---:|---:|---:|
+| volr20 LOW | 172 | +6.33% | +1.06% | 51.74% | +4.38% |
+| body_pct LOW | 172 | +6.54% | +0.99% | 50.58% | +4.60% |
+| mean-rank | 172 | +6.89% | +1.45% | 52.33% | +4.95% |
+| DUAL_TOP1_AGREEMENT | 140 | +7.17% | +1.25% | 52.14% | +4.79% |
+| DUAL + G3 | 117 | +7.98% | +1.74% | 53.85% | +5.14% |
+
+These values are exact for the preserved 2023-2025 artifact. They are **not yet an apples-to-apples victory over current production scoring**, because production and Weak+Early do not share the same signal population or historical availability contract.
+
+## Remaining bridge to a fair current-logic comparison
+
+1. Run the pinned monthly causal Tail generator on an independently maintained daily corpus without TradingView alerts.
+2. Feed each completed monthly Tail pool to the outcome-blind shadow selector and timestamp/hash its candidate ledger before any endpoint matures.
+3. Record current production candidates separately without changing their logic, alerts, or workflow.
+4. After fifth-session endpoints mature, evaluate both ledgers with the same calendar, endpoint, cost, and missing-price policy.
+5. Treat 2026 only as sealed reporting/robustness evidence. Do not use it to pick among the five already-opened selectors or to retune any threshold.
+6. Require a preregistered minimum sample and comparison gate before any production proposal. Until that separate contract is committed, status stays `FORWARD_SHADOW_ONLY`.
+
+## Known blockers and risks
+
+- 2022 historical 89/29/23 identity is not exact-recovered; unchanged generator executions are runtime-sensitive and the frozen 2022 DUAL+G3 summary was weak.
+- The monthly V7 model artifact/runtime for future generation must be container- or lockfile-pinned before forward candidate identity can be called deterministic across hosts.
+- Cloud Monster legacy remains `EXACT_NOT_YET_RECOVERED`; it is not an implementable alternative today.
+- DUAL+G3 is the strongest preserved 2023-2025 selector, but it is a shadow challenger, not a production promotion.
+
+## Production boundary
+
+No main, production code, workflow, Discord, Spreadsheet, Stable, Sniper, Mega, TradingView, or watchlist component is changed by this work.

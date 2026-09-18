@@ -1,39 +1,36 @@
 {
-  "version": 134,
+  "version": 135,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T17:00:00+09:00",
-  "supervisor_last_scan": {"status":"PRIMARY_C1_C4_SELECTORS_PINNED_V16_ROWS_ADVANCED","scanned_at_jst":"2026-09-18T17:00:00+09:00","coordination_contract_reconciled":true},
+  "updated_at_jst": "2026-09-18T18:00:00+09:00",
+  "supervisor_last_scan": {"status":"ALT_HISTORICAL_COMPLETE_META_RELAY_PRIMARY_ROWS_STILL_BLOCKER","scanned_at_jst":"2026-09-18T18:00:00+09:00","coordination_contract_reconciled":true},
   "worker_last_run": {
-    ":12": {"last_known_jst":"2026-09-18T16:11:48+09:00","task":"G3 semantics pin","status":"NEW_SHA_C1_C4_PINNED_C5_PENDING_G3","evidence_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6"},
-    ":24": {"last_known_jst":"2026-09-18T16:23:21+09:00","task":"primary historical comparison completion","status":"NO_CONFIRMED_NEW_COMPARISON_CELL","evidence_commit":null},
-    ":36": {"last_known_jst":"2026-09-18T16:40:14+09:00","task":"V16 historical metrics completion","status":"TRADE_ROWS_ADVANCED_THROUGH_2025","evidence_commit":"b9e245e01d03bf1e3287599757167eed4354f94a"},
-    ":48": {"last_known_jst":"2026-09-18T16:48:46+09:00","task":"2022 C1-C4 canonical rows generation","status":"SELECTOR_SPEC_AVAILABLE_ROWS_NOW_REQUIRED","evidence_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6"},
-    ":00": {"last_known_jst":"2026-09-18T17:00:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"b9e245e01d03bf1e3287599757167eed4354f94a"}
+    ":12": {"last_known_jst":"2026-09-18T17:10:43+09:00","task":"G3 semantics pin","status":"RUN_COMPLETED_NO_CONFIRMED_SHA_YET","evidence_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6"},
+    ":24": {"last_known_jst":"2026-09-18T17:26:26+09:00","task":"primary historical comparison completion","status":"NO_CONFIRMED_NEW_COMPARISON_CELL","evidence_commit":null},
+    ":36": {"last_known_jst":"2026-09-18T17:41:43+09:00","task":"Meta causal labels","status":"ALT_HISTORICAL_COMPLETE_RELAYED_TO_META","evidence_commit":"42a3ed0c641d7cd8c27604f7722c5d0575ecebe2"},
+    ":48": {"last_known_jst":"2026-09-18T17:49:16+09:00","task":"2022 C1-C4 canonical rows generation","status":"NO_CONFIRMED_ROWS_REENABLED_CONTINUE","evidence_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6"},
+    ":00": {"last_known_jst":"2026-09-18T18:00:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"42a3ed0c641d7cd8c27604f7722c5d0575ecebe2"}
   },
   "p0_reallocation": {
     "strict_3pt":"PARKED_REFERENCE_ONLY",
-    "2022_primary":"Deterministic base ledger and C1-C4 selector semantics are pinned. :48 must emit C1-C4 2022 canonical rows now; C5 may not block them.",
+    "2022_primary":"C1-C4 selectors remain pinned; :48 re-enabled and required to emit actual 2022 canonical rows. C5 cannot block C1-C4.",
     "2022_generator_input_contract_commit":"aaf53ab8d9678dcade730b3f4554a1e8ba72b7f4",
     "2022_deterministic_entrypoint_commit":"42e5cd8fd7e9e34e90ddae790b1d4cbd3ede1887",
     "primary_selector_spec_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6",
-    "v16_backward_2022":"ENDPOINT_EXACT_FOR_OWN_CONTRACT; EXCLUDED_AS_PRIMARY",
-    "v16_admissibility_commit":"2bafa6a74ead8e3aa833ddefc8b468ba60150106",
-    "v16_cross_year_inputs_commit":"48743b9c94abf33646866e09412c4e4d08bf3d2d",
-    "alternate_family":"V16 canonical rows advanced through 2025; :36 is reassigned to finish missing-year check plus 2022-2025 and aggregate metrics, then ALT_HISTORICAL_COMPLETE.",
-    "primary_comparison":"2023-2025 fixed exact rows only; :24 fills missing metrics without regeneration and integrates deterministic 2022 rows as they appear.",
-    "meta":"Waits until G3 disposition and historical completion; :12 returns to Meta causal labels after G3 is PINNED or REFERENCE_ONLY."
+    "alternate_family":"ALT_HISTORICAL_COMPLETE at 42a3ed0c641d7cd8c27604f7722c5d0575ecebe2; no further V16 work. :36 relayed to Meta causal labels.",
+    "primary_comparison":"2023-2025 fixed exact rows only; :24 fills missing metrics and integrates deterministic 2022 as emitted.",
+    "meta":"Started in parallel on :36 using preregistered causal inputs; final mapping freeze still waits for primary historical completion."
   },
   "historical_contract": {
     "primary_candidates":["body_pct LOW","volr20 LOW","mean-rank(volr20, body_pct)","DUAL_TOP1_AGREEMENT","DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"],
     "endpoint":"signal T -> next XTKS open -> fifth XTKS close","transaction_cost_pct":0,"win_definition":"gross return > 0",
     "period_2023_2025":"EXACT_ALREADY_FIXED_DO_NOT_RECOMPUTE",
-    "year_2022":"Deterministic reconstruction is canonical. C1-C4 selectors are pinned at fb02a7e; C5 remains fail-closed pending G3 semantics and cannot block C1-C4 rows.",
-    "alternate":"V16 backward exact family has canonical rows advanced through 2025; complete full metrics next."
+    "year_2022":"Deterministic reconstruction canonical; C1-C4 pinned, rows pending; C5 fail-closed pending G3 disposition.",
+    "alternate":"ALT_HISTORICAL_COMPLETE=YES at 42a3ed0c; aggregate n=273, mean=1.6188%, median=-5.4286%, win=40.6593%, 100-share P/L=-87,422.78 JPY."
   },
-  "meta_regime_switching": {"status":"PREREGISTERED_INPUT_PROVENANCE_PARTIALLY_PINNED_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
-  "last_hour_substantive_result":"NEW_SHA/RECEIPT: fb02a7e pinned deterministic selectors for C1-C4 without 2022 outcomes; only C5 G3 semantics remains fail-closed pending. TRADE_ROWS/NEW_SHA: V16 alternate-family canonical rows advanced through 2025 with full-artifact fix 710b948c and receipt b9e245e0. Supervisor therefore moved :48 directly to C1-C4 2022 rows, :12 to final G3 disposition, and :36 from row generation to full historical metrics.",
-  "largest_blocker":"Primary 2022 now needs actual C1-C4 TRADE_ROWS rather than more selector work. C5 G3 semantics is isolated and must be PINNED or REFERENCE_ONLY next run. Alternate family is no longer blocked on 2025 rows; it needs final full metrics/receipt.",
-  "p0_remaining":["emit deterministic C1-C4 primary 2022 canonical rows","pin G3 semantics or mark C5 REFERENCE_ONLY/PARKED without retuning","finish V16 2022-2025 plus aggregate metrics and ALT_HISTORICAL_COMPLETE","fill primary computable candidates 2022-2025 plus aggregate full metrics","complete Meta causal labels across 2022-2025","freeze Meta mapping using only 2022-2025 eligible exact data","only then one-shot open 2026"],
-  "progress":{"overall_pct":88,"phase2_multi_candidate_full_period_pct":75,"meta_regime_switching_pct":10},
+  "meta_regime_switching": {"status":"CAUSAL_LABEL_COVERAGE_IN_PROGRESS_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
+  "last_hour_substantive_result":"ALT_HISTORICAL_COMPLETE: V16 2022-2025 plus aggregate full metrics committed at 42a3ed0c. :36 completed its lane and was immediately reassigned to Meta causal labels. :48 had stopped without confirmed rows and was re-enabled because C1-C4 remain executable P0 work.",
+  "largest_blocker":"Actual deterministic primary 2022 C1-C4 TRADE_ROWS are still missing. Secondary blocker is final G3 disposition for C5. Meta causal labels can proceed independently on 2023-2025 while these resolve.",
+  "p0_remaining":["emit deterministic C1-C4 primary 2022 canonical rows","pin G3 semantics or mark C5 REFERENCE_ONLY/PARKED","fill primary computable candidates 2022-2025 plus aggregate full metrics","complete Meta causal labels across 2022-2025","freeze Meta mapping using only 2022-2025 eligible exact data","only then one-shot open 2026"],
+  "progress":{"overall_pct":90,"phase2_multi_candidate_full_period_pct":80,"meta_regime_switching_pct":12},
   "go_no_go":"RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
 }

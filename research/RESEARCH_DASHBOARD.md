@@ -1,57 +1,81 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-18 19:00 JST  
+> **最終更新:** 2026-09-18 19:45 JST  
+> **最優先:** Cloud Monster legacy exact復元 + weak+early exact復元  
 > **比較契約:** cost 0%、win = gross return > 0、signal T → next XTKS open → fifth XTKS close。  
 > **重要:** 2026はMeta mapping SHA freeze + STATE明示許可までSEALED。production/mainは変更禁止。
 
 ## 現在地
 
-**研究全体: 約90%** / **P0 historical比較: 80%** / **Meta地合い切替: 12%**。直近1時間はsubstantive commitが無かったため進捗率は据え置き。
+**通常研究全体: 約90%** / **historical比較: 80%** / **Meta: 12%**。  
+ただしユーザー指示により、通常P0を一時的に二次優先へ下げ、**Cloud Monster / weak+early exact復元を絶対最優先**へ切替。
 
-## 直近1時間の実成果
+## 今回の実成果
 
-- repository-wide scanで18:00 supervisor更新後の新規commitは **0件**。よって :12/:24/:36/:48 は今回すべて **NONE** 判定。heartbeat/last_runだけでは進捗加算しない。
-- :12 → G3 PENDINGが長引いているため、次runで **PINNED または REFERENCE_ONLY/PARKED の二択に強制確定**。広範囲探索は禁止。
-- :24 → rows待ちidleを禁止。既存exact rowsで埋められる比較セルが無ければ、即Meta causal label補助へ移行。
-- :36 → Meta causal labelsを独立P0として継続。primary完了前のmapping freezeは禁止。
-- :48 → C1-C4 selector/entrypointは既に固定済みなので、定義探索なしで2022 TRADE_ROWS実生成だけを継続。
+- 復元専用ledgerを新規作成: `0527fd106f0c3c2c74156e4ef98a5f97073d2b4f`
+  - `research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`
+- weak+earlyの核を既存sourceから再確認:
+  - branch `research/tvfree-canonical-batch02`
+  - `tvfree_screener/research_20260912_core_monster.md`
+  - blob `762b38e99d11866925abbdb47b5fd61854897120`
+  - fixed gate: market `med_ret5 <= 0`
+  - candidate `ret10 <= 0.5735294117647058`
+  - population: preserved causal V7 Tail
+- 同ファイルに2023-2024の `volr20 LOW` / `body_pct LOW` / `mean-rank(volr20, body_pct)` のranker成績が残っていることを確認。
+- `EXPERIMENT_LEDGER.md` にV7/V9 source recipe、monthly causal training、matured labels before month start、minimum 30,000 rows等のweak+early再構築手掛かりを確認。
+- 4 workerを重複しない復元laneへ全面再配分。
 
-## last substantive commit
+## Cloud Monster legacy
 
-`42a3ed0c641d7cd8c27604f7722c5d0575ecebe2` — V16 alternate-family 2022-2025 historical complete receipt。
+旧headline search signature:
+- n=63
+- mean +9.86%
+- median +3.33%
+- win 57.1%
+- +20% 30.2%
+- +30% 19.0%
+- <=-10% 22.2%
+- Top5-ex +4.03%
 
-Supervisor STATE v136 commit: `60bffd2c492e64594d6517298cfa34a3338b235b`。
+**重要:** これは現時点では検索signatureであり、exact/canonical扱いしない。元generator/input/rows/SHA chainは未回収。
 
-## 現在の最大blocker
+## weak+early
 
-**deterministic primary 2022 C1-C4の実TRADE_ROWS SHA。** selector `fb02a7e...` とentrypoint `42e5cd8f...` は固定済みで、これ以上の定義探索は不要。
+**核となるgateは失われていない。**  
+現blockerは、V7/V9 source/input/cache → causal training → Tail → weak+early gate → same-day rank/tie-break → cooldown → endpoint → canonical rows を1本のexact executable chainとして再固定すること。
 
-Secondary blockerはC5 G3 semantics。次:12 runでPENDINGを終了させる。Metaは2023-2025 causal labelsを並列で進める。
-
-## 次の担当割当
+## 担当割当
 
 | Lane | 担当 | 成果条件 |
 |---|---|---|
-| :12 | G3最終判定→Meta補助 | C5をPINNEDまたはREFERENCE_ONLYへ確定 + SHA。その後非重複META_LABEL |
-| :24 | primary比較→Meta補助 | COMPARISON_CELL。埋めるセルが無ければ非重複META_LABEL |
-| :36 | Meta causal labels | prereg済みinputsで2023-2025 META_LABEL coverage + SHA |
-| :48 | 2022 C1-C4 rows実生成 | 候補単位でもTRADE_ROWS + SHA |
-| :00 | Supervisor | NONE×2/重複/待機を即再配分、STATE/Dashboard更新 |
+| :12 | Cloud Monster provenance復元 | branch/history/workflow artifact/code/specから旧generator/rowsを回収、各leadをSHA固定 |
+| :24 | weak+early exact復元 | V7/V9→gate→rank/cooldown→rowsをidentity-levelで再現 |
+| :36 | Cloud Monster artifact逆引き | n=63/+9.86 signatureからreports/CSV/JSON/Actions artifactを特定 |
+| :48 | deterministic reproducer | 発見specを実行可能entrypointへ統合しrows SHA/metrics SHAを固定 |
+| :00 | Supervisor | 重複探索/NONE×2を即再配分、recovery ledger/STATE/Dashboard更新 |
 
-## P0残タスク
+## REPRO_PACK完了条件
 
-- deterministic primary C1-C4 2022 canonical rowsを実生成。
-- G3 semanticsをpin、明示既存値が無ければC5をREFERENCE_ONLY/PARKED確定。
-- primary computable candidatesの2022-2025 + aggregate全metric完成。
-- Meta causal label coverageを2022-2025で完成しmapping SHAをfreeze。
-- freeze SHA + STATE許可後だけ2026 one-shot開封。2026結果によるretune禁止。
+以下が全部揃うまで「復元完了」と呼ばない:
+1. exact expression / threshold / tie-break / causal timing
+2. source path + commit SHA
+3. input artifact id/path + content SHA
+4. exact command / entrypoint + args
+5. canonical trade rows + rows SHA
+6. evaluation contract + metrics SHA
+7. identity name + version
+8. A-Gを結ぶhandoff receipt
 
-## 完了済みP0
+## 通常P0の扱い
 
-- **V16 alternate family historical complete**: 2022-2025 + aggregate全metrics、receipt `42a3ed0c...`。
-- primary 2023-2025 exact rows固定済み。
-- primary C1-C4 deterministic selector固定済み。
+primary historical / Meta freezeは**復元完了まで一時二次優先**。  
+V16 alternate historical completeや既存primary exact成果は保持し、捨てない。復元完了後にそこから再開する。
+
+## 最大blocker
+
+**Cloud Monster旧n=63/+9.86のexact generator/input/rows lineageが未特定。**  
+weak+earlyは核心条件が確認済みなので、こちらはCloud Monsterより復元成功確率が高い。
 
 ## GO / NO-GO
 
-**研究継続 / production NO-GO / 2026 SEALED。**
+**Cloud Monster/weak+early recovery ACTIVE / production NO-GO / 2026 SEALED。**

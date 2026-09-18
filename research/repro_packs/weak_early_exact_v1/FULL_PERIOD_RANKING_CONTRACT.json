@@ -1,0 +1,43 @@
+{
+  "contract_id": "WEAK_EARLY_FIVE_CANDIDATE_RANKING_V1",
+  "status": "FROZEN_BEFORE_2026_REPORTING_OPEN",
+  "candidates": [
+    "volr20_low",
+    "body_pct_low",
+    "mean_rank_volr20_body_pct",
+    "dual_top1_agreement",
+    "dual_top1_agreement_g3_no_acute_selloff"
+  ],
+  "evaluation": {
+    "endpoint": "signal T -> next official XTKS session open -> fifth official XTKS session close",
+    "cost_pct": 0,
+    "win": "gross_return > 0",
+    "2026_policy": "reporting_and_robustness_only; no rule, threshold, feature, gate, or candidate retuning",
+    "maturity": "include only rows with confirmed fifth official XTKS close in the fixed daily corpus"
+  },
+  "primary_exact_period": "2023-2026",
+  "2022_policy": "summary-only historical block; excluded from exact row-level aggregate and ranking until the missing 89-row historical Tail identity is recovered",
+  "ranking": {
+    "method": "equal-weight mean of ordinal ranks",
+    "higher_is_better": [
+      "mean_pct",
+      "median_pct",
+      "win_pct",
+      "top3_ex_mean_pct",
+      "max_down_pct"
+    ],
+    "lower_is_better": [
+      "minus10_pct",
+      "minus20_pct"
+    ],
+    "tie_break": [
+      "top3_ex_mean_pct descending",
+      "mean_pct descending",
+      "median_pct descending",
+      "win_pct descending",
+      "n descending"
+    ],
+    "pre_2026_rank": "same method on exact 2023-2025 rows",
+    "including_2026_rank": "same method on exact 2023-2026 rows; descriptive only"
+  }
+}

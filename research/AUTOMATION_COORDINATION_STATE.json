@@ -1,37 +1,115 @@
 {
-  "version": 136,
+  "version": 137,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T19:00:00+09:00",
-  "supervisor_last_scan": {"status":"NO_NEW_SHA_LAST_HOUR_STALL_REALLOCATION","scanned_at_jst":"2026-09-18T19:00:00+09:00","coordination_contract_reconciled":true},
+  "updated_at_jst": "2026-09-18T19:45:00+09:00",
+  "supervisor_last_scan": {
+    "status": "CLOUD_MONSTER_WEAK_EARLY_RECOVERY_PRIORITY_OVERRIDE",
+    "scanned_at_jst": "2026-09-18T19:45:00+09:00",
+    "coordination_contract_reconciled": true
+  },
+  "priority_override": {
+    "status": "ACTIVE",
+    "directive": "Cloud Monster legacy exact recovery and weak+early exact recovery are the absolute top research priority until REPRO_PACK completion.",
+    "cloud_monster_legacy_signature": {
+      "status": "NOT_EXACT_YET_SEARCH_SIGNATURE_ONLY",
+      "n": 63,
+      "mean_5bd_pct": 9.86,
+      "median_5bd_pct": 3.33,
+      "win_pct": 57.1,
+      "plus20_pct": 30.2,
+      "plus30_pct": 19,
+      "minus10_pct": 22.2,
+      "top5_ex_mean_pct": 4.03
+    },
+    "weak_early_confirmed_core": {
+      "source_branch": "research/tvfree-canonical-batch02",
+      "source_path": "tvfree_screener/research_20260912_core_monster.md",
+      "source_blob_sha": "762b38e99d11866925abbdb47b5fd61854897120",
+      "market_gate": "med_ret5 <= 0",
+      "candidate_gate": "ret10 <= 0.5735294117647058",
+      "population": "preserved causal V7 Tail",
+      "status": "CORE_GATE_CONFIRMED_REPRO_PIPELINE_NOT_YET_COMPLETE"
+    },
+    "recovery_ledger_commit": "0527fd106f0c3c2c74156e4ef98a5f97073d2b4f",
+    "recovery_ledger_path": "research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md"
+  },
   "worker_last_run": {
-    ":12": {"last_known_jst":"2026-09-18T18:15:39+09:00","task":"G3 final disposition then Meta assist","status":"NONE_NO_CONFIRMED_NEW_SHA_FORCE_DISPOSITION_NEXT_RUN","evidence_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6"},
-    ":24": {"last_known_jst":"2026-09-18T18:26:11+09:00","task":"primary comparison then Meta assist","status":"NONE_NO_CONFIRMED_NEW_COMPARISON_CELL_IDLE_FORBIDDEN","evidence_commit":null},
-    ":36": {"last_known_jst":"2026-09-18T18:38:04+09:00","task":"Meta causal labels","status":"NONE_NO_CONFIRMED_META_LABEL_SHA_YET","evidence_commit":"42a3ed0c641d7cd8c27604f7722c5d0575ecebe2"},
-    ":48": {"last_known_jst":"2026-09-18T18:49:57+09:00","task":"2022 C1-C4 canonical rows generation","status":"NONE_NO_CONFIRMED_ROWS_CONTINUE_EXECUTION_ONLY","evidence_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6"},
-    ":00": {"last_known_jst":"2026-09-18T19:00:00+09:00","task":"Supervisor scan/reallocation","status":"STALL_DETECTED_PROMPTS_TIGHTENED","evidence_commit":"42a3ed0c641d7cd8c27604f7722c5d0575ecebe2"}
+    ":12": {
+      "last_known_jst": "2026-09-18T19:10:17+09:00",
+      "task": "Cloud Monster provenance recovery",
+      "status": "REALLOCATED_TO_RECOVERY_PRIORITY",
+      "evidence_commit": "0527fd106f0c3c2c74156e4ef98a5f97073d2b4f"
+    },
+    ":24": {
+      "last_known_jst": "2026-09-18T19:26:43+09:00",
+      "task": "weak+early exact recovery",
+      "status": "REALLOCATED_TO_RECOVERY_PRIORITY",
+      "evidence_commit": "0527fd106f0c3c2c74156e4ef98a5f97073d2b4f"
+    },
+    ":36": {
+      "last_known_jst": "2026-09-18T19:34:53+09:00",
+      "task": "Cloud Monster result-signature artifact reverse lookup",
+      "status": "REALLOCATED_TO_RECOVERY_PRIORITY",
+      "evidence_commit": "0527fd106f0c3c2c74156e4ef98a5f97073d2b4f"
+    },
+    ":48": {
+      "last_known_jst": "2026-09-18T18:49:57+09:00",
+      "task": "Cloud Monster/weak+early deterministic reproducer",
+      "status": "REALLOCATED_TO_RECOVERY_PRIORITY",
+      "evidence_commit": "0527fd106f0c3c2c74156e4ef98a5f97073d2b4f"
+    },
+    ":00": {
+      "last_known_jst": "2026-09-18T19:45:00+09:00",
+      "task": "Cloud Monster recovery supervisor",
+      "status": "PRIORITY_OVERRIDE_AND_FOUR_LANE_REALLOCATION",
+      "evidence_commit": "0527fd106f0c3c2c74156e4ef98a5f97073d2b4f"
+    }
   },
-  "p0_reallocation": {
-    "strict_3pt":"PARKED_REFERENCE_ONLY",
-    "2022_primary":"C1-C4 selectors and deterministic entrypoint are pinned. :48 remains execution-only and must emit candidate rows; no definition/search work allowed.",
-    "2022_generator_input_contract_commit":"aaf53ab8d9678dcade730b3f4554a1e8ba72b7f4",
-    "2022_deterministic_entrypoint_commit":"42e5cd8fd7e9e34e90ddae790b1d4cbd3ede1887",
-    "primary_selector_spec_commit":"fb02a7e124836668999fc6ee4f484a2c1a94fbc6",
-    "alternate_family":"ALT_HISTORICAL_COMPLETE at 42a3ed0c641d7cd8c27604f7722c5d0575ecebe2; closed, do not revisit.",
-    "primary_comparison":"2023-2025 exact rows fixed. :24 must add an actually missing comparison cell or switch immediately to non-overlapping Meta labels until 2022 rows arrive.",
-    "g3":"Next :12 run must terminate PENDING: PINNED if an explicit existing value is present in the bounded exact sources, otherwise REFERENCE_ONLY/PARKED. No new threshold creation.",
-    "meta":":36 owns causal labels; :24/:12 may assist only on non-overlapping years/axes. Final mapping freeze waits for primary historical completion."
+  "recovery_lanes": {
+    ":12": "Search branch/history/workflow artifacts/code/spec for exact legacy Cloud Monster provenance; record each lead with SHA/artifact id.",
+    ":24": "Recover exact weak+early V7/V9 -> gate -> ranking/cooldown -> endpoint pipeline and identity-level rows.",
+    ":36": "Reverse lookup legacy n=63/+9.86 result signature across reports/JSON/CSV/Actions artifacts; metrics are search keys only, never tuning targets.",
+    ":48": "Turn recovered specs into deterministic executable reproducer and freeze canonical rows/metrics hashes."
   },
+  "repro_pack_hard_gate": [
+    "exact expression/threshold/tie-break/causal timing",
+    "source path + commit SHA",
+    "input artifact id/path + content SHA",
+    "exact command/entrypoint + args",
+    "canonical trade rows + rows SHA",
+    "evaluation contract + metrics SHA",
+    "identity name + version",
+    "10-20 line handoff linking all components"
+  ],
   "historical_contract": {
-    "primary_candidates":["body_pct LOW","volr20 LOW","mean-rank(volr20, body_pct)","DUAL_TOP1_AGREEMENT","DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"],
-    "endpoint":"signal T -> next XTKS open -> fifth XTKS close","transaction_cost_pct":0,"win_definition":"gross return > 0",
-    "period_2023_2025":"EXACT_ALREADY_FIXED_DO_NOT_RECOMPUTE",
-    "year_2022":"Deterministic reconstruction canonical; C1-C4 pinned and rows pending; C5 must leave PENDING next :12 run.",
-    "alternate":"ALT_HISTORICAL_COMPLETE=YES at 42a3ed0c; aggregate n=273, mean=1.6188%, median=-5.4286%, win=40.6593%, 100-share P/L=-87,422.78 JPY."
+    "endpoint": "signal T -> next XTKS open -> fifth XTKS close",
+    "transaction_cost_pct": 0,
+    "win_definition": "gross return > 0",
+    "normal_primary_historical_status": "TEMPORARILY_SECONDARY_DURING_RECOVERY",
+    "alternate": "ALT_HISTORICAL_COMPLETE=YES at 42a3ed0c641d7cd8c27604f7722c5d0575ecebe2"
   },
-  "meta_regime_switching": {"status":"CAUSAL_LABEL_COVERAGE_IN_PROGRESS_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
-  "last_hour_substantive_result":"NONE: repository-wide scan found no commit after the 18:00 supervisor update. This does not increase progress. Supervisor tightened :12 to force G3 disposition, :24 to forbid waiting and switch to Meta assistance when no fillable comparison cells remain, while :36 and :48 continue two independent P0 paths.",
-  "largest_blocker":"Actual deterministic primary 2022 C1-C4 TRADE_ROWS remain missing despite pinned entrypoint/selectors. Secondary blocker is unresolved C5 G3 disposition. No progress percentage increase this run.",
-  "p0_remaining":["emit deterministic C1-C4 primary 2022 canonical rows","force G3 PINNED or REFERENCE_ONLY/PARKED","fill primary computable candidates 2022-2025 plus aggregate full metrics","complete Meta causal labels across 2022-2025","freeze Meta mapping using only 2022-2025 eligible exact data","only then one-shot open 2026"],
-  "progress":{"overall_pct":90,"phase2_multi_candidate_full_period_pct":80,"meta_regime_switching_pct":12},
-  "go_no_go":"RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
+  "meta_regime_switching": {
+    "status": "TEMPORARILY_SECONDARY_DURING_RECOVERY_MAPPING_NOT_FROZEN",
+    "prereg_commit": "a586e98d0d7c6dbed471cf9fde419d9760e1f050",
+    "input_manifest_commit": "b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d",
+    "holdout": "2026_SEALED",
+    "open_condition": "Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"
+  },
+  "last_hour_substantive_result": "Priority override enacted. Recovery ledger created at 0527fd106f0c3c2c74156e4ef98a5f97073d2b4f. Manual evidence recovered that weak+early core gate is explicitly documented as med_ret5<=0 plus ret10<=0.5735294117647058 on preserved causal V7 Tail; four workers reallocated to independent Cloud Monster/weak+early recovery paths.",
+  "largest_blocker": "Exact legacy Cloud Monster n=63/+9.86 generator/input/rows lineage is not yet identified. weak+early core gate is documented, but the full executable source/input/cache/ranking/cooldown/rows chain still needs REPRO_PACK completion.",
+  "priority_remaining": [
+    "locate exact legacy Cloud Monster artifact/generator/rows lineage",
+    "freeze exact weak+early V7/V9 source/input/training/tail/gate/rank/cooldown/endpoint chain",
+    "identity-level replay 2023-2025 against preserved rows/metrics without retuning",
+    "build deterministic reproducer and REPRO_PACK for both recoverable lineages",
+    "then resume normal primary historical and Meta freeze workflow",
+    "only after Meta freeze one-shot open 2026"
+  ],
+  "progress": {
+    "overall_pct": 90,
+    "phase2_multi_candidate_full_period_pct": 80,
+    "meta_regime_switching_pct": 12,
+    "recovery_pct": 15
+  },
+  "go_no_go": "RECOVERY_PRIORITY_ACTIVE_PRODUCTION_NO_GO_2026_SEALED"
 }

@@ -15,13 +15,31 @@
   },
   "outputs": {
     "canonical_trade_rows_body_pct_low.csv": "2fdba3e3b5670dcb4c96eca491274adb33bf05529aed6c1c35b90610148740f5",
+    "canonical_trade_rows_dual_top1_agreement.csv": "b4f9fff630577492198732c91275f2fafb0114e78a519074393d13e03ab88031",
+    "canonical_trade_rows_dual_top1_agreement_g3_no_acute_selloff.csv": "e98d4d82e81d05ac3b3ffae7f6dc91fa1bcd567d58c24403ae5568406ec8de27",
     "canonical_trade_rows_mean_rank_volr20_body_pct.csv": "424a9cb70a2834d2002d3e664ab75e1cde0c0509be34ba3c5c6e23316a810cbb",
     "canonical_trade_rows_volr20_low.csv": "580ed355e27e8c25b13e1db0ac603d21640ddabf7e31cce8de228ae955c13474",
-    "metrics.json": "676f40f6752e54cc0bafb1c5a8e524d8afbd8898b3565ded40a72056ed306947"
+    "metrics.json": "24654976cd82ef93c76f27fdae3a8749a5741edf61a884a779a1d3f41a19e5d9"
+  },
+  "rule_sources": {
+    "dual_top1_agreement": {
+      "commit": "4b37f18d7601f8fd6ff42155879faff5b7d1e9e3",
+      "path": "research/WEAK_EARLY_PHASE2_20260914.md"
+    },
+    "g3_frozen_selection": {
+      "commit": "aed2690c5972edff99b0b06a26f8cb37b86165c1",
+      "path": "research/WEAK_EARLY_PHASE2_REGIME_SELECTION_20260914.md"
+    },
+    "g3_preregistration": {
+      "commit": "bb7e9dcddcf1ff9e931f0e2f92925d6f761cf7e5",
+      "path": "research/WEAK_EARLY_PHASE2_REGIME_PREREG_20260914.md"
+    }
   },
   "rules": {
     "causal_training": "monthly; labels require target_end_date < month_start; minimum 30000 training rows",
     "cooldown": "none in the legacy n=128/n=44 rank comparison",
+    "dual_top1_agreement": "select only dates where volr20 LOW Top1 and body_pct LOW Top1 are the same symbol; otherwise NO TRADE",
+    "g3_no_acute_selloff": "previous-session med_ret1 >= -0.01",
     "gate": "med_ret5 <= 0 AND ret10 <= 0.5735294117647058",
     "population": "preserved causal V7 Tail; tail_cdf >= 0.999 already materialized",
     "rankers": {

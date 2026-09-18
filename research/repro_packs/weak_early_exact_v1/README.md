@@ -1,6 +1,6 @@
 # WEAK_EARLY_EXACT_V1 REPRO_PACK
 
-Status: **EXACT_REPRODUCED** for the preserved 2023-2025 legacy rank comparison. Research-only; 2026 remains SEALED.
+Status: **EXACT_REPRODUCED** for all five frozen 2023-2025 Weak+Early / Phase-2 selectors. Research-only; 2026 remains SEALED.
 
 ## Exact command
 
@@ -21,18 +21,21 @@ The reproducer refuses input SHA drift, unresolved top ties, endpoint-price drif
 3. Monthly V7 training used only labels with `target_end_date < month_start` and required at least 30,000 rows.
 4. Fixed gate is `med_ret5 <= 0 AND ret10 <= 0.5735294117647058`.
 5. Selection is one candidate per signal date; the three exact rankers are volr20 LOW, body_pct LOW, and their mean percentile rank.
-6. Rank direction is ascending; contemporaneous tie-break is `tail_cdf` descending. No selected day remains tied after it.
-7. Legacy rank-comparison cooldown is **none**; adding a prior-session same-symbol cooldown breaks n=128 and is a later separate variant.
-8. Source commit for the preserved cache build is `ef8754d835ccb39faf783092f969417a3ea74ce9`.
-9. V7/V9 source blobs are `f7f49ab2e09496494adfb365c94e969973c4070c` and `45a1272fe49c526bbf69956419e34e96d696f7d6`.
-10. Tail input is artifact `10264251140`, file SHA-256 `0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d`.
-11. Daily input is artifact `10264205130`, file SHA-256 `6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0`.
-12. Endpoint is signal T, next official XTKS session open, fifth official XTKS session close; cost 0%; win is gross > 0.
-13. Each output CSV includes signal date, symbol, candidate identity, entry/exit dates and prices, gross return, and 100-share P/L.
-14. `metrics.json` reports every year and aggregate; `manifest.json` pins all output content hashes.
-15. 2023-2024 exact headline n=128 and all three recorded means/medians/tail metrics reproduce to floating precision.
-16. 2025 exact n=44 and recorded means reproduce; 2026 is neither read nor generated.
-17. Production/main, workflows, Discord, Sheets, Stable, Sniper, Mega, TradingView, and watchlists are untouched.
+6. `DUAL_TOP1_AGREEMENT` trades only when the independently selected volr20 LOW and body_pct LOW Top1 identities agree; disagreement is NO TRADE.
+7. `DUAL + G3` applies the preregistered previous-session gate `med_ret1 >= -0.01` to DUAL without changing the threshold.
+8. Rank direction is ascending; contemporaneous tie-break is `tail_cdf` descending. No selected day remains tied after it.
+9. Legacy rank-comparison cooldown is **none**; adding a prior-session same-symbol cooldown breaks n=128 and is a later separate variant.
+10. Source commit for the preserved cache build is `ef8754d835ccb39faf783092f969417a3ea74ce9`.
+11. DUAL source is commit `4b37f18d7601f8fd6ff42155879faff5b7d1e9e3`; G3 preregistration is `bb7e9dcddcf1ff9e931f0e2f92925d6f761cf7e5`; frozen G3 selection is `aed2690c5972edff99b0b06a26f8cb37b86165c1`.
+12. V7/V9 source blobs are `f7f49ab2e09496494adfb365c94e969973c4070c` and `45a1272fe49c526bbf69956419e34e96d696f7d6`.
+13. Tail input is artifact `10264251140`, file SHA-256 `0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d`.
+14. Daily input is artifact `10264205130`, file SHA-256 `6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0`.
+15. Endpoint is signal T, next official XTKS session open, fifth official XTKS session close; cost 0%; win is gross > 0.
+16. Each output CSV includes signal date, symbol, candidate identity, entry/exit dates and prices, gross return, and 100-share P/L.
+17. `metrics.json` reports every year and aggregate; `manifest.json` pins all output content hashes.
+18. The three base selectors reproduce n=128 for 2023-2024 and n=44 for 2025 with the recorded metrics.
+19. DUAL reproduces n=140 / mean +7.17% / Top3-ex +4.79%; DUAL+G3 reproduces n=117 / mean +7.98% / win 53.85% / Top3-ex +5.14%.
+20. 2026 is neither read nor generated. Production/main, workflows, Discord, Sheets, Stable, Sniper, Mega, TradingView, and watchlists are untouched.
 
 ## 2022 boundary
 

@@ -31,6 +31,10 @@ RANKERS = {
     "mean_rank_volr20_body_pct": "mean_rank",
 }
 
+DUAL_NAME = "dual_top1_agreement"
+DUAL_G3_NAME = "dual_top1_agreement_g3_no_acute_selloff"
+G3_MED_RET1_MIN = -0.01
+
 EXPECTED_DEV = {
     "volr20_low": {"n": 128, "mean_pct": 6.239403543533105, "median_pct": 1.064960900249695},
     "body_pct_low": {"n": 128, "mean_pct": 6.461068512693746, "median_pct": 1.25435483964363},
@@ -40,6 +44,55 @@ EXPECTED_2025_MEAN_PCT = {
     "volr20_low": 6.58,
     "body_pct_low": 6.78,
     "mean_rank_volr20_body_pct": 6.09,
+}
+
+EXPECTED_STRUCTURAL = {
+    DUAL_NAME: {
+        "development_2023_2024": {
+            "n": 103,
+            "mean_pct": 6.88,
+            "median_pct": 1.39,
+            "win_pct": 53.40,
+            "top3_ex_mean_pct": 3.86,
+        },
+        "year_2025": {
+            "n": 37,
+            "mean_pct": 7.97,
+            "median_pct": -2.40,
+            "win_pct": 48.65,
+            "top3_ex_mean_pct": -0.06,
+        },
+        "aggregate_2023_2025": {
+            "n": 140,
+            "mean_pct": 7.17,
+            "median_pct": 1.25,
+            "win_pct": 52.14,
+            "top3_ex_mean_pct": 4.79,
+        },
+    },
+    DUAL_G3_NAME: {
+        "development_2023_2024": {
+            "n": 83,
+            "mean_pct": 7.38,
+            "median_pct": 1.74,
+            "win_pct": 55.42,
+            "top3_ex_mean_pct": 3.62,
+        },
+        "year_2025": {
+            "n": 34,
+            "mean_pct": 9.43,
+            "median_pct": 0.37,
+            "win_pct": 50.00,
+            "top3_ex_mean_pct": 0.77,
+        },
+        "aggregate_2023_2025": {
+            "n": 117,
+            "mean_pct": 7.98,
+            "median_pct": 1.74,
+            "win_pct": 53.85,
+            "top3_ex_mean_pct": 5.14,
+        },
+    },
 }
 
 
@@ -67,10 +120,12 @@ def metrics(frame: pd.DataFrame) -> dict[str, Any]:
         "win_pct": float((returns > 0).mean() * 100),
         "plus10_pct": float((returns >= 0.10).mean() * 100),
         "plus20_pct": float((returns >= 0.20).mean() * 100),
+        "plus50_pct": float((returns >= 0.50).mean() * 100),
         "minus10_pct": float((returns <= -0.10).mean() * 100),
         "minus20_pct": float((returns <= -0.20).mean() * 100),
         "max_up_pct": float(returns.max() * 100),
         "max_down_pct": float(returns.min() * 100),
+        "top1_ex_mean_pct": float(ranked.iloc[1:].mean() * 100) if len(ranked) > 1 else None,
         "top3_ex_mean_pct": float(ranked.iloc[3:].mean() * 100) if len(ranked) > 3 else None,
         "one_hundred_shares_pl_yen": float(frame["one_hundred_shares_pl_yen"].sum()),
     }
@@ -210,6 +265,24 @@ def assert_historical_identity(name: str, rows: pd.DataFrame) -> None:
         raise RuntimeError(f"{name}: 2025 mean drift")
 
 
+def assert_structural_identity(name: str, rows: pd.DataFrame) -> None:
+    frames = {
+        "development_2023_2024": rows[rows["signal_date"] < "2025-01-01"],
+        "year_2025": rows[rows["signal_date"].dt.year == 2025],
+        "aggregate_2023_2025": rows,
+    }
+    for period, frame in frames.items():
+        actual = metrics(frame)
+        for field, expected in EXPECTED_STRUCTURAL[name][period].items():
+            if field == "n":
+                if actual[field] != expected:
+                    raise RuntimeError(f"{name}: {period} {field} drift")
+            elif round(actual[field], 2) != expected:
+                raise RuntimeError(
+                    f"{name}: {period} {field} drift: {actual[field]} != {expected}"
+                )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--tail-cache", type=Path, required=True)
@@ -241,6 +314,20 @@ def main() -> None:
     pool["mean_rank"] = pool[["rank_volr20", "rank_body_pct"]].mean(axis=1)
 
     selected = {name: choose_one_per_day(pool, key) for name, key in RANKERS.items()}
+    agreement_ids = selected["volr20_low"][["date", "symbol"]].merge(
+        selected["body_pct_low"][["date", "symbol"]],
+        on=["date", "symbol"],
+        how="inner",
+        validate="one_to_one",
+    )
+    dual = pool.merge(
+        agreement_ids,
+        on=["date", "symbol"],
+        how="inner",
+        validate="one_to_one",
+    )
+    selected[DUAL_NAME] = dual
+    selected[DUAL_G3_NAME] = dual[dual["med_ret1"] >= G3_MED_RET1_MIN].copy()
     symbols = set(pd.concat(selected.values(), ignore_index=True)["symbol"].astype(str))
     daily = load_required_daily_rows(args.daily_corpus, symbols)
     xtks_calendar = load_xtks_calendar(args.daily_corpus)
@@ -251,13 +338,16 @@ def main() -> None:
         "cost_pct": 0,
         "win_definition": "gross_return > 0",
         "endpoint": "signal T -> next available official XTKS session open -> fifth official XTKS session close",
-        "rankers": {},
+        "selectors": {},
     }
     output_hashes: dict[str, str] = {}
 
     for name, picks in selected.items():
         rows = attach_canonical_endpoint(picks, daily, xtks_calendar)
-        assert_historical_identity(name, rows)
+        if name in RANKERS:
+            assert_historical_identity(name, rows)
+        else:
+            assert_structural_identity(name, rows)
         csv_path = args.output_dir / f"canonical_trade_rows_{name}.csv"
         rows.to_csv(
             csv_path,
@@ -268,7 +358,7 @@ def main() -> None:
             float_format="%.12g",
         )
         output_hashes[csv_path.name] = sha256(csv_path)
-        metric_report["rankers"][name] = {
+        metric_report["selectors"][name] = {
             "by_year": {
                 str(year): metrics(rows[rows["signal_date"].dt.year == year])
                 for year in (2023, 2024, 2025)
@@ -305,10 +395,26 @@ def main() -> None:
             "gate": f"med_ret5 <= 0 AND ret10 <= {RET10_MAX}",
             "selection": "one candidate per signal date",
             "rankers": RANKERS,
+            "dual_top1_agreement": "select only dates where volr20 LOW Top1 and body_pct LOW Top1 are the same symbol; otherwise NO TRADE",
+            "g3_no_acute_selloff": f"previous-session med_ret1 >= {G3_MED_RET1_MIN}",
             "tie_break": "tail_cdf descending",
             "cooldown": "none in the legacy n=128/n=44 rank comparison",
             "causal_training": "monthly; labels require target_end_date < month_start; minimum 30000 training rows",
             "universe": "fixed run-80 TSE daily corpus",
+        },
+        "rule_sources": {
+            "dual_top1_agreement": {
+                "commit": "4b37f18d7601f8fd6ff42155879faff5b7d1e9e3",
+                "path": "research/WEAK_EARLY_PHASE2_20260914.md",
+            },
+            "g3_preregistration": {
+                "commit": "bb7e9dcddcf1ff9e931f0e2f92925d6f761cf7e5",
+                "path": "research/WEAK_EARLY_PHASE2_REGIME_PREREG_20260914.md",
+            },
+            "g3_frozen_selection": {
+                "commit": "aed2690c5972edff99b0b06a26f8cb37b86165c1",
+                "path": "research/WEAK_EARLY_PHASE2_REGIME_SELECTION_20260914.md",
+            },
         },
         "outputs": output_hashes,
     }

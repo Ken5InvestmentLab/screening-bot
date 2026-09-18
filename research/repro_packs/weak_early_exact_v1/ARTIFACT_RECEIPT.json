@@ -22,5 +22,20 @@
     "tvfree_screener/v7_full_tail_research.py": "f7f49ab2e09496494adfb365c94e969973c4070c",
     "tvfree_screener/v9_conditional_quality_research.py": "45a1272fe49c526bbf69956419e34e96d696f7d6",
     "tvfree_screener/run.py": "b639a6f6f33c643c2dcf09383ccf7dbfc7790cfa"
+  },
+  "phase2_rule_sources": {
+    "dual_top1_agreement": {
+      "commit": "4b37f18d7601f8fd6ff42155879faff5b7d1e9e3",
+      "path": "research/WEAK_EARLY_PHASE2_20260914.md"
+    },
+    "g3_preregistration": {
+      "commit": "bb7e9dcddcf1ff9e931f0e2f92925d6f761cf7e5",
+      "path": "research/WEAK_EARLY_PHASE2_REGIME_PREREG_20260914.md",
+      "expression": "previous-session med_ret1 >= -0.01"
+    },
+    "g3_frozen_selection": {
+      "commit": "aed2690c5972edff99b0b06a26f8cb37b86165c1",
+      "path": "research/WEAK_EARLY_PHASE2_REGIME_SELECTION_20260914.md"
+    }
   }
 }

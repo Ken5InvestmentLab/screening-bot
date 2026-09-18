@@ -1,0 +1,37 @@
+{
+  "identity": "WEAK_EARLY_EXACT_V1",
+  "inputs": {
+    "daily_corpus": {
+      "artifact_id": 10264205130,
+      "original_source_run": 34545440155,
+      "sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+      "source_run": 34599959356
+    },
+    "tail_cache": {
+      "artifact_id": 10264251140,
+      "sha256": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+      "source_run": 34600083474
+    }
+  },
+  "outputs": {
+    "canonical_trade_rows_body_pct_low.csv": "2fdba3e3b5670dcb4c96eca491274adb33bf05529aed6c1c35b90610148740f5",
+    "canonical_trade_rows_mean_rank_volr20_body_pct.csv": "424a9cb70a2834d2002d3e664ab75e1cde0c0509be34ba3c5c6e23316a810cbb",
+    "canonical_trade_rows_volr20_low.csv": "580ed355e27e8c25b13e1db0ac603d21640ddabf7e31cce8de228ae955c13474",
+    "metrics.json": "676f40f6752e54cc0bafb1c5a8e524d8afbd8898b3565ded40a72056ed306947"
+  },
+  "rules": {
+    "causal_training": "monthly; labels require target_end_date < month_start; minimum 30000 training rows",
+    "cooldown": "none in the legacy n=128/n=44 rank comparison",
+    "gate": "med_ret5 <= 0 AND ret10 <= 0.5735294117647058",
+    "population": "preserved causal V7 Tail; tail_cdf >= 0.999 already materialized",
+    "rankers": {
+      "body_pct_low": "body_pct",
+      "mean_rank_volr20_body_pct": "mean_rank",
+      "volr20_low": "volr20"
+    },
+    "selection": "one candidate per signal date",
+    "tie_break": "tail_cdf descending",
+    "universe": "fixed run-80 TSE daily corpus"
+  },
+  "status": "EXACT_REPRODUCED_FROM_PRESERVED_CAUSAL_TAIL_ARTIFACT"
+}

@@ -106,3 +106,48 @@ H. 10-20 line handoff linking A-G
 - weak+early is not lost; its core gate and ranking evidence are already documented and appears recoverable.
 - the exact old Cloud Monster n=63 lineage is still unresolved and is now the highest-priority provenance target.
 - normal primary-historical / Meta work is temporarily secondary until this recovery is finished or definitively bounded by evidence, without using 2026 to rescue or tune anything.
+
+## 2026-09-18 manual recovery session
+
+### Workspace and branch isolation
+- Working branch: `research/cloud-monster-recovery`.
+- Branch created from `origin/research/automation-coordination` at `cc08da7523e5037ff5575427fbf4b57bb590f4fd`.
+- Merge base with then-current `origin/main`: `c2d52f5e41aee3f529cfdc98e00e139b6090079c`.
+- Result: research-only branch; no production/main checkout or mutation.
+
+### Weak+early preserved inputs — EXACT
+- Actions artifact `10264205130`, run `34599959356`, original source run `34545440155`, file `tse_daily.csv`.
+- Daily corpus SHA-256: `6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0`.
+- Actions artifact `10264251140`, run `34600083474`, file `v7_causal_tail_cache_2023_2025.csv`.
+- Tail cache SHA-256: `0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d`.
+- Source commit: `ef8754d835ccb39faf783092f969417a3ea74ce9`.
+- V7 source blob: `f7f49ab2e09496494adfb365c94e969973c4070c`; V9 source blob: `45a1272fe49c526bbf69956419e34e96d696f7d6`.
+- Search result: 1,306 preserved Tail rows; years 2023=267, 2024=557, 2025=482. No 2026 row was read.
+
+### Weak+early selector reconstruction — EXACT
+- Fixed gate applied verbatim: `med_ret5 <= 0 AND ret10 <= 0.5735294117647058`.
+- Gate result: 204 eligible 2023-2024 rows on 128 unique signal dates.
+- Selector: one candidate per signal date; `volr20` LOW, `body_pct` LOW, or mean of within-day ascending percentile ranks.
+- Tie-break: `tail_cdf` descending. All three selectors have zero unresolved winning ties after this tie-break.
+- Cooldown: none for the legacy n=128/n=44 rank comparison. A one-prior-session same-symbol cooldown changes n and is rejected as a different later variant.
+- Endpoint replay against the fixed daily corpus had zero entry-date, entry-open, fifth-session-date, exit-close-derived-return, or cached-target mismatches.
+- Reproducer: `research/repro_packs/weak_early_exact_v1/reproduce.py`.
+- Canonical output hashes are pinned in `research/repro_packs/weak_early_exact_v1/output/manifest.json`.
+- Status: `WEAK_EARLY_EXACT_V1` is `EXACT_REPRODUCED` for the preserved 2023-2025 legacy comparison.
+
+### Cloud Monster reverse lookup — bounded surfaces completed so far
+- Git refs/history searched: requested Cloud/Monster branches plus research handoffs/specs/reports; no tracked copy of `cloud_two_lane_union_jpx.csv` or `cloud_priorityA_monsters_compare_teacher.csv` found.
+- Historical exact-recovery specs found on `origin/research/tentei-cloud-mtf`: `research/tentei_cloud/OLD_CLOUD_MONSTER_EXACT_REPRO_SPEC_20260914.md` at commit `9c4aed248cb3dd680a5608cd62b00fe294e254e1`, and forensic report at commit `7d19533560a186ffd4dceccb72fbaf1bd54117cc`.
+- Those frozen documents record 63 historical Priority-A rows and exact scores for 19 high-return A rows, but explicitly record the missing model class/objective/features/transforms/calibration/serialized model/seed and final Watch-detail formula.
+- Current non-expired GitHub Actions artifact metadata was searched by Cloud/Monster/teacher names. No artifact containing either legacy 63-row CSV was identified.
+- Expired 1H Cloud artifacts `10193961732` and `10193889055` are a later/different 1H lane and are not evidence for the legacy 63-row identity.
+- Local filename/content search covered the repository, Product, Downloads, and Documents. No copy of the two legacy CSVs was found.
+- Recovered input-side evidence: Actions artifact `10266329903`, run `34608845800`, `teacher_ohlcv_4h_raw.csv`, SHA-256 `f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2`.
+- Classification: raw 4H corpus is exact input evidence; Watch/priority rule fragments are probable lineage; the legacy n=63 selection/model/canonical rows remain missing.
+- Current Cloud status: `EXACT_NOT_YET_RECOVERED`. No parameter search or signature fitting was performed.
+
+### Do not repeat
+- Do not repeat default-branch-only code search; all listed research refs/history were queried.
+- Do not repeat non-expired artifact-name enumeration for the same run set unless new runs/artifacts appear.
+- Do not rerun local filename search in repo/Product/Downloads/Documents without a new path or cache lead.
+- Do not treat current 1H artifacts or the broad 696-row reconstruction as the legacy n=63 result.

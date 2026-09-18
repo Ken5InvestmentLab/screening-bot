@@ -1,0 +1,230 @@
+{
+  "cost_pct": 0,
+  "endpoint": "signal T -> next available official XTKS session open -> fifth official XTKS session close",
+  "identity": "WEAK_EARLY_EXACT_V1",
+  "rankers": {
+    "body_pct_low": {
+      "aggregate_2023_2025": {
+        "max_down_pct": -41.92307692307692,
+        "max_up_pct": 129.99999999999997,
+        "mean_pct": 6.542981137113803,
+        "median_pct": 0.9876759876759955,
+        "minus10_pct": 29.069767441860467,
+        "minus20_pct": 7.55813953488372,
+        "n": 172,
+        "one_hundred_shares_pl_yen": 271084.9994659424,
+        "plus10_pct": 31.3953488372093,
+        "plus20_pct": 18.6046511627907,
+        "top3_ex_mean_pct": 4.602826648436471,
+        "win_pct": 50.58139534883721
+      },
+      "by_year": {
+        "2023": {
+          "max_down_pct": -25.66666666666667,
+          "max_up_pct": 106.40394088669952,
+          "mean_pct": 5.802856568039605,
+          "median_pct": 0.4826254826254872,
+          "minus10_pct": 30.0,
+          "minus20_pct": 6.0,
+          "n": 50,
+          "one_hundred_shares_pl_yen": 97406.66465759277,
+          "plus10_pct": 30.0,
+          "plus20_pct": 20.0,
+          "top3_ex_mean_pct": 0.897179292918035,
+          "win_pct": 50.0
+        },
+        "2024": {
+          "max_down_pct": -41.92307692307692,
+          "max_up_pct": 111.11111111111111,
+          "mean_pct": 6.882999246446397,
+          "median_pct": 1.6271409749670562,
+          "minus10_pct": 26.923076923076923,
+          "minus20_pct": 8.974358974358974,
+          "n": 78,
+          "one_hundred_shares_pl_yen": 78791.66870117188,
+          "plus10_pct": 29.48717948717949,
+          "plus20_pct": 16.666666666666664,
+          "top3_ex_mean_pct": 3.050502096859227,
+          "win_pct": 53.84615384615385
+        },
+        "2025": {
+          "max_down_pct": -39.869281045751634,
+          "max_up_pct": 129.99999999999997,
+          "mean_pct": 6.781272408153978,
+          "median_pct": -3.7612114584694156,
+          "minus10_pct": 31.818181818181817,
+          "minus20_pct": 6.8181818181818175,
+          "n": 44,
+          "one_hundred_shares_pl_yen": 94886.66610717773,
+          "plus10_pct": 36.36363636363637,
+          "plus20_pct": 20.454545454545457,
+          "top3_ex_mean_pct": 0.034175513239235365,
+          "win_pct": 45.45454545454545
+        }
+      },
+      "development_2023_2024": {
+        "max_down_pct": -41.92307692307692,
+        "max_up_pct": 111.11111111111111,
+        "mean_pct": 6.461068512693744,
+        "median_pct": 1.2543548396436344,
+        "minus10_pct": 28.125,
+        "minus20_pct": 7.8125,
+        "n": 128,
+        "one_hundred_shares_pl_yen": 176198.33335876465,
+        "plus10_pct": 29.6875,
+        "plus20_pct": 17.96875,
+        "top3_ex_mean_pct": 4.032770497772666,
+        "win_pct": 52.34375
+      }
+    },
+    "mean_rank_volr20_body_pct": {
+      "aggregate_2023_2025": {
+        "max_down_pct": -52.37036810980903,
+        "max_up_pct": 129.99999999999997,
+        "mean_pct": 6.887879847071661,
+        "median_pct": 1.4520202020201989,
+        "minus10_pct": 27.906976744186046,
+        "minus20_pct": 7.55813953488372,
+        "n": 172,
+        "one_hundred_shares_pl_yen": 286723.33335876465,
+        "plus10_pct": 31.976744186046513,
+        "plus20_pct": 19.186046511627907,
+        "top3_ex_mean_pct": 4.953847820701271,
+        "win_pct": 52.32558139534884
+      },
+      "by_year": {
+        "2023": {
+          "max_down_pct": -25.66666666666667,
+          "max_up_pct": 106.40394088669952,
+          "mean_pct": 5.169275821301545,
+          "median_pct": 0.0,
+          "minus10_pct": 30.0,
+          "minus20_pct": 6.0,
+          "n": 50,
+          "one_hundred_shares_pl_yen": 72006.66465759277,
+          "plus10_pct": 28.000000000000004,
+          "plus20_pct": 18.0,
+          "top3_ex_mean_pct": 0.22315722192009702,
+          "win_pct": 48.0
+        },
+        "2024": {
+          "max_down_pct": -52.37036810980903,
+          "max_up_pct": 111.11111111111111,
+          "mean_pct": 8.441927365870063,
+          "median_pct": 2.433809904200701,
+          "minus10_pct": 23.076923076923077,
+          "minus20_pct": 8.974358974358974,
+          "n": 78,
+          "one_hundred_shares_pl_yen": 118416.66946411133,
+          "plus10_pct": 33.33333333333333,
+          "plus20_pct": 20.51282051282051,
+          "top3_ex_mean_pct": 4.6717873410598365,
+          "win_pct": 58.97435897435898
+        },
+        "2025": {
+          "max_down_pct": -39.869281045751634,
+          "max_up_pct": 129.99999999999997,
+          "mean_pct": 6.085936547576902,
+          "median_pct": -4.044679994563189,
+          "minus10_pct": 34.090909090909086,
+          "minus20_pct": 6.8181818181818175,
+          "n": 44,
+          "one_hundred_shares_pl_yen": 96299.99923706055,
+          "plus10_pct": 34.090909090909086,
+          "plus20_pct": 18.181818181818183,
+          "top3_ex_mean_pct": -0.7120385810386028,
+          "win_pct": 45.45454545454545
+        }
+      },
+      "development_2023_2024": {
+        "max_down_pct": -52.37036810980903,
+        "max_up_pct": 111.11111111111111,
+        "mean_pct": 7.1635478562729835,
+        "median_pct": 1.8087917367283213,
+        "minus10_pct": 25.78125,
+        "minus20_pct": 7.8125,
+        "n": 128,
+        "one_hundred_shares_pl_yen": 190423.3341217041,
+        "plus10_pct": 31.25,
+        "plus20_pct": 19.53125,
+        "top3_ex_mean_pct": 4.752109345597807,
+        "win_pct": 54.6875
+      }
+    },
+    "volr20_low": {
+      "aggregate_2023_2025": {
+        "max_down_pct": -52.37036810980903,
+        "max_up_pct": 129.99999999999997,
+        "mean_pct": 6.325572456111968,
+        "median_pct": 1.0649609002497007,
+        "minus10_pct": 27.325581395348834,
+        "minus20_pct": 7.55813953488372,
+        "n": 172,
+        "one_hundred_shares_pl_yen": 246043.3322906494,
+        "plus10_pct": 31.3953488372093,
+        "plus20_pct": 18.6046511627907,
+        "top3_ex_mean_pct": 4.381558641736379,
+        "win_pct": 51.74418604651163
+      },
+      "by_year": {
+        "2023": {
+          "max_down_pct": -25.66666666666667,
+          "max_up_pct": 106.40394088669952,
+          "mean_pct": 5.24529083605379,
+          "median_pct": 0.0,
+          "minus10_pct": 30.0,
+          "minus20_pct": 6.0,
+          "n": 50,
+          "one_hundred_shares_pl_yen": 76073.33335876465,
+          "plus10_pct": 30.0,
+          "plus20_pct": 18.0,
+          "top3_ex_mean_pct": 0.304024258890572,
+          "win_pct": 48.0
+        },
+        "2024": {
+          "max_down_pct": -52.37036810980903,
+          "max_up_pct": 111.11111111111111,
+          "mean_pct": 6.876655279096767,
+          "median_pct": 1.6271409749670562,
+          "minus10_pct": 23.076923076923077,
+          "minus20_pct": 8.974358974358974,
+          "n": 78,
+          "one_hundred_shares_pl_yen": 62209.99984741211,
+          "plus10_pct": 29.48717948717949,
+          "plus20_pct": 19.230769230769234,
+          "top3_ex_mean_pct": 3.043904370815611,
+          "win_pct": 55.12820512820513
+        },
+        "2025": {
+          "max_down_pct": -39.869281045751634,
+          "max_up_pct": 129.99999999999997,
+          "mean_pct": 6.5762456563413885,
+          "median_pct": 0.366422580059822,
+          "minus10_pct": 31.818181818181817,
+          "minus20_pct": 6.8181818181818175,
+          "n": 44,
+          "one_hundred_shares_pl_yen": 107759.99908447266,
+          "plus10_pct": 36.36363636363637,
+          "plus20_pct": 18.181818181818183,
+          "top3_ex_mean_pct": -0.18585319602305608,
+          "win_pct": 50.0
+        }
+      },
+      "development_2023_2024": {
+        "max_down_pct": -52.37036810980903,
+        "max_up_pct": 111.11111111111111,
+        "mean_pct": 6.239403543533104,
+        "median_pct": 1.0649609002497007,
+        "minus10_pct": 25.78125,
+        "minus20_pct": 7.8125,
+        "n": 128,
+        "one_hundred_shares_pl_yen": 138283.33320617676,
+        "plus10_pct": 29.6875,
+        "plus20_pct": 18.75,
+        "top3_ex_mean_pct": 3.80578556935217,
+        "win_pct": 52.34375
+      }
+    }
+  },
+  "win_definition": "gross_return > 0"
+}

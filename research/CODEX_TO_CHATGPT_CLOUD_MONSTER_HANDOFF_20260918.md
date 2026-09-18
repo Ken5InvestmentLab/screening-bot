@@ -2,7 +2,7 @@
 
 ## 1. 今回実施したこと
 
-`research/cloud-monster-recovery` を `origin/research/automation-coordination` の `cc08da7523e5037ff5575427fbf4b57bb590f4fd` から作成し、Git全ref/history、指定research branch、Actions run/artifact metadata、対象ログ、既存spec/ledger/handoff、bounded local paths、関連ChatGPT threadを調査した。weak+earlyは保存済み因果Tailから実行可能なexact packへ固定し、Cloud Monsterは証拠済み部分と欠落部分をfail-closed packへ固定した。
+`research/cloud-monster-recovery` を `origin/research/automation-coordination` の `cc08da7523e5037ff5575427fbf4b57bb590f4fd` から作成し、Git全ref/history、指定research branch、Actions run/artifact metadata、対象ログ、既存spec/ledger/handoff、bounded local paths、関連ChatGPT threadを調査した。weak+earlyは保存済み因果Tailから5 selectorすべてを実行可能なexact packへ固定し、outcomeを読まないshadow selectorも追加した。Cloud Monsterは証拠済み部分と欠落部分をfail-closed packへ固定した。旧ChatGPT conversationでfile citationを探した際、browser findの代わりに`Bitcoin Japan`が誤送信されたが、応答を直ちに停止し、その後UI探索は中止した。repo/automation/productionには影響していない。
 
 ## 2. Cloud Monster exact復元状況
 
@@ -10,7 +10,7 @@
 
 ## 3. weak+early exact復元状況
 
-**`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`**（保存済み2023-2025 causal V7 Tailに対するlegacy rank comparison）。固定gate、3 ranker、tie-break、cooldown無し、next official XTKS open→fifth official XTKS close、実価格、全canonical rows、年次/aggregate metrics、入出力SHAを保存した。2026は読んでいない。
+**`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`**（保存済み2023-2025 causal V7 Tailに対する5 selector）。固定gate、3 base ranker、DUAL、DUAL+G3、tie-break、cooldown無し、next official XTKS open→fifth official XTKS close、実価格、全canonical rows、年次/aggregate metrics、入出力SHAを保存した。2026は読んでいない。
 
 ## 4. 確定したweak+earlyルール
 
@@ -19,13 +19,18 @@
 - gate: `med_ret5 <= 0 AND ret10 <= 0.5735294117647058`。
 - per signal dateで1件選択。rankerは`volr20 LOW`、`body_pct LOW`、両者のascending percentile mean-rank。
 - tie-breakは`tail_cdf DESC`。winning tieは全rankerで0件。legacy headline比較のcooldownは無し。
+- DUALはvolr20 LOW Top1とbody_pct LOW Top1のdate+symbol一致日のみ採用。不一致日はNO TRADE。
+- G3は2025 open前に固定された`previous-session med_ret1 >= -0.01`。DUALへそのまま適用。
 - 2023-2024 combined mean-rank: n=128, mean 7.1635478563%, median 1.8087917367%, win 54.6875%, +20 19.53125%, -10 25.78125%, Top3-ex 4.7521093456%。
 - 2025は全ranker n=44。meanはvolr20 6.5762%、body 6.7813%、combined 6.0859%。
+- 2023-2025 DUAL: n=140, mean +7.17%, median +1.25%, win 52.14%, Top3-ex +4.79%。
+- 2023-2025 DUAL+G3: n=117, mean +7.98%, median +1.74%, win 53.85%, Top3-ex +5.14%。
 
 ## 5. 未確定部分
 
 - Cloud: `cloud_two_lane_union_jpx.csv`、`cloud_priorityA_monsters_compare_teacher.csv`、score generator/serialized model、exact feature/transforms/weights/calibration/ties/cooldown、Watchを696からhistorical 575へ限定する実装、original endpoint/cost code。
 - weak+early 2022: 固定specをそのまま実行してもWindows=94/30/22、Linux=95/25/20で旧89/29/23と不一致。runtime/model artifact不足のためhistorical row identityは`EXACT_NOT_YET_RECOVERED`。近さでruntimeを選ばないこと。
+- 現行production scoringとのapples-to-apples勝敗: 未確定。母集団と観測契約が異なるため、保存済み過去成績だけで「現行超え」とは判定しない。`research/TVFREE_REPLACEMENT_READINESS_20260918.md`のforward shadow bridgeが必要。
 
 ## 6. 発見artifact一覧
 
@@ -39,11 +44,13 @@
 - `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_volr20_low.csv` — 172 rows — SHA `580ed355e27e8c25b13e1db0ac603d21640ddabf7e31cce8de228ae955c13474`。
 - `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_body_pct_low.csv` — 172 rows — SHA `2fdba3e3b5670dcb4c96eca491274adb33bf05529aed6c1c35b90610148740f5`。
 - `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_mean_rank_volr20_body_pct.csv` — 172 rows — SHA `424a9cb70a2834d2002d3e664ab75e1cde0c0509be34ba3c5c6e23316a810cbb`。
+- `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_dual_top1_agreement.csv` — 140 rows — SHA `b4f9fff630577492198732c91275f2fafb0114e78a519074393d13e03ab88031`。
+- `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_dual_top1_agreement_g3_no_acute_selloff.csv` — 117 rows — SHA `e98d4d82e81d05ac3b3ffae7f6dc91fa1bcd567d58c24403ae5568406ec8de27`。
 - Cloud canonical 63 rows: missing。作成・推測していない。
 
 ## 8. REPRO_PACK完成度
 
-- `research/repro_packs/weak_early_exact_v1/`: A-H complete for preserved 2023-2025 legacy comparison。`reproduce.py`はinput SHA、ties、row/metric drift、official-session endpoint driftをfailする。
+- `research/repro_packs/weak_early_exact_v1/`: A-H complete for preserved 2023-2025 five-selector comparison。`reproduce.py`はinput SHA、ties、row/metric drift、official-session endpoint driftをfailする。`select_shadow_candidates.py`はoutcome列を読まず、5 selectorのcandidate identityだけを生成する。
 - `research/repro_packs/cloud_monster_legacy_exact_v1/`: evidence/blocker pack complete、exact reproductionはincomplete。`verify_recovery_inputs.py`はteacher SHAを通し、identity CSV/model欠落中は意図的にexit 2。
 - `research/repro_packs/weak_early_exact_v1/2022_runtime_sensitivity/`: 2 runtimeの未調整ledgersとSHAを保存。
 
@@ -51,7 +58,10 @@
 
 - `3ad2ed92821e1111abbc15341f3bd9fce8026d82` — weak+early exact REPRO_PACK。
 - `01a667da` — Cloud fail-closed recovery pack + 2022 runtime sensitivity evidence。
-- このhandoff自体のcommitはbranch tipを`git rev-parse origin/research/cloud-monster-recovery`で取得すること。
+- `6e151853a50b154bc49a417ac2407ee790b6e3b4` — 初版handoff。
+- `38edc77234e5bc283a55e14028a2b88e136c1ec4` — DUAL / DUAL+G3 exact rowsとreproducer固定。
+- `d801da30f731e2d174d347770551bba17e564512` — outcome-blind shadow selectorとTV-free readiness契約。
+- この更新handoff自体のcommitはbranch tipを`git rev-parse origin/research/cloud-monster-recovery`で取得すること。
 
 ## 10. branch名
 
@@ -59,7 +69,7 @@
 
 ## 11. 変更ファイル一覧
 
-今回の差分は `research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`、本handoff、`research/repro_packs/cloud_monster_legacy_exact_v1/**`、`research/repro_packs/weak_early_exact_v1/**` のみ。production code/workflowは変更なし。
+今回の差分は `research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`、`research/RESEARCH_DASHBOARD.md`、`research/TVFREE_REPLACEMENT_READINESS_20260918.md`、本handoff、`research/repro_packs/cloud_monster_legacy_exact_v1/**`、`research/repro_packs/weak_early_exact_v1/**` のみ。production code/workflowは変更なし。
 
 ## 12. 絶対に再実行不要な探索
 
@@ -71,7 +81,7 @@
 
 ## 13. 次にChatGPTがやる最短作業
 
-最短は、ChatGPTの元会話/Libraryからfile-citation `turn10file2`相当の`cloud_two_lane_union_jpx.csv`と`turn10file3`相当の`cloud_priorityA_monsters_compare_teacher.csv`を実ファイルとして再取得し、content SHAを固定すること。次に当時のscore generator/notebook/model attachmentを同じ会話・Libraryで探す。3点が揃うまでmodel-family guessingや数値合わせは開始しない。取得できたらCloud packへ追加し、63行identityとsaved scoreをまず照合する。
+TV-free系の最短作業は、V7 monthly causal generatorのPython/XGBoost runtimeをcontainerまたは完全lockfileで固定し、将来のTail poolを作って`select_shadow_candidates.py`へ渡すこと。候補ledgerはendpoint成熟前にSHA固定し、2026 outcomeはselector選択/retuneに使わない。現行production scoringとの比較は`research/TVFREE_REPLACEMENT_READINESS_20260918.md`の同一endpoint bridgeに従う。Cloud系は、ChatGPTの元会話/Libraryからfile-citation `turn10file2`/`turn10file3`の実ファイルを再取得してSHA固定するのが最短だが、ブラウザUIでの追加探索は行わず、ユーザーまたはChatGPT側の添付回収を待つ。
 
 ## 14. production無変更確認
 
@@ -85,10 +95,10 @@ main checkout、本番コード、本番workflow、Discord、Spreadsheet、Stabl
 
 あなたは`Ken5InvestmentLab/screening-bot`のCloud Monster exact復元を引き継ぎます。repoは`Ken5InvestmentLab/screening-bot`、branchは`research/cloud-monster-recovery`です。最初に`git fetch origin`して`origin/research/cloud-monster-recovery`をcheckoutし、最新SHAを`git rev-parse HEAD`で記録してください。基準成果commitはweak+early packの`3ad2ed92821e1111abbc15341f3bd9fce8026d82`とCloud/2022 evidenceの`01a667da`で、完全handoffは`research/CODEX_TO_CHATGPT_CLOUD_MONSTER_HANDOFF_20260918.md`です。
 
-weak+earlyは`research/repro_packs/weak_early_exact_v1/`に`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`として固定済みです。入力はActions artifact `10264205130`と`10264251140`、canonical rowsは`output/canonical_trade_rows_*.csv`、metrics/hashは`output/metrics.json`と`output/manifest.json`、再現entrypointは`reproduce.py`です。2022は`2022_runtime_sensitivity/`に固定specのWindows/Linux結果を保存しましたが、旧89/29/23は再現せず`EXACT_NOT_YET_RECOVERED`です。近さで条件/runtimeを選ばないでください。
+weak+earlyは`research/repro_packs/weak_early_exact_v1/`に`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`として固定済みです。入力はActions artifact `10264205130`と`10264251140`、canonical rowsは5本の`output/canonical_trade_rows_*.csv`、metrics/hashは`output/metrics.json`と`output/manifest.json`、再現entrypointは`reproduce.py`です。DUALはn=140、DUAL+G3はn=117で保存済み集計とidentity一致します。outcome-blind entrypointは`select_shadow_candidates.py`、移行契約は`research/TVFREE_REPLACEMENT_READINESS_20260918.md`です。2022は`2022_runtime_sensitivity/`に固定specのWindows/Linux結果を保存しましたが、旧89/29/23は再現せず`EXACT_NOT_YET_RECOVERED`です。近さで条件/runtimeを選ばないでください。
 
 Cloud Monsterは`research/repro_packs/cloud_monster_legacy_exact_v1/`に証拠境界を固定済みですが、状態は`EXACT_NOT_YET_RECOVERED`です。回収済みraw入力はartifact `10266329903`の`teacher_ohlcv_4h_raw.csv`（SHA `f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2`）。未解決blockerは`cloud_two_lane_union_jpx.csv`、`cloud_priorityA_monsters_compare_teacher.csv`、original score generator/serialized model、exact Watch implementationです。
 
-次の具体的actionは、ChatGPTの元会話/Libraryでfile-citation `turn10file2`と`turn10file3`の実添付を再取得し、SHAを固定することです。その後、同じ会話/Libraryから当時のscore code/notebook/modelを探してください。ファイル取得前に新model作成、threshold fitting、n=63/+9.86への合わせ込みをしてはいけません。取得後は63 row identityと19 saved scoresを先に照合し、legacy endpoint exactを再現してから、別名のcost-0% canonical next-XTKS-open→fifth-close bridgeを作ってください。
+次の具体的actionは、(1) V7 monthly causal generatorのruntime/containerを固定し、将来Tailをoutcome未使用で生成、(2) `select_shadow_candidates.py`で候補ledgerをendpoint成熟前にSHA固定、(3) 同一endpointで現行production候補とforward比較、です。2026はreport/robustness-onlyで、selector/threshold/gate選択やretuneに使わないでください。Cloudは元会話/Libraryの`turn10file2`/`turn10file3`添付を回収できる場合だけ続行し、取得前の新model作成やn=63/+9.86への合わせ込みは禁止です。
 
 `main`、production、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder、watchlist-updaterは変更禁止です。research-only branch/artifact/scriptだけを変更してください。2026 strategy outcomeはSEALEDのまま維持し、復元条件の選定・調整・推測へ使わないでください。探索の重複を避けるため、先に`research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`の「Do not repeat」を読んでください。

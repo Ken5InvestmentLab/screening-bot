@@ -1,37 +1,37 @@
 {
-  "version": 131,
+  "version": 132,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T14:00:00+09:00",
-  "supervisor_last_scan": {"status":"V16_ALT_ADMISSIBILITY_AND_CROSS_YEAR_INPUTS_PINNED","scanned_at_jst":"2026-09-18T14:00:00+09:00","coordination_contract_reconciled":true},
+  "updated_at_jst": "2026-09-18T15:02:00+09:00",
+  "supervisor_last_scan": {"status":"2022_EXACT_RECOVERY_HARD_EXIT_TRIGGERED_DETERMINISTIC_RECONSTRUCTION_ACTIVE","scanned_at_jst":"2026-09-18T15:02:00+09:00","coordination_contract_reconciled":true},
   "worker_last_run": {
-    ":12": {"last_known_jst":"2026-09-18T13:09:27+09:00","task":"2022 fallback -> Meta preparation","status":"ACTIVE_NO_CONFIRMED_NEW_SHA_IN_SUPERVISOR_BRANCH","evidence_commit":null},
-    ":24": {"last_known_jst":"2026-09-18T13:24:55+09:00","task":"primary historical comparison completion","status":"ACTIVE_NO_CONFIRMED_COMPARISON_CELL","evidence_commit":null},
-    ":36": {"last_known_jst":"2026-09-18T13:39:31+09:00","task":"V16 alternate historical completion","status":"SUBSTANTIVE_NEW_EVIDENCE","evidence_commit":"48743b9c94abf33646866e09412c4e4d08bf3d2d"},
-    ":48": {"last_known_jst":"2026-09-18T13:51:29+09:00","task":"2022 final recovery -> deterministic reconstruction","status":"FINAL_RECOVERY_WINDOW_ACTIVE_UNTIL_15:00_JST","evidence_commit":"aaf53ab8d9678dcade730b3f4554a1e8ba72b7f4"},
-    ":00": {"last_known_jst":"2026-09-18T14:00:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"48743b9c94abf33646866e09412c4e4d08bf3d2d"}
+    ":12": {"last_known_jst":"2026-09-18T14:11:18+09:00","task":"2022 fallback -> Meta preparation","status":"ACTIVE_NO_CONFIRMED_NEW_SHA_IN_COORDINATION_BRANCH","evidence_commit":null},
+    ":24": {"last_known_jst":"2026-09-18T14:22:40+09:00","task":"primary historical comparison completion","status":"ACTIVE_NO_CONFIRMED_COMPARISON_CELL_IN_COORDINATION_BRANCH","evidence_commit":null},
+    ":36": {"last_known_jst":"2026-09-18T14:38:59+09:00","task":"V16 2023-2025 canonical rows generation","status":"ACTIVE_AFTER_INPUT_LOCK","evidence_commit":"48743b9c94abf33646866e09412c4e4d08bf3d2d"},
+    ":48": {"last_known_jst":"2026-09-18T14:46:49+09:00","task":"2022 deterministic reconstruction","status":"HARD_EXIT_TRIGGERED_ARTIFACT_SEARCH_PROHIBITED","evidence_commit":"aaf53ab8d9678dcade730b3f4554a1e8ba72b7f4"},
+    ":00": {"last_known_jst":"2026-09-18T15:02:00+09:00","task":"Supervisor scan/reallocation","status":"SUBSTANTIVE_REALLOCATION","evidence_commit":"aaf53ab8d9678dcade730b3f4554a1e8ba72b7f4"}
   },
   "p0_reallocation": {
     "strict_3pt":"PARKED_REFERENCE_ONLY",
-    "2022_primary":"FINAL_EXACT_RECOVERY WINDOW ENDS 15:00 JST; after deadline deterministic 2022-computable reconstruction is mandatory and artifact searching is prohibited",
+    "2022_primary":"EXACT RECOVERY CLOSED AT 15:00 JST. Deterministic 2022-computable reconstruction is mandatory; further old-artifact searching and retuning to 29/23 are prohibited.",
     "2022_generator_input_contract_commit":"aaf53ab8d9678dcade730b3f4554a1e8ba72b7f4",
     "v16_backward_2022":"ENDPOINT_EXACT_FOR_OWN_CONTRACT; EXCLUDED_AS_PRIMARY",
     "v16_admissibility_commit":"2bafa6a74ead8e3aa833ddefc8b468ba60150106",
     "v16_cross_year_inputs_commit":"48743b9c94abf33646866e09412c4e4d08bf3d2d",
-    "alternate_family":"V16 backward fixed as exact-reproducible alternate family; :36 now generates 2023 then 2024 then 2025 canonical rows, no more candidate search",
-    "primary_comparison":"2023-2025 fixed exact rows only; :24 fills missing metrics without regeneration",
-    "meta":" :12 relays from deterministic-2022 fallback preparation to causal Meta labels; final mapping freeze waits for primary+alternate historical completion"
+    "alternate_family":"V16 backward fixed as exact-reproducible alternate family; :36 generates 2023 then 2024 then 2025 canonical rows; candidate search prohibited",
+    "primary_comparison":"2023-2025 fixed exact rows only; :24 fills missing metrics without regeneration and integrates deterministic 2022 when emitted",
+    "meta":":12 relays from deterministic-2022 fallback support to causal Meta labels; final mapping freeze waits for primary+alternate historical completion"
   },
   "historical_contract": {
     "primary_candidates":["body_pct LOW","volr20 LOW","mean-rank(volr20, body_pct)","DUAL_TOP1_AGREEMENT","DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF"],
     "endpoint":"signal T -> next XTKS open -> fifth XTKS close","transaction_cost_pct":0,"win_definition":"gross return > 0",
     "period_2023_2025":"EXACT_ALREADY_FIXED_DO_NOT_RECOMPUTE",
-    "year_2022":"Old frozen primary identity remains unresolved; hard deadline prevents indefinite recovery. Deterministic reconstruction after 15:00 must not retune to old 29/23 summary.",
-    "alternate":"V16 backward exact family: 2022 n=31 endpoint-exact for its own contract; cross-year inputs now pinned for 2023-2025 generation."
+    "year_2022":"Old frozen primary identity was not recovered by hard deadline. Deterministic reconstruction is now canonical path and must not retune to old 29/23 summary; mismatch must be receipted as OLD_SUMMARY_NOT_EXACTLY_REPRODUCED.",
+    "alternate":"V16 backward exact family: 2022 n=31 endpoint-exact for its own contract; cross-year inputs pinned for 2023-2025 generation."
   },
   "meta_regime_switching": {"status":"PREREGISTERED_INPUT_PROVENANCE_PARTIALLY_PINNED_MAPPING_NOT_FROZEN","prereg_commit":"a586e98d0d7c6dbed471cf9fde419d9760e1f050","input_manifest_commit":"b3d17a0b33070d03bbf7c4c16cc2d9b067160c9d","summary_only_2022_allowed_for_meta":false,"holdout":"2026_SEALED","open_condition":"Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"},
-  "last_hour_substantive_result":"NEW_SHA + CANDIDATE_ADMISSIBILITY: :36 produced 2bafa6a7 admitting V16 backward as an exact-reproducible alternate family and 48743b9c locking its cross-year canonical inputs. Supervisor ended further alternate candidate search and reassigned :36 directly to 2023-2025 canonical row generation. :48 remains inside the final exact-recovery window; at 15:00 it must switch to deterministic 2022 reconstruction regardless of old-summary identity.",
-  "largest_blocker":"Primary 2022 canonical rows are still absent. This blocker now has a hard exit at 15:00 JST. Independent alternate path is materially unblocked because V16 admissibility and cross-year inputs are pinned; next required evidence is 2023 V16 canonical rows SHA.",
-  "p0_remaining":["finish final 2022 exact recovery window, then mandatory deterministic primary-5 2022 rows if unresolved","generate V16 alternate 2023/2024/2025 canonical rows and historical metrics","fill primary-5 row-required comparison metrics for fixed 2023-2025 rows and then 2022","complete Meta causal labels across 2022-2025","freeze Meta mapping using only 2022-2025 eligible exact data","only then one-shot open 2026"],
+  "last_hour_substantive_result":"No newly confirmed canonical trade-row SHA or comparison cell was visible on the coordination branch at scan time. The planned 15:00 hard exit itself was executed: :48 is now forcibly reassigned from old-artifact recovery to deterministic primary-5 2022 canonical-row generation. V16 remains independently unblocked with admissibility and cross-year inputs pinned.",
+  "largest_blocker":"Primary 2022 canonical rows are absent, but recovery search is now closed and cannot consume further runs. Immediate required evidence is the first deterministic primary-5 2022 TRADE_ROWS SHA. Independent alternate path requires the first V16 2023 canonical rows SHA.",
+  "p0_remaining":["generate deterministic primary-5 2022 canonical rows and receipt old-summary mismatch if any","generate V16 alternate 2023/2024/2025 canonical rows and historical metrics","fill primary-5 2022-2025 plus aggregate full metrics","complete Meta causal labels across 2022-2025","freeze Meta mapping using only 2022-2025 eligible exact data","only then one-shot open 2026"],
   "progress":{"overall_pct":85,"phase2_multi_candidate_full_period_pct":70,"meta_regime_switching_pct":10},
   "go_no_go":"RESEARCH_CONTINUES_PRODUCTION_NO_GO_2026_SEALED"
 }

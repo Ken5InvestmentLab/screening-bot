@@ -1,0 +1,5 @@
+trigger: 2026-09-11 pre2025-weakday-rank-v1
+selection_source: 2023-2024 only
+market_gates: med_ret5<=0, breadth_ret1_pos<=0.50
+rank_features: volr20, ret1
+2025_2026_use: reporting-only

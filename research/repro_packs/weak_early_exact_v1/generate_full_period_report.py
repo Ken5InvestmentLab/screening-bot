@@ -85,7 +85,10 @@ def select_with_endpoints(
     safe = shadow.select_candidates(tail)
     outputs: dict[str, pd.DataFrame] = {}
     for selector in SELECTORS:
-        identities = safe.loc[safe["selector"] == selector, ["date", "symbol"]]
+        identities = safe.loc[
+            safe["selector"] == selector,
+            ["date", "symbol", "rank_volr20", "rank_body_pct", "mean_rank"],
+        ]
         picks = tail.merge(
             identities,
             on=["date", "symbol"],
@@ -134,6 +137,11 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--start", default="2026-01-01")
     parser.add_argument("--end", default="2026-09-11")
+    parser.add_argument(
+        "--reuse-tail",
+        action="store_true",
+        help="Reuse the already-generated reporting-only Tail CSV after a downstream failure.",
+    )
     args = parser.parse_args()
 
     if sha256(args.daily_corpus) != DAILY_SHA256:
@@ -146,15 +154,25 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     raw = read_daily(args.daily_corpus)
     cutoff = pd.Timestamp(raw["date"].max())
-    prepared = v9.prepare(raw)
-    tail = v9.generate_tail_pool(prepared, args.start, args.end)
+    tail_path = args.output_dir / "causal_tail_pool_2026_reporting_only.csv"
+    if args.reuse_tail:
+        if not tail_path.exists():
+            raise RuntimeError("--reuse-tail requested but Tail CSV is missing")
+        tail = pd.read_csv(
+            tail_path,
+            parse_dates=["date", "target_end_date"],
+            dtype={"symbol": str},
+        )
+    else:
+        prepared = v9.prepare(raw)
+        tail = v9.generate_tail_pool(prepared, args.start, args.end)
     if tail.empty:
         raise RuntimeError("no mature 2026 Tail rows")
     if tail["target_end_date"].max() > cutoff:
         raise RuntimeError("unmatured endpoint escaped the fixed daily cutoff")
 
-    tail_path = args.output_dir / "causal_tail_pool_2026_reporting_only.csv"
-    write_csv(tail, tail_path)
+    if not args.reuse_tail:
+        write_csv(tail, tail_path)
     symbols = set(tail["symbol"].astype(str))
     endpoint_daily = raw.loc[raw["symbol"].isin(symbols), ["date", "symbol", "open", "close"]]
     calendar = pd.DatetimeIndex(sorted(pd.Timestamp(value) for value in raw["date"].unique()))

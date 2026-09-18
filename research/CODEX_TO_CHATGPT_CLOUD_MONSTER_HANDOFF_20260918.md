@@ -10,7 +10,7 @@
 
 ## 3. weak+early exact復元状況
 
-**`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`**（保存済み2023-2025 causal V7 Tailに対する5 selector）。固定gate、3 base ranker、DUAL、DUAL+G3、tie-break、cooldown無し、next official XTKS open→fifth official XTKS close、実価格、全canonical rows、年次/aggregate metrics、入出力SHAを保存した。2026は読んでいない。
+**`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`**（保存済み2023-2025 causal V7 Tailに対する5 selector）に加え、明示的なユーザー指示で固定5候補だけを2026 reporting-onlyへ無調整延長した。2026 daily cutoffは2026-09-11、成熟済みsignal cutoffは2026-09-03。固定gate、3 base ranker、DUAL、DUAL+G3、tie-break、cooldown無し、next official XTKS open→fifth official XTKS close、実価格、全canonical rows、年次/aggregate metrics、入出力SHAを保存した。
 
 ## 4. 確定したweak+earlyルール
 
@@ -25,6 +25,8 @@
 - 2025は全ranker n=44。meanはvolr20 6.5762%、body 6.7813%、combined 6.0859%。
 - 2023-2025 DUAL: n=140, mean +7.17%, median +1.25%, win 52.14%, Top3-ex +4.79%。
 - 2023-2025 DUAL+G3: n=117, mean +7.98%, median +1.74%, win 53.85%, Top3-ex +5.14%。
+- 2026単年: volr20 n42/+3.20%、body n42/+4.90%、mean-rank n42/+5.08%、DUAL n36/+3.26%、DUAL+G3 n32/+2.58%。
+- Exact 2023-2026総合順位: 1 mean-rank、2 DUAL+G3、3 body、4 DUAL、5 volr20。順位契約は2026開封前のcommit `26653f45`で固定。
 
 ## 5. 未確定部分
 
@@ -46,6 +48,7 @@
 - `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_mean_rank_volr20_body_pct.csv` — 172 rows — SHA `424a9cb70a2834d2002d3e664ab75e1cde0c0509be34ba3c5c6e23316a810cbb`。
 - `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_dual_top1_agreement.csv` — 140 rows — SHA `b4f9fff630577492198732c91275f2fafb0114e78a519074393d13e03ab88031`。
 - `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_dual_top1_agreement_g3_no_acute_selloff.csv` — 117 rows — SHA `e98d4d82e81d05ac3b3ffae7f6dc91fa1bcd567d58c24403ae5568406ec8de27`。
+- 2026 canonical rows 5本、causal Tail、normalized metrics、完全比較表は`research/repro_packs/weak_early_exact_v1/output/full_period_2026/`。各content SHAは`full_period_report.json`に固定。
 - Cloud canonical 63 rows: missing。作成・推測していない。
 
 ## 8. REPRO_PACK完成度
@@ -61,6 +64,8 @@
 - `6e151853a50b154bc49a417ac2407ee790b6e3b4` — 初版handoff。
 - `38edc77234e5bc283a55e14028a2b88e136c1ec4` — DUAL / DUAL+G3 exact rowsとreproducer固定。
 - `d801da30f731e2d174d347770551bba17e564512` — outcome-blind shadow selectorとTV-free readiness契約。
+- `26653f45` — 2026開封前の5候補ranking contractとfull-period generator固定。
+- `c84b0de2` / `3012fc2b` — endpoint joinとfloat round-tripのfail-closed修正。
 - この更新handoff自体のcommitはbranch tipを`git rev-parse origin/research/cloud-monster-recovery`で取得すること。
 
 ## 10. branch名
@@ -81,24 +86,24 @@
 
 ## 13. 次にChatGPTがやる最短作業
 
-TV-free系の最短作業は、V7 monthly causal generatorのPython/XGBoost runtimeをcontainerまたは完全lockfileで固定し、将来のTail poolを作って`select_shadow_candidates.py`へ渡すこと。候補ledgerはendpoint成熟前にSHA固定し、2026 outcomeはselector選択/retuneに使わない。現行production scoringとの比較は`research/TVFREE_REPLACEMENT_READINESS_20260918.md`の同一endpoint bridgeに従う。Cloud系は、ChatGPTの元会話/Libraryからfile-citation `turn10file2`/`turn10file3`の実ファイルを再取得してSHA固定するのが最短だが、ブラウザUIでの追加探索は行わず、ユーザーまたはChatGPT側の添付回収を待つ。
+TV-free系の最短作業は、`output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`を基準に、総合1位mean-rankと2位DUAL+G3を新しいoutcome未成熟forward shadowで並走させること。候補ledgerはendpoint成熟前にSHA固定し、開封済み2026をselector変更やretuneに使わない。現行production scoringとの比較は`research/TVFREE_REPLACEMENT_READINESS_20260918.md`の同一endpoint bridgeに従う。Cloud系は、ChatGPTの元会話/Libraryからfile-citation `turn10file2`/`turn10file3`の実ファイルを再取得できる場合だけ続行する。
 
 ## 14. production無変更確認
 
 main checkout、本番コード、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder、watchlist-updaterは変更していない。差分はresearch-only pathのみ。
 
-## 15. 2026 SEALED確認
+## 15. 2026の取扱い
 
-2026 strategy outcomeはSEALEDのまま。Cloud headline/rowsの既知情報はartifact同定用にのみ扱い、threshold/feature/gate/candidate/retune/score推測へ利用していない。weak+early exact replayは2023-2025保存済みartifactだけを使用した。
+明示的なユーザー指示により、既に固定済みのWeak+Early 5候補だけ2026をreporting/robustness用途で開封した。2026をthreshold/feature/gate/candidate変更やretuneには使用していない。Meta mappingおよび他の2026 research laneはSEALEDのまま。Cloud headline/rowsの既知情報もartifact同定用にのみ扱っている。
 
 ## ChatGPTへ貼るプロンプト
 
 あなたは`Ken5InvestmentLab/screening-bot`のCloud Monster exact復元を引き継ぎます。repoは`Ken5InvestmentLab/screening-bot`、branchは`research/cloud-monster-recovery`です。最初に`git fetch origin`して`origin/research/cloud-monster-recovery`をcheckoutし、最新SHAを`git rev-parse HEAD`で記録してください。基準成果commitはweak+early packの`3ad2ed92821e1111abbc15341f3bd9fce8026d82`とCloud/2022 evidenceの`01a667da`で、完全handoffは`research/CODEX_TO_CHATGPT_CLOUD_MONSTER_HANDOFF_20260918.md`です。
 
-weak+earlyは`research/repro_packs/weak_early_exact_v1/`に`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`として固定済みです。入力はActions artifact `10264205130`と`10264251140`、canonical rowsは5本の`output/canonical_trade_rows_*.csv`、metrics/hashは`output/metrics.json`と`output/manifest.json`、再現entrypointは`reproduce.py`です。DUALはn=140、DUAL+G3はn=117で保存済み集計とidentity一致します。outcome-blind entrypointは`select_shadow_candidates.py`、移行契約は`research/TVFREE_REPLACEMENT_READINESS_20260918.md`です。2022は`2022_runtime_sensitivity/`に固定specのWindows/Linux結果を保存しましたが、旧89/29/23は再現せず`EXACT_NOT_YET_RECOVERED`です。近さで条件/runtimeを選ばないでください。
+weak+earlyは`research/repro_packs/weak_early_exact_v1/`に`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`として固定済みです。入力はActions artifact `10264205130`と`10264251140`、2023-2025 canonical rowsは5本の`output/canonical_trade_rows_*.csv`です。固定5候補の2026 reporting-only延長は`output/full_period_2026/`、完全表は`FULL_PERIOD_COMPARISON_20260918.md`、machine-readable結果は`full_period_report.json`と`normalized_yearly_and_total_metrics.csv`です。Exact 2023-2026順位は1 mean-rank、2 DUAL+G3、3 body、4 DUAL、5 volr20です。2022はsummary-onlyでexact総計から除外しています。
 
 Cloud Monsterは`research/repro_packs/cloud_monster_legacy_exact_v1/`に証拠境界を固定済みですが、状態は`EXACT_NOT_YET_RECOVERED`です。回収済みraw入力はartifact `10266329903`の`teacher_ohlcv_4h_raw.csv`（SHA `f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2`）。未解決blockerは`cloud_two_lane_union_jpx.csv`、`cloud_priorityA_monsters_compare_teacher.csv`、original score generator/serialized model、exact Watch implementationです。
 
-次の具体的actionは、(1) V7 monthly causal generatorのruntime/containerを固定し、将来Tailをoutcome未使用で生成、(2) `select_shadow_candidates.py`で候補ledgerをendpoint成熟前にSHA固定、(3) 同一endpointで現行production候補とforward比較、です。2026はreport/robustness-onlyで、selector/threshold/gate選択やretuneに使わないでください。Cloudは元会話/Libraryの`turn10file2`/`turn10file3`添付を回収できる場合だけ続行し、取得前の新model作成やn=63/+9.86への合わせ込みは禁止です。
+次の具体的actionは、mean-rankとDUAL+G3を新しいoutcome未成熟期間でparallel shadowし、`select_shadow_candidates.py`で候補ledgerをendpoint成熟前にSHA固定してから、同一endpointで現行production候補と比較することです。今回開封した2026はreport/robustness-onlyで、selector/threshold/gate変更やretuneに使わないでください。Cloudは元会話/Libraryの`turn10file2`/`turn10file3`添付を回収できる場合だけ続行し、取得前の新model作成やn=63/+9.86への合わせ込みは禁止です。
 
-`main`、production、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder、watchlist-updaterは変更禁止です。research-only branch/artifact/scriptだけを変更してください。2026 strategy outcomeはSEALEDのまま維持し、復元条件の選定・調整・推測へ使わないでください。探索の重複を避けるため、先に`research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`の「Do not repeat」を読んでください。
+`main`、production、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder、watchlist-updaterは変更禁止です。research-only branch/artifact/scriptだけを変更してください。Weak+Early固定5候補以外の2026はSEALEDのまま維持し、開封済み2026も復元条件の選定・調整・推測へ使わないでください。探索の重複を避けるため、先に`research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`の「Do not repeat」を読んでください。

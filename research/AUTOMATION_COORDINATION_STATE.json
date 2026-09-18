@@ -1,7 +1,7 @@
 {
-  "version": 137,
+  "version": 138,
   "purpose": "Shared state for staggered ChatGPT research automation workers. Research-only.",
-  "updated_at_jst": "2026-09-18T19:45:00+09:00",
+  "updated_at_jst": "2026-09-18T21:16:13+09:00",
   "supervisor_last_scan": {
     "status": "CLOUD_MONSTER_WEAK_EARLY_RECOVERY_PRIORITY_OVERRIDE",
     "scanned_at_jst": "2026-09-18T19:45:00+09:00",
@@ -28,7 +28,7 @@
       "market_gate": "med_ret5 <= 0",
       "candidate_gate": "ret10 <= 0.5735294117647058",
       "population": "preserved causal V7 Tail",
-      "status": "CORE_GATE_CONFIRMED_REPRO_PIPELINE_NOT_YET_COMPLETE"
+      "status": "EXACT_REPRODUCED_5_SELECTORS_2023_2025_AND_2026_REPORTING_ONLY"
     },
     "recovery_ledger_commit": "0527fd106f0c3c2c74156e4ef98a5f97073d2b4f",
     "recovery_ledger_path": "research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md"
@@ -95,7 +95,23 @@
     "holdout": "2026_SEALED",
     "open_condition": "Meta mapping SHA freeze plus explicit STATE 2026_OPEN_ALLOWED_AFTER_META_FREEZE"
   },
-  "last_hour_substantive_result": "Priority override enacted. Recovery ledger created at 0527fd106f0c3c2c74156e4ef98a5f97073d2b4f. Manual evidence recovered that weak+early core gate is explicitly documented as med_ret5<=0 plus ret10<=0.5735294117647058 on preserved causal V7 Tail; four workers reallocated to independent Cloud Monster/weak+early recovery paths.",
+  "weak_early_five_candidate_2026": {
+    "status": "OPENED_REPORTING_ONLY_BY_EXPLICIT_USER_REQUEST",
+    "rules_retuned": false,
+    "input_cutoff": "2026-09-11",
+    "mature_signal_cutoff": "2026-09-03",
+    "ranking_contract_commit": "26653f45",
+    "report": "research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md",
+    "descriptive_rank_2023_2026": [
+      "mean_rank_volr20_body_pct",
+      "dual_top1_agreement_g3_no_acute_selloff",
+      "body_pct_low",
+      "dual_top1_agreement",
+      "volr20_low"
+    ],
+    "note": "Meta mapping and unrelated 2026 lanes remain sealed. This opening applies only to the already-frozen five Weak+Early candidates."
+  },
+  "last_hour_substantive_result": "Weak+Early five-selector exact pack was extended without retune through mature 2026 endpoints. Exact 2023-2026 descriptive ranking is mean-rank, DUAL+G3, body, DUAL, volr20. Meta and unrelated 2026 lanes remain sealed; production remains NO-GO.",
   "largest_blocker": "Exact legacy Cloud Monster n=63/+9.86 generator/input/rows lineage is not yet identified. weak+early core gate is documented, but the full executable source/input/cache/ranking/cooldown/rows chain still needs REPRO_PACK completion.",
   "priority_remaining": [
     "locate exact legacy Cloud Monster artifact/generator/rows lineage",
@@ -111,5 +127,5 @@
     "meta_regime_switching_pct": 12,
     "recovery_pct": 15
   },
-  "go_no_go": "RECOVERY_PRIORITY_ACTIVE_PRODUCTION_NO_GO_2026_SEALED"
+  "go_no_go": "RECOVERY_PRIORITY_ACTIVE_PRODUCTION_NO_GO_WEAK_EARLY_2026_REPORTING_OPEN_META_2026_SEALED"
 }

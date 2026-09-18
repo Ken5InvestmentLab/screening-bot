@@ -1,6 +1,8 @@
 # TV-Free replacement readiness — 2026-09-18
 
-Status: **FORWARD_SHADOW_READY / PRODUCTION NO-GO / 2026 OUTCOMES SEALED**
+Status: **FORWARD_SHADOW_READY / PRODUCTION NO-GO / WEAK+EARLY 2026 REPORTING OPEN / META 2026 SEALED**
+
+Update: explicit user authorization subsequently opened 2026 for the already-frozen five Weak+Early candidates on a reporting-only basis. Meta and unrelated 2026 lanes remain sealed. Exact 2023-2026 descriptive ranking is mean-rank, DUAL+G3, body_pct LOW, DUAL, volr20 LOW; see `research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`.
 
 ## Objective
 

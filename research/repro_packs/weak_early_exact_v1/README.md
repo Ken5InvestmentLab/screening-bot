@@ -24,6 +24,16 @@ py research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py --tail-p
 
 The historical assertion must return counts 172 / 172 / 172 / 140 / 117 for the three base selectors, DUAL, and DUAL+G3. For a forward run, omit the historical assertion and supply a causally generated Tail pool; this selector still does not authorize production use or outcome-based retuning.
 
+## 2026 reporting-only full-period comparison
+
+The ranking contract was frozen at commit `26653f45` before 2026 performance was generated. The fixed five candidates are extended through the fixed daily-corpus cutoff without rule changes:
+
+```powershell
+uv run --python 3.12 --with-requirements tvfree_screener/requirements.txt --with "numpy==2.5.3" --with "pandas==2.3.3" --with "scikit-learn==1.9.1" --with "xgboost==3.4.1" python research/repro_packs/weak_early_exact_v1/generate_full_period_report.py --daily-corpus .cache/recovery/artifact_10264205130/tse_daily.csv --historical-output-dir research/repro_packs/weak_early_exact_v1/output --output-dir research/repro_packs/weak_early_exact_v1/output/full_period_2026
+```
+
+Use `--reuse-tail` only after the generated Tail CSV has been preserved and a downstream reporting step failed. The exact human-readable report is `output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`; normalized machine-readable metrics and every 2026 canonical row file are in the same directory. 2022 remains summary-only and is excluded from the exact 2023-2026 ranking because its historical 89-row Tail identity is missing.
+
 ## A-H handoff receipt
 
 1. Identity is `WEAK_EARLY_EXACT_V1`; it is a legacy research replay, not a production candidate.

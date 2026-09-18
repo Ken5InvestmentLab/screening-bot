@@ -184,3 +184,18 @@ H. 10-20 line handoff linking A-G
 ### ChatGPT UI evidence-surface incident
 - While attempting to locate legacy Cloud file citations in the old ChatGPT conversation, browser find did not activate and the search text `Bitcoin Japan` was accidentally submitted as a new message.
 - The response was immediately stopped. No attachment, automation, repository file, production setting, or external message channel was changed. Browser/UI exploration was stopped and all subsequent work used repository/history only.
+
+### Fixed five-candidate 2026 reporting-only open
+- Explicit user request authorized calculation through 2026. It did not authorize rule/threshold/feature/gate retuning or production changes.
+- Ranking contract `WEAK_EARLY_FIVE_CANDIDATE_RANKING_V1` was frozen and pushed at commit `26653f45` before 2026 performance was generated.
+- Runtime: Python 3.12.13 / numpy 2.5.3 / pandas 2.3.3 / scikit-learn 1.9.1 / XGBoost 3.4.1 on Windows 11.
+- Input: artifact `10264205130`, daily SHA `6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0`, cutoff 2026-09-11.
+- Causal 2026 Tail: 220 rows, signal dates 2026-01-05 through 2026-09-03, SHA `8363340cc8ea48f6b6b41307da7cdb6f59860200b96f6849503145516ab021dd`.
+- All selected rows passed next-open, fifth-XTKS-close, cached next-open, target-end-date, and gross-return consistency checks.
+- 2026 rows: each base selector n=42; DUAL n=36; DUAL+G3 n=32.
+- 2026 mean: volr20 +3.20%, body +4.90%, mean-rank +5.08%, DUAL +3.26%, DUAL+G3 +2.58%.
+- Exact 2023-2026 total means: volr20 +5.71%, body +6.22%, mean-rank +6.53%, DUAL +6.37%, DUAL+G3 +6.82%.
+- Pre-frozen equal-weight ordinal ranking for exact 2023-2026 rows: 1 mean-rank, 2 DUAL+G3, 3 body, 4 DUAL, 5 volr20.
+- Pre-2026 2023-2025 ranking is retained separately: 1 DUAL+G3, 2 mean-rank, 3 DUAL, 4 volr20, 5 body.
+- 2022 stays summary-only and excluded from exact total/ranking; missing historical row identity was not substituted with either runtime replay.
+- Full report: `research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`.

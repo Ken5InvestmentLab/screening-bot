@@ -12,6 +12,10 @@
 
 ## 今回の実成果
 
+- 固定5候補を2026 reporting-onlyへ無調整延長。daily cutoff 2026-09-11、成熟済みsignal cutoff 2026-09-03。
+- 2026単年はmean-rankがn=42 / mean +5.08% / median +1.38% / win 50.00% / Top3-ex +1.99%で最も均衡。
+- Exact 2023-2026総合順位: 1 mean-rank、2 DUAL+G3、3 body_pct LOW、4 DUAL、5 volr20 LOW。
+- 完全表: `research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`。
 - `WEAK_EARLY_EXACT_V1`をPhase-2の5 selectorまで拡張し、DUAL n=140とDUAL+G3 n=117のcanonical rowsをexact固定。
 - DUAL+G3は2023-2025でmean +7.98%、median +1.74%、win 53.85%、Top3-ex +5.14%を再現。
 - outcome列を読まないresearch-only shadow selectorを追加し、5 selectorすべてでcanonical date+symbol identity一致を確認。

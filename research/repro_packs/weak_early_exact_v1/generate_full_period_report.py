@@ -73,7 +73,7 @@ def write_csv(frame: pd.DataFrame, path: Path) -> None:
         encoding="utf-8",
         lineterminator="\n",
         date_format="%Y-%m-%d",
-        float_format="%.12g",
+        float_format="%.17g",
     )
 
 

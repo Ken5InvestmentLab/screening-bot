@@ -1,31 +1,28 @@
 {
   "identity": "CLOUD_MONSTER_LEGACY_EXACT_V1",
-  "status": "EXACT_NOT_YET_RECOVERED",
-  "frozen_specs": [
-    {
-      "commit": "9c4aed248cb3dd680a5608cd62b00fe294e254e1",
-      "path": "research/tentei_cloud/OLD_CLOUD_MONSTER_EXACT_REPRO_SPEC_20260914.md"
-    },
-    {
-      "commit": "7d19533560a186ffd4dceccb72fbaf1bd54117cc",
-      "path": "research/tentei_cloud/OLD_CLOUD_MONSTER_FORENSIC_20260914.md"
-    }
+  "status": "EXACT_ROWS_AND_FINAL_SELECTOR_RECOVERED_FULL_PIPELINE_REPRO_BLOCKED",
+  "source_conversation": {
+    "title": "研修継続報告",
+    "url": "https://chatgpt.com/c/6aa38426-70f4-83ee-a623-29577859a638",
+    "message_id": "3141d527-c580-4ae7-a045-764138f04611",
+    "library_file_id": "libfile_a5ca557456f0819195d1d03342885513"
+  },
+  "recovered_artifacts": [
+    {"path":"artifacts/cloud_two_lane_union_jpx.csv","sha256":"91f1f956a48a308e21e49aa2a80c7075677ac5aa6d5dfae5d26c1b1ad7db4a62","rows":210,"monster_rows":63},
+    {"path":"artifacts/cloud_priorityA_monsters_compare_teacher.csv","sha256":"1920e2e69b89feee473cd2e6f6542fe1766f754c3ff60397b65d026614037d54","rows":19},
+    {"path":"recovered_selector.py","provenance":"verbatim Monster section of /mnt/data/v3r/revalidate_lanes_jpx.py"}
   ],
   "recovered_input": {
     "artifact_id": 10266329903,
-    "artifact_name": "no-tv-stable-teacher-preserved",
     "run_id": 34608845800,
-    "source_commit": "f54fbd02",
     "path": "teacher_ohlcv_4h_raw.csv",
     "sha256": "f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2"
   },
   "missing_identity_artifacts": [
-    "cloud_two_lane_union_jpx.csv",
-    "cloud_priorityA_monsters_compare_teacher.csv",
-    "original score generator or serialized fitted model",
-    "exact watch-pool implementation"
+    "builder of cloud4h_frame_dedup_sep.pkl",
+    "exact upstream 1314-symbol universe construction",
+    "historical cloud4h_mtf_jpx5bd.pkl or all deterministic predecessors",
+    "entry/exit dates and prices for a separately named canonical next-open bridge"
   ],
-  "canonical_trade_rows": null,
-  "canonical_metrics": null
+  "legacy_metrics": "output/legacy_metrics.json"
 }
-

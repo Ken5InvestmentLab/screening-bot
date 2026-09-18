@@ -199,3 +199,20 @@ H. 10-20 line handoff linking A-G
 - Pre-2026 2023-2025 ranking is retained separately: 1 DUAL+G3, 2 mean-rank, 3 DUAL, 4 volr20, 5 body.
 - 2022 stays summary-only and excluded from exact total/ranking; missing historical row identity was not substituted with either runtime replay.
 - Full report: `research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`.
+
+## 2026-09-19 ChatGPT Library exact recovery breakthrough
+
+- Evidence surface: ChatGPT conversation `研修継続報告`, URL `https://chatgpt.com/c/6aa38426-70f4-83ee-a623-29577859a638`, message id `3141d527-c580-4ae7-a045-764138f04611`.
+- Recovered Library file `libfile_a5ca557456f0819195d1d03342885513` as `cloud_two_lane_union_jpx.csv`; repository-normalized SHA `91f1f956a48a308e21e49aa2a80c7075677ac5aa6d5dfae5d26c1b1ad7db4a62`.
+- Recovered `cloud_priorityA_monsters_compare_teacher.csv`; repository-normalized SHA `1920e2e69b89feee473cd2e6f6542fe1766f754c3ff60397b65d026614037d54`.
+- The union has 210 rows: Monster 63 and Stable 147. The Monster subset independently reproduces every search signature exactly, including Top5-ex.
+- Recovered original final generator `/mnt/data/v3r/revalidate_lanes_jpx.py`. Exact Watch gate is `d_pre3 & d_gap & ret3>=.06 & ret3<5 & ret5.notna()`, first symbol-date row.
+- Recovered model: 52 ordered features, median imputer, StandardScaler, balanced LogisticRegression C=.15/max_iter=500/random_state=1.
+- Recovered walk-forward: April/May/June, prior-only training, fixed fractions .10/.20/.30, historical objective preserved in `recovered_selector.py`; selected .10.
+- Recovered final fit before 2026-07-01 and fixed training-score quantile threshold `0.7480177317229793`. No cooldown and no per-day quota.
+- Recovered source texts also exist in the conversation for `/mnt/data/v3r/build_mtf_fast.py` and `/mnt/data/v3r/relabel_jpx_5bd.py`; the latter uses official JPX session index +5.
+- Exact row/selector evidence pack commit: `bb597947` on `research/cloud-monster-recovery`.
+- Classification: exact rows and final selector recovered; full from-raw reproduction remains blocked by the missing builder of `cloud4h_frame_dedup_sep.pkl` and exact 1,314-symbol universe construction.
+- Canonical bridge warning: recovered legacy endpoint is signal snapshot close→fifth XTKS close. The requested next-open→fifth-close bridge must be emitted separately after entry/exit prices are joined; never replace the legacy headline.
+- Do not repeat: ChatGPT Library download of the two CSVs, message-38 final generator extraction, or signature verification. Resume only at earlier tool logs that built `cloud4h_frame_dedup_sep.pkl`.
+- Usage stop: Codex weekly usage showed 98% used. New heavy exploration stopped; commit/push and handoff took priority.

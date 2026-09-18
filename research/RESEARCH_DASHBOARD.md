@@ -1,6 +1,6 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
-> **最終更新:** 2026-09-18 19:45 JST  
+> **最終更新:** 2026-09-19 JST
 > **最優先:** Cloud Monster legacy exact復元 + weak+early exact復元  
 > **比較契約:** cost 0%、win = gross return > 0、signal T → next XTKS open → fifth XTKS close。  
 > **重要:** 2026はMeta mapping SHA freeze + STATE明示許可までSEALED。production/mainは変更禁止。
@@ -12,6 +12,8 @@
 
 ## 今回の実成果
 
+- Cloud Monsterの歴史的63行CSV、19行saved-score比較、最終Watch/ranker sourceを旧ChatGPT会話から回収し、commit `bb597947`でhash固定。
+- `verify_recovered_rows.py`が n=63 / mean +9.8569% / median +3.3333% / win 57.1429% / +20 30.1587% / +30 19.0476% / -10 22.2222% / Top5-ex +4.0269%を独立再計算して全一致。
 - 固定5候補を2026 reporting-onlyへ無調整延長。daily cutoff 2026-09-11、成熟済みsignal cutoff 2026-09-03。
 - 2026単年はmean-rankがn=42 / mean +5.08% / median +1.38% / win 50.00% / Top3-ex +1.99%で最も均衡。
 - Exact 2023-2026総合順位: 1 mean-rank、2 DUAL+G3、3 body_pct LOW、4 DUAL、5 volr20 LOW。
@@ -46,12 +48,11 @@
 - <=-10% 22.2%
 - Top5-ex +4.03%
 
-**重要:** これは現時点では検索signatureであり、exact/canonical扱いしない。元generator/input/rows/SHA chainは未回収。
+**状態:** `EXACT_ROWS_AND_FINAL_SELECTOR_RECOVERED / FULL_PIPELINE_REPRO_BLOCKED`。63 row identityと最終selectorはexact。未回収は`cloud4h_frame_dedup_sep.pkl`のbuilder、上流universe構築、next-open canonical bridge。headlineへ合わせるretuneは行っていない。
 
 ## weak+early
 
-**核となるgateは失われていない。**  
-現blockerは、V7/V9 source/input/cache → causal training → Tail → weak+early gate → same-day rank/tie-break → cooldown → endpoint → canonical rows を1本のexact executable chainとして再固定すること。
+**`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`。** 2023-2025の5 selectorと2026 reporting-only延長を実行可能chain、canonical rows、SHA付きで固定済み。
 
 ## 担当割当
 
@@ -82,9 +83,8 @@ V16 alternate historical completeや既存primary exact成果は保持し、捨�
 
 ## 最大blocker
 
-**Cloud Monster旧n=63/+9.86のexact generator/input/rows lineageが未特定。**  
-weak+earlyは核心条件が確認済みなので、こちらはCloud Monsterより復元成功確率が高い。
+**Cloud Monsterのbase 4H feature-frame builderと上流universe constructionが未特定。** 63 rows、final selector、daily/MTF augmentation source、JPX relabel sourceは回収済み。週間枠98%到達のため新規重探索は停止し、handoffを優先。
 
 ## GO / NO-GO
 
-**Cloud Monster/weak+early recovery ACTIVE / production NO-GO / 2026 SEALED。**
+**Cloud full-pipeline handoff ready / weak+early exact / production NO-GO。2026は固定候補のreporting-only以外SEALED。**

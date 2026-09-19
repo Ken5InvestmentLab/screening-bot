@@ -48,7 +48,7 @@
 - <=-10% 22.2%
 - Top5-ex +4.03%
 
-**状態:** `EXACT_REPRODUCED_FROM_RAW`。artifact `10266329903` → base 4H frame → MTF → JPX +5-session relabel → final selectorを原文ソースで再実行し、63 row identity / close / ret5が最大差0.0で一致。未完は別契約のnext-open canonical bridgeのみ。headlineへ合わせるretuneは行っていない。
+**状態:** `EXACT_REPRODUCED_FROM_RAW / CANONICAL_BRIDGE_COMPLETE`。artifact `10266329903` → base 4H frame → MTF → JPX +5-session relabel → final selectorを原文ソースで再実行し、63 row identity / close / ret5が最大差0.0で一致。固定63件のnext-open→fifth-close版も別identityで完成。headlineへ合わせるretuneは行っていない。
 
 ## weak+early
 
@@ -83,7 +83,7 @@ V16 alternate historical completeや既存primary exact成果は保持し、捨�
 
 ## 最大blocker
 
-Cloud Monster legacy exactはrawから再現完了。次はlegacy headlineと混ぜず、同じ63 signal identitiesへnext-open→fifth-close canonical endpointを付与する。
+Cloud Monster legacy exactとcanonical endpoint bridgeは完了。残る研究判断は、期間差を明示したforward shadowで現行productionとapples-to-apples比較すること。
 
 ## GO / NO-GO
 

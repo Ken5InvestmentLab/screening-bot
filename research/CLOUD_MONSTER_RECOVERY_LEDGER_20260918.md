@@ -231,3 +231,16 @@ H. 10-20 line handoff linking A-G
 - Classification upgraded to `CLOUD_MONSTER_LEGACY_EXACT_V1 / EXACT_REPRODUCED_FROM_RAW`.
 - No parameter search, threshold fitting to n=63, or 2026-based rule choice was performed.
 - Do not repeat: base-builder/source search, raw-to-63 reproduction, or legacy signature verification. Remaining work is only the separately named next-open canonical endpoint bridge and final handoff refresh.
+
+## 2026-09-19 canonical endpoint bridge and comparison
+
+- Frozen selection input: the exact 63 `CLOUD_MONSTER_LEGACY_EXACT_V1` identities; no row, threshold, feature, gate, model, or ranking choice changed.
+- Canonical endpoint: signal T → next official XTKS session open → fifth official XTKS session close; cost 0%; win=`gross_return > 0`.
+- Canonical rows: `output/canonical_next_open_fifth_close/canonical_trade_rows_next_open_fifth_close.csv`, 63 rows, SHA `e8022da46af85fa249e0815768682fe0ccc7730485f9494268bebd8e961a6a17`.
+- All 63 fifth-session closes independently reproduce the legacy close→fifth-close returns within absolute tolerance `1e-15`.
+- Canonical 2026/TOTAL metrics: mean +4.5821%, median -0.1406%, win 49.2063%, +10 30.1587%, +20 15.8730%, -10 20.6349%, -20 7.9365%, max +87.20%, min -41.0448%, Top3-ex +1.3913%, 100-share aggregate P/L ¥153,500.
+- Identity: `CLOUD_MONSTER_CANONICAL_NEXT_OPEN_FIFTH_CLOSE_V1`; legacy headline and canonical endpoint are intentionally separate.
+- Built a coverage-aware comparison under `research/comparisons/cloud_weak_early_20260919/` using the previously frozen seven-metric ordinal contract.
+- Descriptive 2026 ranking across six fixed candidates: 1 mean-rank, 2 body_pct LOW, 3 Cloud Monster canonical, 4 DUAL+G3, 5 DUAL, 6 volr20 LOW.
+- Cloud covers only 2026-03-01 through 2026-08-31, whereas Weak+Early 2026 begins in January; this is descriptive reporting, not a retune or an apples-to-apples production adoption claim.
+- Weak+Early 2023-2026 total ranking remains 1 mean-rank, 2 DUAL+G3, 3 body_pct LOW, 4 DUAL, 5 volr20 LOW. Cloud is not mixed into this four-year rank.

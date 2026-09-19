@@ -1,6 +1,6 @@
 {
   "identity": "CLOUD_MONSTER_LEGACY_EXACT_V1",
-  "status": "EXACT_ROWS_AND_FINAL_SELECTOR_RECOVERED_FULL_PIPELINE_REPRO_BLOCKED",
+  "status": "EXACT_REPRODUCED_FROM_RAW_CANONICAL_BRIDGE_COMPLETE",
   "source_conversation": {
     "title": "研修継続報告",
     "url": "https://chatgpt.com/c/6aa38426-70f4-83ee-a623-29577859a638",
@@ -10,7 +10,11 @@
   "recovered_artifacts": [
     {"path":"artifacts/cloud_two_lane_union_jpx.csv","sha256":"91f1f956a48a308e21e49aa2a80c7075677ac5aa6d5dfae5d26c1b1ad7db4a62","rows":210,"monster_rows":63},
     {"path":"artifacts/cloud_priorityA_monsters_compare_teacher.csv","sha256":"1920e2e69b89feee473cd2e6f6542fe1766f754c3ff60397b65d026614037d54","rows":19},
-    {"path":"recovered_selector.py","provenance":"verbatim Monster section of /mnt/data/v3r/revalidate_lanes_jpx.py"}
+    {"path":"recovered_selector.py","sha256":"73f21e05fa43e74edd95d6fb91a7d2eb9c39161b0fc48fa4d227c6bd48b8526b","provenance":"verbatim Monster section of /mnt/data/v3r/revalidate_lanes_jpx.py"},
+    {"path":"source/build_cloud4h_dedup_sep.py","sha256":"c3fcd4b4bb24a4fd15f1a893795b318a248ca00abe6e0fc02018cec17422536e"},
+    {"path":"source/build_mtf_fast.py","sha256":"71c4db4e5bce908efbd0d16ae6f51a20c91acc750f096e83a215bf5578468c8e"},
+    {"path":"source/relabel_jpx_5bd.py","sha256":"6a9150ec1b0259bf8afed796c200801f0e19606f369a4618d1648062db4dac7b"},
+    {"path":"source/revalidate_lanes_jpx.py","sha256":"610958e46a2dfd656d2b4f1aff6394a9b27fb2ab521c8f9c535318691df32684"}
   ],
   "recovered_input": {
     "artifact_id": 10266329903,
@@ -18,11 +22,21 @@
     "path": "teacher_ohlcv_4h_raw.csv",
     "sha256": "f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2"
   },
-  "missing_identity_artifacts": [
-    "builder of cloud4h_frame_dedup_sep.pkl",
-    "exact upstream 1314-symbol universe construction",
-    "historical cloud4h_mtf_jpx5bd.pkl or all deterministic predecessors",
-    "entry/exit dates and prices for a separately named canonical next-open bridge"
-  ],
+  "raw_reproduction": {
+    "receipt": "output/raw_reproduction_receipt.json",
+    "expected_rows": 63,
+    "actual_rows": 63,
+    "identity_equal": true,
+    "close_bitwise_equal": true,
+    "ret5_max_abs_diff": 0.0
+  },
+  "canonical_bridge": {
+    "identity": "CLOUD_MONSTER_CANONICAL_NEXT_OPEN_FIFTH_CLOSE_V1",
+    "rows": "output/canonical_next_open_fifth_close/canonical_trade_rows_next_open_fifth_close.csv",
+    "rows_sha256": "e8022da46af85fa249e0815768682fe0ccc7730485f9494268bebd8e961a6a17",
+    "metrics": "output/canonical_next_open_fifth_close/canonical_metrics_by_year_and_total.csv",
+    "metrics_sha256": "8df1b9481eca98494b9ebb06b30c70faa469c95a760aadd1c2a88dd91c27923f"
+  },
+  "missing_identity_artifacts": [],
   "legacy_metrics": "output/legacy_metrics.json"
 }

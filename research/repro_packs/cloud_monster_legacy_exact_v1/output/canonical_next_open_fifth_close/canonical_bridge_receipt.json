@@ -1,0 +1,64 @@
+{
+  "identity": "CLOUD_MONSTER_CANONICAL_NEXT_OPEN_FIFTH_CLOSE_V1",
+  "status": "EXACT_ENDPOINT_BRIDGE",
+  "selection_identity": "CLOUD_MONSTER_LEGACY_EXACT_V1",
+  "selection_changed": false,
+  "endpoint": "signal T -> next official XTKS session open -> fifth official XTKS session close",
+  "cost": 0.0,
+  "win_definition": "gross_return > 0",
+  "inputs": {
+    "raw_csv": {
+      "artifact_id": "10266329903",
+      "sha256": "f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2"
+    },
+    "union_csv": {
+      "sha256": "91f1f956a48a308e21e49aa2a80c7075677ac5aa6d5dfae5d26c1b1ad7db4a62"
+    }
+  },
+  "outputs": {
+    "canonical_trade_rows_next_open_fifth_close.csv": {
+      "rows": 63,
+      "sha256": "e8022da46af85fa249e0815768682fe0ccc7730485f9494268bebd8e961a6a17"
+    },
+    "canonical_metrics_by_year_and_total.csv": {
+      "rows": 2,
+      "sha256": "8df1b9481eca98494b9ebb06b30c70faa469c95a760aadd1c2a88dd91c27923f"
+    }
+  },
+  "legacy_exit_consistency": {
+    "rows_checked": 63,
+    "all_equal_with_atol_1e-15": true
+  },
+  "metrics": [
+    {
+      "period": "2026",
+      "n": 63,
+      "mean": 0.04582147691093387,
+      "median": -0.0014064697609000865,
+      "win": 0.49206349206349204,
+      "plus10": 0.30158730158730157,
+      "plus20": 0.15873015873015872,
+      "minus10": 0.20634920634920634,
+      "minus20": 0.07936507936507936,
+      "max_up": 0.8720000000000001,
+      "max_down": -0.4104477611940298,
+      "top3_excluded_mean": 0.013912920491393085,
+      "pl_100_shares_yen": 153500.0
+    },
+    {
+      "period": "TOTAL",
+      "n": 63,
+      "mean": 0.04582147691093387,
+      "median": -0.0014064697609000865,
+      "win": 0.49206349206349204,
+      "plus10": 0.30158730158730157,
+      "plus20": 0.15873015873015872,
+      "minus10": 0.20634920634920634,
+      "minus20": 0.07936507936507936,
+      "max_up": 0.8720000000000001,
+      "max_down": -0.4104477611940298,
+      "top3_excluded_mean": 0.013912920491393085,
+      "pl_100_shares_yen": 153500.0
+    }
+  ]
+}

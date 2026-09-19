@@ -5,6 +5,20 @@
 > **比較契約:** cost 0%、win = gross return > 0、signal T → next XTKS open → fifth XTKS close。  
 > **重要:** 2026はMeta mapping SHA freeze + STATE明示許可までSEALED。production/mainは変更禁止。
 
+## 確定表示名
+
+ユーザー向け表示名は以下で固定する。**内部セレクタ名・条件式・candidate_name は再現性維持のため変更しない。**
+
+| 表示名 | 内部セレクタ | 旧表示名 |
+|---|---|---|
+| **Shadow** | `mean-rank(volr20, body_pct)` | 静かな売られ過ぎバランス |
+| **Dive** | `body_pct LOW` | 陰線沈み込みリバウンド |
+| **Silence** | `volr20 LOW` | 出来高沈静リバウンド |
+| **Fusion** | `DUAL_TOP1_AGREEMENT` | 2条件一致リバウンド |
+| **Balance** | `DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF` | 地合い安定・2条件一致 |
+
+今後のダッシュボード・レポート等の**表示名**はこの英語名を使用する。内部IDは過去artifact/rows SHAとの整合性維持のためそのままとする。
+
 ## 現在地
 
 **通常研究全体: 約90%** / **historical比較: 80%** / **Meta: 12%**。  

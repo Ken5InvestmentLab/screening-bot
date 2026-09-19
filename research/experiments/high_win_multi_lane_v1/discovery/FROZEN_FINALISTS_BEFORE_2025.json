@@ -1,0 +1,187 @@
+{
+  "identity": "HIGH_WIN_MULTI_LANE_RESEARCH_V1",
+  "status": "FINALISTS_FROZEN_BEFORE_2025_HOLDOUT",
+  "prereg_sha256": "7a5c4ca0b5a2466f19ec73fb4eb9abb4c85a9374a522b6a99056a0d1aeb1665e",
+  "tail_sha256": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+  "discovery_years": [
+    2023,
+    2024
+  ],
+  "holdout_opened": false,
+  "family_winners": [
+    {
+      "candidate_id": "EARLY_PRESSURE_V3",
+      "family": "EARLY_PRESSURE",
+      "atoms": [
+        "body_pct:LOW",
+        "ret1:LOW"
+      ],
+      "n_2023": 50,
+      "n_2024": 78,
+      "win_2023": 0.5,
+      "win_2024": 0.5128205128205128,
+      "median_2023": 0.00482625482625485,
+      "median_2024": 0.012543548396436299,
+      "min_year_win": 0.5,
+      "min_year_median": 0.00482625482625485,
+      "aggregate_n": 128,
+      "aggregate_mean": 0.05750030920001699,
+      "aggregate_median": 0.0098767598767599,
+      "aggregate_win": 0.5078125,
+      "aggregate_plus20": 0.1796875,
+      "aggregate_minus10": 0.296875,
+      "aggregate_top3_excluded_mean": 0.03304668002856012,
+      "eligible": true
+    },
+    {
+      "candidate_id": "DEFENSIVE_PULLBACK_V3",
+      "family": "DEFENSIVE_PULLBACK",
+      "atoms": [
+        "bbpct:LOW",
+        "rsi14:LOW"
+      ],
+      "n_2023": 50,
+      "n_2024": 78,
+      "win_2023": 0.46,
+      "win_2024": 0.5641025641025641,
+      "median_2023": -0.00283018867924525,
+      "median_2024": 0.01860556208382285,
+      "min_year_win": 0.46,
+      "min_year_median": -0.00283018867924525,
+      "aggregate_n": 128,
+      "aggregate_mean": 0.07649295364823211,
+      "aggregate_median": 0.01064960900249695,
+      "aggregate_win": 0.5234375,
+      "aggregate_plus20": 0.1953125,
+      "aggregate_minus10": 0.2578125,
+      "aggregate_top3_excluded_mean": 0.0524951479435324,
+      "eligible": true
+    },
+    {
+      "candidate_id": "REVERSAL_WICK_V1",
+      "family": "REVERSAL_WICK",
+      "atoms": [
+        "lower_wick:HIGH",
+        "body_pct:LOW"
+      ],
+      "n_2023": 50,
+      "n_2024": 78,
+      "win_2023": 0.48,
+      "win_2024": 0.5512820512820513,
+      "median_2023": 0.0,
+      "median_2024": 0.02114771766940335,
+      "min_year_win": 0.48,
+      "min_year_median": 0.0,
+      "aggregate_n": 128,
+      "aggregate_mean": 0.0710331903590088,
+      "aggregate_median": 0.01808791736728315,
+      "aggregate_win": 0.5234375,
+      "aggregate_plus20": 0.203125,
+      "aggregate_minus10": 0.28125,
+      "aggregate_top3_excluded_mean": 0.04690435033536774,
+      "eligible": true
+    },
+    {
+      "candidate_id": "MODEL_CONVICTION_V1",
+      "family": "MODEL_CONVICTION",
+      "atoms": [
+        "tail_cdf:HIGH",
+        "body_pct:LOW"
+      ],
+      "n_2023": 50,
+      "n_2024": 78,
+      "win_2023": 0.46,
+      "win_2024": 0.5,
+      "median_2023": -0.00283018867924525,
+      "median_2024": 0.00757575757575755,
+      "min_year_win": 0.46,
+      "min_year_median": -0.00283018867924525,
+      "aggregate_n": 128,
+      "aggregate_mean": 0.05725719283539324,
+      "aggregate_median": 0.0,
+      "aggregate_win": 0.484375,
+      "aggregate_plus20": 0.203125,
+      "aggregate_minus10": 0.3046875,
+      "aggregate_top3_excluded_mean": 0.033702617760074285,
+      "eligible": true
+    }
+  ],
+  "finalists": [
+    {
+      "candidate_id": "EARLY_PRESSURE_V3",
+      "family": "EARLY_PRESSURE",
+      "atoms": [
+        "body_pct:LOW",
+        "ret1:LOW"
+      ],
+      "n_2023": 50,
+      "n_2024": 78,
+      "win_2023": 0.5,
+      "win_2024": 0.5128205128205128,
+      "median_2023": 0.00482625482625485,
+      "median_2024": 0.012543548396436299,
+      "min_year_win": 0.5,
+      "min_year_median": 0.00482625482625485,
+      "aggregate_n": 128,
+      "aggregate_mean": 0.05750030920001699,
+      "aggregate_median": 0.0098767598767599,
+      "aggregate_win": 0.5078125,
+      "aggregate_plus20": 0.1796875,
+      "aggregate_minus10": 0.296875,
+      "aggregate_top3_excluded_mean": 0.03304668002856012,
+      "eligible": true
+    },
+    {
+      "candidate_id": "REVERSAL_WICK_V1",
+      "family": "REVERSAL_WICK",
+      "atoms": [
+        "lower_wick:HIGH",
+        "body_pct:LOW"
+      ],
+      "n_2023": 50,
+      "n_2024": 78,
+      "win_2023": 0.48,
+      "win_2024": 0.5512820512820513,
+      "median_2023": 0.0,
+      "median_2024": 0.02114771766940335,
+      "min_year_win": 0.48,
+      "min_year_median": 0.0,
+      "aggregate_n": 128,
+      "aggregate_mean": 0.0710331903590088,
+      "aggregate_median": 0.01808791736728315,
+      "aggregate_win": 0.5234375,
+      "aggregate_plus20": 0.203125,
+      "aggregate_minus10": 0.28125,
+      "aggregate_top3_excluded_mean": 0.04690435033536774,
+      "eligible": true
+    },
+    {
+      "candidate_id": "DEFENSIVE_PULLBACK_V3",
+      "family": "DEFENSIVE_PULLBACK",
+      "atoms": [
+        "bbpct:LOW",
+        "rsi14:LOW"
+      ],
+      "n_2023": 50,
+      "n_2024": 78,
+      "win_2023": 0.46,
+      "win_2024": 0.5641025641025641,
+      "median_2023": -0.00283018867924525,
+      "median_2024": 0.01860556208382285,
+      "min_year_win": 0.46,
+      "min_year_median": -0.00283018867924525,
+      "aggregate_n": 128,
+      "aggregate_mean": 0.07649295364823211,
+      "aggregate_median": 0.01064960900249695,
+      "aggregate_win": 0.5234375,
+      "aggregate_plus20": 0.1953125,
+      "aggregate_minus10": 0.2578125,
+      "aggregate_top3_excluded_mean": 0.0524951479435324,
+      "eligible": true
+    }
+  ],
+  "outputs": {
+    "discovery_all_candidates.csv": "f9aa7a9bb9866ee12a737a0bcfcaf39206b4b240325c245d27f6450f225b42fa",
+    "frozen_finalist_discovery_identities.csv": "a7a0c79187150c2c5ed6b3aa39dc3bae12d0549decbc9c9b1156b0ba0cb09339"
+  }
+}

@@ -82,10 +82,10 @@ Legacy endpointはsignal snapshot close→fifth official XTKS close。n=63、mea
 
 ## 13. 次の最短作業
 
-1. Cloud exact modelの係数・imputer・scaler・threshold freezeとoutcome-blind scorerは完成済み。次はlabel不要のcausal future feature-frame builderを、歴史frameへのfeature identity test付きで作る。
-2. Weak 5候補とCloud固定モデルを、新しいendpoint未成熟期間のappend-only candidate ledgerへ出し、生成時刻/SHAを保存する。
-3. 現行production候補を別ledgerへread-only記録し、同じ成熟cutoff/calendar/cost/missing-price policyで比較する。
-4. 観測月が違う現在の2026順位をpromotionには使わない。最低sample/gateは既存preregistered contractから採用し、新たに2026を見て調整しない。
+1. 最優先は`research/HIGH_WIN_MULTI_LANE_PREREG_20260919.json`と`research/experiments/high_win_multi_lane_v1/discovery/FROZEN_FINALISTS_BEFORE_2025.json`を読み、commit `a61cd763`でfreeze済み3 finalistだけを2025 holdoutへ一度通す。条件追加/緩和禁止。0件通過なら`NO_VIABLE_NEW_LANE`。
+2. Cloud exact model freeze/outcome-blind scorerは完成済み。次はlabel不要のcausal future feature-frame builderを歴史feature identity test付きで作る。
+3. Weak固定候補、holdout通過新lane、Cloud固定モデル、現行production候補をendpoint未成熟時点で別々のappend-only ledgerへSHA固定する。
+4. 観測月が違う現在の2026順位をpromotionには使わない。2026を見て条件を変更しない。
 
 ## 14. production無変更
 
@@ -103,6 +103,6 @@ Cloud Monsterは`CLOUD_MONSTER_LEGACY_EXACT_V1 / EXACT_REPRODUCED_FROM_RAW`で�
 
 Weak+Earlyは`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`。packは`research/repro_packs/weak_early_exact_v1/`、2026 reportingは`output/full_period_2026/`。Cross comparisonは`research/comparisons/cloud_weak_early_20260919/`。2026年内の記述順位は1 mean-rank、2 body_pct LOW、3 Cloud Monster canonical、4 DUAL+G3、5 DUAL、6 volr20 LOWですが、Cloud=3〜8月、Weak=1〜9月初旬で完全apples-to-applesではありません。Weak 2023-2026順位は1 mean-rank、2 DUAL+G3、3 body、4 DUAL、5 volr20です。2022はrow identity不足でsummary-onlyです。
 
-未解決blockerは復元ではなくforward比較です。Cloudのfrozen modelは`artifacts/cloud_monster_frozen_shadow_model_v1.json`と`cloud_monster_frozen_pipeline_v1.joblib`、outcome-blind scorerは`select_cloud_shadow_candidates.py`です。歴史assertionはlegacy評価63件を全包含し、endpoint欠損だけで旧評価から落ちた6217を加えた64件です。次のactionはlabel不要のcausal future feature-frame builderをidentity-test付きで作り、Weak 5候補 + Cloud固定モデル + 現行production候補をendpoint未成熟時点で別々のappend-only ledgerへSHA固定すること。2026を見てrule、threshold、feature、gate、candidate familyを選び直してはいけません。
+未解決blockerは復元ではなくforward比較です。Cloudのfrozen modelは`artifacts/cloud_monster_frozen_shadow_model_v1.json`と`cloud_monster_frozen_pipeline_v1.joblib`、outcome-blind scorerは`select_cloud_shadow_candidates.py`です。歴史assertionはlegacy評価63件を全包含し、endpoint欠損だけで旧評価から落ちた6217を加えた64件です。加えて高勝率研究は`HIGH_WIN_MULTI_LANE_RESEARCH_V1`として事前登録済みで、2025未開封の3 finalistがcommit `a61cd763a2b5e7a2f3875c74cc57f8774b0fa505`に固定されています。次のactionはこの3件だけを2025 holdoutへ一度通し、その後にlabel不要Cloud feature builderとappend-only forward ledgerへ進むこと。2026を見てrule、threshold、feature、gate、candidate familyを選び直してはいけません。
 
 `main`、production、本番workflow、Discord、Spreadsheet、Stable★6、Sniper、Mega、TradingView、watchlist-builder、watchlist-updaterは変更禁止。research-only branch/artifact/scriptだけ変更してください。Meta/他laneの2026はSEALED。`research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`のDo not repeatを先に読み、Cloud復元探索を繰り返さないでください。

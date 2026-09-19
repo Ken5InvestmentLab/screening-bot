@@ -253,3 +253,13 @@ H. 10-20 line handoff linking A-G
 - Historical causal selection is 64 rows. The 63 legacy evaluated rows are an exact subset with zero missing identities and zero score drift.
 - Additional causal identity: `6217|2026-04-13 13:00:00`. Legacy evaluation omitted it solely because `ret5.notna()` was false; endpoint availability is non-causal and is intentionally absent from the forward scorer.
 - This 64-vs-63 distinction is not a mismatch and must not be hidden: 64 is candidate selection, 63 is the evaluable legacy performance set.
+
+## 2026-09-19 high-win multi-lane research pause
+
+- User authorized a bounded search for stronger win-rate conditions and allowed 2-3 distinct final scoring lanes.
+- Preregistered `HIGH_WIN_MULTI_LANE_RESEARCH_V1` at commit `2a9d644393ac54d1502e29f4412080109bfb5071` before discovery: 12 fixed two-feature rankers, 2023 discovery, 2024 validation, 2025 holdout, 2026 forbidden for selection.
+- Discovery selected one family winner, then froze three diversity-bounded finalists at commit `a61cd763a2b5e7a2f3875c74cc57f8774b0fa505` before opening 2025.
+- Finalists: `EARLY_PRESSURE_V3 = body_pct LOW + ret1 LOW`; `REVERSAL_WICK_V1 = lower_wick HIGH + body_pct LOW`; `DEFENSIVE_PULLBACK_V3 = bbpct LOW + rsi14 LOW`.
+- 2023-2024 aggregate win: 50.78%, 52.34%, 52.34%. These are not yet strong enough to claim success; no extra gate was added after seeing them.
+- Frozen 2025 pass gate remains win>=55%, mean>=3%, median>0, Top3-ex>0, +20>=15%, -10<=25%, n>=35.
+- 2025 holdout remains unopened in this lane at the 5-hour usage pause. Next action is a single fixed-spec holdout run; `NO_VIABLE_NEW_LANE` is valid.

@@ -18,7 +18,8 @@
 - `verify_recovered_rows.py`が n=63 / mean +9.8569% / median +3.3333% / win 57.1429% / +20 30.1587% / +30 19.0476% / -10 22.2222% / Top5-ex +4.0269%を独立再計算して全一致。
 - 固定5候補を2026 reporting-onlyへ無調整延長。daily cutoff 2026-09-11、成熟済みsignal cutoff 2026-09-03。
 - 2026単年はmean-rankがn=42 / mean +5.08% / median +1.38% / win 50.00% / Top3-ex +1.99%で最も均衡。
-- Exact 2023-2026総合順位: 1 mean-rank、2 DUAL+G3、3 body_pct LOW、4 DUAL、5 volr20 LOW。
+- Exact 2023-2026の7指標equal-weight ordinal順位: 1 mean-rank、2 DUAL+G3、3 body_pct LOW、4 DUAL、5 volr20 LOW。
+- Exact canonical rowsを100株固定・cost 0%で金額集計。2023-2026キャッシュ利益順位は1 mean-rank ¥425,423、2 body ¥410,185、3 volr20 ¥363,393、4 DUAL ¥339,017、5 DUAL+G3 ¥290,317。必要元資金と年別順位を`research/comparisons/cash_profit_ranking_2023_2026/`へSHA付きで固定（commit `10335fc2`）。
 - 完全表: `research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`。
 - `WEAK_EARLY_EXACT_V1`をPhase-2の5 selectorまで拡張し、DUAL n=140とDUAL+G3 n=117のcanonical rowsをexact固定。
 - DUAL+G3は2023-2025でmean +7.98%、median +1.74%、win 53.85%、Top3-ex +5.14%を再現。

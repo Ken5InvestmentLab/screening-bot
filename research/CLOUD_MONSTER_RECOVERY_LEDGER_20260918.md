@@ -263,3 +263,16 @@ H. 10-20 line handoff linking A-G
 - 2023-2024 aggregate win: 50.78%, 52.34%, 52.34%. These are not yet strong enough to claim success; no extra gate was added after seeing them.
 - Frozen 2025 pass gate remains win>=55%, mean>=3%, median>0, Top3-ex>0, +20>=15%, -10<=25%, n>=35.
 - 2025 holdout remains unopened in this lane at the 5-hour usage pause. Next action is a single fixed-spec holdout run; `NO_VIABLE_NEW_LANE` is valid.
+
+## 2026-09-19 exact cash-profit ranking, 2023-2026
+
+- Scope was explicitly limited to ranking; no new candidate search and no frozen 2025 holdout evaluation ran.
+- Source rows are the exact Weak+Early canonical 2023-2025 files, their fixed 2026 reporting extensions, and the exact 63-row Cloud canonical bridge. All 11 input SHA-256 values are frozen in `cash_profit_ranking_receipt.json`.
+- Contract: 100 shares per signal, next official XTKS open entry, fifth official XTKS close exit, cost/tax 0%, no compounding. Same-date entries occur at open before exits at close.
+- `minimum_starting_cash_yen` is the smallest initial cash that keeps the cash ledger non-negative; `gross_deployed_capital_yen` is the sum of every entry cost. Ranking key is aggregate `cash_profit_yen` descending.
+- Comparable 2023-2026 result: 1 mean-rank ¥425,423; 2 body_pct LOW ¥410,185; 3 volr20 LOW ¥363,393; 4 DUAL ¥339,017; 5 DUAL+G3 ¥290,317.
+- Required starting cash / increase: mean-rank ¥212,997 / +199.73%; body ¥217,697 / +188.42%; volr20 ¥208,930 / +173.93%; DUAL ¥201,830 / +167.97%; DUAL+G3 ¥243,080 / +119.43%.
+- Cloud canonical is 2026-only: ¥153,500 profit on ¥473,900 minimum starting cash (+32.39%). It is shown as a reference and excluded from the comparable four-year winner claim.
+- Annual cash-profit winner: 2023 body; 2024 mean-rank; 2025 volr20; 2026 Cloud reference (among Weak candidates, body).
+- Report/reproducer: `research/comparisons/cash_profit_ranking_2023_2026/` and `research/build_cash_profit_ranking_2023_2026.py`; result commit `10335fc28078505ba5698209d76efe89763cf969`.
+- 2022 remains excluded because exact historical trade rows and entry prices are unavailable; no value was imputed.

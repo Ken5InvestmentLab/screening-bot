@@ -2,7 +2,7 @@
 
 ## 1. 今回実施したこと
 
-research-only branch `research/cloud-monster-recovery` でGit全ref/history、Actions artifact、旧ChatGPT会話/Library、保存ソースを追跡した。weak+early 5候補をexact packへ固定し、Cloud Monsterは63行だけでなくraw入力から4段pipelineを再実行して完全一致を確認した。さらに同じ63 signal identityへcanonical next-open endpointを付与し、6候補の年別/total比較を作成した。
+research-only branch `research/cloud-monster-recovery` でGit全ref/history、Actions artifact、旧ChatGPT会話/Library、保存ソースを追跡した。weak+early 5候補をexact packへ固定し、Cloud Monsterは63行だけでなくraw入力から4段pipelineを再実行して完全一致を確認した。さらに同じ63 signal identityへcanonical next-open endpointを付与し、6候補の年別/total比較と、100株固定の2023-2026キャッシュ利益ランキングを作成した。
 
 ## 2. Cloud Monster exact復元状況
 
@@ -47,6 +47,8 @@ Legacy endpointはsignal snapshot close→fifth official XTKS close。n=63、mea
 - Weak 2023-2025 canonical 5本: `research/repro_packs/weak_early_exact_v1/output/canonical_trade_rows_*.csv`。
 - Weak 2026 rows/metrics: `research/repro_packs/weak_early_exact_v1/output/full_period_2026/`。
 - Cross-system year/rank/total: `research/comparisons/cloud_weak_early_20260919/`。
+- 100株・実価格の年別/total金額順位: `research/comparisons/cash_profit_ranking_2023_2026/`。machine receiptに11 input SHAと評価契約を固定。
+- 比較可能な2023-2026キャッシュ利益順位: 1 mean-rank ¥425,423、2 body ¥410,185、3 volr20 ¥363,393、4 DUAL ¥339,017、5 DUAL+G3 ¥290,317。Cloud ¥153,500は2026-only参考で、4年順位から除外。
 
 ## 8. REPRO_PACK完成度
 
@@ -63,6 +65,7 @@ Legacy endpointはsignal snapshot close→fifth official XTKS close。n=63、mea
 - `bb597947` — Cloud historical 63 rows / final selector。
 - `ed871081c2847457b438d4b1cb9939a1b44cb999` — Cloud raw→63 exact reproduction。
 - `7b57dc84320a27bccb3ffb23433fa67edace54ba` — Cloud canonical bridge + 6-candidate comparison（latest result SHA）。
+- `10335fc28078505ba5698209d76efe89763cf969` — exact canonical rowsによる2023-2026キャッシュ利益ランキング。
 
 ## 10. branch
 
@@ -70,7 +73,7 @@ Legacy endpointはsignal snapshot close→fifth official XTKS close。n=63、mea
 
 ## 11. 変更ファイル
 
-変更は`research/**`だけ。主要追加はCloud pack `source/`, `reproduce_from_raw.py`, `build_canonical_bridge.py`, canonical rows/receipt、Weak pack、recovery ledger/dashboard/readiness、`research/comparisons/cloud_weak_early_20260919/`、本handoff。本番コード/workflow/configは変更なし。
+変更は`research/**`だけ。主要追加はCloud pack `source/`, `reproduce_from_raw.py`, `build_canonical_bridge.py`, canonical rows/receipt、Weak pack、recovery ledger/dashboard/readiness、`research/comparisons/cloud_weak_early_20260919/`、`research/comparisons/cash_profit_ranking_2023_2026/`、本handoff。本番コード/workflow/configは変更なし。
 
 ## 12. 再実行不要な探索
 
@@ -97,11 +100,11 @@ Legacy endpointはsignal snapshot close→fifth official XTKS close。n=63、mea
 
 ## ChatGPTへ貼るプロンプト
 
-あなたは`Ken5InvestmentLab/screening-bot`のTradingView非依存研究を引き継ぎます。repoは`Ken5InvestmentLab/screening-bot`、branchは`research/cloud-monster-recovery`、latest result SHAは`7b57dc84320a27bccb3ffb23433fa67edace54ba`です。最初に`git fetch origin`し、`origin/research/cloud-monster-recovery`をcheckoutしてbranch tipを記録してください。完全handoffは`research/CODEX_TO_CHATGPT_CLOUD_MONSTER_HANDOFF_20260918.md`、探索ledgerは`research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`です。
+あなたは`Ken5InvestmentLab/screening-bot`のTradingView非依存研究を引き継ぎます。repoは`Ken5InvestmentLab/screening-bot`、branchは`research/cloud-monster-recovery`、latest result SHAは`10335fc28078505ba5698209d76efe89763cf969`です。最初に`git fetch origin`し、`origin/research/cloud-monster-recovery`をcheckoutしてbranch tipを記録してください。完全handoffは`research/CODEX_TO_CHATGPT_CLOUD_MONSTER_HANDOFF_20260918.md`、探索ledgerは`research/CLOUD_MONSTER_RECOVERY_LEDGER_20260918.md`です。
 
 Cloud Monsterは`CLOUD_MONSTER_LEGACY_EXACT_V1 / EXACT_REPRODUCED_FROM_RAW`です。packは`research/repro_packs/cloud_monster_legacy_exact_v1/`。rawはActions artifact `10266329903`、SHA `f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2`。4 original sourcesは`source/`、full reproducerは`reproduce_from_raw.py`、receiptは`output/raw_reproduction_receipt.json`。expected/actual 63、identity/close完全一致、ret5最大差0.0です。canonical rowsは`output/canonical_next_open_fifth_close/canonical_trade_rows_next_open_fifth_close.csv`、SHA `e8022da46af85fa249e0815768682fe0ccc7730485f9494268bebd8e961a6a17`です。
 
-Weak+Earlyは`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`。packは`research/repro_packs/weak_early_exact_v1/`、2026 reportingは`output/full_period_2026/`。Cross comparisonは`research/comparisons/cloud_weak_early_20260919/`。2026年内の記述順位は1 mean-rank、2 body_pct LOW、3 Cloud Monster canonical、4 DUAL+G3、5 DUAL、6 volr20 LOWですが、Cloud=3〜8月、Weak=1〜9月初旬で完全apples-to-applesではありません。Weak 2023-2026順位は1 mean-rank、2 DUAL+G3、3 body、4 DUAL、5 volr20です。2022はrow identity不足でsummary-onlyです。
+Weak+Earlyは`WEAK_EARLY_EXACT_V1 / EXACT_REPRODUCED`。packは`research/repro_packs/weak_early_exact_v1/`、2026 reportingは`output/full_period_2026/`。Cross comparisonは`research/comparisons/cloud_weak_early_20260919/`。2026年内の7指標ordinal順位は1 mean-rank、2 body_pct LOW、3 Cloud Monster canonical、4 DUAL+G3、5 DUAL、6 volr20 LOWですが、Cloud=3〜8月、Weak=1〜9月初旬で完全apples-to-applesではありません。Weakの2023-2026 ordinal順位は1 mean-rank、2 DUAL+G3、3 body、4 DUAL、5 volr20です。100株固定の金額順位は`research/comparisons/cash_profit_ranking_2023_2026/`にあり、1 mean-rank ¥425,423、2 body ¥410,185、3 volr20 ¥363,393、4 DUAL ¥339,017、5 DUAL+G3 ¥290,317です。Cloud ¥153,500は2026-only参考です。2022はrow identity不足でsummary-onlyです。
 
 未解決blockerは復元ではなくforward比較です。Cloudのfrozen modelは`artifacts/cloud_monster_frozen_shadow_model_v1.json`と`cloud_monster_frozen_pipeline_v1.joblib`、outcome-blind scorerは`select_cloud_shadow_candidates.py`です。歴史assertionはlegacy評価63件を全包含し、endpoint欠損だけで旧評価から落ちた6217を加えた64件です。加えて高勝率研究は`HIGH_WIN_MULTI_LANE_RESEARCH_V1`として事前登録済みで、2025未開封の3 finalistがcommit `a61cd763a2b5e7a2f3875c74cc57f8774b0fa505`に固定されています。次のactionはこの3件だけを2025 holdoutへ一度通し、その後にlabel不要Cloud feature builderとappend-only forward ledgerへ進むこと。2026を見てrule、threshold、feature、gate、candidate familyを選び直してはいけません。
 

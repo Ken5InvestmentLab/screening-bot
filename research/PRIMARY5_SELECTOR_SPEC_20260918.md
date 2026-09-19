@@ -6,6 +6,20 @@ Authoritative context: STATE v133 and `DETERMINISTIC_2022_FALLBACK_MANIFEST_2026
 
 Feature source is validation commit `d9792122a541847c3e4ed82604bffa220dab4a33`, path `tvfree_screener/run.py`; V7/V9 source blobs are respectively `f7f49ab2e09496494adfb365c94e969973c4070c` and `45a1272fe49c526bbf69956419e34e96d696f7d6`. Input is artifact `10264205130`, `tse_daily.csv`, content SHA256 `6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0`.
 
+## User-facing display names — PINNED
+
+The research/internal selector identities remain unchanged for reproducibility. User-facing labels are pinned as follows:
+
+| User-facing name | Internal selector identity |
+|---|---|
+| **Shadow** | `mean-rank(volr20, body_pct)` |
+| **Dive** | `body_pct LOW` |
+| **Silence** | `volr20 LOW` |
+| **Fusion** | `DUAL_TOP1_AGREEMENT` |
+| **Balance** | `DUAL_TOP1_AGREEMENT + G3 NO_ACUTE_SELLOFF` |
+
+These are display aliases only. Do not alter selector expressions, ranking, tie-breaks, candidate identity fields, or historical hashes solely to apply these names.
+
 ## Shared deterministic ordering
 All ranks are cross-sectional within one `signal_date`, ascending for LOW. To make exact reconstruction independent of input row order, equal metric values are resolved by lexical ascending `symbol`. This is a deterministic identity tie-break only; it is not selected from returns or the old 2022 summary. Missing required selector values fail closed for that candidate/date.
 

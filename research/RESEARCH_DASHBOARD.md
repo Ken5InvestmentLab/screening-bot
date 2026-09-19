@@ -48,7 +48,7 @@
 - <=-10% 22.2%
 - Top5-ex +4.03%
 
-**状態:** `EXACT_ROWS_AND_FINAL_SELECTOR_RECOVERED / FULL_PIPELINE_REPRO_BLOCKED`。63 row identityと最終selectorはexact。未回収は`cloud4h_frame_dedup_sep.pkl`のbuilder、上流universe構築、next-open canonical bridge。headlineへ合わせるretuneは行っていない。
+**状態:** `EXACT_REPRODUCED_FROM_RAW`。artifact `10266329903` → base 4H frame → MTF → JPX +5-session relabel → final selectorを原文ソースで再実行し、63 row identity / close / ret5が最大差0.0で一致。未完は別契約のnext-open canonical bridgeのみ。headlineへ合わせるretuneは行っていない。
 
 ## weak+early
 
@@ -83,7 +83,7 @@ V16 alternate historical completeや既存primary exact成果は保持し、捨�
 
 ## 最大blocker
 
-**Cloud Monsterのbase 4H feature-frame builderと上流universe constructionが未特定。** 63 rows、final selector、daily/MTF augmentation source、JPX relabel sourceは回収済み。週間枠98%到達のため新規重探索は停止し、handoffを優先。
+Cloud Monster legacy exactはrawから再現完了。次はlegacy headlineと混ぜず、同じ63 signal identitiesへnext-open→fifth-close canonical endpointを付与する。
 
 ## GO / NO-GO
 

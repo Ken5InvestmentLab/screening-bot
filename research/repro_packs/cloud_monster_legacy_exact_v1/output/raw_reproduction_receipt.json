@@ -1,0 +1,80 @@
+{
+  "identity": "CLOUD_MONSTER_LEGACY_EXACT_V1",
+  "status": "EXACT_REPRODUCED",
+  "input_artifact_id": "10266329903",
+  "inputs": {
+    "teacher_ohlcv_4h_raw.csv": {
+      "sha256": "f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2",
+      "bytes": 25666329
+    },
+    "teacher_bottom_confirmed.csv": {
+      "sha256": "8b4b8ca25fa5c083bfe3b315387745e6b349bee99a733bc0c5b9b088105522b3",
+      "bytes": 2687949
+    },
+    "teacher_stable6_confirmed.csv": {
+      "sha256": "5ae5ac50fe3acd6ac3f0d4a37b1be7a68570d39ab0586fb131a8d3872b9adfa3",
+      "bytes": 37348
+    }
+  },
+  "runtime": {
+    "python": "3.12.13 (main, Aug  5 2026, 17:14:30) [MSC v.1944 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "pandas": "2.3.3",
+    "numpy": "2.5.3",
+    "scikit_learn": "1.9.1",
+    "exchange_calendars": "4.13.2"
+  },
+  "stages": [
+    {
+      "source": "source\\build_cloud4h_dedup_sep.py",
+      "source_sha256": "c3fcd4b4bb24a4fd15f1a893795b318a248ca00abe6e0fc02018cec17422536e",
+      "log": "build_cloud4h_dedup_sep.log",
+      "returncode": 0
+    },
+    {
+      "source": "source\\build_mtf_fast.py",
+      "source_sha256": "71c4db4e5bce908efbd0d16ae6f51a20c91acc750f096e83a215bf5578468c8e",
+      "log": "build_mtf_fast.log",
+      "returncode": 0
+    },
+    {
+      "source": "source\\relabel_jpx_5bd.py",
+      "source_sha256": "6a9150ec1b0259bf8afed796c200801f0e19606f369a4618d1648062db4dac7b",
+      "log": "relabel_jpx_5bd.log",
+      "returncode": 0
+    },
+    {
+      "source": "recovered_selector.py",
+      "source_sha256": "73f21e05fa43e74edd95d6fb91a7d2eb9c39161b0fc48fa4d227c6bd48b8526b",
+      "log": "recovered_selector.log",
+      "returncode": 0
+    }
+  ],
+  "comparison": {
+    "expected_n": 63,
+    "actual_n": 63,
+    "identity_columns_equal": true,
+    "close_bitwise_equal": true,
+    "ret5_max_abs_diff": 0.0,
+    "exact_rows_reproduced": true,
+    "metrics": {
+      "n": 63,
+      "mean": 0.09856926744273573,
+      "median": 0.0333333333333334,
+      "win": 0.5714285714285714,
+      "plus10": 0.38095238095238093,
+      "plus20": 0.30158730158730157,
+      "plus30": 0.19047619047619047,
+      "minus10": 0.2222222222222222,
+      "minus20": 0.07936507936507936,
+      "max_up": 1.236024844720497,
+      "max_down": -0.4316546762589928,
+      "top3_excluded_mean": 0.05793776036699126,
+      "top5_excluded_mean": 0.040268601424974564
+    }
+  },
+  "reproduced_rows": {
+    "path": "cloud_monster_legacy_reproduced.csv",
+    "sha256": "7677ac3a5b83d55b5ad9a30f9edf8243be014d9e01b065c22cab99581c826dfc"
+  }
+}

@@ -216,3 +216,18 @@ H. 10-20 line handoff linking A-G
 - Canonical bridge warning: recovered legacy endpoint is signal snapshot close→fifth XTKS close. The requested next-open→fifth-close bridge must be emitted separately after entry/exit prices are joined; never replace the legacy headline.
 - Do not repeat: ChatGPT Library download of the two CSVs, message-38 final generator extraction, or signature verification. Resume only at earlier tool logs that built `cloud4h_frame_dedup_sep.pkl`.
 - Usage stop: Codex weekly usage showed 98% used. New heavy exploration stopped; commit/push and handoff took priority.
+
+## 2026-09-19 full raw reproduction
+
+- Recovered the earlier original source `/mnt/data/v3r/build_cloud4h_dedup_sep.py` plus complete `build_mtf_fast.py`, `relabel_jpx_5bd.py`, and `revalidate_lanes_jpx.py` from conversation `6aa38426-70f4-83ee-a623-29577859a638`.
+- Preserved all four under `research/repro_packs/cloud_monster_legacy_exact_v1/source/`; no production file or workflow was changed.
+- Exact input: Actions artifact `10266329903`; raw OHLCV SHA-256 `f28bcb4546a4806c67feae4b45f346d08a881dc530f95da870ee50a6be9b7ce2`.
+- Exact command is pinned in the pack README and uses Python 3.12, numpy 2.5.3, pandas 2.3.3, scikit-learn 1.9.1, and exchange-calendars 4.13.2.
+- Base builder independently reproduced 245,334 rows, 74 columns, zero duplicate symbol/timestamps; MTF added 27 columns for the same 245,334 rows and 1,314 symbols with zero missing `d_rsi`.
+- JPX official-session relabel completed, then the recovered fixed Watch/model/walk-forward/final-fit selector ran unchanged.
+- Result: expected 63 / actual 63; symbol+timestamp+date identities equal; close bitwise equal; maximum absolute `ret5` difference `0.0`.
+- Exact legacy headline reproduced: mean 9.8569267443%, median 3.3333333333%, win 57.1428571429%, +20 30.1587301587%, +30 19.0476190476%, -10 22.2222222222%, Top5-ex 4.0268601425%.
+- Machine receipt: `research/repro_packs/cloud_monster_legacy_exact_v1/output/raw_reproduction_receipt.json`.
+- Classification upgraded to `CLOUD_MONSTER_LEGACY_EXACT_V1 / EXACT_REPRODUCED_FROM_RAW`.
+- No parameter search, threshold fitting to n=63, or 2026-based rule choice was performed.
+- Do not repeat: base-builder/source search, raw-to-63 reproduction, or legacy signature verification. Remaining work is only the separately named next-open canonical endpoint bridge and final handoff refresh.

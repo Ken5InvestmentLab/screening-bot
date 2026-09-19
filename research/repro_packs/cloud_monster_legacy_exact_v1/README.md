@@ -31,6 +31,14 @@ The historical 63 Monster rows, their legacy returns, the 19-row saved-score com
 - The runner substitutes only the original hard-coded `/mnt/data/v3r` work directory in memory. It fails on input-SHA drift, stage failure, row identity drift, close drift, or any `ret5` difference above `1e-15`.
 - `output/raw_reproduction_receipt.json` records the exact successful runtime and zero-difference comparison.
 
+### Outcome-blind forward scorer
+
+- `freeze_shadow_model.py` serializes the exact fitted sklearn pipeline plus a readable JSON parameter artifact; no coefficient, imputer statistic, scaler value, or threshold is retuned.
+- `select_cloud_shadow_candidates.py` reads only signal-time fields and the 52 frozen features. It does not reference a return, target, entry, exit, or realized-outcome column.
+- Frozen JSON SHA: `0e46ab60683b20c2ab3a3eeaf79380f0cf39be38903b5686954f0dc69f2bcb26`; pipeline SHA: `f8f1e9402a755bbd4a142adfe06d04f83178474b459f795965c92f5e81057716`.
+- Historical outcome-blind assertion emits 64 candidates. All 63 legacy evaluated identities are an exact subset; the one additional candidate is `6217|2026-04-13 13:00:00`, which the legacy evaluator excluded only because `ret5.notna()` was false. A future selector cannot use endpoint availability, so the 64-row ledger is the correct causal shadow identity and is kept separate from the 63-row legacy evaluation.
+- Receipt: `output/cloud_shadow_model_receipt.json`.
+
 ## E-F. Rows and evaluation
 
 - `artifacts/cloud_two_lane_union_jpx.csv`: 210 union rows, including the exact 63 Monster rows; repository content SHA-256 `91f1f956a48a308e21e49aa2a80c7075677ac5aa6d5dfae5d26c1b1ad7db4a62`.

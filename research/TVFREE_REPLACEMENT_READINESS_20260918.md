@@ -1,8 +1,8 @@
 # TV-Free replacement readiness — 2026-09-18
 
-Status: **FORWARD_SHADOW_READY / PRODUCTION NO-GO / WEAK+EARLY 2026 REPORTING OPEN / META 2026 SEALED**
+Status: **RECOVERY COMPLETE / FORWARD_SHADOW READY / PRODUCTION NO-GO / FIXED-CANDIDATE 2026 REPORTING OPEN / META 2026 SEALED**
 
-Update: explicit user authorization subsequently opened 2026 for the already-frozen five Weak+Early candidates on a reporting-only basis. Meta and unrelated 2026 lanes remain sealed. Exact 2023-2026 descriptive ranking is mean-rank, DUAL+G3, body_pct LOW, DUAL, volr20 LOW; see `research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`.
+Update: explicit user authorization subsequently opened 2026 for the already-frozen five Weak+Early candidates and the exact-recovered Cloud Monster on a reporting-only basis. Meta and unrelated 2026 lanes remain sealed. Exact Weak+Early 2023-2026 descriptive ranking is mean-rank, DUAL+G3, body_pct LOW, DUAL, volr20 LOW. The 2026-year descriptive six-candidate ranking is mean-rank, body_pct LOW, Cloud Monster canonical, DUAL+G3, DUAL, volr20 LOW; Cloud and Weak+Early observation months differ, so this is not a promotion verdict.
 
 ## Objective
 
@@ -17,6 +17,9 @@ TradingView signal dependencyを外し、現行production scoringと同一のcan
 - Historical endpoint: signal T -> next official XTKS open -> fifth official XTKS close, cost 0%, win = gross > 0。
 - Candidate-only entrypoint: `research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py`。
 - The entrypoint reads signal-time fields only and reproduces all five historical candidate identities exactly; no target, entry, exit, or realized-return column is read.
+- `CLOUD_MONSTER_LEGACY_EXACT_V1` is now reproduced from Actions artifact `10266329903` through all four recovered source stages with 63/63 identities and zero close/return drift.
+- `CLOUD_MONSTER_CANONICAL_NEXT_OPEN_FIFTH_CLOSE_V1` fixes those same 63 signals to the common next-open→fifth-close endpoint; canonical rows and metrics are hash-pinned under `research/repro_packs/cloud_monster_legacy_exact_v1/output/canonical_next_open_fifth_close/`.
+- `CLOUD_MONSTER_FROZEN_SHADOW_MODEL_V1` freezes the exact imputer/scaler/logit/threshold and exposes an outcome-blind scorer. Historical causal candidate identity is 64 rows: all 63 evaluated legacy rows plus one row previously removed only by endpoint-availability (`ret5.notna`).
 
 ## Frozen historical position
 
@@ -43,7 +46,7 @@ These values are exact for the preserved 2023-2025 artifact. They are **not yet 
 
 - 2022 historical 89/29/23 identity is not exact-recovered; unchanged generator executions are runtime-sensitive and the frozen 2022 DUAL+G3 summary was weak.
 - The monthly V7 model artifact/runtime for future generation must be container- or lockfile-pinned before forward candidate identity can be called deterministic across hosts.
-- Cloud Monster legacy remains `EXACT_NOT_YET_RECOVERED`; it is not an implementable alternative today.
+- Cloud Monster legacy is exact-recovered, but its historical model was developed on 2026 outcomes. It is valid forensic/reference evidence and may be frozen for strictly prospective shadowing; its 2026 in-sample/development performance cannot be used as promotion evidence.
 - DUAL+G3 is the strongest preserved 2023-2025 selector, but it is a shadow challenger, not a production promotion.
 
 ## Production boundary

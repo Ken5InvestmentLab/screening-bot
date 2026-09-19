@@ -37,6 +37,16 @@
     "metrics": "output/canonical_next_open_fifth_close/canonical_metrics_by_year_and_total.csv",
     "metrics_sha256": "8df1b9481eca98494b9ebb06b30c70faa469c95a760aadd1c2a88dd91c27923f"
   },
+  "outcome_blind_shadow": {
+    "identity": "CLOUD_MONSTER_FROZEN_SHADOW_MODEL_V1",
+    "model_json_sha256": "0e46ab60683b20c2ab3a3eeaf79380f0cf39be38903b5686954f0dc69f2bcb26",
+    "pipeline_joblib_sha256": "f8f1e9402a755bbd4a142adfe06d04f83178474b459f795965c92f5e81057716",
+    "legacy_evaluated_identity_subset_exact": true,
+    "legacy_evaluated_rows": 63,
+    "outcome_blind_rows": 64,
+    "additional_identity": "6217|2026-04-13 13:00:00",
+    "difference_reason": "legacy ret5.notna outcome-availability gate"
+  },
   "missing_identity_artifacts": [],
   "legacy_metrics": "output/legacy_metrics.json"
 }

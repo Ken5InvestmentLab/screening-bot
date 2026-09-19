@@ -1,0 +1,30 @@
+{
+  "identity": "CLOUD_MONSTER_FROZEN_SHADOW_MODEL_V1",
+  "status": "OUTCOME_BLIND_SCORER_MATCHES_63_EVALUATED_PLUS_1_UNEVALUATED",
+  "model_artifact": {
+    "path": "cloud_monster_frozen_shadow_model_v1.json",
+    "sha256": "0e46ab60683b20c2ab3a3eeaf79380f0cf39be38903b5686954f0dc69f2bcb26"
+  },
+  "pipeline_joblib": {
+    "path": "cloud_monster_frozen_pipeline_v1.joblib",
+    "sha256": "f8f1e9402a755bbd4a142adfe06d04f83178474b459f795965c92f5e81057716"
+  },
+  "historical_assertion": {
+    "rows": 64,
+    "legacy_evaluated_rows": 63,
+    "legacy_evaluated_identity_subset_exact": true,
+    "missing_legacy_evaluated_rows": 0,
+    "additional_outcome_blind_rows": [
+      {
+        "date": "2026-04-13",
+        "timestamp": "2026-04-13 13:00:00",
+        "symbol": "6217"
+      }
+    ],
+    "difference_reason": "legacy selector required ret5.notna; forward selection cannot use endpoint availability",
+    "max_score_abs_diff_vs_sklearn": 0.0,
+    "path": "cloud_shadow_historical_assertion.csv",
+    "sha256": "29b28fc3df39169346851ebec32f7da8b5b1a3b44eb9284bf22f1763affff802"
+  },
+  "expected_union_sha256": "91f1f956a48a308e21e49aa2a80c7075677ac5aa6d5dfae5d26c1b1ad7db4a62"
+}

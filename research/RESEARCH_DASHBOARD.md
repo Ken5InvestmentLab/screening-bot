@@ -1,18 +1,20 @@
 # TV-Free スコアリングBot研究ダッシュボード
 
 > **最終更新:** 2026-09-19 JST
-> **最優先:** Cloud Monster legacy exact復元 + weak+early exact復元  
+> **最優先:** 復元完了。次は固定候補のprospective forward shadow
 > **比較契約:** cost 0%、win = gross return > 0、signal T → next XTKS open → fifth XTKS close。  
-> **重要:** 2026はMeta mapping SHA freeze + STATE明示許可までSEALED。production/mainは変更禁止。
+> **重要:** 固定Weak 5候補と復元Cloudだけ2026 reporting open。Meta/他lane 2026はSEALED。production/mainは変更禁止。
 
 ## 現在地
 
-**通常研究全体: 約90%** / **historical比較: 80%** / **Meta: 12%**。  
-ただしユーザー指示により、通常P0を一時的に二次優先へ下げ、**Cloud Monster / weak+early exact復元を絶対最優先**へ切替。
+**Cloud/Weak exact recovery: 100%** / **forward apples-to-apples comparison: 未成熟** / **Meta: SEALED**。
+復元探索は終了し、次工程はendpoint未成熟時点で候補identityを固定するprospective shadow。
 
 ## 今回の実成果
 
 - Cloud Monsterの歴史的63行CSV、19行saved-score比較、最終Watch/ranker sourceを旧ChatGPT会話から回収し、commit `bb597947`でhash固定。
+- 原base/MTF/JPX relabel/final selectorの4 sourceを回収し、artifact `10266329903`から63件をidentity/close/ret5最大差0.0で再現。commit `ed871081`。
+- 固定63件へcanonical next-open→fifth-close endpointを付与。6候補2026記述順位はmean-rank、body、Cloud、DUAL+G3、DUAL、volr20。commit `7b57dc84`。
 - `verify_recovered_rows.py`が n=63 / mean +9.8569% / median +3.3333% / win 57.1429% / +20 30.1587% / +30 19.0476% / -10 22.2222% / Top5-ex +4.0269%を独立再計算して全一致。
 - 固定5候補を2026 reporting-onlyへ無調整延長。daily cutoff 2026-09-11、成熟済みsignal cutoff 2026-09-03。
 - 2026単年はmean-rankがn=42 / mean +5.08% / median +1.38% / win 50.00% / Top3-ex +1.99%で最も均衡。
@@ -78,8 +80,7 @@
 
 ## 通常P0の扱い
 
-primary historical / Meta freezeは**復元完了まで一時二次優先**。  
-V16 alternate historical completeや既存primary exact成果は保持し、捨てない。復元完了後にそこから再開する。
+復元は完了。primary historical / Metaの既存成果は保持し、Meta/他lane 2026を開けずにforward shadow準備へ進む。
 
 ## 最大blocker
 

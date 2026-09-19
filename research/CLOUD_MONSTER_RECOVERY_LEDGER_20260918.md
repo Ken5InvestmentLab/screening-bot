@@ -244,3 +244,12 @@ H. 10-20 line handoff linking A-G
 - Descriptive 2026 ranking across six fixed candidates: 1 mean-rank, 2 body_pct LOW, 3 Cloud Monster canonical, 4 DUAL+G3, 5 DUAL, 6 volr20 LOW.
 - Cloud covers only 2026-03-01 through 2026-08-31, whereas Weak+Early 2026 begins in January; this is descriptive reporting, not a retune or an apples-to-apples production adoption claim.
 - Weak+Early 2023-2026 total ranking remains 1 mean-rank, 2 DUAL+G3, 3 body_pct LOW, 4 DUAL, 5 volr20 LOW. Cloud is not mixed into this four-year rank.
+
+## 2026-09-19 outcome-blind Cloud model freeze
+
+- Frozen the exact fitted imputer, scaler, LogisticRegression, feature order, and threshold as `CLOUD_MONSTER_FROZEN_SHADOW_MODEL_V1`; no refit choice or threshold change was introduced.
+- JSON artifact SHA `0e46ab60683b20c2ab3a3eeaf79380f0cf39be38903b5686954f0dc69f2bcb26`; sklearn pipeline SHA `f8f1e9402a755bbd4a142adfe06d04f83178474b459f795965c92f5e81057716`.
+- `select_cloud_shadow_candidates.py` references only signal-time fields and the 52 frozen features, then applies the frozen sklearn pipeline and threshold.
+- Historical causal selection is 64 rows. The 63 legacy evaluated rows are an exact subset with zero missing identities and zero score drift.
+- Additional causal identity: `6217|2026-04-13 13:00:00`. Legacy evaluation omitted it solely because `ret5.notna()` was false; endpoint availability is non-causal and is intentionally absent from the forward scorer.
+- This 64-vs-63 distinction is not a mismatch and must not be hidden: 64 is candidate selection, 63 is the evaluable legacy performance set.

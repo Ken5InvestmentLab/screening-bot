@@ -275,4 +275,5 @@ H. 10-20 line handoff linking A-G
 - Cloud canonical is 2026-only: ¥153,500 profit on ¥473,900 minimum starting cash (+32.39%). It is shown as a reference and excluded from the comparable four-year winner claim.
 - Annual cash-profit winner: 2023 body; 2024 mean-rank; 2025 volr20; 2026 Cloud reference (among Weak candidates, body).
 - Report/reproducer: `research/comparisons/cash_profit_ranking_2023_2026/` and `research/build_cash_profit_ranking_2023_2026.py`; result commit `10335fc28078505ba5698209d76efe89763cf969`.
+- Japanese workbook: `research/comparisons/cash_profit_ranking_2023_2026/キャッシュ利益ランキング_2023-2026.xlsx`, SHA `37a220f7d86ff4fb828d04c6c1c20c92afc4ce175ae9461bd9e6d3eecbac7dc7`; saved-XLSX inspection found zero formula errors and all six annual-to-total reconciliations matched.
 - 2022 remains excluded because exact historical trade rows and entry prices are unavailable; no value was imputed.

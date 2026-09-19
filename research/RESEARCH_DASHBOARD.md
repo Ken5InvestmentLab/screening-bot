@@ -20,6 +20,7 @@
 - 2026単年はmean-rankがn=42 / mean +5.08% / median +1.38% / win 50.00% / Top3-ex +1.99%で最も均衡。
 - Exact 2023-2026の7指標equal-weight ordinal順位: 1 mean-rank、2 DUAL+G3、3 body_pct LOW、4 DUAL、5 volr20 LOW。
 - Exact canonical rowsを100株固定・cost 0%で金額集計。2023-2026キャッシュ利益順位は1 mean-rank ¥425,423、2 body ¥410,185、3 volr20 ¥363,393、4 DUAL ¥339,017、5 DUAL+G3 ¥290,317。必要元資金と年別順位を`research/comparisons/cash_profit_ranking_2023_2026/`へSHA付きで固定（commit `10335fc2`）。
+- 同結果を日本語Excel `キャッシュ利益ランキング_2023-2026.xlsx` に固定。総合順位、年別順位、年別合計検算、計算条件の4シートで、全候補の検算は一致。
 - 完全表: `research/repro_packs/weak_early_exact_v1/output/full_period_2026/FULL_PERIOD_COMPARISON_20260918.md`。
 - `WEAK_EARLY_EXACT_V1`をPhase-2の5 selectorまで拡張し、DUAL n=140とDUAL+G3 n=117のcanonical rowsをexact固定。
 - DUAL+G3は2023-2025でmean +7.98%、median +1.74%、win 53.85%、Top3-ex +5.14%を再現。

@@ -48,6 +48,7 @@ Legacy endpointはsignal snapshot close→fifth official XTKS close。n=63、mea
 - Weak 2026 rows/metrics: `research/repro_packs/weak_early_exact_v1/output/full_period_2026/`。
 - Cross-system year/rank/total: `research/comparisons/cloud_weak_early_20260919/`。
 - 100株・実価格の年別/total金額順位: `research/comparisons/cash_profit_ranking_2023_2026/`。machine receiptに11 input SHAと評価契約を固定。
+- 日本語Excel: `research/comparisons/cash_profit_ranking_2023_2026/キャッシュ利益ランキング_2023-2026.xlsx`。総合順位、年別順位、検算、計算条件の4シート。SHA `37a220f7d86ff4fb828d04c6c1c20c92afc4ce175ae9461bd9e6d3eecbac7dc7`。
 - 比較可能な2023-2026キャッシュ利益順位: 1 mean-rank ¥425,423、2 body ¥410,185、3 volr20 ¥363,393、4 DUAL ¥339,017、5 DUAL+G3 ¥290,317。Cloud ¥153,500は2026-only参考で、4年順位から除外。
 
 ## 8. REPRO_PACK完成度

@@ -75,4 +75,5 @@ Cloud Monsterは2026-03〜08だけなので、金額順位には表示するが2
 - Comparable total CSV SHA-256: `61adaf781110340ed9161bfa847304c0fd3ea0ba74bfe9bd679be8bc6e8d9b70`
 - All available total CSV SHA-256: `2b481fdf46d01da2b3f33c1ba4ff67e8049d782622f5345dc21f66ca6752c96a`
 - Yearly CSV SHA-256: `30cfc15868701c996cdb5bad31ce645f007e05bbd05b992dd0f114ee05046f51`
-- Machine receipt SHA-256: `7dc6fcb7f8e75e56cf6ab554786663c0c27f5a7ca867fa79cfd528190ab64201`
+- Japanese workbook SHA-256: `37a220f7d86ff4fb828d04c6c1c20c92afc4ce175ae9461bd9e6d3eecbac7dc7`
+- Machine receipt SHA-256: `082ff069f2b35d595b35a57d7a3dd1a5ae59916d957ee01cb83426967b2c49e3`

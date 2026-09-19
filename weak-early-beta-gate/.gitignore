@@ -1,0 +1,6 @@
+node_modules/
+public/
+worker-configuration.d.ts
+src/shared-report-gate.ts
+src/shared-report-gate.sha256
+.wrangler/

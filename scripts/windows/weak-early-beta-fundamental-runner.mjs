@@ -1,0 +1,211 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+const SIGNAL_CHANNEL_ID = '1550876104917520505';
+const FUNDAMENTAL_CHANNEL_ID = '1550876675884060702';
+
+function readJson(file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
+}
+
+function writeJson(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const temporary = `${file}.tmp`;
+  fs.writeFileSync(temporary, `${JSON.stringify(value, null, 2)}\n`);
+  fs.renameSync(temporary, file);
+}
+
+function cleanEnvironment(source) {
+  const result = { ...source };
+  for (const key of Object.keys(result)) {
+    if (/^(OPENAI_API_KEY|CODEX_API_KEY)$/i.test(key)) delete result[key];
+  }
+  return result;
+}
+
+function loadDotEnv(target, file) {
+  if (!fs.existsSync(file)) return;
+  for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const match = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (!match || target[match[1]] !== undefined) continue;
+    let value = match[2];
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    target[match[1]] = value;
+  }
+}
+
+async function command(exe, args, { cwd, env, log, input = '', timeoutMs = 12_000_000 }) {
+  fs.mkdirSync(path.dirname(log), { recursive: true });
+  const stdout = fs.openSync(`${log}.stdout`, 'w');
+  const stderr = fs.openSync(`${log}.stderr`, 'w');
+  try {
+    return await new Promise((resolve, reject) => {
+      const child = spawn(exe, args, {
+        cwd, env, windowsHide: true, stdio: ['pipe', stdout, stderr],
+      });
+      const timer = setTimeout(() => {
+        if (process.platform === 'win32') {
+          spawn('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], {
+            windowsHide: true, stdio: 'ignore',
+          });
+        } else child.kill('SIGTERM');
+        reject(new Error('execution timeout; inspect the beta claim and Discord before retrying'));
+      }, timeoutMs);
+      child.on('error', error => { clearTimeout(timer); reject(error); });
+      child.on('exit', code => { clearTimeout(timer); resolve(code); });
+      child.stdin.on('error', () => {});
+      child.stdin.end(input);
+    });
+  } finally {
+    fs.closeSync(stdout);
+    fs.closeSync(stderr);
+  }
+}
+
+function assertIsolated(config) {
+  const beta = path.resolve(config.repoPath, 'weak_early_beta', 'fundamental_worker');
+  const production = path.resolve(config.premiumWorkerRepoPath, 'premium_worker');
+  if (beta === production || beta.startsWith(`${production}${path.sep}`)) {
+    throw new Error('beta worker state must not be inside the production Premium Worker directory');
+  }
+  if (SIGNAL_CHANNEL_ID === FUNDAMENTAL_CHANNEL_ID) {
+    throw new Error('signal and fundamental Discord channels must remain separate');
+  }
+}
+
+async function main(configFile) {
+  const config = readJson(path.resolve(configFile));
+  assertIsolated(config);
+  const now = new Date().toISOString();
+  const runtimeDir = path.resolve(config.runtimeDir);
+  const runDir = path.join(runtimeDir, `run-${now.replace(/[:.]/g, '-')}`);
+  fs.mkdirSync(runDir, { recursive: true });
+  const resultPath = path.join(runtimeDir, 'latest.json');
+  const result = {
+    identity: 'WEAK_EARLY_FUNDAMENTAL_LUNA_XHIGH_V1',
+    startedAt: now,
+    ok: false,
+    model: 'gpt-5.6-luna',
+    reasoningEffort: 'xhigh',
+    channelId: FUNDAMENTAL_CHANNEL_ID,
+    runDir,
+  };
+
+  const env = cleanEnvironment(process.env);
+  loadDotEnv(env, path.join(config.repoPath, '.env'));
+  loadDotEnv(env, path.join(config.premiumWorkerRepoPath, '.env'));
+  loadDotEnv(env, path.join(config.premiumWorkerRepoPath, 'premium_worker', '.env'));
+  env.CODEX_HOME = config.codexHome;
+  const pathKey = Object.keys(env).find(key => /^path$/i.test(key));
+  const inheritedPath = pathKey ? env[pathKey] : '';
+  for (const key of Object.keys(env)) if (/^path$/i.test(key)) delete env[key];
+  env.PATH = `${path.dirname(config.nodePath)}${path.delimiter}${inheritedPath}`;
+
+  const betaRoot = path.join(config.repoPath, 'weak_early_beta', 'fundamental_worker');
+  const statePath = path.join(betaRoot, 'state', 'premium_alert_state.json');
+  const outDir = path.join(betaRoot, 'out');
+  const claimPath = path.join(outDir, 'latest_claim.json');
+  const reportsPath = path.join(outDir, 'premium_reports.json');
+  const receiptsPath = path.join(outDir, 'fundamental_receipts.json');
+  const workerPath = path.join(config.premiumWorkerRepoPath, 'premium_worker', 'worker.mjs');
+
+  const run = async (exe, args, name, options = {}) => {
+    const exit = await command(exe, args, {
+      cwd: options.cwd || config.repoPath,
+      env: options.env || env,
+      log: path.join(runDir, name),
+      input: options.input || '',
+      timeoutMs: options.timeoutMs,
+    });
+    if (exit !== 0) throw new Error(`${name} failed; inspect bounded local logs`);
+  };
+
+  try {
+    await run(config.pythonPath || 'py', [
+      '-m', 'weak_early_beta.cli', 'prepare-fundamentals',
+      '--worker-state', statePath, '--claim', claimPath,
+      '--max-alerts', String(config.maxAlertsPerRun || 0),
+    ], 'prepare-claim');
+    const claim = readJson(claimPath);
+    writeJson(path.join(runDir, 'claim.json'), claim);
+    result.claimed = claim.claimedCount;
+    if (!claim.claimedCount) {
+      result.ok = true;
+      result.posted = 0;
+      return;
+    }
+
+    const prompt = [
+      'Weak+Early betaの未来検出だけを、現行Premium Workerと同じ会社固有の品質でファンダ分析してください。$premium-fundamental-snapshot を使います。',
+      `不変claimは ${path.join(runDir, 'claim.json')} です。ここにあるalertIdだけを対象にしてください。`,
+      `必ず ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'AUTOMATION_PROMPT.md')} と ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'FUNDAMENTAL_EXAMPLES.md')} を全文読み、skillのreferences/report_quality.mdも読んでください。`,
+      '各社の公式IR、IRBANKまたはTDnet相当の開示一覧を45日以上確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
+      '売買推奨、目標株価、追加スコアは禁止。現行契約の全7フィールドとSourcesを満たしてください。',
+      `最終JSONは ${reportsPath} だけに書き込んでください。Discord投稿、worker state、Sheets、Git、workflow、ソースコードは変更しないでください。`,
+      '報告は有界に保ち、出力JSON作成後は日本語で簡潔に完了を報告してください。',
+    ].join('\n\n');
+    fs.writeFileSync(path.join(runDir, 'prompt.txt'), prompt);
+    await run(config.nodePath, [
+      config.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
+      '--cd', config.premiumWorkerRepoPath, '--skip-git-repo-check',
+      '--sandbox', 'danger-full-access', '-m', 'gpt-5.6-luna',
+      '-c', 'model_reasoning_effort="xhigh"',
+      '-c', 'forced_login_method="chatgpt"', '--json',
+      '-o', path.join(runDir, 'codex.final.txt'), '-',
+    ], 'codex', { cwd: config.premiumWorkerRepoPath, input: prompt });
+    if (!fs.existsSync(reportsPath)) throw new Error('Codex completed without premium_reports.json');
+
+    const postEnv = { ...env };
+    postEnv.PREMIUM_STATE_PATH = statePath;
+    postEnv.PREMIUM_OUT_DIR = outDir;
+    postEnv.DISCORD_PREMIUM_WEBHOOK_URL = env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '';
+    postEnv.DISCORD_PREMIUM_USERNAME = 'Weak+Early Beta | ファンダ分析';
+    postEnv.DISCORD_PREMIUM_CHANNEL_ID = FUNDAMENTAL_CHANNEL_ID;
+    postEnv.PREMIUM_LOG_SPREADSHEET_ID = '';
+    // Webhook-only keeps the beta post independent from the production bot and /scan button.
+    delete postEnv.DISCORD_PREMIUM_BOT_TOKEN;
+    delete postEnv.DISCORD_BOT_TOKEN;
+    delete postEnv.DISCORD_TOKEN;
+    await run(config.nodePath, [workerPath, 'post', '--input', reportsPath, '--dry-run'], 'validate', {
+      cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 180_000,
+    });
+    if (!postEnv.DISCORD_PREMIUM_WEBHOOK_URL) {
+      throw new Error('WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL is missing; validation passed but nothing was posted');
+    }
+    await run(config.nodePath, [workerPath, 'post', '--input', reportsPath], 'post', {
+      cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 300_000,
+    });
+
+    await run(config.pythonPath || 'py', [
+      '-m', 'weak_early_beta.cli', 'export-fundamentals',
+      '--worker-state', statePath, '--receipts', receiptsPath,
+    ], 'export-receipts');
+    await run(config.pythonPath || 'py', [
+      '-m', 'weak_early_beta.cli', 'import-fundamentals', '--receipts', receiptsPath,
+    ], 'import-receipts');
+    const state = readJson(statePath);
+    if (Object.keys(state.claims || {}).length || Object.keys(state.failed || {}).length || (state.pendingLogEvents || []).length) {
+      throw new Error('beta worker state remains incomplete; do not retry blindly');
+    }
+    result.posted = claim.claimedCount;
+    result.ok = true;
+  } catch (error) {
+    result.error = error.message;
+    process.exitCode = 1;
+  } finally {
+    result.completedAt = new Date().toISOString();
+    writeJson(resultPath, result);
+    console.log(JSON.stringify(result));
+  }
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  if (!process.argv[2]) throw new Error('usage: node weak-early-beta-fundamental-runner.mjs <config.json>');
+  await main(process.argv[2]);
+}
+
+export { assertIsolated, cleanEnvironment };

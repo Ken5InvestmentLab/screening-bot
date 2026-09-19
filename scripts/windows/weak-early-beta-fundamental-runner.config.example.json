@@ -1,0 +1,10 @@
+{
+  "repoPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot",
+  "premiumWorkerRepoPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\weekly_report_gas",
+  "runtimeDir": "C:\\Users\\ken5\\AppData\\Local\\WeakEarlyBetaFundamental",
+  "nodePath": "C:\\Program Files\\nodejs\\node.exe",
+  "pythonPath": "py",
+  "cliJs": "C:\\path\\to\\codex\\bin\\codex.js",
+  "codexHome": "C:\\Users\\ken5\\.codex",
+  "maxAlertsPerRun": 0
+}

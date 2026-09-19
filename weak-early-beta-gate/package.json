@@ -1,0 +1,19 @@
+{
+  "name": "screening-bot-weak-early-beta-gate",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npm run types && npm run typecheck && npm run deploy:dry-run",
+    "deploy": "npm run sync-shared && npm run sync-report && wrangler deploy --minify",
+    "deploy:dry-run": "npm run sync-shared && npm run sync-report && wrangler deploy --dry-run",
+    "sync-report": "node scripts/sync-report.mjs",
+    "sync-shared": "node scripts/sync-shared-gate.mjs",
+    "typecheck": "tsc --noEmit",
+    "types": "npm run sync-shared && wrangler types"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "wrangler": "4.135.0"
+  }
+}

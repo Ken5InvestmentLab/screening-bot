@@ -1,7 +1,9 @@
 # Weak+Early Beta Guidance
 
 - Keep this beta isolated from `screener.js`, `index.js`, `current_logic*.json`, the existing Mega report/gate, production Discord channels, and Google Sheets.
-- Preserve the five frozen selector IDs, fixed gates, causal monthly timing, Tail threshold, rank direction, tie-break, and no-cooldown contract. Japanese display names may change without changing internal identities.
+- Preserve the five frozen selector IDs, fixed gates, causal monthly timing, Tail threshold, rank direction, tie-break, and no-cooldown contract. Public names are `Silence`, `Dive`, `Shadow`, `Fusion`, and `Balance`; changing a display name must not change its internal identity.
 - Combined results must show both allocations: 100 shares per matched condition (`all_conditions_stacked`) and 100 shares per signal-date/symbol (`all_conditions_unique`). Do not describe overlapping selectors as independent evidence.
+- Brand the standalone report as `天底極致 -Cloud-`. Use `確定取引数` / `未確定取引数` instead of internal labels such as `n` or `unit`, keep current-system comparisons out of public HTML, and retain the collapsible monthly metrics table.
+- Resolve historical company names through the pinned `state/company_names_202608.csv`; never render missing values as the literal string `nan`.
 - Historical canonical rows remain `not_requested_historical`; only forward causal detections enter the fundamental queue. Fundamental worker state must stay under `weak_early_beta/fundamental_worker/` and must never reuse production Premium state.
 - Regenerate outputs with `python -m weak_early_beta.cli report`, test with `python -m unittest tests.test_weak_early_beta`, and verify the separate gate with `cd weak-early-beta-gate && npm run check`.

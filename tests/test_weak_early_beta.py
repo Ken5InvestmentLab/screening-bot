@@ -13,7 +13,7 @@ from weak_early_beta.config import (
 )
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
-from weak_early_beta.metrics import build_metrics
+from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.report import render_report
 
 
@@ -29,9 +29,19 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertTrue(self.ledger["gross_return"].notna().all())
 
     def test_names_explain_features_and_internal_ids_stay_fixed(self):
-        self.assertIn("出来高", selector_info("volr20_low").display_name)
-        self.assertIn("陰線", selector_info("body_pct_low").display_name)
-        self.assertIn("2条件", selector_info("dual_top1_agreement").display_name)
+        self.assertEqual(selector_info("mean_rank_volr20_body_pct").display_name, "Shadow")
+        self.assertEqual(selector_info("body_pct_low").display_name, "Dive")
+        self.assertEqual(selector_info("volr20_low").display_name, "Silence")
+        self.assertEqual(selector_info("dual_top1_agreement").display_name, "Fusion")
+        self.assertEqual(
+            selector_info("dual_top1_agreement_g3_no_acute_selloff").display_name,
+            "Balance",
+        )
+
+    def test_bootstrap_resolves_company_names_without_nan(self):
+        names = self.ledger["company_name"].fillna("").astype(str).str.strip()
+        self.assertTrue(names.ne("").all())
+        self.assertFalse(names.str.lower().eq("nan").any())
 
     def test_metrics_include_user_facing_fields(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
@@ -63,18 +73,38 @@ class WeakEarlyBetaTests(unittest.TestCase):
 
     def test_report_has_no_extended_investment_metric(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
-        output = render_report(self.ledger.head(20), metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
+        monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))
+        output = render_report(
+            self.ledger.head(20),
+            metrics,
+            pd.Timestamp("2026-09-19", tz="Asia/Tokyo"),
+            monthly_metrics=monthly,
+        )
         self.assertIn("勝率", output)
         self.assertIn("平均", output)
         self.assertIn("100株損益", output)
         self.assertIn("参考元金", output)
         self.assertIn("元金増加率", output)
         self.assertIn("順位", output)
-        self.assertIn("全5条件の合計成績", output)
-        self.assertIn("条件別積上げ", output)
+        self.assertIn("Cloud 全体の成績", output)
+        self.assertIn("モード別積上げ", output)
         self.assertIn("銘柄均等", output)
         self.assertIn("単純年率", output)
+        self.assertIn("月別の詳しい成績を見る", output)
+        self.assertIn("確定取引数", output)
+        self.assertNotIn("確定n", output)
+        self.assertNotIn("確定ユニット", output)
+        self.assertNotIn(">n<", output)
+        self.assertIn("天底極致 -Cloud-", output)
+        for old_label in ("現行", "Stable", "Sniper", "Mega", "Weak+Early"):
+            self.assertNotIn(old_label, output)
         self.assertNotIn("延べ投入額</th>", output)
+
+    def test_monthly_metrics_keep_year_month_labels(self):
+        monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))
+        self.assertFalse(monthly.empty)
+        self.assertTrue(monthly["period"].astype(str).str.fullmatch(r"\d{4}-\d{2}").all())
+        self.assertTrue(set(SELECTOR_ORDER).issubset(set(monthly["selector_id"])))
 
     def test_fundamental_claim_and_receipt_stay_in_beta_state(self):
         with tempfile.TemporaryDirectory() as temp:

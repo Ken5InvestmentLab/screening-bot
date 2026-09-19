@@ -1,0 +1,13 @@
+{
+  "identity": "JPX_LISTED_COMPANY_NAMES_202608",
+  "source_page": "https://www.jpx.co.jp/markets/statistics-equities/misc/01.html",
+  "source_artifact": "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xlsx",
+  "source_version": "2026-08",
+  "retrieved_on": "2026-09-20",
+  "source_sha256": "FFF94DD14057C8BFA36A3FBABD8E228BBED63751C7ECD10C1A8281F5385FCB78",
+  "derived_path": "weak_early_beta/state/company_names_202608.csv",
+  "derived_sha256": "B496BA65F862B0BFD453500BFE9DD172A039D996C4B38CC7BC9D41AF4314FC45",
+  "derived_rows": 104,
+  "coverage": "All unique symbols in the frozen 2023-2026 Cloud canonical trade rows",
+  "missing_symbols": 0
+}

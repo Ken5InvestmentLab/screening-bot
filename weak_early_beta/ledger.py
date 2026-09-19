@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PACK_OUTPUT = ROOT / "research" / "repro_packs" / "weak_early_exact_v1" / "output"
 DEFAULT_LEDGER = ROOT / "weak_early_beta" / "state" / "detections.csv"
 DEFAULT_QUEUE = ROOT / "weak_early_beta" / "state" / "fundamental_queue.json"
+DEFAULT_COMPANY_NAMES = ROOT / "weak_early_beta" / "state" / "company_names_202608.csv"
 
 LEDGER_COLUMNS = [
     "detection_id", "signal_date", "symbol", "company_name", "selector_id",
@@ -40,7 +41,24 @@ def read_ledger(path: Path = DEFAULT_LEDGER) -> pd.DataFrame:
     for column in ("signal_date", "entry_date", "fifth_xtks_exit_date"):
         if column in frame:
             frame[column] = pd.to_datetime(frame[column], errors="coerce")
-    return frame.reindex(columns=LEDGER_COLUMNS)
+    return apply_company_names(frame.reindex(columns=LEDGER_COLUMNS))
+
+
+def apply_company_names(
+    frame: pd.DataFrame,
+    mapping_path: Path = DEFAULT_COMPANY_NAMES,
+) -> pd.DataFrame:
+    """Fill blank historical names from the pinned JPX 2026-08 listing."""
+    result = frame.copy()
+    if not mapping_path.exists() or result.empty:
+        return result
+    mapping = pd.read_csv(mapping_path, dtype={"symbol": str}).set_index("symbol")["company_name"]
+    current = result["company_name"].fillna("").astype(str).str.strip()
+    current = current.mask(current.str.lower().eq("nan"), "")
+    result["company_name"] = current.mask(
+        current.eq(""), result["symbol"].astype(str).map(mapping).fillna("")
+    )
+    return result
 
 
 def write_ledger(frame: pd.DataFrame, path: Path = DEFAULT_LEDGER) -> None:
@@ -92,7 +110,9 @@ def bootstrap_historical() -> pd.DataFrame:
             frame["created_at"] = now
             frame["updated_at"] = now
             parts.append(frame)
-    result = pd.concat(parts, ignore_index=True).reindex(columns=LEDGER_COLUMNS)
+    result = apply_company_names(
+        pd.concat(parts, ignore_index=True).reindex(columns=LEDGER_COLUMNS)
+    )
     if result["detection_id"].duplicated().any():
         dupes = result.loc[result["detection_id"].duplicated(), "detection_id"].tolist()
         raise RuntimeError(f"duplicate historical detection identities: {dupes[:5]}")

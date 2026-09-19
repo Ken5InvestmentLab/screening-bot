@@ -144,3 +144,37 @@ def build_metrics(ledger: pd.DataFrame, as_of: pd.Timestamp | None = None) -> pd
             **summarize(combined, f"{min_year}-{max_year}", as_of),
         })
     return pd.DataFrame(rows)
+
+
+def build_monthly_metrics(
+    ledger: pd.DataFrame,
+    as_of: pd.Timestamp | None = None,
+) -> pd.DataFrame:
+    """Monthly detail for the five modes and both combined allocations."""
+    if ledger.empty:
+        return pd.DataFrame()
+    as_of = pd.Timestamp(as_of or pd.Timestamp.now()).tz_localize(None)
+    data = ledger.copy()
+    data["signal_date"] = pd.to_datetime(data["signal_date"])
+    modes = [
+        (selector_id, selector_info(selector_id).display_name, data[data["selector_id"].eq(selector_id)])
+        for selector_id in SELECTOR_ORDER
+    ]
+    modes.extend([
+        (COMBINED_STACKED_ID, COMBINED_STACKED_NAME, data),
+        (COMBINED_UNIQUE_ID, COMBINED_UNIQUE_NAME, combined_detections(data)),
+    ])
+    rows = []
+    for selector_id, selector_name, lane in modes:
+        periods = lane["signal_date"].dt.to_period("M")
+        for month, monthly in lane.groupby(periods, sort=True):
+            summary = summarize(monthly, str(month.year), as_of)
+            summary["period"] = str(month)
+            rows.append({
+                "selector_id": selector_id,
+                "selector_name": selector_name,
+                # Annualization is not presented for monthly rows. Passing the
+                # year keeps the shared capital calculation deterministic.
+                **summary,
+            })
+    return pd.DataFrame(rows)

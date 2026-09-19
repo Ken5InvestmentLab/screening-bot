@@ -8,18 +8,18 @@ from pathlib import Path
 import pandas as pd
 
 from .config import (
-    BETA_IDENTITY,
     COMBINED_SELECTOR_IDS,
     ENDPOINT_LABEL,
     SELECTOR_ORDER,
     selector_info,
 )
-from .metrics import build_metrics
+from .metrics import build_metrics, build_monthly_metrics
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPORT = ROOT / "reports" / "weak_early_beta_latest.html"
 DEFAULT_METRICS = ROOT / "weak_early_beta" / "state" / "metrics.csv"
+DEFAULT_MONTHLY_METRICS = ROOT / "weak_early_beta" / "state" / "monthly_metrics.csv"
 
 
 def _pct(value, signed: bool = False) -> str:
@@ -127,6 +127,30 @@ def _combined_rows(metrics: pd.DataFrame) -> str:
     return "".join(rows)
 
 
+def _monthly_rows(metrics: pd.DataFrame) -> str:
+    if metrics.empty:
+        return '<tr><td colspan="13">集計対象がありません</td></tr>'
+    mode_order = {
+        selector_id: index
+        for index, selector_id in enumerate((*SELECTOR_ORDER, *COMBINED_SELECTOR_IDS))
+    }
+    data = metrics.copy()
+    data["_mode_order"] = data["selector_id"].map(mode_order)
+    rows = []
+    for row in data.sort_values(["period", "_mode_order"], ascending=[False, True]).itertuples():
+        rows.append(
+            "<tr>"
+            f"<th>{html.escape(str(row.period))}</th><th>{html.escape(row.selector_name)}</th>"
+            f"<td>{row.n}</td><td>{row.pending}</td>"
+            f"<td>{_pct(row.mean_pct, True)}</td><td>{_pct(row.median_pct, True)}</td>"
+            f"<td>{_pct(row.win_pct)}</td><td>{_pct(row.plus10_pct)}</td>"
+            f"<td>{_pct(row.plus20_pct)}</td><td>{_pct(row.minus10_pct)}</td>"
+            f"<td>{_pct(row.minus20_pct)}</td><td>{_yen(row.cash_pl_100_yen)}</td>"
+            f"<td>{_price(row.required_capital_yen)}</td></tr>"
+        )
+    return "".join(rows)
+
+
 def _condition_cards() -> str:
     cards = []
     for selector_id in SELECTOR_ORDER:
@@ -157,8 +181,11 @@ def _detection_rows(ledger: pd.DataFrame) -> str:
             for s in selectors
         )
         units = len(selectors)
-        badges += f'<small>条件別積上げ: {units}ユニット / {units * 100}株</small>'
-        name = str(first.get("company_name", "") or "").strip()
+        badges += f'<small>モード別配分: {units}口（{units * 100}株）</small>'
+        raw_name = first.get("company_name", "")
+        name = "" if pd.isna(raw_name) else str(raw_name).strip()
+        if name.lower() == "nan":
+            name = ""
         gross = pd.to_numeric(group["gross_return"], errors="coerce").dropna()
         cash = pd.to_numeric(group["one_hundred_shares_pl_yen"], errors="coerce").dropna()
         status = "確定" if not gross.empty else ("保有中" if str(first["status"]) == "entered" else "寄付待ち")
@@ -193,58 +220,83 @@ def _detection_rows(ledger: pd.DataFrame) -> str:
     return "".join(rows)
 
 
-def render_report(ledger: pd.DataFrame, metrics: pd.DataFrame, generated_at: pd.Timestamp) -> str:
+def render_report(
+    ledger: pd.DataFrame,
+    metrics: pd.DataFrame,
+    generated_at: pd.Timestamp,
+    monthly_metrics: pd.DataFrame | None = None,
+) -> str:
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     total_period = max(metrics["period"].astype(str), key=len) if not metrics.empty else "—"
     total = metrics[metrics["period"].eq(total_period)] if not metrics.empty else pd.DataFrame()
-    best = total.sort_values("cash_pl_100_yen", ascending=False).iloc[0] if not total.empty else None
+    selector_total = total[total["selector_id"].isin(SELECTOR_ORDER)] if not total.empty else total
+    best = (
+        selector_total.sort_values("cash_pl_100_yen", ascending=False).iloc[0]
+        if not selector_total.empty
+        else None
+    )
+    monthly_metrics = monthly_metrics if monthly_metrics is not None else pd.DataFrame()
     detection_count = len(ledger)
     unique_count = ledger.groupby(["signal_date", "symbol"]).ngroups if not ledger.empty else 0
     return f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Weak+Early スコアリング ベータ</title>
+<title>天底極致 -Cloud-</title>
 <style>
-:root{{--bg:#f4f7fb;--panel:#fff;--ink:#172033;--muted:#60708a;--line:#dbe3ee;--blue:#2255d8;--cyan:#0d8795;--good:#08744f;--warn:#a25b00;--shadow:0 12px 32px rgba(25,45,80,.08)}}
-:root[data-theme="dark"]{{--bg:#0e1420;--panel:#172131;--ink:#edf4ff;--muted:#9fb0c7;--line:#2b3b51;--blue:#88aaff;--cyan:#5bd0d4;--good:#65d6a7;--warn:#ffc56b;--shadow:none}}
-*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Noto Sans JP",sans-serif}}a{{color:var(--blue)}}
-.topbar{{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--panel) 94%,transparent);border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}}
+:root{{--bg:#edf4ff;--panel:rgba(255,255,255,.9);--panel-solid:#fff;--ink:#14213d;--muted:#60708a;--line:#d4e1f3;--blue:#4169e1;--cyan:#149fba;--violet:#725fda;--good:#08744f;--warn:#a25b00;--shadow:0 18px 46px rgba(54,84,145,.12)}}
+:root[data-theme="dark"]{{--bg:#0c1424;--panel:rgba(21,32,51,.94);--panel-solid:#152033;--ink:#edf4ff;--muted:#a3b3ca;--line:#2b405e;--blue:#91adff;--cyan:#65d5e6;--violet:#ad9bff;--good:#65d6a7;--warn:#ffc56b;--shadow:0 18px 46px rgba(0,0,0,.28)}}
+*{{box-sizing:border-box}}html{{scroll-behavior:smooth}}body{{margin:0;background:radial-gradient(circle at 12% -8%,color-mix(in srgb,var(--cyan) 18%,transparent),transparent 34%),radial-gradient(circle at 94% 5%,color-mix(in srgb,var(--violet) 16%,transparent),transparent 30%),var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Noto Sans JP",sans-serif}}a{{color:var(--blue)}}
+.topbar{{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--panel-solid) 86%,transparent);border-bottom:1px solid var(--line);backdrop-filter:blur(16px)}}
 .nav{{max-width:1440px;margin:auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}}.brand{{font-weight:850;margin-right:auto}}button,select,input{{font:inherit}}button{{cursor:pointer}}
-.theme{{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:7px 12px}}main{{max-width:1440px;margin:auto;padding:28px 20px 60px}}
-.hero{{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:stretch}}.panel{{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow);margin-bottom:20px}}
+.theme{{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:999px;padding:7px 12px}}main{{max-width:1440px;margin:auto;padding:34px 20px 60px}}
+.hero{{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:stretch}}.panel{{background:var(--panel);border:1px solid color-mix(in srgb,var(--line) 84%,transparent);border-radius:22px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px;backdrop-filter:blur(10px)}}
+.hero-main{{position:relative;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--panel-solid) 94%,var(--cyan)),color-mix(in srgb,var(--panel-solid) 92%,var(--violet)))}}.hero-main:after{{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;bottom:-130px;background:color-mix(in srgb,var(--cyan) 16%,transparent)}}
 .eyebrow{{color:var(--cyan);font-weight:800;letter-spacing:.06em}}h1{{font-size:clamp(28px,5vw,52px);line-height:1.12;margin:.15em 0}}h2{{margin:0 0 16px;font-size:22px}}h3{{margin:8px 0}}.lead{{font-size:17px;color:var(--muted);max-width:62ch}}
-.kpis{{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}}.kpi{{background:var(--bg);border-radius:14px;padding:14px}}.kpi b{{display:block;font-size:24px}}.kpi small,.subtle,small{{display:block;color:var(--muted)}}
-.condition-grid{{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}}.condition-card{{border:1px solid var(--line);border-radius:14px;padding:16px;background:linear-gradient(150deg,var(--panel),var(--bg))}}.condition-id,.badge{{display:inline-flex;border-radius:999px;background:color-mix(in srgb,var(--blue) 12%,var(--panel));color:var(--blue);padding:3px 8px;font-size:12px;font-weight:750;margin:2px}}
-.table-wrap{{overflow:auto;border:1px solid var(--line);border-radius:14px}}table{{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel)}}th,td{{border-bottom:1px solid var(--line);padding:10px 9px;text-align:right;white-space:nowrap}}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){{text-align:left}}thead th{{position:sticky;top:0;background:var(--panel);z-index:1;font-size:12px;color:var(--muted)}}
+.kpis{{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}}.kpi{{background:color-mix(in srgb,var(--bg) 76%,var(--panel-solid));border:1px solid var(--line);border-radius:16px;padding:14px}}.kpi b{{display:block;font-size:24px;line-height:1.3}}.kpi small,.subtle,small{{display:block;color:var(--muted)}}
+.condition-grid{{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}}.condition-card{{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;padding:17px;background:linear-gradient(150deg,var(--panel-solid),color-mix(in srgb,var(--bg) 88%,var(--violet)));transition:transform .18s ease,box-shadow .18s ease}}.condition-card:before{{content:"";position:absolute;left:0;top:0;width:100%;height:4px;background:linear-gradient(90deg,var(--cyan),var(--violet))}}.condition-card:hover{{transform:translateY(-2px);box-shadow:0 12px 28px rgba(54,84,145,.12)}}.condition-id,.badge{{display:inline-flex;border-radius:999px;background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));color:var(--blue);padding:3px 8px;font-size:12px;font-weight:750;margin:2px}}
+.table-wrap{{overflow:auto;border:1px solid var(--line);border-radius:16px}}table{{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel-solid)}}th,td{{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;white-space:nowrap}}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){{text-align:left}}thead th{{position:sticky;top:0;background:color-mix(in srgb,var(--panel-solid) 94%,var(--bg));z-index:1;font-size:12px;color:var(--muted)}}tbody tr:nth-child(even){{background:color-mix(in srgb,var(--bg) 42%,transparent)}}tbody tr:hover{{background:color-mix(in srgb,var(--blue) 7%,var(--panel-solid))}}
 .filters{{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}}.filters input,.filters select{{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:9px;padding:9px 11px}}.status{{font-weight:750}}.status.mature{{color:var(--good)}}.status.pending{{color:var(--warn)}}.number{{font-variant-numeric:tabular-nums}}.symbol{{font-size:17px}}.actions{{margin-top:5px}}.button-link,.fundamental-toggle{{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}}.fundamental-detail{{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}}
-.note{{color:var(--muted);font-size:13px}}footer{{color:var(--muted);text-align:center;padding:28px}}
+.note{{color:var(--muted);font-size:13px}}.monthly-details{{margin-top:16px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 55%,var(--panel-solid));padding:0 14px 14px}}.monthly-details summary{{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}}footer{{color:var(--muted);text-align:center;padding:28px}}
 @media(max-width:1000px){{.hero{{grid-template-columns:1fr}}.condition-grid{{grid-template-columns:repeat(2,1fr)}}}}
 @media(max-width:620px){{main{{padding:18px 12px 50px}}.panel{{padding:16px;border-radius:14px}}.condition-grid{{grid-template-columns:1fr}}.kpis{{grid-template-columns:1fr 1fr}}}}
 </style><script src="/report-interactions.js" defer></script></head>
-<body><header class="topbar"><nav class="nav"><span class="brand">Weak+Early ベータ</span><a href="#performance">成績</a><a href="#conditions">5つの条件</a><a href="#history">検出履歴</a><button class="theme" id="theme-toggle" type="button">表示切替</button></nav></header>
-<main><section class="hero"><div class="panel"><span class="eyebrow">TRADINGVIEW-FREE / BETA</span><h1>引け後に選び、<br>翌営業日の寄り付きへ。</h1><p class="lead">因果的に生成したTail候補へ、特徴の異なる5条件を適用する独立ベータ版です。現行のStable・Sniper・Megaとは別系統で、条件判定後の銘柄だけを通知します。</p><p class="note">評価契約: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>条件別記録</small><b>{detection_count:,}</b></div><div class="kpi"><small>実銘柄・日付</small><b>{unique_count:,}</b></div><div class="kpi"><small>集計期間</small><b>{html.escape(total_period)}</b></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div><p class="note">同じ銘柄が複数条件に該当することがあります。実銘柄数は重複を1件として数えています。</p></aside></section>
-<section class="panel" id="performance"><h2>全期間の成績</h2><p class="note">順位は100株ずつ売買した累計損益額順です。参考元金は同時保有を賄うために必要だった最大金額、元金増加率は累計損益÷参考元金です。単純年率はそれを対象年数で割った値で、複利・売買コスト・税金は含みません。延べ投入額は表示していません。</p><div class="table-wrap"><table><thead><tr><th>順位</th><th>条件</th><th>確定n</th><th>未確定</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>Top3除外平均</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_overall_rows(metrics)}</tbody></table></div></section>
-<section class="panel"><h2>全5条件の合計成績</h2><p class="note">「条件別積上げ」は1条件につき100株とし、3条件重複なら300株として集計します。「銘柄均等」は同一シグナル日×同一銘柄を100株に固定した比較用です。重複は条件同士が完全に独立とは限らないため、両方を併記します。</p><div class="table-wrap"><table><thead><tr><th>期間</th><th>配分方式</th><th>確定ユニット</th><th>未確定</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>100株ユニット損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_combined_rows(metrics)}</tbody></table></div></section>
-<section class="panel"><h2>年別の成績</h2><div class="table-wrap"><table><thead><tr><th>年</th><th>順位</th><th>条件</th><th>n</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_yearly_rows(metrics)}</tbody></table></div></section>
-<section class="panel" id="conditions"><h2>5つの条件</h2><div class="condition-grid">{_condition_cards()}</div><p class="note">共通gateは市場5日中央値リターン≤0、候補10日リターン≤0.5735294117647058。Tailは月初前に成熟したlabelだけで学習し、月次学習行数30,000以上、tail CDF≥0.999です。内部IDと閾値は復元版から変更していません。</p></section>
-<section class="panel" id="history"><h2>検出履歴</h2><div class="filters"><input id="symbol-filter" inputmode="numeric" placeholder="証券コード 1234"><select id="selector-filter"><option value="">すべての条件</option>{''.join(f'<option value="{s}">{html.escape(selector_info(s).display_name)}</option>' for s in SELECTOR_ORDER)}</select></div><div class="table-wrap"><table id="detection-table"><thead><tr><th>シグナル日</th><th>銘柄</th><th>該当条件</th><th>状態</th><th>エントリー</th><th>5営業日目</th><th>騰落率</th><th>100株損益</th><th>操作</th></tr></thead><tbody>{_detection_rows(ledger)}</tbody></table></div></section>
-<section class="panel"><h2>ベータ版について</h2><p>これからの検出は、専用Discordへ通知し、別の専用チャンネルでファンダ分析を行う前提です。過去分はトークン消費を抑えるため、ファンダ分析を一括生成しません。分析が登録された銘柄だけ履歴内にボタンが表示されます。</p><p class="note">Identity: {BETA_IDENTITY} / Generated: {generated:%Y-%m-%d %H:%M:%S JST}</p></section></main><footer>Weak+Early Scoring Beta — research-only parallel test</footer></body></html>'''
+<body><header class="topbar"><nav class="nav"><span class="brand">天底極致 -Cloud-</span><a href="#performance">成績</a><a href="#conditions">5つのモード</a><a href="#history">検出履歴</a><button class="theme" id="theme-toggle" type="button">表示切替</button></nav></header>
+<main><section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>反転の兆しを、<br>雲の先から。</h1><p class="lead">日足データから候補を選び、特徴の異なる5つのモードで引け後に検出します。翌営業日の寄り付きから5営業日目の終値までを、すべて同じルールで記録します。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p></div>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{detection_count:,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{unique_count:,}件</b></div><div class="kpi"><small>集計期間</small><b>{html.escape(total_period)}</b></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div><p class="note">同じ銘柄が複数モードに該当することがあります。重複を除いた検出件数では、同じ日・同じ銘柄を1件として数えています。</p></aside></section>
+<section class="panel" id="performance"><h2>全期間のモード別成績</h2><p class="note">順位は100株ずつ売買した累計損益額順です。参考元金は同時保有を賄うために必要だった最大金額、元金増加率は累計損益÷参考元金です。単純年率はそれを対象年数で割った値で、複利・売買コスト・税金は含みません。</p><div class="table-wrap"><table><thead><tr><th>順位</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>Top3除外平均</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_overall_rows(metrics)}</tbody></table></div></section>
+<section class="panel"><h2>Cloud 全体の成績</h2><p class="note">「モード別積上げ」は該当モードごとに100株を配分し、3モード重複なら合計300株として集計します。「銘柄均等」は同じ日・同じ銘柄を100株に固定します。重複を投資確度として活かす場合と、1銘柄への偏りを抑える場合を比較できます。</p><div class="table-wrap"><table><thead><tr><th>期間</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_combined_rows(metrics)}</tbody></table></div></section>
+<section class="panel"><h2>年別の成績</h2><div class="table-wrap"><table><thead><tr><th>年</th><th>順位</th><th>モード</th><th>確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_yearly_rows(metrics)}</tbody></table></div><details class="monthly-details"><summary>月別の詳しい成績を見る</summary><p class="note">各モードとCloud全体の2つの配分方式を、月ごとに確認できます。</p><div class="table-wrap"><table><thead><tr><th>月</th><th>モード／配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th></tr></thead><tbody>{_monthly_rows(monthly_metrics)}</tbody></table></div></details></section>
+<section class="panel" id="conditions"><h2>5つのモード</h2><div class="condition-grid">{_condition_cards()}</div><p class="note">各モードの判定ルールと評価方法は固定し、後から過去の結果に合わせて変更しません。</p></section>
+<section class="panel" id="history"><h2>検出履歴</h2><div class="filters"><input id="symbol-filter" inputmode="numeric" placeholder="証券コード 1234"><select id="selector-filter"><option value="">すべてのモード</option>{''.join(f'<option value="{s}">{html.escape(selector_info(s).display_name)}</option>' for s in SELECTOR_ORDER)}</select></div><div class="table-wrap"><table id="detection-table"><thead><tr><th>シグナル日</th><th>銘柄</th><th>該当モード</th><th>状態</th><th>エントリー</th><th>5営業日目</th><th>騰落率</th><th>100株損益</th><th>操作</th></tr></thead><tbody>{_detection_rows(ledger)}</tbody></table></div></section>
+<section class="panel"><h2>このレポートについて</h2><p>これから検出される銘柄は専用Discordへ通知し、ファンダ分析が登録された銘柄は検出履歴から確認できるようにします。過去分のファンダ分析は一括生成せず、登録済みの銘柄だけボタンを表示します。</p><p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section></main><footer>天底極致 -Cloud-</footer></body></html>'''
 
 
 def write_report(
     ledger: pd.DataFrame,
     report_path: Path = DEFAULT_REPORT,
     metrics_path: Path = DEFAULT_METRICS,
+    monthly_metrics_path: Path = DEFAULT_MONTHLY_METRICS,
 ) -> pd.DataFrame:
     generated = pd.Timestamp.now(tz="Asia/Tokyo")
     metrics = build_metrics(ledger, as_of=generated.tz_localize(None))
+    monthly_metrics = build_monthly_metrics(ledger, as_of=generated.tz_localize(None))
     report_path.parent.mkdir(parents=True, exist_ok=True)
     metrics_path.parent.mkdir(parents=True, exist_ok=True)
+    monthly_metrics_path.parent.mkdir(parents=True, exist_ok=True)
     metrics.to_csv(metrics_path, index=False, encoding="utf-8", lineterminator="\n", float_format="%.12g")
-    report_path.write_text(render_report(ledger, metrics, generated), encoding="utf-8")
+    monthly_metrics.to_csv(
+        monthly_metrics_path,
+        index=False,
+        encoding="utf-8",
+        lineterminator="\n",
+        float_format="%.12g",
+    )
+    report_path.write_text(
+        render_report(ledger, metrics, generated, monthly_metrics=monthly_metrics),
+        encoding="utf-8",
+    )
     free_path = report_path.with_name(report_path.stem + "_free.html")
     free_path.write_text(
-        '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>アクセス権限がありません</title><style>body{font-family:system-ui;background:#f4f7fb;color:#172033;margin:0;padding:40px}.box{max-width:680px;margin:auto;background:#fff;border:1px solid #dbe3ee;border-radius:16px;padding:28px}a{color:#2255d8}</style></head><body><main class="box"><h1>Discordロールが必要です</h1><p>Weak+Early ベータ版は、現行レポートと同じDiscordロールを持つユーザーだけが閲覧できます。</p><p><a href="/auth/logout">Discordで再ログイン</a></p></main></body></html>',
+        '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>天底極致 -Cloud- | アクセス権限がありません</title><style>body{font-family:system-ui;background:radial-gradient(circle at 20% 0,#d8efff,transparent 45%),#edf4ff;color:#14213d;margin:0;padding:40px}.box{max-width:680px;margin:auto;background:rgba(255,255,255,.92);border:1px solid #d4e1f3;border-radius:22px;padding:32px;box-shadow:0 18px 46px rgba(54,84,145,.12)}a{color:#4169e1}</style></head><body><main class="box"><p>天底極致 -Cloud-</p><h1>Discordロールが必要です</h1><p>このレポートは、対象のDiscordロールを持つユーザーだけが閲覧できます。</p><p><a href="/auth/logout">Discordで再ログイン</a></p></main></body></html>',
         encoding="utf-8",
     )
     return metrics

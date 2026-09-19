@@ -1,0 +1,87 @@
+{
+  "identity": "HIGH_WIN_MULTI_LANE_RESEARCH_V1",
+  "status": "PREREGISTERED_BEFORE_DISCOVERY",
+  "objective": "Find up to three distinct TradingView-free scoring lanes with materially better win-rate robustness without sacrificing breadth, mean return, or right-tail capture.",
+  "input": {
+    "tail_artifact_id": "10264251140",
+    "tail_sha256": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+    "daily_artifact_id": "10264205130",
+    "daily_sha256": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0"
+  },
+  "periods": {
+    "discovery": 2023,
+    "internal_validation": 2024,
+    "holdout": 2025,
+    "forbidden_for_selection": 2026
+  },
+  "population_gate": "med_ret5 <= 0 AND ret10 <= 0.5735294117647058",
+  "selection": {
+    "per_signal_date": 1,
+    "score": "mean of within-date percentile ranks in the declared directions",
+    "tie_break": ["tail_cdf DESC", "symbol ASC"],
+    "cooldown": "none"
+  },
+  "families": {
+    "EARLY_PRESSURE": [
+      ["volr20:LOW", "body_pct:LOW"],
+      ["volr20:LOW", "ret1:LOW"],
+      ["body_pct:LOW", "ret1:LOW"]
+    ],
+    "DEFENSIVE_PULLBACK": [
+      ["atr14p:LOW", "bbpct:LOW"],
+      ["atr14p:LOW", "rsi14:LOW"],
+      ["bbpct:LOW", "rsi14:LOW"]
+    ],
+    "REVERSAL_WICK": [
+      ["lower_wick:HIGH", "body_pct:LOW"],
+      ["lower_wick:HIGH", "volr20:LOW"],
+      ["lower_wick:HIGH", "bbpct:LOW"]
+    ],
+    "MODEL_CONVICTION": [
+      ["tail_cdf:HIGH", "body_pct:LOW"],
+      ["tail_cdf:HIGH", "volr20:LOW"],
+      ["tail_cdf:HIGH", "atr14p:LOW"]
+    ]
+  },
+  "family_winner_order": [
+    "minimum of 2023 and 2024 win rate DESC",
+    "2023-2024 aggregate win rate DESC",
+    "minimum of 2023 and 2024 median return DESC",
+    "2023-2024 aggregate Top3-excluded mean DESC",
+    "2023-2024 aggregate mean return DESC",
+    "candidate_id ASC"
+  ],
+  "discovery_eligibility": {
+    "minimum_2023_n": 45,
+    "minimum_2024_n": 70,
+    "aggregate_mean_gt": 0.0,
+    "aggregate_top3_excluded_mean_gt": 0.0
+  },
+  "finalists": {
+    "maximum": 3,
+    "source": "one winner per family",
+    "order": "same as family_winner_order",
+    "maximum_pairwise_identity_jaccard": 0.85,
+    "freeze_before_holdout": true
+  },
+  "holdout_pass_gate": {
+    "minimum_2025_n": 35,
+    "minimum_2025_win_rate": 0.55,
+    "minimum_2025_mean_return": 0.03,
+    "minimum_2025_median_return_exclusive": 0.0,
+    "minimum_2025_top3_excluded_mean_exclusive": 0.0,
+    "minimum_2025_plus20_rate": 0.15,
+    "maximum_2025_minus10_rate": 0.25
+  },
+  "valid_terminal_outcomes": [
+    "TWO_OR_THREE_DISTINCT_LANES_PASS",
+    "ONE_LANE_PASSES",
+    "NO_VIABLE_NEW_LANE"
+  ],
+  "prohibitions": [
+    "No 2026 outcome access for discovery, family selection, finalist selection, thresholding, or retuning.",
+    "No changes to recovered Weak+Early or Cloud Monster identities.",
+    "No post-holdout feature, direction, family, gate, tie-break, cooldown, or sample-floor changes.",
+    "No production/main/workflow/Discord/Spreadsheet/TradingView/watchlist changes."
+  ]
+}

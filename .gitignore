@@ -1,6 +1,7 @@
 .env
 credentials.json
 node_modules/
+.cache/
 pine/.cache/
 logs/
 backups/

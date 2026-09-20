@@ -28,6 +28,7 @@ LEDGER_COLUMNS = [
     "tail_cdf", "tail_p", "source_scope", "source_sha256",
     "signal_discord_url", "notified_at", "fundamental_status",
     "fundamental_discord_url", "fundamental_html", "created_at", "updated_at",
+    "exit_reminder_discord_url", "exit_reminded_at",
 ]
 
 
@@ -130,6 +131,7 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
         "company_name", "signal_close", "signal_volume",
         "signal_discord_url", "notified_at", "fundamental_status",
         "fundamental_discord_url", "fundamental_html", "created_at",
+        "exit_reminder_discord_url", "exit_reminded_at",
     ]
     old = existing.set_index("detection_id", drop=False)
     new = incoming.set_index("detection_id", drop=False)
@@ -173,6 +175,8 @@ def write_fundamental_queue(frame: pd.DataFrame, path: Path = DEFAULT_QUEUE) -> 
 
 def apply_fundamental_receipts(frame: pd.DataFrame, receipts: Iterable[dict]) -> pd.DataFrame:
     result = frame.copy()
+    for column in ("fundamental_status", "fundamental_discord_url", "fundamental_html", "updated_at"):
+        result[column] = result[column].astype("object")
     for receipt in receipts:
         signal_date = pd.Timestamp(receipt["signal_date"]).strftime("%Y-%m-%d")
         symbol = str(receipt["symbol"])

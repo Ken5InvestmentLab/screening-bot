@@ -119,6 +119,23 @@ def command_daily(args: argparse.Namespace) -> None:
     print(json.dumps(receipt, ensure_ascii=False, indent=2))
 
 
+def command_notify(args: argparse.Namespace) -> None:
+    from .notify import notify_pending
+
+    ledger_path = Path(args.ledger)
+    ledger = _load_or_bootstrap(ledger_path)
+    ledger, payloads = notify_pending(
+        ledger,
+        report_url=args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", ""),
+        dry_run=args.dry_run,
+    )
+    if payloads and not args.dry_run:
+        write_ledger(ledger, ledger_path)
+        write_fundamental_queue(ledger, Path(args.queue))
+        write_report(ledger, Path(args.report), Path(args.metrics))
+    print(json.dumps({"notifications": len(payloads), "dry_run": bool(args.dry_run)}, ensure_ascii=False))
+
+
 def command_import_fundamentals(args: argparse.Namespace) -> None:
     ledger_path = Path(args.ledger)
     ledger = read_ledger(ledger_path)
@@ -153,6 +170,40 @@ def command_export_fundamentals(args: argparse.Namespace) -> None:
 
     receipts = export_receipts(Path(args.worker_state), Path(args.receipts))
     print(json.dumps({"exported": len(receipts), "receipts": args.receipts}, ensure_ascii=False))
+
+
+def command_is_business_day(args: argparse.Namespace) -> None:
+    from .bank_calendar import is_bank_business_day
+
+    target = pd.Timestamp(args.date or pd.Timestamp.now(tz="Asia/Tokyo").date()).date()
+    print(json.dumps({"date": target.isoformat(), "business_day": is_bank_business_day(target)}, ensure_ascii=False))
+
+
+def command_remind_exits(args: argparse.Namespace) -> None:
+    from .bank_calendar import is_bank_business_day
+    from .reminders import notify_exit_reminders
+
+    target = pd.Timestamp(args.date or pd.Timestamp.now(tz="Asia/Tokyo").date()).date()
+    ledger_path = Path(args.ledger)
+    ledger = _load_or_bootstrap(ledger_path)
+    payloads = []
+    if is_bank_business_day(target):
+        ledger, payloads = notify_exit_reminders(
+            ledger,
+            target,
+            report_url=args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", ""),
+            dry_run=args.dry_run,
+        )
+    if payloads and not args.dry_run:
+        write_ledger(ledger, ledger_path)
+        write_fundamental_queue(ledger, Path(args.queue))
+        write_report(ledger, Path(args.report), Path(args.metrics))
+    print(json.dumps({
+        "date": target.isoformat(),
+        "business_day": is_bank_business_day(target),
+        "reminders": len(payloads),
+        "dry_run": bool(args.dry_run),
+    }, ensure_ascii=False))
 
 
 def parser() -> argparse.ArgumentParser:
@@ -195,6 +246,12 @@ def parser() -> argparse.ArgumentParser:
     daily.add_argument("--receipt", default=str(DEFAULT_RECEIPT))
     daily.set_defaults(func=command_daily)
 
+    notify = sub.add_parser("notify", help="send queued signal embeds without rescoring")
+    common(notify)
+    notify.add_argument("--report-url", default="")
+    notify.add_argument("--dry-run", action="store_true")
+    notify.set_defaults(func=command_notify)
+
     imports = sub.add_parser("import-fundamentals", help="attach dedicated-channel analysis receipts")
     common(imports)
     imports.add_argument("--receipts", required=True)
@@ -227,6 +284,17 @@ def parser() -> argparse.ArgumentParser:
         default=str(ROOT / "weak_early_beta" / "fundamental_worker" / "out" / "fundamental_receipts.json"),
     )
     export.set_defaults(func=command_export_fundamentals)
+
+    business_day = sub.add_parser("is-business-day", help="check the Japanese bank-business-day gate")
+    business_day.add_argument("--date")
+    business_day.set_defaults(func=command_is_business_day)
+
+    reminders = sub.add_parser("remind-exits", help="notify symbols reaching their fifth session today")
+    common(reminders)
+    reminders.add_argument("--date")
+    reminders.add_argument("--report-url", default="")
+    reminders.add_argument("--dry-run", action="store_true")
+    reminders.set_defaults(func=command_remind_exits)
     return result
 
 

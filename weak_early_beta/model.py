@@ -190,6 +190,8 @@ def attach_forward_rows(
             "fundamental_status": "queued",
             "fundamental_discord_url": "",
             "fundamental_html": "",
+            "exit_reminder_discord_url": "",
+            "exit_reminded_at": "",
             "created_at": now,
             "updated_at": now,
         }

@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -11,11 +12,13 @@ from weak_early_beta.config import (
     SELECTOR_ORDER,
     selector_info,
 )
+from weak_early_beta.bank_calendar import fifth_session_from_entry, is_bank_business_day
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.notify import EMBED_COLORS, _message
 from weak_early_beta.report import MODE_PAGE_NAMES, render_mode_report, render_report, write_report
+from weak_early_beta.reminders import notify_exit_reminders
 
 
 class WeakEarlyBetaTests(unittest.TestCase):
@@ -97,6 +100,30 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertNotIn("売買評価", serialized)
         self.assertNotIn("WEAK_EARLY_BETA:", serialized)
 
+    def test_bank_calendar_and_fifth_session_reminder(self):
+        self.assertFalse(is_bank_business_day(date(2026, 9, 21)))
+        self.assertFalse(is_bank_business_day(date(2026, 9, 22)))
+        self.assertFalse(is_bank_business_day(date(2026, 9, 23)))
+        self.assertEqual(fifth_session_from_entry(date(2026, 9, 15)), date(2026, 9, 24))
+        forward = self.ledger.head(5).copy()
+        forward.loc[:, "source_scope"] = "FORWARD_CAUSAL"
+        forward.loc[:, "signal_date"] = pd.Timestamp("2026-09-14")
+        forward.loc[:, "entry_date"] = pd.Timestamp("2026-09-15")
+        forward.loc[:, "entry_open"] = 80
+        forward.loc[:, "symbol"] = "7709"
+        forward.loc[:, "company_name"] = "クボテック"
+        forward.loc[:, "selector_id"] = SELECTOR_ORDER
+        forward.loc[:, "exit_reminded_at"] = ""
+        updated, payloads = notify_exit_reminders(
+            forward,
+            date(2026, 9, 24),
+            report_url="https://example.test/",
+            dry_run=True,
+        )
+        self.assertEqual(len(payloads), 1)
+        self.assertEqual(payloads[0]["embeds"][0]["title"], "5営業日目の確認：7709 クボテック")
+        self.assertTrue(updated["exit_reminded_at"].fillna("").eq("").all())
+
     def test_report_has_no_extended_investment_metric(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
         monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))
@@ -109,8 +136,11 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("勝率", output)
         self.assertIn("平均", output)
         self.assertIn("100株損益", output)
-        self.assertIn("参考元金", output)
-        self.assertIn("元金増加率", output)
+        self.assertIn("必要資金（目安）", output)
+        self.assertIn("天底極致 -Cloud- アナリティクス", output)
+        self.assertIn('<a class="brand" href="./weak_early_beta_latest.html">', output)
+        self.assertIn("data-paginated-table", output)
+        self.assertIn("資金増加率", output)
         self.assertIn("順位", output)
         self.assertIn("Cloud 全体の成績", output)
         self.assertIn("モード別積上げ", output)
@@ -150,7 +180,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn('id="history-date-from"', output)
         self.assertIn('id="history-date-to"', output)
         self.assertIn('id="history-load-more"', output)
-        self.assertIn("銘柄一覧を表示（20件ずつ）", output)
+        self.assertIn("最新20件を表示中", output)
+        self.assertNotIn("<details class=\"history-details\"", output)
         self.assertIn("https://jp.tradingview.com/chart/", output)
         self.assertNotIn('id="selector-filter"', output)
 
@@ -166,6 +197,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
             for filename in MODE_PAGE_NAMES.values():
                 self.assertTrue((root / filename).exists(), filename)
                 self.assertTrue((root / filename.replace(".html", "_free.html")).exists(), filename)
+            self.assertTrue((root / "weak_early_beta_guide.html").exists())
+            self.assertTrue((root / "weak_early_beta_guide_free.html").exists())
 
     def test_free_report_masks_pending_identity_until_fifth_close(self):
         pending = self.ledger.head(1).copy()
@@ -203,6 +236,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
             state_path = root / "beta-state.json"
             claim_path = root / "claim.json"
             receipt_path = root / "receipts.json"
+            reports_path = root / "reports.json"
             forward = self.ledger.head(1).copy()
             forward.loc[:, "source_scope"] = "FORWARD_CAUSAL"
             forward.loc[:, "fundamental_status"] = "queued"
@@ -226,9 +260,14 @@ class WeakEarlyBetaTests(unittest.TestCase):
             }
             state["claims"] = {}
             state_path.write_text(json.dumps(state), encoding="utf-8")
-            receipts = export_receipts(state_path, receipt_path)
+            reports_path.write_text(json.dumps({"reports": [{
+                "alertId": identity,
+                "fields": [{"name": "材料インパクト", "value": "様子見：テスト"}],
+            }]}, ensure_ascii=False), encoding="utf-8")
+            receipts = export_receipts(state_path, receipt_path, reports_path)
             self.assertEqual(receipts[0]["signal_date"], "2026-09-18")
             self.assertEqual(receipts[0]["symbol"], "1234")
+            self.assertIn("材料インパクト", receipts[0]["html"])
 
     def test_embedded_fundamental_text_is_html_escaped(self):
         ledger = self.ledger.head(1).copy()

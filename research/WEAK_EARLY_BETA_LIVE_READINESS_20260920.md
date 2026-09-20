@@ -12,9 +12,12 @@
 10. Role contract: the separate gate uses the same allowed Discord role as the current report gate.
 11. Browser verification: initial 20 rows, +20 pagination, code/name search, inclusive date range, clear, theme persistence, and relative mode navigation all passed.
 12. TradingView chart URLs use the Japanese domain.
-13. Python verification: 13 tests passed; JavaScript syntax checks passed.
-14. Gate verification: TypeScript and Wrangler dry-run passed with all 12 HTML pages and both beta scripts synchronized.
-15. Live deploy attempted but stopped before upload because the local environment lacks `CLOUDFLARE_API_TOKEN`.
-16. Discord signal and Luna xhigh fundamental notification remain unposted because the two dedicated beta webhook secrets are absent.
+13. Python verification: 15 tests passed; JavaScript syntax checks passed.
+14. Gate verification: TypeScript and Wrangler dry-run passed with all protected/free HTML pages, guide pages, and beta scripts synchronized.
+15. Live deploy completed to `https://scoring-bot-weak-early-beta.ipo-ken5-5489.workers.dev/` (Worker version `9eefbc28-0482-42f7-9384-dc2ce3cc6b42`).
+16. The 7709 signal Embed was updated in place and the validated Luna xhigh fundamental analysis was posted to the dedicated channel at `https://discord.com/channels/1479418833352785944/1550876675884060702/1551177205411876886`.
 17. Queue and receipt: `weak_early_beta/state/fundamental_queue.json` and `weak_early_beta/state/latest_run_receipt.json`.
-18. Safe next action: credentialed beta-only Worker deploy, then configure the two dedicated webhooks and process the single queued claim.
+18. UI completion: title/navigation, highlighted P/L metrics, 20-row pagination, date-range search, persistent dark mode, guide/disclaimer page, footer, and 7709 company name were verified in a real browser.
+19. Automation: `cloud-2` runs the isolated daily pipeline at 16:15 JST on weekdays; `cloud-5` sends fifth-session reminders at 07:30 JST on weekdays. Both use Luna/minimal as launchers and code-side Japanese bank-holiday gates.
+20. The next Japanese bank business day is 2026-09-24. Dry-run identifies one 7709 fifth-session reminder for that date.
+21. Production/main/Stable/Sniper/Mega/TradingView/watchlist/Spreadsheet and existing production workflows remain unchanged; 2026 remains SEALED for selection and retuning.

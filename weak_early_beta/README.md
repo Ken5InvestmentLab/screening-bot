@@ -23,10 +23,10 @@
   -> med_ret5 <= 0 AND ret10 <= 0.5735294117647058
   -> 5条件で選択
   -> append-safe ledger
-  -> 専用Discordへ検出通知
-  -> 専用Premium Worker claim（未来分のみ）
+  -> 専用Premium Worker claim（未来分のみ、Luna xhigh）
   -> ファンダ分析receiptをledgerへ反映
-  -> 別HTMLを再生成
+  -> 分析込みHTMLを再生成・Cloudflareへ反映
+  -> 最後に専用Discordへ検出Embedを通知
 ```
 
 同じ日・銘柄が複数条件へ該当した場合、ledgerは条件ごとに1行を保持し、Discordは銘柄単位で1通知へまとめます。
@@ -38,6 +38,9 @@ py -m weak_early_beta.cli bootstrap
 py -m weak_early_beta.cli report
 py -m weak_early_beta.cli daily --refresh-live --dry-run-notify
 py -m weak_early_beta.cli daily --refresh-live --notify
+py -m weak_early_beta.cli notify
+py -m weak_early_beta.cli is-business-day --date 2026-09-24
+py -m weak_early_beta.cli remind-exits --date 2026-09-24 --dry-run
 py -m weak_early_beta.cli prepare-fundamentals
 py -m weak_early_beta.cli export-fundamentals
 py -m weak_early_beta.cli import-fundamentals --receipts path/to/receipts.json
@@ -47,18 +50,28 @@ py -m weak_early_beta.cli import-fundamentals --receipts path/to/receipts.json
 
 Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-runner.mjs` です。例設定を複製し、`WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL` をGit管理外の `.env` に設定して実行します。ランナーは `gpt-5.6-luna` / `xhigh` を固定し、現行Premium Workerのvalidatorでdry-run通過後に専用チャンネルへ投稿します。
 
+## 定時運用
+
+- Codex予定タスク `Cloud 日次スコアリング`（ID `cloud-2`）を平日16:15 JSTに実行します。16:00直後のデータ未到着を避けつつ早めに動かす設定です。
+- ランナーは当日の日足が揃うまで最大3回・5分間隔で有限再試行し、揃わなければ通知前に停止します。
+- Codex予定タスク `Cloud 5営業日目リマインダー`（ID `cloud-5`）を平日7:30 JSTに実行します。
+- 両ランナーとも日本の銀行休業日（祝日・振替休日・12月31日〜1月3日）をコード側で判定し、休業日は何も変更しません。
+- 日次ランナーは `scripts/windows/weak-early-beta-daily-runner.mjs`、朝のリマインダーは `scripts/windows/weak-early-beta-exit-reminder-runner.mjs` です。予定タスク自体は `gpt-5.6-luna` / minimal、ファンダ分析だけは専用ランナーが `gpt-5.6-luna` / xhigh に固定します。
+- PCとCodexのローカル実行環境、インターネット接続が利用できることが前提です。GitHub cronや既存GAS、本番workflowは使用しません。
+
 ## 成績表示
 
 - 年別・月別・全期間の `確定取引数 / 平均 / 中央値 / 勝率 / +10 / +20 / -10 / -20 / 最大上昇 / 最大下落 / Top3除外平均`
 - 100株ずつ売買した損益
 - 100株損益額による年別・全期間順位
-- 同時保有に必要だった参考元金と元金増加率
+- 同時保有に必要だった必要資金（目安）と資金増加率
 - 5モードを合わせた統合成績（1モードにつき100株の「モード別積上げ」と、同日・同銘柄を100株にする「銘柄均等」を併記）
 - 同時保有を賄う参考必要元金に対する単純年率
 - 未確定件数
 - トータルと5モードを分けた専用ページ
-- 参考元金へ決済日の100株損益を加算した資産推移グラフ
-- 証券コードまたは銘柄名による検出履歴検索
+- 必要資金（目安）へ決済日の100株損益を加算した資産推移グラフ
+- 証券コード・銘柄名・シグナル日範囲・モードによる検出履歴検索
+- 検出履歴と月別成績の20件ずつ追加表示、端末ごとのダークモード保存、独立した見方・使い方ページ
 
 延べ投入額は表示しません。単純年率は複利・売買コスト・税金を含みません。
 
@@ -69,4 +82,4 @@ Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-run
 - トータルは `reports/weak_early_beta_latest.html`、モード別は `reports/weak_early_beta_<mode>.html` を生成します。
 - `weak-early-beta-gate/` は現行report-gateの認証実装をコード再利用しますが、別Worker・別公開URL・別assetsです。
 - 既存の本番workflow、Stable、Sniper、Mega、TradingView、watchlist、Spreadsheetは読み書きしません。
-- GitHub Actionsのscheduleはdefault branchに置かれた後だけ有効です。研究branch上では手動実行で検証します。
+- 定時起動は研究branchを対象にしたCodex予定タスクから専用Windowsランナーを呼びます。GitHub Actionsのscheduleや既存GASは変更しません。

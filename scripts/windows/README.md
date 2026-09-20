@@ -40,3 +40,18 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/install-
 - タスクを登録しただけで未ログオン復旧を検証済みとしない。Session 0 テストに加え、実際の再起動後・未ログオンでの初回予定実行を履歴から確認する。
 
 公式資料: [非対話 CLI](https://learn.chatgpt.com/docs/non-interactive-mode)、[認証](https://learn.chatgpt.com/docs/auth)、[ChatGPT のスケジュール](https://learn.chatgpt.com/docs/automations)。Web版 ChatGPT Workへ移す場合は、ローカル worker・認証・状態をクラウドから扱う仕組みと同等の投稿検証が別途必要。
+
+## Cloud ベータ専用ランナー
+
+`research/weak-early-beta` では、既存GAS・本番workflowへ接続せず次の独立ランナーをCodex予定タスクから呼び出す。
+
+```powershell
+node scripts/windows/weak-early-beta-daily-runner.mjs .cache/weak_early_beta/daily-runner.config.json
+node scripts/windows/weak-early-beta-exit-reminder-runner.mjs .cache/weak_early_beta/exit-reminder-runner.config.json
+```
+
+- 日次は平日16:15 JST（automation `cloud-2`）。当日日足のfreshnessを確認し、不足時は最大3回・5分間隔で有限再試行する。
+- 朝は平日07:30 JST（automation `cloud-5`）。その日の終値で5営業日目を迎える銘柄だけを専用DiscordへEmbed通知する。
+- 日本の銀行休業日はランナー内の決定論カレンダーでskipする。起動側は `gpt-5.6-luna` / minimal、ファンダ分析だけは専用runnerで Luna / xhigh。
+- 実設定は `.cache/weak_early_beta/*.config.json` とGit管理外の専用 `.env` に置く。秘密値をexample、ログ、commitへ書かない。
+- 両ランナーは `research/weak-early-beta` 以外で停止し、production/mainや既存通知系を更新しない。

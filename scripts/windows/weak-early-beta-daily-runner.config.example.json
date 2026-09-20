@@ -1,0 +1,10 @@
+{
+  "repoPath": "C:\\path\\to\\screening-bot",
+  "runtimeDir": "C:\\path\\to\\screening-bot\\.cache\\weak_early_beta\\daily_runtime",
+  "pythonPath": "C:\\path\\to\\python.exe",
+  "nodePath": "C:\\Program Files\\nodejs\\node.exe",
+  "npmPath": "C:\\Program Files\\nodejs\\npm.cmd",
+  "fundamentalConfigPath": "C:\\path\\to\\screening-bot\\.cache\\weak_early_beta\\fundamental-runner.config.json",
+  "maxFreshnessAttempts": 3,
+  "freshnessRetryDelayMs": 300000
+}

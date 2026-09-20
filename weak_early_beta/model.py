@@ -96,6 +96,39 @@ def score_latest(raw: pd.DataFrame, as_of: str | None = None) -> tuple[pd.DataFr
     return tail_latest, selected
 
 
+def score_range(
+    raw: pd.DataFrame,
+    start: str,
+    end: str | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Score an inclusive forward date range, fitting each causal month only once."""
+    eligible, labeled = prepare_live(raw)
+    start_date = pd.Timestamp(start).normalize()
+    end_date = pd.Timestamp(end).normalize() if end else eligible["date"].max().normalize()
+    if end_date < start_date:
+        raise ValueError(f"end date {end_date:%Y-%m-%d} is before start date {start_date:%Y-%m-%d}")
+    months = pd.period_range(start_date.to_period("M"), end_date.to_period("M"), freq="M")
+    tail_parts = []
+    selected_parts = []
+    for month in months:
+        month_tail = causal_tail_for_month(eligible, labeled, month)
+        month_tail = month_tail[
+            month_tail["date"].between(start_date, end_date, inclusive="both")
+        ].copy()
+        if month_tail.empty:
+            continue
+        tail_parts.append(month_tail)
+        selected = shadow.select_candidates(month_tail)
+        if not selected.empty:
+            selected_parts.append(selected)
+    tail = pd.concat(tail_parts, ignore_index=True) if tail_parts else pd.DataFrame()
+    selected = (
+        pd.concat(selected_parts, ignore_index=True)
+        if selected_parts else pd.DataFrame()
+    )
+    return tail, selected
+
+
 def attach_forward_rows(
     selected: pd.DataFrame,
     raw: pd.DataFrame,

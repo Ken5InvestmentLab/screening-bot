@@ -93,7 +93,10 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("月別の詳しい成績を見る", output)
         self.assertIn("トータルの資産推移", output)
         self.assertEqual(output.count('role="img"'), 2)
-        self.assertIn("/weak_early_beta_shadow.html", output)
+        self.assertIn("./weak_early_beta_shadow.html", output)
+        self.assertIn("./weak-early-beta-interactions.js", output)
+        self.assertIn("./weak-early-beta-theme-init.js", output)
+        self.assertIn("3モード該当なら合計300株", output)
         self.assertIn("確定取引数", output)
         self.assertNotIn("確定n", output)
         self.assertNotIn("確定ユニット", output)
@@ -116,7 +119,13 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("Shadow の資産推移", output)
         self.assertEqual(output.count('role="img"'), 1)
         self.assertIn('data-search="', output)
+        self.assertIn('data-date="', output)
         self.assertIn("証券コード・銘柄名で検索", output)
+        self.assertIn('id="history-date-from"', output)
+        self.assertIn('id="history-date-to"', output)
+        self.assertIn('id="history-load-more"', output)
+        self.assertIn("銘柄一覧を表示（20件ずつ）", output)
+        self.assertIn("https://jp.tradingview.com/chart/", output)
         self.assertNotIn('id="selector-filter"', output)
 
     def test_write_report_creates_all_mode_pages_and_free_shells(self):
@@ -131,6 +140,28 @@ class WeakEarlyBetaTests(unittest.TestCase):
             for filename in MODE_PAGE_NAMES.values():
                 self.assertTrue((root / filename).exists(), filename)
                 self.assertTrue((root / filename.replace(".html", "_free.html")).exists(), filename)
+
+    def test_free_report_masks_pending_identity_until_fifth_close(self):
+        pending = self.ledger.head(1).copy()
+        pending.loc[:, "source_scope"] = "FORWARD_CAUSAL"
+        pending.loc[:, "status"] = "entered"
+        pending.loc[:, "symbol"] = "9999"
+        pending.loc[:, "company_name"] = "未確定テスト社"
+        pending.loc[:, "gross_return"] = float("nan")
+        pending.loc[:, "one_hundred_shares_pl_yen"] = float("nan")
+        metrics = build_metrics(pending, pd.Timestamp("2026-09-20"))
+        monthly = build_monthly_metrics(pending, pd.Timestamp("2026-09-20"))
+        output = render_report(
+            pending,
+            metrics,
+            pd.Timestamp("2026-09-20", tz="Asia/Tokyo"),
+            monthly_metrics=monthly,
+            mask_pending=True,
+        )
+        self.assertNotIn("9999", output)
+        self.assertNotIn("未確定テスト社", output)
+        self.assertIn("5営業日終値確定まで会員限定", output)
+        self.assertIn('href="/purchase"', output)
 
     def test_monthly_metrics_keep_year_month_labels(self):
         monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))

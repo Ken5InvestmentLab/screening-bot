@@ -92,7 +92,7 @@ def prepare_claim(
             "symbolCode": symbol,
             "symbolName": str(item.get("company_name", "")),
             "entryPrice": entry_price,
-            "tradingViewUrl": f"https://www.tradingview.com/chart/?symbol=TSE%3A{symbol}",
+            "tradingViewUrl": f"https://jp.tradingview.com/chart/?symbol=TSE%3A{symbol}",
             "betaSelectors": list(item.get("selector_names", [])),
         }
         pending.append(alert)

@@ -30,6 +30,11 @@ MODE_PAGE_NAMES = {
     for selector_id in SELECTOR_ORDER
 }
 
+ALLOCATION_EXPLANATION = (
+    "モード別積上げは、同じ銘柄が複数モードに該当した場合、モードごとに100株ずつ買ったものとして集計します"
+    "（例: 3モード該当なら合計300株）。銘柄均等は、該当モード数にかかわらず、同じ日・同じ銘柄を100株だけ買ったものとして集計します。"
+)
+
 
 def _pct(value, signed: bool = False) -> str:
     if pd.isna(value):
@@ -175,7 +180,7 @@ def _condition_cards() -> str:
     return "".join(cards)
 
 
-def _detection_rows(ledger: pd.DataFrame) -> str:
+def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
     if ledger.empty:
         return '<tr><td colspan="9">検出履歴がありません</td></tr>'
     data = ledger.copy()
@@ -199,14 +204,17 @@ def _detection_rows(ledger: pd.DataFrame) -> str:
         cash = pd.to_numeric(group["one_hundred_shares_pl_yen"], errors="coerce").dropna()
         status = "確定" if not gross.empty else ("保有中" if str(first["status"]) == "entered" else "寄付待ち")
         status_class = "mature" if not gross.empty else "pending"
-        fundamental_url = next(
+        is_masked = mask_pending and gross.empty
+        fundamental_url = "" if is_masked else next(
             (str(x) for x in group["fundamental_discord_url"] if pd.notna(x) and str(x).strip()), ""
         )
-        fundamental_html = next(
+        fundamental_html = "" if is_masked else next(
             (str(x) for x in group["fundamental_html"] if pd.notna(x) and str(x).strip()), ""
         )
         actions = ""
-        if fundamental_html:
+        if is_masked:
+            actions = '<a class="button-link" href="/purchase">新着銘柄を見る</a>'
+        elif fundamental_html:
             safe_analysis = html.escape(fundamental_html).replace("\n", "<br>")
             actions = (
                 '<button class="fundamental-toggle" type="button">ファンダ分析</button>'
@@ -214,18 +222,28 @@ def _detection_rows(ledger: pd.DataFrame) -> str:
             )
         elif fundamental_url:
             actions = f'<a class="button-link" href="{html.escape(fundamental_url)}">ファンダ分析</a>'
-        search_text = f"{symbol} {name}".strip()
+        display_symbol = "••••" if is_masked else str(symbol)
+        display_name = "5営業日終値確定まで会員限定" if is_masked else name
+        search_text = "" if is_masked else f"{symbol} {name}".strip()
+        entry_display = "会員限定" if is_masked else f"{_date(first['entry_date'])}<small>{_price(first['entry_open'])}</small>"
+        exit_display = "未確定" if is_masked else f"{_date(first['fifth_xtks_exit_date'])}<small>{_price(first['fifth_xtks_exit_close'])}</small>"
+        chart_action = (
+            '<a class="button-link" href="/purchase">アクセス権を購入する</a>'
+            if is_masked
+            else f'<a href="https://jp.tradingview.com/chart/?symbol=TSE%3A{html.escape(str(symbol))}">チャート</a>'
+        )
         rows.append(
             f'<tr data-selectors="{html.escape(" ".join(selectors))}" '
-            f'data-symbol="{html.escape(str(symbol))}" data-search="{html.escape(search_text)}">'
+            f'data-date="{signal_date:%Y-%m-%d}" '
+            f'data-symbol="{"" if is_masked else html.escape(str(symbol))}" data-search="{html.escape(search_text)}">'
             f"<td>{signal_date:%Y-%m-%d}</td>"
-            f"<th><span class=\"symbol\">{html.escape(str(symbol))}</span> {html.escape(name)}<div class=\"actions\">{actions}</div></th>"
+            f"<th><span class=\"symbol\">{html.escape(display_symbol)}</span> {html.escape(display_name)}<div class=\"actions\">{actions}</div></th>"
             f"<td>{badges}</td><td><span class=\"status {status_class}\">{status}</span></td>"
-            f"<td>{_date(first['entry_date'])}<small>{_price(first['entry_open'])}</small></td>"
-            f"<td>{_date(first['fifth_xtks_exit_date'])}<small>{_price(first['fifth_xtks_exit_close'])}</small></td>"
+            f"<td>{entry_display}</td>"
+            f"<td>{exit_display}</td>"
             f"<td class=\"number\">{_pct(gross.iloc[0] * 100, True) if not gross.empty else '—'}</td>"
             f"<td class=\"number\">{_yen(cash.iloc[0]) if not cash.empty else '—'}</td>"
-            f"<td><a href=\"https://www.tradingview.com/chart/?symbol=TSE%3A{html.escape(str(symbol))}\">チャート</a></td>"
+            f"<td>{chart_action}</td>"
             "</tr>"
         )
     return "".join(rows)
@@ -237,7 +255,7 @@ REPORT_CSS = """
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 12% -8%,color-mix(in srgb,var(--cyan) 18%,transparent),transparent 34%),radial-gradient(circle at 94% 5%,color-mix(in srgb,var(--violet) 16%,transparent),transparent 30%),var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Noto Sans JP",sans-serif}a{color:var(--blue)}
 .topbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--panel-solid) 86%,transparent);border-bottom:1px solid var(--line);backdrop-filter:blur(16px)}
 .nav{max-width:1440px;margin:auto;padding:10px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brand{font-weight:850;margin-right:auto}.nav-link{padding:7px 10px;border-radius:999px;text-decoration:none;font-weight:700}.nav-link.active,.nav-link:hover{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid))}button,select,input{font:inherit}button{cursor:pointer}
-.theme,.clear-search{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:999px;padding:7px 12px}main{max-width:1440px;margin:auto;padding:34px 20px 60px}
+.theme,.clear-search,.load-more,.collapse-results{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:999px;padding:7px 12px}main{max-width:1440px;margin:auto;padding:34px 20px 60px}
 .hero{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:stretch}.panel{background:var(--panel);border:1px solid color-mix(in srgb,var(--line) 84%,transparent);border-radius:22px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px;backdrop-filter:blur(10px)}
 .hero-main{position:relative;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--panel-solid) 94%,var(--cyan)),color-mix(in srgb,var(--panel-solid) 92%,var(--violet)))}.hero-main:after{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;bottom:-130px;background:color-mix(in srgb,var(--cyan) 16%,transparent)}
 .eyebrow{color:var(--cyan);font-weight:800;letter-spacing:.06em}h1{font-size:clamp(28px,5vw,52px);line-height:1.12;margin:.15em 0}h2{margin:0 0 16px;font-size:22px}h3{margin:8px 0}.lead{font-size:17px;color:var(--muted);max-width:62ch}
@@ -245,7 +263,7 @@ REPORT_CSS = """
 .condition-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.condition-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;padding:17px;background:linear-gradient(150deg,var(--panel-solid),color-mix(in srgb,var(--bg) 88%,var(--violet)));transition:transform .18s ease,box-shadow .18s ease;text-decoration:none;color:var(--ink)}.condition-card:before{content:"";position:absolute;left:0;top:0;width:100%;height:4px;background:linear-gradient(90deg,var(--cyan),var(--violet))}.condition-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(54,84,145,.12)}.condition-id,.badge{display:inline-flex;border-radius:999px;background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));color:var(--blue);padding:3px 8px;font-size:12px;font-weight:750;margin:2px}
 .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.chart-card{border:1px solid var(--line);border-radius:18px;background:var(--panel-solid);padding:18px}.chart-card svg{width:100%;height:auto;display:block}.chart-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.chart-stats div{background:var(--bg);border-radius:12px;padding:10px}.chart-stats b{display:block}.axis-label{fill:var(--muted);font-size:12px}.grid-line{stroke:var(--line);stroke-width:1}.equity-line{fill:none;stroke:var(--blue);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}.equity-area{fill:url(#equity-fill);opacity:.22}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel-solid)}th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}thead th{position:sticky;top:0;background:color-mix(in srgb,var(--panel-solid) 94%,var(--bg));z-index:1;font-size:12px;color:var(--muted)}tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg) 42%,transparent)}tbody tr:hover{background:color-mix(in srgb,var(--blue) 7%,var(--panel-solid))}tr[hidden]{display:none!important}
-.filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}.filters input,.filters select{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:10px;padding:10px 12px}.filters input{min-width:min(360px,100%)}.result-count{color:var(--muted);font-weight:700}.status{font-weight:750}.status.mature{color:var(--good)}.status.pending{color:var(--warn)}.number{font-variant-numeric:tabular-nums}.symbol{font-size:17px}.actions{margin-top:5px}.button-link,.fundamental-toggle{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}.fundamental-detail{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}
+.history-details{border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 38%,var(--panel-solid));padding:0 14px 14px}.history-details>summary{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.filter-field{display:grid;gap:4px}.filter-field span{font-size:12px;color:var(--muted);font-weight:700}.filters input,.filters select{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:10px;padding:10px 12px}.filters input[type="search"]{min-width:min(360px,100%)}.result-count{color:var(--muted);font-weight:700}.history-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}.status{font-weight:750}.status.mature{color:var(--good)}.status.pending{color:var(--warn)}.number{font-variant-numeric:tabular-nums}.symbol{font-size:17px}.actions{margin-top:5px}.button-link,.fundamental-toggle{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}.fundamental-detail{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}
 .note{color:var(--muted);font-size:13px}.monthly-details{margin-top:16px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 55%,var(--panel-solid));padding:0 14px 14px}.monthly-details summary{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}footer{color:var(--muted);text-align:center;padding:28px}
 @media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid{grid-template-columns:1fr}}
 @media(max-width:620px){main{padding:18px 12px 50px}.panel{padding:16px;border-radius:14px}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}}
@@ -255,13 +273,13 @@ REPORT_CSS = """
 def _nav(current: str) -> str:
     links = [
         f'<a class="nav-link {"active" if current == "total" else ""}" '
-        'href="/weak_early_beta_latest.html">トータル</a>'
+        'href="./weak_early_beta_latest.html">トータル</a>'
     ]
     for selector_id in SELECTOR_ORDER:
         info = selector_info(selector_id)
         active = "active" if selector_id == current else ""
         links.append(
-            f'<a class="nav-link {active}" href="/{MODE_PAGE_NAMES[selector_id]}">'
+            f'<a class="nav-link {active}" href="./{MODE_PAGE_NAMES[selector_id]}">'
             f"{html.escape(info.short_name)}</a>"
         )
     return "".join(links)
@@ -271,9 +289,9 @@ def _page_shell(title: str, current: str, body: str) -> str:
     document_title = "天底極致 -Cloud-" if current == "total" else f"{title} | 天底極致 -Cloud-"
     return f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(document_title)}</title><style>{REPORT_CSS}</style>
-<script src="/report-interactions.js?v=20260920-2" defer></script></head>
-<body><header class="topbar"><nav class="nav"><span class="brand">天底極致 -Cloud-</span>{_nav(current)}<button class="theme" id="theme-toggle" type="button">表示切替</button></nav></header>
+<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260920-3"></script><style>{REPORT_CSS}</style>
+<script src="./weak-early-beta-interactions.js?v=20260920-3" defer></script></head>
+<body><header class="topbar"><nav class="nav"><span class="brand">天底極致 -Cloud-</span>{_nav(current)}<button class="theme" id="theme-toggle" type="button" aria-pressed="false">ダークモード</button></nav></header>
 <main>{body}</main><footer>天底極致 -Cloud-</footer></body></html>'''
 
 
@@ -316,7 +334,7 @@ def _equity_chart(frame: pd.DataFrame, title: str, chart_id: str) -> str:
     pl = final - initial
     return (
         f'<article class="chart-card"><h3>{html.escape(title)}</h3>'
-        '<p class="note">参考元金から開始し、決済日の100株損益を順番に加えた実現損益ベースです。</p>'
+        '<p class="note">参考元金から開始し、各取引が決済した日に100株分の損益を加えていく推移です。</p>'
         f'<svg viewBox="0 0 {width:.0f} {height:.0f}" role="img" aria-label="{html.escape(title)}の資産推移">'
         f'<defs><linearGradient id="equity-fill-{chart_id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blue)"/><stop offset="1" stop-color="var(--cyan)" stop-opacity="0"/></linearGradient></defs>'
         + "".join(grid)
@@ -365,7 +383,11 @@ def _mode_yearly_rows(metrics: pd.DataFrame, selector_id: str) -> str:
     return "".join(rows)
 
 
-def _history_section(ledger: pd.DataFrame, include_mode_filter: bool) -> str:
+def _history_section(
+    ledger: pd.DataFrame,
+    include_mode_filter: bool,
+    mask_pending: bool = False,
+) -> str:
     mode_filter = ""
     if include_mode_filter:
         options = "".join(
@@ -373,16 +395,28 @@ def _history_section(ledger: pd.DataFrame, include_mode_filter: bool) -> str:
             for selector_id in SELECTOR_ORDER
         )
         mode_filter = f'<select id="selector-filter" aria-label="モードで絞り込み"><option value="">すべてのモード</option>{options}</select>'
+    access_notice = (
+        '<p class="note"><strong>無料表示:</strong> 新着銘柄は5営業日目の終値が確定するまで伏せています。'
+        '<a href="/purchase">アクセス権を購入すると確定前から確認できます。</a></p>'
+        if mask_pending else ""
+    )
     return (
         '<section class="panel" id="history"><h2>検出履歴</h2>'
-        '<div class="filters"><input id="symbol-filter" type="search" autocomplete="off" '
-        'aria-label="証券コードまたは銘柄名で検索" placeholder="証券コード・銘柄名で検索">'
+        + access_notice
+        + '<details class="history-details"><summary>銘柄一覧を表示（20件ずつ）</summary>'
+        '<div class="filters"><label class="filter-field"><span>銘柄</span><input id="symbol-filter" type="search" autocomplete="off" '
+        'aria-label="証券コードまたは銘柄名で検索" placeholder="証券コード・銘柄名で検索"></label>'
+        '<label class="filter-field"><span>開始日</span><input id="history-date-from" type="date" aria-label="シグナル日の開始日"></label>'
+        '<label class="filter-field"><span>終了日</span><input id="history-date-to" type="date" aria-label="シグナル日の終了日"></label>'
         + mode_filter
         + '<button class="clear-search" id="clear-search" type="button">検索をクリア</button>'
         '<output class="result-count" id="search-result-count" aria-live="polite"></output></div>'
         '<noscript><p class="note">検索機能を使うにはJavaScriptを有効にしてください。</p></noscript>'
         '<div class="table-wrap"><table id="detection-table"><thead><tr><th>シグナル日</th><th>銘柄</th><th>該当モード</th><th>状態</th><th>エントリー</th><th>5営業日目</th><th>騰落率</th><th>100株損益</th><th>操作</th></tr></thead>'
-        f'<tbody>{_detection_rows(ledger)}</tbody></table></div></section>'
+        f'<tbody>{_detection_rows(ledger, mask_pending=mask_pending)}</tbody></table></div>'
+        '<div class="history-pagination"><button class="load-more" id="history-load-more" type="button">次の20件を表示</button>'
+        '<button class="collapse-results" id="history-collapse" type="button" hidden>最初の20件に戻す</button></div>'
+        '</details></section>'
     )
 
 
@@ -391,6 +425,7 @@ def render_report(
     metrics: pd.DataFrame,
     generated_at: pd.Timestamp,
     monthly_metrics: pd.DataFrame | None = None,
+    mask_pending: bool = False,
 ) -> str:
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     monthly_metrics = monthly_metrics if monthly_metrics is not None else pd.DataFrame()
@@ -403,11 +438,11 @@ def render_report(
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>Cloud トータル</h1><p class="lead">5つのモードを合わせた成績と資産推移です。各モードの詳しい成績は専用ページで確認できます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>集計期間</small><b>{html.escape(total_period)}</b></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div></aside></section>
-<section class="panel" id="growth"><h2>トータルの資産推移</h2><div class="chart-grid">{_equity_chart(ledger, 'モード別積上げ', 'stacked')}{_equity_chart(unique_ledger, '銘柄均等', 'unique')}</div></section>
-<section class="panel" id="performance"><h2>Cloud 全体の成績</h2><p class="note">モード別積上げは該当モードごとに100株、銘柄均等は同じ日・同じ銘柄を100株に固定します。</p><div class="table-wrap"><table><thead><tr><th>期間</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_combined_rows(metrics)}</tbody></table></div><details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table><thead><tr><th>月</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th></tr></thead><tbody>{_monthly_rows(combined_monthly)}</tbody></table></div></details></section>
+<section class="panel" id="growth"><h2>トータルの資産推移</h2><p class="note">{html.escape(ALLOCATION_EXPLANATION)}</p><div class="chart-grid">{_equity_chart(ledger, 'モード別積上げ', 'stacked')}{_equity_chart(unique_ledger, '銘柄均等', 'unique')}</div></section>
+<section class="panel" id="performance"><h2>Cloud 全体の成績</h2><p class="note">{html.escape(ALLOCATION_EXPLANATION)}</p><div class="table-wrap"><table><thead><tr><th>期間</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_combined_rows(metrics)}</tbody></table></div><details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table><thead><tr><th>月</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th></tr></thead><tbody>{_monthly_rows(combined_monthly)}</tbody></table></div></details></section>
 <section class="panel" id="conditions"><h2>モード別ページ</h2><div class="condition-grid">{_condition_cards()}</div></section>
 <section class="panel"><h2>モード別の全期間比較</h2><p class="note">順位は100株ずつ売買した累計損益額順です。</p><div class="table-wrap"><table><thead><tr><th>順位</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>Top3除外平均</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_overall_rows(metrics)}</tbody></table></div></section>
-{_history_section(ledger, include_mode_filter=True)}
+{_history_section(ledger, include_mode_filter=True, mask_pending=mask_pending)}
 <section class="panel"><h2>このレポートについて</h2><p>検出銘柄は専用Discordへ通知し、ファンダ分析が登録された銘柄は検出履歴から確認できます。</p><p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
     return _page_shell("トータル", "total", body)
 
@@ -418,6 +453,7 @@ def render_mode_report(
     monthly_metrics: pd.DataFrame,
     generated_at: pd.Timestamp,
     selector_id: str,
+    mask_pending: bool = False,
 ) -> str:
     info = selector_info(selector_id)
     lane = ledger[ledger["selector_id"].eq(selector_id)].copy()
@@ -432,7 +468,7 @@ def render_mode_report(
 <section class="panel"><h2>{html.escape(info.display_name)} の資産推移</h2>{_equity_chart(lane, info.display_name, selector_id.replace('_', '-'))}</section>
 <section class="panel" id="performance"><h2>全期間の成績</h2><div class="table-wrap"><table><thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_mode_overall_row(metrics, selector_id)}</tbody></table></div></section>
 <section class="panel"><h2>年別の成績</h2><div class="table-wrap"><table><thead><tr><th>年</th><th>確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_mode_yearly_rows(metrics, selector_id)}</tbody></table></div><details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table><thead><tr><th>月</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th></tr></thead><tbody>{_monthly_rows(lane_monthly)}</tbody></table></div></details></section>
-{_history_section(lane, include_mode_filter=False)}
+{_history_section(lane, include_mode_filter=False, mask_pending=mask_pending)}
 <section class="panel"><h2>ほかのモード</h2><div class="condition-grid">{_condition_cards()}</div><p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
     return _page_shell(info.display_name, selector_id, body)
 
@@ -463,7 +499,13 @@ def write_report(
     )
     free_path = report_path.with_name(report_path.stem + "_free.html")
     free_path.write_text(
-        '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>天底極致 -Cloud- | アクセス権限がありません</title><style>body{font-family:system-ui;background:radial-gradient(circle at 20% 0,#d8efff,transparent 45%),#edf4ff;color:#14213d;margin:0;padding:40px}.box{max-width:680px;margin:auto;background:rgba(255,255,255,.92);border:1px solid #d4e1f3;border-radius:22px;padding:32px;box-shadow:0 18px 46px rgba(54,84,145,.12)}a{color:#4169e1}</style></head><body><main class="box"><p>天底極致 -Cloud-</p><h1>Discordロールが必要です</h1><p>このレポートは、対象のDiscordロールを持つユーザーだけが閲覧できます。</p><p><a href="/auth/logout">Discordで再ログイン</a></p></main></body></html>',
+        render_report(
+            ledger,
+            metrics,
+            generated,
+            monthly_metrics=monthly_metrics,
+            mask_pending=True,
+        ),
         encoding="utf-8",
     )
     for selector_id, filename in MODE_PAGE_NAMES.items():
@@ -473,7 +515,14 @@ def write_report(
             encoding="utf-8",
         )
         mode_path.with_name(mode_path.stem + "_free.html").write_text(
-            free_path.read_text(encoding="utf-8"),
+            render_mode_report(
+                ledger,
+                metrics,
+                monthly_metrics,
+                generated,
+                selector_id,
+                mask_pending=True,
+            ),
             encoding="utf-8",
         )
     return metrics

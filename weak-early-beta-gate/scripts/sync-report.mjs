@@ -1,4 +1,4 @@
-import { copyFile, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -21,10 +21,10 @@ for (const name of pageStems.flatMap((stem) => [`${stem}.html`, `${stem}_free.ht
   await copyFile(path.join(reports, name), path.join(publicDir, name));
   console.log(`synced reports/${name}`);
 }
-await copyFile(
-  path.join(reports, "weak-early-beta-interactions.js"),
-  path.join(publicDir, "report-interactions.js"),
-);
-// The shared gate exposes this stable path.  The beta report does not need an
-// early inline theme script, so a no-op asset keeps the route deterministic.
-await writeFile(path.join(publicDir, "report-theme-init.js"), "// beta no-op\n", "utf8");
+for (const scriptName of [
+  "weak-early-beta-interactions.js",
+  "weak-early-beta-theme-init.js",
+]) {
+  await copyFile(path.join(reports, scriptName), path.join(publicDir, scriptName));
+  console.log(`synced reports/${scriptName}`);
+}

@@ -76,10 +76,16 @@ def command_daily(args: argparse.Namespace) -> None:
         if not daily_path.exists():
             raise FileNotFoundError(f"daily corpus not found: {daily_path}")
         raw = model.read_daily(daily_path)
+        if args.refresh_universe:
+            universe = model.base.jpx_universe()
+            company_names = universe.set_index("code")["name"].astype(str).to_dict()
     source_hash = model.sha256(daily_path)
     raw = model.read_daily(daily_path)
     ledger = model.refresh_forward_endpoints(ledger, raw)
-    tail, selected = model.score_latest(raw, args.as_of)
+    if args.from_date:
+        tail, selected = model.score_range(raw, args.from_date, args.as_of)
+    else:
+        tail, selected = model.score_latest(raw, args.as_of)
     incoming = model.attach_forward_rows(selected, raw, company_names, source_hash)
     ledger = merge_detections(ledger, incoming)
     report_url = args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", "")
@@ -100,6 +106,8 @@ def command_daily(args: argparse.Namespace) -> None:
         "daily_corpus": str(daily_path),
         "daily_sha256": source_hash,
         "latest_session": f"{latest:%Y-%m-%d}",
+        "score_from": args.from_date or (args.as_of or f"{latest:%Y-%m-%d}"),
+        "score_to": args.as_of or f"{latest:%Y-%m-%d}",
         "tail_rows_latest": int(len(tail)),
         "selector_rows_latest": int(len(selected)),
         "new_or_refreshed_rows": int(len(incoming)),
@@ -170,8 +178,17 @@ def parser() -> argparse.ArgumentParser:
     common(daily)
     daily.add_argument("--daily-corpus", default=".cache/weak_early_beta/tse_daily.csv")
     daily.add_argument("--refresh-live", action="store_true")
+    daily.add_argument(
+        "--refresh-universe",
+        action="store_true",
+        help="refresh only the JPX code/name mapping while reusing the cached daily corpus",
+    )
     daily.add_argument("--period", default="5y")
     daily.add_argument("--as-of")
+    daily.add_argument(
+        "--from-date",
+        help="score every session from this date through --as-of, fitting each month once",
+    )
     daily.add_argument("--notify", action="store_true")
     daily.add_argument("--dry-run-notify", action="store_true")
     daily.add_argument("--report-url", default="")

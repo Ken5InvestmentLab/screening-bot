@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "claim_id": "2026-09-14|7709",
+    "signal_date": "2026-09-14",
+    "symbol": "7709",
+    "company_name": "クボテック",
+    "selectors": [
+      "body_pct_low",
+      "dual_top1_agreement",
+      "dual_top1_agreement_g3_no_acute_selloff",
+      "mean_rank_volr20_body_pct",
+      "volr20_low"
+    ],
+    "selector_names": [
+      "Balance",
+      "Dive",
+      "Fusion",
+      "Shadow",
+      "Silence"
+    ],
+    "status": "queued"
+  }
+]

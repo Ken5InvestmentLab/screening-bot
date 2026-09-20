@@ -1,0 +1,15 @@
+{
+  "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
+  "run_at": "2026-09-20T14:16:30.460830+09:00",
+  "daily_corpus": ".cache\\weak_early_beta\\tse_daily.csv",
+  "daily_sha256": "492e735b3bceb345e784d9315189a8a98a9edf90663d0a46eee04895a85acabf",
+  "latest_session": "2026-09-18",
+  "score_from": "2026-09-11",
+  "score_to": "2026-09-18",
+  "tail_rows_latest": 2,
+  "selector_rows_latest": 5,
+  "new_or_refreshed_rows": 5,
+  "notification_payloads": 1,
+  "ledger_rows": 972,
+  "metrics_rows": 35
+}

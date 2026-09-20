@@ -14,7 +14,7 @@ import requests
 import yfinance as yf
 from xgboost import XGBClassifier
 
-JPX_LIST_URL = "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xls"
+JPX_LIST_URL = "https://www.jpx.co.jp/markets/statistics-equities/misc/tvdivq0000001vg2-att/data_j.xlsx"
 FEATURES = [
     "ret1","ret2","ret3","ret5","ret10","ret20","ret40",
     "ma5_gap","ma10_gap","ma20_gap","ma40_gap",

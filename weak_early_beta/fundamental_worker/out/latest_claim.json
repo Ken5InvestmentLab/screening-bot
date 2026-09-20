@@ -1,24 +1,23 @@
 {
   "ok": true,
-  "claimId": "2d92b3b6-3916-4039-a6bf-21cacb45046e",
-  "generatedAt": "2026-09-20T15:28:37.226683+09:00",
+  "claimId": "d29a1a4a-fe00-4a24-b4f8-86b0e0579c1d",
+  "generatedAt": "2026-09-21T01:15:48.772488+09:00",
   "claimedCount": 1,
   "alerts": [
     {
-      "alertId": "weak-early-beta:2026-09-14:7709",
-      "receivedAt": "2026-09-14T15:30:00+09:00",
-      "signalDate": "2026-09-14",
+      "alertId": "weak-early-beta:2026-09-02:4052",
+      "receivedAt": "2026-09-02T15:30:00+09:00",
+      "signalDate": "2026-09-02",
       "signalType": "WEAK_EARLY_BETA",
-      "symbolCode": "7709",
-      "symbolName": "",
-      "entryPrice": 80.0,
-      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A7709",
+      "symbolCode": "4052",
+      "symbolName": "フィーチャ",
+      "entryPrice": 736.0,
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A4052",
       "betaSelectors": [
-        "Balance",
-        "Dive",
-        "Fusion",
-        "Shadow",
-        "Silence"
+        "陰線沈み込みリバウンド",
+        "2条件一致リバウンド",
+        "静かな売られ過ぎバランス",
+        "出来高沈静リバウンド"
       ]
     }
   ],

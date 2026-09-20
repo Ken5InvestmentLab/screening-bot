@@ -120,6 +120,7 @@ async function main(configFile) {
   const reportsPath = path.join(outDir, 'premium_reports.json');
   const receiptsPath = path.join(outDir, 'fundamental_receipts.json');
   const workerPath = path.join(config.premiumWorkerRepoPath, 'premium_worker', 'worker.mjs');
+  const historicalPosterPath = path.join(config.repoPath, 'weak_early_beta', 'scripts', 'post_historical_snapshot.mjs');
 
   const run = async (exe, args, name, options = {}) => {
     const exit = await command(exe, args, {
@@ -162,10 +163,11 @@ async function main(configFile) {
     }
 
     const prompt = [
-      'Weak+Early betaの未来検出だけを、現行Premium Workerと同じ会社固有の品質でファンダ分析してください。$premium-fundamental-snapshot を使います。',
+      'Weak+Early betaのclaimに含まれる検出銘柄を、現行Premium Workerと同じ会社固有の品質でファンダ分析してください。$premium-fundamental-snapshot を使います。',
       `不変claimは ${path.join(runDir, 'claim.json')} です。ここにあるalertIdだけを対象にしてください。`,
       `必ず ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'AUTOMATION_PROMPT.md')} と ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'FUNDAMENTAL_EXAMPLES.md')} を全文読み、skillのreferences/report_quality.mdも読んでください。`,
-      '各社の公式IR、IRBANKまたはTDnet相当の開示一覧を45日以上確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
+      '各銘柄の分析基準時点はclaimのsignal_dateの日本時間23:59です。その時点より後に公表されたIR・適時開示・ニュース・決算資料は、検索で見つかっても絶対に使わないでください。各社の公式IR、IRBANKまたはTDnet相当の開示一覧を基準時点まで確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
+      'レポート本文と開示リンクには、採用した資料の公表日がsignal_date以前であることが分かるようにし、基準時点後の資料を参照していないことを守ってください。',
       '売買推奨、目標株価、追加スコアは禁止。現行契約の全7フィールドとSourcesを満たしてください。',
       `最終JSONは ${reportsPath} だけに書き込んでください。Discord投稿、worker state、Sheets、Git、workflow、ソースコードは変更しないでください。`,
       '報告は有界に保ち、出力JSON作成後は日本語で簡潔に完了を報告してください。',
@@ -196,26 +198,39 @@ async function main(configFile) {
     }
     if (!fs.existsSync(reportsPath)) throw new Error('Codex completed without premium_reports.json');
 
-    const postEnv = { ...env };
-    postEnv.PREMIUM_STATE_PATH = statePath;
-    postEnv.PREMIUM_OUT_DIR = outDir;
-    postEnv.DISCORD_PREMIUM_WEBHOOK_URL = env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '';
-    postEnv.DISCORD_PREMIUM_USERNAME = '天底極致 -Cloud- | ファンダ分析';
-    postEnv.DISCORD_PREMIUM_CHANNEL_ID = FUNDAMENTAL_CHANNEL_ID;
-    postEnv.PREMIUM_LOG_SPREADSHEET_ID = '';
-    // Webhook-only keeps the beta post independent from the production bot and /scan button.
-    delete postEnv.DISCORD_PREMIUM_BOT_TOKEN;
-    delete postEnv.DISCORD_BOT_TOKEN;
-    delete postEnv.DISCORD_TOKEN;
-    await run(config.nodePath, [workerPath, 'post', '--input', reportsPath, '--dry-run'], 'validate', {
-      cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 180_000,
-    });
-    if (!postEnv.DISCORD_PREMIUM_WEBHOOK_URL) {
-      throw new Error('WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL is missing; validation passed but nothing was posted');
+    const reportPayload = readJson(reportsPath);
+    const historicalSnapshot = (reportPayload.reports || reportPayload).every(report =>
+      /^\d{4}-\d{2}-\d{2}T23:59:59\+09:00$/.test(String(report.analysisCutoff || ''))
+    );
+    if (historicalSnapshot) {
+      // Historical snapshots are intentionally posted by the beta-only sidecar:
+      // the production worker rejects any report that omits a later disclosure,
+      // while this sidecar enforces signal_date 23:59 JST as the evidence cutoff.
+      await run(config.nodePath, [historicalPosterPath, '--input', reportsPath, '--state', statePath], 'historical-post', {
+        cwd: config.repoPath, env, timeoutMs: 180_000,
+      });
+    } else {
+      const postEnv = { ...env };
+      postEnv.PREMIUM_STATE_PATH = statePath;
+      postEnv.PREMIUM_OUT_DIR = outDir;
+      postEnv.DISCORD_PREMIUM_WEBHOOK_URL = env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '';
+      postEnv.DISCORD_PREMIUM_USERNAME = '天底極致 -Cloud- | ファンダ分析';
+      postEnv.DISCORD_PREMIUM_CHANNEL_ID = FUNDAMENTAL_CHANNEL_ID;
+      postEnv.PREMIUM_LOG_SPREADSHEET_ID = '';
+      // Webhook-only keeps the beta post independent from the production bot and /scan button.
+      delete postEnv.DISCORD_PREMIUM_BOT_TOKEN;
+      delete postEnv.DISCORD_BOT_TOKEN;
+      delete postEnv.DISCORD_TOKEN;
+      await run(config.nodePath, [workerPath, 'post', '--input', reportsPath, '--dry-run'], 'validate', {
+        cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 180_000,
+      });
+      if (!postEnv.DISCORD_PREMIUM_WEBHOOK_URL) {
+        throw new Error('WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL is missing; validation passed but nothing was posted');
+      }
+      await run(config.nodePath, [workerPath, 'post', '--input', reportsPath], 'post', {
+        cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 300_000,
+      });
     }
-    await run(config.nodePath, [workerPath, 'post', '--input', reportsPath], 'post', {
-      cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 300_000,
-    });
 
     await run(config.pythonPath || 'py', [
       '-m', 'weak_early_beta.cli', 'export-fundamentals',

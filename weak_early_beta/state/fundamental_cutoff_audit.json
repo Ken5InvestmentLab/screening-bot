@@ -1,0 +1,22 @@
+{
+  "policy": "ファンダ分析は各signal_dateの日本時間23:59までに公表済みのIR・適時開示だけを使用する。後発資料はHTML・Discordの新規分析へ持ち込まない。",
+  "audited_at": "2026-09-21T01:40:00+09:00",
+  "entries": [
+    {
+      "alert_id": "weak-early-beta:2026-09-02:4052",
+      "symbol": "4052",
+      "signal_date": "2026-09-02",
+      "status": "PASS",
+      "analysis_cutoff": "2026-09-02T23:59:59+09:00",
+      "discord_url": "https://discord.com/channels/1479418833352785944/1550876675884060702/1551270391501291621"
+    },
+    {
+      "alert_id": "weak-early-beta:2026-09-14:7709",
+      "symbol": "7709",
+      "signal_date": "2026-09-14",
+      "status": "REVIEW_REQUIRED",
+      "reason": "既存の投稿済み分析に2026-09-17開示が含まれるため、検出日基準の分析としては採用しない。銘柄自体もJPX上場廃止決定・整理銘柄指定によりactive HTMLから除外済み。",
+      "existing_discord_url": "https://discord.com/channels/1479418833352785944/1550876675884060702/1551177205411876886"
+    }
+  ]
+}

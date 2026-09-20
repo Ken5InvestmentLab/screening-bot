@@ -9,6 +9,16 @@
       "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A7709",
       "discordMessageUrl": "https://discord.com/channels/1479418833352785944/1550876675884060702/1551177205411876886",
       "sourceCount": 8
+    },
+    "weak-early-beta:2026-09-02:4052": {
+      "postedAt": "2026-09-20T16:34:42.754Z",
+      "symbolCode": "4052",
+      "symbolName": "フィーチャ",
+      "title": "フィーチャ (4052) | TradingView チャート",
+      "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A4052",
+      "discordMessageUrl": "https://discord.com/channels/1479418833352785944/1550876675884060702/1551270391501291621",
+      "sourceCount": 9,
+      "historicalSnapshotCutoff": "2026-09-02T23:59:59+09:00"
     }
   },
   "failed": {},

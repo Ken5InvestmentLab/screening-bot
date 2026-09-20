@@ -29,3 +29,7 @@ Python/
 report-gate/.wrangler/
 report-gate/public/
 report-gate/worker-configuration.d.ts
+
+# Weak+Early beta temporary fundamental-runner logs/configuration
+weak_early_beta/fundamental_worker/out/manual_runtime/
+weak_early_beta/fundamental_worker/out/manual_run_config.json

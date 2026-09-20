@@ -190,6 +190,18 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("./weak_early_beta_shadow.html", output)
         self.assertIn("./weak-early-beta-interactions.js", output)
         self.assertIn("./weak-early-beta-theme-init.js", output)
+        self.assertIn('aria-label="Discord"', output)
+        self.assertIn('aria-label="ココナラ"', output)
+        self.assertIn('aria-label="X"', output)
+        for asset_name in (
+            "discord-light.png",
+            "discord-dark.png",
+            "coconala-light.png",
+            "coconala-dark.png",
+            "x-light.png",
+            "x-dark.png",
+        ):
+            self.assertIn(f'report-assets/{asset_name}', output)
         self.assertIn("3モード該当なら合計300株", output)
         self.assertIn("確定取引数", output)
         self.assertNotIn("確定n", output)

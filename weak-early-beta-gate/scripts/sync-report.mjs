@@ -7,8 +7,10 @@ const gateDir = path.resolve(scriptDir, "..");
 const repoRoot = path.resolve(gateDir, "..");
 const reports = path.join(repoRoot, "reports");
 const publicDir = path.join(gateDir, "public");
+const publicAssetsDir = path.join(publicDir, "report-assets");
 
 await mkdir(publicDir, { recursive: true });
+await mkdir(publicAssetsDir, { recursive: true });
 const pageStems = [
   "weak_early_beta_latest",
   "weak_early_beta_silence",
@@ -28,4 +30,18 @@ for (const scriptName of [
 ]) {
   await copyFile(path.join(reports, scriptName), path.join(publicDir, scriptName));
   console.log(`synced reports/${scriptName}`);
+}
+for (const assetName of [
+  "discord-light.png",
+  "discord-dark.png",
+  "coconala-light.png",
+  "coconala-dark.png",
+  "x-light.png",
+  "x-dark.png",
+]) {
+  await copyFile(
+    path.join(reports, "report-assets", assetName),
+    path.join(publicAssetsDir, assetName),
+  );
+  console.log(`synced reports/report-assets/${assetName}`);
 }

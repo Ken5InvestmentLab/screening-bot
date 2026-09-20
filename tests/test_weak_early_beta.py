@@ -14,7 +14,7 @@ from weak_early_beta.config import (
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
-from weak_early_beta.report import render_report
+from weak_early_beta.report import MODE_PAGE_NAMES, render_mode_report, render_report, write_report
 
 
 class WeakEarlyBetaTests(unittest.TestCase):
@@ -91,6 +91,9 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("銘柄均等", output)
         self.assertIn("単純年率", output)
         self.assertIn("月別の詳しい成績を見る", output)
+        self.assertIn("トータルの資産推移", output)
+        self.assertEqual(output.count('role="img"'), 2)
+        self.assertIn("/weak_early_beta_shadow.html", output)
         self.assertIn("確定取引数", output)
         self.assertNotIn("確定n", output)
         self.assertNotIn("確定ユニット", output)
@@ -99,6 +102,35 @@ class WeakEarlyBetaTests(unittest.TestCase):
         for old_label in ("現行", "Stable", "Sniper", "Mega", "Weak+Early"):
             self.assertNotIn(old_label, output)
         self.assertNotIn("延べ投入額</th>", output)
+
+    def test_mode_pages_have_separate_metrics_chart_and_searchable_history(self):
+        metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
+        monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))
+        output = render_mode_report(
+            self.ledger,
+            metrics,
+            monthly,
+            pd.Timestamp("2026-09-19", tz="Asia/Tokyo"),
+            "mean_rank_volr20_body_pct",
+        )
+        self.assertIn("Shadow の資産推移", output)
+        self.assertEqual(output.count('role="img"'), 1)
+        self.assertIn('data-search="', output)
+        self.assertIn("証券コード・銘柄名で検索", output)
+        self.assertNotIn('id="selector-filter"', output)
+
+    def test_write_report_creates_all_mode_pages_and_free_shells(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            write_report(
+                self.ledger,
+                report_path=root / "weak_early_beta_latest.html",
+                metrics_path=root / "metrics.csv",
+                monthly_metrics_path=root / "monthly.csv",
+            )
+            for filename in MODE_PAGE_NAMES.values():
+                self.assertTrue((root / filename).exists(), filename)
+                self.assertTrue((root / filename.replace(".html", "_free.html")).exists(), filename)
 
     def test_monthly_metrics_keep_year_month_labels(self):
         monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))

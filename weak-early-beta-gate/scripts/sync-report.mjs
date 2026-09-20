@@ -9,7 +9,15 @@ const reports = path.join(repoRoot, "reports");
 const publicDir = path.join(gateDir, "public");
 
 await mkdir(publicDir, { recursive: true });
-for (const name of ["weak_early_beta_latest.html", "weak_early_beta_latest_free.html"]) {
+const pageStems = [
+  "weak_early_beta_latest",
+  "weak_early_beta_silence",
+  "weak_early_beta_dive",
+  "weak_early_beta_shadow",
+  "weak_early_beta_fusion",
+  "weak_early_beta_balance",
+];
+for (const name of pageStems.flatMap((stem) => [`${stem}.html`, `${stem}_free.html`])) {
   await copyFile(path.join(reports, name), path.join(publicDir, name));
   console.log(`synced reports/${name}`);
 }

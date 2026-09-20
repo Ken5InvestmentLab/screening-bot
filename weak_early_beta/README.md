@@ -56,6 +56,9 @@ Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-run
 - 5モードを合わせた統合成績（1モードにつき100株の「モード別積上げ」と、同日・同銘柄を100株にする「銘柄均等」を併記）
 - 同時保有を賄う参考必要元金に対する単純年率
 - 未確定件数
+- トータルと5モードを分けた専用ページ
+- 参考元金へ決済日の100株損益を加算した資産推移グラフ
+- 証券コードまたは銘柄名による検出履歴検索
 
 延べ投入額は表示しません。単純年率は複利・売買コスト・税金を含みません。
 
@@ -63,7 +66,7 @@ Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-run
 
 ## 運用境界
 
-- 現行レポートとは別の `reports/weak_early_beta_latest.html` を生成します。
+- トータルは `reports/weak_early_beta_latest.html`、モード別は `reports/weak_early_beta_<mode>.html` を生成します。
 - `weak-early-beta-gate/` は現行report-gateの認証実装をコード再利用しますが、別Worker・別公開URL・別assetsです。
 - 既存の本番workflow、Stable、Sniper、Mega、TradingView、watchlist、Spreadsheetは読み書きしません。
 - GitHub Actionsのscheduleはdefault branchに置かれた後だけ有効です。研究branch上では手動実行で検証します。

@@ -16,6 +16,7 @@ const pageStems = [
   "weak_early_beta_shadow",
   "weak_early_beta_fusion",
   "weak_early_beta_balance",
+  "weak_early_beta_guide",
 ];
 for (const name of pageStems.flatMap((stem) => [`${stem}.html`, `${stem}_free.html`])) {
   await copyFile(path.join(reports, name), path.join(publicDir, name));

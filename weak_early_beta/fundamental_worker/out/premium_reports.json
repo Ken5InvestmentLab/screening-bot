@@ -1,0 +1,58 @@
+{
+  "reports": [
+    {
+      "alertId": "weak-early-beta:2026-09-14:7709",
+      "title": "クボテック (7709) | TradingView チャート",
+      "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A7709",
+      "symbolCode": "7709",
+      "symbolName": "クボテック",
+      "receivedAt": "2026-09-14T15:30:00+09:00",
+      "signalType": "WEAK_EARLY_BETA",
+      "summary": "上場廃止後の市場売買停止に加え、1Qの受注残急減・債務超過・資金計画未策定が重なり、事業継続リスクが顕在化している。",
+      "materialImpact": "ネガティブ材料：上場廃止後は市場売買ができず、受注残急減・債務超過・具体的な資金計画未策定が重なる。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "ネガティブ材料：上場廃止後は市場売買ができず、受注残急減・債務超過・具体的な資金計画未策定が重なる。",
+          "inline": false
+        },
+        {
+          "name": "事業概要",
+          "value": "液晶・半導体などのフラットパネル関連を含む画像処理外観検査装置、3Dソリューションシステム、メディアネット機器を開発・製造・販売する精密機器会社です。日本では検査装置、米国ではCAD/CAMソフト等を扱い、顧客の設備投資と受注案件が売上を左右します。",
+          "inline": false
+        },
+        {
+          "name": "足元材料",
+          "value": "9月17日開示では、9月30日を最後に東証での取扱いを終え、10月1日の上場廃止後は証券会社での取扱いもなく、株式譲渡は当事者間の相対取引に限られます。8月7日1Qは売上高2.16億円（前年同期比65.3％減）、営業損失0.61億円、主力日本の受注残高0.63億円（同92.3％減）で、事業継続と資金確保が中心課題です。",
+          "inline": false
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "受注残高と資金繰りが最重要です。1Qの日本受注高は0.20億円（前年同期比92.7％減）、受注残高は0.63億円（同92.3％減）、日本売上は0.65億円（同86.8％減）に落ち込み、米国CAD/CAM等も売上1.51億円と増収ながらセグメント損失0.12億円でした。総資産8.33億円に対し純資産はマイナス0.14億円で、受注回復の速度と資金調達の実行が再建の鍵です。",
+          "inline": false
+        },
+        {
+          "name": "注意点",
+          "value": "資金調達の目途と受注回復が未解決です。期中レビューは結論不表明で、8期連続営業損失・2期連続営業キャッシュ・フロー赤字、債務超過、具体的な資金計画未策定を根拠に証拠を得られないとしています。上場廃止後は相対取引のみとなり、株式事務も会社が直接対応するため、事業継続だけでなく非上場化後の株式手続きと資金確保の進捗が重要です。",
+          "inline": false
+        },
+        {
+          "name": "開示リンク",
+          "value": "[2026-09-17 上場廃止後の当社株式の取扱いに関するお知らせ(15:40)](https://www.kubotek.com/info/pdf/gyoseki/2027_03/haishigo_info20260917.pdf)\n[2026-08-07 2027年3月期 第1四半期決算短信〔日本基準〕（連結）(15:40)](https://www.kubotek.com/info/pdf/gyoseki/2027_03/1Q_tanshin_202703.pdf)\n[2026-08-07 2027年3月期第1四半期の四半期連結財務諸表に係る期中レビュー報告書の結論の不表明に関するお知らせ(15:40)](https://www.kubotek.com/info/pdf/gyoseki/2027_03/20260807_inforeview.pdf)",
+          "inline": false
+        },
+        {
+          "name": "Sources",
+          "value": "[クボテック IR情報](https://www.kubotek.com/info/ir/ir.html)\n[クボテック 業績報告](https://www.kubotek.com/info/ir/gyoseki/gyoseki.html)\n[IRBANK 7709 クボテック 株式情報](https://irbank.net/7709)\n[クボテック 7709 適時開示一覧](https://finance.yahoo.co.jp/quote/7709.T/disclosure)",
+          "inline": false
+        }
+      ],
+      "sources": [
+        "https://www.kubotek.com/info/ir/ir.html",
+        "https://www.kubotek.com/info/ir/gyoseki/gyoseki.html",
+        "https://irbank.net/7709",
+        "https://finance.yahoo.co.jp/quote/7709.T/disclosure"
+      ]
+    }
+  ]
+}

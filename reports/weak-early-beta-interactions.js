@@ -94,6 +94,26 @@
   });
   filter();
 
+  for (const table of document.querySelectorAll("table[data-paginated-table]")) {
+    const tableRows = Array.from(table.querySelectorAll("tbody tr"));
+    const pagination = table.closest(".table-wrap")?.nextElementSibling;
+    if (!pagination?.classList.contains("table-pagination")) continue;
+    const moreButton = pagination.querySelector(".table-load-more");
+    const resetButton = pagination.querySelector(".table-collapse");
+    const count = pagination.querySelector(".table-result-count");
+    let limit = PAGE_SIZE;
+    const renderPage = () => {
+      tableRows.forEach((row, index) => { row.hidden = index >= limit; });
+      const shown = Math.min(limit, tableRows.length);
+      if (count) count.textContent = `${shown.toLocaleString("ja-JP")} / ${tableRows.length.toLocaleString("ja-JP")}件を表示`;
+      if (moreButton) moreButton.hidden = shown >= tableRows.length;
+      if (resetButton) resetButton.hidden = limit <= PAGE_SIZE || tableRows.length <= PAGE_SIZE;
+    };
+    moreButton?.addEventListener("click", () => { limit += PAGE_SIZE; renderPage(); });
+    resetButton?.addEventListener("click", () => { limit = PAGE_SIZE; renderPage(); });
+    renderPage();
+  }
+
   for (const button of document.querySelectorAll(".fundamental-toggle")) {
     button.addEventListener("click", () => {
       const detail = button.parentElement?.querySelector(".fundamental-detail");

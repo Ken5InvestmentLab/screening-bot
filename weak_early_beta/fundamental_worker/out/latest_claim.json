@@ -1,0 +1,46 @@
+{
+  "ok": true,
+  "claimId": "2d92b3b6-3916-4039-a6bf-21cacb45046e",
+  "generatedAt": "2026-09-20T15:28:37.226683+09:00",
+  "claimedCount": 1,
+  "alerts": [
+    {
+      "alertId": "weak-early-beta:2026-09-14:7709",
+      "receivedAt": "2026-09-14T15:30:00+09:00",
+      "signalDate": "2026-09-14",
+      "signalType": "WEAK_EARLY_BETA",
+      "symbolCode": "7709",
+      "symbolName": "",
+      "entryPrice": 80.0,
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A7709",
+      "betaSelectors": [
+        "Balance",
+        "Dive",
+        "Fusion",
+        "Shadow",
+        "Silence"
+      ]
+    }
+  ],
+  "outputReportPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "rules": {
+    "requiredFields": [
+      "alertId",
+      "symbolCode",
+      "symbolName",
+      "summary",
+      "materialImpact",
+      "fields",
+      "sources"
+    ],
+    "disclosureFallback": "開示リンク未確認",
+    "prohibited": [
+      "buy/sell recommendations",
+      "target prices",
+      "additional scores"
+    ],
+    "destinationChannelId": "1550876675884060702",
+    "model": "gpt-5.6-luna",
+    "reasoningEffort": "xhigh"
+  }
+}

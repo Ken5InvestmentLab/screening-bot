@@ -17,6 +17,7 @@ DEFAULT_WORKER_STATE = WORKER_ROOT / "state" / "premium_alert_state.json"
 DEFAULT_WORKER_OUT = WORKER_ROOT / "out"
 DEFAULT_CLAIM = DEFAULT_WORKER_OUT / "latest_claim.json"
 DEFAULT_RECEIPTS = DEFAULT_WORKER_OUT / "fundamental_receipts.json"
+DEFAULT_REPORTS = DEFAULT_WORKER_OUT / "premium_reports.json"
 
 
 def _read_json(path: Path, default):
@@ -141,19 +142,34 @@ def prepare_claim(
 def export_receipts(
     state_path: Path = DEFAULT_WORKER_STATE,
     receipt_path: Path = DEFAULT_RECEIPTS,
+    reports_path: Path = DEFAULT_REPORTS,
 ) -> list[dict]:
     """Convert worker Discord receipts into the beta ledger import contract."""
     state = _read_json(state_path, empty_worker_state())
+    reports_payload = _read_json(reports_path, {"reports": []})
+    report_lookup = {
+        str(report.get("alertId", "")): report
+        for report in reports_payload.get("reports", [])
+        if isinstance(report, dict)
+    }
     receipts = []
     for identity, posted in sorted(state.get("posted", {}).items()):
         if not identity.startswith("weak-early-beta:"):
             continue
         signal_date, symbol = identity.removeprefix("weak-early-beta:").split(":", 1)
+        report = report_lookup.get(identity, {})
+        analysis_lines = []
+        for field in report.get("fields", []):
+            name = str(field.get("name", "")).strip()
+            value = str(field.get("value", "")).strip()
+            if name and value:
+                analysis_lines.extend([name, value, ""])
         receipts.append({
             "signal_date": signal_date,
             "symbol": symbol,
             "status": "complete",
             "discord_url": str(posted.get("discordMessageUrl", "")),
+            "html": "\n".join(analysis_lines).strip(),
         })
     _write_json(receipt_path, {"receipts": receipts})
     return receipts

@@ -17,6 +17,14 @@ function writeJson(file, value) {
   fs.renameSync(temporary, file);
 }
 
+function reportsMatchClaim(reportsPath, claim) {
+  if (!fs.existsSync(reportsPath)) return false;
+  const reports = readJson(reportsPath).reports || [];
+  const expected = new Set((claim.alerts || []).map(alert => alert.alertId));
+  const actual = new Set(reports.map(report => report.alertId));
+  return expected.size > 0 && expected.size === actual.size && [...expected].every(id => actual.has(id));
+}
+
 function cleanEnvironment(source) {
   const result = { ...source };
   for (const key of Object.keys(result)) {
@@ -125,12 +133,26 @@ async function main(configFile) {
   };
 
   try {
-    await run(config.pythonPath || 'py', [
-      '-m', 'weak_early_beta.cli', 'prepare-fundamentals',
-      '--worker-state', statePath, '--claim', claimPath,
-      '--max-alerts', String(config.maxAlertsPerRun || 0),
-    ], 'prepare-claim');
-    const claim = readJson(claimPath);
+    const stateBefore = fs.existsSync(statePath) ? readJson(statePath) : { claims: {} };
+    let claim;
+    if (Object.keys(stateBefore.claims || {}).length) {
+      if (!fs.existsSync(claimPath)) throw new Error('active beta claims exist without latest_claim.json');
+      claim = readJson(claimPath);
+      const activeIds = new Set(Object.keys(stateBefore.claims || {}));
+      const claimIds = new Set((claim.alerts || []).map(alert => alert.alertId));
+      if (activeIds.size !== claimIds.size || [...activeIds].some(id => !claimIds.has(id))) {
+        throw new Error('active beta claims do not match latest_claim.json');
+      }
+      result.resumedExistingClaim = true;
+    } else {
+      await run(config.pythonPath || 'py', [
+        '-m', 'weak_early_beta.cli', 'prepare-fundamentals',
+        '--worker-state', statePath, '--claim', claimPath,
+        '--max-alerts', String(config.maxAlertsPerRun || 0),
+      ], 'prepare-claim');
+      claim = readJson(claimPath);
+      if (fs.existsSync(reportsPath)) fs.rmSync(reportsPath);
+    }
     writeJson(path.join(runDir, 'claim.json'), claim);
     result.claimed = claim.claimedCount;
     if (!claim.claimedCount) {
@@ -149,21 +171,36 @@ async function main(configFile) {
       '報告は有界に保ち、出力JSON作成後は日本語で簡潔に完了を報告してください。',
     ].join('\n\n');
     fs.writeFileSync(path.join(runDir, 'prompt.txt'), prompt);
-    await run(config.nodePath, [
-      config.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
-      '--cd', config.premiumWorkerRepoPath, '--skip-git-repo-check',
-      '--sandbox', 'danger-full-access', '-m', 'gpt-5.6-luna',
-      '-c', 'model_reasoning_effort="xhigh"',
-      '-c', 'forced_login_method="chatgpt"', '--json',
-      '-o', path.join(runDir, 'codex.final.txt'), '-',
-    ], 'codex', { cwd: config.premiumWorkerRepoPath, input: prompt });
+    if (!reportsMatchClaim(reportsPath, claim)) {
+      const analysisExit = await command(config.nodePath, [
+        config.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
+        '--cd', config.premiumWorkerRepoPath, '--skip-git-repo-check',
+        '--sandbox', 'danger-full-access', '-m', 'gpt-5.6-luna',
+        '-c', 'model_reasoning_effort="xhigh"',
+        '-c', 'forced_login_method="chatgpt"', '--json',
+        '-o', path.join(runDir, 'codex.final.txt'), '-',
+      ], {
+        cwd: config.premiumWorkerRepoPath,
+        env,
+        log: path.join(runDir, 'codex'),
+        input: prompt,
+        timeoutMs: 12_000_000,
+      });
+      result.analysisExit = analysisExit;
+      if (analysisExit !== 0 && !reportsMatchClaim(reportsPath, claim)) {
+        throw new Error('codex failed before producing a claim-matched report; inspect bounded local logs');
+      }
+      if (analysisExit !== 0) result.recoveredValidatedOutputAfterAnalysisLimit = true;
+    } else {
+      result.reusedClaimMatchedReport = true;
+    }
     if (!fs.existsSync(reportsPath)) throw new Error('Codex completed without premium_reports.json');
 
     const postEnv = { ...env };
     postEnv.PREMIUM_STATE_PATH = statePath;
     postEnv.PREMIUM_OUT_DIR = outDir;
     postEnv.DISCORD_PREMIUM_WEBHOOK_URL = env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '';
-    postEnv.DISCORD_PREMIUM_USERNAME = 'Weak+Early Beta | ファンダ分析';
+    postEnv.DISCORD_PREMIUM_USERNAME = '天底極致 -Cloud- | ファンダ分析';
     postEnv.DISCORD_PREMIUM_CHANNEL_ID = FUNDAMENTAL_CHANNEL_ID;
     postEnv.PREMIUM_LOG_SPREADSHEET_ID = '';
     // Webhook-only keeps the beta post independent from the production bot and /scan button.

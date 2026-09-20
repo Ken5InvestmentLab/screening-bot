@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_REPORT = ROOT / "reports" / "weak_early_beta_latest.html"
 DEFAULT_METRICS = ROOT / "weak_early_beta" / "state" / "metrics.csv"
 DEFAULT_MONTHLY_METRICS = ROOT / "weak_early_beta" / "state" / "monthly_metrics.csv"
+GUIDE_PAGE_NAME = "weak_early_beta_guide.html"
 MODE_PAGE_NAMES = {
     selector_id: f"weak_early_beta_{selector_info(selector_id).short_name.lower()}.html"
     for selector_id in SELECTOR_ORDER
@@ -33,6 +34,11 @@ MODE_PAGE_NAMES = {
 ALLOCATION_EXPLANATION = (
     "モード別積上げは、同じ銘柄が複数モードに該当した場合、モードごとに100株ずつ買ったものとして集計します"
     "（例: 3モード該当なら合計300株）。銘柄均等は、該当モード数にかかわらず、同じ日・同じ銘柄を100株だけ買ったものとして集計します。"
+)
+
+CAPITAL_HEADER = (
+    '<span title="複数の取引が同時に重なった期間を含め、100株ずつ運用するために必要だった最大資金の目安です。">'
+    "必要資金（目安）</span>"
 )
 
 
@@ -73,13 +79,13 @@ def _overall_rows(metrics: pd.DataFrame) -> str:
             "<tr>"
             f"<td>{rank}位</td><th>{html.escape(row['selector_name'])}</th>"
             f"<td>{int(row['n'])}</td><td>{int(row['pending'])}</td>"
+            f"<td class=\"metric-focus\">{_yen(row['cash_pl_100_yen'])}</td><td class=\"metric-focus\">{_price(row['required_capital_yen'])}</td>"
+            f"<td class=\"metric-focus\">{_pct(row['capital_return_pct'], True)}</td><td class=\"metric-focus\">{_pct(row['simple_annualized_pct'], True)}</td>"
             f"<td>{_pct(row['mean_pct'], True)}</td><td>{_pct(row['median_pct'], True)}</td>"
             f"<td>{_pct(row['win_pct'])}</td><td>{_pct(row['plus10_pct'])}</td>"
             f"<td>{_pct(row['plus20_pct'])}</td><td>{_pct(row['minus10_pct'])}</td>"
             f"<td>{_pct(row['minus20_pct'])}</td><td>{_pct(row['max_up_pct'], True)}</td>"
             f"<td>{_pct(row['max_down_pct'], True)}</td><td>{_pct(row['top3_ex_mean_pct'], True)}</td>"
-            f"<td>{_yen(row['cash_pl_100_yen'])}</td><td>{_price(row['required_capital_yen'])}</td>"
-            f"<td>{_pct(row['capital_return_pct'], True)}</td><td>{_pct(row['simple_annualized_pct'], True)}</td>"
             "</tr>"
         )
     return "".join(rows)
@@ -105,8 +111,8 @@ def _yearly_rows(metrics: pd.DataFrame) -> str:
                 f"<td>{_pct(row.median_pct, True)}</td><td>{_pct(row.win_pct)}</td>"
                 f"<td>{_pct(row.plus10_pct)}</td><td>{_pct(row.plus20_pct)}</td>"
                 f"<td>{_pct(row.minus10_pct)}</td><td>{_pct(row.minus20_pct)}</td>"
-                f"<td>{_yen(row.cash_pl_100_yen)}</td><td>{_price(row.required_capital_yen)}</td>"
-                f"<td>{_pct(row.capital_return_pct, True)}</td><td>{_pct(row.simple_annualized_pct, True)}</td>"
+                f"<td class=\"metric-focus\">{_yen(row.cash_pl_100_yen)}</td><td class=\"metric-focus\">{_price(row.required_capital_yen)}</td>"
+                f"<td class=\"metric-focus\">{_pct(row.capital_return_pct, True)}</td><td class=\"metric-focus\">{_pct(row.simple_annualized_pct, True)}</td>"
                 "</tr>"
             )
     return "".join(rows)
@@ -130,13 +136,13 @@ def _combined_rows(metrics: pd.DataFrame) -> str:
             "<tr>"
             f"<th>{html.escape(label)}</th><th>{html.escape(row.selector_name)}</th>"
             f"<td>{row.n}</td><td>{row.pending}</td>"
+            f"<td class=\"metric-focus\">{_yen(row.cash_pl_100_yen)}</td><td class=\"metric-focus\">{_price(row.required_capital_yen)}</td>"
+            f"<td class=\"metric-focus\">{_pct(row.capital_return_pct, True)}</td><td class=\"metric-focus\">{_pct(row.simple_annualized_pct, True)}</td>"
             f"<td>{_pct(row.mean_pct, True)}</td><td>{_pct(row.median_pct, True)}</td>"
             f"<td>{_pct(row.win_pct)}</td><td>{_pct(row.plus10_pct)}</td>"
             f"<td>{_pct(row.plus20_pct)}</td><td>{_pct(row.minus10_pct)}</td>"
             f"<td>{_pct(row.minus20_pct)}</td><td>{_pct(row.max_up_pct, True)}</td>"
-            f"<td>{_pct(row.max_down_pct, True)}</td><td>{_yen(row.cash_pl_100_yen)}</td>"
-            f"<td>{_price(row.required_capital_yen)}</td><td>{_pct(row.capital_return_pct, True)}</td>"
-            f"<td>{_pct(row.simple_annualized_pct, True)}</td></tr>"
+            f"<td>{_pct(row.max_down_pct, True)}</td></tr>"
         )
     return "".join(rows)
 
@@ -156,13 +162,23 @@ def _monthly_rows(metrics: pd.DataFrame) -> str:
             "<tr>"
             f"<th>{html.escape(str(row.period))}</th><th>{html.escape(row.selector_name)}</th>"
             f"<td>{row.n}</td><td>{row.pending}</td>"
+            f"<td class=\"metric-focus\">{_yen(row.cash_pl_100_yen)}</td><td class=\"metric-focus\">{_price(row.required_capital_yen)}</td>"
             f"<td>{_pct(row.mean_pct, True)}</td><td>{_pct(row.median_pct, True)}</td>"
             f"<td>{_pct(row.win_pct)}</td><td>{_pct(row.plus10_pct)}</td>"
             f"<td>{_pct(row.plus20_pct)}</td><td>{_pct(row.minus10_pct)}</td>"
-            f"<td>{_pct(row.minus20_pct)}</td><td>{_yen(row.cash_pl_100_yen)}</td>"
-            f"<td>{_price(row.required_capital_yen)}</td></tr>"
+            f"<td>{_pct(row.minus20_pct)}</td></tr>"
         )
     return "".join(rows)
+
+
+def _table_pagination() -> str:
+    return (
+        '<div class="table-pagination">'
+        '<button class="table-load-more" type="button">次の20件を表示</button>'
+        '<button class="table-collapse" type="button" hidden>最初の20件に戻す</button>'
+        '<output class="result-count table-result-count" aria-live="polite"></output>'
+        '</div>'
+    )
 
 
 def _condition_cards() -> str:
@@ -254,18 +270,18 @@ REPORT_CSS = """
 :root[data-theme="dark"]{--bg:#0c1424;--panel:rgba(21,32,51,.94);--panel-solid:#152033;--ink:#edf4ff;--muted:#a3b3ca;--line:#2b405e;--blue:#91adff;--cyan:#65d5e6;--violet:#ad9bff;--good:#65d6a7;--warn:#ffc56b;--shadow:0 18px 46px rgba(0,0,0,.28)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 12% -8%,color-mix(in srgb,var(--cyan) 18%,transparent),transparent 34%),radial-gradient(circle at 94% 5%,color-mix(in srgb,var(--violet) 16%,transparent),transparent 30%),var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Noto Sans JP",sans-serif}a{color:var(--blue)}
 .topbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--panel-solid) 86%,transparent);border-bottom:1px solid var(--line);backdrop-filter:blur(16px)}
-.nav{max-width:1440px;margin:auto;padding:10px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brand{font-weight:850;margin-right:auto}.nav-link{padding:7px 10px;border-radius:999px;text-decoration:none;font-weight:700}.nav-link.active,.nav-link:hover{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid))}button,select,input{font:inherit}button{cursor:pointer}
-.theme,.clear-search,.load-more,.collapse-results{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:999px;padding:7px 12px}main{max-width:1440px;margin:auto;padding:34px 20px 60px}
+.nav{max-width:1440px;margin:auto;padding:10px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brand{font-weight:850;margin-right:auto;text-decoration:none;color:var(--ink)}.nav-link{padding:7px 10px;border-radius:999px;text-decoration:none;font-weight:700}.nav-link.active,.nav-link:hover{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid))}button,select,input{font:inherit}button{cursor:pointer}
+.theme,.clear-search,.load-more,.collapse-results,.table-load-more,.table-collapse{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:999px;padding:7px 12px}main{max-width:1440px;margin:auto;padding:34px 20px 60px}
 .hero{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:stretch}.panel{background:var(--panel);border:1px solid color-mix(in srgb,var(--line) 84%,transparent);border-radius:22px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px;backdrop-filter:blur(10px)}
 .hero-main{position:relative;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--panel-solid) 94%,var(--cyan)),color-mix(in srgb,var(--panel-solid) 92%,var(--violet)))}.hero-main:after{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;bottom:-130px;background:color-mix(in srgb,var(--cyan) 16%,transparent)}
 .eyebrow{color:var(--cyan);font-weight:800;letter-spacing:.06em}h1{font-size:clamp(28px,5vw,52px);line-height:1.12;margin:.15em 0}h2{margin:0 0 16px;font-size:22px}h3{margin:8px 0}.lead{font-size:17px;color:var(--muted);max-width:62ch}
 .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.kpi{background:color-mix(in srgb,var(--bg) 76%,var(--panel-solid));border:1px solid var(--line);border-radius:16px;padding:14px}.kpi b{display:block;font-size:24px;line-height:1.3}.kpi small,.subtle,small{display:block;color:var(--muted)}
 .condition-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.condition-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;padding:17px;background:linear-gradient(150deg,var(--panel-solid),color-mix(in srgb,var(--bg) 88%,var(--violet)));transition:transform .18s ease,box-shadow .18s ease;text-decoration:none;color:var(--ink)}.condition-card:before{content:"";position:absolute;left:0;top:0;width:100%;height:4px;background:linear-gradient(90deg,var(--cyan),var(--violet))}.condition-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(54,84,145,.12)}.condition-id,.badge{display:inline-flex;border-radius:999px;background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));color:var(--blue);padding:3px 8px;font-size:12px;font-weight:750;margin:2px}
 .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.chart-card{border:1px solid var(--line);border-radius:18px;background:var(--panel-solid);padding:18px}.chart-card svg{width:100%;height:auto;display:block}.chart-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.chart-stats div{background:var(--bg);border-radius:12px;padding:10px}.chart-stats b{display:block}.axis-label{fill:var(--muted);font-size:12px}.grid-line{stroke:var(--line);stroke-width:1}.equity-line{fill:none;stroke:var(--blue);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}.equity-area{fill:url(#equity-fill);opacity:.22}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel-solid)}th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}thead th{position:sticky;top:0;background:color-mix(in srgb,var(--panel-solid) 94%,var(--bg));z-index:1;font-size:12px;color:var(--muted)}tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg) 42%,transparent)}tbody tr:hover{background:color-mix(in srgb,var(--blue) 7%,var(--panel-solid))}tr[hidden]{display:none!important}
-.history-details{border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 38%,var(--panel-solid));padding:0 14px 14px}.history-details>summary{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.filter-field{display:grid;gap:4px}.filter-field span{font-size:12px;color:var(--muted);font-weight:700}.filters input,.filters select{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:10px;padding:10px 12px}.filters input[type="search"]{min-width:min(360px,100%)}.result-count{color:var(--muted);font-weight:700}.history-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}.status{font-weight:750}.status.mature{color:var(--good)}.status.pending{color:var(--warn)}.number{font-variant-numeric:tabular-nums}.symbol{font-size:17px}.actions{margin-top:5px}.button-link,.fundamental-toggle{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}.fundamental-detail{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}
-.note{color:var(--muted);font-size:13px}.monthly-details{margin-top:16px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 55%,var(--panel-solid));padding:0 14px 14px}.monthly-details summary{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}footer{color:var(--muted);text-align:center;padding:28px}
-@media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid{grid-template-columns:1fr}}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel-solid)}th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}thead th{position:sticky;top:0;background:color-mix(in srgb,var(--panel-solid) 94%,var(--bg));z-index:1;font-size:12px;color:var(--muted)}tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg) 42%,transparent)}tbody tr:hover{background:color-mix(in srgb,var(--blue) 7%,var(--panel-solid))}tr[hidden]{display:none!important}.metric-focus{color:var(--blue);font-weight:850;background:color-mix(in srgb,var(--blue) 8%,transparent)}.table-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.history-details{border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 38%,var(--panel-solid));padding:14px}.history-heading{font-weight:800;margin:0 0 14px;color:var(--blue)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.filter-field{display:grid;gap:4px}.filter-field span{font-size:12px;color:var(--muted);font-weight:700}.filters input,.filters select{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:10px;padding:10px 12px}.filters input[type="search"]{min-width:min(360px,100%)}.result-count{color:var(--muted);font-weight:700}.history-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}.status{font-weight:750}.status.mature{color:var(--good)}.status.pending{color:var(--warn)}.number{font-variant-numeric:tabular-nums}.symbol{font-size:17px}.actions{margin-top:5px}.button-link,.fundamental-toggle{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}.fundamental-detail{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}
+.note{color:var(--muted);font-size:13px}.monthly-details{margin-top:16px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 55%,var(--panel-solid));padding:0 14px 14px}.monthly-details summary{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}.guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.guide-card{border:1px solid var(--line);border-radius:16px;background:var(--panel-solid);padding:18px}.site-footer{border-top:1px solid var(--line);background:color-mix(in srgb,var(--panel-solid) 78%,transparent);padding:26px 20px}.site-footer-inner{max-width:1440px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}.footer-copy{margin:0;color:var(--muted)}.footer-links{display:flex;gap:8px;flex-wrap:wrap}.footer-link{border:1px solid var(--line);border-radius:999px;padding:7px 12px;text-decoration:none;font-weight:750;background:var(--panel-solid)}
+@media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid,.guide-grid{grid-template-columns:1fr}}
 @media(max-width:620px){main{padding:18px 12px 50px}.panel{padding:16px;border-radius:14px}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}}
 """
 
@@ -282,17 +298,31 @@ def _nav(current: str) -> str:
             f'<a class="nav-link {active}" href="./{MODE_PAGE_NAMES[selector_id]}">'
             f"{html.escape(info.short_name)}</a>"
         )
+    links.append(
+        f'<a class="nav-link {"active" if current == "guide" else ""}" '
+        f'href="./{GUIDE_PAGE_NAME}">見方・使い方</a>'
+    )
     return "".join(links)
+
+
+def _site_footer() -> str:
+    return '''<footer class="site-footer"><div class="site-footer-inner">
+<p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
+<div class="footer-links" aria-label="公式リンク">
+<a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer">Discord</a>
+<a class="footer-link" href="https://coconala.com/users/322523" target="_blank" rel="noopener noreferrer">ココナラ</a>
+<a class="footer-link" href="https://x.com/ken5investlab" target="_blank" rel="noopener noreferrer">X</a>
+</div></div></footer>'''
 
 
 def _page_shell(title: str, current: str, body: str) -> str:
     document_title = "天底極致 -Cloud-" if current == "total" else f"{title} | 天底極致 -Cloud-"
     return f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260920-3"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-interactions.js?v=20260920-3" defer></script></head>
-<body><header class="topbar"><nav class="nav"><span class="brand">天底極致 -Cloud-</span>{_nav(current)}<button class="theme" id="theme-toggle" type="button" aria-pressed="false">ダークモード</button></nav></header>
-<main>{body}</main><footer>天底極致 -Cloud-</footer></body></html>'''
+<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260920-4"></script><style>{REPORT_CSS}</style>
+<script src="./weak-early-beta-interactions.js?v=20260920-4" defer></script></head>
+<body><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html">天底極致 -Cloud-</a>{_nav(current)}<button class="theme" id="theme-toggle" type="button" aria-pressed="false">ダークモード</button></nav></header>
+<main>{body}</main>{_site_footer()}</body></html>'''
 
 
 def _equity_chart(frame: pd.DataFrame, title: str, chart_id: str) -> str:
@@ -334,7 +364,7 @@ def _equity_chart(frame: pd.DataFrame, title: str, chart_id: str) -> str:
     pl = final - initial
     return (
         f'<article class="chart-card"><h3>{html.escape(title)}</h3>'
-        '<p class="note">参考元金から開始し、各取引が決済した日に100株分の損益を加えていく推移です。</p>'
+        '<p class="note">100株ずつ運用するために同時保有も含めて必要だった資金の目安から開始し、各取引が決済した日に損益を加えた推移です。</p>'
         f'<svg viewBox="0 0 {width:.0f} {height:.0f}" role="img" aria-label="{html.escape(title)}の資産推移">'
         f'<defs><linearGradient id="equity-fill-{chart_id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--blue)"/><stop offset="1" stop-color="var(--cyan)" stop-opacity="0"/></linearGradient></defs>'
         + "".join(grid)
@@ -343,7 +373,7 @@ def _equity_chart(frame: pd.DataFrame, title: str, chart_id: str) -> str:
         + f'<text class="axis-label" x="{left}" y="{height - 18}">{pd.Timestamp(dates[0]):%Y-%m-%d}</text>'
         + f'<text class="axis-label" x="{left + plot_w}" y="{height - 18}" text-anchor="end">{pd.Timestamp(dates[-1]):%Y-%m-%d}</text></svg>'
         + '<div class="chart-stats">'
-        + f'<div><small>開始時の参考元金</small><b>{_price(initial)}</b></div>'
+        + f'<div><small>開始時の必要資金（目安）</small><b>{_price(initial)}</b></div>'
         + f'<div><small>最終資産</small><b>{_price(final)}</b></div>'
         + f'<div><small>累計損益</small><b>{_yen(pl)}</b></div></div></article>'
     )
@@ -357,12 +387,12 @@ def _mode_overall_row(metrics: pd.DataFrame, selector_id: str) -> str:
     row = lane[lane["period"].eq(total_period)].iloc[0]
     return (
         f"<tr><th>{html.escape(total_period)}</th><td>{int(row['n'])}</td><td>{int(row['pending'])}</td>"
+        f"<td class=\"metric-focus\">{_yen(row['cash_pl_100_yen'])}</td><td class=\"metric-focus\">{_price(row['required_capital_yen'])}</td>"
+        f"<td class=\"metric-focus\">{_pct(row['capital_return_pct'], True)}</td><td class=\"metric-focus\">{_pct(row['simple_annualized_pct'], True)}</td>"
         f"<td>{_pct(row['mean_pct'], True)}</td><td>{_pct(row['median_pct'], True)}</td>"
         f"<td>{_pct(row['win_pct'])}</td><td>{_pct(row['plus10_pct'])}</td><td>{_pct(row['plus20_pct'])}</td>"
         f"<td>{_pct(row['minus10_pct'])}</td><td>{_pct(row['minus20_pct'])}</td>"
-        f"<td>{_pct(row['max_up_pct'], True)}</td><td>{_pct(row['max_down_pct'], True)}</td>"
-        f"<td>{_yen(row['cash_pl_100_yen'])}</td><td>{_price(row['required_capital_yen'])}</td>"
-        f"<td>{_pct(row['capital_return_pct'], True)}</td><td>{_pct(row['simple_annualized_pct'], True)}</td></tr>"
+        f"<td>{_pct(row['max_up_pct'], True)}</td><td>{_pct(row['max_down_pct'], True)}</td></tr>"
     )
 
 
@@ -375,10 +405,10 @@ def _mode_yearly_rows(metrics: pd.DataFrame, selector_id: str) -> str:
     for row in lane[~lane["period"].eq(total_period)].sort_values("period").itertuples():
         rows.append(
             f"<tr><th>{html.escape(str(row.period))}</th><td>{row.n}</td>"
+            f"<td class=\"metric-focus\">{_yen(row.cash_pl_100_yen)}</td><td class=\"metric-focus\">{_price(row.required_capital_yen)}</td>"
+            f"<td class=\"metric-focus\">{_pct(row.capital_return_pct, True)}</td><td class=\"metric-focus\">{_pct(row.simple_annualized_pct, True)}</td>"
             f"<td>{_pct(row.mean_pct, True)}</td><td>{_pct(row.median_pct, True)}</td><td>{_pct(row.win_pct)}</td>"
-            f"<td>{_pct(row.plus10_pct)}</td><td>{_pct(row.plus20_pct)}</td><td>{_pct(row.minus10_pct)}</td><td>{_pct(row.minus20_pct)}</td>"
-            f"<td>{_yen(row.cash_pl_100_yen)}</td><td>{_price(row.required_capital_yen)}</td>"
-            f"<td>{_pct(row.capital_return_pct, True)}</td><td>{_pct(row.simple_annualized_pct, True)}</td></tr>"
+            f"<td>{_pct(row.plus10_pct)}</td><td>{_pct(row.plus20_pct)}</td><td>{_pct(row.minus10_pct)}</td><td>{_pct(row.minus20_pct)}</td></tr>"
         )
     return "".join(rows)
 
@@ -403,7 +433,7 @@ def _history_section(
     return (
         '<section class="panel" id="history"><h2>検出履歴</h2>'
         + access_notice
-        + '<details class="history-details"><summary>銘柄一覧を表示（20件ずつ）</summary>'
+        + '<div class="history-details"><p class="history-heading">最新20件を表示中。ボタンで20件ずつ追加できます。</p>'
         '<div class="filters"><label class="filter-field"><span>銘柄</span><input id="symbol-filter" type="search" autocomplete="off" '
         'aria-label="証券コードまたは銘柄名で検索" placeholder="証券コード・銘柄名で検索"></label>'
         '<label class="filter-field"><span>開始日</span><input id="history-date-from" type="date" aria-label="シグナル日の開始日"></label>'
@@ -416,7 +446,7 @@ def _history_section(
         f'<tbody>{_detection_rows(ledger, mask_pending=mask_pending)}</tbody></table></div>'
         '<div class="history-pagination"><button class="load-more" id="history-load-more" type="button">次の20件を表示</button>'
         '<button class="collapse-results" id="history-collapse" type="button" hidden>最初の20件に戻す</button></div>'
-        '</details></section>'
+        '</div></section>'
     )
 
 
@@ -436,14 +466,14 @@ def render_report(
     unique_ledger = combined_detections(ledger)
     combined_monthly = monthly_metrics[monthly_metrics["selector_id"].isin(COMBINED_SELECTOR_IDS)] if not monthly_metrics.empty else monthly_metrics
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>Cloud トータル</h1><p class="lead">5つのモードを合わせた成績と資産推移です。各モードの詳しい成績は専用ページで確認できます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p></div>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- アナリティクス</h1><p class="lead">5つのモードを合わせた成績と資産推移です。各モードの詳しい成績は専用ページで確認できます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>集計期間</small><b>{html.escape(total_period)}</b></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div></aside></section>
 <section class="panel" id="growth"><h2>トータルの資産推移</h2><p class="note">{html.escape(ALLOCATION_EXPLANATION)}</p><div class="chart-grid">{_equity_chart(ledger, 'モード別積上げ', 'stacked')}{_equity_chart(unique_ledger, '銘柄均等', 'unique')}</div></section>
-<section class="panel" id="performance"><h2>Cloud 全体の成績</h2><p class="note">{html.escape(ALLOCATION_EXPLANATION)}</p><div class="table-wrap"><table><thead><tr><th>期間</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_combined_rows(metrics)}</tbody></table></div><details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table><thead><tr><th>月</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th></tr></thead><tbody>{_monthly_rows(combined_monthly)}</tbody></table></div></details></section>
+<section class="panel" id="performance"><h2>Cloud 全体の成績</h2><p class="note">{html.escape(ALLOCATION_EXPLANATION)}</p><div class="table-wrap"><table data-paginated-table><thead><tr><th>期間</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead><tbody>{_combined_rows(metrics)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table><thead><tr><th>月</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead><tbody>{_monthly_rows(combined_monthly)}</tbody></table></div>{_table_pagination()}</details></section>
 <section class="panel" id="conditions"><h2>モード別ページ</h2><div class="condition-grid">{_condition_cards()}</div></section>
-<section class="panel"><h2>モード別の全期間比較</h2><p class="note">順位は100株ずつ売買した累計損益額順です。</p><div class="table-wrap"><table><thead><tr><th>順位</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>Top3除外平均</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_overall_rows(metrics)}</tbody></table></div></section>
+<section class="panel"><h2>モード別の全期間比較</h2><p class="note">順位は100株ずつ売買した累計損益額順です。</p><div class="table-wrap"><table><thead><tr><th>順位</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>Top3除外平均</th></tr></thead><tbody>{_overall_rows(metrics)}</tbody></table></div></section>
 {_history_section(ledger, include_mode_filter=True, mask_pending=mask_pending)}
-<section class="panel"><h2>このレポートについて</h2><p>検出銘柄は専用Discordへ通知し、ファンダ分析が登録された銘柄は検出履歴から確認できます。</p><p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
+<p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p>'''
     return _page_shell("トータル", "total", body)
 
 
@@ -466,11 +496,37 @@ def render_mode_report(
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">CLOUD MODE</span><h1>{html.escape(info.display_name)}</h1><p class="lead">{html.escape(info.feature_summary)}</p><p>{html.escape(info.selection_summary)}</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>確定取引数</small><b>{int(total['n']) if total is not None else 0}件</b></div><div class="kpi"><small>平均騰落率</small><b>{_pct(total['mean_pct'], True) if total is not None else '—'}</b></div><div class="kpi"><small>勝率</small><b>{_pct(total['win_pct']) if total is not None else '—'}</b></div><div class="kpi"><small>100株損益</small><b>{_yen(total['cash_pl_100_yen']) if total is not None else '—'}</b></div></div></aside></section>
 <section class="panel"><h2>{html.escape(info.display_name)} の資産推移</h2>{_equity_chart(lane, info.display_name, selector_id.replace('_', '-'))}</section>
-<section class="panel" id="performance"><h2>全期間の成績</h2><div class="table-wrap"><table><thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_mode_overall_row(metrics, selector_id)}</tbody></table></div></section>
-<section class="panel"><h2>年別の成績</h2><div class="table-wrap"><table><thead><tr><th>年</th><th>確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th><th>元金増加率</th><th>単純年率</th></tr></thead><tbody>{_mode_yearly_rows(metrics, selector_id)}</tbody></table></div><details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table><thead><tr><th>月</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>100株損益</th><th>参考元金</th></tr></thead><tbody>{_monthly_rows(lane_monthly)}</tbody></table></div></details></section>
+<section class="panel" id="performance"><h2>全期間の成績</h2><div class="table-wrap"><table><thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead><tbody>{_mode_overall_row(metrics, selector_id)}</tbody></table></div></section>
+<section class="panel"><h2>年別の成績</h2><div class="table-wrap"><table data-paginated-table><thead><tr><th>年</th><th>確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead><tbody>{_mode_yearly_rows(metrics, selector_id)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table><thead><tr><th>月</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead><tbody>{_monthly_rows(lane_monthly)}</tbody></table></div>{_table_pagination()}</details></section>
 {_history_section(lane, include_mode_filter=False, mask_pending=mask_pending)}
 <section class="panel"><h2>ほかのモード</h2><div class="condition-grid">{_condition_cards()}</div><p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
     return _page_shell(info.display_name, selector_id, body)
+
+
+def render_guide(generated_at: pd.Timestamp) -> str:
+    generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
+    body = f'''
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
+<p class="lead">天底極致 -Cloud- の検出履歴、成績、資産推移を迷わず確認するためのガイドです。</p></div>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>エントリー</small><b>翌営業日寄付</b></div><div class="kpi"><small>評価</small><b>5営業日目終値</b></div><div class="kpi"><small>売買単位</small><b>100株</b></div><div class="kpi"><small>コスト</small><b>0%試算</b></div></div></aside></section>
+<section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
+<article class="guide-card"><h3>アナリティクス</h3><p>5モードを合算した成績と資産推移を確認できます。重複をモードごとに数える集計と、同じ日・同じ銘柄を1回だけ数える集計を並べています。</p></article>
+<article class="guide-card"><h3>モード別ページ</h3><p>Shadow、Dive、Silence、Fusion、Balanceごとの全期間・年別・月別成績、資産推移、検出履歴を確認できます。</p></article>
+<article class="guide-card"><h3>検出履歴</h3><p>最初から最新20件を表示します。証券コード・銘柄名・日付範囲・モードで絞り込み、20件ずつ追加表示できます。</p></article>
+<article class="guide-card"><h3>ファンダ分析</h3><p>未来の新規検出だけを対象に、検出時点で確認できた会社固有の開示と事業情報を表示します。分析後に出た情報は自動的には遡及反映しません。</p></article>
+</div></section>
+<section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
+<article class="guide-card"><h3>100株損益</h3><p>各検出を100株ずつ売買したと仮定した累計損益です。税金・手数料・スリッページは含みません。</p></article>
+<article class="guide-card"><h3>必要資金（目安）</h3><p>複数の取引が同時に重なった期間を含め、100株ずつ運用するために必要だった最大資金の目安です。延べ売買代金ではありません。</p></article>
+<article class="guide-card"><h3>資金増加率・単純年率</h3><p>100株損益を必要資金（目安）で割った増加率と、観測年数で単純に年率換算した参考値です。複利運用を表すものではありません。</p></article>
+<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は騰落率が0%の取引を分母から除外します。平均・中央値・最大上昇・最大下落は、翌営業日寄付から5営業日目終値までの騰落率です。</p></article>
+</div></section>
+<section class="panel"><h2>2つの合算方法</h2><p>{html.escape(ALLOCATION_EXPLANATION)}</p><p class="note">複数モードへの同時該当は、独立した複数の根拠を意味するものではありません。</p></section>
+<section class="panel"><h2>大切な注意事項</h2>
+<p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
+<p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
+<p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
+    return _page_shell("見方・使い方", "guide", body)
 
 
 def write_report(
@@ -506,6 +562,13 @@ def write_report(
             monthly_metrics=monthly_metrics,
             mask_pending=True,
         ),
+        encoding="utf-8",
+    )
+    guide_path = report_path.with_name(GUIDE_PAGE_NAME)
+    guide_html = render_guide(generated)
+    guide_path.write_text(guide_html, encoding="utf-8")
+    guide_path.with_name(guide_path.stem + "_free.html").write_text(
+        guide_html,
         encoding="utf-8",
     )
     for selector_id, filename in MODE_PAGE_NAMES.items():

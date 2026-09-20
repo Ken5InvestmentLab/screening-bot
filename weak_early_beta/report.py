@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import re
 from pathlib import Path
 
 import pandas as pd
@@ -40,6 +41,71 @@ CAPITAL_HEADER = (
     '<span title="複数の取引が同時に重なった期間を含め、100株ずつ運用するために必要だった最大資金の目安です。">'
     "必要資金（目安）</span>"
 )
+
+MARKDOWN_LINK_RE = re.compile(r"\[([^\]]+)\]\((https?://[^\s)]+)\)")
+BARE_URL_RE = re.compile(r"https?://[^\s<>]+")
+
+
+def _anchor(url: str, label: str) -> str:
+    return (
+        f'<a href="{html.escape(url, quote=True)}" target="_blank" '
+        f'rel="noopener noreferrer">{html.escape(label)}</a>'
+    )
+
+
+def _linkify(value: str) -> str:
+    """Render trusted link syntax while escaping every other character."""
+    text = str(value or "")
+    parts: list[str] = []
+    cursor = 0
+    for match in MARKDOWN_LINK_RE.finditer(text):
+        plain = text[cursor : match.start()]
+        plain_cursor = 0
+        for url_match in BARE_URL_RE.finditer(plain):
+            parts.append(html.escape(plain[plain_cursor : url_match.start()]))
+            url = url_match.group(0).rstrip(".,;:!?、。)]}）】」』")
+            trailing = url_match.group(0)[len(url) :]
+            parts.append(_anchor(url, url))
+            parts.append(html.escape(trailing))
+            plain_cursor = url_match.end()
+        parts.append(html.escape(plain[plain_cursor:]))
+        parts.append(_anchor(match.group(2), match.group(1)))
+        cursor = match.end()
+    tail = text[cursor:]
+    tail_cursor = 0
+    for url_match in BARE_URL_RE.finditer(tail):
+        parts.append(html.escape(tail[tail_cursor : url_match.start()]))
+        url = url_match.group(0).rstrip(".,;:!?、。)]}）】」』")
+        trailing = url_match.group(0)[len(url) :]
+        parts.append(_anchor(url, url))
+        parts.append(html.escape(trailing))
+        tail_cursor = url_match.end()
+    parts.append(html.escape(tail[tail_cursor:]))
+    return "".join(parts).replace("\n", "<br>")
+
+
+def _fundamental_html(value: str) -> str:
+    """Turn the stored Premium-style field text into a safe, linked embed."""
+    fields: list[tuple[str, str]] = []
+    for block in re.split(r"\n\s*\n", str(value or "").strip()):
+        lines = block.splitlines()
+        if len(lines) >= 2 and lines[0].strip():
+            fields.append((lines[0].strip(), "\n".join(lines[1:]).strip()))
+    if not fields:
+        return f'<article class="discord-embed"><p>{_linkify(value)}</p></article>'
+    impact = next((content for name, content in fields if "材料インパクト" in name), "")
+    impact_class = ""
+    if "ネガティブ" in impact:
+        impact_class = " impact-negative"
+    elif any(word in impact for word in ("様子見", "混在", "要確認")):
+        impact_class = " impact-watch"
+    elif "ポジティブ" in impact:
+        impact_class = " impact-positive"
+    field_html = "".join(
+        f"<div><dt>{html.escape(name)}</dt><dd>{_linkify(content)}</dd></div>"
+        for name, content in fields
+    )
+    return f'<article class="discord-embed{impact_class}"><dl>{field_html}</dl></article>'
 
 
 def _pct(value, signed: bool = False) -> str:
@@ -231,10 +297,9 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         if is_masked:
             actions = '<a class="button-link" href="/purchase">新着銘柄を見る</a>'
         elif fundamental_html:
-            safe_analysis = html.escape(fundamental_html).replace("\n", "<br>")
             actions = (
                 '<button class="fundamental-toggle" type="button">ファンダ分析</button>'
-                f'<div class="fundamental-detail" hidden>{safe_analysis}</div>'
+                f'<div class="fundamental-detail" hidden>{_fundamental_html(fundamental_html)}</div>'
             )
         elif fundamental_url:
             actions = f'<a class="button-link" href="{html.escape(fundamental_url)}">ファンダ分析</a>'
@@ -279,7 +344,7 @@ REPORT_CSS = """
 .condition-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.condition-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;padding:17px;background:linear-gradient(150deg,var(--panel-solid),color-mix(in srgb,var(--bg) 88%,var(--violet)));transition:transform .18s ease,box-shadow .18s ease;text-decoration:none;color:var(--ink)}.condition-card:before{content:"";position:absolute;left:0;top:0;width:100%;height:4px;background:linear-gradient(90deg,var(--cyan),var(--violet))}.condition-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(54,84,145,.12)}.condition-id,.badge{display:inline-flex;border-radius:999px;background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));color:var(--blue);padding:3px 8px;font-size:12px;font-weight:750;margin:2px}
 .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.chart-card{border:1px solid var(--line);border-radius:18px;background:var(--panel-solid);padding:18px}.chart-card svg{width:100%;height:auto;display:block}.chart-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.chart-stats div{background:var(--bg);border-radius:12px;padding:10px}.chart-stats b{display:block}.axis-label{fill:var(--muted);font-size:12px}.grid-line{stroke:var(--line);stroke-width:1}.equity-line{fill:none;stroke:var(--blue);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}.equity-area{fill:url(#equity-fill);opacity:.22}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel-solid)}th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}thead th{position:sticky;top:0;background:color-mix(in srgb,var(--panel-solid) 94%,var(--bg));z-index:1;font-size:12px;color:var(--muted)}tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg) 42%,transparent)}tbody tr:hover{background:color-mix(in srgb,var(--blue) 7%,var(--panel-solid))}tr[hidden]{display:none!important}.metric-focus{color:var(--blue);font-weight:850;background:color-mix(in srgb,var(--blue) 8%,transparent)}.table-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}
-.history-details{border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 38%,var(--panel-solid));padding:14px}.history-heading{font-weight:800;margin:0 0 14px;color:var(--blue)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.filter-field{display:grid;gap:4px}.filter-field span{font-size:12px;color:var(--muted);font-weight:700}.filters input,.filters select{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:10px;padding:10px 12px}.filters input[type="search"]{min-width:min(360px,100%)}.result-count{color:var(--muted);font-weight:700}.history-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}.status{font-weight:750}.status.mature{color:var(--good)}.status.pending{color:var(--warn)}.number{font-variant-numeric:tabular-nums}.symbol{font-size:17px}.actions{margin-top:5px}.button-link,.fundamental-toggle{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}.fundamental-detail{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}
+.history-details{border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 38%,var(--panel-solid));padding:14px}.history-heading{font-weight:800;margin:0 0 14px;color:var(--blue)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.filter-field{display:grid;gap:4px}.filter-field span{font-size:12px;color:var(--muted);font-weight:700}.filters input,.filters select{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:10px;padding:10px 12px}.filters input[type="search"]{min-width:min(360px,100%)}.result-count{color:var(--muted);font-weight:700}.history-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}.status{font-weight:750}.status.mature{color:var(--good)}.status.pending{color:var(--warn)}.number{font-variant-numeric:tabular-nums}.symbol{font-size:17px}.actions{margin-top:5px}.button-link,.fundamental-toggle{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}.fundamental-detail{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}.discord-embed{border-left:4px solid var(--blue);background:var(--panel-solid);border-radius:8px;padding:12px;text-align:left}.discord-embed.impact-positive{border-left-color:#12b76a;background:color-mix(in srgb,#12b76a 10%,var(--panel-solid))}.discord-embed.impact-watch{border-left-color:#fdb022;background:color-mix(in srgb,#fdb022 11%,var(--panel-solid))}.discord-embed.impact-negative{border-left-color:#f04438;background:color-mix(in srgb,#f04438 9%,var(--panel-solid))}.discord-embed dl{display:grid;gap:10px;margin:0}.discord-embed dt{font-weight:800;color:var(--muted)}.discord-embed dd{margin:2px 0 0;overflow-wrap:anywhere;white-space:normal}
 .note{color:var(--muted);font-size:13px}.monthly-details{margin-top:16px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 55%,var(--panel-solid));padding:0 14px 14px}.monthly-details summary{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}.guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.guide-card{border:1px solid var(--line);border-radius:16px;background:var(--panel-solid);padding:18px}.site-footer{border-top:1px solid var(--line);background:color-mix(in srgb,var(--panel-solid) 78%,transparent);padding:26px 20px}.site-footer-inner{max-width:1440px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}.footer-copy{margin:0;color:var(--muted)}.footer-links{display:flex;gap:8px;flex-wrap:wrap}.footer-link{border:1px solid var(--line);border-radius:999px;padding:7px 12px;text-decoration:none;font-weight:750;background:var(--panel-solid)}
 @media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid,.guide-grid{grid-template-columns:1fr}}
 @media(max-width:620px){main{padding:18px 12px 50px}.panel{padding:16px;border-radius:14px}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}}
@@ -289,7 +354,7 @@ REPORT_CSS = """
 def _nav(current: str) -> str:
     links = [
         f'<a class="nav-link {"active" if current == "total" else ""}" '
-        'href="./weak_early_beta_latest.html">トータル</a>'
+        'href="./weak_early_beta_latest.html">アナリティクス</a>'
     ]
     for selector_id in SELECTOR_ORDER:
         info = selector_info(selector_id)
@@ -507,19 +572,19 @@ def render_guide(generated_at: pd.Timestamp) -> str:
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
-<p class="lead">天底極致 -Cloud- の検出履歴、成績、資産推移を迷わず確認するためのガイドです。</p></div>
+<p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>エントリー</small><b>翌営業日寄付</b></div><div class="kpi"><small>評価</small><b>5営業日目終値</b></div><div class="kpi"><small>売買単位</small><b>100株</b></div><div class="kpi"><small>コスト</small><b>0%試算</b></div></div></aside></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
-<article class="guide-card"><h3>アナリティクス</h3><p>5モードを合算した成績と資産推移を確認できます。重複をモードごとに数える集計と、同じ日・同じ銘柄を1回だけ数える集計を並べています。</p></article>
-<article class="guide-card"><h3>モード別ページ</h3><p>Shadow、Dive、Silence、Fusion、Balanceごとの全期間・年別・月別成績、資産推移、検出履歴を確認できます。</p></article>
-<article class="guide-card"><h3>検出履歴</h3><p>最初から最新20件を表示します。証券コード・銘柄名・日付範囲・モードで絞り込み、20件ずつ追加表示できます。</p></article>
-<article class="guide-card"><h3>ファンダ分析</h3><p>未来の新規検出だけを対象に、検出時点で確認できた会社固有の開示と事業情報を表示します。分析後に出た情報は自動的には遡及反映しません。</p></article>
+<article class="guide-card"><h3>アナリティクス</h3><p>Cloud全体の成績を見るトップページです。いくら増減したか、勝った取引の割合、資産の動きをまとめて確認できます。</p></article>
+<article class="guide-card"><h3>5つのモード</h3><p>モードは、銘柄を選ぶ「見方の違い」です。Shadow、Dive、Silence、Fusion、Balanceを押すと、それぞれの成績と検出銘柄を確認できます。</p></article>
+<article class="guide-card"><h3>検出履歴</h3><p>条件に当てはまった銘柄の一覧です。最初は新しい順に20件を表示し、銘柄名・証券コード・日付で絞り込めます。「さらに20件表示」で続きを確認できます。</p></article>
+<article class="guide-card"><h3>ファンダ分析</h3><p>会社の事業内容、決算や開示、注目材料、注意したい点を、分析を行った時点の情報でまとめています。リンクから根拠資料も確認できます。</p></article>
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
-<article class="guide-card"><h3>100株損益</h3><p>各検出を100株ずつ売買したと仮定した累計損益です。税金・手数料・スリッページは含みません。</p></article>
-<article class="guide-card"><h3>必要資金（目安）</h3><p>複数の取引が同時に重なった期間を含め、100株ずつ運用するために必要だった最大資金の目安です。延べ売買代金ではありません。</p></article>
-<article class="guide-card"><h3>資金増加率・単純年率</h3><p>100株損益を必要資金（目安）で割った増加率と、観測年数で単純に年率換算した参考値です。複利運用を表すものではありません。</p></article>
-<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は騰落率が0%の取引を分母から除外します。平均・中央値・最大上昇・最大下落は、翌営業日寄付から5営業日目終値までの騰落率です。</p></article>
+<article class="guide-card"><h3>100株損益</h3><p>検出された銘柄を毎回100株ずつ売買した、と仮定した損益の合計です。税金や手数料は入れていません。</p></article>
+<article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、100株ずつ取引するために最も多く必要だった資金の目安です。</p></article>
+<article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
+<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、利益になった取引の割合です。買値と売値が同じ取引は数えません。騰落率は、買った価格から売った価格まで何%動いたかを表します。</p></article>
 </div></section>
 <section class="panel"><h2>2つの合算方法</h2><p>{html.escape(ALLOCATION_EXPLANATION)}</p><p class="note">複数モードへの同時該当は、独立した複数の根拠を意味するものではありません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>

@@ -16,9 +16,10 @@ from weak_early_beta.bank_calendar import fifth_session_from_entry, is_bank_busi
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
-from weak_early_beta.notify import EMBED_COLORS, _message
-from weak_early_beta.report import MODE_PAGE_NAMES, render_mode_report, render_report, write_report
+from weak_early_beta.notify import EMBED_COLORS, _message, notify_daily_completion
+from weak_early_beta.report import MODE_PAGE_NAMES, render_guide, render_mode_report, render_report, write_report
 from weak_early_beta.reminders import notify_exit_reminders
+from weak_early_beta.restrictions import parse_jpx_restricted_symbols, quarantine_restricted_detections
 
 
 class WeakEarlyBetaTests(unittest.TestCase):
@@ -91,6 +92,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertEqual(len(payload["embeds"]), 1)
         embed = payload["embeds"][0]
         self.assertEqual(embed["title"], "7709 クボテック")
+        self.assertEqual(embed["url"], "https://jp.tradingview.com/chart/?symbol=TSE%3A7709")
         self.assertEqual(embed["color"], EMBED_COLORS[5])
         fields = {field["name"]: field["value"] for field in embed["fields"]}
         self.assertEqual(fields["検出時点の終値"], "76円")
@@ -99,6 +101,42 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertNotIn("Weak+Early ベータ検出", serialized)
         self.assertNotIn("売買評価", serialized)
         self.assertNotIn("WEAK_EARLY_BETA:", serialized)
+
+    def test_daily_completion_notifies_zero_detection_and_analytics(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state_path = Path(temp) / "daily.json"
+            payloads = notify_daily_completion(
+                self.ledger,
+                "2026-09-24",
+                "https://example.test/",
+                state_path=state_path,
+                dry_run=True,
+            )
+        self.assertEqual(len(payloads), 2)
+        self.assertEqual(payloads[0]["embeds"][0]["title"], "本日の検出銘柄はありません")
+        self.assertEqual(payloads[1]["embeds"][0]["url"], "https://example.test/")
+
+    def test_jpx_delisting_gate_is_causal_and_keeps_an_audit_row(self):
+        document = """<table><tr><th>指定年月日</th><th>銘柄名</th><th>コード</th><th>市場</th><th>解除</th><th>内容</th></tr>
+        <tr><td>2026/04/22</td><td>クボテック（株）</td><td>7709</td><td>スタンダード</td><td>-</td><td>上場廃止の決定・整理銘柄指定</td></tr>
+        <tr><td>2026/10/01</td><td>未来指定社</td><td>9999</td><td>スタンダード</td><td>-</td><td>上場廃止の決定・整理銘柄指定</td></tr></table>""".encode("utf-8")
+        restrictions = parse_jpx_restricted_symbols(document, "2026-09-14")
+        self.assertEqual([row["code"] for row in restrictions], ["7709"])
+        forward = self.ledger.head(2).copy()
+        forward.loc[:, "source_scope"] = "FORWARD_CAUSAL"
+        forward.loc[:, "symbol"] = "7709"
+        forward.loc[forward.index[0], "signal_date"] = pd.Timestamp("2026-04-21")
+        forward.loc[forward.index[1], "signal_date"] = pd.Timestamp("2026-09-14")
+        with tempfile.TemporaryDirectory() as temp:
+            active, excluded = quarantine_restricted_detections(
+                forward,
+                restrictions,
+                Path(temp) / "excluded.csv",
+            )
+        self.assertEqual(len(active), 1)
+        self.assertEqual(pd.Timestamp(active.iloc[0]["signal_date"]), pd.Timestamp("2026-04-21"))
+        self.assertEqual(len(excluded), 1)
+        self.assertEqual(excluded.iloc[0]["restriction_designation_date"], "2026-04-22")
 
     def test_bank_calendar_and_fifth_session_reminder(self):
         self.assertFalse(is_bank_business_day(date(2026, 9, 21)))
@@ -158,6 +196,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertNotIn("確定ユニット", output)
         self.assertNotIn(">n<", output)
         self.assertIn("天底極致 -Cloud-", output)
+        self.assertIn(">アナリティクス</a>", output)
         for old_label in ("現行", "Stable", "Sniper", "Mega", "Weak+Early"):
             self.assertNotIn(old_label, output)
         self.assertNotIn("延べ投入額</th>", output)
@@ -276,6 +315,24 @@ class WeakEarlyBetaTests(unittest.TestCase):
         output = render_report(ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
         self.assertNotIn('<img src=x onerror="alert(1)">', output)
         self.assertIn("&lt;img src=x", output)
+
+    def test_embedded_fundamental_links_and_impact_are_rendered(self):
+        ledger = self.ledger.head(1).copy()
+        ledger.loc[:, "fundamental_html"] = (
+            "材料インパクト\nポジティブ材料：受注を確認\n\n"
+            "開示リンク\n[会社資料](https://example.com/disclosure)"
+        )
+        metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
+        output = render_report(ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
+        self.assertIn("impact-positive", output)
+        self.assertIn('href="https://example.com/disclosure"', output)
+        self.assertIn('target="_blank" rel="noopener noreferrer"', output)
+
+    def test_guide_uses_beginner_friendly_copy_without_future_only_limit(self):
+        output = render_guide(pd.Timestamp("2026-09-20", tz="Asia/Tokyo"))
+        self.assertIn("モードは、銘柄を選ぶ「見方の違い」です", output)
+        self.assertIn("リンクから根拠資料も確認できます", output)
+        self.assertNotIn("未来の新規検出だけを対象に", output)
 
 
 if __name__ == "__main__":

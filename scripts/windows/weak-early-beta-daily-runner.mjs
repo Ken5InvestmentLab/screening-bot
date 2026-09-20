@@ -99,8 +99,8 @@ async function main(configFile) {
 
     await requireOk(python, ['-m', 'weak_early_beta.cli', 'report'], { cwd: repo, env, log: path.join(runDir, 'report') });
     await requireOk(config.npmPath, ['run', 'deploy'], { cwd: path.join(repo, 'weak-early-beta-gate'), env, log: path.join(runDir, 'deploy'), timeoutMs: 600_000 });
-    const notify = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify'], { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
-    result.notifications = JSON.parse(notify.stdout.trim()).notifications;
+    const notify = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today], { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
+    result.notifications = JSON.parse(notify.stdout.trim());
 
     await requireOk('git', ['add', '-A', '--', 'reports/weak_early_beta*.html', 'weak_early_beta/state', 'weak_early_beta/fundamental_worker'], { cwd: repo, env, log: path.join(runDir, 'git-add'), timeoutMs: 60_000 });
     const staged = await run('git', ['diff', '--cached', '--quiet'], { cwd: repo, env, log: path.join(runDir, 'git-diff'), timeoutMs: 60_000 });

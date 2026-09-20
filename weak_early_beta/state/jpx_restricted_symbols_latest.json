@@ -1,0 +1,696 @@
+{
+  "version": 1,
+  "as_of": "2026-09-20",
+  "fetched_at": "2026-09-21T00:18:58.245167+09:00",
+  "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
+  "source_sha256": "84387871905c57ab8ccd549427a3b9844b3429ffa8cd2adccde398bf515bb449",
+  "rule": "exclude only JPX rows marked 上場廃止の決定・整理銘柄指定 on or before signal date",
+  "symbols": [
+    {
+      "code": "9776",
+      "company_name": "札幌臨床検査センター（株）",
+      "designation_date": "2026-01-13",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7817",
+      "company_name": "パラマウントベッドホールディングス（株）",
+      "designation_date": "2026-01-19",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3526",
+      "company_name": "芦森工業（株）",
+      "designation_date": "2026-01-27",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5596",
+      "company_name": "アウトルックコンサルティング（株）",
+      "designation_date": "2026-01-28",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "9600",
+      "company_name": "（株）アイネット",
+      "designation_date": "2026-01-30",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "1949",
+      "company_name": "住友電設（株）",
+      "designation_date": "2026-02-09",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "9719",
+      "company_name": "ＳＣＳＫ（株）",
+      "designation_date": "2026-02-09",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4957",
+      "company_name": "ヤスハラケミカル（株）",
+      "designation_date": "2026-02-10",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5386",
+      "company_name": "（株）鶴弥",
+      "designation_date": "2026-02-16",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2374",
+      "company_name": "セントケア・ホールディング（株）",
+      "designation_date": "2026-02-18",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6734",
+      "company_name": "（株）ニューテック",
+      "designation_date": "2026-02-19",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3961",
+      "company_name": "シルバーエッグ・テクノロジー（株）",
+      "designation_date": "2026-02-20",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6406",
+      "company_name": "フジテック（株）",
+      "designation_date": "2026-02-20",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2389",
+      "company_name": "（株）デジタルホールディングス",
+      "designation_date": "2026-02-25",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7116",
+      "company_name": "ダイワ通信（株）",
+      "designation_date": "2026-02-25",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3655",
+      "company_name": "（株）ブレインパッド",
+      "designation_date": "2026-02-26",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7718",
+      "company_name": "スター精密（株）",
+      "designation_date": "2026-02-26",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7923",
+      "company_name": "トーイン（株）",
+      "designation_date": "2026-02-27",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7635",
+      "company_name": "杉田エース（株）",
+      "designation_date": "2026-03-03",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "1841",
+      "company_name": "サンユー建設（株）",
+      "designation_date": "2026-03-06",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7455",
+      "company_name": "（株）パリミキホールディングス",
+      "designation_date": "2026-03-06",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5352",
+      "company_name": "黒崎播磨（株）",
+      "designation_date": "2026-03-11",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7450",
+      "company_name": "（株）サンデー",
+      "designation_date": "2026-03-12",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7092",
+      "company_name": "（株）Ｆａｓｔ Ｆｉｔｎｅｓｓ Ｊａｐａｎ",
+      "designation_date": "2026-03-19",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7739",
+      "company_name": "キヤノン電子（株）",
+      "designation_date": "2026-03-19",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3902",
+      "company_name": "メディカル・データ・ビジョン（株）",
+      "designation_date": "2026-03-24",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7250",
+      "company_name": "太平洋工業（株）",
+      "designation_date": "2026-03-24",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "202A",
+      "company_name": "（株）豆蔵",
+      "designation_date": "2026-03-26",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4690",
+      "company_name": "日本パレットプール（株）",
+      "designation_date": "2026-03-26",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "8209",
+      "company_name": "（株）フレンドリー",
+      "designation_date": "2026-03-27",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6565",
+      "company_name": "ＡＢホテル（株）",
+      "designation_date": "2026-03-30",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4316",
+      "company_name": "（株）ビーマップ",
+      "designation_date": "2026-03-31",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7088",
+      "company_name": "（株）フォーラムエンジニアリング",
+      "designation_date": "2026-04-01",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7105",
+      "company_name": "三菱ロジスネクスト（株）",
+      "designation_date": "2026-04-09",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3541",
+      "company_name": "（株）農業総合研究所",
+      "designation_date": "2026-04-10",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6901",
+      "company_name": "澤藤電機（株）",
+      "designation_date": "2026-04-14",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2344",
+      "company_name": "平安レイサービス（株）",
+      "designation_date": "2026-04-15",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7255",
+      "company_name": "（株）桜井製作所",
+      "designation_date": "2026-04-15",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7946",
+      "company_name": "（株）光陽社",
+      "designation_date": "2026-04-15",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7985",
+      "company_name": "ネポン（株）",
+      "designation_date": "2026-04-15",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4530",
+      "company_name": "久光製薬（株）",
+      "designation_date": "2026-04-17",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7426",
+      "company_name": "（株）山大",
+      "designation_date": "2026-04-22",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7709",
+      "company_name": "クボテック（株）",
+      "designation_date": "2026-04-22",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3593",
+      "company_name": "（株）ホギメディカル",
+      "designation_date": "2026-04-24",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4917",
+      "company_name": "（株）マンダム",
+      "designation_date": "2026-04-24",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2692",
+      "company_name": "伊藤忠食品（株）",
+      "designation_date": "2026-04-28",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3670",
+      "company_name": "協立情報通信（株）",
+      "designation_date": "2026-04-30",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3681",
+      "company_name": "（株）ブイキューブ",
+      "designation_date": "2026-04-30",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6173",
+      "company_name": "（株）アクアライン",
+      "designation_date": "2026-04-30",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "1776",
+      "company_name": "三井住建道路（株）",
+      "designation_date": "2026-05-08",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "9067",
+      "company_name": "（株）丸運",
+      "designation_date": "2026-05-08",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4384",
+      "company_name": "ラクスル（株）",
+      "designation_date": "2026-05-12",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6201",
+      "company_name": "（株）豊田自動織機",
+      "designation_date": "2026-05-12",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7851",
+      "company_name": "カワセコンピュータサプライ（株）",
+      "designation_date": "2026-05-13",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "9914",
+      "company_name": "（株）植松商会",
+      "designation_date": "2026-05-13",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "1726",
+      "company_name": "（株）ビーアールホールディングス",
+      "designation_date": "2026-05-15",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7229",
+      "company_name": "（株）ユタカ技研",
+      "designation_date": "2026-05-15",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4974",
+      "company_name": "タカラバイオ（株）",
+      "designation_date": "2026-05-20",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7999",
+      "company_name": "ＭＵＴＯＨホールディングス（株）",
+      "designation_date": "2026-05-21",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2686",
+      "company_name": "（株）ジーフット",
+      "designation_date": "2026-05-22",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4556",
+      "company_name": "（株）カイノス",
+      "designation_date": "2026-05-25",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5856",
+      "company_name": "（株）エルアイイーエイチ",
+      "designation_date": "2026-05-25",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "9338",
+      "company_name": "（株）ＩＮＦＯＲＩＣＨ",
+      "designation_date": "2026-05-26",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3294",
+      "company_name": "（株）イーグランド",
+      "designation_date": "2026-05-27",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3546",
+      "company_name": "アレンザホールディングス（株）",
+      "designation_date": "2026-05-27",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6147",
+      "company_name": "（株）ヤマザキ",
+      "designation_date": "2026-05-27",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6670",
+      "company_name": "（株）ＭＣＪ",
+      "designation_date": "2026-05-27",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "9927",
+      "company_name": "（株）ワットマン",
+      "designation_date": "2026-05-29",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2540",
+      "company_name": "養命酒製造（株）",
+      "designation_date": "2026-06-01",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6403",
+      "company_name": "水道機工（株）",
+      "designation_date": "2026-06-01",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4659",
+      "company_name": "（株）エイジス",
+      "designation_date": "2026-06-02",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2763",
+      "company_name": "（株）エフティグループ",
+      "designation_date": "2026-06-03",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3787",
+      "company_name": "（株）テクノマセマティカル",
+      "designation_date": "2026-06-03",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7922",
+      "company_name": "三光産業（株）",
+      "designation_date": "2026-06-05",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7940",
+      "company_name": "ウェーブロックホールディングス（株）",
+      "designation_date": "2026-06-18",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7317",
+      "company_name": "（株）松屋アールアンドディ",
+      "designation_date": "2026-06-25",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5903",
+      "company_name": "シンポ（株）",
+      "designation_date": "2026-07-01",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "6197",
+      "company_name": "（株）ソラスト",
+      "designation_date": "2026-07-06",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3271",
+      "company_name": "（株）ＴＨＥグローバル社",
+      "designation_date": "2026-07-09",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4171",
+      "company_name": "（株）グローバルインフォメーション",
+      "designation_date": "2026-07-13",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "8283",
+      "company_name": "（株）ＰＡＬＴＡＣ",
+      "designation_date": "2026-07-15",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "1382",
+      "company_name": "（株）ホーブ",
+      "designation_date": "2026-07-23",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5103",
+      "company_name": "昭和ホールディングス（株）",
+      "designation_date": "2026-07-24",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2162",
+      "company_name": "ｎｍｓ ホールディングス（株）",
+      "designation_date": "2026-07-30",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3480",
+      "company_name": "（株）ジェイ・エス・ビー",
+      "designation_date": "2026-08-10",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "1909",
+      "company_name": "日本ドライケミカル（株）",
+      "designation_date": "2026-08-24",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "1948",
+      "company_name": "（株）弘電社",
+      "designation_date": "2026-08-25",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "3856",
+      "company_name": "Ａｂａｌａｎｃｅ（株）",
+      "designation_date": "2026-08-25",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "2180",
+      "company_name": "（株）サニーサイドアップグループ",
+      "designation_date": "2026-08-28",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7082",
+      "company_name": "（株）ジモティー",
+      "designation_date": "2026-08-28",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5202",
+      "company_name": "日本板硝子（株）",
+      "designation_date": "2026-08-31",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4800",
+      "company_name": "オリコン（株）",
+      "designation_date": "2026-09-07",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7183",
+      "company_name": "あんしん保証（株）",
+      "designation_date": "2026-09-10",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7490",
+      "company_name": "日新商事（株）",
+      "designation_date": "2026-09-10",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "4760",
+      "company_name": "（株）アルファ",
+      "designation_date": "2026-09-16",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "5484",
+      "company_name": "東北特殊鋼（株）",
+      "designation_date": "2026-09-16",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "8254",
+      "company_name": "（株）さいか屋",
+      "designation_date": "2026-09-16",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "9691",
+      "company_name": "（株）両毛システムズ",
+      "designation_date": "2026-09-16",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    }
+  ]
+}

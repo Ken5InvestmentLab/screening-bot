@@ -61,6 +61,7 @@ def command_daily(args: argparse.Namespace) -> None:
     # report/bootstrap operations stay lightweight and deterministic.
     from . import model
     from .notify import notify_pending
+    from .restrictions import fetch_jpx_restricted_symbols, quarantine_restricted_detections, restricted_mask
 
     ledger_path = Path(args.ledger)
     ledger = _load_or_bootstrap(ledger_path)
@@ -86,8 +87,21 @@ def command_daily(args: argparse.Namespace) -> None:
         tail, selected = model.score_range(raw, args.from_date, args.as_of)
     else:
         tail, selected = model.score_latest(raw, args.as_of)
+    latest = pd.to_datetime(raw["date"]).max()
+    restrictions = fetch_jpx_restricted_symbols(
+        args.as_of or latest,
+        Path(args.restriction_snapshot),
+    )
+    selected_restriction_mask = restricted_mask(selected, restrictions)
+    restricted_selected = selected[selected_restriction_mask].copy()
+    selected = selected[~selected_restriction_mask].copy()
     incoming = model.attach_forward_rows(selected, raw, company_names, source_hash)
     ledger = merge_detections(ledger, incoming)
+    ledger, quarantined = quarantine_restricted_detections(
+        ledger,
+        restrictions,
+        Path(args.excluded_ledger),
+    )
     report_url = args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", "")
     payloads = []
     if args.notify or args.dry_run_notify:
@@ -99,7 +113,6 @@ def command_daily(args: argparse.Namespace) -> None:
     write_ledger(ledger, ledger_path)
     write_fundamental_queue(ledger, Path(args.queue))
     metrics = write_report(ledger, Path(args.report), Path(args.metrics))
-    latest = pd.to_datetime(raw["date"]).max()
     receipt = {
         "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
         "run_at": pd.Timestamp.now(tz="Asia/Tokyo").isoformat(),
@@ -110,6 +123,9 @@ def command_daily(args: argparse.Namespace) -> None:
         "score_to": args.as_of or f"{latest:%Y-%m-%d}",
         "tail_rows_latest": int(len(tail)),
         "selector_rows_latest": int(len(selected)),
+        "restricted_selector_rows_latest": int(len(restricted_selected)),
+        "quarantined_ledger_rows": int(len(quarantined)),
+        "jpx_restricted_symbols": int(len(restrictions)),
         "new_or_refreshed_rows": int(len(incoming)),
         "notification_payloads": len(payloads),
         "ledger_rows": int(len(ledger)),
@@ -117,6 +133,30 @@ def command_daily(args: argparse.Namespace) -> None:
     }
     _write_receipt(Path(args.receipt), receipt)
     print(json.dumps(receipt, ensure_ascii=False, indent=2))
+
+
+def command_refresh_restrictions(args: argparse.Namespace) -> None:
+    from .restrictions import fetch_jpx_restricted_symbols, quarantine_restricted_detections
+
+    target = args.as_of or pd.Timestamp.now(tz="Asia/Tokyo").date()
+    ledger_path = Path(args.ledger)
+    ledger = _load_or_bootstrap(ledger_path)
+    restrictions = fetch_jpx_restricted_symbols(target, Path(args.restriction_snapshot))
+    ledger, excluded = quarantine_restricted_detections(
+        ledger,
+        restrictions,
+        Path(args.excluded_ledger),
+    )
+    write_ledger(ledger, ledger_path)
+    write_fundamental_queue(ledger, Path(args.queue))
+    metrics = write_report(ledger, Path(args.report), Path(args.metrics))
+    print(json.dumps({
+        "as_of": f"{pd.Timestamp(target):%Y-%m-%d}",
+        "restricted_symbols": len(restrictions),
+        "excluded_rows": len(excluded),
+        "ledger_rows": len(ledger),
+        "metrics_rows": len(metrics),
+    }, ensure_ascii=False))
 
 
 def command_notify(args: argparse.Namespace) -> None:
@@ -128,12 +168,58 @@ def command_notify(args: argparse.Namespace) -> None:
         ledger,
         report_url=args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", ""),
         dry_run=args.dry_run,
+        signal_date=args.date,
+        refresh_existing=args.refresh_existing,
     )
     if payloads and not args.dry_run:
         write_ledger(ledger, ledger_path)
         write_fundamental_queue(ledger, Path(args.queue))
-        write_report(ledger, Path(args.report), Path(args.metrics))
     print(json.dumps({"notifications": len(payloads), "dry_run": bool(args.dry_run)}, ensure_ascii=False))
+
+
+def command_notify_day(args: argparse.Namespace) -> None:
+    from .notify import notify_daily_completion, notify_pending
+
+    target = pd.Timestamp(args.date or pd.Timestamp.now(tz="Asia/Tokyo").date()).date()
+    ledger_path = Path(args.ledger)
+    ledger = _load_or_bootstrap(ledger_path)
+    report_url = args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", "")
+    ledger, signal_payloads = notify_pending(
+        ledger,
+        report_url=report_url,
+        dry_run=args.dry_run,
+        signal_date=target,
+    )
+    completion_payloads = notify_daily_completion(
+        ledger,
+        target,
+        report_url,
+        state_path=Path(args.daily_notification_state),
+        dry_run=args.dry_run,
+    )
+    if signal_payloads and not args.dry_run:
+        write_ledger(ledger, ledger_path)
+        write_fundamental_queue(ledger, Path(args.queue))
+    print(json.dumps({
+        "date": target.isoformat(),
+        "signal_notifications": len(signal_payloads),
+        "completion_notifications": len(completion_payloads),
+        "dry_run": bool(args.dry_run),
+    }, ensure_ascii=False))
+
+
+def command_notify_exclusions(args: argparse.Namespace) -> None:
+    from .notify import notify_exclusion_corrections
+
+    excluded_path = Path(args.excluded_ledger)
+    if not excluded_path.exists():
+        print(json.dumps({"corrections": 0, "dry_run": bool(args.dry_run)}, ensure_ascii=False))
+        return
+    excluded = pd.read_csv(excluded_path, dtype={"symbol": str})
+    excluded, payloads = notify_exclusion_corrections(excluded, dry_run=args.dry_run)
+    if payloads and not args.dry_run:
+        excluded.to_csv(excluded_path, index=False, encoding="utf-8", lineterminator="\n")
+    print(json.dumps({"corrections": len(payloads), "dry_run": bool(args.dry_run)}, ensure_ascii=False))
 
 
 def command_import_fundamentals(args: argparse.Namespace) -> None:
@@ -243,14 +329,56 @@ def parser() -> argparse.ArgumentParser:
     daily.add_argument("--notify", action="store_true")
     daily.add_argument("--dry-run-notify", action="store_true")
     daily.add_argument("--report-url", default="")
+    daily.add_argument(
+        "--restriction-snapshot",
+        default=str(ROOT / "weak_early_beta" / "state" / "jpx_restricted_symbols_latest.json"),
+    )
+    daily.add_argument(
+        "--excluded-ledger",
+        default=str(ROOT / "weak_early_beta" / "state" / "excluded_detections.csv"),
+    )
     daily.add_argument("--receipt", default=str(DEFAULT_RECEIPT))
     daily.set_defaults(func=command_daily)
+
+    restrictions = sub.add_parser("refresh-restrictions", help="apply the causal JPX delisting gate")
+    common(restrictions)
+    restrictions.add_argument("--as-of")
+    restrictions.add_argument(
+        "--restriction-snapshot",
+        default=str(ROOT / "weak_early_beta" / "state" / "jpx_restricted_symbols_latest.json"),
+    )
+    restrictions.add_argument(
+        "--excluded-ledger",
+        default=str(ROOT / "weak_early_beta" / "state" / "excluded_detections.csv"),
+    )
+    restrictions.set_defaults(func=command_refresh_restrictions)
 
     notify = sub.add_parser("notify", help="send queued signal embeds without rescoring")
     common(notify)
     notify.add_argument("--report-url", default="")
     notify.add_argument("--dry-run", action="store_true")
+    notify.add_argument("--date")
+    notify.add_argument("--refresh-existing", action="store_true")
     notify.set_defaults(func=command_notify)
+
+    notify_day = sub.add_parser("notify-day", help="send one business day's signals and completion embeds")
+    common(notify_day)
+    notify_day.add_argument("--date")
+    notify_day.add_argument("--report-url", default="")
+    notify_day.add_argument("--dry-run", action="store_true")
+    notify_day.add_argument(
+        "--daily-notification-state",
+        default=str(ROOT / "weak_early_beta" / "state" / "daily_notifications.json"),
+    )
+    notify_day.set_defaults(func=command_notify_day)
+
+    notify_exclusions = sub.add_parser("notify-exclusions", help="patch already-posted JPX-excluded signals")
+    notify_exclusions.add_argument(
+        "--excluded-ledger",
+        default=str(ROOT / "weak_early_beta" / "state" / "excluded_detections.csv"),
+    )
+    notify_exclusions.add_argument("--dry-run", action="store_true")
+    notify_exclusions.set_defaults(func=command_notify_exclusions)
 
     imports = sub.add_parser("import-fundamentals", help="attach dedicated-channel analysis receipts")
     common(imports)

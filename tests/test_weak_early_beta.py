@@ -14,6 +14,7 @@ from weak_early_beta.config import (
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
+from weak_early_beta.notify import EMBED_COLORS, _message
 from weak_early_beta.report import MODE_PAGE_NAMES, render_mode_report, render_report, write_report
 
 
@@ -68,8 +69,33 @@ class WeakEarlyBetaTests(unittest.TestCase):
         incoming = old.copy()
         incoming.loc[:, "notified_at"] = ""
         incoming.loc[:, "signal_discord_url"] = ""
+        incoming.loc[:, "company_name"] = ""
         merged = merge_detections(old, incoming)
         self.assertEqual(merged.iloc[0]["signal_discord_url"], "https://discord.example/message")
+        self.assertEqual(merged.iloc[0]["company_name"], old.iloc[0]["company_name"])
+
+    def test_signal_notification_is_user_facing_embed(self):
+        group = self.ledger.head(5).copy()
+        group.loc[:, "signal_date"] = pd.Timestamp("2026-09-14")
+        group.loc[:, "symbol"] = "7709"
+        group.loc[:, "company_name"] = "クボテック"
+        group.loc[:, "signal_close"] = 76
+        group.loc[:, "signal_volume"] = 2_405_500
+        group.loc[:, "selector_id"] = SELECTOR_ORDER
+        group.loc[:, "selector_name"] = [selector_info(value).display_name for value in SELECTOR_ORDER]
+        payload = _message(group, "https://example.test/")
+        self.assertEqual(payload["content"], "")
+        self.assertEqual(len(payload["embeds"]), 1)
+        embed = payload["embeds"][0]
+        self.assertEqual(embed["title"], "7709 クボテック")
+        self.assertEqual(embed["color"], EMBED_COLORS[5])
+        fields = {field["name"]: field["value"] for field in embed["fields"]}
+        self.assertEqual(fields["検出時点の終値"], "76円")
+        self.assertEqual(fields["当日の出来高"], "2,405,500株")
+        serialized = json.dumps(payload, ensure_ascii=False)
+        self.assertNotIn("Weak+Early ベータ検出", serialized)
+        self.assertNotIn("売買評価", serialized)
+        self.assertNotIn("WEAK_EARLY_BETA:", serialized)
 
     def test_report_has_no_extended_investment_metric(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))

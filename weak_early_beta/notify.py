@@ -8,6 +8,8 @@ from typing import Any
 import pandas as pd
 import requests
 
+from .config import SELECTOR_ORDER
+
 
 WEBHOOK_ENV = "WEAK_EARLY_BETA_SIGNAL_WEBHOOK_URL"
 CHANNEL_ID = "1550876104917520505"
@@ -22,28 +24,65 @@ def _discord_url(response: dict[str, Any]) -> str:
     return f"https://discord.com/channels/{guild_id}/{channel_id}/{message_id}"
 
 
+EMBED_COLORS = {
+    1: 0x5B8DEF,
+    2: 0x27B7C7,
+    3: 0x2ECC71,
+    4: 0xF39C12,
+    5: 0x9B59B6,
+}
+
+
+def _number(value: Any, suffix: str = "") -> str:
+    numeric = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
+    return "—" if pd.isna(numeric) else f"{float(numeric):,.0f}{suffix}"
+
+
 def _message(group: pd.DataFrame, report_url: str) -> dict[str, Any]:
     first = group.iloc[0]
-    names = " / ".join(sorted(group["selector_name"].astype(str).unique()))
+    order = {selector_id: index for index, selector_id in enumerate(SELECTOR_ORDER)}
+    modes = (
+        group[["selector_id", "selector_name"]]
+        .drop_duplicates("selector_id")
+        .assign(_order=lambda frame: frame["selector_id"].map(order).fillna(len(order)))
+        .sort_values("_order", kind="mergesort")
+    )
+    names = " / ".join(modes["selector_name"].astype(str))
     units = int(group["selector_id"].nunique())
     company = str(first.get("company_name", "") or "").strip()
     symbol_label = f"{first['symbol']} {company}".strip()
-    marker = f"WEAK_EARLY_BETA:{pd.Timestamp(first['signal_date']):%Y-%m-%d}|{first['symbol']}"
-    content = (
-        f"**Weak+Early ベータ検出**\n"
-        f"銘柄: **{symbol_label}**\n"
-        f"シグナル日: {pd.Timestamp(first['signal_date']):%Y-%m-%d}\n"
-        f"該当条件: {names}\n"
-        f"条件別積上げ換算: {units}ユニット / {units * 100}株\n"
-        "売買評価: 翌営業日寄付 → 5営業日目終値（100株・コスト0%）\n"
-        f"||{marker}||"
-    )
+    embed: dict[str, Any] = {
+        "title": symbol_label,
+        "color": EMBED_COLORS.get(min(max(units, 1), 5), EMBED_COLORS[5]),
+        "fields": [
+            {
+                "name": "検出日",
+                "value": f"{pd.Timestamp(first['signal_date']):%Y-%m-%d}",
+                "inline": True,
+            },
+            {
+                "name": "検出時点の終値",
+                "value": _number(first.get("signal_close"), "円"),
+                "inline": True,
+            },
+            {
+                "name": "当日の出来高",
+                "value": _number(first.get("signal_volume"), "株"),
+                "inline": True,
+            },
+            {"name": "該当モード数", "value": f"{units}モード", "inline": True},
+            {"name": "該当モード", "value": names, "inline": False},
+        ],
+        "footer": {"text": "色は該当モード数を表します"},
+    }
     if report_url:
-        content += f"\n履歴と成績: {report_url}"
-    return {"content": content, "allowed_mentions": {"parse": []}}
+        embed["url"] = report_url
+    # Discord PATCH keeps omitted fields, so an explicit empty content value is
+    # required when upgrading an older text notification to an embed.
+    return {"content": "", "embeds": [embed], "allowed_mentions": {"parse": []}}
 
 
-def _existing_message(marker: str, bot_token: str) -> dict[str, Any] | None:
+def _existing_message(signal_date: Any, symbol: str, bot_token: str) -> dict[str, Any] | None:
     if not bot_token:
         return None
     response = requests.get(
@@ -52,7 +91,25 @@ def _existing_message(marker: str, bot_token: str) -> dict[str, Any] | None:
         timeout=30,
     )
     response.raise_for_status()
-    return next((message for message in response.json() if marker in str(message.get("content", ""))), None)
+    expected_date = f"{pd.Timestamp(signal_date):%Y-%m-%d}"
+    for message in response.json():
+        for embed in message.get("embeds", []):
+            title = str(embed.get("title", ""))
+            fields = {str(field.get("name", "")): str(field.get("value", "")) for field in embed.get("fields", [])}
+            if title.startswith(str(symbol)) and fields.get("検出日") == expected_date:
+                return message
+    return None
+
+
+def edit_webhook_message(webhook_url: str, message_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Replace a beta webhook message without creating a duplicate."""
+    response = requests.patch(
+        f"{webhook_url.rstrip('/')}/messages/{message_id}",
+        json=payload,
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 def notify_pending(
@@ -81,8 +138,7 @@ def notify_pending(
         payloads.append(payload)
         if dry_run:
             continue
-        marker = f"WEAK_EARLY_BETA:{pd.Timestamp(signal_date):%Y-%m-%d}|{symbol}"
-        existing_message = _existing_message(marker, bot_token)
+        existing_message = _existing_message(signal_date, str(symbol), bot_token)
         if existing_message:
             receipt = existing_message
         else:

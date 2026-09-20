@@ -19,7 +19,8 @@ DEFAULT_QUEUE = ROOT / "weak_early_beta" / "state" / "fundamental_queue.json"
 DEFAULT_COMPANY_NAMES = ROOT / "weak_early_beta" / "state" / "company_names_202608.csv"
 
 LEDGER_COLUMNS = [
-    "detection_id", "signal_date", "symbol", "company_name", "selector_id",
+    "detection_id", "signal_date", "symbol", "company_name", "signal_close",
+    "signal_volume", "selector_id",
     "selector_name", "model_period", "status", "entry_date", "entry_open",
     "fifth_xtks_exit_date", "fifth_xtks_exit_close", "gross_return",
     "one_hundred_shares_pl_yen", "med_ret5", "med_ret1", "ret10",
@@ -126,6 +127,7 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
     if incoming["detection_id"].duplicated().any():
         raise RuntimeError("incoming detections contain duplicate detection_id")
     protected = [
+        "company_name", "signal_close", "signal_volume",
         "signal_discord_url", "notified_at", "fundamental_status",
         "fundamental_discord_url", "fundamental_html", "created_at",
     ]
@@ -138,7 +140,7 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
                 new.at[detection_id, column] = value
     untouched = old.loc[~old.index.isin(new.index)]
     result = pd.concat([untouched, new], ignore_index=True)
-    return result.reindex(columns=LEDGER_COLUMNS)
+    return apply_company_names(result.reindex(columns=LEDGER_COLUMNS))
 
 
 def build_fundamental_queue(frame: pd.DataFrame) -> list[dict]:

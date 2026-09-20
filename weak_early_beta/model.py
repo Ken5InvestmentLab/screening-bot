@@ -144,7 +144,7 @@ def attach_forward_rows(
     company_names = company_names or {}
     calendar = pd.DatetimeIndex(pd.to_datetime(raw["date"].unique())).sort_values()
     date_pos = {date: pos for pos, date in enumerate(calendar)}
-    prices = raw.set_index(["symbol", "date"])[["open", "close"]]
+    prices = raw.set_index(["symbol", "date"])[["open", "close", "volume"]]
     rows = []
     for record in selected.to_dict(orient="records"):
         signal_date = pd.Timestamp(record["date"]).normalize()
@@ -155,6 +155,11 @@ def attach_forward_rows(
         exit_date = calendar[pos + 5] if pos + 5 < len(calendar) else pd.NaT
         entry_open = float("nan")
         exit_close = float("nan")
+        signal_close = float("nan")
+        signal_volume = float("nan")
+        if (symbol, signal_date) in prices.index:
+            signal_close = float(prices.loc[(symbol, signal_date), "close"])
+            signal_volume = float(prices.loc[(symbol, signal_date), "volume"])
         if pd.notna(entry_date) and (symbol, entry_date) in prices.index:
             entry_open = float(prices.loc[(symbol, entry_date), "open"])
         if pd.notna(exit_date) and (symbol, exit_date) in prices.index:
@@ -167,6 +172,8 @@ def attach_forward_rows(
             "signal_date": signal_date,
             "symbol": symbol,
             "company_name": company_names.get(symbol, ""),
+            "signal_close": signal_close,
+            "signal_volume": signal_volume,
             "selector_id": selector_id,
             "selector_name": selector_info(selector_id).display_name,
             "status": "mature" if mature else ("entered" if pd.notna(entry_open) else "pending_entry"),

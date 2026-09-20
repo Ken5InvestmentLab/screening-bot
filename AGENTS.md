@@ -288,6 +288,12 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - The barrier fails closed: a timeout or persistent premium-log read failure must block report generation, deployment, and the report-ready Discord notice. Runs with `notify_discord=false` bypass the barrier.
 - Keep the premium catch-up window at 4 hours and the report job timeout at 300 minutes so a sleeping Windows host can resume the local workers before the fail-closed gate expires; keep the workflow values and `tests/test_wait_for_premium_snapshot.py` assertions aligned.
 
+## Weak+Early beta fundamental snapshots
+
+- Fundamental analysis for `weak_early_beta` is a detection-date snapshot: use only IR, timely disclosures, and other primary material publicly available by `signal_date` 23:59 JST. Never let a later disclosure enter the report or its links.
+- Reports carrying `analysisCutoff` must use the research-only `weak_early_beta/scripts/post_historical_snapshot.mjs` path. Do not change the production Premium Worker to weaken its newer-disclosure freshness gate.
+- Keep the cutoff audit and the beta worker state separate from production state, Discord channels, and workflows; regenerate the beta HTML only after the beta receipt is imported.
+
 ## Future Work
 
 - **Moonshot mode is retired**: it overlapped with Mega40 and was removed from optimizer code, pending/current logic files, and old analysis scripts. Do not recreate `/scan moonshot`, `current_logic_moonshot.json`, `pending_logic_moonshot.json`, or Moonshot optimizer paths; use the report-only Mega40 modes instead.

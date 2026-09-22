@@ -83,7 +83,7 @@ Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-run
 
 ## 運用境界
 
-- トータルは `reports/weak_early_beta_latest.html`、モード別は `reports/weak_early_beta_<mode>.html` を生成します。
+- 検出履歴とモード別ページへの入口は `reports/weak_early_beta_latest.html`、合算成績と資産推移は `reports/weak_early_beta_analytics.html`、各モードは `reports/weak_early_beta_<mode>.html` に生成します。各ページの無料版は `_free.html` です。
 - `weak-early-beta-gate/` は現行report-gateの認証実装をコード再利用しますが、別Worker・別公開URL・別assetsです。
 - 既存の本番workflow、Stable、Sniper、Mega、TradingView、watchlist、Spreadsheetは読み書きしません。
 - 定時起動は研究branchを対象にしたCodex予定タスクから専用Windowsランナーを呼びます。GitHub Actionsのscheduleや既存GASは変更しません。

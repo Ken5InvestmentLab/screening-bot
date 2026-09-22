@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urljoin
 
 import pandas as pd
 import requests
@@ -238,7 +239,7 @@ def notify_daily_completion(
         "fields": [{"name": "更新日", "value": date_key, "inline": True}],
     }
     if report_url:
-        analytics_embed["url"] = report_url
+        analytics_embed["url"] = urljoin(report_url, "weak_early_beta_analytics.html")
     send_once("analytics_url", {
         "content": "",
         "embeds": [analytics_embed],

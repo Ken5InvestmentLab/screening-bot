@@ -2,7 +2,7 @@
 // shared module. This wrapper only lets the beta's mode pages use the same gate.
 import sharedGate from "./shared-report-gate";
 
-const MODE_PAGE_RE = /^\/weak_early_beta_(?:silence|dive|shadow|fusion|balance|guide)\.html$/;
+const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
 const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init)\.js$/;
 type SharedRequest = Parameters<typeof sharedGate.fetch>[0];
 

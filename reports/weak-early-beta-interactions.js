@@ -4,14 +4,31 @@
   const root = document.documentElement;
   const themeButton = document.getElementById("theme-toggle");
 
+  // Register this first and use delegation so an unrelated table/filter error
+  // can never disable the embedded fundamental snapshot buttons.
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.(".fundamental-toggle");
+    if (!button) return;
+    const detail = button.parentElement?.querySelector(".fundamental-detail");
+    if (!detail) return;
+    detail.hidden = !detail.hidden;
+    button.setAttribute("aria-expanded", detail.hidden ? "false" : "true");
+    button.textContent = detail.hidden ? "ファンダ分析" : "閉じる";
+  });
+
   const currentTheme = () => root.dataset.theme === "dark" ? "dark" : "light";
   const applyTheme = (theme, persist = false) => {
     const normalized = theme === "dark" ? "dark" : "light";
     if (normalized === "dark") root.dataset.theme = "dark";
     else root.removeAttribute("data-theme");
     if (themeButton) {
-      themeButton.textContent = normalized === "dark" ? "ライトモード" : "ダークモード";
       themeButton.setAttribute("aria-pressed", normalized === "dark" ? "true" : "false");
+      themeButton.setAttribute(
+        "aria-label",
+        normalized === "dark" ? "ライトモードに切り替える" : "ダークモードに切り替える"
+      );
+      const label = themeButton.querySelector(".theme-toggle-label");
+      if (label) label.textContent = normalized === "dark" ? "ライト" : "ダーク";
     }
     if (persist) {
       try { localStorage.setItem(THEME_KEY, normalized); } catch (_error) {}
@@ -114,12 +131,4 @@
     renderPage();
   }
 
-  for (const button of document.querySelectorAll(".fundamental-toggle")) {
-    button.addEventListener("click", () => {
-      const detail = button.parentElement?.querySelector(".fundamental-detail");
-      if (!detail) return;
-      detail.hidden = !detail.hidden;
-      button.textContent = detail.hidden ? "ファンダ分析" : "閉じる";
-    });
-  }
 })();

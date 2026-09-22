@@ -17,7 +17,15 @@ from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.notify import EMBED_COLORS, _message, notify_daily_completion
-from weak_early_beta.report import MODE_PAGE_NAMES, render_guide, render_mode_report, render_report, write_report
+from weak_early_beta.report import (
+    ANALYTICS_PAGE_NAME,
+    MODE_PAGE_NAMES,
+    render_analytics_report,
+    render_guide,
+    render_mode_report,
+    render_report,
+    write_report,
+)
 from weak_early_beta.reminders import notify_exit_reminders
 from weak_early_beta.restrictions import parse_jpx_restricted_symbols, quarantine_restricted_detections
 
@@ -114,7 +122,10 @@ class WeakEarlyBetaTests(unittest.TestCase):
             )
         self.assertEqual(len(payloads), 2)
         self.assertEqual(payloads[0]["embeds"][0]["title"], "本日の検出銘柄はありません")
-        self.assertEqual(payloads[1]["embeds"][0]["url"], "https://example.test/")
+        self.assertEqual(
+            payloads[1]["embeds"][0]["url"],
+            "https://example.test/weak_early_beta_analytics.html",
+        )
 
     def test_jpx_delisting_gate_is_causal_and_keeps_an_audit_row(self):
         document = """<table><tr><th>指定年月日</th><th>銘柄名</th><th>コード</th><th>市場</th><th>解除</th><th>内容</th></tr>
@@ -146,12 +157,12 @@ class WeakEarlyBetaTests(unittest.TestCase):
         forward = self.ledger.head(5).copy()
         forward.loc[:, "source_scope"] = "FORWARD_CAUSAL"
         forward.loc[:, "signal_date"] = pd.Timestamp("2026-09-14")
-        forward.loc[:, "entry_date"] = pd.Timestamp("2026-09-15")
+        forward.loc[:, "entry_date"] = "2026-09-15"
         forward.loc[:, "entry_open"] = 80
         forward.loc[:, "symbol"] = "7709"
         forward.loc[:, "company_name"] = "クボテック"
         forward.loc[:, "selector_id"] = SELECTOR_ORDER
-        forward.loc[:, "exit_reminded_at"] = ""
+        forward["exit_reminded_at"] = pd.Series("", index=forward.index, dtype="object")
         updated, payloads = notify_exit_reminders(
             forward,
             date(2026, 9, 24),
@@ -171,22 +182,12 @@ class WeakEarlyBetaTests(unittest.TestCase):
             pd.Timestamp("2026-09-19", tz="Asia/Tokyo"),
             monthly_metrics=monthly,
         )
-        self.assertIn("勝率", output)
-        self.assertIn("平均", output)
         self.assertIn("100株損益", output)
-        self.assertIn("必要資金（目安）", output)
-        self.assertIn("天底極致 -Cloud- アナリティクス", output)
-        self.assertIn('<a class="brand" href="./weak_early_beta_latest.html">', output)
-        self.assertIn("data-paginated-table", output)
-        self.assertIn("資金増加率", output)
-        self.assertIn("順位", output)
-        self.assertIn("Cloud 全体の成績", output)
-        self.assertIn("モード別積上げ", output)
-        self.assertIn("銘柄均等", output)
-        self.assertIn("単純年率", output)
-        self.assertIn("月別の詳しい成績を見る", output)
-        self.assertIn("トータルの資産推移", output)
-        self.assertEqual(output.count('role="img"'), 2)
+        self.assertIn("天底極致 -Cloud- ダッシュボード", output)
+        self.assertIn('<a class="brand" href="./weak_early_beta_latest.html"', output)
+        self.assertNotIn("Cloud全体の成績", output)
+        self.assertNotIn("トータルの資産推移", output)
+        self.assertEqual(output.count('role="img"'), 0)
         self.assertIn("./weak_early_beta_shadow.html", output)
         self.assertIn("./weak-early-beta-interactions.js", output)
         self.assertIn("./weak-early-beta-theme-init.js", output)
@@ -202,13 +203,13 @@ class WeakEarlyBetaTests(unittest.TestCase):
             "x-dark.png",
         ):
             self.assertIn(f'report-assets/{asset_name}', output)
-        self.assertIn("3モード該当なら合計300株", output)
-        self.assertIn("確定取引数", output)
         self.assertNotIn("確定n", output)
         self.assertNotIn("確定ユニット", output)
         self.assertNotIn(">n<", output)
         self.assertIn("天底極致 -Cloud-", output)
         self.assertIn(">アナリティクス</a>", output)
+        self.assertIn("cloud-logo-light.png", output)
+        self.assertIn("cloud-logo-dark.png", output)
         for old_label in ("現行", "Stable", "Sniper", "Mega", "Weak+Early"):
             self.assertNotIn(old_label, output)
         self.assertNotIn("延べ投入額</th>", output)
@@ -250,6 +251,28 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 self.assertTrue((root / filename.replace(".html", "_free.html")).exists(), filename)
             self.assertTrue((root / "weak_early_beta_guide.html").exists())
             self.assertTrue((root / "weak_early_beta_guide_free.html").exists())
+            self.assertTrue((root / ANALYTICS_PAGE_NAME).exists())
+            self.assertTrue((root / ANALYTICS_PAGE_NAME.replace(".html", "_free.html")).exists())
+
+    def test_analytics_is_separate_and_uses_actual_period(self):
+        metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
+        monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))
+        output = render_analytics_report(
+            self.ledger,
+            metrics,
+            pd.Timestamp("2026-09-19", tz="Asia/Tokyo"),
+            monthly_metrics=monthly,
+        )
+        dates = pd.to_datetime(self.ledger["signal_date"])
+        expected = f"{dates.min():%Y-%m-%d}<br>〜{dates.max():%Y-%m-%d}"
+        self.assertIn(expected, output)
+        self.assertIn("トータルの資産推移", output)
+        self.assertIn("資金増加率", output)
+        self.assertIn("単純年率", output)
+        self.assertIn("3モード該当なら合計300株", output)
+        self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
+        self.assertIn("Cloud全体の成績 — 銘柄均等", output)
+        self.assertNotIn('id="history"', output)
 
     def test_free_report_masks_pending_identity_until_fifth_close(self):
         pending = self.ledger.head(1).copy()
@@ -343,7 +366,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
     def test_guide_uses_beginner_friendly_copy_without_future_only_limit(self):
         output = render_guide(pd.Timestamp("2026-09-20", tz="Asia/Tokyo"))
         self.assertIn("モードは、銘柄を選ぶ「見方の違い」です", output)
-        self.assertIn("リンクから根拠資料も確認できます", output)
+        self.assertIn("資料名を押すと根拠となる開示資料を確認できます", output)
         self.assertNotIn("未来の新規検出だけを対象に", output)
 
 

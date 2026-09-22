@@ -13,6 +13,7 @@ await mkdir(publicDir, { recursive: true });
 await mkdir(publicAssetsDir, { recursive: true });
 const pageStems = [
   "weak_early_beta_latest",
+  "weak_early_beta_analytics",
   "weak_early_beta_silence",
   "weak_early_beta_dive",
   "weak_early_beta_shadow",
@@ -38,6 +39,8 @@ for (const assetName of [
   "coconala-dark.png",
   "x-light.png",
   "x-dark.png",
+  "cloud-logo-light.png",
+  "cloud-logo-dark.png",
 ]) {
   await copyFile(
     path.join(reports, "report-assets", assetName),

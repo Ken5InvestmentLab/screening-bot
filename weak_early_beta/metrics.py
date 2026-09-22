@@ -55,14 +55,15 @@ def required_capital(frame: pd.DataFrame) -> float:
     return peak
 
 
-def _coverage_years(period: str, as_of: pd.Timestamp) -> float:
-    if "-" in period:
-        start_year = int(period.split("-")[0])
-        start = pd.Timestamp(f"{start_year}-01-01")
-    else:
-        start = pd.Timestamp(f"{int(period)}-01-01")
-    final_year = int(period.split("-")[-1])
-    end = min(as_of.normalize(), pd.Timestamp(f"{final_year}-12-31"))
+def coverage_years(frame: pd.DataFrame, as_of: pd.Timestamp) -> float:
+    """Return the actual observed span instead of assuming full calendar years."""
+    signal_dates = pd.to_datetime(frame["signal_date"], errors="coerce").dropna()
+    if signal_dates.empty:
+        return 1 / 365.2425
+    exit_dates = pd.to_datetime(frame.get("fifth_xtks_exit_date"), errors="coerce").dropna()
+    start = signal_dates.min().normalize()
+    observed_end = max(signal_dates.max(), exit_dates.max() if not exit_dates.empty else signal_dates.max())
+    end = min(as_of.normalize(), observed_end.normalize())
     return max((end - start).days / 365.2425, 1 / 365.2425)
 
 
@@ -92,7 +93,7 @@ def summarize(frame: pd.DataFrame, period: str, as_of: pd.Timestamp) -> dict[str
         "required_capital_yen": capital,
         "capital_return_pct": float(capital_return * 100) if pd.notna(capital_return) else np.nan,
         "simple_annualized_pct": (
-            float(capital_return * 100 / _coverage_years(period, as_of))
+            float(capital_return * 100 / coverage_years(frame, as_of))
             if pd.notna(capital_return) else np.nan
         ),
     }

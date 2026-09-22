@@ -254,7 +254,15 @@ def command_prepare_fundamentals(args: argparse.Namespace) -> None:
 def command_export_fundamentals(args: argparse.Namespace) -> None:
     from .fundamental import export_receipts
 
-    receipts = export_receipts(Path(args.worker_state), Path(args.receipts))
+    alert_ids = None
+    if args.claim:
+        claim = json.loads(Path(args.claim).read_text(encoding="utf-8-sig"))
+        alert_ids = {str(alert["alertId"]) for alert in claim.get("alerts", [])}
+    receipts = export_receipts(
+        Path(args.worker_state),
+        Path(args.receipts),
+        alert_ids=alert_ids,
+    )
     print(json.dumps({"exported": len(receipts), "receipts": args.receipts}, ensure_ascii=False))
 
 
@@ -411,6 +419,7 @@ def parser() -> argparse.ArgumentParser:
         "--receipts",
         default=str(ROOT / "weak_early_beta" / "fundamental_worker" / "out" / "fundamental_receipts.json"),
     )
+    export.add_argument("--claim", help="limit receipts to alert IDs in this claim JSON")
     export.set_defaults(func=command_export_fundamentals)
 
     business_day = sub.add_parser("is-business-day", help="check the Japanese bank-business-day gate")

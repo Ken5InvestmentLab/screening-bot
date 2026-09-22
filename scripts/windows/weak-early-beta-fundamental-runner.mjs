@@ -234,7 +234,7 @@ async function main(configFile) {
 
     await run(config.pythonPath || 'py', [
       '-m', 'weak_early_beta.cli', 'export-fundamentals',
-      '--worker-state', statePath, '--receipts', receiptsPath,
+      '--worker-state', statePath, '--receipts', receiptsPath, '--claim', claimPath,
     ], 'export-receipts');
     await run(config.pythonPath || 'py', [
       '-m', 'weak_early_beta.cli', 'import-fundamentals', '--receipts', receiptsPath,

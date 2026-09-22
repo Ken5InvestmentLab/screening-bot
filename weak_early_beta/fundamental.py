@@ -143,6 +143,7 @@ def export_receipts(
     state_path: Path = DEFAULT_WORKER_STATE,
     receipt_path: Path = DEFAULT_RECEIPTS,
     reports_path: Path = DEFAULT_REPORTS,
+    alert_ids: set[str] | None = None,
 ) -> list[dict]:
     """Convert worker Discord receipts into the beta ledger import contract."""
     state = _read_json(state_path, empty_worker_state())
@@ -155,6 +156,8 @@ def export_receipts(
     receipts = []
     for identity, posted in sorted(state.get("posted", {}).items()):
         if not identity.startswith("weak-early-beta:"):
+            continue
+        if alert_ids is not None and identity not in alert_ids:
             continue
         signal_date, symbol = identity.removeprefix("weak-early-beta:").split(":", 1)
         report = report_lookup.get(identity, {})

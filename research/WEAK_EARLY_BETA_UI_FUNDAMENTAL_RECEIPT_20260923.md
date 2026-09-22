@@ -16,4 +16,5 @@
 - 09-02時点の4052 raw reportは作業開始元 commit の `weak_early_beta/fundamental_worker/out/premium_reports.json` に保存されている。今回の単一claim用出力で上書きしてもGit履歴から復元可能。09-14の7709の旧投稿は上場廃止除外履歴として残し、再importしない。
 - 09-03版は会社IR・TDnet相当の基準日以前資料だけで構成。09-04以降の開示は含めていない。09-03提出の大株主変更報告書は会社IRではないため、このPremium形式の本文には含めていない。対象資料の範囲を拡げる場合は別途訂正・追記として扱うこと。
 - `py -3 -m unittest tests.test_weak_early_beta` 20件成功。`weak-early-beta-gate` の `npm run check`（TypeScript検査とWorker dry-run）成功。
-- ローカル `.env` とプロセス環境に `CLOUDFLARE_API_TOKEN` は見つからず、このreceipt時点で公開Workerへの反映は未確認。研究branchへのcommit/push後、beta-onlyのデプロイ経路を確認すること。main、本番Worker、既存Discord/Spreadsheetには変更なし。
+- 研究branchには `273b0cca`（ファンダ分析）と `e0e28365`（HTML/ロゴ）をcommit/push済み。main、本番Worker、既存Discord/Spreadsheetには変更なし。
+- `weak-early-beta-gate/.env` にCloudflareトークン設定はあったが、beta-only `npm run deploy` は Cloudflare API `Invalid access token [9109]` で失敗。保存済みWranglerログインも期限切れ。公開Workerへの反映は**未完了**で、ローカルHTMLとGitHub研究branchだけが更新済み。トークンを再発行・更新するかWranglerへ再ログインした後、beta-only `npm run deploy` を1回行い、公開URLの analytics/free/role制限と透過ロゴを確認すること。無効トークンのまま繰り返さない。

@@ -1,8 +1,8 @@
 # Weak+Early Cloud 公開URL 302調査
 
-調査日: 2026-09-24  
-調査担当: GPT-6 Sol xhigh   
-対象: `https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev/`  
+調査日: 2026-09-24
+調査担当: GPT-6 Sol xhigh
+対象: `https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev/`
 対象Worker: `tentei-kyokuchi-cloud`（ベータ専用）
 
 ## 結論

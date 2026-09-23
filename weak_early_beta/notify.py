@@ -11,17 +11,19 @@ from urllib.parse import urljoin
 import pandas as pd
 import requests
 
-from .config import SELECTOR_ORDER
+from .config import SELECTOR_ORDER, selector_info
 
 
 WEBHOOK_ENV = "WEAK_EARLY_BETA_SIGNAL_WEBHOOK_URL"
 CHANNEL_ID = "1550876104917520505"
+SUMMARY_CHANNEL_ID = "1552256658678218852"
+GUILD_ID = "1479418833352785944"
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DAILY_NOTIFICATION_STATE = ROOT / "weak_early_beta" / "state" / "daily_notifications.json"
 
 
 def _discord_url(response: dict[str, Any]) -> str:
-    guild_id = response.get("guild_id") or "@me"
+    guild_id = response.get("guild_id") or GUILD_ID
     channel_id = response.get("channel_id")
     message_id = response.get("id")
     if not channel_id or not message_id:
@@ -52,7 +54,7 @@ def _message(group: pd.DataFrame, report_url: str = "") -> dict[str, Any]:
         .assign(_order=lambda frame: frame["selector_id"].map(order).fillna(len(order)))
         .sort_values("_order", kind="mergesort")
     )
-    names = " / ".join(modes["selector_name"].astype(str))
+    names = " / ".join(selector_info(selector_id).display_name for selector_id in modes["selector_id"])
     units = int(group["selector_id"].nunique())
     company = str(first.get("company_name", "") or "").strip()
     symbol_label = f"{first['symbol']} {company}".strip()
@@ -126,6 +128,17 @@ def _post_webhook(webhook_url: str, payload: dict[str, Any]) -> dict[str, Any]:
     return response.json()
 
 
+def _post_bot(channel_id: str, bot_token: str, payload: dict[str, Any]) -> dict[str, Any]:
+    response = requests.post(
+        f"https://discord.com/api/v10/channels/{channel_id}/messages",
+        headers={"authorization": f"Bot {bot_token}"},
+        json=payload,
+        timeout=30,
+    )
+    response.raise_for_status()
+    return response.json()
+
+
 def _message_id_from_url(value: Any) -> str:
     return str(value or "").rstrip("/").rsplit("/", 1)[-1]
 
@@ -185,67 +198,70 @@ def notify_pending(
     return result, payloads
 
 
+def daily_summary_payload(
+    ledger: pd.DataFrame,
+    target_date: Any,
+    report_url: str,
+    source_scope: str = "FORWARD_CAUSAL",
+) -> dict[str, Any]:
+    """Build the dated, per-mode result and HTML links for the summary channel."""
+    if not report_url:
+        raise ValueError("WEAK_EARLY_BETA_REPORT_URL is required for the Cloud summary")
+    date_key = f"{pd.Timestamp(target_date):%Y-%m-%d}"
+    dated = ledger[
+        ledger["source_scope"].eq(source_scope)
+        & pd.to_datetime(ledger["signal_date"]).eq(pd.Timestamp(target_date))
+    ]
+    unique_count = int(dated["symbol"].astype(str).nunique())
+    fields = [{"name": "重複を除いた検出銘柄", "value": f"{unique_count}件", "inline": False}]
+    for selector_id in SELECTOR_ORDER:
+        count = int(dated.loc[dated["selector_id"].eq(selector_id), "symbol"].astype(str).nunique())
+        fields.append({"name": selector_info(selector_id).display_name, "value": f"{count}件", "inline": True})
+    fields.extend([
+        {"name": "検出銘柄一覧", "value": f"[HTMLを開く]({urljoin(report_url, 'weak_early_beta_latest.html')})", "inline": False},
+        {"name": "アナリティクス", "value": f"[HTMLを開く]({urljoin(report_url, 'weak_early_beta_analytics.html')})", "inline": False},
+    ])
+    return {
+        "content": "",
+        "embeds": [{
+            "title": f"天底極致 -Cloud- | {date_key} 検出結果",
+            "description": "5モードの件数です。同じ銘柄が複数モードに該当する場合があります。",
+            "url": urljoin(report_url, "weak_early_beta_analytics.html"),
+            "color": 0x4169E1,
+            "fields": fields,
+        }],
+        "allowed_mentions": {"parse": []},
+    }
+
+
 def notify_daily_completion(
     ledger: pd.DataFrame,
     target_date: Any,
     report_url: str,
     state_path: Path = DEFAULT_DAILY_NOTIFICATION_STATE,
-    webhook_url: str | None = None,
+    bot_token: str | None = None,
     dry_run: bool = False,
 ) -> list[dict[str, Any]]:
-    """Post a zero-detection notice when needed, then the analytics update notice."""
-    webhook_url = (webhook_url or os.environ.get(WEBHOOK_ENV, "")).strip()
-    if not dry_run and not webhook_url:
-        raise RuntimeError(f"{WEBHOOK_ENV} is required for live beta notifications")
+    """Post one idempotent summary Embed to the dedicated update channel."""
+    token = (bot_token or os.environ.get("WEAK_EARLY_BETA_DISCORD_BOT_TOKEN") or os.environ.get("DISCORD_TOKEN") or "").strip()
+    if not dry_run and not token:
+        raise RuntimeError("a Discord bot token is required for the Cloud summary channel")
     date_key = f"{pd.Timestamp(target_date):%Y-%m-%d}"
     state = {"version": 1, "days": {}}
     if state_path.exists():
         state = json.loads(state_path.read_text(encoding="utf-8"))
     day_state = state.setdefault("days", {}).setdefault(date_key, {})
-    dated = ledger[
-        ledger["source_scope"].eq("FORWARD_CAUSAL")
-        & pd.to_datetime(ledger["signal_date"]).eq(pd.Timestamp(target_date))
-    ]
-    detected = int(dated["symbol"].astype(str).nunique())
-    payloads: list[dict[str, Any]] = []
-
-    def send_once(key: str, payload: dict[str, Any]) -> None:
-        if day_state.get(key):
-            return
-        payloads.append(payload)
-        if dry_run:
-            return
-        receipt = _post_webhook(webhook_url, payload)
-        day_state[key] = _discord_url(receipt) or str(receipt.get("id", ""))
-        day_state["updated_at"] = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
-        state_path.parent.mkdir(parents=True, exist_ok=True)
-        state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-    if detected == 0:
-        send_once("no_detection_url", {
-            "content": "",
-            "embeds": [{
-                "title": "本日の検出銘柄はありません",
-                "description": "本日のCloud条件に該当する銘柄はありませんでした。",
-                "color": 0x95A5A6,
-                "fields": [{"name": "対象日", "value": date_key, "inline": True}],
-            }],
-            "allowed_mentions": {"parse": []},
-        })
-    analytics_embed = {
-        "title": "天底極致 -Cloud- アナリティクス",
-        "description": "天底極致 -Cloud- アナリティクスの更新が完了しました。こちらからご確認ください。",
-        "color": 0x4169E1,
-        "fields": [{"name": "更新日", "value": date_key, "inline": True}],
-    }
-    if report_url:
-        analytics_embed["url"] = urljoin(report_url, "weak_early_beta_analytics.html")
-    send_once("analytics_url", {
-        "content": "",
-        "embeds": [analytics_embed],
-        "allowed_mentions": {"parse": []},
-    })
-    return payloads
+    if day_state.get("summary_url"):
+        return []
+    payload = daily_summary_payload(ledger, target_date, report_url)
+    if dry_run:
+        return [payload]
+    receipt = _post_bot(SUMMARY_CHANNEL_ID, token, payload)
+    day_state["summary_url"] = _discord_url(receipt) or str(receipt.get("id", ""))
+    day_state["updated_at"] = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return [payload]
 
 
 def notify_exclusion_corrections(

@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from datetime import date
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 
@@ -22,7 +23,7 @@ from weak_early_beta.historical_fundamentals import (
 )
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
-from weak_early_beta.notify import EMBED_COLORS, _message, notify_daily_completion
+from weak_early_beta.notify import EMBED_COLORS, GUILD_ID, SUMMARY_CHANNEL_ID, _discord_url, _message, daily_summary_payload, notify_daily_completion
 from weak_early_beta.report import (
     ANALYTICS_PAGE_NAME,
     MODE_PAGE_NAMES,
@@ -111,12 +112,27 @@ class WeakEarlyBetaTests(unittest.TestCase):
         fields = {field["name"]: field["value"] for field in embed["fields"]}
         self.assertEqual(fields["検出時点の終値"], "76円")
         self.assertEqual(fields["当日の出来高"], "2,405,500株")
+        self.assertEqual(fields["該当モード"], "Silence / Dive / Shadow / Fusion / Balance")
         serialized = json.dumps(payload, ensure_ascii=False)
         self.assertNotIn("Weak+Early ベータ検出", serialized)
         self.assertNotIn("売買評価", serialized)
         self.assertNotIn("WEAK_EARLY_BETA:", serialized)
 
-    def test_daily_completion_notifies_zero_detection_and_analytics(self):
+    def test_daily_summary_counts_overlapping_modes_and_links(self):
+        group = self.ledger.head(5).copy()
+        group.loc[:, "source_scope"] = "FORWARD_CAUSAL"
+        group.loc[:, "signal_date"] = pd.Timestamp("2026-09-24")
+        group.loc[:, "symbol"] = "7709"
+        group.loc[:, "selector_id"] = SELECTOR_ORDER
+        payload = daily_summary_payload(group, "2026-09-24", "https://example.test/")
+        fields = {field["name"]: field["value"] for field in payload["embeds"][0]["fields"]}
+        self.assertEqual(fields["重複を除いた検出銘柄"], "1件")
+        for selector_id in SELECTOR_ORDER:
+            self.assertEqual(fields[selector_info(selector_id).display_name], "1件")
+        self.assertIn("weak_early_beta_latest.html", fields["検出銘柄一覧"])
+        self.assertIn("weak_early_beta_analytics.html", fields["アナリティクス"])
+
+    def test_daily_completion_sends_one_zero_count_summary(self):
         with tempfile.TemporaryDirectory() as temp:
             state_path = Path(temp) / "daily.json"
             payloads = notify_daily_completion(
@@ -126,12 +142,37 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 state_path=state_path,
                 dry_run=True,
             )
-        self.assertEqual(len(payloads), 2)
-        self.assertEqual(payloads[0]["embeds"][0]["title"], "本日の検出銘柄はありません")
+        self.assertEqual(len(payloads), 1)
+        self.assertEqual(payloads[0]["content"], "")
         self.assertEqual(
-            payloads[1]["embeds"][0]["url"],
+            payloads[0]["embeds"][0]["url"],
             "https://example.test/weak_early_beta_analytics.html",
         )
+        fields = {field["name"]: field["value"] for field in payloads[0]["embeds"][0]["fields"]}
+        self.assertEqual(fields["重複を除いた検出銘柄"], "0件")
+
+    def test_daily_summary_receipt_prevents_a_second_post(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state_path = Path(temp) / "daily.json"
+            response = {"channel_id": SUMMARY_CHANNEL_ID, "id": "123"}
+            with patch("weak_early_beta.notify._post_bot", return_value=response) as post:
+                first = notify_daily_completion(
+                    self.ledger, "2026-09-24", "https://example.test/",
+                    state_path=state_path, bot_token="test-token",
+                )
+                second = notify_daily_completion(
+                    self.ledger, "2026-09-24", "https://example.test/",
+                    state_path=state_path, bot_token="test-token",
+                )
+            self.assertEqual(len(first), 1)
+            self.assertEqual(second, [])
+            post.assert_called_once()
+            self.assertEqual(post.call_args.args[0], SUMMARY_CHANNEL_ID)
+            self.assertEqual(
+                json.loads(state_path.read_text(encoding="utf-8"))["days"]["2026-09-24"]["summary_url"],
+                f"https://discord.com/channels/{GUILD_ID}/{SUMMARY_CHANNEL_ID}/123",
+            )
+            self.assertEqual(_discord_url(response), f"https://discord.com/channels/{GUILD_ID}/{SUMMARY_CHANNEL_ID}/123")
 
     def test_jpx_delisting_gate_is_causal_and_keeps_an_audit_row(self):
         document = """<table><tr><th>指定年月日</th><th>銘柄名</th><th>コード</th><th>市場</th><th>解除</th><th>内容</th></tr>

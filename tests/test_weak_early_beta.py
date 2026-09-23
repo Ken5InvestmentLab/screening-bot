@@ -27,6 +27,7 @@ from weak_early_beta.notify import EMBED_COLORS, GUILD_ID, SUMMARY_CHANNEL_ID, _
 from weak_early_beta.report import (
     ANALYTICS_PAGE_NAME,
     MODE_PAGE_NAMES,
+    _payoff_structure,
     render_analytics_report,
     render_guide,
     render_mode_report,
@@ -326,6 +327,11 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn(f"最終検出: {dates.max():%Y-%m-%d}", output)
         self.assertIn("トータルの資産推移", output)
         self.assertIn('<section class="panel" id="annual-pl">', output)
+        self.assertIn('<section class="panel" id="payoff-structure">', output)
+        self.assertIn("50.88%", output)
+        self.assertIn("+24.2%", output)
+        self.assertIn("-12.6%", output)
+        self.assertIn("1.92倍", output)
         self.assertIn("2026年（9月3日検出分まで）", output)
         self.assertNotIn("YTD", output)
         self.assertIn("資金増加率", output)
@@ -351,6 +357,17 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertEqual(chart.count('class="annual-pl-row"'), 4)
         self.assertIn("¥+370,003", chart)
         self.assertNotIn("¥+90,307", chart)
+
+    def test_payoff_structure_uses_current_completed_trades(self):
+        frame = pd.DataFrame({"gross_return": [0.2, -0.1, 0.0, float("nan")]})
+        chart = _payoff_structure(frame)
+        self.assertIn("33.33%", chart)
+        self.assertIn("+20.0%", chart)
+        self.assertIn("-10.0%", chart)
+        self.assertIn("2.00倍", chart)
+        self.assertIn("勝ち 1件・負け 1件・引き分け 1件", chart)
+        self.assertIn('width:42.00%', chart)
+        self.assertIn('width:21.00%', chart)
 
     def test_detection_history_starts_with_only_twenty_rows_visible_in_html(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))

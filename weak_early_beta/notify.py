@@ -214,19 +214,24 @@ def daily_summary_payload(
     ]
     unique_count = int(dated["symbol"].astype(str).nunique())
     fields = [{"name": "重複を除いた検出銘柄", "value": f"{unique_count}件", "inline": False}]
+    modes_by_count: dict[int, list[str]] = {}
     for selector_id in SELECTOR_ORDER:
         count = int(dated.loc[dated["selector_id"].eq(selector_id), "symbol"].astype(str).nunique())
-        fields.append({"name": selector_info(selector_id).display_name, "value": f"{count}件", "inline": True})
+        modes_by_count.setdefault(count, []).append(selector_info(selector_id).display_name)
+    breakdown = "全モード0件" if unique_count == 0 else "\n".join(
+        f"**{count}件**｜{'・'.join(modes_by_count[count])}"
+        for count in sorted(modes_by_count, reverse=True)
+    )
     fields.extend([
+        {"name": "モード別内訳", "value": breakdown, "inline": False},
         {"name": "検出銘柄一覧", "value": f"[HTMLを開く]({urljoin(report_url, 'weak_early_beta_latest.html')})", "inline": False},
-        {"name": "アナリティクス", "value": f"[HTMLを開く]({urljoin(report_url, 'weak_early_beta_analytics.html')})", "inline": False},
     ])
     return {
         "content": "",
         "embeds": [{
             "title": f"天底極致 -Cloud- | {date_key} 検出結果",
             "description": "5モードの件数です。同じ銘柄が複数モードに該当する場合があります。",
-            "url": urljoin(report_url, "weak_early_beta_analytics.html"),
+            "url": urljoin(report_url, "weak_early_beta_latest.html"),
             "color": 0x4169E1,
             "fields": fields,
         }],

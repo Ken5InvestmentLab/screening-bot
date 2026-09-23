@@ -127,10 +127,19 @@ class WeakEarlyBetaTests(unittest.TestCase):
         payload = daily_summary_payload(group, "2026-09-24", "https://example.test/")
         fields = {field["name"]: field["value"] for field in payload["embeds"][0]["fields"]}
         self.assertEqual(fields["重複を除いた検出銘柄"], "1件")
-        for selector_id in SELECTOR_ORDER:
-            self.assertEqual(fields[selector_info(selector_id).display_name], "1件")
+        self.assertEqual(fields["モード別内訳"], "**1件**｜Silence・Dive・Shadow・Fusion・Balance")
         self.assertIn("weak_early_beta_latest.html", fields["検出銘柄一覧"])
-        self.assertIn("weak_early_beta_analytics.html", fields["アナリティクス"])
+        self.assertNotIn("weak_early_beta_analytics.html", json.dumps(payload, ensure_ascii=False))
+
+        second = group.head(2).copy()
+        second.loc[:, "symbol"] = "1234"
+        mixed = daily_summary_payload(pd.concat([group, second]), "2026-09-24", "https://example.test/")
+        mixed_fields = {field["name"]: field["value"] for field in mixed["embeds"][0]["fields"]}
+        self.assertEqual(mixed_fields["重複を除いた検出銘柄"], "2件")
+        self.assertEqual(
+            mixed_fields["モード別内訳"],
+            "**2件**｜Silence・Dive\n**1件**｜Shadow・Fusion・Balance",
+        )
 
     def test_daily_completion_sends_one_zero_count_summary(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -146,10 +155,11 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertEqual(payloads[0]["content"], "")
         self.assertEqual(
             payloads[0]["embeds"][0]["url"],
-            "https://example.test/weak_early_beta_analytics.html",
+            "https://example.test/weak_early_beta_latest.html",
         )
         fields = {field["name"]: field["value"] for field in payloads[0]["embeds"][0]["fields"]}
         self.assertEqual(fields["重複を除いた検出銘柄"], "0件")
+        self.assertEqual(fields["モード別内訳"], "全モード0件")
 
     def test_daily_summary_receipt_prevents_a_second_post(self):
         with tempfile.TemporaryDirectory() as temp:

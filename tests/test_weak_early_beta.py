@@ -591,7 +591,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
         ledger = self.ledger.head(1).copy()
         ledger.loc[:, "fundamental_html"] = (
             "材料インパクト\nポジティブ材料：受注を確認\n\n"
-            "開示リンク\n[会社資料](https://example.com/disclosure)\n\n"
+            "開示リンク\n[2026-08-13 会社資料(11:30)](https://example.com/disclosure)；"
+            "2026-08-28 14:10 お知らせ https://example.com/notice\n\n"
             "Sources\n[会社IR情報](https://example.com/ir)（一覧確認）；"
             "[適時開示一覧](https://example.com/list)（カットオフ確認のみ）。"
             "内容の事実は上記の開示資料で確認。"
@@ -600,16 +601,19 @@ class WeakEarlyBetaTests(unittest.TestCase):
         output = render_report(ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
         self.assertIn("impact-positive", output)
         self.assertIn('href="https://example.com/disclosure"', output)
-        self.assertIn('<ul class="source-links">', output)
-        self.assertIn('<li><a href="https://example.com/ir"', output)
-        self.assertIn('<li><a href="https://example.com/list"', output)
+        self.assertIn('>2026-08-13 会社資料(11:30)</a>', output)
+        self.assertIn('>2026-08-28 お知らせ(14:10)</a>', output)
+        self.assertIn('・<a href="https://example.com/ir"', output)
+        self.assertIn('・<a href="https://example.com/list"', output)
+        self.assertIn('class="fundamental-close"', output)
+        self.assertIn('Cloud fundamental snapshot / Not investment advice / 分析対象日:', output)
         self.assertNotIn("一覧確認", output)
         self.assertNotIn("カットオフ確認のみ", output)
         self.assertNotIn("内容の事実は上記", output)
         self.assertIn('target="_blank" rel="noopener noreferrer"', output)
-        self.assertIn(".discord-embed{font-weight:400;line-height:1.55}", output)
-        self.assertIn(".discord-embed dt{font-weight:800;color:var(--muted)}", output)
-        self.assertIn(".discord-embed dd{font-weight:400}", output)
+        self.assertIn('font:400 14px/1.55 "Yu Gothic","Meiryo","Segoe UI",sans-serif', output)
+        self.assertIn(".discord-embed dt{margin-bottom:2px;color:#344054;font-weight:700}", output)
+        self.assertIn(".discord-embed dd{margin:0;min-width:0;color:#182230;font-weight:400", output)
 
     def test_guide_uses_beginner_friendly_copy_without_future_only_limit(self):
         output = render_guide(pd.Timestamp("2026-09-20", tz="Asia/Tokyo"))

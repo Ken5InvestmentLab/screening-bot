@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import html
+import json
 import re
+from functools import lru_cache
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -95,90 +98,148 @@ def _linkify(value: str) -> str:
     return "".join(parts).replace("\n", "<br>")
 
 
-def _sources_html(value: str) -> str:
-    """Render source references as concise Premium-style bullets."""
+def _source_label(url: str, company_name: str, symbol: str) -> str:
+    subject = company_name or symbol or "発行体"
+    parsed = urlparse(url)
+    host = parsed.netloc.lower()
+    path = parsed.path.lower()
+    if "finance.yahoo.co.jp" in host and "/disclosure" in path:
+        return f"Yahoo!ファイナンス {symbol} 適時開示一覧"
+    if "irbank.net" in host:
+        return f"IRBANK {subject} 開示一覧"
+    if "/news" in path or "/category/news" in path:
+        return f"{subject} ニュース一覧"
+    if "/library" in path or "/ir-docs" in path:
+        return f"{subject} IR資料一覧"
+    return f"{subject} IR情報"
+
+
+def _link_entries(value: str) -> list[str]:
+    return [entry.strip().lstrip("・• ").strip() for entry in re.split(r"[\r\n;；]+", str(value or "")) if entry.strip()]
+
+
+def _source_links_html(value: str, company_name: str, symbol: str) -> str:
     links: list[str] = []
     seen: set[str] = set()
-    entries = re.split(r"[\r\n;；]+", str(value or ""))
-    for entry in entries:
-        entry = entry.strip().lstrip("・•-–— ").strip()
-        if not entry:
-            continue
-        markdown_matches = list(MARKDOWN_LINK_RE.finditer(entry))
-        if markdown_matches:
-            for match in markdown_matches:
-                url, label = match.group(2), match.group(1)
-                if url not in seen:
-                    links.append(f"<li>{_anchor(url, label)}</li>")
-                    seen.add(url)
-            continue
-        for match in BARE_URL_RE.finditer(entry):
-            raw_url = match.group(0)
-            url = raw_url.rstrip(".,;:!?、。)]}）】」』")
-            if url in seen:
+    for entry in _link_entries(value):
+        # Source lines often carry parenthetical research notes after a Markdown
+        # link. Keep only the source label and URL, as in the Premium report.
+        markdown_links = list(MARKDOWN_LINK_RE.finditer(entry))
+        if markdown_links:
+            candidates = [(match.group(2), match.group(1)) for match in markdown_links]
+        else:
+            matches = list(BARE_URL_RE.finditer(entry))
+            if len(matches) != 1:
                 continue
-            label = entry[: match.start()].strip(" ：:・•-–—") or url
-            links.append(f"<li>{_anchor(url, label)}</li>")
-            seen.add(url)
+            match = matches[0]
+            url = match.group(0).rstrip(".,;:!?、。)]}）】」』")
+            label = entry[: match.start()].strip(" ：:・•-–—") or _source_label(url, company_name, symbol)
+            candidates = [(url, label)]
+        for url, label in candidates:
+            if url not in seen:
+                links.append("・" + _anchor(url, label))
+                seen.add(url)
     if not links:
         return _linkify(value)
-    return '<ul class="source-links">' + "".join(links) + "</ul>"
+    return "<br>".join(links)
 
 
-def _disclosure_links_html(value: str) -> str:
-    """Render disclosures like Premium Worker bullets with descriptive links."""
+@lru_cache(maxsize=1)
+def _historical_snapshot_metadata() -> dict[tuple[str, str], dict]:
+    path = ROOT / "weak_early_beta" / "fundamental_worker" / "out" / "historical_backfill_receipts.json"
+    try:
+        reports = json.loads(path.read_text(encoding="utf-8")).get("reports", [])
+    except (OSError, ValueError):
+        return {}
+    lookup: dict[tuple[str, str], dict] = {}
+    for report in reports:
+        if report.get("auditStatus") != "pass":
+            continue
+        labels: dict[str, str] = {}
+        for disclosure in report.get("disclosures", []):
+            url = str(disclosure.get("url") or "").strip()
+            title = str(disclosure.get("title") or "").strip()
+            published = str(disclosure.get("publishedAt") or "").strip()
+            if not (url and title and published and disclosure.get("contentReviewed")):
+                continue
+            try:
+                stamp = pd.Timestamp(published).tz_convert("Asia/Tokyo")
+            except (ValueError, TypeError):
+                continue
+            labels[url] = f"{stamp:%Y-%m-%d} {title}({stamp:%H:%M})"
+        key = (str(report.get("signalDate") or ""), str(report.get("symbolCode") or ""))
+        lookup[key] = {"cutoff": str(report.get("analysisCutoff") or ""), "disclosures": labels}
+    return lookup
+
+
+def _bare_disclosure_label(prefix: str) -> str:
+    dated = re.match(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", prefix)
+    if not dated:
+        return prefix.strip(" 「」")
+    date = dated.group(1)
+    title = (dated.group(2) or "").strip()
+    time = ""
+    time_prefix = re.match(r"^(\d{1,2}:\d{2})(?:\+09:00)?\s*(.*)$", title)
+    if time_prefix:
+        time = time_prefix.group(1)
+        title = time_prefix.group(2).strip()
+    if title.startswith("「") and title.endswith("」"):
+        title = title[1:-1].strip()
+    time_suffix = re.search(r"\s*\((\d{1,2}:\d{2})\)$", title)
+    if time_suffix:
+        time = time or time_suffix.group(1)
+        title = title[: time_suffix.start()].rstrip()
+    return f"{date} {title}" + (f"({time})" if time else "")
+
+
+def _disclosure_links_html(value: str, metadata: dict | None = None) -> str:
+    """Render both Markdown and plain disclosure URLs as Premium-style links."""
     rendered: list[str] = []
-    for line in str(value or "").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        matches = list(BARE_URL_RE.finditer(line))
-        if len(matches) != 1:
-            rendered.append(_linkify(line))
-            continue
-
-        match = matches[0]
-        raw_url = match.group(0)
-        url = raw_url.rstrip(".,;:!?、。)]}）】」』")
-        trailing = raw_url[len(url) :]
-        prefix = line[: match.start()].rstrip()
-        dated = re.match(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", prefix)
-        if not dated:
-            rendered.append(_linkify(line))
-            continue
-
-        date = dated.group(1)
-        title = (dated.group(2) or "").strip()
-        time = ""
-        time_prefix = re.match(r"^(\d{1,2}:\d{2})(?:\+09:00)?\s*(.*)$", title)
-        if time_prefix:
-            time = time_prefix.group(1)
-            title = time_prefix.group(2).strip()
-        if title.startswith("「") and title.endswith("」"):
-            title = title[1:-1].strip()
-        time_suffix = re.search(r"\s*\((\d{1,2}:\d{2})\)$", title)
-        if time_suffix:
-            time = time or time_suffix.group(1)
-            title = title[: time_suffix.start()].rstrip()
-        if not title:
-            rendered.append(_linkify(line))
-            continue
-
-        label = f"{date} {title}" + (f"({time})" if time else "")
-        rendered.append("・" + _anchor(url, label) + html.escape(trailing))
+    seen: set[str] = set()
+    disclosure_labels = (metadata or {}).get("disclosures", {})
+    for entry in _link_entries(value):
+        markdown = MARKDOWN_LINK_RE.fullmatch(entry)
+        if markdown:
+            label, url = markdown.group(1), markdown.group(2)
+        else:
+            matches = list(BARE_URL_RE.finditer(entry))
+            if len(matches) != 1:
+                rendered.append(_linkify(entry))
+                continue
+            match = matches[0]
+            url = match.group(0).rstrip(".,;:!?、。)]}）】」』")
+            label = _bare_disclosure_label(entry[: match.start()].strip())
+        if url not in seen:
+            rendered.append("・" + _anchor(url, disclosure_labels.get(url) or label or "開示資料"))
+            seen.add(url)
 
     return "<br>".join(rendered)
 
 
-def _fundamental_html(value: str) -> str:
+def _fundamental_html(
+    value: str, company_name: str, symbol: str, signal_date: str, metadata: dict | None = None
+) -> str:
     """Turn the stored Premium-style field text into a safe, linked embed."""
     fields: list[tuple[str, str]] = []
     for block in re.split(r"\n\s*\n", str(value or "").strip()):
         lines = block.splitlines()
         if len(lines) >= 2 and lines[0].strip():
             fields.append((lines[0].strip(), "\n".join(lines[1:]).strip()))
+    title = f"{company_name or symbol}({symbol}) | TradingView チャート"
+    chart_url = f"https://jp.tradingview.com/chart/?symbol=TSE%3A{symbol}"
+    title_html = f"<h4>{_anchor(chart_url, title)}</h4>"
+    cutoff = (metadata or {}).get("cutoff")
+    timing = f"基準時点: {cutoff}" if cutoff else f"分析対象日: {signal_date}"
+    meta_html = (
+        '<p class="discord-meta">'
+        f"{html.escape('Cloud fundamental snapshot / Not investment advice / ' + timing)}"
+        "</p>"
+    )
     if not fields:
-        return f'<article class="discord-embed"><p>{_linkify(value)}</p></article>'
+        return (
+            '<div class="discord-message"><article class="discord-embed">'
+            f"{title_html}<p>{_linkify(value)}</p>{meta_html}</article></div>"
+        )
     impact = next((content for name, content in fields if "材料インパクト" in name), "")
     impact_class = ""
     if "ネガティブ" in impact:
@@ -189,11 +250,14 @@ def _fundamental_html(value: str) -> str:
         impact_class = " impact-positive"
     field_html = "".join(
         f"<div><dt>{html.escape(name)}</dt><dd>"
-        f"{_sources_html(content) if name == 'Sources' else _disclosure_links_html(content) if name == '開示リンク' else _linkify(content)}"
+        f"{_source_links_html(content, company_name, symbol) if name == 'Sources' else _disclosure_links_html(content, metadata) if name == '開示リンク' else _linkify(content)}"
         "</dd></div>"
         for name, content in fields
     )
-    return f'<article class="discord-embed{impact_class}"><dl>{field_html}</dl></article>'
+    return (
+        f'<div class="discord-message"><article class="discord-embed{impact_class}">'
+        f"{title_html}<dl>{field_html}</dl>{meta_html}</article></div>"
+    )
 
 
 def _pct(value, signed: bool = False) -> str:
@@ -360,6 +424,7 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
     data = ledger.copy()
     data["signal_date"] = pd.to_datetime(data["signal_date"])
     rows = []
+    historical_metadata = _historical_snapshot_metadata()
     grouped = data.groupby(["signal_date", "symbol"], sort=False)
     for index, ((signal_date, symbol), group) in enumerate(
         sorted(grouped, key=lambda item: item[0], reverse=True)
@@ -391,9 +456,15 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         if is_masked:
             actions = '<a class="button-link" href="/purchase">新着銘柄を見る</a>'
         elif fundamental_html:
+            signal_day = f"{signal_date:%Y-%m-%d}"
+            snapshot_metadata = historical_metadata.get((signal_day, str(symbol)))
             actions = (
-                '<button class="fundamental-toggle" type="button" aria-expanded="false">ファンダ分析</button>'
-                f'<div class="fundamental-detail" hidden>{_fundamental_html(fundamental_html)}</div>'
+                '<button class="fundamental-toggle" data-fundamental-toggle type="button" '
+                'aria-expanded="false">ファンダ分析</button>'
+                '<div class="fundamental-detail" hidden>'
+                '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる">×</button>'
+                f'{_fundamental_html(fundamental_html, name, str(symbol), signal_day, snapshot_metadata)}'
+                '</div>'
             )
         elif fundamental_url:
             actions = f'<a class="button-link" href="{html.escape(fundamental_url)}">ファンダ分析</a>'
@@ -448,9 +519,33 @@ REPORT_CSS = """
 @media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid,.guide-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.nav{grid-template-columns:minmax(0,1fr) auto;padding:8px 12px;gap:4px 8px}.brand{grid-column:1;grid-row:1}.brand-logo{width:min(250px,61vw);height:44px}.theme-toggle{grid-column:2;grid-row:1;min-height:38px}.nav-links{grid-column:1/-1;grid-row:2;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:3px}.nav-link{flex:0 0 auto;font-size:13px;padding:6px 9px}}
 @media(max-width:620px){main{padding:18px 12px 50px;min-width:0}.panel{padding:16px;border-radius:14px;min-width:0}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}.insight-grid .annual-pl-row{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:19px 0}.annual-pl-track{grid-column:1/-1;grid-row:2}.annual-pl-value{grid-column:2;grid-row:1}.payoff-kpis{gap:5px}.payoff-kpi strong{font-size:22px}.filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}.filter-field{min-width:0}.filters input,.filters select{width:100%;min-width:0!important}.filters .filter-field:first-child,#selector-filter,#search-result-count{grid-column:1/-1}.history-table-wrap{overflow:visible;border:0;background:transparent}#detection-table{min-width:0;background:transparent}#detection-table thead{display:none}#detection-table tbody{display:grid;gap:12px}#detection-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid)}#detection-table tbody tr>*{display:block;min-width:0;white-space:normal;border:0;padding:6px 8px;text-align:left}#detection-table tbody tr>td:first-child,#detection-table tbody tr>th,#detection-table tbody tr>td:nth-child(3),#detection-table tbody tr>td:last-child{grid-column:1/-1}#detection-table tbody tr>th{font-size:16px;border-bottom:1px solid var(--line);padding-bottom:10px}#detection-table tbody tr>td::before{content:attr(data-label);display:block;color:var(--muted);font-size:11px;font-weight:800}#detection-table tbody tr>td:last-child{border-top:1px solid var(--line)}.fundamental-detail{min-width:0;max-width:100%;overflow-wrap:anywhere}.discord-embed{min-width:0}.button-link,.fundamental-toggle{min-height:36px;align-items:center}.kpi b.period-range{font-size:15px;white-space:normal}}
-/* Fundamentals sit inside a table header cell; reset inherited bold so only labels and explicitly emphasized text are bold, as in Premium. */
-.discord-embed{font-weight:400;line-height:1.55}.discord-embed dt{font-weight:800;color:var(--muted)}.discord-embed dd{font-weight:400}
-.discord-embed .source-links{display:grid;gap:4px;margin:0;padding-left:20px}.discord-embed .source-links li{padding-left:2px}.discord-embed .source-links li::marker{color:var(--blue)}
+/* Match the current report's fundamental popup, independent of the table header's typography. */
+.fundamental-detail{position:relative;box-sizing:border-box;width:100%;min-width:0;max-width:520px;margin-top:8px;padding:10px 38px 10px 10px;border:1px solid var(--line);border-radius:6px;background:#fbfdff;color:#182230;text-align:left;white-space:normal;font:400 14px/1.55 "Yu Gothic","Meiryo","Segoe UI",sans-serif}
+.fundamental-detail{scroll-margin-top:110px}
+.fundamental-close{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:1px solid #cfd8e6;border-radius:999px;background:#fff;color:#344054;font-size:18px;font-weight:700;line-height:1;cursor:pointer;box-shadow:0 2px 8px rgba(16,24,40,.08)}
+.fundamental-close:hover{background:#eef5ff;color:#1849a9}
+.discord-message{display:grid;gap:8px;min-width:0;max-width:100%;color:#182230}
+.discord-embed{min-width:0;max-width:100%;border-left:4px solid #5865f2;border-radius:6px;background:#f8f9ff;padding:10px;text-align:left;font-size:14px;font-weight:400;line-height:1.55}
+.discord-embed.impact-positive{border-left-color:#12b76a;background:#f0fdf4}
+.discord-embed.impact-watch{border-left-color:#fdb022;background:#fff8e6}
+.discord-embed.impact-negative{border-left-color:#f04438;background:#fff1f2}
+.discord-embed h4{margin:0 0 8px;font-size:13px}
+.discord-embed dl{display:grid;gap:8px;margin:0;min-width:0}
+.discord-embed dt{margin-bottom:2px;color:#344054;font-weight:700}
+.discord-embed dd{margin:0;min-width:0;color:#182230;font-weight:400;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
+.discord-embed a{color:#1849a9;text-decoration:underline;overflow-wrap:anywhere;word-break:break-word}
+.discord-meta{margin:8px 0 0;color:#667085;font-size:11px;font-weight:400}
+@media(min-width:821px){.fundamental-detail:not([hidden]){position:fixed;top:96px;left:50%;z-index:80;width:min(760px,calc(100vw - 48px));max-width:min(760px,calc(100vw - 48px));max-height:calc(100vh - 128px);margin-top:0;padding:14px 48px 14px 14px;overflow:auto;transform:translateX(-50%);box-shadow:0 22px 56px rgba(16,24,40,.28)}}
+@media(max-width:820px){.fundamental-detail{max-width:100%}}
+@media(max-width:620px){.fundamental-detail{width:calc(100% + 32px);max-width:none;margin-left:-16px}}
+:root[data-theme="dark"] .fundamental-detail{background:var(--panel-solid);color:var(--ink)}
+:root[data-theme="dark"] .discord-message,:root[data-theme="dark"] .discord-embed dt,:root[data-theme="dark"] .discord-embed dd{color:var(--ink)}
+:root[data-theme="dark"] .discord-embed{background:#18263a;border-left-color:#7f8cff}
+:root[data-theme="dark"] .discord-embed.impact-positive{background:#102a22;border-left-color:#63d49b}
+:root[data-theme="dark"] .discord-embed.impact-watch{background:#332710;border-left-color:#f4c15d}
+:root[data-theme="dark"] .discord-embed.impact-negative{background:#351b20;border-left-color:#ff8a7c}
+:root[data-theme="dark"] .discord-embed a{color:#9cc7ff}
+:root[data-theme="dark"] .discord-meta{color:var(--muted)}
 """
 
 
@@ -496,7 +591,7 @@ def _page_shell(title: str, current: str, body: str) -> str:
     return f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-interactions.js?v=20260923-1" defer></script></head>
+<script src="./weak-early-beta-interactions.js?v=20260924-1" defer></script></head>
 <body><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
 

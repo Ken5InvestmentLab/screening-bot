@@ -4,16 +4,46 @@
   const root = document.documentElement;
   const themeButton = document.getElementById("theme-toggle");
 
-  // Register this first and use delegation so an unrelated table/filter error
-  // can never disable the embedded fundamental snapshot buttons.
+  // Keep the snapshot controls independent of the table/filter handlers.
+  const fundamentalPairs = Array.from(document.querySelectorAll(".fundamental-toggle"))
+    .map((button) => {
+      const detail = button.parentElement?.querySelector(".fundamental-detail");
+      return detail ? { button, detail } : null;
+    }).filter(Boolean);
+  const closeFundamental = ({ button, detail }) => {
+    detail.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    button.textContent = "ファンダ分析";
+  };
   document.addEventListener("click", (event) => {
-    const button = event.target.closest?.(".fundamental-toggle");
-    if (!button) return;
-    const detail = button.parentElement?.querySelector(".fundamental-detail");
-    if (!detail) return;
-    detail.hidden = !detail.hidden;
-    button.setAttribute("aria-expanded", detail.hidden ? "false" : "true");
-    button.textContent = detail.hidden ? "ファンダ分析" : "閉じる";
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const closeButton = target.closest(".fundamental-close");
+    if (closeButton) {
+      const pair = fundamentalPairs.find(({ detail }) => detail === closeButton.closest(".fundamental-detail"));
+      if (pair) closeFundamental(pair);
+      return;
+    }
+    const button = target.closest(".fundamental-toggle");
+    if (button) {
+      const pair = fundamentalPairs.find((item) => item.button === button);
+      if (!pair) return;
+      const shouldOpen = pair.detail.hidden;
+      fundamentalPairs.forEach(closeFundamental);
+      if (shouldOpen) {
+        pair.detail.hidden = false;
+        button.setAttribute("aria-expanded", "true");
+        button.textContent = "閉じる";
+        if (window.matchMedia("(max-width: 820px)").matches) {
+          requestAnimationFrame(() => pair.detail.scrollIntoView({ block: "start" }));
+        }
+      }
+      return;
+    }
+    if (!target.closest(".fundamental-detail")) fundamentalPairs.forEach(closeFundamental);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") fundamentalPairs.forEach(closeFundamental);
   });
 
   const currentTheme = () => root.dataset.theme === "dark" ? "dark" : "light";

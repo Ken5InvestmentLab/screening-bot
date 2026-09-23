@@ -224,7 +224,7 @@ def daily_summary_payload(
     )
     fields.extend([
         {"name": "モード別内訳", "value": breakdown, "inline": False},
-        {"name": "検出銘柄一覧", "value": f"[HTMLを開く]({urljoin(report_url, 'weak_early_beta_latest.html')})", "inline": False},
+        {"name": "検出銘柄一覧", "value": f"[最新情報をチェック]({urljoin(report_url, 'weak_early_beta_latest.html')})", "inline": False},
     ])
     return {
         "content": "",

@@ -327,6 +327,11 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn(f"最終検出: {dates.max():%Y-%m-%d}", output)
         self.assertIn("トータルの資産推移", output)
         self.assertIn('<section class="panel" id="annual-pl">', output)
+        self.assertIn('<section class="panel" id="payoff-structure">', output)
+        self.assertIn("50.88%", output)
+        self.assertIn("+24.2%", output)
+        self.assertIn("-12.6%", output)
+        self.assertIn("1.92倍", output)
         self.assertIn("2026年（9月3日検出分まで）", output)
         self.assertNotIn("YTD", output)
         self.assertIn("資金増加率", output)
@@ -335,8 +340,6 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
         self.assertIn("Cloud全体の成績 — 銘柄均等", output)
         self.assertNotIn("<th>配分方式</th>", output)
-        self.assertIn("損小利大の構造", output)
-        self.assertIn("平均利益幅 ÷ 平均損失幅", output)
         self.assertIn('<div class="nav-links" aria-label="ページ移動">', output)
         self.assertNotIn('id="history"', output)
 
@@ -355,14 +358,16 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("¥+370,003", chart)
         self.assertNotIn("¥+90,307", chart)
 
-    def test_payoff_structure_uses_completed_stacked_trade_returns(self):
-        output = _payoff_structure(pd.DataFrame({"gross_return": [0.20, -0.10, 0.0, float("nan")]}))
-        self.assertIn("33.33%", output)
-        self.assertIn("+20.0%", output)
-        self.assertIn("-10.0%", output)
-        self.assertIn("2.00倍", output)
-        self.assertIn("勝ち 1件・負け 1件・引き分け 1件", output)
-        self.assertIn("勝率の分母には引き分けも含みます", output)
+    def test_payoff_structure_uses_current_completed_trades(self):
+        frame = pd.DataFrame({"gross_return": [0.2, -0.1, 0.0, float("nan")]})
+        chart = _payoff_structure(frame)
+        self.assertIn("33.33%", chart)
+        self.assertIn("+20.0%", chart)
+        self.assertIn("-10.0%", chart)
+        self.assertIn("2.00倍", chart)
+        self.assertIn("勝ち 1件・負け 1件・引き分け 1件", chart)
+        self.assertIn('width:42.00%', chart)
+        self.assertIn('width:21.00%', chart)
 
     def test_detection_history_starts_with_only_twenty_rows_visible_in_html(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))

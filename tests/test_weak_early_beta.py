@@ -27,6 +27,7 @@ from weak_early_beta.notify import EMBED_COLORS, GUILD_ID, SUMMARY_CHANNEL_ID, _
 from weak_early_beta.report import (
     ANALYTICS_PAGE_NAME,
     MODE_PAGE_NAMES,
+    _payoff_structure,
     render_analytics_report,
     render_guide,
     render_mode_report,
@@ -334,6 +335,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
         self.assertIn("Cloud全体の成績 — 銘柄均等", output)
         self.assertNotIn("<th>配分方式</th>", output)
+        self.assertIn("損小利大の構造", output)
+        self.assertIn("平均利益幅 ÷ 平均損失幅", output)
         self.assertIn('<div class="nav-links" aria-label="ページ移動">', output)
         self.assertNotIn('id="history"', output)
 
@@ -351,6 +354,15 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertEqual(chart.count('class="annual-pl-row"'), 4)
         self.assertIn("¥+370,003", chart)
         self.assertNotIn("¥+90,307", chart)
+
+    def test_payoff_structure_uses_completed_stacked_trade_returns(self):
+        output = _payoff_structure(pd.DataFrame({"gross_return": [0.20, -0.10, 0.0, float("nan")]}))
+        self.assertIn("33.33%", output)
+        self.assertIn("+20.0%", output)
+        self.assertIn("-10.0%", output)
+        self.assertIn("2.00倍", output)
+        self.assertIn("勝ち 1件・負け 1件・引き分け 1件", output)
+        self.assertIn("勝率の分母には引き分けも含みます", output)
 
     def test_detection_history_starts_with_only_twenty_rows_visible_in_html(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))

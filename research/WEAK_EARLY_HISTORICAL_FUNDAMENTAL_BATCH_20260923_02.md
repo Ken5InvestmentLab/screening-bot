@@ -1,0 +1,16 @@
+# Historical Fundamental Batch Receipt — 2026-09-23 / 02
+
+- Identity: `WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_20260923_LUNA6_02`.
+- Branch: `research/weak-early-beta`; batch started from `b7cc3854259d5c55ef886aa057309298e8d3787e`; the isolated 2023-02-08 raw-output checkpoint is `a2e1de09b53ac8c4babdf910a05df100d52b2f53`.
+- Model: GPT-6 Luna (`gpt-6-luna`), `xhigh`, via the installed Codex CLI `0.155.0-alpha.9.2`. Research-only; no historical Discord post.
+- Scope: `2023-01-06|3133` (海帆), `2023-02-02|7037` (テノ．ホールディングス), `2023-02-07|4586` and `2023-02-08|4586` (メドレックス). Each uses its own 16:15 JST cutoff.
+- The prepared four-row manifest remained fixed. The first model output returned three reports; one separate one-identity run supplied only the omitted Feb 8 Medrx report. The accepted input contains exactly four unique identities.
+- Primary-source evidence: 8, 4, 6, and 6 direct documents respectively. The issuer IR plus IRBANK/TDnet or official exchange listing was checked; selected documents were body-read and carry exact publication timestamp, direct HTTPS URL, and `contentReviewed: true`. Full source metadata and seven Premium Worker fields are preserved in the normalized input and receipt store.
+- Strict as-of sanitation: the raw Jan 6 Kaihan draft mentioned a 17:00 payment completion after the 16:15 cutoff, so that sentence was removed from the accepted analysis. Raw `auditNotes` were excluded from accepted reports because they contained later-date audit bookkeeping; no such later information remains in the seven user-facing fields.
+- Raw model outputs: `weak_early_beta/fundamental_worker/out/historical_backfill_candidate_luna6_batch4_raw.json` and `.../historical_backfill_candidate_luna6_batch4_missing_20230208_raw.json`. The former has the first three records; the latter has only Feb 8. These are evidence artifacts, not importer inputs.
+- Canonical importer input: `weak_early_beta/fundamental_worker/out/historical_backfill_luna6_batch4_reports.json`, SHA256 `0f795edd25c40b660647a3dfb8a31480952df8199393e5d28f21085862c20059`.
+- Importer result: 4 imported; 253 canonical identities; 8 complete, 245 pending; 35 metrics rows; historical Discord posts `0`.
+- Receipt hashes: `2023-01-06|3133` `d914ba0fc6bb3fcfb060140d84978f9d934f3e661c2f04684804e669ece45f47`; `2023-02-02|7037` `14ed1051ad5c093b644dc3fe840778a4362fa1e1b704575df792e3726491eb33`; `2023-02-07|4586` `6066ad8d129fe4cdbe6a51a1a4d5c4dbb2880cd7f7650d54ca5d465fc5b2f72f`; `2023-02-08|4586` `1ba351280d59eeb761ea1612b3cd45c1e1d1c95ac7a79b476b7b4b7aeea8514c`.
+- Verification: all four passed `validate_historical_report`, exact cutoff/identity/company/selector checks, and seven-field order/count. Exactly 20 canonical detection rows changed and only `fundamental_html`, `fundamental_status`, and `updated_at`. `test_weak_early_beta.py`: 27/27; `test_report_fundamental_html.py`: 8/8.
+- The generated 16 paid/free report pages reflect the new historical receipts. No main, production, live worker, webhook/Discord, Sheets, workflow, Cloudflare, or scoring-selection change. 2026 remains SEALED for selection and retuning.
+- Next pending manifest identities begin with `2023-02-15|4586`, `2023-03-15|7138`, `2023-03-16|7776`, `2023-03-20|7042`. Continue with at most the first two during current five-hour headroom; do not repeat any batch-4 research.

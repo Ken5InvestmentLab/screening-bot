@@ -6,7 +6,7 @@
 - Isolated worker state: `weak_early_beta/fundamental_worker/state/premium_alert_state.json`
 - Isolated worker output: `weak_early_beta/fundamental_worker/out/`
 - Destination channel: `1550876675884060702`
-- Model: `gpt-5.6-luna`
+- Model: `gpt-6-luna`
 - Reasoning effort: `xhigh`
 - Report quality: 現行 `premium_worker/AUTOMATION_PROMPT.md`、`FUNDAMENTAL_EXAMPLES.md`、`premium-fundamental-snapshot` skillと同一
 - Dedup identity: `signal_date|symbol`

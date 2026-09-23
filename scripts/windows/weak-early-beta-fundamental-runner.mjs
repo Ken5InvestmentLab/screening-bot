@@ -97,7 +97,7 @@ async function main(configFile) {
     identity: 'WEAK_EARLY_FUNDAMENTAL_LUNA_XHIGH_V1',
     startedAt: now,
     ok: false,
-    model: 'gpt-5.6-luna',
+    model: 'gpt-6-luna',
     reasoningEffort: 'xhigh',
     channelId: FUNDAMENTAL_CHANNEL_ID,
     runDir,
@@ -177,7 +177,7 @@ async function main(configFile) {
       const analysisExit = await command(config.nodePath, [
         config.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
         '--cd', config.premiumWorkerRepoPath, '--skip-git-repo-check',
-        '--sandbox', 'danger-full-access', '-m', 'gpt-5.6-luna',
+        '--sandbox', 'danger-full-access', '-m', 'gpt-6-luna',
         '-c', 'model_reasoning_effort="xhigh"',
         '-c', 'forced_login_method="chatgpt"', '--json',
         '-o', path.join(runDir, 'codex.final.txt'), '-',

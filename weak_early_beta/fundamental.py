@@ -130,7 +130,7 @@ def prepare_claim(
                 "buy/sell recommendations", "target prices", "additional scores"
             ],
             "destinationChannelId": "1550876675884060702",
-            "model": "gpt-5.6-luna",
+            "model": "gpt-6-luna",
             "reasoningEffort": "xhigh",
         },
     }

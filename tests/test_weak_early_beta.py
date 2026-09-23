@@ -586,6 +586,9 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("impact-positive", output)
         self.assertIn('href="https://example.com/disclosure"', output)
         self.assertIn('target="_blank" rel="noopener noreferrer"', output)
+        self.assertIn(".discord-embed{font-weight:400;line-height:1.55}", output)
+        self.assertIn(".discord-embed dt{font-weight:700}", output)
+        self.assertIn(".discord-embed dd{font-weight:400}", output)
 
     def test_guide_uses_beginner_friendly_copy_without_future_only_limit(self):
         output = render_guide(pd.Timestamp("2026-09-20", tz="Asia/Tokyo"))

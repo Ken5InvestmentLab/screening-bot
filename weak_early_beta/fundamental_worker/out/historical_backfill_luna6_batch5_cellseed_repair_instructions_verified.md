@@ -1,0 +1,24 @@
+# Luna 6 xhigh — CellSeed historical report repair (verified evidence packet)
+
+Generate exactly one report for `2023-03-16|7776` (セルシード), cutoff `2023-03-16T16:15:00+09:00`, using GPT-6 Luna (`gpt-6-luna`) with `xhigh` reasoning. Do not substitute a model. Do not use web search, browser/UI automation, or network lookup: the parent agent has already checked the official and IRBANK lists and read the primary documents listed below. Do not edit files; the invoking CLI will save your final message to `historical_backfill_candidate_luna6_batch5_cellseed_repair_raw.json`.
+
+Read the canonical batch entry and existing candidate only to preserve identity, name, and exact selector names. Use only the contemporaneous evidence below. No EDINET, post-cutoff materials, later prices, realized returns, or hindsight.
+
+## Source-list audit already completed
+
+- Official company IR list: `https://www.cellseed.com/news/2023/ir/`
+- IRBANK list: `https://irbank.net/7776/ir`
+- Both February 14 notices and the FY results were listed at 16:30 JST. The official company list also shows the January 26 MAF announcement at 17:00. The March 13 Bridge Salon video is an external seminar video, not a primary disclosure, and is not evidence. No later materially relevant company/TDnet primary disclosure was listed through the March 16 cutoff.
+
+## Primary-document bodies read
+
+1. FY2022 results, `2023-02-14T16:30:00+09:00`, `https://www2.jpx.co.jp/disc/77760/140120230214510206.pdf`. Revenue ¥126m (-21.8%), operating loss ¥743m, ordinary loss ¥754m, net loss ¥759m. Cash at year end ¥1,072.210m; operating cash flow -¥718.006m; financing cash flow +¥881.814m, mainly proceeds from stock acquisition-right exercises. The filing states a material going-concern uncertainty because the first cell-sheet product had not yet reached commercialization. FY2023 forecast: revenue ¥200m, operating and ordinary losses ¥840m each, net loss ¥845m.
+2. Forecast-versus-actual variance, `2023-02-14T16:30:00+09:00`, `https://www2.jpx.co.jp/disc/77760/140120230214510130.pdf`. Prior forecast was revenue ¥209m, operating loss ¥834m, ordinary loss ¥834m, net loss ¥838m. Actual revenue was ¥126m (¥82m / 39.5% below forecast), while each loss was smaller than forecast by ¥91m, ¥80m, and ¥79m respectively. Revenue missed mainly because overseas culture-equipment sales lagged plan after distributors' inventory rose during prolonged COVID disruption; the company said inventory adjustment had largely ended and orders were recovering. Losses were smaller mainly after cost reductions in outsourced development and cell-culture facility maintenance.
+3. Non-operating expense, `2023-02-14T16:30:00+09:00`, `https://www2.jpx.co.jp/disc/77760/140120230214510263.pdf`. ¥12.034m of share-issuance costs from exercise of the 22nd and 23rd stock acquisition rights was recorded as non-operating expense and reflected in the FY results. Decide whether this is sufficiently relevant to the funding/dilution risk to include; do not inflate its importance relative to the ¥759m net loss.
+4. Company-issued FDA Medical Device Master File notice, `2023-01-26T17:00:00+09:00`, `https://www.cellseed.com/news/news_file/file/20230126_ir_1.pdf`. UpCell ADVANCE was registered as an FDA medical-device master file. This permits future applicants to reference the registered information; it is not FDA approval, marketing authorization, or FDA verification of safety/effectiveness.
+
+Balance lower-than-planned losses against the major revenue shortfall, ongoing large R&D losses, operating cash burn and the disclosed going-concern uncertainty. Describe the MAF registration accurately as documentation progress, not approval. CellSeed develops cell-culture materials and contract manufacturing for regenerative medicine, while its cell-sheet regenerative medicine pipeline remains in development.
+
+Include the FY results, forecast-versus-actual variance, and MAF only if each is materially used in the narrative. Include the non-operating-expense notice only if you discuss warrant-financing cost/dilution. `disclosures` and `開示リンク` must match exactly. `Sources` must contain 2–4 non-PDF listing/reference URLs only (use the company IR list and IRBANK list above). Keep the combined `開示リンク` under 1,000 characters. `sourceChecks` must include `official_ir` and `irbank_or_tdnet` with the verified URLs and concise results. Mark each selected primary document `contentReviewed: true`.
+
+Return only `{ "reports": [ <one report> ] }`, with exact identity/cutoff/selectors, the canonical seven-field order, a source-grounded Japanese impact label, and `auditStatus: "pass"` only if every material claim is covered. `auditNotes` should record the same-day source/body checks and the FDA-MAF-versus-approval distinction. Historical reports are never sent to Discord.

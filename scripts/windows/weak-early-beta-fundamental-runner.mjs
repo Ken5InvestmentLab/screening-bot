@@ -166,7 +166,7 @@ async function main(configFile) {
       'Weak+Early betaのclaimに含まれる検出銘柄を、現行Premium Workerと同じ会社固有の品質でファンダ分析してください。$premium-fundamental-snapshot を使います。',
       `不変claimは ${path.join(runDir, 'claim.json')} です。ここにあるalertIdだけを対象にしてください。`,
       `必ず ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'AUTOMATION_PROMPT.md')} と ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'FUNDAMENTAL_EXAMPLES.md')} を全文読み、skillのreferences/report_quality.mdも読んでください。`,
-      '各銘柄の分析基準時点はclaimのsignal_dateの日本時間23:59です。その時点より後に公表されたIR・適時開示・ニュース・決算資料は、検索で見つかっても絶対に使わないでください。各社の公式IR、IRBANKまたはTDnet相当の開示一覧を基準時点まで確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
+      '各銘柄の分析基準時点はclaimのreceivedAt（検出日の日本時間16:15）です。その時点より後に公表されたIR・適時開示・ニュース・決算資料は、検索で見つかっても絶対に使わないでください。各社の公式IR、IRBANKまたはTDnet相当の開示一覧を基準時点まで確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
       'レポート本文と開示リンクには、採用した資料の公表日がsignal_date以前であることが分かるようにし、基準時点後の資料を参照していないことを守ってください。',
       '売買推奨、目標株価、追加スコアは禁止。現行契約の全7フィールドとSourcesを満たしてください。',
       `最終JSONは ${reportsPath} だけに書き込んでください。Discord投稿、worker state、Sheets、Git、workflow、ソースコードは変更しないでください。`,
@@ -200,7 +200,7 @@ async function main(configFile) {
 
     const reportPayload = readJson(reportsPath);
     const historicalSnapshot = (reportPayload.reports || reportPayload).every(report =>
-      /^\d{4}-\d{2}-\d{2}T23:59:59\+09:00$/.test(String(report.analysisCutoff || ''))
+      /^\d{4}-\d{2}-\d{2}T16:15:00\+09:00$/.test(String(report.analysisCutoff || ''))
     );
     if (historicalSnapshot) {
       // Historical snapshots are intentionally posted by the beta-only sidecar:

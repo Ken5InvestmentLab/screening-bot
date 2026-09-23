@@ -1,0 +1,3765 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_V1",
+  "generated_at": "2026-09-23T12:36:40.333300+09:00",
+  "source_ledger": "weak_early_beta/state/detections.csv",
+  "detection_time_basis": "scheduled daily beta scan at 16:15 JST; deterministic historical proxy",
+  "as_of_rule": "only disclosures published at or before analysis_cutoff may be cited or used",
+  "discord_policy": "historical analyses are not reposted to Discord",
+  "total_identities": 253,
+  "status_counts": {
+    "pending": 251,
+    "legacy_needs_asof_audit": 2
+  },
+  "records": [
+    {
+      "identity": "2023-01-04|3133",
+      "signal_date": "2023-01-04",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-01-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-01-05|3133",
+      "signal_date": "2023-01-05",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-01-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-01-06|3133",
+      "signal_date": "2023-01-06",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-01-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-02-02|7037",
+      "signal_date": "2023-02-02",
+      "symbol": "7037",
+      "company_name": "テノ．ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-02-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-02-07|4586",
+      "signal_date": "2023-02-07",
+      "symbol": "4586",
+      "company_name": "メドレックス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-02-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-02-08|4586",
+      "signal_date": "2023-02-08",
+      "symbol": "4586",
+      "company_name": "メドレックス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-02-08T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-02-15|4586",
+      "signal_date": "2023-02-15",
+      "symbol": "4586",
+      "company_name": "メドレックス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-02-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-03-15|7138",
+      "signal_date": "2023-03-15",
+      "symbol": "7138",
+      "company_name": "ＴＯＲＩＣＯ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-03-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-03-16|7776",
+      "signal_date": "2023-03-16",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-03-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-03-20|7042",
+      "signal_date": "2023-03-20",
+      "symbol": "7042",
+      "company_name": "アクセスグループ・ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-03-20T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-05|7776",
+      "signal_date": "2023-04-05",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-04-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-06|6775",
+      "signal_date": "2023-04-06",
+      "symbol": "6775",
+      "company_name": "ＴＢグループ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-04-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-07|6775",
+      "signal_date": "2023-04-07",
+      "symbol": "6775",
+      "company_name": "ＴＢグループ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-04-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-07|7997",
+      "signal_date": "2023-04-07",
+      "symbol": "7997",
+      "company_name": "くろがね工作所",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2023-04-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-10|6775",
+      "signal_date": "2023-04-10",
+      "symbol": "6775",
+      "company_name": "ＴＢグループ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2023-04-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-10|7692",
+      "signal_date": "2023-04-10",
+      "symbol": "7692",
+      "company_name": "アースインフィニティ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-04-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-26|6927",
+      "signal_date": "2023-04-26",
+      "symbol": "6927",
+      "company_name": "ヘリオス　テクノ　ホールディング",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-04-26T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-04-27|6775",
+      "signal_date": "2023-04-27",
+      "symbol": "6775",
+      "company_name": "ＴＢグループ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-04-27T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-16|3192",
+      "signal_date": "2023-05-16",
+      "symbol": "3192",
+      "company_name": "白鳩",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-17|2435",
+      "signal_date": "2023-05-17",
+      "symbol": "2435",
+      "company_name": "シダー",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-17|3133",
+      "signal_date": "2023-05-17",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2023-05-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-18|3133",
+      "signal_date": "2023-05-18",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-18|7538",
+      "signal_date": "2023-05-18",
+      "symbol": "7538",
+      "company_name": "大水",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2023-05-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-19|3137",
+      "signal_date": "2023-05-19",
+      "symbol": "3137",
+      "company_name": "ファンデリー",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-25|2656",
+      "signal_date": "2023-05-25",
+      "symbol": "2656",
+      "company_name": "ベクターホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-26|9439",
+      "signal_date": "2023-05-26",
+      "symbol": "9439",
+      "company_name": "エム・エイチ・グループ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-26T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-29|2304",
+      "signal_date": "2023-05-29",
+      "symbol": "2304",
+      "company_name": "ＣＳＳホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-29T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-30|6578",
+      "signal_date": "2023-05-30",
+      "symbol": "6578",
+      "company_name": "コレックホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-30T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-05-31|4259",
+      "signal_date": "2023-05-31",
+      "symbol": "4259",
+      "company_name": "エクサウィザーズ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-05-31T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-06-23|3133",
+      "signal_date": "2023-06-23",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-06-23T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-06-27|7578",
+      "signal_date": "2023-06-27",
+      "symbol": "7578",
+      "company_name": "ニチリョク",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-06-27T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-06-28|7578",
+      "signal_date": "2023-06-28",
+      "symbol": "7578",
+      "company_name": "ニチリョク",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-06-28T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-07-10|7709",
+      "signal_date": "2023-07-10",
+      "symbol": "7709",
+      "company_name": "クボテック",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-07-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-07-12|7578",
+      "signal_date": "2023-07-12",
+      "symbol": "7578",
+      "company_name": "ニチリョク",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-07-12T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-08-03|2134",
+      "signal_date": "2023-08-03",
+      "symbol": "2134",
+      "company_name": "北浜キャピタルパートナーズ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-08-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-08-08|3779",
+      "signal_date": "2023-08-08",
+      "symbol": "3779",
+      "company_name": "ジェイ・エスコムホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-08-08T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-08-09|3779",
+      "signal_date": "2023-08-09",
+      "symbol": "3779",
+      "company_name": "ジェイ・エスコムホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-08-09T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-08-22|7578",
+      "signal_date": "2023-08-22",
+      "symbol": "7578",
+      "company_name": "ニチリョク",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-08-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-09-12|9425",
+      "signal_date": "2023-09-12",
+      "symbol": "9425",
+      "company_name": "ＲｅＹｕｕ　Ｊａｐａｎ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-09-12T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-09-14|9425",
+      "signal_date": "2023-09-14",
+      "symbol": "9425",
+      "company_name": "ＲｅＹｕｕ　Ｊａｐａｎ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-09-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-02|2375",
+      "signal_date": "2023-10-02",
+      "symbol": "2375",
+      "company_name": "ギグワークス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-03|4882",
+      "signal_date": "2023-10-03",
+      "symbol": "4882",
+      "company_name": "ペルセウスプロテオミクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-04|4882",
+      "signal_date": "2023-10-04",
+      "symbol": "4882",
+      "company_name": "ペルセウスプロテオミクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-06|4882",
+      "signal_date": "2023-10-06",
+      "symbol": "4882",
+      "company_name": "ペルセウスプロテオミクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-16|3779",
+      "signal_date": "2023-10-16",
+      "symbol": "3779",
+      "company_name": "ジェイ・エスコムホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-17|2375",
+      "signal_date": "2023-10-17",
+      "symbol": "2375",
+      "company_name": "ギグワークス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-18|6573",
+      "signal_date": "2023-10-18",
+      "symbol": "6573",
+      "company_name": "ＣＲＡＶＩＡ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-19|6573",
+      "signal_date": "2023-10-19",
+      "symbol": "6573",
+      "company_name": "ＣＲＡＶＩＡ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-23|3189",
+      "signal_date": "2023-10-23",
+      "symbol": "3189",
+      "company_name": "ＡＮＡＰホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-23T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-10-24|2375",
+      "signal_date": "2023-10-24",
+      "symbol": "2375",
+      "company_name": "ギグワークス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-10-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-12-08|7273",
+      "signal_date": "2023-12-08",
+      "symbol": "7273",
+      "company_name": "イクヨ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-12-08T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-12-11|6731",
+      "signal_date": "2023-12-11",
+      "symbol": "6731",
+      "company_name": "ピクセラ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-12-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-12-14|6085",
+      "signal_date": "2023-12-14",
+      "symbol": "6085",
+      "company_name": "アーキテクツ・スタジオ・ジャパン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-12-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-12-18|3077",
+      "signal_date": "2023-12-18",
+      "symbol": "3077",
+      "company_name": "ホリイフードサービス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-12-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-01-17|4073",
+      "signal_date": "2024-01-17",
+      "symbol": "4073",
+      "company_name": "ジィ・シィ企画",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-01-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-01-18|3358",
+      "signal_date": "2024-01-18",
+      "symbol": "3358",
+      "company_name": "Ｔｒａｉｌｈｅａｄ　Ｇｌｏｂａｌ　Ｈｏｌｄｉｎｇｓ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-01-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-02-08|7601",
+      "signal_date": "2024-02-08",
+      "symbol": "7601",
+      "company_name": "ポプラ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-02-08T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-02-14|7689",
+      "signal_date": "2024-02-14",
+      "symbol": "7689",
+      "company_name": "コパ・コーポレーション",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-02-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-02-15|2970",
+      "signal_date": "2024-02-15",
+      "symbol": "2970",
+      "company_name": "ＧＬＣ　ＧＲＯＵＰ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-02-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-05|7692",
+      "signal_date": "2024-03-05",
+      "symbol": "7692",
+      "company_name": "アースインフィニティ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-06|2330",
+      "signal_date": "2024-03-06",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-06|7692",
+      "signal_date": "2024-03-06",
+      "symbol": "7692",
+      "company_name": "アースインフィニティ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-03-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-07|6276",
+      "signal_date": "2024-03-07",
+      "symbol": "6276",
+      "company_name": "シリウスビジョン",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-03-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-07|7692",
+      "signal_date": "2024-03-07",
+      "symbol": "7692",
+      "company_name": "アースインフィニティ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-11|2330",
+      "signal_date": "2024-03-11",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-12|2330",
+      "signal_date": "2024-03-12",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-12T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-12|9704",
+      "signal_date": "2024-03-12",
+      "symbol": "9704",
+      "company_name": "アゴーラ　ホスピタリティー　グループ",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-03-12T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-13|3744",
+      "signal_date": "2024-03-13",
+      "symbol": "3744",
+      "company_name": "サイオス",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-03-13T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-13|5216",
+      "signal_date": "2024-03-13",
+      "symbol": "5216",
+      "company_name": "倉元製作所",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-13T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-14|2330",
+      "signal_date": "2024-03-14",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-14|9704",
+      "signal_date": "2024-03-14",
+      "symbol": "9704",
+      "company_name": "アゴーラ　ホスピタリティー　グループ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-03-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-15|6659",
+      "signal_date": "2024-03-15",
+      "symbol": "6659",
+      "company_name": "メディアリンクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-03-28|6276",
+      "signal_date": "2024-03-28",
+      "symbol": "6276",
+      "company_name": "シリウスビジョン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-03-28T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-01|2330",
+      "signal_date": "2024-04-01",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-01T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-02|5255",
+      "signal_date": "2024-04-02",
+      "symbol": "5255",
+      "company_name": "モンスターラボ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-03|2330",
+      "signal_date": "2024-04-03",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-04-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-03|6659",
+      "signal_date": "2024-04-03",
+      "symbol": "6659",
+      "company_name": "メディアリンクス",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-04|2330",
+      "signal_date": "2024-04-04",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-05|2330",
+      "signal_date": "2024-04-05",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-08|6659",
+      "signal_date": "2024-04-08",
+      "symbol": "6659",
+      "company_name": "メディアリンクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-08T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-16|5216",
+      "signal_date": "2024-04-16",
+      "symbol": "5216",
+      "company_name": "倉元製作所",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-04-19|2330",
+      "signal_date": "2024-04-19",
+      "symbol": "2330",
+      "company_name": "フォーサイド",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-04-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-14|6659",
+      "signal_date": "2024-05-14",
+      "symbol": "6659",
+      "company_name": "メディアリンクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-05-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-15|5216",
+      "signal_date": "2024-05-15",
+      "symbol": "5216",
+      "company_name": "倉元製作所",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-05-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-16|3350",
+      "signal_date": "2024-05-16",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-05-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-17|3350",
+      "signal_date": "2024-05-17",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-05-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-17|6659",
+      "signal_date": "2024-05-17",
+      "symbol": "6659",
+      "company_name": "メディアリンクス",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-05-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-20|3350",
+      "signal_date": "2024-05-20",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-05-20T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-24|6696",
+      "signal_date": "2024-05-24",
+      "symbol": "6696",
+      "company_name": "トラース・オン・プロダクト",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-05-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-05-30|3350",
+      "signal_date": "2024-05-30",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-05-30T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-06-07|3350",
+      "signal_date": "2024-06-07",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-06-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-06-11|5216",
+      "signal_date": "2024-06-11",
+      "symbol": "5216",
+      "company_name": "倉元製作所",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-06-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-06-11|5535",
+      "signal_date": "2024-06-11",
+      "symbol": "5535",
+      "company_name": "ミガロホールディングス",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-06-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-06-13|4564",
+      "signal_date": "2024-06-13",
+      "symbol": "4564",
+      "company_name": "オンコセラピー・サイエンス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-06-13T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-06-18|6696",
+      "signal_date": "2024-06-18",
+      "symbol": "6696",
+      "company_name": "トラース・オン・プロダクト",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-06-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-06-21|4592",
+      "signal_date": "2024-06-21",
+      "symbol": "4592",
+      "company_name": "サンバイオ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-06-21T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-11|4935",
+      "signal_date": "2024-07-11",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-22|4893",
+      "signal_date": "2024-07-22",
+      "symbol": "4893",
+      "company_name": "ノイルイミューン・バイオテック",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-23|4564",
+      "signal_date": "2024-07-23",
+      "symbol": "4564",
+      "company_name": "オンコセラピー・サイエンス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-23T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-24|4169",
+      "signal_date": "2024-07-24",
+      "symbol": "4169",
+      "company_name": "ＥＮＥＣＨＡＮＧＥ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-25|4935",
+      "signal_date": "2024-07-25",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-07-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-25|7776",
+      "signal_date": "2024-07-25",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-26|7776",
+      "signal_date": "2024-07-26",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-26T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-29|7776",
+      "signal_date": "2024-07-29",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-29T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-30|3350",
+      "signal_date": "2024-07-30",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-07-30T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-07-30|7776",
+      "signal_date": "2024-07-30",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-07-30T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-01|3350",
+      "signal_date": "2024-08-01",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-08-01T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-01|7776",
+      "signal_date": "2024-08-01",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-08-01T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-02|3350",
+      "signal_date": "2024-08-02",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-08-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-02|4935",
+      "signal_date": "2024-08-02",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-08-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-05|7776",
+      "signal_date": "2024-08-05",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-08-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-06|3350",
+      "signal_date": "2024-08-06",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-08-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-07|4935",
+      "signal_date": "2024-08-07",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-08-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-07|7776",
+      "signal_date": "2024-08-07",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-08-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-08|4935",
+      "signal_date": "2024-08-08",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-08-08T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-09|4935",
+      "signal_date": "2024-08-09",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-08-09T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-08-09|7776",
+      "signal_date": "2024-08-09",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-08-09T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-04|2586",
+      "signal_date": "2024-09-04",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-05|7776",
+      "signal_date": "2024-09-05",
+      "symbol": "7776",
+      "company_name": "セルシード",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-06|3070",
+      "signal_date": "2024-09-06",
+      "symbol": "3070",
+      "company_name": "ジェリービーンズグループ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-06|4316",
+      "signal_date": "2024-09-06",
+      "symbol": "4316",
+      "company_name": "ビーマップ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-09-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-09|2586",
+      "signal_date": "2024-09-09",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-09-09T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-09|8894",
+      "signal_date": "2024-09-09",
+      "symbol": "8894",
+      "company_name": "ＲＥＶＯＬＵＴＩＯＮ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-09T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-10|2586",
+      "signal_date": "2024-09-10",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-10|4316",
+      "signal_date": "2024-09-10",
+      "symbol": "4316",
+      "company_name": "ビーマップ",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-09-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-11|3350",
+      "signal_date": "2024-09-11",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-13|2586",
+      "signal_date": "2024-09-13",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-13T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-17|190A",
+      "signal_date": "2024-09-17",
+      "symbol": "190A",
+      "company_name": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-18|190A",
+      "signal_date": "2024-09-18",
+      "symbol": "190A",
+      "company_name": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-30|6836",
+      "signal_date": "2024-09-30",
+      "symbol": "6836",
+      "company_name": "ぷらっとホーム",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-09-30T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-09-30|8894",
+      "signal_date": "2024-09-30",
+      "symbol": "8894",
+      "company_name": "ＲＥＶＯＬＵＴＩＯＮ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-09-30T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-02|3070",
+      "signal_date": "2024-10-02",
+      "symbol": "3070",
+      "company_name": "ジェリービーンズグループ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-04|6836",
+      "signal_date": "2024-10-04",
+      "symbol": "6836",
+      "company_name": "ぷらっとホーム",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-10|8894",
+      "signal_date": "2024-10-10",
+      "symbol": "8894",
+      "company_name": "ＲＥＶＯＬＵＴＩＯＮ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-16|2156",
+      "signal_date": "2024-10-16",
+      "symbol": "2156",
+      "company_name": "セーラー広告",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-17|8894",
+      "signal_date": "2024-10-17",
+      "symbol": "8894",
+      "company_name": "ＲＥＶＯＬＵＴＩＯＮ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-18|3936",
+      "signal_date": "2024-10-18",
+      "symbol": "3936",
+      "company_name": "グローバルウェイ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-21|2156",
+      "signal_date": "2024-10-21",
+      "symbol": "2156",
+      "company_name": "セーラー広告",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-21T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-22|2156",
+      "signal_date": "2024-10-22",
+      "symbol": "2156",
+      "company_name": "セーラー広告",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-23|2901",
+      "signal_date": "2024-10-23",
+      "symbol": "2901",
+      "company_name": "ウェルディッシュ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-23T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-24|2586",
+      "signal_date": "2024-10-24",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-25|2586",
+      "signal_date": "2024-10-25",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-25|6836",
+      "signal_date": "2024-10-25",
+      "symbol": "6836",
+      "company_name": "ぷらっとホーム",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-10-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-28|2586",
+      "signal_date": "2024-10-28",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-28T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-28|8894",
+      "signal_date": "2024-10-28",
+      "symbol": "8894",
+      "company_name": "ＲＥＶＯＬＵＴＩＯＮ",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2024-10-28T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-10-29|8894",
+      "signal_date": "2024-10-29",
+      "symbol": "8894",
+      "company_name": "ＲＥＶＯＬＵＴＩＯＮ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-10-29T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-11-14|3350",
+      "signal_date": "2024-11-14",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-11-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-11-19|2901",
+      "signal_date": "2024-11-19",
+      "symbol": "2901",
+      "company_name": "ウェルディッシュ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2024-11-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-11-19|3350",
+      "signal_date": "2024-11-19",
+      "symbol": "3350",
+      "company_name": "メタプラネット",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-11-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-11-21|4833",
+      "signal_date": "2024-11-21",
+      "symbol": "4833",
+      "company_name": "Ｄｅｆ　ｃｏｎｓｕｌｔｉｎｇ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-11-21T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-12-02|2586",
+      "signal_date": "2024-12-02",
+      "symbol": "2586",
+      "company_name": "フルッタフルッタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-12-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-12-18|4935",
+      "signal_date": "2024-12-18",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-12-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2024-12-25|4576",
+      "signal_date": "2024-12-25",
+      "symbol": "4576",
+      "company_name": "デ・ウエスタン・セラピテクス研究所",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2024-12-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-01-10|7074",
+      "signal_date": "2025-01-10",
+      "symbol": "7074",
+      "company_name": "トゥエンティーフォーセブンホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-01-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-01-14|4935",
+      "signal_date": "2025-01-14",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-01-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-01-15|4935",
+      "signal_date": "2025-01-15",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-01-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-01-16|4935",
+      "signal_date": "2025-01-16",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-01-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-01-17|4935",
+      "signal_date": "2025-01-17",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-01-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-01-20|4935",
+      "signal_date": "2025-01-20",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-01-20T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-04|5246",
+      "signal_date": "2025-02-04",
+      "symbol": "5246",
+      "company_name": "ＥＬＥＭＥＮＴＳ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-02-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-05|4935",
+      "signal_date": "2025-02-05",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-02-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-05|5246",
+      "signal_date": "2025-02-05",
+      "symbol": "5246",
+      "company_name": "ＥＬＥＭＥＮＴＳ",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2025-02-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-06|4935",
+      "signal_date": "2025-02-06",
+      "symbol": "4935",
+      "company_name": "リベルタ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-02-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-20|5597",
+      "signal_date": "2025-02-20",
+      "symbol": "5597",
+      "company_name": "ブルーイノベーション",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2025-02-20T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-20|8783",
+      "signal_date": "2025-02-20",
+      "symbol": "8783",
+      "company_name": "ａｂｃ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-02-20T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-21|5597",
+      "signal_date": "2025-02-21",
+      "symbol": "5597",
+      "company_name": "ブルーイノベーション",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-02-21T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-02-27|5597",
+      "signal_date": "2025-02-27",
+      "symbol": "5597",
+      "company_name": "ブルーイノベーション",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-02-27T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-03-04|3823",
+      "signal_date": "2025-03-04",
+      "symbol": "3823",
+      "company_name": "ＴＨＥ　ＷＨＹ　ＨＯＷ　ＤＯ　ＣＯＭＰＡＮＹ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-03-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-03-13|5535",
+      "signal_date": "2025-03-13",
+      "symbol": "5535",
+      "company_name": "ミガロホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-03-13T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-03-28|6786",
+      "signal_date": "2025-03-28",
+      "symbol": "6786",
+      "company_name": "ＲＶＨ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-03-28T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-04-10|3823",
+      "signal_date": "2025-04-10",
+      "symbol": "3823",
+      "company_name": "ＴＨＥ　ＷＨＹ　ＨＯＷ　ＤＯ　ＣＯＭＰＡＮＹ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-04-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-05-16|2673",
+      "signal_date": "2025-05-16",
+      "symbol": "2673",
+      "company_name": "夢みつけ隊",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-05-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-05-19|9610",
+      "signal_date": "2025-05-19",
+      "symbol": "9610",
+      "company_name": "ウィルソン・ラーニング　ワールドワイド",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-05-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-05-21|6786",
+      "signal_date": "2025-05-21",
+      "symbol": "6786",
+      "company_name": "ＲＶＨ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-05-21T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-05-22|2334",
+      "signal_date": "2025-05-22",
+      "symbol": "2334",
+      "company_name": "イオレ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-05-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-05-23|2334",
+      "signal_date": "2025-05-23",
+      "symbol": "2334",
+      "company_name": "イオレ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-05-23T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-05-26|9610",
+      "signal_date": "2025-05-26",
+      "symbol": "9610",
+      "company_name": "ウィルソン・ラーニング　ワールドワイド",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-05-26T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-06-13|3070",
+      "signal_date": "2025-06-13",
+      "symbol": "3070",
+      "company_name": "ジェリービーンズグループ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-06-13T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-06-19|6993",
+      "signal_date": "2025-06-19",
+      "symbol": "6993",
+      "company_name": "大黒屋ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-06-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-06-24|3936",
+      "signal_date": "2025-06-24",
+      "symbol": "3936",
+      "company_name": "グローバルウェイ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2025-06-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-06-24|6574",
+      "signal_date": "2025-06-24",
+      "symbol": "6574",
+      "company_name": "コンヴァノ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-06-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-07-03|5721",
+      "signal_date": "2025-07-03",
+      "symbol": "5721",
+      "company_name": "エスクリプトエナジー",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-07-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-07-03|6786",
+      "signal_date": "2025-07-03",
+      "symbol": "6786",
+      "company_name": "ＲＶＨ",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2025-07-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-07-04|5721",
+      "signal_date": "2025-07-04",
+      "symbol": "5721",
+      "company_name": "エスクリプトエナジー",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-07-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-07-07|4594",
+      "signal_date": "2025-07-07",
+      "symbol": "4594",
+      "company_name": "ブライトパス・バイオ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-07-07T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-07-16|2134",
+      "signal_date": "2025-07-16",
+      "symbol": "2134",
+      "company_name": "北浜キャピタルパートナーズ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-07-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-07-22|6574",
+      "signal_date": "2025-07-22",
+      "symbol": "6574",
+      "company_name": "コンヴァノ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-07-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-08-29|7138",
+      "signal_date": "2025-08-29",
+      "symbol": "7138",
+      "company_name": "ＴＯＲＩＣＯ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-08-29T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-08-29|7615",
+      "signal_date": "2025-08-29",
+      "symbol": "7615",
+      "company_name": "京都きもの友禅ホールディングス",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2025-08-29T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-09-24|3997",
+      "signal_date": "2025-09-24",
+      "symbol": "3997",
+      "company_name": "トレードワークス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-09-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-10-01|2323",
+      "signal_date": "2025-10-01",
+      "symbol": "2323",
+      "company_name": "ｆｏｎｆｕｎ",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2025-10-01T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-10-01|2673",
+      "signal_date": "2025-10-01",
+      "symbol": "2673",
+      "company_name": "夢みつけ隊",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2025-10-01T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-10-01|4586",
+      "signal_date": "2025-10-01",
+      "symbol": "4586",
+      "company_name": "メドレックス",
+      "selector_names": [
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-10-01T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-10-02|4446",
+      "signal_date": "2025-10-02",
+      "symbol": "4446",
+      "company_name": "Ｌｉｎｋ－Ｕグループ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-10-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-10-14|6177",
+      "signal_date": "2025-10-14",
+      "symbol": "6177",
+      "company_name": "ＡｐｐＢａｎｋ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-10-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-10-30|7746",
+      "signal_date": "2025-10-30",
+      "symbol": "7746",
+      "company_name": "岡本硝子",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-10-30T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-10-31|8105",
+      "signal_date": "2025-10-31",
+      "symbol": "8105",
+      "company_name": "Ｂｉｔｃｏｉｎ　Ｊａｐａｎ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-10-31T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-11-18|6993",
+      "signal_date": "2025-11-18",
+      "symbol": "6993",
+      "company_name": "大黒屋ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-11-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-11-20|6993",
+      "signal_date": "2025-11-20",
+      "symbol": "6993",
+      "company_name": "大黒屋ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-11-20T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-12-05|6993",
+      "signal_date": "2025-12-05",
+      "symbol": "6993",
+      "company_name": "大黒屋ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-12-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-12-09|6993",
+      "signal_date": "2025-12-09",
+      "symbol": "6993",
+      "company_name": "大黒屋ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-12-09T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-12-11|198A",
+      "signal_date": "2025-12-11",
+      "symbol": "198A",
+      "company_name": "ＰｏｓｔＰｒｉｍｅ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-12-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-12-17|6629",
+      "signal_date": "2025-12-17",
+      "symbol": "6629",
+      "company_name": "テクノホライゾン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-12-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-12-22|5817",
+      "signal_date": "2025-12-22",
+      "symbol": "5817",
+      "company_name": "ＪＭＡＣＳ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2025-12-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2025-12-22|6629",
+      "signal_date": "2025-12-22",
+      "symbol": "6629",
+      "company_name": "テクノホライゾン",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2025-12-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-01-22|2667",
+      "signal_date": "2026-01-22",
+      "symbol": "2667",
+      "company_name": "イメージ　ワン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-01-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-01-27|3103",
+      "signal_date": "2026-01-27",
+      "symbol": "3103",
+      "company_name": "ユニチカ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-01-27T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-01-29|3103",
+      "signal_date": "2026-01-29",
+      "symbol": "3103",
+      "company_name": "ユニチカ",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-01-29T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-01-29|6993",
+      "signal_date": "2026-01-29",
+      "symbol": "6993",
+      "company_name": "大黒屋ホールディングス",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2026-01-29T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-02-02|3103",
+      "signal_date": "2026-02-02",
+      "symbol": "3103",
+      "company_name": "ユニチカ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-02-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-02-03|4422",
+      "signal_date": "2026-02-03",
+      "symbol": "4422",
+      "company_name": "ＶＡＬＵＥＮＥＸ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-02-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-02-19|6613",
+      "signal_date": "2026-02-19",
+      "symbol": "6613",
+      "company_name": "ＱＤレーザ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-02-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-03|7771",
+      "signal_date": "2026-03-03",
+      "symbol": "7771",
+      "company_name": "日本精密",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-03T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-05|6613",
+      "signal_date": "2026-03-05",
+      "symbol": "6613",
+      "company_name": "ＱＤレーザ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-06|6613",
+      "signal_date": "2026-03-06",
+      "symbol": "6613",
+      "company_name": "ＱＤレーザ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-06T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-09|4596",
+      "signal_date": "2026-03-09",
+      "symbol": "4596",
+      "company_name": "窪田製薬ホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-09T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-10|7719",
+      "signal_date": "2026-03-10",
+      "symbol": "7719",
+      "company_name": "東京衡機",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-10|7771",
+      "signal_date": "2026-03-10",
+      "symbol": "7771",
+      "company_name": "日本精密",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2026-03-10T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-17|4422",
+      "signal_date": "2026-03-17",
+      "symbol": "4422",
+      "company_name": "ＶＡＬＵＥＮＥＸ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-18|4888",
+      "signal_date": "2026-03-18",
+      "symbol": "4888",
+      "company_name": "ステラファーマ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-19|4422",
+      "signal_date": "2026-03-19",
+      "symbol": "4422",
+      "company_name": "ＶＡＬＵＥＮＥＸ",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2026-03-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-19|4888",
+      "signal_date": "2026-03-19",
+      "symbol": "4888",
+      "company_name": "ステラファーマ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-24|6740",
+      "signal_date": "2026-03-24",
+      "symbol": "6740",
+      "company_name": "ジャパンディスプレイ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-24T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-25|6085",
+      "signal_date": "2026-03-25",
+      "symbol": "6085",
+      "company_name": "アーキテクツ・スタジオ・ジャパン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-26|4422",
+      "signal_date": "2026-03-26",
+      "symbol": "4422",
+      "company_name": "ＶＡＬＵＥＮＥＸ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-26T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-03-31|7746",
+      "signal_date": "2026-03-31",
+      "symbol": "7746",
+      "company_name": "岡本硝子",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-03-31T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-02|6740",
+      "signal_date": "2026-04-02",
+      "symbol": "6740",
+      "company_name": "ジャパンディスプレイ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-14|281A",
+      "signal_date": "2026-04-14",
+      "symbol": "281A",
+      "company_name": "インフォメティス",
+      "selector_names": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysis_cutoff": "2026-04-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-14|6740",
+      "signal_date": "2026-04-14",
+      "symbol": "6740",
+      "company_name": "ジャパンディスプレイ",
+      "selector_names": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-14T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-15|4840",
+      "signal_date": "2026-04-15",
+      "symbol": "4840",
+      "company_name": "トライアイズ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-16|6085",
+      "signal_date": "2026-04-16",
+      "symbol": "6085",
+      "company_name": "アーキテクツ・スタジオ・ジャパン",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-16|6740",
+      "signal_date": "2026-04-16",
+      "symbol": "6740",
+      "company_name": "ジャパンディスプレイ",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2026-04-16T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-17|6740",
+      "signal_date": "2026-04-17",
+      "symbol": "6740",
+      "company_name": "ジャパンディスプレイ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-17T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-22|7719",
+      "signal_date": "2026-04-22",
+      "symbol": "7719",
+      "company_name": "東京衡機",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-22T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-23|7719",
+      "signal_date": "2026-04-23",
+      "symbol": "7719",
+      "company_name": "東京衡機",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-23T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-27|5341",
+      "signal_date": "2026-04-27",
+      "symbol": "5341",
+      "company_name": "ＡＳＡＨＩ　ＥＩＴＯホールディングス",
+      "selector_names": [
+        "出来高沈静リバウンド"
+      ],
+      "analysis_cutoff": "2026-04-27T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-04-27|7256",
+      "signal_date": "2026-04-27",
+      "symbol": "7256",
+      "company_name": "河西工業",
+      "selector_names": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-04-27T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-01|6085",
+      "signal_date": "2026-05-01",
+      "symbol": "6085",
+      "company_name": "アーキテクツ・スタジオ・ジャパン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-01T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-11|6085",
+      "signal_date": "2026-05-11",
+      "symbol": "6085",
+      "company_name": "アーキテクツ・スタジオ・ジャパン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-11T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-15|6740",
+      "signal_date": "2026-05-15",
+      "symbol": "6740",
+      "company_name": "ジャパンディスプレイ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-15T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-18|281A",
+      "signal_date": "2026-05-18",
+      "symbol": "281A",
+      "company_name": "インフォメティス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-18T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-19|281A",
+      "signal_date": "2026-05-19",
+      "symbol": "281A",
+      "company_name": "インフォメティス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-19T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-21|6840",
+      "signal_date": "2026-05-21",
+      "symbol": "6840",
+      "company_name": "ＡＫＩＢＡホールディングス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-21T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-25|2693",
+      "signal_date": "2026-05-25",
+      "symbol": "2693",
+      "company_name": "ＹＫＴ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-05-26|2693",
+      "signal_date": "2026-05-26",
+      "symbol": "2693",
+      "company_name": "ＹＫＴ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-05-26T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-06-02|6659",
+      "signal_date": "2026-06-02",
+      "symbol": "6659",
+      "company_name": "メディアリンクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-06-02T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-06-05|6085",
+      "signal_date": "2026-06-05",
+      "symbol": "6085",
+      "company_name": "アーキテクツ・スタジオ・ジャパン",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-06-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-06-08|4422",
+      "signal_date": "2026-06-08",
+      "symbol": "4422",
+      "company_name": "ＶＡＬＵＥＮＥＸ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-06-08T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-06-25|6659",
+      "signal_date": "2026-06-25",
+      "symbol": "6659",
+      "company_name": "メディアリンクス",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-06-25T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-06-26|4179",
+      "signal_date": "2026-06-26",
+      "symbol": "4179",
+      "company_name": "ジーネクスト",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-06-26T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-08-04|4381",
+      "signal_date": "2026-08-04",
+      "symbol": "4381",
+      "company_name": "ビープラッツ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-08-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-09-02|4052",
+      "signal_date": "2026-09-02",
+      "symbol": "4052",
+      "company_name": "フィーチャ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-09-02T16:15:00+09:00",
+      "status": "legacy_needs_asof_audit",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-09-03|4052",
+      "signal_date": "2026-09-03",
+      "symbol": "4052",
+      "company_name": "フィーチャ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-09-03T16:15:00+09:00",
+      "status": "legacy_needs_asof_audit",
+      "receipt_sha256": ""
+    }
+  ]
+}

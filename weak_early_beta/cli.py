@@ -21,6 +21,17 @@ from .ledger import (
     write_fundamental_queue,
     write_ledger,
 )
+from .historical_fundamentals import (
+    DEFAULT_BATCH,
+    DEFAULT_BATCH_REPORTS,
+    DEFAULT_MANIFEST,
+    DEFAULT_RECEIPTS as DEFAULT_HISTORICAL_RECEIPTS,
+    build_manifest as build_historical_manifest,
+    import_historical_reports,
+    merge_receipts as merge_historical_receipts,
+    select_batch as select_historical_batch,
+    validate_historical_report,
+)
 from .report import DEFAULT_METRICS, DEFAULT_REPORT, write_report
 
 
@@ -266,6 +277,86 @@ def command_export_fundamentals(args: argparse.Namespace) -> None:
     print(json.dumps({"exported": len(receipts), "receipts": args.receipts}, ensure_ascii=False))
 
 
+def _historical_payload(path: Path) -> list[dict]:
+    payload = json.loads(path.read_text(encoding="utf-8-sig"))
+    reports = payload if isinstance(payload, list) else payload.get("reports", [])
+    if not isinstance(reports, list):
+        raise ValueError("historical reports must be a list")
+    return reports
+
+
+def command_historical_fundamentals_manifest(args: argparse.Namespace) -> None:
+    ledger = read_ledger(Path(args.ledger))
+    receipts_payload = json.loads(Path(args.receipts).read_text(encoding="utf-8-sig")) if Path(args.receipts).exists() else {}
+    manifest = build_historical_manifest(ledger, receipts_payload.get("reports", []))
+    target = Path(args.manifest)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "identity": manifest["identity"],
+        "total_identities": manifest["total_identities"],
+        "status_counts": manifest["status_counts"],
+        "manifest": args.manifest,
+    }, ensure_ascii=False))
+
+
+def command_historical_fundamentals_batch(args: argparse.Namespace) -> None:
+    ledger = read_ledger(Path(args.ledger))
+    receipts_path = Path(args.receipts)
+    receipts_payload = json.loads(receipts_path.read_text(encoding="utf-8-sig")) if receipts_path.exists() else {}
+    manifest = build_historical_manifest(ledger, receipts_payload.get("reports", []))
+    batch = select_historical_batch(manifest, args.limit)
+    target = Path(args.output)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+        "created_at": pd.Timestamp.now(tz="Asia/Tokyo").isoformat(),
+        "limit": args.limit,
+        "records": batch,
+    }
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"batch_size": len(batch), "output": args.output}, ensure_ascii=False))
+
+
+def command_import_historical_fundamentals(args: argparse.Namespace) -> None:
+    ledger_path = Path(args.ledger)
+    receipts_path = Path(args.receipts)
+    manifest_path = Path(args.manifest)
+    input_reports = _historical_payload(Path(args.input))
+    identities = [validate_historical_report(report) for report in input_reports]
+    if len(identities) != len(set(identities)):
+        raise ValueError("input contains duplicate historical identities")
+
+    ledger = read_ledger(ledger_path)
+    previous = json.loads(receipts_path.read_text(encoding="utf-8-sig")) if receipts_path.exists() else {}
+    manifest = build_historical_manifest(ledger, previous.get("reports", []))
+    manifest_status = {record["identity"]: record["status"] for record in manifest["records"]}
+    for row_id in identities:
+        if row_id not in manifest_status:
+            raise ValueError(f"historical identity is not in the canonical ledger: {row_id}")
+        if manifest_status[row_id] == "complete":
+            raise ValueError(f"historical identity is already complete: {row_id}")
+
+    updated_ledger, accepted = import_historical_reports(ledger, input_reports)
+    merged_receipts = merge_historical_receipts(previous, accepted)
+    updated_manifest = build_historical_manifest(updated_ledger, merged_receipts["reports"])
+
+    receipts_path.parent.mkdir(parents=True, exist_ok=True)
+    receipts_path.write_text(json.dumps(merged_receipts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    write_ledger(updated_ledger, ledger_path)
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    manifest_path.write_text(json.dumps(updated_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    metrics = write_report(updated_ledger, Path(args.report), Path(args.metrics))
+    print(json.dumps({
+        "imported": len(accepted),
+        "total_identities": updated_manifest["total_identities"],
+        "status_counts": updated_manifest["status_counts"],
+        "metrics_rows": len(metrics),
+        "discord_posts": 0,
+    }, ensure_ascii=False))
+
+
 def command_is_business_day(args: argparse.Namespace) -> None:
     from .bank_calendar import is_bank_business_day
 
@@ -421,6 +512,37 @@ def parser() -> argparse.ArgumentParser:
     )
     export.add_argument("--claim", help="limit receipts to alert IDs in this claim JSON")
     export.set_defaults(func=command_export_fundamentals)
+
+    historical_manifest = sub.add_parser(
+        "historical-fundamentals-manifest",
+        help="build the as-of historical fundamental backfill manifest",
+    )
+    historical_manifest.add_argument("--ledger", default=str(DEFAULT_LEDGER))
+    historical_manifest.add_argument("--receipts", default=str(DEFAULT_HISTORICAL_RECEIPTS))
+    historical_manifest.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
+    historical_manifest.set_defaults(func=command_historical_fundamentals_manifest)
+
+    historical_batch = sub.add_parser(
+        "historical-fundamentals-batch",
+        help="export the next bounded batch of historical detections to analyze",
+    )
+    historical_batch.add_argument("--ledger", default=str(DEFAULT_LEDGER))
+    historical_batch.add_argument("--receipts", default=str(DEFAULT_HISTORICAL_RECEIPTS))
+    historical_batch.add_argument("--limit", type=int, default=4)
+    historical_batch.add_argument("--output", default=str(DEFAULT_BATCH))
+    historical_batch.set_defaults(func=command_historical_fundamentals_batch)
+
+    historical_import = sub.add_parser(
+        "import-historical-fundamentals",
+        help="validate and attach as-of historical analysis without Discord posting",
+    )
+    historical_import.add_argument("--input", default=str(DEFAULT_BATCH_REPORTS))
+    historical_import.add_argument("--ledger", default=str(DEFAULT_LEDGER))
+    historical_import.add_argument("--receipts", default=str(DEFAULT_HISTORICAL_RECEIPTS))
+    historical_import.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
+    historical_import.add_argument("--report", default=str(DEFAULT_REPORT))
+    historical_import.add_argument("--metrics", default=str(DEFAULT_METRICS))
+    historical_import.set_defaults(func=command_import_historical_fundamentals)
 
     business_day = sub.add_parser("is-business-day", help="check the Japanese bank-business-day gate")
     business_day.add_argument("--date")

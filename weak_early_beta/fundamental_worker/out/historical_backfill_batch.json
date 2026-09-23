@@ -1,0 +1,69 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "created_at": "2026-09-23T12:36:46.120400+09:00",
+  "limit": 4,
+  "records": [
+    {
+      "identity": "2026-09-02|4052",
+      "signal_date": "2026-09-02",
+      "symbol": "4052",
+      "company_name": "フィーチャ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-09-02T16:15:00+09:00",
+      "status": "legacy_needs_asof_audit",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2026-09-03|4052",
+      "signal_date": "2026-09-03",
+      "symbol": "4052",
+      "company_name": "フィーチャ",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2026-09-03T16:15:00+09:00",
+      "status": "legacy_needs_asof_audit",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-01-04|3133",
+      "signal_date": "2023-01-04",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-01-04T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    },
+    {
+      "identity": "2023-01-05|3133",
+      "signal_date": "2023-01-05",
+      "symbol": "3133",
+      "company_name": "海帆",
+      "selector_names": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysis_cutoff": "2023-01-05T16:15:00+09:00",
+      "status": "pending",
+      "receipt_sha256": ""
+    }
+  ]
+}

@@ -14,6 +14,12 @@ from weak_early_beta.config import (
 )
 from weak_early_beta.bank_calendar import fifth_session_from_entry, is_bank_business_day
 from weak_early_beta.fundamental import export_receipts, prepare_claim
+from weak_early_beta.historical_fundamentals import (
+    FIELD_ORDER,
+    build_manifest as build_historical_manifest,
+    import_historical_reports,
+    validate_historical_report,
+)
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.notify import EMBED_COLORS, _message, notify_daily_completion
@@ -338,6 +344,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
             queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
             claim = prepare_claim(queue_path, ledger_path, state_path, claim_path)
             self.assertEqual(claim["claimedCount"], 1)
+            self.assertEqual(claim["alerts"][0]["receivedAt"], "2026-09-18T16:15:00+09:00")
             identity = "weak-early-beta:2026-09-18:1234"
             state = json.loads(state_path.read_text(encoding="utf-8"))
             self.assertIn(identity, state["claims"])
@@ -354,6 +361,70 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertEqual(receipts[0]["signal_date"], "2026-09-18")
             self.assertEqual(receipts[0]["symbol"], "1234")
             self.assertIn("材料インパクト", receipts[0]["html"])
+
+    def _historical_report(self, signal_date="2023-01-04", symbol="3133"):
+        values = {
+            "材料インパクト": "様子見：一次資料に示された業績推移は横ばい。",
+            "事業概要": "テスト用の事業概要。",
+            "足元材料": "2023年1月3日公表の決算資料を確認。",
+            "ファンダ要点": "売上と利益の推移を事業構造と合わせて見る。",
+            "注意点": "顧客構成と継続性が開示からは限定的。",
+            "開示リンク": "[2023-01-03 決算短信(15:00)](https://example.com/filing.pdf)",
+            "Sources": "[IR](https://example.com/ir)\n[TDnet一覧](https://example.com/tdnet)",
+        }
+        return {
+            "signalDate": signal_date,
+            "symbolCode": symbol,
+            "symbolName": "テスト社",
+            "analysisCutoff": f"{signal_date}T16:15:00+09:00",
+            "fields": [{"name": name, "value": values[name]} for name in FIELD_ORDER],
+            "sourceChecks": [
+                {"role": "official_ir", "url": "https://example.com/ir"},
+                {"role": "irbank_or_tdnet", "url": "https://example.com/tdnet"},
+            ],
+            "disclosures": [{
+                "title": "決算短信",
+                "publishedAt": "2023-01-03T15:00:00+09:00",
+                "url": "https://example.com/filing.pdf",
+                "contentReviewed": True,
+            }],
+        }
+
+    def test_historical_manifest_is_per_date_symbol_and_outside_forward_queue(self):
+        sample = self.ledger[
+            self.ledger["signal_date"].dt.strftime("%Y-%m-%d").eq("2023-01-04")
+            & self.ledger["symbol"].eq("3133")
+        ]
+        manifest = build_historical_manifest(
+            sample,
+            generated_at="2026-09-23T16:00:00+09:00",
+        )
+        self.assertEqual(manifest["total_identities"], 1)
+        record = manifest["records"][0]
+        self.assertEqual(record["identity"], "2023-01-04|3133")
+        self.assertEqual(record["analysis_cutoff"], "2023-01-04T16:15:00+09:00")
+        self.assertEqual(record["status"], "pending")
+        self.assertTrue(manifest["records"][0]["selector_names"])
+
+    def test_historical_report_rejects_disclosures_published_after_cutoff(self):
+        report = self._historical_report()
+        report["disclosures"][0]["publishedAt"] = "2023-01-04T16:16:00+09:00"
+        with self.assertRaisesRegex(ValueError, "post-detection disclosure"):
+            validate_historical_report(report)
+
+    def test_historical_import_sets_html_without_creating_or_clearing_discord_receipts(self):
+        ledger = self.ledger[
+            self.ledger["signal_date"].dt.strftime("%Y-%m-%d").eq("2023-01-04")
+            & self.ledger["symbol"].eq("3133")
+        ].copy()
+        ledger.loc[:, "fundamental_discord_url"] = "https://discord.example/existing"
+        updated, accepted = import_historical_reports(ledger, [self._historical_report()])
+        self.assertEqual(len(accepted), 1)
+        self.assertTrue(updated["fundamental_status"].eq("complete_historical").all())
+        self.assertTrue(updated["fundamental_html"].str.contains("開示リンク").all())
+        self.assertTrue(updated["fundamental_discord_url"].eq("https://discord.example/existing").all())
+        manifest = build_historical_manifest(updated, accepted)
+        self.assertEqual(manifest["status_counts"], {"complete": 1})
 
     def test_embedded_fundamental_text_is_html_escaped(self):
         ledger = self.ledger.head(1).copy()

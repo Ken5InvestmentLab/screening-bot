@@ -87,7 +87,7 @@ def prepare_claim(
                 entry_price = float(prices.iloc[0])
         alert = {
             "alertId": identity,
-            "receivedAt": f"{signal_date}T15:30:00+09:00",
+            "receivedAt": f"{signal_date}T16:15:00+09:00",
             "signalDate": signal_date,
             "signalType": "WEAK_EARLY_BETA",
             "symbolCode": symbol,

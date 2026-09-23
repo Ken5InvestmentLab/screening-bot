@@ -1,14 +1,14 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_V1",
-  "generated_at": "2026-09-24T01:14:36.408457+09:00",
+  "generated_at": "2026-09-24T01:50:57.148795+09:00",
   "source_ledger": "weak_early_beta/state/detections.csv",
   "detection_time_basis": "scheduled daily beta scan at 16:15 JST; deterministic historical proxy",
   "as_of_rule": "only disclosures published at or before analysis_cutoff may be cited or used",
   "discord_policy": "historical analyses are not reposted to Discord",
   "total_identities": 253,
   "status_counts": {
-    "complete": 13,
-    "pending": 240
+    "complete": 16,
+    "pending": 237
   },
   "records": [
     {
@@ -3679,8 +3679,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2026-06-08T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "3cd9eac5232af5150dd1b2b2e14077ba268790eb6bfd05c781967cbd55cc4b93"
     },
     {
       "identity": "2026-06-25|6659",
@@ -3695,8 +3695,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2026-06-25T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "cfed3fc1d37a799adbf99bca39eea1a015385e83c55cb6f1de6463fe34c2e3f6"
     },
     {
       "identity": "2026-06-26|4179",
@@ -3711,8 +3711,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2026-06-26T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "327cefaee3cdfa2d0957ef966838b600b9fc89ee8f0c4ba60a9b05a39fa5afe2"
     },
     {
       "identity": "2026-08-04|4381",
@@ -3743,7 +3743,7 @@
       ],
       "analysis_cutoff": "2026-09-02T16:15:00+09:00",
       "status": "complete",
-      "receipt_sha256": "55f207546f3b608e45f7187ed19caa838748d75fc83552ffda6074d90b28bd5b"
+      "receipt_sha256": "5a18696a3c4dd9a0a7501dbdc62054ccdbade2ed9d4d28bdf081c82b3c32db0a"
     },
     {
       "identity": "2026-09-03|4052",
@@ -3759,7 +3759,7 @@
       ],
       "analysis_cutoff": "2026-09-03T16:15:00+09:00",
       "status": "complete",
-      "receipt_sha256": "0cb1d6dbcbedfdebdf5f67e19816f565b4a58a2578483c6babbdc70a531815fe"
+      "receipt_sha256": "650c56196693d2aa44e476f73ea5823f625cb664507a2e9fed43730ff3f6ee33"
     }
   ]
 }

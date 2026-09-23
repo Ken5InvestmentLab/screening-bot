@@ -54,6 +54,23 @@ def _require_historical_audit_pass(reports: list[dict]) -> None:
             )
 
 
+def _validate_historical_import_targets(
+    manifest_status: dict[str, str],
+    identities: list[str],
+    *,
+    replace_existing: bool = False,
+) -> None:
+    for row_id in identities:
+        if row_id not in manifest_status:
+            raise ValueError(f"historical identity is not in the canonical ledger: {row_id}")
+    complete = [row_id for row_id in identities if manifest_status[row_id] == "complete"]
+    if replace_existing:
+        if len(complete) != len(identities):
+            raise ValueError("--replace-existing may only replace already complete identities")
+    elif complete:
+        raise ValueError(f"historical identity is already complete: {complete[0]}")
+
+
 def command_bootstrap(args: argparse.Namespace) -> None:
     target = Path(args.ledger)
     if target.exists() and not args.force:
@@ -342,11 +359,11 @@ def command_import_historical_fundamentals(args: argparse.Namespace) -> None:
     previous = json.loads(receipts_path.read_text(encoding="utf-8-sig")) if receipts_path.exists() else {}
     manifest = build_historical_manifest(ledger, previous.get("reports", []))
     manifest_status = {record["identity"]: record["status"] for record in manifest["records"]}
-    for row_id in identities:
-        if row_id not in manifest_status:
-            raise ValueError(f"historical identity is not in the canonical ledger: {row_id}")
-        if manifest_status[row_id] == "complete":
-            raise ValueError(f"historical identity is already complete: {row_id}")
+    _validate_historical_import_targets(
+        manifest_status,
+        identities,
+        replace_existing=bool(getattr(args, "replace_existing", False)),
+    )
 
     updated_ledger, accepted = import_historical_reports(ledger, input_reports)
     merged_receipts = merge_historical_receipts(previous, accepted)
@@ -553,6 +570,11 @@ def parser() -> argparse.ArgumentParser:
     historical_import.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
     historical_import.add_argument("--report", default=str(DEFAULT_REPORT))
     historical_import.add_argument("--metrics", default=str(DEFAULT_METRICS))
+    historical_import.add_argument(
+        "--replace-existing",
+        action="store_true",
+        help="replace complete historical receipts only after auditStatus=pass",
+    )
     historical_import.set_defaults(func=command_import_historical_fundamentals)
 
     business_day = sub.add_parser("is-business-day", help="check the Japanese bank-business-day gate")

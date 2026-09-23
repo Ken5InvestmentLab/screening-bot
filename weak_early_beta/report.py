@@ -95,6 +95,36 @@ def _linkify(value: str) -> str:
     return "".join(parts).replace("\n", "<br>")
 
 
+def _sources_html(value: str) -> str:
+    """Render source references as concise Premium-style bullets."""
+    links: list[str] = []
+    seen: set[str] = set()
+    entries = re.split(r"[\r\n;；]+", str(value or ""))
+    for entry in entries:
+        entry = entry.strip().lstrip("・•-–— ").strip()
+        if not entry:
+            continue
+        markdown_matches = list(MARKDOWN_LINK_RE.finditer(entry))
+        if markdown_matches:
+            for match in markdown_matches:
+                url, label = match.group(2), match.group(1)
+                if url not in seen:
+                    links.append(f"<li>{_anchor(url, label)}</li>")
+                    seen.add(url)
+            continue
+        for match in BARE_URL_RE.finditer(entry):
+            raw_url = match.group(0)
+            url = raw_url.rstrip(".,;:!?、。)]}）】」』")
+            if url in seen:
+                continue
+            label = entry[: match.start()].strip(" ：:・•-–—") or url
+            links.append(f"<li>{_anchor(url, label)}</li>")
+            seen.add(url)
+    if not links:
+        return _linkify(value)
+    return '<ul class="source-links">' + "".join(links) + "</ul>"
+
+
 def _fundamental_html(value: str) -> str:
     """Turn the stored Premium-style field text into a safe, linked embed."""
     fields: list[tuple[str, str]] = []
@@ -113,7 +143,9 @@ def _fundamental_html(value: str) -> str:
     elif "ポジティブ" in impact:
         impact_class = " impact-positive"
     field_html = "".join(
-        f"<div><dt>{html.escape(name)}</dt><dd>{_linkify(content)}</dd></div>"
+        f"<div><dt>{html.escape(name)}</dt><dd>"
+        f"{_sources_html(content) if name == 'Sources' else _linkify(content)}"
+        "</dd></div>"
         for name, content in fields
     )
     return f'<article class="discord-embed{impact_class}"><dl>{field_html}</dl></article>'
@@ -373,6 +405,7 @@ REPORT_CSS = """
 @media(max-width:620px){main{padding:18px 12px 50px;min-width:0}.panel{padding:16px;border-radius:14px;min-width:0}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}.insight-grid .annual-pl-row{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:19px 0}.annual-pl-track{grid-column:1/-1;grid-row:2}.annual-pl-value{grid-column:2;grid-row:1}.payoff-kpis{gap:5px}.payoff-kpi strong{font-size:22px}.filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}.filter-field{min-width:0}.filters input,.filters select{width:100%;min-width:0!important}.filters .filter-field:first-child,#selector-filter,#search-result-count{grid-column:1/-1}.history-table-wrap{overflow:visible;border:0;background:transparent}#detection-table{min-width:0;background:transparent}#detection-table thead{display:none}#detection-table tbody{display:grid;gap:12px}#detection-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid)}#detection-table tbody tr>*{display:block;min-width:0;white-space:normal;border:0;padding:6px 8px;text-align:left}#detection-table tbody tr>td:first-child,#detection-table tbody tr>th,#detection-table tbody tr>td:nth-child(3),#detection-table tbody tr>td:last-child{grid-column:1/-1}#detection-table tbody tr>th{font-size:16px;border-bottom:1px solid var(--line);padding-bottom:10px}#detection-table tbody tr>td::before{content:attr(data-label);display:block;color:var(--muted);font-size:11px;font-weight:800}#detection-table tbody tr>td:last-child{border-top:1px solid var(--line)}.fundamental-detail{min-width:0;max-width:100%;overflow-wrap:anywhere}.discord-embed{min-width:0}.button-link,.fundamental-toggle{min-height:36px;align-items:center}.kpi b.period-range{font-size:15px;white-space:normal}}
 /* Fundamentals sit inside a table header cell; reset inherited bold so only labels and explicitly emphasized text are bold, as in Premium. */
 .discord-embed{font-weight:400;line-height:1.55}.discord-embed dt{font-weight:800;color:var(--muted)}.discord-embed dd{font-weight:400}
+.discord-embed .source-links{display:grid;gap:4px;margin:0;padding-left:20px}.discord-embed .source-links li{padding-left:2px}.discord-embed .source-links li::marker{color:var(--blue)}
 """
 
 

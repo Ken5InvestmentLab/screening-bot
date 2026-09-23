@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-24T01:14:35.125055+09:00",
+  "updated_at": "2026-09-24T01:50:56.318984+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -895,6 +895,259 @@
       "auditNotes": "選択した3月14日開示本文を確認しました。3月22日の事業再編発表は分析cutoff後として使用していません。"
     },
     {
+      "signalDate": "2026-06-08",
+      "symbolCode": "4422",
+      "companyName": "ＶＡＬＵＥＮＥＸ",
+      "analysisCutoff": "2026-06-08T16:15:00+09:00",
+      "summary": "2026年7月期中間期はコンサルティングを中心に増収し、前年同期の赤字から黒字へ転換。現金保有と自己資本比率は堅調だが、通期予想はなく、営業キャッシュフローも小幅な支出で、持続的な通期黒字は未確認。",
+      "materialImpact": "混在/要確認：中間期の大幅増収・黒字転換と厚い自己資本は支えだが、通期見通しがなく営業CFも小幅な支出。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：中間期の大幅増収・黒字転換と厚い自己資本は支えだが、通期見通しがなく営業CFも小幅な支出。"
+        },
+        {
+          "name": "事業概要",
+          "value": "自然言語処理や類似性評価、可視化などのアルゴリズムを基盤に、文書・テキスト情報の解析サービスを提供する。コンサルティングサービスとASPサービスを展開する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年7月期中間期は国内コンサルティングを中心に堅調に推移し、前年同期比で増収、営業・経常・親会社株主に帰属する中間純利益が黒字化した。4月17日公表の特許庁プロボノ事業では、開催期間中の調査・分析用に当社ツールを提供した。開示に契約金額、継続導入、業績寄与の記載はなく、現時点では認知・実績面の情報にとどまる。会社は2026年1月31日時点でグロース市場の上場維持基準すべてに適合したと公表。流通株式時価総額は2025年7月末の4.94億円から2026年1月末に5.93億円となった。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "中間期売上高は423.417百万円（前年同期比64.6％増）、営業利益61.939百万円（前年同期は126.412百万円の損失）、経常利益64.757百万円（同126.121百万円の損失）、親会社株主に帰属する中間純利益64.492百万円（同125.457百万円の損失）。コンサルティング売上高は247.833百万円（177.6％増）、ASP売上高は170.972百万円（4.8％増）。中間期末の現金及び現金同等物は688.713百万円、総資産897.499百万円、負債123.291百万円、自己資本比率86.0％。"
+        },
+        {
+          "name": "注意点",
+          "value": "通期業績予想は合理的な算定が困難として開示されておらず、中間期の黒字だけでは通期・継続的な黒字化を確認できない。営業キャッシュフローは3.073百万円の支出、投資キャッシュフローは16.891百万円の支出。営業CFの主因は前受金の76.887百万円減少と説明されている。特許庁プロボノでのツール提供は契約金額や継続採用、収益寄与が開示されていない。上場維持基準への適合は2026年1月31日時点の状況であり、将来の適合を保証するものではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "2026-04-17 12:00+09:00「特許庁のプロボノ事業で当社ツールを提供」 https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260417/20260417505832.pdf\n2026-03-12 15:30+09:00「2026年７月期 第２四半期（中間期）決算短信〔日本基準〕（連結）」 https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf\n2026-02-27 16:00+09:00「上場維持基準への適合に関するお知らせ」 https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf"
+        },
+        {
+          "name": "Sources",
+          "value": "公式IR資料一覧: https://www.valuenex.com/ir-docs\n4422 適時開示情報一覧: https://finance.yahoo.co.jp/quote/4422.T/disclosure"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://www.valuenex.com/ir-docs",
+          "result": "公式IR資料一覧で2026年3月12日公表の中間決算資料を確認し、提示された一次資料の内容と照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://finance.yahoo.co.jp/quote/4422.T/disclosure",
+          "result": "開示一覧で対象資料の公表日時を照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "特許庁のプロボノ事業で当社ツールを提供",
+          "publishedAt": "2026-04-17T12:00:00+09:00",
+          "url": "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260417/20260417505832.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年７月期 第２四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2026-03-12T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "上場維持基準への適合に関するお知らせ",
+          "publishedAt": "2026-02-27T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "signalDate": "2026-06-25",
+      "symbolCode": "6659",
+      "companyName": "メディアリンクス",
+      "analysisCutoff": "2026-06-25T16:15:00+09:00",
+      "summary": "受注高・受注残の増加や海外受注がある一方、2026年3月期は赤字が拡大。2027年3月期の会社予想は営業黒字化も20百万円にとどまり、受注の売上化と利益回復が焦点となる。",
+      "materialImpact": "混在/要確認：受注残の増加と海外受注は回復余地を示す一方、営業赤字の拡大と旧製品在庫評価損が重い。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：受注残の増加と海外受注は回復余地を示す一方、営業赤字の拡大と旧製品在庫評価損が重い。"
+        },
+        {
+          "name": "事業概要",
+          "value": "放送・通信事業者向けに、映像や音声などのIPメディア伝送機器・ソフトウェアを提供。Xscend®などの製品を展開し、ネットワークを使ったメディア伝送を支える。"
+        },
+        {
+          "name": "足元材料",
+          "value": "6月22日、毎日放送、セイコーソリューションズなどと、5Gスライシング・MECダイレクトを活用した大阪—東京間の放送TS・PTP長距離伝送実証に成功。専用回線より低コストのネットワーク構築や迅速なBCP対応を目指す試験だが、開示に売上・受注金額や業績影響の記載はない。\n5月19日、第18回新株予約権32万個の行使が完了し、残数はゼロ。発行時からの資金調達額は約1,543百万円で、5月には246万株が交付された。\n5月18日、中東の通信事業者から主力製品Xscend®を受注。受注額は非開示で、納期は2026年7月、売上計上は2027年3月期の予定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期は売上高2,337百万円（前年比16.2%減）、売上総利益1,053百万円（32.6%減）、営業損失877百万円、経常損失894百万円、親会社株主帰属損失1,454百万円。受注高は前年比7.2%増、受注残高は111.5%増。現金575百万円、営業キャッシュフロー△429百万円、財務キャッシュフロー+867百万円。2027年3月期会社予想は売上高3,690百万円、営業利益20百万円、経常利益15百万円、純損失25百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "営業損失は前期の523百万円から877百万円へ拡大。モデルチェンジに伴う旧製品終売で棚卸資産評価損503百万円、固定資産減損32百万円を計上した。翌期予想の営業利益は20百万円と小幅で、受注残の売上化と利益率の回復には不確実性がある。海外受注は受注額非開示で納期・売上計上時期が限られ、実証実験から売上につながるかも開示からは確認できない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "2026-06-22 5GスライシングとMECダイレクトを活用した国内初の実証実験に成功(17:50) https://www2.jpx.co.jp/disc/66590/140120260622576175.pdf\n2026-05-19 第三者割当により発行された第18回新株予約権（行使価額修正条項付）の行使完了及び月間行使状況に関するお知らせ(17:00) https://www2.jpx.co.jp/disc/66590/140120260519541277.pdf\n2026-05-18 大口受注に関するお知らせ(15:30) https://www2.jpx.co.jp/disc/66590/140120260518534064.pdf\n2026-05-14 2026年３月期 決算短信〔日本基準〕（連結）(15:30) https://www2.jpx.co.jp/disc/66590/140120260514533249.pdf\n2026-05-12 特別損失の発生及び業績予想の修正に関するお知らせ(16:30) https://www2.jpx.co.jp/disc/66590/140120260512524655.pdf"
+        },
+        {
+          "name": "Sources",
+          "value": "公式IRライブラリー：https://jp.medialinks.com/investor-relations/investor-library/\n公式ニュース一覧：https://jp.medialinks.com/news-and-events/\nTDnet開示一覧：https://finance.yahoo.co.jp/quote/6659.T/disclosure"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://jp.medialinks.com/investor-relations/investor-library/",
+          "result": "指定資料の公式IR掲載情報を確認。"
+        },
+        {
+          "role": "official_news",
+          "url": "https://jp.medialinks.com/news-and-events/",
+          "result": "指定された実証実験の公式ニュース掲載情報を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://finance.yahoo.co.jp/quote/6659.T/disclosure",
+          "result": "開示一覧を参照し、指定資料の公表日時が分析基準時刻以前であることを照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "特別損失の発生及び業績予想の修正に関するお知らせ",
+          "publishedAt": "2026-05-12T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120260512524655.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2026-05-14T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120260514533249.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "大口受注に関するお知らせ",
+          "publishedAt": "2026-05-18T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120260518534064.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当により発行された第18回新株予約権（行使価額修正条項付）の行使完了及び月間行使状況に関するお知らせ",
+          "publishedAt": "2026-05-19T17:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120260519541277.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "5GスライシングとMECダイレクトを活用した国内初の実証実験に成功",
+          "publishedAt": "2026-06-22T17:50:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120260622576175.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "signalDate": "2026-06-26",
+      "symbolCode": "4179",
+      "companyName": "ジーネクスト",
+      "analysisCutoff": "2026-06-26T16:15:00+09:00",
+      "summary": "2026年3月期は第4四半期に営業黒字となりストック事業も成長したが、通期赤字、営業キャッシュフローのマイナス、継続企業の前提に関する重要な不確実性が残る。GPUクラウドは商談段階で、契約と業績寄与は未確定。",
+      "materialImpact": "混在/要確認：第4四半期黒字とストック成長・翌期営業黒字予想は支えだが、通期赤字、営業CFマイナス、継続企業の重要な不確実性が残る。GPU案件も商談段階。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：第4四半期黒字とストック成長・翌期営業黒字予想は支えだが、通期赤字、営業CFマイナス、継続企業の重要な不確実性が残る。GPU案件も商談段階。"
+        },
+        {
+          "name": "事業概要",
+          "value": "顧客の声や問い合わせを一元管理するクラウド型DX基盤「Discoveriez」を軸に、導入・受託開発、BPOやコンサルティング、ハードウェア調達・AIデータセンター導入支援を提供します。"
+        },
+        {
+          "name": "足元材料",
+          "value": "6月3日、提携先のアルメニアAIデータセンター開所を受け、「G-NEXT GPUクラウド」の具体的な商談受付を開始しました。問い合わせは想定を上回ったとしていますが、正式契約は商用提供開始後の予定で、受注・金額・業績寄与は未確定です。6月18日開示では主要株主の保有比率が12.21%から8.34%へ低下しました。会社は実質所有株式数を確認できていないと注記しています。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "連結初年度で前年比較なし。売上高1,015.668百万円、営業損失70.183百万円、経常損失71.837百万円、純損失72.252百万円。第4四半期は営業利益17.714百万円。ストック売上高465.327百万円（+13.9%）、ストック比率45.8%、クラウドMMR成長率+16.0%、過去12か月平均月次解約率0.74%。翌期予想は売上高1,500〜1,600百万円、営業利益30〜40百万円。経常利益・純利益の数値予想はなし。"
+        },
+        {
+          "name": "注意点",
+          "value": "期末現金182.835百万円に対し営業キャッシュフローはマイナス162.564百万円、投資キャッシュフローはマイナス37.151百万円。対応策は実施途上で、継続企業の前提に関する重要な不確実性があると記載。GPUクラウドは商談受付であり契約・受注ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "2026-05-14 15:30+09:00「2026年３月期 決算短信〔日本基準〕(連結)」 https://www2.jpx.co.jp/disc/41790/140120260514533314.pdf\n2026-06-03 15:30+09:00「アルメニア『Eleveight AI』AIデータセンター開所式典の開催および『G-NEXT GPUクラウド』商談受付開始のお知らせ」 https://www.gnext.co.jp/information/336/\n2026-06-18 12:00+09:00「主要株主の異動に関するお知らせ」 https://www2.jpx.co.jp/disc/41790/140120260617573089.pdf"
+        },
+        {
+          "name": "Sources",
+          "value": "https://www.gnext.co.jp/ir/ir-contents/library/\nhttps://www.gnext.co.jp/category/news/\nhttps://finance.yahoo.co.jp/quote/4179.T/disclosure"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://www.gnext.co.jp/ir/ir-contents/library/",
+          "result": "公式IRライブラリーと公式お知らせ一覧を確認し、基準時刻以前の対象開示を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://finance.yahoo.co.jp/quote/4179.T/disclosure",
+          "result": "TDnet開示一覧を確認し、対象3資料の公表日時を照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年３月期 決算短信〔日本基準〕(連結)",
+          "publishedAt": "2026-05-14T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/41790/140120260514533314.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "アルメニア『Eleveight AI』AIデータセンター開所式典の開催および『G-NEXT GPUクラウド』商談受付開始のお知らせ",
+          "publishedAt": "2026-06-03T15:30:00+09:00",
+          "url": "https://www.gnext.co.jp/information/336/",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要株主の異動に関するお知らせ",
+          "publishedAt": "2026-06-18T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/41790/140120260617573089.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
       "signalDate": "2026-08-04",
       "symbolCode": "4381",
       "companyName": "ビープラッツ",
@@ -996,7 +1249,7 @@
       "symbolCode": "4052",
       "companyName": "フィーチャ",
       "analysisCutoff": "2026-09-02T16:15:00+09:00",
-      "summary": "2026年6月期は増収で黒字転換し、量産を背景にライセンス売上が伸長。一方、大型共同開発案件の中断で受託開発売上が減少し、営業キャッシュフローもマイナス。翌期予想では売上構成の変化が見込まれ、サイバー事故 の調査未確定範囲も残る。回顧的な開示整理であり、投資判断ではない。",
+      "summary": "2026年6月期は増収で黒字転換し、量産を背景にライセンス売上が伸長。一方、大型共同開発案件の中断で受託開発売上が減少し、営業キャッシュフローもマイナス。翌期予想では売上構成の変化が見込まれ、サイバー事故 の調査未確定範囲も残る。",
       "materialImpact": "混在/要確認。黒字転換・ライセンス売上の伸長に対し、受託開発の縮小、債権増加を主因とする営業キャッシュフローのマイナス、翌期の売上構成変化、サイバー事故 の未確定範囲が併存する。",
       "selectorNames": [
         "2条件一致リバウンド",
@@ -1023,7 +1276,7 @@
         },
         {
           "name": "注意点",
-          "value": "営業CFのマイナスと売上債権増加、受託開発案件の中断、翌期予想における売上構成の変化を確認。2026年5月のランサムウェア最終報告では32サーバーへの不正アクセス、13台の感染、GitHubリポジトリ144件の外部コピーを確認。初期の侵入原因・手法と送信ファイルの全容は特定できず、通常業務は再開し、多層的対策と監視を実施。定量的な損失額は示されていない。2026年8月28日の資本準備金減少等は純資産総額・損益を変えない資本勘定内の振替案で、株主総会承認等は各カットオフ時点で将来予定。"
+          "value": "営業CFのマイナスと売上債権増加、受託開発案件の中断、翌期予想における売上構成の変化を確認。2026年5月のランサムウェア最終報告では32サーバーへの不正アクセス、13台の感染、GitHubリポジトリ144件の外部コピーを確認。初期の侵入原因・手法と送信ファイルの全容は特定できず、通常業務は再開し、多層的対策と監視を実施。定量的な損失額は示されていない"
         },
         {
           "name": "開示リンク",
@@ -1031,7 +1284,7 @@
         },
         {
           "name": "Sources",
-          "value": "[会社IR](https://ficha.jp/ir/)（一覧確認）；[会社IRニュース](https://ficha.jp/ir/news/)（一覧確認）；[開示タイトル・時刻一覧](https://finance.yahoo.co.jp/quote/4052.T/disclosure)（カットオフ確認のみ）。内容の事実は上記のJPX原本で確認。"
+          "value": "[フィーチャ IR情報](https://ficha.jp/ir/)\n[フィーチャ IRニュース](https://ficha.jp/ir/news/)\n[4052 適時開示情報一覧](https://finance.yahoo.co.jp/quote/4052.T/disclosure)"
         }
       ],
       "sourceChecks": [
@@ -1090,14 +1343,16 @@
           "url": "https://www2.jpx.co.jp/disc/40520/140120260512526303.pdf",
           "contentReviewed": true
         }
-      ]
+      ],
+      "auditStatus": "pass",
+      "auditNotes": "Point-in-time correction: exact signal identity and 16:15 JST cutoff preserved; the referenced 2026-08-28 notice is pre-cutoff and remains linked; removed only the unnecessary future shareholder-approval sentence and retrospective disclaimer; disclosure facts, URLs, timestamps, and source checks are otherwise unchanged."
     },
     {
       "signalDate": "2026-09-03",
       "symbolCode": "4052",
       "companyName": "フィーチャ",
       "analysisCutoff": "2026-09-03T16:15:00+09:00",
-      "summary": "2026年6月期は増収で黒字転換し、量産を背景にライセンス売上が伸長。一方、大型共同開発案件の中断で受託開発売上が減少し、営業キャッシュフローもマイナス。翌期予想では売上構成の変化が見込まれ、サイバー事故 の調査未確定範囲も残る。回顧的な開示整理であり、投資判断ではない。",
+      "summary": "2026年6月期は増収で黒字転換し、量産を背景にライセンス売上が伸長。一方、大型共同開発案件の中断で受託開発売上が減少し、営業キャッシュフローもマイナス。翌期予想では売上構成の変化が見込まれ、サイバー事故 の調査未確定範囲も残る。",
       "materialImpact": "混在/要確認。黒字転換・ライセンス売上の伸長に対し、受託開発の縮小、債権増加を主因とする営業キャッシュフローのマイナス、翌期の売上構成変化、サイバー事故 の未確定範囲が併存する。",
       "selectorNames": [
         "2条件一致リバウンド",
@@ -1125,7 +1380,7 @@
         },
         {
           "name": "注意点",
-          "value": "営業CFのマイナスと売上債権増加、受託開発案件の中断、翌期予想における売上構成の変化を確認。2026年5月のランサムウェア最終報告では32サーバーへの不正アクセス、13台の感染、GitHubリポジトリ144件の外部コピーを確認。初期の侵入原因・手法と送信ファイルの全容は特定できず、通常業務は再開し、多層的対策と監視を実施。定量的な損失額は示されていない。2026年8月28日の資本準備金減少等は純資産総額・損益を変えない資本勘定内の振替案で、株主総会承認等は各カットオフ時点で将来予定。"
+          "value": "営業CFのマイナスと売上債権増加、受託開発案件の中断、翌期予想における売上構成の変化を確認。2026年5月のランサムウェア最終報告では32サーバーへの不正アクセス、13台の感染、GitHubリポジトリ144件の外部コピーを確認。初期の侵入原因・手法と送信ファイルの全容は特定できず、通常業務は再開し、多層的対策と監視を実施。定量的な損失額は示されていない"
         },
         {
           "name": "開示リンク",
@@ -1133,7 +1388,7 @@
         },
         {
           "name": "Sources",
-          "value": "[会社IR](https://ficha.jp/ir/)（一覧確認）；[会社IRニュース](https://ficha.jp/ir/news/)（一覧確認）；[開示タイトル・時刻一覧](https://finance.yahoo.co.jp/quote/4052.T/disclosure)（カットオフ確認のみ）。内容の事実は上記のJPX原本で確認。"
+          "value": "[フィーチャ IR情報](https://ficha.jp/ir/)\n[フィーチャ IRニュース](https://ficha.jp/ir/news/)\n[4052 適時開示情報一覧](https://finance.yahoo.co.jp/quote/4052.T/disclosure)"
         }
       ],
       "sourceChecks": [
@@ -1192,7 +1447,9 @@
           "url": "https://www2.jpx.co.jp/disc/40520/140120260512526303.pdf",
           "contentReviewed": true
         }
-      ]
+      ],
+      "auditStatus": "pass",
+      "auditNotes": "Point-in-time correction: exact signal identity and 16:15 JST cutoff preserved; the referenced 2026-08-28 notice is pre-cutoff and remains linked; removed only the unnecessary future shareholder-approval sentence and retrospective disclaimer; disclosure facts, URLs, timestamps, and source checks are otherwise unchanged."
     }
   ],
   "audit_log": [
@@ -1285,6 +1542,36 @@
       "imported_at": "2026-09-24T01:14:35.125055+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "f1bc067b48207217809d85797d0aacd6541203179f8b5da051a1e4815a1eb25f"
+    },
+    {
+      "identity": "2026-06-26|4179",
+      "imported_at": "2026-09-24T01:34:28.188805+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "327cefaee3cdfa2d0957ef966838b600b9fc89ee8f0c4ba60a9b05a39fa5afe2"
+    },
+    {
+      "identity": "2026-06-25|6659",
+      "imported_at": "2026-09-24T01:43:43.757846+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "cfed3fc1d37a799adbf99bca39eea1a015385e83c55cb6f1de6463fe34c2e3f6"
+    },
+    {
+      "identity": "2026-09-02|4052",
+      "imported_at": "2026-09-24T01:45:52.792485+09:00",
+      "previous_receipt_sha256": "55f207546f3b608e45f7187ed19caa838748d75fc83552ffda6074d90b28bd5b",
+      "receipt_sha256": "5a18696a3c4dd9a0a7501dbdc62054ccdbade2ed9d4d28bdf081c82b3c32db0a"
+    },
+    {
+      "identity": "2026-09-03|4052",
+      "imported_at": "2026-09-24T01:45:52.792485+09:00",
+      "previous_receipt_sha256": "0cb1d6dbcbedfdebdf5f67e19816f565b4a58a2578483c6babbdc70a531815fe",
+      "receipt_sha256": "650c56196693d2aa44e476f73ea5823f625cb664507a2e9fed43730ff3f6ee33"
+    },
+    {
+      "identity": "2026-06-08|4422",
+      "imported_at": "2026-09-24T01:50:56.318984+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "3cd9eac5232af5150dd1b2b2e14077ba268790eb6bfd05c781967cbd55cc4b93"
     }
   ]
 }

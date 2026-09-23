@@ -13,7 +13,7 @@ from weak_early_beta.config import (
     SELECTOR_ORDER,
     selector_info,
 )
-from weak_early_beta.cli import _require_historical_audit_pass
+from weak_early_beta.cli import _require_historical_audit_pass, _validate_historical_import_targets
 from weak_early_beta.bank_calendar import fifth_session_from_entry, is_bank_business_day
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.historical_fundamentals import (
@@ -553,6 +553,18 @@ class WeakEarlyBetaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Sources must contain 2-4"):
             validate_historical_report(report)
 
+    def test_historical_import_replacement_requires_explicit_complete_targets(self):
+        statuses = {"2023-01-04|3133": "complete", "2023-01-05|3133": "pending"}
+        with self.assertRaisesRegex(ValueError, "already complete"):
+            _validate_historical_import_targets(statuses, ["2023-01-04|3133"])
+        _validate_historical_import_targets(
+            statuses, ["2023-01-04|3133"], replace_existing=True
+        )
+        with self.assertRaisesRegex(ValueError, "only replace already complete"):
+            _validate_historical_import_targets(
+                statuses, ["2023-01-05|3133"], replace_existing=True
+            )
+
     def test_historical_import_sets_html_without_creating_or_clearing_discord_receipts(self):
         ledger = self.ledger[
             self.ledger["signal_date"].dt.strftime("%Y-%m-%d").eq("2023-01-04")
@@ -579,12 +591,21 @@ class WeakEarlyBetaTests(unittest.TestCase):
         ledger = self.ledger.head(1).copy()
         ledger.loc[:, "fundamental_html"] = (
             "材料インパクト\nポジティブ材料：受注を確認\n\n"
-            "開示リンク\n[会社資料](https://example.com/disclosure)"
+            "開示リンク\n[会社資料](https://example.com/disclosure)\n\n"
+            "Sources\n[会社IR情報](https://example.com/ir)（一覧確認）；"
+            "[適時開示一覧](https://example.com/list)（カットオフ確認のみ）。"
+            "内容の事実は上記の開示資料で確認。"
         )
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
         output = render_report(ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
         self.assertIn("impact-positive", output)
         self.assertIn('href="https://example.com/disclosure"', output)
+        self.assertIn('<ul class="source-links">', output)
+        self.assertIn('<li><a href="https://example.com/ir"', output)
+        self.assertIn('<li><a href="https://example.com/list"', output)
+        self.assertNotIn("一覧確認", output)
+        self.assertNotIn("カットオフ確認のみ", output)
+        self.assertNotIn("内容の事実は上記", output)
         self.assertIn('target="_blank" rel="noopener noreferrer"', output)
         self.assertIn(".discord-embed{font-weight:400;line-height:1.55}", output)
         self.assertIn(".discord-embed dt{font-weight:800;color:var(--muted)}", output)

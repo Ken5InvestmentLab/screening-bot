@@ -125,6 +125,62 @@ def _sources_html(value: str) -> str:
     return '<ul class="source-links">' + "".join(links) + "</ul>"
 
 
+def _disclosure_links_html(value: str) -> str:
+    """Make each disclosure title the clickable text for its source URL."""
+    rendered: list[str] = []
+    for line in str(value or "").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        matches = list(BARE_URL_RE.finditer(line))
+        if len(matches) != 1:
+            rendered.append(_linkify(line))
+            continue
+
+        match = matches[0]
+        raw_url = match.group(0)
+        url = raw_url.rstrip(".,;:!?、。)]}）】」』")
+        trailing = raw_url[len(url) :]
+        prefix = line[: match.start()].rstrip()
+        title = ""
+        lead = ""
+
+        quoted = re.search(r"「([^」]+)」$", prefix)
+        if quoted:
+            lead = prefix[: quoted.start()]
+            title = quoted.group(1)
+        else:
+            dated = re.match(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", prefix)
+            if dated:
+                lead = dated.group(1)
+                remainder = (dated.group(2) or "").strip()
+                time_prefix = re.match(r"^(\d{1,2}:\d{2}(?:\+09:00)?)(?:\s+)?(.*)$", remainder)
+                if time_prefix:
+                    lead += " " + time_prefix.group(1)
+                    title = time_prefix.group(2).strip()
+                else:
+                    title = remainder
+
+        display_time = ""
+        time_suffix = re.search(r"\s*\((\d{1,2}:\d{2})\)$", title)
+        if time_suffix:
+            display_time = " (" + time_suffix.group(1) + ")"
+            title = title[: time_suffix.start()].rstrip()
+
+        if not title:
+            rendered.append(_linkify(line))
+            continue
+
+        title_link = _anchor(url, title)
+        if quoted:
+            text = f"{html.escape(lead)}「{title_link}」{html.escape(display_time)}"
+        else:
+            text = f"{html.escape(lead)} {title_link}{html.escape(display_time)}".strip()
+        rendered.append(text + html.escape(trailing))
+
+    return "<br>".join(rendered)
+
+
 def _fundamental_html(value: str) -> str:
     """Turn the stored Premium-style field text into a safe, linked embed."""
     fields: list[tuple[str, str]] = []
@@ -144,7 +200,7 @@ def _fundamental_html(value: str) -> str:
         impact_class = " impact-positive"
     field_html = "".join(
         f"<div><dt>{html.escape(name)}</dt><dd>"
-        f"{_sources_html(content) if name == 'Sources' else _linkify(content)}"
+        f"{_sources_html(content) if name == 'Sources' else _disclosure_links_html(content) if name == '開示リンク' else _linkify(content)}"
         "</dd></div>"
         for name, content in fields
     )

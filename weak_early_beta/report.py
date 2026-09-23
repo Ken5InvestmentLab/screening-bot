@@ -126,7 +126,7 @@ def _sources_html(value: str) -> str:
 
 
 def _disclosure_links_html(value: str) -> str:
-    """Make each disclosure title the clickable text for its source URL."""
+    """Render disclosures like Premium Worker bullets with descriptive links."""
     rendered: list[str] = []
     for line in str(value or "").splitlines():
         line = line.strip()
@@ -142,41 +142,30 @@ def _disclosure_links_html(value: str) -> str:
         url = raw_url.rstrip(".,;:!?、。)]}）】」』")
         trailing = raw_url[len(url) :]
         prefix = line[: match.start()].rstrip()
-        title = ""
-        lead = ""
+        dated = re.match(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", prefix)
+        if not dated:
+            rendered.append(_linkify(line))
+            continue
 
-        quoted = re.search(r"「([^」]+)」$", prefix)
-        if quoted:
-            lead = prefix[: quoted.start()]
-            title = quoted.group(1)
-        else:
-            dated = re.match(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", prefix)
-            if dated:
-                lead = dated.group(1)
-                remainder = (dated.group(2) or "").strip()
-                time_prefix = re.match(r"^(\d{1,2}:\d{2}(?:\+09:00)?)(?:\s+)?(.*)$", remainder)
-                if time_prefix:
-                    lead += " " + time_prefix.group(1)
-                    title = time_prefix.group(2).strip()
-                else:
-                    title = remainder
-
-        display_time = ""
+        date = dated.group(1)
+        title = (dated.group(2) or "").strip()
+        time = ""
+        time_prefix = re.match(r"^(\d{1,2}:\d{2})(?:\+09:00)?\s*(.*)$", title)
+        if time_prefix:
+            time = time_prefix.group(1)
+            title = time_prefix.group(2).strip()
+        if title.startswith("「") and title.endswith("」"):
+            title = title[1:-1].strip()
         time_suffix = re.search(r"\s*\((\d{1,2}:\d{2})\)$", title)
         if time_suffix:
-            display_time = " (" + time_suffix.group(1) + ")"
+            time = time or time_suffix.group(1)
             title = title[: time_suffix.start()].rstrip()
-
         if not title:
             rendered.append(_linkify(line))
             continue
 
-        title_link = _anchor(url, title)
-        if quoted:
-            text = f"{html.escape(lead)}「{title_link}」{html.escape(display_time)}"
-        else:
-            text = f"{html.escape(lead)} {title_link}{html.escape(display_time)}".strip()
-        rendered.append(text + html.escape(trailing))
+        label = f"{date} {title}" + (f"({time})" if time else "")
+        rendered.append("・" + _anchor(url, label) + html.escape(trailing))
 
     return "<br>".join(rendered)
 

@@ -1,0 +1,84 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "signalDate": "2026-06-26",
+      "symbolCode": "4179",
+      "companyName": "ジーネクスト",
+      "analysisCutoff": "2026-06-26T16:15:00+09:00",
+      "summary": "2026年3月期は第4四半期に営業黒字となりストック事業も成長したが、通期赤字、営業キャッシュフローのマイナス、継続企業の前提に関する重要な不確実性が残る。GPUクラウドは商談段階で、契約と業績寄与は未確定。",
+      "materialImpact": "混在/要確認：第4四半期黒字とストック成長・翌期営業黒字予想は支えだが、通期赤字、営業CFマイナス、継続企業の重要な不確実性が残る。GPU案件も商談段階。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：第4四半期黒字とストック成長・翌期営業黒字予想は支えだが、通期赤字、営業CFマイナス、継続企業の重要な不確実性が残る。GPU案件も商談段階。"
+        },
+        {
+          "name": "事業概要",
+          "value": "顧客の声や問い合わせを一元管理するクラウド型DX基盤「Discoveriez」を軸に、導入・受託開発、BPOやコンサルティング、ハードウェア調達・AIデータセンター導入支援を提供します。"
+        },
+        {
+          "name": "足元材料",
+          "value": "6月3日、提携先のアルメニアAIデータセンター開所を受け、「G-NEXT GPUクラウド」の具体的な商談受付を開始しました。問い合わせは想定を上回ったとしていますが、正式契約は商用提供開始後の予定で、受注・金額・業績寄与は未確定です。6月18日開示では主要株主の保有比率が12.21%から8.34%へ低下しました。会社は実質所有株式数を確認できていないと注記しています。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "連結初年度で前年比較なし。売上高1,015.668百万円、営業損失70.183百万円、経常損失71.837百万円、純損失72.252百万円。第4四半期は営業利益17.714百万円。ストック売上高465.327百万円（+13.9%）、ストック比率45.8%、クラウドMMR成長率+16.0%、過去12か月平均月次解約率0.74%。翌期予想は売上高1,500〜1,600百万円、営業利益30〜40百万円。経常利益・純利益の数値予想はなし。"
+        },
+        {
+          "name": "注意点",
+          "value": "期末現金182.835百万円に対し営業キャッシュフローはマイナス162.564百万円、投資キャッシュフローはマイナス37.151百万円。対応策は実施途上で、継続企業の前提に関する重要な不確実性があると記載。GPUクラウドは商談受付であり契約・受注ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "2026-05-14 15:30+09:00「2026年３月期 決算短信〔日本基準〕(連結)」 https://www2.jpx.co.jp/disc/41790/140120260514533314.pdf\n2026-06-03 15:30+09:00「アルメニア『Eleveight AI』AIデータセンター開所式典の開催および『G-NEXT GPUクラウド』商談受付開始のお知らせ」 https://www.gnext.co.jp/information/336/\n2026-06-18 12:00+09:00「主要株主の異動に関するお知らせ」 https://www2.jpx.co.jp/disc/41790/140120260617573089.pdf"
+        },
+        {
+          "name": "Sources",
+          "value": "https://www.gnext.co.jp/ir/ir-contents/library/\nhttps://www.gnext.co.jp/category/news/\nhttps://finance.yahoo.co.jp/quote/4179.T/disclosure"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://www.gnext.co.jp/ir/ir-contents/library/",
+          "result": "公式IRライブラリーと公式お知らせ一覧を確認し、基準時刻以前の対象開示を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://finance.yahoo.co.jp/quote/4179.T/disclosure",
+          "result": "TDnet開示一覧を確認し、対象3資料の公表日時を照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年３月期 決算短信〔日本基準〕(連結)",
+          "publishedAt": "2026-05-14T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/41790/140120260514533314.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "アルメニア『Eleveight AI』AIデータセンター開所式典の開催および『G-NEXT GPUクラウド』商談受付開始のお知らせ",
+          "publishedAt": "2026-06-03T15:30:00+09:00",
+          "url": "https://www.gnext.co.jp/information/336/",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要株主の異動に関するお知らせ",
+          "publishedAt": "2026-06-18T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/41790/140120260617573089.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

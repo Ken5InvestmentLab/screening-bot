@@ -200,7 +200,7 @@ def _combined_rows(metrics: pd.DataFrame, selector_id: str | None = None) -> str
     if selector_id:
         combined = combined[combined["selector_id"].eq(selector_id)]
     if combined.empty:
-        return '<tr><td colspan="17">集計対象がありません</td></tr>'
+        return '<tr><td colspan="16">集計対象がありません</td></tr>'
     total_period = max(metrics["period"].astype(str), key=len)
     order = {period: index for index, period in enumerate(sorted(combined["period"].astype(str).unique()))}
     order[total_period] = 999
@@ -213,7 +213,7 @@ def _combined_rows(metrics: pd.DataFrame, selector_id: str | None = None) -> str
         label = f"{row.period} 合計" if str(row.period) == total_period else str(row.period)
         rows.append(
             "<tr>"
-            f"<th>{html.escape(label)}</th><th>{html.escape(row.selector_name)}</th>"
+            f"<th>{html.escape(label)}</th>"
             f"<td>{row.n}</td><td>{row.pending}</td>"
             f"<td class=\"metric-focus\">{_yen(row.cash_pl_100_yen)}</td><td class=\"metric-focus\">{_price(row.required_capital_yen)}</td>"
             f"<td class=\"metric-focus\">{_pct(row.capital_return_pct, True)}</td><td class=\"metric-focus\">{_pct(row.simple_annualized_pct, True)}</td>"
@@ -226,9 +226,9 @@ def _combined_rows(metrics: pd.DataFrame, selector_id: str | None = None) -> str
     return "".join(rows)
 
 
-def _monthly_rows(metrics: pd.DataFrame) -> str:
+def _monthly_rows(metrics: pd.DataFrame, show_mode: bool = True) -> str:
     if metrics.empty:
-        return '<tr><td colspan="13">集計対象がありません</td></tr>'
+        return f'<tr><td colspan="{13 if show_mode else 12}">集計対象がありません</td></tr>'
     mode_order = {
         selector_id: index
         for index, selector_id in enumerate((*SELECTOR_ORDER, *COMBINED_SELECTOR_IDS))
@@ -237,9 +237,11 @@ def _monthly_rows(metrics: pd.DataFrame) -> str:
     data["_mode_order"] = data["selector_id"].map(mode_order)
     rows = []
     for row in data.sort_values(["period", "_mode_order"], ascending=[False, True]).itertuples():
+        mode_cell = f"<th>{html.escape(row.selector_name)}</th>" if show_mode else ""
         rows.append(
             "<tr>"
-            f"<th>{html.escape(str(row.period))}</th><th>{html.escape(row.selector_name)}</th>"
+            f"<th>{html.escape(str(row.period))}</th>"
+            f"{mode_cell}"
             f"<td>{row.n}</td><td>{row.pending}</td>"
             f"<td class=\"metric-focus\">{_yen(row.cash_pl_100_yen)}</td><td class=\"metric-focus\">{_price(row.required_capital_yen)}</td>"
             f"<td>{_pct(row.mean_pct, True)}</td><td>{_pct(row.median_pct, True)}</td>"
@@ -282,7 +284,9 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
     data["signal_date"] = pd.to_datetime(data["signal_date"])
     rows = []
     grouped = data.groupby(["signal_date", "symbol"], sort=False)
-    for (signal_date, symbol), group in sorted(grouped, key=lambda item: item[0], reverse=True):
+    for index, ((signal_date, symbol), group) in enumerate(
+        sorted(grouped, key=lambda item: item[0], reverse=True)
+    ):
         first = group.iloc[0]
         selectors = group["selector_id"].astype(str).tolist()
         badges = "".join(
@@ -329,15 +333,16 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         rows.append(
             f'<tr data-selectors="{html.escape(" ".join(selectors))}" '
             f'data-date="{signal_date:%Y-%m-%d}" '
-            f'data-symbol="{"" if is_masked else html.escape(str(symbol))}" data-search="{html.escape(search_text)}">'
-            f"<td>{signal_date:%Y-%m-%d}</td>"
+            f'data-symbol="{"" if is_masked else html.escape(str(symbol))}" data-search="{html.escape(search_text)}"'
+            f'{" hidden" if index >= 20 else ""}>'
+            f'<td data-label="シグナル日">{signal_date:%Y-%m-%d}</td>'
             f"<th><span class=\"symbol\">{html.escape(display_symbol)}</span> {html.escape(display_name)}<div class=\"actions\">{actions}</div></th>"
-            f"<td>{badges}</td><td><span class=\"status {status_class}\">{status}</span></td>"
-            f"<td>{entry_display}</td>"
-            f"<td>{exit_display}</td>"
-            f"<td class=\"number\">{_pct(gross.iloc[0] * 100, True) if not gross.empty else '—'}</td>"
-            f"<td class=\"number\">{_yen(cash.iloc[0]) if not cash.empty else '—'}</td>"
-            f"<td>{chart_action}</td>"
+            f'<td data-label="該当モード">{badges}</td><td data-label="状態"><span class="status {status_class}">{status}</span></td>'
+            f'<td data-label="エントリー">{entry_display}</td>'
+            f'<td data-label="5営業日目">{exit_display}</td>'
+            f'<td data-label="騰落率" class="number">{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}</td>'
+            f'<td data-label="100株損益" class="number">{_yen(cash.iloc[0]) if not cash.empty else "—"}</td>'
+            f'<td data-label="操作">{chart_action}</td>'
             "</tr>"
         )
     return "".join(rows)
@@ -348,7 +353,7 @@ REPORT_CSS = """
 :root[data-theme="dark"]{--bg:#0c1424;--panel:rgba(21,32,51,.94);--panel-solid:#152033;--ink:#edf4ff;--muted:#a3b3ca;--line:#2b405e;--blue:#91adff;--cyan:#65d5e6;--violet:#ad9bff;--good:#65d6a7;--warn:#ffc56b;--shadow:0 18px 46px rgba(0,0,0,.28)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 12% -8%,color-mix(in srgb,var(--cyan) 18%,transparent),transparent 34%),radial-gradient(circle at 94% 5%,color-mix(in srgb,var(--violet) 16%,transparent),transparent 30%),var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Noto Sans JP",sans-serif}a{color:var(--blue)}
 .topbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--panel-solid) 86%,transparent);border-bottom:1px solid var(--line);backdrop-filter:blur(16px)}
-.nav{max-width:1440px;margin:auto;padding:10px 20px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.brand{display:inline-flex;align-items:center;margin-right:auto;text-decoration:none}.brand-logo{display:block;width:min(340px,42vw);height:52px;object-fit:contain;object-position:left center}.brand-logo-dark{display:none}:root[data-theme="dark"] .brand-logo-light{display:none}:root[data-theme="dark"] .brand-logo-dark{display:block}.nav-link{padding:7px 10px;border-radius:999px;text-decoration:none;font-weight:700}.nav-link.active,.nav-link:hover{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid))}button,select,input{font:inherit}button{cursor:pointer}
+.nav{max-width:1440px;margin:auto;padding:10px 20px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}.brand{display:inline-flex;align-items:center;min-width:0;text-decoration:none}.brand-logo{display:block;width:min(340px,42vw);height:52px;object-fit:contain;object-position:left center}.brand-logo-dark{display:none}:root[data-theme="dark"] .brand-logo-light{display:none}:root[data-theme="dark"] .brand-logo-dark{display:block}.nav-links{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:2px;min-width:0}.nav-link{padding:7px 10px;border-radius:999px;text-decoration:none;font-weight:700;white-space:nowrap}.nav-link.active,.nav-link:hover{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid))}button,select,input{font:inherit}button{cursor:pointer}
 .theme-toggle{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:5px 9px;border:1px solid var(--line);border-radius:999px;background:var(--panel-solid);color:var(--ink);font-size:12px;font-weight:800;line-height:1;white-space:nowrap}.theme-toggle-track{position:relative;display:inline-block;width:36px;height:20px;border-radius:999px;background:#aebdd1;transition:background .2s ease}.theme-toggle-knob{position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(16,24,40,.28);transition:transform .2s ease}:root[data-theme="dark"] .theme-toggle-track{background:#4f8dff}:root[data-theme="dark"] .theme-toggle-knob{transform:translateX(16px)}.clear-search,.load-more,.collapse-results,.table-load-more,.table-collapse{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:999px;padding:7px 12px}main{max-width:1440px;margin:auto;padding:34px 20px 60px}
 .hero{display:grid;grid-template-columns:2fr 1fr;gap:18px;align-items:stretch}.panel{background:var(--panel);border:1px solid color-mix(in srgb,var(--line) 84%,transparent);border-radius:22px;padding:24px;box-shadow:var(--shadow);margin-bottom:22px;backdrop-filter:blur(10px)}
 .hero-main{position:relative;overflow:hidden;background:linear-gradient(135deg,color-mix(in srgb,var(--panel-solid) 94%,var(--cyan)),color-mix(in srgb,var(--panel-solid) 92%,var(--violet)))}.hero-main:after{content:"";position:absolute;width:240px;height:240px;border-radius:50%;right:-70px;bottom:-130px;background:color-mix(in srgb,var(--cyan) 16%,transparent)}
@@ -356,12 +361,12 @@ REPORT_CSS = """
 .kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.kpi{background:color-mix(in srgb,var(--bg) 76%,var(--panel-solid));border:1px solid var(--line);border-radius:16px;padding:14px}.kpi b{display:block;font-size:24px;line-height:1.3}.kpi b.period-range{font-size:19px;white-space:nowrap}.kpi small,.subtle,small{display:block;color:var(--muted)}
 .condition-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.condition-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;padding:17px;background:linear-gradient(150deg,var(--panel-solid),color-mix(in srgb,var(--bg) 88%,var(--violet)));transition:transform .18s ease,box-shadow .18s ease;text-decoration:none;color:var(--ink)}.condition-card:before{content:"";position:absolute;left:0;top:0;width:100%;height:4px;background:linear-gradient(90deg,var(--cyan),var(--violet))}.condition-card:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(54,84,145,.12)}.condition-id,.badge{display:inline-flex;border-radius:999px;background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));color:var(--blue);padding:3px 8px;font-size:12px;font-weight:750;margin:2px}
 .chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.chart-card{border:1px solid var(--line);border-radius:18px;background:var(--panel-solid);padding:18px}.chart-card svg{width:100%;height:auto;display:block}.chart-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}.chart-stats div{background:var(--bg);border-radius:12px;padding:10px}.chart-stats b{display:block}.axis-label{fill:var(--muted);font-size:12px}.grid-line{stroke:var(--line);stroke-width:1}.equity-line{fill:none;stroke:var(--blue);stroke-width:4;stroke-linejoin:round;stroke-linecap:round}.equity-area{fill:url(#equity-fill);opacity:.22}
-.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel-solid)}th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}thead th{position:sticky;top:0;background:color-mix(in srgb,var(--panel-solid) 94%,var(--bg));z-index:1;font-size:12px;color:var(--muted)}tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg) 42%,transparent)}tbody tr:hover{background:color-mix(in srgb,var(--blue) 7%,var(--panel-solid))}tr[hidden]{display:none!important}.metric-focus{color:var(--blue);font-weight:850;background:color-mix(in srgb,var(--blue) 8%,transparent)}.table-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}table{width:100%;border-collapse:collapse;min-width:1050px;background:var(--panel-solid)}th,td{border-bottom:1px solid var(--line);padding:11px 10px;text-align:right;white-space:nowrap}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}thead th{position:sticky;top:0;background:color-mix(in srgb,var(--panel-solid) 94%,var(--bg));z-index:1;font-size:12px;color:var(--muted)}tbody tr:nth-child(even){background:color-mix(in srgb,var(--bg) 42%,transparent)}tbody tr:hover{background:color-mix(in srgb,var(--blue) 7%,var(--panel-solid))}[hidden]{display:none!important}.metric-focus{color:var(--blue);font-weight:850;background:color-mix(in srgb,var(--blue) 8%,transparent)}.table-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}
 .history-details{border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 38%,var(--panel-solid));padding:14px}.history-heading{font-weight:800;margin:0 0 14px;color:var(--blue)}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.filter-field{display:grid;gap:4px}.filter-field span{font-size:12px;color:var(--muted);font-weight:700}.filters input,.filters select{border:1px solid var(--line);background:var(--panel-solid);color:var(--ink);border-radius:10px;padding:10px 12px}.filters input[type="search"]{min-width:min(360px,100%)}.result-count{color:var(--muted);font-weight:700}.history-pagination{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:14px}.status{font-weight:750}.status.mature{color:var(--good)}.status.pending{color:var(--warn)}.number{font-variant-numeric:tabular-nums}.symbol{font-size:17px}.actions{margin-top:5px}.button-link,.fundamental-toggle{display:inline-flex;border:1px solid var(--line);background:var(--bg);color:var(--blue);text-decoration:none;border-radius:7px;padding:4px 8px}.fundamental-detail{white-space:normal;min-width:320px;max-width:650px;margin-top:8px;padding:12px;background:var(--bg);border-radius:10px}.discord-embed{border-left:4px solid var(--blue);background:var(--panel-solid);border-radius:8px;padding:12px;text-align:left}.discord-embed.impact-positive{border-left-color:#12b76a;background:color-mix(in srgb,#12b76a 10%,var(--panel-solid))}.discord-embed.impact-watch{border-left-color:#fdb022;background:color-mix(in srgb,#fdb022 11%,var(--panel-solid))}.discord-embed.impact-negative{border-left-color:#f04438;background:color-mix(in srgb,#f04438 9%,var(--panel-solid))}.discord-embed dl{display:grid;gap:10px;margin:0}.discord-embed dt{font-weight:800;color:var(--muted)}.discord-embed dd{margin:2px 0 0;overflow-wrap:anywhere;white-space:normal}
 .note{color:var(--muted);font-size:13px}.monthly-details{margin-top:16px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 55%,var(--panel-solid));padding:0 14px 14px}.monthly-details summary{cursor:pointer;font-weight:800;padding:14px 2px;color:var(--blue)}.guide-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.guide-card{border:1px solid var(--line);border-radius:16px;background:var(--panel-solid);padding:18px}.site-footer{border-top:1px solid var(--line);background:color-mix(in srgb,var(--panel-solid) 78%,transparent);padding:26px 20px}.site-footer-inner{max-width:1440px;margin:auto;display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap}.footer-copy{margin:0;color:var(--muted)}.footer-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.footer-link{display:inline-flex;align-items:center;justify-content:center;min-width:42px;min-height:40px;padding:6px 8px;border:1px solid transparent;border-radius:8px;background:transparent;text-decoration:none}.footer-link:hover{border-color:#b7c8e4;background:#eef5ff}.footer-logo{display:block;object-fit:contain}.footer-logo-dark{display:none}.footer-logo-x{width:24px;height:24px}.footer-logo-discord{width:35px;height:27px}.footer-logo-coconala{width:76px;height:42px}:root[data-theme="dark"] .footer-link:hover{background:#183250;border-color:#4f8dff}:root[data-theme="dark"] .footer-logo-light{display:none}:root[data-theme="dark"] .footer-logo-dark{display:block}
 @media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid,.guide-grid{grid-template-columns:1fr}}
-@media(max-width:620px){main{padding:18px 12px 50px}.panel{padding:16px;border-radius:14px}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}}
-@media(max-width:620px){.brand-logo{width:190px;height:44px}.nav{padding:8px 12px}}
+@media(max-width:760px){.nav{grid-template-columns:minmax(0,1fr) auto;padding:8px 12px;gap:4px 8px}.brand{grid-column:1;grid-row:1}.brand-logo{width:min(250px,61vw);height:44px}.theme-toggle{grid-column:2;grid-row:1;min-height:38px}.nav-links{grid-column:1/-1;grid-row:2;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:3px}.nav-link{flex:0 0 auto;font-size:13px;padding:6px 9px}}
+@media(max-width:620px){main{padding:18px 12px 50px;min-width:0}.panel{padding:16px;border-radius:14px;min-width:0}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}.filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}.filter-field{min-width:0}.filters input,.filters select{width:100%;min-width:0!important}.filters .filter-field:first-child,#selector-filter,#search-result-count{grid-column:1/-1}.history-table-wrap{overflow:visible;border:0;background:transparent}#detection-table{min-width:0;background:transparent}#detection-table thead{display:none}#detection-table tbody{display:grid;gap:12px}#detection-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid)}#detection-table tbody tr>*{display:block;min-width:0;white-space:normal;border:0;padding:6px 8px;text-align:left}#detection-table tbody tr>td:first-child,#detection-table tbody tr>th,#detection-table tbody tr>td:nth-child(3),#detection-table tbody tr>td:last-child{grid-column:1/-1}#detection-table tbody tr>th{font-size:16px;border-bottom:1px solid var(--line);padding-bottom:10px}#detection-table tbody tr>td::before{content:attr(data-label);display:block;color:var(--muted);font-size:11px;font-weight:800}#detection-table tbody tr>td:last-child{border-top:1px solid var(--line)}.fundamental-detail{min-width:0;max-width:100%;overflow-wrap:anywhere}.discord-embed{min-width:0}.button-link,.fundamental-toggle{min-height:36px;align-items:center}.kpi b.period-range{font-size:15px;white-space:normal}}
 """
 
 
@@ -406,9 +411,9 @@ def _page_shell(title: str, current: str, body: str) -> str:
     document_title = "天底極致 -Cloud-" if current == "home" else f"{title} | 天底極致 -Cloud-"
     return f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260922-1"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-interactions.js?v=20260922-1" defer></script></head>
-<body><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=transparent-1" alt="天底極致 -Cloud-"></a>{_nav(current)}<button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
+<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>{REPORT_CSS}</style>
+<script src="./weak-early-beta-interactions.js?v=20260923-1" defer></script></head>
+<body><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
 
 
@@ -541,7 +546,7 @@ def _history_section(
         + '<button class="clear-search" id="clear-search" type="button">検索をクリア</button>'
         '<output class="result-count" id="search-result-count" aria-live="polite"></output></div>'
         '<noscript><p class="note">検索機能を使うにはJavaScriptを有効にしてください。</p></noscript>'
-        '<div class="table-wrap"><table id="detection-table"><thead><tr><th>シグナル日</th><th>銘柄</th><th>該当モード</th><th>状態</th><th>エントリー</th><th>5営業日目</th><th>騰落率</th><th>100株損益</th><th>操作</th></tr></thead>'
+        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th>シグナル日</th><th>銘柄</th><th>該当モード</th><th>状態</th><th>エントリー</th><th>5営業日目</th><th>騰落率</th><th>100株損益</th><th>操作</th></tr></thead>'
         f'<tbody>{_detection_rows(ledger, mask_pending=mask_pending)}</tbody></table></div>'
         '<div class="history-pagination"><button class="load-more" id="history-load-more" type="button">次の20件を表示</button>'
         '<button class="collapse-results" id="history-collapse" type="button" hidden>最初の20件に戻す</button></div>'
@@ -549,15 +554,16 @@ def _history_section(
     )
 
 
-def _actual_period_label(ledger: pd.DataFrame) -> str:
+def _actual_period_label(ledger: pd.DataFrame, generated_at: pd.Timestamp) -> str:
     dates = pd.to_datetime(ledger.get("signal_date"), errors="coerce").dropna()
     if dates.empty:
         return "—"
-    return f"{dates.min():%Y-%m-%d}〜{dates.max():%Y-%m-%d}"
+    generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
+    return f"{dates.min():%Y-%m-%d}〜{generated:%Y-%m-%d}"
 
 
-def _actual_period_html(ledger: pd.DataFrame) -> str:
-    label = _actual_period_label(ledger)
+def _actual_period_html(ledger: pd.DataFrame, generated_at: pd.Timestamp) -> str:
+    label = _actual_period_label(ledger, generated_at)
     if "〜" not in label:
         return html.escape(label)
     start, end = label.split("〜", 1)
@@ -586,7 +592,7 @@ def render_report(
     unique_ledger = combined_detections(ledger)
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- ダッシュボード</h1><p class="lead">条件に該当した銘柄を新しい順に確認し、5つのモード別ページへ進めます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger)}</b></div><div class="kpi"><small>モード数</small><b>5</b></div></div></aside></section>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger, generated)}</b></div><div class="kpi"><small>最終検出日</small><b>{pd.to_datetime(ledger['signal_date']).max():%Y-%m-%d}</b></div></div></aside></section>
 {_history_section(ledger, include_mode_filter=True, mask_pending=mask_pending)}
 {_mode_pages_section(generated)}'''
     return _page_shell("ダッシュボード", "home", body)
@@ -607,14 +613,14 @@ def render_analytics_report(
     unique_ledger = combined_detections(ledger)
     stacked_monthly = monthly_metrics[monthly_metrics["selector_id"].eq(COMBINED_STACKED_ID)] if not monthly_metrics.empty else monthly_metrics
     unique_monthly = monthly_metrics[monthly_metrics["selector_id"].eq(COMBINED_UNIQUE_ID)] if not monthly_metrics.empty else monthly_metrics
-    table_head = f'<thead><tr><th>期間</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead>'
-    monthly_head = f'<thead><tr><th>月</th><th>配分方式</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead>'
+    table_head = f'<thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead>'
+    monthly_head = f'<thead><tr><th>月</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead>'
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- アナリティクス</h1><p class="lead">5つのモードを合わせた成績と資産推移です。検出銘柄はダッシュボード、各モードの内訳は専用ページで確認できます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>集計期間</small><b class="period-range">{_actual_period_html(ledger)}</b></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div></aside></section>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger, generated)}</b><small>最終検出: {pd.to_datetime(ledger['signal_date']).max():%Y-%m-%d}</small></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div></aside></section>
 <section class="panel" id="growth"><h2>トータルの資産推移</h2><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p><div class="chart-grid">{_equity_chart(ledger, 'モード別積み上げ', 'stacked', STACKED_EXPLANATION, generated.tz_localize(None))}{_equity_chart(unique_ledger, '銘柄均等', 'unique', UNIQUE_EXPLANATION, generated.tz_localize(None))}</div></section>
-<section class="panel" id="stacked-performance"><h2>Cloud全体の成績 — モード別積み上げ</h2><p class="note">{html.escape(STACKED_EXPLANATION)}</p><div class="table-wrap"><table data-paginated-table>{table_head}<tbody>{_combined_rows(metrics, COMBINED_STACKED_ID)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table>{monthly_head}<tbody>{_monthly_rows(stacked_monthly)}</tbody></table></div>{_table_pagination()}</details></section>
-<section class="panel" id="unique-performance"><h2>Cloud全体の成績 — 銘柄均等</h2><p class="note">{html.escape(UNIQUE_EXPLANATION)}</p><div class="table-wrap"><table data-paginated-table>{table_head}<tbody>{_combined_rows(metrics, COMBINED_UNIQUE_ID)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table>{monthly_head}<tbody>{_monthly_rows(unique_monthly)}</tbody></table></div>{_table_pagination()}</details></section>
+<section class="panel" id="stacked-performance"><h2>Cloud全体の成績 — モード別積み上げ</h2><p class="note">{html.escape(STACKED_EXPLANATION)}</p><div class="table-wrap"><table data-paginated-table>{table_head}<tbody>{_combined_rows(metrics, COMBINED_STACKED_ID)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table>{monthly_head}<tbody>{_monthly_rows(stacked_monthly, show_mode=False)}</tbody></table></div>{_table_pagination()}</details></section>
+<section class="panel" id="unique-performance"><h2>Cloud全体の成績 — 銘柄均等</h2><p class="note">{html.escape(UNIQUE_EXPLANATION)}</p><div class="table-wrap"><table data-paginated-table>{table_head}<tbody>{_combined_rows(metrics, COMBINED_UNIQUE_ID)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table>{monthly_head}<tbody>{_monthly_rows(unique_monthly, show_mode=False)}</tbody></table></div>{_table_pagination()}</details></section>
 <section class="panel"><h2>モード別の全期間比較</h2><p class="note">順位は100株ずつ売買した累計損益額順です。</p><div class="table-wrap"><table><thead><tr><th>順位</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>Top3除外平均</th></tr></thead><tbody>{_overall_rows(metrics)}</tbody></table></div></section>
 {_mode_pages_section(generated)}'''
     return _page_shell("アナリティクス", "analytics", body)

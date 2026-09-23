@@ -254,7 +254,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertTrue((root / ANALYTICS_PAGE_NAME).exists())
             self.assertTrue((root / ANALYTICS_PAGE_NAME.replace(".html", "_free.html")).exists())
 
-    def test_analytics_is_separate_and_uses_actual_period(self):
+    def test_analytics_is_separate_and_uses_generated_day_for_period_end(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
         monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-11"))
         output = render_analytics_report(
@@ -264,15 +264,27 @@ class WeakEarlyBetaTests(unittest.TestCase):
             monthly_metrics=monthly,
         )
         dates = pd.to_datetime(self.ledger["signal_date"])
-        expected = f"{dates.min():%Y-%m-%d}<br>〜{dates.max():%Y-%m-%d}"
+        expected = f"{dates.min():%Y-%m-%d}<br>〜2026-09-19"
         self.assertIn(expected, output)
+        self.assertIn(f"最終検出: {dates.max():%Y-%m-%d}", output)
         self.assertIn("トータルの資産推移", output)
         self.assertIn("資金増加率", output)
         self.assertIn("単純年率", output)
         self.assertIn("3モード該当なら合計300株", output)
         self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
         self.assertIn("Cloud全体の成績 — 銘柄均等", output)
+        self.assertNotIn("<th>配分方式</th>", output)
+        self.assertIn('<div class="nav-links" aria-label="ページ移動">', output)
         self.assertNotIn('id="history"', output)
+
+    def test_detection_history_starts_with_only_twenty_rows_visible_in_html(self):
+        metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))
+        output = render_report(self.ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
+        history = output.split('<table id="detection-table">', 1)[1].split('</table>', 1)[0]
+        self.assertEqual(history.count('data-date="'), len(self.ledger.drop_duplicates(["signal_date", "symbol"])))
+        self.assertEqual(history.count('data-search="'), history.count('data-date="'))
+        self.assertEqual(history.count(' hidden>'), max(history.count('data-date="') - 20, 0))
+        self.assertIn('data-label="100株損益"', history)
 
     def test_free_report_masks_pending_identity_until_fifth_close(self):
         pending = self.ledger.head(1).copy()

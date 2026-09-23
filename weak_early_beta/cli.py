@@ -44,6 +44,16 @@ def _write_receipt(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def _require_historical_audit_pass(reports: list[dict]) -> None:
+    for report in reports:
+        if report.get("auditStatus") != "pass":
+            identity = f"{report.get('signalDate', '?')}|{report.get('symbolCode', '?')}"
+            status = report.get("auditStatus", "missing")
+            raise ValueError(
+                f"historical report {identity} is not importable: auditStatus={status!r}"
+            )
+
+
 def command_bootstrap(args: argparse.Namespace) -> None:
     target = Path(args.ledger)
     if target.exists() and not args.force:
@@ -323,6 +333,7 @@ def command_import_historical_fundamentals(args: argparse.Namespace) -> None:
     receipts_path = Path(args.receipts)
     manifest_path = Path(args.manifest)
     input_reports = _historical_payload(Path(args.input))
+    _require_historical_audit_pass(input_reports)
     identities = [validate_historical_report(report) for report in input_reports]
     if len(identities) != len(set(identities)):
         raise ValueError("input contains duplicate historical identities")

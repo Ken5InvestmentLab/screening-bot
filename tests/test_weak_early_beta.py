@@ -13,6 +13,7 @@ from weak_early_beta.config import (
     SELECTOR_ORDER,
     selector_info,
 )
+from weak_early_beta.cli import _require_historical_audit_pass
 from weak_early_beta.bank_calendar import fifth_session_from_entry, is_bank_business_day
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.historical_fundamentals import (
@@ -497,6 +498,14 @@ class WeakEarlyBetaTests(unittest.TestCase):
         report["disclosures"][0]["publishedAt"] = "2023-01-04T16:16:00+09:00"
         with self.assertRaisesRegex(ValueError, "post-detection disclosure"):
             validate_historical_report(report)
+
+    def test_historical_import_rejects_reports_without_passing_audit(self):
+        report = self._historical_report()
+        report["auditStatus"] = "needs_repair"
+        with self.assertRaisesRegex(ValueError, "auditStatus='needs_repair'"):
+            _require_historical_audit_pass([report])
+        report["auditStatus"] = "pass"
+        _require_historical_audit_pass([report])
 
     def test_historical_report_rejects_edinet_as_primary_evidence(self):
         report = self._historical_report()

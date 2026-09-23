@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-23T15:16:00.924345+09:00",
+  "updated_at": "2026-09-23T18:23:32.555338+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -210,6 +210,221 @@
           "contentReviewed": true
         }
       ]
+    },
+    {
+      "signalDate": "2026-09-02",
+      "symbolCode": "4052",
+      "companyName": "フィーチャ",
+      "analysisCutoff": "2026-09-02T16:15:00+09:00",
+      "summary": "混在/要確認：黒字転換とライセンス増を確認する一方、会計整理に留まる欠損填補、受託開発減、創業者持分7.96%までの市場内処分が残る。",
+      "materialImpact": "混在/要確認：黒字転換・ライセンス増に対し、欠損填補は会計整理で、受託開発減と創業者持分低下による需給・支配面の不確実性が残る。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "2条件一致リバウンド",
+        "静かな売られ過ぎバランス",
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：黒字転換・ライセンス増に対し、欠損填補は会計整理で、受託開発減と創業者持分低下による需給・支配面の不確実性が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "画像認識AIソフトウェアを開発・販売し、Mobility SolutionsでADAS・DMS向け車載認識、DX-AI SolutionsでAI-OCR・Drawing-AI・DXコンサルを提供する。自動車メーカー・Tier1向け受託開発と、量産車への搭載に連動するライセンスを収益の軸とする。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9月2日9:38:25公開の変更報告書No.6で、創業者・脇健一郎氏の保有割合は9.32%から7.96%へ低下し、8月18日〜31日に79,200株を市場内処分。8月25日公開のNo.5では10.34%から9.32%への低下も確認された。8月28日の資本準備金367,196,173円のその他資本剰余金振替と23,031,101円の欠損填補は、9月29日株主総会承認が条件で、純資産・業績を変えない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年6月期は売上高543.9百万円（+9.3%）、営業利益41.1百万円（前年△11.2百万円）で黒字化。ライセンス収入は265.9百万円（+68.6%）と伸びた一方、受託開発収入は約278.0百万円（△18.2%）。2027年6月期は受託開発447.8百万円（+61.1%）、営業利益50.3百万円（+22.4%）を見込む一方、ボリュームディスカウントでライセンス172.2百万円（△35.2%）を見込む。自己資本比率92.5%に対し、営業CFは77.3百万円の支出、売掛金は180.8百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "創業者の持分はNo.5の10.34%からNo.6時点7.96%へ市場内処分で低下し、発行を伴う材料ではなく、保有構造・需給の変化として見る必要がある。受託開発447.8百万円の回復、ライセンス172.2百万円の減収見込み、営業CF77.3百万円支出の改善は未確認で、資本準備金振替も現金・利益・本業を増やさない。 5月13日最終報告では不正アクセス32台、13台感染、GitHubリポジトリ144個の外部コピーを確認。通常業務は再開し多層対策を導入した一方、ログ暗号化等で侵入原因と送信ファイル全容は特定できず、追加影響の監視と対策の実効性が残る。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "[2026-09-02 変更報告書No.6(09:38)](https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YZSH.pdf)\n[2026-08-28 資本準備金の額の減少及び剰余金の処分に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/40520/140120260827527279.pdf)\n[2026-08-25 変更報告書No.5(10:47)](https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YYIX.pdf)\n[2026-08-14 2026年６月期 決算短信〔日本基準〕（非連結）(15:30)](https://www2.jpx.co.jp/disc/40520/140120260810517222.pdf)\n[2026-08-14 2026年６月期通期決算説明資料(15:30)](https://www2.jpx.co.jp/disc/40520/140120260807515824.pdf)\n[2026-08-05 非連結決算への移行及び2026年６月期個別業績予想に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/40520/140120260805509971.pdf)\n[2026-05-13 ランサムウェア被害に関する調査結果および再発防止策のご報告（最終報）(15:30)](https://www2.jpx.co.jp/disc/40520/140120260512526303.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[IR情報｜Ficha Inc.](https://ficha.jp/ir/)\n[フィーチャ(株)〖4052〗：適時開示情報 - Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/4052.T/disclosure)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ficha.jp/ir/",
+          "checkedUrls": [],
+          "result": "公式IR一覧を確認し、採用した業績・資本政策の根拠はcutoff前公表の指定直接PDFに限定した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/4052.T/disclosure",
+          "checkedUrls": [],
+          "result": "TDnet型開示一覧を参照し、No.5・No.6とJPX資料のcutoff前開示を照合し、後日開示は根拠に使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "変更報告書No.6",
+          "publishedAt": "2026-09-02T09:38:25+09:00",
+          "url": "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YZSH.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "資本準備金の額の減少及び剰余金の処分に関するお知らせ",
+          "publishedAt": "2026-08-28T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260827527279.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "変更報告書No.5",
+          "publishedAt": "2026-08-25T10:47:41+09:00",
+          "url": "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YYIX.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年６月期 決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2026-08-14T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260810517222.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年６月期通期決算説明資料",
+          "publishedAt": "2026-08-14T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260807515824.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "非連結決算への移行及び2026年６月期個別業績予想に関するお知らせ",
+          "publishedAt": "2026-08-05T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260805509971.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ランサムウェア被害に関する調査結果および再発防止策のご報告（最終報）",
+          "publishedAt": "2026-05-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260512526303.pdf",
+          "contentReviewed": true
+        }
+      ]
+    },
+    {
+      "signalDate": "2026-09-03",
+      "symbolCode": "4052",
+      "companyName": "フィーチャ",
+      "analysisCutoff": "2026-09-03T16:15:00+09:00",
+      "summary": "混在/要確認：黒字転換とライセンス増を確認する一方、会計整理に留まる欠損填補、受託開発減、創業者持分6.09%までの市場内処分が残る。",
+      "materialImpact": "混在/要確認：黒字転換・ライセンス増に対し、欠損填補は会計整理で、受託開発減と創業者持分6.09%までの低下による需給・支配面の不確実性が残る。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "2条件一致リバウンド",
+        "地合い安定・2条件一致",
+        "静かな売られ過ぎバランス",
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：黒字転換・ライセンス増に対し、欠損填補は会計整理で、受託開発減と創業者持分6.09%までの低下による需給・支配面の不確実性が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "画像認識AIソフトウェアを開発・販売し、Mobility SolutionsでADAS・DMS向け車載認識、DX-AI SolutionsでAI-OCR・Drawing-AI・DXコンサルを提供する。自動車メーカー・Tier1向け受託開発と、量産車への搭載に連動するライセンスを収益の軸とする。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9月3日9:40:37公開の変更報告書No.7で、創業者・脇健一郎氏の保有割合は7.96%から6.09%へ低下し、9月1日〜2日に110,000株を市場内処分。前日公表のNo.6では8月18日〜31日に79,200株を処分し、No.5からの保有割合低下は10.34%から6.09%まで進んだ。8月28日の資本準備金367,196,173円の振替と23,031,101円の欠損填補は、9月29日株主総会承認が条件で、純資産・業績を変えない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年6月期は売上高543.9百万円（+9.3%）、営業利益41.1百万円（前年△11.2百万円）で黒字化。ライセンス収入は265.9百万円（+68.6%）と伸びた一方、受託開発収入は約278.0百万円（△18.2%）。2027年6月期は受託開発447.8百万円（+61.1%）、営業利益50.3百万円（+22.4%）を見込む一方、ボリュームディスカウントでライセンス172.2百万円（△35.2%）を見込む。自己資本比率92.5%に対し、営業CFは77.3百万円の支出、売掛金は180.8百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "創業者の持分はNo.7で6.09%まで市場内処分により低下し、9月1日〜2日の110,000株処分が需給・支配構造の変化を示すが、発行を伴う材料ではない。受託開発447.8百万円の回復、ライセンス172.2百万円の減収見込み、営業CF77.3百万円支出の改善は未確認で、資本準備金振替も本業改善ではない。 5月13日最終報告では不正アクセス32台、13台感染、GitHubリポジトリ144個の外部コピーを確認。通常業務は再開し多層対策を導入した一方、ログ暗号化等で侵入原因と送信ファイル全容は特定できず、追加影響の監視と対策の実効性が残る。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "[2026-09-03 変更報告書No.7(09:40)](https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100Z07L.pdf)\n[2026-09-02 変更報告書No.6(09:38)](https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YZSH.pdf)\n[2026-08-28 資本準備金の額の減少及び剰余金の処分に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/40520/140120260827527279.pdf)\n[2026-08-25 変更報告書No.5(10:47)](https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YYIX.pdf)\n[2026-08-14 2026年６月期 決算短信〔日本基準〕（非連結）(15:30)](https://www2.jpx.co.jp/disc/40520/140120260810517222.pdf)\n[2026-08-14 2026年６月期通期決算説明資料(15:30)](https://www2.jpx.co.jp/disc/40520/140120260807515824.pdf)\n[2026-08-05 非連結決算への移行及び2026年６月期個別業績予想に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/40520/140120260805509971.pdf)\n[2026-05-13 ランサムウェア被害に関する調査結果および再発防止策のご報告（最終報）(15:30)](https://www2.jpx.co.jp/disc/40520/140120260512526303.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[IR情報｜Ficha Inc.](https://ficha.jp/ir/)\n[フィーチャ(株)〖4052〗：適時開示情報 - Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/4052.T/disclosure)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ficha.jp/ir/",
+          "checkedUrls": [],
+          "result": "公式IR一覧を確認し、採用した業績・資本政策の根拠はcutoff前公表の指定直接PDFに限定した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/4052.T/disclosure",
+          "checkedUrls": [],
+          "result": "TDnet型開示一覧を参照し、No.5・No.6・No.7とJPX資料のcutoff前開示を照合し、後日開示は根拠に使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "変更報告書No.7",
+          "publishedAt": "2026-09-03T09:40:37+09:00",
+          "url": "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100Z07L.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "変更報告書No.6",
+          "publishedAt": "2026-09-02T09:38:25+09:00",
+          "url": "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YZSH.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "資本準備金の額の減少及び剰余金の処分に関するお知らせ",
+          "publishedAt": "2026-08-28T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260827527279.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "変更報告書No.5",
+          "publishedAt": "2026-08-25T10:47:41+09:00",
+          "url": "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100YYIX.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年６月期 決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2026-08-14T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260810517222.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年６月期通期決算説明資料",
+          "publishedAt": "2026-08-14T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260807515824.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "非連結決算への移行及び2026年６月期個別業績予想に関するお知らせ",
+          "publishedAt": "2026-08-05T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260805509971.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ランサムウェア被害に関する調査結果および再発防止策のご報告（最終報）",
+          "publishedAt": "2026-05-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/40520/140120260512526303.pdf",
+          "contentReviewed": true
+        }
+      ]
     }
   ],
   "audit_log": [
@@ -224,6 +439,18 @@
       "imported_at": "2026-09-23T15:16:00.924345+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "56e44babdda9ee53c07ef4b0b9f44e91129ff68c8e23219c6c28972b866b4ca2"
+    },
+    {
+      "identity": "2026-09-02|4052",
+      "imported_at": "2026-09-23T18:23:32.555338+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "b187a260ed0aac59a24616404a1e8203b2ea362f4d69a952048706391646da69"
+    },
+    {
+      "identity": "2026-09-03|4052",
+      "imported_at": "2026-09-23T18:23:32.555338+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "f0a43a17c48de69201065c788d2307d8c1c42082a79f5fee0d151ed93f28ef3a"
     }
   ]
 }

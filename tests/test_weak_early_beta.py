@@ -325,6 +325,9 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn(expected, output)
         self.assertIn(f"最終検出: {dates.max():%Y-%m-%d}", output)
         self.assertIn("トータルの資産推移", output)
+        self.assertIn('<section class="panel" id="annual-pl">', output)
+        self.assertIn("2026年（9月3日検出分まで）", output)
+        self.assertNotIn("YTD", output)
         self.assertIn("資金増加率", output)
         self.assertIn("単純年率", output)
         self.assertIn("3モード該当なら合計300株", output)
@@ -333,6 +336,21 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertNotIn("<th>配分方式</th>", output)
         self.assertIn('<div class="nav-links" aria-label="ページ移動">', output)
         self.assertNotIn('id="history"', output)
+
+    def test_annual_pl_chart_uses_stacked_metrics_and_handles_losses(self):
+        metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))
+        year_mask = metrics["selector_id"].eq(COMBINED_STACKED_ID) & metrics["period"].eq("2026")
+        metrics.loc[year_mask, "cash_pl_100_yen"] = -123_456
+        output = render_analytics_report(
+            self.ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo")
+        )
+        chart = output.split('id="annual-pl">', 1)[1].split('</section>', 1)[0]
+        self.assertIn('aria-label="2026年（9月3日検出分まで）の100株損益 ¥-123,456"', chart)
+        self.assertIn('class="annual-pl-bar negative"', chart)
+        self.assertIn("確定取引数", chart)
+        self.assertEqual(chart.count('class="annual-pl-row"'), 4)
+        self.assertIn("¥+370,003", chart)
+        self.assertNotIn("¥+90,307", chart)
 
     def test_detection_history_starts_with_only_twenty_rows_visible_in_html(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))

@@ -290,7 +290,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 
 ## Weak+Early beta fundamental snapshots
 
-- Fundamental analysis for `weak_early_beta` is a detection-date snapshot: use only IR, timely disclosures, and other primary material publicly available by `signal_date` 23:59 JST. Never let a later disclosure enter the report or its links.
+- Historical fundamental snapshots for `weak_early_beta` use the manifest `analysisCutoff` (canonical scheduled detection time: 16:15 JST) and only official company IR or TDnet/JPX disclosures published by that cutoff. Read the primary-source body; never include post-cutoff disclosures, prices, or realized returns. EDINET is not an accepted source for this historical backfill.
 - Reports carrying `analysisCutoff` must use the research-only `weak_early_beta/scripts/post_historical_snapshot.mjs` path. Do not change the production Premium Worker to weaken its newer-disclosure freshness gate.
 - Keep the cutoff audit and the beta worker state separate from production state, Discord channels, and workflows; regenerate the beta HTML only after the beta receipt is imported.
 

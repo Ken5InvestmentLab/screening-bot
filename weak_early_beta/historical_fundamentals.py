@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -117,6 +118,12 @@ def validate_historical_report(report: dict) -> str:
             raise ValueError(f"disclosure requires title, publishedAt, and url: {disclosure}")
         if not str(disclosure["url"]).startswith("https://"):
             raise ValueError("disclosure links must use https")
+        disclosure_host = (urlparse(str(disclosure["url"])).hostname or "").lower()
+        if disclosure_host == "edinet-fsa.go.jp" or disclosure_host.endswith(".edinet-fsa.go.jp"):
+            raise ValueError(
+                "EDINET filings are not accepted as historical fundamental evidence; "
+                "use official company IR or TDnet/JPX disclosures"
+            )
         published_at = pd.Timestamp(disclosure["publishedAt"])
         if published_at.tzinfo is None:
             raise ValueError("disclosure publishedAt must include a timezone")

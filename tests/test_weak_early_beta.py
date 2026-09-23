@@ -498,6 +498,14 @@ class WeakEarlyBetaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "post-detection disclosure"):
             validate_historical_report(report)
 
+    def test_historical_report_rejects_edinet_as_primary_evidence(self):
+        report = self._historical_report()
+        report["disclosures"][0]["url"] = (
+            "https://disclosure2dl.edinet-fsa.go.jp/searchdocument/pdf/S100TEST.pdf"
+        )
+        with self.assertRaisesRegex(ValueError, "EDINET filings are not accepted"):
+            validate_historical_report(report)
+
     def test_historical_import_sets_html_without_creating_or_clearing_discord_receipts(self):
         ledger = self.ledger[
             self.ledger["signal_date"].dt.strftime("%Y-%m-%d").eq("2023-01-04")

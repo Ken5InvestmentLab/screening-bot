@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_V1",
-  "generated_at": "2026-09-23T19:57:13.285555+09:00",
+  "generated_at": "2026-09-23T23:06:39.863039+09:00",
   "source_ledger": "weak_early_beta/state/detections.csv",
   "detection_time_basis": "scheduled daily beta scan at 16:15 JST; deterministic historical proxy",
   "as_of_rule": "only disclosures published at or before analysis_cutoff may be cited or used",
@@ -3743,7 +3743,7 @@
       ],
       "analysis_cutoff": "2026-09-02T16:15:00+09:00",
       "status": "complete",
-      "receipt_sha256": "b187a260ed0aac59a24616404a1e8203b2ea362f4d69a952048706391646da69"
+      "receipt_sha256": "55f207546f3b608e45f7187ed19caa838748d75fc83552ffda6074d90b28bd5b"
     },
     {
       "identity": "2026-09-03|4052",
@@ -3759,7 +3759,7 @@
       ],
       "analysis_cutoff": "2026-09-03T16:15:00+09:00",
       "status": "complete",
-      "receipt_sha256": "f0a43a17c48de69201065c788d2307d8c1c42082a79f5fee0d151ed93f28ef3a"
+      "receipt_sha256": "0cb1d6dbcbedfdebdf5f67e19816f565b4a58a2578483c6babbdc70a531815fe"
     }
   ]
 }

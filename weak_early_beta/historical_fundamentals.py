@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -97,6 +98,16 @@ def validate_historical_report(report: dict) -> str:
     if missing:
         raise ValueError(f"historical report is missing non-empty fields: {missing}")
 
+    # Match the active Premium snapshot link contract: no fixed disclosure-link
+    # count, but keep the combined field below Discord's safe 1,000-character
+    # budget and use 2-4 reference/listing pages in Sources.
+    disclosure_links = fields["開示リンク"]
+    if len(disclosure_links) > 1000:
+        raise ValueError("開示リンク must stay within the Premium 1,000-character safety limit")
+    source_urls = re.findall(r"https?://[^\s)>\]]+", fields["Sources"])
+    if not 2 <= len(set(source_urls)) <= 4:
+        raise ValueError("Sources must contain 2-4 distinct reference-page URLs")
+
     source_checks = report.get("sourceChecks", [])
     roles = {str(row.get("role", "")) for row in source_checks if isinstance(row, dict)}
     required_roles = {"official_ir", "irbank_or_tdnet"}
@@ -133,6 +144,15 @@ def validate_historical_report(report: dict) -> str:
             )
         if disclosure.get("contentReviewed") is not True:
             raise ValueError("each selected primary disclosure must be marked contentReviewed")
+
+    declared_disclosure_urls = {
+        str(disclosure.get("url", "")).strip()
+        for disclosure in disclosures
+        if isinstance(disclosure, dict)
+    }
+    linked_disclosure_urls = set(re.findall(r"https?://[^\s)>\]]+", disclosure_links))
+    if linked_disclosure_urls != declared_disclosure_urls:
+        raise ValueError("開示リンク URLs must exactly match the selected disclosure receipts")
 
     return identity(signal_date, symbol)
 

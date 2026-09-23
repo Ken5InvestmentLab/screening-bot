@@ -506,6 +506,44 @@ class WeakEarlyBetaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "EDINET filings are not accepted"):
             validate_historical_report(report)
 
+    def test_historical_report_uses_premium_link_budget_without_a_link_count_cap(self):
+        report = self._historical_report()
+        disclosures = []
+        links = []
+        for number in range(8):
+            url = f"https://example.com/disclosure-{number}.pdf"
+            disclosures.append({
+                "title": f"開示資料{number}",
+                "publishedAt": "2023-01-03T15:00:00+09:00",
+                "url": url,
+                "contentReviewed": True,
+            })
+            links.append(f"[2023-01-03 開示資料{number}(15:00)]({url})")
+        report["disclosures"] = disclosures
+        report["fields"] = [
+            {"name": field["name"], "value": "\n".join(links) if field["name"] == "開示リンク" else field["value"]}
+            for field in report["fields"]
+        ]
+        self.assertLessEqual(len(next(field["value"] for field in report["fields"] if field["name"] == "開示リンク")), 1000)
+        self.assertEqual(validate_historical_report(report), "2023-01-04|3133")
+
+    def test_historical_report_enforces_premium_link_field_budgets(self):
+        report = self._historical_report()
+        report["fields"] = [
+            {"name": field["name"], "value": "x" * 1001 if field["name"] == "開示リンク" else field["value"]}
+            for field in report["fields"]
+        ]
+        with self.assertRaisesRegex(ValueError, "1,000-character safety limit"):
+            validate_historical_report(report)
+
+        report = self._historical_report()
+        report["fields"] = [
+            {"name": field["name"], "value": "[IR](https://example.com/ir)" if field["name"] == "Sources" else field["value"]}
+            for field in report["fields"]
+        ]
+        with self.assertRaisesRegex(ValueError, "Sources must contain 2-4"):
+            validate_historical_report(report)
+
     def test_historical_import_sets_html_without_creating_or_clearing_discord_receipts(self):
         ledger = self.ledger[
             self.ledger["signal_date"].dt.strftime("%Y-%m-%d").eq("2023-01-04")

@@ -1,5 +1,6 @@
 """Offline contracts for the Cloud universe, Yahoo keys, and coverage report."""
 import csv
+import datetime as dt
 import io
 import json
 import tempfile
@@ -9,6 +10,7 @@ from pathlib import Path
 from openpyxl import Workbook
 
 from coverage_1h import coverage
+from daily_data_policy import daily_close_from_payload, detection_gate, settle_due_positions
 from fetch_1h import deduplicate_rows, load_symbols, yahoo_symbol
 from jpx_universe import discover_excel, extract_universe
 
@@ -77,6 +79,20 @@ class FullUniverseTest(unittest.TestCase):
         self.assertEqual(report["duplicate_rows"], 1)
         self.assertEqual(report["failed_chunks"], 1)
         self.assertEqual([r["code"] for r in missing], ["345A"])
+
+    def test_failed_1h_blocks_detection_but_existing_exit_can_settle(self):
+        gate = detection_gate({"1234", "345A"}, {"1234"}, {"345A"})
+        self.assertFalse(gate["new_detection_allowed"])
+        positions = [{"signal_id": "existing", "symbol": "1234", "exit_date": "2026-08-31",
+                      "entry_price": "100"}]
+        rows = settle_due_positions(positions, dt.date(2026, 8, 31), lambda code, day: 110.0)
+        self.assertEqual(rows[0]["status"], "settled")
+        self.assertAlmostEqual(rows[0]["return_5bd"], 0.1)
+        payload = {"chart": {"result": [{"timestamp": [int(dt.datetime(2026, 8, 31, tzinfo=dt.timezone.utc).timestamp())],
+                                           "indicators": {"quote": [{"close": [110]}]}}]}}
+        self.assertEqual(daily_close_from_payload("1234", dt.date(2026, 8, 31), payload), 110.0)
+        with self.assertRaises(ValueError):
+            daily_close_from_payload("1234", dt.date(2026, 9, 1), payload)
 
 
 if __name__ == "__main__":

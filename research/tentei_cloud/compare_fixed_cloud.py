@@ -21,7 +21,8 @@ METRICS = ("mean", "median", "win", "ge10", "ge20", "le10", "max_up", "max_down"
 
 
 def read_parts(pattern: str, filename: str) -> tuple[pd.DataFrame, list[dict]]:
-    files = [Path(p) for p in sorted(glob.glob(pattern, recursive=True)) if Path(p).name == filename]
+    directory_pattern = pattern.rsplit("/", 1)[0]
+    files = [Path(p) for p in sorted(glob.glob(directory_pattern + "/" + filename, recursive=True))]
     if not files:
         raise ValueError(f"no {filename} found: {pattern}")
     metas = []

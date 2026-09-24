@@ -1,0 +1,3 @@
+trigger: 2026-09-11 conditional-knn-quality-v1
+source: frozen run-80 artifact 34545440155
+protocol: 2023 warmup -> 2024 dev -> 2025 validation -> 2026 only after pass

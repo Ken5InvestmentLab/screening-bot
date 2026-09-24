@@ -1,0 +1,4 @@
+trigger: 2026-09-11 build-v7-tail-cache-v1
+source: frozen run-80 artifact 34545440155
+periods: 2023-2025
+retention: 90 days

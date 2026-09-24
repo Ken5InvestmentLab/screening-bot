@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+"""Synthetic checks for point_in_time_universe.py. TEST ONLY."""
+from __future__ import annotations
+
+import pandas as pd
+
+import point_in_time_universe as pit
+
+
+def main() -> None:
+    # Archive discovery must not depend on fragile selector markup. Even with an
+    # empty landing page, deterministic 2022+ archive URLs must be generated for
+    # both JPX listing and delisting pages.
+    get_backup = pit._get
+    pit._get = lambda url: "<html><body>no archive links</body></html>"
+    try:
+        new_pages = pit.discover_archive_pages(pit.NEW_URL, 2022, 2026)
+        delist_pages = pit.discover_archive_pages(pit.DELIST_URL, 2022, 2026)
+    finally:
+        pit._get = get_backup
+    assert pit.NEW_URL in new_pages
+    assert pit.DELIST_URL in delist_pages
+    assert any(url.endswith("00-archives-01.html") for url in new_pages)
+    assert any(url.endswith("00-archives-04.html") for url in new_pages)
+    assert any(url.endswith("archives-01.html") for url in delist_pages)
+    assert any(url.endswith("archives-04.html") for url in delist_pages)
+    assert len(new_pages) == 5
+    assert len(delist_pages) == 5
+
+    # Encoding regression: prefer real UTF-8 bytes and retain a deterministic
+    # fallback for legacy Japanese encodings.
+    jp = "プライム市場"
+    assert pit._decode_html(jp.encode("utf-8"), "cp932") == jp
+    assert pit._decode_html(jp.encode("cp932"), "cp932") == jp
+
+    # Live-parser regression: even if pandas.read_html cannot normalize the JPX
+    # table, direct lxml <tr>/<td> parsing must recover the same strict event.
+    synthetic_html = """
+    <html><body><table>
+      <tr><th>上場日</th><th>会社名</th><th>コード</th><th>会社概要</th></tr>
+      <tr><td>2024/04/01</td><td>テスト株式会社</td><td>1A23</td><td></td></tr>
+      <tr><td>グロース</td><td></td><td>1500</td><td>OA100</td></tr>
+    </table></body></html>
+    """
+    get_backup = pit._get
+    read_html_backup = pit.pd.read_html
+    pit._get = lambda url: synthetic_html
+    pit.pd.read_html = lambda *args, **kwargs: (_ for _ in ()).throw(ValueError("synthetic pandas parser failure"))
+    try:
+        parsed, unknown_rows = pit.parse_event_page(
+            "https://example.invalid/jpx",
+            "listing",
+            2022,
+            pd.Timestamp("2025-12-31"),
+        )
+    finally:
+        pit._get = get_backup
+        pit.pd.read_html = read_html_backup
+    assert len(parsed) == 1
+    assert parsed[0].code == "1A23"
+    assert parsed[0].event_date == pd.Timestamp("2024-04-01")
+    assert parsed[0].market == "グロース"
+    assert unknown_rows == []
+
+    anchor = pd.Timestamp("2025-12-31")
+    current = {"A001", "C003"}
+    events = pd.DataFrame([
+        {"event_date": pd.Timestamp("2023-04-03"), "code": "C003", "event": "listing"},
+        {"event_date": pd.Timestamp("2024-06-28"), "code": "B002", "event": "delisting"},
+    ])
+
+    # At the anchor, use the exact current snapshot.
+    assert pit.members_as_of(current, events, anchor, anchor) == {"A001", "C003"}
+    # Before B002 delisted, restore it; C003 still exists after its listing.
+    assert pit.members_as_of(current, events, pd.Timestamp("2024-01-31"), anchor) == {"A001", "B002", "C003"}
+    # Before C003 listed, undo that listing too.
+    assert pit.members_as_of(current, events, pd.Timestamp("2022-12-30"), anchor) == {"A001", "B002"}
+
+    # Code reuse is handled if events are temporally ordered: undo later listing,
+    # then restore the older delisted episode when travelling further backwards.
+    reuse = pd.DataFrame([
+        {"event_date": pd.Timestamp("2023-03-31"), "code": "D004", "event": "delisting"},
+        {"event_date": pd.Timestamp("2024-09-02"), "code": "D004", "event": "listing"},
+    ])
+    assert pit.members_as_of({"D004"}, reuse, pd.Timestamp("2024-01-31"), anchor) == set()
+    assert pit.members_as_of({"D004"}, reuse, pd.Timestamp("2022-12-30"), anchor) == {"D004"}
+
+    reuse_validation = pit.validate_events(
+        reuse.assign(market="プライム", source_url="x"),
+        pd.DataFrame(columns=["event_date", "code", "event", "market", "source_url"]),
+    )
+    assert reuse_validation["valid_for_membership_reconstruction"] is True
+    assert reuse_validation["temporal_code_reuse_count"] == 1
+    assert reuse_validation["temporal_code_reuse_codes"] == ["D004"]
+    assert reuse_validation["yahoo_price_identity_safe_without_quarantine"] is False
+
+    unknown = pd.DataFrame(columns=["event_date", "code", "event", "market", "source_url"])
+    v = pit.validate_events(events.assign(market="プライム", source_url="x"), unknown)
+    assert v["valid_for_membership_reconstruction"] is True
+    assert v["temporal_code_reuse_count"] == 0
+    assert v["yahoo_price_identity_safe_without_quarantine"] is True
+
+    collision_events = pd.DataFrame([
+        {"event_date": pd.Timestamp("2024-01-01"), "code": "X999", "event": "listing"},
+        {"event_date": pd.Timestamp("2024-01-01"), "code": "X999", "event": "delisting"},
+    ])
+    v2 = pit.validate_events(collision_events, unknown)
+    assert v2["valid_for_membership_reconstruction"] is False
+    assert v2["same_day_code_collisions"] == 1
+
+    # Required-year coverage is an independent fail-closed gate. A parser that
+    # silently loses a full archive year must never be accepted just because
+    # all remaining rows have known markets and no same-day collisions.
+    year_events = pd.DataFrame([
+        {"event_date": pd.Timestamp("2022-04-01"), "code": "Y001", "event": "listing"},
+        {"event_date": pd.Timestamp("2024-04-01"), "code": "Y002", "event": "listing"},
+        {"event_date": pd.Timestamp("2025-04-01"), "code": "Y003", "event": "listing"},
+    ]).assign(market="プライム", source_url="x")
+    base = pit.validate_events(year_events, unknown)
+    assert base["valid_for_membership_reconstruction"] is True
+    gated = pit.apply_event_year_coverage_gate(base, year_events, 2022, 2025)
+    assert gated["parsed_event_years"] == [2022, 2024, 2025]
+    assert gated["required_event_years"] == [2022, 2023, 2024, 2025]
+    assert gated["missing_event_years"] == [2023]
+    assert gated["valid_for_membership_reconstruction"] is False
+
+    complete_year_events = pd.concat([
+        year_events,
+        pd.DataFrame([{
+            "event_date": pd.Timestamp("2023-04-03"),
+            "code": "Y004",
+            "event": "listing",
+            "market": "プライム",
+            "source_url": "x",
+        }]),
+    ], ignore_index=True)
+    complete = pit.apply_event_year_coverage_gate(
+        pit.validate_events(complete_year_events, unknown),
+        complete_year_events,
+        2022,
+        2025,
+    )
+    assert complete["missing_event_years"] == []
+    assert complete["valid_for_membership_reconstruction"] is True
+
+    print("point-in-time universe self-test: PASS")
+
+
+if __name__ == "__main__":
+    main()

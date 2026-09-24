@@ -1,0 +1,52 @@
+name: TV-free V13 frozen 2026 reporting TEST
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/tvfree-screener-v1
+    paths:
+      - "tvfree_screener/RUN_V13"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  v13-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/tvfree-screener-v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Compile frozen V13 runner
+        run: python -m py_compile tvfree_screener/v13_frozen_preexhaust_range_2026.py
+      - name: Download preserved frozen run80 dataset
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: tvfree_screener/out
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Run frozen V13 2026 reporting
+        run: >-
+          python tvfree_screener/v13_frozen_preexhaust_range_2026.py
+          --cache tvfree_screener/out/tse_daily.csv
+      - name: Upload V13 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-v13-frozen-2026-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v13_frozen_2026_report.json
+            tvfree_screener/out/v13_frozen_2026_picks.csv
+          if-no-files-found: warn
+          retention-days: 30

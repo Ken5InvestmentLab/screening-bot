@@ -1,0 +1,52 @@
+name: TV-free Legacy V3 Old Cache Forensics
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - ".github/workflows/tvfree-legacy-v3-oldcache-forensics.yml"
+      - "tvfree_screener/v3_short_oldcache_forensics.py"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: tvfree-legacy-v3-oldcache-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  forensic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated research dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Download actual rolling-3y artifact from run 7
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-screener-test-34496517500
+          path: tvfree_screener/oldcache
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34496517500
+      - name: Re-run reproducible Short on actual old cache
+        run: >-
+          python tvfree_screener/v3_short_reconstruction.py
+          --cache tvfree_screener/oldcache/tse_daily.csv
+      - name: Upload old-cache forensic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-legacy-v3-oldcache-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v3_short_reconstruction_report.json
+            tvfree_screener/out/v3_short_reconstruction_core.csv
+            tvfree_screener/out/v3_short_reconstruction_defensive.csv
+          if-no-files-found: warn
+          retention-days: 3

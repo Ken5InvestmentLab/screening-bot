@@ -1,0 +1,5 @@
+trigger: 2026-09-11 simple-volr20-rank-v1
+selection_source: 2023-2024 only
+market_gate: med_ret5<=0
+rank_feature: volr20 low
+2025_2026_use: reporting-only

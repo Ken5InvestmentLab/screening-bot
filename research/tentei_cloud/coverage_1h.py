@@ -17,6 +17,7 @@ def coverage(universe_rows: list[dict], ohlcv_paths: list[Path], failure_paths: 
     seen: set[str] = set()
     keys: set[tuple[str, str]] = set()
     first = last = None
+    symbol_span: dict[str, list[str]] = {}
     duplicates = total_rows = 0
     for path in ohlcv_paths:
         with path.open(encoding="utf-8", newline="") as f:
@@ -29,6 +30,11 @@ def coverage(universe_rows: list[dict], ohlcv_paths: list[Path], failure_paths: 
                     raise ValueError(f"OHLCV symbol outside JPX universe: {symbol}")
                 total_rows += 1
                 seen.add(symbol)
+                if symbol not in symbol_span:
+                    symbol_span[symbol] = [stamp, stamp]
+                else:
+                    symbol_span[symbol][0] = min(symbol_span[symbol][0], stamp)
+                    symbol_span[symbol][1] = max(symbol_span[symbol][1], stamp)
                 key = (symbol, stamp)
                 if key in keys:
                     duplicates += 1
@@ -42,6 +48,18 @@ def coverage(universe_rows: list[dict], ohlcv_paths: list[Path], failure_paths: 
         if not isinstance(data, list):
             raise ValueError(f"bad failure JSON: {path}")
         failures.extend(data)
+    topology = Counter()
+    for failure in failures:
+        symbol = failure["symbol"]
+        span = symbol_span.get(symbol)
+        if span is None:
+            topology["never_seen"] += 1
+        elif failure["end"] < span[0][:10]:
+            topology["before_first"] += 1
+        elif failure["start"] > span[1][:10]:
+            topology["after_last"] += 1
+        else:
+            topology["overlap_or_edge"] += 1
     missing = [target[s] for s in sorted(target.keys() - seen)]
     markets = ("Prime", "Standard", "Growth")
     report = {
@@ -54,6 +72,7 @@ def coverage(universe_rows: list[dict], ohlcv_paths: list[Path], failure_paths: 
         "seen_by_market": {m: sum(target[s]["market"] == m for s in seen) for m in markets},
         "missing_by_market": {m: sum(r["market"] == m for r in missing) for m in markets},
         "failure_reasons": dict(Counter(f.get("error", "unknown") for f in failures)),
+        "failure_topology_chunks": dict(topology),
     }
     return report, missing
 

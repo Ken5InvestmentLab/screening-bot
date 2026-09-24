@@ -18,6 +18,14 @@ function loadDotEnv(env, file) {
     env[match[1]] = value;
   }
 }
+function npmInvocation(config) {
+  if (process.platform !== 'win32' || !/\.(?:cmd|bat)$/i.test(config.npmPath)) {
+    return { exe: config.npmPath, args: ['run', 'deploy'] };
+  }
+  const npmCli = path.join(path.dirname(config.npmPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
+  if (!fs.existsSync(npmCli)) throw new Error(`Windows npm CLI not found: ${npmCli}`);
+  return { exe: config.nodePath, args: [npmCli, 'run', 'deploy'] };
+}
 async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_000_000 }) {
   fs.mkdirSync(path.dirname(log), { recursive: true });
   return await new Promise((resolve, reject) => {
@@ -81,6 +89,7 @@ async function main(configFile) {
     result.date = today;
     result.businessDay = businessDay;
     if (!businessDay) { result.ok = true; result.skipped = 'bank_holiday'; return; }
+    const deployCommand = npmInvocation(config);
 
     const attempts = Number(config.maxFreshnessAttempts || 3);
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -98,7 +107,7 @@ async function main(configFile) {
     result.fundamental = JSON.parse(fundamental.stdout.trim().split(/\r?\n/).at(-1));
 
     await requireOk(python, ['-m', 'weak_early_beta.cli', 'report'], { cwd: repo, env, log: path.join(runDir, 'report') });
-    await requireOk(config.npmPath, ['run', 'deploy'], { cwd: path.join(repo, 'weak-early-beta-gate'), env, log: path.join(runDir, 'deploy'), timeoutMs: 600_000 });
+    await requireOk(deployCommand.exe, deployCommand.args, { cwd: path.join(repo, 'weak-early-beta-gate'), env, log: path.join(runDir, 'deploy'), timeoutMs: 600_000 });
     const notify = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today], { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
     result.notifications = JSON.parse(notify.stdout.trim());
 
@@ -126,3 +135,5 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!process.argv[2]) throw new Error('usage: node weak-early-beta-daily-runner.mjs <config.json>');
   await main(process.argv[2]);
 }
+
+export { npmInvocation };

@@ -9,3 +9,7 @@
 - Keep HTML dispatch and its completion notice in the existing GitHub workflow. The CLI must not produce a second HTML notification.
 - Keep wake/recovery bounded to scheduled execution. Do not disable Windows updates, configure automatic logon, store a Windows password, or kill unrelated Codex processes.
 - A Session 0 probe establishes noninteractive capability; only actual scheduled-run evidence establishes successful recovery after reboot. Do not conflate them.
+
+## Cloud beta daily runner
+
+- On Windows, launch npm through `node.exe` and the `npm-cli.js` beside the configured `npm.cmd`. Direct `spawn(npm.cmd, ...)` fails with `EINVAL`, and `shell: true` can break paths containing spaces. Resolve the CLI before starting the daily OHLCV work.

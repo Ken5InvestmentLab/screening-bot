@@ -6,7 +6,7 @@ on:
       start:
         description: Start date (JST, YYYY-MM-DD)
         required: true
-        default: '2024-11-01'
+        default: '2024-09-16'
       end:
         description: End date (JST, YYYY-MM-DD)
         required: true
@@ -19,38 +19,18 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 env:
   PYTHONUNBUFFERED: '1'
 
 jobs:
-  universe:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: research/tentei-cloud-mtf
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python -m pip install --disable-pip-version-check openpyxl
-      - name: Discover and snapshot JPX domestic common stocks
-        run: python research/tentei_cloud/jpx_universe.py --outdir universe
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tentei-cloud-jpx-universe
-          path: universe/*
-          if-no-files-found: error
-          retention-days: 30
   fetch:
     name: shard-${{ matrix.shard }}
-    needs: universe
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -58,18 +38,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - uses: actions/download-artifact@v4
-        with:
-          name: tentei-cloud-jpx-universe
-          path: universe
       - name: Fetch Yahoo 1H data
         run: |
           python research/tentei_cloud/fetch_1h.py \
-            --symbols universe/symbols.txt \
-            --start '${{ inputs.start || '2024-11-01' }}' \
+            --symbols research/tentei_cloud/symbols_4h_universe.txt \
+            --start '${{ inputs.start || '2024-09-16' }}' \
             --end '${{ inputs.end || '2026-09-10' }}' \
             --shard-index '${{ matrix.shard }}' \
-            --shard-count 12 \
+            --shard-count 8 \
             --output "out/ohlcv_1h_shard_${{ matrix.shard }}.csv" \
             --failures "out/failures_${{ matrix.shard }}.json"
       - uses: actions/upload-artifact@v4
@@ -77,33 +53,4 @@ jobs:
           name: tentei-cloud-1h-shard-${{ matrix.shard }}
           path: out/*
           if-no-files-found: error
-          retention-days: 30
-  coverage:
-    needs: [universe, fetch]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: research/tentei-cloud-mtf
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: tentei-cloud-1h-shard-*
-          path: downloaded
-      - uses: actions/download-artifact@v4
-        with:
-          name: tentei-cloud-jpx-universe
-          path: universe
-      - name: Audit coverage and missing symbols
-        run: |
-          python research/tentei_cloud/coverage_1h.py \
-            --universe universe/jpx_universe.csv \
-            --inputs 'downloaded/**/ohlcv_1h_shard_*.csv' \
-            --failures 'downloaded/**/failures_*.json' \
-            --expected-shards 12 \
-            --outdir coverage
-      - uses: actions/upload-artifact@v4
-        with:
-          name: tentei-cloud-1h-coverage
-          path: coverage/*
-          if-no-files-found: error
-          retention-days: 30
+          retention-days: 14

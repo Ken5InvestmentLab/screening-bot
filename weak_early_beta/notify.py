@@ -229,7 +229,7 @@ def daily_summary_payload(
     return {
         "content": "",
         "embeds": [{
-            "title": f"天底極致 -Cloud- | {date_key} 検出結果",
+            "title": f"天底極致 -Cloud- | {date_key} アナリティクス更新完了",
             "description": "5モードの件数です。同じ銘柄が複数モードに該当する場合があります。",
             "url": urljoin(report_url, "weak_early_beta_latest.html"),
             "color": 0x4169E1,
@@ -237,6 +237,61 @@ def daily_summary_payload(
         }],
         "allowed_mentions": {"parse": []},
     }
+
+
+def zero_detection_payload(target_date: Any) -> dict[str, Any]:
+    date_key = f"{pd.Timestamp(target_date):%Y-%m-%d}"
+    return {
+        "content": "",
+        "embeds": [{
+            "title": f"天底極致 -Cloud- | {date_key} 検出0件",
+            "description": "本日の新規検出銘柄はありません。",
+            "color": 0x6B7280,
+        }],
+        "allowed_mentions": {"parse": []},
+    }
+
+
+def notify_zero_detection(
+    ledger: pd.DataFrame,
+    target_date: Any,
+    state_path: Path = DEFAULT_DAILY_NOTIFICATION_STATE,
+    webhook_url: str | None = None,
+    dry_run: bool = False,
+) -> list[dict[str, Any]]:
+    """Post the zero-count signal Embed once, independently of the daily summary."""
+    date_key = f"{pd.Timestamp(target_date):%Y-%m-%d}"
+    dated = ledger[
+        ledger["source_scope"].eq("FORWARD_CAUSAL")
+        & pd.to_datetime(ledger["signal_date"]).eq(pd.Timestamp(target_date))
+    ]
+    if not dated.empty:
+        return []
+    state = {"version": 1, "days": {}}
+    if state_path.exists():
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    day_state = state.setdefault("days", {}).setdefault(date_key, {})
+    if day_state.get("zero_url"):
+        return []
+    payload = zero_detection_payload(target_date)
+    if dry_run:
+        return [payload]
+    webhook = (webhook_url or os.environ.get(WEBHOOK_ENV, "")).strip()
+    if not webhook:
+        raise RuntimeError(f"{WEBHOOK_ENV} is required for the zero-count Embed")
+    details = requests.get(webhook, timeout=30)
+    details.raise_for_status()
+    if str(details.json().get("channel_id", "")) != CHANNEL_ID:
+        raise RuntimeError("zero-count webhook does not target the beta signal channel")
+    receipt = _post_webhook(webhook, payload)
+    url = _discord_url(receipt)
+    if not url:
+        raise RuntimeError("zero-count Embed was sent without a Discord message receipt")
+    day_state["zero_url"] = url
+    day_state["updated_at"] = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
+    state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return [payload]
 
 
 def notify_daily_completion(

@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "as_of": "2026-09-20",
-  "fetched_at": "2026-09-21T00:18:58.245167+09:00",
+  "as_of": "2026-09-24",
+  "fetched_at": "2026-09-24T17:25:13.680478+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
-  "source_sha256": "84387871905c57ab8ccd549427a3b9844b3429ffa8cd2adccde398bf515bb449",
+  "source_sha256": "f8861bcc84444119dc8438f31575d0e26a11dd2588c41059882443a9136ac7dc",
   "rule": "exclude only JPX rows marked 上場廃止の決定・整理銘柄指定 on or before signal date",
   "symbols": [
     {

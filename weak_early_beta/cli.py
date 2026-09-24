@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -244,6 +245,22 @@ def command_notify_day(args: argparse.Namespace) -> None:
         "completion_notifications": len(completion_payloads),
         "dry_run": bool(args.dry_run),
     }, ensure_ascii=False))
+
+
+def command_system_log(args: argparse.Namespace) -> None:
+    from .system_log import post_event
+
+    result = post_event(
+        date.fromisoformat(args.date), args.event, args.run_id,
+        stage=args.stage, detail=args.detail, count=args.count,
+    )
+    print(json.dumps(result, ensure_ascii=False))
+
+
+def command_watch_cloud_start(args: argparse.Namespace) -> None:
+    from .system_log import watch_missed
+
+    print(json.dumps(watch_missed(), ensure_ascii=False))
 
 
 def command_notify_exclusions(args: argparse.Namespace) -> None:
@@ -498,6 +515,18 @@ def parser() -> argparse.ArgumentParser:
         default=str(ROOT / "weak_early_beta" / "state" / "daily_notifications.json"),
     )
     notify_day.set_defaults(func=command_notify_day)
+
+    system_log = sub.add_parser("system-log", help="post one Cloud event to the admin channel")
+    system_log.add_argument("--date", required=True)
+    system_log.add_argument("--event", required=True, choices=("started", "detected", "error"))
+    system_log.add_argument("--run-id", required=True)
+    system_log.add_argument("--stage", default="")
+    system_log.add_argument("--detail", default="")
+    system_log.add_argument("--count", type=int)
+    system_log.set_defaults(func=command_system_log)
+
+    watch_cloud = sub.add_parser("watch-cloud-start", help="alert if the scheduled Cloud start was not observed")
+    watch_cloud.set_defaults(func=command_watch_cloud_start)
 
     notify_exclusions = sub.add_parser("notify-exclusions", help="patch already-posted JPX-excluded signals")
     notify_exclusions.add_argument(

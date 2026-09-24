@@ -55,12 +55,12 @@ Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-run
 
 ## 定時運用
 
-- Codex予定タスク `Cloud 日次スコアリング`（ID `cloud-2`）を平日16:15 JSTに実行します。16:00直後のデータ未到着を避けつつ早めに動かす設定です。
+- Codex予定タスク `Cloud 日次スコアリング`（ID `cloud-2`）を平日17:00 JSTに実行します。
 - ランナーは当日の日足が揃うまで最大3回・5分間隔で有限再試行し、揃わなければ通知前に停止します。
 - 毎回JPX公式の監理・整理銘柄一覧を取得し、シグナル日以前に「上場廃止の決定・整理銘柄指定」となった銘柄は新規エントリー対象から除外します。監理銘柄だけの銘柄は一律除外しません。除外行は `state/excluded_detections.csv` に監査保存します。
 - Codex予定タスク `Cloud 5営業日目リマインダー`（ID `cloud-5`）を平日7:30 JSTに実行します。
 - 両ランナーとも日本の銀行休業日（祝日・振替休日・12月31日〜1月3日）をコード側で判定し、休業日は何も変更しません。
-- 日次ランナーは `scripts/windows/weak-early-beta-daily-runner.mjs`、朝のリマインダーは `scripts/windows/weak-early-beta-exit-reminder-runner.mjs` です。日次の最後に、検出ありなら銘柄Embedとアナリティクス更新完了Embed、検出なしならゼロ件Embedと更新完了Embedを送ります。予定タスク自体は `gpt-5.6-luna` / minimal、ファンダ分析だけは専用ランナーが `gpt-6-luna` / xhigh に固定します。
+- 日次ランナーは `scripts/windows/weak-early-beta-daily-runner.mjs`、朝のリマインダーは `scripts/windows/weak-early-beta-exit-reminder-runner.mjs` です。新規検出がある日だけ銘柄Embedと集計Embedを送り、0件の日は公開向け通知を送りません。起動・検出終了・エラー停止はadmin用システムログチャンネルに記録し、17:30 JSTの独立した監視タスクが定時起動の記録を確認します。ファンダ分析の新規・過去投稿にはスキャンボタンを付けません。
 - PCとCodexのローカル実行環境、インターネット接続が利用できることが前提です。GitHub cronや既存GAS、本番workflowは使用しません。
 
 ## 成績表示

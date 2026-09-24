@@ -74,23 +74,49 @@ async function main(configFile) {
   const result = { identity: 'WEAK_EARLY_CLOUD_DAILY_V1', startedAt, ok: false };
   fs.mkdirSync(runDir, { recursive: true });
   const lock = path.join(runtime, 'daily.lock');
-  if (fs.existsSync(lock)) throw new Error('Cloud daily runner lock exists; inspect the previous run before retrying');
-  fs.writeFileSync(lock, startedAt);
+  let ownsLock = false;
   const env = { ...process.env };
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
   const today = config.date || jstDate();
   const python = config.pythonPath;
+  let stage = 'lock';
+  const sendSystemLog = async (event, extra = []) => {
+    try {
+      const attempt = await run(python, [
+        '-m', 'weak_early_beta.cli', 'system-log', '--date', today,
+        '--event', event, '--run-id', startedAt, ...extra,
+      ], { cwd: repo, env, log: path.join(runDir, `system-log-${event}`), capture: true, timeoutMs: 60_000 });
+      if (attempt.code !== 0) throw new Error(`system-log ${event} failed`);
+      result.systemLogEvents ??= [];
+      result.systemLogEvents.push(event);
+    } catch {
+      result.systemLogErrors ??= [];
+      result.systemLogErrors.push(event);
+    }
+  };
   try {
+    try {
+      fs.writeFileSync(lock, startedAt, { flag: 'wx' });
+    } catch (error) {
+      if (error.code === 'EEXIST') throw new Error('Cloud daily runner lock exists; inspect the previous run before retrying');
+      throw error;
+    }
+    ownsLock = true;
+    stage = 'branch';
     const branch = await requireOk('git', ['branch', '--show-current'], { cwd: repo, env, log: path.join(runDir, 'branch'), capture: true, timeoutMs: 30_000 });
     if (branch.stdout.trim() !== 'research/weak-early-beta') throw new Error(`refusing to run outside research/weak-early-beta: ${branch.stdout.trim()}`);
+    stage = 'business-day';
     const gate = await requireOk(python, ['-m', 'weak_early_beta.cli', 'is-business-day', '--date', today], { cwd: repo, env, log: path.join(runDir, 'business-day'), capture: true, timeoutMs: 60_000 });
     const businessDay = JSON.parse(gate.stdout.trim()).business_day;
     result.date = today;
     result.businessDay = businessDay;
     if (!businessDay) { result.ok = true; result.skipped = 'bank_holiday'; return; }
+    await sendSystemLog('started');
+    stage = 'deploy-setup';
     const deployCommand = npmInvocation(config);
 
+    stage = 'detection';
     const attempts = Number(config.maxFreshnessAttempts || 3);
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--refresh-live'], { cwd: repo, env, log: path.join(runDir, `detect-${attempt}`) });
@@ -101,16 +127,22 @@ async function main(configFile) {
       if (attempt === attempts) throw new Error(`OHLCV freshness gate failed: expected ${today}, got ${receipt.latest_session}`);
       await waitInShortChunks(Number(config.freshnessRetryDelayMs || 300_000));
     }
+    await sendSystemLog('detected', ['--count', String(result.selectorRows)]);
 
+    stage = 'fundamental';
     const fundamental = await run(config.nodePath, [path.join(repo, 'scripts', 'windows', 'weak-early-beta-fundamental-runner.mjs'), config.fundamentalConfigPath], { cwd: repo, env, log: path.join(runDir, 'fundamental') });
     if (fundamental.code !== 0) throw new Error('fundamental runner failed; do not notify signals before reconciliation');
     result.fundamental = JSON.parse(fundamental.stdout.trim().split(/\r?\n/).at(-1));
 
+    stage = 'report';
     await requireOk(python, ['-m', 'weak_early_beta.cli', 'report'], { cwd: repo, env, log: path.join(runDir, 'report') });
+    stage = 'deploy';
     await requireOk(deployCommand.exe, deployCommand.args, { cwd: path.join(repo, 'weak-early-beta-gate'), env, log: path.join(runDir, 'deploy'), timeoutMs: 600_000 });
+    stage = 'notification';
     const notify = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today], { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
     result.notifications = JSON.parse(notify.stdout.trim());
 
+    stage = 'git-sync';
     await requireOk('git', ['add', '-A', '--', 'reports/weak_early_beta*.html', 'weak_early_beta/state', 'weak_early_beta/fundamental_worker'], { cwd: repo, env, log: path.join(runDir, 'git-add'), timeoutMs: 60_000 });
     const staged = await run('git', ['diff', '--cached', '--quiet'], { cwd: repo, env, log: path.join(runDir, 'git-diff'), timeoutMs: 60_000 });
     if (staged.code === 1) {
@@ -122,11 +154,13 @@ async function main(configFile) {
     result.ok = true;
   } catch (error) {
     result.error = error.message;
+    result.stage = stage;
+    await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
     process.exitCode = 1;
   } finally {
     result.completedAt = new Date().toISOString();
-    writeJson(resultPath, result);
-    if (fs.existsSync(lock)) fs.rmSync(lock);
+    writeJson(ownsLock ? resultPath : path.join(runDir, 'result.json'), result);
+    if (ownsLock && fs.existsSync(lock)) fs.rmSync(lock);
     console.log(JSON.stringify(result));
   }
 }

@@ -1,9 +1,10 @@
 import json
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 
@@ -39,6 +40,7 @@ from weak_early_beta.report import (
     write_report,
 )
 from weak_early_beta.reminders import notify_exit_reminders
+from weak_early_beta.system_log import IDENTITY as SYSTEM_LOG_IDENTITY, _payload as system_log_payload, watch_missed
 from weak_early_beta.restrictions import parse_jpx_restricted_symbols, quarantine_restricted_detections
 
 
@@ -146,40 +148,32 @@ class WeakEarlyBetaTests(unittest.TestCase):
             "**2件**｜Silence・Dive\n**1件**｜Shadow・Fusion・Balance",
         )
 
-    def test_daily_completion_sends_one_zero_count_summary(self):
+    def test_daily_completion_skips_zero_count_even_without_discord_token(self):
         with tempfile.TemporaryDirectory() as temp:
             state_path = Path(temp) / "daily.json"
-            payloads = notify_daily_completion(
-                self.ledger,
-                "2026-09-24",
-                "https://example.test/",
-                state_path=state_path,
-                dry_run=True,
-            )
-        self.assertEqual(len(payloads), 1)
-        self.assertEqual(payloads[0]["content"], "")
-        self.assertIn("アナリティクス更新完了", payloads[0]["embeds"][0]["title"])
-        self.assertEqual(
-            payloads[0]["embeds"][0]["url"],
-            "https://example.test/weak_early_beta_latest.html",
-        )
-        fields = {field["name"]: field["value"] for field in payloads[0]["embeds"][0]["fields"]}
-        self.assertEqual(payloads[0]["embeds"][0]["description"], "本日の新規検出銘柄はありません。")
-        self.assertNotIn("重複を除いた検出銘柄", fields)
-        self.assertNotIn("モード別内訳", fields)
-        self.assertEqual(fields["検出銘柄一覧"], "[最新情報をチェック](https://example.test/weak_early_beta_latest.html)")
+            with patch("weak_early_beta.notify._post_bot") as post:
+                payloads = notify_daily_completion(
+                    self.ledger, "2026-09-24", "https://example.test/",
+                    state_path=state_path, bot_token="", dry_run=False,
+                )
+            self.assertEqual(payloads, [])
+            self.assertFalse(state_path.exists())
+            post.assert_not_called()
 
     def test_daily_summary_receipt_prevents_a_second_post(self):
+        group = self.ledger.head(1).copy()
+        group.loc[:, "source_scope"] = "FORWARD_CAUSAL"
+        group.loc[:, "signal_date"] = pd.Timestamp("2026-09-24")
         with tempfile.TemporaryDirectory() as temp:
             state_path = Path(temp) / "daily.json"
             response = {"channel_id": SUMMARY_CHANNEL_ID, "id": "123"}
             with patch("weak_early_beta.notify._post_bot", return_value=response) as post:
                 first = notify_daily_completion(
-                    self.ledger, "2026-09-24", "https://example.test/",
+                    group, "2026-09-24", "https://example.test/",
                     state_path=state_path, bot_token="test-token",
                 )
                 second = notify_daily_completion(
-                    self.ledger, "2026-09-24", "https://example.test/",
+                    group, "2026-09-24", "https://example.test/",
                     state_path=state_path, bot_token="test-token",
                 )
             self.assertEqual(len(first), 1)
@@ -191,6 +185,33 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 f"https://discord.com/channels/{GUILD_ID}/{SUMMARY_CHANNEL_ID}/123",
             )
             self.assertEqual(_discord_url(response), f"https://discord.com/channels/{GUILD_ID}/{SUMMARY_CHANNEL_ID}/123")
+
+    def test_cloud_watchdog_reports_only_missing_business_day_starts(self):
+        jst = ZoneInfo("Asia/Tokyo")
+        with patch("weak_early_beta.system_log._recent", return_value=[]) as recent, patch(
+            "weak_early_beta.system_log.post_event", return_value={"posted": True}
+        ) as post:
+            self.assertEqual(watch_missed(datetime(2026, 9, 23, 17, 45, tzinfo=jst), token="test")["skipped"], "bank_holiday")
+            self.assertEqual(watch_missed(datetime(2026, 9, 24, 17, 29, tzinfo=jst), token="test")["skipped"], "before_watch_time")
+            recent.assert_not_called()
+            self.assertTrue(watch_missed(datetime(2026, 9, 24, 17, 30, tzinfo=jst), token="test")["posted"])
+            post.assert_called_once_with(date(2026, 9, 24), "missed", "schedule-1700", token="test")
+
+        marker = f"{SYSTEM_LOG_IDENTITY}|2026-09-24|started|test-run"
+        with patch("weak_early_beta.system_log._recent", return_value=[{"embeds": [{"footer": {"text": marker}}]}]), patch(
+            "weak_early_beta.system_log.post_event"
+        ) as post:
+            self.assertEqual(watch_missed(datetime(2026, 9, 24, 17, 30, tzinfo=jst), token="test")["skipped"], "started")
+            post.assert_not_called()
+
+    def test_cloud_system_log_payload_distinguishes_detection_and_error(self):
+        day = date(2026, 9, 24)
+        detected = system_log_payload(day, "detected", "run-1", count=0)["embeds"][0]
+        failure = system_log_payload(day, "error", "run-1", stage="deploy", detail="failed")["embeds"][0]
+        self.assertIn("検出終了", detected["title"])
+        self.assertIn("0件", detected["description"])
+        self.assertIn("停止段階: deploy", failure["description"])
+        self.assertIn("原因: failed", failure["description"])
 
     def test_jpx_delisting_gate_is_causal_and_keeps_an_audit_row(self):
         document = """<table><tr><th>指定年月日</th><th>銘柄名</th><th>コード</th><th>市場</th><th>解除</th><th>内容</th></tr>

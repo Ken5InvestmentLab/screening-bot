@@ -48,9 +48,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/windows/install-
 ```powershell
 node scripts/windows/weak-early-beta-daily-runner.mjs .cache/weak_early_beta/daily-runner.config.json
 node scripts/windows/weak-early-beta-exit-reminder-runner.mjs .cache/weak_early_beta/exit-reminder-runner.config.json
+node scripts/windows/weak-early-beta-start-watchdog.mjs .cache/weak_early_beta/daily-runner.config.json
 ```
 
-- 日次は平日16:15 JST（automation `cloud-2`）。当日日足のfreshnessを確認し、不足時は最大3回・5分間隔で有限再試行する。
+- 日次は平日17:00 JST（automation `cloud-2`）。当日日足のfreshnessを確認し、不足時は最大3回・5分間隔で有限再試行する。17:30 JSTの独立監視は日本の銀行営業日だけ、adminシステムログチャンネルの起動記録を確認し、見つからない場合に一度だけ警告する。
 - 朝は平日07:30 JST（automation `cloud-5`）。その日の終値で5営業日目を迎える銘柄だけを専用DiscordへEmbed通知する。
 - 日本の銀行休業日はランナー内の決定論カレンダーでskipする。起動側は `gpt-5.6-luna` / minimal、ファンダ分析だけは専用runnerで Luna / xhigh。
 - 実設定は `.cache/weak_early_beta/*.config.json` とGit管理外の専用 `.env` に置く。秘密値をexample、ログ、commitへ書かない。

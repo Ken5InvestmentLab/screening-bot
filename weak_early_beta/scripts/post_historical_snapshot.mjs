@@ -77,15 +77,6 @@ const payload = {
     fields: embedFields,
     footer: { text: 'Premium fundamental snapshot / Not investment advice' },
   }],
-  components: [{
-    type: 1,
-    components: [{
-      type: 2,
-      style: 2,
-      custom_id: `premium_scan:${report.symbolCode || claim.symbolCode}`,
-      label: `🔍 ${report.symbolCode || claim.symbolCode} をスキャンする`,
-    }],
-  }],
 };
 
 const postUrl = new URL(webhook);

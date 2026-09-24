@@ -213,27 +213,24 @@ def daily_summary_payload(
         & pd.to_datetime(ledger["signal_date"]).eq(pd.Timestamp(target_date))
     ]
     unique_count = int(dated["symbol"].astype(str).nunique())
-    fields = []
     if unique_count == 0:
-        description = "本日の新規検出銘柄はありません。"
-    else:
-        description = "5モードの件数です。同じ銘柄が複数モードに該当する場合があります。"
-        fields.append({"name": "重複を除いた検出銘柄", "value": f"{unique_count}件", "inline": False})
-        modes_by_count: dict[int, list[str]] = {}
-        for selector_id in SELECTOR_ORDER:
-            count = int(dated.loc[dated["selector_id"].eq(selector_id), "symbol"].astype(str).nunique())
-            modes_by_count.setdefault(count, []).append(selector_info(selector_id).display_name)
-        breakdown = "\n".join(
-            f"**{count}件**｜{'・'.join(modes_by_count[count])}"
-            for count in sorted(modes_by_count, reverse=True)
-        )
-        fields.append({"name": "モード別内訳", "value": breakdown, "inline": False})
+        raise ValueError("Cloud summary requires at least one new symbol")
+    fields = [{"name": "重複を除いた検出銘柄", "value": f"{unique_count}件", "inline": False}]
+    modes_by_count: dict[int, list[str]] = {}
+    for selector_id in SELECTOR_ORDER:
+        count = int(dated.loc[dated["selector_id"].eq(selector_id), "symbol"].astype(str).nunique())
+        modes_by_count.setdefault(count, []).append(selector_info(selector_id).display_name)
+    breakdown = "\n".join(
+        f"**{count}件**｜{'・'.join(modes_by_count[count])}"
+        for count in sorted(modes_by_count, reverse=True)
+    )
+    fields.append({"name": "モード別内訳", "value": breakdown, "inline": False})
     fields.append({"name": "検出銘柄一覧", "value": f"[最新情報をチェック]({urljoin(report_url, 'weak_early_beta_latest.html')})", "inline": False})
     return {
         "content": "",
         "embeds": [{
             "title": f"天底極致 -Cloud- | {date_key} アナリティクス更新完了",
-            "description": description,
+            "description": "5モードの件数です。同じ銘柄が複数モードに該当する場合があります。",
             "url": urljoin(report_url, "weak_early_beta_latest.html"),
             "color": 0x4169E1,
             "fields": fields,
@@ -250,11 +247,17 @@ def notify_daily_completion(
     bot_token: str | None = None,
     dry_run: bool = False,
 ) -> list[dict[str, Any]]:
-    """Post one idempotent summary Embed to the dedicated update channel."""
+    """Post one idempotent summary only when the day has new symbols."""
+    date_key = f"{pd.Timestamp(target_date):%Y-%m-%d}"
+    dated = ledger[
+        ledger["source_scope"].eq("FORWARD_CAUSAL")
+        & pd.to_datetime(ledger["signal_date"]).eq(pd.Timestamp(target_date))
+    ]
+    if dated["symbol"].dropna().empty:
+        return []
     token = (bot_token or os.environ.get("WEAK_EARLY_BETA_DISCORD_BOT_TOKEN") or os.environ.get("DISCORD_TOKEN") or "").strip()
     if not dry_run and not token:
         raise RuntimeError("a Discord bot token is required for the Cloud summary channel")
-    date_key = f"{pd.Timestamp(target_date):%Y-%m-%d}"
     state = {"version": 1, "days": {}}
     if state_path.exists():
         state = json.loads(state_path.read_text(encoding="utf-8"))

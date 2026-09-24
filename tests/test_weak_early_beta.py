@@ -26,7 +26,7 @@ from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.notify import (
     CHANNEL_ID, EMBED_COLORS, GUILD_ID, SUMMARY_CHANNEL_ID, _discord_url,
-    _message, daily_summary_payload, notify_daily_completion, notify_zero_detection,
+    _message, daily_summary_payload, notify_daily_completion,
 )
 from weak_early_beta.report import (
     ANALYTICS_PAGE_NAME,
@@ -164,47 +164,10 @@ class WeakEarlyBetaTests(unittest.TestCase):
             "https://example.test/weak_early_beta_latest.html",
         )
         fields = {field["name"]: field["value"] for field in payloads[0]["embeds"][0]["fields"]}
-        self.assertEqual(fields["重複を除いた検出銘柄"], "0件")
-        self.assertEqual(fields["モード別内訳"], "全モード0件")
-
-    def test_zero_detection_embed_is_separate_and_idempotent(self):
-        with tempfile.TemporaryDirectory() as temp:
-            state_path = Path(temp) / "daily.json"
-            receipt = {"channel_id": CHANNEL_ID, "id": "456"}
-            with patch("weak_early_beta.notify.requests.get") as get, patch(
-                "weak_early_beta.notify._post_webhook", return_value=receipt
-            ) as post:
-                get.return_value.json.return_value = {"channel_id": CHANNEL_ID}
-                first = notify_zero_detection(
-                    self.ledger, "2026-09-24", state_path=state_path,
-                    webhook_url="https://example.test/beta-webhook",
-                )
-                second = notify_zero_detection(
-                    self.ledger, "2026-09-24", state_path=state_path,
-                    webhook_url="https://example.test/beta-webhook",
-                )
-            self.assertEqual(len(first), 1)
-            self.assertIn("検出0件", first[0]["embeds"][0]["title"])
-            self.assertEqual(second, [])
-            get.assert_called_once()
-            post.assert_called_once()
-            self.assertEqual(
-                json.loads(state_path.read_text(encoding="utf-8"))["days"]["2026-09-24"]["zero_url"],
-                f"https://discord.com/channels/{GUILD_ID}/{CHANNEL_ID}/456",
-            )
-
-    def test_zero_detection_rejects_a_non_beta_webhook(self):
-        with tempfile.TemporaryDirectory() as temp:
-            with patch("weak_early_beta.notify.requests.get") as get, patch(
-                "weak_early_beta.notify._post_webhook"
-            ) as post:
-                get.return_value.json.return_value = {"channel_id": "wrong-channel"}
-                with self.assertRaisesRegex(RuntimeError, "beta signal channel"):
-                    notify_zero_detection(
-                        self.ledger, "2026-09-24", state_path=Path(temp) / "daily.json",
-                        webhook_url="https://example.test/wrong-webhook",
-                    )
-            post.assert_not_called()
+        self.assertEqual(payloads[0]["embeds"][0]["description"], "本日の新規検出銘柄はありません。")
+        self.assertNotIn("重複を除いた検出銘柄", fields)
+        self.assertNotIn("モード別内訳", fields)
+        self.assertEqual(fields["検出銘柄一覧"], "[最新情報をチェック](https://example.test/weak_early_beta_latest.html)")
 
     def test_daily_summary_receipt_prevents_a_second_post(self):
         with tempfile.TemporaryDirectory() as temp:

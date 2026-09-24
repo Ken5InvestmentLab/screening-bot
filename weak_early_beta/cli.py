@@ -216,7 +216,7 @@ def command_notify(args: argparse.Namespace) -> None:
 
 
 def command_notify_day(args: argparse.Namespace) -> None:
-    from .notify import notify_daily_completion, notify_pending, notify_zero_detection
+    from .notify import notify_daily_completion, notify_pending
 
     target = pd.Timestamp(args.date or pd.Timestamp.now(tz="Asia/Tokyo").date()).date()
     ledger_path = Path(args.ledger)
@@ -227,12 +227,6 @@ def command_notify_day(args: argparse.Namespace) -> None:
         report_url=report_url,
         dry_run=args.dry_run,
         signal_date=target,
-    )
-    zero_payloads = notify_zero_detection(
-        ledger,
-        target,
-        state_path=Path(args.daily_notification_state),
-        dry_run=args.dry_run,
     )
     completion_payloads = notify_daily_completion(
         ledger,
@@ -247,7 +241,6 @@ def command_notify_day(args: argparse.Namespace) -> None:
     print(json.dumps({
         "date": target.isoformat(),
         "signal_notifications": len(signal_payloads),
-        "zero_notifications": len(zero_payloads),
         "completion_notifications": len(completion_payloads),
         "dry_run": bool(args.dry_run),
     }, ensure_ascii=False))

@@ -6,6 +6,11 @@ on:
       fetch_run_id:
         description: Successful JPX-wide 1H fetch run ID
         required: true
+  push:
+    branches:
+      - research/tentei-cloud-mtf
+    paths:
+      - 'research/tentei_cloud/RUN_FULL_UNIVERSE_COMPARE'
 
 permissions:
   contents: read
@@ -64,7 +69,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download '${{ inputs.fetch_run_id }}' --repo "$GITHUB_REPOSITORY" \
+          NEW_FETCH_RUN_ID='${{ inputs.fetch_run_id }}'
+          if [ -z "$NEW_FETCH_RUN_ID" ]; then NEW_FETCH_RUN_ID="$(cat research/tentei_cloud/RUN_FULL_UNIVERSE_COMPARE)"; fi
+          gh run download "$NEW_FETCH_RUN_ID" --repo "$GITHUB_REPOSITORY" \
             --name "tentei-cloud-1h-shard-${{ matrix.shard }}" --dir raw
       - name: Extract unchanged NEW gates
         run: |
@@ -101,7 +108,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh run download '${{ inputs.fetch_run_id }}' --repo "$GITHUB_REPOSITORY" \
+          NEW_FETCH_RUN_ID='${{ inputs.fetch_run_id }}'
+          if [ -z "$NEW_FETCH_RUN_ID" ]; then NEW_FETCH_RUN_ID="$(cat research/tentei_cloud/RUN_FULL_UNIVERSE_COMPARE)"; fi
+          gh run download "$NEW_FETCH_RUN_ID" --repo "$GITHUB_REPOSITORY" \
             --name tentei-cloud-jpx-universe --dir universe
       - name: Compare fixed Core and Monster lanes
         run: |
@@ -112,8 +121,10 @@ jobs:
             --jpx-universe universe/jpx_universe.csv --outdir comparison
       - name: Record source run IDs
         run: |
+          NEW_FETCH_RUN_ID='${{ inputs.fetch_run_id }}'
+          if [ -z "$NEW_FETCH_RUN_ID" ]; then NEW_FETCH_RUN_ID="$(cat research/tentei_cloud/RUN_FULL_UNIVERSE_COMPARE)"; fi
           printf '%s\n' '34592896202' > comparison/old_fetch_run_id.txt
-          printf '%s\n' '${{ inputs.fetch_run_id }}' > comparison/new_fetch_run_id.txt
+          printf '%s\n' "$NEW_FETCH_RUN_ID" > comparison/new_fetch_run_id.txt
       - uses: actions/upload-artifact@v4
         with:
           name: tentei-cloud-full-universe-comparison

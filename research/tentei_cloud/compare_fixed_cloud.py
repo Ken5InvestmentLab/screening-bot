@@ -58,20 +58,18 @@ def cohort(frame: pd.DataFrame, old_symbols: set[str], markets: dict[str, str]) 
     return out
 
 
-def score_monster(train_old: pd.DataFrame, old: pd.DataFrame, new: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[dict]]:
-    train_old = train_old.copy()
+def score_monster(old: pd.DataFrame, new: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame, list[dict]]:
     old = old.copy()
     new = new.copy()
-    train_old["date_dt"] = pd.to_datetime(train_old["date"])
-    train_old["target_date_dt"] = pd.to_datetime(train_old["target_date"], errors="coerce")
     old["date_dt"] = pd.to_datetime(old["date"])
+    old["target_date_dt"] = pd.to_datetime(old["target_date"], errors="coerce")
     new["date_dt"] = pd.to_datetime(new["date"])
     rows = []
     metadata = []
     for fold, start, end in FOLDS:
         start_dt, end_dt = pd.Timestamp(start), pd.Timestamp(end)
-        train = train_old[(train_old["date_dt"] >= pd.Timestamp("2024-11-01"))
-                          & (train_old["target_date_dt"] < start_dt) & train_old["ret5bd"].notna()].copy()
+        train = old[(old["date_dt"] >= pd.Timestamp("2024-11-01"))
+                    & (old["target_date_dt"] < start_dt) & old["ret5bd"].notna()].copy()
         pos = int((train["ret5bd"] >= TARGET).sum())
         neg = len(train) - pos
         if len(train) < MIN_TRAIN or pos < MIN_POS or neg < MIN_POS:
@@ -132,27 +130,17 @@ def main():
         jpx = list(csv.DictReader(f))
     markets = {r["code"]: r["market"] for r in jpx}
     new_syms = set(markets)
-    old_core_replay, old_meta = read_parts(a.old_extract, "core.csv")
+    old_core, old_meta = read_parts(a.old_extract, "core.csv")
     new_core, new_meta = read_parts(a.new_extract, "core.csv")
-    old_pool_replay, _ = read_parts(a.old_extract, "monster_pool.csv")
+    old_pool, _ = read_parts(a.old_extract, "monster_pool.csv")
     new_pool, _ = read_parts(a.new_extract, "monster_pool.csv")
     if len(old_meta) != 8 or len(new_meta) != 12:
         raise ValueError("expected exactly 8 OLD and 12 NEW shards")
-    if old_meta[0]["market_dates_sha256"] != new_meta[0]["market_dates_sha256"]:
-        raise ValueError("OLD and NEW market dates differ")
-    # Retained names must use the very same Yahoo retrieval in both arms.
-    # The pinned OLD artifact supplies only the 24 names absent from today's JPX list.
-    def controlled_old(old_replay: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
-        retained = new[new["symbol"].astype(str).isin(old_syms)].copy()
-        removed = old_replay[~old_replay["symbol"].astype(str).isin(new_syms)].copy()
-        return pd.concat([retained, removed], ignore_index=True, sort=False)
-    old_core = controlled_old(old_core_replay, new_core)
-    old_pool = controlled_old(old_pool_replay, new_pool)
     if set(old_core["symbol"].astype(str)) - old_syms or set(new_core["symbol"].astype(str)) - new_syms:
         raise ValueError("Core candidates outside declared universe")
     if set(old_pool["symbol"].astype(str)) - old_syms or set(new_pool["symbol"].astype(str)) - new_syms:
         raise ValueError("Monster candidates outside declared universe")
-    monster_old, monster_new, model_meta = score_monster(old_pool_replay, old_pool, new_pool)
+    monster_old, monster_new, model_meta = score_monster(old_pool, new_pool)
     start, end = FOLDS[0][1], FOLDS[-1][2]
     core_old = old_core[(old_core["date"] >= start) & (old_core["date"] <= end)].copy()
     core_new = new_core[(new_core["date"] >= start) & (new_core["date"] <= end)].copy()
@@ -193,16 +181,6 @@ def main():
     monster_hits = picks[(picks["universe"] == "NEW") & (picks["cohort"] == "added")
                          & (picks["lane"].str.startswith("Monster")) & (picks["ret5bd"] >= .20)]
     monster_hits[[c for c in keep if c in monster_hits.columns]].to_csv(out / "new_monster_hits_ge20.csv", index=False)
-    drift = []
-    for lane, replay, controlled in (("Core", old_core_replay, old_core),
-                                     ("Monster pool", old_pool_replay, old_pool)):
-        replay_keys = set(zip(replay["symbol"].astype(str), replay["date"].astype(str), replay["session"].astype(str)))
-        controlled_keys = set(zip(controlled["symbol"].astype(str), controlled["date"].astype(str), controlled["session"].astype(str)))
-        drift.append({"lane": lane, "old_artifact_candidates": len(replay),
-                      "controlled_old_candidates": len(controlled),
-                      "only_old_artifact": len(replay_keys - controlled_keys),
-                      "only_controlled": len(controlled_keys - replay_keys)})
-    pd.DataFrame(drift).to_csv(out / "source_retrieval_drift.csv", index=False)
     meta = {"old_symbols": len(old_syms), "new_symbols": len(new_syms),
             "retained_symbols": len(old_syms & new_syms), "added_symbols": len(new_syms - old_syms),
             "old_no_longer_listed": len(old_syms - new_syms), "test_start": start, "test_end": end,
@@ -210,8 +188,6 @@ def main():
             "monster_model_folds": model_meta, "core": "unchanged fixed reconstructed gate, canonical next-open entry",
             "monster": "unchanged fixed reconstructed TAIL gate, signal-close entry",
             "outcome": "5BD close, 10/20/40BD supplementary close, gross cost 0",
-            "controlled_old_source": "NEW fetch for retained symbols plus pinned OLD fetch for old-only symbols",
-            "monster_training_source": "pinned OLD fetch only; model thresholds reused unchanged for controlled OLD and NEW",
             "post_result_tuning": False, "survivorship_bias_free": False}
     (out / "comparison_meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(meta, ensure_ascii=False))

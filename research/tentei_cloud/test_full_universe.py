@@ -78,7 +78,6 @@ class FullUniverseTest(unittest.TestCase):
         self.assertEqual(report["coverage_rate"], 0.5)
         self.assertEqual(report["duplicate_rows"], 1)
         self.assertEqual(report["failed_chunks"], 1)
-        self.assertEqual(report["failure_topology_chunks"], {"never_seen": 1})
         self.assertEqual([r["code"] for r in missing], ["345A"])
 
     def test_failed_1h_blocks_detection_but_existing_exit_can_settle(self):

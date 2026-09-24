@@ -11,6 +11,7 @@ import csv
 import datetime as dt
 import json
 import random
+import re
 import time
 import urllib.error
 import urllib.parse
@@ -21,6 +22,7 @@ from zoneinfo import ZoneInfo
 JST = ZoneInfo("Asia/Tokyo")
 BASE = "https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
 UA = "Mozilla/5.0 TenteiCloudResearch/1.0"
+CODE = re.compile(r"^[0-9A-Z]{4}$")
 
 def parse_args():
     p = argparse.ArgumentParser()
@@ -45,6 +47,9 @@ def load_symbols(path, shard_index, shard_count):
         if s and not s.startswith("#"):
             items.append(s)
     items = sorted(dict.fromkeys(items))
+    bad = [s for s in items if not CODE.fullmatch(s)]
+    if bad:
+        raise ValueError(f"invalid JPX symbols: {bad[:10]}")
     if shard_count < 1 or not (0 <= shard_index < shard_count):
         raise ValueError("invalid shard")
     return [s for i, s in enumerate(items) if i % shard_count == shard_index]
@@ -57,7 +62,15 @@ def chunks(start, end, days):
         cur = chunk_end + dt.timedelta(days=1)
 
 def yahoo_symbol(code):
-    return code if code.endswith(".T") else f"{code}.T"
+    code = code.upper()
+    base = code[:-2] if code.endswith(".T") else code
+    if not CODE.fullmatch(base):
+        raise ValueError(f"invalid Yahoo JPX symbol: {code}")
+    return base + ".T"
+
+
+def deduplicate_rows(rows):
+    return {(row[1], row[0]): row for row in rows}
 
 def request_json(code, start, end, retries=5):
     symbol = urllib.parse.quote(yahoo_symbol(code))
@@ -139,8 +152,9 @@ def main():
             try:
                 payload = request_json(code, cstart, cend)
                 rows = extract_rows(code, payload, cstart, cend)
-                for row in rows:
-                    all_rows[(row[1], row[0])] = row
+                if not rows:
+                    failures.append({"symbol": code, "start": str(cstart), "end": str(cend), "error": "no_usable_rows"})
+                all_rows.update(deduplicate_rows(rows))
                 symbol_rows += len(rows)
             except Exception as e:
                 failures.append({"symbol": code, "start": str(cstart), "end": str(cend), "error": str(e)})

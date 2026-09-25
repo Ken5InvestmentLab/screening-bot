@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "claimId": "aaed3b46-b3e7-4301-8a52-78ba0e501e11",
-  "generatedAt": "2026-09-24T17:25:22.681854+09:00",
+  "claimId": "b46e9dbb-48bb-4e39-89f9-2bd61f226bf7",
+  "generatedAt": "2026-09-25T17:09:28.464099+09:00",
   "claimedCount": 0,
   "alerts": [],
-  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud2-20260924-165559\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud2-20260925-170328\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [
       "alertId",

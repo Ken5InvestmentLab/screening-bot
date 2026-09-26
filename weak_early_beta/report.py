@@ -19,6 +19,7 @@ from .config import (
     SELECTOR_ORDER,
     selector_info,
 )
+from .entry_feasibility import annotate_entry_feasibility, performance_eligible
 from .metrics import (
     build_metrics,
     build_monthly_metrics,
@@ -40,8 +41,12 @@ MODE_PAGE_NAMES = {
 }
 
 TOTAL_EQUITY_EXPLANATION = (
-    "100株ずつ運用するために同時保有も含めて必要だった資金の目安から開始し、"
+    "成績集計対象の取引を100株ずつ運用するために同時保有も含めて必要だった資金の目安から開始し、"
     "各取引が決済した日に損益を加えた推移です。"
+)
+REFERENCE_POLICY_NOTE = (
+    "S高一値として翌寄付での買付が困難と判定した銘柄は、検出履歴では参考値として表示し、"
+    "成績集計と資産推移から除外します。実際の注文が約定しなかったことを示すものではありません。"
 )
 STACKED_EXPLANATION = (
     "同じ銘柄が複数モードに該当した場合、モードごとに100株ずつ買ったものとして集計します"
@@ -419,6 +424,7 @@ def _condition_cards() -> str:
 
 
 def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
+    ledger = annotate_entry_feasibility(ledger)
     if ledger.empty:
         return '<tr><td colspan="9">検出履歴がありません</td></tr>'
     data = ledger.copy()
@@ -443,9 +449,32 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             name = ""
         gross = pd.to_numeric(group["gross_return"], errors="coerce").dropna()
         cash = pd.to_numeric(group["one_hundred_shares_pl_yen"], errors="coerce").dropna()
-        status = "確定" if not gross.empty else ("保有中" if str(first["status"]) == "entered" else "寄付待ち")
-        status_class = "mature" if not gross.empty else "pending"
+        reference_only = (
+            bool(group["performance_reference_only"].fillna(False).any())
+            if "performance_reference_only" in group else False
+        )
+        if reference_only and not gross.empty:
+            status, status_class = "参考値・集計対象外", "reference"
+        else:
+            status = "確定" if not gross.empty else ("保有中" if str(first["status"]) == "entered" else "寄付待ち")
+            status_class = "mature" if not gross.empty else "pending"
         is_masked = mask_pending and gross.empty
+        evidence_url = str(first.get("performance_reference_evidence_url", "") or "")
+        evidence_label = (
+            "JPX一値記録"
+            if first.get("performance_reference_verification_note") == "user_designated_one_price"
+            else "JPX日報"
+        )
+        evidence_link = (
+            f' <a href="{html.escape(evidence_url, quote=True)}" target="_blank" rel="noopener noreferrer">{evidence_label}</a>'
+            if reference_only and evidence_url.startswith("https://www.jpx.co.jp/") else ""
+        )
+        reference_note = (
+            '<small class="reference-note">S高一値のため寄付買いの約定が困難と判定。'
+            f'騰落率と損益は参考値です。{evidence_link}</small>'
+            if reference_only and not gross.empty else ""
+        )
+        reference_marker = '<small class="reference-value">参考値</small>' if reference_only else ""
         fundamental_url = "" if is_masked else next(
             (str(x) for x in group["fundamental_discord_url"] if pd.notna(x) and str(x).strip()), ""
         )
@@ -485,11 +514,11 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             f'{" hidden" if index >= 20 else ""}>'
             f'<td data-label="シグナル日">{signal_date:%Y-%m-%d}</td>'
             f"<th><span class=\"symbol\">{html.escape(display_symbol)}</span> {html.escape(display_name)}<div class=\"actions\">{actions}</div></th>"
-            f'<td data-label="該当モード">{badges}</td><td data-label="状態"><span class="status {status_class}">{status}</span></td>'
+            f'<td data-label="該当モード">{badges}</td><td data-label="状態"><span class="status {status_class}">{status}</span>{reference_note}</td>'
             f'<td data-label="エントリー">{entry_display}</td>'
             f'<td data-label="5営業日目">{exit_display}</td>'
-            f'<td data-label="騰落率" class="number">{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}</td>'
-            f'<td data-label="100株損益" class="number">{_yen(cash.iloc[0]) if not cash.empty else "—"}</td>'
+            f'<td data-label="騰落率" class="number">{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}{reference_marker if not gross.empty else ""}</td>'
+            f'<td data-label="100株損益" class="number">{_yen(cash.iloc[0]) if not cash.empty else "—"}{reference_marker if not cash.empty else ""}</td>'
             f'<td data-label="操作">{chart_action}</td>'
             "</tr>"
         )
@@ -519,6 +548,9 @@ REPORT_CSS = """
 @media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid,.guide-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.nav{grid-template-columns:minmax(0,1fr) auto;padding:8px 12px;gap:4px 8px}.brand{grid-column:1;grid-row:1}.brand-logo{width:min(250px,61vw);height:44px}.theme-toggle{grid-column:2;grid-row:1;min-height:38px}.nav-links{grid-column:1/-1;grid-row:2;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:3px}.nav-link{flex:0 0 auto;font-size:13px;padding:6px 9px}}
 @media(max-width:620px){main{padding:18px 12px 50px;min-width:0}.panel{padding:16px;border-radius:14px;min-width:0}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}.insight-grid .annual-pl-row{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:19px 0}.annual-pl-track{grid-column:1/-1;grid-row:2}.annual-pl-value{grid-column:2;grid-row:1}.payoff-kpis{gap:5px}.payoff-kpi strong{font-size:22px}.filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}.filter-field{min-width:0}.filters input,.filters select{width:100%;min-width:0!important}.filters .filter-field:first-child,#selector-filter,#search-result-count{grid-column:1/-1}.history-table-wrap{overflow:visible;border:0;background:transparent}#detection-table{min-width:0;background:transparent}#detection-table thead{display:none}#detection-table tbody{display:grid;gap:12px}#detection-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid)}#detection-table tbody tr>*{display:block;min-width:0;white-space:normal;border:0;padding:6px 8px;text-align:left}#detection-table tbody tr>td:first-child,#detection-table tbody tr>th,#detection-table tbody tr>td:nth-child(3),#detection-table tbody tr>td:last-child{grid-column:1/-1}#detection-table tbody tr>th{font-size:16px;border-bottom:1px solid var(--line);padding-bottom:10px}#detection-table tbody tr>td::before{content:attr(data-label);display:block;color:var(--muted);font-size:11px;font-weight:800}#detection-table tbody tr>td:last-child{border-top:1px solid var(--line)}.fundamental-detail{min-width:0;max-width:100%;overflow-wrap:anywhere}.discord-embed{min-width:0}.button-link,.fundamental-toggle{min-height:36px;align-items:center}.kpi b.period-range{font-size:15px;white-space:normal}}
+.status.reference{color:var(--warn)}
+.reference-note,.reference-value{display:block;color:var(--muted);font-size:11px;line-height:1.45;white-space:normal}
+.reference-note{max-width:250px;margin-top:4px}.reference-note a{color:var(--blue)}
 /* Match the current report's fundamental popup, independent of the table header's typography. */
 .fundamental-detail{position:relative;box-sizing:border-box;width:100%;min-width:0;max-width:520px;margin-top:8px;padding:10px 38px 10px 10px;border:1px solid var(--line);border-radius:6px;background:#fbfdff;color:#182230;text-align:left;white-space:normal;font:400 14px/1.55 "Yu Gothic","Meiryo","Segoe UI",sans-serif}
 .fundamental-detail{scroll-margin-top:110px}
@@ -603,6 +635,7 @@ def _equity_chart(
     explanation: str = "",
     as_of: pd.Timestamp | None = None,
 ) -> str:
+    frame = performance_eligible(frame)
     completed = frame[
         pd.to_numeric(frame["one_hundred_shares_pl_yen"], errors="coerce").notna()
         & pd.to_datetime(frame["fifth_xtks_exit_date"], errors="coerce").notna()
@@ -664,6 +697,7 @@ def _equity_chart(
 
 def _payoff_structure(ledger: pd.DataFrame) -> str:
     """Compare average gains and losses using completed stacked trades."""
+    ledger = performance_eligible(ledger)
     returns = pd.to_numeric(ledger["gross_return"], errors="coerce").dropna()
     if returns.empty:
         return '<h2>損小利大の構造</h2><p class="note">確定取引がありません。</p>'
@@ -722,7 +756,8 @@ def _annual_pl_chart(ledger: pd.DataFrame, metrics: pd.DataFrame, generated: pd.
         baseline = 0.0
         scale = 0.0
     rows = []
-    completed = ledger[pd.to_numeric(ledger["gross_return"], errors="coerce").notna()]
+    eligible = performance_eligible(ledger)
+    completed = eligible[pd.to_numeric(eligible["gross_return"], errors="coerce").notna()]
     completed_dates = pd.to_datetime(completed["signal_date"], errors="coerce").dropna()
     for row in yearly.itertuples():
         year = int(row.period)
@@ -862,7 +897,7 @@ def render_report(
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     unique_ledger = combined_detections(ledger)
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- ダッシュボード</h1><p class="lead">条件に該当した銘柄を新しい順に確認し、5つのモード別ページへ進めます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p></div>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- ダッシュボード</h1><p class="lead">条件に該当した銘柄を新しい順に確認し、5つのモード別ページへ進めます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger, generated)}</b></div><div class="kpi"><small>最終検出日</small><b>{pd.to_datetime(ledger['signal_date']).max():%Y-%m-%d}</b></div></div></aside></section>
 {_history_section(ledger, include_mode_filter=True, mask_pending=mask_pending)}
 {_mode_pages_section(generated)}'''
@@ -887,7 +922,7 @@ def render_analytics_report(
     table_head = f'<thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead>'
     monthly_head = f'<thead><tr><th>月</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead>'
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- アナリティクス</h1><p class="lead">5つのモードを合わせた成績と資産推移です。検出銘柄はダッシュボード、各モードの内訳は専用ページで確認できます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p></div>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- アナリティクス</h1><p class="lead">5つのモードを合わせた成績と資産推移です。検出銘柄はダッシュボード、各モードの内訳は専用ページで確認できます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger, generated)}</b><small>最終検出: {pd.to_datetime(ledger['signal_date']).max():%Y-%m-%d}</small></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div></aside></section>
 <section class="panel" id="growth"><h2>トータルの資産推移</h2><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p><div class="chart-grid">{_equity_chart(ledger, 'モード別積み上げ', 'stacked', STACKED_EXPLANATION, generated.tz_localize(None))}{_equity_chart(unique_ledger, '銘柄均等', 'unique', UNIQUE_EXPLANATION, generated.tz_localize(None))}</div></section>
 <div class="insight-grid"><section class="panel" id="payoff-structure">{_payoff_structure(ledger)}</section><section class="panel" id="annual-pl"><h2>年別100株損益</h2><p class="note">モード別積み上げの集計です。同じ日・同じ銘柄が複数モードに該当した場合は、モードごとに100株の別取引として数えます。5営業日後の終値が確定した取引を検出年ごとに合計し、日次レポート更新時に数値も更新します。</p>{_annual_pl_chart(ledger, metrics, generated)}</section></div>
@@ -914,7 +949,7 @@ def render_mode_report(
     total = lane_metrics[lane_metrics["period"].eq(total_period)].iloc[0] if not lane_metrics.empty else None
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">CLOUD MODE</span><h1>{html.escape(info.display_name)}</h1><p class="lead">{html.escape(info.feature_summary)}</p><p>{html.escape(info.selection_summary)}</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p></div>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">CLOUD MODE</span><h1>{html.escape(info.display_name)}</h1><p class="lead">{html.escape(info.feature_summary)}</p><p>{html.escape(info.selection_summary)}</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>確定取引数</small><b>{int(total['n']) if total is not None else 0}件</b></div><div class="kpi"><small>平均騰落率</small><b>{_pct(total['mean_pct'], True) if total is not None else '—'}</b></div><div class="kpi"><small>勝率</small><b>{_pct(total['win_pct']) if total is not None else '—'}</b></div><div class="kpi"><small>100株損益</small><b>{_yen(total['cash_pl_100_yen']) if total is not None else '—'}</b></div></div></aside></section>
 <section class="panel"><h2>{html.escape(info.display_name)} の資産推移</h2><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p>{_equity_chart(lane, info.display_name, selector_id.replace('_', '-'), as_of=generated.tz_localize(None))}</section>
 <section class="panel" id="performance"><h2>全期間の成績</h2><div class="table-wrap"><table><thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead><tbody>{_mode_overall_row(metrics, selector_id)}</tbody></table></div></section>
@@ -938,10 +973,11 @@ def render_guide(generated_at: pd.Timestamp) -> str:
 <article class="guide-card"><h3>ファンダ分析</h3><p>会社がどんな事業をしているか、検出時点までに公表されていた決算やお知らせ、その内容から読み取れる注目点と注意点をまとめています。資料名を押すと根拠となる開示資料を確認できます。</p></article>
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
-<article class="guide-card"><h3>100株損益</h3><p>検出された銘柄を毎回100株ずつ売買した、と仮定した損益の合計です。税金や手数料は入れていません。</p></article>
+<article class="guide-card"><h3>100株損益</h3><p>成績集計対象の銘柄を毎回100株ずつ売買した、と仮定した損益の合計です。税金や手数料は入れていません。</p></article>
 <article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、100株ずつ取引するために最も多く必要だった資金の目安です。</p></article>
 <article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
-<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、利益になった取引の割合です。買値と売値が同じ取引は数えません。騰落率は、買った価格から売った価格まで何%動いたかを表します。</p></article>
+<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、成績集計対象の取引のうち利益になった割合です。損益0%の取引も勝率の分母に含みます。騰落率は、買ったと仮定した価格から売値まで何%動いたかを表します。</p></article>
+<article class="guide-card"><h3>参考値・集計対象外</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
 <section class="panel"><h2>2つの合算方法</h2><div class="guide-grid"><article class="guide-card"><h3>モード別積み上げ</h3><p>{html.escape(STACKED_EXPLANATION)}</p></article><article class="guide-card"><h3>銘柄均等</h3><p>{html.escape(UNIQUE_EXPLANATION)}</p></article></div><p class="note">複数モードへの同時該当は、将来の値動きを保証するものではありません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
@@ -958,6 +994,7 @@ def write_report(
     monthly_metrics_path: Path = DEFAULT_MONTHLY_METRICS,
 ) -> pd.DataFrame:
     generated = pd.Timestamp.now(tz="Asia/Tokyo")
+    ledger = annotate_entry_feasibility(ledger)
     metrics = build_metrics(ledger, as_of=generated.tz_localize(None))
     monthly_metrics = build_monthly_metrics(ledger, as_of=generated.tz_localize(None))
     report_path.parent.mkdir(parents=True, exist_ok=True)

@@ -23,6 +23,9 @@
 @media(max-width:1000px){.hero{grid-template-columns:1fr}.condition-grid{grid-template-columns:repeat(2,1fr)}.chart-grid,.guide-grid{grid-template-columns:1fr}}
 @media(max-width:760px){.nav{grid-template-columns:minmax(0,1fr) auto;padding:8px 12px;gap:4px 8px}.brand{grid-column:1;grid-row:1}.brand-logo{width:min(250px,61vw);height:44px}.theme-toggle{grid-column:2;grid-row:1;min-height:38px}.nav-links{grid-column:1/-1;grid-row:2;justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:3px}.nav-link{flex:0 0 auto;font-size:13px;padding:6px 9px}}
 @media(max-width:620px){main{padding:18px 12px 50px;min-width:0}.panel{padding:16px;border-radius:14px;min-width:0}.condition-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.chart-stats{grid-template-columns:1fr}.insight-grid .annual-pl-row{grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;margin:19px 0}.annual-pl-track{grid-column:1/-1;grid-row:2}.annual-pl-value{grid-column:2;grid-row:1}.payoff-kpis{gap:5px}.payoff-kpi strong{font-size:22px}.filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end}.filter-field{min-width:0}.filters input,.filters select{width:100%;min-width:0!important}.filters .filter-field:first-child,#selector-filter,#search-result-count{grid-column:1/-1}.history-table-wrap{overflow:visible;border:0;background:transparent}#detection-table{min-width:0;background:transparent}#detection-table thead{display:none}#detection-table tbody{display:grid;gap:12px}#detection-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid)}#detection-table tbody tr>*{display:block;min-width:0;white-space:normal;border:0;padding:6px 8px;text-align:left}#detection-table tbody tr>td:first-child,#detection-table tbody tr>th,#detection-table tbody tr>td:nth-child(3),#detection-table tbody tr>td:last-child{grid-column:1/-1}#detection-table tbody tr>th{font-size:16px;border-bottom:1px solid var(--line);padding-bottom:10px}#detection-table tbody tr>td::before{content:attr(data-label);display:block;color:var(--muted);font-size:11px;font-weight:800}#detection-table tbody tr>td:last-child{border-top:1px solid var(--line)}.fundamental-detail{min-width:0;max-width:100%;overflow-wrap:anywhere}.discord-embed{min-width:0}.button-link,.fundamental-toggle{min-height:36px;align-items:center}.kpi b.period-range{font-size:15px;white-space:normal}}
+.status.reference{color:var(--warn)}
+.reference-note,.reference-value{display:block;color:var(--muted);font-size:11px;line-height:1.45;white-space:normal}
+.reference-note{max-width:250px;margin-top:4px}.reference-note a{color:var(--blue)}
 /* Match the current report's fundamental popup, independent of the table header's typography. */
 .fundamental-detail{position:relative;box-sizing:border-box;width:100%;min-width:0;max-width:520px;margin-top:8px;padding:10px 38px 10px 10px;border:1px solid var(--line);border-radius:6px;background:#fbfdff;color:#182230;text-align:left;white-space:normal;font:400 14px/1.55 "Yu Gothic","Meiryo","Segoe UI",sans-serif}
 .fundamental-detail{scroll-margin-top:110px}
@@ -65,16 +68,17 @@
 <article class="guide-card"><h3>ファンダ分析</h3><p>会社がどんな事業をしているか、検出時点までに公表されていた決算やお知らせ、その内容から読み取れる注目点と注意点をまとめています。資料名を押すと根拠となる開示資料を確認できます。</p></article>
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
-<article class="guide-card"><h3>100株損益</h3><p>検出された銘柄を毎回100株ずつ売買した、と仮定した損益の合計です。税金や手数料は入れていません。</p></article>
+<article class="guide-card"><h3>100株損益</h3><p>成績集計対象の銘柄を毎回100株ずつ売買した、と仮定した損益の合計です。税金や手数料は入れていません。</p></article>
 <article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、100株ずつ取引するために最も多く必要だった資金の目安です。</p></article>
 <article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
-<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、利益になった取引の割合です。買値と売値が同じ取引は数えません。騰落率は、買った価格から売った価格まで何%動いたかを表します。</p></article>
+<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、成績集計対象の取引のうち利益になった割合です。損益0%の取引も勝率の分母に含みます。騰落率は、買ったと仮定した価格から売値まで何%動いたかを表します。</p></article>
+<article class="guide-card"><h3>参考値・集計対象外</h3><p>S高一値として翌寄付での買付が困難と判定した銘柄は、検出履歴では参考値として表示し、成績集計と資産推移から除外します。実際の注文が約定しなかったことを示すものではありません。 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
 <section class="panel"><h2>2つの合算方法</h2><div class="guide-grid"><article class="guide-card"><h3>モード別積み上げ</h3><p>同じ銘柄が複数モードに該当した場合、モードごとに100株ずつ買ったものとして集計します（例: 3モード該当なら合計300株）。</p></article><article class="guide-card"><h3>銘柄均等</h3><p>該当モード数にかかわらず、同じ日・同じ銘柄を100株だけ買ったものとして集計します。</p></article></div><p class="note">複数モードへの同時該当は、将来の値動きを保証するものではありません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
-<p class="note">最終更新: 2026-09-25 17:09:29 JST</p></section></main><footer class="site-footer"><div class="site-footer-inner">
+<p class="note">最終更新: 2026-09-26 13:14:38 JST</p></section></main><footer class="site-footer"><div class="site-footer-inner">
 <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
 <div class="footer-links" aria-label="公式リンク">
 <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">

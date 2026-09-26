@@ -16,6 +16,7 @@ from .config import (
     SELECTOR_ORDER,
     selector_info,
 )
+from .entry_feasibility import performance_eligible
 
 
 def combined_detections(ledger: pd.DataFrame) -> pd.DataFrame:
@@ -28,6 +29,8 @@ def combined_detections(ledger: pd.DataFrame) -> pd.DataFrame:
         "entry_date", "entry_open", "fifth_xtks_exit_date",
         "fifth_xtks_exit_close", "gross_return", "one_hundred_shares_pl_yen",
     ]
+    if "performance_reference_only" in data:
+        contract_columns.append("performance_reference_only")
     for identity, group in data.groupby(["signal_date", "symbol"], sort=False):
         for column in contract_columns:
             values = group[column].dropna().astype(str).unique()
@@ -68,6 +71,7 @@ def coverage_years(frame: pd.DataFrame, as_of: pd.Timestamp) -> float:
 
 
 def summarize(frame: pd.DataFrame, period: str, as_of: pd.Timestamp) -> dict[str, Any]:
+    frame = performance_eligible(frame)
     completed = frame[pd.to_numeric(frame["gross_return"], errors="coerce").notna()].copy()
     returns = pd.to_numeric(completed["gross_return"], errors="coerce")
     capital = required_capital(completed)
@@ -103,10 +107,11 @@ def build_metrics(ledger: pd.DataFrame, as_of: pd.Timestamp | None = None) -> pd
     if ledger.empty:
         return pd.DataFrame()
     as_of = pd.Timestamp(as_of or pd.Timestamp.now()).tz_localize(None)
-    data = ledger.copy()
-    data["signal_date"] = pd.to_datetime(data["signal_date"])
-    min_year = int(data["signal_date"].dt.year.min())
-    max_year = int(data["signal_date"].dt.year.max())
+    history = ledger.copy()
+    history["signal_date"] = pd.to_datetime(history["signal_date"])
+    min_year = int(history["signal_date"].dt.year.min())
+    max_year = int(history["signal_date"].dt.year.max())
+    data = performance_eligible(history)
     rows = []
     for selector_id in SELECTOR_ORDER:
         lane = data[data["selector_id"].eq(selector_id)]
@@ -155,7 +160,9 @@ def build_monthly_metrics(
     if ledger.empty:
         return pd.DataFrame()
     as_of = pd.Timestamp(as_of or pd.Timestamp.now()).tz_localize(None)
-    data = ledger.copy()
+    data = performance_eligible(ledger)
+    if data.empty:
+        return pd.DataFrame()
     data["signal_date"] = pd.to_datetime(data["signal_date"])
     modes = [
         (selector_id, selector_info(selector_id).display_name, data[data["selector_id"].eq(selector_id)])

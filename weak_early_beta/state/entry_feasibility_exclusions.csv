@@ -1,0 +1,6 @@
+symbol,entry_date,reason,evidence_url,verification_note
+7997,2023-04-10,stop_high_one_price,https://www.jpx.co.jp/markets/statistics-equities/daily/data/202304.pdf,user_designated_one_price
+7601,2024-02-09,stop_high_one_price,https://www.jpx.co.jp/english/markets/statistics-equities/daily/u5j7e50000001usr-att/stq_20240209.pdf,jpx_session_one_price
+3350,2024-08-07,stop_high_one_price,https://www.jpx.co.jp/markets/statistics-equities/daily/mklp77000000dpb4-att/stq_20240807.pdf,jpx_session_one_price
+3103,2026-01-28,stop_high_one_price,https://www.jpx.co.jp/markets/statistics-equities/daily/t13vrt000000hlzy-att/stq_20260128.pdf,jpx_session_one_price
+6840,2026-05-22,stop_high_one_price,https://www.jpx.co.jp/markets/statistics-equities/daily/t13vrt0000019np9-att/stq_20260522.pdf,jpx_session_one_price

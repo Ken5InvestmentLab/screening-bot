@@ -1,4 +1,5 @@
 import json
+import re
 import tempfile
 import unittest
 from datetime import date, datetime
@@ -24,6 +25,7 @@ from weak_early_beta.historical_fundamentals import (
     validate_historical_report,
 )
 from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
+from weak_early_beta.entry_feasibility import annotate_entry_feasibility, performance_eligible
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.notify import (
     CHANNEL_ID, EMBED_COLORS, GUILD_ID, SUMMARY_CHANNEL_ID, _discord_url,
@@ -81,9 +83,61 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertTrue(total[column].notna().all(), column)
         combined = total[total["selector_id"].eq(COMBINED_UNIQUE_ID)].iloc[0]
         unique_trades = self.ledger.drop_duplicates(["signal_date", "symbol"])
-        self.assertEqual(combined["n"], len(unique_trades))
+        self.assertEqual(len(unique_trades), 253)
+        self.assertEqual(combined["n"], 248)
         stacked = total[total["selector_id"].eq(COMBINED_STACKED_ID)].iloc[0]
-        self.assertEqual(stacked["n"], len(self.ledger))
+        self.assertEqual(stacked["n"], 946)
+
+    def test_entry_reference_flags_five_one_price_symbol_dates_and_keeps_evidence_level(self):
+        annotated = annotate_entry_feasibility(self.ledger)
+        reference = annotated[annotated["performance_reference_only"]]
+        expected = {
+            ("7997", "2023-04-10"),
+            ("7601", "2024-02-09"),
+            ("3350", "2024-08-07"),
+            ("3103", "2026-01-28"),
+            ("6840", "2026-05-22"),
+        }
+        identities = set(zip(reference["symbol"].astype(str), pd.to_datetime(reference["entry_date"]).dt.strftime("%Y-%m-%d")))
+        self.assertEqual(identities, expected)
+        self.assertEqual(len(reference), 21)
+        self.assertEqual(reference.groupby(["symbol", "entry_date"])["selector_id"].nunique().to_dict(), {
+            ("7997", "2023-04-10"): 1,
+            ("7601", "2024-02-09"): 5,
+            ("3350", "2024-08-07"): 5,
+            ("3103", "2026-01-28"): 5,
+            ("6840", "2026-05-22"): 5,
+        })
+        self.assertEqual(len(annotated), len(self.ledger))
+        self.assertEqual(annotated["detection_id"].tolist(), self.ledger["detection_id"].tolist())
+        self.assertTrue(reference["performance_reference_reason"].eq("stop_high_one_price").all())
+        self.assertTrue(reference.loc[reference["symbol"].astype(str).ne("7997"), "performance_reference_verification_note"].eq("jpx_session_one_price").all())
+        self.assertTrue(reference.loc[reference["symbol"].astype(str).eq("7997"), "performance_reference_verification_note"].eq("user_designated_one_price").all())
+        self.assertEqual(len(performance_eligible(annotated)), 946)
+        self.assertEqual(len(performance_eligible(annotated).drop_duplicates(["signal_date", "symbol"])), 248)
+
+    def test_entry_reference_is_excluded_from_all_performance_tables(self):
+        metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-26"))
+        total = metrics[metrics["period"].eq("2023-2026")].set_index("selector_id")
+        expected = {
+            "volr20_low": (210, 5.648177959489224, 358623.332595907),
+            "body_pct_low": (209, 6.074949359603703, 386314.999771179),
+            "mean_rank_volr20_body_pct": (210, 6.484249277317019, 420653.333664001),
+            "dual_top1_agreement": (172, 6.304127097974517, 334246.661758483),
+            "dual_top1_agreement_g3_no_acute_selloff": (145, 6.755336404294407, 285546.662521419),
+            COMBINED_STACKED_ID: (946, 6.217027246681598, 1785384.990310989),
+            COMBINED_UNIQUE_ID: (248, 5.494225069392153, 409391.670608603),
+        }
+        for selector_id, (n, mean_pct, cash_pl) in expected.items():
+            with self.subTest(selector_id=selector_id):
+                row = total.loc[selector_id]
+                self.assertEqual(row["n"], n)
+                self.assertAlmostEqual(row["mean_pct"], mean_pct, places=6)
+                self.assertAlmostEqual(row["cash_pl_100_yen"], cash_pl, places=3)
+        monthly = build_monthly_metrics(self.ledger, pd.Timestamp("2026-09-26"))
+        for selector_id, (n, _, _) in expected.items():
+            with self.subTest(monthly_selector_id=selector_id):
+                self.assertEqual(monthly.loc[monthly["selector_id"].eq(selector_id), "n"].sum(), n)
 
     def test_historical_rows_do_not_enter_fundamental_queue(self):
         self.assertEqual(build_fundamental_queue(self.ledger), [])
@@ -326,11 +380,18 @@ class WeakEarlyBetaTests(unittest.TestCase):
     def test_write_report_creates_all_mode_pages_and_free_shells(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            write_report(
+            metrics = write_report(
                 self.ledger,
                 report_path=root / "weak_early_beta_latest.html",
                 metrics_path=root / "metrics.csv",
                 monthly_metrics_path=root / "monthly.csv",
+            )
+            self.assertEqual(
+                metrics.loc[
+                    metrics["selector_id"].eq(COMBINED_STACKED_ID)
+                    & metrics["period"].eq("2023-2026"), "n"
+                ].iloc[0],
+                946,
             )
             for filename in MODE_PAGE_NAMES.values():
                 self.assertTrue((root / filename).exists(), filename)
@@ -339,6 +400,53 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertTrue((root / "weak_early_beta_guide_free.html").exists())
             self.assertTrue((root / ANALYTICS_PAGE_NAME).exists())
             self.assertTrue((root / ANALYTICS_PAGE_NAME.replace(".html", "_free.html")).exists())
+            dashboard = (root / "weak_early_beta_latest.html").read_text(encoding="utf-8")
+            self.assertEqual(dashboard.count('data-date="'), 253)
+            for signal_date, symbol in (
+                ("2024-02-08", "7601"),
+                ("2024-08-06", "3350"),
+                ("2026-01-27", "3103"),
+                ("2026-05-21", "6840"),
+            ):
+                match = re.search(
+                    rf'<tr[^>]*data-date="{signal_date}"[^>]*data-symbol="{symbol}"[^>]*>.*?</tr>',
+                    dashboard,
+                    re.DOTALL,
+                )
+                self.assertIsNotNone(match, (signal_date, symbol))
+                row = match.group(0)
+                self.assertIn("参考値・集計対象外", row)
+                self.assertIn("S高一値", row)
+                self.assertIn('data-label="騰落率"', row)
+                self.assertIn("参考値", row.split('data-label="騰落率"', 1)[1])
+                self.assertIn('data-label="100株損益"', row)
+                self.assertIn("参考値", row.split('data-label="100株損益"', 1)[1])
+                for filename in MODE_PAGE_NAMES.values():
+                    page = (root / filename).read_text(encoding="utf-8")
+                    self.assertIn(f'data-date="{signal_date}"', page)
+                    self.assertIn(f'data-symbol="{symbol}"', page)
+            ordinary = re.search(
+                r'<tr[^>]*data-date="2023-04-07"[^>]*data-symbol="7997"[^>]*>.*?</tr>',
+                dashboard,
+                re.DOTALL,
+            )
+            self.assertIsNotNone(ordinary)
+            self.assertIn("参考値・集計対象外", ordinary.group(0))
+            self.assertIn("S高一値", ordinary.group(0))
+            self.assertIn('data-label="騰落率"', ordinary.group(0))
+            self.assertIn('data-label="100株損益"', ordinary.group(0))
+            self.assertGreaterEqual(ordinary.group(0).count("参考値"), 3)
+            self.assertEqual(dashboard.count("参考値・集計対象外"), 5)
+            direct_dashboard = render_report(self.ledger, metrics, pd.Timestamp("2026-09-26"))
+            self.assertEqual(direct_dashboard.count("参考値・集計対象外"), 5)
+            analytics = (root / ANALYTICS_PAGE_NAME).read_text(encoding="utf-8")
+            growth = analytics.split('id="growth">', 1)[1].split('</section>', 1)[0]
+            self.assertIn("¥+1,785,385", growth)
+            self.assertIn("¥+409,392", growth)
+            self.assertNotIn("¥+1,828,335", growth)
+            payoff = analytics.split('id="payoff-structure">', 1)[1].split('</section>', 1)[0]
+            self.assertIn("50.32%", payoff)
+            self.assertIn("勝ち 476件・負け 456件・引き分け 14件", payoff)
 
     def test_analytics_is_separate_and_uses_generated_day_for_period_end(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-11"))
@@ -356,10 +464,10 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("トータルの資産推移", output)
         self.assertIn('<section class="panel" id="annual-pl">', output)
         self.assertIn('<section class="panel" id="payoff-structure">', output)
-        self.assertIn("50.88%", output)
-        self.assertIn("+24.2%", output)
-        self.assertIn("-12.6%", output)
-        self.assertIn("1.92倍", output)
+        self.assertIn("50.32%", output)
+        self.assertIn("+24.3%", output)
+        self.assertIn("-12.4%", output)
+        self.assertIn("1.95倍", output)
         self.assertIn("2026年（9月3日検出分まで）", output)
         self.assertNotIn("YTD", output)
         self.assertIn("資金増加率", output)
@@ -383,11 +491,15 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn('class="annual-pl-bar negative"', chart)
         self.assertIn("確定取引数", chart)
         self.assertEqual(chart.count('class="annual-pl-row"'), 4)
-        self.assertIn("¥+370,003", chart)
+        self.assertIn("¥+350,903", chart)
         self.assertNotIn("¥+90,307", chart)
 
     def test_payoff_structure_uses_current_completed_trades(self):
-        frame = pd.DataFrame({"gross_return": [0.2, -0.1, 0.0, float("nan")]})
+        frame = pd.DataFrame({
+            "symbol": ["9999"] * 4,
+            "entry_date": ["2026-09-01"] * 4,
+            "gross_return": [0.2, -0.1, 0.0, float("nan")],
+        })
         chart = _payoff_structure(frame)
         self.assertIn("33.33%", chart)
         self.assertIn("+20.0%", chart)

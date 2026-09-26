@@ -1,6 +1,6 @@
 # Weak+Early Beta Gate
 
-現行 `report-gate` と同じDiscord OAuth・ロール確認実装をimportし、別Worker `scoring-bot-weak-early-beta` と別asset bundleでベータHTMLだけを配信します。
+現行 `report-gate` と同じDiscord OAuth・ロール確認実装をimportし、別Worker `tentei-kyokuchi-cloud`（`https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev/`）と別asset bundleでベータHTMLだけを配信します。公開前に `wrangler.jsonc` の `name` がこのWorker名と一致することを確認してください。
 検証・deploy前に `report-gate/src/index.ts` をベータ配下へ機械コピーし、SHA256 receiptを作るため、認証ロジックは同一のまま別bundleになります。
 
 ```bash

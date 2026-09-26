@@ -1,0 +1,66 @@
+name: Cloud Report Deploy
+
+on:
+  push:
+    tags:
+      - "cloud-deploy-*"
+
+concurrency:
+  group: cloud-report-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require the latest Cloud research commit
+        shell: bash
+        run: |
+          target="$(git ls-remote origin refs/heads/research/weak-early-beta | cut -f1)"
+          test -n "$target"
+          test "$GITHUB_SHA" = "$target"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: weak-early-beta-gate/package-lock.json
+
+      - name: Require the live Cloud Worker target
+        working-directory: weak-early-beta-gate
+        run: |
+          node -e 'const fs = require("node:fs"); const config = JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8")); if (config.name !== "tentei-kyokuchi-cloud") process.exit(1)'
+
+      - name: Install Cloud gate dependencies
+        working-directory: weak-early-beta-gate
+        run: npm ci
+
+      - name: Check Cloud gate and assets
+        working-directory: weak-early-beta-gate
+        run: npm run check
+
+      - name: Deploy the Cloud report Worker
+        working-directory: weak-early-beta-gate
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          test -n "$CLOUDFLARE_API_TOKEN"
+          npm run deploy
+
+      - name: Verify the live Worker responds
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev/healthz)"
+            if [ "$status" = "200" ]; then exit 0; fi
+            sleep 5
+          done
+          exit 1

@@ -1,0 +1,114 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-07-16|2134",
+      "signalDate": "2025-07-16",
+      "symbolCode": "2134",
+      "companyName": "北浜キャピタルパートナーズ",
+      "analysisCutoff": "2025-07-16T16:15:00+09:00",
+      "generatedAt": "2026-09-27T19:28:38+09:00",
+      "summary": "2025年3月期は売上701百万円に対し営業損失579百万円、純損失835百万円、営業CF▲1,579百万円。7月16日にトラストコーポレーションの新株250株を2億円で引受け、持分を20％から40％にする契約・決議を公表。譲渡実行は同日予定。",
+      "materialImpact": "トラスト社追加取得で2026年3月期の持分法投資利益が680万円増える見込み。前年の20％取得に続く2億円の投資で、開示上の取得実行はまだ予定段階。通期予想の営業・経常・最終黒字化と大幅増収も未達成の会社計画。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "7月16日、持分法適用会社トラストコーポレーションが発行する250株を2億円で引受け、持株比率を20％から40％にする決議・契約を公表。譲渡実行日は同日「予定」で、開示時点では完了未確認。2026年3月期の経常利益・純利益を各680万円押し上げる見込みだが、年次損失やGC重要不確実性を覆す規模ではない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "投資事業（太陽光発電・蓄電システム等）、アセットマネジメント、アドバイザリーを展開。2025年3月期の連結売上は主にクリーンエネルギー投資で、ゴルフ場運営等も含む。トラスト社は電気工事・太陽光発電・不動産を手掛ける持分法適用会社。"
+        },
+        {
+          "name": "足元材料",
+          "value": "5月にトラスト社の新株150株を2億円で取得して20％を保有。7月16日に新株250株を追加引受する契約を結び、取得後は400株・40％となる計画。7月の追加取得額は2億円で、14回新株予約権の行使調達資金を充てる予定。6月26日には同予約権4,000,000個の全行使が完了し、総額68億円を調達したと会社が公表。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期連結は売上701百万円（前期比199.2％増）、営業損失579百万円、経常損失601百万円、親会社株主帰属損失835百万円。営業CF▲1,579百万円、期末現金同等物256百万円、総資産2,686百万円、純資産2,039百万円、自己資本比率75.0％。2026年3月期予想は売上54,433百万円、営業利益477百万円、経常利益438百万円、純利益201百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "短信は連続する営業・経常・最終赤字により継続企業の前提に重要な疑義がある状況と重要な不確実性を明記。54,433百万円の翌期売上予想にはGPU搭載サーバー販売52,200百万円を含み、確定売上ではない。トラスト社の2025年1月期実績は売上613百万円、営業利益19.5百万円、経常利益10.6百万円、純利益10.4百万円。取得価格のDCF前提には同社の2027年1月期営業利益が2025年1月期比約415％増となる予測を含む。7月16日開示では株式譲渡実行は同日予定とされ、完了確認とは区別した。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-05-15 2025年3月期決算短信(日付のみ)](https://www2.jpx.co.jp/disc/21340/140120250515554931.pdf)\n・[2025-05-15 トラスト社株式取得(日付のみ)](https://kitahamabank.co.jp/wp-content/uploads/2025/05/250515_%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%88%E3%83%A9%E3%82%B9%E3%83%88%E3%82%B3%E3%83%BC%E3%83%9D%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E6%A0%AA%E5%BC%8F%E3%81%AE%E5%8F%96%E5%BE%97%EF%BC%88%E6%8C%81%E5%88%86%E6%B3%95%E9%81%A9%E7%94%A8%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2025-06-26 第14回新株予約権の行使完了(日付のみ)](https://kitahamabank.co.jp/wp-content/uploads/2025/06/250626_%E7%AC%AC14%E5%9B%9E%E6%96%B0%E6%A0%AA%E4%BA%88%E7%B4%84%E6%A8%A9%E3%81%AE%E8%A1%8C%E4%BD%BF%E5%AE%8C%E4%BA%86%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2025-07-16 持分法会社株式の追加取得(15:30)](https://www2.jpx.co.jp/disc/21340/140120250716515560.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[北浜キャピタルパートナーズ IR情報（2025年7月開示一覧）](https://kitahamabank.co.jp/category/ir/page/6/)\n・[2134 適時開示時刻一覧（IRBANK）](https://irbank.net/2134/ir?y=2025-07-16)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://kitahamabank.co.jp/category/ir/page/6/",
+          "checkedUrls": [
+            "https://kitahamabank.co.jp/category/ir/page/6/",
+            "https://www2.jpx.co.jp/disc/21340/140120250515554931.pdf",
+            "https://kitahamabank.co.jp/wp-content/uploads/2025/05/250515_%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%88%E3%83%A9%E3%82%B9%E3%83%88%E3%82%B3%E3%83%BC%E3%83%9D%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E6%A0%AA%E5%BC%8F%E3%81%AE%E5%8F%96%E5%BE%97%EF%BC%88%E6%8C%81%E5%88%86%E6%B3%95%E9%81%A9%E7%94%A8%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+            "https://kitahamabank.co.jp/wp-content/uploads/2025/06/250626_%E7%AC%AC14%E5%9B%9E%E6%96%B0%E6%A0%AA%E4%BA%88%E7%B4%84%E6%A8%A9%E3%81%AE%E8%A1%8C%E4%BD%BF%E5%AE%8C%E4%BA%86%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+            "https://www2.jpx.co.jp/disc/21340/140120250716515560.pdf"
+          ],
+          "result": "会社IR一覧掲載の決算、初回取得、行使完了、7月16日追加取得の公式PDF本文を照合。損益・キャッシュフロー、GC記載、トラスト社の持分・取得金額・事業内容・見通しを確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2134/140120250716515560",
+          "checkedUrls": [
+            "https://irbank.net/2134/140120250716515560",
+            "https://kitahamabank.co.jp/category/ir/page/6/"
+          ],
+          "result": "IRBANK時刻索引で7月16日15:30の公表を確認。公式IR一覧の7月16日掲載を照合し、16:15 cutoff内に公表済みの資料として採用。取得実行日が「予定」の記載であることはPDF本文を優先。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年３月期 決算短信〔日本基準〕(連結)",
+          "publishedAt": "2025-05-15T00:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/21340/140120250515554931.pdf",
+          "publishedAtPrecision": "date_only; official PDF and IR archive show date only",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式会社トラストコーポレーション株式の取得（持分法適用会社化）に関するお知らせ",
+          "publishedAt": "2025-05-15T00:00:00+09:00",
+          "url": "https://kitahamabank.co.jp/wp-content/uploads/2025/05/250515_%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%88%E3%83%A9%E3%82%B9%E3%83%88%E3%82%B3%E3%83%BC%E3%83%9D%E3%83%AC%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3%E6%A0%AA%E5%BC%8F%E3%81%AE%E5%8F%96%E5%BE%97%EF%BC%88%E6%8C%81%E5%88%86%E6%B3%95%E9%81%A9%E7%94%A8%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+          "publishedAtPrecision": "date_only; official PDF and IR archive show date only",
+          "contentReviewed": true
+        },
+        {
+          "title": "第14回新株予約権の行使完了に関するお知らせ",
+          "publishedAt": "2025-06-26T00:00:00+09:00",
+          "url": "https://kitahamabank.co.jp/wp-content/uploads/2025/06/250626_%E7%AC%AC14%E5%9B%9E%E6%96%B0%E6%A0%AA%E4%BA%88%E7%B4%84%E6%A8%A9%E3%81%AE%E8%A1%8C%E4%BD%BF%E5%AE%8C%E4%BA%86%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+          "publishedAtPrecision": "date_only; official PDF and IR archive show date only",
+          "contentReviewed": true
+        },
+        {
+          "title": "持分法適用会社株式の追加取得に関するお知らせ",
+          "publishedAt": "2025-07-16T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/21340/140120250716515560.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity、会社名、5 selectors、16:15 cutoffを照合。",
+        "公式JPX・会社IRの直接PDF本文を確認。FY2025/3実績とFY2026/3会社予想を区別し、予想売上の大半を占めるサーバー販売は未実現計画として記載。",
+        "7月16日15:30の開示本文では持分法会社の追加取得が決議・契約された一方、株式譲渡実行日は「2025年7月16日（予定）」。完了済みと断定しない。",
+        "トラスト社への初回20％出資、追加250株・200百万円、期待持分法利益6.8百万円、DCF予測の2027年1月期営業利益増加率を本文で照合。",
+        "継続企業に重要な疑義を生じさせる状況と重要な不確実性、期末現金同等物、営業CFをFY短信で確認。"
+      ]
+    }
+  ]
+}

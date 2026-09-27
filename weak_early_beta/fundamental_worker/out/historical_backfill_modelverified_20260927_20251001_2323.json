@@ -1,0 +1,98 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-10-01|2323",
+      "signalDate": "2025-10-01",
+      "symbolCode": "2323",
+      "companyName": "ｆｏｎｆｕｎ",
+      "analysisCutoff": "2025-10-01T16:15:00+09:00",
+      "generatedAt": "2026-09-27T19:32:10+09:00",
+      "summary": "2026年3月期1Q（4～6月）は売上高429.871百万円（前年同期比+82.4%）、営業利益61.931百万円（+51.6%）。8/5改定の通期予想は売上1,908・営業204・経常193・純利益193百万円。9/22のMWD社20%取得決議と、10/1 13:00公表のM&A DX新理念・ガバナンス強化まで反映。",
+      "materialImpact": "1Qは増収増益で、8/5に通期予想も上方修正。増収には事業譲受が含まれ、予想引上げ理由は6月のITフリーランスマッチング事業譲受。オンライン診療事業の規模・取得価額は非開示。MWD株取得の業績影響は会社が軽微と想定。M&A DXの理念・統制強化は取り組みの公表で、業績寄与額は示されていない。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド"
+      ],
+      "fields": [
+        {
+          "value": "1Q売上は前年同期比82.4%増、営業利益は51.6%増。8/5の通期予想引上げは6月取得のITフリーランスマッチング事業を織り込む。別途、法人向けオンライン診療事業を開始し「らく診」を譲受。9/22のMWD社20%取得決議は業績影響が軽微との想定。10/1のM&A DX新理念・ガバナンス強化は収益額の開示がない。",
+          "name": "材料インパクト"
+        },
+        {
+          "value": "クラウドソリューション（SMS配信、Webメール、クラウド電話等）と、企業向けDX支援・システム開発・SESを展開。2025年8月にはオンライン診療の法人向け福利厚生サービス「らく診」を取得して提供を開始。",
+          "name": "事業概要"
+        },
+        {
+          "value": "8/5、6月に取得したITフリーランスマッチング事業の寄与を理由に2026年3月期予想を上方修正。同日、porteraから「らく診」事業を譲受し、フェアワークとの業務提携を公表。9/22、システム受託開発・SESのMWD社488株（20%）を取得し持分法適用会社とする取締役会決議。10/1 13:00、関連会社M&A DXが新理念を策定し、ガバナンス・コンプライアンス強化とM&A支援機関への再登録を目指すと公表。",
+          "name": "足元材料"
+        },
+        {
+          "value": "2026年3月期1Q（非連結）：売上高429.871百万円（+82.4%）、営業利益61.931百万円（+51.6%）、経常利益59.387百万円（+45.5%）、四半期純利益59.157百万円（+45.2%）。6/30現金及び預金682.544百万円（3/31比28.517百万円減）、純資産1,000.752百万円、自己資本比率45.0%。四半期CF計算書は未作成。通期予想は売上1,908・営業利益204・経常利益193・純利益193百万円。",
+          "name": "ファンダ要点"
+        },
+        {
+          "value": "1Qは非連結で、事業譲受を含むため前年同期との比較には構成変化がある。らく診の業績・資産負債・譲受価額は非開示。MWD社の財務情報と取得価額も非開示で、取得決議時の会社見通しは業績影響軽微。M&A DXは過去にM&A支援機関登録が取り消されており、再登録は目指す段階。1Q短信の継続企業の前提に関する注記は該当なし。",
+          "name": "注意点"
+        },
+        {
+          "value": "・[2025-08-13 2026年3月期第1四半期決算短信(13:00)](https://www.fonfun.co.jp/wp-content/uploads/2025/08/2025081301.pdf)\n・[2025-08-05 業績予想の修正(13:00)](https://www.fonfun.co.jp/wp-content/uploads/2025/08/2025080501.pdf)\n・[2025-08-05 オンライン診療事業譲受等(13:00)](https://www.fonfun.co.jp/wp-content/uploads/2025/08/2025080502.pdf)\n・[2025-09-22 MWD株式取得決議(13:00)](https://www.fonfun.co.jp/wp-content/uploads/2025/09/2025092201.pdf)\n・[2025-10-01 M&A DX新経営理念(13:00)](https://www.fonfun.co.jp/wp-content/uploads/2025/10/2025100101.pdf)",
+          "name": "開示リンク"
+        },
+        {
+          "value": "・[fonfun IRニュース一覧（10/1掲載）](https://www.fonfun.co.jp/ir/ir-news/page/2/)\n・[fonfun IRニュース一覧（9/22・8/13・8/5掲載）](https://www.fonfun.co.jp/ir/ir-news/page/3/)\n・[IRBANK fonfun 適時開示一覧（10/1 13:00）](https://irbank.net/2323/ir?y=2025-10-02)",
+          "name": "Sources"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "url": "https://www.fonfun.co.jp/ir/ir-news/22367/",
+          "role": "official_ir",
+          "note": "10/1付の会社公式記事と添付PDFの本文を確認。記事・PDFは日付表示のみ。"
+        },
+        {
+          "url": "https://irbank.net/2323/ir?y=2025-10-02",
+          "role": "irbank_or_tdnet",
+          "note": "IRBANKの時系列で同記事を2025/10/01 13:00と確認。16:15 JST cutoff前。8/5、8/13、9/22の選択開示も各13:00で確認。"
+        },
+        {
+          "url": "https://www.fonfun.co.jp/ir/ir-news/page/3/",
+          "role": "official_ir",
+          "note": "会社IR一覧で8/5、8/13、9/22の掲載と各公式PDFを照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "url": "https://www.fonfun.co.jp/wp-content/uploads/2025/08/2025081301.pdf",
+          "title": "2026年３月期 第１四半期決算短信〔日本基準〕（非連結）",
+          "contentReviewed": true,
+          "publishedAt": "2025-08-13T13:00:00+09:00"
+        },
+        {
+          "url": "https://www.fonfun.co.jp/wp-content/uploads/2025/08/2025080501.pdf",
+          "title": "業績予想の修正に関するお知らせ",
+          "contentReviewed": true,
+          "publishedAt": "2025-08-05T13:00:00+09:00"
+        },
+        {
+          "url": "https://www.fonfun.co.jp/wp-content/uploads/2025/08/2025080502.pdf",
+          "title": "新たな事業の開始、事業譲受及び業務提携に関するお知らせ",
+          "contentReviewed": true,
+          "publishedAt": "2025-08-05T13:00:00+09:00"
+        },
+        {
+          "url": "https://www.fonfun.co.jp/wp-content/uploads/2025/09/2025092201.pdf",
+          "title": "株式会社マイクロウェーブデジタルの株式の取得（持分法適用会社化）に関するお知らせ",
+          "contentReviewed": true,
+          "publishedAt": "2025-09-22T13:00:00+09:00"
+        },
+        {
+          "url": "https://www.fonfun.co.jp/wp-content/uploads/2025/10/2025100101.pdf",
+          "title": "関連会社 株式会社M&A DX 新経営理念策定のお知らせ",
+          "contentReviewed": true,
+          "publishedAt": "2025-10-01T13:00:00+09:00"
+        }
+      ],
+      "auditStatus": "pass"
+    }
+  ]
+}

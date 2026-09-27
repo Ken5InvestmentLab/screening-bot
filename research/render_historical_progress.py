@@ -50,10 +50,11 @@ def main() -> None:
     stage_counts = Counter()
     for item in active_items:
         status = item["status"]
-        if status in {"資料確認済み", "候補作成中", "監査完了"}:
+        if status in {"待機中", "資料確認中", "資料確認済み", "候補作成中", "監査完了"}:
             stage_counts[status] += 1
         else:
             stage_counts["資料確認中"] += 1
+    working_count = len(active_items) - stage_counts["待機中"]
     later = pending - len(active_pending)
     active_rows = "".join(row(item["identity"], item["detail"], item["status"]) for item in active_items)
     next_rows = "".join(row(item["identity"], item.get("company_name", ""), "未着手") for item in next_records)
@@ -123,7 +124,7 @@ def main() -> None:
   <div class="stat"><span class="value">{completed} / {total}</span><span class="label">分析完了</span></div>
   <div class="stat"><span class="value">{pending}</span><span class="label">未完了</span></div>
   <div class="stat"><span class="value">{published}</span><span class="label">Web公開済み</span></div>
-  <div class="stat"><span class="value">{len(active_items)}</span><span class="label">進行中</span></div>
+  <div class="stat"><span class="value">{working_count}</span><span class="label">調査中</span></div>
 </div>
 <section aria-label="全体進捗"><div class="progress-copy"><strong>全体進捗</strong><strong>{percent:.1f}%</strong></div><div class="track" role="progressbar" aria-label="分析完了率" aria-valuemin="0" aria-valuemax="{total}" aria-valuenow="{completed}"><div class="fill" style="width:{percent:.1f}%"></div></div><p class="muted note">公式IR / TDnet / JPX の本文を、各検出日16:15 JSTまでの情報として確認。</p></section>
 <section class="flow" aria-label="件数の流れ">
@@ -132,11 +133,11 @@ def main() -> None:
   <div class="flow-arrow" aria-hidden="true">↓</div>
   <div class="flow-row"><div class="flow-node"><strong>{completed}件</strong><small>分析完了</small></div><div class="flow-node"><strong>{pending}件</strong><small>未完了</small></div></div>
   <div class="flow-arrow" aria-hidden="true">↓</div>
-  <div class="flow-row"><div class="flow-node"><strong>{len(active_pending)}件</strong><small>今回の調査対象</small></div><div class="flow-node"><strong>{later}件</strong><small>後続・保留</small></div></div>
-  <div class="flow-stages" aria-label="今回の調査対象の段階"><div class="flow-node"><strong>{stage_counts['資料確認中']}件</strong><small>一次資料を調査中</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['資料確認済み']}件</strong><small>一次資料確認済み</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['候補作成中']}件</strong><small>Luna候補作成中</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['監査完了']}件</strong><small>独立監査完了</small></div></div>
+  <div class="flow-row"><div class="flow-node"><strong>{len(active_pending)}件</strong><small>調査中・待機</small></div><div class="flow-node"><strong>{later}件</strong><small>後続・保留</small></div></div>
+  <div class="flow-stages" aria-label="今回の調査対象の段階"><div class="flow-node"><strong>{stage_counts['待機中']}件</strong><small>着手待ち</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['資料確認中']}件</strong><small>一次資料を調査中</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['資料確認済み']}件</strong><small>一次資料確認済み</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['候補作成中']}件</strong><small>Luna候補作成中</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['監査完了']}件</strong><small>独立監査完了</small></div></div>
 </section>
 <div class="layout"><div>
-  <section><h2>いま進めている銘柄</h2><table><thead><tr><th>検出日・コード</th><th>銘柄</th><th>状態</th></tr></thead><tbody>{active_rows}</tbody></table></section>
+  <section><h2>調査中・次に着手する銘柄</h2><table><thead><tr><th>検出日・コード</th><th>銘柄</th><th>状態</th></tr></thead><tbody>{active_rows}</tbody></table></section>
   <section><h2>次の未完了</h2><table><thead><tr><th>検出日・コード</th><th>銘柄</th><th>状態</th></tr></thead><tbody>{next_rows}</tbody></table></section>
 </div><div>
   <section><h2>年別の完了状況</h2><table><thead><tr><th>年</th><th>完了 / 対象</th><th>進捗</th></tr></thead><tbody>{year_rows}</tbody></table></section>

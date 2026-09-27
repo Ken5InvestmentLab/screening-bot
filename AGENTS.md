@@ -296,6 +296,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 - To correct an already completed historical snapshot, update the candidate and its generation receipt, rerun the checker, then import with `python -B -m weak_early_beta.cli import-historical-fundamentals --replace-existing --input <candidate-json>`. A normal import rejects completed identities; the replacement path upserts the report and records the prior and new hashes in the receipt audit log.
 - Reports carrying `analysisCutoff` must use the research-only `weak_early_beta/scripts/post_historical_snapshot.mjs` path. Do not change the production Premium Worker to weaken its newer-disclosure freshness gate.
 - Keep the cutoff audit and the beta worker state separate from production state, Discord channels, and workflows; regenerate the beta HTML only after the beta receipt is imported.
+- For this historical backfill, `research/render_historical_progress.py` reads the manifest and `research/historical_progress_state.json` to update the local visual dashboard; keep active research and waiting statuses distinct, and keep the published count separate from local completion. Publish accumulated snapshots together after the verifiable batch is finished, rather than deploying each local checkpoint.
 
 ## Future Work
 

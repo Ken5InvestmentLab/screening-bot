@@ -1,0 +1,103 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-12-11|198A",
+      "signalDate": "2025-12-11",
+      "symbolCode": "198A",
+      "companyName": "ＰｏｓｔＰｒｉｍｅ",
+      "analysisCutoff": "2025-12-11T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:09:13+09:00",
+      "summary": "2026年5月期第1四半期（連結）は売上高167.494百万円、営業損失87.365百万円、経常損失80.504百万円、親会社株主帰属純損失83.146百万円。8月末の現金及び預金は651.124百万円、純資産968.742百万円。通期予想は売上高1,389百万円、営業利益52百万円などを据え置き。12月2日開示では、DAN TAKAHASHI LLCが保有株を一部売却し、親会社以外の支配株主から主要株主へ移った。",
+      "materialImpact": "主力SNSの新規課金件数減少とTakaTradeの立上げ費用が重なり、第1四半期は営業赤字。TakaTradeは商品CFDサービスを開始したものの、同事業は売上0.983百万円に対し営業損失87.515百万円で、現時点の損益寄与は小さい。通期予想は黒字計画を維持しているが、今回の四半期実績は赤字。支配株主の異動は所有構成の変化であり、会社は今後の見通しに特記すべき事項なしとしている。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2026年5月期第1四半期の売上高は167.494百万円、営業損失は87.365百万円。会社説明資料はPostPrimeの新規課金件数減少と、TakaTradeのサービス開始遅延に伴う収益貢献の限定・関連費用を赤字要因として挙げている。商品CFDサービスは2025年8月に開始済みだが、四半期の取引プラットフォーム事業売上は0.983百万円、営業損失87.515百万円。通期予想は据置きで、達成は未確定。"
+        },
+        {
+          "name": "事業概要",
+          "value": "金融・経済情報を扱うSNS「PostPrime」の開発・運営を中心に、メンバーシップや有料登録サービスを展開。子会社TakaTrade株式会社では商品CFD取引プラットフォーム事業を運営している。"
+        },
+        {
+          "name": "足元材料",
+          "value": "12月2日、DAN TAKAHASHI LLCが12月1日付で当社株式の一部を売却したとの報告により、同社と高橋ダニエル圭が「親会社以外の支配株主」に該当しなくなったと開示。DAN TAKAHASHI LLCの議決権比率は11月25日時点の51.48%から12月1日時点の48.27%へ低下したが、主要株主として残る。発行済株式総数は10,252,060株で異動前後に変化なし。会社は今後の見通しに特記すべき事項なしとしている。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "最新の2026年5月期第1四半期（6月～8月、連結）は売上高167.494百万円、営業損失87.365百万円、経常損失80.504百万円、親会社株主帰属純損失83.146百万円。金融・経済情報プラットフォーム事業は売上高166.511百万円（外部顧客向け）・セグメント損失7.649百万円、取引プラットフォーム事業は売上高0.983百万円・セグメント損失87.515百万円。8月末の現金及び預金651.124百万円、有価証券212.513百万円、純資産968.742百万円、自己資本比率77.8%。通期予想は売上高1,389百万円、営業利益52百万円、経常利益54百万円、親会社株主帰属当期純利益35百万円を据置き。"
+        },
+        {
+          "name": "注意点",
+          "value": "前期中間期から連結財務諸表を作成しているため、前年同期の第1四半期連結数値と増減率は短信に記載されていない。第1四半期のキャッシュ・フロー計算書は作成されておらず、営業CFは確認できない。現金及び預金は前期末912.870百万円から651.124百万円へ減った一方、顧客分別金信託100百万円と短期差入保証金148.865百万円が新たに計上されており、単純な運転資金流出とは断定できない。継続企業の前提に関する注記は該当事項なし。DAN TAKAHASHI LLCは支配株主ではなくなった後も議決権48.27%の主要株主。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-10-15 2026年5月期第1四半期決算短信（連結）(15:30)](https://www2.jpx.co.jp/disc/198A0/140120251014573389.pdf)\n・[2025-10-15 2026年5月期第1四半期決算説明資料(15:30)](https://www2.jpx.co.jp/disc/198A0/140120251015573751.pdf)\n・[2025-12-02 親会社以外の支配株主の異動に関するお知らせ(08:30)](https://www2.jpx.co.jp/disc/198A0/140120251202513118.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[PostPrime公式IRニュース（2025年・適時開示）](https://corp.postprime.com/ir/news/?ir_cat=disclosure%2Cearnings%2Csecurities-report%2Cpr-info&ir_year=2025)\n・[PostPrime公式決算短信ライブラリー](https://corp.postprime.com/ir/library/results/)\n・[198A適時開示時系列（公開時刻照合用）](https://irbank.net/198A/ir?y=2025-12-11)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://corp.postprime.com/ir/news/?ir_cat=disclosure%2Cearnings%2Csecurities-report%2Cpr-info&ir_year=2025",
+          "checkedUrls": [
+            "https://corp.postprime.com/ir/news/?ir_cat=disclosure%2Cearnings%2Csecurities-report%2Cpr-info&ir_year=2025",
+            "https://corp.postprime.com/ir/library/results/",
+            "https://www2.jpx.co.jp/disc/198A0/140120251014573389.pdf",
+            "https://www2.jpx.co.jp/disc/198A0/140120251015573751.pdf",
+            "https://www2.jpx.co.jp/disc/198A0/140120251202513118.pdf"
+          ],
+          "result": "会社公式IR掲載およびJPX掲載の第1四半期短信・説明資料、12月2日支配株主異動資料の本文を確認。連結業績、セグメント、財政状態、CF計算書の非作成、通期予想、株主比率の異動を照合した。公式IR一覧を2025年12月11日16:15 JSTまで確認し、同日までの開示を採録。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/198A/ir?y=2025-12-11",
+          "checkedUrls": [
+            "https://irbank.net/198A/ir?y=2025-12-11"
+          ],
+          "result": "開示時系列で2025年10月15日15:30の短信・説明資料と、12月2日08:30の支配株主異動の公開時刻を照合。IRBANKは時刻照合のみで、財務・事業・株主異動の事実は会社公式IR/JPX本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年5月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-10-15T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/198A0/140120251014573389.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年5月期 第1四半期 決算説明資料",
+          "publishedAt": "2025-10-15T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/198A0/140120251015573751.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "親会社以外の支配株主の異動に関するお知らせ",
+          "publishedAt": "2025-12-02T08:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/198A0/140120251202513118.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff is 2025-12-11 16:15 JST. Reviewed the official company IR disclosure list and JPX primary documents available by the cutoff; did not use prices, returns, or later materials.",
+        "Read the full Q1 statement and company presentation. Confirmed the reported consolidation basis, quarter figures, segment losses, no cash-flow statement, unchanged annual forecast, and no going-concern note.",
+        "Read the official December 2 shareholder-change notice. Kept the change in controlling-shareholder status distinct from continued major-shareholder status; verified issued shares were unchanged and no earnings outlook effect was specified.",
+        "Used IRBANK only to cross-check publication times; factual statements are based on official company IR and JPX document bodies."
+      ]
+    }
+  ]
+}

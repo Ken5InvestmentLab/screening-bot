@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-27T20:05:55.956925+09:00",
+  "updated_at": "2026-09-27T20:10:22.957809+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -19407,6 +19407,104 @@
       "analysisCutoff": "2025-12-09T16:15:00+09:00"
     },
     {
+      "identity": "2025-12-11|198A",
+      "signalDate": "2025-12-11",
+      "symbolCode": "198A",
+      "companyName": "ＰｏｓｔＰｒｉｍｅ",
+      "analysisCutoff": "2025-12-11T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:09:13+09:00",
+      "summary": "2026年5月期第1四半期（連結）は売上高167.494百万円、営業損失87.365百万円、経常損失80.504百万円、親会社株主帰属純損失83.146百万円。8月末の現金及び預金は651.124百万円、純資産968.742百万円。通期予想は売上高1,389百万円、営業利益52百万円などを据え置き。12月2日開示では、DAN TAKAHASHI LLCが保有株を一部売却し、親会社以外の支配株主から主要株主へ移った。",
+      "materialImpact": "主力SNSの新規課金件数減少とTakaTradeの立上げ費用が重なり、第1四半期は営業赤字。TakaTradeは商品CFDサービスを開始したものの、同事業は売上0.983百万円に対し営業損失87.515百万円で、現時点の損益寄与は小さい。通期予想は黒字計画を維持しているが、今回の四半期実績は赤字。支配株主の異動は所有構成の変化であり、会社は今後の見通しに特記すべき事項なしとしている。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2026年5月期第1四半期の売上高は167.494百万円、営業損失は87.365百万円。会社説明資料はPostPrimeの新規課金件数減少と、TakaTradeのサービス開始遅延に伴う収益貢献の限定・関連費用を赤字要因として挙げている。商品CFDサービスは2025年8月に開始済みだが、四半期の取引プラットフォーム事業売上は0.983百万円、営業損失87.515百万円。通期予想は据置きで、達成は未確定。"
+        },
+        {
+          "name": "事業概要",
+          "value": "金融・経済情報を扱うSNS「PostPrime」の開発・運営を中心に、メンバーシップや有料登録サービスを展開。子会社TakaTrade株式会社では商品CFD取引プラットフォーム事業を運営している。"
+        },
+        {
+          "name": "足元材料",
+          "value": "12月2日、DAN TAKAHASHI LLCが12月1日付で当社株式の一部を売却したとの報告により、同社と高橋ダニエル圭が「親会社以外の支配株主」に該当しなくなったと開示。DAN TAKAHASHI LLCの議決権比率は11月25日時点の51.48%から12月1日時点の48.27%へ低下したが、主要株主として残る。発行済株式総数は10,252,060株で異動前後に変化なし。会社は今後の見通しに特記すべき事項なしとしている。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "最新の2026年5月期第1四半期（6月～8月、連結）は売上高167.494百万円、営業損失87.365百万円、経常損失80.504百万円、親会社株主帰属純損失83.146百万円。金融・経済情報プラットフォーム事業は売上高166.511百万円（外部顧客向け）・セグメント損失7.649百万円、取引プラットフォーム事業は売上高0.983百万円・セグメント損失87.515百万円。8月末の現金及び預金651.124百万円、有価証券212.513百万円、純資産968.742百万円、自己資本比率77.8%。通期予想は売上高1,389百万円、営業利益52百万円、経常利益54百万円、親会社株主帰属当期純利益35百万円を据置き。"
+        },
+        {
+          "name": "注意点",
+          "value": "前期中間期から連結財務諸表を作成しているため、前年同期の第1四半期連結数値と増減率は短信に記載されていない。第1四半期のキャッシュ・フロー計算書は作成されておらず、営業CFは確認できない。現金及び預金は前期末912.870百万円から651.124百万円へ減った一方、顧客分別金信託100百万円と短期差入保証金148.865百万円が新たに計上されており、単純な運転資金流出とは断定できない。継続企業の前提に関する注記は該当事項なし。DAN TAKAHASHI LLCは支配株主ではなくなった後も議決権48.27%の主要株主。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-10-15 2026年5月期第1四半期決算短信（連結）(15:30)](https://www2.jpx.co.jp/disc/198A0/140120251014573389.pdf)\n・[2025-10-15 2026年5月期第1四半期決算説明資料(15:30)](https://www2.jpx.co.jp/disc/198A0/140120251015573751.pdf)\n・[2025-12-02 親会社以外の支配株主の異動に関するお知らせ(08:30)](https://www2.jpx.co.jp/disc/198A0/140120251202513118.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[PostPrime公式IRニュース（2025年・適時開示）](https://corp.postprime.com/ir/news/?ir_cat=disclosure%2Cearnings%2Csecurities-report%2Cpr-info&ir_year=2025)\n・[PostPrime公式決算短信ライブラリー](https://corp.postprime.com/ir/library/results/)\n・[198A適時開示時系列（公開時刻照合用）](https://irbank.net/198A/ir?y=2025-12-11)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://corp.postprime.com/ir/news/?ir_cat=disclosure%2Cearnings%2Csecurities-report%2Cpr-info&ir_year=2025",
+          "checkedUrls": [
+            "https://corp.postprime.com/ir/news/?ir_cat=disclosure%2Cearnings%2Csecurities-report%2Cpr-info&ir_year=2025",
+            "https://corp.postprime.com/ir/library/results/",
+            "https://www2.jpx.co.jp/disc/198A0/140120251014573389.pdf",
+            "https://www2.jpx.co.jp/disc/198A0/140120251015573751.pdf",
+            "https://www2.jpx.co.jp/disc/198A0/140120251202513118.pdf"
+          ],
+          "result": "会社公式IR掲載およびJPX掲載の第1四半期短信・説明資料、12月2日支配株主異動資料の本文を確認。連結業績、セグメント、財政状態、CF計算書の非作成、通期予想、株主比率の異動を照合した。公式IR一覧を2025年12月11日16:15 JSTまで確認し、同日までの開示を採録。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/198A/ir?y=2025-12-11",
+          "checkedUrls": [
+            "https://irbank.net/198A/ir?y=2025-12-11"
+          ],
+          "result": "開示時系列で2025年10月15日15:30の短信・説明資料と、12月2日08:30の支配株主異動の公開時刻を照合。IRBANKは時刻照合のみで、財務・事業・株主異動の事実は会社公式IR/JPX本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年5月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-10-15T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/198A0/140120251014573389.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年5月期 第1四半期 決算説明資料",
+          "publishedAt": "2025-10-15T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/198A0/140120251015573751.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "親会社以外の支配株主の異動に関するお知らせ",
+          "publishedAt": "2025-12-02T08:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/198A0/140120251202513118.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff is 2025-12-11 16:15 JST. Reviewed the official company IR disclosure list and JPX primary documents available by the cutoff; did not use prices, returns, or later materials.",
+        "Read the full Q1 statement and company presentation. Confirmed the reported consolidation basis, quarter figures, segment losses, no cash-flow statement, unchanged annual forecast, and no going-concern note.",
+        "Read the official December 2 shareholder-change notice. Kept the change in controlling-shareholder status distinct from continued major-shareholder status; verified issued shares were unchanged and no earnings outlook effect was specified.",
+        "Used IRBANK only to cross-check publication times; factual statements are based on official company IR and JPX document bodies."
+      ]
+    },
+    {
       "companyName": "イメージ　ワン",
       "symbolCode": "2667",
       "selectorNames": [
@@ -19939,6 +20037,305 @@
         {
           "name": "開示リンク",
           "value": "・[2025-12-11 2026年７月期 第１四半期決算短信（15:30）](https://www2.jpx.co.jp/disc/44220/140120251209516468.pdf)\n・[2026-01-07 株式分割および定款変更のお知らせ（16:00）](https://www2.jpx.co.jp/disc/44220/140120260106529559.pdf)\n・[2026-01-21 島津製作所のTescan買収資料に俯瞰解析が採用（15:30）](https://www2.jpx.co.jp/disc/44220/140120260121536645.pdf)\n・[2026-01-30 航空自衛隊の技術情報収集・解析役務を受注（11:30）](https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[VALUENEX 公式IR資料一覧](https://www.valuenex.com/ir-docs)\n・[VALUENEX 公式ニュース一覧](https://www.valuenex.com/jp/news/notice)\n・[VALUENEX 適時開示時系列（IRBANK）](https://irbank.net/4422/ir)"
+        }
+      ],
+      "auditStatus": "pass"
+    },
+    {
+      "signalDate": "2026-03-17",
+      "symbolCode": "4422",
+      "companyName": "ＶＡＬＵＥＮＥＸ",
+      "identity": "2026-03-17|4422",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysisCutoff": "2026-03-17T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:06:50+09:00",
+      "summary": "2026年7月期中間期は売上高423百万円（前年同期比64.6％増）、営業利益62百万円で黒字転換。通期予想は未開示ですが、前年通期売上の98％相当まで当期実績と当期計上予定の受注分が積み上がっています。",
+      "materialImpact": "コンサルティング増収と費用削減で黒字転換し、当期計上予定の受注残も確保。1月末時点で流通株式時価総額の上場維持基準にも適合しました。一方、通期予想は未定で、受注残の売上化は確定ではありません。",
+      "sourceChecks": [
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf",
+          "role": "official_ir",
+          "result": "公式中間決算短信本文を確認。H1業績、サービス別売上、現預金、営業CF、財政状態、通期予想非開示、継続企業注記なしを照合。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf",
+          "role": "official_ir",
+          "result": "公式補足資料本文を確認。期末受注残305百万円のうち当期売上計上予定251百万円、実績423百万円との合計674百万円が前年通期売上690百万円の98％相当。受注残に変更・解約可能性の注記あり。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf",
+          "role": "official_ir",
+          "result": "公式PDF本文を確認。2026年1月31日時点で上場維持基準全項目に適合し、流通株式時価総額は5.93億円、基準5億円。"
+        },
+        {
+          "url": "https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense",
+          "role": "official_ir",
+          "result": "会社公式受注記事を再確認。契約金額30,250,000円、業績への影響は会社が軽微と説明。"
+        },
+        {
+          "url": "https://irbank.net/4422/ir",
+          "role": "irbank_or_tdnet",
+          "result": "開示時系列で3月12日15:30の中間決算短信・補足資料、2月27日16:00の上場維持基準適合及び1月30日11:30の航空自衛隊案件を照合。3月17日16:15までに公表済みの資料を採用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年７月期 第２四半期（中間期）決算短信〔日本基準〕（連結）",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf",
+          "publishedAt": "2026-03-12T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年７月期 第２四半期 決算補足説明資料",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf",
+          "publishedAt": "2026-03-12T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "上場維持基準への適合に関するお知らせ",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf",
+          "publishedAt": "2026-02-27T16:00:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "VALUENEX、防衛省 航空自衛隊より解析役務1式を受注",
+          "url": "https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense",
+          "publishedAt": "2026-01-30T11:30:00+09:00",
+          "contentReviewed": true
+        }
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "H1黒字転換に加え、当期計上予定受注分を含む実績が前年通期売上の98％相当。上場維持基準への適合も確認されました。ただし会社は通期予想を未開示としています。"
+        },
+        {
+          "name": "事業概要",
+          "value": "独自の俯瞰解析技術を使い、特許・論文等の情報分析を提供。顧客向け受託のコンサルティングサービスと、顧客自身が利用するASPサービスを展開しています。"
+        },
+        {
+          "name": "足元材料",
+          "value": "中間期のコンサルティング売上は247.833百万円（前年同期比177.6％増）、ASP売上は170.972百万円（同4.8％増）。1月末の期末受注残305百万円のうち251百万円を当期計上予定とし、H1実績423百万円との合計674百万円は前年通期売上690百万円の98％相当。航空自衛隊の3,025万円案件も契約済みですが、会社は業績影響を軽微と説明しています。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "H1売上高423.417百万円（前年同期比64.6％増）、営業利益61.939百万円、経常利益64.757百万円、親会社株主帰属利益64.492百万円。経常利益には為替差益2.328百万円を含みます。1月末現金同等物688.713百万円、営業CF▲3.073百万円、純資産774.207百万円、自己資本比率86.0％。通期予想は合理的な算定が困難として未開示。継続企業注記はありません。"
+        },
+        {
+          "name": "注意点",
+          "value": "当期売上計上予定分251百万円は会社資料の見込みで、受注残は顧客都合で変更・解約される可能性があります。通期業績予想は未開示です。営業CFは小幅な支出で、前受金減少などを含みます。上場維持基準適合は2026年1月31日時点の判定です。株式数・1株当たり数値は2月1日効力の1対3株式分割を反映しています。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-03-12 2026年７月期 第２四半期（中間期）決算短信（15:30）](https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf)\n・[2026-03-12 第２四半期 決算補足説明資料（15:30）](https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf)\n・[2026-02-27 上場維持基準への適合に関するお知らせ（16:00）](https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf)\n・[2026-01-30 航空自衛隊の技術情報収集・解析役務を受注（11:30）](https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[VALUENEX 公式IR資料一覧](https://www.valuenex.com/ir-docs)\n・[VALUENEX 公式ニュース一覧](https://www.valuenex.com/jp/news/notice)\n・[VALUENEX 適時開示時系列（IRBANK）](https://irbank.net/4422/ir)"
+        }
+      ],
+      "auditStatus": "pass"
+    },
+    {
+      "signalDate": "2026-03-19",
+      "symbolCode": "4422",
+      "companyName": "ＶＡＬＵＥＮＥＸ",
+      "identity": "2026-03-19|4422",
+      "selectorNames": [
+        "陰線沈み込みリバウンド"
+      ],
+      "analysisCutoff": "2026-03-19T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:07:59+09:00",
+      "summary": "2026年7月期中間期は売上高423百万円（前年同期比64.6％増）、営業利益62百万円で黒字転換。通期予想は未開示ですが、前年通期売上の98％相当まで当期実績と当期計上予定の受注分が積み上がっています。",
+      "materialImpact": "コンサルティング増収と費用削減で黒字転換し、当期計上予定の受注残も確保。1月末時点で流通株式時価総額の上場維持基準にも適合しました。一方、通期予想は未定で、受注残の売上化は確定ではありません。",
+      "sourceChecks": [
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf",
+          "role": "official_ir",
+          "result": "公式中間決算短信本文を確認。H1業績、サービス別売上、現預金、営業CF、財政状態、通期予想非開示、継続企業注記なしを照合。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf",
+          "role": "official_ir",
+          "result": "公式補足資料本文を確認。期末受注残305百万円のうち当期売上計上予定251百万円、実績423百万円との合計674百万円が前年通期売上690百万円の98％相当。受注残に変更・解約可能性の注記あり。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf",
+          "role": "official_ir",
+          "result": "公式PDF本文を確認。2026年1月31日時点で上場維持基準全項目に適合し、流通株式時価総額は5.93億円、基準5億円。"
+        },
+        {
+          "url": "https://www.valuenex.com/jp/news-list/20260318/kurumin",
+          "role": "official_ir",
+          "result": "3月18日付会社記事を確認。くるみん認定取得の告知で、売上・契約金額・業績影響の記載がないため、財務材料としては選択せず。"
+        },
+        {
+          "url": "https://irbank.net/4422/ir",
+          "role": "irbank_or_tdnet",
+          "result": "開示時系列で3月12日15:30の中間決算短信・補足資料、2月27日16:00の上場維持基準適合及び1月30日11:30の航空自衛隊案件を照合。3月19日16:15までに公表済みの資料を採用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年７月期 第２四半期（中間期）決算短信〔日本基準〕（連結）",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf",
+          "publishedAt": "2026-03-12T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年７月期 第２四半期 決算補足説明資料",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf",
+          "publishedAt": "2026-03-12T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "上場維持基準への適合に関するお知らせ",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf",
+          "publishedAt": "2026-02-27T16:00:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "VALUENEX、防衛省 航空自衛隊より解析役務1式を受注",
+          "url": "https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense",
+          "publishedAt": "2026-01-30T11:30:00+09:00",
+          "contentReviewed": true
+        }
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "H1黒字転換に加え、当期計上予定受注分を含む実績が前年通期売上の98％相当。上場維持基準への適合も確認されました。ただし会社は通期予想を未開示としています。"
+        },
+        {
+          "name": "事業概要",
+          "value": "独自の俯瞰解析技術を使い、特許・論文等の情報分析を提供。顧客向け受託のコンサルティングサービスと、顧客自身が利用するASPサービスを展開しています。"
+        },
+        {
+          "name": "足元材料",
+          "value": "中間期のコンサルティング売上は247.833百万円（前年同期比177.6％増）、ASP売上は170.972百万円（同4.8％増）。1月末の期末受注残305百万円のうち251百万円を当期計上予定とし、H1実績423百万円との合計674百万円は前年通期売上690百万円の98％相当。航空自衛隊の3,025万円案件も契約済みですが、会社は業績影響を軽微と説明しています。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "H1売上高423.417百万円（前年同期比64.6％増）、営業利益61.939百万円、経常利益64.757百万円、親会社株主帰属利益64.492百万円。経常利益には為替差益2.328百万円を含みます。1月末現金同等物688.713百万円、営業CF▲3.073百万円、純資産774.207百万円、自己資本比率86.0％。通期予想は合理的な算定が困難として未開示。継続企業注記はありません。"
+        },
+        {
+          "name": "注意点",
+          "value": "当期売上計上予定分251百万円は会社資料の見込みで、受注残は顧客都合で変更・解約される可能性があります。通期業績予想は未開示です。営業CFは小幅な支出で、前受金減少などを含みます。上場維持基準適合は2026年1月31日時点の判定です。株式数・1株当たり数値は2月1日効力の1対3株式分割を反映しています。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-03-12 2026年７月期 第２四半期（中間期）決算短信（15:30）](https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf)\n・[2026-03-12 第２四半期 決算補足説明資料（15:30）](https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf)\n・[2026-02-27 上場維持基準への適合に関するお知らせ（16:00）](https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf)\n・[2026-01-30 航空自衛隊の技術情報収集・解析役務を受注（11:30）](https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[VALUENEX 公式IR資料一覧](https://www.valuenex.com/ir-docs)\n・[VALUENEX 公式ニュース一覧](https://www.valuenex.com/jp/news/notice)\n・[VALUENEX 適時開示時系列（IRBANK）](https://irbank.net/4422/ir)"
+        }
+      ],
+      "auditStatus": "pass"
+    },
+    {
+      "signalDate": "2026-03-26",
+      "symbolCode": "4422",
+      "companyName": "ＶＡＬＵＥＮＥＸ",
+      "identity": "2026-03-26|4422",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysisCutoff": "2026-03-26T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:08:46+09:00",
+      "summary": "2026年7月期中間期は売上高423百万円（前年同期比64.6％増）、営業利益62百万円で黒字転換。通期予想は未開示ですが、前年通期売上の98％相当まで当期実績と当期計上予定の受注分が積み上がっています。",
+      "materialImpact": "コンサルティング増収と費用削減で黒字転換し、当期計上予定の受注残も確保。1月末時点で流通株式時価総額の上場維持基準にも適合しました。一方、通期予想は未定で、受注残の売上化は確定ではありません。",
+      "sourceChecks": [
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf",
+          "role": "official_ir",
+          "result": "公式中間決算短信本文を確認。H1業績、サービス別売上、現預金、営業CF、財政状態、通期予想非開示、継続企業注記なしを照合。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf",
+          "role": "official_ir",
+          "result": "公式補足資料本文を確認。期末受注残305百万円のうち当期売上計上予定251百万円、実績423百万円との合計674百万円が前年通期売上690百万円の98％相当。受注残に変更・解約可能性の注記あり。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf",
+          "role": "official_ir",
+          "result": "公式PDF本文を確認。2026年1月31日時点で上場維持基準全項目に適合し、流通株式時価総額は5.93億円、基準5億円。"
+        },
+        {
+          "url": "https://www.valuenex.com/jp/news-list/20260318/kurumin",
+          "role": "official_ir",
+          "result": "3月18日付会社記事を確認。くるみん認定取得の告知で、売上・契約金額・業績影響の記載がないため、財務材料としては選択せず。"
+        },
+        {
+          "url": "https://irbank.net/4422/ir",
+          "role": "irbank_or_tdnet",
+          "result": "開示時系列で3月12日15:30の中間決算短信・補足資料、2月27日16:00の上場維持基準適合及び1月30日11:30の航空自衛隊案件を照合。3月26日16:15までの開示範囲を確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年７月期 第２四半期（中間期）決算短信〔日本基準〕（連結）",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf",
+          "publishedAt": "2026-03-12T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年７月期 第２四半期 決算補足説明資料",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf",
+          "publishedAt": "2026-03-12T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "上場維持基準への適合に関するお知らせ",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf",
+          "publishedAt": "2026-02-27T16:00:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "VALUENEX、防衛省 航空自衛隊より解析役務1式を受注",
+          "url": "https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense",
+          "publishedAt": "2026-01-30T11:30:00+09:00",
+          "contentReviewed": true
+        }
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "H1黒字転換に加え、当期計上予定受注分を含む実績が前年通期売上の98％相当。上場維持基準への適合も確認されました。ただし会社は通期予想を未開示としています。"
+        },
+        {
+          "name": "事業概要",
+          "value": "独自の俯瞰解析技術を使い、特許・論文等の情報分析を提供。顧客向け受託のコンサルティングサービスと、顧客自身が利用するASPサービスを展開しています。"
+        },
+        {
+          "name": "足元材料",
+          "value": "中間期のコンサルティング売上は247.833百万円（前年同期比177.6％増）、ASP売上は170.972百万円（同4.8％増）。1月末の期末受注残305百万円のうち251百万円を当期計上予定とし、H1実績423百万円との合計674百万円は前年通期売上690百万円の98％相当。航空自衛隊の3,025万円案件も契約済みですが、会社は業績影響を軽微と説明しています。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "H1売上高423.417百万円（前年同期比64.6％増）、営業利益61.939百万円、経常利益64.757百万円、親会社株主帰属利益64.492百万円。経常利益には為替差益2.328百万円を含みます。1月末現金同等物688.713百万円、営業CF▲3.073百万円、純資産774.207百万円、自己資本比率86.0％。通期予想は合理的な算定が困難として未開示。継続企業注記はありません。"
+        },
+        {
+          "name": "注意点",
+          "value": "当期売上計上予定分251百万円は会社資料の見込みで、受注残は顧客都合で変更・解約される可能性があります。通期業績予想は未開示です。営業CFは小幅な支出で、前受金減少などを含みます。上場維持基準適合は2026年1月31日時点の判定です。株式数・1株当たり数値は2月1日効力の1対3株式分割を反映しています。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-03-12 2026年７月期 第２四半期（中間期）決算短信（15:30）](https://www2.jpx.co.jp/disc/44220/140120260310578680.pdf)\n・[2026-03-12 第２四半期 決算補足説明資料（15:30）](https://www2.jpx.co.jp/disc/44220/140120260310578705.pdf)\n・[2026-02-27 上場維持基準への適合に関するお知らせ（16:00）](https://www2.jpx.co.jp/disc/44220/140120260227571928.pdf)\n・[2026-01-30 航空自衛隊の技術情報収集・解析役務を受注（11:30）](https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense)"
         },
         {
           "name": "Sources",
@@ -22040,6 +22437,30 @@
       "imported_at": "2026-09-27T20:05:55.956925+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "2f67cd4252ffbaf821697fada372a48c8db6659e21d4cbf1e0b017c65dac3342"
+    },
+    {
+      "identity": "2026-03-17|4422",
+      "imported_at": "2026-09-27T20:07:13.632011+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "9e325c581095bd38fe3d8c20f7d683ad4eb2faa80a6444ef5b2c19dd3322a1c6"
+    },
+    {
+      "identity": "2026-03-19|4422",
+      "imported_at": "2026-09-27T20:08:21.269885+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "071ac3c6a8ecaa4e43fba4eaedc576a853d7c0882e92f391ceb795801cc65cff"
+    },
+    {
+      "identity": "2026-03-26|4422",
+      "imported_at": "2026-09-27T20:09:05.051849+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "918fb8eb43a8c2b6f4506a40550c3a760b8b8f4891ac02122c174f829b7bc1c9"
+    },
+    {
+      "identity": "2025-12-11|198A",
+      "imported_at": "2026-09-27T20:10:22.957809+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "5545a2fb14a8605c1bf37cf1a5090c7bdf2bb0a451e55b5c814851a173f9463a"
     }
   ]
 }

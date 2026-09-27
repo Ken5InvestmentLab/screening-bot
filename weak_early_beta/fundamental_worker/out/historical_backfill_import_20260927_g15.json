@@ -1,0 +1,310 @@
+{
+  "reports": [
+    {
+      "identity": "2024-03-07|6276",
+      "signalDate": "2024-03-07",
+      "symbolCode": "6276",
+      "companyName": "シリウスビジョン",
+      "analysisCutoff": "2024-03-07T16:15:00+09:00",
+      "selectorNames": [
+        "陰線沈み込みリバウンド"
+      ],
+      "summary": "2023年12月期は増収で営業・経常・最終黒字へ転換。画像検査機の受注回復が寄与した一方、中国経済の悪化で納期・受注に遅れがあり、営業利益率は低水準。中国子会社清算に伴う47百万円の為替換算調整勘定取崩しも一時要因。",
+      "materialImpact": "混在/要確認：通期黒字化と利益予想の上方修正は好材料だが、営業利益率は約2.5％。中国向け納期・受注の遅れと清算に伴う一時益に留意。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：通期黒字化と利益予想の上方修正は好材料だが、営業利益率は約2.5％。中国向け納期・受注の遅れと清算に伴う一時益に留意。"
+        },
+        {
+          "name": "事業概要",
+          "value": "印刷物や各種製品向けの画像検査機と画像検査ソフトウェアを開発・販売。検査アルゴリズムや印刷検査工程向けの装置・ソフトが事業の中心。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2024年2月14日公表の2023年12月期決算は、売上高2,287百万円（前年同期比32.3％増）、営業利益56百万円、経常利益120百万円、親会社株主に帰属する純利益90百万円で、前期の各段階損失から黒字転換。2月8日には利益率の高い受注と収益性向上策を理由に2023年通期予想を上方修正し、売上高はほぼ予想並み、利益は修正予想水準で着地した。2月2日には中国子会社の清算結了と、連結で47百万円の為替換算調整勘定取崩しを特別利益として計上予定と公表。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "営業利益率は約2.5％とまだ薄い。会社説明では画像検査機の販売・受注回復が増収に寄与した一方、中国経済の悪化で中国向け納品予定の延期や受注の遅れが生じた。営業活動によるキャッシュ・フローは106百万円の支出で、利益改善と資金収支は同じ方向ではない。"
+        },
+        {
+          "name": "注意点",
+          "value": "営業利益・純利益は黒字化したが、利益率は低く、中国市場の受注・納期動向に左右される。中国子会社清算に関連する47百万円は為替換算調整勘定の取崩しによる一時的な特別利益として説明されており、継続利益と区別が必要。完全子会社の吸収合併も確認したが、連結業績への影響なしとの記載のため、独立した重要材料としては扱っていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-02-14 2023年12月期 決算短信〔日本基準〕（連結）(16:00)](https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240214.pdf)\n・[2024-02-08 2023年12月期 通期連結業績予想の修正に関するお知らせ(16:00)](https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_1.pdf)\n・[2024-02-02 連結子会社の清算結了および特別利益の計上に関するお知らせ(16:00)](https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240202.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[シリウスビジョン IRライブラリ](https://siriusvision.co.jp/ir/library/)\n[シリウスビジョン IRニュース一覧](https://siriusvision.co.jp/ir/news/page/2/)\n[6276 適時開示一覧](https://irbank.net/6276/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://siriusvision.co.jp/ir/news/page/2/",
+          "checkedUrls": [
+            "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240214.pdf",
+            "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_1.pdf",
+            "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240202.pdf",
+            "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_2.pdf",
+            "https://siriusvision.co.jp/ir/library/"
+          ],
+          "result": "公式IRニュースの2月2日・8日資料とIRライブラリの2月14日決算短信を開き、本文を確認。上方修正の理由、子会社清算の47百万円、合併は連結業績に影響しないとの記載を確認。3月4日の定時株主総会案内は通常の総会資料として確認し、業績材料には含めていない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/ir/6276?y=1709795700",
+          "checkedUrls": [
+            "https://irbank.net/ir/6276?y=1709795700",
+            "https://irbank.net/6276/081220240213534910"
+          ],
+          "result": "3月7日16:15を基準に銘柄別開示一覧で2月2日・8日・14日の関連開示と16:00の公表時刻を照合。3月4日の株主総会資料以降、カットオフ前に新たな業績資料がないことを確認。株価やカットオフ後情報は分析に使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2023年12月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-02-14T16:00:00+09:00",
+          "url": "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240214.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2023年12月期 通期連結業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-02-08T16:00:00+09:00",
+          "url": "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "連結子会社の清算結了および特別利益の計上に関するお知らせ",
+          "publishedAt": "2024-02-02T16:00:00+09:00",
+          "url": "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240202.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "監査合格。2024-03-07 16:15 JST cutoff内の2/2・2/8・2/14公表について、会社公式PDF本文を直接確認。決算短信の連結売上2,287百万円、営業利益56百万円、経常利益120百万円、純利益90百万円・営業利益率2.5%・営業CF△106百万円、中国市場の遅延記述、業績予想修正、子会社清算に伴う47百万円の連結特別利益予定を照合。cutoff後の株価・実現結果は使用せず、吸収合併は連結影響なしのため独立材料として不採用。7 fields、direct disclosure URLs、2-4 Sources、cutoff、link budgetを検証済み。"
+      ]
+    },
+    {
+      "identity": "2024-03-07|7692",
+      "signalDate": "2024-03-07",
+      "symbolCode": "7692",
+      "companyName": "アースインフィニティ",
+      "analysisCutoff": "2024-03-07T16:15:00+09:00",
+      "selectorNames": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "電気契約数が半年で約1万件増えて46,000件を突破し、風力発電所の販売・サポートも開始。一方、2024年7月期第1四半期は減収で営業・経常・純損失。新サービスや契約増の利益寄与は定量化されていない。",
+      "materialImpact": "混在/要確認：電気契約数の拡大と風力発電所販売への参入は進展。ただし直近四半期は減収・小幅赤字で、新事業の収益寄与は未確定。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：電気契約数の拡大と風力発電所販売への参入は進展。ただし直近四半期は減収・小幅赤字で、新事業の収益寄与は未確定。"
+        },
+        {
+          "name": "事業概要",
+          "value": "電力・ガスの小売を主軸に、太陽光・蓄電池や電子ブレーカーの販売、FITを活用した風力発電所の運営を展開。2024年2月には、他社向け風力発電所販売・サポート業務も始めると決議した。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2023年12月15日公表の2024年7月期第1四半期は、売上高1,116百万円（前年同期比25.2％減）、営業損失3百万円、経常損失5百万円、純損失3百万円。2月16日には風力発電所の販売を開始する決議を公表。2月21日には電気契約数が2024年1月末までの半年で約10,000件増え、46,000件を突破したと公表した。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "契約数の増加は電力小売の顧客基盤拡大を示す運営指標だが、契約ごとの採算や売上・利益額は開示されていない。風力発電所の販売は従来の運営経験を活用する新業務で、開示では他事業者への販売・サポートを想定。第1四半期は前年同期比で減収し、営業段階から赤字だった。"
+        },
+        {
+          "name": "注意点",
+          "value": "風力発電所販売の売上・利益は案件成立の有無に左右され、開示時点で金額や時期は示されていない。46,000件という契約数だけから顧客当たり採算や利益成長を推定できない。3月1日の所属業種変更は分類上の変更であり、事業実績の変化として扱っていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2023-12-15 2024年7月期第1四半期決算短信〔日本基準〕（非連結）(12:00)](https://www2.jpx.co.jp/disc/76920/140120231207500267.pdf)\n・[2024-02-16 風力発電所の販売業務開始のお知らせ(12:00)](https://www2.jpx.co.jp/disc/76920/140120240214537406.pdf)\n・[2024-02-21 電気契約件数46,000件突破のお知らせ(08:30)](https://www2.jpx.co.jp/disc/76920/140120240220540323.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[アースインフィニティ IR情報](https://www.earth-infinity.co.jp/ir/IRnews.html)\n[アースインフィニティ 公式ニュース](https://earth-infinity.co.jp/?modalita=m)\n[7692 適時開示一覧](https://irbank.net/7692/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.earth-infinity.co.jp/ir/IRnews.html",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/76920/140120231207500267.pdf",
+            "https://www2.jpx.co.jp/disc/76920/140120240214537406.pdf",
+            "https://www2.jpx.co.jp/disc/76920/140120240220540323.pdf",
+            "https://prtimes.jp/main/html/rd/p/000000035.000111215.html",
+            "https://earth-infinity.co.jp/news/news_information20240220.html"
+          ],
+          "result": "第1四半期決算短信と2件の適時開示PDF本文を確認。2月21日PDFはJPX直リンクとTDNet文書ミラーをバイト単位で照合し同一ファイルであることを確認。発行会社のPR TIMES配信は08:37、適時開示掲載時刻は08:30であり、本候補のpublishedAtはTDNet時刻を採用。3月1日の業種分類変更は内容を確認し、業績材料から除外。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/ir/7692?y=1709795700",
+          "checkedUrls": [
+            "https://irbank.net/ir/7692?y=1709795700",
+            "https://irbank.net/7692/140120240214537406",
+            "https://finance.yahoo.co.jp/quote/7692.T/disclosure?page=3",
+            "https://jp.kabumap.com/servlets/kabumap/Action?SRC=basic%2Ftop%2Fbase&codetext=7692&tdNetViewAll=1"
+          ],
+          "result": "3月7日16:15を基準に開示一覧を確認。12月15日決算と2月16日風力発電所販売の公表日・時刻はIRBANK記載で照合し、2月21日の契約数資料はTDNet開示一覧の08:30と発行会社配信ページの08:37を区別して記録。3月15日の決算等はカットオフ後なので使用していない。株価・騰落データは分析に使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年7月期第1四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2023-12-15T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/76920/140120231207500267.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "風力発電所の販売業務開始のお知らせ",
+          "publishedAt": "2024-02-16T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/76920/140120240214537406.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "電気契約件数46,000件突破のお知らせ",
+          "publishedAt": "2024-02-21T08:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/76920/140120240220540323.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "監査合格。2024-03-07 16:15 JST cutoff内の12/15決算短信、2/16風力発電所販売開始、2/21電気契約46,000件突破について、JPX配布の一次PDF本文を確認。Q1売上1,116百万円・営業損失3百万円・経常損失5百万円・純損失3百万円、販売業務の業績寄与は案件成立次第、契約数は半年で約10,000件増との記述を照合。2/21の開示時刻はTDNet掲載時刻08:30を採用（会社PR TIMES掲載08:37とは配信チャネルの違い）。契約当たり採算や将来利益は推測せず、cutoff後の情報・価格・実現結果を不使用。7 fields、direct disclosure URLs、2-4 Sources、cutoff、link budgetを検証済み。"
+      ]
+    },
+    {
+      "identity": "2024-03-11|2330",
+      "signalDate": "2024-03-11",
+      "symbolCode": "2330",
+      "companyName": "フォーサイド",
+      "analysisCutoff": "2024-03-11T16:15:00+09:00",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "2023年は営業・経常黒字へ転換し、プライズ事業の利益が伸長。一方、営業・経常利益は会社の従来予想を大幅に下回り、純利益には85百万円の債務消滅益が含まれる。AI事業・AICE提携は始動段階で寄与額未開示。2月16日には大株主交代と代表取締役交代予定を公表。",
+      "materialImpact": "混在/要確認：プライズ事業の増益と全社黒字転換は好材料だが、営業・経常利益は従来予想を大きく下回り、純利益は85百万円の一時的債務消滅益を含む。AI新事業の収益寄与は未算定。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：プライズ事業の増益と全社黒字転換は好材料だが、営業・経常利益は従来予想を大きく下回り、純利益は85百万円の一時的債務消滅益を含む。AI新事業の収益寄与は未算定。"
+        },
+        {
+          "name": "事業概要",
+          "value": "クレーンゲーム景品の企画・製作・販売、家賃保証・物件管理、電子書籍・ウェブメディア、イベント・出版などを展開。2023年12月期の主力はプライズ事業と不動産関連事業。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2月1日、完全子会社AI Tech SolutionsによるAI関連事業開始とAICEとの業務提携を公表。AIを使った新製品共同開発やグループ業務のDXを掲げたが、連結業績への影響は精査中。2月13日発表の2023年12月期は営業利益53百万円、経常利益44百万円、純利益114百万円で黒字転換。ただし2月16日に公表した代表取締役交代・筆頭株主異動は3月28日の株主総会等での承認を条件とする予定事項であり、検出日時点では成立済みとして扱えない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2023年12月期の営業収益は4,817百万円（前年同期比3.4％減）、営業利益53百万円、経常利益44百万円、親会社株主に帰属する純利益114百万円。プライズ事業は売上2,713百万円（1.4％増）、セグメント利益215百万円（136.4％増）。一方、不動産関連事業は売上1,671百万円（19.9％増）でも貸倒引当金繰入額増加などでセグメント利益が36.5％減。会社の前回予想比では営業利益63.9％、経常利益68.4％下振れ。"
+        },
+        {
+          "name": "注意点",
+          "value": "純利益には5年の消滅時効を経過した仮受金85百万円の債務消滅益が含まれ、継続的な本業利益と区別が必要。コンテンツ、イベント、マスターライツの各事業は赤字で、不動産関連事業も滞納発生・回収率低下が利益を圧迫。AI新会社・提携は投資・契約を公表した段階で、受注額や収益寄与は未開示。2月16日の大株主・代表者変更は予定であり、承認後の結果はこの分析に含めていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-02-01 当社子会社によるAICE株式会社との業務提携に関するお知らせ(15:02)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/当社子会社によるAICE株式会社との業務提携に関するお知らせ.pdf)\n・[2024-02-13 2023年12月期 決算短信〔日本基準〕（連結）(15:14)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/2023年12月期-決算短信日本基準（連結）.pdf)\n・[2024-02-13 特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ(15:12)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ.pdf)\n・[2024-02-16 代表取締役の異動及び取締役（監査等委員である取締役を除く。）候補者選任に関するお知らせ(15:05)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/代表取締役の異動及び取締役%EF%BC%88監査等委員である取締役を除く。%EF%BC%89候補者選任に関するお知らせ.pdf)\n・[2024-02-16 主要株主である筆頭株主の異動に関するお知らせ(15:05)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/主要株主である筆頭株主の異動に関するお知らせ.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[フォーサイド IR情報（2024年2月1日・13日）](https://www.forside.co.jp/irinfo/page/19/)\n[フォーサイド IR情報（2024年2月16日・3月6日）](https://www.forside.co.jp/irinfo/page/17/)\n[2330 適時開示一覧](https://irbank.net/2330/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.forside.co.jp/irinfo/",
+          "checkedUrls": [
+            "https://www.forside.co.jp/irinfo/page/19/",
+            "https://www.forside.co.jp/irinfo/page/17/",
+            "https://www.forside.co.jp/irinfo/page/18/",
+            "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/当社子会社によるAICE株式会社との業務提携に関するお知らせ.pdf",
+            "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/2023年12月期-決算短信日本基準（連結）.pdf",
+            "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ.pdf",
+            "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/代表取締役の異動及び取締役%EF%BC%88監査等委員である取締役を除く。%EF%BC%89候補者選任に関するお知らせ.pdf",
+            "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/主要株主である筆頭株主の異動に関するお知らせ.pdf",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8130",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8184",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8178",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8240",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8237"
+          ],
+          "result": "公式IRアーカイブで2月1日・13日・16日の資料を確認し、選択したPDF本文を読了。2月1日AI提携の業績影響は未確定、2月13日の85百万円は仮受金に係る一時利益、2月16日の株主・代表者変更は総会等の承認を条件とする予定であることを確認。WordPress公式投稿日時は2月1日15:02台、2月13日15:11〜15:14、2月16日15:05台。3月6日の定時株主総会資料も確認し、既出の議案案内で新たな業績・事業進捗を示さないため本文材料には採用していない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2330/ir?y=2024-03-11",
+          "checkedUrls": [
+            "https://irbank.net/2330/ir?y=2024-03-11",
+            "https://irbank.net/2330/ir",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8130",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8133",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8175",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8178",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8184",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8237",
+            "https://www.forside.co.jp/wp-json/wp/v2/posts/8240"
+          ],
+          "result": "カットオフ時点の開示一覧で、2月1日・13日・16日および3月6日の公表を照合。公式投稿メタデータで本文公表日時を確認し、2月13日の関係会社株式評価損40百万円は個別決算のみで連結影響なしと確認したため記載対象外。3月11日16:15より後の資料・実績・株価情報は使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "当社子会社によるAICE株式会社との業務提携に関するお知らせ",
+          "publishedAt": "2024-02-01T15:02:19+09:00",
+          "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/当社子会社によるAICE株式会社との業務提携に関するお知らせ.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2023年12月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-02-13T15:14:19+09:00",
+          "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/2023年12月期-決算短信日本基準（連結）.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ",
+          "publishedAt": "2024-02-13T15:12:42+09:00",
+          "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "代表取締役の異動及び取締役候補者選任に関するお知らせ",
+          "publishedAt": "2024-02-16T15:05:54+09:00",
+          "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/代表取締役の異動及び取締役%EF%BC%88監査等委員である取締役を除く。%EF%BC%89候補者選任に関するお知らせ.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要株主である筆頭株主の異動に関するお知らせ",
+          "publishedAt": "2024-02-16T15:05:16+09:00",
+          "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/主要株主である筆頭株主の異動に関するお知らせ.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "監査合格。2024-03-11 16:15 JST cutoff内の会社公式PDF本文を確認。2/13決算短信・特別利益/予想実績差異で営業利益52.6百万円、経常利益44.3百万円、純利益113.6百万円、予想比営業・経常利益の下振れ、仮受金85百万円の債務消滅益を照合。2/1 AI事業・AICE提携は影響精査中、2/16大株主・代表者変更は総会等承認前の予定事項として記述し、成立済みと扱っていない。cutoff後の情報・価格・実現結果は不使用。7 fields、direct disclosure URLs、2-4 Sources、cutoff、link budgetを検証済み。"
+      ]
+    }
+  ]
+}

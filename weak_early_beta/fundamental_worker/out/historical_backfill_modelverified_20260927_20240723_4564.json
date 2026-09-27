@@ -1,0 +1,106 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-07-23|4564",
+      "signalDate": "2024-07-23",
+      "symbolCode": "4564",
+      "companyName": "オンコセラピー・サイエンス",
+      "analysisCutoff": "2024-07-23T16:15:00+09:00",
+      "generatedAt": "2026-09-27T17:40:42+09:00",
+      "summary": "2024年3月期は事業収益610百万円、営業損失1,120百万円、親会社株主帰属純損失1,288百万円。2025年3月期予想は非開示で、営業CFは1,227百万円のマイナス、期末現金同等物527百万円。7/4当日に第36回新株予約権で600万株を交付、7/19には動物のがん早期発見を目指す共同研究を公表したが、当期影響は軽微見込み。",
+      "materialImpact": "継続赤字・営業CF赤字と通期予想非開示、期末現金同等物527百万円は重い財務面の懸念。7/4当日に600万株を交付した新株予約権行使は資本調達面の材料だが、希薄化を伴う。7/19共同研究は新たな研究機会で、会社は2025年3月期への影響を軽微とする。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "継続赤字、営業CF赤字、通期予想非開示と期末現金同等物527百万円が財務面の重荷。新株予約権行使で7/4までに600万株を交付した一方、希薄化が生じる。獣医療の共同研究は新規材料だが、2025年3月期への影響は会社見通しで軽微。"
+        },
+        {
+          "name": "事業概要",
+          "value": "創薬研究・医薬品開発を行い、ライセンス契約等に基づく収入を目指す。連結子会社CPMはがん遺伝子解析・検査、リキッドバイオプシー、免疫療法の研究開発などを手掛け、解析サービス収入も得る。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2024年3月期の事業収益は610百万円（前期比46.2%減）、営業損失1,120百万円、経常損失1,136百万円、親会社株主帰属純損失1,288百万円。7/4開示では7/4当日に第36回新株予約権60,000個を行使し、600万株を交付。行使価額32.4円、発行総数の11.11%で、未行使分は880万株。7/19、CPMとWOLVES HANDが犬猫の血漿cfDNAを経時採取し、がん早期発見を目指すデータ収集の共同研究契約を締結。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年3月期の事業収益610百万円に対し営業損失1,120百万円、経常損失1,136百万円、純損失1,288百万円。営業CFはマイナス1,227百万円、期末現金及び現金同等物527百万円、自己資本比率32.2%。2025年3月期の業績予想は会社が公表していない。"
+        },
+        {
+          "name": "注意点",
+          "value": "会社は継続的な営業損失とマイナスの営業CFを背景に、継続企業の前提に関する重要な不確実性を記載。研究開発収入の変動が大きく、2025年3月期予想は非開示。7/19の共同研究はデータ収集段階で、検査の実用化・売上額は開示されず、同年度の業績影響は軽微見込み。新株予約権の未行使分880万株が残る。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-05-10 2024年3月期決算短信〔日本基準〕（連結）(17:00)](https://www.oncotherapy.co.jp/wp-content/uploads/2024/05/240510_01.pdf)\n・[2024-06-25 事業計画及び成長可能性に関する事項(17:00)](https://www.oncotherapy.co.jp/wp-content/uploads/2024/06/240625_03.pdf)\n・[2024-07-04 第三者割当による第36回新株予約権（行使価額修正条項付）の大量行使に関するお知らせ(17:00)](https://www.oncotherapy.co.jp/wp-content/uploads/2024/07/240704_02.pdf)\n・[2024-07-19 当社連結子会社における、株式会社WOLVES HANDとの獣医療分野におけるリキッドバイオプシーによるがんの早期発見に関する共同研究契約締結のお知らせ(08:30)](https://www.oncotherapy.co.jp/wp-content/uploads/2024/07/240719_01.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[オンコセラピー・サイエンス IRニュース（2025年3月期バックナンバー）](https://www.oncotherapy.co.jp/ir/ir-news/backnumber/ir-2024/)\n・[オンコセラピー・サイエンス（4564）適時開示一覧](https://irbank.net/td/4564)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.oncotherapy.co.jp/ir/ir-news/backnumber/ir-2024/",
+          "checkedUrls": [
+            "https://www.oncotherapy.co.jp/ir/ir-news/backnumber/ir-2024/",
+            "https://www.oncotherapy.co.jp/wp-content/uploads/2024/05/240510_01.pdf",
+            "https://www.oncotherapy.co.jp/wp-content/uploads/2024/06/240625_03.pdf",
+            "https://www.oncotherapy.co.jp/wp-content/uploads/2024/07/240704_02.pdf",
+            "https://www.oncotherapy.co.jp/wp-content/uploads/2024/07/240719_01.pdf"
+          ],
+          "result": "会社IRバックナンバー掲載時系列および選択した公式資料4本の本文を確認。7/19の共同研究契約を最新の材料として反映し、7/23 cutoff後の情報は使用していない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/td/4564",
+          "checkedUrls": [
+            "https://irbank.net/td/4564"
+          ],
+          "result": "5/10決算短信・事業計画資料の17:00、7/4大量行使の17:00、7/19共同研究契約の08:30を照合。7/23 16:15までの適時開示時系列も確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年3月期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-10T17:00:00+09:00",
+          "url": "https://www.oncotherapy.co.jp/wp-content/uploads/2024/05/240510_01.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "事業計画及び成長可能性に関する事項",
+          "publishedAt": "2024-06-25T17:00:00+09:00",
+          "url": "https://www.oncotherapy.co.jp/wp-content/uploads/2024/06/240625_03.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による第36回新株予約権（行使価額修正条項付）の大量行使に関するお知らせ",
+          "publishedAt": "2024-07-04T17:00:00+09:00",
+          "url": "https://www.oncotherapy.co.jp/wp-content/uploads/2024/07/240704_02.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社における、株式会社WOLVES HANDとの獣医療分野におけるリキッドバイオプシーによるがんの早期発見に関する共同研究契約締結のお知らせ",
+          "publishedAt": "2024-07-19T08:30:00+09:00",
+          "url": "https://www.oncotherapy.co.jp/wp-content/uploads/2024/07/240719_01.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2024年3月期短信、6/25事業計画資料、7/4新株予約権大量行使、7/19共同研究契約の会社公式PDF本文を確認。7/4は交付株式数と未行使数、7/19は研究内容と会社記載の当期影響を区別。業績予想が非開示である点と継続企業の前提に関する重要な不確実性を反映。"
+      ]
+    }
+  ]
+}

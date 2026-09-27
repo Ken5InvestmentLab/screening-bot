@@ -1,14 +1,14 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_V1",
-  "generated_at": "2026-09-27T17:50:41.529952+09:00",
+  "generated_at": "2026-09-27T17:58:08.724537+09:00",
   "source_ledger": "weak_early_beta/state/detections.csv",
   "detection_time_basis": "scheduled daily beta scan at 16:15 JST; deterministic historical proxy",
   "as_of_rule": "only disclosures published at or before analysis_cutoff may be cited or used",
   "discord_policy": "historical analyses are not reposted to Discord",
   "total_identities": 253,
   "status_counts": {
-    "complete": 122,
-    "pending": 131
+    "complete": 130,
+    "pending": 123
   },
   "records": [
     {
@@ -1640,8 +1640,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2024-08-02T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "df197c9903265b7fb76cc280bb0d33a8396961af79bd5fa0d23529d58bcc4ebf"
     },
     {
       "identity": "2024-08-05|7776",
@@ -1683,8 +1683,8 @@
         "出来高沈静リバウンド"
       ],
       "analysis_cutoff": "2024-08-07T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "ab1f80b8c7533fad4f603f3f84db89ff47fdd98ff2c08e1add2406bc9603251c"
     },
     {
       "identity": "2024-08-07|7776",
@@ -1712,8 +1712,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2024-08-08T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "4d4239651cdacb282d263ee1725561fda20f2766d0b6060fd90f2ba61e0f0ec4"
     },
     {
       "identity": "2024-08-09|4935",
@@ -1724,8 +1724,8 @@
         "出来高沈静リバウンド"
       ],
       "analysis_cutoff": "2024-08-09T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "f4e2fd81d6ae09c0497c3524b923cc262478de8a428ff8ab88bae40fd942a0d6"
     },
     {
       "identity": "2024-08-09|7776",
@@ -1781,8 +1781,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2024-09-06T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "998aae85f2ada8c62200a48c164e61192f053ccbf4e3dbe371eb7e7f06a90233"
     },
     {
       "identity": "2024-09-06|4316",
@@ -1793,8 +1793,8 @@
         "出来高沈静リバウンド"
       ],
       "analysis_cutoff": "2024-09-06T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "e82577ee7f2fe25afb9553e9211b99242214fc6d5983c3bdfc4cacea041a479d"
     },
     {
       "identity": "2024-09-09|2586",
@@ -1818,8 +1818,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2024-09-09T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "3c066e1860a6b0fdb94a681230c593a4fae20dfce29e9f3bf89ad970465106ea"
     },
     {
       "identity": "2024-09-10|2586",
@@ -1843,8 +1843,8 @@
         "陰線沈み込みリバウンド"
       ],
       "analysis_cutoff": "2024-09-10T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "3de45f98dc4797d971b9ed2ab4a41144a53bd521fdd9dcd9a761dd0e8d921d42"
     },
     {
       "identity": "2024-09-11|3350",

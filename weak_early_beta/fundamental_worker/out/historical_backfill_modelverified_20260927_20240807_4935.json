@@ -1,0 +1,119 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-08-07|4935",
+      "signalDate": "2024-08-07",
+      "symbolCode": "4935",
+      "companyName": "リベルタ",
+      "analysisCutoff": "2024-08-07T16:15:00+09:00",
+      "generatedAt": "2026-09-27T17:51:17+09:00",
+      "summary": "2024年12月期1Qは売上高1,651百万円（+22.6%）だが営業損失183百万円、純損失143百万円。クーリスト累計出荷150万個、冷感ミスト32万本に加え、デンティス「レモングラス」は6月までの累計出荷50万個を公表。販売個数は伸びても利益額は非開示。 8/2にはFREEZE TECHと福岡ソフトバンクホークスのコラボ商品を8/4からみずほPayPayドームで発売すると発表。",
+      "materialImpact": "商品販売の広がりは需要面でプラス。デンティス「レモングラス」は6月時点の累計出荷50万個、7月末までの販売個数は前年通期累計を超え、取扱店8,000店超と開示。一方、1Qは営業・純損失が拡大し、ブランド利益は確認できない。 ホークスとのコラボ商品販売は販促機会だが、販売数量・売上効果額は開示されていない。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "商品販売の広がりは需要面でプラス。デンティス「レモングラス」は6月時点の累計出荷50万個、7月末までの販売個数は前年通期累計を超え、取扱店8,000店超と開示。一方、1Qは営業・純損失が拡大し、ブランド利益は確認できない。 ホークスコラボは8/4発売開始の発表で、売上額は非開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "美容・日用品・機能性衣料などを企画・輸入し、国内外の卸・小売・ECを通じてブランド商品を販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Q売上高1,651百万円（+22.6%）、営業損失183百万円、経常損失181百万円、純損失143百万円。デンティス「レモングラス」は6月までの累計出荷50万個、7月末時点の販売個数は前年累計超、取扱店8,000店超（前年比約2,000店増）。クーリストは6月末累計出荷150万個、冷感ミストは32万本。 FREEZE TECHはホークスコラボ商品を8/4からみずほPayPayドームで発売すると8/2発表。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Qは増収でも営業損失183百万円、純損失143百万円と赤字拡大。通期会社予想は売上高9,700百万円、営業利益294百万円、経常利益250百万円、純利益120百万円。1Q末現金及び預金1,313百万円、自己資本比率21.9%。"
+        },
+        {
+          "name": "注意点",
+          "value": "50万個は6月時点の累計出荷実績。7月末の前年通期超・取扱店数は販売数量と販路の情報で、売上額や利益寄与は非開示。5月末の主要ブランド進捗は通期予想に織込み済み。1Q営業・純損失は前年同期より拡大している。 ホークスコラボは発売告知であり、販売数量・売上額は確認できない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-05-15 2024年12月期第1四半期決算短信〔日本基準〕（連結）(17:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf)\n・[2024-06-05 主要ブランドのプロモーション強化に関する進捗状況のお知らせ(12:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf)\n・[2024-07-12 「FREEZE TECH（フリーズテック）衣類用冷感ミスト」累計販売本数32万本突破のお知らせ(17:05)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf)\n・[2024-07-22 冷感アイテムブランド「クーリスト」シリーズ累計販売個数150万個突破のお知らせ(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf)\n・[2024-08-05 “目覚めてすぐキスできる”恋する♡ハミガキ「デンティス」日本限定「レモングラス」フレーバー累計販売個数50万個突破のお知らせ(13:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240805562849/pdfFile.pdf)\n・[2024-08-02 福岡ソフトバンクホークス×FREEZE TECH コラボ商品販売に関するお知らせ(16:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[リベルタ IRニュース一覧](https://ir.liberta-j.co.jp/ja/ir/news.html)\n・[リベルタ（4935）適時開示一覧](https://irbank.net/4935/ir?y=2024-08-09)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240805562849/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf"
+          ],
+          "result": "会社公式IRニュース一覧と選択した公式PDFの本文を確認。累計出荷実績、販売数量、業績予想と実績を区別した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4935/ir?y=2024-08-07",
+          "checkedUrls": [
+            "https://irbank.net/4935/ir?y=2024-08-07",
+            "https://prtimes.jp/main/html/rd/p/000000072.000052173.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf"
+          ],
+          "result": "IRBANK等の掲載時刻を照合。5/15 17:00、6/5 12:00、7/12 17:05、7/22 16:00、8/9の決算・関連4資料15:00。8/5公表時刻はPR TIMES掲載13:00を照合。8/2 16:15時点の後発情報は除外した。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-15T17:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要ブランドのプロモーション強化に関する進捗状況のお知らせ",
+          "publishedAt": "2024-06-05T12:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「FREEZE TECH（フリーズテック）衣類用冷感ミスト」累計販売本数32万本突破のお知らせ",
+          "publishedAt": "2024-07-12T17:05:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "冷感アイテムブランド「クーリスト」シリーズ累計販売個数150万個突破のお知らせ",
+          "publishedAt": "2024-07-22T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "福岡ソフトバンクホークス×FREEZE TECH コラボ商品販売に関するお知らせ",
+          "publishedAt": "2024-08-02T16:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "“目覚めてすぐキスできる”恋する♡ハミガキ「デンティス」日本限定「レモングラス」フレーバー累計販売個数50万個突破のお知らせ",
+          "publishedAt": "2024-08-05T13:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240805562849/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "cutoff前の公式資料を本文確認。製品の累計出荷・販売数量を利益額として扱わず、各実績の基準日を保持。",
+        "8/2 16:30公表のホークス×FREEZE TECHコラボ商品告知を、8/2 cutoff後・8/7以降のcutoff前として反映。発売告知を売上実績と扱わず、金額非開示と記載。"
+      ]
+    }
+  ]
+}

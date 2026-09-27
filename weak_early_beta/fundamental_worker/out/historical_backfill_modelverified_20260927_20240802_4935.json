@@ -1,0 +1,103 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-08-02|4935",
+      "signalDate": "2024-08-02",
+      "symbolCode": "4935",
+      "companyName": "リベルタ",
+      "analysisCutoff": "2024-08-02T16:15:00+09:00",
+      "generatedAt": "2026-09-27T17:51:17+09:00",
+      "summary": "2024年12月期1Qは売上高1,651百万円（前年同期比+22.6%）でも営業損失183百万円、純損失143百万円。6月末までのクーリスト累計出荷150万個、冷感ミスト32万本など商品進捗はあるが、利益への寄与は開示されていない。",
+      "materialImpact": "ブランドの販売進捗は需要面でプラス。ただし1Qは増収ながら営業・最終損失が前年同期から拡大し、商品別の利益額は非開示。5月末のデンティス・クーリスト進捗は会社が通期予想に織込み済みと説明している。",
+      "selectorNames": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "ブランドの販売進捗は需要面でプラス。ただし1Qは増収ながら営業・最終損失が前年同期から拡大し、商品別の利益額は非開示。5月末のデンティス・クーリスト進捗は会社が通期予想に織込み済みと説明している。"
+        },
+        {
+          "name": "事業概要",
+          "value": "美容・日用品・機能性衣料などを企画・輸入し、国内外の卸・小売・ECを通じてブランド商品を販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Q売上高1,651百万円（+22.6%）、営業損失183百万円、経常損失181百万円、純損失143百万円。5月末速報はデンティス売上+70%、クーリスト+355%。6月末までにクーリスト累計150万個、7月12日開示の冷感ミスト32万本など販売進捗が出た。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Qは前年同期より営業損失・純損失が拡大。通期会社予想は売上高9,700百万円、営業利益294百万円、経常利益250百万円、純利益120百万円。1Q末現金及び預金1,313百万円、自己資本比率21.9%。"
+        },
+        {
+          "name": "注意点",
+          "value": "出荷・販売個数やブランド売上伸長は利益額・採算性を示さない。5月末ブランド進捗は通期予想に織込み済み。1Qは営業・純損失が拡大しており、通期利益予想の達成確度を裏付ける当期利益改善はまだ確認できない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-05-15 2024年12月期第1四半期決算短信〔日本基準〕（連結）(17:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf)\n・[2024-06-05 主要ブランドのプロモーション強化に関する進捗状況のお知らせ(12:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf)\n・[2024-07-12 「FREEZE TECH（フリーズテック）衣類用冷感ミスト」累計販売本数32万本突破のお知らせ(17:05)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf)\n・[2024-07-22 冷感アイテムブランド「クーリスト」シリーズ累計販売個数150万個突破のお知らせ(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[リベルタ IRニュース一覧](https://ir.liberta-j.co.jp/ja/ir/news.html)\n・[リベルタ（4935）適時開示一覧](https://irbank.net/4935/ir?y=2024-08-09)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf"
+          ],
+          "result": "会社公式IRニュース一覧と選択した公式PDFの本文を確認。累計出荷実績、販売数量、業績予想と実績を区別した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4935/ir?y=2024-08-02",
+          "checkedUrls": [
+            "https://irbank.net/4935/ir?y=2024-08-02"
+          ],
+          "result": "IRBANK等の掲載時刻を照合。5/15 17:00、6/5 12:00、7/12 17:05、7/22 16:00、8/9の決算・関連4資料15:00。8/5公表時刻はPR TIMES掲載13:00を照合。8/2 16:15時点の後発情報は除外した。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-15T17:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要ブランドのプロモーション強化に関する進捗状況のお知らせ",
+          "publishedAt": "2024-06-05T12:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「FREEZE TECH（フリーズテック）衣類用冷感ミスト」累計販売本数32万本突破のお知らせ",
+          "publishedAt": "2024-07-12T17:05:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "冷感アイテムブランド「クーリスト」シリーズ累計販売個数150万個突破のお知らせ",
+          "publishedAt": "2024-07-22T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "cutoff前の公式資料を本文確認。製品の累計出荷・販売数量を利益額として扱わず、各実績の基準日を保持。"
+      ]
+    }
+  ]
+}

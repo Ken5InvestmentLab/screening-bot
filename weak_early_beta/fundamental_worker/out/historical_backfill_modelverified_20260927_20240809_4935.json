@@ -1,0 +1,118 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-08-09|4935",
+      "signalDate": "2024-08-09",
+      "symbolCode": "4935",
+      "companyName": "リベルタ",
+      "analysisCutoff": "2024-08-09T16:15:00+09:00",
+      "generatedAt": "2026-09-27T17:57:14+09:00",
+      "summary": "2024年12月期中間期は売上高4,180百万円（+23.8%）に対し営業損失39百万円、親会社株主帰属純損失62百万円。販売費の時期後ずれ等で中間損失は予想より縮小したが通期予想は据置。営業CFは▲906百万円で、500百万円の融資枠契約は取締役会決議・締結予定として開示された。FREEZE TECHは8/4から福岡ソフトバンクホークスとのコラボ商品をドーム販売すると発表したが、販売効果額は非開示。",
+      "materialImpact": "増収率は+23.8%で、デンティス・クーリスト等が売上をけん引。一方、営業・経常・純損失が続き、中間売上は計画未達。利益は販促費実施の後ずれや為替差益等で予想より改善した側面があり、通期予想は据置。ホークスコラボ商品も販促機会にとどまり、売上額は示されていない。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "増収率は+23.8%で、デンティス・クーリスト等が売上をけん引。一方、営業・経常・純損失が続き、中間売上は計画未達。利益は販促費実施の後ずれや為替差益等で予想より改善した側面があり、通期予想は据置。FREEZE TECH×ホークス商品を8/4から販売する告知はあるが、売上効果額は非開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "美容・日用品・機能性衣料などを企画・輸入し、国内外の卸・小売・ECを通じてブランド商品を販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "中間期売上高4,180百万円（前年同期比+23.8%）、営業損失39百万円、経常損失42百万円、親会社株主帰属純損失62百万円。売上はデンティス・クーリスト等が伸長。中間期末現金及び預金1,217百万円、純資産1,534百万円、営業CF▲906百万円。500百万円のコミットメントライン契約締結を決議。8/2にホークスとのFREEZE TECHコラボ商品を8/4からみずほPayPayドームで発売と発表。 株主優待は毎年12月末の権利確定日に600株以上保有する株主が対象で、ポイントを5,000円分から7,500円分へ拡充（商品購入代金10%オフは維持）、2024年12月末基準から適用。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "中間期実績は前回予想比で売上高▲29百万円、営業損失は予想より124百万円縮小、経常損失は141百万円、純損失は180百万円それぞれ縮小。通期予想は売上高9,700百万円、営業利益294百万円、経常利益250百万円、純利益120百万円で据置。中間期末現金及び現金同等物852百万円、現金及び預金1,217百万円、有利子負債3,938百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "中間損失の予想比改善には広告・販促施策の後ろ倒しや為替差益等が含まれ、営業黒字化ではない。営業CFは▲906百万円。コミットメントラインは500百万円枠の締結決議であり、開示時点では8月26日契約予定・8月30日開始予定で、借入実行済みとは扱わない。株主優待ポイント拡充も売上・利益の実績ではない。 ホークスコラボは販売開始の告知であり、販売数量や売上高への寄与は非開示。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-09 2024年12月期第2四半期（中間期）決算短信〔日本基準〕（連結）(15:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808568342/pdfFile.pdf)\n・[2024-08-09 2024年12月期第2四半期決算説明資料(15:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808568354/pdfFile.pdf)\n・[2024-08-09 2024年12月期第2四半期（中間期）連結業績予想値と実績値との差異に関するお知らせ(15:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567876/pdfFile.pdf)\n・[2024-08-09 株主優待制度の変更（拡充）に関するお知らせ(15:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567910/pdfFile.pdf)\n・[2024-08-09 コミットメントライン契約の締結に関するお知らせ(15:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567902/pdfFile.pdf)\n・[2024-08-02 福岡ソフトバンクホークス×FREEZE TECH コラボ商品販売に関するお知らせ(16:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[リベルタ IRニュース一覧](https://ir.liberta-j.co.jp/ja/ir/news.html)\n・[リベルタ（4935）適時開示一覧](https://irbank.net/4935/ir?y=2024-08-09)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808568342/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808568354/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567876/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567910/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567902/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf"
+          ],
+          "result": "会社公式IRニュース一覧と選択した公式PDFの本文を確認。累計出荷実績、販売数量、業績予想と実績を区別した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4935/ir?y=2024-08-09",
+          "checkedUrls": [
+            "https://irbank.net/4935/ir?y=2024-08-09",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf"
+          ],
+          "result": "IRBANK等の掲載時刻を照合。5/15 17:00、6/5 12:00、7/12 17:05、7/22 16:00、8/9の決算・関連4資料15:00。8/5公表時刻はPR TIMES掲載13:00を照合。8/2 16:15時点の後発情報は除外した。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "福岡ソフトバンクホークス×FREEZE TECH コラボ商品販売に関するお知らせ",
+          "publishedAt": "2024-08-02T16:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240802561774/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年12月期第2四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808568342/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年12月期第2四半期決算説明資料",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808568354/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年12月期第2四半期（中間期）連結業績予想値と実績値との差異に関するお知らせ",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567876/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の変更（拡充）に関するお知らせ",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567910/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "コミットメントライン契約の締結に関するお知らせ",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240808567902/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "cutoffまでの公式開示本文を確認し、商品単位の出荷・販売実績と業績数値を分けて記載。8/9は15:00確認済みの5資料を採用し、同日時刻未確認の開示は除外。",
+        "8/2 16:30公表のホークス×FREEZE TECHコラボ商品告知を、8/2 cutoff後・8/7以降のcutoff前として反映。発売告知を売上実績と扱わず、金額非開示と記載。"
+      ]
+    }
+  ]
+}

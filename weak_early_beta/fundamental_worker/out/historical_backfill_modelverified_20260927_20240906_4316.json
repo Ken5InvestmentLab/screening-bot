@@ -1,0 +1,90 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-09-06|4316",
+      "signalDate": "2024-09-06",
+      "symbolCode": "4316",
+      "companyName": "ビーマップ",
+      "analysisCutoff": "2024-09-06T16:15:00+09:00",
+      "generatedAt": "2026-09-27T17:52:29+09:00",
+      "summary": "2025年3月期1Qは売上高231百万円（前年同期比▲30.7%）、営業損失128百万円、経常損失134百万円、親会社純損失117百万円。東日本自治体向け防災情報配信システムの当期約1.8億円（税別）受注はあるが、1Q実績は減収・赤字拡大。",
+      "materialImpact": "防災情報配信システムの自治体受注（当期約1.8億円、税別）は受注面の支え。一方で1Qは売上減・損失拡大し、3期連続の営業・経常赤字で疑義事象あり。会社は現預金と対応策により重要な不確実性はないと判断。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "防災情報配信システムの自治体受注（当期約1.8億円、税別）は受注面の支え。一方で1Qは売上減・損失拡大し、3期連続の営業・経常赤字で疑義事象あり。会社は現預金と対応策により重要な不確実性はないと判断。"
+        },
+        {
+          "name": "事業概要",
+          "value": "交通・鉄道向けMaaSやICカード関連サービス、無線LAN・通信システム、映像配信・販促支援などを提供。連結子会社MMSマーケティングは小売・メーカー向けのレシート応募キャンペーン等を企画運営する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Q売上高231百万円（前年同期比▲30.7%）、営業損失128百万円、経常損失134百万円、親会社株主帰属純損失117百万円。会社資料は東日本自治体から防災情報配信システムを当期約1.8億円（税別）受注と記載。9/3発表では関連会社MMSがゆめタウン・森永乳業キャンペーンを企画運営し、当社がレシート読取・抽選システムを提供。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q末現金及び預金523百万円、純資産573百万円、自己資本比率51.1%。2025年3月期通期予想は売上高1,900百万円、営業利益50百万円、経常利益50百万円、純利益30百万円で変更なし。3期連続の営業・経常損失および1Q損失により疑義事象を記載するが、現金残高と対応策を踏まえ重要な不確実性なし・継続企業注記なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "約1.8億円は通期中の受注額（税別）で、1Q売上計上額ではない。9/3キャンペーンは販促運営・技術提供の発表で、契約額や売上寄与は非開示。会社自身は疑義事象の存在を記載しつつ重要な不確実性はないと判断している。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-09 2025年３月期第１四半期決算短信〔日本基準〕（連結）(15:30)](https://www.bemap.co.jp/library_file/cms_file/24080901173.pdf)\n・[2024-09-03 ゆめタウン・森永乳業共同企画「ヒビタス」習慣キャンペーンを技術面で支援(16:00)](https://www.bemap.co.jp/library_file/cms_file/24090301178.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ビーマップ 2024年プレスリリース一覧](https://www.bemap.co.jp/company/press.php?press_year=2024)\n・[ビーマップ IR資料一覧](https://www.bemap.co.jp/irinfo/library.php)\n・[ビーマップ（4316）適時開示一覧](https://irbank.net/4316/ir?y=2024-09-10)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.bemap.co.jp/company/press.php?press_year=2024",
+          "checkedUrls": [
+            "https://www.bemap.co.jp/company/press.php?press_year=2024",
+            "https://www.bemap.co.jp/library_file/cms_file/24080901173.pdf",
+            "https://www.bemap.co.jp/library_file/cms_file/24090301178.pdf"
+          ],
+          "result": "会社公式プレス一覧と選択した会社公式PDF本文を確認。Q1数値、受注額の期間、販促支援・サービス連携の内容を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4316/ir?y=2024-09-06",
+          "checkedUrls": [
+            "https://irbank.net/4316/ir?y=2024-09-06",
+            "https://prtimes.jp/main/html/rd/p/000000174.000018483.html",
+            "https://prtimes.jp/main/html/rd/p/000000175.000018483.html"
+          ],
+          "result": "Q1短信の公表時刻15:30、9/3・9/9の発表時刻16:00を照合。9/6は9/3発表まで、9/10は9/9発表までを採用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年３月期第１四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-09T15:30:00+09:00",
+          "url": "https://www.bemap.co.jp/library_file/cms_file/24080901173.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ゆめタウン・森永乳業共同企画「ヒビタス」習慣キャンペーンを技術面で支援",
+          "publishedAt": "2024-09-03T16:00:00+09:00",
+          "url": "https://www.bemap.co.jp/library_file/cms_file/24090301178.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "公式資料本文を確認し、受注額と売上計上額を分離。赤字・疑義事象、会社による重要な不確実性なしの判断、販促・サービス連携の非開示項目を併記。"
+      ]
+    }
+  ]
+}

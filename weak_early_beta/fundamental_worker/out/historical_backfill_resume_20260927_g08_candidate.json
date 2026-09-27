@@ -1,0 +1,120 @@
+{
+  "reports": [
+    {
+      "identity": "2023-10-02|2375",
+      "signalDate": "2023-10-02",
+      "symbolCode": "2375",
+      "companyName": "ギグワークス",
+      "analysisCutoff": "2023-10-02T16:15:00+09:00",
+      "auditStatus": "pass",
+      "auditNotes": [],
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "通期予想を営業黒字から赤字へ下方修正し、純損失・減損を計上。9月末の子会社配当は連結影響なし、新株予約権の最大希薄化は0.9%。",
+      "materialImpact": "ネガティブ材料：通期営業予想は500百万円黒字から144百万円赤字へ転落し、減損・のれん償却を計上。子会社配当は連結業績に影響しない。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "ネガティブ材料：通期営業予想は500百万円黒字から144百万円赤字へ転落し、減損・のれん償却を計上。子会社配当は連結業績に影響しない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "ギグワーカーによる現場支援・コンタクトセンター等のオンデマンド事業、ITエンジニアの受託開発・システム運用、シェアオフィス等のシェアリング事業を展開。2022年に取得した日本直販等の総合通販・ECをデジタルマーケティング事業として加えた4事業構成。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9月29日に社外協力者向け第25回新株予約権の払込完了を公表。全行使時の潜在株式は20万株、最大希薄化率0.9%。同日公表の子会社配当243百万円は親会社単体に受取配当金として計上予定だが、連結業績への影響はない。9月20日には少額短期保険業参入に向けた準備会社設立を決議し、当面の業績影響は軽微と説明。9月11日公表の第3四半期累計は売上高199億96百万円（前年同期比+24.5%）に対し営業利益17百万円（同△94.5%）、親会社株主帰属純損失9億56百万円。官公庁の大型案件縮小でオンデマンド事業が減収減益、通販事業は収益改善途上。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "通期会社予想は売上高260億円、営業損失1億44百万円、経常損失1億45百万円、純損失11億56百万円へ修正。従来予想（売上高282億円、営業利益5億円、純利益2億60百万円）から営業損益は6億44百万円悪化。第3四半期累計で特別損失6億37百万円（日本直販関連のれん償却3億79百万円、固定資産減損2億55百万円）と繰延税金資産3億5百万円の取崩しを計上。オンデマンド事業は売上高86億57百万円（△12.7%）、セグメント利益4億81百万円（△46.5%）。デジタルマーケティング事業は売上高50億17百万円、セグメント損失89百万円。システムソリューション事業は売上高36億21百万円、セグメント利益5億72百万円（+44.7%）。"
+        },
+        {
+          "name": "注意点",
+          "value": "日本直販の継続利用・LTV向上策は大きく進まず、デジタルマーケティング事業は赤字。前期大型案件の反動で主力オンデマンド事業も減収減益となり、会社予想の赤字転換に直結した。子会社株式20%の譲渡は秋元康氏関係者への譲渡契約段階で、BtoC運営ノウハウ獲得の効果は未確認。新株予約権は全行使時に0.9%の希薄化が生じ得る。子会社配当243百万円は親会社単体の計上であり、連結収益を押し上げない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "[2023-09-29 新株予約権の払込完了(15:00)](https://www.gig.co.jp/wp/wp-content/uploads/2023/09/b0452fb5eb4e1762d257e3e52358e859.pdf)\n[2023-09-29 連結子会社からの配当金受領(15:00)](https://www.gig.co.jp/wp/wp-content/uploads/2023/09/39bdc13b305677113eacc1d51ad94cbb.pdf)\n[2023-09-20 少額短期保険準備会社設立(15:00)](https://www.gig.co.jp/wp/wp-content/uploads/2023/09/a72404af6ef45c9afad30446290705c3.pdf)\n[2023-09-11 特別損失・通期業績予想及び配当予想の修正(16:00)](https://www.gig.co.jp/wp/wp-content/uploads/2023/09/9743a2fe76c9a92d60ec782337522995.pdf)\n[2023-09-11 日本直販株式の一部譲渡・秋元康氏就任(16:00)](https://www.gig.co.jp/wp/wp-content/uploads/2023/09/3657ebf1e16ba5f69bddd67574ecf92e.pdf)\n[2023-09-11 第3四半期決算短信(16:00)](https://www.gig.co.jp/wp/wp-content/uploads/2023/09/ce43e107626c788c5c55676470e4c48f.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[IR情報](https://www.gig.co.jp/ir)\n[IRニュース](https://www.gig.co.jp/ir/news/)\n[決算短信一覧](https://www.gig.co.jp/ir/result)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.gig.co.jp/ir/news/",
+          "checkedUrls": [
+            "https://www.gig.co.jp/ir/result",
+            "https://www.gig.co.jp/ir/",
+            "https://www.gig.co.jp/wp-json/wp/v2/posts?after=2023-09-11T00:00:00&before=2023-10-03T00:00:00&per_page=100"
+          ],
+          "result": "会社公式IR一覧と一次資料本文を確認。公式RESTのdate/date_gmtはサイトへの掲出時刻であり、TDnet公開時刻とは異なるため、IRサイト投稿時刻を開示時刻として転記していない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2375/ir",
+          "checkedUrls": [
+            "https://irbank.net/2375/ir",
+            "https://www2.jpx.co.jp/tseHpFront/StockSearch.do?topSearchStr=2375",
+            "https://www2.jpx.co.jp/disc/23750/140120230911552941.pdf",
+            "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/b0452fb5eb4e1762d257e3e52358e859.pdf",
+            "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/39bdc13b305677113eacc1d51ad94cbb.pdf",
+            "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/a72404af6ef45c9afad30446290705c3.pdf",
+            "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/9743a2fe76c9a92d60ec782337522995.pdf",
+            "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/3657ebf1e16ba5f69bddd67574ecf92e.pdf",
+            "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/ce43e107626c788c5c55676470e4c48f.pdf"
+          ],
+          "result": "IRBANKの2375 IR開示一覧でTDnet時刻を確認（9月11日の決算・修正・株式譲渡資料は16:00、9月20日と29日は15:00）。JPX公式上場会社情報サービスで対象資料と日付を照合した。同サービスの過去一覧は開示日までで時刻を表示せず、会社公式RESTのdate/date_gmtはIRサイト掲出時刻のため、TDnet時刻との区別を確認した。本文根拠は公式IR/JPX直接資料に限定。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "社外協力者に対する新株予約権の発行に係る払込完了に関するお知らせ",
+          "publishedAt": "2023-09-29T15:00:00+09:00",
+          "url": "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/b0452fb5eb4e1762d257e3e52358e859.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "連結子会社からの配当金受領に関するお知らせ",
+          "publishedAt": "2023-09-29T15:00:00+09:00",
+          "url": "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/39bdc13b305677113eacc1d51ad94cbb.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "少額短期保険業参入に向けた新子会社（準備会社）設立に関するお知らせ",
+          "publishedAt": "2023-09-20T15:00:00+09:00",
+          "url": "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/a72404af6ef45c9afad30446290705c3.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "特別損失、繰延税金資産の取り崩しによる法人税等調整額（損）の計上および2023年10月期の連結業績予想の修正ならびに配当予想の修正（未定）に関するお知らせ",
+          "publishedAt": "2023-09-11T16:00:00+09:00",
+          "url": "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/9743a2fe76c9a92d60ec782337522995.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "日本直販株式会社（当社連結子会社）株式の一部譲渡ならびに秋元康氏の「総合プロデューサー」就任に関するお知らせ",
+          "publishedAt": "2023-09-11T16:00:00+09:00",
+          "url": "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/3657ebf1e16ba5f69bddd67574ecf92e.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2023年10月期第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2023-09-11T16:00:00+09:00",
+          "url": "https://www.gig.co.jp/wp/wp-content/uploads/2023/09/ce43e107626c788c5c55676470e4c48f.pdf",
+          "contentReviewed": true
+        }
+      ]
+    }
+  ]
+}

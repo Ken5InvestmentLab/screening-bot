@@ -1,0 +1,173 @@
+{
+  "reports": [
+    {
+      "identity": "2024-04-04|2330",
+      "signalDate": "2024-04-04",
+      "symbolCode": "2330",
+      "companyName": "フォーサイド",
+      "analysisCutoff": "2024-04-04T16:15:00+09:00",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "2023年12月期は減収ながら営業・経常黒字へ転換したが利益水準は薄く、会社予想も未達。純利益には債務消滅益が含まれる。AI関連事業の寄与は未定。3月28日の定時株主総会では取締役選任等が承認された。",
+      "materialImpact": "混在/要確認：黒字転換とプライズ事業の改善は好材料だが、営業・経常利益は会社予想を下回り、純利益は一時的な債務消滅益を含む。AI事業の寄与は未開示。",
+      "fields": [
+        {"name": "材料インパクト", "value": "混在/要確認：黒字転換とプライズ事業の改善は好材料だが、営業・経常利益は会社予想を下回り、純利益は一時的な債務消滅益を含む。AI事業の寄与は未開示。"},
+        {"name": "事業概要", "value": "クレーンゲーム景品の企画・製作・販売、不動産関連、電子書籍・ウェブメディア、イベント・出版などを展開する。2023年12月期はプライズ事業と不動産関連事業が主力。"},
+        {"name": "足元材料", "value": "監査済み2024年3月11日候補の内容を再利用。2023年12月期は営業収益4,817百万円（前期比3.4％減）、営業利益52.6百万円、経常利益44.3百万円、親会社株主に帰属する純利益113.6百万円。3月28日の第24回定時株主総会では取締役6名・監査等委員1名の選任と剰余金処分が承認され、その他資本剰余金23,029,924円を繰越利益剰余金へ振り替えて欠損填補に充てることが決議された。"},
+        {"name": "ファンダ要点", "value": "営業・経常損益は前年赤字から黒字化した一方、営業利益率は約1.1％で、2月13日公表の従来会社予想に対して営業・経常利益は未達。純利益には仮受金に係る債務消滅益85.8百万円を含む。2月に発表したAI関連子会社・AICE提携の連結業績影響は会社が精査中としており、売上・利益寄与は確認できない。"},
+        {"name": "注意点", "value": "純利益を本業の継続利益と同一視しないこと。コンテンツ等の赤字、不動産関連の貸倒引当金増加が既存分析上の留意点。2月16日に公表された大株主異動は予定事項として扱い、3月28日の株主総会決議通知も株式譲渡の完了を確認する資料ではない。欠損填補の決議は利益の発生や営業改善を意味しない。"},
+        {"name": "開示リンク", "value": "・[2024-02-01 子会社によるAICE株式会社との業務提携に関するお知らせ(15:02)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E5%BD%93%E7%A4%BE%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8BAICE%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%AE%E6%A5%AD%E5%8B%99%E6%8F%90%E6%90%BA%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-02-13 2023年12月期 決算短信〔日本基準〕（連結）(15:14)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/2023%E5%B9%B412%E6%9C%88%E6%9C%9F-%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1%E6%97%A5%E6%9C%AC%E5%9F%BA%E6%BA%96%EF%BC%88%E9%80%A3%E7%B5%90%EF%BC%89.pdf)\n・[2024-02-13 特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ(15:12)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E7%89%B9%E5%88%A5%E5%88%A9%E7%9B%8A%E3%81%AE%E8%A8%88%E4%B8%8A%E5%8F%8A%E3%81%B3%E9%80%9A%E6%9C%9F%E9%80%A3%E7%B5%90%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E3%81%A8%E5%AE%9F%E7%B8%BE%E5%80%A4%E3%81%A8%E3%81%AE%E5%B7%AE%E7%95%B0%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-02-16 代表取締役の異動及び取締役候補者選任に関するお知らせ(15:05)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%BB%A3%E8%A1%A8%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%81%AE%E7%95%B0%E5%8B%95%E5%8F%8A%E3%81%B3%E5%8F%96%E7%B7%A0%E5%BD%B9%EF%BC%88%E7%9B%A3%E6%9F%BB%E7%AD%89%E5%A7%94%E5%93%A1%E3%81%A7%E3%81%82%E3%82%8B%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%82%92%E9%99%A4%E3%81%8F%E3%80%82%EF%BC%89%E5%80%99%E8%A3%9C%E8%80%85%E9%81%B8%E4%BB%BB%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-02-16 主要株主である筆頭株主の異動に関するお知らせ(15:05)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%B8%BB%E8%A6%81%E6%A0%AA%E4%B8%BB%E3%81%A7%E3%81%82%E3%82%8B%E7%AD%86%E9%A0%AD%E6%A0%AA%E4%B8%BB%E3%81%AE%E7%95%B0%E5%8B%95%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-03-28 第24回定時株主総会決議ご通知(13:58)](https://www.forside.co.jp/2024/03/28/8441/)"},
+        {"name": "Sources", "value": "[フォーサイド IR情報・2024年アーカイブ](https://www.forside.co.jp/irinfo/?yearnum=2024)\n[フォーサイド 決算・IR資料一覧](https://www.forside.co.jp/irinfo/financialinfo/?yearnum=2024)\n[2330 適時開示一覧｜IRBANK](https://irbank.net/2330/ir)"}
+      ],
+      "disclosures": [
+        {"title": "当社子会社によるAICE株式会社との業務提携に関するお知らせ", "publishedAt": "2024-02-01T15:02:19+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E5%BD%93%E7%A4%BE%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8BAICE%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%AE%E6%A5%AD%E5%8B%99%E6%8F%90%E6%90%BA%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "2023年12月期 決算短信〔日本基準〕（連結）", "publishedAt": "2024-02-13T15:14:19+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/2023%E5%B9%B412%E6%9C%88%E6%9C%9F-%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1%E6%97%A5%E6%9C%AC%E5%9F%BA%E6%BA%96%EF%BC%88%E9%80%A3%E7%B5%90%EF%BC%89.pdf", "contentReviewed": true},
+        {"title": "特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ", "publishedAt": "2024-02-13T15:12:42+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E7%89%B9%E5%88%A5%E5%88%A9%E7%9B%8A%E3%81%AE%E8%A8%88%E4%B8%8A%E5%8F%8A%E3%81%B3%E9%80%9A%E6%9C%9F%E9%80%A3%E7%B5%90%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E3%81%A8%E5%AE%9F%E7%B8%BE%E5%80%A4%E3%81%A8%E3%81%AE%E5%B7%AE%E7%95%B0%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "代表取締役の異動及び取締役候補者選任に関するお知らせ", "publishedAt": "2024-02-16T15:05:54+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%BB%A3%E8%A1%A8%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%81%AE%E7%95%B0%E5%8B%95%E5%8F%8A%E3%81%B3%E5%8F%96%E7%B7%A0%E5%BD%B9%EF%BC%88%E7%9B%A3%E6%9F%BB%E7%AD%89%E5%A7%94%E5%93%A1%E3%81%A7%E3%81%82%E3%82%8B%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%82%92%E9%99%A4%E3%81%8F%E3%80%82%EF%BC%89%E5%80%99%E8%A3%9C%E8%80%85%E9%81%B8%E4%BB%BB%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "主要株主である筆頭株主の異動に関するお知らせ", "publishedAt": "2024-02-16T15:05:16+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%B8%BB%E8%A6%81%E6%A0%AA%E4%B8%BB%E3%81%A7%E3%81%82%E3%82%8B%E7%AD%86%E9%A0%AD%E6%A0%AA%E4%B8%BB%E3%81%AE%E7%95%B0%E5%8B%95%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "第24回定時株主総会決議ご通知", "publishedAt": "2024-03-28T13:58:33+09:00", "url": "https://www.forside.co.jp/2024/03/28/8441/", "contentReviewed": true}
+      ],
+      "sourceChecks": [
+        {"role": "official_ir", "checked": true, "url": "https://www.forside.co.jp/irinfo/?yearnum=2024", "checkedUrls": ["https://www.forside.co.jp/irinfo/?yearnum=2024", "https://www.forside.co.jp/irinfo/financialinfo/?yearnum=2024", "https://www.forside.co.jp/2024/03/28/8441/"], "result": "監査済み2024-03-11|2330 receiptの本文・時刻・2/1、2/13、2/16の一次PDF記録を再利用し、同じPDFは再探索していない。公式IR一覧の差分と3/28決議通知本文を確認。その他資本剰余金23,029,924円を欠損填補へ振り替える決議、取締役等の選任承認を確認した。"},
+        {"role": "irbank_or_tdnet", "checked": true, "url": "https://irbank.net/2330/ir", "checkedUrls": ["https://irbank.net/2330/ir"], "result": "既存監査済receipt記載の2/1、2/13、2/16開示時刻を再利用。3/28資料は会社公式投稿メタデータの2024-03-28 13:58:33 JSTを採用。カットオフは2024-04-04 16:15 JST。"}
+      ],
+      "auditStatus": "candidate",
+      "auditNotes": [
+        "候補のみ。監査済みreceipt 2024-03-11|2330の業績・AI事業・2/16予定事項の分析を再利用し、過去の同一PDFを再探索していない。新しい差分として3/28定時株主総会決議通知の本文を確認した。",
+        "3/28決議通知は取締役選任等の承認と欠損填補を記載するが、2/16公表の大株主異動の株式譲渡完了を確認する資料ではないため、予定事項のまま扱った。",
+        "2024-04-04 16:15 JSTより後の開示、価格、騰落率、実現結果、推測は使用していない。"
+      ]
+    },
+    {
+      "identity": "2024-04-05|2330",
+      "signalDate": "2024-04-05",
+      "symbolCode": "2330",
+      "companyName": "フォーサイド",
+      "analysisCutoff": "2024-04-05T16:15:00+09:00",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "2023年12月期は減収ながら営業・経常黒字へ転換したが利益水準は薄く、会社予想も未達。純利益には債務消滅益が含まれる。AI関連事業の寄与は未定。3月28日の定時株主総会では取締役選任等が承認された。",
+      "materialImpact": "混在/要確認：黒字転換とプライズ事業の改善は好材料だが、営業・経常利益は会社予想を下回り、純利益は一時的な債務消滅益を含む。AI事業の寄与は未開示。",
+      "fields": [
+        {"name": "材料インパクト", "value": "混在/要確認：黒字転換とプライズ事業の改善は好材料だが、営業・経常利益は会社予想を下回り、純利益は一時的な債務消滅益を含む。AI事業の寄与は未開示。"},
+        {"name": "事業概要", "value": "クレーンゲーム景品の企画・製作・販売、不動産関連、電子書籍・ウェブメディア、イベント・出版などを展開する。2023年12月期はプライズ事業と不動産関連事業が主力。"},
+        {"name": "足元材料", "value": "監査済み2024年3月11日候補の内容を再利用。2023年12月期は営業収益4,817百万円（前期比3.4％減）、営業利益52.6百万円、経常利益44.3百万円、親会社株主に帰属する純利益113.6百万円。3月28日の第24回定時株主総会では取締役6名・監査等委員1名の選任と剰余金処分が承認され、その他資本剰余金23,029,924円を繰越利益剰余金へ振り替えて欠損填補に充てることが決議された。"},
+        {"name": "ファンダ要点", "value": "営業・経常損益は前年赤字から黒字化した一方、営業利益率は約1.1％で、2月13日公表の従来会社予想に対して営業・経常利益は未達。純利益には仮受金に係る債務消滅益85.8百万円を含む。2月に発表したAI関連子会社・AICE提携の連結業績影響は会社が精査中としており、売上・利益寄与は確認できない。"},
+        {"name": "注意点", "value": "純利益を本業の継続利益と同一視しないこと。コンテンツ等の赤字、不動産関連の貸倒引当金増加が既存分析上の留意点。2月16日に公表された大株主異動は予定事項として扱い、3月28日の株主総会決議通知も株式譲渡の完了を確認する資料ではない。欠損填補の決議は利益の発生や営業改善を意味しない。"},
+        {"name": "開示リンク", "value": "・[2024-02-01 子会社によるAICE株式会社との業務提携に関するお知らせ(15:02)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E5%BD%93%E7%A4%BE%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8BAICE%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%AE%E6%A5%AD%E5%8B%99%E6%8F%90%E6%90%BA%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-02-13 2023年12月期 決算短信〔日本基準〕（連結）(15:14)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/2023%E5%B9%B412%E6%9C%88%E6%9C%9F-%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1%E6%97%A5%E6%9C%AC%E5%9F%BA%E6%BA%96%EF%BC%88%E9%80%A3%E7%B5%90%EF%BC%89.pdf)\n・[2024-02-13 特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ(15:12)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E7%89%B9%E5%88%A5%E5%88%A9%E7%9B%8A%E3%81%AE%E8%A8%88%E4%B8%8A%E5%8F%8A%E3%81%B3%E9%80%9A%E6%9C%9F%E9%80%A3%E7%B5%90%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E3%81%A8%E5%AE%9F%E7%B8%BE%E5%80%A4%E3%81%A8%E3%81%AE%E5%B7%AE%E7%95%B0%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-02-16 代表取締役の異動及び取締役候補者選任に関するお知らせ(15:05)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%BB%A3%E8%A1%A8%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%81%AE%E7%95%B0%E5%8B%95%E5%8F%8A%E3%81%B3%E5%8F%96%E7%B7%A0%E5%BD%B9%EF%BC%88%E7%9B%A3%E6%9F%BB%E7%AD%89%E5%A7%94%E5%93%A1%E3%81%A7%E3%81%82%E3%82%8B%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%82%92%E9%99%A4%E3%81%8F%E3%80%82%EF%BC%89%E5%80%99%E8%A3%9C%E8%80%85%E9%81%B8%E4%BB%BB%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-02-16 主要株主である筆頭株主の異動に関するお知らせ(15:05)](https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%B8%BB%E8%A6%81%E6%A0%AA%E4%B8%BB%E3%81%A7%E3%81%82%E3%82%8B%E7%AD%86%E9%A0%AD%E6%A0%AA%E4%B8%BB%E3%81%AE%E7%95%B0%E5%8B%95%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2024-03-28 第24回定時株主総会決議ご通知(13:58)](https://www.forside.co.jp/2024/03/28/8441/)"},
+        {"name": "Sources", "value": "[フォーサイド IR情報・2024年アーカイブ](https://www.forside.co.jp/irinfo/?yearnum=2024)\n[フォーサイド 決算・IR資料一覧](https://www.forside.co.jp/irinfo/financialinfo/?yearnum=2024)\n[2330 適時開示一覧｜IRBANK](https://irbank.net/2330/ir)"}
+      ],
+      "disclosures": [
+        {"title": "当社子会社によるAICE株式会社との業務提携に関するお知らせ", "publishedAt": "2024-02-01T15:02:19+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E5%BD%93%E7%A4%BE%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8BAICE%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%81%A8%E3%81%AE%E6%A5%AD%E5%8B%99%E6%8F%90%E6%90%BA%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "2023年12月期 決算短信〔日本基準〕（連結）", "publishedAt": "2024-02-13T15:14:19+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/2023%E5%B9%B412%E6%9C%88%E6%9C%9F-%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1%E6%97%A5%E6%9C%AC%E5%9F%BA%E6%BA%96%EF%BC%88%E9%80%A3%E7%B5%90%EF%BC%89.pdf", "contentReviewed": true},
+        {"title": "特別利益の計上及び通期連結業績予想と実績値との差異に関するお知らせ", "publishedAt": "2024-02-13T15:12:42+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E7%89%B9%E5%88%A5%E5%88%A9%E7%9B%8A%E3%81%AE%E8%A8%88%E4%B8%8A%E5%8F%8A%E3%81%B3%E9%80%9A%E6%9C%9F%E9%80%A3%E7%B5%90%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E3%81%A8%E5%AE%9F%E7%B8%BE%E5%80%A4%E3%81%A8%E3%81%AE%E5%B7%AE%E7%95%B0%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "代表取締役の異動及び取締役候補者選任に関するお知らせ", "publishedAt": "2024-02-16T15:05:54+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%BB%A3%E8%A1%A8%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%81%AE%E7%95%B0%E5%8B%95%E5%8F%8A%E3%81%B3%E5%8F%96%E7%B7%A0%E5%BD%B9%EF%BC%88%E7%9B%A3%E6%9F%BB%E7%AD%89%E5%A7%94%E5%93%A1%E3%81%A7%E3%81%82%E3%82%8B%E5%8F%96%E7%B7%A0%E5%BD%B9%E3%82%92%E9%99%A4%E3%81%8F%E3%80%82%EF%BC%89%E5%80%99%E8%A3%9C%E8%80%85%E9%81%B8%E4%BB%BB%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "主要株主である筆頭株主の異動に関するお知らせ", "publishedAt": "2024-02-16T15:05:16+09:00", "url": "https://www.forside.co.jp/wordpress/wp-content/uploads/2024/02/%E4%B8%BB%E8%A6%81%E6%A0%AA%E4%B8%BB%E3%81%A7%E3%81%82%E3%82%8B%E7%AD%86%E9%A0%AD%E6%A0%AA%E4%B8%BB%E3%81%AE%E7%95%B0%E5%8B%95%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf", "contentReviewed": true},
+        {"title": "第24回定時株主総会決議ご通知", "publishedAt": "2024-03-28T13:58:33+09:00", "url": "https://www.forside.co.jp/2024/03/28/8441/", "contentReviewed": true}
+      ],
+      "sourceChecks": [
+        {"role": "official_ir", "checked": true, "url": "https://www.forside.co.jp/irinfo/?yearnum=2024", "checkedUrls": ["https://www.forside.co.jp/irinfo/?yearnum=2024", "https://www.forside.co.jp/irinfo/financialinfo/?yearnum=2024", "https://www.forside.co.jp/2024/03/28/8441/"], "result": "監査済み2024-03-11|2330 receiptの本文・時刻・2/1、2/13、2/16の一次PDF記録を再利用し、同じPDFは再探索していない。公式IR一覧の差分と3/28決議通知本文を確認。その他資本剰余金23,029,924円を欠損填補へ振り替える決議、取締役等の選任承認を確認した。"},
+        {"role": "irbank_or_tdnet", "checked": true, "url": "https://irbank.net/2330/ir", "checkedUrls": ["https://irbank.net/2330/ir"], "result": "既存監査済receipt記載の2/1、2/13、2/16開示時刻を再利用。3/28資料は会社公式投稿メタデータの2024-03-28 13:58:33 JSTを採用。カットオフは2024-04-05 16:15 JST。"}
+      ],
+      "auditStatus": "candidate",
+      "auditNotes": [
+        "候補のみ。監査済みreceipt 2024-03-11|2330の業績・AI事業・2/16予定事項の分析を再利用し、過去の同一PDFを再探索していない。新しい差分として3/28定時株主総会決議通知の本文を確認した。",
+        "3/28決議通知は取締役選任等の承認と欠損填補を記載するが、2/16公表の大株主異動の株式譲渡完了を確認する資料ではないため、予定事項のまま扱った。",
+        "2024-04-05 16:15 JSTより後の開示、価格、騰落率、実現結果、推測は使用していない。"
+      ]
+    },
+    {
+      "identity": "2024-04-08|6659",
+      "signalDate": "2024-04-08",
+      "symbolCode": "6659",
+      "companyName": "メディアリンクス",
+      "analysisCutoff": "2024-04-08T16:15:00+09:00",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "ポーランドの販売パートナー契約と、放送局・衛星放送事業者でのIP伝送製品採用を相次いで発表。一方、4月5日には第17回新株予約権の大量行使を公表し、3,000,000株分が未行使として残る。商業効果は未定量で、希薄化も続く。",
+      "materialImpact": "混在/要確認：販売網の拡大と採用事例は成長材料だが、受注額・売上寄与は未開示。第17回新株予約権の行使に伴う株式供給と残存潜在株式がある。",
+      "fields": [
+        {"name": "材料インパクト", "value": "混在/要確認：販売網の拡大と採用事例は成長材料だが、受注額・売上寄与は未開示。第17回新株予約権の行使に伴う株式供給と残存潜在株式がある。"},
+        {"name": "事業概要", "value": "放送局・通信事業者等へ、映像・音声などのメディアをIP網で伝送・管理する機器とソリューションを提供する。"},
+        {"name": "足元材料", "value": "3月18日にポーランドのWachowiak & Syn社を販売パートナーとする契約を発表。3月26日には朝日放送テレビのSMPTE ST 2110対応大規模基幹システムへのXscend採用、4月5日朝にはスカパーJSATへのXscend採用とMDX48X6C、ProMD EMSの提供・ネットワーク構築支援を発表。いずれも契約金額・受注額・収益寄与の数値は開示されていない。"},
+        {"name": "ファンダ要点", "value": "4月5日16:30公表のJPX開示では、第17回新株予約権について月初から1,000,000株が交付され、4月5日に10,000個が行使、現時点の未行使は30,000個（対象株式3,000,000株）とされた。既存の2024年3月15日候補に記録された3月5日付の行使前倒し資料も再利用し、実際の行使と潜在株式を区別した。"},
+        {"name": "注意点", "value": "製品採用・販売パートナー発表は商用展開の進展を示すが、販売数量や金額、連結業績への影響は公表されておらず、利益改善を推定できない。新株予約権の行使は資金調達と同時に株式数を増やす可能性があり、未行使3,000,000株を既発行株式として扱わない。既存G17候補で一次本文未確認とされた第3四半期業績数値は本候補にも転記していない。"},
+        {"name": "開示リンク", "value": "・[2024-03-05 第三者割当による第17回新株予約権の行使前倒しに関するお知らせ(15:00)](https://www2.jpx.co.jp/disc/66590/140120240305548782.pdf)\n・[2024-03-18 ポーランドにおける販売パートナー契約](https://jp.medialinks.com/blog/2024/03/18/%E3%83%9D%E3%83%BC%E3%83%A9%E3%83%B3%E3%83%89%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8B%E8%B2%A9%E5%A3%B2%E3%83%91%E3%83%BC%E3%83%88%E3%83%8A%E3%83%BC%E3%81%A8%E3%81%97%E3%81%A6wachowiak-syn%E7%A4%BE/)\n・[2024-03-26 朝日放送テレビの大規模基幹システムにXscend採用](https://jp.medialinks.com/blog/2024/03/26/%E6%9C%9D%E6%97%A5%E6%94%BE%E9%80%81%E3%83%86%E3%83%AC%E3%83%93%E6%A7%98%E3%80%8Csmpte-st-2110%E3%80%8D%E5%AF%BE%E5%BF%9C%E3%81%AE%E5%A4%A7%E8%A6%8F%E6%A8%A1%E5%9F%BA%E5%B9%B9%E3%82%B7%E3%82%B9/)\n・[2024-04-05 スカパーJSATへXscend採用](https://jp.medialinks.com/blog/2024/04/05/%e3%82%b9%e3%82%ab%e3%83%91%e3%83%bc%ef%bd%8a%ef%bd%83%e3%82%88%e3%81%8b%e3%82%8f%e3%81%94%e3%81%94%e3%81%97%e3%81%a7%e3%81%a8%e3%82%93%e3%81%be%e3%82%81%e3%81%a8%e3%81%98%e3%81%a3%e3%81%a8%e3%81%97%e3%81%a6/)\n・[2024-04-05 第17回新株予約権の大量行使に関するお知らせ(16:30)](https://www2.jpx.co.jp/disc/66590/140120240405566803.pdf)"},
+        {"name": "Sources", "value": "[Media Links Japan IRニュース一覧](https://jp.medialinks.com/blog/category/news-archive/)\n[Media Links Japan IRライブラリー](https://jp.medialinks.com/investor-relations/investor-library/)\n[6659 適時開示一覧｜IRBANK](https://irbank.net/6659/ir)"}
+      ],
+      "disclosures": [
+        {"title": "第三者割当により発行された第17回新株予約権（行使価額修正条項付）の行使前倒しに関するお知らせ", "publishedAt": "2024-03-05T15:00:00+09:00", "url": "https://www2.jpx.co.jp/disc/66590/140120240305548782.pdf", "contentReviewed": true},
+        {"title": "ポーランドにおける販売パートナーとしてWachowiak & Syn社とパートナー契約を提携", "publishedAt": "2024-03-18T08:00:11+09:00", "url": "https://jp.medialinks.com/blog/2024/03/18/%E3%83%9D%E3%83%BC%E3%83%A9%E3%83%B3%E3%83%89%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8B%E8%B2%A9%E5%A3%B2%E3%83%91%E3%83%BC%E3%83%88%E3%83%8A%E3%83%BC%E3%81%A8%E3%81%97%E3%81%A6wachowiak-syn%E7%A4%BE/", "contentReviewed": true},
+        {"title": "朝日放送テレビ様「SMPTE ST 2110」対応の大規模基幹システムにおいて新製品Xscendが採用", "publishedAt": "2024-03-26T08:00:39+09:00", "url": "https://jp.medialinks.com/blog/2024/03/26/%E6%9C%9D%E6%97%A5%E6%94%BE%E9%80%81%E3%83%86%E3%83%AC%E3%83%93%E6%A7%98%E3%80%8Csmpte-st-2110%E3%80%8D%E5%AF%BE%E5%BF%9C%E3%81%AE%E5%A4%A7%E8%A6%8F%E6%A8%A1%E5%9F%BA%E5%B9%B9%E3%82%B7%E3%82%B9/", "contentReviewed": true},
+        {"title": "スカパーＪＳＡＴ株式会社に新製品IPゲートウェイXscendが採用されました", "publishedAt": "2024-04-05T08:00:29+09:00", "url": "https://jp.medialinks.com/blog/2024/04/05/%e3%82%b9%e3%82%ab%e3%83%91%e3%83%bc%ef%bd%8a%ef%bd%83%e3%82%88%e3%81%8b%e3%82%8f%e3%81%94%e3%81%94%e3%81%97%e3%81%a7%e3%81%a8%e3%82%93%e3%81%be%e3%82%81%e3%81%a8%e3%81%98%e3%81%a3%e3%81%a8%e3%81%97%e3%81%a6/", "contentReviewed": true},
+        {"title": "第三者割当により発行された第17回新株予約権（行使価額修正条項付）の大量行使に関するお知らせ", "publishedAt": "2024-04-05T16:30:00+09:00", "url": "https://www2.jpx.co.jp/disc/66590/140120240405566803.pdf", "contentReviewed": true}
+      ],
+      "sourceChecks": [
+        {"role": "official_ir", "checked": true, "url": "https://jp.medialinks.com/blog/category/news-archive/", "checkedUrls": ["https://jp.medialinks.com/blog/category/news-archive/", "https://jp.medialinks.com/investor-relations/investor-library/", "https://jp.medialinks.com/blog/2024/03/18/%E3%83%9D%E3%83%BC%E3%83%A9%E3%83%B3%E3%83%89%E3%81%AB%E3%81%8A%E3%81%91%E3%82%8B%E8%B2%A9%E5%A3%B2%E3%83%91%E3%83%BC%E3%83%88%E3%83%8A%E3%83%BC%E3%81%A8%E3%81%97%E3%81%A6wachowiak-syn%E7%A4%BE/", "https://jp.medialinks.com/blog/2024/03/26/%E6%9C%9D%E6%97%A5%E6%94%BE%E9%80%81%E3%83%86%E3%83%AC%E3%83%93%E6%A7%98%E3%80%8Csmpte-st-2110%E3%80%8D%E5%AF%BE%E5%BF%9C%E3%81%AE%E5%A4%A7%E8%A6%8F%E6%A8%A1%E5%9F%BA%E5%B9%B9%E3%82%B7%E3%82%B9/", "https://jp.medialinks.com/blog/2024/04/05/%e3%82%b9%e3%82%ab%e3%83%91%e3%83%bc%ef%bd%8a%ef%bd%83%e3%82%88%e3%81%8b%e3%82%8f%e3%81%94%e3%81%94%e3%81%97%e3%81%a7%e3%81%a8%e3%82%93%e3%81%be%e3%82%81%e3%81%a8%e3%81%98%e3%81%a3%e3%81%a8%e3%81%97%e3%81%a6/"], "result": "会社公式ニュース本文を確認。各投稿の公式WordPress公表時刻は3/18 08:00:11、3/26 08:00:39、4/5 08:00:29 JST。販売・採用事例について、契約額、販売数量、業績寄与を推定していない。"},
+        {"role": "irbank_or_tdnet", "checked": true, "url": "https://irbank.net/6659/ir", "checkedUrls": ["https://irbank.net/6659/ir", "https://irbank.net/6659/140120240305548782", "https://irbank.net/6659/140120240405566803", "https://www2.jpx.co.jp/disc/66590/140120240405566803.pdf"], "result": "第17回の3/5資料時刻15:00を既存G17候補から再利用。4/5 16:30のTDnet開示は本レコードの2024-04-08 16:15 cutoffより前であることを確認し、一次JPX PDF本文を読了。"}
+      ],
+      "auditStatus": "candidate",
+      "auditNotes": [
+        "候補のみ・業績数値はhold。既存G17候補で2024年1月25日付第3四半期資料の一次本文が未確認とされていたため、その業績数値を転記していない。今回の3/18、3/26、4/5の会社公式ニュース本文および4/5 TDnet一次PDFは確認済み。",
+        "4/5 16:30の第17回新株予約権大量行使資料は2024-04-08 16:15 JST cutoff内。10,000個行使、3,000,000株分残存を記し、後者を既発行株式と扱っていない。",
+        "2024-04-08 16:15 JSTより後の開示、価格、騰落率、実現結果、推測は使用していない。"
+      ]
+    },
+    {
+      "identity": "2024-04-16|5216",
+      "signalDate": "2024-04-16",
+      "symbolCode": "5216",
+      "companyName": "倉元製作所",
+      "analysisCutoff": "2024-04-16T16:15:00+09:00",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "2023年は大幅赤字と継続企業に関する重要な不確実性を開示。3月決議の第三者割当は4月10日に払込完了し、4月15日にはLarkの販売代理を含む新規事業を開始したが、会社は当期業績への影響を軽微と見込む。一次資料照合に不足があり候補内hold。",
+      "materialImpact": "混在/要確認：株式払込完了は財務対応の進展だが、前期の大幅赤字・継続企業注記があり、新規事業の当期寄与も会社予想上は軽微。新株予約権行使による将来希薄化に留意。",
+      "fields": [
+        {"name": "材料インパクト", "value": "混在/要確認：株式払込完了は財務対応の進展だが、前期の大幅赤字・継続企業注記があり、新規事業の当期寄与も会社予想上は軽微。新株予約権行使による将来希薄化に留意。"},
+        {"name": "事業概要", "value": "液晶ディスプレイ用ガラス基板・カラーフィルター基板の加工を主力とし、会社はDXアプリケーションの販売代理事業を新たに開始すると発表した。"},
+        {"name": "足元材料", "value": "既存G16候補で本文確認済みの2023年12月期実績は、売上高704百万円（前期比33.4％減）、営業損失407百万円、経常損失399百万円、純損失555百万円。3月25日の支配株主等に関する開示では、ニューセンチュリー有限責任事業組合が議決権42.49％を保有するその他の関係会社とされた。4月10日、第三者割当の普通株式1,624,000株の払込190.008百万円と第3回新株予約権の発行について払込完了を公表。4月15日、Lark Japanの販売チャネルとしてDXアプリ販売・紹介者募集を始めるパートナー契約を締結した。"},
+        {"name": "ファンダ要点", "value": "2月14日開示の2023年実績は大幅赤字で、会社は継続企業に関する重要な不確実性を記載。3月1日の資本対応計画のうち普通株式払込分は4月10日に完了したが、発行された第3回新株予約権35,715個は対象株式最大3,571,500株で、将来の行使による資金調達額は行使状況に依存する。4月15日開示では新規事業の2024年12月期業績への影響を軽微と見込むとされ、短期的な利益寄与の裏付けはない。"},
+        {"name": "注意点", "value": "前期の営業・経常・純損失、現金及び現金同等物51百万円、自己資本比率17.6％、継続企業注記は既存候補の決算本文に基づく。払込完了は資金調達計画の一部であり、営業キャッシュフローや業績回復の確認ではない。新株予約権の潜在株式と実際の行使を区別する。既存G16候補に記載された2024年3月13日16:30の追加資金調達開示は、今回照合できた会社公式一覧・一次資料で同定できておらず、本候補では内容を推定・転記していない。"},
+        {"name": "開示リンク", "value": "・[2024-02-14 2023年12月期 決算短信〔日本基準〕（非連結）(15:10)](https://www2.jpx.co.jp/disc/52160/140120240209531862.pdf)\n・[2024-03-01 第三者割当による新株式発行及び第三者割当による新株予約権発行に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/52160/140120240301546730.pdf)\n・[2024-03-25 支配株主等に関する事項について(10:45)](https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240325.pdf)\n・[2024-04-10 第三者割当による新株式及び第3回新株予約権発行の払込完了に関するお知らせ(15:10)](https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240410.pdf)\n・[2024-04-15 「パートナー契約」の締結及び新規事業の開始に関するお知らせ(15:10)](https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240415-1.pdf)"},
+        {"name": "Sources", "value": "[倉元製作所 プレスリリース一覧](https://www.kuramoto.co.jp/press-release)\n[倉元製作所 決算リリース一覧](https://www.kuramoto.co.jp/financial-results)\n[5216 適時開示一覧｜IRBANK](https://irbank.net/E01205/tdnet)"}
+      ],
+      "disclosures": [
+        {"title": "2023年12月期 決算短信〔日本基準〕（非連結）", "publishedAt": "2024-02-14T15:10:00+09:00", "url": "https://www2.jpx.co.jp/disc/52160/140120240209531862.pdf", "contentReviewed": true},
+        {"title": "第三者割当による新株式発行及び第三者割当による新株予約権発行に関するお知らせ", "publishedAt": "2024-03-01T15:30:00+09:00", "url": "https://www2.jpx.co.jp/disc/52160/140120240301546730.pdf", "contentReviewed": true},
+        {"title": "支配株主等に関する事項について", "publishedAt": "2024-03-25T10:45:00+09:00", "url": "https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240325.pdf", "contentReviewed": true},
+        {"title": "第三者割当による新株式及び第3回新株予約権発行の払込完了に関するお知らせ", "publishedAt": "2024-04-10T15:10:00+09:00", "url": "https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240410.pdf", "contentReviewed": true},
+        {"title": "「パートナー契約」の締結及び新規事業の開始に関するお知らせ", "publishedAt": "2024-04-15T15:10:00+09:00", "url": "https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240415-1.pdf", "contentReviewed": true}
+      ],
+      "sourceChecks": [
+        {"role": "official_ir", "checked": true, "url": "https://www.kuramoto.co.jp/press-release", "checkedUrls": ["https://www.kuramoto.co.jp/press-release", "https://www.kuramoto.co.jp/financial-results", "https://www2.jpx.co.jp/disc/52160/140120240209531862.pdf", "https://www2.jpx.co.jp/disc/52160/140120240301546730.pdf", "https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240325.pdf", "https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240410.pdf", "https://www.kuramoto.co.jp/60022285/wp-content/uploads/2024/04/20240415-1.pdf"], "result": "既存G16候補の2/14決算・3/1資本対応本文を再利用。3/25支配株主開示、4/10払込完了、4/15新規事業の会社公式PDF本文を確認した。4/15資料は当期業績への影響を軽微と見込む旨を記載。"},
+        {"role": "irbank_or_tdnet", "checked": true, "url": "https://irbank.net/E01205/tdnet", "checkedUrls": ["https://irbank.net/E01205/tdnet", "https://irbank.net/5216/140120240301546732", "https://irbank.net/5216/140120240415570774"], "result": "既存候補記録の2/14 15:10・3/1 15:30時刻を再利用し、3/25 10:45、4/10 15:10、4/15 15:10の時刻を照合。既存G16候補にある3/13 16:30追加資金調達の項目は一次資料と同定できず、監査上のholdとして残した。"}
+      ],
+      "auditStatus": "candidate",
+      "auditNotes": [
+        "候補のみ・hold。既存G16|5216候補の決算、3/1調達計画の一次本文と時刻、3/13の未確認記述を再利用・照合対象にした。3/25、4/10、4/15の公式PDF本文を差分確認した。",
+        "既存G16候補は2024-03-13 16:30の追加資金調達開示に言及するが、今回確認できた2024年会社公式プレスリリース一覧には該当する3/13資料が見当たらず、対応するissuer/JPX一次PDF本文も同定できていない。未確認情報を推定せず、一次資料URL・本文・時刻が照合されるまでこのidentityはimport不可としてhold。",
+        "開示本文から株価、実現収益、事後の事業進捗を使用していない。カットオフは2024-04-16 16:15 JST。"
+      ]
+    }
+  ]
+}

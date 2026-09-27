@@ -1,0 +1,17 @@
+{
+  "published_complete": 82,
+  "last_deploy_tag": "cloud-deploy-backfill-20260927-82",
+  "deploy_status": "Actions 成功 / healthz 200 / 未認証 root 302",
+  "remote_head": "f5f0a7ff2c48e02fbf34a74d3a303ca5584abf1d",
+  "known_holds": [
+    "2023-05-19|3137",
+    "2024-03-12|9704"
+  ],
+  "active": [
+    {"identity": "2024-05-14|6659", "detail": "メディアリンクス", "status": "資料確認済み"},
+    {"identity": "2024-05-15|5216", "detail": "倉元製作所", "status": "監査完了"},
+    {"identity": "2024-05-16|3350", "detail": "メタプラネット", "status": "資料確認済み"},
+    {"identity": "2024-05-17|3350", "detail": "メタプラネット", "status": "資料確認済み"},
+    {"identity": "2024-05-17|6659", "detail": "メディアリンクス", "status": "資料確認済み"}
+  ]
+}

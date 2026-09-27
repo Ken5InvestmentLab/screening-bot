@@ -9,6 +9,7 @@
 - 公開tag: `cloud-deploy-backfill-20260927-80`; GitHub Actions run `36302740442` は成功。
 - 公開HTML: `https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev/`。未認証rootの302は想定どおりで、Discordロール認証を維持。`/healthz` は200。
 - 次のCodexは、再開前に `git fetch origin research/weak-early-beta`、remote HEAD、`git status`、最新manifest、lock/processを確認する。保存済みcheckoutの変更と既存untracked fileを保護し、mainへ移らない。
+- この作業の2回のcommitでGit hookが保存checkout内の別worktree管理ディレクトリ3件の削除を試み、`Permission denied` と表示した。commit自体は成功し、読取専用で3件とも残存を確認済み。これらを掃除・削除・再試行しない。
 
 ## 完了・公開済み
 

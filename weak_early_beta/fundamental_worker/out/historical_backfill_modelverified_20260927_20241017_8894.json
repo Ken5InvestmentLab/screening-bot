@@ -1,0 +1,105 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-10-17|8894",
+      "signalDate": "2024-10-17",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-10-17T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:25:24+09:00",
+      "summary": "10/11にWeCapitalを株式交付で子会社化。10/16に渋谷区物件の売却契約と通期予想の上方修正を発表。7/31現金597.815百万円、Q3累計は営業損失112百万円。",
+      "materialImpact": "WeCapital子会社化により新株3.416億株を交付し、議決権54.84%を保有。渋谷物件の売却契約を受け通期予想を上方修正したが、物件決済は未了で、連結利益の上乗せも翌期以降。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "10/17にWeCapital子会社化と不動産売却を反映し、通期予想を上方修正。株式交付に伴う新株発行は大規模。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業等を展開。10/11に投資型クラウドファンディングを運営するWeCapitalを株式交付で連結子会社化。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/11にWeCapital株式27,483株を取得し、議決権54.84%で連結子会社化。REVOLUTION株341,586,207株を交付。10/16に渋谷区物件を税込1,640百万円で売却契約（決済は10/31までの予定）、同日通期予想を売上5,540百万円・営業利益448百万円・経常利益425百万円・純利益389百万円へ修正。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年10月期3Q累計（2023年11月～2024年7月）は売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円。継続企業の前提に関する注記なし。通期予想は10/16修正後、売上5,540百万円、営業利益448百万円、経常利益425百万円、純利益389百万円。Q3 CF計算書は未作成。"
+        },
+        {
+          "name": "注意点",
+          "value": "10/16の物件売却は契約段階で、決済予定は10/31まで。修正予想は会社計画で実績ではない。WeCapitalの損益は2025年10月期から連結予定で、2024年10月期の修正予想に含まれない。株式交付で新株341,586,207株を発行しており希薄化に留意。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf)\n・[2024-10-11 WeCapital子会社化(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf)\n・[2024-10-16 渋谷物件契約(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf)\n・[2024-10-16 業績予想修正(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[8894 適時開示一覧（IRBANK、2024-10-17時点）](https://irbank.net/8894/ir?y=2024-10-17)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://revolution.co.jp/ir/shareholder-meetings/",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf"
+          ],
+          "result": "会社公式IR一覧と、選択した公式PDF本文を確認。9/13 Q3損益・財政状態・CF作成有無・GC注記、10/11株式交付完了、10/16不動産売却契約・業績予想修正を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-10-17",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-10-17"
+          ],
+          "result": "適時開示時系列で各公表日時と16:15 JST cutoffを照合。10/17 cutoffまでに公表された10/16 18:00開示までを反映。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "WeCapital株式会社の株式交付による子会社化完了に関するお知らせ",
+          "publishedAt": "2024-10-11T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "販売用不動産の売却に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

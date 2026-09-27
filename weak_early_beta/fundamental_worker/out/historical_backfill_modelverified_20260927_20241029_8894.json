@@ -1,0 +1,126 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-10-29|8894",
+      "signalDate": "2024-10-29",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-10-29T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:28:45+09:00",
+      "summary": "WeCapitalを10/11に株式交付で子会社化。10/16に不動産売却契約と通期予想引上げを発表。10/21の10対1併合が発効し、10/23には株主優待制度を新設。",
+      "materialImpact": "子会社化と不動産売却を受け通期利益予想を上方修正。株式交付で発行済株式数が増え、株式併合後に優待制度を導入した。WeCapital損益の寄与額や優待費用は未確定。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "10/28時点にWeCapital子会社化と不動産売却を反映し、通期予想を上方修正。株式交付に伴う新株発行は大規模。株式併合後の株主優待制度を新設したが、費用や利益影響は非開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業等を展開。10/11に投資型クラウドファンディングを運営するWeCapitalを株式交付で連結子会社化。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/11にWeCapital株式27,483株を取得し、議決権54.84%で連結子会社化。REVOLUTION株341,586,207株を交付。10/16に渋谷区物件を税込1,640百万円で売却契約（決済は10/31までの予定）、同日通期予想を売上5,540百万円・営業利益448百万円・経常利益425百万円・純利益389百万円へ修正。10/21に10対1併合が発効。10/23に株主優待を新設し、10/24補足では初回発送を2025年7月末までに予定、4,000株でも優待額は倍増しないと説明。 10対1株式併合は10/21に発効し、発行済株式数は1,103,621,322株から110,362,132株へ。10/23発表の優待は2,000株以上を同一株主番号で2基準日連続保有した株主にQUO Payを各回60,000円、年2回・計120,000円。初回基準日は2024/10/31と2025/4/30。10/24補足は初回発送を2025年7月末までに予定し、4,000株でも金額は倍増しないと説明。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年10月期3Q累計（2023年11月～2024年7月）は売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円。継続企業の前提に関する注記なし。通期予想は10/16修正後、売上5,540百万円、営業利益448百万円、経常利益425百万円、純利益389百万円。Q3 CF計算書は未作成。"
+        },
+        {
+          "name": "注意点",
+          "value": "WeCapital損益は2025年10月期から連結予定で、2024年10月期の修正予想に未算入。物件売却は契約済みだが決済予定日は10/31までで、10/29時点の入金済みとは扱わない。併合は10/21発効済み。優待は同一株主番号で2基準日連続保有が条件、初回は2024/10/31・2025/4/30、優待費用・業績影響は未公表。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf)\n・[2024-10-11 WeCapital子会社化(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf)\n・[2024-10-16 渋谷物件契約(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf)\n・[2024-10-16 業績予想修正(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf)\n・[2024-10-21 10対1併合効力(17:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf)\n・[2024-10-23 株主優待新設(17:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf)\n・[2024-10-24 優待内容補足(18:15)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[REVOLUTION 公式株主総会・優待関連資料一覧](https://revolution.co.jp/ir/shareholder-meetings/)\n・[8894 適時開示一覧（IRBANK、2024-10-29時点）](https://irbank.net/8894/ir?y=2024-10-29)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://revolution.co.jp/ir/shareholder-meetings/",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf"
+          ],
+          "result": "会社公式IR一覧と、選択した公式PDF本文を確認。9/13 Q3損益・財政状態・CF作成有無・GC注記、10/11株式交付完了、10/16不動産売却契約・業績予想修正を照合。10/21併合発効、10/23優待、10/24補足資料も本文確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-10-29",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-10-29"
+          ],
+          "result": "適時開示時系列で各公表日時と16:15 JST cutoffを照合。10/21 17:00、10/23 17:00、10/24 18:15の開示をcutoff以前として確認。10/25～29に追加IRなし。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "WeCapital株式会社の株式交付による子会社化完了に関するお知らせ",
+          "publishedAt": "2024-10-11T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "販売用不動産の売却に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式併合の効力発生に関するお知らせ",
+          "publishedAt": "2024-10-21T17:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の新設に関するお知らせ",
+          "publishedAt": "2024-10-23T17:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の内容に関する補足説明",
+          "publishedAt": "2024-10-24T18:15:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

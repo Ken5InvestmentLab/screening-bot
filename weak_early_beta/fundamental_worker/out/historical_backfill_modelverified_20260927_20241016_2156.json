@@ -1,0 +1,112 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-10-16|2156",
+      "signalDate": "2024-10-16",
+      "symbolCode": "2156",
+      "companyName": "セーラー広告",
+      "analysisCutoff": "2024-10-16T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:30:01+09:00",
+      "summary": "2025年3月期1Qは総売上高1,549百万円（+4.2%）も、収益393百万円（-0.3%）、営業損失107百万円へ拡大。前期末の内部統制不備と9/18の株式取得計画が既知材料。",
+      "materialImpact": "増収でも営業赤字が前年同期から拡大。財務報告内部統制に重要な不備があったとの会社報告があり、採算・統制面が評価上の懸念。株式取得は価格非開示で、取得予定日に関する公表のみ。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは総売上高1,549百万円（前年同期比+4.2%）でも、会計基準上の収益は393百万円（-0.3%）、営業損失107百万円へ拡大。2024年3月期末の財務報告内部統制の重要な不備も公表済みで、採算・統制両面に懸念。"
+        },
+        {
+          "name": "事業概要",
+          "value": "中国・四国を中心に広告の企画・制作、マスメディア、販促、イベント、インターネット広告等を展開。地域密着型通所介護と地域産品の小売も行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Qは大学・専門学校等の新規生徒募集に関するプロモーションを受注。9/18、メディア・エーシーの全株取得契約を決議（10/1実行予定、取得価額非開示、当期連結業績への影響は軽微見込み）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期1Qは総売上高1,549百万円（+4.2%）、収益393百万円（-0.3%）、営業損失107百万円、経常損失98百万円、親会社株主純損失96百万円。6月末の現金及び預金830百万円、純資産1,814百万円、自己資本比率47.1%。通期予想は総売上高7,900百万円、営業利益200百万円、経常利益220百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "総売上高は従来基準の販売額で、会計基準上の収益とは定義が異なる。1Q純損失には賃貸用不動産の減損21百万円、法人税等調整額（益）23百万円が含まれ、1Qキャッシュ・フロー計算書は未作成。会社は2024年3月期末の内部統制が有効でないと報告し、徳島支社の従業員による特定先への水増し発注・還流取引を認定。2024年3月期・1Qとも継続企業注記はない。メディア・エーシーは2024年3月期営業損失7.8百万円、取得価額非開示。10/1は取得予定日として公表され、各cutoffまで完了確認の追加開示はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-26 内部統制不備(16:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf)\n・[2024-08-09 1Q決算短信(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf)\n・[2024-09-18 子会社取得契約(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[セーラー広告 2024年 IRニュース一覧](https://www.saylor.co.jp/news/date/2024/)\n・[セーラー広告 IRライブラリ（決算短信）](https://www.saylor.co.jp/ir/library/kessan/)\n・[2156 セーラー広告 適時開示時系列](https://irbank.net/2156/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf"
+          ],
+          "result": "会社公式2024年IR一覧と直接PDF本文を照合。内部統制不備、1Q業績、取得契約の記載を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2156/ir",
+          "checkedUrls": [
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "開示時系列により7/26 16:00、8/9 15:00、9/18 15:00を確認。9/18の次は11/12で、10/16・10/21・10/22 cutoffまで追加IRなし。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "会社公式一覧で開示日・題名を確認し、IRBANK時系列で公表時刻を照合。採用資料は各cutoffより前。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ",
+          "publishedAt": "2024-07-26T16:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ",
+          "publishedAt": "2024-09-18T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selector・16:15 cutoffを照合。",
+        "会社公式PDF本文とIRBANK開示時系列を照合。採用した開示リンクは会社公式の直接PDF。",
+        "総売上高と会計基準上の収益を区別。1Qの税効果、減損、財政状態と継続企業注記を本文で確認。",
+        "内部統制不備は会社の2024年3月期報告として記載。買収は9/18資料の予定として扱い、実行完了を断定していない。"
+      ]
+    }
+  ]
+}

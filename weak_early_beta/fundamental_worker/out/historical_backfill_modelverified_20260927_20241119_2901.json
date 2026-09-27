@@ -1,0 +1,107 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-11-19|2901",
+      "signalDate": "2024-11-19",
+      "symbolCode": "2901",
+      "companyName": "ウェルディッシュ",
+      "analysisCutoff": "2024-11-19T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:32:19+09:00",
+      "summary": "中間期は増収・営業黒字となり、通期予想も上方修正された一方、親会社株主帰属純利益325.148百万円には子会社株式売却益など特別利益が含まれる。営業CFはマイナスで継続企業の重要な不確実性が残る。",
+      "materialImpact": "食品・化粧品事業の採算改善と通期予想の上方修正は材料。一方、中間純利益は子会社売却益等に大きく依存し、営業CFはマイナス、継続企業の前提に重要な不確実性がある。中国協業売上と中期計画の数値も会社見込み・目標であり実績ではない。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "中間期に営業利益・経常利益が黒字化し、10/31には通期予想を上方修正。ただし純利益325.148百万円は子会社株式売却益276.788百万円や債務免除益49.100百万円等を含む。営業CFは▲67.719百万円で、継続企業の重要な不確実性も継続。"
+        },
+        {
+          "name": "事業概要",
+          "value": "食品、化粧品、医療福祉関連事業などを展開。インターネット通信販売子会社は2024年7月31日付で譲渡され、以後は連結対象外。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/31に2025年3月期通期予想を売上高2,080百万円、営業利益80百万円、親会社株主帰属純利益300百万円へ修正。11/12公表の中間期は食品事業が黒字化し、化粧品子会社も寄与。中国企業との協業は10/4契約済みで3年間約20.8億円の売上見込み。11/12 17:00公表の中期経営計画は2028年3月期に売上高180億円・当期利益20億円・FCF約30億円を目指し、2033年3月期の売上高1,000億円は長期構想として掲げる。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期中間期（4～9月）は売上高1,013.878百万円（前年同期比1.0％増）、営業利益32.640百万円、経常利益17.315百万円、親会社株主帰属中間純利益325.148百万円。9月末現金及び預金286.366百万円、純資産434.358百万円。営業活動によるCFは▲67.719百万円。10/31修正後の通期予想は売上高2,080百万円、営業利益80百万円、純利益300百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "中間短信の特別利益には子会社株式売却益276.788百万円、債務免除益49.100百万円等を含み、純利益は継続的な事業利益を表すとは限らない。11/12の別途開示にある196百万円は新日本機能食品の株式譲渡に伴う「追加」連結売却益の確定額で、短信の子会社株式売却益276.788百万円全体を指すものではなく、別途加算しない。中間短信でも継続企業の前提に関する重要な不確実性を記載。中国協業の金額は売上見込み、中期経営計画は将来目標であり実績ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-10-04 中国企業との協業開始のお知らせ(11:31)](https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf)\n・[2024-10-31 業績予想の修正に関するお知らせ(15:01)](https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241031%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E4%BF%AE%E6%AD%A3.pdf)\n・[2024-11-12 2025年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）(16:30)](https://wel-dish.co.jp/wp-content/uploads/2024/11/%E7%9F%AD%E4%BF%A1%E5%85%A8%E6%96%8720241111-2-1.pdf)\n・[2024-11-12 （開示事項の経過）連結子会社株式譲渡に伴う特別利益の計上額確定(16:30)](https://wel-dish.co.jp/wp-content/uploads/2024/11/IR20241112%E5%AD%90%E4%BC%9A%E7%A4%BE%E8%AD%B2%E6%B8%A1%E7%9B%8A%E7%A2%BA%E5%AE%9A-1.pdf)\n・[2024-11-12 中期経営計画（2026年3月期～2028年3月期）(17:00)](https://www2.jpx.co.jp/disc/29010/140120241113520823.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ウェルディッシュ 公式IRニュース一覧](https://wel-dish.co.jp/category/ir/)\n・[2901 適時開示一覧（2024-11-19時点）](https://irbank.net/2901/ir?y=2024-11-19)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://wel-dish.co.jp/category/ir/",
+          "checkedUrls": [
+            "https://wel-dish.co.jp/category/ir/",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241031%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E4%BF%AE%E6%AD%A3.pdf",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/11/%E7%9F%AD%E4%BF%A1%E5%85%A8%E6%96%8720241111-2-1.pdf",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/11/IR20241112%E5%AD%90%E4%BC%9A%E7%A4%BE%E8%AD%B2%E6%B8%A1%E7%9B%8A%E7%A2%BA%E5%AE%9A-1.pdf",
+            "https://www2.jpx.co.jp/disc/29010/140120241113520823.pdf"
+          ],
+          "result": "会社公式IR・JPX資料の本文を確認。通期予想、中間期の損益・財政状態・営業CF・継続企業の重要な不確実性、追加売却益の説明、中期計画の数値目標を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2901/ir?y=2024-11-19",
+          "checkedUrls": [
+            "https://irbank.net/2901/ir?y=2024-11-19"
+          ],
+          "result": "適時開示時系列で公表日時を照合。10/31 15:01、11/12 16:30の決算・譲渡益確定、同日17:00の中期計画はいずれも11/19 16:15 JST cutoff以前。11/19当日の新規IRはない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "中国企業との協業開始のお知らせ",
+          "publishedAt": "2024-10-04T11:31:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-10-31T15:01:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241031%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E4%BF%AE%E6%AD%A3.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年３月期 第２四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-11-12T16:30:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/11/%E7%9F%AD%E4%BF%A1%E5%85%A8%E6%96%8720241111-2-1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（開示事項の経過）当社連結子会社の異動（株式譲渡）に伴う特別利益の計上額確定に関するお知らせ",
+          "publishedAt": "2024-11-12T16:30:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/11/IR20241112%E5%AD%90%E4%BC%9A%E7%A4%BE%E8%AD%B2%E6%B8%A1%E7%9B%8A%E7%A2%BA%E5%AE%9A-1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "中期経営計画（2026年3月期～2028年3月期）",
+          "publishedAt": "2024-11-12T17:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/29010/140120241113520823.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

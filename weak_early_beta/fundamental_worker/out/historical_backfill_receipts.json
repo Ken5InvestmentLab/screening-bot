@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-27T18:20:20.373380+09:00",
+  "updated_at": "2026-09-27T18:37:34.671935+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -11553,7 +11553,7 @@
       "symbolCode": "190A",
       "companyName": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
       "analysisCutoff": "2024-09-17T16:15:00+09:00",
-      "generatedAt": "2026-09-27T18:19:34+09:00",
+      "generatedAt": "2026-09-27T18:23:32+09:00",
       "summary": "2024年8月期3Q累計は事業収益なし、営業損失1,180百万円。通期も事業収益なし・営業損失2,273百万円の予想を維持。5月末現預金3,257百万円、継続企業の前提に関する注記なし。",
       "materialImpact": "創薬研究開発段階で売上収益がなく、研究開発費により損失が続く。一方、5月末現預金3,257百万円、純資産3,323百万円で、Q3短信に継続企業の前提に関する注記はない。",
       "selectorNames": [
@@ -11582,7 +11582,7 @@
         },
         {
           "name": "注意点",
-          "value": "Q3短信の試験データは初期臨床段階で、将来の有効性・承認・売上を保証しない。2024年8月期の通期業績は予想値で実績ではない。Q3短信には継続企業の前提に関する注記はない。9/18付社長インタビューは公表時刻を確認できず、16:15 cutoff内と証明できないため採用していない。"
+          "value": "Q3短信の試験データは初期臨床段階で、将来の有効性・承認・売上を保証しない。2024年8月期の通期業績は予想値で実績ではない。Q3短信には継続企業の前提に関する注記はない。"
         },
         {
           "name": "開示リンク",
@@ -12293,6 +12293,736 @@
       "auditNotes": []
     },
     {
+      "identity": "2024-10-16|2156",
+      "signalDate": "2024-10-16",
+      "symbolCode": "2156",
+      "companyName": "セーラー広告",
+      "analysisCutoff": "2024-10-16T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:30:01+09:00",
+      "summary": "2025年3月期1Qは総売上高1,549百万円（+4.2%）も、収益393百万円（-0.3%）、営業損失107百万円へ拡大。前期末の内部統制不備と9/18の株式取得計画が既知材料。",
+      "materialImpact": "増収でも営業赤字が前年同期から拡大。財務報告内部統制に重要な不備があったとの会社報告があり、採算・統制面が評価上の懸念。株式取得は価格非開示で、取得予定日に関する公表のみ。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは総売上高1,549百万円（前年同期比+4.2%）でも、会計基準上の収益は393百万円（-0.3%）、営業損失107百万円へ拡大。2024年3月期末の財務報告内部統制の重要な不備も公表済みで、採算・統制両面に懸念。"
+        },
+        {
+          "name": "事業概要",
+          "value": "中国・四国を中心に広告の企画・制作、マスメディア、販促、イベント、インターネット広告等を展開。地域密着型通所介護と地域産品の小売も行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Qは大学・専門学校等の新規生徒募集に関するプロモーションを受注。9/18、メディア・エーシーの全株取得契約を決議（10/1実行予定、取得価額非開示、当期連結業績への影響は軽微見込み）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期1Qは総売上高1,549百万円（+4.2%）、収益393百万円（-0.3%）、営業損失107百万円、経常損失98百万円、親会社株主純損失96百万円。6月末の現金及び預金830百万円、純資産1,814百万円、自己資本比率47.1%。通期予想は総売上高7,900百万円、営業利益200百万円、経常利益220百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "総売上高は従来基準の販売額で、会計基準上の収益とは定義が異なる。1Q純損失には賃貸用不動産の減損21百万円、法人税等調整額（益）23百万円が含まれ、1Qキャッシュ・フロー計算書は未作成。会社は2024年3月期末の内部統制が有効でないと報告し、徳島支社の従業員による特定先への水増し発注・還流取引を認定。2024年3月期・1Qとも継続企業注記はない。メディア・エーシーは2024年3月期営業損失7.8百万円、取得価額非開示。10/1は取得予定日として公表され、各cutoffまで完了確認の追加開示はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-26 内部統制不備(16:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf)\n・[2024-08-09 1Q決算短信(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf)\n・[2024-09-18 子会社取得契約(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[セーラー広告 2024年 IRニュース一覧](https://www.saylor.co.jp/news/date/2024/)\n・[セーラー広告 IRライブラリ（決算短信）](https://www.saylor.co.jp/ir/library/kessan/)\n・[2156 セーラー広告 適時開示時系列](https://irbank.net/2156/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf"
+          ],
+          "result": "会社公式2024年IR一覧と直接PDF本文を照合。内部統制不備、1Q業績、取得契約の記載を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2156/ir",
+          "checkedUrls": [
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "開示時系列により7/26 16:00、8/9 15:00、9/18 15:00を確認。9/18の次は11/12で、10/16・10/21・10/22 cutoffまで追加IRなし。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "会社公式一覧で開示日・題名を確認し、IRBANK時系列で公表時刻を照合。採用資料は各cutoffより前。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ",
+          "publishedAt": "2024-07-26T16:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ",
+          "publishedAt": "2024-09-18T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selector・16:15 cutoffを照合。",
+        "会社公式PDF本文とIRBANK開示時系列を照合。採用した開示リンクは会社公式の直接PDF。",
+        "総売上高と会計基準上の収益を区別。1Qの税効果、減損、財政状態と継続企業注記を本文で確認。",
+        "内部統制不備は会社の2024年3月期報告として記載。買収は9/18資料の予定として扱い、実行完了を断定していない。"
+      ]
+    },
+    {
+      "identity": "2024-10-17|8894",
+      "signalDate": "2024-10-17",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-10-17T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:25:24+09:00",
+      "summary": "10/11にWeCapitalを株式交付で子会社化。10/16に渋谷区物件の売却契約と通期予想の上方修正を発表。7/31現金597.815百万円、Q3累計は営業損失112百万円。",
+      "materialImpact": "WeCapital子会社化により新株3.416億株を交付し、議決権54.84%を保有。渋谷物件の売却契約を受け通期予想を上方修正したが、物件決済は未了で、連結利益の上乗せも翌期以降。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "10/17にWeCapital子会社化と不動産売却を反映し、通期予想を上方修正。株式交付に伴う新株発行は大規模。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業等を展開。10/11に投資型クラウドファンディングを運営するWeCapitalを株式交付で連結子会社化。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/11にWeCapital株式27,483株を取得し、議決権54.84%で連結子会社化。REVOLUTION株341,586,207株を交付。10/16に渋谷区物件を税込1,640百万円で売却契約（決済は10/31までの予定）、同日通期予想を売上5,540百万円・営業利益448百万円・経常利益425百万円・純利益389百万円へ修正。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年10月期3Q累計（2023年11月～2024年7月）は売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円。継続企業の前提に関する注記なし。通期予想は10/16修正後、売上5,540百万円、営業利益448百万円、経常利益425百万円、純利益389百万円。Q3 CF計算書は未作成。"
+        },
+        {
+          "name": "注意点",
+          "value": "10/16の物件売却は契約段階で、決済予定は10/31まで。修正予想は会社計画で実績ではない。WeCapitalの損益は2025年10月期から連結予定で、2024年10月期の修正予想に含まれない。株式交付で新株341,586,207株を発行しており希薄化に留意。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf)\n・[2024-10-11 WeCapital子会社化(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf)\n・[2024-10-16 渋谷物件契約(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf)\n・[2024-10-16 業績予想修正(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[8894 適時開示一覧（IRBANK、2024-10-17時点）](https://irbank.net/8894/ir?y=2024-10-17)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://revolution.co.jp/ir/shareholder-meetings/",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf"
+          ],
+          "result": "会社公式IR一覧と、選択した公式PDF本文を確認。9/13 Q3損益・財政状態・CF作成有無・GC注記、10/11株式交付完了、10/16不動産売却契約・業績予想修正を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-10-17",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-10-17"
+          ],
+          "result": "適時開示時系列で各公表日時と16:15 JST cutoffを照合。10/17 cutoffまでに公表された10/16 18:00開示までを反映。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "WeCapital株式会社の株式交付による子会社化完了に関するお知らせ",
+          "publishedAt": "2024-10-11T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "販売用不動産の売却に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-10-21|2156",
+      "signalDate": "2024-10-21",
+      "symbolCode": "2156",
+      "companyName": "セーラー広告",
+      "analysisCutoff": "2024-10-21T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:30:01+09:00",
+      "summary": "2025年3月期1Qは総売上高1,549百万円（+4.2%）も、収益393百万円（-0.3%）、営業損失107百万円へ拡大。前期末の内部統制不備と9/18の株式取得計画が既知材料。",
+      "materialImpact": "増収でも営業赤字が前年同期から拡大。財務報告内部統制に重要な不備があったとの会社報告があり、採算・統制面が評価上の懸念。株式取得は価格非開示で、取得予定日に関する公表のみ。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは総売上高1,549百万円（前年同期比+4.2%）でも、会計基準上の収益は393百万円（-0.3%）、営業損失107百万円へ拡大。2024年3月期末の財務報告内部統制の重要な不備も公表済みで、採算・統制両面に懸念。"
+        },
+        {
+          "name": "事業概要",
+          "value": "中国・四国を中心に広告の企画・制作、マスメディア、販促、イベント、インターネット広告等を展開。地域密着型通所介護と地域産品の小売も行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Qは大学・専門学校等の新規生徒募集に関するプロモーションを受注。9/18、メディア・エーシーの全株取得契約を決議（10/1実行予定、取得価額非開示、当期連結業績への影響は軽微見込み）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期1Qは総売上高1,549百万円（+4.2%）、収益393百万円（-0.3%）、営業損失107百万円、経常損失98百万円、親会社株主純損失96百万円。6月末の現金及び預金830百万円、純資産1,814百万円、自己資本比率47.1%。通期予想は総売上高7,900百万円、営業利益200百万円、経常利益220百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "総売上高は従来基準の販売額で、会計基準上の収益とは定義が異なる。1Q純損失には賃貸用不動産の減損21百万円、法人税等調整額（益）23百万円が含まれ、1Qキャッシュ・フロー計算書は未作成。会社は2024年3月期末の内部統制が有効でないと報告し、徳島支社の従業員による特定先への水増し発注・還流取引を認定。2024年3月期・1Qとも継続企業注記はない。メディア・エーシーは2024年3月期営業損失7.8百万円、取得価額非開示。10/1は取得予定日として公表され、各cutoffまで完了確認の追加開示はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-26 内部統制不備(16:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf)\n・[2024-08-09 1Q決算短信(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf)\n・[2024-09-18 子会社取得契約(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[セーラー広告 2024年 IRニュース一覧](https://www.saylor.co.jp/news/date/2024/)\n・[セーラー広告 IRライブラリ（決算短信）](https://www.saylor.co.jp/ir/library/kessan/)\n・[2156 セーラー広告 適時開示時系列](https://irbank.net/2156/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf"
+          ],
+          "result": "会社公式2024年IR一覧と直接PDF本文を照合。内部統制不備、1Q業績、取得契約の記載を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2156/ir",
+          "checkedUrls": [
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "開示時系列により7/26 16:00、8/9 15:00、9/18 15:00を確認。9/18の次は11/12で、10/16・10/21・10/22 cutoffまで追加IRなし。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "会社公式一覧で開示日・題名を確認し、IRBANK時系列で公表時刻を照合。採用資料は各cutoffより前。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ",
+          "publishedAt": "2024-07-26T16:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ",
+          "publishedAt": "2024-09-18T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selector・16:15 cutoffを照合。",
+        "会社公式PDF本文とIRBANK開示時系列を照合。採用した開示リンクは会社公式の直接PDF。",
+        "総売上高と会計基準上の収益を区別。1Qの税効果、減損、財政状態と継続企業注記を本文で確認。",
+        "内部統制不備は会社の2024年3月期報告として記載。買収は9/18資料の予定として扱い、実行完了を断定していない。"
+      ]
+    },
+    {
+      "identity": "2024-10-22|2156",
+      "signalDate": "2024-10-22",
+      "symbolCode": "2156",
+      "companyName": "セーラー広告",
+      "analysisCutoff": "2024-10-22T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:30:01+09:00",
+      "summary": "2025年3月期1Qは総売上高1,549百万円（+4.2%）も、収益393百万円（-0.3%）、営業損失107百万円へ拡大。前期末の内部統制不備と9/18の株式取得計画が既知材料。",
+      "materialImpact": "増収でも営業赤字が前年同期から拡大。財務報告内部統制に重要な不備があったとの会社報告があり、採算・統制面が評価上の懸念。株式取得は価格非開示で、取得予定日に関する公表のみ。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは総売上高1,549百万円（前年同期比+4.2%）でも、会計基準上の収益は393百万円（-0.3%）、営業損失107百万円へ拡大。2024年3月期末の財務報告内部統制の重要な不備も公表済みで、採算・統制両面に懸念。"
+        },
+        {
+          "name": "事業概要",
+          "value": "中国・四国を中心に広告の企画・制作、マスメディア、販促、イベント、インターネット広告等を展開。地域密着型通所介護と地域産品の小売も行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Qは大学・専門学校等の新規生徒募集に関するプロモーションを受注。9/18、メディア・エーシーの全株取得契約を決議（10/1実行予定、取得価額非開示、当期連結業績への影響は軽微見込み）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期1Qは総売上高1,549百万円（+4.2%）、収益393百万円（-0.3%）、営業損失107百万円、経常損失98百万円、親会社株主純損失96百万円。6月末の現金及び預金830百万円、純資産1,814百万円、自己資本比率47.1%。通期予想は総売上高7,900百万円、営業利益200百万円、経常利益220百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "総売上高は従来基準の販売額で、会計基準上の収益とは定義が異なる。1Q純損失には賃貸用不動産の減損21百万円、法人税等調整額（益）23百万円が含まれ、1Qキャッシュ・フロー計算書は未作成。会社は2024年3月期末の内部統制が有効でないと報告し、徳島支社の従業員による特定先への水増し発注・還流取引を認定。2024年3月期・1Qとも継続企業注記はない。メディア・エーシーは2024年3月期営業損失7.8百万円、取得価額非開示。10/1は取得予定日として公表され、各cutoffまで完了確認の追加開示はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-26 内部統制不備(16:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf)\n・[2024-08-09 1Q決算短信(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf)\n・[2024-09-18 子会社取得契約(15:00)](https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[セーラー広告 2024年 IRニュース一覧](https://www.saylor.co.jp/news/date/2024/)\n・[セーラー広告 IRライブラリ（決算短信）](https://www.saylor.co.jp/ir/library/kessan/)\n・[2156 セーラー広告 適時開示時系列](https://irbank.net/2156/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+            "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf"
+          ],
+          "result": "会社公式2024年IR一覧と直接PDF本文を照合。内部統制不備、1Q業績、取得契約の記載を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2156/ir",
+          "checkedUrls": [
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "開示時系列により7/26 16:00、8/9 15:00、9/18 15:00を確認。9/18の次は11/12で、10/16・10/21・10/22 cutoffまで追加IRなし。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://www.saylor.co.jp/news/date/2024/",
+          "checkedUrls": [
+            "https://www.saylor.co.jp/news/date/2024/",
+            "https://irbank.net/2156/ir"
+          ],
+          "result": "会社公式一覧で開示日・題名を確認し、IRBANK時系列で公表時刻を照合。採用資料は各cutoffより前。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ",
+          "publishedAt": "2024-07-26T16:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240726_財務報告に係る内部統制の開示すべき重要な不備に関するお知らせ.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-09T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240809_2025年3月期第1四半期決算短信〔日本基準〕（連結）.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ",
+          "publishedAt": "2024-09-18T15:00:00+09:00",
+          "url": "https://www.saylor.co.jp/mg/wp-content/uploads/2026/05/20240918_株式の取得（子会社化）に関する株式譲渡契約締結のお知らせ.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selector・16:15 cutoffを照合。",
+        "会社公式PDF本文とIRBANK開示時系列を照合。採用した開示リンクは会社公式の直接PDF。",
+        "総売上高と会計基準上の収益を区別。1Qの税効果、減損、財政状態と継続企業注記を本文で確認。",
+        "内部統制不備は会社の2024年3月期報告として記載。買収は9/18資料の予定として扱い、実行完了を断定していない。"
+      ]
+    },
+    {
+      "identity": "2024-10-23|2901",
+      "signalDate": "2024-10-23",
+      "symbolCode": "2901",
+      "companyName": "ウェルディッシュ",
+      "analysisCutoff": "2024-10-23T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:32:19+09:00",
+      "summary": "10/4に中国企業との協業契約を公表し、3年間で約20.8億円の売上を見込む。最新のQ1は増収で営業・経常黒字だが純損失となり、継続企業の前提に重要な不確実性がある。",
+      "materialImpact": "中国企業との協業で3年間の売上見込みが示された一方、確定受注・実績ではなく、利益寄与も未確定。Q1は増収・営業黒字に転じたが、純損失で継続企業の前提に関する重要な不確実性が記載されている。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "中国企業との協業契約により3年間で約20.8億円の売上見込みを公表。ただし実際の売上・利益は未確定で、相手先の経営成績・財政状態も非開示。Q1は営業・経常黒字だが純損失で、継続企業の重要な不確実性が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "食品事業、インターネット通信販売事業、化粧品事業を中心に、福祉用具などの事業も展開。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/4に中国卸売企業との協業契約を公表。自社商標を活用する化粧品・健康食品の企画、販売、コンサルティングを受託し、事業開始時期は2025年3月期第3四半期。会社は3年間で約1億元（2024年10月4日レートで約20.8億円）の売上を見込むとした。特別支出予定はない一方、相手先の直近3年間の経営成績・財政状態は相手先の意向により非開示。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期Q1（4～6月）は売上高612.653百万円（前年同期比22.4％増）、営業利益16.008百万円、経常利益8.942百万円、親会社株主帰属四半期純損失4.468百万円。6月末の現金及び預金349.353百万円、純資産115.520百万円。通期予想は売上高2,246百万円、営業損失7百万円、経常損失20百万円、純損失48百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q1短信は前期まで11期連続の親会社株主帰属純損失に触れ、施策は実施途上で継続企業の前提に関する重要な不確実性があると記載。10/4の約20.8億円は3年間の売上見込みで確定受注や実績ではなく、為替等により変動し、利益額は示されていない。10/4開示では通期予想を第2四半期決算発表時に公表予定としており、本時点ではQ1短信の予想が最新。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-09 2025年3月期 第1四半期決算短信〔日本基準〕（連結）(17:00)](https://wel-dish.co.jp/wp-content/uploads/2024/08/%E7%9F%AD%E4%BF%A120240809.pdf)\n・[2024-10-04 中国企業との協業開始のお知らせ(11:31)](https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ウェルディッシュ 公式IRニュース一覧](https://wel-dish.co.jp/category/ir/)\n・[2901 適時開示一覧（2024-10-23時点）](https://irbank.net/2901/ir?y=2024-10-23)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://wel-dish.co.jp/category/ir/",
+          "checkedUrls": [
+            "https://wel-dish.co.jp/category/ir/",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/08/%E7%9F%AD%E4%BF%A120240809.pdf",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf"
+          ],
+          "result": "会社公式IR一覧とPDF本文を確認。Q1の損益・6月末現金・通期予想・継続企業の重要な不確実性、10/4契約内容・3年間の売上見込み・相手先情報の非開示を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2901/ir?y=2024-10-23",
+          "checkedUrls": [
+            "https://irbank.net/2901/ir?y=2024-10-23"
+          ],
+          "result": "適時開示時系列で公表日・時刻を照合。8/9 17:00と10/4 11:31の開示は16:15 JST cutoff以前。10/23時点の後日開示は含めていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年３月期 第１四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-09T17:00:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/08/%E7%9F%AD%E4%BF%A120240809.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "中国企業との協業開始のお知らせ",
+          "publishedAt": "2024-10-04T11:31:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-10-24|2586",
+      "signalDate": "2024-10-24",
+      "symbolCode": "2586",
+      "companyName": "フルッタフルッタ",
+      "analysisCutoff": "2024-10-24T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:23:21+09:00",
+      "summary": "アサイー商品の販路拡大が続く一方、Q1の継続企業前提に重要な不確実性が残る。第15回予約権の潜在株式11.96百万株が残存。",
+      "materialImpact": "量販・外食向け商品展開と自社商品の出荷増が材料。ただし発売価格や単品出荷実績から会社業績寄与は算定できず、予約権の行使による希薄化余地と継続企業の重要な不確実性も残る。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "アサイー飲料・冷凍商品の販売先がコンビニ・外食へ拡大。販売価格や商品導入は公表されたが、当社の受注額・販売数量・業績寄与額は非開示。第15回予約権の未行使分による潜在株式も残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "アサイー等アマゾンフルーツの輸入・加工販売と、自社商品の製造販売を行う。外食・小売向けの原料供給に加え、冷凍アサイーボウルなどを展開。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/22発売のファミリーマート限定「果肉を楽しむブルーベリーミルク」は当社アサイーピューレを使用。10/24からジョナサン全163店で「アサイーバナナ」（税込549円）、ベジテリアで「アサイー＆ベリー」（R540円/L810円、期間限定）を販売。いずれも当社への収益額は非開示。10/1時点で第15回予約権は9月行使3.37百万株・10/1行使3.37百万株、未行使119,600個（潜在11.96百万株）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期Q1は売上高472.336百万円（前年同期比74.4%増）、営業利益14.573百万円、経常利益3.402百万円、親会社株主帰属純利益3.164百万円。6月末現金582.156百万円、純資産1,068.010百万円。通期予想は売上高1,430百万円、営業・経常・純損失各100百万円で据置。Q1 CF計算書は未作成。直近通期（2024年3月期）の営業CFは248.809百万円の支出。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q1短信に継続企業の前提に関する重要な不確実性が記載されている。Q1に営業CF計算書はなく、営業CFは前期通期実績値。第15回予約権は10/1時点で119,600個が残り、潜在株式11.96百万株。販売価格は小売価格で当社売上単価ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-14 Q1決算(13:30)](https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf)\n・[2024-05-15 FY決算・営業CF(14:50)](https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf)\n・[2024-10-01 第15回予約権行使状況(15:00)](https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf)\n・[2024-10-22 FamilyMart限定品(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf)\n・[2024-10-24 Jonathan販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf)\n・[2024-10-24 Vegeteria販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[フルッタフルッタ 公式IRニュース一覧](https://www.frutafruta.com/ir_info/news/)\n・[フルッタフルッタ 公式NEWS一覧](https://www.frutafruta.com/news/)\n・[2586 適時開示一覧（IRBANK、2024-10-24時点）](https://irbank.net/2586/ir?y=2024-10-24)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.frutafruta.com/ir_info/news/",
+          "checkedUrls": [
+            "https://www.frutafruta.com/ir_info/news/",
+            "https://www.frutafruta.com/news/",
+            "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf"
+          ],
+          "result": "会社公式IRニュース/NEWS一覧と、決算・予約権のJPX PDF、商品リリース各PDFを本文確認。8/14 Q1数値・通期予想・GC記載・CF作成有無、5/15 OCF、10/1行使株数と残権数、10/22・24の商品内容を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2586/ir?y=2024-10-24",
+          "checkedUrls": [
+            "https://irbank.net/2586/ir?y=2024-10-24"
+          ],
+          "result": "適時開示一覧と会社リリースの日付・時刻を照合。10/22 10:00及び10/24 10:00のリリースは16:15 JST cutoff以前。10/1の予約権開示と最新財務資料の日時も確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-14T13:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年3月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-15T14:50:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第15回新株予約権の月間行使状況及び大量行使に関するお知らせ",
+          "publishedAt": "2024-10-01T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ファミリーマート限定「果肉を楽しむブルーベリーミルク」新発売",
+          "publishedAt": "2024-10-22T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ジョナサン全店で「アサイーバナナ」販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ベジテリアで「アサイー＆ベリー」期間限定販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-10-25|2586",
+      "signalDate": "2024-10-25",
+      "symbolCode": "2586",
+      "companyName": "フルッタフルッタ",
+      "analysisCutoff": "2024-10-25T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:23:21+09:00",
+      "summary": "アサイー商品の販路拡大が続く一方、Q1の継続企業前提に重要な不確実性が残る。第15回予約権の潜在株式11.96百万株が残存。",
+      "materialImpact": "量販・外食向け商品展開と自社商品の出荷増が材料。ただし発売価格や単品出荷実績から会社業績寄与は算定できず、予約権の行使による希薄化余地と継続企業の重要な不確実性も残る。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "アサイー飲料・冷凍商品の販売先がコンビニ・外食へ拡大。販売価格や商品導入は公表されたが、当社の受注額・販売数量・業績寄与額は非開示。第15回予約権の未行使分による潜在株式も残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "アサイー等アマゾンフルーツの輸入・加工販売と、自社商品の製造販売を行う。外食・小売向けの原料供給に加え、冷凍アサイーボウルなどを展開。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/22発売のファミリーマート限定「果肉を楽しむブルーベリーミルク」は当社アサイーピューレを使用。10/24からジョナサン全163店で「アサイーバナナ」（税込549円）、ベジテリアで「アサイー＆ベリー」（R540円/L810円、期間限定）を販売。いずれも当社への収益額は非開示。10/1時点で第15回予約権は9月行使3.37百万株・10/1行使3.37百万株、未行使119,600個（潜在11.96百万株）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期Q1は売上高472.336百万円（前年同期比74.4%増）、営業利益14.573百万円、経常利益3.402百万円、親会社株主帰属純利益3.164百万円。6月末現金582.156百万円、純資産1,068.010百万円。通期予想は売上高1,430百万円、営業・経常・純損失各100百万円で据置。Q1 CF計算書は未作成。直近通期（2024年3月期）の営業CFは248.809百万円の支出。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q1短信に継続企業の前提に関する重要な不確実性が記載されている。Q1に営業CF計算書はなく、営業CFは前期通期実績値。第15回予約権は10/1時点で119,600個が残り、潜在株式11.96百万株。販売価格は小売価格で当社売上単価ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-14 Q1決算(13:30)](https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf)\n・[2024-05-15 FY決算・営業CF(14:50)](https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf)\n・[2024-10-01 第15回予約権行使状況(15:00)](https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf)\n・[2024-10-22 FamilyMart限定品(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf)\n・[2024-10-24 Jonathan販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf)\n・[2024-10-24 Vegeteria販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[フルッタフルッタ 公式IRニュース一覧](https://www.frutafruta.com/ir_info/news/)\n・[フルッタフルッタ 公式NEWS一覧](https://www.frutafruta.com/news/)\n・[2586 適時開示一覧（IRBANK、2024-10-25時点）](https://irbank.net/2586/ir?y=2024-10-25)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.frutafruta.com/ir_info/news/",
+          "checkedUrls": [
+            "https://www.frutafruta.com/ir_info/news/",
+            "https://www.frutafruta.com/news/",
+            "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf"
+          ],
+          "result": "会社公式IRニュース/NEWS一覧と、決算・予約権のJPX PDF、商品リリース各PDFを本文確認。8/14 Q1数値・通期予想・GC記載・CF作成有無、5/15 OCF、10/1行使株数と残権数、10/22・24の商品内容を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2586/ir?y=2024-10-25",
+          "checkedUrls": [
+            "https://irbank.net/2586/ir?y=2024-10-25"
+          ],
+          "result": "適時開示一覧と会社リリースの日付・時刻を照合。10/24の開示は10/22 10:00及び10/24 10:00の会社リリースを含む。10/25 cutoffまで追加の会社/TDnet開示なし。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-14T13:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年3月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-15T14:50:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第15回新株予約権の月間行使状況及び大量行使に関するお知らせ",
+          "publishedAt": "2024-10-01T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ファミリーマート限定「果肉を楽しむブルーベリーミルク」新発売",
+          "publishedAt": "2024-10-22T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ジョナサン全店で「アサイーバナナ」販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ベジテリアで「アサイー＆ベリー」期間限定販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
       "identity": "2024-10-25|6836",
       "signalDate": "2024-10-25",
       "symbolCode": "6836",
@@ -12419,6 +13149,652 @@
         "10/23の協議会発足は研究・開発・実証の開始として記載し、協議会の物流削減目標を実績や会社売上に読み替えていない。",
         "8/22の出荷予定と8/27の配布開始済みを区別。営業赤字と営業外補助金収入を区別し、財務状況は1Qの数値として扱った。"
       ]
+    },
+    {
+      "identity": "2024-10-28|2586",
+      "signalDate": "2024-10-28",
+      "symbolCode": "2586",
+      "companyName": "フルッタフルッタ",
+      "analysisCutoff": "2024-10-28T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:22:02+09:00",
+      "summary": "アサイー商品の販路拡大が続く一方、Q1の継続企業前提に重要な不確実性が残る。第15回予約権の潜在株式11.96百万株が残存。「お家でアサイーボウル」の9月出荷量は前年同月比1,323%と会社発表。",
+      "materialImpact": "量販・外食向け商品展開と自社商品の出荷増が材料。ただし発売価格や単品出荷実績から会社業績寄与は算定できず、予約権の行使による希薄化余地と継続企業の重要な不確実性も残る。",
+      "selectorNames": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "アサイー飲料・冷凍商品の販売先がコンビニ・外食へ拡大。販売価格や商品導入は公表されたが、当社の受注額・販売数量・業績寄与額は非開示。第15回予約権の未行使分による潜在株式も残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "アサイー等アマゾンフルーツの輸入・加工販売と、自社商品の製造販売を行う。外食・小売向けの原料供給に加え、冷凍アサイーボウルなどを展開。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/22発売のファミリーマート限定「果肉を楽しむブルーベリーミルク」は当社アサイーピューレを使用。10/24からジョナサン全163店で「アサイーバナナ」（税込549円）、ベジテリアで「アサイー＆ベリー」（R540円/L810円、期間限定）を販売。いずれも当社への収益額は非開示。10/1時点で第15回予約権は9月行使3.37百万株・10/1行使3.37百万株、未行使119,600個（潜在11.96百万株）。「お家でアサイーボウル」は9月出荷量が前年同月比1,323%、2023/10～2024/9の年間出荷量累計が前年同期比920%。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期Q1は売上高472.336百万円（前年同期比74.4%増）、営業利益14.573百万円、経常利益3.402百万円、親会社株主帰属純利益3.164百万円。6月末現金582.156百万円、純資産1,068.010百万円。通期予想は売上高1,430百万円、営業・経常・純損失各100百万円で据置。Q1 CF計算書は未作成。直近通期（2024年3月期）の営業CFは248.809百万円の支出。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q1短信に継続企業の前提に関する重要な不確実性が記載されている。Q1に営業CF計算書はなく、営業CFは前期通期実績値。第15回予約権は10/1時点で119,600個が残り、潜在株式11.96百万株。商品出荷の前年比は「お家でアサイーボウル」単品の数量で、全社売上高・利益の伸びを示さない。販売価格は小売価格で当社売上単価ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-14 Q1決算(13:30)](https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf)\n・[2024-05-15 FY決算・営業CF(14:50)](https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf)\n・[2024-10-01 第15回予約権行使状況(15:00)](https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf)\n・[2024-10-22 FamilyMart限定品(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf)\n・[2024-10-24 Jonathan販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf)\n・[2024-10-24 Vegeteria販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf)\n・[2024-10-28 商品出荷数量(15:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.28_%E3%81%8A%E5%AE%B6%E3%81%A7%E3%82%A2%E3%82%B5%E3%82%A4%E3%83%BC%E3%83%9C%E3%82%A6%E3%83%AB%E5%A5%BD%E8%AA%BF.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[フルッタフルッタ 公式IRニュース一覧](https://www.frutafruta.com/ir_info/news/)\n・[フルッタフルッタ 公式NEWS一覧](https://www.frutafruta.com/news/)\n・[2586 適時開示一覧（IRBANK、2024-10-28時点）](https://irbank.net/2586/ir?y=2024-10-28)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.frutafruta.com/ir_info/news/",
+          "checkedUrls": [
+            "https://www.frutafruta.com/ir_info/news/",
+            "https://www.frutafruta.com/news/",
+            "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.28_%E3%81%8A%E5%AE%B6%E3%81%A7%E3%82%A2%E3%82%B5%E3%82%A4%E3%83%BC%E3%83%9C%E3%82%A6%E3%83%AB%E5%A5%BD%E8%AA%BF.pdf"
+          ],
+          "result": "会社公式IRニュース/NEWS一覧と、決算・予約権のJPX PDF、商品リリース各PDFを本文確認。8/14 Q1数値・通期予想・GC記載・CF作成有無、5/15 OCF、10/1行使株数と残権数、10/22・24の商品内容を照合。 10/28公表の1,323%/920%は当該商品の出荷数量として照合し、全社売上・利益と区別。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2586/ir?y=2024-10-28",
+          "checkedUrls": [
+            "https://irbank.net/2586/ir?y=2024-10-28"
+          ],
+          "result": "適時開示一覧と会社リリースの日付・時刻を照合。10/28 15:00リリースを16:15 JST cutoff内と確認。11/13中間決算等の後日情報は含めていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-14T13:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年3月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-15T14:50:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第15回新株予約権の月間行使状況及び大量行使に関するお知らせ",
+          "publishedAt": "2024-10-01T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ファミリーマート限定「果肉を楽しむブルーベリーミルク」新発売",
+          "publishedAt": "2024-10-22T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ジョナサン全店で「アサイーバナナ」販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ベジテリアで「アサイー＆ベリー」期間限定販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「お家でアサイーボウル」販売好調のお知らせ",
+          "publishedAt": "2024-10-28T15:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.28_%E3%81%8A%E5%AE%B6%E3%81%A7%E3%82%A2%E3%82%B5%E3%82%A4%E3%83%BC%E3%83%9C%E3%82%A6%E3%83%AB%E5%A5%BD%E8%AA%BF.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-10-28|8894",
+      "signalDate": "2024-10-28",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-10-28T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:25:24+09:00",
+      "summary": "WeCapitalを10/11に株式交付で子会社化。10/16に不動産売却契約と通期予想引上げを発表。10/21の10対1併合が発効し、10/23には株主優待制度を新設。",
+      "materialImpact": "子会社化と不動産売却を受け通期利益予想を上方修正。株式交付で発行済株式数が増え、株式併合後に優待制度を導入した。WeCapital損益の寄与額や優待費用は未確定。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "10/28時点にWeCapital子会社化と不動産売却を反映し、通期予想を上方修正。株式交付に伴う新株発行は大規模。株式併合後の株主優待制度を新設したが、費用や利益影響は非開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業等を展開。10/11に投資型クラウドファンディングを運営するWeCapitalを株式交付で連結子会社化。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/11にWeCapital株式27,483株を取得し、議決権54.84%で連結子会社化。REVOLUTION株341,586,207株を交付。10/16に渋谷区物件を税込1,640百万円で売却契約（決済は10/31までの予定）、同日通期予想を売上5,540百万円・営業利益448百万円・経常利益425百万円・純利益389百万円へ修正。10/21に10対1併合が発効。10/23に株主優待を新設し、10/24補足では初回発送を2025年7月末までに予定、4,000株でも優待額は倍増しないと説明。 10対1株式併合は10/21に発効し、発行済株式数は1,103,621,322株から110,362,132株へ。10/23発表の優待は2,000株以上を同一株主番号で2基準日連続保有した株主にQUO Payを各回60,000円、年2回・計120,000円。初回基準日は2024/10/31と2025/4/30。10/24補足は初回発送を2025年7月末までに予定し、4,000株でも金額は倍増しないと説明。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年10月期3Q累計（2023年11月～2024年7月）は売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円。継続企業の前提に関する注記なし。通期予想は10/16修正後、売上5,540百万円、営業利益448百万円、経常利益425百万円、純利益389百万円。Q3 CF計算書は未作成。"
+        },
+        {
+          "name": "注意点",
+          "value": "WeCapital損益は2025年10月期から連結予定で、2024年10月期の修正予想に未算入。物件売却は契約済みだが決済予定日は10/31までで、10/28時点の入金済みとは扱わない。併合は10/21発効済み。優待は同一株主番号で2基準日連続保有が条件、初回は2024/10/31・2025/4/30、優待費用・業績影響は未公表。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf)\n・[2024-10-11 WeCapital子会社化(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf)\n・[2024-10-16 渋谷物件契約(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf)\n・[2024-10-16 業績予想修正(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf)\n・[2024-10-21 10対1併合効力(17:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf)\n・[2024-10-23 株主優待新設(17:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf)\n・[2024-10-24 優待内容補足(18:15)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[REVOLUTION 公式株主総会・優待関連資料一覧](https://revolution.co.jp/ir/shareholder-meetings/)\n・[8894 適時開示一覧（IRBANK、2024-10-28時点）](https://irbank.net/8894/ir?y=2024-10-28)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://revolution.co.jp/ir/shareholder-meetings/",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf"
+          ],
+          "result": "会社公式IR一覧と、選択した公式PDF本文を確認。9/13 Q3損益・財政状態・CF作成有無・GC注記、10/11株式交付完了、10/16不動産売却契約・業績予想修正を照合。10/21併合発効、10/23優待、10/24補足資料も本文確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-10-28",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-10-28"
+          ],
+          "result": "適時開示時系列で各公表日時と16:15 JST cutoffを照合。10/21 17:00、10/23 17:00、10/24 18:15の開示をcutoff以前として確認。10/25～29に追加IRなし。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "WeCapital株式会社の株式交付による子会社化完了に関するお知らせ",
+          "publishedAt": "2024-10-11T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "販売用不動産の売却に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式併合の効力発生に関するお知らせ",
+          "publishedAt": "2024-10-21T17:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の新設に関するお知らせ",
+          "publishedAt": "2024-10-23T17:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の内容に関する補足説明",
+          "publishedAt": "2024-10-24T18:15:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-10-29|8894",
+      "signalDate": "2024-10-29",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-10-29T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:28:45+09:00",
+      "summary": "WeCapitalを10/11に株式交付で子会社化。10/16に不動産売却契約と通期予想引上げを発表。10/21の10対1併合が発効し、10/23には株主優待制度を新設。",
+      "materialImpact": "子会社化と不動産売却を受け通期利益予想を上方修正。株式交付で発行済株式数が増え、株式併合後に優待制度を導入した。WeCapital損益の寄与額や優待費用は未確定。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "10/28時点にWeCapital子会社化と不動産売却を反映し、通期予想を上方修正。株式交付に伴う新株発行は大規模。株式併合後の株主優待制度を新設したが、費用や利益影響は非開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業等を展開。10/11に投資型クラウドファンディングを運営するWeCapitalを株式交付で連結子会社化。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/11にWeCapital株式27,483株を取得し、議決権54.84%で連結子会社化。REVOLUTION株341,586,207株を交付。10/16に渋谷区物件を税込1,640百万円で売却契約（決済は10/31までの予定）、同日通期予想を売上5,540百万円・営業利益448百万円・経常利益425百万円・純利益389百万円へ修正。10/21に10対1併合が発効。10/23に株主優待を新設し、10/24補足では初回発送を2025年7月末までに予定、4,000株でも優待額は倍増しないと説明。 10対1株式併合は10/21に発効し、発行済株式数は1,103,621,322株から110,362,132株へ。10/23発表の優待は2,000株以上を同一株主番号で2基準日連続保有した株主にQUO Payを各回60,000円、年2回・計120,000円。初回基準日は2024/10/31と2025/4/30。10/24補足は初回発送を2025年7月末までに予定し、4,000株でも金額は倍増しないと説明。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年10月期3Q累計（2023年11月～2024年7月）は売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円。継続企業の前提に関する注記なし。通期予想は10/16修正後、売上5,540百万円、営業利益448百万円、経常利益425百万円、純利益389百万円。Q3 CF計算書は未作成。"
+        },
+        {
+          "name": "注意点",
+          "value": "WeCapital損益は2025年10月期から連結予定で、2024年10月期の修正予想に未算入。物件売却は契約済みだが決済予定日は10/31までで、10/29時点の入金済みとは扱わない。併合は10/21発効済み。優待は同一株主番号で2基準日連続保有が条件、初回は2024/10/31・2025/4/30、優待費用・業績影響は未公表。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf)\n・[2024-10-11 WeCapital子会社化(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf)\n・[2024-10-16 渋谷物件契約(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf)\n・[2024-10-16 業績予想修正(18:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf)\n・[2024-10-21 10対1併合効力(17:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf)\n・[2024-10-23 株主優待新設(17:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf)\n・[2024-10-24 優待内容補足(18:15)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[REVOLUTION 公式株主総会・優待関連資料一覧](https://revolution.co.jp/ir/shareholder-meetings/)\n・[8894 適時開示一覧（IRBANK、2024-10-29時点）](https://irbank.net/8894/ir?y=2024-10-29)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://revolution.co.jp/ir/shareholder-meetings/",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf"
+          ],
+          "result": "会社公式IR一覧と、選択した公式PDF本文を確認。9/13 Q3損益・財政状態・CF作成有無・GC注記、10/11株式交付完了、10/16不動産売却契約・業績予想修正を照合。10/21併合発効、10/23優待、10/24補足資料も本文確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-10-29",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-10-29"
+          ],
+          "result": "適時開示時系列で各公表日時と16:15 JST cutoffを照合。10/21 17:00、10/23 17:00、10/24 18:15の開示をcutoff以前として確認。10/25～29に追加IRなし。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "WeCapital株式会社の株式交付による子会社化完了に関するお知らせ",
+          "publishedAt": "2024-10-11T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1716/ce2f7bf3a8c078c18757a18385fc6a78.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "販売用不動産の売却に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1718/f6059bc7c7ea4f0d61dccde2d52afa44.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-10-16T18:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1719/d55d84c9badbeb434fc34ae3e09f9b43.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式併合の効力発生に関するお知らせ",
+          "publishedAt": "2024-10-21T17:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1721/874ad42693bfcf184d29cfaa635e2996.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の新設に関するお知らせ",
+          "publishedAt": "2024-10-23T17:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1722/36e2ccdaeeb69a0cf8fd7c081148f351.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の内容に関する補足説明",
+          "publishedAt": "2024-10-24T18:15:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1724/dd4e86b7db690af76c09d5e151be13ce.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-11-14|3350",
+      "signalDate": "2024-11-14",
+      "symbolCode": "3350",
+      "companyName": "メタプラネット",
+      "analysisCutoff": "2024-11-14T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:31:27+09:00",
+      "summary": "2024年12月期3Q累計は売上250.692百万円（前年同期比46.3%増）、営業損失183.802百万円、経常損失311.802百万円、純損失321.734百万円。9月末現預金1,966百万円、通期予想は非開示。BTC評価損124.402百万円を計上。",
+      "materialImpact": "赤字継続に加えBTC評価損が経常・純損失を押し下げる一方、11/13時点の保有BTCは1,018.17枚と公表。営業面の改善やBTC運用収益は確認できず、継続企業の前提に重要な不確実性が残る。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "3Q累計は営業損失183.802百万円、経常損失311.802百万円。BTC評価損124.402百万円を計上する一方、11/13時点の保有数1,018.17BTC・累計取得額96.22億円を開示。資産増加と本業採算は分けて見る必要がある。"
+        },
+        {
+          "name": "事業概要",
+          "value": "ホテル事業を基盤に、2024年からビットコインの取得・保有を資金管理戦略として進める。"
+        },
+        {
+          "name": "足元材料",
+          "value": "11/13公表の3Q累計は売上250.692百万円（+46.3%）、営業損失183.802百万円、経常損失311.802百万円、親会社株主帰属純損失321.734百万円。別紙はBTC評価損124.402百万円（うち3Q発生65.032百万円）が決算反映済みと説明。11/13時点保有1,018.17BTC・累計取得額96.22億円も開示。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年12月期3Q累計（1～9月）：売上250.692百万円（前年同期比46.3%増）、営業損失183.802百万円、経常損失311.802百万円、親会社株主帰属純損失321.734百万円。9/30現預金1,966.394百万円、純資産5,262.297百万円、自己資本比率67.2%。通期業績予想は精査中で未開示。四半期CF計算書は未作成。"
+        },
+        {
+          "name": "注意点",
+          "value": "継続企業の前提に関する重要な不確実性が明記されている。BTC評価損124.402百万円は3Q決算に反映済み。9/30保有数は短信KPI表の398.832BTCと同日別紙の492.82BTCが不一致のため、9/30残高は断定しない。11/13時点保有数は別紙公表値。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-11-13 2024年12月期 第3四半期決算短信〔日本基準〕（連結）(12:00)](https://www2.jpx.co.jp/disc/33500/140120241112519902.pdf)\n・[2024-11-13 営業外費用の計上に関するお知らせ(12:00)](https://www2.jpx.co.jp/disc/33500/140120241112519981.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[メタプラネット 公式IR・最新情報一覧](https://metaplanet.jp/ja/updates)\n・[メタプラネット（3350）適時開示一覧（IRBANK、2024-11-14時点）](https://irbank.net/3350/ir?y=2024-11-14)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://metaplanet.jp/ja/updates",
+          "checkedUrls": [
+            "https://metaplanet.jp/ja/updates",
+            "https://www2.jpx.co.jp/disc/33500/140120241112519902.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120241112519981.pdf"
+          ],
+          "result": "会社公式IR一覧とJPX公式PDF2件の本文を確認。3Q損益・9/30財政状態・通期予想非開示・四半期CF未作成・継続企業の前提に関する重要な不確実性、BTC評価損の決算反映および11/13公表保有数を照合。9/30保有数の2資料間不一致は解消せず、候補では断定していない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/3350/ir?y=2024-11-14",
+          "checkedUrls": [
+            "https://irbank.net/3350/ir?y=2024-11-14"
+          ],
+          "result": "11/13 12:00の短信・営業外費用資料の公表時刻を確認し、11/14 16:15 JST cutoffを適用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期 第３四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-11-13T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120241112519902.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "営業外費用の計上に関するお知らせ",
+          "publishedAt": "2024-11-13T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120241112519981.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-11-19|2901",
+      "signalDate": "2024-11-19",
+      "symbolCode": "2901",
+      "companyName": "ウェルディッシュ",
+      "analysisCutoff": "2024-11-19T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:32:19+09:00",
+      "summary": "中間期は増収・営業黒字となり、通期予想も上方修正された一方、親会社株主帰属純利益325.148百万円には子会社株式売却益など特別利益が含まれる。営業CFはマイナスで継続企業の重要な不確実性が残る。",
+      "materialImpact": "食品・化粧品事業の採算改善と通期予想の上方修正は材料。一方、中間純利益は子会社売却益等に大きく依存し、営業CFはマイナス、継続企業の前提に重要な不確実性がある。中国協業売上と中期計画の数値も会社見込み・目標であり実績ではない。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "中間期に営業利益・経常利益が黒字化し、10/31には通期予想を上方修正。ただし純利益325.148百万円は子会社株式売却益276.788百万円や債務免除益49.100百万円等を含む。営業CFは▲67.719百万円で、継続企業の重要な不確実性も継続。"
+        },
+        {
+          "name": "事業概要",
+          "value": "食品、化粧品、医療福祉関連事業などを展開。インターネット通信販売子会社は2024年7月31日付で譲渡され、以後は連結対象外。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/31に2025年3月期通期予想を売上高2,080百万円、営業利益80百万円、親会社株主帰属純利益300百万円へ修正。11/12公表の中間期は食品事業が黒字化し、化粧品子会社も寄与。中国企業との協業は10/4契約済みで3年間約20.8億円の売上見込み。11/12 17:00公表の中期経営計画は2028年3月期に売上高180億円・当期利益20億円・FCF約30億円を目指し、2033年3月期の売上高1,000億円は長期構想として掲げる。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期中間期（4～9月）は売上高1,013.878百万円（前年同期比1.0％増）、営業利益32.640百万円、経常利益17.315百万円、親会社株主帰属中間純利益325.148百万円。9月末現金及び預金286.366百万円、純資産434.358百万円。営業活動によるCFは▲67.719百万円。10/31修正後の通期予想は売上高2,080百万円、営業利益80百万円、純利益300百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "中間短信の特別利益には子会社株式売却益276.788百万円、債務免除益49.100百万円等を含み、純利益は継続的な事業利益を表すとは限らない。11/12の別途開示にある196百万円は新日本機能食品の株式譲渡に伴う「追加」連結売却益の確定額で、短信の子会社株式売却益276.788百万円全体を指すものではなく、別途加算しない。中間短信でも継続企業の前提に関する重要な不確実性を記載。中国協業の金額は売上見込み、中期経営計画は将来目標であり実績ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-10-04 中国企業との協業開始のお知らせ(11:31)](https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf)\n・[2024-10-31 業績予想の修正に関するお知らせ(15:01)](https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241031%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E4%BF%AE%E6%AD%A3.pdf)\n・[2024-11-12 2025年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）(16:30)](https://wel-dish.co.jp/wp-content/uploads/2024/11/%E7%9F%AD%E4%BF%A1%E5%85%A8%E6%96%8720241111-2-1.pdf)\n・[2024-11-12 （開示事項の経過）連結子会社株式譲渡に伴う特別利益の計上額確定(16:30)](https://wel-dish.co.jp/wp-content/uploads/2024/11/IR20241112%E5%AD%90%E4%BC%9A%E7%A4%BE%E8%AD%B2%E6%B8%A1%E7%9B%8A%E7%A2%BA%E5%AE%9A-1.pdf)\n・[2024-11-12 中期経営計画（2026年3月期～2028年3月期）(17:00)](https://www2.jpx.co.jp/disc/29010/140120241113520823.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ウェルディッシュ 公式IRニュース一覧](https://wel-dish.co.jp/category/ir/)\n・[2901 適時開示一覧（2024-11-19時点）](https://irbank.net/2901/ir?y=2024-11-19)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://wel-dish.co.jp/category/ir/",
+          "checkedUrls": [
+            "https://wel-dish.co.jp/category/ir/",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241031%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E4%BF%AE%E6%AD%A3.pdf",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/11/%E7%9F%AD%E4%BF%A1%E5%85%A8%E6%96%8720241111-2-1.pdf",
+            "https://wel-dish.co.jp/wp-content/uploads/2024/11/IR20241112%E5%AD%90%E4%BC%9A%E7%A4%BE%E8%AD%B2%E6%B8%A1%E7%9B%8A%E7%A2%BA%E5%AE%9A-1.pdf",
+            "https://www2.jpx.co.jp/disc/29010/140120241113520823.pdf"
+          ],
+          "result": "会社公式IR・JPX資料の本文を確認。通期予想、中間期の損益・財政状態・営業CF・継続企業の重要な不確実性、追加売却益の説明、中期計画の数値目標を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2901/ir?y=2024-11-19",
+          "checkedUrls": [
+            "https://irbank.net/2901/ir?y=2024-11-19"
+          ],
+          "result": "適時開示時系列で公表日時を照合。10/31 15:01、11/12 16:30の決算・譲渡益確定、同日17:00の中期計画はいずれも11/19 16:15 JST cutoff以前。11/19当日の新規IRはない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "中国企業との協業開始のお知らせ",
+          "publishedAt": "2024-10-04T11:31:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241004%E4%B8%AD%E5%9B%BD%E5%8D%94%E6%A5%AD-1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-10-31T15:01:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/10/IR20241031%E6%A5%AD%E7%B8%BE%E4%BA%88%E6%83%B3%E4%BF%AE%E6%AD%A3.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年３月期 第２四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-11-12T16:30:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/11/%E7%9F%AD%E4%BF%A1%E5%85%A8%E6%96%8720241111-2-1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（開示事項の経過）当社連結子会社の異動（株式譲渡）に伴う特別利益の計上額確定に関するお知らせ",
+          "publishedAt": "2024-11-12T16:30:00+09:00",
+          "url": "https://wel-dish.co.jp/wp-content/uploads/2024/11/IR20241112%E5%AD%90%E4%BC%9A%E7%A4%BE%E8%AD%B2%E6%B8%A1%E7%9B%8A%E7%A2%BA%E5%AE%9A-1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "中期経営計画（2026年3月期～2028年3月期）",
+          "publishedAt": "2024-11-12T17:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/29010/140120241113520823.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-11-19|3350",
+      "signalDate": "2024-11-19",
+      "symbolCode": "3350",
+      "companyName": "メタプラネット",
+      "analysisCutoff": "2024-11-19T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:34:20+09:00",
+      "summary": "9か月累計は営業損失183.802百万円、純損失321.734百万円。11/18発行の17.5億円社債調達資金を11/19 BTC購入へ充当し、124.117BTCを取得。保有数は1,142.287BTC。",
+      "materialImpact": "BTC購入の拡大が続き、11/19公表の保有数は1,142.287BTC。11/18発行の17.5億円社債調達資金を11/19の追加取得に充当済み。資産拡大は負債調達も伴い、3Qの営業赤字と継続企業の前提に関する重要な不確実性は残る。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "11/19に124.117BTCを17.5億円で取得し、保有数は1,142.287BTCに増加。11/18発行の17.5億円社債の調達資金をこの追加取得に充当済み。BTC拡大は負債調達も伴い、営業赤字・継続企業の前提に関する重要な不確実性は続く。"
+        },
+        {
+          "name": "事業概要",
+          "value": "ホテル事業を基盤に、2024年からビットコインの取得・保有を資金管理戦略として進める。"
+        },
+        {
+          "name": "足元材料",
+          "value": "11/13公表3Q累計は売上250.692百万円、営業損失183.802百万円、経常損失311.802百万円、純損失321.734百万円。11/18にEVO FUND向け総額17.5億円の保証付普通社債を発行（年0.36%、償還期日2025/11/17）。11/19資料は社債調達資金をBTC追加取得に充当したと記載。同日に株主優待制度新設を公表。11/19は124.117BTCを平均14,099,600円で追加購入、総保有1,142.287BTC・累計取得額113.72億円・平均取得9,955,874円。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年12月期3Q累計（1～9月）は売上250.692百万円、営業損失183.802百万円、経常損失311.802百万円、純損失321.734百万円。9/30現預金1,966.394百万円、純資産5,262.297百万円、自己資本比率67.2%。通期業績予想は非開示、3Q CF計算書は未作成。11/18社債と11/19 BTC購入は3Q末後の取引。"
+        },
+        {
+          "name": "注意点",
+          "value": "継続企業の前提に関する重要な不確実性が明記されている。11/19の購入資料は11/18の社債発行済みと調達資金のBTC取得への充当済みを記載。9/30保有数は3Q短信KPI表398.832BTCと同日別紙492.82BTCが不一致のため断定しない。優待制度は新設発表段階。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-11-13 2024年12月期 第3四半期決算短信〔日本基準〕（連結）(12:00)](https://www2.jpx.co.jp/disc/33500/140120241112519902.pdf)\n・[2024-11-13 営業外費用の計上に関するお知らせ(12:00)](https://www2.jpx.co.jp/disc/33500/140120241112519981.pdf)\n・[2024-11-18 株主優待制度の新設に関するお知らせ(08:59)](https://www2.jpx.co.jp/disc/33500/140120241117525267.pdf)\n・[2024-11-18 第3回普通社債（保証付）の発行に関するお知らせ(12:30)](https://www2.jpx.co.jp/disc/33500/140120241118525541.pdf)\n・[2024-11-19 ビットコインの追加購入に関するお知らせ(12:00)](https://www2.jpx.co.jp/disc/33500/140120241119526150.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[メタプラネット 公式IR・最新情報一覧](https://metaplanet.jp/ja/updates)\n・[メタプラネット（3350）適時開示一覧（IRBANK、2024-11-19時点）](https://irbank.net/3350/ir?y=2024-11-19)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://metaplanet.jp/ja/updates",
+          "checkedUrls": [
+            "https://metaplanet.jp/ja/updates",
+            "https://www2.jpx.co.jp/disc/33500/140120241112519902.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120241112519981.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120241117525267.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120241118525541.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120241119526150.pdf"
+          ],
+          "result": "会社公式IR一覧とJPX公式PDF5件の本文を確認。3Q損益・財政状態・通期予想・GC/CF、評価損の決算反映・BTC公表数値、11/18社債の条件、11/19資料で確認できる発行済み/調達資金のBTC購入への充当、同日優待新設、11/19 BTC購入数量/価格/保有数を照合。9/30 BTC保有数の公表不一致は残高として断定していない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/3350/ir?y=2024-11-19",
+          "checkedUrls": [
+            "https://irbank.net/3350/ir?y=2024-11-19"
+          ],
+          "result": "11/13、11/18 08:59優待新設、11/18 12:30社債、11/19 12:00 BTC購入の公表時刻を照合し、11/19 16:15 JST cutoffを適用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期 第３四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-11-13T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120241112519902.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "営業外費用の計上に関するお知らせ",
+          "publishedAt": "2024-11-13T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120241112519981.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株主優待制度の新設に関するお知らせ",
+          "publishedAt": "2024-11-18T08:59:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120241117525267.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第３回普通社債（保証付）の発行に関するお知らせ",
+          "publishedAt": "2024-11-18T12:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120241118525541.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ビットコインの追加購入に関するお知らせ",
+          "publishedAt": "2024-11-19T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120241119526150.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
     },
     {
       "signalDate": "2026-06-05",
@@ -13939,6 +15315,90 @@
       "imported_at": "2026-09-27T18:20:20.373380+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "1283ba1f874d1f54d9b16d99863aadde0d95d2f5bb703f0f4611f9210bf7ba78"
+    },
+    {
+      "identity": "2024-09-17|190A",
+      "imported_at": "2026-09-27T18:24:16.074151+09:00",
+      "previous_receipt_sha256": "86dd3e5632f8b7f43fa1bcb648c6109268492f6c3c54fcfc2cf74865b7a64fdc",
+      "receipt_sha256": "17d490b9374093579b756aa40da633768e016ec792fcff972a20c7fd46f9f3a7"
+    },
+    {
+      "identity": "2024-10-24|2586",
+      "imported_at": "2026-09-27T18:24:20.902159+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "35ae22a346e59ca3e46ac782a1ee7171429b2edc23a70a6894a2ab1b3b128992"
+    },
+    {
+      "identity": "2024-10-25|2586",
+      "imported_at": "2026-09-27T18:24:25.545954+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "45946d0f69a3b768dcb1e8f27519a52e1087d799528d1abdd785de5e0a3ddfef"
+    },
+    {
+      "identity": "2024-10-28|2586",
+      "imported_at": "2026-09-27T18:24:30.446208+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "2c2db33148a18463f00b0be8b98e38f301cb90f8fb09fc0108137b91ec885ad0"
+    },
+    {
+      "identity": "2024-10-17|8894",
+      "imported_at": "2026-09-27T18:28:37.357024+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "698d8b584b906dcaf8262f5a01370b0c0af8d45356bb9a25fb0f2c185b8977ee"
+    },
+    {
+      "identity": "2024-10-28|8894",
+      "imported_at": "2026-09-27T18:28:42.112390+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "1d98477cc0b9070136594c0cc04104e8df52bbc4a19253f157c42a0004be0cc8"
+    },
+    {
+      "identity": "2024-10-29|8894",
+      "imported_at": "2026-09-27T18:29:01.047617+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "50a37a0153ac3efc3c3d05e099565e728100b00cc52f50d60cc97a9aaaf6b227"
+    },
+    {
+      "identity": "2024-11-14|3350",
+      "imported_at": "2026-09-27T18:34:04.846898+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "df107ab5f592078d76d2fc6b146b7be5096236ebd636451ce470aac0ecc7412a"
+    },
+    {
+      "identity": "2024-11-19|3350",
+      "imported_at": "2026-09-27T18:35:01.002273+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "b333d4972330526209f0afdf1418ea745bdd7d664481eb15d7a9477ba26a7048"
+    },
+    {
+      "identity": "2024-10-23|2901",
+      "imported_at": "2026-09-27T18:36:54.296234+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "bb5172b0adf057c5eeb864d3c78bab8a7beb4c823ab8a9adc0cbf3783eb5d643"
+    },
+    {
+      "identity": "2024-11-19|2901",
+      "imported_at": "2026-09-27T18:36:58.777736+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "20a42c61b673df0f5f9699f7cec3fd4b80a16735deb5b62dd9cc8f71f771be01"
+    },
+    {
+      "identity": "2024-10-16|2156",
+      "imported_at": "2026-09-27T18:37:25.483015+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "8827a84fc24799270641c94ad81a2e08467f99085c7e63c274a9ead160212cdc"
+    },
+    {
+      "identity": "2024-10-21|2156",
+      "imported_at": "2026-09-27T18:37:30.060546+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "c42b95b07c6c4432fae383d271d413aeb9d2bd057e1f12c0424fb4650a1222c0"
+    },
+    {
+      "identity": "2024-10-22|2156",
+      "imported_at": "2026-09-27T18:37:34.671935+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "424b215e2cdc286d50b7a0635eabe048b4e5245015bb6223cb974cf9c48e272a"
     }
   ]
 }

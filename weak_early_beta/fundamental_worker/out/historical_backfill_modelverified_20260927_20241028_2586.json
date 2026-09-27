@@ -1,0 +1,123 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-10-28|2586",
+      "signalDate": "2024-10-28",
+      "symbolCode": "2586",
+      "companyName": "フルッタフルッタ",
+      "analysisCutoff": "2024-10-28T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:22:02+09:00",
+      "summary": "アサイー商品の販路拡大が続く一方、Q1の継続企業前提に重要な不確実性が残る。第15回予約権の潜在株式11.96百万株が残存。「お家でアサイーボウル」の9月出荷量は前年同月比1,323%と会社発表。",
+      "materialImpact": "量販・外食向け商品展開と自社商品の出荷増が材料。ただし発売価格や単品出荷実績から会社業績寄与は算定できず、予約権の行使による希薄化余地と継続企業の重要な不確実性も残る。",
+      "selectorNames": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "アサイー飲料・冷凍商品の販売先がコンビニ・外食へ拡大。販売価格や商品導入は公表されたが、当社の受注額・販売数量・業績寄与額は非開示。第15回予約権の未行使分による潜在株式も残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "アサイー等アマゾンフルーツの輸入・加工販売と、自社商品の製造販売を行う。外食・小売向けの原料供給に加え、冷凍アサイーボウルなどを展開。"
+        },
+        {
+          "name": "足元材料",
+          "value": "10/22発売のファミリーマート限定「果肉を楽しむブルーベリーミルク」は当社アサイーピューレを使用。10/24からジョナサン全163店で「アサイーバナナ」（税込549円）、ベジテリアで「アサイー＆ベリー」（R540円/L810円、期間限定）を販売。いずれも当社への収益額は非開示。10/1時点で第15回予約権は9月行使3.37百万株・10/1行使3.37百万株、未行使119,600個（潜在11.96百万株）。「お家でアサイーボウル」は9月出荷量が前年同月比1,323%、2023/10～2024/9の年間出荷量累計が前年同期比920%。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期Q1は売上高472.336百万円（前年同期比74.4%増）、営業利益14.573百万円、経常利益3.402百万円、親会社株主帰属純利益3.164百万円。6月末現金582.156百万円、純資産1,068.010百万円。通期予想は売上高1,430百万円、営業・経常・純損失各100百万円で据置。Q1 CF計算書は未作成。直近通期（2024年3月期）の営業CFは248.809百万円の支出。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q1短信に継続企業の前提に関する重要な不確実性が記載されている。Q1に営業CF計算書はなく、営業CFは前期通期実績値。第15回予約権は10/1時点で119,600個が残り、潜在株式11.96百万株。商品出荷の前年比は「お家でアサイーボウル」単品の数量で、全社売上高・利益の伸びを示さない。販売価格は小売価格で当社売上単価ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-14 Q1決算(13:30)](https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf)\n・[2024-05-15 FY決算・営業CF(14:50)](https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf)\n・[2024-10-01 第15回予約権行使状況(15:00)](https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf)\n・[2024-10-22 FamilyMart限定品(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf)\n・[2024-10-24 Jonathan販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf)\n・[2024-10-24 Vegeteria販売(10:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf)\n・[2024-10-28 商品出荷数量(15:00)](https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.28_%E3%81%8A%E5%AE%B6%E3%81%A7%E3%82%A2%E3%82%B5%E3%82%A4%E3%83%BC%E3%83%9C%E3%82%A6%E3%83%AB%E5%A5%BD%E8%AA%BF.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[フルッタフルッタ 公式IRニュース一覧](https://www.frutafruta.com/ir_info/news/)\n・[フルッタフルッタ 公式NEWS一覧](https://www.frutafruta.com/news/)\n・[2586 適時開示一覧（IRBANK、2024-10-28時点）](https://irbank.net/2586/ir?y=2024-10-28)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.frutafruta.com/ir_info/news/",
+          "checkedUrls": [
+            "https://www.frutafruta.com/ir_info/news/",
+            "https://www.frutafruta.com/news/",
+            "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+            "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf",
+            "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.28_%E3%81%8A%E5%AE%B6%E3%81%A7%E3%82%A2%E3%82%B5%E3%82%A4%E3%83%BC%E3%83%9C%E3%82%A6%E3%83%AB%E5%A5%BD%E8%AA%BF.pdf"
+          ],
+          "result": "会社公式IRニュース/NEWS一覧と、決算・予約権のJPX PDF、商品リリース各PDFを本文確認。8/14 Q1数値・通期予想・GC記載・CF作成有無、5/15 OCF、10/1行使株数と残権数、10/22・24の商品内容を照合。 10/28公表の1,323%/920%は当該商品の出荷数量として照合し、全社売上・利益と区別。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/2586/ir?y=2024-10-28",
+          "checkedUrls": [
+            "https://irbank.net/2586/ir?y=2024-10-28"
+          ],
+          "result": "適時開示一覧と会社リリースの日付・時刻を照合。10/28 15:00リリースを16:15 JST cutoff内と確認。11/13中間決算等の後日情報は含めていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-14T13:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240813571541.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年3月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-15T14:50:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120240514594586.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第15回新株予約権の月間行使状況及び大量行使に関するお知らせ",
+          "publishedAt": "2024-10-01T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/25860/140120241001591953.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ファミリーマート限定「果肉を楽しむブルーベリーミルク」新発売",
+          "publishedAt": "2024-10-22T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.22_familymart.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ジョナサン全店で「アサイーバナナ」販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_jonathan.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ベジテリアで「アサイー＆ベリー」期間限定販売開始",
+          "publishedAt": "2024-10-24T10:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.24_vegeteria.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「お家でアサイーボウル」販売好調のお知らせ",
+          "publishedAt": "2024-10-28T15:00:00+09:00",
+          "url": "https://www.frutafruta.com/cms/wp-content/uploads/2024/10/2024.10.28_%E3%81%8A%E5%AE%B6%E3%81%A7%E3%82%A2%E3%82%B5%E3%82%A4%E3%83%BC%E3%83%9C%E3%82%A6%E3%83%AB%E5%A5%BD%E8%AA%BF.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

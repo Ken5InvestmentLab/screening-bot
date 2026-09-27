@@ -1,0 +1,55 @@
+{
+  "identity": "2024-03-12|9704",
+  "generatedAt": "2026-09-27T21:36:26+09:00",
+  "candidatePath": "weak_early_beta/fundamental_worker/out/historical_backfill_candidate_reaudit_20260927_20240312_9704.json",
+  "candidateSha256": "73ba99835b9f878518efe7cf4a08cf3fdac1bedfdb6ce8b8f422936965f826df",
+  "analysisCutoff": "2024-03-12T16:15:00+09:00",
+  "auditStatus": "pass",
+  "publicationTimeEvidence": {
+    "checkedAt": "2026-09-27T21:36:26+09:00",
+    "listingUrl": "https://irbank.net/9704/news",
+    "result": "2024-02-14 16:00 JSTの4開示を確認。すべて分析cutoffより前に公表。PDF本文の根拠はJPX掲載の会社開示原本。"
+  },
+  "primaryDocuments": [
+    {
+      "title": "2023年12月期決算短信〔日本基準〕（連結）",
+      "publishedAt": "2024-02-14T16:00:00+09:00",
+      "url": "https://www2.jpx.co.jp/disc/97040/140120240203525792.pdf",
+      "bodyReviewed": true
+    },
+    {
+      "title": "連結および個別業績の予想値および前期実績との差異に関するお知らせ",
+      "publishedAt": "2024-02-14T16:00:00+09:00",
+      "url": "https://www2.jpx.co.jp/disc/97040/140120240209531673.pdf",
+      "bodyReviewed": true,
+      "bodyVerification": "JPX原本とYahoo Finance配信PDFのSHA-256が一致（54c31f96cc515f618272655ae4c183cc3b8479ce493b33f6a1524ebdaa32994a）。原本URLをレポートに使用。"
+    },
+    {
+      "title": "営業外収益、営業外費用ならびに特別利益の計上に関するお知らせ",
+      "publishedAt": "2024-02-14T16:00:00+09:00",
+      "url": "https://www2.jpx.co.jp/disc/97040/140120240212532997.pdf",
+      "bodyReviewed": true
+    },
+    {
+      "title": "代表取締役の異動に関するお知らせ",
+      "publishedAt": "2024-02-14T16:00:00+09:00",
+      "url": "https://www2.jpx.co.jp/disc/97040/140120240214536572.pdf",
+      "bodyReviewed": true
+    }
+  ],
+  "bodyFactsReviewed": [
+    "2023年12月期売上7,309百万円、営業損失93百万円、経常損失195百万円、親会社株主帰属損失149百万円。",
+    "売上高は前回予想を上回ったが、営業・経常・純利益は各予想を下回った。",
+    "為替差益75百万円、借換手数料67百万円、持分法投資損失19百万円、固定資産売却益129百万円。",
+    "代表取締役交代は3月26日株主総会等の承認条件付きで、cutoff時点では未確定。"
+  ],
+  "validation": {
+    "historicalValidator": "pass: validate_historical_report returned 2024-03-12|9704",
+    "premiumFields": "7 non-empty fields in required order",
+    "materialImpact": "canonical label, fullwidth colon, 52 characters after label",
+    "sourcePages": "3 distinct listing/reference URLs",
+    "disclosureLinks": "4 direct JPX links exactly match disclosures; all timestamps <= cutoff",
+    "discordPosted": false,
+    "sharedManifestOrHtmlChanged": false
+  }
+}

@@ -6,6 +6,8 @@ from generate_mega_validation_report import (
     normalize_cached_fundamental_html,
     normalize_tradingview_title,
 )
+from weak_early_beta.report import _fundamental_html
+from weak_early_beta.impact import normalize_report_material_impact
 
 
 class ReportFundamentalHtmlTest(unittest.TestCase):
@@ -78,6 +80,87 @@ class ReportFundamentalHtmlTest(unittest.TestCase):
         embed = {"fields": [{"name": "材料インパクト", "value": "混在/要確認：確認が必要"}]}
 
         self.assertEqual(discord_embed_impact_class(embed), " impact-watch")
+
+    def test_historical_fundamental_impact_uses_premium_label_and_color_priority(self):
+        value = (
+            "材料インパクト\nネガティブ材料: 減収と営業損失の拡大が続く。\n\n"
+            "足元材料\n決算では売上高と営業利益が前年を下回りました。"
+        )
+
+        rendered = _fundamental_html(value, "テスト社", "1234", "2024-01-01")
+
+        self.assertIn('class="discord-embed impact-negative"', rendered)
+        self.assertIn("ネガティブ材料：減収と営業損失の拡大が続く。", rendered)
+        self.assertNotIn("ネガティブ材料:", rendered)
+
+    def test_historical_mixed_impact_gets_watch_color_before_negative_words(self):
+        value = (
+            "材料インパクト\n混在・慎重：増収だが営業損失が残る。\n\n"
+            "足元材料\n売上高は増加しました。"
+        )
+
+        rendered = _fundamental_html(value, "テスト社", "1234", "2024-01-01")
+
+        self.assertIn('class="discord-embed impact-watch"', rendered)
+        self.assertIn("混在/要確認：増収だが営業損失が残る。", rendered)
+
+    def test_legacy_mixed_impact_is_normalized_without_rewriting_stored_copy(self):
+        original = "売上が増えた一方、赤字が続いた。"
+        value = f"材料インパクト\n{original}\n\n足元材料\n同じ時点の開示要約。"
+
+        rendered = _fundamental_html(value, "テスト社", "1234", "2024-01-01")
+
+        self.assertIn('class="discord-embed impact-watch"', rendered)
+        self.assertIn(f"混在/要確認：{original}", rendered)
+        self.assertLessEqual(len(f"混在/要確認：{original}".split("：", 1)[1]), 90)
+
+    def test_legacy_clear_positive_and_negative_impacts_get_matching_colors(self):
+        positive = _fundamental_html(
+            "材料インパクト\n売上高と営業利益が前年を上回り、黒字転換した。",
+            "テスト社", "1234", "2024-01-01",
+        )
+        negative = _fundamental_html(
+            "材料インパクト\n減収と営業損失が続き、通期予想も下方修正した。",
+            "テスト社", "5678", "2024-01-01",
+        )
+
+        self.assertIn('class="discord-embed impact-positive"', positive)
+        self.assertIn('ポジティブ材料：', positive)
+        self.assertIn('class="discord-embed impact-negative"', negative)
+        self.assertIn('ネガティブ材料：', negative)
+
+    def test_impact_normalization_persists_field_and_top_level_without_new_facts(self):
+        source = {
+            "signalDate": "2024-01-01",
+            "symbolCode": "1234",
+            "materialImpact": "売上が増えた一方、赤字が続いた。",
+            "fields": [
+                {"name": "材料インパクト", "value": "売上が増えた一方、赤字が続いた。"},
+                {"name": "事業概要", "value": "既存の事業説明。"},
+            ],
+        }
+
+        normalized, audit = normalize_report_material_impact(source)
+
+        impact = normalized["fields"][0]["value"]
+        self.assertEqual(impact, "混在/要確認：売上が増えた一方、赤字が続いた。")
+        self.assertEqual(normalized["materialImpact"], impact)
+        self.assertEqual(normalized["fields"][1]["value"], "既存の事業説明。")
+        self.assertEqual(source["fields"][0]["value"], "売上が増えた一方、赤字が続いた。")
+        self.assertEqual(audit["normalized_value"], impact)
+
+    def test_fundamental_modal_markup_and_interaction_use_native_dialog(self):
+        from pathlib import Path
+
+        interactions = (
+            Path("reports/weak-early-beta-interactions.js").read_text(encoding="utf-8")
+        )
+        report_source = Path("weak_early_beta/report.py").read_text(encoding="utf-8")
+
+        self.assertIn('<dialog class="fundamental-detail"', report_source)
+        self.assertIn("showModal()", interactions)
+        self.assertIn("dialog.fundamental-detail::backdrop", report_source)
+        self.assertNotIn("max-width:620px){.fundamental-detail{width:calc(100% + 32px)", report_source)
 
     def test_tradingview_title_removes_duplicate_symbol_code(self):
         title = "ルネサンス (2378) (2378) | TradingView チャート"

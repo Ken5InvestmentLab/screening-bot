@@ -1,0 +1,110 @@
+{
+  "reports": [
+    {
+      "signalDate": "2023-05-19",
+      "symbolCode": "3137",
+      "identity": "2023-05-19|3137",
+      "companyName": "ファンデリー",
+      "analysisCutoff": "2023-05-19T16:15:00+09:00",
+      "generatedAt": "2026-09-27T21:44:34+09:00",
+      "summary": "2023年3月期は売上高・営業利益とも会社計画を下回り、営業赤字が拡大。主力事業は利益を維持する一方、CID事業の大幅赤字と低い自己資本比率が目立つ。",
+      "materialImpact": "混在/要確認：売上高は10.0％減、営業損失は拡大し通期計画も未達。会社は翌期黒字を予想する一方、主力事業への売上集中と自己資本比率6.8％が重い。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：売上高は10.0％減、営業損失は拡大し通期計画も未達。会社は翌期黒字を予想する一方、主力事業への売上集中と自己資本比率6.8％が重い。"
+        },
+        {
+          "name": "事業概要",
+          "value": "主力のMFD事業では、健康食宅配・通販カタログ「ミールタイム」を運営。旬や国産食材にこだわる食事宅配「旬をすぐに」のCID事業と、自社媒体・医療機関ネットワークを使った食品メーカー向けマーケティング事業も展開する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "4月28日公表の2023年3月期は売上高28.1億円（前年同期比10.0％減）、営業損失2.85億円（前年1.77億円の損失）で、前回予想（売上32.0億円・営業利益1.05億円）を下回った。期末配当予想は無配へ修正。5月1日の訂正ではXBRLのEPS表記を44.79円から△44.79円へ変更したが、会社は公開済みPDFの数値に訂正はないと説明した。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "主力MFDは売上22.56億円（前年同期比△7.8％）、営業利益4.80億円（△7.2％）。CIDは売上1.42億円（△39.1％）に対し営業損失7.58億円、マーケティングは売上4.13億円（△7.3％）、営業利益2.90億円（△12.4％）。2024年3月期の会社予想は売上30.37億円（+8.1％）、営業利益5,271万円の黒字。"
+        },
+        {
+          "name": "注意点",
+          "value": "「ミールタイム」が売上の80.3％を占め、会社は同サービスの会員数が売上に大きく影響すると説明。自己資本比率は前期11.6％から6.8％へ低下し、CIDは売上を大きく上回る営業損失。2024年3月期の黒字は会社予想であり、2023年3月期実績では売上高・営業利益とも前回計画を下回った。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2023-04-28 2023年3月期 決算短信〔日本基準〕（非連結）(15:00)](https://www2.jpx.co.jp/disc/31370/140120230428556524.pdf)\n・[2023-04-28 業績予想と実績値との差異、配当予想の修正（無配）に関するお知らせ(15:00)](https://www2.jpx.co.jp/disc/31370/140120230428556409.pdf)\n・[2023-05-01 数値データ（XBRL）の一部訂正について(19:00)](https://www2.jpx.co.jp/disc/31370/140120230501557809.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[IR資料室｜ファンデリー](https://www.fundely.co.jp/ir/library)\n・[IRカレンダー｜ファンデリー](https://www.fundely.co.jp/ir/calendar)\n・[ファンデリーの適時開示一覧｜IRBANK](https://irbank.net/3137/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.fundely.co.jp/ir/library",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/31370/140120230428556524.pdf",
+            "https://www2.jpx.co.jp/disc/31370/140120230428556409.pdf",
+            "https://www2.jpx.co.jp/disc/31370/140120230501557809.pdf"
+          ],
+          "result": "会社のIR資料室・IRカレンダーを確認。採用した決算数値、セグメント、会社計画、無配修正、XBRL訂正内容はJPX掲載の一次資料本文で確認し、訂正PDFにある『公開済みPDFの数値に訂正なし』の説明も照合した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/3137/ir",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/31370/140120230428556524.pdf",
+            "https://www2.jpx.co.jp/disc/31370/140120230428556409.pdf",
+            "https://www2.jpx.co.jp/disc/31370/140120230501557809.pdf"
+          ],
+          "result": "適時開示一覧で4月28日15:00および5月1日19:00の公表時刻を照合。時刻は一覧のメタデータのみを根拠とし、事業・財務の事実は上記JPX一次資料本文から採用した。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2023年3月期 決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2023-04-28T15:00:00+09:00",
+          "publishedAtPrecision": "minute",
+          "timestampEvidenceUrl": "https://irbank.net/3137/ir",
+          "url": "https://www2.jpx.co.jp/disc/31370/140120230428556524.pdf",
+          "contentReviewed": true,
+          "bodyLocator": "PDF pp.1-4, 6, 8, 20-21: results, segments, FY2024 company outlook, financial position/cash flow, service concentration"
+        },
+        {
+          "title": "業績予想と実績値との差異、配当予想の修正（無配）に関するお知らせ",
+          "publishedAt": "2023-04-28T15:00:00+09:00",
+          "publishedAtPrecision": "minute",
+          "timestampEvidenceUrl": "https://irbank.net/3137/ir",
+          "url": "https://www2.jpx.co.jp/disc/31370/140120230428556409.pdf",
+          "contentReviewed": true,
+          "bodyLocator": "PDF p.1: previous forecast vs actual, segment results vs forecast, year-end dividend changed to zero"
+        },
+        {
+          "title": "数値データ（XBRL）の一部訂正について",
+          "publishedAt": "2023-05-01T19:00:00+09:00",
+          "publishedAtPrecision": "minute",
+          "timestampEvidenceUrl": "https://irbank.net/3137/ir",
+          "url": "https://www2.jpx.co.jp/disc/31370/140120230501557809.pdf",
+          "contentReviewed": true,
+          "bodyLocator": "PDF p.1: EPS XBRL corrected from 44.79 to △44.79; issuer states published PDF numeric data was not corrected"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "固定cutoffは2023-05-19 16:15 JST。数値・事業説明はcutoff以前の会社/JPX一次資料本文からのみ採用し、株価・実現リターン・cutoff後の情報は使用していない。",
+        "2023-05-19付の『AI旬すぐ』サービス変更リリースは公式ページと添付資料に日付しかなく、公式配信時刻を確認できないため、同日開示としては候補内容に使用していない。4月28日までの確実な開示と、5月1日の公表時刻を照合できたXBRL訂正でsnapshotを構成した。",
+        "本文の内容監査はpass。GPT-6 Luna xhighの正式なgeneration receiptはrootが別途作成するまでimportしない。"
+      ]
+    }
+  ]
+}

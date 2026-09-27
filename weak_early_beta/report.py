@@ -20,6 +20,7 @@ from .config import (
     selector_info,
 )
 from .entry_feasibility import annotate_entry_feasibility, performance_eligible
+from .impact import normalize_material_impact
 from .metrics import (
     build_metrics,
     build_monthly_metrics,
@@ -245,17 +246,10 @@ def _fundamental_html(
             '<div class="discord-message"><article class="discord-embed">'
             f"{title_html}<p>{_linkify(value)}</p>{meta_html}</article></div>"
         )
-    impact = next((content for name, content in fields if "材料インパクト" in name), "")
-    impact_class = ""
-    if "ネガティブ" in impact:
-        impact_class = " impact-negative"
-    elif any(word in impact for word in ("様子見", "混在", "要確認")):
-        impact_class = " impact-watch"
-    elif "ポジティブ" in impact:
-        impact_class = " impact-positive"
+    impact, impact_class, _changed = normalize_material_impact(fields)
     field_html = "".join(
         f"<div><dt>{html.escape(name)}</dt><dd>"
-        f"{_source_links_html(content, company_name, symbol) if name == 'Sources' else _disclosure_links_html(content, metadata) if name == '開示リンク' else _linkify(content)}"
+        f"{_source_links_html(content, company_name, symbol) if name == 'Sources' else _disclosure_links_html(content, metadata) if name == '開示リンク' else _linkify(impact) if name == '材料インパクト' else _linkify(content)}"
         "</dd></div>"
         for name, content in fields
     )
@@ -263,6 +257,12 @@ def _fundamental_html(
         f'<div class="discord-message"><article class="discord-embed{impact_class}">'
         f"{title_html}<dl>{field_html}</dl>{meta_html}</article></div>"
     )
+
+
+def _display_material_impact(fields: list[tuple[str, str]]) -> tuple[str, str]:
+    """Compatibility wrapper around the shared persisted-impact formatter."""
+    value, impact_class, _changed = normalize_material_impact(fields)
+    return value, impact_class
 
 
 def _pct(value, signed: bool = False) -> str:
@@ -490,10 +490,10 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             actions = (
                 '<button class="fundamental-toggle" data-fundamental-toggle type="button" '
                 'aria-expanded="false">ファンダ分析</button>'
-                '<div class="fundamental-detail" hidden>'
+                '<dialog class="fundamental-detail" aria-label="ファンダ分析の詳細">'
                 '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる">×</button>'
                 f'{_fundamental_html(fundamental_html, name, str(symbol), signal_day, snapshot_metadata)}'
-                '</div>'
+                '</dialog>'
             )
         elif fundamental_url:
             actions = f'<a class="button-link" href="{html.escape(fundamental_url)}">ファンダ分析</a>'
@@ -558,18 +558,17 @@ REPORT_CSS = """
 .fundamental-close:hover{background:#eef5ff;color:#1849a9}
 .discord-message{display:grid;gap:8px;min-width:0;max-width:100%;color:#182230}
 .discord-embed{min-width:0;max-width:100%;border-left:4px solid #5865f2;border-radius:6px;background:#f8f9ff;padding:10px;text-align:left;font-size:14px;font-weight:400;line-height:1.55}
-.discord-embed.impact-positive{border-left-color:#12b76a;background:#f0fdf4}
-.discord-embed.impact-watch{border-left-color:#fdb022;background:#fff8e6}
-.discord-embed.impact-negative{border-left-color:#f04438;background:#fff1f2}
+.discord-embed.impact-positive{border-left-color:#2E7D32;background:#edf7ee}
+.discord-embed.impact-watch{border-left-color:#F9A825;background:#fff8e6}
+.discord-embed.impact-negative{border-left-color:#C62828;background:#fff1f0}
 .discord-embed h4{margin:0 0 8px;font-size:13px}
 .discord-embed dl{display:grid;gap:8px;margin:0;min-width:0}
 .discord-embed dt{margin-bottom:2px;color:#344054;font-weight:700}
 .discord-embed dd{margin:0;min-width:0;color:#182230;font-weight:400;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
 .discord-embed a{color:#1849a9;text-decoration:underline;overflow-wrap:anywhere;word-break:break-word}
 .discord-meta{margin:8px 0 0;color:#667085;font-size:11px;font-weight:400}
-@media(min-width:821px){.fundamental-detail:not([hidden]){position:fixed;top:96px;left:50%;z-index:80;width:min(760px,calc(100vw - 48px));max-width:min(760px,calc(100vw - 48px));max-height:calc(100vh - 128px);margin-top:0;padding:14px 48px 14px 14px;overflow:auto;transform:translateX(-50%);box-shadow:0 22px 56px rgba(16,24,40,.28)}}
-@media(max-width:820px){.fundamental-detail{max-width:100%}}
-@media(max-width:620px){.fundamental-detail{width:calc(100% + 32px);max-width:none;margin-left:-16px}}
+dialog.fundamental-detail{position:fixed;inset:0;box-sizing:border-box;width:min(760px,calc(100vw - 32px));max-width:none;max-height:min(84vh,calc(100dvh - 32px));margin:auto;padding:14px 48px 14px 14px;overflow:auto;border:1px solid var(--line);border-radius:10px;box-shadow:0 22px 56px rgba(16,24,40,.32);transform:none}
+dialog.fundamental-detail::backdrop{background:rgba(12,18,28,.62);backdrop-filter:blur(2px)}
 :root[data-theme="dark"] .fundamental-detail{background:var(--panel-solid);color:var(--ink)}
 :root[data-theme="dark"] .discord-message,:root[data-theme="dark"] .discord-embed dt,:root[data-theme="dark"] .discord-embed dd{color:var(--ink)}
 :root[data-theme="dark"] .discord-embed{background:#18263a;border-left-color:#7f8cff}

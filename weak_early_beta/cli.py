@@ -30,6 +30,7 @@ from .historical_fundamentals import (
     build_manifest as build_historical_manifest,
     import_historical_reports,
     merge_receipts as merge_historical_receipts,
+    normalize_historical_material_impacts,
     select_batch as select_historical_batch,
     validate_historical_report,
 )
@@ -402,6 +403,57 @@ def command_import_historical_fundamentals(args: argparse.Namespace) -> None:
     }, ensure_ascii=False))
 
 
+def command_normalize_historical_material_impacts(args: argparse.Namespace) -> None:
+    """Persist the Premium-compatible impact label on existing historical reports."""
+    ledger_path = Path(args.ledger)
+    receipts_path = Path(args.receipts)
+    manifest_path = Path(args.manifest)
+    audit_path = Path(args.audit)
+    ledger = read_ledger(ledger_path)
+    receipts = json.loads(receipts_path.read_text(encoding="utf-8-sig"))
+    updated_ledger, updated_reports, audit_rows = normalize_historical_material_impacts(
+        ledger, receipts.get("reports", [])
+    )
+    now = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
+    updated_receipts = dict(receipts)
+    updated_receipts["updated_at"] = now
+    updated_receipts["reports"] = updated_reports
+    updated_manifest = build_historical_manifest(updated_ledger, updated_reports)
+    audit = {
+        "identity": "WEAK_EARLY_MATERIAL_IMPACT_NORMALIZATION_V1",
+        "updated_at": now,
+        "rule": "premium_impact_labels_v1; existing as-of snapshot text only; no new facts",
+        "reports_reviewed": len(updated_reports),
+        "reports_changed": len(audit_rows),
+        "changes": audit_rows,
+    }
+    receipts_path.write_text(
+        json.dumps(updated_receipts, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    write_ledger(updated_ledger, ledger_path)
+    manifest_path.write_text(
+        json.dumps(updated_manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
+    audit_path.write_text(json.dumps(audit, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    metrics = write_report(updated_ledger, Path(args.report), Path(args.metrics))
+    labels = {}
+    for report in updated_reports:
+        impact = next(
+            (field["value"] for field in report.get("fields", []) if field.get("name") == "材料インパクト"),
+            "",
+        )
+        label = impact.split("：", 1)[0]
+        labels[label] = labels.get(label, 0) + 1
+    print(json.dumps({
+        "reports_reviewed": len(updated_reports),
+        "reports_changed": len(audit_rows),
+        "labels": labels,
+        "metrics_rows": len(metrics),
+        "discord_posts": 0,
+        "audit": str(audit_path),
+    }, ensure_ascii=False))
+
+
 def command_is_business_day(args: argparse.Namespace) -> None:
     from .bank_calendar import is_bank_business_day
 
@@ -605,6 +657,21 @@ def parser() -> argparse.ArgumentParser:
         help="replace complete historical receipts only after auditStatus=pass",
     )
     historical_import.set_defaults(func=command_import_historical_fundamentals)
+
+    impact_normalize = sub.add_parser(
+        "normalize-historical-material-impacts",
+        help="persist Premium labels/colors on existing as-of reports and regenerate the beta HTML",
+    )
+    impact_normalize.add_argument("--ledger", default=str(DEFAULT_LEDGER))
+    impact_normalize.add_argument("--receipts", default=str(DEFAULT_HISTORICAL_RECEIPTS))
+    impact_normalize.add_argument("--manifest", default=str(DEFAULT_MANIFEST))
+    impact_normalize.add_argument("--report", default=str(DEFAULT_REPORT))
+    impact_normalize.add_argument("--metrics", default=str(DEFAULT_METRICS))
+    impact_normalize.add_argument(
+        "--audit",
+        default=str(ROOT / "weak_early_beta" / "fundamental_worker" / "out" / "historical_material_impact_normalization_receipt.json"),
+    )
+    impact_normalize.set_defaults(func=command_normalize_historical_material_impacts)
 
     business_day = sub.add_parser("is-business-day", help="check the Japanese bank-business-day gate")
     business_day.add_argument("--date")

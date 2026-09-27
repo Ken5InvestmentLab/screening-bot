@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 import pandas as pd
 
 from .ledger import DEFAULT_LEDGER, read_ledger
+from .impact import normalize_report_material_impact
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +30,12 @@ FIELD_ORDER = (
     "注意点",
     "開示リンク",
     "Sources",
+)
+MATERIAL_IMPACT_LABELS = (
+    "ポジティブ材料",
+    "ネガティブ材料",
+    "様子見",
+    "混在/要確認",
 )
 DETECTION_TIME = "16:15:00+09:00"
 
@@ -163,6 +170,24 @@ def validate_historical_report(report: dict) -> str:
     return identity(signal_date, symbol)
 
 
+def validate_material_impact_contract(report: dict) -> None:
+    """Require Premium's exact concise impact format for newly imported reports."""
+    impact = _fields(report).get("材料インパクト", "")
+    label = next((item for item in MATERIAL_IMPACT_LABELS if impact.startswith(item + "：")), "")
+    if not label:
+        raise ValueError(
+            "材料インパクト must start with one canonical Premium label and a fullwidth colon"
+        )
+    summary = impact[len(label) + 1:].strip()
+    if not summary:
+        raise ValueError("材料インパクト must include a source-grounded summary after the label")
+    if len(summary) > 90:
+        raise ValueError("材料インパクト summary must be no more than 90 characters")
+    top_level = str(report.get("materialImpact", "")).strip()
+    if top_level and top_level != impact:
+        raise ValueError("materialImpact must match the 材料インパクト field exactly")
+
+
 def build_manifest(
     ledger: pd.DataFrame,
     receipts: Iterable[dict] = (),
@@ -265,6 +290,7 @@ def import_historical_reports(
     accepted = []
     for report in reports:
         row_id = validate_historical_report(report)
+        validate_material_impact_contract(report)
         signal_date = _iso_date(report["signalDate"])
         symbol = str(report["symbolCode"]).strip()
         mask = (
@@ -280,6 +306,41 @@ def import_historical_reports(
         result.loc[mask, "updated_at"] = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
         accepted.append(report)
     return result, accepted
+
+
+def normalize_historical_material_impacts(
+    ledger: pd.DataFrame,
+    reports: Iterable[dict],
+) -> tuple[pd.DataFrame, list[dict], list[dict]]:
+    """Persist Premium-style impact text without changing any other report field."""
+    result = ledger.copy()
+    for column in ("fundamental_status", "fundamental_html", "updated_at"):
+        result[column] = result[column].astype("object")
+    normalized_reports: list[dict] = []
+    audit_rows: list[dict] = []
+    updated_at = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
+    for report in reports:
+        row_id = validate_historical_report(report)
+        normalized_report, audit_row = normalize_report_material_impact(report)
+        if audit_row:
+            fields = _fields(normalized_report)
+            signal_date = _iso_date(normalized_report["signalDate"])
+            symbol = str(normalized_report["symbolCode"]).strip()
+            mask = (
+                pd.to_datetime(result["signal_date"]).dt.strftime("%Y-%m-%d").eq(signal_date)
+                & result["symbol"].astype(str).eq(symbol)
+            )
+            if not mask.any():
+                raise ValueError(f"historical report has no matching detection: {row_id}")
+            result.loc[mask, "fundamental_html"] = "\n\n".join(
+                f"{name}\n{fields[name]}" for name in FIELD_ORDER
+            )
+            result.loc[mask, "fundamental_status"] = "complete_historical"
+            result.loc[mask, "updated_at"] = updated_at
+            audit_row["label"] = fields["材料インパクト"].split("：", 1)[0]
+            audit_rows.append(audit_row)
+        normalized_reports.append(normalized_report)
+    return result, normalized_reports, audit_rows
 
 
 def merge_receipts(existing: dict, reports: Iterable[dict]) -> dict:

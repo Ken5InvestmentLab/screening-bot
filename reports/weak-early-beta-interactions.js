@@ -7,14 +7,24 @@
   // Keep the snapshot controls independent of the table/filter handlers.
   const fundamentalPairs = Array.from(document.querySelectorAll(".fundamental-toggle"))
     .map((button) => {
-      const detail = button.parentElement?.querySelector(".fundamental-detail");
+      const detail = button.closest("th")?.querySelector(".fundamental-detail")
+        || button.parentElement?.querySelector(".fundamental-detail");
       return detail ? { button, detail } : null;
     }).filter(Boolean);
   const closeFundamental = ({ button, detail }) => {
-    detail.hidden = true;
+    if (detail.open) detail.close();
     button.setAttribute("aria-expanded", "false");
     button.textContent = "ファンダ分析";
   };
+  for (const pair of fundamentalPairs) {
+    pair.detail.addEventListener("close", () => {
+      pair.button.setAttribute("aria-expanded", "false");
+      pair.button.textContent = "ファンダ分析";
+    });
+    pair.detail.addEventListener("click", (event) => {
+      if (event.target === pair.detail) closeFundamental(pair);
+    });
+  }
   document.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;
@@ -28,22 +38,17 @@
     if (button) {
       const pair = fundamentalPairs.find((item) => item.button === button);
       if (!pair) return;
-      const shouldOpen = pair.detail.hidden;
+      const shouldOpen = !pair.detail.open;
       fundamentalPairs.forEach(closeFundamental);
       if (shouldOpen) {
-        pair.detail.hidden = false;
+        pair.detail.showModal();
         button.setAttribute("aria-expanded", "true");
         button.textContent = "閉じる";
-        if (window.matchMedia("(max-width: 820px)").matches) {
-          requestAnimationFrame(() => pair.detail.scrollIntoView({ block: "start" }));
-        }
+        pair.detail.querySelector(".fundamental-close")?.focus();
       }
       return;
     }
     if (!target.closest(".fundamental-detail")) fundamentalPairs.forEach(closeFundamental);
-  });
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") fundamentalPairs.forEach(closeFundamental);
   });
 
   const currentTheme = () => root.dataset.theme === "dark" ? "dark" : "light";

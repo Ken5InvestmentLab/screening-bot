@@ -712,6 +712,23 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 statuses, ["2023-01-05|3133"], replace_existing=True
             )
 
+    def test_historical_import_requires_canonical_premium_material_impact(self):
+        report = self._historical_report()
+        report["fields"] = [
+            {
+                "name": field["name"],
+                "value": "業績改善/注意：回復傾向。" if field["name"] == "材料インパクト" else field["value"],
+            }
+            for field in report["fields"]
+        ]
+        ledger = self.ledger[
+            self.ledger["signal_date"].dt.strftime("%Y-%m-%d").eq("2023-01-04")
+            & self.ledger["symbol"].eq("3133")
+        ].copy()
+
+        with self.assertRaisesRegex(ValueError, "canonical Premium label"):
+            import_historical_reports(ledger, [report])
+
     def test_historical_import_sets_html_without_creating_or_clearing_discord_receipts(self):
         ledger = self.ledger[
             self.ledger["signal_date"].dt.strftime("%Y-%m-%d").eq("2023-01-04")

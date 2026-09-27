@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-27T20:19:03.621296+09:00",
+  "updated_at": "2026-09-27T20:22:09.856332+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -19603,6 +19603,102 @@
       ]
     },
     {
+      "identity": "2025-12-22|5817",
+      "signalDate": "2025-12-22",
+      "symbolCode": "5817",
+      "companyName": "ＪＭＡＣＳ",
+      "analysisCutoff": "2025-12-22T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:19:29+09:00",
+      "summary": "2026年2月期中間期（非連結）は売上高2,858百万円（前年同期比18.1％増）、営業利益244百万円、経常利益261百万円、純利益182百万円と増収・利益拡大。会社は短納期対応を生かした工場プラントや交通信号線等の受注を挙げる一方、営業CFは△24.804百万円で現金同等物が減少。通期予想は据置き。",
+      "materialImpact": "増収・大幅増益は好材料。ただし営業CFは赤字で、営業利益等が通期予想を上回った後も会社は通期予想を修正していない。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "増収と大幅な利益改善は好材料。2026年2月期中間期の営業利益は前年同期の11.567百万円から244.139百万円に増え、営業外を含む経常利益・純利益も通期予想を既に上回った。一方で会社は通期予想を据え置き、営業CFは小幅な赤字。"
+        },
+        {
+          "name": "事業概要",
+          "value": "非連結の電線事業を営み、計装ケーブルを主力に、通信線・交通信号線などの製造販売を展開。会社は短納期対応を強みとしており、工場プラント案件や交通信号線の案件を受注したと中間短信で説明している。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年2月期中間期（2025年3月～8月）の売上高は2,858.110百万円（前年同期比18.1％増）、営業利益244.139百万円（前年同期11.567百万円）、経常利益261.919百万円（同472.1％増）、中間純利益182.855百万円（同150.7％増）。会社は短納期対応を生かした工場プラント・交通信号線等の受注により売上を確保したと説明。11月10日付の中間株主通信も同じ中間期の業績・事業方針を掲載している。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "中間期売上高は2,858.110百万円、営業利益244.139百万円、経常利益261.919百万円、純利益182.855百万円。通期予想は売上高5,700百万円、営業利益171百万円、経常利益208百万円、当期純利益141百万円で変更なし。中間期実績は売上高で通期予想の約50％、営業利益・経常利益・純利益ではそれぞれ通期予想を上回った。8月末の現金及び現金同等物は1,569.775百万円、総資産10,232.208百万円、純資産5,369.385百万円、自己資本比率52.5％。営業CF△24.804百万円、投資CF△9.602百万円、財務CF△142.480百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "中間期の利益は伸びたが、営業活動によるCFは△24.804百万円で前年同期のプラスから赤字化。売上債権の増加157.503百万円と仕入債務の減少140.935百万円などが主な減少要因と会社が説明している。現金及び現金同等物は期首から176.888百万円減少。中間期の営業・経常・純利益は通期予想を超えたものの、会社は予想を修正していない。データは非連結で、電線事業の単一セグメント。継続企業の前提に関する注記は該当事項なし。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-10-15 2026年2月期 第2四半期（中間期）決算短信〔日本基準〕（非連結）(14:00)](https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/10/KT20251015.pdf)\n・[2025-07-15 2026年2月期 第1四半期決算短信〔日本基準〕（非連結）(14:30)](https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/07/KT20250715.pdf)\n・[2025-04-14 2025年2月期 決算短信〔日本基準〕（非連結）(14:00)](https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/04/KT20250414.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[JMACS公式IR 2025年適時開示一覧](https://www.jmacs-j.co.jp/ir/2025/)\n・[JMACS公式IRライブラリー](https://www.jmacs-j.co.jp/ir-info/)\n・[5817 IR・適時開示一覧（IRBANK）](https://irbank.net/5817/ir?y=2025-12-22)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.jmacs-j.co.jp/ir/2025/",
+          "checkedUrls": [
+            "https://www.jmacs-j.co.jp/ir/2025/",
+            "https://www.jmacs-j.co.jp/ir-info/",
+            "https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/10/KT20251015.pdf",
+            "https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/07/KT20250715.pdf",
+            "https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/04/KT20250414.pdf",
+            "https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/11/bf517e37df93f65b60301a3efe80c1dd.pdf"
+          ],
+          "result": "会社公式の2025年適時開示一覧とIRライブラリー、および中間短信・1Q短信・前期通期短信・11月10日中間株主通信の本文を確認。中間短信の業績、財政状態、CF、予想据置き、事業記述と継続企業注記を照合した。公式一覧では中間短信の掲載日が10月17日、1Q短信が7月16日、通期短信が4月17日だが、各PDF本文の日付はそれぞれ10月15日、7月15日、4月14日。11月10日の株主通信は中間期情報の再掲で、追加の業績更新は確認できなかった。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/5817/ir?y=2025-12-22",
+          "checkedUrls": [
+            "https://irbank.net/5817/ir?y=2025-12-22"
+          ],
+          "result": "IRBANKの適時開示時系列で、10月15日中間短信14:00、7月15日1Q短信14:30、4月14日通期短信14:00を照合。時刻確認だけに使用し、業績・事業・CFの事実は会社公式PDF本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年2月期 第2四半期（中間期）決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2025-10-15T14:00:00+09:00",
+          "url": "https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/10/KT20251015.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年2月期 第1四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2025-07-15T14:30:00+09:00",
+          "url": "https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/07/KT20250715.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年2月期 決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2025-04-14T14:00:00+09:00",
+          "url": "https://www.jmacs-j.co.jp/jmacs-wp-jp/wp-content/uploads/2025/04/KT20250414.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff: 2025-12-22 16:15 JST. The official 2025 IR index lists the November 10 interim shareholder letter as its latest item before this date; its figures repeat the Q2 results. No post-cutoff material was used.",
+        "Read the official standalone Q2 statement, Q1 statement, FY 2025/2 statement, and November shareholder letter. All financial and operating claims come from these company documents.",
+        "The company web archive uses later posting dates for the three PDF items than the dates printed in their bodies. The IRBANK chronology was used only to verify TDnet release times; it was not used as a source of financial facts.",
+        "No prices, realized returns, EDINET materials, or later disclosures were used."
+      ]
+    },
+    {
       "identity": "2025-12-22|6629",
       "signalDate": "2025-12-22",
       "symbolCode": "6629",
@@ -20348,6 +20444,110 @@
       ]
     },
     {
+      "identity": "2026-03-03|7771",
+      "signalDate": "2026-03-03",
+      "symbolCode": "7771",
+      "companyName": "日本精密",
+      "analysisCutoff": "2026-03-03T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:20:41+09:00",
+      "summary": "2026年3月期3Q累計は売上高57.01億円（前年同期比6.3%増）、営業利益3.04億円（38.5%増）、純利益3.00億円（66.8%増）。2/24に第三者割当の払込完了を公表。通期予想は据置。",
+      "materialImpact": "9カ月累計の営業利益は前年同期比38.5%増。時計関連と釣具・応用品が増益に寄与した一方、眼鏡フレームは減収・セグメント赤字。第三者割当の払込約2億円は完了したが、借入返済への充当は予定段階。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "9カ月累計の営業利益は前年同期比38.5%増。時計関連と釣具・応用品が増益に寄与した一方、眼鏡フレームは減収・セグメント赤字。第三者割当の払込約2億円は完了したが、借入返済への充当は予定段階。"
+        },
+        {
+          "name": "事業概要",
+          "value": "時計関連（腕時計バンド・外装部品）、眼鏡フレーム、釣具・応用品を製造・販売。時計関連を主力とし、ASEANの生産拠点を運営する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年3月期3Q累計の時計関連売上は42.45億円（前年同期比8.7%増）、セグメント利益1.81億円。国内時計バンドは前年の取引先システム障害の影響解消などで約21%増えた一方、海外時計バンドは新規受注が厳しく約35%減。釣具・応用品は売上8.62億円（17.1%増）、眼鏡フレームは5.94億円（17.7%減）で1,123.7万円のセグメント損失。2/24に第三者割当1,941,748株、総額2億円の払込完了を公表。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期3Q累計（2025年4～12月）は売上高5,701百万円（前年同期比6.3%増）、営業利益304百万円（38.5%増）、経常利益408百万円（85.1%増）、親会社株主帰属純利益300百万円（66.8%増）。12月末は総資産6,051百万円、純資産1,790百万円、自己資本比率29.6%、現金及び預金930百万円。短期借入金2,014百万円、長期借入金760百万円（1年内返済予定84百万円）。通期予想は売上7,000百万円、営業利益180百万円、経常利益140百万円、純利益103百万円で据置。年間配当予想0円。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常利益には為替差益147百万円を含み、会社は期末為替相場で算定され通期額が変動すると説明。眼鏡フレームは減収でセグメント損失。12月末の短期借入金は20.14億円で、シンジケートローン残高19.70億円には純資産維持・営業損失に関する財務制限条項があり、3Q末時点では抵触なし。継続企業の前提に関する注記はなく、3Q累計CF計算書は未作成。第三者割当は発行済株式数比8.03%、議決権比8.82%の希薄化見込みと1/30資料に記載。資金使途は金融機関と協議のうえ借入金の一部返済予定で、返済実行は確認できない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-01-30 第三者割当による新株式発行(17:00)](https://www2.jpx.co.jp/disc/77710/140120260128539720.pdf)\n・[2026-02-13 第3四半期決算短信(16:00)](https://www2.jpx.co.jp/disc/77710/140120260210553345.pdf)\n・[2026-02-13 為替差益の計上(16:00)](https://www2.jpx.co.jp/disc/77710/140120260210553335.pdf)\n・[2026-02-24 第三者割当の払込完了(16:00)](https://www2.jpx.co.jp/disc/77710/140120260219565174.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[日本精密 IRニュース](https://www.nihon-s.co.jp/ir-information/ir-news/)\n・[日本精密 決算短信一覧](https://www.nihon-s.co.jp/ir-information/shortlist-of-accounts/)\n・[7771 適時開示情報一覧・公開時刻](https://finance.yahoo.co.jp/quote/7771.T/disclosure?page=2)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-03-03 16:15 JSTまでの公表資料を対象とした。 会社/JPXの開示本文と時刻付き適時開示一覧を照合し、manifestのidentity・社名・signal date・cutoff・selectorに一致。",
+        "Q3累計業績、12月末財政状態、通期予想、製品別記述、為替差益、財務制限条項は公式Q3短信・同日為替差益開示本文で照合。継続企業注記なし、3Q累計CF未作成。",
+        "第三者割当は2/24に払込完了。1/30資料の借入返済は予定・金融機関との協議前提であり、返済済みとは記載していない。希薄化比率は発行通知の記載値。",
+        "Yahoo!ファイナンスのTDnet時系列は時刻の確認にのみ使い、財務・事業事実は公式会社/JPXの一次資料本文で確認。"
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.nihon-s.co.jp/ir-information/ir-news/",
+          "checkedUrls": [
+            "https://www.nihon-s.co.jp/ir-information/ir-news/",
+            "https://www.nihon-s.co.jp/ir-information/shortlist-of-accounts/",
+            "https://www2.jpx.co.jp/disc/77710/140120260128539720.pdf",
+            "https://www2.jpx.co.jp/disc/77710/140120260210553345.pdf",
+            "https://www2.jpx.co.jp/disc/77710/140120260210553335.pdf",
+            "https://www2.jpx.co.jp/disc/77710/140120260219565174.pdf"
+          ],
+          "result": "会社IRおよび決算資料を確認。事業区分、Q3累計実績、貸借対照表、予想、注記、第三者割当の払込完了を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/7771.T/disclosure?page=2",
+          "checkedUrls": [
+            "https://finance.yahoo.co.jp/quote/7771.T/disclosure?page=2"
+          ],
+          "result": "開示時刻は1/30 17:00、2/13 16:00、2/24 16:00と確認。2/24以降3/3・3/10の各cutoffまでの適時開示掲載なし。本文内容は会社/JPXの一次資料で照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第三者割当による新株式の発行に関するお知らせ",
+          "publishedAt": "2026-01-30T17:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260128539720.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "令和８年３月期 第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2026-02-13T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260210553345.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "営業外収益の計上に関するお知らせ",
+          "publishedAt": "2026-02-13T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260210553335.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による新株式発行の払込完了に関するお知らせ",
+          "publishedAt": "2026-02-24T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260219565174.pdf",
+          "contentReviewed": true
+        }
+      ]
+    },
+    {
       "identity": "2026-03-05|6613",
       "signalDate": "2026-03-05",
       "symbolCode": "6613",
@@ -20579,6 +20779,107 @@
         "会社公表の一次資料に基づき、実績・会社予想・設備計画を分けて記載。補助金は受領済み現金として扱わず、将来の能力見込みも売上実績として扱っていない。",
         "2月20日15:30の遅延掲載英語版説明資料を含めた。3月5日・3月6日の16:15まで追加開示がないことを時系列で確認。",
         "manifestのidentity・signalDate・companyName・analysisCutoff・selectorNamesを一致させた。開示時刻はTDnet時系列で照合し、各文書の公式JPX PDF本文をレビュー。"
+      ]
+    },
+    {
+      "identity": "2026-03-10|7771",
+      "signalDate": "2026-03-10",
+      "symbolCode": "7771",
+      "companyName": "日本精密",
+      "analysisCutoff": "2026-03-10T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:20:41+09:00",
+      "summary": "2026年3月期3Q累計は売上高57.01億円（前年同期比6.3%増）、営業利益3.04億円（38.5%増）、純利益3.00億円（66.8%増）。2/24に第三者割当の払込完了を公表。通期予想は据置。",
+      "materialImpact": "9カ月累計の営業利益は前年同期比38.5%増。時計関連と釣具・応用品が増益に寄与した一方、眼鏡フレームは減収・セグメント赤字。第三者割当の払込約2億円は完了したが、借入返済への充当は予定段階。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "9カ月累計の営業利益は前年同期比38.5%増。時計関連と釣具・応用品が増益に寄与した一方、眼鏡フレームは減収・セグメント赤字。第三者割当の払込約2億円は完了したが、借入返済への充当は予定段階。"
+        },
+        {
+          "name": "事業概要",
+          "value": "時計関連（腕時計バンド・外装部品）、眼鏡フレーム、釣具・応用品を製造・販売。時計関連を主力とし、ASEANの生産拠点を運営する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年3月期3Q累計の時計関連売上は42.45億円（前年同期比8.7%増）、セグメント利益1.81億円。国内時計バンドは前年の取引先システム障害の影響解消などで約21%増えた一方、海外時計バンドは新規受注が厳しく約35%減。釣具・応用品は売上8.62億円（17.1%増）、眼鏡フレームは5.94億円（17.7%減）で1,123.7万円のセグメント損失。2/24に第三者割当1,941,748株、総額2億円の払込完了を公表。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期3Q累計（2025年4～12月）は売上高5,701百万円（前年同期比6.3%増）、営業利益304百万円（38.5%増）、経常利益408百万円（85.1%増）、親会社株主帰属純利益300百万円（66.8%増）。12月末は総資産6,051百万円、純資産1,790百万円、自己資本比率29.6%、現金及び預金930百万円。短期借入金2,014百万円、長期借入金760百万円（1年内返済予定84百万円）。通期予想は売上7,000百万円、営業利益180百万円、経常利益140百万円、純利益103百万円で据置。年間配当予想0円。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常利益には為替差益147百万円を含み、会社は期末為替相場で算定され通期額が変動すると説明。眼鏡フレームは減収でセグメント損失。12月末の短期借入金は20.14億円で、シンジケートローン残高19.70億円には純資産維持・営業損失に関する財務制限条項があり、3Q末時点では抵触なし。継続企業の前提に関する注記はなく、3Q累計CF計算書は未作成。第三者割当は発行済株式数比8.03%、議決権比8.82%の希薄化見込みと1/30資料に記載。資金使途は金融機関と協議のうえ借入金の一部返済予定で、返済実行は確認できない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-01-30 第三者割当による新株式発行(17:00)](https://www2.jpx.co.jp/disc/77710/140120260128539720.pdf)\n・[2026-02-13 第3四半期決算短信(16:00)](https://www2.jpx.co.jp/disc/77710/140120260210553345.pdf)\n・[2026-02-13 為替差益の計上(16:00)](https://www2.jpx.co.jp/disc/77710/140120260210553335.pdf)\n・[2026-02-24 第三者割当の払込完了(16:00)](https://www2.jpx.co.jp/disc/77710/140120260219565174.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[日本精密 IRニュース](https://www.nihon-s.co.jp/ir-information/ir-news/)\n・[日本精密 決算短信一覧](https://www.nihon-s.co.jp/ir-information/shortlist-of-accounts/)\n・[7771 適時開示情報一覧・公開時刻](https://finance.yahoo.co.jp/quote/7771.T/disclosure?page=2)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-03-10 16:15 JSTまでの公表資料を対象とした。 会社/JPXの開示本文と時刻付き適時開示一覧を照合し、manifestのidentity・社名・signal date・cutoff・selectorに一致。",
+        "Q3累計業績、12月末財政状態、通期予想、製品別記述、為替差益、財務制限条項は公式Q3短信・同日為替差益開示本文で照合。継続企業注記なし、3Q累計CF未作成。",
+        "第三者割当は2/24に払込完了。1/30資料の借入返済は予定・金融機関との協議前提であり、返済済みとは記載していない。希薄化比率は発行通知の記載値。",
+        "Yahoo!ファイナンスのTDnet時系列は時刻の確認にのみ使い、財務・事業事実は公式会社/JPXの一次資料本文で確認。"
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.nihon-s.co.jp/ir-information/ir-news/",
+          "checkedUrls": [
+            "https://www.nihon-s.co.jp/ir-information/ir-news/",
+            "https://www.nihon-s.co.jp/ir-information/shortlist-of-accounts/",
+            "https://www2.jpx.co.jp/disc/77710/140120260128539720.pdf",
+            "https://www2.jpx.co.jp/disc/77710/140120260210553345.pdf",
+            "https://www2.jpx.co.jp/disc/77710/140120260210553335.pdf",
+            "https://www2.jpx.co.jp/disc/77710/140120260219565174.pdf"
+          ],
+          "result": "会社IRおよび決算資料を確認。事業区分、Q3累計実績、貸借対照表、予想、注記、第三者割当の払込完了を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/7771.T/disclosure?page=2",
+          "checkedUrls": [
+            "https://finance.yahoo.co.jp/quote/7771.T/disclosure?page=2"
+          ],
+          "result": "開示時刻は1/30 17:00、2/13 16:00、2/24 16:00と確認。2/24以降3/3・3/10の各cutoffまでの適時開示掲載なし。本文内容は会社/JPXの一次資料で照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第三者割当による新株式の発行に関するお知らせ",
+          "publishedAt": "2026-01-30T17:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260128539720.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "令和８年３月期 第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2026-02-13T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260210553345.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "営業外収益の計上に関するお知らせ",
+          "publishedAt": "2026-02-13T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260210553335.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による新株式発行の払込完了に関するお知らせ",
+          "publishedAt": "2026-02-24T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77710/140120260219565174.pdf",
+          "contentReviewed": true
+        }
       ]
     },
     {
@@ -23268,6 +23569,24 @@
       "imported_at": "2026-09-27T20:19:03.621296+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "f40d5648f56a73a4fe9809cf9053d270c0ddc6ff3d3cb5b77dd85d033ded130f"
+    },
+    {
+      "identity": "2025-12-22|5817",
+      "imported_at": "2026-09-27T20:21:08.636503+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "fc44cf8fae01e382edcdcaa6bd3c09b2c484d657d18be2eab5d56b37a10377ab"
+    },
+    {
+      "identity": "2026-03-03|7771",
+      "imported_at": "2026-09-27T20:22:04.898766+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "fc6252cca8959675d175f8ad1c583678258f159189cb23ad84919969b6d181f7"
+    },
+    {
+      "identity": "2026-03-10|7771",
+      "imported_at": "2026-09-27T20:22:09.856332+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "c3b03b6ec5bc634d1cad0eedfbc961bf16f8bca99b1e25e3d6dd88e2c090aaed"
     }
   ]
 }

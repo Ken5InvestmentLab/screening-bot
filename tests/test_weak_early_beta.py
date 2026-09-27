@@ -638,6 +638,14 @@ class WeakEarlyBetaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "post-detection disclosure"):
             validate_historical_report(report)
 
+    def test_historical_report_rejects_declared_identity_mismatch(self):
+        report = self._historical_report()
+        report["identity"] = "2023-01-05|3133"
+        with self.assertRaisesRegex(ValueError, "report identity must match"):
+            validate_historical_report(report)
+        report["identity"] = "2023-01-04|3133"
+        self.assertEqual(validate_historical_report(report), report["identity"])
+
     def test_historical_import_rejects_reports_without_passing_audit(self):
         report = self._historical_report()
         report["auditStatus"] = "needs_repair"

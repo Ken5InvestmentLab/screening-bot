@@ -87,6 +87,12 @@ def validate_historical_report(report: dict) -> str:
     symbol = str(report["symbolCode"]).strip()
     if not symbol:
         raise ValueError("symbolCode is required")
+    expected_identity = identity(signal_date, symbol)
+    declared_identity = str(report.get("identity", "")).strip()
+    if declared_identity and declared_identity != expected_identity:
+        raise ValueError(
+            f"report identity must match signalDate and symbolCode: {expected_identity}"
+        )
     expected_cutoff = detection_cutoff(signal_date)
     if str(report.get("analysisCutoff", "")) != expected_cutoff:
         raise ValueError(

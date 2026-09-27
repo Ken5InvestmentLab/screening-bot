@@ -129,7 +129,7 @@ def main() -> None:
   <section><h2>次の未完了</h2><table><thead><tr><th>検出日・コード</th><th>銘柄</th><th>状態</th></tr></thead><tbody>{next_rows}</tbody></table></section>
 </div><div>
   <section><h2>年別の完了状況</h2><table><thead><tr><th>年</th><th>完了 / 対象</th><th>進捗</th></tr></thead><tbody>{year_rows}</tbody></table></section>
-  <section><h2>公開・検証</h2><div class="meta"><p><strong>公開tag</strong>{escape(state['last_deploy_tag'])}</p><p><strong>公開状況</strong>{escape(state['deploy_status'])}</p><p><strong>研究HEAD</strong><code>{escape(state['remote_head'])[:12]}</code></p><p><strong>Cloud</strong><a href="{root_url}">公開レポート</a></p><p><strong>Discord履歴投稿</strong>0件</p></div></section>
+  <section><h2>公開・検証</h2><div class="meta"><p><strong>次回反映</strong>{escape(state['release_plan'])}</p><p><strong>公開tag</strong>{escape(state['last_deploy_tag'])}</p><p><strong>公開状況</strong>{escape(state['deploy_status'])}</p><p><strong>研究HEAD</strong><code>{escape(state['remote_head'])[:12]}</code></p><p><strong>Cloud</strong><a href="{root_url}">公開レポート</a></p><p><strong>Discord履歴投稿</strong>0件</p></div></section>
   <section><h2>既知の保留</h2><p class="muted">{escape(' / '.join(state.get('known_holds', [])))}</p><p class="muted note">確認済みの不足証拠を同じ方法で再探索しません。</p></section>
 </div></div>
 </body></html>

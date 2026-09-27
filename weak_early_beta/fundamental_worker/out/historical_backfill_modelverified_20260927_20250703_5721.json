@@ -1,0 +1,139 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-07-03|5721",
+      "signalDate": "2025-07-03",
+      "symbolCode": "5721",
+      "companyName": "エスクリプトエナジー",
+      "analysisCutoff": "2025-07-03T16:15:00+09:00",
+      "generatedAt": "2026-09-27T19:22:42+09:00",
+      "summary": "信号日時点の社名は株式会社エス・サイエンス（manifest表示名：エスクリプトエナジー）。2025年3月期は売上634百万円、営業損失292百万円、経常損失296百万円、純損失約97百万円。暗号資産投資事業は7月開始予定として準備され、6月の定時総会で定款追加が承認された。",
+      "materialImpact": "本業の営業赤字と営業CFのマイナスが残り、翌期予想は未開示。暗号資産投資は株主総会承認後の開始計画で、5億円は投資枠の上限であり取得済み額ではない。7月1日の自社株売却について会社は本人の資産運用と説明している。",
+      "selectorNames": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期は営業損失292百万円、経常損失296百万円、純損失約97百万円。暗号資産投資は総会承認後の7月開始予定だが、BTC投資枠5億円は上限決議で購入時期・金額は未定。7月1日の室長の自社株売却について会社は本人の資産運用と説明し、職務継続を公表。"
+        },
+        {
+          "name": "事業概要",
+          "value": "当時の主力はニッケル地金・塩類の販売と不動産の販売・賃貸・仲介。2025年3月期の外部売上はニッケル625.9百万円、不動産8.5百万円。教育・Smart DXも報告セグメントだが、当期は赤字で外部売上の記載がない。"
+        },
+        {
+          "name": "足元材料",
+          "value": "3月に暗号資産投資事業の開始を決議し、7月開始を計画（定款への事業目的追加が前提）。5月12日にBTC取得枠の上限5億円を決議したが、取得時期・額は未定。6月27日総会で定款変更を承認。6月30日発表ではKAY LEO BROTHERS LIMITEDの持株比率が21.93％から6.58％となり、その他の関係会社でなくなった。7月1日、三崎室長の自社株売却について会社は個人の資産運用と説明し、本人の職務継続を公表。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期（非連結）は売上634百万円（前期比11.7％減）、営業損失292.075百万円、経常損失295.954百万円、純損失96.734百万円。営業CFは▲253.412百万円、3月末の現金及び現金同等物2,160.848百万円、現金及び預金1,761.709百万円、総資産3,006.612百万円、純資産2,871.007百万円、自己資本比率95.5％。2026年3月期予想は未開示。"
+        },
+        {
+          "name": "注意点",
+          "value": "5月27日の訂正で620千円の減損損失を追加し、総資産・純資産・純損失を修正。期末純資産は2,871.007百万円、純損失は96.734百万円。特別利益には子会社株式売却益206百万円を含む。第3四半期から非連結決算へ移行しており、前年との比較には注意が必要。短信の継続企業注記は「該当事項なし」。7月3日・4日ともcutoffまでの同日新規開示は確認されていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-03-17 暗号資産投資事業の開始決議(17:00)](https://s-cryptoenergy.jp/wp/ir/20250317.pdf)\n・[2025-05-12 BTC投資枠上限(16:00)](https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/20250512541882-1.pdf)\n・[2025-05-14 2025年3月期決算短信(16:00)](https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/5dc7b62aa683897127afaf2954f853de.pdf)\n・[2025-05-27 決算短信の訂正(16:45)](https://s-cryptoenergy.jp/wp/ir/20250527.pdf)\n・[2025-06-27 定時株主総会決議ご通知(時刻未掲載)](https://s-cryptoenergy.jp/wp/ir/20250627.pdf)\n・[2025-06-30 支配株主等に関する事項(18:05)](https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/b9175e903b84a18ad189d1abb6cd8e25.pdf)\n・[2025-07-01 室長の自社株売却に関する説明(時刻未掲載)](https://s-cryptoenergy.jp/wp/ir/20250701.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[エスクリプトエナジー IR情報・開示一覧](https://s-cryptoenergy.jp/category/ir/)\n・[5721 適時開示時刻一覧（IRBANK）](https://irbank.net/5721/ir?y=2025-07-07)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://s-cryptoenergy.jp/category/ir/",
+          "checkedUrls": [
+            "https://s-cryptoenergy.jp/category/ir/",
+            "https://s-cryptoenergy.jp/wp/ir/20250317.pdf",
+            "https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/20250512541882-1.pdf",
+            "https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/5dc7b62aa683897127afaf2954f853de.pdf",
+            "https://s-cryptoenergy.jp/wp/ir/20250527.pdf",
+            "https://s-cryptoenergy.jp/wp/ir/20250627.pdf",
+            "https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/b9175e903b84a18ad189d1abb6cd8e25.pdf",
+            "https://s-cryptoenergy.jp/wp/ir/20250701.pdf"
+          ],
+          "result": "現行の会社公式IR一覧から7資料を開き本文を照合。決算は5月27日訂正後の数値を使用。定款追加の株主承認、暗号資産投資枠と実購入の区別、株主・室長に関する会社公表を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/5721/ir?y=2025-07-07",
+          "checkedUrls": [
+            "https://irbank.net/5721/ir?y=2025-07-07",
+            "https://disclosure.tokyo/company/57210",
+            "https://s-cryptoenergy.jp/category/ir/"
+          ],
+          "result": "適時開示時刻一覧で資料の公開時刻を照合。2025/07/03の公式IR・適時開示履歴を確認し、16:15 cutoffまでの同日新規開示は見当たらないことを確認。日付のみの会社資料には時刻を補っていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "新たな事業（暗号資産投資事業）の開始に関するお知らせ",
+          "publishedAt": "2025-03-17T17:00:00+09:00",
+          "url": "https://s-cryptoenergy.jp/wp/ir/20250317.pdf",
+          "label": "2025-03-17 暗号資産投資事業の開始決議(17:00)",
+          "contentReviewed": true
+        },
+        {
+          "title": "暗号資産（ビットコイン）の購入に関するお知らせ",
+          "publishedAt": "2025-05-12T16:00:00+09:00",
+          "url": "https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/20250512541882-1.pdf",
+          "label": "2025-05-12 BTC投資枠上限(16:00)",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年３月期 決算短信〔日本基準〕(非連結)",
+          "publishedAt": "2025-05-14T16:00:00+09:00",
+          "url": "https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/5dc7b62aa683897127afaf2954f853de.pdf",
+          "label": "2025-05-14 2025年3月期決算短信(16:00)",
+          "contentReviewed": true
+        },
+        {
+          "title": "(訂正・数値データ訂正)「2025年３月期 決算短信〔日本基準〕（非連結）」の一部訂正のお知らせ",
+          "publishedAt": "2025-05-27T16:45:00+09:00",
+          "url": "https://s-cryptoenergy.jp/wp/ir/20250527.pdf",
+          "label": "2025-05-27 決算短信の訂正(16:45)",
+          "contentReviewed": true
+        },
+        {
+          "title": "第106回定時株主総会決議ご通知",
+          "publishedAt": "2025-06-27T00:00:00+09:00",
+          "publishedAtPrecision": "date_only; official company IR listing and PDF show date only",
+          "url": "https://s-cryptoenergy.jp/wp/ir/20250627.pdf",
+          "label": "2025-06-27 定時株主総会決議ご通知(時刻未掲載)",
+          "contentReviewed": true
+        },
+        {
+          "title": "支配株主等に関する事項について",
+          "publishedAt": "2025-06-30T18:05:00+09:00",
+          "url": "https://s-cryptoenergy.jp/wp/wp-content/uploads/2025/10/b9175e903b84a18ad189d1abb6cd8e25.pdf",
+          "label": "2025-06-30 支配株主等に関する事項(18:05)",
+          "contentReviewed": true
+        },
+        {
+          "title": "お知らせ",
+          "publishedAt": "2025-07-01T00:00:00+09:00",
+          "publishedAtPrecision": "date_only; official company IR listing and PDF show date only",
+          "url": "https://s-cryptoenergy.jp/wp/ir/20250701.pdf",
+          "label": "2025-07-01 室長の自社株売却に関する説明(時刻未掲載)",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selectorNames・16:15 cutoffを照合。",
+        "現行会社公式IRに掲載された各PDF本文を確認し、旧会社サイトの切れたFY URLは使わず、公式IRアーカイブからリンクされたFY短信を採用。",
+        "FY短信は5月27日訂正後の損益・貸借数値に更新。子会社株式売却益、営業CF、現金同等物残高、非連結移行、継続企業注記を照合。",
+        "暗号資産事業の開始計画・事業目的承認・BTC取得枠は実際の取得と区別。6月30日の株主比率変化と7月1日の会社説明を別事実として記載。",
+        "2025/07/03の16:15 cutoffまでに新たな開示がないことを公式IR一覧・開示時刻一覧で確認。同日開示資料は候補に含めていない。"
+      ]
+    }
+  ]
+}

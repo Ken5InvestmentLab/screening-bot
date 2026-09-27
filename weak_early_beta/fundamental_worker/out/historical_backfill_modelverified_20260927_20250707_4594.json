@@ -1,0 +1,101 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-07-07|4594",
+      "signalDate": "2025-07-07",
+      "symbolCode": "4594",
+      "companyName": "ブライトパス・バイオ",
+      "analysisCutoff": "2025-07-07T16:15:00+09:00",
+      "generatedAt": "2026-09-27T19:16:21+09:00",
+      "summary": "2025年3月期は売上高1.133百万円に対し営業損失1,160百万円、営業CF▲1,250百万円。BP2202の米FDA希少疾病用医薬品指定は開発支援材料だが、会社は2026年3月期への業績影響なしと説明。7月7日時点で第19回予約権の交付4,400,000株、残り995,000株。",
+      "materialImpact": "7/3のBP2202指定は米国開発支援策で、承認後の独占販売権も対象だが、臨床有効性・承認ではなく2026年3月期の業績影響もなし。一方、第18・19回予約権の累計交付は10,666,000株（発行時上場株式の16.96%）。第19回は7/7に4,400,000株を交付し、995,000株が未行使で希薄化が続く。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "BP2202（多発性骨髄腫向けBCMA CAR-iPSNKT）が米FDAのオーファンドラッグ指定を取得。開発費税制優遇・申請料免除等の対象となるが、承認後7年の独占販売権を含め、承認・治験成功を示すものではない。会社は2026年3月期への影響なしと説明。第18・19回予約権の累計交付は10,666,000株（発行時上場株式の16.96%）。"
+        },
+        {
+          "name": "事業概要",
+          "value": "がん免疫治療薬の研究開発が主業。早期開発段階で製薬企業へライセンスアウトし、契約一時金・マイルストーン等を得るモデル。主な候補はBP2201 iPS-NKT、BP2202 BCMA CAR-iPSNKT、BP2301 HER2 CAR-Tのほか、抗体薬・がんワクチン。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/3に第18回予約権2,661,000株（45円）の行使完了を開示。第19回は7/4の当初開示を同日19時に訂正し、7/4実績3,605,000株（49円）、残5,395,000株とした。7/7に4,400,000株（74円）を交付し、残は9,950個・995,000株。BP2202の指定は米国治験開始前の開発上の節目。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年3月期（非連結）：売上高1.133百万円、営業損失1,160.918百万円、経常損失1,147.879百万円、純損失1,151.149百万円。期末現金810.470百万円、営業CF▲1,250.359百万円、自己資本比率80.6%。2026年3月期会社予想は売上0百万円、営業損失1,182百万円、経常損失1,164百万円、純損失1,166百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "研究開発費が先行し、営業損失・営業CF赤字が継続。会社は重要事象等を記載する一方、第17～19回予約権の行使進捗などを踏まえ、継続企業の前提に関する重要な不確実性はないと認識。7/7時点で第19回予約権995,000株が未行使であり、希薄化が残る。FDA指定は臨床試験成功や医薬品承認を意味しない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-05-09 2025年3月期決算短信（非連結）(15:30)](https://www.brightpathbio.com/news/img/f81b695d03472382206f80746a72dd948ef7109d.pdf)\n・[2025-06-27 事業計画及び成長可能性に関する事項(15:30)](https://www.brightpathbio.com/news/img/4380ca900659892626fc15107305fcf9cbaef0c2.pdf)\n・[2025-07-03 BP2202の米FDAオーファンドラッグ指定(15:30)](https://www.brightpathbio.com/news/img/e4eac18b6eb5dc4525632f2d5f3c2c2fd7731949.pdf)\n・[2025-07-03 第18回新株予約権の大量行使・全行使完了(15:30)](https://www.brightpathbio.com/news/img/f848f26c0235744b89987adc2311352718b55046.pdf)\n・[2025-07-04 第19回新株予約権大量行使の訂正(19:00)](https://www.brightpathbio.com/news/img/cda4308d1157e5d4d314acb854a451d1da771352.pdf)\n・[2025-07-07 第19回新株予約権の大量行使(15:30)](https://www.brightpathbio.com/news/img/c1c3eb8d06c42b3c58f281bb14fca2ad14545ed7.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ブライトパス・バイオ IRニュース一覧（2025年）](https://www.brightpathbio.com/news/2025/)\n・[ブライトパス・バイオ 適時開示一覧（IRBANK）](https://irbank.net/E31851/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://www.brightpathbio.com/news/2025/"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://irbank.net/E31851/tdnet"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年3月期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2025-05-09T15:30:00+09:00",
+          "url": "https://www.brightpathbio.com/news/img/f81b695d03472382206f80746a72dd948ef7109d.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "事業計画及び成長可能性に関する事項",
+          "publishedAt": "2025-06-27T15:30:00+09:00",
+          "url": "https://www.brightpathbio.com/news/img/4380ca900659892626fc15107305fcf9cbaef0c2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "多発性骨髄腫の治療薬候補「BP2202」が米国FDAよりオーファンドラッグ指定を取得",
+          "publishedAt": "2025-07-03T15:30:00+09:00",
+          "url": "https://www.brightpathbio.com/news/img/e4eac18b6eb5dc4525632f2d5f3c2c2fd7731949.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "行使価額修正条項付第18回新株予約権（第三者割当）の大量行使に関するお知らせ",
+          "publishedAt": "2025-07-03T15:30:00+09:00",
+          "url": "https://www.brightpathbio.com/news/img/f848f26c0235744b89987adc2311352718b55046.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（訂正）第19回新株予約権（第三者割当）の大量行使に関するお知らせの一部訂正について",
+          "publishedAt": "2025-07-04T19:00:00+09:00",
+          "url": "https://www.brightpathbio.com/news/img/cda4308d1157e5d4d314acb854a451d1da771352.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "行使価額修正条項付第19回新株予約権（第三者割当）の大量行使に関するお知らせ",
+          "publishedAt": "2025-07-07T15:30:00+09:00",
+          "url": "https://www.brightpathbio.com/news/img/c1c3eb8d06c42b3c58f281bb14fca2ad14545ed7.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass"
+    }
+  ]
+}

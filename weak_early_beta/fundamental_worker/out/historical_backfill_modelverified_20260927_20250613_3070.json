@@ -1,0 +1,158 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-06-13|3070",
+      "signalDate": "2025-06-13",
+      "symbolCode": "3070",
+      "companyName": "ジェリービーンズグループ",
+      "analysisCutoff": "2025-06-13T16:15:00+09:00",
+      "generatedAt": "2026-09-27T19:11:14+09:00",
+      "summary": "2026年1月期1Qは売上高228百万円（前年同期比5.2%減）、営業損失111百万円、経常損失113百万円、純損失116百万円。4月末の現金及び預金は301百万円。通期予想は売上高1,201百万円、営業損失345百万円などを据え置いた。",
+      "materialImpact": "赤字が続き、短信は継続企業に関する重要事象を記載。5/16に第4回新株予約権の全行使で9億円を調達した一方、5/28の10億円借入枠は上限契約で、実際の借入額とは区別が必要。6/12には3子会社の設立を決議したが、開始時期・収益規模は未確定。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "1Q売上高は前年同期比5.2%減の228百万円、営業損失111百万円、経常損失113百万円、親会社株主帰属純損失116百万円。5/16に新株予約権全行使で9億円を調達し、4月末純資産は786百万円。新設3社や新規事業の収益寄与は未確認。"
+        },
+        {
+          "name": "事業概要",
+          "value": "婦人靴ブランドの小売・ECを主軸に、美術品販売、SDGs関連商品などのその他事業も展開。グループはGold Starの商品販売等を含め、事業領域の拡大を進めている。"
+        },
+        {
+          "name": "足元材料",
+          "value": "6/12、環境リサイクル、医療事務受託、芸能・IP等を担う各資本金9百万円の完全子会社3社の設立を決議。設立予定日は6/12、事業開始時期は未定で、業績影響は精査中。別途、長谷川惠一氏と共同運営する完全予約制ジムを6月に麻布十番で開業。Gold Star商品は5/27から全国のセブン‐イレブンで販売開始と発表されたが、売上額は非開示。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年1月期通期は売上高831百万円、営業損失519百万円、経常損失532百万円、純損失519百万円、営業CFマイナス621百万円。2026年1月期1Qは売上高228百万円、営業損失111百万円、経常損失113百万円、純損失116百万円。4/30現金及び預金301百万円、純資産786百万円、自己資本比率58.3%。通期予想は売上高1,201百万円、営業損失345百万円、経常損失348百万円、純損失354百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "短信は7期連続の営業損失・営業CFマイナス、9期連続の親会社株主帰属純損失と、継続企業の前提に関する注記を記載。5/16の9億円は予約権行使による調達済額。5/27実行のGFA借入は1億円、5/28のQL借入限度額は10億円で、契約上限を入金済額として扱わない。5/30時点で社外取締役1名・社外監査役1名の退任が臨時株主総会終結時に予定されていた。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-03-13 FY短信(17:00)](https://www2.jpx.co.jp/disc/30700/140120250313593465.pdf)\n・[2025-05-16 予約権行使完了(14:00)](https://www2.jpx.co.jp/disc/30700/140120250516556446.pdf)\n・[2025-05-27 借入(16:00)](https://www2.jpx.co.jp/disc/30700/140120250527567851.pdf)\n・[2025-05-28 借入枠(16:00)](https://www2.jpx.co.jp/disc/30700/140120250528570092.pdf)\n・[2025-05-28 Gold Star販売(16:00)](https://www2.jpx.co.jp/disc/30700/140120250528570006.pdf)\n・[2025-05-30 役員退任(13:00)](https://www2.jpx.co.jp/disc/30700/140120250530574236.pdf)\n・[2025-06-12 1Q短信(16:00)](https://www2.jpx.co.jp/disc/30700/140120250612588450.pdf)\n・[2025-06-12 JBサステナブル(16:00)](https://www2.jpx.co.jp/disc/30700/140120250612588527.pdf)\n・[2025-06-12 JBメディカル(16:00)](https://www2.jpx.co.jp/disc/30700/140120250612588525.pdf)\n・[2025-06-12 JBエンタメ(16:00)](https://www2.jpx.co.jp/disc/30700/140120250612588524.pdf)\n・[2025-06-12 WeLLKey Plus開業(16:00)](https://www2.jpx.co.jp/disc/30700/140120250612588521.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ジェリービーンズグループ IRトピックス](https://www.jelly-beans-group.co.jp/ir/news/)\n・[3070 適時開示一覧（時刻索引）](https://disclosure.tokyo/company/30700)\n・[3070 IR情報一覧](https://irbank.net/3070/ir?y=2025)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.jelly-beans-group.co.jp/ir/news/",
+          "checkedUrls": [
+            "https://www.jelly-beans-group.co.jp/ir/news/",
+            "https://www2.jpx.co.jp/disc/30700/140120250313593465.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250516556446.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250527567851.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250528570092.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250528570006.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250530574236.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250612588450.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250612588527.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250612588525.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250612588524.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120250612588521.pdf"
+          ],
+          "result": "会社IR掲載を確認し、公式JPX PDF11件を取得して本文を照合。業績、継続企業に関する記載、払込済み資金と借入限度額、設立予定3社とジム開業の扱いを確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://disclosure.tokyo/company/30700",
+          "checkedUrls": [
+            "https://disclosure.tokyo/company/30700",
+            "https://irbank.net/3070/ir?y=2025"
+          ],
+          "result": "公開時刻一覧で3/13 17:00、5/16 14:00、5/27・5/28 16:00、5/30 13:00、6/12 16:00を確認。cutoff日の6/13 16:15までに追加開示がないことを照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年１月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-03-13T17:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250313593465.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第４回新株予約権の行使完了に関するお知らせ",
+          "publishedAt": "2025-05-16T14:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250516556446.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "資金の借入に関するお知らせ",
+          "publishedAt": "2025-05-27T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250527567851.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "資金の借入に関するお知らせ",
+          "publishedAt": "2025-05-28T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250528570092.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式会社Gold Star取扱商品が全国のセブン‐イレブンにて販売開始のお知らせ",
+          "publishedAt": "2025-05-28T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250528570006.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "取締役及び監査役の退任に関するお知らせ",
+          "publishedAt": "2025-05-30T13:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250530574236.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年１月期第１四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-06-12T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250612588450.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "子会社設立に関するお知らせ（株式会社ＪＢサステナブル）",
+          "publishedAt": "2025-06-12T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250612588527.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "子会社設立に関するお知らせ（株式会社ＪＢメディカル）",
+          "publishedAt": "2025-06-12T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250612588525.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "子会社設立に関するお知らせ（株式会社ＪＢエンターテインメント）",
+          "publishedAt": "2025-06-12T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250612588524.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "パーソナルトレーニングジム『WeLLKey Plus（ウェルキィ プラス）』のオープンについて",
+          "publishedAt": "2025-06-12T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120250612588521.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifestのidentity、会社名、5 selectors、16:15 cutoffを照合。",
+        "公式JPX資料11件の本文と公表時刻を確認。6/13 cutoffまで新規開示がないことも一覧で確認。",
+        "予約権で調達した9億円、GFA借入1億円、QL借入限度額10億円を区別。子会社設立計画は収益化済みとせず、5/30の社外役員退任は発表時点の予定として記載。"
+      ]
+    }
+  ]
+}

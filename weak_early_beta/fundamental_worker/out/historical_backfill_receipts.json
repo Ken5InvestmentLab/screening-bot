@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-27T17:58:08.646114+09:00",
+  "updated_at": "2026-09-27T18:20:20.373380+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -10615,6 +10615,101 @@
       "auditNotes": []
     },
     {
+      "identity": "2024-09-05|7776",
+      "signalDate": "2024-09-05",
+      "symbolCode": "7776",
+      "companyName": "セルシード",
+      "analysisCutoff": "2024-09-05T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:03:39+09:00",
+      "summary": "2024年中間期は売上高76.3百万円（前年同期比+13.9%）、営業損失464.2百万円。細胞シート再生医療事業の売上は1.2百万円で、主力開発品CLS2901Cの第III相試験は症例登録が当初予定より遅れた。6月末現金及び現金同等物は2,174.3百万円、営業CFは▲405.0百万円。通期の赤字予想を据え置いた。",
+      "materialImpact": "増収ながら研究開発費の増加等で営業損失が拡大。中間売上の大半は再生医療支援事業で、細胞シート再生医療事業は小規模。手元資金は2,174.3百万円だが営業CFは▲405.0百万円で、会社は事業化の道筋が未確立として重要な疑義を生じさせる状況を記載した。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "中間期売上高は76.303百万円（+13.9%）と増加したが、営業損失464.170百万円、経常損失463.355百万円、純損失474.459百万円。通期売上高170百万円、営業・経常損失各920百万円、純損失940百万円の予想は据置。第III相CLS2901Cの症例登録遅延と、会社が記載する継続企業上の重要な疑義が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "細胞培養器材の販売や細胞シートの製造受託など再生医療支援事業と、細胞シート再生医療製品の研究開発を行う。開発の中心は同種軟骨細胞シートCLS2901C。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2024年中間期（1～6月）は売上高76.303百万円、営業損失464.170百万円。事業別売上は再生医療支援事業75.086百万円、細胞シート再生医療事業1.217百万円。CLS2901C第III相試験は治験届後、当初予定より症例登録に時間を要し、治験施設で手術体制を整備中。7/1に第24回新株予約権の残り11,354個が全行使され、1,135,400株を交付（行使価額総額385.854百万円）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "中間期は営業損失464.170百万円、純損失474.459百万円。研究開発費322.338百万円。6月末の現金及び預金・現金同等物は2,174.279百万円、純資産2,117.023百万円、自己資本比率86.4%。営業CFは▲405.048百万円。通期予想は売上高170百万円、営業損失920百万円、経常損失920百万円、純損失940百万円で修正なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "7/1の新株予約権行使と株式交付は6/30時点の財務残高より後の事象。中間損益には為替差益2.936百万円、新株発行費1.536百万円、新株予約権戻入益2.055百万円、減損損失12.014百万円が反映済み。決算短信の継続企業前提注記は「該当事項なし」だが、別項目で事業化への道筋が示せていないとして、継続企業に重要な疑義を生じさせる状況を記載。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-01 第24回新株予約権（行使価額修正条項付）の大量行使況及び行使完了に関するお知らせ(16:30)](https://www2.jpx.co.jp/disc/77760/140120240701542284.pdf)\n・[2024-08-13 2024年12月期 第2四半期（中間期）決算短信〔日本基準〕（非連結）(16:30)](https://www2.jpx.co.jp/disc/77760/140120240812570543.pdf)\n・[2024-08-13 営業外損益及び特別損益の計上に関するお知らせ(16:30)](https://www2.jpx.co.jp/disc/77760/140120240812570544.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[セルシード 2024年IRニュース一覧](https://www.cellseed.com/news/2024/ir/)\n・[7776 セルシード 適時開示一覧](https://irbank.net/7776/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.cellseed.com/news/2024/ir/",
+          "checkedUrls": [
+            "https://www.cellseed.com/news/2024/ir/",
+            "https://www2.jpx.co.jp/disc/77760/140120240701542284.pdf",
+            "https://www2.jpx.co.jp/disc/77760/140120240812570543.pdf",
+            "https://www2.jpx.co.jp/disc/77760/140120240812570544.pdf"
+          ],
+          "result": "指定したJPX公式PDF3件の本文を確認し、業績、財政状態、CLS2901Cの症例登録遅延、7/1の行使完了、特別損益が短信に反映済みであることを照合。公式IR一覧掲載の9/5付決算説明会動画は公開時刻と本文を確認できず、16:15 cutoff資料には採用していない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/7776/ir",
+          "checkedUrls": [
+            "https://irbank.net/7776/ir",
+            "https://www.cellseed.com/news/2024/ir/"
+          ],
+          "result": "適時開示一覧で7/1と8/13の公表時刻16:30を照合。2024年のTDnetでは8/13資料の次が9/25であり、9/5付の説明会動画は時刻未確認のためcutoffには採用せず。9/1の月間行使状況は2023年掲載分と確認し、2024年情報と混同していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第24回新株予約権（行使価額修正条項付）の大量行使況及び行使完了に関するお知らせ",
+          "publishedAt": "2024-07-01T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77760/140120240701542284.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年12月期 第2四半期（中間期）決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-08-13T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77760/140120240812570543.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "営業外損益及び特別損益の計上に関するお知らせ",
+          "publishedAt": "2024-08-13T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77760/140120240812570544.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "会社公式IR一覧の2024-09-05付決算説明会動画は公開時刻・本文が確認できないため、16:15 cutoffには含めず、時刻を確認できた8/13公式決算等を基礎に作成。"
+      ]
+    },
+    {
       "identity": "2024-09-06|3070",
       "signalDate": "2024-09-06",
       "symbolCode": "3070",
@@ -11216,6 +11311,132 @@
       ]
     },
     {
+      "identity": "2024-09-11|3350",
+      "signalDate": "2024-09-11",
+      "symbolCode": "3350",
+      "companyName": "メタプラネット",
+      "analysisCutoff": "2024-09-11T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:15:43+09:00",
+      "summary": "2024年12月期中間期は売上168百万円、営業損失116百万円、純損失177百万円。6月末BTC帳簿額は1,567百万円。9/10時点で398.832BTC・累計取得額37.5億円。9/9行使表明分の資金は受領済みだが株式交付は未了。",
+      "materialImpact": "ホテル事業は赤字継続で通期予想も非開示。中間期のBTC評価損59百万円を計上し、継続企業の前提に関する重要な不確実性も残る。一方、資金調達後にBTC保有を拡大し、SBI VCとの提携で保管・担保借入等の選択肢を得たが、実行額や業績効果は未開示。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "9/10までにBTC保有398.832BTC・累計取得37.5億円となり、事業資産構成の変化が進行。9/9経営陣の新株予約権行使金2.997億円は受領済みだが、対応株式の交付は手続き前。上期は営業損失・営業CF流出と継続企業の前提に関する重要な不確実性が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "ホテル事業を中心とし、財務戦略の一環としてビットコインの取得・保有を進める。2024年12月期上期は売上高168.494百万円、営業損失115.967百万円。"
+        },
+        {
+          "name": "足元材料",
+          "value": "8/14上期は売上168.494百万円（前年同期比40.4%増）、営業損失115.967百万円・経常損失176.500百万円・純損失176.975百万円。BTC評価損59.369百万円は上期に計上済み。8/20に57.273BTCを5億円で取得し保有360.368BTC（累計34.5億円）。9/2 SBI VCトレード提携はカストディやBTC担保信用取引を選択肢に加えるもの。9/9に経営陣が第11回予約権540,000個を行使表明、払込2.997億円は受領済みだが株式交付前。9/10に38.464BTCを3億円で追加取得し、保有398.832BTC・累計取得37.5億円・平均9,402,463円/BTC。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年12月期上期（1～6月）は売上高168.494百万円（+40.4%）、営業損失115.967百万円、経常損失176.500百万円、親会社株主帰属純損失176.975百万円。6月末現預金1,008.780百万円、BTC帳簿価額1,567.275百万円、純資産2,316百万円、自己資本比率59.6%。営業CFは54.739百万円の支出。通期予想は精査中で数値未開示。"
+        },
+        {
+          "name": "注意点",
+          "value": "上期のBTC評価損59.369百万円は決算に計上済みで二重計上しない。継続企業の前提に関する重要な不確実性が明記され、施策実施中。9/9受領金は行使対価で、株式交付は通知・手続き後の予定。8/22選定のEVO FUNDは未行使予約権の譲渡先候補で、譲渡契約は未成立。9/2提携の実行額・利益効果は非開示。8/1付で普通株式10株を1株とする併合が効力発生済み（発行済株式数は163,522,969株減少）。第11回予約権の555円行使価額・株数は併合後条件として扱い、併合前後の株数を混同しない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-14 2024年12月期中間決算短信(09:00)](https://www2.jpx.co.jp/disc/33500/140120240722552662.pdf)\n・[2024-08-14 営業外費用の計上(09:00)](https://www2.jpx.co.jp/disc/33500/140120240809570402.pdf)\n・[2024-08-20 BTC追加購入完了・保有360.368BTC(09:00)](https://www2.jpx.co.jp/disc/33500/140120240819573613.pdf)\n・[2024-08-22 第11回予約権の譲渡先候補決定(14:00)](https://www2.jpx.co.jp/disc/33500/140120240820574351.pdf)\n・[2024-08-23 第11回予約権Q&A訂正・追加(18:50)](https://www2.jpx.co.jp/disc/33500/140120240822575213.pdf)\n・[2024-09-02 SBI VCトレードとの提携(12:00)](https://www2.jpx.co.jp/disc/33500/140120240828577919.pdf)\n・[2024-09-09 経営陣の第11回予約権行使表明(16:30)](https://www2.jpx.co.jp/disc/33500/140120240906582153.pdf)\n・[2024-09-10 BTC追加購入・保有398.832BTC(12:00)](https://www2.jpx.co.jp/disc/33500/140120240910582860.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[メタプラネット 公式IR・最新情報一覧](https://metaplanet.jp/ja/updates)\n・[メタプラネット（3350）適時開示一覧（IRBANK、2024-09-11）](https://irbank.net/3350/ir?y=2024-09-11)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://metaplanet.jp/ja/updates",
+          "checkedUrls": [
+            "https://metaplanet.jp/ja/updates",
+            "https://www2.jpx.co.jp/disc/33500/140120240722552662.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120240809570402.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120240819573613.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120240820574351.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120240822575213.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120240828577919.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120240906582153.pdf",
+            "https://www2.jpx.co.jp/disc/33500/140120240910582860.pdf"
+          ],
+          "result": "会社公式の最新情報一覧とJPX公式PDF8件の本文を確認。8/14上期損益・財政状態・CF・GC注記、同日BTC評価損の決算計上、8/20 BTC取得、8/22候補譲渡、8/23予約権Q&A、9/2提携、9/9行使表明と払込、9/10 BTC保有数・取得額を照合。上期評価損を二重計上せず、9/9の株式交付は未了として扱った。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/3350/ir?y=2024-09-11",
+          "checkedUrls": [
+            "https://irbank.net/3350/ir?y=2024-09-11"
+          ],
+          "result": "適時開示時系列で8/14、8/20、8/22、8/23、9/2、9/9、9/10の公表日時を照合。9/11 16:15 JST cutoff以前に追加開示なし。8/14上期短信本文の8/1付10対1株式併合効力発生と株式数減少も確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期 中間決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-08-14T09:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240722552662.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "営業外費用の計上に関するお知らせ",
+          "publishedAt": "2024-08-14T09:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240809570402.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ビットコインの追加購入完了に関するお知らせ",
+          "publishedAt": "2024-08-20T09:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240819573613.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（開示事項の経過）当社が取得する第11回新株予約権の譲渡先候補の決定に関するお知らせ",
+          "publishedAt": "2024-08-22T14:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240820574351.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（訂正及び追加）株主に対する新株予約権（無償）の割当てに関するQ&A",
+          "publishedAt": "2024-08-23T18:50:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240822575213.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "METAPLANETとSBI VCトレードのビットコイン取引・保管・運用に関する提携開始",
+          "publishedAt": "2024-09-02T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240828577919.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "経営陣による第11回新株予約権行使表明のお知らせ",
+          "publishedAt": "2024-09-09T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240906582153.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ビットコインの追加購入に関するお知らせ",
+          "publishedAt": "2024-09-10T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/33500/140120240910582860.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
       "identity": "2024-09-13|2586",
       "signalDate": "2024-09-13",
       "symbolCode": "2586",
@@ -11325,6 +11546,879 @@
       ],
       "auditStatus": "pass",
       "auditNotes": []
+    },
+    {
+      "identity": "2024-09-17|190A",
+      "signalDate": "2024-09-17",
+      "symbolCode": "190A",
+      "companyName": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
+      "analysisCutoff": "2024-09-17T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:19:34+09:00",
+      "summary": "2024年8月期3Q累計は事業収益なし、営業損失1,180百万円。通期も事業収益なし・営業損失2,273百万円の予想を維持。5月末現預金3,257百万円、継続企業の前提に関する注記なし。",
+      "materialImpact": "創薬研究開発段階で売上収益がなく、研究開発費により損失が続く。一方、5月末現預金3,257百万円、純資産3,323百万円で、Q3短信に継続企業の前提に関する注記はない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "7/16時点の最新決算は8月期3Q累計で事業収益なし、営業損失1,180百万円。CTX-712などの研究開発が進む一方、候補薬の承認・販売や売上化は確定していない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "がん領域の低分子創薬を主軸とする研究開発型企業。CLK阻害薬CTX-712、MALT1阻害薬CTX-177、CDK12阻害薬CTX-439などの開発を進める。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/16開示のQ3短信では、CTX-712の日本第1相試験で固形がん46例・血液がん14例、計60例の登録完了を記載。米国の血液がん第1/2相は5月末時点16例投与。試験段階の情報で、承認・商用化を示すものではない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年8月期3Q累計（2023年9月～2024年5月）は事業収益0百万円、営業損失1,180百万円、経常損失1,175百万円、四半期純損失1,177百万円。5月末総資産3,462百万円、純資産3,323百万円、現金及び預金3,257百万円、自己資本比率95.2%。通期予想は事業収益0百万円、営業損失2,273百万円、経常損失2,278百万円、純損失2,280百万円で、直近予想から変更なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q3短信の試験データは初期臨床段階で、将来の有効性・承認・売上を保証しない。2024年8月期の通期業績は予想値で実績ではない。Q3短信には継続企業の前提に関する注記はない。9/18付社長インタビューは公表時刻を確認できず、16:15 cutoff内と証明できないため採用していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-16 2024年8月期 第3四半期決算短信〔日本基準〕（非連結）(13:00)](https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[Chordia Therapeutics 公式IRニュース一覧](https://www.chordiatherapeutics.com/ja/ir/news.html)\n・[Chordia Therapeutics 決算短信・決算説明会資料一覧](https://www.chordiatherapeutics.com/ja/ir/library/result.html)\n・[190A 適時開示一覧（IRBANK、2024-09-17時点）](https://irbank.net/190A/ir?y=2024-09-17)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.chordiatherapeutics.com/ja/ir/news.html",
+          "checkedUrls": [
+            "https://www.chordiatherapeutics.com/ja/ir/news.html",
+            "https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf",
+            "https://www.chordiatherapeutics.com/ja/ir/library/result.html"
+          ],
+          "result": "会社公式IRニュース一覧と7/16 Q3短信本文を確認。Q3累計損益・5月末財政状態・通期予想・継続企業注記、CTX-712の症例登録進捗を照合。公式一覧で9/17及び9/18 cutoff時点までの公表資料を確認し、9/25決算発表予定はcutoff後として除外。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/190A/ir?y=2024-09-17",
+          "checkedUrls": [
+            "https://irbank.net/190A/ir?y=2024-09-17"
+          ],
+          "result": "適時開示一覧で7/16 13:00 Q3短信を照合。9/17は同日cutoffまで新たな重要開示なし。9/18付社長インタビューは公表時刻を確定できず、cutoff前とみなしていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年8月期 第3四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-07-16T13:00:00+09:00",
+          "url": "https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-09-18|190A",
+      "signalDate": "2024-09-18",
+      "symbolCode": "190A",
+      "companyName": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
+      "analysisCutoff": "2024-09-18T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:19:34+09:00",
+      "summary": "2024年8月期3Q累計は事業収益なし、営業損失1,180百万円。通期も事業収益なし・営業損失2,273百万円の予想を維持。5月末現預金3,257百万円、継続企業の前提に関する注記なし。",
+      "materialImpact": "創薬研究開発段階で売上収益がなく、研究開発費により損失が続く。一方、5月末現預金3,257百万円、純資産3,323百万円で、Q3短信に継続企業の前提に関する注記はない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "7/16時点の最新決算は8月期3Q累計で事業収益なし、営業損失1,180百万円。CTX-712などの研究開発が進む一方、候補薬の承認・販売や売上化は確定していない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "がん領域の低分子創薬を主軸とする研究開発型企業。CLK阻害薬CTX-712、MALT1阻害薬CTX-177、CDK12阻害薬CTX-439などの開発を進める。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/16開示のQ3短信では、CTX-712の日本第1相試験で固形がん46例・血液がん14例、計60例の登録完了を記載。米国の血液がん第1/2相は5月末時点16例投与。試験段階の情報で、承認・商用化を示すものではない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年8月期3Q累計（2023年9月～2024年5月）は事業収益0百万円、営業損失1,180百万円、経常損失1,175百万円、四半期純損失1,177百万円。5月末総資産3,462百万円、純資産3,323百万円、現金及び預金3,257百万円、自己資本比率95.2%。通期予想は事業収益0百万円、営業損失2,273百万円、経常損失2,278百万円、純損失2,280百万円で、直近予想から変更なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q3短信の試験データは初期臨床段階で、将来の有効性・承認・売上を保証しない。2024年8月期の通期業績は予想値で実績ではない。Q3短信には継続企業の前提に関する注記はない。9/18付社長インタビューは公表時刻を確認できず、16:15 cutoff内と証明できないため採用していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-16 2024年8月期 第3四半期決算短信〔日本基準〕（非連結）(13:00)](https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[Chordia Therapeutics 公式IRニュース一覧](https://www.chordiatherapeutics.com/ja/ir/news.html)\n・[Chordia Therapeutics 決算短信・決算説明会資料一覧](https://www.chordiatherapeutics.com/ja/ir/library/result.html)\n・[190A 適時開示一覧（IRBANK、2024-09-18時点）](https://irbank.net/190A/ir?y=2024-09-18)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.chordiatherapeutics.com/ja/ir/news.html",
+          "checkedUrls": [
+            "https://www.chordiatherapeutics.com/ja/ir/news.html",
+            "https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf",
+            "https://www.chordiatherapeutics.com/ja/ir/library/result.html"
+          ],
+          "result": "会社公式IRニュース一覧と7/16 Q3短信本文を確認。Q3累計損益・5月末財政状態・通期予想・継続企業注記、CTX-712の症例登録進捗を照合。公式一覧で9/17及び9/18 cutoff時点までの公表資料を確認し、9/25決算発表予定はcutoff後として除外。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/190A/ir?y=2024-09-18",
+          "checkedUrls": [
+            "https://irbank.net/190A/ir?y=2024-09-18"
+          ],
+          "result": "適時開示一覧で7/16 13:00 Q3短信を照合。9/17は同日cutoffまで新たな重要開示なし。9/18付社長インタビューは公表時刻を確定できず、cutoff前とみなしていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年8月期 第3四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-07-16T13:00:00+09:00",
+          "url": "https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-09-30|6836",
+      "signalDate": "2024-09-30",
+      "symbolCode": "6836",
+      "companyName": "ぷらっとホーム",
+      "analysisCutoff": "2024-09-30T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:13:26+09:00",
+      "summary": "2025年3月期1Qは増収だが営業損失30.9百万円。補助金収入32.9百万円を主因に経常・純利益は小幅黒字となった。通期予想は据置。",
+      "materialImpact": "増収も営業赤字が継続。経常・純利益は補助金収入に大きく支えられており、本業の黒字化を示す内容ではない。新製品発表やアプリ提供開始はあるが、売上額・受注額は開示されていない。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは売上高260.792百万円（前年同期比+12.2%）、営業損失30.908百万円。補助金収入32.934百万円を主因に経常利益0.491百万円、純利益0.189百万円を計上したが、本業の営業赤字は継続。"
+        },
+        {
+          "name": "事業概要",
+          "value": "小型Linuxマイクロサーバー、IoTゲートウェイ、ネットワークアプライアンス等の開発・製造・販売と、関連ソフトウェア・サービスを展開。決算短信ではコンピューター関連製品・サービスの単一セグメント。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/30、INTMAXとThingsTokenおよびPlasma Freeを組み合わせたRWA汎用トークンプロトコルの商用化を目的に提携。8/22、冗長化対応DHCP ASを発表（標準5000/2500モデルの税抜参考価格54万円/35万円、出荷開始は9月上旬予定）。8/27、大曲の花火公式アプリの提供開始を発表し、8/26から配布、提供期間は2025年3月末までの予定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高260.792百万円、営業損失30.908百万円、経常利益0.491百万円、純利益0.189百万円。6月末の現金及び預金220.966百万円、純資産403.618百万円、自己資本比率55.4%。通期予想は売上高1,160百万円、営業損失40百万円、経常利益20百万円、純利益15百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常・純利益は営業外収益の補助金32.934百万円が大きく寄与し、営業黒字化を示さない。短信は継続的な営業損失等を継続企業に関する重要な疑義を生じさせる状況として記載する一方、会社は重要な不確実性はないと判断し、継続企業注記を付していない。DHCP製品の出荷開始は発表時点での予定で、同発表に受注・売上金額の記載はない。Q1の四半期キャッシュ・フロー計算書は作成されていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-30 Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表(16:00)](https://www.plathome.co.jp/press-release/20240730-intmax-partnership/)\n・[2024-08-09 2025年3月期 第1四半期決算短信〔日本基準〕（非連結）(16:00)](https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf)\n・[2024-08-22 ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売(14:00)](https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf)\n・[2024-08-27 ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始(11:00)](https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ぷらっとホーム IR 開示資料・リリース一覧](https://www.plathome.co.jp/ir/disclosure/archive/)\n・[ぷらっとホーム プレスリリース一覧](https://www.plathome.co.jp/press-release/)\n・[6836 ぷらっとホーム 適時開示一覧](https://irbank.net/6836/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/ir/disclosure/archive/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/ir/disclosure/archive/",
+            "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf"
+          ],
+          "result": "会社IRの開示資料一覧とJPX掲載の公式四半期決算短信本文を確認。短信の実績、通期予想、財政状態、継続企業に関する記載を照合した。"
+        },
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/press-release/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/press-release/",
+            "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+            "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+            "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf"
+          ],
+          "result": "会社公式リリース本文と掲載情報を確認。提携の目的、製品価格・発表時点の出荷予定、アプリの配布開始・提供予定期間を本文に沿って記載し、確定売上として扱っていない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6836/ir",
+          "checkedUrls": [
+            "https://irbank.net/6836/ir",
+            "https://www.plathome.co.jp/ir/"
+          ],
+          "result": "IR時系列で2024-08-09決算短信の公表時刻16:00を照合。対象cutoffまでの会社IR一覧も確認し、後日開示を対象時点へ混入していない。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+          "checkedUrls": [
+            "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+            "https://prtimes.jp/main/html/rd/p/000000155.000013751.html"
+          ],
+          "result": "会社サイトの内部掲載時刻ではなく、各リリースの配信記録に明示された公表時刻（8/22 14:00、8/27 11:00）に統一。開示本文の事実は会社公式PDFで照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表",
+          "publishedAt": "2024-07-30T16:00:00+09:00",
+          "url": "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-08-09T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売",
+          "publishedAt": "2024-08-22T14:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始",
+          "publishedAt": "2024-08-27T11:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "候補のidentity、cutoff、selectorsをmanifestと照合。採用した資料は全てcutoff以前に公表され、会社公式またはJPXの一次資料本文を確認。",
+        "出荷予定を実績へ読み替えず、提携・アプリ・製品発表に売上金額を付与していない。Q1の営業赤字と営業外補助金収入を区別した。",
+        "8/22・8/27の公表時刻はPR TIMESの配信記録で再照合し、Premiumリンクとdisclosuresを14:00・11:00に統一。"
+      ]
+    },
+    {
+      "identity": "2024-09-30|8894",
+      "signalDate": "2024-09-30",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-09-30T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:14:13+09:00",
+      "summary": "2024年10月期3Q累計は売上高3,056百万円、営業損失112百万円。WeCapital子会社化、10対1株式併合、普通株・第6/7回新株予約権の発行は株主総会前の提案。",
+      "materialImpact": "不動産事業の拡大に向け株式交付や資本政策を提案。実施時には大幅な株式数増加が見込まれるが、cutoff時点では総会承認前で、資金調達・子会社化・併合は未成立。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "8/30提案はWeCapital株式を1株取得につき自社株12,429株交付、下限25,148株取得時の会社公表予定発行数312,562,500株。普通株13,636,200株を22円で発行する案と、第6回53,480,000株・第7回106,960,000株を潜在株式とする予約権案も提示。いずれも株主総会等の条件付き。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業などを展開。2024年10月期3Q累計では不動産事業を主軸に売上を計上。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9/27訂正で10対1併合後の普通株式数は理論値74,421,204株（併合前744,212,044株）に修正。9/29招集通知訂正では第6回予約権の発行払込額を17,113,600円、第7回を34,227,200円に訂正。総会承認前で発行・交付は未実施。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年10月期3Q累計（2023年11月～2024年7月）は売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円、自己資本比率43.7%。通期予想は売上5,021百万円、営業利益373百万円、経常利益388百万円、純利益373百万円。継続企業の前提に関する重要な不確実性の記載なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "株式交付、第三者割当、予約権発行、株式併合はcutoff時点で株主承認前。8/30資料の予約権行使時調達額は全行使を仮定した金額で、発行時の払込額ではなく未受領。WeCapitalの募集総額は同社プラットフォームの取扱額であり、REVOLUTIONの売上ではない。9/29招集通知訂正の掲載日は確認できるが、公開時刻は会社一覧で確認できない。 会社公表の下限25,148株×交換比率12,429株の積は312,564,492株で、公表予定発行数312,562,500株と1,992株異なる。公表値を引用し、こちらで補正していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q決算短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736)\n・[2024-08-30 WeCapital株式交付(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579149.pdf)\n・[2024-08-30 10対1併合案(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579156.pdf)\n・[2024-08-30 普通株割当案(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579155.pdf)\n・[2024-08-30 第6回予約権(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579152.pdf)\n・[2024-08-30 第7回予約権(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579154.pdf)\n・[2024-09-27 併合訂正(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1711/3acfe824d29e7cde77a34b0a4ba60e8f.pdf?v=1727417855)\n・[2024-09-29 招集通知訂正(時刻非公表)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[REVOLUTION 公式株主総会資料一覧](https://revolution.co.jp/ir/shareholder-meetings/)\n・[8894 適時開示一覧（IRBANK、2024-09-30）](https://irbank.net/8894/ir?y=2024-09-30)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579149.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579156.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579155.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579152.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579154.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1711/3acfe824d29e7cde77a34b0a4ba60e8f.pdf?v=1727417855",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446"
+          ],
+          "result": "会社公式IR掲載ページとリンク先のJPX/会社公式PDF本文を確認。第3四半期累計値・通期予想、8/30のWeCapital株式交付・株式併合・普通株発行・第6/7回予約権の条件を照合。9/27訂正の併合後理論株数、9/29訂正の第6/7回予約権発行払込額を照合。9/29の公開時刻は会社一覧に表示されないため日付精度で記録し、前日公開を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-09-30",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-09-30",
+            "https://revolution.co.jp/ir/shareholder-meetings/"
+          ],
+          "result": "IRBankと会社公式株主総会資料一覧で開示日を確認。9/29訂正は会社一覧が日付のみ表示し、時刻は未公表。9/13、8/30、9/27、9/29の資料はいずれも9/30 16:15 cutoff以前。9/30 16:45の総会決議・親会社異動はcutoff後で本候補には反映していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式交付によるWeCapital株式会社の子会社化に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579149.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式併合及び定款の一部変更に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579156.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による普通株式の発行に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579155.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による第6回新株予約権の発行に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579152.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による第7回新株予約権の発行に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579154.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式併合及び定款の一部変更に関する訂正",
+          "publishedAt": "2024-09-27T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1711/3acfe824d29e7cde77a34b0a4ba60e8f.pdf?v=1727417855",
+          "contentReviewed": true
+        },
+        {
+          "title": "招集通知記載事項の一部訂正について",
+          "publishedAt": "2024-09-29T00:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only; time not disclosed on company listing"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-10-02|3070",
+      "signalDate": "2024-10-02",
+      "symbolCode": "3070",
+      "companyName": "ジェリービーンズグループ",
+      "analysisCutoff": "2024-10-02T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:16:26+09:00",
+      "summary": "2025年1月期中間は売上高474百万円（前年同期比▲2.8%）、営業損失197百万円、親会社株主帰属純損失173百万円。7/31は29百万円の債務超過だったが、8/23払込の第三者割当336百万円で解消したと会社説明。通期予想は未定。",
+      "materialImpact": "8/23に第三者割当の払込336百万円を受領し、7/31時点の債務超過は会社説明上解消。一方、第4回新株予約権の追加調達900百万円は全行使時の将来額。10/1の5年ゲーム総代理店契約は業績影響を精査中、10/2のNFTマーケティングツール導入は会社が業績影響軽微と説明。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年1月期中間売上高は474百万円（▲2.8%）、営業損失197百万円、経常損失198百万円、親会社株主帰属純損失173百万円。7/31は29百万円の債務超過だったが、8/23払込の第三者割当336百万円を受け会社は解消と説明。新規事業案件は、10/1のゲーム日本総代理店契約が業績影響精査中、10/2のNFTマーケティングツール導入は業績影響軽微。"
+        },
+        {
+          "name": "事業概要",
+          "value": "婦人靴ブランド「JELLY BEANS」「JELLY BEANS SPORTS」の小売・ECを展開し、美術品販売・SDGs関連商品等の新規事業も手掛ける。Web3・ブロックチェーンサービスは子会社JB BLOCKが担う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "中間売上の内訳はEC295.870百万円、小売173.574百万円、その他4.868百万円。10/1、子会社JB BLOCKを中心に、メタシティのブロックチェーンゲーム「LORD OF DRAGONS」日本語版の5年間の日本総代理店契約を締結。JB BLOCKは販促、サーバー・回線、サイト運営、ユーザー課金を担う。10/2、自社ブランドのSNSマーケティング向けに「SBINFT Mits」の導入を決定し、JB BLOCKの「meta jb stadium」でも利用予定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年1月期中間（2/1～7/31）は売上高474百万円、営業損失197百万円、経常損失198百万円、親会社株主帰属純損失173百万円。7/31の現金及び預金180百万円、純資産▲29百万円、自己資本比率▲8.8%、営業CF▲145百万円。通期予想は合理的算定が困難として未定。8/23に払込済みの第三者割当は新株300百万円と新株予約権発行価額36百万円の合計336百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "会社は継続企業の前提に関する重要な不確実性が存在すると認識。7/31の財務残高と8/23後の払込を区別し、8/23の払込額336百万円と、第4回新株予約権の全行使時に限る追加900百万円を混同しない。予約権の潜在株式は18百万株で、行使は確約されていない。10/1契約の業績影響は精査中、10/2導入の影響は会社が軽微と説明し、いずれも売上金額は非開示。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-08-23 第三者割当による新株式及び第4回新株予約権の発行に係る払込完了に関するお知らせ(11:10)](https://www2.jpx.co.jp/disc/30700/140120240823575791.pdf)\n・[2024-08-29 （訂正）第三者割当による新株式及び第4回新株予約権の発行に係る払込完了に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/30700/140120240829578325.pdf)\n・[2024-09-11 2025年1月期 第2四半期（中間期）決算短信〔日本基準〕（連結）(16:30)](https://www2.jpx.co.jp/disc/30700/140120240911583590.pdf)\n・[2024-10-01 メタシティ株式会社とのLORD OF DRAGONS日本総代理店契約の締結に関するお知らせ(16:00)](https://www2.jpx.co.jp/disc/30700/140120241001592419.pdf)\n・[2024-10-02 「SBINFT Mits」導入に関するお知らせ(12:30)](https://www2.jpx.co.jp/disc/30700/140120241002592780.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ジェリービーンズグループ IRトピックス](https://www.jelly-beans-group.co.jp/ir/news/)\n・[3070 ジェリービーンズグループ 適時開示一覧](https://irbank.net/3070/ir?y=2024)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.jelly-beans-group.co.jp/ir/news/",
+          "checkedUrls": [
+            "https://www.jelly-beans-group.co.jp/ir/news/",
+            "https://www2.jpx.co.jp/disc/30700/140120240823575791.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120240829578325.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120240911583590.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120241001592419.pdf",
+            "https://www2.jpx.co.jp/disc/30700/140120241002592780.pdf"
+          ],
+          "result": "会社IR掲載情報及び公式JPX PDF5件の本文を確認。払込済み額と全行使時見込額、決算上の債務超過・継続企業に関する記載、10/1契約と10/2導入の効果を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/3070/ir?y=2024",
+          "checkedUrls": [
+            "https://irbank.net/3070/ir?y=2024",
+            "https://www.jelly-beans-group.co.jp/ir/news/"
+          ],
+          "result": "8/23 11:10、8/29 15:30、9/11 16:30、10/1 16:00、10/2 12:30の公表時刻を一覧で照合。すべて2024-10-02 16:15 cutoff以前。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第三者割当による新株式及び第4回新株予約権の発行に係る払込完了に関するお知らせ",
+          "publishedAt": "2024-08-23T11:10:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120240823575791.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（訂正）第三者割当による新株式及び第4回新株予約権の発行に係る払込完了に関するお知らせ",
+          "publishedAt": "2024-08-29T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120240829578325.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年1月期 第2四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-11T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120240911583590.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "メタシティ株式会社とのLORD OF DRAGONS日本総代理店契約の締結に関するお知らせ",
+          "publishedAt": "2024-10-01T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120241001592419.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「SBINFT Mits」導入に関するお知らせ",
+          "publishedAt": "2024-10-02T12:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/30700/140120241002592780.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selectors・cutoffを照合し、全資料の公式PDF本文と公表時刻を確認。",
+        "7/31時点の債務超過と8/23の336百万円払込後の会社説明を分離。936百万円訂正後のうち900百万円は新株予約権の全行使時に限る将来資金として記載。",
+        "LORD OF DRAGONS契約は5年間だが業績影響精査中、SBINFT Mits導入は業績影響軽微との会社説明を反映し、確定売上として扱っていない。"
+      ]
+    },
+    {
+      "identity": "2024-10-04|6836",
+      "signalDate": "2024-10-04",
+      "symbolCode": "6836",
+      "companyName": "ぷらっとホーム",
+      "analysisCutoff": "2024-10-04T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:13:26+09:00",
+      "summary": "2025年3月期1Qは増収だが営業損失30.9百万円。補助金収入32.9百万円を主因に経常・純利益は小幅黒字となった。通期予想は据置。",
+      "materialImpact": "増収も営業赤字が継続。経常・純利益は補助金収入に大きく支えられており、本業の黒字化を示す内容ではない。新製品発表やアプリ提供開始はあるが、売上額・受注額は開示されていない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは売上高260.792百万円（前年同期比+12.2%）、営業損失30.908百万円。補助金収入32.934百万円を主因に経常利益0.491百万円、純利益0.189百万円を計上したが、本業の営業赤字は継続。"
+        },
+        {
+          "name": "事業概要",
+          "value": "小型Linuxマイクロサーバー、IoTゲートウェイ、ネットワークアプライアンス等の開発・製造・販売と、関連ソフトウェア・サービスを展開。決算短信ではコンピューター関連製品・サービスの単一セグメント。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/30、INTMAXとThingsTokenおよびPlasma Freeを組み合わせたRWA汎用トークンプロトコルの商用化を目的に提携。8/22、冗長化対応DHCP ASを発表（標準5000/2500モデルの税抜参考価格54万円/35万円、出荷開始は9月上旬予定）。8/27、大曲の花火公式アプリの提供開始を発表し、8/26から配布、提供期間は2025年3月末までの予定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高260.792百万円、営業損失30.908百万円、経常利益0.491百万円、純利益0.189百万円。6月末の現金及び預金220.966百万円、純資産403.618百万円、自己資本比率55.4%。通期予想は売上高1,160百万円、営業損失40百万円、経常利益20百万円、純利益15百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常・純利益は営業外収益の補助金32.934百万円が大きく寄与し、営業黒字化を示さない。短信は継続的な営業損失等を継続企業に関する重要な疑義を生じさせる状況として記載する一方、会社は重要な不確実性はないと判断し、継続企業注記を付していない。DHCP製品の出荷開始は発表時点での予定で、同発表に受注・売上金額の記載はない。Q1の四半期キャッシュ・フロー計算書は作成されていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-30 Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表(16:00)](https://www.plathome.co.jp/press-release/20240730-intmax-partnership/)\n・[2024-08-09 2025年3月期 第1四半期決算短信〔日本基準〕（非連結）(16:00)](https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf)\n・[2024-08-22 ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売(14:00)](https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf)\n・[2024-08-27 ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始(11:00)](https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ぷらっとホーム IR 開示資料・リリース一覧](https://www.plathome.co.jp/ir/disclosure/archive/)\n・[ぷらっとホーム プレスリリース一覧](https://www.plathome.co.jp/press-release/)\n・[6836 ぷらっとホーム 適時開示一覧](https://irbank.net/6836/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/ir/disclosure/archive/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/ir/disclosure/archive/",
+            "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf"
+          ],
+          "result": "会社IRの開示資料一覧とJPX掲載の公式四半期決算短信本文を確認。短信の実績、通期予想、財政状態、継続企業に関する記載を照合した。"
+        },
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/press-release/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/press-release/",
+            "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+            "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+            "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf"
+          ],
+          "result": "会社公式リリース本文と掲載情報を確認。提携の目的、製品価格・発表時点の出荷予定、アプリの配布開始・提供予定期間を本文に沿って記載し、確定売上として扱っていない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6836/ir",
+          "checkedUrls": [
+            "https://irbank.net/6836/ir",
+            "https://www.plathome.co.jp/ir/"
+          ],
+          "result": "IR時系列で2024-08-09決算短信の公表時刻16:00を照合。対象cutoffまでの会社IR一覧も確認し、後日開示を対象時点へ混入していない。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+          "checkedUrls": [
+            "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+            "https://prtimes.jp/main/html/rd/p/000000155.000013751.html"
+          ],
+          "result": "会社サイトの内部掲載時刻ではなく、各リリースの配信記録に明示された公表時刻（8/22 14:00、8/27 11:00）に統一。開示本文の事実は会社公式PDFで照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表",
+          "publishedAt": "2024-07-30T16:00:00+09:00",
+          "url": "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-08-09T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売",
+          "publishedAt": "2024-08-22T14:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始",
+          "publishedAt": "2024-08-27T11:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "候補のidentity、cutoff、selectorsをmanifestと照合。採用した資料は全てcutoff以前に公表され、会社公式またはJPXの一次資料本文を確認。",
+        "出荷予定を実績へ読み替えず、提携・アプリ・製品発表に売上金額を付与していない。Q1の営業赤字と営業外補助金収入を区別した。",
+        "8/22・8/27の公表時刻はPR TIMESの配信記録で再照合し、Premiumリンクとdisclosuresを14:00・11:00に統一。"
+      ]
+    },
+    {
+      "identity": "2024-10-10|8894",
+      "signalDate": "2024-10-10",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-10-10T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:14:13+09:00",
+      "summary": "8/30に提案されたWeCapital株式交付・株式併合・第三者割当は9/30総会で承認。10/8に普通株13,181,700株の発行と払込289.997百万円が完了。",
+      "materialImpact": "普通株発行による資金流入と新株予約権発行が実行された。WeCapital株式交付・株式併合は承認済みだが、10/10時点で効力発生前。予約権の行使調達額は将来の全行使を仮定した未実現額。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "9/30総会でWeCapital株式交付、10対1株式併合、普通株発行、第6/7回新株予約権等が承認。10/4に普通株発行数を13,181,700株へ確定し、10/8に22円での払込289,997,400円が完了。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業等を運営。WeCapitalの株式交付により不動産クラウドファンディング事業を傘下に加える計画。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9/30総会で6議案が承認されたが、WeCapital株式交付の効力発生日は10/11、10対1併合は10/21予定で、いずれも10/10には未発効。9/30開示のFO1議決権比率62.83%から34.12%への低下と親会社異動は見込みとして記載。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "最新決算は2024年10月期3Q累計（2023年11月～2024年7月）で、売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円。通期予想は売上5,021百万円、営業利益373百万円、経常利益388百万円、純利益373百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "10/8に第三者割当普通株13,181,700株×22円＝289,997,400円の払込を確認。第6/7回予約権の発行払込額17,113,600円・34,227,200円も払込済みだが、行使時調達額1,176,560,000円・2,353,120,000円は全行使時の想定で未受領。WeCapital株式交付・併合は10/10時点で効力発生前。9/30親会社異動も確定済みとは扱わない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q決算短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736)\n・[2024-09-30 総会決議(16:45)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1713/57122a39ac15ab2cd2ddf84d5b5465b2.pdf?v=1727681959)\n・[2024-09-30 親会社異動(16:45)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1712/020e8656988f81e151f37668260e9f85.pdf?v=1727681924)\n・[2024-10-08 払込完了(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1715/c28bde478e20abdc45826080f82cab37.pdf?v=1728370823)\n・[2024-10-04 申込結果(17:10)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1714/913924d35bddd779e9c6b20ced82e9f2.pdf?v=1728029417)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[REVOLUTION 公式株主総会資料一覧](https://revolution.co.jp/ir/shareholder-meetings/)\n・[8894 適時開示一覧（IRBANK、2024-10-10）](https://irbank.net/8894/ir?y=2024-10-10)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1713/57122a39ac15ab2cd2ddf84d5b5465b2.pdf?v=1727681959",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1712/020e8656988f81e151f37668260e9f85.pdf?v=1727681924",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1714/913924d35bddd779e9c6b20ced82e9f2.pdf?v=1728029417",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1715/c28bde478e20abdc45826080f82cab37.pdf?v=1728370823"
+          ],
+          "result": "会社公式IR掲載ページとリンク先PDF本文を確認。総会の6議案承認、親会社異動見込み、10/4申込数変更、10/8払込完了と株式数・金額を照合。10/8時点で株式発行及び予約権発行払込は完了したが、予約権の行使調達額は未実現。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-10-10",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-10-10",
+            "https://revolution.co.jp/ir/shareholder-meetings/"
+          ],
+          "result": "会社公式IR/適時開示時系列で9/30 16:45、10/4 17:10、10/8 16:00を確認。全件cutoff以前。9/29訂正の掲載時刻は公式ページに表示されないため日付精度で扱う。10/11のWeCapital株式交付完了はcutoff後のため含めていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+          "contentReviewed": true
+        },
+        {
+          "title": "臨時株主総会及び種類株主総会の決議に関するお知らせ",
+          "publishedAt": "2024-09-30T16:45:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1713/57122a39ac15ab2cd2ddf84d5b5465b2.pdf?v=1727681959",
+          "contentReviewed": true
+        },
+        {
+          "title": "親会社及び主要株主の異動に関するお知らせ",
+          "publishedAt": "2024-09-30T16:45:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1712/020e8656988f81e151f37668260e9f85.pdf?v=1727681924",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による普通株式発行及び第6回・第7回新株予約権発行の払込完了に関するお知らせ",
+          "publishedAt": "2024-10-08T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1715/c28bde478e20abdc45826080f82cab37.pdf?v=1728370823",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による普通株式発行の申込結果に関するお知らせ",
+          "publishedAt": "2024-10-04T17:10:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1714/913924d35bddd779e9c6b20ced82e9f2.pdf?v=1728029417",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "identity": "2024-10-25|6836",
+      "signalDate": "2024-10-25",
+      "symbolCode": "6836",
+      "companyName": "ぷらっとホーム",
+      "analysisCutoff": "2024-10-25T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:18:33+09:00",
+      "summary": "2025年3月期1Qは売上高261百万円（前年同期比+12.2%）も営業損失31百万円。10/23、真空・IoT・Web3技術を使う日本酒流通実証を6社で開始したが、事業は研究・開発・実証段階で売上・受注額は示されていない。",
+      "materialImpact": "Q1の増収に対し営業赤字が続き、経常・純利益は補助金収入に支えられる構造。10/23の流通実証はIoT・Web3を日本酒サプライチェーンへ展開する材料だが、取引額や会社業績への寄与は開示されていない。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは売上高260.792百万円（+12.2%）、営業損失30.908百万円。営業外の補助金収入32.934百万円を主因に経常利益0.491百万円、純利益0.189百万円を計上したが、本業の営業赤字は継続。10/23の日本酒流通実証は新たなIoT・Web3活用分野だが、売上金額・業績寄与は未開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "小型Linuxマイクロサーバー、IoTゲートウェイ、ネットワークアプライアンス等の開発・製造・販売と、関連ソフトウェア・サービスを展開。決算短信ではコンピューター関連製品・サービスの単一セグメント。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/30、INTMAXとThingsToken・Plasma FreeによるRWA汎用トークンプロトコルの商用化を目的に提携。8/22、冗長化DHCP ASを発表（標準5000/2500モデル税抜参考価格54万円/35万円、出荷開始は9月上旬予定）。8/27、大曲の花火公式アプリを発表し、8/26から配布、2025年3月末まで提供予定。10/23、酒造・酒類卸・真空技術・保険等の6社で流通パッケージングシステム推進協議会を設立し、真空低温配送、IoT状態監視、Web3/ThingsToken等を用いた日本酒流通の実証を開始。協議会は流通時間・経費等を概ね30%以上削減することを目指す。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高260.792百万円、営業損失30.908百万円、経常利益0.491百万円、純利益0.189百万円。6月末の現金及び預金220.966百万円、純資産403.618百万円、自己資本比率55.4%。通期予想は売上高1,160百万円、営業損失40百万円、経常利益20百万円、純利益15百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常・純利益は営業外収益の補助金32.934百万円が大きく寄与し、営業黒字化を示さない。短信は継続的な営業損失等を継続企業に関する重要な疑義を生じさせる状況として記載する一方、会社は重要な不確実性はないと判断し、継続企業注記を付していない。8/22資料の出荷開始日は発表時点での予定。10/23資料は実証・研究開発の開始と削減目標を記したもので、実績・受注・売上額を示していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-30 Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表(16:00)](https://www.plathome.co.jp/press-release/20240730-intmax-partnership/)\n・[2024-08-09 2025年3月期 第1四半期決算短信〔日本基準〕（非連結）(16:00)](https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf)\n・[2024-08-22 ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売(14:00)](https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf)\n・[2024-08-27 ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始(11:00)](https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf)\n・[2024-10-23 真空技術とWeb3技術を活用したあたらしい日本酒体験創出のための流通実証事業の開始について(11:00)](https://www.plathome.co.jp/wp-content/uploads/20241023nihonshu-iot.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ぷらっとホーム IR 開示資料・リリース一覧](https://www.plathome.co.jp/ir/disclosure/archive/)\n・[ぷらっとホーム プレスリリース一覧](https://www.plathome.co.jp/press-release/)\n・[6836 ぷらっとホーム 適時開示一覧](https://irbank.net/6836/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/ir/disclosure/archive/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/ir/disclosure/archive/",
+            "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf"
+          ],
+          "result": "会社IRの開示資料一覧とJPX公式Q1決算短信本文を確認し、実績、通期予想、財政状態、継続企業に関する記載を照合。"
+        },
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/press-release/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/press-release/",
+            "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+            "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+            "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf",
+            "https://www.plathome.co.jp/press-release/20241023-nihonshu-iot/",
+            "https://www.plathome.co.jp/wp-content/uploads/20241023nihonshu-iot.pdf"
+          ],
+          "result": "会社公式リリース本文を確認。10/23は6社協議会による流通システムの研究・開発・実証事業開始で、目標は実績ではなく売上・受注金額も開示されていない。既存の製品出荷予定、アプリ配布、RWA提携も本文に沿って記載。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6836/ir",
+          "checkedUrls": [
+            "https://irbank.net/6836/ir",
+            "https://www.plathome.co.jp/ir/"
+          ],
+          "result": "IR時系列で8/9決算短信16:00を確認。10/23以前に掲載された対象資料の時刻を照合し、cutoff後の情報を含めていない。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+          "checkedUrls": [
+            "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+            "https://prtimes.jp/main/html/rd/p/000000155.000013751.html",
+            "https://prtimes.jp/main/html/rd/p/000000156.000013751.html"
+          ],
+          "result": "8/22、8/27、10/23の会社リリース配信ページに明示された公表時刻（14:00、11:00、11:00）を照合。本文の内容は会社公式リリース/PDFで確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表",
+          "publishedAt": "2024-07-30T16:00:00+09:00",
+          "url": "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-08-09T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売",
+          "publishedAt": "2024-08-22T14:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始",
+          "publishedAt": "2024-08-27T11:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "真空技術とWeb3技術を活用したあたらしい日本酒体験創出のための流通実証事業の開始について",
+          "publishedAt": "2024-10-23T11:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/20241023nihonshu-iot.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selector・cutoffと候補を照合。採用資料はcutoff以前に公開された会社公式またはJPX一次資料で本文を確認。",
+        "10/23の協議会発足は研究・開発・実証の開始として記載し、協議会の物流削減目標を実績や会社売上に読み替えていない。",
+        "8/22の出荷予定と8/27の配布開始済みを区別。営業赤字と営業外補助金収入を区別し、財務状況は1Qの数値として扱った。"
+      ]
     },
     {
       "signalDate": "2026-06-05",
@@ -12785,6 +13879,66 @@
       "imported_at": "2026-09-27T17:58:08.646114+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "f4e2fd81d6ae09c0497c3524b923cc262478de8a428ff8ab88bae40fd942a0d6"
+    },
+    {
+      "identity": "2024-09-05|7776",
+      "imported_at": "2026-09-27T18:04:20.863909+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "9b635b33ebf9232a89a6467db84891ce0caefb977c316e86285b0243056bfdb9"
+    },
+    {
+      "identity": "2024-09-30|6836",
+      "imported_at": "2026-09-27T18:14:15.297852+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "ba49f56f54fb9b0b58af40a1c5fd971603a7c41a3103d76eb1bdb55c3e26099d"
+    },
+    {
+      "identity": "2024-10-04|6836",
+      "imported_at": "2026-09-27T18:14:19.965917+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "a92d02ad535830c5da53721d10a73e60aa36c10a67e578487bbb31debb1ba870"
+    },
+    {
+      "identity": "2024-09-30|8894",
+      "imported_at": "2026-09-27T18:14:37.075959+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "a97126ac572d997858311358ff82813907dcbe2872a52971bd1c636eb81af565"
+    },
+    {
+      "identity": "2024-10-10|8894",
+      "imported_at": "2026-09-27T18:14:41.856300+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "85f6e4ca7031341701cb6a82c29ccb8476e80f495ce847ff35b2baf91d0b704e"
+    },
+    {
+      "identity": "2024-09-11|3350",
+      "imported_at": "2026-09-27T18:16:09.012681+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "1cd53324b326e1f27fea67ae126af937a7cdfac84d2fb9cab0fd72b2165504df"
+    },
+    {
+      "identity": "2024-10-02|3070",
+      "imported_at": "2026-09-27T18:19:12.427045+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "581634795b270833edd2500b4a5eeb8f5cdf4f0eb11536bd6e8a2acd4a906b52"
+    },
+    {
+      "identity": "2024-10-25|6836",
+      "imported_at": "2026-09-27T18:19:17.064890+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "1810d8a52d6f8d23dc81789b2b1f0635beb1916bd6267593f080bdd50e7c2f7b"
+    },
+    {
+      "identity": "2024-09-17|190A",
+      "imported_at": "2026-09-27T18:20:15.736416+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "86dd3e5632f8b7f43fa1bcb648c6109268492f6c3c54fcfc2cf74865b7a64fdc"
+    },
+    {
+      "identity": "2024-09-18|190A",
+      "imported_at": "2026-09-27T18:20:20.373380+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "1283ba1f874d1f54d9b16d99863aadde0d95d2f5bb703f0f4611f9210bf7ba78"
     }
   ]
 }

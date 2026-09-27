@@ -1,0 +1,133 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-10-25|6836",
+      "signalDate": "2024-10-25",
+      "symbolCode": "6836",
+      "companyName": "ぷらっとホーム",
+      "analysisCutoff": "2024-10-25T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:18:33+09:00",
+      "summary": "2025年3月期1Qは売上高261百万円（前年同期比+12.2%）も営業損失31百万円。10/23、真空・IoT・Web3技術を使う日本酒流通実証を6社で開始したが、事業は研究・開発・実証段階で売上・受注額は示されていない。",
+      "materialImpact": "Q1の増収に対し営業赤字が続き、経常・純利益は補助金収入に支えられる構造。10/23の流通実証はIoT・Web3を日本酒サプライチェーンへ展開する材料だが、取引額や会社業績への寄与は開示されていない。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは売上高260.792百万円（+12.2%）、営業損失30.908百万円。営業外の補助金収入32.934百万円を主因に経常利益0.491百万円、純利益0.189百万円を計上したが、本業の営業赤字は継続。10/23の日本酒流通実証は新たなIoT・Web3活用分野だが、売上金額・業績寄与は未開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "小型Linuxマイクロサーバー、IoTゲートウェイ、ネットワークアプライアンス等の開発・製造・販売と、関連ソフトウェア・サービスを展開。決算短信ではコンピューター関連製品・サービスの単一セグメント。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/30、INTMAXとThingsToken・Plasma FreeによるRWA汎用トークンプロトコルの商用化を目的に提携。8/22、冗長化DHCP ASを発表（標準5000/2500モデル税抜参考価格54万円/35万円、出荷開始は9月上旬予定）。8/27、大曲の花火公式アプリを発表し、8/26から配布、2025年3月末まで提供予定。10/23、酒造・酒類卸・真空技術・保険等の6社で流通パッケージングシステム推進協議会を設立し、真空低温配送、IoT状態監視、Web3/ThingsToken等を用いた日本酒流通の実証を開始。協議会は流通時間・経費等を概ね30%以上削減することを目指す。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高260.792百万円、営業損失30.908百万円、経常利益0.491百万円、純利益0.189百万円。6月末の現金及び預金220.966百万円、純資産403.618百万円、自己資本比率55.4%。通期予想は売上高1,160百万円、営業損失40百万円、経常利益20百万円、純利益15百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常・純利益は営業外収益の補助金32.934百万円が大きく寄与し、営業黒字化を示さない。短信は継続的な営業損失等を継続企業に関する重要な疑義を生じさせる状況として記載する一方、会社は重要な不確実性はないと判断し、継続企業注記を付していない。8/22資料の出荷開始日は発表時点での予定。10/23資料は実証・研究開発の開始と削減目標を記したもので、実績・受注・売上額を示していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-30 Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表(16:00)](https://www.plathome.co.jp/press-release/20240730-intmax-partnership/)\n・[2024-08-09 2025年3月期 第1四半期決算短信〔日本基準〕（非連結）(16:00)](https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf)\n・[2024-08-22 ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売(14:00)](https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf)\n・[2024-08-27 ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始(11:00)](https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf)\n・[2024-10-23 真空技術とWeb3技術を活用したあたらしい日本酒体験創出のための流通実証事業の開始について(11:00)](https://www.plathome.co.jp/wp-content/uploads/20241023nihonshu-iot.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ぷらっとホーム IR 開示資料・リリース一覧](https://www.plathome.co.jp/ir/disclosure/archive/)\n・[ぷらっとホーム プレスリリース一覧](https://www.plathome.co.jp/press-release/)\n・[6836 ぷらっとホーム 適時開示一覧](https://irbank.net/6836/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/ir/disclosure/archive/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/ir/disclosure/archive/",
+            "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf"
+          ],
+          "result": "会社IRの開示資料一覧とJPX公式Q1決算短信本文を確認し、実績、通期予想、財政状態、継続企業に関する記載を照合。"
+        },
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/press-release/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/press-release/",
+            "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+            "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+            "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf",
+            "https://www.plathome.co.jp/press-release/20241023-nihonshu-iot/",
+            "https://www.plathome.co.jp/wp-content/uploads/20241023nihonshu-iot.pdf"
+          ],
+          "result": "会社公式リリース本文を確認。10/23は6社協議会による流通システムの研究・開発・実証事業開始で、目標は実績ではなく売上・受注金額も開示されていない。既存の製品出荷予定、アプリ配布、RWA提携も本文に沿って記載。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6836/ir",
+          "checkedUrls": [
+            "https://irbank.net/6836/ir",
+            "https://www.plathome.co.jp/ir/"
+          ],
+          "result": "IR時系列で8/9決算短信16:00を確認。10/23以前に掲載された対象資料の時刻を照合し、cutoff後の情報を含めていない。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+          "checkedUrls": [
+            "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+            "https://prtimes.jp/main/html/rd/p/000000155.000013751.html",
+            "https://prtimes.jp/main/html/rd/p/000000156.000013751.html"
+          ],
+          "result": "8/22、8/27、10/23の会社リリース配信ページに明示された公表時刻（14:00、11:00、11:00）を照合。本文の内容は会社公式リリース/PDFで確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表",
+          "publishedAt": "2024-07-30T16:00:00+09:00",
+          "url": "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-08-09T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売",
+          "publishedAt": "2024-08-22T14:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始",
+          "publishedAt": "2024-08-27T11:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "真空技術とWeb3技術を活用したあたらしい日本酒体験創出のための流通実証事業の開始について",
+          "publishedAt": "2024-10-23T11:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/20241023nihonshu-iot.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifest identity・会社名・selector・cutoffと候補を照合。採用資料はcutoff以前に公開された会社公式またはJPX一次資料で本文を確認。",
+        "10/23の協議会発足は研究・開発・実証の開始として記載し、協議会の物流削減目標を実績や会社売上に読み替えていない。",
+        "8/22の出荷予定と8/27の配布開始済みを区別。営業赤字と営業外補助金収入を区別し、財務状況は1Qの数値として扱った。"
+      ]
+    }
+  ]
+}

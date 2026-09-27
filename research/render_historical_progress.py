@@ -47,10 +47,20 @@ def main() -> None:
     active_pending = {item["identity"] for item in records if item["status"] != "complete" and item["identity"] in active_ids}
     active_items = [item for item in state.get("active", []) if item["identity"] in active_pending]
     next_records = [item for item in records if item["status"] != "complete" and item["identity"] not in excluded | active_ids][:8]
-    stage_counts = Counter(item["status"] for item in active_items)
+    stage_counts = Counter()
+    for item in active_items:
+        status = item["status"]
+        if status in {"資料確認済み", "候補作成中", "監査完了"}:
+            stage_counts[status] += 1
+        else:
+            stage_counts["資料確認中"] += 1
     later = pending - len(active_pending)
     active_rows = "".join(row(item["identity"], item["detail"], item["status"]) for item in active_items)
     next_rows = "".join(row(item["identity"], item.get("company_name", ""), "未着手") for item in next_records)
+    hold_rows = "".join(
+        f'<tr><th scope="row">{escape(identity)}</th><td>{escape(state.get("hold_details", {}).get(identity, "証拠確認中"))}</td></tr>'
+        for identity in state.get("known_holds", [])
+    )
     year_rows = "".join(
         f'<tr><th scope="row">{escape(year)}</th><td>{year_complete[year]} / {year_totals[year]}</td>'
         f'<td><div class="year-track"><div class="year-fill" style="width:{100 * year_complete[year] / year_totals[year]:.1f}%"></div></div></td></tr>'
@@ -131,7 +141,7 @@ def main() -> None:
 </div><div>
   <section><h2>年別の完了状況</h2><table><thead><tr><th>年</th><th>完了 / 対象</th><th>進捗</th></tr></thead><tbody>{year_rows}</tbody></table></section>
   <section><h2>公開・検証</h2><div class="meta"><p><strong>次回反映</strong>{escape(state['release_plan'])}</p><p><strong>公開tag</strong>{escape(state['last_deploy_tag'])}</p><p><strong>公開状況</strong>{escape(state['deploy_status'])}</p><p><strong>リモートHEAD</strong><code>{escape(state['remote_head'])[:12]}</code></p><p><strong>Cloud</strong><a href="{root_url}">公開レポート</a></p><p><strong>Discord履歴投稿</strong>0件</p></div></section>
-  <section><h2>既知の保留</h2><p class="muted">{escape(' / '.join(state.get('known_holds', [])))}</p><p class="muted note">確認済みの不足証拠を同じ方法で再探索しません。</p></section>
+  <section><h2>既知の保留</h2><table><thead><tr><th>検出日・コード</th><th>不足している証拠</th></tr></thead><tbody>{hold_rows}</tbody></table><p class="muted note">確認済みの不足証拠を同じ方法で再探索しません。</p></section>
 </div></div>
 </body></html>
 """

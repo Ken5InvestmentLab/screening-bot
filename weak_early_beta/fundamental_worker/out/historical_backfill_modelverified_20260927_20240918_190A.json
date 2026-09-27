@@ -1,0 +1,84 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-09-18|190A",
+      "signalDate": "2024-09-18",
+      "symbolCode": "190A",
+      "companyName": "Ｃｈｏｒｄｉａ　Ｔｈｅｒａｐｅｕｔｉｃｓ",
+      "analysisCutoff": "2024-09-18T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:19:34+09:00",
+      "summary": "2024年8月期3Q累計は事業収益なし、営業損失1,180百万円。通期も事業収益なし・営業損失2,273百万円の予想を維持。5月末現預金3,257百万円、継続企業の前提に関する注記なし。",
+      "materialImpact": "創薬研究開発段階で売上収益がなく、研究開発費により損失が続く。一方、5月末現預金3,257百万円、純資産3,323百万円で、Q3短信に継続企業の前提に関する注記はない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "7/16時点の最新決算は8月期3Q累計で事業収益なし、営業損失1,180百万円。CTX-712などの研究開発が進む一方、候補薬の承認・販売や売上化は確定していない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "がん領域の低分子創薬を主軸とする研究開発型企業。CLK阻害薬CTX-712、MALT1阻害薬CTX-177、CDK12阻害薬CTX-439などの開発を進める。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/16開示のQ3短信では、CTX-712の日本第1相試験で固形がん46例・血液がん14例、計60例の登録完了を記載。米国の血液がん第1/2相は5月末時点16例投与。試験段階の情報で、承認・商用化を示すものではない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年8月期3Q累計（2023年9月～2024年5月）は事業収益0百万円、営業損失1,180百万円、経常損失1,175百万円、四半期純損失1,177百万円。5月末総資産3,462百万円、純資産3,323百万円、現金及び預金3,257百万円、自己資本比率95.2%。通期予想は事業収益0百万円、営業損失2,273百万円、経常損失2,278百万円、純損失2,280百万円で、直近予想から変更なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "Q3短信の試験データは初期臨床段階で、将来の有効性・承認・売上を保証しない。2024年8月期の通期業績は予想値で実績ではない。Q3短信には継続企業の前提に関する注記はない。9/18付社長インタビューは公表時刻を確認できず、16:15 cutoff内と証明できないため採用していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-16 2024年8月期 第3四半期決算短信〔日本基準〕（非連結）(13:00)](https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[Chordia Therapeutics 公式IRニュース一覧](https://www.chordiatherapeutics.com/ja/ir/news.html)\n・[Chordia Therapeutics 決算短信・決算説明会資料一覧](https://www.chordiatherapeutics.com/ja/ir/library/result.html)\n・[190A 適時開示一覧（IRBANK、2024-09-18時点）](https://irbank.net/190A/ir?y=2024-09-18)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.chordiatherapeutics.com/ja/ir/news.html",
+          "checkedUrls": [
+            "https://www.chordiatherapeutics.com/ja/ir/news.html",
+            "https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf",
+            "https://www.chordiatherapeutics.com/ja/ir/library/result.html"
+          ],
+          "result": "会社公式IRニュース一覧と7/16 Q3短信本文を確認。Q3累計損益・5月末財政状態・通期予想・継続企業注記、CTX-712の症例登録進捗を照合。公式一覧で9/17及び9/18 cutoff時点までの公表資料を確認し、9/25決算発表予定はcutoff後として除外。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/190A/ir?y=2024-09-18",
+          "checkedUrls": [
+            "https://irbank.net/190A/ir?y=2024-09-18"
+          ],
+          "result": "適時開示一覧で7/16 13:00 Q3短信を照合。9/17は同日cutoffまで新たな重要開示なし。9/18付社長インタビューは公表時刻を確定できず、cutoff前とみなしていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年8月期 第3四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-07-16T13:00:00+09:00",
+          "url": "https://www.chordiatherapeutics.com/ja/ir/news/auto_20240716549720/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-09-30|8894",
+      "signalDate": "2024-09-30",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-09-30T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:14:13+09:00",
+      "summary": "2024年10月期3Q累計は売上高3,056百万円、営業損失112百万円。WeCapital子会社化、10対1株式併合、普通株・第6/7回新株予約権の発行は株主総会前の提案。",
+      "materialImpact": "不動産事業の拡大に向け株式交付や資本政策を提案。実施時には大幅な株式数増加が見込まれるが、cutoff時点では総会承認前で、資金調達・子会社化・併合は未成立。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "8/30提案はWeCapital株式を1株取得につき自社株12,429株交付、下限25,148株取得時の会社公表予定発行数312,562,500株。普通株13,636,200株を22円で発行する案と、第6回53,480,000株・第7回106,960,000株を潜在株式とする予約権案も提示。いずれも株主総会等の条件付き。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業などを展開。2024年10月期3Q累計では不動産事業を主軸に売上を計上。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9/27訂正で10対1併合後の普通株式数は理論値74,421,204株（併合前744,212,044株）に修正。9/29招集通知訂正では第6回予約権の発行払込額を17,113,600円、第7回を34,227,200円に訂正。総会承認前で発行・交付は未実施。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年10月期3Q累計（2023年11月～2024年7月）は売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円、自己資本比率43.7%。通期予想は売上5,021百万円、営業利益373百万円、経常利益388百万円、純利益373百万円。継続企業の前提に関する重要な不確実性の記載なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "株式交付、第三者割当、予約権発行、株式併合はcutoff時点で株主承認前。8/30資料の予約権行使時調達額は全行使を仮定した金額で、発行時の払込額ではなく未受領。WeCapitalの募集総額は同社プラットフォームの取扱額であり、REVOLUTIONの売上ではない。9/29招集通知訂正の掲載日は確認できるが、公開時刻は会社一覧で確認できない。 会社公表の下限25,148株×交換比率12,429株の積は312,564,492株で、公表予定発行数312,562,500株と1,992株異なる。公表値を引用し、こちらで補正していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q決算短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736)\n・[2024-08-30 WeCapital株式交付(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579149.pdf)\n・[2024-08-30 10対1併合案(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579156.pdf)\n・[2024-08-30 普通株割当案(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579155.pdf)\n・[2024-08-30 第6回予約権(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579152.pdf)\n・[2024-08-30 第7回予約権(17:30)](https://www2.jpx.co.jp/disc/88940/140120240830579154.pdf)\n・[2024-09-27 併合訂正(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1711/3acfe824d29e7cde77a34b0a4ba60e8f.pdf?v=1727417855)\n・[2024-09-29 招集通知訂正(時刻非公表)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[REVOLUTION 公式株主総会資料一覧](https://revolution.co.jp/ir/shareholder-meetings/)\n・[8894 適時開示一覧（IRBANK、2024-09-30）](https://irbank.net/8894/ir?y=2024-09-30)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579149.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579156.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579155.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579152.pdf",
+            "https://www2.jpx.co.jp/disc/88940/140120240830579154.pdf",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1711/3acfe824d29e7cde77a34b0a4ba60e8f.pdf?v=1727417855",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446"
+          ],
+          "result": "会社公式IR掲載ページとリンク先のJPX/会社公式PDF本文を確認。第3四半期累計値・通期予想、8/30のWeCapital株式交付・株式併合・普通株発行・第6/7回予約権の条件を照合。9/27訂正の併合後理論株数、9/29訂正の第6/7回予約権発行払込額を照合。9/29の公開時刻は会社一覧に表示されないため日付精度で記録し、前日公開を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-09-30",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-09-30",
+            "https://revolution.co.jp/ir/shareholder-meetings/"
+          ],
+          "result": "IRBankと会社公式株主総会資料一覧で開示日を確認。9/29訂正は会社一覧が日付のみ表示し、時刻は未公表。9/13、8/30、9/27、9/29の資料はいずれも9/30 16:15 cutoff以前。9/30 16:45の総会決議・親会社異動はcutoff後で本候補には反映していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式交付によるWeCapital株式会社の子会社化に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579149.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式併合及び定款の一部変更に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579156.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による普通株式の発行に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579155.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による第6回新株予約権の発行に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579152.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による第7回新株予約権の発行に関するお知らせ",
+          "publishedAt": "2024-08-30T17:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/88940/140120240830579154.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式併合及び定款の一部変更に関する訂正",
+          "publishedAt": "2024-09-27T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1711/3acfe824d29e7cde77a34b0a4ba60e8f.pdf?v=1727417855",
+          "contentReviewed": true
+        },
+        {
+          "title": "招集通知記載事項の一部訂正について",
+          "publishedAt": "2024-09-29T00:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only; time not disclosed on company listing"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

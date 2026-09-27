@@ -1,0 +1,113 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-10-10|8894",
+      "signalDate": "2024-10-10",
+      "symbolCode": "8894",
+      "companyName": "ＲＥＶＯＬＵＴＩＯＮ",
+      "analysisCutoff": "2024-10-10T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:14:13+09:00",
+      "summary": "8/30に提案されたWeCapital株式交付・株式併合・第三者割当は9/30総会で承認。10/8に普通株13,181,700株の発行と払込289.997百万円が完了。",
+      "materialImpact": "普通株発行による資金流入と新株予約権発行が実行された。WeCapital株式交付・株式併合は承認済みだが、10/10時点で効力発生前。予約権の行使調達額は将来の全行使を仮定した未実現額。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "9/30総会でWeCapital株式交付、10対1株式併合、普通株発行、第6/7回新株予約権等が承認。10/4に普通株発行数を13,181,700株へ確定し、10/8に22円での払込289,997,400円が完了。"
+        },
+        {
+          "name": "事業概要",
+          "value": "不動産売買・開発を中心に、不動産クレジット事業等を運営。WeCapitalの株式交付により不動産クラウドファンディング事業を傘下に加える計画。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9/30総会で6議案が承認されたが、WeCapital株式交付の効力発生日は10/11、10対1併合は10/21予定で、いずれも10/10には未発効。9/30開示のFO1議決権比率62.83%から34.12%への低下と親会社異動は見込みとして記載。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "最新決算は2024年10月期3Q累計（2023年11月～2024年7月）で、売上高3,056百万円（前年同期比31.7%増）、営業損失112百万円、経常損失127百万円、親会社株主帰属純損失118百万円。7月末現預金597.815百万円、純資産1,550百万円。通期予想は売上5,021百万円、営業利益373百万円、経常利益388百万円、純利益373百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "10/8に第三者割当普通株13,181,700株×22円＝289,997,400円の払込を確認。第6/7回予約権の発行払込額17,113,600円・34,227,200円も払込済みだが、行使時調達額1,176,560,000円・2,353,120,000円は全行使時の想定で未受領。WeCapital株式交付・併合は10/10時点で効力発生前。9/30親会社異動も確定済みとは扱わない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-09-13 3Q決算短信(16:30)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736)\n・[2024-09-30 総会決議(16:45)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1713/57122a39ac15ab2cd2ddf84d5b5465b2.pdf?v=1727681959)\n・[2024-09-30 親会社異動(16:45)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1712/020e8656988f81e151f37668260e9f85.pdf?v=1727681924)\n・[2024-10-08 払込完了(16:00)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1715/c28bde478e20abdc45826080f82cab37.pdf?v=1728370823)\n・[2024-10-04 申込結果(17:10)](https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1714/913924d35bddd779e9c6b20ced82e9f2.pdf?v=1728029417)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[REVOLUTION 公式IRニュース一覧](https://revolution.co.jp/ir/news/?limit=500&month=12)\n・[REVOLUTION 公式株主総会資料一覧](https://revolution.co.jp/ir/shareholder-meetings/)\n・[8894 適時開示一覧（IRBANK、2024-10-10）](https://irbank.net/8894/ir?y=2024-10-10)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://revolution.co.jp/ir/news/?limit=500&month=12",
+          "checkedUrls": [
+            "https://revolution.co.jp/ir/news/?limit=500&month=12",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_shareholder_meetings/1059/33b2e5dd136e4ebec6e8b20511e7ae96.pdf?v=1727603446",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1713/57122a39ac15ab2cd2ddf84d5b5465b2.pdf?v=1727681959",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1712/020e8656988f81e151f37668260e9f85.pdf?v=1727681924",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1714/913924d35bddd779e9c6b20ced82e9f2.pdf?v=1728029417",
+            "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1715/c28bde478e20abdc45826080f82cab37.pdf?v=1728370823"
+          ],
+          "result": "会社公式IR掲載ページとリンク先PDF本文を確認。総会の6議案承認、親会社異動見込み、10/4申込数変更、10/8払込完了と株式数・金額を照合。10/8時点で株式発行及び予約権発行払込は完了したが、予約権の行使調達額は未実現。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8894/ir?y=2024-10-10",
+          "checkedUrls": [
+            "https://irbank.net/8894/ir?y=2024-10-10",
+            "https://revolution.co.jp/ir/shareholder-meetings/"
+          ],
+          "result": "会社公式IR/適時開示時系列で9/30 16:45、10/4 17:10、10/8 16:00を確認。全件cutoff以前。9/29訂正の掲載時刻は公式ページに表示されないため日付精度で扱う。10/11のWeCapital株式交付完了はcutoff後のため含めていない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年10月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-09-13T16:30:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1709/71503b8d79b0cbf23fa8c605a2543042.pdf?v=1726212736",
+          "contentReviewed": true
+        },
+        {
+          "title": "臨時株主総会及び種類株主総会の決議に関するお知らせ",
+          "publishedAt": "2024-09-30T16:45:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1713/57122a39ac15ab2cd2ddf84d5b5465b2.pdf?v=1727681959",
+          "contentReviewed": true
+        },
+        {
+          "title": "親会社及び主要株主の異動に関するお知らせ",
+          "publishedAt": "2024-09-30T16:45:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1712/020e8656988f81e151f37668260e9f85.pdf?v=1727681924",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による普通株式発行及び第6回・第7回新株予約権発行の払込完了に関するお知らせ",
+          "publishedAt": "2024-10-08T16:00:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1715/c28bde478e20abdc45826080f82cab37.pdf?v=1728370823",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による普通株式発行の申込結果に関するお知らせ",
+          "publishedAt": "2024-10-04T17:10:00+09:00",
+          "url": "https://s3-ap-northeast-1.amazonaws.com/revolution-prod/files/ir_news/1714/913924d35bddd779e9c6b20ced82e9f2.pdf?v=1728029417",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

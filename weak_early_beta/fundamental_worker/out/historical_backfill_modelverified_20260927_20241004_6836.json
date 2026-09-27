@@ -1,0 +1,128 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-10-04|6836",
+      "signalDate": "2024-10-04",
+      "symbolCode": "6836",
+      "companyName": "ぷらっとホーム",
+      "analysisCutoff": "2024-10-04T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:13:26+09:00",
+      "summary": "2025年3月期1Qは増収だが営業損失30.9百万円。補助金収入32.9百万円を主因に経常・純利益は小幅黒字となった。通期予想は据置。",
+      "materialImpact": "増収も営業赤字が継続。経常・純利益は補助金収入に大きく支えられており、本業の黒字化を示す内容ではない。新製品発表やアプリ提供開始はあるが、売上額・受注額は開示されていない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年3月期1Qは売上高260.792百万円（前年同期比+12.2%）、営業損失30.908百万円。補助金収入32.934百万円を主因に経常利益0.491百万円、純利益0.189百万円を計上したが、本業の営業赤字は継続。"
+        },
+        {
+          "name": "事業概要",
+          "value": "小型Linuxマイクロサーバー、IoTゲートウェイ、ネットワークアプライアンス等の開発・製造・販売と、関連ソフトウェア・サービスを展開。決算短信ではコンピューター関連製品・サービスの単一セグメント。"
+        },
+        {
+          "name": "足元材料",
+          "value": "7/30、INTMAXとThingsTokenおよびPlasma Freeを組み合わせたRWA汎用トークンプロトコルの商用化を目的に提携。8/22、冗長化対応DHCP ASを発表（標準5000/2500モデルの税抜参考価格54万円/35万円、出荷開始は9月上旬予定）。8/27、大曲の花火公式アプリの提供開始を発表し、8/26から配布、提供期間は2025年3月末までの予定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高260.792百万円、営業損失30.908百万円、経常利益0.491百万円、純利益0.189百万円。6月末の現金及び預金220.966百万円、純資産403.618百万円、自己資本比率55.4%。通期予想は売上高1,160百万円、営業損失40百万円、経常利益20百万円、純利益15百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常・純利益は営業外収益の補助金32.934百万円が大きく寄与し、営業黒字化を示さない。短信は継続的な営業損失等を継続企業に関する重要な疑義を生じさせる状況として記載する一方、会社は重要な不確実性はないと判断し、継続企業注記を付していない。DHCP製品の出荷開始は発表時点での予定で、同発表に受注・売上金額の記載はない。Q1の四半期キャッシュ・フロー計算書は作成されていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-07-30 Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表(16:00)](https://www.plathome.co.jp/press-release/20240730-intmax-partnership/)\n・[2024-08-09 2025年3月期 第1四半期決算短信〔日本基準〕（非連結）(16:00)](https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf)\n・[2024-08-22 ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売(14:00)](https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf)\n・[2024-08-27 ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始(11:00)](https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ぷらっとホーム IR 開示資料・リリース一覧](https://www.plathome.co.jp/ir/disclosure/archive/)\n・[ぷらっとホーム プレスリリース一覧](https://www.plathome.co.jp/press-release/)\n・[6836 ぷらっとホーム 適時開示一覧](https://irbank.net/6836/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/ir/disclosure/archive/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/ir/disclosure/archive/",
+            "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf"
+          ],
+          "result": "会社IRの開示資料一覧とJPX掲載の公式四半期決算短信本文を確認。短信の実績、通期予想、財政状態、継続企業に関する記載を照合した。"
+        },
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.plathome.co.jp/press-release/",
+          "checkedUrls": [
+            "https://www.plathome.co.jp/press-release/",
+            "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+            "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+            "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf"
+          ],
+          "result": "会社公式リリース本文と掲載情報を確認。提携の目的、製品価格・発表時点の出荷予定、アプリの配布開始・提供予定期間を本文に沿って記載し、確定売上として扱っていない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6836/ir",
+          "checkedUrls": [
+            "https://irbank.net/6836/ir",
+            "https://www.plathome.co.jp/ir/"
+          ],
+          "result": "IR時系列で2024-08-09決算短信の公表時刻16:00を照合。対象cutoffまでの会社IR一覧も確認し、後日開示を対象時点へ混入していない。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+          "checkedUrls": [
+            "https://prtimes.jp/main/html/rd/p/000000154.000013751.html",
+            "https://prtimes.jp/main/html/rd/p/000000155.000013751.html"
+          ],
+          "result": "会社サイトの内部掲載時刻ではなく、各リリースの配信記録に明示された公表時刻（8/22 14:00、8/27 11:00）に統一。開示本文の事実は会社公式PDFで照合。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "Plat’HomeとINTMAX、「モノ」を記述するRWAの汎用トークンプロトコルの商用化に向け事業提携を発表",
+          "publishedAt": "2024-07-30T16:00:00+09:00",
+          "url": "https://www.plathome.co.jp/press-release/20240730-intmax-partnership/",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年3月期 第1四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2024-08-09T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/68360/140120240808567947.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム、冗長化機能を搭載し、コストパフォーマンスに優れたDHCPサーバーアプライアンス「EasyBlocks DHCP AS 5000 / 2500」を発売",
+          "publishedAt": "2024-08-22T14:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/20240822_ebdhcpas.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ぷらっとホーム 秋田県で開催される日本最大級の花火競技大会「大曲の花火」へスマートフォン用公式アプリケーションを提供開始",
+          "publishedAt": "2024-08-27T11:00:00+09:00",
+          "url": "https://www.plathome.co.jp/wp-content/uploads/oomagari_hanabi_20240827.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "候補のidentity、cutoff、selectorsをmanifestと照合。採用した資料は全てcutoff以前に公表され、会社公式またはJPXの一次資料本文を確認。",
+        "出荷予定を実績へ読み替えず、提携・アプリ・製品発表に売上金額を付与していない。Q1の営業赤字と営業外補助金収入を区別した。",
+        "8/22・8/27の公表時刻はPR TIMESの配信記録で再照合し、Premiumリンクとdisclosuresを14:00・11:00に統一。"
+      ]
+    }
+  ]
+}

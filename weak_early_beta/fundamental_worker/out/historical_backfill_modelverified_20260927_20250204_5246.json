@@ -1,0 +1,107 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-02-04|5246",
+      "signalDate": "2025-02-04",
+      "symbolCode": "5246",
+      "companyName": "ＥＬＥＭＥＮＴＳ",
+      "analysisCutoff": "2025-02-04T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:44:33+09:00",
+      "summary": "2024年11月期は売上高2,545百万円（前年比+31.2%）、営業利益57百万円と黒字化した一方、経常損失27百万円・親会社純損失133百万円。Polarifyの95.01%取得は3/27予定で未完了。2/4の定款変更案も2/27総会への付議決議段階。2025年11月期予想は非開示。",
+      "materialImpact": "売上成長と営業黒字化は改善材料だが、経常・最終損益は赤字。Polarify取得で本人確認の顧客基盤拡大を見込む一方、取得・連結化は未完了で当期への影響額は精査中。定款目的追加は新分野展開への準備であり、事業開始や売上を示すものではない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "売上成長と営業黒字化は改善材料だが、経常・最終損益は赤字。Polarify取得で本人確認の顧客基盤拡大を見込む一方、取得・連結化は未完了で当期への影響額は精査中。定款目的追加は新分野展開への準備であり、事業開始や売上を示すものではない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "生体認証・画像認識等を基盤に、オンライン本人確認サービス「LIQUID eKYC」を中心とする個人認証ソリューションを提供。IoP Cloudを通じて衣食住分野の個人最適化も手掛ける。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1/20、LIQUID eKYCの累計本人確認件数が6,000万件を突破（ICチップ方式は1,400万件超）。1/14にPolarify株82,534株を取得して議決権95.01%とする決議（取得対価1,539百万円、助言費18百万円、3/27予定）。2/4、データセンター運営・付帯機器の販売/貸与、古物買取/販売を定款目的へ追加する案を2/27総会に付議することを決議。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年11月期（2023/12〜2024/11）：売上高2,545.724百万円（+31.2%）、EBITDA343.089百万円、営業利益57.916百万円、経常損失27.290百万円、親会社株主帰属純損失132.915百万円。営業CFは+222.732百万円、期末現金同等物2,746.276百万円。2025年11月期業績予想は合理的・信頼性ある算定が困難として非開示。"
+        },
+        {
+          "name": "注意点",
+          "value": "営業利益は黒字だが経常・純損失が残る。2025年11月期予想は非開示。Polarify取得は3/27予定で2/4時点では未完了、取得後の業績影響も未確定。6,000万件は累計本人確認件数で売上高ではない。定款変更案は2/27総会の決議前であり、事業開始を意味しない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-01-14 2024年11月期 決算短信〔日本基準〕(連結)(16:00)](https://www2.jpx.co.jp/disc/52460/140120250110549478.pdf)\n・[2025-01-14 株式会社ポラリファイの株式の取得（子会社化）に関するお知らせ(16:00)](https://www2.jpx.co.jp/disc/52460/140120250110549155.pdf)\n・[2025-01-20 「LIQUID eKYC」累計本人確認件数6,000万件突破（時刻は会社資料に記載なし）](https://liquidinc.asia/news/2025-01-20)\n・[2025-02-04 定款一部変更に関するお知らせ(16:00)](https://www2.jpx.co.jp/disc/52460/140120250124555124.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ELEMENTS公式 適時開示一覧](https://ir.elementsinc.jp/disclosure/)\n・[Liquid公式 2025年ニュース一覧](https://liquidinc.asia/news/archive/2025)\n・[5246 適時開示一覧（IRBANK）](https://irbank.net/5246/ir?y=2025-02-04)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.elementsinc.jp/disclosure/",
+          "checkedUrls": [
+            "https://ir.elementsinc.jp/disclosure/",
+            "https://liquidinc.asia/news/archive/2025",
+            "https://www2.jpx.co.jp/disc/52460/140120250110549478.pdf",
+            "https://www2.jpx.co.jp/disc/52460/140120250110549155.pdf",
+            "https://www2.jpx.co.jp/disc/52460/140120250124555124.pdf",
+            "https://liquidinc.asia/news/2025-01-20"
+          ],
+          "result": "ELEMENTS公式IR一覧、JPX公式決算短信・Polarify取得決議・定款変更通知、Liquid公式1/20ニュース本文を確認。財務数値、予想非開示、取得比率・対価・予定日、定款目的追加案を照合。取得・定款変更は成立済みと扱わず、累計本人確認件数を売上と混同していない。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/5246/ir?y=2025-02-04",
+          "checkedUrls": [
+            "https://irbank.net/5246/ir?y=2025-02-04",
+            "https://irbank.net/ir/5246"
+          ],
+          "result": "1/14の決算・Polarify取得、2/4定款変更のTDnet公開時刻が16:00であることをIRBANKで照合し、2/4 16:15 JST cutoff内と確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年11月期 決算短信〔日本基準〕(連結)",
+          "publishedAt": "2025-01-14T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/52460/140120250110549478.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式会社ポラリファイの株式の取得（子会社化）に関するお知らせ",
+          "publishedAt": "2025-01-14T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/52460/140120250110549155.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "オンライン本人確認サービス「LIQUID eKYC」の累計本人確認件数が6,000万件を突破",
+          "publishedAt": "2025-01-20T00:00:00+09:00",
+          "publishedAtPrecision": "date_only; official company news page gives date only",
+          "url": "https://liquidinc.asia/news/2025-01-20",
+          "contentReviewed": true
+        },
+        {
+          "title": "定款一部変更に関するお知らせ",
+          "publishedAt": "2025-02-04T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/52460/140120250124555124.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": "FY2024決算、Polarify取得決議、累計本人確認件数、定款変更提案を一次資料で本文確認。2/5候補では招集通知も確認し、全てcutoff内の事実のみ採用。"
+    }
+  ]
+}

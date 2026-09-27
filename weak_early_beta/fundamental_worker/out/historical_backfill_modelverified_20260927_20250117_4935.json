@@ -1,0 +1,138 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-01-17|4935",
+      "signalDate": "2025-01-17",
+      "symbolCode": "4935",
+      "companyName": "リベルタ",
+      "analysisCutoff": "2025-01-17T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:41:39+09:00",
+      "summary": "2024年12月期3Q累計は売上高6,191.6百万円（前年同期比+24.8%）、営業損失24.2百万円、経常損失43.3百万円、親会社株主帰属純損失70.4百万円。11/14に通期予想を売上高8,400百万円、営業利益159百万円等へ下方修正。",
+      "materialImpact": "コスメや機能衣料などの増収で売上は伸びたが、前年同期の営業黒字から赤字へ転落。通期営業利益予想は294百万円から159百万円へ45.7%引下げられ、下期の利益回復が必要。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "コスメや機能衣料などの増収で売上は伸びたが、前年同期の営業黒字から赤字へ転落。通期営業利益予想は294百万円から159百万円へ45.7%引下げられ、下期の利益回復が必要。"
+        },
+        {
+          "name": "事業概要",
+          "value": "コスメ、機能衣料、浄水器・医療機器、生活雑貨等を企画・販売。ブランド開発と販促を軸に、国内外の卸売店・量販店・ECを通じて販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "直近の新規開示は1/15 12:00のSUMIDAY HAIR BALM新色ブラック（2/12発売予定、税込2,970円、Cosme Kitchen 10店舗・Biople 6店舗等）。1/6法定事後開示でVIVA合併の1/1効力発生も確認済み。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "3Q累計売上6,191.6百万円、営業損失24.2百万円、経常損失43.3百万円、純損失70.4百万円。9月末の現金及び預金1,042.0百万円、短期借入金1,950百万円、純資産1,526.0百万円、自己資本比率22.8%。通期予想は売上8,400、営業159、経常140、純利益74百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "冬物商戦に備えた在庫増で商品及び製品は前年末比約807百万円増。短期借入金も1,950百万円に増加。3Q短信に四半期キャッシュ・フロー計算書はなく、通期予想の達成や新規販路の寄与額は未確定。 1/15の新色は販売予定情報で、販売実績・数量は未開示。cutoffまでの追加IRは確認されていない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-11-14 3Q決算短信(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf)\n・[2024-11-14 連結予想修正(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf)\n・[2024-12-11 CIMA独占契約(12:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf)\n・[2024-12-25 海外子会社増資変更(18:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241225544676/pdfFile.pdf)\n・[2024-12-26 3Q説明会Q&A(11:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241226544897/pdfFile.pdf)\n・[2025-01-06 VIVA合併の事後開示(12:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20250106546523/pdfFile.pdf)\n・[2025-01-15 SUMIDAY新色発売(12:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20250115550996/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[リベルタ IRニュース一覧](https://ir.liberta-j.co.jp/ja/ir/news.html)\n・[リベルタ（4935）IR開示履歴](https://irbank.net/4935/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241225544676/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241226544897/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250106546523/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250115550996/pdfFile.pdf"
+          ],
+          "result": "会社公式IR一覧で掲載日と資料名を照合し、選択した公式PDF本文を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4935/ir",
+          "checkedUrls": [
+            "https://irbank.net/4935/ir?y=2025-01-17"
+          ],
+          "result": "1/15 12:00新色発表後、1/17 16:15 cutoffまで新規IRなし。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://irbank.net/4935/ir?y=2025-01-17"
+          ],
+          "result": "公式IR一覧で公表日・タイトル、IRBANKの開示履歴で公表時刻を照合。1/15 12:00新色発表後、1/17 16:15 cutoffまで新規IRなし。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2024-11-14T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "連結業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-11-14T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社によるCIMA LTCI LLCとの独占販売代理店契約締結に関するお知らせ",
+          "publishedAt": "2024-12-11T12:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（開示事項の変更）海外連結子会社の増資に関するお知らせ",
+          "publishedAt": "2024-12-25T18:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241225544676/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年12月期第３四半期決算説明会（動画配信）において投資家の皆様よりいただいたご質問と回答について",
+          "publishedAt": "2024-12-26T11:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241226544897/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "法定事後開示書類（吸収合併）（VIVAネットワーク株式会社）",
+          "publishedAt": "2025-01-06T12:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250106546523/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ヘアスタイリスト・shuco氏が手掛けるヘアバーム「SUMIDAY HAIR BALM」より新色発売のお知らせ",
+          "publishedAt": "2025-01-15T12:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250115550996/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "1/15公式PDF本文とIRBANK公表時刻を確認し、cutoffまでの追加開示なしを公式IR一覧で確認。",
+        "新色発売や海外販売契約について実績・収益として先取り計上していない。"
+      ]
+    }
+  ]
+}

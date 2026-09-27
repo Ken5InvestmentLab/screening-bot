@@ -1,0 +1,135 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-02-05|4935",
+      "signalDate": "2025-02-05",
+      "symbolCode": "4935",
+      "companyName": "リベルタ",
+      "analysisCutoff": "2025-02-05T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:41:39+09:00",
+      "summary": "2024年12月期3Q累計は売上高6,191.6百万円（前年同期比+24.8%）、営業損失24.2百万円、経常損失43.3百万円、親会社株主帰属純損失70.4百万円。11/14に通期予想を売上高8,400百万円、営業利益159百万円等へ下方修正。",
+      "materialImpact": "コスメや機能衣料などの増収で売上は伸びたが、前年同期の営業黒字から赤字へ転落。通期営業利益予想は294百万円から159百万円へ45.7%引下げられ、下期の利益回復が必要。",
+      "selectorNames": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "コスメや機能衣料などの増収で売上は伸びたが、前年同期の営業黒字から赤字へ転落。通期営業利益予想は294百万円から159百万円へ45.7%引下げられ、下期の利益回復が必要。"
+        },
+        {
+          "name": "事業概要",
+          "value": "コスメ、機能衣料、浄水器・医療機器、生活雑貨等を企画・販売。ブランド開発と販促を軸に、国内外の卸売店・量販店・ECを通じて販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1/31に横浜FC・ニッパツ横浜FCシーガルズと2025シーズンのオフィシャルサプライヤー契約を発表し、練習着として「氷撃α」を提供予定。契約料・販売効果は非開示。2/12予定のSUMIDAY新色、2/5 19:00予定のCAMPFIRE説明会も告知段階。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "3Q累計売上6,191.6百万円、営業損失24.2百万円、経常損失43.3百万円、純損失70.4百万円。9月末の現金及び預金1,042.0百万円、短期借入金1,950百万円、純資産1,526.0百万円、自己資本比率22.8%。通期予想は売上8,400、営業159、経常140、純利益74百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "冬物商戦に備えた在庫増で商品及び製品は前年末比約807百万円増。短期借入金も1,950百万円に増加。3Q短信に四半期キャッシュ・フロー計算書はなく、通期予想の達成や新規販路の寄与額は未確定。 スポンサー契約は商品の提供内容までで、売上・契約金額は非開示。CAMPFIRE説明会は16:15 cutoff後の19:00開催予定で、開催結果・売上寄与はこの時点で未確認。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-11-14 3Q決算短信(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf)\n・[2024-11-14 連結予想修正(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf)\n・[2024-12-11 CIMA独占契約(12:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf)\n・[2025-01-15 SUMIDAY新色発売(12:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20250115550996/pdfFile.pdf)\n・[2025-01-22 CAMPFIRE説明会告知(11:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20250122553666/pdfFile.pdf)\n・[2025-01-31 横浜FC契約(14:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20250121553462/pdfFile.pdf)\n・[2025-01-31 ニッパツ横浜FCシーガルズ契約(14:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20250131559765/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[リベルタ IRニュース一覧](https://ir.liberta-j.co.jp/ja/ir/news.html)\n・[リベルタ（4935）IR開示履歴](https://irbank.net/4935/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250115550996/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250122553666/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250121553462/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250131559765/pdfFile.pdf"
+          ],
+          "result": "会社公式IR一覧で掲載日と資料名を照合し、選択した公式PDF本文を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4935/ir",
+          "checkedUrls": [
+            "https://irbank.net/4935/ir?y=2025-02-05"
+          ],
+          "result": "1/22 11:30告知の説明会は2/5 19:00予定。1/31 14:00に2件のサプライヤー契約。2/5 16:15までの同日新規IRなし。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://irbank.net/4935/ir?y=2025-02-05"
+          ],
+          "result": "公式IR一覧で1/22と1/31の資料を確認し、IRBANKで公表時刻を照合。1/22 11:30、1/31 14:00。1/22 11:30告知の説明会は2/5 19:00予定。1/31 14:00に2件のサプライヤー契約。2/5 16:15までの同日新規IRなし。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2024-11-14T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "連結業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-11-14T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社によるCIMA LTCI LLCとの独占販売代理店契約締結に関するお知らせ",
+          "publishedAt": "2024-12-11T12:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ヘアスタイリスト・shuco氏が手掛けるヘアバーム「SUMIDAY HAIR BALM」より新色発売のお知らせ",
+          "publishedAt": "2025-01-15T12:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250115550996/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "リベルタ×CAMPFIRE共同企画「商品流通戦略プログラム」説明会実施のお知らせ",
+          "publishedAt": "2025-01-22T11:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250122553666/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "サッカーJ1リーグ「横浜FC」とのオフィシャルサプライヤー契約締結のお知らせ",
+          "publishedAt": "2025-01-31T14:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250121553462/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "女子サッカーチーム「ニッパツ横浜FC シーガルズ」とのオフィシャルサプライヤー契約締結のお知らせ",
+          "publishedAt": "2025-01-31T14:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20250131559765/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "1/31公式2資料で男女2チームとの2025シーズン契約と氷撃α提供を確認、金額・販売成果は未開示。",
+        "CAMPFIRE資料は公式IR一覧上の2025/1/22公表（11:30）。PDF表紙の「2024年1月22日」は誤記として採用せず、2/5 19:00予定はcutoff後の予定として扱う。"
+      ]
+    }
+  ]
+}

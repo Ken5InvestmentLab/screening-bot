@@ -1,0 +1,117 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-12-18|4935",
+      "signalDate": "2024-12-18",
+      "symbolCode": "4935",
+      "companyName": "リベルタ",
+      "analysisCutoff": "2024-12-18T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:41:39+09:00",
+      "summary": "2024年12月期3Q累計は売上高6,191.6百万円（前年同期比+24.8%）、営業損失24.2百万円、経常損失43.3百万円、親会社株主帰属純損失70.4百万円。11/14に通期予想を売上高8,400百万円、営業利益159百万円等へ下方修正。",
+      "materialImpact": "コスメや機能衣料などの増収で売上は伸びたが、前年同期の営業黒字から赤字へ転落。通期営業利益予想は294百万円から159百万円へ45.7%引下げられ、下期の利益回復が必要。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "コスメや機能衣料などの増収で売上は伸びたが、前年同期の営業黒字から赤字へ転落。通期営業利益予想は294百万円から159百万円へ45.7%引下げられ、下期の利益回復が必要。"
+        },
+        {
+          "name": "事業概要",
+          "value": "コスメ、機能衣料、浄水器・医療機器、生活雑貨等を企画・販売。ブランド開発と販促を軸に、国内外の卸売店・量販店・ECを通じて販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "12/11、連結子会社LIBERTA USAがCIMA LTCI LLCとFREEZE TECHのカナダ公共安全分野で独占販売代理店契約を締結。契約額・受注額は非開示で、2024年12月期への影響は軽微見込み。11/14決議のVIVA残り30%取得（440万円）と2025/1/1合併はこの時点では予定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "3Q累計売上6,191.6百万円、営業損失24.2百万円、経常損失43.3百万円、純損失70.4百万円。9月末の現金及び預金1,042.0百万円、短期借入金1,950百万円、純資産1,526.0百万円、自己資本比率22.8%。通期予想は売上8,400、営業159、経常140、純利益74百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "冬物商戦に備えた在庫増で商品及び製品は前年末比約807百万円増。短期借入金も1,950百万円に増加。3Q短信に四半期キャッシュ・フロー計算書はなく、通期予想の達成や新規販路の寄与額は未確定。 CIMA契約は販路契約であり、具体的な販売数量・収益を示すものではない。VIVA取得・合併も実施前の計画として扱う。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-11-14 3Q決算短信(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf)\n・[2024-11-14 連結予想修正(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf)\n・[2024-12-11 CIMA独占契約(12:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf)\n・[2024-11-14 VIVA株式取得・合併決議(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522448/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[リベルタ IRニュース一覧](https://ir.liberta-j.co.jp/ja/ir/news.html)\n・[リベルタ（4935）IR開示履歴](https://irbank.net/4935/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522448/pdfFile.pdf"
+          ],
+          "result": "会社公式IR一覧で掲載日と資料名を照合し、選択した公式PDF本文を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4935/ir",
+          "checkedUrls": [
+            "https://irbank.net/4935/ir?y=2024-12-18"
+          ],
+          "result": "11/14 16:00の3Q・予想修正、12/11 12:30のCIMA契約を時系列で照合。12/18当日までにこれら以降の対象IRなし。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://irbank.net/4935/ir?y=2024-12-18"
+          ],
+          "result": "公式IR一覧で公表日・タイトル、IRBANKの開示履歴で公表時刻を照合。11/14 16:00の3Q・予想修正、12/11 12:30のCIMA契約を時系列で照合。12/18当日までにこれら以降の対象IRなし。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2024-11-14T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522451/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "連結業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-11-14T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241114524223/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社によるCIMA LTCI LLCとの独占販売代理店契約締結に関するお知らせ",
+          "publishedAt": "2024-12-11T12:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241211536801/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社（VIVAネットワーク株式会社）の株式取得（完全子会社化）および吸収合併（簡易合併・略式合併）に関するお知らせ",
+          "publishedAt": "2024-11-14T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20241113522448/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "公式IR掲載日と各PDF本文を照合し、11/14決算・予想修正、12/11 CIMA契約の記載を確認。",
+        "VIVA取得・合併は11/14時点で決議・予定であり、12/18時点で完了済みとは扱わない。CIMAは契約額・売上額を開示していない。"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-02-20|8783",
+      "signalDate": "2025-02-20",
+      "symbolCode": "8783",
+      "companyName": "ａｂｃ",
+      "analysisCutoff": "2025-02-20T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:55:40+09:00",
+      "summary": "信号日時点の社名はGFA株式会社（manifest記載名は現社名のａｂｃ）。2025年3月期3Q累計は売上2,756百万円、営業損失752百万円、経常損失950百万円、純損失739百万円。GC重要な不確実性の記載がある一方、Web3投資方針と暗号資産追加購入の発表が相次ぐ。",
+      "materialImpact": "9カ月累計で営業・経常・純損失が続き、短信はGCに関する重要な不確実性を記載。一方、2/19にWeb3中心の中期方針を公表し、2/20にはBTC追加購入と金連動トークン関連の投資を発表。目標・投資方針が中心で、売上への寄与は確認できない。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "9カ月累計で営業・経常・純損失が続き、短信はGCに関する重要な不確実性を記載。一方、2/19にWeb3中心の中期方針を公表し、2/20にはBTC追加購入と金連動トークン関連の投資を発表。目標・投資方針が中心で、売上への寄与は確認できない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "金融サービス（助言・投融資・不動産投資）、サイバーセキュリティ、宿泊・ナイトクラブ、オンラインゲーム、運送等を展開。信号日時点はGFA株式会社。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2025年3月期3Q累計（2024年4～12月）は売上高2,756百万円（前年同期比11.6%減）、営業損失752百万円、経常損失950百万円、純損失739百万円。2/19に2026年3月期～2028年3月期の中期計画を公表し、支援先500件・支援先トークン保有額1兆円・BTC21,000枚等を目標化。UAE子会社Coin Techは4事業への投資を3月から順次開始する方針。資金使途では予定額の一部を事業会社への投融資へ振替。2/20はBTC追加購入（上限3億円）を決定・実施と発表し、別途AGF追加購入（上限15万米ドル、単価0.015米ドル）とSamsung Goldexとの金裏付けトークン開発支援を決定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "3Q末純資産1,642百万円、自己資本比率34.4%。当期は営業損失752百万円、経常損失950百万円、親会社株主帰属純損失739百万円。通期予想は売上3,440百万円、営業損失960百万円、経常利益150～500百万円、純利益300～800百万円（2/14修正後）。これは未確定の会社予想であり、3Q実績とは区別。"
+        },
+        {
+          "name": "注意点",
+          "value": "短信は営業・経常・純損失と資金繰り懸念を挙げ、継続企業の前提に関する重要な不確実性を記載。経常・純利益の通期予想レンジは3Q累計の大幅赤字と大きく異なり、達成実績ではない。中期計画の数値は目標。BTCの3億円・AGFの15万米ドルはいずれも上限で、購入数量・確定取得額は開示資料から特定できない。Coin Techの計画やSamsung Goldexとの開発支援は売上・利益の確定を示さず、AGF等のトークンは会社発行の$NYANと別プロジェクト。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-02-14 3Q決算短信(16:00)](https://www2.jpx.co.jp/disc/87830/140120250214575158.pdf)\n・[2025-02-19 長期ビジョン・中期経営計画(12:00)](https://www2.jpx.co.jp/disc/87830/140120250219578736.pdf)\n・[2025-02-19 資金使途変更(16:00)](https://www2.jpx.co.jp/disc/87830/140120250219578790.pdf)\n・[2025-02-19 Coin Tech事業方針(16:30)](https://www2.jpx.co.jp/disc/87830/140120250219579023.pdf)\n・[2025-02-20 BTC追加購入(08:30)](https://www2.jpx.co.jp/disc/87830/140120250219579163.pdf)\n・[2025-02-20 AGF追加購入・提携(15:45)](https://www.gfa.co.jp/gfa_wp/wp-content/uploads/2025/02/%E3%80%8CNyanmaru-GOLD-Utility-Token%EF%BC%88AGF%EF%BC%89%E3%80%8D%E8%BF%BD%E5%8A%A0%E8%B3%BC%E5%85%A5%E5%8F%8A%E3%81%B3Samsung-Goldex%E3%81%A8%E3%81%AE%E6%8F%90%E6%90%BA%E6%8E%A8%E9%80%B2%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[GFA（現abc）公式ニュース一覧](https://abc-chain.com/press/)\n・[GFA（8783）IR開示履歴](https://irbank.net/8783/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://abc-chain.com/press/",
+          "checkedUrls": [
+            "https://abc-chain.com/press/",
+            "https://www2.jpx.co.jp/disc/87830/140120250214575158.pdf",
+            "https://www2.jpx.co.jp/disc/87830/140120250219578736.pdf",
+            "https://www2.jpx.co.jp/disc/87830/140120250219578790.pdf",
+            "https://www2.jpx.co.jp/disc/87830/140120250219579023.pdf",
+            "https://www2.jpx.co.jp/disc/87830/140120250219579163.pdf",
+            "https://www.gfa.co.jp/gfa_wp/wp-content/uploads/2025/02/%E3%80%8CNyanmaru-GOLD-Utility-Token%EF%BC%88AGF%EF%BC%89%E3%80%8D%E8%BF%BD%E5%8A%A0%E8%B3%BC%E5%85%A5%E5%8F%8A%E3%81%B3Samsung-Goldex%E3%81%A8%E3%81%AE%E6%8F%90%E6%90%BA%E6%8E%A8%E9%80%B2%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf"
+          ],
+          "result": "公式ニュース一覧の掲載日・題名を照合し、対象の決算短信、計画・事業方針、資金使途、購入開示の直接本文を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8783/ir",
+          "checkedUrls": [
+            "https://irbank.net/8783/ir?y=2025-02-20",
+            "https://irbank.net/8783/140120250214575158",
+            "https://irbank.net/8783/140120250219578736",
+            "https://irbank.net/8783/140120250219578790",
+            "https://irbank.net/8783/140120250219579023",
+            "https://irbank.net/8783/140120250219579163"
+          ],
+          "result": "時系列の公表時刻を照合。2/19計画12:00、資金使途16:00、Coin Tech16:30、2/20 BTC8:30。2/20のAGF資料は公式一覧掲載と公表時刻15:45を照合。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://abc-chain.com/press/",
+          "checkedUrls": [
+            "https://abc-chain.com/press/",
+            "https://irbank.net/8783/ir?y=2025-02-20"
+          ],
+          "result": "2/20 cutoff 16:15までの同日資料はBTC8:30とAGF15:45。21:00予定のラジオ告知は業績影響が示されず選定外。2/19 Coin Tech16:30はsignal日前の開示。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年３月期 第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2025-02-14T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/87830/140120250214575158.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "長期ビジョン・中期経営計画に関するお知らせ",
+          "publishedAt": "2025-02-19T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/87830/140120250219578736.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "資金使途の変更に関するお知らせ",
+          "publishedAt": "2025-02-19T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/87830/140120250219578790.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "UAE現地法人Coin Tech社の事業方針について",
+          "publishedAt": "2025-02-19T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/87830/140120250219579023.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ビットコイン（Bitcoin）の追加購入に関するお知らせ",
+          "publishedAt": "2025-02-20T08:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/87830/140120250219579163.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "Nyanmaru Gold Utility Token（AGF）の追加購入及びSamsung Goldexとの提携推進に関するお知らせ",
+          "publishedAt": "2025-02-20T15:45:00+09:00",
+          "url": "https://www.gfa.co.jp/gfa_wp/wp-content/uploads/2025/02/%E3%80%8CNyanmaru-GOLD-Utility-Token%EF%BC%88AGF%EF%BC%89%E3%80%8D%E8%BF%BD%E5%8A%A0%E8%B3%BC%E5%85%A5%E5%8F%8A%E3%81%B3Samsung-Goldex%E3%81%A8%E3%81%AE%E6%8F%90%E6%90%BA%E6%8E%A8%E9%80%B2%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Q3短信・公式開示本文・時系列を照合し、同日資料は16:15以前の確認可能なもののみ採用。",
+        "通期予想・中計KPI・追加購入上限を実績値と扱わず、GC重要な不確実性と投資の売上未確認を併記。",
+        "会社名はmanifest値ａｂｃに一致させ、信号日時点の商号GFA株式会社を本文に記した。"
+      ]
+    }
+  ]
+}

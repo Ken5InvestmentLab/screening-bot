@@ -1,0 +1,87 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-02-27|5597",
+      "signalDate": "2025-02-27",
+      "symbolCode": "5597",
+      "companyName": "ブルーイノベーション",
+      "analysisCutoff": "2025-02-27T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:53:43+09:00",
+      "summary": "2024年12月期は売上高1,223百万円（前期比3.3%減）、営業損失398百万円、純損失394百万円。営業CFは▲499百万円、現金同等物668百万円。2025年12月期は売上高1,513百万円を見込む一方、営業損失333百万円など赤字予想です。",
+      "materialImpact": "慎重：2024年12月期は売上・利益が会社予想を下回り、営業損失が拡大。2/12の八潮市現場調査は技術支援の実施で、契約額や売上寄与は開示されていません。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "慎重：2024年12月期は売上が前期比3.3%減り、営業損失が398百万円へ拡大。2/12の八潮市現場調査はJUIDAの協力要請による技術実施で、有償受注や収益寄与は確認できません。"
+        },
+        {
+          "name": "事業概要",
+          "value": "ドローンやAGVを統合管理する「Blue Earth Platform（BEP）」を基盤に、点検・教育・物流・新規ソリューションを提供。2024年12月期売上は点検568百万円、教育280百万円、物流312百万円、ネクスト62百万円でした。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2/12公表：JUIDAの協力要請を受け、2/5に八潮市道路陥没現場の下流約600m付近から、ELIOS 3で下水管内を調査。調査実施の公表であり、受注額・対価・業績寄与は開示されていません。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年12月期は売上高1,223百万円（▲3.3%）、営業損失398百万円、経常損失392百万円、純損失394百万円。営業CF▲499百万円、期末現金同等物668百万円、純資産633百万円。2025年12月期会社予想は売上1,513百万円、営業損失333百万円、経常損失331百万円、純損失334百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "2024年12月期の売上高は従来予想レンジを下回り、各損失も予想を超過。2025年12月期も赤字予想で、継続企業の前提に関する注記はありません。現場調査は受注・売上と同義ではありません。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-02-13 通期業績予想と実績値との差異に関するお知らせ(10:10)](https://pdf.irpocket.com/C5597/vAfC/oAH3/Nmmh.pdf)\n・[2025-02-13 2024年12月期 決算短信〔日本基準〕（非連結）(15:30)](https://www2.jpx.co.jp/disc/55970/140120250213572763.pdf)\n・[2025-02-12 埼玉県八潮市道路陥没事故現場において屋内点検用ドローン「ELIOS 3」による下水管内調査を実施(18:15)](https://www.blue-i.co.jp/news/release/pdf/20250212release_bi.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ブルーイノベーション IRニュース一覧（公式）](https://www.blue-i.co.jp/ir/news/)\n・[ブルーイノベーション ニュースリリース一覧（公式）](https://www.blue-i.co.jp/news/)\n・[ブルーイノベーション IR・適時開示一覧（IRBANK）](https://irbank.net/5597/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://www.blue-i.co.jp/ir/news/"
+        },
+        {
+          "role": "official_ir",
+          "url": "https://xml.irpocket.com/5597/JS/release-all-all.js"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://irbank.net/5597/ir"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "通期業績予想と実績値との差異に関するお知らせ",
+          "publishedAt": "2025-02-13T10:10:00+09:00",
+          "url": "https://pdf.irpocket.com/C5597/vAfC/oAH3/Nmmh.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年12月期 決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2025-02-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/55970/140120250213572763.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "埼玉県八潮市道路陥没事故現場において屋内点検用ドローン「ELIOS 3」による下水管内調査を実施",
+          "publishedAt": "2025-02-12T18:15:00+09:00",
+          "url": "https://www.blue-i.co.jp/news/release/pdf/20250212release_bi.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass"
+    }
+  ]
+}

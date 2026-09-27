@@ -1,0 +1,114 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-03-04|3823",
+      "signalDate": "2025-03-04",
+      "symbolCode": "3823",
+      "companyName": "ＴＨＥ　ＷＨＹ　ＨＯＷ　ＤＯ　ＣＯＭＰＡＮＹ",
+      "analysisCutoff": "2025-03-04T16:15:00+09:00",
+      "generatedAt": "2026-09-27T18:56:00+09:00",
+      "summary": "1Q売上高406百万円（+119.0%）、営業利益27百万円で営業黒字に転換した一方、経常損失1百万円・純損失41百万円。Terra Chargeの0.17%取得決議とブランド共創部設立を発表。",
+      "materialImpact": "1Qは営業黒字に転じ、売上も増加した一方、経常・純損失と産廃事業の減損を計上。Terra Charge株の少数持分取得予定とブランド共創部の設立を開示したが、取得完了・新部門の売上寄与は本時点で確認できない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "1Qは営業黒字に転じ、売上も増加した一方、経常・純損失と産廃事業の減損を計上。Terra Charge株の少数持分取得予定とブランド共創部の設立を開示したが、取得完了・新部門の売上寄与は本時点で確認できない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "スマートフォン・IoT関連ソリューション、飲食・商標管理、IT教育、音楽・イベント等のエンタテインメント、産業廃棄物処理などを展開。外部企業の事業再成長支援も始めている。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2025年8月期1Q（2024年9～11月）は売上高406百万円（前年同期比119.0%増）、営業利益27百万円で2018年8月期以来の連結営業黒字。エンタテインメント事業ではイベント等の収益に加え、2024年9月に子会社化したカプセルトイ事業が寄与。3/3にTerra Charge普通株193株（持分0.17%）を50百万円で取得する決議を公表し、譲渡実行日は3/4予定。3/4には大手企業の新規事業創出・既存事業再成長を支援するブランド共創部を設立した。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Qの営業利益27百万円、経常損失1百万円、親会社株主帰属純損失41百万円、EBITDA38百万円。売上高406百万円。期末現金及び現金同等物733百万円、純資産908百万円、自己資本比率47.8%。通期予想は新規事業が多く不確定として非公表。産廃事業資産の減損損失45百万円を計上。"
+        },
+        {
+          "name": "注意点",
+          "value": "1Qは営業黒字だが経常・純損失が残り、45百万円の減損を計上。会社は営業損失計上の継続状況を重要事象として説明する一方、手元流動性確保等を挙げ、GCに関する重要な不確実性はないと判断。Terra Charge株は193株・0.17%の少数持分で、取得価格50百万円、譲渡実行日は3/4予定として開示されており、3/4 16:15時点で完了確認はない。ブランド共創部の設立資料に受注額・売上見込の開示はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-01-14 1Q決算短信(16:00)](https://www2.jpx.co.jp/disc/38230/140120250107547403.pdf)\n・[2025-03-03 Terra Charge株式取得決議(16:00)](https://www2.jpx.co.jp/disc/38230/140120250303586721.pdf)\n・[2025-03-04 ブランド共創部設立(16:00)](https://www2.jpx.co.jp/disc/38230/140120250304587807.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[THE WHY HOW DO COMPANY 公式ニュース一覧](https://www.twhdc.co.jp/news/)\n・[THE WHY HOW DO COMPANY IR資料一覧](https://www.twhdc.co.jp/ir/library.html)\n・[3823 IR開示履歴](https://irbank.net/3823/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.twhdc.co.jp/news/",
+          "checkedUrls": [
+            "https://www.twhdc.co.jp/news/",
+            "https://www.twhdc.co.jp/ir/library.html",
+            "https://www2.jpx.co.jp/disc/38230/140120250107547403.pdf",
+            "https://www2.jpx.co.jp/disc/38230/140120250303586721.pdf",
+            "https://www2.jpx.co.jp/disc/38230/140120250304587807.pdf"
+          ],
+          "result": "JPX/TDnet一次資料の直接本文（1Q短信、Terra Charge株式取得、ブランド共創部設立）を確認。公式IRニュース・資料一覧を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/3823/ir",
+          "checkedUrls": [
+            "https://irbank.net/3823/140120250107547403",
+            "https://irbank.net/3823/140120250303586721",
+            "https://irbank.net/3823/140120250304587807"
+          ],
+          "result": "IR開示履歴で公表時刻を照合。1/14、3/3、3/4はいずれも16:00。"
+        },
+        {
+          "role": "publication_time_crosscheck",
+          "checked": true,
+          "url": "https://irbank.net/3823/ir",
+          "checkedUrls": [
+            "https://irbank.net/3823/140120250304587807",
+            "https://www.twhdc.co.jp/news/"
+          ],
+          "result": "3/4当日のTDnet開示は16:00公表で16:15 cutoff内。16:15以降のPR配信で付された追加説明は反映せず、TDnet本文のみを採用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年8月期第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-01-14T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/38230/140120250107547403.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "Terra Charge株式会社の株式取得に関するお知らせ",
+          "publishedAt": "2025-03-03T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/38230/140120250303586721.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ブランド共創部、設立のお知らせ",
+          "publishedAt": "2025-03-04T16:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/38230/140120250304587807.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "公式JPX/TDnetの一次資料本文を確認し、3/4 16:00開示のみを同日材料として採用。",
+        "Terra Charge取得は193株・0.17%の少数持分で、3/4実行は予定として記載。cutoff時点の完了を推定していない。",
+        "通期予想は非公表。1QのGC重要事象の説明と会社の重要な不確実性なしとの判断を併記。"
+      ]
+    }
+  ]
+}

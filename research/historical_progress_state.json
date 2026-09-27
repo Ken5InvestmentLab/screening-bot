@@ -13,14 +13,11 @@
     "2024-03-12|9704": "公式一次資料の本文を確認できない"
   },
   "active": [
-    {"identity": "2024-12-02|2586", "detail": "フルッタフルッタ", "status": "候補作成中"},
-    {"identity": "2024-12-25|4576", "detail": "デ・ウエスタン・セラピテクス研究所", "status": "候補作成中"},
-    {"identity": "2025-01-10|7074", "detail": "トゥエンティーフォーセブンホールディングス", "status": "候補作成中"},
-    {"identity": "2025-02-20|5597", "detail": "ブルーイノベーション", "status": "候補作成中"},
-    {"identity": "2025-02-20|8783", "detail": "当時の社名 GFA", "status": "資料確認中"},
-    {"identity": "2025-02-21|5597", "detail": "ブルーイノベーション", "status": "候補作成中"},
-    {"identity": "2025-02-27|5597", "detail": "ブルーイノベーション", "status": "候補作成中"},
-    {"identity": "2025-03-04|3823", "detail": "THE WHY HOW DO COMPANY", "status": "資料確認中"},
-    {"identity": "2025-04-10|3823", "detail": "THE WHY HOW DO COMPANY", "status": "資料確認中"}
+    {"identity": "2025-05-22|2334", "detail": "イオレ", "status": "資料確認中"},
+    {"identity": "2025-05-23|2334", "detail": "イオレ", "status": "待機中"},
+    {"identity": "2025-06-13|3070", "detail": "ジェリービーンズグループ", "status": "資料確認中"},
+    {"identity": "2025-06-19|6993", "detail": "大黒屋ホールディングス", "status": "資料確認中"},
+    {"identity": "2025-06-24|6574", "detail": "コンヴァノ", "status": "待機中"},
+    {"identity": "2025-07-03|5721", "detail": "エス・サイエンス", "status": "待機中"}
   ]
 }

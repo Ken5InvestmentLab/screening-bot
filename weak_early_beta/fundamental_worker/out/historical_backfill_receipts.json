@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-27T20:10:22.957809+09:00",
+  "updated_at": "2026-09-27T20:19:03.621296+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -19505,6 +19505,198 @@
       ]
     },
     {
+      "identity": "2025-12-17|6629",
+      "signalDate": "2025-12-17",
+      "symbolCode": "6629",
+      "companyName": "テクノホライゾン",
+      "analysisCutoff": "2025-12-17T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:14:42+09:00",
+      "summary": "2026年3月期中間期は売上高22,871百万円（前年同期比2.7％減）ながら、営業利益891百万円（同500.8％増）、経常利益980百万円、親会社株主帰属中間純利益457百万円へ回復。利益面の改善は大きいが、ロボティクスは減収・営業赤字で通期予想も据置き。10月のグループ内事業譲受と11月のインドColcom完全子会社化決議はいずれも、当時開示された計画・決議の範囲で評価。",
+      "materialImpact": "利益回復は強い一方、売上は前年同期比2.7％減。中間営業利益は粗利益率の改善と販管費削減で大きく増えたが、ロボティクスの減収・赤字が残り、会社は通期予想を据え置いた。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "利益回復は強い一方、売上は前年同期比2.7％減。中間営業利益は粗利益率の改善と販管費削減で前年同期比500.8％増となり、経常利益・純利益は通期予想を上回る水準まで進んだが、会社は通期予想を据え置いた。ロボティクス事業の減収・営業赤字と、顧客の設備投資延期による海外オフィス設置事業の未達が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "映像＆ITとロボティクスを軸に、教育ICT、企業・自治体DX、FAロボット、ビジョンシステム向けに製品・サービスを提供。中間期の映像＆IT事業には電子黒板・書画カメラ等の教育ICT、サイバーセキュリティ製品の卸売、オフィス機器・AVソリューション等が含まれ、ロボティクス事業はFA関連機器や半導体製造向けX線検査装置等を扱う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年3月期中間期（2025年4～9月）の連結売上高は22,871百万円（前年同期比2.7％減）、営業利益891百万円（同500.8％増）、経常利益980百万円、親会社株主に帰属する中間純利益457百万円。会社説明資料は粗利益率改善と販管費削減を増益要因、ロボティクス事業の減収を減収要因としている。11月25日には連結子会社EscoがインドColcom株式10,000株（発行済株式の50.34％）を追加取得し完全子会社化する決議を公表。取得予定日は12月上旬で、当該開示は計画を示すものであり、取得実行の証拠としては扱っていない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "映像＆IT事業は売上高16,669百万円（前年同期比1.6％増）、セグメント営業利益934百万円（同115.0％増）。国内GIGAスクール第2期に伴う電子黒板等の更新需要とシンガポール事業が堅調だった一方、ESCOのグローバル企業向けオフィス設置は顧客の設備投資延期で計画未達。ロボティクス事業は売上高6,201百万円（同12.5％減）、営業損失36百万円（前年同期は290百万円の損失）。9月末の現金及び預金は4,945.729百万円、総資産34,583百万円、純資産9,782百万円、自己資本比率28.3％。営業CFは2,792.518百万円、投資CFは△280.540百万円、財務CFは△967.653百万円。通期予想は売上高53,000百万円、営業利益1,200百万円、経常利益950百万円、親会社株主帰属純利益450百万円で据置き。中間経常利益・純利益は各通期予想を既に上回る。"
+        },
+        {
+          "name": "注意点",
+          "value": "減収増益であり、利益改善が継続するかは確認できない。ロボティクスは売上高が12.5％減り、依然営業赤字。中間営業CFはプラスだが、売上債権の減少約3,096百万円が寄与しており、営業利益と同額の持続的なキャッシュ創出とみなせない。通期予想は据置きのため、中間経常利益・純利益の進捗超過だけで業績予想の上振れを断定できない。中間包括利益は△55百万円で、主に為替換算調整勘定の減少を反映。継続企業の前提に関する注記は該当事項なし。Colcom株式取得は11月25日資料上の決議・予定であり、取得済みとは記載していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-10-24 2026年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf)\n・[2025-10-24 2026年3月期 第2四半期（中間期）決算説明資料(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf)\n・[2025-11-25 当社連結子会社による株式取得（孫会社化）に関するお知らせ(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[テクノホライゾン公式 IR・ニュース一覧（2025年）](https://www.technohorizon.co.jp/news2025/)\n・[テクノホライゾン公式 決算短信ライブラリー](https://www.technohorizon.co.jp/ir/library/summary/)\n・[6629 IR・適時開示一覧（IRBANK）](https://irbank.net/6629/ir?y=2025-12-22)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.technohorizon.co.jp/news2025/",
+          "checkedUrls": [
+            "https://www.technohorizon.co.jp/news2025/",
+            "https://www.technohorizon.co.jp/ir/library/summary/",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf"
+          ],
+          "result": "会社公式2025年ニュース一覧と決算短信ライブラリーを確認し、2025年10月24日中間決算短信・説明資料と11月25日Colcom株式取得決議資料の本文を照合。業績、通期予想、財政状態、CF、セグメント、注記、取得決議・予定日と業績影響を確認した。各シグナル日の16:15 JSTをcutoffとし、その時点以前の公式開示のみを採録。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6629/ir?y=2025-12-22",
+          "checkedUrls": [
+            "https://irbank.net/6629/ir?y=2025-12-22"
+          ],
+          "result": "10月24日および11月25日の公開時刻16:00を開示時系列で照合。公開時刻の確認にのみ使用し、財務・事業・取引の事実は会社公式資料本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-10-24T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期 第2四半期（中間期）決算説明資料",
+          "publishedAt": "2025-10-24T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社による株式取得（孫会社化）に関するお知らせ",
+          "publishedAt": "2025-11-25T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff: 2025-12-17 16:15 JST. Reviewed the official company 2025 news index and primary document bodies; no later document was used for the financial or business claims.",
+        "Reconciled the Q2 statement and presentation: reported income, forecast unchanged, segment performance, balance sheet, cash flows, FX translation effect, and no going-concern note.",
+        "The November 25 Colcom notice is a board resolution with a planned early-December acquisition date; it does not itself evidence execution.",
+        "Used the IR disclosure chronology only to cross-check the 16:00 release times. No prices, realized returns, or post-cutoff disclosure facts were used."
+      ]
+    },
+    {
+      "identity": "2025-12-22|6629",
+      "signalDate": "2025-12-22",
+      "symbolCode": "6629",
+      "companyName": "テクノホライゾン",
+      "analysisCutoff": "2025-12-22T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:16:24+09:00",
+      "summary": "2026年3月期中間期は売上高22,871百万円（前年同期比2.7％減）ながら、営業利益891百万円（同500.8％増）、経常利益980百万円、親会社株主帰属中間純利益457百万円へ回復。利益面の改善は大きいが、ロボティクスは減収・営業赤字で通期予想も据置き。10月のグループ内事業譲受と11月のインドColcom完全子会社化決議はいずれも、当時開示された計画・決議の範囲で評価。",
+      "materialImpact": "利益回復は強い一方、売上は前年同期比2.7％減。中間営業利益は粗利益率の改善と販管費削減で大きく増えたが、ロボティクスの減収・赤字が残り、会社は通期予想を据え置いた。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "利益回復は強い一方、売上は前年同期比2.7％減。中間営業利益は粗利益率の改善と販管費削減で前年同期比500.8％増となり、経常利益・純利益は通期予想を上回る水準まで進んだが、会社は通期予想を据え置いた。ロボティクス事業の減収・営業赤字と、顧客の設備投資延期による海外オフィス設置事業の未達が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "映像＆ITとロボティクスを軸に、教育ICT、企業・自治体DX、FAロボット、ビジョンシステム向けに製品・サービスを提供。中間期の映像＆IT事業には電子黒板・書画カメラ等の教育ICT、サイバーセキュリティ製品の卸売、オフィス機器・AVソリューション等が含まれ、ロボティクス事業はFA関連機器や半導体製造向けX線検査装置等を扱う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年3月期中間期（2025年4～9月）の連結売上高は22,871百万円（前年同期比2.7％減）、営業利益891百万円（同500.8％増）、経常利益980百万円、親会社株主に帰属する中間純利益457百万円。会社説明資料は粗利益率改善と販管費削減を増益要因、ロボティクス事業の減収を減収要因としている。11月25日には連結子会社EscoがインドColcom株式10,000株（発行済株式の50.34％）を追加取得し完全子会社化する決議を公表。取得予定日は12月上旬で、当該開示は計画を示すものであり、取得実行の証拠としては扱っていない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "映像＆IT事業は売上高16,669百万円（前年同期比1.6％増）、セグメント営業利益934百万円（同115.0％増）。国内GIGAスクール第2期に伴う電子黒板等の更新需要とシンガポール事業が堅調だった一方、ESCOのグローバル企業向けオフィス設置は顧客の設備投資延期で計画未達。ロボティクス事業は売上高6,201百万円（同12.5％減）、営業損失36百万円（前年同期は290百万円の損失）。9月末の現金及び預金は4,945.729百万円、総資産34,583百万円、純資産9,782百万円、自己資本比率28.3％。営業CFは2,792.518百万円、投資CFは△280.540百万円、財務CFは△967.653百万円。通期予想は売上高53,000百万円、営業利益1,200百万円、経常利益950百万円、親会社株主帰属純利益450百万円で据置き。中間経常利益・純利益は各通期予想を既に上回る。"
+        },
+        {
+          "name": "注意点",
+          "value": "減収増益であり、利益改善が継続するかは確認できない。ロボティクスは売上高が12.5％減り、依然営業赤字。中間営業CFはプラスだが、売上債権の減少約3,096百万円が寄与しており、営業利益と同額の持続的なキャッシュ創出とみなせない。通期予想は据置きのため、中間経常利益・純利益の進捗超過だけで業績予想の上振れを断定できない。中間包括利益は△55百万円で、主に為替換算調整勘定の減少を反映。継続企業の前提に関する注記は該当事項なし。Colcom株式取得は11月25日資料上の決議・予定であり、取得済みとは記載していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-10-24 2026年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf)\n・[2025-10-24 2026年3月期 第2四半期（中間期）決算説明資料(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf)\n・[2025-11-25 当社連結子会社による株式取得（孫会社化）に関するお知らせ(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[テクノホライゾン公式 IR・ニュース一覧（2025年）](https://www.technohorizon.co.jp/news2025/)\n・[テクノホライゾン公式 決算短信ライブラリー](https://www.technohorizon.co.jp/ir/library/summary/)\n・[6629 IR・適時開示一覧（IRBANK）](https://irbank.net/6629/ir?y=2025-12-22)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.technohorizon.co.jp/news2025/",
+          "checkedUrls": [
+            "https://www.technohorizon.co.jp/news2025/",
+            "https://www.technohorizon.co.jp/ir/library/summary/",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf"
+          ],
+          "result": "会社公式2025年ニュース一覧と決算短信ライブラリーを確認し、2025年10月24日中間決算短信・説明資料と11月25日Colcom株式取得決議資料の本文を照合。業績、通期予想、財政状態、CF、セグメント、注記、取得決議・予定日と業績影響を確認した。各シグナル日の16:15 JSTをcutoffとし、その時点以前の公式開示のみを採録。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6629/ir?y=2025-12-22",
+          "checkedUrls": [
+            "https://irbank.net/6629/ir?y=2025-12-22"
+          ],
+          "result": "10月24日および11月25日の公開時刻16:00を開示時系列で照合。公開時刻の確認にのみ使用し、財務・事業・取引の事実は会社公式資料本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-10-24T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期 第2四半期（中間期）決算説明資料",
+          "publishedAt": "2025-10-24T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社による株式取得（孫会社化）に関するお知らせ",
+          "publishedAt": "2025-11-25T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff: 2025-12-22 16:15 JST. Reviewed the official company 2025 news index and primary document bodies; candidate claims use only official disclosures published by this cutoff.",
+        "Reconciled the Q2 statement and presentation: reported income, forecast unchanged, segment performance, balance sheet, cash flows, FX translation effect, and no going-concern note.",
+        "The November 25 Colcom notice is a board resolution with a planned early-December acquisition date; it does not itself evidence execution.",
+        "Used the IR disclosure chronology only to cross-check the 16:00 release times. No prices, realized returns, or post-cutoff disclosure facts were used."
+      ]
+    },
+    {
       "companyName": "イメージ　ワン",
       "symbolCode": "2667",
       "selectorNames": [
@@ -20046,6 +20238,350 @@
       "auditStatus": "pass"
     },
     {
+      "identity": "2026-02-19|6613",
+      "signalDate": "2026-02-19",
+      "symbolCode": "6613",
+      "companyName": "ＱＤレーザ",
+      "analysisCutoff": "2026-02-19T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:13:22+09:00",
+      "summary": "2026年3月期3Q累計は売上9.84億円（前年同期比+6.3%）、営業損失2.24億円。前年同期比で赤字幅は縮小したが損失継続。通期予想は売上13.87億円・営業損失4.11億円で据置。補助金5億円を活用する約11億円のMBE設備発注は将来の生産能力増強計画で、売上確定ではない。",
+      "materialImpact": "第3四半期累計は増収で営業赤字幅が縮小したが、依然赤字。通期営業損失予想は4.11億円で据置。補助金5億円を活用する約11億円のMBE設備増設は2027年の検収予定で、能力増強は将来計画であり売上確定ではない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "第3四半期累計は増収で営業赤字幅が縮小したが、依然赤字。通期営業損失予想は4.11億円で据置。補助金5億円を活用する約11億円のMBE設備増設は2027年の検収予定で、能力増強は将来計画であり売上確定ではない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "半導体レーザ素子・量子ドットレーザと、網膜投影技術を使った視覚情報デバイスを開発・製造・販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "高出力レーザ・量子ドットレーザが増収、DFBレーザ・小型可視レーザは減収。視覚情報デバイスは開発受託が伸びた一方、自主回収等の影響で網膜投影製品ビジネスの売上が大幅減。12/19にMBE増設向け補助金5億円の交付が決定（事業完了予定日の2027/11/30後に交付、最終額は検査後に変動する可能性）。12/25にMBE装置・クリーンルーム等約11億円の発注を決議し、検収は2027年4月頃、会社見込みの生産能力は現状の約4倍。1/7、掲示板上の量産契約情報について会社は自社発表ではなく、そのような事実もないと否定した。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期3Q累計（2025年4～12月）は売上高9.84億円（前年同期比+6.3%）、営業損失2.24億円（前年同期3.33億円）、経常損失2.08億円、四半期純損失2.23億円。通期予想（11/13公表から変更なし）は売上高13.87億円、営業損失4.11億円、経常損失4.01億円、純損失4.45億円。2025年12月末の現金及び預金30.70億円、純資産50.01億円、自己資本比率95.5%。"
+        },
+        {
+          "name": "注意点",
+          "value": "累計赤字が続く。3Q短信で、視覚情報デバイス事業は販売網構築途上で販管費が売上総利益を上回ると説明。量子ドットレーザ等の成長やMBE能力増強は、将来の受注・利益を保証するものではない。補助金は設備投資後の交付予定で最終額も変動し得る。2/12の特別損失は本社移転費用1,423万円で、3Q純損失に含まれる。短信に継続企業の前提に関する注記はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-12-19 「中小企業成長加速化補助金」交付決定に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf)\n・[2025-12-25 固定資産の取得に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf)\n・[2026-01-07 当社に関するインターネット掲示板等への投稿内容について(11:40)](https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf)\n・[2026-02-12 2026年３月期第３四半期決算短信〔日本基準〕(非連結)(16:30)](https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf)\n・[2026-02-12 特別損失の計上に関するお知らせ(16:30)](https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[QDレーザ IRニュース](https://www.qdlaser.com/ir/irnews/)\n・[QDレーザ IRライブラリ](https://www.qdlaser.com/ir/library/)\n・[6613 TDnet開示時系列（IRBANK）](https://irbank.net/6613/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.qdlaser.com/ir/irnews/",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf"
+          ],
+          "result": "会社の公式IR情報を起点に、JPX掲載の会社開示PDF本文を直接取得して照合。補助金の交付条件、MBE設備の価格・検収予定・能力見込み、量産契約に関する会社の否定、3Q実績・通期予想・移転費用を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6613/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/6613/tdnet",
+            "https://finance.yahoo.co.jp/quote/6613.T/disclosure?page=2"
+          ],
+          "result": "公表時刻はTDnet時系列で確認。12/19 15:30、12/25 15:30、1/7 11:40、2/12 16:30はcutoff以前。2/20 15:30の英語資料は2/19 16:15のcutoff後のため除外。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "「中小企業成長加速化補助金」交付決定に関するお知らせ",
+          "publishedAt": "2025-12-19T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "固定資産の取得に関するお知らせ",
+          "publishedAt": "2025-12-25T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社に関するインターネット掲示板等への投稿内容について",
+          "publishedAt": "2026-01-07T11:40:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期第３四半期決算短信〔日本基準〕(非連結)",
+          "publishedAt": "2026-02-12T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "特別損失の計上に関するお知らせ",
+          "publishedAt": "2026-02-12T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "会社公表の一次資料に基づき、実績・会社予想・設備計画を分けて記載。補助金は受領済み現金として扱わず、将来の能力見込みも売上実績として扱っていない。",
+        "2026年2月19日16:15時点の候補では、2月20日15:30の英語版説明資料をcutoff後として除外。",
+        "manifestのidentity・signalDate・companyName・analysisCutoff・selectorNamesを一致させた。開示時刻はTDnet時系列で照合し、各文書の公式JPX PDF本文をレビュー。"
+      ]
+    },
+    {
+      "identity": "2026-03-05|6613",
+      "signalDate": "2026-03-05",
+      "symbolCode": "6613",
+      "companyName": "ＱＤレーザ",
+      "analysisCutoff": "2026-03-05T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:13:22+09:00",
+      "summary": "2026年3月期3Q累計は売上9.84億円（前年同期比+6.3%）、営業損失2.24億円。前年同期比で赤字幅は縮小したが損失継続。通期予想は売上13.87億円・営業損失4.11億円で据置。補助金5億円を活用する約11億円のMBE設備発注は将来の生産能力増強計画で、売上確定ではない。",
+      "materialImpact": "第3四半期累計は増収で営業赤字幅が縮小したが、依然赤字。通期営業損失予想は4.11億円で据置。補助金5億円を活用する約11億円のMBE設備増設は2027年の検収予定で、能力増強は将来計画であり売上確定ではない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "第3四半期累計は増収で営業赤字幅が縮小したが、依然赤字。通期営業損失予想は4.11億円で据置。補助金5億円を活用する約11億円のMBE設備増設は2027年の検収予定で、能力増強は将来計画であり売上確定ではない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "半導体レーザ素子・量子ドットレーザと、網膜投影技術を使った視覚情報デバイスを開発・製造・販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "高出力レーザ・量子ドットレーザが増収、DFBレーザ・小型可視レーザは減収。視覚情報デバイスは開発受託が伸びた一方、自主回収等の影響で網膜投影製品ビジネスの売上が大幅減。12/19にMBE増設向け補助金5億円の交付が決定（事業完了予定日の2027/11/30後に交付、最終額は検査後に変動する可能性）。12/25にMBE装置・クリーンルーム等約11億円の発注を決議し、検収は2027年4月頃、会社見込みの生産能力は現状の約4倍。1/7、掲示板上の量産契約情報について会社は自社発表ではなく、そのような事実もないと否定した。2/20には遅延掲載の英語版3Q説明資料が公開され、2/12公表の実績・計画を説明。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期3Q累計（2025年4～12月）は売上高9.84億円（前年同期比+6.3%）、営業損失2.24億円（前年同期3.33億円）、経常損失2.08億円、四半期純損失2.23億円。通期予想（11/13公表から変更なし）は売上高13.87億円、営業損失4.11億円、経常損失4.01億円、純損失4.45億円。2025年12月末の現金及び預金30.70億円、純資産50.01億円、自己資本比率95.5%。"
+        },
+        {
+          "name": "注意点",
+          "value": "累計赤字が続く。3Q短信で、視覚情報デバイス事業は販売網構築途上で販管費が売上総利益を上回ると説明。量子ドットレーザ等の成長やMBE能力増強は、将来の受注・利益を保証するものではない。補助金は設備投資後の交付予定で最終額も変動し得る。2/12の特別損失は本社移転費用1,423万円で、3Q純損失に含まれる。短信に継続企業の前提に関する注記はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-12-19 「中小企業成長加速化補助金」交付決定に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf)\n・[2025-12-25 固定資産の取得に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf)\n・[2026-01-07 当社に関するインターネット掲示板等への投稿内容について(11:40)](https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf)\n・[2026-02-12 2026年３月期第３四半期決算短信〔日本基準〕(非連結)(16:30)](https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf)\n・[2026-02-12 特別損失の計上に関するお知らせ(16:30)](https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf)\n・[2026-02-20 英語版 第3四半期決算説明資料・遅延掲載(15:30)](https://www2.jpx.co.jp/disc/66130/140120260219565743.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[QDレーザ IRニュース](https://www.qdlaser.com/ir/irnews/)\n・[QDレーザ IRライブラリ](https://www.qdlaser.com/ir/library/)\n・[6613 TDnet開示時系列（IRBANK）](https://irbank.net/6613/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.qdlaser.com/ir/irnews/",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260219565743.pdf"
+          ],
+          "result": "会社の公式IR情報を起点に、JPX掲載の会社開示PDF本文を直接取得して照合。補助金の交付条件、MBE設備の価格・検収予定・能力見込み、量産契約に関する会社の否定、3Q実績・通期予想・移転費用を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6613/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/6613/tdnet",
+            "https://finance.yahoo.co.jp/quote/6613.T/disclosure?page=2"
+          ],
+          "result": "公表時刻はTDnet時系列で確認。12/19 15:30、12/25 15:30、1/7 11:40、2/12 16:30、2/20 15:30はいずれも対象cutoff以前。3/5・3/6当日までの新たな開示はなく、次の掲載は3/11 16:00のため両cutoff後。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "「中小企業成長加速化補助金」交付決定に関するお知らせ",
+          "publishedAt": "2025-12-19T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "固定資産の取得に関するお知らせ",
+          "publishedAt": "2025-12-25T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社に関するインターネット掲示板等への投稿内容について",
+          "publishedAt": "2026-01-07T11:40:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期第３四半期決算短信〔日本基準〕(非連結)",
+          "publishedAt": "2026-02-12T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "特別損失の計上に関するお知らせ",
+          "publishedAt": "2026-02-12T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "[Delayed]Quarterly Financial Results Briefing Third Quarter of FY2025",
+          "publishedAt": "2026-02-20T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260219565743.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "会社公表の一次資料に基づき、実績・会社予想・設備計画を分けて記載。補助金は受領済み現金として扱わず、将来の能力見込みも売上実績として扱っていない。",
+        "2月20日15:30の遅延掲載英語版説明資料を含めた。3月5日・3月6日の16:15まで追加開示がないことを時系列で確認。",
+        "manifestのidentity・signalDate・companyName・analysisCutoff・selectorNamesを一致させた。開示時刻はTDnet時系列で照合し、各文書の公式JPX PDF本文をレビュー。"
+      ]
+    },
+    {
+      "identity": "2026-03-06|6613",
+      "signalDate": "2026-03-06",
+      "symbolCode": "6613",
+      "companyName": "ＱＤレーザ",
+      "analysisCutoff": "2026-03-06T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:13:22+09:00",
+      "summary": "2026年3月期3Q累計は売上9.84億円（前年同期比+6.3%）、営業損失2.24億円。前年同期比で赤字幅は縮小したが損失継続。通期予想は売上13.87億円・営業損失4.11億円で据置。補助金5億円を活用する約11億円のMBE設備発注は将来の生産能力増強計画で、売上確定ではない。",
+      "materialImpact": "第3四半期累計は増収で営業赤字幅が縮小したが、依然赤字。通期営業損失予想は4.11億円で据置。補助金5億円を活用する約11億円のMBE設備増設は2027年の検収予定で、能力増強は将来計画であり売上確定ではない。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "第3四半期累計は増収で営業赤字幅が縮小したが、依然赤字。通期営業損失予想は4.11億円で据置。補助金5億円を活用する約11億円のMBE設備増設は2027年の検収予定で、能力増強は将来計画であり売上確定ではない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "半導体レーザ素子・量子ドットレーザと、網膜投影技術を使った視覚情報デバイスを開発・製造・販売する。"
+        },
+        {
+          "name": "足元材料",
+          "value": "高出力レーザ・量子ドットレーザが増収、DFBレーザ・小型可視レーザは減収。視覚情報デバイスは開発受託が伸びた一方、自主回収等の影響で網膜投影製品ビジネスの売上が大幅減。12/19にMBE増設向け補助金5億円の交付が決定（事業完了予定日の2027/11/30後に交付、最終額は検査後に変動する可能性）。12/25にMBE装置・クリーンルーム等約11億円の発注を決議し、検収は2027年4月頃、会社見込みの生産能力は現状の約4倍。1/7、掲示板上の量産契約情報について会社は自社発表ではなく、そのような事実もないと否定した。2/20には遅延掲載の英語版3Q説明資料が公開され、2/12公表の実績・計画を説明。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期3Q累計（2025年4～12月）は売上高9.84億円（前年同期比+6.3%）、営業損失2.24億円（前年同期3.33億円）、経常損失2.08億円、四半期純損失2.23億円。通期予想（11/13公表から変更なし）は売上高13.87億円、営業損失4.11億円、経常損失4.01億円、純損失4.45億円。2025年12月末の現金及び預金30.70億円、純資産50.01億円、自己資本比率95.5%。"
+        },
+        {
+          "name": "注意点",
+          "value": "累計赤字が続く。3Q短信で、視覚情報デバイス事業は販売網構築途上で販管費が売上総利益を上回ると説明。量子ドットレーザ等の成長やMBE能力増強は、将来の受注・利益を保証するものではない。補助金は設備投資後の交付予定で最終額も変動し得る。2/12の特別損失は本社移転費用1,423万円で、3Q純損失に含まれる。短信に継続企業の前提に関する注記はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-12-19 「中小企業成長加速化補助金」交付決定に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf)\n・[2025-12-25 固定資産の取得に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf)\n・[2026-01-07 当社に関するインターネット掲示板等への投稿内容について(11:40)](https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf)\n・[2026-02-12 2026年３月期第３四半期決算短信〔日本基準〕(非連結)(16:30)](https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf)\n・[2026-02-12 特別損失の計上に関するお知らせ(16:30)](https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf)\n・[2026-02-20 英語版 第3四半期決算説明資料・遅延掲載(15:30)](https://www2.jpx.co.jp/disc/66130/140120260219565743.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[QDレーザ IRニュース](https://www.qdlaser.com/ir/irnews/)\n・[QDレーザ IRライブラリ](https://www.qdlaser.com/ir/library/)\n・[6613 TDnet開示時系列（IRBANK）](https://irbank.net/6613/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.qdlaser.com/ir/irnews/",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf",
+            "https://www2.jpx.co.jp/disc/66130/140120260219565743.pdf"
+          ],
+          "result": "会社の公式IR情報を起点に、JPX掲載の会社開示PDF本文を直接取得して照合。補助金の交付条件、MBE設備の価格・検収予定・能力見込み、量産契約に関する会社の否定、3Q実績・通期予想・移転費用を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6613/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/6613/tdnet",
+            "https://finance.yahoo.co.jp/quote/6613.T/disclosure?page=2"
+          ],
+          "result": "公表時刻はTDnet時系列で確認。12/19 15:30、12/25 15:30、1/7 11:40、2/12 16:30、2/20 15:30はいずれも対象cutoff以前。3/5・3/6当日までの新たな開示はなく、次の掲載は3/11 16:00のため両cutoff後。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "「中小企業成長加速化補助金」交付決定に関するお知らせ",
+          "publishedAt": "2025-12-19T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120251218522182.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "固定資産の取得に関するお知らせ",
+          "publishedAt": "2025-12-25T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120251223524997.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社に関するインターネット掲示板等への投稿内容について",
+          "publishedAt": "2026-01-07T11:40:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260107529898.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期第３四半期決算短信〔日本基準〕(非連結)",
+          "publishedAt": "2026-02-12T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260205549387.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "特別損失の計上に関するお知らせ",
+          "publishedAt": "2026-02-12T16:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260205549390.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "[Delayed]Quarterly Financial Results Briefing Third Quarter of FY2025",
+          "publishedAt": "2026-02-20T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66130/140120260219565743.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "会社公表の一次資料に基づき、実績・会社予想・設備計画を分けて記載。補助金は受領済み現金として扱わず、将来の能力見込みも売上実績として扱っていない。",
+        "2月20日15:30の遅延掲載英語版説明資料を含めた。3月5日・3月6日の16:15まで追加開示がないことを時系列で確認。",
+        "manifestのidentity・signalDate・companyName・analysisCutoff・selectorNamesを一致させた。開示時刻はTDnet時系列で照合し、各文書の公式JPX PDF本文をレビュー。"
+      ]
+    },
+    {
       "signalDate": "2026-03-17",
       "symbolCode": "4422",
       "companyName": "ＶＡＬＵＥＮＥＸ",
@@ -20147,6 +20683,122 @@
       "auditStatus": "pass"
     },
     {
+      "signalDate": "2026-03-18",
+      "symbolCode": "4888",
+      "companyName": "ステラファーマ",
+      "identity": "2026-03-18|4888",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysisCutoff": "2026-03-18T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:16:09+09:00",
+      "summary": "再発髄膜腫向けBNCT薬ボロファラン(10B)を3月17日に承認事項一部変更申請。2026年3月期9か月累計は売上261.791百万円、営業損失512.579百万円。AMED課題にも採択されたが、申請は承認前で本格製造も移管中。",
+      "materialImpact": "髄膜腫第II相試験では無増悪生存期間中央値14.4か月対1.4か月（p=0.0157）で、3月17日に一部変更申請。優先審査対象だが承認・収益化は未確定で、会社は当期業績への影響を軽微と説明。AMED採択は3年間最大約2.8億円の補助限度額だが開始は4月以降。一方、9か月営業損失は513百万円に拡大し、製造移管中。",
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://stella-pharma.co.jp/ir/news/",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/48880/140120260121536677.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260203545349.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260212555424.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260317583246.pdf"
+          ],
+          "result": "会社IRの開示内容を確認し、1月22日製造移管、2月3日優先審査、2月12日第3四半期決算、2月20日AMED採択、3月17日承認事項一部変更申請の公式JPX直PDF本文を確認。3月17日資料は申請済みであること、臨床試験の数値、当期業績影響は軽微との記載を照合。"
+        },
+        {
+          "role": "official_amed",
+          "url": "https://www.amed.go.jp/koubo/03001/03/C_00001.html",
+          "checkedUrls": [
+            "https://www.amed.go.jp/koubo/03001/03/C_00001.html",
+            "https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf"
+          ],
+          "result": "AMED公式採択課題ページで2月20日掲載と食道癌BNCT課題の採択を確認。会社のJPX PDFにはFY2026補助限度額97.375百万円、3年で最大約2.8億円とある。JPX PDFとDaiwa掲載PDFはSHA256一致を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://irbank.net/td/4888",
+          "checkedUrls": [
+            "https://irbank.net/td/4888"
+          ],
+          "result": "適時開示時系列で1月22日10:00、2月3日10:00、2月12日14:00、2月20日10:30、3月17日12:00を照合。3月18日16:15まで及び3月19日16:15までに追加開示がなく、次の掲載は3月23日10:00。時刻照合のみに使用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "当社製品の新製造委託先への生産移管に向けた技術移管及び製造所変更の進捗について",
+          "publishedAt": "2026-01-22T10:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260121536677.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "再発髄膜腫を対象とする当社BNCT用医薬品 希少疾病用医薬品の優先審査品目の該当に関するお知らせ",
+          "publishedAt": "2026-02-03T10:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260203545349.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期 第３四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2026-02-12T14:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260212555424.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "国立研究開発法人 日本医療研究開発機構（AMED）公募課題 令和８年度「創薬支援推進事業・希少疾病用医薬品指定前実用化支援事業」採択のお知らせ",
+          "publishedAt": "2026-02-20T10:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "再発髄膜腫を対象とするBNCT用医薬品「ボロファラン(10B)」の承認申請に関するお知らせ",
+          "publishedAt": "2026-03-17T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260317583246.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "3月17日、再発髄膜腫向けに承認事項一部変更申請。第II相試験の無増悪生存期間中央値は14.4か月対1.4か月（p=0.0157）。適応拡大に向けた進展だが、承認・販売開始は未確定。会社は2026年3月期への影響を軽微と説明。AMEDの食道癌BNCT課題採択は3年間最大約2.8億円の補助限度額で、採択・限度額を受領済みの資金と混同しない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "BNCT（ホウ素中性子捕捉療法）用ホウ素医薬品「ステボロニン」（一般名ボロファラン(10B)）の製造販売と、同剤の適応拡大および新たなBNCT用医薬品の研究開発を行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "3月17日に再発髄膜腫向けの製造販売承認事項一部変更を申請。第II相ランダム化比較試験の無増悪生存期間中央値はBNCT群14.4か月、対照群1.4か月で統計学的有意差があった（p=0.0157）。2月3日にPMDAから優先審査・優先相談の対象との評価を受領済み。2月20日には食道癌向けBNCT研究がAMED令和8年度事業に採択され、補助限度額は2026年度97.375百万円、2026年4月から3年間で最大約2.8億円。1月22日開示では、社名非開示の国内新委託先への技術移管と製造所変更を進め、本格製造は2027年3月期中を目指すとしている。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期第3四半期累計（2025年4～12月）は売上高261.791百万円（前年同期比3.0％増）、営業損失512.579百万円（前年同期375.011百万円の損失）、経常損失509.980百万円、四半期純損失512.143百万円。販管費は前年同期比143.148百万円増。12月末の現金及び預金2,691.064百万円、純資産2,695.341百万円、自己資本比率56.4％。通期予想は売上高377百万円、営業損失922百万円、経常損失908百万円、純損失911百万円で据置き。"
+        },
+        {
+          "name": "注意点",
+          "value": "第3四半期累計の損失幅は前年同期より拡大。現金及び預金は3月末の3,206.471百万円から12月末に2,691.064百万円へ減少。四半期キャッシュ・フロー計算書は作成されていない。継続企業の前提に関する注記は該当事項なし。通期予想も大幅な営業・経常・純損失を見込む。新委託先への技術移管・製造所変更は進行中で、本格製造開始は2027年3月期中の目標。AMED補助は限度額であり、採択時点で受領済み資金とはいえない。3月17日の申請も承認取得を意味しない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-01-22 当社製品の新製造委託先への生産移管に向けた技術移管及び製造所変更の進捗について(10:00)](https://www2.jpx.co.jp/disc/48880/140120260121536677.pdf)\n・[2026-02-03 再発髄膜腫を対象とする当社BNCT用医薬品 希少疾病用医薬品の優先審査品目の該当に関するお知らせ(10:00)](https://www2.jpx.co.jp/disc/48880/140120260203545349.pdf)\n・[2026-02-12 2026年３月期 第３四半期決算短信〔日本基準〕（非連結）(14:00)](https://www2.jpx.co.jp/disc/48880/140120260212555424.pdf)\n・[2026-02-20 国立研究開発法人 日本医療研究開発機構（AMED）公募課題 令和８年度「創薬支援推進事業・希少疾病用医薬品指定前実用化支援事業」採択のお知らせ(10:30)](https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf)\n・[2026-03-17 再発髄膜腫を対象とするBNCT用医薬品「ボロファラン(10B)」の承認申請に関するお知らせ(12:00)](https://www2.jpx.co.jp/disc/48880/140120260317583246.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ステラファーマ 公式IRニュース一覧](https://stella-pharma.co.jp/ir/news/)\n・[ステラファーマ 公式決算短信ライブラリー](https://stella-pharma.co.jp/ir/result/)\n・[AMED 採択課題一覧](https://www.amed.go.jp/koubo/saitaku_index.html)\n・[4888 適時開示時系列（IRBANK）](https://irbank.net/td/4888)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-03-18 16:15 JST cutoff。会社公式JPX直PDF本文を確認し、開示日時は適時開示時系列と照合した。",
+        "3月17日申請を承認済みとせず、AMED補助限度額も受領額として扱っていない。製造移管計画は開示上の目標として記載。",
+        "3月18日 cutoff 後の3月23日以降の開示・実績、株価、実現リターンは使用していない。"
+      ]
+    },
+    {
       "signalDate": "2026-03-19",
       "symbolCode": "4422",
       "companyName": "ＶＡＬＵＥＮＥＸ",
@@ -20242,6 +20894,119 @@
         }
       ],
       "auditStatus": "pass"
+    },
+    {
+      "signalDate": "2026-03-19",
+      "symbolCode": "4888",
+      "companyName": "ステラファーマ",
+      "identity": "2026-03-19|4888",
+      "selectorNames": [
+        "出来高沈静リバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysisCutoff": "2026-03-19T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:16:54+09:00",
+      "summary": "再発髄膜腫向けBNCT薬ボロファラン(10B)を3月17日に承認事項一部変更申請。2026年3月期9か月累計は売上261.791百万円、営業損失512.579百万円。AMED課題にも採択されたが、申請は承認前で本格製造も移管中。",
+      "materialImpact": "髄膜腫第II相試験では無増悪生存期間中央値14.4か月対1.4か月（p=0.0157）で、3月17日に一部変更申請。優先審査対象だが承認・収益化は未確定で、会社は当期業績への影響を軽微と説明。AMED採択は3年間最大約2.8億円の補助限度額だが開始は4月以降。一方、9か月営業損失は513百万円に拡大し、製造移管中。",
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://stella-pharma.co.jp/ir/news/",
+          "checkedUrls": [
+            "https://www2.jpx.co.jp/disc/48880/140120260121536677.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260203545349.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260212555424.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf",
+            "https://www2.jpx.co.jp/disc/48880/140120260317583246.pdf"
+          ],
+          "result": "会社IRの開示内容を確認し、1月22日製造移管、2月3日優先審査、2月12日第3四半期決算、2月20日AMED採択、3月17日承認事項一部変更申請の公式JPX直PDF本文を確認。3月17日資料は申請済みであること、臨床試験の数値、当期業績影響は軽微との記載を照合。"
+        },
+        {
+          "role": "official_amed",
+          "url": "https://www.amed.go.jp/koubo/03001/03/C_00001.html",
+          "checkedUrls": [
+            "https://www.amed.go.jp/koubo/03001/03/C_00001.html",
+            "https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf"
+          ],
+          "result": "AMED公式採択課題ページで2月20日掲載と食道癌BNCT課題の採択を確認。会社のJPX PDFにはFY2026補助限度額97.375百万円、3年で最大約2.8億円とある。JPX PDFとDaiwa掲載PDFはSHA256一致を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://irbank.net/td/4888",
+          "checkedUrls": [
+            "https://irbank.net/td/4888"
+          ],
+          "result": "適時開示時系列で1月22日10:00、2月3日10:00、2月12日14:00、2月20日10:30、3月17日12:00を照合。3月19日16:15までに追加開示がなく、次の掲載は3月23日10:00。時刻照合のみに使用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "当社製品の新製造委託先への生産移管に向けた技術移管及び製造所変更の進捗について",
+          "publishedAt": "2026-01-22T10:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260121536677.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "再発髄膜腫を対象とする当社BNCT用医薬品 希少疾病用医薬品の優先審査品目の該当に関するお知らせ",
+          "publishedAt": "2026-02-03T10:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260203545349.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期 第３四半期決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2026-02-12T14:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260212555424.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "国立研究開発法人 日本医療研究開発機構（AMED）公募課題 令和８年度「創薬支援推進事業・希少疾病用医薬品指定前実用化支援事業」採択のお知らせ",
+          "publishedAt": "2026-02-20T10:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "再発髄膜腫を対象とするBNCT用医薬品「ボロファラン(10B)」の承認申請に関するお知らせ",
+          "publishedAt": "2026-03-17T12:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/48880/140120260317583246.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "3月17日、再発髄膜腫向けに承認事項一部変更申請。第II相試験の無増悪生存期間中央値は14.4か月対1.4か月（p=0.0157）。適応拡大に向けた進展だが、承認・販売開始は未確定。会社は2026年3月期への影響を軽微と説明。AMEDの食道癌BNCT課題採択は3年間最大約2.8億円の補助限度額で、採択・限度額を受領済みの資金と混同しない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "BNCT（ホウ素中性子捕捉療法）用ホウ素医薬品「ステボロニン」（一般名ボロファラン(10B)）の製造販売と、同剤の適応拡大および新たなBNCT用医薬品の研究開発を行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "3月17日に再発髄膜腫向けの製造販売承認事項一部変更を申請。第II相ランダム化比較試験の無増悪生存期間中央値はBNCT群14.4か月、対照群1.4か月で統計学的有意差があった（p=0.0157）。2月3日にPMDAから優先審査・優先相談の対象との評価を受領済み。2月20日には食道癌向けBNCT研究がAMED令和8年度事業に採択され、補助限度額は2026年度97.375百万円、2026年4月から3年間で最大約2.8億円。1月22日開示では、社名非開示の国内新委託先への技術移管と製造所変更を進め、本格製造は2027年3月期中を目指すとしている。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期第3四半期累計（2025年4～12月）は売上高261.791百万円（前年同期比3.0％増）、営業損失512.579百万円（前年同期375.011百万円の損失）、経常損失509.980百万円、四半期純損失512.143百万円。販管費は前年同期比143.148百万円増。12月末の現金及び預金2,691.064百万円、純資産2,695.341百万円、自己資本比率56.4％。通期予想は売上高377百万円、営業損失922百万円、経常損失908百万円、純損失911百万円で据置き。"
+        },
+        {
+          "name": "注意点",
+          "value": "第3四半期累計の損失幅は前年同期より拡大。現金及び預金は3月末の3,206.471百万円から12月末に2,691.064百万円へ減少。四半期キャッシュ・フロー計算書は作成されていない。継続企業の前提に関する注記は該当事項なし。通期予想も大幅な営業・経常・純損失を見込む。新委託先への技術移管・製造所変更は進行中で、本格製造開始は2027年3月期中の目標。AMED補助は限度額であり、採択時点で受領済み資金とはいえない。3月17日の申請も承認取得を意味しない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-01-22 当社製品の新製造委託先への生産移管に向けた技術移管及び製造所変更の進捗について(10:00)](https://www2.jpx.co.jp/disc/48880/140120260121536677.pdf)\n・[2026-02-03 再発髄膜腫を対象とする当社BNCT用医薬品 希少疾病用医薬品の優先審査品目の該当に関するお知らせ(10:00)](https://www2.jpx.co.jp/disc/48880/140120260203545349.pdf)\n・[2026-02-12 2026年３月期 第３四半期決算短信〔日本基準〕（非連結）(14:00)](https://www2.jpx.co.jp/disc/48880/140120260212555424.pdf)\n・[2026-02-20 国立研究開発法人 日本医療研究開発機構（AMED）公募課題 令和８年度「創薬支援推進事業・希少疾病用医薬品指定前実用化支援事業」採択のお知らせ(10:30)](https://www2.jpx.co.jp/disc/48880/140120260219565550.pdf)\n・[2026-03-17 再発髄膜腫を対象とするBNCT用医薬品「ボロファラン(10B)」の承認申請に関するお知らせ(12:00)](https://www2.jpx.co.jp/disc/48880/140120260317583246.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ステラファーマ 公式IRニュース一覧](https://stella-pharma.co.jp/ir/news/)\n・[ステラファーマ 公式決算短信ライブラリー](https://stella-pharma.co.jp/ir/result/)\n・[AMED 採択課題一覧](https://www.amed.go.jp/koubo/saitaku_index.html)\n・[4888 適時開示時系列（IRBANK）](https://irbank.net/td/4888)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-03-19 16:15 JST cutoff。会社公式JPX直PDF本文を確認し、開示日時は適時開示時系列と照合した。",
+        "3月17日申請を承認済みとせず、AMED補助限度額も受領額として扱っていない。製造移管計画は開示上の目標として記載。",
+        "3月19日 cutoff 後の3月23日以降の開示・実績、株価、実現リターンは使用していない。"
+      ]
     },
     {
       "signalDate": "2026-03-26",
@@ -22461,6 +23226,48 @@
       "imported_at": "2026-09-27T20:10:22.957809+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "5545a2fb14a8605c1bf37cf1a5090c7bdf2bb0a451e55b5c814851a173f9463a"
+    },
+    {
+      "identity": "2026-02-19|6613",
+      "imported_at": "2026-09-27T20:15:12.867862+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "91443c57bfef8a69282b598c49f2113b27b1c76a172fb2d3ca9624a193f7a32b"
+    },
+    {
+      "identity": "2026-03-05|6613",
+      "imported_at": "2026-09-27T20:15:17.155075+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "aa8b83b1e29b4caba8da388ae0da42a592837078fdda024eb41a8303eb3e9a29"
+    },
+    {
+      "identity": "2026-03-06|6613",
+      "imported_at": "2026-09-27T20:15:21.409411+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "36f33ee2170e9ea7a064fc863d15c3e399e59261ac9d4c1c3b8868aa6b7a15ef"
+    },
+    {
+      "identity": "2025-12-17|6629",
+      "imported_at": "2026-09-27T20:18:49.609911+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "01f24b4ce46cc326e9983e1c3d7903a1e4e3825fad011fc290162d2f7141a904"
+    },
+    {
+      "identity": "2025-12-22|6629",
+      "imported_at": "2026-09-27T20:18:54.412779+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "b5dadfa2bdaa2d99d04fb1f23ad9c34cb8a71fcdedf694b23236535be03dbb6f"
+    },
+    {
+      "identity": "2026-03-18|4888",
+      "imported_at": "2026-09-27T20:18:59.045905+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "8b22bf4148dc74ff0ac49d41cd7a6cb3d5d62248b6f440b9e5a2b0bdaf08a702"
+    },
+    {
+      "identity": "2026-03-19|4888",
+      "imported_at": "2026-09-27T20:19:03.621296+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "f40d5648f56a73a4fe9809cf9053d270c0ddc6ff3d3cb5b77dd85d033ded130f"
     }
   ]
 }

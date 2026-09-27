@@ -1,0 +1,103 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-12-17|6629",
+      "signalDate": "2025-12-17",
+      "symbolCode": "6629",
+      "companyName": "テクノホライゾン",
+      "analysisCutoff": "2025-12-17T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:14:42+09:00",
+      "summary": "2026年3月期中間期は売上高22,871百万円（前年同期比2.7％減）ながら、営業利益891百万円（同500.8％増）、経常利益980百万円、親会社株主帰属中間純利益457百万円へ回復。利益面の改善は大きいが、ロボティクスは減収・営業赤字で通期予想も据置き。10月のグループ内事業譲受と11月のインドColcom完全子会社化決議はいずれも、当時開示された計画・決議の範囲で評価。",
+      "materialImpact": "利益回復は強い一方、売上は前年同期比2.7％減。中間営業利益は粗利益率の改善と販管費削減で大きく増えたが、ロボティクスの減収・赤字が残り、会社は通期予想を据え置いた。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "利益回復は強い一方、売上は前年同期比2.7％減。中間営業利益は粗利益率の改善と販管費削減で前年同期比500.8％増となり、経常利益・純利益は通期予想を上回る水準まで進んだが、会社は通期予想を据え置いた。ロボティクス事業の減収・営業赤字と、顧客の設備投資延期による海外オフィス設置事業の未達が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "映像＆ITとロボティクスを軸に、教育ICT、企業・自治体DX、FAロボット、ビジョンシステム向けに製品・サービスを提供。中間期の映像＆IT事業には電子黒板・書画カメラ等の教育ICT、サイバーセキュリティ製品の卸売、オフィス機器・AVソリューション等が含まれ、ロボティクス事業はFA関連機器や半導体製造向けX線検査装置等を扱う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年3月期中間期（2025年4～9月）の連結売上高は22,871百万円（前年同期比2.7％減）、営業利益891百万円（同500.8％増）、経常利益980百万円、親会社株主に帰属する中間純利益457百万円。会社説明資料は粗利益率改善と販管費削減を増益要因、ロボティクス事業の減収を減収要因としている。11月25日には連結子会社EscoがインドColcom株式10,000株（発行済株式の50.34％）を追加取得し完全子会社化する決議を公表。取得予定日は12月上旬で、当該開示は計画を示すものであり、取得実行の証拠としては扱っていない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "映像＆IT事業は売上高16,669百万円（前年同期比1.6％増）、セグメント営業利益934百万円（同115.0％増）。国内GIGAスクール第2期に伴う電子黒板等の更新需要とシンガポール事業が堅調だった一方、ESCOのグローバル企業向けオフィス設置は顧客の設備投資延期で計画未達。ロボティクス事業は売上高6,201百万円（同12.5％減）、営業損失36百万円（前年同期は290百万円の損失）。9月末の現金及び預金は4,945.729百万円、総資産34,583百万円、純資産9,782百万円、自己資本比率28.3％。営業CFは2,792.518百万円、投資CFは△280.540百万円、財務CFは△967.653百万円。通期予想は売上高53,000百万円、営業利益1,200百万円、経常利益950百万円、親会社株主帰属純利益450百万円で据置き。中間経常利益・純利益は各通期予想を既に上回る。"
+        },
+        {
+          "name": "注意点",
+          "value": "減収増益であり、利益改善が継続するかは確認できない。ロボティクスは売上高が12.5％減り、依然営業赤字。中間営業CFはプラスだが、売上債権の減少約3,096百万円が寄与しており、営業利益と同額の持続的なキャッシュ創出とみなせない。通期予想は据置きのため、中間経常利益・純利益の進捗超過だけで業績予想の上振れを断定できない。中間包括利益は△55百万円で、主に為替換算調整勘定の減少を反映。継続企業の前提に関する注記は該当事項なし。Colcom株式取得は11月25日資料上の決議・予定であり、取得済みとは記載していない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-10-24 2026年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf)\n・[2025-10-24 2026年3月期 第2四半期（中間期）決算説明資料(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf)\n・[2025-11-25 当社連結子会社による株式取得（孫会社化）に関するお知らせ(16:00)](https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[テクノホライゾン公式 IR・ニュース一覧（2025年）](https://www.technohorizon.co.jp/news2025/)\n・[テクノホライゾン公式 決算短信ライブラリー](https://www.technohorizon.co.jp/ir/library/summary/)\n・[6629 IR・適時開示一覧（IRBANK）](https://irbank.net/6629/ir?y=2025-12-22)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.technohorizon.co.jp/news2025/",
+          "checkedUrls": [
+            "https://www.technohorizon.co.jp/news2025/",
+            "https://www.technohorizon.co.jp/ir/library/summary/",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf",
+            "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf"
+          ],
+          "result": "会社公式2025年ニュース一覧と決算短信ライブラリーを確認し、2025年10月24日中間決算短信・説明資料と11月25日Colcom株式取得決議資料の本文を照合。業績、通期予想、財政状態、CF、セグメント、注記、取得決議・予定日と業績影響を確認した。各シグナル日の16:15 JSTをcutoffとし、その時点以前の公式開示のみを採録。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6629/ir?y=2025-12-22",
+          "checkedUrls": [
+            "https://irbank.net/6629/ir?y=2025-12-22"
+          ],
+          "result": "10月24日および11月25日の公開時刻16:00を開示時系列で照合。公開時刻の確認にのみ使用し、財務・事業・取引の事実は会社公式資料本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年3月期 第2四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-10-24T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1-2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期 第2四半期（中間期）決算説明資料",
+          "publishedAt": "2025-10-24T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/10/news_20251024_2026%E5%B9%B43%E6%9C%88%E6%9C%9F-%E7%AC%AC2%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E8%AA%AC%E6%98%8E%E8%B3%87%E6%96%99-2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "当社連結子会社による株式取得（孫会社化）に関するお知らせ",
+          "publishedAt": "2025-11-25T16:00:00+09:00",
+          "url": "https://www.technohorizon.co.jp/thu2021/wp-content/uploads/2025/11/news_20251125_%E5%BD%93%E7%A4%BE%E9%80%A3%E7%B5%90%E5%AD%90%E4%BC%9A%E7%A4%BE%E3%81%AB%E3%82%88%E3%82%8B%E6%A0%AA%E5%BC%8F%E5%8F%96%E5%BE%97%EF%BC%88%E5%AD%AB%E4%BC%9A%E7%A4%BE%E5%8C%96%EF%BC%89%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B-2.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff: 2025-12-17 16:15 JST. Reviewed the official company 2025 news index and primary document bodies; no later document was used for the financial or business claims.",
+        "Reconciled the Q2 statement and presentation: reported income, forecast unchanged, segment performance, balance sheet, cash flows, FX translation effect, and no going-concern note.",
+        "The November 25 Colcom notice is a board resolution with a planned early-December acquisition date; it does not itself evidence execution.",
+        "Used the IR disclosure chronology only to cross-check the 16:00 release times. No prices, realized returns, or post-cutoff disclosure facts were used."
+      ]
+    }
+  ]
+}

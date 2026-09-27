@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-27T15:53:02.892850+09:00",
+  "updated_at": "2026-09-27T16:11:33.488684+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -5767,6 +5767,194 @@
       "auditNotes": []
     },
     {
+      "identity": "2024-03-15|6659",
+      "signalDate": "2024-03-15",
+      "symbolCode": "6659",
+      "companyName": "メディアリンクス",
+      "analysisCutoff": "2024-03-15T16:15:00+09:00",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "2024年3月期第3四半期は増収ながら営業損失が拡大し、継続企業の前提に重要な不確実性が明記された。3月の新株予約権行使は第16回が完了した一方、第17回の行使前倒しが公表済み。",
+      "materialImpact": "混在/要確認：売上は増加したが営業赤字と継続企業リスクが残り、第17回新株予約権の行使前倒しによる希薄化負担もある。KDDI採用の公表は商用実績の材料だが、売上寄与額は開示されていない。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：売上増とKDDI採用の公表に対し、営業損失・継続企業の重要な不確実性および新株予約権行使による希薄化が重い。"
+        },
+        {
+          "name": "事業概要",
+          "value": "放送・通信事業者向けに、IPネットワークを介して映像・音声を伝送する装置やシステムを開発・販売する。IPメディアスイッチ、伝送ゲートウェイ、ネットワーク運用管理ソフトウェアなどを提供し、機器販売に加えてシステム構築・サポートを行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "3月5日、第17回新株予約権8万個（潜在株式800万株）の行使開始を3月6日に前倒しし、行使コミット期限を2024年9月5日とする旨を公表。第16回は同日に残存分3万2,660個（潜在株式326万6,000株）の行使完了を発表した。2月21日にはKDDIの映像伝送IPネットワークへのXscend IPゲートウェイ、MDX48X6CおよびProMDの採用を公表したが、契約額・売上寄与は示されていない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年3月期第3四半期累計の売上高は1,884百万円（前年同期比16.5%増）、営業損失320百万円（前年同期183百万円の損失）、経常損失339百万円、親会社株主に帰属する四半期純損失340百万円。北米は大口通信事業者向け大型案件で増加した一方、アジアは大型案件の不在で減少。通期予想は売上高3,300百万円、営業損失80百万円、純損失136百万円で据え置き。研究開発費の増加もあり、売上増だけでは採算回復を確認できない。"
+        },
+        {
+          "name": "注意点",
+          "value": "決算短信は前期まで4期連続の営業・経常・純損失、当期も損失継続を記載し、継続企業の前提に関する重要な不確実性を明示。金融機関から事業安定まで新規借入が難しいとの説明もあり、資金調達は新株予約権行使に依存する面がある。第17回の潜在株式800万株は大きな希薄化要因で、実際の行使・調達額や業績改善を先取りできない。KDDI採用についても金額・利益貢献の開示はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "[2024-03-05 第17回新株予約権の行使前倒しに関するお知らせ (15:00)](https://www2.jpx.co.jp/disc/66590/140120240305548782.pdf)\n[2024-03-05 第16回新株予約権の行使完了及び月間行使状況 (15:00)](https://www2.jpx.co.jp/disc/66590/140120240305548760.pdf)\n[2024-02-21 KDDI映像伝送IPネットワークへの採用 (公式掲載日、時刻記載なし)](https://jp.medialinks.com/blog/2024/02/21/kddi%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%A7%98%E3%81%AE%E6%98%A0%E5%83%8F%E4%BC%9D%E9%80%81ip%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF%E3%81%AB-%E6%96%B0%E8%A3%BD%E5%93%81ip%E3%82%B2/)\n[2024-01-25 2024年3月期第3四半期決算短信 (15:00)](https://jp.medialinks.com/wp-content/uploads/sites/2/2024/01/MediaLinks_3_159_2024-01-25_Results_3Q202403.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[メディアリンクス IRニュース一覧](https://jp.medialinks.com/blog/category/news-archive/page/5/)\n[メディアリンクス IRライブラリー](https://jp.medialinks.com/investor-relations/investor-library/page/3/)\n[6659 適時開示一覧｜IRBANK](https://irbank.net/6659/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://jp.medialinks.com/investor-relations/investor-library/page/3/",
+          "checkedUrls": [
+            "https://jp.medialinks.com/investor-relations/investor-library/page/3/",
+            "https://jp.medialinks.com/blog/category/news-archive/page/5/"
+          ],
+          "result": "公式IRライブラリーとニュース一覧を確認。第3四半期決算短信、KDDI採用発表、および第16回・第17回新株予約権に関する選定資料の本文を確認した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6659/ir",
+          "result": "適時開示一般一覧で決算短信、第16回の行使完了、第17回の行使前倒しについて公表日と時刻を照合。カットオフ後の開示・価格・騰落率は使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第三者割当により発行された第17回新株予約権（行使価額修正条項付）の行使前倒しに関するお知らせ",
+          "publishedAt": "2024-03-05T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120240305548782.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当により発行された第16回新株予約権（行使価額修正条項付）の行使完了及び月間行使状況に関するお知らせ",
+          "publishedAt": "2024-03-05T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120240305548760.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "KDDI株式会社様の映像伝送IPネットワークに新製品IPゲートウェイ等が採用",
+          "publishedAt": "2024-02-21T00:00:00+09:00",
+          "publishedAtPrecision": "date",
+          "url": "https://jp.medialinks.com/blog/2024/02/21/kddi%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%A7%98%E3%81%AE%E6%98%A0%E5%83%8F%E4%BC%9D%E9%80%81ip%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF%E3%81%AB-%E6%96%B0%E8%A3%BD%E5%93%81ip%E3%82%B2/",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年3月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-01-25T15:00:00+09:00",
+          "url": "https://jp.medialinks.com/wp-content/uploads/sites/2/2024/01/MediaLinks_3_159_2024-01-25_Results_3Q202403.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
+      "signalDate": "2024-03-28",
+      "symbolCode": "6276",
+      "companyName": "シリウスビジョン",
+      "analysisCutoff": "2024-03-28T16:15:00+09:00",
+      "generatedAt": "2026-09-27T16:01:01+09:00",
+      "summary": "2023年12月期は増収となり、営業・経常・最終損益が前期赤字から黒字に転換しました。高利益率案件と収益性改善策が利益を押し上げた一方、営業キャッシュフローは売上債権の増加などでマイナスでした。主力の画像検査事業では中国市場の受注・納品遅延が報告されています。",
+      "materialImpact": "プラス材料と注意点が併存。2023年12月期は売上高が前年比32.3％増、営業利益56百万円で黒字転換し、会社は2024年12月期の増収増益を計画しています。一方、2023年の営業キャッシュフローはマイナスで、中国の受注環境も弱く、2024年第1四半期に予定する47百万円の特別利益は清算に伴う一時要因です。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2023年12月期の連結売上高は2,287百万円（前年比32.3％増）、営業利益56百万円、経常利益120百万円、親会社株主に帰属する当期純利益90百万円で、各利益は前期の赤字から黒字に転換しました。2月8日に利益率の高い受注案件と収益性向上策を理由に通期予想を修正し、売上高は前回予想2,300百万円をわずかに下回る一方、営業・経常・純利益はそれぞれ56・120・90百万円へ引き上げました。2024年12月期の会社計画は売上高2,800百万円、営業利益200百万円です。"
+        },
+        {
+          "name": "事業概要",
+          "value": "画像検査関連事業を主力とし、グラビアシリンダー版・ブランクス・ラベル・ボトル・チューブなどの検査装置やソフトウェアを開発・販売しています。既存検査機との接続で検査精度向上を図るクラウドサービスUniARTSも展開。連結子会社ウェブインパクトはWebソフトウェア、クラウドサービス、受託開発等を行っています。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2月14日公表の2023年12月期は、画像検査関連の売上高が前年から32.3％増加し、営業利益56百万円（前期は519百万円の損失）となりました。2月8日の修正開示では、利益率の高い受注案件の獲得と継続中の収益性向上策が利益予想の引き上げ理由とされています。2月2日には中国の連結子会社・納維達斯机械（蘇州）の清算結了を開示し、2024年12月期第1四半期に為替換算調整勘定の取崩しによる特別利益47百万円を連結計上する予定としました。2月8日決議のWillable吸収合併は、画像検査ソフトウェア開発の資源集約・事業運営効率化を目的とし、連結業績への影響はないと会社は説明しています。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "業績回復は画像検査関連の大型受注やUniARTS採用顧客の増加、ウェブインパクトの安定収益など複数の事業活動を背景にしています。2023年は研究開発費239百万円を計上し、新製品・ソフトウェア・市場開拓への投資も続けました。一方、海外市場では売上低迷が続き、中国では景気悪化により予定していた納品・受注計画の延期や凍結が発生したと説明しています。"
+        },
+        {
+          "name": "注意点",
+          "value": "2023年12月期の営業キャッシュフローは106百万円の支出で、会社は売上債権の増加を主因の一つに挙げています。営業利益率は2.5％でした。中国の受注・納品計画の遅れは業績回復の不確実性となります。2024年の増収増益数値は会社予想であり実績ではありません。また、蘇州子会社の清算に伴う連結47百万円の特別利益は一時要因として区別が必要です。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-02-14 2023年12月期 決算短信〔日本基準〕（連結）(18:26:03)](https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240214.pdf)\n・[2024-02-08 2023年12月期 通期連結業績予想の修正に関するお知らせ(16:30:04)](https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_1.pdf)\n・[2024-02-08 完全子会社の吸収合併（簡易合併・略式合併）に関するお知らせ(16:31:35)](https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_2.pdf)\n・[2024-02-02 連結子会社の清算結了および特別利益の計上に関するお知らせ(16:30:27)](https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240202.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[シリウスビジョン IRライブラリ](https://siriusvision.co.jp/ir/library/)\n・[シリウスビジョン 決算短信一覧](https://siriusvision.co.jp/ir/library/category/summary/)\n・[シリウスビジョン IRニュース一覧](https://siriusvision.co.jp/ir/news/page/2/)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://siriusvision.co.jp/ir/library/category/summary/",
+          "result": "2024年2月14日付決算短信の公式PDF本文を確認。発行者IR RSSのpubDateは2024-02-14 09:26:03 UTCで、JST換算の掲載時刻は2024-02-14T18:26:03+09:00。"
+        },
+        {
+          "role": "official_ir",
+          "url": "https://siriusvision.co.jp/ir/news/page/2/",
+          "result": "2024年2月2日・8日付の公式PDF本文を確認。発行者IR RSSのpubDateをJST換算し、2月2日16:30:27、2月8日業績予想修正16:30:04、2月8日吸収合併16:31:35として記録。"
+        },
+        {
+          "role": "official_ir",
+          "url": "https://siriusvision.co.jp/ir/news/feed/",
+          "result": "各公式IR RSSのUTC pubDateをJSTへ換算して開示掲載時刻を照合。対象4資料はいずれも分析cutoff以前。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://www2.jpx.co.jp/disc/62760/140120240326559588.pdf",
+          "result": "JPXの3月28日付一次開示本文も確認。同機構への加入状況・考え方に関する内容で、業績・事業の重要な変化を示すものではないため、材料開示には採用していません。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2023年12月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-02-14T18:26:03+09:00",
+          "url": "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240214.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2023年12月期 通期連結業績予想の修正に関するお知らせ",
+          "publishedAt": "2024-02-08T16:30:04+09:00",
+          "url": "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "完全子会社の吸収合併（簡易合併・略式合併）に関するお知らせ",
+          "publishedAt": "2024-02-08T16:31:35+09:00",
+          "url": "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240208_2.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "連結子会社の清算結了および特別利益の計上に関するお知らせ",
+          "publishedAt": "2024-02-02T16:30:27+09:00",
+          "url": "https://siriusvision.co.jp/wp-content/uploads/SiriusVision20240202.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    },
+    {
       "identity": "2024-04-01|2330",
       "signalDate": "2024-04-01",
       "symbolCode": "2330",
@@ -7307,6 +7495,18 @@
       "imported_at": "2026-09-27T15:53:02.892850+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "9926143663a17973a97406af6a265ca021f8eca3726391141aa49e0faf820b8c"
+    },
+    {
+      "identity": "2024-03-28|6276",
+      "imported_at": "2026-09-27T16:07:19.843745+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "5ab0efd9d86853462837f21d016e3bd6ba316ca2ee559b8f716d1b1de4f51a0a"
+    },
+    {
+      "identity": "2024-03-15|6659",
+      "imported_at": "2026-09-27T16:11:33.488684+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "3f4a99d4c19c40cb823b9b4877509fcf2bcd070f8d90948fc40d97ed28f977a6"
     }
   ]
 }

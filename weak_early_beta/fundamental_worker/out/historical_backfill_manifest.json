@@ -1,14 +1,14 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_V1",
-  "generated_at": "2026-09-27T15:53:03.114489+09:00",
+  "generated_at": "2026-09-27T16:11:33.730968+09:00",
   "source_ledger": "weak_early_beta/state/detections.csv",
   "detection_time_basis": "scheduled daily beta scan at 16:15 JST; deterministic historical proxy",
   "as_of_rule": "only disclosures published at or before analysis_cutoff may be cited or used",
   "discord_policy": "historical analyses are not reposted to Discord",
   "total_identities": 253,
   "status_counts": {
-    "complete": 78,
-    "pending": 175
+    "complete": 80,
+    "pending": 173
   },
   "records": [
     {
@@ -1086,8 +1086,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2024-03-15T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "3f4a99d4c19c40cb823b9b4877509fcf2bcd070f8d90948fc40d97ed28f977a6"
     },
     {
       "identity": "2024-03-28|6276",
@@ -1101,8 +1101,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2024-03-28T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "5ab0efd9d86853462837f21d016e3bd6ba316ca2ee559b8f716d1b1de4f51a0a"
     },
     {
       "identity": "2024-04-01|2330",

@@ -1,0 +1,97 @@
+{
+  "reports": [
+    {
+      "identity": "2024-03-15|6659",
+      "signalDate": "2024-03-15",
+      "symbolCode": "6659",
+      "companyName": "メディアリンクス",
+      "analysisCutoff": "2024-03-15T16:15:00+09:00",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "summary": "2024年3月期第3四半期は増収ながら営業損失が拡大し、継続企業の前提に重要な不確実性が明記された。3月の新株予約権行使は第16回が完了した一方、第17回の行使前倒しが公表済み。",
+      "materialImpact": "混在/要確認：売上は増加したが営業赤字と継続企業リスクが残り、第17回新株予約権の行使前倒しによる希薄化負担もある。KDDI採用の公表は商用実績の材料だが、売上寄与額は開示されていない。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：売上増とKDDI採用の公表に対し、営業損失・継続企業の重要な不確実性および新株予約権行使による希薄化が重い。"
+        },
+        {
+          "name": "事業概要",
+          "value": "放送・通信事業者向けに、IPネットワークを介して映像・音声を伝送する装置やシステムを開発・販売する。IPメディアスイッチ、伝送ゲートウェイ、ネットワーク運用管理ソフトウェアなどを提供し、機器販売に加えてシステム構築・サポートを行う。"
+        },
+        {
+          "name": "足元材料",
+          "value": "3月5日、第17回新株予約権8万個（潜在株式800万株）の行使開始を3月6日に前倒しし、行使コミット期限を2024年9月5日とする旨を公表。第16回は同日に残存分3万2,660個（潜在株式326万6,000株）の行使完了を発表した。2月21日にはKDDIの映像伝送IPネットワークへのXscend IPゲートウェイ、MDX48X6CおよびProMDの採用を公表したが、契約額・売上寄与は示されていない。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2024年3月期第3四半期累計の売上高は1,884百万円（前年同期比16.5%増）、営業損失320百万円（前年同期183百万円の損失）、経常損失339百万円、親会社株主に帰属する四半期純損失340百万円。北米は大口通信事業者向け大型案件で増加した一方、アジアは大型案件の不在で減少。通期予想は売上高3,300百万円、営業損失80百万円、純損失136百万円で据え置き。研究開発費の増加もあり、売上増だけでは採算回復を確認できない。"
+        },
+        {
+          "name": "注意点",
+          "value": "決算短信は前期まで4期連続の営業・経常・純損失、当期も損失継続を記載し、継続企業の前提に関する重要な不確実性を明示。金融機関から事業安定まで新規借入が難しいとの説明もあり、資金調達は新株予約権行使に依存する面がある。第17回の潜在株式800万株は大きな希薄化要因で、実際の行使・調達額や業績改善を先取りできない。KDDI採用についても金額・利益貢献の開示はない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "[2024-03-05 第17回新株予約権の行使前倒しに関するお知らせ (15:00)](https://www2.jpx.co.jp/disc/66590/140120240305548782.pdf)\n[2024-03-05 第16回新株予約権の行使完了及び月間行使状況 (15:00)](https://www2.jpx.co.jp/disc/66590/140120240305548760.pdf)\n[2024-02-21 KDDI映像伝送IPネットワークへの採用 (公式掲載日、時刻記載なし)](https://jp.medialinks.com/blog/2024/02/21/kddi%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%A7%98%E3%81%AE%E6%98%A0%E5%83%8F%E4%BC%9D%E9%80%81ip%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF%E3%81%AB-%E6%96%B0%E8%A3%BD%E5%93%81ip%E3%82%B2/)\n[2024-01-25 2024年3月期第3四半期決算短信 (15:00)](https://jp.medialinks.com/wp-content/uploads/sites/2/2024/01/MediaLinks_3_159_2024-01-25_Results_3Q202403.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "[メディアリンクス IRニュース一覧](https://jp.medialinks.com/blog/category/news-archive/page/5/)\n[メディアリンクス IRライブラリー](https://jp.medialinks.com/investor-relations/investor-library/page/3/)\n[6659 適時開示一覧｜IRBANK](https://irbank.net/6659/ir)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://jp.medialinks.com/investor-relations/investor-library/page/3/",
+          "checkedUrls": [
+            "https://jp.medialinks.com/investor-relations/investor-library/page/3/",
+            "https://jp.medialinks.com/blog/category/news-archive/page/5/"
+          ],
+          "result": "公式IRライブラリーとニュース一覧を確認。第3四半期決算短信、KDDI採用発表、および第16回・第17回新株予約権に関する選定資料の本文を確認した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/6659/ir",
+          "result": "適時開示一般一覧で決算短信、第16回の行使完了、第17回の行使前倒しについて公表日と時刻を照合。カットオフ後の開示・価格・騰落率は使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第三者割当により発行された第17回新株予約権（行使価額修正条項付）の行使前倒しに関するお知らせ",
+          "publishedAt": "2024-03-05T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120240305548782.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当により発行された第16回新株予約権（行使価額修正条項付）の行使完了及び月間行使状況に関するお知らせ",
+          "publishedAt": "2024-03-05T15:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120240305548760.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "KDDI株式会社様の映像伝送IPネットワークに新製品IPゲートウェイ等が採用",
+          "publishedAt": "2024-02-21T00:00:00+09:00",
+          "publishedAtPrecision": "date",
+          "url": "https://jp.medialinks.com/blog/2024/02/21/kddi%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%A7%98%E3%81%AE%E6%98%A0%E5%83%8F%E4%BC%9D%E9%80%81ip%E3%83%8D%E3%83%83%E3%83%88%E3%83%AF%E3%83%BC%E3%82%AF%E3%81%AB-%E6%96%B0%E8%A3%BD%E5%93%81ip%E3%82%B2/",
+          "contentReviewed": true
+        },
+        {
+          "title": "2024年3月期 第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-01-25T15:00:00+09:00",
+          "url": "https://jp.medialinks.com/wp-content/uploads/sites/2/2024/01/MediaLinks_3_159_2024-01-25_Results_3Q202403.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": []
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-10-31|8105",
+      "signalDate": "2025-10-31",
+      "symbolCode": "8105",
+      "companyName": "Ｂｉｔｃｏｉｎ　Ｊａｐａｎ",
+      "analysisCutoff": "2025-10-31T16:15:00+09:00",
+      "generatedAt": "2026-09-27T19:56:48+09:00",
+      "summary": "2026年3月期1Qは売上高731百万円（前年同期比6.8％減）、営業損失91百万円。8/5にBakkt Opcoが30％株主となり、9月に暗号資産事業を含む定款変更・商号変更案を提示。",
+      "materialImpact": "既存事業は1Q減収・赤字。9/26公表のビットコイン・トレジャリー事業や商号変更は11/11臨時株主総会への提案で、10/31時点では承認前。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2026年3月期1Qは減収・営業赤字。9/26、臨時株主総会にビットコイン・トレジャリー事業の追加やBitcoin Japanへの商号変更、発行可能株式総数の拡大を提案した。いずれも承認前で、BTC保有・新事業の売上実績は開示されていない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "signal date時点の社名は堀田丸正株式会社。きもの、ファッション、マテリアル、ライフスタイルの各事業を手掛ける。候補JSONの会社名はmanifestに合わせた後年の表記であり、2025/10/31時点の法的社名とは異なる。"
+        },
+        {
+          "name": "足元材料",
+          "value": "8/5、Bakkt Opco Holdingsが議決権30.00％を取得して筆頭株主となり、RIZAPグループは27.26％で第2位。10/2に8/4開示を訂正し、Bakkt Holdings, Inc.を最も影響力の大きい親会社等として記載。9/26、11/11臨時株主総会に商号・事業目的変更、取締役選任等を提案し、10/21に招集通知を公表。総会前の計画段階。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期1Q（2025年4～6月）は売上高731.321百万円（前年同期比6.8％減）、営業損失90.955百万円、経常損失71.834百万円、親会社株主帰属純損失73.866百万円。6/30現金及び預金357.100百万円、総資産3,249.077百万円、純資産2,593.415百万円、自己資本比率79.8％。通期会社予想は売上高3,600百万円、営業利益2百万円、経常利益40百万円、純利益30百万円で、5/15公表から変更なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "前期まで7期連続で営業・経常損失を計上し、1Qも両損失と純損失。会社は継続企業に重要な疑義を生じさせる事象を認識する一方、継続企業注記はなく、現預金等を踏まえ不確実性なしと判断。1Qの四半期CF計算書は未作成。通期営業利益予想は2百万円と小さく、ビットコイン事業・商号変更・株式数拡大は総会承認前で業績実績ではない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-08-04 親会社、その他の関係会社、主要株主及び主要株主である筆頭株主の異動(18:30)](https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/08/2d8c29fd13150133ababa071906ac96d.pdf)\n・[2025-08-14 2026年3月期 第1四半期決算短信〔日本基準〕（連結）(15:30)](https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/08/3b785a8c7976571530630a9da9c68dd8.pdf)\n・[2025-09-26 臨時株主総会の開催並びに商号の変更及び定款の一部変更に関するお知らせ(15:30)](https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/09/20f5e1f89e44ed44761a066b3eabd43f.pdf)\n・[2025-10-02 （訂正）「親会社、その他の関係会社、主要株主及び主要株主である筆頭株主の異動」の一部訂正について(15:30)](https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/10/fa82cfd37fa62e698bb09726069503e8.pdf)\n・[2025-10-21 臨時株主総会招集通知(08:00)](https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/10/50ddeb748e55997cf55120ecd4632bcb.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[堀田丸正公式 IRニュース](https://www.hotta-marusho.co.jp/ir/ir-news/)\n・[堀田丸正公式 有価証券報告書・決算短信](https://www.hotta-marusho.co.jp/ir/kessan/)\n・[8105 適時開示時系列（IRBANK）](https://irbank.net/8105/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/08/3b785a8c7976571530630a9da9c68dd8.pdf",
+          "checkedUrls": [
+            "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/08/2d8c29fd13150133ababa071906ac96d.pdf",
+            "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/08/3b785a8c7976571530630a9da9c68dd8.pdf",
+            "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/09/20f5e1f89e44ed44761a066b3eabd43f.pdf",
+            "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/10/fa82cfd37fa62e698bb09726069503e8.pdf",
+            "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/10/50ddeb748e55997cf55120ecd4632bcb.pdf"
+          ],
+          "result": "堀田丸正公式の上記5資料の本文を確認。Q1実績・貸借対照表・継続企業注記、Bakkt Opcoへの株式異動、9/26の総会提案と未承認条件、10/2訂正、10/21招集通知を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/8105/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/8105/tdnet",
+            "https://www.hotta-marusho.co.jp/ir/ir-news/",
+            "https://www.hotta-marusho.co.jp/ir/tuuchi/",
+            "https://minkabu.jp/news/4355609"
+          ],
+          "result": "IRBANK等の適時開示時系列で8/4 18:30、8/14 15:30、9/26 15:30、10/2 15:30を確認。10/21招集通知はTDnet開示時刻一覧（MINKABU）で08:00、会社公式の招集通知一覧・PDF本文も照合。会社IR記事一覧と適時開示時系列で10/31 16:15までの同日新規開示なしを確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "親会社、その他の関係会社、主要株主及び主要株主である筆頭株主の異動",
+          "publishedAt": "2025-08-04T18:30:00+09:00",
+          "url": "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/08/2d8c29fd13150133ababa071906ac96d.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-08-14T15:30:00+09:00",
+          "url": "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/08/3b785a8c7976571530630a9da9c68dd8.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "臨時株主総会の開催並びに商号の変更及び定款の一部変更に関するお知らせ",
+          "publishedAt": "2025-09-26T15:30:00+09:00",
+          "url": "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/09/20f5e1f89e44ed44761a066b3eabd43f.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（訂正）「親会社、その他の関係会社、主要株主及び主要株主である筆頭株主の異動」の一部訂正について",
+          "publishedAt": "2025-10-02T15:30:00+09:00",
+          "url": "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/10/fa82cfd37fa62e698bb09726069503e8.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "臨時株主総会招集通知",
+          "publishedAt": "2025-10-21T08:00:00+09:00",
+          "url": "https://www.hotta-marusho.co.jp/wordpress/wp-content/uploads/2025/10/50ddeb748e55997cf55120ecd4632bcb.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2025-10-31 16:15 JST時点で利用可能な公式開示本文を確認。公開時刻は適時開示一覧で照合し、10/21招集通知は公式PDF本文・公式掲載一覧とTDnet時刻一覧を突合。社名・事業目的変更案、役員候補はいずれも総会承認前として記載。",
+        "manifestのidentity・会社名・cutoff・selectorを照合。Q1実績と通期予想、継続企業の重要事象と注記の有無を区別し、Bitcoin保有実績や将来の総会結果などcutoff後の事実を含めていない。"
+      ]
+    }
+  ]
+}

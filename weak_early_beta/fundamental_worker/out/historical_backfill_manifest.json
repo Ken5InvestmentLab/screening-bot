@@ -1,14 +1,14 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_V1",
-  "generated_at": "2026-09-27T20:41:22.220580+09:00",
+  "generated_at": "2026-09-27T20:48:31.514328+09:00",
   "source_ledger": "weak_early_beta/state/detections.csv",
   "detection_time_basis": "scheduled daily beta scan at 16:15 JST; deterministic historical proxy",
   "as_of_rule": "only disclosures published at or before analysis_cutoff may be cited or used",
   "discord_policy": "historical analyses are not reposted to Discord",
   "total_identities": 253,
   "status_counts": {
-    "complete": 245,
-    "pending": 8
+    "complete": 249,
+    "pending": 4
   },
   "records": [
     {
@@ -3203,8 +3203,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2026-03-09T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "55e7cf2fc07956b46b7edd524e5fcf7874f0aebea125474910334b0a3529066d"
     },
     {
       "identity": "2026-03-10|7719",
@@ -3491,8 +3491,8 @@
         "出来高沈静リバウンド"
       ],
       "analysis_cutoff": "2026-04-27T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "66e2ebfec09b5edfed6742c67026647006afcdbc1adcb899eb7024ca7d0bb39c"
     },
     {
       "identity": "2026-04-27|7256",
@@ -3504,8 +3504,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2026-04-27T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "2e7a8dd01908befe1956f66582e7636f2908aab7f07abc8975e0dbc4c7264ca4"
     },
     {
       "identity": "2026-05-01|6085",
@@ -3600,8 +3600,8 @@
         "静かな売られ過ぎバランス"
       ],
       "analysis_cutoff": "2026-05-21T16:15:00+09:00",
-      "status": "pending",
-      "receipt_sha256": ""
+      "status": "complete",
+      "receipt_sha256": "cbba5ef6e7d0a7458317aefee89ae3590729141e9b535ffad30f594aa19f536c"
     },
     {
       "identity": "2026-05-25|2693",

@@ -1,0 +1,102 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2026-05-21|6840",
+      "signalDate": "2026-05-21",
+      "symbolCode": "6840",
+      "companyName": "ＡＫＩＢＡホールディングス",
+      "analysisCutoff": "2026-05-21T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:44:25+09:00",
+      "summary": "2026年3月期は売上高26,782百万円（前年比46.6%増）、営業利益1,290百万円（80.2%増）。メモリ関連とHPCなどが伸びた一方、次期予想は未定。",
+      "materialImpact": "5/8の上方修正予想にほぼ沿う着地。主力メモリ・PC関連デバイス・IoT事業の売上が82.7%増。繰延税金資産の計上益127百万円を含む純利益であり、2027年3月期の業績予想は未公表。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "通期は増収増益で、メモリ・PC関連とHPCを中心に伸長。5/8に上方修正された予想にほぼ沿って着地したが、純利益には繰延税金資産の計上益が含まれる。次期予想は未定。"
+        },
+        {
+          "name": "事業概要",
+          "value": "PC・サーバー用メモリや周辺機器、IoT機器の開発・販売、通信基地局工事・電波対策・BPO、HPC計算機、不動産取引・旅館運営を展開。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年3月期売上高26,782百万円（前年比46.6%増）、営業利益1,290百万円（80.2%増）、経常利益1,372百万円（107.3%増）、親会社株主帰属純利益883百万円（686.6%増）。メモリ・PC関連デバイス・IoTは売上13,643百万円（82.7%増）、HPCは4,087百万円（15.7%増）。5/8時点の修正予想は売上26,783百万円・営業利益1,291百万円。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "5/15公表の2026年3月期短信では、期末現金及び現金同等物5,911百万円、純資産4,968百万円、自己資本比率24.9%。営業CFは30百万円の支出、財務CFは666百万円の収入。2027年3月期の通期連結業績予想は、メモリ需給、地政学リスク、コスト・為替の不確定要素を理由に未定。"
+        },
+        {
+          "name": "注意点",
+          "value": "5/15に繰延税金資産を計上し、法人税等調整額（益）127百万円を計上。需要増に伴う棚卸資産増加3,047百万円などで営業CFは小幅赤字となり、短期借入金の純増を含む財務CFがプラス。継続企業の前提に関する重要事象等は「該当事項なし」。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-05-08 2026年３月期通期連結業績予想の修正及び営業外収益（為替差益）の計上に関するお知らせ(16:00)](https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/140120260508519258.pdf)\n・[2026-05-15 2026年３月期 決算短信〔日本基準〕（連結）(16:00)](https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/2026.03.4Q-1.pdf)\n・[2026-05-15 法人税等調整額（益）の計上に関するお知らせ(16:00)](https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/140120260515536284.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[AKIBAホールディングス IRニュース一覧](https://www.akiba-holdings.co.jp/ir/news/)\n・[AKIBAホールディングス IRライブラリー](https://www.akiba-holdings.co.jp/ir/irlibrary/)\n・[6840 TDnet時刻付き適時開示一覧](https://finance.yahoo.co.jp/quote/6840.T/disclosure)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifestのidentity・社名・5 selector・16:15 JST cutoffと一致。会社公式の5/8予想修正、5/15決算短信・法人税等調整額資料を本文照合。",
+        "決算短信の損益、セグメント、財政状態、CF、次期予想未定および重要事象なしを確認。5/15別資料の繰延税金資産計上益127百万円も確認し、短信の実績に含まれる情報として記述。",
+        "会社IRニュースとTDnet時刻付き一覧で5/8 16:00、5/15 16:00の公表を確認。5/21 cutoffまでに5/15後の新規適時開示はなく、次の5/28開示はcutoff後。"
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.akiba-holdings.co.jp/ir/news/",
+          "checkedUrls": [
+            "https://www.akiba-holdings.co.jp/ir/news/",
+            "https://www.akiba-holdings.co.jp/ir/irlibrary/",
+            "https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/140120260508519258.pdf",
+            "https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/2026.03.4Q-1.pdf",
+            "https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/140120260515536284.pdf"
+          ],
+          "result": "会社公式IR掲載資料の本文を確認。5/8の上方修正、5/15の連結決算・セグメント・財務・予想未定および法人税等調整額（益）を照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/6840.T/disclosure",
+          "checkedUrls": [
+            "https://finance.yahoo.co.jp/quote/6840.T/disclosure"
+          ],
+          "result": "TDnet時刻付き開示一覧で5/8 16:00、5/15 16:00と後続5/28 16:00を確認し、5/21 cutoffまでに同社の新規開示がないことを照合。公開時刻の確認にのみ使用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年３月期通期連結業績予想の修正及び営業外収益（為替差益）の計上に関するお知らせ",
+          "publishedAt": "2026-05-08T16:00:00+09:00",
+          "url": "https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/140120260508519258.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2026-05-15T16:00:00+09:00",
+          "url": "https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/2026.03.4Q-1.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "法人税等調整額（益）の計上に関するお知らせ",
+          "publishedAt": "2026-05-15T16:00:00+09:00",
+          "url": "https://www.akiba-holdings.co.jp/wp-content/uploads/2026/05/140120260515536284.pdf",
+          "contentReviewed": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "signalDate": "2026-04-27",
+      "symbolCode": "5341",
+      "companyName": "ＡＳＡＨＩ　ＥＩＴＯホールディングス",
+      "identity": "2026-04-27|5341",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "analysisCutoff": "2026-04-27T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:45:42+09:00",
+      "summary": "2026年11月期1Q（2025年12月～2026年2月）は売上高10.64億円（前年同期比0.1％減）、営業損失0.51億円、経常損失0.45億円、親会社株主帰属損失0.53億円。通期予想は据置。継続企業の前提に重要な不確実性あり。",
+      "materialImpact": "やや慎重：本業の赤字が続き、会社は資金調達策が途上で新株予約権の行使も確約されないとして重要な不確実性を記載。希ガス取引の協業検討や暗号資産流動性提供の実運用開始は新しい材料だが、会社は今期業績影響を軽微としており、確定売上や利益寄与は未確認。",
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://www.asahieito-holdings.co.jp/ir",
+          "checkedUrls": [
+            "https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/2026%E5%B9%B411%E6%9C%88%E6%9C%9F%E7%AC%AC%EF%BC%91%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1_20260408.pdf",
+            "https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/%E3%80%904%E6%9C%88%E3%80%91%E5%A4%A7%E9%87%8F%E8%A1%8C%E4%BD%BF%E3%83%97%E3%83%AC%E3%82%B9.pdf",
+            "https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/%EF%BC%88%E9%96%8B%E7%A4%BA%E4%BA%8B%E9%A0%85%E3%81%AE%E7%B5%8C%E9%81%8E%EF%BC%89%E6%9A%97%E5%8F%B7%E8%B3%87%E7%94%A3_20260410.pdf",
+            "https://www.asahieito-holdings.co.jp/news/1508"
+          ],
+          "result": "会社IRの2026年11月期1Q短信、4/6新株予約権大量行使、4/10暗号資産流動性提供の実運用開始、4/20希ガス協業検討の各本文を確認。財務数値・事業内容・会社の業績影響見込みを本文照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://irbank.net/5341/ir?y=2026-04-20",
+          "checkedUrls": [
+            "https://irbank.net/5341/ir?y=2026-04-20",
+            "https://www.asahieito-holdings.co.jp/ir-category/financial-summary",
+            "https://www.asahieito-holdings.co.jp/news/"
+          ],
+          "result": "IRBANKの適時開示時系列で1/19、4/6、4/10、4/20の開示時刻を照合（各16:00）。会社IR一覧も照合し、4/20 16:00をcutoff前の直近開示として確認。4/27 16:15 JSTまでに後続開示は確認されない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第三者割当により発行された第12回新株予約権（行使価額修正条項付）の大量行使に関するお知らせ",
+          "publishedAt": "2026-04-06T16:00:00+09:00",
+          "url": "https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/%E3%80%904%E6%9C%88%E3%80%91%E5%A4%A7%E9%87%8F%E8%A1%8C%E4%BD%BF%E3%83%97%E3%83%AC%E3%82%B9.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年11月期 第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2026-04-10T16:00:00+09:00",
+          "url": "https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/2026%E5%B9%B411%E6%9C%88%E6%9C%9F%E7%AC%AC%EF%BC%91%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1_20260408.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（開示事項の経過）新たな事業、暗号資産流動性提供事業の実運用開始に関して",
+          "publishedAt": "2026-04-10T16:00:00+09:00",
+          "url": "https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/%EF%BC%88%E9%96%8B%E7%A4%BA%E4%BA%8B%E9%A0%85%E3%81%AE%E7%B5%8C%E9%81%8E%EF%BC%89%E6%9A%97%E5%8F%B7%E8%B3%87%E7%94%A3_20260410.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "新しい挑戦「希ガス」、時価総額数兆円規模の上場企業の100%子会社であるエンドユーザー並びに新たな国内高圧ガス企業と「ヘリウム及び希ガス群」貿易事業に向けた協業の検討開始のお知らせ",
+          "publishedAt": "2026-04-20T16:00:00+09:00",
+          "url": "https://www.asahieito-holdings.co.jp/news/1508",
+          "contentReviewed": true
+        }
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "やや慎重：2026年11月期1Qも営業・経常・最終赤字で、収益力と財務体質の改善は途上。希ガス協業の検討や暗号資産流動性提供の実運用開始は将来材料だが、今期業績影響は会社見込みで軽微。"
+        },
+        {
+          "name": "事業概要",
+          "value": "衛生陶器・洗面機器、建築仕上塗材の販売に加え、太陽光・蓄電池の施工販売、施設管理、不動産、M&A・賃貸などを展開。希ガス貿易と暗号資産流動性提供も新たな事業として進める。"
+        },
+        {
+          "name": "足元材料",
+          "value": "4/20、数兆円規模上場企業の子会社Dを需要家、国内高圧ガス会社Eを供給側候補として、ヘリウム・希ガス貿易の協業検討を開始。4月中に日本向け安定供給契約を締結予定との記載はあるが、4/27時点の開示で締結完了は確認できない。会社は本件の今期連結業績への影響を軽微と説明。4/10には暗号資産流動性提供事業の実運用開始を決定し、連結業績影響は軽微とした。4/6時点で第12回新株予約権は6,540個行使・654,000株交付、残45,660個（潜在株4,566,000株）。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高10.64億円（前年同期比0.1％減）、営業損失0.51億円（前年損失0.41億円）、経常損失0.45億円（同0.26億円）、親会社株主帰属損失0.53億円（同0.44億円）。住まい事業売上6.75億円（8.2％減）、暮らし事業3.85億円（17.2％増）、投資事業0.04億円。2月末現金及び預金5.37億円、純資産12.07億円、自己資本比率40.3％。通期会社予想は売上58億円、営業利益0、経常利益0.05億円、純損失0.20億円で変更なし。"
+        },
+        {
+          "name": "注意点",
+          "value": "1Q決算短信は円安・原材料高で国内外とも収益力と財務体質の改善に至らないとし、継続企業の前提に重要な不確実性を明記。資金調達策は進捗途上で、新株予約権の行使は確約されず、資金繰りへの影響可能性がある。会社は希ガス・暗号資産事業の今期影響を軽微と説明しており、協業検討を受注・安定供給契約の成立や利益寄与と混同しない。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-04-06 第12回新株予約権の大量行使(16:00)](https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/%E3%80%904%E6%9C%88%E3%80%91%E5%A4%A7%E9%87%8F%E8%A1%8C%E4%BD%BF%E3%83%97%E3%83%AC%E3%82%B9.pdf)\n・[2026-04-10 2026年11月期第1四半期決算短信(16:00)](https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/2026%E5%B9%B411%E6%9C%88%E6%9C%9F%E7%AC%AC%EF%BC%91%E5%9B%9B%E5%8D%8A%E6%9C%9F%E6%B1%BA%E7%AE%97%E7%9F%AD%E4%BF%A1_20260408.pdf)\n・[2026-04-10 暗号資産流動性提供事業の実運用開始(16:00)](https://www.asahieito-holdings.co.jp/corporate/wp-content/uploads/2026/04/%EF%BC%88%E9%96%8B%E7%A4%BA%E4%BA%8B%E9%A0%85%E3%81%AE%E7%B5%8C%E9%81%8E%EF%BC%89%E6%9A%97%E5%8F%B7%E8%B3%87%E7%94%A3_20260410.pdf)\n・[2026-04-20 希ガス貿易事業に向けた協業検討(16:00)](https://www.asahieito-holdings.co.jp/news/1508)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[ASAHI EITOホールディングス IR情報](https://www.asahieito-holdings.co.jp/ir)\n・[ASAHI EITOホールディングス 決算情報](https://www.asahieito-holdings.co.jp/ir-category/financial-summary)\n・[ASAHI EITOホールディングス お知らせ一覧](https://www.asahieito-holdings.co.jp/news/)\n・[ASAHI EITOホールディングス 適時開示時系列（IRBANK）](https://irbank.net/5341/ir?y=2026-04-20)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "cutoff 2026-04-27 16:15 JST。manifestのidentity、会社名、selectors、analysisCutoffを使用。公式会社開示本文とIRBANK公表時刻を分けて照合。",
+        "1Q実績・通期予想・財政状態を短信本文で照合。4/6新株予約権残高は同日開示時点と明記し、その後も同数とは扱っていない。",
+        "希ガス協業は検討開始、安定供給契約は4月中の予定記載にとどまり、締結済み・売上確定と表現していない。暗号資産流動性提供は実運用開始済みだが会社見込みの業績影響は軽微。"
+      ]
+    }
+  ]
+}

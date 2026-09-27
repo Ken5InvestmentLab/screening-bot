@@ -1,0 +1,110 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2024-07-25|4935",
+      "signalDate": "2024-07-25",
+      "symbolCode": "4935",
+      "companyName": "リベルタ",
+      "analysisCutoff": "2024-07-25T16:15:00+09:00",
+      "generatedAt": "2026-09-27T17:43:19+09:00",
+      "summary": "2024年12月期1Qは売上高1,651百万円（+22.6%）だが、営業損失183百万円、純損失143百万円と赤字拡大。6月末までにクーリストは累計出荷150万個、前年同期比270%超、冷感ミストは32万本。ブランド販売は堅調だが、会社予想を超える業績寄与や利益改善は確認できない。",
+      "materialImpact": "クーリスト、FREEZE TECHの販売進捗は需要面でプラス。クーリストの累計出荷150万個・6月末売上個数前年比270%超、冷感ミスト32万本と開示。一方、1Qは増収でも営業・最終赤字が拡大し、5月末のブランド進捗は通期予想に織込み済み。展示会出展は販促・展示で、受注額の開示はない。",
+      "selectorNames": [
+        "出来高沈静リバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "夏物ブランドの販売進捗は追い風。クーリストは6月末時点で累計出荷150万個、今期売上個数は前年同期比270%超。FREEZE TECH冷感ミストは累計32万本。ただし1Qは営業損失183百万円、親会社株主帰属純損失143百万円で赤字拡大し、増益転換や通期予想引上げは確認できない。"
+        },
+        {
+          "name": "事業概要",
+          "value": "化粧品、日用品、機能性衣料品などを自社企画し、ブランド展開と販売促進を行う。国内小売・卸売や海外販路を通じて商品を販売。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2024年12月期1Qは売上高1,651百万円（前年同期比+22.6%）、営業損失183百万円、経常損失181百万円、親会社株主帰属純損失143百万円。5月末速報ではデンティス売上+70%、クーリスト+355%だが、会社は両ブランドの進捗を通期予想に織込み済みと説明。6月末時点でクーリストはシリーズ累計出荷150万個、今期売上個数は前年同期比270%超、取扱店は前年より約9,000店増えて15,000店以上。FREEZE TECH衣類用冷感ミストは累計32万本、売上高は前期比150%。7/24～26の猛暑対策展で「氷撃α」を展示。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高1,651百万円、営業損失183百万円、経常損失181百万円、純損失143百万円で、前年同期の営業損失38百万円・純損失25百万円から損失が拡大。通期会社予想は売上高9,700百万円、営業利益294百万円、経常利益250百万円、純利益120百万円で据置。1Q末現金及び預金1,313百万円、自己資本比率21.9%。"
+        },
+        {
+          "name": "注意点",
+          "value": "クーリスト150万個は2024年6月末までのシリーズ累計出荷実績、前年同期比270%超は今期の累計販売個数の伸びであり、利益額を示さない。冷感ミスト32万本も6月末時点。5月末のデンティス・クーリスト進捗は通期予想に織込み済み。7/24の展示会出展は販売契約・売上確定を意味しない。1Qは増収でも営業・純損失が拡大。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2024-05-15 2024年12月期第1四半期決算短信〔日本基準〕（連結）(17:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf)\n・[2024-06-05 主要ブランドのプロモーション強化に関する進捗状況のお知らせ(12:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf)\n・[2024-07-12 「FREEZE TECH（フリーズテック）衣類用冷感ミスト」累計販売本数32万本突破のお知らせ(17:05)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf)\n・[2024-07-22 冷感アイテムブランド「クーリスト」シリーズ累計販売個数150万個突破のお知らせ(16:00)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf)\n・[2024-07-24 暑さ対策の専門展『第10回 猛暑対策展』への出展に関するお知らせ(12:30)](https://ir.liberta-j.co.jp/ja/ir/news/auto_20240724553949/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[リベルタ IRニュース一覧](https://ir.liberta-j.co.jp/ja/ir/news.html)\n・[リベルタ（4935）適時開示一覧](https://irbank.net/4935/ir?y=2024-07-25)\n・[4935 適時開示掲載一覧](https://jp.kabumap.com/servlets/kabumap/Action?SRC=basic%2Ftop%2Fbase&codetext=4935&tdNetViewAll=1)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news.html",
+          "checkedUrls": [
+            "https://ir.liberta-j.co.jp/ja/ir/news.html",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf",
+            "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240724553949/pdfFile.pdf"
+          ],
+          "result": "選択した会社IR PDF5本の本文と会社公式開示一覧を確認。ブランドの販売基準日と予想織込みの注記、展示会出展の内容を区別。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/4935/ir?y=2024-07-25",
+          "checkedUrls": [
+            "https://irbank.net/4935/ir?y=2024-07-25",
+            "https://jp.kabumap.com/servlets/kabumap/Action?SRC=basic%2Ftop%2Fbase&codetext=4935&tdNetViewAll=1"
+          ],
+          "result": "5/15決算短信17:00、6/5進捗12:00、7/12冷感ミスト17:05、7/22クーリスト16:00、7/24猛暑対策展12:30の掲載時刻を照合。7/25 16:15までの会社開示一覧も確認。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2024年12月期第1四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2024-05-15T17:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240515597985/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要ブランドのプロモーション強化に関する進捗状況のお知らせ",
+          "publishedAt": "2024-06-05T12:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240605521733/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「FREEZE TECH（フリーズテック）衣類用冷感ミスト」累計販売本数32万本突破のお知らせ",
+          "publishedAt": "2024-07-12T17:05:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240712549120/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "冷感アイテムブランド「クーリスト」シリーズ累計販売個数150万個突破のお知らせ",
+          "publishedAt": "2024-07-22T16:00:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240722552731/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "暑さ対策の専門展『第10回 猛暑対策展』への出展に関するお知らせ",
+          "publishedAt": "2024-07-24T12:30:00+09:00",
+          "url": "https://ir.liberta-j.co.jp/ja/ir/news/auto_20240724553949/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "cutoff前の会社公式PDF5本を本文確認。1Q実績の百万円未満切捨て表を使い、後発の販売数は会社記載の時点・指標に限定。Coolist取扱店の約9,000店は前年比増加、15,000店以上は総店舗数と区別。ブランド進捗の通期予想織込み済みと展示会販促の性質を反映。"
+      ]
+    }
+  ]
+}

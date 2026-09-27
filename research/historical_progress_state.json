@@ -1,9 +1,9 @@
 {
-  "published_complete": 87,
-  "last_deploy_tag": "cloud-deploy-backfill-20260927-87",
-  "deploy_status": "Actions 成功 / healthz 200 / 未認証 root 302",
-  "release_plan": "検証済み251件を一括公開予定",
-  "remote_head": "e998989f60ddba258984d040dc2de0d362f98e1b",
+  "published_complete": 251,
+  "last_deploy_tag": "cloud-deploy-backfill-20260927-251",
+  "deploy_status": "Actions 成功 (run 36317603308) / healthz 200 / 未認証 root 302",
+  "release_plan": "検証済み251件を一括公開済み",
+  "remote_head": "4041efa3b2fc669f2b9bc0afaf91c2ea11abef3a",
   "known_holds": [
     "2023-05-19|3137",
     "2024-03-12|9704"

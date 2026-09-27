@@ -1,0 +1,91 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "summary": "2026年3月期中間期は売上高62,147百万円（1.0％増）、営業利益5,644百万円、経常利益4,828百万円。構造改革費用76.31億円の計上で純損失34.87億円となり、通期純利益は未定です。",
+      "materialImpact": "コスト見直しや価格改定で営業採算は改善しましたが、事業撤退・移管に伴う特別損失が続き、純損益は赤字。会社の通期営業・経常利益予想は黒字ながら、純利益の算定は未了です。",
+      "signalDate": "2026-01-29",
+      "generatedAt": "2026-09-27T19:52:05+09:00",
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://www.unitika.co.jp/news/ir/"
+        },
+        {
+          "role": "official_company_news",
+          "note": "2026-01-29 dated announcement has no intraday time and concerns duty assignments; not used as material.",
+          "url": "https://www.unitika.co.jp/news/company/post_287.html?page=1"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://irbank.net/E00527/tdnet"
+        }
+      ],
+      "fields": [
+        {
+          "value": "中間期は増収・営業増益でしたが、事業構造改善費用76.31億円を特別損失に計上し親会社株主帰属損失34.87億円。通期は営業利益75億円・経常利益60億円を予想する一方、純利益は未定です。",
+          "name": "材料インパクト"
+        },
+        {
+          "value": "ポリエステルフィルム・樹脂、高機能資材（活性炭繊維、ガラスクロス、不織布等）、各種繊維製品を製造・販売する素材メーカー。",
+          "name": "事業概要"
+        },
+        {
+          "value": "不採算販売の見直し、製品価格改定、コスト削減で中間営業利益は前年同期比152.7％増。11/4には一部事業の会社分割とセーレンへの新会社株式譲渡を予定する契約を締結。12/12には連結子会社ユニチカテキスタイルの解散を決議しました。",
+          "name": "足元材料"
+        },
+        {
+          "value": "2026年3月期中間期売上高62,147百万円（前年同期比1.0％増）、営業利益5,644百万円、経常利益4,828百万円、親会社株主帰属損失3,487百万円。営業CF5,562百万円、現金同等物39,100百万円、純資産32,118百万円、自己資本比率18.4％。通期予想は売上高110,000百万円、営業利益7,500百万円、経常利益6,000百万円、純利益未定。",
+          "name": "ファンダ要点"
+        },
+        {
+          "value": "中間純損失には事業譲渡等の契約締結を踏まえた事業構造改善費用7,631百万円を計上済み。営業CFには事業構造改善引当金の増加等が寄与し、財務CFにはC種種類株式発行等が含まれるため、これらを反復的な営業力と同一視できません。ユニチカテキスタイルの債権放棄損失は親会社個別で全額引当済み、連結では相殺消去と会社説明。",
+          "name": "注意点"
+        },
+        {
+          "value": "・[2025-11-04 （開示事項の経過）完全子会社との会社分割の契約締結に関するお知らせ(16:00)](https://www2.jpx.co.jp/disc/31030/140120251104586173.pdf)\n・[2025-11-11 2026年３月期 第２四半期（中間期）決算短信〔日本基準〕（連結）(11:00)](https://www2.jpx.co.jp/disc/31030/140120251110592914.pdf)\n・[2025-11-11 営業外収益（為替差益）、特別損失（事業構造改善費用）の計上及び2026年3月期通期業績予想に関するお知らせ(11:00)](https://www2.jpx.co.jp/disc/31030/140120251110592913.pdf)\n・[2025-12-12 子会社の解散に関するお知らせ(15:30)](https://www.unitika.co.jp/news/io-pdf/re20251212.pdf)",
+          "name": "開示リンク"
+        },
+        {
+          "value": "・[ユニチカ IR情報一覧](https://www.unitika.co.jp/news/ir/)\n・[ユニチカ IR資料室・決算短信](https://www.unitika.co.jp/ir/accounts/)\n・[ユニチカ 適時開示一覧（IRBANK）](https://irbank.net/E00527/tdnet)",
+          "name": "Sources"
+        }
+      ],
+      "selectorNames": [
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "identity": "2026-01-29|3103",
+      "auditStatus": "pass",
+      "companyName": "ユニチカ",
+      "analysisCutoff": "2026-01-29T16:15:00+09:00",
+      "symbolCode": "3103",
+      "disclosures": [
+        {
+          "url": "https://www2.jpx.co.jp/disc/31030/140120251104586173.pdf",
+          "title": "（開示事項の経過）完全子会社との会社分割の契約締結に関するお知らせ",
+          "publishedAt": "2025-11-04T16:00:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/31030/140120251110592914.pdf",
+          "title": "2026年３月期 第２四半期（中間期）決算短信〔日本基準〕（連結）",
+          "publishedAt": "2025-11-11T11:00:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/31030/140120251110592913.pdf",
+          "title": "営業外収益（為替差益）、特別損失（事業構造改善費用）の計上及び2026年3月期通期業績予想に関するお知らせ",
+          "publishedAt": "2025-11-11T11:00:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "url": "https://www.unitika.co.jp/news/io-pdf/re20251212.pdf",
+          "title": "子会社の解散に関するお知らせ",
+          "publishedAt": "2025-12-12T15:30:00+09:00",
+          "contentReviewed": true
+        }
+      ]
+    }
+  ]
+}

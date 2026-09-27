@@ -1,0 +1,8 @@
+{
+  "candidate_path": "weak_early_beta/fundamental_worker/out/historical_backfill_modelverified_20260927_20260202_3103.json",
+  "generated_at": "2026-09-27T19:52:27+09:00",
+  "model": "gpt-6-luna",
+  "identity": "2026-02-02|3103",
+  "reasoning_effort": "xhigh",
+  "sha256": "9ee9430d053e3e1304e3b6b84825c266ff87fa5e93e0e7726be6d3686d279db9"
+}

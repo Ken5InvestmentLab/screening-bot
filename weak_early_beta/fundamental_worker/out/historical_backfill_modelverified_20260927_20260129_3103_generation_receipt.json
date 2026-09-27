@@ -1,0 +1,8 @@
+{
+  "model": "gpt-6-luna",
+  "identity": "2026-01-29|3103",
+  "sha256": "0f276909320f514d01eb4d6e231bc47aa10cd7d46bbdd39e796af2656a7d2adc",
+  "reasoning_effort": "xhigh",
+  "candidate_path": "weak_early_beta/fundamental_worker/out/historical_backfill_modelverified_20260927_20260129_3103.json",
+  "generated_at": "2026-09-27T19:52:05+09:00"
+}

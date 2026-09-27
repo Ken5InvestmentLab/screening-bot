@@ -1,0 +1,129 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2026-03-31|7746",
+      "signalDate": "2026-03-31",
+      "symbolCode": "7746",
+      "companyName": "岡本硝子",
+      "analysisCutoff": "2026-03-31T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:04:59+09:00",
+      "summary": "2026年3月期3Q累計は売上30.19億円（前年同期比5.5%減）、営業損失3.10億円。通期予想は売上46.90億円・営業損失1.24億円へ下方修正。偏光子は11月から受注回復し複数社との年間販売契約も成立したが、数量・収益の具体額は非開示。",
+      "materialImpact": "3Q累計で売上減・営業赤字が拡大し、通期予想も従来の営業利益1.04億円から営業損失1.24億円へ転落。偏光子受注は11月以降回復、複数顧客との1年契約を締結したが、今期売上は予想に織込済み。偏光子製造設備6,000万円を発注し増産準備を継続。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "3Q累計で売上減・営業赤字が拡大し、通期予想も従来の営業利益1.04億円から営業損失1.24億円へ転落。偏光子受注は11月以降回復、複数顧客との1年契約を締結したが、今期売上は予想に織込済み。偏光子製造設備6,000万円を発注し増産準備を継続。"
+        },
+        {
+          "name": "事業概要",
+          "value": "特殊ガラス・光学部品、薄膜製品の製造販売。プロジェクター用反射鏡・フライアイレンズ、光通信用ガラス偏光子、窒化アルミニウム（AlN）放熱基板、ガラス容器への加飾蒸着などを手掛ける。"
+        },
+        {
+          "name": "足元材料",
+          "value": "世界的なプロジェクター需要低迷と顧客在庫調整でフライアイレンズが減少。光通信向け偏光子はファラデー回転子の供給逼迫で発注が急減したが、2025年11月から受注・生産が回復。11/27に製造設備を発注し、12/23に複数顧客との2026年1月開始の年間販売契約を締結。1/14には台湾顧客でAlN基板の初期材料評価に合格（包装評価中）。2/13に南極IceCube計画のD-Egg用ガラス耐圧容器採用を公表したが、今期業績への影響は軽微。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期3Q累計（2025年4～12月）は売上高30.19億円（前年同期比5.5%減）、営業損失3.10億円、経常損失3.28億円、親会社株主帰属純損失2.46億円。2025年12月末は総資産89.82億円、純資産25.38億円、自己資本比率28.3%、現金及び預金23.52億円。通期予想は売上高46.90億円、営業損失1.24億円、経常損失1.21億円、純損失1.34億円へ修正（従来は営業利益1.04億円等）。"
+        },
+        {
+          "name": "注意点",
+          "value": "通期下方修正の理由はフライアイレンズ需要低迷、偏光子受注の急減、AlN基板の立上がり遅れ。偏光子の当期販売数量は回復後も当初計画未達見込みで、年間契約の金額は非開示、今期売上は予想に織込み済み。設備は納入が2026年11月頃の予定で、増強前は現行設備の生産増（6割強）で対応。3Q短信に継続企業の前提注記はなく、四半期CF計算書は未作成。9/9の新株予約権全行使により3Q末の発行済株式数は2,912万株（前期末2,331万株）。3/27に2027年3月期から減価償却を定率法から定額法へ変更決議したが、同年度予想への影響額は未公表。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-11-27 偏光子製造設備発注(11:15)](https://ogc-jp.com/jp/wp-content/uploads/2025/11/3415f8402a28755c1f04372292e794d6.pdf)\n・[2025-12-23 偏光子年間販売契約(09:45)](https://ogc-jp.com/jp/wp-content/uploads/2025/12/05c4cec00f9f989abb6ef73031519c14.pdf)\n・[2026-01-14 AlN基板初期評価合格(16:45)](https://ogc-jp.com/jp/wp-content/uploads/2026/01/bb98272aa9324759261b403908b70257.pdf)\n・[2026-02-13 D-Egg用耐圧容器採用(11:00)](https://ogc-jp.com/jp/wp-content/uploads/2026/02/0af25c43ace935c9d0b1a61131ddc832.pdf)\n・[2026-02-13 第3四半期決算短信(15:30)](https://www2.jpx.co.jp/disc/77460/140120260203545898.pdf)\n・[2026-02-13 通期業績予想修正(15:30)](https://www2.jpx.co.jp/disc/77460/140120260213560098.pdf)\n・[2026-03-27 減価償却方法変更(15:30)](https://ogc-jp.com/jp/wp-content/uploads/2026/03/b720bd7f9eb989d8a38e052c029231ee.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[岡本硝子 ニュースリリース](https://ogc-jp.com/irinfo/news_release/)\n・[岡本硝子 決算短信一覧](https://ogc-jp.com/irinfo/settlement/)\n・[7746 TDnet開示時系列（IRBANK）](https://irbank.net/77460/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ogc-jp.com/irinfo/news_release/",
+          "checkedUrls": [
+            "https://ogc-jp.com/jp/wp-content/uploads/2025/11/3415f8402a28755c1f04372292e794d6.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2025/12/05c4cec00f9f989abb6ef73031519c14.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2026/01/bb98272aa9324759261b403908b70257.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2026/02/0af25c43ace935c9d0b1a61131ddc832.pdf",
+            "https://www2.jpx.co.jp/disc/77460/140120260203545898.pdf",
+            "https://www2.jpx.co.jp/disc/77460/140120260213560098.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2026/03/b720bd7f9eb989d8a38e052c029231ee.pdf"
+          ],
+          "result": "会社公式のニュース掲載ページと7件の直接PDF本文を照合。決算数値・受注回復・偏光子契約の織込み状況・AlN評価段階・IceCube採用の業績影響・減価償却変更の適用期を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/77460/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/77460/tdnet",
+            "https://ogc-jp.com/irinfo/settlement/"
+          ],
+          "result": "対象期間の公表時刻を確認。11/27 11:15、12/23 09:45、1/14 16:45、2/13 11:00及び15:30、3/27 15:30はいずれもcutoff前。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "(開示事項の経過)ガラス偏光子生産能力増強のための製造設備の発注",
+          "publishedAt": "2025-11-27T11:15:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2025/11/3415f8402a28755c1f04372292e794d6.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "複数の顧客とのガラス偏光子年間販売契約の締結について",
+          "publishedAt": "2025-12-23T09:45:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2025/12/05c4cec00f9f989abb6ef73031519c14.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "サーマルナイト添加窒化アルミニウム放熱基板の初期材料評価合格のお知らせ",
+          "publishedAt": "2026-01-14T16:45:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2026/01/bb98272aa9324759261b403908b70257.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "南極IceCubeアップグレード計画におけるD-Egg用ガラス耐圧容器の採用について",
+          "publishedAt": "2026-02-13T11:00:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2026/02/0af25c43ace935c9d0b1a61131ddc832.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2026-02-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77460/140120260203545898.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期業績予想に関するお知らせ",
+          "publishedAt": "2026-02-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77460/140120260213560098.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "減価償却方法の変更について",
+          "publishedAt": "2026-03-27T15:30:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2026/03/b720bd7f9eb989d8a38e052c029231ee.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-03-31 16:15 JST時点で公表済みの会社IR/TDnet一次資料を確認し、決算実績・通期予想・製品評価・契約・投資計画・会計方針の適用時期を分けて記載。",
+        "3Q短信では継続企業の前提に関する注記は該当事項なし。2025-09-09の新株予約権全行使後、3Q末発行済株式数は2,912万株。2027年3月期からの定額法変更は影響未公表で、当期実績とは混同していない。",
+        "manifestのidentity・会社名・signal date・cutoff・selectorを一致させた。開示時刻はIRBANK/TDnet時系列で確認し、各資料の会社公式またはJPX本文を照合。"
+      ]
+    }
+  ]
+}

@@ -62,6 +62,10 @@ def check_candidate(path: Path, manifest: dict, receipt_paths: list[Path]) -> li
             errors.append(f"{prefix}: auditStatus is not pass")
         if [item.get("name") for item in report.get("fields", [])] != list(FIELD_ORDER):
             errors.append(f"{prefix}: seven fields are missing, duplicated, or out of order")
+        for field in report.get("fields", []):
+            value = field.get("value")
+            if field.get("name") in ("開示リンク", "Sources") and isinstance(value, str) and "\\n" in value:
+                errors.append(f"{prefix}: {field['name']} contains escaped newline text")
         matching = [
             item
             for item in receipts

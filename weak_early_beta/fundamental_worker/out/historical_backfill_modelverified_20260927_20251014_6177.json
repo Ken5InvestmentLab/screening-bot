@@ -1,0 +1,119 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2025-10-14|6177",
+      "signalDate": "2025-10-14",
+      "symbolCode": "6177",
+      "companyName": "ＡｐｐＢａｎｋ",
+      "analysisCutoff": "2025-10-14T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:01:37.946+09:00",
+      "summary": "2025年12月期中間期（非連結）は売上高658.022百万円（前年同期比176.4%増）、営業損失81.083百万円、経常損失82.421百万円、純損失82.884百万円。営業損失は前年同期から縮小した一方、通期予想は非開示で、営業CFは117.134百万円のマイナス。継続企業に重要な疑義を生じさせる重要事象が記載され、9月1日にはPWANとmusica labの株式交換が効力発生し計2,953,000株を交付した。",
+      "materialImpact": "売上増加と営業損失の縮小は改善材料だが、依然として赤字で営業CFもマイナス、通期予想も非開示。AIサービスは開発・販売プロジェクトの開始と秋の販売目標までで、売上額や確定受注は開示されていない。2社の完全子会社化と新株交付は事業拡張の材料である一方、業績寄与は未確定で株式数増加を伴う。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "H1売上高は前年同期比176.4%増、営業損失は前年同期の110.059百万円から81.083百万円へ縮小した。一方、営業損失・純損失が続き、営業CFはマイナス。2WINS・PLANAとのAIサービス開発やPWAN・musica labの子会社化は成長施策として公表されたが、開示時点で販売実績や収益寄与は未確認。"
+        },
+        {
+          "name": "事業概要",
+          "value": "メディア事業（AppBank.net、動画等）とIP＆コマース事業（IPコラボ商品・地域イベント等）を運営。2025年4月にYURINAN事業を譲渡し、原宿friendを閉店するなど、実店舗赤字の整理とメディア共創企画の拡大を進めていた。"
+        },
+        {
+          "name": "足元材料",
+          "value": "8月18日に2WINS・PLANAとのAIソリューション開発契約を締結し、企業・教育機関向けサービスパッケージの開発・販売プロジェクトを開始。会社発表上の販売開始目標は2025年秋であり、売上額・確定受注は示されていない。PWANとmusica labは9月1日に株式交換の効力が発生し完全子会社化。8月13日資料ではP/L連結を10月1日から開始する計画と説明していた。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "最新の中間期（非連結）は売上高658.022百万円（前年同期238.067百万円）、営業損失81.083百万円、経常損失82.421百万円、純損失82.884百万円。メディア事業は売上604.895百万円・セグメント利益29.726百万円、IP＆コマース事業は売上53.126百万円・セグメント損失18.640百万円。6月末の現金及び現金同等物は137.463百万円、純資産139.986百万円。営業CF▲117.134百万円、投資CF＋30.725百万円（事業譲渡収入33.625百万円を含む）、財務CF＋153.040百万円（株式発行収入）。"
+        },
+        {
+          "name": "注意点",
+          "value": "通期業績予想は、事業環境や新規収益事業の不確定要素から合理的な算定が困難として非開示。前事業年度まで9期連続営業損失で、H1も営業損失を計上したため、継続企業の前提に重要な疑義を生じさせる重要事象等を記載。ただし中間短信の『継続企業の前提に関する注記』は該当事項なし。H1数値は非連結で、株式交換による子会社化前の期間。9月1日の株式交換で新株をPWANに1,000,000株、musica labに1,953,000株、合計2,953,000株交付。株主異動資料ではマイルストーン・キャピタルの保有が8月19日時点の1,500,300株（8.24%）から2,050,100株（10.54%）へ、続いて8月25日時点で1,910,100株（9.62%）へ変化。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-08-04 PWAN・musica lab株式交換契約(17:00)](https://data.swcms.net/file/appbank/ir/news/auto_20250804529351/pdfFile.pdf)\n・[2025-08-13 H1決算短信(16:00)](https://data.swcms.net/file/appbank/dam/jcr:a7835fdd-fc44-42c4-8f0e-cc8d2e08e331/140120250813540941.pdf)\n・[2025-08-13 H1決算説明資料(16:00)](https://data.swcms.net/file/appbank/ir/news/auto_20250813540956/pdfFile.pdf)\n・[2025-08-18 2WINS・PLANA AI開発契約(10:30)](https://data.swcms.net/file/appbank/ir/news/auto_20250818543371/pdfFile.pdf)\n・[2025-08-29 主要株主異動(11:45)](https://data.swcms.net/file/appbank/ir/news/auto_20250829549688/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[AppBank IRニュース一覧](https://ir.appbank.co.jp/ir/news.html)\n・[AppBank 決算短信IRライブラリー](https://ir.appbank.co.jp/ir/library/results.html)\n・[AppBank 適時開示一覧（IRBANK）](https://irbank.net/E31817/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.appbank.co.jp/ir/news.html",
+          "checkedUrls": [
+            "https://data.swcms.net/file/appbank/dam/jcr:a7835fdd-fc44-42c4-8f0e-cc8d2e08e331/140120250813540941.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250813540956/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250804529351/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250818543371/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250825546633/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250829549688/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250901551136/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250901551143/pdfFile.pdf"
+          ],
+          "result": "会社公式IR掲載PDFの本文を確認し、中間期数値、非連結区分、予想非開示、継続企業に関する重要事象、AIプロジェクトの予定、株式交換の新株交付と効力発生日、主要株主の異動を照合。9/1付の事後開示2件も本文を確認したが、資料に公開時刻がないため時刻付き開示一覧には含めていない。公式IR一覧はカットオフ日まで時系列確認し、同日16:15までの新規開示は見当たらなかった。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/E31817/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/E31817/tdnet",
+            "https://irbank.net/6177/140120250818543371"
+          ],
+          "result": "公開時刻照合用の開示時系列で、8/4 17:00、8/13 16:00、8/18 10:30、8/25・8/29 11:45を確認。IRBANKは時刻確認にのみ使用し、事業・財務事実は会社公式IR本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "株式会社PWAN及びmusica lab株式会社との株式交換契約の締結に関するお知らせ",
+          "publishedAt": "2025-08-04T17:00:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250804529351/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年12月期第2四半期（中間期）決算短信（日本基準）（非連結）",
+          "publishedAt": "2025-08-13T16:00:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/dam/jcr:a7835fdd-fc44-42c4-8f0e-cc8d2e08e331/140120250813540941.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年12月期第2四半期決算説明資料",
+          "publishedAt": "2025-08-13T16:00:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250813540956/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式会社2WINS及び株式会社PLANAとのAIソリューション開発契約締結及び企業・教育機関向けAIサービスパッケージプロジェクト開始に関するお知らせ",
+          "publishedAt": "2025-08-18T10:30:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250818543371/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要株主の異動に関するお知らせ",
+          "publishedAt": "2025-08-29T11:45:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250829549688/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff is 2025-10-14 16:15 JST. Reviewed the company IR timeline through the cutoff; excluded all later materials and did not use price or realized-return data.",
+        "Independently reviewed the official H1 statement and presentation. Confirmed exact non-consolidated financials, cash flows, no full-year forecast, significant going-concern event, and no separate going-concern note.",
+        "Reviewed the official 8/4 share-exchange agreement and both 9/1 statutory post-completion disclosures. Confirmed 9/1 effective date and total 2,953,000 AppBank shares issued to the two subsidiaries' shareholders. The 9/1 documents show dates but no verifiable release times, so they remain in sourceChecks and are omitted from the time-stamped disclosure list.",
+        "Reviewed official 8/18 AI project release. Treated autumn launch as a target only; no disclosed sales amount or confirmed revenue was assumed.",
+        "Reviewed official 8/25 and 8/29 major-shareholder notices and kept the two ownership changes separate. Used IRBANK only to verify release times."
+      ]
+    }
+  ]
+}

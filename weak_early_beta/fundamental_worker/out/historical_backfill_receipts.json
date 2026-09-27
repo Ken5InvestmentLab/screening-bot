@@ -1,6 +1,6 @@
 {
   "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_RECEIPTS_V1",
-  "updated_at": "2026-09-27T19:58:27.804727+09:00",
+  "updated_at": "2026-09-27T20:05:55.956925+09:00",
   "reports": [
     {
       "signalDate": "2023-01-04",
@@ -18776,6 +18776,120 @@
       ]
     },
     {
+      "identity": "2025-10-14|6177",
+      "signalDate": "2025-10-14",
+      "symbolCode": "6177",
+      "companyName": "ＡｐｐＢａｎｋ",
+      "analysisCutoff": "2025-10-14T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:01:37.946+09:00",
+      "summary": "2025年12月期中間期（非連結）は売上高658.022百万円（前年同期比176.4%増）、営業損失81.083百万円、経常損失82.421百万円、純損失82.884百万円。営業損失は前年同期から縮小した一方、通期予想は非開示で、営業CFは117.134百万円のマイナス。継続企業に重要な疑義を生じさせる重要事象が記載され、9月1日にはPWANとmusica labの株式交換が効力発生し計2,953,000株を交付した。",
+      "materialImpact": "売上増加と営業損失の縮小は改善材料だが、依然として赤字で営業CFもマイナス、通期予想も非開示。AIサービスは開発・販売プロジェクトの開始と秋の販売目標までで、売上額や確定受注は開示されていない。2社の完全子会社化と新株交付は事業拡張の材料である一方、業績寄与は未確定で株式数増加を伴う。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "H1売上高は前年同期比176.4%増、営業損失は前年同期の110.059百万円から81.083百万円へ縮小した。一方、営業損失・純損失が続き、営業CFはマイナス。2WINS・PLANAとのAIサービス開発やPWAN・musica labの子会社化は成長施策として公表されたが、開示時点で販売実績や収益寄与は未確認。"
+        },
+        {
+          "name": "事業概要",
+          "value": "メディア事業（AppBank.net、動画等）とIP＆コマース事業（IPコラボ商品・地域イベント等）を運営。2025年4月にYURINAN事業を譲渡し、原宿friendを閉店するなど、実店舗赤字の整理とメディア共創企画の拡大を進めていた。"
+        },
+        {
+          "name": "足元材料",
+          "value": "8月18日に2WINS・PLANAとのAIソリューション開発契約を締結し、企業・教育機関向けサービスパッケージの開発・販売プロジェクトを開始。会社発表上の販売開始目標は2025年秋であり、売上額・確定受注は示されていない。PWANとmusica labは9月1日に株式交換の効力が発生し完全子会社化。8月13日資料ではP/L連結を10月1日から開始する計画と説明していた。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "最新の中間期（非連結）は売上高658.022百万円（前年同期238.067百万円）、営業損失81.083百万円、経常損失82.421百万円、純損失82.884百万円。メディア事業は売上604.895百万円・セグメント利益29.726百万円、IP＆コマース事業は売上53.126百万円・セグメント損失18.640百万円。6月末の現金及び現金同等物は137.463百万円、純資産139.986百万円。営業CF▲117.134百万円、投資CF＋30.725百万円（事業譲渡収入33.625百万円を含む）、財務CF＋153.040百万円（株式発行収入）。"
+        },
+        {
+          "name": "注意点",
+          "value": "通期業績予想は、事業環境や新規収益事業の不確定要素から合理的な算定が困難として非開示。前事業年度まで9期連続営業損失で、H1も営業損失を計上したため、継続企業の前提に重要な疑義を生じさせる重要事象等を記載。ただし中間短信の『継続企業の前提に関する注記』は該当事項なし。H1数値は非連結で、株式交換による子会社化前の期間。9月1日の株式交換で新株をPWANに1,000,000株、musica labに1,953,000株、合計2,953,000株交付。株主異動資料ではマイルストーン・キャピタルの保有が8月19日時点の1,500,300株（8.24%）から2,050,100株（10.54%）へ、続いて8月25日時点で1,910,100株（9.62%）へ変化。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-08-04 PWAN・musica lab株式交換契約(17:00)](https://data.swcms.net/file/appbank/ir/news/auto_20250804529351/pdfFile.pdf)\n・[2025-08-13 H1決算短信(16:00)](https://data.swcms.net/file/appbank/dam/jcr:a7835fdd-fc44-42c4-8f0e-cc8d2e08e331/140120250813540941.pdf)\n・[2025-08-13 H1決算説明資料(16:00)](https://data.swcms.net/file/appbank/ir/news/auto_20250813540956/pdfFile.pdf)\n・[2025-08-18 2WINS・PLANA AI開発契約(10:30)](https://data.swcms.net/file/appbank/ir/news/auto_20250818543371/pdfFile.pdf)\n・[2025-08-29 主要株主異動(11:45)](https://data.swcms.net/file/appbank/ir/news/auto_20250829549688/pdfFile.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[AppBank IRニュース一覧](https://ir.appbank.co.jp/ir/news.html)\n・[AppBank 決算短信IRライブラリー](https://ir.appbank.co.jp/ir/library/results.html)\n・[AppBank 適時開示一覧（IRBANK）](https://irbank.net/E31817/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ir.appbank.co.jp/ir/news.html",
+          "checkedUrls": [
+            "https://data.swcms.net/file/appbank/dam/jcr:a7835fdd-fc44-42c4-8f0e-cc8d2e08e331/140120250813540941.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250813540956/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250804529351/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250818543371/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250825546633/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250829549688/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250901551136/pdfFile.pdf",
+            "https://data.swcms.net/file/appbank/ir/news/auto_20250901551143/pdfFile.pdf"
+          ],
+          "result": "会社公式IR掲載PDFの本文を確認し、中間期数値、非連結区分、予想非開示、継続企業に関する重要事象、AIプロジェクトの予定、株式交換の新株交付と効力発生日、主要株主の異動を照合。9/1付の事後開示2件も本文を確認したが、資料に公開時刻がないため時刻付き開示一覧には含めていない。公式IR一覧はカットオフ日まで時系列確認し、同日16:15までの新規開示は見当たらなかった。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/E31817/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/E31817/tdnet",
+            "https://irbank.net/6177/140120250818543371"
+          ],
+          "result": "公開時刻照合用の開示時系列で、8/4 17:00、8/13 16:00、8/18 10:30、8/25・8/29 11:45を確認。IRBANKは時刻確認にのみ使用し、事業・財務事実は会社公式IR本文から採録。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "株式会社PWAN及びmusica lab株式会社との株式交換契約の締結に関するお知らせ",
+          "publishedAt": "2025-08-04T17:00:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250804529351/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年12月期第2四半期（中間期）決算短信（日本基準）（非連結）",
+          "publishedAt": "2025-08-13T16:00:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/dam/jcr:a7835fdd-fc44-42c4-8f0e-cc8d2e08e331/140120250813540941.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2025年12月期第2四半期決算説明資料",
+          "publishedAt": "2025-08-13T16:00:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250813540956/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式会社2WINS及び株式会社PLANAとのAIソリューション開発契約締結及び企業・教育機関向けAIサービスパッケージプロジェクト開始に関するお知らせ",
+          "publishedAt": "2025-08-18T10:30:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250818543371/pdfFile.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "主要株主の異動に関するお知らせ",
+          "publishedAt": "2025-08-29T11:45:00+09:00",
+          "url": "https://data.swcms.net/file/appbank/ir/news/auto_20250829549688/pdfFile.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "Cutoff is 2025-10-14 16:15 JST. Reviewed the company IR timeline through the cutoff; excluded all later materials and did not use price or realized-return data.",
+        "Independently reviewed the official H1 statement and presentation. Confirmed exact non-consolidated financials, cash flows, no full-year forecast, significant going-concern event, and no separate going-concern note.",
+        "Reviewed the official 8/4 share-exchange agreement and both 9/1 statutory post-completion disclosures. Confirmed 9/1 effective date and total 2,953,000 AppBank shares issued to the two subsidiaries' shareholders. The 9/1 documents show dates but no verifiable release times, so they remain in sourceChecks and are omitted from the time-stamped disclosure list.",
+        "Reviewed official 8/18 AI project release. Treated autumn launch as a target only; no disclosed sales amount or confirmed revenue was assumed.",
+        "Reviewed official 8/25 and 8/29 major-shareholder notices and kept the two ownership changes separate. Used IRBANK only to verify release times."
+      ]
+    },
+    {
       "identity": "2025-10-30|7746",
       "signalDate": "2025-10-30",
       "symbolCode": "7746",
@@ -19730,6 +19844,231 @@
           "publishedAt": "2025-12-12T15:30:00+09:00",
           "contentReviewed": true
         }
+      ]
+    },
+    {
+      "signalDate": "2026-02-03",
+      "symbolCode": "4422",
+      "companyName": "ＶＡＬＵＥＮＥＸ",
+      "identity": "2026-02-03|4422",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "analysisCutoff": "2026-02-03T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:04:31+09:00",
+      "summary": "2026年7月期1Qは売上高183百万円（前年同期比39.3％増）、営業損失2百万円。1月30日に航空自衛隊から3,025万円の解析業務を受注しましたが、会社は業績への影響を軽微と説明しています。",
+      "materialImpact": "航空自衛隊向け解析業務の受注は新たな実績として前向きな材料です。一方、会社は業績影響を軽微と説明しており、受注額から当期売上や利益を推定できません。",
+      "sourceChecks": [
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120251209516468.pdf",
+          "role": "official_ir",
+          "result": "公式決算短信本文を確認。1Q業績、現預金・純資産・自己資本比率、為替差益、通期予想非開示、継続企業注記なし及び四半期CF未作成を照合。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260106529559.pdf",
+          "role": "official_ir",
+          "result": "公式株式分割PDF本文を確認。1株を3株に分割し、効力発生日が2026年2月1日であることを照合。"
+        },
+        {
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260121536645.pdf",
+          "role": "official_ir",
+          "result": "公式TDnet PDF本文を確認。島津製作所の説明資料に両社特許データの俯瞰図が掲載された内容。本文日付は1月21日。会社サイト記事のフッター日付と異なるためPDF本文と開示一覧時刻を採用。"
+        },
+        {
+          "url": "https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense",
+          "role": "official_ir",
+          "result": "会社公式記事本文を確認。2025年12月10日契約、契約額30,250,000円、会社説明の業績影響は軽微。"
+        },
+        {
+          "url": "https://irbank.net/4422/ir",
+          "role": "irbank_or_tdnet",
+          "result": "開示時系列で1月21日15:30の島津製作所資料への掲載、1月30日11:30の航空自衛隊案件及び1月7日16:00の株式分割を照合。いずれも2月3日16:15までに公表済み。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2026年７月期 第１四半期決算短信〔日本基準〕（連結）",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120251209516468.pdf",
+          "publishedAt": "2025-12-11T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式分割および株式分割に伴う定款の一部変更に関するお知らせ",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260106529559.pdf",
+          "publishedAt": "2026-01-07T16:00:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "島津製作所のTescan社買収資料におけるVALUENEX俯瞰解析の採用",
+          "url": "https://www2.jpx.co.jp/disc/44220/140120260121536645.pdf",
+          "publishedAt": "2026-01-21T15:30:00+09:00",
+          "contentReviewed": true
+        },
+        {
+          "title": "VALUENEX、防衛省 航空自衛隊より解析役務1式を受注",
+          "url": "https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense",
+          "publishedAt": "2026-01-30T11:30:00+09:00",
+          "contentReviewed": true
+        }
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "航空自衛隊向け技術情報収集・解析業務の受注は実績拡大の材料。ただし契約額は3,025万円で、会社は業績への影響を軽微と説明しています。"
+        },
+        {
+          "name": "事業概要",
+          "value": "特許・論文などの文書データを独自技術で解析し、俯瞰図や指標として提供するアルゴリズム事業を展開。コンサルティングサービスとASPサービスが主な収益源です。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1月30日、航空自衛隊から技術情報収集・解析役務を落札し、契約締結済みと公表。契約日は2025年12月10日、金額は3,025万円です。1月21日には島津製作所のTescan買収説明資料で同社の特許俯瞰図が採用されました。株式は2月1日付で1株を3株に分割済みです。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "1Q売上高183.034百万円（前年同期比39.3％増）、営業損失1.606百万円、経常利益0.471百万円、親会社株主帰属利益0.279百万円。経常利益には為替差益1.651百万円を含みます。10月末現預金721.741百万円、純資産711.125百万円、自己資本比率79.7％。通期予想は合理的算定が困難として非開示。"
+        },
+        {
+          "name": "注意点",
+          "value": "1Q営業損益は小幅赤字で、経常・純利益も小額です。経常利益は為替差益の影響を受けています。航空自衛隊案件は会社が業績影響を軽微と説明しており、契約額を当期売上・利益と同額に扱えません。島津製作所資料への掲載は売上契約額を示さず、Tescan買収価額を同社の売上とみなせません。株式分割は投資単位の調整で、企業価値や利益を増やすものではありません。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-12-11 2026年７月期 第１四半期決算短信（15:30）](https://www2.jpx.co.jp/disc/44220/140120251209516468.pdf)\n・[2026-01-07 株式分割および定款変更のお知らせ（16:00）](https://www2.jpx.co.jp/disc/44220/140120260106529559.pdf)\n・[2026-01-21 島津製作所のTescan買収資料に俯瞰解析が採用（15:30）](https://www2.jpx.co.jp/disc/44220/140120260121536645.pdf)\n・[2026-01-30 航空自衛隊の技術情報収集・解析役務を受注（11:30）](https://www.valuenex.com/jp/news-list/20260126/valuenex-20261210-defense)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[VALUENEX 公式IR資料一覧](https://www.valuenex.com/ir-docs)\n・[VALUENEX 公式ニュース一覧](https://www.valuenex.com/jp/news/notice)\n・[VALUENEX 適時開示時系列（IRBANK）](https://irbank.net/4422/ir)"
+        }
+      ],
+      "auditStatus": "pass"
+    },
+    {
+      "identity": "2026-03-31|7746",
+      "signalDate": "2026-03-31",
+      "symbolCode": "7746",
+      "companyName": "岡本硝子",
+      "analysisCutoff": "2026-03-31T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:04:59+09:00",
+      "summary": "2026年3月期3Q累計は売上30.19億円（前年同期比5.5%減）、営業損失3.10億円。通期予想は売上46.90億円・営業損失1.24億円へ下方修正。偏光子は11月から受注回復し複数社との年間販売契約も成立したが、数量・収益の具体額は非開示。",
+      "materialImpact": "3Q累計で売上減・営業赤字が拡大し、通期予想も従来の営業利益1.04億円から営業損失1.24億円へ転落。偏光子受注は11月以降回復、複数顧客との1年契約を締結したが、今期売上は予想に織込済み。偏光子製造設備6,000万円を発注し増産準備を継続。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "3Q累計で売上減・営業赤字が拡大し、通期予想も従来の営業利益1.04億円から営業損失1.24億円へ転落。偏光子受注は11月以降回復、複数顧客との1年契約を締結したが、今期売上は予想に織込済み。偏光子製造設備6,000万円を発注し増産準備を継続。"
+        },
+        {
+          "name": "事業概要",
+          "value": "特殊ガラス・光学部品、薄膜製品の製造販売。プロジェクター用反射鏡・フライアイレンズ、光通信用ガラス偏光子、窒化アルミニウム（AlN）放熱基板、ガラス容器への加飾蒸着などを手掛ける。"
+        },
+        {
+          "name": "足元材料",
+          "value": "世界的なプロジェクター需要低迷と顧客在庫調整でフライアイレンズが減少。光通信向け偏光子はファラデー回転子の供給逼迫で発注が急減したが、2025年11月から受注・生産が回復。11/27に製造設備を発注し、12/23に複数顧客との2026年1月開始の年間販売契約を締結。1/14には台湾顧客でAlN基板の初期材料評価に合格（包装評価中）。2/13に南極IceCube計画のD-Egg用ガラス耐圧容器採用を公表したが、今期業績への影響は軽微。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年3月期3Q累計（2025年4～12月）は売上高30.19億円（前年同期比5.5%減）、営業損失3.10億円、経常損失3.28億円、親会社株主帰属純損失2.46億円。2025年12月末は総資産89.82億円、純資産25.38億円、自己資本比率28.3%、現金及び預金23.52億円。通期予想は売上高46.90億円、営業損失1.24億円、経常損失1.21億円、純損失1.34億円へ修正（従来は営業利益1.04億円等）。"
+        },
+        {
+          "name": "注意点",
+          "value": "通期下方修正の理由はフライアイレンズ需要低迷、偏光子受注の急減、AlN基板の立上がり遅れ。偏光子の当期販売数量は回復後も当初計画未達見込みで、年間契約の金額は非開示、今期売上は予想に織込み済み。設備は納入が2026年11月頃の予定で、増強前は現行設備の生産増（6割強）で対応。3Q短信に継続企業の前提注記はなく、四半期CF計算書は未作成。9/9の新株予約権全行使により3Q末の発行済株式数は2,912万株（前期末2,331万株）。3/27に2027年3月期から減価償却を定率法から定額法へ変更決議したが、同年度予想への影響額は未公表。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2025-11-27 偏光子製造設備発注(11:15)](https://ogc-jp.com/jp/wp-content/uploads/2025/11/3415f8402a28755c1f04372292e794d6.pdf)\n・[2025-12-23 偏光子年間販売契約(09:45)](https://ogc-jp.com/jp/wp-content/uploads/2025/12/05c4cec00f9f989abb6ef73031519c14.pdf)\n・[2026-01-14 AlN基板初期評価合格(16:45)](https://ogc-jp.com/jp/wp-content/uploads/2026/01/bb98272aa9324759261b403908b70257.pdf)\n・[2026-02-13 D-Egg用耐圧容器採用(11:00)](https://ogc-jp.com/jp/wp-content/uploads/2026/02/0af25c43ace935c9d0b1a61131ddc832.pdf)\n・[2026-02-13 第3四半期決算短信(15:30)](https://www2.jpx.co.jp/disc/77460/140120260203545898.pdf)\n・[2026-02-13 通期業績予想修正(15:30)](https://www2.jpx.co.jp/disc/77460/140120260213560098.pdf)\n・[2026-03-27 減価償却方法変更(15:30)](https://ogc-jp.com/jp/wp-content/uploads/2026/03/b720bd7f9eb989d8a38e052c029231ee.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[岡本硝子 ニュースリリース](https://ogc-jp.com/irinfo/news_release/)\n・[岡本硝子 決算短信一覧](https://ogc-jp.com/irinfo/settlement/)\n・[7746 TDnet開示時系列（IRBANK）](https://irbank.net/77460/tdnet)"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://ogc-jp.com/irinfo/news_release/",
+          "checkedUrls": [
+            "https://ogc-jp.com/jp/wp-content/uploads/2025/11/3415f8402a28755c1f04372292e794d6.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2025/12/05c4cec00f9f989abb6ef73031519c14.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2026/01/bb98272aa9324759261b403908b70257.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2026/02/0af25c43ace935c9d0b1a61131ddc832.pdf",
+            "https://www2.jpx.co.jp/disc/77460/140120260203545898.pdf",
+            "https://www2.jpx.co.jp/disc/77460/140120260213560098.pdf",
+            "https://ogc-jp.com/jp/wp-content/uploads/2026/03/b720bd7f9eb989d8a38e052c029231ee.pdf"
+          ],
+          "result": "会社公式のニュース掲載ページと7件の直接PDF本文を照合。決算数値・受注回復・偏光子契約の織込み状況・AlN評価段階・IceCube採用の業績影響・減価償却変更の適用期を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://irbank.net/77460/tdnet",
+          "checkedUrls": [
+            "https://irbank.net/77460/tdnet",
+            "https://ogc-jp.com/irinfo/settlement/"
+          ],
+          "result": "対象期間の公表時刻を確認。11/27 11:15、12/23 09:45、1/14 16:45、2/13 11:00及び15:30、3/27 15:30はいずれもcutoff前。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "(開示事項の経過)ガラス偏光子生産能力増強のための製造設備の発注",
+          "publishedAt": "2025-11-27T11:15:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2025/11/3415f8402a28755c1f04372292e794d6.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "複数の顧客とのガラス偏光子年間販売契約の締結について",
+          "publishedAt": "2025-12-23T09:45:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2025/12/05c4cec00f9f989abb6ef73031519c14.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "サーマルナイト添加窒化アルミニウム放熱基板の初期材料評価合格のお知らせ",
+          "publishedAt": "2026-01-14T16:45:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2026/01/bb98272aa9324759261b403908b70257.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "南極IceCubeアップグレード計画におけるD-Egg用ガラス耐圧容器の採用について",
+          "publishedAt": "2026-02-13T11:00:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2026/02/0af25c43ace935c9d0b1a61131ddc832.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期第3四半期決算短信〔日本基準〕（連結）",
+          "publishedAt": "2026-02-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77460/140120260203545898.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年3月期業績予想に関するお知らせ",
+          "publishedAt": "2026-02-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/77460/140120260213560098.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "減価償却方法の変更について",
+          "publishedAt": "2026-03-27T15:30:00+09:00",
+          "url": "https://ogc-jp.com/jp/wp-content/uploads/2026/03/b720bd7f9eb989d8a38e052c029231ee.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-03-31 16:15 JST時点で公表済みの会社IR/TDnet一次資料を確認し、決算実績・通期予想・製品評価・契約・投資計画・会計方針の適用時期を分けて記載。",
+        "3Q短信では継続企業の前提に関する注記は該当事項なし。2025-09-09の新株予約権全行使後、3Q末発行済株式数は2,912万株。2027年3月期からの定額法変更は影響未公表で、当期実績とは混同していない。",
+        "manifestのidentity・会社名・signal date・cutoff・selectorを一致させた。開示時刻はIRBANK/TDnet時系列で確認し、各資料の会社公式またはJPX本文を照合。"
       ]
     },
     {
@@ -21683,6 +22022,24 @@
       "imported_at": "2026-09-27T19:58:27.804727+09:00",
       "previous_receipt_sha256": "",
       "receipt_sha256": "905c7846b5bb4accfeb3442709dfd373446cae0db74a2afe041d7c17d09404a9"
+    },
+    {
+      "identity": "2026-02-03|4422",
+      "imported_at": "2026-09-27T20:04:56.085556+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "41ba8633c24b98b74fef24b19a951fed0bf17c774c5f98b98ebdb0f7347be67b"
+    },
+    {
+      "identity": "2025-10-14|6177",
+      "imported_at": "2026-09-27T20:05:51.440930+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "560781bd488fec1d689c28a0b6c43fdc0184022e8fab68331c38d98bc5cf231a"
+    },
+    {
+      "identity": "2026-03-31|7746",
+      "imported_at": "2026-09-27T20:05:55.956925+09:00",
+      "previous_receipt_sha256": "",
+      "receipt_sha256": "2f67cd4252ffbaf821697fada372a48c8db6659e21d4cbf1e0b017c65dac3342"
     }
   ]
 }

@@ -1,0 +1,110 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2026-05-18|281A",
+      "signalDate": "2026-05-18",
+      "symbolCode": "281A",
+      "companyName": "インフォメティス",
+      "analysisCutoff": "2026-05-18T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:39:52+09:00",
+      "summary": "2026年12月期1Qは72.0%増収、経常・純利益は黒字転換したが営業損失が継続。持分法投資利益73百万円の寄与と大口顧客契約終了後のARR低下を踏まえ、通期は営業赤字予想を維持。",
+      "materialImpact": "BridgeLAB DRは4月に中国電力の家庭向け商用サービスへ採用された。継続収入の可能性を示す案件だが、契約額・寄与額は公表されていない。目先の1Q経常黒字は持分法投資利益による部分が大きい。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "1Qは増収し経常・純損益が黒字化したが、営業損失74百万円が残る。経常黒字には持分法投資利益73百万円が寄与。大口賃貸顧客の契約終了でARRは前年割れ。4月15日にはBridgeLAB DRが中国電力の家庭向け商用DRサービスに採用されたが、金額は非開示。"
+        },
+        {
+          "name": "事業概要",
+          "value": "電力データのAI分析を基盤に、家電別使用量を推定するNILM、電力小売向けDR支援「BridgeLAB DR」、スマートメーター活用・受託開発、家庭向け電力見える化サービスを提供。"
+        },
+        {
+          "name": "足元材料",
+          "value": "1Q売上高203百万円（前年同期比72.0%増）、営業損失74百万円（前年同期は131百万円の損失）。主要指標ARRは357.241百万円で19.7%減だが前四半期比3.4%増。大口賃貸事業者との契約終了に伴い4月以降ARRは一時大きく減少する見込みで、会社はienowa収入増と成果報酬型BridgeLAB DRの寄与により後半回復を見込む。4月15日、中国電力の家庭向けサービス「ぐっとずっと。エコタイムシフト」でBridgeLAB DRの商用提供が開始。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2026年12月期1Q（1～3月）は売上高203.479百万円、営業損失74.024百万円、経常利益2.834百万円、親会社株主帰属純利益2.597百万円。営業外に持分法投資利益73.493百万円を計上。3月末現金及び預金534.301百万円、総資産1,918.206百万円、純資産879.230百万円、自己資本比率45.8%。通期予想は売上845百万円、営業損失395百万円、経常損失350百万円、純損失351百万円で据置。"
+        },
+        {
+          "name": "注意点",
+          "value": "経常・純利益の黒字は本業営業黒字を意味せず、持分法投資利益の寄与が大きい。大口顧客終了後のARR低下と、BridgeLAB DRの収益寄与時期・規模に不確実性がある。会社は2027年3月末までの資金を確保できる見込みとして継続企業の前提に関する重要な不確実性はないと判断する一方、資金繰りを慎重管理すると説明。4/3に第9回新株予約権は全数行使済みで、同月に187,700株を交付。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-04-03 第三者割当による行使価額修正条項付インフォメティス株式会社第９回新株予約権（停止要請条項付）の大量行使、行使完了及び月間行使状況に関するお知らせ(16:00)](https://contents.xj-storage.jp/xcontents/AS04931a/34dcc3dd/e284/4ba2/ba7a/9f913f32200f/140120260403598053.pdf)\n・[2026-04-15 インフォメティス、「BridgeLAB DR」が中国電力の商用家庭向けDRサービスに採用(11:00)](https://contents.xj-storage.jp/xcontents/AS04931a/240011e7/6665/43a7/99e0/5c588983ec3f/140120260414504369.pdf)\n・[2026-05-14 2026年12月期第１四半期決算短信〔日本基準〕(連結)(16:00)](https://contents.xj-storage.jp/xcontents/AS04931a/50530969/9338/4144/81fe/c43de9a9af61/140120260513527802.pdf)\n・[2026-05-14 営業外収益の計上に関するお知らせ(16:00)](https://contents.xj-storage.jp/xcontents/AS04931a/ad883ea0/8e25/4b99/8b6b/e2e0b11796dc/140120260513531117.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[インフォメティス IRニュース一覧](https://www.informetis.com/news/)\n・[インフォメティス 電力事業者向けサービス](https://www.informetis.com/service/forbusiness/)\n・[281A 適時開示一覧・時刻確認](https://finance.yahoo.co.jp/quote/281A.T/disclosure)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-05-18 16:15 JST cutoffで、4/3 16:00予約権完了、4/15 11:00中国電力商用DR採用、5/14 16:00初回Q1短信・営業外収益資料の公式本文を照合。manifestの社名、5 selector、identity、cutoffと一致。",
+        "Q1実績・通期予想・ARR・大口顧客終了・資金繰り判断は初回5/14決算短信で確認。別資料と短信の持分法投資利益は73百万円、短信の厳密値73.493百万円で一致し、経常黒字と営業赤字を区別。",
+        "4/15資料は採用・商用サービス開始を確認したが収益金額の記載なし。4/3の4月行使187,700株と第9回予約権の行使完了を別資料で確認。",
+        "Yahoo!ファイナンス適時開示一覧で各公表時刻と時系列を照合。5/18までに5/14後の新規適時開示はなく、次の掲載となる5/21 16:00の決算説明資料はcutoff後として除外。7/7の短信更新・訂正も後日情報として不使用。"
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.informetis.com/news/",
+          "checkedUrls": [
+            "https://www.informetis.com/news/",
+            "https://www.informetis.com/service/forbusiness/",
+            "https://contents.xj-storage.jp/xcontents/AS04931a/34dcc3dd/e284/4ba2/ba7a/9f913f32200f/140120260403598053.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS04931a/240011e7/6665/43a7/99e0/5c588983ec3f/140120260414504369.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS04931a/50530969/9338/4144/81fe/c43de9a9af61/140120260513527802.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS04931a/ad883ea0/8e25/4b99/8b6b/e2e0b11796dc/140120260513531117.pdf"
+          ],
+          "result": "会社公式ニュース一覧に掲載された各開示の公式PDF本文を確認。業績、財務、顧客終了、DR商用採用の説明を照合し、サービス紹介ページで事業内容を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/281A.T/disclosure",
+          "checkedUrls": [
+            "https://finance.yahoo.co.jp/quote/281A.T/disclosure"
+          ],
+          "result": "TDnet時刻付き一覧で4/3 16:00、4/15 11:00、5/14 16:00を照合し、5/14以降5/18 cutoffまで新規開示の掲載がないことを確認。公開時刻と順序の確認にのみ使用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "第三者割当による行使価額修正条項付インフォメティス株式会社第９回新株予約権（停止要請条項付）の大量行使、行使完了及び月間行使状況に関するお知らせ",
+          "publishedAt": "2026-04-03T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS04931a/34dcc3dd/e284/4ba2/ba7a/9f913f32200f/140120260403598053.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "インフォメティス、「BridgeLAB DR」が中国電力の商用家庭向けDRサービスに採用",
+          "publishedAt": "2026-04-15T11:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS04931a/240011e7/6665/43a7/99e0/5c588983ec3f/140120260414504369.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年12月期第１四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2026-05-14T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS04931a/50530969/9338/4144/81fe/c43de9a9af61/140120260513527802.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "営業外収益の計上に関するお知らせ",
+          "publishedAt": "2026-05-14T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS04931a/ad883ea0/8e25/4b99/8b6b/e2e0b11796dc/140120260513531117.pdf",
+          "contentReviewed": true
+        }
+      ]
+    }
+  ]
+}

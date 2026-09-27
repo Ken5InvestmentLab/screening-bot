@@ -1,0 +1,95 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2026-04-14|281A",
+      "signalDate": "2026-04-14",
+      "symbolCode": "281A",
+      "companyName": "インフォメティス",
+      "analysisCutoff": "2026-04-14T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:38:46+09:00",
+      "summary": "2025年12月期は大口顧客との取引終了等で大幅赤字となり、2026年も営業赤字を見込む。4月3日、第9回新株予約権の全数行使が完了。",
+      "materialImpact": "前期実績の悪化と顧客集中リスクが残る一方、会社はDR支援の受注増や次世代スマートメーター、海外事業を成長領域と位置付ける。短期の黒字化はまだ会社予想に含まれない。",
+      "selectorNames": [
+        "陰線沈み込みリバウンド"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2025年12月期は大口賃貸顧客との取引終了等で46.0%減収、営業損失628百万円。2026年12月期は増収予想だが営業赤字継続の計画。第9回新株予約権は4月3日に全数行使完了し、4月1～3日に187,700株を交付。"
+        },
+        {
+          "name": "事業概要",
+          "value": "電力データのAI分析を基盤に、家電別使用量を推定するNILM、電力小売向けDR支援「BridgeLAB DR」、スマートメーター活用・受託開発、家庭向け電力見える化サービスを提供。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2025年10～12月のARRは345百万円（前年同期比29.1%減）。大口賃貸事業者との取引終了に伴う加入者の自然減が背景で、2026年4月以降もARRは一時的に大きく減る見込み。会社は成果報酬型BridgeLAB DRの受注契約数が2025年10～12月に前年同期比約2倍となり、2026年後半から売上・利益に寄与すると説明。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "2025年12月期売上高530百万円（46.0%減）、営業損失628百万円、経常損失717百万円、親会社株主帰属純損失721百万円。期末現金及び現金同等物417.679百万円、営業CF▲440百万円、純資産585.781百万円・自己資本比率35.3%。2026年12月期会社予想は売上845百万円、営業損失395百万円、経常損失350百万円、純損失351百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "売上減少の主因となる大口顧客の契約終了後、継続収入の補完はDR受注の売上化やスマートメーター関連案件の進捗に左右される。会社は継続企業の前提に重要な疑義を生じさせる事象を認識する一方、2025年12月期短信では重要な不確実性はないと判断。4月3日の完了は第9回予約権の行使であり、交付株式187,700株を伴う。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-02-13 2025年12月期 決算短信〔日本基準〕(連結)(16:00)](https://contents.xj-storage.jp/xcontents/AS04931a/405e278c/c56c/4c6f/aa6f/4323e977b637/140120260212557786.pdf)\n・[2026-03-27 事業計画及び成長可能性に関する事項(16:00)](https://contents.xj-storage.jp/xcontents/AS04931a/f0cdfef4/b2e0/4d91/82a0/0a4bb702abb8/140120260326590677.pdf)\n・[2026-04-03 第三者割当による行使価額修正条項付インフォメティス株式会社第９回新株予約権（停止要請条項付）の大量行使、行使完了及び月間行使状況に関するお知らせ(16:00)](https://contents.xj-storage.jp/xcontents/AS04931a/34dcc3dd/e284/4ba2/ba7a/9f913f32200f/140120260403598053.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[インフォメティス IRニュース一覧](https://www.informetis.com/news/)\n・[インフォメティス 電力事業者向けサービス](https://www.informetis.com/service/forbusiness/)\n・[281A 適時開示一覧・時刻確認](https://finance.yahoo.co.jp/quote/281A.T/disclosure)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "2026-04-14 16:15 JST cutoffで、2/13 16:00決算短信、3/27 16:00事業計画、4/3 16:00第9回新株予約権完了資料の会社公式PDF本文を照合。manifestの社名、selector、identity、cutoffと一致。",
+        "2026年12月期予想、ARR推移・大口顧客取引終了、顧客の受注契約数、財務数値および継続企業注記を決算短信本文で確認。第9回予約権の4/1～3交付株数と行使完了を4/3資料で確認。",
+        "Yahoo!ファイナンス適時開示一覧はTDnet時刻・時系列の照合に限り使用。次の掲載は4/15 11:00の中国電力商用DR採用であり、4/14 cutoffには含めていない。本文事実は会社公式IR資料に限定。"
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://www.informetis.com/news/",
+          "checkedUrls": [
+            "https://www.informetis.com/news/",
+            "https://www.informetis.com/service/forbusiness/"
+          ],
+          "result": "会社公式ニュース一覧から対象開示を確認し、決算短信・事業計画・予約権行使完了資料の本文をレビュー。事業概要は会社公式サービス説明で照合。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/281A.T/disclosure",
+          "checkedUrls": [
+            "https://finance.yahoo.co.jp/quote/281A.T/disclosure"
+          ],
+          "result": "時刻付き開示一覧で2/13、3/27、4/3を各16:00と確認。cutoff翌日の4/15 11:00の掲載も確認し、post-cutoffとして除外。時刻と掲載順以外の事実根拠には使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "2025年12月期 決算短信〔日本基準〕(連結)",
+          "publishedAt": "2026-02-13T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS04931a/405e278c/c56c/4c6f/aa6f/4323e977b637/140120260212557786.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "事業計画及び成長可能性に関する事項",
+          "publishedAt": "2026-03-27T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS04931a/f0cdfef4/b2e0/4d91/82a0/0a4bb702abb8/140120260326590677.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当による行使価額修正条項付インフォメティス株式会社第９回新株予約権（停止要請条項付）の大量行使、行使完了及び月間行使状況に関するお知らせ",
+          "publishedAt": "2026-04-03T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS04931a/34dcc3dd/e284/4ba2/ba7a/9f913f32200f/140120260403598053.pdf",
+          "contentReviewed": true
+        }
+      ]
+    }
+  ]
+}

@@ -56,8 +56,38 @@ def main() -> None:
             stage_counts["資料確認中"] += 1
     working_count = len(active_items) - stage_counts["待機中"]
     later = pending - len(active_pending)
+    hold_pending = sum(item["status"] != "complete" and item["identity"] in excluded for item in records)
+    later_label = "保留" if later == hold_pending else "後続・保留"
     active_rows = "".join(row(item["identity"], item["detail"], item["status"]) for item in active_items)
     next_rows = "".join(row(item["identity"], item.get("company_name", ""), "未着手") for item in next_records)
+    if not active_rows:
+        active_rows = '<tr><td colspan="3">現在調査中の銘柄はありません</td></tr>'
+    if not next_rows:
+        next_rows = '<tr><td colspan="3">次に着手する銘柄はありません</td></tr>'
+    if active_items:
+        stage_flow = (
+            '<div class="flow-stages" aria-label="今回の調査対象の段階">'
+            f'<div class="flow-node"><strong>{stage_counts["待機中"]}件</strong><small>着手待ち</small></div>'
+            '<div class="flow-arrow" aria-hidden="true">↓</div>'
+            f'<div class="flow-node"><strong>{stage_counts["資料確認中"]}件</strong><small>一次資料を調査中</small></div>'
+            '<div class="flow-arrow" aria-hidden="true">↓</div>'
+            f'<div class="flow-node"><strong>{stage_counts["資料確認済み"]}件</strong><small>一次資料確認済み</small></div>'
+            '<div class="flow-arrow" aria-hidden="true">↓</div>'
+            f'<div class="flow-node"><strong>{stage_counts["候補作成中"]}件</strong><small>Luna候補作成中</small></div>'
+            '<div class="flow-arrow" aria-hidden="true">↓</div>'
+            f'<div class="flow-node"><strong>{stage_counts["監査完了"]}件</strong><small>独立監査完了</small></div>'
+            '</div>'
+        )
+    elif pending == hold_pending:
+        stage_flow = (
+            '<div class="flow-node" style="max-width:420px;margin:14px auto 0">'
+            f'<strong>調査可能な銘柄は完了</strong><small>資料不足の保留 {hold_pending} 件</small></div>'
+        )
+    else:
+        stage_flow = (
+            '<div class="flow-node" style="max-width:420px;margin:14px auto 0">'
+            f'<strong>次の着手待ち {pending - hold_pending} 件</strong><small>資料不足の保留 {hold_pending} 件</small></div>'
+        )
     hold_rows = "".join(
         f'<tr><th scope="row">{escape(identity)}</th><td>{escape(state.get("hold_details", {}).get(identity, "証拠確認中"))}</td></tr>'
         for identity in state.get("known_holds", [])
@@ -133,15 +163,15 @@ def main() -> None:
   <div class="flow-arrow" aria-hidden="true">↓</div>
   <div class="flow-row"><div class="flow-node"><strong>{completed}件</strong><small>分析完了</small></div><div class="flow-node"><strong>{pending}件</strong><small>未完了</small></div></div>
   <div class="flow-arrow" aria-hidden="true">↓</div>
-  <div class="flow-row"><div class="flow-node"><strong>{len(active_pending)}件</strong><small>調査中・待機</small></div><div class="flow-node"><strong>{later}件</strong><small>後続・保留</small></div></div>
-  <div class="flow-stages" aria-label="今回の調査対象の段階"><div class="flow-node"><strong>{stage_counts['待機中']}件</strong><small>着手待ち</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['資料確認中']}件</strong><small>一次資料を調査中</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['資料確認済み']}件</strong><small>一次資料確認済み</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['候補作成中']}件</strong><small>Luna候補作成中</small></div><div class="flow-arrow" aria-hidden="true">↓</div><div class="flow-node"><strong>{stage_counts['監査完了']}件</strong><small>独立監査完了</small></div></div>
+  <div class="flow-row"><div class="flow-node"><strong>{len(active_pending)}件</strong><small>調査中・待機</small></div><div class="flow-node"><strong>{later}件</strong><small>{later_label}</small></div></div>
+  {stage_flow}
 </section>
 <div class="layout"><div>
   <section><h2>調査中・次に着手する銘柄</h2><table><thead><tr><th>検出日・コード</th><th>銘柄</th><th>状態</th></tr></thead><tbody>{active_rows}</tbody></table></section>
   <section><h2>次の未完了</h2><table><thead><tr><th>検出日・コード</th><th>銘柄</th><th>状態</th></tr></thead><tbody>{next_rows}</tbody></table></section>
 </div><div>
   <section><h2>年別の完了状況</h2><table><thead><tr><th>年</th><th>完了 / 対象</th><th>進捗</th></tr></thead><tbody>{year_rows}</tbody></table></section>
-  <section><h2>公開・検証</h2><div class="meta"><p><strong>次回反映</strong>{escape(state['release_plan'])}</p><p><strong>公開tag</strong>{escape(state['last_deploy_tag'])}</p><p><strong>公開状況</strong>{escape(state['deploy_status'])}</p><p><strong>リモートHEAD</strong><code>{escape(state['remote_head'])[:12]}</code></p><p><strong>Cloud</strong><a href="{root_url}">公開レポート</a></p><p><strong>Discord履歴投稿</strong>0件</p></div></section>
+  <section><h2>公開・検証</h2><div class="meta"><p><strong>公開計画・結果</strong>{escape(state['release_plan'])}</p><p><strong>公開tag</strong>{escape(state['last_deploy_tag'])}</p><p><strong>公開状況</strong>{escape(state['deploy_status'])}</p><p><strong>公開コミット</strong><code>{escape(state['remote_head'])[:12]}</code></p><p><strong>Cloud</strong><a href="{root_url}">公開レポート</a></p><p><strong>今回の新規Discord投稿</strong>0件</p></div></section>
   <section><h2>既知の保留</h2><table><thead><tr><th>検出日・コード</th><th>不足している証拠</th></tr></thead><tbody>{hold_rows}</tbody></table><p class="muted note">確認済みの不足証拠を同じ方法で再探索しません。</p></section>
 </div></div>
 </body></html>

@@ -2,7 +2,7 @@
   "published_complete": 87,
   "last_deploy_tag": "cloud-deploy-backfill-20260927-87",
   "deploy_status": "Actions 成功 / healthz 200 / 未認証 root 302",
-  "release_plan": "分析完了後にまとめて公開",
+  "release_plan": "検証済み251件を一括公開予定",
   "remote_head": "e998989f60ddba258984d040dc2de0d362f98e1b",
   "known_holds": [
     "2023-05-19|3137",
@@ -12,8 +12,5 @@
     "2023-05-19|3137": "16:15以前の公開時刻を確認できない",
     "2024-03-12|9704": "公式一次資料の本文を確認できない"
   },
-  "active": [
-    {"identity": "2026-06-02|6659", "detail": "メディアリンクス", "status": "資料確認中"},
-    {"identity": "2026-04-15|4840", "detail": "トライアイズ", "status": "資料確認中"}
-  ]
+  "active": []
 }

@@ -1,0 +1,115 @@
+{
+  "identity": "WEAK_EARLY_HISTORICAL_FUNDAMENTALS_BATCH_V1",
+  "reports": [
+    {
+      "identity": "2026-06-02|6659",
+      "signalDate": "2026-06-02",
+      "symbolCode": "6659",
+      "companyName": "メディアリンクス",
+      "analysisCutoff": "2026-06-02T16:15:00+09:00",
+      "generatedAt": "2026-09-27T20:49:17+09:00",
+      "summary": "2026年3月期は売上高16.2%減、営業損失877百万円と赤字拡大。旧型製品在庫の評価損を計上し、7期連続赤字とGC重要な不確実性が続く。",
+      "materialImpact": "5/18に中東通信事業者からXscendを受注したが、金額非開示で売上計上は2027年3月期予定。5/19に第18回新株予約権の全数行使が完了し、5月中に246万株を交付。",
+      "selectorNames": [
+        "2条件一致リバウンド",
+        "出来高沈静リバウンド",
+        "地合い安定・2条件一致",
+        "陰線沈み込みリバウンド",
+        "静かな売られ過ぎバランス"
+      ],
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "2026年3月期は売上減、営業・経常・純損失が拡大。5/18の受注は翌期の売上機会だが金額は非開示で、決算説明資料掲載済み案件の受注確定。赤字継続と資金調達制約が残る。"
+        },
+        {
+          "name": "事業概要",
+          "value": "放送・映像伝送向けIPネットワーク機器・システムの開発、販売、構築、運用支援を行う単一セグメントのメーカー。主力製品はIP伝送プラットフォーム「Xscend」。"
+        },
+        {
+          "name": "足元材料",
+          "value": "2026年3月期売上高2,337百万円（前年比16.2%減）、営業損失877百万円（前期523百万円）、経常損失894百万円、親会社株主帰属純損失1,454百万円。5/12、旧型製品の販売終了に伴う棚卸資産評価損503百万円と固定資産減損32百万円を開示し、通期予想を下方修正。5/18、中東通信事業者からXscendを受注、金額非開示、2027年3月期売上計上予定。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "3月末総資産3,077百万円、純資産2,519百万円、自己資本比率80.5%、現金及び現金同等物575.479百万円。営業CFは428.866百万円の支出、財務CFは867.111百万円の収入。2027年3月期予想は売上3,690百万円、営業利益20百万円、経常利益15百万円、純損失25百万円。"
+        },
+        {
+          "name": "注意点",
+          "value": "7期連続で営業・経常・純損失。金融機関から業績安定まで新規融資の検討は困難との見解を受け、短信は継続企業の前提に関する重要な不確実性を明記。5/19に第18回新株予約権320,000個の行使が完了し、5月に246万株を交付、発行済株式数は78,695,300株。5/28、登録拒否処分を受けた旧監査法人の異動に伴い、海南監査法人を6/25株主総会の候補として付議決議。総会前のため交代は未了。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-05-12 特別損失の発生及び業績予想の修正に関するお知らせ(16:30)](https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/MediaLinks_3_170_2026-05-12_FY202603-The-recognition-of-extraordinary-lossrevision-forecast.pdf)\n・[2026-05-14 2026年３月期 決算短信〔日本基準〕（連結）(15:30)](https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/MediaLinks_3_171_2026-05-14_Results_4Q202603.pdf)\n・[2026-05-18 大口受注に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/66590/140120260514534064.pdf)\n・[2026-05-19 第三者割当による第18回新株予約権（行使価額修正条項付）の行使完了及び月間行使状況に関するお知らせ(17:00)](https://www2.jpx.co.jp/disc/66590/140120260519541277.pdf)\n・[2026-05-28 （開示事項の経過）会計監査人の異動に関するお知らせ(15:30)](https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/%EF%BC%88%E9%96%8B%E7%A4%BA%E4%BA%8B%E9%A0%85%E3%81%AE%E7%B5%8C%E9%81%8E%EF%BC%89%E4%BC%9A%E8%A8%88%E7%9B%A3%E6%9F%BB%E4%BA%BA%E7%95%B0%E5%8B%95%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[メディアリンクス IRニュース一覧](https://jp.medialinks.com/blog/category/news-archive/)\n・[メディアリンクス IRライブラリー](https://jp.medialinks.com/investor-relations/investor-library/)\n・[6659 TDnet時刻付き適時開示一覧](https://finance.yahoo.co.jp/quote/6659.Q/disclosure)"
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "manifestのidentity・社名・5 selector・16:15 JST cutoffと一致。会社公式5/12、5/14資料およびJPXの5/18、5/19資料、会社公式5/28資料の本文を照合。",
+        "損益、CF、財政状態、次期予想、継続企業の前提に関する重要事象・不確実性、旧型在庫評価損を確認。5/18受注は金額非開示で、5/14決算説明資料掲載案件の一つ、売上計上は翌期予定と区別。",
+        "第18回新株予約権は5/19に全320,000個の行使完了。5月中の交付株数と同日現在の発行済株式数をJPX本文で確認。5/28の監査法人交代は6/25総会への選任議案付議であり、cutoff時点では未了。",
+        "会社IRニュースとTDnet時刻付き一覧で5/12 16:30、5/14 15:30、5/18 15:30、5/19 17:00、5/28 15:30を照合。6/2 cutoffまでの新規適時開示はなく、次の掲載は6/5。"
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "checked": true,
+          "url": "https://jp.medialinks.com/blog/category/news-archive/",
+          "checkedUrls": [
+            "https://jp.medialinks.com/blog/category/news-archive/",
+            "https://jp.medialinks.com/investor-relations/investor-library/",
+            "https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/MediaLinks_3_170_2026-05-12_FY202603-The-recognition-of-extraordinary-lossrevision-forecast.pdf",
+            "https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/MediaLinks_3_171_2026-05-14_Results_4Q202603.pdf",
+            "https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/%EF%BC%88%E9%96%8B%E7%A4%BA%E4%BA%8B%E9%A0%85%E3%81%AE%E7%B5%8C%E9%81%8E%EF%BC%89%E4%BC%9A%E8%A8%88%E7%9B%A3%E6%9F%BB%E4%BA%BA%E7%95%B0%E5%8B%95%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf"
+          ],
+          "result": "会社IR掲載の5/12、5/14決算短信および5/28監査法人異動資料を読み、損益・業績予想・継続企業情報・監査法人の変更状況を確認。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/6659.Q/disclosure",
+          "checkedUrls": [
+            "https://finance.yahoo.co.jp/quote/6659.Q/disclosure"
+          ],
+          "result": "TDnet時刻付き一覧で5/12 16:30、5/14 15:30、5/18 15:30、5/19 17:00、5/28 15:30を確認し、5/28後から6/2 cutoffまで新規開示がないことを照合。公開時刻と順序の確認にのみ使用。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "特別損失の発生及び業績予想の修正に関するお知らせ",
+          "publishedAt": "2026-05-12T16:30:00+09:00",
+          "url": "https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/MediaLinks_3_170_2026-05-12_FY202603-The-recognition-of-extraordinary-lossrevision-forecast.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年３月期 決算短信〔日本基準〕（連結）",
+          "publishedAt": "2026-05-14T15:30:00+09:00",
+          "url": "https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/MediaLinks_3_171_2026-05-14_Results_4Q202603.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "大口受注に関するお知らせ",
+          "publishedAt": "2026-05-18T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120260514534064.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "第三者割当により発行された第18回新株予約権（行使価額修正条項付）の行使完了及び月間行使状況に関するお知らせ",
+          "publishedAt": "2026-05-19T17:00:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/66590/140120260519541277.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "（開示事項の経過）会計監査人の異動に関するお知らせ",
+          "publishedAt": "2026-05-28T15:30:00+09:00",
+          "url": "https://jp.medialinks.com/wp-content/uploads/sites/2/2026/05/%EF%BC%88%E9%96%8B%E7%A4%BA%E4%BA%8B%E9%A0%85%E3%81%AE%E7%B5%8C%E9%81%8E%EF%BC%89%E4%BC%9A%E8%A8%88%E7%9B%A3%E6%9F%BB%E4%BA%BA%E7%95%B0%E5%8B%95%E3%81%AB%E9%96%A2%E3%81%99%E3%82%8B%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+          "contentReviewed": true
+        }
+      ]
+    }
+  ]
+}

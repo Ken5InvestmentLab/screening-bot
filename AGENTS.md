@@ -235,6 +235,7 @@ MIN_4H_BARS: 30          // 最低4h足本数
 完了通知は `send_report_ready_notice.py` を唯一の送信実装とし、同じタイトル・フィールド・本文・フッターのメッセージが直近15分にあれば送信をスキップする。送信直後も再確認し、競合で同一通知が増えた場合はこのWebhook側の重複を削除して1通へ収束させる。この重複ガードをインラインWebhook POSTへ戻さない。
 `Deploy Approved Logic` 承認後のレポート再生成ではこのDiscord完了通知を送らない。`deploy.yml` から `mega-validation-report.yml` を呼ぶ場合は `notify_discord: false` を明示し、承認適用したスコアロジックの内容通知は `--apply-pending` 中に一時JSONへ退避して、HTML再生成とreport-gate反映後に `mega-validation-report.yml` の最終段で送る。
 `Mega Validation Report` workflow に平日21:00 JSTなどの定時 `schedule` は置かない。レポート再生成は `Daily Screener Optimization` からの共有workflow呼び出し、13:21先行OHLCV取得後の明示dispatch、または手動実行で行う。
+`Mega Validation Report`、`Daily Screener Optimization`、`Deploy Approved Logic` のPython依存関係は共通の `requirements-actions.txt` で固定し、`.github/scripts/install-python-deps.sh` から取得する。依存関係を変えるときは3つのworkflowで使える組み合わせを検証する。
 
 ### VM 環境変数（`~/screening-bot/.env`）
 

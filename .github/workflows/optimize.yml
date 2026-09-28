@@ -30,9 +30,11 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-actions.txt
 
       - name: Install dependencies
-        run: pip install numpy pandas openpyxl google-auth google-auth-httplib2 google-api-python-client
+        run: bash .github/scripts/install-python-deps.sh
 
       - name: Write credentials.json
         run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json

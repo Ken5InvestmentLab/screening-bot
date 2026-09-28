@@ -13,3 +13,4 @@
 ## Cloud beta daily runner
 
 - On Windows, launch npm through `node.exe` and the `npm-cli.js` beside the configured `npm.cmd`. Direct `spawn(npm.cmd, ...)` fails with `EINVAL`, and `shell: true` can break paths containing spaces. Resolve the CLI before starting the daily OHLCV work.
+- When using a temporary clean clone, copy both the repository-root `.env` and `weak-early-beta-gate/.env` along with the two runner configs; Wrangler's `CLOUDFLARE_API_TOKEN` is loaded from the latter. Repoint the configs to the clone and remove both copied `.env` files after the run.

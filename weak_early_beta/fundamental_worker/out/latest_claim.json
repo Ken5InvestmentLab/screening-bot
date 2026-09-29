@@ -1,10 +1,10 @@
 {
   "ok": true,
-  "claimId": "7cb8ed06-1f91-4b29-bdf7-edb01cc49057",
-  "generatedAt": "2026-09-28T17:09:20.171069+09:00",
+  "claimId": "38c69ff1-7dbf-4ec7-97c1-bf894c49cba3",
+  "generatedAt": "2026-09-29T17:06:39.176615+09:00",
   "claimedCount": 0,
   "alerts": [],
-  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud2-20260928-170305\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "outputReportPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [
       "alertId",

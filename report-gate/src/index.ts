@@ -8,6 +8,8 @@ const REPORT_THEME_INIT_SCRIPT_PATH = "/report-theme-init.js";
 const ROLE_CACHE_SECONDS = 90;
 const ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS = 600;
 const TOKEN_REFRESH_SKEW_SECONDS = 300;
+const TOKEN_REFRESH_REPLAY_MS = 60000;
+const DISCORD_REQUEST_TIMEOUT_MS = 10000;
 const DEFAULT_SESSION_TTL_SECONDS = 31536000;
 const REPORT_ASSET_PATH_RE = /^\/mega_validation_report(?:_[a-z0-9_]+)?\.html$/;
 const REPORT_IMAGE_ASSET_PATH_RE = /^\/report-assets\/[a-z0-9-]+\.png$/;
@@ -23,25 +25,60 @@ function accessGuardScript(env: WorkerEnv): string {
   const deniedMessage = JSON.stringify(ROLE_REQUIRED_MESSAGE);
   return `(() => {
   const checkIntervalMs = 120000;
+  const recovering = document.documentElement.hasAttribute('data-auth-recovery');
+  let checking = false;
+  let finished = false;
+  let recoveryDelayMs = 2000;
   const deny = () => {
     document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + ${deniedTitle} + '</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}.wrap{max-width:680px;margin:0 auto;padding:28px;border:1px solid #d7e0ea;border-radius:10px;background:#fff}h1{font-size:24px;margin:0 0 12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}a{color:#2563eb}.button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:7px;text-decoration:none;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{border:1px solid #c9d7ea;color:#1849a9;background:#f3f7ff}</style></head><body><main class="wrap"><h1>' + ${deniedTitle} + '</h1><p>' + ${deniedMessage} + '</p><div class="actions"><a class="button primary" href="' + ${purchaseUrl} + '">アクセス権を購入する</a><a class="button secondary" href="/auth/logout">Discordで再ログイン</a></div></main></body>';
   };
-  const check = async () => {
-    try {
+  const checkUnderLock = async () => {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
       const response = await fetch('/auth/check', {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { accept: 'application/json' },
+        signal: AbortSignal.timeout(25000),
       });
       if (response.status === 401) {
+        if (attempt < 2) {
+          // A concurrent response may just have replaced the browser's cookie.
+          await new Promise(resolve => window.setTimeout(resolve, 1000 * (attempt + 1)));
+          continue;
+        }
+        finished = true;
         window.location.replace('/auth/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search));
+        return;
+      }
+      if (recovering && (response.ok || response.status === 403)) {
+        finished = true;
+        window.location.reload();
         return;
       }
       if (response.status === 403) {
         deny();
       }
+      if (recovering && response.status === 503) {
+        window.setTimeout(check, recoveryDelayMs);
+        recoveryDelayMs = Math.min(recoveryDelayMs * 2, 60000);
+      }
+      return;
+    }
+  };
+  const check = async () => {
+    if (checking || finished) return;
+    checking = true;
+    try {
+      // Web Locks serialize refreshes across tabs and authentication wait pages.
+      if (navigator.locks && navigator.locks.request) {
+        await navigator.locks.request('report-gate-auth', checkUnderLock);
+      } else {
+        await checkUnderLock();
+      }
     } catch {
       // Keep the current page during transient network failures; the next check will retry.
+    } finally {
+      checking = false;
     }
   };
   window.addEventListener('pageshow', check);
@@ -89,6 +126,7 @@ type OAuthToken = {
   accessToken: string;
   refreshToken?: string;
   expiresIn: number;
+  expiresAt?: number;
 };
 
 type DiscordGuildMember = {
@@ -102,6 +140,11 @@ type DiscordGuildMember = {
 class AccessDeniedError extends Error {}
 
 class DiscordRateLimitedError extends Error {}
+
+class RefreshTokenRejectedError extends Error {}
+
+// Request coalescing only: no tokens are persisted outside the encrypted cookie.
+const tokenRefreshes = new Map<string, { promise: Promise<OAuthToken>; expiresAt: number }>();
 
 type SecurityHeaderOptions = {
   allowReportScript?: boolean;
@@ -435,6 +478,9 @@ type AuthorizationCheck = {
   authorized: boolean;
   refreshedSession?: SessionPayload;
   loginRequired?: boolean;
+  temporaryError?: boolean;
+  tokenRefreshed?: boolean;
+  refreshRequired?: boolean;
 };
 
 async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv): Promise<SessionPayload | null> {
@@ -446,40 +492,46 @@ async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv
     return null;
   }
 
-  const token = await refreshAccessToken(session.refreshToken, env);
+  const token = await coalescedRefreshAccessToken(session.refreshToken, env);
   const refreshedAt = Math.floor(Date.now() / 1000);
   return {
     ...session,
     accessToken: token.accessToken,
     refreshToken: token.refreshToken ?? session.refreshToken,
-    tokenExp: refreshedAt + token.expiresIn,
+    tokenExp: token.expiresAt ?? refreshedAt + token.expiresIn,
   };
 }
 
-async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv): Promise<AuthorizationCheck> {
+async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv, allowTokenRefresh = true): Promise<AuthorizationCheck> {
   const now = Math.floor(Date.now() / 1000);
+  if (!allowTokenRefresh && session.tokenExp <= now + TOKEN_REFRESH_SKEW_SECONDS) {
+    return { authorized: false, refreshRequired: true };
+  }
   let currentSession: SessionPayload;
   let refreshedSession: SessionPayload | undefined;
+  let tokenRefreshed = false;
 
   try {
-    const tokenSession = await refreshSessionAccessToken(session, env);
+    const tokenSession = allowTokenRefresh ? await refreshSessionAccessToken(session, env) : session;
     if (!tokenSession) {
       return { authorized: false, loginRequired: true };
     }
     currentSession = tokenSession;
     if (tokenSession !== session) {
       refreshedSession = tokenSession;
+      tokenRefreshed = true;
     }
   } catch (error) {
-    if (error instanceof AccessDeniedError) {
+    if (error instanceof RefreshTokenRejectedError) {
       return { authorized: false, loginRequired: true };
     }
-    throw error;
+    console.error(JSON.stringify({ level: "warn", message: "Discord token refresh temporarily unavailable" }));
+    return { authorized: false, temporaryError: true };
   }
 
   const hasFreshRoles = currentSession.roleCheckedAt > 0 && now - currentSession.roleCheckedAt <= ROLE_CACHE_SECONDS;
   if (hasFreshRoles) {
-    return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession };
+    return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession, tokenRefreshed };
   }
 
   try {
@@ -493,19 +545,21 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     return {
       authorized: hasAllowedRole(roles, allowedRoleIds(env)),
       refreshedSession: roleCheckedSession,
+      tokenRefreshed,
     };
   } catch (error) {
     if (error instanceof AccessDeniedError) {
-      return { authorized: false };
+      return { authorized: false, refreshedSession, tokenRefreshed };
     }
     if (
       error instanceof DiscordRateLimitedError &&
       currentSession.roleCheckedAt > 0 &&
       now - currentSession.roleCheckedAt <= ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS
     ) {
-      return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession };
+      return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession, tokenRefreshed };
     }
-    throw error;
+    console.error(JSON.stringify({ level: "warn", message: "Discord role check temporarily unavailable" }));
+    return { authorized: false, temporaryError: true, refreshedSession, tokenRefreshed };
   }
 }
 
@@ -513,6 +567,20 @@ async function encryptedSessionCookie(request: Request, env: WorkerEnv, session:
   const now = Math.floor(Date.now() / 1000);
   const maxAge = Math.max(0, session.exp - now);
   return cookie(SESSION_COOKIE, await createSession(session, requiredEnv(env, "SESSION_SECRET")), new URL(request.url), maxAge);
+}
+
+async function appendSessionCookie(
+  request: Request,
+  env: WorkerEnv,
+  headers: Headers,
+  check: Pick<AuthorizationCheck, "refreshedSession" | "tokenRefreshed">,
+): Promise<void> {
+  const session = check.refreshedSession;
+  if (!session) return;
+  const value = await encryptedSessionCookie(request, env, session);
+  // A slow role lookup must not overwrite a token another request just rotated.
+  if (!check.tokenRefreshed && session.tokenExp <= Math.floor(Date.now() / 1000) + TOKEN_REFRESH_SKEW_SECONDS) return;
+  headers.append("set-cookie", value);
 }
 
 function roleRequiredResponse(env: WorkerEnv, status = 403, init: HeadersInit = {}): Response {
@@ -525,8 +593,8 @@ function roleRequiredResponse(env: WorkerEnv, status = 403, init: HeadersInit = 
 type ReportAccessResult = {
   fullAccess: boolean;
   loginRequired?: boolean;
-  refreshedSession?: SessionPayload;
-  clearSession?: boolean;
+  temporaryError?: boolean;
+  refreshRequired?: boolean;
 };
 
 async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAccessResult> {
@@ -535,14 +603,15 @@ async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAcc
     return { fullAccess: false, loginRequired: true };
   }
 
-  const check = await checkSessionAuthorization(session, env);
+  const check = await checkSessionAuthorization(session, env, false);
+  if (check.refreshRequired) return { fullAccess: false, refreshRequired: true };
   if (check.authorized) {
-    return { fullAccess: true, refreshedSession: check.refreshedSession };
+    return { fullAccess: true };
   }
   if (check.loginRequired) {
-    return { fullAccess: false, loginRequired: true, clearSession: true };
+    return { fullAccess: false, loginRequired: true };
   }
-  return { fullAccess: false, refreshedSession: check.refreshedSession };
+  return { fullAccess: false, temporaryError: check.temporaryError };
 }
 
 async function login(request: Request, env: WorkerEnv): Promise<Response> {
@@ -654,6 +723,31 @@ async function exchangeCodeForToken(
   };
 }
 
+async function coalescedRefreshAccessToken(refreshToken: string, env: WorkerEnv): Promise<OAuthToken> {
+  const now = Date.now();
+  for (const [key, entry] of tokenRefreshes) {
+    if (entry.expiresAt <= now) tokenRefreshes.delete(key);
+  }
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
+    `${discordApiBase(env)}\0${requiredEnv(env, "DISCORD_CLIENT_ID")}\0${requiredEnv(env, "DISCORD_CLIENT_SECRET")}\0${refreshToken}`,
+  ));
+  const key = base64UrlEncode(new Uint8Array(digest));
+  const existing = tokenRefreshes.get(key);
+  if (existing) return existing.promise;
+  // Bound isolate memory even if many devices refresh at once.
+  if (tokenRefreshes.size >= 256) tokenRefreshes.delete(tokenRefreshes.keys().next().value!);
+  const entry = { promise: refreshAccessToken(refreshToken, env), expiresAt: now + TOKEN_REFRESH_REPLAY_MS };
+  tokenRefreshes.set(key, entry);
+  try {
+    const token = await entry.promise;
+    entry.expiresAt = Date.now() + TOKEN_REFRESH_REPLAY_MS;
+    return token;
+  } catch (error) {
+    if (tokenRefreshes.get(key) === entry) tokenRefreshes.delete(key);
+    throw error;
+  }
+}
+
 async function refreshAccessToken(refreshToken: string, env: WorkerEnv): Promise<OAuthToken> {
   const body = new URLSearchParams({
     client_id: requiredEnv(env, "DISCORD_CLIENT_ID"),
@@ -666,14 +760,16 @@ async function refreshAccessToken(refreshToken: string, env: WorkerEnv): Promise
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body,
+    signal: AbortSignal.timeout(DISCORD_REQUEST_TIMEOUT_MS),
   });
 
-  if ([400, 401, 403].includes(response.status)) {
-    throw new AccessDeniedError("Discord refresh token is no longer valid");
-  }
   if (!response.ok) {
-    const errorBody = (await response.text()).slice(0, 500);
-    throw new Error(`Discord token refresh failed: ${response.status} ${errorBody}`);
+    const body = await response.json().catch(() => ({})) as { error?: string };
+    if ([400, 401, 403].includes(response.status) && body.error === "invalid_grant") {
+      throw new RefreshTokenRejectedError("Discord refresh token was rejected");
+    }
+    // Do not log OAuth response bodies, which may contain sensitive information.
+    throw new Error(`Discord token refresh unavailable: ${response.status}`);
   }
 
   const token = (await response.json()) as DiscordTokenResponse;
@@ -685,6 +781,7 @@ async function refreshAccessToken(refreshToken: string, env: WorkerEnv): Promise
     accessToken: token.access_token,
     refreshToken: token.refresh_token,
     expiresIn,
+    expiresAt: Math.floor(Date.now() / 1000) + expiresIn,
   };
 }
 
@@ -692,6 +789,7 @@ async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
   const guildId = requiredEnv(env, "DISCORD_GUILD_ID");
   const response = await fetch(`${discordApiBase(env)}/users/@me/guilds/${guildId}/member`, {
     headers: { authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(DISCORD_REQUEST_TIMEOUT_MS),
   });
 
   if (response.status === 429) {
@@ -734,15 +832,32 @@ function injectAccessGuard(html: string): string {
   return `${html}${scriptTag}`;
 }
 
+function authenticationWaitResponse(status = 200, init: HeadersInit = {}): Response {
+  return new Response(
+    `<!doctype html><html lang="ja" data-auth-recovery><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>認証情報を確認しています</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}main{max-width:680px;margin:auto;padding:28px;background:#fff;border-radius:10px}</style></head><body><main><h1>認証情報を確認しています</h1><p>確認でき次第、自動でレポートへ戻ります。通信が混み合っている場合は少しお待ちください。</p><noscript>レポートを開くにはJavaScriptを有効にしてください。</noscript></main><script src="${ACCESS_GUARD_SCRIPT_PATH}" defer></script></body></html>`,
+    {
+      status,
+      headers: securityHeaders({ "content-type": "text/html; charset=utf-8", "cache-control": "private, no-store", ...Object.fromEntries(new Headers(init)) }, { allowReportScript: true }),
+    },
+  );
+}
+
 async function serveReport(request: Request, env: WorkerEnv, assetPath = reportAssetPath(env)): Promise<Response> {
   const access = await reportAccess(request, env);
+  if (access.refreshRequired) {
+    // Document navigation must use the same browser lock as open report tabs.
+    // This shell contains no report data; /auth/check refreshes before reload.
+    return authenticationWaitResponse();
+  }
   if (access.loginRequired) {
-    const headers = new Headers();
-    const url = new URL(request.url);
-    if (access.clearSession) {
-      headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-    }
-    return loginRedirect(request, headers);
+    return loginRedirect(request);
+  }
+  const headers = new Headers();
+  // Only the serialized /auth/check writes session updates. A late document
+  // response must never overwrite a token that an open tab has just rotated.
+  if (access.temporaryError) {
+    headers.set("retry-after", "2");
+    return authenticationWaitResponse(503, headers);
   }
 
   const servedAssetPath = access.fullAccess ? assetPath : freeReportAssetPath(assetPath);
@@ -750,28 +865,16 @@ async function serveReport(request: Request, env: WorkerEnv, assetPath = reportA
   const assetUrl = new URL(servedAssetPath, "https://assets.local");
   const assetResponse = await env.ASSETS.fetch(assetUrl.toString());
   if (!assetResponse.ok || !assetResponse.body) {
-    return textResponse("Report asset not found", 404);
+    return new Response("Report asset not found", { status: 404, headers: securityHeaders(headers) });
   }
 
   const assetHtml = await assetResponse.text();
   const html = access.fullAccess ? injectAccessGuard(assetHtml) : assetHtml;
-  const headers = securityHeaders(
-    {
-      "content-type": "text/html; charset=utf-8",
-      "cache-control": "private, no-store",
-    },
-    { allowReportScript: true },
-  );
-  const url = new URL(request.url);
-  if (access.clearSession) {
-    headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-  }
-  if (access.refreshedSession) {
-    headers.append("set-cookie", await encryptedSessionCookie(request, env, access.refreshedSession));
-  }
+  headers.set("content-type", "text/html; charset=utf-8");
+  headers.set("cache-control", "private, no-store");
   return new Response(html, {
     status: assetResponse.status,
-    headers,
+    headers: securityHeaders(headers, { allowReportScript: true }),
   });
 }
 
@@ -807,26 +910,23 @@ async function serveReportImageAsset(env: WorkerEnv, assetPath: string): Promise
 
 async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
   const session = await readSession(request, env);
-  const url = new URL(request.url);
   if (!session) {
-    const headers = new Headers();
-    headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-    return jsonResponse({ ok: false, reason: "login_required" }, 401, headers);
+    // A late response must not erase a cookie a concurrent login just created.
+    return jsonResponse({ ok: false, reason: "login_required" }, 401);
   }
 
   const check = await checkSessionAuthorization(session, env);
+  const headers = new Headers();
+  await appendSessionCookie(request, env, headers, check);
+  if (check.temporaryError) {
+    headers.set("retry-after", "2");
+    return jsonResponse({ ok: false, reason: "temporarily_unavailable" }, 503, headers);
+  }
   if (!check.authorized) {
     if (check.loginRequired) {
-      const headers = new Headers();
-      headers.append("set-cookie", clearCookie(SESSION_COOKIE, url));
-      return jsonResponse({ ok: false, reason: "login_required" }, 401, headers);
+      return jsonResponse({ ok: false, reason: "login_required", confirmation_required: true }, 401, headers);
     }
-    return jsonResponse({ ok: false, reason: "role_required" }, 403);
-  }
-
-  const headers = new Headers();
-  if (check.refreshedSession) {
-    headers.append("set-cookie", await encryptedSessionCookie(request, env, check.refreshedSession));
+    return jsonResponse({ ok: false, reason: "role_required" }, 403, headers);
   }
   return jsonResponse({ ok: true }, 200, headers);
 }

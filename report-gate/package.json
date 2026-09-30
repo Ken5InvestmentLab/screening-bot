@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "npm run types && npm run typecheck && npm run deploy:dry-run",
+    "check": "npm run types && npm run test && npm run typecheck && npm run deploy:dry-run",
+    "test": "node --test ../tests/report_gate_auth.test.cjs",
     "deploy": "npm run sync-report && wrangler deploy --minify",
     "deploy:legacy": "npm run sync-report && wrangler deploy --minify --name screening-bot-report-gate",
     "deploy:dry-run": "npm run sync-report && wrangler deploy --dry-run",

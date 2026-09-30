@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { cleanEnvironment, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
 function writeJson(file, value) {
@@ -64,6 +65,30 @@ function jstDate() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 }
 
+async function probeFundamentalModel(config, runDir, env) {
+  const fundamentalConfig = readJson(path.resolve(config.fundamentalConfigPath));
+  const probeEnv = cleanEnvironment(env);
+  probeEnv.CODEX_HOME = fundamentalConfig.codexHome;
+  const probe = await run(fundamentalConfig.nodePath, [
+    fundamentalConfig.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
+    '--cd', runDir, '--skip-git-repo-check', '--sandbox', 'read-only',
+    '-m', FUNDAMENTAL_MODEL,
+    '-c', `model_reasoning_effort="${FUNDAMENTAL_REASONING_EFFORT}"`,
+    '-c', 'forced_login_method="chatgpt"', '--json', 'Return exactly MODEL_READY.',
+  ], {
+    cwd: runDir,
+    env: probeEnv,
+    log: path.join(runDir, 'model-preflight'),
+    capture: true,
+    timeoutMs: 120_000,
+  });
+  if (probe.code !== 0 || !probe.stdout.split(/\r?\n/).some(line => {
+    try { return JSON.parse(line).type === 'turn.completed'; } catch { return false; }
+  })) {
+    throw new Error(`Luna xhigh model preflight failed; inspect ${path.join(runDir, 'model-preflight.stdout')}`);
+  }
+}
+
 async function main(configFile) {
   const config = readJson(path.resolve(configFile));
   const repo = path.resolve(config.repoPath);
@@ -113,6 +138,8 @@ async function main(configFile) {
     result.businessDay = businessDay;
     if (!businessDay) { result.ok = true; result.skipped = 'bank_holiday'; return; }
     await sendSystemLog('started');
+    stage = 'model-preflight';
+    await probeFundamentalModel(config, runDir, env);
     stage = 'deploy-setup';
     const deployCommand = npmInvocation(config);
 
@@ -170,4 +197,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { npmInvocation };
+export { npmInvocation, probeFundamentalModel };

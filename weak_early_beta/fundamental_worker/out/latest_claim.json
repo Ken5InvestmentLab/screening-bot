@@ -1,9 +1,27 @@
 {
   "ok": true,
-  "claimId": "38c69ff1-7dbf-4ec7-97c1-bf894c49cba3",
-  "generatedAt": "2026-09-29T17:06:39.176615+09:00",
-  "claimedCount": 0,
-  "alerts": [],
+  "claimId": "d59e7d31-f957-4dfe-8b1f-a768a468b06c",
+  "generatedAt": "2026-09-30T17:07:53.685711+09:00",
+  "claimedCount": 1,
+  "alerts": [
+    {
+      "alertId": "weak-early-beta:2026-09-30:4052",
+      "receivedAt": "2026-09-30T16:15:00+09:00",
+      "signalDate": "2026-09-30",
+      "signalType": "WEAK_EARLY_BETA",
+      "symbolCode": "4052",
+      "symbolName": "フィーチャ",
+      "entryPrice": null,
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A4052",
+      "betaSelectors": [
+        "Balance",
+        "Dive",
+        "Fusion",
+        "Shadow",
+        "Silence"
+      ]
+    }
+  ],
   "outputReportPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [

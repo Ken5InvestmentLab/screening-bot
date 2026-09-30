@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 const SIGNAL_CHANNEL_ID = '1550876104917520505';
 const FUNDAMENTAL_CHANNEL_ID = '1550876675884060702';
+const FUNDAMENTAL_MODEL = 'gpt-5.6-luna';
+const FUNDAMENTAL_REASONING_EFFORT = 'xhigh';
 
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
@@ -97,8 +99,8 @@ async function main(configFile) {
     identity: 'WEAK_EARLY_FUNDAMENTAL_LUNA_XHIGH_V1',
     startedAt: now,
     ok: false,
-    model: 'gpt-6-luna',
-    reasoningEffort: 'xhigh',
+    model: FUNDAMENTAL_MODEL,
+    reasoningEffort: FUNDAMENTAL_REASONING_EFFORT,
     channelId: FUNDAMENTAL_CHANNEL_ID,
     runDir,
   };
@@ -177,8 +179,8 @@ async function main(configFile) {
       const analysisExit = await command(config.nodePath, [
         config.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
         '--cd', config.premiumWorkerRepoPath, '--skip-git-repo-check',
-        '--sandbox', 'danger-full-access', '-m', 'gpt-6-luna',
-        '-c', 'model_reasoning_effort="xhigh"',
+        '--sandbox', 'danger-full-access', '-m', FUNDAMENTAL_MODEL,
+        '-c', `model_reasoning_effort="${FUNDAMENTAL_REASONING_EFFORT}"`,
         '-c', 'forced_login_method="chatgpt"', '--json',
         '-o', path.join(runDir, 'codex.final.txt'), '-',
       ], {
@@ -199,13 +201,13 @@ async function main(configFile) {
     if (!fs.existsSync(reportsPath)) throw new Error('Codex completed without premium_reports.json');
 
     const reportPayload = readJson(reportsPath);
-    const historicalSnapshot = (reportPayload.reports || reportPayload).every(report =>
+    const pointInTimeSnapshot = (reportPayload.reports || reportPayload).every(report =>
       /^\d{4}-\d{2}-\d{2}T16:15:00\+09:00$/.test(String(report.analysisCutoff || ''))
     );
-    if (historicalSnapshot) {
-      // Historical snapshots are intentionally posted by the beta-only sidecar:
+    if (pointInTimeSnapshot) {
+      // Point-in-time snapshots are intentionally posted by the beta-only sidecar:
       // the production worker rejects any report that omits a later disclosure,
-      // while this sidecar enforces signal_date 23:59 JST as the evidence cutoff.
+      // while this sidecar enforces the claim's 16:15 JST evidence cutoff.
       await run(config.nodePath, [historicalPosterPath, '--input', reportsPath, '--state', statePath], 'historical-post', {
         cwd: config.repoPath, env, timeoutMs: 180_000,
       });
@@ -260,4 +262,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { assertIsolated, cleanEnvironment };
+export { assertIsolated, cleanEnvironment, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };

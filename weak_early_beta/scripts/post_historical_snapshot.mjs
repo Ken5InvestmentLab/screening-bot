@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-// Research-only Discord poster for historical snapshots.
+// Discord poster for claim-matched, point-in-time beta snapshots.
 // The production Premium Worker intentionally rejects stale reports when a
-// newer disclosure exists. This sidecar keeps a detection-date cutoff explicit
+// newer disclosure exists. This sidecar keeps the analysis cutoff explicit
 // and posts only a claim-matched report for the isolated beta worker state.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -32,8 +32,12 @@ if (String(claim.symbolCode) !== String(report.symbolCode)) throw new Error('rep
 
 const signalDate = String(report.signalDate || claim.signalDate || '').slice(0, 10);
 const cutoff = String(report.analysisCutoff || '').trim();
-if (!/^\d{4}-\d{2}-\d{2}T23:59:59\+09:00$/.test(cutoff) || !cutoff.startsWith(signalDate)) {
-  throw new Error('analysisCutoff must be signal_date 23:59:59+09:00');
+const claimCutoff = String(claim.receivedAt || '').trim();
+const endOfDayCutoff = `${signalDate}T23:59:59+09:00`;
+if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/.test(cutoff) ||
+    !cutoff.startsWith(signalDate) ||
+    (cutoff !== claimCutoff && cutoff !== endOfDayCutoff)) {
+  throw new Error('analysisCutoff must match claim.receivedAt or signal_date 23:59:59+09:00');
 }
 const allText = JSON.stringify(report);
 for (const date of allText.match(/\b20\d{2}-\d{2}-\d{2}\b/g) || []) {
@@ -56,6 +60,17 @@ if (!/^(?:ポジティブ材料|ネガティブ材料|様子見|混在\/要確�
   throw new Error('材料インパクト must begin with a supported label and summary');
 }
 if (!fields.get('Sources').includes('https://')) throw new Error('Sources must contain a URL');
+if (cutoff === claimCutoff) {
+  const disclosureLines = fields.get('開示リンク').split(/\r?\n/).filter(line => line.trim());
+  for (const line of disclosureLines) {
+    const match = line.match(/^\s*・?\s*\[(\d{4}-\d{2}-\d{2})\s+.+\((\d{2}):(\d{2})\)\]\(https:\/\/[^)]+\)\s*$/);
+    if (!match || Number(match[2]) > 23 || Number(match[3]) > 59) {
+      throw new Error('forward disclosure links require a dated title and publication time');
+    }
+    const publishedAt = `${match[1]}T${match[2]}:${match[3]}:00+09:00`;
+    if (publishedAt > cutoff) throw new Error(`post-cutoff disclosure found: ${publishedAt}`);
+  }
+}
 if (/(買い推奨|売り推奨|目標株価|追加採点|買うべき|売るべき|利確|損切り)/.test(allText)) {
   throw new Error('report contains prohibited investment-advice wording');
 }
@@ -79,6 +94,11 @@ const payload = {
   }],
 };
 
+if (process.argv.includes('--dry-run')) {
+  console.log(JSON.stringify({ ok: true, dryRun: true, alertId: report.alertId, analysisCutoff: cutoff }));
+  process.exit(0);
+}
+
 const postUrl = new URL(webhook);
 postUrl.searchParams.set('wait', 'true');
 const response = await fetch(postUrl, {
@@ -100,7 +120,7 @@ state.posted[report.alertId] = {
   url: String(report.url || claim.tradingViewUrl || ''),
   discordMessageUrl,
   sourceCount: (JSON.stringify(payload).match(/https?:\/\//g) || []).length,
-  historicalSnapshotCutoff: cutoff,
+  analysisCutoff: cutoff,
 };
 delete state.claims[report.alertId];
 delete state.failed[report.alertId];

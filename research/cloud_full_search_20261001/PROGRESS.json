@@ -1,0 +1,60 @@
+{
+  "updated_at_utc": "2026-10-01T16:33:10.163873+00:00",
+  "status": "IN_PROGRESS",
+  "production_unchanged": true,
+  "prepared": true,
+  "parity": {
+    "status": "PASS",
+    "month": "2025-01",
+    "eligible_rows": 1076072,
+    "labeled_rows": 1071678,
+    "feature_float32_equal": true,
+    "teacher_equal": true,
+    "tail_rows": 33,
+    "selected_rows": 23,
+    "selected_sha256": "dad53c3a4b289556ada6b69c6c90d08247feb0c1c88c0c9077e0f1cdfb449573",
+    "seconds": 158.5,
+    "limits": "One frozen month, same normalized input. Not a replay of the old canonical production lineage or proof of profitability.",
+    "reuse_equivalence": "parity_equivalence.json",
+    "origin_cache": ".cache\\cloud_full_search_20261001"
+  },
+  "completed_fits": 26,
+  "screened_configs": 6,
+  "total_configs": 864,
+  "refined_configs": 0,
+  "latest_fit": {
+    "config": {
+      "learner": "xgb",
+      "size": "small",
+      "objective": "top025",
+      "horizon": 5,
+      "features": "price_market",
+      "cap": 1000,
+      "id": "xgb_small_top025_h5_price_market_cap1000"
+    },
+    "month": "2023-09",
+    "train_rows": 380615,
+    "prediction_rows": 18253,
+    "retained_rows": 1378,
+    "max_training_exit": "2023-08-31",
+    "files": {
+      "npz": "8b54c34e8a0406ebace294904abaf9c43e5ec98b15fdf4209a4102904e8bd611",
+      "joblib": "44f82ccb0573d7daf30018e5b479c9dd8c9100f7cc38e54de8f0b22c8fd947ba"
+    }
+  },
+  "progress": {
+    "phase": "SCREEN",
+    "next_config": "xgb_small_top025_h5_price_market_cap1000",
+    "next_month": "2023-03",
+    "screen_complete": 6,
+    "total_configs": 864,
+    "reason": "bounded batch or usage guard"
+  },
+  "usage_lease": {
+    "primary_used_percent": 78,
+    "secondary_used_percent": 44,
+    "checked_at_utc": "2026-10-01T16:32:08.6220394+00:00",
+    "expires_at_unix": 1790873228
+  },
+  "final": null
+}

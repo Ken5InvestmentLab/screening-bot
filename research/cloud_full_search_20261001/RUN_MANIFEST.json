@@ -1,0 +1,73 @@
+{
+  "identity": "CLOUD_FULL_SEARCH_V1",
+  "cache": ".cache\\cloud_full_search_v2_20261001",
+  "versions": {
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "numpy": "2.5.3",
+    "pandas": "2.3.3",
+    "sklearn": "1.9.1",
+    "xgboost": "3.4.1"
+  },
+  "rows": 4306683,
+  "configurations": 864,
+  "independent_scalar_probes": 1440,
+  "complete_20_endpoints": 4262243,
+  "source_and_code_hashes": {
+    "research/cloud_full_search_20261001/PROTOCOL.md": "3ae151bdbada6d025e36e40405fff78e7162841d156da2782101814535f5f02d",
+    "research/cloud_full_search_20261001/common.py": "409e03a6eafee8c6b13fd034f6dcfc1bc1bc905ced0e2f7a763568e65a0e6107",
+    "research/cloud_full_search_20261001/parity.py": "c8348ac3f1bf6decdf65fcd4b417cbbba74c041c54b1dbb2d35bd4703596414f",
+    "research/cloud_full_search_20261001/prepare.py": "6454d2d80e9ce212b28222d07a991d133173124a5d8f4215c1974f847598a533",
+    "research/cloud_full_search_20261001/search.py": "26adfbf1bf5ec0a070002cb91907cf7a81a019b3b00314eb82dcc7c985f3ea0b",
+    "research/cloud_full_search_20261001/status.py": "9f42d080db1f2ceff5b7a171453643ca125b22b27877492ca702cf7c0f8c09f3",
+    "research/cloud_full_search_20261001/test_search.py": "9a8f473fb4c24f10d3542347330fdf9bfa3fd4949fd2c68ea8151e7e61f79b5b",
+    ".cache/weak_early_beta/split_preflight_20261001/normalized_daily.csv": "cfc358198f07b29182da77eac5fccb6efe8d2c2450e79d2859cbd7a15f7d0c13",
+    ".cache/cloud_cap_corrected_v2_20261001/prepared.json": "0713b055ffb50a658ddd62a484cf8ec19ebdf3f3def39467e911ebe77ccc25c0",
+    ".cache/cloud_cap_corrected_v2_20261001/rows.pkl": "290e30536f8bb99190af4509fdf4ddb7d7153390ba66b5a2c34dfd2ba3ce7b36",
+    ".cache/cloud_cap_corrected_v2_20261001/features.npy": "ef46fad051eac87b818c0cd786fa6f11f6430748632e4bd351090b1b0113c1af",
+    ".cache/cloud_cap_corrected_v2_20261001/prices.pkl": "e178d9d46441e425d869f9dc616e2c26e40e415ac680c28e232e2ec02bfc87bd",
+    ".cache/cloud_cap_corrected_v2_20261001/actions.csv": "f53238a8322bc4677a1ae0124bac2bf1e94f62be2b7c0f4f13146cd10345ed80",
+    "weak_early_beta/model.py": "41df78ed1b7e904ce630a9eb4804290ad24384c9fdd07388db47a8ebcde981f9",
+    "tvfree_screener/run.py": "ac36e597e28334238a6ec760a5b84e727f82a640ab99285328e2cd45fcfb6d4f",
+    "tvfree_screener/v7_full_tail_research.py": "dae56e2e82cc07dd7dfbbc1c09431309cf9bcf358d3ae687e432815a5d510fb2",
+    "research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py": "9b3b766fde49e0cbe4442fe71c13b7e41b8687455b2c688896705af2808777dc",
+    "weak_early_beta/corporate_actions.py": "7558cef4ac9cf08c3592addf3a2e21e4939910eeaf8dac9e4ff9b8aac929c1a2",
+    "weak_early_beta/bank_calendar.py": "82b3dacee8feb832cd9dcc696d929fc536c9700bb00df458fa83a8d6514af68c",
+    "weak_early_beta/trade_basis.py": "300b63c3ffa7c9c474f0631a5976b27fcdbfccb563fc4272b5286e201c4e5783",
+    "weak_early_beta/restrictions.py": "f9a7406253ec61eb8c64b826f6ce69eb288ea6a676337e85c449f8f280e88e1f",
+    "weak_early_beta/entry_feasibility.py": "9676e3754c883f85eb81c3b1e19cd96e59bd02539bc0aa83ef678a61ecc11af8",
+    ".cache/cloud_full_search_v2_20261001/entry_feasibility_exclusions.csv": "7074232a4e65e7744e4d80f67c62ca836753e6708460a412e542dbc74685c94f",
+    ".cache/cloud_full_search_v2_20261001/restriction_snapshot.json": "6c476e96b42bc1f4da8c63e9fe30e51a328d3bbe2e4423a126cd6434438d4f19"
+  },
+  "output_hashes": {
+    "outcomes.npy": "7e01e096e2f413e109c2e92b9b428bc63024987e777767bd42e37c3d7807ad65",
+    "entry_prices.npy": "1d4553d9cc18675bdac70e354436c4b934dd86c16b8cdfc0df3f1799c1240ab7",
+    "scheduled_sessions.npy": "f057d3efcecced1fc95b4201828bc3767a4d2b7c38143c98040129115fdae3ba",
+    "session_index.npy": "5a9c3d19b01902381bb4e5b292c629f3036a68552025a69fa58228b9f7a06e22",
+    "augmented.npy": "d770c54aa69eb00735e65fda6e74a6f1caf3ed8661c06fb06d5b040152da267a"
+  },
+  "frozen_policy_origins": {
+    "entry_feasibility_exclusions.csv": {
+      "captured_from": "weak_early_beta/state/entry_feasibility_exclusions.csv",
+      "captured_sha256": "7074232a4e65e7744e4d80f67c62ca836753e6708460a412e542dbc74685c94f"
+    },
+    "restriction_snapshot.json": {
+      "captured_from": "weak_early_beta/state/jpx_restricted_symbols_latest.json",
+      "captured_sha256": "6c476e96b42bc1f4da8c63e9fe30e51a328d3bbe2e4423a126cd6434438d4f19"
+    }
+  },
+  "production_replay": {
+    "status": "PASS",
+    "month": "2025-01",
+    "eligible_rows": 1076072,
+    "labeled_rows": 1071678,
+    "feature_float32_equal": true,
+    "teacher_equal": true,
+    "tail_rows": 33,
+    "selected_rows": 23,
+    "selected_sha256": "dad53c3a4b289556ada6b69c6c90d08247feb0c1c88c0c9077e0f1cdfb449573",
+    "seconds": 158.5,
+    "limits": "One frozen month, same normalized input. Not a replay of the old canonical production lineage or proof of profitability.",
+    "reuse_equivalence": "parity_equivalence.json",
+    "origin_cache": ".cache\\cloud_full_search_20261001"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "status": "PASS",
+  "receipt_count": 17,
+  "independent_model_replays": [
+    {
+      "config": "extra_small_return_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "extra_small_top025_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "extra_small_win_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "hist_small_return_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "hist_small_top025_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "hist_small_win_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "linear_small_return_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "linear_small_top025_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "linear_small_win_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    },
+    {
+      "config": "xgb_small_top025_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    }
+  ],
+  "final_trade_reaggregations": [],
+  "audit_script_sha256": "9211551841bfd5d451ae02e5cef638ca9cffbacf67d5f1c3fe97dcbb837f3e2c",
+  "limits": "Score/CDF replay sampled by learner/size/objective/features; no proof of fills or profitability; 2026 already viewed."
+}

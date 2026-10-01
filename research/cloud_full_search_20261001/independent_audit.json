@@ -1,0 +1,15 @@
+{
+  "status": "PASS",
+  "receipt_count": 8,
+  "independent_model_replays": [
+    {
+      "config": "xgb_small_top025_h5_all45_cap1000",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 262659
+    }
+  ],
+  "final_trade_reaggregations": [],
+  "audit_script_sha256": "996aebbf46fd4b8f43df0cc6338c8a1649bb3b82dfb55ff38c9542c5130866e1",
+  "limits": "Score/CDF replay sampled by learner/size/objective/features; no proof of fills or profitability; 2026 already viewed."
+}

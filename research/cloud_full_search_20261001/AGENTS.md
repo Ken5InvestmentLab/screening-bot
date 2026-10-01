@@ -1,0 +1,10 @@
+# Isolated Cloud search
+
+- This directory is offline research. Never call the daily CLI, send notifications, deploy, or write production state. Freeze source, code, action and exclusion hashes before a run; changed inputs need a new cache namespace.
+- Read restriction and entry-feasibility snapshots captured into the research cache, not files that the daily production run refreshes. Hash the copies and retain capture provenance.
+- Use the Python runtime in `.cache/weak_early_beta/venv/Scripts/python.exe`. Store large arrays, predictions and fitted models only in the ignored search cache. Resume only verified receipts under the same contract.
+- Select model families and policies using 2023–2024 only, with every development exit completed by 2024-12-31. Freeze candidates before reading their 2025 results. Treat already-viewed 2026 as retrospective robustness, never untouched validation. Disclose prior outcome inspection for every reused period, including validation data viewed in a previous study.
+- Train only labels whose scheduled exit precedes the model month. Predict unlabeled rows too. Use bank sessions and actual-share economics; never move a missing endpoint, invent fractional settlement, or use future restriction dates for detection.
+- Preserve the full as-of split journal when normalizing prices. Restrict the evaluated quote and label dates after normalization/causal feature calculation; truncating a priced later event can invalidate earlier stored split factors.
+- A broad staged search is not a proof of the global optimum. Name its finite grid, pruning rules and tested scope. Improvement over a corrected baseline alone does not satisfy the user's current-Cloud performance requirement.
+- Check the account usage guard between bounded batches. A worker must require an unexpired usage lease, honor STOP_REQUESTED, and hold an OS lock. Do not start duplicate workers or automatically resume a weekly-limit pause.

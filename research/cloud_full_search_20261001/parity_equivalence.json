@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "unchanged_replay_inputs_and_dependencies": [
+    "research/cloud_full_search_20261001/parity.py",
+    ".cache/weak_early_beta/split_preflight_20261001/normalized_daily.csv",
+    ".cache/cloud_cap_corrected_v2_20261001/prepared.json",
+    ".cache/cloud_cap_corrected_v2_20261001/rows.pkl",
+    ".cache/cloud_cap_corrected_v2_20261001/features.npy",
+    ".cache/cloud_cap_corrected_v2_20261001/prices.pkl",
+    ".cache/cloud_cap_corrected_v2_20261001/actions.csv",
+    "weak_early_beta/model.py",
+    "tvfree_screener/run.py",
+    "tvfree_screener/v7_full_tail_research.py",
+    "weak_early_beta/corporate_actions.py",
+    "weak_early_beta/bank_calendar.py",
+    "weak_early_beta/trade_basis.py",
+    "weak_early_beta/restrictions.py",
+    "weak_early_beta/entry_feasibility.py",
+    "research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py"
+  ],
+  "versions_equal": true,
+  "all_prepared_array_hashes_equal": true,
+  "origin": "V1 production raw-to-model replay, 2025-01",
+  "limits": "Reused unchanged production diagnostic only; no V1 model-search fits feed V2."
+}

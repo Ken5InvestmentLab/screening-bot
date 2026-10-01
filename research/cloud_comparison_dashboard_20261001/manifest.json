@@ -1,0 +1,58 @@
+{
+  "status": "PASS",
+  "cap_metrics": 210,
+  "exit_metrics": 5040,
+  "fixed_policy_rows": 42,
+  "sources": [
+    {
+      "path": "research/cloud_cap_comparison_20261001/metrics.csv",
+      "sha256": "d5089d2f27d73a7cb71bf98d506d1178e1c27e5cafe79173cf1e43e68f951beb"
+    },
+    {
+      "path": "research/cloud_cap_comparison_20261001/independent_result_audit.json",
+      "sha256": "53e20418baccf0db5773675d808d10a3a12e25b590351c43b7a717d5dccf9d8d"
+    },
+    {
+      "path": "research/comparisons/cloud_exit_20261001/metrics.csv",
+      "sha256": "e1b04b01de02b540c8bcb8fa2b932c37fe0587c65ca968459185a6b6a8f0034c"
+    },
+    {
+      "path": "research/comparisons/cloud_exit_20261001/joint_cap_exit_dev_fixed.csv",
+      "sha256": "f7dd0c293bad864bac78de149185e87230c84b54dc9c83b456f2dd03858512ef"
+    },
+    {
+      "path": "research/comparisons/cloud_exit_20261001/metadata.json",
+      "sha256": "94bfa2398eddfefe25c9f0fadbd3e20d65b3b344ab1892140431683eef2b0d85"
+    },
+    {
+      "path": "research/comparisons/cloud_exit_20261001/independent_audit.json",
+      "sha256": "9df8510eb31fd89674dac49e1ca6fcc3ea9add40f6ab4bc2eedf0f7c1a4381a7"
+    },
+    {
+      "path": "research/cloud_comparison_dashboard_20261001/production_reference.json",
+      "sha256": "5938f7283d5081b2b6c90a06e835cad22ea9e5bf9b8e0617ca4daf12cf1242cc"
+    },
+    {
+      "path": "research/cloud_comparison_dashboard_20261001/production_public_snapshot.json",
+      "sha256": "69f407af9a00a0cbd4a9cf22869098e7eb56fc4990ab323c0983d44786be4dbf"
+    }
+  ],
+  "source_hash_basis": "file bytes with CRLF normalized to LF",
+  "renderer_sources": {
+    "generate.py": "59232dd9241569c85a4b43d3ad992c89aca15530d0161a58c9a327bc284f07ac",
+    "template.html": "ac98eff5cf210f7b140840a876acd7cbeaf6919d1716e92ebb03e9ac05b11a4b",
+    "style.css": "1146890fb35004faebffdf76036b31040577058aac300dca00834e781cf764f3",
+    "dashboard.js": "4ef04a08ebad223553fcbb6d0ae78195c53cfd9362b56265f5b685b17c6db547"
+  },
+  "index_sha256": "f46c81900ca57b13bfe36cb93f98d5bf074085594f4656dd47077bfcdf140457",
+  "checks": [
+    "independent audit receipts",
+    "complete unique grids",
+    "percentage units",
+    "separate cap and exit cohorts",
+    "equal twenty-endpoint cohorts",
+    "DEV-only fixed policies"
+  ],
+  "no_model_execution": true,
+  "no_production_mutations": true
+}

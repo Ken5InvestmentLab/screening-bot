@@ -1,0 +1,27 @@
+{
+  "status": "PASS",
+  "checks": [
+    "120 heatmap cells and one selected condition",
+    "20 interactive SVG endpoints",
+    "full-period DEV-fixed 2000-yen/day7-open +4.23%",
+    "2025 fixed policy +1.17% and top3 sensitivity -4.01%",
+    "mode selection including Balance and stacked allocation",
+    "metric switching including loss-rate control",
+    "cap/exit cohort separation: 472 vs 471",
+    "production reference: 248/+5.49% vs research 252/+0.08%",
+    "CSV downloaded in browser and all 20 rows matched audited source",
+    "390px mobile without document overflow",
+    "light/dark themes and default desktop without overflow"
+  ],
+  "csv_export": {
+    "rows": 20,
+    "arm": "nocap",
+    "mode": "all_conditions_unique",
+    "period": "ALL_DESCRIPTIVE"
+  },
+  "screenshots": {
+    "desktop": "preview.png",
+    "mobile": ".cache/cloud_dashboard_preview_20261001/mobile.png"
+  },
+  "production_state_mutated": false
+}

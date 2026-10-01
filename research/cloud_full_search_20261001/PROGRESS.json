@@ -1,5 +1,5 @@
 {
-  "updated_at_utc": "2026-10-01T17:13:56.542114+00:00",
+  "updated_at_utc": "2026-10-01T18:03:06.353587+00:00",
   "status": "IN_PROGRESS",
   "production_unchanged": true,
   "prepared": true,
@@ -18,43 +18,46 @@
     "reuse_equivalence": "parity_equivalence.json",
     "origin_cache": ".cache\\cloud_full_search_20261001"
   },
-  "completed_fits": 91,
-  "screened_configs": 22,
+  "completed_fits": 147,
+  "screened_configs": 36,
   "total_configs": 864,
   "refined_configs": 0,
   "latest_fit": {
     "config": {
       "learner": "xgb",
       "size": "small",
-      "objective": "top025",
-      "horizon": 10,
+      "objective": "win",
+      "horizon": 5,
       "features": "all45",
-      "cap": 5000,
-      "id": "xgb_small_top025_h10_all45_cap5000"
+      "cap": 1000,
+      "id": "xgb_small_win_h5_all45_cap1000"
     },
     "month": "2024-03",
-    "train_rows": 1180844,
-    "prediction_rows": 49314,
-    "retained_rows": 6160,
+    "train_rows": 493808,
+    "prediction_rows": 18765,
+    "retained_rows": 0,
     "max_training_exit": "2024-02-29",
     "files": {
-      "npz": "acdc64fbd84948cb8a4990fc1940608fe52e4891c440f5ef00bafe086c2869eb",
-      "joblib": "3648986b11a660b73a1309615d8f5cc5d6037f65cb7addda70acbf4a6af10792"
+      "npz": "c41efcf85874633440100dc255386c018baf58c8537a9dc606fba509b7d7ebc0",
+      "joblib": "6fb27bfc40ac0dcb523ad3b4100827fec0ecdf7dc029aaba603c642566b023de"
     }
   },
   "progress": {
     "phase": "SCREEN",
-    "next_config": "xgb_small_top025_h10_all45_cap5000",
+    "next_config": "xgb_small_win_h5_all45_cap1000",
     "next_month": "2024-09",
-    "screen_complete": 22,
+    "screen_complete": 36,
     "total_configs": 864,
     "reason": "bounded batch or usage guard"
   },
   "usage_lease": {
-    "primary_used_percent": 97,
-    "expires_at_unix": 1790875710,
-    "secondary_used_percent": 47,
-    "checked_at_utc": "2026-10-01T17:13:30.7407824+00:00"
+    "checked_at_utc": "2026-10-02T02:54:37.1852684+09:00",
+    "expires_at_unix": 1790877496,
+    "secondary_used_percent": 49,
+    "primary_used_percent": 11
   },
-  "final": null
+  "final": null,
+  "execution_status": "STOPPED_FOR_DOT_HANDOFF",
+  "automation_status": "PAUSED",
+  "manual_resume_required": true
 }

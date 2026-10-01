@@ -339,8 +339,10 @@ class CorporateActionTests(unittest.TestCase):
         np.testing.assert_allclose(result.close, raw.close)
         np.testing.assert_allclose(result.actual_close, raw.close * [2, 2, 1, 1])
 
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
     @patch("yfinance.download")
-    def test_fetch_multi_ticker_schema_and_missing_actions_fail(self, download):
+    def test_fetch_multi_ticker_schema_and_missing_actions_fail(self, download, ticker, sleep):
         one = daily(ratios=(0, 0, 0, 0)).set_index("date").drop(columns="symbol")
         one = one.rename(columns={"split_ratio": "Stock Splits"})
         two = one.copy()
@@ -348,8 +350,85 @@ class CorporateActionTests(unittest.TestCase):
         result = fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
         self.assertEqual(sorted(result.symbol.unique()), ["1234", "5678"])
         download.return_value = one.drop(columns="Stock Splits")
+        ticker.return_value.history.return_value = download.return_value
         with self.assertRaisesRegex(CorporateActionError, "did not return split actions"):
             fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y")
+        self.assertEqual(ticker.return_value.history.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_partial_batch_recovers_only_failed_ticker_with_repair_and_actions(self, download, ticker):
+        one = daily().set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        failed = one.drop(columns="Stock Splits") * np.nan
+        download.return_value = pd.concat({"1234.T": one, "5678.T": failed}, axis=1)
+        recovered = one.copy()
+        recovered["Repaired?"] = [True, False, False, False]
+        ticker.return_value.history.return_value = recovered
+        result = fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+        download.assert_called_once()
+        ticker.assert_called_once_with("5678.T")
+        args = ticker.return_value.history.call_args.kwargs
+        self.assertTrue(args["actions"])
+        self.assertTrue(args["repair"])
+        self.assertFalse(args["auto_adjust"])
+        self.assertFalse(args["raise_errors"])
+        restored = result[result.symbol.eq("5678")]
+        self.assertEqual(restored.provider_repaired.tolist(), [True, False, False, False])
+        np.testing.assert_allclose(restored.actual_close, one.close * [2, 2, 1, 1])
+        self.assertEqual(action_table(result).symbol.tolist(), ["1234", "5678"])
+
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_missing_ticker_identity_in_partial_response_is_recovered_not_omitted(self, download, ticker):
+        one = daily().set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        download.return_value = pd.concat({"1234.T": one}, axis=1).swaplevel(axis=1)
+        ticker.return_value.history.return_value = one
+        result = fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+        ticker.assert_called_once_with("5678.T")
+        self.assertEqual(sorted(result.symbol.unique()), ["1234", "5678"])
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_empty_batch_can_recover_a_single_ticker_and_keeps_off_session_event(self, download, ticker, sleep):
+        one = daily(ratios=(0, 0, 0, 0)).set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        event_date = one.index.max() + pd.Timedelta(days=1)
+        one.loc[event_date, :] = np.nan
+        one.loc[event_date, "Stock Splits"] = 0.1
+        download.return_value = pd.DataFrame()
+        ticker.return_value.history.side_effect = [pd.DataFrame(), one]
+        result = fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y")
+        self.assertEqual(download.call_count, 3)
+        self.assertEqual(ticker.return_value.history.call_count, 2)
+        self.assertEqual(len(result), 4)
+        self.assertEqual(action_table(result).iloc[0].effective_date, event_date)
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_unknown_split_values_and_persistent_empty_history_fail_bounded(self, download, ticker, sleep):
+        one = daily().set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        for failed in (one * np.nan, one.assign(**{"Stock Splits": np.nan})):
+            with self.subTest(columns=failed.columns.tolist()):
+                download.return_value = pd.concat({"1234.T": one, "5678.T": failed}, axis=1)
+                ticker.reset_mock()
+                ticker.return_value.history.return_value = failed
+                with self.assertRaisesRegex(CorporateActionError, "5678.T after 3 individual attempts"):
+                    fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+                self.assertEqual(ticker.return_value.history.call_count, 3)
+
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_recovered_history_still_requires_source_revision_evidence(self, download, ticker):
+        previous = normalize_daily(daily(ratios=(0, 0, 0, 0)))
+        one = daily(ratios=(0, 0, 0, 0)).set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        one[["open", "high", "low", "close"]] /= 2
+        one["volume"] *= 2
+        download.return_value = one.drop(columns="Stock Splits")
+        ticker.return_value.history.return_value = one
+        with self.assertRaisesRegex(CorporateActionError, "unexplained historical"):
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y", previous=previous)
 
     @patch("yfinance.download")
     def test_fetch_retains_an_action_only_provider_row_in_journal(self, download):

@@ -509,6 +509,66 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
     return receipt
 
 
+def _ticker_source(data: pd.DataFrame | None, ticker: str, *, single: bool) -> pd.DataFrame:
+    """Keep ticker identity when unpacking a possibly partial batch response."""
+    if data is None:
+        return pd.DataFrame()
+    if isinstance(data.columns, pd.MultiIndex):
+        if ticker in data.columns.get_level_values(0):
+            source = data[ticker].copy()
+        elif ticker in data.columns.get_level_values(1):
+            source = data.xs(ticker, axis=1, level=1).copy()
+        else:
+            return pd.DataFrame()
+    elif single or data.empty:
+        source = data.copy()
+    else:
+        raise CorporateActionError("Yahoo multi-symbol response lost ticker identity")
+    return source.rename(columns={column: str(column).strip().lower().replace(" ", "_") for column in source})
+
+
+def _source_problem(source: pd.DataFrame) -> str | None:
+    if "stock_splits" not in source:
+        return "did not return split actions"
+    missing = set([*OHLC, "volume"]).difference(source.columns)
+    if missing:
+        return f"incomplete daily bars: {sorted(missing)}"
+    priced = source[list(OHLC)].notna().any(axis=1)
+    if source.loc[priced, "stock_splits"].isna().any():
+        return "did not return split actions for priced sessions"
+    if source.empty or (
+        source[list(OHLC)].isna().all().all()
+        and not source["stock_splits"].fillna(0).ne(0).any()
+    ):
+        return "returned no usable daily bars"
+    return None
+
+
+def _retry_ticker(yf: Any, ticker: str, period: str) -> pd.DataFrame:
+    """Retry only failed tickers, retaining repaired daily bars and split evidence.
+
+    yfinance.download forces raise_errors=True. A missing intraday series used
+    by its repair routine can therefore discard otherwise valid daily history.
+    history(raise_errors=False) retains those daily rows; empty or incomplete
+    responses still fail here, and normal source-quality/revision gates follow.
+    """
+    problem = "returned no usable daily bars"
+    for attempt in range(3):
+        try:
+            source = _ticker_source(yf.Ticker(ticker).history(
+                period=period, interval="1d", auto_adjust=False,
+                actions=True, repair=True, raise_errors=False, timeout=30,
+            ), ticker, single=True)
+            problem = _source_problem(source)
+            if problem is None:
+                return source
+        except Exception as exc:
+            problem = f"daily history request failed ({type(exc).__name__})"
+        if attempt < 2:
+            time.sleep(2 ** attempt)
+    raise CorporateActionError(f"Yahoo {problem} for {ticker} after 3 individual attempts")
+
+
 def fetch_daily(
     universe: pd.DataFrame,
     period: str,
@@ -527,7 +587,6 @@ def fetch_daily(
     for offset in range(0, len(tickers), batch):
         part = tickers[offset:offset + batch]
         data = None
-        last_error: Exception | None = None
         for attempt in range(3):
             try:
                 data = yf.download(
@@ -537,31 +596,15 @@ def fetch_daily(
                 )
                 if data is not None and not data.empty:
                     break
-            except Exception as exc:
-                last_error = exc
+            except Exception:
+                data = None
             if attempt < 2:
                 time.sleep(2 ** attempt)
-        if data is None or data.empty:
-            raise CorporateActionError(f"Yahoo daily batch returned no usable data: {last_error}")
         for ticker in part:
-            if isinstance(data.columns, pd.MultiIndex):
-                if ticker in data.columns.get_level_values(0):
-                    source = data[ticker].copy()
-                elif ticker in data.columns.get_level_values(1):
-                    source = data.xs(ticker, axis=1, level=1).copy()
-                else:
-                    continue
-            elif len(part) == 1:
-                source = data.copy()
-            else:
-                raise CorporateActionError("Yahoo multi-symbol response lost ticker identity")
-            source = source.rename(columns={column: str(column).strip().lower().replace(" ", "_") for column in source})
-            if "stock_splits" not in source:
-                raise CorporateActionError(f"Yahoo did not return split actions for {ticker}")
+            source = _ticker_source(data, ticker, single=len(part) == 1)
+            if _source_problem(source) is not None:
+                source = _retry_ticker(yf, ticker, period)
             required = [*OHLC, "volume", "stock_splits"]
-            missing = set(required).difference(source.columns)
-            if missing:
-                raise CorporateActionError(f"Yahoo incomplete daily bars for {ticker}: {sorted(missing)}")
             if "repaired?" in source:
                 source["provider_repaired"] = source["repaired?"].fillna(False)
             else:

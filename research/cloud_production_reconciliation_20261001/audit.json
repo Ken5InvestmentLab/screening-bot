@@ -1,0 +1,96 @@
+{
+  "status": "PASS",
+  "scope": "saved-artifact replay and cached-input diagnostic; no model fitting",
+  "runtime": {
+    "python": "3.12.14",
+    "numpy": "2.5.3",
+    "pandas": "2.3.3"
+  },
+  "code_parity": {
+    "FEATURES": true,
+    "build_features": true,
+    "eligible_rows": true,
+    "model": true,
+    "cdf": true,
+    "RET10_MAX": true,
+    "G3_MED_RET1_MIN": true,
+    "choose_one": true,
+    "select_candidates": true
+  },
+  "canonical_selector_replay": {
+    "rows": 967,
+    "all_detection_ids_match": true,
+    "unique_signals": 253,
+    "legacy_input_cutoff": "2026-09-11",
+    "latest_legacy_tail_date": "2026-09-03"
+  },
+  "canonical_current_gate": {
+    "pass_unique_signals": 221,
+    "fail_unique_signals": 32,
+    "failure_reasons_overlapping": {
+      "actual_close_below_20": 1,
+      "actual_previous_close_above_1000": 31,
+      "actual_previous_volume_below_10000": 2
+    }
+  },
+  "completed_identity_comparison": {
+    "production_only": 132,
+    "research_only": 136,
+    "shared": 116
+  },
+  "production_only_gate": {
+    "actual_close_below_20": 1,
+    "actual_previous_close_above_1000": 31,
+    "actual_previous_volume_below_10000": 2
+  },
+  "production_only_still_gate_eligible": 100,
+  "within_legacy_cutoff_membership": {
+    "production_only": 132,
+    "research_only": 136,
+    "shared": 116
+  },
+  "research_only_after_legacy_cutoff": 0,
+  "production_gate_feature_probes": 1644,
+  "production_gate_matches_cached_contract": true,
+  "teacher_probe": {
+    "old_tail_rows": 1526,
+    "rows_eligible_in_corrected_population": 1340,
+    "changed_rank_rows": 1305,
+    "changed_top025_label_rows": 3,
+    "scope_limit": "Old Tail subset only; this is not a count of changes in the full training corpus."
+  },
+  "cached_monthly_train_prediction_counts_verified": 45,
+  "confirmed_changes": [
+    "historical input snapshot",
+    "absolute price/volume gates use actual-session units",
+    "source-quality masks and market-breadth denominator",
+    "eligible population and teacher ranks",
+    "comparison cutoff and shared exclusion day"
+  ],
+  "remaining": [
+    "The contribution of each change to final model selection has not been isolated with controlled fitted-model replays.",
+    "Code/cache parity does not certify an exact replay from raw data through a fresh production model fit.",
+    "Future observed performance and cost/fill-sensitive results are not established by this historical diagnostic."
+  ],
+  "input_sha256": {
+    "weak_early_beta/state/detections.csv": "7e41a2018618ed89b31df8d3d9907076e352f9d61bbc91a469c206981ae0448d",
+    "weak_early_beta/state/metrics.csv": "7d367c780467ba9131f4dd633df504374d1b7b5e47db942b8b457d5c0790d035",
+    "weak_early_beta/state/entry_feasibility_exclusions.csv": "7074232a4e65e7744e4d80f67c62ca836753e6708460a412e542dbc74685c94f",
+    "weak_early_beta/state/jpx_restricted_symbols_latest.json": "6c476e96b42bc1f4da8c63e9fe30e51a328d3bbe2e4423a126cd6434438d4f19",
+    ".cache/recovery/artifact_10264251140/v7_causal_tail_cache_2023_2025.csv": "0398969e13cc4b79f64cf8ad3b300ab34c0270ac70d20367994979478b60849d",
+    ".cache/recovery/artifact_10264205130/tse_daily.csv": "6adfb626bc1e067e662e4dc9902c6a9e3743c08a2e2ed1e6b79094307b107ba0",
+    "research/repro_packs/weak_early_exact_v1/output/full_period_2026/causal_tail_pool_2026_reporting_only.csv": "8363340cc8ea48f6b6b41307da7cdb6f59860200b96f6849503145516ab021dd",
+    "research/repro_packs/weak_early_exact_v1/output/full_period_2026/full_period_report.json": "a88b374618f3fd6a0e1e85b3963cf4c08c62bd0005ed2722b85356e74e73308f",
+    ".cache/cloud_cap_corrected_v2_20261001/prepared.json": "0713b055ffb50a658ddd62a484cf8ec19ebdf3f3def39467e911ebe77ccc25c0",
+    ".cache/cloud_cap_corrected_v2_20261001/rows.pkl": "290e30536f8bb99190af4509fdf4ddb7d7153390ba66b5a2c34dfd2ba3ce7b36",
+    ".cache/cloud_cap_corrected_v2_20261001/features.npy": "ef46fad051eac87b818c0cd786fa6f11f6430748632e4bd351090b1b0113c1af",
+    ".cache/cloud_cap_corrected_v2_20261001/trades_cap1000.csv": "65dc2e113569ae68475ece7d81a4e5e3bbfedb298ebd89365730c96801633da6",
+    ".cache/weak_early_beta/split_preflight_20261001/normalized_daily.csv": "cfc358198f07b29182da77eac5fccb6efe8d2c2450e79d2859cbd7a15f7d0c13",
+    "weak_early_beta/model.py": "41df78ed1b7e904ce630a9eb4804290ad24384c9fdd07388db47a8ebcde981f9",
+    "tvfree_screener/run.py": "ac36e597e28334238a6ec760a5b84e727f82a640ab99285328e2cd45fcfb6d4f",
+    "tvfree_screener/v7_full_tail_research.py": "dae56e2e82cc07dd7dfbbc1c09431309cf9bcf358d3ae687e432815a5d510fb2",
+    "research/repro_packs/weak_early_exact_v1/select_shadow_candidates.py": "9b3b766fde49e0cbe4442fe71c13b7e41b8687455b2c688896705af2808777dc"
+  },
+  "no_model_execution": true,
+  "no_production_mutations": true
+}

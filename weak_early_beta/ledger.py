@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 
 from .config import SELECTOR_ORDER, selector_info
+from .trade_basis import (
+    LEGACY_PRICE_BASIS_VERSION, TRADE_BASIS_COLUMNS, preserve_completed_economics,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +32,7 @@ LEDGER_COLUMNS = [
     "signal_discord_url", "notified_at", "fundamental_status",
     "fundamental_discord_url", "fundamental_html", "created_at", "updated_at",
     "exit_reminder_discord_url", "exit_reminded_at",
+    *TRADE_BASIS_COLUMNS,
 ]
 
 
@@ -43,7 +47,11 @@ def read_ledger(path: Path = DEFAULT_LEDGER) -> pd.DataFrame:
     for column in ("signal_date", "entry_date", "fifth_xtks_exit_date"):
         if column in frame:
             frame[column] = pd.to_datetime(frame[column], errors="coerce")
-    return apply_company_names(frame.reindex(columns=LEDGER_COLUMNS))
+    frame = frame.reindex(columns=LEDGER_COLUMNS)
+    legacy = frame["source_scope"].fillna("").astype(str).str.startswith("EXACT_CANONICAL")
+    missing_basis = frame["price_basis"].fillna("").astype(str).str.strip().eq("")
+    frame.loc[legacy & missing_basis, "price_basis"] = LEGACY_PRICE_BASIS_VERSION
+    return apply_company_names(frame)
 
 
 def apply_company_names(
@@ -103,6 +111,9 @@ def bootstrap_historical() -> pd.DataFrame:
             )
             frame["status"] = "mature"
             frame["source_scope"] = "EXACT_CANONICAL_2023_2026"
+            # Preserve pinned amounts; their vendor-adjusted share basis has
+            # not been reconstructed into actual-session cash economics.
+            frame["price_basis"] = LEGACY_PRICE_BASIS_VERSION
             frame["source_sha256"] = ""
             frame["signal_discord_url"] = ""
             frame["notified_at"] = ""
@@ -133,9 +144,17 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
         "fundamental_discord_url", "fundamental_html", "created_at",
         "exit_reminder_discord_url", "exit_reminded_at",
     ]
-    old = existing.set_index("detection_id", drop=False)
-    new = incoming.set_index("detection_id", drop=False)
+    old = existing.reindex(columns=LEDGER_COLUMNS).set_index("detection_id", drop=False)
+    new = incoming.reindex(columns=LEDGER_COLUMNS).set_index("detection_id", drop=False)
     for detection_id in new.index.intersection(old.index):
+        if str(old.at[detection_id, "source_scope"]).startswith("EXACT_CANONICAL"):
+            # A forward catch-up replay cannot migrate pinned historical rows.
+            # A future verified reconstruction needs a separate explicit path.
+            new.loc[detection_id] = old.loc[detection_id]
+            continue
+        preserved = preserve_completed_economics(old.loc[detection_id], new.loc[detection_id])
+        for column, value in preserved.items():
+            new.at[detection_id, column] = value
         for column in protected:
             value = old.at[detection_id, column]
             if pd.notna(value) and str(value).strip():

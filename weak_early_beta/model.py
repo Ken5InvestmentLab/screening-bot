@@ -8,6 +8,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from .corporate_actions import action_table, normalize_daily
+from .bank_calendar import add_bank_business_days
+from .trade_basis import PRICE_BASIS_VERSION, build_trade_economics, is_frozen_trade
+
 
 ROOT = Path(__file__).resolve().parents[1]
 TVFREE = ROOT / "tvfree_screener"
@@ -22,6 +26,7 @@ import select_shadow_candidates as shadow  # noqa: E402
 
 TAIL_GATE = 0.999
 MIN_TRAIN_ROWS = 30_000
+PRICE_CAP = 1000.0
 
 
 def sha256(path: Path) -> str:
@@ -36,15 +41,41 @@ def read_daily(path: Path) -> pd.DataFrame:
     frame = pd.read_csv(path, parse_dates=["date"], dtype={"symbol": str})
     for column in ("open", "high", "low", "close", "volume"):
         frame[column] = pd.to_numeric(frame[column], errors="coerce")
-    return frame.dropna(
-        subset=["date", "symbol", "open", "high", "low", "close", "volume"]
-    ).sort_values(["symbol", "date"]).drop_duplicates(["symbol", "date"], keep="last")
+    return normalize_daily(frame)
+
+
+def eligible_live_rows(features: pd.DataFrame, price_cap: float = PRICE_CAP) -> pd.DataFrame:
+    """Apply absolute gates to contemporaneous shares, never later split units."""
+    previous_close = features.groupby("symbol")["actual_close"].shift(1)
+    previous_volume = features.groupby("symbol")["actual_volume"].shift(1)
+    mask = (
+        (previous_volume >= 10_000)
+        & (features["actual_volume"] >= 5_000)
+        & (features["actual_close"] >= 20)
+    )
+    if "source_usable" in features:
+        usable = features["source_usable"]
+        mask &= usable & usable.groupby(features["symbol"]).shift(1).eq(True)
+    if price_cap > 0:
+        mask &= previous_close <= price_cap
+    return features.loc[mask].dropna(subset=base.FEATURES).copy()
+
+
+def build_live_features(raw: pd.DataFrame) -> pd.DataFrame:
+    """Preserve session positions while keeping quarantined prices out of indicators."""
+    raw = normalize_daily(raw)
+    # Relative indicators use the provider's continuous split-adjusted series.
+    # A later split scales a historical lookback uniformly; price*volume and
+    # relative indicators stay invariant. Absolute gates use actual_* instead.
+    feature_source = raw.copy()
+    feature_source.loc[~feature_source["source_usable"], ["open", "high", "low", "close", "volume"]] = float("nan")
+    return base.build_features(feature_source)
 
 
 def prepare_live(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Keep unlabeled prediction rows; labels exist only on matured rows."""
-    features = base.build_features(raw)
-    eligible = base.eligible_rows(features, price_cap=1000.0).copy()
+    features = build_live_features(raw)
+    eligible = eligible_live_rows(features)
     eligible["date"] = pd.to_datetime(eligible["date"])
     eligible["target_end_date"] = pd.to_datetime(eligible["target_end_date"], errors="coerce")
     labeled = eligible.dropna(subset=["target5_no", "target_end_date"]).copy()
@@ -53,6 +84,13 @@ def prepare_live(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     )
     labeled["y_top025"] = (labeled["future_rank"] >= 0.9975).astype(int)
     return eligible, labeled
+
+
+def _actual_price(prices: pd.DataFrame, symbol: str, date: pd.Timestamp, column: str) -> float:
+    if pd.isna(date) or (symbol, date) not in prices.index:
+        return float("nan")
+    row = prices.loc[(symbol, date)]
+    return float(row[column]) if bool(row["source_usable"]) else float("nan")
 
 
 def causal_tail_for_month(
@@ -140,32 +178,32 @@ def attach_forward_rows(
 
     if selected.empty:
         return pd.DataFrame(columns=LEDGER_COLUMNS)
+    raw = normalize_daily(raw)
     now = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
     company_names = company_names or {}
-    calendar = pd.DatetimeIndex(pd.to_datetime(raw["date"].unique())).sort_values()
-    date_pos = {date: pos for pos, date in enumerate(calendar)}
-    prices = raw.set_index(["symbol", "date"])[["open", "close", "volume"]]
+    prices = raw.set_index(["symbol", "date"])
+    actions = action_table(raw)
     rows = []
     for record in selected.to_dict(orient="records"):
         signal_date = pd.Timestamp(record["date"]).normalize()
         symbol = str(record["symbol"])
         selector_id = str(record["selector"])
-        pos = date_pos[signal_date]
-        entry_date = calendar[pos + 1] if pos + 1 < len(calendar) else pd.NaT
-        exit_date = calendar[pos + 5] if pos + 5 < len(calendar) else pd.NaT
-        entry_open = float("nan")
-        exit_close = float("nan")
+        entry_date = pd.Timestamp(add_bank_business_days(signal_date.date(), 1))
+        exit_date = pd.Timestamp(add_bank_business_days(signal_date.date(), 5))
         signal_close = float("nan")
         signal_volume = float("nan")
         if (symbol, signal_date) in prices.index:
-            signal_close = float(prices.loc[(symbol, signal_date), "close"])
-            signal_volume = float(prices.loc[(symbol, signal_date), "volume"])
-        if pd.notna(entry_date) and (symbol, entry_date) in prices.index:
-            entry_open = float(prices.loc[(symbol, entry_date), "open"])
-        if pd.notna(exit_date) and (symbol, exit_date) in prices.index:
-            exit_close = float(prices.loc[(symbol, exit_date), "close"])
-        mature = pd.notna(entry_open) and pd.notna(exit_close) and entry_open > 0
-        gross = exit_close / entry_open - 1 if mature else float("nan")
+            if not bool(prices.loc[(symbol, signal_date), "source_usable"]):
+                raise ValueError(f"selected signal has quarantined source prices: {symbol} {signal_date:%Y-%m-%d}")
+            signal_close = float(prices.loc[(symbol, signal_date), "actual_close"])
+            signal_volume = float(prices.loc[(symbol, signal_date), "actual_volume"])
+        entry_open = _actual_price(prices, symbol, entry_date, "actual_open")
+        exit_close = _actual_price(prices, symbol, exit_date, "actual_close")
+        basis_date = prices.loc[(symbol, signal_date), "basis_asof"]
+        economics = build_trade_economics(
+            entry_date, exit_date, entry_open, exit_close, actions,
+            symbol=symbol, basis_date=basis_date, source_sha256=source_sha256,
+        )
         row = {
             **record,
             "detection_id": f"{signal_date:%Y-%m-%d}|{symbol}|{selector_id}",
@@ -176,13 +214,11 @@ def attach_forward_rows(
             "signal_volume": signal_volume,
             "selector_id": selector_id,
             "selector_name": selector_info(selector_id).display_name,
-            "status": "mature" if mature else ("entered" if pd.notna(entry_open) else "pending_entry"),
             "entry_date": entry_date,
             "entry_open": entry_open,
             "fifth_xtks_exit_date": exit_date,
             "fifth_xtks_exit_close": exit_close,
-            "gross_return": gross,
-            "one_hundred_shares_pl_yen": (exit_close - entry_open) * 100 if mature else float("nan"),
+            **economics,
             "source_scope": "FORWARD_CAUSAL",
             "source_sha256": source_sha256,
             "signal_discord_url": "",
@@ -199,41 +235,64 @@ def attach_forward_rows(
     return pd.DataFrame(rows).reindex(columns=LEDGER_COLUMNS)
 
 
-def refresh_forward_endpoints(ledger: pd.DataFrame, raw: pd.DataFrame) -> pd.DataFrame:
+def refresh_forward_endpoints(
+    ledger: pd.DataFrame, raw: pd.DataFrame, source_sha256: str = "",
+) -> pd.DataFrame:
     """Fill entry/exit receipts for already-recorded forward detections."""
     if ledger.empty:
         return ledger.copy()
+    raw = normalize_daily(raw)
     result = ledger.copy()
+    # Legacy CSVs have all-empty new metadata columns, inferred as float64.
+    # Make their string contract explicit before filling a forward receipt.
+    for column in ("price_basis", "price_basis_date", "price_basis_source_sha256", "applied_actions_json"):
+        if column not in result:
+            result[column] = ""
+        else:
+            result[column] = result[column].astype(object)
     result["signal_date"] = pd.to_datetime(result["signal_date"])
-    calendar = pd.DatetimeIndex(pd.to_datetime(raw["date"].unique())).sort_values()
-    date_pos = {date: pos for pos, date in enumerate(calendar)}
-    prices = raw.set_index(["symbol", "date"])[["open", "close"]]
+    prices = raw.set_index(["symbol", "date"])
+    actions = action_table(raw)
     mask = result["source_scope"].eq("FORWARD_CAUSAL")
     for index, row in result[mask].iterrows():
+        if is_frozen_trade(row):
+            continue
         signal_date = pd.Timestamp(row["signal_date"]).normalize()
         symbol = str(row["symbol"])
-        if signal_date not in date_pos:
+        if (symbol, signal_date) not in prices.index:
             continue
-        pos = date_pos[signal_date]
-        entry_date = calendar[pos + 1] if pos + 1 < len(calendar) else pd.NaT
-        exit_date = calendar[pos + 5] if pos + 5 < len(calendar) else pd.NaT
-        entry_open = float("nan")
-        exit_close = float("nan")
-        if pd.notna(entry_date) and (symbol, entry_date) in prices.index:
-            entry_open = float(prices.loc[(symbol, entry_date), "open"])
-        if pd.notna(exit_date) and (symbol, exit_date) in prices.index:
-            exit_close = float(prices.loc[(symbol, exit_date), "close"])
-        mature = pd.notna(entry_open) and pd.notna(exit_close) and entry_open > 0
+        entry_date = pd.Timestamp(add_bank_business_days(signal_date.date(), 1))
+        exit_date = pd.Timestamp(add_bank_business_days(signal_date.date(), 5))
+        entry_open = _actual_price(prices, symbol, entry_date, "actual_open")
+        exit_close = _actual_price(prices, symbol, exit_date, "actual_close")
+        if not bool(prices.loc[(symbol, signal_date), "source_usable"]):
+            continue
+        basis_date = prices.loc[(symbol, signal_date), "basis_asof"]
+        # Once entered on the actual-share basis, the original cost is fixed.
+        if row.get("price_basis") == PRICE_BASIS_VERSION and pd.notna(row.get("entry_open")):
+            if pd.Timestamp(row["entry_date"]).normalize() != entry_date:
+                raise ValueError(f"entry session revision requires review: {row['detection_id']}")
+            if pd.notna(row.get("fifth_xtks_exit_date")) and pd.Timestamp(row["fifth_xtks_exit_date"]).normalize() != exit_date:
+                raise ValueError(f"exit session revision requires review: {row['detection_id']}")
+            if pd.notna(entry_open) and abs(entry_open - float(row["entry_open"])) > max(0.01, abs(float(row["entry_open"])) * 1e-6):
+                raise ValueError(f"entry price revision requires review: {row['detection_id']}")
+            entry_open = float(row["entry_open"])
+        economics = build_trade_economics(
+            entry_date, exit_date, entry_open, exit_close, actions,
+            symbol=symbol, basis_date=basis_date,
+            source_sha256=source_sha256 or str(row.get("source_sha256", "")),
+        )
+        # Legacy forward records gain an explicit basis only after verified
+        # action-aware source data is available. Historical canonical rows stay
+        # outside this migration.
+        if row.get("price_basis") != PRICE_BASIS_VERSION:
+            result.at[index, "signal_close"] = float(prices.loc[(symbol, signal_date), "actual_close"])
+            result.at[index, "signal_volume"] = float(prices.loc[(symbol, signal_date), "actual_volume"])
         result.at[index, "entry_date"] = entry_date
         result.at[index, "entry_open"] = entry_open
         result.at[index, "fifth_xtks_exit_date"] = exit_date
         result.at[index, "fifth_xtks_exit_close"] = exit_close
-        result.at[index, "gross_return"] = exit_close / entry_open - 1 if mature else float("nan")
-        result.at[index, "one_hundred_shares_pl_yen"] = (
-            (exit_close - entry_open) * 100 if mature else float("nan")
-        )
-        result.at[index, "status"] = (
-            "mature" if mature else ("entered" if pd.notna(entry_open) else "pending_entry")
-        )
+        for column, value in economics.items():
+            result.at[index, column] = value
         result.at[index, "updated_at"] = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
     return result

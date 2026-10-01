@@ -53,6 +53,13 @@ jobs:
           numpy==2.5.3 pandas==2.3.3 scikit-learn==1.9.1 xgboost==3.4.1
           requests>=2.32,<3 openpyxl>=3.1,<4 xlrd>=2.0,<3 lxml>=5,<7 yfinance>=0.2.65,<1
 
+      - name: Verify beta package
+        run: >-
+          python -B -m unittest tests.test_weak_early_beta
+          tests.test_weak_early_beta_corporate_actions
+          tests.test_weak_early_beta_trade_basis
+          tests.test_weak_early_beta_model
+
       - name: Run five-lane causal scorer once after close
         shell: bash
         run: |
@@ -65,9 +72,6 @@ jobs:
             args+=(--notify)
           fi
           python -m weak_early_beta.cli "${args[@]}"
-
-      - name: Verify beta package
-        run: python -m unittest tests.test_weak_early_beta
 
       - name: Commit beta-only state and HTML
         shell: bash

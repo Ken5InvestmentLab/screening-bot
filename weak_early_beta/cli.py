@@ -7,6 +7,7 @@ import argparse
 import json
 import os
 import sys
+import tempfile
 from datetime import date
 from pathlib import Path
 
@@ -44,6 +45,19 @@ DEFAULT_RECEIPT = ROOT / "weak_early_beta" / "state" / "latest_run_receipt.json"
 def _write_receipt(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _write_daily_cache(frame: pd.DataFrame, path: Path) -> None:
+    """Keep the prior price/action evidence intact if a large CSV write fails."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    os.close(descriptor)
+    temporary = Path(temporary_name)
+    try:
+        frame.to_csv(temporary, index=False, encoding="utf-8", lineterminator="\n", date_format="%Y-%m-%d")
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _require_historical_audit_pass(reports: list[dict]) -> None:
@@ -107,11 +121,21 @@ def command_daily(args: argparse.Namespace) -> None:
     ledger = _load_or_bootstrap(ledger_path)
     company_names: dict[str, str] = {}
     daily_path = Path(args.daily_corpus)
+    source_revision = {}
     if args.refresh_live:
+        from .corporate_actions import fetch_daily
+
         universe = model.base.jpx_universe()
-        raw = model.base.fetch_daily(universe, args.period)
-        daily_path.parent.mkdir(parents=True, exist_ok=True)
-        raw.to_csv(daily_path, index=False, encoding="utf-8", lineterminator="\n", date_format="%Y-%m-%d")
+        # The old cache is evidence for detecting unannounced source rebases;
+        # it must not be treated as action-aware input merely because it exists.
+        previous = (
+            pd.read_csv(daily_path, parse_dates=["date"], dtype={"symbol": str})
+            if daily_path.exists() else None
+        )
+        raw = fetch_daily(universe, args.period, previous=previous)
+        source_revision = raw.attrs.get("source_revision_receipt", {})
+        del previous
+        _write_daily_cache(raw, daily_path)
         company_names = universe.set_index("code")["name"].astype(str).to_dict()
     else:
         if not daily_path.exists():
@@ -122,7 +146,32 @@ def command_daily(args: argparse.Namespace) -> None:
             company_names = universe.set_index("code")["name"].astype(str).to_dict()
     source_hash = model.sha256(daily_path)
     raw = model.read_daily(daily_path)
-    ledger = model.refresh_forward_endpoints(ledger, raw)
+    from .corporate_actions import source_quality_receipt
+
+    source_quality = source_quality_receipt(raw)
+    quality_path = daily_path.with_suffix(".source-quality.json")
+    if not args.refresh_live and quality_path.exists():
+        previous_quality = json.loads(quality_path.read_text(encoding="utf-8"))
+        if previous_quality.get("daily_sha256") == source_hash:
+            source_revision = previous_quality.get("source_revision", {})
+    _write_receipt(quality_path, {**source_quality, "daily_sha256": source_hash, "source_revision": source_revision})
+    quality_dates = sorted(source_quality["quarantinedDates"])
+    source_quality = {key: value for key, value in source_quality.items() if key not in {"issues", "quarantinedDates"}}
+    source_quality.update(
+        quarantinedDateCount=len(quality_dates),
+        firstQuarantinedDate=quality_dates[0] if quality_dates else None,
+        lastQuarantinedDate=quality_dates[-1] if quality_dates else None,
+    )
+    source_quality.update(audit_path=str(quality_path), audit_sha256=model.sha256(quality_path))
+    source_revision = {
+        **{key: value for key, value in source_revision.items() if key not in {"acceptedRepairs", "quarantinedComparisons"}},
+        "acceptedRepairs": [
+            {key: value for key, value in repair.items() if key != "differences"}
+            for repair in source_revision.get("acceptedRepairs", [])
+        ],
+        "quarantinedComparisonSymbolCount": len(source_revision.get("quarantinedComparisons", [])),
+    }
+    ledger = model.refresh_forward_endpoints(ledger, raw, source_sha256=source_hash)
     if args.from_date:
         tail, selected = model.score_range(raw, args.from_date, args.as_of)
     else:
@@ -158,6 +207,8 @@ def command_daily(args: argparse.Namespace) -> None:
         "run_at": pd.Timestamp.now(tz="Asia/Tokyo").isoformat(),
         "daily_corpus": str(daily_path),
         "daily_sha256": source_hash,
+        "source_quality": source_quality,
+        "source_revision": source_revision,
         "latest_session": f"{latest:%Y-%m-%d}",
         "score_from": args.from_date or (args.as_of or f"{latest:%Y-%m-%d}"),
         "score_to": args.as_of or f"{latest:%Y-%m-%d}",

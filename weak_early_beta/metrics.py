@@ -17,6 +17,7 @@ from .config import (
     selector_info,
 )
 from .entry_feasibility import performance_eligible
+from .trade_basis import PRICE_BASIS_VERSION, TRADE_BASIS_COLUMNS
 
 
 def combined_detections(ledger: pd.DataFrame) -> pd.DataFrame:
@@ -29,6 +30,7 @@ def combined_detections(ledger: pd.DataFrame) -> pd.DataFrame:
         "entry_date", "entry_open", "fifth_xtks_exit_date",
         "fifth_xtks_exit_close", "gross_return", "one_hundred_shares_pl_yen",
     ]
+    contract_columns.extend(column for column in TRADE_BASIS_COLUMNS if column in data)
     if "performance_reference_only" in data:
         contract_columns.append("performance_reference_only")
     for identity, group in data.groupby(["signal_date", "symbol"], sort=False):
@@ -46,7 +48,15 @@ def required_capital(frame: pd.DataFrame) -> float:
     for row in frame.itertuples():
         if pd.isna(row.entry_date) or pd.isna(row.fifth_xtks_exit_date) or pd.isna(row.entry_open):
             continue
-        principal = float(row.entry_open) * 100
+        shares = getattr(row, "entry_shares", 100)
+        if pd.isna(shares):
+            if str(getattr(row, "price_basis", "")) == PRICE_BASIS_VERSION:
+                raise ValueError("actual-session trade is missing its entry share quantity")
+            shares = 100  # Pinned legacy amounts retain their original convention.
+        shares = float(shares)
+        if not math.isfinite(shares) or shares <= 0:
+            raise ValueError("entry share quantity must be positive and finite")
+        principal = float(row.entry_open) * shares
         events.append((pd.Timestamp(row.entry_date), 1, principal))
         events.append((pd.Timestamp(row.fifth_xtks_exit_date), -1, -principal))
     current = peak = 0.0

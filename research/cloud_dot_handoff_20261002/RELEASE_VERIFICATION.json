@@ -1,0 +1,78 @@
+{
+  "status": "PASS",
+  "verified_at_utc": "2026-10-01T18:31:51.741Z",
+  "repository_private": true,
+  "release": {
+    "assets": [
+      {
+        "browser_download_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/download/research-cloud-dot-handoff-20261002/CHECKPOINT.json",
+        "digest": "sha256:ac9339a95a8a4bed4257dcdf69aea425d44fd03eb4303b19e8eefb8bd7cd56e9",
+        "id": 603859996,
+        "name": "CHECKPOINT.json",
+        "size": 1240,
+        "state": "uploaded"
+      },
+      {
+        "browser_download_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/download/research-cloud-dot-handoff-20261002/cloud-dot-handoff-20261002.zip",
+        "digest": "sha256:4ea98a96a8128dee2efa93b118686f6b4a6c35bcef7cbf3c0646ccfde016f2b0",
+        "id": 603859992,
+        "name": "cloud-dot-handoff-20261002.zip",
+        "size": 1540751604,
+        "state": "uploaded"
+      },
+      {
+        "browser_download_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/download/research-cloud-dot-handoff-20261002/cloud-dot-handoff-20261002.zip.sha256",
+        "digest": "sha256:8efaffacf5089ad92fe72f6f73e1ccd6dfee9bf84c5d6ee75bd2f47ba67e82ab",
+        "id": 603859990,
+        "name": "cloud-dot-handoff-20261002.zip.sha256",
+        "size": 98,
+        "state": "uploaded"
+      },
+      {
+        "browser_download_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/download/research-cloud-dot-handoff-20261002/ENVIRONMENT.json",
+        "digest": "sha256:307417d3faac90cc8d58008db4ff1e63b2be8cef9b976481700e8b0d24866a74",
+        "id": 603860084,
+        "name": "ENVIRONMENT.json",
+        "size": 1350,
+        "state": "uploaded"
+      },
+      {
+        "browser_download_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/download/research-cloud-dot-handoff-20261002/MANIFEST.json",
+        "digest": "sha256:c92a26fcf13fe8f2bd01603b72aeb3c91383aef2285a5f819c719162db797d84",
+        "id": 603860000,
+        "name": "MANIFEST.json",
+        "size": 261361,
+        "state": "uploaded"
+      },
+      {
+        "browser_download_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/download/research-cloud-dot-handoff-20261002/requirements-linux-core.txt",
+        "digest": "sha256:3e1279e0bf875edb8a02e1e6f6bb0053303c404c09c933bc7e4602d95d3a2186",
+        "id": 603860091,
+        "name": "requirements-linux-core.txt",
+        "size": 174,
+        "state": "uploaded"
+      },
+      {
+        "browser_download_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/download/research-cloud-dot-handoff-20261002/VERIFICATION.json",
+        "digest": "sha256:1b57b3d2d53852f4bb7801537e9b591be6287f5c42002baff7ceb80795fd77c5",
+        "id": 603859993,
+        "name": "VERIFICATION.json",
+        "size": 491,
+        "state": "uploaded"
+      }
+    ],
+    "draft": false,
+    "html_url": "https://github.com/Ken5InvestmentLab/screening-bot/releases/tag/research-cloud-dot-handoff-20261002",
+    "id": 401236299,
+    "prerelease": true,
+    "tag_name": "research-cloud-dot-handoff-20261002",
+    "target_commitish": "9aa210136c3ad954955296745efdd02469a8449c"
+  },
+  "all_asset_sizes_and_sha256_match_local": true,
+  "downloaded_sidecars_match_local": true,
+  "zip_content_verified_files": 1200,
+  "completed_fit_artifact_hash_checks": 147,
+  "stopped": true,
+  "automation_status": "PAUSED",
+  "code_snapshot_commit": "9aa210136c3ad954955296745efdd02469a8449c"
+}

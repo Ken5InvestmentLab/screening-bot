@@ -1,12 +1,12 @@
 {
-  "updated_at_utc": "2026-10-01T17:07:03.627148+00:00",
+  "updated_at_utc": "2026-10-01T17:13:57.267514+00:00",
   "cache": ".cache/cloud_full_search_v2_20261001",
-  "screened_configs": 20,
+  "screened_configs": 22,
   "refined_configs": 0,
-  "completed_fits": 80,
+  "completed_fits": 91,
   "final_present": false,
-  "generator_sha256": "3cd0671bf8d0a88d7ae98eb197223f3f815751aeb0b83326cc648addac285667",
-  "dashboard_sha256": "f68015907e492c30ab06added89c797ff7efa6bc12393606cb3fff1d3bc25acb",
+  "generator_sha256": "eec3604cc5421438f5f6642b667a73a94aed2c4f9a2dfc7e5c58fa90feb65606",
+  "dashboard_sha256": "3cbfeaa17d8f55e697bce6e06fd9db8c5d67d120c94de8446abe5f49f74c5eae",
   "javascript_sha256": "e054c719a3c77e90b9b8c041623f5cf7ff169a41bd176c2e77e54ccb50b7decb",
   "prepared_manifest_sha256": "3438df61532bd2f6ec7e02e2823b9ca0c178395584e7b2c66aef5e3a338d95cd",
   "scope": "Metadata-only rendering. No new model fits, candidate selection, or production changes."

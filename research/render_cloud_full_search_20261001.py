@@ -59,7 +59,7 @@ main{{max-width:1280px;margin:auto;padding:32px 24px}}h1{{font-size:30px;margin:
 <p id="scope" class="muted"></p><div class="scroll"><table><thead><tr><th>学習設定・検出条件</th><th>売却</th><th>件数</th><th>勝率</th><th>平均</th><th>中央値</th><th>大敗率</th><th>上位3除外平均</th><th>必要資金</th><th>順位指標</th></tr></thead><tbody id="results"></tbody></table></div>
 <h2>平均と利益集中</h2><p class="muted">品質基準を通過した候補のみ。平均と上位3利益除外後の平均の差が大きいほど、大勝ちへの依存が強くなります。</p><div id="chart" class="chart"></div></section>
 <h2>固定した候補の年別検証</h2><section id="validation"></section>
-<h2>現行公開値との関係</h2><section><p>現行公開実績の参考水準：固有銘柄248件、平均5.4942%、勝率49.1935%、中央値0%、大敗率29.0323%。過去に固定された別集合の成績で、上の開発4か月と直接対応する比較値ではありません。</p><p>最終検証では同入力の現行V7と公開参考値の両方を示します。補正後の研究ベースラインだけを超えた候補は採用済みと扱いません。</p><p>損益は翌営業日始値で実100株を買い、保有中の分割・併合後の株数を使います。勝率は利益プラスの件数÷評価件数（0%を含む）、大敗は-10%以下。予定価格の欠落、隔離価格、端株精算未対応、約定困難登録は除外。必要資金は同日売却代金を購入前に使わない保守的な概算です。</p></section>
+<h2>現行公開値との関係</h2><section><p>2026年10月1日18:15 JST保存のCloud公開参考値：固有銘柄248件、平均5.4942%、勝率49.1935%、中央値0%、大敗率29.0323%、上位3利益除外平均4.1431%、必要資金363,400円。過去に固定された別集合の成績で、上の開発4か月と直接対応する比較値ではありません。</p><p>最終検証では同入力の現行V7と公開参考値の両方を示します。補正後の研究ベースラインだけを超えた候補は採用済みと扱いません。</p><p>損益は翌営業日始値で実100株を買い、保有中の分割・併合後の株数を使います。勝率は利益プラスの件数÷評価件数（0%を含む）、大敗は-10%以下。予定価格の欠落、隔離価格、端株精算未対応、約定困難登録は除外。必要資金は同日売却代金を購入前に使わない保守的な概算です。</p></section>
 <footer><a href="PROTOCOL.md">事前固定手順</a> · <a href="PROGRESS.md">進捗記録</a> · <a href="independent_audit.json">監査の範囲</a> · <a href="../cloud_comparison_dashboard_20261001/index.html">前回の比較</a><p>有限の段階探索であり、数学的な全条件の最適を証明しません。実約定、配当、税、過去の銘柄母集団・企業行動の完全性は再現していません。</p></footer>
 <script type="application/json" id="data">{payload}</script><script src="search-dashboard.js"></script></main></html>'''
     (HERE/'dashboard.html').write_text(html, encoding='utf-8')

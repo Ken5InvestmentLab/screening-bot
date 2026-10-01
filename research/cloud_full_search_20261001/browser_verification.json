@@ -25,5 +25,13 @@
     "page_overflow": false,
     "temporary_viewport_reset": true,
     "tested_snapshot_screened_configs": 16
+  },
+  "checkpoint_preview": {
+    "completed_fits": 91,
+    "screened_configs": 22,
+    "quality_candidate_configs": 12,
+    "dashboard_sha256": "3cbfeaa17d8f55e697bce6e06fd9db8c5d67d120c94de8446abe5f49f74c5eae",
+    "screenshot": "dashboard_preview.png",
+    "scope": "Latest checkpoint rendering verified; interaction tests and mobile screenshot retain their earlier stated scope."
   }
 }

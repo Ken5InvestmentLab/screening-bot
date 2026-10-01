@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "trade_rows": 139280,
+  "metrics_rows": 5040,
+  "endpoint_price_rows": 17740,
+  "unique_identities": 887,
+  "joint_groups": 7,
+  "checks": [
+    "immutable input/script SHA",
+    "source actual quotes and source usability",
+    "entry-exclusive/exit-inclusive event quantities and whole intermediate lots",
+    "cash and returns from original 100 shares",
+    "all saved metrics independently recalculated",
+    "equal twenty-endpoint cohorts",
+    "DEV-only per-cap and 120-pair joint selection"
+  ],
+  "no_production_mutations": true
+}

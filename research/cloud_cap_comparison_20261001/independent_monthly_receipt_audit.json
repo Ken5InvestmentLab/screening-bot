@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "all_270_required": true,
+  "verified_monthly_receipts": 270,
+  "months_by_cap": {
+    "0": 45,
+    "1000": 45,
+    "1500": 45,
+    "2000": 45,
+    "3000": 45,
+    "5000": 45
+  },
+  "selected_rows": 7100,
+  "checks": [
+    "component hashes unchanged",
+    "monthly CSV SHA and row count",
+    "selected dates within declared model month and corpus cutoff",
+    "tail CDF >= 0.999",
+    "at most five selected allocations per tail row"
+  ]
+}

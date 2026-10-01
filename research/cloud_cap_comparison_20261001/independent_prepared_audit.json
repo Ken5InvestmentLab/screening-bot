@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "identity": "CLOUD_CAP_CORRECTED_COMPARISON_V2",
+  "rows": 4306683,
+  "artifact_sha256": {
+    "features.npy": "ef46fad051eac87b818c0cd786fa6f11f6430748632e4bd351090b1b0113c1af",
+    "rows.pkl": "290e30536f8bb99190af4509fdf4ddb7d7153390ba66b5a2c34dfd2ba3ce7b36",
+    "prices.pkl": "e178d9d46441e425d869f9dc616e2c26e40e415ac680c28e232e2ec02bfc87bd",
+    "actions.csv": "f53238a8322bc4677a1ae0124bac2bf1e94f62be2b7c0f4f13146cd10345ed80",
+    "restriction_snapshot.json": "b43d8ea3fe83a9e1829c6ebe80c8e83aaf73c84a48ca04e5d97b0b4690e80e57",
+    "prepared.json": "0713b055ffb50a658ddd62a484cf8ec19ebdf3f3def39467e911ebe77ccc25c0"
+  },
+  "only_changed_features_from_v1": {
+    "breadth_ret1_pos": 4306683,
+    "breadth_ma20": 4306683
+  },
+  "breadth_contract": "positive non-NaN rows divided by non-NaN count; all-NaN returns NaN",
+  "source_sha256": "cfc358198f07b29182da77eac5fccb6efe8d2c2450e79d2859cbd7a15f7d0c13",
+  "actions_sha256": "f53238a8322bc4677a1ae0124bac2bf1e94f62be2b7c0f4f13146cd10345ed80"
+}

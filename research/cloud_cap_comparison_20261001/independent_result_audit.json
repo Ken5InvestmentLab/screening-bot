@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "completed_monthly_checkpoint_receipts": 270,
+  "independent_metric_rows": 210,
+  "trade_economics_unique_arm_identities_checked": 2260,
+  "all_selected_rows_economics_checked_through_identical_identity_inputs": 7100,
+  "win_rate_denominator": "all measured returns including zero, matching current Cloud metrics.py",
+  "cash_method": "independent chronological event ratios on 100 entry shares; verifies integral intermediate shares, then exit_price*exit_shares-entry_price*100",
+  "capital_method": "independent date ledger: all open purchases before close sales; releases purchase principal",
+  "common_day_excluded_calendar": [
+    "2024-07-25"
+  ],
+  "disagreements": [],
+  "summary_sha256": "17458c7c5ec5ad728c90d7f8c46de19ef6d2e728c6108293aaa3adbf2c83d963"
+}

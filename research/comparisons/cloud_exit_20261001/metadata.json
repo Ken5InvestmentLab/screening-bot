@@ -1,0 +1,102 @@
+{
+  "stage": "corrected_actual_share_caps_v2",
+  "selection_inputs": [
+    {
+      "arm": "cap1000",
+      "path": ".cache\\cloud_cap_corrected_v2_20261001\\trades_cap1000.csv",
+      "sha256": "65dc2e113569ae68475ece7d81a4e5e3bbfedb298ebd89365730c96801633da6"
+    },
+    {
+      "arm": "cap1500",
+      "path": ".cache\\cloud_cap_corrected_v2_20261001\\trades_cap1500.csv",
+      "sha256": "7590c814aacb3f5527e9bfd0a36597f9325711435ec1f6de7be5d32e4e337e68"
+    },
+    {
+      "arm": "cap2000",
+      "path": ".cache\\cloud_cap_corrected_v2_20261001\\trades_cap2000.csv",
+      "sha256": "047482c2df35056d6e8ecded98f20df0050aa72d33bcfbdcdfd7af7b082d96e9"
+    },
+    {
+      "arm": "cap3000",
+      "path": ".cache\\cloud_cap_corrected_v2_20261001\\trades_cap3000.csv",
+      "sha256": "9cc3238514d7e81dbc0fd60bee4cf3e6a30440d01fa7ffc5b1f0d511e5f29469"
+    },
+    {
+      "arm": "cap5000",
+      "path": ".cache\\cloud_cap_corrected_v2_20261001\\trades_cap5000.csv",
+      "sha256": "d46595111bf9f1da02d57254969562363e50de9597ab594079c8f620cb84ff9c"
+    },
+    {
+      "arm": "nocap",
+      "path": ".cache\\cloud_cap_corrected_v2_20261001\\trades_cap0.csv",
+      "sha256": "efd25f80362a297e29c6849dfe0687d0709fa21d76bbe484c15206321b9626b6"
+    }
+  ],
+  "cap_summary_path": ".cache\\cloud_cap_corrected_v2_20261001\\summary.json",
+  "cap_summary_sha256": "17458c7c5ec5ad728c90d7f8c46de19ef6d2e728c6108293aaa3adbf2c83d963",
+  "verified_monthly_model_receipts": 270,
+  "script_path": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\research\\comparisons\\cloud_exit_20261001\\compare_exits.py",
+  "script_snapshot": "research\\comparisons\\cloud_exit_20261001\\compare_exits_executed.py",
+  "script_sha256": "7594711153bb9a1deebbcbebce72ad307266707527487adb10dfc93899a363ea",
+  "daily_path": ".cache\\weak_early_beta\\split_preflight_20261001\\normalized_daily.csv",
+  "daily_sha256": "cfc358198f07b29182da77eac5fccb6efe8d2c2450e79d2859cbd7a15f7d0c13",
+  "source_cutoff": "2026-09-30",
+  "actions_path": ".cache\\weak_early_beta\\split_preflight_20261001\\actions.csv",
+  "actions_sha256": "f53238a8322bc4677a1ae0124bac2bf1e94f62be2b7c0f4f13146cd10345ed80",
+  "bad_bars_path": null,
+  "bad_bars_sha256": null,
+  "quarantined_dates_sha256": "0f027c52b5ef198e54266fcef8f3a24fce0aaeae8a3b051c8161280f227a8328",
+  "entry_registry_sha256": "7074232a4e65e7744e4d80f67c62ca836753e6708460a412e542dbc74685c94f",
+  "jpx_restriction_sha256": "6c476e96b42bc1f4da8c63e9fe30e51a328d3bbe2e4423a126cd6434438d4f19",
+  "selection_rows_before_policy": 7100,
+  "selection_rows_after_policy": 6992,
+  "common_day_flag_count": 1,
+  "endpoint_bad_date_union_applied_to_all_arms": true,
+  "common_selector_rows": 6964,
+  "common_unique_trades": 887,
+  "excluded_selector_rows": 28,
+  "selection_target": "Original fixed 5-session next-open-to-close learning target; no retraining or re-selection for exit endpoints.",
+  "entry": "signal+1 official bank business session open",
+  "exits": [
+    "d1_open",
+    "d1_close",
+    "d2_open",
+    "d2_close",
+    "d3_open",
+    "d3_close",
+    "d4_open",
+    "d4_close",
+    "d5_open",
+    "d5_close",
+    "d6_open",
+    "d6_close",
+    "d7_open",
+    "d7_close",
+    "d8_open",
+    "d8_close",
+    "d9_open",
+    "d9_close",
+    "d10_open",
+    "d10_close"
+  ],
+  "cost_pct": 0,
+  "win": "gross_return>0; flat trades in denominator",
+  "dividends_included": false,
+  "max_down_pct": "Worst completed trade return at an endpoint; not intraholding drawdown.",
+  "cohort": "All twenty endpoints available and usable for every retained identity; fractional corporate-action lots rejected.",
+  "holdout": "Endpoint chosen on 2023-2024 only; 2025 temporal validation and 2026 reporting; already-opened retrospective data, not untouched OOS.",
+  "joint_cap_exit_selection": "One arm/endpoint pair per selector chosen by DEV 2023-2024 mean; cap and exit both fixed for 2025/2026. Exact ties: tighter positive cap, earlier day, open. Whole-period maxima descriptive only.",
+  "joint_dev_grid_counts": {
+    "all_conditions_stacked": 120,
+    "all_conditions_unique": 120,
+    "body_pct_low": 120,
+    "dual_top1_agreement": 120,
+    "dual_top1_agreement_g3_no_acute_selloff": 120,
+    "mean_rank_volr20_body_pct": 120,
+    "volr20_low": 120
+  },
+  "basis_note": "分割併合確認後の当時株単位による価格上限・固定選定。ベンダーの最新取得履歴を使い、過去時点の原本そのものを復元したデータではない。価格元データの制約は別途source監査参照。",
+  "cash_basis": "journal reconstructed actual entry100shares",
+  "no_production_mutations": true,
+  "standard_matplotlib_plots_written": true
+}

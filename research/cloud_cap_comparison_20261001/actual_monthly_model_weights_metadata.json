@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "identity": "CLOUD_CAP_CORRECTED_COMPARISON_V2",
+  "expected_models": 270,
+  "completed_receipts_checked": 270,
+  "effective_weight_values": [
+    80
+  ],
+  "prepared_model_parameters_are_template": true,
+  "template_scale_pos_weight": 1.0,
+  "actual_dynamic_formula": "effective_pos=max(positive_teacher_rows,1); effective_neg=max(training_rows-effective_pos,1); scale_pos_weight=min(effective_neg/effective_pos,80)",
+  "teacher_definition": "eligible within cap, same-date target5_no average percentile rank >= 0.9975",
+  "monthly_causality": "target_end_date < month_start",
+  "source_sha256": "cfc358198f07b29182da77eac5fccb6efe8d2c2450e79d2859cbd7a15f7d0c13",
+  "source_hashes": {
+    "research\\cloud_cap_comparison_20261001\\frozen\\run.py": "ac36e597e28334238a6ec760a5b84e727f82a640ab99285328e2cd45fcfb6d4f",
+    "research\\cloud_cap_comparison_20261001\\frozen\\select_shadow_candidates.py": "9b3b766fde49e0cbe4442fe71c13b7e41b8687455b2c688896705af2808777dc",
+    "research\\cloud_cap_comparison_20261001\\frozen\\v7_full_tail_research.py": "dae56e2e82cc07dd7dfbbc1c09431309cf9bcf358d3ae687e432815a5d510fb2",
+    "research\\cloud_cap_comparison_20261001\\compare.py": "99b45039fb971956823a334fac78e0296ef611c1f579bbea93383df2bc85164d",
+    "weak_early_beta\\bank_calendar.py": "82b3dacee8feb832cd9dcc696d929fc536c9700bb00df458fa83a8d6514af68c",
+    "weak_early_beta\\trade_basis.py": "300b63c3ffa7c9c474f0631a5976b27fcdbfccb563fc4272b5286e201c4e5783",
+    "weak_early_beta\\metrics.py": "8917445f72ffa871e7f91010a6d7bdbe986bc124c644d5f7c0bad112beb2d6ab",
+    "weak_early_beta\\entry_feasibility.py": "9676e3754c883f85eb81c3b1e19cd96e59bd02539bc0aa83ef678a61ecc11af8",
+    "weak_early_beta\\restrictions.py": "f9a7406253ec61eb8c64b826f6ce69eb288ea6a676337e85c449f8f280e88e1f",
+    "weak_early_beta\\state\\entry_feasibility_exclusions.csv": "7074232a4e65e7744e4d80f67c62ca836753e6708460a412e542dbc74685c94f",
+    "weak_early_beta\\state\\jpx_restricted_symbols_latest.json": "6c476e96b42bc1f4da8c63e9fe30e51a328d3bbe2e4423a126cd6434438d4f19"
+  },
+  "csv_sha256": "775e74d225be72ebf3c8255069d512ff763b651b78dc1d6fab8cc3e15ed38f5d"
+}

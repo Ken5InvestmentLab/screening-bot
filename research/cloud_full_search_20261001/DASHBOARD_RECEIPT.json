@@ -1,0 +1,13 @@
+{
+  "updated_at_utc": "2026-10-01T17:07:03.627148+00:00",
+  "cache": ".cache/cloud_full_search_v2_20261001",
+  "screened_configs": 20,
+  "refined_configs": 0,
+  "completed_fits": 80,
+  "final_present": false,
+  "generator_sha256": "3cd0671bf8d0a88d7ae98eb197223f3f815751aeb0b83326cc648addac285667",
+  "dashboard_sha256": "f68015907e492c30ab06added89c797ff7efa6bc12393606cb3fff1d3bc25acb",
+  "javascript_sha256": "e054c719a3c77e90b9b8c041623f5cf7ff169a41bd176c2e77e54ccb50b7decb",
+  "prepared_manifest_sha256": "3438df61532bd2f6ec7e02e2823b9ca0c178395584e7b2c66aef5e3a338d95cd",
+  "scope": "Metadata-only rendering. No new model fits, candidate selection, or production changes."
+}

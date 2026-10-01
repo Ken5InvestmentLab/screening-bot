@@ -1,5 +1,5 @@
 {
-  "updated_at_utc": "2026-10-01T16:33:10.163873+00:00",
+  "updated_at_utc": "2026-10-01T16:51:22.625497+00:00",
   "status": "IN_PROGRESS",
   "production_unchanged": true,
   "prepared": true,
@@ -18,8 +18,8 @@
     "reuse_equivalence": "parity_equivalence.json",
     "origin_cache": ".cache\\cloud_full_search_20261001"
   },
-  "completed_fits": 26,
-  "screened_configs": 6,
+  "completed_fits": 62,
+  "screened_configs": 15,
   "total_configs": 864,
   "refined_configs": 0,
   "latest_fit": {
@@ -28,33 +28,33 @@
       "size": "small",
       "objective": "top025",
       "horizon": 5,
-      "features": "price_market",
-      "cap": 1000,
-      "id": "xgb_small_top025_h5_price_market_cap1000"
+      "features": "augmented",
+      "cap": 3000,
+      "id": "xgb_small_top025_h5_augmented_cap3000"
     },
     "month": "2023-09",
-    "train_rows": 380615,
-    "prediction_rows": 18253,
-    "retained_rows": 1378,
+    "train_rows": 797928,
+    "prediction_rows": 41172,
+    "retained_rows": 2810,
     "max_training_exit": "2023-08-31",
     "files": {
-      "npz": "8b54c34e8a0406ebace294904abaf9c43e5ec98b15fdf4209a4102904e8bd611",
-      "joblib": "44f82ccb0573d7daf30018e5b479c9dd8c9100f7cc38e54de8f0b22c8fd947ba"
+      "npz": "190c222f51d35bab5a24897cdcb05ea91aec4aedfcc7f419647e7cc8074b45b6",
+      "joblib": "22a775acae8c940c7e751b4ffe56901057dfee86f8aed62f508d10025a0327c9"
     }
   },
   "progress": {
     "phase": "SCREEN",
-    "next_config": "xgb_small_top025_h5_price_market_cap1000",
+    "next_config": "xgb_small_top025_h5_augmented_cap2000",
     "next_month": "2023-03",
-    "screen_complete": 6,
+    "screen_complete": 14,
     "total_configs": 864,
     "reason": "bounded batch or usage guard"
   },
   "usage_lease": {
-    "primary_used_percent": 78,
-    "secondary_used_percent": 44,
-    "checked_at_utc": "2026-10-01T16:32:08.6220394+00:00",
-    "expires_at_unix": 1790873228
+    "primary_used_percent": 84,
+    "secondary_used_percent": 45,
+    "checked_at_utc": "2026-10-01T16:48:41.9887584+00:00",
+    "expires_at_unix": 1790874221
   },
   "final": null
 }

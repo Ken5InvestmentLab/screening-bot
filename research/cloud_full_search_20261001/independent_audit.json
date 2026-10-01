@@ -1,15 +1,95 @@
 {
   "status": "PASS",
-  "receipt_count": 8,
+  "receipt_count": 80,
   "independent_model_replays": [
     {
-      "config": "xgb_small_top025_h5_all45_cap1000",
+      "config": "xgb_small_top025_h10_all45_cap1000",
       "month": "2023-03",
       "scores": 12,
-      "training_reference_rows": 262659
+      "training_reference_rows": 257895
+    },
+    {
+      "config": "xgb_small_top025_h5_all45_cap0",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 653420
+    },
+    {
+      "config": "xgb_small_top025_h5_augmented_cap0",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 653420
+    },
+    {
+      "config": "xgb_small_top025_h5_price_market_cap0",
+      "month": "2023-03",
+      "scores": 12,
+      "training_reference_rows": 653420
+    }
+  ],
+  "dev_winner_reaggregations": [
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h10_all45_cap1500",
+      "endpoint": "d5_open",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_all45_cap1000",
+      "endpoint": "d3_open",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_all45_cap1500",
+      "endpoint": "d1_close",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_all45_cap2000",
+      "endpoint": "d1_close",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_augmented_cap1000",
+      "endpoint": "d4_open",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_augmented_cap1500",
+      "endpoint": "d1_close",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_price_market_cap1000",
+      "endpoint": "d1_close",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_price_market_cap1500",
+      "endpoint": "d1_close",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_price_market_cap2000",
+      "endpoint": "d1_close",
+      "trade_rows": 40
+    },
+    {
+      "stage": "screen",
+      "config": "xgb_small_top025_h5_price_market_cap3000",
+      "endpoint": "d1_close",
+      "trade_rows": 40
     }
   ],
   "final_trade_reaggregations": [],
-  "audit_script_sha256": "996aebbf46fd4b8f43df0cc6338c8a1649bb3b82dfb55ff38c9542c5130866e1",
-  "limits": "Score/CDF replay sampled by learner/size/objective/features; no proof of fills or profitability; 2026 already viewed."
+  "audit_script_sha256": "8ae52427678f31925d3db0576df7f673888d930d25e741a5c55027ddbbbf82db",
+  "limits": "Score/CDF replay sampled by learner/size/objective/features/horizon. DEV winner arithmetic independently reaggregated; selection uses frozen implementation. No proof of fills or profitability; previously viewed periods are reused data."
 }

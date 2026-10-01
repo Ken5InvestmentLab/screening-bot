@@ -1,0 +1,29 @@
+{
+  "pc": {
+    "uncomputed_refined_state": "explicit incomplete",
+    "screened_configs": 20,
+    "completed_fits": 80,
+    "mean_sort_descending": true,
+    "screenshot": "dashboard_preview.png",
+    "price1000_quality_count": 3,
+    "price1000_setting_count": 4,
+    "quality_candidates": 10
+  },
+  "dashboard_sha256": "f68015907e492c30ab06added89c797ff7efa6bc12393606cb3fff1d3bc25acb",
+  "backend": "Edge",
+  "status": "PASS",
+  "scope": "Local research UI only. Browser verification does not validate strategy profitability.",
+  "verified_at_utc": "2026-10-01T17:08:55.1560381+00:00",
+  "javascript_sha256": "e054c719a3c77e90b9b8c041623f5cf7ff169a41bd176c2e77e54ccb50b7decb",
+  "url": "http://127.0.0.1:18769/cloud_full_search_20261001/dashboard.html",
+  "mobile": {
+    "table_width": 979,
+    "observed_viewport": 375,
+    "page_width": 375,
+    "requested_width": 390,
+    "screenshot": "dashboard_mobile_preview.png",
+    "page_overflow": false,
+    "temporary_viewport_reset": true,
+    "tested_snapshot_screened_configs": 16
+  }
+}

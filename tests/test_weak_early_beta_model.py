@@ -143,6 +143,56 @@ class SplitAwareModelTests(unittest.TestCase):
         expected = ledger.copy()
         pd.testing.assert_frame_equal(model.refresh_forward_endpoints(ledger, raw), expected)
 
+    def test_quarantined_quotes_do_not_vote_against_market_breadth(self):
+        dates = pd.bdate_range("2026-08-03", periods=35)
+        raw = pd.concat([
+            pd.DataFrame({"date": dates, "symbol": symbol, "open": range(100, 135),
+                          "high": range(102, 137), "low": range(99, 134),
+                          "close": range(101, 136), "volume": 20_000, "split_ratio": 0})
+            for symbol in ("9997", "9998", "9999")
+        ], ignore_index=True)
+        # Every quote for one symbol is invalid; the two valid rising series
+        # must retain a 100% breadth rather than become artificially 66.7%.
+        raw.loc[raw.symbol.eq("9999"), "close"] = 999
+        result = model.build_live_features(raw)
+        valid = result[result.symbol.ne("9999") & result.date.eq(dates[-1])]
+        self.assertTrue(valid.breadth_ret1_pos.eq(1).all())
+        self.assertTrue(valid.breadth_ma20.eq(1).all())
+        first = result[result.date.eq(dates[0])]
+        self.assertTrue(first.breadth_ret1_pos.isna().all())
+
+    def test_replayed_missing_entry_cannot_erase_original_purchase(self):
+        raw = self.daily()
+        original = model.attach_forward_rows(self.selected(raw), self.before_split(raw, 3))
+        missing = self.before_split(raw, 3)
+        missing = missing[missing.date.ne(pd.Timestamp("2026-09-02"))].copy()
+        incoming = model.attach_forward_rows(self.selected(raw), missing)
+        self.assertEqual(incoming.iloc[0]["status"], "pending_entry")
+        merged = merge_detections(original, incoming)
+        for column in ECONOMIC_COLUMNS:
+            left, right = merged.iloc[0][column], original.iloc[0][column]
+            if pd.isna(right):
+                self.assertTrue(pd.isna(left), column)
+            else:
+                self.assertEqual(left, right, column)
+        completed = model.refresh_forward_endpoints(merged, raw)
+        self.assertEqual(completed.iloc[0]["status"], "mature")
+        self.assertEqual(completed.iloc[0]["entry_cost_yen"], 10_000)
+
+    def test_merge_rejects_conflicting_purchase_but_accepts_completion(self):
+        raw = self.daily()
+        original = model.attach_forward_rows(self.selected(raw), self.before_split(raw, 3))
+        completed = model.attach_forward_rows(self.selected(raw), raw)
+        self.assertEqual(merge_detections(original, completed).iloc[0]["status"], "mature")
+        revised = completed.copy()
+        revised.loc[:, "entry_open"] = 101
+        with self.assertRaisesRegex(ValueError, "entry price revision"):
+            merge_detections(original, revised)
+        revised = completed.copy()
+        revised.loc[:, "entry_shares"] = 200
+        with self.assertRaisesRegex(ValueError, "entry shares revision"):
+            merge_detections(original, revised)
+
     def test_future_split_does_not_admit_historically_expensive_stock(self):
         features = pd.DataFrame({name: [0.0, 0.0] for name in model.base.FEATURES})
         features["symbol"] = "9999"

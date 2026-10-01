@@ -69,7 +69,14 @@ def build_live_features(raw: pd.DataFrame) -> pd.DataFrame:
     # relative indicators stay invariant. Absolute gates use actual_* instead.
     feature_source = raw.copy()
     feature_source.loc[~feature_source["source_usable"], ["open", "high", "low", "close", "volume"]] = float("nan")
-    return base.build_features(feature_source)
+    features = base.build_features(feature_source)
+    groups = features.groupby("date")
+    # Missing/isolated quotes are unknown, not a negative market vote.
+    # Recompute across the complete universe after masking source inputs.
+    for column, source in (("breadth_ret1_pos", "ret1"), ("breadth_ma20", "ma20_gap")):
+        values = groups[source].apply(lambda series: series.dropna().gt(0).mean())
+        features[column] = features["date"].map(values)
+    return features
 
 
 def prepare_live(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:

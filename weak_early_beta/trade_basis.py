@@ -239,9 +239,46 @@ def is_frozen_trade(row: Mapping[str, Any]) -> bool:
 def preserve_completed_economics(
     existing: Mapping[str, Any], incoming: Mapping[str, Any]
 ) -> dict[str, Any]:
-    """Retain completed economics even when a vendor rebases later history."""
+    """Retain completed economics and the original cost of an entered trade."""
     result = dict(incoming)
     if is_frozen_trade(existing):
         for column in ECONOMIC_COLUMNS:
             result[column] = existing[column]
+        return result
+    if (
+        str(existing.get("source_scope", "")) == "FORWARD_CAUSAL"
+        and str(existing.get("price_basis", "")) == PRICE_BASIS_VERSION
+        and str(existing.get("status", "")) == "entered"
+    ):
+        entry = _session(existing["entry_date"])
+        price = _price(existing["entry_open"])
+        shares = _whole_shares(existing["entry_shares"], location="recorded entry")
+        cost = float(existing["entry_cost_yen"])
+        if not math.isfinite(price) or not math.isfinite(cost) or not math.isclose(cost, price * shares, rel_tol=1e-9, abs_tol=1e-7):
+            raise ValueError("corrupt recorded entry economics")
+        for column in ("entry_date", "fifth_xtks_exit_date"):
+            if pd.notna(incoming.get(column)) and _session(incoming[column]) != _session(existing[column]):
+                raise ValueError(f"{column} revision requires review")
+        if str(incoming.get("price_basis", "")) != PRICE_BASIS_VERSION:
+            raise ValueError("recorded entry price basis revision requires review")
+        current_price = _price(incoming.get("entry_open"))
+        if math.isfinite(current_price) and abs(current_price - price) > max(0.01, abs(price) * 1e-6):
+            raise ValueError("entry price revision requires review")
+        if pd.notna(incoming.get("entry_shares")) and _whole_shares(incoming["entry_shares"], location="incoming entry") != shares:
+            raise ValueError("entry shares revision requires review")
+        if not math.isfinite(current_price):
+            # A source gap/quality quarantine cannot undo a recorded purchase.
+            # Endpoint refresh can fill its exit separately from this replay.
+            for column in ECONOMIC_COLUMNS:
+                result[column] = existing[column]
+            return result
+        if str(incoming.get("status", "")) == "mature":
+            is_frozen_trade(incoming)
+        for column in ("entry_date", "entry_open", "entry_shares", "entry_cost_yen"):
+            result[column] = existing[column]
+        if str(result.get("status", "")) == "mature":
+            proceeds = float(result["exit_proceeds_yen"])
+            result["gross_return"] = proceeds / cost - 1
+            result["one_hundred_shares_pl_yen"] = proceeds - cost
+            is_frozen_trade(result)
     return result

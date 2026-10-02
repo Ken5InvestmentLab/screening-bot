@@ -36,6 +36,7 @@ from .historical_fundamentals import (
     validate_historical_report,
 )
 from .report import DEFAULT_METRICS, DEFAULT_REPORT, write_report
+from .progress import daily_phase
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -136,19 +137,21 @@ def command_daily(args: argparse.Namespace) -> None:
         source_revision = raw.attrs.get("source_revision_receipt", {})
         del previous
         _write_daily_cache(raw, daily_path)
+        del raw
         company_names = universe.set_index("code")["name"].astype(str).to_dict()
     else:
         if not daily_path.exists():
             raise FileNotFoundError(f"daily corpus not found: {daily_path}")
-        raw = model.read_daily(daily_path)
         if args.refresh_universe:
             universe = model.base.jpx_universe()
             company_names = universe.set_index("code")["name"].astype(str).to_dict()
     source_hash = model.sha256(daily_path)
-    raw = model.read_daily(daily_path)
+    with daily_phase("cache-read-and-validation"):
+        raw = model.read_daily(daily_path)
     from .corporate_actions import source_quality_receipt
 
-    source_quality = source_quality_receipt(raw)
+    with daily_phase("source-quality"):
+        source_quality = source_quality_receipt(raw)
     quality_path = daily_path.with_suffix(".source-quality.json")
     if not args.refresh_live and quality_path.exists():
         previous_quality = json.loads(quality_path.read_text(encoding="utf-8"))
@@ -171,20 +174,24 @@ def command_daily(args: argparse.Namespace) -> None:
         ],
         "quarantinedComparisonSymbolCount": len(source_revision.get("quarantinedComparisons", [])),
     }
-    ledger = model.refresh_forward_endpoints(ledger, raw, source_sha256=source_hash)
-    if args.from_date:
-        tail, selected = model.score_range(raw, args.from_date, args.as_of)
-    else:
-        tail, selected = model.score_latest(raw, args.as_of)
+    with daily_phase("forward-endpoints"):
+        ledger = model.refresh_forward_endpoints(ledger, raw, source_sha256=source_hash)
+    with daily_phase("scoring"):
+        if args.from_date:
+            tail, selected = model.score_range(raw, args.from_date, args.as_of)
+        else:
+            tail, selected = model.score_latest(raw, args.as_of)
     latest = pd.to_datetime(raw["date"]).max()
-    restrictions = fetch_jpx_restricted_symbols(
-        args.as_of or latest,
-        Path(args.restriction_snapshot),
-    )
+    with daily_phase("jpx-tradability"):
+        restrictions = fetch_jpx_restricted_symbols(
+            args.as_of or latest,
+            Path(args.restriction_snapshot),
+        )
     selected_restriction_mask = restricted_mask(selected, restrictions)
     restricted_selected = selected[selected_restriction_mask].copy()
     selected = selected[~selected_restriction_mask].copy()
-    incoming = model.attach_forward_rows(selected, raw, company_names, source_hash)
+    with daily_phase("attach-forward-rows"):
+        incoming = model.attach_forward_rows(selected, raw, company_names, source_hash)
     ledger = merge_detections(ledger, incoming)
     ledger, quarantined = quarantine_restricted_detections(
         ledger,
@@ -201,7 +208,8 @@ def command_daily(args: argparse.Namespace) -> None:
         )
     write_ledger(ledger, ledger_path)
     write_fundamental_queue(ledger, Path(args.queue))
-    metrics = write_report(ledger, Path(args.report), Path(args.metrics))
+    with daily_phase("report"):
+        metrics = write_report(ledger, Path(args.report), Path(args.metrics))
     receipt = {
         "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
         "run_at": pd.Timestamp.now(tz="Asia/Tokyo").isoformat(),

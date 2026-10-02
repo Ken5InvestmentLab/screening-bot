@@ -3,7 +3,42 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { probeFundamentalModel } from './weak-early-beta-daily-runner.mjs';
+import { probeFundamentalModel, run } from './weak-early-beta-daily-runner.mjs';
+
+test('Cloud child progress is readable before the process exits', async () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'weak-early-beta-live-logs-'));
+  try {
+    const log = path.join(fixture, 'child');
+    const script = path.join(fixture, 'child.mjs');
+    fs.writeFileSync(script, `
+console.log('phase started');
+console.error('validation started');
+await new Promise(resolve => setTimeout(resolve, 1200));
+console.log('phase finished');
+`);
+    let finished = false;
+    const pending = run(process.execPath, [script], {
+      cwd: fixture, env: process.env, log, timeoutMs: 10000,
+    }).finally(() => { finished = true; });
+    for (let attempt = 0; attempt < 100; attempt++) {
+      if (fs.readFileSync(`${log}.stderr`, 'utf8').includes('validation started')) break;
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
+    assert.equal(finished, false);
+    assert.equal(fs.readFileSync(`${log}.stdout`, 'utf8'), 'phase started\n');
+    assert.equal(fs.readFileSync(`${log}.stderr`, 'utf8'), 'validation started\n');
+    const result = await pending;
+    assert.equal(result.code, 0);
+    assert.equal(fs.readFileSync(`${log}.stdout`, 'utf8'), result.stdout);
+    assert.equal(fs.readFileSync(`${log}.stderr`, 'utf8'), result.stderr);
+  } finally {
+    const resolved = path.resolve(fixture);
+    if (!resolved.startsWith(`${path.resolve(os.tmpdir())}${path.sep}`) || !path.basename(resolved).startsWith('weak-early-beta-live-logs-')) {
+      throw new Error('refusing to remove an unexpected fixture path');
+    }
+    fs.rmSync(resolved, { recursive: true, force: true });
+  }
+});
 
 test('Cloud beta checks Luna xhigh with ChatGPT before detection', async () => {
   const parent = path.resolve(os.tmpdir());

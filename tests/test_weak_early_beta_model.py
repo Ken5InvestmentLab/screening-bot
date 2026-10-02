@@ -2,13 +2,16 @@
 
 import tempfile
 import unittest
+from argparse import Namespace
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
 import pandas as pd
 
 from weak_early_beta import model
-from weak_early_beta.cli import _write_daily_cache
+from weak_early_beta.cli import _write_daily_cache, command_daily
 from weak_early_beta.corporate_actions import CorporateActionError, normalize_daily
 from weak_early_beta.ledger import merge_detections
 from weak_early_beta.metrics import required_capital
@@ -49,6 +52,38 @@ class SplitAwareModelTests(unittest.TestCase):
         for column in ("open", "high", "low", "close", "volume"):
             frame[column] = raw.iloc[:count][f"actual_{column}"].to_numpy()
         return normalize_daily(frame)
+
+    def test_cached_and_refreshed_daily_use_same_serialized_verified_input(self):
+        class InputReached(Exception):
+            pass
+
+        for refresh_live, refresh_universe in ((False, False), (False, True), (True, False)):
+            with self.subTest(refresh_live=refresh_live, refresh_universe=refresh_universe), tempfile.TemporaryDirectory() as temporary:
+                path = Path(temporary) / "daily.csv"
+                _write_daily_cache(self.daily(), path)
+                expected = model.read_daily(path)
+                expected_hash = model.sha256(path)
+                original_read = model.read_daily
+                universe = pd.DataFrame({"code": ["9999"], "name": ["Example"]})
+
+                def capture_input(ledger, raw, source_sha256=""):
+                    pd.testing.assert_frame_equal(raw, expected)
+                    self.assertEqual(source_sha256, expected_hash)
+                    raise InputReached
+
+                args = Namespace(
+                    ledger=str(Path(temporary) / "ledger.csv"), daily_corpus=str(path),
+                    refresh_live=refresh_live, refresh_universe=refresh_universe, period="5y",
+                )
+                with patch("weak_early_beta.cli._load_or_bootstrap", return_value=pd.DataFrame()), \
+                     patch.object(model, "read_daily", wraps=original_read) as reads, \
+                     patch.object(model.base, "jpx_universe", return_value=universe), \
+                     patch("weak_early_beta.corporate_actions.fetch_daily", return_value=self.daily()), \
+                     patch.object(model, "refresh_forward_endpoints", side_effect=capture_input), \
+                     redirect_stderr(StringIO()):
+                    with self.assertRaises(InputReached):
+                        command_daily(args)
+                    self.assertEqual(reads.call_count, 1)
 
     def test_forward_trade_spanning_split_uses_original_lot(self):
         raw = self.daily()

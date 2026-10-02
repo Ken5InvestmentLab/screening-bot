@@ -29,12 +29,20 @@ function npmInvocation(config) {
 }
 async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_000_000 }) {
   fs.mkdirSync(path.dirname(log), { recursive: true });
+  fs.writeFileSync(`${log}.stdout`, '');
+  fs.writeFileSync(`${log}.stderr`, '');
   return await new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
     const child = spawn(exe, args, { cwd, env, windowsHide: true, stdio: capture ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'] });
-    child.stdout.on('data', chunk => { stdout += chunk; });
-    child.stderr.on('data', chunk => { stderr += chunk; });
+    child.stdout.on('data', chunk => {
+      stdout += chunk;
+      fs.appendFileSync(`${log}.stdout`, chunk);
+    });
+    child.stderr.on('data', chunk => {
+      stderr += chunk;
+      fs.appendFileSync(`${log}.stderr`, chunk);
+    });
     const timer = setTimeout(() => {
       spawn('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, stdio: 'ignore' });
       reject(new Error(`timeout: ${path.basename(log)}`));
@@ -42,8 +50,6 @@ async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_0
     child.on('error', error => { clearTimeout(timer); reject(error); });
     child.on('exit', code => {
       clearTimeout(timer);
-      fs.writeFileSync(`${log}.stdout`, stdout);
-      fs.writeFileSync(`${log}.stderr`, stderr);
       resolve({ code, stdout, stderr });
     });
   });
@@ -197,4 +203,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { npmInvocation, probeFundamentalModel };
+export { npmInvocation, probeFundamentalModel, run };

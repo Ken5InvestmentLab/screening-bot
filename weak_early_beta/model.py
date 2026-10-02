@@ -11,6 +11,7 @@ import pandas as pd
 from .corporate_actions import action_table, normalize_daily
 from .bank_calendar import add_bank_business_days
 from .trade_basis import PRICE_BASIS_VERSION, build_trade_economics, is_frozen_trade
+from .progress import daily_phase
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,13 +64,17 @@ def eligible_live_rows(features: pd.DataFrame, price_cap: float = PRICE_CAP) -> 
 
 def build_live_features(raw: pd.DataFrame) -> pd.DataFrame:
     """Preserve session positions while keeping quarantined prices out of indicators."""
-    raw = normalize_daily(raw)
+    with daily_phase("feature-source-validation"):
+        raw = normalize_daily(raw)
     # Relative indicators use the provider's continuous split-adjusted series.
     # A later split scales a historical lookback uniformly; price*volume and
     # relative indicators stay invariant. Absolute gates use actual_* instead.
     feature_source = raw.copy()
+    del raw
     feature_source.loc[~feature_source["source_usable"], ["open", "high", "low", "close", "volume"]] = float("nan")
-    features = base.build_features(feature_source)
+    with daily_phase("feature-build"):
+        features = base.build_features(feature_source)
+    del feature_source
     groups = features.groupby("date")
     # Missing/isolated quotes are unknown, not a negative market vote.
     # Recompute across the complete universe after masking source inputs.
@@ -83,6 +88,7 @@ def prepare_live(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Keep unlabeled prediction rows; labels exist only on matured rows."""
     features = build_live_features(raw)
     eligible = eligible_live_rows(features)
+    del features
     eligible["date"] = pd.to_datetime(eligible["date"])
     eligible["target_end_date"] = pd.to_datetime(eligible["target_end_date"], errors="coerce")
     labeled = eligible.dropna(subset=["target5_no", "target_end_date"]).copy()
@@ -119,9 +125,11 @@ def causal_tail_for_month(
     if y.nunique() < 2:
         raise RuntimeError("degenerate y_top025 training labels")
     model = v7.model(y)
-    model.fit(train[base.FEATURES], y, verbose=False)
-    train_probability = model.predict_proba(train[base.FEATURES])[:, 1]
-    pred_probability = model.predict_proba(pred[base.FEATURES])[:, 1]
+    with daily_phase("monthly-model-fit"):
+        model.fit(train[base.FEATURES], y, verbose=False)
+    with daily_phase("monthly-model-predict"):
+        train_probability = model.predict_proba(train[base.FEATURES])[:, 1]
+        pred_probability = model.predict_proba(pred[base.FEATURES])[:, 1]
     pred["tail_p"] = pred_probability
     pred["tail_cdf"] = v7.cdf(train_probability, pred_probability)
     pred["model_period"] = str(month)

@@ -33,6 +33,27 @@ test('every arbitrary cap chooses the last inclusive aggregate boundary', () => 
   assert.equal(key(null), 'd5_close:all');
 });
 
+test('year-scoped variants use only the chosen scope price boundaries', () => {
+  const payload = { priceBreakpoints: [100, 700], scopes: {
+    '2024': { years: [2024], priceBreakpoints: [123.45], priceBreakpointKeys: ['123.45'] },
+    '2023_2025': { years: [2023, 2024, 2025], priceBreakpoints: [123.45, 650] },
+  } };
+  assert.equal(prefs.variantKey(payload, { priceCapYen: 500, exitKey: 'd6_open' }, { yearScope: '2024' }), 'd6_open:2024:123.45');
+  assert.equal(prefs.variantKey(payload, { priceCapYen: 100, exitKey: 'd5_close' }, { yearScope: '2024' }), 'd5_close:2024:empty');
+  assert.equal(prefs.variantKey(payload, { priceCapYen: null, exitKey: 'd5_close' }, { yearScope: '2023_2025' }), 'd5_close:2023_2025:all');
+  assert.throws(() => prefs.normalizeView({ yearScope: '2022' }, payload));
+  assert.throws(() => prefs.normalizeView({ yearScope: '2026' }, payload));
+  assert.throws(() => prefs.normalizeView({ allocation: 'unknown' }, payload));
+});
+
+test('allocation CSV selection keeps analytics comparisons and mode reports distinct', () => {
+  const rows = [{ selector_id: 'mode-a' }, { selector_id: 'all_conditions_unique' }, { selector_id: 'all_conditions_stacked' }];
+  assert.deepEqual(prefs.selectCsvMetrics(rows, 'analytics', 'all'), rows.slice(1));
+  assert.deepEqual(prefs.selectCsvMetrics(rows, 'analytics', 'unique'), [rows[1]]);
+  assert.deepEqual(prefs.selectCsvMetrics(rows, 'home', 'stacked'), [rows[0], rows[2]]);
+  assert.deepEqual(prefs.selectCsvMetrics(rows, 'mode-a', 'all'), rows);
+});
+
 test('CSV preserves missing prices, decimals and quotes without formula injection', () => {
   const csv = prefs.csv([{ name: '=HYPERLINK("x")', price: null, pl: -123.45 },
     { name: 'A,"B"', price: 1234.56, pl: 0 }], ['name', 'price', 'pl']);
@@ -51,11 +72,13 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 // Run the shipped browser handlers, not a second implementation of their state
 // machine. Only the browser boundary is simulated; the async variant completion,
 // filter, endpoint, save and CSV paths below are the actual application code.
-function browserFixture({ emptyHistory = false } = {}) {
+function browserFixture({ emptyHistory = false, researchViews = false, savedPreferences = null, savedView = null } = {}) {
   const elements = new Map();
   const downloads = [];
   const blobs = new Map();
   const storage = new Map();
+  if (savedPreferences) storage.set('cloudReportPreferences:v1', JSON.stringify(savedPreferences));
+  if (savedView) storage.set('cloudReportView:v1', JSON.stringify(savedView));
   const requests = [];
   const queuedDecodes = new Map();
   const variants = {};
@@ -79,8 +102,8 @@ function browserFixture({ emptyHistory = false } = {}) {
         this.children.push(child);
       }
     }
-    setAttribute(name, value) { this.attributes[name] = value; }
-    removeAttribute(name) { delete this.attributes[name]; }
+    setAttribute(name, value) { this.attributes[name] = value; if (name === 'hidden') this.hidden = true; }
+    removeAttribute(name) { delete this.attributes[name]; if (name === 'hidden') this.hidden = false; }
     querySelectorAll() { return []; }
     querySelector() { return null; }
     closest() { return null; }
@@ -95,12 +118,13 @@ function browserFixture({ emptyHistory = false } = {}) {
     'cloud-exit-endpoint', 'cloud-settings-save', 'cloud-settings-status',
     'cloud-analytics-data', 'cloud-analytics-content', 'cloud-export-csv',
     'cloud-history-export-csv', 'cloud-preferences', 'search-result-count', 'symbol-filter']) new Element(id);
+  if (researchViews) for (const id of ['cloud-year-scope', 'cloud-allocation', 'cloud-research-reset']) new Element(id);
   const rows = (emptyHistory ? [] : [
     { symbol: 'LOW1111', signalActualClose: '222.22', entryOpen: '220', d5Close: '242', d6Open: '244' },
     { symbol: 'HIGH9999', signalActualClose: '731.29', entryOpen: '730', d5Close: '803', d6Open: '810' },
   ]).map((values) => {
     const row = new Element();
-    row.dataset = { ...values, signalPriceVerified: 'true', date: '2025-01-06',
+    row.dataset = { ...values, signalPriceVerified: 'true', date: researchViews && values.symbol === 'LOW1111' ? '2024-01-06' : '2025-01-06',
       selectors: 'mode-a', entryDate: '2025-01-07', d6EntryDate: '2025-01-07',
       d6EntryOpen: values.entryOpen, d5Date: '2025-01-14', d6Date: '2025-01-15',
       d5Return: '0.1', d6Return: '0.11', d6Status: 'verified' };
@@ -112,12 +136,34 @@ function browserFixture({ emptyHistory = false } = {}) {
   const endpointCells = ['d5_close', 'd6_open'].map((exitKey) => {
     const element = new Element(); element.dataset.exitKey = exitKey; return element;
   });
+  const allocationSeries = ['unique', 'stacked'].map((cloudAllocation) => {
+    const element = new Element(); element.dataset.cloudAllocation = cloudAllocation; return element;
+  });
   const payload = { priceBreakpoints: emptyHistory ? [] : [222.22, 731.29], variants: {} };
+  if (researchViews) {
+    payload.page = 'analytics';
+    payload.scopes = {
+      all: { years: null, priceBreakpoints: payload.priceBreakpoints },
+      '2024': { years: [2024], priceBreakpoints: [222.22] },
+      '2025': { years: [2025], priceBreakpoints: [731.29] },
+      '2023_2025': { years: [2023, 2024, 2025], priceBreakpoints: payload.priceBreakpoints },
+    };
+  }
   for (const exit of ['d5_close', 'd6_open']) {
     for (const [bound, count] of [['empty', 0], ['222.22', 1], ['731.29', 2], ['all', 2]]) {
       const key = `${exit}:${bound}`;
       variants[key] = { html: `view:${key}`, metrics: [{ period: 'all', n: emptyHistory ? 0 : count }], monthlyMetrics: [] };
       payload.variants[key] = { gzip: Buffer.from(key).toString('base64') };
+    }
+  }
+  if (researchViews) {
+    for (const [scope, data] of Object.entries(payload.scopes)) for (const exit of ['d5_close', 'd6_open']) {
+      for (const [bound, cap] of [['empty', 0], ['all', Infinity], ...data.priceBreakpoints.map((price) => [String(price), price])]) {
+        const key = scope === 'all' ? `${exit}:${bound}` : `${exit}:${scope}:${bound}`;
+        const n = rows.filter((row) => (data.years === null || data.years.includes(Number(row.dataset.date.slice(0, 4)))) && Number(row.dataset.signalActualClose) <= cap).length;
+        variants[key] = { html: `view:${key}`, metrics: ['all_conditions_unique', 'all_conditions_stacked'].map((selector_id) => ({ selector_id, period: 'all', n })), monthlyMetrics: [] };
+        payload.variants[key] = { gzip: Buffer.from(key).toString('base64') };
+      }
     }
   }
   elements.get('cloud-analytics-data').textContent = JSON.stringify(payload);
@@ -135,7 +181,8 @@ function browserFixture({ emptyHistory = false } = {}) {
     getElementById: (id) => elements.get(id) || null,
     querySelectorAll: (selector) => selector === '#detection-table tbody tr' ? tableRows
       : selector === '#detection-table tbody tr[data-date]' ? rows
-      : selector === '[data-exit-key]' ? endpointCells : [],
+      : selector === '[data-exit-key]' ? endpointCells
+      : selector === '[data-cloud-allocation]' ? allocationSeries : [],
     querySelector: () => null, addEventListener: () => {},
     createElement: () => new Element(), createTextNode: (textContent) => ({ textContent }),
   };
@@ -157,7 +204,7 @@ function browserFixture({ emptyHistory = false } = {}) {
   });
   vm.runInContext(fs.readFileSync(require.resolve('../reports/weak-early-beta-interactions.js'), 'utf8'), context);
   return {
-    elements, downloads, storage, requests, rows, emptyMessage, endpointCells, variants, serverRead,
+    elements, downloads, storage, requests, rows, emptyMessage, endpointCells, allocationSeries, variants, serverRead,
     get: (id) => elements.get(id),
     delay(key) { const item = deferred(); queuedDecodes.set(key, [...(queuedDecodes.get(key) || []), item]); return item; },
     delaySave() { nextSave = deferred(); return nextSave; },
@@ -166,6 +213,11 @@ function browserFixture({ emptyHistory = false } = {}) {
       elements.get('cloud-price-custom').value = String(cap ?? '');
       elements.get('cloud-exit-endpoint').value = exit;
       return elements.get('cloud-exit-endpoint').dispatch('change');
+    },
+    selectView(scope, allocation = 'all') {
+      elements.get('cloud-year-scope').value = scope;
+      elements.get('cloud-allocation').value = allocation;
+      return elements.get('cloud-year-scope').dispatch('change');
     },
     snapshot() {
       return { html: elements.get('cloud-analytics-content').innerHTML,
@@ -310,4 +362,88 @@ test('an empty free history with unlimited cap stays zero and exports only CSV h
   await page.get('symbol-filter').dispatch('input');
   assert.equal(page.get('search-result-count').textContent, '0件を表示');
   assert.equal(page.emptyMessage.hidden, false);
+});
+
+test('year and allocation changes commit atomically and roll back together on failure', async () => {
+  const page = browserFixture({ researchViews: true }); await flush();
+  const before = page.snapshot();
+  const load = page.delay('d5_close:2024:222.22');
+  const change = page.selectView('2024', 'unique');
+  assert.deepEqual(page.snapshot(), before);
+  assert.equal(page.get('cloud-history-export-csv').disabled, true);
+  load.resolve(page.variants['d5_close:2024:222.22']); await change;
+  assert.deepEqual(page.snapshot().symbols, ['LOW1111']);
+  assert.equal(page.allocationSeries[0].hidden, false);
+  assert.equal(page.allocationSeries[1].attributes.hidden, '');
+  let [aggregate, history] = await page.exportBoth();
+  assert.match(aggregate.csv, /"2024","unique","all_conditions_unique","all","1"/);
+  assert.doesNotMatch(aggregate.csv, /all_conditions_stacked/);
+  assert.doesNotMatch(history.csv, /HIGH9999/);
+  const complete = page.snapshot();
+  const bad = page.delay('d5_close:2025:731.29');
+  const failed = page.selectView('2025', 'stacked');
+  bad.reject(new Error('broken year variant')); await failed;
+  assert.deepEqual(page.snapshot(), complete);
+  assert.equal(page.get('cloud-year-scope').value, '2024');
+  assert.equal(page.get('cloud-allocation').value, 'unique');
+  [aggregate] = await page.exportBoth();
+  assert.match(aggregate.csv, /"2024","unique","all_conditions_unique"/);
+});
+
+test('reset restores default price, endpoint, year, both allocation series and search', async () => {
+  const page = browserFixture({ researchViews: true }); await flush();
+  await page.select(500, 'd6_open'); await page.selectView('2024', 'stacked');
+  page.get('symbol-filter').value = 'LOW1111';
+  await page.get('symbol-filter').dispatch('input');
+  await page.get('cloud-research-reset').dispatch('click');
+  assert.deepEqual(page.snapshot(), { html: 'view:d5_close:731.29', symbols: ['LOW1111', 'HIGH9999'], endpoints: ['d5_close'] });
+  assert.equal(page.get('cloud-price-preset').value, '1000');
+  assert.equal(page.get('cloud-year-scope').value, 'all');
+  assert.equal(page.get('cloud-allocation').value, 'all');
+  assert.equal(page.get('symbol-filter').value, '');
+  assert.ok(page.allocationSeries.every((series) => !series.hidden));
+});
+
+test('display-only year/allocation restore locally while server price/endpoint remain authoritative', async () => {
+  const page = browserFixture({ researchViews: true,
+    savedPreferences: { priceCapYen: 500, exitKey: 'd6_open' }, savedView: { yearScope: '2024', allocation: 'stacked' } });
+  await flush();
+  assert.equal(page.snapshot().html, 'view:d6_open:2024:222.22');
+  page.serverRead.resolve({ ok: true, json: async () => ({ preferences: { max_price: 3000, exit_endpoint: 'd5_close' }, membership: { status: 'paid' } }) });
+  await flush();
+  assert.equal(page.snapshot().html, 'view:d5_close:2024:222.22');
+  assert.equal(page.get('cloud-price-preset').value, '3000');
+  assert.equal(page.get('cloud-allocation').value, 'stacked');
+  await page.get('cloud-settings-save').dispatch('click');
+  const sent = JSON.parse(page.requests.find((request) => request.options.method === 'PUT').options.body);
+  assert.deepEqual(Object.keys(sent).sort(), ['exit_endpoint', 'max_price', 'notifications']);
+  assert.equal(sent.max_price, 3000);
+  assert.deepEqual(JSON.parse(page.storage.get('cloudReportView:v1')), { yearScope: '2024', allocation: 'stacked' });
+});
+
+test('saved years unavailable in the current public page fall back to all', async () => {
+  const page = browserFixture({ savedView: { yearScope: '2026', allocation: 'stacked' } });
+  await flush();
+  assert.equal(page.snapshot().html, 'view:d5_close:731.29');
+  const [aggregate] = await page.exportBoth();
+  assert.doesNotMatch(aggregate.csv, /2026/);
+});
+
+test('all price presets, unlimited and custom decimals survive server save/reload with both endpoints', async () => {
+  for (const cap of [1000, 2000, 3000, 5000, null, 222.22]) for (const exitKey of ['d5_close', 'd6_open']) {
+    const page = browserFixture(); await flush();
+    await page.select(cap, exitKey);
+    await page.get('cloud-settings-save').dispatch('click');
+    const saved = JSON.parse(page.requests.find((request) => request.options.method === 'PUT').options.body);
+    assert.equal(saved.max_price, cap); assert.equal(saved.exit_endpoint, exitKey);
+    const restored = browserFixture(); await flush();
+    restored.serverRead.resolve({ ok: true, json: async () => ({ preferences: saved, membership: { status: 'paid' } }) });
+    await flush();
+    assert.deepEqual(restored.snapshot().symbols, cap === 222.22 ? ['LOW1111'] : ['LOW1111', 'HIGH9999']);
+    assert.deepEqual(restored.snapshot().endpoints, [exitKey]);
+    const [aggregate, history] = await restored.exportBoth();
+    assert.ok(aggregate.csv.includes(`"${exitKey}","${cap ?? '上限なし'}"`));
+    assert.equal(history.csv.split('\r\n').length - 1, cap === 222.22 ? 1 : 2);
+    assert.ok(history.filename.includes(exitKey));
+  }
 });

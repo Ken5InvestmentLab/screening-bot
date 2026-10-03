@@ -1,6 +1,7 @@
 // Pure preference/CSV helpers are also exercised without a browser by Node tests.
 const CloudPreferences = (() => {
   const DEFAULT = Object.freeze({ priceCapYen: 1000, exitKey: "d5_close" });
+  const DEFAULT_VIEW = Object.freeze({ yearScope: "all", allocation: "all" });
   const PRESETS = [1000, 2000, 3000, 5000];
   const parseCap = (value) => {
     if (value === null) return null;
@@ -16,15 +17,36 @@ const CloudPreferences = (() => {
     if (!value || !["d5_close", "d6_open"].includes(value.exitKey)) throw new Error("確定日を選択してください。");
     return { priceCapYen: parseCap(value.priceCapYen), exitKey: value.exitKey };
   };
-  const variantKey = (payload, prefs) => {
-    if (prefs.priceCapYen === null) return `${prefs.exitKey}:all`;
+  const normalizeView = (value, payload) => {
+    const yearScope = value?.yearScope || "all";
+    const allocation = value?.allocation || "all";
+    if (!["all", "unique", "stacked"].includes(allocation)) throw new Error("株数方式を選択してください。");
+    if (yearScope !== "all") {
+      const years = payload?.scopes?.[yearScope]?.years;
+      if (!Array.isArray(years) || !years.length || years.some((year) => !Number.isInteger(year) || year === 2022)) {
+        throw new Error("このページで利用できる検出年を選択してください。");
+      }
+    }
+    return { yearScope, allocation };
+  };
+  const variantKey = (payload, prefs, view = DEFAULT_VIEW) => {
+    const { yearScope } = normalizeView(view, payload);
+    const scope = yearScope === "all" ? payload : payload.scopes[yearScope];
+    const prefix = yearScope === "all" ? prefs.exitKey : `${prefs.exitKey}:${yearScope}`;
+    if (prefs.priceCapYen === null) return `${prefix}:all`;
     let bound = "empty";
-    for (const [index, price] of (payload.priceBreakpoints || []).entries()) {
-      if (price <= prefs.priceCapYen) bound = payload.priceBreakpointKeys?.[index] || String(price);
+    for (const [index, price] of (scope.priceBreakpoints || []).entries()) {
+      if (price <= prefs.priceCapYen) bound = scope.priceBreakpointKeys?.[index] || String(price);
       else break;
     }
-    return `${prefs.exitKey}:${bound}`;
+    return `${prefix}:${bound}`;
   };
+  const selectCsvMetrics = (records, page, allocation) => records.filter((row) => {
+    const selected = { unique: "all_conditions_unique", stacked: "all_conditions_stacked" };
+    const combined = Object.values(selected).includes(row.selector_id);
+    if (!combined) return page !== "analytics";
+    return allocation === "all" || row.selector_id === selected[allocation];
+  });
   const matchesCap = (actualClose, verified, cap) => cap === null || (
     (verified === true || verified === "true" || verified === "1" || verified === "verified")
     && Number.isFinite(Number(actualClose)) && Number(actualClose) > 0 && Number(actualClose) <= cap
@@ -38,7 +60,7 @@ const CloudPreferences = (() => {
     };
     return "\uFEFF" + [columns.map(cell).join(","), ...records.map((row) => columns.map((column) => cell(row[column])).join(","))].join("\r\n");
   };
-  return { DEFAULT, PRESETS, parseCap, normalize, variantKey, matchesCap, csv };
+  return { DEFAULT, DEFAULT_VIEW, PRESETS, parseCap, normalize, normalizeView, variantKey, selectCsvMetrics, matchesCap, csv };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = CloudPreferences;
 
@@ -135,6 +157,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   // A requested choice can remain in flight while its aggregate is decompressed.
   let appliedPreferences = { ...CloudPreferences.DEFAULT };
   let requestedPreferences = { ...appliedPreferences };
+  let appliedView = { ...CloudPreferences.DEFAULT_VIEW };
+  let requestedView = { ...appliedView };
+  let appliedYears = null;
   let matchingRows = [];
 
   const initialQuery = new URLSearchParams(window.location.search).get("q");
@@ -151,6 +176,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       const signalDate = row.dataset.date || "";
       return CloudPreferences.matchesCap(row.dataset.signalActualClose,
         row.dataset.signalPriceVerified || row.dataset.signalActualCloseStatus, appliedPreferences.priceCapYen)
+        && (appliedYears === null || appliedYears.includes(Number(signalDate.slice(0, 4))))
         && (!symbolValue || searchTarget.includes(symbolValue))
         && (!selectorValue || (row.dataset.selectors || "").split(" ").includes(selectorValue))
         && (!fromValue || signalDate >= fromValue)
@@ -229,11 +255,15 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const customPrice = document.getElementById("cloud-price-custom");
   const customPriceField = document.getElementById("cloud-price-custom-field");
   const endpoint = document.getElementById("cloud-exit-endpoint");
+  const yearScope = document.getElementById("cloud-year-scope");
+  const allocation = document.getElementById("cloud-allocation");
+  const researchReset = document.getElementById("cloud-research-reset");
   const saveButton = document.getElementById("cloud-settings-save");
   const status = document.getElementById("cloud-settings-status");
   const payloadElement = document.getElementById("cloud-analytics-data");
   const content = document.getElementById("cloud-analytics-content");
   const storageKey = "cloudReportPreferences:v1";
+  const viewStorageKey = "cloudReportView:v1";
   let payload = null;
   let currentVariant = null;
   let renderRevision = 0;
@@ -313,6 +343,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       customPrice.setAttribute("aria-invalid", "false");
     }
     endpoint.value = preferences.exitKey;
+    if (yearScope) yearScope.value = requestedView.yearScope;
+    if (allocation) allocation.value = requestedView.allocation;
   };
   const decodeVariant = async (key) => {
     if (decodedVariants.has(key)) return decodedVariants.get(key);
@@ -341,19 +373,21 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const applyPreferences = async ({ persist = false } = {}) => {
     const revision = ++renderRevision;
     const requested = { ...requestedPreferences };
+    const nextView = { ...requestedView };
     preferencesPending = true;
     syncActionAvailability();
     let nextVariant = currentVariant;
     if (payloadElement && content) {
       try {
         if (!payload) throw new Error("analytics payload unavailable");
-        nextVariant = await decodeVariant(CloudPreferences.variantKey(payload, requested));
+        nextVariant = await decodeVariant(CloudPreferences.variantKey(payload, requested, nextView));
         if (revision !== renderRevision) return false;
       } catch (_error) {
         if (revision !== renderRevision) return false;
         // Keep the last complete view and its CSV usable; failed requests are
         // neither persisted locally nor sent as the current member preference.
         requestedPreferences = { ...appliedPreferences };
+        requestedView = { ...appliedView };
         syncControls(appliedPreferences);
         preferencesPending = false;
         syncActionAvailability();
@@ -369,12 +403,24 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     }
     currentVariant = nextVariant;
     appliedPreferences = requested;
+    appliedView = nextView;
+    appliedYears = appliedView.yearScope === "all" ? null : [...payload.scopes[appliedView.yearScope].years];
     for (const element of document.querySelectorAll("[data-exit-key]")) {
       element.hidden = element.dataset.exitKey !== appliedPreferences.exitKey;
     }
+    for (const element of document.querySelectorAll("[data-cloud-allocation]")) {
+      // SVG series do not reflect an HTMLElement.hidden property. The shared
+      // [hidden] CSS rule applies to this explicit attribute on either element.
+      if (appliedView.allocation !== "all" && element.dataset.cloudAllocation !== appliedView.allocation) element.setAttribute("hidden", "");
+      else element.removeAttribute("hidden");
+    }
     filter({ resetLimit: true });
     if (persist) {
-      try { localStorage.setItem(storageKey, JSON.stringify(appliedPreferences)); storageFailed = false; }
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(appliedPreferences));
+        localStorage.setItem(viewStorageKey, JSON.stringify(appliedView));
+        storageFailed = false;
+      }
       catch (_error) { storageFailed = true; }
     }
     preferencesPending = false;
@@ -385,6 +431,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     priceCapYen: settings.value === "unlimited" ? null : (settings.value === "custom" ? customPrice?.value : settings.value),
     exitKey: endpoint.value,
   });
+  const readViewControls = () => CloudPreferences.normalizeView({
+    yearScope: yearScope?.value || "all", allocation: allocation?.value || "all",
+  }, payload);
   const updateFromControls = async () => {
     edited = true;
     editRevision += 1;
@@ -396,16 +445,19 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     }
     try {
       const next = readControls();
+      const nextView = readViewControls();
       requestedPreferences = next;
+      requestedView = nextView;
       customPrice?.setAttribute("aria-invalid", "false");
       setStatus("表示条件を反映しています。反映が終わるまでCSV出力と会員設定の保存はできません。");
       if (await applyPreferences({ persist: true }) && editRevision === editAtChange) setStatus(storageFailed
-        ? "表示に適用しました。この端末では保存できません。会員設定の保存をお試しください。"
-        : "表示に適用しました。会員設定に残すには「設定を保存」を押してください。");
+        ? "表示に適用しました。この端末では補助保存できません。株価上限・確定日は会員設定へ保存できます。"
+        : "表示に適用しました。株価上限・確定日を会員設定に残すには「設定を保存」を押してください。検出年・株数方式はこの端末の表示設定です。");
     } catch (error) {
       // An invalid newer edit must also cancel an older decompression request.
       renderRevision += 1;
       requestedPreferences = { ...appliedPreferences };
+      requestedView = { ...appliedView };
       preferencesPending = false;
       syncActionAvailability();
       customPrice?.setAttribute("aria-invalid", "true");
@@ -416,12 +468,32 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) requestedPreferences = CloudPreferences.normalize(JSON.parse(saved));
+      const savedView = localStorage.getItem(viewStorageKey);
+      if (savedView) {
+        // A free page may expose fewer years than the paid page. Never reuse an
+        // unavailable scope, or invent hidden source-year metadata for it.
+        try { requestedView = CloudPreferences.normalizeView(JSON.parse(savedView), payload); }
+        catch (_error) { requestedView = { ...CloudPreferences.DEFAULT_VIEW }; }
+      }
     } catch (_error) { storageFailed = true; }
     syncControls();
     applyPreferences();
     settings.addEventListener("change", updateFromControls);
     endpoint.addEventListener("change", updateFromControls);
+    yearScope?.addEventListener("change", updateFromControls);
+    allocation?.addEventListener("change", updateFromControls);
     customPrice?.addEventListener("input", updateFromControls);
+    researchReset?.addEventListener("click", () => {
+      requestedPreferences = { ...CloudPreferences.DEFAULT };
+      requestedView = { ...CloudPreferences.DEFAULT_VIEW };
+      syncControls();
+      if (symbol) symbol.value = "";
+      if (selector) selector.value = "";
+      if (dateFrom) dateFrom.value = "";
+      if (dateTo) dateTo.value = "";
+      filter({ resetLimit: true });
+      return updateFromControls();
+    });
     saveButton?.addEventListener("click", async () => {
       if (preferencesPending || saving) return;
       let selected;
@@ -493,12 +565,15 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   document.getElementById("cloud-export-csv")?.addEventListener("click", () => {
     if (preferencesPending || !currentVariant) return;
     const preferences = appliedPreferences;
-    const records = [...(currentVariant.metrics || []), ...(currentVariant.monthlyMetrics || [])].map((row) => ({
+    const metrics = CloudPreferences.selectCsvMetrics(
+      [...(currentVariant.metrics || []), ...(currentVariant.monthlyMetrics || [])], payload?.page, appliedView.allocation);
+    const records = metrics.map((row) => ({
       exit_endpoint: preferences.exitKey,
       detection_actual_close_cap_yen: preferences.priceCapYen === null ? "上限なし" : preferences.priceCapYen,
+      ...(yearScope ? { signal_year_scope: appliedView.yearScope, allocation: appliedView.allocation } : {}),
       ...row,
     }));
-    const columns = records.length ? Object.keys(records[0]) : ["exit_endpoint", "detection_actual_close_cap_yen", "period", "n"];
+    const columns = records.length ? Object.keys(records[0]) : ["exit_endpoint", "detection_actual_close_cap_yen", ...(yearScope ? ["signal_year_scope", "allocation"] : []), "period", "n"];
     downloadCSV(CloudPreferences.csv(records, columns), `Cloud_集計_${preferences.exitKey}.csv`);
   });
   document.getElementById("cloud-history-export-csv")?.addEventListener("click", () => {

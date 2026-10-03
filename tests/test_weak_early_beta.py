@@ -396,6 +396,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 report_path=root / "weak_early_beta_latest.html",
                 metrics_path=root / "metrics.csv",
                 monthly_metrics_path=root / "monthly.csv",
+                apply_reviewed_prices=False,  # Modified canonical test fixture; never adopt private receipts.
             )
             # The frozen canonical signal_close is not a verified nominal
             # close. Initial capped CSV/view must exclude its unknown prices.
@@ -467,12 +468,15 @@ class WeakEarlyBetaTests(unittest.TestCase):
         document = output
         output = report_variant_html(output)
         dates = pd.to_datetime(self.ledger["signal_date"])
-        expected = f"{dates.min():%Y-%m-%d}<br>〜2026-09-19"
+        expected = f"{dates.min():%Y-%m-%d}〜2026-09-19"
         self.assertIn(expected, output)
         self.assertIn(f"最終検出: {dates.max():%Y-%m-%d}", output)
         self.assertIn("トータルの資産推移", output)
-        self.assertIn('<section class="panel" id="annual-pl">', output)
-        self.assertIn('<section class="panel" id="payoff-structure">', output)
+        self.assertIn('id="annual-pl"', output)
+        self.assertIn('id="payoff-structure"', output)
+        self.assertIn("株数方式の比較", output)
+        self.assertIn("累積確定損益", output)
+        self.assertIn("必要資金・損失・集中度", output)
         self.assertIn("50.32%", output)
         self.assertIn("+24.3%", output)
         self.assertIn("-12.4%", output)

@@ -53,6 +53,17 @@ ENDPOINT_TEXT_COLUMNS = [
 ]
 
 
+def endpoint_csv_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Keep receipt arithmetic at round-trip precision without changing D5 formatting."""
+    result = frame.copy()
+    for column in ENDPOINT_NUMBER_COLUMNS:
+        if column in result:
+            result[column] = result[column].map(
+                lambda value: "" if pd.isna(value) or value == "" else format(float(value), ".17g")
+            )
+    return result
+
+
 def _positive(value: Any) -> bool:
     try:
         return not isinstance(value, bool) and math.isfinite(float(value)) and float(value) > 0
@@ -109,19 +120,28 @@ def _price_verified(row: Mapping[str, Any], prefix: str, price_column: str) -> b
             and evidence.get("field") == ("actual_close" if prefix == "signal_actual_close" else "actual_open")
             and evidence.get("source_sha256") == row.get(f"{prefix}_source_sha256")
             and evidence.get("price_basis") == PRICE_BASIS_VERSION
-            and evidence.get("source_price_basis") == SOURCE_PRICE_BASIS
-            and evidence.get("corporate_actions_version") == ACTION_VERSION
-            and evidence.get("corporate_actions_source") == ACTION_SOURCE
             and evidence.get("source_usable") is True
             and (field != "actual_open" or _holding_evidence_verified(evidence, signal, endpoint_date))
             and pd.Timestamp(evidence["basis_asof"]) >= endpoint_date
             and pd.Timestamp(evidence["basis_asof"]).date() <= observed.tz_convert("Asia/Tokyo").date()
-            and _positive(evidence.get("adjusted_price")) and _positive(evidence.get("split_factor"))
-            and math.isclose(float(evidence["adjusted_price"]) * float(evidence["split_factor"]), float(row[price_column]), rel_tol=1e-9)
+            and _price_source_verified(evidence, row, price_column)
             and math.isclose(float(evidence["actual_price"]), float(row[price_column]), rel_tol=1e-9)
         )
     except (TypeError, ValueError, KeyError, AttributeError):
         return False
+
+
+def _price_source_verified(evidence: Mapping[str, Any], row: Mapping[str, Any], price_column: str) -> bool:
+    if evidence.get("provenance_kind") == "REVIEWED_RESEARCH_NOMINAL_V1":
+        from .research_price_receipts import research_price_evidence_verified
+        return research_price_evidence_verified(evidence, row)
+    return bool(
+        evidence.get("source_price_basis") == SOURCE_PRICE_BASIS
+        and evidence.get("corporate_actions_version") == ACTION_VERSION
+        and evidence.get("corporate_actions_source") == ACTION_SOURCE
+        and _positive(evidence.get("adjusted_price")) and _positive(evidence.get("split_factor"))
+        and math.isclose(float(evidence["adjusted_price"]) * float(evidence["split_factor"]), float(row[price_column]), rel_tol=1e-9)
+    )
 
 
 def signal_actual_close_verified(row: Mapping[str, Any]) -> bool:
@@ -179,18 +199,26 @@ def _sixth_economics_source_verified(row: Mapping[str, Any]) -> bool:
         source = str(row["sixth_price_basis_source_sha256"])
         current = {**dict(row), **evidence["exit_receipt"]}
         entry = evidence["entry"]
+        exit_evidence = json.loads(current["sixth_xtks_exit_provenance_json"])
+        if evidence.get("version") == "REVIEWED_RESEARCH_NOMINAL_V1":
+            from .research_price_receipts import research_entry_evidence_verified
+            entry_verified = research_entry_evidence_verified(entry, exit_evidence, row)
+        else:
+            entry_verified = bool(
+                evidence.get("version") == "CLOUD_D6_ECONOMIC_SOURCE_V1"
+                and _positive(entry["actual_open"]) and _positive(entry["adjusted_open"]) and _positive(entry["split_factor"])
+                and math.isclose(float(entry["actual_open"]), float(row["sixth_entry_open"]), rel_tol=1e-9)
+                and math.isclose(float(entry["adjusted_open"]) * float(entry["split_factor"]), float(row["sixth_entry_open"]), rel_tol=1e-9)
+            )
         return bool(
-            evidence.get("version") == "CLOUD_D6_ECONOMIC_SOURCE_V1"
-            and evidence.get("source_sha256") == source
+            evidence.get("source_sha256") == source
             and current["sixth_xtks_exit_source_sha256"] == source
             and sixth_endpoint_verified(current)
             and not _d6_receipt_conflict(row, current)
             and entry["session"] == f"{pd.Timestamp(row['sixth_entry_date']):%Y-%m-%d}"
             and entry["basis_asof"] == row["sixth_price_basis_date"]
             and entry["basis_asof"] == json.loads(current["sixth_xtks_exit_provenance_json"])["basis_asof"]
-            and _positive(entry["actual_open"]) and _positive(entry["adjusted_open"]) and _positive(entry["split_factor"])
-            and math.isclose(float(entry["actual_open"]), float(row["sixth_entry_open"]), rel_tol=1e-9)
-            and math.isclose(float(entry["adjusted_open"]) * float(entry["split_factor"]), float(row["sixth_entry_open"]), rel_tol=1e-9)
+            and entry_verified
             and evidence["holding_actions"] == json.loads(str(row["sixth_applied_actions_json"]))
             and evidence["holding_actions"] == json.loads(current["sixth_xtks_exit_provenance_json"])["holding_actions"]
         )

@@ -4,3 +4,6 @@ screener.js              merge=ours
 current_logic.json      merge=ours
 current_logic_sniper.json merge=ours
 index.js                merge=ours
+
+# SHA-pinned private Cloud research receipts must retain their exact bytes.
+weak_early_beta/state/reviewed_endpoint_receipts.v1.json -text

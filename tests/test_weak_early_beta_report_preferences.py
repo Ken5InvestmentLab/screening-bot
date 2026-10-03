@@ -104,6 +104,36 @@ class ReportPreferenceTests(unittest.TestCase):
         self.assertTrue(pd.isna(view.iloc[0].gross_return))
         self.assertTrue(pd.isna(view.iloc[0].one_hundred_shares_pl_yen))
 
+    def test_d6_view_maps_selected_holding_actions_and_proceeds(self):
+        for ratio in (2, .5):
+            with self.subTest(ratio=ratio):
+                source = actual_trade(split=ratio)
+                original = source.copy(deep=True)
+                view = select_report_view(source, 1000, "d6_open")
+                row = view.iloc[0]
+                self.assertEqual(row.exit_shares, 100 * ratio)
+                self.assertAlmostEqual(row.exit_proceeds_yen, 100500)
+                self.assertEqual(row.holding_action_factor, ratio)
+                self.assertEqual(json.loads(row.applied_actions_json), [{"effective_date": "2026-09-09", "ratio": ratio}])
+                self.assertEqual(original.iloc[0].exit_shares, 100)
+                self.assertEqual(original.iloc[0].holding_action_factor, 1)
+                pd.testing.assert_frame_equal(source, original)
+
+    def test_d6_unverified_or_missing_holding_economics_never_reuses_d5(self):
+        source = actual_trade(split=2)
+        for missing in (False, True):
+            with self.subTest(missing=missing):
+                candidate = source.copy(deep=True)
+                if missing:
+                    candidate = candidate.drop(columns=["sixth_exit_shares", "sixth_exit_proceeds_yen", "sixth_holding_action_factor", "sixth_applied_actions_json"])
+                else:
+                    candidate["sixth_economics_status"] = "review_required"
+                view = select_report_view(candidate, 1000, "d6_open")
+                for column in ("exit_shares", "exit_proceeds_yen", "holding_action_factor"):
+                    self.assertTrue(pd.isna(view.iloc[0][column]), column)
+                self.assertEqual(view.iloc[0].applied_actions_json, "")
+                self.assertTrue(pd.notna(source.iloc[0].exit_proceeds_yen))
+
     def test_free_all_pages_omit_d5_mature_identity_until_verified_d6(self):
         pending = actual_trade(complete=False)
         for renderer in (
@@ -122,8 +152,8 @@ class ReportPreferenceTests(unittest.TestCase):
     def test_free_population_excludes_all_pending_values_dates_and_thresholds(self):
         released = actual_trade("R001", 222.22, signal_date="2026-07-01")
         pending = actual_trade("Q9Z9", 876.54, complete=False)
-        pending["gross_return"] = .13791
         pending["one_hundred_shares_pl_yen"] = 12088.56
+        pending["gross_return"] = pending["one_hundred_shares_pl_yen"] / pending["entry_cost_yen"]
         pending["company_name"] = "PENDING_PRIVATE_SENTINEL"
         mixed = pd.concat([released, pending], ignore_index=True)
         before = mixed.copy(deep=True)
@@ -146,7 +176,9 @@ class ReportPreferenceTests(unittest.TestCase):
             for secret in ("Q9Z9", "PENDING_PRIVATE_SENTINEL", "876.54", "12088.56", "12,089", "2026-09-01", "2026-09-02", "2026-09-08"):
                 self.assertNotIn(secret, output)
                 self.assertNotIn(secret, decoded)
-            totals = [r for r in data["variants"]["d5_close:all"]["metrics"] if r["selector_id"] == "volr20_low" and r["period"] == "2026-2026"]
+            values = data["variants"]["d5_close:all"]["metrics"]
+            total_id = "volr20_low" if any(r["selector_id"] == "volr20_low" for r in values) else COMBINED_UNIQUE_ID
+            totals = [r for r in values if r["selector_id"] == total_id and r["period"] == "2026-2026"]
             self.assertEqual(totals[0]["n"], 1)
         pd.testing.assert_frame_equal(mixed, before)
 
@@ -202,9 +234,13 @@ class ReportPreferenceTests(unittest.TestCase):
             for suffix, cap in (("1000", 1000), ("1500", 1500), ("all", None)):
                 variant = data["variants"][f"{endpoint}:{suffix}"]
                 view = select_report_view(frame, cap, endpoint)
-                expected = json.loads(build_metrics(view, self.generated.tz_localize(None)).to_json(orient="records", double_precision=15))
+                expected_frame = build_metrics(view, self.generated.tz_localize(None))
+                expected_frame = expected_frame.loc[expected_frame.selector_id.isin([COMBINED_STACKED_ID, COMBINED_UNIQUE_ID])]
+                expected = json.loads(expected_frame.to_json(orient="records", double_precision=15))
                 self.assertEqual(variant["metrics"], expected)
-                monthly = json.loads(build_monthly_metrics(view, self.generated.tz_localize(None)).to_json(orient="records", double_precision=15))
+                monthly_frame = build_monthly_metrics(view, self.generated.tz_localize(None))
+                monthly_frame = monthly_frame.loc[monthly_frame.selector_id.isin([COMBINED_STACKED_ID, COMBINED_UNIQUE_ID])]
+                monthly = json.loads(monthly_frame.to_json(orient="records", double_precision=15))
                 self.assertEqual(variant["monthlyMetrics"], monthly)
                 totals = {row["selector_id"]: row for row in expected if row["period"] == "2026-2026"}
                 for identity in (COMBINED_STACKED_ID, COMBINED_UNIQUE_ID):
@@ -222,7 +258,7 @@ class ReportPreferenceTests(unittest.TestCase):
         self.assertEqual(data["variants"]["d5_close:empty"]["metrics"], [])
         totals = [r for r in data["variants"]["d5_close:all"]["metrics"] if r["period"] == "2023-2026" and r["selector_id"] == COMBINED_STACKED_ID]
         self.assertEqual(totals[0]["n"], 946)
-        self.assertIn("2026年の過去再構成分も", output)
+        self.assertIn("2026年分も結果既知の期間", output)
 
     def test_verified_history_has_only_twenty_initial_rows_without_javascript(self):
         frame = pd.concat([actual_trade(f"X{i:03d}") for i in range(25)], ignore_index=True)

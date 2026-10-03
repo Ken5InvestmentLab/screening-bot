@@ -106,4 +106,15 @@ def select_report_view(
         result["entry_cost_yen"] = pd.to_numeric(result["sixth_entry_cost_yen"], errors="coerce").where(economic)
     if "sixth_entry_shares" in result:
         result["entry_shares"] = pd.to_numeric(result["sixth_entry_shares"], errors="coerce").where(economic)
+    # Do not leave D5 holding quantities/receipts attached to a D6 endpoint.
+    # A split or consolidation may occur between those sessions. Missing or
+    # quarantined D6 economics must remain unavailable, never inherit D5.
+    for column in ("exit_shares", "exit_proceeds_yen", "holding_action_factor"):
+        result[column] = pd.to_numeric(
+            result.get("sixth_" + column, pd.Series(index=result.index, dtype=float)),
+            errors="coerce",
+        ).where(economic)
+    result["applied_actions_json"] = result.get(
+        "sixth_applied_actions_json", pd.Series("", index=result.index, dtype=object)
+    ).where(economic, "")
     return result

@@ -12,7 +12,7 @@ import pandas as pd
 from .config import SELECTOR_ORDER, selector_info
 from .endpoint_receipts import (
     ENDPOINT_COLUMNS, ENDPOINT_DATE_COLUMNS, ENDPOINT_NUMBER_COLUMNS,
-    ENDPOINT_TEXT_COLUMNS, build_endpoint_receipts, preserve_verified_endpoints,
+    ENDPOINT_TEXT_COLUMNS, build_endpoint_receipts, preserve_verified_endpoints, endpoint_csv_frame,
 )
 from .trade_basis import (
     LEGACY_PRICE_BASIS_VERSION, TRADE_BASIS_COLUMNS, preserve_completed_economics,
@@ -83,7 +83,7 @@ def write_ledger(frame: pd.DataFrame, path: Path = DEFAULT_LEDGER) -> None:
     ordered = ordered.sort_values(
         ["signal_date", "selector_id", "symbol"], kind="mergesort"
     ).reset_index(drop=True)
-    ordered.to_csv(
+    endpoint_csv_frame(ordered).to_csv(
         path, index=False, encoding="utf-8", lineterminator="\n",
         date_format="%Y-%m-%d", float_format="%.12g",
     )

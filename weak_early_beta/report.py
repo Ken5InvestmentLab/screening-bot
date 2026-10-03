@@ -24,15 +24,16 @@ from .config import (
 )
 from .entry_feasibility import annotate_entry_feasibility, performance_eligible
 from .impact import normalize_material_impact
+from .analytics import build_analytics, build_presentation_metrics, validated_unique_detections as combined_detections
 from .endpoint_receipts import signal_actual_close_verified, sixth_endpoint_verified, sixth_economics_verified
 from .report_preferences import (
     DEFAULT_PRICE_CAP, ENDPOINT_LABELS, select_report_view, visible_history, released_history,
     verified_signal_prices,
 )
+from .reviewed_endpoint_overlay import load_reviewed_endpoint_overlay, apply_reviewed_endpoint_overlay
 from .metrics import (
     build_metrics,
     build_monthly_metrics,
-    combined_detections,
     coverage_years,
     required_capital,
 )
@@ -532,7 +533,13 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         d6_price = _price(first.get("sixth_xtks_exit_open")) if d6_verified else ""
         d6_status = "取得・確定済み" if d6_verified else "未取得・未確定"
         d6_stamp = str(first.get("sixth_xtks_exit_observed_at", "") or "") if d6_verified else ""
-        d6_display = "会員限定" if is_masked else f"{d6_day}<small>{d6_price}</small><small>{d6_status}</small><small>{html.escape(d6_stamp)}</small>"
+        try:
+            d6_provenance = json.loads(str(first.get("sixth_xtks_exit_provenance_json", "{}")))
+        except (TypeError, ValueError):
+            d6_provenance = {}
+        stamp_label = "検証資料の取込時刻" if isinstance(d6_provenance, dict) and d6_provenance.get("provenance_kind") == "REVIEWED_RESEARCH_NOMINAL_V1" else "実価格の記録時刻"
+        stamp_html = f"<small>{stamp_label}: {html.escape(d6_stamp)}</small>" if d6_stamp else ""
+        d6_display = "会員限定" if is_masked else f"{d6_day}<small>{d6_price}</small><small>{d6_status}</small>{stamp_html}"
         signal_display = "会員限定" if is_masked else (_price(signal_price) if signal_verified else "未検証")
         sixth_return = pd.to_numeric(first.get("sixth_gross_return"), errors="coerce")
         sixth_cash = pd.to_numeric(first.get("sixth_one_hundred_shares_pl_yen"), errors="coerce")
@@ -651,6 +658,25 @@ dialog.fundamental-detail::backdrop{background:rgba(12,18,28,.62);backdrop-filte
 :root[data-theme="dark"] .discord-embed.impact-negative{background:#351b20;border-left-color:#ff8a7c}
 :root[data-theme="dark"] .discord-embed a{color:#9cc7ff}
 :root[data-theme="dark"] .discord-meta{color:var(--muted)}
+.cloud-research-page{font-variant-numeric:tabular-nums;padding-bottom:20px}
+.cloud-research-page h1{font-size:24px;letter-spacing:-.5px;margin:0}
+.research-heading{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:8px 0 18px}.research-heading>span{color:var(--muted);font-size:12px}
+.research-conditions{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px;color:var(--muted);font-size:13px}.research-conditions>span{padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel-solid)}
+.research-notice{padding:12px 16px;margin:0 0 20px;border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 7%,var(--panel-solid));font-size:13px;line-height:1.8;border-radius:0 8px 8px 0}
+.research-card{background:var(--panel-solid);box-shadow:0 4px 18px color-mix(in srgb,var(--blue) 5%,transparent);padding:24px}.research-card h2{font-size:17px;font-weight:650;margin:0 0 24px}
+.research-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}.research-strategy+.research-strategy{border-left:1px solid var(--line);padding-left:32px}.research-strategy h3{font-size:17px;font-weight:650;margin:0;display:flex;align-items:center;gap:9px}
+.research-swatch{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--blue);flex:none}.research-swatch.stacked{background:var(--violet)}
+.research-profit{margin:22px 0;display:grid;gap:4px}.research-profit>span{font-size:12px;color:var(--muted)}.research-profit strong{font-size:clamp(25px,3.2vw,38px);line-height:1.2;letter-spacing:-1px;font-weight:650}.research-profit .positive{color:var(--good)}.research-profit .negative{color:#cc4357}:root[data-theme="dark"] .research-profit .negative{color:#ff98a7}
+.research-stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 16px;margin:0}.research-stat-grid dt{font-size:12px;color:var(--muted)}.research-stat-grid dd{font-size:21px;font-weight:600;margin:4px 0 0}
+.research-footnote{font-size:12px;color:var(--muted);line-height:1.8;margin:18px 0 0}.research-legend{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-bottom:12px}.research-legend>span{display:flex;align-items:center;gap:7px}
+.research-chart{width:100%;height:auto;display:block;overflow:visible}.research-line{fill:none;stroke:var(--series);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.research-bar,.research-point{fill:var(--series);outline-offset:4px}.research-point{stroke:var(--panel-solid);stroke-width:1.5}.research-zero{stroke:var(--muted);stroke-width:1;opacity:.65}.research-chart .axis-label{font-size:12px}
+.research-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px;margin-bottom:22px}.research-grid>.panel{margin-bottom:0;min-width:0}.research-grid .research-chart{min-height:210px}
+.research-normalization{display:grid;gap:20px}.research-normalization>div{display:flex;justify-content:space-between;gap:18px;border-bottom:1px solid var(--line);padding-bottom:14px;font-size:13px}.research-normalization strong{white-space:nowrap;font-weight:650}
+.research-table table{min-width:560px;font-size:13px}.research-table th,.research-table td{padding:13px 14px}.research-table tbody th{font-weight:500;text-align:left}.research-table tbody td{text-align:right}.research-table caption{text-align:left;color:var(--muted);font-size:12px;padding:10px}.research-table tbody tr:last-child>*{border-bottom:0}
+.research-data{margin-top:18px}.research-data>summary{cursor:pointer;padding:12px 0;min-height:44px;color:var(--muted);font-size:12px;font-weight:600}.research-data[open]>summary{margin-bottom:10px}.research-empty{display:grid;place-items:center;min-height:160px;color:var(--muted);font-size:13px}
+body[data-page="analytics"]{background:var(--bg)}body[data-page="analytics"] main{max-width:1280px;padding-top:22px}body[data-page="analytics"] .cloud-settings h2{font-size:16px;margin-bottom:12px}body[data-page="analytics"] .cloud-settings{padding:18px 22px;box-shadow:0 4px 18px color-mix(in srgb,var(--blue) 5%,transparent)}body[data-page="analytics"] .cloud-settings select{font-size:13px}body[data-page="analytics"] .cloud-settings p{font-size:12px;margin:8px 0}body[data-page="analytics"] .cloud-provenance{padding:0;border:0;background:transparent;box-shadow:none;backdrop-filter:none}body[data-page="analytics"] .cloud-provenance h2{font-size:13px;margin-bottom:8px}body[data-page="analytics"] .cloud-provenance p{font-size:12px;line-height:1.7;margin:6px 0}
+@media(max-width:800px){.research-grid{grid-template-columns:1fr}.research-grid .research-chart{min-height:0}}
+@media(max-width:650px){.research-pair{grid-template-columns:1fr;gap:24px}.research-strategy+.research-strategy{border-left:0;border-top:1px solid var(--line);padding-left:0;padding-top:24px}.research-profit strong{font-size:32px}.research-heading{display:block}.research-heading>span{display:block;margin-top:6px}.research-conditions{gap:6px;font-size:11px}.research-conditions>span{padding:6px 8px}.research-card{padding:18px}.research-chart{min-height:180px}.research-normalization>div{gap:12px}.research-table table{min-width:520px}.research-notice{font-size:12px}.research-card h2{margin-bottom:18px}body[data-page="analytics"] .cloud-settings{padding:16px}.research-chart-line .axis-label{font-size:25px}.research-chart-bar .axis-label{font-size:18px}}
 """
 
 
@@ -696,8 +722,8 @@ def _page_shell(title: str, current: str, body: str) -> str:
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-interactions.js?v=20261004-2" defer></script></head>
-<body><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
+<script src="./weak-early-beta-interactions.js?v=20261004-3" defer></script></head>
+<body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
     # corresponding existing report. A failed generation must not be deployed.
@@ -992,6 +1018,88 @@ def _render_dashboard_body(
     return body
 
 
+def _research_number(value, suffix: str = "", *, decimals: int = 0) -> str:
+    if value is None or pd.isna(value):
+        return "—"
+    return f"{float(value):,.{decimals}f}{suffix}"
+
+
+def _research_table(headers: list[str], rows: list[list[str]], *, caption: str = "") -> str:
+    head = "".join(f"<th scope=\"col\">{html.escape(label)}</th>" for label in headers)
+    body = "".join("<tr>" + "".join(f'<{"th scope=\"row\"" if index == 0 else "td"}>{cell}</{"th" if index == 0 else "td"}>' for index, cell in enumerate(row)) + "</tr>" for row in rows)
+    if not rows:
+        body = f'<tr><td colspan="{len(headers)}">この条件で確定した取引はありません。</td></tr>'
+    return f'<div class="table-wrap research-table"><table>{f"<caption>{html.escape(caption)}</caption>" if caption else ""}<thead><tr>{head}</tr></thead><tbody>{body}</tbody></table></div>'
+
+
+def _research_legend() -> str:
+    return '<div class="research-legend"><span data-cloud-allocation="unique"><i class="research-swatch"></i>一律100株</span><span data-cloud-allocation="stacked"><i class="research-swatch stacked"></i>条件数×100株</span></div>'
+
+
+def _research_data_table(headers: list[str], rows: list[list[str]]) -> str:
+    return '<details class="research-data"><summary>集計データを見る</summary>' + _research_table(headers, rows) + '</details>'
+
+
+def _research_plot(rows: list[dict], *, category: str, fields: tuple[str, ...], labels: tuple[str, ...], kind: str, unit: str, title: str) -> str:
+    """Render aggregate-only SVG plus a keyboard-accessible data table."""
+    if not rows:
+        return '<p class="research-empty">この条件で確定した取引はありません。</p>'
+    width, height, left, right, top, bottom = (1000 if kind == "line" else 580), 300, 80, 28, 24, 50
+    vals = [float(row[field]) for row in rows for field in fields if row.get(field) is not None]
+    low, high = min([0.0, *vals]), max([0.0, *vals])
+    span = high - low or 1.0
+    low, high = low - span * .07, high + span * .12
+    plot_w, plot_h = width - left - right, height - top - bottom
+    def y(value):
+        return top + (high - float(value)) / (high - low) * plot_h
+    def axis(value):
+        return f"{value / 10000:,.1f}万" if unit == "円" and abs(value) >= 10000 else f"{value:,.0f}"
+    parts = [f'<svg class="research-chart research-chart-{kind}" viewBox="0 0 {width} {height}" role="img" aria-label="{html.escape(title)}"><title>{html.escape(title)}</title>']
+    for index in range(5):
+        value = low + (high - low) * index / 4
+        ypos = y(value)
+        parts.append(f'<line class="grid-line" x1="{left}" y1="{ypos:.1f}" x2="{width-right}" y2="{ypos:.1f}"/><text class="axis-label" x="{left-12}" y="{ypos+4:.1f}" text-anchor="end">{axis(value)}</text>')
+    parts.append(f'<line class="research-zero" x1="{left}" y1="{y(0):.1f}" x2="{width-right}" y2="{y(0):.1f}"/><text class="axis-label" x="{left-12}" y="13" text-anchor="end">{unit}</text>')
+    if kind == "line":
+        dates = [pd.Timestamp(row[category]) for row in rows]
+        days = max(1, (dates[-1] - dates[0]).days)
+        xs = [left + (date - dates[0]).days / days * plot_w for date in dates]
+    else:
+        xs = [left + (index + .5) / len(rows) * plot_w for index in range(len(rows))]
+    for field_index, field in enumerate(fields):
+        color = "var(--blue)" if field_index == 0 else "var(--violet)"
+        allocation = f' data-cloud-allocation="{field}"' if field in {"unique", "stacked"} else ""
+        parts.append(f'<g{allocation} style="--series:{color}">')
+        if kind == "line":
+            points = " ".join(f'{x:.1f},{y(row[field]):.1f}' for x, row in zip(xs, rows))
+            parts.append(f'<polyline class="research-line" points="{points}"/>')
+        for index, (xpos, row) in enumerate(zip(xs, rows)):
+            value = row.get(field)
+            if value is None:
+                continue
+            tooltip = html.escape(f'{row[category]} · {labels[field_index]}: {_research_number(value, unit, decimals=2 if unit == "%" else 0)}')
+            if kind == "line":
+                # Sparse focus targets keep long historical curves compact;
+                # the complete aggregate series is available in the table.
+                if index not in {0, len(rows)-1} and index % max(1, len(rows)//10):
+                    continue
+                parts.append(f'<circle class="research-point" cx="{xpos:.1f}" cy="{y(value):.1f}" r="3.5" tabindex="0"><title>{tooltip}</title></circle>')
+            else:
+                bar_width = min(54, plot_w / len(rows) * .65 / len(fields))
+                x = xpos + (field_index - len(fields)/2) * bar_width
+                parts.append(f'<rect class="research-bar" x="{x:.1f}" y="{min(y(value), y(0)):.1f}" width="{bar_width-3:.1f}" height="{max(1,abs(y(value)-y(0))):.1f}" rx="3" tabindex="0"><title>{tooltip}</title></rect>')
+        parts.append('</g>')
+    label_indexes = sorted({0, len(rows)-1, *(round(index*(len(rows)-1)/4) for index in range(5))}) if kind == "line" else range(len(rows))
+    for index in label_indexes:
+        label = str(rows[index][category])
+        if kind == "line":
+            label = label[:7]
+        parts.append(f'<text class="axis-label" x="{xs[index]:.1f}" y="{height-18}" text-anchor="middle">{html.escape(label)}</text>')
+    parts.append('</svg>')
+    data_rows = [[html.escape(str(row[category])), *[_research_number(row.get(field), unit, decimals=2 if unit == "%" else 0) for field in fields]] for row in rows]
+    return ''.join(parts) + _research_data_table(["確定日" if kind == "line" else "検出年" if category == "year" else "条件数", *labels], data_rows)
+
+
 def _render_analytics_body(
     ledger: pd.DataFrame,
     metrics: pd.DataFrame,
@@ -999,26 +1107,61 @@ def _render_analytics_body(
     monthly_metrics: pd.DataFrame | None = None,
 ) -> str:
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
-    monthly_metrics = monthly_metrics if monthly_metrics is not None else pd.DataFrame()
-    total_period = max(metrics["period"].astype(str), key=len) if not metrics.empty else "—"
-    total = metrics[metrics["period"].eq(total_period)] if not metrics.empty else pd.DataFrame()
-    selector_total = total[total["selector_id"].isin(SELECTOR_ORDER)] if not total.empty else total
-    best = selector_total.sort_values("cash_pl_100_yen", ascending=False).iloc[0] if not selector_total.empty else None
+    data = build_analytics(ledger, as_of=generated.tz_localize(None))
+    counts, strategies = data["counts"], data["strategies"]
     unique_ledger = combined_detections(ledger)
-    stacked_monthly = monthly_metrics[monthly_metrics["selector_id"].eq(COMBINED_STACKED_ID)] if not monthly_metrics.empty else monthly_metrics
-    unique_monthly = monthly_metrics[monthly_metrics["selector_id"].eq(COMBINED_UNIQUE_ID)] if not monthly_metrics.empty else monthly_metrics
-    table_head = f'<thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead>'
-    monthly_head = f'<thead><tr><th>月</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead>'
-    body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- アナリティクス</h1><p class="lead">5つのモードを合わせた成績と資産推移です。検出銘柄はダッシュボード、各モードの内訳は専用ページで確認できます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger, generated)}</b><small>最終検出: {_latest_signal_label(ledger)}</small></div><div class="kpi"><small>100株損益 首位</small><b>{html.escape(str(best['selector_name'])) if best is not None else '—'}</b></div></div></aside></section>
-<section class="panel" id="growth"><h2>トータルの資産推移</h2><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p><div class="chart-grid">{_equity_chart(ledger, 'モード別積み上げ', 'stacked', STACKED_EXPLANATION, generated.tz_localize(None))}{_equity_chart(unique_ledger, '銘柄均等', 'unique', UNIQUE_EXPLANATION, generated.tz_localize(None))}</div></section>
-<div class="insight-grid"><section class="panel" id="payoff-structure">{_payoff_structure(ledger)}</section><section class="panel" id="annual-pl"><h2>年別100株損益</h2><p class="note">モード別積み上げの集計です。同じ日・同じ銘柄が複数モードに該当した場合は、モードごとに100株の別取引として数えます。5営業日後の終値が確定した取引を検出年ごとに合計し、日次レポート更新時に数値も更新します。</p>{_annual_pl_chart(ledger, metrics, generated)}</section></div>
-<section class="panel" id="stacked-performance"><h2>Cloud全体の成績 — モード別積み上げ</h2><p class="note">{html.escape(STACKED_EXPLANATION)}</p><div class="table-wrap"><table data-paginated-table>{table_head}<tbody>{_combined_rows(metrics, COMBINED_STACKED_ID)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table>{monthly_head}<tbody>{_monthly_rows(stacked_monthly, show_mode=False)}</tbody></table></div>{_table_pagination()}</details></section>
-<section class="panel" id="unique-performance"><h2>Cloud全体の成績 — 銘柄均等</h2><p class="note">{html.escape(UNIQUE_EXPLANATION)}</p><div class="table-wrap"><table data-paginated-table>{table_head}<tbody>{_combined_rows(metrics, COMBINED_UNIQUE_ID)}</tbody></table></div>{_table_pagination()}<details class="monthly-details"><summary>月別の詳しい成績を見る</summary><div class="table-wrap"><table data-paginated-table>{monthly_head}<tbody>{_monthly_rows(unique_monthly, show_mode=False)}</tbody></table></div>{_table_pagination()}</details></section>
-<section class="panel"><h2>モード別の全期間比較</h2><p class="note">順位は100株ずつ売買した累計損益額順です。</p><div class="table-wrap"><table><thead><tr><th>順位</th><th>モード</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th><th>Top3除外平均</th></tr></thead><tbody>{_overall_rows(metrics)}</tbody></table></div></section>
-{_mode_pages_section(generated)}'''
-    return body
+    cards = []
+    for key, label, explanation in [("unique", "一律100株", UNIQUE_EXPLANATION), ("stacked", "条件数×100株", STACKED_EXPLANATION)]:
+        values = strategies[key]
+        stats = [("確定した検出", _research_number(values["resolved_signals"], "件")), ("100株単位の取引", _research_number(values["resolved_lots"], "口")), ("検出単位の勝率", _pct(values["signal_win_pct"])), ("数量で加重した勝率", _pct(values["lot_win_pct"])), ("検出単位の平均騰落率", _pct(values["signal_mean_pct"], True)), ("検出単位の中央値", _pct(values["signal_median_pct"], True))]
+        cells = ''.join(f'<div><dt>{name}</dt><dd>{value}</dd></div>' for name, value in stats)
+        tone = "positive" if values["cash_pl_yen"] >= 0 else "negative"
+        cards.append(f'<article class="research-strategy"><h3><i class="research-swatch {key}"></i>{label}</h3><div class="research-profit"><span>累積確定損益</span><strong class="{tone}">{_yen(values["cash_pl_yen"])}</strong></div><dl class="research-stat-grid">{cells}</dl><p class="research-footnote">{html.escape(explanation)}</p></article>')
+    risk_definitions = [
+        ("最低初期資金（事後計算）", "minimum_initial_cash_yen", "円"),
+        ("最大同時保有の取得額", "peak_open_principal_yen", "円"),
+        ("確定損益の最大ドローダウン", "max_drawdown_yen", "円"),
+        ("最も大きい1検出の損失", "worst_signal_cash_pl_yen", "円"),
+        ("最も低い騰落率", "worst_return_pct", "%"),
+        ("最大同時保有100株口数", "max_concurrent_lots", "口"),
+        ("最大同時保有銘柄数", "max_concurrent_symbols", "銘柄"),
+        ("利益上位3検出を除く損益", "profit_excluding_best3_signals_yen", "円"),
+    ]
+    risk_rows = [[label, *[_research_number(strategies[key][field], unit, decimals=2 if unit == "%" else 0) for key in ["unique", "stacked"]]] for label, field, unit in risk_definitions]
+    normalization = data["normalization"]
+    normal_rows = [("一律100株の損益", strategies["unique"]["cash_pl_yen"]), ("条件数×100株の損益", strategies["stacked"]["cash_pl_yen"]), ("総買付株数を一律100株に揃えた損益", normalization["shares_normalized_stacked_pl_yen"]), ("総買付金額を一律100株に揃えた損益", normalization["entry_cost_normalized_stacked_pl_yen"])]
+    normal_html = ''.join(f'<div><span>{label}</span><strong>{_yen(value)}</strong></div>' for label, value in normal_rows)
+    payoff_definitions = [("利益の合計", "gross_win_cash_pl_yen", "円"), ("損失の合計", "gross_loss_cash_pl_yen", "円"), ("勝ち検出の平均損益", "average_win_cash_pl_yen", "円"), ("負け検出の平均損益", "average_loss_cash_pl_yen", "円"), ("数量加重の平均騰落率", "lot_mean_pct", "%"), ("数量加重の中央値", "lot_median_pct", "%"), ("数量加重の勝率", "lot_win_pct", "%"), ("勝ち取引の平均騰落率", "lot_average_win_pct", "%"), ("負け取引の平均騰落率", "lot_average_loss_pct", "%"), ("未確定の検出数", "pending_signals", "件"), ("未確定の100株口数", "pending_lots", "口")]
+    payoff_rows = [[label, *[_research_number(strategies[key][field], unit, decimals=2 if unit == "%" else 0) for key in ["unique", "stacked"]]] for label, field, unit in payoff_definitions]
+    overlap_rows = [[f'{row["selector_count"]}条件', _research_number(row["resolved_signals"], "件"), _pct(row["mean_pct"], True), _pct(row["median_pct"], True), _pct(row["win_pct"]), _yen(row["cash_pl_100_yen"])] for row in data["overlap"]]
+    coverage_rows = [[f'{row["year"]}年', _research_number(row["historical"], "件"), _research_number(row["forward"], "件"), _research_number(row["other"], "件")] for row in data["coverage"]["years"]]
+    current_year_rows = [row for row in data["annual"] if row["year"] == generated.year]
+    current_year_label = ""
+    if current_year_rows:
+        latest = pd.Timestamp(current_year_rows[-1]["latest_completed_signal_date"])
+        current_year_label = f"{latest.year}年（{latest.month}月{latest.day}日検出分まで）。"
+    monthly_metrics = monthly_metrics if monthly_metrics is not None else pd.DataFrame()
+    table_head = f'<thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th>100株損益</th><th>{CAPITAL_HEADER}</th><th>資金増加率</th><th>単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead>'
+    monthly_head = f'<thead><tr><th>月</th><th>確定取引数</th><th>未確定取引数</th><th>100株損益</th><th>{CAPITAL_HEADER}</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th></tr></thead>'
+    detailed_tables = []
+    for key, selector, label in [("unique", COMBINED_UNIQUE_ID, "銘柄均等（一律100株）"), ("stacked", COMBINED_STACKED_ID, "モード別積み上げ（条件数×100株）")]:
+        monthly = monthly_metrics[monthly_metrics["selector_id"].eq(selector)] if not monthly_metrics.empty else monthly_metrics
+        detailed_tables.append(f'<details class="research-data" data-cloud-allocation="{key}" id="{key}-performance"><summary>Cloud全体の成績 — {label}</summary><div class="table-wrap"><table data-paginated-table>{table_head}<tbody>{_combined_rows(metrics, selector)}</tbody></table></div>{_table_pagination()}<h3>月別の詳しい成績</h3><div class="table-wrap"><table data-paginated-table>{monthly_head}<tbody>{_monthly_rows(monthly, show_mode=False)}</tbody></table></div>{_table_pagination()}</details>')
+    return f'''<div class="cloud-research-page">
+<div class="research-heading"><h1>アナリティクス</h1><span>最終更新 {generated.strftime('%Y-%m-%d %H:%M')} JST</span></div>
+<div class="research-conditions"><span>検出履歴</span><span>検出から1営業日後 始値で買付</span><span>手数料0・配当なし</span><span>記録期間 {_actual_period_label(ledger, generated)}</span><span>最終検出: {_latest_signal_label(ledger)}</span></div><!--cloud-provenance-->
+<p class="research-notice">表示母集団 <strong>{counts['display_signals']:,}検出 / {counts['display_lots']:,}条件一致</strong>のうち、成績対象は{counts['eligible_signals']:,}検出。参考扱いの{counts['reference_excluded_signals']:,}検出（{counts['reference_excluded_lots']:,}条件一致）を成績から除外しています。対象内の損益確定 {counts['completed_signals']:,}件・未確定 {counts['pending_signals']:,}件。以下の比較・グラフ・資金計算は、同じ確定済みの母集団です。</p>
+<section class="panel research-card"><h2>株数方式の比較</h2><div class="research-pair">{''.join(cards)}</div><p class="research-footnote">検出は「同じ日・同じ銘柄」で1件。口数は買付時100株を1口とし、分割・併合後の売却株数ではありません。数量を増やしても、同じ検出の騰落率は変わりません。</p></section>
+<section class="panel research-card" id="realized-profit"><h2>累積確定損益</h2>{_research_legend()}{_research_plot(data['cumulative'], category='date', fields=('unique','stacked'), labels=('一律100株','条件数×100株'), kind='line', unit='円', title='確定日ごとの累積確定損益')}<p class="research-footnote">0円から始め、選択した確定日の損益を加えています。未決済の含み損益を含む時価評価の曲線ではありません。</p></section>
+<section class="panel research-card" id="capital-risk"><h2>必要資金・損失・集中度</h2>{_research_table(['指標','一律100株','条件数×100株'], risk_rows)}<p class="research-footnote">最低初期資金は、確定済みの注文を固定し、同日の買付を売却代金の受領より先に行う事後計算です。最大同時保有の取得額とは異なります。ドローダウンは確定損益だけから算出し、保有中の下落・保証金・税金・注文制約を含みません。欠損がある指標は空欄（—）です。</p></section>
+<div class="research-grid"><section class="panel research-card" id="annual-pl"><h2>検出年別の損益</h2>{_research_legend()}{_research_plot(data['annual'], category='year', fields=('unique','stacked'), labels=('一律100株','条件数×100株'), kind='bar', unit='円', title='検出年別の確定損益')}<p class="research-footnote">{current_year_label}検出年で分類し、年をまたいだ決済も元の検出年へ含めます。選択した年の全期間集計です。</p></section><section class="panel research-card"><h2>株数増加だけの影響を確認</h2><div class="research-normalization">{normal_html}</div><p class="research-footnote">株数・買付金額の比率で損益を事後的に縮小した参考比較です。端株を含む仮想的な正規化で、同じ資金で実行できたポートフォリオや実際の約定を示しません。</p></section></div>
+<div class="research-grid"><section class="panel research-card"><h2>検出条件の重なり</h2>{_research_plot(data['overlap'], category='selector_count', fields=('resolved_signals',), labels=('確定した検出',), kind='bar', unit='件', title='一致した条件数別の確定検出件数')}</section><section class="panel research-card"><h2>重なり別の平均騰落率</h2>{_research_plot(data['overlap'], category='selector_count', fields=('mean_pct',), labels=('平均騰落率',), kind='bar', unit='%', title='一致した条件数別の平均騰落率')}<p class="research-footnote">検出ごとの単純平均。条件数が多いほど将来成績が良いと保証するものではありません。</p></section></div>
+<section class="panel research-card" id="payoff-structure"><h2>勝ち・負けと加重集計</h2>{_research_table(['指標','一律100株','条件数×100株'], payoff_rows)}<p class="research-footnote">勝ちは騰落率が0より大きい取引。0%は勝率の分母に含みます。数量加重の平均・中央値・勝率は100株口数で重みを付けます。</p><details class="research-data"><summary>勝ち負けの幅を比較（条件数×100株）</summary>{_payoff_structure(ledger)}</details></section>
+<section class="panel research-card"><h2>条件の重なり別の内訳</h2>{_research_table(['一致条件数','確定した検出','平均騰落率','中央値','勝率','一律100株の損益'], overlap_rows)}</section>
+<section class="panel research-card"><h2>検出履歴・取引の明細</h2><p>銘柄・検出日・条件で検索する明細と履歴CSVは、<a href="./weak_early_beta_latest.html#detections">ダッシュボードの検出履歴</a>から確認できます。価格上限・確定日・検出年は共通の表示設定です。</p><p class="research-footnote">{html.escape(REFERENCE_POLICY_NOTE)}</p></section>
+<section class="panel research-card"><h2>記録の範囲と来歴</h2>{_research_table(['検出年','過去再構成','実運用観測','その他'], coverage_rows)}<p class="research-footnote">成績対象の検出数です。過去再構成は実運用の観測とは異なり、2026年分も検証時点で結果が既知の過去期間です。2022年の原データは保持したまま表示・集計から除外しています。5営業日後成績は従来台帳の凍結済み経済（調整価格の参考値を含む）、6営業日後成績は独立検証した実価格と分割・併合による受取額です。両者の円損益は価格基準が一致しない取引を含みます。</p></section>
+<section class="panel research-card" id="growth"><details class="research-data"><summary>必要資金を起点にしたトータルの資産推移</summary><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p><div class="chart-grid"><div data-cloud-allocation="unique">{_equity_chart(unique_ledger, '銘柄均等', 'unique', UNIQUE_EXPLANATION, generated.tz_localize(None))}</div><div data-cloud-allocation="stacked">{_equity_chart(ledger, 'モード別積み上げ', 'stacked', STACKED_EXPLANATION, generated.tz_localize(None))}</div></div></details>{''.join(detailed_tables)}</section>
+{_mode_pages_section(generated)}</div>'''
 
 
 def _render_mode_body(
@@ -1046,22 +1189,36 @@ def _render_mode_body(
     return body
 
 
-def _settings_panel() -> str:
+def _scope_definitions(source: pd.DataFrame) -> dict[str, dict]:
+    """Derive signal years from the already audience-restricted source."""
+    dates = pd.to_datetime(source.get("signal_date", pd.Series(dtype="object")), errors="coerce")
+    years = sorted(int(year) for year in dates.dt.year.dropna().unique() if year != 2022)
+    scopes = {"all": {"label": "記録期間すべて", "years": None}}
+    if len(set(years) & {2023, 2024, 2025}) > 1 and any(year > 2025 for year in years):
+        scopes["2023_2025"] = {"label": "2023–2025年", "years": [2023, 2024, 2025]}
+    scopes.update({str(year): {"label": f"{year}年", "years": [year]} for year in years})
+    return scopes
+
+
+def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
+    options = "".join(f'<option value="{html.escape(key)}">{html.escape(scope["label"])}</option>' for key, scope in (scopes or {"all": {"label": "記録期間すべて"}}).items())
     return '''<section class="panel cloud-settings" aria-label="表示・集計の設定">
 <h2>表示・集計の設定</h2><div class="filters">
+<label class="filter-field"><span>検出年</span><select id="cloud-year-scope">''' + options + '''</select></label>
 <label class="filter-field"><span>検出日の実終値の上限</span><select id="cloud-price-preset">
 <option value="1000" selected>1,000円以下</option>
 <option value="2000">2,000円以下</option><option value="3000">3,000円以下</option>
 <option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
 <label class="filter-field" id="cloud-price-custom-field" hidden><span>任意の上限（円・小数2桁まで）</span><input id="cloud-price-custom" type="number" step="0.01" min="0.01" inputmode="decimal" value="1000"></label>
 <label class="filter-field"><span>確定日の選択</span><select id="cloud-exit-endpoint"><option value="d5_close">検出から5営業日後 終値</option><option value="d6_open">検出から6営業日後 始値</option></select></label>
-<button id="cloud-settings-save" type="button">設定を保存</button><button id="cloud-export-csv" type="button">集計CSV</button></div>
+<label class="filter-field"><span>グラフ・集計CSVの株数方式</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">一律100株</option><option value="stacked">条件数×100株</option></select></label>
+<button id="cloud-research-reset" type="button">リセット</button><button id="cloud-settings-save" type="button">設定を保存</button><button id="cloud-export-csv" type="button">集計CSV</button></div>
 <p id="cloud-settings-status" role="status" aria-live="polite">初期値は実終値1,000円以下・検出から5営業日後 終値です。</p>
 <p class="note">価格上限と確定日は、表示・集計・CSV・通知設定で共通です。検出モデル自体は直前観測日（通常は前営業日）の実終値1,000円以下を対象としています。表示上限を引き上げても、当初未検出の銘柄は追加されません。上限を指定すると実終値が未検証の履歴は除外し、上限なしでは残します。</p>
 <div id="cloud-notification-settings"></div></section>'''
 
 
-def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: str, *, missing: int | None = None) -> str:
+def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: str, *, missing: int | None = None, compact: bool = False) -> str:
     if missing is None:
         unique = combined_detections(source)
         missing = int(verified_signal_prices(unique).isna().sum())
@@ -1070,6 +1227,14 @@ def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: s
     historical = int(scopes.str.startswith("EXACT_CANONICAL").sum())
     forward = int(scopes.str.startswith("FORWARD").sum())
     other = len(selected_unique) - historical - forward
+    if compact:
+        return (
+            '<div class="research-notice research-provenance">'
+            f'<strong>{ENDPOINT_LABELS[exit_key]}</strong> · 過去再構成 {historical:,}件・実運用観測 {forward:,}件・その他 {other:,}件。'
+            '過去再構成は2026年分も結果既知の期間です。2022年は表示・集計から除外し、原データを保持しています。'
+            f'<details class="research-data"><summary>価格の来歴と未検証の記録</summary><p>この検出年範囲で実終値が未検証: <strong data-unknown-price-count>{missing:,}件</strong>。上限指定時は除外しています。</p>'
+            '<p>5営業日後成績には保存時の調整価格参考値が含まれます。6営業日後成績は独立に検証した実価格と分割・併合を反映するため、円損益の基準が一致しない取引があります。欠損を0円や別日の価格で補いません。</p></details></div>'
+        )
     return (
         '<section class="panel cloud-provenance"><h2>検出履歴の範囲と価格の来歴</h2>'
         f'<p>選択した確定日: <strong>{ENDPOINT_LABELS[exit_key]}</strong>。買付の基準は検出から1営業日後の始値です。</p>'
@@ -1091,11 +1256,19 @@ def _breakpoint_key(value: float) -> str:
     return repr(float(value)).removesuffix(".0")
 
 
-def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, current: str) -> tuple[str, str]:
+def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, current: str, *, _summary_cache: dict | None = None) -> tuple[str, str]:
     as_of = generated.tz_localize(None)
+    summary_cache = _summary_cache if _summary_cache is not None else {}
     prices = verified_signal_prices(source)
-    breakpoints = sorted(float(value) for value in prices.dropna().unique())
-    missing_prices = int(verified_signal_prices(combined_detections(source)).isna().sum())
+    scopes = _scope_definitions(source)
+    signal_years = pd.to_datetime(source["signal_date"], errors="coerce").dt.year
+    scoped_sources = {}
+    for scope_key, scope in scopes.items():
+        scope_mask = pd.Series(True, index=source.index) if scope["years"] is None else signal_years.isin(scope["years"])
+        scoped_sources[scope_key] = source.loc[scope_mask]
+        scope["priceBreakpoints"] = sorted(float(value) for value in prices.loc[scope_mask].dropna().unique())
+        scope["priceBreakpointKeys"] = [_breakpoint_key(value) for value in scope["priceBreakpoints"]]
+    breakpoints = scopes["all"]["priceBreakpoints"]
     variants: dict[str, dict] = {}
     default_breakpoints = [value for value in breakpoints if value <= DEFAULT_PRICE_CAP]
     default_key = _breakpoint_key(default_breakpoints[-1]) if default_breakpoints else "empty"
@@ -1104,31 +1277,40 @@ def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, cu
         # Verify receipts once per endpoint; each subsequent cap only selects
         # rows from this immutable, already verified presentation view.
         endpoint_view = select_report_view(source, None, exit_key)
-        for key, cap in [("empty", DEFAULT_PRICE_CAP), ("all", None), *((_breakpoint_key(value), value) for value in breakpoints)]:
-            view = endpoint_view.iloc[0:0].copy() if key == "empty" else endpoint_view.copy() if cap is None else endpoint_view.loc[prices.le(cap)].copy()
-            metrics = build_metrics(view, as_of=as_of)
-            monthly = build_monthly_metrics(view, as_of=as_of)
-            if current in SELECTOR_ORDER:
-                metrics = metrics[metrics["selector_id"].eq(current)].copy() if not metrics.empty else metrics
-                monthly = monthly[monthly["selector_id"].eq(current)].copy() if not monthly.empty else monthly
-            if current == "analytics":
-                body = _render_analytics_body(view, metrics, generated, monthly_metrics=monthly)
-            elif current == "home":
-                body = _render_dashboard_body(view, metrics, generated, monthly_metrics=monthly, mask_pending=False)
-            else:
-                body = _render_mode_body(view, metrics, monthly, generated, current, mask_pending=False)
-            body = body.replace(ENDPOINT_LABEL, f"検出から1営業日後 始値 → {ENDPOINT_LABELS[exit_key]}（コスト0%）")
-            body = body.replace("5営業日後の終値が確定した取引", f"{ENDPOINT_LABELS[exit_key]}の損益が確定した取引")
-            body = _provenance_notice(source, view, exit_key, missing=missing_prices) + body
-            variant = {"html": body, "metrics": _json_records(metrics), "monthlyMetrics": _json_records(monthly)}
-            packed = gzip.compress(json.dumps(variant, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8"), compresslevel=9, mtime=0)
-            variants[f"{exit_key}:{key}"] = {"gzip": base64.b64encode(packed).decode("ascii")}
-            if exit_key == "d5_close" and key == default_key:
-                default_html = body
+        for scope_key, scope in scopes.items():
+            scoped_source = scoped_sources[scope_key]
+            scoped_view = endpoint_view.loc[scoped_source.index]
+            scoped_prices = prices.loc[scoped_source.index]
+            missing_prices = int(verified_signal_prices(combined_detections(scoped_source)).isna().sum())
+            # Each scope gets only its own exact price breakpoints, avoiding the
+            # global-price × year Cartesian product. Allocation is a series
+            # display choice and introduces no additional variants.
+            for key, cap in [("empty", DEFAULT_PRICE_CAP), ("all", None), *((_breakpoint_key(value), value) for value in scope["priceBreakpoints"])]:
+                view = scoped_view.iloc[0:0].copy() if key == "empty" else scoped_view.copy() if cap is None else scoped_view.loc[scoped_prices.le(cap)].copy()
+                selected_ids = COMBINED_SELECTOR_IDS if current == "analytics" else (current,) if current in SELECTOR_ORDER else None
+                metrics, monthly = build_presentation_metrics(view, as_of=as_of, selector_ids=selected_ids, _summary_cache=summary_cache)
+                if current == "analytics":
+                    body = _render_analytics_body(view, metrics, generated, monthly_metrics=monthly)
+                elif current == "home":
+                    body = _render_dashboard_body(view, metrics, generated, monthly_metrics=monthly, mask_pending=False)
+                else:
+                    body = _render_mode_body(view, metrics, monthly, generated, current, mask_pending=False)
+                body = body.replace(ENDPOINT_LABEL, f"検出から1営業日後 始値 → {ENDPOINT_LABELS[exit_key]}（コスト0%）")
+                body = body.replace("5営業日後の終値が確定した取引", f"{ENDPOINT_LABELS[exit_key]}の損益が確定した取引")
+                notice = _provenance_notice(scoped_source, view, exit_key, missing=missing_prices, compact=current == "analytics")
+                body = body.replace("<!--cloud-provenance-->", notice) if current == "analytics" else notice + body
+                variant = {"html": body, "metrics": _json_records(metrics), "monthlyMetrics": _json_records(monthly)}
+                packed = gzip.compress(json.dumps(variant, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8"), compresslevel=9, mtime=0)
+                variant_key = f"{exit_key}:{key}" if scope_key == "all" else f"{exit_key}:{scope_key}:{key}"
+                variants[variant_key] = {"gzip": base64.b64encode(packed).decode("ascii")}
+                if exit_key == "d5_close" and scope_key == "all" and key == default_key:
+                    default_html = body
     payload = {
         "version": 1,
         "encoding": "gzip-base64-json",
-        "default": {"exitKey": "d5_close", "priceCapYen": DEFAULT_PRICE_CAP},
+        "page": current,
+        "default": {"exitKey": "d5_close", "priceCapYen": DEFAULT_PRICE_CAP, "yearScope": "all"},
+        "scopes": scopes,
         "priceBreakpoints": breakpoints,
         "priceBreakpointKeys": [_breakpoint_key(value) for value in breakpoints],
         "variants": variants,
@@ -1162,7 +1344,7 @@ def _variant_page(
     digest.update(pd.util.hash_pandas_object(source, index=True).values.tobytes())
     cache_key = (current, "released" if mask_pending else "full", generated.isoformat(), digest.hexdigest())
     if cache_key not in cache:
-        cache[cache_key] = _aggregate_variant_payload(source, generated, current)
+        cache[cache_key] = _aggregate_variant_payload(source, generated, current, _summary_cache=cache.setdefault("aggregate-summary-cache", {}))
     default_html, serialized = cache[cache_key]
     history = "" if current == "analytics" else _history_section(source, include_mode_filter=current == "home", mask_pending=mask_pending)
     scope_notice = (
@@ -1172,7 +1354,7 @@ def _variant_page(
         '<a href="/purchase">有料会員のアクセスについて</a></p></section>'
         if mask_pending else ""
     )
-    body = scope_notice + _settings_panel() + f'<div id="cloud-analytics-content">{default_html}</div>' + history + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>'
+    body = scope_notice + _settings_panel(_scope_definitions(source)) + f'<div id="cloud-analytics-content">{default_html}</div>' + history + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>'
     title = "ダッシュボード" if current == "home" else "アナリティクス" if current == "analytics" else selector_info(current).display_name
     return _page_shell(title, current, body)
 
@@ -1247,9 +1429,15 @@ def write_report(
     report_path: Path = DEFAULT_REPORT,
     metrics_path: Path = DEFAULT_METRICS,
     monthly_metrics_path: Path = DEFAULT_MONTHLY_METRICS,
+    *,
+    apply_reviewed_prices: bool = True,
 ) -> pd.DataFrame:
     variant_cache: dict = {}
     generated = pd.Timestamp.now(tz="Asia/Tokyo")
+    # The hash-pinned private sidecar enriches only this presentation copy.
+    # Raw ledger reads and frozen D5 economics remain unchanged.
+    if apply_reviewed_prices:
+        ledger, _overlay_audit = apply_reviewed_endpoint_overlay(ledger, load_reviewed_endpoint_overlay())
     ledger = annotate_entry_feasibility(ledger)
     default_view = select_report_view(ledger)
     metrics = build_metrics(default_view, as_of=generated.tz_localize(None))

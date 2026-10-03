@@ -543,7 +543,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
         )
         self.assertNotIn("9999", output)
         self.assertNotIn("未確定テスト社", output)
-        self.assertIn("検出から6営業日後の実始値取得・確定まで会員限定", output)
+        self.assertIn("検出から6営業日後の実始値を取得・検証済みの検出履歴のみ", output)
+        self.assertNotIn('data-date="', output)
         self.assertIn('href="/purchase"', output)
 
     def test_monthly_metrics_keep_year_month_labels(self):

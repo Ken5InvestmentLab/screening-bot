@@ -1,6 +1,8 @@
 """Local-only candidate/calendar and durable-schema contract tests."""
 import importlib.util
+import json
 from pathlib import Path
+import re
 import sqlite3
 import unittest
 from unittest.mock import patch
@@ -78,6 +80,86 @@ class CloudNotificationAdapterTests(unittest.TestCase):
             db.execute("INSERT INTO cloud_notification_deliveries VALUES (?, ?, ?, ?, ?, ?, ?)", values)
         with self.assertRaises(sqlite3.IntegrityError):
             db.execute("INSERT INTO cloud_member_preferences VALUES (?, ?, ?)", ("memberB", '{broken', "now"))
+        db.close()
+
+    def scan_database(self):
+        db = sqlite3.connect(":memory:")
+        db.row_factory = sqlite3.Row
+        for _ in range(2):
+            for path in sorted((ROOT / "weak-early-beta-gate/migrations").glob("*.sql")):
+                db.executescript(path.read_text(encoding="utf-8"))
+        for index in range(205):
+            db.execute("INSERT INTO cloud_notification_events VALUES (?, ?, ?, ?)",
+                (f"private-{index:03}", json.dumps({"signal_id": f"private-signal-{index:03}"}),
+                 "2026-10-01T00:00:00.000Z", "a" * 64))
+        return db
+
+    def scan_statement(self, prefix):
+        # Execute the production statements against real SQLite, rather than a
+        # second hand-written pagination query that could conceal SQL mistakes.
+        source = (ROOT / "weak-early-beta-gate/src/cloud-api.ts").read_text(encoding="utf-8")
+        match = re.search(r"`(" + re.escape(prefix) + r"[^`]+)`", source)
+        self.assertIsNotNone(match, prefix)
+        return match.group(1)
+
+    def test_real_sql_scan_reaches_205_and_revisits_held_after_wrap(self):
+        db = self.scan_database()
+        initialize = self.scan_statement("INSERT OR IGNORE INTO cloud_notification_scan_progress")
+        select_progress = self.scan_statement("SELECT after_available_at")
+        select_page = self.scan_statement("SELECT source_event_key")
+        advance = self.scan_statement("UPDATE cloud_notification_scan_progress")
+        delivery = self.scan_statement("INSERT INTO cloud_notification_deliveries")
+        now = "2026-10-02T00:00:00.000Z"
+        db.execute(initialize, ("member-a", now))
+        for state in ("held", "dry_run_eligible"):
+            visited = []
+            page_count = 0
+            while True:
+                progress = db.execute(select_progress, ("member-a",)).fetchone()
+                cutoff = progress["cycle_cutoff_at"] or now
+                rows = db.execute(select_page, (cutoff, progress["after_available_at"],
+                    progress["after_source_event_key"])).fetchall()
+                self.assertLessEqual(len(rows), 21)
+                page = rows[:20]
+                has_more = len(rows) > 20
+                visited.extend(row["source_event_key"] for row in page)
+                for row in page:
+                    db.execute(delivery, ("member-a", row["source_event_key"], state, "dry-run", now, now))
+                last = page[-1] if page else None
+                changed = db.execute(advance, (last["available_at"] if has_more else "",
+                    last["source_event_key"] if has_more else "", cutoff if has_more else "", now,
+                    "member-a", progress["version"])).rowcount
+                self.assertEqual(changed, 1)
+                page_count += 1
+                self.assertLessEqual(page_count, 11)
+                if not has_more:
+                    break
+            self.assertEqual(visited, [f"private-{index:03}" for index in range(205)])
+            self.assertEqual(page_count, 11)
+        self.assertEqual(db.execute("SELECT count(*) FROM cloud_notification_deliveries WHERE status='dry_run_eligible' AND attempts=2").fetchone()[0], 205)
+        self.assertEqual(db.execute("SELECT count(*) FROM cloud_notification_deliveries WHERE status='sent'").fetchone()[0], 0)
+        plan = db.execute("EXPLAIN QUERY PLAN " + select_page, (now, "", "")).fetchall()
+        self.assertTrue(any("cloud_notification_events_scan" in row[3] for row in plan))
+        self.assertTrue(any("(available_at,source_event_key)>(?,?)" in row[3] for row in plan))
+        db.close()
+
+    def test_real_sql_cursor_compare_and_swap_prevents_late_regression(self):
+        db = self.scan_database()
+        initialize = self.scan_statement("INSERT OR IGNORE INTO cloud_notification_scan_progress")
+        select_progress = self.scan_statement("SELECT after_available_at")
+        advance = self.scan_statement("UPDATE cloud_notification_scan_progress")
+        now = "2026-10-02T00:00:00.000Z"
+        for member in ("member-a", "member-b"):
+            db.execute(initialize, (member, now))
+        first = db.execute(select_progress, ("member-a",)).fetchone()
+        late = db.execute(select_progress, ("member-a",)).fetchone()
+        values = ("2026-10-01T00:00:00.000Z", "private-019", now, now, "member-a", first["version"])
+        self.assertEqual(db.execute(advance, values).rowcount, 1)
+        current = db.execute(select_progress, ("member-a",)).fetchone()
+        self.assertEqual(db.execute(advance, (values[0], "private-039", now, now, "member-a", current["version"])).rowcount, 1)
+        self.assertEqual(db.execute(advance, ("", "", "", now, "member-a", late["version"])).rowcount, 0)
+        self.assertEqual(db.execute(select_progress, ("member-a",)).fetchone()["after_source_event_key"], "private-039")
+        self.assertEqual(db.execute(select_progress, ("member-b",)).fetchone()["version"], 0)
         db.close()
 
 

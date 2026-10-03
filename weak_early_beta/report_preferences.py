@@ -45,6 +45,23 @@ def visible_history(ledger: pd.DataFrame) -> pd.DataFrame:
     return ledger.loc[dates.notna() & dates.dt.year.ne(2022)].copy()
 
 
+def released_history(ledger: pd.DataFrame) -> pd.DataFrame:
+    """Return the complete free-page population before any rendering/aggregation.
+
+    Unreleased rows must contribute neither values nor counts, dates, thresholds
+    or anonymous aggregates. Require every overlapping selector's D6 receipt so
+    a partially migrated identity is not exposed through another mode page.
+    """
+    result = visible_history(ledger)
+    if result.empty:
+        return result
+    verified = result.apply(sixth_endpoint_verified, axis=1).astype(bool)
+    dates = pd.to_datetime(result["signal_date"]).dt.normalize()
+    symbols = result["symbol"].astype(str)
+    released = verified.groupby([dates, symbols], dropna=False).transform("all")
+    return result.loc[released].copy()
+
+
 def verified_signal_prices(ledger: pd.DataFrame) -> pd.Series:
     if ledger.empty:
         return pd.Series(index=ledger.index, dtype=float)

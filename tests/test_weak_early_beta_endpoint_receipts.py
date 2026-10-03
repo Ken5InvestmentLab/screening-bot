@@ -235,14 +235,15 @@ class IndependentEndpointTests(unittest.TestCase):
         revised_raw = normalize_daily(revised_raw)
         refreshed = model.refresh_forward_endpoints(original, revised_raw)
         row = refreshed.iloc[0]
-        self.assertTrue(sixth_endpoint_verified(row))
+        self.assertFalse(sixth_endpoint_verified(row))
         self.assertEqual(row.sixth_economics_status, "review_required")
-        self.assertEqual(row.sixth_economics_issue, "frozen_d5_action_revision")
+        self.assertEqual(row.sixth_economics_issue, "d6_holding_action_revision")
         self.assertTrue(pd.isna(row.sixth_gross_return))
         pd.testing.assert_series_equal(row[ECONOMIC_COLUMNS], original.iloc[0][ECONOMIC_COLUMNS], check_names=False)
         incoming = model.attach_forward_rows(self.selected(), revised_raw)
-        with self.assertRaisesRegex(ValueError, "sixth endpoint/economics revision"):
-            merge_detections(original, incoming)
+        merged = merge_detections(original, incoming)
+        self.assertFalse(sixth_endpoint_verified(merged.iloc[0]))
+        self.assertEqual(merged.iloc[0].sixth_economics_status, "review_required")
 
     def test_d5_observation_is_newly_recorded_but_never_invented_for_old_freeze(self):
         entered = self.attached(self.daily(count=3))
@@ -267,8 +268,136 @@ class IndependentEndpointTests(unittest.TestCase):
         revised.loc[0, "sixth_exit_proceeds_yen"] = 12000
         revised.loc[0, "sixth_gross_return"] = .2
         revised.loc[0, "sixth_one_hundred_shares_pl_yen"] = 2000
-        with self.assertRaisesRegex(ValueError, "sixth endpoint/economics revision"):
-            merge_detections(original, revised)
+        merged = merge_detections(original, revised)
+        self.assertFalse(sixth_endpoint_verified(merged.iloc[0]))
+        self.assertTrue(pd.isna(merged.iloc[0].sixth_gross_return))
+
+    def pending_d6_with_captured_open(self, raw=None):
+        frozen = self.attached(self.daily(count=6))
+        partial = self.daily() if raw is None else raw
+        partial = partial[partial.date.ne(frozen.iloc[0].entry_date)]
+        first = model.refresh_forward_endpoints(frozen, partial)
+        self.assertTrue(sixth_endpoint_verified(first.iloc[0]))
+        self.assertEqual(first.iloc[0].sixth_economics_status, "pending")
+        return frozen, first
+
+    def test_two_stage_d6_price_and_new_split_cannot_mix(self):
+        frozen, first = self.pending_d6_with_captured_open()
+        self.assertEqual(first.iloc[0].sixth_xtks_exit_open, 110)
+        second = model.refresh_forward_endpoints(first, self.daily(ratio=2))
+        row = second.iloc[0]
+        self.assertFalse(sixth_endpoint_verified(row))
+        self.assertFalse(sixth_economics_verified(row))
+        self.assertEqual(row.sixth_xtks_exit_status, "quarantined")
+        self.assertEqual(row.sixth_economics_status, "review_required")
+        self.assertTrue(pd.isna(row.sixth_xtks_exit_open))
+        self.assertTrue(pd.isna(row.sixth_one_hundred_shares_pl_yen))
+        self.assertTrue(pd.isna(row.sixth_gross_return))
+        pd.testing.assert_series_equal(row[ECONOMIC_COLUMNS], frozen.iloc[0][ECONOMIC_COLUMNS], check_names=False)
+        audit = json.loads(row.sixth_xtks_exit_provenance_json)["quarantine"]
+        self.assertEqual(audit["saved_price_receipt"]["sixth_xtks_exit_open"], 110)
+        self.assertEqual(audit["conflicting_price_receipt"]["sixth_xtks_exit_open"], 55)
+        self.assertNotEqual(audit["saved_price_receipt"]["sixth_xtks_exit_source_sha256"],
+                            audit["conflicting_price_receipt"]["sixth_xtks_exit_source_sha256"])
+        coherent = self.attached(self.daily(ratio=2)).iloc[0]
+        self.assertTrue(sixth_economics_verified(coherent))
+        self.assertEqual(coherent.sixth_one_hundred_shares_pl_yen, 1000)
+        self.assertAlmostEqual(coherent.sixth_gross_return, .1)
+
+    def test_two_stage_unchanged_split_snapshot_completes_with_one_source_bundle(self):
+        _, first = self.pending_d6_with_captured_open(self.daily(ratio=2))
+        filled = model.refresh_forward_endpoints(first, self.daily(ratio=2)).iloc[0]
+        self.assertTrue(sixth_economics_verified(filled))
+        self.assertEqual(filled.sixth_one_hundred_shares_pl_yen, 1000)
+        evidence = json.loads(filled.sixth_economics_provenance_json)
+        self.assertNotEqual(filled.sixth_xtks_exit_source_sha256, filled.sixth_price_basis_source_sha256)
+        self.assertEqual(evidence["exit_receipt"]["sixth_xtks_exit_source_sha256"], filled.sixth_price_basis_source_sha256)
+        self.assertEqual(evidence["exit_receipt"]["sixth_xtks_exit_open"], 55)
+        self.assertEqual(evidence["entry"]["actual_open"], 100)
+        self.assertEqual(evidence["holding_actions"], [{"effective_date": "2026-09-09", "ratio": 2.0}])
+
+    def test_unchanged_d6_price_with_changed_d6_actions_is_quarantined(self):
+        raw = self.daily()[["date", "symbol", "open", "high", "low", "close", "volume", "split_ratio"]].copy()
+        for field in ("open", "high", "low", "close"):
+            raw.loc[6, field] /= 2
+        _, first = self.pending_d6_with_captured_open(normalize_daily(raw))
+        self.assertEqual(first.iloc[0].sixth_xtks_exit_open, 55)
+        second = model.refresh_forward_endpoints(first, self.daily(ratio=2)).iloc[0]
+        self.assertEqual(second.sixth_economics_issue, "d6_holding_action_revision")
+        self.assertFalse(sixth_endpoint_verified(second))
+
+    def test_missing_current_d6_quote_cannot_complete_saved_price_with_new_actions(self):
+        _, first = self.pending_d6_with_captured_open()
+        second = model.refresh_forward_endpoints(first, self.daily(count=6)).iloc[0]
+        self.assertTrue(sixth_endpoint_verified(second))
+        self.assertEqual(second.sixth_economics_status, "pending")
+        self.assertTrue(pd.isna(second.sixth_gross_return))
+
+    def test_new_off_session_d6_action_revokes_release_even_without_new_quote(self):
+        _, first = self.pending_d6_with_captured_open()
+        raw = self.daily(ratio=2).iloc[:6][["date", "symbol", "open", "high", "low", "close", "volume", "split_ratio"]].copy()
+        raw["off_session_actions"] = ""
+        raw.loc[5, "off_session_actions"] = json.dumps([
+            {"effective_date": "2026-09-09", "ratio": 2, "source": "Yahoo Finance Stock Splits"},
+        ])
+        second = model.refresh_forward_endpoints(first, normalize_daily(raw)).iloc[0]
+        self.assertFalse(sixth_endpoint_verified(second))
+        self.assertEqual(second.sixth_economics_issue, "d6_holding_action_revision")
+
+    def test_quarantine_survives_refresh_merge_csv_and_generic_backfill(self):
+        _, first = self.pending_d6_with_captured_open()
+        quarantined = model.refresh_forward_endpoints(first, self.daily(ratio=2))
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "quarantined.csv"
+            write_ledger(quarantined, path)
+            restored = read_ledger(path)
+        for candidate in (
+            model.refresh_forward_endpoints(restored, self.daily()),
+            model.refresh_forward_endpoints(restored, self.daily(ratio=2)),
+            merge_detections(restored, self.attached()),
+            merge_detections(self.attached(), restored),
+            backfill_verified_endpoints(restored, self.daily(ratio=2), source_sha256="a" * 64,
+                                        observed_at="2026-10-01T16:15:00+09:00", identities=restored.detection_id)[0],
+        ):
+            self.assertFalse(sixth_endpoint_verified(candidate.iloc[0]))
+            self.assertFalse(sixth_economics_verified(candidate.iloc[0]))
+            self.assertEqual(candidate.iloc[0].sixth_xtks_exit_provenance_json, restored.iloc[0].sixth_xtks_exit_provenance_json)
+
+    def test_completed_d6_also_revokes_release_on_a_contradictory_source(self):
+        complete = self.attached()
+        self.assertTrue(sixth_economics_verified(complete.iloc[0]))
+        for revised in (model.refresh_forward_endpoints(complete, self.daily(ratio=2)),
+                        merge_detections(complete, self.attached(self.daily(ratio=2)))):
+            self.assertFalse(sixth_endpoint_verified(revised.iloc[0]))
+            self.assertFalse(sixth_economics_verified(revised.iloc[0]))
+            audit = json.loads(revised.iloc[0].sixth_xtks_exit_provenance_json)["quarantine"]
+            self.assertEqual(audit["saved_economics"]["sixth_one_hundred_shares_pl_yen"], 1000)
+            pd.testing.assert_series_equal(revised.iloc[0][ECONOMIC_COLUMNS], complete.iloc[0][ECONOMIC_COLUMNS], check_names=False)
+
+    def test_later_post_d6_split_changes_source_hash_without_changing_held_units(self):
+        raw = self.daily()[["date", "symbol", "open", "high", "low", "close", "volume", "split_ratio"]].copy()
+        for field in ("open", "high", "low", "close"):
+            raw[field] /= 2
+        raw["volume"] *= 2
+        raw.loc[7] = {"date": pd.Timestamp("2026-09-10"), "symbol": "9999", "open": 55,
+                      "high": 56, "low": 54, "close": 55, "volume": 10_000, "split_ratio": 2}
+        later = normalize_daily(raw)
+        _, first = self.pending_d6_with_captured_open()
+        filled = model.refresh_forward_endpoints(first, later).iloc[0]
+        self.assertTrue(sixth_economics_verified(filled))
+        self.assertEqual(filled.sixth_xtks_exit_open, 110)
+        self.assertEqual(filled.sixth_exit_shares, 100)
+        self.assertEqual(filled.sixth_one_hundred_shares_pl_yen, 1000)
+        complete = self.attached()
+        retained = model.refresh_forward_endpoints(complete, later)
+        pd.testing.assert_series_equal(retained.iloc[0][ENDPOINT_COLUMNS], complete.iloc[0][ENDPOINT_COLUMNS], check_names=False)
+
+    def test_economics_validator_rejects_mixed_or_missing_source_bundle(self):
+        row = self.attached().iloc[0].to_dict()
+        self.assertFalse(sixth_economics_verified({**row, "sixth_economics_provenance_json": ""}))
+        bundle = json.loads(row["sixth_economics_provenance_json"])
+        bundle["exit_receipt"]["sixth_xtks_exit_source_sha256"] = "a" * 64
+        self.assertFalse(sixth_economics_verified({**row, "sixth_economics_provenance_json": json.dumps(bundle)}))
 
     def test_csv_roundtrip_preserves_receipts_and_timestamp_precision(self):
         original = self.attached()

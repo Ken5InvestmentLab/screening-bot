@@ -26,6 +26,10 @@ authenticated Discord subject; clients cannot choose another member's ID.
 - `POST /api/cloud/notifications/dry-run`: body `{}` only. Reads trusted server
   candidates and returns reasons/countable outcomes without identifiers, prices
   or message text. `sent` is always zero. No browser-provided candidate is accepted.
+  Each call processes at most 20 rows, returning `scan.processed`, `page_limit`,
+  `has_more` and `cycle_complete`. Repeat while `has_more` is true to finish the
+  current cycle; the next call after completion starts a new reevaluation cycle.
+  Scan positions and source keys are server-side only and never returned.
 
 Missing D1 returns `503 storage_unavailable`. Unlinked users and missing Whop
 configuration receive only the generated free HTML, even with a Discord paid role.
@@ -36,7 +40,11 @@ Mega does not supply the additional hook and retains its existing behavior.
 ## Identity and entitlement setup still required
 
 After separately approving production setup, bind an existing/new D1 database as
-`CLOUD_DB` and apply `migrations/0001_cloud_preferences.sql`. The current Wrangler
+`CLOUD_DB` and apply `migrations/0001_cloud_preferences.sql`, then
+`migrations/0002_notification_scan_progress.sql`. The second migration adds only
+per-member scan progress and a candidate-order index; it preserves existing event
+and delivery records. Both migrations are idempotent and tested in local SQLite.
+The current Wrangler
 configuration deliberately has no production binding or invented database ID.
 Local SQL/fixture checks can run without creating cloud resources.
 
@@ -99,6 +107,17 @@ detection + notification kind + endpoint + session.
 Changing a price cap does not create another key. The unique SQL key and guarded
 upsert prevent simultaneous repeat eligibility. Held events can be reevaluated;
 dry-run-eligible events deduplicate. Dry-run does not mark delivery as sent.
+Candidate scans seek forward by `(available_at, source_event_key)` with a fixed
+cutoff for each cycle. A persisted per-member cursor prevents the newest 100 rows
+from starving the rest; the 21st fetched row is only lookahead for the 20-row page.
+The cursor advances after successful receipt writes using a version comparison,
+so concurrent or delayed requests cannot rewind or skip a page. Interrupted
+requests retry the same page safely through the delivery unique-key guard.
+At cycle end the cursor wraps: held/suppressed candidates can be reevaluated after
+eligibility, preference, time or price-evidence changes. Newly imported backdated
+rows are reached by the next cycle. Malformed private candidates are held and do
+not prevent the cursor from reaching later rows. No unbounded request scan or
+client-controlled cursor is exposed.
 A future sender must use a separate attempt/dispatch state, repeat a fresh
 entitlement check immediately before each attempt, honor unsubscribe, and disable
 dead push endpoints. It must never mistake existing dry-run records for sent ones.

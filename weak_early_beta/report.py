@@ -7,6 +7,7 @@ import json
 import re
 import base64
 import gzip
+import hashlib
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlparse
@@ -25,7 +26,7 @@ from .entry_feasibility import annotate_entry_feasibility, performance_eligible
 from .impact import normalize_material_impact
 from .endpoint_receipts import signal_actual_close_verified, sixth_endpoint_verified, sixth_economics_verified
 from .report_preferences import (
-    DEFAULT_PRICE_CAP, ENDPOINT_LABELS, select_report_view, visible_history,
+    DEFAULT_PRICE_CAP, ENDPOINT_LABELS, select_report_view, visible_history, released_history,
     verified_signal_prices,
 )
 from .metrics import (
@@ -434,7 +435,9 @@ def _condition_cards() -> str:
 
 
 def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
-    ledger = annotate_entry_feasibility(visible_history(ledger))
+    # Free pages omit the entire unreleased record, including otherwise
+    # identifying dates, prices, mode combinations and individual economics.
+    ledger = annotate_entry_feasibility(released_history(ledger) if mask_pending else visible_history(ledger))
     if ledger.empty:
         return '<tr><td colspan="10">検出履歴がありません</td></tr>'
     data = ledger.copy()
@@ -693,7 +696,7 @@ def _page_shell(title: str, current: str, body: str) -> str:
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-interactions.js?v=20261004-1" defer></script></head>
+<script src="./weak-early-beta-interactions.js?v=20261004-2" defer></script></head>
 <body><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
@@ -916,7 +919,7 @@ def _history_section(
         )
         mode_filter = f'<select id="selector-filter" aria-label="モードで絞り込み"><option value="">すべてのモード</option>{options}</select>'
     access_notice = (
-        '<p class="note"><strong>無料表示:</strong> 新着銘柄は検出から6営業日後の実始値を取得・検証し確定するまで伏せています。'
+        '<p class="note"><strong>無料表示:</strong> 検出から6営業日後の実始値を取得・検証済みの検出履歴のみを表示します。未解禁の取引は一覧・集計・CSVに含みません。'
         '<a href="/purchase">アクセス権を購入すると確定前から確認できます。</a></p>'
         if mask_pending else ""
     )
@@ -1071,7 +1074,7 @@ def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: s
         '<section class="panel cloud-provenance"><h2>検出履歴の範囲と価格の来歴</h2>'
         f'<p>選択した確定日: <strong>{ENDPOINT_LABELS[exit_key]}</strong>。買付の基準は検出から1営業日後の始値です。</p>'
         f'<p>表示対象 {len(selected_unique):,}件（過去再構成 {historical:,}件・実運用観測 {forward:,}件・その他 {other:,}件）。'
-        f'全履歴のうち検出日の実終値が未検証: <strong data-unknown-price-count>{missing:,}件</strong>。</p>'
+        f'このページの履歴のうち検出日の実終値が未検証: <strong data-unknown-price-count>{missing:,}件</strong>。</p>'
         '<p class="note">2022年は表示・集計から除外しています。原データは保持しています。過去再構成と実運用の観測は異なる記録です。2026年の過去再構成分も、検証時点で結果が既知の過去期間です。</p>'
         '<p class="note">過去再構成の5営業日後成績には、保存時の調整価格に基づく参考値が含まれます。6営業日後成績は独立に検証した実価格と、6営業日後までの分割・併合を反映した元の買付数量で計算します。未取得や未検証の価格を0円や別日の価格で補いません。</p></section>'
     )
@@ -1144,17 +1147,32 @@ def _variant_page(
     mask_pending: bool = False,
     _variant_cache: dict | None = None,
 ) -> str:
-    source = annotate_entry_feasibility(visible_history(ledger))
+    # Restrict the source before generating dates, counts, price breakpoints,
+    # CSV aggregates, compressed variants, or the history table. Omitting only
+    # symbols cannot protect identities inferable from a price/return path.
+    source = annotate_entry_feasibility(released_history(ledger) if mask_pending else visible_history(ledger))
     if current in SELECTOR_ORDER:
         source = source[source["selector_id"].eq(current)].copy()
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
-    # The cache is local to write_report and one immutable ledger/generation.
+    # write_report owns a local cache, and the full key also prevents accidental
+    # reuse across audiences, source frames or generation dates by other callers.
     cache = _variant_cache if _variant_cache is not None else {}
-    if current not in cache:
-        cache[current] = _aggregate_variant_payload(source, generated, current)
-    default_html, serialized = cache[current]
+    digest = hashlib.sha256()
+    digest.update(repr([(str(column), str(dtype)) for column, dtype in source.dtypes.items()]).encode("utf-8"))
+    digest.update(pd.util.hash_pandas_object(source, index=True).values.tobytes())
+    cache_key = (current, "released" if mask_pending else "full", generated.isoformat(), digest.hexdigest())
+    if cache_key not in cache:
+        cache[cache_key] = _aggregate_variant_payload(source, generated, current)
+    default_html, serialized = cache[cache_key]
     history = "" if current == "analytics" else _history_section(source, include_mode_filter=current == "home", mask_pending=mask_pending)
-    body = _settings_panel() + f'<div id="cloud-analytics-content">{default_html}</div>' + history + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>'
+    scope_notice = (
+        '<section class="panel free-scope"><p><strong>無料版の表示範囲:</strong> '
+        '検出から6営業日後の実始値を取得・検証済みの検出履歴のみを表示・集計します。'
+        '未解禁の取引は一覧・グラフ・集計・CSVに含みません。'
+        '<a href="/purchase">有料会員のアクセスについて</a></p></section>'
+        if mask_pending else ""
+    )
+    body = scope_notice + _settings_panel() + f'<div id="cloud-analytics-content">{default_html}</div>' + history + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>'
     title = "ダッシュボード" if current == "home" else "アナリティクス" if current == "analytics" else selector_info(current).display_name
     return _page_shell(title, current, body)
 
@@ -1199,6 +1217,7 @@ def render_guide(generated_at: pd.Timestamp) -> str:
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>エントリー</small><b>翌営業日寄付</b></div><div class="kpi"><small>評価</small><b>検出から5営業日後 終値 / 検出から6営業日後 始値</b></div><div class="kpi"><small>売買単位</small><b>100株</b></div><div class="kpi"><small>コスト</small><b>0%試算</b></div></div></aside></section>
+<section class="panel"><h2>無料版の表示範囲</h2><p>無料版は検出から6営業日後の実始値を取得・検証済みの検出履歴のみを表示・集計します。未解禁の取引は一覧・グラフ・集計・CSVに含みません。表示期間や最新検出日も、この公開済み履歴の範囲を示します。有料会員向けの新着履歴とは集計対象が異なるため、成績や件数が異なる場合があります。</p></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3>ダッシュボード</h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
 <article class="guide-card"><h3>アナリティクス</h3><p>Cloud全体の過去成績を見るページです。100株ずつ取引した場合の損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>

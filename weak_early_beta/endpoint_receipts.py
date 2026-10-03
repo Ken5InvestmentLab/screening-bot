@@ -17,7 +17,7 @@ import pandas as pd
 
 from .bank_calendar import add_bank_business_days
 from .corporate_actions import ACTION_SOURCE, PRICE_BASIS as SOURCE_PRICE_BASIS, VERSION as ACTION_VERSION
-from .trade_basis import PRICE_BASIS_VERSION, UnsupportedFractionalShares, build_trade_economics, is_frozen_trade
+from .trade_basis import PRICE_BASIS_VERSION, UnsupportedFractionalShares, _holding_actions, build_trade_economics, is_frozen_trade
 
 
 SIGNAL_ACTUAL_COLUMNS = [
@@ -38,6 +38,7 @@ SIXTH_ECONOMIC_COLUMNS = [
     "sixth_applied_actions_json", "sixth_price_basis_date",
     "sixth_price_basis_source_sha256", "sixth_economics_observed_at",
     "sixth_economics_issue",
+    "sixth_economics_provenance_json",
 ]
 ENDPOINT_COLUMNS = [*SIGNAL_ACTUAL_COLUMNS, *SIXTH_PRICE_COLUMNS, *SIXTH_ECONOMIC_COLUMNS]
 ENDPOINT_DATE_COLUMNS = ["sixth_xtks_exit_date", "sixth_entry_date"]
@@ -64,6 +65,22 @@ def _earliest_observation(session: pd.Timestamp, field: str) -> pd.Timestamp:
     minutes = 9 * 60 if field == "actual_open" else (15 * 60 + (30 if session >= pd.Timestamp("2024-11-05") else 0))
     return pd.Timestamp(year=session.year, month=session.month, day=session.day,
                         hour=minutes // 60, minute=minutes % 60, tz="Asia/Tokyo")
+
+
+def _holding_evidence_verified(evidence: Mapping[str, Any], signal: pd.Timestamp, sixth: pd.Timestamp) -> bool:
+    """Bind a D6 price to the action coverage known in the same source snapshot."""
+    entry = pd.Timestamp(add_bank_business_days(signal.date(), 1))
+    if evidence.get("entry_session") != f"{entry:%Y-%m-%d}" or not isinstance(evidence.get("holding_actions"), list):
+        return False
+    previous = entry
+    for action in evidence["holding_actions"]:
+        if not isinstance(action, dict) or set(action) != {"effective_date", "ratio"}:
+            return False
+        effective = pd.Timestamp(action["effective_date"])
+        if action["effective_date"] != f"{effective:%Y-%m-%d}" or not previous < effective <= sixth or not _positive(action["ratio"]):
+            return False
+        previous = effective
+    return True
 
 
 def _price_verified(row: Mapping[str, Any], prefix: str, price_column: str) -> bool:
@@ -96,6 +113,7 @@ def _price_verified(row: Mapping[str, Any], prefix: str, price_column: str) -> b
             and evidence.get("corporate_actions_version") == ACTION_VERSION
             and evidence.get("corporate_actions_source") == ACTION_SOURCE
             and evidence.get("source_usable") is True
+            and (field != "actual_open" or _holding_evidence_verified(evidence, signal, endpoint_date))
             and pd.Timestamp(evidence["basis_asof"]) >= endpoint_date
             and pd.Timestamp(evidence["basis_asof"]).date() <= observed.tz_convert("Asia/Tokyo").date()
             and _positive(evidence.get("adjusted_price")) and _positive(evidence.get("split_factor"))
@@ -131,10 +149,96 @@ def sixth_economics_verified(row: Mapping[str, Any]) -> bool:
             and observed >= pd.Timestamp(row["sixth_xtks_exit_observed_at"])
             and pd.Timestamp(row["sixth_price_basis_date"]).date() <= observed.tz_convert("Asia/Tokyo").date()
             and re.fullmatch(r"[0-9a-f]{64}", str(row.get("sixth_price_basis_source_sha256", "")))
+            and _sixth_economics_source_verified(row)
             and is_frozen_trade(view) and _consistent_with_frozen_d5(row, view)
         )
     except (KeyError, TypeError, ValueError):
         return False
+
+
+def _d6_receipt_conflict(saved: Mapping[str, Any], current: Mapping[str, Any]) -> str:
+    """A whole-corpus hash change alone is not a revision of this endpoint."""
+    old = json.loads(str(saved["sixth_xtks_exit_provenance_json"]))
+    new = json.loads(str(current["sixth_xtks_exit_provenance_json"]))
+    if not math.isclose(float(saved["sixth_xtks_exit_open"]), float(current["sixth_xtks_exit_open"]), rel_tol=1e-9, abs_tol=1e-8):
+        return "d6_actual_open_revision"
+    if old.get("entry_session") != new.get("entry_session") or old.get("holding_actions") != new.get("holding_actions"):
+        return "d6_holding_action_revision"
+    for field in ("symbol", "session", "field", "price_basis", "source_price_basis", "corporate_actions_version", "corporate_actions_source"):
+        if old.get(field) != new.get(field):
+            return "d6_price_basis_revision"
+    # Later post-D6 actions can alter the vendor-adjusted price/split factor.
+    # Each receipt validates that reconstruction separately; equal actual price
+    # and equal entry-through-D6 actions establish the same held-share units.
+    return ""
+
+
+def _sixth_economics_source_verified(row: Mapping[str, Any]) -> bool:
+    try:
+        evidence = json.loads(str(row.get("sixth_economics_provenance_json", "")))
+        source = str(row["sixth_price_basis_source_sha256"])
+        current = {**dict(row), **evidence["exit_receipt"]}
+        entry = evidence["entry"]
+        return bool(
+            evidence.get("version") == "CLOUD_D6_ECONOMIC_SOURCE_V1"
+            and evidence.get("source_sha256") == source
+            and current["sixth_xtks_exit_source_sha256"] == source
+            and sixth_endpoint_verified(current)
+            and not _d6_receipt_conflict(row, current)
+            and entry["session"] == f"{pd.Timestamp(row['sixth_entry_date']):%Y-%m-%d}"
+            and entry["basis_asof"] == row["sixth_price_basis_date"]
+            and entry["basis_asof"] == json.loads(current["sixth_xtks_exit_provenance_json"])["basis_asof"]
+            and _positive(entry["actual_open"]) and _positive(entry["adjusted_open"]) and _positive(entry["split_factor"])
+            and math.isclose(float(entry["actual_open"]), float(row["sixth_entry_open"]), rel_tol=1e-9)
+            and math.isclose(float(entry["adjusted_open"]) * float(entry["split_factor"]), float(row["sixth_entry_open"]), rel_tol=1e-9)
+            and evidence["holding_actions"] == json.loads(str(row["sixth_applied_actions_json"]))
+            and evidence["holding_actions"] == json.loads(current["sixth_xtks_exit_provenance_json"])["holding_actions"]
+        )
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return False
+
+
+def _plain_receipt(row: Mapping[str, Any], columns: list[str]) -> dict[str, Any]:
+    result = {}
+    for column in columns:
+        value = row.get(column)
+        result[column] = None if pd.isna(value) else (value.isoformat() if isinstance(value, pd.Timestamp) else value)
+    return result
+
+
+def _review_quarantined(row: Mapping[str, Any]) -> bool:
+    if row.get("sixth_xtks_exit_status") != "quarantined":
+        return False
+    try:
+        evidence = json.loads(str(row.get("sixth_xtks_exit_provenance_json", "")))
+        return evidence.get("quarantine", {}).get("requires_explicit_review") is True
+    except (TypeError, ValueError, AttributeError):
+        return False
+
+
+def _pending_economics(entry: Any, *, issue: str = "") -> dict[str, Any]:
+    result = {column: float("nan") for column in SIXTH_ECONOMIC_COLUMNS}
+    result.update({column: "" for column in SIXTH_ECONOMIC_COLUMNS if column in ENDPOINT_TEXT_COLUMNS})
+    result.update({"sixth_economics_status": "review_required" if issue else "pending",
+                   "sixth_entry_date": entry, "sixth_economics_issue": issue})
+    return result
+
+
+def _quarantine_d6(saved: Mapping[str, Any], current: Mapping[str, Any], reason: str, observed_at: str) -> dict[str, Any]:
+    """Keep both audit receipts, revoke the price, and require explicit review."""
+    evidence = json.loads(str(saved["sixth_xtks_exit_provenance_json"]))
+    evidence["quarantine"] = {
+        "requires_explicit_review": True, "reason": reason, "observed_at": observed_at,
+        "saved_price_receipt": _plain_receipt(saved, SIXTH_PRICE_COLUMNS),
+        "saved_economics": _plain_receipt(saved, SIXTH_ECONOMIC_COLUMNS),
+        "conflicting_price_receipt": _plain_receipt(current, SIXTH_PRICE_COLUMNS),
+    }
+    result = {column: saved.get(column) for column in SIXTH_PRICE_COLUMNS}
+    result.update({"sixth_xtks_exit_status": "quarantined", "sixth_xtks_exit_open": float("nan"),
+                   "sixth_xtks_exit_provenance_json": json.dumps(evidence, ensure_ascii=False, sort_keys=True, separators=(",", ":"), default=str, allow_nan=False)})
+    entry = pd.Timestamp(add_bank_business_days(pd.Timestamp(saved["signal_date"]).date(), 1))
+    result.update(_pending_economics(entry, issue=reason))
+    return result
 
 
 def _consistent_with_frozen_d5(row: Mapping[str, Any], sixth_economics: Mapping[str, Any]) -> bool:
@@ -164,6 +268,7 @@ def source_digest(raw: pd.DataFrame, declared_sha256: str = "") -> str:
 def _capture_price(
     prices: pd.DataFrame, symbol: str, session: pd.Timestamp, field: str,
     prefix: str, price_column: str, digest: str, observed_at: str,
+    *, entry_session: pd.Timestamp | None = None, holding_actions: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     result = {
         price_column: float("nan"), f"{prefix}_status": "missing",
@@ -193,6 +298,8 @@ def _capture_price(
         "corporate_actions_source": str(quote["corporate_actions_source"]),
         "source_usable": True, "source_sha256": digest,
     }
+    if field == "actual_open":
+        provenance.update({"entry_session": f"{entry_session:%Y-%m-%d}", "holding_actions": holding_actions})
     return {
         price_column: float(quote[field]), f"{prefix}_status": "verified",
         f"{prefix}_observed_at": observed_at, f"{prefix}_source_sha256": digest,
@@ -219,6 +326,36 @@ def build_endpoint_receipts(
     if pd.isna(observed) or observed.tzinfo is None or observed > pd.Timestamp.now(tz="UTC"):
         raise ValueError("endpoint observation time must be timezone-aware and non-future")
     result = {"sixth_xtks_exit_date": sixth}
+    if _review_quarantined(row):
+        # A subsequent normal refresh, replay or generic backfill is not a
+        # reviewed correction of contradictory source evidence.
+        return {column: row.get(column) for column in ENDPOINT_COLUMNS}
+    holding_actions = _holding_actions(actions, entry, sixth, symbol)
+    current_sixth = {"sixth_xtks_exit_date": sixth, **_capture_price(
+        prices, symbol, sixth, "actual_open", "sixth_xtks_exit", "sixth_xtks_exit_open", digest, observed_at,
+        entry_session=entry, holding_actions=holding_actions,
+    )}
+    if current_sixth["sixth_xtks_exit_status"] == "verified" and not sixth_endpoint_verified({**dict(row), **current_sixth}):
+        raise ValueError("invalid new endpoint receipt: sixth_xtks_exit; review source basis and observation time")
+    if row.get("sixth_xtks_exit_status") == "verified" and sixth_endpoint_verified(row):
+        conflict = ""
+        if current_sixth["sixth_xtks_exit_status"] == "verified":
+            conflict = _d6_receipt_conflict(row, current_sixth)
+        elif current_sixth["sixth_xtks_exit_status"] == "quarantined":
+            conflict = "d6_current_source_quarantined"
+        else:
+            saved_actions = json.loads(str(row["sixth_xtks_exit_provenance_json"]))["holding_actions"]
+            # A missing quote is not proof that an old action disappeared, but
+            # a newly declared action still contradicts the stored share basis.
+            if any(action not in saved_actions for action in holding_actions):
+                conflict = "d6_holding_action_revision"
+        if conflict:
+            if current_sixth["sixth_xtks_exit_status"] != "verified":
+                current_sixth.update({"sixth_xtks_exit_source_sha256": digest,
+                                      "sixth_xtks_exit_observed_at": observed_at,
+                                      "sixth_xtks_exit_provenance_json": json.dumps({"holding_actions": holding_actions}, separators=(",", ":"))})
+            return {**{column: row.get(column) for column in SIGNAL_ACTUAL_COLUMNS},
+                    **_quarantine_d6(row, current_sixth, conflict, observed_at)}
     for prefix, price_column, session, field, columns, verifier in (
         ("signal_actual_close", "signal_actual_close", signal, "actual_close", SIGNAL_ACTUAL_COLUMNS, signal_actual_close_verified),
         ("sixth_xtks_exit", "sixth_xtks_exit_open", sixth, "actual_open", SIXTH_PRICE_COLUMNS, sixth_endpoint_verified),
@@ -230,7 +367,7 @@ def build_endpoint_receipts(
             if prefix == "sixth_xtks_exit" and pd.Timestamp(row["sixth_xtks_exit_date"]).normalize() != sixth:
                 raise ValueError("sixth session revision requires review")
         else:
-            result.update(_capture_price(prices, symbol, session, field, prefix, price_column, digest, observed_at))
+            result.update(current_sixth if field == "actual_open" else _capture_price(prices, symbol, session, field, prefix, price_column, digest, observed_at))
             if result.get(f"{prefix}_status") == "verified" and not verifier({**dict(row), **result}):
                 raise ValueError(f"invalid new endpoint receipt: {prefix}; review source basis and observation time")
     # Keep verified D6 economics just as D5 economics are frozen.
@@ -239,12 +376,10 @@ def build_endpoint_receipts(
             raise ValueError("corrupt verified sixth economics")
         result.update({column: row.get(column) for column in SIXTH_ECONOMIC_COLUMNS})
         return result
-    result.update({column: float("nan") for column in SIXTH_ECONOMIC_COLUMNS})
-    result.update({"sixth_economics_status": "pending", "sixth_entry_date": entry,
-                   "sixth_applied_actions_json": "", "sixth_price_basis_date": "",
-                   "sixth_price_basis_source_sha256": "", "sixth_economics_observed_at": "",
-                   "sixth_economics_issue": ""})
-    if not sixth_endpoint_verified({**dict(row), **result}) or (symbol, entry) not in prices.index:
+    result.update(_pending_economics(entry))
+    # Both prices and all holding actions must come from the current verified
+    # corpus. A saved price alone never completes economics with new actions.
+    if not sixth_endpoint_verified({**dict(row), **current_sixth}) or (symbol, entry) not in prices.index:
         return result
     quote = prices.loc[(symbol, entry)]
     if not bool(quote["source_usable"]):
@@ -262,7 +397,7 @@ def build_endpoint_receipts(
         shares = float(row.get("entry_shares", 100))
     try:
         economics = build_trade_economics(
-            entry, sixth, actual_entry, result["sixth_xtks_exit_open"], actions,
+            entry, sixth, actual_entry, current_sixth["sixth_xtks_exit_open"], actions,
             symbol=symbol, entry_shares=shares, basis_date=quote["basis_asof"], source_sha256=digest,
         )
     except UnsupportedFractionalShares:
@@ -281,6 +416,14 @@ def build_endpoint_receipts(
     )})
     result["sixth_economics_status"] = "verified"
     result["sixth_economics_observed_at"] = observed_at
+    result["sixth_economics_provenance_json"] = json.dumps({
+        "version": "CLOUD_D6_ECONOMIC_SOURCE_V1", "source_sha256": digest,
+        "entry": {"session": f"{entry:%Y-%m-%d}", "actual_open": float(quote["actual_open"]),
+                  "adjusted_open": float(quote["open"]), "split_factor": float(quote["split_factor"]),
+                  "basis_asof": f"{pd.Timestamp(quote['basis_asof']):%Y-%m-%d}"},
+        "exit_receipt": _plain_receipt(current_sixth, SIXTH_PRICE_COLUMNS),
+        "holding_actions": json.loads(economics["applied_actions_json"]),
+    }, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
     if not sixth_economics_verified({**dict(row), **result}):
         raise ValueError("invalid new sixth economics; review source basis and observation time")
     return result
@@ -289,15 +432,27 @@ def build_endpoint_receipts(
 def preserve_verified_endpoints(existing: Mapping[str, Any], incoming: Mapping[str, Any]) -> dict[str, Any]:
     """Replay must not erase or revise independently verified receipts."""
     result = dict(incoming)
+    for candidate in (existing, incoming):
+        if _review_quarantined(candidate):
+            result.update({column: candidate.get(column) for column in [*SIXTH_PRICE_COLUMNS, *SIXTH_ECONOMIC_COLUMNS]})
+            break
+    else:
+        if sixth_endpoint_verified(existing) and sixth_endpoint_verified(incoming):
+            conflict = _d6_receipt_conflict(existing, incoming)
+            if conflict:
+                result.update(_quarantine_d6(existing, incoming, conflict, str(incoming["sixth_xtks_exit_observed_at"])))
+    quarantined = _review_quarantined(result)
     for status, columns, verifier in (
         ("signal_actual_close_status", SIGNAL_ACTUAL_COLUMNS, signal_actual_close_verified),
         ("sixth_xtks_exit_status", SIXTH_PRICE_COLUMNS, sixth_endpoint_verified),
     ):
+        if status == "sixth_xtks_exit_status" and quarantined:
+            continue
         if existing.get(status) == "verified":
             if not verifier(existing):
                 raise ValueError(f"corrupt verified endpoint receipt: {status}")
             result.update({column: existing.get(column) for column in columns})
-    if existing.get("sixth_economics_status") == "verified":
+    if existing.get("sixth_economics_status") == "verified" and not quarantined:
         if not sixth_economics_verified(existing):
             raise ValueError("corrupt verified sixth economics")
         result.update({column: existing.get(column) for column in SIXTH_ECONOMIC_COLUMNS})

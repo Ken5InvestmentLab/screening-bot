@@ -127,10 +127,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const resultCount = document.getElementById("search-result-count");
   const loadMore = document.getElementById("history-load-more");
   const collapse = document.getElementById("history-collapse");
-  const rows = Array.from(document.querySelectorAll("#detection-table tbody tr"));
+  // The empty-history message is a table row, but never a detection or CSV row.
+  const rows = Array.from(document.querySelectorAll("#detection-table tbody tr[data-date]"));
   const normalize = (value) => String(value || "").normalize("NFKC").trim().toLowerCase();
   let visibleLimit = PAGE_SIZE;
-  let preferences = { ...CloudPreferences.DEFAULT };
+  // Only applied preferences may be used by visible rows, endpoint cells or CSV.
+  // A requested choice can remain in flight while its aggregate is decompressed.
+  let appliedPreferences = { ...CloudPreferences.DEFAULT };
+  let requestedPreferences = { ...appliedPreferences };
   let matchingRows = [];
 
   const initialQuery = new URLSearchParams(window.location.search).get("q");
@@ -146,7 +150,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       const searchTarget = normalize(row.dataset.search || row.dataset.symbol);
       const signalDate = row.dataset.date || "";
       return CloudPreferences.matchesCap(row.dataset.signalActualClose,
-        row.dataset.signalPriceVerified || row.dataset.signalActualCloseStatus, preferences.priceCapYen)
+        row.dataset.signalPriceVerified || row.dataset.signalActualCloseStatus, appliedPreferences.priceCapYen)
         && (!symbolValue || searchTarget.includes(symbolValue))
         && (!selectorValue || (row.dataset.selectors || "").split(" ").includes(selectorValue))
         && (!fromValue || signalDate >= fromValue)
@@ -233,6 +237,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   let payload = null;
   let currentVariant = null;
   let renderRevision = 0;
+  let preferencesPending = false;
+  let saving = false;
+  const exportButton = document.getElementById("cloud-export-csv");
+  const historyExportButton = document.getElementById("cloud-history-export-csv");
   const decodedVariants = new Map();
   let edited = false;
   let editRevision = 0;
@@ -292,7 +300,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     });
   }
 
-  const syncControls = () => {
+  const syncControls = (preferences = requestedPreferences) => {
     if (!settings || !endpoint) return;
     settings.value = preferences.priceCapYen === null ? "unlimited" : (
       CloudPreferences.PRESETS.includes(preferences.priceCapYen) ? String(preferences.priceCapYen) : "custom"
@@ -324,37 +332,53 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     decodedVariants.set(key, variant);
     return variant;
   };
+  const syncActionAvailability = () => {
+    if (exportButton) exportButton.disabled = preferencesPending || !currentVariant;
+    if (historyExportButton) historyExportButton.disabled = preferencesPending;
+    if (saveButton) saveButton.disabled = preferencesPending || saving;
+    content?.setAttribute("aria-busy", preferencesPending ? "true" : "false");
+  };
   const applyPreferences = async ({ persist = false } = {}) => {
     const revision = ++renderRevision;
-    const requested = { ...preferences };
-    const exportButton = document.getElementById("cloud-export-csv");
-    if (persist) {
-      try { localStorage.setItem(storageKey, JSON.stringify(requested)); storageFailed = false; }
-      catch (_error) { storageFailed = true; }
-    }
-    if (payload && content) {
-      content.setAttribute("aria-busy", "true");
-      if (exportButton) exportButton.disabled = true;
+    const requested = { ...requestedPreferences };
+    preferencesPending = true;
+    syncActionAvailability();
+    let nextVariant = currentVariant;
+    if (payloadElement && content) {
       try {
-        const nextVariant = await decodeVariant(CloudPreferences.variantKey(payload, requested));
+        if (!payload) throw new Error("analytics payload unavailable");
+        nextVariant = await decodeVariant(CloudPreferences.variantKey(payload, requested));
         if (revision !== renderRevision) return false;
-        currentVariant = nextVariant;
       } catch (_error) {
         if (revision !== renderRevision) return false;
-        currentVariant = null;
-        content.setAttribute("aria-busy", "false");
-        setStatus("この条件の集計を読み込めません。対応ブラウザで再読込してください。保存済みの初期表示を残しています。", true);
+        // Keep the last complete view and its CSV usable; failed requests are
+        // neither persisted locally nor sent as the current member preference.
+        requestedPreferences = { ...appliedPreferences };
+        syncControls(appliedPreferences);
+        preferencesPending = false;
+        syncActionAvailability();
+        setStatus("この条件の集計を読み込めません。表示・CSV・選択欄を直前に表示できた条件へ戻しました。この変更は保存していません。", true);
         return false;
       }
-      content.innerHTML = currentVariant.html;
-      initializePagination(content);
-      content.setAttribute("aria-busy", "false");
-      if (exportButton) exportButton.disabled = false;
     }
+    // No await inside this commit: aggregates, history, endpoint cells and the
+    // parameters used by both exports change together within one browser task.
+    if (payload && content) {
+      content.innerHTML = nextVariant.html;
+      initializePagination(content);
+    }
+    currentVariant = nextVariant;
+    appliedPreferences = requested;
     for (const element of document.querySelectorAll("[data-exit-key]")) {
-      element.hidden = element.dataset.exitKey !== preferences.exitKey;
+      element.hidden = element.dataset.exitKey !== appliedPreferences.exitKey;
     }
     filter({ resetLimit: true });
+    if (persist) {
+      try { localStorage.setItem(storageKey, JSON.stringify(appliedPreferences)); storageFailed = false; }
+      catch (_error) { storageFailed = true; }
+    }
+    preferencesPending = false;
+    syncActionAvailability();
     return true;
   };
   const readControls = () => CloudPreferences.normalize({
@@ -372,12 +396,18 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     }
     try {
       const next = readControls();
-      preferences = next;
+      requestedPreferences = next;
       customPrice?.setAttribute("aria-invalid", "false");
+      setStatus("表示条件を反映しています。反映が終わるまでCSV出力と会員設定の保存はできません。");
       if (await applyPreferences({ persist: true }) && editRevision === editAtChange) setStatus(storageFailed
         ? "表示に適用しました。この端末では保存できません。会員設定の保存をお試しください。"
         : "表示に適用しました。会員設定に残すには「設定を保存」を押してください。");
     } catch (error) {
+      // An invalid newer edit must also cancel an older decompression request.
+      renderRevision += 1;
+      requestedPreferences = { ...appliedPreferences };
+      preferencesPending = false;
+      syncActionAvailability();
       customPrice?.setAttribute("aria-invalid", "true");
       setStatus(`${error.message} 前の有効な設定を表示しています。`, true);
     }
@@ -385,7 +415,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   if (settings && endpoint) {
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) preferences = CloudPreferences.normalize(JSON.parse(saved));
+      if (saved) requestedPreferences = CloudPreferences.normalize(JSON.parse(saved));
     } catch (_error) { storageFailed = true; }
     syncControls();
     applyPreferences();
@@ -393,31 +423,35 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     endpoint.addEventListener("change", updateFromControls);
     customPrice?.addEventListener("input", updateFromControls);
     saveButton?.addEventListener("click", async () => {
-      try { preferences = readControls(); }
+      if (preferencesPending || saving) return;
+      let selected;
+      try { selected = readControls(); }
       catch (error) { setStatus(error.message, true); return; }
+      if (selected.priceCapYen !== appliedPreferences.priceCapYen || selected.exitKey !== appliedPreferences.exitKey) {
+        setStatus("選択した条件はまだ表示に反映されていません。条件を選び直し、反映後に保存してください。", true);
+        return;
+      }
+      const preferencesToSave = { ...appliedPreferences };
       const editAtSave = editRevision;
-      saveButton.disabled = true;
+      edited = true;
+      saving = true;
+      syncActionAvailability();
       try {
         const response = await fetch("/api/cloud/preferences", {
           method: "PUT", credentials: "same-origin", cache: "no-store",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ max_price: preferences.priceCapYen, exit_endpoint: preferences.exitKey, notifications }),
+          body: JSON.stringify({ max_price: preferencesToSave.priceCapYen, exit_endpoint: preferencesToSave.exitKey, notifications }),
         });
         if (!response.ok) throw new Error(`status:${response.status}`);
         if (editRevision !== editAtSave) {
           setStatus("保存中に表示条件が変更されました。前の設定は保存済みです。今の条件を保存するにはもう一度押してください。");
           return;
         }
-        await applyPreferences({ persist: true });
-        if (editRevision !== editAtSave) {
-          setStatus("表示条件が変更されました。会員設定への保存はもう一度行ってください。");
-          return;
-        }
         edited = false;
         setStatus(storageFailed ? "会員設定を保存しました。端末内の補助保存は利用できません。" : "会員設定を保存しました。通知の実送信はまだ行いません。");
       } catch (_error) {
         setStatus("会員設定を保存できませんでした。ログイン・会員連携・接続を確認してください。現在の表示は利用できます。", true);
-      } finally { saveButton.disabled = false; }
+      } finally { saving = false; syncActionAvailability(); }
     });
     // Server preferences are authoritative. Do not overwrite an edit made while loading.
     fetch("/api/cloud/preferences", { credentials: "same-origin", cache: "no-store" }).then(async (response) => {
@@ -427,12 +461,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       const serverPreferences = CloudPreferences.normalize({ priceCapYen: saved.max_price, exitKey: saved.exit_endpoint });
       const paidMembership = data.membership?.status === "paid";
       serverAvailable = true;
+      let serverApplied = false;
       if (!edited) {
-        preferences = serverPreferences;
+        requestedPreferences = serverPreferences;
         notifications = Object.fromEntries(Object.keys(notifications).map((key) => [key, saved.notifications?.[key] === true]));
         syncControls();
-        const applied = await applyPreferences({ persist: true });
-        if (applied && !edited) {
+        serverApplied = await applyPreferences({ persist: true });
+        if (serverApplied && !edited) {
           for (const [key, input] of Object.entries(notifyInputs)) input.checked = notifications[key];
           setStatus(storageFailed ? "会員設定を反映しました。端末内の補助保存は利用できません。" : "会員設定を反映しました。");
         }
@@ -440,7 +475,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       for (const input of Object.values(notifyInputs)) input.disabled = !paidMembership;
       const off = document.getElementById("cloud-notifications-off");
       if (off) off.disabled = false;
-      if (!paidMembership && !edited) setStatus("表示条件の会員設定を反映しました。通知の利用には有効な有料会員資格が必要です。通知解除は行えます。");
+      if (!paidMembership && !edited && serverApplied) setStatus("表示条件の会員設定を反映しました。通知の利用には有効な有料会員資格が必要です。通知解除は行えます。");
     }).catch(() => {
       if (!edited) setStatus(storageFailed
         ? "会員設定と端末保存を利用できません。この画面で条件を選択できます。"
@@ -456,7 +491,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   document.getElementById("cloud-export-csv")?.addEventListener("click", () => {
-    if (!currentVariant) return;
+    if (preferencesPending || !currentVariant) return;
+    const preferences = appliedPreferences;
     const records = [...(currentVariant.metrics || []), ...(currentVariant.monthlyMetrics || [])].map((row) => ({
       exit_endpoint: preferences.exitKey,
       detection_actual_close_cap_yen: preferences.priceCapYen === null ? "上限なし" : preferences.priceCapYen,
@@ -466,6 +502,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     downloadCSV(CloudPreferences.csv(records, columns), `Cloud_集計_${preferences.exitKey}.csv`);
   });
   document.getElementById("cloud-history-export-csv")?.addEventListener("click", () => {
+    if (preferencesPending) return;
+    const preferences = appliedPreferences;
     const records = matchingRows.map((row) => ({
       "検出日": row.dataset.date || "",
       "銘柄コード": row.dataset.symbol || "",

@@ -16,6 +16,21 @@ export type CloudEnv = Env & {
   SESSION_SECRET?: string;
 };
 const list = (value?: string): string[] => (value ?? "").split(",").map(x => x.trim()).filter(Boolean);
+// Bound each request's database work. A persistent per-member cursor visits the
+// remaining candidates on subsequent calls; held/suppressed rows return next cycle.
+const DRY_RUN_PAGE_SIZE = 20;
+type ScanProgress = {
+  after_available_at: string;
+  after_source_event_key: string;
+  cycle_cutoff_at: string;
+  version: number;
+};
+type CandidateRow = {
+  source_event_key: string;
+  event_json: string;
+  source_ledger_revision: string;
+  available_at: string;
+};
 export async function cloudMemberId(discordSubject: string): Promise<string> {
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`cloud-member:${discordSubject}`));
   return `cloud_${Array.from(new Uint8Array(hash), n => n.toString(16).padStart(2, "0")).join("")}`;
@@ -143,24 +158,43 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     try { input = await requestJson(request); } catch { return json({ ok: false, reason: "invalid_request" }, 400); }
     if (!isObject(input) || Object.keys(input).length) return json({ ok: false, reason: "empty_body_required" }, 400);
     const now = Date.now();
+    const nowIso = new Date(now).toISOString();
+    const initialized = await env.CLOUD_DB.prepare(`INSERT OR IGNORE INTO cloud_notification_scan_progress
+      (member_id, updated_at) VALUES (?, ?)`).bind(memberId, nowIso).run();
+    if (!initialized.success) throw new Error("scan_progress_save_failed");
+    const progress = await env.CLOUD_DB.prepare(`SELECT after_available_at, after_source_event_key,
+      cycle_cutoff_at, version FROM cloud_notification_scan_progress WHERE member_id = ?`)
+      .bind(memberId).first<ScanProgress>();
+    if (!progress || !Number.isSafeInteger(progress.version) || progress.version < 0) throw new Error("scan_progress_missing");
+    const cutoff = progress.cycle_cutoff_at || nowIso;
     const rows = await env.CLOUD_DB.prepare(
-      "SELECT event_json, source_ledger_revision FROM cloud_notification_events WHERE available_at <= ? ORDER BY available_at DESC LIMIT 100",
-    ).bind(new Date(now).toISOString()).all<{ event_json: string; source_ledger_revision: string }>();
+      `SELECT source_event_key, event_json, source_ledger_revision, available_at
+       FROM cloud_notification_events WHERE available_at <= ?
+       AND (available_at, source_event_key) > (?, ?)
+       ORDER BY available_at ASC, source_event_key ASC LIMIT 21`,
+    ).bind(cutoff, progress.after_available_at, progress.after_source_event_key).all<CandidateRow>();
+    if (!rows.success) throw new Error("candidate_read_failed");
+    const candidates = (rows.results ?? []).slice(0, DRY_RUN_PAGE_SIZE);
+    const hasMore = (rows.results ?? []).length > DRY_RUN_PAGE_SIZE;
     const results: { status: string; reason: string }[] = [];
-    for (const row of rows.results ?? []) {
-      const parsed: unknown = JSON.parse(row.event_json);
+    for (const row of candidates) {
+      let parsed: unknown;
+      try { parsed = JSON.parse(row.event_json); }
+      catch {
+        results.push({ status: "held", reason: "canonical_event_evidence_required" });
+        continue;
+      }
       if (!isObject(parsed) || parsed.adapter_version !== "cloud-ledger-v1" ||
         !/^[0-9a-f]{64}$/.test(row.source_ledger_revision) || parsed.source_ledger_revision !== row.source_ledger_revision) {
         results.push({ status: "held", reason: "canonical_event_evidence_required" });
         continue;
       }
       const event = parsed as NotificationEvent;
-      const decision = evaluateNotification(event, preferences, membership, now);
-      const existing = await env.CLOUD_DB.prepare(
-        "SELECT status FROM cloud_notification_deliveries WHERE member_id = ? AND event_key = ?",
-      ).bind(memberId, decision.event_key).first<{ status: string }>();
-      if (existing?.status === "dry_run_eligible" || existing?.status === "sent") {
-        results.push({ status: "suppressed", reason: "duplicate_event" });
+      let decision: ReturnType<typeof evaluateNotification>;
+      try { decision = evaluateNotification(event, preferences, membership, now); }
+      catch {
+        // One malformed private candidate must not strand every following page.
+        results.push({ status: "held", reason: "invalid_candidate_data" });
         continue;
       }
       const state = decision.status === "would_send" ? "dry_run_eligible" : decision.status;
@@ -174,8 +208,19 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
       if (!receipt.success) throw new Error("delivery_receipt_save_failed");
       results.push(receipt.meta.changes === 0 ? { status: "suppressed", reason: "duplicate_event" } : { status: decision.status, reason: decision.reason });
     }
+    const last = candidates.at(-1);
+    // Advance only after all delivery writes succeeded. Concurrent callers may
+    // inspect the same page, but the delivery guard prevents duplicate eligibility
+    // and this version comparison prevents a late request from moving us backward.
+    const advanced = await env.CLOUD_DB.prepare(`UPDATE cloud_notification_scan_progress
+      SET after_available_at = ?, after_source_event_key = ?, cycle_cutoff_at = ?,
+      updated_at = ?, version = version + 1 WHERE member_id = ? AND version = ?`)
+      .bind(hasMore && last ? last.available_at : "", hasMore && last ? last.source_event_key : "",
+        hasMore ? cutoff : "", nowIso, memberId, progress.version).run();
+    if (!advanced.success) throw new Error("scan_progress_save_failed");
     // No event IDs, company names, prices, or messages are returned by dry-run.
-    return json({ ok: true, delivery_mode: "dry_run", sent: 0, results });
+    return json({ ok: true, delivery_mode: "dry_run", sent: 0, results,
+      scan: { processed: candidates.length, page_limit: DRY_RUN_PAGE_SIZE, has_more: hasMore, cycle_complete: !hasMore } });
   } catch {
     return json({ ok: false, reason: "temporarily_unavailable", delivery_mode: "dry_run" }, 503);
   }

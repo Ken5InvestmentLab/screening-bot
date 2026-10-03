@@ -15,23 +15,23 @@ from weak_early_beta.ledger import bootstrap_historical
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.model import attach_forward_rows
 from weak_early_beta.report import _detection_rows, _page_shell, render_analytics_report, render_mode_report, render_report
-from weak_early_beta.report_preferences import select_report_view, validate_price_cap
+from weak_early_beta.report_preferences import released_history, select_report_view, validate_price_cap
 from weak_early_beta.trade_basis import LEGACY_PRICE_BASIS_VERSION
 
 
-def actual_trade(symbol="9Z9Z", price=1000, *, complete=True, split=1):
+def actual_trade(symbol="9Z9Z", price=1000, *, complete=True, split=1, signal_date="2026-09-01"):
     count = 7 if complete else 6
     actual = [price, price, price + 1, price + 2, price + 3, price + 4, (price + 5) / split][:count]
     factors = [split] * min(count, 6) + ([1] if complete else [])
     adjusted = [value / factor for value, factor in zip(actual, factors)]
     daily = normalize_daily(pd.DataFrame({
-        "date": pd.bdate_range("2026-09-01", periods=count), "symbol": symbol,
+        "date": pd.bdate_range(signal_date, periods=count), "symbol": symbol,
         "open": adjusted, "high": [value + 1 for value in adjusted],
         "low": [value - 1 for value in adjusted], "close": adjusted,
         "volume": [10_000 * factor for factor in factors],
         "split_ratio": [0] * min(count, 6) + ([split if split != 1 else 0] if complete else []),
     }))
-    selected = pd.DataFrame([{"date": pd.Timestamp("2026-09-01"), "symbol": symbol,
+    selected = pd.DataFrame([{"date": pd.Timestamp(signal_date), "symbol": symbol,
                               "selector": "volr20_low", "model_period": "2026-09"}])
     result = attach_forward_rows(selected, daily)
     result["company_name"] = "PRIVATE_IDENTITY_SENTINEL"
@@ -118,6 +118,66 @@ class ReportPreferenceTests(unittest.TestCase):
             self.assertNotIn('data-entry-open=', output)
             self.assertNotIn('data-d5-close=', output)
             self.assertNotIn('data-d6-open=', output)
+
+    def test_free_population_excludes_all_pending_values_dates_and_thresholds(self):
+        released = actual_trade("R001", 222.22, signal_date="2026-07-01")
+        pending = actual_trade("Q9Z9", 876.54, complete=False)
+        pending["gross_return"] = .13791
+        pending["one_hundred_shares_pl_yen"] = 12088.56
+        pending["company_name"] = "PENDING_PRIVATE_SENTINEL"
+        mixed = pd.concat([released, pending], ignore_index=True)
+        before = mixed.copy(deep=True)
+        cache = {}
+        renderers = (
+            lambda data, free: render_report(data, pd.DataFrame(), self.generated, mask_pending=free, _variant_cache=cache),
+            lambda data, free: render_analytics_report(data, pd.DataFrame(), self.generated, mask_pending=free, _variant_cache=cache),
+            lambda data, free: render_mode_report(data, pd.DataFrame(), pd.DataFrame(), self.generated, "volr20_low", mask_pending=free, _variant_cache=cache),
+        )
+        for renderer in renderers:
+            full = payload(renderer(mixed, False))  # Prime the same cache full-first.
+            self.assertIn(876.54, full["priceBreakpoints"])
+            output = renderer(mixed, True)
+            data = payload(output)
+            # Strong non-interference: adding an unreleased row changes no byte
+            # of free output, including counts, dates, compressed data and CSV.
+            self.assertEqual(output, renderer(released, True))
+            self.assertEqual(data["priceBreakpoints"], [222.22])
+            decoded = json.dumps(data, ensure_ascii=False)
+            for secret in ("Q9Z9", "PENDING_PRIVATE_SENTINEL", "876.54", "12088.56", "12,089", "2026-09-01", "2026-09-02", "2026-09-08"):
+                self.assertNotIn(secret, output)
+                self.assertNotIn(secret, decoded)
+            totals = [r for r in data["variants"]["d5_close:all"]["metrics"] if r["selector_id"] == "volr20_low" and r["period"] == "2026-2026"]
+            self.assertEqual(totals[0]["n"], 1)
+        pd.testing.assert_frame_equal(mixed, before)
+
+    def test_shared_cache_is_separated_by_source_generation_and_audience(self):
+        first = actual_trade("R001", 222.22, signal_date="2026-07-01")
+        second = actual_trade("R002", 333.33, signal_date="2026-07-01")
+        cache = {}
+        def render(frame, generated, free):
+            return render_analytics_report(frame, pd.DataFrame(), generated, mask_pending=free, _variant_cache=cache)
+        a = payload(render(first, self.generated, True))
+        b = payload(render(second, self.generated, True))
+        self.assertEqual(a["priceBreakpoints"], [222.22])
+        self.assertEqual(b["priceBreakpoints"], [333.33])
+        later = render(second, self.generated + pd.Timedelta(days=1), True)
+        self.assertIn("2026-10-05", payload(later)["variants"]["d5_close:all"]["html"])
+        pending = actual_trade("Q9Z9", 876.54, complete=False)
+        free = payload(render(pending, self.generated, True))
+        full = payload(render(pending, self.generated, False))
+        self.assertEqual(free["priceBreakpoints"], [])
+        self.assertEqual(full["priceBreakpoints"], [876.54])
+
+    def test_free_release_requires_all_overlapping_mode_receipts(self):
+        first = actual_trade("R001", 222.22)
+        overlap = first.copy()
+        overlap["selector_id"] = "body_pct_low"
+        overlap["sixth_xtks_exit_status"] = "pending"
+        mixed = pd.concat([first, overlap], ignore_index=True)
+        self.assertTrue(released_history(mixed).empty)
+        output = render_mode_report(mixed, pd.DataFrame(), pd.DataFrame(), self.generated, "volr20_low", mask_pending=True)
+        self.assertEqual(payload(output)["priceBreakpoints"], [])
+        self.assertNotIn('data-symbol="R001"', output)
 
     def test_receipt_verified_d6_releases_identity_even_if_economics_unavailable(self):
         frame = actual_trade()

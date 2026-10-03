@@ -414,7 +414,8 @@ test('missing or malformed monetary values cannot silently become a paid total o
 // The in-memory D1 double implements only statements used by the real API.
 // Unique delivery keys are enforced at INSERT, including concurrent calls.
 function fakeDatabase() {
-  const state = { links: new Map(), preferences: new Map(), events: [], deliveries: new Map(), subscriptions: [], writes: [], failWrites: false };
+  const state = { links: new Map(), preferences: new Map(), events: [], deliveries: new Map(),
+    scanProgress: new Map(), scans: [], subscriptions: [], writes: [], failWrites: false, failProgressWrites: false };
   function prepare(sql) {
     const normalized = sql.replace(/\s+/g, ' ').trim();
     return {
@@ -428,11 +429,26 @@ function fakeDatabase() {
             if (normalized.includes('FROM cloud_member_preferences')) {
               return state.preferences.has(args[0]) ? { preferences_json: state.preferences.get(args[0]) } : null;
             }
+            if (normalized.includes('FROM cloud_notification_scan_progress')) {
+              const progress = state.scanProgress.get(args[0]);
+              return progress ? structuredClone(progress) : null;
+            }
             if (normalized.includes('FROM cloud_notification_deliveries')) return state.deliveries.get(`${args[0]}|${args[1]}`) || null;
             throw new Error(`Unexpected first query: ${normalized}`);
           },
           async all() {
             assert.match(normalized, /FROM cloud_notification_events/);
+            state.scans.push({ sql: normalized, args: plain(args) });
+            if (normalized.includes('LIMIT 21')) {
+              assert.match(normalized, /ORDER BY available_at ASC,\s*source_event_key ASC/);
+              assert.match(normalized, /\(available_at,\s*source_event_key\) > \(\?,\s*\?\)/);
+              assert.equal(args.length, 3);
+              return { success: true, results: state.events
+                .filter(row => row.available_at <= args[0] && (row.available_at > args[1] ||
+                  (row.available_at === args[1] && row.source_event_key > args[2])))
+                .sort((a, b) => a.available_at.localeCompare(b.available_at) || a.source_event_key.localeCompare(b.source_event_key))
+                .slice(0, 21).map(row => structuredClone(row)) };
+            }
             return { success: true, results: state.events.filter(row => row.available_at <= args[0])
               .sort((a, b) => b.available_at.localeCompare(a.available_at)).slice(0, 100)
               .map(row => ({ event_json: row.event_json, source_ledger_revision: row.source_ledger_revision })) };
@@ -440,6 +456,20 @@ function fakeDatabase() {
           async run() {
             state.writes.push({ sql: normalized, args: plain(args) });
             if (state.failWrites) return { success: false, error: 'synthetic write failure', meta: { changes: 0 } };
+            if (normalized.startsWith('INSERT OR IGNORE INTO cloud_notification_scan_progress')) {
+              if (state.scanProgress.has(args[0])) return { success: true, meta: { changes: 0 } };
+              state.scanProgress.set(args[0], { after_available_at: '', after_source_event_key: '',
+                cycle_cutoff_at: '', version: 0, updated_at: args[1] });
+              return { success: true, meta: { changes: 1 } };
+            }
+            if (normalized.startsWith('UPDATE cloud_notification_scan_progress')) {
+              if (state.failProgressWrites) return { success: false, error: 'synthetic cursor failure', meta: { changes: 0 } };
+              const progress = state.scanProgress.get(args[4]);
+              if (!progress || progress.version !== args[5]) return { success: true, meta: { changes: 0 } };
+              state.scanProgress.set(args[4], { after_available_at: args[0], after_source_event_key: args[1],
+                cycle_cutoff_at: args[2], version: progress.version + 1, updated_at: args[3] });
+              return { success: true, meta: { changes: 1 } };
+            }
             if (normalized.startsWith('INSERT INTO cloud_member_preferences')) {
               state.preferences.set(args[0], args[1]);
               return { success: true, meta: { changes: 1 } };
@@ -649,8 +679,31 @@ test('unconfigured membership, a missing identity link, and a database outage fa
 });
 
 function addNotification(h, event = eventFixture()) {
-  h.db.state.events.push({ available_at: '2026-10-02T07:00:00.000Z', event_json: JSON.stringify(event), source_ledger_revision: event.source_ledger_revision });
+  h.db.state.events.push({ source_event_key: `${event.signal_id}:${event.kind}`, available_at: '2026-10-02T07:00:00.000Z',
+    event_json: JSON.stringify(event), source_ledger_revision: event.source_ledger_revision });
   h.db.state.preferences.set(h.memberId, JSON.stringify(preferences({ notifications: { result: true } })));
+}
+
+function addBacklog(h, count, { prefix = 'private-backlog', sameTime = false } = {}) {
+  const start = h.db.state.events.length;
+  for (let index = 0; index < count; index += 1) {
+    addNotification(h, eventFixture({ signal_id: `${prefix}-${String(index).padStart(3, '0')}` }));
+    h.db.state.events[start + index].available_at = new Date(NOW - (sameTime ? 0 : index * 1000)).toISOString();
+  }
+}
+
+async function dryRunPage(h, { subject } = {}) {
+  const response = await h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {}, subject });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.sent, 0);
+  assert.equal(body.delivery_mode, 'dry_run');
+  assert.doesNotMatch(JSON.stringify(body), /private-backlog|private-held|private-ties|private-concurrent|signal_id|event_key|actual_price|source_ledger_revision|after_available_at|cycle_cutoff_at/);
+  assert.equal(body.scan.page_limit, 20);
+  assert.equal(body.scan.processed, body.results.length);
+  assert.ok(body.scan.processed <= 20);
+  assert.equal(body.scan.cycle_complete, !body.scan.has_more);
+  return body;
 }
 
 test('dry-run uses server events, never sends, and returns no private event identifiers', async () => {
@@ -746,6 +799,168 @@ test('dry-run deduplicates concurrent requests and subsequent retries atomically
   assert.deepEqual(retry.results, [{ status: 'suppressed', reason: 'duplicate_event' }]);
   assert.equal(h.db.state.deliveries.size, 1);
   assert.equal([...h.db.state.deliveries.values()][0].attempts, 1);
+});
+
+test('repeated dry-runs eventually evaluate all 205 available candidates with bounded pages', async () => {
+  const h = await apiHarness();
+  addBacklog(h, 205);
+  const eligiblePerRun = [];
+  for (let run = 0; run < 12; run += 1) {
+    const body = await dryRunPage(h);
+    eligiblePerRun.push(body.results.filter(result => result.status === 'would_send').length);
+  }
+  assert.equal(h.db.state.deliveries.size, 205,
+    `All available candidates must be reachable; eligible counts by run: ${eligiblePerRun.join(', ')}`);
+  assert.equal([...h.db.state.deliveries.values()].filter(row => row.status === 'dry_run_eligible').length, 205);
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.attempts === 1), 'Eligible candidates must not be duplicated on later runs.');
+});
+
+test('all 205 held candidates are reached and re-evaluated on the next scan after recovery', async () => {
+  const h = await apiHarness({ providerStatus: 503 });
+  addBacklog(h, 205, { prefix: 'private-held' });
+  for (let page = 0; page < 11; page += 1) {
+    const body = await dryRunPage(h);
+    assert.ok(body.results.every(result => result.status === 'held'));
+    assert.equal(body.scan.cycle_complete, page === 10);
+  }
+  assert.equal(h.db.state.deliveries.size, 205);
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.status === 'held' && row.attempts === 1));
+  h.provider.status = 200;
+  let eligible = 0;
+  for (let page = 0; page < 11; page += 1) {
+    const body = await dryRunPage(h);
+    eligible += body.results.filter(result => result.status === 'would_send').length;
+  }
+  assert.equal(eligible, 205);
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.status === 'dry_run_eligible' && row.attempts === 2));
+});
+
+test('expired membership holds paginated candidates until a fresh API check confirms active status', async () => {
+  const fixture = memberFixture(); fixture.membership.status = 'expired';
+  const h = await apiHarness({ fixture }); addBacklog(h, 21);
+  for (let page = 0; page < 2; page += 1) {
+    const body = await dryRunPage(h);
+    assert.ok(body.results.every(result => result.status === 'held' && result.reason === 'membership_not_paid_active'));
+  }
+  assert.equal(h.db.state.deliveries.size, 21);
+  const priorProviderCalls = h.calls.length;
+  h.provider.fixture.membership.status = 'active';
+  let eligible = 0;
+  for (let page = 0; page < 2; page += 1) {
+    const body = await dryRunPage(h);
+    eligible += body.results.filter(result => result.status === 'would_send').length;
+  }
+  assert.equal(eligible, 21);
+  assert.ok(h.calls.length > priorProviderCalls, 'Restored membership must come from a fresh provider lookup.');
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.status === 'dry_run_eligible' && row.attempts === 2));
+});
+
+test('malformed private candidates are held without preventing the rest of a 205-row scan', async () => {
+  const h = await apiHarness(); addBacklog(h, 205, { sameTime: true });
+  h.db.state.events[0].event_json = 'malformed-json';
+  h.db.state.events[1].event_json = 'null';
+  const missingData = JSON.parse(h.db.state.events[2].event_json);
+  delete missingData.endpoints;
+  h.db.state.events[2].event_json = JSON.stringify(missingData);
+  h.db.state.events[3].source_ledger_revision = 'mismatched-revision';
+  let held = 0;
+  let eligible = 0;
+  for (let page = 0; page < 11; page += 1) {
+    const body = await dryRunPage(h);
+    held += body.results.filter(result => result.status === 'held').length;
+    eligible += body.results.filter(result => result.status === 'would_send').length;
+  }
+  assert.equal(held, 4);
+  assert.equal(eligible, 201);
+  assert.equal(h.db.state.deliveries.size, 201);
+  assert.equal(h.db.state.scanProgress.get(h.memberId).after_source_event_key, '');
+});
+
+test('the source-key tie-breaker reaches every one of 205 candidates with an identical timestamp', async () => {
+  const h = await apiHarness();
+  addBacklog(h, 205, { prefix: 'private-ties', sameTime: true });
+  // Deliberately scramble insertion order so an implicit stable array order cannot pass.
+  h.db.state.events.reverse();
+  for (let page = 0; page < 11; page += 1) await dryRunPage(h);
+  assert.equal(h.db.state.deliveries.size, 205);
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.attempts === 1));
+  assert.equal(h.db.state.scanProgress.get(h.memberId).after_source_event_key, '');
+  assert.equal(h.db.state.scanProgress.get(h.memberId).after_available_at, '');
+});
+
+test('overlapping paginated scans do not duplicate receipts or move the server cursor backwards', async () => {
+  const h = await apiHarness();
+  addBacklog(h, 205, { prefix: 'private-concurrent' });
+  let eligible = 0;
+  let lastVersion = 0;
+  for (let round = 0; round < 12; round += 1) {
+    const bodies = await Promise.all([dryRunPage(h), dryRunPage(h)]);
+    eligible += bodies.flatMap(body => body.results).filter(result => result.status === 'would_send').length;
+    const version = h.db.state.scanProgress.get(h.memberId).version;
+    assert.ok(version > lastVersion);
+    lastVersion = version;
+  }
+  assert.equal(eligible, 205);
+  assert.equal(h.db.state.deliveries.size, 205);
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.status === 'dry_run_eligible' && row.attempts === 1));
+  assert.ok(h.db.state.writes.filter(write => write.sql.startsWith('UPDATE cloud_notification_scan_progress'))
+    .every(write => /WHERE member_id = \? AND version = \?/.test(write.sql)), 'Cursor updates must compare the original version.');
+});
+
+test('each authenticated member has an independent server-side scan position', async () => {
+  const h = await apiHarness(); addBacklog(h, 45);
+  await dryRunPage(h);
+  const firstMemberPosition = structuredClone(h.db.state.scanProgress.get(h.memberId));
+  const otherSubject = 'other-unlinked-discord-user';
+  const otherMemberId = await h.api.cloudMemberId(otherSubject);
+  h.db.state.preferences.set(otherMemberId, JSON.stringify(preferences({ notifications: { result: true } })));
+  const other = await dryRunPage(h, { subject: otherSubject });
+  assert.equal(other.results.length, 20);
+  assert.ok(other.results.every(result => result.status === 'held'));
+  const otherPosition = structuredClone(h.db.state.scanProgress.get(otherMemberId));
+  assert.equal(otherPosition.after_source_event_key, firstMemberPosition.after_source_event_key);
+  await dryRunPage(h);
+  assert.notEqual(h.db.state.scanProgress.get(h.memberId).after_source_event_key, firstMemberPosition.after_source_event_key);
+  assert.deepEqual(h.db.state.scanProgress.get(otherMemberId), otherPosition);
+  assert.equal([...h.db.state.deliveries.values()].filter(row => row.member_id === h.memberId).length, 40);
+  assert.equal([...h.db.state.deliveries.values()].filter(row => row.member_id === otherMemberId).length, 20);
+});
+
+test('backdated and newly available candidates inserted mid-cycle are reached in the next bounded cycle', async () => {
+  const h = await apiHarness(); addBacklog(h, 41);
+  await dryRunPage(h);
+  const cutoff = h.db.state.scanProgress.get(h.memberId).cycle_cutoff_at;
+  addNotification(h, eventFixture({ signal_id: 'inserted-before-cursor' }));
+  h.db.state.events.at(-1).available_at = new Date(NOW - 1000000).toISOString();
+  addNotification(h, eventFixture({ signal_id: 'inserted-after-cycle-cutoff' }));
+  h.db.state.events.at(-1).available_at = new Date(NOW + 1000).toISOString();
+  h.clock.now = NOW + 2000;
+  await dryRunPage(h);
+  assert.equal(h.db.state.scanProgress.get(h.memberId).cycle_cutoff_at, cutoff);
+  const last = await dryRunPage(h);
+  assert.equal(last.scan.cycle_complete, true);
+  assert.equal(h.db.state.deliveries.size, 41, 'Mid-cycle inserts must not make a supposedly bounded cycle unending.');
+  for (let page = 0; page < 3; page += 1) await dryRunPage(h);
+  assert.equal(h.db.state.deliveries.size, 43);
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.attempts === 1));
+});
+
+test('a failed cursor save can be retried without skipping a page or duplicating eligible receipts', async () => {
+  const h = await apiHarness(); addBacklog(h, 21);
+  h.db.state.failProgressWrites = true;
+  const failed = await h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {} });
+  assert.equal(failed.status, 503);
+  assert.equal((await failed.json()).ok, false);
+  assert.equal(h.db.state.deliveries.size, 20);
+  assert.equal(h.db.state.scanProgress.get(h.memberId).version, 0);
+  h.db.state.failProgressWrites = false;
+  const retried = await dryRunPage(h);
+  assert.ok(retried.results.every(result => result.reason === 'duplicate_event'));
+  const finalPage = await dryRunPage(h);
+  assert.equal(finalPage.results.length, 1);
+  assert.equal(finalPage.results[0].status, 'would_send');
+  assert.equal(h.db.state.deliveries.size, 21);
+  assert.ok([...h.db.state.deliveries.values()].every(row => row.attempts === 1));
 });
 
 test('a held dry-run can be re-evaluated after provider recovery without claiming a send', async () => {

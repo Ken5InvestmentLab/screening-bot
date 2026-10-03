@@ -130,7 +130,8 @@ class ReportPreferenceTests(unittest.TestCase):
         self.assertEqual(view.iloc[0].entry_shares, 100)
         self.assertAlmostEqual(view.iloc[0].gross_return, .005)
         self.assertAlmostEqual(view.iloc[0].one_hundred_shares_pl_yen, 500)
-        self.assertEqual(view.iloc[0].display_d5_gross_return, .99)
+        self.assertTrue(pd.isna(view.iloc[0].display_d5_gross_return))
+        self.assertEqual(view.iloc[0].raw_d5_gross_return, .99)
         pd.testing.assert_frame_equal(source, original)
 
     def test_unverified_d6_economics_never_becomes_zero_or_a_d5_substitute(self):
@@ -287,13 +288,14 @@ class ReportPreferenceTests(unittest.TestCase):
         self.assertNotIn("PRIVATE_IDENTITY_SENTINEL", output)
         self.assertNotIn('"entry_open"', output)
 
-    def test_canonical_initial_view_excludes_unknown_prices_but_keeps_unlimited_reference(self):
+    def test_canonical_without_actual_receipts_never_counts_legacy_reference_as_actual_d5(self):
         ledger = bootstrap_historical()
         output = render_analytics_report(ledger, pd.DataFrame(), self.generated)
         data = payload(output)
         self.assertEqual(data["variants"]["d5_close:empty"]["metrics"], [])
         totals = [r for r in data["variants"]["d5_close:all"]["metrics"] if r["period"] == "2023-2026" and r["selector_id"] == COMBINED_STACKED_ID]
-        self.assertEqual(totals[0]["n"], 946)
+        self.assertEqual(totals[0]["n"], 0)
+        self.assertEqual(totals[0]["pending"], 946)
         self.assertIn("2026年分も結果既知の期間", output)
 
     def test_verified_history_has_only_twenty_initial_rows_without_javascript(self):

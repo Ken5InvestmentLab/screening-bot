@@ -12,6 +12,8 @@ import math
 import pandas as pd
 
 from .endpoint_receipts import signal_actual_close_verified, sixth_endpoint_verified, sixth_economics_verified
+from .reviewed_d5_overlay import actual_d5_economics
+from .trade_basis import ECONOMIC_COLUMNS, PRICE_BASIS_VERSION
 
 
 DEFAULT_PRICE_CAP = 1000
@@ -81,9 +83,29 @@ def select_report_view(
     result = visible_history(ledger)
     if cap is not None:
         result = result.loc[verified_signal_prices(result).le(cap)].copy()
+    # Preserve canonical values in this copy only. All presentation consumers
+    # use the same independently verified actual D5 acquired lot and receipts.
+    for column in ECONOMIC_COLUMNS:
+        if column in result and "raw_d5_" + column not in result:
+            result["raw_d5_" + column] = result[column]
+    verified_d5 = [actual_d5_economics(row) for _, row in result.iterrows()]
+    numeric = ("entry_open", "fifth_xtks_exit_close", "gross_return", "one_hundred_shares_pl_yen",
+               "entry_shares", "exit_shares", "holding_action_factor", "entry_cost_yen", "exit_proceeds_yen")
+    for column in numeric:
+        result[column] = [economics[column] if economics is not None else float("nan") for economics in verified_d5]
+    for column in ("price_basis_date", "price_basis_source_sha256", "applied_actions_json"):
+        result[column] = [economics[column] if economics is not None else "" for economics in verified_d5]
+    # Missing evidence is pending, never a legacy return, zero, or a price
+    # inferred from another endpoint. Scheduled dates may still be displayed.
+    result["price_basis"] = PRICE_BASIS_VERSION
+    result["display_d5_verified"] = [value is not None for value in verified_d5]
+    result["status"] = ["mature" if value is not None else "pending_entry" for value in verified_d5]
+    for column in ("entry_date", "fifth_xtks_exit_date"):
+        original_dates = pd.to_datetime(result.get("raw_d5_" + column, result[column]), errors="coerce")
+        result[column] = pd.to_datetime([economics[column] if economics is not None else original_dates.iloc[index] for index, economics in enumerate(verified_d5)])
     if exit_key == "d5_close":
         return result
-    # Preserve original D5 values for the detection table. These aliases live
+    # Preserve actual D5 values for the detection table. These aliases live
     # only in this temporary view and are never written to the ledger.
     for column in ("fifth_xtks_exit_date", "fifth_xtks_exit_close", "gross_return", "one_hundred_shares_pl_yen"):
         result["display_d5_" + column] = result[column]

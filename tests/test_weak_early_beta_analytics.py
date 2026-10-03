@@ -188,8 +188,11 @@ class AnalyticsTests(unittest.TestCase):
         before = source.copy(deep=True)
         d5 = build_analytics(select_report_view(source, None, "d5_close"))["strategies"]["unique"]
         d6 = build_analytics(select_report_view(source, None, "d6_open"))["strategies"]["unique"]
-        self.assertEqual(d5["cash_pl_yen"], 400)
-        self.assertEqual(d5["total_entry_cost_yen"], 50000)
+        # This fixture has no independent nominal BASE5 evidence. Its frozen
+        # adjusted amounts remain in source, but cannot be shown as actual100.
+        self.assertEqual(d5["resolved_signals"], 0)
+        self.assertEqual(d5["cash_pl_yen"], 0)
+        self.assertEqual(d5["total_entry_cost_yen"], 0)
         self.assertEqual(d6["cash_pl_yen"], 1000)
         self.assertEqual(d6["total_entry_cost_yen"], 100000)
         self.assertEqual(d6["total_entry_shares"], 100)

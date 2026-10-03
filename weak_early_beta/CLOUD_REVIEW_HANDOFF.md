@@ -85,45 +85,52 @@ symlink・展開量を検査した。CRCと全93ファイルのmanifest検証が
 証跡には研究資料由来と記録し、取込時刻を元vendorの取得時刻と偽らない。
 
 凍結D5の調整価格参考値と研究の名目価格には46検出・164モード行で金額差がある。
-日付と騰落率は一致するが、原D5の価格・数量・円損益は変更しない。
-D6は名目価格と企業行動で計算するため、D5/D6の円損益を同じ元本基準だと扱わない。
+原D5の価格・数量・円損益は変更せず、独立した表示専用sidecar
+`state/reviewed_actual_d5.v1.json`から実100株D5経済を計算する。
+履歴・CSV・資金・グラフ・年度/上限の集計は全て同じ変換を通し、D5/D6を
+翌営業日実始値の100株・コスト0という同じ取得元本基準へ揃えた。
+日付と企業行動を各出口まで検証し、証跡不足は未確認として比較対象から除く。
 分割・併合を反映しても、単元未満株が市場始値で約定することを保証しない。
+
+研究固定cohort（実終値1,000円以下）の2023–25年174件はD5約361,070円 / D6約430,770円、
+2026年44件はD5 162,300円 / D6 205,000円を再現。既存の参考除外5件を反映した製品成績は
+2023–25年171件で320,470円 / 379,670円、2026年42件で148,700円 / 191,300円。
+7997・7601・3350・3103・6840の除外ID・理由・両出口の金額を独立照合資料に記録。
+年度・6上限・D5/D6・数量方式の148照合、およびDecimal/資金/全曲線の36照合が成功した。
 
 ## 検証とプレビュー
 
-最終版のPython回帰207件が67.474秒で成功した。
-gate179件、型検査、Wranglerの無公開buildが成功した。
-新研究UIの実ブラウザ回帰115項目、無料漏洩8項目、非同期故障注入4項目、
-private価格証跡の改変・隔離保持12項目が成功した。
-実価格CSVの独立読戻し991項目、Python・画面JS・通知の母集団比較43項目が成功した。
-研究履歴967行は本番用通知adapterから除外され、現在の通知候補は0件。
-
-最終実データの全上限（1000/2000/3000/5000/制限なし/1234.56）×D5/D6で、
+最終版のPython回帰215件が114.857秒で成功した。
+Node回帰30件、gate179件、型検査、Wranglerの無公開buildが成功した。
+実データの全上限（1000/2000/3000/5000/制限なし/1234.56）×D5/D6で、
 一覧・集計・CSV・会員設定保存/再読込と無料境界のブラウザ140件が成功した。
-401/403後の識別子なしページへの再確認と、503/文脈違い/欠けたキー/共有辞書異常の
-ロールバック10件、4画面構成×full/freeとpopupを含む描画44件も成功した。
-小分け前後の全16,232 variantsのgzip bytesは同一で、価格・損益・集計は変えていない。
+全253検出の入口・両出口・損益率CSV、履歴円損益、未確認行、履歴リンクの21照合が成功した。
+401/403後の識別子破棄と503等のロールバック10件、PC/スマホ・ライト/ダーク・full/freeと
+popupを含む描画44件、自己完結確認HTMLの2画面検査も成功した。
+研究履歴967行は本番用通知adapterから除外され、現在の通知候補は0件。
+原台帳SHAと生成16ページのrepo/public一致を最終照合した。
 
 ### 実測性能と生成アセット
 
-16ページ、4,062 JSON bundlesを作成。各bundleは最大4条件・実測最大131,663 bytes。
-初回analytics HTMLは305,432 bytes（free 305,776）、履歴は1,840,036 bytes。
-初期条件だけをinlineに置き、共通HTML辞書を一度だけ収録する。
-非表示テーマ画像・画面外のフッター画像は遅延読込する。
+16ページ、16,232 variants、4,062 JSON bundlesを再生成。各bundleは最大4条件・
+実測最大131,963 bytes。初回analytics HTMLは306,111 bytes（free 306,455）、
+履歴は1,818,232 bytes（free 1,812,685）。初期条件だけをinlineに置き、共通HTML辞書を
+一度だけ収録する。非表示テーマ画像・画面外のフッター画像は遅延読込する。
 
-Edge/localhost・HTTP圧縮なし・cold cacheの測定では、PC/スマホの通常環境で
-操作可能約0.25秒、最大切替0.077秒。初回総転送はライト922,616 bytes、
-ダーク1,803,515 bytes（既存ロゴ画像も含む）。1.6Mbps・150ms・CPU6倍の
-模擬スマホでは操作可能3.004秒、初回画像取得を含む安定化9.818秒、最大切替2.157秒。
-小分け前の同条件最大14.292秒から改善した。初期JS heapは約2.6MB、切替中の
-観測最大は約9.5MB。実機、CDN/TLS、Whop通信、native/GPUメモリの測定ではない。
+Edge/localhost・HTTP圧縮なし・cold cacheの測定では、PC/スマホ4通常条件の
+操作可能0.211–0.252秒、最大切替0.357秒。初回総転送はライト923,243 bytes、
+ダーク1,804,142 bytes（既存ロゴ画像も含む）。10Mbps・80ms・CPU4倍の模擬PCは
+操作可能1.459秒・最大切替0.488秒。1.6Mbps・150ms・CPU6倍の模擬スマホは
+操作可能2.976秒、画像取得を含む安定化9.755秒、最大切替2.180秒。
+実機、CDN/TLS、Whop通信、native/GPUメモリの測定ではない。
 
-全条件を含む操作用ZIPは133,046,384 bytes、4,089 entries、CRC正常。
-画面見本を内蔵した確認HTMLはサーバー不要。ZIPの操作にはローカルHTTPが必要。
-private sidecar・原台帳・資格情報は含めない。bundle全体は約170MBの生成物なので
-Git履歴へ毎回追加しない。承認後のCloud専用tag deployは対象commitの台帳と固定
-価格証跡からHTMLとbundleを一緒に再生成し、検証してから同期する。
-そのworkflowの再生成手順自体は未起動であり、ローカルで同じbuilderを検証した。
+実100株比較へ修正したv03操作用ZIPは134,847,411 bytes、4,089 entries、CRC正常。
+画面8枚を内蔵したv03確認HTMLは8,900,409 bytesでサーバー不要。
+ZIPの操作にはローカルHTTPが必要。private sidecar・原台帳・資格情報は含めない。
+bundle全体172,440,360 bytesは生成物なのでGit履歴へ毎回追加しない。
+承認後のCloud専用tag deployは対象commitの台帳と固定価格証跡からHTMLとbundleを
+一緒に再生成し、検証してから同期する。そのworkflow自体は未起動であり、ローカルで
+同じbuilderを検証した。v02はD5/D6の経済基準が混在する旧確認資料であり、v03で置き換える。
 
 Windows sandboxの一時フォルダで`WinError 5`が発生するため、Pythonテストと
 子プロセスを使うブラウザ・ビルドは承認済みPC実行環境で検証する。
@@ -132,7 +139,7 @@ Node 22.13.1を使用。workflowのPython指定は3.12。モデル再学習は�
 
 ```powershell
 python -B -m unittest tests.test_weak_early_beta tests.test_weak_early_beta_corporate_actions tests.test_weak_early_beta_trade_basis tests.test_weak_early_beta_model tests.test_weak_early_beta_endpoint_receipts tests.test_weak_early_beta_report_preferences tests.test_cloud_notification_adapter
-python -B -m unittest tests.test_weak_early_beta_analytics tests.test_weak_early_beta_research_backfill tests.test_weak_early_beta_reviewed_overlay tests.test_weak_early_beta_research_presentation
+python -B -m unittest tests.test_weak_early_beta_analytics tests.test_weak_early_beta_research_backfill tests.test_weak_early_beta_reviewed_overlay tests.test_weak_early_beta_research_presentation tests.test_weak_early_beta_actual_d5
 python -B weak_early_beta/scripts/build_review_preview.py --output ../review-cloud
 python -m http.server 8765 --bind 127.0.0.1 --directory ../review-cloud
 ```
@@ -143,10 +150,12 @@ python -m http.server 8765 --bind 127.0.0.1 --directory ../review-cloud
 checkは同期・認証テスト・型検査・dry-run buildであり、公開しない。
 previewはmetrics/HTML/補助アセットを別フォルダへ保存し、原台帳のSHA不変を確認する。
 
-確認用 `Cloud_confirmation_v02.html`（画面内蔵）と `Cloud_review_preview.zip` は
-作業workspaceの `qa/delivery/` に保存済み。Libraryへの正規prepared uploadは
-`Library prepare_uploads is not available` で停止し、Library保存成功とは扱っていない。
-接続・権限を変更せず、別経路で再依頼していない。親側への納品経路確認を残す。
+確認用 `Cloud_実100株比較_確認資料_v03.html` と `Cloud_実100株比較プレビュー_v03.zip` は
+作業workspaceの `qa/delivery/actual-d5-v03/` に保存済み。親の指示により、v03のLibrary
+出力uploadは試行していない。以前のv02の正規prepared uploadは
+`Library prepare_uploads is not available` で停止した。別経路で権限拒否を回避しない。
+ローカル操作用previewは `http://127.0.0.1:8772/weak_early_beta_analytics.html`。
+静的localhost確認にはfull/freeの両方があり、本番資格認証の証明ではない。
 PC終了の許可は取り消されており、終了・再起動・スリープは行わない。
 
 ## 残る本番セットアップ

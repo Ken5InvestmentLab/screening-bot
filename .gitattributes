@@ -7,3 +7,4 @@ index.js                merge=ours
 
 # SHA-pinned private Cloud research receipts must retain their exact bytes.
 weak_early_beta/state/reviewed_endpoint_receipts.v1.json -text
+weak_early_beta/state/reviewed_actual_d5.v1.json -text

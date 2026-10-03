@@ -41,7 +41,9 @@ class ResearchPresentationTests(unittest.TestCase):
         self.assertIn('data-cloud-allocation="stacked"', body)
         self.assertIn("表示母集団 <strong>2検出 / 3条件一致", body)
         self.assertIn("結果が既知の過去期間", body)
-        self.assertIn("価格基準が一致しない", body)
+        self.assertIn("100株・コスト0を共通基準", body)
+        self.assertIn('weak_early_beta_latest.html#history', body)
+        self.assertNotIn('weak_early_beta_latest.html#detections', body)
         self.assertIn("集計データを見る", body)
         # Analytics aggregates contain no raw identity even on full assets.
         serialized = json.dumps(self.data, ensure_ascii=False)

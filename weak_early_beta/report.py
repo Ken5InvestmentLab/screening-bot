@@ -31,6 +31,7 @@ from .report_preferences import (
     verified_signal_prices,
 )
 from .reviewed_endpoint_overlay import load_reviewed_endpoint_overlay, apply_reviewed_endpoint_overlay
+from .reviewed_d5_overlay import apply_reviewed_d5_overlay
 from .metrics import (
     build_metrics,
     build_monthly_metrics,
@@ -438,7 +439,7 @@ def _condition_cards() -> str:
 def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
     # Free pages omit the entire unreleased record, including otherwise
     # identifying dates, prices, mode combinations and individual economics.
-    ledger = annotate_entry_feasibility(released_history(ledger) if mask_pending else visible_history(ledger))
+    ledger = annotate_entry_feasibility(select_report_view(released_history(ledger) if mask_pending else visible_history(ledger), None, "d5_close"))
     if ledger.empty:
         return '<tr><td colspan="10">検出履歴がありません</td></tr>'
     data = ledger.copy()
@@ -468,8 +469,8 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             bool(group["performance_reference_only"].fillna(False).any())
             if "performance_reference_only" in group else False
         )
-        if reference_only and not gross.empty:
-            status, status_class = "参考値・集計対象外", "reference"
+        if reference_only:
+            status, status_class = ("参考値・集計対象外" if not gross.empty else "実価格未確認・集計対象外"), "reference"
         else:
             status = "確定" if not gross.empty else ("保有中" if str(first["status"]) == "entered" else "寄付待ち")
             status_class = "mature" if not gross.empty else "pending"
@@ -495,8 +496,8 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         )
         reference_note = (
             '<small class="reference-note">S高一値のため寄付買いの約定が困難と判定。'
-            f'騰落率と損益は参考値です。{evidence_link}</small>'
-            if reference_only and not gross.empty else ""
+            f'{"騰落率と損益は参考値です。" if not gross.empty else "実価格の証跡が不足する損益は表示しません。"}{evidence_link}</small>'
+            if reference_only else ""
         )
         reference_marker = '<small class="reference-value">参考値</small>' if reference_only else ""
         fundamental_url = "" if is_masked else next(
@@ -1161,8 +1162,8 @@ def _render_analytics_body(
 <div class="research-grid"><section class="panel research-card"><h2>検出条件の重なり</h2>{_research_plot(data['overlap'], category='selector_count', fields=('resolved_signals',), labels=('確定した検出',), kind='bar', unit='件', title='一致した条件数別の確定検出件数')}</section><section class="panel research-card"><h2>重なり別の平均騰落率</h2>{_research_plot(data['overlap'], category='selector_count', fields=('mean_pct',), labels=('平均騰落率',), kind='bar', unit='%', title='一致した条件数別の平均騰落率')}<p class="research-footnote">検出ごとの単純平均。条件数が多いほど将来成績が良いと保証するものではありません。</p></section></div>
 <section class="panel research-card" id="payoff-structure"><h2>勝ち・負けと加重集計</h2>{_research_table(['指標','一律100株','条件数×100株'], payoff_rows)}<p class="research-footnote">勝ちは騰落率が0より大きい取引。0%は勝率の分母に含みます。数量加重の平均・中央値・勝率は100株口数で重みを付けます。</p><details class="research-data"><summary>勝ち負けの幅を比較（条件数×100株）</summary>{_payoff_structure(ledger)}</details></section>
 <section class="panel research-card"><h2>条件の重なり別の内訳</h2>{_research_table(['一致条件数','確定した検出','平均騰落率','中央値','勝率','一律100株の損益'], overlap_rows)}</section>
-<section class="panel research-card"><h2>検出履歴・取引の明細</h2><p>銘柄・検出日・条件で検索する明細と履歴CSVは、<a href="./weak_early_beta_latest.html#detections">ダッシュボードの検出履歴</a>から確認できます。価格上限・確定日・検出年は共通の表示設定です。</p><p class="research-footnote">{html.escape(REFERENCE_POLICY_NOTE)}</p></section>
-<section class="panel research-card"><h2>記録の範囲と来歴</h2>{_research_table(['検出年','過去再構成','実運用観測','その他'], coverage_rows)}<p class="research-footnote">成績対象の検出数です。過去再構成は実運用の観測とは異なり、2026年分も検証時点で結果が既知の過去期間です。2022年の原データは保持したまま表示・集計から除外しています。5営業日後成績は従来台帳の凍結済み経済（調整価格の参考値を含む）、6営業日後成績は独立検証した実価格と分割・併合による受取額です。両者の円損益は価格基準が一致しない取引を含みます。</p></section>
+<section class="panel research-card"><h2>検出履歴・取引の明細</h2><p>銘柄・検出日・条件で検索する明細と履歴CSVは、<a href="./weak_early_beta_latest.html#history">ダッシュボードの検出履歴</a>から確認できます。価格上限・確定日・検出年は共通の表示設定です。</p><p class="research-footnote">{html.escape(REFERENCE_POLICY_NOTE)}</p></section>
+<section class="panel research-card"><h2>記録の範囲と来歴</h2>{_research_table(['検出年','過去再構成','実運用観測','その他'], coverage_rows)}<p class="research-footnote">成績対象の検出数です。過去再構成は実運用の観測とは異なり、2026年分も検証時点で結果が既知の過去期間です。2022年の原データは保持したまま表示・集計から除外しています。5営業日後・6営業日後とも、翌営業日の実始値で取得した100株・コスト0を共通基準とし、それぞれの確定日までの分割・併合を反映します。原台帳の5営業日後経済は凍結したまま、独立した検証済み実価格証跡から表示用に計算しています。証跡が不足する損益は比較・集計に含めません。</p></section>
 <section class="panel research-card" id="growth"><details class="research-data"><summary>必要資金を起点にしたトータルの資産推移</summary><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p><div class="chart-grid"><div data-cloud-allocation="unique">{_equity_chart(unique_ledger, '銘柄均等', 'unique', UNIQUE_EXPLANATION, generated.tz_localize(None))}</div><div data-cloud-allocation="stacked">{_equity_chart(ledger, 'モード別積み上げ', 'stacked', STACKED_EXPLANATION, generated.tz_localize(None))}</div></div></details>{''.join(detailed_tables)}</section>
 {_mode_pages_section(generated)}</div>'''
 
@@ -1236,7 +1237,7 @@ def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: s
             f'<strong>{ENDPOINT_LABELS[exit_key]}</strong> · 過去再構成 {historical:,}件・実運用観測 {forward:,}件・その他 {other:,}件。'
             '過去再構成は2026年分も結果既知の期間です。2022年は表示・集計から除外し、原データを保持しています。'
             f'<details class="research-data"><summary>価格の来歴と未検証の記録</summary><p>この検出年範囲で実終値が未検証: <strong data-unknown-price-count>{missing:,}件</strong>。上限指定時は除外しています。</p>'
-            '<p>5営業日後成績には保存時の調整価格参考値が含まれます。6営業日後成績は独立に検証した実価格と分割・併合を反映するため、円損益の基準が一致しない取引があります。欠損を0円や別日の価格で補いません。</p></details></div>'
+            '<p>5営業日後・6営業日後とも、検出から1営業日後の実始値で取得した100株・コスト0を共通基準とし、各確定日までの分割・併合を反映します。5営業日後の保存済み原台帳は変更せず、検証済み実価格から表示用に別計算しています。証跡が不足する損益は比較・集計に含めず、0円や別日の価格で補いません。</p></details></div>'
         )
     return (
         '<section class="panel cloud-provenance"><h2>検出履歴の範囲と価格の来歴</h2>'
@@ -1244,7 +1245,7 @@ def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: s
         f'<p>表示対象 {len(selected_unique):,}件（過去再構成 {historical:,}件・実運用観測 {forward:,}件・その他 {other:,}件）。'
         f'このページの履歴のうち検出日の実終値が未検証: <strong data-unknown-price-count>{missing:,}件</strong>。</p>'
         '<p class="note">2022年は表示・集計から除外しています。原データは保持しています。過去再構成と実運用の観測は異なる記録です。2026年の過去再構成分も、検証時点で結果が既知の過去期間です。</p>'
-        '<p class="note">過去再構成の5営業日後成績には、保存時の調整価格に基づく参考値が含まれます。6営業日後成績は独立に検証した実価格と、6営業日後までの分割・併合を反映した元の買付数量で計算します。未取得や未検証の価格を0円や別日の価格で補いません。</p></section>'
+        '<p class="note">5営業日後・6営業日後とも、検出から1営業日後の実始値で取得した100株・コスト0を共通基準とし、各確定日までの分割・併合を反映します。5営業日後の保存済み原台帳は変更せず、検証済み実価格の独立証跡から表示用に別計算しています。未取得・未検証の価格や企業行動は比較・集計に含めず、0円や別日の価格で補いません。</p></section>'
     )
 
 
@@ -1530,6 +1531,7 @@ def write_report(
     # Raw ledger reads and frozen D5 economics remain unchanged.
     if apply_reviewed_prices:
         ledger, _overlay_audit = apply_reviewed_endpoint_overlay(ledger, load_reviewed_endpoint_overlay())
+        ledger, _d5_overlay_audit = apply_reviewed_d5_overlay(ledger)
     ledger = annotate_entry_feasibility(ledger)
     default_view = select_report_view(ledger)
     metrics = build_metrics(default_view, as_of=generated.tz_localize(None))

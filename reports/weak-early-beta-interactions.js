@@ -638,14 +638,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       "モード": row.dataset.selectors || "",
       "検出日の実終値": row.dataset.signalActualClose || "",
       "入口日": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryDate : row.dataset.entryDate) || "",
-      "入口価格（D5過去履歴は調整参考値を含む）": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryOpen : row.dataset.entryOpen) || "",
+      "入口実始値（100株取得）": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryOpen : row.dataset.entryOpen) || "",
       "確定日選択": preferences.exitKey === "d5_close" ? "検出から5営業日後 終値" : "検出から6営業日後 始値",
       "確定予定日": preferences.exitKey === "d5_close" ? (row.dataset.d5Date || "") : (row.dataset.d6Date || ""),
       "確定価格": preferences.exitKey === "d5_close" ? (row.dataset.d5Close || "") : (row.dataset.d6Open || ""),
       "騰落率": preferences.exitKey === "d5_close" ? (row.dataset.d5Return || "") : (row.dataset.d6Return || ""),
       "6営業日後始値の状態": row.dataset.d6Status || "",
     }));
-    const columns = ["検出日", "銘柄コード", "モード", "検出日の実終値", "入口日", "入口価格（D5過去履歴は調整参考値を含む）", "確定日選択", "確定予定日", "確定価格", "騰落率", "6営業日後始値の状態"];
+    const columns = ["検出日", "銘柄コード", "モード", "検出日の実終値", "入口日", "入口実始値（100株取得）", "確定日選択", "確定予定日", "確定価格", "騰落率", "6営業日後始値の状態"];
     downloadCSV(CloudPreferences.csv(records, columns), `Cloud_検出履歴_${preferences.exitKey}.csv`);
   });
 

@@ -546,9 +546,11 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         sixth_cash = pd.to_numeric(first.get("sixth_one_hundred_shares_pl_yen"), errors="coerce")
         d6_economic = sixth_economics_verified(first)
         d6_result_status = "確定" if d6_economic else ("価格確定・損益未確定" if d6_verified else "未確定")
+        acquired_date = first.get('sixth_entry_date') if d6_economic else first.get('entry_date')
+        acquired_open = first.get('sixth_entry_open') if d6_economic else first.get('entry_open')
         d6_entry_display = "会員限定" if is_masked else (
-            f"{_date(first.get('sixth_entry_date'))}<small>{_price(first.get('sixth_entry_open'))}</small>"
-            if d6_economic else "未検証"
+            f"{_date(acquired_date)}<small>{_price(acquired_open)}</small>"
+            if pd.notna(acquired_open) else "未検証"
         )
         d6_return_display = _pct(sixth_return * 100, True) if d6_economic and pd.notna(sixth_return) else ""
         d6_cash_display = _yen(sixth_cash) if d6_economic and pd.notna(sixth_cash) else ""
@@ -568,8 +570,8 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             "d6-open": first.get("sixth_xtks_exit_open") if d6_verified else None,
             "d6-return": sixth_return if d6_economic else None,
             "d6-status": d6_status,
-            "d6-entry-date": _date(first.get("sixth_entry_date")) if d6_economic else None,
-            "d6-entry-open": first.get("sixth_entry_open") if d6_economic else None,
+            "d6-entry-date": _date(acquired_date) if pd.notna(acquired_open) else None,
+            "d6-entry-open": acquired_open,
         }
         export_attributes = " ".join(
             f'data-{key}="{html.escape(str(value), quote=True)}"'

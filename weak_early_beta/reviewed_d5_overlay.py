@@ -15,7 +15,7 @@ from .research_price_receipts import (
     VERIFICATION_SCOPE, record_digest, verify_research_trade,
 )
 from .reviewed_endpoint_overlay import baseline_digest, BASELINE_COLUMNS
-from .trade_basis import ECONOMIC_COLUMNS, is_frozen_trade
+from .trade_basis import ECONOMIC_COLUMNS, PRICE_BASIS_VERSION, is_frozen_trade, preserve_completed_economics
 
 SCHEMA = "CLOUD_REVIEWED_ACTUAL_D5_OVERLAY_V1"
 RECEIPT_COLUMN = "reviewed_d5_receipt_json"
@@ -75,6 +75,30 @@ def actual_d5_economics(row) -> dict | None:
         # the canonical loader/updater retains its strict corruption checks.
         return None
     return None
+
+
+def actual_forward_entry(row) -> dict | None:
+    """Keep a validated acquired lot while its D5 endpoint is still pending."""
+    receipt = row.get(RECEIPT_COLUMN)
+    if isinstance(receipt, str) and receipt:
+        return None  # A rejected historical receipt cannot become a forward lot.
+    original = dict(row)
+    for column in ECONOMIC_COLUMNS:
+        if "raw_d5_" + column in row:
+            original[column] = row["raw_d5_" + column]
+    if (str(original.get("source_scope", "")) != "FORWARD_CAUSAL"
+            or original.get("price_basis") != PRICE_BASIS_VERSION
+            or original.get("status") != "entered"):
+        return None
+    try:
+        # Use the canonical acquired-lot validation without changing the source.
+        checked = preserve_completed_economics(original, original)
+        return {column: checked[column] for column in (
+            "entry_date", "entry_open", "entry_shares", "entry_cost_yen",
+            "price_basis_date", "price_basis_source_sha256",
+        )}
+    except (ValueError, TypeError, KeyError):
+        return None
 
 
 def apply_reviewed_d5_overlay(frame: pd.DataFrame, package: dict | None = None) -> tuple[pd.DataFrame, dict]:

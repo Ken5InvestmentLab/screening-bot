@@ -18,7 +18,7 @@ from weak_early_beta.reviewed_d5_overlay import (
 from weak_early_beta.report_preferences import select_report_view, released_history
 from weak_early_beta.report import _detection_rows
 from weak_early_beta.analytics import build_analytics
-from weak_early_beta.trade_basis import ECONOMIC_COLUMNS
+from weak_early_beta.trade_basis import ECONOMIC_COLUMNS, LEGACY_PRICE_BASIS_VERSION, build_trade_economics
 from tests.test_weak_early_beta_report_preferences import actual_trade
 
 
@@ -127,6 +127,102 @@ class ActualD5PresentationTests(unittest.TestCase):
         self.assertTrue(result.display_d5_verified.all())
         self.assertAlmostEqual(result.iloc[0].one_hundred_shares_pl_yen,400)
         pd.testing.assert_frame_equal(frame,original)
+
+
+class ForwardPendingPresentationTests(unittest.TestCase):
+    @staticmethod
+    def forward(symbol, entry, exit_price):
+        frame = actual_trade(symbol, 900)
+        row = frame.iloc[0]
+        economics = build_trade_economics(
+            row.entry_date, row.fifth_xtks_exit_date, entry, exit_price, None,
+            basis_date=row.entry_date if pd.isna(exit_price) else row.fifth_xtks_exit_date,
+            source_sha256=str(row.price_basis_source_sha256),
+        )
+        for column, value in economics.items():
+            frame[column] = value
+        # Neither incomplete entry/exit fixture has a confirmed D6 receipt.
+        frame['sixth_xtks_exit_status'] = 'pending'
+        frame['sixth_economics_status'] = 'pending'
+        return frame
+
+    def test_entered_lot_is_preserved_without_confirming_d5_or_d6(self):
+        frame = self.forward('P001', 900, float('nan'))
+        original = frame.copy(deep=True)
+        for endpoint in ('d5_close', 'd6_open'):
+            with self.subTest(endpoint=endpoint):
+                view = select_report_view(frame, None, endpoint).iloc[0]
+                self.assertEqual(view.status, 'entered')
+                self.assertEqual(view.entry_open, 900)
+                self.assertEqual(view.entry_shares, 100)
+                self.assertEqual(view.entry_cost_yen, 90000)
+                self.assertEqual(view.entry_date, frame.iloc[0].entry_date)
+                self.assertFalse(view.display_d5_verified)
+                for column in ('fifth_xtks_exit_close', 'gross_return', 'one_hundred_shares_pl_yen', 'exit_proceeds_yen', 'exit_shares'):
+                    self.assertTrue(pd.isna(view[column]), column)
+                repeated = select_report_view(select_report_view(frame, None, 'd6_open'), None, endpoint).iloc[0]
+                for column in ('status', 'entry_open', 'entry_shares', 'entry_cost_yen'):
+                    self.assertEqual(view[column], repeated[column])
+                self.assertEqual(build_analytics(select_report_view(frame, None, endpoint))['counts']['completed_signals'], 0)
+        pd.testing.assert_frame_equal(frame, original)
+
+    def test_entry_before_purchase_and_unverified_legacy_remain_unavailable(self):
+        pending = self.forward('P002', float('nan'), float('nan'))
+        legacy = self.forward('P003', 900, float('nan'))
+        legacy['source_scope'] = 'EXACT_CANONICAL_HISTORY'
+        legacy['price_basis'] = LEGACY_PRICE_BASIS_VERSION
+        for frame in (pending, legacy):
+            for endpoint in ('d5_close', 'd6_open'):
+                row = select_report_view(frame, None, endpoint).iloc[0]
+                self.assertEqual(row.status, 'pending_entry')
+                self.assertFalse(row.display_d5_verified)
+                for column in ('entry_open', 'entry_shares', 'entry_cost_yen', 'gross_return'):
+                    self.assertTrue(pd.isna(row[column]), column)
+
+    def test_mature_forward_stays_confirmed_at_9000_yen(self):
+        frame = self.forward('P004', 900, 990)
+        row = select_report_view(frame, None, 'd5_close').iloc[0]
+        self.assertEqual(row.status, 'mature')
+        self.assertTrue(row.display_d5_verified)
+        self.assertEqual(row.entry_open, 900)
+        self.assertEqual(row.one_hundred_shares_pl_yen, 9000)
+
+    def test_history_and_csv_entry_attributes_distinguish_all_four_states(self):
+        entered = self.forward('P001', 900, float('nan'))
+        pending = self.forward('P002', float('nan'), float('nan'))
+        legacy = self.forward('P003', 900, float('nan'))
+        legacy['source_scope'] = 'EXACT_CANONICAL_HISTORY'
+        legacy['price_basis'] = LEGACY_PRICE_BASIS_VERSION
+        mature = self.forward('P004', 900, 990)
+        frame = pd.concat([entered, pending, legacy, mature], ignore_index=True)
+        rows = _detection_rows(frame)
+        for symbol, label, bought, completed in (
+            ('P001', '保有中', True, False), ('P002', '寄付待ち', False, False),
+            ('P003', '寄付待ち', False, False), ('P004', '確定', True, True),
+        ):
+            row = re.search(r'<tr\b(?=[^>]*data-symbol="'+symbol+r'")[\s\S]*?</tr>', rows)[0]
+            self.assertIn(label, row)
+            for attribute in ('data-entry-open="900.0"', 'data-d6-entry-open="900.0"'):
+                self.assertEqual(attribute in row, bought)
+            self.assertEqual('data-d5-close="990.0"' in row, completed)
+            if not completed:
+                self.assertNotIn('data-d5-return=', row)
+                self.assertNotIn('data-d6-return=', row)
+        self.assertEqual(rows, _detection_rows(select_report_view(frame, None, 'd6_open')))
+        free = _detection_rows(frame, mask_pending=True)
+        for symbol in ('P001', 'P002', 'P003', 'P004'):
+            self.assertNotIn(symbol, free)
+
+    def test_corrupt_acquired_cost_and_rejected_receipt_do_not_restore_entry(self):
+        frame = self.forward('P001', 900, float('nan'))
+        for column, value in (('entry_cost_yen', 1), ('entry_shares', 0.5), (RECEIPT_COLUMN, '{"invalid":true}')):
+            with self.subTest(column=column):
+                bad = frame.copy(deep=True)
+                bad[column] = value
+                row = select_report_view(bad, None, 'd5_close').iloc[0]
+                self.assertEqual(row.status, 'pending_entry')
+                self.assertTrue(pd.isna(row.entry_open))
+                self.assertFalse(row.display_d5_verified)
 
 
 if __name__=='__main__':

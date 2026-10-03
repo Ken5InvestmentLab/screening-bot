@@ -12,7 +12,7 @@ import math
 import pandas as pd
 
 from .endpoint_receipts import signal_actual_close_verified, sixth_endpoint_verified, sixth_economics_verified
-from .reviewed_d5_overlay import actual_d5_economics
+from .reviewed_d5_overlay import actual_d5_economics, actual_forward_entry
 from .trade_basis import ECONOMIC_COLUMNS, PRICE_BASIS_VERSION
 
 
@@ -89,20 +89,27 @@ def select_report_view(
         if column in result and "raw_d5_" + column not in result:
             result["raw_d5_" + column] = result[column]
     verified_d5 = [actual_d5_economics(row) for _, row in result.iterrows()]
+    verified_entries = [actual_forward_entry(row) if economics is None else economics
+                        for (_, row), economics in zip(result.iterrows(), verified_d5)]
     numeric = ("entry_open", "fifth_xtks_exit_close", "gross_return", "one_hundred_shares_pl_yen",
                "entry_shares", "exit_shares", "holding_action_factor", "entry_cost_yen", "exit_proceeds_yen")
     for column in numeric:
         result[column] = [economics[column] if economics is not None else float("nan") for economics in verified_d5]
+    for column in ("entry_open", "entry_shares", "entry_cost_yen"):
+        result[column] = [entry[column] if entry is not None else float("nan") for entry in verified_entries]
     for column in ("price_basis_date", "price_basis_source_sha256", "applied_actions_json"):
-        result[column] = [economics[column] if economics is not None else "" for economics in verified_d5]
-    # Missing evidence is pending, never a legacy return, zero, or a price
-    # inferred from another endpoint. Scheduled dates may still be displayed.
+        values = verified_d5 if column == "applied_actions_json" else verified_entries
+        result[column] = [value[column] if value is not None else "" for value in values]
+    # Pending exits do not undo a validated purchase. Unknown acquisitions
+    # never use legacy economics or prices inferred from another endpoint.
     result["price_basis"] = PRICE_BASIS_VERSION
     result["display_d5_verified"] = [value is not None for value in verified_d5]
-    result["status"] = ["mature" if value is not None else "pending_entry" for value in verified_d5]
+    result["status"] = ["mature" if economics is not None else ("entered" if entry is not None else "pending_entry")
+                        for economics, entry in zip(verified_d5, verified_entries)]
     for column in ("entry_date", "fifth_xtks_exit_date"):
         original_dates = pd.to_datetime(result.get("raw_d5_" + column, result[column]), errors="coerce")
-        result[column] = pd.to_datetime([economics[column] if economics is not None else original_dates.iloc[index] for index, economics in enumerate(verified_d5)])
+        values = verified_entries if column == "entry_date" else verified_d5
+        result[column] = pd.to_datetime([value[column] if value is not None else original_dates.iloc[index] for index, value in enumerate(values)])
     if exit_key == "d5_close":
         return result
     # Preserve actual D5 values for the detection table. These aliases live
@@ -125,9 +132,9 @@ def select_report_view(
     if "sixth_entry_date" in result:
         result["entry_date"] = pd.to_datetime(result["sixth_entry_date"], errors="coerce").where(economic, result["entry_date"])
     if "sixth_entry_cost_yen" in result:
-        result["entry_cost_yen"] = pd.to_numeric(result["sixth_entry_cost_yen"], errors="coerce").where(economic)
+        result["entry_cost_yen"] = pd.to_numeric(result["sixth_entry_cost_yen"], errors="coerce").where(economic, result["entry_cost_yen"])
     if "sixth_entry_shares" in result:
-        result["entry_shares"] = pd.to_numeric(result["sixth_entry_shares"], errors="coerce").where(economic)
+        result["entry_shares"] = pd.to_numeric(result["sixth_entry_shares"], errors="coerce").where(economic, result["entry_shares"])
     # Do not leave D5 holding quantities/receipts attached to a D6 endpoint.
     # A split or consolidation may occur between those sessions. Missing or
     # quarantined D6 economics must remain unavailable, never inherit D5.

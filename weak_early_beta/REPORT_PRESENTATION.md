@@ -166,6 +166,14 @@ Cloud の運用実績ではない。実台帳への価格バックフィルは�
 
 ## テスト
 
+D5損益の確定と、取得済み入口の検証は別に扱う。`FORWARD_CAUSAL` の実価格基準で
+`entered` の行は、既存の取得ロット検証を通った入口日・実始値・株数・原価を保持して
+「保有中」と表示する。D5出口価格・損益・`display_d5_verified` は未確定のままにする。
+D6待ちでも同じ取得ロットを履歴/CSVへ渡す。入口前・未検証legacy・破損した取得ロットは
+入口を表示しない。原台帳を変更せず、無料版は引き続きD6確認まで行全体を除外する。
+P2回帰は、900円/100株/90,000円の保有中、入口前、成熟900→990円/+9,000円、未検証legacy、
+破損した原価/株数/証跡を区別し、両出口選択・再選択・履歴・CSV属性を検査する。
+
 ```powershell
 python -B -m unittest tests.test_weak_early_beta tests.test_weak_early_beta_report_preferences
 ```

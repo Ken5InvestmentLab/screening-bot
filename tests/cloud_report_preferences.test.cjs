@@ -72,7 +72,7 @@ const flush = () => new Promise((resolve) => setImmediate(resolve));
 // Run the shipped browser handlers, not a second implementation of their state
 // machine. Only the browser boundary is simulated; the async variant completion,
 // filter, endpoint, save and CSV paths below are the actual application code.
-function browserFixture({ emptyHistory = false, researchViews = false, savedPreferences = null, savedView = null } = {}) {
+function browserFixture({ emptyHistory = false, researchViews = false, savedPreferences = null, savedView = null, lazyBundles = false } = {}) {
   const elements = new Map();
   const downloads = [];
   const blobs = new Map();
@@ -108,7 +108,7 @@ function browserFixture({ emptyHistory = false, researchViews = false, savedPref
     querySelector() { return null; }
     closest() { return null; }
     focus() {}
-    remove() {}
+    remove() { this.removed = true; }
     click() {
       if (this.download) downloads.push({ filename: this.download, csv: blobs.get(this.href).parts.join('') });
       else return this.dispatch('click');
@@ -166,6 +166,18 @@ function browserFixture({ emptyHistory = false, researchViews = false, savedPref
       }
     }
   }
+  let bundle;
+  let reloads = 0;
+  if (lazyBundles) {
+    payload.bundleContext = { audience: 'full', page: 'latest', snapshot: 'a'.repeat(16) };
+    payload.sharedHtml = { s0: '<b>shared</b>' };
+    bundle = { version: 1, encoding: 'gzip-base64-json', ...payload.bundleContext, chunk: 0, variants: {} };
+    for (const [key, packed] of Object.entries(payload.variants)) if (key !== 'd5_close:731.29') {
+      bundle.variants[key] = packed;
+      payload.variants[key] = { bundle: `./weak_early_beta_data_full_latest_${'a'.repeat(16)}_0000.json` };
+      variants[key].html += '<!--cloud-shared:s0-->';
+    }
+  }
   elements.get('cloud-analytics-data').textContent = JSON.stringify(payload);
   elements.get('cloud-analytics-content').innerHTML = 'view:d5_close:731.29';
   class Blob {
@@ -191,13 +203,17 @@ function browserFixture({ emptyHistory = false, researchViews = false, savedPref
     static revokeObjectURL() {}
   }
   const context = vm.createContext({
-    document, Element, window: { location: { search: '' } }, Blob, Response,
+    document, Element, window: { location: { search: '', href: 'https://gate.invalid/weak_early_beta_latest.html', origin: 'https://gate.invalid', reload() { reloads += 1; } } }, Blob, Response, TextEncoder,
     DecompressionStream: class {}, URL: BrowserURL, URLSearchParams,
     atob: (value) => Buffer.from(value, 'base64').toString('binary'),
     setTimeout: () => {}, console,
     localStorage: { getItem: (key) => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) },
     fetch: (url, options = {}) => {
       requests.push({ url, options });
+      if (String(url).includes('weak_early_beta_data_')) {
+        const status = lazyBundles === 'denied' ? 403 : lazyBundles === 'unauthenticated' ? 401 : lazyBundles === 'failure' ? 503 : 200;
+        return Promise.resolve({ status, ok: status === 200, headers: { get() { return null; } }, text: async () => JSON.stringify({ ...bundle, ...(lazyBundles === 'mismatch' ? { audience: 'free' } : {}) }) });
+      }
       if (options.method === 'PUT') return nextSave?.promise || Promise.resolve({ ok: true });
       return serverRead.promise;
     },
@@ -205,6 +221,7 @@ function browserFixture({ emptyHistory = false, researchViews = false, savedPref
   vm.runInContext(fs.readFileSync(require.resolve('../reports/weak-early-beta-interactions.js'), 'utf8'), context);
   return {
     elements, downloads, storage, requests, rows, emptyMessage, endpointCells, allocationSeries, variants, serverRead,
+    reloads: () => reloads,
     get: (id) => elements.get(id),
     delay(key) { const item = deferred(); queuedDecodes.set(key, [...(queuedDecodes.get(key) || []), item]); return item; },
     delaySave() { nextSave = deferred(); return nextSave; },
@@ -231,6 +248,40 @@ function browserFixture({ emptyHistory = false, researchViews = false, savedPref
     },
   };
 }
+
+test('lazy bundles fetch only on demand, expand shared HTML and reuse a bounded audience-specific cache', async () => {
+  const page = browserFixture({ lazyBundles: true }); await flush();
+  assert.equal(page.requests.filter(r => String(r.url).includes('weak_early_beta_data_')).length, 0);
+  await page.select(500, 'd6_open');
+  assert.equal(page.snapshot().html, 'view:d6_open:222.22<b>shared</b>');
+  await page.select(null, 'd6_open');
+  const requests = page.requests.filter(r => String(r.url).includes('weak_early_beta_data_'));
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].options.cache, 'no-store');
+  assert.equal(requests[0].options.credentials, 'same-origin');
+});
+
+for (const lazyBundles of ['failure', 'mismatch']) test(`lazy ${lazyBundles} preserves the applied view and CSV`, async () => {
+  const page = browserFixture({ lazyBundles }); await flush();
+  const before = page.snapshot();
+  await page.select(500, 'd6_open');
+  assert.deepEqual(page.snapshot(), before);
+  assert.equal(page.get('cloud-export-csv').disabled, false);
+  assert.equal(page.reloads(), 0);
+});
+
+for (const lazyBundles of ['denied', 'unauthenticated']) test(`lazy ${lazyBundles} purges cached paid content, blocks exports/save and reloads`, async () => {
+  const page = browserFixture({ lazyBundles }); await flush();
+  await page.select(500, 'd6_open');
+  assert.equal(page.snapshot().html, '');
+  assert.equal(page.rows.every(row => row.removed), true);
+  assert.equal(page.get('cloud-analytics-data').textContent, '');
+  assert.equal(page.reloads(), 1);
+  for (const id of ['cloud-export-csv', 'cloud-history-export-csv', 'cloud-settings-save']) assert.equal(page.get(id).disabled, true);
+  await page.exportBoth(); await page.get('cloud-settings-save').dispatch('click');
+  assert.equal(page.downloads.length, 0);
+  assert.equal(page.requests.some(r => r.options.method === 'PUT'), false);
+});
 
 test('pending cap change blocks both CSVs and save, then commits one consistent population', async () => {
   const page = browserFixture(); await flush();

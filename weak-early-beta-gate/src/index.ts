@@ -1,15 +1,35 @@
 // The OAuth/session/role implementation remains byte-identical in the synced
 // shared module. This wrapper only lets the beta's mode pages use the same gate.
-import sharedGate from "./shared-report-gate";
+import sharedGate, { reportIdentity } from "./shared-report-gate";
 import { cloudApi, currentMembership, type CloudEnv } from "./cloud-api";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
 const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init)\.js$/;
+const BUNDLE_RE = /^\/weak_early_beta_data_(full|free)_(latest|analytics|silence|dive|shadow|fusion|balance|guide)_([a-f0-9]{16})_(\d{4})\.json$/;
 type SharedRequest = Parameters<typeof sharedGate.fetch>[0];
+
+async function bundleResponse(request: Request, env: CloudEnv, audience: string): Promise<Response> {
+  const headers = { "content-type": "application/json; charset=utf-8", "cache-control": "private, no-store",
+    vary: "Cookie", "x-content-type-options": "nosniff", "cross-origin-resource-policy": "same-origin" };
+  const reject = (status: number) => new Response(JSON.stringify({ error: "bundle_unavailable" }), { status, headers });
+  if (request.method !== "GET" && request.method !== "HEAD") return reject(405);
+  if (request.headers.get("sec-fetch-site") === "cross-site" || (request.headers.get("origin") && request.headers.get("origin") !== new URL(request.url).origin)) return reject(403);
+  try {
+    const identity = await reportIdentity(request, env);
+    if (!identity.subject) return reject(identity.reason === "temporarily_unavailable" ? 503 : 401);
+    if (audience === "full" && (!identity.discord_authorized || (await currentMembership(env, identity.subject)).status !== "paid")) return reject(403);
+    const asset = await env.ASSETS.fetch(new URL(new URL(request.url).pathname, "https://assets.local").toString());
+    if (!asset.ok) return reject(404);
+    return new Response(request.method === "HEAD" ? null : asset.body, { status: 200, headers });
+  } catch (_error) { return reject(503); }
+}
 
 export default {
   async fetch(request: SharedRequest, env: CloudEnv): Promise<Response> {
     const pathname = new URL(request.url).pathname;
+    const bundle = BUNDLE_RE.exec(pathname);
+    if (bundle) return bundleResponse(request, env, bundle[1]);
+    if (pathname.startsWith("/weak_early_beta_data_")) return new Response("Not found", { status: 404, headers: { "cache-control": "private, no-store" } });
     if (pathname.startsWith("/api/cloud/")) return cloudApi(request, env);
     // A Discord role alone never unlocks Cloud's unreleased identifiers.
     // Missing configuration, unlinked users and provider failures all use free.

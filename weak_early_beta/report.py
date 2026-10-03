@@ -722,11 +722,14 @@ def _page_shell(title: str, current: str, body: str) -> str:
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-interactions.js?v=20261004-3" defer></script></head>
+<script src="./weak-early-beta-interactions.js?v=20261004-4" defer></script></head>
 <body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
     # corresponding existing report. A failed generation must not be deployed.
+    # Hidden theme images and below-fold footer icons should not compete with
+    # the selected view's data on a constrained connection.
+    result = re.sub(r'<img(?![^>]*\bloading=)', '<img loading="lazy"', result)
     if len(result.encode("utf-8")) > MAX_REPORT_BYTES:
         raise ValueError(f"Cloud report {current} exceeds the 24 MiB asset budget; no oversized HTML was written")
     return result
@@ -1256,9 +1259,65 @@ def _breakpoint_key(value: float) -> str:
     return repr(float(value)).removesuffix(".0")
 
 
-def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, current: str, *, _summary_cache: dict | None = None) -> tuple[str, str]:
+class _SharedHtmlFragments:
+    """Deduplicate only known presentation blocks, within one page payload.
+
+    The dictionary never sees history rows, ledger JSON or fundamental content.
+    No fragment refers to another fragment; expansion is exactly one pass.
+    """
+
+    token = re.compile(r"<!--cloud-shared:([a-z0-9_-]+)-->")
+
+    def __init__(self, generated: pd.Timestamp):
+        self.fragments: dict[str, str] = {}
+        self._keys: dict[str, str] = {}
+        self._mode_links = _mode_pages_section(generated)
+
+    def _replace(self, content: str) -> str:
+        if "<!--cloud-shared:" in content:
+            raise ValueError("nested shared HTML fragment")
+        key = self._keys.get(content)
+        if key is None:
+            key = f"s{len(self.fragments)}"
+            self._keys[content] = key
+            self.fragments[key] = content
+        return f"<!--cloud-shared:{key}-->"
+
+    def pack(self, body: str) -> str:
+        if "<!--cloud-shared:" in body:
+            raise ValueError("reserved shared HTML token in rendered content")
+        body = body.replace(self._mode_links, self._replace(self._mode_links))
+        # Outer blocks go first so their content can never become a nested token.
+        patterns = [
+            r'<section class="panel research-card"><h2>検出履歴・取引の明細</h2>.*?</section>',
+            r'<div class="research-legend">.*?</div>',
+            r'<thead>.*?</thead>',
+            r'<p class="research-footnote">.*?</p>',
+        ]
+        for pattern in patterns:
+            def replace(match):
+                content = match.group(0)
+                # The annual coverage note contains the selected source's
+                # latest completed date, so keep it local to that variant.
+                if "検出年で分類し" in content:
+                    return content
+                return self._replace(content)
+            body = re.sub(pattern, replace, body, flags=re.DOTALL)
+        return body
+
+    def expand(self, body: str) -> str:
+        def replace(match):
+            key = match.group(1)
+            if key not in self.fragments:
+                raise ValueError("unknown shared HTML fragment")
+            return self.fragments[key]
+        return self.token.sub(replace, body)
+
+
+def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, current: str, *, _summary_cache: dict | None = None, bundle_assets: dict | None = None, bundle_context: dict | None = None) -> tuple[str, str]:
     as_of = generated.tz_localize(None)
     summary_cache = _summary_cache if _summary_cache is not None else {}
+    shared_html = _SharedHtmlFragments(generated)
     prices = verified_signal_prices(source)
     scopes = _scope_definitions(source)
     signal_years = pd.to_datetime(source["signal_date"], errors="coerce").dt.year
@@ -1273,6 +1332,24 @@ def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, cu
     default_breakpoints = [value for value in breakpoints if value <= DEFAULT_PRICE_CAP]
     default_key = _breakpoint_key(default_breakpoints[-1]) if default_breakpoints else "empty"
     default_html = ""
+    bundle_variants: dict[str, dict] = {}
+    chunk = 0
+
+    def flush_bundle():
+        nonlocal chunk
+        if not bundle_variants:
+            return
+        context = bundle_context
+        filename = f"weak_early_beta_data_{context['audience']}_{context['page']}_{context['snapshot']}_{chunk:04d}.json"
+        bundle = {"version": 1, "encoding": "gzip-base64-json", **context, "chunk": chunk, "variants": dict(bundle_variants)}
+        encoded = json.dumps(bundle, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8")
+        if len(encoded) > 160_000:
+            raise ValueError("Cloud variant bundle exceeds 160 KB")
+        bundle_assets[filename] = encoded
+        for variant_key in bundle_variants:
+            variants[variant_key] = {"bundle": f"./{filename}"}
+        bundle_variants.clear()
+        chunk += 1
     for exit_key in ENDPOINT_LABELS:
         # Verify receipts once per endpoint; each subsequent cap only selects
         # rows from this immutable, already verified presentation view.
@@ -1299,12 +1376,22 @@ def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, cu
                 body = body.replace("5営業日後の終値が確定した取引", f"{ENDPOINT_LABELS[exit_key]}の損益が確定した取引")
                 notice = _provenance_notice(scoped_source, view, exit_key, missing=missing_prices, compact=current == "analytics")
                 body = body.replace("<!--cloud-provenance-->", notice) if current == "analytics" else notice + body
-                variant = {"html": body, "metrics": _json_records(metrics), "monthlyMetrics": _json_records(monthly)}
+                variant = {"html": shared_html.pack(body), "metrics": _json_records(metrics), "monthlyMetrics": _json_records(monthly)}
                 packed = gzip.compress(json.dumps(variant, ensure_ascii=False, allow_nan=False, separators=(",", ":")).encode("utf-8"), compresslevel=9, mtime=0)
                 variant_key = f"{exit_key}:{key}" if scope_key == "all" else f"{exit_key}:{scope_key}:{key}"
-                variants[variant_key] = {"gzip": base64.b64encode(packed).decode("ascii")}
+                packed_variant = {"gzip": base64.b64encode(packed).decode("ascii")}
+                is_default = exit_key == "d5_close" and scope_key == "all" and key == default_key
+                if bundle_assets is None or is_default:
+                    variants[variant_key] = packed_variant
+                else:
+                    # Bound each fetch by both count and bytes. The initial
+                    # view stays inline; other caps/years load only on demand.
+                    if bundle_variants and (len(bundle_variants) >= 4 or sum(len(item["gzip"]) for item in bundle_variants.values()) + len(packed_variant["gzip"]) > 150_000):
+                        flush_bundle()
+                    bundle_variants[variant_key] = packed_variant
                 if exit_key == "d5_close" and scope_key == "all" and key == default_key:
                     default_html = body
+    flush_bundle() if bundle_assets is not None else None
     payload = {
         "version": 1,
         "encoding": "gzip-base64-json",
@@ -1313,8 +1400,11 @@ def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, cu
         "scopes": scopes,
         "priceBreakpoints": breakpoints,
         "priceBreakpointKeys": [_breakpoint_key(value) for value in breakpoints],
+        "sharedHtml": shared_html.fragments,
         "variants": variants,
     }
+    if bundle_assets is not None:
+        payload["bundleContext"] = bundle_context
     # Only aggregate render fragments and metric rows are serialized. No raw
     # ledger, identity, company, URL, entry-price path or fundamental snapshot.
     serialized = json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(",", ":")).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
@@ -1344,7 +1434,9 @@ def _variant_page(
     digest.update(pd.util.hash_pandas_object(source, index=True).values.tobytes())
     cache_key = (current, "released" if mask_pending else "full", generated.isoformat(), digest.hexdigest())
     if cache_key not in cache:
-        cache[cache_key] = _aggregate_variant_payload(source, generated, current, _summary_cache=cache.setdefault("aggregate-summary-cache", {}))
+        cache[cache_key] = _aggregate_variant_payload(source, generated, current, _summary_cache=cache.setdefault("aggregate-summary-cache", {}),
+            bundle_assets=cache.get("bundle-assets"), bundle_context={"snapshot": hashlib.sha256(repr(cache_key).encode("utf-8")).hexdigest()[:16],
+            "audience": "free" if mask_pending else "full", "page": "latest" if current == "home" else selector_info(current).short_name.lower() if current in SELECTOR_ORDER else current})
     default_html, serialized = cache[cache_key]
     history = "" if current == "analytics" else _history_section(source, include_mode_filter=current == "home", mask_pending=mask_pending)
     scope_notice = (
@@ -1432,7 +1524,7 @@ def write_report(
     *,
     apply_reviewed_prices: bool = True,
 ) -> pd.DataFrame:
-    variant_cache: dict = {}
+    variant_cache: dict = {"bundle-assets": {}}
     generated = pd.Timestamp.now(tz="Asia/Tokyo")
     # The hash-pinned private sidecar enriches only this presentation copy.
     # Raw ledger reads and frozen D5 economics remain unchanged.
@@ -1507,4 +1599,14 @@ def write_report(
             ),
             encoding="utf-8",
         )
+    for filename, encoded in variant_cache["bundle-assets"].items():
+        report_path.with_name(filename).write_bytes(encoded)
+    # Remove only older generated Cloud bundles, after every page and current
+    # bundle succeeded. A failed generation preserves its previous snapshot.
+    output_directory = report_path.parent.resolve()
+    for candidate in report_path.parent.glob("weak_early_beta_data_*.json"):
+        if re.fullmatch(r"weak_early_beta_data_(full|free)_(latest|analytics|silence|dive|shadow|fusion|balance|guide)_[a-f0-9]{16}_\d{4}\.json", candidate.name) and candidate.name not in variant_cache["bundle-assets"]:
+            if candidate.resolve().parent != output_directory or candidate.is_symlink():
+                raise ValueError("unsafe stale Cloud bundle path")
+            candidate.unlink()
     return metrics

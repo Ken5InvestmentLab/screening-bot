@@ -10,8 +10,9 @@
 `sixth_endpoint_verified(row)` を使用し、単なる予定日到来や D5 損益確定では解禁しない。
 未取得価格は空欄。`pending` / `missing` / `quarantined` は確定を意味しない。
 
-実価格証跡には取得時刻、元データ SHA-256、調整価格、分割係数、検算後実価格、
-価格・企業行動の版、基準日を保存する。D6 損益は別の入口価格・原株数・原価と
+今後の日次実価格証跡には取得時刻、元データ SHA-256、調整価格、分割係数、検算後実価格、
+価格・企業行動の版、基準日を保存する。承認済み研究資料の名目実価格は後述の別証跡で扱い、
+研究資料にない調整価格や係数を捏造しない。D6 損益は別の入口価格・原株数・原価と
 `entry_date < effective_date <= D6` の分割・併合を使用する。
 `sixth_economics_verified(row)` を通らない損益は集計しない。
 端株処分の未実装や入口価格不足でも、取得・検証できた D6 実始値は保持できる。
@@ -45,8 +46,9 @@ D6価格証跡は、そのソースが記録した入口翌日以降〜D6まで�
 
 ## 明示バックフィル
 
-この改修中、実台帳に対するバックフィルはまだ実行していない。
-Library の正規取得・サイズ・SHA 確認後、対象の価格・企業行動・同一銘柄性を検算し、
+原本 `state/detections.csv` への書込みは行っていない。別出力CSVとprivate overlayの
+研究資料による補完は後述する。日次CSVの経路では、入力のサイズ・SHA確認後に
+対象の価格・企業行動・同一銘柄性を検算し、
 その検算済みの日次 CSV を入力する。研究 HTML に埋め込まれた集計値や
 canonical の `signal_close` を実終値の代わりに使用してはいけない。
 
@@ -78,8 +80,84 @@ python -B -m weak_early_beta.cli backfill-endpoints `
 取得済み証跡は保存され `changed_count` が 0 になる。
 出力を本番へ採用する操作は、このサブコマンドの対象外。
 
+## 承認済み研究資料と読み込み用の補完ファイル
+
+ユーザー配置の価格比較ZIPと、保存一式から安全に復元した研究ZIPを使用した。
+両ZIPの全体SHA、全メンバーのサイズ・SHA、全506件のBASE5/OPEN6取引、
+48集計、営業日・企業行動・元本と株数を検算する。研究HTMLの固定集計値は使用しない。
+
+| 入力 | SHA-256 |
+| --- | --- |
+| 価格比較ZIP | `481a688c76f6d86c3741b016de510ca2deb5f52a4c61ba4ccd91977ed55be37d` |
+| 研究ZIP | `370e9c266319115b035808949b9fc5df3b2fe50f2f64b1dc9ce3f236714578d7` |
+| 価格比較 `inputs.json` | `a388021bdc008975cbc442db38d2e3f319ac70baf6b27389180a3f070029ecae` |
+| 研究 `compact_inputs.json` | `618cc3b0b5a71d6d60fa67cfa645bf6ae59aaac42cc5ebe01590c4c3ea91e849` |
+
+**検証の範囲:** `REVIEWED_RESEARCH_NOMINAL_V1` は固定された研究明細の名目実価格・
+企業行動・経済計算の再検算を表す。元のprepared市場価格・企業行動ファイル自体は
+この資料に含まれず、源泉市場データの再取得・独立再検証は行っていない。
+二つの資料は同じ上流データを使用しており、独立した二系統の市況証拠ではない。
+証跡に `raw_market_refetched:false` と検証範囲を明記し、観測時刻は今回の取込時刻とする。
+歴史上の価格取得時刻は推測しない。既知の2026期間も過去の再利用として扱う。
+
+253件の研究検出は、現行254銘柄日・972モード行のうち253銘柄日・967モード行と一致する。
+資料にない `2026-09-30|4052` の5モードは補完しない。研究mode identity/scope/statusと
+現行972行は一致。二資料で取引明細を照合できる範囲は218件、残る35件は価格比較資料の
+上限なし明細を検算している。研究253件を972件の別々の検出と表現してはいけない。
+
+D5の既存金額と研究名目金額には46銘柄日・164モードの差がある。原D5経済は変更せず、
+検証済み検出日終値とD6の独立列だけを追加する。D6は原入口価格・100株から、D6までの
+分割・併合を適用する（8894の10株、3997/6085の1,000株を含む）。
+
+研究専用の別CSV・監査・照合一覧を生成する。入力も既存出力も上書きしない。
+
+```powershell
+python -B -m weak_early_beta.research_endpoint_backfill `
+  --ledger weak_early_beta/state/detections.csv `
+  --price-comparison-zip <承認済み価格比較ZIP> `
+  --mode-research-zip <承認済み研究ZIP> `
+  --output review/detections_with_research_receipts.csv `
+  --audit review/backfill_audit.json `
+  --coverage review/identity_coverage.csv
+```
+
+出力直前にCSVを再読込し、全行の終値・D6価格・D6経済の検証判定が一致することを必須とする。
+endpoint数値列は17桁で保存する。D5の既存12桁書式は維持する。
+7138の1591.0000610351562円のような実価格も、利益の差分丸めで失効しない。
+
+原台帳を変更せず、上記の別CSV・監査をprivate補完ファイルへ変換する。
+
+```powershell
+python -B -m weak_early_beta.reviewed_endpoint_overlay `
+  --ledger weak_early_beta/state/detections.csv `
+  --reviewed-ledger review/detections_with_research_receipts.csv `
+  --audit review/backfill_audit.json `
+  --output review/reviewed_endpoint_receipts.v1.json `
+  --manifest review/reviewed_endpoint_receipts.v1.manifest.json
+```
+
+採用済みprivate sidecarは `state/reviewed_endpoint_receipts.v1.json`、対応manifestも同じ場所。
+253銘柄日へ証跡を重複排除し、967対象モードのimmutable baseline SHAを持つ。
+モジュールの固定SHAと一致するsidecarだけを読み込む。新しい資料の採用は再レビューとSHA更新が必要。
+原台帳SHAは `7574c18d72948e8faa3b1e0e8d718690242750f5459e68a3f98d7e18b9a55909` のまま。
+
+`read_ledger()` の既定動作は原台帳の読込だけ。daily/modelへ暗黙適用せず、
+レポート生成時に一度読み込んだsidecarを明示的に結合する。
+
+```python
+overlay = load_reviewed_endpoint_overlay()
+report_ledger, overlay_audit = apply_reviewed_endpoint_overlay(read_ledger(), overlay)
+```
+
+入力DataFrameとD5等の既存列は不変、未照合・将来行は変更しない。
+対象モードの検出時点・スコア・D5等のbaselineが変わったら生成を停止する。
+既存の検証済み証跡を優先して保持し、矛盾は例外で停止、review/quarantineは解除しない。
+sidecarには識別子と生の明細があるため**公開assetsへコピーしない**。
+HTML/JS/CSVは通常の無料解禁・上限・履歴区分を適用した派生データから生成する。
+元の研究ZIPはリポジトリへ含めない。
+
 検証コマンド:
 
 ```powershell
-python -B -m unittest tests.test_weak_early_beta_endpoint_receipts tests.test_weak_early_beta_model tests.test_weak_early_beta_trade_basis
+python -B -m unittest tests.test_weak_early_beta_endpoint_receipts tests.test_weak_early_beta_research_backfill tests.test_weak_early_beta_reviewed_overlay tests.test_weak_early_beta_model tests.test_weak_early_beta_trade_basis
 ```

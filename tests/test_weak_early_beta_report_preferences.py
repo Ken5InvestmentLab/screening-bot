@@ -14,7 +14,7 @@ from weak_early_beta.config import COMBINED_STACKED_ID, COMBINED_UNIQUE_ID
 from weak_early_beta.ledger import bootstrap_historical
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.model import attach_forward_rows
-from weak_early_beta.report import _detection_rows, _page_shell, render_analytics_report, render_mode_report, render_report
+from weak_early_beta.report import _detection_rows, _page_shell, _variant_page, render_analytics_report, render_mode_report, render_report
 from weak_early_beta.report_preferences import released_history, select_report_view, validate_price_cap
 from weak_early_beta.trade_basis import LEGACY_PRICE_BASIS_VERSION
 
@@ -44,6 +44,8 @@ def payload(output):
     data = json.loads(re.search(r'<script id="cloud-analytics-data" type="application/json">(.*?)</script>', output, re.S).group(1))
     if data.get("encoding") == "gzip-base64-json":
         data["variants"] = {key: json.loads(gzip.decompress(base64.b64decode(value["gzip"]))) for key, value in data["variants"].items()}
+    for variant in data["variants"].values():
+        variant["html"] = re.sub(r"<!--cloud-shared:([a-z0-9_-]+)-->", lambda match: data.get("sharedHtml", {})[match.group(1)], variant["html"])
     return data
 
 
@@ -57,6 +59,40 @@ class ReportPreferenceTests(unittest.TestCase):
         for value in (True, 0, -1, "", float("inf"), float("nan"), 1.001, "0.001", "90071992547410"):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 validate_price_cap(value)
+
+    def test_lazy_bundles_match_every_inline_variant_and_free_never_receives_pending_records(self):
+        frame = pd.concat([actual_trade("A001", 900), actual_trade("A002", 1500), actual_trade("Z999", 731.29, complete=False)], ignore_index=True)
+        for free in (False, True):
+            inline = payload(_variant_page(frame, self.generated, "home", mask_pending=free))
+            cache = {"bundle-assets": {}}
+            output = _variant_page(frame, self.generated, "home", mask_pending=free, _variant_cache=cache)
+            data = json.loads(re.search(r'<script id="cloud-analytics-data" type="application/json">(.*?)</script>', output, re.S).group(1))
+            self.assertEqual(sum("gzip" in packed for packed in data["variants"].values()), 1)
+            self.assertEqual(data["bundleContext"]["audience"], "free" if free else "full")
+            self.assertLess(len(output.encode("utf8")), 200_000)
+            for key, packed in data["variants"].items():
+                if "bundle" in packed:
+                    name = packed["bundle"][2:]
+                    self.assertRegex(name, r"^weak_early_beta_data_(full|free)_latest_[a-f0-9]{16}_\d{4}\.json$")
+                    encoded = cache["bundle-assets"][name]
+                    self.assertLessEqual(len(encoded), 160_000)
+                    bundle = json.loads(encoded)
+                    self.assertLessEqual(len(bundle["variants"]), 4)
+                    for field in ("snapshot", "audience", "page"):
+                        self.assertEqual(bundle[field], data["bundleContext"][field])
+                    packed = bundle["variants"][key]
+                variant = json.loads(gzip.decompress(base64.b64decode(packed["gzip"])))
+                variant["html"] = re.sub(r"<!--cloud-shared:([a-z0-9_-]+)-->", lambda match: data["sharedHtml"][match.group(1)], variant["html"])
+                self.assertEqual(variant, inline["variants"][key])
+                if free:
+                    self.assertNotIn("Z999", variant["html"])
+            if free:
+                self.assertNotIn("Z999", output)
+                self.assertNotIn(731.29, data["priceBreakpoints"])
+                released_cache = {"bundle-assets": {}}
+                released_output = _variant_page(released_history(frame), self.generated, "home", mask_pending=True, _variant_cache=released_cache)
+                self.assertEqual(output, released_output)
+                self.assertEqual(cache["bundle-assets"], released_cache["bundle-assets"])
 
     def test_price_boundary_uses_verified_actual_close_not_adjusted_reference(self):
         below = actual_trade("A001", 999.99)

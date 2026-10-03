@@ -47,14 +47,19 @@ from weak_early_beta.system_log import IDENTITY as SYSTEM_LOG_IDENTITY, _payload
 from weak_early_beta.restrictions import parse_jpx_restricted_symbols, quarantine_restricted_detections
 
 
-def report_variant_html(output, key="d5_close:all"):
+def report_variant_html(output, key="d5_close:all", bundle_root=None):
     """Inspect the explicitly selected legacy/unlimited reference view."""
     data = json.loads(re.search(r'<script id="cloud-analytics-data" type="application/json">(.*?)</script>', output, re.DOTALL).group(1))
     if data.get("encoding") == "gzip-base64-json":
         import base64
         import gzip
-        return json.loads(gzip.decompress(base64.b64decode(data["variants"][key]["gzip"])))['html']
-    return data["variants"][key]["html"]
+        packed = data["variants"][key]
+        if "bundle" in packed:
+            packed = json.loads((bundle_root / packed["bundle"][2:]).read_text(encoding="utf8"))["variants"][key]
+        fragment = json.loads(gzip.decompress(base64.b64decode(packed["gzip"])))['html']
+    else:
+        fragment = data["variants"][key]["html"]
+    return re.sub(r"<!--cloud-shared:([a-z0-9_-]+)-->", lambda match: data.get("sharedHtml", {})[match.group(1)], fragment)
 
 
 class WeakEarlyBetaTests(unittest.TestCase):
@@ -391,6 +396,10 @@ class WeakEarlyBetaTests(unittest.TestCase):
     def test_write_report_creates_all_mode_pages_and_free_shells(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
+            stale = root / "weak_early_beta_data_full_analytics_aaaaaaaaaaaaaaaa_9999.json"
+            stale.write_text("old generated snapshot", encoding="utf8")
+            private = root / "private_receipts.json"
+            private.write_text("private unchanged", encoding="utf8")
             metrics = write_report(
                 self.ledger,
                 report_path=root / "weak_early_beta_latest.html",
@@ -401,6 +410,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
             # The frozen canonical signal_close is not a verified nominal
             # close. Initial capped CSV/view must exclude its unknown prices.
             self.assertTrue(metrics.empty)
+            self.assertFalse(stale.exists())
+            self.assertEqual(private.read_text(encoding="utf8"), "private unchanged")
             for filename in MODE_PAGE_NAMES.values():
                 self.assertTrue((root / filename).exists(), filename)
                 self.assertTrue((root / filename.replace(".html", "_free.html")).exists(), filename)
@@ -447,7 +458,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertEqual(dashboard.count("参考値・集計対象外"), 5)
             direct_dashboard = render_report(self.ledger, metrics, pd.Timestamp("2026-09-26"))
             self.assertEqual(direct_dashboard.count("参考値・集計対象外"), 5)
-            analytics = report_variant_html((root / ANALYTICS_PAGE_NAME).read_text(encoding="utf-8"))
+            analytics = report_variant_html((root / ANALYTICS_PAGE_NAME).read_text(encoding="utf-8"), bundle_root=root)
             growth = analytics.split('id="growth">', 1)[1].split('</section>', 1)[0]
             self.assertIn("¥+1,785,385", growth)
             self.assertIn("¥+409,392", growth)

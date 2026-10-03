@@ -272,6 +272,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const exportButton = document.getElementById("cloud-export-csv");
   const historyExportButton = document.getElementById("cloud-history-export-csv");
   const decodedVariants = new Map();
+  const bundles = new Map();
+  let accessLost = false;
   let edited = false;
   let editRevision = 0;
   let storageFailed = false;
@@ -347,9 +349,53 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     if (allocation) allocation.value = requestedView.allocation;
   };
   const decodeVariant = async (key) => {
+    if (accessLost) throw new Error("access lost");
     if (decodedVariants.has(key)) return decodedVariants.get(key);
-    const packed = payload.variants[key];
+    let packed = payload.variants[key];
     if (!packed) throw new Error("missing variant");
+    if (typeof packed.bundle === "string") {
+      const match = /^\.\/weak_early_beta_data_(full|free)_(latest|analytics|silence|dive|shadow|fusion|balance|guide)_([a-f0-9]{16})_(\d{4})\.json$/.exec(packed.bundle);
+      const context = payload.bundleContext;
+      if (!match || !context || match[1] !== context.audience || match[2] !== context.page || match[3] !== context.snapshot) throw new Error("invalid bundle reference");
+      const url = new URL(packed.bundle, window.location.href);
+      if (url.origin !== window.location.origin) throw new Error("invalid bundle origin");
+      let bundle = bundles.get(packed.bundle);
+      if (!bundle) {
+        const response = await fetch(url.href, { credentials: "same-origin", cache: "no-store", redirect: "error" });
+        if (response.status === 401 || response.status === 403) {
+          // Even a superseded request's denial invalidates paid cached content.
+          accessLost = true;
+          renderRevision += 1;
+          decodedVariants.clear(); bundles.clear(); currentVariant = null;
+          for (const pair of fundamentalPairs) {
+            closeFundamental(pair);
+            pair.detail.innerHTML = "";
+            pair.detail.remove();
+          }
+          fundamentalPairs.length = 0;
+          rows.forEach((row) => row.remove()); rows.length = 0; matchingRows = [];
+          content.innerHTML = "";
+          payloadElement.textContent = "";
+          payload = null;
+          for (const element of document.querySelectorAll("[data-fundamental], .fundamental-detail")) element.remove();
+          syncActionAvailability();
+          setStatus("閲覧資格を再確認します。ページを読み直しています。", true);
+          window.location.reload();
+          throw new Error("access lost");
+        }
+        if (!response.ok) throw new Error("bundle unavailable");
+        if (Number(response.headers.get("content-length")) > 1024 * 1024) throw new Error("oversized bundle");
+        const text = await response.text();
+        if (new TextEncoder().encode(text).length > 1024 * 1024) throw new Error("oversized bundle");
+        bundle = JSON.parse(text);
+        if (accessLost) throw new Error("access lost");
+        if (bundle.version !== 1 || bundle.encoding !== "gzip-base64-json" || bundle.audience !== context.audience || bundle.page !== context.page || bundle.snapshot !== context.snapshot || bundle.chunk !== Number(match[4]) || !bundle.variants || Array.isArray(bundle.variants) || Object.keys(bundle.variants).length > 32) throw new Error("invalid bundle context");
+        if (bundles.size >= 2) bundles.delete(bundles.keys().next().value);
+        bundles.set(packed.bundle, bundle);
+      }
+      packed = bundle.variants[key];
+      if (!packed || typeof packed.gzip !== "string") throw new Error("missing bundle variant");
+    }
     let variant = packed;
     if (typeof packed.gzip === "string") {
       if (typeof DecompressionStream === "undefined") throw new Error("decompression unavailable");
@@ -358,6 +404,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       variant = await new Response(stream).json();
     }
     if (typeof variant.html !== "string" || !Array.isArray(variant.metrics) || !Array.isArray(variant.monthlyMetrics)) throw new Error("invalid variant");
+    variant.html = variant.html.replace(/<!--cloud-shared:([a-z0-9_-]+)-->/g, (_token, fragmentKey) => {
+      const fragment = payload.sharedHtml?.[fragmentKey];
+      if (typeof fragment !== "string" || fragment.includes("<!--cloud-shared:")) throw new Error("invalid shared HTML");
+      return fragment;
+    });
+    if (accessLost) throw new Error("access lost");
     // Retain only two decoded choices; compressed histories can remain compact
     // on mobile even when many exact nominal-price boundaries are available.
     if (decodedVariants.size >= 2) decodedVariants.delete(decodedVariants.keys().next().value);
@@ -365,12 +417,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     return variant;
   };
   const syncActionAvailability = () => {
-    if (exportButton) exportButton.disabled = preferencesPending || !currentVariant;
-    if (historyExportButton) historyExportButton.disabled = preferencesPending;
-    if (saveButton) saveButton.disabled = preferencesPending || saving;
+    if (exportButton) exportButton.disabled = accessLost || preferencesPending || !currentVariant;
+    if (historyExportButton) historyExportButton.disabled = accessLost || preferencesPending;
+    if (saveButton) saveButton.disabled = accessLost || preferencesPending || saving;
     content?.setAttribute("aria-busy", preferencesPending ? "true" : "false");
   };
   const applyPreferences = async ({ persist = false } = {}) => {
+    if (accessLost) return false;
     const revision = ++renderRevision;
     const requested = { ...requestedPreferences };
     const nextView = { ...requestedView };
@@ -381,9 +434,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       try {
         if (!payload) throw new Error("analytics payload unavailable");
         nextVariant = await decodeVariant(CloudPreferences.variantKey(payload, requested, nextView));
-        if (revision !== renderRevision) return false;
+        if (accessLost || revision !== renderRevision) return false;
       } catch (_error) {
-        if (revision !== renderRevision) return false;
+        if (accessLost || revision !== renderRevision) return false;
         // Keep the last complete view and its CSV usable; failed requests are
         // neither persisted locally nor sent as the current member preference.
         requestedPreferences = { ...appliedPreferences };
@@ -495,7 +548,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       return updateFromControls();
     });
     saveButton?.addEventListener("click", async () => {
-      if (preferencesPending || saving) return;
+      if (accessLost || preferencesPending || saving) return;
       let selected;
       try { selected = readControls(); }
       catch (error) { setStatus(error.message, true); return; }
@@ -544,7 +597,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
           setStatus(storageFailed ? "会員設定を反映しました。端末内の補助保存は利用できません。" : "会員設定を反映しました。");
         }
       }
-      for (const input of Object.values(notifyInputs)) input.disabled = !paidMembership;
+      for (const input of Object.values(notifyInputs)) input.disabled = accessLost || !paidMembership;
       const off = document.getElementById("cloud-notifications-off");
       if (off) off.disabled = false;
       if (!paidMembership && !edited && serverApplied) setStatus("表示条件の会員設定を反映しました。通知の利用には有効な有料会員資格が必要です。通知解除は行えます。");
@@ -563,7 +616,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
   document.getElementById("cloud-export-csv")?.addEventListener("click", () => {
-    if (preferencesPending || !currentVariant) return;
+    if (accessLost || preferencesPending || !currentVariant) return;
     const preferences = appliedPreferences;
     const metrics = CloudPreferences.selectCsvMetrics(
       [...(currentVariant.metrics || []), ...(currentVariant.monthlyMetrics || [])], payload?.page, appliedView.allocation);
@@ -577,7 +630,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     downloadCSV(CloudPreferences.csv(records, columns), `Cloud_集計_${preferences.exitKey}.csv`);
   });
   document.getElementById("cloud-history-export-csv")?.addEventListener("click", () => {
-    if (preferencesPending) return;
+    if (accessLost || preferencesPending) return;
     const preferences = appliedPreferences;
     const records = matchingRows.map((row) => ({
       "検出日": row.dataset.date || "",

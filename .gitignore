@@ -33,3 +33,10 @@ report-gate/worker-configuration.d.ts
 # Weak+Early beta temporary fundamental-runner logs/configuration
 weak_early_beta/fundamental_worker/out/manual_runtime/
 weak_early_beta/fundamental_worker/out/manual_run_config.json
+
+# Cloud variants are rebuilt with their HTML from the pinned ledger at deploy.
+# Do not append a complete new compressed snapshot to Git history every day.
+reports/weak_early_beta_data_*.json
+reports/review_metrics.csv
+reports/review_monthly_metrics.csv
+reports/review_receipt.json

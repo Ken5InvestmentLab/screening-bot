@@ -559,6 +559,45 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
   return { api, worker, env, db, memberId, request, fetchApi, calls, assets, provider, clock };
 }
 
+const bundlePath = (audience) => `/weak_early_beta_data_${audience}_analytics_${'a'.repeat(16)}_0000.json`;
+for (const scenario of ['paid', 'free', 'expired', 'test', 'unlinked', 'provider-error', 'unconfigured']) {
+  test(`lazy full/free bundle access is fail-closed for ${scenario}`, async () => {
+    const fixture = memberFixture();
+    if (scenario === 'expired') fixture.membership.current_period_end = '2026-10-01T00:00:00Z';
+    if (scenario === 'test') fixture.link.environment = 'test';
+    const h = await apiHarness({ fixture, roles: scenario === 'free' ? [] : ['paid-discord-role'], configured: scenario !== 'unconfigured', providerStatus: scenario === 'provider-error' ? 503 : 200 });
+    if (scenario === 'unlinked') h.db.state.links.clear();
+    const full = await h.worker.fetch(await h.request(bundlePath('full')), h.env);
+    assert.equal(full.status, scenario === 'paid' ? 200 : 403);
+    assert.equal(full.headers.get('cache-control'), 'private, no-store');
+    assert.equal(full.headers.get('vary'), 'Cookie');
+    assert.equal(full.headers.get('cross-origin-resource-policy'), 'same-origin');
+    assert.equal(full.headers.get('access-control-allow-origin'), null);
+    const free = await h.worker.fetch(await h.request(bundlePath('free')), h.env);
+    assert.equal(free.status, 200);
+    if (scenario !== 'paid') assert.equal(h.assets.some(name => name.includes('_data_full_')), false);
+  });
+}
+test('bundle routes reject unauthenticated, cross-origin, malformed and mutating requests', async () => {
+  const h = await apiHarness();
+  for (const [pathname, options, expected] of [
+    [bundlePath('full'), { authenticated: false }, 401],
+    [bundlePath('free'), { authenticated: false }, 401],
+    [bundlePath('full'), { origin: 'https://elsewhere.invalid' }, 403],
+    [bundlePath('full'), { method: 'POST' }, 405],
+    ['/weak_early_beta_data_full_analytics_bad_0000.json', {}, 404],
+  ]) assert.equal((await h.worker.fetch(await h.request(pathname, options), h.env)).status, expected);
+  assert.equal(h.assets.length, 0);
+});
+test('bundle paid access rechecks live membership after an earlier successful request', async () => {
+  const h = await apiHarness();
+  assert.equal((await h.worker.fetch(await h.request(bundlePath('full')), h.env)).status, 200);
+  h.provider.fixture.membership.status = 'revoked';
+  assert.equal((await h.worker.fetch(await h.request(bundlePath('full')), h.env)).status, 403);
+  assert.equal(h.assets.length, 1);
+  assert.equal((await h.worker.fetch(await h.request(bundlePath('free'), { method: 'HEAD' }), h.env)).status, 200);
+});
+
 test('API stores settings under the server session identity and returns private uncached JSON', async () => {
   const h = await apiHarness();
   const initial = await h.fetchApi();

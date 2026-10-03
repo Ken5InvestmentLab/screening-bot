@@ -1,0 +1,798 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const { webcrypto } = require('node:crypto');
+
+const repoRoot = path.resolve(__dirname, '..');
+const tsPath = [
+  'weak-early-beta-gate/node_modules/typescript/lib/typescript.js',
+  'report-gate/node_modules/typescript/lib/typescript.js',
+].map((relative) => path.join(repoRoot, relative)).find((candidate) => fs.existsSync(candidate));
+assert.ok(tsPath, 'Install one gate package before running the membership tests.');
+const ts = require(tsPath);
+
+// Load the actual Worker modules with synthetic credentials and no network.
+// Only relative imports under the Cloud source directory are permitted.
+function createModules({ fetchMock, clock } = {}) {
+  const sourceRoot = path.join(repoRoot, 'weak-early-beta-gate', 'src');
+  const cache = new Map();
+  function load(name, parent = sourceRoot) {
+    const filename = path.resolve(parent, `${name.replace(/\.ts$/, '')}.ts`);
+    assert.ok(filename.startsWith(`${sourceRoot}${path.sep}`), 'Test imports must remain inside the Cloud gate.');
+    if (cache.has(filename)) return cache.get(filename).exports;
+    const module = { exports: {} };
+    cache.set(filename, module);
+    let source = fs.readFileSync(filename, 'utf8');
+    if (path.basename(filename) === 'shared-report-gate.ts') source += '\nexport const __test = { createSession };';
+    const compiled = ts.transpileModule(source, {
+      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+    }).outputText;
+    const sandbox = {
+      exports: module.exports, module,
+      require: (specifier) => {
+        assert.ok(specifier.startsWith('.'), `Unexpected dependency: ${specifier}`);
+        return load(specifier, path.dirname(filename));
+      },
+      Request, Response, Headers, URL, URLSearchParams, AbortSignal,
+      TextEncoder, TextDecoder, Uint8Array, crypto: webcrypto, atob, btoa,
+      fetch: fetchMock || (() => { throw new Error('Network access is forbidden in membership tests.'); }),
+      Date: class extends Date {
+        constructor(...args) { super(...(args.length ? args : [clock ? clock.now : Date.now()])); }
+        static now() { return clock ? clock.now : Date.now(); }
+      },
+      console: { error() {}, log() {}, warn() {} },
+      setTimeout, clearTimeout,
+    };
+    vm.runInNewContext(compiled, sandbox, { filename });
+    return module.exports;
+  }
+  return { load };
+}
+
+// Convert VM objects to the host realm before structural assertions.
+const plain = (value) => JSON.parse(JSON.stringify(value));
+
+const rules = createModules().load('./cloud-membership');
+const NOW = Date.parse('2026-10-02T07:00:00.000Z');
+
+function preferences(overrides = {}) {
+  return { ...plain(rules.DEFAULT_PREFERENCES), ...overrides,
+    notifications: { ...plain(rules.DEFAULT_PREFERENCES.notifications), ...(overrides.notifications || {}) } };
+}
+
+function memberFixture() {
+  return {
+    link: {
+      member_id: 'internal-member-1', discord_user_id: 'discord-user-1',
+      whop_user_id: 'user_1', membership_id: 'mem_1', payment_id: 'pay_1',
+      environment: 'live', verified_at: '2026-09-01T00:00:00Z',
+      verification_method: 'dual_oauth', evidence_reference: 'verified-link-receipt-1', revoked_at: null,
+    },
+    policy: { account_id: 'biz_1', product_ids: ['prod_1'], paid_plan_ids: ['plan_1'], one_time_plan_ids: [] },
+    membership: {
+      id: 'mem_1', user_id: 'user_1', account: { id: 'biz_1' }, product_id: 'prod_1', plan_id: 'plan_1',
+      status: 'active', current_period_start: '2026-10-01T00:00:00Z', current_period_end: '2026-11-01T00:00:00Z',
+      cancel_at_period_end: false, canceled_at: null,
+    },
+    payment: {
+      id: 'pay_1', membership_id: 'mem_1', account_id: 'biz_1', user: { id: 'user_1' },
+      status: 'paid', total: { amount: '1000', currency: 'jpy' },
+      refunded_amount: { amount: '0', currency: 'jpy' }, paid_at: '2026-10-01T00:00:00Z',
+    },
+  };
+}
+
+function membershipDecision(fixture = memberFixture(), now = NOW) {
+  return rules.evaluateMembership(fixture.membership, fixture.payment, fixture.link, fixture.policy, now);
+}
+
+function eventFixture(overrides = {}) {
+  return {
+    signal_id: 'signal-private-1', kind: 'result', detection_date: '2026-09-24',
+    adapter_version: 'cloud-ledger-v1', source_ledger_revision: 'a'.repeat(64),
+    signal_actual_close: 1000, signal_price_status: 'verified',
+    endpoints: {
+      d5_close: { date: '2026-10-01', actual_price: 1100, status: 'verified',
+        fetched_at: '2026-10-01T07:00:00Z', source: 'b'.repeat(64) },
+      d6_open: { date: '2026-10-02', actual_price: 1110, status: 'verified',
+        fetched_at: '2026-10-02T00:01:00Z', source: 'c'.repeat(64) },
+    },
+    ...overrides,
+  };
+}
+
+function notificationDecision(event = eventFixture(), prefs = preferences({ notifications: { result: true } }),
+  member, now = NOW) {
+  const currentMembership = member || { ...membershipDecision(), checked_at: new Date(now).toISOString() };
+  return rules.evaluateNotification(event, prefs, currentMembership, now);
+}
+
+test('all three notifications default OFF and preference storage collects no email address', () => {
+  assert.deepEqual(plain(rules.DEFAULT_PREFERENCES), {
+    max_price: 1000, exit_endpoint: 'd5_close',
+    notifications: { new_detection: false, reminder: false, result: false },
+  });
+  assert.throws(() => rules.validatePreferences({ ...preferences(), email: 'unused@example.invalid' }), /invalid_preferences/);
+});
+
+for (const max_price of [1000, 3000, 5000, null, 1250.25]) {
+  for (const exit_endpoint of ['d5_close', 'd6_open']) {
+    test(`preferences accept ${max_price ?? 'unlimited'} and ${exit_endpoint}`, () => {
+      const input = preferences({ max_price, exit_endpoint, notifications: { reminder: true } });
+      assert.deepEqual(plain(rules.validatePreferences(input)), input);
+    });
+  }
+}
+
+for (const max_price of [undefined, '', '1000', 0, -1, NaN, Infinity, 1.001, 1.2300000001, 1e-7]) {
+  test(`preferences reject unsafe price boundary ${String(max_price)}`, () => {
+    assert.throws(() => rules.validatePreferences(preferences({ max_price })), /invalid_max_price/);
+  });
+}
+
+test('preferences reject partial, mistyped, and unexpected notification settings', () => {
+  for (const input of [null, [], {}, { ...preferences(), exit_endpoint: 'd6_close' },
+    { ...preferences(), notifications: {} },
+    { ...preferences(), notifications: { new_detection: false, reminder: 'true', result: false } },
+    { ...preferences(), notifications: { ...preferences().notifications, email: true } }]) {
+    assert.throws(() => rules.validatePreferences(input), /invalid_/);
+  }
+});
+
+test('validated preferences do not share mutable notification state with request data', () => {
+  const input = preferences({ notifications: { result: true } });
+  const validated = rules.validatePreferences(input);
+  input.notifications.result = false;
+  assert.equal(validated.notifications.result, true);
+  assert.equal(rules.DEFAULT_PREFERENCES.notifications.result, false);
+});
+
+test('a verified live paid member passes and its check time is generated by the server', () => {
+  assert.deepEqual(plain(membershipDecision()), {
+    status: 'paid', reason: 'verified_paid_membership', checked_at: '2026-10-02T07:00:00.000Z',
+  });
+});
+
+test('scheduled cancellation retains access until the paid period ends', () => {
+  const fixture = memberFixture();
+  fixture.membership.cancel_at_period_end = true;
+  fixture.membership.canceled_at = '2026-10-02T01:00:00Z';
+  assert.equal(membershipDecision(fixture).status, 'paid');
+  assert.equal(membershipDecision(fixture, Date.parse('2026-11-01T00:00:00Z')).status, 'free');
+});
+
+for (const status of ['canceled', 'expired', 'past_due', 'trialing', 'unpaid', 'unknown', 'completed']) {
+  test(`membership status ${status} does not grant subscription access`, () => {
+    const fixture = memberFixture();
+    fixture.membership.status = status;
+    assert.equal(membershipDecision(fixture).status, 'free');
+  });
+}
+
+test('a completed purchase is accepted only when its plan explicitly permits one-time access', () => {
+  const fixture = memberFixture();
+  fixture.membership.status = 'completed';
+  fixture.membership.current_period_end = null;
+  fixture.membership.current_period_start = null;
+  assert.notEqual(membershipDecision(fixture).status, 'paid');
+  fixture.policy.one_time_plan_ids.push('plan_1');
+  assert.equal(membershipDecision(fixture).status, 'paid');
+});
+
+for (const [label, change] of [
+  ['test account', f => { f.link.environment = 'test'; }],
+  ['revoked identity link', f => { f.link.revoked_at = '2026-10-01T00:00:00Z'; }],
+  ['email-only linkage', f => { f.link.verification_method = 'email_match'; }],
+  ['missing evidence', f => { f.link.evidence_reference = ''; }],
+  ['missing verification time', f => { f.link.verified_at = ''; }],
+  ['future verification time', f => { f.link.verified_at = '2027-01-01T00:00:00Z'; }],
+  ['different membership', f => { f.membership.id = 'mem_other'; }],
+  ['different owner', f => { f.membership.user_id = 'user_other'; }],
+  ['different account', f => { f.membership.account.id = 'biz_other'; }],
+  ['different product', f => { f.membership.product_id = 'prod_other'; }],
+  ['free plan', f => { f.membership.plan_id = 'plan_free'; }],
+  ['different payment', f => { f.payment.id = 'pay_other'; }],
+  ['payment from another membership', f => { f.payment.membership_id = 'mem_other'; }],
+  ['payment from another account', f => { f.payment.account_id = 'biz_other'; }],
+  ['payment by another owner', f => { f.payment.user.id = 'user_other'; }],
+  ['payment not completed', f => { f.payment.status = 'pending'; }],
+  ['zero-price grant', f => { f.payment.total.amount = '0'; }],
+  ['fully refunded payment', f => { f.payment.refunded_amount.amount = '1000'; }],
+  ['negative refund', f => { f.payment.refunded_amount.amount = '-1'; }],
+  ['currency mismatch', f => { f.payment.refunded_amount.currency = 'usd'; }],
+  ['previous-period payment', f => { f.payment.paid_at = '2026-09-01T00:00:00Z'; }],
+  ['future payment', f => { f.payment.paid_at = '2027-01-01T00:00:00Z'; }],
+  ['unparseable payment timestamp', f => { f.payment.paid_at = 'unknown'; }],
+  ['future period start', f => { f.membership.current_period_start = '2027-01-01T00:00:00Z'; }],
+  ['missing subscription expiry', f => { f.membership.current_period_end = null; }],
+  ['unparseable subscription expiry', f => { f.membership.current_period_end = 'unknown'; }],
+]) {
+  test(`${label} cannot grant paid access`, () => {
+    const fixture = memberFixture();
+    change(fixture);
+    assert.notEqual(membershipDecision(fixture).status, 'paid');
+  });
+}
+
+test('missing or malformed provider results fail closed', () => {
+  for (const invalid of [undefined, null, [], 'failure']) {
+    const fixture = memberFixture();
+    fixture.membership = invalid;
+    assert.equal(membershipDecision(fixture).status, 'unavailable');
+    const paymentFixture = memberFixture();
+    paymentFixture.payment = invalid;
+    assert.equal(membershipDecision(paymentFixture).status, 'unavailable');
+  }
+});
+
+for (const kind of ['new_detection', 'reminder', 'result']) {
+  test(`${kind} stays suppressed until that individual notification is enabled`, () => {
+    const event = eventFixture({ kind });
+    assert.equal(notificationDecision(event, preferences()).reason, 'notification_off');
+    for (const enabled of ['new_detection', 'reminder', 'result'].filter(k => k !== kind)) {
+      assert.equal(notificationDecision(event, preferences({ notifications: { [enabled]: true } })).reason, 'notification_off');
+    }
+  });
+}
+
+for (const status of ['free', 'unverified', 'unavailable']) {
+  test(`notification for ${status} membership is held even with opt-in`, () => {
+    const decision = notificationDecision(undefined, undefined, { status, reason: `test_${status}`, checked_at: new Date(NOW).toISOString() });
+    assert.equal(decision.status, 'held');
+    assert.equal(decision.message, null);
+  });
+}
+
+test('confirmed detection-day actual close uses an inclusive price cap', () => {
+  for (const signal_actual_close of [999.99, 1000]) {
+    assert.equal(notificationDecision(eventFixture({ signal_actual_close })).status, 'would_send');
+  }
+  assert.equal(notificationDecision(eventFixture({ signal_actual_close: 1000.01 })).reason, 'over_price_limit');
+});
+
+test('a finite cap holds unknown, zero, nonfinite, and unverified detection prices', () => {
+  for (const signal_actual_close of [null, 0, -1, NaN, Infinity, '1000']) {
+    assert.equal(notificationDecision(eventFixture({ signal_actual_close })).reason, 'signal_price_unverified');
+  }
+  for (const signal_price_status of ['pending', 'adjusted_reference', '', 'missing']) {
+    assert.equal(notificationDecision(eventFixture({ signal_price_status })).reason, 'signal_price_unverified');
+  }
+});
+
+test('unlimited selection does not turn an unknown detection price into a numeric substitute', () => {
+  const event = eventFixture({ signal_actual_close: null, signal_price_status: 'pending' });
+  const decision = notificationDecision(event, preferences({ max_price: null, notifications: { result: true } }));
+  assert.equal(decision.status, 'would_send');
+  assert.equal(event.signal_actual_close, null);
+  assert.equal(event.signal_price_status, 'pending');
+});
+
+test('2022 rows cannot produce notifications under any configured price limit', () => {
+  for (const max_price of [1000, null]) {
+    const decision = notificationDecision(eventFixture({ detection_date: '2022-12-30', kind: 'new_detection' }),
+      preferences({ max_price, notifications: { new_detection: true } }));
+    assert.equal(decision.status, 'suppressed');
+    assert.equal(decision.reason, 'excluded_research_year');
+  }
+});
+
+for (const exit_endpoint of ['d5_close', 'd6_open']) {
+  test(`${exit_endpoint} result requires its own confirmed actual price and provenance`, () => {
+    const prefs = preferences({ exit_endpoint, notifications: { result: true } });
+    assert.equal(notificationDecision(undefined, prefs).status, 'would_send');
+    for (const invalid of [
+      { actual_price: null }, { actual_price: 0 }, { actual_price: -1 }, { actual_price: NaN },
+      { actual_price: Infinity }, { actual_price: '1100' }, { status: 'pending' },
+      { source: null }, { source: '' }, { fetched_at: null }, { fetched_at: 'invalid' },
+      { fetched_at: '2027-01-01T00:00:00Z' }, { date: '2026-10-05' },
+    ]) {
+      const event = eventFixture();
+      Object.assign(event.endpoints[exit_endpoint], invalid);
+      const decision = notificationDecision(event, prefs);
+      assert.equal(decision.status, 'held', JSON.stringify(invalid));
+      assert.equal(decision.message, null);
+    }
+  });
+}
+
+test('a frozen D5 result does not allow a pending D6 result notification', () => {
+  const event = eventFixture();
+  event.endpoints.d6_open.actual_price = null;
+  event.endpoints.d6_open.status = 'pending';
+  event.endpoints.d6_open.fetched_at = null;
+  event.endpoints.d6_open.source = null;
+  assert.equal(notificationDecision(event).status, 'would_send');
+  assert.equal(notificationDecision(event, preferences({ exit_endpoint: 'd6_open', notifications: { result: true } })).status, 'held');
+});
+
+for (const exit_endpoint of ['d5_close', 'd6_open']) {
+  test(`${exit_endpoint} at 08:00 JST creates a reminder while its result remains pending`, () => {
+    const event = eventFixture({ kind: 'reminder' });
+    event.endpoints[exit_endpoint] = { date: '2026-10-02', actual_price: null,
+      status: 'pending', fetched_at: null, source: null };
+    const prefs = preferences({ exit_endpoint, notifications: { reminder: true, result: true } });
+    const time = Date.parse('2026-10-01T23:00:00Z');
+    const reminder = notificationDecision(event, prefs, undefined, time);
+    assert.equal(reminder.status, 'would_send');
+    assert.equal(reminder.reason, 'confirmation_day_reminder');
+    const result = notificationDecision({ ...event, kind: 'result' }, prefs, undefined, time);
+    assert.equal(result.status, 'held');
+    assert.equal(result.reason, 'endpoint_price_unconfirmed');
+    assert.notEqual(result.event_key, reminder.event_key);
+  });
+}
+
+test('reminders are limited to the selected endpoint date and the 08 JST hour across a year boundary', () => {
+  const event = eventFixture({ kind: 'reminder' });
+  event.endpoints.d6_open.date = '2027-01-04';
+  const prefs = preferences({ exit_endpoint: 'd6_open', notifications: { reminder: true } });
+  for (const time of ['2027-01-03T22:59:59Z', '2027-01-04T00:00:00Z', '2027-01-02T23:00:00Z', '2026-12-31T23:00:00Z']) {
+    assert.equal(notificationDecision(event, prefs, undefined, Date.parse(time)).reason, 'outside_reminder_window', time);
+  }
+  for (const time of ['2027-01-03T23:00:00Z', '2027-01-03T23:59:59Z']) {
+    assert.equal(notificationDecision(event, prefs, undefined, Date.parse(time)).reason, 'confirmation_day_reminder', time);
+  }
+});
+
+test('new-detection deduplication survives price-cap and D5/D6 preference changes', () => {
+  const event = eventFixture({ kind: 'new_detection' });
+  const first = notificationDecision(event, preferences({ notifications: { new_detection: true } }));
+  const second = notificationDecision(event, preferences({ max_price: 5000, exit_endpoint: 'd6_open', notifications: { new_detection: true } }));
+  assert.equal(first.status, 'would_send');
+  assert.equal(second.status, 'would_send');
+  assert.equal(first.event_key, second.event_key);
+});
+
+test('results distinguish D5 and D6 while keeping the same key after a cap change', () => {
+  const first = notificationDecision();
+  const capChanged = notificationDecision(undefined, preferences({ max_price: 5000, notifications: { result: true } }));
+  const endpointChanged = notificationDecision(undefined, preferences({ exit_endpoint: 'd6_open', notifications: { result: true } }));
+  assert.equal(first.event_key, capChanged.event_key);
+  assert.notEqual(first.event_key, endpointChanged.event_key);
+});
+
+test('notification authorization rejects a stale, future, or missing membership check', () => {
+  for (const checked_at of ['2026-10-02T06:59:29.999Z', '2026-10-02T07:00:00.001Z', '', null]) {
+    const decision = notificationDecision(undefined, undefined, { ...membershipDecision(), checked_at });
+    assert.equal(decision.status, 'held', String(checked_at));
+    assert.equal(decision.reason, 'membership_check_stale');
+  }
+});
+
+test('an apparently confirmed same-day result cannot be used before its market time', () => {
+  for (const [exit_endpoint, endpointDate, clock] of [
+    ['d5_close', '2026-10-01', '2026-10-01T06:29:59Z'],
+    ['d6_open', '2026-10-02', '2026-10-01T23:59:59Z'],
+  ]) {
+    const event = eventFixture();
+    event.endpoints[exit_endpoint].date = endpointDate;
+    event.endpoints[exit_endpoint].fetched_at = clock;
+    assert.equal(notificationDecision(event, preferences({ exit_endpoint, notifications: { result: true } }),
+      undefined, Date.parse(clock)).status, 'held');
+  }
+});
+
+test('result provenance cannot predate the actual market endpoint, including the 2024 closing-time change', () => {
+  for (const [exit_endpoint, date, fetched_at, now] of [
+    ['d5_close', '2024-11-01', '2024-11-01T05:59:59Z', '2024-11-01T08:00:00Z'],
+    ['d5_close', '2024-11-05', '2024-11-05T06:29:59Z', '2024-11-05T08:00:00Z'],
+    ['d6_open', '2026-10-02', '2026-10-01T23:59:59Z', '2026-10-02T08:00:00Z'],
+  ]) {
+    const event = eventFixture();
+    event.endpoints[exit_endpoint].date = date;
+    event.endpoints[exit_endpoint].fetched_at = fetched_at;
+    const decision = notificationDecision(event, preferences({ exit_endpoint, notifications: { result: true } }), undefined, Date.parse(now));
+    assert.equal(decision.status, 'held');
+    assert.equal(decision.reason, 'endpoint_observation_too_early');
+  }
+  for (const [date, fetched_at] of [['2024-11-01', '2024-11-01T06:00:00Z'], ['2024-11-05', '2024-11-05T06:30:00Z']]) {
+    const event = eventFixture();
+    event.endpoints.d5_close.date = date;
+    event.endpoints.d5_close.fetched_at = fetched_at;
+    assert.equal(notificationDecision(event, undefined, undefined, Date.parse(`${date}T08:00:00Z`)).status, 'would_send');
+  }
+});
+
+test('a price source must be the full receipt SHA-256, not a provider name or arbitrary string', () => {
+  for (const source of ['yahoo', 'x'.repeat(64), 'a'.repeat(63), 'a'.repeat(65), '', null]) {
+    const event = eventFixture(); event.endpoints.d5_close.source = source;
+    assert.equal(notificationDecision(event).status, 'held');
+  }
+});
+
+test('missing or malformed monetary values cannot silently become a paid total or zero refund', () => {
+  for (const invalid of [true, false, null, '', '  ', [], {}]) {
+    const total = memberFixture(); total.payment.total.amount = invalid;
+    assert.notEqual(membershipDecision(total).status, 'paid', `total: ${JSON.stringify(invalid)}`);
+    const refunded = memberFixture(); refunded.payment.refunded_amount.amount = invalid;
+    assert.notEqual(membershipDecision(refunded).status, 'paid', `refund: ${JSON.stringify(invalid)}`);
+  }
+});
+
+// The in-memory D1 double implements only statements used by the real API.
+// Unique delivery keys are enforced at INSERT, including concurrent calls.
+function fakeDatabase() {
+  const state = { links: new Map(), preferences: new Map(), events: [], deliveries: new Map(), subscriptions: [], writes: [], failWrites: false };
+  function prepare(sql) {
+    const normalized = sql.replace(/\s+/g, ' ').trim();
+    return {
+      bind(...args) {
+        return {
+          async first() {
+            if (normalized.includes('FROM cloud_member_links')) {
+              const link = state.links.get(args[0]);
+              return link?.discord_user_id === args[1] ? structuredClone(link) : null;
+            }
+            if (normalized.includes('FROM cloud_member_preferences')) {
+              return state.preferences.has(args[0]) ? { preferences_json: state.preferences.get(args[0]) } : null;
+            }
+            if (normalized.includes('FROM cloud_notification_deliveries')) return state.deliveries.get(`${args[0]}|${args[1]}`) || null;
+            throw new Error(`Unexpected first query: ${normalized}`);
+          },
+          async all() {
+            assert.match(normalized, /FROM cloud_notification_events/);
+            return { success: true, results: state.events.filter(row => row.available_at <= args[0])
+              .sort((a, b) => b.available_at.localeCompare(a.available_at)).slice(0, 100)
+              .map(row => ({ event_json: row.event_json, source_ledger_revision: row.source_ledger_revision })) };
+          },
+          async run() {
+            state.writes.push({ sql: normalized, args: plain(args) });
+            if (state.failWrites) return { success: false, error: 'synthetic write failure', meta: { changes: 0 } };
+            if (normalized.startsWith('INSERT INTO cloud_member_preferences')) {
+              state.preferences.set(args[0], args[1]);
+              return { success: true, meta: { changes: 1 } };
+            }
+            if (normalized.startsWith('UPDATE cloud_push_subscriptions')) {
+              let changes = 0;
+              for (const subscription of state.subscriptions) {
+                if (subscription.member_id === args[1] && !subscription.revoked_at) {
+                  subscription.revoked_at = args[0]; changes += 1;
+                }
+              }
+              return { success: true, meta: { changes } };
+            }
+            if (normalized.startsWith('INSERT INTO cloud_notification_deliveries')) {
+              const key = `${args[0]}|${args[1]}`;
+              const existing = state.deliveries.get(key);
+              if (['sent', 'dry_run_eligible'].includes(existing?.status)) return { success: true, meta: { changes: 0 } };
+              state.deliveries.set(key, { member_id: args[0], event_key: args[1], status: args[2], reason: args[3],
+                checked_at: args[4], membership_checked_at: args[5], attempts: (existing?.attempts || 0) + 1 });
+              return { success: true, meta: { changes: 1 } };
+            }
+            throw new Error(`Unexpected run query: ${normalized}`);
+          },
+        };
+      },
+    };
+  }
+  return { state, prepare, batch: async (statements) => Promise.all(statements.map(statement => statement.run())) };
+}
+
+async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-role'], configured = true,
+  providerStatus = 200, dbFailure = false } = {}) {
+  const clock = { now: NOW };
+  const calls = [];
+  const assets = [];
+  const provider = { status: providerStatus, fixture };
+  const modules = createModules({ clock, fetchMock: async (input, init = {}) => {
+    const url = new URL(String(input));
+    assert.equal(url.origin, 'https://api.whop.com');
+    assert.equal(init.method || 'GET', 'GET', 'No network mutation or push delivery is allowed.');
+    assert.equal(init.headers.authorization, 'Bearer synthetic-whop-read-key');
+    assert.equal(init.headers['Api-Version-Date'], rules.WHOP_API_VERSION);
+    assert.equal(init.redirect, 'error');
+    assert.equal(init.cache, 'no-store');
+    calls.push({ path: url.pathname, query: Object.fromEntries(url.searchParams) });
+    if (provider.status !== 200) return Response.json({ secret_provider_error: 'must-never-leak' }, { status: provider.status });
+    if (url.pathname === '/api/v1/memberships/mem_1') return Response.json(provider.fixture.membership);
+    if (url.pathname === '/api/v1/payments') return Response.json({ data: [provider.fixture.payment], pagination: { next_page: null } });
+    if (url.pathname === `/api/v1/payments/${provider.fixture.payment.id}`) return Response.json(provider.fixture.payment);
+    throw new Error(`Unexpected synthetic provider URL: ${url}`);
+  } });
+  const api = modules.load('./cloud-api');
+  const worker = modules.load('./index').default;
+  const gate = modules.load('./shared-report-gate');
+  const db = fakeDatabase();
+  const memberId = await api.cloudMemberId(fixture.link.discord_user_id);
+  db.state.links.set(memberId, { ...fixture.link, member_id: memberId });
+  const env = {
+    DISCORD_CLIENT_ID: 'synthetic-discord-client', DISCORD_CLIENT_SECRET: 'synthetic-discord-secret',
+    DISCORD_GUILD_ID: 'synthetic-guild', DISCORD_ALLOWED_ROLE_IDS: 'paid-discord-role',
+    SESSION_SECRET: 'synthetic-session-encryption-key',
+    REPORT_ASSET_PATH: '/weak_early_beta_latest.html',
+    CLOUD_DB: db,
+    ...(configured ? { WHOP_API_KEY: 'synthetic-whop-read-key', WHOP_ACCOUNT_ID: 'biz_1',
+      WHOP_PRODUCT_IDS: 'prod_1', WHOP_PAID_PLAN_IDS: 'plan_1' } : {}),
+    ASSETS: { fetch: async input => {
+      const pathname = new URL(String(input)).pathname;
+      assets.push(pathname);
+      return new Response(`<html><body>${pathname.endsWith('_free.html') ? 'RELEASED-PUBLIC-ONLY' : 'SECRET-UNRELEASED-TICKER'}</body></html>`);
+    } },
+  };
+  if (dbFailure) env.CLOUD_DB = { prepare() { throw new Error('synthetic db outage'); } };
+  async function request(pathname = '/api/cloud/preferences', { method = 'GET', body, origin = 'https://gate.invalid', authenticated = true, subject } = {}) {
+    const headers = new Headers();
+    if (origin !== null) headers.set('origin', origin);
+    if (authenticated) {
+      const now = Math.floor(clock.now / 1000);
+      const session = await gate.__test.createSession({ sub: subject || fixture.link.discord_user_id,
+        accessToken: 'synthetic-discord-access', refreshToken: 'synthetic-discord-refresh', exp: now + 86400,
+        tokenExp: now + 3600, roleCheckedAt: now, roles }, env.SESSION_SECRET);
+      headers.set('cookie', `__Host-report_gate_session=${encodeURIComponent(session)}`);
+    }
+    if (body !== undefined) headers.set('content-type', 'application/json');
+    return new Request(`https://gate.invalid${pathname}`, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+  }
+  const fetchApi = async (pathname, options) => api.cloudApi(await request(pathname, options), env);
+  return { api, worker, env, db, memberId, request, fetchApi, calls, assets, provider, clock };
+}
+
+test('API stores settings under the server session identity and returns private uncached JSON', async () => {
+  const h = await apiHarness();
+  const initial = await h.fetchApi();
+  assert.equal(initial.status, 200);
+  assert.equal(initial.headers.get('cache-control'), 'private, no-store');
+  assert.equal(initial.headers.get('vary'), 'Cookie');
+  assert.equal((await initial.json()).membership.status, 'paid');
+  const selected = preferences({ max_price: 3000, exit_endpoint: 'd6_open', notifications: { result: true } });
+  const saved = await h.fetchApi(undefined, { method: 'PUT', body: selected });
+  assert.equal(saved.status, 200);
+  assert.deepEqual(JSON.parse(h.db.state.preferences.get(h.memberId)), selected);
+  const retrieved = await h.fetchApi();
+  assert.deepEqual((await retrieved.json()).preferences, selected);
+  const otherUser = await h.fetchApi(undefined, { subject: 'other-discord-user' });
+  const otherBody = await otherUser.json();
+  assert.deepEqual(otherBody.preferences, preferences());
+  assert.equal(otherBody.membership.status, 'unverified');
+  assert.doesNotMatch(JSON.stringify(otherBody), /other-discord-user|synthetic-.*(?:key|secret|access|refresh)/);
+});
+
+for (const [label, options] of [
+  ['no session', { authenticated: false }],
+  ['foreign origin', { origin: 'https://attacker.invalid' }],
+  ['missing origin', { origin: null }],
+]) {
+  test(`API rejects a preference mutation with ${label}`, async () => {
+    const h = await apiHarness();
+    const response = await h.fetchApi(undefined, { method: 'PUT', body: preferences(), ...options });
+    assert.ok([401, 403].includes(response.status));
+    assert.equal(h.db.state.writes.length, 0);
+  });
+}
+
+test('API rejects browser-supplied member IDs and email addresses', async () => {
+  const h = await apiHarness();
+  for (const extra of [{ member_id: 'someone-else' }, { email: 'unused@example.invalid' }]) {
+    const response = await h.fetchApi(undefined, { method: 'PUT', body: { ...preferences(), ...extra } });
+    assert.equal(response.status, 400);
+  }
+  assert.equal(h.db.state.writes.length, 0);
+});
+
+for (const [label, configure] of [
+  ['expired membership', f => { f.membership.status = 'expired'; }],
+  ['free grant', f => { f.payment.total.amount = '0'; }],
+  ['test membership', f => { f.link.environment = 'test'; }],
+]) {
+  test(`API prevents opt-in for ${label} while allowing opt-out`, async () => {
+    const fixture = memberFixture(); configure(fixture);
+    const h = await apiHarness({ fixture });
+    const enable = await h.fetchApi(undefined, { method: 'PUT', body: preferences({ notifications: { result: true } }) });
+    assert.equal(enable.status, 403);
+    assert.equal(h.db.state.writes.length, 0);
+    const disable = await h.fetchApi(undefined, { method: 'PUT', body: preferences() });
+    assert.equal(disable.status, 200);
+  });
+}
+
+test('a valid Whop member without the required Discord role cannot opt in or receive the full report', async () => {
+  const h = await apiHarness({ roles: ['unrelated-role'] });
+  const enable = await h.fetchApi(undefined, { method: 'PUT', body: preferences({ notifications: { result: true } }) });
+  assert.equal(enable.status, 403);
+  const report = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html'), h.env);
+  assert.doesNotMatch(await report.text(), /SECRET-UNRELEASED-TICKER/);
+  assert.equal(h.calls.length, 0);
+});
+
+test('unsubscribe revokes only the current member subscriptions and disables every notification', async () => {
+  const h = await apiHarness({ providerStatus: 503 });
+  h.db.state.preferences.set(h.memberId, JSON.stringify(preferences({ notifications: { new_detection: true, reminder: true, result: true } })));
+  h.db.state.subscriptions.push({ member_id: h.memberId, revoked_at: null }, { member_id: 'other-member', revoked_at: null });
+  const response = await h.fetchApi('/api/cloud/push-subscriptions', { method: 'DELETE' });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).unsubscribed, true);
+  assert.deepEqual(JSON.parse(h.db.state.preferences.get(h.memberId)).notifications, preferences().notifications);
+  assert.ok(h.db.state.subscriptions[0].revoked_at);
+  assert.equal(h.db.state.subscriptions[1].revoked_at, null);
+});
+
+test('each membership check re-reads Whop and a later 429 cannot reuse the earlier paid result', async () => {
+  const h = await apiHarness();
+  assert.equal((await h.api.currentMembership(h.env, 'discord-user-1')).status, 'paid');
+  const firstReadCount = h.calls.length;
+  assert.ok(firstReadCount >= 2);
+  h.provider.status = 429;
+  const denied = await h.api.currentMembership(h.env, 'discord-user-1');
+  assert.equal(denied.status, 'unavailable');
+  assert.ok(h.calls.length > firstReadCount);
+  assert.doesNotMatch(JSON.stringify(denied), /must-never-leak|synthetic-whop-read-key/);
+});
+
+test('a renewed subscription uses its current paid receipt instead of the identity link initial payment', async () => {
+  const fixture = memberFixture();
+  fixture.payment.id = 'pay_renewal2';
+  const h = await apiHarness({ fixture });
+  const decision = await h.api.currentMembership(h.env, 'discord-user-1');
+  assert.equal(decision.status, 'paid');
+  const paymentList = h.calls.find(call => call.path === '/api/v1/payments');
+  assert.ok(paymentList, 'Renewal verification must discover current payment receipts.');
+  assert.equal(paymentList.query.account_id, 'biz_1');
+  assert.equal(paymentList.query.membership_id, 'mem_1');
+  assert.equal(paymentList.query.user_id, 'user_1');
+  assert.equal(paymentList.query.status, 'paid');
+  assert.ok(h.calls.some(call => call.path === '/api/v1/payments/pay_renewal2'));
+  assert.equal(h.db.state.links.get(h.memberId).payment_id, 'pay_1', 'Provider verification does not rewrite identity evidence.');
+});
+
+test('unconfigured membership, a missing identity link, and a database outage fail closed', async () => {
+  const h = await apiHarness({ configured: false });
+  assert.equal((await h.api.currentMembership(h.env, 'discord-user-1')).status, 'unavailable');
+  assert.equal(h.calls.length, 0);
+  const missing = await apiHarness();
+  missing.db.state.links.clear();
+  assert.equal((await missing.api.currentMembership(missing.env, 'discord-user-1')).status, 'unverified');
+  assert.equal(missing.calls.length, 0);
+  const outage = await apiHarness({ dbFailure: true });
+  assert.equal((await outage.fetchApi()).status, 503);
+});
+
+function addNotification(h, event = eventFixture()) {
+  h.db.state.events.push({ available_at: '2026-10-02T07:00:00.000Z', event_json: JSON.stringify(event), source_ledger_revision: event.source_ledger_revision });
+  h.db.state.preferences.set(h.memberId, JSON.stringify(preferences({ notifications: { result: true } })));
+}
+
+test('dry-run uses server events, never sends, and returns no private event identifiers', async () => {
+  const h = await apiHarness(); addNotification(h);
+  const response = await h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {} });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.delivery_mode, 'dry_run');
+  assert.equal(body.sent, 0);
+  assert.deepEqual(body.results, [{ status: 'would_send', reason: 'confirmed_price_result' }]);
+  assert.doesNotMatch(JSON.stringify(body), /signal-private-1|SECRET-UNRELEASED-TICKER|actual_price|event_key|message/);
+  assert.equal([...h.db.state.deliveries.values()][0].status, 'dry_run_eligible');
+  assert.equal([...h.db.state.deliveries.values()][0].attempts, 1);
+  assert.ok(h.calls.every(call => call.path.startsWith('/api/v1/memberships') || call.path.startsWith('/api/v1/payments')));
+});
+
+test('default notification OFF also suppresses server-side dry-run candidates', async () => {
+  const h = await apiHarness(); addNotification(h);
+  h.db.state.preferences.clear();
+  const response = await h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {} });
+  const body = await response.json();
+  assert.deepEqual(body.results, [{ status: 'suppressed', reason: 'notification_off' }]);
+  assert.equal(body.sent, 0);
+  assert.equal([...h.db.state.deliveries.values()][0].status, 'suppressed');
+});
+
+test('future notification candidates remain unavailable to a dry-run', async () => {
+  const h = await apiHarness(); addNotification(h);
+  h.db.state.events[0].available_at = '2026-10-03T07:00:00.000Z';
+  const response = await h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {} });
+  const body = await response.json();
+  assert.deepEqual(body.results, []);
+  assert.equal(body.sent, 0);
+  assert.equal(h.db.state.deliveries.size, 0);
+});
+
+test('D1 write failures cannot be reported as saved settings, completed unsubscribe, or eligible receipts', async () => {
+  const h = await apiHarness(); addNotification(h);
+  h.db.state.failWrites = true;
+  for (const [pathname, options] of [
+    ['/api/cloud/preferences', { method: 'PUT', body: preferences({ max_price: 3000 }) }],
+    ['/api/cloud/push-subscriptions', { method: 'DELETE' }],
+    ['/api/cloud/notifications/dry-run', { method: 'POST', body: {} }],
+  ]) {
+    const response = await h.fetchApi(pathname, options);
+    assert.equal(response.status, 503, pathname);
+    const body = await response.json();
+    assert.equal(body.ok, false);
+    assert.notEqual(body.unsubscribed, true);
+    assert.doesNotMatch(JSON.stringify(body), /synthetic write failure/);
+  }
+  assert.equal(JSON.parse(h.db.state.preferences.get(h.memberId)).max_price, 1000);
+  assert.equal(h.db.state.deliveries.size, 0);
+});
+
+test('dry-run refuses all browser-supplied event or recipient data', async () => {
+  const h = await apiHarness(); addNotification(h);
+  for (const body of [eventFixture(), { signal_id: 'attacker-signal' }, { member_id: 'other-member' }, { price: 1 }]) {
+    const response = await h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body });
+    assert.equal(response.status, 400);
+  }
+  assert.equal(h.db.state.deliveries.size, 0);
+});
+
+test('dry-run holds candidates lacking the canonical adapter version or matching ledger revision', async () => {
+  for (const change of [
+    (row, event) => { delete event.adapter_version; },
+    (row, event) => { event.adapter_version = 'untrusted-adapter'; },
+    (row, event) => { event.source_ledger_revision = 'd'.repeat(64); },
+    (row) => { row.source_ledger_revision = 'not-a-sha'; },
+  ]) {
+    const h = await apiHarness(); addNotification(h);
+    const row = h.db.state.events[0];
+    const event = JSON.parse(row.event_json);
+    change(row, event); row.event_json = JSON.stringify(event);
+    const response = await h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {} });
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.deepEqual(body.results, [{ status: 'held', reason: 'canonical_event_evidence_required' }]);
+    assert.equal(body.sent, 0);
+    assert.equal(h.db.state.deliveries.size, 0);
+  }
+});
+
+test('dry-run deduplicates concurrent requests and subsequent retries atomically', async () => {
+  const h = await apiHarness(); addNotification(h);
+  const call = () => h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {} });
+  const responses = await Promise.all([call(), call()]);
+  const results = (await Promise.all(responses.map(response => response.json()))).flatMap(body => body.results);
+  assert.equal(results.filter(result => result.status === 'would_send').length, 1);
+  assert.equal(results.filter(result => result.reason === 'duplicate_event').length, 1);
+  const retry = await (await call()).json();
+  assert.deepEqual(retry.results, [{ status: 'suppressed', reason: 'duplicate_event' }]);
+  assert.equal(h.db.state.deliveries.size, 1);
+  assert.equal([...h.db.state.deliveries.values()][0].attempts, 1);
+});
+
+test('a held dry-run can be re-evaluated after provider recovery without claiming a send', async () => {
+  const h = await apiHarness({ providerStatus: 503 }); addNotification(h);
+  const call = () => h.fetchApi('/api/cloud/notifications/dry-run', { method: 'POST', body: {} });
+  const held = await (await call()).json();
+  assert.equal(held.results[0].status, 'held');
+  h.provider.status = 200;
+  const recovered = await (await call()).json();
+  assert.equal(recovered.results[0].status, 'would_send');
+  assert.equal(recovered.sent, 0);
+  assert.equal([...h.db.state.deliveries.values()][0].attempts, 2);
+  assert.equal([...h.db.state.deliveries.values()][0].status, 'dry_run_eligible');
+});
+
+for (const [label, setup] of [
+  ['unconfigured provider', { configured: false }],
+  ['provider unavailable', { providerStatus: 503 }],
+  ['provider rate limited', { providerStatus: 429 }],
+  ['expired membership', { fixture: (() => { const f = memberFixture(); f.membership.status = 'expired'; return f; })() }],
+  ['test identity', { fixture: (() => { const f = memberFixture(); f.link.environment = 'test'; return f; })() }],
+]) {
+  test(`Cloud serves only the free asset for ${label}, including direct report URLs`, async () => {
+    const h = await apiHarness(setup);
+    for (const pathname of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_fusion.html']) {
+      const response = await h.worker.fetch(await h.request(pathname), h.env);
+      assert.equal(response.status, 200);
+      const html = await response.text();
+      assert.match(html, /RELEASED-PUBLIC-ONLY/);
+      assert.doesNotMatch(html, /SECRET-UNRELEASED-TICKER/);
+      assert.equal(response.headers.get('cache-control'), 'private, no-store');
+    }
+    assert.ok(h.assets.every(asset => asset.endsWith('_free.html')));
+  });
+}
+
+test('only a verified paid member with a valid Discord session obtains the full report', async () => {
+  const h = await apiHarness();
+  const report = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html'), h.env);
+  assert.equal(report.status, 200);
+  assert.match(await report.text(), /SECRET-UNRELEASED-TICKER/);
+  const loggedOut = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html', { authenticated: false }), h.env);
+  assert.equal(loggedOut.status, 302);
+  assert.doesNotMatch(await loggedOut.text(), /SECRET-UNRELEASED-TICKER/);
+  const check = await h.worker.fetch(await h.request('/auth/check'), h.env);
+  assert.equal(check.status, 200);
+  h.provider.fixture.membership.status = 'expired';
+  const revoked = await h.worker.fetch(await h.request('/auth/check'), h.env);
+  assert.equal(revoked.status, 403);
+});

@@ -32,6 +32,7 @@ from weak_early_beta.notify import (
     _message, daily_summary_payload, notify_daily_completion,
 )
 from weak_early_beta.report import (
+    _annual_pl_chart,
     ANALYTICS_PAGE_NAME,
     MODE_PAGE_NAMES,
     _payoff_structure,
@@ -44,6 +45,16 @@ from weak_early_beta.report import (
 from weak_early_beta.reminders import notify_exit_reminders
 from weak_early_beta.system_log import IDENTITY as SYSTEM_LOG_IDENTITY, _payload as system_log_payload, watch_missed
 from weak_early_beta.restrictions import parse_jpx_restricted_symbols, quarantine_restricted_detections
+
+
+def report_variant_html(output, key="d5_close:all"):
+    """Inspect the explicitly selected legacy/unlimited reference view."""
+    data = json.loads(re.search(r'<script id="cloud-analytics-data" type="application/json">(.*?)</script>', output, re.DOTALL).group(1))
+    if data.get("encoding") == "gzip-base64-json":
+        import base64
+        import gzip
+        return json.loads(gzip.decompress(base64.b64decode(data["variants"][key]["gzip"])))['html']
+    return data["variants"][key]["html"]
 
 
 class WeakEarlyBetaTests(unittest.TestCase):
@@ -365,14 +376,14 @@ class WeakEarlyBetaTests(unittest.TestCase):
             "mean_rank_volr20_body_pct",
         )
         self.assertIn("Shadow の資産推移", output)
-        self.assertEqual(output.count('role="img"'), 1)
+        self.assertEqual(report_variant_html(output).count('role="img"'), 1)
         self.assertIn('data-search="', output)
         self.assertIn('data-date="', output)
         self.assertIn("証券コード・銘柄名で検索", output)
         self.assertIn('id="history-date-from"', output)
         self.assertIn('id="history-date-to"', output)
         self.assertIn('id="history-load-more"', output)
-        self.assertIn("最新20件を表示中", output)
+        self.assertIn("条件に合う最新20件を表示", output)
         self.assertNotIn("<details class=\"history-details\"", output)
         self.assertIn("https://jp.tradingview.com/chart/", output)
         self.assertNotIn('id="selector-filter"', output)
@@ -386,13 +397,9 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 metrics_path=root / "metrics.csv",
                 monthly_metrics_path=root / "monthly.csv",
             )
-            self.assertEqual(
-                metrics.loc[
-                    metrics["selector_id"].eq(COMBINED_STACKED_ID)
-                    & metrics["period"].eq("2023-2026"), "n"
-                ].iloc[0],
-                946,
-            )
+            # The frozen canonical signal_close is not a verified nominal
+            # close. Initial capped CSV/view must exclude its unknown prices.
+            self.assertTrue(metrics.empty)
             for filename in MODE_PAGE_NAMES.values():
                 self.assertTrue((root / filename).exists(), filename)
                 self.assertTrue((root / filename.replace(".html", "_free.html")).exists(), filename)
@@ -439,7 +446,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertEqual(dashboard.count("参考値・集計対象外"), 5)
             direct_dashboard = render_report(self.ledger, metrics, pd.Timestamp("2026-09-26"))
             self.assertEqual(direct_dashboard.count("参考値・集計対象外"), 5)
-            analytics = (root / ANALYTICS_PAGE_NAME).read_text(encoding="utf-8")
+            analytics = report_variant_html((root / ANALYTICS_PAGE_NAME).read_text(encoding="utf-8"))
             growth = analytics.split('id="growth">', 1)[1].split('</section>', 1)[0]
             self.assertIn("¥+1,785,385", growth)
             self.assertIn("¥+409,392", growth)
@@ -457,6 +464,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
             pd.Timestamp("2026-09-19", tz="Asia/Tokyo"),
             monthly_metrics=monthly,
         )
+        document = output
+        output = report_variant_html(output)
         dates = pd.to_datetime(self.ledger["signal_date"])
         expected = f"{dates.min():%Y-%m-%d}<br>〜2026-09-19"
         self.assertIn(expected, output)
@@ -476,17 +485,14 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
         self.assertIn("Cloud全体の成績 — 銘柄均等", output)
         self.assertNotIn("<th>配分方式</th>", output)
-        self.assertIn('<div class="nav-links" aria-label="ページ移動">', output)
+        self.assertIn('<div class="nav-links" aria-label="ページ移動">', document)
         self.assertNotIn('id="history"', output)
 
     def test_annual_pl_chart_uses_stacked_metrics_and_handles_losses(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))
         year_mask = metrics["selector_id"].eq(COMBINED_STACKED_ID) & metrics["period"].eq("2026")
         metrics.loc[year_mask, "cash_pl_100_yen"] = -123_456
-        output = render_analytics_report(
-            self.ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo")
-        )
-        chart = output.split('id="annual-pl">', 1)[1].split('</section>', 1)[0]
+        chart = _annual_pl_chart(self.ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
         self.assertIn('aria-label="2026年（9月3日検出分まで）の100株損益 ¥-123,456"', chart)
         self.assertIn('class="annual-pl-bar negative"', chart)
         self.assertIn("確定取引数", chart)
@@ -509,16 +515,16 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn('width:42.00%', chart)
         self.assertIn('width:21.00%', chart)
 
-    def test_detection_history_starts_with_only_twenty_rows_visible_in_html(self):
+    def test_detection_history_unknown_prices_start_excluded_in_capped_html(self):
         metrics = build_metrics(self.ledger, pd.Timestamp("2026-09-19"))
         output = render_report(self.ledger, metrics, pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
         history = output.split('<table id="detection-table">', 1)[1].split('</table>', 1)[0]
         self.assertEqual(history.count('data-date="'), len(self.ledger.drop_duplicates(["signal_date", "symbol"])))
         self.assertEqual(history.count('data-search="'), history.count('data-date="'))
-        self.assertEqual(history.count(' hidden>'), max(history.count('data-date="') - 20, 0))
+        self.assertEqual(len(re.findall(r'<tr[^>]* hidden>', history)), history.count('data-date="'))
         self.assertIn('data-label="100株損益"', history)
 
-    def test_free_report_masks_pending_identity_until_fifth_close(self):
+    def test_free_report_masks_pending_identity_until_verified_sixth_open(self):
         pending = self.ledger.head(1).copy()
         pending.loc[:, "source_scope"] = "FORWARD_CAUSAL"
         pending.loc[:, "status"] = "entered"
@@ -537,7 +543,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         )
         self.assertNotIn("9999", output)
         self.assertNotIn("未確定テスト社", output)
-        self.assertIn("5営業日終値確定まで会員限定", output)
+        self.assertIn("検出から6営業日後の実始値取得・確定まで会員限定", output)
         self.assertIn('href="/purchase"', output)
 
     def test_monthly_metrics_keep_year_month_labels(self):

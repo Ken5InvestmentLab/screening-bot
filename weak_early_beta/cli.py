@@ -520,6 +520,69 @@ def command_is_business_day(args: argparse.Namespace) -> None:
     print(json.dumps({"date": target.isoformat(), "business_day": is_bank_business_day(target)}, ensure_ascii=False))
 
 
+def command_backfill_endpoints(args: argparse.Namespace) -> None:
+    """Write a reviewed, isolated endpoint migration and its audit, never in place."""
+    import hashlib
+    import io
+    from .ledger import backfill_verified_endpoints
+
+    inputs = [Path(value).resolve(strict=True) for value in (args.ledger, args.daily_corpus, args.identities)]
+    ledger_path, source_path, identities_path = inputs
+    output = Path(args.output).resolve()
+    audit_path = Path(args.audit).resolve()
+    protected_state = (ROOT / "weak_early_beta" / "state").resolve()
+    if len(set(inputs + [output, audit_path])) != 5:
+        raise ValueError("ledger, source, identities, output and audit must be distinct paths")
+    for target in (output, audit_path):
+        if target.is_relative_to(protected_state):
+            raise ValueError("endpoint backfill cannot write into the production state directory")
+        if target.exists():
+            raise ValueError(f"endpoint backfill output already exists: {target}")
+    # Read each input only once: the checked digest and parsed bytes are identical.
+    source_bytes = source_path.read_bytes()
+    source_hash = hashlib.sha256(source_bytes).hexdigest()
+    if source_hash != args.source_sha256:
+        raise ValueError("reviewed daily source SHA-256 does not match the input file")
+    ledger_bytes = ledger_path.read_bytes()
+    identity_bytes = identities_path.read_bytes()
+    identities = json.loads(identity_bytes.decode("utf-8-sig"))
+    if not isinstance(identities, list) or not all(isinstance(value, str) and value.strip() for value in identities):
+        raise ValueError("identities JSON must be an explicit array of nonempty detection_id strings")
+    observed = pd.Timestamp(args.observed_at)
+    if pd.isna(observed) or observed.tzinfo is None or observed > pd.Timestamp.now(tz="UTC"):
+        raise ValueError("observed-at must be a timezone-aware, non-future actual ingestion time")
+    # Do not apply company-name or D5 migrations while reading a backfill input.
+    ledger = pd.read_csv(io.BytesIO(ledger_bytes), dtype={"symbol": str})
+    raw = pd.read_csv(io.BytesIO(source_bytes), parse_dates=["date"], dtype={"symbol": str})
+    revised, audit = backfill_verified_endpoints(
+        ledger, raw, source_sha256=source_hash, observed_at=observed.isoformat(), identities=identities,
+    )
+    csv_bytes = revised.to_csv(index=False, lineterminator="\n", date_format="%Y-%m-%d", float_format="%.12g").encode("utf-8")
+    audit.update({
+        "input_ledger": str(ledger_path), "input_ledger_sha256": hashlib.sha256(ledger_bytes).hexdigest(),
+        "source_file": str(source_path), "identities_file": str(identities_path),
+        "identities_sha256": hashlib.sha256(identity_bytes).hexdigest(),
+        "output_ledger": str(output), "output_ledger_sha256": hashlib.sha256(csv_bytes).hexdigest(),
+    })
+    audit_bytes = (json.dumps(audit, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+    for target in (output, audit_path):
+        target.parent.mkdir(parents=True, exist_ok=True)
+    # Exclusive creation prevents racing another review output. If writing the
+    # audit fails, remove only the output created by this invocation.
+    created = []
+    try:
+        for target, contents in ((output, csv_bytes), (audit_path, audit_bytes)):
+            with target.open("xb") as handle:
+                created.append(target)
+                handle.write(contents)
+    except Exception:
+        for target in created:
+            target.unlink(missing_ok=True)
+        raise
+    print(json.dumps({"output": str(output), "audit": str(audit_path),
+                      "changed_count": audit["changed_count"], "notifications_sent": 0}, ensure_ascii=False))
+
+
 def command_remind_exits(args: argparse.Namespace) -> None:
     from .bank_calendar import is_bank_business_day
     from .reminders import notify_exit_reminders
@@ -565,6 +628,16 @@ def parser() -> argparse.ArgumentParser:
     report = sub.add_parser("report", help="regenerate metrics and HTML from ledger")
     common(report)
     report.set_defaults(func=command_report)
+
+    endpoints = sub.add_parser("backfill-endpoints", help="write a reviewed actual-price/D6 migration to a separate ledger")
+    endpoints.add_argument("--ledger", required=True, help="read-only input ledger; no default")
+    endpoints.add_argument("--daily-corpus", required=True, help="reviewed action-aware daily CSV")
+    endpoints.add_argument("--source-sha256", required=True, help="reviewed daily CSV SHA-256")
+    endpoints.add_argument("--identities", required=True, help="JSON array of detection_id strings to migrate")
+    endpoints.add_argument("--observed-at", required=True, help="actual ingestion time with a timezone offset")
+    endpoints.add_argument("--output", required=True, help="new isolated output ledger; input and production state forbidden")
+    endpoints.add_argument("--audit", required=True, help="new JSON audit receipt path")
+    endpoints.set_defaults(func=command_backfill_endpoints)
 
     daily = sub.add_parser("daily", help="score latest session and update beta artifacts")
     common(daily)

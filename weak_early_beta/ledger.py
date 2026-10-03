@@ -10,6 +10,10 @@ import numpy as np
 import pandas as pd
 
 from .config import SELECTOR_ORDER, selector_info
+from .endpoint_receipts import (
+    ENDPOINT_COLUMNS, ENDPOINT_DATE_COLUMNS, ENDPOINT_NUMBER_COLUMNS,
+    ENDPOINT_TEXT_COLUMNS, build_endpoint_receipts, preserve_verified_endpoints,
+)
 from .trade_basis import (
     LEGACY_PRICE_BASIS_VERSION, TRADE_BASIS_COLUMNS, preserve_completed_economics,
 )
@@ -26,6 +30,7 @@ LEDGER_COLUMNS = [
     "signal_volume", "selector_id",
     "selector_name", "model_period", "status", "entry_date", "entry_open",
     "fifth_xtks_exit_date", "fifth_xtks_exit_close", "gross_return",
+    "d5_price_observed_at",
     "one_hundred_shares_pl_yen", "med_ret5", "med_ret1", "ret10",
     "volr20", "body_pct", "rank_volr20", "rank_body_pct", "mean_rank",
     "tail_cdf", "tail_p", "source_scope", "source_sha256",
@@ -33,6 +38,7 @@ LEDGER_COLUMNS = [
     "fundamental_discord_url", "fundamental_html", "created_at", "updated_at",
     "exit_reminder_discord_url", "exit_reminded_at",
     *TRADE_BASIS_COLUMNS,
+    *ENDPOINT_COLUMNS,
 ]
 
 
@@ -44,7 +50,7 @@ def read_ledger(path: Path = DEFAULT_LEDGER) -> pd.DataFrame:
     if not path.exists():
         return _empty_ledger()
     frame = pd.read_csv(path, dtype={"symbol": str})
-    for column in ("signal_date", "entry_date", "fifth_xtks_exit_date"):
+    for column in ("signal_date", "entry_date", "fifth_xtks_exit_date", *ENDPOINT_DATE_COLUMNS):
         if column in frame:
             frame[column] = pd.to_datetime(frame[column], errors="coerce")
     frame = frame.reindex(columns=LEDGER_COLUMNS)
@@ -143,6 +149,7 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
         "signal_discord_url", "notified_at", "fundamental_status",
         "fundamental_discord_url", "fundamental_html", "created_at",
         "exit_reminder_discord_url", "exit_reminded_at",
+        "d5_price_observed_at",
     ]
     old = existing.reindex(columns=LEDGER_COLUMNS).set_index("detection_id", drop=False)
     new = incoming.reindex(columns=LEDGER_COLUMNS).set_index("detection_id", drop=False)
@@ -153,6 +160,7 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
             new.loc[detection_id] = old.loc[detection_id]
             continue
         preserved = preserve_completed_economics(old.loc[detection_id], new.loc[detection_id])
+        preserved = preserve_verified_endpoints(old.loc[detection_id], preserved)
         for column, value in preserved.items():
             new.at[detection_id, column] = value
         for column in protected:
@@ -162,6 +170,59 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
     untouched = old.loc[~old.index.isin(new.index)]
     result = pd.concat([untouched, new], ignore_index=True)
     return apply_company_names(result.reindex(columns=LEDGER_COLUMNS))
+
+
+def backfill_verified_endpoints(
+    frame: pd.DataFrame, raw: pd.DataFrame, *, source_sha256: str,
+    observed_at: str, identities: Iterable[str],
+) -> tuple[pd.DataFrame, dict]:
+    """Explicit, receipt-producing migration of reviewed actual-price evidence.
+
+    This operation is deliberately separate from canonical upsert protection.
+    Only the independent endpoint columns change; D5 legacy economics and source
+    classification remain byte-value-equivalent. The caller must verify the
+    supplied corpus against its declared SHA before invoking this API.
+    """
+    import re
+    from .corporate_actions import action_table, normalize_daily
+
+    if not re.fullmatch(r"[0-9a-f]{64}", str(source_sha256)):
+        raise ValueError("explicit backfill requires the reviewed source SHA-256")
+    requested = list(identities)
+    if not requested or len(set(requested)) != len(requested):
+        raise ValueError("explicit backfill requires distinct detection identities")
+    if frame["detection_id"].duplicated().any():
+        raise ValueError("ledger contains duplicate detection identities")
+    unknown = set(requested).difference(frame["detection_id"].astype(str))
+    if unknown:
+        raise ValueError(f"backfill identities not found: {sorted(unknown)[:5]}")
+    normalized = normalize_daily(raw)
+    prices = normalized.set_index(["symbol", "date"])
+    actions = action_table(normalized)
+    result = frame.copy()
+    for column in ENDPOINT_COLUMNS:
+        if column not in result:
+            result[column] = pd.NaT if column in ENDPOINT_DATE_COLUMNS else (float("nan") if column in ENDPOINT_NUMBER_COLUMNS else "")
+        elif column in ENDPOINT_TEXT_COLUMNS:
+            result[column] = result[column].astype(object)
+    changes = []
+    for index, row in result[result["detection_id"].isin(requested)].iterrows():
+        receipts = build_endpoint_receipts(row, prices, actions, digest=source_sha256, observed_at=observed_at)
+        changed = []
+        for column, value in receipts.items():
+            prior = row.get(column)
+            same = (pd.isna(prior) and pd.isna(value)) or (pd.notna(prior) and pd.notna(value) and prior == value)
+            if not same:
+                result.at[index, column] = value
+                changed.append(column)
+        if changed:
+            changes.append({"detection_id": str(row["detection_id"]), "columns": changed})
+    return result, {
+        "schema": "CLOUD_VERIFIED_ENDPOINT_BACKFILL_V1", "source_sha256": source_sha256,
+        "observed_at": observed_at, "requested_count": len(requested),
+        "changed_count": len(changes), "changes": changes,
+        "d5_economics_modified": False, "notifications_sent": 0,
+    }
 
 
 def build_fundamental_queue(frame: pd.DataFrame) -> list[dict]:

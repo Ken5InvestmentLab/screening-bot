@@ -10,6 +10,10 @@ import pandas as pd
 
 from .corporate_actions import action_table, normalize_daily
 from .bank_calendar import add_bank_business_days
+from .endpoint_receipts import (
+    ENDPOINT_COLUMNS, ENDPOINT_DATE_COLUMNS, ENDPOINT_NUMBER_COLUMNS,
+    ENDPOINT_TEXT_COLUMNS, build_endpoint_receipts, source_digest,
+)
 from .trade_basis import PRICE_BASIS_VERSION, build_trade_economics, is_frozen_trade
 from .progress import daily_phase
 
@@ -198,6 +202,7 @@ def attach_forward_rows(
     company_names = company_names or {}
     prices = raw.set_index(["symbol", "date"])
     actions = action_table(raw)
+    endpoint_digest = source_digest(raw, source_sha256)
     rows = []
     for record in selected.to_dict(orient="records"):
         signal_date = pd.Timestamp(record["date"]).normalize()
@@ -234,6 +239,7 @@ def attach_forward_rows(
             "fifth_xtks_exit_date": exit_date,
             "fifth_xtks_exit_close": exit_close,
             **economics,
+            "d5_price_observed_at": now if economics["status"] == "mature" else "",
             "source_scope": "FORWARD_CAUSAL",
             "source_sha256": source_sha256,
             "signal_discord_url": "",
@@ -246,6 +252,9 @@ def attach_forward_rows(
             "created_at": now,
             "updated_at": now,
         }
+        row.update(build_endpoint_receipts(
+            row, prices, actions, digest=endpoint_digest, observed_at=now,
+        ))
         rows.append(row)
     return pd.DataFrame(rows).reindex(columns=LEDGER_COLUMNS)
 
@@ -253,14 +262,19 @@ def attach_forward_rows(
 def refresh_forward_endpoints(
     ledger: pd.DataFrame, raw: pd.DataFrame, source_sha256: str = "",
 ) -> pd.DataFrame:
-    """Fill entry/exit receipts for already-recorded forward detections."""
+    """Fill forward receipts, independently of the frozen D5 economics."""
     if ledger.empty:
         return ledger.copy()
     raw = normalize_daily(raw)
     result = ledger.copy()
+    for column in ENDPOINT_COLUMNS:
+        if column not in result:
+            result[column] = pd.NaT if column in ENDPOINT_DATE_COLUMNS else (float("nan") if column in ENDPOINT_NUMBER_COLUMNS else "")
+        elif column in ENDPOINT_TEXT_COLUMNS:
+            result[column] = result[column].astype(object)
     # Legacy CSVs have all-empty new metadata columns, inferred as float64.
     # Make their string contract explicit before filling a forward receipt.
-    for column in ("price_basis", "price_basis_date", "price_basis_source_sha256", "applied_actions_json"):
+    for column in ("price_basis", "price_basis_date", "price_basis_source_sha256", "applied_actions_json", "d5_price_observed_at"):
         if column not in result:
             result[column] = ""
         else:
@@ -268,8 +282,22 @@ def refresh_forward_endpoints(
     result["signal_date"] = pd.to_datetime(result["signal_date"])
     prices = raw.set_index(["symbol", "date"])
     actions = action_table(raw)
+    endpoint_digest = source_digest(raw, source_sha256)
+    now = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
     mask = result["source_scope"].eq("FORWARD_CAUSAL")
     for index, row in result[mask].iterrows():
+        receipts = build_endpoint_receipts(
+            row, prices, actions, digest=endpoint_digest, observed_at=now,
+        )
+        changed = False
+        for column, value in receipts.items():
+            prior = row.get(column)
+            same = (pd.isna(prior) and pd.isna(value)) or (pd.notna(prior) and pd.notna(value) and prior == value)
+            if not same:
+                result.at[index, column] = value
+                changed = True
+        if changed:
+            result.at[index, "updated_at"] = now
         if is_frozen_trade(row):
             continue
         signal_date = pd.Timestamp(row["signal_date"]).normalize()
@@ -309,5 +337,7 @@ def refresh_forward_endpoints(
         result.at[index, "fifth_xtks_exit_close"] = exit_close
         for column, value in economics.items():
             result.at[index, column] = value
+        if economics["status"] == "mature" and not str(row.get("d5_price_observed_at", "") if pd.notna(row.get("d5_price_observed_at")) else "").strip():
+            result.at[index, "d5_price_observed_at"] = now
         result.at[index, "updated_at"] = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
     return result

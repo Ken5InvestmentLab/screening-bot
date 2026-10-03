@@ -1,6 +1,13 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>見方・使い方 | 天底極致 -Cloud-</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>
+#cloud-notification-settings label,.cloud-notification-settings label{display:block;margin:12px 0}
+#cloud-notification-settings input[type="checkbox"],.cloud-notification-settings input[type="checkbox"]{width:auto;min-width:20px;min-height:20px;margin-right:10px;vertical-align:middle}
+#cloud-notification-settings summary,.cloud-notification-settings summary{min-height:44px;padding:10px 0;cursor:pointer;font-weight:700}
+#cloud-settings-status[data-state="error"]{color:var(--warn)}
+.cloud-settings button{min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid);color:var(--ink)}
+@media(max-width:620px){.cloud-settings .filters .filter-field{grid-column:1/-1}}
+
 :root{--bg:#edf4ff;--panel:rgba(255,255,255,.9);--panel-solid:#fff;--ink:#14213d;--muted:#60708a;--line:#d4e1f3;--blue:#4169e1;--cyan:#149fba;--violet:#725fda;--good:#08744f;--warn:#a25b00;--shadow:0 18px 46px rgba(54,84,145,.12)}
 :root[data-theme="dark"]{--bg:#0c1424;--panel:rgba(21,32,51,.94);--panel-solid:#152033;--ink:#edf4ff;--muted:#a3b3ca;--line:#2b405e;--blue:#91adff;--cyan:#65d5e6;--violet:#ad9bff;--good:#65d6a7;--warn:#ffc56b;--shadow:0 18px 46px rgba(0,0,0,.28)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 12% -8%,color-mix(in srgb,var(--cyan) 18%,transparent),transparent 34%),radial-gradient(circle at 94% 5%,color-mix(in srgb,var(--violet) 16%,transparent),transparent 30%),var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Noto Sans JP",sans-serif}a{color:var(--blue)}
@@ -53,12 +60,12 @@ dialog.fundamental-detail::backdrop{background:rgba(12,18,28,.62);backdrop-filte
 :root[data-theme="dark"] .discord-embed a{color:#9cc7ff}
 :root[data-theme="dark"] .discord-meta{color:var(--muted)}
 </style>
-<script src="./weak-early-beta-interactions.js?v=20260924-1" defer></script></head>
+<script src="./weak-early-beta-interactions.js?v=20261004-1" defer></script></head>
 <body><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動"><a class="nav-link " href="./weak_early_beta_latest.html">検出履歴</a><a class="nav-link " href="./weak_early_beta_analytics.html">アナリティクス</a><a class="nav-link " href="./weak_early_beta_silence.html">Silence</a><a class="nav-link " href="./weak_early_beta_dive.html">Dive</a><a class="nav-link " href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link " href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link " href="./weak_early_beta_balance.html">Balance</a><a class="nav-link active" href="./weak_early_beta_guide.html">見方・使い方</a></div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>エントリー</small><b>翌営業日寄付</b></div><div class="kpi"><small>評価</small><b>5営業日目終値</b></div><div class="kpi"><small>売買単位</small><b>100株</b></div><div class="kpi"><small>コスト</small><b>0%試算</b></div></div></aside></section>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>エントリー</small><b>翌営業日寄付</b></div><div class="kpi"><small>評価</small><b>検出から5営業日後 終値 / 検出から6営業日後 始値</b></div><div class="kpi"><small>売買単位</small><b>100株</b></div><div class="kpi"><small>コスト</small><b>0%試算</b></div></div></aside></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3>ダッシュボード</h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
 <article class="guide-card"><h3>アナリティクス</h3><p>Cloud全体の過去成績を見るページです。100株ずつ取引した場合の損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
@@ -68,7 +75,7 @@ dialog.fundamental-detail::backdrop{background:rgba(12,18,28,.62);backdrop-filte
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
 <article class="guide-card"><h3>100株損益</h3><p>成績集計対象の銘柄を毎回100株購入した、と仮定した損益の合計です。分割・併合を確認した取引は、購入原価を固定し、変わった保有株数で売却額を計算します。税金や手数料は入れていません。</p></article>
-<article class="guide-card"><h3>対象銘柄と株式分割</h3><p>東証の対象銘柄を広く取得し、前営業日終値1,000円以下などの条件で検出対象を選びます。株価・出来高の条件には各営業日当時の値を使い、基準を確認できないデータから成績を確定させません。</p></article>
+<article class="guide-card"><h3>対象銘柄と株式分割</h3><p>東証の対象銘柄を広く取得し、直前観測日（通常は前営業日）の実終値1,000円以下などの条件で検出対象を選びます。表示設定の価格上限は検出当日の検証済み実終値で判定します。株価・出来高の条件には各営業日当時の値を使い、基準を確認できないデータから成績を確定させません。</p></article>
 <article class="guide-card"><h3>保存済みの過去成績</h3><p>保存済みの過去成績には、当初の調整済み株価で100株とした参考値も含まれます。この円損益と必要資金は、当時の実際の100株へ復元した値とは異なる場合があります。</p></article>
 <article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、100株ずつ取引するために最も多く必要だった資金の目安です。</p></article>
 <article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
@@ -79,7 +86,7 @@ dialog.fundamental-detail::backdrop{background:rgba(12,18,28,.62);backdrop-filte
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
-<p class="note">最終更新: 2026-10-02 18:04:49 JST</p></section></main><footer class="site-footer"><div class="site-footer-inner">
+<p class="note">最終更新: 2026-10-04 02:33:31 JST</p></section></main><footer class="site-footer"><div class="site-footer-inner">
 <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
 <div class="footer-links" aria-label="公式リンク">
 <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">

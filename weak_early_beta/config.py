@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 
 BETA_IDENTITY = "WEAK_EARLY_FIVE_LANE_BETA_V1"
-ENDPOINT_LABEL = "シグナル翌営業日寄付 → 5営業日目終値（コスト0%）"
+ENDPOINT_LABEL = "検出から1営業日後 始値 → 検出から5営業日後 終値（コスト0%）"
 COMBINED_STACKED_ID = "all_conditions_stacked"
 COMBINED_STACKED_NAME = "Cloud合計（モード別積上げ）"
 COMBINED_UNIQUE_ID = "all_conditions_unique"

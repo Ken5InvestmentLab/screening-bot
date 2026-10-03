@@ -22,7 +22,7 @@ const ROLE_REQUIRED_MESSAGE =
 function accessGuardScript(env: WorkerEnv): string {
   const purchaseUrl = JSON.stringify(accessPurchaseUrl(env));
   const deniedTitle = JSON.stringify(ROLE_REQUIRED_TITLE);
-  const deniedMessage = JSON.stringify(ROLE_REQUIRED_MESSAGE);
+  const deniedMessage = JSON.stringify(env.REPORT_ACCESS_DENIED_MESSAGE ?? ROLE_REQUIRED_MESSAGE);
   return `(() => {
   const checkIntervalMs = 120000;
   const recovering = document.documentElement.hasAttribute('data-auth-recovery');
@@ -97,6 +97,10 @@ type WorkerEnv = Env & {
   ACCESS_PURCHASE_URL?: string;
   PUBLIC_BASE_URL?: string;
   SESSION_SECRET?: string;
+  // Optional server-only restriction used by Cloud. It can only narrow access;
+  // Mega supplies no hook and retains its existing Discord authorization.
+  REPORT_ACCESS_CHECK?: (discordSubject: string) => Promise<boolean>;
+  REPORT_ACCESS_DENIED_MESSAGE?: string;
 };
 
 type SessionPayload = {
@@ -606,12 +610,36 @@ async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAcc
   const check = await checkSessionAuthorization(session, env, false);
   if (check.refreshRequired) return { fullAccess: false, refreshRequired: true };
   if (check.authorized) {
-    return { fullAccess: true };
+    return { fullAccess: await additionalReportAccess(env, session.sub) };
   }
   if (check.loginRequired) {
     return { fullAccess: false, loginRequired: true };
   }
   return { fullAccess: false, temporaryError: check.temporaryError };
+}
+
+async function additionalReportAccess(env: WorkerEnv, subject: string): Promise<boolean> {
+  if (!env.REPORT_ACCESS_CHECK) return true;
+  try {
+    return (await env.REPORT_ACCESS_CHECK(subject)) === true;
+  } catch {
+    return false;
+  }
+}
+
+// Cloud settings need an authenticated identity even after membership expiry so
+// users can opt out. Tokens stay private, and this function never refreshes or
+// writes a session cookie: the existing serialized /auth/check owns that work.
+export async function reportIdentity(request: Request, env: WorkerEnv): Promise<{
+  subject?: string; discord_authorized: boolean; reason?: string;
+}> {
+  const session = await readSession(request, env);
+  if (!session) return { discord_authorized: false, reason: "login_required" };
+  const check = await checkSessionAuthorization(session, env, false);
+  if (check.refreshRequired) return { discord_authorized: false, reason: "refresh_required" };
+  if (check.loginRequired) return { discord_authorized: false, reason: "login_required" };
+  if (check.temporaryError) return { discord_authorized: false, reason: "temporarily_unavailable" };
+  return { subject: session.sub, discord_authorized: check.authorized };
 }
 
 async function login(request: Request, env: WorkerEnv): Promise<Response> {
@@ -927,6 +955,9 @@ async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
       return jsonResponse({ ok: false, reason: "login_required", confirmation_required: true }, 401, headers);
     }
     return jsonResponse({ ok: false, reason: "role_required" }, 403, headers);
+  }
+  if (!(await additionalReportAccess(env, session.sub))) {
+    return jsonResponse({ ok: false, reason: "membership_required" }, 403, headers);
   }
   return jsonResponse({ ok: true }, 200, headers);
 }

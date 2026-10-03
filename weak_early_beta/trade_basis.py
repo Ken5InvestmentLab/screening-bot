@@ -244,6 +244,9 @@ def preserve_completed_economics(
     if is_frozen_trade(existing):
         for column in ECONOMIC_COLUMNS:
             result[column] = existing[column]
+        # An old completed row has no reconstructable acquisition timestamp.
+        # A later replay must not invent one for result-notification eligibility.
+        result["d5_price_observed_at"] = existing.get("d5_price_observed_at", "")
         return result
     if (
         str(existing.get("source_scope", "")) == "FORWARD_CAUSAL"

@@ -340,7 +340,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
             pd.Timestamp("2026-09-19", tz="Asia/Tokyo"),
             monthly_metrics=monthly,
         )
-        self.assertIn("選択中の成績", output)
+        self.assertIn('data-label="成績"', output)
+        self.assertIn('data-scenario-endpoint-label>6営業日後 始値', output)
         self.assertIn("天底極致 -Cloud- ダッシュボード", output)
         self.assertIn('<a class="brand" href="./weak_early_beta_latest.html"', output)
         self.assertNotIn("Cloud全体の成績", output)

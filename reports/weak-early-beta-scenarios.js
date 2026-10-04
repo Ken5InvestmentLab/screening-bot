@@ -167,7 +167,7 @@ const CloudScenario = (() => {
     const source=period==='全期間'?data.strategies:[...data.annual,...data.monthly].find(r=>r.period===period);
     return ['unique','stacked'].filter(k=>view.allocation==='all'||view.allocation===k).map(k=>{const v=source[k];return {
       '期間':period,'買付方法':k==='unique'?'同じ株数':'条件数に応じた株数','基本株数':prefs.baseShares,'片道コスト%':prefs.costPercent,
-      '検出日終値の上限':prefs.priceCapYen??'上限なし','売却価格の選択':prefs.exitKey==='d5_close'?'検出から5営業日後 終値':'検出から6営業日後 始値',
+      '検出日終値の上限':prefs.priceCapYen??'上限なし','売却価格の選択':prefs.exitKey==='d5_close'?'5営業日後 終値':'6営業日後 始値',
       '結果ありの取引数':v.n,'価格待ちの取引数':v.pending,'損益円':v.cash_pl_100_yen,'平均の騰落率%':v.mean_pct,'中央値%':v.median_pct,'勝率%':v.win_pct,
       '必要資金円':v.required_capital_yen,'開始資金円':v.minimum_initial_cash_yen,'資金増加率%':v.capital_return_pct,'単純年率%':v.simple_annualized_pct,
       '+10%の割合':v.plus10_pct,'+20%の割合':v.plus20_pct,'-10%の割合':v.minus10_pct,'-20%の割合':v.minus20_pct,

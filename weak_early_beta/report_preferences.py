@@ -19,8 +19,8 @@ from .trade_basis import ECONOMIC_COLUMNS, PRICE_BASIS_VERSION
 DEFAULT_PRICE_CAP = 1000
 MAX_PRICE_CAP = Decimal("90071992547409.91")  # Number.MAX_SAFE_INTEGER / 100
 ENDPOINT_LABELS = {
-    "d5_close": "検出から5営業日後 終値",
-    "d6_open": "検出から6営業日後 始値",
+    "d5_close": "5営業日後 終値",
+    "d6_open": "6営業日後 始値",
 }
 
 

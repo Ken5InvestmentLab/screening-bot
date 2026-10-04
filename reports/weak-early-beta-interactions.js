@@ -394,7 +394,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     if (!output) return;
     const entitlement = membership === 'paid' ? '有料会員資格を確認済み' : membership === 'unknown' ? '会員資格は未確認' : '有効な有料会員資格が必要';
     const permission = typeof Notification === 'undefined' ? 'このブラウザのプッシュは未対応' : Notification.permission === 'granted' ? '端末の通知権限あり' : Notification.permission === 'denied' ? '端末の通知権限なし' : '端末の通知許可は未設定';
-    output.textContent = `${entitlement}。${permission}。配信機能は準備中のため、通知は送信しません。`;
+    output.textContent = `${entitlement}。${permission}。通知は現在利用できません。`;
   };
   notificationReadiness('unknown');
   const setStatus = (message, invalid = false) => {
@@ -408,7 +408,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   if (settings && endpoint) {
     const host = document.createElement(settingsDialog ? "div" : "details");
     host.className = "cloud-notification-settings";
-    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>プッシュ通知は準備中です。保存しても通知は送信しません。初期設定はすべてOFFです。</p>';
+    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>通知は現在利用できません。初期設定はすべてOFFです。</p>';
     for (const [key, label] of Object.entries({ new_detection: "新しい検出", reminder: "売却予定日の朝8時（日本時間）" })) {
       const element = document.createElement("label");
       const checkbox = document.createElement("input");
@@ -585,6 +585,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       initializeAnnualSummary(content);
     }
     if (payload?.version === 2) {
+      for (const label of document.querySelectorAll('[data-scenario-endpoint-label]')) label.textContent = requested.exitKey === 'd5_close' ? '5営業日後 終値' : '6営業日後 始値';
       for (const row of rows) {
         const t = CloudScenario.trade(row.dataset, requested);
         const pl = row.querySelector('[data-scenario-pl]'), ret = row.querySelector('[data-scenario-return]'), shares = row.querySelector('[data-scenario-shares]'), cost = row.querySelector('[data-scenario-cost]');
@@ -593,7 +594,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         const label = method => method === 'stacked' ? '条件数比例' : '一律';
         if (pl) pl.innerHTML = methods.map(method => `<span class="history-method ${t.pl>0?'positive':t.pl<0?'negative':''}" data-method="${method}"><small>${label(method)}</small>${CloudScenario.yen(t.pl === null ? null : t.pl * units(method), true)}</span>`).join('');
         if (ret) ret.textContent = CloudScenario.pct(t.returnPct, true) + (requestedView.allocation === 'all' && t.returnPct !== null ? '（両方式共通）' : '');
-        if (shares) shares.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${(requested.baseShares * units(method)).toLocaleString('ja-JP')}株${t.exitShares === null ? '' : ` / 売却 ${(t.exitShares * units(method)).toLocaleString('ja-JP')}株`}</span>`).join('');
+        if (shares) shares.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${(requested.baseShares * units(method)).toLocaleString('ja-JP')}株${t.pl !== null && t.exitShares !== null && Math.abs(t.exitShares - requested.baseShares) > 1e-9 ? `（売却 ${(t.exitShares * units(method)).toLocaleString('ja-JP')}株）` : ''}</span>`).join(' / ');
         if (cost) cost.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${CloudScenario.yen(t.cost === null ? null : t.cost * units(method))}</span>`).join('');
       }
       const summary = document.getElementById('cloud-applied-summary');
@@ -889,7 +890,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         "片道コスト%": preferences.costPercent, "終値の上限": preferences.priceCapYen ?? '上限なし',
         "買付日": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryDate : row.dataset.entryDate) || "",
         "買付始値": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryOpen : row.dataset.entryOpen) || "",
-        "売却価格の選択": preferences.exitKey === "d5_close" ? "検出から5営業日後 終値" : "検出から6営業日後 始値",
+        "売却価格の選択": preferences.exitKey === "d5_close" ? "5営業日後 終値" : "6営業日後 始値",
         "売却予定日": preferences.exitKey === "d5_close" ? (row.dataset.d5Date || "") : (row.dataset.d6Date || ""),
         "売却価格": preferences.exitKey === "d5_close" ? (row.dataset.d5Close || "") : (row.dataset.d6Open || ""),
         "売却株数": t?.exitShares === null || !t ? '' : t.exitShares * units,

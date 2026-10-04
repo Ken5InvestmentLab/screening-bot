@@ -30,6 +30,18 @@ and P/L lines. Positive P/L has a plus sign and green color, negative P/L is red
 and zero is neutral. Confirmed endpoint cells show their date and price without
 redundant status; unknown prices remain blank with waiting/not-obtained status.
 
+The accepted wording follow-up shortens endpoint labels to `5営業日後 終値` and
+`6営業日後 始値`; the guide retains the detection-day counting explanation. Share
+quantities use one compact comparison separated by `/`, wrapping naturally on
+narrow screens. Confirmed split/consolidation exits show disposal shares only
+when different from purchase shares; pending prices never imply a completed sale.
+Acquisition amounts and P/L continue to occupy separate method lines.
+The history performance heading also names the saved D5/D6 endpoint; dashboard
+and all five modes update the heading and actual P/L together. Notification
+copy now says the service is currently unavailable, without preview/dry-run
+language or a claim of enabled delivery. A personal-device arrival plan and
+separate production release gate are documented in the dedicated gate directory.
+
 Each allocation has its own smooth asset curve and independently scaled currency
 axis in ten-thousand yen. Curves preserve all observed settlement points and use
 bounded cubic controls; they are not daily mark-to-market observations. Graphs

@@ -315,8 +315,8 @@ test('decompression failure restores controls and exports the complete previous 
   for (const id of ['cloud-export-csv', 'cloud-history-export-csv', 'cloud-settings-save']) assert.equal(page.get(id).disabled, false);
   const [aggregate, history] = await page.exportBoth();
   assert.match(aggregate.csv, /"d5_close","500","all","1"/);
-  assert.match(history.csv, /検出から5営業日後 終値/);
-  assert.doesNotMatch(history.csv, /HIGH9999|検出から6営業日後 始値/);
+  assert.match(history.csv, /5営業日後 終値/);
+  assert.doesNotMatch(history.csv, /HIGH9999|"6営業日後 始値"/);
   assert.equal(JSON.parse(page.storage.get('cloudReportPreferences:v1')).exitKey, 'd5_close');
   await page.get('cloud-settings-save').dispatch('click');
   const saved = JSON.parse(page.requests.find((request) => request.options.method === 'PUT').options.body);
@@ -339,7 +339,7 @@ test('rapid changes commit only the newest choice despite older completion and r
   assert.equal(page.get('cloud-price-preset').value, 'unlimited');
   const [aggregate, history] = await page.exportBoth();
   assert.match(aggregate.csv, /"d6_open","上限なし","all","2"/);
-  assert.match(history.csv, /検出から6営業日後 始値/);
+  assert.match(history.csv, /6営業日後 始値/);
   assert.match(history.csv, /HIGH9999/);
 });
 
@@ -352,7 +352,7 @@ test('invalid newer input cancels pending application and cannot save unapplied 
   assert.deepEqual(page.snapshot(), { html: 'view:d5_close:731.29', symbols: ['LOW1111', 'HIGH9999'], endpoints: ['d5_close'] });
   const [aggregate, history] = await page.exportBoth();
   assert.match(aggregate.csv, /"d5_close","1000","all","2"/);
-  assert.match(history.csv, /検出から5営業日後 終値/);
+  assert.match(history.csv, /5営業日後 終値/);
   await page.get('cloud-settings-save').dispatch('click');
   assert.equal(page.requests.filter((request) => request.options.method === 'PUT').length, 0);
 });
@@ -408,7 +408,7 @@ test('an empty free history with unlimited cap stays zero and exports only CSV h
   assert.match(aggregate.csv, /"d5_close","上限なし","all","0"/);
   assert.equal(history.csv.split('\r\n').length, 1);
   assert.ok(history.csv.startsWith('\uFEFF"検出日","銘柄コード"'));
-  assert.doesNotMatch(history.csv, /検出から5営業日後 終値/);
+  assert.doesNotMatch(history.csv, /5営業日後 終値/);
   page.get('symbol-filter').value = 'anything';
   await page.get('symbol-filter').dispatch('input');
   assert.equal(page.get('search-result-count').textContent, '0件を表示');

@@ -610,9 +610,9 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             f'<div data-label="該当モード">{badges}<small data-scenario-shares>100株で買付</small></div>'
             f'<div data-label="保有状況"><span data-exit-key="d5_close" class="status {status_class}">{"結果あり" if status == "確定" else status}</span><span data-exit-key="d6_open" class="status {"reference" if reference_only else "mature" if d6_economic else "pending"}" hidden>{"参考値・成績に含めません" if reference_only else d6_result_status}</span></div>'
             f'<div data-label="買付日・始値"><span data-exit-key="d5_close">{entry_display}</span><span data-exit-key="d6_open" hidden>{d6_entry_display}</span><small data-scenario-cost></small></div>'
-            f'<div data-label="検出から5営業日後 終値">{exit_display}</div>'
-            f'<div data-label="検出から6営業日後 始値">{d6_display}</div>'
-            f'<div data-label="選択中の成績" class="number"><strong data-scenario-pl>{_yen(cash.iloc[0]) if not cash.empty else "—"}</strong><small data-scenario-return>{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}</small>{reference_marker}</div>'
+            f'<div data-label="5営業日後 終値">{exit_display}</div>'
+            f'<div data-label="6営業日後 始値">{d6_display}</div>'
+            f'<div data-label="成績" class="number"><small class="history-endpoint-label" data-scenario-endpoint-label>6営業日後 始値</small><strong data-scenario-pl>{_yen(cash.iloc[0]) if not cash.empty else "—"}</strong><small data-scenario-return>{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}</small>{reference_marker}</div>'
             '</div>' + reference_note + '</td>'
             "</tr>"
         )
@@ -743,8 +743,8 @@ def _page_shell(title: str, current: str, body: str) -> str:
     document_title = "天底極致 -Cloud-" if current == "home" else f"{title} | 天底極致 -Cloud-"
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20261004-v06"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-scenarios.js?v=20261004-v06" defer></script><script src="./weak-early-beta-interactions.js?v=20261004-v06" defer></script></head>
+<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20261004-v06-01"></script><style>{REPORT_CSS}</style>
+<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261004-v06-01" defer></script></head>
 <body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
@@ -997,7 +997,7 @@ def _history_section(
         + '<button class="clear-search" id="clear-search" type="button">検索をクリア</button>'
         '<output class="result-count" id="search-result-count" aria-live="polite"></output></div>'
         '<noscript><p class="note">検索機能を使うにはJavaScriptを有効にしてください。</p></noscript>'
-        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th colspan="8"><div class="history-visible-grid"><div>検出日</div><div>銘柄</div><div>該当モード</div><div>保有状況</div><div>買付日・始値</div><div>検出から5営業日後 終値</div><div>検出から6営業日後 始値</div><div class="number">選択中の成績</div></div></th></tr></thead>'
+        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th colspan="8"><div class="history-visible-grid"><div>検出日</div><div>銘柄</div><div>該当モード</div><div>保有状況</div><div>買付日・始値</div><div>5営業日後 終値</div><div>6営業日後 始値</div><div class="number">成績<small data-scenario-endpoint-label>6営業日後 始値</small></div></div></th></tr></thead>'
         f'<tbody>{_detection_rows(ledger, mask_pending=mask_pending)}</tbody></table></div>'
         '<div class="history-pagination"><button class="load-more" id="history-load-more" type="button">次の20件を表示</button>'
         '<button class="collapse-results" id="history-collapse" type="button" hidden>最初の20件に戻す</button></div>'
@@ -1047,7 +1047,7 @@ def _render_dashboard_body(
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     unique_ledger = combined_detections(ledger)
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- ダッシュボード</h1><p class="lead">条件に該当した銘柄を新しい順に確認し、5つのモード別ページへ進めます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- ダッシュボード</h1><p class="lead">条件に該当した銘柄を新しい順に確認し、5つのモード別ページへ進めます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL.replace("検出から", ""))}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger, generated)}</b></div><div class="kpi"><small>最終検出日</small><b>{_latest_signal_label(ledger)}</b></div></div></aside></section>
 {_mode_pages_section(generated)}'''
     return body
@@ -1214,7 +1214,7 @@ def _render_mode_body(
     total = lane_metrics[lane_metrics["period"].eq(total_period)].iloc[0] if not lane_metrics.empty else None
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">CLOUD MODE</span><h1>{html.escape(info.display_name)}</h1><p class="lead">{html.escape(info.feature_summary)}</p><p>{html.escape(info.selection_summary)}</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL)}。投資助言ではありません。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">CLOUD MODE</span><h1>{html.escape(info.display_name)}</h1><p class="lead">{html.escape(info.feature_summary)}</p><p>{html.escape(info.selection_summary)}</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL.replace("検出から", ""))}。投資助言ではありません。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>確定取引数</small><b>{int(total['n']) if total is not None else 0}件</b></div><div class="kpi"><small>平均騰落率</small><b>{_pct(total['mean_pct'], True) if total is not None else '—'}</b></div><div class="kpi"><small>勝率</small><b>{_pct(total['win_pct']) if total is not None else '—'}</b></div><div class="kpi"><small>100株損益</small><b>{_yen(total['cash_pl_100_yen']) if total is not None else '—'}</b></div></div></aside></section>
 <section class="panel"><h2>{html.escape(info.display_name)} の資産推移</h2><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p>{_equity_chart(lane, info.display_name, selector_id.replace('_', '-'), as_of=generated.tz_localize(None))}</section>
 <section class="panel" id="performance"><h2>全期間の成績</h2><div class="table-wrap"><table><thead><tr><th>期間</th><th>確定取引数</th><th>未確定取引数</th><th class="metric-focus">100株損益</th><th class="metric-focus">{CAPITAL_HEADER}</th><th class="metric-focus">資金増加率</th><th class="metric-focus">単純年率</th><th>平均</th><th>中央値</th><th>勝率</th><th>+10%</th><th>+20%</th><th>-10%</th><th>-20%</th><th>最大上昇</th><th>最大下落</th></tr></thead><tbody>{_mode_overall_row(metrics, selector_id)}</tbody></table></div></section>
@@ -1241,14 +1241,14 @@ def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
 <label class="filter-field"><span>検出年</span><select id="cloud-year-scope">''' + options + '''</select></label>
 <label class="filter-field"><span>検出日 終値の上限</span><select id="cloud-price-preset"><option value="1000" selected>1,000円以下</option><option value="2000">2,000円以下</option><option value="3000">3,000円以下</option><option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
 <label class="filter-field" id="cloud-price-custom-field" hidden><span>任意の上限（円・小数2桁まで）</span><input id="cloud-price-custom" type="number" step="0.01" min="0.01" inputmode="decimal" value="1000"></label>
-<label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">検出から5営業日後 終値</option><option value="d6_open" selected>検出から6営業日後 始値</option></select></label>
+<label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option></select></label>
 <label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">1銘柄に同じ株数</option><option value="stacked">一致した条件の数だけ買付</option></select></label>
 <label class="filter-field"><span>基本の買付株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
 <label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label></div>
 <p class="note">初期表示は1,000円以下・6営業日後始値・両方式・100株・コスト0%。保存した設定がある場合は、そちらを使います。買付株数を増やすと、必要な資金も増えます。</p>
 <p class="note">上限は検出済みの銘柄を絞る条件で、検出対象を広げません。コストは買付額・売却額の両方にかかります。配当・税金は含みません。</p>
 <p class="note">終値と始値は別の日に確認します。予定日前は「確定日待ち」、予定日を過ぎても価格が分からない場合は「未取得」と表示します。</p></div>
-<div id="settings-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications" hidden><p id="cloud-notification-readiness" role="status">通知は準備中です。会員資格・端末の状態を確認しています。</p><div id="cloud-notification-settings"></div></div>
+<div id="settings-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications" hidden><p id="cloud-notification-readiness" role="status">通知の利用状況を確認しています。</p><div id="cloud-notification-settings"></div></div>
 <div id="settings-display" role="tabpanel" aria-labelledby="settings-tab-display" hidden><div class="filters">
 <label class="filter-field"><span>テーマ</span><select id="cloud-theme"><option value="light">ライト</option><option value="dark" selected>ダーク</option><option value="system">端末に合わせる</option></select></label>
 <label class="filter-field"><span>文字サイズ</span><select id="cloud-font-size"><option value="small">小さめ</option><option value="standard" selected>標準</option><option value="large">大きめ</option></select></label>
@@ -1385,7 +1385,7 @@ def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, cu
                     body = _render_dashboard_body(view, metrics, generated, monthly_metrics=monthly, mask_pending=False)
                 else:
                     body = _render_mode_body(view, metrics, monthly, generated, current, mask_pending=False)
-                body = body.replace(ENDPOINT_LABEL, f"検出から1営業日後 始値 → {ENDPOINT_LABELS[exit_key]}（コスト0%）")
+                body = body.replace(ENDPOINT_LABEL.replace("検出から", ""), f"1営業日後 始値 → {ENDPOINT_LABELS[exit_key]}（コスト0%）")
                 body = body.replace("5営業日後の終値が確定した取引", f"{ENDPOINT_LABELS[exit_key]}の損益が確定した取引")
                 notice = _provenance_notice(scoped_source, view, exit_key, missing=missing_prices, compact=current == "analytics")
                 body = body.replace("<!--cloud-provenance-->", notice) if current == "analytics" else notice + body
@@ -1518,7 +1518,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>売却価格</small><b>検出から5営業日後 終値 / 検出から6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>売却価格</small><b>5営業日後 終値 / 6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
 <section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3>ダッシュボード</h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
@@ -1529,7 +1529,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
 <article class="guide-card"><h3>株数とコスト</h3><p>株数は100株ずつ変更できます。コストは買付額と売却額の両方にかかり、損益とグラフに反映します。分割・併合による株数の変化も計算します。配当・税金は含みません。</p></article>
-<article class="guide-card"><h3>5営業日後・6営業日後</h3><p>検出日は数えず、次の営業日を1日目とします。5日目の終値と6日目の始値は、別の日に確認します。予定日前は「確定日待ち」、価格を確認できない場合は「未取得」と表示します。</p></article>
+<article class="guide-card"><h3>5営業日後・6営業日後</h3><p>検出日を基準に、次の営業日を1日目と数えます。5日目の終値と6日目の始値は、別の日に確認します。予定日前は「確定日待ち」、価格を確認できない場合は「未取得」と表示します。</p></article>
 <article class="guide-card"><h3>株価の上限</h3><p>検出日 終値が上限以下の検出銘柄を表示します。検出済みの銘柄を絞る設定なので、上限を引き上げても検出対象は広がりません。終値が未取得の記録は上限ありでは除外し、上限なしでは表示します。</p></article>
 <article class="guide-card"><h3>過去の成績</h3><p>過去データによる試算と、運用開始後の記録を含みます。2026年の過去データも、結果が分かった期間の試算です。価格を取得できていない取引の損益は表示しません。</p></article>
 <article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、選択した株数とコストで取引するために最も多く必要だった資金の目安です。</p></article>
@@ -1538,7 +1538,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
 <article class="guide-card"><h3>参考値・成績に含めません</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
 <section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>一致した条件の数だけ買付</h3><p>基本100株なら、3条件に一致した銘柄は300株で試算します。</p></article><article class="guide-card"><h3>1銘柄に同じ株数</h3><p>同じ日の同じ銘柄を1件として買い付けます。複数の条件に一致しても株数は増やしません。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
-<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は準備中で、このプレビューからは送信しません。有効な有料会員のみ設定でき、初期値はOFFです。朝8時（日本時間）は「今日は選んだ確定日」のお知らせで、価格や損益の確定通知ではありません。</p></section>
+<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は現在利用できません。有料会員向けの機能で、初期値はOFFです。朝8時（日本時間）は「今日は選んだ確定日」のお知らせです。この時点では価格や損益はまだ確定していません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
@@ -1684,7 +1684,8 @@ REPORT_CSS += """
 @media(max-width:760px){.nav{grid-template-columns:minmax(0,1fr) auto;gap:4px 8px}.brand-logo{width:min(230px,100%)}.cloud-main-nav{grid-column:1/-1;grid-row:2;justify-content:flex-start}.cloud-secondary-nav{display:none}.cloud-main-nav .nav-link{flex:1;justify-content:center;font-size:calc(14px * var(--text-scale));border-radius:10px}#cloud-menu-toggle{display:inline-flex}.cloud-navigation{top:calc(100% + 4px)}}
 """
 
-REPORT_CSS += "[data-scenario-cost]>span,[data-scenario-shares]>span{display:block;margin:3px 0;white-space:normal;overflow-wrap:anywhere}"
+REPORT_CSS += "[data-scenario-cost]>span{display:block;margin:3px 0;white-space:normal;overflow-wrap:anywhere}[data-scenario-shares]>span{display:inline;white-space:normal;overflow-wrap:anywhere}"
+REPORT_CSS += ".history-record .history-endpoint-label{display:none}@media(max-width:760px){.history-record .history-endpoint-label{display:block}}"
 
 REPORT_CSS += ".research-swatch.positive{background:var(--good)}.cloud-bar-item .positive{color:var(--good)}.cloud-bar-item .negative{color:#bc4253}:root[data-theme=dark] .cloud-bar-item .negative{color:#ff98a7}"
 

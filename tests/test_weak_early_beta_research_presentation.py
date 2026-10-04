@@ -38,8 +38,9 @@ class ResearchPresentationTests(unittest.TestCase):
             self.assertIn(title, body)
         for control in ("cloud-year-scope", "cloud-allocation", "cloud-research-reset", "cloud-price-preset", "cloud-exit-endpoint", "cloud-base-shares", "cloud-cost-percent"):
             self.assertIn(f'id="{control}"', self.document)
-        self.assertIn('id="history"', self.document)
-        self.assertIn('class="history-expand"', self.document)
+        self.assertNotIn('id="history"', self.document)
+        self.assertIn('<template id="cloud-scenario-rows">', self.document)
+        self.assertNotIn('class="history-expand"', self.document)
         self.assertNotIn('<circle class="research-point"', body)
         self.assertNotIn("記録の範囲と来歴", body)
         self.assertNotIn("2022年", body)

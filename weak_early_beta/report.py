@@ -57,8 +57,8 @@ TOTAL_EQUITY_EXPLANATION = (
     "各取引が決済した日に損益を加えた推移です。"
 )
 REFERENCE_POLICY_NOTE = (
-    "S高一値として翌寄付での買付が困難と判定した銘柄は、検出履歴では参考値として表示し、"
-    "成績集計と資産推移から除外します。実際の注文が約定しなかったことを示すものではありません。"
+    "ストップ高で買付が難しい銘柄は、参考値として履歴に残し、成績とグラフには含めません。"
+    "実際の注文結果を示すものではありません。"
 )
 STACKED_EXPLANATION = (
     "同じ銘柄が複数モードに該当した場合、モードごとに100株ずつ買ったものとして集計します"
@@ -441,7 +441,7 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
     # identifying dates, prices, mode combinations and individual economics.
     ledger = annotate_entry_feasibility(select_report_view(released_history(ledger) if mask_pending else visible_history(ledger), None, "d5_close"))
     if ledger.empty:
-        return '<tr><td colspan="10">検出履歴がありません</td></tr>'
+        return '<tr><td colspan="8">検出履歴がありません</td></tr>'
     data = ledger.copy()
     data["signal_date"] = pd.to_datetime(data["signal_date"])
     rows = []
@@ -452,7 +452,7 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         sorted(grouped, key=lambda item: item[0], reverse=True)
     ):
         first = group.iloc[0]
-        selectors = group["selector_id"].astype(str).tolist()
+        selectors = str(first.get("report_matched_selectors", "") or "").split() or group["selector_id"].astype(str).tolist()
         badges = "".join(
             f'<span class="badge">{html.escape(selector_info(s).short_name)}</span>'
             for s in selectors
@@ -470,9 +470,9 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             if "performance_reference_only" in group else False
         )
         if reference_only:
-            status, status_class = ("参考値・集計対象外" if not gross.empty else "実価格未確認・集計対象外"), "reference"
+            status, status_class = ("参考値・成績に含めません" if not gross.empty else "価格未確認・成績に含めません"), "reference"
         else:
-            status = "確定" if not gross.empty else ("保有中" if str(first["status"]) == "entered" else "寄付待ち")
+            status = "確定" if not gross.empty else ("保有中" if str(first["status"]) == "entered" else "買付待ち")
             status_class = "mature" if not gross.empty else "pending"
         # A D5 return, elapsed date or an adjusted reference open is not enough
         # to release an identity. All overlapping receipts must be verified.
@@ -495,8 +495,8 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             if not is_masked and reference_only and evidence_url.startswith("https://www.jpx.co.jp/") else ""
         )
         reference_note = (
-            '<small class="reference-note">S高一値のため寄付買いの約定が困難と判定。'
-            f'{"騰落率と損益は参考値です。" if not gross.empty else "実価格の証跡が不足する損益は表示しません。"}{evidence_link}</small>'
+            '<small class="reference-note">ストップ高で買付が難しいため、成績に含めません。'
+            f'{"騰落率と損益は参考値です。" if not gross.empty else "価格を確認できないため、損益は表示しません。"}{evidence_link}</small>'
             if reference_only else ""
         )
         reference_marker = '<small class="reference-value">参考値</small>' if reference_only else ""
@@ -526,7 +526,14 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         display_name = "検出から6営業日後の実始値取得・確定まで会員限定" if is_masked else name
         search_text = "" if is_masked else f"{symbol} {name}".strip()
         entry_display = "会員限定" if is_masked else f"{_date(first['entry_date'])}<small>{_price(first['entry_open'])}</small>"
-        exit_display = "会員限定" if is_masked else f"{_date(first['fifth_xtks_exit_date'])}<small>{_price(first['fifth_xtks_exit_close'])}</small>"
+        d5_price = _price(first['fifth_xtks_exit_close']) if pd.notna(first.get('fifth_xtks_exit_close')) else ""
+        exit_display = "会員限定" if is_masked else f"{_date(first['fifth_xtks_exit_date'])}<small>{d5_price}</small>"
+        today = pd.Timestamp.now(tz="Asia/Tokyo").tz_localize(None).normalize()
+        d5_day = pd.Timestamp(first.get("fifth_xtks_exit_date"))
+        d5_verified = pd.notna(first.get("gross_return")) and pd.notna(first.get("fifth_xtks_exit_close"))
+        d5_price_status = "取得済み" if d5_verified else ("確定日待ち" if pd.notna(d5_day) and d5_day > today else "未取得")
+        if not d5_verified:
+            exit_display += f'<small class="endpoint-status">{d5_price_status}</small>'
         if not is_masked and str(first.get("price_basis", "")).startswith("LEGACY_"):
             entry_display += "<small>保存時の調整価格参考値</small>"
             exit_display += "<small>保存時の調整価格参考値</small>"
@@ -536,13 +543,13 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             d6_session = pd.Timestamp(add_bank_business_days(signal_date.date(), 6))
         d6_day = _date(d6_session)
         d6_price = _price(first.get("sixth_xtks_exit_open")) if d6_verified else ""
-        d6_status = "価格あり" if d6_verified else ("価格待ち" if d6_session > pd.Timestamp.now(tz="Asia/Tokyo").tz_localize(None).normalize() else "未取得")
-        d6_display = "会員限定" if is_masked else f"{d6_day}<small>{d6_price}</small><small>{d6_status}</small>"
+        d6_status = "取得済み" if d6_verified else ("確定日待ち" if d6_session > today else "未取得")
+        d6_display = "会員限定" if is_masked else f"{d6_day}<small>{d6_price}</small>" + ("" if d6_verified else f"<small>{d6_status}</small>")
         signal_display = "会員限定" if is_masked else (_price(signal_price) if signal_verified else "未取得")
         sixth_return = pd.to_numeric(first.get("sixth_gross_return"), errors="coerce")
         sixth_cash = pd.to_numeric(first.get("sixth_one_hundred_shares_pl_yen"), errors="coerce")
         d6_economic = sixth_economics_verified(first)
-        d6_result_status = "結果あり" if d6_economic else ("損益を確認中" if d6_verified else ("保有中" if str(first["status"]) == "entered" else "寄付待ち"))
+        d6_result_status = "結果あり" if d6_economic else ("損益を確認中" if d6_verified else ("保有中" if str(first["status"]) == "entered" else "買付待ち"))
         acquired_date = first.get('sixth_entry_date') if d6_economic else first.get('entry_date')
         acquired_open = first.get('sixth_entry_open') if d6_economic else first.get('entry_open')
         d6_entry_display = "会員限定" if is_masked else (
@@ -570,6 +577,7 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             "d5-date": _date(first.get("fifth_xtks_exit_date")),
             "d5-close": first.get("fifth_xtks_exit_close"),
             "d5-return": first.get("gross_return"),
+            "d5-status": d5_price_status,
             "d6-date": d6_day,
             "d6-open": first.get("sixth_xtks_exit_open") if d6_verified else None,
             "d6-return": sixth_return if d6_economic else None,
@@ -596,19 +604,16 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             f'{export_attributes} '
             f'data-symbol="{"" if is_masked else html.escape(str(symbol))}" data-search="{html.escape(search_text)}"'
             f'{" hidden" if initial_hidden else ""}>'
-            '<td colspan="5" class="history-record">'
-            '<div class="history-main">'
-            f'<div class="history-company"><strong><span class="symbol">{html.escape(display_symbol)}</span> {html.escape(display_name)}</strong></div>'
+            '<td colspan="8" class="history-record"><div class="history-visible-grid">'
             f'<div data-label="検出日">{signal_date:%Y-%m-%d}</div>'
-            f'<div data-label="検出日 終値">{signal_display}</div>'
-            f'<div data-label="保有状況"><span data-exit-key="d5_close" class="status {status_class}">{"結果あり" if status == "確定" else status}</span><span data-exit-key="d6_open" class="status {"reference" if reference_only else "mature" if d6_economic else "pending"}" hidden>{"参考値・集計対象外" if reference_only else d6_result_status}</span></div>'
+            f'<div class="history-company"><strong><span class="symbol">{html.escape(display_symbol)}</span> {html.escape(display_name)}</strong><small>検出日 終値 {signal_display}</small><div class="actions">{actions}</div></div>'
+            f'<div data-label="該当モード">{badges}<small data-scenario-shares>100株で買付</small></div>'
+            f'<div data-label="保有状況"><span data-exit-key="d5_close" class="status {status_class}">{"結果あり" if status == "確定" else status}</span><span data-exit-key="d6_open" class="status {"reference" if reference_only else "mature" if d6_economic else "pending"}" hidden>{"参考値・成績に含めません" if reference_only else d6_result_status}</span></div>'
+            f'<div data-label="買付日・始値"><span data-exit-key="d5_close">{entry_display}</span><span data-exit-key="d6_open" hidden>{d6_entry_display}</span><small data-scenario-cost></small></div>'
+            f'<div data-label="検出から5営業日後 終値">{exit_display}</div>'
+            f'<div data-label="検出から6営業日後 始値">{d6_display}</div>'
             f'<div data-label="選択中の成績" class="number"><strong data-scenario-pl>{_yen(cash.iloc[0]) if not cash.empty else "—"}</strong><small data-scenario-return>{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}</small>{reference_marker}</div>'
-            '</div><details class="history-expand"><summary>詳細を見る</summary><div class="history-detail-grid">'
-            f'<div><b>買付日・始値</b><span data-exit-key="d5_close">{entry_display}</span><span data-exit-key="d6_open" hidden>{d6_entry_display}</span><small data-scenario-shares>100株</small></div>'
-            f'<div><b>検出から5営業日後 終値</b>{exit_display}</div>'
-            f'<div><b>検出から6営業日後 始値</b>{d6_display}</div>'
-            f'<div><b>一致した条件</b>{badges}</div>'
-            '</div>' + reference_note + f'<div class="actions">{actions}</div></details></td>'
+            '</div>' + reference_note + '</td>'
             "</tr>"
         )
     return "".join(rows)
@@ -738,8 +743,8 @@ def _page_shell(title: str, current: str, body: str) -> str:
     document_title = "天底極致 -Cloud-" if current == "home" else f"{title} | 天底極致 -Cloud-"
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-scenarios.js?v=20261005-1" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-1" defer></script></head>
+<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20261004-v06"></script><style>{REPORT_CSS}</style>
+<script src="./weak-early-beta-scenarios.js?v=20261004-v06" defer></script><script src="./weak-early-beta-interactions.js?v=20261004-v06" defer></script></head>
 <body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
@@ -747,6 +752,16 @@ def _page_shell(title: str, current: str, body: str) -> str:
     # Hidden theme images and below-fold footer icons should not compete with
     # the selected view's data on a constrained connection.
     result = re.sub(r'<img(?![^>]*\bloading=)', '<img loading="lazy"', result)
+    old_navigation = f'<div class="nav-links" aria-label="ページ移動">{_nav(current)}</div>'
+    menu_links = _nav(current).replace('class="nav-link active"', 'class="nav-link active" aria-current="page"')
+    navigation_items = re.findall(r'<a\b.*?</a>', menu_links)
+    primary_links, secondary_links = ''.join(navigation_items[:2]), ''.join(navigation_items[2:])
+    new_navigation = (f'<div class="cloud-main-nav" aria-label="ページ移動"><span class="cloud-primary-nav">{primary_links}</span><span class="cloud-secondary-nav">{secondary_links}</span></div>'
+        f'<div class="nav-tools"><button id="cloud-menu-toggle" class="nav-control {"active" if current not in ("home", "analytics") else ""}" type="button" aria-controls="cloud-navigation" aria-expanded="false" aria-label="その他のページを開く">その他 <span aria-hidden="true">⌄</span></button>'
+        '<button id="cloud-settings-open" class="nav-control" type="button" aria-haspopup="dialog" aria-controls="cloud-settings-dialog" aria-label="表示・試算設定を開く"><span aria-hidden="true">⚙</span> 設定</button></div>'
+        f'<div id="cloud-navigation" class="nav-links cloud-navigation" aria-label="その他のページ" hidden>{secondary_links}</div>')
+    result = result.replace(old_navigation, new_navigation)
+    result = re.sub(r'<button class="theme-toggle".*?</button>', '', result, flags=re.S)
     if len(result.encode("utf-8")) > MAX_REPORT_BYTES:
         raise ValueError(f"Cloud report {current} exceeds the 24 MiB asset budget; no oversized HTML was written")
     return result
@@ -825,7 +840,7 @@ def _payoff_structure(ledger: pd.DataFrame) -> str:
     ledger = performance_eligible(ledger)
     returns = pd.to_numeric(ledger["gross_return"], errors="coerce").dropna()
     if returns.empty:
-        return '<h2>損小利大の構造</h2><p class="note">確定取引がありません。</p>'
+        return '<h2>利益構造</h2><p class="note">確定取引がありません。</p>'
     winners = returns[returns.gt(0)]
     losers = returns[returns.lt(0)]
     win_rate = len(winners) / len(returns) * 100
@@ -839,7 +854,7 @@ def _payoff_structure(ledger: pd.DataFrame) -> str:
     loss_label = f"{avg_loss:+.1f}%" if not losers.empty else "—"
     ratio_label = f"平均利益幅 ÷ 平均損失幅 {payoff_ratio:.2f}倍" if payoff_ratio else "平均利益幅 ÷ 平均損失幅 —"
     return (
-        f'<div class="payoff-heading"><h2>損小利大の構造</h2><span class="payoff-ratio">{ratio_label}</span></div>'
+        f'<div class="payoff-heading"><h2>利益構造</h2><span class="payoff-ratio">{ratio_label}</span></div>'
         '<p class="note">確定取引の勝敗と平均騰落率（モード別積み上げ）</p>'
         '<div class="payoff-kpis">'
         f'<div class="payoff-kpi"><strong>{win_rate:.2f}%</strong><small>勝率</small></div>'
@@ -965,24 +980,24 @@ def _history_section(
         )
         mode_filter = f'<select id="selector-filter" aria-label="モードで絞り込み"><option value="">すべてのモード</option>{options}</select>'
     access_notice = (
-        '<p class="note"><strong>無料表示:</strong> 検出から6営業日後の実始値を取得・検証済みの検出履歴のみを表示します。未解禁の取引は一覧・集計・CSVに含みません。'
-        '<a href="/purchase">アクセス権を購入すると確定前から確認できます。</a></p>'
+        '<div class="note"><strong>無料版で見られる情報</strong><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p>'
+        '<p>最新の検出銘柄は、有料会員向けに公開しています。</p><a href="/purchase">有料版について</a></div>'
         if mask_pending else ""
     )
     return (
         '<section class="panel" id="history"><h2>検出履歴</h2>'
         + access_notice
-        + '<div class="history-details"><p class="history-heading">条件に合う最新20件を表示。検索・日付・モード指定は検出履歴内の絞り込みです。価格上限と確定日は全体設定と共通です。</p>'
+        + '<div class="history-details"><p class="history-heading">新しい順に表示します。検索はこの一覧だけを絞り込みます。株価の上限・売却価格は「設定」で変更できます。</p>'
         '<div class="filters"><label class="filter-field"><span>銘柄</span><input id="symbol-filter" type="search" autocomplete="off" '
         'aria-label="証券コードまたは銘柄名で検索" placeholder="証券コード・銘柄名で検索"></label>'
         '<label class="filter-field"><span>開始日</span><input id="history-date-from" type="date" aria-label="検出日の開始日"></label>'
         '<label class="filter-field"><span>終了日</span><input id="history-date-to" type="date" aria-label="検出日の終了日"></label>'
+        '<label class="filter-field"><span>並び順</span><select id="history-sort"><option value="newest">新しい順</option><option value="oldest">古い順</option><option value="symbol">証券コード順</option></select></label>'
         + mode_filter
         + '<button class="clear-search" id="clear-search" type="button">検索をクリア</button>'
         '<output class="result-count" id="search-result-count" aria-live="polite"></output></div>'
         '<noscript><p class="note">検索機能を使うにはJavaScriptを有効にしてください。</p></noscript>'
-        '<button id="cloud-history-export-csv" type="button">検出履歴CSV</button>'
-        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th colspan="5"><div class="history-main"><div>銘柄</div><div>検出日</div><div>検出日 終値</div><div>保有状況</div><div class="number">選択中の成績</div></div></th></tr></thead>'
+        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th colspan="8"><div class="history-visible-grid"><div>検出日</div><div>銘柄</div><div>該当モード</div><div>保有状況</div><div>買付日・始値</div><div>検出から5営業日後 終値</div><div>検出から6営業日後 始値</div><div class="number">選択中の成績</div></div></th></tr></thead>'
         f'<tbody>{_detection_rows(ledger, mask_pending=mask_pending)}</tbody></table></div>'
         '<div class="history-pagination"><button class="load-more" id="history-load-more" type="button">次の20件を表示</button>'
         '<button class="collapse-results" id="history-collapse" type="button" hidden>最初の20件に戻す</button></div>'
@@ -1169,7 +1184,7 @@ def _render_analytics_body(
     return f'''<div class="cloud-research-page">
 <div class="research-heading"><h1>アナリティクス</h1><span>最終更新 {generated.strftime('%Y-%m-%d %H:%M')} JST</span></div>
 <div class="research-conditions"><span>検出履歴</span><span>検出から1営業日後 始値で買付</span><span>手数料0・配当なし</span><span>記録期間 {_actual_period_label(ledger, generated)}</span><span>最終検出: {_latest_signal_label(ledger)}</span></div><!--cloud-provenance-->
-<p class="research-notice">表示母集団 <strong>{counts['display_signals']:,}検出 / {counts['display_lots']:,}条件一致</strong>のうち、成績対象は{counts['eligible_signals']:,}検出。参考扱いの{counts['reference_excluded_signals']:,}検出（{counts['reference_excluded_lots']:,}条件一致）を成績から除外しています。対象内の損益確定 {counts['completed_signals']:,}件・未確定 {counts['pending_signals']:,}件。以下の比較・グラフ・資金計算は、同じ確定済みの母集団です。</p>
+<p class="research-notice">表示中 <strong>{counts['display_signals']:,}検出 / {counts['display_lots']:,}条件一致</strong>のうち、成績対象は{counts['eligible_signals']:,}検出。参考扱いの{counts['reference_excluded_signals']:,}検出（{counts['reference_excluded_lots']:,}条件一致）を成績から除外しています。対象内の損益確定 {counts['completed_signals']:,}件・未確定 {counts['pending_signals']:,}件。以下の比較・グラフ・資金計算は、結果が出た同じ取引です。</p>
 <section class="panel research-card"><h2>株数方式の比較</h2><div class="research-pair">{''.join(cards)}</div><p class="research-footnote">検出は「同じ日・同じ銘柄」で1件。口数は買付時100株を1口とし、分割・併合後の売却株数ではありません。数量を増やしても、同じ検出の騰落率は変わりません。</p></section>
 <section class="panel research-card" id="realized-profit"><h2>累積確定損益</h2>{_research_legend()}{_research_plot(data['cumulative'], category='date', fields=('unique','stacked'), labels=('一律100株','条件数×100株'), kind='line', unit='円', title='確定日ごとの累積確定損益')}<p class="research-footnote">0円から始め、選択した確定日の損益を加えています。未決済の含み損益を含む時価評価の曲線ではありません。</p></section>
 <section class="panel research-card" id="capital-risk"><h2>必要資金・損失・集中度</h2>{_research_table(['指標','一律100株','条件数×100株'], risk_rows)}<p class="research-footnote">最低初期資金は、確定済みの注文を固定し、同日の買付を売却代金の受領より先に行う事後計算です。最大同時保有の取得額とは異なります。ドローダウンは確定損益だけから算出し、保有中の下落・保証金・税金・注文制約を含みません。欠損がある指標は空欄（—）です。</p></section>
@@ -1177,7 +1192,7 @@ def _render_analytics_body(
 <div class="research-grid"><section class="panel research-card"><h2>検出条件の重なり</h2>{_research_plot(data['overlap'], category='selector_count', fields=('resolved_signals',), labels=('確定した検出',), kind='bar', unit='件', title='一致した条件数別の確定検出件数')}</section><section class="panel research-card"><h2>重なり別の平均騰落率</h2>{_research_plot(data['overlap'], category='selector_count', fields=('mean_pct',), labels=('平均騰落率',), kind='bar', unit='%', title='一致した条件数別の平均騰落率')}<p class="research-footnote">検出ごとの単純平均。条件数が多いほど将来成績が良いと保証するものではありません。</p></section></div>
 <section class="panel research-card" id="payoff-structure"><h2>勝ち・負けと加重集計</h2>{_research_table(['指標','一律100株','条件数×100株'], payoff_rows)}<p class="research-footnote">勝ちは騰落率が0より大きい取引。0%は勝率の分母に含みます。数量加重の平均・中央値・勝率は100株口数で重みを付けます。</p><details class="research-data"><summary>勝ち負けの幅を比較（条件数×100株）</summary>{_payoff_structure(ledger)}</details></section>
 <section class="panel research-card"><h2>条件の重なり別の内訳</h2>{_research_table(['一致条件数','確定した検出','平均騰落率','中央値','勝率','一律100株の損益'], overlap_rows)}</section>
-<section class="panel research-card"><h2>検出履歴・取引の明細</h2><p>銘柄・検出日・条件で検索する明細と履歴CSVは、<a href="./weak_early_beta_latest.html#history">ダッシュボードの検出履歴</a>から確認できます。価格上限・確定日・検出年は共通の表示設定です。</p><p class="research-footnote">{html.escape(REFERENCE_POLICY_NOTE)}</p></section>
+<section class="panel research-card"><h2>検出履歴・取引の明細</h2><p>銘柄・検出日・条件で検索する一覧は、<a href="./weak_early_beta_latest.html#history">ダッシュボードの検出履歴</a>から確認できます。価格上限・確定日・検出年は共通の表示設定です。</p><p class="research-footnote">{html.escape(REFERENCE_POLICY_NOTE)}</p></section>
 <p class="note">過去データによる試算を含みます。2026年の過去データも、結果が分かった期間の試算です。</p>
 <section class="panel research-card" id="growth"><details class="research-data"><summary>必要資金を起点にしたトータルの資産推移</summary><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p><div class="chart-grid"><div data-cloud-allocation="unique">{_equity_chart(unique_ledger, '銘柄均等', 'unique', UNIQUE_EXPLANATION, generated.tz_localize(None))}</div><div data-cloud-allocation="stacked">{_equity_chart(ledger, 'モード別積み上げ', 'stacked', STACKED_EXPLANATION, generated.tz_localize(None))}</div></div></details>{''.join(detailed_tables)}</section>
 {_mode_pages_section(generated)}</div>'''
@@ -1219,20 +1234,27 @@ def _scope_definitions(source: pd.DataFrame) -> dict[str, dict]:
 
 def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
     options = "".join(f'<option value="{html.escape(key)}">{html.escape(scope["label"])}</option>' for key, scope in (scopes or {"all": {"label": "記録期間すべて"}}).items())
-    return '''<section class="panel cloud-settings" aria-label="表示・集計の設定">
-<h2>表示と試算の設定</h2><div class="filters">
+    return '''<dialog id="cloud-settings-dialog" class="cloud-settings-dialog" aria-labelledby="cloud-settings-title"><section class="cloud-settings">
+<div class="settings-heading"><h2 id="cloud-settings-title">表示・試算設定</h2><button id="cloud-settings-close" class="settings-close" type="button" aria-label="設定を閉じる"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+<div class="settings-tabs" role="tablist" aria-label="設定の項目"><button id="settings-tab-trial" role="tab" aria-selected="true" aria-controls="settings-trial" type="button">試算方法</button><button id="settings-tab-notifications" role="tab" aria-selected="false" aria-controls="settings-notifications" tabindex="-1" type="button">通知</button><button id="settings-tab-display" role="tab" aria-selected="false" aria-controls="settings-display" tabindex="-1" type="button">表示</button></div>
+<div id="settings-trial" role="tabpanel" aria-labelledby="settings-tab-trial"><div class="filters">
 <label class="filter-field"><span>検出年</span><select id="cloud-year-scope">''' + options + '''</select></label>
-<label class="filter-field"><span>検出日 終値の上限</span><select id="cloud-price-preset">
-<option value="1000" selected>1,000円以下</option>
-<option value="2000">2,000円以下</option><option value="3000">3,000円以下</option>
-<option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
+<label class="filter-field"><span>検出日 終値の上限</span><select id="cloud-price-preset"><option value="1000" selected>1,000円以下</option><option value="2000">2,000円以下</option><option value="3000">3,000円以下</option><option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
 <label class="filter-field" id="cloud-price-custom-field" hidden><span>任意の上限（円・小数2桁まで）</span><input id="cloud-price-custom" type="number" step="0.01" min="0.01" inputmode="decimal" value="1000"></label>
-<label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">検出から5営業日後 終値</option><option value="d6_open">検出から6営業日後 始値</option></select></label>
+<label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">検出から5営業日後 終値</option><option value="d6_open" selected>検出から6営業日後 始値</option></select></label>
 <label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">1銘柄に同じ株数</option><option value="stacked">一致した条件の数だけ買付</option></select></label>
-<label class="filter-field"><span>基本の買付株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label><label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label><button id="cloud-research-reset" type="button">リセット</button><button id="cloud-settings-save" type="button">設定を保存</button><button id="cloud-export-csv" type="button">集計CSV</button></div>
-<p id="cloud-settings-status" role="status" aria-live="polite">初期値は実終値1,000円以下・検出から5営業日後 終値です。</p>
-<p class="note">上限は検出済みの銘柄を絞ります。検出対象は広がりません。終値をまだ取得できていない銘柄は、上限ありでは表示しません。</p><p class="note">コストは買付額と売却額のそれぞれにかかります。配当・税金は含みません。</p><output id="cloud-applied-summary" class="scenario-apply" aria-live="polite"></output>
-<div id="cloud-notification-settings"></div></section>'''
+<label class="filter-field"><span>基本の買付株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
+<label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label></div>
+<p class="note">初期表示は1,000円以下・6営業日後始値・両方式・100株・コスト0%。保存した設定がある場合は、そちらを使います。買付株数を増やすと、必要な資金も増えます。</p>
+<p class="note">上限は検出済みの銘柄を絞る条件で、検出対象を広げません。コストは買付額・売却額の両方にかかります。配当・税金は含みません。</p>
+<p class="note">終値と始値は別の日に確認します。予定日前は「確定日待ち」、予定日を過ぎても価格が分からない場合は「未取得」と表示します。</p></div>
+<div id="settings-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications" hidden><p id="cloud-notification-readiness" role="status">通知は準備中です。会員資格・端末の状態を確認しています。</p><div id="cloud-notification-settings"></div></div>
+<div id="settings-display" role="tabpanel" aria-labelledby="settings-tab-display" hidden><div class="filters">
+<label class="filter-field"><span>テーマ</span><select id="cloud-theme"><option value="light">ライト</option><option value="dark" selected>ダーク</option><option value="system">端末に合わせる</option></select></label>
+<label class="filter-field"><span>文字サイズ</span><select id="cloud-font-size"><option value="small">小さめ</option><option value="standard" selected>標準</option><option value="large">大きめ</option></select></label>
+<label class="filter-field"><span>一覧件数</span><select id="cloud-page-size"><option value="20">20件</option><option value="50">50件</option><option value="100">100件</option></select></label></div><p class="note">表示設定はこの端末に保存します。未保存のテーマ・文字サイズは確認用に表示し、キャンセルで元に戻ります。</p></div>
+<p id="cloud-settings-status" role="status" aria-live="polite">保存済みの設定を読み込んでいます。</p>
+<div class="settings-actions"><button id="cloud-research-reset" class="settings-secondary" type="button">試算方法をリセット</button><button id="cloud-settings-cancel" class="settings-secondary" type="button">キャンセル</button><button id="cloud-settings-save" class="settings-primary" type="button">設定を保存</button></div></section></dialog><output id="cloud-settings-feedback" role="status" aria-live="polite"></output><output id="cloud-applied-summary" class="scenario-apply" aria-live="polite"></output>'''
 
 
 def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: str, *, missing: int | None = None, compact: bool = False) -> str:
@@ -1415,13 +1437,16 @@ def _variant_page(
     # symbols cannot protect identities inferable from a price/return path.
     source = annotate_entry_feasibility(released_history(ledger) if mask_pending else visible_history(ledger))
     if current in SELECTOR_ORDER:
+        # A mode page selects its own detections, but proportional buying uses
+        # the same full set of matched modes as the combined Cloud strategy.
+        source["report_matched_selectors"] = source.groupby(["signal_date", "symbol"])["selector_id"].transform(lambda ids: " ".join(dict.fromkeys(ids.astype(str))))
         source = source[source["selector_id"].eq(current)].copy()
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     # write_report owns a local cache, and the full key also prevents accidental
     # reuse across audiences, source frames or generation dates by other callers.
     # Calculate from audience-visible, validated presentation economics only.
     # Never embed raw ledger/provenance or a grid of all setting combinations.
-    selected = select_report_view(source)
+    selected = select_report_view(source, 1000, "d6_open")
     metrics, monthly = build_presentation_metrics(selected, as_of=generated.tz_localize(None))
     if current == "home":
         default_html = _render_dashboard_body(selected, metrics, generated, monthly)
@@ -1434,9 +1459,21 @@ def _variant_page(
     serialized = json.dumps({"version": 2, "page": current, "scopes": scopes,
         "variants": {}, "generated": generated.isoformat(),
         "modeNames": {key: selector_info(key).display_name for key in SELECTOR_ORDER}}, ensure_ascii=False).replace('<', '\u003c')
-    history = _history_section(source, include_mode_filter=current == "home", mask_pending=mask_pending)
-    body = (f'<div id="cloud-analytics-content">{default_html}</div>'
-        + _settings_panel(scopes) + history + _mode_pages_section(generated, include_updated=False)
+    if current == "analytics":
+        # A minimal audience-checked calculator input, without a visible stock
+        # list, links, analysis or raw ledger/provenance. Free rows are released
+        # before this template is derived, just as on the history page.
+        opening_rows = re.findall(r'<tr\b[^>]*data-date="[^>]*>', _detection_rows(source, mask_pending=mask_pending))
+        history = '<template id="cloud-scenario-rows"><table><tbody>' + ''.join(tag + '<td></td></tr>' for tag in opening_rows) + '</tbody></table></template>'
+    else:
+        history = _history_section(source, include_mode_filter=current == "home", mask_pending=mask_pending)
+    mode_context = ''
+    if current in SELECTOR_ORDER:
+        info = selector_info(current)
+        mode_context = f'<div id="cloud-mode-context" hidden data-feature="{html.escape(info.feature_summary, quote=True)}" data-selection="{html.escape(info.selection_summary, quote=True)}"></div>'
+    access_notice = ('<section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>' if mask_pending and current == 'analytics' else '')
+    body = (f'<div id="cloud-analytics-content">{default_html}</div>' + access_notice
+        + _settings_panel(scopes) + mode_context + history + _mode_pages_section(generated, include_updated=False)
         + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>')
     title = "ダッシュボード" if current == "home" else "アナリティクス" if current == "analytics" else selector_info(current).display_name
     return _page_shell(title, current, body)
@@ -1476,35 +1513,38 @@ def render_mode_report(
     return _variant_page(ledger, generated_at, selector_id, mask_pending=mask_pending, _variant_cache=_variant_cache)
 
 
-def render_guide(generated_at: pd.Timestamp) -> str:
+def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>翌営業日寄付</b></div><div class="kpi"><small>売却価格</small><b>検出から5営業日後 終値 / 検出から6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
-<section class="panel"><h2>無料版の表示範囲</h2><p>無料版は検出から6営業日後の実始値を取得・検証済みの検出履歴のみを表示・集計します。未解禁の取引は一覧・グラフ・集計・CSVに含みません。表示期間や最新検出日も、この公開済み履歴の範囲を示します。有料会員向けの新着履歴とは集計対象が異なるため、成績や件数が異なる場合があります。</p></section>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>売却価格</small><b>検出から5営業日後 終値 / 検出から6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
+<section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3>ダッシュボード</h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
 <article class="guide-card"><h3>アナリティクス</h3><p>Cloud全体の過去成績を見るページです。選択した株数とコストで試算した損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
 <article class="guide-card"><h3>5つのモード</h3><p>モードは、銘柄を選ぶ「見方の違い」です。Shadow、Dive、Silence、Fusion、Balanceを押すと、それぞれの成績と検出銘柄を確認できます。</p></article>
-<article class="guide-card"><h3>検出履歴</h3><p>条件に当てはまった銘柄の一覧です。最初は新しい順に20件を表示し、銘柄名・証券コード・日付で絞り込めます。「次の20件を表示」で続きを確認できます。</p></article>
+<article class="guide-card"><h3>検出履歴</h3><p>見つかった銘柄を新しい順に表示します。銘柄名・証券コード・日付で検索できます。一覧件数は「設定」の「表示」で20・50・100件から選べます。</p></article>
 <article class="guide-card"><h3>ファンダ分析</h3><p>会社がどんな事業をしているか、検出時点までに公表されていた決算やお知らせ、その内容から読み取れる注目点と注意点をまとめています。資料名を押すと根拠となる開示資料を確認できます。</p></article>
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
-<article class="guide-card"><h3>株数とコスト</h3><p>基本株数は100株ずつ変更できます。売買コストは買付額と売却額の両方に、指定した割合でかかります。損益・グラフ・CSVには同じ設定を使います。分割・併合があった場合は、変わった保有株数で売却額を計算します。配当・税金は含みません。</p></article>
+<article class="guide-card"><h3>株数とコスト</h3><p>株数は100株ずつ変更できます。コストは買付額と売却額の両方にかかり、損益とグラフに反映します。分割・併合による株数の変化も計算します。配当・税金は含みません。</p></article>
+<article class="guide-card"><h3>5営業日後・6営業日後</h3><p>検出日は数えず、次の営業日を1日目とします。5日目の終値と6日目の始値は、別の日に確認します。予定日前は「確定日待ち」、価格を確認できない場合は「未取得」と表示します。</p></article>
 <article class="guide-card"><h3>株価の上限</h3><p>検出日 終値が上限以下の検出銘柄を表示します。検出済みの銘柄を絞る設定なので、上限を引き上げても検出対象は広がりません。終値が未取得の記録は上限ありでは除外し、上限なしでは表示します。</p></article>
 <article class="guide-card"><h3>過去の成績</h3><p>過去データによる試算と、運用開始後の記録を含みます。2026年の過去データも、結果が分かった期間の試算です。価格を取得できていない取引の損益は表示しません。</p></article>
 <article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、選択した株数とコストで取引するために最も多く必要だった資金の目安です。</p></article>
 <article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
-<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、成績集計対象の取引のうち利益になった割合です。損益0%の取引も勝率の分母に含みます。騰落率は、買ったと仮定した価格から売値まで何%動いたかを表します。</p></article>
-<article class="guide-card"><h3>参考値・集計対象外</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
+<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、結果が出た取引のうち利益になった割合です。損益が0の取引も数えます。騰落率は、買付額に対する損益の割合です。選択したコストも含みます。</p></article>
+<article class="guide-card"><h3>参考値・成績に含めません</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
-<section class="panel"><h2>2つの合算方法</h2><div class="guide-grid"><article class="guide-card"><h3>モード別積み上げ</h3><p>一致した条件の数に応じて買付株数を増やします。基本100株なら、3条件に一致した銘柄は300株で試算します。</p></article><article class="guide-card"><h3>銘柄均等</h3><p>同じ日の同じ銘柄は1件として、基本株数で買い付けます。複数の条件に一致しても株数は増やしません。</p></article></div><p class="note">複数モードへの同時該当は、将来の値動きを保証するものではありません。</p></section>
+<section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>一致した条件の数だけ買付</h3><p>基本100株なら、3条件に一致した銘柄は300株で試算します。</p></article><article class="guide-card"><h3>1銘柄に同じ株数</h3><p>同じ日の同じ銘柄を1件として買い付けます。複数の条件に一致しても株数は増やしません。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
+<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は準備中で、このプレビューからは送信しません。有効な有料会員のみ設定でき、初期値はOFFです。朝8時（日本時間）は「今日は選んだ確定日」のお知らせで、価格や損益の確定通知ではありません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
 <p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
-    return _page_shell("見方・使い方", "guide", body)
+    metadata = json.dumps({"version": 2, "page": "guide", "scopes": scopes or {"all": {"label": "記録期間すべて", "years": None}}, "variants": {}, "generated": generated.isoformat(), "modeNames": {}}, ensure_ascii=False).replace('<', '\u003c')
+    return _page_shell("見方・使い方", "guide", body + _settings_panel(scopes) + f'<script id="cloud-analytics-data" type="application/json">{metadata}</script>')
 
 
 def write_report(
@@ -1569,10 +1609,10 @@ def write_report(
         encoding="utf-8",
     )
     guide_path = report_path.with_name(GUIDE_PAGE_NAME)
-    guide_html = render_guide(generated)
+    guide_html = render_guide(generated, _scope_definitions(visible_history(ledger)))
     guide_path.write_text(guide_html, encoding="utf-8")
     guide_path.with_name(guide_path.stem + "_free.html").write_text(
-        guide_html,
+        render_guide(generated, _scope_definitions(released_history(ledger))),
         encoding="utf-8",
     )
     for selector_id, filename in MODE_PAGE_NAMES.items():
@@ -1615,3 +1655,44 @@ main{min-width:0}.history-table-wrap{overflow:visible}#detection-table{min-width
 #cloud-history-export-csv{min-height:44px;padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel-solid);color:var(--ink);font:inherit;cursor:pointer;margin:10px 0}
 @media(max-width:760px){.scenario-chart text{font-size:36px}.scenario-chart{min-height:130px}}
 """
+
+REPORT_CSS += """
+:root{--text-scale:1}:root[data-font-size="small"]{--text-scale:.9333}:root[data-font-size="large"]{--text-scale:1.1333}
+body{font-size:calc(15px * var(--text-scale))}body[data-page="analytics"]{background:radial-gradient(circle at 12% -8%,color-mix(in srgb,var(--cyan) 18%,transparent),transparent 34%),radial-gradient(circle at 94% 5%,color-mix(in srgb,var(--violet) 16%,transparent),transparent 30%),var(--bg)}body[data-page="analytics"] main{max-width:1440px;padding-top:30px}
+.nav{grid-template-columns:minmax(0,1fr) auto;position:relative}.nav-tools{display:flex;gap:8px;align-items:center}.nav-control{display:inline-flex;align-items:center;gap:6px;min-height:44px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid);color:var(--ink);padding:8px 14px;font-weight:700;cursor:pointer}.nav-control span{font-size:22px;line-height:1}.cloud-navigation{position:absolute;right:20px;top:calc(100% + 8px);width:min(280px,calc(100vw - 24px));display:grid;gap:2px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid);box-shadow:var(--shadow);z-index:30}.cloud-navigation[hidden]{display:none!important}.cloud-navigation .nav-link{display:block;border-radius:8px;padding:10px 12px;min-height:44px;line-height:24px}.cloud-navigation .nav-link[aria-current="page"]{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));color:var(--blue)}
+.cloud-settings-dialog{width:min(760px,calc(100vw - 24px));max-height:calc(100dvh - 24px);border:1px solid var(--line);border-radius:20px;padding:0;color:var(--ink);background:var(--panel-solid);box-shadow:0 24px 70px rgba(0,0,0,.32);overflow:auto}.cloud-settings-dialog::backdrop{background:rgba(12,18,28,.58);backdrop-filter:blur(4px)}.cloud-settings-dialog .cloud-settings{padding:24px}.settings-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.settings-heading h2{font-size:22px;margin:0}.settings-close{width:40px;min-height:40px;font-size:24px!important;cursor:pointer}.settings-tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:20px;padding-bottom:12px}.settings-tabs button{flex:1;font-weight:700;cursor:pointer}.settings-tabs [aria-selected="true"]{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));border-color:var(--blue);color:var(--blue)}.cloud-settings .filters{display:grid;grid-template-columns:1fr 1fr;gap:16px}.cloud-settings .filters .filter-field{min-width:0}.cloud-settings select,.cloud-settings input{width:100%;min-width:0;font-size:calc(15px * var(--text-scale));min-height:44px}.settings-actions{display:flex;justify-content:flex-end;gap:10px;position:sticky;bottom:0;background:var(--panel-solid);padding-top:18px;border-top:1px solid var(--line);margin-top:20px}.cloud-settings button.settings-primary{background:#4169e1;color:#fff;border-color:#4169e1;font-weight:800}.cloud-settings button.settings-secondary{background:color-mix(in srgb,var(--muted) 6%,var(--panel-solid));color:var(--muted);border-color:var(--line)}.cloud-settings button:focus-visible,.nav-control:focus-visible,[role="tab"]:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}.cloud-settings button:disabled{opacity:.55;cursor:wait}.cloud-settings .note{font-size:max(12px,calc(13px * var(--text-scale)))}.cloud-settings #cloud-settings-status[data-state="error"]{color:var(--warn)}#cloud-settings-feedback:empty{display:none}#cloud-settings-feedback{display:block;color:var(--muted);font-size:13px;padding:8px 0}#cloud-applied-summary{font-size:12px;color:var(--muted);font-weight:400;margin:0 0 14px}
+.history-visible-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.7fr) minmax(0,1.25fr) minmax(0,.85fr) repeat(3,minmax(0,1fr)) minmax(0,1.25fr);align-items:start;gap:14px;font-size:max(12px,calc(13px * var(--text-scale)))}.history-visible-grid>div{min-width:0;white-space:normal;overflow-wrap:anywhere}.history-visible-grid small{display:block;font-size:max(11px,calc(11px * var(--text-scale)));color:var(--muted)}.history-visible-grid .actions{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}.history-visible-grid .actions button,.history-visible-grid .actions a{font-size:12px;padding:4px 7px;min-height:32px}.history-visible-grid .badge{font-size:11px;margin:2px 1px;padding:3px 7px}.history-visible-grid .history-company strong{font-size:calc(14px * var(--text-scale))}.history-method{display:block;margin-bottom:6px;font-size:calc(14px * var(--text-scale))}.history-record .reference-note{max-width:none;width:100%;padding:10px 12px;margin-top:10px;border-radius:10px;background:color-mix(in srgb,var(--warn) 9%,var(--panel-solid));font-size:12px}.endpoint-status{color:var(--muted)}#detection-table thead th{width:auto!important}.history-record{padding:14px 12px!important}#detection-table tbody tr[hidden]{display:none!important}
+.chart-card.research-strategy+.research-strategy{padding:18px;border-left:1px solid var(--line)}.chart-card.research-strategy h3{font-size:18px}.chart-card .scenario-stats{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}.chart-card .chart-stats small{font-size:12px}.chart-card .chart-stats b{font-size:calc(19px * var(--text-scale))}.positive{color:var(--good)}.negative{color:#bc4253}:root[data-theme="dark"] .negative{color:#ff98a7}.cloud-equity-chart{overflow:visible}.cloud-equity-chart .axis-label{fill:var(--muted)}.payoff-comparison{display:grid;gap:28px}.payoff-comparison article+article{padding-top:20px;border-top:1px solid var(--line)}.payoff-kpis{margin-left:0;padding:0}.payoff-kpi strong{font-size:calc(27px * var(--text-scale))}.payoff-kpi small{font-size:12px}.payoff-ratio{font-size:12px}.payoff-heading h3{font-size:16px;margin:0}.research-swatch.negative{background:#df6670}.cloud-horizontal-bars{display:grid;gap:18px}.cloud-bar-row>strong{font-size:15px}.cloud-bar-item{display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,auto);gap:4px 12px;margin:8px 0}.cloud-bar-track{display:block;height:17px;overflow:hidden;border-radius:999px;background:color-mix(in srgb,var(--blue) 8%,var(--bg))}.cloud-bar-track i{display:block;height:100%;min-width:0;border-radius:999px}.cloud-bar-item b{text-align:right;font-size:13px}.cloud-bar-item small{font-size:11px;color:var(--muted)}.annual-chart-details summary,.scenario-details summary{cursor:pointer;min-height:44px;padding:10px 0;font-weight:700}.scenario-table{font-size:max(12px,calc(14px * var(--text-scale)))}.scenario-table td:first-child{font-weight:600}.scenario-table td{font-variant-numeric:tabular-nums}.cloud-period-note{margin-bottom:22px}.kpi b{overflow-wrap:anywhere}.hero h1{font-size:clamp(27px,3vw,42px)}
+@media(max-width:760px){.nav{grid-template-columns:minmax(0,1fr) auto;padding:8px 12px}.brand{grid-column:1;grid-row:1}.brand-logo{width:min(230px,100%);height:44px}.nav-tools{grid-column:2;grid-row:1;gap:5px}.nav-control{font-size:12px;padding:8px;gap:4px}.nav-control span{font-size:19px}.cloud-navigation{right:12px;top:calc(100% + 6px);grid-column:auto;grid-row:auto;overflow:auto;max-height:calc(100dvh - 85px)}.history-visible-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;font-size:max(13px,calc(14px * var(--text-scale)))}.history-visible-grid>div:before{content:attr(data-label);display:block;color:var(--muted);font-size:11px}.history-visible-grid .history-company{grid-column:1/-1;order:-1}.history-visible-grid .history-company strong{font-size:calc(16px * var(--text-scale))}.history-record .number{text-align:left}.history-visible-grid .actions button,.history-visible-grid .actions a{min-height:40px;padding:6px 10px;font-size:13px}.history-method{font-size:calc(16px * var(--text-scale))}.cloud-settings-dialog .cloud-settings{padding:16px}.settings-heading h2{font-size:20px}.cloud-settings .filters{grid-template-columns:1fr}.settings-actions{gap:7px}.settings-actions button{padding:9px 11px}.scenario-table thead{display:none}.scenario-table tbody{display:grid;gap:12px}.scenario-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--panel-solid)}.scenario-table tbody td{display:block;padding:7px;border:0}.scenario-table tbody td:first-child{grid-column:1/-1}.scenario-table tbody td:before{content:attr(data-label);display:block;font-size:11px;color:var(--muted);font-weight:400;margin-bottom:3px}.scenario-table tr[hidden]{display:none!important}.scenario-stats dd{font-size:calc(18px * var(--text-scale))}.cloud-equity-chart text{font-size:27px}.cloud-equity-chart{min-height:150px}.payoff-kpi strong{font-size:calc(23px * var(--text-scale))}.hero h1{font-size:calc(27px * var(--text-scale))}.lead{font-size:calc(15px * var(--text-scale))}.cloud-bar-item{grid-template-columns:minmax(0,1fr) auto}}
+"""
+
+REPORT_CSS += """
+.note,.history-heading,#cloud-applied-summary{font-size:max(12px,calc(13px * var(--text-scale)))}.lead{font-size:calc(16px * var(--text-scale))}.settings-tabs button,.settings-actions button,.nav-control{font-size:calc(14px * var(--text-scale))}.cloud-navigation .nav-link{font-size:calc(14px * var(--text-scale))}.cloud-bar-item b,.payoff-ratio,.research-legend,.payoff-kpi small,.chart-stats small{font-size:max(12px,calc(13px * var(--text-scale)))}.cloud-bar-item small{font-size:max(11px,calc(12px * var(--text-scale)))}.history-visible-grid small,.history-visible-grid .badge{font-size:max(11px,calc(12px * var(--text-scale)))}
+@media(max-width:760px){.nav-control{font-size:12px}.cloud-equity-chart text{font-size:32px}.settings-heading h2{font-size:calc(20px * var(--text-scale))}.settings-actions button{font-size:calc(13px * var(--text-scale))}}
+"""
+
+REPORT_CSS += """
+.insight-grid{align-items:start}#annual-pl{box-sizing:border-box}#annual-older-toggle{min-height:44px;margin-top:16px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel-solid);color:var(--ink);font:inherit;cursor:pointer}.cloud-bar-row[hidden],#annual-older-toggle[hidden]{display:none!important}
+"""
+
+REPORT_CSS += ".kpi b.period-range{font-size:calc(16px * var(--text-scale));white-space:normal;line-height:1.5}"
+
+REPORT_CSS += ".settings-actions{flex-wrap:wrap}#cloud-research-reset{margin-right:auto}"
+
+REPORT_CSS += """
+.nav{grid-template-columns:minmax(180px,.85fr) minmax(0,2fr) auto}.brand-logo{width:min(340px,100%)}.cloud-main-nav{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:2px;min-width:0}.cloud-primary-nav,.cloud-secondary-nav{display:contents}.cloud-main-nav .nav-link{font-size:calc(14px * var(--text-scale));padding:8px 10px;min-height:44px;display:inline-flex;align-items:center}.cloud-main-nav .nav-link[aria-current="page"],.nav-control.active{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid));color:var(--blue)}#cloud-menu-toggle{display:none}
+@media(max-width:760px){.nav{grid-template-columns:minmax(0,1fr) auto;gap:4px 8px}.brand-logo{width:min(230px,100%)}.cloud-main-nav{grid-column:1/-1;grid-row:2;justify-content:flex-start}.cloud-secondary-nav{display:none}.cloud-main-nav .nav-link{flex:1;justify-content:center;font-size:calc(14px * var(--text-scale));border-radius:10px}#cloud-menu-toggle{display:inline-flex}.cloud-navigation{top:calc(100% + 4px)}}
+"""
+
+REPORT_CSS += "[data-scenario-cost]>span,[data-scenario-shares]>span{display:block;margin:3px 0;white-space:normal;overflow-wrap:anywhere}"
+
+REPORT_CSS += ".research-swatch.positive{background:var(--good)}.cloud-bar-item .positive{color:var(--good)}.cloud-bar-item .negative{color:#bc4253}:root[data-theme=dark] .cloud-bar-item .negative{color:#ff98a7}"
+
+REPORT_CSS += """
+body[data-page=analytics] .analytics-detail-table-wrap{width:100%;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0;isolation:isolate}body[data-page=analytics] .analytics-detail-table{width:var(--detail-width);table-layout:fixed;font-size:calc(14px * var(--text-scale));margin:0;border-collapse:separate;border-spacing:0}body[data-page=analytics] .analytics-detail-table th,body[data-page=analytics] .analytics-detail-table td{padding:12px 14px;vertical-align:middle;text-align:right;overflow-wrap:normal}body[data-page=analytics] .analytics-detail-table td{white-space:nowrap}body[data-page=analytics] .analytics-detail-table th:first-child,body[data-page=analytics] .analytics-detail-table td:first-child{position:sticky;left:0;z-index:2;text-align:left;background:var(--panel-solid)}body[data-page=analytics] .analytics-detail-table th:nth-child(2),body[data-page=analytics] .analytics-detail-table td:nth-child(2){position:sticky;left:160px;z-index:2;text-align:left;background:var(--panel-solid);border-right:1px solid var(--line)}.detail-method-mobile{display:none}.analytics-detail-table-wrap:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+@media(max-width:760px){body[data-page=analytics] .analytics-detail-table thead{display:table-header-group}body[data-page=analytics] .analytics-detail-table tbody{display:table-row-group}body[data-page=analytics] .analytics-detail-table tr{display:table-row;border:0;padding:0;background:var(--panel-solid)}body[data-page=analytics] .analytics-detail-table td{display:table-cell;grid-column:auto}body[data-page=analytics] .analytics-detail-table td:before{display:none}body[data-page=analytics] .analytics-detail-table th:nth-child(2),body[data-page=analytics] .analytics-detail-table td:nth-child(2){position:static}.detail-method-mobile{display:block;font-size:12px}body[data-page=analytics] .analytics-detail-table tr[hidden]{display:none!important}}
+"""
+
+REPORT_CSS += ".cloud-bar-track{position:relative}.cloud-bar-track:after{content:'';position:absolute;left:var(--bar-zero,0%);top:0;bottom:0;width:1px;background:var(--muted);opacity:.65}"
+
+REPORT_CSS += ".cloud-settings .settings-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0!important;line-height:1;border-radius:12px;align-self:center}.settings-close svg{display:block;width:20px;height:20px}.settings-heading h2{line-height:1.3}"

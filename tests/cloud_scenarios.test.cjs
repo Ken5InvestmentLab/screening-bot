@@ -9,6 +9,27 @@ const dataset={date:'2026-09-01',symbol:'A001',selectors:'silence dive',signalAc
   d6Proceeds:'100500',d6Return:'.005',d6Open:'502.5',d6ExitShares:'200',reference:'false'};
 const pref={priceCapYen:1000,exitKey:'d5_close',baseShares:100,costPercent:0};
 const payload={generated:'2026-10-04',scopes:{all:{label:'すべて',years:null},'2026':{label:'2026年',years:[2026]}},modeNames:{},page:'analytics'};
+test('a single mode keeps both allocations visible without inventing a quantity difference',()=>{
+ const input=[{...dataset,selectors:'balance'}],view={allocation:'all',yearScope:'all'},mode={...payload,page:'balance'};
+ const data=calc.calculate(input,pref,view,mode),html=calc.render(data,pref,view,mode);
+ assert.equal(data.strategies.unique.cash_pl_100_yen,data.strategies.stacked.cash_pl_100_yen);
+ assert.equal(data.strategies.unique.n,data.strategies.stacked.n);
+ assert.equal((html.match(/<path data-cloud-allocation=/g)||[]).length,2);
+ assert.ok(html.includes('一律100株')&&html.includes('条件数比例'));
+});
+test('smooth asset curves preserve observations and cannot overshoot between them',()=>{
+  const rows=[dataset,{...dataset,symbol:'B',entryDate:'2026-09-03',d5Date:'2026-09-09',d5Proceeds:'95000',d5Return:'-.05'}];
+  const view={allocation:'unique',yearScope:'all'},data=calc.calculate(rows,pref,view,payload),html=calc.render(data,pref,view,payload);
+  assert.ok(html.includes('<linearGradient id="cloud-equity-fill-unique"'));
+  const path=html.match(/<path data-cloud-allocation="unique" d="([^"]+)"/)[1];
+  const start=path.match(/^M([\d.-]+) ([\d.-]+)/);let previous=[Number(start[1]),Number(start[2])],segments=0;
+  for(const m of path.matchAll(/C([\d.-]+) ([\d.-]+) ([\d.-]+) ([\d.-]+) ([\d.-]+) ([\d.-]+)/g)){
+    const c=m.slice(1).map(Number),end=[c[4],c[5]];
+    for(let i=0;i<=20;i++){const t=i/20,y=(1-t)**3*previous[1]+3*(1-t)**2*t*c[1]+3*(1-t)*t*t*c[3]+t**3*end[1];assert.ok(y>=Math.min(previous[1],end[1])-.001&&y<=Math.max(previous[1],end[1])+.001);}
+    assert.equal(c[1],previous[1]);assert.equal(c[3],end[1]);previous=end;segments++;
+  }
+  assert.equal(segments,data.strategies.unique.equityCurve.length-1);
+});
 test('a quarter percent is charged to both notionals, then shares scale all cash flows',()=>{
   const t=calc.trade(dataset,{...pref,baseShares:300,costPercent:.25});
   close(t.cost,300750);close(t.proceeds,302242.5);close(t.pl,1492.5);close(t.returnPct,1492.5/300750*100);
@@ -58,23 +79,25 @@ test('v2 selected allocation drives payoff KPI/chart, capital, annual chart and 
     const view={allocation,yearScope:'all'},data=calc.calculate([winner,loser],pref,view,payload),html=calc.render(data,pref,view,payload),csv=calc.csvMetrics(data,pref,view);
     const section=id=>html.split(`id="${id}"`)[1].split('</section>')[0];
     const payoff=section('payoff-structure'),risk=section('capital-risk'),annual=section('annual-pl');
-    assert.match(payoff,new RegExp(`<dt>勝率</dt><dd>${expected.win.toFixed(2)}%`));
-    assert.match(payoff,/<dt>平均の下落率<\/dt><dd>-10.00%/);
-    assert.match(payoff,/<dt>平均の上昇率<\/dt><dd>10.00%/);
+    assert.ok(payoff.includes(`<strong>${expected.win.toFixed(2)}%</strong><small>勝率`));
+    assert.match(payoff,/<strong>-10.00%<\/strong><small>平均負け/);
+    assert.match(payoff,/<strong>\+10.00%<\/strong><small>平均勝ち/);
     assert.ok(payoff.includes(`data-cloud-allocation="${allocation}"`));
     assert.ok(!payoff.includes(`data-cloud-allocation="${allocation==='unique'?'stacked':'unique'}"`));
-    assert.ok(payoff.includes(': -10.00%')&&payoff.includes(': 10.00%'));
+    assert.ok(payoff.includes('data-average-loss="-10')&&payoff.includes('data-average-win="10'));
     assert.ok(risk.includes(calc.yen(expected.capital)));
-    assert.ok(annual.includes(`: ${calc.yen(expected.pl)}`));
+    assert.ok(annual.includes(`>${calc.yen(expected.pl,true)}</b>`));
     assert.equal(csv.length,3);assert.equal(csv[0]['結果ありの取引数'],expected.n);
     close(csv[0]['勝率%'],expected.win);assert.equal(csv[0]['損益円'],expected.pl);
     assert.equal(csv[0]['必要資金円'],expected.capital);assert.equal(csv[1]['損益円'],expected.pl);
-    assert.equal((html.match(/<path data-cloud-allocation=/g)||[]).length,2); // selected cash-flow and equity charts
+    assert.equal((html.match(/<path data-cloud-allocation=/g)||[]).length,1);
   }
   const view={allocation:'all',yearScope:'all'},data=calc.calculate([winner,loser],pref,view,payload),html=calc.render(data,pref,view,payload);
   const payoff=html.split('id="payoff-structure"')[1].split('</section>')[0];
-  assert.match(payoff,/<dt>勝率<\/dt><dd>50.00%/);assert.match(payoff,/<dt>勝率<\/dt><dd>16.67%/);
+  assert.match(payoff,/<strong>50.00%<\/strong><small>勝率/);assert.match(payoff,/<strong>16.67%<\/strong><small>勝率/);
   assert.ok(payoff.includes('data-cloud-allocation="unique"')&&payoff.includes('data-cloud-allocation="stacked"'));
+  const domains=[...html.matchAll(/data-domain-min="([^"]+)" data-domain-max="([^"]+)"/g)].map(m=>m.slice(1));
+  assert.equal(domains.length,2);assert.notDeepEqual(domains[0],domains[1]);
 });
 
 test('v2 average gain/loss bars follow the selected weights rather than a stacked constant',()=>{
@@ -83,9 +106,9 @@ test('v2 average gain/loss bars follow the selected weights rather than a stacke
   for(const [allocation,gain,loss] of [['unique',20,-20],['stacked',160/6,-80/6]]){
     const view={allocation,yearScope:'all'},data=calc.calculate(rows,pref,view,payload),html=calc.render(data,pref,view,payload);
     const payoff=html.split('id="payoff-structure"')[1].split('</section>')[0];
-    assert.ok(payoff.includes(`: ${gain.toFixed(2)}%`)&&payoff.includes(`: ${loss.toFixed(2)}%`));
-    assert.ok(payoff.includes(`<dt>平均の上昇率</dt><dd>${gain.toFixed(2)}%`));
-    assert.ok(payoff.includes(`<dt>平均の下落率</dt><dd>${loss.toFixed(2)}%`));
+    assert.ok(payoff.includes(`<strong>+${gain.toFixed(2)}%</strong><small>平均勝ち`));
+    assert.ok(payoff.includes(`<strong>${loss.toFixed(2)}%</strong><small>平均負け`));
+    assert.ok(payoff.includes(`data-average-win="${gain}`));
     const totals=calc.csvMetrics(data,pref,view)[0];close(totals['平均利益円'],gain*1000);close(totals['平均損失円'],loss*1000);
   }
 });

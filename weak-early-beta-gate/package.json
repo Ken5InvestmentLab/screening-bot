@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "check": "npm run types && npm run test && npm run typecheck && npm run deploy:dry-run",
-    "test": "node --test ../tests/report_gate_auth.test.cjs ../tests/cloud_gate_membership.test.cjs ../tests/cloud_report_preferences.test.cjs ../tests/cloud_scenarios.test.cjs ../tests/cloud_bundle_sync.test.cjs",
+    "test": "node --test ../tests/report_gate_auth.test.cjs ../tests/cloud_gate_membership.test.cjs ../tests/cloud_report_preferences.test.cjs ../tests/cloud_scenarios.test.cjs ../tests/cloud_display_settings.test.cjs ../tests/cloud_bundle_sync.test.cjs",
     "deploy": "npm run sync-shared && npm run sync-report && wrangler deploy --minify",
     "deploy:dry-run": "npm run sync-shared && npm run sync-report && wrangler deploy --dry-run",
     "sync-report": "node scripts/sync-report.mjs",

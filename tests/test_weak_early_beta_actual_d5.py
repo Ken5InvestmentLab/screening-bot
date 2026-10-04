@@ -197,8 +197,8 @@ class ForwardPendingPresentationTests(unittest.TestCase):
         frame = pd.concat([entered, pending, legacy, mature], ignore_index=True)
         rows = _detection_rows(frame)
         for symbol, label, bought, completed in (
-            ('P001', '保有中', True, False), ('P002', '寄付待ち', False, False),
-            ('P003', '寄付待ち', False, False), ('P004', '結果あり', True, True),
+            ('P001', '保有中', True, False), ('P002', '買付待ち', False, False),
+            ('P003', '買付待ち', False, False), ('P004', '結果あり', True, True),
         ):
             row = re.search(r'<tr\b(?=[^>]*data-symbol="'+symbol+r'")[\s\S]*?</tr>', rows)[0]
             self.assertIn(label, row)

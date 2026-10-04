@@ -293,5 +293,28 @@ class ReportPreferenceTests(unittest.TestCase):
                 _page_shell("test", "analytics", "test")
 
 
+class PendingD6CoverageTests(unittest.TestCase):
+    def test_missing_old_d6_schedule_is_derived_without_inventing_a_price(self):
+        source = actual_trade(complete=False, signal_date="2026-09-01")
+        source["sixth_xtks_exit_date"] = pd.NaT
+        original = source.copy(deep=True)
+        view = select_report_view(source, None, "d6_open")
+        self.assertEqual(view.iloc[0]["fifth_xtks_exit_date"], pd.Timestamp("2026-09-09"))
+        self.assertTrue(pd.isna(view.iloc[0]["gross_return"]))
+        self.assertTrue(pd.isna(view.iloc[0]["fifth_xtks_exit_close"]))
+        from weak_early_beta.metrics import coverage_years
+        self.assertAlmostEqual(coverage_years(view, pd.Timestamp("2026-09-07")), 6 / 365.2425)
+        pd.testing.assert_frame_equal(source, original)
+
+    def test_mode_history_retains_global_match_count_on_an_isolated_copy(self):
+        from weak_early_beta.config import SELECTOR_ORDER
+        row = actual_trade()
+        source = pd.concat([row.assign(selector_id=key) for key in SELECTOR_ORDER[:3]], ignore_index=True)
+        original = source.copy(deep=True)
+        output = render_mode_report(source, pd.DataFrame(), pd.DataFrame(), pd.Timestamp("2026-10-04", tz="Asia/Tokyo"), SELECTOR_ORDER[0])
+        self.assertIn(f'data-selectors="{" ".join(SELECTOR_ORDER[:3])}"', output)
+        self.assertEqual(output.count('data-date="'), 1)
+        pd.testing.assert_frame_equal(source, original)
+
 if __name__ == "__main__":
     unittest.main()

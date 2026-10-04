@@ -121,6 +121,16 @@ def select_report_view(
     cash = pd.to_numeric(result.get("sixth_one_hundred_shares_pl_yen", pd.Series(index=result.index, dtype=float)), errors="coerce")
     economic = result.apply(sixth_economics_verified, axis=1).astype(bool) if not result.empty else pd.Series(index=result.index, dtype=bool)
     result["fifth_xtks_exit_date"] = pd.to_datetime(result.get("sixth_xtks_exit_date", pd.Series(index=result.index, dtype=object)), errors="coerce")
+    # Older pending records may predate the D6 date column. Use the same
+    # deterministic scheduled session as the history UI, while leaving every
+    # actual price and receipt unavailable. This also keeps coverage-year
+    # denominators identical in native metrics and the browser.
+    from .bank_calendar import add_bank_business_days
+    scheduled = pd.Series([
+        pd.Timestamp(add_bank_business_days(day.date(), 6)) if pd.notna(day) else pd.NaT
+        for day in pd.to_datetime(result["signal_date"], errors="coerce")
+    ], index=result.index)
+    result["fifth_xtks_exit_date"] = result["fifth_xtks_exit_date"].where(result["fifth_xtks_exit_date"].notna(), scheduled)
     result["fifth_xtks_exit_close"] = pd.to_numeric(result.get("sixth_xtks_exit_open", pd.Series(index=result.index, dtype=float)), errors="coerce").where(verified)
     result["gross_return"] = returns.where(economic)
     result["one_hundred_shares_pl_yen"] = cash.where(economic)

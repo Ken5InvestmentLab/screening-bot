@@ -2,6 +2,11 @@
 const CloudPreferences = (() => {
   const DEFAULT = Object.freeze({ priceCapYen: 1000, exitKey: "d5_close", baseShares: 100, costPercent: 0 });
   const DEFAULT_VIEW = Object.freeze({ yearScope: "all", allocation: "all" });
+  const INITIAL = Object.freeze({ priceCapYen: 1000, exitKey: "d6_open", baseShares: 100, costPercent: 0 });
+  const normalizeDisplay = value => {
+    if (!value || !["light", "dark", "system"].includes(value.theme) || !["small", "standard", "large"].includes(value.fontSize) || ![20, 50, 100].includes(value.pageSize)) throw new Error("表示設定を確認してください。");
+    return { theme: value.theme, fontSize: value.fontSize, pageSize: value.pageSize };
+  };
   const PRESETS = [1000, 2000, 3000, 5000];
   const parseCap = (value) => {
     if (value === null) return null;
@@ -63,14 +68,22 @@ const CloudPreferences = (() => {
     };
     return "\uFEFF" + [columns.map(cell).join(","), ...records.map((row) => columns.map((column) => cell(row[column])).join(","))].join("\r\n");
   };
-  return { DEFAULT, DEFAULT_VIEW, PRESETS, parseCap, normalize, normalizeView, variantKey, selectCsvMetrics, matchesCap, csv };
+  return { DEFAULT, INITIAL, DEFAULT_VIEW, PRESETS, parseCap, normalize, normalizeView, normalizeDisplay, variantKey, selectCsvMetrics, matchesCap, csv };
 })();
 if (typeof module !== "undefined" && module.exports) module.exports = CloudPreferences;
 
 (() => {
   if (typeof document === "undefined") return;
   const THEME_KEY = "weakEarlyBetaTheme:v1";
-  const PAGE_SIZE = 20;
+  let PAGE_SIZE = 20;
+  const DISPLAY_KEY = "cloudReportDisplay:v1";
+  let appliedDisplay = { theme: "dark", fontSize: "standard", pageSize: 20 };
+  try {
+    const legacyTheme = localStorage.getItem(THEME_KEY); if (["dark", "light"].includes(legacyTheme)) appliedDisplay.theme = legacyTheme;
+    const saved = localStorage.getItem(DISPLAY_KEY);
+    if (saved) appliedDisplay = CloudPreferences.normalizeDisplay(JSON.parse(saved));
+  } catch (_error) {}
+  PAGE_SIZE = appliedDisplay.pageSize;
   const root = document.documentElement;
   const themeButton = document.getElementById("theme-toggle");
 
@@ -143,6 +156,32 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   themeButton?.addEventListener("click", () => {
     applyTheme(currentTheme() === "dark" ? "light" : "dark", true);
   });
+  const applyDisplay = (value, persist = false) => {
+    const dark = value.theme === "system" ? window.matchMedia?.("(prefers-color-scheme: dark)").matches : value.theme === "dark";
+    applyTheme(dark ? "dark" : "light");
+    root.dataset.fontSize = value.fontSize;
+    if (persist) {
+      localStorage.setItem(DISPLAY_KEY, JSON.stringify(value));
+      localStorage.setItem(THEME_KEY, dark ? "dark" : "light");
+    }
+  };
+  applyDisplay(appliedDisplay);
+  window.matchMedia?.("(prefers-color-scheme: dark)").addEventListener?.("change", () => {
+    const selected = document.getElementById("cloud-settings-dialog")?.open ? readDisplayControls() : appliedDisplay;
+    if (selected.theme === "system") applyDisplay(selected);
+  });
+  const menuButton = document.getElementById("cloud-menu-toggle"), menu = document.getElementById("cloud-navigation");
+  const closeMenu = (restore = false) => {
+    if (!menu) return;
+    menu.hidden = true; menuButton?.setAttribute("aria-expanded", "false");
+    if (restore) menuButton?.focus();
+  };
+  menuButton?.addEventListener("click", () => {
+    const open = menu.hidden; menu.hidden = !open; menuButton.setAttribute("aria-expanded", String(open));
+    if (open) menu.querySelector('[aria-current="page"],a')?.focus();
+  });
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && menu && !menu.hidden) closeMenu(true); });
+  document.addEventListener("click", event => { if (menu && !menu.hidden && !menu.contains(event.target) && !menuButton?.contains(event.target)) closeMenu(true); });
 
   const symbol = document.getElementById("symbol-filter");
   const selector = document.getElementById("selector-filter");
@@ -152,8 +191,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const resultCount = document.getElementById("search-result-count");
   const loadMore = document.getElementById("history-load-more");
   const collapse = document.getElementById("history-collapse");
+  const historySort = document.getElementById("history-sort");
   // The empty-history message is a table row, but never a detection or CSV row.
-  const rows = Array.from(document.querySelectorAll("#detection-table tbody tr[data-date]"));
+  const scenarioRows = document.getElementById("cloud-scenario-rows");
+  const rows = Array.from(scenarioRows?.content ? scenarioRows.content.querySelectorAll("tr[data-date]") : document.querySelectorAll("#detection-table tbody tr[data-date]"));
   const normalize = (value) => String(value || "").normalize("NFKC").trim().toLowerCase();
   let visibleLimit = PAGE_SIZE;
   // Only applied preferences may be used by visible rows, endpoint cells or CSV.
@@ -170,6 +211,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
 
   const filter = ({ resetLimit = false } = {}) => {
     if (resetLimit) visibleLimit = PAGE_SIZE;
+    if (historySort) {
+      rows.sort((a,b) => historySort.value === 'symbol' ? String(a.dataset.symbol).localeCompare(String(b.dataset.symbol), 'ja', { numeric: true })
+        : historySort.value === 'oldest' ? String(a.dataset.date).localeCompare(String(b.dataset.date)) : String(b.dataset.date).localeCompare(String(a.dataset.date)));
+      const tbody = document.querySelector('#detection-table tbody');
+      if (tbody) for (const row of rows) tbody.append(row);
+    }
     const symbolValue = normalize(symbol?.value);
     const selectorValue = selector?.value || "";
     const fromValue = dateFrom?.value || "";
@@ -201,6 +248,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     }
     if (clear) clear.disabled = !symbolValue && !selectorValue && !fromValue && !toValue;
     if (loadMore) loadMore.hidden = shown >= matchedRows.length;
+    if (loadMore) loadMore.textContent = `次の${PAGE_SIZE}件を表示`;
+    if (collapse) collapse.textContent = `最初の${PAGE_SIZE}件に戻す`;
     if (collapse) collapse.hidden = visibleLimit <= PAGE_SIZE || matchedRows.length <= PAGE_SIZE;
   };
 
@@ -210,6 +259,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   }
   symbol?.addEventListener("search", () => filter({ resetLimit: true }));
   selector?.addEventListener("change", () => filter({ resetLimit: true }));
+  historySort?.addEventListener("change", () => filter({ resetLimit: true }));
   clear?.addEventListener("click", () => {
     if (symbol) symbol.value = "";
     if (selector) selector.value = "";
@@ -239,6 +289,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     const moreButton = pagination.querySelector(".table-load-more");
     const resetButton = pagination.querySelector(".table-collapse");
     const count = pagination.querySelector(".table-result-count");
+    if (moreButton) moreButton.textContent = `次の${PAGE_SIZE}件を表示`;
+    if (resetButton) resetButton.textContent = `最初の${PAGE_SIZE}件に戻す`;
     let limit = PAGE_SIZE;
     const renderPage = () => {
       tableRows.forEach((row, index) => { row.hidden = index >= limit; });
@@ -254,6 +306,55 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   };
   initializePagination();
 
+  let annualResizeObserver = null;
+  const initializeAnnualSummary = (scope) => {
+    annualResizeObserver?.disconnect();
+    const annual = scope.querySelector('#annual-pl'), payoff = scope.querySelector('#payoff-structure'), toggle = scope.querySelector('#annual-older-toggle');
+    if (!annual || !payoff || !toggle) return;
+    const yearRows = Array.from(annual.querySelectorAll('.cloud-bar-row'));
+    let expanded = false, scheduled = false;
+    const arrange = () => {
+      scheduled = false;
+      payoff.style.minHeight = ''; annual.style.minHeight = '';
+      yearRows.forEach(row => { row.hidden = false; });
+      toggle.hidden = false;
+      const target = payoff.getBoundingClientRect().height;
+      const count = Math.min(3, yearRows.length);
+      const overflow = count < yearRows.length;
+      yearRows.forEach((row,index) => { row.hidden = !expanded && index >= count; });
+      const values = yearRows.filter(row => !row.hidden).flatMap(row => Array.from(row.querySelectorAll('[data-bar-value]')).map(item => Number(item.dataset.barValue)));
+      const minimum = Math.min(0, ...values), maximum = Math.max(0, ...values), span = maximum - minimum || 1;
+      const zero = -minimum / span * 100;
+      annual.dataset.axisMin = String(minimum); annual.dataset.axisMax = String(maximum);
+      for (const row of yearRows) for (const item of row.querySelectorAll('[data-bar-value]')) {
+        const value = Number(item.dataset.barValue), track = item.querySelector('.cloud-bar-track'), bar = track.querySelector('i');
+        track.style.setProperty('--bar-zero', `${zero}%`);
+        bar.style.width = `${Math.abs(value) / span * 100}%`;
+        bar.style.marginLeft = `${value < 0 ? zero - Math.abs(value) / span * 100 : zero}%`;
+      }
+      let axis = annual.querySelector('.annual-bar-axis');
+      if (!axis) { axis = document.createElement('p'); axis.className = 'note annual-bar-axis'; annual.querySelector('#annual-year-bars').after(axis); }
+      axis.textContent = `目盛り: ${CloudScenario.yen(minimum)} 〜 ${CloudScenario.yen(maximum)}（0が基準）`;
+
+      toggle.hidden = !overflow;
+      toggle.textContent = expanded ? '新しい年だけに戻す' : '過去の年を表示';
+      toggle.setAttribute('aria-expanded', String(expanded));
+      if (expanded) annual.style.minHeight = `${target}px`;
+      else {
+        // Three complete years remain readable at narrow widths and large
+        // fonts. Grow the shorter card instead of cutting off a chart row.
+        const balanced = Math.max(target, annual.getBoundingClientRect().height);
+        annual.style.minHeight = `${balanced}px`; payoff.style.minHeight = `${balanced}px`;
+      }
+    };
+    toggle.addEventListener('click', () => { expanded = !expanded; arrange(); });
+    if (typeof ResizeObserver !== 'undefined') {
+      annualResizeObserver = new ResizeObserver(() => { if (!scheduled) { scheduled = true; requestAnimationFrame(arrange); } });
+      annualResizeObserver.observe(payoff);
+    }
+    arrange();
+  };
+
   const settings = document.getElementById("cloud-price-preset");
   const customPrice = document.getElementById("cloud-price-custom");
   const customPriceField = document.getElementById("cloud-price-custom-field");
@@ -262,6 +363,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const allocation = document.getElementById("cloud-allocation");
   const baseShares = document.getElementById("cloud-base-shares");
   const costPercent = document.getElementById("cloud-cost-percent");
+  const settingsDialog = document.getElementById("cloud-settings-dialog"), settingsOpen = document.getElementById("cloud-settings-open");
+  const displayTheme = document.getElementById("cloud-theme"), displayFont = document.getElementById("cloud-font-size"), displayPage = document.getElementById("cloud-page-size");
+  let settingsSnapshot = null;
   const researchReset = document.getElementById("cloud-research-reset");
   const saveButton = document.getElementById("cloud-settings-save");
   const status = document.getElementById("cloud-settings-status");
@@ -285,6 +389,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   let serverAvailable = false;
   let notifications = { new_detection: false, reminder: false };
   const notifyInputs = {};
+  const notificationReadiness = membership => {
+    const output = document.getElementById('cloud-notification-readiness');
+    if (!output) return;
+    const entitlement = membership === 'paid' ? '有料会員資格を確認済み' : membership === 'unknown' ? '会員資格は未確認' : '有効な有料会員資格が必要';
+    const permission = typeof Notification === 'undefined' ? 'このブラウザのプッシュは未対応' : Notification.permission === 'granted' ? '端末の通知権限あり' : Notification.permission === 'denied' ? '端末の通知権限なし' : '端末の通知許可は未設定';
+    output.textContent = `${entitlement}。${permission}。配信機能は準備中のため、通知は送信しません。`;
+  };
+  notificationReadiness('unknown');
   const setStatus = (message, invalid = false) => {
     if (!status) return;
     status.textContent = message;
@@ -294,9 +406,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   catch (_error) { setStatus("表示用データを読み込めません。ページを再読込してください。", true); }
 
   if (settings && endpoint) {
-    const host = document.createElement("details");
+    const host = document.createElement(settingsDialog ? "div" : "details");
     host.className = "cloud-notification-settings";
-    host.innerHTML = '<summary>プッシュ通知の設定</summary><p>通知は準備中です。この設定の保存では通知を送信しません。初期設定はすべてOFFです。</p>';
+    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>プッシュ通知は準備中です。保存しても通知は送信しません。初期設定はすべてOFFです。</p>';
     for (const [key, label] of Object.entries({ new_detection: "新しい検出", reminder: "売却予定日の朝8時（日本時間）" })) {
       const element = document.createElement("label");
       const checkbox = document.createElement("input");
@@ -320,7 +432,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     const unsubscribe = document.createElement("button");
     unsubscribe.type = "button";
     unsubscribe.id = "cloud-notifications-off";
-    unsubscribe.textContent = "通知をすべてOFF・購読解除";
+    unsubscribe.textContent = "通知をすべてOFF・購読解除（即時）";
     unsubscribe.disabled = true;
     host.append(unsubscribe);
     (document.getElementById("cloud-notification-settings") || document.getElementById("cloud-preferences") || saveButton?.parentElement || settings.parentElement).append(host);
@@ -330,6 +442,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         const response = await fetch("/api/cloud/push-subscriptions", { method: "DELETE", credentials: "same-origin", cache: "no-store" });
         if (!response.ok) throw new Error("unsubscribe");
         notifications = { new_detection: false, reminder: false };
+        if (settingsSnapshot) settingsSnapshot.notifications = { ...notifications };
         for (const input of Object.values(notifyInputs)) input.checked = false;
         setStatus("通知をすべてOFFにして、購読を解除しました。");
       } catch (_error) { setStatus("解除を確認できません。接続を確認してもう一度お試しください。", true); }
@@ -423,7 +536,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     decodedVariants.set(key, variant);
     return variant;
   };
+  const savedControlAvailability = new Map();
   const syncActionAvailability = () => {
+    // A save commits one complete draft. Prevent edits or reset during its PUT.
+    if (settingsDialog) for (const control of settingsDialog.querySelectorAll('input, select, button')) {
+      if (saving) { if (!savedControlAvailability.has(control)) savedControlAvailability.set(control, control.disabled); control.disabled = true; }
+      else if (savedControlAvailability.has(control)) { control.disabled = savedControlAvailability.get(control); savedControlAvailability.delete(control); }
+    }
     if (exportButton) exportButton.disabled = accessLost || preferencesPending || !currentVariant;
     if (historyExportButton) historyExportButton.disabled = accessLost || preferencesPending;
     if (saveButton) saveButton.disabled = accessLost || preferencesPending || saving;
@@ -454,7 +573,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         syncControls(appliedPreferences);
         preferencesPending = false;
         syncActionAvailability();
-        setStatus("この条件の集計を読み込めません。表示・CSV・選択欄を直前に表示できた条件へ戻しました。この変更は保存していません。", true);
+        setStatus("この条件の集計を読み込めません。直前の表示に戻しました。変更は保存していません。", true);
         return false;
       }
     }
@@ -463,18 +582,22 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     if (payload && content) {
       content.innerHTML = nextVariant.html;
       initializePagination(content);
+      initializeAnnualSummary(content);
     }
     if (payload?.version === 2) {
       for (const row of rows) {
         const t = CloudScenario.trade(row.dataset, requested);
-        const pl = row.querySelector('[data-scenario-pl]'), ret = row.querySelector('[data-scenario-return]'), shares = row.querySelector('[data-scenario-shares]');
-        const units = requestedView.allocation === 'stacked' ? t.selectors.length : 1;
-        if (pl) pl.textContent = CloudScenario.yen(t.pl === null ? null : t.pl * units);
-        if (ret) ret.textContent = CloudScenario.pct(t.returnPct);
-        if (shares) shares.textContent = `${(requested.baseShares * units).toLocaleString('ja-JP')}株で買付${t.exitShares === null ? '' : ` / 売却 ${ (t.exitShares * units).toLocaleString('ja-JP')}株`}（売買コスト込み）`;
+        const pl = row.querySelector('[data-scenario-pl]'), ret = row.querySelector('[data-scenario-return]'), shares = row.querySelector('[data-scenario-shares]'), cost = row.querySelector('[data-scenario-cost]');
+        const methods = requestedView.allocation === 'all' ? ['unique', 'stacked'] : [requestedView.allocation];
+        const units = method => method === 'stacked' ? t.selectors.length : 1;
+        const label = method => method === 'stacked' ? '条件数比例' : '一律';
+        if (pl) pl.innerHTML = methods.map(method => `<span class="history-method ${t.pl>0?'positive':t.pl<0?'negative':''}" data-method="${method}"><small>${label(method)}</small>${CloudScenario.yen(t.pl === null ? null : t.pl * units(method), true)}</span>`).join('');
+        if (ret) ret.textContent = CloudScenario.pct(t.returnPct, true) + (requestedView.allocation === 'all' && t.returnPct !== null ? '（両方式共通）' : '');
+        if (shares) shares.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${(requested.baseShares * units(method)).toLocaleString('ja-JP')}株${t.exitShares === null ? '' : ` / 売却 ${(t.exitShares * units(method)).toLocaleString('ja-JP')}株`}</span>`).join('');
+        if (cost) cost.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${CloudScenario.yen(t.cost === null ? null : t.cost * units(method))}</span>`).join('');
       }
       const summary = document.getElementById('cloud-applied-summary');
-      if (summary) summary.textContent = `表示中: 終値 ${requested.priceCapYen === null ? '上限なし' : requested.priceCapYen.toLocaleString('ja-JP')+'円以下'} / ${endpoint.options[endpoint.selectedIndex].text} / 基本${requested.baseShares.toLocaleString('ja-JP')}株 / 片道${requested.costPercent}% / ${payload.scopes[nextView.yearScope].label} / ${nextView.allocation === 'stacked' ? '条件数に応じた株数' : nextView.allocation === 'unique' ? '同じ株数' : '両方を比較（履歴は同じ株数）'}`;
+      if (summary) summary.textContent = `表示中: 終値 ${requested.priceCapYen === null ? '上限なし' : requested.priceCapYen.toLocaleString('ja-JP')+'円以下'} / ${endpoint.options[endpoint.selectedIndex].text} / 基本${requested.baseShares.toLocaleString('ja-JP')}株 / 片道${requested.costPercent}% / ${payload.scopes[nextView.yearScope].label} / ${nextView.allocation === 'stacked' ? '条件数比例' : nextView.allocation === 'unique' ? '一律' : '両方式を比較'}`;
     }
     currentVariant = nextVariant;
     appliedPreferences = requested;
@@ -510,6 +633,72 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const readViewControls = () => CloudPreferences.normalizeView({
     yearScope: yearScope?.value || "all", allocation: allocation?.value || "all",
   }, payload);
+  const readDisplayControls = () => CloudPreferences.normalizeDisplay({ theme: displayTheme?.value || appliedDisplay.theme, fontSize: displayFont?.value || appliedDisplay.fontSize, pageSize: Number(displayPage?.value || appliedDisplay.pageSize) });
+  const syncDisplayControls = () => {
+    if (displayTheme) displayTheme.value = appliedDisplay.theme;
+    if (displayFont) displayFont.value = appliedDisplay.fontSize;
+    if (displayPage) displayPage.value = String(appliedDisplay.pageSize);
+  };
+  const cancelSettings = () => {
+    if (!settingsSnapshot || saving) return;
+    notifications = { ...settingsSnapshot.notifications }; edited = settingsSnapshot.edited;
+    requestedPreferences = { ...appliedPreferences }; requestedView = { ...appliedView };
+    syncControls(); syncDisplayControls(); applyDisplay(appliedDisplay);
+    for (const [key, input] of Object.entries(notifyInputs)) input.checked = notifications[key];
+    settingsDialog.close();
+  };
+  if (settingsDialog && settingsOpen) {
+    settingsOpen.addEventListener('click', () => {
+      closeMenu(); requestedPreferences = { ...appliedPreferences }; requestedView = { ...appliedView };
+      settingsSnapshot = { notifications: { ...notifications }, edited };
+      syncControls(); syncDisplayControls(); edited = true;
+      settingsDialog.showModal(); root.style.overflow = 'hidden';
+      settingsDialog.querySelector('[role="tab"][aria-selected="true"]')?.focus();
+    });
+    document.getElementById('cloud-settings-close')?.addEventListener('click', cancelSettings);
+    document.getElementById('cloud-settings-cancel')?.addEventListener('click', cancelSettings);
+    settingsDialog.addEventListener('cancel', event => { event.preventDefault(); cancelSettings(); });
+    settingsDialog.addEventListener('close', () => { root.style.overflow = ''; settingsOpen.focus(); settingsSnapshot = null; });
+    settingsDialog.addEventListener('click', event => {
+      if (event.target !== settingsDialog) return;
+      const r = settingsDialog.getBoundingClientRect();
+      if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) cancelSettings();
+    });
+    const tabs = Array.from(settingsDialog.querySelectorAll('[role="tab"]'));
+    const activate = button => { if (researchReset) researchReset.textContent = ({'settings-tab-trial':'試算方法をリセット','settings-tab-notifications':'通知をリセット','settings-tab-display':'表示をリセット'})[button.id]; tabs.forEach(tab => {
+      const selected = tab === button; tab.setAttribute('aria-selected', String(selected)); tab.tabIndex = selected ? 0 : -1;
+      document.getElementById(tab.getAttribute('aria-controls')).hidden = !selected;
+    }); };
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => activate(tab));
+      tab.addEventListener('keydown', event => {
+        const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null;
+        if (next !== null) { event.preventDefault(); activate(tabs[next]); tabs[next].focus(); }
+      });
+    });
+    for (const input of [displayTheme, displayFont, displayPage]) input?.addEventListener('change', () => { edited = true; editRevision += 1; applyDisplay(readDisplayControls()); setStatus('未保存の表示を確認中です。「設定を保存」で残し、「キャンセル」で元に戻ります。'); });
+  }
+  const commitSettingsDraft = async () => {
+    if (accessLost || preferencesPending || saving) return;
+    let prefs, view, display;
+    try { prefs = readControls(); view = readViewControls(); display = readDisplayControls(); }
+    catch (error) { setStatus(error.message, true); return; }
+    saving = true; syncActionAvailability();
+    try {
+      if (serverAvailable) {
+        const response = await fetch('/api/cloud/preferences', { method: 'PUT', credentials: 'same-origin', cache: 'no-store', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ max_price: prefs.priceCapYen, exit_endpoint: prefs.exitKey, base_shares: prefs.baseShares, cost_percent: prefs.costPercent, notifications }) });
+        if (!response.ok) throw new Error('会員設定を保存できませんでした。入力は残しています。接続を確認して再度お試しください。');
+      }
+      requestedPreferences = prefs; requestedView = view; appliedDisplay = display; PAGE_SIZE = display.pageSize;
+      if (!await applyPreferences({ persist: true })) throw new Error('表示に反映できませんでした。再度お試しください。');
+      try { applyDisplay(display, true); } catch (_error) { storageFailed = true; }
+      edited = false;
+      const message = storageFailed ? '表示に適用しました。端末の保存は利用できません。' : serverAvailable ? '会員設定と端末の表示設定を保存しました。' : 'この端末に設定を保存しました。会員設定の連携前です。';
+      setStatus(message); const feedback = document.getElementById('cloud-settings-feedback'); if (feedback) feedback.textContent = message;
+      settingsDialog.close();
+    } catch (error) { setStatus(error.message, true); }
+    finally { saving = false; syncActionAvailability(); }
+  };
   const updateFromControls = async () => {
     edited = true;
     editRevision += 1;
@@ -519,13 +708,18 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       if (customPriceField) customPriceField.hidden = settings.value !== "custom";
       customPrice.disabled = settings.value !== "custom";
     }
+    if (settingsDialog) {
+      try { readControls(); readViewControls(); setStatus('未保存です。「設定を保存」で表示・試算へ反映します。'); }
+      catch (error) { setStatus(error.message, true); }
+      return;
+    }
     try {
       const next = readControls();
       const nextView = readViewControls();
       requestedPreferences = next;
       requestedView = nextView;
       customPrice?.setAttribute("aria-invalid", "false");
-      setStatus("表示条件を反映しています。反映が終わるまでCSV出力と会員設定の保存はできません。");
+      setStatus("表示条件を反映しています。しばらくお待ちください。");
       if (await applyPreferences({ persist: true }) && editRevision === editAtChange) setStatus(storageFailed
         ? "表示に適用しました。この端末では補助保存できません。株価上限・確定日は会員設定へ保存できます。"
         : "表示に適用しました。今の条件を会員設定に残すには「設定を保存」を押してください。検出年・買付方法はこの端末に保存します。");
@@ -541,6 +735,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     }
   };
   if (settings && endpoint) {
+    if (payload?.version === 2) requestedPreferences = { ...CloudPreferences.INITIAL };
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) requestedPreferences = CloudPreferences.normalize(JSON.parse(saved));
@@ -553,6 +748,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       }
     } catch (_error) { storageFailed = true; }
     syncControls();
+    syncDisplayControls();
     applyPreferences();
     settings.addEventListener("change", updateFromControls);
     endpoint.addEventListener("change", updateFromControls);
@@ -562,9 +758,15 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     costPercent?.addEventListener("change", updateFromControls);
     customPrice?.addEventListener("input", updateFromControls);
     researchReset?.addEventListener("click", () => {
-      requestedPreferences = { ...CloudPreferences.DEFAULT };
-      requestedView = { ...CloudPreferences.DEFAULT_VIEW };
-      syncControls();
+      if (settingsDialog) {
+        const active = settingsDialog.querySelector('[role="tab"][aria-selected="true"]')?.id;
+        if (active === 'settings-tab-trial') { requestedPreferences = { ...CloudPreferences.INITIAL }; requestedView = { ...CloudPreferences.DEFAULT_VIEW }; syncControls(); }
+        if (active === 'settings-tab-notifications') { notifications = { new_detection: false, reminder: false }; for (const input of Object.values(notifyInputs)) input.checked = false; }
+        if (active === 'settings-tab-display') { displayTheme.value = 'dark'; displayFont.value = 'standard'; displayPage.value = '20'; applyDisplay(readDisplayControls()); }
+        edited = true; editRevision += 1;
+        setStatus('このタブを初期値に戻しました。「設定を保存」で反映し、「キャンセル」で元に戻ります。'); return;
+      }
+      requestedPreferences = { ...CloudPreferences.DEFAULT }; requestedView = { ...CloudPreferences.DEFAULT_VIEW }; syncControls();
       if (symbol) symbol.value = "";
       if (selector) selector.value = "";
       if (dateFrom) dateFrom.value = "";
@@ -573,6 +775,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       return updateFromControls();
     });
     saveButton?.addEventListener("click", async () => {
+      if (settingsDialog) return commitSettingsDraft();
       if (accessLost || preferencesPending || saving) return;
       let selected;
       try { selected = readControls(); }
@@ -598,7 +801,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
           return;
         }
         edited = false;
-        setStatus(storageFailed ? "会員設定を保存しました。端末内の補助保存は利用できません。" : "会員設定を保存しました。通知の実送信はまだ行いません。");
+        setStatus(storageFailed ? "会員設定を保存しました。端末の保存は利用できません。" : "会員設定を保存しました。通知の実送信はまだ行いません。");
       } catch (_error) {
         setStatus("会員設定を保存できませんでした。ログイン・会員連携・接続を確認してください。現在の表示は利用できます。", true);
       } finally { saving = false; syncActionAvailability(); }
@@ -610,6 +813,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       const saved = data.preferences || data;
       const serverPreferences = CloudPreferences.normalize({ priceCapYen: saved.max_price, exitKey: saved.exit_endpoint, baseShares: saved.base_shares ?? 100, costPercent: saved.cost_percent ?? 0 });
       const paidMembership = data.membership?.status === "paid";
+      notificationReadiness(data.membership?.status || 'unknown');
       serverAvailable = true;
       let serverApplied = false;
       if (!edited) {
@@ -619,7 +823,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         serverApplied = await applyPreferences({ persist: true });
         if (serverApplied && !edited) {
           for (const [key, input] of Object.entries(notifyInputs)) input.checked = notifications[key];
-          setStatus(storageFailed ? "会員設定を反映しました。端末内の補助保存は利用できません。" : "会員設定を反映しました。");
+          setStatus(storageFailed ? "会員設定を反映しました。端末の保存は利用できません。" : "会員設定を反映しました。");
         }
       }
       for (const input of Object.values(notifyInputs)) input.disabled = accessLost || !paidMembership;
@@ -629,9 +833,21 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     }).catch(() => {
       if (!edited) setStatus(storageFailed
         ? "会員設定と端末保存を利用できません。この画面で条件を選択できます。"
-        : "会員設定の連携前です。表示条件はこの端末の補助設定を使用します。");
+        : "会員設定の連携前です。表示条件はこの端末の設定を使います。");
     });
   }
+
+  window.addEventListener?.('storage', async event => {
+    if (![storageKey, viewStorageKey, DISPLAY_KEY].includes(event.key)) return;
+    if (settingsDialog?.open || saving) { setStatus('他のページで保存された設定があります。現在の入力は保持しています。'); return; }
+    try {
+      const pref = localStorage.getItem(storageKey), view = localStorage.getItem(viewStorageKey), display = localStorage.getItem(DISPLAY_KEY);
+      if (pref) requestedPreferences = CloudPreferences.normalize(JSON.parse(pref));
+      if (view) { try { requestedView = CloudPreferences.normalizeView(JSON.parse(view), payload); } catch (_error) { requestedView = { ...CloudPreferences.DEFAULT_VIEW }; } }
+      if (display) { appliedDisplay = CloudPreferences.normalizeDisplay(JSON.parse(display)); PAGE_SIZE = appliedDisplay.pageSize; applyDisplay(appliedDisplay); }
+      syncControls(); syncDisplayControls(); await applyPreferences();
+    } catch (_error) { setStatus('他のページの設定を読み込めません。現在の表示を維持します。', true); }
+  });
 
   const downloadCSV = (text, filename) => {
     const url = URL.createObjectURL(new Blob([text], { type: "text/csv;charset=utf-8" }));
@@ -662,13 +878,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   document.getElementById("cloud-history-export-csv")?.addEventListener("click", () => {
     if (accessLost || preferencesPending) return;
     const preferences = appliedPreferences;
-    const records = matchingRows.map((row) => {
+    const records = matchingRows.flatMap((row) => (appliedView.allocation === 'all' ? ['unique', 'stacked'] : [appliedView.allocation]).map(allocation => {
       const t = typeof CloudScenario === 'undefined' ? null : CloudScenario.trade(row.dataset, preferences);
-      const units = appliedView.allocation === 'stacked' ? (row.dataset.selectors || '').split(' ').filter(Boolean).length : 1;
+      const units = allocation === 'stacked' ? (row.dataset.selectors || '').split(' ').filter(Boolean).length : 1;
       return {
         "検出日": row.dataset.date || "", "銘柄コード": row.dataset.symbol || "", "銘柄名": row.dataset.name || "",
+        "買付方法": allocation === 'stacked' ? '条件数に応じた株数' : '同じ株数',
         "一致した条件": (row.dataset.selectors || '').split(' ').map(key => payload?.modeNames?.[key] || key).join(' / '),
-        "買付方法": appliedView.allocation === 'stacked' ? '条件数に応じた株数' : '同じ株数',
         "検出日 終値": row.dataset.signalActualClose || "", "基本株数": preferences.baseShares, "買付株数": preferences.baseShares * units,
         "片道コスト%": preferences.costPercent, "終値の上限": preferences.priceCapYen ?? '上限なし',
         "買付日": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryDate : row.dataset.entryDate) || "",
@@ -686,7 +902,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         "参考値・集計対象外": row.dataset.reference === 'true' ? 'はい' : 'いいえ',
         "6営業日後 始値の取得状況": row.dataset.d6Status || "",
       };
-    });
+    }));
     const columns = records.length ? Object.keys(records[0]) : ['検出日','銘柄コード','銘柄名','検出日 終値','買付日','売却予定日','売却価格','損益円','騰落率%'];
     downloadCSV(CloudPreferences.csv(records, columns), `Cloud_検出履歴_${preferences.exitKey}.csv`);
   });

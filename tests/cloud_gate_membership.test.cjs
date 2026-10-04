@@ -58,7 +58,8 @@ const rules = createModules().load('./cloud-membership');
 const NOW = Date.parse('2026-10-02T07:00:00.000Z');
 
 function preferences(overrides = {}) {
-  return { ...plain(rules.DEFAULT_PREFERENCES), ...overrides,
+  // Explicit fixture choices retain the boundary tests' original 1,000/D5 case.
+  return { ...plain(rules.DEFAULT_PREFERENCES), max_price: 1000, exit_endpoint: 'd5_close', ...overrides,
     notifications: { ...plain(rules.DEFAULT_PREFERENCES.notifications), ...(overrides.notifications || {}) } };
 }
 
@@ -111,7 +112,7 @@ function notificationDecision(event = eventFixture(), prefs = preferences({ noti
 
 test('both notifications default OFF and preference storage collects no email address', () => {
   assert.deepEqual(plain(rules.DEFAULT_PREFERENCES), {
-    max_price: 1000, exit_endpoint: 'd5_close', base_shares: 100, cost_percent: 0,
+    max_price: 1000, exit_endpoint: 'd6_open', base_shares: 100, cost_percent: 0,
     notifications: { new_detection: false, reminder: false },
   });
   assert.throws(() => rules.validatePreferences({ ...preferences(), email: 'unused@example.invalid' }), /invalid_preferences/);
@@ -543,7 +544,7 @@ test('API stores settings under the server session identity and returns private 
   assert.deepEqual((await retrieved.json()).preferences, selected);
   const otherUser = await h.fetchApi(undefined, { subject: 'other-discord-user' });
   const otherBody = await otherUser.json();
-  assert.deepEqual(otherBody.preferences, preferences());
+  assert.deepEqual(otherBody.preferences, plain(rules.DEFAULT_PREFERENCES));
   assert.equal(otherBody.membership.status, 'unverified');
   assert.doesNotMatch(JSON.stringify(otherBody), /other-discord-user|synthetic-.*(?:key|secret|access|refresh)/);
 });

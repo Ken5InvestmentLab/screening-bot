@@ -494,7 +494,8 @@ test('all price presets, unlimited and custom decimals survive server save/reloa
     assert.deepEqual(restored.snapshot().endpoints, [exitKey]);
     const [aggregate, history] = await restored.exportBoth();
     assert.ok(aggregate.csv.includes(`"${exitKey}","${cap ?? '上限なし'}"`));
-    assert.equal(history.csv.split('\r\n').length - 1, cap === 222.22 ? 1 : 2);
+    assert.equal(history.csv.split('\r\n').length - 1, cap === 222.22 ? 2 : 4);
+    assert.ok(history.csv.includes('条件数に応じた株数'));
     assert.ok(history.filename.includes(exitKey));
   }
 });

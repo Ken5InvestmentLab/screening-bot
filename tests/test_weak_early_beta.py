@@ -392,7 +392,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn('id="history-date-from"', output)
         self.assertIn('id="history-date-to"', output)
         self.assertIn('id="history-load-more"', output)
-        self.assertIn("条件に合う最新20件を表示", output)
+        self.assertIn("検索はこの一覧だけを絞り込みます", output)
         self.assertNotIn("<details class=\"history-details\"", output)
         self.assertIn("https://jp.tradingview.com/chart/", output)
         self.assertNotIn('id="selector-filter"', output)
@@ -441,7 +441,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 self.assertIn("参考値", row)
                 self.assertNotIn('data-entry-open=',row)
                 self.assertNotIn('data-d5-return=',row)
-                self.assertIn("S高一値", row)
+                self.assertIn("ストップ高", row)
                 self.assertIn('data-scenario-return', row)
                 self.assertIn("参考値", row.split('data-scenario-return', 1)[1])
                 self.assertIn('data-scenario-pl', row)
@@ -456,8 +456,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 re.DOTALL,
             )
             self.assertIsNotNone(ordinary)
-            self.assertIn("実価格未確認・集計対象外", ordinary.group(0))
-            self.assertIn("S高一値", ordinary.group(0))
+            self.assertIn("価格未確認・成績に含めません", ordinary.group(0))
+            self.assertIn("ストップ高", ordinary.group(0))
             self.assertIn('data-scenario-return', ordinary.group(0))
             self.assertIn('data-scenario-pl', ordinary.group(0))
             self.assertGreaterEqual(ordinary.group(0).count("参考値"), 2)
@@ -506,7 +506,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
         self.assertIn("Cloud全体の成績 — 銘柄均等", output)
         self.assertNotIn("<th>配分方式</th>", output)
-        self.assertIn('<div class="nav-links" aria-label="ページ移動">', document)
+        self.assertIn('id="cloud-navigation" class="nav-links cloud-navigation"', document)
         self.assertNotIn('id="history"', output)
 
     def test_annual_pl_chart_uses_stacked_metrics_and_handles_losses(self):
@@ -564,7 +564,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         )
         self.assertNotIn("9999", output)
         self.assertNotIn("未確定テスト社", output)
-        self.assertIn("検出から6営業日後の実始値を取得・検証済みの検出履歴のみ", output)
+        self.assertIn("検出から6営業日後の始値を確認できた銘柄を公開しています", output)
         self.assertNotIn('data-date="', output)
         self.assertIn('href="/purchase"', output)
 

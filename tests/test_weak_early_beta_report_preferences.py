@@ -56,6 +56,16 @@ def payload(output):
 class ReportPreferenceTests(unittest.TestCase):
     generated = pd.Timestamp("2026-10-04", tz="Asia/Tokyo")
 
+    def test_settings_copy_preserves_endpoint_choices_and_share_limits(self):
+        from weak_early_beta.report import _settings_panel
+        output = _settings_panel()
+        self.assertIn('<span>確定日</span>', output)
+        self.assertIn('<span>基準となる株数</span>', output)
+        self.assertNotIn('基本の買付株数', output)
+        self.assertIn('<option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option>', output)
+        self.assertIn('id="cloud-base-shares" type="number" min="100" max="1000000" step="100"', output)
+        self.assertIn('基準となる株数×条件数', output)
+
     def test_explicit_price_cap_validation_without_rounding(self):
         for value in (1, "1500", 1000.01, "0.01", "1500.00"):
             self.assertEqual(validate_price_cap(value), float(value))

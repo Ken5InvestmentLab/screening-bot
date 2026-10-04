@@ -135,7 +135,7 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
   const path = new URL(request.url).pathname;
   const methods: Record<string, string[]> = {
     "/api/cloud/preferences": ["GET", "PUT"],
-    "/api/cloud/push-subscriptions": ["POST", "DELETE"],
+    "/api/cloud/push-subscriptions": ["POST"],
     "/api/cloud/push-config": ["GET"],
     "/api/cloud/push-subscriptions/device": ["DELETE"],
     "/api/cloud/notifications/dry-run": ["POST"],
@@ -187,16 +187,6 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
       const saved = await preferenceStatement(env.CLOUD_DB, memberId, next).run();
       if (!saved.success) throw new Error("preference_save_failed");
       return json({ ok: true, preferences: next, membership, delivery_mode: "dry_run", persistence: "server" });
-    }
-    if (path === "/api/cloud/push-subscriptions") {
-      const next = { ...preferences, notifications: { new_detection: false, reminder: false } };
-      const saved = await env.CLOUD_DB.batch([
-        preferenceStatement(env.CLOUD_DB, memberId, next),
-        env.CLOUD_DB.prepare("UPDATE cloud_push_subscriptions SET revoked_at = ? WHERE member_id = ? AND revoked_at IS NULL")
-          .bind(new Date().toISOString(), memberId),
-      ]);
-      if (saved.some(row => !row.success)) throw new Error("unsubscribe_failed");
-      return json({ ok: true, preferences: next, delivery_mode: "dry_run", unsubscribed: true });
     }
     // Candidates are trusted server-produced canonical observations. This route
     // never accepts a browser-supplied signal, price, identity, or recipient.

@@ -43,10 +43,14 @@ export async function pushApi(request: Request, env: Environment, context: Depen
   } catch { return json({ ok: false, reason: "invalid_request" }, 400); }
   if (path === "/api/cloud/push-subscriptions/device") {
     if (!isObject(input) || Object.keys(input).join(",") !== "subscription_id" || typeof input.subscription_id !== "string" || !/^[0-9a-f-]{36}$/.test(input.subscription_id)) return json({ ok: false, reason: "invalid_request" }, 400);
+    const owned = await db.prepare("SELECT revoked_at FROM cloud_push_subscriptions WHERE member_id = ? AND subscription_id = ?")
+      .bind(context.memberId, input.subscription_id).first<{ revoked_at: string | null }>();
+    if (!owned) return json({ ok: false, reason: "device_unavailable" }, 404);
+    if (owned.revoked_at) return json({ ok: true, device_revoked: true, delivery_available: false });
     // Revocation is permitted after expiry and always scoped to the session ID.
     const result = await db.prepare("UPDATE cloud_push_subscriptions SET revoked_at = ? WHERE member_id = ? AND subscription_id = ? AND revoked_at IS NULL")
       .bind(new Date().toISOString(), context.memberId, input.subscription_id).run();
-    if (!result.success) throw new Error("revocation_failed");
+    if (!result.success || result.meta.changes !== 1) throw new Error("revocation_failed");
     return json({ ok: true, device_revoked: true, delivery_available: false });
   }
   if (!registrationConfigured(env)) return json({ ok: false, reason: "registration_disabled" }, 503);

@@ -598,16 +598,24 @@ test('a valid Whop member without the required Discord role cannot opt in or rec
   assert.equal(h.calls.length, 0);
 });
 
-test('unsubscribe revokes only the current member subscriptions and disables every notification', async () => {
+test('legacy all-device unsubscribe is rejected without changing notifications or any device', async () => {
   const h = await apiHarness({ providerStatus: 503 });
   h.db.state.preferences.set(h.memberId, JSON.stringify(preferences({ notifications: { new_detection: true, reminder: true, result: true } })));
   h.db.state.subscriptions.push({ member_id: h.memberId, revoked_at: null }, { member_id: 'other-member', revoked_at: null });
   const response = await h.fetchApi('/api/cloud/push-subscriptions', { method: 'DELETE' });
-  assert.equal(response.status, 200);
-  assert.equal((await response.json()).unsubscribed, true);
-  assert.deepEqual(JSON.parse(h.db.state.preferences.get(h.memberId)).notifications, preferences().notifications);
-  assert.ok(h.db.state.subscriptions[0].revoked_at);
+  assert.equal(response.status, 405);
+  assert.equal((await response.json()).ok, false);
+  assert.equal(JSON.parse(h.db.state.preferences.get(h.memberId)).notifications.reminder,true);
+  assert.equal(h.db.state.subscriptions[0].revoked_at,null);
   assert.equal(h.db.state.subscriptions[1].revoked_at, null);
+});
+
+test('notification OFF saves pause settings while preserving all existing device registrations',async()=>{
+ const h=await apiHarness({providerStatus:503});
+ h.db.state.subscriptions.push({member_id:h.memberId,revoked_at:null},{member_id:h.memberId,revoked_at:null},{member_id:'other-member',revoked_at:null});
+ const response=await h.fetchApi('/api/cloud/preferences',{method:'PUT',body:preferences()});
+ assert.equal(response.status,200);assert.deepEqual(JSON.parse(h.db.state.preferences.get(h.memberId)).notifications,preferences().notifications);
+ assert.equal(h.db.state.subscriptions.every(row=>row.revoked_at===null),true);
 });
 
 test('each membership check re-reads Whop and a later 429 cannot reuse the earlier paid result', async () => {
@@ -717,7 +725,6 @@ test('D1 write failures cannot be reported as saved settings, completed unsubscr
   h.db.state.failWrites = true;
   for (const [pathname, options] of [
     ['/api/cloud/preferences', { method: 'PUT', body: preferences({ max_price: 3000 }) }],
-    ['/api/cloud/push-subscriptions', { method: 'DELETE' }],
     ['/api/cloud/notifications/dry-run', { method: 'POST', body: {} }],
   ]) {
     const response = await h.fetchApi(pathname, options);

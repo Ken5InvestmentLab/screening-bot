@@ -987,7 +987,7 @@ def _history_section(
     return (
         '<section class="panel" id="history"><h2>検出履歴</h2>'
         + access_notice
-        + '<div class="history-details"><p class="history-heading">新しい順に表示します。検索はこの一覧だけを絞り込みます。株価の上限・売却価格は「設定」で変更できます。</p>'
+        + '<div class="history-details"><p class="history-heading">新しい順に表示します。検索はこの一覧だけを絞り込みます。株価の上限・確定日は「設定」で変更できます。</p>'
         '<div class="filters"><label class="filter-field"><span>銘柄</span><input id="symbol-filter" type="search" autocomplete="off" '
         'aria-label="証券コードまたは銘柄名で検索" placeholder="証券コード・銘柄名で検索"></label>'
         '<label class="filter-field"><span>開始日</span><input id="history-date-from" type="date" aria-label="検出日の開始日"></label>'
@@ -1241,13 +1241,13 @@ def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
 <label class="filter-field"><span>検出年</span><select id="cloud-year-scope">''' + options + '''</select></label>
 <label class="filter-field"><span>検出日 終値の上限</span><select id="cloud-price-preset"><option value="1000" selected>1,000円以下</option><option value="2000">2,000円以下</option><option value="3000">3,000円以下</option><option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
 <label class="filter-field" id="cloud-price-custom-field" hidden><span>任意の上限（円・小数2桁まで）</span><input id="cloud-price-custom" type="number" step="0.01" min="0.01" inputmode="decimal" value="1000"></label>
-<label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option></select></label>
+<label class="filter-field"><span>確定日</span><select id="cloud-exit-endpoint"><option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option></select></label>
 <label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">各銘柄を同じ株数で買う</option><option value="stacked">一致した条件数に応じて株数を増やす</option></select></label>
-<label class="filter-field"><span>基本の買付株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
+<label class="filter-field"><span>基準となる株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
 <label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label></div>
-<p class="note">初期表示は1,000円以下・6営業日後始値・両方式・100株・コスト0%。保存した設定がある場合は、そちらを使います。買付株数を増やすと、必要な資金も増えます。</p>
+<p class="note">初期表示は1,000円以下・確定日は6営業日後始値・両方式・基準となる株数100株・コスト0%。保存した設定がある場合は、そちらを使います。各銘柄を同じ株数で買う場合は基準となる株数、一致した条件数に応じて増やす場合は基準となる株数×条件数で試算します。株数を増やすと必要な資金も増えます。</p>
 <p class="note">上限は検出済みの銘柄を絞る条件で、検出対象を広げません。コストは買付額・売却額の両方にかかります。配当・税金は含みません。</p>
-<p class="note">終値と始値は別の日に確認します。予定日前は「確定日待ち」、予定日を過ぎても価格が分からない場合は「未取得」と表示します。</p></div>
+<p class="note">確定日は試算で使う売却価格を確認する日です。5営業日後の終値と6営業日後の始値から選びます。予定日前は「確定日待ち」、予定日を過ぎても価格が分からない場合は「未取得」と表示します。</p></div>
 <div id="settings-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications" hidden><p id="cloud-notification-readiness" role="status">通知の利用状況を確認しています。</p><div id="cloud-notification-settings"></div></div>
 <div id="settings-display" role="tabpanel" aria-labelledby="settings-tab-display" hidden><div class="filters">
 <label class="filter-field"><span>テーマ</span><select id="cloud-theme"><option value="light">ライト</option><option value="dark" selected>ダーク</option><option value="system">端末に合わせる</option></select></label>
@@ -1520,7 +1520,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>売却価格</small><b>5営業日後 終値 / 6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>確定日</small><b>5営業日後 終値 / 6営業日後 始値</b></div><div class="kpi"><small>基準となる株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
 <section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3><a href="./weak_early_beta_latest.html">ダッシュボード</a></h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
@@ -1537,7 +1537,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
 <article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、結果が出た取引のうち利益になった割合です。損益が0の取引も数えます。騰落率は、買付額に対する損益の割合です。選択したコストも含みます。</p></article>
 <article class="guide-card"><h3>参考値・成績に含めません</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
-<section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>各銘柄を同じ株数で買う</h3><p>同じ日・同じ銘柄を<span data-guide-base-shares>100</span>株で試算します。複数の条件に一致しても株数は増やしません。</p></article><article class="guide-card"><h3>一致した条件数に応じて株数を増やす</h3><p>基本<span data-guide-base-shares>100</span>株なら、3条件に一致した銘柄は<span data-guide-stacked-shares>300</span>株で試算します。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
+<section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>各銘柄を同じ株数で買う</h3><p>同じ日・同じ銘柄を<span data-guide-base-shares>100</span>株で試算します。複数の条件に一致しても株数は増やしません。</p></article><article class="guide-card"><h3>一致した条件数に応じて株数を増やす</h3><p>基準となる株数が<span data-guide-base-shares>100</span>株なら、3条件に一致した銘柄は<span data-guide-stacked-shares>300</span>株で試算します。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
 <section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は現在利用できません。有料会員向けの機能で、初期値はOFFです。朝8時（日本時間）は「今日は選んだ確定日」のお知らせです。この時点では価格や損益はまだ確定していません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>

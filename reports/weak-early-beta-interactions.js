@@ -19,7 +19,7 @@ const CloudPreferences = (() => {
     return Number(cents) / 100;
   };
   const normalize = (value) => {
-    if (!value || !["d5_close", "d6_open"].includes(value.exitKey)) throw new Error("売却価格を選択してください。");
+    if (!value || !["d5_close", "d6_open"].includes(value.exitKey)) throw new Error("確定日を選択してください。");
     const shares = value.baseShares ?? 100, cost = value.costPercent ?? 0;
     if (!Number.isInteger(Number(shares)) || Number(shares) < 100 || Number(shares) > 1000000 || Number(shares) % 100) throw new Error("株数は100〜1,000,000株の範囲で、100株ずつ入力してください。");
     if (!/^\d+(?:\.\d{1,2})?$/.test(String(cost)) || Number(cost) > 10) throw new Error("売買コストは0〜10%の範囲で、小数点以下2桁まで入力してください。");
@@ -389,12 +389,21 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   let serverAvailable = false;
   let notifications = { new_detection: false, reminder: false };
   const notifyInputs = {};
+  const notifyLabels = {};
+  let notifyMembershipPaid = false;
+  const syncNotificationControls = () => {
+    for (const [key, input] of Object.entries(notifyInputs)) {
+      input.checked = notifications[key];
+      input.disabled = accessLost || !serverAvailable || (!notifyMembershipPaid && !notifications[key]);
+      notifyLabels[key].textContent = notifications[key] ? 'ON' : 'OFF';
+    }
+  };
   const notificationReadiness = membership => {
     const output = document.getElementById('cloud-notification-readiness');
     if (!output) return;
     const entitlement = membership === 'paid' ? '有料会員資格を確認済み' : membership === 'unknown' ? '会員資格は未確認' : '有効な有料会員資格が必要';
     const permission = typeof Notification === 'undefined' ? 'このブラウザのプッシュは未対応' : Notification.permission === 'granted' ? '端末の通知権限あり' : Notification.permission === 'denied' ? '端末の通知権限なし' : '端末の通知許可は未設定';
-    output.textContent = `${entitlement}。${permission}。通知は現在利用できません。`;
+    output.textContent = `${entitlement}。${permission}。ブラウザの通知許可と端末登録は別の状態です。`;
   };
   notificationReadiness('unknown');
   const setStatus = (message, invalid = false) => {
@@ -408,46 +417,32 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   if (settings && endpoint) {
     const host = document.createElement(settingsDialog ? "div" : "details");
     host.className = "cloud-notification-settings";
-    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>通知は現在利用できません。初期設定はすべてOFFです。</p>';
+    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>ON／OFFで通知を一時停止・再開します。「設定を保存」で反映し、OFFでも端末登録は残ります。初期設定はすべてOFFです。</p>';
     for (const [key, label] of Object.entries({ new_detection: "新しい検出", reminder: "売却予定日の朝8時（日本時間）" })) {
       const element = document.createElement("label");
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
+      checkbox.setAttribute('role', 'switch');
       checkbox.id = `cloud-notify-${key}`;
       checkbox.checked = false;
       checkbox.disabled = true;
-      element.append(checkbox, document.createTextNode(` ${label}`));
+      const state = document.createElement('span'); state.textContent = 'OFF';
+      element.append(checkbox, document.createTextNode(` ${label}：`), state);
       host.append(element);
       notifyInputs[key] = checkbox;
+      notifyLabels[key] = state;
       checkbox.addEventListener("change", () => {
         edited = true;
         editRevision += 1;
         notifications[key] = checkbox.checked;
+        syncNotificationControls();
         setStatus("通知設定は未保存です。「設定を保存」で会員設定を更新します。");
       });
     }
     const note = document.createElement("p");
     note.textContent = "朝8時に「今日は売却予定日」とお知らせします。その日の始値・終値はまだ出ていません。";
     host.append(note);
-    const unsubscribe = document.createElement("button");
-    unsubscribe.type = "button";
-    unsubscribe.id = "cloud-notifications-off";
-    unsubscribe.textContent = "通知をすべてOFF・購読解除（即時）";
-    unsubscribe.disabled = true;
-    host.append(unsubscribe);
     (document.getElementById("cloud-notification-settings") || document.getElementById("cloud-preferences") || saveButton?.parentElement || settings.parentElement).append(host);
-    unsubscribe.addEventListener("click", async () => {
-      unsubscribe.disabled = true;
-      try {
-        const response = await fetch("/api/cloud/push-subscriptions", { method: "DELETE", credentials: "same-origin", cache: "no-store" });
-        if (!response.ok) throw new Error("unsubscribe");
-        notifications = { new_detection: false, reminder: false };
-        if (settingsSnapshot) settingsSnapshot.notifications = { ...notifications };
-        for (const input of Object.values(notifyInputs)) input.checked = false;
-        setStatus("通知をすべてOFFにして、購読を解除しました。");
-      } catch (_error) { setStatus("解除を確認できません。接続を確認してもう一度お試しください。", true); }
-      finally { unsubscribe.disabled = !serverAvailable; }
-    });
   }
 
   const syncControls = (preferences = requestedPreferences) => {
@@ -600,7 +595,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         if (cost) cost.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${CloudScenario.yen(t.cost === null ? null : t.cost * units(method))}</span>`).join('');
       }
       const summary = document.getElementById('cloud-applied-summary');
-      if (summary) summary.textContent = `表示中: 終値 ${requested.priceCapYen === null ? '上限なし' : requested.priceCapYen.toLocaleString('ja-JP')+'円以下'} / ${endpoint.options[endpoint.selectedIndex].text} / 基本${requested.baseShares.toLocaleString('ja-JP')}株 / 片道${requested.costPercent}% / ${payload.scopes[nextView.yearScope].label} / ${nextView.allocation === 'stacked' ? '条件数比例' : nextView.allocation === 'unique' ? '一律' : '両方式を比較'}`;
+      if (summary) summary.textContent = `表示中: 終値 ${requested.priceCapYen === null ? '上限なし' : requested.priceCapYen.toLocaleString('ja-JP')+'円以下'} / 確定日 ${endpoint.options[endpoint.selectedIndex].text} / 基準となる株数 ${requested.baseShares.toLocaleString('ja-JP')}株 / 片道${requested.costPercent}% / ${payload.scopes[nextView.yearScope].label} / ${nextView.allocation === 'stacked' ? '条件数比例' : nextView.allocation === 'unique' ? '一律' : '両方式を比較'}`;
     }
     currentVariant = nextVariant;
     appliedPreferences = requested;
@@ -647,7 +642,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     notifications = { ...settingsSnapshot.notifications }; edited = settingsSnapshot.edited;
     requestedPreferences = { ...appliedPreferences }; requestedView = { ...appliedView };
     syncControls(); syncDisplayControls(); applyDisplay(appliedDisplay);
-    for (const [key, input] of Object.entries(notifyInputs)) input.checked = notifications[key];
+    syncNotificationControls();
     settingsDialog.close();
   };
   if (settingsDialog && settingsOpen) {
@@ -764,7 +759,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       if (settingsDialog) {
         const active = settingsDialog.querySelector('[role="tab"][aria-selected="true"]')?.id;
         if (active === 'settings-tab-trial') { requestedPreferences = { ...CloudPreferences.INITIAL }; requestedView = { ...CloudPreferences.DEFAULT_VIEW }; syncControls(); }
-        if (active === 'settings-tab-notifications') { notifications = { new_detection: false, reminder: false }; for (const input of Object.values(notifyInputs)) input.checked = false; }
+        if (active === 'settings-tab-notifications') { notifications = { new_detection: false, reminder: false }; syncNotificationControls(); }
         if (active === 'settings-tab-display') { displayTheme.value = 'dark'; displayFont.value = 'standard'; displayPage.value = '20'; applyDisplay(readDisplayControls()); }
         edited = true; editRevision += 1;
         setStatus('このタブを初期値に戻しました。「設定を保存」で反映し、「キャンセル」で元に戻ります。'); return;
@@ -816,6 +811,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       const saved = data.preferences || data;
       const serverPreferences = CloudPreferences.normalize({ priceCapYen: saved.max_price, exitKey: saved.exit_endpoint, baseShares: saved.base_shares ?? 100, costPercent: saved.cost_percent ?? 0 });
       const paidMembership = data.membership?.status === "paid";
+      notifyMembershipPaid = paidMembership;
       notificationReadiness(data.membership?.status || 'unknown');
       serverAvailable = true;
       let serverApplied = false;
@@ -825,13 +821,11 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         syncControls();
         serverApplied = await applyPreferences({ persist: true });
         if (serverApplied && !edited) {
-          for (const [key, input] of Object.entries(notifyInputs)) input.checked = notifications[key];
+          syncNotificationControls();
           setStatus(storageFailed ? "会員設定を反映しました。端末の保存は利用できません。" : "会員設定を反映しました。");
         }
       }
-      for (const input of Object.values(notifyInputs)) input.disabled = accessLost || !paidMembership;
-      const off = document.getElementById("cloud-notifications-off");
-      if (off) off.disabled = false;
+      syncNotificationControls();
       if (!paidMembership && !edited && serverApplied) setStatus("表示条件の会員設定を反映しました。通知の利用には有効な有料会員資格が必要です。通知解除は行えます。");
     }).catch(() => {
       if (!edited) setStatus(storageFailed

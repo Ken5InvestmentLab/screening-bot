@@ -15,6 +15,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 - `npm run verify-release` は既存D1・Discord設定とpreviewのD1なし/通知OFFを検証する。本番のみ `personal_test` の手動1端末構成を許可し、CronはOFF。本人ID・端末ID・一回用RUN_ID・実provider originはDashboardの運用値、秘密鍵はSecretとし、GitやASSETSへ含めない。`keep_vars: true` でこの運用値を公開時に維持する。未確認providerは本人端末でoriginのみ表示する準備を許可し、allowlist設定前に購読をD1へ保存・送信しない。詳しくは `weak-early-beta-gate/CLOUD_PERSONAL_LIVE_RELEASE.md`。
 - `npm run check` はProduction/preview両方のdry-runを含む。プレビューは `npm run dev:preview` を使う。production設定の `wrangler dev --remote` は禁止。実DB保存のローカル検証は隔離D1と合成セッションで行い、本番DB・本物のCookieを使わない。
 - 手動personal-testは予約後・送信直前のfresh Discordロール照会をHTTP内で1回行う。入口の署名済みセッションは本人選択用で送信権限を与えず、cached role/429猶予では送らない。資格取得失敗のreceiptも残し、自動再試行しない。
+- 通知ON/OFFはpreferences保存による一時停止/再開で、端末登録を消さない。解除UIは現在ブラウザのendpoint hashと本人の登録が一致した1端末だけに限定し、サーバー失効後にブラウザunsubscribeと未登録確認を行う。一括DELETEは405で拒否する。解除は契約・ロール・他端末・通知許可・通知ON/OFFを変更せず、失敗/部分完了は完了表示にしない。
 
 TradingViewのBOTTOMシグナル銘柄を複数のテクニカル指標でスコアリングし、
 Discordにスクリーニング結果をDM送信するBotです。

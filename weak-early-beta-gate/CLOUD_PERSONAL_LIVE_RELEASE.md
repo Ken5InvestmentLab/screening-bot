@@ -16,6 +16,8 @@ Wranglerの `keep_vars: true` によりDashboardの固定値を再deployで維�
 
 手動テストHTTP内のDiscord照会は、予約後・送信前のfresh照会1回に限定する。入口の署名済み未期限切れセッション確認は本人行の選択にだけ使い、送信を許可しない。ロールキャッシュや429猶予では送らず、最終照会失敗もheld receiptとして保存する。通常のレポート認証は既存処理のまま。
 
+通知のON/OFFは「設定を保存」で反映し、OFFでも端末登録を残す。登録表示はブラウザ購読と本人のサーバー行の照合で判定する。解除は1端末DELETE→ブラウザunsubscribe→未登録確認の順。サーバー側完了後にブラウザ解除が失敗しても元へ戻さず、同じボタンで残りの解除を再試行できる。旧一括DELETEは405。ブラウザ許可・契約・ロール・他端末・通知設定は解除で変更しない。登録保存応答の不確定時はブラウザ準備を維持し、完了表示を避ける。
+
 ## 公開と復旧
 
 `npm run check`、最新research HEADとの祖先・差分確認、運用値と既存3認証Secretの存在確認を完了してから、fast-forwardで `research/weak-early-beta` を更新し、そのHEADに `cloud-deploy-*` タグを作成する。専用workflowは同じ台帳からHTMLとprivate canonical moduleを生成し、台帳/カレンダー検証後にdeployする。SQL 0001–0003は適用済みなので再実行しない。

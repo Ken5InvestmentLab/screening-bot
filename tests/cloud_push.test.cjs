@@ -56,7 +56,7 @@ test('subscription validates actual curve point, canonical encoding and auth len
 });
 function database(owner='mine') {
  const statements=[];let batchCalls=0;
- return {statements,get batchCalls(){return batchCalls;},prepare(sql){const query={sql,values:[],bind(...values){this.values=values;return this;},async first(){return sql.includes('WHERE endpoint')?{subscription_id:'11111111-1111-4111-8111-111111111111',member_id:owner}:null;},async all(){return {success:true,results:[]};},async run(){statements.push(this);return {success:true,meta:{changes:1}};}};return query;},async batch(rows){batchCalls++;return Promise.all(rows.map(row=>row.run()));}};
+ return {statements,get batchCalls(){return batchCalls;},prepare(sql){const query={sql,values:[],bind(...values){this.values=values;return this;},async first(){return sql.includes('SELECT revoked_at')?(this.values[0]===owner?{revoked_at:null}:null):sql.includes('WHERE endpoint')?{subscription_id:'11111111-1111-4111-8111-111111111111',member_id:owner}:null;},async all(){return {success:true,results:[]};},async run(){statements.push(this);return {success:true,meta:{changes:1}};}};return query;},async batch(rows){batchCalls++;return Promise.all(rows.map(row=>row.run()));}};
 }
 function request(path,method='GET',body){return new Request('https://cloud.example.invalid'+path,{method,headers:body?{'content-type':'application/json'}:{},...(body?{body:JSON.stringify(body)}:{})});}
 const push=modules({cryptoMock:noGenerate}).load('./cloud-push');
@@ -75,6 +75,18 @@ test('explicit opt-in atomically saves session-owned device and metadata without
 });
 test('expired member can revoke only their own device',async()=>{
  const db=database();const response=await push.pushApi(request('/api/cloud/push-subscriptions/device','DELETE',{subscription_id:'11111111-1111-4111-8111-111111111111'}),{CLOUD_DB:db},{memberId:'mine',roleAuthorized:false,membership:async()=>{throw Error('must_not_require_payment');}});assert.equal(response.status,200);assert.match(db.statements[0].sql,/member_id = \? AND subscription_id = \?/);assert.equal(db.statements[0].values[1],'mine');
+});
+
+test('device revoke changes exactly one owned row, is idempotent, and rejects other owners',async()=>{
+ const otherId='22222222-2222-4222-8222-222222222222',mine='11111111-1111-4111-8111-111111111111';
+ const rows=[{member_id:'mine',subscription_id:mine,revoked_at:null},{member_id:'mine',subscription_id:otherId,revoked_at:null},{member_id:'other',subscription_id:'33333333-3333-4333-8333-333333333333',revoked_at:null}];
+ let writes=0;
+ const db={prepare(sql){return {bind(...values){this.values=values;return this;},async first(){assert.match(sql,/SELECT revoked_at/);return rows.find(r=>r.member_id===this.values[0]&&r.subscription_id===this.values[1])||null;},async run(){assert.match(sql,/WHERE member_id = \? AND subscription_id = \? AND revoked_at IS NULL/);writes++;let changes=0;for(const row of rows)if(row.member_id===this.values[1]&&row.subscription_id===this.values[2]&&!row.revoked_at){row.revoked_at=this.values[0];changes++;}return {success:true,meta:{changes}};}};}};
+ const context={memberId:'mine',roleAuthorized:false,membership:async()=>{throw Error('must-not-change-membership');}};
+ const revoke=id=>push.pushApi(request('/api/cloud/push-subscriptions/device','DELETE',{subscription_id:id}),{CLOUD_DB:db},context);
+ assert.equal((await revoke(mine)).status,200);assert.ok(rows[0].revoked_at);assert.equal(rows[1].revoked_at,null);assert.equal(rows[2].revoked_at,null);
+ assert.equal((await revoke(mine)).status,200);assert.equal(writes,1);
+ const denied=await revoke(rows[2].subscription_id);assert.equal(denied.status,404);assert.notEqual((await denied.json()).device_revoked,true);assert.equal(writes,1);
 });
 test('fresh-role option bypasses cached authorization and refuses 429 grace',async()=>{
  for(const code of [200,429,503,403]){
@@ -159,7 +171,7 @@ test('personal origin discovery is owner-only and cannot persist/send before an 
 test('browser preparation displays origin only, preserves pending subscription and saves once after exact approval',async()=>{
  const elements=new Map();
  const element=()=>({hidden:false,disabled:false,textContent:'',listeners:{},append(){},setAttribute(){},addEventListener(name,fn){this.listeners[name]=fn;}});
- const host=element();
+ const host=element();host.prepend=()=>{};
  const document={getElementById:()=>host,createElement:()=>{const e=element();Object.defineProperty(e,'id',{set(id){elements.set(id,e);}});return e;}};
  let permissions=0,registrations=0,subscriptions=0,saves=0,unsubscribes=0,saved=false,allowed=false;
  const sub={endpoint:'https://push.example.invalid/private-device-token',toJSON:()=>({endpoint:subscription.endpoint,keys:{p256dh:UA,auth:AUTH}}),unsubscribe:async()=>{unsubscribes++;}};
@@ -181,7 +193,7 @@ test('browser preparation displays origin only, preserves pending subscription a
  assert.doesNotMatch(elements.get('cloud-device-provider-origin').textContent,/private-device-token/);
  allowed=true;await elements.get('cloud-device-register').listeners.click();
  assert.equal(subscriptions,1);assert.equal(saves,1);assert.equal(unsubscribes,0);
- assert.equal(elements.get('cloud-device-register').hidden,true);
+ assert.equal(elements.get('cloud-device-register').hidden,false);assert.equal(elements.get('cloud-device-register').textContent,'登録済み');assert.equal(elements.get('cloud-device-register').disabled,true);
 });
 test('persisted old detections and malformed canonical events cause no send or reservation',async()=>{
  for(const eventOverride of [{detection_date:'2020-01-02'},{detection_date:'2099-01-01'},{endpoints:null},{kind:'unexpected'}]) {

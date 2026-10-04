@@ -467,7 +467,7 @@ test('display-only year/allocation restore locally while server price/endpoint r
   assert.equal(page.get('cloud-allocation').value, 'stacked');
   await page.get('cloud-settings-save').dispatch('click');
   const sent = JSON.parse(page.requests.find((request) => request.options.method === 'PUT').options.body);
-  assert.deepEqual(Object.keys(sent).sort(), ['exit_endpoint', 'max_price', 'notifications']);
+  assert.deepEqual(Object.keys(sent).sort(), ['base_shares', 'cost_percent', 'exit_endpoint', 'max_price', 'notifications']);
   assert.equal(sent.max_price, 3000);
   assert.deepEqual(JSON.parse(page.storage.get('cloudReportView:v1')), { yearScope: '2024', allocation: 'stacked' });
 });

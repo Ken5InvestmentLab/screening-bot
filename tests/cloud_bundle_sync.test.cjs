@@ -33,7 +33,7 @@ async function fixture(t, fault) {
     await fs.writeFile(path.join(reports,name),fault === 'size' && page === 'analytics' && audience === 'free' ? ' '.repeat(1024*1024+1) : JSON.stringify(bundle));
     await fs.writeFile(path.join(reports,`weak_early_beta_${page}${audience==='free'?'_free':''}.html`),page === 'guide' ? '<html>guide</html>' : `<script id="cloud-analytics-data" type="application/json">${JSON.stringify(payload)}</script>`);
   }
-  for (const name of ['weak-early-beta-interactions.js','weak-early-beta-theme-init.js']) await fs.writeFile(path.join(reports,name),'// generated');
+  for (const name of ['weak-early-beta-interactions.js','weak-early-beta-theme-init.js','weak-early-beta-scenarios.js']) await fs.writeFile(path.join(reports,name),'// generated');
   for (const name of ['discord-light','discord-dark','coconala-light','coconala-dark','x-light','x-dark','cloud-logo-light','cloud-logo-dark']) await fs.writeFile(path.join(reports,'report-assets',name+'.png'),'fixture');
   await fs.writeFile(path.join(reports,'private.json'),'PRIVATE RECEIPTS');
   await fs.writeFile(path.join(gate,'public','keep.json'),'keep');
@@ -56,4 +56,10 @@ for (const fault of ['path','audience','metadata','key','size']) test(`sync refu
   const f=await fixture(t,fault);
   assert.notEqual(f.result.status,0);
   assert.deepEqual((await fs.readdir(f.publicDir)).sort(),['keep.json',f.stale].sort());
+});
+
+test('v05 calculator is a public code asset and private price evidence stays outside sync',async t=>{
+ const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);
+ const names=await fs.readdir(f.publicDir);assert.ok(names.includes('weak-early-beta-scenarios.js'));
+ assert.ok(!names.includes('private.json'));
 });

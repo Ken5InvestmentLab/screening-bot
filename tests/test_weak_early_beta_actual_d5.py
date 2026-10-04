@@ -198,7 +198,7 @@ class ForwardPendingPresentationTests(unittest.TestCase):
         rows = _detection_rows(frame)
         for symbol, label, bought, completed in (
             ('P001', '保有中', True, False), ('P002', '寄付待ち', False, False),
-            ('P003', '寄付待ち', False, False), ('P004', '確定', True, True),
+            ('P003', '寄付待ち', False, False), ('P004', '結果あり', True, True),
         ):
             row = re.search(r'<tr\b(?=[^>]*data-symbol="'+symbol+r'")[\s\S]*?</tr>', rows)[0]
             self.assertIn(label, row)

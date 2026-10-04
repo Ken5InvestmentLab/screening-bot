@@ -13,4 +13,4 @@ npm run deploy
 
 初回deploy前に、このWorkerへ `DISCORD_CLIENT_ID`、`DISCORD_CLIENT_SECRET`、`SESSION_SECRET` をsecretとして設定し、Discord Developer PortalへベータWorkerの `/auth/callback` をRedirect URIとして追加します。ロールIDは現行gateと同じです。
 
-ロール保持者には通常版HTML、非保持者には対応する `_free.html` を返します。無料版は5営業日目終値が未確定の銘柄について、証券コード・社名・エントリー価格・チャート・ファンダURLをHTMLへ埋め込まず、購入ページへの導線だけを表示します。5営業日目終値が確定した過去行は表示できます。
+Cloudの通常版HTMLは既存セッションと、独立検証で結び付いた有効なWhop有料資格の両方が必要です。未連携・失効・確認不能の場合は対応する `_free.html` を返します。無料版は検出から6営業日後の実始値が取得・検証済みの銘柄だけを含み、未解禁銘柄のコード・社名・価格・チャート・ファンダURLはHTMLやCSVへ渡しません。資格連携・会員設定の保存・無送信の通知判定については [CLOUD_MEMBERSHIP_SETUP.md](CLOUD_MEMBERSHIP_SETUP.md) を参照してください。本番の設定・公開はこのPRでは実施していません。

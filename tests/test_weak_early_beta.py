@@ -50,6 +50,8 @@ from weak_early_beta.restrictions import parse_jpx_restricted_symbols, quarantin
 def report_variant_html(output, key="d5_close:all", bundle_root=None):
     """Inspect the explicitly selected legacy/unlimited reference view."""
     data = json.loads(re.search(r'<script id="cloud-analytics-data" type="application/json">(.*?)</script>', output, re.DOTALL).group(1))
+    if data.get("version") == 2:
+        return output.split('<div id="cloud-analytics-content">', 1)[1].split('<section class="panel cloud-settings"',1)[0]
     if data.get("encoding") == "gzip-base64-json":
         import base64
         import gzip
@@ -338,7 +340,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
             pd.Timestamp("2026-09-19", tz="Asia/Tokyo"),
             monthly_metrics=monthly,
         )
-        self.assertIn("100株損益", output)
+        self.assertIn("選択中の成績", output)
         self.assertIn("天底極致 -Cloud- ダッシュボード", output)
         self.assertIn('<a class="brand" href="./weak_early_beta_latest.html"', output)
         self.assertNotIn("Cloud全体の成績", output)
@@ -440,10 +442,10 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 self.assertNotIn('data-entry-open=',row)
                 self.assertNotIn('data-d5-return=',row)
                 self.assertIn("S高一値", row)
-                self.assertIn('data-label="騰落率"', row)
-                self.assertIn("参考値", row.split('data-label="騰落率"', 1)[1])
-                self.assertIn('data-label="100株損益"', row)
-                self.assertIn("参考値", row.split('data-label="100株損益"', 1)[1])
+                self.assertIn('data-scenario-return', row)
+                self.assertIn("参考値", row.split('data-scenario-return', 1)[1])
+                self.assertIn('data-scenario-pl', row)
+                self.assertIn("参考値", row.split('data-scenario-pl', 1)[1])
                 for filename in MODE_PAGE_NAMES.values():
                     page = (root / filename).read_text(encoding="utf-8")
                     self.assertIn(f'data-date="{signal_date}"', page)
@@ -456,8 +458,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertIsNotNone(ordinary)
             self.assertIn("実価格未確認・集計対象外", ordinary.group(0))
             self.assertIn("S高一値", ordinary.group(0))
-            self.assertIn('data-label="騰落率"', ordinary.group(0))
-            self.assertIn('data-label="100株損益"', ordinary.group(0))
+            self.assertIn('data-scenario-return', ordinary.group(0))
+            self.assertIn('data-scenario-pl', ordinary.group(0))
             self.assertGreaterEqual(ordinary.group(0).count("参考値"), 2)
             self.assertNotIn('data-d5-return=',ordinary.group(0))
             direct_dashboard = render_report(self.ledger, metrics, pd.Timestamp("2026-09-26"))
@@ -483,9 +485,9 @@ class WeakEarlyBetaTests(unittest.TestCase):
         document = output
         output = report_variant_html(output)
         dates = pd.to_datetime(self.ledger["signal_date"])
-        expected = f"{dates.min():%Y-%m-%d}〜2026-09-19"
+        expected = "記録期間 —"
         self.assertIn(expected, output)
-        self.assertIn(f"最終検出: {dates.max():%Y-%m-%d}", output)
+        self.assertIn("最終検出: —", output)
         self.assertIn("トータルの資産推移", output)
         self.assertIn('id="annual-pl"', output)
         self.assertIn('id="payoff-structure"', output)
@@ -496,11 +498,11 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertNotIn("+24.3%", output)
         self.assertNotIn("-12.4%", output)
         self.assertNotIn("1.95倍", output)
-        self.assertIn("100株・コスト0を共通基準", output)
+        self.assertIn("売買コスト（片道 %）", document)
         self.assertNotIn("YTD", output)
         self.assertIn("資金増加率", output)
         self.assertIn("単純年率", output)
-        self.assertIn("3モード該当なら合計300株", output)
+        self.assertIn("一致した条件の数だけ買付", document)
         self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
         self.assertIn("Cloud全体の成績 — 銘柄均等", output)
         self.assertNotIn("<th>配分方式</th>", output)
@@ -541,7 +543,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertEqual(history.count('data-date="'), len(self.ledger.drop_duplicates(["signal_date", "symbol"])))
         self.assertEqual(history.count('data-search="'), history.count('data-date="'))
         self.assertEqual(len(re.findall(r'<tr[^>]* hidden>', history)), history.count('data-date="'))
-        self.assertIn('data-label="100株損益"', history)
+        self.assertIn('data-scenario-pl', history)
 
     def test_free_report_masks_pending_identity_until_verified_sixth_open(self):
         pending = self.ledger.head(1).copy()

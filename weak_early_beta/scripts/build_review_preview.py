@@ -29,9 +29,12 @@ def main() -> None:
     before = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
     frame = read_ledger(ledger_path)
     destination.mkdir(parents=True, exist_ok=True)
+    # Keep audit CSVs/receipts outside the directory served by a preview server.
+    evidence = destination.with_name(destination.name + "-evidence")
+    evidence.mkdir(parents=True, exist_ok=True)
     write_report(frame, destination / "weak_early_beta_latest.html",
-                 destination / "review_metrics.csv", destination / "review_monthly_metrics.csv")
-    for filename in ("weak-early-beta-interactions.js", "weak-early-beta-theme-init.js"):
+                 evidence / "review_metrics.csv", evidence / "review_monthly_metrics.csv")
+    for filename in ("weak-early-beta-interactions.js", "weak-early-beta-theme-init.js", "weak-early-beta-scenarios.js"):
         target = destination / filename
         source = ROOT / "reports" / filename
         if target.resolve() != source.resolve():
@@ -49,7 +52,7 @@ def main() -> None:
     receipt = {"source_sha256": before, "source_rows": len(frame), "source_unchanged": True,
                "notifications_sent": 0, "deployment": False,
                "note": "Local preview only. Missing verified prices remain unavailable."}
-    (destination / "review_receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    (evidence / "review_receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(receipt))
 
 

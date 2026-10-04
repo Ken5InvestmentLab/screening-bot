@@ -5,18 +5,22 @@ export type NotificationKind = "new_detection" | "reminder" | "result";
 export type Preferences = {
   max_price: number | null;
   exit_endpoint: ExitEndpoint;
-  notifications: Record<NotificationKind, boolean>;
+  base_shares: number;
+  cost_percent: number;
+  notifications: Record<"new_detection" | "reminder", boolean>;
 };
 export const DEFAULT_PREFERENCES: Preferences = {
   max_price: 1000,
   exit_endpoint: "d5_close",
-  notifications: { new_detection: false, reminder: false, result: false },
+  base_shares: 100,
+  cost_percent: 0,
+  notifications: { new_detection: false, reminder: false },
 };
 export const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-export function validatePreferences(value: unknown): Preferences {
-  if (!isObject(value) || Object.keys(value).some(k => !["max_price", "exit_endpoint", "notifications"].includes(k))) {
+export function validatePreferences(value: unknown, migrateStored = false): Preferences {
+  if (!isObject(value) || Object.keys(value).some(k => !["max_price", "exit_endpoint", "base_shares", "cost_percent", "notifications"].includes(k))) {
     throw new Error("invalid_preferences");
   }
   const cap = value.max_price;
@@ -30,13 +34,16 @@ export function validatePreferences(value: unknown): Preferences {
     throw new Error("invalid_max_price");
   }
   if (value.exit_endpoint !== "d5_close" && value.exit_endpoint !== "d6_open") throw new Error("invalid_exit_endpoint");
+  const shares = value.base_shares ?? 100, cost = value.cost_percent ?? 0;
+  if (typeof shares !== "number" || !Number.isSafeInteger(shares) || shares < 100 || shares > 1000000 || shares % 100) throw new Error("invalid_base_shares");
+  if (typeof cost !== "number" || !Number.isFinite(cost) || cost < 0 || cost > 10 || decimalPlaces(cost) > 2) throw new Error("invalid_cost_percent");
   const n = value.notifications;
-  const keys: NotificationKind[] = ["new_detection", "reminder", "result"];
-  if (!isObject(n) || Object.keys(n).length !== keys.length || keys.some(k => typeof n[k] !== "boolean")) {
+  const keys = ["new_detection", "reminder"];
+  if (!isObject(n) || Object.keys(n).some(k => !keys.includes(k) && !(migrateStored && k === "result" && typeof n.result === "boolean")) || keys.some(k => typeof n[k] !== "boolean")) {
     throw new Error("invalid_notifications");
   }
-  return { max_price: cap as number | null, exit_endpoint: value.exit_endpoint,
-    notifications: { new_detection: n.new_detection as boolean, reminder: n.reminder as boolean, result: n.result as boolean } };
+  return { max_price: cap as number | null, exit_endpoint: value.exit_endpoint, base_shares: shares, cost_percent: cost,
+    notifications: { new_detection: n.new_detection as boolean, reminder: n.reminder as boolean } };
 }
 
 export type VerifiedMemberLink = {
@@ -142,6 +149,9 @@ export function evaluateNotification(
     event.kind === "new_detection" ? event.detection_date : endpoint?.date].join(":");
   const result = (status: NotificationDecision["status"], reason: string, message: string | null = null): NotificationDecision =>
     ({ status, reason, event_key: key, message });
+  // Historical result candidates remain in the delivery ledger for auditing.
+  // This feature has been removed; no preference can opt back into it.
+  if (event.kind === "result") return result("suppressed", "result_notifications_removed");
   if (!preferences.notifications[event.kind]) return result("suppressed", "notification_off");
   if (membership.status !== "paid") return result("held", membership.reason);
   const checkedAt = timestamp(membership.checked_at);
@@ -159,13 +169,5 @@ export function evaluateNotification(
     if (jst.slice(0, 10) !== endpoint.date || jst.slice(11, 13) !== "08") return result("suppressed", "outside_reminder_window");
     return result("would_send", "confirmation_day_reminder", "今日は選択した価格の確定予定日です。実価格はまだ確定していません。");
   }
-  if (jst.slice(0, 10) < endpoint.date || endpoint.status !== "verified" ||
-    typeof endpoint.actual_price !== "number" || !Number.isFinite(endpoint.actual_price) || endpoint.actual_price <= 0 ||
-    !endpoint.source || !/^[0-9a-f]{64}$/.test(endpoint.source) || !Number.isFinite(timestamp(endpoint.fetched_at)) || timestamp(endpoint.fetched_at) > nowMs) {
-    return result("held", "endpoint_price_unconfirmed");
-  }
-  const readyTime = preferences.exit_endpoint === "d5_close" ? (endpoint.date < "2024-11-05" ? "15:00" : "15:30") : "09:00";
-  if (jst.slice(0, 10) === endpoint.date && jst.slice(11, 16) < readyTime) return result("held", "endpoint_market_time_pending");
-  if (timestamp(endpoint.fetched_at) < Date.parse(`${endpoint.date}T${readyTime}:00+09:00`)) return result("held", "endpoint_observation_too_early");
-  return result("would_send", "confirmed_price_result", "選択した実価格の取得が確定しました。");
+  return result("suppressed", "unsupported_notification");
 }

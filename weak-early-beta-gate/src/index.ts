@@ -4,7 +4,7 @@ import sharedGate, { reportIdentity } from "./shared-report-gate";
 import { cloudApi, currentMembership, type CloudEnv } from "./cloud-api";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
-const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init)\.js$/;
+const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init|scenarios)\.js$/;
 const BUNDLE_RE = /^\/weak_early_beta_data_(full|free)_(latest|analytics|silence|dive|shadow|fusion|balance|guide)_([a-f0-9]{16})_(\d{4})\.json$/;
 type SharedRequest = Parameters<typeof sharedGate.fetch>[0];
 

@@ -458,7 +458,7 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             for s in selectors
         )
         units = len(selectors)
-        badges += f'<small>モード別配分: {units}口（{units * 100}株）</small>'
+        badges += f'<small>一致した条件: {units}個</small>'
         raw_name = first.get("company_name", "")
         name = "" if pd.isna(raw_name) else str(raw_name).strip()
         if name.lower() == "nan":
@@ -530,27 +530,24 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         if not is_masked and str(first.get("price_basis", "")).startswith("LEGACY_"):
             entry_display += "<small>保存時の調整価格参考値</small>"
             exit_display += "<small>保存時の調整価格参考値</small>"
-        d6_day = _date(first.get("sixth_xtks_exit_date"))
+        from .bank_calendar import add_bank_business_days
+        d6_session = pd.Timestamp(first.get("sixth_xtks_exit_date"))
+        if pd.isna(d6_session):
+            d6_session = pd.Timestamp(add_bank_business_days(signal_date.date(), 6))
+        d6_day = _date(d6_session)
         d6_price = _price(first.get("sixth_xtks_exit_open")) if d6_verified else ""
-        d6_status = "取得・確定済み" if d6_verified else "未取得・未確定"
-        d6_stamp = str(first.get("sixth_xtks_exit_observed_at", "") or "") if d6_verified else ""
-        try:
-            d6_provenance = json.loads(str(first.get("sixth_xtks_exit_provenance_json", "{}")))
-        except (TypeError, ValueError):
-            d6_provenance = {}
-        stamp_label = "検証資料の取込時刻" if isinstance(d6_provenance, dict) and d6_provenance.get("provenance_kind") == "REVIEWED_RESEARCH_NOMINAL_V1" else "実価格の記録時刻"
-        stamp_html = f"<small>{stamp_label}: {html.escape(d6_stamp)}</small>" if d6_stamp else ""
-        d6_display = "会員限定" if is_masked else f"{d6_day}<small>{d6_price}</small><small>{d6_status}</small>{stamp_html}"
-        signal_display = "会員限定" if is_masked else (_price(signal_price) if signal_verified else "未検証")
+        d6_status = "価格あり" if d6_verified else ("価格待ち" if d6_session > pd.Timestamp.now(tz="Asia/Tokyo").tz_localize(None).normalize() else "未取得")
+        d6_display = "会員限定" if is_masked else f"{d6_day}<small>{d6_price}</small><small>{d6_status}</small>"
+        signal_display = "会員限定" if is_masked else (_price(signal_price) if signal_verified else "未取得")
         sixth_return = pd.to_numeric(first.get("sixth_gross_return"), errors="coerce")
         sixth_cash = pd.to_numeric(first.get("sixth_one_hundred_shares_pl_yen"), errors="coerce")
         d6_economic = sixth_economics_verified(first)
-        d6_result_status = "確定" if d6_economic else ("価格確定・損益未確定" if d6_verified else "未確定")
+        d6_result_status = "結果あり" if d6_economic else ("損益を確認中" if d6_verified else ("保有中" if str(first["status"]) == "entered" else "寄付待ち"))
         acquired_date = first.get('sixth_entry_date') if d6_economic else first.get('entry_date')
         acquired_open = first.get('sixth_entry_open') if d6_economic else first.get('entry_open')
         d6_entry_display = "会員限定" if is_masked else (
             f"{_date(acquired_date)}<small>{_price(acquired_open)}</small>"
-            if pd.notna(acquired_open) else "未検証"
+            if pd.notna(acquired_open) else "未取得"
         )
         d6_return_display = _pct(sixth_return * 100, True) if d6_economic and pd.notna(sixth_return) else ""
         d6_cash_display = _yen(sixth_cash) if d6_economic and pd.notna(sixth_cash) else ""
@@ -561,8 +558,15 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         )
         actions += chart_action
         export_fields = {
+            "name": name,
+            "reference": str(reference_only).lower(),
+            "historical": str(str(first.get("source_scope", "")).startswith("EXACT_CANONICAL")).lower(),
             "entry-date": _date(first.get("entry_date")),
             "entry-open": first.get("entry_open"),
+            "entry-cost": first.get("entry_cost_yen"),
+            "entry-shares": first.get("entry_shares"),
+            "d5-proceeds": first.get("exit_proceeds_yen"),
+            "d5-exit-shares": first.get("exit_shares"),
             "d5-date": _date(first.get("fifth_xtks_exit_date")),
             "d5-close": first.get("fifth_xtks_exit_close"),
             "d5-return": first.get("gross_return"),
@@ -572,6 +576,10 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             "d6-status": d6_status,
             "d6-entry-date": _date(acquired_date) if pd.notna(acquired_open) else None,
             "d6-entry-open": acquired_open,
+            "d6-entry-cost": first.get("sixth_entry_cost_yen") if d6_economic else first.get("entry_cost_yen"),
+            "d6-entry-shares": first.get("sixth_entry_shares") if d6_economic else first.get("entry_shares"),
+            "d6-proceeds": first.get("sixth_exit_proceeds_yen") if d6_economic else None,
+            "d6-exit-shares": first.get("sixth_exit_shares") if d6_economic else None,
         }
         export_attributes = " ".join(
             f'data-{key}="{html.escape(str(value), quote=True)}"'
@@ -588,21 +596,27 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             f'{export_attributes} '
             f'data-symbol="{"" if is_masked else html.escape(str(symbol))}" data-search="{html.escape(search_text)}"'
             f'{" hidden" if initial_hidden else ""}>'
-            f'<td data-label="シグナル日">{signal_date:%Y-%m-%d}</td>'
-            f"<th><span class=\"symbol\">{html.escape(display_symbol)}</span> {html.escape(display_name)}<div class=\"actions\">{actions}</div></th>"
-            f'<td data-label="該当モード">{badges}</td><td data-label="状態"><span data-exit-key="d5_close" class="status {status_class}">{status}</span><span data-exit-key="d6_open" class="status {"mature" if d6_economic else "pending"}" hidden>{d6_result_status}</span>{reference_note}</td>'
-            f'<td data-label="検出日の実終値">{signal_display}</td>'
-            f'<td data-label="エントリー"><span data-exit-key="d5_close">{entry_display}</span><span data-exit-key="d6_open" hidden>{d6_entry_display}</span></td>'
-            f'<td data-label="検出から5営業日後 終値">{exit_display}</td>'
-            f'<td data-label="検出から6営業日後 始値">{d6_display}</td>'
-            f'<td data-label="騰落率" class="number"><span data-exit-key="d5_close">{_pct(gross.iloc[0] * 100, True) if not gross.empty else ""}</span><span data-exit-key="d6_open" hidden>{d6_return_display}</span>{reference_marker}</td>'
-            f'<td data-label="100株損益" class="number"><span data-exit-key="d5_close">{_yen(cash.iloc[0]) if not cash.empty else ""}</span><span data-exit-key="d6_open" hidden>{d6_cash_display}</span>{reference_marker}</td>'
+            '<td colspan="5" class="history-record">'
+            '<div class="history-main">'
+            f'<div class="history-company"><strong><span class="symbol">{html.escape(display_symbol)}</span> {html.escape(display_name)}</strong></div>'
+            f'<div data-label="検出日">{signal_date:%Y-%m-%d}</div>'
+            f'<div data-label="検出日 終値">{signal_display}</div>'
+            f'<div data-label="保有状況"><span data-exit-key="d5_close" class="status {status_class}">{"結果あり" if status == "確定" else status}</span><span data-exit-key="d6_open" class="status {"reference" if reference_only else "mature" if d6_economic else "pending"}" hidden>{"参考値・集計対象外" if reference_only else d6_result_status}</span></div>'
+            f'<div data-label="選択中の成績" class="number"><strong data-scenario-pl>{_yen(cash.iloc[0]) if not cash.empty else "—"}</strong><small data-scenario-return>{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}</small>{reference_marker}</div>'
+            '</div><details class="history-expand"><summary>詳細を見る</summary><div class="history-detail-grid">'
+            f'<div><b>買付日・始値</b><span data-exit-key="d5_close">{entry_display}</span><span data-exit-key="d6_open" hidden>{d6_entry_display}</span><small data-scenario-shares>100株</small></div>'
+            f'<div><b>検出から5営業日後 終値</b>{exit_display}</div>'
+            f'<div><b>検出から6営業日後 始値</b>{d6_display}</div>'
+            f'<div><b>一致した条件</b>{badges}</div>'
+            '</div>' + reference_note + f'<div class="actions">{actions}</div></details></td>'
             "</tr>"
         )
     return "".join(rows)
 
 
 REPORT_CSS = """
+#detection-table{width:100%;min-width:0;table-layout:fixed}#detection-table thead th:nth-child(1){width:34%}#detection-table thead th:nth-child(n+2){width:16.5%}
+
 #cloud-notification-settings label,.cloud-notification-settings label{display:block;margin:12px 0}
 #cloud-notification-settings input[type="checkbox"],.cloud-notification-settings input[type="checkbox"]{width:auto;min-width:20px;min-height:20px;margin-right:10px;vertical-align:middle}
 #cloud-notification-settings summary,.cloud-notification-settings summary{min-height:44px;padding:10px 0;cursor:pointer;font-weight:700}
@@ -725,7 +739,7 @@ def _page_shell(title: str, current: str, body: str) -> str:
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20260923-1"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-interactions.js?v=20261004-4" defer></script></head>
+<script src="./weak-early-beta-scenarios.js?v=20261005-1" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-1" defer></script></head>
 <body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
@@ -961,14 +975,14 @@ def _history_section(
         + '<div class="history-details"><p class="history-heading">条件に合う最新20件を表示。検索・日付・モード指定は検出履歴内の絞り込みです。価格上限と確定日は全体設定と共通です。</p>'
         '<div class="filters"><label class="filter-field"><span>銘柄</span><input id="symbol-filter" type="search" autocomplete="off" '
         'aria-label="証券コードまたは銘柄名で検索" placeholder="証券コード・銘柄名で検索"></label>'
-        '<label class="filter-field"><span>開始日</span><input id="history-date-from" type="date" aria-label="シグナル日の開始日"></label>'
-        '<label class="filter-field"><span>終了日</span><input id="history-date-to" type="date" aria-label="シグナル日の終了日"></label>'
+        '<label class="filter-field"><span>開始日</span><input id="history-date-from" type="date" aria-label="検出日の開始日"></label>'
+        '<label class="filter-field"><span>終了日</span><input id="history-date-to" type="date" aria-label="検出日の終了日"></label>'
         + mode_filter
         + '<button class="clear-search" id="clear-search" type="button">検索をクリア</button>'
         '<output class="result-count" id="search-result-count" aria-live="polite"></output></div>'
         '<noscript><p class="note">検索機能を使うにはJavaScriptを有効にしてください。</p></noscript>'
         '<button id="cloud-history-export-csv" type="button">検出履歴CSV</button>'
-        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th>シグナル日</th><th>銘柄</th><th>該当モード</th><th>状態</th><th>検出日の実終値</th><th>検出から1営業日後 始値</th><th>検出から5営業日後 終値</th><th>検出から6営業日後 始値</th><th>騰落率</th><th>100株損益</th></tr></thead>'
+        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th colspan="5"><div class="history-main"><div>銘柄</div><div>検出日</div><div>検出日 終値</div><div>保有状況</div><div class="number">選択中の成績</div></div></th></tr></thead>'
         f'<tbody>{_detection_rows(ledger, mask_pending=mask_pending)}</tbody></table></div>'
         '<div class="history-pagination"><button class="load-more" id="history-load-more" type="button">次の20件を表示</button>'
         '<button class="collapse-results" id="history-collapse" type="button" hidden>最初の20件に戻す</button></div>'
@@ -1089,7 +1103,6 @@ def _research_plot(rows: list[dict], *, category: str, fields: tuple[str, ...], 
                 # the complete aggregate series is available in the table.
                 if index not in {0, len(rows)-1} and index % max(1, len(rows)//10):
                     continue
-                parts.append(f'<circle class="research-point" cx="{xpos:.1f}" cy="{y(value):.1f}" r="3.5" tabindex="0"><title>{tooltip}</title></circle>')
             else:
                 bar_width = min(54, plot_w / len(rows) * .65 / len(fields))
                 x = xpos + (field_index - len(fields)/2) * bar_width
@@ -1165,7 +1178,7 @@ def _render_analytics_body(
 <section class="panel research-card" id="payoff-structure"><h2>勝ち・負けと加重集計</h2>{_research_table(['指標','一律100株','条件数×100株'], payoff_rows)}<p class="research-footnote">勝ちは騰落率が0より大きい取引。0%は勝率の分母に含みます。数量加重の平均・中央値・勝率は100株口数で重みを付けます。</p><details class="research-data"><summary>勝ち負けの幅を比較（条件数×100株）</summary>{_payoff_structure(ledger)}</details></section>
 <section class="panel research-card"><h2>条件の重なり別の内訳</h2>{_research_table(['一致条件数','確定した検出','平均騰落率','中央値','勝率','一律100株の損益'], overlap_rows)}</section>
 <section class="panel research-card"><h2>検出履歴・取引の明細</h2><p>銘柄・検出日・条件で検索する明細と履歴CSVは、<a href="./weak_early_beta_latest.html#history">ダッシュボードの検出履歴</a>から確認できます。価格上限・確定日・検出年は共通の表示設定です。</p><p class="research-footnote">{html.escape(REFERENCE_POLICY_NOTE)}</p></section>
-<section class="panel research-card"><h2>記録の範囲と来歴</h2>{_research_table(['検出年','過去再構成','実運用観測','その他'], coverage_rows)}<p class="research-footnote">成績対象の検出数です。過去再構成は実運用の観測とは異なり、2026年分も検証時点で結果が既知の過去期間です。2022年の原データは保持したまま表示・集計から除外しています。5営業日後・6営業日後とも、翌営業日の実始値で取得した100株・コスト0を共通基準とし、それぞれの確定日までの分割・併合を反映します。原台帳の5営業日後経済は凍結したまま、独立した検証済み実価格証跡から表示用に計算しています。証跡が不足する損益は比較・集計に含めません。</p></section>
+<p class="note">過去データによる試算を含みます。2026年の過去データも、結果が分かった期間の試算です。</p>
 <section class="panel research-card" id="growth"><details class="research-data"><summary>必要資金を起点にしたトータルの資産推移</summary><p class="note">{html.escape(TOTAL_EQUITY_EXPLANATION)}</p><div class="chart-grid"><div data-cloud-allocation="unique">{_equity_chart(unique_ledger, '銘柄均等', 'unique', UNIQUE_EXPLANATION, generated.tz_localize(None))}</div><div data-cloud-allocation="stacked">{_equity_chart(ledger, 'モード別積み上げ', 'stacked', STACKED_EXPLANATION, generated.tz_localize(None))}</div></div></details>{''.join(detailed_tables)}</section>
 {_mode_pages_section(generated)}</div>'''
 
@@ -1200,8 +1213,6 @@ def _scope_definitions(source: pd.DataFrame) -> dict[str, dict]:
     dates = pd.to_datetime(source.get("signal_date", pd.Series(dtype="object")), errors="coerce")
     years = sorted(int(year) for year in dates.dt.year.dropna().unique() if year != 2022)
     scopes = {"all": {"label": "記録期間すべて", "years": None}}
-    if len(set(years) & {2023, 2024, 2025}) > 1 and any(year > 2025 for year in years):
-        scopes["2023_2025"] = {"label": "2023–2025年", "years": [2023, 2024, 2025]}
     scopes.update({str(year): {"label": f"{year}年", "years": [year]} for year in years})
     return scopes
 
@@ -1209,46 +1220,23 @@ def _scope_definitions(source: pd.DataFrame) -> dict[str, dict]:
 def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
     options = "".join(f'<option value="{html.escape(key)}">{html.escape(scope["label"])}</option>' for key, scope in (scopes or {"all": {"label": "記録期間すべて"}}).items())
     return '''<section class="panel cloud-settings" aria-label="表示・集計の設定">
-<h2>表示・集計の設定</h2><div class="filters">
+<h2>表示と試算の設定</h2><div class="filters">
 <label class="filter-field"><span>検出年</span><select id="cloud-year-scope">''' + options + '''</select></label>
-<label class="filter-field"><span>検出日の実終値の上限</span><select id="cloud-price-preset">
+<label class="filter-field"><span>検出日 終値の上限</span><select id="cloud-price-preset">
 <option value="1000" selected>1,000円以下</option>
 <option value="2000">2,000円以下</option><option value="3000">3,000円以下</option>
 <option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
 <label class="filter-field" id="cloud-price-custom-field" hidden><span>任意の上限（円・小数2桁まで）</span><input id="cloud-price-custom" type="number" step="0.01" min="0.01" inputmode="decimal" value="1000"></label>
-<label class="filter-field"><span>確定日の選択</span><select id="cloud-exit-endpoint"><option value="d5_close">検出から5営業日後 終値</option><option value="d6_open">検出から6営業日後 始値</option></select></label>
-<label class="filter-field"><span>グラフ・集計CSVの株数方式</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">一律100株</option><option value="stacked">条件数×100株</option></select></label>
-<button id="cloud-research-reset" type="button">リセット</button><button id="cloud-settings-save" type="button">設定を保存</button><button id="cloud-export-csv" type="button">集計CSV</button></div>
+<label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">検出から5営業日後 終値</option><option value="d6_open">検出から6営業日後 始値</option></select></label>
+<label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">1銘柄に同じ株数</option><option value="stacked">一致した条件の数だけ買付</option></select></label>
+<label class="filter-field"><span>基本の買付株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label><label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label><button id="cloud-research-reset" type="button">リセット</button><button id="cloud-settings-save" type="button">設定を保存</button><button id="cloud-export-csv" type="button">集計CSV</button></div>
 <p id="cloud-settings-status" role="status" aria-live="polite">初期値は実終値1,000円以下・検出から5営業日後 終値です。</p>
-<p class="note">価格上限と確定日は、表示・集計・CSV・通知設定で共通です。検出モデル自体は直前観測日（通常は前営業日）の実終値1,000円以下を対象としています。表示上限を引き上げても、当初未検出の銘柄は追加されません。上限を指定すると実終値が未検証の履歴は除外し、上限なしでは残します。</p>
+<p class="note">上限は検出済みの銘柄を絞ります。検出対象は広がりません。終値をまだ取得できていない銘柄は、上限ありでは表示しません。</p><p class="note">コストは買付額と売却額のそれぞれにかかります。配当・税金は含みません。</p><output id="cloud-applied-summary" class="scenario-apply" aria-live="polite"></output>
 <div id="cloud-notification-settings"></div></section>'''
 
 
 def _provenance_notice(source: pd.DataFrame, selected: pd.DataFrame, exit_key: str, *, missing: int | None = None, compact: bool = False) -> str:
-    if missing is None:
-        unique = combined_detections(source)
-        missing = int(verified_signal_prices(unique).isna().sum())
-    selected_unique = combined_detections(selected)
-    scopes = selected_unique.get("source_scope", pd.Series("", index=selected_unique.index)).fillna("").astype(str)
-    historical = int(scopes.str.startswith("EXACT_CANONICAL").sum())
-    forward = int(scopes.str.startswith("FORWARD").sum())
-    other = len(selected_unique) - historical - forward
-    if compact:
-        return (
-            '<div class="research-notice research-provenance">'
-            f'<strong>{ENDPOINT_LABELS[exit_key]}</strong> · 過去再構成 {historical:,}件・実運用観測 {forward:,}件・その他 {other:,}件。'
-            '過去再構成は2026年分も結果既知の期間です。2022年は表示・集計から除外し、原データを保持しています。'
-            f'<details class="research-data"><summary>価格の来歴と未検証の記録</summary><p>この検出年範囲で実終値が未検証: <strong data-unknown-price-count>{missing:,}件</strong>。上限指定時は除外しています。</p>'
-            '<p>5営業日後・6営業日後とも、検出から1営業日後の実始値で取得した100株・コスト0を共通基準とし、各確定日までの分割・併合を反映します。5営業日後の保存済み原台帳は変更せず、検証済み実価格から表示用に別計算しています。証跡が不足する損益は比較・集計に含めず、0円や別日の価格で補いません。</p></details></div>'
-        )
-    return (
-        '<section class="panel cloud-provenance"><h2>検出履歴の範囲と価格の来歴</h2>'
-        f'<p>選択した確定日: <strong>{ENDPOINT_LABELS[exit_key]}</strong>。買付の基準は検出から1営業日後の始値です。</p>'
-        f'<p>表示対象 {len(selected_unique):,}件（過去再構成 {historical:,}件・実運用観測 {forward:,}件・その他 {other:,}件）。'
-        f'このページの履歴のうち検出日の実終値が未検証: <strong data-unknown-price-count>{missing:,}件</strong>。</p>'
-        '<p class="note">2022年は表示・集計から除外しています。原データは保持しています。過去再構成と実運用の観測は異なる記録です。2026年の過去再構成分も、検証時点で結果が既知の過去期間です。</p>'
-        '<p class="note">5営業日後・6営業日後とも、検出から1営業日後の実始値で取得した100株・コスト0を共通基準とし、各確定日までの分割・併合を反映します。5営業日後の保存済み原台帳は変更せず、検証済み実価格の独立証跡から表示用に別計算しています。未取得・未検証の価格や企業行動は比較・集計に含めず、0円や別日の価格で補いません。</p></section>'
-    )
+    return '<p class="note">過去データによる試算と、運用開始後の検出記録を含みます。過去の成績は将来の利益を保証しません。</p>'
 
 
 def _json_records(frame: pd.DataFrame) -> list[dict]:
@@ -1431,25 +1419,25 @@ def _variant_page(
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     # write_report owns a local cache, and the full key also prevents accidental
     # reuse across audiences, source frames or generation dates by other callers.
-    cache = _variant_cache if _variant_cache is not None else {}
-    digest = hashlib.sha256()
-    digest.update(repr([(str(column), str(dtype)) for column, dtype in source.dtypes.items()]).encode("utf-8"))
-    digest.update(pd.util.hash_pandas_object(source, index=True).values.tobytes())
-    cache_key = (current, "released" if mask_pending else "full", generated.isoformat(), digest.hexdigest())
-    if cache_key not in cache:
-        cache[cache_key] = _aggregate_variant_payload(source, generated, current, _summary_cache=cache.setdefault("aggregate-summary-cache", {}),
-            bundle_assets=cache.get("bundle-assets"), bundle_context={"snapshot": hashlib.sha256(repr(cache_key).encode("utf-8")).hexdigest()[:16],
-            "audience": "free" if mask_pending else "full", "page": "latest" if current == "home" else selector_info(current).short_name.lower() if current in SELECTOR_ORDER else current})
-    default_html, serialized = cache[cache_key]
-    history = "" if current == "analytics" else _history_section(source, include_mode_filter=current == "home", mask_pending=mask_pending)
-    scope_notice = (
-        '<section class="panel free-scope"><p><strong>無料版の表示範囲:</strong> '
-        '検出から6営業日後の実始値を取得・検証済みの検出履歴のみを表示・集計します。'
-        '未解禁の取引は一覧・グラフ・集計・CSVに含みません。'
-        '<a href="/purchase">有料会員のアクセスについて</a></p></section>'
-        if mask_pending else ""
-    )
-    body = scope_notice + _settings_panel(_scope_definitions(source)) + f'<div id="cloud-analytics-content">{default_html}</div>' + history + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>'
+    # Calculate from audience-visible, validated presentation economics only.
+    # Never embed raw ledger/provenance or a grid of all setting combinations.
+    selected = select_report_view(source)
+    metrics, monthly = build_presentation_metrics(selected, as_of=generated.tz_localize(None))
+    if current == "home":
+        default_html = _render_dashboard_body(selected, metrics, generated, monthly)
+    elif current == "analytics":
+        default_html = _render_analytics_body(selected, metrics, generated, monthly)
+    else:
+        default_html = _render_mode_body(selected, metrics, monthly, generated, current)
+    default_html = re.sub(r'<section class="panel" id="conditions">.*?</section>', '', default_html, flags=re.S)
+    scopes = _scope_definitions(source)
+    serialized = json.dumps({"version": 2, "page": current, "scopes": scopes,
+        "variants": {}, "generated": generated.isoformat(),
+        "modeNames": {key: selector_info(key).display_name for key in SELECTOR_ORDER}}, ensure_ascii=False).replace('<', '\u003c')
+    history = _history_section(source, include_mode_filter=current == "home", mask_pending=mask_pending)
+    body = (f'<div id="cloud-analytics-content">{default_html}</div>'
+        + _settings_panel(scopes) + history + _mode_pages_section(generated, include_updated=False)
+        + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>')
     title = "ダッシュボード" if current == "home" else "アナリティクス" if current == "analytics" else selector_info(current).display_name
     return _page_shell(title, current, body)
 
@@ -1493,25 +1481,25 @@ def render_guide(generated_at: pd.Timestamp) -> str:
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>エントリー</small><b>翌営業日寄付</b></div><div class="kpi"><small>評価</small><b>検出から5営業日後 終値 / 検出から6営業日後 始値</b></div><div class="kpi"><small>売買単位</small><b>100株</b></div><div class="kpi"><small>コスト</small><b>0%試算</b></div></div></aside></section>
+<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>翌営業日寄付</b></div><div class="kpi"><small>売却価格</small><b>検出から5営業日後 終値 / 検出から6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
 <section class="panel"><h2>無料版の表示範囲</h2><p>無料版は検出から6営業日後の実始値を取得・検証済みの検出履歴のみを表示・集計します。未解禁の取引は一覧・グラフ・集計・CSVに含みません。表示期間や最新検出日も、この公開済み履歴の範囲を示します。有料会員向けの新着履歴とは集計対象が異なるため、成績や件数が異なる場合があります。</p></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3>ダッシュボード</h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
-<article class="guide-card"><h3>アナリティクス</h3><p>Cloud全体の過去成績を見るページです。100株ずつ取引した場合の損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
+<article class="guide-card"><h3>アナリティクス</h3><p>Cloud全体の過去成績を見るページです。選択した株数とコストで試算した損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
 <article class="guide-card"><h3>5つのモード</h3><p>モードは、銘柄を選ぶ「見方の違い」です。Shadow、Dive、Silence、Fusion、Balanceを押すと、それぞれの成績と検出銘柄を確認できます。</p></article>
-<article class="guide-card"><h3>検出履歴</h3><p>条件に当てはまった銘柄の一覧です。最初は新しい順に20件を表示し、銘柄名・証券コード・日付で絞り込めます。「さらに20件表示」で続きを確認できます。</p></article>
+<article class="guide-card"><h3>検出履歴</h3><p>条件に当てはまった銘柄の一覧です。最初は新しい順に20件を表示し、銘柄名・証券コード・日付で絞り込めます。「次の20件を表示」で続きを確認できます。</p></article>
 <article class="guide-card"><h3>ファンダ分析</h3><p>会社がどんな事業をしているか、検出時点までに公表されていた決算やお知らせ、その内容から読み取れる注目点と注意点をまとめています。資料名を押すと根拠となる開示資料を確認できます。</p></article>
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
-<article class="guide-card"><h3>100株損益</h3><p>成績集計対象の銘柄を毎回100株購入した、と仮定した損益の合計です。分割・併合を確認した取引は、購入原価を固定し、変わった保有株数で売却額を計算します。税金や手数料は入れていません。</p></article>
-<article class="guide-card"><h3>対象銘柄と株式分割</h3><p>東証の対象銘柄を広く取得し、直前観測日（通常は前営業日）の実終値1,000円以下などの条件で検出対象を選びます。表示設定の価格上限は検出当日の検証済み実終値で判定します。株価・出来高の条件には各営業日当時の値を使い、基準を確認できないデータから成績を確定させません。</p></article>
-<article class="guide-card"><h3>保存済みの過去成績</h3><p>保存済みの過去成績には、当初の調整済み株価で100株とした参考値も含まれます。この円損益と必要資金は、当時の実際の100株へ復元した値とは異なる場合があります。</p></article>
-<article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、100株ずつ取引するために最も多く必要だった資金の目安です。</p></article>
+<article class="guide-card"><h3>株数とコスト</h3><p>基本株数は100株ずつ変更できます。売買コストは買付額と売却額の両方に、指定した割合でかかります。損益・グラフ・CSVには同じ設定を使います。分割・併合があった場合は、変わった保有株数で売却額を計算します。配当・税金は含みません。</p></article>
+<article class="guide-card"><h3>株価の上限</h3><p>検出日 終値が上限以下の検出銘柄を表示します。検出済みの銘柄を絞る設定なので、上限を引き上げても検出対象は広がりません。終値が未取得の記録は上限ありでは除外し、上限なしでは表示します。</p></article>
+<article class="guide-card"><h3>過去の成績</h3><p>過去データによる試算と、運用開始後の記録を含みます。2026年の過去データも、結果が分かった期間の試算です。価格を取得できていない取引の損益は表示しません。</p></article>
+<article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、選択した株数とコストで取引するために最も多く必要だった資金の目安です。</p></article>
 <article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
 <article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、成績集計対象の取引のうち利益になった割合です。損益0%の取引も勝率の分母に含みます。騰落率は、買ったと仮定した価格から売値まで何%動いたかを表します。</p></article>
 <article class="guide-card"><h3>参考値・集計対象外</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
-<section class="panel"><h2>2つの合算方法</h2><div class="guide-grid"><article class="guide-card"><h3>モード別積み上げ</h3><p>{html.escape(STACKED_EXPLANATION)}</p></article><article class="guide-card"><h3>銘柄均等</h3><p>{html.escape(UNIQUE_EXPLANATION)}</p></article></div><p class="note">複数モードへの同時該当は、将来の値動きを保証するものではありません。</p></section>
+<section class="panel"><h2>2つの合算方法</h2><div class="guide-grid"><article class="guide-card"><h3>モード別積み上げ</h3><p>一致した条件の数に応じて買付株数を増やします。基本100株なら、3条件に一致した銘柄は300株で試算します。</p></article><article class="guide-card"><h3>銘柄均等</h3><p>同じ日の同じ銘柄は1件として、基本株数で買い付けます。複数の条件に一致しても株数は増やしません。</p></article></div><p class="note">複数モードへの同時該当は、将来の値動きを保証するものではありません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
@@ -1534,6 +1522,8 @@ def write_report(
     if apply_reviewed_prices:
         ledger, _overlay_audit = apply_reviewed_endpoint_overlay(ledger, load_reviewed_endpoint_overlay())
         ledger, _d5_overlay_audit = apply_reviewed_d5_overlay(ledger)
+        from .forward_price_overlay import apply_reviewed_forward_close
+        ledger = apply_reviewed_forward_close(ledger)
     ledger = annotate_entry_feasibility(ledger)
     default_view = select_report_view(ledger)
     metrics = build_metrics(default_view, as_of=generated.tz_localize(None))
@@ -1614,3 +1604,14 @@ def write_report(
                 raise ValueError("unsafe stale Cloud bundle path")
             candidate.unlink()
     return metrics
+
+
+# Last rules deliberately override the legacy wide-table/mobile cell layout.
+REPORT_CSS += """
+main{min-width:0}.history-table-wrap{overflow:visible}#detection-table{min-width:0;table-layout:fixed;width:100%}.history-main{display:grid;grid-template-columns:minmax(0,2.05fr) repeat(4,minmax(0,1fr));gap:12px;align-items:center}.history-main>div{min-width:0;white-space:normal;overflow-wrap:anywhere}.history-main small{display:block}.history-company strong{font-size:15px}.history-record{white-space:normal!important;padding:14px!important}.history-expand summary{cursor:pointer;min-height:44px;padding:10px 0;color:var(--blue);font-weight:700}.history-detail-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:14px;border:1px solid var(--line);border-radius:12px}.history-detail-grid>div{min-width:0;overflow-wrap:anywhere}.history-detail-grid b,.history-detail-grid small{display:block}.history-detail-grid b{font-size:12px;color:var(--muted);margin-bottom:8px}.history-expand .reference-note{max-width:none;width:100%;padding:14px;font-size:13px;background:color-mix(in srgb,var(--warn) 12%,var(--panel-solid));border-radius:8px}.history-main .status{white-space:normal}.history-expand .actions{margin-top:14px}.scenario-details{margin-top:20px}.scenario-details summary{min-height:44px;cursor:pointer;font-weight:700}.scenario-table{width:100%;min-width:0;table-layout:fixed}.scenario-table td,.scenario-table th{white-space:normal;overflow-wrap:anywhere}.scenario-table td.number{text-align:right}.scenario-empty{padding:20px}.scenario-chart{width:100%;height:auto;display:block}.scenario-pair{display:grid;grid-template-columns:1fr 1fr;gap:20px}.scenario-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}.scenario-stats dt{font-size:12px;color:var(--muted)}.scenario-stats dd{margin:0;font-size:18px;font-weight:700}.scenario-profit{font-size:34px;font-weight:800}.scenario-apply{display:block;margin-top:12px;font-weight:700;color:var(--ink)}
+@media(max-width:760px){#detection-table thead{display:none}#detection-table tbody{display:grid;gap:12px}#detection-table tbody tr{display:block!important;padding:0!important}#detection-table tbody tr>.history-record{display:block!important}#detection-table tbody tr>.history-record:before{display:none}.history-main{grid-template-columns:1fr 1fr;gap:12px}.history-company{grid-column:1/-1}.history-main>div[data-label]::before{content:attr(data-label);display:block;font-size:11px;color:var(--muted)}.history-detail-grid{grid-template-columns:1fr 1fr}.history-record .number{text-align:left}.scenario-pair{grid-template-columns:1fr}.scenario-table{font-size:12px}.scenario-table td,.scenario-table th{padding:8px 5px}}
+@media(min-width:761px){#detection-table tbody tr>.history-record{display:table-cell!important}.history-table-wrap #detection-table thead{display:table-header-group}}
+#detection-table tbody tr[hidden]{display:none!important}
+#cloud-history-export-csv{min-height:44px;padding:9px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel-solid);color:var(--ink);font:inherit;cursor:pointer;margin:10px 0}
+@media(max-width:760px){.scenario-chart text{font-size:36px}.scenario-chart{min-height:130px}}
+"""

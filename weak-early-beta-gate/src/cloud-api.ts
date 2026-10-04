@@ -95,7 +95,7 @@ function json(body: unknown, status = 200): Response {
 async function preferencesFor(db: D1Database, memberId: string): Promise<Preferences> {
   const row = await db.prepare("SELECT preferences_json FROM cloud_member_preferences WHERE member_id = ?")
     .bind(memberId).first<{ preferences_json: string }>();
-  return row ? validatePreferences(JSON.parse(row.preferences_json)) : validatePreferences(DEFAULT_PREFERENCES);
+  return row ? validatePreferences(JSON.parse(row.preferences_json), true) : validatePreferences(DEFAULT_PREFERENCES);
 }
 function preferenceStatement(db: D1Database, memberId: string, preferences: Preferences): D1PreparedStatement {
   return db.prepare(`INSERT INTO cloud_member_preferences (member_id, preferences_json, updated_at)
@@ -143,7 +143,7 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
       return json({ ok: true, preferences: next, membership, delivery_mode: "dry_run", persistence: "server" });
     }
     if (path === "/api/cloud/push-subscriptions") {
-      const next = { ...preferences, notifications: { new_detection: false, reminder: false, result: false } };
+      const next = { ...preferences, notifications: { new_detection: false, reminder: false } };
       const saved = await env.CLOUD_DB.batch([
         preferenceStatement(env.CLOUD_DB, memberId, next),
         env.CLOUD_DB.prepare("UPDATE cloud_push_subscriptions SET revoked_at = ? WHERE member_id = ? AND revoked_at IS NULL")

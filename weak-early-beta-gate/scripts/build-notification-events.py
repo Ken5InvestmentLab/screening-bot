@@ -19,6 +19,7 @@ sys.path.insert(0, str(ROOT))
 import pandas as pd
 from weak_early_beta.bank_calendar import add_bank_business_days
 from weak_early_beta.endpoint_receipts import signal_actual_close_verified, sixth_endpoint_verified
+from weak_early_beta.forward_price_overlay import apply_reviewed_forward_close
 from weak_early_beta.ledger import read_ledger
 from weak_early_beta.trade_basis import is_frozen_trade
 
@@ -29,6 +30,10 @@ def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp) 
     if not re.fullmatch(r"[0-9a-f]{64}", source_sha256):
         raise ValueError("source ledger SHA-256 is required")
     today = as_of.tz_convert("Asia/Tokyo").date()
+    # Use the same reviewed signal-price view as the report. The observation
+    # cutoff below prevents this later receipt from being available earlier.
+    # The original ledger revision and canonical bytes remain unchanged.
+    ledger = apply_reviewed_forward_close(ledger)
     events = []
     seen_signals: dict[str, dict] = {}
     for _, row in ledger.iterrows():
@@ -86,9 +91,6 @@ def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp) 
             events.append({**base, "kind": "new_detection"})
         if today.isoformat() in {fifth, sixth}:
             events.append({**base, "kind": "reminder"})
-        if ((d6_verified and d6_observed.tz_convert("Asia/Tokyo").date() == today)
-            or (d5_verified and d5_observed.tz_convert("Asia/Tokyo").date() == today)):
-            events.append({**base, "kind": "result"})
     return events
 
 

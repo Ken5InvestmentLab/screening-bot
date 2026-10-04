@@ -15,8 +15,13 @@ authenticated Discord subject; clients cannot choose another member's ID.
 - `GET /api/cloud/preferences`: `{ok, preferences, membership, delivery_mode:
   "dry_run", persistence:"server"}`. `preferences` contains `max_price` (default
   `1000`; positive finite number, at most two decimal places; `null` means no cap),
-  `exit_endpoint` (`d5_close` or `d6_open`), and `notifications` with
-  `new_detection`, `reminder`, `result` booleans, all false initially.
+  `exit_endpoint` (`d5_close` or `d6_open`), `base_shares` (default `100`,
+  multiples of 100 from 100 to 1,000,000), `cost_percent` (default `0`,
+  0–10 with at most two decimal places, applied to both buy and sell notionals),
+  and `notifications` with `new_detection`, `reminder` booleans, both false initially.
+  Stored legacy preferences gain the new defaults and drop `result`. New writes
+  containing `result` are rejected; historical result candidates are suppressed
+  regardless of a previously saved opt-in.
 - `PUT /api/cloud/preferences`: the preferences object itself is the JSON body.
   Unknown properties are rejected. Any true notification flag requires a live
   paid membership check. Authenticated users can still turn everything off after
@@ -94,12 +99,18 @@ observation time and source SHA-256 into the Worker. Events must identify adapte
 `cloud-ledger-v1` and match the server row's source-ledger SHA-256. Upload/import of
 these private candidates to D1 is a remaining integration step, not a public API.
 
-At 08:00 JST the selected-day reminder says the price is not yet final. Result
-notifications require a verified positive real price, source digest and a valid
-observation time after the relevant market event. D5 close uses 15:30 JST since
-2024-11-05 (15:00 earlier), D6 open uses 09:00 JST. No D6 P/L is guessed from D5.
+At 08:00 JST the selected-day reminder says the price is not yet final. The
+adapter produces only new-detection and reminder candidates; it never produces
+result notifications. D5 close receipts use 15:30 JST since 2024-11-05 (15:00
+earlier), D6 open uses 09:00 JST. No D6 P/L is guessed from D5.
 Price caps use the verified detection-day actual close, inclusive of the boundary;
 unlimited bypasses the cap, as in the report. Missing prices never become zero.
+The adapter and report share the reviewed forward-close view for 4052 on
+2026-09-30 (1,149 yen). Its receipt was observed on 2026-10-04; an earlier
+`--as-of` cannot claim that later observation. Canonical ledger bytes and their
+source revision are preserved. Future daily runs record signal-close receipts
+through `attach_forward_rows` and `refresh_forward_endpoints`, independently of
+frozen D5 economics; this snapshot is not a substitute for ongoing daily capture.
 
 Detections are aggregated by signal date + stock across modes; inconsistent
 overlapping receipts stop export. The delivery key is member + unique stock

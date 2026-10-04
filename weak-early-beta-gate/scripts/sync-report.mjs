@@ -56,6 +56,7 @@ for (const name of pageStems.flatMap((stem) => [`${stem}.html`, `${stem}_free.ht
 }
 for (const scriptName of [
   "weak-early-beta-interactions.js",
+  "weak-early-beta-scenarios.js",
   "weak-early-beta-theme-init.js",
 ]) {
   await copyFile(path.join(reports, scriptName), path.join(publicDir, scriptName));

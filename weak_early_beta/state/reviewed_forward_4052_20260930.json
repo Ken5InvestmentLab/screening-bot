@@ -1,0 +1,19 @@
+{
+  "version": "CLOUD_FORWARD_SIGNAL_PRICE_SNAPSHOT_V1",
+  "provider": "Yahoo Finance",
+  "request": {
+    "ticker": "4052.T",
+    "start": "2026-09-29",
+    "end": "2026-10-03",
+    "actions": true,
+    "repair": true,
+    "auto_adjust": false
+  },
+  "observed_at": "2026-10-04T03:50:00.952009+00:00",
+  "source_sha256": "7baa3a8e025bd1b196de894cbc5c136c85921020fb791f207423e6efe5117b89",
+  "rows": 4,
+  "symbol": "4052",
+  "signal_date": "2026-09-30",
+  "actual_close": 1149.0,
+  "previous_session_close": 999.0
+}

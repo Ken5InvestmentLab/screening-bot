@@ -5,7 +5,7 @@ import unittest
 
 import pandas as pd
 
-from tests.test_weak_early_beta_report_preferences import actual_trade, payload
+from tests.test_weak_early_beta_report_preferences import actual_trade, payload, visible_prices
 from weak_early_beta.analytics import build_analytics
 from weak_early_beta.config import COMBINED_STACKED_ID, COMBINED_UNIQUE_ID
 from weak_early_beta.metrics import build_metrics
@@ -32,43 +32,31 @@ class ResearchPresentationTests(unittest.TestCase):
         cls.data = payload(cls.document)
 
     def test_reference_visual_sections_and_controls_are_real_aggregates(self):
-        body = self.data["variants"]["d5_close:731.29"]["html"]
-        for title in ("株数方式の比較", "累積確定損益", "必要資金・損失・集中度", "検出年別の損益", "株数増加だけの影響を確認", "検出条件の重なり", "重なり別の平均騰落率", "勝ち・負けと加重集計", "記録の範囲と来歴"):
+        selected = select_report_view(self.frame, 1000, "d5_close")
+        body = _render_analytics_body(selected, pd.DataFrame(), self.generated)
+        for title in ("株数方式の比較", "累積確定損益", "必要資金・損失・集中度", "検出年別の損益", "検出条件の重なり"):
             self.assertIn(title, body)
-        for control in ("cloud-year-scope", "cloud-allocation", "cloud-research-reset", "cloud-price-preset", "cloud-exit-endpoint"):
+        for control in ("cloud-year-scope", "cloud-allocation", "cloud-research-reset", "cloud-price-preset", "cloud-exit-endpoint", "cloud-base-shares", "cloud-cost-percent"):
             self.assertIn(f'id="{control}"', self.document)
-        self.assertIn('data-cloud-allocation="unique"', body)
-        self.assertIn('data-cloud-allocation="stacked"', body)
-        self.assertIn("表示母集団 <strong>2検出 / 3条件一致", body)
-        self.assertIn("結果が既知の過去期間", body)
-        self.assertIn("100株・コスト0を共通基準", body)
-        self.assertIn('weak_early_beta_latest.html#history', body)
-        self.assertNotIn('weak_early_beta_latest.html#detections', body)
-        self.assertIn("集計データを見る", body)
-        # Analytics aggregates contain no raw identity even on full assets.
+        self.assertIn('id="history"', self.document)
+        self.assertIn('class="history-expand"', self.document)
+        self.assertNotIn('<circle class="research-point"', body)
+        self.assertNotIn("記録の範囲と来歴", body)
+        self.assertNotIn("2022年", body)
+        self.assertIn("2026年の過去データも、結果が分かった期間の試算", body)
+        self.assertEqual(self.data["variants"], {})
         serialized = json.dumps(self.data, ensure_ascii=False)
         for identity in ("R001", "R002", "R003", "PRIVATE_IDENTITY_SENTINEL", "PRIVATE_URL_SENTINEL"):
             self.assertNotIn(identity, serialized)
         pd.testing.assert_frame_equal(self.frame, self.original)
 
-    def test_scope_specific_breakpoints_and_full_recalculation(self):
+    def test_individual_years_are_public_choices_without_combined_year_or_variant_grid(self):
         self.assertEqual(self.data["page"], "analytics")
         self.assertEqual(self.data["scopes"]["2023"]["years"], [2023])
-        self.assertEqual(self.data["scopes"]["2023"]["priceBreakpoints"], [222.22])
-        self.assertNotIn("d5_close:2023:731.29", self.data["variants"])
-        self.assertEqual(self.data["scopes"]["2023_2025"]["years"], [2023, 2024, 2025])
-        variant = self.data["variants"]["d6_open:2024:all"]
-        source = self.frame[pd.to_datetime(self.frame.signal_date).dt.year.eq(2024)]
-        selected = select_report_view(source, None, "d6_open")
-        expected = build_metrics(selected, self.generated.tz_localize(None))
-        expected = expected[expected.selector_id.isin([COMBINED_STACKED_ID, COMBINED_UNIQUE_ID])]
-        actual = pd.DataFrame(variant["metrics"])
-        actual = actual[actual.selector_id.isin([COMBINED_STACKED_ID, COMBINED_UNIQUE_ID])]
-        pd.testing.assert_frame_equal(actual.reset_index(drop=True), expected.reset_index(drop=True), check_dtype=False, atol=1e-9)
-        calculated = build_analytics(selected)
-        self.assertIn(f'{calculated["counts"]["completed_signals"]}件', variant["html"])
-        self.assertIn("2024-02-01", variant["html"])
-        self.assertNotIn("2023-02-01", variant["html"])
+        self.assertEqual(self.data["scopes"]["2024"]["years"], [2024])
+        self.assertNotIn("2023_2025", self.data["scopes"])
+        self.assertEqual(self.data["variants"], {})
+        self.assertEqual(visible_prices(self.document), [222.22, 731.29, 1212.34])
 
     def test_unreleased_year_and_price_do_not_change_free_scope_or_content(self):
         pending = actual_trade("S9Z9", 876.54, signal_date="2025-02-13", complete=False)
@@ -81,7 +69,7 @@ class ResearchPresentationTests(unittest.TestCase):
         self.assertEqual(candidate, baseline)
         scopes = payload(candidate)["scopes"]
         self.assertNotIn("2025", scopes)
-        self.assertEqual(scopes["all"]["priceBreakpoints"], [222.22])
+        self.assertEqual(visible_prices(candidate), [222.22])
 
     def test_scope_2022_is_never_exposed(self):
         source = self.frame.copy()

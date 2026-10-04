@@ -14,7 +14,7 @@ from weak_early_beta.config import COMBINED_STACKED_ID, COMBINED_UNIQUE_ID
 from weak_early_beta.ledger import bootstrap_historical
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.model import attach_forward_rows
-from weak_early_beta.report import _detection_rows, _page_shell, _variant_page, render_analytics_report, render_mode_report, render_report
+from weak_early_beta.report import _detection_rows, _page_shell, _variant_page, render_analytics_report, render_mode_report, render_report, _aggregate_variant_payload
 from weak_early_beta.report_preferences import released_history, select_report_view, validate_price_cap
 from weak_early_beta.trade_basis import LEGACY_PRICE_BASIS_VERSION
 
@@ -40,6 +40,10 @@ def actual_trade(symbol="9Z9Z", price=1000, *, complete=True, split=1, signal_da
     return result
 
 
+def visible_prices(output):
+    return sorted(set(float(value) for value in re.findall(r'data-signal-actual-close="([0-9.]+)"', output)))
+
+
 def payload(output):
     data = json.loads(re.search(r'<script id="cloud-analytics-data" type="application/json">(.*?)</script>', output, re.S).group(1))
     if data.get("encoding") == "gzip-base64-json":
@@ -60,39 +64,23 @@ class ReportPreferenceTests(unittest.TestCase):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 validate_price_cap(value)
 
-    def test_lazy_bundles_match_every_inline_variant_and_free_never_receives_pending_records(self):
+    def test_compact_public_payload_has_no_precomputed_grid_or_unreleased_rows(self):
         frame = pd.concat([actual_trade("A001", 900), actual_trade("A002", 1500), actual_trade("Z999", 731.29, complete=False)], ignore_index=True)
         for free in (False, True):
-            inline = payload(_variant_page(frame, self.generated, "home", mask_pending=free))
             cache = {"bundle-assets": {}}
             output = _variant_page(frame, self.generated, "home", mask_pending=free, _variant_cache=cache)
-            data = json.loads(re.search(r'<script id="cloud-analytics-data" type="application/json">(.*?)</script>', output, re.S).group(1))
-            self.assertEqual(sum("gzip" in packed for packed in data["variants"].values()), 1)
-            self.assertEqual(data["bundleContext"]["audience"], "free" if free else "full")
-            self.assertLess(len(output.encode("utf8")), 200_000)
-            for key, packed in data["variants"].items():
-                if "bundle" in packed:
-                    name = packed["bundle"][2:]
-                    self.assertRegex(name, r"^weak_early_beta_data_(full|free)_latest_[a-f0-9]{16}_\d{4}\.json$")
-                    encoded = cache["bundle-assets"][name]
-                    self.assertLessEqual(len(encoded), 160_000)
-                    bundle = json.loads(encoded)
-                    self.assertLessEqual(len(bundle["variants"]), 4)
-                    for field in ("snapshot", "audience", "page"):
-                        self.assertEqual(bundle[field], data["bundleContext"][field])
-                    packed = bundle["variants"][key]
-                variant = json.loads(gzip.decompress(base64.b64decode(packed["gzip"])))
-                variant["html"] = re.sub(r"<!--cloud-shared:([a-z0-9_-]+)-->", lambda match: data["sharedHtml"][match.group(1)], variant["html"])
-                self.assertEqual(variant, inline["variants"][key])
-                if free:
-                    self.assertNotIn("Z999", variant["html"])
+            data = payload(output)
+            self.assertEqual(data["version"], 2)
+            self.assertEqual(data["variants"], {})
+            self.assertLess(len(json.dumps(data).encode()), 2_000)
+            self.assertEqual(cache["bundle-assets"], {})
+            self.assertNotIn('"entry_open"', json.dumps(data))
+            self.assertNotIn('"symbol"', json.dumps(data))
+            self.assertNotIn('2023_2025', data["scopes"])
             if free:
-                self.assertNotIn("Z999", output)
-                self.assertNotIn(731.29, data["priceBreakpoints"])
-                released_cache = {"bundle-assets": {}}
-                released_output = _variant_page(released_history(frame), self.generated, "home", mask_pending=True, _variant_cache=released_cache)
-                self.assertEqual(output, released_output)
-                self.assertEqual(cache["bundle-assets"], released_cache["bundle-assets"])
+                self.assertNotIn('data-symbol="Z999"', output)
+                self.assertNotIn('731.29', output)
+                self.assertEqual(output, _variant_page(released_history(frame), self.generated, "home", mask_pending=True))
 
     def test_price_boundary_uses_verified_actual_close_not_adjusted_reference(self):
         below = actual_trade("A001", 999.99)
@@ -201,41 +189,34 @@ class ReportPreferenceTests(unittest.TestCase):
             lambda data, free: render_mode_report(data, pd.DataFrame(), pd.DataFrame(), self.generated, "volr20_low", mask_pending=free, _variant_cache=cache),
         )
         for renderer in renderers:
-            full = payload(renderer(mixed, False))  # Prime the same cache full-first.
-            self.assertIn(876.54, full["priceBreakpoints"])
+            full_output = renderer(mixed, False)  # Full-first must not contaminate free.
+            self.assertIn(876.54, visible_prices(full_output))
             output = renderer(mixed, True)
             data = payload(output)
             # Strong non-interference: adding an unreleased row changes no byte
             # of free output, including counts, dates, compressed data and CSV.
             self.assertEqual(output, renderer(released, True))
-            self.assertEqual(data["priceBreakpoints"], [222.22])
+            self.assertEqual(visible_prices(output), [222.22])
             decoded = json.dumps(data, ensure_ascii=False)
             for secret in ("Q9Z9", "PENDING_PRIVATE_SENTINEL", "876.54", "12088.56", "12,089", "2026-09-01", "2026-09-02", "2026-09-08"):
                 self.assertNotIn(secret, output)
                 self.assertNotIn(secret, decoded)
-            values = data["variants"]["d5_close:all"]["metrics"]
-            total_id = "volr20_low" if any(r["selector_id"] == "volr20_low" for r in values) else COMBINED_UNIQUE_ID
-            totals = [r for r in values if r["selector_id"] == total_id and r["period"] == "2026-2026"]
-            self.assertEqual(totals[0]["n"], 1)
+            self.assertEqual(output.count('data-symbol="R001"'), 1)
+            self.assertEqual(data["variants"], {})
         pd.testing.assert_frame_equal(mixed, before)
 
-    def test_shared_cache_is_separated_by_source_generation_and_audience(self):
+    def test_public_views_are_separated_by_source_generation_and_audience(self):
         first = actual_trade("R001", 222.22, signal_date="2026-07-01")
         second = actual_trade("R002", 333.33, signal_date="2026-07-01")
         cache = {}
         def render(frame, generated, free):
             return render_analytics_report(frame, pd.DataFrame(), generated, mask_pending=free, _variant_cache=cache)
-        a = payload(render(first, self.generated, True))
-        b = payload(render(second, self.generated, True))
-        self.assertEqual(a["priceBreakpoints"], [222.22])
-        self.assertEqual(b["priceBreakpoints"], [333.33])
-        later = render(second, self.generated + pd.Timedelta(days=1), True)
-        self.assertIn("2026-10-05", payload(later)["variants"]["d5_close:all"]["html"])
+        self.assertEqual(visible_prices(render(first, self.generated, True)), [222.22])
+        self.assertEqual(visible_prices(render(second, self.generated, True)), [333.33])
+        self.assertIn("2026-10-05", payload(render(second, self.generated + pd.Timedelta(days=1), True))["generated"])
         pending = actual_trade("Q9Z9", 876.54, complete=False)
-        free = payload(render(pending, self.generated, True))
-        full = payload(render(pending, self.generated, False))
-        self.assertEqual(free["priceBreakpoints"], [])
-        self.assertEqual(full["priceBreakpoints"], [876.54])
+        self.assertEqual(visible_prices(render(pending, self.generated, True)), [])
+        self.assertEqual(visible_prices(render(pending, self.generated, False)), [876.54])
 
     def test_free_release_requires_all_overlapping_mode_receipts(self):
         first = actual_trade("R001", 222.22)
@@ -245,7 +226,7 @@ class ReportPreferenceTests(unittest.TestCase):
         mixed = pd.concat([first, overlap], ignore_index=True)
         self.assertTrue(released_history(mixed).empty)
         output = render_mode_report(mixed, pd.DataFrame(), pd.DataFrame(), self.generated, "volr20_low", mask_pending=True)
-        self.assertEqual(payload(output)["priceBreakpoints"], [])
+        self.assertEqual(visible_prices(output), [])
         self.assertNotIn('data-symbol="R001"', output)
 
     def test_receipt_verified_d6_releases_identity_even_if_economics_unavailable(self):
@@ -264,7 +245,10 @@ class ReportPreferenceTests(unittest.TestCase):
         overlap["selector_id"] = "body_pct_low"
         second = actual_trade("A002", 1500, complete=False)
         frame = pd.concat([first, overlap, second], ignore_index=True)
-        output = render_analytics_report(frame, pd.DataFrame(), self.generated)
+        # The Python aggregate oracle remains independently checked; the v2
+        # shipped calculator is compared against it in the browser/math suite.
+        default_html, serialized = _aggregate_variant_payload(frame, self.generated, "analytics")
+        output = '<script id="cloud-analytics-data" type="application/json">' + serialized + '</script>'
         data = payload(output)
         self.assertEqual(data["priceBreakpoints"], [1000, 1500])
         for endpoint in ("d5_close", "d6_open"):
@@ -291,12 +275,10 @@ class ReportPreferenceTests(unittest.TestCase):
     def test_canonical_without_actual_receipts_never_counts_legacy_reference_as_actual_d5(self):
         ledger = bootstrap_historical()
         output = render_analytics_report(ledger, pd.DataFrame(), self.generated)
-        data = payload(output)
-        self.assertEqual(data["variants"]["d5_close:empty"]["metrics"], [])
-        totals = [r for r in data["variants"]["d5_close:all"]["metrics"] if r["period"] == "2023-2026" and r["selector_id"] == COMBINED_STACKED_ID]
-        self.assertEqual(totals[0]["n"], 0)
-        self.assertEqual(totals[0]["pending"], 946)
-        self.assertIn("2026年分も結果既知の期間", output)
+        self.assertEqual(visible_prices(output), [])
+        self.assertNotIn('data-d5-return=', output)
+        self.assertNotIn('data-d5-proceeds=', output)
+        self.assertIn("2026年の過去データも、結果が分かった期間の試算", output)
 
     def test_verified_history_has_only_twenty_initial_rows_without_javascript(self):
         frame = pd.concat([actual_trade(f"X{i:03d}") for i in range(25)], ignore_index=True)

@@ -12,7 +12,7 @@ exports.modules = function ({ fetchMock, cryptoMock = webcrypto, clock } = {}) {
     let source = fs.readFileSync(filename, 'utf8');
     if (filename.endsWith('shared-report-gate.ts')) source += '\nexport const __test = {createSession, createOAuthState};';
     const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
-    vm.runInNewContext(code, { module, exports: module.exports, require: name => load(name, path.dirname(filename)),
+    vm.runInNewContext(code, { module, exports: module.exports, require: name => name === 'cloudflare:workers' ? require('./cloud-role-authority.cjs').runtime : load(name, path.dirname(filename)),
       Request, Response, Headers, URL, URLSearchParams, AbortSignal, TextEncoder, TextDecoder, Uint8Array,
       crypto: cryptoMock, atob, btoa, Date: clock ? class extends Date {
         constructor(...args) { super(...(args.length ? args : [clock.now])); }

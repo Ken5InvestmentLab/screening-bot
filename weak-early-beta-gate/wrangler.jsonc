@@ -13,6 +13,10 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  "durable_objects": {
+    "bindings": [{ "name": "CLOUD_ROLE_AUTHORITY", "class_name": "CloudRoleAuthority" }]
+  },
+  "migrations": [{ "tag": "cloud-role-authority-v1", "new_sqlite_classes": ["CloudRoleAuthority"] }],
   "d1_databases": [
     {
       "binding": "CLOUD_DB",
@@ -29,8 +33,8 @@
     "ACCESS_PURCHASE_URL": "https://whop.com/scoring-bot/tenteikyokuchi/",
     "REPORT_ASSET_PATH": "/weak_early_beta_latest.html",
     "SESSION_TTL_SECONDS": "31536000",
-    "CLOUD_PUSH_REGISTRATION_ENABLED": "true",
-    "CLOUD_PUSH_MODE": "personal_test",
+    "CLOUD_PUSH_REGISTRATION_ENABLED": "false",
+    "CLOUD_PUSH_MODE": "disabled",
     "CLOUD_PUSH_MEMBERSHIP_POLICY": "whop_managed_discord_role",
     "CLOUD_PUSH_AUDIENCE": "authenticated",
     "CLOUD_PUSH_SCHEDULER_ENABLED": "false",
@@ -42,6 +46,9 @@
       "name": "tentei-kyokuchi-cloud-preview",
       "preview_urls": false,
       "d1_databases": [],
+      "durable_objects": {
+        "bindings": [{ "name": "CLOUD_ROLE_AUTHORITY", "class_name": "CloudRoleAuthority" }]
+      },
       "vars": {
         "DISCORD_API_BASE": "https://discord.com/api",
         "DISCORD_GUILD_ID": "1479418833352785944",

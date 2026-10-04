@@ -16,10 +16,18 @@ export function verifyReleaseConfig(config) {
   assert.equal(config.vars?.DISCORD_GUILD_ID, '1479418833352785944');
   assert.equal(config.vars?.DISCORD_ALLOWED_ROLE_IDS, '1487089073385373828');
   assert.equal(config.vars?.SESSION_TTL_SECONDS, '31536000');
+  const authority = config.durable_objects?.bindings?.find(value => value.name === 'CLOUD_ROLE_AUTHORITY');
+  assert.equal(authority?.class_name, 'CloudRoleAuthority');
+  assert.equal(authority?.script_name, undefined, 'authority stays inside Cloud, without another Worker dependency');
+  assert.ok(config.migrations?.some(value => value.tag === 'cloud-role-authority-v1' && value.new_sqlite_classes?.includes('CloudRoleAuthority')));
   const preview = config.env?.preview;
   assert.equal(preview?.name, 'tentei-kyokuchi-cloud-preview');
   assert.deepEqual(preview?.d1_databases, [], 'preview must have no D1 binding');
   assert.equal(preview?.preview_urls, false);
+  const previewAuthority = preview.durable_objects?.bindings?.find(value => value.name === 'CLOUD_ROLE_AUTHORITY');
+  assert.equal(previewAuthority?.class_name, 'CloudRoleAuthority');
+  assert.equal(previewAuthority?.script_name, undefined, 'preview must not point to production authority');
+  assert.equal(config.keep_vars, true, 'retain the existing provider wait and runtime settings');
   const personal = config.vars?.CLOUD_PUSH_MODE === 'personal_test';
   if (personal) {
     assert.equal(config.keep_vars, true, 'retain operator-fixed member/device/provider runtime settings');
@@ -34,7 +42,7 @@ export function verifyReleaseConfig(config) {
     // Identity/device/provider are confirmed in the Dashboard; never published
     // into the repository. Runtime has no recipient fallback if they are absent.
     for (const name of ['CLOUD_VAPID_PRIVATE_KEY', 'CLOUD_PUSH_TEST_MEMBER_ID', 'CLOUD_PUSH_TEST_SUBSCRIPTION_ID',
-      'CLOUD_PUSH_TEST_RUN_ID', 'CLOUD_PUSH_ALLOWED_ORIGINS', 'CLOUD_DISCORD_BOT_TOKEN', 'WHOP_API_KEY']) {
+      'CLOUD_PUSH_TEST_RUN_ID', 'CLOUD_PUSH_ALLOWED_ORIGINS', 'CLOUD_DISCORD_BOT_TOKEN', 'WHOP_API_KEY', 'CLOUD_ROLE_INITIAL_WAIT']) {
       assert.equal(config.vars[name], undefined, `${name} must remain outside checked-in vars`);
     }
   }
@@ -43,6 +51,7 @@ export function verifyReleaseConfig(config) {
       assert.equal(environment.vars?.CLOUD_PUSH_REGISTRATION_ENABLED, 'false', 'nonpersonal registration must stay OFF');
       assert.equal(environment.vars?.CLOUD_PUSH_MODE, 'disabled', 'nonpersonal sending must stay OFF');
     }
+    assert.equal(environment.vars?.CLOUD_ROLE_INITIAL_WAIT, undefined, 'owner wait metadata must stay outside Git');
     assert.notEqual(environment.vars?.CLOUD_PUSH_SCHEDULER_ENABLED, 'true', 'scheduled delivery must stay OFF in this manual-test release');
     assert.equal(environment.triggers?.crons?.length ?? 0, 0, 'no notification scheduler');
     assert.equal(environment.queues?.consumers?.length ?? 0, 0, 'no notification consumer');

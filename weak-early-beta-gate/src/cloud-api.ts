@@ -12,6 +12,7 @@ import {
 
 export type CloudEnv = Env & PushConfig & {
   CLOUD_DB?: D1Database;
+  CLOUD_ROLE_AUTHORITY?: DurableObjectNamespace;
   WHOP_API_KEY?: string;
   WHOP_ACCOUNT_ID?: string;
   WHOP_PRODUCT_IDS?: string;
@@ -21,6 +22,8 @@ export type CloudEnv = Env & PushConfig & {
   CLOUD_PUSH_MEMBERSHIP_POLICY?: string;
   CLOUD_PUSH_AUDIENCE?: string;
   SESSION_SECRET?: string;
+  DISCORD_CLIENT_ID?: string;
+  CLOUD_ROLE_INITIAL_WAIT?: string;
 };
 const list = (value?: string): string[] => (value ?? "").split(",").map(x => x.trim()).filter(Boolean);
 // Bound each request's database work. A persistent per-member cursor visits the

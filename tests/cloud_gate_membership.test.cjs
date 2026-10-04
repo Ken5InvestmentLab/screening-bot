@@ -32,6 +32,7 @@ function createModules({ fetchMock, clock } = {}) {
     const sandbox = {
       exports: module.exports, module,
       require: (specifier) => {
+        if (specifier === 'cloudflare:workers') return require('./helpers/cloud-role-authority.cjs').runtime;
         assert.ok(specifier.startsWith('.'), `Unexpected dependency: ${specifier}`);
         return load(specifier, path.dirname(filename));
       },
@@ -474,6 +475,7 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
       return new Response(`<html><body>${pathname.endsWith('_free.html') ? 'RELEASED-PUBLIC-ONLY' : 'SECRET-UNRELEASED-TICKER'}</body></html>`);
     } },
   };
+  env.CLOUD_ROLE_AUTHORITY = require('./helpers/cloud-role-authority.cjs').namespace(modules.load('./cloud-role-authority').CloudRoleAuthority,env);
   if (dbFailure) env.CLOUD_DB = { prepare() { throw new Error('synthetic db outage'); } };
   async function request(pathname = '/api/cloud/preferences', { method = 'GET', body, origin = 'https://gate.invalid', authenticated = true, subject } = {}) {
     const headers = new Headers();
@@ -1086,4 +1088,25 @@ for(const [label,status,roles] of [['revoked',200,[]],['429',429,['paid-discord-
  const full=await h.worker.fetch(await h.request(bundlePath('full')),h.env);assert.ok([401,403,503].includes(full.status));
  assert.equal(h.assets.some(path=>path.includes('_data_full_')),false);
  assert.equal((await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env)).status,200);
+});
+
+test('approved authority shares a 90 second decision across navigation and full data, then confirms revocation',async()=>{
+ const h=await apiHarness();
+ for(const path of ['/weak_early_beta_latest.html','/weak_early_beta_analytics.html',bundlePath('full'),'/auth/check']) assert.equal((await h.worker.fetch(await h.request(path),h.env)).status,200);
+ assert.equal(h.provider.discordCalls,1);
+ h.provider.discordRoles=[];h.clock.now+=90000;
+ const doc=await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);const html=await doc.text();
+ assert.match(html,/data-auth-free/);assert.doesNotMatch(html,/data-auth-unavailable|SECRET-UNRELEASED-TICKER/);
+ assert.equal((await h.worker.fetch(await h.request(bundlePath('full')),h.env)).status,403);assert.equal(h.provider.discordCalls,2);
+});
+test('expired authority with failed lookup is visibly unknown and closes all full assets, while settings remain writable',async()=>{
+ const h=await apiHarness();h.env.CLOUD_PUSH_MEMBERSHIP_POLICY='whop_managed_discord_role';
+ await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);h.clock.now+=90000;h.provider.discordStatus=429;
+ const doc=await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);const html=await doc.text();
+ assert.match(html,/data-auth-unavailable|会員資格を確認できませんでした/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER/);
+ const check=await h.worker.fetch(await h.request('/auth/check'),h.env);assert.equal(check.status,503);assert.equal((await check.json()).reason,'discord_role_lookup_429');
+ assert.equal((await h.worker.fetch(await h.request(bundlePath('full')),h.env)).status,503);
+ const input=preferences();delete input.notifications;
+ const save=await h.worker.fetch(await h.request('/api/cloud/preferences',{method:'PUT',body:input}),h.env);assert.equal(save.status,200);
+ assert.equal(h.provider.discordCalls,2);
 });

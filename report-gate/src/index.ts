@@ -32,6 +32,13 @@ function accessGuardScript(env: WorkerEnv): string {
   let finished = false;
   let recoveryDelayMs = 2000;
   let retryAt = 0;
+  let validUntil = Number(document.documentElement.getAttribute?.('data-auth-valid-until')) || 0;
+  let expiryTimer;
+  const armExpiry = () => {
+    if (!validUntil) return;
+    window.clearTimeout?.(expiryTimer);
+    expiryTimer = window.setTimeout(check, Math.max(0, validUntil - Date.now()));
+  };
   const deny = () => {
     ${env.REPORT_PUBLIC_FREE === "true" ? "if (!freePage) { finished = true; window.location.reload(); } return;" : ""}
     document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + ${deniedTitle} + '</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}.wrap{max-width:680px;margin:0 auto;padding:28px;border:1px solid #d7e0ea;border-radius:10px;background:#fff}h1{font-size:24px;margin:0 0 12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}a{color:#2563eb}.button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:7px;text-decoration:none;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{border:1px solid #c9d7ea;color:#1849a9;background:#f3f7ff}</style></head><body><main class="wrap"><h1>' + ${deniedTitle} + '</h1><p>' + ${deniedMessage} + '</p><div class="actions"><a class="button primary" href="' + ${purchaseUrl} + '">アクセス権を購入する</a><a class="button secondary" href="/auth/logout">Discordで再ログイン</a></div></main></body>';
@@ -44,6 +51,13 @@ function accessGuardScript(env: WorkerEnv): string {
         headers: { accept: 'application/json' },
         signal: AbortSignal.timeout(25000),
       });
+      ${env.REPORT_ROLE_LOOKUP ? `if (response.ok && !freePage) {
+        const result = await response.json();
+        if (!Number.isFinite(result.valid_until) || result.valid_until <= Date.now()) { deny(); return; }
+        validUntil = result.valid_until;
+        if (document.body) document.body.style.visibility = '';
+        armExpiry();
+      }` : ""}
       ${env.REPORT_PUBLIC_FREE === "true" ? `if (response.status === 503) {
         const seconds = Number(response.headers.get('retry-after'));
         if (Number.isFinite(seconds) && seconds > 0) {
@@ -85,6 +99,7 @@ function accessGuardScript(env: WorkerEnv): string {
     }
   };
   const check = async () => {
+    if (validUntil && Date.now() >= validUntil && !freePage && document.body) document.body.style.visibility = 'hidden';
     if (checking || finished || Date.now() < retryAt) return;
     checking = true;
     try {
@@ -112,6 +127,7 @@ function accessGuardScript(env: WorkerEnv): string {
     }
   });
   window.setInterval(check, checkIntervalMs);
+  armExpiry();
 })();`;
 }
 
@@ -128,7 +144,11 @@ type WorkerEnv = Env & {
   REPORT_PUBLIC_FREE?: string;
   REPORT_LOGIN_REQUIRED?: string;
   REPORT_REQUIRE_FRESH_ROLE?: string;
+  REPORT_ROLE_LOOKUP?: (subject: string, accessToken: string) => Promise<ReportRoleDecision>;
 };
+
+export type ReportRoleDecision = { status: "paid" | "free" | "unavailable"; checkedAt?: number; validUntil?: number;
+  reason?: string; retryAfterSeconds?: number; scope?: string; replyKind?: string; source?: string };
 
 type SessionPayload = {
   sub: string;
@@ -529,6 +549,7 @@ type AuthorizationCheck = {
   roleRetryAfterSeconds?: number;
   roleRateLimitScope?: string;
   roleRateLimitReplyKind?: string;
+  roleValidUntil?: number;
 };
 
 async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv): Promise<SessionPayload | null> {
@@ -583,6 +604,12 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
   }
 
   try {
+    if (freshRoles && env.REPORT_ROLE_LOOKUP) {
+      const decision = await env.REPORT_ROLE_LOOKUP(currentSession.sub, currentSession.accessToken);
+      if (decision.status === "unavailable") return { authorized: false, temporaryError: true, roleLookupReason: decision.reason,
+        roleRetryAfterSeconds: decision.retryAfterSeconds, roleRateLimitScope: decision.scope, roleRateLimitReplyKind: decision.replyKind, refreshedSession, tokenRefreshed };
+      return { authorized: decision.status === "paid", roleValidUntil: decision.validUntil, refreshedSession, tokenRefreshed };
+    }
     const member = freshRoles ? await freshGuildMember(currentSession.accessToken, env) : await fetchGuildMember(currentSession.accessToken, env);
     if (freshRoles && (!Array.isArray(member.roles) || member.roles.some(role => typeof role !== "string"))) {
       return { authorized: false, temporaryError: true, roleLookupReason: "discord_role_response_invalid", refreshedSession, tokenRefreshed };
@@ -590,7 +617,7 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     const roles = member.roles ?? [];
     const roleCheckedSession = {
       ...currentSession,
-      roleCheckedAt: now,
+      roleCheckedAt: env.REPORT_ROLE_LOOKUP ? 0 : now,
       roles,
     };
     return {
@@ -652,6 +679,8 @@ type ReportAccessResult = {
   loginRequired?: boolean;
   temporaryError?: boolean;
   refreshRequired?: boolean;
+  roleValidUntil?: number;
+  roleRetryAfterSeconds?: number;
 };
 
 async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAccessResult> {
@@ -663,12 +692,12 @@ async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAcc
   const check = await checkSessionAuthorization(session, env, false, env.REPORT_REQUIRE_FRESH_ROLE === "true");
   if (check.refreshRequired) return { fullAccess: false, refreshRequired: true };
   if (check.authorized) {
-    return { fullAccess: await additionalReportAccess(env, session.sub) };
+    return { fullAccess: await additionalReportAccess(env, session.sub), roleValidUntil: check.roleValidUntil };
   }
   if (check.loginRequired) {
     return { fullAccess: false, loginRequired: true };
   }
-  return { fullAccess: false, temporaryError: check.temporaryError };
+  return { fullAccess: false, temporaryError: check.temporaryError, roleRetryAfterSeconds: check.roleRetryAfterSeconds, roleValidUntil: check.roleValidUntil };
 }
 
 async function additionalReportAccess(env: WorkerEnv, subject: string): Promise<boolean> {
@@ -750,9 +779,19 @@ async function callback(request: Request, env: WorkerEnv): Promise<Response> {
   }
 
   const token = await exchangeCodeForToken(code, request, env);
-  const member = await fetchGuildMember(token.accessToken, env);
-  const roles = member.roles ?? [];
-  const userId = member.user?.id;
+  // Cloud obtains the signed owner first. Role authorization occurs only through
+  // the shared authority on the destination document, including inherited waits.
+  const member = env.REPORT_ROLE_LOOKUP ? undefined : await fetchGuildMember(token.accessToken, env);
+  let userId = member?.user?.id;
+  if (env.REPORT_ROLE_LOOKUP) {
+    const identity = await fetch(`${discordApiBase(env)}/users/@me`, {
+      headers: { authorization: `Bearer ${token.accessToken}`, "user-agent": DISCORD_USER_AGENT, accept: "application/json" },
+      signal: AbortSignal.timeout(DISCORD_REQUEST_TIMEOUT_MS), cache: "no-store", redirect: "error",
+    });
+    const user = identity.ok ? await identity.json().catch(() => null) as { id?: unknown } | null : null;
+    userId = typeof user?.id === "string" && user.id ? user.id : undefined;
+  }
+  const roles = member?.roles ?? [];
   if (!userId) {
     return htmlResponse("Access denied", "Discord did not return a user id for this guild member.", 403);
   }
@@ -767,7 +806,7 @@ async function callback(request: Request, env: WorkerEnv): Promise<Response> {
       accessToken: token.accessToken,
       refreshToken: token.refreshToken,
       exp,
-      roleCheckedAt: now,
+      roleCheckedAt: env.REPORT_ROLE_LOOKUP ? 0 : now,
       roles,
       tokenExp,
     },
@@ -1010,7 +1049,15 @@ async function serveReport(request: Request, env: WorkerEnv, assetPath = reportA
 
   const assetHtml = await assetResponse.text();
   const publicFree = !access.fullAccess && env.REPORT_PUBLIC_FREE === "true";
-  const markedHtml = publicFree ? assetHtml.replace(/<html(?=[\s>])/i, '<html data-auth-free') : assetHtml;
+  const unavailable = publicFree && (access.temporaryError || access.refreshRequired);
+  const marker = `${publicFree ? `data-auth-free${unavailable ? ' data-auth-unavailable' : ''}` : ''}${access.roleValidUntil ? ` data-auth-valid-until="${access.roleValidUntil}"` : ''}`.trim();
+  let markedHtml = marker ? assetHtml.replace(/<html(?=[\s>])/i, `<html ${marker}`) : assetHtml;
+  if (unavailable) {
+    // Unknown qualification is never a confirmed free account. Public identifiers
+    // remain masked, with a distinct status instead of a purchase recommendation.
+    markedHtml = markedHtml.replace(/<a\b[^>]*href=["']\/purchase["'][^>]*>[\s\S]*?<\/a>/gi, '<span>会員資格を確認できませんでした</span>');
+    markedHtml = markedHtml.replace(/<body([^>]*)>/i, '<body$1><p role="status" style="padding:12px;text-align:center">会員資格を確認できませんでした。しばらくしてから再度お試しください。</p>');
+  }
   const html = access.fullAccess || publicFree ? injectAccessGuard(markedHtml) : markedHtml;
   headers.set("content-type", "text/html; charset=utf-8");
   headers.set("cache-control", "private, no-store");
@@ -1076,7 +1123,7 @@ async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
   if (!(await additionalReportAccess(env, session.sub))) {
     return jsonResponse({ ok: false, reason: "membership_required" }, 403, headers);
   }
-  return jsonResponse({ ok: true }, 200, headers);
+  return jsonResponse({ ok: true, ...(check.roleValidUntil ? { valid_until: check.roleValidUntil } : {}) }, 200, headers);
 }
 
 function logout(request: Request): Response {

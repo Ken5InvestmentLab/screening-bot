@@ -312,7 +312,7 @@ test('display-only save with existing notification ON does not invoke unavailabl
 });
 
 test('Cloud Discord callback accepts a verified guild user with no paid role and no purchase redirect',async()=>{
- const m=modules({fetchMock:async input=>String(input).includes('/oauth2/token')?Response.json({access_token:'fixture-only-token',token_type:'Bearer',expires_in:3600,refresh_token:'fixture-only-refresh'}):Response.json({user:{id:'fixture-discord-user'},roles:[]})});
+ const m=modules({fetchMock:async input=>String(input).includes('/oauth2/token')?Response.json({access_token:'fixture-only-token',token_type:'Bearer',expires_in:3600,refresh_token:'fixture-only-refresh'}):Response.json({id:'fixture-discord-user',user:{id:'fixture-discord-user'},roles:[]})});
  const env={DISCORD_CLIENT_ID:'fixture-client',DISCORD_CLIENT_SECRET:'fixture-secret',SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'fixture-guild',DISCORD_ALLOWED_ROLE_IDS:'paid-role',REPORT_ASSET_PATH:'/weak_early_beta_latest.html',ASSETS:{fetch:async()=>new Response('<html>FREE</html>')}};
  const gate=m.load('./shared-report-gate'),state=await gate.__test.createOAuthState('/weak_early_beta_latest.html',env.SESSION_SECRET);
  const response=await m.load('./index').default.fetch(new Request('https://cloud.example.invalid/auth/callback?code=fixture-code&state='+encodeURIComponent(state)),env);

@@ -282,7 +282,7 @@ for (const state of ['missing', 'expired']) {
   });
 }
 
-function guardHarness(script, fetchMock, { recovering = false, freePage = false, clock, locks = { request: async (_name, callback) => callback() } } = {}) {
+function guardHarness(script, fetchMock, { recovering = false, freePage = false, validUntil = 0, clock, locks = { request: async (_name, callback) => callback() } } = {}) {
   const windowEvents = new Map();
   const documentEvents = new Map();
   const intervals = [];
@@ -291,7 +291,9 @@ function guardHarness(script, fetchMock, { recovering = false, freePage = false,
   let reloads = 0;
   const document = {
     hidden: false,
-    documentElement: { innerHTML: 'original report', hasAttribute: (name) => (name === 'data-auth-recovery' && recovering) || (name === 'data-auth-free' && freePage) },
+    documentElement: { innerHTML: 'original report', getAttribute: name => name === 'data-auth-valid-until' && validUntil ? String(validUntil) : null,
+      hasAttribute: (name) => (name === 'data-auth-recovery' && recovering) || (name === 'data-auth-free' && freePage) },
+    body: { style: { visibility: '' } },
     addEventListener: (name, callback) => documentEvents.set(name, callback),
   };
   const window = {
@@ -311,6 +313,22 @@ function guardHarness(script, fetchMock, { recovering = false, freePage = false,
   }, { filename: 'access-guard.js' });
   return { windowEvents, documentEvents, intervals, timeouts, navigations, document, reloads: () => reloads };
 }
+
+test('Cloud confirmed deadline hides the full document while rechecking, then accepts only a new finite deadline',async()=>{
+ const clock={now:Date.now()},gate=createGate(()=>{throw Error('no network');});let resolve;let requests=0;
+ const env={...gate.env,REPORT_PUBLIC_FREE:'true',REPORT_REQUIRE_FRESH_ROLE:'true',REPORT_ROLE_LOOKUP:async()=>({status:'paid'})};
+ const guard=guardHarness(gate.api.accessGuardScript(env),()=>{requests++;return new Promise(r=>resolve=r);},{clock,validUntil:clock.now+90000});
+ await guard.windowEvents.get('pageshow')({persisted:false});assert.equal(requests,0);
+ clock.now+=90000;const check=guard.timeouts[0]();await Promise.resolve();assert.equal(guard.document.body.style.visibility,'hidden');
+ resolve(Response.json({ok:true,valid_until:clock.now+90000}));await check;
+ assert.equal(guard.document.body.style.visibility,'');assert.equal(guard.reloads(),0);assert.equal(requests,1);
+});
+for(const status of [403,503])test(`Cloud deadline never keeps stale paid content visible after ${status}`,async()=>{
+ const clock={now:Date.now()},gate=createGate(()=>{throw Error('no network');});
+ const env={...gate.env,REPORT_PUBLIC_FREE:'true',REPORT_REQUIRE_FRESH_ROLE:'true',REPORT_ROLE_LOOKUP:async()=>({status:'paid'})};
+ const guard=guardHarness(gate.api.accessGuardScript(env),async()=>Response.json({ok:false},{status,headers:{'retry-after':'86400'}}),{clock,validUntil:clock.now+90000});
+ clock.now+=90000;await guard.timeouts[0]();assert.equal(guard.document.body.style.visibility,'hidden');assert.equal(guard.reloads(),1);
+});
 
 async function flushGuardTimers(guard) {
   for (let step = 0; step < 10; step += 1) {
@@ -577,4 +595,27 @@ test('guard serializes authentication across two tabs through a shared Web Lock'
   assert.equal(requests, 2);
   assert.deepEqual(first.navigations, []);
   assert.deepEqual(second.navigations, []);
+});
+
+for (const qualification of ['paid', 'free', 'unavailable']) test('Cloud OAuth establishes identity without bypassing centralized role authority: ' + qualification, async () => {
+  const calls = [];
+  const gate = createGate(async (input) => {
+    const url = String(input); calls.push(url);
+    if (url.endsWith('/oauth2/token')) return tokenResponse();
+    if (url.endsWith('/users/@me')) return Response.json({id: 'test-owner'});
+    throw Error('OAuth must not make a separate role lookup');
+  });
+  let lookups = 0;
+  const env = {...gate.env, REPORT_PUBLIC_FREE:'true', REPORT_LOGIN_REQUIRED:'true', REPORT_REQUIRE_FRESH_ROLE:'true',
+    REPORT_ROLE_LOOKUP: async subject => { assert.equal(subject,'test-owner'); lookups++; return {status:qualification,checkedAt:Date.now(),validUntil:Date.now()+90000,reason:'discord_role_lookup_429',retryAfterSeconds:86400}; }};
+  const state = await gate.api.createOAuthState('/mega_validation_report_latest.html', env.SESSION_SECRET);
+  const callback = await gate.worker.fetch(new Request(`https://gate.invalid/auth/callback?code=synthetic-code&state=${encodeURIComponent(state)}`),env);
+  assert.equal(callback.status,302); assert.equal(lookups,0); assert.equal(calls.length,2);
+  const session = await gate.api.readSession(new Request('https://gate.invalid/auth/check',{headers:{cookie:callback.headers.get('set-cookie').split(';',1)[0]}}),env); assert.equal(session.sub,'test-owner'); assert.equal(session.roleCheckedAt,0); assert.deepEqual(Array.from(session.roles),[]);
+  const report = await gate.worker.fetch(new Request('https://gate.invalid/mega_validation_report_latest.html',{headers:{cookie:callback.headers.get('set-cookie').split(';',1)[0]}}),env);
+  assert.equal(report.status,200); assert.equal(lookups,1); assert.equal(calls.length,2);
+  const html=await report.text();
+  if(qualification==='paid') assert.doesNotMatch(html,/data-auth-free/);
+  else assert.match(html,/data-auth-free/);
+  if(qualification==='unavailable') assert.match(html,/data-auth-unavailable/);
 });

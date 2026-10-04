@@ -3,6 +3,8 @@
 import sharedGate, { reportIdentity } from "./shared-report-gate";
 import { cloudApi, type CloudEnv } from "./cloud-api";
 import { runScheduledPersonalNotifications, type ScheduleEnv } from "./cloud-push-scheduler";
+import { cloudReportRole } from "./cloud-role-authority";
+export { CloudRoleAuthority } from "./cloud-role-authority";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
 const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init|scenarios|push|service-worker)\.js$/;
@@ -17,8 +19,8 @@ async function bundleResponse(request: Request, env: CloudEnv, audience: string)
   if (request.headers.get("sec-fetch-site") === "cross-site" || (request.headers.get("origin") && request.headers.get("origin") !== new URL(request.url).origin)) return reject(403);
   try {
     if (audience === "full") {
-      const identity = await reportIdentity(request, env, true);
-      if (!identity.subject) return reject(identity.reason === "temporarily_unavailable" ? 503 : 401);
+      const identity = await reportIdentity(request, { ...env, REPORT_ROLE_LOOKUP: (subject, token) => cloudReportRole(env, subject, token, "/full-data") }, true);
+      if (!identity.subject) return reject(identity.reason === "login_required" || identity.reason === "refresh_required" ? 401 : 503);
       if (!identity.discord_authorized) return reject(403);
     }
     const asset = await env.ASSETS.fetch(new URL(new URL(request.url).pathname, "https://assets.local").toString());
@@ -43,7 +45,8 @@ export default {
     // First-time visitors go straight to existing Discord OAuth, without a
     // purchase interstitial. Valid free sessions receive prefiltered free HTML.
     // Full assets and full lazy bundles retain the existing Discord role gate.
-    const protectedEnv = { ...env, REPORT_PUBLIC_FREE: "true", REPORT_LOGIN_REQUIRED: "true", REPORT_REQUIRE_FRESH_ROLE: "true" };
+    const protectedEnv = { ...env, REPORT_PUBLIC_FREE: "true", REPORT_LOGIN_REQUIRED: "true", REPORT_REQUIRE_FRESH_ROLE: "true",
+      REPORT_ROLE_LOOKUP: (subject: string, token: string) => cloudReportRole(env, subject, token, pathname) };
     if (BETA_SCRIPT_RE.test(pathname)) {
       const assetResponse = await env.ASSETS.fetch(
         new URL(pathname, "https://assets.local").toString(),

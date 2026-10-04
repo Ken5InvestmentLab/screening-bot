@@ -25,7 +25,12 @@ test('release preserves production access/D1 and excludes previews and broad del
 
 test('personal manual release requires managed role/public key and keeps runtime secrets out of Git', async () => {
   const { verifyReleaseConfig } = await import('../weak-early-beta-gate/scripts/verify-release-config.mjs');
-  assert.equal(config.vars.CLOUD_PUSH_MODE, 'personal_test');
+  assert.equal(config.vars.CLOUD_PUSH_MODE, 'disabled');
+  assert.equal(config.vars.CLOUD_PUSH_REGISTRATION_ENABLED, 'false');
+  const personal = structuredClone(config);
+  personal.vars.CLOUD_PUSH_MODE = 'personal_test';
+  personal.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'true';
+  verifyReleaseConfig(personal);
   for (const mutate of [
     c => { c.keep_vars = false; },
     c => { c.vars.CLOUD_PUSH_MEMBERSHIP_POLICY = 'whop_api'; },
@@ -36,7 +41,7 @@ test('personal manual release requires managed role/public key and keeps runtime
     c => { c.env.preview.vars.CLOUD_PUSH_MODE = 'personal_test'; },
     c => { c.triggers = {crons:['0 23 * * *']}; },
   ]) {
-    const changed = structuredClone(config); mutate(changed);
+    const changed = structuredClone(personal); mutate(changed);
     assert.throws(() => verifyReleaseConfig(changed));
   }
   const off = structuredClone(config);

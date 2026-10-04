@@ -391,6 +391,18 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const notifyInputs = {};
   const notifyLabels = {};
   let notifyMembershipPaid = false;
+  const qualificationMessage = reason => ({
+    fresh_managed_role_unavailable: 'Discordロールを新規照会できませんでした。時間を置いてページを再読み込みしてください。',
+    temporarily_unavailable: 'Discordの照会が一時的に失敗しました。時間を置いてページを再読み込みしてください。',
+    managed_role_revoked: '必要なDiscordロールを確認できませんでした。通知は有効にできません。',
+    discord_role_required: '必要なDiscordロールを確認できませんでした。通知は有効にできません。',
+    refresh_required: 'Discordの認証更新が必要です。ページを再読み込みし、必要ならDiscordで再ログインしてください。',
+    login_required: 'このブラウザでDiscordにログインしてください。',
+  }[reason] || '会員資格・接続状態を確認してください。');
+  const saveFailure = async response => {
+    const data = await response.json().catch(() => ({}));
+    return new Error(`会員設定を保存できませんでした（HTTP ${response.status}）。${qualificationMessage(data.membership?.reason || data.reason)}入力は残しています。`);
+  };
   const syncNotificationControls = () => {
     for (const [key, input] of Object.entries(notifyInputs)) {
       input.checked = notifications[key];
@@ -401,7 +413,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const notificationReadiness = membership => {
     const output = document.getElementById('cloud-notification-readiness');
     if (!output) return;
-    const entitlement = membership === 'paid' ? '有料会員資格を確認済み' : membership === 'unknown' ? '会員資格は未確認' : '有効な有料会員資格が必要';
+    const entitlement = membership === 'paid' ? '有料会員資格を確認済み' : ['unknown', 'unavailable', 'unverified'].includes(membership) ? '会員資格は未確認' : '有効な有料会員資格が必要';
     const permission = typeof Notification === 'undefined' ? 'このブラウザのプッシュは未対応' : Notification.permission === 'granted' ? '端末の通知権限あり' : Notification.permission === 'denied' ? '端末の通知権限なし' : '端末の通知許可は未設定';
     output.textContent = `${entitlement}。${permission}。ブラウザの通知許可と端末登録は別の状態です。`;
   };
@@ -685,7 +697,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     try {
       if (serverAvailable) {
         const response = await fetch('/api/cloud/preferences', { method: 'PUT', credentials: 'same-origin', cache: 'no-store', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ max_price: prefs.priceCapYen, exit_endpoint: prefs.exitKey, base_shares: prefs.baseShares, cost_percent: prefs.costPercent, notifications }) });
-        if (!response.ok) throw new Error('会員設定を保存できませんでした。入力は残しています。接続を確認して再度お試しください。');
+        if (!response.ok) throw await saveFailure(response);
       }
       requestedPreferences = prefs; requestedView = view; appliedDisplay = display; PAGE_SIZE = display.pageSize;
       if (!await applyPreferences({ persist: true })) throw new Error('表示に反映できませんでした。再度お試しください。');
@@ -793,15 +805,15 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ max_price: preferencesToSave.priceCapYen, exit_endpoint: preferencesToSave.exitKey, base_shares: preferencesToSave.baseShares, cost_percent: preferencesToSave.costPercent, notifications }),
         });
-        if (!response.ok) throw new Error(`status:${response.status}`);
+        if (!response.ok) throw await saveFailure(response);
         if (editRevision !== editAtSave) {
           setStatus("保存中に表示条件が変更されました。前の設定は保存済みです。今の条件を保存するにはもう一度押してください。");
           return;
         }
         edited = false;
         setStatus(storageFailed ? "会員設定を保存しました。端末の保存は利用できません。" : "会員設定を保存しました。通知の実送信はまだ行いません。");
-      } catch (_error) {
-        setStatus("会員設定を保存できませんでした。ログイン・会員連携・接続を確認してください。現在の表示は利用できます。", true);
+      } catch (error) {
+        setStatus(error.message || "会員設定を保存できませんでした。現在の表示は利用できます。", true);
       } finally { saving = false; syncActionAvailability(); }
     });
     // Server preferences are authoritative. Do not overwrite an edit made while loading.
@@ -826,7 +838,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         }
       }
       syncNotificationControls();
-      if (!paidMembership && !edited && serverApplied) setStatus("表示条件の会員設定を反映しました。通知の利用には有効な有料会員資格が必要です。通知解除は行えます。");
+      if (!paidMembership && !edited && serverApplied) setStatus(`表示条件の会員設定を反映しました。${qualificationMessage(data.membership?.reason)}通知OFFでの設定保存と端末登録の解除は行えます。`);
     }).catch(() => {
       if (!edited) setStatus(storageFailed
         ? "会員設定と端末保存を利用できません。この画面で条件を選択できます。"

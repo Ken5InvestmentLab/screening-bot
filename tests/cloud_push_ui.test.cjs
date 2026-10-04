@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {webcrypto,createHash}=require('node:crypto');
 const source=fs.readFileSync(require.resolve('../reports/weak-early-beta-push.js'),'utf8');
 const ownId='11111111-1111-4111-8111-111111111111';
-async function page({registered=false,permission='granted'}={}) {
+async function page({registered=false,permission='granted',qualificationReason=null}={}) {
  const elements=new Map();
  const element=()=>({children:[],hidden:false,disabled:false,textContent:'',listeners:{},append(...items){this.children.push(...items);},prepend(...items){this.children.unshift(...items);},setAttribute(){},addEventListener(name,fn){this.listeners[name]=fn;}});
  const host=element(),controls=element();host.append(controls);
@@ -12,7 +12,7 @@ async function page({registered=false,permission='granted'}={}) {
  const subscription={endpoint,toJSON:()=>({endpoint,keys:{p256dh:'fixture',auth:'fixture'}}),unsubscribe:async()=>{if(state.browserFailure)throw Error('browser-failure');if(!state.browserNoEffect)state.browser=false;return !state.browserNoEffect;}};
  const worker={pushManager:{getSubscription:async()=>state.browser?subscription:null,subscribe:async()=>{state.subscriptions++;state.browser=true;return subscription;}}};
  const Notification={get permission(){return state.permission;},requestPermission:async()=>{state.permissions++;return state.permission;}};
- const config=()=>({ok:true,registration_available:true,public_key:'BA',allowed_origins:['https://push.example.invalid'],personal_test_available:true,personal_test_subscription_id:ownId,devices:state.server?[{subscription_id:ownId,endpoint_hash:createHash('sha256').update(endpoint).digest('hex')}]:[]});
+ const config=()=>({ok:true,registration_available:!qualificationReason,membership:{status:qualificationReason?'unavailable':'paid',reason:qualificationReason},public_key:'BA',allowed_origins:['https://push.example.invalid'],personal_test_available:true,personal_test_subscription_id:ownId,devices:state.server?[{subscription_id:ownId,endpoint_hash:createHash('sha256').update(endpoint).digest('hex')}]:[]});
  const fetch=async(path,init)=>{
    state.requests.push({path,method:init.method,body:init.body});
    if(path==='/api/cloud/push-config'){if(state.readFailure)return Response.json({ok:false},{status:503});return Response.json(config());}
@@ -34,6 +34,9 @@ test('unregistered has receive at top and exactly one current-device revoke cont
  assert.equal(p.host.children.at(-1).children.at(-1),p.get('cloud-device-revoke'));
  assert.equal(p.get('cloud-device-register').textContent,'この端末で通知を受け取る');assert.equal(p.get('cloud-device-register').disabled,false);assert.equal(p.get('cloud-device-revoke').hidden,false);assert.equal(p.get('cloud-device-revoke').disabled,true);
  assert.equal(p.state.permissions,0);assert.equal(p.state.subscriptions,0);
+});
+test('failed fresh qualification keeps registration disabled and reports lookup failure distinctly',async()=>{
+ const p=await page({qualificationReason:'fresh_managed_role_unavailable'});assert.equal(p.get('cloud-device-register').disabled,true);assert.match(p.get('cloud-device-status').textContent,/Discordロールを新規照会できませんでした/);assert.doesNotMatch(p.get('cloud-device-status').textContent,/剥奪|登録済み/);assert.equal(p.state.permissions,0);assert.equal(p.state.subscriptions,0);
 });
 test('registered and notifications OFF keep registration in the same position',async()=>{
  const p=await page({registered:true});assert.equal(p.get('cloud-device-register').textContent,'登録済み');assert.equal(p.get('cloud-device-register').disabled,true);

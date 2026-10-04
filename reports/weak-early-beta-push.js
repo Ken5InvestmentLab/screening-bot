@@ -19,12 +19,21 @@
   panel.append(register, permission, status, provider); host.prepend(panel);
   const actions = document.createElement('div'); actions.append(test, revoke); host.append(actions);
   let busy = false, current = null, readyConfig = null, verified = false;
+  const qualificationMessage = reason => ({
+    fresh_managed_role_unavailable: 'Discordロールを新規照会できませんでした。時間を置いてページを再読み込みしてください。',
+    temporarily_unavailable: 'Discordの照会が一時的に失敗しました。時間を置いてページを再読み込みしてください。',
+    managed_role_revoked: '必要なDiscordロールを確認できませんでした。端末登録・通知送信を停止しています。',
+    discord_role_required: '必要なDiscordロールを確認できませんでした。端末登録・通知送信を停止しています。',
+    refresh_required: 'Discordの認証更新が必要です。ページを再読み込みし、必要ならDiscordで再ログインしてください。',
+    login_required: 'このブラウザでDiscordにログインしてください。',
+    personal_test_member_required: '本人テスト用のDiscordアカウントでログインしてください。',
+  }[reason] || '端末へのプッシュ通知は現在利用できません。');
   const supported = () => window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   async function api(path, method, body) {
     const response = await fetch(path, { method: method || 'GET', credentials: 'same-origin', cache: 'no-store',
       headers: body ? { 'content-type': 'application/json' } : { accept: 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const value = await response.json();
-    if (!response.ok || !value.ok) throw new Error('unavailable');
+    if (!response.ok || !value.ok) throw new Error(qualificationMessage(value.membership?.reason || value.reason));
     return value;
   }
   async function hash(endpoint) {
@@ -62,9 +71,9 @@
       verified = true;
       render();
       status.textContent = current && current.id ? 'この端末は登録済みです。通知ON／OFFは「設定を保存」で反映し、OFFでも登録は残ります。通常配信はまだ開始していません。' : current ? 'ブラウザ側の登録が残っています。受け取り登録、またはこの端末の解除を行えます。' :
-        readyConfig ? 'この端末の通知登録にはボタン操作と許可が必要です。' : '端末へのプッシュ通知は現在利用できません。';
+        readyConfig ? 'この端末の通知登録にはボタン操作と許可が必要です。' : qualificationMessage(config.reason === 'personal_test_member_required' ? config.reason : config.membership?.reason || config.reason);
       return true;
-    } catch (_) { readyConfig = null; verified = false; render(); status.textContent = '端末登録の状態を確認できません。接続状態を確認してください。'; return false; }
+    } catch (error) { readyConfig = null; verified = false; render(); status.textContent = '端末登録の状態を確認できません。' + (error.message || '接続状態を確認してください。'); return false; }
   }
   register.addEventListener('click', async () => {
     if (busy || !supported()) return;
@@ -127,14 +136,14 @@
     busy = true; test.disabled = true;
     try {
       const result = await api('/api/cloud/notifications/personal-test', 'POST', {});
-      status.textContent = result.status === 'accepted' ? '配信サービスが受け付けました。Windowsの通知表示を確認してください。' :
-        result.status === 'unknown' ? '送信結果を確認できません。再送せずWindowsの通知表示を確認してください。' :
-        result.status === 'suppressed' ? 'このテストは送信済み、または結果確認中です。Windowsの通知表示を確認してください。' :
+      status.textContent = result.status === 'accepted' ? '配信サービスが受け付けました。この端末の通知表示を確認してください。' :
+        result.status === 'unknown' ? '送信結果を確認できません。再送せずこの端末の通知表示を確認してください。' :
+        result.status === 'suppressed' ? 'このテストは送信済み、または結果確認中です。この端末の通知表示を確認してください。' :
         result.reason === 'notification_opt_in_required' ? '通知設定がOFFのため、送信を停止しました。' :
         result.reason === 'fresh_discord_role_unavailable' ? 'Discordの通知資格を新規照会できなかったため、送信を停止しました。' :
         result.reason === 'fresh_discord_role_required' ? '必要なDiscordロールを確認できなかったため、送信を停止しました。' :
         'テスト通知を送れませんでした。会員資格・通知設定・端末登録を確認してください。';
-    } catch (_) { status.textContent = 'テスト通知の結果を確認できません。再送せずWindowsの通知表示を確認してください。'; }
+    } catch (_) { status.textContent = 'テスト通知の結果を確認できません。再送せずこの端末の通知表示を確認してください。'; }
     finally { busy = false; test.disabled = false; }
   });
   // Explicit opt-in only; no localStorage dependency and no permission prompt.

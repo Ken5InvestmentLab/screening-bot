@@ -147,11 +147,19 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     return json({ ok: false, reason: "same_origin_required" }, 403);
   }
   try {
-    const identity = path === "/api/cloud/notifications/personal-test"
+    const managedRoles = env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role";
+    const ownSettings = path === "/api/cloud/preferences" || path.startsWith("/api/cloud/push-");
+    const identity = path === "/api/cloud/notifications/personal-test" || (managedRoles && ownSettings)
       ? await reportSessionIdentity(request, env) : await reportIdentity(request, env);
     if (!identity.subject) return json({ ok: false, reason: identity.reason }, identity.reason === "temporarily_unavailable" ? 503 : 401);
     if (!env.CLOUD_DB) return json({ ok: false, reason: "storage_unavailable", delivery_mode: "dry_run" }, 503);
     const memberId = await cloudMemberId(identity.subject);
+    const freshMembership = (fresh: Awaited<ReturnType<typeof reportIdentity>>) => {
+      if (fresh.subject !== identity.subject) return { status: "unavailable" as const,
+        reason: fresh.reason === "login_required" || fresh.reason === "refresh_required" ? fresh.reason : "fresh_managed_role_unavailable",
+        checked_at: new Date().toISOString() };
+      return currentMembership(env, identity.subject!, fresh.discord_authorized);
+    };
     if (path === "/api/cloud/notifications/personal-test") {
       let input: unknown;
       try { input = await requestJson(request); } catch { return json({ ok: false, reason: "invalid_request" }, 400); }
@@ -163,15 +171,15 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
       (path === "/api/cloud/push-subscriptions" && request.method === "POST")) {
       const freshIdentity = request.method === "POST" || (path === "/api/cloud/push-config" && env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") ? await reportIdentity(request, env, true) : identity;
       return pushApi(request, env, { memberId, roleAuthorized: freshIdentity.discord_authorized,
-        membership: () => currentMembership(env, identity.subject!, freshIdentity.subject === identity.subject && freshIdentity.discord_authorized) });
+        membership: () => Promise.resolve(freshMembership(freshIdentity)) });
     }
     const preferences = await preferencesFor(env.CLOUD_DB, memberId);
     let membership = identity.discord_authorized
       ? await currentMembership(env, identity.subject)
       : { status: "free" as const, reason: "discord_role_required", checked_at: new Date().toISOString() };
-    if (request.method === "GET" && env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") {
+    if (request.method === "GET" && managedRoles) {
       const fresh = await reportIdentity(request, env, true);
-      membership = await currentMembership(env, identity.subject, fresh.subject === identity.subject && fresh.discord_authorized);
+      membership = await freshMembership(fresh);
     }
     if (path === "/api/cloud/preferences") {
       if (request.method === "GET") return json({ ok: true, preferences, membership, delivery_mode: "dry_run", persistence: "server" });
@@ -179,9 +187,9 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
       try { next = validatePreferences(await requestJson(request)); }
       catch { return json({ ok: false, reason: "invalid_preferences" }, 400); }
       const enabling = Object.values(next.notifications).some(Boolean);
-      if (enabling && env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") {
+      if (enabling && managedRoles) {
         const fresh = await reportIdentity(request, env, true);
-        membership = await currentMembership(env, identity.subject, fresh.subject === identity.subject && fresh.discord_authorized);
+        membership = await freshMembership(fresh);
       }
       if (enabling && membership.status !== "paid") return json({ ok: false, reason: "paid_membership_required", membership }, 403);
       const saved = await preferenceStatement(env.CLOUD_DB, memberId, next).run();

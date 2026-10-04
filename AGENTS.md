@@ -17,6 +17,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 - 手動personal-testは予約後・送信直前のfresh Discordロール照会をHTTP内で1回行う。入口の署名済みセッションは本人選択用で送信権限を与えず、cached role/429猶予では送らない。資格取得失敗のreceiptも残し、自動再試行しない。
 - 通知ON/OFFはpreferences保存による一時停止/再開で、端末登録を消さない。解除UIは現在ブラウザのendpoint hashと本人の登録が一致した1端末だけに限定し、サーバー失効後にブラウザunsubscribeと未登録確認を行う。一括DELETEは405で拒否する。解除は契約・ロール・他端末・通知許可・通知ON/OFFを変更せず、失敗/部分完了は完了表示にしない。
 - reminderの表示・通知タイトルは「確定日の朝8時（日本時間）」、説明は「選んだ確定日の朝8時にお知らせします。その日の価格はまだ確定していません。」、生成本文は「今日は、設定した確定日です」で統一する。既存exit_endpoint値・JST時刻・資格条件・計算は文言変更で変えない。文言確認のための実通知は送らず、生成payloadとService WorkerのshowNotificationを隔離して検証する。
+- managed-role方式の設定・push-configは署名済みセッションで所有者を選択し、資格が必要な処理でfresh roleを1回照会する。照会不能をロール剥奪として返さずunavailable/fresh_managed_role_unavailableにする。通知OFFの保存はロール照会に依存しない。端末ごとのChrome/Edge認証状態を区別し、テスト対象の切替は実測origin・本人の購読行・別の一回用RUN_IDを確認してからDashboardへ反映する。unknownの旧receiptは削除・再利用せず、Windows向け再送をしない。
 
 TradingViewのBOTTOMシグナル銘柄を複数のテクニカル指標でスコアリングし、
 Discordにスクリーニング結果をDM送信するBotです。

@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>見方・使い方 | 天底極致 -Cloud-</title><script src="./weak-early-beta-theme-init.js?v=20261004-v06-01"></script><style>
+<title>ヘルプ | 天底極致 -Cloud-</title><script src="./weak-early-beta-theme-init.js?v=20261005-v09"></script><style>
 #detection-table{width:100%;min-width:0;table-layout:fixed}#detection-table thead th:nth-child(1){width:34%}#detection-table thead th:nth-child(n+2){width:16.5%}
 
 #cloud-notification-settings label,.cloud-notification-settings label{display:block;margin:12px 0}
@@ -106,55 +106,103 @@ body{font-size:calc(15px * var(--text-scale))}body[data-page="analytics"]{backgr
 [data-scenario-cost]>span{display:block;margin:3px 0;white-space:normal;overflow-wrap:anywhere}[data-scenario-shares]>span{display:inline;white-space:normal;overflow-wrap:anywhere}.history-record .history-endpoint-label{display:none}@media(max-width:760px){.history-record .history-endpoint-label{display:block}}.research-swatch.positive{background:var(--good)}.cloud-bar-item .positive{color:var(--good)}.cloud-bar-item .negative{color:#bc4253}:root[data-theme=dark] .cloud-bar-item .negative{color:#ff98a7}
 body[data-page=analytics] .analytics-detail-table-wrap{width:100%;max-width:100%;overflow:auto;border:1px solid var(--line);border-radius:12px;margin:12px 0;isolation:isolate}body[data-page=analytics] .analytics-detail-table{width:var(--detail-width);table-layout:fixed;font-size:calc(14px * var(--text-scale));margin:0;border-collapse:separate;border-spacing:0}body[data-page=analytics] .analytics-detail-table th,body[data-page=analytics] .analytics-detail-table td{padding:12px 14px;vertical-align:middle;text-align:right;overflow-wrap:normal}body[data-page=analytics] .analytics-detail-table td{white-space:nowrap}body[data-page=analytics] .analytics-detail-table th:first-child,body[data-page=analytics] .analytics-detail-table td:first-child{position:sticky;left:0;z-index:2;text-align:left;background:var(--panel-solid)}body[data-page=analytics] .analytics-detail-table th:nth-child(2),body[data-page=analytics] .analytics-detail-table td:nth-child(2){position:sticky;left:160px;z-index:2;text-align:left;background:var(--panel-solid);border-right:1px solid var(--line)}.detail-method-mobile{display:none}.analytics-detail-table-wrap:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
 @media(max-width:760px){body[data-page=analytics] .analytics-detail-table thead{display:table-header-group}body[data-page=analytics] .analytics-detail-table tbody{display:table-row-group}body[data-page=analytics] .analytics-detail-table tr{display:table-row;border:0;padding:0;background:var(--panel-solid)}body[data-page=analytics] .analytics-detail-table td{display:table-cell;grid-column:auto}body[data-page=analytics] .analytics-detail-table td:before{display:none}body[data-page=analytics] .analytics-detail-table th:nth-child(2),body[data-page=analytics] .analytics-detail-table td:nth-child(2){position:static}.detail-method-mobile{display:block;font-size:12px}body[data-page=analytics] .analytics-detail-table tr[hidden]{display:none!important}}
-.cloud-bar-track{position:relative}.cloud-bar-track:after{content:'';position:absolute;left:var(--bar-zero,0%);top:0;bottom:0;width:1px;background:var(--muted);opacity:.65}.cloud-settings .settings-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0!important;line-height:1;border-radius:12px;align-self:center}.settings-close svg{display:block;width:20px;height:20px}.settings-heading h2{line-height:1.3}</style>
-<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-push.js?v=20261004-v07" defer></script></head>
-<body data-page="guide"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img loading="lazy" class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img loading="lazy" class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="cloud-main-nav" aria-label="ページ移動"><span class="cloud-primary-nav"><a class="nav-link " href="./weak_early_beta_latest.html">ダッシュボード</a><a class="nav-link " href="./weak_early_beta_analytics.html">アナリティクス</a></span><span class="cloud-secondary-nav"><a class="nav-link " href="./weak_early_beta_silence.html">Silence</a><a class="nav-link " href="./weak_early_beta_dive.html">Dive</a><a class="nav-link " href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link " href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link " href="./weak_early_beta_balance.html">Balance</a><a class="nav-link active" aria-current="page" href="./weak_early_beta_guide.html">見方・使い方</a></span></div><div class="nav-tools"><button id="cloud-menu-toggle" class="nav-control active" type="button" aria-controls="cloud-navigation" aria-expanded="false" aria-label="その他のページを開く">その他 <span aria-hidden="true">⌄</span></button><button id="cloud-settings-open" class="nav-control" type="button" aria-haspopup="dialog" aria-controls="cloud-settings-dialog" aria-label="表示・試算設定を開く"><span aria-hidden="true">⚙</span> 設定</button></div><div id="cloud-navigation" class="nav-links cloud-navigation" aria-label="その他のページ" hidden><a class="nav-link " href="./weak_early_beta_silence.html">Silence</a><a class="nav-link " href="./weak_early_beta_dive.html">Dive</a><a class="nav-link " href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link " href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link " href="./weak_early_beta_balance.html">Balance</a><a class="nav-link active" aria-current="page" href="./weak_early_beta_guide.html">見方・使い方</a></div></nav></header>
+.cloud-bar-track{position:relative}.cloud-bar-track:after{content:'';position:absolute;left:var(--bar-zero,0%);top:0;bottom:0;width:1px;background:var(--muted);opacity:.65}.cloud-settings .settings-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0!important;line-height:1;border-radius:12px;align-self:center}.settings-close svg{display:block;width:20px;height:20px}.settings-heading h2{line-height:1.3}
+@media(max-width:820px){
+  body{font-size:calc(16px * var(--text-scale));line-height:1.7}
+  main{padding:18px 12px 48px;min-width:0}
+  .panel,.hero,.kpis,.cloud-settings,.history-record{min-width:0}
+  .panel{padding:16px}.hero h1{font-size:calc(26px * var(--text-scale))}
+  .note,.lead,.history-visible-grid small{font-size:calc(14px * var(--text-scale))}
+  .cloud-settings-dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);margin:auto;border-radius:14px;overflow:auto}
+  .cloud-settings-dialog .cloud-settings{padding:16px;line-height:1.7}
+  .cloud-settings .filters{grid-template-columns:minmax(0,1fr)}
+  .cloud-settings button,.cloud-settings select,.cloud-settings input:not([type=checkbox]),.cloud-settings .button-link{font-size:calc(16px * var(--text-scale));min-height:44px}
+  .cloud-settings p,.cloud-settings .note,#cloud-device-status,#cloud-device-permission,#cloud-settings-status,#cloud-notification-readiness{font-size:calc(14px * var(--text-scale));overflow-wrap:anywhere}
+  .cloud-notification-settings>label{display:flex;align-items:center;gap:6px;padding:10px 0;font-size:calc(16px * var(--text-scale));min-height:44px}
+  .cloud-settings input[type=checkbox]{width:22px;min-width:22px;height:22px;min-height:22px;flex:0 0 22px}
+  #cloud-device-test{width:100%;white-space:normal;line-height:1.5;margin:6px 0;padding:10px 12px}
+  .settings-tabs{gap:6px}.settings-tabs button{padding:10px 6px}
+  .settings-actions{gap:8px;flex-wrap:wrap;padding-top:12px;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .settings-actions button{padding:10px 12px}
+  .history-visible-grid{grid-template-columns:repeat(2,minmax(0,1fr));font-size:calc(16px * var(--text-scale));gap:12px}
+  .history-visible-grid>div:before{font-size:calc(13px * var(--text-scale))}
+  .history-visible-grid .actions button,.history-visible-grid .actions a{font-size:calc(14px * var(--text-scale));min-height:44px}
+  .nav-control{min-height:44px;font-size:14px}
+}
+body[data-page="guide"] .hero{grid-template-columns:minmax(0,1fr)}
+.history-mobile-toggle{display:none}
+#cloud-device-status:empty,#cloud-device-permission:empty,#cloud-device-registration:empty,#cloud-notification-eligibility-status:empty,#cloud-settings-status:empty{display:none}
+@media(max-width:820px){
+  #history .history-details{padding:0;border:0;background:transparent}
+  #history .history-record{padding:12px 10px!important}
+  .history-record:not(.history-details-open) .history-visible-grid>div:not(.history-company):not([data-label="検出日"]):not([data-label="状況"]):not([data-label="該当モード"]):not([data-label="成績"]),
+  .history-record:not(.history-details-open) [data-scenario-shares],
+  tr:not([data-masked="true"]) .history-record:not(.history-details-open) .history-company .actions,
+  .history-record:not(.history-details-open) .reference-note{display:none}
+  .history-visible-grid .history-company{grid-column:1/-1;order:-1}
+  .history-visible-grid [data-label="状況"]{order:1}
+  .history-visible-grid [data-label="該当モード"]{order:2;grid-column:1/-1}
+  .history-visible-grid [data-label="成績"]{order:4;grid-column:1/-1;padding-top:8px;border-top:1px solid var(--line)}
+  .history-visible-grid [data-label="試算開始日・始値"],.history-visible-grid [data-label="5営業日後 終値"],.history-visible-grid [data-label="6営業日後 始値"]{order:3}
+  .history-visible-grid [data-label="試算開始日・始値"]{grid-column:1/-1}
+  [data-label="試算開始日・始値"]>[data-exit-key]:not([hidden]){display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+  [data-scenario-cost]{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:6px}
+  [data-scenario-cost]:empty{display:none!important}
+  .history-record .history-visible-grid{gap:8px 10px}
+  [data-scenario-pl]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  [data-scenario-pl] .history-method{margin:0;font-size:17px}
+  .history-company .actions{margin-top:8px}
+  .history-record .reference-note{max-width:none;margin-top:8px}
+  .history-mobile-toggle{display:block;width:100%;min-height:44px;margin-top:8px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel-solid);color:var(--blue);font:inherit;cursor:pointer}
+}
+</style>
+<script src="./weak-early-beta-scenarios.js?v=20261005-v11" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-v11" defer></script></head>
+<body data-page="guide"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img loading="lazy" class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img loading="lazy" class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="cloud-main-nav" aria-label="ページ移動"><span class="cloud-primary-nav"><a class="nav-link " href="./weak_early_beta_latest.html">ダッシュボード</a><a class="nav-link " href="./weak_early_beta_analytics.html">アナリティクス</a></span><span class="cloud-secondary-nav"><a class="nav-link " href="./weak_early_beta_silence.html">Silence</a><a class="nav-link " href="./weak_early_beta_dive.html">Dive</a><a class="nav-link " href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link " href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link " href="./weak_early_beta_balance.html">Balance</a><a class="nav-link active" aria-current="page" href="./weak_early_beta_guide.html">ヘルプ</a></span></div><div class="nav-tools"><button id="cloud-menu-toggle" class="nav-control active" type="button" aria-controls="cloud-navigation" aria-expanded="false" aria-label="その他のページを開く">その他</button><button id="cloud-settings-open" class="nav-control" type="button" aria-haspopup="dialog" aria-controls="cloud-settings-dialog" aria-label="表示・試算設定を開く"><span aria-hidden="true">⚙</span> 設定</button></div><div id="cloud-navigation" class="nav-links cloud-navigation" aria-label="その他のページ" hidden><a class="nav-link " href="./weak_early_beta_silence.html">Silence</a><a class="nav-link " href="./weak_early_beta_dive.html">Dive</a><a class="nav-link " href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link " href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link " href="./weak_early_beta_balance.html">Balance</a><a class="nav-link active" aria-current="page" href="./weak_early_beta_guide.html">ヘルプ</a></div></nav></header>
 <main>
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>ヘルプ</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>売却価格</small><b>5営業日後 終値 / 6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
+</section>
 <section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3><a href="./weak_early_beta_latest.html">ダッシュボード</a></h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
-<article class="guide-card"><h3><a href="./weak_early_beta_analytics.html">アナリティクス</a></h3><p>Cloud全体の過去成績を見るページです。選択した株数とコストで試算した損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
+<article class="guide-card"><h3><a href="./weak_early_beta_analytics.html">アナリティクス</a></h3><p>Cloud全体の過去成績を見るページです。選択した株数と手数料で試算した損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
 <article class="guide-card"><h3>5つのモード</h3><p>モードは、銘柄を選ぶ「見方の違い」です。<a href="./weak_early_beta_shadow.html">Shadow</a>、<a href="./weak_early_beta_dive.html">Dive</a>、<a href="./weak_early_beta_silence.html">Silence</a>、<a href="./weak_early_beta_fusion.html">Fusion</a>、<a href="./weak_early_beta_balance.html">Balance</a>を押すと、それぞれの成績と検出銘柄を確認できます。</p></article>
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
-<article class="guide-card"><h3>株数とコスト</h3><p>株数は100株ずつ変更できます。コストは買付額と売却額の両方にかかり、損益とグラフに反映します。分割・併合による株数の変化も計算します。配当・税金は含みません。</p></article>
+<article class="guide-card"><h3>株数と手数料</h3><p>株数は100株ずつ変更できます。売買手数料（片道％）は、買付額と売却額のそれぞれに指定した率を掛けます。買付時と売却時の両方に適用します。信用取引の金利・貸株料・逆日歩などは含みません。手数料無料の場合は0％で試算できます。分割・併合による株数の変化も計算します。配当・税金は含みません。</p></article>
 <article class="guide-card"><h3>5営業日後・6営業日後</h3><p>検出日を基準に、次の営業日を1日目と数えます。5日目の終値と6日目の始値は、別の日に確認します。予定日前は「確定日待ち」、価格を確認できない場合は「未取得」と表示します。</p></article>
 <article class="guide-card"><h3>株価の上限</h3><p>検出日 終値が上限以下の検出銘柄を表示します。検出済みの銘柄を絞る設定なので、上限を引き上げても検出対象は広がりません。終値が未取得の記録は上限ありでは除外し、上限なしでは表示します。</p></article>
 <article class="guide-card"><h3>過去の成績</h3><p>過去データによる試算は、実際の運用実績ではありません。2026年の過去データも、結果が分かった期間の試算です。運用開始後の検出記録とは区別しています。価格を取得できていない取引の損益は表示しません。</p></article>
-<article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、選択した株数とコストで取引するために最も多く必要だった資金の目安です。</p></article>
+<article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、選択した株数と手数料で取引するために最も多く必要だった資金の目安です。</p></article>
 <article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
-<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、結果が出た取引のうち利益になった割合です。損益が0の取引も数えます。騰落率は、買付額に対する損益の割合です。選択したコストも含みます。</p></article>
-<article class="guide-card"><h3>参考値・成績に含めません</h3><p>ストップ高で買付が難しい銘柄は、参考値として履歴に残し、成績とグラフには含めません。実際の注文結果を示すものではありません。 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
+<article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、結果が出た取引のうち利益になった割合です。損益が0の取引も数えます。騰落率は、取得額に対する損益の割合です。選択した手数料も含みます。</p></article>
+<article class="guide-card"><h3>参考値・成績に含めません</h3><p>ストップ高で取得が難しい銘柄は、参考値として履歴に残し、成績とグラフには含めません。実際の注文結果を示すものではありません。 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
-<section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>各銘柄を同じ株数で買う</h3><p>同じ日・同じ銘柄を<span data-guide-base-shares>100</span>株で試算します。複数の条件に一致しても株数は増やしません。</p></article><article class="guide-card"><h3>一致した条件数に応じて株数を増やす</h3><p>基本<span data-guide-base-shares>100</span>株なら、3条件に一致した銘柄は<span data-guide-stacked-shares>300</span>株で試算します。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
-<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は現在利用できません。有料会員向けの機能で、初期値はOFFです。朝8時（日本時間）は「今日は選んだ確定日」のお知らせです。この時点では価格や損益はまだ確定していません。</p></section>
+<section class="panel"><h2>2つの株数配分</h2><div class="guide-grid"><article class="guide-card"><h3>各銘柄を同じ株数で試算する</h3><p>同じ日・同じ銘柄を<span data-guide-base-shares>100</span>株で試算します。複数の条件に一致しても株数は増やしません。</p></article><article class="guide-card"><h3>一致した条件数に応じて株数を増やす</h3><p>基準となる株数が<span data-guide-base-shares>100</span>株なら、3条件に一致した銘柄は<span data-guide-stacked-shares>300</span>株で試算します。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
+<section class="panel"><h2>設定</h2><p>「設定」は全ページで共通です。「試算方法」「表示」の2タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
-<p class="note">最終更新: 2026-10-04 20:45:38 JST</p></section><dialog id="cloud-settings-dialog" class="cloud-settings-dialog" aria-labelledby="cloud-settings-title"><section class="cloud-settings">
-<div class="settings-heading"><h2 id="cloud-settings-title">表示・試算設定</h2><button id="cloud-settings-close" class="settings-close" type="button" aria-label="設定を閉じる"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
-<div class="settings-tabs" role="tablist" aria-label="設定の項目"><button id="settings-tab-trial" role="tab" aria-selected="true" aria-controls="settings-trial" type="button">試算方法</button><button id="settings-tab-notifications" role="tab" aria-selected="false" aria-controls="settings-notifications" tabindex="-1" type="button">通知</button><button id="settings-tab-display" role="tab" aria-selected="false" aria-controls="settings-display" tabindex="-1" type="button">表示</button></div>
+<p class="note">最終更新: 2026-10-05 03:14:05 JST</p></section><dialog id="cloud-settings-dialog" class="cloud-settings-dialog" aria-labelledby="cloud-settings-title"><section class="cloud-settings">
+<div class="settings-heading"><h2 id="cloud-settings-title">設定</h2><button id="cloud-settings-close" class="settings-close" type="button" aria-label="設定を閉じる"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+<div class="settings-tabs" role="tablist" aria-label="設定の項目"><button id="settings-tab-trial" role="tab" aria-selected="true" aria-controls="settings-trial" type="button">試算方法</button><button id="settings-tab-display" role="tab" aria-selected="false" aria-controls="settings-display" tabindex="-1" type="button">表示</button></div>
 <div id="settings-trial" role="tabpanel" aria-labelledby="settings-tab-trial"><div class="filters">
 <label class="filter-field"><span>検出年</span><select id="cloud-year-scope"><option value="all">記録期間すべて</option><option value="2023">2023年</option><option value="2024">2024年</option><option value="2025">2025年</option><option value="2026">2026年</option></select></label>
 <label class="filter-field"><span>検出日 終値の上限</span><select id="cloud-price-preset"><option value="1000" selected>1,000円以下</option><option value="2000">2,000円以下</option><option value="3000">3,000円以下</option><option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
 <label class="filter-field" id="cloud-price-custom-field" hidden><span>任意の上限（円・小数2桁まで）</span><input id="cloud-price-custom" type="number" step="0.01" min="0.01" inputmode="decimal" value="1000"></label>
-<label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option></select></label>
-<label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">各銘柄を同じ株数で買う</option><option value="stacked">一致した条件数に応じて株数を増やす</option></select></label>
-<label class="filter-field"><span>基本の買付株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
-<label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label></div>
-<p class="note">初期表示は1,000円以下・6営業日後始値・両方式・100株・コスト0%。保存した設定がある場合は、そちらを使います。買付株数を増やすと、必要な資金も増えます。</p>
-<p class="note">上限は検出済みの銘柄を絞る条件で、検出対象を広げません。コストは買付額・売却額の両方にかかります。配当・税金は含みません。</p>
-<p class="note">終値と始値は別の日に確認します。予定日前は「確定日待ち」、予定日を過ぎても価格が分からない場合は「未取得」と表示します。</p></div>
-<div id="settings-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications" hidden><p id="cloud-notification-readiness" role="status">通知の利用状況を確認しています。</p><div id="cloud-notification-settings"></div></div>
+<label class="filter-field"><span>確定日</span><select id="cloud-exit-endpoint"><option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option></select></label>
+<label class="filter-field"><span>株数の配分</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">各銘柄を同じ株数で試算する</option><option value="stacked">一致した条件数に応じて株数を増やす</option></select></label>
+<label class="filter-field"><span>基準となる株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
+<label class="filter-field"><span>売買手数料（片道％）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label></div>
+<p class="note">条件数に応じて株数を増やす場合は、基準となる株数×一致条件数で試算します。</p>
+<p class="note">株価の上限は絞り込み条件です。手数料は取得・売却の両方に適用し、配当・税金は含みません。</p>
+</div>
 <div id="settings-display" role="tabpanel" aria-labelledby="settings-tab-display" hidden><div class="filters">
 <label class="filter-field"><span>テーマ</span><select id="cloud-theme"><option value="light">ライト</option><option value="dark" selected>ダーク</option><option value="system">端末に合わせる</option></select></label>
 <label class="filter-field"><span>文字サイズ</span><select id="cloud-font-size"><option value="small">小さめ</option><option value="standard" selected>標準</option><option value="large">大きめ</option></select></label>
-<label class="filter-field"><span>一覧件数</span><select id="cloud-page-size"><option value="20">20件</option><option value="50">50件</option><option value="100">100件</option></select></label></div><p class="note">表示設定はこの端末に保存します。未保存のテーマ・文字サイズは確認用に表示し、キャンセルで元に戻ります。</p></div>
+<label class="filter-field"><span>一覧件数</span><select id="cloud-page-size"><option value="20">20件</option><option value="50">50件</option><option value="100">100件</option></select></label></div><p class="note">表示設定はこの端末に保存します。</p></div>
 <p id="cloud-settings-status" role="status" aria-live="polite">保存済みの設定を読み込んでいます。</p>
-<div class="settings-actions"><button id="cloud-research-reset" class="settings-secondary" type="button">試算方法をリセット</button><button id="cloud-settings-cancel" class="settings-secondary" type="button">キャンセル</button><button id="cloud-settings-save" class="settings-primary" type="button">設定を保存</button></div></section></dialog><output id="cloud-settings-feedback" role="status" aria-live="polite"></output><script id="cloud-analytics-data" type="application/json">{"version": 2, "page": "guide", "scopes": {"all": {"label": "記録期間すべて", "years": null}, "2023": {"label": "2023年", "years": [2023]}, "2024": {"label": "2024年", "years": [2024]}, "2025": {"label": "2025年", "years": [2025]}, "2026": {"label": "2026年", "years": [2026]}}, "variants": {}, "generated": "2026-10-04T20:45:38.612522+09:00", "modeNames": {}}</script></main><footer class="site-footer"><div class="site-footer-inner">
+<div class="settings-actions"><button id="cloud-research-reset" class="settings-secondary" type="button">試算方法をリセット</button><button id="cloud-settings-cancel" class="settings-secondary" type="button">キャンセル</button><button id="cloud-settings-save" class="settings-primary" type="button">設定を保存</button></div></section></dialog><output id="cloud-settings-feedback" role="status" aria-live="polite"></output><script id="cloud-analytics-data" type="application/json">{"version": 2, "page": "guide", "scopes": {"all": {"label": "記録期間すべて", "years": null}, "2023": {"label": "2023年", "years": [2023]}, "2024": {"label": "2024年", "years": [2024]}, "2025": {"label": "2025年", "years": [2025]}, "2026": {"label": "2026年", "years": [2026]}}, "variants": {}, "generated": "2026-10-05T03:14:05.353603+09:00", "modeNames": {}}</script></main><footer class="site-footer"><div class="site-footer-inner">
 <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>
 <div class="footer-links" aria-label="公式リンク">
 <a class="footer-link" href="https://discord.gg/PX3cCQTxAz" target="_blank" rel="noopener noreferrer" aria-label="Discord">

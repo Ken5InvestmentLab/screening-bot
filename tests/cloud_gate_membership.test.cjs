@@ -1018,6 +1018,19 @@ test('custom shares and fees survive server save and reload',async()=>{
  const read=await h.fetchApi(); const body=await read.json(); assert.equal(body.preferences.base_shares,300);assert.equal(body.preferences.cost_percent,0.25);
 });
 
+test('hidden notification settings preserve authoritative opt-ins and other members without qualification lookup',async()=>{
+ const h=await apiHarness({configured:false});
+ const previous=preferences({notifications:{new_detection:true,reminder:true}});
+ h.db.state.preferences.set(h.memberId,JSON.stringify(previous));
+ const input=preferences({max_price:2000,base_shares:200});delete input.notifications;
+ const other=await h.worker.fetch(await h.request('/api/cloud/preferences',{method:'PUT',body:input,subject:'other-discord-user'}),h.env);
+ assert.equal(other.status,200);assert.deepEqual((await other.json()).preferences.notifications,{new_detection:false,reminder:false});
+ const saved=await h.fetchApi('/api/cloud/preferences',{method:'PUT',body:input});
+ assert.equal(saved.status,200);assert.deepEqual((await saved.json()).preferences.notifications,previous.notifications);
+ assert.equal(JSON.parse(h.db.state.preferences.get(h.memberId)).max_price,2000);
+ assert.equal(h.db.state.preferences.size,2);assert.equal(h.calls.length,0);
+});
+
 test('notification-OFF settings save without Whop configuration and stay isolated across two Discord sessions', async () => {
   const h = await apiHarness({ configured: false });
   const users = [

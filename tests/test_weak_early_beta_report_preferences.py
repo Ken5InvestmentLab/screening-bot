@@ -14,7 +14,7 @@ from weak_early_beta.config import COMBINED_STACKED_ID, COMBINED_UNIQUE_ID
 from weak_early_beta.ledger import bootstrap_historical
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.model import attach_forward_rows
-from weak_early_beta.report import MASKED_PENDING_NOTICE, _detection_rows, _page_shell, _variant_page, render_analytics_report, render_mode_report, render_report, _aggregate_variant_payload
+from weak_early_beta.report import _detection_rows, _page_shell, _variant_page, render_analytics_report, render_mode_report, render_report, _aggregate_variant_payload
 from weak_early_beta.report_preferences import released_history, select_report_view, validate_price_cap
 from weak_early_beta.trade_basis import LEGACY_PRICE_BASIS_VERSION
 
@@ -53,18 +53,26 @@ def payload(output):
     return data
 
 
+def without_masked_rows(output):
+    return re.sub(r'<tr data-masked="true".*?</tr>', '', output, flags=re.S)
+
+
 class ReportPreferenceTests(unittest.TestCase):
     generated = pd.Timestamp("2026-10-04", tz="Asia/Tokyo")
 
     def test_purchase_cta_is_in_free_information_only(self):
         from weak_early_beta.report import render_guide
-        for render in (render_report, render_analytics_report):
+        for render in (render_report,):
             free = render(actual_trade(), pd.DataFrame(), self.generated, mask_pending=True)
             full = render(actual_trade(), pd.DataFrame(), self.generated)
             self.assertIn('href="/purchase">有料プランを見る</a>', free)
             self.assertNotIn('href="/purchase">有料プランを見る</a>', full)
         self.assertIn('href="/purchase">有料プランを見る</a>', render_guide(self.generated, mask_pending=True))
         self.assertNotIn('href="/purchase">有料プランを見る</a>', render_guide(self.generated))
+        analytics = render_analytics_report(actual_trade(complete=False), pd.DataFrame(), self.generated, mask_pending=True)
+        self.assertNotIn('href="/purchase"', analytics)
+        self.assertNotIn('無料版で見られる情報', analytics)
+        self.assertNotIn('id="cloud-masked-pending"', analytics)
 
     def test_settings_copy_preserves_endpoint_choices_and_share_limits(self):
         from weak_early_beta.report import _settings_panel
@@ -75,6 +83,18 @@ class ReportPreferenceTests(unittest.TestCase):
         self.assertIn('<option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option>', output)
         self.assertIn('id="cloud-base-shares" type="number" min="100" max="1000000" step="100"', output)
         self.assertIn('基準となる株数×一致条件数', output)
+        self.assertNotIn('settings-tab-notifications', output)
+        self.assertNotIn('cloud-notification-settings', output)
+        shell = _page_shell('検証', 'home', output)
+        self.assertNotIn('weak-early-beta-push.js', shell)
+        self.assertNotIn('Discordでログイン', shell)
+        self.assertIn('settings-tab-display', shell)
+        self.assertIn('売買手数料（片道％）', output)
+        self.assertIn('id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"', output)
+        from weak_early_beta.report import render_guide
+        guide = render_guide(self.generated)
+        self.assertIn('買付時と売却時の両方に適用します。信用取引の金利・貸株料・逆日歩などは含みません', guide)
+        self.assertIn('手数料無料の場合は0％で試算できます', guide)
 
     def test_explicit_price_cap_validation_without_rounding(self):
         for value in (1, "1500", 1000.01, "0.01", "1500.00"):
@@ -100,8 +120,8 @@ class ReportPreferenceTests(unittest.TestCase):
             if free:
                 self.assertNotIn('data-symbol="Z999"', output)
                 self.assertNotIn('731.29', output)
-                self.assertIn(MASKED_PENDING_NOTICE, output)
-                self.assertEqual(output.replace(MASKED_PENDING_NOTICE, ""), _variant_page(released_history(frame), self.generated, "home", mask_pending=True))
+                self.assertIn('<tr data-masked="true"', output)
+                self.assertEqual(without_masked_rows(output), _variant_page(released_history(frame), self.generated, "home", mask_pending=True))
 
     def test_price_boundary_uses_verified_actual_close_not_adjusted_reference(self):
         below = actual_trade("A001", 999.99)
@@ -214,13 +234,13 @@ class ReportPreferenceTests(unittest.TestCase):
             self.assertIn(876.54, visible_prices(full_output))
             output = renderer(mixed, True)
             data = payload(output)
-            # Only the explicitly approved existence teaser may differ.
-            # Counts, dates, thresholds, metrics, compressed data and CSV remain public-only.
-            self.assertIn(MASKED_PENDING_NOTICE, output)
-            self.assertEqual(output.replace(MASKED_PENDING_NOTICE, ""), renderer(released, True))
+            # Approved day/mode metadata appears only in sanitized table rows.
+            # Metrics, thresholds, calculator data and CSV stay released-only.
+            self.assertEqual(without_masked_rows(output), renderer(released, True))
+            self.assertEqual(data, payload(renderer(released, True)))
             self.assertEqual(visible_prices(output), [222.22])
             decoded = json.dumps(data, ensure_ascii=False)
-            for secret in ("Q9Z9", "PENDING_PRIVATE_SENTINEL", "876.54", "12088.56", "12,089", "2026-09-01", "2026-09-02", "2026-09-08"):
+            for secret in ("Q9Z9", "PENDING_PRIVATE_SENTINEL", "876.54", "12088.56", "12,089", "2026-09-02", "2026-09-08"):
                 self.assertNotIn(secret, output)
                 self.assertNotIn(secret, decoded)
             self.assertEqual(output.count('data-symbol="R001"'), 1)
@@ -250,6 +270,7 @@ class ReportPreferenceTests(unittest.TestCase):
         output = render_mode_report(mixed, pd.DataFrame(), pd.DataFrame(), self.generated, "volr20_low", mask_pending=True)
         self.assertEqual(visible_prices(output), [])
         self.assertNotIn('data-symbol="R001"', output)
+        self.assertIn('<tr data-masked="true"', output)
 
     def test_receipt_verified_d6_releases_identity_even_if_economics_unavailable(self):
         frame = actual_trade()

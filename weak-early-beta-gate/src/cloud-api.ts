@@ -184,7 +184,13 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     if (path === "/api/cloud/preferences") {
       if (request.method === "GET") return json({ ok: true, preferences, membership, notification_eligible: notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE), delivery_mode: "dry_run", persistence: "server" });
       let next: Preferences;
-      try { next = validatePreferences(await requestJson(request)); }
+      try {
+        const input = await requestJson(request);
+        // Hidden notification controls omit this field. Preserve the owner's
+        // authoritative opt-ins rather than resetting them from a UI default.
+        next = validatePreferences(isObject(input) && !Object.hasOwn(input, "notifications")
+          ? { ...input, notifications: preferences.notifications } : input);
+      }
       catch { return json({ ok: false, reason: "invalid_preferences" }, 400); }
       // Saving display/trial settings must not re-enable an already saved opt-in
       // or depend on a role lookup. Delivery still always performs a fresh check.

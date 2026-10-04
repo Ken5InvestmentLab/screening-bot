@@ -15,7 +15,13 @@ test('a single mode keeps both allocations visible without inventing a quantity 
  assert.equal(data.strategies.unique.cash_pl_100_yen,data.strategies.stacked.cash_pl_100_yen);
  assert.equal(data.strategies.unique.n,data.strategies.stacked.n);
  assert.equal((html.match(/<path data-cloud-allocation=/g)||[]).length,2);
- assert.ok(html.includes('各銘柄を同じ株数で買う（100株）')&&html.includes('一致した条件数に応じて株数を増やす（基本100株）'));
+ assert.ok(html.includes('各銘柄を同じ株数で試算する（100株）')&&html.includes('一致した条件数に応じて株数を増やす（基本100株）'));
+});
+test('masked detections never affect any scenario even with unlimited price and all years',()=>{
+ const view={allocation:'all',yearScope:'all'},unlimited={...pref,priceCapYen:null};
+ const expected=calc.calculate([dataset],unlimited,view,payload);
+ const masked={...dataset,masked:'true',date:'2025-01-01',symbol:'PRIVATE',d5Proceeds:'99999999'};
+ assert.deepEqual(calc.calculate([dataset,masked],unlimited,view,payload),expected);
 });
 test('smooth asset curves preserve observations and cannot overshoot between them',()=>{
   const rows=[dataset,{...dataset,symbol:'B',entryDate:'2026-09-03',d5Date:'2026-09-09',d5Proceeds:'95000',d5Return:'-.05'}];
@@ -34,6 +40,9 @@ test('a quarter percent is charged to both notionals, then shares scale all cash
   const t=calc.trade(dataset,{...pref,baseShares:300,costPercent:.25});
   close(t.cost,300750);close(t.proceeds,302242.5);close(t.pl,1492.5);close(t.returnPct,1492.5/300750*100);
   close(t.entryFee,750);close(t.exitFee,757.5);assert.equal(t.exitShares,300);
+  const free=calc.trade(dataset,{...pref,baseShares:300,costPercent:0});
+  assert.equal(free.entryFee,0);assert.equal(free.exitFee,0);
+  close(free.cost,300000);close(free.proceeds,303000);close(free.pl,3000);
 });
 test('D6 uses its own held-share receipt including splits and consolidations',()=>{
   const split=calc.trade(dataset,{...pref,exitKey:'d6_open',baseShares:300});

@@ -467,9 +467,21 @@ test('display-only year/allocation restore locally while server price/endpoint r
   assert.equal(page.get('cloud-allocation').value, 'stacked');
   await page.get('cloud-settings-save').dispatch('click');
   const sent = JSON.parse(page.requests.find((request) => request.options.method === 'PUT').options.body);
-  assert.deepEqual(Object.keys(sent).sort(), ['base_shares', 'cost_percent', 'exit_endpoint', 'max_price', 'notifications']);
+  assert.deepEqual(Object.keys(sent).sort(), ['base_shares', 'cost_percent', 'exit_endpoint', 'max_price']);
   assert.equal(sent.max_price, 3000);
   assert.deepEqual(JSON.parse(page.storage.get('cloudReportView:v1')), { yearScope: '2024', allocation: 'stacked' });
+});
+
+test('masked pending rows remain visible with a price cap but never enter history CSV or identity search',async()=>{
+ const page=browserFixture();await flush();
+ page.rows[1].dataset={masked:'true',date:'2025-01-06',selectors:'mode-a',symbol:'',search:''};
+ await page.select(500);
+ assert.equal(page.get('search-result-count').textContent,'2件を表示');
+ const [,history]=await page.exportBoth();
+ assert.doesNotMatch(history.csv,/HIGH9999|731.29/);
+ assert.equal(history.csv.split('\r\n').length,3); // header + released row in both allocations
+ page.get('symbol-filter').value='HIGH9999';await page.get('symbol-filter').dispatch('input');
+ assert.equal(page.get('search-result-count').textContent,'0件を表示');
 });
 
 test('saved years unavailable in the current public page fall back to all', async () => {

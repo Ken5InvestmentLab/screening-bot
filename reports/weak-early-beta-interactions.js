@@ -22,13 +22,13 @@ const CloudPreferences = (() => {
     if (!value || !["d5_close", "d6_open"].includes(value.exitKey)) throw new Error("確定日を選択してください。");
     const shares = value.baseShares ?? 100, cost = value.costPercent ?? 0;
     if (!Number.isInteger(Number(shares)) || Number(shares) < 100 || Number(shares) > 1000000 || Number(shares) % 100) throw new Error("株数は100〜1,000,000株の範囲で、100株ずつ入力してください。");
-    if (!/^\d+(?:\.\d{1,2})?$/.test(String(cost)) || Number(cost) > 10) throw new Error("売買コストは0〜10%の範囲で、小数点以下2桁まで入力してください。");
+    if (!/^\d+(?:\.\d{1,2})?$/.test(String(cost)) || Number(cost) > 10) throw new Error("売買手数料は0〜10%の範囲で、小数点以下2桁まで入力してください。");
     return { priceCapYen: parseCap(value.priceCapYen), exitKey: value.exitKey, baseShares: Number(shares), costPercent: Number(cost) };
   };
   const normalizeView = (value, payload) => {
     const yearScope = value?.yearScope || "all";
     const allocation = value?.allocation || "all";
-    if (!["all", "unique", "stacked"].includes(allocation)) throw new Error("買付方法を選択してください。");
+    if (!["all", "unique", "stacked"].includes(allocation)) throw new Error("株数の配分を選択してください。");
     if (yearScope !== "all") {
       const years = payload?.scopes?.[yearScope]?.years;
       if (!Array.isArray(years) || !years.length || years.some((year) => !Number.isInteger(year) || year === 2022)) {
@@ -233,8 +233,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     const matchedRows = rows.filter((row) => {
       const searchTarget = normalize(row.dataset.search || row.dataset.symbol);
       const signalDate = row.dataset.date || "";
-      return CloudPreferences.matchesCap(row.dataset.signalActualClose,
-        row.dataset.signalPriceVerified || row.dataset.signalActualCloseStatus, appliedPreferences.priceCapYen)
+      return (row.dataset.masked === "true" || CloudPreferences.matchesCap(row.dataset.signalActualClose,
+        row.dataset.signalPriceVerified || row.dataset.signalActualCloseStatus, appliedPreferences.priceCapYen))
         && (appliedYears === null || appliedYears.includes(Number(signalDate.slice(0, 4))))
         && (!symbolValue || searchTarget.includes(symbolValue))
         && (!selectorValue || (row.dataset.selectors || "").split(" ").includes(selectorValue))
@@ -429,7 +429,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   try { if (payloadElement) payload = JSON.parse(payloadElement.textContent); }
   catch (_error) { setStatus("表示用データを読み込めません。ページを再読込してください。", true); }
 
-  if (settings && endpoint) {
+  const notificationPanel = document.getElementById("cloud-notification-settings");
+  if (settings && endpoint && notificationPanel) {
     const host = document.createElement(settingsDialog ? "div" : "details");
     host.className = "cloud-notification-settings";
     host.innerHTML = settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>';
@@ -616,6 +617,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       for (const label of document.querySelectorAll('[data-guide-stacked-shares]')) label.textContent = (requested.baseShares * 3).toLocaleString('ja-JP');
       for (const label of document.querySelectorAll('[data-scenario-endpoint-label]')) label.textContent = requested.exitKey === 'd5_close' ? '5営業日後 終値' : '6営業日後 始値';
       for (const row of rows) {
+        if (row.dataset.masked === "true") continue;
         const t = CloudScenario.trade(row.dataset, requested);
         const pl = row.querySelector('[data-scenario-pl]'), ret = row.querySelector('[data-scenario-return]'), shares = row.querySelector('[data-scenario-shares]'), cost = row.querySelector('[data-scenario-cost]');
         const methods = requestedView.allocation === 'all' ? ['unique', 'stacked'] : [requestedView.allocation];
@@ -624,7 +626,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         if (pl) pl.innerHTML = methods.map(method => `<span class="history-method ${t.pl>0?'positive':t.pl<0?'negative':''}" data-method="${method}"><small>${label(method)}</small>${CloudScenario.yen(t.pl === null ? null : t.pl * units(method), true)}</span>`).join('');
         if (ret) ret.textContent = CloudScenario.pct(t.returnPct, true) + (requestedView.allocation === 'all' && t.returnPct !== null ? '（両方式共通）' : '');
         if (shares) shares.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${(requested.baseShares * units(method)).toLocaleString('ja-JP')}株${t.pl !== null && t.exitShares !== null && Math.abs(t.exitShares - requested.baseShares) > 1e-9 ? `（売却 ${(t.exitShares * units(method)).toLocaleString('ja-JP')}株）` : ''}</span>`).join(' / ');
-        if (cost) cost.innerHTML = methods.map(method => `<span data-method="${method}">${label(method)} ${CloudScenario.yen(t.cost === null ? null : t.cost * units(method))}</span>`).join('');
+        if (cost) cost.innerHTML = methods.map(method => `<span data-method="${method}"><small>${label(method)} 取得額</small>${CloudScenario.yen(t.cost === null ? null : t.cost * units(method))}</span>`).join('');
       }
       const summary = document.getElementById('cloud-applied-summary');
       if (summary) summary.textContent = `表示中: 終値 ${requested.priceCapYen === null ? '上限なし' : requested.priceCapYen.toLocaleString('ja-JP')+'円以下'} / 確定日 ${endpoint.options[endpoint.selectedIndex].text} / 基準となる株数 ${requested.baseShares.toLocaleString('ja-JP')}株 / 片道${requested.costPercent}% / ${payload.scopes[nextView.yearScope].label} / ${nextView.allocation === 'stacked' ? '条件数比例' : nextView.allocation === 'unique' ? '一律' : '両方式を比較'}`;
@@ -720,13 +722,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     if (previousFeedback) previousFeedback.textContent = '';
     try {
       if (serverAvailable) {
-        const response = await fetch('/api/cloud/preferences', { method: 'PUT', credentials: 'same-origin', cache: 'no-store', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ max_price: prefs.priceCapYen, exit_endpoint: prefs.exitKey, base_shares: prefs.baseShares, cost_percent: prefs.costPercent, notifications }) });
+        const response = await fetch('/api/cloud/preferences', { method: 'PUT', credentials: 'same-origin', cache: 'no-store', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ max_price: prefs.priceCapYen, exit_endpoint: prefs.exitKey, base_shares: prefs.baseShares, cost_percent: prefs.costPercent, ...(notificationPanel ? { notifications } : {}) }) });
         if (!response.ok) throw await saveFailure(response);
       }
       requestedPreferences = prefs; requestedView = view; appliedDisplay = display; PAGE_SIZE = display.pageSize;
       if (!await applyPreferences({ persist: true })) throw new Error('表示に反映できませんでした。再度お試しください。');
       try { applyDisplay(display, true); } catch (_error) { storageFailed = true; }
-      if (serverAvailable && !Object.values(notifications).some(Boolean)) {
+      if (notificationPanel && serverAvailable && !Object.values(notifications).some(Boolean)) {
         // Preferences are already OFF and the applied values are authoritative.
         // A failed device revoke may be retried without restoring a saved ON.
         settingsSnapshot = { notifications: { ...notifications }, edited: false };
@@ -767,7 +769,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       setStatus("表示条件を反映しています。しばらくお待ちください。");
       if (await applyPreferences({ persist: true }) && editRevision === editAtChange) setStatus(storageFailed
         ? "表示に適用しました。この端末では補助保存できません。株価上限・確定日は設定へ保存できます。"
-        : "表示に適用しました。今の条件を設定に残すには「設定を保存」を押してください。検出年・買付方法はこの端末に保存します。");
+        : "表示に適用しました。今の条件を設定に残すには「設定を保存」を押してください。検出年・株数の配分はこの端末に保存します。");
     } catch (error) {
       // An invalid newer edit must also cancel an older decompression request.
       renderRevision += 1;
@@ -838,7 +840,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         const response = await fetch("/api/cloud/preferences", {
           method: "PUT", credentials: "same-origin", cache: "no-store",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ max_price: preferencesToSave.priceCapYen, exit_endpoint: preferencesToSave.exitKey, base_shares: preferencesToSave.baseShares, cost_percent: preferencesToSave.costPercent, notifications }),
+          body: JSON.stringify({ max_price: preferencesToSave.priceCapYen, exit_endpoint: preferencesToSave.exitKey, base_shares: preferencesToSave.baseShares, cost_percent: preferencesToSave.costPercent, ...(notificationPanel ? { notifications } : {}) }),
         });
         if (!response.ok) throw await saveFailure(response);
         if (editRevision !== editAtSave) {
@@ -920,24 +922,24 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   document.getElementById("cloud-history-export-csv")?.addEventListener("click", () => {
     if (accessLost || preferencesPending) return;
     const preferences = appliedPreferences;
-    const records = matchingRows.flatMap((row) => (appliedView.allocation === 'all' ? ['unique', 'stacked'] : [appliedView.allocation]).map(allocation => {
+    const records = matchingRows.filter(row => row.dataset.masked !== "true").flatMap((row) => (appliedView.allocation === 'all' ? ['unique', 'stacked'] : [appliedView.allocation]).map(allocation => {
       const t = typeof CloudScenario === 'undefined' ? null : CloudScenario.trade(row.dataset, preferences);
       const units = allocation === 'stacked' ? (row.dataset.selectors || '').split(' ').filter(Boolean).length : 1;
       return {
         "検出日": row.dataset.date || "", "銘柄コード": row.dataset.symbol || "", "銘柄名": row.dataset.name || "",
-        "買付方法": allocation === 'stacked' ? '条件数に応じた株数' : '同じ株数',
+        "株数の配分": allocation === 'stacked' ? '条件数に応じた株数' : '同じ株数',
         "一致した条件": (row.dataset.selectors || '').split(' ').map(key => payload?.modeNames?.[key] || key).join(' / '),
-        "検出日 終値": row.dataset.signalActualClose || "", "基本株数": preferences.baseShares, "買付株数": preferences.baseShares * units,
-        "片道コスト%": preferences.costPercent, "終値の上限": preferences.priceCapYen ?? '上限なし',
-        "買付日": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryDate : row.dataset.entryDate) || "",
-        "買付始値": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryOpen : row.dataset.entryOpen) || "",
+        "検出日 終値": row.dataset.signalActualClose || "", "基本株数": preferences.baseShares, "取得株数": preferences.baseShares * units,
+        "片道手数料%": preferences.costPercent, "終値の上限": preferences.priceCapYen ?? '上限なし',
+        "試算開始日": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryDate : row.dataset.entryDate) || "",
+        "試算開始時の始値": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryOpen : row.dataset.entryOpen) || "",
         "売却価格の選択": preferences.exitKey === "d5_close" ? "5営業日後 終値" : "6営業日後 始値",
         "確定日": preferences.exitKey === "d5_close" ? (row.dataset.d5Date || "") : (row.dataset.d6Date || ""),
         "売却価格": preferences.exitKey === "d5_close" ? (row.dataset.d5Close || "") : (row.dataset.d6Open || ""),
         "売却株数": t?.exitShares === null || !t ? '' : t.exitShares * units,
-        "買付額円": t?.grossCost === null || !t ? '' : t.grossCost * units,
+        "取得額円": t?.grossCost === null || !t ? '' : t.grossCost * units,
         "売却額円": t?.grossProceeds === null || !t ? '' : t.grossProceeds * units,
-        "買付コスト円": t?.entryFee === null || !t ? '' : t.entryFee * units,
+        "取得コスト円": t?.entryFee === null || !t ? '' : t.entryFee * units,
         "売却コスト円": t?.exitFee === null || !t ? '' : t.exitFee * units,
         "損益円": t?.pl === null || !t ? '' : t.pl * units,
         "騰落率%": t ? t.returnPct : (preferences.exitKey === "d5_close" ? row.dataset.d5Return : row.dataset.d6Return) || '',
@@ -945,7 +947,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         "6営業日後 始値の取得状況": row.dataset.d6Status || "",
       };
     }));
-    const columns = records.length ? Object.keys(records[0]) : ['検出日','銘柄コード','銘柄名','検出日 終値','買付日','確定日','売却価格','損益円','騰落率%'];
+    const columns = records.length ? Object.keys(records[0]) : ['検出日','銘柄コード','銘柄名','検出日 終値','試算開始日','確定日','売却価格','損益円','騰落率%'];
     downloadCSV(CloudPreferences.csv(records, columns), `Cloud_検出履歴_${preferences.exitKey}.csv`);
   });
 

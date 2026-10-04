@@ -1,6 +1,6 @@
 // Canonical dispatch is internal. The HTTP route invokes only the fixed-device
 // test below, with no browser-supplied event, recipient, or message.
-import { reportIdentity } from "./shared-report-gate";
+import { reportIdentity, reportSessionIdentity } from "./shared-report-gate";
 import { cloudMemberId, currentMembership, type CloudEnv } from "./cloud-api";
 import { evaluateNotification, isObject, validatePreferences, DEFAULT_PREFERENCES, type NotificationEvent } from "./cloud-membership";
 import { sendPersonalPush, type SendResult, type PushSubscription, type encryptPushPayload } from "./cloud-web-push";
@@ -11,20 +11,17 @@ export async function dispatchPersonalDeviceTest(request: Request, env: CloudEnv
   const db = env.CLOUD_DB;
   if (!db || String(env.CLOUD_PUSH_MODE) !== "personal_test" || !env.CLOUD_PUSH_TEST_MEMBER_ID || !env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID ||
       !/^[A-Za-z0-9_-]{16,64}$/.test(env.CLOUD_PUSH_TEST_RUN_ID ?? "")) return { status: "disabled", reason: "personal_test_not_enabled" };
-  const identity = await reportIdentity(request, env, true);
-  if (!identity.subject || !identity.discord_authorized) return { status: "held", reason: "fresh_discord_role_required" };
+  const identity = await reportSessionIdentity(request, env);
+  if (!identity.subject) return { status: "held", reason: "authenticated_session_required" };
   const memberId = await cloudMemberId(identity.subject);
   if (memberId !== env.CLOUD_PUSH_TEST_MEMBER_ID) return { status: "disabled", reason: "personal_test_member_required" };
-  const check = async () => {
-    const fresh = await reportIdentity(request, env, true);
-    if (fresh.subject !== identity.subject || !fresh.discord_authorized) return false;
-    if ((await currentMembership(env, identity.subject!, true)).status !== "paid") return false;
+  const optedIn = async () => {
     const row = await db.prepare("SELECT preferences_json FROM cloud_member_preferences WHERE member_id = ?").bind(memberId).first<{ preferences_json: string }>();
     const prefs = validatePreferences(row ? JSON.parse(row.preferences_json) : DEFAULT_PREFERENCES, true);
     return Object.values(prefs.notifications).some(Boolean);
   };
-  try { if (!await check()) return { status: "held", reason: "fresh_membership_and_opt_in_required" }; }
-  catch { return { status: "held", reason: "fresh_membership_and_opt_in_required" }; }
+  try { if (!await optedIn()) return { status: "held", reason: "notification_opt_in_required" }; }
+  catch { return { status: "held", reason: "notification_preferences_unavailable" }; }
   const eventKey = `personal-device-test:${env.CLOUD_PUSH_TEST_RUN_ID}`;
   const receipt = await db.prepare(`INSERT OR IGNORE INTO cloud_push_dispatch_receipts
     (member_id, subscription_id, event_key, status, reason, updated_at) VALUES (?, ?, ?, 'preparing', 'reserved', ?)`)
@@ -37,8 +34,17 @@ export async function dispatchPersonalDeviceTest(request: Request, env: CloudEnv
     if (!saved.success) throw new Error("receipt_save_failed");
     return result;
   };
-  try { if (!await check()) return finish({ status: "held", reason: "fresh_membership_and_opt_in_required" }); }
-  catch { return finish({ status: "held", reason: "fresh_membership_and_opt_in_required" }); }
+  // Exactly one fresh role lookup in this HTTP operation. Neither the signed
+  // identity nor cached roles authorize sending. Look up after reservation and
+  // re-read opt-in before transport; failures remain non-retryable receipts.
+  try {
+    const fresh = await reportIdentity(request, env, true);
+    if (fresh.subject !== identity.subject || !fresh.discord_authorized)
+      return finish({ status: "held", reason: "fresh_discord_role_required" });
+    if ((await currentMembership(env, identity.subject!, true)).status !== "paid")
+      return finish({ status: "held", reason: "fresh_paid_membership_required" });
+    if (!await optedIn()) return finish({ status: "held", reason: "notification_opt_in_required" });
+  } catch { return finish({ status: "held", reason: "final_qualification_unavailable" }); }
   const device = await db.prepare(`SELECT s.*, m.vapid_public_key, m.expires_at_ms FROM cloud_push_subscriptions s JOIN
     cloud_push_subscription_metadata m ON m.subscription_id = s.subscription_id
     WHERE s.member_id = ? AND s.subscription_id = ? AND s.revoked_at IS NULL`)

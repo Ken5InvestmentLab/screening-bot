@@ -14,6 +14,8 @@ Wranglerの `keep_vars: true` によりDashboardの固定値を再deployで維�
 
 本人が通知ONを保存し、登録IDを本番の固定端末値に設定した後、本人Edgeの「この端末へテスト通知」を1回実行する。送信直前にもfresh role・通知ON・本人/端末一致を確認する。unknown/preparing/acceptedの予約は削除・自動再送しない。provider acceptedはOS実到着と区別して記録する。
 
+手動テストHTTP内のDiscord照会は、予約後・送信前のfresh照会1回に限定する。入口の署名済み未期限切れセッション確認は本人行の選択にだけ使い、送信を許可しない。ロールキャッシュや429猶予では送らず、最終照会失敗もheld receiptとして保存する。通常のレポート認証は既存処理のまま。
+
 ## 公開と復旧
 
 `npm run check`、最新research HEADとの祖先・差分確認、運用値と既存3認証Secretの存在確認を完了してから、fast-forwardで `research/weak-early-beta` を更新し、そのHEADに `cloud-deploy-*` タグを作成する。専用workflowは同じ台帳からHTMLとprivate canonical moduleを生成し、台帳/カレンダー検証後にdeployする。SQL 0001–0003は適用済みなので再実行しない。

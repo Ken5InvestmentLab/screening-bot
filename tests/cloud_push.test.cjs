@@ -103,7 +103,7 @@ async function dispatchHarness({ optIn=true, providerStatus=200, revokeBeforeSen
  const event={signal_id:'private-signal',kind:'new_detection',detection_date:new Date(now+9*3600000).toISOString().slice(0,10),adapter_version:'cloud-ledger-v1',source_ledger_revision:'a'.repeat(64),signal_actual_close:1000,signal_price_status:'verified',endpoints:{d5_close:{date:'2026-10-09'},d6_open:{date:'2026-10-13'}},...eventOverride};
  const m=modules({cryptoMock:noGenerate,fetchMock:async(input)=>{
  const url=String(input);
- if(url.includes('discord.com')){roleReads++;if(background)assert.equal(url,`https://discord.com/api/v10/guilds/345678901234567890/members/${subject}`);return new Response(JSON.stringify({user:{id:wrongReturnedSubject?'456789012345678901':subject},roles:roleStatus===200&&!(removeRoleBeforeSend&&roleReads>1)?[role]:[]}),{status:roleStatus});}
+ if(url.includes('discord.com')){roleReads++;if(background)assert.equal(url,`https://discord.com/api/v10/guilds/345678901234567890/members/${subject}`);return new Response(JSON.stringify({user:{id:wrongReturnedSubject?'456789012345678901':subject},roles:roleStatus===200&&!(removeRoleBeforeSend&&(deviceTest||roleReads>1))?[role]:[]}),{status:roleStatus});}
  assert.match(url,/^https:\/\/api\.whop\.com\//);paymentReads++;
  if(providerStatus!==200)return new Response('',{status:providerStatus});
  if(url.includes('/memberships/'))return Response.json({...membership,status:revokeBeforeSend&&paymentReads>3?'revoked':'active'});
@@ -121,7 +121,7 @@ async function dispatchHarness({ optIn=true, providerStatus=200, revokeBeforeSen
  const req=new Request('https://cloud.example.invalid/',{headers:{cookie:'__Host-report_gate_session='+encodeURIComponent(session)}});
  const dispatch=m.load('./cloud-push-dispatch');
  const material=await fixture();const transport=async()=>{delivered++;if(transportFailure)throw Error('lost');return new Response('',{status:201});};
- return {call:()=>deviceTest?dispatch.dispatchPersonalDeviceTest(req,env,transport,material):background?dispatch.dispatchBackgroundPersonalCandidate(env,'trusted-server-source-event',transport,material):dispatch.dispatchPersonalCandidate(req,env,'trusted-server-source-event',transport,material),receipts,get delivered(){return delivered;},get roleReads(){return roleReads;},get paymentReads(){return paymentReads;}};
+ return {call:()=>deviceTest?dispatch.dispatchPersonalDeviceTest(req,env,transport,material):background?dispatch.dispatchBackgroundPersonalCandidate(env,'trusted-server-source-event',transport,material):dispatch.dispatchPersonalCandidate(req,env,'trusted-server-source-event',transport,material),httpCall:()=>api.cloudApi(new Request('https://cloud.example.invalid/api/cloud/notifications/personal-test',{method:'POST',headers:{origin:'https://cloud.example.invalid','content-type':'application/json',cookie:req.headers.get('cookie')},body:'{}'}),env),receipts,get delivered(){return delivered;},get roleReads(){return roleReads;},get paymentReads(){return paymentReads;}};
 }
 test('dispatcher rechecks role/payment/opt-in before send and atomically prevents concurrent duplicates',async()=>{
  const h=await dispatchHarness();const results=await Promise.all([h.call(),h.call()]);assert.equal(h.delivered,1);assert.equal(results.filter(r=>r.status==='accepted').length,1);assert.equal(results.filter(r=>r.reason==='duplicate_or_uncertain_delivery').length,1);assert.ok(h.roleReads>=3);assert.ok(h.paymentReads>=6);assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
@@ -201,7 +201,7 @@ test('managed-role unknown outcome stays non-retryable',async()=>{
 });
 
 test('explicit device test needs no Bot/Whop credentials and preserves a one-time receipt',async()=>{
- const h=await dispatchHarness({deviceTest:true});assert.equal((await h.call()).status,'accepted');assert.equal(h.roleReads,3);assert.equal(h.paymentReads,0);assert.equal(h.delivered,1);
+ const h=await dispatchHarness({deviceTest:true});assert.equal((await h.call()).status,'accepted');assert.equal(h.roleReads,1);assert.equal(h.paymentReads,0);assert.equal(h.delivered,1);
  assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
  assert.match([...h.receipts.keys()][0],/personal-device-test:personal_test_20261004$/);
 });
@@ -210,6 +210,15 @@ for(const [label,options] of [['opt-in OFF',{optIn:false}],['role removed',{remo
 });
 test('explicit device test unknown response never retries',async()=>{
  const h=await dispatchHarness({deviceTest:true,transportFailure:true});assert.equal((await h.call()).status,'unknown');assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
+});
+
+for(const options of [{removeRoleBeforeSend:true},{roleStatus:429},{roleStatus:503}])test('manual HTTP dispatch never sends on cached paid roles when the one final lookup fails '+JSON.stringify(options),async()=>{
+ const h=await dispatchHarness({deviceTest:true,...options});
+ const response=await h.httpCall(),value=await response.json();
+ assert.equal(value.status,'held');assert.equal(value.reason,'fresh_discord_role_required');
+ assert.equal(value.arrival_confirmed,false);assert.equal(h.roleReads,1);assert.equal(h.delivered,0);
+ assert.equal(h.receipts.size,1);assert.equal([...h.receipts.values()][0].status,'held');
+ assert.equal((await (await h.httpCall()).json()).status,'suppressed');assert.equal(h.roleReads,1);
 });
 test('device test HTTP route requires same-origin authenticated empty POST and never claims OS arrival',async()=>{
  const m=modules(),env={CLOUD_DB:database(),SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'guild',DISCORD_ALLOWED_ROLE_IDS:'role'};

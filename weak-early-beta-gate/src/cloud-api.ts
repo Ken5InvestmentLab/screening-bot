@@ -1,4 +1,4 @@
-import { reportIdentity } from "./shared-report-gate";
+import { reportIdentity, reportSessionIdentity } from "./shared-report-gate";
 import { pushApi } from "./cloud-push";
 import { dispatchPersonalDeviceTest } from "./cloud-push-dispatch";
 import { evaluateNestedMembership } from "./cloud-whop-adapter";
@@ -147,7 +147,8 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     return json({ ok: false, reason: "same_origin_required" }, 403);
   }
   try {
-    const identity = await reportIdentity(request, env);
+    const identity = path === "/api/cloud/notifications/personal-test"
+      ? await reportSessionIdentity(request, env) : await reportIdentity(request, env);
     if (!identity.subject) return json({ ok: false, reason: identity.reason }, identity.reason === "temporarily_unavailable" ? 503 : 401);
     if (!env.CLOUD_DB) return json({ ok: false, reason: "storage_unavailable", delivery_mode: "dry_run" }, 503);
     const memberId = await cloudMemberId(identity.subject);

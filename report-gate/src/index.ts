@@ -644,6 +644,19 @@ export async function reportIdentity(request: Request, env: WorkerEnv, freshRole
   return { subject: session.sub, discord_authorized: check.authorized };
 }
 
+// Identifies the signed, unexpired session without a role lookup. This does not
+// grant report or push access. Manual dispatch uses it only to select the owner;
+// it must perform reportIdentity(..., true) immediately before sending.
+export async function reportSessionIdentity(request: Request, env: WorkerEnv): Promise<{
+  subject?: string; discord_authorized: boolean; reason?: string;
+}> {
+  const session = await readSession(request, env);
+  if (!session) return { discord_authorized: false, reason: "login_required" };
+  const now = Math.floor(Date.now() / 1000);
+  if (session.tokenExp <= now + TOKEN_REFRESH_SKEW_SECONDS) return { discord_authorized: false, reason: "refresh_required" };
+  return { subject: session.sub, discord_authorized: false };
+}
+
 async function login(request: Request, env: WorkerEnv): Promise<Response> {
   requiredEnv(env, "DISCORD_CLIENT_ID");
   requiredEnv(env, "DISCORD_CLIENT_SECRET");

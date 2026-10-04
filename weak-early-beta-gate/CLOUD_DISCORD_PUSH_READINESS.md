@@ -1,7 +1,19 @@
 # Discord access, synchronized settings and personal push preparation
 
+Current D1/Edge preflight status is in [CLOUD_D1_RELEASE_PREP.md](CLOUD_D1_RELEASE_PREP.md).
+The named D1 now has approved migrations0001–0003 and the Production CLOUD_DB
+binding; Previews Base has no database binding. Dashboard created binding-only
+version64bee25d; preparation code remains unpublished. Existing Edge login renders
+the old report after the change. Historical absence/unverified statements below
+describe the prior handoff. Console application did not register d1_migrations.
+Push remains OFF.
+
+For the integrated notification-OFF candidate and its fresh tests/release/rollback
+steps, see [CLOUD_NOTIFY_OFF_RELEASE.md](CLOUD_NOTIFY_OFF_RELEASE.md).
+
 2026-10-04 followup. This document supersedes the Whop-for-every-report proposal
-in earlier review documents. Nothing here is deployed or sent.
+in earlier review documents. Preparation code is not deployed and no push is sent;
+the separately approved D1 connection/schema described above is already live.
 
 ## Approved account contract
 

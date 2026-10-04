@@ -1,8 +1,12 @@
 # Cloud membership and push preparation
 
+Current D1 is already approved/applied in production; historical setup statements
+below are not instructions to rerun SQL. See [CLOUD_D1_RELEASE_PREP.md](CLOUD_D1_RELEASE_PREP.md)
+and [CLOUD_NOTIFY_OFF_RELEASE.md](CLOUD_NOTIFY_OFF_RELEASE.md) for current state.
+
 Delivery remains disabled. Subscription registration/UI, push-only service worker,
 RFC web-push sender and an unwired personal dispatch helper now exist. No actual
-push, keys, credentials, DB resource, production binding or deployment was made.
+push, new keys or credentials were made. Preparation code is not deployed.
 Discord login/role access and Discord-ID settings follow the approved contract in
 [CLOUD_DISCORD_PUSH_READINESS.md](CLOUD_DISCORD_PUSH_READINESS.md). That document
 also records an unresolved provider schema discrepancy; these membership fixtures

@@ -3,6 +3,7 @@
   "name": "tentei-kyokuchi-cloud",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-07",
+  "preview_urls": false,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
@@ -12,12 +13,40 @@
     "enabled": true,
     "head_sampling_rate": 1
   },
+  "d1_databases": [
+    {
+      "binding": "CLOUD_DB",
+      "database_name": "tentei-cloud-settings",
+      "database_id": "e0cdb3a7-b682-4db8-96ac-f2afcc9c23cb",
+      "remote": false,
+      "migrations_dir": "migrations"
+    }
+  ],
   "vars": {
     "DISCORD_API_BASE": "https://discord.com/api",
     "DISCORD_GUILD_ID": "1479418833352785944",
     "DISCORD_ALLOWED_ROLE_IDS": "1487089073385373828",
     "ACCESS_PURCHASE_URL": "https://whop.com/scoring-bot/tenteikyokuchi/",
     "REPORT_ASSET_PATH": "/weak_early_beta_latest.html",
-    "SESSION_TTL_SECONDS": "31536000"
+    "SESSION_TTL_SECONDS": "31536000",
+    "CLOUD_PUSH_REGISTRATION_ENABLED": "false",
+    "CLOUD_PUSH_MODE": "disabled"
+  },
+  "env": {
+    "preview": {
+      "name": "tentei-kyokuchi-cloud-preview",
+      "preview_urls": false,
+      "d1_databases": [],
+      "vars": {
+        "DISCORD_API_BASE": "https://discord.com/api",
+        "DISCORD_GUILD_ID": "1479418833352785944",
+        "DISCORD_ALLOWED_ROLE_IDS": "1487089073385373828",
+        "ACCESS_PURCHASE_URL": "https://whop.com/scoring-bot/tenteikyokuchi/",
+        "REPORT_ASSET_PATH": "/weak_early_beta_latest.html",
+        "SESSION_TTL_SECONDS": "31536000",
+        "CLOUD_PUSH_REGISTRATION_ENABLED": "false",
+        "CLOUD_PUSH_MODE": "disabled"
+      }
+    }
   }
 }

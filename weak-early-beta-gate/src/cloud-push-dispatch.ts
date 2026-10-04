@@ -7,7 +7,9 @@ type Device = PushSubscription & { member_id: string; subscription_id: string; r
 export async function dispatchPersonalCandidate(request: Request, env: CloudEnv, sourceEventKey: string,
   transport: typeof fetch = fetch, fixture?: Parameters<typeof encryptPushPayload>[2]): Promise<SendResult | { status: "held" | "suppressed"; reason: string }> {
   const db = env.CLOUD_DB;
-  if (!db || env.CLOUD_PUSH_MODE !== "personal_test" || !env.CLOUD_PUSH_TEST_MEMBER_ID || !env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID) return { status: "disabled", reason: "personal_test_not_enabled" };
+  // Release vars generate the literal "disabled" type; this unused helper also
+  // checks any separately approved runtime configuration without enabling it.
+  if (!db || String(env.CLOUD_PUSH_MODE) !== "personal_test" || !env.CLOUD_PUSH_TEST_MEMBER_ID || !env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID) return { status: "disabled", reason: "personal_test_not_enabled" };
   const identity = await reportIdentity(request, env, true);
   if (!identity.subject || !identity.discord_authorized) return { status: "held", reason: "fresh_discord_role_required" };
   const memberId = await cloudMemberId(identity.subject);

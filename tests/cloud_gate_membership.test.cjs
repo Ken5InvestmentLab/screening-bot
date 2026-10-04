@@ -1009,3 +1009,27 @@ test('custom shares and fees survive server save and reload',async()=>{
  const saved=await h.fetchApi('/api/cloud/preferences',{method:'PUT',body:input}); assert.equal(saved.status,200);
  const read=await h.fetchApi(); const body=await read.json(); assert.equal(body.preferences.base_shares,300);assert.equal(body.preferences.cost_percent,0.25);
 });
+
+test('notification-OFF settings save without Whop configuration and stay isolated across two Discord sessions', async () => {
+  const h = await apiHarness({ configured: false });
+  const users = [
+    ['discord-user-1', preferences({ max_price: 2000, base_shares: 200 })],
+    ['other-discord-user', preferences({ max_price: 5000, base_shares: 300, exit_endpoint: 'd6_open' })],
+  ];
+  for (const [subject, body] of users) {
+    const saved = await h.worker.fetch(await h.request('/api/cloud/preferences', { method: 'PUT', body, subject }), h.env);
+    assert.equal(saved.status, 200);
+    assert.equal((await saved.json()).persistence, 'server');
+  }
+  for (const [subject, expected] of users) {
+    const read = await h.worker.fetch(await h.request('/api/cloud/preferences?member_id=forged-target', { subject }), h.env);
+    assert.equal(read.status, 200);
+    assert.deepEqual((await read.json()).preferences, expected);
+  }
+  assert.equal(h.db.state.preferences.size, 2);
+  assert.equal(h.calls.length, 0, 'Whop must not be contacted when absent');
+  const enabled = await h.worker.fetch(await h.request('/api/cloud/preferences', {
+    method: 'PUT', body: preferences({ notifications: { new_detection: true } }),
+  }), h.env);
+  assert.equal(enabled.status, 403);
+});

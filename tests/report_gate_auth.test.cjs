@@ -282,7 +282,7 @@ for (const state of ['missing', 'expired']) {
   });
 }
 
-function guardHarness(script, fetchMock, { recovering = false, freePage = false, validUntil = 0, clock, locks = { request: async (_name, callback) => callback() } } = {}) {
+function guardHarness(script, fetchMock, { recovering = false, freePage = false, unavailablePage = false, validUntil = 0, clock, locks = { request: async (_name, callback) => callback() } } = {}) {
   const windowEvents = new Map();
   const documentEvents = new Map();
   const intervals = [];
@@ -292,7 +292,7 @@ function guardHarness(script, fetchMock, { recovering = false, freePage = false,
   const document = {
     hidden: false,
     documentElement: { innerHTML: 'original report', getAttribute: name => name === 'data-auth-valid-until' && validUntil ? String(validUntil) : null,
-      hasAttribute: (name) => (name === 'data-auth-recovery' && recovering) || (name === 'data-auth-free' && freePage) },
+      hasAttribute: (name) => (name === 'data-auth-recovery' && recovering) || (name === 'data-auth-free' && freePage) || (name === 'data-auth-unavailable' && unavailablePage) },
     body: { style: { visibility: '' } },
     addEventListener: (name, callback) => documentEvents.set(name, callback),
   };
@@ -356,6 +356,58 @@ test('public free guard promotes only after a successful serialized role check',
   status = 200;
   guard.documentEvents.get('visibilitychange')(); await flushGuardTimers(guard); assert.equal(guard.reloads(), 1);
   await guard.intervals[0](); assert.equal(guard.reloads(), 1); assert.deepEqual(guard.navigations, []);
+});
+
+test('Cloud unavailable page restores confirmed free HTML once, including its purchase links', async () => {
+  const gate = createGate(() => { throw new Error('Unexpected provider request.'); });
+  let qualification = 'unavailable';
+  let checks = 0;
+  const env = {
+    ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_LOGIN_REQUIRED: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true',
+    REPORT_ROLE_LOOKUP: async () => ({ status: qualification, reason: 'discord_role_lookup_503' }),
+    ASSETS: { fetch: async input => new Response(`<html><body>${String(input).includes('_free.html')
+      ? 'MASKED-FREE <a href="/purchase">アクセス権を購入する</a>' : 'PRIVATE-PAID'}</body></html>`) },
+  };
+  const payload = sessionPayload({ tokenExp: Math.floor(Date.now() / 1000) + 3600 });
+  const report = () => requestFor(gate, '/', payload).then(request => gate.worker.fetch(request, env));
+  const beforeHtml = await (await report()).text();
+  assert.match(beforeHtml, /data-auth-unavailable/);
+  assert.match(beforeHtml, /会員資格を確認できませんでした/);
+  assert.doesNotMatch(beforeHtml, /href="\/purchase"|PRIVATE-PAID/);
+  qualification = 'free';
+  const check = async () => {
+    checks += 1;
+    return gate.worker.fetch(await requestFor(gate, '/auth/check', payload), env);
+  };
+  const guard = guardHarness(gate.api.accessGuardScript(env), check, { freePage: true, unavailablePage: true });
+  await guard.windowEvents.get('pageshow')();
+  await guard.intervals[0]();
+  assert.equal(guard.reloads(), 1);
+  assert.equal(checks, 1);
+  assert.deepEqual(guard.navigations, []);
+  const afterHtml = await (await report()).text();
+  assert.match(afterHtml, /data-auth-free/);
+  assert.match(afterHtml, /href="\/purchase"/);
+  assert.doesNotMatch(afterHtml, /data-auth-unavailable|会員資格を確認できませんでした|PRIVATE-PAID/);
+  const restored = guardHarness(gate.api.accessGuardScript(env), check, { freePage: true });
+  await restored.windowEvents.get('pageshow')();
+  assert.equal(restored.reloads(), 0);
+});
+
+for (const scenario of [
+  { name: 'ordinary confirmed free page', unavailablePage: false, response: () => Response.json({ reason: 'role_required' }, { status: 403 }) },
+  { name: 'continuing qualification failure', unavailablePage: true, response: () => Response.json({ reason: 'discord_role_lookup_503' }, { status: 503 }) },
+  { name: 'different forbidden reason', unavailablePage: true, response: () => Response.json({ reason: 'membership_required' }, { status: 403 }) },
+  { name: 'malformed forbidden JSON', unavailablePage: true, response: () => new Response('{', { status: 403 }) },
+  { name: 'null forbidden JSON', unavailablePage: true, response: () => Response.json(null, { status: 403 }) },
+]) test(`free recovery guard does not reload for ${scenario.name}`, async () => {
+  const gate = createGate(() => { throw new Error('Unexpected provider request.'); });
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_LOGIN_REQUIRED: 'true' };
+  const guard = guardHarness(gate.api.accessGuardScript(env), scenario.response, { freePage: true, unavailablePage: scenario.unavailablePage });
+  await guard.windowEvents.get('pageshow')();
+  await guard.intervals[0]();
+  assert.equal(guard.reloads(), 0);
+  assert.deepEqual(guard.navigations, []);
 });
 
 test('fresh Cloud full document skips duplicate initial lookup but checks restored pages and intervals', async () => {

@@ -6,8 +6,10 @@ const NOW=Date.parse('2026-10-05T00:00:00Z');
 function harness() {
  const clock={now:NOW},requests=[],provider={roles:['allowed'],http:200,retry:86374,scope:'user'};
  const fetchMock=async(input,init)=>{requests.push({route:new URL(input).pathname});provider.started?.(); if(provider.wait)await provider.wait;
+   clock.now+=provider.elapsed||0;
+   if(provider.error)throw provider.error;
    if(provider.http===200)return Response.json({roles:provider.roles});
-   return Response.json({retry_after:provider.retry,untrusted_secret:'must-not-be-stored-or-logged'},{status:provider.http,headers:{'x-ratelimit-scope':provider.scope}});
+   return Response.json({retry_after:provider.retry,untrusted_secret:'must-not-be-stored-or-logged'},{status:provider.http,headers:{'x-ratelimit-scope':provider.scope,...(provider.retryHeader?{'retry-after':provider.retryHeader}:{})}});
  };
  const mod=modules({clock,fetchMock}),authority=mod.load('./cloud-role-authority');
  const env={DISCORD_GUILD_ID:'synthetic-guild',DISCORD_ALLOWED_ROLE_IDS:'allowed',DISCORD_API_BASE:'https://discord.invalid/api',DISCORD_CLIENT_ID:'synthetic-client',SESSION_SECRET:'synthetic-encryption-secret'};
@@ -48,6 +50,47 @@ test('qualification remains separated between owners and allowed-role policy ver
 for(const status of [401,403,404,503])test(`upstream HTTP ${status} never confirms a missing role`,async()=>{
  const h=harness();h.provider.http=status;const result=await h.check();assert.equal(result.status,'unavailable');assert.equal(result.reason,'discord_role_lookup_'+status);
  assert.equal((await h.check()).status,'unavailable');assert.equal(h.requests.length,1);
+});
+
+for(const failure of [
+ {name:'10-second thrown timeout',provider:{elapsed:10000,error:new DOMException('synthetic timeout','TimeoutError')},reason:'discord_role_network_unavailable'},
+ {name:'slow HTTP 503',provider:{elapsed:10000,http:503},reason:'discord_role_lookup_503'},
+ {name:'slow invalid roles response',provider:{elapsed:10000,roles:null},reason:'discord_role_response_invalid'},
+])test(`${failure.name} waits five seconds after completion, including restart and token rotation`,async()=>{
+ const h=harness();Object.assign(h.provider,failure.provider);
+ const result=await h.check();const completedAt=h.clock.now,deadline=completedAt+5000;
+ assert.equal(completedAt,NOW+10000);assert.equal(result.status,'unavailable');assert.equal(result.reason,failure.reason);assert.equal(result.retryAfterSeconds,5);
+ const stored=h.env.CLOUD_ROLE_AUTHORITY.records,values=[...stored.values()][0];
+ assert.equal(values.get('failure').retryAt,deadline);
+ assert.equal((await h.check()).source,'waiting');assert.equal(h.requests.length,1);
+ // Persisted failure must also govern a new object with a newly rotated token.
+ h.env.CLOUD_ROLE_AUTHORITY=namespace(h.authority.CloudRoleAuthority,h.env,stored);
+ h.clock.now=completedAt+1000;const restarted=await h.check('owner','synthetic-rotated-access');
+ assert.equal(restarted.status,'unavailable');assert.equal(restarted.source,'waiting');assert.equal(restarted.retryAfterSeconds,4);assert.equal(h.requests.length,1);
+ h.clock.now=deadline-1;const waiting=await h.check();
+ assert.equal(waiting.status,'unavailable');assert.equal(waiting.retryAfterSeconds,1);assert.equal(h.requests.length,1);assert.equal(values.get('failure').retryAt,deadline);
+ Object.assign(h.provider,{elapsed:0,error:undefined,http:200,roles:['allowed']});h.clock.now=deadline;
+ const recovered=await h.check('owner','synthetic-rotated-access');assert.equal(recovered.status,'paid');assert.equal(recovered.source,'upstream');assert.equal(h.requests.length,2);assert.equal(values.has('failure'),false);
+});
+
+for(const wait of [
+ {name:'Retry-After header',provider:{retryHeader:'17',retry:13},seconds:17},
+ {name:'JSON retry_after',provider:{retry:13},seconds:13},
+ {name:'invalid Retry-After fallback',provider:{retryHeader:'invalid',retry:0},seconds:5},
+])test(`slow 429 preserves its ${wait.name} deadline`,async()=>{
+ const h=harness();Object.assign(h.provider,{elapsed:10000,http:429},wait.provider);
+ const result=await h.check();const deadline=NOW+10000+wait.seconds*1000;
+ assert.equal(result.status,'unavailable');assert.equal(result.reason,'discord_role_lookup_429');assert.equal(result.retryAfterSeconds,wait.seconds);
+ const values=[...h.env.CLOUD_ROLE_AUTHORITY.records.values()][0];assert.equal(values.get('failure').retryAt,deadline);
+ h.clock.now=deadline-1;assert.equal((await h.check()).source,'waiting');assert.equal(h.requests.length,1);assert.equal(values.get('failure').retryAt,deadline);
+ h.clock.now=deadline;Object.assign(h.provider,{elapsed:0,http:200});assert.equal((await h.check()).status,'paid');assert.equal(h.requests.length,2);
+});
+
+test('a slow successful lookup keeps its original checkedAt plus 90-second absolute expiry',async()=>{
+ const h=harness();h.provider.elapsed=10000;
+ const result=await h.check();assert.equal(result.checkedAt,NOW);assert.equal(result.validUntil,NOW+90000);
+ h.provider.elapsed=0;h.provider.roles=[];h.clock.now=NOW+89999;assert.equal((await h.check()).status,'paid');assert.equal(h.requests.length,1);
+ h.clock.now=NOW+90000;assert.equal((await h.check()).status,'free');assert.equal(h.requests.length,2);
 });
 test('missing authority fails closed without independent per-isolate fallback',async()=>{
  const h=harness();delete h.env.CLOUD_ROLE_AUTHORITY;assert.equal((await h.check()).status,'unavailable');assert.equal(h.requests.length,0);

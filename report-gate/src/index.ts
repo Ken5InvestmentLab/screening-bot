@@ -28,6 +28,7 @@ function accessGuardScript(env: WorkerEnv): string {
   const checkIntervalMs = 120000;
   const recovering = document.documentElement.hasAttribute('data-auth-recovery');
   const freePage = document.documentElement.hasAttribute('data-auth-free');
+  const unavailablePage = document.documentElement.hasAttribute('data-auth-unavailable');
   let checking = false;
   let finished = false;
   let recoveryDelayMs = 2000;
@@ -67,9 +68,14 @@ function accessGuardScript(env: WorkerEnv): string {
         }
       }` : ""}
       ${env.REPORT_PUBLIC_FREE === "true" ? `if (freePage${env.REPORT_LOGIN_REQUIRED === "true" ? " && response.status !== 401" : ""}) {
-        // A public page must refresh the existing session too. Never redirect
-        // anonymous/free visitors or reload on a failed/denied role lookup.
-        if (response.ok) { finished = true; window.location.reload(); }
+        // Refresh the existing session and recover an unavailable page once a
+        // free result is confirmed. Stable free pages and failures stay put.
+        let recoveredFree = false;
+        if (unavailablePage && response.status === 403) {
+          const result = await response.json().catch(() => null);
+          recoveredFree = result?.reason === 'role_required';
+        }
+        if (response.ok || recoveredFree) { finished = true; window.location.reload(); }
         return;
       }` : ""}
       if (response.status === 401) {

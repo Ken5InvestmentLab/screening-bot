@@ -48,7 +48,7 @@ export class CloudRoleAuthority extends DurableObject<CloudEnv> {
   }
   private async lookup(accessToken: string): Promise<ReportRoleDecision> {
     const checkedAt = Date.now();
-    let failure: Failure = { reason: "discord_role_network_unavailable", retryAt: checkedAt + 5000 };
+    let failure: Failure = { reason: "discord_role_network_unavailable", retryAt: 0 };
     let httpStatus: number | undefined;
     let observedAt: string | undefined;
     try {
@@ -82,6 +82,7 @@ export class CloudRoleAuthority extends DurableObject<CloudEnv> {
           replyKind: response.headers.get("content-type")?.includes("application/json") ? "json" : "other" };
       } else failure.reason = `discord_role_lookup_${response.status}`;
     } catch { /* Provider bodies and credentials must never reach logs. */ }
+    if (failure.retryAt === 0) failure.retryAt = Date.now() + 5000;
     // No positive decision survives its original deadline or gets extended by an error.
     await this.ctx.storage.delete("verified"); this.verified = undefined;
     await this.ctx.storage.put("failure", failure); this.failure = failure;

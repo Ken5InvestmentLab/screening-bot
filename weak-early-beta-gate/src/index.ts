@@ -40,9 +40,10 @@ export default {
     if (pathname.startsWith("/api/cloud/")) return cloudApi(request, env);
     // Keep existing Discord OAuth + configured-role access. Payment verification
     // remains independent for notifications, without another user login.
-    // Only this Cloud Worker exposes pre-filtered free documents anonymously.
+    // First-time visitors go straight to existing Discord OAuth, without a
+    // purchase interstitial. Valid free sessions receive prefiltered free HTML.
     // Full assets and full lazy bundles retain the existing Discord role gate.
-    const protectedEnv = { ...env, REPORT_PUBLIC_FREE: "true", REPORT_REQUIRE_FRESH_ROLE: "true" };
+    const protectedEnv = { ...env, REPORT_PUBLIC_FREE: "true", REPORT_LOGIN_REQUIRED: "true", REPORT_REQUIRE_FRESH_ROLE: "true" };
     if (BETA_SCRIPT_RE.test(pathname)) {
       const assetResponse = await env.ASSETS.fetch(
         new URL(pathname, "https://assets.local").toString(),

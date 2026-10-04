@@ -43,7 +43,7 @@ function accessGuardScript(env: WorkerEnv): string {
         headers: { accept: 'application/json' },
         signal: AbortSignal.timeout(25000),
       });
-      ${env.REPORT_PUBLIC_FREE === "true" ? `if (freePage) {
+      ${env.REPORT_PUBLIC_FREE === "true" ? `if (freePage${env.REPORT_LOGIN_REQUIRED === "true" ? " && response.status !== 401" : ""}) {
         // A public page must refresh the existing session too. Never redirect
         // anonymous/free visitors or reload on a failed/denied role lookup.
         if (response.ok) { finished = true; window.location.reload(); }
@@ -56,7 +56,7 @@ function accessGuardScript(env: WorkerEnv): string {
           continue;
         }
         finished = true;
-        ${env.REPORT_PUBLIC_FREE === "true" ? "window.location.reload();" : "window.location.replace('/auth/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search));"}
+        ${env.REPORT_PUBLIC_FREE === "true" && env.REPORT_LOGIN_REQUIRED !== "true" ? "window.location.reload();" : "window.location.replace('/auth/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search));"}
         return;
       }
       if (recovering && (response.ok || response.status === 403)) {
@@ -117,6 +117,7 @@ type WorkerEnv = Env & {
   REPORT_ACCESS_CHECK?: (discordSubject: string) => Promise<boolean>;
   REPORT_ACCESS_DENIED_MESSAGE?: string;
   REPORT_PUBLIC_FREE?: string;
+  REPORT_LOGIN_REQUIRED?: string;
   REPORT_REQUIRE_FRESH_ROLE?: string;
 };
 
@@ -959,7 +960,7 @@ async function serveReport(request: Request, env: WorkerEnv, assetPath = reportA
     // This shell contains no report data; /auth/check refreshes before reload.
     return authenticationWaitResponse();
   }
-  if (access.loginRequired && env.REPORT_PUBLIC_FREE !== "true") {
+  if (access.loginRequired && (env.REPORT_PUBLIC_FREE !== "true" || env.REPORT_LOGIN_REQUIRED === "true")) {
     return loginRedirect(request);
   }
   const headers = new Headers();

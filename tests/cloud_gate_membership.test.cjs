@@ -986,7 +986,8 @@ test('valid Discord session and specified role retain report and auth/check acce
   assert.equal(report.status, 200);
   assert.match(await report.text(), /SECRET-UNRELEASED-TICKER/);
   const loggedOut = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html', { authenticated: false }), h.env);
-  assert.equal(loggedOut.status, 200);
+  assert.equal(loggedOut.status, 302);
+  assert.match(loggedOut.headers.get('location'), /^\/auth\/login/);
   assert.doesNotMatch(await loggedOut.text(), /SECRET-UNRELEASED-TICKER/);
   const check = await h.worker.fetch(await h.request('/auth/check'), h.env);
   assert.equal(check.status, 200);
@@ -1055,10 +1056,12 @@ test('notification-OFF settings save without Whop configuration and stay isolate
   assert.equal(enabled.status, 403);
 });
 
-for(const [label,options,expected] of [['anonymous',{authenticated:false},'free'],['free',{},'free'],['paid',{},'full']])test('public Cloud document and free bundle: '+label,async()=>{
+for(const [label,options,expected] of [['anonymous',{authenticated:false},'login'],['free',{},'free'],['paid',{},'full']])test('Cloud initial Discord authentication and free bundle: '+label,async()=>{
  const h=await apiHarness({roles:label==='paid'?['paid-discord-role']:[]});
  for(const path of ['/','/weak_early_beta_latest.html','/weak_early_beta_analytics.html','/weak_early_beta_guide.html']){
-  const response=await h.worker.fetch(await h.request(path,options),h.env);assert.equal(response.status,200);
+  const response=await h.worker.fetch(await h.request(path,options),h.env);
+  if(expected==='login'){assert.equal(response.status,302);assert.match(response.headers.get('location'),/^\/auth\/login/);assert.doesNotMatch(await response.text(),/purchase|whop|SECRET-UNRELEASED-TICKER/);continue;}
+  assert.equal(response.status,200);
   const html=await response.text();assert.match(html,expected==='free'?/RELEASED-PUBLIC-ONLY/:/SECRET-UNRELEASED-TICKER/);
   if(expected==='free'){assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER/);assert.match(html,/data-auth-free/);assert.match(html,/auth\/guard/);}
  }

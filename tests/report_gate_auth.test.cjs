@@ -18,7 +18,7 @@ const ts = require(tsPath);
 function createGate(fetchMock, { clock } = {}) {
   const source = fs.readFileSync(path.join(repoRoot, 'report-gate/src/index.ts'), 'utf8');
   const compiled = ts.transpileModule(`${source}\n` +
-    'globalThis.__gateTest = { createSession, readSession, accessGuardScript };', {
+    'globalThis.__gateTest = { createSession, createOAuthState, readSession, accessGuardScript };', {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText;
   const sandbox = {
@@ -365,6 +365,32 @@ test('newly assigned role unlocks Cloud documents even when the signed session p
   const now = Math.floor(Date.now() / 1000);
   const response = await gate.worker.fetch(await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600, roleCheckedAt: now, roles: [] })), env);
   assert.equal(response.status, 200); assert.doesNotMatch(await response.text(), /data-auth-free/); assert.equal(mock.calls.member, 1);
+});
+
+test('first Cloud visit goes directly to Discord OAuth and a valid free member returns to the free report', async () => {
+  const gate = createGate(async input => String(input).endsWith('/oauth2/token') ? tokenResponse() : Response.json({ roles: [], user: { id: 'test-free-user' } }));
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_LOGIN_REQUIRED: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' };
+  const start = await gate.worker.fetch(new Request('https://gate.invalid/'), env);
+  assert.equal(start.status, 302); assert.match(start.headers.get('location'), /^\/auth\/login/); assert.doesNotMatch(await start.text(), /purchase|whop/);
+  const login = await gate.worker.fetch(new Request(new URL(start.headers.get('location'), 'https://gate.invalid')), env);
+  const destination = new URL(login.headers.get('location'));
+  assert.equal(destination.origin, 'https://discord.com'); assert.equal(destination.pathname, '/oauth2/authorize'); assert.equal(destination.searchParams.get('scope'), 'identify guilds.members.read');
+  const state = await gate.api.createOAuthState('/mega_validation_report_latest.html', env.SESSION_SECRET);
+  const callback = await gate.worker.fetch(new Request(`https://gate.invalid/auth/callback?code=synthetic-code&state=${encodeURIComponent(state)}`), env);
+  assert.equal(callback.status, 302); assert.equal(callback.headers.get('location'), '/mega_validation_report_latest.html');
+  const report = await gate.worker.fetch(new Request('https://gate.invalid/mega_validation_report_latest.html', { headers: { cookie: callback.headers.get('set-cookie').split(';', 1)[0] } }), env);
+  assert.equal(report.status, 200); assert.match(await report.text(), /data-auth-free/);
+});
+
+test('Cloud free page requires reauthentication only after confirming a failed session, never a missing paid role', async () => {
+  const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_LOGIN_REQUIRED: 'true' };
+  const free = guardHarness(gate.api.accessGuardScript(env), async () => new Response(null, { status: 403 }), { freePage: true });
+  await free.windowEvents.get('pageshow')(); assert.deepEqual(free.navigations, []); assert.equal(free.reloads(), 0);
+  let calls = 0;
+  const invalid = guardHarness(gate.api.accessGuardScript(env), async () => { calls += 1; return new Response(null, { status: 401 }); }, { freePage: true });
+  const check = invalid.windowEvents.get('pageshow')(); await flushGuardTimers(invalid); await check;
+  assert.equal(calls, 3); assert.deepEqual(invalid.navigations, ['/auth/login?return_to=%2Freport%3Ftest%3D1']); assert.equal(invalid.reloads(), 0);
 });
 
 test('concurrent fresh role checks share only the active request and recheck a later role revocation', async () => {

@@ -1,5 +1,5 @@
 import { isObject, type MembershipDecision } from "./cloud-membership";
-import { registrationConfigured, validateSubscription, type PushConfig } from "./cloud-web-push";
+import { personalPreparationConfigured, registrationConfigured, validateSubscription, type PushConfig } from "./cloud-web-push";
 type Environment = PushConfig & { CLOUD_DB?: D1Database };
 type Dependencies = { memberId: string; roleAuthorized: boolean; membership: () => Promise<MembershipDecision> };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: {
@@ -21,6 +21,7 @@ export async function pushApi(request: Request, env: Environment, context: Depen
   if (path === "/api/cloud/push-config") {
     const membership = context.roleAuthorized ? await context.membership() : { status: "free", reason: "discord_role_required" };
     const ready = personalMemberAllowed && registrationConfigured(env) && membership.status === "paid";
+    const preparation = personalMemberAllowed && personalPreparationConfigured(env) && membership.status === "paid";
     const rows = await db.prepare(`SELECT s.subscription_id, m.endpoint_hash FROM cloud_push_subscriptions s
       JOIN cloud_push_subscription_metadata m ON m.subscription_id = s.subscription_id
       WHERE s.member_id = ? AND s.revoked_at IS NULL ORDER BY s.opted_in_at DESC LIMIT 50`)
@@ -28,10 +29,11 @@ export async function pushApi(request: Request, env: Environment, context: Depen
     if (!rows.success) throw new Error("subscription_read_failed");
     const testReady = ready && env.CLOUD_PUSH_MODE === "personal_test" && /^[A-Za-z0-9_-]{16,64}$/.test(env.CLOUD_PUSH_TEST_RUN_ID ?? "") &&
       (rows.results ?? []).some(device => device.subscription_id === env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID);
-    return json({ ok: true, registration_available: ready, delivery_available: false,
+    return json({ ok: true, registration_available: ready, preparation_available: preparation, delivery_available: false,
       personal_test_available: testReady, ...(testReady ? { personal_test_subscription_id: env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID } : {}),
       reason: ready ? "device_registration_only" : "push_unavailable", membership,
-      ...(ready ? { public_key: env.CLOUD_VAPID_PUBLIC_KEY } : {}), devices: rows.results ?? [] });
+      ...(ready || preparation ? { public_key: env.CLOUD_VAPID_PUBLIC_KEY,
+        allowed_origins: (env.CLOUD_PUSH_ALLOWED_ORIGINS ?? "").split(",").map(value => value.trim()).filter(Boolean) } : {}), devices: rows.results ?? [] });
   }
   let input: unknown;
   try {

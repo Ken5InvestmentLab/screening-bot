@@ -20,10 +20,29 @@ export function verifyReleaseConfig(config) {
   assert.equal(preview?.name, 'tentei-kyokuchi-cloud-preview');
   assert.deepEqual(preview?.d1_databases, [], 'preview must have no D1 binding');
   assert.equal(preview?.preview_urls, false);
+  const personal = config.vars?.CLOUD_PUSH_MODE === 'personal_test';
+  if (personal) {
+    assert.equal(config.keep_vars, true, 'retain operator-fixed member/device/provider runtime settings');
+    assert.equal(config.vars.CLOUD_PUSH_REGISTRATION_ENABLED, 'true');
+    assert.equal(config.vars.CLOUD_PUSH_MEMBERSHIP_POLICY, 'whop_managed_discord_role');
+    const key = Buffer.from(config.vars.CLOUD_VAPID_PUBLIC_KEY ?? '', 'base64url');
+    assert.equal(key.length, 65, 'valid VAPID public key required');
+    assert.equal(key[0], 4);
+    assert.equal(key.toString('base64url'), config.vars.CLOUD_VAPID_PUBLIC_KEY);
+    assert.equal(config.vars.CLOUD_VAPID_SUBJECT, 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev/');
+    // Identity/device/provider are confirmed in the Dashboard; never published
+    // into the repository. Runtime has no recipient fallback if they are absent.
+    for (const name of ['CLOUD_VAPID_PRIVATE_KEY', 'CLOUD_PUSH_TEST_MEMBER_ID', 'CLOUD_PUSH_TEST_SUBSCRIPTION_ID',
+      'CLOUD_PUSH_TEST_RUN_ID', 'CLOUD_PUSH_ALLOWED_ORIGINS', 'CLOUD_DISCORD_BOT_TOKEN', 'WHOP_API_KEY']) {
+      assert.equal(config.vars[name], undefined, `${name} must remain outside checked-in vars`);
+    }
+  }
   for (const environment of [config, ...Object.values(config.env ?? {})]) {
-    assert.equal(environment.vars?.CLOUD_PUSH_REGISTRATION_ENABLED, 'false', 'push registration must stay OFF');
-    assert.equal(environment.vars?.CLOUD_PUSH_MODE, 'disabled', 'push sending must stay OFF');
-    assert.notEqual(environment.vars?.CLOUD_PUSH_SCHEDULER_ENABLED, 'true', 'personal scheduler must stay OFF in this release config');
+    if (environment !== config || !personal) {
+      assert.equal(environment.vars?.CLOUD_PUSH_REGISTRATION_ENABLED, 'false', 'nonpersonal registration must stay OFF');
+      assert.equal(environment.vars?.CLOUD_PUSH_MODE, 'disabled', 'nonpersonal sending must stay OFF');
+    }
+    assert.notEqual(environment.vars?.CLOUD_PUSH_SCHEDULER_ENABLED, 'true', 'scheduled delivery must stay OFF in this manual-test release');
     assert.equal(environment.triggers?.crons?.length ?? 0, 0, 'no notification scheduler');
     assert.equal(environment.queues?.consumers?.length ?? 0, 0, 'no notification consumer');
     for (const binding of environment.d1_databases ?? []) {
@@ -35,5 +54,5 @@ export function verifyReleaseConfig(config) {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const config = JSON.parse(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
   verifyReleaseConfig(config);
-  console.log('Release configuration verified: production CLOUD_DB retained, preview has no D1, notifications OFF. No remote operation.');
+  console.log('Release configuration verified: production CLOUD_DB retained, preview has no D1/push, only explicitly fixed personal manual delivery is permitted, scheduler OFF. No remote operation.');
 }

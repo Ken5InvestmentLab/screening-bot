@@ -56,6 +56,14 @@ export function registrationConfigured(env: PushConfig): boolean {
     return decode(env.CLOUD_VAPID_PUBLIC_KEY ?? "", 65)[0] === 4;
   } catch { return false; }
 }
+// Only the approved member can prepare a browser subscription before its exact
+// provider origin has been observed. Preparation does not save it or send.
+export function personalPreparationConfigured(env: PushConfig): boolean {
+  try {
+    return env.CLOUD_PUSH_MODE === "personal_test" && !!env.CLOUD_PUSH_TEST_MEMBER_ID &&
+      env.CLOUD_PUSH_REGISTRATION_ENABLED === "true" && decode(env.CLOUD_VAPID_PUBLIC_KEY ?? "", 65)[0] === 4;
+  } catch { return false; }
+}
 async function hkdf(key: Uint8Array<ArrayBuffer>, salt: Uint8Array<ArrayBuffer>, info: Uint8Array<ArrayBuffer>, bits: number): Promise<Uint8Array<ArrayBuffer>> {
   const imported = await crypto.subtle.importKey("raw", key, "HKDF", false, ["deriveBits"]);
   return new Uint8Array(new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, imported, bits)));

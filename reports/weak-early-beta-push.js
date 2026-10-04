@@ -6,13 +6,15 @@
   const status = document.createElement('p');
   status.id = 'cloud-device-status'; status.setAttribute('role', 'status');
   status.textContent = '端末へのプッシュ通知は現在利用できません。';
+  const provider = document.createElement('p');
+  provider.id = 'cloud-device-provider-origin'; provider.hidden = true;
   const register = document.createElement('button');
   register.type = 'button'; register.id = 'cloud-device-register'; register.textContent = 'この端末を登録'; register.hidden = true;
   const revoke = document.createElement('button');
   revoke.type = 'button'; revoke.id = 'cloud-device-revoke'; revoke.textContent = 'この端末の登録を解除'; revoke.hidden = true;
   const test = document.createElement('button');
   test.type = 'button'; test.id = 'cloud-device-test'; test.textContent = 'この端末へテスト通知'; test.hidden = true;
-  panel.append(status, register, revoke, test); host.append(panel);
+  panel.append(status, provider, register, revoke, test); host.append(panel);
   let busy = false, current = null, readyConfig = null;
   const supported = () => window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   async function api(path, method, body) {
@@ -39,14 +41,14 @@
     register.hidden = true; revoke.hidden = true; test.hidden = true;
     try {
       const config = await api('/api/cloud/push-config');
-      readyConfig = config.registration_available ? config : null;
+      readyConfig = config.registration_available || config.preparation_available ? config : null;
       if (!supported()) { status.textContent = 'このブラウザでは端末へのプッシュ登録を利用できません。'; return; }
       current = await ownedDevice(config);
       test.hidden = !current || !config.personal_test_available || current.id !== config.personal_test_subscription_id;
       revoke.hidden = !current;
-      register.hidden = !config.registration_available || Boolean(current);
+      register.hidden = !(config.registration_available || config.preparation_available) || Boolean(current);
       status.textContent = current ? (!test.hidden ? 'この端末は登録済みです。テスト通知を送れます。' : 'この端末は登録済みです。通知配信は現在利用できません。') :
-        config.registration_available ? '通知配信は現在利用できません。端末登録はボタン操作と許可が必要です。' : '端末へのプッシュ通知は現在利用できません。';
+        readyConfig ? 'この端末の通知登録にはボタン操作と許可が必要です。' : '端末へのプッシュ通知は現在利用できません。';
     } catch (_) { readyConfig = null; status.textContent = '端末へのプッシュ通知は現在利用できません。'; }
   }
   register.addEventListener('click', async () => {
@@ -59,7 +61,7 @@
       // Server eligibility is repeated below and again before subscription save.
       if (await Notification.requestPermission() !== 'granted') throw new Error('permission_denied');
       const config = await api('/api/cloud/push-config');
-      if (!config.registration_available || typeof config.public_key !== 'string') throw new Error('unavailable');
+      if (!(config.registration_available || config.preparation_available) || typeof config.public_key !== 'string') throw new Error('unavailable');
       const worker = await navigator.serviceWorker.register('./weak-early-beta-service-worker.js', { scope: './', updateViaCache: 'none' });
       await navigator.serviceWorker.ready;
       subscription = await worker.pushManager.getSubscription();
@@ -67,7 +69,16 @@
         const key = Uint8Array.from(atob(config.public_key.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
         subscription = await worker.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }); created = true;
       }
+      const origin = new URL(subscription.endpoint).origin;
+      if (!config.registration_available || !(config.allowed_origins || []).includes(origin)) {
+        // Retain this browser-only preparation for the same explicit retry after
+        // operator approval. Never persist endpoint/key material or widen origins.
+        provider.textContent = '通知サービスのorigin: ' + origin; provider.hidden = false;
+        status.textContent = '通知サービスの確認待ちです。確認後にこの端末を登録してください。';
+        return;
+      }
       await api('/api/cloud/push-subscriptions', 'POST', { opt_in: true, subscription: subscription.toJSON() });
+      provider.hidden = true;
       await refresh();
     } catch (_) {
       if (created && subscription) try { await subscription.unsubscribe(); } catch (_) {}

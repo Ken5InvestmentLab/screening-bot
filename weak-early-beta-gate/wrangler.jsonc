@@ -29,8 +29,12 @@
     "ACCESS_PURCHASE_URL": "https://whop.com/scoring-bot/tenteikyokuchi/",
     "REPORT_ASSET_PATH": "/weak_early_beta_latest.html",
     "SESSION_TTL_SECONDS": "31536000",
-    "CLOUD_PUSH_REGISTRATION_ENABLED": "false",
-    "CLOUD_PUSH_MODE": "disabled"
+    "CLOUD_PUSH_REGISTRATION_ENABLED": "true",
+    "CLOUD_PUSH_MODE": "personal_test",
+    "CLOUD_PUSH_MEMBERSHIP_POLICY": "whop_managed_discord_role",
+    "CLOUD_PUSH_SCHEDULER_ENABLED": "false",
+    "CLOUD_VAPID_PUBLIC_KEY": "BGr6bbvNlYvIHrZx58m6BFNQOaWBnBNxMwuuAdOkxewJSkm2zdKT3LTlyl5H4e_cFpJ-CqDkZmN7ilu775RXAqQ",
+    "CLOUD_VAPID_SUBJECT": "https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev/"
   },
   "env": {
     "preview": {
@@ -48,5 +52,6 @@
         "CLOUD_PUSH_MODE": "disabled"
       }
     }
-  }
+  },
+  "keep_vars": true
 }

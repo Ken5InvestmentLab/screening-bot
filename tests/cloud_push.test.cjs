@@ -139,6 +139,50 @@ test('personal-test config cannot register or expose a VAPID key to a different 
  const response=await push.pushApi(request('/api/cloud/push-subscriptions','POST',{opt_in:true,subscription:{endpoint:subscription.endpoint,keys:{p256dh:UA,auth:AUTH}}}),{...config,CLOUD_DB:db},context);
  assert.equal(response.status,403);assert.equal(db.batchCalls,0);
 });
+
+test('personal origin discovery is owner-only and cannot persist/send before an exact allowlist',async()=>{
+ const env={...config,CLOUD_DB:database(),CLOUD_PUSH_ALLOWED_ORIGINS:''};
+ const context={memberId:'mine',roleAuthorized:true,membership:async()=>({status:'paid'})};
+ const value=await(await push.pushApi(request('/api/cloud/push-config'),env,context)).json();
+ assert.equal(value.preparation_available,true);assert.equal(value.registration_available,false);
+ assert.equal(value.public_key,AS);assert.deepEqual(value.allowed_origins,[]);assert.equal(value.personal_test_available,false);
+ const post=await push.pushApi(request('/api/cloud/push-subscriptions','POST',{opt_in:true,subscription:{endpoint:subscription.endpoint,keys:{p256dh:UA,auth:AUTH}}}),env,context);
+ assert.equal(post.status,503);assert.equal(env.CLOUD_DB.batchCalls,0);
+ for(const context of [{memberId:'other',roleAuthorized:true,membership:async()=>({status:'paid'})},
+   {memberId:'mine',roleAuthorized:false,membership:async()=>({status:'paid'})},
+   {memberId:'mine',roleAuthorized:true,membership:async()=>({status:'unavailable'})}]) {
+   const denied=await(await push.pushApi(request('/api/cloud/push-config'),env,context)).json();
+   assert.equal(denied.preparation_available,false);assert.equal(denied.public_key,undefined);
+ }
+});
+
+test('browser preparation displays origin only, preserves pending subscription and saves once after exact approval',async()=>{
+ const elements=new Map();
+ const element=()=>({hidden:false,disabled:false,textContent:'',listeners:{},append(){},setAttribute(){},addEventListener(name,fn){this.listeners[name]=fn;}});
+ const host=element();
+ const document={getElementById:()=>host,createElement:()=>{const e=element();Object.defineProperty(e,'id',{set(id){elements.set(id,e);}});return e;}};
+ let permissions=0,registrations=0,subscriptions=0,saves=0,unsubscribes=0,saved=false,allowed=false;
+ const sub={endpoint:'https://push.example.invalid/private-device-token',toJSON:()=>({endpoint:subscription.endpoint,keys:{p256dh:UA,auth:AUTH}}),unsubscribe:async()=>{unsubscribes++;}};
+ const worker={pushManager:{getSubscription:async()=>subscriptions?sub:null,subscribe:async()=>{subscriptions++;return sub;}}};
+ const configValue=async()=>({ok:true,registration_available:allowed,preparation_available:true,public_key:AS,allowed_origins:allowed?['https://push.example.invalid']:[],devices:saved?[{subscription_id:'mine-device',endpoint_hash:await push.endpointHash(sub.endpoint)}]:[]});
+ const api=async(path,init)=>{
+   if(path==='/api/cloud/push-config')return Response.json(await configValue());
+   assert.equal(path,'/api/cloud/push-subscriptions');assert.equal(init.method,'POST');assert.equal(allowed,true);saves++;saved=true;return Response.json({ok:true});
+ };
+ vm.runInNewContext(fs.readFileSync(require('node:path').resolve(__dirname,'../reports/weak-early-beta-push.js'),'utf8'),{
+   document,window:{isSecureContext:true,PushManager:{},Notification:{}},navigator:{serviceWorker:{getRegistration:async()=>subscriptions?worker:null,register:async()=>{registrations++;return worker;},ready:Promise.resolve(worker)}},
+   Notification:{requestPermission:async()=>{permissions++;return 'granted';}},fetch:api,URL,crypto:webcrypto,TextEncoder,Uint8Array,atob,
+ });
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(permissions,0);assert.equal(registrations,0);assert.equal(subscriptions,0);
+ await elements.get('cloud-device-register').listeners.click();
+ assert.equal(saves,0);assert.equal(subscriptions,1);assert.equal(unsubscribes,0);
+ assert.equal(elements.get('cloud-device-provider-origin').textContent,'通知サービスのorigin: https://push.example.invalid');
+ assert.doesNotMatch(elements.get('cloud-device-provider-origin').textContent,/private-device-token/);
+ allowed=true;await elements.get('cloud-device-register').listeners.click();
+ assert.equal(subscriptions,1);assert.equal(saves,1);assert.equal(unsubscribes,0);
+ assert.equal(elements.get('cloud-device-register').hidden,true);
+});
 test('persisted old detections and malformed canonical events cause no send or reservation',async()=>{
  for(const eventOverride of [{detection_date:'2020-01-02'},{detection_date:'2099-01-01'},{endpoints:null},{kind:'unexpected'}]) {
   const h=await dispatchHarness({eventOverride});assert.notEqual((await h.call()).status,'accepted');assert.equal(h.delivered,0);assert.equal(h.receipts.size,0);

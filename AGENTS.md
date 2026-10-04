@@ -9,10 +9,11 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 - Cloud Workerは `tentei-kyokuchi-cloud`、公開対象ブランチは `research/weak-early-beta`。`weak-early-beta-gate/` の設定・migrationだけをCloud用に扱い、mainや他Workerへ混ぜない。
 - D1名は `tentei-cloud-settings`、bindingは `CLOUD_DB`。スキーマの正は `weak-early-beta-gate/migrations/0001`–`0003` のSQL。ローカル接続設定と本番接続・スキーマ適用を区別し、資源IDと公開準備状態は `weak-early-beta-gate/CLOUD_D1_RELEASE_PREP.md` を読む。
 - このDBの0001〜0003は承認後にDashboard Consoleで適用した。Wranglerの `d1_migrations` 登録とは別なので、pending表示や履歴の欠如だけを理由に本番SQLを再適用しない。実スキーマ・適用証跡で判定する。Time Travel bookmarkは期限付きで、長期バックアップではない。
-- 既存Discord OAuth・許可ロール・セッションを保持する。通知OFFのDiscord-ID設定保存にWhop追加ログインを要求しない。pushは別途の確認を要し、未確認のWhop支払・失効連携を会員ロールだけで代替しない。
+- 既存Discord OAuth・許可ロール・セッションを保持する。通知OFFのDiscord-ID設定保存にWhop追加ログインを要求しない。通知資格は本人の明示選択により `whop_managed_discord_role` を使用できる。既存Whopが付与・失効時に剥奪する設定済みロールを毎回新規取得し、取得失敗時は送らない。Whop APIエラーからロールへ自動fallbackしない。
 - 永続認証キー生成・権限追加・本番接続/公開は具体的な変更と検証結果を示して確認する。本人の指定1端末だけを通知テスト対象とし、他会員・一般配信は有効化しない。秘密値や実endpointをログへ出さない。
 - Cloudデプロイは最新 `research/weak-early-beta` HEADを指す `cloud-deploy-*` タグの専用workflowを使い、アクセス確認と復旧先を記録する。DBスキーマを準備前に本番コードを公開しない。プレビューに本番DBを共有しない。
-- 通知OFF公開候補では `npm run verify-release` が既存D1・Discord設定・通知OFF・previewのD1なしを検証する。`npm run check` はProduction/preview両方のdry-runを含む。プレビューは `npm run dev:preview` を使う。production設定の `wrangler dev --remote` は禁止。実DB保存のローカル検証は隔離D1と合成セッションで行い、本番DB・本物のCookieを使わない。
+- `npm run verify-release` は既存D1・Discord設定とpreviewのD1なし/通知OFFを検証する。本番のみ `personal_test` の手動1端末構成を許可し、CronはOFF。本人ID・端末ID・一回用RUN_ID・実provider originはDashboardの運用値、秘密鍵はSecretとし、GitやASSETSへ含めない。`keep_vars: true` でこの運用値を公開時に維持する。未確認providerは本人端末でoriginのみ表示する準備を許可し、allowlist設定前に購読をD1へ保存・送信しない。詳しくは `weak-early-beta-gate/CLOUD_PERSONAL_LIVE_RELEASE.md`。
+- `npm run check` はProduction/preview両方のdry-runを含む。プレビューは `npm run dev:preview` を使う。production設定の `wrangler dev --remote` は禁止。実DB保存のローカル検証は隔離D1と合成セッションで行い、本番DB・本物のCookieを使わない。
 
 TradingViewのBOTTOMシグナル銘柄を複数のテクニカル指標でスコアリングし、
 Discordにスクリーニング結果をDM送信するBotです。

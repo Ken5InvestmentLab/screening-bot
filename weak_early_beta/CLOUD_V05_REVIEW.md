@@ -89,3 +89,22 @@ Evidence is in the executor workspace `qa/v05/` (test logs, assertion JSON,
 actual CSV downloads and screenshots); it is not a production asset. Live Whop
 credentials, authenticated production rendering and real push delivery were not
 tested. No claimed result depends on an actual notification being sent.
+
+## Allocation display regression fix
+
+An independent review found that the v2 payoff summary/chart always used stacked
+weights even after selecting equal shares. Payoff KPI and bars now use the chosen
+allocation; comparing both renders separately labelled summaries. Funding
+tables, annual bars and cash-flow/equity chart series also follow the selection.
+Overlap P/L uses the selected share rule and explicitly labels its basis.
+The remaining direct stacked references are the labelled comparison of increased
+share quantities, not a selected-portfolio statistic. Signal counts remain counts
+of distinct securities rather than counts of duplicated trade lots.
+
+Two new unit regressions execute `calculate` → `render` → `csvMetrics` directly.
+Actual browser fixtures execute the v2 page controls, with one winning signal
+matching one condition and one losing signal matching five: equal-share win rate
+50%, stacked 16.67%. A second fixture varies average win/loss weights. D5/D6,
+cost and share changes, equal/stacked/both on desktop/mobile passed 212 assertions
+against independent expected values, including diagram, KPI, downloaded CSV,
+funding, annual and chart-series consistency. Gate check now passes 202 tests.

@@ -50,3 +50,42 @@ test('public validation is identical for saved and typed share/cost choices',()=
   for(const costPercent of [-1,10.01,.001,Infinity,true,''])assert.throws(()=>prefs.normalize({...pref,costPercent}));
   assert.deepEqual(prefs.normalize({...pref,baseShares:'300',costPercent:'0.25'}),{...pref,baseShares:300,costPercent:.25});
 });
+
+test('v2 selected allocation drives payoff KPI/chart, capital, annual chart and CSV together',()=>{
+  const winner={...dataset,symbol:'WIN1',selectors:'silence',d5Return:'.1',d5Proceeds:'110000'},
+    loser={...dataset,symbol:'LOSE1',selectors:'silence dive shadow fusion balance',d5Return:'-.1',d5Proceeds:'90000'};
+  for(const [allocation,expected] of [['unique',{win:50,n:2,pl:0,capital:200000}],['stacked',{win:100/6,n:6,pl:-40000,capital:600000}]]){
+    const view={allocation,yearScope:'all'},data=calc.calculate([winner,loser],pref,view,payload),html=calc.render(data,pref,view,payload),csv=calc.csvMetrics(data,pref,view);
+    const section=id=>html.split(`id="${id}"`)[1].split('</section>')[0];
+    const payoff=section('payoff-structure'),risk=section('capital-risk'),annual=section('annual-pl');
+    assert.match(payoff,new RegExp(`<dt>勝率</dt><dd>${expected.win.toFixed(2)}%`));
+    assert.match(payoff,/<dt>平均の下落率<\/dt><dd>-10.00%/);
+    assert.match(payoff,/<dt>平均の上昇率<\/dt><dd>10.00%/);
+    assert.ok(payoff.includes(`data-cloud-allocation="${allocation}"`));
+    assert.ok(!payoff.includes(`data-cloud-allocation="${allocation==='unique'?'stacked':'unique'}"`));
+    assert.ok(payoff.includes(': -10.00%')&&payoff.includes(': 10.00%'));
+    assert.ok(risk.includes(calc.yen(expected.capital)));
+    assert.ok(annual.includes(`: ${calc.yen(expected.pl)}`));
+    assert.equal(csv.length,3);assert.equal(csv[0]['結果ありの取引数'],expected.n);
+    close(csv[0]['勝率%'],expected.win);assert.equal(csv[0]['損益円'],expected.pl);
+    assert.equal(csv[0]['必要資金円'],expected.capital);assert.equal(csv[1]['損益円'],expected.pl);
+    assert.equal((html.match(/<path data-cloud-allocation=/g)||[]).length,2); // selected cash-flow and equity charts
+  }
+  const view={allocation:'all',yearScope:'all'},data=calc.calculate([winner,loser],pref,view,payload),html=calc.render(data,pref,view,payload);
+  const payoff=html.split('id="payoff-structure"')[1].split('</section>')[0];
+  assert.match(payoff,/<dt>勝率<\/dt><dd>50.00%/);assert.match(payoff,/<dt>勝率<\/dt><dd>16.67%/);
+  assert.ok(payoff.includes('data-cloud-allocation="unique"')&&payoff.includes('data-cloud-allocation="stacked"'));
+});
+
+test('v2 average gain/loss bars follow the selected weights rather than a stacked constant',()=>{
+  const rows=[['A',1,110000],['B',5,130000],['C',5,90000],['D',1,70000]].map(([symbol,n,proceeds])=>({...dataset,symbol,
+    selectors:['silence','dive','shadow','fusion','balance'].slice(0,n).join(' '),d5Return:String(proceeds/100000-1),d5Proceeds:String(proceeds)}));
+  for(const [allocation,gain,loss] of [['unique',20,-20],['stacked',160/6,-80/6]]){
+    const view={allocation,yearScope:'all'},data=calc.calculate(rows,pref,view,payload),html=calc.render(data,pref,view,payload);
+    const payoff=html.split('id="payoff-structure"')[1].split('</section>')[0];
+    assert.ok(payoff.includes(`: ${gain.toFixed(2)}%`)&&payoff.includes(`: ${loss.toFixed(2)}%`));
+    assert.ok(payoff.includes(`<dt>平均の上昇率</dt><dd>${gain.toFixed(2)}%`));
+    assert.ok(payoff.includes(`<dt>平均の下落率</dt><dd>${loss.toFixed(2)}%`));
+    const totals=calc.csvMetrics(data,pref,view)[0];close(totals['平均利益円'],gain*1000);close(totals['平均損失円'],loss*1000);
+  }
+});

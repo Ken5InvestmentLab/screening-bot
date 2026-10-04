@@ -94,7 +94,7 @@ test('service worker has no fetch cache and clicks only fixed same-origin report
  handlers.notificationclick({notification:{close(){},data:{url:'https://evil.invalid/'}},waitUntil:p=>wait=p});await wait;assert.deepEqual(opened,['https://cloud.example.invalid/weak_early_beta_latest.html']);
 });
 
-async function dispatchHarness({ optIn=true, providerStatus=200, revokeBeforeSend=false, roleStatus=200, transportFailure=false, eventOverride={}, background=false, removeRoleBeforeSend=false, wrongReturnedSubject=false, wrongConfiguredSubject=false, deviceMissing=false, deviceTest=false, testRunId='personal_test_20261004', wrongMember=false }={}) {
+async function dispatchHarness({ optIn=true, optOutBeforeFinal=false, roleNetworkFailure=false, providerStatus=200, revokeBeforeSend=false, roleStatus=200, transportFailure=false, eventOverride={}, background=false, removeRoleBeforeSend=false, wrongReturnedSubject=false, wrongConfiguredSubject=false, deviceMissing=false, deviceTest=false, testRunId='personal_test_20261004', wrongMember=false }={}) {
  let memberId, roleReads=0, paymentReads=0, delivered=0;const receipts=new Map();
  const subject=background?'123456789012345678':'discord-user',role=background?'234567890123456789':'role';
  const now=Date.now(), start=new Date(now-86400000).toISOString(), end=new Date(now+86400000*30).toISOString();
@@ -103,7 +103,7 @@ async function dispatchHarness({ optIn=true, providerStatus=200, revokeBeforeSen
  const event={signal_id:'private-signal',kind:'new_detection',detection_date:new Date(now+9*3600000).toISOString().slice(0,10),adapter_version:'cloud-ledger-v1',source_ledger_revision:'a'.repeat(64),signal_actual_close:1000,signal_price_status:'verified',endpoints:{d5_close:{date:'2026-10-09'},d6_open:{date:'2026-10-13'}},...eventOverride};
  const m=modules({cryptoMock:noGenerate,fetchMock:async(input)=>{
  const url=String(input);
- if(url.includes('discord.com')){roleReads++;if(background)assert.equal(url,`https://discord.com/api/v10/guilds/345678901234567890/members/${subject}`);return new Response(JSON.stringify({user:{id:wrongReturnedSubject?'456789012345678901':subject},roles:roleStatus===200&&!(removeRoleBeforeSend&&(deviceTest||roleReads>1))?[role]:[]}),{status:roleStatus});}
+ if(url.includes('discord.com')){roleReads++;if(roleNetworkFailure)throw Error('fixture-network-failure');if(optOutBeforeFinal)optIn=false;if(background)assert.equal(url,`https://discord.com/api/v10/guilds/345678901234567890/members/${subject}`);return new Response(JSON.stringify({user:{id:wrongReturnedSubject?'456789012345678901':subject},roles:roleStatus===200&&!(removeRoleBeforeSend&&(deviceTest||roleReads>1))?[role]:[]}),{status:roleStatus});}
  assert.match(url,/^https:\/\/api\.whop\.com\//);paymentReads++;
  if(providerStatus!==200)return new Response('',{status:providerStatus});
  if(url.includes('/memberships/'))return Response.json({...membership,status:revokeBeforeSend&&paymentReads>3?'revoked':'active'});
@@ -212,13 +212,19 @@ test('explicit device test unknown response never retries',async()=>{
  const h=await dispatchHarness({deviceTest:true,transportFailure:true});assert.equal((await h.call()).status,'unknown');assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
 });
 
-for(const options of [{removeRoleBeforeSend:true},{roleStatus:429},{roleStatus:503}])test('manual HTTP dispatch never sends on cached paid roles when the one final lookup fails '+JSON.stringify(options),async()=>{
+for(const options of [{removeRoleBeforeSend:true},{roleStatus:429},{roleStatus:503},{roleNetworkFailure:true}])test('manual HTTP dispatch never sends on cached paid roles when the one final lookup fails '+JSON.stringify(options),async()=>{
  const h=await dispatchHarness({deviceTest:true,...options});
  const response=await h.httpCall(),value=await response.json();
- assert.equal(value.status,'held');assert.equal(value.reason,'fresh_discord_role_required');
+ assert.equal(value.status,'held');assert.equal(value.reason,options.removeRoleBeforeSend?'fresh_discord_role_required':'fresh_discord_role_unavailable');
  assert.equal(value.arrival_confirmed,false);assert.equal(h.roleReads,1);assert.equal(h.delivered,0);
  assert.equal(h.receipts.size,1);assert.equal([...h.receipts.values()][0].status,'held');
  assert.equal((await (await h.httpCall()).json()).status,'suppressed');assert.equal(h.roleReads,1);
+});
+
+for(const options of [{optIn:false},{optOutBeforeFinal:true}])test('manual HTTP dispatch stops when opt-in is OFF, including after reservation '+JSON.stringify(options),async()=>{
+ const h=await dispatchHarness({deviceTest:true,...options});const value=await (await h.httpCall()).json();
+ assert.equal(value.status,'held');assert.equal(value.reason,'notification_opt_in_required');assert.equal(h.delivered,0);
+ assert.equal(h.roleReads,options.optOutBeforeFinal?1:0);assert.equal(h.receipts.size,options.optOutBeforeFinal?1:0);
 });
 test('device test HTTP route requires same-origin authenticated empty POST and never claims OS arrival',async()=>{
  const m=modules(),env={CLOUD_DB:database(),SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'guild',DISCORD_ALLOWED_ROLE_IDS:'role'};

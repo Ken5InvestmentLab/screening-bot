@@ -15,7 +15,7 @@ test('a single mode keeps both allocations visible without inventing a quantity 
  assert.equal(data.strategies.unique.cash_pl_100_yen,data.strategies.stacked.cash_pl_100_yen);
  assert.equal(data.strategies.unique.n,data.strategies.stacked.n);
  assert.equal((html.match(/<path data-cloud-allocation=/g)||[]).length,2);
- assert.ok(html.includes('一律100株')&&html.includes('条件数比例'));
+ assert.ok(html.includes('各銘柄を同じ株数で買う（100株）')&&html.includes('一致した条件数に応じて株数を増やす（基本100株）'));
 });
 test('smooth asset curves preserve observations and cannot overshoot between them',()=>{
   const rows=[dataset,{...dataset,symbol:'B',entryDate:'2026-09-03',d5Date:'2026-09-09',d5Proceeds:'95000',d5Return:'-.05'}];

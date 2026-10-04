@@ -51,6 +51,40 @@ class CloudNotificationAdapterTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 ADAPTER.build_events(pd.DataFrame(), digest, as_of)
 
+    def test_weekends_and_bank_holidays_generate_no_candidates(self):
+        for day in ("2026-10-04", "2026-10-12", "2027-01-01", "2027-01-02", "2027-01-03"):
+            self.assertEqual(ADAPTER.build_events(pd.DataFrame([self.row(signal_date=day)]), "a" * 64,
+                pd.Timestamp(day + "T08:00:00+09:00")), [])
+
+    def test_private_sql_plan_imports_exact_json_idempotently_and_preserves_receipts(self):
+        now = pd.Timestamp("2026-12-28T17:00:00+09:00")
+        events = ADAPTER.build_events(pd.DataFrame([self.row(symbol="9999'quoted")]), "a" * 64, now)
+        db = sqlite3.connect(":memory:")
+        for path in sorted((ROOT / "weak-early-beta-gate/migrations").glob("*.sql")):
+            db.executescript(path.read_text(encoding="utf-8"))
+        db.execute("INSERT INTO cloud_member_preferences VALUES ('memberA','{}','unchanged')")
+        db.execute("INSERT INTO cloud_push_dispatch_receipts VALUES ('memberA','device','event','unknown','no_auto_retry','unchanged')")
+        db.commit()
+        plan = ADAPTER.build_sql_plan(events, "a" * 64, now)
+        db.executescript(plan)
+        db.executescript(plan)
+        row = db.execute("SELECT event_json,available_at FROM cloud_notification_events").fetchone()
+        self.assertEqual(json.loads(row[0]), events[0])
+        self.assertEqual(row[1], "2026-12-28T08:00:00.000Z")
+        self.assertEqual(db.execute("SELECT count(*) FROM cloud_notification_events").fetchone()[0], 1)
+        revised = {**events[0], "source_ledger_revision": "b" * 64}
+        db.executescript(ADAPTER.build_sql_plan([revised], "b" * 64, now + pd.Timedelta(minutes=1)))
+        self.assertEqual(db.execute("SELECT count(*) FROM cloud_notification_events").fetchone()[0], 1)
+        self.assertEqual(db.execute("SELECT source_ledger_revision FROM cloud_notification_events").fetchone()[0], "b" * 64)
+        self.assertEqual(db.execute("SELECT preferences_json,updated_at FROM cloud_member_preferences").fetchone(), ("{}", "unchanged"))
+        self.assertEqual(db.execute("SELECT status,reason FROM cloud_push_dispatch_receipts").fetchone(), ("unknown", "no_auto_retry"))
+        self.assertNotIn("DELETE", plan)
+        with self.assertRaises(ValueError):
+            ADAPTER.build_sql_plan([events[0], events[0]], "a" * 64, now)
+        with self.assertRaises(ValueError):
+            ADAPTER.build_sql_plan([{**events[0], "kind": "result"}], "a" * 64, now)
+        db.close()
+
     def test_overlapping_selectors_emit_one_stock_notification(self):
         rows = [self.row(), self.row(detection_id="2026-12-28|9999|dive")]
         events = ADAPTER.build_events(pd.DataFrame(rows), "a" * 64, pd.Timestamp("2026-12-28T17:00:00+09:00"))
@@ -94,10 +128,10 @@ class CloudNotificationAdapterTests(unittest.TestCase):
                  "2026-10-01T00:00:00.000Z", "a" * 64))
         return db
 
-    def scan_statement(self, prefix):
+    def scan_statement(self, prefix, source_file="cloud-api.ts"):
         # Execute the production statements against real SQLite, rather than a
         # second hand-written pagination query that could conceal SQL mistakes.
-        source = (ROOT / "weak-early-beta-gate/src/cloud-api.ts").read_text(encoding="utf-8")
+        source = (ROOT / "weak-early-beta-gate/src" / source_file).read_text(encoding="utf-8")
         match = re.search(r"`(" + re.escape(prefix) + r"[^`]+)`", source)
         self.assertIsNotNone(match, prefix)
         return match.group(1)
@@ -141,6 +175,35 @@ class CloudNotificationAdapterTests(unittest.TestCase):
         plan = db.execute("EXPLAIN QUERY PLAN " + select_page, (now, "", "")).fetchall()
         self.assertTrue(any("cloud_notification_events_scan" in row[3] for row in plan))
         self.assertTrue(any("(available_at,source_event_key)>(?,?)" in row[3] for row in plan))
+        db.close()
+
+    def test_personal_runner_sql_pages_205_separately_and_rejects_late_cursor(self):
+        db = self.scan_database()
+        query = lambda prefix: self.scan_statement(prefix, "cloud-push-runner.ts")
+        initialize, progress_query, page_query, advance = [query(prefix) for prefix in
+            ("INSERT OR IGNORE INTO cloud_notification_scan_progress", "SELECT after_available_at",
+             "SELECT source_event_key", "UPDATE cloud_notification_scan_progress")]
+        now, cursor = "2026-10-02T00:00:00.000Z", "personal-push:member-a:device-a"
+        for member in (cursor, "member-a", "personal-push:member-a:device-b"):
+            db.execute(initialize, (member, now))
+        for _ in range(2):
+            visited = []
+            while True:
+                progress = db.execute(progress_query, (cursor,)).fetchone()
+                cutoff = progress["cycle_cutoff_at"] or now
+                rows = db.execute(page_query, (cutoff, progress["after_available_at"], progress["after_source_event_key"])).fetchall()
+                page, more = rows[:20], len(rows) > 20
+                visited.extend(row["source_event_key"] for row in page)
+                values = (page[-1]["available_at"] if more else "", page[-1]["source_event_key"] if more else "",
+                    cutoff if more else "", now, cursor, progress["version"])
+                self.assertEqual(db.execute(advance, values).rowcount, 1)
+                self.assertEqual(db.execute(advance, values).rowcount, 0)
+                if not more:
+                    break
+            self.assertEqual(visited, [f"private-{index:03}" for index in range(205)])
+        for member in ("member-a", "personal-push:member-a:device-b"):
+            self.assertEqual(db.execute(progress_query, (member,)).fetchone()["version"], 0)
+        self.assertEqual(db.execute("SELECT count(*) FROM cloud_push_dispatch_receipts").fetchone()[0], 0)
         db.close()
 
     def test_real_sql_cursor_compare_and_swap_prevents_late_regression(self):

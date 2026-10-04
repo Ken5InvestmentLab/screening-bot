@@ -94,33 +94,34 @@ test('service worker has no fetch cache and clicks only fixed same-origin report
  handlers.notificationclick({notification:{close(){},data:{url:'https://evil.invalid/'}},waitUntil:p=>wait=p});await wait;assert.deepEqual(opened,['https://cloud.example.invalid/weak_early_beta_latest.html']);
 });
 
-async function dispatchHarness({ optIn=true, providerStatus=200, revokeBeforeSend=false, roleStatus=200, transportFailure=false }={}) {
+async function dispatchHarness({ optIn=true, providerStatus=200, revokeBeforeSend=false, roleStatus=200, transportFailure=false, eventOverride={}, background=false, removeRoleBeforeSend=false, wrongReturnedSubject=false, wrongConfiguredSubject=false, deviceMissing=false, deviceTest=false, testRunId='personal_test_20261004', wrongMember=false }={}) {
  let memberId, roleReads=0, paymentReads=0, delivered=0;const receipts=new Map();
+ const subject=background?'123456789012345678':'discord-user',role=background?'234567890123456789':'role';
  const now=Date.now(), start=new Date(now-86400000).toISOString(), end=new Date(now+86400000*30).toISOString();
  const membership={id:'mem_1',user_id:'user_1',account:{id:'biz_1'},product_id:'prod_1',plan_id:'plan_1',status:'active',current_period_start:start,current_period_end:end,cancel_at_period_end:false};
  const payment={id:'pay_1',membership_id:'mem_1',account_id:'biz_1',user:{id:'user_1'},status:'paid',total:{amount:'1000',currency:'jpy'},refunded_amount:{amount:'0',currency:'jpy'},paid_at:start};
- const event={signal_id:'private-signal',kind:'new_detection',detection_date:new Date(now).toISOString().slice(0,10),adapter_version:'cloud-ledger-v1',source_ledger_revision:'a'.repeat(64),signal_actual_close:1000,signal_price_status:'verified',endpoints:{d5_close:{date:'2026-10-09'},d6_open:{date:'2026-10-13'}}};
+ const event={signal_id:'private-signal',kind:'new_detection',detection_date:new Date(now+9*3600000).toISOString().slice(0,10),adapter_version:'cloud-ledger-v1',source_ledger_revision:'a'.repeat(64),signal_actual_close:1000,signal_price_status:'verified',endpoints:{d5_close:{date:'2026-10-09'},d6_open:{date:'2026-10-13'}},...eventOverride};
  const m=modules({cryptoMock:noGenerate,fetchMock:async(input)=>{
  const url=String(input);
- if(url.includes('discord.com')){roleReads++;return new Response(JSON.stringify({roles:roleStatus===200?['role']:[]}),{status:roleStatus});}
+ if(url.includes('discord.com')){roleReads++;if(background)assert.equal(url,`https://discord.com/api/v10/guilds/345678901234567890/members/${subject}`);return new Response(JSON.stringify({user:{id:wrongReturnedSubject?'456789012345678901':subject},roles:roleStatus===200&&!(removeRoleBeforeSend&&roleReads>1)?[role]:[]}),{status:roleStatus});}
  assert.match(url,/^https:\/\/api\.whop\.com\//);paymentReads++;
  if(providerStatus!==200)return new Response('',{status:providerStatus});
  if(url.includes('/memberships/'))return Response.json({...membership,status:revokeBeforeSend&&paymentReads>3?'revoked':'active'});
  if(url.includes('/payments?'))return Response.json({data:[payment]});return Response.json(payment);
  }});
  const db={prepare(sql){return {values:[],bind(...values){this.values=values;return this;},async first(){
- if(sql.includes('cloud_member_links'))return {member_id:memberId,discord_user_id:'discord-user',whop_user_id:'user_1',membership_id:'mem_1',payment_id:'pay_1',environment:'live',verification_method:'verified_operator',evidence_reference:'operator-proof',verified_at:start,revoked_at:null};
+ if(sql.includes('cloud_member_links')){assert.equal(background||deviceTest,false,'managed role must not query a Whop identity link');return {member_id:memberId,discord_user_id:subject,whop_user_id:'user_1',membership_id:'mem_1',payment_id:'pay_1',environment:'live',verification_method:'verified_operator',evidence_reference:'operator-proof',verified_at:start,revoked_at:null};}
  if(sql.includes('cloud_notification_events'))return {event_json:JSON.stringify(event),source_ledger_revision:'a'.repeat(64)};
  if(sql.includes('cloud_member_preferences'))return {preferences_json:JSON.stringify({max_price:1000,exit_endpoint:'d6_open',base_shares:100,cost_percent:0,notifications:{new_detection:optIn,reminder:false}})};
- if(sql.includes('cloud_push_subscriptions'))return {...subscription,member_id:memberId,subscription_id:'my-device',vapid_public_key:AS,expires_at_ms:null};
+ if(sql.includes('cloud_push_subscriptions'))return deviceMissing?null:{...subscription,member_id:memberId,subscription_id:'my-device',vapid_public_key:AS,expires_at_ms:null};
  throw Error('unhandled_query');},async run(){const key=this.values.slice(sql.startsWith('UPDATE')?3:0,sql.startsWith('UPDATE')?6:3).join(':');if(sql.startsWith('INSERT OR IGNORE')){const exists=receipts.has(key);if(!exists)receipts.set(key,{status:'preparing'});return {success:true,meta:{changes:exists?0:1}};}if(sql.startsWith('UPDATE')){receipts.set(key,{status:this.values[0],reason:this.values[1]});return {success:true,meta:{changes:1}};}throw Error('unhandled_write');}};}};
- const api=m.load('./cloud-api');memberId=await api.cloudMemberId('discord-user');
- const env={...config,CLOUD_DB:db,CLOUD_PUSH_TEST_MEMBER_ID:memberId,SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'guild',DISCORD_ALLOWED_ROLE_IDS:'role',WHOP_API_KEY:'fixture-only-whop',WHOP_ACCOUNT_ID:'biz_1',WHOP_PRODUCT_IDS:'prod_1',WHOP_PAID_PLAN_IDS:'plan_1'};
- const sec=Math.floor(now/1000);const session=await m.load('./shared-report-gate').__test.createSession({sub:'discord-user',accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec,roles:['role']},env.SESSION_SECRET);
+ const api=m.load('./cloud-api');memberId=await api.cloudMemberId(subject);
+ const env={...config,CLOUD_DB:db,CLOUD_PUSH_TEST_MEMBER_ID:wrongMember?'other-member':memberId,CLOUD_PUSH_TEST_RUN_ID:testRunId,SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:background?'345678901234567890':'guild',DISCORD_ALLOWED_ROLE_IDS:role,...(background||deviceTest?{CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role',...(background?{CLOUD_DISCORD_BOT_TOKEN:'fixture-only-bot',CLOUD_PUSH_TEST_DISCORD_USER_ID:wrongConfiguredSubject?'456789012345678901':subject}:{})}:{WHOP_API_KEY:'fixture-only-whop',WHOP_ACCOUNT_ID:'biz_1',WHOP_PRODUCT_IDS:'prod_1',WHOP_PAID_PLAN_IDS:'plan_1'})};
+ const sec=Math.floor(now/1000);const session=await m.load('./shared-report-gate').__test.createSession({sub:subject,accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec,roles:[role]},env.SESSION_SECRET);
  const req=new Request('https://cloud.example.invalid/',{headers:{cookie:'__Host-report_gate_session='+encodeURIComponent(session)}});
- const send=m.load('./cloud-push-dispatch').dispatchPersonalCandidate;
+ const dispatch=m.load('./cloud-push-dispatch');
  const material=await fixture();const transport=async()=>{delivered++;if(transportFailure)throw Error('lost');return new Response('',{status:201});};
- return {call:()=>send(req,env,'trusted-server-source-event',transport,material),receipts,get delivered(){return delivered;},get roleReads(){return roleReads;},get paymentReads(){return paymentReads;}};
+ return {call:()=>deviceTest?dispatch.dispatchPersonalDeviceTest(req,env,transport,material):background?dispatch.dispatchBackgroundPersonalCandidate(env,'trusted-server-source-event',transport,material):dispatch.dispatchPersonalCandidate(req,env,'trusted-server-source-event',transport,material),receipts,get delivered(){return delivered;},get roleReads(){return roleReads;},get paymentReads(){return paymentReads;}};
 }
 test('dispatcher rechecks role/payment/opt-in before send and atomically prevents concurrent duplicates',async()=>{
  const h=await dispatchHarness();const results=await Promise.all([h.call(),h.call()]);assert.equal(h.delivered,1);assert.equal(results.filter(r=>r.status==='accepted').length,1);assert.equal(results.filter(r=>r.reason==='duplicate_or_uncertain_delivery').length,1);assert.ok(h.roleReads>=3);assert.ok(h.paymentReads>=6);assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
@@ -130,4 +131,71 @@ for(const [label,options] of [['OFF',{optIn:false}],['provider error',{providerS
 });
 test('uncertain personal delivery is never retried even when called again',async()=>{
  const h=await dispatchHarness({transportFailure:true});assert.equal((await h.call()).status,'unknown');assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);assert.equal([...h.receipts.values()][0].status,'unknown');
+});
+test('personal-test config cannot register or expose a VAPID key to a different paid member',async()=>{
+ const db=database(),context={memberId:'another',roleAuthorized:true,membership:async()=>({status:'paid'})};
+ const value=await (await push.pushApi(request('/api/cloud/push-config'),{...config,CLOUD_DB:db},context)).json();
+ assert.equal(value.registration_available,false);assert.equal(value.public_key,undefined);
+ const response=await push.pushApi(request('/api/cloud/push-subscriptions','POST',{opt_in:true,subscription:{endpoint:subscription.endpoint,keys:{p256dh:UA,auth:AUTH}}}),{...config,CLOUD_DB:db},context);
+ assert.equal(response.status,403);assert.equal(db.batchCalls,0);
+});
+test('persisted old detections and malformed canonical events cause no send or reservation',async()=>{
+ for(const eventOverride of [{detection_date:'2020-01-02'},{detection_date:'2099-01-01'},{endpoints:null},{kind:'unexpected'}]) {
+  const h=await dispatchHarness({eventOverride});assert.notEqual((await h.call()).status,'accepted');assert.equal(h.delivered,0);assert.equal(h.receipts.size,0);
+ }
+});
+
+test('approved managed-role background path reads exact member twice, no Whop API/link, one device once',async()=>{
+ const h=await dispatchHarness({background:true});assert.equal((await h.call()).status,'accepted');assert.equal(h.roleReads,2);assert.equal(h.paymentReads,0);assert.equal(h.delivered,1);
+ assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
+});
+for(const [label,options] of [['revoked role',{roleStatus:200,removeRoleBeforeSend:true}],['Discord429',{roleStatus:429}],['Discord503',{roleStatus:503}],['wrong member response',{wrongReturnedSubject:true}],['wrong configured member',{wrongConfiguredSubject:true}],['missing device',{deviceMissing:true}],['opt-in OFF',{optIn:false}]])test('managed-role background '+label+' makes zero sends and no Whop reads',async()=>{
+ const h=await dispatchHarness({background:true,...options});assert.notEqual((await h.call()).status,'accepted');assert.equal(h.delivered,0);assert.equal(h.paymentReads,0);
+});
+test('managed-role unknown outcome stays non-retryable',async()=>{
+ const h=await dispatchHarness({background:true,transportFailure:true});assert.equal((await h.call()).status,'unknown');assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
+});
+
+test('explicit device test needs no Bot/Whop credentials and preserves a one-time receipt',async()=>{
+ const h=await dispatchHarness({deviceTest:true});assert.equal((await h.call()).status,'accepted');assert.equal(h.roleReads,3);assert.equal(h.paymentReads,0);assert.equal(h.delivered,1);
+ assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
+ assert.match([...h.receipts.keys()][0],/personal-device-test:personal_test_20261004$/);
+});
+for(const [label,options] of [['opt-in OFF',{optIn:false}],['role removed',{removeRoleBeforeSend:true}],['Discord429',{roleStatus:429}],['missing device',{deviceMissing:true}],['wrong member',{wrongMember:true}],['no approved run ID',{testRunId:''}]])test('explicit device test '+label+' sends nothing',async()=>{
+ const h=await dispatchHarness({deviceTest:true,...options});assert.notEqual((await h.call()).status,'accepted');assert.equal(h.delivered,0);assert.equal(h.paymentReads,0);
+});
+test('explicit device test unknown response never retries',async()=>{
+ const h=await dispatchHarness({deviceTest:true,transportFailure:true});assert.equal((await h.call()).status,'unknown');assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);
+});
+test('device test HTTP route requires same-origin authenticated empty POST and never claims OS arrival',async()=>{
+ const m=modules(),env={CLOUD_DB:database(),SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'guild',DISCORD_ALLOWED_ROLE_IDS:'role'};
+ const sec=Math.floor(Date.now()/1000),session=await m.load('./shared-report-gate').__test.createSession({sub:'mine',accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec,roles:['role']},env.SESSION_SECRET);
+ const req=(body={},origin='https://cloud.example.invalid',authenticated=true,method='POST')=>new Request('https://cloud.example.invalid/api/cloud/notifications/personal-test',{method,headers:{origin,'content-type':'application/json',...(authenticated?{cookie:'__Host-report_gate_session='+encodeURIComponent(session)}:{})},...(method==='POST'?{body:JSON.stringify(body)}:{})});
+ const api=m.load('./cloud-api');
+ assert.equal((await api.cloudApi(req({},'https://other.invalid'),env)).status,403);
+ assert.equal((await api.cloudApi(req({},undefined,false),env)).status,401);
+ assert.equal((await api.cloudApi(req({},undefined,true,'GET'),env)).status,405);
+ for(const field of ['event','member_id','subscription_id','message'])assert.equal((await api.cloudApi(req({[field]:'forged'}),env)).status,400);
+ const response=await api.cloudApi(req(),env),value=await response.json();assert.equal(response.status,200);assert.equal(value.status,'disabled');assert.equal(value.arrival_confirmed,false);assert.equal(response.headers.get('cache-control'),'private, no-store');
+});
+
+test('managed-role policy is explicit, requires fresh evidence, and never falls back to payment API',async()=>{
+ const api=modules().load('./cloud-api'),env={CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role'};
+ assert.equal((await api.currentMembership(env,'member')).status,'unavailable');
+ assert.equal((await api.currentMembership(env,'member',true)).status,'paid');
+ assert.equal((await api.currentMembership(env,'member',false)).status,'free');
+ assert.equal((await api.currentMembership({CLOUD_PUSH_MEMBERSHIP_POLICY:'unknown'},'member',true)).status,'unavailable');
+ assert.equal((await api.currentMembership({},'member',true)).status,'unavailable');
+});
+for(const roleStatus of [200,429,503])test('managed-role preference read/enable uses fresh role; OFF save remains independent: '+roleStatus,async()=>{
+ let reads=0,writes=0;
+ const m=modules({fetchMock:async input=>{assert.match(String(input),/^https:\/\/discord\.com\//);reads++;return Response.json({roles:['role']},{status:roleStatus});}});
+ const prefs={max_price:1000,exit_endpoint:'d6_open',base_shares:100,cost_percent:0,notifications:{new_detection:false,reminder:false}};
+ const db={prepare(){return {bind(){return this;},async first(){return null;},async run(){writes++;return {success:true,meta:{changes:1}};}};}};
+ const env={CLOUD_DB:db,SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'guild',DISCORD_ALLOWED_ROLE_IDS:'role',CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role'};
+ const sec=Math.floor(Date.now()/1000),session=await m.load('./shared-report-gate').__test.createSession({sub:'member',accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec,roles:['role']},env.SESSION_SECRET);
+ const req=(method,body)=>new Request('https://cloud.example.invalid/api/cloud/preferences',{method,headers:{cookie:'__Host-report_gate_session='+encodeURIComponent(session),origin:'https://cloud.example.invalid',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+ const api=m.load('./cloud-api');const response=await api.cloudApi(req('GET'),env);assert.equal(response.status,200);assert.equal((await response.json()).membership.status,roleStatus===200?'paid':'free');assert.equal(reads,1);
+ const enabled=await api.cloudApi(req('PUT',{...prefs,notifications:{new_detection:true,reminder:false}}),env);assert.equal(enabled.status,roleStatus===200?200:403);assert.equal(reads,2);
+ const before=reads;assert.equal((await api.cloudApi(req('PUT',prefs),env)).status,200);assert.equal(reads,before);assert.equal(writes,roleStatus===200?2:1);
 });

@@ -585,6 +585,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       initializeAnnualSummary(content);
     }
     if (payload?.version === 2) {
+      for (const label of document.querySelectorAll('[data-guide-base-shares]')) label.textContent = requested.baseShares.toLocaleString('ja-JP');
+      for (const label of document.querySelectorAll('[data-guide-stacked-shares]')) label.textContent = (requested.baseShares * 3).toLocaleString('ja-JP');
       for (const label of document.querySelectorAll('[data-scenario-endpoint-label]')) label.textContent = requested.exitKey === 'd5_close' ? '5営業日後 終値' : '6営業日後 始値';
       for (const row of rows) {
         const t = CloudScenario.trade(row.dataset, requested);

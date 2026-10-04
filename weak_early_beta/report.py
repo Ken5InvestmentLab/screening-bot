@@ -705,7 +705,7 @@ body[data-page="analytics"]{background:var(--bg)}body[data-page="analytics"] mai
 def _nav(current: str) -> str:
     links = [
         f'<a class="nav-link {"active" if current == "home" else ""}" '
-        'href="./weak_early_beta_latest.html">検出履歴</a>',
+        'href="./weak_early_beta_latest.html">ダッシュボード</a>',
         f'<a class="nav-link {"active" if current == "analytics" else ""}" '
         f'href="./{ANALYTICS_PAGE_NAME}">アナリティクス</a>',
     ]
@@ -1242,7 +1242,7 @@ def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
 <label class="filter-field"><span>検出日 終値の上限</span><select id="cloud-price-preset"><option value="1000" selected>1,000円以下</option><option value="2000">2,000円以下</option><option value="3000">3,000円以下</option><option value="5000">5,000円以下</option><option value="unlimited">上限なし</option><option value="custom">自由入力</option></select></label>
 <label class="filter-field" id="cloud-price-custom-field" hidden><span>任意の上限（円・小数2桁まで）</span><input id="cloud-price-custom" type="number" step="0.01" min="0.01" inputmode="decimal" value="1000"></label>
 <label class="filter-field"><span>売却価格</span><select id="cloud-exit-endpoint"><option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option></select></label>
-<label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">1銘柄に同じ株数</option><option value="stacked">一致した条件の数だけ買付</option></select></label>
+<label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">各銘柄を同じ株数で買う</option><option value="stacked">一致した条件数に応じて株数を増やす</option></select></label>
 <label class="filter-field"><span>基本の買付株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
 <label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label></div>
 <p class="note">初期表示は1,000円以下・6営業日後始値・両方式・100株・コスト0%。保存した設定がある場合は、そちらを使います。買付株数を増やすと、必要な資金も増えます。</p>
@@ -1515,36 +1515,37 @@ def render_mode_report(
 
 def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
+    mode_routes = {selector_info(key).short_name: MODE_PAGE_NAMES[key] for key in SELECTOR_ORDER}
+    mode_links = "、".join(f'<a href="./{html.escape(mode_routes[name])}">{name}</a>' for name in ("Shadow", "Dive", "Silence", "Fusion", "Balance"))
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>売却価格</small><b>5営業日後 終値 / 6営業日後 始値</b></div><div class="kpi"><small>基本株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
 <section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
-<article class="guide-card"><h3>ダッシュボード</h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
-<article class="guide-card"><h3>アナリティクス</h3><p>Cloud全体の過去成績を見るページです。選択した株数とコストで試算した損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
-<article class="guide-card"><h3>5つのモード</h3><p>モードは、銘柄を選ぶ「見方の違い」です。Shadow、Dive、Silence、Fusion、Balanceを押すと、それぞれの成績と検出銘柄を確認できます。</p></article>
-<article class="guide-card"><h3>検出履歴</h3><p>見つかった銘柄を新しい順に表示します。銘柄名・証券コード・日付で検索できます。一覧件数は「設定」の「表示」で20・50・100件から選べます。</p></article>
-<article class="guide-card"><h3>ファンダ分析</h3><p>会社がどんな事業をしているか、検出時点までに公表されていた決算やお知らせ、その内容から読み取れる注目点と注意点をまとめています。資料名を押すと根拠となる開示資料を確認できます。</p></article>
+<article class="guide-card"><h3><a href="./weak_early_beta_latest.html">ダッシュボード</a></h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
+<article class="guide-card"><h3><a href="./{ANALYTICS_PAGE_NAME}">アナリティクス</a></h3><p>Cloud全体の過去成績を見るページです。選択した株数とコストで試算した損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
+<article class="guide-card"><h3>5つのモード</h3><p>モードは、銘柄を選ぶ「見方の違い」です。{mode_links}を押すと、それぞれの成績と検出銘柄を確認できます。</p></article>
 </div></section>
 <section class="panel"><h2>成績の読み方</h2><div class="guide-grid">
 <article class="guide-card"><h3>株数とコスト</h3><p>株数は100株ずつ変更できます。コストは買付額と売却額の両方にかかり、損益とグラフに反映します。分割・併合による株数の変化も計算します。配当・税金は含みません。</p></article>
 <article class="guide-card"><h3>5営業日後・6営業日後</h3><p>検出日を基準に、次の営業日を1日目と数えます。5日目の終値と6日目の始値は、別の日に確認します。予定日前は「確定日待ち」、価格を確認できない場合は「未取得」と表示します。</p></article>
 <article class="guide-card"><h3>株価の上限</h3><p>検出日 終値が上限以下の検出銘柄を表示します。検出済みの銘柄を絞る設定なので、上限を引き上げても検出対象は広がりません。終値が未取得の記録は上限ありでは除外し、上限なしでは表示します。</p></article>
-<article class="guide-card"><h3>過去の成績</h3><p>過去データによる試算と、運用開始後の記録を含みます。2026年の過去データも、結果が分かった期間の試算です。価格を取得できていない取引の損益は表示しません。</p></article>
+<article class="guide-card"><h3>過去の成績</h3><p>過去データによる試算は、実際の運用実績ではありません。2026年の過去データも、結果が分かった期間の試算です。運用開始後の検出記録とは区別しています。価格を取得できていない取引の損益は表示しません。</p></article>
 <article class="guide-card"><h3>必要資金（目安）</h3><p>複数の銘柄を同時に持つ期間も考えたうえで、選択した株数とコストで取引するために最も多く必要だった資金の目安です。</p></article>
 <article class="guide-card"><h3>資金増加率・単純年率</h3><p>必要資金に対して損益が何%だったかと、それを1年あたりに単純換算した参考値です。利益を再投資する複利計算ではありません。</p></article>
 <article class="guide-card"><h3>勝率と騰落率</h3><p>勝率は、結果が出た取引のうち利益になった割合です。損益が0の取引も数えます。騰落率は、買付額に対する損益の割合です。選択したコストも含みます。</p></article>
 <article class="guide-card"><h3>参考値・成績に含めません</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
-<section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>一致した条件の数だけ買付</h3><p>基本100株なら、3条件に一致した銘柄は300株で試算します。</p></article><article class="guide-card"><h3>1銘柄に同じ株数</h3><p>同じ日の同じ銘柄を1件として買い付けます。複数の条件に一致しても株数は増やしません。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
+<section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>各銘柄を同じ株数で買う</h3><p>同じ日・同じ銘柄を<span data-guide-base-shares>100</span>株で試算します。複数の条件に一致しても株数は増やしません。</p></article><article class="guide-card"><h3>一致した条件数に応じて株数を増やす</h3><p>基本<span data-guide-base-shares>100</span>株なら、3条件に一致した銘柄は<span data-guide-stacked-shares>300</span>株で試算します。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
 <section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は現在利用できません。有料会員向けの機能で、初期値はOFFです。朝8時（日本時間）は「今日は選んだ確定日」のお知らせです。この時点では価格や損益はまだ確定していません。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
 <p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
     metadata = json.dumps({"version": 2, "page": "guide", "scopes": scopes or {"all": {"label": "記録期間すべて", "years": None}}, "variants": {}, "generated": generated.isoformat(), "modeNames": {}}, ensure_ascii=False).replace('<', '\u003c')
-    return _page_shell("見方・使い方", "guide", body + _settings_panel(scopes) + f'<script id="cloud-analytics-data" type="application/json">{metadata}</script>')
+    guide_settings = _settings_panel(scopes).replace('<output id="cloud-applied-summary" class="scenario-apply" aria-live="polite"></output>', '')
+    return _page_shell("見方・使い方", "guide", body + guide_settings + f'<script id="cloud-analytics-data" type="application/json">{metadata}</script>')
 
 
 def write_report(

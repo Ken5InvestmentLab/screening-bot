@@ -10,7 +10,9 @@
   register.type = 'button'; register.id = 'cloud-device-register'; register.textContent = 'この端末を登録'; register.hidden = true;
   const revoke = document.createElement('button');
   revoke.type = 'button'; revoke.id = 'cloud-device-revoke'; revoke.textContent = 'この端末の登録を解除'; revoke.hidden = true;
-  panel.append(status, register, revoke); host.append(panel);
+  const test = document.createElement('button');
+  test.type = 'button'; test.id = 'cloud-device-test'; test.textContent = 'この端末へテスト通知'; test.hidden = true;
+  panel.append(status, register, revoke, test); host.append(panel);
   let busy = false, current = null, readyConfig = null;
   const supported = () => window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   async function api(path, method, body) {
@@ -34,15 +36,16 @@
     return device ? { id: device.subscription_id, subscription } : null;
   }
   async function refresh() {
-    register.hidden = true; revoke.hidden = true;
+    register.hidden = true; revoke.hidden = true; test.hidden = true;
     try {
       const config = await api('/api/cloud/push-config');
       readyConfig = config.registration_available ? config : null;
       if (!supported()) { status.textContent = 'このブラウザでは端末へのプッシュ登録を利用できません。'; return; }
       current = await ownedDevice(config);
+      test.hidden = !current || !config.personal_test_available || current.id !== config.personal_test_subscription_id;
       revoke.hidden = !current;
       register.hidden = !config.registration_available || Boolean(current);
-      status.textContent = current ? 'この端末は登録済みです。通知配信は現在利用できません。' :
+      status.textContent = current ? (!test.hidden ? 'この端末は登録済みです。テスト通知を送れます。' : 'この端末は登録済みです。通知配信は現在利用できません。') :
         config.registration_available ? '通知配信は現在利用できません。端末登録はボタン操作と許可が必要です。' : '端末へのプッシュ通知は現在利用できません。';
     } catch (_) { readyConfig = null; status.textContent = '端末へのプッシュ通知は現在利用できません。'; }
   }
@@ -83,6 +86,18 @@
       status.textContent = removed ? 'この端末の登録を解除しました。' : 'サーバー側の端末登録を解除しました。ブラウザ側の解除を確認してください。';
     } catch (_) { status.textContent = '端末の登録を解除できませんでした。接続状態を確認してください。'; }
     finally { busy = false; revoke.disabled = false; }
+  });
+  test.addEventListener('click', async () => {
+    if (busy || test.hidden || !current) return;
+    busy = true; test.disabled = true;
+    try {
+      const result = await api('/api/cloud/notifications/personal-test', 'POST', {});
+      status.textContent = result.status === 'accepted' ? '配信サービスが受け付けました。Windowsの通知表示を確認してください。' :
+        result.status === 'unknown' ? '送信結果を確認できません。再送せずWindowsの通知表示を確認してください。' :
+        result.status === 'suppressed' ? 'このテストは送信済み、または結果確認中です。Windowsの通知表示を確認してください。' :
+        'テスト通知を送れませんでした。会員資格・通知設定・端末登録を確認してください。';
+    } catch (_) { status.textContent = 'テスト通知の結果を確認できません。再送せずWindowsの通知表示を確認してください。'; }
+    finally { busy = false; test.disabled = false; }
   });
   // Explicit opt-in only; no localStorage dependency and no permission prompt.
   void refresh();

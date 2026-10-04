@@ -14,15 +14,22 @@ export async function pushApi(request: Request, env: Environment, context: Depen
   const db = env.CLOUD_DB;
   if (!db) return json({ ok: false, reason: "storage_unavailable" }, 503);
   const path = new URL(request.url).pathname;
+  // A separately approved personal-test configuration must not open device
+  // registration for other paid members. Revocation remains available to owners.
+  const personalMemberAllowed = env.CLOUD_PUSH_MODE !== "personal_test" ||
+    (!!env.CLOUD_PUSH_TEST_MEMBER_ID && context.memberId === env.CLOUD_PUSH_TEST_MEMBER_ID);
   if (path === "/api/cloud/push-config") {
     const membership = context.roleAuthorized ? await context.membership() : { status: "free", reason: "discord_role_required" };
-    const ready = registrationConfigured(env) && membership.status === "paid";
+    const ready = personalMemberAllowed && registrationConfigured(env) && membership.status === "paid";
     const rows = await db.prepare(`SELECT s.subscription_id, m.endpoint_hash FROM cloud_push_subscriptions s
       JOIN cloud_push_subscription_metadata m ON m.subscription_id = s.subscription_id
       WHERE s.member_id = ? AND s.revoked_at IS NULL ORDER BY s.opted_in_at DESC LIMIT 50`)
       .bind(context.memberId).all<{ subscription_id: string; endpoint_hash: string }>();
     if (!rows.success) throw new Error("subscription_read_failed");
+    const testReady = ready && env.CLOUD_PUSH_MODE === "personal_test" && /^[A-Za-z0-9_-]{16,64}$/.test(env.CLOUD_PUSH_TEST_RUN_ID ?? "") &&
+      (rows.results ?? []).some(device => device.subscription_id === env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID);
     return json({ ok: true, registration_available: ready, delivery_available: false,
+      personal_test_available: testReady, ...(testReady ? { personal_test_subscription_id: env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID } : {}),
       reason: ready ? "device_registration_only" : "push_unavailable", membership,
       ...(ready ? { public_key: env.CLOUD_VAPID_PUBLIC_KEY } : {}), devices: rows.results ?? [] });
   }
@@ -41,6 +48,7 @@ export async function pushApi(request: Request, env: Environment, context: Depen
     return json({ ok: true, device_revoked: true, delivery_available: false });
   }
   if (!registrationConfigured(env)) return json({ ok: false, reason: "registration_disabled" }, 503);
+  if (!personalMemberAllowed) return json({ ok: false, reason: "personal_test_member_required" }, 403);
   if (!context.roleAuthorized || (await context.membership()).status !== "paid") return json({ ok: false, reason: "paid_membership_required" }, 403);
   if (!isObject(input) || Object.keys(input).sort().join(",") !== "opt_in,subscription" || input.opt_in !== true) return json({ ok: false, reason: "explicit_opt_in_required" }, 400);
   let subscription;

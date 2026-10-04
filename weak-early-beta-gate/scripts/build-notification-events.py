@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 import pandas as pd
-from weak_early_beta.bank_calendar import add_bank_business_days
+from weak_early_beta.bank_calendar import add_bank_business_days, is_bank_business_day
 from weak_early_beta.endpoint_receipts import signal_actual_close_verified, sixth_endpoint_verified
 from weak_early_beta.forward_price_overlay import apply_reviewed_forward_close
 from weak_early_beta.ledger import read_ledger
@@ -30,6 +30,8 @@ def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp) 
     if not re.fullmatch(r"[0-9a-f]{64}", source_sha256):
         raise ValueError("source ledger SHA-256 is required")
     today = as_of.tz_convert("Asia/Tokyo").date()
+    if not is_bank_business_day(today):
+        return []
     # Use the same reviewed signal-price view as the report. The observation
     # cutoff below prevents this later receipt from being available earlier.
     # The original ledger revision and canonical bytes remain unchanged.
@@ -94,22 +96,55 @@ def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp) 
     return events
 
 
+def build_sql_plan(events: list[dict], source_sha256: str, as_of: pd.Timestamp) -> str:
+    """Produce a private, reviewable import plan. Never connect to or execute D1."""
+    if as_of.tzinfo is None or not re.fullmatch(r"[0-9a-f]{64}", source_sha256):
+        raise ValueError("timezone-aware cutoff and source SHA-256 are required")
+    quote = lambda text: "'" + str(text).replace("'", "''") + "'"
+    statements = ["-- PRIVATE canonical notification plan. No execution or sending.", "BEGIN TRANSACTION;"]
+    available = as_of.tz_convert("UTC").isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    seen = set()
+    for event in events:
+        if event.get("adapter_version") != "cloud-ledger-v1" or event.get("source_ledger_revision") != source_sha256 or event.get("kind") not in {"new_detection", "reminder"}:
+            raise ValueError("canonical event evidence is required")
+        # Immutable signal/kind identity; a later ledger revision does not create
+        # another alert. The dispatch receipt key is independent of this revision.
+        identity = str(event["signal_id"]) + ":" + str(event["kind"])
+        key = hashlib.sha256(identity.encode("utf-8")).hexdigest()
+        if key in seen:
+            raise ValueError("duplicate canonical notification event")
+        seen.add(key)
+        payload = json.dumps(event, ensure_ascii=False, allow_nan=False, sort_keys=True, separators=(",", ":"))
+        statements.append("INSERT INTO cloud_notification_events (source_event_key,event_json,available_at,source_ledger_revision) VALUES ("
+            + ",".join(quote(value) for value in (key, payload, available, source_sha256))
+            + ") ON CONFLICT(source_event_key) DO UPDATE SET event_json=excluded.event_json, source_ledger_revision=excluded.source_ledger_revision;" )
+    statements.append("COMMIT;")
+    return "\n".join(statements) + "\n"
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ledger", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--as-of", required=True, help="Timezone-aware observation cutoff")
+    parser.add_argument("--sql-plan", type=Path, help="Optional private SQL file for review only; no execution")
     args = parser.parse_args()
     ledger_path, output_path = args.ledger.resolve(), args.output.resolve()
     if ledger_path == output_path:
         raise ValueError("output must not overwrite the ledger")
     if {"public", "reports"}.intersection(part.lower() for part in output_path.parts):
         raise ValueError("notification candidates must not be written to public assets")
+    plan_path = args.sql_plan.resolve() if args.sql_plan else None
+    if plan_path and (plan_path in {ledger_path, output_path} or {"public", "reports"}.intersection(part.lower() for part in plan_path.parts)):
+        raise ValueError("SQL plan must be separate from source/output and public assets")
     digest = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
     events = build_events(read_ledger(ledger_path), digest, pd.Timestamp(args.as_of))
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps({"schema_version": 1, "delivery_mode": "dry_run",
         "source_ledger_revision": digest, "events": events}, ensure_ascii=False, allow_nan=False, indent=2) + "\n", encoding="utf-8")
+    if plan_path:
+        plan_path.parent.mkdir(parents=True, exist_ok=True)
+        plan_path.write_text(build_sql_plan(events, digest, pd.Timestamp(args.as_of)), encoding="utf-8")
     print(json.dumps({"events": len(events), "sent": 0, "source_ledger_revision": digest}))
 
 

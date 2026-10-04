@@ -1,5 +1,7 @@
 import { reportIdentity } from "./shared-report-gate";
 import { pushApi } from "./cloud-push";
+import { dispatchPersonalDeviceTest } from "./cloud-push-dispatch";
+import { evaluateNestedMembership } from "./cloud-whop-adapter";
 import type { PushConfig } from "./cloud-web-push";
 import {
   DEFAULT_PREFERENCES, WHOP_API_VERSION, evaluateMembership, evaluateNotification,
@@ -15,6 +17,8 @@ export type CloudEnv = Env & PushConfig & {
   WHOP_PRODUCT_IDS?: string;
   WHOP_PAID_PLAN_IDS?: string;
   WHOP_ONE_TIME_PLAN_IDS?: string;
+  WHOP_RESPONSE_SCHEMA?: string;
+  CLOUD_PUSH_MEMBERSHIP_POLICY?: string;
   SESSION_SECRET?: string;
 };
 const list = (value?: string): string[] => (value ?? "").split(",").map(x => x.trim()).filter(Boolean);
@@ -38,8 +42,16 @@ export async function cloudMemberId(discordSubject: string): Promise<string> {
   return `cloud_${Array.from(new Uint8Array(hash), n => n.toString(16).padStart(2, "0")).join("")}`;
 }
 
-export async function currentMembership(env: CloudEnv, subject: string): Promise<MembershipDecision> {
+export async function currentMembership(env: CloudEnv, subject: string, freshRoleAuthorized?: boolean): Promise<MembershipDecision> {
   const unavailable = (reason: string): MembershipDecision => ({ status: "unavailable", reason, checked_at: new Date().toISOString() });
+  // Explicitly approved alternative policy. This is never an error fallback from
+  // Whop: fresh Discord authorization is the selected source of paid eligibility.
+  if (env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") {
+    if (!subject || freshRoleAuthorized === undefined) return unavailable("fresh_managed_role_required");
+    return { status: freshRoleAuthorized ? "paid" : "free", reason: freshRoleAuthorized ? "verified_whop_managed_discord_role" : "managed_role_revoked",
+      checked_at: new Date().toISOString() };
+  }
+  if (env.CLOUD_PUSH_MEMBERSHIP_POLICY && env.CLOUD_PUSH_MEMBERSHIP_POLICY !== "whop_api") return unavailable("unsupported_membership_policy");
   if (!env.CLOUD_DB || !env.WHOP_API_KEY || !env.WHOP_ACCOUNT_ID || !list(env.WHOP_PRODUCT_IDS).length || !list(env.WHOP_PAID_PLAN_IDS).length) {
     return unavailable("membership_not_configured");
   }
@@ -62,6 +74,17 @@ export async function currentMembership(env: CloudEnv, subject: string): Promise
     };
     const membership = await read(`memberships/${link.membership_id}`);
     if (!isObject(membership)) return unavailable("invalid_provider_response");
+    const policy: MembershipPolicy = {
+      account_id: env.WHOP_ACCOUNT_ID, product_ids: list(env.WHOP_PRODUCT_IDS),
+      paid_plan_ids: list(env.WHOP_PAID_PLAN_IDS), one_time_plan_ids: list(env.WHOP_ONE_TIME_PLAN_IDS),
+    };
+    if (env.WHOP_RESPONSE_SCHEMA === "nested_v1") {
+      // Personal-test minimum: only this operator-verified payment is read.
+      // A renewal needs updated evidence; no undocumented membership/user filter
+      // or account-wide scan is permitted by this adapter.
+      return evaluateNestedMembership(membership, await read(`payments/${link.payment_id}`), link, policy);
+    }
+    if (env.WHOP_RESPONSE_SCHEMA && env.WHOP_RESPONSE_SCHEMA !== "legacy_fixture") return unavailable("unsupported_provider_schema");
     // Follow renewals instead of pinning eligibility to the first payment in the
     // identity-link evidence. Scope every query and recheck returned ownership.
     const paymentQuery = new URLSearchParams({
@@ -75,10 +98,6 @@ export async function currentMembership(env: CloudEnv, subject: string): Promise
       row.status === "paid" && typeof row.id === "string" && /^pay_[A-Za-z0-9]+$/.test(row.id));
     if (!isObject(paid)) return { status: "unverified", reason: "current_period_payment_required", checked_at: new Date().toISOString() };
     const payment = await read(`payments/${paid.id}`);
-    const policy: MembershipPolicy = {
-      account_id: env.WHOP_ACCOUNT_ID, product_ids: list(env.WHOP_PRODUCT_IDS),
-      paid_plan_ids: list(env.WHOP_PAID_PLAN_IDS), one_time_plan_ids: list(env.WHOP_ONE_TIME_PLAN_IDS),
-    };
     return evaluateMembership(membership, payment, { ...link, payment_id: String(paid.id) }, policy);
   } catch {
     // No role-cache grace, previous positive result, or provider-error body leaks.
@@ -120,6 +139,7 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     "/api/cloud/push-config": ["GET"],
     "/api/cloud/push-subscriptions/device": ["DELETE"],
     "/api/cloud/notifications/dry-run": ["POST"],
+    "/api/cloud/notifications/personal-test": ["POST"],
   };
   if (!methods[path]) return json({ ok: false, reason: "not_found" }, 404);
   if (!methods[path].includes(request.method)) return json({ ok: false, reason: "method_not_allowed" }, 405);
@@ -131,22 +151,37 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     if (!identity.subject) return json({ ok: false, reason: identity.reason }, identity.reason === "temporarily_unavailable" ? 503 : 401);
     if (!env.CLOUD_DB) return json({ ok: false, reason: "storage_unavailable", delivery_mode: "dry_run" }, 503);
     const memberId = await cloudMemberId(identity.subject);
+    if (path === "/api/cloud/notifications/personal-test") {
+      let input: unknown;
+      try { input = await requestJson(request); } catch { return json({ ok: false, reason: "invalid_request" }, 400); }
+      if (!isObject(input) || Object.keys(input).length) return json({ ok: false, reason: "empty_body_required" }, 400);
+      const result = await dispatchPersonalDeviceTest(request, env);
+      return json({ ok: true, ...result, arrival_confirmed: false });
+    }
     if (path === "/api/cloud/push-config" || path === "/api/cloud/push-subscriptions/device" ||
       (path === "/api/cloud/push-subscriptions" && request.method === "POST")) {
-      const freshIdentity = request.method === "POST" ? await reportIdentity(request, env, true) : identity;
+      const freshIdentity = request.method === "POST" || (path === "/api/cloud/push-config" && env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") ? await reportIdentity(request, env, true) : identity;
       return pushApi(request, env, { memberId, roleAuthorized: freshIdentity.discord_authorized,
-        membership: () => currentMembership(env, identity.subject!) });
+        membership: () => currentMembership(env, identity.subject!, freshIdentity.subject === identity.subject && freshIdentity.discord_authorized) });
     }
     const preferences = await preferencesFor(env.CLOUD_DB, memberId);
-    const membership = identity.discord_authorized
+    let membership = identity.discord_authorized
       ? await currentMembership(env, identity.subject)
       : { status: "free" as const, reason: "discord_role_required", checked_at: new Date().toISOString() };
+    if (request.method === "GET" && env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") {
+      const fresh = await reportIdentity(request, env, true);
+      membership = await currentMembership(env, identity.subject, fresh.subject === identity.subject && fresh.discord_authorized);
+    }
     if (path === "/api/cloud/preferences") {
       if (request.method === "GET") return json({ ok: true, preferences, membership, delivery_mode: "dry_run", persistence: "server" });
       let next: Preferences;
       try { next = validatePreferences(await requestJson(request)); }
       catch { return json({ ok: false, reason: "invalid_preferences" }, 400); }
       const enabling = Object.values(next.notifications).some(Boolean);
+      if (enabling && env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") {
+        const fresh = await reportIdentity(request, env, true);
+        membership = await currentMembership(env, identity.subject, fresh.subject === identity.subject && fresh.discord_authorized);
+      }
       if (enabling && membership.status !== "paid") return json({ ok: false, reason: "paid_membership_required", membership }, 403);
       const saved = await preferenceStatement(env.CLOUD_DB, memberId, next).run();
       if (!saved.success) throw new Error("preference_save_failed");

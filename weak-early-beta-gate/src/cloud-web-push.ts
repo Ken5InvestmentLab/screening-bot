@@ -4,6 +4,7 @@ export type PushConfig = {
   CLOUD_PUSH_MODE?: string;
   CLOUD_PUSH_TEST_MEMBER_ID?: string;
   CLOUD_PUSH_TEST_SUBSCRIPTION_ID?: string;
+  CLOUD_PUSH_TEST_RUN_ID?: string;
   CLOUD_PUSH_ALLOWED_ORIGINS?: string;
   CLOUD_VAPID_PUBLIC_KEY?: string;
   CLOUD_VAPID_PRIVATE_KEY?: string;

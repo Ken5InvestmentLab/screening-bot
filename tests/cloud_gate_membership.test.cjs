@@ -437,10 +437,10 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
   const clock = { now: NOW };
   const calls = [];
   const assets = [];
-  const provider = { status: providerStatus, fixture, discordRoles: roles, discordStatus:200 };
+  const provider = { status: providerStatus, fixture, discordRoles: roles, discordStatus:200, discordCalls:0 };
   const modules = createModules({ clock, fetchMock: async (input, init = {}) => {
     const url = new URL(String(input));
-    if(url.origin==='https://discord.com')return Response.json({roles:provider.discordRoles},{status:provider.discordStatus});
+    if(url.origin==='https://discord.com'){provider.discordCalls+=1;return Response.json({roles:provider.discordRoles},{status:provider.discordStatus});}
     assert.equal(url.origin, 'https://api.whop.com');
     assert.equal(init.method || 'GET', 'GET', 'No network mutation or push delivery is allowed.');
     assert.equal(init.headers.authorization, 'Bearer synthetic-whop-read-key');
@@ -1030,6 +1030,16 @@ test('hidden notification settings preserve authoritative opt-ins and other memb
  assert.equal(saved.status,200);assert.deepEqual((await saved.json()).preferences.notifications,previous.notifications);
  assert.equal(JSON.parse(h.db.state.preferences.get(h.memberId)).max_price,2000);
  assert.equal(h.db.state.preferences.size,2);assert.equal(h.calls.length,0);
+});
+
+test('hidden notification preference read skips redundant roles without qualifying notifications or reports', async () => {
+ const h=await apiHarness(); h.env.CLOUD_PUSH_MEMBERSHIP_POLICY='whop_managed_discord_role'; h.provider.discordStatus=429;
+ const saved=preferences({notifications:{new_detection:true,reminder:true}});h.db.state.preferences.set(h.memberId,JSON.stringify(saved));
+ const response=await h.fetchApi('/api/cloud/preferences?notification_status=omit'); assert.equal(response.status,200);
+ const body=await response.json();assert.deepEqual(body.preferences,saved);assert.equal(body.membership.status,'unavailable');assert.equal(body.membership.reason,'notification_status_not_requested');assert.equal(body.notification_eligible,false);assert.equal(h.provider.discordCalls,0);
+ const anonymous=await h.fetchApi('/api/cloud/preferences?notification_status=omit',{authenticated:false});assert.equal(anonymous.status,401);
+ const report=await h.worker.fetch(await h.request('/weak_early_beta_latest.html?notification_status=omit'),h.env);
+ assert.doesNotMatch(await report.text(),/SECRET-UNRELEASED-TICKER/);assert.equal(h.provider.discordCalls,1);
 });
 
 test('notification-OFF settings save without Whop configuration and stay isolated across two Discord sessions', async () => {

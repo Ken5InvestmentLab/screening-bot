@@ -177,7 +177,12 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     let membership = identity.discord_authorized
       ? await currentMembership(env, identity.subject)
       : { status: "free" as const, reason: "discord_role_required", checked_at: new Date().toISOString() };
-    if (request.method === "GET" && managedRoles) {
+    const omitNotificationStatus = request.method === "GET" && path === "/api/cloud/preferences" && new URL(request.url).searchParams.get("notification_status") === "omit";
+    if (omitNotificationStatus) {
+      // Hidden notification UI only needs the signed owner's saved settings.
+      // This opt-out never grants report access or notification qualification.
+      membership = { status: "unavailable", reason: "notification_status_not_requested", checked_at: new Date().toISOString() };
+    } else if (request.method === "GET" && managedRoles) {
       const fresh = await reportIdentity(request, env, true);
       membership = await freshMembership(fresh);
     }

@@ -854,7 +854,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       } finally { saving = false; syncActionAvailability(); }
     });
     // Server preferences are authoritative. Do not overwrite an edit made while loading.
-    fetch("/api/cloud/preferences", { credentials: "same-origin", cache: "no-store" }).then(async (response) => {
+    fetch(notificationPanel ? "/api/cloud/preferences" : "/api/cloud/preferences?notification_status=omit", { credentials: "same-origin", cache: "no-store" }).then(async (response) => {
       if (!response.ok) throw new Error("settings-unavailable");
       const data = await response.json();
       const saved = data.preferences || data;

@@ -282,7 +282,7 @@ for (const state of ['missing', 'expired']) {
   });
 }
 
-function guardHarness(script, fetchMock, { recovering = false, freePage = false, locks = { request: async (_name, callback) => callback() } } = {}) {
+function guardHarness(script, fetchMock, { recovering = false, freePage = false, clock, locks = { request: async (_name, callback) => callback() } } = {}) {
   const windowEvents = new Map();
   const documentEvents = new Map();
   const intervals = [];
@@ -306,6 +306,7 @@ function guardHarness(script, fetchMock, { recovering = false, freePage = false,
   vm.runInNewContext(script, {
     window, document, fetch: fetchMock, encodeURIComponent, AbortSignal,
     navigator: { locks },
+    Date: class extends Date { static now() { return clock ? clock.now : Date.now(); } },
     setTimeout: window.setTimeout, clearTimeout() {},
   }, { filename: 'access-guard.js' });
   return { windowEvents, documentEvents, intervals, timeouts, navigations, document, reloads: () => reloads };
@@ -391,6 +392,31 @@ test('Cloud free page requires reauthentication only after confirming a failed s
   const invalid = guardHarness(gate.api.accessGuardScript(env), async () => { calls += 1; return new Response(null, { status: 401 }); }, { freePage: true });
   const check = invalid.windowEvents.get('pageshow')(); await flushGuardTimers(invalid); await check;
   assert.equal(calls, 3); assert.deepEqual(invalid.navigations, ['/auth/login?return_to=%2Freport%3Ftest%3D1']); assert.equal(invalid.reloads(), 0);
+});
+
+test('Cloud free guard waits for provider Retry-After despite visibility and interval events', async () => {
+  const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  const clock = { now: 1000 }; let calls = 0;
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => ++calls === 1
+    ? new Response(null, { status: 503, headers: { 'retry-after': '60' } }) : new Response(null, { status: 200 }), { freePage: true, clock });
+  await guard.windowEvents.get('pageshow')(); assert.equal(calls, 1);
+  guard.documentEvents.get('visibilitychange')(); await guard.intervals[0](); assert.equal(calls, 1); assert.equal(guard.reloads(), 0);
+  clock.now += 60000; guard.timeouts.shift()(); await flushGuardTimers(guard);
+  assert.equal(calls, 2); assert.equal(guard.reloads(), 1);
+});
+
+test('fresh role cooldown retains only provider failure, then rechecks paid access and later revocation', async () => {
+  const clock = { now: Date.now() }; let calls = 0; let roles = ['test-allowed-role'];
+  const gate = createGate(async () => ++calls === 1 ? Response.json({ retry_after: 60 }, { status: 429, headers: { 'x-ratelimit-scope': 'user' } }) : Response.json({ roles }), { clock });
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' };
+  const request = await requestFor(gate, '/auth/check', sessionPayload({ tokenExp: Math.floor(clock.now / 1000) + 3600 }));
+  const first = await gate.worker.fetch(request.clone(), env); assert.equal(first.status, 503); assert.equal(first.headers.get('retry-after'), '60');
+  assert.deepEqual(await first.json(), { ok: false, reason: 'discord_role_lookup_429', retry_after_seconds: 60, rate_limit_scope: 'user', rate_limit_response: 'json' });
+  const again = await gate.worker.fetch(request.clone(), env); assert.equal(again.status, 503); assert.equal(calls, 1);
+  clock.now += 60001;
+  const paid = await gate.worker.fetch(request.clone(), env); assert.equal(paid.status, 200); assert.equal(calls, 2);
+  roles = [];
+  const revoked = await gate.worker.fetch(request.clone(), env); assert.equal(revoked.status, 403); assert.equal(calls, 3);
 });
 
 test('concurrent fresh role checks share only the active request and recheck a later role revocation', async () => {

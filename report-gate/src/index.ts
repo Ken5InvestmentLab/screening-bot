@@ -31,6 +31,7 @@ function accessGuardScript(env: WorkerEnv): string {
   let checking = false;
   let finished = false;
   let recoveryDelayMs = 2000;
+  let retryAt = 0;
   const deny = () => {
     ${env.REPORT_PUBLIC_FREE === "true" ? "if (!freePage) { finished = true; window.location.reload(); } return;" : ""}
     document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + ${deniedTitle} + '</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}.wrap{max-width:680px;margin:0 auto;padding:28px;border:1px solid #d7e0ea;border-radius:10px;background:#fff}h1{font-size:24px;margin:0 0 12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}a{color:#2563eb}.button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:7px;text-decoration:none;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{border:1px solid #c9d7ea;color:#1849a9;background:#f3f7ff}</style></head><body><main class="wrap"><h1>' + ${deniedTitle} + '</h1><p>' + ${deniedMessage} + '</p><div class="actions"><a class="button primary" href="' + ${purchaseUrl} + '">アクセス権を購入する</a><a class="button secondary" href="/auth/logout">Discordで再ログイン</a></div></main></body>';
@@ -43,6 +44,14 @@ function accessGuardScript(env: WorkerEnv): string {
         headers: { accept: 'application/json' },
         signal: AbortSignal.timeout(25000),
       });
+      ${env.REPORT_PUBLIC_FREE === "true" ? `if (response.status === 503) {
+        const seconds = Number(response.headers.get('retry-after'));
+        if (Number.isFinite(seconds) && seconds > 0) {
+          const delay = Math.min(seconds * 1000, 2147483647);
+          retryAt = Date.now() + delay;
+          window.setTimeout(check, delay);
+        }
+      }` : ""}
       ${env.REPORT_PUBLIC_FREE === "true" ? `if (freePage${env.REPORT_LOGIN_REQUIRED === "true" ? " && response.status !== 401" : ""}) {
         // A public page must refresh the existing session too. Never redirect
         // anonymous/free visitors or reload on a failed/denied role lookup.
@@ -76,7 +85,7 @@ function accessGuardScript(env: WorkerEnv): string {
     }
   };
   const check = async () => {
-    if (checking || finished) return;
+    if (checking || finished || Date.now() < retryAt) return;
     checking = true;
     try {
       // Web Locks serialize refreshes across tabs and authentication wait pages.
@@ -165,7 +174,7 @@ class DiscordGuildMemberDeniedError extends AccessDeniedError {
 }
 
 class DiscordRateLimitedError extends Error {
-  constructor(readonly retryAfterMs = 0) { super("Discord guild member lookup was rate limited"); }
+  constructor(readonly retryAfterMs = 0, readonly scope?: string, readonly replyKind?: string) { super("Discord guild member lookup was rate limited"); }
 }
 class DiscordGuildMemberUnavailableError extends Error {
   constructor(readonly status: number) { super("Discord guild member lookup unavailable"); }
@@ -178,6 +187,7 @@ const tokenRefreshes = new Map<string, { promise: Promise<OAuthToken>; expiresAt
 // Share only a currently running fresh lookup, never a completed authorization.
 // Keys contain a digest rather than credentials; other guilds/tokens cannot join.
 const freshRoleLookups = new Map<string, Promise<DiscordGuildMember>>();
+const freshRoleCooldowns = new Map<string, { until: number; error: DiscordRateLimitedError }>();
 
 type SecurityHeaderOptions = {
   allowReportScript?: boolean;
@@ -516,6 +526,9 @@ type AuthorizationCheck = {
   refreshRequired?: boolean;
   roleLookupStatus?: number;
   roleLookupReason?: string;
+  roleRetryAfterSeconds?: number;
+  roleRateLimitScope?: string;
+  roleRateLimitReplyKind?: string;
 };
 
 async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv): Promise<SessionPayload | null> {
@@ -599,8 +612,11 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     }
     const status = error instanceof DiscordRateLimitedError ? 429 : error instanceof DiscordGuildMemberUnavailableError ? error.status : undefined;
     const reason = status ? `discord_role_lookup_${status}` : "discord_role_network_unavailable";
-    console.error(JSON.stringify({ level: "warn", message: "Discord role check temporarily unavailable", reason }));
-    return { authorized: false, temporaryError: true, roleLookupReason: reason, refreshedSession, tokenRefreshed };
+    const rateLimit = error instanceof DiscordRateLimitedError ? {
+      roleRetryAfterSeconds: Math.ceil(error.retryAfterMs / 1000), roleRateLimitScope: error.scope, roleRateLimitReplyKind: error.replyKind,
+    } : {};
+    console.error(JSON.stringify({ level: "warn", message: "Discord role check temporarily unavailable", reason, ...rateLimit }));
+    return { authorized: false, temporaryError: true, roleLookupReason: reason, ...rateLimit, refreshedSession, tokenRefreshed };
   }
 }
 
@@ -871,6 +887,9 @@ async function freshGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
     JSON.stringify([discordApiBase(env), requiredEnv(env, "DISCORD_GUILD_ID"), accessToken]),
   ));
   const key = base64UrlEncode(new Uint8Array(digest));
+  for (const [entryKey, entry] of freshRoleCooldowns) if (entry.until <= Date.now()) freshRoleCooldowns.delete(entryKey);
+  const cooldown = freshRoleCooldowns.get(key);
+  if (cooldown) throw new DiscordRateLimitedError(cooldown.until - Date.now(), cooldown.error.scope, cooldown.error.replyKind);
   const running = freshRoleLookups.get(key);
   if (running) return running;
   if (freshRoleLookups.size >= 256) return fetchGuildMember(accessToken, env);
@@ -886,6 +905,13 @@ async function freshGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
   })();
   freshRoleLookups.set(key, promise);
   try { return await promise; }
+  catch (error) {
+    if (error instanceof DiscordRateLimitedError && error.retryAfterMs > 0) {
+      if (freshRoleCooldowns.size >= 256) freshRoleCooldowns.delete(freshRoleCooldowns.keys().next().value!);
+      freshRoleCooldowns.set(key, { until: Date.now() + Math.min(error.retryAfterMs, 86400000), error });
+    }
+    throw error;
+  }
   finally { if (freshRoleLookups.get(key) === promise) freshRoleLookups.delete(key); }
 }
 
@@ -904,7 +930,10 @@ async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
       const body = await response.json().catch(() => null) as { retry_after?: unknown } | null;
       retrySeconds = typeof body?.retry_after === "number" ? body.retry_after : 0;
     }
-    throw new DiscordRateLimitedError(Number.isFinite(retrySeconds) && retrySeconds > 0 ? Math.ceil(retrySeconds * 1000) : 0);
+    const scope = response.headers.get("x-ratelimit-scope");
+    throw new DiscordRateLimitedError(Number.isFinite(retrySeconds) && retrySeconds > 0 ? Math.ceil(Math.min(retrySeconds, 86400) * 1000) : 0,
+      scope && ["user", "global", "shared"].includes(scope) ? scope : undefined,
+      response.headers.get("content-type")?.includes("application/json") ? "json" : "other");
   }
   if ([401, 403, 404].includes(response.status)) {
     throw new DiscordGuildMemberDeniedError(response.status);
@@ -1032,8 +1061,11 @@ async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
   const headers = new Headers();
   await appendSessionCookie(request, env, headers, check);
   if (check.temporaryError) {
-    headers.set("retry-after", "2");
-    return jsonResponse({ ok: false, reason: "temporarily_unavailable" }, 503, headers);
+    headers.set("retry-after", String(check.roleRetryAfterSeconds && check.roleRetryAfterSeconds > 0 ? check.roleRetryAfterSeconds : 2));
+    return jsonResponse({ ok: false, reason: env.REPORT_REQUIRE_FRESH_ROLE === "true" ? check.roleLookupReason ?? "temporarily_unavailable" : "temporarily_unavailable",
+      ...(env.REPORT_REQUIRE_FRESH_ROLE === "true" && check.roleRetryAfterSeconds !== undefined ? {
+        retry_after_seconds: check.roleRetryAfterSeconds, rate_limit_scope: check.roleRateLimitScope, rate_limit_response: check.roleRateLimitReplyKind,
+      } : {}) }, 503, headers);
   }
   if (!check.authorized) {
     if (check.loginRequired) {

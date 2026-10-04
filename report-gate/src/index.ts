@@ -26,11 +26,12 @@ function accessGuardScript(env: WorkerEnv): string {
   return `(() => {
   const checkIntervalMs = 120000;
   const recovering = document.documentElement.hasAttribute('data-auth-recovery');
+  const freePage = document.documentElement.hasAttribute('data-auth-free');
   let checking = false;
   let finished = false;
   let recoveryDelayMs = 2000;
   const deny = () => {
-    ${env.REPORT_PUBLIC_FREE === "true" ? "window.location.reload(); return;" : ""}
+    ${env.REPORT_PUBLIC_FREE === "true" ? "if (!freePage) { finished = true; window.location.reload(); } return;" : ""}
     document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + ${deniedTitle} + '</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}.wrap{max-width:680px;margin:0 auto;padding:28px;border:1px solid #d7e0ea;border-radius:10px;background:#fff}h1{font-size:24px;margin:0 0 12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}a{color:#2563eb}.button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:7px;text-decoration:none;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{border:1px solid #c9d7ea;color:#1849a9;background:#f3f7ff}</style></head><body><main class="wrap"><h1>' + ${deniedTitle} + '</h1><p>' + ${deniedMessage} + '</p><div class="actions"><a class="button primary" href="' + ${purchaseUrl} + '">アクセス権を購入する</a><a class="button secondary" href="/auth/logout">Discordで再ログイン</a></div></main></body>';
   };
   const checkUnderLock = async () => {
@@ -41,6 +42,12 @@ function accessGuardScript(env: WorkerEnv): string {
         headers: { accept: 'application/json' },
         signal: AbortSignal.timeout(25000),
       });
+      ${env.REPORT_PUBLIC_FREE === "true" ? `if (freePage) {
+        // A public page must refresh the existing session too. Never redirect
+        // anonymous/free visitors or reload on a failed/denied role lookup.
+        if (response.ok) { finished = true; window.location.reload(); }
+        return;
+      }` : ""}
       if (response.status === 401) {
         if (attempt < 2) {
           // A concurrent response may just have replaced the browser's cookie.
@@ -84,7 +91,11 @@ function accessGuardScript(env: WorkerEnv): string {
       checking = false;
     }
   };
-  window.addEventListener('pageshow', check);
+  ${env.REPORT_PUBLIC_FREE === "true" && env.REPORT_REQUIRE_FRESH_ROLE === "true" ? `window.addEventListener('pageshow', event => {
+    // A fresh full document already checked Discord. Avoid a second lookup
+    // immediately after every navigation; restored pages still recheck.
+    if (freePage || recovering || event?.persisted) return check();
+  });` : "window.addEventListener('pageshow', check);"}
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
       check();
@@ -151,7 +162,9 @@ class DiscordGuildMemberDeniedError extends AccessDeniedError {
   constructor(readonly status: number) { super("Discord guild member lookup did not authorize this user"); }
 }
 
-class DiscordRateLimitedError extends Error {}
+class DiscordRateLimitedError extends Error {
+  constructor(readonly retryAfterMs = 0) { super("Discord guild member lookup was rate limited"); }
+}
 class DiscordGuildMemberUnavailableError extends Error {
   constructor(readonly status: number) { super("Discord guild member lookup unavailable"); }
 }
@@ -160,6 +173,9 @@ class RefreshTokenRejectedError extends Error {}
 
 // Request coalescing only: no tokens are persisted outside the encrypted cookie.
 const tokenRefreshes = new Map<string, { promise: Promise<OAuthToken>; expiresAt: number }>();
+// Share only a currently running fresh lookup, never a completed authorization.
+// Keys contain a digest rather than credentials; other guilds/tokens cannot join.
+const freshRoleLookups = new Map<string, Promise<DiscordGuildMember>>();
 
 type SecurityHeaderOptions = {
   allowReportScript?: boolean;
@@ -552,7 +568,7 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
   }
 
   try {
-    const member = await fetchGuildMember(currentSession.accessToken, env);
+    const member = freshRoles ? await freshGuildMember(currentSession.accessToken, env) : await fetchGuildMember(currentSession.accessToken, env);
     if (freshRoles && (!Array.isArray(member.roles) || member.roles.some(role => typeof role !== "string"))) {
       return { authorized: false, temporaryError: true, roleLookupReason: "discord_role_response_invalid", refreshedSession, tokenRefreshed };
     }
@@ -848,6 +864,29 @@ async function refreshAccessToken(refreshToken: string, env: WorkerEnv): Promise
   };
 }
 
+async function freshGuildMember(accessToken: string, env: WorkerEnv): Promise<DiscordGuildMember> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(
+    JSON.stringify([discordApiBase(env), requiredEnv(env, "DISCORD_GUILD_ID"), accessToken]),
+  ));
+  const key = base64UrlEncode(new Uint8Array(digest));
+  const running = freshRoleLookups.get(key);
+  if (running) return running;
+  if (freshRoleLookups.size >= 256) return fetchGuildMember(accessToken, env);
+  const promise = (async () => {
+    try { return await fetchGuildMember(accessToken, env); }
+    catch (error) {
+      // Respect a short provider retry interval once, with a bounded total wait.
+      // Longer outages remain unavailable and never use a cached paid result.
+      if (!(error instanceof DiscordRateLimitedError) || error.retryAfterMs <= 0 || error.retryAfterMs > 2000) throw error;
+      await new Promise(resolve => setTimeout(resolve, error.retryAfterMs));
+      return fetchGuildMember(accessToken, env);
+    }
+  })();
+  freshRoleLookups.set(key, promise);
+  try { return await promise; }
+  finally { if (freshRoleLookups.get(key) === promise) freshRoleLookups.delete(key); }
+}
+
 async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<DiscordGuildMember> {
   const guildId = requiredEnv(env, "DISCORD_GUILD_ID");
   const response = await fetch(`${discordApiBase(env)}/users/@me/guilds/${guildId}/member`, {
@@ -856,7 +895,8 @@ async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
   });
 
   if (response.status === 429) {
-    throw new DiscordRateLimitedError("Discord guild member lookup was rate limited");
+    const retrySeconds = Number(response.headers.get("retry-after"));
+    throw new DiscordRateLimitedError(Number.isFinite(retrySeconds) && retrySeconds > 0 ? Math.ceil(retrySeconds * 1000) : 0);
   }
   if ([401, 403, 404].includes(response.status)) {
     throw new DiscordGuildMemberDeniedError(response.status);
@@ -932,7 +972,9 @@ async function serveReport(request: Request, env: WorkerEnv, assetPath = reportA
   }
 
   const assetHtml = await assetResponse.text();
-  const html = access.fullAccess ? injectAccessGuard(assetHtml) : assetHtml;
+  const publicFree = !access.fullAccess && env.REPORT_PUBLIC_FREE === "true";
+  const markedHtml = publicFree ? assetHtml.replace(/<html(?=[\s>])/i, '<html data-auth-free') : assetHtml;
+  const html = access.fullAccess || publicFree ? injectAccessGuard(markedHtml) : markedHtml;
   headers.set("content-type", "text/html; charset=utf-8");
   headers.set("cache-control", "private, no-store");
   return new Response(html, {

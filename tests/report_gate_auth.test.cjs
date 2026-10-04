@@ -280,7 +280,7 @@ for (const state of ['missing', 'expired']) {
   });
 }
 
-function guardHarness(script, fetchMock, { recovering = false, locks = { request: async (_name, callback) => callback() } } = {}) {
+function guardHarness(script, fetchMock, { recovering = false, freePage = false, locks = { request: async (_name, callback) => callback() } } = {}) {
   const windowEvents = new Map();
   const documentEvents = new Map();
   const intervals = [];
@@ -289,7 +289,7 @@ function guardHarness(script, fetchMock, { recovering = false, locks = { request
   let reloads = 0;
   const document = {
     hidden: false,
-    documentElement: { innerHTML: 'original report', hasAttribute: (name) => name === 'data-auth-recovery' && recovering },
+    documentElement: { innerHTML: 'original report', hasAttribute: (name) => (name === 'data-auth-recovery' && recovering) || (name === 'data-auth-free' && freePage) },
     addEventListener: (name, callback) => documentEvents.set(name, callback),
   };
   const window = {
@@ -315,6 +315,80 @@ async function flushGuardTimers(guard) {
     while (guard.timeouts.length) guard.timeouts.shift()();
   }
 }
+
+for (const status of [401, 403, 503]) test(`public free guard stays masked without reload/login loop after ${status}`, async () => {
+  const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  let requests = 0;
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => {
+    requests += 1; return new Response(null, { status });
+  }, { freePage: true });
+  await guard.windowEvents.get('pageshow')();
+  assert.equal(requests, 1); assert.equal(guard.reloads(), 0); assert.deepEqual(guard.navigations, []);
+  await guard.intervals[0](); assert.equal(requests, 2); assert.equal(guard.reloads(), 0);
+});
+
+test('public free guard promotes only after a successful serialized role check', async () => {
+  const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  let status = 503;
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => new Response(null, { status }), { freePage: true });
+  await guard.windowEvents.get('pageshow')(); assert.equal(guard.reloads(), 0);
+  status = 200;
+  guard.documentEvents.get('visibilitychange')(); await flushGuardTimers(guard); assert.equal(guard.reloads(), 1);
+  await guard.intervals[0](); assert.equal(guard.reloads(), 1); assert.deepEqual(guard.navigations, []);
+});
+
+test('fresh Cloud full document skips duplicate initial lookup but checks restored pages and intervals', async () => {
+  const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  let requests = 0;
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' }), async () => { requests += 1; return new Response(null, { status: 200 }); });
+  await guard.windowEvents.get('pageshow')({ persisted: false }); assert.equal(requests, 0);
+  await guard.windowEvents.get('pageshow')({ persisted: true }); assert.equal(requests, 1);
+  await guard.intervals[0](); assert.equal(requests, 2);
+});
+
+test('Cloud free document with expired token recovers paid access via auth/check without leaking full assets', async () => {
+  const mock = discordMock(); const gate = createGate(mock.fetchMock);
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true', ASSETS: { fetch: async input => new Response(`<html><body>${String(input).includes('_free.html') ? 'MASKED-FREE' : 'PRIVATE-PAID'}</body></html>`) } };
+  const before = await gate.worker.fetch(await requestFor(gate, '/'), env);
+  const html = await before.text(); assert.match(html, /MASKED-FREE/); assert.match(html, /data-auth-free/); assert.match(html, /auth\/guard/); assert.doesNotMatch(html, /PRIVATE-PAID/);
+  assert.equal(mock.calls.refresh, 0); assert.equal(mock.calls.member, 0);
+  const check = await gate.worker.fetch(await requestFor(gate), env); assert.equal(check.status, 200);
+  const after = await gate.worker.fetch(new Request('https://gate.invalid/', { headers: { cookie: check.headers.get('set-cookie').split(';', 1)[0] } }), env);
+  assert.match(await after.text(), /PRIVATE-PAID/); assert.equal(mock.calls.refresh, 1); assert.equal(mock.calls.member, 2);
+});
+
+test('newly assigned role unlocks Cloud documents even when the signed session previously had no roles', async () => {
+  const mock = discordMock({ accessToken: 'test-old-access' }); const gate = createGate(mock.fetchMock);
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' };
+  const now = Math.floor(Date.now() / 1000);
+  const response = await gate.worker.fetch(await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600, roleCheckedAt: now, roles: [] })), env);
+  assert.equal(response.status, 200); assert.doesNotMatch(await response.text(), /data-auth-free/); assert.equal(mock.calls.member, 1);
+});
+
+test('concurrent fresh role checks share only the active request and recheck a later role revocation', async () => {
+  let release; let lookups = 0; let roles = ['test-allowed-role'];
+  const gate = createGate(async () => { lookups += 1; if (lookups === 1) await new Promise(resolve => { release = resolve; }); return Response.json({ roles }); });
+  const now = Math.floor(Date.now() / 1000);
+  const request = await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600, roleCheckedAt: now }));
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' };
+  const pending = [gate.worker.fetch(request.clone(), env), gate.worker.fetch(request.clone(), env)];
+  while (!release) await new Promise(setImmediate);
+  await new Promise(setImmediate); assert.equal(lookups, 1); release();
+  for (const response of await Promise.all(pending)) assert.doesNotMatch(await response.text(), /data-auth-free/);
+  roles = [];
+  const revoked = await gate.worker.fetch(request.clone(), env); assert.match(await revoked.text(), /data-auth-free/); assert.equal(lookups, 2);
+});
+
+for (const recovered of [true, false]) test(`short fresh-role rate limit retry ${recovered ? 'recovers' : 'fails closed'}`, async () => {
+  let calls = 0;
+  const gate = createGate(async () => {
+    calls += 1;
+    return recovered && calls === 2 ? Response.json({ roles: ['test-allowed-role'] }) : new Response(null, { status: 429, headers: { 'retry-after': '0.001' } });
+  });
+  const now = Math.floor(Date.now() / 1000);
+  const response = await gate.worker.fetch(await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600, roleCheckedAt: now })), { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' });
+  const html = await response.text(); assert.equal(/data-auth-free/.test(html), !recovered); assert.equal(calls, 2);
+});
 
 test('open-page guard serializes page, visibility, and interval checks', async () => {
   const gate = createGate(() => { throw new Error('Worker fetch is not used by this test.'); });

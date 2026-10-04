@@ -1060,7 +1060,7 @@ for(const [label,options,expected] of [['anonymous',{authenticated:false},'free'
  for(const path of ['/','/weak_early_beta_latest.html','/weak_early_beta_analytics.html','/weak_early_beta_guide.html']){
   const response=await h.worker.fetch(await h.request(path,options),h.env);assert.equal(response.status,200);
   const html=await response.text();assert.match(html,expected==='free'?/RELEASED-PUBLIC-ONLY/:/SECRET-UNRELEASED-TICKER/);
-  if(expected==='free'){assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|auth\/guard/);}
+  if(expected==='free'){assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER/);assert.match(html,/data-auth-free/);assert.match(html,/auth\/guard/);}
  }
  const free=await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env);assert.equal(free.status,200);
  const full=await h.worker.fetch(await h.request(bundlePath('full'),options),h.env);assert.equal(full.status,expected==='full'?200:label==='anonymous'?401:403);

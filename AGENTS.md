@@ -18,6 +18,8 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 - 通知ON/OFFはpreferences保存による一時停止/再開で、端末登録を消さない。解除UIは現在ブラウザのendpoint hashと本人の登録が一致した1端末だけに限定し、サーバー失効後にブラウザunsubscribeと未登録確認を行う。一括DELETEは405で拒否する。解除は契約・ロール・他端末・通知許可・通知ON/OFFを変更せず、失敗/部分完了は完了表示にしない。
 - reminderの表示・通知タイトルは「確定日の朝8時（日本時間）」、説明は「選んだ確定日の朝8時にお知らせします。その日の価格はまだ確定していません。」、生成本文は「今日は、設定した確定日です」で統一する。既存exit_endpoint値・JST時刻・資格条件・計算は文言変更で変えない。文言確認のための実通知は送らず、生成payloadとService WorkerのshowNotificationを隔離して検証する。
 - managed-role方式の設定・push-configは署名済みセッションで所有者を選択し、資格が必要な処理でfresh roleを1回照会する。照会不能をロール剥奪として返さずunavailable/fresh_managed_role_unavailableにする。通知OFFの保存はロール照会に依存しない。端末ごとのChrome/Edge認証状態を区別し、テスト対象の切替は実測origin・本人の購読行・別の一回用RUN_IDを確認してからDashboardへ反映する。unknownの旧receiptは削除・再利用せず、Windows向け再送をしない。
+- 通知の購入案内はfresh確認でfreeの場合だけ表示する。paidでは非表示、確認中/照会不能/未検証はfreeとして扱わない。失敗時は資格再試行を表示し、許可要求・購読登録・送信は再試行から行わない。リンクはpush-configが既存ACCESS_PURCHASE_URLから返すWhop URLを使い、フロントに別の購入先を埋め込まない。
+- fresh roleのHTTP401/403/404はロールなしを確認できた結果と区別し、discord_role_lookup_<HTTP status>としてunavailableにする。取得成功の有効なroles配列で許可ロールがない場合だけfree扱い。通常レポートの認証/許可ロール/購入URLは維持する。「ヘルプ」の名称を使い、既存guide URLと本文内容を保持する。
 
 TradingViewのBOTTOMシグナル銘柄を複数のテクニカル指標でスコアリングし、
 Discordにスクリーニング結果をDM送信するBotです。

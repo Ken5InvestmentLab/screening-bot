@@ -142,6 +142,9 @@ type DiscordGuildMember = {
 };
 
 class AccessDeniedError extends Error {}
+class DiscordGuildMemberDeniedError extends AccessDeniedError {
+  constructor(readonly status: number) { super("Discord guild member lookup did not authorize this user"); }
+}
 
 class DiscordRateLimitedError extends Error {}
 
@@ -485,6 +488,7 @@ type AuthorizationCheck = {
   temporaryError?: boolean;
   tokenRefreshed?: boolean;
   refreshRequired?: boolean;
+  roleLookupStatus?: number;
 };
 
 async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv): Promise<SessionPayload | null> {
@@ -540,6 +544,9 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
 
   try {
     const member = await fetchGuildMember(currentSession.accessToken, env);
+    if (freshRoles && (!Array.isArray(member.roles) || member.roles.some(role => typeof role !== "string"))) {
+      return { authorized: false, temporaryError: true, refreshedSession, tokenRefreshed };
+    }
     const roles = member.roles ?? [];
     const roleCheckedSession = {
       ...currentSession,
@@ -553,7 +560,8 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     };
   } catch (error) {
     if (error instanceof AccessDeniedError) {
-      return { authorized: false, refreshedSession, tokenRefreshed };
+      return { authorized: false, refreshedSession, tokenRefreshed,
+        ...(error instanceof DiscordGuildMemberDeniedError ? { roleLookupStatus: error.status } : {}) };
     }
     if (
       !freshRoles && error instanceof DiscordRateLimitedError &&
@@ -641,6 +649,7 @@ export async function reportIdentity(request: Request, env: WorkerEnv, freshRole
   if (check.refreshRequired) return { discord_authorized: false, reason: "refresh_required" };
   if (check.loginRequired) return { discord_authorized: false, reason: "login_required" };
   if (check.temporaryError) return { discord_authorized: false, reason: "temporarily_unavailable" };
+  if (freshRoles && check.roleLookupStatus) return { discord_authorized: false, reason: `discord_role_lookup_${check.roleLookupStatus}` };
   return { subject: session.sub, discord_authorized: check.authorized };
 }
 
@@ -839,7 +848,7 @@ async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
     throw new DiscordRateLimitedError("Discord guild member lookup was rate limited");
   }
   if ([401, 403, 404].includes(response.status)) {
-    throw new AccessDeniedError("Discord guild member lookup did not authorize this user");
+    throw new DiscordGuildMemberDeniedError(response.status);
   }
   if (!response.ok) {
     throw new Error(`Discord guild member lookup failed: ${response.status}`);

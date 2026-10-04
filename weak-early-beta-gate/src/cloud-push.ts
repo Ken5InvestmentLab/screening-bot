@@ -1,6 +1,6 @@
 import { isObject, type MembershipDecision } from "./cloud-membership";
 import { personalPreparationConfigured, registrationConfigured, validateSubscription, type PushConfig } from "./cloud-web-push";
-type Environment = PushConfig & { CLOUD_DB?: D1Database };
+type Environment = PushConfig & { CLOUD_DB?: D1Database; ACCESS_PURCHASE_URL?: string };
 type Dependencies = { memberId: string; roleAuthorized: boolean; membership: () => Promise<MembershipDecision> };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: {
   "cache-control": "private, no-store", vary: "Cookie", "x-content-type-options": "nosniff",
@@ -32,6 +32,7 @@ export async function pushApi(request: Request, env: Environment, context: Depen
     return json({ ok: true, registration_available: ready, preparation_available: preparation, delivery_available: false,
       personal_test_available: testReady, ...(testReady ? { personal_test_subscription_id: env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID } : {}),
       reason: ready ? "device_registration_only" : !personalMemberAllowed ? "personal_test_member_required" : membership.status !== "paid" ? membership.reason : "push_unavailable", membership,
+      ...(membership.status === "free" && env.ACCESS_PURCHASE_URL ? { purchase_url: env.ACCESS_PURCHASE_URL } : {}),
       ...(ready || preparation ? { public_key: env.CLOUD_VAPID_PUBLIC_KEY,
         allowed_origins: (env.CLOUD_PUSH_ALLOWED_ORIGINS ?? "").split(",").map(value => value.trim()).filter(Boolean) } : {}), devices: rows.results ?? [] });
   }

@@ -7,12 +7,12 @@ async function page({registered=false,permission='granted',qualificationReason=n
  const element=()=>({children:[],hidden:false,disabled:false,textContent:'',listeners:{},append(...items){this.children.push(...items);},prepend(...items){this.children.unshift(...items);},setAttribute(){},addEventListener(name,fn){this.listeners[name]=fn;}});
  const host=element(),controls=element();host.append(controls);
  const document={getElementById:()=>host,createElement:()=>{const e=element();Object.defineProperty(e,'id',{set(id){elements.set(id,e);}});return e;}};
- const state={browser:registered,server:registered,permission,serverFailure:false,browserFailure:false,browserNoEffect:false,readFailure:false,saveFailure:false,readAfterSaveFailure:false,requests:[],permissions:0,subscriptions:0,otherDevice:true,contract:'paid',role:'allowed',notifications:false};
+ const state={browser:registered,server:registered,permission,qualificationReason,membershipStatus:qualificationReason?'unavailable':'paid',serverFailure:false,browserFailure:false,browserNoEffect:false,readFailure:false,saveFailure:false,readAfterSaveFailure:false,requests:[],permissions:0,subscriptions:0,otherDevice:true,contract:'paid',role:'allowed',notifications:false};
  const endpoint='https://push.example.invalid/fixture-device';
  const subscription={endpoint,toJSON:()=>({endpoint,keys:{p256dh:'fixture',auth:'fixture'}}),unsubscribe:async()=>{if(state.browserFailure)throw Error('browser-failure');if(!state.browserNoEffect)state.browser=false;return !state.browserNoEffect;}};
  const worker={pushManager:{getSubscription:async()=>state.browser?subscription:null,subscribe:async()=>{state.subscriptions++;state.browser=true;return subscription;}}};
  const Notification={get permission(){return state.permission;},requestPermission:async()=>{state.permissions++;return state.permission;}};
- const config=()=>({ok:true,registration_available:!qualificationReason,membership:{status:qualificationReason?'unavailable':'paid',reason:qualificationReason},public_key:'BA',allowed_origins:['https://push.example.invalid'],personal_test_available:true,personal_test_subscription_id:ownId,devices:state.server?[{subscription_id:ownId,endpoint_hash:createHash('sha256').update(endpoint).digest('hex')}]:[]});
+ const config=()=>({ok:true,registration_available:state.membershipStatus==='paid',membership:{status:state.membershipStatus,reason:state.qualificationReason},purchase_url:state.membershipStatus==='free'?'https://whop.com/fixture-existing-plan/':undefined,public_key:'BA',allowed_origins:['https://push.example.invalid'],personal_test_available:true,personal_test_subscription_id:ownId,devices:state.server?[{subscription_id:ownId,endpoint_hash:createHash('sha256').update(endpoint).digest('hex')}]:[]});
  const fetch=async(path,init)=>{
    state.requests.push({path,method:init.method,body:init.body});
    if(path==='/api/cloud/push-config'){if(state.readFailure)return Response.json({ok:false},{status:503});return Response.json(config());}
@@ -37,6 +37,13 @@ test('unregistered has receive at top and exactly one current-device revoke cont
 });
 test('failed fresh qualification keeps registration disabled and reports lookup failure distinctly',async()=>{
  const p=await page({qualificationReason:'fresh_managed_role_unavailable'});assert.equal(p.get('cloud-device-register').disabled,true);assert.match(p.get('cloud-device-status').textContent,/Discordロールを新規照会できませんでした/);assert.doesNotMatch(p.get('cloud-device-status').textContent,/剥奪|登録済み/);assert.equal(p.state.permissions,0);assert.equal(p.state.subscriptions,0);
+});
+test('eligibility failure retries to confirmed free then paid without permission, registration or push',async()=>{
+ const p=await page({qualificationReason:'fresh_managed_role_unavailable'});assert.equal(p.get('cloud-notification-eligibility-status').textContent,'会員資格を確認できませんでした');assert.equal(p.get('cloud-notification-purchase').hidden,true);assert.equal(p.get('cloud-notification-retry').hidden,false);
+ p.state.membershipStatus='free';p.state.qualificationReason='managed_role_revoked';await p.click('cloud-notification-retry');assert.equal(p.get('cloud-notification-eligibility-status').textContent,'通知は有料プランで利用できます');assert.equal(p.get('cloud-notification-purchase').hidden,false);assert.equal(p.get('cloud-notification-purchase').href,'https://whop.com/fixture-existing-plan/');assert.equal(p.get('cloud-device-register').disabled,true);
+ p.state.readFailure=true;await p.click('cloud-notification-retry');assert.equal(p.get('cloud-notification-purchase').hidden,true);assert.equal(p.get('cloud-notification-eligibility-status').textContent,'会員資格を確認できませんでした');
+ p.state.readFailure=false;p.state.membershipStatus='paid';p.state.qualificationReason=null;await p.click('cloud-notification-retry');assert.equal(p.get('cloud-notification-eligibility').hidden,true);assert.equal(p.get('cloud-notification-purchase').hidden,true);assert.equal(p.get('cloud-notification-retry').hidden,true);assert.equal(p.get('cloud-device-register').disabled,false);
+ assert.equal(p.state.permissions,0);assert.equal(p.state.subscriptions,0);assert.ok(p.state.requests.every(r=>r.path==='/api/cloud/push-config'));
 });
 test('registered and notifications OFF keep registration in the same position',async()=>{
  const p=await page({registered:true});assert.equal(p.get('cloud-device-register').textContent,'登録済み');assert.equal(p.get('cloud-device-register').disabled,true);

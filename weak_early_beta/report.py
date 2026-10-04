@@ -718,7 +718,7 @@ def _nav(current: str) -> str:
         )
     links.append(
         f'<a class="nav-link {"active" if current == "guide" else ""}" '
-        f'href="./{GUIDE_PAGE_NAME}">見方・使い方</a>'
+        f'href="./{GUIDE_PAGE_NAME}">ヘルプ</a>'
     )
     return "".join(links)
 
@@ -744,7 +744,7 @@ def _page_shell(title: str, current: str, body: str) -> str:
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20261004-v06-01"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-push.js?v=20261004-v07" defer></script></head>
+<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-v08" defer></script><script src="./weak-early-beta-push.js?v=20261005-v08" defer></script></head>
 <body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
@@ -1047,7 +1047,7 @@ def _render_dashboard_body(
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     unique_ledger = combined_detections(ledger)
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- ダッシュボード</h1><p class="lead">条件に該当した銘柄を新しい順に確認し、5つのモード別ページへ進めます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL.replace("検出から", ""))}。詳しい見方と注意事項は「見方・使い方」をご覧ください。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">TEN-TEI-KYOKUCHI / CLOUD</span><h1>天底極致 -Cloud- ダッシュボード</h1><p class="lead">条件に該当した銘柄を新しい順に確認し、5つのモード別ページへ進めます。</p><p class="note">評価ルール: {html.escape(ENDPOINT_LABEL.replace("検出から", ""))}。詳しい見方と注意事項は「ヘルプ」をご覧ください。</p><p class="note">{html.escape(REFERENCE_POLICY_NOTE)}</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>モード別の記録件数</small><b>{len(ledger):,}件</b></div><div class="kpi"><small>重複を除いた検出件数</small><b>{len(unique_ledger):,}件</b></div><div class="kpi"><small>記録期間</small><b class="period-range">{_actual_period_html(ledger, generated)}</b></div><div class="kpi"><small>最終検出日</small><b>{_latest_signal_label(ledger)}</b></div></div></aside></section>
 {_mode_pages_section(generated)}'''
     return body
@@ -1518,7 +1518,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
     mode_routes = {selector_info(key).short_name: MODE_PAGE_NAMES[key] for key in SELECTOR_ORDER}
     mode_links = "、".join(f'<a href="./{html.escape(mode_routes[name])}">{name}</a>' for name in ("Shadow", "Dive", "Silence", "Fusion", "Balance"))
     body = f'''
-<section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>見方・使い方</h1>
+<section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>ヘルプ</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
 <aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>確定日</small><b>5営業日後 終値 / 6営業日後 始値</b></div><div class="kpi"><small>基準となる株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
 <section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>
@@ -1545,7 +1545,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
 <p class="note">最終更新: {generated:%Y-%m-%d %H:%M:%S JST}</p></section>'''
     metadata = json.dumps({"version": 2, "page": "guide", "scopes": scopes or {"all": {"label": "記録期間すべて", "years": None}}, "variants": {}, "generated": generated.isoformat(), "modeNames": {}}, ensure_ascii=False).replace('<', '\u003c')
     guide_settings = _settings_panel(scopes).replace('<output id="cloud-applied-summary" class="scenario-apply" aria-live="polite"></output>', '')
-    return _page_shell("見方・使い方", "guide", body + guide_settings + f'<script id="cloud-analytics-data" type="application/json">{metadata}</script>')
+    return _page_shell("ヘルプ", "guide", body + guide_settings + f'<script id="cloud-analytics-data" type="application/json">{metadata}</script>')
 
 
 def write_report(

@@ -156,7 +156,7 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     const memberId = await cloudMemberId(identity.subject);
     const freshMembership = (fresh: Awaited<ReturnType<typeof reportIdentity>>) => {
       if (fresh.subject !== identity.subject) return { status: "unavailable" as const,
-        reason: fresh.reason === "login_required" || fresh.reason === "refresh_required" ? fresh.reason : "fresh_managed_role_unavailable",
+        reason: fresh.reason === "login_required" || fresh.reason === "refresh_required" || fresh.reason?.startsWith("discord_role_lookup_") ? fresh.reason : "fresh_managed_role_unavailable",
         checked_at: new Date().toISOString() };
       return currentMembership(env, identity.subject!, fresh.discord_authorized);
     };

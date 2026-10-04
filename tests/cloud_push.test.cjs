@@ -64,6 +64,11 @@ test('config exposes only own opaque device list; disabled mode excludes even pu
  const db=database(), response=await push.pushApi(request('/api/cloud/push-config'),{CLOUD_DB:db},{memberId:'mine',roleAuthorized:true,membership:async()=>({status:'paid'})});
  const value=await response.json();assert.equal(value.registration_available,false);assert.equal(value.delivery_available,false);assert.equal(value.public_key,undefined);assert.equal(response.headers.get('cache-control'),'private, no-store');
 });
+for(const status of ['paid','free','unavailable','unverified'])test('only confirmed free eligibility receives the existing configured purchase URL: '+status,async()=>{
+ const configured=JSON.parse(fs.readFileSync(require('node:path').resolve(__dirname,'../weak-early-beta-gate/wrangler.jsonc'),'utf8')).vars.ACCESS_PURCHASE_URL;
+ const db=database(),response=await push.pushApi(request('/api/cloud/push-config'),{CLOUD_DB:db,ACCESS_PURCHASE_URL:configured},{memberId:'mine',roleAuthorized:status==='paid',membership:async()=>({status,reason:'fixture'})});
+ const value=await response.json();assert.equal(value.purchase_url,status==='free'?configured:undefined);assert.equal(db.batchCalls,0);
+});
 for(const status of ['free','expired','unverified','unavailable'])test('registration refuses '+status+' without any write',async()=>{
  const db=database();const response=await push.pushApi(request('/api/cloud/push-subscriptions','POST',{opt_in:true,subscription:{endpoint:subscription.endpoint,keys:{p256dh:UA,auth:AUTH}}}),{...config,CLOUD_DB:db},{memberId:'mine',roleAuthorized:true,membership:async()=>({status})});assert.equal(response.status,403);assert.equal(db.batchCalls,0);
 });
@@ -258,7 +263,7 @@ test('managed-role policy is explicit, requires fresh evidence, and never falls 
  assert.equal((await api.currentMembership({CLOUD_PUSH_MEMBERSHIP_POLICY:'unknown'},'member',true)).status,'unavailable');
  assert.equal((await api.currentMembership({},'member',true)).status,'unavailable');
 });
-for(const [roleStatus,rolePresent] of [[200,true],[200,false],[429,true],[503,true]])test('managed-role preference read/enable uses one fresh role; OFF save remains independent: '+roleStatus+'/'+rolePresent,async()=>{
+for(const [roleStatus,rolePresent] of [[200,true],[200,false],[401,true],[403,true],[404,true],[429,true],[503,true]])test('managed-role preference read/enable uses one fresh role; OFF save remains independent: '+roleStatus+'/'+rolePresent,async()=>{
  let reads=0,writes=0;
  const m=modules({fetchMock:async input=>{assert.match(String(input),/^https:\/\/discord\.com\//);reads++;return Response.json({roles:rolePresent?['role']:[]},{status:roleStatus});}});
  const prefs={max_price:1000,exit_endpoint:'d6_open',base_shares:100,cost_percent:0,notifications:{new_detection:false,reminder:false}};
@@ -267,7 +272,7 @@ for(const [roleStatus,rolePresent] of [[200,true],[200,false],[429,true],[503,tr
  const sec=Math.floor(Date.now()/1000),session=await m.load('./shared-report-gate').__test.createSession({sub:'member',accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec-3600,roles:['role']},env.SESSION_SECRET);
  const req=(method,body)=>new Request('https://cloud.example.invalid/api/cloud/preferences',{method,headers:{cookie:'__Host-report_gate_session='+encodeURIComponent(session),origin:'https://cloud.example.invalid',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
  const eligible=roleStatus===200&&rolePresent;
- const api=m.load('./cloud-api');const response=await api.cloudApi(req('GET'),env);assert.equal(response.status,200);const readBody=await response.json();assert.equal(readBody.membership.status,roleStatus===200?(eligible?'paid':'free'):'unavailable');assert.equal(readBody.membership.reason,roleStatus===200?(eligible?'verified_whop_managed_discord_role':'managed_role_revoked'):'fresh_managed_role_unavailable');assert.equal(reads,1);
+ const api=m.load('./cloud-api');const response=await api.cloudApi(req('GET'),env);assert.equal(response.status,200);const readBody=await response.json();assert.equal(readBody.membership.status,roleStatus===200?(eligible?'paid':'free'):'unavailable');assert.equal(readBody.membership.reason,roleStatus===200?(eligible?'verified_whop_managed_discord_role':'managed_role_revoked'):[401,403,404].includes(roleStatus)?'discord_role_lookup_'+roleStatus:'fresh_managed_role_unavailable');assert.equal(reads,1);
  const enabled=await api.cloudApi(req('PUT',{...prefs,notifications:{new_detection:true,reminder:false}}),env);assert.equal(enabled.status,eligible?200:403);assert.equal(reads,2);
  const before=reads;assert.equal((await api.cloudApi(req('PUT',prefs),env)).status,200);assert.equal(reads,before);assert.equal(writes,eligible?2:1);
 });

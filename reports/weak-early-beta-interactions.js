@@ -398,6 +398,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     discord_role_required: '必要なDiscordロールを確認できませんでした。通知は有効にできません。',
     refresh_required: 'Discordの認証更新が必要です。ページを再読み込みし、必要ならDiscordで再ログインしてください。',
     login_required: 'このブラウザでDiscordにログインしてください。',
+    discord_role_lookup_401: 'Discordが認証を受け付けませんでした（HTTP 401）。このChromeでDiscordに再ログインしてください。',
+    discord_role_lookup_403: 'Discordからロールを取得できませんでした（HTTP 403）。このブラウザでDiscordに再ログインして確認してください。',
+    discord_role_lookup_404: 'Discordのサーバー所属を確認できませんでした（HTTP 404）。ログイン中のアカウントと所属サーバーを確認してください。',
   }[reason] || '会員資格・接続状態を確認してください。');
   const saveFailure = async response => {
     const data = await response.json().catch(() => ({}));
@@ -417,6 +420,11 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     const permission = typeof Notification === 'undefined' ? 'このブラウザのプッシュは未対応' : Notification.permission === 'granted' ? '端末の通知権限あり' : Notification.permission === 'denied' ? '端末の通知権限なし' : '端末の通知許可は未設定';
     output.textContent = `${entitlement}。${permission}。ブラウザの通知許可と端末登録は別の状態です。`;
   };
+  window.addEventListener?.('cloud-notification-membership', event => {
+    notifyMembershipPaid = event.detail?.membership?.status === 'paid';
+    notificationReadiness(event.detail?.membership?.status || 'unknown');
+    syncNotificationControls();
+  });
   notificationReadiness('unknown');
   const setStatus = (message, invalid = false) => {
     if (!status) return;

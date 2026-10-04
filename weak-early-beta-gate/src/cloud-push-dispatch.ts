@@ -39,7 +39,7 @@ export async function dispatchPersonalDeviceTest(request: Request, env: CloudEnv
   // re-read opt-in before transport; failures remain non-retryable receipts.
   try {
     const fresh = await reportIdentity(request, env, true);
-    if (fresh.reason === "temporarily_unavailable")
+    if (fresh.reason === "temporarily_unavailable" || fresh.reason?.startsWith("discord_role_lookup_"))
       return finish({ status: "held", reason: "fresh_discord_role_unavailable" });
     if (fresh.subject !== identity.subject || !fresh.discord_authorized)
       return finish({ status: "held", reason: "fresh_discord_role_required" });

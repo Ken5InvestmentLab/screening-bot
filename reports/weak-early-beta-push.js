@@ -16,7 +16,12 @@
   revoke.type = 'button'; revoke.id = 'cloud-device-revoke'; revoke.textContent = 'この端末の通知登録を解除'; revoke.hidden = true;
   const test = document.createElement('button');
   test.type = 'button'; test.id = 'cloud-device-test'; test.textContent = 'この端末へテスト通知'; test.hidden = true;
-  panel.append(register, permission, status, provider); host.prepend(panel);
+  const eligibility = document.createElement('div'); eligibility.id = 'cloud-notification-eligibility';
+  const eligibilityStatus = document.createElement('p'); eligibilityStatus.id = 'cloud-notification-eligibility-status'; eligibilityStatus.setAttribute('role', 'status');
+  const purchase = document.createElement('a'); purchase.id = 'cloud-notification-purchase'; purchase.className = 'button-link'; purchase.textContent = '有料プランを見る'; purchase.hidden = true;
+  const retry = document.createElement('button'); retry.type = 'button'; retry.id = 'cloud-notification-retry'; retry.textContent = '再試行'; retry.hidden = true;
+  eligibility.append(eligibilityStatus, purchase, retry);
+  panel.append(register, permission, status, provider, eligibility); host.prepend(panel);
   const actions = document.createElement('div'); actions.append(test, revoke); host.append(actions);
   let busy = false, current = null, readyConfig = null, verified = false;
   const qualificationMessage = reason => ({
@@ -27,7 +32,24 @@
     refresh_required: 'Discordの認証更新が必要です。ページを再読み込みし、必要ならDiscordで再ログインしてください。',
     login_required: 'このブラウザでDiscordにログインしてください。',
     personal_test_member_required: '本人テスト用のDiscordアカウントでログインしてください。',
+    discord_role_lookup_401: 'Discordが認証を受け付けませんでした（HTTP 401）。このChromeでDiscordに再ログインしてください。',
+    discord_role_lookup_403: 'Discordからロールを取得できませんでした（HTTP 403）。このブラウザでDiscordに再ログインして確認してください。',
+    discord_role_lookup_404: 'Discordのサーバー所属を確認できませんでした（HTTP 404）。ログイン中のアカウントと所属サーバーを確認してください。',
   }[reason] || '端末へのプッシュ通知は現在利用できません。');
+  function showEligibility(membership, purchaseUrl) {
+    eligibility.hidden = membership?.status === 'paid';
+    purchase.hidden = true; retry.hidden = true; purchase.removeAttribute?.('href');
+    if (!membership) { eligibilityStatus.textContent = '会員資格を確認しています。'; return; }
+    if (membership.status === 'paid') { eligibilityStatus.textContent = ''; }
+    else if (membership.status === 'free') {
+      eligibilityStatus.textContent = '通知は有料プランで利用できます';
+      try {
+        const url = new URL(purchaseUrl);
+        if (url.protocol === 'https:' && url.hostname === 'whop.com' && !url.username && !url.password) { purchase.href = url.href; purchase.hidden = false; }
+      } catch (_) {}
+    } else { eligibilityStatus.textContent = '会員資格を確認できませんでした'; retry.hidden = false; }
+    if (typeof CustomEvent === 'function') window.dispatchEvent?.(new CustomEvent('cloud-notification-membership', { detail: { membership } }));
+  }
   const supported = () => window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
   async function api(path, method, body) {
     const response = await fetch(path, { method: method || 'GET', credentials: 'same-origin', cache: 'no-store',
@@ -58,13 +80,16 @@
     revoke.hidden = false; revoke.disabled = busy || !current;
     test.hidden = !registered || !readyConfig?.personal_test_available || current.id !== readyConfig.personal_test_subscription_id || browserPermission === 'denied';
     test.disabled = busy;
+    retry.disabled = busy;
     permission.textContent = !supported() ? 'このブラウザはプッシュ通知に対応していません。' :
       browserPermission === 'granted' ? 'ブラウザの通知許可：許可済み。端末登録とは別の設定です。' :
       browserPermission === 'denied' ? 'ブラウザの通知許可：拒否。通知を受け取るにはブラウザ側で許可してください。' : 'ブラウザの通知許可：未設定。端末登録時に確認します。';
   }
   async function refresh() {
+    readyConfig = null; showEligibility(null); render();
     try {
       const config = await api('/api/cloud/push-config');
+      showEligibility(config.membership, config.purchase_url);
       readyConfig = config.registration_available || config.preparation_available ? config : null;
       if (!supported()) { readyConfig = null; render(); status.textContent = 'このブラウザでは端末へのプッシュ登録を利用できません。'; return true; }
       current = await ownedDevice(config);
@@ -73,8 +98,13 @@
       status.textContent = current && current.id ? 'この端末は登録済みです。通知ON／OFFは「設定を保存」で反映し、OFFでも登録は残ります。通常配信はまだ開始していません。' : current ? 'ブラウザ側の登録が残っています。受け取り登録、またはこの端末の解除を行えます。' :
         readyConfig ? 'この端末の通知登録にはボタン操作と許可が必要です。' : qualificationMessage(config.reason === 'personal_test_member_required' ? config.reason : config.membership?.reason || config.reason);
       return true;
-    } catch (error) { readyConfig = null; verified = false; render(); status.textContent = '端末登録の状態を確認できません。' + (error.message || '接続状態を確認してください。'); return false; }
+    } catch (error) { readyConfig = null; verified = false; showEligibility({status:'unavailable'}); render(); status.textContent = '端末登録の状態を確認できません。' + (error.message || '接続状態を確認してください。'); return false; }
   }
+  retry.addEventListener('click', async () => {
+    if (busy) return;
+    busy = true; render();
+    try { await refresh(); } finally { busy = false; render(); }
+  });
   register.addEventListener('click', async () => {
     if (busy || !supported()) return;
     busy = true; register.disabled = true;

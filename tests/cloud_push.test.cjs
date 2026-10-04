@@ -175,6 +175,7 @@ test('personal origin discovery is owner-only and cannot persist/send before an 
 
 test('browser preparation displays origin only, preserves pending subscription and saves once after exact approval',async()=>{
  const elements=new Map();
+ const windowEvents=new Map();
  const element=()=>({hidden:false,disabled:false,textContent:'',listeners:{},append(){},setAttribute(){},addEventListener(name,fn){this.listeners[name]=fn;}});
  const host=element();host.prepend=()=>{};
  const document={getElementById:()=>host,createElement:()=>{const e=element();Object.defineProperty(e,'id',{set(id){elements.set(id,e);}});return e;}};
@@ -187,18 +188,19 @@ test('browser preparation displays origin only, preserves pending subscription a
    assert.equal(path,'/api/cloud/push-subscriptions');assert.equal(init.method,'POST');assert.equal(allowed,true);saves++;saved=true;return Response.json({ok:true});
  };
  vm.runInNewContext(fs.readFileSync(require('node:path').resolve(__dirname,'../reports/weak-early-beta-push.js'),'utf8'),{
-   document,window:{isSecureContext:true,PushManager:{},Notification:{}},navigator:{serviceWorker:{getRegistration:async()=>subscriptions?worker:null,register:async()=>{registrations++;return worker;},ready:Promise.resolve(worker)}},
+   document,window:{isSecureContext:true,PushManager:{},Notification:{},addEventListener:(name,fn)=>windowEvents.set(name,fn)},navigator:{serviceWorker:{getRegistration:async()=>subscriptions?worker:null,register:async()=>{registrations++;return worker;},ready:Promise.resolve(worker)}},
    Notification:{requestPermission:async()=>{permissions++;return 'granted';}},fetch:api,URL,crypto:webcrypto,TextEncoder,Uint8Array,atob,
  });
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(permissions,0);assert.equal(registrations,0);assert.equal(subscriptions,0);
- await elements.get('cloud-device-register').listeners.click();
+ const enable=()=>new Promise(resolve=>windowEvents.get('cloud-notification-enable')({detail:{complete:resolve}}));
+ assert.equal(await enable(),false);
  assert.equal(saves,0);assert.equal(subscriptions,1);assert.equal(unsubscribes,0);
  assert.equal(elements.get('cloud-device-provider-origin').textContent,'通知サービスのorigin: https://push.example.invalid');
  assert.doesNotMatch(elements.get('cloud-device-provider-origin').textContent,/private-device-token/);
- allowed=true;await elements.get('cloud-device-register').listeners.click();
+ allowed=true;assert.equal(await enable(),true);
  assert.equal(subscriptions,1);assert.equal(saves,1);assert.equal(unsubscribes,0);
- assert.equal(elements.get('cloud-device-register').hidden,false);assert.equal(elements.get('cloud-device-register').textContent,'登録済み');assert.equal(elements.get('cloud-device-register').disabled,true);
+ assert.equal(elements.get('cloud-device-register'),undefined);assert.equal(elements.get('cloud-device-registration').textContent,'登録済み');
 });
 test('persisted old detections and malformed canonical events cause no send or reservation',async()=>{
  for(const eventOverride of [{detection_date:'2020-01-02'},{detection_date:'2099-01-01'},{endpoints:null},{kind:'unexpected'}]) {

@@ -10,18 +10,18 @@
   provider.id = 'cloud-device-provider-origin'; provider.hidden = true;
   const permission = document.createElement('p');
   permission.id = 'cloud-device-permission';
-  const register = document.createElement('button');
-  register.type = 'button'; register.id = 'cloud-device-register'; register.textContent = 'この端末で通知を受け取る'; register.disabled = true;
-  const revoke = document.createElement('button');
-  revoke.type = 'button'; revoke.id = 'cloud-device-revoke'; revoke.textContent = 'この端末の通知登録を解除'; revoke.hidden = true;
+  const registration = document.createElement('p');
+  registration.id = 'cloud-device-registration';
+  const instruction = document.createElement('p');
+  instruction.id = 'cloud-device-instruction'; instruction.textContent = '通知を受け取りたい端末で設定してください。';
   const test = document.createElement('button');
   test.type = 'button'; test.id = 'cloud-device-test'; test.textContent = 'この端末へテスト通知'; test.hidden = true;
   const eligibility = document.createElement('div'); eligibility.id = 'cloud-notification-eligibility';
   const eligibilityStatus = document.createElement('p'); eligibilityStatus.id = 'cloud-notification-eligibility-status'; eligibilityStatus.setAttribute('role', 'status');
   const retry = document.createElement('button'); retry.type = 'button'; retry.id = 'cloud-notification-retry'; retry.textContent = '再試行'; retry.hidden = true;
   eligibility.append(eligibilityStatus, retry);
-  panel.append(register, permission, status, provider, eligibility); host.prepend(panel);
-  const actions = document.createElement('div'); actions.append(test, revoke); host.append(actions);
+  panel.append(registration, instruction, permission, status, provider, eligibility); host.prepend(panel);
+  const actions = document.createElement('div'); actions.append(test); host.append(actions);
   let busy = false, current = null, readyConfig = null, verified = false;
   const qualificationMessage = reason => ({
     refresh_required: 'もう一度ログインしてください。',
@@ -59,16 +59,12 @@
   function render() {
     const registered = Boolean(verified && current && current.id);
     const browserPermission = typeof Notification === 'undefined' ? 'unavailable' : Notification.permission;
-    register.hidden = false;
-    register.textContent = current?.id && !verified ? '登録状態を確認できません' : registered ? '登録済み' : 'この端末で通知を受け取る';
-    register.disabled = busy || Boolean(current?.id) || !readyConfig || browserPermission === 'denied';
-    revoke.hidden = false; revoke.disabled = busy || !current;
+    registration.textContent = current?.id && !verified ? '登録状態を確認できません' : registered ? '登録済み' : '';
     test.hidden = !registered || !readyConfig?.personal_test_available || current.id !== readyConfig.personal_test_subscription_id || browserPermission === 'denied';
     test.disabled = busy;
     retry.disabled = busy;
     permission.textContent = !supported() ? 'このブラウザはプッシュ通知に対応していません。' :
-      browserPermission === 'granted' ? '通知許可：許可済み' :
-      browserPermission === 'denied' ? '通知許可：拒否（ブラウザ設定で許可してください）' : '通知許可：未設定';
+      browserPermission === 'denied' ? '通知が拒否されています。ブラウザ設定で許可してください。' : '';
   }
   async function refresh() {
     readyConfig = null; showEligibility(null); render();
@@ -90,9 +86,10 @@
     busy = true; render();
     try { await refresh(); } finally { busy = false; render(); }
   });
-  register.addEventListener('click', async () => {
-    if (busy || !supported()) return;
-    busy = true; register.disabled = true;
+  async function registerDevice() {
+    if (busy || !supported() || Notification.permission === 'denied') return false;
+    if (verified && current?.id) return true;
+    busy = true; render();
     let subscription, created = false, saveAttempted = false;
     try {
       if (!readyConfig || typeof readyConfig.public_key !== 'string') throw new Error('unavailable');
@@ -114,7 +111,7 @@
         // operator approval. Never persist endpoint/key material or widen origins.
         provider.textContent = '通知サービスのorigin: ' + origin; provider.hidden = false;
         status.textContent = '通知サービスの確認待ちです。確認後にこの端末を登録してください。';
-        return;
+        return false;
       }
       saveAttempted = true;
       const saved = await api('/api/cloud/push-subscriptions', 'POST', { opt_in: true, subscription: subscription.toJSON() });
@@ -129,10 +126,20 @@
       verified = false;
       status.textContent = '端末を登録できませんでした。通知許可・接続状態を確認してください。';
     } finally { busy = false; render(); }
+    return Boolean(verified && current?.id);
+  }
+  window.addEventListener?.('cloud-notification-enable', event => {
+    if (typeof event.detail?.complete !== 'function') return;
+    event.detail.handled = true;
+    // The switch's user event invokes this before any await, preserving the
+    // browser activation needed by Notification.requestPermission().
+    void registerDevice().then(event.detail.complete, () => event.detail.complete(false));
   });
-  revoke.addEventListener('click', async () => {
-    if (busy || !current) return;
-    busy = true; revoke.disabled = true;
+  async function revokeDevice() {
+    if (busy) return false;
+    if (!verified && !await refresh()) return false;
+    if (!current) return true;
+    busy = true; render();
     try {
       if (current.id) await api('/api/cloud/push-subscriptions/device', 'DELETE', { subscription_id: current.id });
       // Server revocation takes precedence. Browser failure does not restore it.
@@ -142,9 +149,15 @@
       if (worker && await worker.pushManager.getSubscription()) throw new Error('browser_revocation_incomplete');
       current = null;
       if (!await refresh()) throw new Error('revocation_confirmation_failed');
-      status.textContent = 'この端末の通知登録を解除しました。';
-    } catch (_) { status.textContent = current?.serverRevoked ? 'サーバー側は解除済みですが、ブラウザ側の解除は未完了です。もう一度解除してください。' : 'この端末の通知登録の解除を確認できません。完了していません。接続状態を確認してください。'; }
+      status.textContent = '';
+    } catch (_) { status.textContent = current?.serverRevoked ? 'この端末の解除が未完了です。「設定を保存」で再試行してください。' : 'この端末の解除を確認できません。「設定を保存」で再試行してください。'; return false; }
     finally { busy = false; render(); }
+    return true;
+  }
+  window.addEventListener?.('cloud-notification-disable', event => {
+    if (typeof event.detail?.complete !== 'function') return;
+    event.detail.handled = true;
+    void revokeDevice().then(event.detail.complete, () => event.detail.complete(false));
   });
   test.addEventListener('click', async () => {
     if (busy || test.hidden || !current) return;

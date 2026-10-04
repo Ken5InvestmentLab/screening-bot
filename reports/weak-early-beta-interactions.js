@@ -400,6 +400,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const notifyInputs = {};
   const notifyLabels = {};
   let notifyEligible = false;
+  let registeringDevice = false;
   const qualificationMessage = reason => ({
     refresh_required: 'もう一度ログインしてください。',
     login_required: 'このブラウザでDiscordにログインしてください。',
@@ -407,12 +408,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   }[reason] || '時間を置いて再試行してください。');
   const saveFailure = async response => {
     const data = await response.json().catch(() => ({}));
-    return new Error(`会員設定を保存できませんでした（HTTP ${response.status}）。${qualificationMessage(data.membership?.reason || data.reason)}入力は残しています。`);
+    return new Error(`設定を保存できませんでした（HTTP ${response.status}）。${qualificationMessage(data.membership?.reason || data.reason)}入力は残しています。`);
   };
   const syncNotificationControls = () => {
     for (const [key, input] of Object.entries(notifyInputs)) {
       input.checked = notifications[key];
-      input.disabled = accessLost || !serverAvailable || (!notifyEligible && !notifications[key]);
+      input.disabled = registeringDevice || accessLost || !serverAvailable || (!notifyEligible && !notifications[key]);
       notifyLabels[key].textContent = notifications[key] ? 'ON' : 'OFF';
     }
   };
@@ -431,7 +432,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   if (settings && endpoint) {
     const host = document.createElement(settingsDialog ? "div" : "details");
     host.className = "cloud-notification-settings";
-    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>OFFでも端末登録は残ります。変更後は「設定を保存」を押してください。</p>';
+    host.innerHTML = settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>';
     for (const [key, label] of Object.entries({ new_detection: "新しい検出", reminder: "確定日の朝8時（日本時間）" })) {
       const element = document.createElement("label");
       const checkbox = document.createElement("input");
@@ -445,12 +446,29 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       host.append(element);
       notifyInputs[key] = checkbox;
       notifyLabels[key] = state;
-      checkbox.addEventListener("change", () => {
+      checkbox.addEventListener("change", async () => {
+        const enabling = checkbox.checked;
+        if (enabling) {
+          const openedSettings = settingsSnapshot;
+          registeringDevice = true;
+          checkbox.checked = false;
+          syncNotificationControls();
+          syncActionAvailability();
+          const registered = await new Promise(resolve => {
+            const detail = { complete: resolve };
+            // No listener means no verified registration; fail closed.
+            window.dispatchEvent(new CustomEvent('cloud-notification-enable', { detail }));
+            if (!detail.handled) { setStatus('通知をONにできませんでした。ページを再読み込みしてください。', true); resolve(false); }
+          });
+          registeringDevice = false;
+          syncActionAvailability();
+          if (!registered || settingsDialog && settingsSnapshot !== openedSettings) { syncNotificationControls(); return; }
+        }
         edited = true;
         editRevision += 1;
-        notifications[key] = checkbox.checked;
+        notifications[key] = enabling;
         syncNotificationControls();
-        setStatus("通知設定は未保存です。「設定を保存」で会員設定を更新します。");
+        setStatus("通知設定は未保存です。「設定を保存」で反映します。");
       });
     }
     const note = document.createElement("p");
@@ -554,7 +572,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     }
     if (exportButton) exportButton.disabled = accessLost || preferencesPending || !currentVariant;
     if (historyExportButton) historyExportButton.disabled = accessLost || preferencesPending;
-    if (saveButton) saveButton.disabled = accessLost || preferencesPending || saving;
+    if (saveButton) saveButton.disabled = accessLost || preferencesPending || saving || registeringDevice;
     content?.setAttribute("aria-busy", preferencesPending ? "true" : "false");
   };
   const applyPreferences = async ({ persist = false } = {}) => {
@@ -657,6 +675,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     requestedPreferences = { ...appliedPreferences }; requestedView = { ...appliedView };
     syncControls(); syncDisplayControls(); applyDisplay(appliedDisplay);
     syncNotificationControls();
+    setStatus('');
     settingsDialog.close();
   };
   if (settingsDialog && settingsOpen) {
@@ -664,6 +683,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       closeMenu(); requestedPreferences = { ...appliedPreferences }; requestedView = { ...appliedView };
       settingsSnapshot = { notifications: { ...notifications }, edited };
       syncControls(); syncDisplayControls(); edited = true;
+      setStatus('');
       settingsDialog.showModal(); root.style.overflow = 'hidden';
       settingsDialog.querySelector('[role="tab"][aria-selected="true"]')?.focus();
     });
@@ -691,11 +711,13 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     for (const input of [displayTheme, displayFont, displayPage]) input?.addEventListener('change', () => { edited = true; editRevision += 1; applyDisplay(readDisplayControls()); setStatus('未保存の表示を確認中です。「設定を保存」で残し、「キャンセル」で元に戻ります。'); });
   }
   const commitSettingsDraft = async () => {
-    if (accessLost || preferencesPending || saving) return;
+    if (accessLost || preferencesPending || saving || registeringDevice) return;
     let prefs, view, display;
     try { prefs = readControls(); view = readViewControls(); display = readDisplayControls(); }
     catch (error) { setStatus(error.message, true); return; }
     saving = true; syncActionAvailability();
+    const previousFeedback = document.getElementById('cloud-settings-feedback');
+    if (previousFeedback) previousFeedback.textContent = '';
     try {
       if (serverAvailable) {
         const response = await fetch('/api/cloud/preferences', { method: 'PUT', credentials: 'same-origin', cache: 'no-store', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ max_price: prefs.priceCapYen, exit_endpoint: prefs.exitKey, base_shares: prefs.baseShares, cost_percent: prefs.costPercent, notifications }) });
@@ -704,8 +726,19 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       requestedPreferences = prefs; requestedView = view; appliedDisplay = display; PAGE_SIZE = display.pageSize;
       if (!await applyPreferences({ persist: true })) throw new Error('表示に反映できませんでした。再度お試しください。');
       try { applyDisplay(display, true); } catch (_error) { storageFailed = true; }
+      if (serverAvailable && !Object.values(notifications).some(Boolean)) {
+        // Preferences are already OFF and the applied values are authoritative.
+        // A failed device revoke may be retried without restoring a saved ON.
+        settingsSnapshot = { notifications: { ...notifications }, edited: false };
+        const revoked = await new Promise(resolve => {
+          const detail = { complete: resolve };
+          window.dispatchEvent(new CustomEvent('cloud-notification-disable', { detail }));
+          if (!detail.handled) resolve(false);
+        });
+        if (!revoked) throw new Error('通知はOFFに保存しました。この端末の解除が完了していません。「設定を保存」で再試行してください。');
+      }
       edited = false;
-      const message = storageFailed ? '表示に適用しました。端末の保存は利用できません。' : serverAvailable ? '会員設定と端末の表示設定を保存しました。' : 'この端末に設定を保存しました。会員設定の連携前です。';
+      const message = storageFailed ? '表示に適用しました。端末の保存は利用できません。' : serverAvailable ? '設定を保存しました。' : 'この端末に設定を保存しました。設定の連携前です。';
       setStatus(message); const feedback = document.getElementById('cloud-settings-feedback'); if (feedback) feedback.textContent = message;
       settingsDialog.close();
     } catch (error) { setStatus(error.message, true); }
@@ -733,8 +766,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       customPrice?.setAttribute("aria-invalid", "false");
       setStatus("表示条件を反映しています。しばらくお待ちください。");
       if (await applyPreferences({ persist: true }) && editRevision === editAtChange) setStatus(storageFailed
-        ? "表示に適用しました。この端末では補助保存できません。株価上限・確定日は会員設定へ保存できます。"
-        : "表示に適用しました。今の条件を会員設定に残すには「設定を保存」を押してください。検出年・買付方法はこの端末に保存します。");
+        ? "表示に適用しました。この端末では補助保存できません。株価上限・確定日は設定へ保存できます。"
+        : "表示に適用しました。今の条件を設定に残すには「設定を保存」を押してください。検出年・買付方法はこの端末に保存します。");
     } catch (error) {
       // An invalid newer edit must also cancel an older decompression request.
       renderRevision += 1;
@@ -788,7 +821,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     });
     saveButton?.addEventListener("click", async () => {
       if (settingsDialog) return commitSettingsDraft();
-      if (accessLost || preferencesPending || saving) return;
+      if (accessLost || preferencesPending || saving || registeringDevice) return;
       let selected;
       try { selected = readControls(); }
       catch (error) { setStatus(error.message, true); return; }
@@ -813,9 +846,9 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
           return;
         }
         edited = false;
-        setStatus(storageFailed ? "会員設定を保存しました。端末の保存は利用できません。" : "会員設定を保存しました。通知の実送信はまだ行いません。");
+        setStatus(storageFailed ? "設定を保存しました。端末の保存は利用できません。" : "設定を保存しました。通知の実送信はまだ行いません。");
       } catch (error) {
-        setStatus(error.message || "会員設定を保存できませんでした。現在の表示は利用できます。", true);
+        setStatus(error.message || "設定を保存できませんでした。現在の表示は利用できます。", true);
       } finally { saving = false; syncActionAvailability(); }
     });
     // Server preferences are authoritative. Do not overwrite an edit made while loading.
@@ -841,8 +874,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       syncNotificationControls();
     }).catch(() => {
       if (!edited) setStatus(storageFailed
-        ? "会員設定と端末保存を利用できません。この画面で条件を選択できます。"
-        : "会員設定の連携前です。表示条件はこの端末の設定を使います。");
+        ? "設定と端末保存を利用できません。この画面で条件を選択できます。"
+        : "設定の連携前です。表示条件はこの端末の設定を使います。");
     });
   }
 

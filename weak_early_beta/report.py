@@ -744,7 +744,7 @@ def _page_shell(title: str, current: str, body: str) -> str:
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20261005-v09"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-v09" defer></script><script src="./weak-early-beta-push.js?v=20261005-v09" defer></script></head>
+<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-v10" defer></script><script src="./weak-early-beta-push.js?v=20261005-v10" defer></script></head>
 <body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
@@ -1724,7 +1724,7 @@ REPORT_CSS += """
   .cloud-settings p,.cloud-settings .note,#cloud-device-status,#cloud-device-permission,#cloud-settings-status,#cloud-notification-readiness{font-size:calc(14px * var(--text-scale));overflow-wrap:anywhere}
   .cloud-notification-settings>label{display:flex;align-items:center;gap:6px;padding:10px 0;font-size:calc(16px * var(--text-scale));min-height:44px}
   .cloud-settings input[type=checkbox]{width:22px;min-width:22px;height:22px;min-height:22px;flex:0 0 22px}
-  #cloud-device-register,#cloud-device-test,#cloud-device-revoke{width:100%;white-space:normal;line-height:1.5;margin:6px 0;padding:10px 12px}
+  #cloud-device-test{width:100%;white-space:normal;line-height:1.5;margin:6px 0;padding:10px 12px}
   .settings-tabs{gap:6px}.settings-tabs button{padding:10px 6px}
   .settings-actions{gap:8px;flex-wrap:wrap;padding-top:12px;padding-bottom:env(safe-area-inset-bottom,0px)}
   .settings-actions button{padding:10px 12px}
@@ -1739,7 +1739,7 @@ REPORT_CSS += 'body[data-page="guide"] .hero{grid-template-columns:minmax(0,1fr)
 
 REPORT_CSS += """
 .history-mobile-toggle{display:none}
-#cloud-device-status:empty,#cloud-notification-eligibility-status:empty,#cloud-settings-status:empty{display:none}
+#cloud-device-status:empty,#cloud-device-permission:empty,#cloud-device-registration:empty,#cloud-notification-eligibility-status:empty,#cloud-settings-status:empty{display:none}
 @media(max-width:820px){
   .history-record:not(.history-details-open) .history-visible-grid>div:not(.history-company):not([data-label="検出日"]):not([data-label="状況"]):not([data-label="該当モード"]):not([data-label="成績"]),
   .history-record:not(.history-details-open) [data-scenario-shares],

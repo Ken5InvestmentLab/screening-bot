@@ -46,8 +46,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ledger", type=Path, default=ROOT / "weak_early_beta/state/detections.csv")
     parser.add_argument("--as-of", help="Timezone-aware actual observation cutoff; defaults to now")
-    # Private local artifact by default. Deployment wiring needs the separate
-    # canonical-data destination approval; do not overwrite the checked-in stub.
+    # Keep ad-hoc generation outside the checkout. Approved deploy workflows
+    # explicitly select the private Worker module, never public ASSETS.
     parser.add_argument("--output", type=Path, default=ROOT.parent / "qa/private-notification-input/cloud-canonical-input.generated.ts")
     args = parser.parse_args()
     source, output = args.ledger.resolve(), args.output.resolve()

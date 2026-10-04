@@ -51,9 +51,20 @@ test('bounded scheduler continues all pages and holds importer failure without s
 test('private compiler input is excluded from the public asset sync allowlist',()=>{
  const source=fs.readFileSync(path.join(root,'weak-early-beta-gate/scripts/sync-report.mjs'),'utf8');assert.doesNotMatch(source,/cloud-canonical-input|build-canonical-input/);
 });
-test('unapproved live-input stub holds an enabled schedule before any DB/provider access',async()=>{
- const s=schedule('2026-10-09');const result=await scheduler.runScheduledPersonalNotifications(s.controller,config,s.now);
+test('unavailable storage holds an enabled schedule without dispatch',async()=>{
+ let dispatched=false; const s=schedule('2026-10-09');const result=await scheduler.runScheduledPersonalNotifications(s.controller,config,s.now,{importInput:feed.importCanonicalInput,runBatch:async()=>{dispatched=true;throw Error('must not dispatch');}});
  assert.equal(result.status,'held');assert.equal(result.reason,'canonical_import_or_scan_failed');
+ assert.equal(dispatched,false);
+});
+test('approved generated manifest imports into isolated SQLite without any provider access',async()=>{
+ const {CANONICAL_MANIFEST}=m.load('./cloud-canonical-input.generated');
+ const {db,sqlite}=database();
+ try {
+  const result=await feed.importCanonicalInput(db,CANONICAL_MANIFEST,Date.now());
+  assert.equal(result.imported,CANONICAL_MANIFEST.events.length);
+  assert.equal(sqlite.prepare('SELECT count(*) AS n FROM cloud_notification_events').get().n,result.imported);
+  assert.equal(sqlite.prepare('SELECT count(*) AS n FROM cloud_push_dispatch_receipts').get().n,0);
+ } finally {sqlite.close();}
 });
 test('actual SQLite canonical import -> 08JST runner -> fresh-role -> encrypted fixture push is once-only',async()=>{
  // Published RFC8291 keys, synthetic identity/subscription, no real provider.

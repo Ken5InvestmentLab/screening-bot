@@ -44,6 +44,9 @@ jobs:
       - name: Rebuild matching HTML and private-gated variants from the pinned ledger
         run: python -B weak_early_beta/scripts/build_review_preview.py --output reports
 
+      - name: Compile private canonical notification input and shared calendar
+        run: python -B weak-early-beta-gate/scripts/build-canonical-input.py --output weak-early-beta-gate/src/cloud-canonical-input.generated.ts
+
       - name: Require the live Cloud Worker target
         working-directory: weak-early-beta-gate
         run: |

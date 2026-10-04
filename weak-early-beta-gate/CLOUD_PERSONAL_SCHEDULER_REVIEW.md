@@ -1,5 +1,7 @@
 # 本人通知・canonical供給・朝スケジューラの追加レビュー
 
+> この文書はd176652時点の記録。以下の「承認待ち」「null stub」「workflow未接続」は解消済み。今回の直接承認・接続実装・335件検証・残件は `CLOUD_CANONICAL_CONNECTION_REVIEW.md` を正とする。本番反映と本人OS到着は未実施。
+
 `CLOUD_PERSONAL_NOTIFY_REVIEW.md` の候補に、通知供給と朝処理の隔離実装を追加した。本番反映・実通知・OS到着は未実施。画面だけの先行公開には使わない。
 
 ## 実装と有効化状態

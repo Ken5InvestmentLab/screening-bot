@@ -167,7 +167,7 @@ async function dispatchWithIdentity(env: CloudEnv, sourceEventKey: string, ident
     WHERE s.member_id = ? AND s.subscription_id = ? AND s.revoked_at IS NULL`)
     .bind(memberId, env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID).first<Device>();
   if (!device || device.vapid_public_key !== env.CLOUD_VAPID_PUBLIC_KEY || (device.expires_at_ms !== null && device.expires_at_ms <= Date.now())) return finish({ status: "held", reason: "active_approved_device_required" });
-  const payload = JSON.stringify({ version: 1, kind: event.kind, body: `【本人端末テスト】${second.message}`, tag: decision.event_key });
+  const payload = JSON.stringify({ version: 1, kind: event.kind, body: event.kind === "reminder" ? second.message : `【本人端末テスト】${second.message}`, tag: decision.event_key });
   const result = await sendPersonalPush(env, memberId, device.subscription_id, device, payload, transport, fixture);
   if (result.status === "expired") {
     const revoked = await db.prepare("UPDATE cloud_push_subscriptions SET revoked_at = ? WHERE member_id = ? AND subscription_id = ? AND revoked_at IS NULL")

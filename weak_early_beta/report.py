@@ -1538,7 +1538,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
 <article class="guide-card"><h3>参考値・成績に含めません</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
 <section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>各銘柄を同じ株数で買う</h3><p>同じ日・同じ銘柄を<span data-guide-base-shares>100</span>株で試算します。複数の条件に一致しても株数は増やしません。</p></article><article class="guide-card"><h3>一致した条件数に応じて株数を増やす</h3><p>基準となる株数が<span data-guide-base-shares>100</span>株なら、3条件に一致した銘柄は<span data-guide-stacked-shares>300</span>株で試算します。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
-<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は現在利用できません。有料会員向けの機能で、初期値はOFFです。朝8時（日本時間）は「今日は選んだ確定日」のお知らせです。この時点では価格や損益はまだ確定していません。</p></section>
+<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は現在利用できません。有料会員向けの機能で、初期値はOFFです。通知名は「確定日の朝8時（日本時間）」です。選んだ確定日の朝8時にお知らせします。その日の価格はまだ確定していません。通知本文は「今日は、設定した確定日です」です。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>

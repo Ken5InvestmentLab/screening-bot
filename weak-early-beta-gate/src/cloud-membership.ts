@@ -167,7 +167,7 @@ export function evaluateNotification(
   const jst = new Date(nowMs + 9 * 60 * 60 * 1000).toISOString();
   if (event.kind === "reminder") {
     if (jst.slice(0, 10) !== endpoint.date || jst.slice(11, 13) !== "08") return result("suppressed", "outside_reminder_window");
-    return result("would_send", "confirmation_day_reminder", "今日は選んだ売却価格の確定日です。始値・終値はまだ出ていません。");
+    return result("would_send", "confirmation_day_reminder", "今日は、設定した確定日です");
   }
   return result("suppressed", "unsupported_notification");
 }

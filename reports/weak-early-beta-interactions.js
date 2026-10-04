@@ -418,7 +418,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
     const host = document.createElement(settingsDialog ? "div" : "details");
     host.className = "cloud-notification-settings";
     host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>ON／OFFで通知を一時停止・再開します。「設定を保存」で反映し、OFFでも端末登録は残ります。初期設定はすべてOFFです。</p>';
-    for (const [key, label] of Object.entries({ new_detection: "新しい検出", reminder: "売却予定日の朝8時（日本時間）" })) {
+    for (const [key, label] of Object.entries({ new_detection: "新しい検出", reminder: "確定日の朝8時（日本時間）" })) {
       const element = document.createElement("label");
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
@@ -440,7 +440,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       });
     }
     const note = document.createElement("p");
-    note.textContent = "朝8時に「今日は売却予定日」とお知らせします。その日の始値・終値はまだ出ていません。";
+    note.textContent = "選んだ確定日の朝8時にお知らせします。その日の価格はまだ確定していません。";
     host.append(note);
     (document.getElementById("cloud-notification-settings") || document.getElementById("cloud-preferences") || saveButton?.parentElement || settings.parentElement).append(host);
   }
@@ -887,7 +887,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         "買付日": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryDate : row.dataset.entryDate) || "",
         "買付始値": (preferences.exitKey === "d6_open" ? row.dataset.d6EntryOpen : row.dataset.entryOpen) || "",
         "売却価格の選択": preferences.exitKey === "d5_close" ? "5営業日後 終値" : "6営業日後 始値",
-        "売却予定日": preferences.exitKey === "d5_close" ? (row.dataset.d5Date || "") : (row.dataset.d6Date || ""),
+        "確定日": preferences.exitKey === "d5_close" ? (row.dataset.d5Date || "") : (row.dataset.d6Date || ""),
         "売却価格": preferences.exitKey === "d5_close" ? (row.dataset.d5Close || "") : (row.dataset.d6Open || ""),
         "売却株数": t?.exitShares === null || !t ? '' : t.exitShares * units,
         "買付額円": t?.grossCost === null || !t ? '' : t.grossCost * units,
@@ -900,7 +900,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         "6営業日後 始値の取得状況": row.dataset.d6Status || "",
       };
     }));
-    const columns = records.length ? Object.keys(records[0]) : ['検出日','銘柄コード','銘柄名','検出日 終値','買付日','売却予定日','売却価格','損益円','騰落率%'];
+    const columns = records.length ? Object.keys(records[0]) : ['検出日','銘柄コード','銘柄名','検出日 終値','買付日','確定日','売却価格','損益円','騰落率%'];
     downloadCSV(CloudPreferences.csv(records, columns), `Cloud_検出履歴_${preferences.exitKey}.csv`);
   });
 

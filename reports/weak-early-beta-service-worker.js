@@ -9,7 +9,7 @@ self.addEventListener('push', event => {
     // Tags are opaque: signal identifiers must not reach the lock-screen API.
     const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value.tag));
     const tag = Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('');
-    await self.registration.showNotification('天底極致 -Cloud-', { body: value.body, tag,
+    await self.registration.showNotification(value.kind === 'reminder' ? '確定日の朝8時（日本時間）' : '天底極致 -Cloud-', { body: value.body, tag,
       data: { url: new URL('./weak_early_beta_latest.html', self.location.href).href } });
   })());
 });

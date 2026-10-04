@@ -289,6 +289,7 @@ for (const exit_endpoint of ['d5_close', 'd6_open']) {
     const reminder = notificationDecision(event, prefs, undefined, time);
     assert.equal(reminder.status, 'would_send');
     assert.equal(reminder.reason, 'confirmation_day_reminder');
+    assert.equal(reminder.message, '今日は、設定した確定日です');
     const result = notificationDecision({ ...event, kind: 'result' }, prefs, undefined, time);
     assert.equal(result.status, 'suppressed');
     assert.equal(result.reason, 'result_notifications_removed');

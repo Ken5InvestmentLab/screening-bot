@@ -101,7 +101,7 @@ test('service worker has no fetch cache and clicks only fixed same-origin report
  const handlers={},opened=[],shown=[];const self={location:{href:'https://cloud.example.invalid/weak-early-beta-service-worker.js'},addEventListener:(name,fn)=>handlers[name]=fn,registration:{showNotification:async(...args)=>shown.push(args)},clients:{matchAll:async()=>[],openWindow:async url=>opened.push(url)}};
  vm.runInNewContext(fs.readFileSync(require('node:path').resolve(__dirname,'../reports/weak-early-beta-service-worker.js'),'utf8'),{self,URL,crypto:webcrypto,TextEncoder,Uint8Array});
  assert.deepEqual(Object.keys(handlers).sort(),['notificationclick','push']);let wait;
- handlers.push({data:{json:()=>({version:1,kind:'reminder',body:'【本人端末テスト】今日は確定日。始値・終値はまだ出ていません。',tag:'private-signal'})},waitUntil:p=>wait=p});await wait;assert.equal(shown.length,1);assert.match(shown[0][1].tag,/^[0-9a-f]{64}$/);assert.doesNotMatch(JSON.stringify(shown),/private-signal/);
+ handlers.push({data:{json:()=>({version:1,kind:'reminder',body:'今日は、設定した確定日です',tag:'private-signal'})},waitUntil:p=>wait=p});await wait;assert.equal(shown.length,1);assert.equal(shown[0][0],'確定日の朝8時（日本時間）');assert.equal(shown[0][1].body,'今日は、設定した確定日です');assert.match(shown[0][1].tag,/^[0-9a-f]{64}$/);assert.doesNotMatch(JSON.stringify(shown),/private-signal/);
  handlers.push({data:{json:()=>({version:1,kind:'result',body:'fake',tag:'fake'})},waitUntil:()=>assert.fail('removed result')});assert.equal(shown.length,1);
  handlers.notificationclick({notification:{close(){},data:{url:'https://evil.invalid/'}},waitUntil:p=>wait=p});await wait;assert.deepEqual(opened,['https://cloud.example.invalid/weak_early_beta_latest.html']);
 });

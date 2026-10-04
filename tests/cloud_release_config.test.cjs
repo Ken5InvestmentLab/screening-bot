@@ -14,6 +14,7 @@ test('notification-OFF release keeps production D1 and excludes it from previews
     c => { c.preview_urls = true; },
     c => { c.vars.CLOUD_PUSH_MODE = 'personal_test'; },
     c => { c.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'true'; },
+    c => { c.vars.CLOUD_PUSH_SCHEDULER_ENABLED = 'true'; },
     c => { c.vars.DISCORD_ALLOWED_ROLE_IDS = ''; },
     c => { c.assets.run_worker_first = false; },
   ]) {

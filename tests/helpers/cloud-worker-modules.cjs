@@ -2,7 +2,7 @@ const fs = require('node:fs'), path = require('node:path'), vm = require('node:v
 const { webcrypto } = require('node:crypto');
 const sourceRoot = path.resolve(__dirname, '../../weak-early-beta-gate/src');
 const ts = require('../../weak-early-beta-gate/node_modules/typescript/lib/typescript.js');
-exports.modules = function ({ fetchMock, cryptoMock = webcrypto } = {}) {
+exports.modules = function ({ fetchMock, cryptoMock = webcrypto, clock } = {}) {
   const cache = new Map();
   function load(name, parent = sourceRoot) {
     const filename = path.resolve(parent, `${name.replace(/\.ts$/, '')}.ts`);
@@ -14,7 +14,10 @@ exports.modules = function ({ fetchMock, cryptoMock = webcrypto } = {}) {
     const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     vm.runInNewContext(code, { module, exports: module.exports, require: name => load(name, path.dirname(filename)),
       Request, Response, Headers, URL, URLSearchParams, AbortSignal, TextEncoder, TextDecoder, Uint8Array,
-      crypto: cryptoMock, atob, btoa, Date, setTimeout, clearTimeout,
+      crypto: cryptoMock, atob, btoa, Date: clock ? class extends Date {
+        constructor(...args) { super(...(args.length ? args : [clock.now])); }
+        static now() { return clock.now; }
+      } : Date, setTimeout, clearTimeout,
       fetch: fetchMock || (() => { throw new Error('network_forbidden'); }), console: { error() {}, warn() {}, log() {} },
     }, { filename });
     return module.exports;

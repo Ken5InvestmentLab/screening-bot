@@ -191,7 +191,7 @@ class CloudNotificationAdapterTests(unittest.TestCase):
             while True:
                 progress = db.execute(progress_query, (cursor,)).fetchone()
                 cutoff = progress["cycle_cutoff_at"] or now
-                rows = db.execute(page_query, (cutoff, progress["after_available_at"], progress["after_source_event_key"])).fetchall()
+                rows = db.execute(page_query, (cutoff, progress["after_available_at"], progress["after_source_event_key"], "", "", "", "", "", "")).fetchall()
                 page, more = rows[:20], len(rows) > 20
                 visited.extend(row["source_event_key"] for row in page)
                 values = (page[-1]["available_at"] if more else "", page[-1]["source_event_key"] if more else "",

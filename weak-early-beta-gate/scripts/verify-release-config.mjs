@@ -23,6 +23,7 @@ export function verifyReleaseConfig(config) {
   for (const environment of [config, ...Object.values(config.env ?? {})]) {
     assert.equal(environment.vars?.CLOUD_PUSH_REGISTRATION_ENABLED, 'false', 'push registration must stay OFF');
     assert.equal(environment.vars?.CLOUD_PUSH_MODE, 'disabled', 'push sending must stay OFF');
+    assert.notEqual(environment.vars?.CLOUD_PUSH_SCHEDULER_ENABLED, 'true', 'personal scheduler must stay OFF in this release config');
     assert.equal(environment.triggers?.crons?.length ?? 0, 0, 'no notification scheduler');
     assert.equal(environment.queues?.consumers?.length ?? 0, 0, 'no notification consumer');
     for (const binding of environment.d1_databases ?? []) {

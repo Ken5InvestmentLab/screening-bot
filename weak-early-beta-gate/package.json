@@ -8,7 +8,7 @@
     "verify-release": "node scripts/verify-release-config.mjs",
     "preview:dry-run": "wrangler deploy --dry-run --env preview",
     "dev:preview": "wrangler dev --local --env preview",
-    "test": "node --test ../tests/report_gate_auth.test.cjs ../tests/cloud_gate_membership.test.cjs ../tests/cloud_report_preferences.test.cjs ../tests/cloud_scenarios.test.cjs ../tests/cloud_display_settings.test.cjs ../tests/cloud_bundle_sync.test.cjs ../tests/cloud_push.test.cjs ../tests/cloud_release_config.test.cjs ../tests/cloud_whop_adapter.test.cjs",
+    "test": "node --test ../tests/report_gate_auth.test.cjs ../tests/cloud_gate_membership.test.cjs ../tests/cloud_report_preferences.test.cjs ../tests/cloud_scenarios.test.cjs ../tests/cloud_display_settings.test.cjs ../tests/cloud_bundle_sync.test.cjs ../tests/cloud_push.test.cjs ../tests/cloud_release_config.test.cjs ../tests/cloud_whop_adapter.test.cjs ../tests/cloud_push_scheduler.test.cjs",
     "deploy": "npm run verify-release && npm run sync-shared && npm run sync-report && wrangler deploy --env= --minify",
     "deploy:dry-run": "npm run sync-shared && npm run sync-report && wrangler deploy --env= --dry-run",
     "sync-report": "node scripts/sync-report.mjs",

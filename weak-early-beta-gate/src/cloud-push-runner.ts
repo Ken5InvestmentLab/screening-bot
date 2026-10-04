@@ -4,12 +4,13 @@ import { dispatchBackgroundPersonalCandidate, type BackgroundPushEnv } from "./c
 import type { encryptPushPayload } from "./cloud-web-push";
 
 export async function runPersonalNotificationBatch(env: BackgroundPushEnv, transport: typeof fetch = fetch,
-  fixture?: Parameters<typeof encryptPushPayload>[2]): Promise<{ processed: number; accepted: number; held: number; suppressed: number; failed: number; more: boolean }> {
+  fixture?: Parameters<typeof encryptPushPayload>[2], kind?: "new_detection" | "reminder"): Promise<{ processed: number; accepted: number; held: number; suppressed: number; failed: number; more: boolean }> {
   const counts = { processed: 0, accepted: 0, held: 0, suppressed: 0, failed: 0, more: false };
   if (!env.CLOUD_DB || String(env.CLOUD_PUSH_MODE) !== "personal_test" || !env.CLOUD_PUSH_TEST_MEMBER_ID || !env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID) return counts;
   const db = env.CLOUD_DB, now = new Date().toISOString();
   // Isolated from the current-session dry-run cursor, using only fixed server IDs.
-  const cursor = `personal-push:${env.CLOUD_PUSH_TEST_MEMBER_ID}:${env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID}`;
+  const today = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10);
+  const cursor = `personal-push:${env.CLOUD_PUSH_TEST_MEMBER_ID}:${env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID}${kind ? `:${kind}:${today}` : ""}`;
   const init = await db.prepare(`INSERT OR IGNORE INTO cloud_notification_scan_progress (member_id, updated_at) VALUES (?, ?)`).bind(cursor, now).run();
   if (!init.success) throw new Error("scan_progress_save_failed");
   const progress = await db.prepare(`SELECT after_available_at, after_source_event_key, cycle_cutoff_at, version FROM cloud_notification_scan_progress WHERE member_id = ?`)
@@ -17,8 +18,12 @@ export async function runPersonalNotificationBatch(env: BackgroundPushEnv, trans
   if (!progress || !Number.isSafeInteger(progress.version) || progress.version < 0) throw new Error("scan_progress_missing");
   const cutoff = progress.cycle_cutoff_at || now;
   const rows = await db.prepare(`SELECT source_event_key, available_at FROM cloud_notification_events WHERE available_at <= ?
-    AND (available_at, source_event_key) > (?, ?) ORDER BY available_at, source_event_key LIMIT 21`)
-    .bind(cutoff, progress.after_available_at, progress.after_source_event_key).all<{ source_event_key: string; available_at: string }>();
+    AND (available_at, source_event_key) > (?, ?)
+    AND (? = '' OR (json_extract(event_json, '$.kind') = ? AND
+      (json_extract(event_json, '$.detection_date') = ? OR (? = 'reminder' AND
+        (json_extract(event_json, '$.endpoints.d5_close.date') = ? OR json_extract(event_json, '$.endpoints.d6_open.date') = ?)))))
+    ORDER BY available_at, source_event_key LIMIT 21`)
+    .bind(cutoff, progress.after_available_at, progress.after_source_event_key, kind ?? "", kind ?? "", today, kind ?? "", today, today).all<{ source_event_key: string; available_at: string }>();
   if (!rows.success) throw new Error("candidate_read_failed");
   counts.more = (rows.results ?? []).length > 20;
   const page = (rows.results ?? []).slice(0, 20);

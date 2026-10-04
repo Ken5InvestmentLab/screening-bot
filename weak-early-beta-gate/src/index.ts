@@ -2,6 +2,7 @@
 // shared module. This wrapper only lets the beta's mode pages use the same gate.
 import sharedGate, { reportIdentity } from "./shared-report-gate";
 import { cloudApi, type CloudEnv } from "./cloud-api";
+import { runScheduledPersonalNotifications, type ScheduleEnv } from "./cloud-push-scheduler";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
 const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init|scenarios|push|service-worker)\.js$/;
@@ -25,6 +26,10 @@ async function bundleResponse(request: Request, env: CloudEnv, audience: string)
 }
 
 export default {
+  async scheduled(controller: ScheduledController, env: ScheduleEnv): Promise<void> {
+    const result = await runScheduledPersonalNotifications(controller, env);
+    console.log(JSON.stringify({ operation: "cloud_personal_schedule", ...result }));
+  },
   async fetch(request: SharedRequest, env: CloudEnv): Promise<Response> {
     const pathname = new URL(request.url).pathname;
     const bundle = BUNDLE_RE.exec(pathname);

@@ -24,13 +24,15 @@ from weak_early_beta.ledger import read_ledger
 from weak_early_beta.trade_basis import is_frozen_trade
 
 
-def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp) -> list[dict]:
+def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp,
+                 *, include_future_reminders: bool = False) -> list[dict]:
     if as_of.tzinfo is None:
         raise ValueError("as_of must be timezone-aware")
     if not re.fullmatch(r"[0-9a-f]{64}", source_sha256):
         raise ValueError("source ledger SHA-256 is required")
     today = as_of.tz_convert("Asia/Tokyo").date()
-    if not is_bank_business_day(today):
+    business_today = is_bank_business_day(today)
+    if not business_today and not include_future_reminders:
         return []
     # Use the same reviewed signal-price view as the report. The observation
     # cutoff below prevents this later receipt from being available earlier.
@@ -44,6 +46,8 @@ def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp) 
         signal = pd.Timestamp(row["signal_date"]).date()
         if signal.year == 2022 or signal > today:
             continue
+        if not is_bank_business_day(signal):
+            raise ValueError("forward detection date is not a bank business day")
         fifth = add_bank_business_days(signal, 5).isoformat()
         sixth = add_bank_business_days(signal, 6).isoformat()
         # Refuse recorded dates that contradict the authoritative calendar.
@@ -89,9 +93,9 @@ def build_events(ledger: pd.DataFrame, source_sha256: str, as_of: pd.Timestamp) 
                 raise ValueError(f"conflicting overlapping endpoint receipts: {base['signal_id']}")
             continue
         seen_signals[base["signal_id"]] = base
-        if signal == today:
+        if signal == today and business_today:
             events.append({**base, "kind": "new_detection"})
-        if today.isoformat() in {fifth, sixth}:
+        if today.isoformat() in {fifth, sixth} or (include_future_reminders and max(fifth, sixth) >= today.isoformat()):
             events.append({**base, "kind": "reminder"})
     return events
 

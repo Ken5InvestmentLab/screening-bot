@@ -503,7 +503,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertNotIn("YTD", output)
         self.assertIn("資金増加率", output)
         self.assertIn("単純年率", output)
-        self.assertIn("一致した条件の数だけ買付", document)
+        self.assertIn("一致した条件数に応じて株数を増やす", document)
         self.assertIn("Cloud全体の成績 — モード別積み上げ", output)
         self.assertIn("Cloud全体の成績 — 銘柄均等", output)
         self.assertNotIn("<th>配分方式</th>", output)
@@ -811,7 +811,8 @@ class WeakEarlyBetaTests(unittest.TestCase):
     def test_guide_uses_beginner_friendly_copy_without_future_only_limit(self):
         output = render_guide(pd.Timestamp("2026-09-20", tz="Asia/Tokyo"))
         self.assertIn("モードは、銘柄を選ぶ「見方の違い」です", output)
-        self.assertIn("資料名を押すと根拠となる開示資料を確認できます", output)
+        self.assertNotIn("<h3>ファンダ分析</h3>", output)
+        self.assertIn('href="./weak_early_beta_latest.html"', output)
         self.assertNotIn("未来の新規検出だけを対象に", output)
 
 

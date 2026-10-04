@@ -2,6 +2,7 @@ const SESSION_COOKIE = "__Host-report_gate_session";
 const STATE_COOKIE = "__Host-report_gate_oauth_state";
 const RETURN_TO_COOKIE = "__Host-report_gate_return_to";
 const DISCORD_SCOPE = "identify guilds.members.read";
+const DISCORD_USER_AGENT = "DiscordBot (https://github.com/Ken5InvestmentLab/screening-bot, 1.0)";
 const ACCESS_GUARD_SCRIPT_PATH = "/auth/guard.js";
 const REPORT_INTERACTIONS_SCRIPT_PATH = "/report-interactions.js";
 const REPORT_THEME_INIT_SCRIPT_PATH = "/report-theme-init.js";
@@ -781,7 +782,7 @@ async function exchangeCodeForToken(
 
   const response = await fetch(`${discordApiBase(env)}/oauth2/token`, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
+    headers: { "content-type": "application/x-www-form-urlencoded", "user-agent": DISCORD_USER_AGENT },
     body,
   });
 
@@ -837,7 +838,7 @@ async function refreshAccessToken(refreshToken: string, env: WorkerEnv): Promise
 
   const response = await fetch(`${discordApiBase(env)}/oauth2/token`, {
     method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
+    headers: { "content-type": "application/x-www-form-urlencoded", "user-agent": DISCORD_USER_AGENT },
     body,
     signal: AbortSignal.timeout(DISCORD_REQUEST_TIMEOUT_MS),
   });
@@ -890,12 +891,18 @@ async function freshGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
 async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<DiscordGuildMember> {
   const guildId = requiredEnv(env, "DISCORD_GUILD_ID");
   const response = await fetch(`${discordApiBase(env)}/users/@me/guilds/${guildId}/member`, {
-    headers: { authorization: `Bearer ${accessToken}` },
+    headers: { authorization: `Bearer ${accessToken}`, "user-agent": DISCORD_USER_AGENT, accept: "application/json" },
     signal: AbortSignal.timeout(DISCORD_REQUEST_TIMEOUT_MS),
   });
 
   if (response.status === 429) {
-    const retrySeconds = Number(response.headers.get("retry-after"));
+    let retrySeconds = Number(response.headers.get("retry-after"));
+    if (!(Number.isFinite(retrySeconds) && retrySeconds > 0)) {
+      // Discord may return the retry interval only as a numeric JSON field.
+      // Never log the provider body, which is untrusted and may be sensitive.
+      const body = await response.json().catch(() => null) as { retry_after?: unknown } | null;
+      retrySeconds = typeof body?.retry_after === "number" ? body.retry_after : 0;
+    }
     throw new DiscordRateLimitedError(Number.isFinite(retrySeconds) && retrySeconds > 0 ? Math.ceil(retrySeconds * 1000) : 0);
   }
   if ([401, 403, 404].includes(response.status)) {

@@ -79,12 +79,14 @@ function discordMock({ refresh = tokenResponse, member, accessToken = 'test-new-
   const fetchMock = async (input, init) => {
     const url = String(input);
     if (url === 'https://discord.invalid/api/oauth2/token') {
+      assert.equal(init.headers['user-agent'], 'DiscordBot (https://github.com/Ken5InvestmentLab/screening-bot, 1.0)');
       calls.refresh += 1;
       assert.equal(init.body.get('grant_type'), 'refresh_token');
       assert.equal(init.body.get('refresh_token'), 'test-old-refresh');
       return refresh(calls.refresh);
     }
     if (url === 'https://discord.invalid/api/users/@me/guilds/test-guild/member') {
+      assert.equal(init.headers['user-agent'], 'DiscordBot (https://github.com/Ken5InvestmentLab/screening-bot, 1.0)');
       calls.member += 1;
       assert.equal(init.headers.authorization, `Bearer ${accessToken}`);
       return member ? member(calls.member) : Response.json({ roles: ['test-allowed-role'] });
@@ -388,6 +390,22 @@ for (const recovered of [true, false]) test(`short fresh-role rate limit retry $
   const now = Math.floor(Date.now() / 1000);
   const response = await gate.worker.fetch(await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600, roleCheckedAt: now })), { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' });
   const html = await response.text(); assert.equal(/data-auth-free/.test(html), !recovered); assert.equal(calls, 2);
+});
+
+test('fresh role lookup respects a numeric JSON retry interval without response headers', async () => {
+  let calls = 0;
+  const gate = createGate(async () => ++calls === 1 ? Response.json({ retry_after: 0.001 }, { status: 429 }) : Response.json({ roles: ['test-allowed-role'] }));
+  const now = Math.floor(Date.now() / 1000);
+  const response = await gate.worker.fetch(await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600 })), { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' });
+  assert.doesNotMatch(await response.text(), /data-auth-free/); assert.equal(calls, 2);
+});
+
+for (const retry_after of [60, '0.001', -1, null]) test(`invalid or long retry interval ${retry_after} cannot bypass fresh authorization`, async () => {
+  let calls = 0;
+  const gate = createGate(async () => { calls += 1; return Response.json({ retry_after }, { status: 429 }); });
+  const now = Math.floor(Date.now() / 1000);
+  const response = await gate.worker.fetch(await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600 })), { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' });
+  assert.match(await response.text(), /data-auth-free/); assert.equal(calls, 1);
 });
 
 test('open-page guard serializes page, visibility, and interval checks', async () => {

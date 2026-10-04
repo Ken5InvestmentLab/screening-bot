@@ -24,7 +24,7 @@ from weak_early_beta.historical_fundamentals import (
     import_historical_reports,
     validate_historical_report,
 )
-from weak_early_beta.ledger import bootstrap_historical, build_fundamental_queue, merge_detections
+from weak_early_beta.ledger import apply_fundamental_receipts, bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.entry_feasibility import annotate_entry_feasibility, performance_eligible
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.notify import (
@@ -616,6 +616,44 @@ class WeakEarlyBetaTests(unittest.TestCase):
             self.assertEqual(receipts[0]["signal_date"], "2026-09-18")
             self.assertEqual(receipts[0]["symbol"], "1234")
             self.assertIn("材料インパクト", receipts[0]["html"])
+
+    def test_saved_fundamental_snapshot_embeds_without_discord_and_is_not_reclaimed(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger_path, queue_path, state_path, claim_path, receipt_path, reports_path = (
+                root / name for name in ("ledger.csv", "queue.json", "state.json", "claim.json", "receipts.json", "reports.json")
+            )
+            ledger = pd.concat([self.ledger.head(1)] * 2, ignore_index=True)
+            ledger.loc[1, ["selector_id", "selector_name"]] = self.ledger.iloc[1][["selector_id", "selector_name"]].values
+            ledger.loc[:, "source_scope"] = "FORWARD_CAUSAL"
+            ledger.loc[:, "signal_date"] = pd.Timestamp("2026-09-18")
+            ledger.loc[:, "symbol"] = "1234"
+            ledger.loc[:, "company_name"] = "テスト社"
+            ledger.loc[:, "fundamental_status"] = "queued"
+            ledger.loc[:, "fundamental_discord_url"] = ""
+            ledger.to_csv(ledger_path, index=False)
+            queue_path.write_text(json.dumps([{"signal_date": "2026-09-18", "symbol": "1234"}]), encoding="utf-8")
+            claim = prepare_claim(queue_path, ledger_path, state_path, claim_path)
+            self.assertEqual(claim["rules"]["destination"], "html")
+            identity = claim["alerts"][0]["alertId"]
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            report = {"alertId": identity, "fields": [{"name": "ファンダ要点", "value": "保存済み分析本文"}]}
+            state["completed"][identity] = {"delivery": "html", "report": report}
+            state["claims"] = {}
+            state_path.write_text(json.dumps(state, ensure_ascii=False), encoding="utf-8")
+            # A later batch must not erase the stored analysis used by the exporter.
+            reports_path.write_text('{"reports": []}', encoding="utf-8")
+            receipts = export_receipts(state_path, receipt_path, reports_path, {identity})
+            self.assertEqual(len(receipts), 1)
+            self.assertEqual(receipts[0]["discord_url"], "")
+            updated = apply_fundamental_receipts(ledger, receipts)
+            self.assertTrue(updated["fundamental_status"].eq("complete").all())
+            self.assertTrue(updated["fundamental_discord_url"].eq("").all())
+            self.assertEqual(build_fundamental_queue(updated), [])
+            output = render_report(updated, build_metrics(self.ledger), pd.Timestamp("2026-09-19", tz="Asia/Tokyo"))
+            self.assertIn("保存済み分析本文", output)
+            self.assertIn('data-fundamental-toggle', output)
+            self.assertEqual(prepare_claim(queue_path, ledger_path, state_path, claim_path)["claimedCount"], 0)
 
     def _historical_report(self, signal_date="2023-01-04", symbol="3133"):
         values = {

@@ -43,6 +43,7 @@ def empty_worker_state() -> dict:
     return {
         "version": 1,
         "posted": {},
+        "completed": {},
         "failed": {},
         "claims": {},
         "pendingLogEvents": [],
@@ -77,7 +78,7 @@ def prepare_claim(
         signal_date = str(item["signal_date"])
         symbol = str(item["symbol"])
         identity = alert_id(signal_date, symbol)
-        if identity in state["posted"]:
+        if identity in state["posted"] or identity in state["completed"]:
             continue
         group = lookup.get((signal_date, symbol))
         entry_price = None
@@ -129,7 +130,7 @@ def prepare_claim(
             "prohibited": [
                 "buy/sell recommendations", "target prices", "additional scores"
             ],
-            "destinationChannelId": "1550876675884060702",
+            "destination": "html",
             "model": "gpt-5.6-luna",
             "reasoningEffort": "xhigh",
         },
@@ -145,7 +146,7 @@ def export_receipts(
     reports_path: Path = DEFAULT_REPORTS,
     alert_ids: set[str] | None = None,
 ) -> list[dict]:
-    """Convert worker Discord receipts into the beta ledger import contract."""
+    """Export saved HTML snapshots and legacy Discord receipts to the beta ledger."""
     state = _read_json(state_path, empty_worker_state())
     reports_payload = _read_json(reports_path, {"reports": []})
     report_lookup = {
@@ -154,13 +155,17 @@ def export_receipts(
         if isinstance(report, dict)
     }
     receipts = []
-    for identity, posted in sorted(state.get("posted", {}).items()):
+    completed = state.get("completed", {})
+    records = {**state.get("posted", {}), **completed}
+    for identity, record in sorted(records.items()):
         if not identity.startswith("weak-early-beta:"):
             continue
         if alert_ids is not None and identity not in alert_ids:
             continue
         signal_date, symbol = identity.removeprefix("weak-early-beta:").split(":", 1)
-        report = report_lookup.get(identity, {})
+        report = record.get("report", {}) if identity in completed else report_lookup.get(identity, {})
+        if identity in completed and (record.get("delivery") != "html" or not report.get("fields")):
+            raise ValueError(f"incomplete saved HTML snapshot: {identity}")
         analysis_lines = []
         for field in report.get("fields", []):
             name = str(field.get("name", "")).strip()
@@ -171,7 +176,7 @@ def export_receipts(
             "signal_date": signal_date,
             "symbol": symbol,
             "status": "complete",
-            "discord_url": str(posted.get("discordMessageUrl", "")),
+            "discord_url": "" if identity in completed else str(record.get("discordMessageUrl", "")),
             "html": "\n".join(analysis_lines).strip(),
         })
     _write_json(receipt_path, {"receipts": receipts})

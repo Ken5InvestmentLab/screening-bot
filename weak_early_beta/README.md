@@ -73,7 +73,7 @@ py -m weak_early_beta.cli import-fundamentals --receipts path/to/receipts.json
 
 通知を実送信する場合は `WEAK_EARLY_BETA_SIGNAL_WEBHOOK_URL`、レポートリンクには `WEAK_EARLY_BETA_REPORT_URL` を使います。専用Botがチャンネル履歴を読める場合だけ `WEAK_EARLY_BETA_DISCORD_BOT_TOKEN` を設定します。現行Bot tokenはベータへ流用しません。通常の日次運用では `state/fundamental_queue.json` の新規検出分を処理します。過去銘柄のファンダ分析も、対象期間と上限を固定した専用バッチとして後から追加できます。
 
-Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-runner.mjs` です。例設定を複製し、`WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL` をGit管理外の `.env` に設定して実行します。ランナーは `gpt-6-luna` / `xhigh` を固定し、現行Premium Workerのvalidatorでdry-run通過後に専用チャンネルへ投稿します。
+Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-runner.mjs` です。例設定を複製して実行します。ランナーは `gpt-5.6-luna` / `xhigh` を固定し、claimの16:15 JSTを基準に開示時点と7フィールドを検証します。検証済み分析はベータ専用stateの `completed` に保存し、receiptを介してHTMLへ埋め込みます。ファンダ分析のDiscord通知とwebhook設定は不要です。HTMLへの取り込みが成功するまでclaimを保持し、中断時は同じ分析を再利用します。
 
 ## 定時運用
 
@@ -82,7 +82,7 @@ Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-run
 - 毎回JPX公式の監理・整理銘柄一覧を取得し、シグナル日以前に「上場廃止の決定・整理銘柄指定」となった銘柄は新規エントリー対象から除外します。監理銘柄だけの銘柄は一律除外しません。除外行は `state/excluded_detections.csv` に監査保存します。
 - Codex予定タスク `Cloud 5営業日目リマインダー`（ID `cloud-5`）を平日7:30 JSTに実行します。
 - 両ランナーとも日本の銀行休業日（祝日・振替休日・12月31日〜1月3日）をコード側で判定し、休業日は何も変更しません。
-- 日次ランナーは `scripts/windows/weak-early-beta-daily-runner.mjs`、朝のリマインダーは `scripts/windows/weak-early-beta-exit-reminder-runner.mjs` です。新規検出がある日だけ銘柄Embedと集計Embedを送り、0件の日は公開向け通知を送りません。起動・検出終了・エラー停止はadmin用システムログチャンネルに記録し、17:30 JSTの独立した監視タスクが定時起動の記録を確認します。ファンダ分析の新規・過去投稿にはスキャンボタンを付けません。
+- 日次ランナーは `scripts/windows/weak-early-beta-daily-runner.mjs`、朝のリマインダーは `scripts/windows/weak-early-beta-exit-reminder-runner.mjs` です。新規検出がある日だけ銘柄Embedと集計Embedを送り、0件の日は公開向け通知を送りません。起動・検出終了・エラー停止はadmin用システムログチャンネルに記録し、17:30 JSTの独立した監視タスクが定時起動の記録を確認します。ファンダ分析はHTMLへ反映し、Discordへ通知しません。
 - PCとCodexのローカル実行環境、インターネット接続が利用できることが前提です。GitHub cronや既存GAS、本番workflowは使用しません。
 
 ## 成績表示

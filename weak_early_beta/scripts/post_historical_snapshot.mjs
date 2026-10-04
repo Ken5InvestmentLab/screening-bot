@@ -7,6 +7,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
+import { isDeepStrictEqual } from 'node:util';
 
 const repoRoot = path.resolve(import.meta.dirname, '..', '..');
 const reportPath = resolveArg('--input', path.join(repoRoot, 'weak_early_beta', 'fundamental_worker', 'out', 'premium_reports.json'));
@@ -18,7 +19,7 @@ const REQUIRED_FIELDS = ['材料インパクト', '事業概要', '足元材料'
 
 const env = { ...readDotEnv(envPath), ...process.env };
 const webhook = String(env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '').trim();
-if (!webhook) throw new Error('WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL is missing');
+const saveOnly = process.argv.includes('--save-only');
 
 const reportData = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
 const reports = Array.isArray(reportData) ? reportData : reportData.reports;
@@ -38,6 +39,9 @@ if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+09:00$/.test(cutoff) ||
     !cutoff.startsWith(signalDate) ||
     (cutoff !== claimCutoff && cutoff !== endOfDayCutoff)) {
   throw new Error('analysisCutoff must match claim.receivedAt or signal_date 23:59:59+09:00');
+}
+if (saveOnly && cutoff !== claimCutoff) {
+  throw new Error('HTML snapshot analysisCutoff must match claim.receivedAt');
 }
 const allText = JSON.stringify(report);
 for (const date of allText.match(/\b20\d{2}-\d{2}-\d{2}\b/g) || []) {
@@ -99,6 +103,29 @@ if (process.argv.includes('--dry-run')) {
   process.exit(0);
 }
 
+if (saveOnly) {
+  state.completed ??= {};
+  const existing = state.completed[report.alertId];
+  if (existing && !isDeepStrictEqual(existing.report, report)) {
+    throw new Error(`a different HTML snapshot already exists: ${report.alertId}`);
+  }
+  if (!existing) {
+    state.completed[report.alertId] = {
+      completedAt: new Date().toISOString(),
+      delivery: 'html',
+      analysisCutoff: cutoff,
+      report,
+    };
+    const temporary = `${statePath}.tmp`;
+    fs.writeFileSync(temporary, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
+    fs.renameSync(temporary, statePath);
+  }
+  // Keep claim ownership until the runner successfully imports and renders HTML.
+  console.log(JSON.stringify({ ok: true, alertId: report.alertId, saved: true, posted: false }));
+  process.exit(0);
+}
+
+if (!webhook) throw new Error('WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL is missing');
 const postUrl = new URL(webhook);
 postUrl.searchParams.set('wait', 'true');
 const response = await fetch(postUrl, {

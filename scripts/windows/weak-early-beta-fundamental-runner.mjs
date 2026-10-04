@@ -27,6 +27,23 @@ function reportsMatchClaim(reportsPath, claim) {
   return expected.size > 0 && expected.size === actual.size && [...expected].every(id => actual.has(id));
 }
 
+function finalizeHtmlSnapshots(statePath, claim) {
+  const state = readJson(statePath);
+  for (const alert of claim.alerts || []) {
+    const id = alert.alertId;
+    if (state.completed?.[id]?.delivery !== 'html' ||
+        state.claims?.[id]?.claimId !== claim.claimId) {
+      throw new Error(`HTML snapshot/claim ownership mismatch: ${id}`);
+    }
+    delete state.claims[id];
+    delete state.failed?.[id];
+  }
+  if (Object.keys(state.claims || {}).length || Object.keys(state.failed || {}).length || (state.pendingLogEvents || []).length) {
+    throw new Error('beta worker state remains incomplete; do not retry blindly');
+  }
+  writeJson(statePath, state);
+}
+
 function cleanEnvironment(source) {
   const result = { ...source };
   for (const key of Object.keys(result)) {
@@ -101,7 +118,7 @@ async function main(configFile) {
     ok: false,
     model: FUNDAMENTAL_MODEL,
     reasoningEffort: FUNDAMENTAL_REASONING_EFFORT,
-    channelId: FUNDAMENTAL_CHANNEL_ID,
+    delivery: 'html',
     runDir,
   };
 
@@ -121,7 +138,6 @@ async function main(configFile) {
   const claimPath = path.join(outDir, 'latest_claim.json');
   const reportsPath = path.join(outDir, 'premium_reports.json');
   const receiptsPath = path.join(outDir, 'fundamental_receipts.json');
-  const workerPath = path.join(config.premiumWorkerRepoPath, 'premium_worker', 'worker.mjs');
   const historicalPosterPath = path.join(config.repoPath, 'weak_early_beta', 'scripts', 'post_historical_snapshot.mjs');
 
   const run = async (exe, args, name, options = {}) => {
@@ -160,6 +176,7 @@ async function main(configFile) {
     result.claimed = claim.claimedCount;
     if (!claim.claimedCount) {
       result.ok = true;
+      result.imported = 0;
       result.posted = 0;
       return;
     }
@@ -170,6 +187,7 @@ async function main(configFile) {
       `必ず ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'AUTOMATION_PROMPT.md')} と ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'FUNDAMENTAL_EXAMPLES.md')} を全文読み、skillのreferences/report_quality.mdも読んでください。`,
       '各銘柄の分析基準時点はclaimのreceivedAt（検出日の日本時間16:15）です。その時点より後に公表されたIR・適時開示・ニュース・決算資料は、検索で見つかっても絶対に使わないでください。各社の公式IR、IRBANKまたはTDnet相当の開示一覧を基準時点まで確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
       'レポート本文と開示リンクには、採用した資料の公表日がsignal_date以前であることが分かるようにし、基準時点後の資料を参照していないことを守ってください。',
+      '各レポートのsignalDateとanalysisCutoffをclaimのsignalDateとreceivedAtへ正確に合わせてください。分析はHTMLへの保存だけに使い、Discordへ通知しません。',
       '売買推奨、目標株価、追加スコアは禁止。現行契約の全7フィールドとSourcesを満たしてください。',
       `最終JSONは ${reportsPath} だけに書き込んでください。Discord投稿、worker state、Sheets、Git、workflow、ソースコードは変更しないでください。`,
       '報告は有界に保ち、出力JSON作成後は日本語で簡潔に完了を報告してください。',
@@ -200,39 +218,10 @@ async function main(configFile) {
     }
     if (!fs.existsSync(reportsPath)) throw new Error('Codex completed without premium_reports.json');
 
-    const reportPayload = readJson(reportsPath);
-    const pointInTimeSnapshot = (reportPayload.reports || reportPayload).every(report =>
-      /^\d{4}-\d{2}-\d{2}T16:15:00\+09:00$/.test(String(report.analysisCutoff || ''))
-    );
-    if (pointInTimeSnapshot) {
-      // Point-in-time snapshots are intentionally posted by the beta-only sidecar:
-      // the production worker rejects any report that omits a later disclosure,
-      // while this sidecar enforces the claim's 16:15 JST evidence cutoff.
-      await run(config.nodePath, [historicalPosterPath, '--input', reportsPath, '--state', statePath], 'historical-post', {
-        cwd: config.repoPath, env, timeoutMs: 180_000,
-      });
-    } else {
-      const postEnv = { ...env };
-      postEnv.PREMIUM_STATE_PATH = statePath;
-      postEnv.PREMIUM_OUT_DIR = outDir;
-      postEnv.DISCORD_PREMIUM_WEBHOOK_URL = env.WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL || '';
-      postEnv.DISCORD_PREMIUM_USERNAME = '天底極致 -Cloud- | ファンダ分析';
-      postEnv.DISCORD_PREMIUM_CHANNEL_ID = FUNDAMENTAL_CHANNEL_ID;
-      postEnv.PREMIUM_LOG_SPREADSHEET_ID = '';
-      // Webhook-only keeps the beta post independent from the production bot and /scan button.
-      delete postEnv.DISCORD_PREMIUM_BOT_TOKEN;
-      delete postEnv.DISCORD_BOT_TOKEN;
-      delete postEnv.DISCORD_TOKEN;
-      await run(config.nodePath, [workerPath, 'post', '--input', reportsPath, '--dry-run'], 'validate', {
-        cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 180_000,
-      });
-      if (!postEnv.DISCORD_PREMIUM_WEBHOOK_URL) {
-        throw new Error('WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL is missing; validation passed but nothing was posted');
-      }
-      await run(config.nodePath, [workerPath, 'post', '--input', reportsPath], 'post', {
-        cwd: config.premiumWorkerRepoPath, env: postEnv, timeoutMs: 300_000,
-      });
-    }
+    // Reuse the beta point-in-time validator, then persist without a Discord request.
+    await run(config.nodePath, [historicalPosterPath, '--input', reportsPath, '--state', statePath, '--save-only'], 'save-snapshot', {
+      cwd: config.repoPath, env, timeoutMs: 180_000,
+    });
 
     await run(config.pythonPath || 'py', [
       '-m', 'weak_early_beta.cli', 'export-fundamentals',
@@ -241,11 +230,9 @@ async function main(configFile) {
     await run(config.pythonPath || 'py', [
       '-m', 'weak_early_beta.cli', 'import-fundamentals', '--receipts', receiptsPath,
     ], 'import-receipts');
-    const state = readJson(statePath);
-    if (Object.keys(state.claims || {}).length || Object.keys(state.failed || {}).length || (state.pendingLogEvents || []).length) {
-      throw new Error('beta worker state remains incomplete; do not retry blindly');
-    }
-    result.posted = claim.claimedCount;
+    finalizeHtmlSnapshots(statePath, claim);
+    result.imported = claim.claimedCount;
+    result.posted = 0;
     result.ok = true;
   } catch (error) {
     result.error = error.message;
@@ -262,4 +249,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { assertIsolated, cleanEnvironment, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };
+export { assertIsolated, cleanEnvironment, finalizeHtmlSnapshots, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };

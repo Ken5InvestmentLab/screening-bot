@@ -12,6 +12,7 @@
 
 ## Cloud beta daily runner
 
+- Fundamental analysis is delivered to HTML only. Use the beta validator's `--save-only` path without a webhook, retain claim ownership through receipt import/HTML generation, and then finalize. Preserve Luna xhigh, cutoff validation, and legacy receipts. Verify changes with `node --test scripts/windows/test-weak-early-beta-point-in-time-post.mjs scripts/windows/test-weak-early-beta-model-preflight.mjs` and the relevant beta Python tests.
 - Inspect streamed child logs and `CLOUD_DAILY_PHASE_V1` records before treating a quiet daily process as stalled. Full-corpus validation and monthly model fitting can remain silent for minutes; unchanged final receipts or one low CPU sample do not establish a deadlock. After acquisition completed, verify the cache SHA-256 against its source-quality receipt and resume the failed detection with that cache rather than downloading OHLCV again.
 - For diagnostic GPT-6.1 Sol calls, probe the current Codex app executable with ChatGPT login before declaring the model unavailable; the separate fundamental CLI runtime may have a different version/catalog. Keep its fundamental model/configuration unchanged.
 

@@ -720,7 +720,7 @@ def parser() -> argparse.ArgumentParser:
     notify_exclusions.add_argument("--dry-run", action="store_true")
     notify_exclusions.set_defaults(func=command_notify_exclusions)
 
-    imports = sub.add_parser("import-fundamentals", help="attach dedicated-channel analysis receipts")
+    imports = sub.add_parser("import-fundamentals", help="attach saved analysis snapshots to HTML")
     common(imports)
     imports.add_argument("--receipts", required=True)
     imports.set_defaults(func=command_import_fundamentals)
@@ -741,7 +741,7 @@ def parser() -> argparse.ArgumentParser:
     prepare.set_defaults(func=command_prepare_fundamentals)
 
     export = sub.add_parser(
-        "export-fundamentals", help="export dedicated-channel Discord receipts"
+        "export-fundamentals", help="export saved HTML snapshots and legacy Discord receipts"
     )
     export.add_argument(
         "--worker-state",

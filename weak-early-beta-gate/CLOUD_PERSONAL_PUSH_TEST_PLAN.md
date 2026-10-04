@@ -13,9 +13,10 @@ authentication permission has been created/configured by this task.
 - The checked-in Cloud configuration has no production D1 binding or Whop policy.
   Existing live bindings/credentials and exact member links remain unverified;
   there is no identity-link registration flow.
-- Application source has no subscription-registration endpoint, service worker,
-  VAPID/web-push sender or scheduled delivery handler. Generated Worker runtime
-  type declarations are not those implementations. Dry-run always sends zero.
+- Subscription registration/revocation, gesture-only UI, push-only service worker,
+  RFC sender and internal personal dispatch helper exist and are tested locally.
+  Registration/delivery flags remain off, no cron/public test-send entry exists.
+  See CLOUD_DISCORD_PUSH_READINESS.md for live/schema/setup blockers.
 - Existing Discord notifications are unchanged and cannot substitute for a
   browser-push arrival test. Provider acceptance alone is not arrival proof.
 
@@ -23,7 +24,8 @@ authentication permission has been created/configured by this task.
 
 1. Which personal device/OS/browser will receive the test? Is Cloud a browser tab
    or installed web app, and is its notification permission granted/denied/unasked?
-2. Which existing Cloud/Discord account and exact Whop membership are to be linked?
+2. Which existing Discord account and verified existing Whop integration evidence apply?
+   Keep current Discord login; require no new Cloud/Whop account or re-login.
    Never infer the link from Slack/display name/email or a role alone.
 3. After sign-in and explicit device opt-in, identify one active subscription
    through the secure server flow. Do not ask for endpoints, credentials or keys
@@ -35,8 +37,8 @@ authentication permission has been created/configured by this task.
 ## Integration and controlled test sequence
 
 Complete the access-preserving setup/checks in `CLOUD_RELEASE_READINESS.md` first.
-Implement explicit opt-in/revocation, service worker and approved sender/key
-configuration. Derive the member from the existing session, require exact-origin
+Verify the implemented explicit opt-in/revocation and service worker, then
+approve the exact sender/key configuration and a reviewed personal trigger. Derive the member from the existing session, require exact-origin
 mutations, and restrict the personal-test action to that member and one selected
 device. Use a labeled test event, short-lived one-use authorization and persistent
 idempotency key. No browser-supplied recipient may override server ownership.

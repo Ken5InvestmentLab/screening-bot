@@ -1,9 +1,12 @@
 # Cloud membership and push preparation
 
-This revision is **dry-run only**. It contains no push sender, scheduled handler,
-email collection, email sender, or public subscription-registration endpoint.
-No database, Whop app, webhook, credential, VAPID key, or deployment was created.
-The existing Discord notifications in `weak_early_beta/notify.py` are unchanged.
+Delivery remains disabled. Subscription registration/UI, push-only service worker,
+RFC web-push sender and an unwired personal dispatch helper now exist. No actual
+push, keys, credentials, DB resource, production binding or deployment was made.
+Discord login/role access and Discord-ID settings follow the approved contract in
+[CLOUD_DISCORD_PUSH_READINESS.md](CLOUD_DISCORD_PUSH_READINESS.md). That document
+also records an unresolved provider schema discrepancy; these membership fixtures
+are not proof of live paid qualification. Existing Discord notifications are unchanged.
 
 ## API contract
 
@@ -36,19 +39,20 @@ authenticated Discord subject; clients cannot choose another member's ID.
   current cycle; the next call after completion starts a new reevaluation cycle.
   Scan positions and source keys are server-side only and never returned.
 
-Missing D1 returns `503 storage_unavailable`. Unlinked users and missing Whop
-configuration receive only the generated free HTML, even with a Discord paid role.
-Raw JSON/CSV asset routes are not exposed. `/auth/check` repeats the Cloud check so
-the existing page guard also removes protected content after loss of eligibility.
-Mega does not supply the additional hook and retains its existing behavior.
+Missing D1 returns `503 storage_unavailable` for settings; it does not remove
+existing Discord role-based report access. Full pages, full lazy bundles and
+`/auth/check` keep their configured-role contract. Whop checks apply independently
+to notification opt-in/registration/delivery, with no additional user login.
+Free report identities still require actually verified D6 opening receipts.
 
 ## Identity and entitlement setup still required
 
 After separately approving production setup, bind an existing/new D1 database as
 `CLOUD_DB` and apply `migrations/0001_cloud_preferences.sql`, then
-`migrations/0002_notification_scan_progress.sql`. The second migration adds only
+`migrations/0002_notification_scan_progress.sql` and
+`migrations/0003_push_device_metadata.sql`. The second migration adds only
 per-member scan progress and a candidate-order index; it preserves existing event
-and delivery records. Both migrations are idempotent and tested in local SQLite.
+and delivery records. All three migrations are idempotent and tested in local SQLite.
 The current Wrangler
 configuration deliberately has no production binding or invented database ID.
 Local SQL/fixture checks can run without creating cloud resources.
@@ -56,19 +60,16 @@ Local SQL/fixture checks can run without creating cloud resources.
 Configure `WHOP_API_KEY`, `WHOP_ACCOUNT_ID`, comma-separated `WHOP_PRODUCT_IDS` and
 `WHOP_PAID_PLAN_IDS`; use `WHOP_ONE_TIME_PLAN_IDS` only for approved paid lifetime
 plans. Keep credentials in Worker secrets, never public assets or source control.
-The read-only provider calls are pinned to REST `Api-Version-Date: 2026-09-29`.
-Do not mix the current `user_id`, `account.id`, `current_period_end` fields with
-legacy API field names. See [membership](https://docs.whop.com/api-reference/beta/memberships/retrieve-membership)
-and [payments](https://docs.whop.com/api-reference/beta/payments/list-payments).
+The provider is pinned to `Api-Version-Date: 2026-09-29`, but exact-version live
+responses/filters/read scopes are not verified. Current public docs show different
+nested ID/period/payment formats than these fixtures. Validate and review a strict
+adapter before enabling notification registration or delivery. See the readiness
+document for the precise discrepancy and approval requirements.
 
-No Whop-link registration route is implemented. Provision `cloud_member_links`
-only after independently verifying both identities, using `cloudMemberId` for its
-member key. Required evidence includes Discord ID, Whop user ID, membership ID,
-initial payment ID, verification method/reference/time, and environment `live`.
-Never infer the link from email, display name, a Discord role, or client input.
-A future self-service flow must bind the current Discord session to Whop OAuth
-2.1 PKCE/state/nonce and verify `userinfo.sub`; only `openid` is needed for identity.
-[Official OAuth contract](https://docs.whop.com/developer/guides/oauth).
+Provision notification-only `cloud_member_links` from verified operator evidence
+of existing exact Discord/Whop IDs, membership/payment, method/reference/time and
+live environment. Never infer identity from email/display name or a client field.
+No new Cloud account, Whop login or repeated Whop OAuth is required of users.
 
 Eligibility requires matching owner/account/product/paid plan, active membership,
 an unexpired period, and a current-period positive paid payment that is not fully
@@ -143,7 +144,8 @@ is duplicated and unordered; never restore access from an older event.
 [Webhook specification](https://docs.whop.com/developer/guides/webhooks),
 [membership.updated](https://docs.whop.com/api-reference/beta/memberships/membership-updated).
 
-Browser push still needs an approved VAPID setup, service worker, explicit browser
-opt-in and validated subscription registration. Whop push would instead need its
-experience and notification permission. Neither is enabled by this revision.
-There is no setting or environment flag that turns dry-run into actual sending.
+Browser push registration, opt-out, service worker and personal-only sender now
+exist locally, all disabled by default. Approved live VAPID/provider settings,
+membership response verification, exact personal device and separate send approval
+remain required. There is no public test-send route, scheduled handler or broad
+member delivery mode. Dry-run API never invokes the sender.

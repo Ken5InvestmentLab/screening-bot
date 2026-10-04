@@ -506,7 +506,7 @@ async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv
   };
 }
 
-async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv, allowTokenRefresh = true): Promise<AuthorizationCheck> {
+async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv, allowTokenRefresh = true, freshRoles = false): Promise<AuthorizationCheck> {
   const now = Math.floor(Date.now() / 1000);
   if (!allowTokenRefresh && session.tokenExp <= now + TOKEN_REFRESH_SKEW_SECONDS) {
     return { authorized: false, refreshRequired: true };
@@ -534,7 +534,7 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
   }
 
   const hasFreshRoles = currentSession.roleCheckedAt > 0 && now - currentSession.roleCheckedAt <= ROLE_CACHE_SECONDS;
-  if (hasFreshRoles) {
+  if (hasFreshRoles && !freshRoles) {
     return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession, tokenRefreshed };
   }
 
@@ -556,7 +556,7 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
       return { authorized: false, refreshedSession, tokenRefreshed };
     }
     if (
-      error instanceof DiscordRateLimitedError &&
+      !freshRoles && error instanceof DiscordRateLimitedError &&
       currentSession.roleCheckedAt > 0 &&
       now - currentSession.roleCheckedAt <= ROLE_CACHE_RATE_LIMIT_GRACE_SECONDS
     ) {
@@ -630,12 +630,14 @@ async function additionalReportAccess(env: WorkerEnv, subject: string): Promise<
 // Cloud settings need an authenticated identity even after membership expiry so
 // users can opt out. Tokens stay private, and this function never refreshes or
 // writes a session cookie: the existing serialized /auth/check owns that work.
-export async function reportIdentity(request: Request, env: WorkerEnv): Promise<{
+// Cloud mutations/delivery can request freshRoles; this bypasses both the role
+// cache and rate-limit grace without changing the default report contract.
+export async function reportIdentity(request: Request, env: WorkerEnv, freshRoles = false): Promise<{
   subject?: string; discord_authorized: boolean; reason?: string;
 }> {
   const session = await readSession(request, env);
   if (!session) return { discord_authorized: false, reason: "login_required" };
-  const check = await checkSessionAuthorization(session, env, false);
+  const check = await checkSessionAuthorization(session, env, false, freshRoles);
   if (check.refreshRequired) return { discord_authorized: false, reason: "refresh_required" };
   if (check.loginRequired) return { discord_authorized: false, reason: "login_required" };
   if (check.temporaryError) return { discord_authorized: false, reason: "temporarily_unavailable" };

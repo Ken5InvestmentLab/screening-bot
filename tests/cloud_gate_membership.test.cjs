@@ -492,21 +492,22 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
 
 const bundlePath = (audience) => `/weak_early_beta_data_${audience}_analytics_${'a'.repeat(16)}_0000.json`;
 for (const scenario of ['paid', 'free', 'expired', 'test', 'unlinked', 'provider-error', 'unconfigured']) {
-  test(`lazy full/free bundle access is fail-closed for ${scenario}`, async () => {
+  test(`lazy full/free bundle preserves Discord role contract for ${scenario}`, async () => {
     const fixture = memberFixture();
     if (scenario === 'expired') fixture.membership.current_period_end = '2026-10-01T00:00:00Z';
     if (scenario === 'test') fixture.link.environment = 'test';
     const h = await apiHarness({ fixture, roles: scenario === 'free' ? [] : ['paid-discord-role'], configured: scenario !== 'unconfigured', providerStatus: scenario === 'provider-error' ? 503 : 200 });
     if (scenario === 'unlinked') h.db.state.links.clear();
     const full = await h.worker.fetch(await h.request(bundlePath('full')), h.env);
-    assert.equal(full.status, scenario === 'paid' ? 200 : 403);
+    assert.equal(full.status, scenario === 'free' ? 403 : 200);
     assert.equal(full.headers.get('cache-control'), 'private, no-store');
     assert.equal(full.headers.get('vary'), 'Cookie');
     assert.equal(full.headers.get('cross-origin-resource-policy'), 'same-origin');
     assert.equal(full.headers.get('access-control-allow-origin'), null);
     const free = await h.worker.fetch(await h.request(bundlePath('free')), h.env);
     assert.equal(free.status, 200);
-    if (scenario !== 'paid') assert.equal(h.assets.some(name => name.includes('_data_full_')), false);
+    if (scenario === 'free') assert.equal(h.assets.some(name => name.includes('_data_full_')), false);
+    assert.equal(h.calls.length, 0, 'report access must not require another Whop login/check');
   });
 }
 test('bundle routes reject unauthenticated, cross-origin, malformed and mutating requests', async () => {
@@ -520,12 +521,13 @@ test('bundle routes reject unauthenticated, cross-origin, malformed and mutating
   ]) assert.equal((await h.worker.fetch(await h.request(pathname, options), h.env)).status, expected);
   assert.equal(h.assets.length, 0);
 });
-test('bundle paid access rechecks live membership after an earlier successful request', async () => {
+test('bundle access follows the existing role while delivery separately rechecks revocation', async () => {
   const h = await apiHarness();
   assert.equal((await h.worker.fetch(await h.request(bundlePath('full')), h.env)).status, 200);
   h.provider.fixture.membership.status = 'revoked';
-  assert.equal((await h.worker.fetch(await h.request(bundlePath('full')), h.env)).status, 403);
-  assert.equal(h.assets.length, 1);
+  assert.equal((await h.worker.fetch(await h.request(bundlePath('full')), h.env)).status, 200);
+  assert.equal((await h.api.currentMembership(h.env, 'discord-user-1')).status, 'free');
+  assert.equal(h.assets.length, 2);
   assert.equal((await h.worker.fetch(await h.request(bundlePath('free'), { method: 'HEAD' }), h.env)).status, 200);
 });
 
@@ -953,21 +955,24 @@ for (const [label, setup] of [
   ['expired membership', { fixture: (() => { const f = memberFixture(); f.membership.status = 'expired'; return f; })() }],
   ['test identity', { fixture: (() => { const f = memberFixture(); f.link.environment = 'test'; return f; })() }],
 ]) {
-  test(`Cloud serves only the free asset for ${label}, including direct report URLs`, async () => {
+  test(`Cloud preserves existing role access for ${label}, without requiring a new Whop login`, async () => {
     const h = await apiHarness(setup);
     for (const pathname of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_fusion.html']) {
       const response = await h.worker.fetch(await h.request(pathname), h.env);
       assert.equal(response.status, 200);
       const html = await response.text();
-      assert.match(html, /RELEASED-PUBLIC-ONLY/);
-      assert.doesNotMatch(html, /SECRET-UNRELEASED-TICKER/);
+      assert.match(html, /SECRET-UNRELEASED-TICKER/);
       assert.equal(response.headers.get('cache-control'), 'private, no-store');
     }
-    assert.ok(h.assets.every(asset => asset.endsWith('_free.html')));
+    assert.ok(h.assets.every(asset => !asset.endsWith('_free.html')));
+    assert.equal(h.calls.length, 0);
+    const noRole = await apiHarness({ ...setup, roles: [] });
+    const denied = await noRole.worker.fetch(await noRole.request('/weak_early_beta_latest.html'), noRole.env);
+    assert.doesNotMatch(await denied.text(), /SECRET-UNRELEASED-TICKER/);
   });
 }
 
-test('only a verified paid member with a valid Discord session obtains the full report', async () => {
+test('valid Discord session and specified role retain report and auth/check access', async () => {
   const h = await apiHarness();
   const report = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html'), h.env);
   assert.equal(report.status, 200);
@@ -978,8 +983,9 @@ test('only a verified paid member with a valid Discord session obtains the full 
   const check = await h.worker.fetch(await h.request('/auth/check'), h.env);
   assert.equal(check.status, 200);
   h.provider.fixture.membership.status = 'expired';
-  const revoked = await h.worker.fetch(await h.request('/auth/check'), h.env);
-  assert.equal(revoked.status, 403);
+  const sameRole = await h.worker.fetch(await h.request('/auth/check'), h.env);
+  assert.equal(sameRole.status, 200);
+  assert.equal((await h.api.currentMembership(h.env, 'discord-user-1')).status, 'free');
 });
 
 for (const exit_endpoint of ['d5_close','d6_open']) test(`removed result ${exit_endpoint} is suppressed even for paid legacy opt-in`, () => {

@@ -58,6 +58,8 @@ for (const scriptName of [
   "weak-early-beta-interactions.js",
   "weak-early-beta-scenarios.js",
   "weak-early-beta-theme-init.js",
+  "weak-early-beta-push.js",
+  "weak-early-beta-service-worker.js",
 ]) {
   await copyFile(path.join(reports, scriptName), path.join(publicDir, scriptName));
   console.log(`synced reports/${scriptName}`);

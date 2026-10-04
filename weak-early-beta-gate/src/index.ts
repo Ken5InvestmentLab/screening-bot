@@ -1,10 +1,10 @@
 // The OAuth/session/role implementation remains byte-identical in the synced
 // shared module. This wrapper only lets the beta's mode pages use the same gate.
 import sharedGate, { reportIdentity } from "./shared-report-gate";
-import { cloudApi, currentMembership, type CloudEnv } from "./cloud-api";
+import { cloudApi, type CloudEnv } from "./cloud-api";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
-const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init|scenarios)\.js$/;
+const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init|scenarios|push|service-worker)\.js$/;
 const BUNDLE_RE = /^\/weak_early_beta_data_(full|free)_(latest|analytics|silence|dive|shadow|fusion|balance|guide)_([a-f0-9]{16})_(\d{4})\.json$/;
 type SharedRequest = Parameters<typeof sharedGate.fetch>[0];
 
@@ -17,7 +17,7 @@ async function bundleResponse(request: Request, env: CloudEnv, audience: string)
   try {
     const identity = await reportIdentity(request, env);
     if (!identity.subject) return reject(identity.reason === "temporarily_unavailable" ? 503 : 401);
-    if (audience === "full" && (!identity.discord_authorized || (await currentMembership(env, identity.subject)).status !== "paid")) return reject(403);
+    if (audience === "full" && !identity.discord_authorized) return reject(403);
     const asset = await env.ASSETS.fetch(new URL(new URL(request.url).pathname, "https://assets.local").toString());
     if (!asset.ok) return reject(404);
     return new Response(request.method === "HEAD" ? null : asset.body, { status: 200, headers });
@@ -31,13 +31,9 @@ export default {
     if (bundle) return bundleResponse(request, env, bundle[1]);
     if (pathname.startsWith("/weak_early_beta_data_")) return new Response("Not found", { status: 404, headers: { "cache-control": "private, no-store" } });
     if (pathname.startsWith("/api/cloud/")) return cloudApi(request, env);
-    // A Discord role alone never unlocks Cloud's unreleased identifiers.
-    // Missing configuration, unlinked users and provider failures all use free.
-    const protectedEnv = {
-      ...env,
-      REPORT_ACCESS_CHECK: async (subject: string) => (await currentMembership(env, subject)).status === "paid",
-      REPORT_ACCESS_DENIED_MESSAGE: "有効なWhop有料会員との連携を確認できません。会員資格を確認してからもう一度開いてください。",
-    };
+    // Keep existing Discord OAuth + configured-role access. Payment verification
+    // remains independent for notifications, without another user login.
+    const protectedEnv = env;
     if (BETA_SCRIPT_RE.test(pathname)) {
       const assetResponse = await env.ASSETS.fetch(
         new URL(pathname, "https://assets.local").toString(),
@@ -49,7 +45,7 @@ export default {
         status: assetResponse.status,
         headers: {
           "content-type": "application/javascript; charset=utf-8",
-          "cache-control": "public, max-age=300",
+          "cache-control": pathname.endsWith("service-worker.js") ? "no-store" : "public, max-age=300",
           "x-content-type-options": "nosniff",
         },
       });

@@ -1,4 +1,6 @@
 import { reportIdentity } from "./shared-report-gate";
+import { pushApi } from "./cloud-push";
+import type { PushConfig } from "./cloud-web-push";
 import {
   DEFAULT_PREFERENCES, WHOP_API_VERSION, evaluateMembership, evaluateNotification,
   isObject, validatePreferences,
@@ -6,7 +8,7 @@ import {
   type Preferences, type VerifiedMemberLink,
 } from "./cloud-membership";
 
-export type CloudEnv = Env & {
+export type CloudEnv = Env & PushConfig & {
   CLOUD_DB?: D1Database;
   WHOP_API_KEY?: string;
   WHOP_ACCOUNT_ID?: string;
@@ -114,7 +116,9 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
   const path = new URL(request.url).pathname;
   const methods: Record<string, string[]> = {
     "/api/cloud/preferences": ["GET", "PUT"],
-    "/api/cloud/push-subscriptions": ["DELETE"],
+    "/api/cloud/push-subscriptions": ["POST", "DELETE"],
+    "/api/cloud/push-config": ["GET"],
+    "/api/cloud/push-subscriptions/device": ["DELETE"],
     "/api/cloud/notifications/dry-run": ["POST"],
   };
   if (!methods[path]) return json({ ok: false, reason: "not_found" }, 404);
@@ -127,6 +131,12 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     if (!identity.subject) return json({ ok: false, reason: identity.reason }, identity.reason === "temporarily_unavailable" ? 503 : 401);
     if (!env.CLOUD_DB) return json({ ok: false, reason: "storage_unavailable", delivery_mode: "dry_run" }, 503);
     const memberId = await cloudMemberId(identity.subject);
+    if (path === "/api/cloud/push-config" || path === "/api/cloud/push-subscriptions/device" ||
+      (path === "/api/cloud/push-subscriptions" && request.method === "POST")) {
+      const freshIdentity = request.method === "POST" ? await reportIdentity(request, env, true) : identity;
+      return pushApi(request, env, { memberId, roleAuthorized: freshIdentity.discord_authorized,
+        membership: () => currentMembership(env, identity.subject!) });
+    }
     const preferences = await preferencesFor(env.CLOUD_DB, memberId);
     const membership = identity.discord_authorized
       ? await currentMembership(env, identity.subject)

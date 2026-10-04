@@ -69,6 +69,11 @@ export type MembershipDecision = {
   reason: string;
   checked_at: string;
 };
+// Report access continues to use its existing paid-role gate. This opt-in
+// audience only permits generic notifications after a successful fresh lookup.
+export function notificationEligible(member: MembershipDecision, audience?: string): boolean {
+  return member.status === "paid" || (audience === "authenticated" && member.status === "free" && member.reason === "managed_role_revoked");
+}
 const timestamp = (value: unknown): number => typeof value === "string" ? Date.parse(value) : NaN;
 const idOf = (value: unknown): unknown => isObject(value) ? value.id : undefined;
 
@@ -143,6 +148,7 @@ export type NotificationDecision = {
 export function evaluateNotification(
   event: NotificationEvent, preferences: Preferences, membership: MembershipDecision,
   nowMs = Date.now(),
+  audience?: string,
 ): NotificationDecision {
   const endpoint = event.endpoints[preferences.exit_endpoint];
   const key = [event.signal_id, event.kind, event.kind === "new_detection" ? "detected" : preferences.exit_endpoint,
@@ -153,7 +159,7 @@ export function evaluateNotification(
   // This feature has been removed; no preference can opt back into it.
   if (event.kind === "result") return result("suppressed", "result_notifications_removed");
   if (!preferences.notifications[event.kind]) return result("suppressed", "notification_off");
-  if (membership.status !== "paid") return result("held", membership.reason);
+  if (!notificationEligible(membership, audience)) return result("held", membership.reason);
   const checkedAt = timestamp(membership.checked_at);
   if (!Number.isFinite(checkedAt) || checkedAt > nowMs || nowMs - checkedAt > 30000) return result("held", "membership_check_stale");
   // The same verified detection-day real close is used by reports, CSV and alerts.

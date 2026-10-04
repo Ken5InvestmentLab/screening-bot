@@ -1,6 +1,6 @@
-import { isObject, type MembershipDecision } from "./cloud-membership";
+import { isObject, notificationEligible, type MembershipDecision } from "./cloud-membership";
 import { personalPreparationConfigured, registrationConfigured, validateSubscription, type PushConfig } from "./cloud-web-push";
-type Environment = PushConfig & { CLOUD_DB?: D1Database; ACCESS_PURCHASE_URL?: string };
+type Environment = PushConfig & { CLOUD_DB?: D1Database; CLOUD_PUSH_AUDIENCE?: string };
 type Dependencies = { memberId: string; roleAuthorized: boolean; membership: () => Promise<MembershipDecision> };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: {
   "cache-control": "private, no-store", vary: "Cookie", "x-content-type-options": "nosniff",
@@ -20,8 +20,9 @@ export async function pushApi(request: Request, env: Environment, context: Depen
     (!!env.CLOUD_PUSH_TEST_MEMBER_ID && context.memberId === env.CLOUD_PUSH_TEST_MEMBER_ID);
   if (path === "/api/cloud/push-config") {
     const membership = await context.membership();
-    const ready = context.roleAuthorized && personalMemberAllowed && registrationConfigured(env) && membership.status === "paid";
-    const preparation = context.roleAuthorized && personalMemberAllowed && personalPreparationConfigured(env) && membership.status === "paid";
+    const eligible = notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE) && (context.roleAuthorized || env.CLOUD_PUSH_AUDIENCE === "authenticated");
+    const ready = eligible && personalMemberAllowed && registrationConfigured(env);
+    const preparation = eligible && personalMemberAllowed && personalPreparationConfigured(env);
     const rows = await db.prepare(`SELECT s.subscription_id, m.endpoint_hash FROM cloud_push_subscriptions s
       JOIN cloud_push_subscription_metadata m ON m.subscription_id = s.subscription_id
       WHERE s.member_id = ? AND s.revoked_at IS NULL ORDER BY s.opted_in_at DESC LIMIT 50`)
@@ -31,8 +32,7 @@ export async function pushApi(request: Request, env: Environment, context: Depen
       (rows.results ?? []).some(device => device.subscription_id === env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID);
     return json({ ok: true, registration_available: ready, preparation_available: preparation, delivery_available: false,
       personal_test_available: testReady, ...(testReady ? { personal_test_subscription_id: env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID } : {}),
-      reason: ready ? "device_registration_only" : !personalMemberAllowed ? "personal_test_member_required" : membership.status !== "paid" ? membership.reason : "push_unavailable", membership,
-      ...(membership.status === "free" && env.ACCESS_PURCHASE_URL ? { purchase_url: env.ACCESS_PURCHASE_URL } : {}),
+      reason: ready ? "device_registration_only" : !personalMemberAllowed ? "personal_test_member_required" : !eligible ? membership.reason : "push_unavailable", membership, notification_eligible: eligible,
       ...(ready || preparation ? { public_key: env.CLOUD_VAPID_PUBLIC_KEY,
         allowed_origins: (env.CLOUD_PUSH_ALLOWED_ORIGINS ?? "").split(",").map(value => value.trim()).filter(Boolean) } : {}), devices: rows.results ?? [] });
   }
@@ -57,7 +57,7 @@ export async function pushApi(request: Request, env: Environment, context: Depen
   if (!registrationConfigured(env)) return json({ ok: false, reason: "registration_disabled" }, 503);
   if (!personalMemberAllowed) return json({ ok: false, reason: "personal_test_member_required" }, 403);
   const membership = await context.membership();
-  if (!context.roleAuthorized || membership.status !== "paid") return json({ ok: false, reason: "paid_membership_required", membership }, 403);
+  if (!notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE) || (!context.roleAuthorized && env.CLOUD_PUSH_AUDIENCE !== "authenticated")) return json({ ok: false, reason: "notification_qualification_required", membership }, 403);
   if (!isObject(input) || Object.keys(input).sort().join(",") !== "opt_in,subscription" || input.opt_in !== true) return json({ ok: false, reason: "explicit_opt_in_required" }, 400);
   let subscription;
   try { subscription = await validateSubscription(input.subscription, env); }

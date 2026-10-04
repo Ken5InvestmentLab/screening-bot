@@ -16,9 +16,11 @@ async function bundleResponse(request: Request, env: CloudEnv, audience: string)
   if (request.method !== "GET" && request.method !== "HEAD") return reject(405);
   if (request.headers.get("sec-fetch-site") === "cross-site" || (request.headers.get("origin") && request.headers.get("origin") !== new URL(request.url).origin)) return reject(403);
   try {
-    const identity = await reportIdentity(request, env);
-    if (!identity.subject) return reject(identity.reason === "temporarily_unavailable" ? 503 : 401);
-    if (audience === "full" && !identity.discord_authorized) return reject(403);
+    if (audience === "full") {
+      const identity = await reportIdentity(request, env, true);
+      if (!identity.subject) return reject(identity.reason === "temporarily_unavailable" ? 503 : 401);
+      if (!identity.discord_authorized) return reject(403);
+    }
     const asset = await env.ASSETS.fetch(new URL(new URL(request.url).pathname, "https://assets.local").toString());
     if (!asset.ok) return reject(404);
     return new Response(request.method === "HEAD" ? null : asset.body, { status: 200, headers });
@@ -38,7 +40,9 @@ export default {
     if (pathname.startsWith("/api/cloud/")) return cloudApi(request, env);
     // Keep existing Discord OAuth + configured-role access. Payment verification
     // remains independent for notifications, without another user login.
-    const protectedEnv = env;
+    // Only this Cloud Worker exposes pre-filtered free documents anonymously.
+    // Full assets and full lazy bundles retain the existing Discord role gate.
+    const protectedEnv = { ...env, REPORT_PUBLIC_FREE: "true", REPORT_REQUIRE_FRESH_ROLE: "true" };
     if (BETA_SCRIPT_RE.test(pathname)) {
       const assetResponse = await env.ASSETS.fetch(
         new URL(pathname, "https://assets.local").toString(),

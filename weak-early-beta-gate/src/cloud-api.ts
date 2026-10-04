@@ -5,7 +5,7 @@ import { evaluateNestedMembership } from "./cloud-whop-adapter";
 import type { PushConfig } from "./cloud-web-push";
 import {
   DEFAULT_PREFERENCES, WHOP_API_VERSION, evaluateMembership, evaluateNotification,
-  isObject, validatePreferences,
+  isObject, validatePreferences, notificationEligible,
   type MembershipDecision, type MembershipPolicy, type NotificationEvent,
   type Preferences, type VerifiedMemberLink,
 } from "./cloud-membership";
@@ -19,6 +19,7 @@ export type CloudEnv = Env & PushConfig & {
   WHOP_ONE_TIME_PLAN_IDS?: string;
   WHOP_RESPONSE_SCHEMA?: string;
   CLOUD_PUSH_MEMBERSHIP_POLICY?: string;
+  CLOUD_PUSH_AUDIENCE?: string;
   SESSION_SECRET?: string;
 };
 const list = (value?: string): string[] => (value ?? "").split(",").map(x => x.trim()).filter(Boolean);
@@ -148,15 +149,14 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
   }
   try {
     const managedRoles = env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role";
-    const ownSettings = path === "/api/cloud/preferences" || path.startsWith("/api/cloud/push-");
-    const identity = path === "/api/cloud/notifications/personal-test" || (managedRoles && ownSettings)
+    const identity = path === "/api/cloud/notifications/personal-test" || managedRoles
       ? await reportSessionIdentity(request, env) : await reportIdentity(request, env);
     if (!identity.subject) return json({ ok: false, reason: identity.reason }, identity.reason === "temporarily_unavailable" ? 503 : 401);
     if (!env.CLOUD_DB) return json({ ok: false, reason: "storage_unavailable", delivery_mode: "dry_run" }, 503);
     const memberId = await cloudMemberId(identity.subject);
     const freshMembership = (fresh: Awaited<ReturnType<typeof reportIdentity>>) => {
       if (fresh.subject !== identity.subject) return { status: "unavailable" as const,
-        reason: fresh.reason === "login_required" || fresh.reason === "refresh_required" || fresh.reason?.startsWith("discord_role_lookup_") ? fresh.reason : "fresh_managed_role_unavailable",
+        reason: fresh.reason === "login_required" || fresh.reason === "refresh_required" || fresh.reason?.startsWith("discord_role_") ? fresh.reason : "fresh_managed_role_unavailable",
         checked_at: new Date().toISOString() };
       return currentMembership(env, identity.subject!, fresh.discord_authorized);
     };
@@ -182,25 +182,29 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
       membership = await freshMembership(fresh);
     }
     if (path === "/api/cloud/preferences") {
-      if (request.method === "GET") return json({ ok: true, preferences, membership, delivery_mode: "dry_run", persistence: "server" });
+      if (request.method === "GET") return json({ ok: true, preferences, membership, notification_eligible: notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE), delivery_mode: "dry_run", persistence: "server" });
       let next: Preferences;
       try { next = validatePreferences(await requestJson(request)); }
       catch { return json({ ok: false, reason: "invalid_preferences" }, 400); }
-      const enabling = Object.values(next.notifications).some(Boolean);
+      // Saving display/trial settings must not re-enable an already saved opt-in
+      // or depend on a role lookup. Delivery still always performs a fresh check.
+      const enabling = (Object.keys(next.notifications) as (keyof Preferences["notifications"])[])
+        .some(kind => next.notifications[kind] && !preferences.notifications[kind]);
       if (enabling && managedRoles) {
         const fresh = await reportIdentity(request, env, true);
         membership = await freshMembership(fresh);
       }
-      if (enabling && membership.status !== "paid") return json({ ok: false, reason: "paid_membership_required", membership }, 403);
+      if (enabling && !notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE)) return json({ ok: false, reason: "notification_qualification_required", membership }, 403);
       const saved = await preferenceStatement(env.CLOUD_DB, memberId, next).run();
       if (!saved.success) throw new Error("preference_save_failed");
-      return json({ ok: true, preferences: next, membership, delivery_mode: "dry_run", persistence: "server" });
+      return json({ ok: true, preferences: next, membership, notification_eligible: notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE), delivery_mode: "dry_run", persistence: "server" });
     }
     // Candidates are trusted server-produced canonical observations. This route
     // never accepts a browser-supplied signal, price, identity, or recipient.
     let input: unknown;
     try { input = await requestJson(request); } catch { return json({ ok: false, reason: "invalid_request" }, 400); }
     if (!isObject(input) || Object.keys(input).length) return json({ ok: false, reason: "empty_body_required" }, 400);
+    if (managedRoles) membership = await freshMembership(await reportIdentity(request, env, true));
     const now = Date.now();
     const nowIso = new Date(now).toISOString();
     const initialized = await env.CLOUD_DB.prepare(`INSERT OR IGNORE INTO cloud_notification_scan_progress
@@ -235,7 +239,7 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
       }
       const event = parsed as NotificationEvent;
       let decision: ReturnType<typeof evaluateNotification>;
-      try { decision = evaluateNotification(event, preferences, membership, now); }
+      try { decision = evaluateNotification(event, preferences, membership, now, env.CLOUD_PUSH_AUDIENCE); }
       catch {
         // One malformed private candidate must not strand every following page.
         results.push({ status: "held", reason: "invalid_candidate_data" });

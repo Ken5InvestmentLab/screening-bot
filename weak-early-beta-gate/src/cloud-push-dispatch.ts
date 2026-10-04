@@ -2,7 +2,7 @@
 // test below, with no browser-supplied event, recipient, or message.
 import { reportIdentity, reportSessionIdentity } from "./shared-report-gate";
 import { cloudMemberId, currentMembership, type CloudEnv } from "./cloud-api";
-import { evaluateNotification, isObject, validatePreferences, DEFAULT_PREFERENCES, type NotificationEvent } from "./cloud-membership";
+import { evaluateNotification, notificationEligible, isObject, validatePreferences, DEFAULT_PREFERENCES, type NotificationEvent } from "./cloud-membership";
 import { sendPersonalPush, type SendResult, type PushSubscription, type encryptPushPayload } from "./cloud-web-push";
 type Device = PushSubscription & { member_id: string; subscription_id: string; revoked_at: string | null; vapid_public_key: string; expires_at_ms: number | null };
 type Identity = { subject?: string; discord_authorized: boolean };
@@ -39,11 +39,11 @@ export async function dispatchPersonalDeviceTest(request: Request, env: CloudEnv
   // re-read opt-in before transport; failures remain non-retryable receipts.
   try {
     const fresh = await reportIdentity(request, env, true);
-    if (fresh.reason === "temporarily_unavailable" || fresh.reason?.startsWith("discord_role_lookup_"))
+    if (fresh.reason === "temporarily_unavailable" || fresh.reason?.startsWith("discord_role_"))
       return finish({ status: "held", reason: "fresh_discord_role_unavailable" });
-    if (fresh.subject !== identity.subject || !fresh.discord_authorized)
+    if (fresh.subject !== identity.subject || (!fresh.discord_authorized && env.CLOUD_PUSH_AUDIENCE !== "authenticated"))
       return finish({ status: "held", reason: "fresh_discord_role_required" });
-    if ((await currentMembership(env, identity.subject!, true)).status !== "paid")
+    if (!notificationEligible(await currentMembership(env, identity.subject!, fresh.discord_authorized), env.CLOUD_PUSH_AUDIENCE))
       return finish({ status: "held", reason: "fresh_paid_membership_required" });
     if (!await optedIn()) return finish({ status: "held", reason: "notification_opt_in_required" });
   } catch { return finish({ status: "held", reason: "final_qualification_unavailable" }); }
@@ -113,7 +113,7 @@ async function dispatchWithIdentity(env: CloudEnv, sourceEventKey: string, ident
   // checks any separately approved runtime configuration without enabling it.
   if (!db || String(env.CLOUD_PUSH_MODE) !== "personal_test" || !env.CLOUD_PUSH_TEST_MEMBER_ID || !env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID) return { status: "disabled", reason: "personal_test_not_enabled" };
   const identity = await identityRead();
-  if (!identity.subject || !identity.discord_authorized) return { status: "held", reason: "fresh_discord_role_required" };
+  if (!identity.subject || (!identity.discord_authorized && env.CLOUD_PUSH_AUDIENCE !== "authenticated")) return { status: "held", reason: "fresh_discord_role_required" };
   const memberId = await cloudMemberId(identity.subject);
   if (memberId !== env.CLOUD_PUSH_TEST_MEMBER_ID) return { status: "disabled", reason: "personal_test_member_required" };
   const candidate = await db.prepare("SELECT event_json, source_ledger_revision FROM cloud_notification_events WHERE source_event_key = ? AND available_at <= ?")
@@ -136,7 +136,7 @@ async function dispatchWithIdentity(env: CloudEnv, sourceEventKey: string, ident
     const row = await db.prepare("SELECT preferences_json FROM cloud_member_preferences WHERE member_id = ?").bind(memberId).first<{ preferences_json: string }>();
     const prefs = validatePreferences(row ? JSON.parse(row.preferences_json) : DEFAULT_PREFERENCES, true);
     const member = await currentMembership(env, identity.subject!, roleAuthorized);
-    return evaluateNotification(event, prefs, member, Date.now());
+    return evaluateNotification(event, prefs, member, Date.now(), env.CLOUD_PUSH_AUDIENCE);
   };
   let decision;
   try { decision = await check(identity.discord_authorized); }
@@ -157,7 +157,7 @@ async function dispatchWithIdentity(env: CloudEnv, sourceEventKey: string, ident
   };
   // Repeat identity/role, selected membership policy, and opt-in before send.
   const fresh = await identityRead();
-  if (!fresh.discord_authorized || fresh.subject !== identity.subject) return finish({ status: "held", reason: "fresh_discord_role_required" });
+  if (fresh.subject !== identity.subject || (!fresh.discord_authorized && env.CLOUD_PUSH_AUDIENCE !== "authenticated")) return finish({ status: "held", reason: "fresh_discord_role_required" });
   let second;
   try { second = await check(fresh.discord_authorized); }
   catch { return finish({ status: "held", reason: "invalid_candidate_or_preferences" }); }

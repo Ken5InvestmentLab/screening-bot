@@ -608,12 +608,12 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             f'<div data-label="検出日">{signal_date:%Y-%m-%d}</div>'
             f'<div class="history-company"><strong><span class="symbol">{html.escape(display_symbol)}</span> {html.escape(display_name)}</strong><small>検出日 終値 {signal_display}</small><div class="actions">{actions}</div></div>'
             f'<div data-label="該当モード">{badges}<small data-scenario-shares>100株で買付</small></div>'
-            f'<div data-label="保有状況"><span data-exit-key="d5_close" class="status {status_class}">{"結果あり" if status == "確定" else status}</span><span data-exit-key="d6_open" class="status {"reference" if reference_only else "mature" if d6_economic else "pending"}" hidden>{"参考値・成績に含めません" if reference_only else d6_result_status}</span></div>'
+            f'<div data-label="状況"><span data-exit-key="d5_close" class="status {status_class}">{"結果あり" if status == "確定" else status}</span><span data-exit-key="d6_open" class="status {"reference" if reference_only else "mature" if d6_economic else "pending"}" hidden>{"参考値・成績に含めません" if reference_only else d6_result_status}</span></div>'
             f'<div data-label="買付日・始値"><span data-exit-key="d5_close">{entry_display}</span><span data-exit-key="d6_open" hidden>{d6_entry_display}</span><small data-scenario-cost></small></div>'
             f'<div data-label="5営業日後 終値">{exit_display}</div>'
             f'<div data-label="6営業日後 始値">{d6_display}</div>'
             f'<div data-label="成績" class="number"><small class="history-endpoint-label" data-scenario-endpoint-label>6営業日後 始値</small><strong data-scenario-pl>{_yen(cash.iloc[0]) if not cash.empty else "—"}</strong><small data-scenario-return>{_pct(gross.iloc[0] * 100, True) if not gross.empty else "—"}</small>{reference_marker}</div>'
-            '</div>' + reference_note + '</td>'
+            '</div>' + reference_note + '<button class="history-mobile-toggle" type="button" data-cloud-history-details aria-expanded="false">詳細を見る</button></td>'
             "</tr>"
         )
     return "".join(rows)
@@ -743,8 +743,8 @@ def _page_shell(title: str, current: str, body: str) -> str:
     document_title = "天底極致 -Cloud-" if current == "home" else f"{title} | 天底極致 -Cloud-"
     result = f'''<!doctype html>
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20261004-v06-01"></script><style>{REPORT_CSS}</style>
-<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-v08" defer></script><script src="./weak-early-beta-push.js?v=20261005-v08" defer></script></head>
+<title>{html.escape(document_title)}</title><script src="./weak-early-beta-theme-init.js?v=20261005-v09"></script><style>{REPORT_CSS}</style>
+<script src="./weak-early-beta-scenarios.js?v=20261004-v06-01" defer></script><script src="./weak-early-beta-interactions.js?v=20261005-v09" defer></script><script src="./weak-early-beta-push.js?v=20261005-v09" defer></script></head>
 <body data-page="{html.escape(current)}"><header class="topbar"><nav class="nav"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致 Cloud トップへ"><img class="brand-logo brand-logo-light" src="report-assets/cloud-logo-light.png?v=transparent-1" alt="天底極致 -Cloud-"><img class="brand-logo brand-logo-dark" src="report-assets/cloud-logo-dark.png?v=20260923-1" alt="天底極致 -Cloud-"></a><div class="nav-links" aria-label="ページ移動">{_nav(current)}</div><button class="theme-toggle" id="theme-toggle" type="button" data-theme-toggle aria-pressed="false" aria-label="ダークモードに切り替える"><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-knob"></span></span><span class="theme-toggle-label">ダーク</span></button></nav></header>
 <main>{body}</main>{_site_footer()}</body></html>'''
     # Cloudflare's per-asset limit must be checked before overwriting the
@@ -756,8 +756,9 @@ def _page_shell(title: str, current: str, body: str) -> str:
     menu_links = _nav(current).replace('class="nav-link active"', 'class="nav-link active" aria-current="page"')
     navigation_items = re.findall(r'<a\b.*?</a>', menu_links)
     primary_links, secondary_links = ''.join(navigation_items[:2]), ''.join(navigation_items[2:])
+    secondary_links += '<a class="nav-link" href="/auth/login">Discordでログイン</a>'
     new_navigation = (f'<div class="cloud-main-nav" aria-label="ページ移動"><span class="cloud-primary-nav">{primary_links}</span><span class="cloud-secondary-nav">{secondary_links}</span></div>'
-        f'<div class="nav-tools"><button id="cloud-menu-toggle" class="nav-control {"active" if current not in ("home", "analytics") else ""}" type="button" aria-controls="cloud-navigation" aria-expanded="false" aria-label="その他のページを開く">その他 <span aria-hidden="true">⌄</span></button>'
+        f'<div class="nav-tools"><button id="cloud-menu-toggle" class="nav-control {"active" if current not in ("home", "analytics") else ""}" type="button" aria-controls="cloud-navigation" aria-expanded="false" aria-label="その他のページを開く">その他</button>'
         '<button id="cloud-settings-open" class="nav-control" type="button" aria-haspopup="dialog" aria-controls="cloud-settings-dialog" aria-label="表示・試算設定を開く"><span aria-hidden="true">⚙</span> 設定</button></div>'
         f'<div id="cloud-navigation" class="nav-links cloud-navigation" aria-label="その他のページ" hidden>{secondary_links}</div>')
     result = result.replace(old_navigation, new_navigation)
@@ -981,7 +982,7 @@ def _history_section(
         mode_filter = f'<select id="selector-filter" aria-label="モードで絞り込み"><option value="">すべてのモード</option>{options}</select>'
     access_notice = (
         '<div class="note"><strong>無料版で見られる情報</strong><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p>'
-        '<p>最新の検出銘柄は、有料会員向けに公開しています。</p><a href="/purchase">有料版について</a></div>'
+        '<p>最新の検出銘柄は、有料会員向けに公開しています。</p><a class="button-link" href="/purchase">有料プランを見る</a></div>'
         if mask_pending else ""
     )
     return (
@@ -997,7 +998,7 @@ def _history_section(
         + '<button class="clear-search" id="clear-search" type="button">検索をクリア</button>'
         '<output class="result-count" id="search-result-count" aria-live="polite"></output></div>'
         '<noscript><p class="note">検索機能を使うにはJavaScriptを有効にしてください。</p></noscript>'
-        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th colspan="8"><div class="history-visible-grid"><div>検出日</div><div>銘柄</div><div>該当モード</div><div>保有状況</div><div>買付日・始値</div><div>5営業日後 終値</div><div>6営業日後 始値</div><div class="number">成績<small data-scenario-endpoint-label>6営業日後 始値</small></div></div></th></tr></thead>'
+        '<div class="table-wrap history-table-wrap"><table id="detection-table"><thead><tr><th colspan="8"><div class="history-visible-grid"><div>検出日</div><div>銘柄</div><div>該当モード</div><div>状況</div><div>買付日・始値</div><div>5営業日後 終値</div><div>6営業日後 始値</div><div class="number">成績<small data-scenario-endpoint-label>6営業日後 始値</small></div></div></th></tr></thead>'
         f'<tbody>{_detection_rows(ledger, mask_pending=mask_pending)}</tbody></table></div>'
         '<div class="history-pagination"><button class="load-more" id="history-load-more" type="button">次の20件を表示</button>'
         '<button class="collapse-results" id="history-collapse" type="button" hidden>最初の20件に戻す</button></div>'
@@ -1235,7 +1236,7 @@ def _scope_definitions(source: pd.DataFrame) -> dict[str, dict]:
 def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
     options = "".join(f'<option value="{html.escape(key)}">{html.escape(scope["label"])}</option>' for key, scope in (scopes or {"all": {"label": "記録期間すべて"}}).items())
     return '''<dialog id="cloud-settings-dialog" class="cloud-settings-dialog" aria-labelledby="cloud-settings-title"><section class="cloud-settings">
-<div class="settings-heading"><h2 id="cloud-settings-title">表示・試算設定</h2><button id="cloud-settings-close" class="settings-close" type="button" aria-label="設定を閉じる"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
+<div class="settings-heading"><h2 id="cloud-settings-title">設定</h2><button id="cloud-settings-close" class="settings-close" type="button" aria-label="設定を閉じる"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6L18 18M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></div>
 <div class="settings-tabs" role="tablist" aria-label="設定の項目"><button id="settings-tab-trial" role="tab" aria-selected="true" aria-controls="settings-trial" type="button">試算方法</button><button id="settings-tab-notifications" role="tab" aria-selected="false" aria-controls="settings-notifications" tabindex="-1" type="button">通知</button><button id="settings-tab-display" role="tab" aria-selected="false" aria-controls="settings-display" tabindex="-1" type="button">表示</button></div>
 <div id="settings-trial" role="tabpanel" aria-labelledby="settings-tab-trial"><div class="filters">
 <label class="filter-field"><span>検出年</span><select id="cloud-year-scope">''' + options + '''</select></label>
@@ -1245,14 +1246,14 @@ def _settings_panel(scopes: dict[str, dict] | None = None) -> str:
 <label class="filter-field"><span>買付方法</span><select id="cloud-allocation"><option value="all">両方式を比較</option><option value="unique">各銘柄を同じ株数で買う</option><option value="stacked">一致した条件数に応じて株数を増やす</option></select></label>
 <label class="filter-field"><span>基準となる株数</span><input id="cloud-base-shares" type="number" min="100" max="1000000" step="100" inputmode="numeric" value="100"></label>
 <label class="filter-field"><span>売買コスト（片道 %）</span><input id="cloud-cost-percent" type="number" min="0" max="10" step="0.01" inputmode="decimal" value="0"></label></div>
-<p class="note">初期表示は1,000円以下・確定日は6営業日後始値・両方式・基準となる株数100株・コスト0%。保存した設定がある場合は、そちらを使います。各銘柄を同じ株数で買う場合は基準となる株数、一致した条件数に応じて増やす場合は基準となる株数×条件数で試算します。株数を増やすと必要な資金も増えます。</p>
-<p class="note">上限は検出済みの銘柄を絞る条件で、検出対象を広げません。コストは買付額・売却額の両方にかかります。配当・税金は含みません。</p>
-<p class="note">確定日は試算で使う売却価格を確認する日です。5営業日後の終値と6営業日後の始値から選びます。予定日前は「確定日待ち」、予定日を過ぎても価格が分からない場合は「未取得」と表示します。</p></div>
-<div id="settings-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications" hidden><p id="cloud-notification-readiness" role="status">通知の利用状況を確認しています。</p><div id="cloud-notification-settings"></div></div>
+<p class="note">条件数に応じて株数を増やす場合は、基準となる株数×一致条件数で試算します。</p>
+<p class="note">株価の上限は絞り込み条件です。コストは買付・売却の両方に適用し、配当・税金は含みません。</p>
+</div>
+<div id="settings-notifications" role="tabpanel" aria-labelledby="settings-tab-notifications" hidden><div id="cloud-notification-settings"></div></div>
 <div id="settings-display" role="tabpanel" aria-labelledby="settings-tab-display" hidden><div class="filters">
 <label class="filter-field"><span>テーマ</span><select id="cloud-theme"><option value="light">ライト</option><option value="dark" selected>ダーク</option><option value="system">端末に合わせる</option></select></label>
 <label class="filter-field"><span>文字サイズ</span><select id="cloud-font-size"><option value="small">小さめ</option><option value="standard" selected>標準</option><option value="large">大きめ</option></select></label>
-<label class="filter-field"><span>一覧件数</span><select id="cloud-page-size"><option value="20">20件</option><option value="50">50件</option><option value="100">100件</option></select></label></div><p class="note">表示設定はこの端末に保存します。未保存のテーマ・文字サイズは確認用に表示し、キャンセルで元に戻ります。</p></div>
+<label class="filter-field"><span>一覧件数</span><select id="cloud-page-size"><option value="20">20件</option><option value="50">50件</option><option value="100">100件</option></select></label></div><p class="note">表示設定はこの端末に保存します。</p></div>
 <p id="cloud-settings-status" role="status" aria-live="polite">保存済みの設定を読み込んでいます。</p>
 <div class="settings-actions"><button id="cloud-research-reset" class="settings-secondary" type="button">試算方法をリセット</button><button id="cloud-settings-cancel" class="settings-secondary" type="button">キャンセル</button><button id="cloud-settings-save" class="settings-primary" type="button">設定を保存</button></div></section></dialog><output id="cloud-settings-feedback" role="status" aria-live="polite"></output><output id="cloud-applied-summary" class="scenario-apply" aria-live="polite"></output>'''
 
@@ -1424,6 +1425,11 @@ def _aggregate_variant_payload(source: pd.DataFrame, generated: pd.Timestamp, cu
     return default_html, serialized
 
 
+MASKED_PENDING_NOTICE = ('<section class="panel" id="cloud-masked-pending"><h2>未確定銘柄</h2>'
+    '<p>未確定の銘柄があります。</p><p aria-label="銘柄名・価格は有料会員限定">銘柄：••••　価格：••••</p>'
+    '<a class="button-link" href="/purchase">有料プランで詳細を見る</a></section>')
+
+
 def _variant_page(
     ledger: pd.DataFrame,
     generated_at: pd.Timestamp,
@@ -1436,6 +1442,9 @@ def _variant_page(
     # CSV aggregates, compressed variants, or the history table. Omitting only
     # symbols cannot protect identities inferable from a price/return path.
     source = annotate_entry_feasibility(released_history(ledger) if mask_pending else visible_history(ledger))
+    # The approved teaser reveals existence only. No raw row, count, date,
+    # identity, price or hidden attributes are passed into the public template.
+    pending_notice = MASKED_PENDING_NOTICE if mask_pending and len(visible_history(ledger)) > len(source) else ""
     if current in SELECTOR_ORDER:
         # A mode page selects its own detections, but proportional buying uses
         # the same full set of matched modes as the combined Cloud strategy.
@@ -1471,8 +1480,8 @@ def _variant_page(
     if current in SELECTOR_ORDER:
         info = selector_info(current)
         mode_context = f'<div id="cloud-mode-context" hidden data-feature="{html.escape(info.feature_summary, quote=True)}" data-selection="{html.escape(info.selection_summary, quote=True)}"></div>'
-    access_notice = ('<section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>' if mask_pending and current == 'analytics' else '')
-    body = (f'<div id="cloud-analytics-content">{default_html}</div>' + access_notice
+    access_notice = ('<section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p><a class="button-link" href="/purchase">有料プランを見る</a></section>' if mask_pending and current == 'analytics' else '')
+    body = (f'<div id="cloud-analytics-content">{default_html}</div>' + pending_notice + access_notice
         + _settings_panel(scopes) + mode_context + history + _mode_pages_section(generated, include_updated=False)
         + f'<script id="cloud-analytics-data" type="application/json">{serialized}</script>')
     title = "ダッシュボード" if current == "home" else "アナリティクス" if current == "analytics" else selector_info(current).display_name
@@ -1513,15 +1522,15 @@ def render_mode_report(
     return _variant_page(ledger, generated_at, selector_id, mask_pending=mask_pending, _variant_cache=_variant_cache)
 
 
-def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
+def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None, *, mask_pending: bool = False) -> str:
     generated = generated_at.tz_convert("Asia/Tokyo") if generated_at.tzinfo else generated_at.tz_localize("Asia/Tokyo")
     mode_routes = {selector_info(key).short_name: MODE_PAGE_NAMES[key] for key in SELECTOR_ORDER}
     mode_links = "、".join(f'<a href="./{html.escape(mode_routes[name])}">{name}</a>' for name in ("Shadow", "Dive", "Silence", "Fusion", "Balance"))
     body = f'''
 <section class="hero"><div class="panel hero-main"><span class="eyebrow">GUIDE</span><h1>ヘルプ</h1>
 <p class="lead">はじめての方でも、見つかった銘柄と過去の成績を順番に確認できるガイドです。</p></div>
-<aside class="panel"><div class="kpis"><div class="kpi"><small>買付</small><b>検出の翌営業日 始値</b></div><div class="kpi"><small>確定日</small><b>5営業日後 終値 / 6営業日後 始値</b></div><div class="kpi"><small>基準となる株数</small><b>初期値100株</b></div><div class="kpi"><small>売買コスト</small><b>初期値0%</b></div></div></aside></section>
-<section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p></section>
+</section>
+<section class="panel"><h2>無料版で見られる情報</h2><p>検出から6営業日後の始値を確認できた銘柄を公開しています。グラフや成績も、公開済みの銘柄だけで計算しています。</p><p>最新の検出銘柄は、有料会員向けに公開しています。</p>{'<a class="button-link" href="/purchase">有料プランを見る</a>' if mask_pending else ''}</section>
 <section class="panel"><h2>まず見る場所</h2><div class="guide-grid">
 <article class="guide-card"><h3><a href="./weak_early_beta_latest.html">ダッシュボード</a></h3><p>最初に開くページです。条件に当てはまった銘柄を新しい順に確認し、銘柄名・証券コード・日付・モードで絞り込めます。</p></article>
 <article class="guide-card"><h3><a href="./{ANALYTICS_PAGE_NAME}">アナリティクス</a></h3><p>Cloud全体の過去成績を見るページです。選択した株数とコストで試算した損益、勝率、平均騰落率、資産の動きを確認できます。</p></article>
@@ -1538,7 +1547,7 @@ def render_guide(generated_at: pd.Timestamp, scopes: dict | None = None) -> str:
 <article class="guide-card"><h3>参考値・成績に含めません</h3><p>{html.escape(REFERENCE_POLICY_NOTE)} 履歴の騰落率と損益は仮定上の参考値として残します。</p></article>
 </div></section>
 <section class="panel"><h2>2つの買付方法</h2><div class="guide-grid"><article class="guide-card"><h3>各銘柄を同じ株数で買う</h3><p>同じ日・同じ銘柄を<span data-guide-base-shares>100</span>株で試算します。複数の条件に一致しても株数は増やしません。</p></article><article class="guide-card"><h3>一致した条件数に応じて株数を増やす</h3><p>基準となる株数が<span data-guide-base-shares>100</span>株なら、3条件に一致した銘柄は<span data-guide-stacked-shares>300</span>株で試算します。</p></article></div><p class="note">条件が複数一致しても、将来の値動きを保証しません。</p></section>
-<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知は現在利用できません。有料会員向けの機能で、初期値はOFFです。通知名は「確定日の朝8時（日本時間）」です。選んだ確定日の朝8時にお知らせします。その日の価格はまだ確定していません。通知本文は「今日は、設定した確定日です」です。</p></section>
+<section class="panel"><h2>設定と通知</h2><p>「設定」は全ページで共通です。「試算方法」「通知」「表示」の3タブで変更し、「設定を保存」で反映します。キャンセル・×・画面外のクリック・Escapeでは元に戻ります。</p><p>通知はログイン済みの無料・有料会員が利用できます。銘柄名・価格は含みません。初期値はOFFです。端末登録と通知許可が必要で、通常配信は準備中です。通知名は「確定日の朝8時（日本時間）」です。選んだ確定日の朝8時にお知らせします。その日の価格はまだ確定していません。通知本文は「今日は、設定した確定日です」です。</p></section>
 <section class="panel"><h2>大切な注意事項</h2>
 <p>本サイトは過去データとルールに基づく情報提供・検証を目的としたもので、特定銘柄の売買を勧める投資助言ではありません。将来の収益や価格上昇を保証するものでもありません。</p>
 <p>実際の取引では、手数料、税金、スリッページ、流動性、値幅制限、寄付で約定できない可能性などにより結果が異なります。投資判断は、ご自身で最新の開示・株価・財務情報を確認したうえで行ってください。</p>
@@ -1613,7 +1622,7 @@ def write_report(
     guide_html = render_guide(generated, _scope_definitions(visible_history(ledger)))
     guide_path.write_text(guide_html, encoding="utf-8")
     guide_path.with_name(guide_path.stem + "_free.html").write_text(
-        render_guide(generated, _scope_definitions(released_history(ledger))),
+        render_guide(generated, _scope_definitions(released_history(ledger)), mask_pending=True),
         encoding="utf-8",
     )
     for selector_id, filename in MODE_PAGE_NAMES.items():
@@ -1698,3 +1707,48 @@ body[data-page=analytics] .analytics-detail-table-wrap{width:100%;max-width:100%
 REPORT_CSS += ".cloud-bar-track{position:relative}.cloud-bar-track:after{content:'';position:absolute;left:var(--bar-zero,0%);top:0;bottom:0;width:1px;background:var(--muted);opacity:.65}"
 
 REPORT_CSS += ".cloud-settings .settings-close{display:grid;place-items:center;flex:0 0 44px;width:44px;height:44px;min-height:44px;padding:0!important;line-height:1;border-radius:12px;align-self:center}.settings-close svg{display:block;width:20px;height:20px}.settings-heading h2{line-height:1.3}"
+
+
+# Match the existing Cloud card layout on phones; keep desktop tables unchanged.
+REPORT_CSS += """
+@media(max-width:820px){
+  body{font-size:calc(16px * var(--text-scale));line-height:1.7}
+  main{padding:18px 12px 48px;min-width:0}
+  .panel,.hero,.kpis,.cloud-settings,.history-record{min-width:0}
+  .panel{padding:16px}.hero h1{font-size:calc(26px * var(--text-scale))}
+  .note,.lead,.history-visible-grid small{font-size:calc(14px * var(--text-scale))}
+  .cloud-settings-dialog{width:calc(100vw - 16px);max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);margin:auto;border-radius:14px;overflow:auto}
+  .cloud-settings-dialog .cloud-settings{padding:16px;line-height:1.7}
+  .cloud-settings .filters{grid-template-columns:minmax(0,1fr)}
+  .cloud-settings button,.cloud-settings select,.cloud-settings input:not([type=checkbox]),.cloud-settings .button-link{font-size:calc(16px * var(--text-scale));min-height:44px}
+  .cloud-settings p,.cloud-settings .note,#cloud-device-status,#cloud-device-permission,#cloud-settings-status,#cloud-notification-readiness{font-size:calc(14px * var(--text-scale));overflow-wrap:anywhere}
+  .cloud-notification-settings>label{display:flex;align-items:center;gap:6px;padding:10px 0;font-size:calc(16px * var(--text-scale));min-height:44px}
+  .cloud-settings input[type=checkbox]{width:22px;min-width:22px;height:22px;min-height:22px;flex:0 0 22px}
+  #cloud-device-register,#cloud-device-test,#cloud-device-revoke{width:100%;white-space:normal;line-height:1.5;margin:6px 0;padding:10px 12px}
+  .settings-tabs{gap:6px}.settings-tabs button{padding:10px 6px}
+  .settings-actions{gap:8px;flex-wrap:wrap;padding-top:12px;padding-bottom:env(safe-area-inset-bottom,0px)}
+  .settings-actions button{padding:10px 12px}
+  .history-visible-grid{grid-template-columns:repeat(2,minmax(0,1fr));font-size:calc(16px * var(--text-scale));gap:12px}
+  .history-visible-grid>div:before{font-size:calc(13px * var(--text-scale))}
+  .history-visible-grid .actions button,.history-visible-grid .actions a{font-size:calc(14px * var(--text-scale));min-height:44px}
+  .nav-control{min-height:44px;font-size:14px}
+}
+"""
+
+REPORT_CSS += 'body[data-page="guide"] .hero{grid-template-columns:minmax(0,1fr)}'
+
+REPORT_CSS += """
+.history-mobile-toggle{display:none}
+#cloud-device-status:empty,#cloud-notification-eligibility-status:empty,#cloud-settings-status:empty{display:none}
+@media(max-width:820px){
+  .history-record:not(.history-details-open) .history-visible-grid>div:not(.history-company):not([data-label="検出日"]):not([data-label="状況"]):not([data-label="該当モード"]):not([data-label="成績"]),
+  .history-record:not(.history-details-open) [data-scenario-shares],
+  .history-record:not(.history-details-open) .history-company .actions,
+  .history-record:not(.history-details-open) .reference-note{display:none}
+  .history-visible-grid .history-company{grid-column:1/-1;order:-1}
+  .history-record:not(.history-details-open) [data-label="状況"]{order:1}
+  .history-record:not(.history-details-open) [data-label="該当モード"]{order:2;grid-column:1/-1}
+  .history-record:not(.history-details-open) [data-label="成績"]{order:3;grid-column:1/-1;padding-top:8px;border-top:1px solid var(--line)}
+  .history-mobile-toggle{display:block;width:100%;min-height:44px;margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel-solid);color:var(--blue);font:inherit;cursor:pointer}
+}
+"""

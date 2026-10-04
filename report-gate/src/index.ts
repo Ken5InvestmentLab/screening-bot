@@ -30,6 +30,7 @@ function accessGuardScript(env: WorkerEnv): string {
   let finished = false;
   let recoveryDelayMs = 2000;
   const deny = () => {
+    ${env.REPORT_PUBLIC_FREE === "true" ? "window.location.reload(); return;" : ""}
     document.documentElement.innerHTML = '<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + ${deniedTitle} + '</title><style>body{font-family:system-ui,sans-serif;margin:40px;line-height:1.7;color:#182230;background:#f8fafc}.wrap{max-width:680px;margin:0 auto;padding:28px;border:1px solid #d7e0ea;border-radius:10px;background:#fff}h1{font-size:24px;margin:0 0 12px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}a{color:#2563eb}.button{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:7px;text-decoration:none;font-weight:700}.primary{background:#2563eb;color:#fff}.secondary{border:1px solid #c9d7ea;color:#1849a9;background:#f3f7ff}</style></head><body><main class="wrap"><h1>' + ${deniedTitle} + '</h1><p>' + ${deniedMessage} + '</p><div class="actions"><a class="button primary" href="' + ${purchaseUrl} + '">アクセス権を購入する</a><a class="button secondary" href="/auth/logout">Discordで再ログイン</a></div></main></body>';
   };
   const checkUnderLock = async () => {
@@ -47,7 +48,7 @@ function accessGuardScript(env: WorkerEnv): string {
           continue;
         }
         finished = true;
-        window.location.replace('/auth/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search));
+        ${env.REPORT_PUBLIC_FREE === "true" ? "window.location.reload();" : "window.location.replace('/auth/login?return_to=' + encodeURIComponent(window.location.pathname + window.location.search));"}
         return;
       }
       if (recovering && (response.ok || response.status === 403)) {
@@ -58,6 +59,7 @@ function accessGuardScript(env: WorkerEnv): string {
       if (response.status === 403) {
         deny();
       }
+      ${env.REPORT_PUBLIC_FREE === "true" ? "if (!recovering && response.status === 503) { deny(); return; }" : ""}
       if (recovering && response.status === 503) {
         window.setTimeout(check, recoveryDelayMs);
         recoveryDelayMs = Math.min(recoveryDelayMs * 2, 60000);
@@ -76,6 +78,7 @@ function accessGuardScript(env: WorkerEnv): string {
         await checkUnderLock();
       }
     } catch {
+      ${env.REPORT_PUBLIC_FREE === "true" ? "if (!recovering) { deny(); return; }" : ""}
       // Keep the current page during transient network failures; the next check will retry.
     } finally {
       checking = false;
@@ -101,6 +104,8 @@ type WorkerEnv = Env & {
   // Mega supplies no hook and retains its existing Discord authorization.
   REPORT_ACCESS_CHECK?: (discordSubject: string) => Promise<boolean>;
   REPORT_ACCESS_DENIED_MESSAGE?: string;
+  REPORT_PUBLIC_FREE?: string;
+  REPORT_REQUIRE_FRESH_ROLE?: string;
 };
 
 type SessionPayload = {
@@ -147,6 +152,9 @@ class DiscordGuildMemberDeniedError extends AccessDeniedError {
 }
 
 class DiscordRateLimitedError extends Error {}
+class DiscordGuildMemberUnavailableError extends Error {
+  constructor(readonly status: number) { super("Discord guild member lookup unavailable"); }
+}
 
 class RefreshTokenRejectedError extends Error {}
 
@@ -489,6 +497,7 @@ type AuthorizationCheck = {
   tokenRefreshed?: boolean;
   refreshRequired?: boolean;
   roleLookupStatus?: number;
+  roleLookupReason?: string;
 };
 
 async function refreshSessionAccessToken(session: SessionPayload, env: WorkerEnv): Promise<SessionPayload | null> {
@@ -545,7 +554,7 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
   try {
     const member = await fetchGuildMember(currentSession.accessToken, env);
     if (freshRoles && (!Array.isArray(member.roles) || member.roles.some(role => typeof role !== "string"))) {
-      return { authorized: false, temporaryError: true, refreshedSession, tokenRefreshed };
+      return { authorized: false, temporaryError: true, roleLookupReason: "discord_role_response_invalid", refreshedSession, tokenRefreshed };
     }
     const roles = member.roles ?? [];
     const roleCheckedSession = {
@@ -570,8 +579,10 @@ async function checkSessionAuthorization(session: SessionPayload, env: WorkerEnv
     ) {
       return { authorized: hasAllowedRole(currentSession.roles, allowedRoleIds(env)), refreshedSession, tokenRefreshed };
     }
-    console.error(JSON.stringify({ level: "warn", message: "Discord role check temporarily unavailable" }));
-    return { authorized: false, temporaryError: true, refreshedSession, tokenRefreshed };
+    const status = error instanceof DiscordRateLimitedError ? 429 : error instanceof DiscordGuildMemberUnavailableError ? error.status : undefined;
+    const reason = status ? `discord_role_lookup_${status}` : "discord_role_network_unavailable";
+    console.error(JSON.stringify({ level: "warn", message: "Discord role check temporarily unavailable", reason }));
+    return { authorized: false, temporaryError: true, roleLookupReason: reason, refreshedSession, tokenRefreshed };
   }
 }
 
@@ -615,7 +626,7 @@ async function reportAccess(request: Request, env: WorkerEnv): Promise<ReportAcc
     return { fullAccess: false, loginRequired: true };
   }
 
-  const check = await checkSessionAuthorization(session, env, false);
+  const check = await checkSessionAuthorization(session, env, false, env.REPORT_REQUIRE_FRESH_ROLE === "true");
   if (check.refreshRequired) return { fullAccess: false, refreshRequired: true };
   if (check.authorized) {
     return { fullAccess: await additionalReportAccess(env, session.sub) };
@@ -648,7 +659,7 @@ export async function reportIdentity(request: Request, env: WorkerEnv, freshRole
   const check = await checkSessionAuthorization(session, env, false, freshRoles);
   if (check.refreshRequired) return { discord_authorized: false, reason: "refresh_required" };
   if (check.loginRequired) return { discord_authorized: false, reason: "login_required" };
-  if (check.temporaryError) return { discord_authorized: false, reason: "temporarily_unavailable" };
+  if (check.temporaryError) return { discord_authorized: false, reason: freshRoles ? check.roleLookupReason ?? "temporarily_unavailable" : "temporarily_unavailable" };
   if (freshRoles && check.roleLookupStatus) return { discord_authorized: false, reason: `discord_role_lookup_${check.roleLookupStatus}` };
   return { subject: session.sub, discord_authorized: check.authorized };
 }
@@ -851,7 +862,7 @@ async function fetchGuildMember(accessToken: string, env: WorkerEnv): Promise<Di
     throw new DiscordGuildMemberDeniedError(response.status);
   }
   if (!response.ok) {
-    throw new Error(`Discord guild member lookup failed: ${response.status}`);
+    throw new DiscordGuildMemberUnavailableError(response.status);
   }
   return (await response.json()) as DiscordGuildMember;
 }
@@ -896,18 +907,18 @@ function authenticationWaitResponse(status = 200, init: HeadersInit = {}): Respo
 
 async function serveReport(request: Request, env: WorkerEnv, assetPath = reportAssetPath(env)): Promise<Response> {
   const access = await reportAccess(request, env);
-  if (access.refreshRequired) {
+  if (access.refreshRequired && env.REPORT_PUBLIC_FREE !== "true") {
     // Document navigation must use the same browser lock as open report tabs.
     // This shell contains no report data; /auth/check refreshes before reload.
     return authenticationWaitResponse();
   }
-  if (access.loginRequired) {
+  if (access.loginRequired && env.REPORT_PUBLIC_FREE !== "true") {
     return loginRedirect(request);
   }
   const headers = new Headers();
   // Only the serialized /auth/check writes session updates. A late document
   // response must never overwrite a token that an open tab has just rotated.
-  if (access.temporaryError) {
+  if (access.temporaryError && env.REPORT_PUBLIC_FREE !== "true") {
     headers.set("retry-after", "2");
     return authenticationWaitResponse(503, headers);
   }
@@ -967,7 +978,7 @@ async function authCheck(request: Request, env: WorkerEnv): Promise<Response> {
     return jsonResponse({ ok: false, reason: "login_required" }, 401);
   }
 
-  const check = await checkSessionAuthorization(session, env);
+  const check = await checkSessionAuthorization(session, env, true, env.REPORT_REQUIRE_FRESH_ROLE === "true");
   const headers = new Headers();
   await appendSessionCookie(request, env, headers, check);
   if (check.temporaryError) {
@@ -1069,6 +1080,7 @@ export default {
       return await router(request, env);
     } catch (error) {
       if (error instanceof AccessDeniedError) {
+        if (env.REPORT_PUBLIC_FREE === "true") return htmlResponse("Discord認証を確認できませんでした", "無料ページは認証なしで閲覧できます。設定の保存や通知登録には、時間を置いてDiscordで再ログインしてください。", 401);
         return roleRequiredResponse(env);
       }
       console.error(

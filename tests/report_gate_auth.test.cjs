@@ -373,6 +373,23 @@ test('open-page guard removes premium content when a real role denial is returne
   assert.equal(guard.reloads(), 0);
 });
 
+for (const status of [403, 503]) test(`Cloud guard reloads into public free page after ${status}`, async () => {
+  const gate = createGate(() => { throw new Error('No Worker request in guard fixture.'); });
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => new Response(null, { status }));
+  await guard.windowEvents.get('pageshow')();
+  assert.equal(guard.reloads(), 1);
+  assert.deepEqual(guard.navigations, []);
+  assert.equal(guard.document.documentElement.innerHTML, 'original report');
+});
+
+test('Cloud guard reloads into public free page when role check transport fails', async () => {
+  const gate = createGate(() => { throw new Error('No Worker request in guard fixture.'); });
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => { throw new Error('fixture-network-failure'); });
+  await guard.windowEvents.get('pageshow')();
+  assert.equal(guard.reloads(), 1);
+  assert.deepEqual(guard.navigations, []);
+});
+
 for (const status of [200, 403]) {
   test(`authentication wait page reloads once after ${status} and does not continue checking`, async () => {
     const gate = createGate(() => { throw new Error('Worker fetch is not used by this test.'); });

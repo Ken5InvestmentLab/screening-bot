@@ -1,5 +1,6 @@
 (() => {
   document.documentElement.dataset.theme = "dark";
+  document.documentElement.dataset.fontSize = window.matchMedia?.("(max-width: 820px)").matches ? "small" : "standard";
   try {
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem("cloudReportDisplay:v1") || "null"); } catch (_error) {}

@@ -77,7 +77,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const THEME_KEY = "weakEarlyBetaTheme:v1";
   let PAGE_SIZE = 20;
   const DISPLAY_KEY = "cloudReportDisplay:v1";
-  let appliedDisplay = { theme: "dark", fontSize: "standard", pageSize: 20 };
+  const defaultFontSize = window.matchMedia?.("(max-width: 820px)").matches ? "small" : "standard";
+  let appliedDisplay = { theme: "dark", fontSize: defaultFontSize, pageSize: 20 };
   try {
     const legacyTheme = localStorage.getItem(THEME_KEY); if (["dark", "light"].includes(legacyTheme)) appliedDisplay.theme = legacyTheme;
     const saved = localStorage.getItem(DISPLAY_KEY);
@@ -195,6 +196,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   // The empty-history message is a table row, but never a detection or CSV row.
   const scenarioRows = document.getElementById("cloud-scenario-rows");
   const rows = Array.from(scenarioRows?.content ? scenarioRows.content.querySelectorAll("tr[data-date]") : document.querySelectorAll("#detection-table tbody tr[data-date]"));
+  document.addEventListener?.('click', event => {
+    const button = event.target?.closest?.('[data-cloud-history-details]');
+    const record = button?.closest('.history-record');
+    if (!record) return;
+    const expanded = record.classList.toggle('history-details-open');
+    button.setAttribute('aria-expanded', String(expanded));
+    button.textContent = expanded ? '詳細を閉じる' : '詳細を見る';
+  });
   const normalize = (value) => String(value || "").normalize("NFKC").trim().toLowerCase();
   let visibleLimit = PAGE_SIZE;
   // Only applied preferences may be used by visible rows, endpoint cells or CSV.
@@ -390,18 +399,12 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   let notifications = { new_detection: false, reminder: false };
   const notifyInputs = {};
   const notifyLabels = {};
-  let notifyMembershipPaid = false;
+  let notifyEligible = false;
   const qualificationMessage = reason => ({
-    fresh_managed_role_unavailable: 'Discordロールを新規照会できませんでした。時間を置いてページを再読み込みしてください。',
-    temporarily_unavailable: 'Discordの照会が一時的に失敗しました。時間を置いてページを再読み込みしてください。',
-    managed_role_revoked: '必要なDiscordロールを確認できませんでした。通知は有効にできません。',
-    discord_role_required: '必要なDiscordロールを確認できませんでした。通知は有効にできません。',
-    refresh_required: 'Discordの認証更新が必要です。ページを再読み込みし、必要ならDiscordで再ログインしてください。',
+    refresh_required: 'もう一度ログインしてください。',
     login_required: 'このブラウザでDiscordにログインしてください。',
-    discord_role_lookup_401: 'Discordが認証を受け付けませんでした（HTTP 401）。このChromeでDiscordに再ログインしてください。',
-    discord_role_lookup_403: 'Discordからロールを取得できませんでした（HTTP 403）。このブラウザでDiscordに再ログインして確認してください。',
-    discord_role_lookup_404: 'Discordのサーバー所属を確認できませんでした（HTTP 404）。ログイン中のアカウントと所属サーバーを確認してください。',
-  }[reason] || '会員資格・接続状態を確認してください。');
+    discord_role_lookup_401: 'もう一度ログインしてください。',
+  }[reason] || '時間を置いて再試行してください。');
   const saveFailure = async response => {
     const data = await response.json().catch(() => ({}));
     return new Error(`会員設定を保存できませんでした（HTTP ${response.status}）。${qualificationMessage(data.membership?.reason || data.reason)}入力は残しています。`);
@@ -409,23 +412,14 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   const syncNotificationControls = () => {
     for (const [key, input] of Object.entries(notifyInputs)) {
       input.checked = notifications[key];
-      input.disabled = accessLost || !serverAvailable || (!notifyMembershipPaid && !notifications[key]);
+      input.disabled = accessLost || !serverAvailable || (!notifyEligible && !notifications[key]);
       notifyLabels[key].textContent = notifications[key] ? 'ON' : 'OFF';
     }
   };
-  const notificationReadiness = membership => {
-    const output = document.getElementById('cloud-notification-readiness');
-    if (!output) return;
-    const entitlement = membership === 'paid' ? '有料会員資格を確認済み' : ['unknown', 'unavailable', 'unverified'].includes(membership) ? '会員資格は未確認' : '有効な有料会員資格が必要';
-    const permission = typeof Notification === 'undefined' ? 'このブラウザのプッシュは未対応' : Notification.permission === 'granted' ? '端末の通知権限あり' : Notification.permission === 'denied' ? '端末の通知権限なし' : '端末の通知許可は未設定';
-    output.textContent = `${entitlement}。${permission}。ブラウザの通知許可と端末登録は別の状態です。`;
-  };
   window.addEventListener?.('cloud-notification-membership', event => {
-    notifyMembershipPaid = event.detail?.membership?.status === 'paid';
-    notificationReadiness(event.detail?.membership?.status || 'unknown');
+    notifyEligible = event.detail?.notification_eligible === true;
     syncNotificationControls();
   });
-  notificationReadiness('unknown');
   const setStatus = (message, invalid = false) => {
     if (!status) return;
     status.textContent = message;
@@ -437,7 +431,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
   if (settings && endpoint) {
     const host = document.createElement(settingsDialog ? "div" : "details");
     host.className = "cloud-notification-settings";
-    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>ON／OFFで通知を一時停止・再開します。「設定を保存」で反映し、OFFでも端末登録は残ります。初期設定はすべてOFFです。</p>';
+    host.innerHTML = (settingsDialog ? '' : '<summary>プッシュ通知の設定</summary>') + '<p>OFFでも端末登録は残ります。変更後は「設定を保存」を押してください。</p>';
     for (const [key, label] of Object.entries({ new_detection: "新しい検出", reminder: "確定日の朝8時（日本時間）" })) {
       const element = document.createElement("label");
       const checkbox = document.createElement("input");
@@ -780,7 +774,7 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         const active = settingsDialog.querySelector('[role="tab"][aria-selected="true"]')?.id;
         if (active === 'settings-tab-trial') { requestedPreferences = { ...CloudPreferences.INITIAL }; requestedView = { ...CloudPreferences.DEFAULT_VIEW }; syncControls(); }
         if (active === 'settings-tab-notifications') { notifications = { new_detection: false, reminder: false }; syncNotificationControls(); }
-        if (active === 'settings-tab-display') { displayTheme.value = 'dark'; displayFont.value = 'standard'; displayPage.value = '20'; applyDisplay(readDisplayControls()); }
+        if (active === 'settings-tab-display') { displayTheme.value = 'dark'; displayFont.value = defaultFontSize; displayPage.value = '20'; applyDisplay(readDisplayControls()); }
         edited = true; editRevision += 1;
         setStatus('このタブを初期値に戻しました。「設定を保存」で反映し、「キャンセル」で元に戻ります。'); return;
       }
@@ -830,9 +824,8 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
       const data = await response.json();
       const saved = data.preferences || data;
       const serverPreferences = CloudPreferences.normalize({ priceCapYen: saved.max_price, exitKey: saved.exit_endpoint, baseShares: saved.base_shares ?? 100, costPercent: saved.cost_percent ?? 0 });
-      const paidMembership = data.membership?.status === "paid";
-      notifyMembershipPaid = paidMembership;
-      notificationReadiness(data.membership?.status || 'unknown');
+      const eligible = data.notification_eligible ?? data.membership?.status === "paid";
+      notifyEligible = eligible;
       serverAvailable = true;
       let serverApplied = false;
       if (!edited) {
@@ -842,11 +835,10 @@ if (typeof module !== "undefined" && module.exports) module.exports = CloudPrefe
         serverApplied = await applyPreferences({ persist: true });
         if (serverApplied && !edited) {
           syncNotificationControls();
-          setStatus(storageFailed ? "会員設定を反映しました。端末の保存は利用できません。" : "会員設定を反映しました。");
+          setStatus(storageFailed ? "端末の保存は利用できません。" : "");
         }
       }
       syncNotificationControls();
-      if (!paidMembership && !edited && serverApplied) setStatus(`表示条件の会員設定を反映しました。${qualificationMessage(data.membership?.reason)}通知OFFでの設定保存と端末登録の解除は行えます。`);
     }).catch(() => {
       if (!edited) setStatus(storageFailed
         ? "会員設定と端末保存を利用できません。この画面で条件を選択できます。"

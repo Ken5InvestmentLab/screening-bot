@@ -437,9 +437,10 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
   const clock = { now: NOW };
   const calls = [];
   const assets = [];
-  const provider = { status: providerStatus, fixture };
+  const provider = { status: providerStatus, fixture, discordRoles: roles, discordStatus:200 };
   const modules = createModules({ clock, fetchMock: async (input, init = {}) => {
     const url = new URL(String(input));
+    if(url.origin==='https://discord.com')return Response.json({roles:provider.discordRoles},{status:provider.discordStatus});
     assert.equal(url.origin, 'https://api.whop.com');
     assert.equal(init.method || 'GET', 'GET', 'No network mutation or push delivery is allowed.');
     assert.equal(init.headers.authorization, 'Bearer synthetic-whop-read-key');
@@ -515,7 +516,6 @@ test('bundle routes reject unauthenticated, cross-origin, malformed and mutating
   const h = await apiHarness();
   for (const [pathname, options, expected] of [
     [bundlePath('full'), { authenticated: false }, 401],
-    [bundlePath('free'), { authenticated: false }, 401],
     [bundlePath('full'), { origin: 'https://elsewhere.invalid' }, 403],
     [bundlePath('full'), { method: 'POST' }, 405],
     ['/weak_early_beta_data_full_analytics_bad_0000.json', {}, 404],
@@ -986,7 +986,7 @@ test('valid Discord session and specified role retain report and auth/check acce
   assert.equal(report.status, 200);
   assert.match(await report.text(), /SECRET-UNRELEASED-TICKER/);
   const loggedOut = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html', { authenticated: false }), h.env);
-  assert.equal(loggedOut.status, 302);
+  assert.equal(loggedOut.status, 200);
   assert.doesNotMatch(await loggedOut.text(), /SECRET-UNRELEASED-TICKER/);
   const check = await h.worker.fetch(await h.request('/auth/check'), h.env);
   assert.equal(check.status, 200);
@@ -1040,4 +1040,24 @@ test('notification-OFF settings save without Whop configuration and stay isolate
     method: 'PUT', body: preferences({ notifications: { new_detection: true } }),
   }), h.env);
   assert.equal(enabled.status, 403);
+});
+
+for(const [label,options,expected] of [['anonymous',{authenticated:false},'free'],['free',{},'free'],['paid',{},'full']])test('public Cloud document and free bundle: '+label,async()=>{
+ const h=await apiHarness({roles:label==='paid'?['paid-discord-role']:[]});
+ for(const path of ['/','/weak_early_beta_latest.html','/weak_early_beta_analytics.html','/weak_early_beta_guide.html']){
+  const response=await h.worker.fetch(await h.request(path,options),h.env);assert.equal(response.status,200);
+  const html=await response.text();assert.match(html,expected==='free'?/RELEASED-PUBLIC-ONLY/:/SECRET-UNRELEASED-TICKER/);
+  if(expected==='free'){assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|auth\/guard/);}
+ }
+ const free=await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env);assert.equal(free.status,200);
+ const full=await h.worker.fetch(await h.request(bundlePath('full'),options),h.env);assert.equal(full.status,expected==='full'?200:label==='anonymous'?401:403);
+});
+
+for(const [label,status,roles] of [['revoked',200,[]],['429',429,['paid-discord-role']],['503',503,['paid-discord-role']],['401',401,['paid-discord-role']],['403',403,['paid-discord-role']]])test('cached paid Cloud session cannot expose unreleased documents or full bundles after '+label,async()=>{
+ const h=await apiHarness();h.provider.discordRoles=roles;h.provider.discordStatus=status;
+ const document=await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);
+ assert.equal(document.status,200);const text=await document.text();assert.match(text,/RELEASED-PUBLIC-ONLY/);assert.doesNotMatch(text,/SECRET-UNRELEASED-TICKER/);
+ const full=await h.worker.fetch(await h.request(bundlePath('full')),h.env);assert.ok([401,403,503].includes(full.status));
+ assert.equal(h.assets.some(path=>path.includes('_data_full_')),false);
+ assert.equal((await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env)).status,200);
 });

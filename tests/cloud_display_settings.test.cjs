@@ -1,7 +1,14 @@
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
 const prefs=require('../reports/weak-early-beta-interactions.js');
 const themeSource=fs.readFileSync(require('node:path').join(__dirname,'../reports/weak-early-beta-theme-init.js'),'utf8');
-function theme(storage={},darkOS=false,blocked=false){const root={dataset:{},removeAttribute(){delete this.dataset.theme;}};vm.runInNewContext(themeSource,{document:{documentElement:root},window:{matchMedia:()=>({matches:darkOS})},localStorage:{getItem:k=>{if(blocked)throw Error('blocked');return storage[k]??null;}}});return root.dataset;}
+function theme(storage={},darkOS=false,blocked=false,mobile=false){const root={dataset:{},removeAttribute(){delete this.dataset.theme;}};vm.runInNewContext(themeSource,{document:{documentElement:root},window:{matchMedia:query=>({matches:query==='(max-width: 820px)'?mobile:darkOS})},localStorage:{getItem:k=>{if(blocked)throw Error('blocked');return storage[k]??null;}}});return root.dataset;}
+
+test('mobile starts small before paint while desktop and saved preferences retain their sizes',()=>{
+ assert.equal(theme({},false,false,true).fontSize,'small');
+ assert.equal(theme({},false,true,true).fontSize,'small');
+ assert.equal(theme().fontSize,'standard');
+ assert.equal(theme({'cloudReportDisplay:v1':JSON.stringify({theme:'dark',fontSize:'large',pageSize:20})},false,false,true).fontSize,'large');
+});
 test('fresh and blocked-storage views default dark without requesting permission',()=>{
  assert.equal(theme().theme,'dark');assert.equal(theme({},false,true).theme,'dark');
  assert.ok(!themeSource.includes('requestPermission'));

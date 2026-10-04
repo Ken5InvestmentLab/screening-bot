@@ -25,6 +25,7 @@ export function verifyReleaseConfig(config) {
     assert.equal(config.keep_vars, true, 'retain operator-fixed member/device/provider runtime settings');
     assert.equal(config.vars.CLOUD_PUSH_REGISTRATION_ENABLED, 'true');
     assert.equal(config.vars.CLOUD_PUSH_MEMBERSHIP_POLICY, 'whop_managed_discord_role');
+    assert.equal(config.vars.CLOUD_PUSH_AUDIENCE, 'authenticated', 'generic notifications are approved for logged-in free and paid users');
     const key = Buffer.from(config.vars.CLOUD_VAPID_PUBLIC_KEY ?? '', 'base64url');
     assert.equal(key.length, 65, 'valid VAPID public key required');
     assert.equal(key[0], 4);

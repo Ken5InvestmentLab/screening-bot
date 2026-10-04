@@ -10,7 +10,7 @@ exports.modules = function ({ fetchMock, cryptoMock = webcrypto, clock } = {}) {
     if (cache.has(filename)) return cache.get(filename).exports;
     const module = { exports: {} }; cache.set(filename, module);
     let source = fs.readFileSync(filename, 'utf8');
-    if (filename.endsWith('shared-report-gate.ts')) source += '\nexport const __test = {createSession};';
+    if (filename.endsWith('shared-report-gate.ts')) source += '\nexport const __test = {createSession, createOAuthState};';
     const code = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
     vm.runInNewContext(code, { module, exports: module.exports, require: name => load(name, path.dirname(filename)),
       Request, Response, Headers, URL, URLSearchParams, AbortSignal, TextEncoder, TextDecoder, Uint8Array,

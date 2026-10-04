@@ -64,10 +64,10 @@ test('config exposes only own opaque device list; disabled mode excludes even pu
  const db=database(), response=await push.pushApi(request('/api/cloud/push-config'),{CLOUD_DB:db},{memberId:'mine',roleAuthorized:true,membership:async()=>({status:'paid'})});
  const value=await response.json();assert.equal(value.registration_available,false);assert.equal(value.delivery_available,false);assert.equal(value.public_key,undefined);assert.equal(response.headers.get('cache-control'),'private, no-store');
 });
-for(const status of ['paid','free','unavailable','unverified'])test('only confirmed free eligibility receives the existing configured purchase URL: '+status,async()=>{
+for(const status of ['paid','free','unavailable','unverified'])test('notification config contains no paid-plan offer: '+status,async()=>{
  const configured=JSON.parse(fs.readFileSync(require('node:path').resolve(__dirname,'../weak-early-beta-gate/wrangler.jsonc'),'utf8')).vars.ACCESS_PURCHASE_URL;
  const db=database(),response=await push.pushApi(request('/api/cloud/push-config'),{CLOUD_DB:db,ACCESS_PURCHASE_URL:configured},{memberId:'mine',roleAuthorized:status==='paid',membership:async()=>({status,reason:'fixture'})});
- const value=await response.json();assert.equal(value.purchase_url,status==='free'?configured:undefined);assert.equal(db.batchCalls,0);
+ const value=await response.json();assert.equal(value.purchase_url,undefined);assert.equal(db.batchCalls,0);
 });
 for(const status of ['free','expired','unverified','unavailable'])test('registration refuses '+status+' without any write',async()=>{
  const db=database();const response=await push.pushApi(request('/api/cloud/push-subscriptions','POST',{opt_in:true,subscription:{endpoint:subscription.endpoint,keys:{p256dh:UA,auth:AUTH}}}),{...config,CLOUD_DB:db},{memberId:'mine',roleAuthorized:true,membership:async()=>({status})});assert.equal(response.status,403);assert.equal(db.batchCalls,0);
@@ -111,7 +111,7 @@ test('service worker has no fetch cache and clicks only fixed same-origin report
  handlers.notificationclick({notification:{close(){},data:{url:'https://evil.invalid/'}},waitUntil:p=>wait=p});await wait;assert.deepEqual(opened,['https://cloud.example.invalid/weak_early_beta_latest.html']);
 });
 
-async function dispatchHarness({ optIn=true, optOutBeforeFinal=false, roleNetworkFailure=false, providerStatus=200, revokeBeforeSend=false, roleStatus=200, transportFailure=false, eventOverride={}, background=false, removeRoleBeforeSend=false, wrongReturnedSubject=false, wrongConfiguredSubject=false, deviceMissing=false, deviceTest=false, testRunId='personal_test_20261004', wrongMember=false }={}) {
+async function dispatchHarness({ optIn=true, optOutBeforeFinal=false, roleNetworkFailure=false, providerStatus=200, revokeBeforeSend=false, roleStatus=200, transportFailure=false, eventOverride={}, background=false, removeRoleBeforeSend=false, wrongReturnedSubject=false, wrongConfiguredSubject=false, deviceMissing=false, deviceTest=false, testRunId='personal_test_20261004', wrongMember=false, audience }={}) {
  let memberId, roleReads=0, paymentReads=0, delivered=0;const receipts=new Map();
  const subject=background?'123456789012345678':'discord-user',role=background?'234567890123456789':'role';
  const now=Date.now(), start=new Date(now-86400000).toISOString(), end=new Date(now+86400000*30).toISOString();
@@ -133,7 +133,7 @@ async function dispatchHarness({ optIn=true, optOutBeforeFinal=false, roleNetwor
  if(sql.includes('cloud_push_subscriptions'))return deviceMissing?null:{...subscription,member_id:memberId,subscription_id:'my-device',vapid_public_key:AS,expires_at_ms:null};
  throw Error('unhandled_query');},async run(){const key=this.values.slice(sql.startsWith('UPDATE')?3:0,sql.startsWith('UPDATE')?6:3).join(':');if(sql.startsWith('INSERT OR IGNORE')){const exists=receipts.has(key);if(!exists)receipts.set(key,{status:'preparing'});return {success:true,meta:{changes:exists?0:1}};}if(sql.startsWith('UPDATE')){receipts.set(key,{status:this.values[0],reason:this.values[1]});return {success:true,meta:{changes:1}};}throw Error('unhandled_write');}};}};
  const api=m.load('./cloud-api');memberId=await api.cloudMemberId(subject);
- const env={...config,CLOUD_DB:db,CLOUD_PUSH_TEST_MEMBER_ID:wrongMember?'other-member':memberId,CLOUD_PUSH_TEST_RUN_ID:testRunId,SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:background?'345678901234567890':'guild',DISCORD_ALLOWED_ROLE_IDS:role,...(background||deviceTest?{CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role',...(background?{CLOUD_DISCORD_BOT_TOKEN:'fixture-only-bot',CLOUD_PUSH_TEST_DISCORD_USER_ID:wrongConfiguredSubject?'456789012345678901':subject}:{})}:{WHOP_API_KEY:'fixture-only-whop',WHOP_ACCOUNT_ID:'biz_1',WHOP_PRODUCT_IDS:'prod_1',WHOP_PAID_PLAN_IDS:'plan_1'})};
+ const env={...config,CLOUD_PUSH_AUDIENCE:audience,CLOUD_DB:db,CLOUD_PUSH_TEST_MEMBER_ID:wrongMember?'other-member':memberId,CLOUD_PUSH_TEST_RUN_ID:testRunId,SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:background?'345678901234567890':'guild',DISCORD_ALLOWED_ROLE_IDS:role,...(background||deviceTest?{CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role',...(background?{CLOUD_DISCORD_BOT_TOKEN:'fixture-only-bot',CLOUD_PUSH_TEST_DISCORD_USER_ID:wrongConfiguredSubject?'456789012345678901':subject}:{})}:{WHOP_API_KEY:'fixture-only-whop',WHOP_ACCOUNT_ID:'biz_1',WHOP_PRODUCT_IDS:'prod_1',WHOP_PAID_PLAN_IDS:'plan_1'})};
  const sec=Math.floor(now/1000);const session=await m.load('./shared-report-gate').__test.createSession({sub:subject,accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec,roles:[role]},env.SESSION_SECRET);
  const req=new Request('https://cloud.example.invalid/',{headers:{cookie:'__Host-report_gate_session='+encodeURIComponent(session)}});
  const dispatch=m.load('./cloud-push-dispatch');
@@ -263,16 +263,56 @@ test('managed-role policy is explicit, requires fresh evidence, and never falls 
  assert.equal((await api.currentMembership({CLOUD_PUSH_MEMBERSHIP_POLICY:'unknown'},'member',true)).status,'unavailable');
  assert.equal((await api.currentMembership({},'member',true)).status,'unavailable');
 });
-for(const [roleStatus,rolePresent] of [[200,true],[200,false],[401,true],[403,true],[404,true],[429,true],[503,true]])test('managed-role preference read/enable uses one fresh role; OFF save remains independent: '+roleStatus+'/'+rolePresent,async()=>{
+for(const audience of [undefined,'authenticated'])for(const [roleStatus,rolePresent] of [[200,true],[200,false],[401,true],[403,true],[404,true],[429,true],[503,true]])test('managed-role preference read/enable uses one fresh role; OFF save remains independent: '+roleStatus+'/'+rolePresent+'/'+audience,async()=>{
  let reads=0,writes=0;
  const m=modules({fetchMock:async input=>{assert.match(String(input),/^https:\/\/discord\.com\//);reads++;return Response.json({roles:rolePresent?['role']:[]},{status:roleStatus});}});
  const prefs={max_price:1000,exit_endpoint:'d6_open',base_shares:100,cost_percent:0,notifications:{new_detection:false,reminder:false}};
  const db={prepare(){return {bind(){return this;},async first(){return null;},async run(){writes++;return {success:true,meta:{changes:1}};}};}};
- const env={CLOUD_DB:db,SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'guild',DISCORD_ALLOWED_ROLE_IDS:'role',CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role'};
+ const env={CLOUD_PUSH_AUDIENCE:audience,CLOUD_DB:db,SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'guild',DISCORD_ALLOWED_ROLE_IDS:'role',CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role'};
  const sec=Math.floor(Date.now()/1000),session=await m.load('./shared-report-gate').__test.createSession({sub:'member',accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec-3600,roles:['role']},env.SESSION_SECRET);
  const req=(method,body)=>new Request('https://cloud.example.invalid/api/cloud/preferences',{method,headers:{cookie:'__Host-report_gate_session='+encodeURIComponent(session),origin:'https://cloud.example.invalid',...(body?{'content-type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
- const eligible=roleStatus===200&&rolePresent;
- const api=m.load('./cloud-api');const response=await api.cloudApi(req('GET'),env);assert.equal(response.status,200);const readBody=await response.json();assert.equal(readBody.membership.status,roleStatus===200?(eligible?'paid':'free'):'unavailable');assert.equal(readBody.membership.reason,roleStatus===200?(eligible?'verified_whop_managed_discord_role':'managed_role_revoked'):[401,403,404].includes(roleStatus)?'discord_role_lookup_'+roleStatus:'fresh_managed_role_unavailable');assert.equal(reads,1);
+ const eligible=roleStatus===200&&(rolePresent||audience==='authenticated');
+ const api=m.load('./cloud-api');const response=await api.cloudApi(req('GET'),env);assert.equal(response.status,200);const readBody=await response.json();assert.equal(readBody.membership.status,roleStatus===200?(rolePresent?'paid':'free'):'unavailable');assert.equal(readBody.membership.reason,roleStatus===200?(rolePresent?'verified_whop_managed_discord_role':'managed_role_revoked'):'discord_role_lookup_'+roleStatus);assert.equal(reads,1);
  const enabled=await api.cloudApi(req('PUT',{...prefs,notifications:{new_detection:true,reminder:false}}),env);assert.equal(enabled.status,eligible?200:403);assert.equal(reads,2);
  const before=reads;assert.equal((await api.cloudApi(req('PUT',prefs),env)).status,200);assert.equal(reads,before);assert.equal(writes,eligible?2:1);
+});
+
+for(const [label,options,sends] of [
+ ['free confirmed',{removeRoleBeforeSend:true},1],['lookup401',{roleStatus:401},0],['lookup403',{roleStatus:403},0],
+ ['lookup404',{roleStatus:404},0],['lookup429',{roleStatus:429},0],['lookup503',{roleStatus:503},0],
+ ['network failure',{roleNetworkFailure:true},0],['OFF',{optIn:false},0],['wrong member',{wrongMember:true},0],
+ ['missing device',{deviceMissing:true},0],['OFF immediately before transport',{optOutBeforeFinal:true},0],
+])test('approved free generic notification audience: '+label,async()=>{
+ const h=await dispatchHarness({deviceTest:true,audience:'authenticated',...options});
+ const result=await h.call();assert.equal(h.delivered,sends);assert.equal(h.paymentReads,0);
+ if(sends){assert.equal(result.status,'accepted');assert.equal(h.roleReads,1);assert.equal((await h.call()).status,'suppressed');assert.equal(h.delivered,1);}
+ else assert.notEqual(result.status,'accepted');
+});
+for(const status of ['paid','free','unavailable','unverified'])test('free-audience config uses confirmed membership and retains fixed-person isolation: '+status,async()=>{
+ const membership={status,reason:status==='free'?'managed_role_revoked':'fixture'};
+ const env={...config,CLOUD_PUSH_AUDIENCE:'authenticated',CLOUD_DB:database(),ACCESS_PURCHASE_URL:'https://whop.com/existing/'};
+ for(const memberId of ['mine','other']) {
+  const value=await (await push.pushApi(request('/api/cloud/push-config'),env,{memberId,roleAuthorized:status==='paid',membership:async()=>membership})).json();
+  assert.equal(value.registration_available,memberId==='mine'&&['paid','free'].includes(status));
+  assert.equal(value.notification_eligible,['paid','free'].includes(status));
+  assert.equal(value.purchase_url,undefined);assert.equal(value.personal_test_available,false);
+ }
+});
+
+test('display-only save with existing notification ON does not invoke unavailable role lookup or change opt-in',async()=>{
+ let writes=0;
+ const prefs={max_price:1000,exit_endpoint:'d6_open',base_shares:100,cost_percent:0,notifications:{new_detection:false,reminder:true}};
+ const m=modules({fetchMock:async()=>assert.fail('display save must not look up Discord')});
+ const env={CLOUD_PUSH_AUDIENCE:'authenticated',CLOUD_PUSH_MEMBERSHIP_POLICY:'whop_managed_discord_role',SESSION_SECRET:'fixture-only-secret-long-enough',CLOUD_DB:{prepare(sql){return {bind(...args){this.args=args;return this;},async first(){return {preferences_json:JSON.stringify(prefs)};},async run(){writes++;assert.equal(JSON.parse(this.args[1]).notifications.reminder,true);return {success:true};}};}}};
+ const sec=Math.floor(Date.now()/1000), session=await m.load('./shared-report-gate').__test.createSession({sub:'member',accessToken:'fixture',exp:sec+86400,tokenExp:sec+3600,roleCheckedAt:sec,roles:[]},env.SESSION_SECRET);
+ const req=new Request('https://cloud.example.invalid/api/cloud/preferences',{method:'PUT',headers:{cookie:'__Host-report_gate_session='+encodeURIComponent(session),origin:'https://cloud.example.invalid','content-type':'application/json'},body:JSON.stringify({...prefs,max_price:2000})});
+ assert.equal((await m.load('./cloud-api').cloudApi(req,env)).status,200);assert.equal(writes,1);
+});
+
+test('Cloud Discord callback accepts a verified guild user with no paid role and no purchase redirect',async()=>{
+ const m=modules({fetchMock:async input=>String(input).includes('/oauth2/token')?Response.json({access_token:'fixture-only-token',token_type:'Bearer',expires_in:3600,refresh_token:'fixture-only-refresh'}):Response.json({user:{id:'fixture-discord-user'},roles:[]})});
+ const env={DISCORD_CLIENT_ID:'fixture-client',DISCORD_CLIENT_SECRET:'fixture-secret',SESSION_SECRET:'fixture-only-secret-long-enough',DISCORD_GUILD_ID:'fixture-guild',DISCORD_ALLOWED_ROLE_IDS:'paid-role',REPORT_ASSET_PATH:'/weak_early_beta_latest.html',ASSETS:{fetch:async()=>new Response('<html>FREE</html>')}};
+ const gate=m.load('./shared-report-gate'),state=await gate.__test.createOAuthState('/weak_early_beta_latest.html',env.SESSION_SECRET);
+ const response=await m.load('./index').default.fetch(new Request('https://cloud.example.invalid/auth/callback?code=fixture-code&state='+encodeURIComponent(state)),env);
+ assert.equal(response.status,302);assert.equal(response.headers.get('location'),'/weak_early_beta_latest.html');assert.match(response.headers.get('set-cookie'),/__Host-report_gate_session=/);assert.doesNotMatch(response.headers.get('location'),/purchase|whop/);
 });

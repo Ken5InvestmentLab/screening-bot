@@ -14,7 +14,7 @@ from weak_early_beta.config import COMBINED_STACKED_ID, COMBINED_UNIQUE_ID
 from weak_early_beta.ledger import bootstrap_historical
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.model import attach_forward_rows
-from weak_early_beta.report import _detection_rows, _page_shell, _variant_page, render_analytics_report, render_mode_report, render_report, _aggregate_variant_payload
+from weak_early_beta.report import MASKED_PENDING_NOTICE, _detection_rows, _page_shell, _variant_page, render_analytics_report, render_mode_report, render_report, _aggregate_variant_payload
 from weak_early_beta.report_preferences import released_history, select_report_view, validate_price_cap
 from weak_early_beta.trade_basis import LEGACY_PRICE_BASIS_VERSION
 
@@ -56,6 +56,16 @@ def payload(output):
 class ReportPreferenceTests(unittest.TestCase):
     generated = pd.Timestamp("2026-10-04", tz="Asia/Tokyo")
 
+    def test_purchase_cta_is_in_free_information_only(self):
+        from weak_early_beta.report import render_guide
+        for render in (render_report, render_analytics_report):
+            free = render(actual_trade(), pd.DataFrame(), self.generated, mask_pending=True)
+            full = render(actual_trade(), pd.DataFrame(), self.generated)
+            self.assertIn('href="/purchase">有料プランを見る</a>', free)
+            self.assertNotIn('href="/purchase">有料プランを見る</a>', full)
+        self.assertIn('href="/purchase">有料プランを見る</a>', render_guide(self.generated, mask_pending=True))
+        self.assertNotIn('href="/purchase">有料プランを見る</a>', render_guide(self.generated))
+
     def test_settings_copy_preserves_endpoint_choices_and_share_limits(self):
         from weak_early_beta.report import _settings_panel
         output = _settings_panel()
@@ -64,7 +74,7 @@ class ReportPreferenceTests(unittest.TestCase):
         self.assertNotIn('基本の買付株数', output)
         self.assertIn('<option value="d5_close">5営業日後 終値</option><option value="d6_open" selected>6営業日後 始値</option>', output)
         self.assertIn('id="cloud-base-shares" type="number" min="100" max="1000000" step="100"', output)
-        self.assertIn('基準となる株数×条件数', output)
+        self.assertIn('基準となる株数×一致条件数', output)
 
     def test_explicit_price_cap_validation_without_rounding(self):
         for value in (1, "1500", 1000.01, "0.01", "1500.00"):
@@ -90,7 +100,8 @@ class ReportPreferenceTests(unittest.TestCase):
             if free:
                 self.assertNotIn('data-symbol="Z999"', output)
                 self.assertNotIn('731.29', output)
-                self.assertEqual(output, _variant_page(released_history(frame), self.generated, "home", mask_pending=True))
+                self.assertIn(MASKED_PENDING_NOTICE, output)
+                self.assertEqual(output.replace(MASKED_PENDING_NOTICE, ""), _variant_page(released_history(frame), self.generated, "home", mask_pending=True))
 
     def test_price_boundary_uses_verified_actual_close_not_adjusted_reference(self):
         below = actual_trade("A001", 999.99)
@@ -203,9 +214,10 @@ class ReportPreferenceTests(unittest.TestCase):
             self.assertIn(876.54, visible_prices(full_output))
             output = renderer(mixed, True)
             data = payload(output)
-            # Strong non-interference: adding an unreleased row changes no byte
-            # of free output, including counts, dates, compressed data and CSV.
-            self.assertEqual(output, renderer(released, True))
+            # Only the explicitly approved existence teaser may differ.
+            # Counts, dates, thresholds, metrics, compressed data and CSV remain public-only.
+            self.assertIn(MASKED_PENDING_NOTICE, output)
+            self.assertEqual(output.replace(MASKED_PENDING_NOTICE, ""), renderer(released, True))
             self.assertEqual(visible_prices(output), [222.22])
             decoded = json.dumps(data, ensure_ascii=False)
             for secret in ("Q9Z9", "PENDING_PRIVATE_SENTINEL", "876.54", "12088.56", "12,089", "2026-09-01", "2026-09-02", "2026-09-08"):

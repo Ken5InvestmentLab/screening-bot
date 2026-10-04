@@ -319,3 +319,21 @@ MIN_4H_BARS: 30          // 最低4h足本数
 ## Future Work
 
 - **Moonshot mode is retired**: it overlapped with Mega40 and was removed from optimizer code, pending/current logic files, and old analysis scripts. Do not recreate `/scan moonshot`, `current_logic_moonshot.json`, `pending_logic_moonshot.json`, or Moonshot optimizer paths; use the report-only Mega40 modes instead.
+
+## Cloud generic notification audience and mobile layout
+
+- Logged-in free and paid members may opt in to generic notifications under `CLOUD_PUSH_AUDIENCE=authenticated`. This supersedes the paid-only notification UI/policy above, but never changes full/free report access. A successful fresh Discord guild-member/roles lookup is still required; a missing paid role is eligible for generic notifications, lookup failures are not. No company/code/price is included. Personal-test member/device restrictions and scheduler OFF remain until separately approved.
+- Changing display/trial settings with unchanged saved opt-in does not require another role lookup; enabling a new notification does. Delivery always performs its final fresh lookup and re-reads opt-in. Store each signed Discord owner's settings separately.
+- Fresh lookup diagnostics expose only HTTP status or a safe failure category, never tokens, response bodies, endpoint or subscription keys. Default report auth/cache/grace behavior stays unchanged.
+- Phone layout uses readable 16px controls, 14px explanations, at least 44px buttons, single-column settings, and the existing card history. Preserve viewport metadata, zoom, desktop layout, and calculation choices. Compare against saved previous-Cloud mobile evidence and check 360/390/412px plus desktop in an isolated browser preview.
+
+- Cloud documents and prefiltered free lazy bundles are public, including without a Discord session. The Cloud wrapper alone sets `REPORT_PUBLIC_FREE=true`; do not enable this on the original Mega Worker. Full HTML and full bundles still require the existing allowed-role authorization, and API writes still require a signed owner session. A confirmed role removal reloads full documents into the free page rather than replacing the whole site with a purchase-only screen. Never serve full assets as a free fallback.
+- The help page omits its top-right current-values panel. Keep its settings dialog/button and other pages' current-value panels intact.
+
+- Cloud full document, full bundle, and `/auth/check` authorization explicitly bypass cached roles/rate-limit grace via `REPORT_REQUIRE_FRESH_ROLE=true`. The original Mega Worker keeps its default contract. On unknown/failing lookup Cloud serves only prefiltered free documents and rejects full bundles, even when the encrypted session contains a previously valid paid role.
+
+- Free Cloud pages intentionally show one constant masked teaser when unreleased records exist, linking through the existing `/purchase` route. This supersedes the earlier byte-identical free-output rule only for the existence boolean. No unreleased identity, code, date, price, count, raw data attribute, metric, search input or CSV row may escape. All released-only calculation/data contracts remain intact. Discord login must accept valid free guild members without purchase redirection; purchase prompts belong beside masked content, not the authentication screen.
+- Keep settings copy brief; do not add audience labels or repeated implementation/status explanations. Retain the exact requested confirmation-day reminder explanation and actionable failure states.
+- The settings dialog is titled 設定. Notification settings contain no membership/role-status explanation or paid-plan CTA; unavailable operations show a short failure and explicit retry. Backend fresh checks, opt-in and device restrictions remain enforced.
+- Mobile history cards initially show company, detection-date close, detection date, 状況, modes and profit/return. 詳細を見る expands transaction prices, allocation and links without changing data/calculations/CSV; desktop retains all fields. The その他 menu has no caret.
+- With no saved display choice, viewports up to 820px default to the existing small font-size option before first paint and in the settings dialog/reset. Larger screens default standard; valid saved display preferences take precedence.

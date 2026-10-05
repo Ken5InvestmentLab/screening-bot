@@ -26,6 +26,13 @@ const tag = 'cloud-deploy-test-20261006';
 const headSha = 'a'.repeat(40);
 const origin = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
 
+test('the generated commit used for tag deployment contains no workflow skip instruction', () => {
+  const source = fs.readFileSync(new URL('./weak-early-beta-daily-runner.mjs', import.meta.url), 'utf8');
+  const generatedMessage = source.match(/result\.generatedCommit = await commitGeneratedChanges\(\{ git, message: `([^`]+)`/);
+  assert.ok(generatedMessage, 'the live generated-commit message must be checked');
+  assert.doesNotMatch(generatedMessage[1], /\[(?:skip ci|ci skip|no ci|skip actions|actions skip)\]|skip-checks\s*:/i);
+});
+
 function queueItem(symbol) {
   return { signal_date: signalDate, symbol, claim_id: `${signalDate}|${symbol}` };
 }

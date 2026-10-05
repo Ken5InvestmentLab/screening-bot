@@ -466,7 +466,7 @@ async function main(configFile) {
       log: path.join(runDir, 'gate-check'), timeoutMs: 600_000 });
     saveProgress('git-sync-before-deploy');
     await requireBranch();
-    result.generatedCommit = await commitGeneratedChanges({ git, message: `chore: refresh Cloud beta ${today} [skip ci]` });
+    result.generatedCommit = await commitGeneratedChanges({ git, message: `chore: refresh Cloud beta ${today}` });
     const headSha = await requireRemoteHead(git);
     const tag = `cloud-deploy-daily-${new Date().toISOString().replace(/[-:.]/g, '')}-${headSha.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
     result.deployment = { tag, headSha, workflow: DEPLOY_WORKFLOW, worker: 'tentei-kyokuchi-cloud' };

@@ -268,6 +268,73 @@ class CorporateActionTests(unittest.TestCase):
             with self.subTest(evidence=missing_evidence), self.assertRaisesRegex(CorporateActionError, "unexplained historical"):
                 validate_source_revision(old, normalize_daily(bad))
 
+    def _latest_zero_volume_placeholder(self):
+        old = daily(ratios=(0, 0), start="2026-09-29")
+        old["provider_repaired"] = [False, True]
+        old.loc[1, ["open", "high", "low", "close"]] = 1000
+        old.loc[1, "volume"] = 0
+        extra = daily(ratios=(0, 0, 0), start="2026-09-29").iloc[[2]].copy()
+        extra["provider_repaired"] = False
+        current = pd.concat([old.copy(), extra], ignore_index=True)
+        current.loc[1, "volume"] = 100
+        current.loc[1, "provider_repaired"] = False
+        return old, current
+
+    def test_latest_repaired_zero_volume_can_settle_with_exact_prices_and_audit(self):
+        old, current = self._latest_zero_volume_placeholder()
+        receipt = validate_source_revision(normalize_daily(old), normalize_daily(current))
+        self.assertEqual(receipt["acceptedRepairColumnValues"], 1)
+        repair = receipt["acceptedRepairs"][0]
+        self.assertEqual(repair["reason"], "latest_repaired_zero_volume_settled_by_unrepaired_bar")
+        self.assertEqual(repair["previousBasis"], "2026-09-30")
+        self.assertEqual(repair["currentBasis"], "2026-10-01")
+        self.assertEqual(repair["differences"][0]["previousExpected"], 0)
+        self.assertEqual(repair["differences"][0]["current"], 100)
+        self.assertEqual(repair["differences"][0]["unchangedActualOHLC"]["close"], 1000)
+        json.dumps(receipt)
+        # Once settled, the bar has the normal strict historical-volume contract.
+        next_snapshot = current.copy()
+        next_snapshot.loc[1, "volume"] = 200
+        with self.assertRaisesRegex(CorporateActionError, "unexplained historical volume"):
+            validate_source_revision(normalize_daily(current), normalize_daily(next_snapshot))
+
+    def test_zero_volume_completion_requires_each_piece_of_source_evidence(self):
+        for missing in ("old_repair", "raw_current", "later_basis", "flat_prices", "unchanged_prices", "zero_volume"):
+            old, current = self._latest_zero_volume_placeholder()
+            if missing == "old_repair":
+                old.loc[1, "provider_repaired"] = False
+            elif missing == "raw_current":
+                current.loc[1, "provider_repaired"] = True
+            elif missing == "later_basis":
+                current = current.iloc[:2].copy()
+            elif missing == "flat_prices":
+                old.loc[1, "high"] = current.loc[1, "high"] = 1001
+            elif missing == "unchanged_prices":
+                current.loc[1, ["open", "high", "low", "close"]] = 1001
+            else:
+                old.loc[1, "volume"] = 10
+            with self.subTest(missing=missing), self.assertRaisesRegex(CorporateActionError, "unexplained historical volume"):
+                validate_source_revision(normalize_daily(old), normalize_daily(current))
+
+    def test_repaired_zero_volume_on_older_session_still_requires_review(self):
+        old, current = self._latest_zero_volume_placeholder()
+        old = pd.concat([old, current.iloc[[2]]], ignore_index=True)
+        extra = daily(ratios=(0, 0, 0, 0), start="2026-09-29").iloc[[3]].copy()
+        extra["provider_repaired"] = False
+        current = pd.concat([current, extra], ignore_index=True)
+        with self.assertRaisesRegex(CorporateActionError, "unexplained historical volume"):
+            validate_source_revision(normalize_daily(old), normalize_daily(current))
+
+    def test_zero_volume_completion_cannot_accept_a_new_historical_action(self):
+        old, current = self._latest_zero_volume_placeholder()
+        current.loc[1, "split_ratio"] = 2
+        # Keep all actual historical prices/volumes unchanged so only the
+        # unrecorded historical action prevents accepting the placeholder.
+        current.loc[0, ["open", "high", "low", "close"]] /= 2
+        current.loc[0, "volume"] *= 2
+        with self.assertRaisesRegex(CorporateActionError, "unexplained historical"):
+            validate_source_revision(normalize_daily(old), normalize_daily(current))
+
     def test_provider_repair_flag_does_not_relax_verified_snapshot_comparison(self):
         raw = daily()
         old = normalize_daily(raw)

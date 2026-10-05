@@ -363,8 +363,11 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
 
     For a legacy snapshot, only declared actions newly effective AFTER its last
     session can explain a provider-wide rebase.  For a verified snapshot, actual
-    historical OHLCV must remain stable. Small provider corrections are tolerated;
-    larger changes require a review instead of a guessed correction ratio.
+    historical OHLCV must remain stable. Small provider corrections are tolerated.
+    A repaired zero-volume flat bar on the previous snapshot's final session can
+    settle to an unrepaired positive-volume bar in a later snapshot only when its
+    actual OHLC and historical action journal are unchanged. Audit that narrow
+    completion separately; larger unexplained changes still require review.
     """
     receipt: dict[str, Any] = {
         "identity": "CLOUD_SOURCE_REVISION_V1", "previousBasis": "none",
@@ -482,8 +485,28 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
             accepted = different & repair_eligible
             if column == "volume":
                 accepted &= np.isclose(after, before / repair_price_scale, rtol=1e-6, atol=1e-6)
-            if (different & ~accepted).any():
-                position = int(np.flatnonzero(different & ~accepted)[0])
+            settled = np.zeros(len(right), dtype=bool)
+            if enriched and column == "volume":
+                old_prices = left[[f"actual_{name}" for name in OHLC]].to_numpy(dtype=float)
+                new_prices = right[[f"actual_{name}" for name in OHLC]].to_numpy(dtype=float)
+                historical_actions_unchanged = all(
+                    (symbol, event.effective_date) in old_events.index
+                    for event in symbol_events.itertuples()
+                    if event.effective_date <= old_basis
+                )
+                settled = (
+                    different & historical_actions_unchanged
+                    & (right.index == old_basis)
+                    & right["basis_asof"].gt(old_basis).to_numpy(dtype=bool)
+                    & left["provider_repaired"].to_numpy(dtype=bool)
+                    & ~right["provider_repaired"].to_numpy(dtype=bool)
+                    & (before == 0) & (after > 0)
+                    & np.isclose(old_prices, new_prices, rtol=0, atol=1e-8).all(axis=1)
+                    & np.isclose(old_prices, old_prices[:, :1], rtol=0, atol=1e-8).all(axis=1)
+                )
+            unexplained = different & ~(accepted | settled)
+            if unexplained.any():
+                position = int(np.flatnonzero(unexplained)[0])
                 raise CorporateActionError(
                     f"unexplained historical {column} revision for {symbol} "
                     f"{right.index[position]:%Y-%m-%d}: {before[position]} -> {after[position]}; "
@@ -505,6 +528,22 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
                         {"date": f"{right.index[i]:%Y-%m-%d}", "previousExpected": float(before[i]), "current": float(after[i])}
                         for i in np.flatnonzero(accepted)
                     ],
+                })
+            if settled.any():
+                receipt["acceptedRepairColumnValues"] += int(settled.sum())
+                receipt["acceptedRepairs"].append({
+                    "symbol": str(symbol), "column": "volume", "rows": int(settled.sum()),
+                    "reason": "latest_repaired_zero_volume_settled_by_unrepaired_bar",
+                    "firstDate": f"{right.index[settled].min():%Y-%m-%d}",
+                    "lastDate": f"{right.index[settled].max():%Y-%m-%d}",
+                    "previousBasis": f"{old_basis:%Y-%m-%d}",
+                    "currentBasis": f"{right['basis_asof'].max():%Y-%m-%d}",
+                    "differences": [{
+                        "date": f"{right.index[i]:%Y-%m-%d}",
+                        "previousExpected": float(before[i]), "current": float(after[i]),
+                        "previousProviderRepaired": True, "currentProviderRepaired": False,
+                        "unchangedActualOHLC": dict(zip(OHLC, old_prices[i].tolist())),
+                    } for i in np.flatnonzero(settled)],
                 })
     return receipt
 

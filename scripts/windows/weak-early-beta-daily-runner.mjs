@@ -221,6 +221,36 @@ async function verifyLiveWorker({ origin = CLOUD_ORIGIN, fetchImpl = fetch }) {
   return { origin, healthStatus: health.status, rootStatus: root.status, oauthRedirect: true };
 }
 
+function assertNotificationReceipt(receipt, date, dryRun) {
+  if (receipt?.date !== date || receipt.dry_run !== dryRun ||
+      !['signal_notifications', 'completion_notifications'].every(key => Number.isInteger(receipt[key]) && receipt[key] >= 0)) {
+    throw new Error('invalid Cloud notification receipt; reconcile saved receipts before retrying');
+  }
+}
+
+async function reconcileNotifications({ date, preview, send, onProgress = () => {} }) {
+  const before = await preview('preview');
+  assertNotificationReceipt(before, date, true);
+  await onProgress({ phase: 'preview', receipt: before });
+  const hasPending = before.signal_notifications + before.completion_notifications > 0;
+  const notifications = hasPending ? await send() : {
+    date, signal_notifications: 0, completion_notifications: 0, dry_run: false, skipped: 'no_new_symbols',
+  };
+  assertNotificationReceipt(notifications, date, false);
+  await onProgress({ phase: 'sent', receipt: notifications });
+  if (notifications.signal_notifications !== before.signal_notifications ||
+      notifications.completion_notifications !== before.completion_notifications) {
+    throw new Error('Cloud notification counts differ from preview; reconcile saved receipts before retrying');
+  }
+  const remaining = await preview('reconcile');
+  assertNotificationReceipt(remaining, date, true);
+  await onProgress({ phase: 'reconcile', receipt: remaining });
+  if (remaining.signal_notifications || remaining.completion_notifications) {
+    throw new Error('Cloud notifications remain pending after delivery; reconcile saved receipts before retrying');
+  }
+  return { preview: before, notifications, remaining };
+}
+
 function assertValidatedFundamentalOutput({ raw, state, receipt, env }) {
   if (!/^[a-f0-9]{64}$/.test(receipt.validatedReportSha256) ||
       createHash('sha256').update(raw).digest('hex') !== receipt.validatedReportSha256) {
@@ -459,19 +489,29 @@ async function main(configFile) {
     saveProgress('live-verification');
     result.deployment.live = await verifyLiveWorker({});
     saveProgress('notification');
-    const preview = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today, '--dry-run'],
-      { cwd: repo, env, log: path.join(runDir, 'notify-preview'), capture: true });
-    result.notificationPreview = JSON.parse(preview.stdout.trim());
-    if (result.notificationPreview.signal_notifications || result.notificationPreview.completion_notifications) {
-      const notify = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today],
-        { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
-      result.notifications = JSON.parse(notify.stdout.trim());
+    await reconcileNotifications({ date: today,
+      preview: async phase => {
+        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today, '--dry-run'],
+          { cwd: repo, env, log: path.join(runDir, `notify-${phase}`), capture: true });
+        return JSON.parse(attempt.stdout.trim());
+      },
+      send: async () => {
+        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today],
+          { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
+        return JSON.parse(attempt.stdout.trim());
+      },
+      onProgress: ({ phase, receipt }) => {
+        const key = { preview: 'notificationPreview', sent: 'notifications', reconcile: 'notificationReconciliation' }[phase];
+        saveProgress('notification', { [key]: receipt });
+      },
+    });
+    if (result.notifications.signal_notifications || result.notifications.completion_notifications) {
       // Discord receipts change the CSV byte hash without changing event economics. No second deploy.
       saveProgress('canonical-after-notification');
       await buildCanonicalInput('canonical-after-notify');
       await requireOk(config.nodePath, [path.join(repo, 'weak-early-beta-gate', 'scripts', 'verify-canonical-input.mjs')],
         { cwd: path.join(repo, 'weak-early-beta-gate'), env, log: path.join(runDir, 'canonical-after-notify-check'), timeoutMs: 60_000 });
-    } else result.notifications = { date: today, signal_notifications: 0, completion_notifications: 0, skipped: 'no_new_symbols' };
+    }
     saveProgress('git-sync-receipts');
     await requireBranch();
     result.receiptCommit = await commitGeneratedChanges({ git, message: `chore: save Cloud beta ${today} notification receipts [skip ci]` });
@@ -498,4 +538,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 
 export { npmInvocation, probeFundamentalModel, run, parseGitStatus, assertGeneratedChanges, GENERATED_PATHS,
   queueIdentities, drainFundamentalQueue, assertHtmlImports, selectWorkflowRun, waitForTagWorkflow,
-  verifyLiveWorker, commitGeneratedChanges, requireRemoteHead, assertValidatedFundamentalOutput };
+  verifyLiveWorker, commitGeneratedChanges, requireRemoteHead, assertValidatedFundamentalOutput, reconcileNotifications };

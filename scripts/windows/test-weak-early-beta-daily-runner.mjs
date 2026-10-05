@@ -13,6 +13,7 @@ import {
   npmInvocation,
   parseGitStatus,
   queueIdentities,
+  reconcileNotifications,
   requireRemoteHead,
   selectWorkflowRun,
   verifyLiveWorker,
@@ -431,6 +432,139 @@ test('completed deployment failures stop polling immediately', async () => {
       listRuns: async () => [workflowRun({ conclusion })],
     }), /fail|conclusion|cancel|timed|skipped/i);
     assert.equal(waits, 0);
+  }
+});
+
+function notificationReceipt({ signal = 2, completion = 1, dryRun = true, date = signalDate } = {}) {
+  return { date, signal_notifications: signal, completion_notifications: completion, dry_run: dryRun };
+}
+
+test('notification reconciliation sends the exact preview counts and confirms zero remaining', async () => {
+  const calls = [];
+  const progress = [];
+  const initial = notificationReceipt();
+  const actual = notificationReceipt({ dryRun: false });
+  const remaining = notificationReceipt({ signal: 0, completion: 0 });
+  const result = await reconcileNotifications({
+    date: signalDate,
+    preview: async phase => { calls.push(phase); return phase === 'preview' ? initial : remaining; },
+    send: async () => { calls.push('send'); return actual; },
+    onProgress: async event => { progress.push(event); },
+  });
+  assert.deepEqual(calls, ['preview', 'send', 'reconcile']);
+  assert.deepEqual(result, { preview: initial, notifications: actual, remaining });
+  assert.equal(progress.length, 3);
+  assert.deepEqual(progress.map(item => item.phase), ['preview', 'sent', 'reconcile']);
+  assert.deepEqual(progress.map(item => item.receipt), [initial, actual, remaining]);
+});
+
+test('zero preview notifications skip send and still reconcile the remaining queue', async () => {
+  const calls = [];
+  const progress = [];
+  let sends = 0;
+  const empty = notificationReceipt({ signal: 0, completion: 0 });
+  const result = await reconcileNotifications({
+    date: signalDate,
+    preview: async phase => { calls.push(phase); return empty; },
+    send: async () => { sends += 1; throw new Error('zero preview must not send'); },
+    onProgress: async event => { progress.push(event); },
+  });
+  assert.equal(sends, 0);
+  assert.deepEqual(calls, ['preview', 'reconcile']);
+  assert.deepEqual(result.notifications, {
+    date: signalDate, signal_notifications: 0, completion_notifications: 0,
+    dry_run: false, skipped: 'no_new_symbols',
+  });
+  assert.deepEqual(result.remaining, empty);
+  assert.deepEqual(progress.map(item => item.phase), ['preview', 'sent', 'reconcile']);
+  assert.deepEqual(progress[1].receipt, result.notifications);
+});
+
+test('notification count mismatches stop without retrying the actual send', async () => {
+  for (const actual of [
+    notificationReceipt({ signal: 1, dryRun: false }),
+    notificationReceipt({ signal: 3, dryRun: false }),
+    notificationReceipt({ completion: 0, dryRun: false }),
+  ]) {
+    let sends = 0;
+    let previews = 0;
+    await assert.rejects(reconcileNotifications({
+      date: signalDate,
+      preview: async () => { previews += 1; return notificationReceipt(); },
+      send: async () => { sends += 1; return actual; },
+    }), /count|match|receipt|reconcil/i);
+    assert.equal(sends, 1);
+    assert.equal(previews, 1);
+  }
+});
+
+test('remaining notification work rejects completion and never triggers another send', async () => {
+  let sends = 0;
+  const calls = [];
+  await assert.rejects(reconcileNotifications({
+    date: signalDate,
+    preview: async phase => { calls.push(phase); return notificationReceipt({ signal: phase === 'preview' ? 2 : 1, completion: phase === 'preview' ? 1 : 0 }); },
+    send: async () => { sends += 1; return notificationReceipt({ dryRun: false }); },
+  }), /remain|pending|reconcil|incomplete/i);
+  assert.equal(sends, 1);
+  assert.deepEqual(calls, ['preview', 'reconcile']);
+});
+
+test('invalid notification previews stop before an actual send', async () => {
+  const invalid = [
+    notificationReceipt({ date: '2026-10-05' }),
+    notificationReceipt({ signal: -1 }),
+    notificationReceipt({ signal: 0.5 }),
+    notificationReceipt({ signal: '2' }),
+    notificationReceipt({ completion: -1 }),
+    notificationReceipt({ completion: Number.NaN }),
+    notificationReceipt({ dryRun: false }),
+    { date: signalDate, signal_notifications: 2, completion_notifications: 1 },
+  ];
+  for (const receipt of invalid) {
+    let sends = 0;
+    await assert.rejects(reconcileNotifications({
+      date: signalDate,
+      preview: async () => receipt,
+      send: async () => { sends += 1; throw new Error('invalid preview must not send'); },
+    }));
+    assert.equal(sends, 0);
+  }
+});
+
+test('invalid actual notification receipts stop without another preview or send', async () => {
+  for (const receipt of [
+    notificationReceipt({ date: '2026-10-05', dryRun: false }),
+    notificationReceipt({ signal: -1, dryRun: false }),
+    notificationReceipt({ completion: 0.5, dryRun: false }),
+    notificationReceipt({ dryRun: true }),
+    { date: signalDate, signal_notifications: 2, completion_notifications: 1 },
+  ]) {
+    let sends = 0;
+    let previews = 0;
+    await assert.rejects(reconcileNotifications({
+      date: signalDate,
+      preview: async () => { previews += 1; return notificationReceipt(); },
+      send: async () => { sends += 1; return receipt; },
+    }));
+    assert.equal(sends, 1);
+    assert.equal(previews, 1);
+  }
+});
+
+test('invalid final notification receipts retain one-send behavior and reject completion', async () => {
+  for (const invalid of [
+    notificationReceipt({ signal: 0, completion: 0, date: '2026-10-05' }),
+    notificationReceipt({ signal: -1, completion: 0 }),
+    notificationReceipt({ signal: 0, completion: 0, dryRun: false }),
+  ]) {
+    let sends = 0;
+    await assert.rejects(reconcileNotifications({
+      date: signalDate,
+      preview: async phase => phase === 'preview' ? notificationReceipt() : invalid,
+      send: async () => { sends += 1; return notificationReceipt({ dryRun: false }); },
+    }));
+    assert.equal(sends, 1);
   }
 });
 

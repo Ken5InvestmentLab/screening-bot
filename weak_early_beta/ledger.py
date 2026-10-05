@@ -25,6 +25,12 @@ DEFAULT_LEDGER = ROOT / "weak_early_beta" / "state" / "detections.csv"
 DEFAULT_QUEUE = ROOT / "weak_early_beta" / "state" / "fundamental_queue.json"
 DEFAULT_COMPANY_NAMES = ROOT / "weak_early_beta" / "state" / "company_names_202608.csv"
 
+EXIT_REMINDER_COLUMNS = [
+    # Existing columns remain the D5 receipt; do not migrate or clear it.
+    "exit_reminder_discord_url", "exit_reminded_at",
+    "d6_exit_reminder_discord_url", "d6_exit_reminded_at",
+]
+
 LEDGER_COLUMNS = [
     "detection_id", "signal_date", "symbol", "company_name", "signal_close",
     "signal_volume", "selector_id",
@@ -36,7 +42,7 @@ LEDGER_COLUMNS = [
     "tail_cdf", "tail_p", "source_scope", "source_sha256",
     "signal_discord_url", "notified_at", "fundamental_status",
     "fundamental_discord_url", "fundamental_html", "created_at", "updated_at",
-    "exit_reminder_discord_url", "exit_reminded_at",
+    *EXIT_REMINDER_COLUMNS,
     *TRADE_BASIS_COLUMNS,
     *ENDPOINT_COLUMNS,
 ]
@@ -148,7 +154,7 @@ def merge_detections(existing: pd.DataFrame, incoming: pd.DataFrame) -> pd.DataF
         "company_name", "signal_close", "signal_volume",
         "signal_discord_url", "notified_at", "fundamental_status",
         "fundamental_discord_url", "fundamental_html", "created_at",
-        "exit_reminder_discord_url", "exit_reminded_at",
+        *EXIT_REMINDER_COLUMNS,
         "d5_price_observed_at",
     ]
     old = existing.reindex(columns=LEDGER_COLUMNS).set_index("detection_id", drop=False)

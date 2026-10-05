@@ -20,7 +20,7 @@ from .endpoint_receipts import (
     preserve_verified_endpoints, signal_actual_close_verified, sixth_endpoint_verified,
     sixth_economics_verified,
 )
-from .ledger import LEDGER_COLUMNS
+from .ledger import EXIT_REMINDER_COLUMNS, LEDGER_COLUMNS
 from .research_price_receipts import VERIFICATION_SCOPE
 from .research_price_receipts import PRICE_PACKAGE_SHA256, MODE_PACKAGE_SHA256
 from .trade_basis import LEGACY_PRICE_BASIS_VERSION
@@ -34,7 +34,7 @@ DEFAULT_OVERLAY_SHA256 = "a4af8311918ab34ab0ebf7346b3f75a44f3d00e303be81d2e6fc1c
 _MUTABLE_COLUMNS = {
     "company_name", "selector_name", "signal_discord_url", "notified_at", "fundamental_status",
     "fundamental_discord_url", "fundamental_html", "created_at", "updated_at",
-    "exit_reminder_discord_url", "exit_reminded_at", "d5_price_observed_at",
+    *EXIT_REMINDER_COLUMNS, "d5_price_observed_at",
 }
 BASELINE_COLUMNS = [column for column in LEDGER_COLUMNS if column not in {*ENDPOINT_COLUMNS, *_MUTABLE_COLUMNS}]
 _BASELINE_DATES = {"signal_date", "entry_date", "fifth_xtks_exit_date"}

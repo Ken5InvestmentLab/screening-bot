@@ -198,7 +198,7 @@ def attach_forward_rows(
     source_sha256: str = "",
 ) -> pd.DataFrame:
     from .config import selector_info
-    from .ledger import LEDGER_COLUMNS
+    from .ledger import EXIT_REMINDER_COLUMNS, LEDGER_COLUMNS
 
     if selected.empty:
         return pd.DataFrame(columns=LEDGER_COLUMNS)
@@ -252,8 +252,7 @@ def attach_forward_rows(
             "fundamental_status": "queued",
             "fundamental_discord_url": "",
             "fundamental_html": "",
-            "exit_reminder_discord_url": "",
-            "exit_reminded_at": "",
+            **dict.fromkeys(EXIT_REMINDER_COLUMNS, ""),
             "created_at": now,
             "updated_at": now,
         }

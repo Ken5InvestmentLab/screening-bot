@@ -830,7 +830,7 @@ def parser() -> argparse.ArgumentParser:
     business_day.add_argument("--date")
     business_day.set_defaults(func=command_is_business_day)
 
-    reminders = sub.add_parser("remind-exits", help="notify symbols reaching their fifth session today")
+    reminders = sub.add_parser("remind-exits", help="notify D5-close and D6-open evaluation days")
     common(reminders)
     reminders.add_argument("--date")
     reminders.add_argument("--report-url", default="")

@@ -92,3 +92,8 @@ def fifth_session_from_entry(entry_date: date) -> date:
     if not is_bank_business_day(entry_date):
         raise ValueError(f"entry date is not a bank business day: {entry_date}")
     return add_bank_business_days(entry_date, 4)
+
+
+def sixth_session_from_entry(entry_date: date) -> date:
+    """Entry session is day 1; return the sixth official bank-business session."""
+    return add_bank_business_days(fifth_session_from_entry(entry_date), 1)

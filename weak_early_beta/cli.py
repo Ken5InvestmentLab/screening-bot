@@ -34,6 +34,7 @@ from .historical_fundamentals import (
     normalize_historical_material_impacts,
     select_batch as select_historical_batch,
     validate_historical_report,
+    validate_forward_reports,
 )
 from .report import DEFAULT_METRICS, DEFAULT_REPORT, write_report
 from .progress import daily_phase
@@ -358,6 +359,7 @@ def command_prepare_fundamentals(args: argparse.Namespace) -> None:
         state_path=Path(args.worker_state),
         claim_path=Path(args.claim),
         max_alerts=args.max_alerts,
+        analysis_cutoff=getattr(args, "analysis_cutoff", None),
     )
     print(json.dumps({
         "claimed": claim["claimedCount"],
@@ -379,6 +381,14 @@ def command_export_fundamentals(args: argparse.Namespace) -> None:
         alert_ids=alert_ids,
     )
     print(json.dumps({"exported": len(receipts), "receipts": args.receipts}, ensure_ascii=False))
+
+
+def command_validate_forward_fundamentals(args: argparse.Namespace) -> None:
+    claim = json.loads(Path(args.claim).read_text(encoding="utf-8-sig"))
+    payload = json.loads(Path(args.input).read_text(encoding="utf-8-sig"))
+    reports = payload if isinstance(payload, list) else payload.get("reports", [])
+    identities = validate_forward_reports(claim, reports)
+    print(json.dumps({"ok": True, "validated": len(identities), "identities": identities}, ensure_ascii=False))
 
 
 def _historical_payload(path: Path) -> list[dict]:
@@ -738,7 +748,18 @@ def parser() -> argparse.ArgumentParser:
         default=str(ROOT / "weak_early_beta" / "fundamental_worker" / "out" / "latest_claim.json"),
     )
     prepare.add_argument("--max-alerts", type=int, default=0)
+    prepare.add_argument(
+        "--analysis-cutoff",
+        help="exact fundamental analysis-start ISO timestamp; runner stamps the final value immediately before analysis",
+    )
     prepare.set_defaults(func=command_prepare_fundamentals)
+
+    validate_forward = sub.add_parser(
+        "validate-forward-fundamentals", help="validate audited reports against the actual analysis-start claim cutoff"
+    )
+    validate_forward.add_argument("--claim", required=True)
+    validate_forward.add_argument("--input", required=True)
+    validate_forward.set_defaults(func=command_validate_forward_fundamentals)
 
     export = sub.add_parser(
         "export-fundamentals", help="export saved HTML snapshots and legacy Discord receipts"

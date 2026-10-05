@@ -88,8 +88,60 @@ def _fields(report: dict) -> dict[str, str]:
     return values
 
 
+def analysis_timestamp(value: str) -> pd.Timestamp:
+    """Require an explicit analysis instant, including seconds and timezone."""
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})", value):
+        raise ValueError("analysisCutoff must be an ISO timestamp with seconds and timezone")
+    try:
+        timestamp = pd.Timestamp(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("analysisCutoff must be a valid ISO timestamp") from exc
+    if pd.isna(timestamp) or timestamp.tzinfo is None:
+        raise ValueError("analysisCutoff must be a valid timezone-aware timestamp")
+    return timestamp
+
+
 def validate_historical_report(report: dict) -> str:
-    """Reject mismatched, incomplete, or post-detection evidence receipts."""
+    """Keep historical evidence fixed to the scheduled signal-date proxy."""
+    return _validate_report(report, detection_cutoff(report["signalDate"]), forward=False)
+
+
+def validate_forward_report(report: dict, claim: dict) -> str:
+    """Validate live evidence against its immutable analysis-start claim stamp."""
+    if report.get("auditStatus") != "pass":
+        raise ValueError("forward report requires auditStatus='pass'")
+    if claim.get("signalType") != "WEAK_EARLY_BETA":
+        raise ValueError("forward validation requires a WEAK_EARLY_BETA claim")
+    if str(report.get("symbolCode", "")) != str(claim.get("symbolCode", "")):
+        raise ValueError("report/claim symbol mismatch")
+    if _iso_date(report["signalDate"]) != _iso_date(claim["signalDate"]):
+        raise ValueError("report/claim signal date mismatch")
+    if claim.get("alertId") and report.get("alertId") != claim["alertId"]:
+        raise ValueError("report/claim alert mismatch")
+    cutoff = str(claim.get("analysisCutoff", claim.get("receivedAt", ""))).strip()
+    analysis_timestamp(cutoff)
+    return _validate_report(report, cutoff, forward=True)
+
+
+def validate_forward_reports(claim: dict, reports: list[dict]) -> list[str]:
+    """Require exactly one audited snapshot for every alert in the owned batch."""
+    alerts = claim.get("alerts", [])
+    if not isinstance(alerts, list) or any(not isinstance(alert, dict) for alert in alerts):
+        raise ValueError("forward claim alerts must be a list of objects")
+    if not isinstance(reports, list) or any(not isinstance(report, dict) for report in reports):
+        raise ValueError("forward reports must be a list of objects")
+    claim_ids = [str(alert.get("alertId", "")).strip() for alert in alerts]
+    report_ids = [str(report.get("alertId", "")).strip() for report in reports]
+    if any(not value for value in (*claim_ids, *report_ids)) or len(set(claim_ids)) != len(claim_ids) or len(set(report_ids)) != len(report_ids):
+        raise ValueError("forward claim/report alert IDs must be non-empty and unique")
+    if set(claim_ids) != set(report_ids) or claim.get("claimedCount", len(alerts)) != len(alerts):
+        raise ValueError("forward reports must exactly match the claimed alert batch")
+    lookup = dict(zip(claim_ids, alerts))
+    return [validate_forward_report(report, lookup[report_id]) for report, report_id in zip(reports, report_ids)]
+
+
+def _validate_report(report: dict, expected_cutoff: str, *, forward: bool) -> str:
+    """Share field/evidence checks without widening the historical entry point."""
     signal_date = _iso_date(report["signalDate"])
     symbol = str(report["symbolCode"]).strip()
     if not symbol:
@@ -100,8 +152,9 @@ def validate_historical_report(report: dict) -> str:
         raise ValueError(
             f"report identity must match signalDate and symbolCode: {expected_identity}"
         )
-    expected_cutoff = detection_cutoff(signal_date)
     if str(report.get("analysisCutoff", "")) != expected_cutoff:
+        if forward:
+            raise ValueError("analysisCutoff must match claim.analysisCutoff or legacy claim.receivedAt")
         raise ValueError(
             f"analysisCutoff must equal the scheduled detection cutoff {expected_cutoff}"
         )
@@ -149,9 +202,20 @@ def validate_historical_report(report: dict) -> str:
                 "use official company IR or TDnet/JPX disclosures"
             )
         published_at = pd.Timestamp(disclosure["publishedAt"])
-        if published_at.tzinfo is None:
+        date_only_forward = forward and disclosure.get("publishedAtPrecision") == "date_only"
+        if date_only_forward:
+            if pd.isna(published_at) or (published_at.tzinfo is None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(disclosure["publishedAt"]))):
+                raise ValueError("date-only disclosure requires a JST publication date or timezone-aware timestamp")
+            publication_day = published_at.tz_convert("Asia/Tokyo").date() if published_at.tzinfo else published_at.date()
+            if publication_day >= cutoff.tz_convert("Asia/Tokyo").date():
+                raise ValueError("date-only disclosure must predate the analysis-start JST date")
+        elif published_at.tzinfo is None:
             raise ValueError("disclosure publishedAt must include a timezone")
-        if published_at > cutoff:
+        if not date_only_forward and published_at > cutoff:
+            if forward:
+                raise ValueError(
+                    f"post-analysis-start disclosure rejected: {disclosure['publishedAt']} > {expected_cutoff}"
+                )
             raise ValueError(
                 f"post-detection disclosure rejected: {disclosure['publishedAt']} > {expected_cutoff}"
             )

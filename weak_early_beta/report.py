@@ -167,7 +167,22 @@ def _historical_snapshot_metadata() -> dict[tuple[str, str], dict]:
     try:
         reports = json.loads(path.read_text(encoding="utf-8")).get("reports", [])
     except (OSError, ValueError):
-        return {}
+        reports = []
+    state_path = ROOT / "weak_early_beta" / "fundamental_worker" / "state" / "premium_alert_state.json"
+    try:
+        completed = json.loads(state_path.read_text(encoding="utf-8")).get("completed", {})
+    except (OSError, ValueError):
+        completed = {}
+    forward_reports = []
+    for identity, saved in completed.items():
+        report = saved.get("report", {})
+        if (saved.get("delivery") == "html" and saved.get("analysisBasis") == "analysis_start"
+                and report.get("auditStatus") == "pass"
+                and report.get("alertId") == identity
+                and saved.get("analysisCutoff") == report.get("analysisCutoff")):
+            forward_reports.append(report)
+    forward_ids = {id(report) for report in forward_reports}
+    reports = [*reports, *forward_reports]
     lookup: dict[tuple[str, str], dict] = {}
     for report in reports:
         if report.get("auditStatus") != "pass":
@@ -180,12 +195,18 @@ def _historical_snapshot_metadata() -> dict[tuple[str, str], dict]:
             if not (url and title and published and disclosure.get("contentReviewed")):
                 continue
             try:
-                stamp = pd.Timestamp(published).tz_convert("Asia/Tokyo")
+                stamp = pd.Timestamp(published)
+                if stamp.tzinfo is not None:
+                    stamp = stamp.tz_convert("Asia/Tokyo")
+                elif not (id(report) in forward_ids and disclosure.get("publishedAtPrecision") == "date_only"):
+                    continue
             except (ValueError, TypeError):
                 continue
-            labels[url] = f"{stamp:%Y-%m-%d} {title}({stamp:%H:%M})"
+            time_label = "時刻未確認" if id(report) in forward_ids and disclosure.get("publishedAtPrecision") == "date_only" else f"{stamp:%H:%M}"
+            labels[url] = f"{stamp:%Y-%m-%d} {title}({time_label})"
         key = (str(report.get("signalDate") or ""), str(report.get("symbolCode") or ""))
-        lookup[key] = {"cutoff": str(report.get("analysisCutoff") or ""), "disclosures": labels}
+        lookup[key] = {"cutoff": str(report.get("analysisCutoff") or ""), "disclosures": labels,
+                       "forward_analysis": id(report) in forward_ids}
     return lookup
 
 
@@ -247,6 +268,9 @@ def _fundamental_html(
     title_html = f"<h4>{_anchor(chart_url, title)}</h4>"
     cutoff = (metadata or {}).get("cutoff")
     timing = f"基準時点: {cutoff}" if cutoff else f"分析対象日: {signal_date}"
+    if cutoff and (metadata or {}).get("forward_analysis"):
+        stamp = pd.Timestamp(cutoff).tz_convert("Asia/Tokyo")
+        timing = f"検出日: {signal_date} / 分析基準日時: {stamp.isoformat()} (日本時間)"
     meta_html = (
         '<p class="discord-meta">'
         f"{html.escape('Cloud fundamental snapshot / Not investment advice / ' + timing)}"

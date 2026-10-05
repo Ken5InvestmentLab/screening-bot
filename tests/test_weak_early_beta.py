@@ -3,6 +3,7 @@ import re
 import tempfile
 import unittest
 from datetime import date, datetime
+from argparse import Namespace
 from pathlib import Path
 from unittest.mock import patch
 from zoneinfo import ZoneInfo
@@ -15,7 +16,7 @@ from weak_early_beta.config import (
     SELECTOR_ORDER,
     selector_info,
 )
-from weak_early_beta.cli import _require_historical_audit_pass, _validate_historical_import_targets
+from weak_early_beta.cli import _require_historical_audit_pass, _validate_historical_import_targets, command_validate_forward_fundamentals
 from weak_early_beta.bank_calendar import fifth_session_from_entry, is_bank_business_day
 from weak_early_beta.fundamental import export_receipts, prepare_claim
 from weak_early_beta.historical_fundamentals import (
@@ -23,6 +24,8 @@ from weak_early_beta.historical_fundamentals import (
     build_manifest as build_historical_manifest,
     import_historical_reports,
     validate_historical_report,
+    validate_forward_report,
+    validate_forward_reports,
 )
 from weak_early_beta.ledger import apply_fundamental_receipts, bootstrap_historical, build_fundamental_queue, merge_detections
 from weak_early_beta.entry_feasibility import annotate_entry_feasibility, performance_eligible
@@ -612,12 +615,18 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 "selector_names": ["出来高沈静リバウンド"],
             }]
             queue_path.write_text(json.dumps(queue, ensure_ascii=False), encoding="utf-8")
+            before_prepare = pd.Timestamp.now(tz="Asia/Tokyo")
             claim = prepare_claim(queue_path, ledger_path, state_path, claim_path)
+            after_prepare = pd.Timestamp.now(tz="Asia/Tokyo")
             self.assertEqual(claim["claimedCount"], 1)
             self.assertEqual(claim["alerts"][0]["receivedAt"], "2026-09-18T16:15:00+09:00")
+            cutoff = claim["alerts"][0]["analysisCutoff"]
+            self.assertLessEqual(before_prepare, pd.Timestamp(cutoff))
+            self.assertLessEqual(pd.Timestamp(cutoff), after_prepare)
             identity = "weak-early-beta:2026-09-18:1234"
             state = json.loads(state_path.read_text(encoding="utf-8"))
             self.assertIn(identity, state["claims"])
+            self.assertEqual(state["claims"][identity]["analysisCutoff"], cutoff)
             state["posted"][identity] = {
                 "discordMessageUrl": "https://discord.com/channels/g/c/m"
             }
@@ -697,6 +706,116 @@ class WeakEarlyBetaTests(unittest.TestCase):
                 "contentReviewed": True,
             }],
         }
+
+    def test_forward_claim_accepts_an_explicit_analysis_start_without_changing_detection_time(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            ledger_path, queue_path, state_path, claim_path = (
+                root / name for name in ("ledger.csv", "queue.json", "state.json", "claim.json")
+            )
+            ledger = self.ledger.head(1).copy()
+            ledger.loc[:, "source_scope"] = "FORWARD_CAUSAL"
+            ledger.loc[:, "signal_date"] = pd.Timestamp("2026-09-18")
+            ledger.loc[:, "symbol"] = "1234"
+            ledger.to_csv(ledger_path, index=False)
+            queue_path.write_text(json.dumps([{"signal_date": "2026-09-18", "symbol": "1234"}]), encoding="utf-8")
+            cutoff = "2026-09-19T09:00:00.123Z"
+            claim = prepare_claim(queue_path, ledger_path, state_path, claim_path, analysis_cutoff=cutoff)
+            alert = claim["alerts"][0]
+            self.assertEqual(alert["analysisCutoff"], cutoff)
+            self.assertEqual(alert["receivedAt"], "2026-09-18T16:15:00+09:00")
+            saved = json.loads(state_path.read_text(encoding="utf-8"))["claims"][alert["alertId"]]
+            self.assertEqual(saved["analysisCutoff"], cutoff)
+            self.assertEqual(saved["receivedAt"], alert["receivedAt"])
+            self.assertEqual(saved["claimId"], claim["claimId"])
+
+    def _forward_analysis_report(self):
+        report = self._historical_report(signal_date="2026-09-30")
+        cutoff = "2026-10-01T06:00:00.123Z"
+        claim = {
+            "signalType": "WEAK_EARLY_BETA", "signalDate": report["signalDate"],
+            "symbolCode": report["symbolCode"], "receivedAt": "2026-09-30T16:15:00+09:00",
+            "analysisCutoff": cutoff,
+        }
+        report["alertId"] = claim["alertId"] = f"weak-early-beta:{report['signalDate']}:{report['symbolCode']}"
+        report["auditStatus"] = "pass"
+        report["analysisCutoff"] = cutoff
+        report["disclosures"][0]["publishedAt"] = "2026-10-01T15:00:00.123+09:00"
+        return report, claim
+
+    def test_forward_report_accepts_later_day_disclosure_at_analysis_start(self):
+        report, claim = self._forward_analysis_report()
+        self.assertEqual(validate_forward_report(report, claim), "2026-09-30|3133")
+        with self.assertRaisesRegex(ValueError, "scheduled detection cutoff"):
+            validate_historical_report(report)
+
+    def test_forward_report_rejects_disclosure_after_analysis_start_by_a_millisecond(self):
+        report, claim = self._forward_analysis_report()
+        report["disclosures"][0]["publishedAt"] = "2026-10-01T15:00:00.124+09:00"
+        with self.assertRaisesRegex(ValueError, "post-analysis-start disclosure"):
+            validate_forward_report(report, claim)
+
+    def test_forward_report_requires_the_exact_claim_analysis_cutoff_and_identity(self):
+        report, claim = self._forward_analysis_report()
+        report["analysisCutoff"] = claim["receivedAt"]
+        with self.assertRaisesRegex(ValueError, "must match claim.analysisCutoff"):
+            validate_forward_report(report, claim)
+        report["analysisCutoff"] = claim["analysisCutoff"]
+        claim["signalDate"] = "2026-10-01"
+        with self.assertRaisesRegex(ValueError, "signal date mismatch"):
+            validate_forward_report(report, claim)
+        claim["signalDate"] = report["signalDate"]
+        claim["analysisCutoff"] = "2026-10-01T15:00:00"
+        report["analysisCutoff"] = claim["analysisCutoff"]
+        with self.assertRaisesRegex(ValueError, "seconds and timezone"):
+            validate_forward_report(report, claim)
+
+    def test_forward_report_legacy_cutoff_falls_back_to_received_at(self):
+        report = self._historical_report(signal_date="2026-09-30")
+        report["auditStatus"] = "pass"
+        claim = {
+            "signalType": "WEAK_EARLY_BETA", "signalDate": report["signalDate"],
+            "symbolCode": report["symbolCode"], "receivedAt": report["analysisCutoff"],
+        }
+        self.assertEqual(validate_forward_report(report, claim), "2026-09-30|3133")
+        report["disclosures"][0]["publishedAt"] = "2026-10-01T00:00:00+09:00"
+        with self.assertRaisesRegex(ValueError, "post-analysis-start disclosure"):
+            validate_forward_report(report, claim)
+
+    def test_forward_date_only_disclosures_use_analysis_start_jst_calendar_date(self):
+        report, claim = self._forward_analysis_report()
+        claim["analysisCutoff"] = report["analysisCutoff"] = "2026-10-01T15:00:00.123Z"
+        report["disclosures"][0]["publishedAtPrecision"] = "date_only"
+        report["disclosures"][0]["publishedAt"] = "2026-10-01"
+        self.assertEqual(validate_forward_report(report, claim), "2026-09-30|3133")
+        report["disclosures"][0]["publishedAt"] = "2026-10-02"
+        with self.assertRaisesRegex(ValueError, "predate the analysis-start JST date"):
+            validate_forward_report(report, claim)
+
+    def test_forward_batch_validator_requires_audited_exact_unique_claim_reports(self):
+        report, alert = self._forward_analysis_report()
+        claim = {"claimedCount": 1, "alerts": [alert]}
+        self.assertEqual(validate_forward_reports(claim, [report]), ["2026-09-30|3133"])
+        with self.assertRaisesRegex(ValueError, "exactly match"):
+            validate_forward_reports(claim, [])
+        with self.assertRaisesRegex(ValueError, "non-empty and unique"):
+            validate_forward_reports(claim, [report, report])
+        report["auditStatus"] = "needs_repair"
+        with self.assertRaisesRegex(ValueError, "auditStatus='pass'"):
+            validate_forward_reports(claim, [report])
+
+    def test_forward_validation_cli_checks_the_claim_and_reports_without_writing_state(self):
+        report, alert = self._forward_analysis_report()
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            claim_path, report_path = root / "claim.json", root / "reports.json"
+            claim_path.write_text(json.dumps({"claimedCount": 1, "alerts": [alert]}), encoding="utf-8")
+            report_path.write_text(json.dumps({"reports": [report]}, ensure_ascii=False), encoding="utf-8")
+            before = {path: path.read_bytes() for path in (claim_path, report_path)}
+            with patch("builtins.print") as output:
+                command_validate_forward_fundamentals(Namespace(claim=str(claim_path), input=str(report_path)))
+            self.assertEqual(json.loads(output.call_args.args[0]), {"ok": True, "validated": 1, "identities": ["2026-09-30|3133"]})
+            self.assertEqual(before, {path: path.read_bytes() for path in before})
 
     def test_historical_manifest_is_per_date_symbol_and_outside_forward_queue(self):
         sample = self.ledger[

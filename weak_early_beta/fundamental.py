@@ -9,6 +9,7 @@ from pathlib import Path
 import pandas as pd
 
 from .ledger import DEFAULT_LEDGER, DEFAULT_QUEUE, read_ledger
+from .historical_fundamentals import analysis_timestamp
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -56,6 +57,7 @@ def prepare_claim(
     state_path: Path = DEFAULT_WORKER_STATE,
     claim_path: Path = DEFAULT_CLAIM,
     max_alerts: int = 0,
+    analysis_cutoff: str | None = None,
 ) -> dict:
     """Create one immutable beta batch without reading production Sheets/state."""
     queue = _read_json(queue_path, [])
@@ -66,6 +68,10 @@ def prepare_claim(
         raise RuntimeError(
             "beta fundamental claims already exist; reconcile the existing batch before preparing another"
         )
+
+    now = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
+    cutoff = str(analysis_cutoff).strip() if analysis_cutoff is not None else now
+    analysis_timestamp(cutoff)
 
     ledger = read_ledger(ledger_path)
     lookup = {}
@@ -89,6 +95,7 @@ def prepare_claim(
         alert = {
             "alertId": identity,
             "receivedAt": f"{signal_date}T16:15:00+09:00",
+            "analysisCutoff": cutoff,
             "signalDate": signal_date,
             "signalType": "WEAK_EARLY_BETA",
             "symbolCode": symbol,
@@ -101,13 +108,13 @@ def prepare_claim(
     if max_alerts > 0:
         pending = pending[:max_alerts]
 
-    now = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
     claim_id = str(uuid.uuid4())
     for alert in pending:
         state["claims"][alert["alertId"]] = {
             "claimId": claim_id,
             "claimedAt": now,
             "receivedAt": alert["receivedAt"],
+            "analysisCutoff": alert["analysisCutoff"],
             "signalDate": alert["signalDate"],
             "signalType": alert["signalType"],
             "symbolCode": alert["symbolCode"],

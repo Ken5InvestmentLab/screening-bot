@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const SIGNAL_CHANNEL_ID = '1550876104917520505';
@@ -24,7 +25,37 @@ function reportsMatchClaim(reportsPath, claim) {
   const reports = readJson(reportsPath).reports || [];
   const expected = new Set((claim.alerts || []).map(alert => alert.alertId));
   const actual = new Set(reports.map(report => report.alertId));
-  return expected.size > 0 && expected.size === actual.size && [...expected].every(id => actual.has(id));
+  return expected.size > 0 && reports.length === expected.size && expected.size === actual.size && [...expected].every(id => actual.has(id)) &&
+    (claim.alerts || []).every(alert => reports.some(report =>
+      report.alertId === alert.alertId && report.signalDate === alert.signalDate &&
+      report.analysisCutoff === (alert.analysisCutoff || alert.receivedAt)));
+}
+
+function stampAnalysisStart(statePath, claim, analysisStartedAt) {
+  if (!Number.isFinite(Date.parse(analysisStartedAt))) throw new Error('invalid analysis start time');
+  const state = readJson(statePath);
+  for (const alert of claim.alerts || []) {
+    if (state.claims?.[alert.alertId]?.claimId !== claim.claimId ||
+        state.completed?.[alert.alertId]?.delivery === 'html') {
+      throw new Error(`analysis-start claim ownership mismatch: ${alert.alertId}`);
+    }
+  }
+  const stamped = {
+    ...claim, analysisStartedAt,
+    alerts: (claim.alerts || []).map(alert => ({ ...alert, analysisCutoff: analysisStartedAt })),
+  };
+  for (const alert of stamped.alerts) state.claims[alert.alertId].analysisCutoff = analysisStartedAt;
+  writeJson(statePath, state);
+  return stamped;
+}
+
+function reusableClaimReport(reportsPath, claim, savedState) {
+  const validatedLegacyImport = (claim.alerts || []).every(alert => {
+    const saved = savedState.completed?.[alert.alertId];
+    return saved?.delivery === 'html' && saved.analysisCutoff === (alert.analysisCutoff || alert.receivedAt);
+  });
+  return ((claim.alerts || []).every(alert => alert.analysisCutoff) || validatedLegacyImport) &&
+    reportsMatchClaim(reportsPath, claim);
 }
 
 function finalizeHtmlSnapshots(statePath, claim) {
@@ -181,19 +212,31 @@ async function main(configFile) {
       return;
     }
 
+    // Capture the fundamental analysis start, independently of detection time.
+    // A validated-output import retry retains the original analysis timestamp.
+    const savedState = readJson(statePath);
+    const reuseReport = reusableClaimReport(reportsPath, claim, savedState);
+    if (!reuseReport) {
+      const analysisStartedAt = new Date().toISOString();
+      claim = stampAnalysisStart(statePath, claim, analysisStartedAt);
+      writeJson(claimPath, claim);
+      writeJson(path.join(runDir, 'claim.json'), claim);
+    }
+    result.analysisStartedAt = claim.analysisStartedAt || claim.alerts?.[0]?.analysisCutoff || claim.alerts?.[0]?.receivedAt;
+
     const prompt = [
       'Weak+Early betaのclaimに含まれる検出銘柄を、現行Premium Workerと同じ会社固有の品質でファンダ分析してください。$premium-fundamental-snapshot を使います。',
       `不変claimは ${path.join(runDir, 'claim.json')} です。ここにあるalertIdだけを対象にしてください。`,
       `必ず ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'AUTOMATION_PROMPT.md')} と ${path.join(config.premiumWorkerRepoPath, 'premium_worker', 'FUNDAMENTAL_EXAMPLES.md')} を全文読み、skillのreferences/report_quality.mdも読んでください。`,
-      '各銘柄の分析基準時点はclaimのreceivedAt（検出日の日本時間16:15）です。その時点より後に公表されたIR・適時開示・ニュース・決算資料は、検索で見つかっても絶対に使わないでください。各社の公式IR、IRBANKまたはTDnet相当の開示一覧を基準時点まで確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
-      'レポート本文と開示リンクには、採用した資料の公表日がsignal_date以前であることが分かるようにし、基準時点後の資料を参照していないことを守ってください。',
-      '各レポートのsignalDateとanalysisCutoffをclaimのsignalDateとreceivedAtへ正確に合わせてください。分析はHTMLへの保存だけに使い、Discordへ通知しません。',
+      '各銘柄の分析基準時点はclaimのanalysisCutoff（今回のファンダ分析を開始する直前の日時）です。銘柄検出の開始時刻やreceivedAtを分析基準にしないでください。その時点までに公表されたIR・適時開示・ニュース・決算資料を含め、それ以後の情報は検索で見つかっても使わないでください。各社の公式IR、IRBANKまたはTDnet相当の開示一覧を基準時点まで確認し、選んだ一次資料の本文を読んでください。検索スニペットだけで作らないでください。',
+      '検出日より後の公表資料でもanalysisCutoff以前なら対象です。本文と開示リンクには採用資料の公表日時を示し、基準時点後の資料を使わないでください。同じ基準日の開示時刻が確認できなければ採用しないでください。',
+      '各レポートのsignalDateはclaimのsignalDate、analysisCutoffはclaimのanalysisCutoffへ文字列まで正確に合わせてください。receivedAtは検出日時として保持します。既存本文が出力先にあれば参考として読み、新しい分析基準時点までの追加開示を確認してから更新してください。分析はHTMLへの保存だけに使い、Discordへ通知しません。',
       '売買推奨、目標株価、追加スコアは禁止。現行契約の全7フィールドとSourcesを満たしてください。',
       `最終JSONは ${reportsPath} だけに書き込んでください。Discord投稿、worker state、Sheets、Git、workflow、ソースコードは変更しないでください。`,
       '報告は有界に保ち、出力JSON作成後は日本語で簡潔に完了を報告してください。',
     ].join('\n\n');
     fs.writeFileSync(path.join(runDir, 'prompt.txt'), prompt);
-    if (!reportsMatchClaim(reportsPath, claim)) {
+    if (!reuseReport) {
       const analysisExit = await command(config.nodePath, [
         config.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
         '--cd', config.premiumWorkerRepoPath, '--skip-git-repo-check',
@@ -218,6 +261,16 @@ async function main(configFile) {
     }
     if (!fs.existsSync(reportsPath)) throw new Error('Codex completed without premium_reports.json');
 
+    if ((claim.alerts || []).every(alert => alert.signalType === 'WEAK_EARLY_BETA' && alert.analysisCutoff)) {
+      await run(config.pythonPath || 'py', [
+        '-m', 'weak_early_beta.cli', 'validate-forward-fundamentals',
+        '--claim', claimPath, '--input', reportsPath,
+      ], 'validate-analysis-start');
+    }
+    result.validatedReportPath = path.join(runDir, 'validated-reports.json');
+    fs.copyFileSync(reportsPath, result.validatedReportPath);
+    result.validatedReportSha256 = createHash('sha256').update(fs.readFileSync(result.validatedReportPath)).digest('hex');
+
     // Reuse the beta point-in-time validator, then persist without a Discord request.
     await run(config.nodePath, [historicalPosterPath, '--input', reportsPath, '--state', statePath, '--save-only'], 'save-snapshot', {
       cwd: config.repoPath, env, timeoutMs: 180_000,
@@ -230,6 +283,9 @@ async function main(configFile) {
     await run(config.pythonPath || 'py', [
       '-m', 'weak_early_beta.cli', 'import-fundamentals', '--receipts', receiptsPath,
     ], 'import-receipts');
+    result.importedReceiptPath = path.join(runDir, 'imported-receipts.json');
+    fs.copyFileSync(receiptsPath, result.importedReceiptPath);
+    result.importedReceiptSha256 = createHash('sha256').update(fs.readFileSync(result.importedReceiptPath)).digest('hex');
     finalizeHtmlSnapshots(statePath, claim);
     result.imported = claim.claimedCount;
     result.posted = 0;
@@ -249,4 +305,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { assertIsolated, cleanEnvironment, finalizeHtmlSnapshots, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };
+export { assertIsolated, cleanEnvironment, finalizeHtmlSnapshots, reportsMatchClaim, reusableClaimReport, stampAnalysisStart, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };

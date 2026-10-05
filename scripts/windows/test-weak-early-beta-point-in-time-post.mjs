@@ -148,3 +148,86 @@ test('Cloud beta posting accepts claim cutoff and rejects later disclosures', ()
     fs.rmSync(resolved, { recursive: true, force: true });
   }
 });
+
+test('forward HTML snapshots use exact analysis start and later-day publication receipts', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'weak-early-beta-forward-cutoff-'));
+  try {
+    const statePath = path.join(fixture, 'state.json');
+    const reportPath = path.join(fixture, 'report.json');
+    const report = validReport();
+    const receivedAt = report.analysisCutoff;
+    const cutoff = '2026-10-01T06:00:00.123Z';
+    const claim = { claimId: 'forward-claim', symbolCode: report.symbolCode, signalDate: report.signalDate,
+      signalType: 'WEAK_EARLY_BETA', receivedAt, analysisCutoff: cutoff };
+    const state = { claims: { [report.alertId]: claim }, posted: {}, failed: {} };
+    fs.writeFileSync(statePath, JSON.stringify(state));
+    report.analysisCutoff = cutoff;
+    report.auditStatus = 'pass';
+    report.fields[5].value = '・[2026-10-01 開示タイトル(15:00)](https://example.com/disclosure.pdf)';
+    report.disclosures = [{ url: 'https://example.com/disclosure.pdf', publishedAt: '2026-10-01T15:00:00.123+09:00', contentReviewed: true }];
+    const run = (mode = '--dry-run') => {
+      fs.writeFileSync(reportPath, JSON.stringify({ reports: [report] }));
+      return spawnSync(process.execPath, [poster, '--input', reportPath, '--state', statePath, '--save-only', mode], {
+        encoding: 'utf8', env: { ...process.env, WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL: '' },
+      });
+    };
+    assert.equal(run().status, 0);
+    report.disclosures[0].publishedAt = '2026-10-01T15:00:00.124+09:00';
+    assert.match(run().stderr, /post-cutoff disclosure found/);
+    report.disclosures[0].publishedAt = '2026-10-01T15:00:00.123+09:00';
+    report.analysisCutoff = '2026-10-01T15:00:00.123+09:00';
+    assert.match(run().stderr, /must match claim.analysisCutoff/);
+    report.analysisCutoff = cutoff;
+    report.disclosures[0].url = 'https://example.com/other.pdf';
+    assert.match(run().stderr, /must match selected publication receipts/);
+    report.disclosures[0].url = 'https://example.com/disclosure.pdf';
+    assert.equal(run('--save-only').status, 0);
+    const saved = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    assert.equal(saved.completed[report.alertId].analysisBasis, 'analysis_start');
+    assert.equal(saved.completed[report.alertId].analysisCutoff, cutoff);
+    assert.deepEqual(saved.claims, state.claims);
+    assert.deepEqual(saved.posted, {});
+  } finally {
+    const resolved = path.resolve(fixture);
+    if (!resolved.startsWith(`${path.resolve(os.tmpdir())}${path.sep}`) || !path.basename(resolved).startsWith('weak-early-beta-forward-cutoff-')) {
+      throw new Error('refusing to remove an unexpected fixture path');
+    }
+    fs.rmSync(resolved, { recursive: true, force: true });
+  }
+});
+
+test('forward date-only receipts use the analysis-start JST day and legacy types stay historical', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'weak-early-beta-forward-date-only-'));
+  try {
+    const statePath = path.join(fixture, 'state.json');
+    const reportPath = path.join(fixture, 'report.json');
+    const report = validReport();
+    const receivedAt = report.analysisCutoff;
+    const cutoff = '2026-10-01T15:00:00.123Z'; // JST 2026-10-02, after the signal date.
+    const claim = { symbolCode: report.symbolCode, signalDate: report.signalDate,
+      signalType: 'WEAK_EARLY_BETA', receivedAt, analysisCutoff: cutoff };
+    report.analysisCutoff = cutoff;
+    report.auditStatus = 'pass';
+    report.fields[5].value = '・[2026-10-01 開示タイトル(時刻未確認)](https://example.com/disclosure.pdf)';
+    report.disclosures = [{ url: 'https://example.com/disclosure.pdf', publishedAt: '2026-10-01', publishedAtPrecision: 'date_only', contentReviewed: true }];
+    const run = () => {
+      fs.writeFileSync(statePath, JSON.stringify({ claims: { [report.alertId]: claim }, posted: {} }));
+      fs.writeFileSync(reportPath, JSON.stringify({ reports: [report] }));
+      return spawnSync(process.execPath, [poster, '--input', reportPath, '--state', statePath, '--save-only', '--dry-run'], {
+        encoding: 'utf8', env: { ...process.env, WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL: '' },
+      });
+    };
+    assert.equal(run().status, 0);
+    report.disclosures[0].publishedAt = '2026-10-02';
+    assert.match(run().stderr, /predate the analysis-start JST date/);
+    claim.signalType = 'HISTORICAL';
+    report.analysisCutoff = receivedAt;
+    assert.match(run().stderr, /post-signal date found in historical report/);
+  } finally {
+    const resolved = path.resolve(fixture);
+    if (!resolved.startsWith(`${path.resolve(os.tmpdir())}${path.sep}`) || !path.basename(resolved).startsWith('weak-early-beta-forward-date-only-')) {
+      throw new Error('refusing to remove an unexpected fixture path');
+    }
+    fs.rmSync(resolved, { recursive: true, force: true });
+  }
+});

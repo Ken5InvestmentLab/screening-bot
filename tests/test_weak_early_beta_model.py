@@ -228,7 +228,7 @@ class SplitAwareModelTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "entry shares revision"):
             merge_detections(original, revised)
 
-    def test_future_split_does_not_admit_historically_expensive_stock(self):
+    def test_future_split_does_not_admit_expensive_stock_to_training(self):
         features = pd.DataFrame({name: [0.0, 0.0] for name in model.base.FEATURES})
         features["symbol"] = "9999"
         features["date"] = pd.bdate_range("2026-09-01", periods=2)
@@ -236,8 +236,8 @@ class SplitAwareModelTests(unittest.TestCase):
         features["actual_close"] = 1300  # Actual price at each historical session.
         features["volume"] = 40_000
         features["actual_volume"] = 20_000
-        self.assertTrue(model.eligible_live_rows(features).empty)
-        self.assertEqual(len(model.eligible_live_rows(features, price_cap=0)), 1)
+        self.assertTrue(model.eligible_live_rows(features, price_cap=model.TRAINING_PRICE_CAP).empty)
+        self.assertEqual(len(model.eligible_live_rows(features)), 1)
 
     def test_future_split_does_not_inflate_historical_liquidity_gate(self):
         features = pd.DataFrame({name: [0.0, 0.0] for name in model.base.FEATURES})

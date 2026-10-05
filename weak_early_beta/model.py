@@ -31,7 +31,7 @@ import select_shadow_candidates as shadow  # noqa: E402
 
 TAIL_GATE = 0.999
 MIN_TRAIN_ROWS = 30_000
-PRICE_CAP = 1000.0
+TRAINING_PRICE_CAP = 1000.0
 
 
 def sha256(path: Path) -> str:
@@ -49,7 +49,7 @@ def read_daily(path: Path) -> pd.DataFrame:
     return normalize_daily(frame)
 
 
-def eligible_live_rows(features: pd.DataFrame, price_cap: float = PRICE_CAP) -> pd.DataFrame:
+def eligible_live_rows(features: pd.DataFrame, price_cap: float = 0.0) -> pd.DataFrame:
     """Apply absolute gates to contemporaneous shares, never later split units."""
     previous_close = features.groupby("symbol")["actual_close"].shift(1)
     previous_volume = features.groupby("symbol")["actual_volume"].shift(1)
@@ -89,13 +89,18 @@ def build_live_features(raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def prepare_live(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Keep unlabeled prediction rows; labels exist only on matured rows."""
+    """Predict without an upper price limit using the frozen capped training pool."""
     features = build_live_features(raw)
     eligible = eligible_live_rows(features)
+    # Keep the original training rows and cross-sectional labels. Expanding
+    # prediction coverage must not redefine the fitted model or its Tail CDF.
+    training = eligible_live_rows(features, price_cap=TRAINING_PRICE_CAP)
     del features
     eligible["date"] = pd.to_datetime(eligible["date"])
     eligible["target_end_date"] = pd.to_datetime(eligible["target_end_date"], errors="coerce")
-    labeled = eligible.dropna(subset=["target5_no", "target_end_date"]).copy()
+    training["date"] = pd.to_datetime(training["date"])
+    training["target_end_date"] = pd.to_datetime(training["target_end_date"], errors="coerce")
+    labeled = training.dropna(subset=["target5_no", "target_end_date"]).copy()
     labeled["future_rank"] = labeled.groupby("date")["target5_no"].rank(
         pct=True, method="average"
     )

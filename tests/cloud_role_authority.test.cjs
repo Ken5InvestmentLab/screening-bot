@@ -5,9 +5,11 @@ const {createHash}=require('node:crypto');
 const NOW=Date.parse('2026-10-05T00:00:00Z');
 function harness() {
  const clock={now:NOW},requests=[],provider={roles:['allowed'],http:200,retry:86374,scope:'user'};
- const fetchMock=async(input,init)=>{requests.push({route:new URL(input).pathname});provider.started?.(); if(provider.wait)await provider.wait;
+ const fetchMock=async(input,init)=>{requests.push({route:new URL(input).pathname,redirect:init.redirect});provider.started?.(); if(provider.wait)await provider.wait;
    clock.now+=provider.elapsed||0;
+   if(provider.workerdRedirectGuard&&init.redirect==='error')throw new TypeError('Unsupported redirect mode: error');
    if(provider.error)throw provider.error;
+   if(provider.response)return provider.response();
    if(provider.http===200)return Response.json({roles:provider.roles});
    return Response.json({retry_after:provider.retry,untrusted_secret:'must-not-be-stored-or-logged'},{status:provider.http,headers:{'x-ratelimit-scope':provider.scope,...(provider.retryHeader?{'retry-after':provider.retryHeader}:{})}});
  };
@@ -16,6 +18,17 @@ function harness() {
  env.CLOUD_ROLE_AUTHORITY=namespace(authority.CloudRoleAuthority,env);
  return {clock,requests,provider,mod,env,authority,check:(subject='owner',token='synthetic-access')=>authority.cloudReportRole(env,subject,token,'/auth/check')};
 }
+test('role lookup uses a workerd-supported manual redirect mode',async()=>{
+ const h=harness();h.provider.workerdRedirectGuard=true;
+ const result=await h.check();assert.equal(result.status,'paid');assert.equal(h.requests.length,1);assert.equal(h.requests[0].redirect,'manual');
+});
+test('role redirect with a Location and permitted-role body remains unavailable without following it',async()=>{
+ const h=harness();h.provider.response=()=>Response.json({roles:['allowed']},{status:302,headers:{location:'https://redirect.invalid/member'}});
+ const result=await h.check();assert.equal(result.status,'unavailable');assert.equal(result.reason,'discord_role_lookup_302');assert.equal(result.retryAfterSeconds,5);
+ assert.equal(h.requests.length,1);assert.equal(h.requests[0].redirect,'manual');
+ const values=[...h.env.CLOUD_ROLE_AUTHORITY.records.values()][0];assert.equal(values.has('verified'),false);
+ assert.equal((await h.check()).status,'unavailable');assert.equal(h.requests.length,1);
+});
 test('real authority shares one lookup across concurrent and serialized tabs, isolates, HTML and bundle requests',async()=>{
  const h=harness();let release;h.provider.wait=new Promise(r=>release=r);const started=new Promise(r=>h.provider.started=r);
  const calls=Array.from({length:4},()=>h.check());await started;assert.equal(h.requests.length,1);release();

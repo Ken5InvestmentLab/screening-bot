@@ -54,7 +54,8 @@ export class CloudRoleAuthority extends DurableObject<CloudEnv> {
     try {
       const response = await fetch(`${this.env.DISCORD_API_BASE ?? "https://discord.com/api"}/users/@me/guilds/${this.env.DISCORD_GUILD_ID}/member`, {
         headers: { authorization: `Bearer ${accessToken}`, "user-agent": USER_AGENT, accept: "application/json" },
-        cache: "no-store", redirect: "error", signal: AbortSignal.timeout(10000),
+        // workerd accepts follow/manual; reject redirects via response.ok below.
+        cache: "no-store", redirect: "manual", signal: AbortSignal.timeout(10000),
       });
       httpStatus = response.status;
       observedAt = new Date().toISOString();

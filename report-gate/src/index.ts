@@ -792,7 +792,8 @@ async function callback(request: Request, env: WorkerEnv): Promise<Response> {
   if (env.REPORT_ROLE_LOOKUP) {
     const identity = await fetch(`${discordApiBase(env)}/users/@me`, {
       headers: { authorization: `Bearer ${token.accessToken}`, "user-agent": DISCORD_USER_AGENT, accept: "application/json" },
-      signal: AbortSignal.timeout(DISCORD_REQUEST_TIMEOUT_MS), cache: "no-store", redirect: "error",
+      // workerd accepts follow/manual; never forward the token to a redirect.
+      signal: AbortSignal.timeout(DISCORD_REQUEST_TIMEOUT_MS), cache: "no-store", redirect: "manual",
     });
     const user = identity.ok ? await identity.json().catch(() => null) as { id?: unknown } | null : null;
     userId = typeof user?.id === "string" && user.id ? user.id : undefined;

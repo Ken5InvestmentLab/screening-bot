@@ -651,10 +651,14 @@ test('guard serializes authentication across two tabs through a shared Web Lock'
 
 for (const qualification of ['paid', 'free', 'unavailable']) test('Cloud OAuth establishes identity without bypassing centralized role authority: ' + qualification, async () => {
   const calls = [];
-  const gate = createGate(async (input) => {
+  const gate = createGate(async (input, init) => {
     const url = String(input); calls.push(url);
     if (url.endsWith('/oauth2/token')) return tokenResponse();
-    if (url.endsWith('/users/@me')) return Response.json({id: 'test-owner'});
+    if (url.endsWith('/users/@me')) {
+      if (init.redirect === 'error') throw new TypeError('Unsupported redirect mode: error');
+      assert.equal(init.redirect, 'manual');
+      return Response.json({id: 'test-owner'});
+    }
     throw Error('OAuth must not make a separate role lookup');
   });
   let lookups = 0;
@@ -670,4 +674,24 @@ for (const qualification of ['paid', 'free', 'unavailable']) test('Cloud OAuth e
   if(qualification==='paid') assert.doesNotMatch(html,/data-auth-free/);
   else assert.match(html,/data-auth-free/);
   if(qualification==='unavailable') assert.match(html,/data-auth-unavailable/);
+});
+
+for (const status of [302, 401, 403, 404, 503]) test(`Cloud OAuth rejects upstream identity HTTP ${status} even with a valid user id`, async () => {
+  const calls = [];
+  const gate = createGate(async (input, init) => {
+    const url = String(input); calls.push(url);
+    if (url.endsWith('/oauth2/token')) return tokenResponse();
+    if (url.endsWith('/users/@me')) {
+      assert.equal(init.redirect, 'manual');
+      return Response.json({ id: 'test-untrusted-owner' }, { status, headers: { location: 'https://redirect.invalid/identity' } });
+    }
+    throw new Error('OAuth must not follow redirects or make a separate role lookup');
+  });
+  let lookups = 0;
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_LOGIN_REQUIRED: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true',
+    REPORT_ROLE_LOOKUP: async () => { lookups += 1; return { status: 'paid', checkedAt: Date.now(), validUntil: Date.now() + 90000 }; } };
+  const state = await gate.api.createOAuthState('/mega_validation_report_latest.html', env.SESSION_SECRET);
+  const callback = await gate.worker.fetch(new Request(`https://gate.invalid/auth/callback?code=synthetic-code&state=${encodeURIComponent(state)}`), env);
+  assert.equal(callback.status, 403); assert.equal(callback.headers.get('set-cookie'), null); assert.equal(callback.headers.get('location'), null);
+  assert.equal(lookups, 0); assert.equal(calls.length, 2);
 });

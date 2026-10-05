@@ -137,7 +137,9 @@ class UnlimitedForwardCandidateTests(unittest.TestCase):
 
                 with patch.object(notify, "_post_webhook") as post, \
                      patch.object(notify, "_existing_message") as existing:
-                    unchanged, payloads = notify.notify_pending(ledger, dry_run=True)
+                    unchanged, payloads = notify.notify_pending(
+                        ledger, report_url="https://example.test/", dry_run=True,
+                    )
                 post.assert_not_called()
                 existing.assert_not_called()
                 pd.testing.assert_frame_equal(unchanged, ledger)
@@ -145,6 +147,7 @@ class UnlimitedForwardCandidateTests(unittest.TestCase):
                 for payload in payloads:
                     embed = payload["embeds"][0]
                     self.assertEqual(embed["title"], "9992 High-price example")
+                    self.assertEqual(embed["url"], "https://example.test/weak_early_beta_latest.html")
                     fields = {field["name"]: field["value"] for field in embed["fields"]}
                     self.assertEqual(fields["検出時点の終値"], "20,000円")
                     self.assertEqual(fields["該当モード数"], "5モード")

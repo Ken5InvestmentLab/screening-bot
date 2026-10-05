@@ -73,7 +73,7 @@ py -m weak_early_beta.cli export-fundamentals
 py -m weak_early_beta.cli import-fundamentals --receipts path/to/receipts.json
 ```
 
-通知を実送信する場合は `WEAK_EARLY_BETA_SIGNAL_WEBHOOK_URL`、レポートリンクには `WEAK_EARLY_BETA_REPORT_URL` を使います。専用Botがチャンネル履歴を読める場合だけ `WEAK_EARLY_BETA_DISCORD_BOT_TOKEN` を設定します。現行Bot tokenはベータへ流用しません。通常の日次運用では `state/fundamental_queue.json` の新規検出分を処理します。過去銘柄のファンダ分析も、対象期間と上限を固定した専用バッチとして後から追加できます。
+通知を実送信する場合は `WEAK_EARLY_BETA_SIGNAL_WEBHOOK_URL`、レポートリンクには `WEAK_EARLY_BETA_REPORT_URL` を使います。銘柄通知のタイトルは、この設定を基にしたCloudの検出銘柄一覧 `weak_early_beta_latest.html` へのリンクです。専用Botがチャンネル履歴を読める場合だけ `WEAK_EARLY_BETA_DISCORD_BOT_TOKEN` を設定します。現行Bot tokenはベータへ流用しません。通常の日次運用では `state/fundamental_queue.json` の新規検出分を処理します。過去銘柄のファンダ分析も、対象期間と上限を固定した専用バッチとして後から追加できます。
 
 Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-runner.mjs` です。例設定を複製して実行します。ランナーは `gpt-5.6-luna` / `xhigh` を固定し、claimの16:15 JSTを基準に開示時点と7フィールドを検証します。検証済み分析はベータ専用stateの `completed` に保存し、receiptを介してHTMLへ埋め込みます。ファンダ分析のDiscord通知とwebhook設定は不要です。HTMLへの取り込みが成功するまでclaimを保持し、中断時は同じ分析を再利用します。
 

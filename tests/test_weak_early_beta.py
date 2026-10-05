@@ -186,7 +186,7 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertEqual(len(payload["embeds"]), 1)
         embed = payload["embeds"][0]
         self.assertEqual(embed["title"], "7709 クボテック")
-        self.assertEqual(embed["url"], "https://jp.tradingview.com/chart/?symbol=TSE%3A7709")
+        self.assertEqual(embed["url"], "https://example.test/weak_early_beta_latest.html")
         self.assertEqual(embed["color"], EMBED_COLORS[5])
         fields = {field["name"]: field["value"] for field in embed["fields"]}
         self.assertEqual(fields["検出時点の終値"], "76円")
@@ -196,6 +196,21 @@ class WeakEarlyBetaTests(unittest.TestCase):
         self.assertNotIn("Weak+Early ベータ検出", serialized)
         self.assertNotIn("売買評価", serialized)
         self.assertNotIn("WEAK_EARLY_BETA:", serialized)
+        for report_url in (
+            "https://example.test",
+            "https://example.test/weak_early_beta_latest.html",
+            "https://example.test/weak_early_beta_analytics.html",
+        ):
+            with self.subTest(report_url=report_url):
+                self.assertEqual(
+                    _message(group, report_url)["embeds"][0]["url"],
+                    "https://example.test/weak_early_beta_latest.html",
+                )
+        with patch.dict("os.environ", {"WEAK_EARLY_BETA_REPORT_URL": "https://example.test/"}):
+            self.assertEqual(_message(group)["embeds"][0]["url"], embed["url"])
+        with patch.dict("os.environ", {"WEAK_EARLY_BETA_REPORT_URL": ""}):
+            with self.assertRaisesRegex(ValueError, "WEAK_EARLY_BETA_REPORT_URL"):
+                _message(group)
 
     def test_daily_summary_counts_overlapping_modes_and_links(self):
         group = self.ledger.head(5).copy()

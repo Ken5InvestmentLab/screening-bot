@@ -46,6 +46,9 @@ def _number(value: Any, suffix: str = "") -> str:
 
 
 def _message(group: pd.DataFrame, report_url: str = "") -> dict[str, Any]:
+    report_url = (report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", "")).strip()
+    if not report_url:
+        raise ValueError("WEAK_EARLY_BETA_REPORT_URL is required for Cloud signal links")
     first = group.iloc[0]
     order = {selector_id: index for index, selector_id in enumerate(SELECTOR_ORDER)}
     modes = (
@@ -82,7 +85,7 @@ def _message(group: pd.DataFrame, report_url: str = "") -> dict[str, Any]:
         ],
         "footer": {"text": "色は該当モード数を表します"},
     }
-    embed["url"] = f"https://jp.tradingview.com/chart/?symbol=TSE%3A{first['symbol']}"
+    embed["url"] = urljoin(report_url, "weak_early_beta_latest.html")
     # Discord PATCH keeps omitted fields, so an explicit empty content value is
     # required when upgrading an older text notification to an embed.
     return {"content": "", "embeds": [embed], "allowed_mentions": {"parse": []}}

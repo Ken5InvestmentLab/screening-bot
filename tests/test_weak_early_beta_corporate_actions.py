@@ -13,6 +13,7 @@ from weak_early_beta.corporate_actions import (
     action_table,
     fetch_daily,
     normalize_daily,
+    quarantine_repaired_volume_revisions,
     source_quality_audit,
     source_quality_receipt,
     validate_source_revision,
@@ -285,12 +286,12 @@ class CorporateActionTests(unittest.TestCase):
         receipt = validate_source_revision(normalize_daily(old), normalize_daily(current))
         self.assertEqual(receipt["acceptedRepairColumnValues"], 1)
         repair = receipt["acceptedRepairs"][0]
-        self.assertEqual(repair["reason"], "latest_repaired_zero_volume_settled_by_unrepaired_bar")
+        self.assertEqual(repair["reason"], "latest_repaired_bar_settled_by_unrepaired_bar")
         self.assertEqual(repair["previousBasis"], "2026-09-30")
         self.assertEqual(repair["currentBasis"], "2026-10-01")
         self.assertEqual(repair["differences"][0]["previousExpected"], 0)
         self.assertEqual(repair["differences"][0]["current"], 100)
-        self.assertEqual(repair["differences"][0]["unchangedActualOHLC"]["close"], 1000)
+        self.assertEqual(repair["differences"][0]["previousActualOHLC"]["close"], 1000)
         json.dumps(receipt)
         # Once settled, the bar has the normal strict historical-volume contract.
         next_snapshot = current.copy()
@@ -299,7 +300,7 @@ class CorporateActionTests(unittest.TestCase):
             validate_source_revision(normalize_daily(current), normalize_daily(next_snapshot))
 
     def test_zero_volume_completion_requires_each_piece_of_source_evidence(self):
-        for missing in ("old_repair", "raw_current", "later_basis", "flat_prices", "unchanged_prices", "zero_volume"):
+        for missing in ("old_repair", "raw_current", "later_basis", "positive_volume"):
             old, current = self._latest_zero_volume_placeholder()
             if missing == "old_repair":
                 old.loc[1, "provider_repaired"] = False
@@ -307,14 +308,100 @@ class CorporateActionTests(unittest.TestCase):
                 current.loc[1, "provider_repaired"] = True
             elif missing == "later_basis":
                 current = current.iloc[:2].copy()
-            elif missing == "flat_prices":
-                old.loc[1, "high"] = current.loc[1, "high"] = 1001
-            elif missing == "unchanged_prices":
-                current.loc[1, ["open", "high", "low", "close"]] = 1001
             else:
-                old.loc[1, "volume"] = 10
+                old.loc[1, "volume"] = 100
+                current.loc[1, "volume"] = 0
             with self.subTest(missing=missing), self.assertRaisesRegex(CorporateActionError, "unexplained historical volume"):
                 validate_source_revision(normalize_daily(old), normalize_daily(current))
+
+    def test_latest_repaired_nonzero_volume_and_small_price_correction_can_settle(self):
+        old, current = self._latest_zero_volume_placeholder()
+        old.loc[1, "volume"] = 400
+        current.loc[1, "volume"] = 500
+        old.loc[1, "low"] = old.loc[1, "open"] = 990
+        receipt = validate_source_revision(normalize_daily(old), normalize_daily(current))
+        self.assertEqual(receipt["acceptedRepairs"][0]["differences"][0]["previousActualOHLC"]["open"], 990)
+        self.assertEqual(receipt["acceptedRepairs"][0]["differences"][0]["currentActualOHLC"]["open"], 1000)
+        current.loc[1, ["open", "high", "low", "close"]] = 1100
+        with self.assertRaisesRegex(CorporateActionError, "unexplained historical open"):
+            validate_source_revision(normalize_daily(old), normalize_daily(current))
+
+    def test_unstable_older_repaired_volume_is_quarantined_with_original_values(self):
+        old = daily(ratios=(0, 0, 0, 0))
+        old["provider_repaired"] = [True, False, False, False]
+        current = old.copy()
+        current.loc[0, "volume"] *= 0.6
+        previous = normalize_daily(old)
+        with self.assertRaisesRegex(CorporateActionError, "unexplained historical volume"):
+            validate_source_revision(previous, normalize_daily(current))
+        reviewed = quarantine_repaired_volume_revisions(previous, normalize_daily(current))
+        self.assertFalse(reviewed.iloc[0].source_usable)
+        self.assertEqual(reviewed.iloc[0].source_issue, "unstable_historical_repaired_volume")
+        self.assertEqual(reviewed.iloc[0].volume, current.iloc[0].volume)
+        evidence = json.loads(reviewed.iloc[0].source_revision_evidence)
+        self.assertEqual(evidence["previousActualVolume"], old.iloc[0].volume)
+        self.assertEqual(evidence["currentActualVolume"], current.iloc[0].volume)
+        self.assertEqual(validate_source_revision(previous, reviewed)["quarantinedComparisonRows"], 1)
+        pd.testing.assert_frame_equal(reviewed, normalize_daily(reviewed))
+        self.assertEqual(source_quality_receipt(reviewed)["issues"][0]["source_revision_evidence"], reviewed.iloc[0].source_revision_evidence)
+        # Persist the first comparison as evidence across future acquisitions.
+        next_snapshot = current.copy()
+        next_snapshot.loc[0, "volume"] *= 0.8
+        carried = quarantine_repaired_volume_revisions(reviewed, normalize_daily(next_snapshot))
+        self.assertFalse(carried.iloc[0].source_usable)
+        self.assertEqual(json.loads(carried.iloc[0].source_revision_evidence)["previousActualVolume"], old.iloc[0].volume)
+        next_snapshot.loc[0, "provider_repaired"] = False
+        released = quarantine_repaired_volume_revisions(reviewed, normalize_daily(next_snapshot))
+        self.assertTrue(released.iloc[0].source_usable)
+        next_snapshot.loc[0, "close"] += 1
+        with self.assertRaisesRegex(CorporateActionError, "changed price/action evidence"):
+            quarantine_repaired_volume_revisions(reviewed, normalize_daily(next_snapshot))
+
+    def test_historical_repair_quarantine_cannot_mask_prices_flags_or_new_actions(self):
+        for missing in ("old_repair", "current_repair", "same_price", "same_actions", "older_session"):
+            old = daily(ratios=(0, 0, 0, 0))
+            old["provider_repaired"] = [True, False, False, False]
+            current = old.copy()
+            current.loc[0, "volume"] *= 0.6
+            if missing == "old_repair":
+                old.loc[0, "provider_repaired"] = False
+            elif missing == "current_repair":
+                current.loc[0, "provider_repaired"] = False
+            elif missing == "same_price":
+                current.loc[0, "close"] += 1
+            elif missing == "same_actions":
+                current.loc[0, "split_ratio"] = 2
+            else:
+                old = old.iloc[:1]
+            previous = normalize_daily(old)
+            reviewed = quarantine_repaired_volume_revisions(previous, normalize_daily(current))
+            with self.subTest(missing=missing), self.assertRaisesRegex(CorporateActionError, "unexplained historical"):
+                validate_source_revision(previous, reviewed)
+
+    def test_quarantine_evidence_is_checked_on_every_cache_read(self):
+        old = daily(ratios=(0, 0, 0, 0))
+        old["provider_repaired"] = [True, False, False, False]
+        current = old.copy()
+        current.loc[0, "volume"] *= 0.6
+        reviewed = quarantine_repaired_volume_revisions(normalize_daily(old), normalize_daily(current))
+        for changed in ("price", "volume", "basis", "actions", "flag", "evidence"):
+            bad = reviewed.copy()
+            evidence = json.loads(bad.iloc[0].source_revision_evidence)
+            if changed == "price":
+                evidence["previousActualOHLC"]["open"] += 1
+            elif changed == "volume":
+                evidence["currentActualVolume"] += 1
+            elif changed == "basis":
+                evidence["previousBasis"] = evidence["date"]
+            elif changed == "actions":
+                evidence["historicalActions"] = [{"effective_date": evidence["date"], "ratio": 2}]
+            elif changed == "flag":
+                evidence["previousProviderRepaired"] = False
+            else:
+                evidence["identity"] = "unknown"
+            bad.loc[0, "source_revision_evidence"] = json.dumps(evidence)
+            with self.subTest(changed=changed), self.assertRaisesRegex(CorporateActionError, "invalid repaired-volume revision evidence"):
+                normalize_daily(bad)
 
     def test_repaired_zero_volume_on_older_session_still_requires_review(self):
         old, current = self._latest_zero_volume_placeholder()

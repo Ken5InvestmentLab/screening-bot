@@ -28,6 +28,8 @@ BASIS_COLUMNS = (
     "source_usable", "source_issue", "provider_repaired",
 )
 ACTION_COLUMNS = ("symbol", "effective_date", "ratio", "source", "basis_asof")
+REVISION_EVIDENCE = "source_revision_evidence"
+REVISION_ISSUE = "unstable_historical_repaired_volume"
 
 
 class CorporateActionError(RuntimeError):
@@ -75,6 +77,19 @@ def _dates(values: Any) -> pd.DatetimeIndex:
     if dates.isna().any():
         raise CorporateActionError("missing corporate-action session date")
     return dates
+
+
+def _historical_actions(group: pd.DataFrame, basis: pd.Timestamp) -> list[dict[str, Any]]:
+    events = [
+        {"effective_date": f"{row.date:%Y-%m-%d}", "ratio": float(row.split_ratio)}
+        for row in group[group["split_ratio"].ne(0)].itertuples()
+        if row.date <= basis
+    ]
+    events.extend(
+        {"effective_date": f"{event['effective_date']:%Y-%m-%d}", "ratio": event["ratio"]}
+        for event in _off_session_events(group) if event["effective_date"] <= basis
+    )
+    return sorted(events, key=lambda event: event["effective_date"])
 
 
 def _numeric(frame: pd.DataFrame, columns: tuple[str, ...]) -> None:
@@ -281,6 +296,42 @@ def normalize_daily(
     ambiguous_volume = repaired & (factors < 1e-4) & source_usable
     source_usable.loc[ambiguous_volume] = False
     source_issue.loc[ambiguous_volume] = "ambiguous_repaired_volume_basis"
+    # A cross-snapshot repair discrepancy is evidence of uncertainty, not a new
+    # volume estimate. Verify the retained evidence on every cache read before
+    # masking the original vendor bar from features and outcomes.
+    if REVISION_EVIDENCE in result:
+        evidence_values = result[REVISION_EVIDENCE].fillna("").astype(str)
+        groups = {symbol: group for symbol, group in result.groupby("symbol", sort=False)}
+        for position in evidence_values.index[evidence_values.ne("")]:
+            row = result.loc[position]
+            try:
+                evidence = json.loads(evidence_values.at[position])
+                prior_basis = _dates([evidence["previousBasis"]])[0]
+                current_volume = float(row.volume) / factors[position]
+                previous_volume = float(evidence["previousActualVolume"])
+                previous_prices = np.array([evidence["previousActualOHLC"][name] for name in OHLC], dtype=float)
+                current_prices = row[list(OHLC)].to_numpy(dtype=float) * factors[position]
+                valid = (
+                    evidence["identity"] == "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1"
+                    and evidence["symbol"] == row.symbol
+                    and evidence["date"] == f"{row.date:%Y-%m-%d}"
+                    and row.date < prior_basis <= snapshot_dates.at[position]
+                    and bool(row.provider_repaired) and evidence["previousProviderRepaired"] is True
+                    and np.isfinite(previous_volume) and previous_volume >= 0
+                    and np.isfinite(previous_prices).all()
+                    and np.isclose(previous_prices, current_prices, rtol=0, atol=1e-8).all()
+                    and not np.isclose(previous_volume, current_volume, rtol=0.05, atol=1e-6)
+                    and np.isclose(evidence["currentActualVolume"], current_volume, rtol=1e-9, atol=1e-6)
+                    and evidence["historicalActions"] == _historical_actions(groups[row.symbol], prior_basis)
+                )
+                if not valid:
+                    raise ValueError("evidence does not match the provider bar")
+            except (KeyError, TypeError, ValueError) as exc:
+                raise CorporateActionError(f"invalid repaired-volume revision evidence: {row.symbol} {row.date:%Y-%m-%d}") from exc
+            if source_usable.at[position]:
+                source_usable.at[position] = False
+                source_issue.at[position] = REVISION_ISSUE
+        result[REVISION_EVIDENCE] = evidence_values
     if enriched:
         if saved_quality.isna().any() or not saved_quality.eq(source_usable).all():
             raise CorporateActionError("stored source_usable disagrees with provider evidence")
@@ -317,6 +368,8 @@ def source_quality_audit(frame: pd.DataFrame) -> pd.DataFrame:
     verified = normalize_daily(frame)
     rejected = verified[~verified["source_usable"]].copy()
     columns = ["symbol", "date", "source_issue", *OHLC, "volume", "split_ratio", "split_factor", "provider_repaired"]
+    if REVISION_EVIDENCE in verified:
+        columns.append(REVISION_EVIDENCE)
     if rejected.empty:
         return rejected.reindex(columns=[*columns, "error_yen", "error_ratio"])
     rejected["error_yen"] = pd.concat([
@@ -358,15 +411,74 @@ def action_table(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True).sort_values(["symbol", "effective_date"]).reset_index(drop=True)
 
 
+def quarantine_repaired_volume_revisions(previous: pd.DataFrame, current: pd.DataFrame) -> pd.DataFrame:
+    """Retain, audit and exclude unstable historical reconstructed volumes.
+
+    Only two provider-marked repairs with identical actual OHLC and an unchanged
+    historical action journal qualify. The ordinary revision validator remains
+    strict. Never select either volume as the corrected historical value.
+    """
+    if previous.empty or "corporate_actions_version" not in previous:
+        return current
+    previous = normalize_daily(previous)
+    result = normalize_daily(current)
+    if REVISION_EVIDENCE not in result:
+        result[REVISION_EVIDENCE] = ""
+    old_groups = {symbol: group for symbol, group in previous.groupby("symbol", sort=False)}
+    for symbol, group in result.groupby("symbol", sort=False):
+        old = old_groups.get(symbol)
+        if old is None:
+            continue
+        prior_basis = old.basis_asof.max()
+        old_rows = old.set_index("date")
+        prior_volume = group.date.map(old_rows.actual_volume)
+        changed_volume = ~np.isclose(group.actual_volume, prior_volume, rtol=0.05, atol=1e-6)
+        carried_dates = old.loc[
+            old.get(REVISION_EVIDENCE, pd.Series("", index=old.index)).fillna("").ne(""), "date"
+        ]
+        candidates = (group.provider_repaired & changed_volume) | group.date.isin(carried_dates)
+        for position in group.index[candidates]:
+            row = result.loc[position]
+            if row.date not in old_rows.index or row.date >= prior_basis:
+                continue
+            before = old_rows.loc[row.date]
+            saved = before.get(REVISION_EVIDENCE, "")
+            carried = bool(pd.notna(saved) and str(saved).strip())
+            if not bool(before.provider_repaired) or (not bool(before.source_usable) and not carried):
+                continue
+            evidence = json.loads(saved) if carried else {
+                "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1", "symbol": str(symbol),
+                "date": f"{row.date:%Y-%m-%d}", "previousBasis": f"{prior_basis:%Y-%m-%d}",
+                "previousProviderRepaired": True, "previousActualVolume": float(before.actual_volume),
+                "previousActualOHLC": {name: float(before[f"actual_{name}"]) for name in OHLC},
+                "historicalActions": _historical_actions(old, prior_basis),
+            }
+            basis = pd.Timestamp(evidence["previousBasis"])
+            same_prices = all(np.isclose(evidence["previousActualOHLC"][name], row[f"actual_{name}"], rtol=0, atol=1e-8) for name in OHLC)
+            same_actions = evidence["historicalActions"] == _historical_actions(group, basis)
+            if carried and (not same_prices or not same_actions):
+                raise CorporateActionError(f"quarantined repair changed price/action evidence: {symbol} {row.date:%Y-%m-%d}")
+            if not bool(row.provider_repaired) or not same_prices or not same_actions or not bool(row.source_usable):
+                continue
+            if np.isclose(evidence["previousActualVolume"], row.actual_volume, rtol=0.05, atol=1e-6):
+                continue
+            evidence["currentActualVolume"] = float(row.actual_volume)
+            result.at[position, REVISION_EVIDENCE] = json.dumps(evidence, separators=(",", ":"))
+            result.at[position, "source_usable"] = False
+            result.at[position, "source_issue"] = REVISION_ISSUE
+    return normalize_daily(result)
+
+
 def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> dict[str, Any]:
     """Reject missing actions and unexplained historical share-unit revisions.
 
     For a legacy snapshot, only declared actions newly effective AFTER its last
     session can explain a provider-wide rebase.  For a verified snapshot, actual
     historical OHLCV must remain stable. Small provider corrections are tolerated.
-    A repaired zero-volume flat bar on the previous snapshot's final session can
+    A repaired bar on the previous snapshot's final session can
     settle to an unrepaired positive-volume bar in a later snapshot only when its
-    actual OHLC and historical action journal are unchanged. Audit that narrow
+    actual OHLC meets the existing price tolerance and its historical action
+    journal is unchanged. Audit that narrow
     completion separately; larger unexplained changes still require review.
     """
     receipt: dict[str, Any] = {
@@ -500,9 +612,8 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
                     & right["basis_asof"].gt(old_basis).to_numpy(dtype=bool)
                     & left["provider_repaired"].to_numpy(dtype=bool)
                     & ~right["provider_repaired"].to_numpy(dtype=bool)
-                    & (before == 0) & (after > 0)
-                    & np.isclose(old_prices, new_prices, rtol=0, atol=1e-8).all(axis=1)
-                    & np.isclose(old_prices, old_prices[:, :1], rtol=0, atol=1e-8).all(axis=1)
+                    & (after > 0)
+                    & np.isclose(old_prices, new_prices, rtol=0.03, atol=1e-6).all(axis=1)
                 )
             unexplained = different & ~(accepted | settled)
             if unexplained.any():
@@ -533,7 +644,7 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
                 receipt["acceptedRepairColumnValues"] += int(settled.sum())
                 receipt["acceptedRepairs"].append({
                     "symbol": str(symbol), "column": "volume", "rows": int(settled.sum()),
-                    "reason": "latest_repaired_zero_volume_settled_by_unrepaired_bar",
+                    "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
                     "firstDate": f"{right.index[settled].min():%Y-%m-%d}",
                     "lastDate": f"{right.index[settled].max():%Y-%m-%d}",
                     "previousBasis": f"{old_basis:%Y-%m-%d}",
@@ -542,7 +653,8 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
                         "date": f"{right.index[i]:%Y-%m-%d}",
                         "previousExpected": float(before[i]), "current": float(after[i]),
                         "previousProviderRepaired": True, "currentProviderRepaired": False,
-                        "unchangedActualOHLC": dict(zip(OHLC, old_prices[i].tolist())),
+                        "previousActualOHLC": dict(zip(OHLC, old_prices[i].tolist())),
+                        "currentActualOHLC": dict(zip(OHLC, new_prices[i].tolist())),
                     } for i in np.flatnonzero(settled)],
                 })
     return receipt
@@ -670,5 +782,6 @@ def fetch_daily(
         raise CorporateActionError("Yahoo returned no split-aware daily rows")
     normalized = normalize_daily(pd.concat(rows, ignore_index=True), basis_asof=provider_snapshot)
     if previous is not None:
+        normalized = quarantine_repaired_volume_revisions(previous, normalized)
         normalized.attrs["source_revision_receipt"] = validate_source_revision(previous, normalized)
     return normalized

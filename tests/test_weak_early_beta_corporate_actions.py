@@ -35,6 +35,46 @@ def daily(ratios=(0, 0, 2, 0), symbol="1234", start="2026-09-24"):
 
 
 class CorporateActionTests(unittest.TestCase):
+    def test_invalid_symbol_diagnostic_uses_normalized_code_without_mutating_input(self):
+        raw = daily()
+        raw.loc[0, "symbol"] = "  123 \n"
+        original = raw.copy(deep=True)
+        with self.assertRaisesRegex(CorporateActionError, "^invalid symbol in corporate-action source") as caught:
+            normalize_daily(raw)
+        message = str(caught.exception)
+        self.assertIn("invalid_count=1", message)
+        self.assertEqual(json.loads(message.split("; samples=", 1)[1]), [{"code": "123"}])
+        pd.testing.assert_frame_equal(raw, original)
+
+    def test_invalid_symbol_diagnostic_counts_all_rows_and_samples_at_most_five(self):
+        raw = pd.concat([daily(ratios=(0, 0))] * 4, ignore_index=True)
+        codes = [f"bad{index:02}" for index in range(7)]
+        raw.loc[:6, "symbol"] = codes
+        with self.assertRaises(CorporateActionError) as caught:
+            normalize_daily(raw)
+        message = str(caught.exception)
+        self.assertIn("invalid_count=7", message)
+        self.assertEqual(json.loads(message.split("; samples=", 1)[1]), [{"code": code} for code in codes[:5]])
+        self.assertNotIn(codes[5], message)
+        self.assertNotIn(codes[6], message)
+
+    def test_invalid_symbol_diagnostic_redacts_values_longer_than_twelve_characters(self):
+        raw = daily()
+        codes = ["x" * 12, "x" * 13, "private-token" + "x" * 1000]
+        raw.loc[:2, "symbol"] = codes
+        with self.assertRaises(CorporateActionError) as caught:
+            normalize_daily(raw)
+        message = str(caught.exception)
+        self.assertIn("invalid_count=3", message)
+        self.assertEqual(json.loads(message.split("; samples=", 1)[1]), [
+            {"code": codes[0]},
+            {"length": len(codes[1]), "type": "str"},
+            {"length": len(codes[2]), "type": "str"},
+        ])
+        self.assertNotIn(codes[1], message)
+        self.assertNotIn("private-token", message)
+        self.assertLess(len(message), 250)
+
     def test_two_for_one_reconstructs_actual_units_and_event_day_uses_new_basis(self):
         raw = daily()
         result = normalize_daily(raw)

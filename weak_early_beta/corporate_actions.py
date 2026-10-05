@@ -185,8 +185,17 @@ def normalize_daily(
                 result[column] = pd.Series(dtype="object")
         return result
     result["symbol"] = result["symbol"].astype(str).str.strip()
-    if not result["symbol"].str.fullmatch(r"[0-9A-Z]{4}").all():
-        raise CorporateActionError("invalid symbol in corporate-action source")
+    valid_symbols = result["symbol"].str.fullmatch(r"[0-9A-Z]{4}")
+    if not valid_symbols.all():
+        invalid_symbols = result.loc[~valid_symbols, "symbol"]
+        samples = [
+            {"code": code} if len(code) <= 12 else {"length": len(code), "type": type(code).__name__}
+            for code in invalid_symbols.head(5)
+        ]
+        raise CorporateActionError(
+            f"invalid symbol in corporate-action source: invalid_count={len(invalid_symbols)}; "
+            f"samples={json.dumps(samples, ensure_ascii=True)}"
+        )
     result["date"] = _dates(result["date"])
     if result.duplicated(["symbol", "date"]).any():
         raise CorporateActionError("duplicate symbol/session in corporate-action source")

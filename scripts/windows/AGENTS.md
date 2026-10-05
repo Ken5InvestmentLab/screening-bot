@@ -12,6 +12,9 @@
 
 ## Cloud beta daily runner
 
+- Drain the initial forward fundamental queue with a bounded loop: each successful child must remove exactly its verified HTML import count. Stop on errors or no progress and reconcile retained claims before stage-only recovery; do not repeat completed analysis.
+- Commit only the explicit beta generated leaves, require HEAD to equal the latest research remote ref, and deploy once through the exact `cloud-deploy-*` tag workflow. Require matching tag/SHA success and live health/OAuth checks before notifications. Rebuild private canonical input after Discord receipts change the ledger hash, then commit/push receipts without a second deploy. Check `node --test scripts/windows/test-weak-early-beta-daily-runner.mjs` after changing this sequence.
+
 - Fundamental analysis is delivered to HTML only. Use the beta validator's `--save-only` path without a webhook, retain claim ownership through receipt import/HTML generation, and then finalize. Preserve Luna xhigh, cutoff validation, and legacy receipts. Verify changes with `node --test scripts/windows/test-weak-early-beta-point-in-time-post.mjs scripts/windows/test-weak-early-beta-model-preflight.mjs` and the relevant beta Python tests.
 - Inspect streamed child logs and `CLOUD_DAILY_PHASE_V1` records before treating a quiet daily process as stalled. Full-corpus validation and monthly model fitting can remain silent for minutes; unchanged final receipts or one low CPU sample do not establish a deadlock. After acquisition completed, verify the cache SHA-256 against its source-quality receipt and resume the failed detection with that cache rather than downloading OHLCV again.
 - For diagnostic GPT-6.1 Sol calls, probe the current Codex app executable with ChatGPT login before declaring the model unavailable; the separate fundamental CLI runtime may have a different version/catalog. Keep its fundamental model/configuration unchanged.

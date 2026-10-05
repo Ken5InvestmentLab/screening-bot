@@ -1,12 +1,12 @@
 {
   "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
-  "run_at": "2026-10-02T18:04:42.491734+09:00",
+  "run_at": "2026-10-05T23:03:47.465374+09:00",
   "daily_corpus": ".cache\\weak_early_beta\\tse_daily.csv",
-  "daily_sha256": "57842974c36ff07b18cb5fb09c0cb99960d4bc6fcbb0df229a20b4f5c661b52d",
+  "daily_sha256": "87896f4954b5e4d3a441578ac5a240a92ab50aeab1c371cc1d6023551c04798a",
   "source_quality": {
     "identity": "CLOUD_SOURCE_QUALITY_V1",
-    "sourceRows": 4310703,
-    "quarantinedRows": 3922,
+    "sourceRows": 4299420,
+    "quarantinedRows": 2914,
     "quarantinedSymbols": [
       "1383",
       "1401",
@@ -20,12 +20,9 @@
       "1882",
       "1885",
       "1899",
-      "1909",
       "1946",
-      "1948",
       "1968",
       "2117",
-      "2180",
       "2208",
       "2215",
       "2217",
@@ -129,6 +126,7 @@
       "5162",
       "5194",
       "5199",
+      "5271",
       "5279",
       "5482",
       "5537",
@@ -201,7 +199,6 @@
       "7041",
       "7058",
       "7061",
-      "7082",
       "7096",
       "7122",
       "7129",
@@ -216,7 +213,6 @@
       "7337",
       "7352",
       "7399",
-      "7426",
       "7427",
       "7442",
       "7481",
@@ -321,306 +317,231 @@
       "9986"
     ],
     "quarantinedDateCount": 1222,
-    "firstQuarantinedDate": "2021-10-04",
-    "lastQuarantinedDate": "2026-10-02",
+    "firstQuarantinedDate": "2021-10-05",
+    "lastQuarantinedDate": "2026-10-05",
     "audit_path": ".cache\\weak_early_beta\\tse_daily.source-quality.json",
-    "audit_sha256": "c4f425ba4d4920dcd0bf65654a107be6891ce24b148a3ea87ca2e8e49ef84035"
+    "audit_sha256": "13f85c0024bb3b71656c5a929125fdbd5fae6396c3051fe7bca685d2690b68b0"
   },
   "source_revision": {
     "identity": "CLOUD_SOURCE_REVISION_V1",
-    "previousBasis": "legacy_unverified",
-    "comparedRows": 4299311,
-    "quarantinedComparisonRows": 3916,
-    "acceptedRepairColumnValues": 14065,
+    "previousBasis": "verified",
+    "comparedRows": 4292738,
+    "quarantinedComparisonRows": 2911,
+    "acceptedRepairColumnValues": 20,
     "acceptedRepairs": [
       {
-        "symbol": "6557",
-        "column": "open",
-        "rows": 688,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2024-07-23",
-        "priceMultipliers": [
-          2.0
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-09-27",
-            "ratio": 2.0
-          }
-        ]
-      },
-      {
-        "symbol": "6557",
-        "column": "high",
-        "rows": 688,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2024-07-23",
-        "priceMultipliers": [
-          2.0
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-09-27",
-            "ratio": 2.0
-          }
-        ]
-      },
-      {
-        "symbol": "6557",
-        "column": "low",
-        "rows": 688,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2024-07-23",
-        "priceMultipliers": [
-          2.0
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-09-27",
-            "ratio": 2.0
-          }
-        ]
-      },
-      {
-        "symbol": "6557",
-        "column": "close",
-        "rows": 688,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2024-07-23",
-        "priceMultipliers": [
-          2.0
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-09-27",
-            "ratio": 2.0
-          }
-        ]
-      },
-      {
-        "symbol": "6557",
+        "symbol": "1380",
         "column": "volume",
-        "rows": 685,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2024-07-23",
-        "priceMultipliers": [
-          2.0
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-09-27",
-            "ratio": 2.0
-          }
-        ]
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
       },
       {
-        "symbol": "7946",
-        "column": "open",
-        "rows": 1077,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-27",
-        "priceMultipliers": [
-          0.2
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2026-03-05",
-            "ratio": 5.0
-          }
-        ]
-      },
-      {
-        "symbol": "7946",
-        "column": "high",
-        "rows": 1077,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-27",
-        "priceMultipliers": [
-          0.2
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2026-03-05",
-            "ratio": 5.0
-          }
-        ]
-      },
-      {
-        "symbol": "7946",
-        "column": "low",
-        "rows": 1077,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-27",
-        "priceMultipliers": [
-          0.2
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2026-03-05",
-            "ratio": 5.0
-          }
-        ]
-      },
-      {
-        "symbol": "7946",
-        "column": "close",
-        "rows": 1077,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-27",
-        "priceMultipliers": [
-          0.2
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2026-03-05",
-            "ratio": 5.0
-          }
-        ]
-      },
-      {
-        "symbol": "7946",
+        "symbol": "1764",
         "column": "volume",
-        "rows": 970,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-27",
-        "priceMultipliers": [
-          0.2
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2026-03-05",
-            "ratio": 5.0
-          }
-        ]
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
       },
       {
-        "symbol": "8227",
-        "column": "open",
-        "rows": 1070,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-17",
-        "priceMultipliers": [
-          0.333333333
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-02-19",
-            "ratio": 2.0
-          },
-          {
-            "effective_date": "2026-02-19",
-            "ratio": 3.0
-          }
-        ]
-      },
-      {
-        "symbol": "8227",
-        "column": "high",
-        "rows": 1070,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-17",
-        "priceMultipliers": [
-          0.333333333
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-02-19",
-            "ratio": 2.0
-          },
-          {
-            "effective_date": "2026-02-19",
-            "ratio": 3.0
-          }
-        ]
-      },
-      {
-        "symbol": "8227",
-        "column": "low",
-        "rows": 1070,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-17",
-        "priceMultipliers": [
-          0.333333333
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-02-19",
-            "ratio": 2.0
-          },
-          {
-            "effective_date": "2026-02-19",
-            "ratio": 3.0
-          }
-        ]
-      },
-      {
-        "symbol": "8227",
-        "column": "close",
-        "rows": 1070,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-17",
-        "priceMultipliers": [
-          0.333333333
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-02-19",
-            "ratio": 2.0
-          },
-          {
-            "effective_date": "2026-02-19",
-            "ratio": 3.0
-          }
-        ]
-      },
-      {
-        "symbol": "8227",
+        "symbol": "1788",
         "column": "volume",
-        "rows": 1070,
-        "reason": "legacy_provider_repair_matching_declared_split",
-        "firstDate": "2021-10-04",
-        "lastDate": "2026-02-17",
-        "priceMultipliers": [
-          0.333333333
-        ],
-        "declaredEvents": [
-          {
-            "effective_date": "2024-02-19",
-            "ratio": 2.0
-          },
-          {
-            "effective_date": "2026-02-19",
-            "ratio": 3.0
-          }
-        ]
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "1897",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "220A",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "3920",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "4102",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "4645",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "5126",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "5867",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "5918",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "5974",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "6342",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "6408",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "7031",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "7461",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "7477",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "7501",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "7808",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
+      },
+      {
+        "symbol": "7877",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-02",
+        "lastDate": "2026-10-02",
+        "previousBasis": "2026-10-02",
+        "currentBasis": "2026-10-05"
       }
     ],
-    "quarantinedComparisonSymbolCount": 311
+    "quarantinedComparisonSymbolCount": 307
   },
-  "latest_session": "2026-10-02",
-  "score_from": "2026-10-02",
-  "score_to": "2026-10-02",
-  "tail_rows_latest": 0,
-  "selector_rows_latest": 0,
+  "latest_session": "2026-10-05",
+  "score_from": "2026-10-05",
+  "score_to": "2026-10-05",
+  "tail_rows_latest": 2,
+  "selector_rows_latest": 3,
   "restricted_selector_rows_latest": 0,
   "quarantined_ledger_rows": 0,
   "jpx_restricted_symbols": 99,
-  "new_or_refreshed_rows": 0,
+  "new_or_refreshed_rows": 3,
   "notification_payloads": 0,
-  "ledger_rows": 972,
+  "ledger_rows": 975,
   "metrics_rows": 35
 }

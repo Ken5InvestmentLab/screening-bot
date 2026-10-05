@@ -1,0 +1,117 @@
+{
+  "reports": [
+    {
+      "alertId": "weak-early-beta:2026-10-05:338A",
+      "signalDate": "2026-10-05",
+      "symbolCode": "338A",
+      "symbolName": "ＺｅｎｍｕＴｅｃｈ",
+      "companyName": "ＺｅｎｍｕＴｅｃｈ",
+      "receivedAt": "2026-10-05T16:15:00+09:00",
+      "analysisCutoff": "2026-10-05T15:17:31.645Z",
+      "signalType": "WEAK_EARLY_BETA",
+      "selectorNames": [
+        "Dive"
+      ],
+      "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A338A",
+      "title": "ＺｅｎｍｕＴｅｃｈ (338A) | TradingView チャート",
+      "summary": "9月1日のHAIP共同事業開始とクラウド・Mac向け開発は拡張余地を示す一方、8月中間期は売上305.6百万円で計画未達、営業損失99.3百万円。通期計画は据え置きだが、大型案件の4Q集中と新製品の収益化時期が不確定。",
+      "materialImpact": "混在/要確認：上期計画未達・赤字拡大に対し、主力ストック収益の伸長と新領域開発が進むが、通期達成は下期案件に依存。",
+      "fields": [
+        {
+          "name": "材料インパクト",
+          "value": "混在/要確認：上期計画未達・赤字拡大に対し、主力ストック収益の伸長と新領域開発が進むが、通期達成は下期案件に依存。"
+        },
+        {
+          "name": "事業概要",
+          "value": "秘密分散技術でPC・クラウド/NAS・ネットワーク上のデータを保護する「ZENMU Virtual Drive」「ZENMU Engine」と、秘匿したまま計算する「QueryAhead®」を提供する情報セキュリティ企業です。金融・保険・製造などの法人を中心に、ライセンス、保守、受託開発・秘密計算案件を組み合わせています。"
+        },
+        {
+          "name": "足元材料",
+          "value": "9月1日17:05、HAIPと特許取得済み「秘密分散プロキシ」を使うサイバーセキュリティ事業を開始し、医療連携ネットワーク等への展開を計画しましたが、当期業績への影響は軽微と明記されています。8月13日15:30の中間期は売上高305.6百万円（前年同期比0.3％増）、営業損失99.3百万円で、期初計画の売上377百万円・営業損失71百万円を下回りました。同日16:45には秘密分散ストレージとZVD for Macの開発を開始し、正式提供目標は2027年春です。"
+        },
+        {
+          "name": "ファンダ要点",
+          "value": "主力ZENMU Virtual Driveの2Q売上は257百万円、前年同期比32.5％増、売上構成84.2％で、サブスク受注と実質解約率0.4％がストック収益を支えます。対してQueryAhead®は前年の単発受託案件の反動で67.0％減、販管費は369.99百万円（28.2％増）に増えました。通期売上1,080百万円・営業利益161百万円は、4Q大型案件と下期の売上計上に依存します。"
+        },
+        {
+          "name": "注意点",
+          "value": "通期予想は据え置きですが、上期の売上進捗は約28％にとどまり、ZVD案件42百万円程度が導入検討の長期化で下期へずれ込みました。人件費・営業外部リソース・外注開発が先行するなか、4Qの大型案件の契約・計上、ストックライセンス継続、2027年春予定の新製品の価格・導入件数は未開示で、赤字からの回復時期は確定していません。"
+        },
+        {
+          "name": "開示リンク",
+          "value": "・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://www2.jpx.co.jp/disc/338A0/140120260901530226.pdf)\n・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://www2.jpx.co.jp/disc/338A0/140120260812517698.pdf)\n・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値との差異に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/338A0/140120260812517700.pdf)\n・[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://www2.jpx.co.jp/disc/338A0/140120260812517722.pdf)\n・[2026-08-13 ZenmuTech、情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://www2.jpx.co.jp/disc/338A0/140120260813519820.pdf)"
+        },
+        {
+          "name": "Sources",
+          "value": "・[IR情報TOP｜株式会社ZenmuTech](https://zenmutech.com/ir/)\n・[ニュース&トピック｜株式会社ZenmuTech](https://zenmutech.com/information/news/)\n・[ZenmuTech（338A）のIR情報・決算資料｜IRBANK](https://irbank.net/338A/ir)\n・[(株)ＺｅｎｍｕＴｅｃｈ〖338A〗：適時開示情報｜Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/338A.T/disclosure)"
+        }
+      ],
+      "sources": [
+        {
+          "title": "IR情報TOP｜株式会社ZenmuTech",
+          "url": "https://zenmutech.com/ir/"
+        },
+        {
+          "title": "ニュース&トピック｜株式会社ZenmuTech",
+          "url": "https://zenmutech.com/information/news/"
+        },
+        {
+          "title": "ZenmuTech（338A）のIR情報・決算資料｜IRBANK",
+          "url": "https://irbank.net/338A/ir"
+        },
+        {
+          "title": "(株)ＺｅｎｍｕＴｅｃｈ〖338A〗：適時開示情報｜Yahoo!ファイナンス",
+          "url": "https://finance.yahoo.co.jp/quote/338A.T/disclosure"
+        }
+      ],
+      "sourceChecks": [
+        {
+          "role": "official_ir",
+          "url": "https://zenmutech.com/ir/",
+          "result": "公式IRトップとニュース&トピック一覧を確認し、9月1日のHAIP事業開始、8月13日の新製品開発を含むcutoff前の材料候補を照合した。後発の掲載・イベント情報は当期業績や契約金額を伴わないため主材料から除外し、採用した業績数値は同日TDnet資料本文で確認した。"
+        },
+        {
+          "role": "irbank_or_tdnet",
+          "url": "https://finance.yahoo.co.jp/quote/338A.T/disclosure",
+          "result": "TDnet配信相当の適時開示一覧を確認し、9月1日17:05、8月13日15:30および16:45の公開時刻と同日資料束を突合した。IRBANKの銘柄IR一覧も照合し、analysisCutoff以後の情報は使用していない。"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意",
+          "publishedAt": "2026-09-01T17:05:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/338A0/140120260901530226.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）",
+          "publishedAt": "2026-08-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/338A0/140120260812517698.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年12月期 第２四半期（中間期）の業績予想値と実績値との差異に関するお知らせ",
+          "publishedAt": "2026-08-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/338A0/140120260812517700.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "2026年12月期 第２四半期 決算説明資料",
+          "publishedAt": "2026-08-13T15:30:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/338A0/140120260812517722.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "ZenmuTech、情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始",
+          "publishedAt": "2026-08-13T16:45:00+09:00",
+          "url": "https://www2.jpx.co.jp/disc/338A0/140120260813519820.pdf",
+          "contentReviewed": true
+        }
+      ],
+      "auditStatus": "pass",
+      "auditNotes": [
+        "claimのalertId 1件のみを対象とし、signalDate・receivedAt・analysisCutoffはclaimの文字列を保持した。公式IR、公式ニュース、IRBANK/TDnet配信相当一覧、選択した各開示本文を確認し、選択資料の公開日時はすべてanalysisCutoff以前である。"
+      ]
+    }
+  ]
+}

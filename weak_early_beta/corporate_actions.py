@@ -432,7 +432,7 @@ def quarantine_repaired_volume_revisions(previous: pd.DataFrame, current: pd.Dat
         prior_basis = old.basis_asof.max()
         old_rows = old.set_index("date")
         prior_volume = group.date.map(old_rows.actual_volume)
-        changed_volume = ~np.isclose(group.actual_volume, prior_volume, rtol=0.05, atol=1e-6)
+        changed_volume = ~np.isclose(prior_volume, group.actual_volume, rtol=0.05, atol=1e-6)
         carried_dates = old.loc[
             old.get(REVISION_EVIDENCE, pd.Series("", index=old.index)).fillna("").ne(""), "date"
         ]

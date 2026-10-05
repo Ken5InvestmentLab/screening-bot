@@ -378,6 +378,27 @@ class CorporateActionTests(unittest.TestCase):
             with self.subTest(missing=missing), self.assertRaisesRegex(CorporateActionError, "unexplained historical"):
                 validate_source_revision(previous, reviewed)
 
+    def test_repaired_volume_quarantine_uses_the_same_five_percent_boundary_as_validation(self):
+        for current_volume, quarantine in ((9510, True), (10510, False), (10530, True)):
+            old = daily(ratios=(0, 0, 0, 0))
+            old["provider_repaired"] = [True, False, False, False]
+            old.loc[0, "volume"] = 10000
+            current = old.copy()
+            current.loc[0, "volume"] = current_volume
+            previous = normalize_daily(old)
+            candidate = normalize_daily(current)
+            with self.subTest(current_volume=current_volume):
+                if quarantine:
+                    with self.assertRaisesRegex(CorporateActionError, "unexplained historical volume"):
+                        validate_source_revision(previous, candidate)
+                else:
+                    validate_source_revision(previous, candidate)
+                reviewed = quarantine_repaired_volume_revisions(previous, candidate)
+                self.assertEqual(bool(reviewed.iloc[0].source_usable), not quarantine)
+                self.assertEqual(reviewed.iloc[0].volume, current_volume)
+                pd.testing.assert_frame_equal(reviewed, normalize_daily(reviewed))
+                self.assertEqual(validate_source_revision(previous, reviewed)["quarantinedComparisonRows"], int(quarantine))
+
     def test_quarantine_evidence_is_checked_on_every_cache_read(self):
         old = daily(ratios=(0, 0, 0, 0))
         old["provider_repaired"] = [True, False, False, False]

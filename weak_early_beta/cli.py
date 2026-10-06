@@ -134,6 +134,8 @@ def command_daily(args: argparse.Namespace) -> None:
             pd.read_csv(daily_path, parse_dates=["date"], dtype={"symbol": str})
             if daily_path.exists() else None
         )
+        if previous is not None:
+            previous.attrs["source_sha256"] = model.sha256(daily_path)
         raw = fetch_daily(universe, args.period, previous=previous)
         source_revision = raw.attrs.get("source_revision_receipt", {})
         del previous

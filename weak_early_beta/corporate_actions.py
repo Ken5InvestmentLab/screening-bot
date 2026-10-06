@@ -478,7 +478,13 @@ def quarantine_repaired_volume_revisions(previous: pd.DataFrame, current: pd.Dat
     return normalize_daily(result)
 
 
-def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> dict[str, Any]:
+def validate_source_revision(
+    previous: pd.DataFrame,
+    current: pd.DataFrame,
+    *,
+    previous_source_sha256: str | None = None,
+    source_corrections_manifest: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Reject missing actions and unexplained historical share-unit revisions.
 
     For a legacy snapshot, only declared actions newly effective AFTER its last
@@ -495,7 +501,11 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
         "comparedRows": 0, "quarantinedComparisonRows": 0,
         "acceptedRepairColumnValues": 0, "acceptedRepairs": [],
         "quarantinedComparisons": [],
+        "sourceCorrectionAudit": [],
     }
+    # Capture file identity before copies/normalization can discard attrs.
+    if previous_source_sha256 is None:
+        previous_source_sha256 = previous.attrs.get("source_sha256")
     if previous.empty:
         return receipt
     current = normalize_daily(current)
@@ -535,6 +545,14 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
             ):
                 raise CorporateActionError(f"previously recorded split event was removed/revised: {identity}")
 
+    from .source_corrections import reviewed_comparison_overrides
+
+    comparison_overrides, correction_audit = reviewed_comparison_overrides(
+        previous, current,
+        previous_source_sha256=previous_source_sha256,
+        manifest=source_corrections_manifest,
+    )
+    receipt["sourceCorrectionAudit"] = correction_audit
     old_groups = {symbol: group for symbol, group in previous.groupby("symbol", sort=False)}
     for symbol, now in current.groupby("symbol", sort=False):
         old = old_groups.get(symbol)
@@ -594,7 +612,12 @@ def validate_source_revision(previous: pd.DataFrame, current: pd.DataFrame) -> d
             repair_eligible = coherent & matching & right["provider_repaired"].to_numpy(dtype=bool)
         for column in (*OHLC, "volume"):
             if enriched:
-                before = left[f"actual_{column}"].to_numpy(dtype=float)
+                # Overrides exist only in this private comparison array. The
+                # normalized frames retain their original, consistent bases.
+                before = left[f"actual_{column}"].to_numpy(dtype=float, copy=True)
+                for (reviewed_symbol, session), correction in comparison_overrides.items():
+                    if reviewed_symbol == str(symbol) and session in left.index:
+                        before[left.index.get_loc(session)] = correction[f"actual_{column}"]
                 after = right[f"actual_{column}"].to_numpy(dtype=float)
             else:
                 before = left[column].to_numpy(dtype=float)
@@ -741,6 +764,9 @@ def fetch_daily(
 
     if batch <= 0:
         raise ValueError("batch must be positive")
+    previous_source_sha256 = (
+        previous.attrs.get("source_sha256") if previous is not None else None
+    )
     tickers = universe["ticker"].astype(str).tolist()
     rows: list[pd.DataFrame] = []
     provider_snapshot = pd.NaT
@@ -792,5 +818,7 @@ def fetch_daily(
     normalized = normalize_daily(pd.concat(rows, ignore_index=True), basis_asof=provider_snapshot)
     if previous is not None:
         normalized = quarantine_repaired_volume_revisions(previous, normalized)
-        normalized.attrs["source_revision_receipt"] = validate_source_revision(previous, normalized)
+        normalized.attrs["source_revision_receipt"] = validate_source_revision(
+            previous, normalized, previous_source_sha256=previous_source_sha256,
+        )
     return normalized

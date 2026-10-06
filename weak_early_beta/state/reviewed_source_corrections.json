@@ -1,0 +1,82 @@
+{
+  "identity": "CLOUD_REVIEWED_SOURCE_CORRECTIONS_V1",
+  "manifest_version": 1,
+  "previous_source_sha256": "87896f4954b5e4d3a441578ac5a240a92ab50aeab1c371cc1d6023551c04798a",
+  "previous_basis": "2026-10-05",
+  "current_basis": "2026-10-06",
+  "symbol": "8377",
+  "previous_journal": [],
+  "current_journal": [
+    {
+      "effective_date": "2026-09-29",
+      "ratio": 10.0
+    }
+  ],
+  "previous_split_factor": 1.0,
+  "current_split_factor": 10.0,
+  "previous_provider_repaired": false,
+  "current_provider_repaired": false,
+  "previous_source_usable": true,
+  "current_source_usable": true,
+  "previous_action_ratio": 0.0,
+  "current_action_ratio": 10.0,
+  "primary_sources": [
+    "https://www.hokuhoku-fg.co.jp/stocks/docs/kabushiki20260724.pdf",
+    "https://www.hokuhoku-fg.co.jp/stocks/benefit/",
+    "https://www.jpx.co.jp/markets/equities/rights/archives-01.html",
+    "https://finance.yahoo.co.jp/quote/8377.T/history"
+  ],
+  "rows": [
+    {
+      "date": "2026-09-24",
+      "previous_actual": {
+        "open": 860.5,
+        "high": 861.2999877929688,
+        "low": 831.5,
+        "close": 835.7999877929688,
+        "volume": 7629000
+      },
+      "current_actual": {
+        "open": 8605,
+        "high": 8613,
+        "low": 8315,
+        "close": 8358,
+        "volume": 762900
+      }
+    },
+    {
+      "date": "2026-09-25",
+      "previous_actual": {
+        "open": 850,
+        "high": 881.5,
+        "low": 850,
+        "close": 881.5,
+        "volume": 6986000
+      },
+      "current_actual": {
+        "open": 8500,
+        "high": 8815,
+        "low": 8500,
+        "close": 8815,
+        "volume": 698600
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "previous_actual": {
+        "open": 882.0999755859375,
+        "high": 890,
+        "low": 877.5,
+        "close": 879.4000244140625,
+        "volume": 4965000
+      },
+      "current_actual": {
+        "open": 8821,
+        "high": 8900,
+        "low": 8775,
+        "close": 8794,
+        "volume": 496500
+      }
+    }
+  ]
+}

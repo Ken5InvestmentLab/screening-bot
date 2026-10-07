@@ -1,5 +1,7 @@
 # Weak+Early Beta Guidance
 
+- Keep live acquisition/source revision validation and atomic CSV saving observable through flushed `CLOUD_DAILY_PHASE_V1` stages `live-acquisition` and `source-cache-write`. Preserve exception propagation and the prior cache on failure; progress logging must not add retries or weaken source validation. Verify with `python -B -m unittest tests.test_weak_early_beta_model`.
+
 - Reviewed source corrections must pin the original full-cache SHA-256, exact old/new actual OHLCV endpoints, basis dates, both action journals, and primary evidence. Apply them only to private revision-comparison arrays; preserve the original cache and canonical economics, audit the manifest hash, and keep every other revision fail-closed. Run `python -B -m unittest tests.test_weak_early_beta_source_corrections tests.test_weak_early_beta_corporate_actions` after changing this contract.
 - Keep this beta isolated from `screener.js`, `index.js`, `current_logic*.json`, the existing Mega report/gate, production Discord channels, and Google Sheets.
 - Preserve the five frozen selector IDs, fixed gates, causal monthly timing, Tail threshold, rank direction, tie-break, and no-cooldown contract. Public names are `Silence`, `Dive`, `Shadow`, `Fusion`, and `Balance`; changing a display name must not change its internal identity.

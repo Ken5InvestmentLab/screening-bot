@@ -24,3 +24,5 @@
 - When using a temporary clean clone, copy both the repository-root `.env` and `weak-early-beta-gate/.env` along with the two runner configs; Wrangler's `CLOUDFLARE_API_TOKEN` is loaded from the latter. Repoint the configs to the clone and remove both copied `.env` files after the run.
 
 - When invoking a temporary clone runner from another checkout, pass its absolute config path or set the working directory to the clone. The daily runner must verify config repoPath against its own repository realpath before environment reads, runtime/lock creation or Discord events; test this guard with `node --test scripts/windows/test-weak-early-beta-daily-config.mjs`.
+
+- Cloud fundamental generation must supply the Cloud evidence contract: sourceChecks is an array with official_ir and irbank_or_tdnet role objects, not a Premium-style keyed object. Keep the point-in-time validator strict; a retained claim-matched report may be repaired without changing its cutoff or regenerating analysis, then validated and imported once.

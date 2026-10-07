@@ -9,6 +9,18 @@ const FUNDAMENTAL_CHANNEL_ID = '1550876675884060702';
 const FUNDAMENTAL_MODEL = 'gpt-5.6-luna';
 const FUNDAMENTAL_REASONING_EFFORT = 'xhigh';
 
+const CLOUD_REPORT_CONTRACT = [
+  'Cloud固有のJSON契約: sourceChecksは必ずオブジェクトの配列です。role名をキーにしたオブジェクトにはしません。',
+  '実際に確認した公式IRとIRBANKまたはTDnetについて、次の形の確認記録を必ず含めてください。例のURLや本文は確認した実値へ置き換え、未確認の資料を確認済みにしないでください。',
+  JSON.stringify({ sourceChecks: [
+    { role: 'official_ir', checked: true, url: 'https://example.com/ir', checkedUrls: ['https://example.com/filing.pdf'], result: '実際に行った一覧照合と本文確認の記録' },
+    { role: 'irbank_or_tdnet', checked: true, url: 'https://example.com/disclosures', checkedUrls: ['https://example.com/disclosures'], result: '実際に行った開示一覧と公表日時の照合記録' },
+  ] }),
+  '各記録のurlは確認したhttps URLとし、disclosuresには採用資料ごとのtitle、publishedAt、url、contentReviewed:trueを保存します。開示リンクのURLはdisclosuresと一致させます。開示がない場合は確認根拠をnoMaterialDisclosureReasonに記録します。',
+  'alertId、signalDate、analysisCutoffは不変claimの値と文字列まで一致させ、auditStatusは監査を通過した場合だけpassにしてください。',
+].join('\n');
+
+
 function readJson(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, ''));
 }
@@ -232,6 +244,7 @@ async function main(configFile) {
       '検出日より後の公表資料でもanalysisCutoff以前なら対象です。本文と開示リンクには採用資料の公表日時を示し、基準時点後の資料を使わないでください。同じ基準日の開示時刻が確認できなければ採用しないでください。',
       '各レポートのsignalDateはclaimのsignalDate、analysisCutoffはclaimのanalysisCutoffへ文字列まで正確に合わせてください。receivedAtは検出日時として保持します。既存本文が出力先にあれば参考として読み、新しい分析基準時点までの追加開示を確認してから更新してください。分析はHTMLへの保存だけに使い、Discordへ通知しません。',
       '売買推奨、目標株価、追加スコアは禁止。現行契約の全7フィールドとSourcesを満たしてください。',
+      CLOUD_REPORT_CONTRACT,
       `最終JSONは ${reportsPath} だけに書き込んでください。Discord投稿、worker state、Sheets、Git、workflow、ソースコードは変更しないでください。`,
       '報告は有界に保ち、出力JSON作成後は日本語で簡潔に完了を報告してください。',
     ].join('\n\n');
@@ -305,4 +318,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { assertIsolated, cleanEnvironment, finalizeHtmlSnapshots, reportsMatchClaim, reusableClaimReport, stampAnalysisStart, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };
+export { CLOUD_REPORT_CONTRACT, assertIsolated, cleanEnvironment, finalizeHtmlSnapshots, reportsMatchClaim, reusableClaimReport, stampAnalysisStart, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };

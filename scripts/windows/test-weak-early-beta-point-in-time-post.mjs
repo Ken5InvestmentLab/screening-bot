@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
-import { finalizeHtmlSnapshots } from './weak-early-beta-fundamental-runner.mjs';
+import { CLOUD_REPORT_CONTRACT, finalizeHtmlSnapshots } from './weak-early-beta-fundamental-runner.mjs';
 
 const poster = path.resolve('weak_early_beta/scripts/post_historical_snapshot.mjs');
 
@@ -230,4 +230,20 @@ test('forward date-only receipts use the analysis-start JST day and legacy types
     }
     fs.rmSync(resolved, { recursive: true, force: true });
   }
+});
+
+// Exercise the actual JSON shape supplied to the analysis model.
+test('Cloud generation supplies explicit role-array evidence contract', () => {
+  const exampleLine = CLOUD_REPORT_CONTRACT.split('\n').find(line => line.startsWith('{'));
+  const evidence = JSON.parse(exampleLine).sourceChecks;
+  assert.equal(Array.isArray(evidence), true);
+  assert.deepEqual(evidence.map(row => row.role), ['official_ir', 'irbank_or_tdnet']);
+  for (const row of evidence) {
+    assert.equal(row.checked, true);
+    assert.match(row.url, /^https:\/\//);
+    assert.ok(row.checkedUrls.length);
+    assert.ok(row.result);
+  }
+  const source = fs.readFileSync(new URL('./weak-early-beta-fundamental-runner.mjs', import.meta.url), 'utf8');
+  assert.match(source, /\s+CLOUD_REPORT_CONTRACT,\s/);
 });

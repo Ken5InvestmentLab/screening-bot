@@ -1,5 +1,6 @@
 """Cloud acceptance checks for source units, selection and fixed trade economics."""
 
+import json
 import tempfile
 import unittest
 from argparse import Namespace
@@ -80,10 +81,47 @@ class SplitAwareModelTests(unittest.TestCase):
                      patch.object(model.base, "jpx_universe", return_value=universe), \
                      patch("weak_early_beta.corporate_actions.fetch_daily", return_value=self.daily()), \
                      patch.object(model, "refresh_forward_endpoints", side_effect=capture_input), \
-                     redirect_stderr(StringIO()):
+                     redirect_stderr(StringIO()) as progress:
                     with self.assertRaises(InputReached):
                         command_daily(args)
                     self.assertEqual(reads.call_count, 1)
+                    records = [json.loads(line) for line in progress.getvalue().splitlines()
+                               if line.startswith('{"identity": "CLOUD_DAILY_PHASE_V1"')]
+                    live = [(r["stage"], r["event"]) for r in records
+                            if r["stage"] in {"live-acquisition", "source-cache-write"}]
+                    self.assertEqual(live, [
+                        ("live-acquisition", "started"), ("live-acquisition", "finished"),
+                        ("source-cache-write", "started"), ("source-cache-write", "finished"),
+                    ] if refresh_live else [])
+
+    def test_live_phase_failure_preserves_cache_and_does_not_retry(self):
+        for failed_stage in ("live-acquisition", "source-cache-write"):
+            with self.subTest(failed_stage=failed_stage), tempfile.TemporaryDirectory() as temporary:
+                path = Path(temporary) / "daily.csv"
+                _write_daily_cache(self.daily(), path)
+                original = path.read_bytes()
+                args = Namespace(ledger=str(Path(temporary) / "ledger.csv"),
+                                 daily_corpus=str(path), refresh_live=True, period="5y")
+                failure = CorporateActionError("blocked source") if failed_stage == "live-acquisition" else OSError("disk full")
+                with patch("weak_early_beta.cli._load_or_bootstrap", return_value=pd.DataFrame()), \
+                     patch.object(model.base, "jpx_universe", return_value=pd.DataFrame({"code": ["9999"], "name": ["Example"]})), \
+                     patch("weak_early_beta.corporate_actions.fetch_daily", return_value=self.daily(),
+                           side_effect=failure if failed_stage == "live-acquisition" else None) as fetch, \
+                     patch("weak_early_beta.cli._write_daily_cache", side_effect=failure if failed_stage == "source-cache-write" else None) as write, \
+                     patch.object(model, "read_daily") as read, \
+                     redirect_stderr(StringIO()) as progress:
+                    with self.assertRaises(type(failure)) as raised:
+                        command_daily(args)
+                    self.assertIs(raised.exception, failure)
+                    self.assertEqual(fetch.call_count, 1)
+                    self.assertEqual(write.call_count, int(failed_stage == "source-cache-write"))
+                    read.assert_not_called()
+                self.assertEqual(path.read_bytes(), original)
+                self.assertFalse(path.with_suffix(".source-quality.json").exists())
+                records = [json.loads(line) for line in progress.getvalue().splitlines()
+                           if line.startswith('{"identity": "CLOUD_DAILY_PHASE_V1"')]
+                self.assertEqual(records[-1]["stage"], failed_stage)
+                self.assertEqual(records[-1]["event"], "failed")
 
     def test_forward_trade_spanning_split_uses_original_lot(self):
         raw = self.daily()

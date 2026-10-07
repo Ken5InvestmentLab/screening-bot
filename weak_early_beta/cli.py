@@ -127,19 +127,21 @@ def command_daily(args: argparse.Namespace) -> None:
     if args.refresh_live:
         from .corporate_actions import fetch_daily
 
-        universe = model.base.jpx_universe()
-        # The old cache is evidence for detecting unannounced source rebases;
-        # it must not be treated as action-aware input merely because it exists.
-        previous = (
-            pd.read_csv(daily_path, parse_dates=["date"], dtype={"symbol": str})
-            if daily_path.exists() else None
-        )
-        if previous is not None:
-            previous.attrs["source_sha256"] = model.sha256(daily_path)
-        raw = fetch_daily(universe, args.period, previous=previous)
-        source_revision = raw.attrs.get("source_revision_receipt", {})
-        del previous
-        _write_daily_cache(raw, daily_path)
+        with daily_phase("live-acquisition"):
+            universe = model.base.jpx_universe()
+            # The old cache is evidence for detecting unannounced source rebases;
+            # it must not be treated as action-aware input merely because it exists.
+            previous = (
+                pd.read_csv(daily_path, parse_dates=["date"], dtype={"symbol": str})
+                if daily_path.exists() else None
+            )
+            if previous is not None:
+                previous.attrs["source_sha256"] = model.sha256(daily_path)
+            raw = fetch_daily(universe, args.period, previous=previous)
+            source_revision = raw.attrs.get("source_revision_receipt", {})
+            del previous
+        with daily_phase("source-cache-write"):
+            _write_daily_cache(raw, daily_path)
         del raw
         company_names = universe.set_index("code")["name"].astype(str).to_dict()
     else:

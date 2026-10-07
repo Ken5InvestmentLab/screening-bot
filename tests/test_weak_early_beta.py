@@ -743,6 +743,21 @@ class WeakEarlyBetaTests(unittest.TestCase):
         report["disclosures"][0]["publishedAt"] = "2026-10-01T15:00:00.123+09:00"
         return report, claim
 
+    def test_forward_source_checks_require_role_array_without_implicit_coercion(self):
+        report, claim = self._forward_analysis_report()
+        checked = report["sourceChecks"]
+        report["sourceChecks"] = {row["role"]: {key: value for key, value in row.items() if key != "role"} for row in checked}
+        with self.assertRaisesRegex(ValueError, "sourceChecks must cover"):
+            validate_forward_report(report, claim)
+        report["sourceChecks"] = checked
+        self.assertEqual(validate_forward_report(report, claim), "2026-09-30|3133")
+        report["sourceChecks"] = checked[:1]
+        with self.assertRaisesRegex(ValueError, "sourceChecks must cover"):
+            validate_forward_report(report, claim)
+        report["sourceChecks"] = [dict(row, url="http://example.com") for row in checked]
+        with self.assertRaisesRegex(ValueError, "https URL"):
+            validate_forward_report(report, claim)
+
     def test_forward_report_accepts_later_day_disclosure_at_analysis_start(self):
         report, claim = self._forward_analysis_report()
         self.assertEqual(validate_forward_report(report, claim), "2026-09-30|3133")

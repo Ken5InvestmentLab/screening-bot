@@ -283,6 +283,239 @@
           "claimのalertId 1件のみを対象とし、signalDate・receivedAt・analysisCutoffはclaimの文字列を保持した。公式IR、公式ニュース、IRBANK/TDnet配信相当一覧、選択した各開示本文を確認し、選択資料の公開日時はすべてanalysisCutoff以前である。"
         ]
       }
+    },
+    "weak-early-beta:2026-10-07:2962": {
+      "completedAt": "2026-10-07T09:54:20.918Z",
+      "delivery": "html",
+      "analysisCutoff": "2026-10-07T09:28:54.145Z",
+      "analysisBasis": "analysis_start",
+      "report": {
+        "alertId": "weak-early-beta:2026-10-07:2962",
+        "title": "テクニスコ (2962) | TradingView チャート",
+        "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A2962",
+        "symbolCode": "2962",
+        "symbolName": "テクニスコ",
+        "companyName": "テクニスコ",
+        "receivedAt": "2026-10-07T16:15:00+09:00",
+        "signalDate": "2026-10-07",
+        "analysisCutoff": "2026-10-07T09:28:54.145Z",
+        "selectorNames": [
+          "Silence"
+        ],
+        "summary": "9月18日13:30開示のデータセンター通信装置向け高機能ヒートシンク受注は2026年6月期売上高の10％以上で、2027年6月期に計上予定。ただし業績予想織込み済みで、8月14日実績は売上37.45億円、営業赤字0.74億円と計画未達。",
+        "materialImpact": "混在/要確認：データセンター向け高機能ヒートシンクを売上高10％以上受注したが、2027年6月期予想に織込み済みで金額・顧客名も非開示。",
+        "fields": [
+          {
+            "name": "材料インパクト",
+            "value": "混在/要確認：データセンター向け高機能ヒートシンクを売上高10％以上受注したが、2027年6月期予想に織込み済みで金額・顧客名も非開示。"
+          },
+          {
+            "name": "事業概要",
+            "value": "光通信・高出力半導体レーザー・パワー半導体/MPU向けヒートシンク、TGVなどのガラス製品、精密加工部品を手がけるメーカーです。顧客の評価・量産認定を経た案件の売上計上と、製品構成による粗利が収益を左右します。"
+          },
+          {
+            "name": "足元材料",
+            "value": "9月18日13:30、データセンターの通信装置向け高機能ヒートシンク部品を光通信メーカーから受注し、受注額は2026年6月期売上高の10％以上、売上計上は2027年6月期予定です。8月14日の通期実績は売上高37.45億円、営業損失0.74億円で、同日予想の売上42億円・営業利益0.6億円を下回りました。会社は今回受注の2027年6月期業績への影響を、8月14日公表予想に織込み済みとしています。"
+          },
+          {
+            "name": "ファンダ要点",
+            "value": "2027年6月期は売上高59億円、営業利益2.5億円を計画。今回受注は売上計画の達成確度を支える一方、予想に織込み済みで増額材料ではありません。大型案件の顧客評価遅延で前期計画を外した経緯があるため、受注品の出荷・量産移行、ヒートシンクの粗利率、営業CFの再現性が利益計画の鍵となります。"
+          },
+          {
+            "name": "注意点",
+            "value": "受注先・受注金額は守秘義務で非開示で、売上計上時期も予定にとどまります。2026年6月期は売上計画比10.8％減、営業利益は黒字予想から0.74億円の赤字へ下振れしており、顧客評価・量産立ち上がりが遅れると売上59億円計画と利益率の再現性が損なわれます。"
+          },
+          {
+            "name": "開示リンク",
+            "value": "[2026-09-18 大口受注に関するお知らせ(13:30)](https://ssl4.eir-parts.net/doc/2962/tdnet/2886329/00.pdf)\n[2026-08-14 連結業績予想と実績値との差異に関するお知らせ(15:30)](https://ssl4.eir-parts.net/doc/2962/tdnet/2873691/00.pdf)\n[2026-08-14 2026年６月期 決算短信〔日本基準〕（連結）(15:30)](https://ssl4.eir-parts.net/doc/2962/tdnet/2873647/00.pdf)"
+          },
+          {
+            "name": "Sources",
+            "value": "[IRニュース｜株式会社テクニスコ](https://www.tecnisco.com/ir/news.html)\n[製品情報｜株式会社テクニスコ](https://www.tecnisco.com/product.html)\n[テクニスコ(2962) 適時開示情報｜IRBANK](https://irbank.net/2962/ir)\n[テクニスコ(株)〖2962〗：適時開示情報｜Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/2962.T/disclosure)"
+          }
+        ],
+        "sources": [
+          "https://www.tecnisco.com/ir/news.html",
+          "https://www.tecnisco.com/product.html",
+          "https://irbank.net/2962/ir",
+          "https://finance.yahoo.co.jp/quote/2962.T/disclosure"
+        ],
+        "sourceChecks": [
+          {
+            "role": "official_ir",
+            "checked": true,
+            "url": "https://www.tecnisco.com/ir/news.html",
+            "checkedUrls": [
+              "https://ssl4.eir-parts.net/doc/2962/tdnet/2886329/00.pdf",
+              "https://ssl4.eir-parts.net/doc/2962/tdnet/2873691/00.pdf",
+              "https://ssl4.eir-parts.net/doc/2962/tdnet/2873647/00.pdf"
+            ],
+            "result": "analysisCutoffまでの公式IR一覧を確認し、9月25日の支配株主・コーポレートガバナンス報告書を含む後発の定型開示も確認。業績・受注材料として採用した3件は公式PDF本文を直接確認しました。"
+          },
+          {
+            "role": "irbank_or_tdnet",
+            "checked": true,
+            "url": "https://irbank.net/2962/ir",
+            "checkedUrls": [
+              "https://irbank.net/2962/ir",
+              "https://finance.yahoo.co.jp/quote/2962.T/disclosure"
+            ],
+            "result": "IRBANKとYahoo!ファイナンスの適時開示一覧で、9月18日13:30の大口受注、8月14日15:30の決算短信・予想実績差異を公表時刻まで照合。analysisCutoff後の情報は使用していません。"
+          }
+        ],
+        "disclosures": [
+          {
+            "title": "大口受注に関するお知らせ",
+            "publishedAt": "2026-09-18T13:30:00+09:00",
+            "url": "https://ssl4.eir-parts.net/doc/2962/tdnet/2886329/00.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "連結業績予想と実績値との差異に関するお知らせ",
+            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "url": "https://ssl4.eir-parts.net/doc/2962/tdnet/2873691/00.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "2026年６月期 決算短信〔日本基準〕（連結）",
+            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "url": "https://ssl4.eir-parts.net/doc/2962/tdnet/2873647/00.pdf",
+            "contentReviewed": true
+          }
+        ],
+        "auditStatus": "pass",
+        "auditNotes": [
+          "analysisCutoffの2026-10-07T09:28:54.145Z（JST 2026年10月7日18:28:54）以前を対象に、公式IR、IRBANK、Yahoo!ファイナンスの開示一覧を確認。採用3件は公表日時を照合し、公式PDF本文を直接確認しました。9月25日の支配株主・コーポレートガバナンス報告書は定型開示として確認済みですが、業績・受注分析の主材料には不採用。7 fields、直接開示URL、Sources、cutoffを検証済みです。"
+        ]
+      }
+    },
+    "weak-early-beta:2026-10-07:338A": {
+      "completedAt": "2026-10-07T10:04:28.031Z",
+      "delivery": "html",
+      "analysisCutoff": "2026-10-07T10:00:57.908Z",
+      "analysisBasis": "analysis_start",
+      "report": {
+        "alertId": "weak-early-beta:2026-10-07:338A",
+        "signalDate": "2026-10-07",
+        "symbolCode": "338A",
+        "symbolName": "ＺｅｎｍｕＴｅｃｈ",
+        "companyName": "ＺｅｎｍｕＴｅｃｈ",
+        "receivedAt": "2026-10-07T16:15:00+09:00",
+        "analysisCutoff": "2026-10-07T10:00:57.908Z",
+        "signalType": "WEAK_EARLY_BETA",
+        "selectorNames": [
+          "Dive",
+          "Shadow"
+        ],
+        "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A338A",
+        "title": "ＺｅｎｍｕＴｅｃｈ (338A) | TradingView チャート",
+        "summary": "2Qは売上305.6百万円で微増にとどまり営業損失99.3百万円。秘密分散ストレージ等の開発とHAIP事業は拡張余地を示すが、通期計画は下期偏重。",
+        "materialImpact": "混在/要確認：主力ZVDのストック基盤は拡大する一方、上期営業損失99百万円・計画未達で下期大型案件への依存が残る。",
+        "fields": [
+          {
+            "name": "材料インパクト",
+            "value": "混在/要確認：主力ZVDのストック基盤は拡大する一方、上期営業損失99百万円・計画未達で下期大型案件への依存が残る。"
+          },
+          {
+            "name": "事業概要",
+            "value": "秘密分散技術を使うデータ保護ソリューション企業で、PC向け「ZENMU Virtual Drive」、組込み用「ZENMU Engine」、秘密計算DB「QueryAhead®」を企業・医療・自治体などへ提供しています。ライセンス・保守のストック収益に加え、秘密計算の受託や技術実証が売上を構成します。"
+          },
+          {
+            "name": "足元材料",
+            "value": "9月1日、HAIPと特許取得済みの秘密分散プロキシ技術を使うサイバーセキュリティ事業を共同開始しました。医療機関や地域医療連携への展開余地はあるものの、当期業績への影響は軽微と明記されています。8月13日には秘密分散ストレージとZVD for Macの開発を開始し、同日の2Qは売上高305.6百万円（前年同期比0.3％増）、営業損失99.3百万円でした。"
+          },
+          {
+            "name": "ファンダ要点",
+            "value": "主力のZENMU Virtual Driveはストック型収益の積み上げが進む一方、2Q累計は売上計画377百万円に対し305.6百万円、営業損失は計画71百万円に対し99.3百万円で未達でした。ZVD案件約42百万円の下期ずれと人件費中心の固定費負担を吸収し、通期売上1,080百万円・営業利益161百万円を実現できるかが中核です。"
+          },
+          {
+            "name": "注意点",
+            "value": "中間期は販管費が前年同期比81百万円増え、受注の長期化で売上と損益が下期へ偏っています。新製品の正式提供は2027年春頃予定で、仕様・価格・契約件数は未開示です。HAIP事業も現時点の業績寄与は軽微で、下期大型案件の計上と継続課金の伸長が計画達成の前提です。"
+          },
+          {
+            "name": "開示リンク",
+            "value": "・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://zenmutech.com/information/news/20260901/)\n・[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://zenmutech.com/information/news/20260813/)\n・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf)\n・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf)"
+          },
+          {
+            "name": "Sources",
+            "value": "・[IR情報TOP | 株式会社ZenmuTech](https://zenmutech.com/ir/)\n・[IRニュース一覧 | 株式会社ZenmuTech](https://zenmutech.com/ir/news/)\n・[ZenmuTech（338A）のIR情報・決算資料 | IRBANK](https://irbank.net/338A/ir)\n・[ＺｅｎｍｕＴ(338A)：適時開示情報 | 株予報Pro](https://kabuyoho.jp/sp/reportDisclose?bcode=338A&disc_type=0)"
+          }
+        ],
+        "sources": [
+          {
+            "title": "IR情報TOP | 株式会社ZenmuTech",
+            "url": "https://zenmutech.com/ir/"
+          },
+          {
+            "title": "IRニュース一覧 | 株式会社ZenmuTech",
+            "url": "https://zenmutech.com/ir/news/"
+          },
+          {
+            "title": "ZenmuTech（338A）のIR情報・決算資料 | IRBANK",
+            "url": "https://irbank.net/338A/ir"
+          },
+          {
+            "title": "ＺｅｎｍｕＴ(338A)：適時開示情報 | 株予報Pro",
+            "url": "https://kabuyoho.jp/sp/reportDisclose?bcode=338A&disc_type=0"
+          }
+        ],
+        "sourceChecks": [
+          {
+            "role": "official_ir",
+            "checked": true,
+            "url": "https://zenmutech.com/ir/news/",
+            "checkedUrls": [
+              "https://zenmutech.com/ir/",
+              "https://zenmutech.com/ir/news/",
+              "https://zenmutech.com/information/news/20260901/",
+              "https://zenmutech.com/information/news/20260813/",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf"
+            ],
+            "result": "公式IRトップとIRニュース一覧を確認し、analysisCutoff以前の最新IRは9月1日17:05のHAIP事業開始、次いで8月13日16:45の新製品開発、同日15:30の2Q決算短信・業績予想差異であることを照合しました。9月1日と8月13日の公式個別本文、決算短信・差異資料本文を確認し、基準時点後の情報は使用していません。"
+          },
+          {
+            "role": "irbank_or_tdnet",
+            "checked": true,
+            "url": "https://irbank.net/338A/ir",
+            "checkedUrls": [
+              "https://irbank.net/338A/ir",
+              "https://kabuyoho.jp/sp/reportDisclose?bcode=338A&disc_type=0"
+            ],
+            "result": "IRBANKとTDnet配信相当の適時開示一覧を確認し、9月1日17:05、8月13日16:45、同日15:30の決算短信・業績予想差異・関連資料を公表日時まで突合しました。基準時点までにこれらを上回る338Aの業績・事業材料は確認されず、基準時点後の情報は除外しています。"
+          }
+        ],
+        "disclosures": [
+          {
+            "title": "HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意",
+            "publishedAt": "2026-09-01T17:05:00+09:00",
+            "url": "https://zenmutech.com/information/news/20260901/",
+            "contentReviewed": true
+          },
+          {
+            "title": "情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始",
+            "publishedAt": "2026-08-13T16:45:00+09:00",
+            "url": "https://zenmutech.com/information/news/20260813/",
+            "contentReviewed": true
+          },
+          {
+            "title": "2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf",
+            "contentReviewed": true
+          }
+        ],
+        "auditStatus": "pass",
+        "auditNotes": [
+          "不変claimのalertId 1件のみを対象とし、signalDate・receivedAt・analysisCutoffはclaimの文字列を保持しました。公式IR、IRBANK、TDnet配信相当一覧、選択した各開示本文を確認し、採用資料の公表日時はすべてanalysisCutoff以前です。"
+        ]
+      }
     }
   }
 }

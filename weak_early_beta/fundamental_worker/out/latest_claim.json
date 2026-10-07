@@ -1,25 +1,26 @@
 {
   "ok": true,
-  "claimId": "a919e639-4ff7-4b98-a7d6-28b187865aed",
-  "generatedAt": "2026-10-05T23:51:43.850819+09:00",
+  "claimId": "8286d427-92ce-442b-b0e3-385a0e8dccaf",
+  "generatedAt": "2026-10-07T19:00:57.638530+09:00",
   "claimedCount": 1,
   "alerts": [
     {
-      "alertId": "weak-early-beta:2026-10-05:338A",
-      "receivedAt": "2026-10-05T16:15:00+09:00",
-      "analysisCutoff": "2026-10-05T15:17:31.645Z",
-      "signalDate": "2026-10-05",
+      "alertId": "weak-early-beta:2026-10-07:338A",
+      "receivedAt": "2026-10-07T16:15:00+09:00",
+      "analysisCutoff": "2026-10-07T10:00:57.908Z",
+      "signalDate": "2026-10-07",
       "signalType": "WEAK_EARLY_BETA",
       "symbolCode": "338A",
       "symbolName": "ＺｅｎｍｕＴｅｃｈ",
       "entryPrice": null,
       "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A338A",
       "betaSelectors": [
-        "Dive"
+        "Dive",
+        "Shadow"
       ]
     }
   ],
-  "outputReportPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261007-repair\\repo\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [
       "alertId",
@@ -40,5 +41,5 @@
     "model": "gpt-5.6-luna",
     "reasoningEffort": "xhigh"
   },
-  "analysisStartedAt": "2026-10-05T15:17:31.645Z"
+  "analysisStartedAt": "2026-10-07T10:00:57.908Z"
 }

@@ -330,9 +330,16 @@ function assertValidatedFundamentalOutput({ raw, state, receipt, env }) {
 
 async function commitGeneratedChanges({ git, message }) {
   const entries = parseGitStatus((await git(['status', '--porcelain=v1', '-z', '--untracked-files=all'])).stdout);
-  const paths = assertGeneratedChanges(entries);
-  if (!paths.length) return { committed: false, paths: [] };
-  await git(['add', '--', ...paths]);
+  const initialPaths = assertGeneratedChanges(entries);
+  if (!initialPaths.length) return { committed: false, paths: [] };
+  // Compare Git-normalized contents before choosing exact staging leaves.
+  // Windows CRLF/LF rewrites can appear dirty but produce no index change.
+  const changed = new Set((await git(['diff', '--name-only', '-z', '--', ...initialPaths])).stdout.split('\0').filter(Boolean));
+  if ([...changed].some(file => !initialPaths.includes(file))) throw new Error('unexpected normalized generated diff');
+  const paths = entries.filter(entry => entry.status === '??' || changed.has(entry.path)).map(entry => entry.path);
+  // Stage the exact audited leaves, including normalized no-ops, to refresh
+  // Git's stat cache. Only the normalized changed set may enter the commit.
+  await git(['add', '--', ...initialPaths]);
   const staged = (await git(['diff', '--cached', '--name-only', '-z'])).stdout.split('\0').filter(Boolean);
   const after = parseGitStatus((await git(['status', '--porcelain=v1', '-z', '--untracked-files=all'])).stdout);
   assertGeneratedChanges(after, { allowStaged: true });
@@ -340,6 +347,7 @@ async function commitGeneratedChanges({ git, message }) {
       after.length !== paths.length || after.some(entry => !paths.includes(entry.path) || !/^[MA] $/.test(entry.status))) {
     throw new Error('working/staged changes changed during generated-file staging');
   }
+  if (!paths.length) return { committed: false, paths: [] };
   await git(['commit', '-m', message]);
   if (parseGitStatus((await git(['status', '--porcelain=v1', '-z', '--untracked-files=all'])).stdout).length) {
     throw new Error('working tree changed during generated-file commit; refusing push');

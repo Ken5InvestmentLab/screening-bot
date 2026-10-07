@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
@@ -305,7 +306,7 @@ test('configured secret values are refused in both plain and JSON escaped output
   assert.doesNotThrow(() => assertValidatedFundamentalOutput(ordinary));
 });
 
-function mockedGit({ initial = ` M ${generatedReport}\0`, staged = `${generatedReport}\0`, afterStage = `M  ${generatedReport}\0`, afterCommit = '' } = {}) {
+function mockedGit({ initial = ` M ${generatedReport}\0`, staged = `${generatedReport}\0`, afterStage = `M  ${generatedReport}\0`, afterCommit = '', normalized = `${generatedReport}\0` } = {}) {
   const calls = [];
   let statusReads = 0;
   return {
@@ -314,7 +315,7 @@ function mockedGit({ initial = ` M ${generatedReport}\0`, staged = `${generatedR
       calls.push(args);
       let stdout = '';
       if (args[0] === 'status') stdout = [initial, afterStage, afterCommit][statusReads++];
-      if (args[0] === 'diff') stdout = staged;
+      if (args[0] === 'diff') stdout = args.includes('--cached') ? staged : normalized;
       return { stdout };
     },
   };
@@ -327,6 +328,7 @@ test('generated commits stage exact leaves and push only the Cloud research bran
   assert.deepEqual(result, { committed: true, paths: [generatedReport] });
   assert.deepEqual(mock.calls, [
     ['status', '--porcelain=v1', '-z', '--untracked-files=all'],
+    ['diff', '--name-only', '-z', '--', generatedReport],
     ['add', '--', generatedReport],
     ['diff', '--cached', '--name-only', '-z'],
     ['status', '--porcelain=v1', '-z', '--untracked-files=all'],
@@ -637,4 +639,53 @@ test('npm uses the configured node and npm CLI on Windows and defaults to check'
     }
     fs.rmSync(resolved, { recursive: true, force: true });
   }
+});
+
+
+test('normalized no-op does not create a commit and still requires a clean worktree', async () => {
+  const mock = mockedGit({ normalized: '', staged: '', afterStage: '' });
+  assert.deepEqual(await commitGeneratedChanges({ git: mock.git, message: 'unused' }), { committed: false, paths: [] });
+  assert.equal(mock.calls.some(args => ['commit', 'push'].includes(args[0])), false);
+  const race = mockedGit({ normalized: '', staged: '', afterStage: ` M ${generatedReport}\0` });
+  await assert.rejects(commitGeneratedChanges({ git: race.git, message: 'unused' }), /working\/staged.*staging/);
+});
+
+test('unexpected normalized names stop before staging', async () => {
+  const mock = mockedGit({ normalized: `${generatedReport}\0.env\0` });
+  await assert.rejects(commitGeneratedChanges({ git: mock.git, message: 'unused' }), /normalized generated diff/);
+  assert.equal(mock.calls.some(args => ['add', 'commit', 'push'].includes(args[0])), false);
+});
+
+test('real Git autocrlf normalization commits only substantive generated changes', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-normalized-git-'));
+  const csv = 'weak_early_beta/state/metrics.csv';
+  const calls = [];
+  function execute(args) {
+    const output = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+    assert.equal(output.status, 0, output.stderr);
+    return { stdout: output.stdout };
+  }
+  const git = async args => {
+    calls.push(args);
+    return args[0] === 'push' ? { stdout: '' } : execute(args);
+  };
+  try {
+    execute(['init', '-b', 'research/weak-early-beta']);
+    execute(['config', 'user.name', 'Cloud test']);
+    execute(['config', 'user.email', 'cloud-test@example.invalid']);
+    execute(['config', 'core.autocrlf', 'true']);
+    for (const file of [csv, generatedReport, 'unrelated.txt']) {
+      fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+      fs.writeFileSync(path.join(root, file), 'before\r\n');
+    }
+    execute(['add', '--', csv, generatedReport, 'unrelated.txt']);
+    execute(['commit', '-m', 'test baseline']);
+    fs.writeFileSync(path.join(root, csv), 'before\n');
+    fs.writeFileSync(path.join(root, generatedReport), 'after\n');
+    assert.deepEqual(await commitGeneratedChanges({ git, message: 'test generated report' }), { committed: true, paths: [generatedReport] });
+    assert.deepEqual(execute(['diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD']).stdout.trim().split('\n'), [generatedReport]);
+    assert.equal(execute(['status', '--porcelain']).stdout, '');
+    assert.deepEqual(new Set(calls.find(args => args[0] === 'add').slice(2)), new Set([generatedReport, csv]));
+    assert.deepEqual(calls.at(-1), ['push', 'origin', 'HEAD:refs/heads/research/weak-early-beta']);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

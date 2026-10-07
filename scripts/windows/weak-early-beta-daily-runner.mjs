@@ -7,6 +7,62 @@ import { isDeepStrictEqual } from 'node:util';
 import { cleanEnvironment, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
+const DEFAULT_RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
+
+export function loadDailyConfig(
+  configFile,
+  runnerRepo = DEFAULT_RUNNER_REPO,
+) {
+  // Preserve existing resolution of relative config paths against cwd.
+  const configPath = path.resolve(configFile);
+  const config = readJson(configPath);
+
+  if (
+    typeof config?.repoPath !== 'string' ||
+    config.repoPath.trim() === ''
+  ) {
+    throw new Error(
+      `Daily runner config "${configPath}" requires a non-empty repoPath.`,
+    );
+  }
+
+  // Preserve existing resolution of relative repoPath values against cwd.
+  const configuredRepo = path.resolve(config.repoPath);
+
+  let configuredReal;
+  let runnerReal;
+
+  try {
+    configuredReal = fs.realpathSync.native(configuredRepo);
+  } catch (cause) {
+    throw new Error(
+      `Daily runner config "${configPath}" repoPath cannot be resolved: ` +
+        `"${configuredRepo}". Refusing to run.`,
+      { cause },
+    );
+  }
+
+  try {
+    runnerReal = fs.realpathSync.native(path.resolve(runnerRepo));
+  } catch (cause) {
+    throw new Error(
+      `Daily runner repository cannot be resolved: "${runnerRepo}". ` +
+        'Refusing to run.',
+      { cause },
+    );
+  }
+
+  if (configuredReal !== runnerReal) {
+    throw new Error(
+      `Daily runner repository mismatch: config "${configPath}" targets ` +
+        `"${configuredReal}", but this runner belongs to "${runnerReal}". ` +
+        'Pass the config belonging to this runner repository. Refusing to run.',
+    );
+  }
+
+  return config;
+}
+
 function writeJson(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
@@ -325,7 +381,7 @@ async function probeFundamentalModel(config, runDir, env) {
 }
 
 async function main(configFile) {
-  const config = readJson(path.resolve(configFile));
+  const config = loadDailyConfig(configFile);
   const repo = path.resolve(config.repoPath);
   const runtime = path.resolve(config.runtimeDir);
   const startedAt = new Date().toISOString();

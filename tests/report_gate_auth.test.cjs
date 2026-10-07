@@ -18,7 +18,7 @@ const ts = require(tsPath);
 function createGate(fetchMock, { clock } = {}) {
   const source = fs.readFileSync(path.join(repoRoot, 'report-gate/src/index.ts'), 'utf8');
   const compiled = ts.transpileModule(`${source}\n` +
-    'globalThis.__gateTest = { createSession, createOAuthState, readSession, accessGuardScript };', {
+    'globalThis.__gateTest = { createSession, createOAuthState, readSession, accessGuardScript, freshRoleLookups };', {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText;
   const sandbox = {
@@ -489,16 +489,37 @@ test('fresh role cooldown retains only provider failure, then rechecks paid acce
   const revoked = await gate.worker.fetch(request.clone(), env); assert.equal(revoked.status, 403); assert.equal(calls, 3);
 });
 
-test('concurrent fresh role checks share only the active request and recheck a later role revocation', async () => {
+test('concurrent fresh role checks share only the active request and recheck a later role revocation', { timeout: 10_000 }, async () => {
   let release; let lookups = 0; let roles = ['test-allowed-role'];
-  const gate = createGate(async () => { lookups += 1; if (lookups === 1) await new Promise(resolve => { release = resolve; }); return Response.json({ roles }); });
+  const providerHeld = new Promise(resolve => { release = resolve; });
+  const gate = createGate(async () => { lookups += 1; if (lookups === 1) await providerHeld; return Response.json({ roles }); });
   const now = Math.floor(Date.now() / 1000);
   const request = await requestFor(gate, '/', sessionPayload({ tokenExp: now + 3600, roleCheckedAt: now }));
   const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true' };
-  const pending = [gate.worker.fetch(request.clone(), env), gate.worker.fetch(request.clone(), env)];
-  while (!release) await new Promise(setImmediate);
-  await new Promise(setImmediate); assert.equal(lookups, 1); release();
-  for (const response of await Promise.all(pending)) assert.doesNotMatch(await response.text(), /data-auth-free/);
+  let resolveJoined;
+  const joined = new Promise(resolve => { resolveJoined = resolve; });
+  const active = gate.api.freshRoleLookups;
+  const originalGet = active.get;
+  active.get = function (key) {
+    const running = originalGet.call(this, key);
+    if (running !== undefined) resolveJoined();
+    return running;
+  };
+  let responses;
+  try {
+    const pending = Promise.all([gate.worker.fetch(request.clone(), env), gate.worker.fetch(request.clone(), env)]);
+    // Observe the second authorization joining the first provider request,
+    // including asynchronous session decryption and token digest completion.
+    await joined;
+    assert.equal(lookups, 1);
+    release();
+    responses = await pending;
+  } finally {
+    release();
+    active.get = originalGet;
+  }
+  assert.equal(lookups, 1);
+  for (const response of responses) assert.doesNotMatch(await response.text(), /data-auth-free/);
   roles = [];
   const revoked = await gate.worker.fetch(request.clone(), env); assert.match(await revoked.text(), /data-auth-free/); assert.equal(lookups, 2);
 });

@@ -10,7 +10,7 @@ function harness() {
    if(provider.workerdRedirectGuard&&init.redirect==='error')throw new TypeError('Unsupported redirect mode: error');
    if(provider.error)throw provider.error;
    if(provider.response)return provider.response();
-   if(provider.http===200)return Response.json({roles:provider.roles});
+   if(provider.http===200)return Response.json({roles:provider.roles,...provider.successBody},{headers:provider.headers});
    return Response.json({retry_after:provider.retry,untrusted_secret:'must-not-be-stored-or-logged'},{status:provider.http,headers:{'x-ratelimit-scope':provider.scope,...(provider.retryHeader?{'retry-after':provider.retryHeader}:{})}});
  };
  const mod=modules({clock,fetchMock}),authority=mod.load('./cloud-role-authority');
@@ -42,6 +42,66 @@ test('verified role is held at most 90 seconds; removed role closes access at it
  h.provider.roles=[];h.clock.now=NOW+89999;assert.equal((await h.check()).status,'paid');assert.equal(h.requests.length,1);
  h.clock.now=NOW+90000;const removed=await h.check();assert.equal(removed.status,'free');assert.equal(h.requests.length,2);
  assert.equal((await h.check()).status,'free');assert.equal(h.requests.length,2);
+});
+
+test('an exhausted successful quota preserves only the original 90 second decision, then waits through restart and token rotation',async()=>{
+ const h=harness(),deadline=NOW+3600000;
+ h.provider.headers={'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'3600'};
+ h.provider.successBody={untrusted_secret:'must-not-be-stored-or-logged',user:{id:'private-provider-user'},access_token:'private-provider-token'};
+ const initial=await h.check();assert.equal(initial.status,'paid');assert.equal(initial.checkedAt,NOW);assert.equal(initial.validUntil,NOW+90000);
+ const stored=h.env.CLOUD_ROLE_AUTHORITY.records,values=[...stored.values()][0];
+ assert.equal(values.get('quotaRetryAt'),deadline);assert.equal(typeof values.get('quotaRetryAt'),'number');assert.equal(values.has('failure'),false);
+ const persisted=JSON.stringify([...stored.values()].map(v=>[...v.entries()]));
+ assert.doesNotMatch(persisted,/synthetic-access|rotated-access|must-not-be|allowed|owner|private-provider|access_token|user/);
+ h.provider.roles=[];h.clock.now=NOW+89999;
+ const withinLifetime=await h.check();assert.equal(withinLifetime.status,'paid');assert.equal(withinLifetime.validUntil,NOW+90000);assert.equal(h.requests.length,1);
+ h.clock.now=NOW+90000;
+ const waiting=await h.check();assert.equal(waiting.status,'unavailable');assert.equal(waiting.reason,'discord_role_rate_limit_wait');assert.equal(waiting.source,'quota_wait');
+ assert.equal(waiting.retryAfterSeconds,3510);assert.equal(waiting.validUntil,undefined);assert.equal(h.requests.length,1);
+ h.env.CLOUD_ROLE_AUTHORITY=namespace(h.authority.CloudRoleAuthority,h.env,stored);
+ h.clock.now=NOW+120000;
+ const restarted=await h.check('owner','synthetic-rotated-access');assert.equal(restarted.status,'unavailable');assert.equal(restarted.reason,'discord_role_rate_limit_wait');
+ assert.equal(restarted.source,'quota_wait');assert.equal(restarted.retryAfterSeconds,3480);assert.equal(values.get('quotaRetryAt'),deadline);assert.equal(h.requests.length,1);
+ h.clock.now=deadline-1;
+ const almostReset=await h.check();assert.equal(almostReset.status,'unavailable');assert.equal(almostReset.retryAfterSeconds,1);assert.equal(h.requests.length,1);
+ assert.equal(values.get('quotaRetryAt'),deadline);
+ h.clock.now=deadline;h.provider.headers={'x-ratelimit-remaining':'3','x-ratelimit-reset-after':'60'};
+ const revoked=await h.check('owner','synthetic-rotated-access');assert.equal(revoked.status,'free');assert.equal(revoked.source,'upstream');
+ assert.equal(revoked.checkedAt,deadline);assert.equal(revoked.validUntil,deadline+90000);assert.equal(h.requests.length,2);assert.equal(values.has('quotaRetryAt'),false);
+});
+
+test('slow successful quota reset is measured from response completion without extending verified lifetime',async()=>{
+ const h=harness();h.provider.elapsed=10000;h.provider.headers={'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'3600'};
+ const initial=await h.check();assert.equal(initial.checkedAt,NOW);assert.equal(initial.validUntil,NOW+90000);
+ const values=[...h.env.CLOUD_ROLE_AUTHORITY.records.values()][0];assert.equal(values.get('quotaRetryAt'),NOW+10000+3600000);
+ h.clock.now=NOW+90000;
+ const waiting=await h.check();assert.equal(waiting.status,'unavailable');assert.equal(waiting.reason,'discord_role_rate_limit_wait');
+ assert.equal(waiting.retryAfterSeconds,3520);assert.equal(h.requests.length,1);
+});
+
+for(const headers of [
+ {},
+ {'x-ratelimit-reset-after':'3600'},
+ {'x-ratelimit-remaining':'','x-ratelimit-reset-after':'3600'},
+ {'x-ratelimit-remaining':' ','x-ratelimit-reset-after':'3600'},
+ {'x-ratelimit-remaining':'invalid','x-ratelimit-reset-after':'3600'},
+ {'x-ratelimit-remaining':'-1','x-ratelimit-reset-after':'3600'},
+ {'x-ratelimit-remaining':'1','x-ratelimit-reset-after':'3600'},
+ {'x-ratelimit-remaining':'0'},
+ {'x-ratelimit-remaining':'0','x-ratelimit-reset-after':''},
+ {'x-ratelimit-remaining':'0','x-ratelimit-reset-after':' '},
+ {'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'0'},
+ {'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'-1'},
+ {'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'invalid'},
+ {'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'Infinity'},
+ {'x-ratelimit-remaining':'0','x-ratelimit-reset-after':'1e308'},
+])test(`missing, invalid or nonexhausted success quota headers do not create a wait: ${JSON.stringify(headers)}`,async()=>{
+ const h=harness();h.provider.headers=headers;
+ const initial=await h.check();assert.equal(initial.status,'paid');assert.equal(initial.validUntil,NOW+90000);
+ const values=[...h.env.CLOUD_ROLE_AUTHORITY.records.values()][0];assert.equal(values.has('quotaRetryAt'),false);
+ h.provider.roles=[];h.clock.now=NOW+90000;
+ const removed=await h.check();assert.equal(removed.status,'free');assert.equal(removed.source,'upstream');assert.equal(h.requests.length,2);
+ assert.equal(values.has('quotaRetryAt'),false);
 });
 test('provider 429 is unavailable, never free; deadline survives object restart and token rotation without paid grace',async()=>{
  const h=harness();await h.check();h.clock.now+=90000;h.provider.http=429;

@@ -12,6 +12,7 @@ type Failure = { reason: string; retryAt: number; scope?: string; replyKind?: st
 export class CloudRoleAuthority extends DurableObject<CloudEnv> {
   private verified?: Verified;
   private failure?: Failure;
+  private quotaRetryAt?: number;
   private running?: Promise<ReportRoleDecision>;
   private ready: Promise<void>;
   constructor(ctx: DurableObjectState, env: CloudEnv) {
@@ -19,6 +20,7 @@ export class CloudRoleAuthority extends DurableObject<CloudEnv> {
     this.ready = ctx.blockConcurrencyWhile(async () => {
       this.verified = await ctx.storage.get<Verified>("verified");
       this.failure = await ctx.storage.get<Failure>("failure");
+      this.quotaRetryAt = await ctx.storage.get<number>("quotaRetryAt");
     });
   }
   async fetch(request: Request): Promise<Response> {
@@ -36,6 +38,7 @@ export class CloudRoleAuthority extends DurableObject<CloudEnv> {
     }
     if (this.verified && now < this.verified.validUntil) return Response.json({ ...this.verified, source: "verified" });
     if (this.failure && now < this.failure.retryAt) return Response.json(this.unavailable(this.failure, "waiting"));
+    if (this.quotaRetryAt && now < this.quotaRetryAt) return Response.json(this.unavailable({ reason: "discord_role_rate_limit_wait", retryAt: this.quotaRetryAt }, "quota_wait"));
     if (this.running) return Response.json({ ...await this.running, source: "joined" });
     const promise = this.lookup(input.accessToken);
     this.running = promise;
@@ -64,10 +67,25 @@ export class CloudRoleAuthority extends DurableObject<CloudEnv> {
         if (Array.isArray(body?.roles) && body.roles.every(role => typeof role === "string")) {
           const allowed = (this.env.DISCORD_ALLOWED_ROLE_IDS ?? "").split(",").map(value => value.trim()).filter(Boolean);
           const decision: Verified = { status: body.roles.some(role => allowed.includes(role)) ? "paid" : "free", checkedAt, validUntil: checkedAt + ROLE_LIFETIME_MS };
+          // Success can exhaust a provider bucket too. Honor its reset without
+          // extending the independently bounded paid/free verification lifetime.
+          const remainingHeader = response.headers.get("x-ratelimit-remaining");
+          const remaining = remainingHeader === null || !remainingHeader.trim() ? NaN : Number(remainingHeader);
+          const resetAfter = Number(response.headers.get("x-ratelimit-reset-after"));
+          const quotaRetryAt = Date.now() + Math.ceil(resetAfter * 1000);
+          if (remaining === 0 && Number.isFinite(resetAfter) && resetAfter > 0 && Number.isSafeInteger(quotaRetryAt) && quotaRetryAt <= 8640000000000000) {
+            await this.ctx.storage.put("quotaRetryAt", quotaRetryAt);
+            this.quotaRetryAt = quotaRetryAt;
+          } else {
+            await this.ctx.storage.delete("quotaRetryAt");
+            this.quotaRetryAt = undefined;
+          }
           await this.ctx.storage.put("verified", decision);
           await this.ctx.storage.delete("failure");
           this.verified = decision; this.failure = undefined;
-          console.log(JSON.stringify({ operation: "cloud_role_lookup", action: "upstream", observed_at: observedAt, http_status: httpStatus, result: decision.status }));
+          console.log(JSON.stringify({ operation: "cloud_role_lookup", action: "upstream", observed_at: observedAt, http_status: httpStatus, result: decision.status,
+            ...(Number.isFinite(remaining) && remaining >= 0 ? { rate_limit_remaining: remaining } : {}),
+            ...(this.quotaRetryAt ? { retry_at: new Date(this.quotaRetryAt).toISOString() } : {}) }));
           return { ...decision, source: "upstream" };
         }
         failure.reason = "discord_role_response_invalid";

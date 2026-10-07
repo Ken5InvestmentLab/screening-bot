@@ -287,12 +287,25 @@ function guardHarness(script, fetchMock, { recovering = false, freePage = false,
   const documentEvents = new Map();
   const intervals = [];
   const timeouts = [];
+  const timers = new Map();
+  let nextTimerId = 0;
   const navigations = [];
   let reloads = 0;
+  const attributes = new Map([
+    ...(recovering ? [['data-auth-recovery', '']] : []),
+    ...(freePage ? [['data-auth-free', '']] : []),
+    ...(unavailablePage ? [['data-auth-unavailable', '']] : []),
+    ...(validUntil ? [['data-auth-valid-until', String(validUntil)]] : []),
+  ]);
   const document = {
     hidden: false,
-    documentElement: { innerHTML: 'original report', getAttribute: name => name === 'data-auth-valid-until' && validUntil ? String(validUntil) : null,
-      hasAttribute: (name) => (name === 'data-auth-recovery' && recovering) || (name === 'data-auth-free' && freePage) || (name === 'data-auth-unavailable' && unavailablePage) },
+    documentElement: {
+      innerHTML: 'original report',
+      getAttribute: name => attributes.get(name) ?? null,
+      hasAttribute: name => attributes.has(name),
+      setAttribute: (name, value) => attributes.set(name, String(value)),
+      removeAttribute: name => attributes.delete(name),
+    },
     body: { style: { visibility: '' } },
     addEventListener: (name, callback) => documentEvents.set(name, callback),
   };
@@ -303,31 +316,51 @@ function guardHarness(script, fetchMock, { recovering = false, freePage = false,
     },
     addEventListener: (name, callback) => windowEvents.set(name, callback),
     setInterval: (callback) => { intervals.push(callback); return intervals.length; },
-    setTimeout: (callback) => { timeouts.push(callback); return timeouts.length; },
+    setTimeout: (callback, delay = 0) => {
+      const id = ++nextTimerId;
+      const timer = () => {
+        if (!timers.has(id)) return;
+        timers.delete(id);
+        const queued = timeouts.indexOf(timer);
+        if (queued !== -1) timeouts.splice(queued, 1);
+        return callback();
+      };
+      timer.delay = delay;
+      timer.id = id;
+      timers.set(id, timer);
+      timeouts.push(timer);
+      return id;
+    },
+    clearTimeout: id => {
+      const timer = timers.get(id);
+      timers.delete(id);
+      const queued = timeouts.indexOf(timer);
+      if (queued !== -1) timeouts.splice(queued, 1);
+    },
   };
   vm.runInNewContext(script, {
     window, document, fetch: fetchMock, encodeURIComponent, AbortSignal,
     navigator: { locks },
     Date: class extends Date { static now() { return clock ? clock.now : Date.now(); } },
-    setTimeout: window.setTimeout, clearTimeout() {},
+    setTimeout: window.setTimeout, clearTimeout: window.clearTimeout,
   }, { filename: 'access-guard.js' });
   return { windowEvents, documentEvents, intervals, timeouts, navigations, document, reloads: () => reloads };
 }
 
-test('Cloud confirmed deadline hides the full document while rechecking, then accepts only a new finite deadline',async()=>{
+test('Cloud open document keeps the scoring-report behavior while a periodic role check is pending',async()=>{
  const clock={now:Date.now()},gate=createGate(()=>{throw Error('no network');});let resolve;let requests=0;
  const env={...gate.env,REPORT_PUBLIC_FREE:'true',REPORT_REQUIRE_FRESH_ROLE:'true',REPORT_ROLE_LOOKUP:async()=>({status:'paid'})};
  const guard=guardHarness(gate.api.accessGuardScript(env),()=>{requests++;return new Promise(r=>resolve=r);},{clock,validUntil:clock.now+90000});
  await guard.windowEvents.get('pageshow')({persisted:false});assert.equal(requests,0);
- clock.now+=90000;const check=guard.timeouts[0]();await Promise.resolve();assert.equal(guard.document.body.style.visibility,'hidden');
- resolve(Response.json({ok:true,valid_until:clock.now+90000}));await check;
+ clock.now+=120000;const check=guard.intervals[0]();await Promise.resolve();assert.equal(guard.document.body.style.visibility,'');
+ resolve(Response.json({ok:true}));await check;
  assert.equal(guard.document.body.style.visibility,'');assert.equal(guard.reloads(),0);assert.equal(requests,1);
 });
-for(const status of [403,503])test(`Cloud deadline never keeps stale paid content visible after ${status}`,async()=>{
+for(const status of [403,503])test(`Cloud open document distinguishes role revocation from transient ${status} after a shared decision expires`,async()=>{
  const clock={now:Date.now()},gate=createGate(()=>{throw Error('no network');});
  const env={...gate.env,REPORT_PUBLIC_FREE:'true',REPORT_REQUIRE_FRESH_ROLE:'true',REPORT_ROLE_LOOKUP:async()=>({status:'paid'})};
  const guard=guardHarness(gate.api.accessGuardScript(env),async()=>Response.json({ok:false},{status,headers:{'retry-after':'86400'}}),{clock,validUntil:clock.now+90000});
- clock.now+=90000;await guard.timeouts[0]();assert.equal(guard.document.body.style.visibility,'hidden');assert.equal(guard.reloads(),1);
+ clock.now+=90000;await guard.intervals[0]();assert.equal(guard.document.body.style.visibility,'');assert.equal(guard.reloads(),status===403?1:0);
 });
 
 async function flushGuardTimers(guard) {
@@ -337,6 +370,153 @@ async function flushGuardTimers(guard) {
   }
 }
 
+test('hidden Cloud tabs stop periodic, online and retry requests until displayed again', async () => {
+  const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  const clock = { now: 1000 }; let calls = 0;
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => {
+    calls += 1;
+    return calls === 1 ? new Response(null, { status: 503, headers: { 'retry-after': '3' } }) : new Response(null, { status: 200 });
+  }, { clock });
+  await guard.windowEvents.get('pageshow')(); assert.equal(calls, 1);
+  guard.document.hidden = true; clock.now += 3000;
+  await guard.timeouts.shift()(); await guard.intervals[0](); await guard.windowEvents.get('online')();
+  guard.documentEvents.get('visibilitychange')(); await new Promise(setImmediate);
+  assert.equal(calls, 1); assert.equal(guard.reloads(), 0);
+  guard.document.hidden = false;
+  guard.documentEvents.get('visibilitychange')(); await new Promise(setImmediate);
+  assert.equal(calls, 2); assert.equal(guard.reloads(), 0);
+});
+
+test('a Cloud tab hidden while queued for the refresh lock makes no request until shown again', async () => {
+  const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  let release; let calls = 0;
+  const wait = new Promise(resolve => { release = resolve; });
+  const locks = { request: async (_name, callback) => { await wait; return callback(); } };
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => {
+    calls += 1; return new Response(null, { status: 200 });
+  }, { locks });
+  const queued = guard.windowEvents.get('pageshow')();
+  guard.document.hidden = true; release(); await queued;
+  assert.equal(calls, 0);
+  guard.document.hidden = false; await guard.intervals[0]();
+  assert.equal(calls, 1); assert.equal(guard.reloads(), 0);
+});
+
+async function fireGuardTimer(guard, clock, delay) {
+  const timer = guard.timeouts.find(candidate => candidate.delay === delay);
+  assert.ok(timer, `Expected a ${delay}ms recovery timer.`);
+  clock.now += delay;
+  await timer();
+  await new Promise(setImmediate);
+}
+
+for (const failure of ['HTTP 503', 'network exception']) test(`Cloud ${failure} keeps the open report and retries automatically without a reload`, async () => {
+  const clock = { now: Date.now() };
+  const gate = createGate(() => { throw new Error('No Worker provider request.'); });
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true', REPORT_ROLE_LOOKUP: async () => ({ status: 'paid' }) };
+  let requests = 0;
+  const guard = guardHarness(gate.api.accessGuardScript(env), async () => {
+    requests += 1;
+    if (requests === 1) {
+      if (failure === 'network exception') throw new Error('Synthetic offline connection');
+      return new Response(null, { status: 503 });
+    }
+    return Response.json({ ok: true });
+  }, { clock, validUntil: clock.now + 90000 });
+  await guard.windowEvents.get('pageshow')({ persisted: true });
+  assert.equal(requests, 1);
+  assert.equal(guard.reloads(), 0);
+  assert.equal(guard.document.body.style.visibility, '');
+  assert.equal(guard.document.documentElement.innerHTML, 'original report');
+  await guard.windowEvents.get('online')();
+  await guard.documentEvents.get('visibilitychange')();
+  await guard.intervals[0]();
+  assert.equal(requests, 1, 'All event sources must respect the recovery deadline.');
+  await fireGuardTimer(guard, clock, 2000);
+  assert.equal(requests, 2);
+  assert.equal(guard.reloads(), 0);
+  assert.equal(guard.document.body.style.visibility, '');
+  assert.equal(guard.document.documentElement.innerHTML, 'original report');
+  assert.equal(guard.timeouts.length, 0);
+});
+
+for (const page of ['free', 'recovery']) test(`Cloud ${page} page retries a transport failure and reloads once after paid confirmation`, async () => {
+  const clock = { now: Date.now() };
+  const gate = createGate(() => { throw new Error('No Worker provider request.'); });
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_LOGIN_REQUIRED: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true', REPORT_ROLE_LOOKUP: async () => ({ status: 'paid' }) };
+  let requests = 0;
+  const guard = guardHarness(gate.api.accessGuardScript(env), async () => {
+    requests += 1;
+    if (requests === 1) throw new Error('Synthetic offline connection');
+    return Response.json({ ok: true, valid_until: clock.now + 90000 });
+  }, { clock, freePage: page === 'free', unavailablePage: page === 'free', recovering: page === 'recovery' });
+  await guard.windowEvents.get('pageshow')();
+  assert.equal(guard.reloads(), 0);
+  await fireGuardTimer(guard, clock, 2000);
+  assert.equal(guard.reloads(), 1);
+  assert.equal(requests, 2);
+  await guard.windowEvents.get('online')();
+  await guard.documentEvents.get('visibilitychange')();
+  await guard.intervals[0]();
+  assert.equal(guard.reloads(), 1);
+  assert.equal(requests, 2);
+  assert.deepEqual(guard.navigations, []);
+});
+
+for (const failure of ['no retry header', 'invalid retry header', 'network exception']) test(`Cloud ${failure} uses bounded exponential recovery delays without event storms`, async () => {
+  const clock = { now: Date.now() };
+  const gate = createGate(() => { throw new Error('No Worker provider request.'); });
+  let requests = 0;
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => {
+    requests += 1;
+    if (failure === 'network exception') throw new Error('Synthetic offline connection');
+    return new Response(null, { status: 503, headers: failure === 'invalid retry header' ? { 'retry-after': 'invalid' } : {} });
+  }, { clock, freePage: true, unavailablePage: true });
+  await guard.windowEvents.get('pageshow')();
+  let expectedRequests = 1;
+  for (const delay of [2000, 4000, 8000, 16000, 32000, 60000, 60000]) {
+    await guard.windowEvents.get('online')();
+    await guard.documentEvents.get('visibilitychange')();
+    await guard.intervals[0]();
+    assert.equal(requests, expectedRequests);
+    await fireGuardTimer(guard, clock, delay);
+    assert.equal(requests, ++expectedRequests);
+    assert.equal(guard.reloads(), 0);
+  }
+  assert.deepEqual(guard.navigations, []);
+});
+
+test('Cloud Retry-After stays absolute across the shared decision deadline and network events', async () => {
+  const clock = { now: Date.now() };
+  const originalDeadline = clock.now + 90000;
+  const gate = createGate(() => { throw new Error('No Worker provider request.'); });
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true', REPORT_ROLE_LOOKUP: async () => ({ status: 'paid' }) };
+  let requests = 0;
+  const guard = guardHarness(gate.api.accessGuardScript(env), async () => {
+    requests += 1;
+    return requests === 1 ? new Response(null, { status: 503, headers: { 'retry-after': '3600' } })
+      : Response.json({ ok: true, valid_until: clock.now + 90000 });
+  }, { clock, validUntil: originalDeadline });
+  await guard.windowEvents.get('pageshow')({ persisted: true });
+  assert.equal(guard.reloads(), 0);
+  assert.equal(guard.document.body.style.visibility, '');
+  assert.equal(guard.timeouts.some(timer => timer.delay === 90000), false);
+  clock.now = originalDeadline;
+  await guard.windowEvents.get('online')();
+  await guard.documentEvents.get('visibilitychange')();
+  await guard.intervals[0]();
+  assert.equal(requests, 1);
+  assert.equal(guard.document.body.style.visibility, '');
+  assert.equal(guard.document.documentElement.innerHTML, 'original report');
+  clock.now = originalDeadline - 90000 + 3600000;
+  const recoveryTimer = guard.timeouts.find(timer => timer.delay === 3600000);
+  assert.ok(recoveryTimer);
+  await recoveryTimer();
+  assert.equal(requests, 2);
+  assert.equal(guard.document.body.style.visibility, '');
+  assert.equal(guard.reloads(), 0);
+});
+
 for (const status of [401, 403, 503]) test(`public free guard stays masked without reload/login loop after ${status}`, async () => {
   const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
   let requests = 0;
@@ -345,15 +525,17 @@ for (const status of [401, 403, 503]) test(`public free guard stays masked witho
   }, { freePage: true });
   await guard.windowEvents.get('pageshow')();
   assert.equal(requests, 1); assert.equal(guard.reloads(), 0); assert.deepEqual(guard.navigations, []);
-  await guard.intervals[0](); assert.equal(requests, 2); assert.equal(guard.reloads(), 0);
+  await guard.intervals[0](); assert.equal(requests, status === 503 ? 1 : 2); assert.equal(guard.reloads(), 0);
 });
 
 test('public free guard promotes only after a successful serialized role check', async () => {
   const gate = createGate(() => { throw new Error('No provider request in guard fixture.'); });
+  const clock = { now: Date.now() };
   let status = 503;
-  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => new Response(null, { status }), { freePage: true });
+  const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => new Response(null, { status }), { freePage: true, clock });
   await guard.windowEvents.get('pageshow')(); assert.equal(guard.reloads(), 0);
   status = 200;
+  clock.now += 2000;
   guard.documentEvents.get('visibilitychange')(); await flushGuardTimers(guard); assert.equal(guard.reloads(), 1);
   await guard.intervals[0](); assert.equal(guard.reloads(), 1); assert.deepEqual(guard.navigations, []);
 });
@@ -419,13 +601,20 @@ test('fresh Cloud full document skips duplicate initial lookup but checks restor
   await guard.intervals[0](); assert.equal(requests, 2);
 });
 
-test('Cloud free document with expired token recovers paid access via auth/check without leaking full assets', async () => {
+for (const tokenOffset of [-60, 299]) test(`Cloud normal token refresh (${tokenOffset}s to expiry) waits without fetching assets or presenting qualification failure`, async () => {
   const mock = discordMock(); const gate = createGate(mock.fetchMock);
-  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true', ASSETS: { fetch: async input => new Response(`<html><body>${String(input).includes('_free.html') ? 'MASKED-FREE' : 'PRIVATE-PAID'}</body></html>`) } };
-  const before = await gate.worker.fetch(await requestFor(gate, '/'), env);
-  const html = await before.text(); assert.match(html, /MASKED-FREE/); assert.match(html, /data-auth-free/); assert.match(html, /auth\/guard/); assert.doesNotMatch(html, /PRIVATE-PAID/);
+  let assets = 0;
+  const env = { ...gate.env, REPORT_PUBLIC_FREE: 'true', REPORT_REQUIRE_FRESH_ROLE: 'true', ASSETS: { fetch: async input => {
+    assets += 1;
+    return new Response(`<html><body>${String(input).includes('_free.html') ? 'MASKED-FREE' : 'PRIVATE-PAID'}</body></html>`);
+  } } };
+  const payload = sessionPayload({ tokenExp: Math.floor(Date.now() / 1000) + tokenOffset });
+  const before = await gate.worker.fetch(await requestFor(gate, '/', payload), env);
+  const html = await before.text(); assert.match(html, /data-auth-recovery/); assert.match(html, /auth\/guard/);
+  assert.doesNotMatch(html, /MASKED-FREE|PRIVATE-PAID|data-auth-unavailable|会員資格を確認できませんでした/);
+  assert.equal(assets, 0);
   assert.equal(mock.calls.refresh, 0); assert.equal(mock.calls.member, 0);
-  const check = await gate.worker.fetch(await requestFor(gate), env); assert.equal(check.status, 200);
+  const check = await gate.worker.fetch(await requestFor(gate, '/auth/check', payload), env); assert.equal(check.status, 200);
   const after = await gate.worker.fetch(new Request('https://gate.invalid/', { headers: { cookie: check.headers.get('set-cookie').split(';', 1)[0] } }), env);
   assert.match(await after.text(), /PRIVATE-PAID/); assert.equal(mock.calls.refresh, 1); assert.equal(mock.calls.member, 2);
 });
@@ -608,20 +797,21 @@ test('open-page guard removes premium content when a real role denial is returne
   assert.equal(guard.reloads(), 0);
 });
 
-for (const status of [403, 503]) test(`Cloud guard reloads into public free page after ${status}`, async () => {
+for (const status of [403, 503]) test(`Cloud guard distinguishes confirmed denial from temporary ${status}`, async () => {
   const gate = createGate(() => { throw new Error('No Worker request in guard fixture.'); });
   const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => new Response(null, { status }));
   await guard.windowEvents.get('pageshow')();
-  assert.equal(guard.reloads(), 1);
+  assert.equal(guard.reloads(), status === 403 ? 1 : 0);
   assert.deepEqual(guard.navigations, []);
   assert.equal(guard.document.documentElement.innerHTML, 'original report');
 });
 
-test('Cloud guard reloads into public free page when role check transport fails', async () => {
+test('Cloud guard schedules recovery without reloading when role check transport fails', async () => {
   const gate = createGate(() => { throw new Error('No Worker request in guard fixture.'); });
   const guard = guardHarness(gate.api.accessGuardScript({ ...gate.env, REPORT_PUBLIC_FREE: 'true' }), async () => { throw new Error('fixture-network-failure'); });
   await guard.windowEvents.get('pageshow')();
-  assert.equal(guard.reloads(), 1);
+  assert.equal(guard.reloads(), 0);
+  assert.equal(guard.timeouts.some(timer => timer.delay === 2000), true);
   assert.deepEqual(guard.navigations, []);
 });
 

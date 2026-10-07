@@ -33,12 +33,14 @@ function accessGuardScript(env: WorkerEnv): string {
   let finished = false;
   let recoveryDelayMs = 2000;
   let retryAt = 0;
-  let validUntil = Number(document.documentElement.getAttribute?.('data-auth-valid-until')) || 0;
-  let expiryTimer;
-  const armExpiry = () => {
-    if (!validUntil) return;
-    window.clearTimeout?.(expiryTimer);
-    expiryTimer = window.setTimeout(check, Math.max(0, validUntil - Date.now()));
+  let retryTimer;
+  const retry = (seconds) => {
+    const providerWait = Number.isFinite(seconds) && seconds > 0;
+    const delay = providerWait ? Math.min(seconds * 1000, 2147483647) : recoveryDelayMs;
+    retryAt = Date.now() + delay;
+    window.clearTimeout?.(retryTimer);
+    retryTimer = window.setTimeout(check, delay);
+    if (!providerWait) recoveryDelayMs = Math.min(recoveryDelayMs * 2, 60000);
   };
   const deny = () => {
     ${env.REPORT_PUBLIC_FREE === "true" ? "if (!freePage) { finished = true; window.location.reload(); } return;" : ""}
@@ -46,27 +48,21 @@ function accessGuardScript(env: WorkerEnv): string {
   };
   const checkUnderLock = async () => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
+      // A tab may become hidden while waiting for another tab's refresh lock.
+      if (document.hidden || finished || Date.now() < retryAt) return;
       const response = await fetch('/auth/check', {
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { accept: 'application/json' },
         signal: AbortSignal.timeout(25000),
       });
-      ${env.REPORT_ROLE_LOOKUP ? `if (response.ok && !freePage) {
-        const result = await response.json();
-        if (!Number.isFinite(result.valid_until) || result.valid_until <= Date.now()) { deny(); return; }
-        validUntil = result.valid_until;
-        if (document.body) document.body.style.visibility = '';
-        armExpiry();
-      }` : ""}
-      ${env.REPORT_PUBLIC_FREE === "true" ? `if (response.status === 503) {
-        const seconds = Number(response.headers.get('retry-after'));
-        if (Number.isFinite(seconds) && seconds > 0) {
-          const delay = Math.min(seconds * 1000, 2147483647);
-          retryAt = Date.now() + delay;
-          window.setTimeout(check, delay);
-        }
-      }` : ""}
+      if (response.status === 503) {
+        retry(Number(response.headers.get('retry-after')));
+        return;
+      }
+      recoveryDelayMs = 2000;
+      retryAt = 0;
+      window.clearTimeout?.(retryTimer);
       ${env.REPORT_PUBLIC_FREE === "true" ? `if (freePage${env.REPORT_LOGIN_REQUIRED === "true" ? " && response.status !== 401" : ""}) {
         // Refresh the existing session and recover an unavailable page once a
         // free result is confirmed. Stable free pages and failures stay put.
@@ -96,17 +92,11 @@ function accessGuardScript(env: WorkerEnv): string {
       if (response.status === 403) {
         deny();
       }
-      ${env.REPORT_PUBLIC_FREE === "true" ? "if (!recovering && response.status === 503) { deny(); return; }" : ""}
-      if (recovering && response.status === 503) {
-        window.setTimeout(check, recoveryDelayMs);
-        recoveryDelayMs = Math.min(recoveryDelayMs * 2, 60000);
-      }
       return;
     }
   };
   const check = async () => {
-    if (validUntil && Date.now() >= validUntil && !freePage && document.body) document.body.style.visibility = 'hidden';
-    if (checking || finished || Date.now() < retryAt) return;
+    if (document.hidden || checking || finished || Date.now() < retryAt) return;
     checking = true;
     try {
       // Web Locks serialize refreshes across tabs and authentication wait pages.
@@ -116,8 +106,9 @@ function accessGuardScript(env: WorkerEnv): string {
         await checkUnderLock();
       }
     } catch {
-      ${env.REPORT_PUBLIC_FREE === "true" ? "if (!recovering) { deny(); return; }" : ""}
-      // Keep the current page during transient network failures; the next check will retry.
+      // Match the established report behavior: only a confirmed denial removes
+      // an already displayed report. New documents/data remain server-gated.
+      retry();
     } finally {
       checking = false;
     }
@@ -132,8 +123,8 @@ function accessGuardScript(env: WorkerEnv): string {
       check();
     }
   });
+  window.addEventListener('online', check);
   window.setInterval(check, checkIntervalMs);
-  armExpiry();
 })();`;
 }
 
@@ -1030,7 +1021,7 @@ function authenticationWaitResponse(status = 200, init: HeadersInit = {}): Respo
 
 async function serveReport(request: Request, env: WorkerEnv, assetPath = reportAssetPath(env)): Promise<Response> {
   const access = await reportAccess(request, env);
-  if (access.refreshRequired && env.REPORT_PUBLIC_FREE !== "true") {
+  if (access.refreshRequired) {
     // Document navigation must use the same browser lock as open report tabs.
     // This shell contains no report data; /auth/check refreshes before reload.
     return authenticationWaitResponse();

@@ -77,6 +77,7 @@ class SplitAwareModelTests(unittest.TestCase):
                     refresh_live=refresh_live, refresh_universe=refresh_universe, period="5y",
                 )
                 with patch("weak_early_beta.cli._load_or_bootstrap", return_value=pd.DataFrame()), \
+                     patch("weak_early_beta.restrictions.fetch_jpx_restricted_symbols", return_value=[]), \
                      patch.object(model, "read_daily", wraps=original_read) as reads, \
                      patch.object(model.base, "jpx_universe", return_value=universe), \
                      patch("weak_early_beta.corporate_actions.fetch_daily", return_value=self.daily()), \
@@ -104,6 +105,7 @@ class SplitAwareModelTests(unittest.TestCase):
                                  daily_corpus=str(path), refresh_live=True, period="5y")
                 failure = CorporateActionError("blocked source") if failed_stage == "live-acquisition" else OSError("disk full")
                 with patch("weak_early_beta.cli._load_or_bootstrap", return_value=pd.DataFrame()), \
+                     patch("weak_early_beta.restrictions.fetch_jpx_restricted_symbols", return_value=[]), \
                      patch.object(model.base, "jpx_universe", return_value=pd.DataFrame({"code": ["9999"], "name": ["Example"]})), \
                      patch("weak_early_beta.corporate_actions.fetch_daily", return_value=self.daily(),
                            side_effect=failure if failed_stage == "live-acquisition" else None) as fetch, \
@@ -122,6 +124,118 @@ class SplitAwareModelTests(unittest.TestCase):
                            if line.startswith('{"identity": "CLOUD_DAILY_PHASE_V1"')]
                 self.assertEqual(records[-1]["stage"], failed_stage)
                 self.assertEqual(records[-1]["event"], "failed")
+
+    def test_delisting_lookup_failure_stops_before_vendor_or_cache_changes(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "daily.csv"
+            _write_daily_cache(self.daily(), path)
+            before = path.read_bytes()
+            args = Namespace(refresh_live=True, as_of="2026-10-09",
+                             ledger=str(Path(temporary) / "ledger.csv"), daily_corpus=str(path))
+            with patch("weak_early_beta.restrictions.fetch_jpx_restricted_symbols", side_effect=RuntimeError("JPX unavailable")), \
+                 patch("weak_early_beta.corporate_actions.fetch_daily") as vendor, \
+                 patch("weak_early_beta.cli._write_daily_cache") as write, \
+                 patch.object(model, "refresh_forward_endpoints") as endpoints, redirect_stderr(StringIO()):
+                with self.assertRaisesRegex(RuntimeError, "JPX unavailable"):
+                    command_daily(args)
+                vendor.assert_not_called()
+                write.assert_not_called()
+                endpoints.assert_not_called()
+            self.assertEqual(path.read_bytes(), before)
+
+    def test_delisted_ticker_is_not_fetched_and_verified_history_is_retained(self):
+        class InputReached(Exception):
+            pass
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "daily.csv"
+            old = self.daily().copy()
+            old["symbol"] = "7183"
+            _write_daily_cache(old, path)
+            prior = model.read_daily(path)
+            path.with_suffix(".source-quality.json").write_text(json.dumps({
+                "identity": "CLOUD_SOURCE_QUALITY_V1", "daily_sha256": model.sha256(path),
+            }), encoding="utf-8")
+            universe = pd.DataFrame({"code": ["7183", "9999"], "name": ["Delisted", "Active"]})
+            restrictions = [{"code": "7183", "designation_date": "2026-09-10", "delisting_date": "2026-10-09",
+                             "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"}]
+            def capture(ledger, raw, source_sha256=""):
+                pd.testing.assert_frame_equal(raw.loc[raw.symbol.eq("7183")].reset_index(drop=True), prior)
+                self.assertIn("9999", set(raw.symbol))
+                raise InputReached
+            args = Namespace(refresh_live=True, as_of="2026-10-09", period="5y",
+                             ledger=str(Path(temporary) / "ledger.csv"), daily_corpus=str(path))
+            with patch("weak_early_beta.restrictions.fetch_jpx_restricted_symbols", return_value=restrictions), \
+                 patch("weak_early_beta.cli._load_or_bootstrap", return_value=pd.DataFrame()), \
+                 patch.object(model.base, "jpx_universe", return_value=universe), \
+                 patch("weak_early_beta.corporate_actions.fetch_daily", return_value=self.daily()) as vendor, \
+                 patch.object(model, "refresh_forward_endpoints", side_effect=capture), redirect_stderr(StringIO()):
+                with self.assertRaises(InputReached):
+                    command_daily(args)
+                self.assertEqual(vendor.call_args.args[0]["code"].tolist(), ["9999"])
+            quality = json.loads(path.with_suffix(".source-quality.json").read_text(encoding="utf-8"))
+            self.assertEqual(quality["acquisition_exclusions"]["excluded_universe_symbols"], ["7183"])
+
+    def test_delisted_history_with_wrong_quality_hash_is_not_reused(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / "daily.csv"
+            old = self.daily().copy()
+            old["symbol"] = "7183"
+            _write_daily_cache(old, path)
+            before = path.read_bytes()
+            path.with_suffix(".source-quality.json").write_text(json.dumps({
+                "identity": "CLOUD_SOURCE_QUALITY_V1", "daily_sha256": "0" * 64,
+            }), encoding="utf-8")
+            args = Namespace(refresh_live=True, as_of="2026-10-09", period="5y",
+                             ledger=str(Path(temporary) / "ledger.csv"), daily_corpus=str(path))
+            with patch("weak_early_beta.restrictions.fetch_jpx_restricted_symbols", return_value=[{
+                     "code": "7183", "designation_date": "2026-10-09", "delisting_date": "2026-10-09",
+                     "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"}]), \
+                 patch("weak_early_beta.cli._load_or_bootstrap", return_value=pd.DataFrame()), \
+                 patch.object(model.base, "jpx_universe", return_value=pd.DataFrame({"code": ["7183", "9999"]})), \
+                 patch("weak_early_beta.corporate_actions.fetch_daily") as vendor, redirect_stderr(StringIO()):
+                with self.assertRaisesRegex(RuntimeError, "matching source-quality receipt"):
+                    command_daily(args)
+                vendor.assert_not_called()
+            self.assertEqual(path.read_bytes(), before)
+
+    def test_cached_predictions_drop_delisted_rows_without_changing_training(self):
+        eligible = pd.DataFrame({"symbol": ["7183", "7183", "9999"],
+                                 "date": pd.to_datetime(["2026-10-08", "2026-10-09", "2026-10-09"])})
+        labeled = eligible.assign(future_rank=[.1, .7, 1], y_top025=[0, 0, 1])
+        expected_training = labeled.copy(deep=True)
+        delistings = [{"code": "7183", "delisting_date": "2026-10-09"}]
+        def tail_for_month(prediction, training, month):
+            pd.testing.assert_frame_equal(training, expected_training)
+            self.assertEqual(prediction.loc[prediction.symbol.eq("7183"), "date"].tolist(), [pd.Timestamp("2026-10-08")])
+            return prediction.copy()
+        for mode in ("latest", "range"):
+            with self.subTest(mode=mode), patch.object(model, "prepare_live", return_value=(eligible.copy(), labeled.copy())), \
+                 patch.object(model, "causal_tail_for_month", side_effect=tail_for_month), \
+                 patch.object(model.shadow, "select_candidates", side_effect=lambda frame: frame.copy()):
+                if mode == "latest":
+                    tail, selected = model.score_latest(pd.DataFrame(), "2026-10-09", delistings=delistings)
+                    self.assertEqual(selected.symbol.tolist(), ["9999"])
+                else:
+                    tail, selected = model.score_range(pd.DataFrame(), "2026-10-08", "2026-10-09", delistings=delistings)
+                    self.assertEqual(selected.symbol.tolist(), ["7183", "9999"])
+        pd.testing.assert_frame_equal(labeled, expected_training)
+
+    def test_all_delisted_predictions_and_empty_months_are_zero_candidates(self):
+        eligible = pd.DataFrame({"symbol": ["7183"], "date": [pd.Timestamp("2026-10-09")]})
+        restrictions = [{"code": "7183", "delisting_date": "2026-10-09"}]
+        for mode in ("latest", "range"):
+            for blocked in (False, True):
+                with self.subTest(mode=mode, blocked=blocked), \
+                     patch.object(model, "prepare_live", return_value=(eligible.copy(), pd.DataFrame())), \
+                     patch.object(model, "causal_tail_for_month", return_value=pd.DataFrame()) as monthly:
+                    if mode == "latest":
+                        tail, selected = model.score_latest(pd.DataFrame(), "2026-10-09", delistings=restrictions if blocked else [])
+                    else:
+                        tail, selected = model.score_range(pd.DataFrame(), "2026-10-09", "2026-10-09", delistings=restrictions if blocked else [])
+                    self.assertTrue(tail.empty)
+                    self.assertTrue(selected.empty)
+                    if blocked:
+                        monthly.assert_not_called()
 
     def test_forward_trade_spanning_split_uses_original_lot(self):
         raw = self.daily()

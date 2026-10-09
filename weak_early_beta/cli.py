@@ -117,18 +117,33 @@ def command_daily(args: argparse.Namespace) -> None:
     # report/bootstrap operations stay lightweight and deterministic.
     from . import model
     from .notify import notify_pending
-    from .restrictions import fetch_jpx_restricted_symbols, quarantine_restricted_detections, restricted_mask
+    from .restrictions import (
+        DEFAULT_RESTRICTION_SNAPSHOT, exclude_delisted_universe,
+        fetch_jpx_restricted_symbols, preserve_delisted_history,
+        quarantine_restricted_detections, restricted_mask,
+    )
+
+    # Fail closed before any vendor acquisition: a stale monthly JPX universe
+    # can still contain securities delisted since its publication.
+    tradability_date = getattr(args, "as_of", None) or str(pd.Timestamp.now(tz="Asia/Tokyo").date())
+    with daily_phase("jpx-tradability"):
+        restrictions = fetch_jpx_restricted_symbols(
+            tradability_date,
+            Path(getattr(args, "restriction_snapshot", DEFAULT_RESTRICTION_SNAPSHOT)),
+        )
 
     ledger_path = Path(args.ledger)
     ledger = _load_or_bootstrap(ledger_path)
     company_names: dict[str, str] = {}
     daily_path = Path(args.daily_corpus)
     source_revision = {}
+    acquisition_exclusions = {}
     if args.refresh_live:
         from .corporate_actions import fetch_daily
 
         with daily_phase("live-acquisition"):
             universe = model.base.jpx_universe()
+            universe, excluded_universe = exclude_delisted_universe(universe, restrictions, tradability_date)
             # The old cache is evidence for detecting unannounced source rebases;
             # it must not be treated as action-aware input merely because it exists.
             previous = (
@@ -137,8 +152,21 @@ def command_daily(args: argparse.Namespace) -> None:
             )
             if previous is not None:
                 previous.attrs["source_sha256"] = model.sha256(daily_path)
+                delisted_codes = {row["code"] for row in restrictions if row.get("delisting_date")
+                                  and not (row.get("relisting_date") and row["relisting_date"] <= tradability_date)}
+                if previous["symbol"].isin(delisted_codes).any():
+                    quality_path = daily_path.with_suffix(".source-quality.json")
+                    quality = json.loads(quality_path.read_text(encoding="utf-8"))
+                    if (quality.get("identity") != "CLOUD_SOURCE_QUALITY_V1"
+                            or quality.get("daily_sha256") != previous.attrs["source_sha256"]):
+                        raise RuntimeError("delisted history requires a matching source-quality receipt")
             raw = fetch_daily(universe, args.period, previous=previous)
             source_revision = raw.attrs.get("source_revision_receipt", {})
+            raw, acquisition_exclusions = preserve_delisted_history(
+                previous, raw, restrictions, tradability_date,
+                previous_source_sha256=previous.attrs["source_sha256"] if previous is not None else None,
+            )
+            acquisition_exclusions["excluded_universe_symbols"] = sorted(excluded_universe["code"].astype(str).tolist())
             del previous
         with daily_phase("source-cache-write"):
             _write_daily_cache(raw, daily_path)
@@ -162,7 +190,9 @@ def command_daily(args: argparse.Namespace) -> None:
         previous_quality = json.loads(quality_path.read_text(encoding="utf-8"))
         if previous_quality.get("daily_sha256") == source_hash:
             source_revision = previous_quality.get("source_revision", {})
-    _write_receipt(quality_path, {**source_quality, "daily_sha256": source_hash, "source_revision": source_revision})
+            acquisition_exclusions = previous_quality.get("acquisition_exclusions", {})
+    _write_receipt(quality_path, {**source_quality, "daily_sha256": source_hash, "source_revision": source_revision,
+                                "acquisition_exclusions": acquisition_exclusions})
     quality_dates = sorted(source_quality["quarantinedDates"])
     source_quality = {key: value for key, value in source_quality.items() if key not in {"issues", "quarantinedDates"}}
     source_quality.update(
@@ -183,15 +213,10 @@ def command_daily(args: argparse.Namespace) -> None:
         ledger = model.refresh_forward_endpoints(ledger, raw, source_sha256=source_hash)
     with daily_phase("scoring"):
         if args.from_date:
-            tail, selected = model.score_range(raw, args.from_date, args.as_of)
+            tail, selected = model.score_range(raw, args.from_date, args.as_of, delistings=restrictions)
         else:
-            tail, selected = model.score_latest(raw, args.as_of)
+            tail, selected = model.score_latest(raw, args.as_of, delistings=restrictions)
     latest = pd.to_datetime(raw["date"]).max()
-    with daily_phase("jpx-tradability"):
-        restrictions = fetch_jpx_restricted_symbols(
-            args.as_of or latest,
-            Path(args.restriction_snapshot),
-        )
     selected_restriction_mask = restricted_mask(selected, restrictions)
     restricted_selected = selected[selected_restriction_mask].copy()
     selected = selected[~selected_restriction_mask].copy()
@@ -222,6 +247,7 @@ def command_daily(args: argparse.Namespace) -> None:
         "daily_sha256": source_hash,
         "source_quality": source_quality,
         "source_revision": source_revision,
+        "acquisition_exclusions": acquisition_exclusions,
         "latest_session": f"{latest:%Y-%m-%d}",
         "score_from": args.from_date or (args.as_of or f"{latest:%Y-%m-%d}"),
         "score_to": args.as_of or f"{latest:%Y-%m-%d}",

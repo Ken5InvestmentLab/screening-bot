@@ -145,12 +145,34 @@ def causal_tail_for_month(
     return pred[pred["tail_cdf"] >= TAIL_GATE].copy()
 
 
-def score_latest(raw: pd.DataFrame, as_of: str | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _delisting_prediction_gate(eligible: pd.DataFrame, delistings: list[dict] | None) -> pd.DataFrame:
+    """Remove post-delisting predictions while keeping historical training intact."""
+    if not delistings or eligible.empty:
+        return eligible
+    blocked = pd.Series(False, index=eligible.index)
+    symbols = eligible["symbol"].astype(str)
+    present = set(symbols.unique())
+    for row in delistings:
+        if row.get("delisting_date") and str(row["code"]) in present:
+            interval = (symbols.eq(str(row["code"]))
+                        & eligible["date"].ge(pd.Timestamp(row["delisting_date"])))
+            if row.get("relisting_date"):
+                interval &= eligible["date"].lt(pd.Timestamp(row["relisting_date"]))
+            blocked |= interval
+    return eligible.loc[~blocked].copy()
+
+
+def score_latest(raw: pd.DataFrame, as_of: str | None = None, *, delistings: list[dict] | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
     eligible, labeled = prepare_live(raw)
     latest = pd.Timestamp(as_of) if as_of else eligible["date"].max()
     latest = latest.normalize()
+    eligible = _delisting_prediction_gate(eligible, delistings)
+    if eligible.empty:
+        return eligible.copy(), pd.DataFrame()
     month = latest.to_period("M")
     tail = causal_tail_for_month(eligible, labeled, month)
+    if tail.empty:
+        return eligible.iloc[:0].copy(), pd.DataFrame()
     tail_latest = tail[tail["date"].eq(latest)].copy()
     if tail_latest.empty:
         return tail_latest, pd.DataFrame()
@@ -162,6 +184,8 @@ def score_range(
     raw: pd.DataFrame,
     start: str,
     end: str | None = None,
+    *,
+    delistings: list[dict] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Score an inclusive forward date range, fitting each causal month only once."""
     eligible, labeled = prepare_live(raw)
@@ -169,11 +193,16 @@ def score_range(
     end_date = pd.Timestamp(end).normalize() if end else eligible["date"].max().normalize()
     if end_date < start_date:
         raise ValueError(f"end date {end_date:%Y-%m-%d} is before start date {start_date:%Y-%m-%d}")
+    eligible = _delisting_prediction_gate(eligible, delistings)
+    if eligible.empty:
+        return eligible.copy(), pd.DataFrame()
     months = pd.period_range(start_date.to_period("M"), end_date.to_period("M"), freq="M")
     tail_parts = []
     selected_parts = []
     for month in months:
         month_tail = causal_tail_for_month(eligible, labeled, month)
+        if month_tail.empty:
+            continue
         month_tail = month_tail[
             month_tail["date"].between(start_date, end_date, inclusive="both")
         ].copy()

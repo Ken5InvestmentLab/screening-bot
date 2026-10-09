@@ -516,6 +516,883 @@
           "不変claimのalertId 1件のみを対象とし、signalDate・receivedAt・analysisCutoffはclaimの文字列を保持しました。公式IR、IRBANK、TDnet配信相当一覧、選択した各開示本文を確認し、採用資料の公表日時はすべてanalysisCutoff以前です。"
         ]
       }
+    },
+    "weak-early-beta:2026-10-09:338A": {
+      "completedAt": "2026-10-09T11:32:16.752Z",
+      "delivery": "html",
+      "analysisCutoff": "2026-10-09T11:05:55.690Z",
+      "analysisBasis": "analysis_start",
+      "report": {
+        "alertId": "weak-early-beta:2026-10-09:338A",
+        "symbolCode": "338A",
+        "symbolName": "ＺｅｎｍｕＴｅｃｈ",
+        "signalType": "WEAK_EARLY_BETA",
+        "signalDate": "2026-10-09",
+        "receivedAt": "2026-10-09T16:15:00+09:00",
+        "analysisCutoff": "2026-10-09T11:05:55.690Z",
+        "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A338A",
+        "summary": "ZVDの売上とライセンス数は伸長する一方、受注の期ずれと営業・開発投資で上期赤字が拡大。医療AI共同事業は開始済みだが当期影響は会社説明で軽微。潜在株式の最新残高と一部長期案件の精算・商用寄与は未確定として記録。",
+        "materialImpact": "混在/要確認：上期ZVD売上は32.5％増だが営業赤字が拡大し、医療AI共同事業の当期影響は軽微、既存潜在株式の残高は未確定。",
+        "fields": [
+          {
+            "name": "材料インパクト",
+            "value": "混在/要確認：上期ZVD売上は32.5％増だが営業赤字が拡大し、医療AI共同事業の当期影響は軽微、既存潜在株式の残高は未確定。"
+          },
+          {
+            "name": "事業概要",
+            "value": "秘密分散技術ZENMU-AONTでデータを単体では意味を持たない断片に分け、PC・クラウド等へ分散保存するセキュリティ会社。金融・保険・製造業などの法人端末向け『ZENMU Virtual Drive（ZVD）』が主力で、サブスクリプション、買切りライセンス、保守料を組み合わせる。秘密分散SDK『ZENMU Engine』を外部サービスへ組み込むライセンス・ロイヤルティ事業と、産総研との協働による秘密計算データベース『QueryAhead』も展開。医療データ通信や秘匿したままのデータ分析へ応用領域を広げている。"
+          },
+          {
+            "name": "足元材料",
+            "value": "2026-09-01 17:05公表：HAIPとの共同開発特許「データ通信システム」を利用した秘密分散プロキシ事業を同日開始。複数のTLS通信路へデータを分散する技術で、医療AIの安全な通信基盤が対象。ただし当期影響は軽微と会社が説明し、ユースケースの優先順位付けや実証を今後進める段階。\n2026-08-13 16:45公表：Mac向けZVDとクラウド・NAS向け秘密分散ストレージの開発を開始し、両製品とも2027年春頃の提供予定。\n同日15:30公表の上期決算は売上305.63百万円（前年同期比0.3％増）、営業損失99.29百万円（前年同期24.15百万円の損失）。受注の一部が4Qへずれ、人員・外部リソースと外注開発費が先行。通期会社予想の売上1,080百万円・営業利益161百万円は据え置きで、売上残額774百万円を下期で計上する計画への依存が大きい。"
+          },
+          {
+            "name": "ファンダ要点",
+            "value": "2026-08-13 15:30の決算説明資料では、主力ZVD売上257百万円（32.5％増）、6月末ライセンス126,072件（前年同月107,309件）、うちサブスクリプション46,024件。公表解約率4.4％に対し、1,700件の買切り移行を除く実質解約率は0.4％で、単純な顧客離反と契約形態変更を区別する必要がある。一方、QueryAhead売上は29百万円と67％減で、主力の伸長が他製品の減少と費用増に吸収されている。\n2025-06-04 10:00公表の原発表との照合では、2025年6月のHAIP参画は2026年9月1日の共同事業開始へ進展し、医療ネットワークでの秘密分散技術の事業化段階に入った。\n2026-03-23 15:35公表のMOUと8月の事業進捗では、BigObject協業は金融・医療・製造向けの共同データ基盤を目指し、2026～2027年の展開を掲げる開発・市場機会探索段階で、案件別の売上・利益寄与は未確認。\nQueryAhead Hubは2026年4QのPaaS化、2027年のARR型基盤を計画しており、基準日は4Q入り後だが、サービス開始・継続課金売上の実績は未確認。\nMac版ZVDと秘密分散ストレージは2027年春頃の提供予定で、既存Windows顧客への横展開余地はあるが、現時点の売上寄与は未確認。"
+          },
+          {
+            "name": "注意点",
+            "value": "2026-08-13 15:30公表の半期報告書では、営業CF76.73百万円は売上債権301.01百万円の回収が大きく、恒常的な利益創出と同一視できない。補助金収入20.36百万円は営業外収益で、上期の補助金受取額はゼロ。通期の収益改善は4Q受注・検収の期ずれと先行開発費の吸収に左右される。\nHAIP共同事業は9月1日の開始予定日に達しているが、案件別の売上・利益寄与は未確認で、会社が示す当期影響は軽微にとどまる。\n2024-05-02 09:30公表の原発表と最新半期を照合すると、SBIR医療AI事業は当初予定の2025年度末を過ぎたが、最終交付・精算と商用収益の確定を資料から照合できず、補助金採択を継続売上と扱えない。 コンソーシアム全体の補助上限30億円は同社の受注額・売上ではない。\n2026-03-27 15:24公表の有報と最新半期を照合すると、既存ストックオプションと第13回有償新株予約権は残存を示す資料があるが、発行原資料と基準時点の回号別残高を完結照合できず、希薄化リスクの有無・規模を全件では確定できない。 半期の『新株予約権等は該当なし』だけでは残存ゼロとは判断できず、同報告書は潜在株式の存在を明記。過去残高の単純倍増や異なる時点の発行済株式数で希薄化率を算出していない。"
+          },
+          {
+            "name": "開示リンク",
+            "value": "[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf)\n[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf)\n[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf)\n[2026-08-13 半期報告書－第13期(2026/01/01－2026/12/31)(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/u5Ap.pdf)\n[2026-03-27 有価証券報告書－第12期(2025/01/01－2025/12/31)(15:24)](https://pdf.irpocket.com/C338A/LseR/ACI1/cTjP.pdf)\n[2025-06-04 医療AIプラットフォーム技術研究組合（HAIP）に参画(10:00)](https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf)\n[2024-05-02 中小企業イノベーション創出推進事業開始のお知らせ(09:30)](https://zenmutech.com/information/news/20240502/)\n[2026-03-23 台湾のBigObjectと戦略的協業に関するMOUを締結(15:35)](https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf)"
+          },
+          {
+            "name": "Sources",
+            "value": "[ZenmuTech公式IRニュース](https://zenmutech.com/ir/news/)\n[ZenmuTech公式有価証券報告書・半期報告書](https://zenmutech.com/ir/library/securities-report/)\n[ZenmuTech公式プレスリリース一覧](https://zenmutech.com/news_cat/press-release/)\n[Yahoo!ファイナンス・TDnet配信開示一覧](https://finance.yahoo.co.jp/quote/338A.T/disclosure)"
+          }
+        ],
+        "sources": [
+          {
+            "label": "ZenmuTech公式IRニュース",
+            "url": "https://zenmutech.com/ir/news/"
+          },
+          {
+            "label": "ZenmuTech公式有価証券報告書・半期報告書",
+            "url": "https://zenmutech.com/ir/library/securities-report/"
+          },
+          {
+            "label": "ZenmuTech公式プレスリリース一覧",
+            "url": "https://zenmutech.com/news_cat/press-release/"
+          },
+          {
+            "label": "Yahoo!ファイナンス・TDnet配信開示一覧",
+            "url": "https://finance.yahoo.co.jp/quote/338A.T/disclosure"
+          }
+        ],
+        "sourceChecks": [
+          {
+            "role": "official_ir",
+            "checked": true,
+            "url": "https://zenmutech.com/ir/news/",
+            "checkedUrls": [
+              "https://xml.irpocket.com/338A/JS/release-all-all.js",
+              "https://xml.irpocket.com/338A/JS/ir-all-all.js",
+              "https://zenmutech.com/ir/library/securities-report/",
+              "https://zenmutech.com/news_cat/press-release/",
+              "https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/u5Ap.pdf",
+              "https://pdf.irpocket.com/C338A/LseR/ACI1/cTjP.pdf",
+              "https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf",
+              "https://zenmutech.com/information/news/20240502/",
+              "https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf",
+              "https://zenmutech.com/information/news/20260909/",
+              "https://zenmutech.com/information/news/20261007/"
+            ],
+            "result": "公式IRの適時開示・IRライブラリーの実データ、公式プレスリリース履歴を一覧照合。分析基準2026-10-09 20:05:55.690 JSTまで、直近45日（8月25日以降）を含めて確認した。IRの最新事業開示は9月1日17:05のHAIP共同事業開始。9月9日CEATECと10月7日CTC DISCOVERは展示予定の告知で、受注・収益の実績とは扱わない。採用8資料は本文を確認し、最新半期・前年有報・原発表から継続案件と潜在株式を追跡。SBIRの公表日時は公式ページのarticle:published_time及びdatePublishedの2024-05-02T09:30:09+09:00で確認した。IRライブラリーの掲載時刻と適時開示の公表時刻が異なる資料は後者を採用した。"
+          },
+          {
+            "role": "irbank_or_tdnet",
+            "checked": true,
+            "url": "https://finance.yahoo.co.jp/quote/338A.T/disclosure",
+            "checkedUrls": [
+              "https://finance.yahoo.co.jp/quote/338A.T/disclosure",
+              "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260901/20260901530226.pdf",
+              "https://f.irbank.net/pdf/20260813/140120260812517722.pdf",
+              "https://www.jpx.co.jp/listing/stocks/new/00-archives-01.html",
+              "https://www.jpx.co.jp/listing/stocks/new/um3qrc000000tjd9-att/03ZenmuTech-1s.pdf"
+            ],
+            "result": "TDnet配信相当のYahoo開示一覧で、9月1日17:05のHAIP合意、8月13日16:45の製品開発開始、同日15:30の上期決算・差異開示をタイトルと日時で照合し、直近45日と基準時点までの追加開示を確認。HAIPの直接PDFとIRBANK配信の決算説明PDFの本文も確認した。BigObjectの配信時刻18:30に対し会社IR一覧は15:35のため、採用日時は会社IRの初回公表時刻15:35とし、MOU本文内の英語原発表日3月9日を国内開示日3月23日と混同していない。IRBANKのHTML一覧は取得できず、確認済み扱いにはしていない。 上場前SOはJPX掲載のⅠの部本文を確認し、JPXの2025年新規上場アーカイブの338A上場承認公表日2月21日と照合した。公表時刻は未確認としてdate_onlyで記録した。"
+          }
+        ],
+        "disclosures": [
+          {
+            "title": "HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意",
+            "publishedAt": "2026-09-01T17:05:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始",
+            "publishedAt": "2026-08-13T16:45:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "2026年12月期 第２四半期 決算説明資料",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "半期報告書－第13期(2026/01/01－2026/12/31)",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/u5Ap.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "有価証券報告書－第12期(2025/01/01－2025/12/31)",
+            "publishedAt": "2026-03-27T15:24:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/LseR/ACI1/cTjP.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "医療AIプラットフォーム技術研究組合（HAIP）に参画",
+            "publishedAt": "2025-06-04T10:00:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "中小企業イノベーション創出推進事業開始のお知らせ",
+            "publishedAt": "2024-05-02T09:30:09+09:00",
+            "url": "https://zenmutech.com/information/news/20240502/",
+            "contentReviewed": true
+          },
+          {
+            "title": "台湾のBigObjectと戦略的協業に関するMOUを締結",
+            "publishedAt": "2026-03-23T15:35:00+09:00",
+            "url": "https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf",
+            "contentReviewed": true
+          }
+        ],
+        "capitalRiskReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-09T11:05:55.690Z",
+          "status": "unresolved",
+          "historyCheckedThrough": null,
+          "riskNote": "既存ストックオプションと第13回有償新株予約権は残存を示す資料があるが、発行原資料と基準時点の回号別残高を完結照合できず、希薄化リスクの有無・規模を全件では確定できない。",
+          "unresolvedReason": "最新2026年6月半期は潜在株式の存在と行使による増資を確認できるが、回号別残高を掲載していない。2025年有報では2017年以降の各SOと2023年第13回有償新株予約権を確認したものの、上場前の独立した発行原資料を会社IR・適時開示履歴から確認できず、基準時点までの全行使・取得消却・失効を回号別に完結照合できない。転換社債及びその他潜在株式についても全種類の残存なしを明示する本文根拠はなく、包括的なabsenceEvidenceは付けない。",
+          "documents": [
+            {
+              "id": "h1_report",
+              "title": "半期報告書－第13期(2026/01/01－2026/12/31)",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/u5Ap.pdf",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "PDF 2、6～7、10、12、15頁／主要経営指標、株式等の状況、注記",
+              "finding": "潜在株式が存在するため損失期の希薄化後EPSを記載しない旨を明記。6月末発行済株式2,726,000株、2月5日に分割前1,000株・5月19日に分割後800株の新株予約権行使、4月1日に1対2分割、5月14日に譲渡制限付株式4,000株を発行。6月末新株予約権勘定5,277千円は株数ではなく、回号別の未行使数を示さない。8月13日の発行済株式数は8月1日以降の行使を含めない旨がある。貸借対照表と株式等の状況に転換社債残高の明記は見当たらず、全潜在株式なしという証明ではない。"
+            },
+            {
+              "id": "fy2025_report",
+              "title": "有価証券報告書－第12期(2025/01/01－2025/12/31)",
+              "publishedAt": "2026-03-27T15:24:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/LseR/ACI1/cTjP.pdf",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "PDF 3、30～48、50～51、76、80～83頁／新株予約権等、資本推移、SO注記",
+              "finding": "2017年第4系列、2021年第9系列、2022年第11・12系列、2024年第14回SOと2023年第13回有償新株予約権の条件・期末残高を記載。第9回は2026年2月まで1,000株行使で27,400株から26,400株へ減少。第9-3回の10,000株失効、第14回の3,600株失効は一部終了であり、各13,400株・6,200株が2025年末に残る。第4-4回及び第12-2回は2025年に各1,000株・400株を行使して同年末残高ゼロ。第13回は82個、対象16,400株、行使期間2025年4月1日～2028年9月28日で、売上高630百万円の業績条件がある。A種・A2種優先株は2024年11月に全て普通株へ転換・自己優先株消却済み。記載は当時の株式単位であり、2026年4月分割後・基準時点の残数へ自動換算しない。"
+            },
+            {
+              "id": "fy2025_correction",
+              "kind": "status",
+              "source": "official_ir",
+              "title": "訂正有価証券報告書－第12期(2025/01/01－2025/12/31)",
+              "url": "https://pdf.irpocket.com/C338A/Rytt/h4ec/wKM8.pdf",
+              "publishedAt": "2026-04-30T16:14:00+09:00",
+              "contentReviewed": true,
+              "locator": "PDF 2頁／訂正事項・監査報酬",
+              "finding": "監査報酬の非監査業務1,500千円とIPOコンフォートレター作成の訂正。資本政策・SO残高の更新ではない。"
+            },
+            {
+              "id": "split_202604",
+              "kind": "status",
+              "source": "official_ir",
+              "title": "株式分割に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf",
+              "publishedAt": "2026-03-13T18:30:00+09:00",
+              "contentReviewed": true,
+              "locator": "PDF 1～2頁／分割の方法・日程、新株予約権の行使価格調整",
+              "finding": "4月1日効力発生の1株を2株への分割。第4系列1,141円、第9・11系列1,359円、第12回1,538円、第13回1,375円、第14回1,240円へ行使価格調整。残高の全行使履歴を確認せず期末対象株数を倍増して現在残高とはしていない。"
+            },
+            {
+              "id": "rs_issue_202605",
+              "kind": "issuance",
+              "source": "official_ir",
+              "title": "譲渡制限付株式報酬としての新株式発行に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/nX8G/Hmg3/gelq.pdf",
+              "publishedAt": "2026-04-15T15:30:00+09:00",
+              "contentReviewed": true,
+              "locator": "PDF 1～3頁／発行概要・譲渡制限",
+              "finding": "監査等委員の取締役2名へ普通株式4,000株、発行価額2,462円、総額9,848,000円。払込予定5月14日、譲渡制限は2027年5月13日まで。新株予約権ではない。"
+            },
+            {
+              "id": "rs_completed_202605",
+              "kind": "status",
+              "source": "official_ir",
+              "title": "譲渡制限付株式報酬としての新株式発行の払込完了に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/WUpy/otyQ/rhY3.pdf",
+              "publishedAt": "2026-05-14T15:30:00+09:00",
+              "contentReviewed": true,
+              "locator": "PDF 1頁／払込完了・発行概要",
+              "finding": "5月14日に4,000株の発行の払込が完了。半期の発行済株式数へ反映済みであり、未行使潜在株式に重複加算しない。"
+            },
+            {
+              "id": "ipo_financial_baseline",
+              "kind": "financial_baseline",
+              "source": "tdnet_jpx",
+              "title": "上場申請のための有価証券報告書（Ⅰの部）",
+              "url": "https://www.jpx.co.jp/listing/stocks/new/um3qrc000000tjd9-att/03ZenmuTech-1s.pdf",
+              "publishedAt": "2025-02-21",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "locator": "PDF 37頁（本文34頁）／第1回・第2回新株予約権の対象者注記",
+              "finding": "第1回は権利行使により従業員0名、第2回は権利行使及び権利放棄により監査役・従業員・外部協力者が各0名と記載。上場前SOの終了を示すが、独立した元の発行資料との全数照合を欠くためclosed判定には用いない。JPX新規上場アーカイブの338A上場承認公表日2025年2月21日を照合し、公表時刻は未確認のためdate_only。",
+              "publicationEvidenceUrl": "https://www.jpx.co.jp/listing/stocks/new/00-archives-01.html"
+            }
+          ],
+          "instruments": [
+            {
+              "id": "warrant_1",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "ipo_financial_baseline",
+              "asOfDate": "2025-01-31",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新有報の過去増資注記と上場時JPX資料では行使・権利放棄による終了を示すが、独立した発行原資料との全数照合を完結できないため、厳格契約の現在残数はnull。",
+              "summary": "2014年の第1回SO。最新有報の資本推移は2024年の行使による増加を記載し、JPX上場資料では付与対象従業員0名を示す。現在残存と推測せず、原資料を欠くため正式closed判定もしない。",
+              "unresolvedReason": "上場前発行原資料と個別の全数行使・放棄の完結照合が不足。JPX上場資料の終了記述だけを元の発行条件まで確認済みとしない。"
+            },
+            {
+              "id": "warrant_2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "ipo_financial_baseline",
+              "asOfDate": "2025-01-31",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新有報の過去増資注記と上場時JPX資料では行使・権利放棄による終了を示すが、独立した発行原資料との全数照合を完結できないため、厳格契約の現在残数はnull。",
+              "summary": "2015年の第2回SO。最新有報に行使による資本増加があり、JPX上場資料では行使及び権利放棄により対象者0名を示す。行使・放棄を同じ閉鎖理由に一括化せず、原資料未確認でunresolved。",
+              "unresolvedReason": "上場前発行原資料と個別の全数行使・放棄の完結照合が不足。JPX上場資料の終了記述だけを元の発行条件まで確認済みとしない。"
+            },
+            {
+              "id": "warrant_4",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2017年SO。継続在籍等が条件。2025年末に未行使5,000株。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 5000,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_4_2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2017年SO。継続在籍等が条件。2025年末に未行使2,000株。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 2000,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_4_3",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2017年SO。継続在籍等が条件。2025年末に未行使9,000株。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 9000,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_4_4",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2017年SO。2025年に1,000株を行使し同年末残数ゼロ。独立した元の発行資料が確認できず、厳格契約上closedとはしない。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 0,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_9",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2021年SO。2025年末27,400株、2026年2月の1,000株行使後は26,400株（いずれも2026年4月分割前）。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 27400,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              },
+              "subsequentVerifiedChange": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 26400,
+                "change": "分割前1,000株行使後の記載"
+              }
+            },
+            {
+              "id": "warrant_9_2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2021年SO。2025年末に未行使800株。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 800,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_9_3",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2021年SO。2025年中10,000株失効・400株行使後も13,400株残存。一部失効を全数終了とは扱わない。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 13400,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_11",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2022年SO。2025年末に未行使10,000株。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 10000,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_11_2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2022年SO。2025年に400株行使後も400株残存。一部行使を全数終了とは扱わない。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 400,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_11_3",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2022年SO。2025年に600株行使・200株失効後、6,400株未行使。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 6400,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_12",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2022年SO。2025年末に未行使600株。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 600,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_12_2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2022年SO。2025年に400株を行使し同年末残数ゼロ。元の発行資料が確認できず、厳格契約上closedとはしない。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 0,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_13",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2023年10月決議の有償新株予約権。2025年末82個・対象16,400株（分割前）、2024～2027年のいずれかの売上630百万円到達が条件、2028年9月28日まで行使可能。2026年4月に行使価格1,375円へ調整。条件充足・行使可能性と実際の新株交付量を区別する。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 16400,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            },
+            {
+              "id": "warrant_14",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "h1_report",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新半期は潜在株式の存在を示すが回号別残数を掲載しておらず、2026年4月の株式分割とその後の行使・失効を基準時点まで照合できないため、現在の対象株数はnull。",
+              "summary": "2024年SO。2025年末の権利未確定残6,200株。3,600株の失効があっても全数消滅ではなく、2026年3月29日からの行使期間と分割後の条件を照合する必要がある。",
+              "unresolvedReason": "有報に発行決議・条件の再掲はあるが独立した発行原資料を確認できず、基準時点までの最新回号別残高も未公表又は照合不能。",
+              "lastVerifiedBalance": {
+                "documentId": "fy2025_report",
+                "asOfDate": "2025-12-31",
+                "remainingUnderlyingShares": 6200,
+                "shareUnitBasis": "2024年11月の1対200分割後、2026年4月の1対2分割前。現在残高や新株発行数ではない。"
+              }
+            }
+          ],
+          "otherEquityChecks": [
+            {
+              "type": "convertible_bond",
+              "result": "半期貸借対照表、最新有報の新株予約権等と資本推移、会社IR・TDnet配信履歴を確認。転換社債の残高を確認できる記載は見当たらないが、全期間・全種類の残存なしの明示根拠ではない。",
+              "remainingUnderlyingShares": null
+            },
+            {
+              "type": "other_equity_financing",
+              "result": "A種・A2種優先株は2024年11月の普通株化と消却を有報で確認。2026年5月の譲渡制限付株式4,000株は払込完了済みで、未行使数には含めない。潜在株式の包括的不存在は確認できていない。",
+              "remainingUnderlyingShares": null
+            }
+          ]
+        },
+        "longTermMaterialReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-09T11:05:55.690Z",
+          "conclusion": "unresolved",
+          "historyCheckedThrough": null,
+          "reviewedCategories": [
+            "alliances",
+            "orders_contracts",
+            "investment_capacity",
+            "products_services",
+            "approvals_subsidies",
+            "restructuring",
+            "legal_regulatory",
+            "contract_changes"
+          ],
+          "reviewScopeNote": "最新2026年上期の公式決算説明・半期報告書を起点に、2025年有報、公式プレスリリースの2014年以降の掲載履歴、上場後のIR全開示履歴を確認。医療AI・HAIPの原発表、BigObject、製品ロードマップ、2025年大型ZVD受注の実績反映、研究開発・補助金、M&A方針・規制訴訟記述・契約形態を照合。年数上限は設けず、古い受注を新材料として再計上していない。SBIR事業の最終交付・精算と商用寄与を完結照合できないため、全期間の確認完了とはしない。",
+          "unresolvedReason": "2024年のSBIR原発表は事業実施期間を2025年度末までとしているが、最新半期・公式IR履歴に案件別の最終交付・精算又は商用売上・利益の確定を明示する続報を確認できない。半期の補助金収入20,363千円と受取ゼロだけでは、当該コンソーシアム事業の精算・終了や今後の営業収益への反映を断定できない。非公開パイプラインを含む全案件の完結照合もできず、履歴確認完了日時はnullとする。",
+          "riskNote": "SBIR医療AI事業は当初予定の2025年度末を過ぎたが、最終交付・精算と商用収益の確定を資料から照合できず、補助金採択を継続売上と扱えない。",
+          "documents": [
+            {
+              "id": "h1_presentation",
+              "title": "2026年12月期 第２四半期 決算説明資料",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "PDF 5～7、9～23、25～28、35、42～43頁／上期実績、製品別KPI、成長ロードマップ",
+              "finding": "ZVD売上257百万円・前年比32.5％増、QueryAhead29百万円・67％減、ライセンス126,072件、実質解約率0.4％（公表4.4％から買切り移行1,700件を除く）。Digital Trust Grid実装、BigObject協業、PaaSの2026年4Qローンチと2027年ARR型基盤を掲げるが個別新規案件の売上・利益実績は示さない。M&Aは成長戦略の方針であり実行済み案件としない。"
+            },
+            {
+              "id": "h1_report",
+              "title": "半期報告書－第13期(2026/01/01－2026/12/31)",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/u5Ap.pdf",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "PDF 3～5、10～13、15頁／事業進捗、研究開発、財務、注記",
+              "finding": "営業赤字99,287千円、研究開発費66,193千円、営業CF76,729千円と売上債権301,013千円回収。補助金収入20,363千円に対し補助金受取ゼロ。200百万円の融資枠と決算期末の財務制限を記載。事業リスクの重要な変更・重要な契約等の新規記載はなく、将来の案件売上やSBIR最終交付は示さない。"
+            },
+            {
+              "id": "fy2025_report",
+              "title": "有価証券報告書－第12期(2025/01/01－2025/12/31)",
+              "publishedAt": "2026-03-27T15:24:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/LseR/ACI1/cTjP.pdf",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "PDF 4、事業内容・事業等のリスク・重要な契約・研究開発の各節、株式及び財務諸表",
+              "finding": "創業後の事業展開、秘密分散・秘密計算製品、競合・知財・人材・顧客契約に係るリスク、補助金・研究開発及びライセンス契約を確認。知財紛争のリスク記述を現実の係争発生とは扱わず、M&A計画を実行済み再編とはしていない。"
+            },
+            {
+              "id": "haip_join",
+              "title": "医療AIプラットフォーム技術研究組合（HAIP）に参画",
+              "publishedAt": "2025-06-04T10:00:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "PDF 1～2頁／HAIP加入・研究開発の目的",
+              "finding": "2025年にHAIPへ加入し、秘密分散技術のサービス事業基盤・AI開発基盤への適用によるネットワークソリューションを検討・検証すると公表。"
+            },
+            {
+              "id": "haip_start",
+              "title": "HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意",
+              "publishedAt": "2026-09-01T17:05:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf",
+              "contentReviewed": true,
+              "kind": "progress",
+              "source": "official_ir",
+              "locator": "PDF 1～3頁／共同事業開始、今後の展望、業績への影響",
+              "finding": "共同開発特許7825250を活用し2026年9月1日から共同事業開始。医療DX通信を複数のTLSチャネルへ秘密分散する。今後のワーキンググループ、ユースケース選定・実証と当期業績影響軽微を記載し、案件別売上・利益実績はない。"
+            },
+            {
+              "id": "mac_storage",
+              "title": "情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始",
+              "publishedAt": "2026-08-13T16:45:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "PDF 1～4頁／開発開始、新サービス概要、今後のスケジュール",
+              "finding": "秘密分散ストレージとMac版ZVDの開発開始。双方2027年春頃のリリース予定で、仕様・提供開始時期・価格は進捗に応じて公表する。正式提供済み又は当期売上寄与とはしていない。"
+            },
+            {
+              "id": "queryahead_hub_plan",
+              "title": "2026年12月期 第２四半期 決算説明資料",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "PDF 21～22頁（資料内20～21頁）／QueryAhead開発ロードマップ・受託からクラウドへの転換",
+              "finding": "2026年4QのQueryAhead Hub PaaSローンチと2027年のARR積み上げ型基盤を公表。新プラットフォームの提供開始日・継続課金売上実績は示さない。"
+            },
+            {
+              "id": "bigobject_original",
+              "title": "台湾のBigObjectと戦略的協業に関するMOUを締結",
+              "publishedAt": "2026-03-23T15:35:00+09:00",
+              "url": "https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "PDF 1～4頁／戦略的協業MOU、日本語発表・英語原発表",
+              "finding": "金融・医療・製造を中心に秘密分散・秘密計算とリアルタイム分析の技術を組み合わせ、新データ基盤の開発と市場機会創出を目指すMOU。契約売上額・商用利益は記載なし。日本語資料の国内公表日は3月23日、英語原文内の3月9日とは区別。"
+            },
+            {
+              "id": "sbir_original",
+              "title": "中小企業イノベーション創出推進事業開始のお知らせ",
+              "publishedAt": "2024-05-02T09:30:09+09:00",
+              "url": "https://zenmutech.com/information/news/20240502/",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "公式記事本文／採択、補助上限、実施期間、ZenmuTechの担当",
+              "finding": "スタートアップ13社及び日本医師会の医療AIコンソーシアム。全体補助上限30億円、実施期間は2024年4月10日から2025年度末の予定。ZenmuTechは秘密分散を用いた安価で安全な医療データ転送を担当。補助上限を同社売上とみなさない。"
+            },
+            {
+              "id": "zvd_large_order_2025",
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "title": "ZENMU Virtual Drive大型案件受注に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf",
+              "publishedAt": "2025-12-25T16:00:00+09:00",
+              "contentReviewed": true,
+              "locator": "PDF 1～2頁／受注内容・売上計上予定・見通し",
+              "finding": "買切りライセンス2件140百万円・114百万円、計254百万円を受注。2025年12月検収基準で一括計上予定、当時の通期予想に織込み済み。原発表だけでは実績とせず、次の通期資料と照合した。"
+            },
+            {
+              "id": "fy2025_presentation",
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "title": "2025年12月期 決算説明資料",
+              "url": "https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf",
+              "publishedAt": "2026-02-13T15:30:00+09:00",
+              "contentReviewed": true,
+              "locator": "PDF 2、5～9頁／通期総括、増減分析、ZVD売上・四半期推移",
+              "finding": "2025年4Qの大型フロー2件254百万円と、ZVD671百万円・4Q売上421百万円の実績を説明。受注原発表と実績を照合し、2025年に反映済みの売上を2026年の新材料として再掲しない。"
+            }
+          ],
+          "items": [
+            {
+              "id": "haip_secure_proxy",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "haip_join",
+              "latestProgressDocumentId": "haip_start",
+              "currentAssessment": "2025年6月のHAIP参画は2026年9月1日の共同事業開始へ進展し、医療ネットワークでの秘密分散技術の事業化段階に入った。",
+              "reportedTiming": {
+                "documentId": "haip_start",
+                "statement": "2026年9月1日より、共同でサイバーセキュリティ事業を開始",
+                "dueDate": "2026-09-01"
+              },
+              "timingReachedButContributionUnconfirmed": true,
+              "riskNote": "HAIP共同事業は9月1日の開始予定日に達しているが、案件別の売上・利益寄与は未確認で、会社が示す当期影響は軽微にとどまる。"
+            },
+            {
+              "id": "mac_and_secret_storage",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "planned",
+              "originalDocumentId": "mac_storage",
+              "latestProgressDocumentId": "mac_storage",
+              "currentAssessment": "Mac版ZVDと秘密分散ストレージは2027年春頃の提供予定で、既存Windows顧客への横展開余地はあるが、現時点の売上寄与は未確認。",
+              "reportedTiming": {
+                "documentId": "mac_storage",
+                "statement": "秘密分散ストレージ、ZENMU Virtual Drive for Macとも2027年春頃のリリースを予定",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "queryahead_hub",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "planned",
+              "originalDocumentId": "queryahead_hub_plan",
+              "latestProgressDocumentId": "queryahead_hub_plan",
+              "currentAssessment": "QueryAhead Hubは2026年4QのPaaS化、2027年のARR型基盤を計画しており、基準日は4Q入り後だが、サービス開始・継続課金売上の実績は未確認。",
+              "reportedTiming": {
+                "documentId": "queryahead_hub_plan",
+                "statement": "2026年12月期4QにPaaS（QueryAhead Hub）をローンチし、2027年12月期にARR積み上げ型の成長基盤を確立する計画",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "bigobject_secure_data",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "planned",
+              "originalDocumentId": "bigobject_original",
+              "latestProgressDocumentId": "h1_presentation",
+              "currentAssessment": "BigObject協業は金融・医療・製造向けの共同データ基盤を目指し、2026～2027年の展開を掲げる開発・市場機会探索段階で、案件別の売上・利益寄与は未確認。",
+              "reportedTiming": {
+                "documentId": "h1_presentation",
+                "statement": "BigObjectとの製造・金融・ヘルスケア領域のデータ基盤構築案件について、リリース予定を2026～2027年と記載",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "medical_ai_sbir",
+              "category": "approvals_subsidies",
+              "direction": "mixed",
+              "status": "unresolved",
+              "originalDocumentId": "sbir_original",
+              "latestProgressDocumentId": "h1_report",
+              "currentAssessment": "SBIR医療AI事業は当初予定の2025年度末を過ぎたが、最終交付・精算と商用収益の確定を資料から照合できず、補助金採択を継続売上と扱えない。",
+              "reportedTiming": {
+                "documentId": "sbir_original",
+                "statement": "事業実施期間は2024年4月10日から2025年度末を予定",
+                "dueDate": null
+              },
+              "unresolvedReason": "最新半期の補助金収入・受取額には当該案件の最終交付・精算・商用売上の明示がなく、予定期間終了後の正式な終了・継続及び商用寄与を確定できない。",
+              "riskNote": "SBIR医療AI事業は当初予定の2025年度末を過ぎたが、最終交付・精算と商用収益の確定を資料から照合できず、補助金採択を継続売上と扱えない。"
+            },
+            {
+              "id": "zvd_254m_2025",
+              "category": "orders_contracts",
+              "direction": "positive",
+              "status": "ended",
+              "originalDocumentId": "zvd_large_order_2025",
+              "latestProgressDocumentId": "fy2025_presentation",
+              "currentAssessment": "2025年12月の2件計254百万円のZVD受注は2025年4Qのフロー売上へ反映済み。今回の新材料として再計上しない。",
+              "reportedTiming": {
+                "documentId": "zvd_large_order_2025",
+                "statement": "売上計上時期2025年12月。検収基準により一括計上予定",
+                "dueDate": null
+              },
+              "completionBasis": "通期決算説明の実績総括とZVD四半期売上への反映を確認。買切りライセンスの受注売上というイベントは既反映であり、その後の保守・顧客関係全体が終了したという意味ではない。"
+            }
+          ],
+          "categoryFindings": [
+            {
+              "category": "alliances",
+              "documentIds": [
+                "haip_join",
+                "haip_start",
+                "bigobject_original",
+                "h1_presentation",
+                "h1_report"
+              ],
+              "finding": "HAIPは参画から特許・共同事業開始へ進展。BigObjectは共同基盤の開発・市場機会探索MOUと最新ロードマップを照合。NICT・ナシュアのNerveNet共同開発、TMIP&S・ミントウェーブ紹介契約、AIデータ保護の進捗も最新決算で確認したが、主たる分析根拠は本文確認したHAIP・BigObjectへ絞り、他案件の未開示収益を推測しない。"
+            },
+            {
+              "category": "orders_contracts",
+              "documentIds": [
+                "zvd_large_order_2025",
+                "fy2025_presentation",
+                "h1_presentation"
+              ],
+              "finding": "2025年大型ZVD買切り受注の実績反映を原発表と通期実績で確認し、2026年の新材料として再掲しない。上期には受注の4Qへの期ずれがあり、契約締結・売上検収・計上を区別した。"
+            },
+            {
+              "category": "investment_capacity",
+              "documentIds": [
+                "h1_report",
+                "h1_presentation"
+              ],
+              "finding": "ソフトウェア企業の人員増・外注開発費・研究開発費・無形固定資産支出を確認。工場の生産能力増強のような未公表設備計画を作らず、営業及び開発リソースの先行費用と売上化の時間差として評価。"
+            },
+            {
+              "category": "products_services",
+              "documentIds": [
+                "mac_storage",
+                "queryahead_hub_plan",
+                "h1_presentation",
+                "fy2025_report"
+              ],
+              "finding": "ZVDの既存Windows製品とライセンス実績、Mac・ストレージ開発、QueryAheadのクラウドPaaS化、ZENMU Engineの非公開案件を含むロードマップを照合。新製品の予定と公表された売上実績を分けた。"
+            },
+            {
+              "category": "approvals_subsidies",
+              "documentIds": [
+                "sbir_original",
+                "h1_report",
+                "fy2025_report"
+              ],
+              "finding": "2024年の医療AI補助事業の原発表と最新半期の補助金・研究開発を照合。補助上限はコンソーシアム全体であり、会社の受注・売上とはしない。最終交付・精算・商用寄与は未解決。"
+            },
+            {
+              "category": "restructuring",
+              "documentIds": [
+                "fy2025_report",
+                "h1_presentation",
+                "h1_report"
+              ],
+              "finding": "沿革、事業内容、資本推移、M&A成長方針、半期の重要契約と事業進捗を確認。成長戦略中のM&A意向を実行済み再編とは扱わず、旧優先株の普通株化は資本レビューで区別した。"
+            },
+            {
+              "category": "legal_regulatory",
+              "documentIds": [
+                "fy2025_report",
+                "h1_report"
+              ],
+              "finding": "最新有報の知財・法規制・訴訟等に係るリスク記述、半期の重要変更及び公式開示履歴を確認。知財紛争の一般リスクを係争の実在と読み替えず、新たな重大訴訟・行政処分の採用資料は確認できない。全世界の不存在を保証しない。"
+            },
+            {
+              "category": "contract_changes",
+              "documentIds": [
+                "fy2025_report",
+                "h1_report",
+                "h1_presentation"
+              ],
+              "finding": "ライセンス・保守・サブスクリプション及び秘密計算ライセンスの記述、1,700件の買切り移行と調整解約率を確認。買切り移行を顧客全体の解約と混同せず、収益形態の違いをKPI解釈に反映。重要な契約解除・撤回を裏付ける採用一次資料は見当たらないが、非公開契約の状態は推定しない。"
+            }
+          ]
+        },
+        "auditStatus": "pass",
+        "audit": {
+          "analysisBasis": "claim.analysisCutoff",
+          "claimIdentifiersExact": true,
+          "publicFieldsCount": 7,
+          "pointInTimeRule": "全採用資料は2026-10-09T11:05:55.690Z以前の公表。検出receivedAtは分析基準に使用しない。",
+          "primaryBodiesReviewed": true,
+          "recentWindowStart": "2026-08-25",
+          "recentWindowEnd": "2026-10-09",
+          "historyAgeLimit": null,
+          "limitations": [
+            "資本レビューは発行原資料及び最新回号別残高が不足しunresolved。残存なし・希薄化率を断定していない。",
+            "長期レビューはSBIR最終交付・精算・商用寄与が不足しunresolved。計画・共同事業開始・実績寄与を区別した。"
+          ],
+          "excludedCandidates": [
+            {
+              "url": "https://zenmutech.com/information/news/20260909/",
+              "publishedAt": "2026-09-09",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "reason": "CEATEC出展・AIデータ保護ソリューションの展示予定。受注・収益実績の開示ではなく、主要材料として再計上しない。"
+            },
+            {
+              "url": "https://zenmutech.com/information/news/20261007/",
+              "publishedAt": "2026-10-07",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "reason": "CTC DISCOVERイベントへの出展予定。基準時点前の追加告知として確認したが、契約・収益実績ではない。"
+            }
+          ]
+        }
+      }
     }
   }
 }

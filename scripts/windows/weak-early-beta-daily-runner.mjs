@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { cleanEnvironment, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
+import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
 const DEFAULT_RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
@@ -368,13 +368,14 @@ async function probeFundamentalModel(config, runDir, env) {
   const fundamentalConfig = readJson(path.resolve(config.fundamentalConfigPath));
   const probeEnv = cleanEnvironment(env);
   probeEnv.CODEX_HOME = fundamentalConfig.codexHome;
-  const probe = await run(fundamentalConfig.nodePath, [
-    fundamentalConfig.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
+  const invocation = codexInvocation(fundamentalConfig, [
+    '--search', '-a', 'never', 'exec', '--ignore-user-config',
     '--cd', runDir, '--skip-git-repo-check', '--sandbox', 'read-only',
     '-m', FUNDAMENTAL_MODEL,
     '-c', `model_reasoning_effort="${FUNDAMENTAL_REASONING_EFFORT}"`,
     '-c', 'forced_login_method="chatgpt"', '--json', 'Return exactly MODEL_READY.',
-  ], {
+  ]);
+  const probe = await run(invocation.exe, invocation.args, {
     cwd: runDir,
     env: probeEnv,
     log: path.join(runDir, 'model-preflight'),
@@ -384,7 +385,7 @@ async function probeFundamentalModel(config, runDir, env) {
   if (probe.code !== 0 || !probe.stdout.split(/\r?\n/).some(line => {
     try { return JSON.parse(line).type === 'turn.completed'; } catch { return false; }
   })) {
-    throw new Error(`Luna xhigh model preflight failed; inspect ${path.join(runDir, 'model-preflight.stdout')}`);
+    throw new Error(`${FUNDAMENTAL_MODEL} ${FUNDAMENTAL_REASONING_EFFORT} model preflight failed; inspect ${path.join(runDir, 'model-preflight.stdout')}`);
   }
 }
 

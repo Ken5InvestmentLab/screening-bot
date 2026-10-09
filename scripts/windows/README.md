@@ -52,7 +52,10 @@ node scripts/windows/weak-early-beta-start-watchdog.mjs .cache/weak_early_beta/d
 ```
 
 - 日次は平日17:00 JST（automation `cloud-2`）。当日日足のfreshnessを確認し、不足時は最大3回・5分間隔で有限再試行する。17:30 JSTの独立監視は日本の銀行営業日だけ、adminシステムログチャンネルの起動記録を確認し、見つからない場合に一度だけ警告する。
-- 朝は平日07:30 JST（automation `cloud-5`）。その日の終値で5営業日目を迎える銘柄だけを専用DiscordへEmbed通知する。
-- 日本の銀行休業日はランナー内の決定論カレンダーでskipする。起動側は `gpt-5.6-luna` / minimal、ファンダ分析だけは専用runnerで Luna / xhigh。
+- 朝は平日07:30 JST（automation `cloud-5`）。エントリー日を1営業日目として、その日の終値で5営業日目を迎える銘柄と、その日の始値で6営業日目を迎える銘柄へ、それぞれ専用DiscordのEmbedを送る。両方のreceiptは独立させる。
+- 朝の処理は各送信成功直後に `detections.csv` のreceiptを原子的に保存し、同ファイルだけをcommit/pushする。HTML・ファンダキューは夕方の日次処理で再生成する。2通目以降で失敗しても送信済みreceiptを保持し、結果不明の投稿を自動再送しない。その場合は未同期receiptでcheckoutがdirtyのまま停止し、次回起動前にDiscord・保存済みreceipt・Gitを照合してから復旧する。
+- ランナーと設定の実checkoutが一致し、クリーンな `research/weak-early-beta` のHEADがGitHubの最新HEADと一致することを起動前に検証する。作業中の保存checkoutがdirtyなら変更を保持したまま専用のclean checkoutを準備し、そのcheckoutのランナー・設定を使う。既存変更をstash・commit・削除して定期実行を通さない。
+- `exit-reminder-runner.lock` は多重起動を止める。実行phase・子プロセスのstdout/stderr・結果はGit管理外の `.cache/weak_early_beta/exit_reminder_runtime/` に残る。朝のコード変更は `node --test scripts/windows/test-weak-early-beta-exit-reminder-runner.mjs` と `python -B -m unittest tests.test_weak_early_beta_reminders` で実送信なしに検証する。
+- 日本の銀行休業日はランナー内の決定論カレンダーでskipする。起動側は `gpt-5.6-luna` / minimal、ファンダ分析だけは専用runnerで GPT-6.1 Sol / xhigh。
 - 実設定は `.cache/weak_early_beta/*.config.json` とGit管理外の専用 `.env` に置く。秘密値をexample、ログ、commitへ書かない。
 - 両ランナーは `research/weak-early-beta` 以外で停止し、production/mainや既存通知系を更新しない。

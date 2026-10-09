@@ -599,7 +599,7 @@ def command_backfill_endpoints(args: argparse.Namespace) -> None:
 
 def command_remind_exits(args: argparse.Namespace) -> None:
     from .bank_calendar import is_bank_business_day
-    from .reminders import notify_exit_reminders
+    from .reminders import notify_exit_reminders, save_reminder_receipts
 
     target = pd.Timestamp(args.date or pd.Timestamp.now(tz="Asia/Tokyo").date()).date()
     ledger_path = Path(args.ledger)
@@ -611,11 +611,10 @@ def command_remind_exits(args: argparse.Namespace) -> None:
             target,
             report_url=args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", ""),
             dry_run=args.dry_run,
+            on_delivery=lambda delivered: save_reminder_receipts(delivered, ledger_path),
         )
-    if payloads and not args.dry_run:
-        write_ledger(ledger, ledger_path)
-        write_fundamental_queue(ledger, Path(args.queue))
-        write_report(ledger, Path(args.report), Path(args.metrics))
+    # Morning delivery changes only receipts. The daily job rebuilds HTML and
+    # queues; doing that here delayed completion after an already sent message.
     print(json.dumps({
         "date": target.isoformat(),
         "business_day": is_bank_business_day(target),

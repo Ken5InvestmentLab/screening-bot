@@ -24,7 +24,7 @@
   -> 5条件で選択
   -> JPXで上場廃止決定・整理銘柄指定済みの銘柄を除外
   -> append-safe ledger
-  -> 専用Premium Worker claim（日次は新規検出分、Luna xhigh）
+  -> 専用Premium Worker claim（日次は新規検出分、GPT-6.1 Sol xhigh）
   -> ファンダ分析receiptをledgerへ反映
   -> 分析込みHTMLを再生成・Cloudflareへ反映
   -> 最後に専用Discordへ検出Embedを通知
@@ -75,7 +75,9 @@ py -m weak_early_beta.cli import-fundamentals --receipts path/to/receipts.json
 
 通知を実送信する場合は `WEAK_EARLY_BETA_SIGNAL_WEBHOOK_URL`、レポートリンクには `WEAK_EARLY_BETA_REPORT_URL` を使います。銘柄通知のタイトルは、この設定を基にしたCloudの検出銘柄一覧 `weak_early_beta_latest.html` へのリンクです。専用Botがチャンネル履歴を読める場合だけ `WEAK_EARLY_BETA_DISCORD_BOT_TOKEN` を設定します。現行Bot tokenはベータへ流用しません。通常の日次運用では `state/fundamental_queue.json` の新規検出分を処理します。過去銘柄のファンダ分析も、対象期間と上限を固定した専用バッチとして後から追加できます。
 
-Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-runner.mjs` です。例設定を複製して実行します。ランナーは `gpt-5.6-luna` / `xhigh` を固定し、ファンダ分析を実際に開始する直前の日時をclaimの `analysisCutoff` に記録します。17:00に分析を開始したら17:00、18:00なら18:00までの開示を対象とし、銘柄検出の開始時刻は使いません。検出日時 `receivedAt` と分析基準日時を別々に保持し、開示時点と7フィールドを検証します。検証済み分析はベータ専用stateの `completed` に保存し、receiptを介してHTMLへ埋め込みます。ファンダ分析のDiscord通知とwebhook設定は不要です。HTMLへの取り込みが成功するまでclaimを保持し、検証済み本文の取り込みだけを再開するときは本文作成時の分析基準日時を維持します。明示的な過去日バックフィルの基準日時は変更しません。
+Windowsの専用ランナーは `scripts/windows/weak-early-beta-fundamental-runner.mjs` です。例設定を複製して実行します。ランナーは `gpt-6.1-sol` / `xhigh` を固定し、ファンダ分析を実際に開始する直前の日時をclaimの `analysisCutoff` に記録します。17:00に分析を開始したら17:00、18:00なら18:00までの開示を対象とし、銘柄検出の開始時刻は使いません。検出日時 `receivedAt` と分析基準日時を別々に保持し、開示時点と7フィールドを検証します。検証済み分析はベータ専用stateの `completed` に保存し、receiptを介してHTMLへ埋め込みます。ファンダ分析のDiscord通知とwebhook設定は不要です。HTMLへの取り込みが成功するまでclaimを保持し、検証済み本文の取り込みだけを再開するときは本文作成時の分析基準日時を維持します。明示的な過去日バックフィルの基準日時は変更しません。
+
+ファンダ専用設定で任意の `codexExecutable` に現在のCodexネイティブ実行ファイルの絶対パスを指定すると、分析と日次モデルpreflightの両方がその同じ実行ファイルを使います。未指定時は従来の `nodePath` + `cliJs` 経路を維持します。指定した実行ファイルが使えない場合は停止し、別モデル・別runtimeへ自動変更しません。ChatGPTログイン経路で `gpt-6.1-sol` / `xhigh` のpreflightが成功してから運用へ反映し、Astraを使いません。共有Premiumのruntimeや起動側automationモデルは変更しません。
 
 ## 定時運用
 

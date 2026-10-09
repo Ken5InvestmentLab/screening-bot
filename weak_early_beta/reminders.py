@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from datetime import date
-from typing import Any
+from pathlib import Path
+from typing import Any, Callable
 
 import pandas as pd
 import requests
@@ -12,7 +14,7 @@ import requests
 from .bank_calendar import (
     fifth_session_from_entry, is_bank_business_day, sixth_session_from_entry,
 )
-from .ledger import EXIT_REMINDER_COLUMNS
+from .ledger import EXIT_REMINDER_COLUMNS, write_ledger
 from .notify import WEBHOOK_ENV, _discord_url, _number
 
 
@@ -21,6 +23,21 @@ REMINDER_ENDPOINTS = (
     (5, "終値", fifth_session_from_entry, "exit_reminder_discord_url", "exit_reminded_at"),
     (6, "始値", sixth_session_from_entry, "d6_exit_reminder_discord_url", "d6_exit_reminded_at"),
 )
+
+
+def save_reminder_receipts(ledger: pd.DataFrame, path: Path) -> None:
+    """Replace the ledger atomically before proceeding to another delivery."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    os.close(descriptor)
+    temporary_path = Path(temporary)
+    try:
+        write_ledger(ledger, temporary_path)
+        with temporary_path.open("r+b") as handle:
+            os.fsync(handle.fileno())
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
 
 
 def _payload(
@@ -53,11 +70,12 @@ def notify_exit_reminders(
     report_url: str = "",
     webhook_url: str | None = None,
     dry_run: bool = False,
+    on_delivery: Callable[[pd.DataFrame], None] | None = None,
 ) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     webhook_url = (webhook_url or os.environ.get(WEBHOOK_ENV, "")).strip()
     result = ledger.copy()
     # CSVs written before D6 reminders have only the original D5 columns.
-    for column in EXIT_REMINDER_COLUMNS:
+    for column in (*EXIT_REMINDER_COLUMNS, "updated_at"):
         result[column] = result.get(column, pd.Series("", index=result.index)).fillna("").astype(object)
     if not is_bank_business_day(target):
         return result, []
@@ -80,12 +98,16 @@ def notify_exit_reminders(
                 continue
             if not webhook_url:
                 raise RuntimeError(f"{WEBHOOK_ENV} is required for live exit reminders")
-            response = requests.post(
-                webhook_url + ("&" if "?" in webhook_url else "?") + "wait=true",
-                json=payload,
-                timeout=30,
-            )
-            response.raise_for_status()
+            try:
+                response = requests.post(
+                    webhook_url + ("&" if "?" in webhook_url else "?") + "wait=true",
+                    json=payload,
+                    timeout=30,
+                )
+                response.raise_for_status()
+            except requests.RequestException:
+                # Request exception text can contain the secret webhook URL.
+                raise RuntimeError("Cloud reminder delivery failed; reconcile Discord receipts before retrying") from None
             receipt = response.json()
             mask = (
                 pd.to_datetime(result["signal_date"]).eq(pd.Timestamp(signal_date))
@@ -96,4 +118,6 @@ def notify_exit_reminders(
             result.loc[mask, url_column] = _discord_url(receipt)
             result.loc[mask, at_column] = now
             result.loc[mask, "updated_at"] = now
+            if on_delivery is not None:
+                on_delivery(result.copy())
     return result, payloads

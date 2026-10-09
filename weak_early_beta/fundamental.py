@@ -19,6 +19,8 @@ DEFAULT_WORKER_OUT = WORKER_ROOT / "out"
 DEFAULT_CLAIM = DEFAULT_WORKER_OUT / "latest_claim.json"
 DEFAULT_RECEIPTS = DEFAULT_WORKER_OUT / "fundamental_receipts.json"
 DEFAULT_REPORTS = DEFAULT_WORKER_OUT / "premium_reports.json"
+FUNDAMENTAL_MODEL = "gpt-6.1-sol"
+FUNDAMENTAL_REASONING_EFFORT = "xhigh"
 
 
 def _read_json(path: Path, default):
@@ -138,8 +140,8 @@ def prepare_claim(
                 "buy/sell recommendations", "target prices", "additional scores"
             ],
             "destination": "html",
-            "model": "gpt-5.6-luna",
-            "reasoningEffort": "xhigh",
+            "model": FUNDAMENTAL_MODEL,
+            "reasoningEffort": FUNDAMENTAL_REASONING_EFFORT,
         },
     }
     _write_json(state_path, state)

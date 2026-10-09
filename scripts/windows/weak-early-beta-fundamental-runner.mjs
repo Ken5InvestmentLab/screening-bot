@@ -3,10 +3,12 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { CAPITAL_RISK_REVIEW_VERSION, CLOUD_CAPITAL_RISK_CONTRACT, validateClaimCapitalRiskReviews } from './weak-early-beta-capital-risk.mjs';
+import { LONG_TERM_MATERIAL_REVIEW_VERSION, CLOUD_LONG_TERM_MATERIAL_CONTRACT, validateClaimLongTermMaterialReviews } from './weak-early-beta-long-term-materials.mjs';
 
 const SIGNAL_CHANNEL_ID = '1550876104917520505';
 const FUNDAMENTAL_CHANNEL_ID = '1550876675884060702';
-const FUNDAMENTAL_MODEL = 'gpt-5.6-luna';
+const FUNDAMENTAL_MODEL = 'gpt-6.1-sol';
 const FUNDAMENTAL_REASONING_EFFORT = 'xhigh';
 
 const CLOUD_REPORT_CONTRACT = [
@@ -18,6 +20,8 @@ const CLOUD_REPORT_CONTRACT = [
   ] }),
   '各記録のurlは確認したhttps URLとし、disclosuresには採用資料ごとのtitle、publishedAt、url、contentReviewed:trueを保存します。開示リンクのURLはdisclosuresと一致させます。開示がない場合は確認根拠をnoMaterialDisclosureReasonに記録します。',
   'alertId、signalDate、analysisCutoffは不変claimの値と文字列まで一致させ、auditStatusは監査を通過した場合だけpassにしてください。',
+  CLOUD_CAPITAL_RISK_CONTRACT,
+  CLOUD_LONG_TERM_MATERIAL_CONTRACT,
 ].join('\n');
 
 
@@ -53,10 +57,18 @@ function stampAnalysisStart(statePath, claim, analysisStartedAt) {
     }
   }
   const stamped = {
-    ...claim, analysisStartedAt,
-    alerts: (claim.alerts || []).map(alert => ({ ...alert, analysisCutoff: analysisStartedAt })),
+    ...claim, analysisStartedAt, capitalRiskReviewVersion: CAPITAL_RISK_REVIEW_VERSION,
+    longTermMaterialReviewVersion: LONG_TERM_MATERIAL_REVIEW_VERSION,
+    rules: { ...claim.rules, model: FUNDAMENTAL_MODEL, reasoningEffort: FUNDAMENTAL_REASONING_EFFORT },
+    alerts: (claim.alerts || []).map(alert => ({ ...alert, analysisCutoff: analysisStartedAt,
+      capitalRiskReviewVersion: CAPITAL_RISK_REVIEW_VERSION,
+      longTermMaterialReviewVersion: LONG_TERM_MATERIAL_REVIEW_VERSION })),
   };
-  for (const alert of stamped.alerts) state.claims[alert.alertId].analysisCutoff = analysisStartedAt;
+  for (const alert of stamped.alerts) {
+    state.claims[alert.alertId].analysisCutoff = analysisStartedAt;
+    state.claims[alert.alertId].capitalRiskReviewVersion = CAPITAL_RISK_REVIEW_VERSION;
+    state.claims[alert.alertId].longTermMaterialReviewVersion = LONG_TERM_MATERIAL_REVIEW_VERSION;
+  }
   writeJson(statePath, state);
   return stamped;
 }
@@ -95,6 +107,17 @@ function cleanEnvironment(source) {
   return result;
 }
 
+function codexInvocation(config, args) {
+  if (config.codexExecutable !== undefined) {
+    if (typeof config.codexExecutable !== 'string' || !config.codexExecutable.trim()) throw new Error('invalid configured native Codex executable');
+    const executable = path.resolve(config.codexExecutable);
+    if (!fs.existsSync(executable)) throw new Error('configured native Codex executable is unavailable; do not substitute another runtime');
+    return { exe: executable, args: [...args] };
+  }
+  if (!config.nodePath || !config.cliJs) throw new Error('Codex requires codexExecutable or nodePath plus cliJs');
+  return { exe: config.nodePath, args: [config.cliJs, ...args] };
+}
+
 function loadDotEnv(target, file) {
   if (!fs.existsSync(file)) return;
   for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
@@ -106,6 +129,22 @@ function loadDotEnv(target, file) {
     }
     target[match[1]] = value;
   }
+}
+
+function loadFundamentalEnvironment(config, source = process.env) {
+  const loaded = cleanEnvironment(source);
+  loadDotEnv(loaded, path.join(config.repoPath, '.env'));
+  loadDotEnv(loaded, path.join(config.premiumWorkerRepoPath, '.env'));
+  loadDotEnv(loaded, path.join(config.premiumWorkerRepoPath, 'premium_worker', '.env'));
+  // Dotenv files can reintroduce API credentials after the inherited-env pass.
+  // Every child uses this final sanitized environment, including save/import.
+  const env = cleanEnvironment(loaded);
+  env.CODEX_HOME = config.codexHome;
+  const pathKey = Object.keys(env).find(key => /^path$/i.test(key));
+  const inheritedPath = pathKey ? env[pathKey] : '';
+  for (const key of Object.keys(env)) if (/^path$/i.test(key)) delete env[key];
+  env.PATH = `${path.dirname(config.nodePath)}${path.delimiter}${inheritedPath}`;
+  return env;
 }
 
 async function command(exe, args, { cwd, env, log, input = '', timeoutMs = 12_000_000 }) {
@@ -156,7 +195,7 @@ async function main(configFile) {
   fs.mkdirSync(runDir, { recursive: true });
   const resultPath = path.join(runtimeDir, 'latest.json');
   const result = {
-    identity: 'WEAK_EARLY_FUNDAMENTAL_LUNA_XHIGH_V1',
+    identity: 'WEAK_EARLY_FUNDAMENTAL_SOL_XHIGH_V2',
     startedAt: now,
     ok: false,
     model: FUNDAMENTAL_MODEL,
@@ -165,15 +204,7 @@ async function main(configFile) {
     runDir,
   };
 
-  const env = cleanEnvironment(process.env);
-  loadDotEnv(env, path.join(config.repoPath, '.env'));
-  loadDotEnv(env, path.join(config.premiumWorkerRepoPath, '.env'));
-  loadDotEnv(env, path.join(config.premiumWorkerRepoPath, 'premium_worker', '.env'));
-  env.CODEX_HOME = config.codexHome;
-  const pathKey = Object.keys(env).find(key => /^path$/i.test(key));
-  const inheritedPath = pathKey ? env[pathKey] : '';
-  for (const key of Object.keys(env)) if (/^path$/i.test(key)) delete env[key];
-  env.PATH = `${path.dirname(config.nodePath)}${path.delimiter}${inheritedPath}`;
+  const env = loadFundamentalEnvironment(config);
 
   const betaRoot = path.join(config.repoPath, 'weak_early_beta', 'fundamental_worker');
   const statePath = path.join(betaRoot, 'state', 'premium_alert_state.json');
@@ -250,14 +281,15 @@ async function main(configFile) {
     ].join('\n\n');
     fs.writeFileSync(path.join(runDir, 'prompt.txt'), prompt);
     if (!reuseReport) {
-      const analysisExit = await command(config.nodePath, [
-        config.cliJs, '--search', '-a', 'never', 'exec', '--ignore-user-config',
+      const analysisCommand = codexInvocation(config, [
+        '--search', '-a', 'never', 'exec', '--ignore-user-config',
         '--cd', config.premiumWorkerRepoPath, '--skip-git-repo-check',
         '--sandbox', 'danger-full-access', '-m', FUNDAMENTAL_MODEL,
         '-c', `model_reasoning_effort="${FUNDAMENTAL_REASONING_EFFORT}"`,
         '-c', 'forced_login_method="chatgpt"', '--json',
         '-o', path.join(runDir, 'codex.final.txt'), '-',
-      ], {
+      ]);
+      const analysisExit = await command(analysisCommand.exe, analysisCommand.args, {
         cwd: config.premiumWorkerRepoPath,
         env,
         log: path.join(runDir, 'codex'),
@@ -273,6 +305,10 @@ async function main(configFile) {
       result.reusedClaimMatchedReport = true;
     }
     if (!fs.existsSync(reportsPath)) throw new Error('Codex completed without premium_reports.json');
+    result.capitalRiskReviewsValidated = validateClaimCapitalRiskReviews(
+      claim, readJson(reportsPath).reports || [], readJson(statePath));
+    result.longTermMaterialReviewsValidated = validateClaimLongTermMaterialReviews(
+      claim, readJson(reportsPath).reports || [], readJson(statePath));
 
     if ((claim.alerts || []).every(alert => alert.signalType === 'WEAK_EARLY_BETA' && alert.analysisCutoff)) {
       await run(config.pythonPath || 'py', [
@@ -318,4 +354,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { CLOUD_REPORT_CONTRACT, assertIsolated, cleanEnvironment, finalizeHtmlSnapshots, reportsMatchClaim, reusableClaimReport, stampAnalysisStart, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };
+export { CLOUD_REPORT_CONTRACT, assertIsolated, cleanEnvironment, loadFundamentalEnvironment, codexInvocation, finalizeHtmlSnapshots, reportsMatchClaim, reusableClaimReport, stampAnalysisStart, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };

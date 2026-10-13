@@ -1,12 +1,12 @@
 {
   "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
-  "run_at": "2026-10-09T20:05:47.831069+09:00",
+  "run_at": "2026-10-13T18:36:06.561305+09:00",
   "daily_corpus": ".cache\\weak_early_beta\\tse_daily.csv",
-  "daily_sha256": "f7d759bccea35db64a2fe3802754085db1b0623ce070f2f62f9e14525c4116d9",
+  "daily_sha256": "8a75326a1a44229f82b1c0e6e49cea2c36f00181b0873523bed58cab8eb7d6c3",
   "source_quality": {
     "identity": "CLOUD_SOURCE_QUALITY_V1",
-    "sourceRows": 4300962,
-    "quarantinedRows": 2918,
+    "sourceRows": 4298081,
+    "quarantinedRows": 2917,
     "quarantinedSymbols": [
       "1383",
       "1401",
@@ -316,129 +316,79 @@
       "9960",
       "9986"
     ],
-    "quarantinedDateCount": 1222,
-    "firstQuarantinedDate": "2021-10-11",
-    "lastQuarantinedDate": "2026-10-09",
+    "quarantinedDateCount": 1221,
+    "firstQuarantinedDate": "2021-10-13",
+    "lastQuarantinedDate": "2026-10-13",
     "audit_path": ".cache\\weak_early_beta\\tse_daily.source-quality.json",
-    "audit_sha256": "58e2928c8829bbeb055e6d597692da69aad2c2446d5595e9bd5bee5012418124"
+    "audit_sha256": "d987238c71d3741655ab4fe4b3a3aa535b57c7856074790842214694a57d1f0d"
   },
   "source_revision": {
     "identity": "CLOUD_SOURCE_REVISION_V1",
     "previousBasis": "verified",
-    "comparedRows": 4276070,
-    "quarantinedComparisonRows": 2908,
-    "acceptedRepairColumnValues": 11,
+    "comparedRows": 4280531,
+    "quarantinedComparisonRows": 2913,
+    "acceptedRepairColumnValues": 6,
     "sourceCorrectionAudit": [],
     "acceptedRepairs": [
       {
-        "symbol": "2806",
+        "symbol": "1992",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
+        "firstDate": "2026-10-09",
+        "lastDate": "2026-10-09",
+        "previousBasis": "2026-10-09",
+        "currentBasis": "2026-10-13"
       },
       {
-        "symbol": "2813",
+        "symbol": "3426",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
+        "firstDate": "2026-10-09",
+        "lastDate": "2026-10-09",
+        "previousBasis": "2026-10-09",
+        "currentBasis": "2026-10-13"
       },
       {
-        "symbol": "4247",
+        "symbol": "3437",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
+        "firstDate": "2026-10-09",
+        "lastDate": "2026-10-09",
+        "previousBasis": "2026-10-09",
+        "currentBasis": "2026-10-13"
       },
       {
-        "symbol": "5533",
+        "symbol": "4624",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
+        "firstDate": "2026-10-09",
+        "lastDate": "2026-10-09",
+        "previousBasis": "2026-10-09",
+        "currentBasis": "2026-10-13"
       },
       {
-        "symbol": "6408",
+        "symbol": "5484",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
+        "firstDate": "2026-10-09",
+        "lastDate": "2026-10-09",
+        "previousBasis": "2026-10-09",
+        "currentBasis": "2026-10-13"
       },
       {
-        "symbol": "7067",
+        "symbol": "9539",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
-      },
-      {
-        "symbol": "7509",
-        "column": "volume",
-        "rows": 1,
-        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
-      },
-      {
-        "symbol": "8225",
-        "column": "volume",
-        "rows": 1,
-        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
-      },
-      {
-        "symbol": "9476",
-        "column": "volume",
-        "rows": 1,
-        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
-      },
-      {
-        "symbol": "9635",
-        "column": "volume",
-        "rows": 1,
-        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
-      },
-      {
-        "symbol": "9849",
-        "column": "volume",
-        "rows": 1,
-        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-06",
-        "lastDate": "2026-10-06",
-        "previousBasis": "2026-10-06",
-        "currentBasis": "2026-10-09"
+        "firstDate": "2026-10-09",
+        "lastDate": "2026-10-09",
+        "previousBasis": "2026-10-09",
+        "currentBasis": "2026-10-13"
       }
     ],
     "quarantinedComparisonSymbolCount": 306
@@ -1021,7 +971,7 @@
       "9977",
       "9995"
     ],
-    "retained_rows": 10949,
+    "retained_rows": 10931,
     "retained_symbols": [
       {
         "code": "3670",
@@ -1032,52 +982,52 @@
       },
       {
         "code": "3787",
-        "rows": 1215,
+        "rows": 1213,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "6a01d9d47f534b5c024d382b45e6cc3d7b244d01d1261dfa458d36191dc8b4c4"
+        "rows_sha256": "3cb44187f674b122dbbbf25de6e22a4f004987aaedcd7731d6081d078c8b1b7c"
       },
       {
         "code": "4316",
-        "rows": 1215,
+        "rows": 1213,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "ba919e9e6eae3643d2dfa8adb26ed050272e4b65b8ff866ba1f54f20309eacb5"
+        "rows_sha256": "135eda4fc65c4b2dc64960fe1c1401ccf0c58e7ca7a18ba22818019ac0f5aa8f"
       },
       {
         "code": "6147",
-        "rows": 1215,
+        "rows": 1213,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "1e33a10ed3e042ed49f2ddb92bbfe835d1c14c481646de3bba0c4439e7e45a25"
+        "rows_sha256": "39477ffe723c2b872be8c329c8b16fcd58d02a262912531057f3f24de0a924b6"
       },
       {
         "code": "7183",
-        "rows": 1219,
+        "rows": 1217,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "b77a8a8f185b367019b1ed63fca51e2ed07d81d491951dfbd2cfe16ce955fb2a"
+        "rows_sha256": "41191dc8595af70b8d4e79ddd700ca04d990e5b04f6d8bdc465f49ddd54975c3"
       },
       {
         "code": "7255",
-        "rows": 1215,
+        "rows": 1213,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "851d03088b45c45b7a4c402a966ce53e7642860e6c2f0ad50cf17d5bf4eb7ff3"
+        "rows_sha256": "859b2aea509b7dbaeb85d83a347ca6ee91335e1a7925dd24a1db99301ae263da"
       },
       {
         "code": "7490",
-        "rows": 1219,
+        "rows": 1217,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "bdc5d0ac595c803e5d0e1a7a719cc2a5aa1c61c8427cde9fa9c9f9c387efca6c"
+        "rows_sha256": "551f272161027de453e76ff6149149904853373a4402e07a96b99dcf16c469cd"
       },
       {
         "code": "7709",
-        "rows": 1215,
+        "rows": 1213,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "3cfd2ce5c1d05254b184ab70d4dd89a9f7364ad9a02090876a5f9e11f353ca3c"
+        "rows_sha256": "e7944561577f760db04e3f1e2e78c7b6485ea69134261c01057f899ea3caa55b"
       },
       {
         "code": "7851",
@@ -1088,10 +1038,10 @@
       },
       {
         "code": "7946",
-        "rows": 1215,
+        "rows": 1213,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "52eaaad4127eb2d526f6c58b4bc576ae73ed2661475c2aea5a1c28c006142587"
+        "rows_sha256": "0a7bbb9b77faae4a7fad8a6bc8bed30677b79b932b13bbeebc2c5acd7e415088"
       },
       {
         "code": "7985",
@@ -1102,15 +1052,15 @@
       },
       {
         "code": "9691",
-        "rows": 1218,
+        "rows": 1216,
         "latest_session": "2026-10-05",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "755616a47f27634e0d24e245538887e89f36e5a7cd9743a129f7f9dd20499cb6"
+        "rows_sha256": "94a5df83dbd8cfd5000647214126652b179e2324b2fe14b068b2622434e2a949"
       }
     ],
-    "outside_current_window_rows": 27,
-    "current_window_start": "2021-10-11",
-    "previous_source_sha256": "c3ef34b4e85a943dac6d8c5f96477b6f7d5e38a30b73fc76efc4f6e0ca097dd7",
+    "outside_current_window_rows": 18,
+    "current_window_start": "2021-10-13",
+    "previous_source_sha256": "f7d759bccea35db64a2fe3802754085db1b0623ce070f2f62f9e14525c4116d9",
     "excluded_universe_symbols": [
       "3670",
       "3787",
@@ -1126,15 +1076,15 @@
       "9691"
     ]
   },
-  "latest_session": "2026-10-09",
-  "score_from": "2026-10-09",
-  "score_to": "2026-10-09",
+  "latest_session": "2026-10-13",
+  "score_from": "2026-10-13",
+  "score_to": "2026-10-13",
   "tail_rows_latest": 3,
-  "selector_rows_latest": 5,
+  "selector_rows_latest": 0,
   "restricted_selector_rows_latest": 0,
   "quarantined_ledger_rows": 0,
   "jpx_restricted_symbols": 581,
-  "new_or_refreshed_rows": 5,
+  "new_or_refreshed_rows": 0,
   "notification_payloads": 0,
   "ledger_rows": 983,
   "metrics_rows": 35

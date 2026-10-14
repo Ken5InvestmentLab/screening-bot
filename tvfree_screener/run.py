@@ -99,8 +99,25 @@ def fetch_daily(universe: pd.DataFrame, period: str, batch: int = 80) -> pd.Data
     return d.sort_values(["symbol","date"]).drop_duplicates(["symbol","date"], keep="last")
 
 
-def build_features(d: pd.DataFrame) -> pd.DataFrame:
-    d = d.sort_values(["symbol","date"]).copy()
+def _take_columns(frame: pd.DataFrame, positions: np.ndarray, *, reset_index: bool = False) -> pd.DataFrame:
+    """Take rows per column without consolidating the complete feature matrix."""
+    columns = {}
+    for column in frame:
+        series = frame[column].iloc[positions]
+        if reset_index:
+            series.index = pd.RangeIndex(len(series))
+        columns[column] = series
+    return pd.DataFrame(columns, copy=False)
+
+
+def build_features(d: pd.DataFrame, *, memory_efficient: bool = False) -> pd.DataFrame:
+    if memory_efficient:
+        keys = pd.DataFrame({"symbol": d["symbol"].array, "date": d["date"].array}, copy=False)
+        positions = keys.sort_values(["symbol", "date"]).index.to_numpy()
+        d = _take_columns(d, positions, reset_index=True)
+        del keys, positions
+    else:
+        d = d.sort_values(["symbol","date"]).copy()
     g = d.groupby("symbol", group_keys=False)
     for n in [1,2,3,5,10,20,40]:
         d[f"ret{n}"] = g["close"].pct_change(n, fill_method=None)
@@ -150,6 +167,9 @@ def build_features(d: pd.DataFrame) -> pd.DataFrame:
     d["target_end_date"] = g["date"].shift(-5)
     d["prev_close"] = g["close"].shift(1)
     d["prev_volume"] = g["volume"].shift(1)
+    if memory_efficient:
+        del g, ma, va, delta, gain, loss, ag, al, rs, prev, tr, rng
+        del hi, lo, lo14, hi14, ma20, sd20, vm, vs
     bd = d.groupby("date")
     m = pd.DataFrame({
         "breadth_ret1_pos": bd["ret1"].apply(lambda s:(s>0).mean()),
@@ -157,8 +177,25 @@ def build_features(d: pd.DataFrame) -> pd.DataFrame:
         "med_ret5": bd["ret5"].median(),
         "breadth_ma20": bd["ma20_gap"].apply(lambda s:(s>0).mean()),
     }).reset_index()
-    d = d.merge(m, on="date", how="left")
-    return d.replace([np.inf,-np.inf],np.nan)
+    if not memory_efficient:
+        d = d.merge(m, on="date", how="left")
+        return d.replace([np.inf,-np.inf],np.nan)
+    # Cloud's multi-million-row corpus must not consolidate every feature into
+    # another full float64 matrix just to attach four date-level market values.
+    market = m.set_index("date")
+    overlap = set(market.columns).intersection(d.columns)
+    if overlap:
+        names = [f"{column}_x" if column in overlap else column for column in d]
+        if len(set(names)) != len(names):
+            raise pd.errors.MergeError("Market-column suffixes would create duplicate columns")
+        d.columns = names
+    for column in market:
+        name = f"{column}_y" if column in overlap else column
+        d[name] = d["date"].map(market[column])
+    del bd, market, m
+    for column in d:
+        d[column] = d[column].replace([np.inf, -np.inf], np.nan)
+    return d
 
 
 def model(seed=42):

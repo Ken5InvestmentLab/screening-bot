@@ -49,8 +49,8 @@ def read_daily(path: Path) -> pd.DataFrame:
     return normalize_daily(frame)
 
 
-def eligible_live_rows(features: pd.DataFrame, price_cap: float = 0.0) -> pd.DataFrame:
-    """Apply absolute gates to contemporaneous shares, never later split units."""
+def _eligible_live_mask(features: pd.DataFrame, price_cap: float = 0.0) -> pd.Series:
+    """Evaluate gates on all sessions before selecting any rows."""
     previous_close = features.groupby("symbol")["actual_close"].shift(1)
     previous_volume = features.groupby("symbol")["actual_volume"].shift(1)
     mask = (
@@ -63,7 +63,15 @@ def eligible_live_rows(features: pd.DataFrame, price_cap: float = 0.0) -> pd.Dat
         mask &= usable & usable.groupby(features["symbol"]).shift(1).eq(True)
     if price_cap > 0:
         mask &= previous_close <= price_cap
-    return features.loc[mask].dropna(subset=base.FEATURES).copy()
+    for column in base.FEATURES:
+        mask &= features[column].notna()
+    return mask
+
+
+def eligible_live_rows(features: pd.DataFrame, price_cap: float = 0.0) -> pd.DataFrame:
+    """Apply absolute gates to contemporaneous shares, never later split units."""
+    mask = _eligible_live_mask(features, price_cap)
+    return base._take_columns(features, mask.to_numpy().nonzero()[0])
 
 
 def build_live_features(raw: pd.DataFrame) -> pd.DataFrame:
@@ -73,11 +81,13 @@ def build_live_features(raw: pd.DataFrame) -> pd.DataFrame:
     # Relative indicators use the provider's continuous split-adjusted series.
     # A later split scales a historical lookback uniformly; price*volume and
     # relative indicators stay invariant. Absolute gates use actual_* instead.
-    feature_source = raw.copy()
-    del raw
-    feature_source.loc[~feature_source["source_usable"], ["open", "high", "low", "close", "volume"]] = float("nan")
+    feature_source = raw.copy(deep=False)
+    quarantined = ~feature_source["source_usable"]
+    for column in ("open", "high", "low", "close", "volume"):
+        feature_source[column] = feature_source[column].mask(quarantined, float("nan"))
+    del raw, quarantined
     with daily_phase("feature-build"):
-        features = base.build_features(feature_source)
+        features = base.build_features(feature_source, memory_efficient=True)
     del feature_source
     groups = features.groupby("date")
     # Missing/isolated quotes are unknown, not a negative market vote.
@@ -91,16 +101,19 @@ def build_live_features(raw: pd.DataFrame) -> pd.DataFrame:
 def prepare_live(raw: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Predict without an upper price limit using the frozen capped training pool."""
     features = build_live_features(raw)
-    eligible = eligible_live_rows(features)
     # Keep the original training rows and cross-sectional labels. Expanding
     # prediction coverage must not redefine the fitted model or its Tail CDF.
-    training = eligible_live_rows(features, price_cap=TRAINING_PRICE_CAP)
-    del features
+    eligible_mask = _eligible_live_mask(features)
+    training_mask = _eligible_live_mask(features, price_cap=TRAINING_PRICE_CAP)
+    training_mask &= features["target5_no"].notna()
+    training_mask &= pd.to_datetime(features["target_end_date"], errors="coerce").notna()
+    eligible = base._take_columns(features, eligible_mask.to_numpy().nonzero()[0])
+    labeled = base._take_columns(features, training_mask.to_numpy().nonzero()[0])
+    del features, eligible_mask, training_mask
     eligible["date"] = pd.to_datetime(eligible["date"])
     eligible["target_end_date"] = pd.to_datetime(eligible["target_end_date"], errors="coerce")
-    training["date"] = pd.to_datetime(training["date"])
-    training["target_end_date"] = pd.to_datetime(training["target_end_date"], errors="coerce")
-    labeled = training.dropna(subset=["target5_no", "target_end_date"]).copy()
+    labeled["date"] = pd.to_datetime(labeled["date"])
+    labeled["target_end_date"] = pd.to_datetime(labeled["target_end_date"], errors="coerce")
     labeled["future_rank"] = labeled.groupby("date")["target5_no"].rank(
         pct=True, method="average"
     )

@@ -5,6 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
+import { checkpointJpxRefresh } from './weak-early-beta-jpx-checkout.mjs';
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
 const DEFAULT_RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
@@ -449,6 +450,9 @@ async function main(configFile) {
       throw error;
     }
     ownsLock = true;
+    for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
+      if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
+    }
     saveProgress('branch');
     await requireBranch();
     stage = 'business-day';
@@ -460,7 +464,7 @@ async function main(configFile) {
     saveProgress('preflight');
     if (process.platform === 'win32') {
       const processCheck = await requireOk('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-        `@(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.ProcessId -ne ${process.pid} -and $_.CommandLine -match 'weak-early-beta-daily-runner\\.mjs' } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`],
+        `@(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.ProcessId -ne ${process.pid} -and $_.CommandLine -match 'weak-early-beta-(?:exit-reminder|daily)-runner\\.mjs' } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`],
       { cwd: repo, env, log: path.join(runDir, 'process-preflight'), capture: true, timeoutMs: 30_000 });
       if (processCheck.stdout.trim() && !/^\[\s*\]$/.test(processCheck.stdout.trim())) throw new Error('another Cloud daily Node process exists');
     }
@@ -586,6 +590,18 @@ async function main(configFile) {
   } catch (error) {
     result.error = error.message;
     result.stage = stage;
+    if (ownsLock && stage === 'detection') {
+      try {
+        result.failedJpxRefresh = await checkpointJpxRefresh({ repo, git, startedAt, startCommit: result.startCommit, date: today, checkSafety: () => {
+          if (!fs.existsSync(lock) || fs.readFileSync(lock, 'utf8') !== startedAt) throw new Error('Cloud daily lock ownership changed');
+          for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
+            if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
+          }
+        } });
+      } catch (cleanupError) {
+        result.jpxRefreshError = cleanupError.message;
+      }
+    }
     await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
     process.exitCode = 1;
   } finally {

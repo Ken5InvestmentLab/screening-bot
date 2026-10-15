@@ -50,6 +50,7 @@ function fixture(t, settings = {}) {
         case 'commit': state = ''; committed = true; break;
         case 'diff-tree': stdout = settings.commitLeaves || `${ledger}\0`; break;
         case 'push': assert.deepEqual(args, ['push', 'origin', `${commitSha}:refs/heads/research/weak-early-beta`]); break;
+        case 'fetch': case 'merge-base': case 'merge': break;
         default: throw new Error(`unexpected git operation ${args[0]}`);
       }
     }
@@ -81,6 +82,26 @@ test('zero reminders stay silent without a commit or push', async t => {
   const result = await main(f.configPath, f.options);
   assert.equal(result.reminders, 0);
   assert.equal(f.calls.some(call => ['add', 'commit', 'push'].includes(call.args[0])), false);
+});
+
+test('prepare-only syncs a clean checkout without Python or changing the delivery receipt', async t => {
+  const f = fixture(t);
+  fs.mkdirSync(path.dirname(f.resultPath), { recursive: true });
+  fs.writeFileSync(f.resultPath, 'previous verified delivery');
+  const result = await main(f.configPath, { ...f.options, prepareOnly: true });
+  assert.equal(result.ok, true);
+  assert.equal(result.checkout.action, 'clean');
+  assert.equal(f.delivered(), 0);
+  assert.equal(fs.readFileSync(f.resultPath, 'utf8'), 'previous verified delivery');
+  assert.equal(f.calls.some(call => ['add', 'commit', 'push'].includes(call.args[0])), false);
+  assert.ok(f.calls.some(call => call.args[0] === 'merge' && call.args[1] === '--ff-only'));
+});
+
+test('prepare-only preserves unknown edits and stops before fetching', async t => {
+  const f = fixture(t, { initialStatus: ' M reports/weak_early_beta_latest.html\0' });
+  await assert.rejects(main(f.configPath, { ...f.options, prepareOnly: true }), /JPX-only/);
+  assert.equal(f.delivered(), 0);
+  assert.equal(f.calls.some(call => ['fetch', 'restore', 'add', 'commit', 'push'].includes(call.args[0])), false);
 });
 
 test('dirty, wrong branch, wrong origin and stale HEAD stop before any delivery', async t => {

@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadDailyConfig, parseGitStatus, requireRemoteHead, run } from './weak-early-beta-daily-runner.mjs';
+import { prepareJpxCheckout } from './weak-early-beta-jpx-checkout.mjs';
 
 const RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
 const BRANCH = 'research/weak-early-beta';
@@ -63,7 +64,7 @@ export async function commitReminderReceipts(git, date, { startCommit, checkLock
 }
 export async function main(configFile, {
   runnerRepo = RUNNER_REPO, runImpl = run, now = () => new Date(),
-  platform = process.platform, log = line => console.error(line),
+  platform = process.platform, log = line => console.error(line), prepareOnly = false,
 } = {}) {
   const config = loadReminderConfig(configFile, runnerRepo);
   const repo = path.resolve(config.repoPath);
@@ -75,7 +76,7 @@ export async function main(configFile, {
   const runtime = path.join(repo, '.cache', 'weak_early_beta', 'exit_reminder_runtime');
   const runDir = path.join(runtime, `reminder-${startedAt.replace(/[:.]/g, '-')}`);
   const lock = path.join(repo, '.cache', 'weak_early_beta', 'exit-reminder-runner.lock');
-  const resultPath = path.join(runtime, 'exit-reminder-latest.json');
+  const resultPath = path.join(runtime, prepareOnly ? 'checkout-latest.json' : 'exit-reminder-latest.json');
   const result = { identity: 'WEAK_EARLY_CLOUD_EXIT_REMINDER_V1', startedAt, date: today, ok: false };
   fs.mkdirSync(runDir, { recursive: true });
   const env = { ...process.env, PYTHONUNBUFFERED: '1' };
@@ -111,6 +112,24 @@ export async function main(configFile, {
       if (fs.existsSync(otherLock)) throw new Error('another Cloud runner lock exists; reconcile the active run');
     }
     if ((await git(['branch', '--show-current'])).stdout.trim() !== BRANCH) throw new Error('refusing to run outside research/weak-early-beta');
+    if (prepareOnly) {
+      // Preparation never invokes Python or sends a Discord message.
+      if (platform === 'win32') {
+        const processes = await execute('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+          `$ErrorActionPreference = 'Stop'; @(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" -ErrorAction Stop | Where-Object { $_.ProcessId -ne ${process.pid} -and $_.CommandLine -match 'weak-early-beta-(?:exit-reminder|daily)-runner\\.mjs' } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`], 'process-preflight', 30_000);
+        if (processes.stdout.trim() && !/^\[\s*\]$/.test(processes.stdout.trim())) throw new Error('another Cloud reminder or daily Node process exists');
+      }
+      const checkSafety = () => {
+        checkLock();
+        for (const other of ['exit-reminder.lock', 'daily_runtime/daily.lock']) {
+          if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud runner lock exists');
+        }
+      };
+      result.checkout = await prepareJpxCheckout({ repo, git, checkSafety, auditDir: runDir });
+      result.ok = true;
+      progress('complete');
+      return result;
+    }
     if (parseGitStatus((await git(['status', '--porcelain=v1', '-z', '--untracked-files=all'])).stdout).length) throw new Error('reminder checkout is not clean; use a clean research checkout without changing user files');
     const origin = (await git(['remote', 'get-url', 'origin'])).stdout.trim();
     if (!/^(?:https:\/\/github\.com\/|git@github\.com:)Ken5InvestmentLab\/screening-bot(?:\.git)?$/i.test(origin)) throw new Error('unexpected Cloud Git origin');
@@ -143,6 +162,7 @@ export async function main(configFile, {
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (!process.argv[2]) throw new Error('usage: node weak-early-beta-exit-reminder-runner.mjs <config.json>');
-  try { console.log(JSON.stringify(await main(process.argv[2]))); }
+  if (process.argv.slice(3).some(arg => arg !== '--prepare-only') || process.argv.length > 4) throw new Error('unexpected Cloud reminder option');
+  try { console.log(JSON.stringify(await main(process.argv[2], { prepareOnly: process.argv[3] === '--prepare-only' }))); }
   catch (error) { console.error(error.message); process.exitCode = 1; }
 }

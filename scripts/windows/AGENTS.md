@@ -12,6 +12,8 @@
 
 ## Cloud beta daily runner
 
+- Check Windows dynamic TCP port pressure before any remote Git/model/JPX/Yahoo work. Count unique local endpoints, including orphan/TIME_WAIT sockets; wait only within the same JST run date and a bounded deadline, with receipt progress. This guard must not kill other applications, change OS networking, retry the full daily pipeline, or start another run. Test with `node --test scripts/windows/test-weak-early-beta-network-guard.mjs scripts/windows/test-weak-early-beta-daily-runner.mjs`.
+
 - Before the morning reminder, run the exit-reminder runner with `--prepare-only` using its existing config, then invoke delivery once without the flag. Preparation owns the reminder lock, checks both runners, fast-forwards only the research branch, and repairs only an unstaged JPX snapshot metadata refresh with unchanged symbol/rule data. Audit and discard an older refresh already superseded on origin; otherwise preserve it in a snapshot-only commit/push. Unknown/staged/mixed changes and divergence still stop. Preparation never invokes Python or overwrites the delivery result. On detection failure, checkpoint only a sole metadata refresh generated during that run, with frozen HEAD, remote and lock checks; do not auto-commit other failed outputs. Verify with `node --test scripts/windows/test-weak-early-beta-jpx-checkout.mjs scripts/windows/test-weak-early-beta-exit-reminder-runner.mjs`.
 
 - Drain the initial forward fundamental queue with a bounded loop: each successful child must remove exactly its verified HTML import count. Stop on errors or no progress and reconcile retained claims before stage-only recovery; do not repeat completed analysis.

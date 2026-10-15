@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
 import { checkpointJpxRefresh } from './weak-early-beta-jpx-checkout.mjs';
+import { networkFailureDetail, waitForNetworkCapacity } from './weak-early-beta-network-guard.mjs';
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
 const DEFAULT_RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
@@ -137,7 +138,11 @@ async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_0
 }
 async function requireOk(exe, args, options) {
   const result = await run(exe, args, options);
-  if (result.code !== 0) throw new Error(`${path.basename(options.log)} failed; inspect bounded local logs`);
+  if (result.code !== 0) {
+    const detail = networkFailureDetail(result.stderr);
+    throw Object.assign(new Error(`${path.basename(options.log)} failed; ${detail?.message || 'inspect bounded local logs'}`),
+      detail ? { failureType: detail.failureType } : {});
+  }
   return result;
 }
 async function waitInShortChunks(ms) {
@@ -473,6 +478,16 @@ async function main(configFile) {
     }
     const origin = (await git(['remote', 'get-url', 'origin'])).stdout.trim();
     if (!/^(?:https:\/\/github\.com\/|git@github\.com:)Ken5InvestmentLab\/screening-bot(?:\.git)?$/i.test(origin)) throw new Error('unexpected Cloud Git origin');
+    // Check local socket pressure before GitHub, model, JPX or Yahoo requests.
+    // A waiting preflight owns this run's lock and never replays daily work.
+    saveProgress('network-preflight');
+    result.networkPreflight = await waitForNetworkCapacity({
+      expectedDate: today,
+      timeoutMs: Number(config.networkWaitTimeoutMs ?? 900_000),
+      pollMs: Number(config.networkPollMs ?? 30_000),
+      onProgress: progress => saveProgress('network-preflight', { networkPreflight: progress }),
+    });
+    saveProgress('preflight');
     result.startCommit = await requireRemoteHead(git);
     const fundamentalConfig = readJson(path.resolve(config.fundamentalConfigPath));
     if (path.resolve(fundamentalConfig.repoPath) !== repo) throw new Error('fundamental runner configuration points outside the daily checkout');
@@ -589,6 +604,7 @@ async function main(configFile) {
     result.ok = true;
   } catch (error) {
     result.error = error.message;
+    if (error.failureType) result.failureType = error.failureType;
     result.stage = stage;
     if (ownsLock && stage === 'detection') {
       try {

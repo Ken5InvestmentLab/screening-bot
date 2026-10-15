@@ -15,6 +15,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from .network import permanent_network_error, transient_network_error
+
 
 VERSION = "CLOUD_SPLIT_BASIS_V1"
 PRICE_BASIS = "yahoo_daily_split_adjusted"
@@ -727,6 +729,14 @@ def _source_problem(source: pd.DataFrame) -> str | None:
     return None
 
 
+def _provider_errors(yf: Any) -> dict:
+    # yfinance 0.2.66 swallows transport exceptions in download/history and
+    # stores their original representation here. Keep this diagnostic only;
+    # success still requires the actual bars and explicit action evidence.
+    errors = getattr(getattr(yf, "shared", None), "_ERRORS", None)
+    return errors if isinstance(errors, dict) else {}
+
+
 def _retry_ticker(yf: Any, ticker: str, period: str) -> pd.DataFrame:
     """Retry only failed tickers, retaining repaired daily bars and split evidence.
 
@@ -736,7 +746,10 @@ def _retry_ticker(yf: Any, ticker: str, period: str) -> pd.DataFrame:
     responses still fail here, and normal source-quality/revision gates follow.
     """
     problem = "returned no usable daily bars"
+    last_error = None
     for attempt in range(3):
+        last_error = None
+        _provider_errors(yf).pop(ticker.upper(), None)
         try:
             source = _ticker_source(yf.Ticker(ticker).history(
                 period=period, interval="1d", auto_adjust=False,
@@ -746,9 +759,30 @@ def _retry_ticker(yf: Any, ticker: str, period: str) -> pd.DataFrame:
             if problem is None:
                 return source
         except Exception as exc:
-            problem = f"daily history request failed ({type(exc).__name__})"
+            if not transient_network_error(exc):
+                raise CorporateActionError(f"Yahoo daily history request failed for {ticker}: {exc}") from exc
+            last_error = exc
+        else:
+            provider_error = _provider_errors(yf).get(ticker.upper())
+            if provider_error:
+                last_error = provider_error
+                if permanent_network_error(provider_error):
+                    raise CorporateActionError(
+                        f"Yahoo daily history request failed for {ticker}: {provider_error}"
+                    ) from RuntimeError(str(provider_error))
         if attempt < 2:
             time.sleep(2 ** attempt)
+    if last_error is not None and transient_network_error(last_error):
+        cause = last_error if isinstance(last_error, BaseException) else RuntimeError(str(last_error))
+        raise CorporateActionError(
+            f"Yahoo daily transport request failed for {ticker} after 3 individual attempts: {last_error}; "
+            f"last response: {problem}"
+        ) from cause
+    if last_error is not None:
+        cause = last_error if isinstance(last_error, BaseException) else RuntimeError(str(last_error))
+        raise CorporateActionError(
+            f"Yahoo {problem} for {ticker} after 3 individual attempts: {last_error}"
+        ) from cause
     raise CorporateActionError(f"Yahoo {problem} for {ticker} after 3 individual attempts")
 
 
@@ -773,19 +807,37 @@ def fetch_daily(
     for offset in range(0, len(tickers), batch):
         part = tickers[offset:offset + batch]
         data = None
+        batch_error = None
         for attempt in range(3):
+            batch_error = None
+            for ticker in part:
+                _provider_errors(yf).pop(ticker.upper(), None)
             try:
                 data = yf.download(
                     part, period=period, interval="1d", group_by="ticker",
                     auto_adjust=False, actions=True, repair=True, threads=True,
                     progress=False, timeout=30,
                 )
+                errors = _provider_errors(yf)
+                failures = [errors.get(ticker.upper()) for ticker in part]
+                for failure in failures:
+                    if failure and permanent_network_error(failure):
+                        raise CorporateActionError(f"Yahoo batch daily request failed: {failure}") from RuntimeError(str(failure))
                 if data is not None and not data.empty:
                     break
-            except Exception:
+                if failures and all(failure and transient_network_error(failure) for failure in failures):
+                    batch_error = RuntimeError("; ".join(dict.fromkeys(str(failure) for failure in failures)))
+            except Exception as exc:
+                if not transient_network_error(exc):
+                    raise CorporateActionError(f"Yahoo batch daily request failed: {exc}") from exc
+                batch_error = exc
                 data = None
             if attempt < 2:
                 time.sleep(2 ** attempt)
+        if (data is None or data.empty) and batch_error is not None:
+            raise CorporateActionError(
+                f"Yahoo batch daily transport request failed after 3 attempts: {batch_error}"
+            ) from batch_error
         for ticker in part:
             source = _ticker_source(data, ticker, single=len(part) == 1)
             if _source_problem(source) is not None:

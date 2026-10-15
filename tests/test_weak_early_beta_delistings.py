@@ -272,5 +272,41 @@ class DelistingTests(unittest.TestCase):
         self.assertEqual(roundtrip[roundtrip.symbol.eq('7183')].actual_close.tolist(), [100., 50.])
 
 
+    @patch('weak_early_beta.network.time.sleep')
+    def test_transient_archive_failure_retries_only_that_page(self, sleep):
+        pages = self.responses()
+        failed_url = 'https://www.jpx.co.jp/listing/stocks/delisted/archives-05.html'
+        seen = []
+
+        def get(url, **kwargs):
+            seen.append(url)
+            if url == failed_url and seen.count(url) == 1:
+                raise requests.ConnectionError('[WinError 10048] socket exhaustion')
+            return SimpleNamespace(content=pages[url], url=url, raise_for_status=lambda: None)
+
+        with tempfile.TemporaryDirectory() as temporary, patch('weak_early_beta.restrictions.requests.get', side_effect=get):
+            path = Path(temporary) / 'snapshot.json'
+            rows = fetch_jpx_restricted_symbols('2026-10-09', path)
+            self.assertTrue(rows)
+            self.assertTrue(path.exists())
+        self.assertEqual(seen.count(JPX_RESTRICTIONS_URL), 1)
+        self.assertEqual(seen.count(JPX_DELISTINGS_URL), 1)
+        self.assertEqual(seen.count(failed_url), 2)
+        sleep.assert_called_once_with(1)
+
+    @patch('weak_early_beta.network.time.sleep')
+    def test_transport_exhaustion_retains_previous_snapshot(self, sleep):
+        failure = requests.ConnectionError('[WinError 10048] socket exhaustion')
+        with tempfile.TemporaryDirectory() as temporary, patch('weak_early_beta.restrictions.requests.get', side_effect=failure) as get:
+            path = Path(temporary) / 'snapshot.json'
+            path.write_text('original evidence', encoding='utf-8')
+            with self.assertRaises(requests.ConnectionError) as caught:
+                fetch_jpx_restricted_symbols('2026-10-09', path)
+            self.assertIs(caught.exception, failure)
+            self.assertEqual(path.read_text(encoding='utf-8'), 'original evidence')
+        self.assertEqual(get.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,7 @@
 # Weak+Early Beta Guidance
 
+- Retry transient acquisition failures only for the same read-only GET or unfinished ticker within its existing bound. Preserve Yahoo's original transport cause; authentication/TLS/schema/action/source-revision failures remain fail-closed. Never retry the full daily pipeline or completed batches to recover a network failure. Verify with `python -B -m unittest tests.test_weak_early_beta_network tests.test_weak_early_beta_corporate_actions tests.test_weak_early_beta_delistings`.
+
 - For the multi-million-row Cloud feature corpus, use `base.build_features(..., memory_efficient=True)` and select eligible/training rows per column. Avoid wide-frame merge, replace, sorting/deep-copy consolidation and intermediate training copies; preserve float64 values, global market aggregates, session positions and frozen labels. Keep the shared builder's default legacy path unchanged. Verify exact legacy equivalence and wide-copy guards with `python -B -m unittest tests.test_weak_early_beta_feature_memory tests.test_weak_early_beta_model tests.test_weak_early_beta_unlimited`.
 
 - Keep live acquisition/source revision validation and atomic CSV saving observable through flushed `CLOUD_DAILY_PHASE_V1` stages `live-acquisition` and `source-cache-write`. Preserve exception propagation and the prior cache on failure; progress logging must not add retries or weaken source validation. Verify with `python -B -m unittest tests.test_weak_early_beta_model`.

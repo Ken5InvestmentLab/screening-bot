@@ -13,6 +13,8 @@ from urllib.parse import urljoin, urlparse
 import pandas as pd
 import requests
 
+from .network import retry_get
+
 
 ROOT = Path(__file__).resolve().parents[1]
 JPX_RESTRICTIONS_URL = "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
@@ -82,8 +84,7 @@ def fetch_jpx_restricted_symbols(
     as_of: Any,
     snapshot_path: Path = DEFAULT_RESTRICTION_SNAPSHOT,
 ) -> list[dict[str, str]]:
-    response = requests.get(JPX_RESTRICTIONS_URL, timeout=60, headers={"User-Agent": "Mozilla/5.0"})
-    response.raise_for_status()
+    response = retry_get(requests.get, JPX_RESTRICTIONS_URL, timeout=60, headers={"User-Agent": "Mozilla/5.0"})
     supervision = _TableRows()
     supervision.feed(response.content.decode("utf-8"))
     if not any(len(row) >= 6 and row[:3] == ["指定年月日", "銘柄名", "コード"] and row[5] == "内容"
@@ -196,8 +197,7 @@ def _archive_url(value: str, *, new_listings: bool = False) -> str:
 def _get_jpx_page(url: str) -> bytes:
     new_listings = "/listing/stocks/new/" in url
     _archive_url(url, new_listings=new_listings)
-    response = requests.get(url, timeout=60, headers={"User-Agent": "Mozilla/5.0"})
-    response.raise_for_status()
+    response = retry_get(requests.get, url, timeout=60, headers={"User-Agent": "Mozilla/5.0"})
     if getattr(response, "url", url) != url:
         _archive_url(response.url, new_listings=new_listings)
     return response.content

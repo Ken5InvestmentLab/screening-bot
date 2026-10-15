@@ -661,6 +661,161 @@ class CorporateActionTests(unittest.TestCase):
         self.assertEqual(action_table(result).iloc[0].effective_date, event_date)
         np.testing.assert_allclose(result.actual_close, result.close * 0.1)
 
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_batch_transport_exhaustion_keeps_cause_without_individual_storm(self, download, ticker, sleep):
+        failures = [ConnectionError(f"curl: (7) failed {i}") for i in range(3)]
+        download.side_effect = failures
+        with self.assertRaisesRegex(CorporateActionError, "transport.*after 3 attempts.*failed 2") as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+        self.assertIs(caught.exception.__cause__, failures[-1])
+        self.assertEqual(download.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+        ticker.assert_not_called()
+
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download", side_effect=ValueError("unknown provider failure"))
+    def test_unknown_batch_exception_is_not_retried(self, download, ticker):
+        with self.assertRaisesRegex(CorporateActionError, "unknown provider failure") as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y")
+        self.assertIs(caught.exception.__cause__, download.side_effect)
+        download.assert_called_once()
+        ticker.assert_not_called()
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_partial_batch_transport_failure_keeps_healthy_ticker_and_original_cause(self, download, ticker, sleep):
+        one = daily().set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        download.return_value = pd.concat({"1234.T": one}, axis=1)
+        failure = ConnectionError("curl: (7) failed to connect")
+        ticker.return_value.history.side_effect = failure
+        with self.assertRaisesRegex(CorporateActionError, "5678.T after 3 individual attempts.*curl") as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+        self.assertIs(caught.exception.__cause__, failure)
+        download.assert_called_once()
+        self.assertEqual(ticker.call_args_list[0].args, ("5678.T",))
+        self.assertEqual(ticker.return_value.history.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_yfinance_swallowed_transport_diagnostic_is_not_reported_as_missing_actions(self, download, ticker, sleep):
+        import yfinance as yf
+        error = "ConnectionError('curl: (7) failed to connect')"
+
+        def empty(*args, **kwargs):
+            yf.shared._ERRORS["1234.T"] = error
+            return pd.DataFrame()
+
+        with patch.dict(yf.shared._ERRORS, {}, clear=True):
+            download.side_effect = empty
+            with self.assertRaisesRegex(CorporateActionError, "transport.*curl") as caught:
+                fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y")
+            self.assertEqual(str(caught.exception.__cause__), error)
+        self.assertEqual(download.call_count, 3)
+        ticker.assert_not_called()
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_latest_missing_actions_replace_earlier_ticker_transport_failure(self, download, ticker, sleep):
+        import yfinance as yf
+        one = daily().set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        download.return_value = pd.concat({"1234.T": one}, axis=1)
+        missing = one.drop(columns="Stock Splits")
+        ticker.return_value.history.side_effect = [ConnectionError("curl: (7) old error"), missing, missing]
+        with patch.dict(yf.shared._ERRORS, {}, clear=True), self.assertRaises(CorporateActionError) as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+        self.assertIn("did not return split actions", str(caught.exception))
+        self.assertNotIn("curl", str(caught.exception))
+        self.assertIsNone(caught.exception.__cause__)
+        self.assertEqual(ticker.return_value.history.call_count, 3)
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_latest_empty_batch_replaces_earlier_batch_transport_failure(self, download, ticker, sleep):
+        import yfinance as yf
+        download.side_effect = [ConnectionError("curl: (7) old error"), pd.DataFrame(), pd.DataFrame()]
+        ticker.return_value.history.return_value = pd.DataFrame()
+        with patch.dict(yf.shared._ERRORS, {}, clear=True), self.assertRaises(CorporateActionError) as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y")
+        self.assertIn("did not return split actions", str(caught.exception))
+        self.assertNotIn("curl", str(caught.exception))
+        self.assertEqual(download.call_count, 3)
+        self.assertEqual(ticker.return_value.history.call_count, 3)
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_swallowed_tls_after_transport_failure_stops_ticker_immediately(self, download, ticker, sleep):
+        import yfinance as yf
+        one = daily().set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        download.return_value = pd.concat({"1234.T": one}, axis=1)
+        ssl_error = "SSLError('curl: (60) certificate verify failed')"
+
+        def history(*args, **kwargs):
+            if ticker.return_value.history.call_count == 1:
+                raise ConnectionError("curl: (7) old error")
+            yf.shared._ERRORS["5678.T"] = ssl_error
+            return pd.DataFrame()
+
+        ticker.return_value.history.side_effect = history
+        with patch.dict(yf.shared._ERRORS, {}, clear=True), self.assertRaises(CorporateActionError) as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+        self.assertIn("certificate verify failed", str(caught.exception))
+        self.assertNotIn("old error", str(caught.exception))
+        self.assertEqual(str(caught.exception.__cause__), ssl_error)
+        self.assertEqual(ticker.return_value.history.call_count, 2)
+        sleep.assert_called_once_with(1)
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_swallowed_tls_after_transport_failure_stops_batch_immediately(self, download, ticker, sleep):
+        import yfinance as yf
+
+        def batch(*args, **kwargs):
+            if download.call_count == 1:
+                raise ConnectionError("curl: (7) old error")
+            yf.shared._ERRORS["1234.T"] = "SSLError('curl: (60) certificate verify failed')"
+            return pd.DataFrame()
+
+        download.side_effect = batch
+        with patch.dict(yf.shared._ERRORS, {}, clear=True), self.assertRaises(CorporateActionError) as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T"]}), "5y")
+        self.assertIn("certificate verify failed", str(caught.exception))
+        self.assertNotIn("old error", str(caught.exception))
+        self.assertEqual(download.call_count, 2)
+        ticker.assert_not_called()
+        sleep.assert_called_once_with(1)
+
+    @patch("weak_early_beta.corporate_actions.time.sleep")
+    @patch("yfinance.Ticker")
+    @patch("yfinance.download")
+    def test_latest_provider_missing_prices_replaces_old_transport_cause(self, download, ticker, sleep):
+        import yfinance as yf
+        one = daily().set_index("date").drop(columns="symbol").rename(columns={"split_ratio": "Stock Splits"})
+        download.return_value = pd.concat({"1234.T": one}, axis=1)
+        missing_error = "YFPricesMissingError('possibly delisted; no price data found')"
+
+        def history(*args, **kwargs):
+            if ticker.return_value.history.call_count == 1:
+                raise ConnectionError("curl: (7) old error")
+            yf.shared._ERRORS["5678.T"] = missing_error
+            return pd.DataFrame()
+
+        ticker.return_value.history.side_effect = history
+        with patch.dict(yf.shared._ERRORS, {}, clear=True), self.assertRaises(CorporateActionError) as caught:
+            fetch_daily(pd.DataFrame({"ticker": ["1234.T", "5678.T"]}), "5y")
+        self.assertIn("YFPricesMissingError", str(caught.exception))
+        self.assertNotIn("old error", str(caught.exception))
+        self.assertEqual(str(caught.exception.__cause__), missing_error)
+        self.assertEqual(ticker.return_value.history.call_count, 3)
+
 
 if __name__ == "__main__":
     unittest.main()

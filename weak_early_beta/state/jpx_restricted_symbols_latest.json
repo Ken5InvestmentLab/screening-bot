@@ -1,7 +1,7 @@
 {
   "version": 2,
   "as_of": "2026-10-15",
-  "fetched_at": "2026-10-15T17:01:18.564291+09:00",
+  "fetched_at": "2026-10-15T18:47:55.247635+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
   "source_sha256": "eff9defae535fe7e36c31889f7bf9aa19e350e713b776a10c1875460e2797a6b",
   "rule": "causal designation-date gate; exclude acquisition only on or after the official delisting date",

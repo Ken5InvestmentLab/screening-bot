@@ -39,7 +39,7 @@ jobs:
           cache-dependency-path: .github/workflows/weak-early-beta.yml
 
       - name: Install report-only runtime
-        run: pip install numpy==2.5.3 pandas==2.3.3
+        run: pip install numpy==2.5.3 pandas==2.3.3 'requests>=2.32,<3'
 
       - name: Rebuild matching HTML and private-gated variants from the pinned ledger
         run: python -B weak_early_beta/scripts/build_review_preview.py --output reports

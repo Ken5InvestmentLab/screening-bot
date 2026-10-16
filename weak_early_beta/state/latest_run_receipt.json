@@ -1,18 +1,17 @@
 {
   "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
-  "run_at": "2026-10-15T19:20:03.988353+09:00",
+  "run_at": "2026-10-16T17:34:37.552160+09:00",
   "daily_corpus": ".cache\\weak_early_beta\\tse_daily.csv",
-  "daily_sha256": "bf2f9537aa0141189b3c9a713931d06b7f504d2017a2824922e575405313c61e",
+  "daily_sha256": "ee04a078b2a8d030dfaa466690d7913838521b9d04db07d559f01e994ad23502",
   "source_quality": {
     "identity": "CLOUD_SOURCE_QUALITY_V1",
-    "sourceRows": 4298854,
-    "quarantinedRows": 2986,
+    "sourceRows": 4299236,
+    "quarantinedRows": 2921,
     "quarantinedSymbols": [
       "1383",
       "1401",
       "1420",
       "1719",
-      "1766",
       "1768",
       "1798",
       "1799",
@@ -20,12 +19,10 @@
       "1867",
       "1882",
       "1885",
-      "1887",
       "1899",
       "1946",
       "1968",
       "2117",
-      "2130",
       "2208",
       "2215",
       "2217",
@@ -37,19 +34,16 @@
       "2464",
       "2480",
       "2485",
-      "2493",
       "2503",
       "2683",
       "2687",
       "2737",
       "2753",
-      "2792",
       "2795",
       "2877",
       "2904",
       "2908",
       "2981",
-      "2986",
       "3045",
       "3058",
       "3080",
@@ -81,22 +75,16 @@
       "3623",
       "3624",
       "3645",
-      "3649",
-      "3674",
       "3675",
-      "3680",
       "3723",
       "3750",
       "3771",
       "3842",
       "3915",
-      "3937",
       "3979",
       "3981",
       "4004",
       "4008",
-      "4017",
-      "4040",
       "4072",
       "4097",
       "4178",
@@ -109,12 +97,9 @@
       "4343",
       "4361",
       "4391",
-      "4412",
-      "4415",
       "4429",
       "4438",
       "4440",
-      "4446",
       "4527",
       "4558",
       "4593",
@@ -128,46 +113,33 @@
       "4679",
       "4685",
       "4719",
-      "4736",
       "4743",
       "4750",
-      "4763",
       "4801",
       "4809",
       "4826",
       "4926",
-      "4976",
       "5019",
-      "5026",
       "5126",
       "5134",
       "5142",
       "5162",
       "5194",
       "5199",
-      "5243",
-      "5271",
+      "523A",
       "5279",
-      "5283",
-      "5341",
       "5482",
       "5537",
-      "5541",
       "5542",
       "5632",
       "5753",
       "5802",
       "5817",
       "5844",
-      "5857",
-      "5867",
       "5905",
       "5936",
       "5939",
-      "5941",
       "5942",
-      "5945",
-      "5951",
       "5952",
       "5981",
       "5983",
@@ -177,9 +149,7 @@
       "6050",
       "6087",
       "6091",
-      "6138",
       "6145",
-      "6150",
       "6167",
       "6178",
       "6182",
@@ -188,11 +158,8 @@
       "6208",
       "6217",
       "6222",
-      "6227",
-      "6269",
       "6291",
       "6309",
-      "6328",
       "6336",
       "6340",
       "6356",
@@ -203,8 +170,6 @@
       "6467",
       "6474",
       "6497",
-      "6525",
-      "6555",
       "6571",
       "6574",
       "6597",
@@ -216,13 +181,10 @@
       "6775",
       "6787",
       "6800",
-      "6803",
       "6809",
       "6822",
       "6840",
       "6858",
-      "6864",
-      "6874",
       "6898",
       "6899",
       "6907",
@@ -232,13 +194,10 @@
       "6961",
       "6989",
       "6998",
-      "7003",
       "7021",
-      "7030",
       "7036",
       "7038",
       "7041",
-      "7057",
       "7058",
       "7061",
       "7096",
@@ -250,28 +209,21 @@
       "7189",
       "7215",
       "7231",
-      "7264",
-      "7273",
       "7292",
       "7305",
       "7337",
       "7352",
       "7399",
-      "7409",
-      "7421",
       "7427",
       "7442",
       "7481",
       "7487",
-      "7500",
       "7501",
       "7506",
       "7510",
-      "7515",
       "7524",
       "7596",
       "7603",
-      "7604",
       "7607",
       "7619",
       "7637",
@@ -281,8 +233,6 @@
       "7723",
       "7760",
       "7792",
-      "7800",
-      "7809",
       "7818",
       "7827",
       "7833",
@@ -303,14 +253,12 @@
       "8041",
       "8046",
       "8065",
-      "8077",
       "8085",
       "8089",
       "8104",
       "8111",
       "8142",
       "8147",
-      "8153",
       "8167",
       "8198",
       "8244",
@@ -338,7 +286,6 @@
       "9028",
       "9046",
       "9063",
-      "9163",
       "9173",
       "9219",
       "9233",
@@ -348,12 +295,9 @@
       "9265",
       "9267",
       "9272",
-      "9312",
       "9319",
       "9322",
       "9360",
-      "9362",
-      "9418",
       "9421",
       "9438",
       "9441",
@@ -361,7 +305,6 @@
       "9531",
       "9539",
       "9543",
-      "9562",
       "9633",
       "9644",
       "9701",
@@ -371,21 +314,20 @@
       "9872",
       "9880",
       "9888",
-      "9936",
       "9960",
       "9986"
     ],
     "quarantinedDateCount": 1221,
-    "firstQuarantinedDate": "2021-10-15",
-    "lastQuarantinedDate": "2026-10-15",
+    "firstQuarantinedDate": "2021-10-18",
+    "lastQuarantinedDate": "2026-10-16",
     "audit_path": ".cache\\weak_early_beta\\tse_daily.source-quality.json",
-    "audit_sha256": "f458fed398924b9b6c14da0b9d0d3c0c2864754bf374eafbda18e6545bc3ecdc"
+    "audit_sha256": "377ce5725ee487c6dd9c1b47ad168f8dcef313cee70374659063feb99d194762"
   },
   "source_revision": {
     "identity": "CLOUD_SOURCE_REVISION_V1",
     "previousBasis": "verified",
-    "comparedRows": 4281329,
-    "quarantinedComparisonRows": 2915,
+    "comparedRows": 4278045,
+    "quarantinedComparisonRows": 2913,
     "acceptedRepairColumnValues": 9,
     "sourceCorrectionAudit": [],
     "acceptedRepairs": [
@@ -397,7 +339,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "244A",
@@ -407,7 +349,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "3123",
@@ -417,7 +359,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "3583",
@@ -427,7 +369,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "3931",
@@ -437,7 +379,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "4754",
@@ -447,7 +389,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "7815",
@@ -457,7 +399,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "7916",
@@ -467,7 +409,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       },
       {
         "symbol": "9365",
@@ -477,7 +419,7 @@
         "firstDate": "2026-10-14",
         "lastDate": "2026-10-14",
         "previousBasis": "2026-10-14",
-        "currentBasis": "2026-10-15"
+        "currentBasis": "2026-10-16"
       }
     ],
     "quarantinedComparisonSymbolCount": 306
@@ -1060,7 +1002,7 @@
       "9977",
       "9995"
     ],
-    "retained_rows": 10913,
+    "retained_rows": 10904,
     "retained_symbols": [
       {
         "code": "3670",
@@ -1071,52 +1013,52 @@
       },
       {
         "code": "3787",
-        "rows": 1211,
+        "rows": 1210,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "5b155ac1feebf3b5ccb09302271ec718ec9885aa4b8de80bebf696b2df644893"
+        "rows_sha256": "a559002148d37c34630132fbe6f478c53e94a64217841ec330c32559463e8036"
       },
       {
         "code": "4316",
-        "rows": 1211,
+        "rows": 1210,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "1290b16820bcf4374c49b1990074563ec576d8fef4f9cad5f9ae8385a231975d"
+        "rows_sha256": "174cff4166cb2ea674cf8076839015a360bf7a21cb4af8fe1c5621831b8600b0"
       },
       {
         "code": "6147",
-        "rows": 1211,
+        "rows": 1210,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "c16e6d7bff7496f4d36d35502a0aa37a51f3559b7bb84e49c7e391fe81abe3fc"
+        "rows_sha256": "ef04c8c239c99e9bbba5c8641955c464c53fd0f38c8a1addadfd623850adf8db"
       },
       {
         "code": "7183",
-        "rows": 1215,
+        "rows": 1214,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "12f572d7535a795bc6cb5650cd36c02af88b9de06cf041488e1ee15b0e428846"
+        "rows_sha256": "6d7f419e9f256a7c917d0731f96b665746370962c3c6a0a12b40b3b5216e94fb"
       },
       {
         "code": "7255",
-        "rows": 1211,
+        "rows": 1210,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "0b528cca97e2edba3f2f52f22c9756d6db1f9e66a1715bf2e225860771cb2acf"
+        "rows_sha256": "c99eba00c2595ee6af90e1693f1af15369ed39a8e75c8e05a42a567e64431794"
       },
       {
         "code": "7490",
-        "rows": 1215,
+        "rows": 1214,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "9b4fbe7c30357d8a8f67a5722f7f4f35d8e7b6c30c0f96e800ca75852b84dbff"
+        "rows_sha256": "29fc179dbc5bc0c7ec6d2d60baae7912a20c9ab4b430d264c0e8382d2764c01f"
       },
       {
         "code": "7709",
-        "rows": 1211,
+        "rows": 1210,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "c827677f1b7b0325bb2864f6077355d2cb9356dc55dbbb99802c6cc1fa9bcefe"
+        "rows_sha256": "9b1c6fe13f76cb00c100ab92d91472d8d33cbb66e47736714e1bb4a2e24d06e4"
       },
       {
         "code": "7851",
@@ -1127,10 +1069,10 @@
       },
       {
         "code": "7946",
-        "rows": 1211,
+        "rows": 1210,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "9d9005760e87bd691de279b78282ecedad94149a6eaf0d7ea7eb2bd4ae06e540"
+        "rows_sha256": "4b30fc4e07614f7a3351c309162e50b38831393e40372c0878edbf6f9055d7c0"
       },
       {
         "code": "7985",
@@ -1141,14 +1083,14 @@
       },
       {
         "code": "9691",
-        "rows": 1214,
+        "rows": 1213,
         "latest_session": "2026-10-05",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "7f3035ba34d7b6853ceec6205c12007c0d2f25d1cc1e68dad137f4490beb1cac"
+        "rows_sha256": "af7aad7f0292be307eb0c8daccaceeb024b5f33cb2fbb87b8e2089dcd6da8b37"
       }
     ],
-    "outside_current_window_rows": 9,
-    "current_window_start": "2021-10-15",
+    "outside_current_window_rows": 18,
+    "current_window_start": "2021-10-18",
     "previous_source_sha256": "dc4ad30bf3906ca3c2613ffa8ca244257968492c26ba59d66f978e9005c111c5",
     "excluded_universe_symbols": [
       "3670",
@@ -1165,9 +1107,9 @@
       "9691"
     ]
   },
-  "latest_session": "2026-10-15",
-  "score_from": "2026-10-15",
-  "score_to": "2026-10-15",
+  "latest_session": "2026-10-16",
+  "score_from": "2026-10-16",
+  "score_to": "2026-10-16",
   "tail_rows_latest": 3,
   "selector_rows_latest": 0,
   "restricted_selector_rows_latest": 0,

@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "as_of": "2026-10-15",
-  "fetched_at": "2026-10-15T18:47:55.247635+09:00",
+  "as_of": "2026-10-16",
+  "fetched_at": "2026-10-16T17:01:21.973458+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
-  "source_sha256": "eff9defae535fe7e36c31889f7bf9aa19e350e713b776a10c1875460e2797a6b",
+  "source_sha256": "abd2846e85da5a2b14fe43a765e45ed19e57243046a34104663ec74cb4aa6e24",
   "rule": "causal designation-date gate; exclude acquisition only on or after the official delisting date",
   "delisting_sources": [
     {
@@ -9265,7 +9265,7 @@
     {
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/new/index.html",
-      "source_sha256": "f178b3999dbc498c26f344427bc006fe4d8453ee978e71154a3b7be3c1c8a9ca",
+      "source_sha256": "8c74f85984cec448318b33c1539d197f5217fd029c322c5dbe296256fdf2018d",
       "listed_symbol_count": 42
     }
   ],

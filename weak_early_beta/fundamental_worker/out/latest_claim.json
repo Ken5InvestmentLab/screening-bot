@@ -1,19 +1,19 @@
 {
   "ok": true,
-  "claimId": "f4e1653f-7991-4785-aec3-8cdf3f473b3f",
-  "generatedAt": "2026-10-14T18:45:09.421200+09:00",
+  "claimId": "265e22fa-54d8-47da-84b8-8055e51beaec",
+  "generatedAt": "2026-10-19T17:45:01.149982+09:00",
   "claimedCount": 1,
   "alerts": [
     {
-      "alertId": "weak-early-beta:2026-10-14:153A",
-      "receivedAt": "2026-10-14T16:15:00+09:00",
-      "analysisCutoff": "2026-10-14T09:45:09.726Z",
-      "signalDate": "2026-10-14",
+      "alertId": "weak-early-beta:2026-10-19:5242",
+      "receivedAt": "2026-10-19T16:15:00+09:00",
+      "analysisCutoff": "2026-10-19T08:45:01.405Z",
+      "signalDate": "2026-10-19",
       "signalType": "WEAK_EARLY_BETA",
-      "symbolCode": "153A",
-      "symbolName": "カウリス",
+      "symbolCode": "5242",
+      "symbolName": "アイズ",
       "entryPrice": null,
-      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A153A",
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A5242",
       "betaSelectors": [
         "Balance",
         "Dive",
@@ -25,7 +25,7 @@
       "longTermMaterialReviewVersion": 1
     }
   ],
-  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\screening-bot-cloud3-memory-20261014\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "outputReportPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [
       "alertId",
@@ -46,7 +46,7 @@
     "model": "gpt-6.1-sol",
     "reasoningEffort": "xhigh"
   },
-  "analysisStartedAt": "2026-10-14T09:45:09.726Z",
+  "analysisStartedAt": "2026-10-19T08:45:01.405Z",
   "capitalRiskReviewVersion": 1,
   "longTermMaterialReviewVersion": 1
 }

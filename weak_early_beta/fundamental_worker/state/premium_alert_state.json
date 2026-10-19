@@ -2194,6 +2194,449 @@
         },
         "auditStatus": "pass"
       }
+    },
+    "weak-early-beta:2026-10-19:5242": {
+      "completedAt": "2026-10-19T08:59:33.836Z",
+      "delivery": "html",
+      "analysisCutoff": "2026-10-19T08:45:01.405Z",
+      "analysisBasis": "analysis_start",
+      "report": {
+        "alertId": "weak-early-beta:2026-10-19:5242",
+        "signalDate": "2026-10-19",
+        "analysisCutoff": "2026-10-19T08:45:01.405Z",
+        "receivedAt": "2026-10-19T16:15:00+09:00",
+        "signalType": "WEAK_EARLY_BETA",
+        "symbolCode": "5242",
+        "symbolName": "アイズ",
+        "title": "アイズ (5242) | TradingView チャート",
+        "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A5242",
+        "summary": "メディアレーダー刷新と金融領域への拡張が進み、ファクログは既に上期売上へ寄与。ただし主力広告サービスは減収で、新サービスの利益寄与と基準時点のSO残高には未確認点が残る。",
+        "materialImpact": "混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。",
+        "auditStatus": "pass",
+        "fields": [
+          {
+            "name": "材料インパクト",
+            "value": "混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。"
+          },
+          {
+            "name": "事業概要",
+            "value": "広告主・代理店と媒体社をつなぎ、資料ダウンロードやセミナーの見込み顧客情報を提供する「メディアレーダー」と、商品体験後のSNS投稿を企業向けに運営する「トラミー」が主力。金融比較サイト「ファクログ」の成果報酬型送客と、請求書を買い取る「レゾナス」も展開する。"
+          },
+          {
+            "name": "足元材料",
+            "value": "9月25日15:30公表のメディアレーダー全面更新でAI検索や資料管理機能を拡充。AI検索・履歴管理の刷新は資料探索を改善するが、有料リード数・転換率の回復実績は未公表。 9月4日15:30公表ではレゾナスの8月買取額が2.5億円超、前月比約10倍となった。8月14日公表（時刻記載なし）の半期報告書では上期売上5.597億円（10.2%増）、営業利益1,908万円と黒字回復した一方、メディアレーダー売上33.1%減、トラミー9.7%減で、既存広告事業の回復には至っていない。"
+          },
+          {
+            "name": "ファンダ要点",
+            "value": "リード提供の成果承認・請求権確定がファクログの収益化の要点。2025年8月28日15:30公表のrimad買収は費用込み概算2.24億円で、同年9月取得・12月吸収合併は3月26日公表（時刻記載なし）の有報でも実施済みと確認できる。ファクログは上期売上1.566億円を計上し、買収効果は既に売上へ反映されている。 6月末ののれんは1.616億円で、集客費を投じても成果承認単価と利益が残るかが採算を左右する。6月23日15:30公表の予定との比較では、レゾナスは7月開始予定から取引実行の段階へ進んだが、買取額と売上・利益は異なり、個別利益寄与は未確認。 6月5日15:30公表のラボル提携についても、ELファクタリングは共同運営の開始が公表されているが、当社の個別売上・利益寄与は未開示。"
+          },
+          {
+            "name": "注意点",
+            "value": "資料リード売上33.9%減の背景は、生成AIでの情報収集行動の変化、一括から個別ダウンロードへの移行、広告投資の抑制。刷新の開始だけで回復を織り込めず、レゾナスのノンリコース買取では信用費用・資金回転と手数料採算の内訳も未開示。第1回SOは3月26日公表（時刻記載なし）の有報で2月末58,940株が残り、行使価額444円・期限2031年3月。発行原資料とその後の全異動を照合できず、基準時点の残存・希薄化規模は未確定。 2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。"
+          },
+          {
+            "name": "開示リンク",
+            "value": "[2026-09-25 No.1の広告業界向けプラットフォーム「メディアレーダー」が全面リニューアル UI・UXを大幅に刷新し、AI検索や資料管理機能も拡充(15:30)](https://f.irbank.net/pr/20260925/140120260925540153.pdf)\n[2026-09-04 株式会社アイズが運営するファクタリングサービス「レゾナス」、８月の買取金額が２億5,000万円を突破 先月比約10倍成長(15:30)](https://f.irbank.net/pr/20260904/140120260904531729.pdf)\n[2026-08-14 半期報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf)\n[2026-06-23 「ファクログ」運営の株式会社アイズ、法人向けオンラインファクタリングサービス「レゾナス」の提供を7月に開始予定(15:30)](https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf)\n[2026-06-05 「ファクログ」運営の株式会社アイズ、株式会社ラボルと提携しAIファクタリングサービスの共同運営を開始(15:30)](https://www.eyez.jp/info/20260605/)\n[2026-03-26 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf)\n[2025-08-28 rimad株式会社の株式の取得（子会社化）に関するお知らせ(15:30)](https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf)\n[2021-11-01 マーケティングに悩む経営者へ。No.1の媒体資料ポータル「メディアレーダー」運営の株式会社アイズが、「THE OWNER」の株式会社ZUUと業務提携を開始(時刻記載なし)](https://www.eyez.jp/info/20211101/)"
+          },
+          {
+            "name": "Sources",
+            "value": "[IRニュース – 株式会社アイズ](https://www.eyez.jp/ir/news/)\n[ニュース – 株式会社アイズ](https://www.eyez.jp/info/)\n[アイズ（5242）のIR情報・決算資料 | IRBANK](https://irbank.net/5242/ir)\n[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)"
+          }
+        ],
+        "sources": [
+          {
+            "title": "IRニュース – 株式会社アイズ",
+            "url": "https://www.eyez.jp/ir/news/"
+          },
+          {
+            "title": "ニュース – 株式会社アイズ",
+            "url": "https://www.eyez.jp/info/"
+          },
+          {
+            "title": "アイズ（5242）のIR情報・決算資料 | IRBANK",
+            "url": "https://irbank.net/5242/ir"
+          },
+          {
+            "title": "(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス",
+            "url": "https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1"
+          }
+        ],
+        "disclosures": [
+          {
+            "title": "No.1の広告業界向けプラットフォーム「メディアレーダー」が全面リニューアル UI・UXを大幅に刷新し、AI検索や資料管理機能も拡充",
+            "publishedAt": "2026-09-25T15:30:00+09:00",
+            "url": "https://f.irbank.net/pr/20260925/140120260925540153.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "株式会社アイズが運営するファクタリングサービス「レゾナス」、８月の買取金額が２億5,000万円を突破 先月比約10倍成長",
+            "publishedAt": "2026-09-04T15:30:00+09:00",
+            "url": "https://f.irbank.net/pr/20260904/140120260904531729.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "半期報告書",
+            "publishedAt": "2026-08-14",
+            "publishedAtPrecision": "date_only",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "「ファクログ」運営の株式会社アイズ、法人向けオンラインファクタリングサービス「レゾナス」の提供を7月に開始予定",
+            "publishedAt": "2026-06-23T15:30:00+09:00",
+            "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "「ファクログ」運営の株式会社アイズ、株式会社ラボルと提携しAIファクタリングサービスの共同運営を開始",
+            "publishedAt": "2026-06-05T15:30:00+09:00",
+            "url": "https://www.eyez.jp/info/20260605/",
+            "contentReviewed": true
+          },
+          {
+            "title": "有価証券報告書",
+            "publishedAt": "2026-03-26",
+            "publishedAtPrecision": "date_only",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "rimad株式会社の株式の取得（子会社化）に関するお知らせ",
+            "publishedAt": "2025-08-28T15:30:00+09:00",
+            "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf",
+            "contentReviewed": true
+          },
+          {
+            "title": "マーケティングに悩む経営者へ。No.1の媒体資料ポータル「メディアレーダー」運営の株式会社アイズが、「THE OWNER」の株式会社ZUUと業務提携を開始",
+            "publishedAt": "2021-11-01",
+            "publishedAtPrecision": "date_only",
+            "url": "https://www.eyez.jp/info/20211101/",
+            "contentReviewed": true
+          }
+        ],
+        "sourceChecks": [
+          {
+            "role": "official_ir",
+            "checked": true,
+            "url": "https://www.eyez.jp/ir/news/",
+            "checkedUrls": [
+              "https://www.eyez.jp/ir/library/securities/",
+              "https://www.eyez.jp/ir/library/",
+              "https://www.eyez.jp/info/",
+              "https://www.eyez.jp/info/page/2/",
+              "https://www.eyez.jp/date/2021/?post_type=info",
+              "https://ssl4.eir-parts.net/V4Public/eir/5242/ja/announcement/announcement_0.js",
+              "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf",
+              "https://www.eyez.jp/info/20260605/",
+              "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf",
+              "https://www.eyez.jp/info/20211101/",
+              "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100VI3W/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100T5HZ/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100QIDJ/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/tdnet/2873663/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/tdnet/2875057/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/tdnet/2847192/00.pdf",
+              "https://ssl4.eir-parts.net/doc/5242/tdnet/2553178/00.pdf"
+            ],
+            "result": "公式IRの動的掲載元EIRフィード214件と公式ニュースを開き、2026年9月4日～10月19日17:45:01 JSTの直近45日相当・分析開始までの候補を照合。最新は9月25日15:30の全面更新、次は9月4日15:30のレゾナス買取額。検出日時16:15を分析基準にせず、claim.analysisCutoffまでの公表資料を採用した。半期報告書・年次有報・主要原発表の本文を読んだ。EIRで00:00表示の法定報告書は実際の公表時刻の証拠とせずdate_onlyとした。2021年提携まで遡及したが、全過去契約の継続・終了とSO発行原決議書は未照合。出力先に既存premium_reports.jsonはなかった。"
+          },
+          {
+            "role": "irbank_or_tdnet",
+            "checked": true,
+            "url": "https://irbank.net/5242/ir",
+            "checkedUrls": [
+              "https://irbank.net/5242/ir",
+              "https://irbank.net/5242/140120260925540153",
+              "https://irbank.net/5242/140120260904531729",
+              "https://f.irbank.net/pr/20260925/140120260925540153.pdf",
+              "https://f.irbank.net/pr/20260904/140120260904531729.pdf"
+            ],
+            "result": "IRBANKの開示一覧をHTTP取得して本文を読み、最新9月25日15:30、9月4日15:30、8月18日15:30、8月17日15:30、8月14日15:30の開示順と公式EIRを照合した。web閲覧側の403は別の読み取りGETで解消し、未取得の一覧を確認済みにはしていない。個別ページが示すf.irbank.net/pr直リンクを取得してPDF本文と公表日を確認。8月14日決算の文書IDに8月13日が含まれても、ID日付を公表日に使わなかった。基準日当日の時刻未確認資料は採用していない。"
+          },
+          {
+            "role": "tdnet_equivalent",
+            "checked": true,
+            "url": "https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1",
+            "checkedUrls": [
+              "https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1",
+              "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260814/20260813519946.pdf",
+              "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260814/20260813519931.pdf"
+            ],
+            "result": "Yahoo掲載のTDnet一覧を開き、9月25日・9月4日と中間決算一式の掲載日時を確認し、決算説明資料・短信本文も読んだ。ページ上の株価日は10月5日で鮮度が限定されるため、この一覧だけで10月19日までの開示不存在を断定せず、公式EIRとIRBANKの取得結果を優先した。長いYahoo PDF URLは公開開示リンクに使わず、公式掲載PDFまたは確認済みf.irbank.netを選んだ。"
+          }
+        ],
+        "capitalRiskReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-19T08:45:01.405Z",
+          "status": "unresolved",
+          "historyCheckedThrough": null,
+          "documents": [
+            {
+              "id": "cap_half_2026",
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "title": "半期報告書",
+              "publishedAt": "2026-08-14",
+              "publishedAtPrecision": "date_only",
+              "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
+              "contentReviewed": true,
+              "locator": "6頁「新株予約権等の状況」「発行済株式」・13頁CF・15頁「1株当たり情報」",
+              "finding": "上期の新規SO等は該当なし、上期の新株予約権行使収入はゼロ。一方、基本EPS8.07円、潜在株式調整後7.82円、調整用普通株式増加数33,089株があり、潜在株式の不存在を示さない。33,089株はEPS計算値で、未行使対象株数ではない。発行済1,026,100株の提出日欄は8月1日以降の行使による発行数を含まない。"
+            },
+            {
+              "id": "cap_annual_2025",
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "title": "有価証券報告書",
+              "publishedAt": "2026-03-26",
+              "publishedAtPrecision": "date_only",
+              "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
+              "contentReviewed": true,
+              "locator": "13頁(12)・21～23頁「新株予約権等の状況」・51頁株主資本・56頁SO注記・66～67頁",
+              "finding": "第1回SOの2025年末未行使残58,940株、2026年2月末まで内容変更なし。2025年の権利行使9,400株・失効ゼロ、行使価額444円、行使期間2023年4月1日～2031年3月31日。在職要件、相続人行使不可、譲渡は取締役会承認。その他新株予約権・ライツプランは該当なし、社債明細も該当なし。株主資本注記のSO欄のダッシュは残存ゼロを意味しない。"
+            },
+            {
+              "id": "cap_annual_2024",
+              "kind": "status",
+              "source": "official_ir",
+              "title": "2024年12月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100VI3W/00.pdf",
+              "publishedAt": "2025-03-28",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "locator": "55頁「ストック・オプション等関係」",
+              "finding": "第1回SOは期首76,040株、権利行使6,300株、失効1,400株、期末未行使68,340株。付与時79,920株、付与日2021年4月16日、行使価額444円。"
+            },
+            {
+              "id": "cap_annual_2023",
+              "kind": "status",
+              "source": "official_ir",
+              "title": "2023年12月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100T5HZ/00.pdf",
+              "publishedAt": "2024-03-28",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "locator": "61頁「ストック・オプション等関係」",
+              "finding": "第1回SOは79,520株の権利が確定し、行使3,400株・失効80株、未行使残76,040株。"
+            },
+            {
+              "id": "cap_annual_2022",
+              "kind": "status",
+              "source": "official_ir",
+              "title": "2022年12月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100QIDJ/00.pdf",
+              "publishedAt": "2023-03-31",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "locator": "61頁「ストック・オプション等関係」",
+              "finding": "2021年4月16日付与の第1回SO79,920株を再掲。2022年は権利の確定前79,760株から240株失効し、未確定残79,520株。発行時の決議書そのものではないためissuanceとして扱わない。"
+            }
+          ],
+          "instruments": [
+            {
+              "id": "eyez_warrant_1_2021",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap_half_2026",
+              "asOfDate": "2026-10-19",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "基準時点の未行使対象株数は未公表・未照合。年次有報の58,940株は2025年末～2026年2月末の確認値で、半期EPSの33,089株は未行使残ではない。2026年3月以降の失効・取得消却等の全異動を確定できないため持ち越して推定しない。",
+              "lastConfirmedBalance": {
+                "documentId": "cap_annual_2025",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 58940
+              },
+              "unresolvedReason": "2021年3月31日決議・4月16日付与の発行原決議書そのものを取得できず、2022～2025年有報の再掲で条件・年次行使/失効を確認した。最新半期報告書は既存SO残高表を更新せず、上期の行使収入ゼロだけでは失効ゼロや下期全異動を証明できない。",
+              "summary": "役職員向け無償SOで行使価額444円、期限2031年3月31日。在職要件・譲渡承認・無償取得条項がある。2023年3,400株、2024年6,300株、2025年9,400株の行使と各年失効を確認したが、部分行使を全数終了とは扱わない。最新残高の時点と新株交付/自己株式交付の最終内訳を揃えられないため、希薄化率は計算しない。"
+            }
+          ],
+          "unresolvedReason": "第1回SO発行原資料と分析基準時点までの全残高の連続照合が未完了。最新公式半期・年次資料でSO以外の新株予約権、社債、潜在株式も調べたが、これらを含めた全潜在株式の残存なしを示す根拠はない。none_confirmedや残高ゼロとはしない。",
+          "riskNote": "第1回SOは3月26日公表（時刻記載なし）の有報で2月末58,940株が残り、行使価額444円・期限2031年3月。発行原資料とその後の全異動を照合できず、基準時点の残存・希薄化規模は未確定。"
+        },
+        "longTermMaterialReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-19T08:45:01.405Z",
+          "conclusion": "unresolved",
+          "historyCheckedThrough": null,
+          "reviewedCategories": [
+            "alliances",
+            "orders_contracts",
+            "investment_capacity",
+            "products_services",
+            "approvals_subsidies",
+            "restructuring",
+            "legal_regulatory",
+            "contract_changes"
+          ],
+          "reviewScopeNote": "最新公式半期（2026年8月14日）・年次有報（3月26日）、公式EIR開示履歴、会社ニュースを起点に、現在の3主力事業、金融領域、買収・合併・ソフトウエア投資、広告規制、重要な契約と変更を確認。2021年ZUU提携、2025年rimad/Talema買収、2026年EL/レゾナス開始と9月進捗まで原発表へ遡った。年数による除外はしていない。重要な設備計画・大型受注/補助金については最新資料・履歴に該当する継続案件を特定できなかった。全過去案件の更新・終了を網羅して確定したとはしない。",
+          "documents": [
+            {
+              "id": "lt_half_2026",
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "title": "半期報告書",
+              "publishedAt": "2026-08-14",
+              "publishedAtPrecision": "date_only",
+              "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
+              "contentReviewed": true,
+              "locator": "3～5頁経営成績・重要な契約、10～15頁財務諸表・収益認識",
+              "finding": "ファクログ売上156,577千円、メディアレーダー180,668千円、トラミー173,211千円。主力2サービスは減収、ファクログが増収を補完。のれん161,599千円、営業CF32,146千円。重要な契約等は該当なしだが、個別提携すべての継続・終了を証明する記載ではない。"
+            },
+            {
+              "id": "lt_annual_2025",
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "title": "有価証券報告書",
+              "publishedAt": "2026-03-26",
+              "publishedAtPrecision": "date_only",
+              "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
+              "contentReviewed": true,
+              "locator": "5～6頁事業、10～14頁戦略・リスク、19～20頁契約・設備、48～49頁見積り・減損、61・63頁",
+              "finding": "2025年12月1日rimad吸収合併実施済みで新株発行なし。ファクログののれん評価は同事業売上を主要仮定とする。ソフトウエア減損22,050千円は2025年業績へ既反映で、資産名からTalema等の個別サービスへ帰属させない。重要な設備新設・除却計画はなし。SNS規約、ステマ規制、薬機法、検索集客が事業リスク。ZUU提携の現行条件・個別寄与は特定できない。"
+            },
+            {
+              "id": "lt_faclog_acquisition",
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "title": "rimad株式会社の株式の取得（子会社化）に関するお知らせ",
+              "publishedAt": "2025-08-28T15:30:00+09:00",
+              "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf",
+              "contentReviewed": true,
+              "locator": "1～2頁 取得理由・取得価額・日程",
+              "finding": "rimad全株式を213百万円、費用込み概算224百万円で取得する決議。2025年9月1日実行予定。金融比較プラットフォームと既存事業の連携を目的とし、当時の業績影響は精査中。"
+            },
+            {
+              "id": "lt_resonas_plan",
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "title": "「ファクログ」運営の株式会社アイズ、法人向けオンラインファクタリングサービス「レゾナス」の提供を7月に開始予定",
+              "publishedAt": "2026-06-23T15:30:00+09:00",
+              "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf",
+              "contentReviewed": true,
+              "locator": "1～2頁 提供予定・今後の見通し",
+              "finding": "レゾナスを2026年7月中に開始予定と明示。日までは定めていない。業績影響は軽微との会社見込みで、実績寄与とは区別する。"
+            },
+            {
+              "id": "lt_resonas_latest",
+              "kind": "progress",
+              "source": "tdnet_jpx",
+              "title": "株式会社アイズが運営するファクタリングサービス「レゾナス」、８月の買取金額が２億5,000万円を突破 先月比約10倍成長",
+              "publishedAt": "2026-09-04T15:30:00+09:00",
+              "url": "https://f.irbank.net/pr/20260904/140120260904531729.pdf",
+              "contentReviewed": true,
+              "locator": "1～3頁 開始後の実績・契約設計",
+              "finding": "2026年7月に提供開始し、8月買取額2億5,000万円超・前月比約10倍。手数料1.0%～、ノンリコース契約。買取額は売上・利益ではなく、個別損益・信用費用・必要運転資金の数値は本文にない。"
+            },
+            {
+              "id": "lt_renewal",
+              "kind": "original_announcement",
+              "source": "tdnet_jpx",
+              "title": "No.1の広告業界向けプラットフォーム「メディアレーダー」が全面リニューアル UI・UXを大幅に刷新し、AI検索や資料管理機能も拡充",
+              "publishedAt": "2026-09-25T15:30:00+09:00",
+              "url": "https://f.irbank.net/pr/20260925/140120260925540153.pdf",
+              "contentReviewed": true,
+              "locator": "1～2頁 全面リニューアル・機能詳細",
+              "finding": "AI検索、キープ、検索履歴、ダウンロード履歴を提供。資料探索・比較管理の利便性を改善する施策で、有料リード数や売上改善の実績数値は示されていない。"
+            },
+            {
+              "id": "lt_el",
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "title": "「ファクログ」運営の株式会社アイズ、株式会社ラボルと提携しAIファクタリングサービスの共同運営を開始",
+              "publishedAt": "2026-06-05T15:30:00+09:00",
+              "url": "https://www.eyez.jp/info/20260605/",
+              "contentReviewed": true,
+              "locator": "本文「提携の背景」「サービス概要」",
+              "finding": "ラボルのAI買取基盤とファクログの集客を組み合わせ、ELファクタリングの共同運営開始を公表。初回手数料9%の特典があるが、アイズへの配分・利益実績は未記載。自社レゾナスとは別サービス。15:30は公式EIR開示フィードで照合。"
+            },
+            {
+              "id": "lt_zuu",
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "title": "マーケティングに悩む経営者へ。No.1の媒体資料ポータル「メディアレーダー」運営の株式会社アイズが、「THE OWNER」の株式会社ZUUと業務提携を開始",
+              "publishedAt": "2021-11-01",
+              "publishedAtPrecision": "date_only",
+              "url": "https://www.eyez.jp/info/20211101/",
+              "contentReviewed": true,
+              "locator": "本文「この度の業務提携により」「提携の背景」",
+              "finding": "THE OWNERの広告・マーケティング資料請求希望者をメディアレーダーへ送客する提携を公表。公表時の構想は確認できるが、現在の契約更新・終了や個別売上を示す後続資料へ接続できない。"
+            }
+          ],
+          "items": [
+            {
+              "id": "faclog_acquisition",
+              "category": "restructuring",
+              "direction": "positive",
+              "status": "contributing",
+              "originalDocumentId": "lt_faclog_acquisition",
+              "latestProgressDocumentId": "lt_half_2026",
+              "currentAssessment": "ファクログは上期売上1.566億円を計上し、買収効果は既に売上へ反映されている。",
+              "reportedTiming": {
+                "documentId": "lt_faclog_acquisition",
+                "statement": "株式譲渡実行日2025年9月1日（予定）",
+                "dueDate": "2025-09-01"
+              },
+              "actualContribution": {
+                "documentId": "lt_half_2026",
+                "metric": "revenue",
+                "basis": "reported_actual",
+                "statement": "2026年1～6月のファクログ売上156,577千円を公表。サービス別営業利益は開示されていないので、増益額を買収利益と同一視しない。"
+              }
+            },
+            {
+              "id": "resonas_launch",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "in_progress",
+              "originalDocumentId": "lt_resonas_plan",
+              "latestProgressDocumentId": "lt_resonas_latest",
+              "currentAssessment": "レゾナスは7月開始予定から取引実行の段階へ進んだが、買取額と売上・利益は異なり、個別利益寄与は未確認。",
+              "reportedTiming": {
+                "documentId": "lt_resonas_plan",
+                "statement": "2026年7月中の提供開始を予定",
+                "dueDate": null
+              },
+              "riskNote": "レゾナスは買取取引が伸びているが、信用費用・資金負担を含む個別損益は未開示。開始月だけの予定から正確な開始日や収益化日を創作しない。"
+            },
+            {
+              "id": "media_radar_renewal",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "planned",
+              "originalDocumentId": "lt_renewal",
+              "latestProgressDocumentId": "lt_renewal",
+              "currentAssessment": "AI検索・履歴管理の刷新は資料探索を改善するが、有料リード数・転換率の回復実績は未公表。",
+              "statusExplanation": "機能の提供開始は確認済み。原発表後の収益効果の続報がないため、利益寄与を認定せず予定・効果検証段階として記録する。"
+            },
+            {
+              "id": "el_factoring_alliance",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "planned",
+              "originalDocumentId": "lt_el",
+              "latestProgressDocumentId": "lt_el",
+              "currentAssessment": "ELファクタリングは共同運営の開始が公表されているが、当社の個別売上・利益寄与は未開示。",
+              "statusExplanation": "共同運営開始は原発表本文で確認済みだが、その後の個別進捗・当社収益の続報がないため、原発表だけで収益寄与を認定しない。"
+            },
+            {
+              "id": "zuu_referral_alliance_2021",
+              "category": "alliances",
+              "direction": "mixed",
+              "status": "unresolved",
+              "originalDocumentId": "lt_zuu",
+              "latestProgressDocumentId": null,
+              "currentAssessment": "2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。",
+              "unresolvedReason": "原発表のTHE OWNERからメディアレーダーへの送客構想は確認したが、公式開示履歴と最新決算から、契約更新・終了、現在の送客数、売上/利益寄与を示す後続一次資料へ接続できない。",
+              "riskNote": "2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。"
+            }
+          ],
+          "unresolvedReason": "8カテゴリを最新決算・会社固有の履歴で点検したが、ZUU等の旧提携の現在の存続条件・終了・個別寄与の照合が未完了。確認済みのファクログ売上寄与やレゾナス取引増を保持し、古い提携を現在の新材料や未公表利益へ置き換えない。",
+          "riskNote": "2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。"
+        }
+      }
     }
   }
 }

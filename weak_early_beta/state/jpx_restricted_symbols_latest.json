@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "as_of": "2026-10-16",
-  "fetched_at": "2026-10-16T17:01:21.973458+09:00",
+  "as_of": "2026-10-19",
+  "fetched_at": "2026-10-19T17:08:22.219609+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
-  "source_sha256": "abd2846e85da5a2b14fe43a765e45ed19e57243046a34104663ec74cb4aa6e24",
+  "source_sha256": "6a61b16f635704c62272a12b2884c946b4165ca645a4750cd5eff7d64d93a451",
   "rule": "causal designation-date gate; exclude acquisition only on or after the official delisting date",
   "delisting_sources": [
     {
@@ -40,7 +40,7 @@
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
       "source_sha256": "4bd35ae35ac62c606d52a39582e9cb73a6e3c33d1c1b336076f42f32e341bf96",
-      "delisted_symbol_count": 132
+      "delisted_symbol_count": 133
     }
   ],
   "delisted_symbols": [
@@ -5783,6 +5783,16 @@
       "delisting_date": "2026-10-09",
       "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
       "relisting_coverage_start_year": 2022
+    },
+    {
+      "code": "5484",
+      "company_name": "東北特殊鋼（株）",
+      "designation_date": "2026-09-16",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
+      "delisting_date": "2026-10-19",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
+      "relisting_coverage_start_year": 2022
     }
   ],
   "delisting_history": [
@@ -9234,6 +9244,12 @@
       "code": "9691",
       "company_name": "（株）両毛システムズ",
       "delisting_date": "2026-10-09",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"
+    },
+    {
+      "code": "5484",
+      "company_name": "東北特殊鋼（株）",
+      "delisting_date": "2026-10-19",
       "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"
     }
   ],
@@ -15002,7 +15018,10 @@
       "company_name": "東北特殊鋼（株）",
       "designation_date": "2026-09-16",
       "designation": "上場廃止の決定・整理銘柄指定",
-      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
+      "delisting_date": "2026-10-19",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
+      "relisting_coverage_start_year": 2022
     },
     {
       "code": "8254",

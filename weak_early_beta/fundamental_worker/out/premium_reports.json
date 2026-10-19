@@ -1,544 +1,264 @@
 {
   "reports": [
     {
-      "alertId": "weak-early-beta:2026-10-14:153A",
-      "symbolCode": "153A",
-      "symbolName": "カウリス",
-      "signalDate": "2026-10-14",
-      "receivedAt": "2026-10-14T16:15:00+09:00",
-      "analysisCutoff": "2026-10-14T09:45:09.726Z",
+      "alertId": "weak-early-beta:2026-10-19:5242",
+      "signalDate": "2026-10-19",
+      "analysisCutoff": "2026-10-19T08:45:01.405Z",
+      "receivedAt": "2026-10-19T16:15:00+09:00",
       "signalType": "WEAK_EARLY_BETA",
-      "title": "カウリス (153A) | TradingView チャート",
-      "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A153A",
-      "summary": "北國銀行のログイン検知と千葉信用金庫のGrid Data KYC導入が直近材料。継続課金の単価上昇とPoC売上が成長を支える一方、粗利率低下、採用費未消化を含む増益、SOの最新残高照合不足を分けて評価した。",
-      "materialImpact": "混在/要確認：銀行・信金での導入拡大と上方修正が進む一方、新事業の原価増で粗利率が低下し、増益には採用遅延による費用未消化も含む。",
+      "symbolCode": "5242",
+      "symbolName": "アイズ",
+      "title": "アイズ (5242) | TradingView チャート",
+      "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A5242",
+      "summary": "メディアレーダー刷新と金融領域への拡張が進み、ファクログは既に上期売上へ寄与。ただし主力広告サービスは減収で、新サービスの利益寄与と基準時点のSO残高には未確認点が残る。",
+      "materialImpact": "混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。",
+      "auditStatus": "pass",
       "fields": [
         {
           "name": "材料インパクト",
-          "value": "混在/要確認：銀行・信金での導入拡大と上方修正が進む一方、新事業の原価増で粗利率が低下し、増益には採用遅延による費用未消化も含む。",
-          "inline": false
+          "value": "混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。"
         },
         {
           "name": "事業概要",
-          "value": "銀行・証券・カード会社などに、端末情報や利用傾向を横断共有して不正アクセス・不正送金を検知するクラウドサービス「Fraud Alert」を提供する。全国の送配電事業者の電力契約情報と金融機関の顧客情報を照合し、居住実態の確認や継続的顧客管理を支援する「Grid Data KYC」も展開する。",
-          "inline": false
+          "value": "広告主・代理店と媒体社をつなぎ、資料ダウンロードやセミナーの見込み顧客情報を提供する「メディアレーダー」と、商品体験後のSNS投稿を企業向けに運営する「トラミー」が主力。金融比較サイト「ファクログ」の成果報酬型送客と、請求書を買い取る「レゾナス」も展開する。"
         },
         {
           "name": "足元材料",
-          "value": "9月24日11:00発表の北國銀行クラウドバンキングへのログイン検知導入が最新の事業材料。9月17日11:00には千葉信用金庫がGrid Data KYCを導入し、低リスク顧客の住所確認をDMから電力契約情報との照合へ置き換える利用例が増えた。ただし両案件の契約額・個別利益寄与は非開示。8月14日15:30の中間決算説明・業績修正では、売上高8.166億円（前年同期比21.8%増）、営業利益2.833億円（27.0%増）。通期会社予想は売上高15.70億円から16.47億円、営業利益4.11億円から5.32億円へ引き上げ、主力の新規・追加利用とGrid Data KYCのPoC獲得を反映した。",
-          "inline": false
+          "value": "9月25日15:30公表のメディアレーダー全面更新でAI検索や資料管理機能を拡充。AI検索・履歴管理の刷新は資料探索を改善するが、有料リード数・転換率の回復実績は未公表。 9月4日15:30公表ではレゾナスの8月買取額が2.5億円超、前月比約10倍となった。8月14日公表（時刻記載なし）の半期報告書では上期売上5.597億円（10.2%増）、営業利益1,908万円と黒字回復した一方、メディアレーダー売上33.1%減、トラミー9.7%減で、既存広告事業の回復には至っていない。"
         },
         {
           "name": "ファンダ要点",
-          "value": "MRRは6月末1.309億円、ARR15.707億円、ARPU月278.4万円で各前年同期比18.7%増。Fraud Alertの契約社数は47社で前年同月と同数、前期末比1社減でも単価上昇が成長を支える。8月14日公表の半期報告書（時刻記載なし）はGrid Data KYCの一部PoCの売上計上を明記する。全国送配電10社との提携で整備したGrid Data KYCは、PoC売上が限定的ながら計上され、当初の事業化計画から顧客獲得へ進んでいる。2025年9月18日10:30の原発表では同年10月15日開始予定としていたが、最新決算説明では2025年9月提供開始、2026年は初期顧客獲得、2027年以降の拡販と2028年黒字化を掲げる。すでに一部売上は生じている一方、事業全体の黒字化は将来計画である。",
-          "inline": false
+          "value": "リード提供の成果承認・請求権確定がファクログの収益化の要点。2025年8月28日15:30公表のrimad買収は費用込み概算2.24億円で、同年9月取得・12月吸収合併は3月26日公表（時刻記載なし）の有報でも実施済みと確認できる。ファクログは上期売上1.566億円を計上し、買収効果は既に売上へ反映されている。 6月末ののれんは1.616億円で、集客費を投じても成果承認単価と利益が残るかが採算を左右する。6月23日15:30公表の予定との比較では、レゾナスは7月開始予定から取引実行の段階へ進んだが、買取額と売上・利益は異なり、個別利益寄与は未確認。 6月5日15:30公表のラボル提携についても、ELファクタリングは共同運営の開始が公表されているが、当社の個別売上・利益寄与は未開示。"
         },
         {
           "name": "注意点",
-          "value": "売上総利益率は上期58.7%と前年63.0%から低下し、Grid Data KYCの仕入・サーバー費と開発人員増が原価を押し上げた。上方修正には採用計画5名に対する実績2名による人件費等の未消化も含まれ、増益の全てを継続的な採算改善とは扱えない。Grid Data KYCのPoCから本契約への転換率、顧客別売上・利益額は非開示で、2028年黒字化の達成実績もまだない。9月14日08:00公表の従業員向け自己株43,000株の交付は払込完了しており、6月末の自己株残を現在値には使えない。6月末のSOは条件確定済み未行使160,300株、権利未確定46,400株。自己株式を交付する方針でも、発行原資料と6月末後の回号別行使・失効残高を照合できず、基準時点の追加希薄化リスクの有無・規模は確定できない。2017年8月31日公表（時刻記載なし）のトヨタ向け本人特定技術共同研究は、継続・終了や売上利益への反映を示す続報を確認できず、長期案件の照合が未完了で、現在の業績材料には算入できない。",
-          "inline": false
+          "value": "資料リード売上33.9%減の背景は、生成AIでの情報収集行動の変化、一括から個別ダウンロードへの移行、広告投資の抑制。刷新の開始だけで回復を織り込めず、レゾナスのノンリコース買取では信用費用・資金回転と手数料採算の内訳も未開示。第1回SOは3月26日公表（時刻記載なし）の有報で2月末58,940株が残り、行使価額444円・期限2031年3月。発行原資料とその後の全異動を照合できず、基準時点の残存・希薄化規模は未確定。 2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。"
         },
         {
           "name": "開示リンク",
-          "value": "[2026-09-24 株式会社北國銀行が不正アクセス検知サービス「Fraud Alert ログイン検知」を導入～口座の不正利用への対策を強化～(11:00)](https://f.irbank.net/pr/20260924/140120260924539111.pdf)\n[2026-09-17 千葉信用金庫、電力契約情報を継続的顧客管理に活用～DMに替わる個人口座の本人確認業務効率化へ、「Grid Data KYC」を導入～(11:00)](https://f.irbank.net/pr/20260917/140120260915536592.pdf)\n[2026-09-14 従業員に対する譲渡制限付株式としての自己株式の処分の払込完了に関するお知らせ(08:00)](https://ssl4.eir-parts.net/doc/153A/tdnet/2884256/00.pdf)\n[2026-08-14 2026年12月期　第２四半期決算説明資料(15:30)](https://f.irbank.net/pdf/20260814/140120260814520619.pdf)\n[2026-08-14 2026年12月期 半期報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100YWZI/00.pdf)\n[2026-08-14 通期業績予想の修正に関するお知らせ(15:30)](https://f.irbank.net/pdf/20260814/140120260814520612.pdf)\n[2025-09-18 新たな事業の開始および業務上の提携に関するお知らせ(10:30)](https://f.irbank.net/pdf/20250918/140120250918559288.pdf)\n[2017-08-31 株式会社カウリス、TOYOTA NEXTへの採択決定～コネクティッドカー向け本人特定技術の共同研究をトヨタ自動車と共同で推進～(時刻記載なし)](https://caulis.jp/news/2017/08/toyotanext/)",
-          "inline": false
+          "value": "[2026-09-25 No.1の広告業界向けプラットフォーム「メディアレーダー」が全面リニューアル UI・UXを大幅に刷新し、AI検索や資料管理機能も拡充(15:30)](https://f.irbank.net/pr/20260925/140120260925540153.pdf)\n[2026-09-04 株式会社アイズが運営するファクタリングサービス「レゾナス」、８月の買取金額が２億5,000万円を突破 先月比約10倍成長(15:30)](https://f.irbank.net/pr/20260904/140120260904531729.pdf)\n[2026-08-14 半期報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf)\n[2026-06-23 「ファクログ」運営の株式会社アイズ、法人向けオンラインファクタリングサービス「レゾナス」の提供を7月に開始予定(15:30)](https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf)\n[2026-06-05 「ファクログ」運営の株式会社アイズ、株式会社ラボルと提携しAIファクタリングサービスの共同運営を開始(15:30)](https://www.eyez.jp/info/20260605/)\n[2026-03-26 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf)\n[2025-08-28 rimad株式会社の株式の取得（子会社化）に関するお知らせ(15:30)](https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf)\n[2021-11-01 マーケティングに悩む経営者へ。No.1の媒体資料ポータル「メディアレーダー」運営の株式会社アイズが、「THE OWNER」の株式会社ZUUと業務提携を開始(時刻記載なし)](https://www.eyez.jp/info/20211101/)"
         },
         {
           "name": "Sources",
-          "value": "[カウリス IRニュース](https://caulis.jp/ir/news/)\n[カウリス お知らせ](https://caulis.jp/news/)\n[カウリス（153A）のIR情報・決算資料｜IRBANK](https://irbank.net/153A/ir)\n[株式会社カウリスの適時開示一覧｜開示情報データベース](https://disclosure.catr.jp/companies/1b993/42506/disclosures)",
-          "inline": false
+          "value": "[IRニュース – 株式会社アイズ](https://www.eyez.jp/ir/news/)\n[ニュース – 株式会社アイズ](https://www.eyez.jp/info/)\n[アイズ（5242）のIR情報・決算資料 | IRBANK](https://irbank.net/5242/ir)\n[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)"
         }
       ],
       "sources": [
         {
-          "title": "カウリス IRニュース",
-          "url": "https://caulis.jp/ir/news/"
+          "title": "IRニュース – 株式会社アイズ",
+          "url": "https://www.eyez.jp/ir/news/"
         },
         {
-          "title": "カウリス お知らせ",
-          "url": "https://caulis.jp/news/"
+          "title": "ニュース – 株式会社アイズ",
+          "url": "https://www.eyez.jp/info/"
         },
         {
-          "title": "カウリス（153A）のIR情報・決算資料｜IRBANK",
-          "url": "https://irbank.net/153A/ir"
+          "title": "アイズ（5242）のIR情報・決算資料 | IRBANK",
+          "url": "https://irbank.net/5242/ir"
         },
         {
-          "title": "株式会社カウリスの適時開示一覧｜開示情報データベース",
-          "url": "https://disclosure.catr.jp/companies/1b993/42506/disclosures"
+          "title": "(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス",
+          "url": "https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1"
+        }
+      ],
+      "disclosures": [
+        {
+          "title": "No.1の広告業界向けプラットフォーム「メディアレーダー」が全面リニューアル UI・UXを大幅に刷新し、AI検索や資料管理機能も拡充",
+          "publishedAt": "2026-09-25T15:30:00+09:00",
+          "url": "https://f.irbank.net/pr/20260925/140120260925540153.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "株式会社アイズが運営するファクタリングサービス「レゾナス」、８月の買取金額が２億5,000万円を突破 先月比約10倍成長",
+          "publishedAt": "2026-09-04T15:30:00+09:00",
+          "url": "https://f.irbank.net/pr/20260904/140120260904531729.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "半期報告書",
+          "publishedAt": "2026-08-14",
+          "publishedAtPrecision": "date_only",
+          "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「ファクログ」運営の株式会社アイズ、法人向けオンラインファクタリングサービス「レゾナス」の提供を7月に開始予定",
+          "publishedAt": "2026-06-23T15:30:00+09:00",
+          "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "「ファクログ」運営の株式会社アイズ、株式会社ラボルと提携しAIファクタリングサービスの共同運営を開始",
+          "publishedAt": "2026-06-05T15:30:00+09:00",
+          "url": "https://www.eyez.jp/info/20260605/",
+          "contentReviewed": true
+        },
+        {
+          "title": "有価証券報告書",
+          "publishedAt": "2026-03-26",
+          "publishedAtPrecision": "date_only",
+          "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "rimad株式会社の株式の取得（子会社化）に関するお知らせ",
+          "publishedAt": "2025-08-28T15:30:00+09:00",
+          "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf",
+          "contentReviewed": true
+        },
+        {
+          "title": "マーケティングに悩む経営者へ。No.1の媒体資料ポータル「メディアレーダー」運営の株式会社アイズが、「THE OWNER」の株式会社ZUUと業務提携を開始",
+          "publishedAt": "2021-11-01",
+          "publishedAtPrecision": "date_only",
+          "url": "https://www.eyez.jp/info/20211101/",
+          "contentReviewed": true
         }
       ],
       "sourceChecks": [
         {
           "role": "official_ir",
           "checked": true,
-          "url": "https://caulis.jp/ir/news/",
+          "url": "https://www.eyez.jp/ir/news/",
           "checkedUrls": [
-            "https://caulis.jp/ir/news/",
-            "https://caulis.jp/ir/library-securities/",
-            "https://caulis.jp/ir/library-presentation/",
-            "https://ssl4.eir-parts.net/V4Public/eir/153A/ja/announcement/announcement_0.js",
-            "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100YWZI/00.pdf",
-            "https://caulis.jp/news/2017/08/toyotanext/",
-            "https://caulis.jp/news/2024/12/fraud-alert-new/",
-            "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100XV0K/00.pdf",
-            "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100VJCX/00.pdf",
-            "https://ssl4.eir-parts.net/doc/153A/ir_material_for_fiscal_ym1/153201/00.pdf",
-            "https://ssl4.eir-parts.net/doc/153A/tdnet/2878019/00.pdf",
-            "https://ssl4.eir-parts.net/doc/153A/tdnet/2884256/00.pdf",
-            "https://ssl4.eir-parts.net/doc/153A/tdnet/2793845/00.pdf",
-            "https://caulis.jp/news/2019/10/caulis-kepco/",
-            "https://caulis.jp/news/2024/04/grayzone/",
-            "https://caulis.jp/news/2026/03/new-office-fukuoka/"
+            "https://www.eyez.jp/ir/library/securities/",
+            "https://www.eyez.jp/ir/library/",
+            "https://www.eyez.jp/info/",
+            "https://www.eyez.jp/info/page/2/",
+            "https://www.eyez.jp/date/2021/?post_type=info",
+            "https://ssl4.eir-parts.net/V4Public/eir/5242/ja/announcement/announcement_0.js",
+            "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf",
+            "https://www.eyez.jp/info/20260605/",
+            "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf",
+            "https://www.eyez.jp/info/20211101/",
+            "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100VI3W/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100T5HZ/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100QIDJ/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/tdnet/2873663/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/tdnet/2875057/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/tdnet/2847192/00.pdf",
+            "https://ssl4.eir-parts.net/doc/5242/tdnet/2553178/00.pdf"
           ],
-          "result": "公式IRページの表示用E-IRデータを取得して2024年上場時から基準時点までの掲載資料・公表日時を照合。直近45日（8月30日以降）と検出後～分析開始までを確認し、採用したPDF/個別発表の本文を読んだ。公式ニュース全35頁（2016年2月～2026年10月14日）の一覧も走査。最新事業材料は9月24日、同日10月14日のFIT2026告知は公表時刻を採用根拠に確定せず分析から除外。決算説明訂正はQ1の販管費・原価図の訂正であり、最新Q2の数値と混ぜていない。"
+          "result": "公式IRの動的掲載元EIRフィード214件と公式ニュースを開き、2026年9月4日～10月19日17:45:01 JSTの直近45日相当・分析開始までの候補を照合。最新は9月25日15:30の全面更新、次は9月4日15:30のレゾナス買取額。検出日時16:15を分析基準にせず、claim.analysisCutoffまでの公表資料を採用した。半期報告書・年次有報・主要原発表の本文を読んだ。EIRで00:00表示の法定報告書は実際の公表時刻の証拠とせずdate_onlyとした。2021年提携まで遡及したが、全過去契約の継続・終了とSO発行原決議書は未照合。出力先に既存premium_reports.jsonはなかった。"
         },
         {
           "role": "irbank_or_tdnet",
           "checked": true,
-          "url": "https://irbank.net/153A/ir",
+          "url": "https://irbank.net/5242/ir",
           "checkedUrls": [
-            "https://irbank.net/153A/ir",
-            "https://irbank.net/153A/140120260924539111",
-            "https://irbank.net/153A/140120260915536592",
-            "https://irbank.net/153A/140120260913535388",
-            "https://irbank.net/153A/140120260814520619",
-            "https://irbank.net/153A/140120260814520612",
-            "https://irbank.net/153A/140120250918559288",
-            "https://disclosure.catr.jp/companies/1b993/42506/disclosures",
-            "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.8.pdf",
-            "https://f.irbank.net/pr/20260924/140120260924539111.pdf",
-            "https://f.irbank.net/pr/20260917/140120260915536592.pdf",
-            "https://f.irbank.net/pdf/20260814/140120260814520619.pdf",
-            "https://f.irbank.net/pdf/20260814/140120260814520612.pdf",
-            "https://f.irbank.net/pdf/20250918/140120250918559288.pdf"
+            "https://irbank.net/5242/ir",
+            "https://irbank.net/5242/140120260925540153",
+            "https://irbank.net/5242/140120260904531729",
+            "https://f.irbank.net/pr/20260925/140120260925540153.pdf",
+            "https://f.irbank.net/pr/20260904/140120260904531729.pdf"
           ],
-          "result": "IRBANK銘柄別一覧をブラウザ取得失敗後にHTTPSで直接取得し、全上場履歴の開示見出しを照合。個別ページの提出日・時刻とf.irbank.netの実リンクを確認し、9月17日11:00・9月24日11:00のPRと、9月14日08:00の払込完了を区別した。文書ID内日付と提出日がずれる千葉信金（ID9月15日→公表9月17日）、払込完了（ID9月13日→公表9月14日）は提出日を採用。TDnet相当の開示情報データベース一覧でも直近・過去の適時開示を照合し、JPXの8月分株式数変更表p.7を読んだ。"
-        }
-      ],
-      "disclosures": [
-        {
-          "title": "株式会社北國銀行が不正アクセス検知サービス「Fraud Alert ログイン検知」を導入～口座の不正利用への対策を強化～",
-          "publishedAt": "2026-09-24T11:00:00+09:00",
-          "url": "https://f.irbank.net/pr/20260924/140120260924539111.pdf",
-          "contentReviewed": true
+          "result": "IRBANKの開示一覧をHTTP取得して本文を読み、最新9月25日15:30、9月4日15:30、8月18日15:30、8月17日15:30、8月14日15:30の開示順と公式EIRを照合した。web閲覧側の403は別の読み取りGETで解消し、未取得の一覧を確認済みにはしていない。個別ページが示すf.irbank.net/pr直リンクを取得してPDF本文と公表日を確認。8月14日決算の文書IDに8月13日が含まれても、ID日付を公表日に使わなかった。基準日当日の時刻未確認資料は採用していない。"
         },
         {
-          "title": "千葉信用金庫、電力契約情報を継続的顧客管理に活用～DMに替わる個人口座の本人確認業務効率化へ、「Grid Data KYC」を導入～",
-          "publishedAt": "2026-09-17T11:00:00+09:00",
-          "url": "https://f.irbank.net/pr/20260917/140120260915536592.pdf",
-          "contentReviewed": true
-        },
-        {
-          "title": "従業員に対する譲渡制限付株式としての自己株式の処分の払込完了に関するお知らせ",
-          "publishedAt": "2026-09-14T08:00:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/153A/tdnet/2884256/00.pdf",
-          "contentReviewed": true
-        },
-        {
-          "title": "2026年12月期　第２四半期決算説明資料",
-          "publishedAt": "2026-08-14T15:30:00+09:00",
-          "url": "https://f.irbank.net/pdf/20260814/140120260814520619.pdf",
-          "contentReviewed": true
-        },
-        {
-          "title": "2026年12月期 半期報告書",
-          "publishedAt": "2026-08-14",
-          "publishedAtPrecision": "date_only",
-          "url": "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100YWZI/00.pdf",
-          "contentReviewed": true
-        },
-        {
-          "title": "通期業績予想の修正に関するお知らせ",
-          "publishedAt": "2026-08-14T15:30:00+09:00",
-          "url": "https://f.irbank.net/pdf/20260814/140120260814520612.pdf",
-          "contentReviewed": true
-        },
-        {
-          "title": "新たな事業の開始および業務上の提携に関するお知らせ",
-          "publishedAt": "2025-09-18T10:30:00+09:00",
-          "url": "https://f.irbank.net/pdf/20250918/140120250918559288.pdf",
-          "contentReviewed": true
-        },
-        {
-          "title": "株式会社カウリス、TOYOTA NEXTへの採択決定～コネクティッドカー向け本人特定技術の共同研究をトヨタ自動車と共同で推進～",
-          "publishedAt": "2017-08-31",
-          "publishedAtPrecision": "date_only",
-          "url": "https://caulis.jp/news/2017/08/toyotanext/",
-          "contentReviewed": true
+          "role": "tdnet_equivalent",
+          "checked": true,
+          "url": "https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1",
+          "checkedUrls": [
+            "https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1",
+            "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260814/20260813519946.pdf",
+            "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260814/20260813519931.pdf"
+          ],
+          "result": "Yahoo掲載のTDnet一覧を開き、9月25日・9月4日と中間決算一式の掲載日時を確認し、決算説明資料・短信本文も読んだ。ページ上の株価日は10月5日で鮮度が限定されるため、この一覧だけで10月19日までの開示不存在を断定せず、公式EIRとIRBANKの取得結果を優先した。長いYahoo PDF URLは公開開示リンクに使わず、公式掲載PDFまたは確認済みf.irbank.netを選んだ。"
         }
       ],
       "capitalRiskReview": {
         "version": 1,
-        "analysisCutoff": "2026-10-14T09:45:09.726Z",
+        "analysisCutoff": "2026-10-19T08:45:01.405Z",
         "status": "unresolved",
         "historyCheckedThrough": null,
         "documents": [
           {
-            "id": "cap-half-2026",
+            "id": "cap_half_2026",
             "kind": "financial_baseline",
             "source": "official_ir",
-            "title": "2026年12月期 半期報告書",
-            "url": "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100YWZI/00.pdf",
+            "title": "半期報告書",
             "publishedAt": "2026-08-14",
             "publishedAtPrecision": "date_only",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
             "contentReviewed": true,
-            "locator": "pp.7,14-16：株式等、自己株式処分、潜在株式調整後EPS、後発事象",
-            "finding": "6月末発行済6,534,800株、自己株188,400株。上期新株発行6,800株と自己株交付を区別。潜在株式調整後EPS26.97円に用いる普通株式増加数194,979株は期中平均計算値で、現在のSO残高ではない。p.7の新規SO該当なしを既存SO消滅とは扱わない。"
+            "locator": "6頁「新株予約権等の状況」「発行済株式」・13頁CF・15頁「1株当たり情報」",
+            "finding": "上期の新規SO等は該当なし、上期の新株予約権行使収入はゼロ。一方、基本EPS8.07円、潜在株式調整後7.82円、調整用普通株式増加数33,089株があり、潜在株式の不存在を示さない。33,089株はEPS計算値で、未行使対象株数ではない。発行済1,026,100株の提出日欄は8月1日以降の行使による発行数を含まない。"
           },
           {
-            "id": "cap-q2-2026",
-            "kind": "status",
-            "source": "tdnet_jpx",
-            "title": "2026年12月期　第２四半期決算説明資料",
-            "url": "https://f.irbank.net/pdf/20260814/140120260814520619.pdf",
-            "publishedAt": "2026-08-14T15:30:00+09:00",
-            "contentReviewed": true,
-            "locator": "p.19：新株予約権等の行使状況",
-            "finding": "6月末の条件確定済み未行使160,300株、権利未確定46,400株。上期行使60,400株のうち53,600株に自己株を交付、発行済総数はQ2中増加なし。自己株取得累計242,000株、6月末残188,400株。既行使累計501,700株・失効71,700株は残高に再加算しない。"
-          },
-          {
-            "id": "cap-annual-2025",
+            "id": "cap_annual_2025",
             "kind": "financial_baseline",
             "source": "official_ir",
-            "title": "2025年12月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100XV0K/00.pdf",
-            "publishedAt": "2026-03-30",
+            "title": "有価証券報告書",
+            "publishedAt": "2026-03-26",
             "publishedAtPrecision": "date_only",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
             "contentReviewed": true,
-            "locator": "pp.33-39,71-74：SO各回号、権利行使条件、変動表",
-            "finding": "第7回・第8回・第8回の2・第8回の3・第10回が記載され、2026年2月末の対象株数は134,900、72,000、14,300、10,900、34,200株。2023年11月25日の1対100分割調整後。第10回の行使期間開始は2026年9月21日だが、その後の行使残高を示す資料ではない。その他新株予約権・MSCB欄は該当なし。"
+            "locator": "13頁(12)・21～23頁「新株予約権等の状況」・51頁株主資本・56頁SO注記・66～67頁",
+            "finding": "第1回SOの2025年末未行使残58,940株、2026年2月末まで内容変更なし。2025年の権利行使9,400株・失効ゼロ、行使価額444円、行使期間2023年4月1日～2031年3月31日。在職要件、相続人行使不可、譲渡は取締役会承認。その他新株予約権・ライツプランは該当なし、社債明細も該当なし。株主資本注記のSO欄のダッシュは残存ゼロを意味しない。"
           },
           {
-            "id": "cap-ipo-terms",
+            "id": "cap_annual_2024",
             "kind": "status",
-            "source": "official_ir",
-            "title": "有価証券届出書",
-            "url": "https://ssl4.eir-parts.net/doc/153A/ir_material_for_fiscal_ym1/153201/00.pdf",
-            "publishedAt": "2024-02-22T17:50:00+09:00",
-            "contentReviewed": true,
-            "locator": "pp.51-64,153-156：新株予約権要項、第三者割当等の概況",
-            "finding": "上場前の各回号の発行・決議日、行使価額、期間、退職時失効、分割・優先株から普通株への切替を再録する資料。第5回の旧B種対象予約権の取得消却と普通株対象の代替予約権500個交付を併記しており、旧権利消却を第5回全体の終了と扱わない。発行当時の原決議書そのものは確保できていない。"
-          },
-          {
-            "id": "cap-annual-2024-closures",
-            "kind": "closure",
             "source": "official_ir",
             "title": "2024年12月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100VJCX/00.pdf",
-            "publishedAt": "2025-03-31",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100VI3W/00.pdf",
+            "publishedAt": "2025-03-28",
             "publishedAtPrecision": "date_only",
             "contentReviewed": true,
-            "locator": "pp.38-40,74-78：その他予約権、SO変動表",
-            "finding": "2024年の第1回56,500株、第2回91,000株、第3回65,000株は全数行使で期末残なし。第11回は権利未確定10,000株が全数失効し期末残なし。第5回は2025年2月末時点で普通株50,000株対象・行使価額600円、行使期限2025年8月10日。第5回のその後の終了方法はこの資料では確定しない。"
+            "locator": "55頁「ストック・オプション等関係」",
+            "finding": "第1回SOは期首76,040株、権利行使6,300株、失効1,400株、期末未行使68,340株。付与時79,920株、付与日2021年4月16日、行使価額444円。"
           },
           {
-            "id": "cap-jpx-202608",
+            "id": "cap_annual_2023",
             "kind": "status",
-            "source": "tdnet_jpx",
-            "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年8月分）",
-            "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.8.pdf",
-            "publishedAt": "2026-09-18",
+            "source": "official_ir",
+            "title": "2023年12月期 有価証券報告書",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100T5HZ/00.pdf",
+            "publishedAt": "2024-03-28",
             "publishedAtPrecision": "date_only",
             "contentReviewed": true,
-            "locator": "表紙、p.7：カウリス（153A）",
-            "finding": "8月末上場株式数6,534,800株、当月新株増加0株。これは新株を伴う月間行使の集計で、自己株交付による行使や全回号の未行使残高ゼロを証明しない。"
+            "locator": "61頁「ストック・オプション等関係」",
+            "finding": "第1回SOは79,520株の権利が確定し、行使3,400株・失効80株、未行使残76,040株。"
           },
           {
-            "id": "cap-rs-issuance",
-            "kind": "issuance",
-            "source": "official_ir",
-            "title": "従業員に対する譲渡制限付株式付与としての自己株式の処分に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/153A/tdnet/2878019/00.pdf",
-            "publishedAt": "2026-08-26T15:30:00+09:00",
-            "contentReviewed": true,
-            "locator": "pp.1-3：処分概要、割当契約",
-            "finding": "従業員19名へ自己株43,000株を1株1,395円、金銭債権59,985,000円の現物出資で交付。2026年9月11日から2年の譲渡制限。新たなSO・CB発行ではなく保有自己株の処分であり、新株数や現金調達額に読み替えない。"
-          },
-          {
-            "id": "cap-rs-completion",
+            "id": "cap_annual_2022",
             "kind": "status",
             "source": "official_ir",
-            "title": "従業員に対する譲渡制限付株式としての自己株式の処分の払込完了に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/153A/tdnet/2884256/00.pdf",
-            "publishedAt": "2026-09-14T08:00:00+09:00",
+            "title": "2022年12月期 有価証券報告書",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100QIDJ/00.pdf",
+            "publishedAt": "2023-03-31",
+            "publishedAtPrecision": "date_only",
             "contentReviewed": true,
-            "locator": "p.1：払込完了と処分概要",
-            "finding": "9月11日払込期日の自己株43,000株の処分について払込手続完了を公表。発行済株式数を43,000株増やす処理ではなく、自己株残高188,400株をそのまま基準時点残高として利用することもできない。"
-          },
-          {
-            "id": "cap-buyback-end",
-            "kind": "status",
-            "source": "official_ir",
-            "title": "自己株式の取得状況及び取得終了に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/153A/tdnet/2793845/00.pdf",
-            "publishedAt": "2026-04-23T15:30:00+09:00",
-            "contentReviewed": true,
-            "locator": "pp.1-2：取得終了、累計",
-            "finding": "4月7日までに自己株242,000株を299,977,700円で取得して枠終了。取得終了はSOの終了・消却ではない。"
+            "locator": "61頁「ストック・オプション等関係」",
+            "finding": "2021年4月16日付与の第1回SO79,920株を再掲。2022年は権利の確定前79,760株から240株失効し、未確定残79,520株。発行時の決議書そのものではないためissuanceとして扱わない。"
           }
         ],
         "instruments": [
           {
-            "id": "warrant_7",
+            "id": "eyez_warrant_1_2021",
             "type": "warrant",
             "status": "unresolved",
             "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2025",
-            "asOfDate": "2026-10-14",
+            "statusDocumentId": "cap_half_2026",
+            "asOfDate": "2026-10-19",
             "remainingUnderlyingShares": null,
-            "quantityUncertainty": "6月末以降の回号別行使・失効と基準時点残高は公表確認できず、6月末の合計残高を回号別へ配賦しない。",
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "lastVerifiedBalance": {
-              "documentId": "cap-annual-2025",
+            "quantityUncertainty": "基準時点の未行使対象株数は未公表・未照合。年次有報の58,940株は2025年末～2026年2月末の確認値で、半期EPSの33,089株は未行使残ではない。2026年3月以降の失効・取得消却等の全異動を確定できないため持ち越して推定しない。",
+            "lastConfirmedBalance": {
+              "documentId": "cap_annual_2025",
               "asOfDate": "2026-02-28",
-              "underlyingShares": 134900,
-              "includesUnvested": true
+              "remainingUnderlyingShares": 58940
             },
-            "exercisePrice": 295,
-            "exercisePriceCurrency": "JPY",
-            "exercisePeriod": {
-              "from": "2024-03-26",
-              "through": "2030-12-28"
-            },
-            "unresolvedReason": "発行時の原決議書・要項そのものを公開IRで確保できず、上場時届出書と年次報告で条件を遡及照合した。基準時点の回号別最新状態も未確定。",
-            "summary": "第7回は分割調整後の行使価額295円、行使期間2024-03-26～2030-12-28。2026年2月末対象株数134,900株は過去残高であり、基準時点の新株交付数ではない。自己株充当方針でも残高・供給株数・追加新株発行の規模を確定できない。"
-          },
-          {
-            "id": "warrant_8",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2025",
-            "asOfDate": "2026-10-14",
-            "remainingUnderlyingShares": null,
-            "quantityUncertainty": "6月末以降の回号別行使・失効と基準時点残高は公表確認できず、6月末の合計残高を回号別へ配賦しない。",
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "lastVerifiedBalance": {
-              "documentId": "cap-annual-2025",
-              "asOfDate": "2026-02-28",
-              "underlyingShares": 72000,
-              "includesUnvested": true
-            },
-            "exercisePrice": 300,
-            "exercisePriceCurrency": "JPY",
-            "exercisePeriod": {
-              "from": "2025-06-16",
-              "through": "2032-03-25"
-            },
-            "unresolvedReason": "発行時の原決議書・要項そのものを公開IRで確保できず、上場時届出書と年次報告で条件を遡及照合した。基準時点の回号別最新状態も未確定。",
-            "summary": "第8回は分割調整後の行使価額300円、行使期間2025-06-16～2032-03-25。2026年2月末対象株数72,000株は過去残高であり、基準時点の新株交付数ではない。自己株充当方針でも残高・供給株数・追加新株発行の規模を確定できない。"
-          },
-          {
-            "id": "warrant_8_2",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2025",
-            "asOfDate": "2026-10-14",
-            "remainingUnderlyingShares": null,
-            "quantityUncertainty": "6月末以降の回号別行使・失効と基準時点残高は公表確認できず、6月末の合計残高を回号別へ配賦しない。",
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "lastVerifiedBalance": {
-              "documentId": "cap-annual-2025",
-              "asOfDate": "2026-02-28",
-              "underlyingShares": 14300,
-              "includesUnvested": true
-            },
-            "exercisePrice": 300,
-            "exercisePriceCurrency": "JPY",
-            "exercisePeriod": {
-              "from": "2025-07-21",
-              "through": "2032-03-25"
-            },
-            "unresolvedReason": "発行時の原決議書・要項そのものを公開IRで確保できず、上場時届出書と年次報告で条件を遡及照合した。基準時点の回号別最新状態も未確定。",
-            "summary": "第8回の2は分割調整後の行使価額300円、行使期間2025-07-21～2032-03-25。2026年2月末対象株数14,300株は過去残高であり、基準時点の新株交付数ではない。自己株充当方針でも残高・供給株数・追加新株発行の規模を確定できない。"
-          },
-          {
-            "id": "warrant_8_3",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2025",
-            "asOfDate": "2026-10-14",
-            "remainingUnderlyingShares": null,
-            "quantityUncertainty": "6月末以降の回号別行使・失効と基準時点残高は公表確認できず、6月末の合計残高を回号別へ配賦しない。",
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "lastVerifiedBalance": {
-              "documentId": "cap-annual-2025",
-              "asOfDate": "2026-02-28",
-              "underlyingShares": 10900,
-              "includesUnvested": true
-            },
-            "exercisePrice": 300,
-            "exercisePriceCurrency": "JPY",
-            "exercisePeriod": {
-              "from": "2025-12-22",
-              "through": "2032-03-25"
-            },
-            "unresolvedReason": "発行時の原決議書・要項そのものを公開IRで確保できず、上場時届出書と年次報告で条件を遡及照合した。基準時点の回号別最新状態も未確定。",
-            "summary": "第8回の3は分割調整後の行使価額300円、行使期間2025-12-22～2032-03-25。2026年2月末対象株数10,900株は過去残高であり、基準時点の新株交付数ではない。自己株充当方針でも残高・供給株数・追加新株発行の規模を確定できない。"
-          },
-          {
-            "id": "warrant_10",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2025",
-            "asOfDate": "2026-10-14",
-            "remainingUnderlyingShares": null,
-            "quantityUncertainty": "6月末以降の回号別行使・失効と基準時点残高は公表確認できず、6月末の合計残高を回号別へ配賦しない。",
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "lastVerifiedBalance": {
-              "documentId": "cap-annual-2025",
-              "asOfDate": "2026-02-28",
-              "underlyingShares": 34200,
-              "includesUnvested": true
-            },
-            "exercisePrice": 450,
-            "exercisePriceCurrency": "JPY",
-            "exercisePeriod": {
-              "from": "2026-09-21",
-              "through": "2033-03-24"
-            },
-            "unresolvedReason": "発行時の原決議書・要項そのものを公開IRで確保できず、上場時届出書と年次報告で条件を遡及照合した。基準時点の回号別最新状態も未確定。",
-            "summary": "第10回は分割調整後の行使価額450円、行使期間2026-09-21～2033-03-24。2026年2月末対象株数34,200株は過去残高であり、基準時点の新株交付数ではない。自己株充当方針でも残高・供給株数・追加新株発行の規模を確定できない。"
-          },
-          {
-            "id": "warrant_1",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2024-closures",
-            "asOfDate": "2024-12-31",
-            "remainingUnderlyingShares": 0,
-            "quantityUncertainty": null,
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "verifiedHistoricalClosure": {
-              "documentId": "cap-annual-2024-closures",
-              "kind": "exercised",
-              "underlyingShares": 56500
-            },
-            "unresolvedReason": "残高ゼロの会社年次報告は確認したが、発行当時の原資料そのものを確保していないため契約上closedとしない。",
-            "summary": "第1回は2024年年次報告に56,500株の全数行使と期末残高ゼロが明記されている。現在の残存SOへ再加算しない。unresolvedは発行原資料の照合不足を表す。"
-          },
-          {
-            "id": "warrant_2",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2024-closures",
-            "asOfDate": "2024-12-31",
-            "remainingUnderlyingShares": 0,
-            "quantityUncertainty": null,
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "verifiedHistoricalClosure": {
-              "documentId": "cap-annual-2024-closures",
-              "kind": "exercised",
-              "underlyingShares": 91000
-            },
-            "unresolvedReason": "残高ゼロの会社年次報告は確認したが、発行当時の原資料そのものを確保していないため契約上closedとしない。",
-            "summary": "第2回は2024年年次報告に91,000株の全数行使と期末残高ゼロが明記されている。現在の残存SOへ再加算しない。unresolvedは発行原資料の照合不足を表す。"
-          },
-          {
-            "id": "warrant_3",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2024-closures",
-            "asOfDate": "2024-12-31",
-            "remainingUnderlyingShares": 0,
-            "quantityUncertainty": null,
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "verifiedHistoricalClosure": {
-              "documentId": "cap-annual-2024-closures",
-              "kind": "exercised",
-              "underlyingShares": 65000
-            },
-            "unresolvedReason": "残高ゼロの会社年次報告は確認したが、発行当時の原資料そのものを確保していないため契約上closedとしない。",
-            "summary": "第3回は2024年年次報告に65,000株の全数行使と期末残高ゼロが明記されている。現在の残存SOへ再加算しない。unresolvedは発行原資料の照合不足を表す。"
-          },
-          {
-            "id": "warrant_11",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2024-closures",
-            "asOfDate": "2024-12-31",
-            "remainingUnderlyingShares": 0,
-            "quantityUncertainty": null,
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "verifiedHistoricalClosure": {
-              "documentId": "cap-annual-2024-closures",
-              "kind": "expired",
-              "underlyingShares": 10000
-            },
-            "unresolvedReason": "残高ゼロの会社年次報告は確認したが、発行当時の原資料そのものを確保していないため契約上closedとしない。",
-            "summary": "第11回は2024年年次報告に10,000株の全数失効と期末残高ゼロが明記されている。現在の残存SOへ再加算しない。unresolvedは発行原資料の照合不足を表す。"
-          },
-          {
-            "id": "warrant_5",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2025",
-            "asOfDate": "2026-10-14",
-            "remainingUnderlyingShares": null,
-            "quantityUncertainty": "上場時の普通株対象への交換後株数は確認したが、行使・失効・取得消却を回号別に結ぶ終了資料を確保できていない。",
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "unresolvedReason": "当初発行原資料と、代替普通株予約権の最新残高・終了方法の個別根拠が不足。直近年次のその他予約権該当なしだけで全数行使・満期失効の別を推定しない。",
-            "summary": "第5回はIPO資料に普通株50,000株対象、行使価額600円、期限2025-08-10と記載。旧優先株対象の消却後に代替予約権を交付している。2025年年次ではその他予約権該当なしだが、回号別履歴を完了できず、基準時点残高・終了理由は未確定。"
-          },
-          {
-            "id": "warrant_6",
-            "type": "warrant",
-            "status": "unresolved",
-            "issueDocumentId": null,
-            "statusDocumentId": "cap-annual-2025",
-            "asOfDate": "2026-10-14",
-            "remainingUnderlyingShares": null,
-            "quantityUncertainty": "上場時の普通株対象への交換後株数は確認したが、行使・失効・取得消却を回号別に結ぶ終了資料を確保できていない。",
-            "initialTermsDocumentId": "cap-ipo-terms",
-            "unresolvedReason": "当初発行原資料と、代替普通株予約権の最新残高・終了方法の個別根拠が不足。直近年次のその他予約権該当なしだけで全数行使・満期失効の別を推定しない。",
-            "summary": "第6回はIPO資料に普通株23,200株対象、行使価額648円、期限2026-12-10と記載。旧優先株対象の消却後に代替予約権を交付している。2025年年次ではその他予約権該当なしだが、回号別履歴を完了できず、基準時点残高・終了理由は未確定。"
+            "unresolvedReason": "2021年3月31日決議・4月16日付与の発行原決議書そのものを取得できず、2022～2025年有報の再掲で条件・年次行使/失効を確認した。最新半期報告書は既存SO残高表を更新せず、上期の行使収入ゼロだけでは失効ゼロや下期全異動を証明できない。",
+            "summary": "役職員向け無償SOで行使価額444円、期限2031年3月31日。在職要件・譲渡承認・無償取得条項がある。2023年3,400株、2024年6,300株、2025年9,400株の行使と各年失効を確認したが、部分行使を全数終了とは扱わない。最新残高の時点と新株交付/自己株式交付の最終内訳を揃えられないため、希薄化率は計算しない。"
           }
         ],
-        "riskNote": "6月末のSOは条件確定済み未行使160,300株、権利未確定46,400株。自己株式を交付する方針でも、発行原資料と6月末後の回号別行使・失効残高を照合できず、基準時点の追加希薄化リスクの有無・規模は確定できない。",
-        "unresolvedReason": "上場時届出書まで遡って発行条件を確認したが、2016～2023年の各回号発行当時の原決議資料は公開IRで確保できなかった。最新Q2はSOの合計残と自己株交付を示す一方、6月末以降～分析基準時点の回号別残・失効・行使を公表資料で完結照合できない。第5・6回の代替予約権を含む個別終了経路も未確定。資本政策の全履歴確認完了や残存なしとは判定しない。",
-        "aggregateVerifiedBalance": {
-          "documentId": "cap-q2-2026",
-          "asOfDate": "2026-06-30",
-          "vestedUnexercisedUnderlyingShares": 160300,
-          "unvestedUnderlyingShares": 46400,
-          "treasuryShares": 188400,
-          "periodExercisedUnderlyingShares": 60400,
-          "periodTreasurySharesDelivered": 53600,
-          "periodNewSharesIssued": 6800,
-          "issuedSharesIncludingTreasury": 6534800,
-          "additionalNewSharesAtAnalysisCutoff": null,
-          "dilutionRate": null,
-          "quantityUncertainty": "6月末後のSO行使・失効、自己株残、回号別残高と新株交付分が照合できない。未行使対象株数をそのまま将来発行数や比率へ変換しない。"
-        },
-        "settledEquityTransactions": [
-          {
-            "issueDocumentId": "cap-rs-issuance",
-            "statusDocumentId": "cap-rs-completion",
-            "asOfDate": "2026-09-11",
-            "type": "restricted_stock_treasury_disposal",
-            "treasurySharesDelivered": 43000,
-            "newSharesIssued": 0,
-            "summary": "金銭債権の現物出資による自己株式処分は払込完了。SO未行使対象株数や新株による資金調達と合算しない。"
-          }
-        ],
-        "reviewedInstrumentTypes": [
-          "warrant",
-          "convertible_bond",
-          "other_equity_financing"
-        ],
-        "instrumentTypeFindings": "SOだけでなく、年次・中間のその他新株予約権、MSCB、負債・潜在株式注記、優先株から普通株への転換、RS自己株処分を確認した。確認した資料で新たな残存CBは見つからないが、全潜在株式不存在の明示根拠は置かず、none_confirmedを使用しない。"
+        "unresolvedReason": "第1回SO発行原資料と分析基準時点までの全残高の連続照合が未完了。最新公式半期・年次資料でSO以外の新株予約権、社債、潜在株式も調べたが、これらを含めた全潜在株式の残存なしを示す根拠はない。none_confirmedや残高ゼロとはしない。",
+        "riskNote": "第1回SOは3月26日公表（時刻記載なし）の有報で2月末58,940株が残り、行使価額444円・期限2031年3月。発行原資料とその後の全異動を照合できず、基準時点の残存・希薄化規模は未確定。"
       },
       "longTermMaterialReview": {
         "version": 1,
-        "analysisCutoff": "2026-10-14T09:45:09.726Z",
+        "analysisCutoff": "2026-10-19T08:45:01.405Z",
         "conclusion": "unresolved",
         "historyCheckedThrough": null,
         "reviewedCategories": [
@@ -551,249 +271,172 @@
           "legal_regulatory",
           "contract_changes"
         ],
-        "reviewScopeNote": "最新中間報告・Q2説明資料と2025年年次報告を起点に、公式ニュース全35頁（2016年2月の最古掲載分まで）、会社IRのIPO以降の全掲載履歴、IRBANK一覧を照合。2019年の旧電力事業、2024年の法的整理・入出金検知、2025年の全国提携、2026年の導入・PoC・拠点稼働を追跡した。年数による除外はせず、2017年のTOYOTA NEXTも本文と相手方原発表を読んだが、同案件のその後の継続・終了・業績反映を確定できず、全履歴照合完了とはしない。",
+        "reviewScopeNote": "最新公式半期（2026年8月14日）・年次有報（3月26日）、公式EIR開示履歴、会社ニュースを起点に、現在の3主力事業、金融領域、買収・合併・ソフトウエア投資、広告規制、重要な契約と変更を確認。2021年ZUU提携、2025年rimad/Talema買収、2026年EL/レゾナス開始と9月進捗まで原発表へ遡った。年数による除外はしていない。重要な設備計画・大型受注/補助金については最新資料・履歴に該当する継続案件を特定できなかった。全過去案件の更新・終了を網羅して確定したとはしない。",
         "documents": [
           {
-            "id": "lt-half-2026",
+            "id": "lt_half_2026",
             "kind": "financial_baseline",
             "source": "official_ir",
-            "title": "2026年12月期 半期報告書",
-            "url": "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100YWZI/00.pdf",
+            "title": "半期報告書",
             "publishedAt": "2026-08-14",
             "publishedAtPrecision": "date_only",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100YWQU/00.pdf",
             "contentReviewed": true,
-            "locator": "pp.3-6,15：経営成績、重要な契約、収益認識",
-            "finding": "Grid Data KYCは一部PoCで売上計上し中間売上へ限定的に寄与。Q2に新たに2件のPoC受注。Fraud Alertは新規・アップセル・クロスセルがMRRへ寄与。福岡拠点を3月開設。重要な契約等欄は当中間期の追加該当なしであり、既存の電力提携終了を意味しない。"
+            "locator": "3～5頁経営成績・重要な契約、10～15頁財務諸表・収益認識",
+            "finding": "ファクログ売上156,577千円、メディアレーダー180,668千円、トラミー173,211千円。主力2サービスは減収、ファクログが増収を補完。のれん161,599千円、営業CF32,146千円。重要な契約等は該当なしだが、個別提携すべての継続・終了を証明する記載ではない。"
           },
           {
-            "id": "lt-q2-2026",
-            "kind": "financial_baseline",
-            "source": "tdnet_jpx",
-            "title": "2026年12月期　第２四半期決算説明資料",
-            "url": "https://f.irbank.net/pdf/20260814/140120260814520619.pdf",
-            "publishedAt": "2026-08-14T15:30:00+09:00",
-            "contentReviewed": true,
-            "locator": "pp.7-19,21-28,32-37,57-61：KPI、拡販、計画、原価、採用",
-            "finding": "Fraud AlertのMRR・ARPU増、契約社数47社。Grid Data KYCは2025年9月開始、UI銀行本契約、飯田信金・Orico・川口信金のPoC、2026年初期顧客、2027年以降拡販と2028年黒字化という計画。入出金・アプリ・法人口座へのクロスセルを推進。福岡営業所は本格活動開始するが拠点別売上・利益額は非開示。"
-          },
-          {
-            "id": "lt-annual-2025",
+            "id": "lt_annual_2025",
             "kind": "financial_baseline",
             "source": "official_ir",
-            "title": "2025年12月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/153A/yuho_pdf/S100XV0K/00.pdf",
-            "publishedAt": "2026-03-30",
+            "title": "有価証券報告書",
+            "publishedAt": "2026-03-26",
             "publishedAtPrecision": "date_only",
+            "url": "https://ssl4.eir-parts.net/doc/5242/yuho_pdf/S100XU39/00.pdf",
             "contentReviewed": true,
-            "locator": "pp.4-5,18-25,30-31,78：沿革、事業戦略、リスク、重要契約、設備・のれん",
-            "finding": "2019年電力提携から2025年Grid Data KYCへの展開を記載。送配電10社との2025年9月18日～2030年9月17日の契約と自動更新、売上割合・固定費の支払を確認。2025年設備投資68,626千円、主にPC等・自社利用ソフトウェアで重要新設計画なし。訴訟は将来リスクの説明で具体的係争案件の認定ではない。"
+            "locator": "5～6頁事業、10～14頁戦略・リスク、19～20頁契約・設備、48～49頁見積り・減損、61・63頁",
+            "finding": "2025年12月1日rimad吸収合併実施済みで新株発行なし。ファクログののれん評価は同事業売上を主要仮定とする。ソフトウエア減損22,050千円は2025年業績へ既反映で、資産名からTalema等の個別サービスへ帰属させない。重要な設備新設・除却計画はなし。SNS規約、ステマ規制、薬機法、検索集客が事業リスク。ZUU提携の現行条件・個別寄与は特定できない。"
           },
           {
-            "id": "lt-grid-original",
-            "kind": "original_announcement",
-            "source": "tdnet_jpx",
-            "title": "新たな事業の開始および業務上の提携に関するお知らせ",
-            "url": "https://f.irbank.net/pdf/20250918/140120250918559288.pdf",
-            "publishedAt": "2025-09-18T10:30:00+09:00",
-            "contentReviewed": true,
-            "locator": "pp.1-2,7：事業開始目的・予定、業務提携",
-            "finding": "全国送配電10社との提携でGrid Data KYC事業を開始し、予定開始日を2025年10月15日と記載。2025年業績影響は軽微という当時の見通し。8:00のPR版と10:30適時開示版は内容同一であり、二重計上しない。"
-          },
-          {
-            "id": "lt-grid-latest",
-            "kind": "progress",
-            "source": "tdnet_jpx",
-            "title": "千葉信用金庫、電力契約情報を継続的顧客管理に活用～DMに替わる個人口座の本人確認業務効率化へ、「Grid Data KYC」を導入～",
-            "url": "https://f.irbank.net/pr/20260917/140120260915536592.pdf",
-            "publishedAt": "2026-09-17T11:00:00+09:00",
-            "contentReviewed": true,
-            "locator": "pp.1-2：千葉信用金庫導入、利用業務",
-            "finding": "電力契約情報と信金の低リスク顧客情報を照合し、DM代替の居住確認・継続的顧客管理に使用。導入は確認できるが契約額、案件別実績利益・売上は非開示。"
-          },
-          {
-            "id": "lt-fraud-original",
-            "kind": "progress",
-            "source": "official_ir",
-            "title": "不正アクセス検知サービス「Fraud Alert」を提供する株式会社カウリスが、入出金のモニタリングを行う「Fraud Alert 入出金検知」サービスを正式リリース",
-            "url": "https://caulis.jp/news/2024/12/fraud-alert-new/",
-            "publishedAt": "2024-12-27",
-            "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
-            "locator": "本文：正式リリースと既存サービスとの併用",
-            "finding": "入出金のリアルタイムモニタリングを正式リリース。既存ログイン・口座開設検知との併用で不正口座対策の設置面を拡張する。導入・検知実績を、カウリス自身の案件別売上・利益と混同しない。"
-          },
-          {
-            "id": "lt-toyota-original",
+            "id": "lt_faclog_acquisition",
             "kind": "original_announcement",
             "source": "official_ir",
-            "title": "株式会社カウリス、TOYOTA NEXTへの採択決定～コネクティッドカー向け本人特定技術の共同研究をトヨタ自動車と共同で推進～",
-            "url": "https://caulis.jp/news/2017/08/toyotanext/",
-            "publishedAt": "2017-08-31",
-            "publishedAtPrecision": "date_only",
+            "title": "rimad株式会社の株式の取得（子会社化）に関するお知らせ",
+            "publishedAt": "2025-08-28T15:30:00+09:00",
+            "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2681211/00.pdf",
             "contentReviewed": true,
-            "locator": "本文：MaaS・OneID TOYOTA向け共同基礎研究",
-            "finding": "TOYOTA NEXT採択と、利用者本人特定技術の共同開発・実証実験を予定する合意。売上利益の計上、商用開始日、現在の継続・終了はこの原発表では確認できない。"
+            "locator": "1～2頁 取得理由・取得価額・日程",
+            "finding": "rimad全株式を213百万円、費用込み概算224百万円で取得する決議。2025年9月1日実行予定。金融比較プラットフォームと既存事業の連携を目的とし、当時の業績影響は精査中。"
           },
           {
-            "id": "lt-toyota-counterparty",
-            "kind": "progress",
+            "id": "lt_resonas_plan",
+            "kind": "original_announcement",
             "source": "official_ir",
-            "title": "オープンイノベーションプログラム『TOYOTA NEXT』－サービスを共同開発する協業企業、選定結果のお知らせ－",
-            "url": "https://global.toyota/jp/detail/18327954/",
-            "publishedAt": "2017-08-31",
-            "publishedAtPrecision": "date_only",
+            "title": "「ファクログ」運営の株式会社アイズ、法人向けオンラインファクタリングサービス「レゾナス」の提供を7月に開始予定",
+            "publishedAt": "2026-06-23T15:30:00+09:00",
+            "url": "https://ssl4.eir-parts.net/doc/5242/tdnet/2839158/00.pdf",
             "contentReviewed": true,
-            "locator": "本文末段、別紙カウリス：協業の方向性",
-            "finding": "相手方公式発表もリスク検知技術のモビリティー応用を方向性とし、具体的サービス内容・開始時期・提携詳細は今後協議とする。同日発表であり、その後の進捗を証明する続報ではない。"
+            "locator": "1～2頁 提供予定・今後の見通し",
+            "finding": "レゾナスを2026年7月中に開始予定と明示。日までは定めていない。業績影響は軽微との会社見込みで、実績寄与とは区別する。"
           },
           {
-            "id": "lt-power-legacy",
+            "id": "lt_resonas_latest",
             "kind": "progress",
-            "source": "official_ir",
-            "title": "電力設備情報を活用した不正口座開設等防止サービスの事業開始について ～「規制のサンドボックス制度」認定プロジェクト、初の事業化～",
-            "url": "https://caulis.jp/news/2019/10/caulis-kepco/",
-            "publishedAt": "2019-10-21",
-            "publishedAtPrecision": "date_only",
+            "source": "tdnet_jpx",
+            "title": "株式会社アイズが運営するファクタリングサービス「レゾナス」、８月の買取金額が２億5,000万円を突破 先月比約10倍成長",
+            "publishedAt": "2026-09-04T15:30:00+09:00",
+            "url": "https://f.irbank.net/pr/20260904/140120260904531729.pdf",
             "contentReviewed": true,
-            "locator": "本文：関西電力との業務提携と事業開始",
-            "finding": "2019年3月のサンドボックス実証を経て電力設備情報の不正口座開設防止事業を開始。現在のGrid Data KYCに至る前身経路の背景として確認し、当時の事業化を現在の追加売上として再計上しない。"
+            "locator": "1～3頁 開始後の実績・契約設計",
+            "finding": "2026年7月に提供開始し、8月買取額2億5,000万円超・前月比約10倍。手数料1.0%～、ノンリコース契約。買取額は売上・利益ではなく、個別損益・信用費用・必要運転資金の数値は本文にない。"
           },
           {
-            "id": "lt-grayzone",
-            "kind": "progress",
-            "source": "official_ir",
-            "title": "カウリスと関西電力送配電が提供する電力契約データを活用した不正検知サービスが、電力契約者の氏名・電話番号・住所などの個人情報を利用できるとして、３省庁からグレーゾーン解消制度の回答を受領",
-            "url": "https://caulis.jp/news/2024/04/grayzone/",
-            "publishedAt": "2024-04-03",
-            "publishedAtPrecision": "date_only",
+            "id": "lt_renewal",
+            "kind": "original_announcement",
+            "source": "tdnet_jpx",
+            "title": "No.1の広告業界向けプラットフォーム「メディアレーダー」が全面リニューアル UI・UXを大幅に刷新し、AI検索や資料管理機能も拡充",
+            "publishedAt": "2026-09-25T15:30:00+09:00",
+            "url": "https://f.irbank.net/pr/20260925/140120260925540153.pdf",
             "contentReviewed": true,
-            "locator": "本文：回答取得と利用目的・条件",
-            "finding": "電力契約情報による本人確認・継続的顧客管理について、照会内容に沿う範囲での回答受領を確認。法的整理の進展であり、受領だけを売上・利益の計上と扱わない。"
+            "locator": "1～2頁 全面リニューアル・機能詳細",
+            "finding": "AI検索、キープ、検索履歴、ダウンロード履歴を提供。資料探索・比較管理の利便性を改善する施策で、有料リード数や売上改善の実績数値は示されていない。"
           },
           {
-            "id": "lt-fukuoka",
-            "kind": "progress",
+            "id": "lt_el",
+            "kind": "original_announcement",
             "source": "official_ir",
-            "title": "事業拡大に伴い福岡県に新拠点を開設－九州、中国、四国エリアでの顧客連携強化及び将来の採用拠点を目指す―",
-            "url": "https://caulis.jp/news/2026/03/new-office-fukuoka/",
-            "publishedAt": "2026-03-02",
-            "publishedAtPrecision": "date_only",
+            "title": "「ファクログ」運営の株式会社アイズ、株式会社ラボルと提携しAIファクタリングサービスの共同運営を開始",
+            "publishedAt": "2026-06-05T15:30:00+09:00",
+            "url": "https://www.eyez.jp/info/20260605/",
             "contentReviewed": true,
-            "locator": "本文：拠点概要・目的",
-            "finding": "3月1日開設、九州・中国・四国で営業・採用を担う営業所。最新Q2資料で対面商談など活動開始を確認したが、独立した大型設備投資や拠点利益の計上額は示されない。"
+            "locator": "本文「提携の背景」「サービス概要」",
+            "finding": "ラボルのAI買取基盤とファクログの集客を組み合わせ、ELファクタリングの共同運営開始を公表。初回手数料9%の特典があるが、アイズへの配分・利益実績は未記載。自社レゾナスとは別サービス。15:30は公式EIR開示フィードで照合。"
+          },
+          {
+            "id": "lt_zuu",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "title": "マーケティングに悩む経営者へ。No.1の媒体資料ポータル「メディアレーダー」運営の株式会社アイズが、「THE OWNER」の株式会社ZUUと業務提携を開始",
+            "publishedAt": "2021-11-01",
+            "publishedAtPrecision": "date_only",
+            "url": "https://www.eyez.jp/info/20211101/",
+            "contentReviewed": true,
+            "locator": "本文「この度の業務提携により」「提携の背景」",
+            "finding": "THE OWNERの広告・マーケティング資料請求希望者をメディアレーダーへ送客する提携を公表。公表時の構想は確認できるが、現在の契約更新・終了や個別売上を示す後続資料へ接続できない。"
           }
         ],
         "items": [
           {
-            "id": "grid_data_kyc_national",
-            "category": "alliances",
+            "id": "faclog_acquisition",
+            "category": "restructuring",
             "direction": "positive",
             "status": "contributing",
-            "originalDocumentId": "lt-grid-original",
-            "latestProgressDocumentId": "lt-grid-latest",
-            "currentAssessment": "全国送配電10社との提携で整備したGrid Data KYCは、PoC売上が限定的ながら計上され、当初の事業化計画から顧客獲得へ進んでいる。",
+            "originalDocumentId": "lt_faclog_acquisition",
+            "latestProgressDocumentId": "lt_half_2026",
+            "currentAssessment": "ファクログは上期売上1.566億円を計上し、買収効果は既に売上へ反映されている。",
             "reportedTiming": {
-              "documentId": "lt-q2-2026",
-              "statement": "2026年は各業界の初期顧客獲得、2027年以降に拡販を進め、2028年にサービスの黒字転換・収益化を目指す。2028年の月日は明示されていない。",
-              "dueDate": null
+              "documentId": "lt_faclog_acquisition",
+              "statement": "株式譲渡実行日2025年9月1日（予定）",
+              "dueDate": "2025-09-01"
             },
             "actualContribution": {
-              "documentId": "lt-half-2026",
+              "documentId": "lt_half_2026",
               "metric": "revenue",
               "basis": "reported_actual",
-              "statement": "中間報告pp.3-4に、Grid Data KYCは実証実験の実施に伴い一部案件で売上を計上し、当中間期売上高に限定的ながら寄与したと記載。案件別金額と利益黒字化は確認していない。"
+              "statement": "2026年1～6月のファクログ売上156,577千円を公表。サービス別営業利益は開示されていないので、増益額を買収利益と同一視しない。"
             }
           },
           {
-            "id": "toyota_next_identity_research",
+            "id": "resonas_launch",
+            "category": "products_services",
+            "direction": "mixed",
+            "status": "in_progress",
+            "originalDocumentId": "lt_resonas_plan",
+            "latestProgressDocumentId": "lt_resonas_latest",
+            "currentAssessment": "レゾナスは7月開始予定から取引実行の段階へ進んだが、買取額と売上・利益は異なり、個別利益寄与は未確認。",
+            "reportedTiming": {
+              "documentId": "lt_resonas_plan",
+              "statement": "2026年7月中の提供開始を予定",
+              "dueDate": null
+            },
+            "riskNote": "レゾナスは買取取引が伸びているが、信用費用・資金負担を含む個別損益は未開示。開始月だけの予定から正確な開始日や収益化日を創作しない。"
+          },
+          {
+            "id": "media_radar_renewal",
+            "category": "products_services",
+            "direction": "mixed",
+            "status": "planned",
+            "originalDocumentId": "lt_renewal",
+            "latestProgressDocumentId": "lt_renewal",
+            "currentAssessment": "AI検索・履歴管理の刷新は資料探索を改善するが、有料リード数・転換率の回復実績は未公表。",
+            "statusExplanation": "機能の提供開始は確認済み。原発表後の収益効果の続報がないため、利益寄与を認定せず予定・効果検証段階として記録する。"
+          },
+          {
+            "id": "el_factoring_alliance",
+            "category": "alliances",
+            "direction": "positive",
+            "status": "planned",
+            "originalDocumentId": "lt_el",
+            "latestProgressDocumentId": "lt_el",
+            "currentAssessment": "ELファクタリングは共同運営の開始が公表されているが、当社の個別売上・利益寄与は未開示。",
+            "statusExplanation": "共同運営開始は原発表本文で確認済みだが、その後の個別進捗・当社収益の続報がないため、原発表だけで収益寄与を認定しない。"
+          },
+          {
+            "id": "zuu_referral_alliance_2021",
             "category": "alliances",
             "direction": "mixed",
             "status": "unresolved",
-            "originalDocumentId": "lt-toyota-original",
+            "originalDocumentId": "lt_zuu",
             "latestProgressDocumentId": null,
-            "currentAssessment": "2017年8月31日公表（時刻記載なし）のトヨタ向け本人特定技術共同研究は、継続・終了や売上利益への反映を示す続報を確認できず、長期案件の照合が未完了で、現在の業績材料には算入できない。",
-            "unresolvedReason": "原発表と相手方同日発表は確認したが、公式ニュース全履歴・最新決算・会社IRおよびトヨタ公式情報の検索で、具体的サービス化・計上実績・契約終了の本文を確保できない。原発表は正確な商用開始日も約していない。",
-            "riskNote": "2017年8月31日公表（時刻記載なし）のトヨタ向け本人特定技術共同研究は、継続・終了や売上利益への反映を示す続報を確認できず、長期案件の照合が未完了で、現在の業績材料には算入できない。"
+            "currentAssessment": "2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。",
+            "unresolvedReason": "原発表のTHE OWNERからメディアレーダーへの送客構想は確認したが、公式開示履歴と最新決算から、契約更新・終了、現在の送客数、売上/利益寄与を示す後続一次資料へ接続できない。",
+            "riskNote": "2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。"
           }
         ],
-        "categoryFindings": [
-          {
-            "category": "alliances",
-            "documentIds": [
-              "lt-grid-original",
-              "lt-grid-latest",
-              "lt-power-legacy",
-              "lt-toyota-original"
-            ],
-            "finding": "電力提携は全国Grid Data KYCとして継続し顧客導入へ進展。旧トヨタ共同研究は現在の状態未確定。"
-          },
-          {
-            "category": "orders_contracts",
-            "documentIds": [
-              "lt-half-2026",
-              "lt-q2-2026",
-              "lt-grid-latest"
-            ],
-            "finding": "PoC受注と一部売上計上、本契約への展開を区別。契約残高1,009,887千円には複数年・季節性があり、全額を今期売上にしない。"
-          },
-          {
-            "category": "investment_capacity",
-            "documentIds": [
-              "lt-annual-2025",
-              "lt-fukuoka",
-              "lt-q2-2026"
-            ],
-            "finding": "PC・自社利用ソフトウェア投資と福岡営業所の稼働を確認。大型生産能力増強は最新の重要設備計画に見つからず、拠点開設を売上利益の計上と扱わない。"
-          },
-          {
-            "category": "products_services",
-            "documentIds": [
-              "lt-fraud-original",
-              "lt-q2-2026",
-              "lt-half-2026"
-            ],
-            "finding": "Fraud Alertの入出金への拡張とGrid Data KYCの事業化を確認。MRR・ARRはFraud Alert指標でGrid Data KYCを含まない。"
-          },
-          {
-            "category": "approvals_subsidies",
-            "documentIds": [
-              "lt-grayzone",
-              "lt-annual-2025",
-              "lt-half-2026"
-            ],
-            "finding": "2019年実証と2024年グレーゾーン回答が電力情報の事業化の背景。許認可・制度回答を補助金収入や売上利益へ読み替えない。最新決算と公式履歴で追加の重要補助金採択・収益計上を確認したものはない。"
-          },
-          {
-            "category": "restructuring",
-            "documentIds": [
-              "lt-annual-2025",
-              "lt-half-2026"
-            ],
-            "finding": "単一報告セグメント、関係会社・のれん記載と全IR履歴を確認。現在の業績を変える新たなM&A・事業売却・再編の公表を確認したものはない。"
-          },
-          {
-            "category": "legal_regulatory",
-            "documentIds": [
-              "lt-grayzone",
-              "lt-annual-2025",
-              "lt-half-2026"
-            ],
-            "finding": "個人情報の利用条件、金融犯罪対策要請、一般訴訟リスクを照合。将来リスクの記載を実際の提訴・行政処分と扱わない。最新中間資料は事業リスクの重要変更なし。"
-          },
-          {
-            "category": "contract_changes",
-            "documentIds": [
-              "lt-annual-2025",
-              "lt-half-2026",
-              "lt-q2-2026"
-            ],
-            "finding": "電力提携の期間・更新条件とFraud Alertの小規模付随サービス終了・解約を確認。上期契約社数減少と単価上昇を併記し、解約を全事業・全提携終了へ拡大しない。"
-          }
-        ],
-        "unresolvedReason": "8カテゴリを調査したが、2017年TOYOTA NEXT共同研究の商用化・継続・撤回・終了を示す後続一次資料を確保できず、全長期案件の状態照合を完了できない。確認済みGrid Data KYCの売上寄与と未確認案件を混ぜない。",
-        "riskNote": "2017年8月31日公表（時刻記載なし）のトヨタ向け本人特定技術共同研究は、継続・終了や売上利益への反映を示す続報を確認できず、長期案件の照合が未完了で、現在の業績材料には算入できない。"
-      },
-      "auditStatus": "pass"
+        "unresolvedReason": "8カテゴリを最新決算・会社固有の履歴で点検したが、ZUU等の旧提携の現在の存続条件・終了・個別寄与の照合が未完了。確認済みのファクログ売上寄与やレゾナス取引増を保持し、古い提携を現在の新材料や未公表利益へ置き換えない。",
+        "riskNote": "2021年11月1日公表（時刻記載なし）のZUU送客提携は、最新の契約継続・終了と個別損益を照合できず、現在のリード増加要因とは断定できない。"
+      }
     }
   ]
 }
+

@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "as_of": "2026-10-19",
-  "fetched_at": "2026-10-19T17:08:22.219609+09:00",
+  "as_of": "2026-10-20",
+  "fetched_at": "2026-10-20T17:05:22.944519+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
-  "source_sha256": "6a61b16f635704c62272a12b2884c946b4165ca645a4750cd5eff7d64d93a451",
+  "source_sha256": "dcf009148b7613481cacd262d1087f549c437f8ba2b7f4107cb1c631b7b09b71",
   "rule": "causal designation-date gate; exclude acquisition only on or after the official delisting date",
   "delisting_sources": [
     {
@@ -39,7 +39,7 @@
     {
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
-      "source_sha256": "4bd35ae35ac62c606d52a39582e9cb73a6e3c33d1c1b336076f42f32e341bf96",
+      "source_sha256": "ebc27fea76d22687f735b12d5daa4ee7cdbe4f69a439a306721758f5d8209a5c",
       "delisted_symbol_count": 133
     }
   ],
@@ -9281,7 +9281,7 @@
     {
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/new/index.html",
-      "source_sha256": "8c74f85984cec448318b33c1539d197f5217fd029c322c5dbe296256fdf2018d",
+      "source_sha256": "aefdfc46efbb77fd3213a953a151a81906d30ca2a7dd9174a4c1461c113c9c8a",
       "listed_symbol_count": 42
     }
   ],
@@ -15091,6 +15091,13 @@
       "code": "8141",
       "company_name": "新光商事（株）",
       "designation_date": "2026-10-09",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7523",
+      "company_name": "アールビバン（株）",
+      "designation_date": "2026-10-20",
       "designation": "上場廃止の決定・整理銘柄指定",
       "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
     }

@@ -50,6 +50,12 @@ class ReminderDeliveryTests(unittest.TestCase):
                                          webhook_url="https://example.test/webhook", on_delivery=saved.append)
             self.assertEqual(post.call_count, 2)
             self.assertTrue(d6["d6_exit_reminded_at"].ne("").all())
+            for call in post.call_args_list:
+                self.assertIn("with_components=true", call.args[0])
+                self.assertEqual(call.kwargs["json"]["components"], [{"type": 1, "components": [{
+                    "type": 2, "style": 5, "label": "チャートを見る",
+                    "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A4052",
+                }]}])
             notify_exit_reminders(d6, date(2026, 10, 8), webhook_url="https://example.test/webhook")
             self.assertEqual(post.call_count, 2)
         self.assertEqual(len(saved), 2)

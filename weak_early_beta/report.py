@@ -609,7 +609,7 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
         chart_action = (
             '<a class="button-link" href="/purchase">アクセス権を購入する</a>'
             if is_masked
-            else f'<a class="button-link" href="https://jp.tradingview.com/chart/?symbol=TSE%3A{html.escape(str(symbol))}">チャート</a>'
+            else f'<a class="button-link" href="https://jp.tradingview.com/chart/?symbol=TSE%3A{html.escape(str(symbol))}" target="_blank" rel="noopener noreferrer">チャート</a>'
         )
         actions += chart_action
         export_fields = {

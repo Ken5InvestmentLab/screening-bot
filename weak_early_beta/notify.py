@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 import pandas as pd
 import requests
@@ -43,6 +43,16 @@ EMBED_COLORS = {
 def _number(value: Any, suffix: str = "") -> str:
     numeric = pd.to_numeric(pd.Series([value]), errors="coerce").iloc[0]
     return "—" if pd.isna(numeric) else f"{float(numeric):,.0f}{suffix}"
+
+
+def chart_components(symbol: Any) -> list[dict[str, Any]]:
+    """A link button works without a bot interaction handler."""
+    return [{"type": 1, "components": [{
+        "type": 2,
+        "style": 5,
+        "label": "チャートを見る",
+        "url": f"https://jp.tradingview.com/chart/?symbol=TSE%3A{quote(str(symbol), safe='')}",
+    }]}]
 
 
 def _message(group: pd.DataFrame, report_url: str = "") -> dict[str, Any]:
@@ -88,7 +98,7 @@ def _message(group: pd.DataFrame, report_url: str = "") -> dict[str, Any]:
     embed["url"] = urljoin(report_url, "weak_early_beta_latest.html")
     # Discord PATCH keeps omitted fields, so an explicit empty content value is
     # required when upgrading an older text notification to an embed.
-    return {"content": "", "embeds": [embed], "allowed_mentions": {"parse": []}}
+    return {"content": "", "embeds": [embed], "components": chart_components(first["symbol"]), "allowed_mentions": {"parse": []}}
 
 
 def _existing_message(signal_date: Any, symbol: str, bot_token: str) -> dict[str, Any] | None:
@@ -114,6 +124,7 @@ def edit_webhook_message(webhook_url: str, message_id: str, payload: dict[str, A
     """Replace a beta webhook message without creating a duplicate."""
     response = requests.patch(
         f"{webhook_url.rstrip('/')}/messages/{message_id}",
+        params={"with_components": "true"},
         json=payload,
         timeout=30,
     )
@@ -123,7 +134,7 @@ def edit_webhook_message(webhook_url: str, message_id: str, payload: dict[str, A
 
 def _post_webhook(webhook_url: str, payload: dict[str, Any]) -> dict[str, Any]:
     response = requests.post(
-        webhook_url + ("&" if "?" in webhook_url else "?") + "wait=true",
+        webhook_url + ("&" if "?" in webhook_url else "?") + "wait=true&with_components=true",
         json=payload,
         timeout=30,
     )

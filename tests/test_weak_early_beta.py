@@ -32,7 +32,7 @@ from weak_early_beta.entry_feasibility import annotate_entry_feasibility, perfor
 from weak_early_beta.metrics import build_metrics, build_monthly_metrics
 from weak_early_beta.notify import (
     CHANNEL_ID, EMBED_COLORS, GUILD_ID, SUMMARY_CHANNEL_ID, _discord_url,
-    _message, daily_summary_payload, notify_daily_completion,
+    _message, _post_webhook, daily_summary_payload, edit_webhook_message, notify_daily_completion,
 )
 from weak_early_beta.report import (
     _annual_pl_chart,
@@ -190,6 +190,10 @@ class WeakEarlyBetaTests(unittest.TestCase):
         embed = payload["embeds"][0]
         self.assertEqual(embed["title"], "7709 クボテック")
         self.assertEqual(embed["url"], "https://example.test/weak_early_beta_latest.html")
+        self.assertEqual(payload["components"], [{"type": 1, "components": [{
+            "type": 2, "style": 5, "label": "チャートを見る",
+            "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A7709",
+        }]}])
         self.assertEqual(embed["color"], EMBED_COLORS[5])
         fields = {field["name"]: field["value"] for field in embed["fields"]}
         self.assertEqual(fields["検出時点の終値"], "76円")
@@ -214,6 +218,17 @@ class WeakEarlyBetaTests(unittest.TestCase):
         with patch.dict("os.environ", {"WEAK_EARLY_BETA_REPORT_URL": ""}):
             with self.assertRaisesRegex(ValueError, "WEAK_EARLY_BETA_REPORT_URL"):
                 _message(group)
+
+    def test_webhook_create_and_edit_enable_link_components(self):
+        payload = _message(self.ledger.head(1), "https://example.test/")
+        with patch("weak_early_beta.notify.requests.post") as post:
+            _post_webhook("https://example.test/webhook?thread_id=123", payload)
+            self.assertEqual(post.call_args.args[0], "https://example.test/webhook?thread_id=123&wait=true&with_components=true")
+            self.assertEqual(post.call_args.kwargs["json"], payload)
+        with patch("weak_early_beta.notify.requests.patch") as edit:
+            edit_webhook_message("https://example.test/webhook", "456", payload)
+            self.assertEqual(edit.call_args.kwargs["params"], {"with_components": "true"})
+            self.assertEqual(edit.call_args.kwargs["json"], payload)
 
     def test_daily_summary_counts_overlapping_modes_and_links(self):
         group = self.ledger.head(5).copy()

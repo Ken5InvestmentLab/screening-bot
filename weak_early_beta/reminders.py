@@ -15,7 +15,7 @@ from .bank_calendar import (
     fifth_session_from_entry, is_bank_business_day, sixth_session_from_entry,
 )
 from .ledger import EXIT_REMINDER_COLUMNS, write_ledger
-from .notify import WEBHOOK_ENV, _discord_url, _number
+from .notify import WEBHOOK_ENV, _discord_url, _number, chart_components
 
 
 REMINDER_COLOR = 0xF39C12
@@ -61,7 +61,7 @@ def _payload(
     }
     if report_url:
         embed["url"] = report_url
-    return {"content": "", "embeds": [embed], "allowed_mentions": {"parse": []}}
+    return {"content": "", "embeds": [embed], "components": chart_components(symbol), "allowed_mentions": {"parse": []}}
 
 
 def notify_exit_reminders(
@@ -100,7 +100,7 @@ def notify_exit_reminders(
                 raise RuntimeError(f"{WEBHOOK_ENV} is required for live exit reminders")
             try:
                 response = requests.post(
-                    webhook_url + ("&" if "?" in webhook_url else "?") + "wait=true",
+                    webhook_url + ("&" if "?" in webhook_url else "?") + "wait=true&with_components=true",
                     json=payload,
                     timeout=30,
                 )

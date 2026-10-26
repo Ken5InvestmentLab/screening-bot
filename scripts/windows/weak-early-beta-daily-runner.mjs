@@ -88,7 +88,7 @@ const GENERATED_PATHS = new Set([
   ...['latest', 'analytics', 'guide', 'balance', 'dive', 'fusion', 'shadow', 'silence']
     .flatMap(name => [`reports/weak_early_beta_${name}.html`, `reports/weak_early_beta_${name}_free.html`]),
   ...['daily_notifications.json', 'detections.csv', 'excluded_detections.csv', 'fundamental_queue.json',
-    'jpx_restricted_symbols_latest.json', 'latest_run_receipt.json', 'metrics.csv', 'monthly_metrics.csv']
+    'jpx_restricted_symbols_latest.json', 'latest_prices.json', 'latest_run_receipt.json', 'metrics.csv', 'monthly_metrics.csv']
     .map(name => `weak_early_beta/state/${name}`),
   'weak_early_beta/fundamental_worker/out/fundamental_receipts.json',
   'weak_early_beta/fundamental_worker/out/latest_claim.json',

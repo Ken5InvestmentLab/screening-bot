@@ -70,6 +70,7 @@ test('Git porcelain NUL parsing preserves filenames and rename source paths', ()
 });
 
 test('only explicitly allowed generated paths can enter the daily commit', () => {
+  assert.deepEqual(assertGeneratedChanges([{ status: '??', path: 'weak_early_beta/state/latest_prices.json' }]), ['weak_early_beta/state/latest_prices.json']);
   assert.deepEqual(assertGeneratedChanges([{ status: ' M', path: generatedReport }]), [generatedReport]);
   assert.deepEqual(assertGeneratedChanges([{ status: '??', path: generatedReport }]), [generatedReport]);
   for (const unexpected of [

@@ -16,6 +16,7 @@ from .bank_calendar import (
 )
 from .ledger import EXIT_REMINDER_COLUMNS, write_ledger
 from .notify import WEBHOOK_ENV, _discord_url, _number, chart_components
+from .current_prices import quote_for, read_snapshot
 
 
 REMINDER_COLOR = 0xF39C12
@@ -42,10 +43,12 @@ def save_reminder_receipts(ledger: pd.DataFrame, path: Path) -> None:
 
 def _payload(
     group: pd.DataFrame, target: date, report_url: str, session: int, price_label: str,
+    prices: dict | None = None,
 ) -> dict[str, Any]:
     first = group.iloc[0]
     company = str(first.get("company_name", "") or "").strip()
     symbol = str(first["symbol"])
+    price, price_date = quote_for(prices or {}, symbol, before=target)
     embed: dict[str, Any] = {
         "title": f"{session}営業日目の確認：{symbol} {company}".strip(),
         "description": f"本日の{price_label}で、Cloudの{session}営業日目が確定します。運用ルールの確認用リマインダーです。",
@@ -55,6 +58,7 @@ def _payload(
             {"name": "評価タイミング", "value": f"{session}営業日目の{price_label}", "inline": True},
             {"name": "エントリー日", "value": f"{pd.Timestamp(first['entry_date']):%Y-%m-%d}", "inline": True},
             {"name": "エントリー価格", "value": _number(first.get("entry_open"), "円"), "inline": True},
+            {"name": "現在株価（最新終値）", "value": price + (f"\n{price_date}" if price_date else ""), "inline": True},
             {"name": "該当モード数", "value": f"{group['selector_id'].nunique()}モード", "inline": True},
         ],
         "footer": {"text": "売買推奨ではなく、設定済み評価日の確認通知です"},
@@ -84,6 +88,7 @@ def notify_exit_reminders(
         & pd.to_datetime(result["entry_date"], errors="coerce").notna()
     ].copy()
     payloads: list[dict[str, Any]] = []
+    prices = read_snapshot()
     for (signal_date, symbol), group in candidates.groupby(["signal_date", "symbol"], sort=True):
         entry = pd.Timestamp(group.iloc[0]["entry_date"]).date()
         for session, price_label, session_date, url_column, at_column in REMINDER_ENDPOINTS:
@@ -92,7 +97,7 @@ def notify_exit_reminders(
             # One receipt on any matched mode suppresses the whole symbol group.
             if any(group[column].astype(str).str.strip().ne("").any() for column in (url_column, at_column)):
                 continue
-            payload = _payload(group, target, report_url, session, price_label)
+            payload = _payload(group, target, report_url, session, price_label, prices)
             payloads.append(payload)
             if dry_run:
                 continue

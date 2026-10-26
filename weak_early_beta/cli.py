@@ -228,6 +228,8 @@ def command_daily(args: argparse.Namespace) -> None:
         restrictions,
         Path(args.excluded_ledger),
     )
+    from .current_prices import write_snapshot
+    write_snapshot(raw, ledger["symbol"], source_hash, ledger_path.with_name("latest_prices.json"))
     report_url = args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", "")
     payloads = []
     if args.notify or args.dry_run_notify:

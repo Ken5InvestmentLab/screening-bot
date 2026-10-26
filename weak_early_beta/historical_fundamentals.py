@@ -106,7 +106,7 @@ def validate_historical_report(report: dict) -> str:
     return _validate_report(report, detection_cutoff(report["signalDate"]), forward=False)
 
 
-def validate_forward_report(report: dict, claim: dict) -> str:
+def validate_forward_report(report: dict, claim: dict, *, html_only: bool = False) -> str:
     """Validate live evidence against its immutable analysis-start claim stamp."""
     if report.get("auditStatus") != "pass":
         raise ValueError("forward report requires auditStatus='pass'")
@@ -120,10 +120,10 @@ def validate_forward_report(report: dict, claim: dict) -> str:
         raise ValueError("report/claim alert mismatch")
     cutoff = str(claim.get("analysisCutoff", claim.get("receivedAt", ""))).strip()
     analysis_timestamp(cutoff)
-    return _validate_report(report, cutoff, forward=True)
+    return _validate_report(report, cutoff, forward=True, html_only=html_only)
 
 
-def validate_forward_reports(claim: dict, reports: list[dict]) -> list[str]:
+def validate_forward_reports(claim: dict, reports: list[dict], *, html_only: bool = False) -> list[str]:
     """Require exactly one audited snapshot for every alert in the owned batch."""
     alerts = claim.get("alerts", [])
     if not isinstance(alerts, list) or any(not isinstance(alert, dict) for alert in alerts):
@@ -137,10 +137,10 @@ def validate_forward_reports(claim: dict, reports: list[dict]) -> list[str]:
     if set(claim_ids) != set(report_ids) or claim.get("claimedCount", len(alerts)) != len(alerts):
         raise ValueError("forward reports must exactly match the claimed alert batch")
     lookup = dict(zip(claim_ids, alerts))
-    return [validate_forward_report(report, lookup[report_id]) for report, report_id in zip(reports, report_ids)]
+    return [validate_forward_report(report, lookup[report_id], html_only=html_only) for report, report_id in zip(reports, report_ids)]
 
 
-def _validate_report(report: dict, expected_cutoff: str, *, forward: bool) -> str:
+def _validate_report(report: dict, expected_cutoff: str, *, forward: bool, html_only: bool = False) -> str:
     """Share field/evidence checks without widening the historical entry point."""
     signal_date = _iso_date(report["signalDate"])
     symbol = str(report["symbolCode"]).strip()
@@ -164,11 +164,11 @@ def _validate_report(report: dict, expected_cutoff: str, *, forward: bool) -> st
     if missing:
         raise ValueError(f"historical report is missing non-empty fields: {missing}")
 
-    # Match the active Premium snapshot link contract: no fixed disclosure-link
-    # count, but keep the combined field below Discord's safe 1,000-character
-    # budget and use 2-4 reference/listing pages in Sources.
+    # Discord keeps Premium's 1,000-character budget. Explicit forward HTML-only
+    # validation retains all evidence links; the remaining evidence checks apply
+    # identically, including exact publication receipts and URL correspondence.
     disclosure_links = fields["開示リンク"]
-    if len(disclosure_links) > 1000:
+    if not (forward and html_only) and len(disclosure_links) > 1000:
         raise ValueError("開示リンク must stay within the Premium 1,000-character safety limit")
     source_urls = re.findall(r"https?://[^\s)>\]]+", fields["Sources"])
     if not 2 <= len(set(source_urls)) <= 4:

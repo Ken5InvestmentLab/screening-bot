@@ -12,6 +12,7 @@ const FUNDAMENTAL_MODEL = 'gpt-6.1-sol';
 const FUNDAMENTAL_REASONING_EFFORT = 'xhigh';
 
 const CLOUD_REPORT_CONTRACT = [
+  'CloudはHTML保存専用です。長期材料と増資の主要根拠を開示リンクとdisclosuresに欠落なく保持し、Discord向け文字数制限のために証跡を削除・省略しないでください。Discordへの投稿は行いません。',
   'Cloud固有のJSON契約: sourceChecksは必ずオブジェクトの配列です。role名をキーにしたオブジェクトにはしません。',
   '実際に確認した公式IRとIRBANKまたはTDnetについて、次の形の確認記録を必ず含めてください。例のURLや本文は確認した実値へ置き換え、未確認の資料を確認済みにしないでください。',
   JSON.stringify({ sourceChecks: [
@@ -313,7 +314,7 @@ async function main(configFile) {
     if ((claim.alerts || []).every(alert => alert.signalType === 'WEAK_EARLY_BETA' && alert.analysisCutoff)) {
       await run(config.pythonPath || 'py', [
         '-m', 'weak_early_beta.cli', 'validate-forward-fundamentals',
-        '--claim', claimPath, '--input', reportsPath,
+        '--claim', claimPath, '--input', reportsPath, '--html-only',
       ], 'validate-analysis-start');
     }
     result.validatedReportPath = path.join(runDir, 'validated-reports.json');

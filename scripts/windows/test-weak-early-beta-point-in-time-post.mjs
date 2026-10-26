@@ -8,6 +8,26 @@ import { CLOUD_REPORT_CONTRACT, finalizeHtmlSnapshots } from './weak-early-beta-
 
 const poster = path.resolve('weak_early_beta/scripts/post_historical_snapshot.mjs');
 
+test('long forward evidence is preserved for HTML and rejected before Discord send', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-long-evidence-'));
+  try {
+    const report = validReport();
+    report.auditStatus = 'pass';
+    report.disclosures = Array.from({length:20}, (_,i) => ({title:`資料${i}`, publishedAt:'2026-09-30T15:30:00+09:00', url:`https://example.com/primary-evidence-document-${i}.pdf`, contentReviewed:true}));
+    const links = report.disclosures.map((d,i)=>`・[2026-09-30 資料${i}(15:30)](${d.url})`).join('\n');
+    report.fields.find(f=>f.name==='開示リンク').value = links;
+    assert.ok([...links].length>1024);
+    const statePath=path.join(fixture,'state.json'), reportPath=path.join(fixture,'report.json');
+    const initial={claims:{[report.alertId]:{claimId:'long-evidence', symbolCode:report.symbolCode, signalDate:report.signalDate, signalType:'WEAK_EARLY_BETA', receivedAt:report.analysisCutoff, analysisCutoff:report.analysisCutoff}},posted:{},failed:{}};
+    fs.writeFileSync(statePath,JSON.stringify(initial));fs.writeFileSync(reportPath,JSON.stringify({reports:[report]}));
+    const run=args=>spawnSync(process.execPath,[poster,'--input',reportPath,'--state',statePath,...args],{encoding:'utf8',env:{...process.env,WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL:'http://127.0.0.1:1/must-not-send'}});
+    const denied=run([]);assert.notEqual(denied.status,0);assert.match(denied.stderr,/1,000-character safety limit/);
+    assert.deepEqual(JSON.parse(fs.readFileSync(statePath,'utf8')),initial);
+    const saved=run(['--save-only']);assert.equal(saved.status,0,saved.stderr);assert.equal(JSON.parse(saved.stdout).posted,false);
+    const state=JSON.parse(fs.readFileSync(statePath,'utf8'));assert.deepEqual(state.completed[report.alertId].report,report);assert.deepEqual(state.claims,initial.claims);assert.deepEqual(state.posted,{});
+  } finally {fs.rmSync(fixture,{recursive:true,force:true});}
+});
+
 function validReport() {
   return {
     alertId: 'weak-early-beta:2026-09-30:4052',

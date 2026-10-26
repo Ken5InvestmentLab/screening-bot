@@ -779,6 +779,42 @@ class WeakEarlyBetaTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "scheduled detection cutoff"):
             validate_historical_report(report)
 
+    def test_forward_html_only_preserves_long_evidence_and_keeps_validation(self):
+        report, alert = self._forward_analysis_report()
+        disclosures = [dict(report["disclosures"][0], url=f"https://example.com/primary-evidence-document-{n}.pdf") for n in range(20)]
+        links = "\n".join(f"・[2026-10-01 開示資料{n}(15:00)]({doc['url']})" for n, doc in enumerate(disclosures))
+        report["disclosures"] = disclosures
+        for field in report["fields"]:
+            if field["name"] == "開示リンク":
+                field["value"] = links
+        self.assertGreater(len(links), 1024)
+        batch = {"claimedCount": 1, "alerts": [alert]}
+        with self.assertRaisesRegex(ValueError, "1,000-character safety limit"):
+            validate_forward_reports(batch, [report])
+        self.assertEqual(validate_forward_reports(batch, [report], html_only=True), ["2026-09-30|3133"])
+        # Saving/exporting an HTML snapshot must retain every byte and URL.
+        with tempfile.TemporaryDirectory() as temp:
+            state_path, receipts_path = Path(temp) / "state.json", Path(temp) / "receipts.json"
+            state_path.write_text(json.dumps({"completed": {report["alertId"]: {"delivery": "html", "report": report}}}), encoding="utf-8")
+            receipts = export_receipts(state_path, receipts_path, alert_ids={report["alertId"]})
+            self.assertIn(links, receipts[0]["html"])
+        report["disclosures"] = disclosures[:-1]
+        with self.assertRaisesRegex(ValueError, "exactly match"):
+            validate_forward_reports(batch, [report], html_only=True)
+        report["disclosures"] = disclosures
+        disclosures[-1]["publishedAt"] = "2026-10-01T15:00:00.124+09:00"
+        with self.assertRaisesRegex(ValueError, "post-analysis-start disclosure"):
+            validate_forward_reports(batch, [report], html_only=True)
+
+    def test_forward_discord_link_budget_boundary_remains_1000(self):
+        report, alert = self._forward_analysis_report()
+        field = next(field for field in report["fields"] if field["name"] == "開示リンク")
+        field["value"] += " " * (1000 - len(field["value"]))
+        self.assertEqual(validate_forward_report(report, alert), "2026-09-30|3133")
+        field["value"] += "x"
+        with self.assertRaisesRegex(ValueError, "1,000-character safety limit"):
+            validate_forward_report(report, alert)
+
     def test_forward_report_rejects_disclosure_after_analysis_start_by_a_millisecond(self):
         report, claim = self._forward_analysis_report()
         report["disclosures"][0]["publishedAt"] = "2026-10-01T15:00:00.124+09:00"

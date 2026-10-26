@@ -74,6 +74,11 @@ for (const name of REQUIRED_FIELDS) {
   if (!fields.get(name)) throw new Error(`missing report field: ${name}`);
 }
 const impact = fields.get('材料インパクト');
+// HTML keeps the complete report. A Discord send must fail before truncation
+// or network access when its disclosure evidence exceeds the safe budget.
+if (!saveOnly && [...fields.get('開示リンク')].length > 1000) {
+  throw new Error('開示リンク must stay within the Premium 1,000-character safety limit for Discord delivery');
+}
 if (!/^(?:ポジティブ材料|ネガティブ材料|様子見|混在\/要確認)[：:]/.test(impact)) {
   throw new Error('材料インパクト must begin with a supported label and summary');
 }

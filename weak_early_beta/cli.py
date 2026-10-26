@@ -417,7 +417,7 @@ def command_validate_forward_fundamentals(args: argparse.Namespace) -> None:
     claim = json.loads(Path(args.claim).read_text(encoding="utf-8-sig"))
     payload = json.loads(Path(args.input).read_text(encoding="utf-8-sig"))
     reports = payload if isinstance(payload, list) else payload.get("reports", [])
-    identities = validate_forward_reports(claim, reports)
+    identities = validate_forward_reports(claim, reports, html_only=bool(getattr(args, "html_only", False)))
     print(json.dumps({"ok": True, "validated": len(identities), "identities": identities}, ensure_ascii=False))
 
 
@@ -788,6 +788,7 @@ def parser() -> argparse.ArgumentParser:
     )
     validate_forward.add_argument("--claim", required=True)
     validate_forward.add_argument("--input", required=True)
+    validate_forward.add_argument("--html-only", action="store_true", help="retain full evidence links for Cloud HTML storage; never authorizes Discord delivery")
     validate_forward.set_defaults(func=command_validate_forward_fundamentals)
 
     export = sub.add_parser(

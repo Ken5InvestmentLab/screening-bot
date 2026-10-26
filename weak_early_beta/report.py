@@ -661,8 +661,8 @@ def _detection_rows(ledger: pd.DataFrame, mask_pending: bool = False) -> str:
             f'data-symbol="{"" if is_masked else html.escape(str(symbol))}" data-search="{html.escape(search_text)}"'
             f'{" hidden" if initial_hidden else ""}>'
             '<td colspan="8" class="history-record"><div class="history-visible-grid">'
-            f'<div data-label="検出日">{signal_date:%Y-%m-%d}</div>'
-            f'<div class="history-company"><strong><span class="symbol">{html.escape(display_symbol)}</span> {html.escape(display_name)}</strong>{current_display}<small>検出日 終値 {signal_display}</small><div class="actions">{actions}</div></div>'
+            f'<div class="history-date" data-label="検出日"><div class="history-date-value">{signal_date:%Y-%m-%d}</div><div class="actions history-date-actions">{actions}</div></div>'
+            f'<div class="history-company"><strong><span class="symbol">{html.escape(display_symbol)}</span> {html.escape(display_name)}</strong>{current_display}<small>検出日 終値 {signal_display}</small></div>'
             f'<div data-label="該当モード">{badges}<small data-scenario-shares>100株で試算</small></div>'
             f'<div data-label="状況"><span data-exit-key="d5_close" class="status {status_class}">{"結果あり" if status == "確定" else status}</span><span data-exit-key="d6_open" class="status {"reference" if reference_only else "mature" if d6_economic else "pending"}" hidden>{"参考値・成績に含めません" if reference_only else d6_result_status}</span></div>'
             f'<div data-label="試算開始日・始値"><span data-exit-key="d5_close">{entry_display}</span><span data-exit-key="d6_open" hidden>{d6_entry_display}</span><small data-scenario-cost></small></div>'
@@ -1827,4 +1827,18 @@ REPORT_CSS += """
 .history-company .current-quote>strong{font-size:19px;line-height:1.3;color:var(--ink)}
 .history-company .current-quote>small{flex-basis:100%;margin:0;font-size:11px;color:var(--muted)}
 @media(max-width:820px){.history-company .current-quote{margin:8px 0;padding:8px 10px}.history-company .current-quote>strong{font-size:21px}}
+"""
+
+REPORT_CSS += """
+.history-date .history-date-actions{display:flex;flex-direction:column;align-items:stretch;gap:8px;margin-top:14px}
+.history-date-actions>.button-link,.history-date-actions>.fundamental-toggle{width:100%;min-height:34px;justify-content:center;text-align:center;white-space:nowrap;font-size:clamp(10px,.85vw,12px);padding:6px 4px}
+@media(max-width:820px){
+  .history-visible-grid>.history-date{display:contents}
+  .history-date:before{display:none!important}
+  .history-date-value{order:1;min-width:0}
+  .history-date-value:before{content:"検出日";display:block;color:var(--muted);font-size:11px}
+  .history-date .history-date-actions{grid-column:1/-1;order:0;flex-direction:row;flex-wrap:wrap;gap:8px;margin:0}
+  .history-date-actions>.button-link,.history-date-actions>.fundamental-toggle{width:auto;min-height:44px;padding:8px 10px;font-size:14px}
+  .history-record:not(.history-details-open) .history-date-actions{display:none}
+}
 """

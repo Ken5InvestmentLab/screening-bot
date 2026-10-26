@@ -56,12 +56,18 @@ class CurrentPricesTests(unittest.TestCase):
         from weak_early_beta.ledger import bootstrap_historical
         from weak_early_beta.report import _detection_rows
         ledger = bootstrap_historical().iloc[:1].copy()
+        ledger["fundamental_html"] = "事業概要\n表示位置を確認する分析本文"
         symbol = str(ledger.iloc[0]["symbol"])
         with patch("weak_early_beta.current_prices.read_snapshot", return_value={symbol: {"date": "2026-10-26", "close": 1234.5}}):
             output = _detection_rows(ledger)
             self.assertIn('class="current-quote"', output)
             self.assertIn("1,234.5円", output)
             self.assertIn("2026-10-26 終値", output)
+            date_cell, company_cell = output.split('<div class="history-company">', 1)
+            self.assertIn('class="actions history-date-actions"', date_cell)
+            self.assertLess(date_cell.index('data-fundamental-toggle'), date_cell.index('>チャート</a>'))
+            self.assertNotIn('class="actions', company_cell)
+            self.assertEqual(output.count('<dialog class="fundamental-detail"'), 1)
             ledger["source_scope"] = "FORWARD_CAUSAL"
             ledger["sixth_xtks_exit_open"] = float("nan")
             ledger["sixth_price_observed_at"] = ""

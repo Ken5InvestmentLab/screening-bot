@@ -24474,7 +24474,7 @@ Sources
 [カウリス お知らせ](https://caulis.jp/news/)
 [カウリス（153A）のIR情報・決算資料｜IRBANK](https://irbank.net/153A/ir)
 [株式会社カウリスの適時開示一覧｜開示情報データベース](https://disclosure.catr.jp/companies/1b993/42506/disclosures)",2026-10-14T18:34:39.972637+09:00,2026-10-22T20:25:39.710816+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1562230745802743820,2026-10-21T07:27:15.824820+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1562594116993294337,2026-10-22T07:31:10.245055+09:00,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-21,e1da983b6f3dbf42fc7db782e9d7a812696696e1a9d6d1cd2ea0e187c150110a,100,100,1,247500,231500,[],2675,verified,2026-10-14T18:34:39.972637+09:00,dc4ad30bf3906ca3c2613ffa8ca244257968492c26ba59d66f978e9005c111c5,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2675.0,""adjusted_price"":2675.0,""basis_asof"":""2026-10-14"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-14"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""dc4ad30bf3906ca3c2613ffa8ca244257968492c26ba59d66f978e9005c111c5"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-22,2660,verified,2026-10-22T20:25:39.710816+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2660.0,""adjusted_price"":2660.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""entry_session"":""2026-10-15"",""field"":""actual_open"",""holding_actions"":[],""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",verified,2026-10-15,2475,100,247500,0.074747474747474701,18500,100,266000,1,[],2026-10-22,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,2026-10-22T20:25:39.710816+09:00,,"{""entry"":{""actual_open"":2475.0,""adjusted_open"":2475.0,""basis_asof"":""2026-10-22"",""session"":""2026-10-15"",""split_factor"":1.0},""exit_receipt"":{""sixth_xtks_exit_date"":""2026-10-22T00:00:00"",""sixth_xtks_exit_observed_at"":""2026-10-22T20:25:39.710816+09:00"",""sixth_xtks_exit_open"":2660.0,""sixth_xtks_exit_price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""sixth_xtks_exit_provenance_json"":""{\""actual_price\"":2660.0,\""adjusted_price\"":2660.0,\""basis_asof\"":\""2026-10-22\"",\""corporate_actions_source\"":\""Yahoo Finance Stock Splits\"",\""corporate_actions_version\"":\""CLOUD_SPLIT_BASIS_V1\"",\""entry_session\"":\""2026-10-15\"",\""field\"":\""actual_open\"",\""holding_actions\"":[],\""price_basis\"":\""ACTUAL_SESSION_SHARE_AWARE_V1\"",\""session\"":\""2026-10-22\"",\""source_price_basis\"":\""yahoo_daily_split_adjusted\"",\""source_sha256\"":\""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847\"",\""source_usable\"":true,\""split_factor\"":1.0,\""symbol\"":\""153A\""}"",""sixth_xtks_exit_source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""sixth_xtks_exit_status"":""verified""},""holding_actions"":[],""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""version"":""CLOUD_D6_ECONOMIC_SOURCE_V1""}"
-2026-10-19|5242|body_pct_low,2026-10-19,5242,アイズ,2704,48500,body_pct_low,Dive,2026-10,entered,2026-10-20,2764,2026-10-26,,,,,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
+2026-10-19|5242|body_pct_low,2026-10-19,5242,アイズ,2704,48500,body_pct_low,Dive,2026-10,mature,2026-10-20,2764,2026-10-26,2997,0.0842981186686,2026-10-26T17:54:03.739882+09:00,23300,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
 混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。
 
 事業概要
@@ -24503,8 +24503,8 @@ Sources
 [IRニュース – 株式会社アイズ](https://www.eyez.jp/ir/news/)
 [ニュース – 株式会社アイズ](https://www.eyez.jp/info/)
 [アイズ（5242）のIR情報・決算資料 | IRBANK](https://irbank.net/5242/ir)
-[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T07:30:39.055208+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,276400,,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
-2026-10-19|5242|dual_top1_agreement,2026-10-19,5242,アイズ,2704,48500,dual_top1_agreement,Fusion,2026-10,entered,2026-10-20,2764,2026-10-26,,,,,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
+[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T17:54:06.967006+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,276400,299700,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
+2026-10-19|5242|dual_top1_agreement,2026-10-19,5242,アイズ,2704,48500,dual_top1_agreement,Fusion,2026-10,mature,2026-10-20,2764,2026-10-26,2997,0.0842981186686,2026-10-26T17:54:03.739882+09:00,23300,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
 混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。
 
 事業概要
@@ -24533,8 +24533,8 @@ Sources
 [IRニュース – 株式会社アイズ](https://www.eyez.jp/ir/news/)
 [ニュース – 株式会社アイズ](https://www.eyez.jp/info/)
 [アイズ（5242）のIR情報・決算資料 | IRBANK](https://irbank.net/5242/ir)
-[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T07:30:39.055208+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,276400,,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
-2026-10-19|5242|dual_top1_agreement_g3_no_acute_selloff,2026-10-19,5242,アイズ,2704,48500,dual_top1_agreement_g3_no_acute_selloff,Balance,2026-10,entered,2026-10-20,2764,2026-10-26,,,,,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
+[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T17:54:06.999460+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,276400,299700,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
+2026-10-19|5242|dual_top1_agreement_g3_no_acute_selloff,2026-10-19,5242,アイズ,2704,48500,dual_top1_agreement_g3_no_acute_selloff,Balance,2026-10,mature,2026-10-20,2764,2026-10-26,2997,0.0842981186686,2026-10-26T17:54:03.739882+09:00,23300,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
 混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。
 
 事業概要
@@ -24563,8 +24563,8 @@ Sources
 [IRニュース – 株式会社アイズ](https://www.eyez.jp/ir/news/)
 [ニュース – 株式会社アイズ](https://www.eyez.jp/info/)
 [アイズ（5242）のIR情報・決算資料 | IRBANK](https://irbank.net/5242/ir)
-[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T07:30:39.055208+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,276400,,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
-2026-10-19|5242|mean_rank_volr20_body_pct,2026-10-19,5242,アイズ,2704,48500,mean_rank_volr20_body_pct,Shadow,2026-10,entered,2026-10-20,2764,2026-10-26,,,,,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
+[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T17:54:07.045978+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,276400,299700,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
+2026-10-19|5242|mean_rank_volr20_body_pct,2026-10-19,5242,アイズ,2704,48500,mean_rank_volr20_body_pct,Shadow,2026-10,mature,2026-10-20,2764,2026-10-26,2997,0.0842981186686,2026-10-26T17:54:03.739882+09:00,23300,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
 混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。
 
 事業概要
@@ -24593,8 +24593,8 @@ Sources
 [IRニュース – 株式会社アイズ](https://www.eyez.jp/ir/news/)
 [ニュース – 株式会社アイズ](https://www.eyez.jp/info/)
 [アイズ（5242）のIR情報・決算資料 | IRBANK](https://irbank.net/5242/ir)
-[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T07:30:39.055208+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,276400,,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
-2026-10-19|5242|volr20_low,2026-10-19,5242,アイズ,2704,48500,volr20_low,Silence,2026-10,entered,2026-10-20,2764,2026-10-26,,,,,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
+[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T17:54:07.087988+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,276400,299700,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
+2026-10-19|5242|volr20_low,2026-10-19,5242,アイズ,2704,48500,volr20_low,Silence,2026-10,mature,2026-10-20,2764,2026-10-26,2997,0.0842981186686,2026-10-26T17:54:03.739882+09:00,23300,0,-0.00165050553755,0.257089725709,3.92394822006,0.918079096045,1,1,1,0.999779652153,0.859134733677,FORWARD_CAUSAL,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,https://discord.com/channels/1479418833352785944/1550876104917520505/1561669803414913045,2026-10-19T18:18:15.970588+09:00,complete,,"材料インパクト
 混在/要確認：AI検索刷新とファクタリング拡大は事業基盤を広げる一方、主力広告２サービスの減収が続き、新サービスの利益寄与は未確定。
 
 事業概要
@@ -24623,7 +24623,7 @@ Sources
 [IRニュース – 株式会社アイズ](https://www.eyez.jp/ir/news/)
 [ニュース – 株式会社アイズ](https://www.eyez.jp/info/)
 [アイズ（5242）のIR情報・決算資料 | IRBANK](https://irbank.net/5242/ir)
-[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T07:30:39.055208+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,276400,,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
+[(株)アイズ【5242】：適時開示情報 – Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/5242.T/disclosure?page=1)",2026-10-19T17:37:58.376889+09:00,2026-10-26T17:54:07.152512+09:00,https://discord.com/channels/1479418833352785944/1550876104917520505/1564043511433535619,2026-10-26T07:30:39.055208+09:00,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,276400,299700,[],2704,verified,2026-10-19T17:37:58.376889+09:00,8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2704.0,""adjusted_price"":2704.0,""basis_asof"":""2026-10-19"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-19"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""8f29515dc8e2fe9be1b3c24fe53d3704fe16b44d3f65eb0e2cbf0cde4afd9d27"",""source_usable"":true,""split_factor"":1.0,""symbol"":""5242""}",2026-10-27,,pending,,,,,pending,2026-10-20,,,,,,,,,,,,,,
 2026-10-22|153A|body_pct_low,2026-10-22,153A,カウリス,2807,2300900,body_pct_low,Dive,2026-10,entered,2026-10-23,2622,2026-10-29,,,,,0,-0.00265017667845,0.238200264667,1.33597714631,0.622881355932,0.333333333333,0.333333333333,0.333333333333,0.999066061234,0.82557696104,FORWARD_CAUSAL,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,https://discord.com/channels/1479418833352785944/1550876104917520505/1562801353862942781,2026-10-22T21:14:39.243450+09:00,complete,,"材料インパクト
 混在/要確認：電力データ本人確認の導入・実証拡大と通期営業益の上方修正は前進だが、新事業の固定費負担と既存ＳＯの残高確認不足が残る。
 
@@ -24653,7 +24653,7 @@ Sources
 ・[カウリス IRニュース](https://caulis.jp/ir/news/)
 ・[カウリス お知らせ](https://caulis.jp/news/)
 ・[カウリス 有価証券報告書](https://caulis.jp/ir/library-securities/)
-・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-23T17:45:41.804819+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
+・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-26T17:54:07.203504+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
 2026-10-22|153A|dual_top1_agreement,2026-10-22,153A,カウリス,2807,2300900,dual_top1_agreement,Fusion,2026-10,entered,2026-10-23,2622,2026-10-29,,,,,0,-0.00265017667845,0.238200264667,1.33597714631,0.622881355932,0.333333333333,0.333333333333,0.333333333333,0.999066061234,0.82557696104,FORWARD_CAUSAL,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,https://discord.com/channels/1479418833352785944/1550876104917520505/1562801353862942781,2026-10-22T21:14:39.243450+09:00,complete,,"材料インパクト
 混在/要確認：電力データ本人確認の導入・実証拡大と通期営業益の上方修正は前進だが、新事業の固定費負担と既存ＳＯの残高確認不足が残る。
 
@@ -24683,7 +24683,7 @@ Sources
 ・[カウリス IRニュース](https://caulis.jp/ir/news/)
 ・[カウリス お知らせ](https://caulis.jp/news/)
 ・[カウリス 有価証券報告書](https://caulis.jp/ir/library-securities/)
-・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-23T17:45:41.829486+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
+・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-26T17:54:07.238638+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
 2026-10-22|153A|dual_top1_agreement_g3_no_acute_selloff,2026-10-22,153A,カウリス,2807,2300900,dual_top1_agreement_g3_no_acute_selloff,Balance,2026-10,entered,2026-10-23,2622,2026-10-29,,,,,0,-0.00265017667845,0.238200264667,1.33597714631,0.622881355932,0.333333333333,0.333333333333,0.333333333333,0.999066061234,0.82557696104,FORWARD_CAUSAL,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,https://discord.com/channels/1479418833352785944/1550876104917520505/1562801353862942781,2026-10-22T21:14:39.243450+09:00,complete,,"材料インパクト
 混在/要確認：電力データ本人確認の導入・実証拡大と通期営業益の上方修正は前進だが、新事業の固定費負担と既存ＳＯの残高確認不足が残る。
 
@@ -24713,7 +24713,7 @@ Sources
 ・[カウリス IRニュース](https://caulis.jp/ir/news/)
 ・[カウリス お知らせ](https://caulis.jp/news/)
 ・[カウリス 有価証券報告書](https://caulis.jp/ir/library-securities/)
-・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-23T17:45:41.852740+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
+・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-26T17:54:07.277658+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
 2026-10-22|153A|mean_rank_volr20_body_pct,2026-10-22,153A,カウリス,2807,2300900,mean_rank_volr20_body_pct,Shadow,2026-10,entered,2026-10-23,2622,2026-10-29,,,,,0,-0.00265017667845,0.238200264667,1.33597714631,0.622881355932,0.333333333333,0.333333333333,0.333333333333,0.999066061234,0.82557696104,FORWARD_CAUSAL,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,https://discord.com/channels/1479418833352785944/1550876104917520505/1562801353862942781,2026-10-22T21:14:39.243450+09:00,complete,,"材料インパクト
 混在/要確認：電力データ本人確認の導入・実証拡大と通期営業益の上方修正は前進だが、新事業の固定費負担と既存ＳＯの残高確認不足が残る。
 
@@ -24743,7 +24743,7 @@ Sources
 ・[カウリス IRニュース](https://caulis.jp/ir/news/)
 ・[カウリス お知らせ](https://caulis.jp/news/)
 ・[カウリス 有価証券報告書](https://caulis.jp/ir/library-securities/)
-・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-23T17:45:41.879009+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
+・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-26T17:54:07.342178+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
 2026-10-22|153A|volr20_low,2026-10-22,153A,カウリス,2807,2300900,volr20_low,Silence,2026-10,entered,2026-10-23,2622,2026-10-29,,,,,0,-0.00265017667845,0.238200264667,1.33597714631,0.622881355932,0.333333333333,0.333333333333,0.333333333333,0.999066061234,0.82557696104,FORWARD_CAUSAL,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,https://discord.com/channels/1479418833352785944/1550876104917520505/1562801353862942781,2026-10-22T21:14:39.243450+09:00,complete,,"材料インパクト
 混在/要確認：電力データ本人確認の導入・実証拡大と通期営業益の上方修正は前進だが、新事業の固定費負担と既存ＳＯの残高確認不足が残る。
 
@@ -24773,4 +24773,284 @@ Sources
 ・[カウリス IRニュース](https://caulis.jp/ir/news/)
 ・[カウリス お知らせ](https://caulis.jp/news/)
 ・[カウリス 有価証券報告書](https://caulis.jp/ir/library-securities/)
-・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-23T17:45:41.901511+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-23,3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
+・[カウリス 適時開示情報（TDnet配信一覧）](https://finance.yahoo.co.jp/quote/153A.T/disclosure)",2026-10-22T20:29:16.419798+09:00,2026-10-26T17:54:07.403182+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,262200,,[],2807,verified,2026-10-22T20:29:16.419798+09:00,6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":2807.0,""adjusted_price"":2807.0,""basis_asof"":""2026-10-22"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-22"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""6e0e51a782a9ed4f287fee0990485e512cceadb2017106ef1c96233a1df7b847"",""source_usable"":true,""split_factor"":1.0,""symbol"":""153A""}",2026-10-30,,pending,,,,,pending,2026-10-23,,,,,,,,,,,,,,
+2026-10-26|338A|body_pct_low,2026-10-26,338A,ＺｅｎｍｕＴｅｃｈ,4900,1199300,body_pct_low,Dive,2026-10,pending_entry,2026-10-27,,2026-11-02,,,,,-0.0117994100295,0.000670594224053,0.0304942166141,0.756269666606,0.625698324022,1,1,1,0.999207779341,0.83226442337,FORWARD_CAUSAL,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,,,complete,,"材料インパクト
+混在/要確認：レゾナックとの材料開発実証で秘密計算の適用が進む一方、上期の赤字拡大と下期への受注集中、潜在株式の残高未確定が残る。
+
+事業概要
+秘密分散技術「ZENMU-AONT」でデータを無意味な断片に分けて保管する情報セキュリティ企業。企業・金融機関・官公庁等のPC向け「ZENMU Virtual Drive」、他社製品へ組み込むSDK「ZENMU Engine」、データを秘匿したまま分析する秘密計算基盤「QueryAhead」を提供し、ライセンス・保守・サブスクリプションと開発受託を収益源とする。
+
+足元材料
+10月26日15:00、レゾナックと化学メーカーA社の機密データを開示せず結合するMI基盤の実証を公表。QueryAheadを用いた物性の予測誤差が単独データ比で約78％減少し、材料開発での有効性は具体化したが、受注金額・継続課金契約・売上計上額の開示はない。
+8月13日15:30の中間決算は売上305.63百万円（前年同期比0.3％増）、営業損失99.29百万円（前年24.15百万円の損失）。同時開示の計画差異ではZVD約42百万円の導入検討が長期化し、決算説明は一部受注の4Qずれ込みを説明している。通期会社予想の売上1,080百万円・営業利益161百万円は据え置きで、現在の4Qに売上・黒字化を集中させた計画である。
+
+ファンダ要点
+ZVDの上期売上は257百万円（32.5％増）、6月末ライセンス数は126,072件。公表解約率4.4％には大口顧客1,700件の買い切り移行が含まれ、会社算定の実質解約率は0.4％。一方、QueryAhead売上は29百万円（67.0％減）で、国プロジェクト等の単発受託の反動がある。いずれも8月13日15:30公表の値で、総ライセンス数をサブスク契約数やARRとは同一視しない。
+2018年10月16日（時刻記載なし）に始動した産総研との秘密計算実用化は、2023年からのレゾナック共創を経て企業間の材料開発実証まで進んだ。
+8月13日15:30公表のQueryAhead HubのPaaS展開は2026年4Q計画で、基準時点はその計画期に入ったが継続課金の実績は未公表。
+2025年6月4日10:00のHAIP参画は、2026年9月1日17:05公表の共同事業開始に進んだが、当期業績への影響は会社説明で軽微。
+8月13日16:45公表のMac版・秘密分散ストレージは2027年春頃の提供予定で、当期の実績収益とは区別する。
+4月23日15:30公表のNerveNet共同開発は中間決算でも継続案件に位置付けられ、自治体向けの案件別収益は未公表。
+3月23日18:30開示のBigObject協業は最新計画でも2026～2027年の開発案件であり、MOUを確定売上とは扱えない。
+2022年6月13日（時刻記載なし）発表のドローン連携は2025年4月21日12:50に実証成功へ進んだが、最新計画のリリース予定は2028年で、量産収益は未確認。
+2025年10月7日11:30公表のRevoWorksは2026年1月販売予定の時期を過ぎたが、ZenmuTechの案件別ロイヤリティ実績は未公表。
+2025年12月25日16:00のZVD大型受注254百万円は、2月13日15:30の通期説明で前年4Qのフロー売上増に反映済みと確認でき、今回の新規受注には数えない。
+
+注意点
+受注の後ろ倒しと採用・開発費先行が損益を圧迫し、実証成功だけでは4Q計画を裏付けられない。8月13日15:30の半期報告書では現預金861.01百万円、営業CF76.73百万円だが、売上債権301.01百万円の回収による押上げが大きい。りそな銀行の200百万円枠には期末純資産の前年同期比75％以上維持・決算期の経常赤字回避条項がある。中間赤字を直ちに条項違反とは判断しない。
+ストックオプション等の潜在株式は存在するが、原発行資料と10月26日時点の回号別残高を完結照合できず、残存株数と希薄化率は確定できない。 3月13日18:30の公表に基づく4月1日の1対2分割、2月の1,000株と5月の800株の行使、報酬株4,000株の発行を区別した。10月20日公表のJPX9月分では上場株式数2,726,000株・9月の行使増加0株だが、これは未行使残高0を意味しない。
+HAIP共同事業は公表開始日の9月1日を過ぎたが、案件別の売上・利益寄与は未公表。
+2024年5月2日（時刻記載なし）公表のSBIR実施期間は2026年3月末までだが、事業終了・補助金精算の完了は確認できず、上期の補助金収入20.36百万円を恒久収益とは扱えない。
+SBIRの事業終了・補助金精算を確定する続報が不足し、全長期案件の完結照合には至らない。
+
+開示リンク
+・[2026-10-26 レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～(15:00)](https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf)
+・[2026-10-20 2026年9月分 新株予約権の行使等に伴う上場株式数等の変更(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf)
+・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf)
+・[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf)
+・[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf)
+・[2026-08-13 半期報告書－第13期(2026/01/01－2026/12/31)(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf)
+・[2026-04-23 公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始(15:30)](https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf)
+・[2026-03-27 有価証券報告書－第12期(2025/01/01－2025/12/31)(15:24)](https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf)
+・[2026-03-23 台湾のBigObjectとZenmuTech Secure Data Intelligence Platformの実現に向けた戦略的協業に関するMOUを締結(18:30)](https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf)
+・[2026-03-13 株式分割に関するお知らせ(18:30)](https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf)
+・[2026-02-13 2025年12月期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf)
+・[2025-12-25 ZENMU Virtual Drive大型案件受注に関するお知らせ(16:00)](https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf)
+・[2025-10-07 ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～(11:30)](https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf)
+・[2025-06-04 医療AIプラットフォーム技術研究組合（HAIP）に参画(10:00)](https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf)
+・[2025-04-21 国産技術を用いた次世代ドローン・セキュリティの実証試験に成功(12:50)](https://pdf.irpocket.com/C338A/dRUj/UQBS/dnfY.pdf)
+・[2024-05-02 中小企業イノベーション創出推進事業開始のお知らせ(時刻記載なし)](https://zenmutech.com/information/news/20240502/)
+・[2022-06-13 「インテグリティ・ドローン」を開発(時刻記載なし)](https://zenmutech.com/information/news/20220613/)
+・[2018-10-16 秘密計算技術の実用化を産総研との協働で始動(時刻記載なし)](https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/)
+
+Sources
+・[IRニュース一覧 | 株式会社ZenmuTech](https://zenmutech.com/ir/news/)
+・[ニュース＆トピック | 株式会社ZenmuTech](https://zenmutech.com/information/news/)
+・[ＺｅｎｍｕＴ（338A）適時開示情報 | 株予報Pro](https://kabuyoho.jp/sp/reportDisclose?bcode=338A)
+・[上場株式数 | 日本取引所グループ](https://www.jpx.co.jp/listing/co/01.html)",2026-10-26T18:01:23.941796+09:00,2026-10-26T20:27:45.535728+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,,,[],4900,verified,2026-10-26T18:01:23.941796+09:00,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":4900.0,""adjusted_price"":4900.0,""basis_asof"":""2026-10-26"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-26"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03"",""source_usable"":true,""split_factor"":1.0,""symbol"":""338A""}",2026-11-04,,pending,,,,,pending,2026-10-27,,,,,,,,,,,,,,
+2026-10-26|338A|dual_top1_agreement,2026-10-26,338A,ＺｅｎｍｕＴｅｃｈ,4900,1199300,dual_top1_agreement,Fusion,2026-10,pending_entry,2026-10-27,,2026-11-02,,,,,-0.0117994100295,0.000670594224053,0.0304942166141,0.756269666606,0.625698324022,1,1,1,0.999207779341,0.83226442337,FORWARD_CAUSAL,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,,,complete,,"材料インパクト
+混在/要確認：レゾナックとの材料開発実証で秘密計算の適用が進む一方、上期の赤字拡大と下期への受注集中、潜在株式の残高未確定が残る。
+
+事業概要
+秘密分散技術「ZENMU-AONT」でデータを無意味な断片に分けて保管する情報セキュリティ企業。企業・金融機関・官公庁等のPC向け「ZENMU Virtual Drive」、他社製品へ組み込むSDK「ZENMU Engine」、データを秘匿したまま分析する秘密計算基盤「QueryAhead」を提供し、ライセンス・保守・サブスクリプションと開発受託を収益源とする。
+
+足元材料
+10月26日15:00、レゾナックと化学メーカーA社の機密データを開示せず結合するMI基盤の実証を公表。QueryAheadを用いた物性の予測誤差が単独データ比で約78％減少し、材料開発での有効性は具体化したが、受注金額・継続課金契約・売上計上額の開示はない。
+8月13日15:30の中間決算は売上305.63百万円（前年同期比0.3％増）、営業損失99.29百万円（前年24.15百万円の損失）。同時開示の計画差異ではZVD約42百万円の導入検討が長期化し、決算説明は一部受注の4Qずれ込みを説明している。通期会社予想の売上1,080百万円・営業利益161百万円は据え置きで、現在の4Qに売上・黒字化を集中させた計画である。
+
+ファンダ要点
+ZVDの上期売上は257百万円（32.5％増）、6月末ライセンス数は126,072件。公表解約率4.4％には大口顧客1,700件の買い切り移行が含まれ、会社算定の実質解約率は0.4％。一方、QueryAhead売上は29百万円（67.0％減）で、国プロジェクト等の単発受託の反動がある。いずれも8月13日15:30公表の値で、総ライセンス数をサブスク契約数やARRとは同一視しない。
+2018年10月16日（時刻記載なし）に始動した産総研との秘密計算実用化は、2023年からのレゾナック共創を経て企業間の材料開発実証まで進んだ。
+8月13日15:30公表のQueryAhead HubのPaaS展開は2026年4Q計画で、基準時点はその計画期に入ったが継続課金の実績は未公表。
+2025年6月4日10:00のHAIP参画は、2026年9月1日17:05公表の共同事業開始に進んだが、当期業績への影響は会社説明で軽微。
+8月13日16:45公表のMac版・秘密分散ストレージは2027年春頃の提供予定で、当期の実績収益とは区別する。
+4月23日15:30公表のNerveNet共同開発は中間決算でも継続案件に位置付けられ、自治体向けの案件別収益は未公表。
+3月23日18:30開示のBigObject協業は最新計画でも2026～2027年の開発案件であり、MOUを確定売上とは扱えない。
+2022年6月13日（時刻記載なし）発表のドローン連携は2025年4月21日12:50に実証成功へ進んだが、最新計画のリリース予定は2028年で、量産収益は未確認。
+2025年10月7日11:30公表のRevoWorksは2026年1月販売予定の時期を過ぎたが、ZenmuTechの案件別ロイヤリティ実績は未公表。
+2025年12月25日16:00のZVD大型受注254百万円は、2月13日15:30の通期説明で前年4Qのフロー売上増に反映済みと確認でき、今回の新規受注には数えない。
+
+注意点
+受注の後ろ倒しと採用・開発費先行が損益を圧迫し、実証成功だけでは4Q計画を裏付けられない。8月13日15:30の半期報告書では現預金861.01百万円、営業CF76.73百万円だが、売上債権301.01百万円の回収による押上げが大きい。りそな銀行の200百万円枠には期末純資産の前年同期比75％以上維持・決算期の経常赤字回避条項がある。中間赤字を直ちに条項違反とは判断しない。
+ストックオプション等の潜在株式は存在するが、原発行資料と10月26日時点の回号別残高を完結照合できず、残存株数と希薄化率は確定できない。 3月13日18:30の公表に基づく4月1日の1対2分割、2月の1,000株と5月の800株の行使、報酬株4,000株の発行を区別した。10月20日公表のJPX9月分では上場株式数2,726,000株・9月の行使増加0株だが、これは未行使残高0を意味しない。
+HAIP共同事業は公表開始日の9月1日を過ぎたが、案件別の売上・利益寄与は未公表。
+2024年5月2日（時刻記載なし）公表のSBIR実施期間は2026年3月末までだが、事業終了・補助金精算の完了は確認できず、上期の補助金収入20.36百万円を恒久収益とは扱えない。
+SBIRの事業終了・補助金精算を確定する続報が不足し、全長期案件の完結照合には至らない。
+
+開示リンク
+・[2026-10-26 レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～(15:00)](https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf)
+・[2026-10-20 2026年9月分 新株予約権の行使等に伴う上場株式数等の変更(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf)
+・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf)
+・[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf)
+・[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf)
+・[2026-08-13 半期報告書－第13期(2026/01/01－2026/12/31)(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf)
+・[2026-04-23 公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始(15:30)](https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf)
+・[2026-03-27 有価証券報告書－第12期(2025/01/01－2025/12/31)(15:24)](https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf)
+・[2026-03-23 台湾のBigObjectとZenmuTech Secure Data Intelligence Platformの実現に向けた戦略的協業に関するMOUを締結(18:30)](https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf)
+・[2026-03-13 株式分割に関するお知らせ(18:30)](https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf)
+・[2026-02-13 2025年12月期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf)
+・[2025-12-25 ZENMU Virtual Drive大型案件受注に関するお知らせ(16:00)](https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf)
+・[2025-10-07 ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～(11:30)](https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf)
+・[2025-06-04 医療AIプラットフォーム技術研究組合（HAIP）に参画(10:00)](https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf)
+・[2025-04-21 国産技術を用いた次世代ドローン・セキュリティの実証試験に成功(12:50)](https://pdf.irpocket.com/C338A/dRUj/UQBS/dnfY.pdf)
+・[2024-05-02 中小企業イノベーション創出推進事業開始のお知らせ(時刻記載なし)](https://zenmutech.com/information/news/20240502/)
+・[2022-06-13 「インテグリティ・ドローン」を開発(時刻記載なし)](https://zenmutech.com/information/news/20220613/)
+・[2018-10-16 秘密計算技術の実用化を産総研との協働で始動(時刻記載なし)](https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/)
+
+Sources
+・[IRニュース一覧 | 株式会社ZenmuTech](https://zenmutech.com/ir/news/)
+・[ニュース＆トピック | 株式会社ZenmuTech](https://zenmutech.com/information/news/)
+・[ＺｅｎｍｕＴ（338A）適時開示情報 | 株予報Pro](https://kabuyoho.jp/sp/reportDisclose?bcode=338A)
+・[上場株式数 | 日本取引所グループ](https://www.jpx.co.jp/listing/co/01.html)",2026-10-26T18:01:23.941796+09:00,2026-10-26T20:27:45.535728+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,,,[],4900,verified,2026-10-26T18:01:23.941796+09:00,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":4900.0,""adjusted_price"":4900.0,""basis_asof"":""2026-10-26"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-26"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03"",""source_usable"":true,""split_factor"":1.0,""symbol"":""338A""}",2026-11-04,,pending,,,,,pending,2026-10-27,,,,,,,,,,,,,,
+2026-10-26|338A|dual_top1_agreement_g3_no_acute_selloff,2026-10-26,338A,ＺｅｎｍｕＴｅｃｈ,4900,1199300,dual_top1_agreement_g3_no_acute_selloff,Balance,2026-10,pending_entry,2026-10-27,,2026-11-02,,,,,-0.0117994100295,0.000670594224053,0.0304942166141,0.756269666606,0.625698324022,1,1,1,0.999207779341,0.83226442337,FORWARD_CAUSAL,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,,,complete,,"材料インパクト
+混在/要確認：レゾナックとの材料開発実証で秘密計算の適用が進む一方、上期の赤字拡大と下期への受注集中、潜在株式の残高未確定が残る。
+
+事業概要
+秘密分散技術「ZENMU-AONT」でデータを無意味な断片に分けて保管する情報セキュリティ企業。企業・金融機関・官公庁等のPC向け「ZENMU Virtual Drive」、他社製品へ組み込むSDK「ZENMU Engine」、データを秘匿したまま分析する秘密計算基盤「QueryAhead」を提供し、ライセンス・保守・サブスクリプションと開発受託を収益源とする。
+
+足元材料
+10月26日15:00、レゾナックと化学メーカーA社の機密データを開示せず結合するMI基盤の実証を公表。QueryAheadを用いた物性の予測誤差が単独データ比で約78％減少し、材料開発での有効性は具体化したが、受注金額・継続課金契約・売上計上額の開示はない。
+8月13日15:30の中間決算は売上305.63百万円（前年同期比0.3％増）、営業損失99.29百万円（前年24.15百万円の損失）。同時開示の計画差異ではZVD約42百万円の導入検討が長期化し、決算説明は一部受注の4Qずれ込みを説明している。通期会社予想の売上1,080百万円・営業利益161百万円は据え置きで、現在の4Qに売上・黒字化を集中させた計画である。
+
+ファンダ要点
+ZVDの上期売上は257百万円（32.5％増）、6月末ライセンス数は126,072件。公表解約率4.4％には大口顧客1,700件の買い切り移行が含まれ、会社算定の実質解約率は0.4％。一方、QueryAhead売上は29百万円（67.0％減）で、国プロジェクト等の単発受託の反動がある。いずれも8月13日15:30公表の値で、総ライセンス数をサブスク契約数やARRとは同一視しない。
+2018年10月16日（時刻記載なし）に始動した産総研との秘密計算実用化は、2023年からのレゾナック共創を経て企業間の材料開発実証まで進んだ。
+8月13日15:30公表のQueryAhead HubのPaaS展開は2026年4Q計画で、基準時点はその計画期に入ったが継続課金の実績は未公表。
+2025年6月4日10:00のHAIP参画は、2026年9月1日17:05公表の共同事業開始に進んだが、当期業績への影響は会社説明で軽微。
+8月13日16:45公表のMac版・秘密分散ストレージは2027年春頃の提供予定で、当期の実績収益とは区別する。
+4月23日15:30公表のNerveNet共同開発は中間決算でも継続案件に位置付けられ、自治体向けの案件別収益は未公表。
+3月23日18:30開示のBigObject協業は最新計画でも2026～2027年の開発案件であり、MOUを確定売上とは扱えない。
+2022年6月13日（時刻記載なし）発表のドローン連携は2025年4月21日12:50に実証成功へ進んだが、最新計画のリリース予定は2028年で、量産収益は未確認。
+2025年10月7日11:30公表のRevoWorksは2026年1月販売予定の時期を過ぎたが、ZenmuTechの案件別ロイヤリティ実績は未公表。
+2025年12月25日16:00のZVD大型受注254百万円は、2月13日15:30の通期説明で前年4Qのフロー売上増に反映済みと確認でき、今回の新規受注には数えない。
+
+注意点
+受注の後ろ倒しと採用・開発費先行が損益を圧迫し、実証成功だけでは4Q計画を裏付けられない。8月13日15:30の半期報告書では現預金861.01百万円、営業CF76.73百万円だが、売上債権301.01百万円の回収による押上げが大きい。りそな銀行の200百万円枠には期末純資産の前年同期比75％以上維持・決算期の経常赤字回避条項がある。中間赤字を直ちに条項違反とは判断しない。
+ストックオプション等の潜在株式は存在するが、原発行資料と10月26日時点の回号別残高を完結照合できず、残存株数と希薄化率は確定できない。 3月13日18:30の公表に基づく4月1日の1対2分割、2月の1,000株と5月の800株の行使、報酬株4,000株の発行を区別した。10月20日公表のJPX9月分では上場株式数2,726,000株・9月の行使増加0株だが、これは未行使残高0を意味しない。
+HAIP共同事業は公表開始日の9月1日を過ぎたが、案件別の売上・利益寄与は未公表。
+2024年5月2日（時刻記載なし）公表のSBIR実施期間は2026年3月末までだが、事業終了・補助金精算の完了は確認できず、上期の補助金収入20.36百万円を恒久収益とは扱えない。
+SBIRの事業終了・補助金精算を確定する続報が不足し、全長期案件の完結照合には至らない。
+
+開示リンク
+・[2026-10-26 レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～(15:00)](https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf)
+・[2026-10-20 2026年9月分 新株予約権の行使等に伴う上場株式数等の変更(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf)
+・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf)
+・[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf)
+・[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf)
+・[2026-08-13 半期報告書－第13期(2026/01/01－2026/12/31)(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf)
+・[2026-04-23 公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始(15:30)](https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf)
+・[2026-03-27 有価証券報告書－第12期(2025/01/01－2025/12/31)(15:24)](https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf)
+・[2026-03-23 台湾のBigObjectとZenmuTech Secure Data Intelligence Platformの実現に向けた戦略的協業に関するMOUを締結(18:30)](https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf)
+・[2026-03-13 株式分割に関するお知らせ(18:30)](https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf)
+・[2026-02-13 2025年12月期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf)
+・[2025-12-25 ZENMU Virtual Drive大型案件受注に関するお知らせ(16:00)](https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf)
+・[2025-10-07 ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～(11:30)](https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf)
+・[2025-06-04 医療AIプラットフォーム技術研究組合（HAIP）に参画(10:00)](https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf)
+・[2025-04-21 国産技術を用いた次世代ドローン・セキュリティの実証試験に成功(12:50)](https://pdf.irpocket.com/C338A/dRUj/UQBS/dnfY.pdf)
+・[2024-05-02 中小企業イノベーション創出推進事業開始のお知らせ(時刻記載なし)](https://zenmutech.com/information/news/20240502/)
+・[2022-06-13 「インテグリティ・ドローン」を開発(時刻記載なし)](https://zenmutech.com/information/news/20220613/)
+・[2018-10-16 秘密計算技術の実用化を産総研との協働で始動(時刻記載なし)](https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/)
+
+Sources
+・[IRニュース一覧 | 株式会社ZenmuTech](https://zenmutech.com/ir/news/)
+・[ニュース＆トピック | 株式会社ZenmuTech](https://zenmutech.com/information/news/)
+・[ＺｅｎｍｕＴ（338A）適時開示情報 | 株予報Pro](https://kabuyoho.jp/sp/reportDisclose?bcode=338A)
+・[上場株式数 | 日本取引所グループ](https://www.jpx.co.jp/listing/co/01.html)",2026-10-26T18:01:23.941796+09:00,2026-10-26T20:27:45.535728+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,,,[],4900,verified,2026-10-26T18:01:23.941796+09:00,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":4900.0,""adjusted_price"":4900.0,""basis_asof"":""2026-10-26"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-26"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03"",""source_usable"":true,""split_factor"":1.0,""symbol"":""338A""}",2026-11-04,,pending,,,,,pending,2026-10-27,,,,,,,,,,,,,,
+2026-10-26|338A|mean_rank_volr20_body_pct,2026-10-26,338A,ＺｅｎｍｕＴｅｃｈ,4900,1199300,mean_rank_volr20_body_pct,Shadow,2026-10,pending_entry,2026-10-27,,2026-11-02,,,,,-0.0117994100295,0.000670594224053,0.0304942166141,0.756269666606,0.625698324022,1,1,1,0.999207779341,0.83226442337,FORWARD_CAUSAL,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,,,complete,,"材料インパクト
+混在/要確認：レゾナックとの材料開発実証で秘密計算の適用が進む一方、上期の赤字拡大と下期への受注集中、潜在株式の残高未確定が残る。
+
+事業概要
+秘密分散技術「ZENMU-AONT」でデータを無意味な断片に分けて保管する情報セキュリティ企業。企業・金融機関・官公庁等のPC向け「ZENMU Virtual Drive」、他社製品へ組み込むSDK「ZENMU Engine」、データを秘匿したまま分析する秘密計算基盤「QueryAhead」を提供し、ライセンス・保守・サブスクリプションと開発受託を収益源とする。
+
+足元材料
+10月26日15:00、レゾナックと化学メーカーA社の機密データを開示せず結合するMI基盤の実証を公表。QueryAheadを用いた物性の予測誤差が単独データ比で約78％減少し、材料開発での有効性は具体化したが、受注金額・継続課金契約・売上計上額の開示はない。
+8月13日15:30の中間決算は売上305.63百万円（前年同期比0.3％増）、営業損失99.29百万円（前年24.15百万円の損失）。同時開示の計画差異ではZVD約42百万円の導入検討が長期化し、決算説明は一部受注の4Qずれ込みを説明している。通期会社予想の売上1,080百万円・営業利益161百万円は据え置きで、現在の4Qに売上・黒字化を集中させた計画である。
+
+ファンダ要点
+ZVDの上期売上は257百万円（32.5％増）、6月末ライセンス数は126,072件。公表解約率4.4％には大口顧客1,700件の買い切り移行が含まれ、会社算定の実質解約率は0.4％。一方、QueryAhead売上は29百万円（67.0％減）で、国プロジェクト等の単発受託の反動がある。いずれも8月13日15:30公表の値で、総ライセンス数をサブスク契約数やARRとは同一視しない。
+2018年10月16日（時刻記載なし）に始動した産総研との秘密計算実用化は、2023年からのレゾナック共創を経て企業間の材料開発実証まで進んだ。
+8月13日15:30公表のQueryAhead HubのPaaS展開は2026年4Q計画で、基準時点はその計画期に入ったが継続課金の実績は未公表。
+2025年6月4日10:00のHAIP参画は、2026年9月1日17:05公表の共同事業開始に進んだが、当期業績への影響は会社説明で軽微。
+8月13日16:45公表のMac版・秘密分散ストレージは2027年春頃の提供予定で、当期の実績収益とは区別する。
+4月23日15:30公表のNerveNet共同開発は中間決算でも継続案件に位置付けられ、自治体向けの案件別収益は未公表。
+3月23日18:30開示のBigObject協業は最新計画でも2026～2027年の開発案件であり、MOUを確定売上とは扱えない。
+2022年6月13日（時刻記載なし）発表のドローン連携は2025年4月21日12:50に実証成功へ進んだが、最新計画のリリース予定は2028年で、量産収益は未確認。
+2025年10月7日11:30公表のRevoWorksは2026年1月販売予定の時期を過ぎたが、ZenmuTechの案件別ロイヤリティ実績は未公表。
+2025年12月25日16:00のZVD大型受注254百万円は、2月13日15:30の通期説明で前年4Qのフロー売上増に反映済みと確認でき、今回の新規受注には数えない。
+
+注意点
+受注の後ろ倒しと採用・開発費先行が損益を圧迫し、実証成功だけでは4Q計画を裏付けられない。8月13日15:30の半期報告書では現預金861.01百万円、営業CF76.73百万円だが、売上債権301.01百万円の回収による押上げが大きい。りそな銀行の200百万円枠には期末純資産の前年同期比75％以上維持・決算期の経常赤字回避条項がある。中間赤字を直ちに条項違反とは判断しない。
+ストックオプション等の潜在株式は存在するが、原発行資料と10月26日時点の回号別残高を完結照合できず、残存株数と希薄化率は確定できない。 3月13日18:30の公表に基づく4月1日の1対2分割、2月の1,000株と5月の800株の行使、報酬株4,000株の発行を区別した。10月20日公表のJPX9月分では上場株式数2,726,000株・9月の行使増加0株だが、これは未行使残高0を意味しない。
+HAIP共同事業は公表開始日の9月1日を過ぎたが、案件別の売上・利益寄与は未公表。
+2024年5月2日（時刻記載なし）公表のSBIR実施期間は2026年3月末までだが、事業終了・補助金精算の完了は確認できず、上期の補助金収入20.36百万円を恒久収益とは扱えない。
+SBIRの事業終了・補助金精算を確定する続報が不足し、全長期案件の完結照合には至らない。
+
+開示リンク
+・[2026-10-26 レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～(15:00)](https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf)
+・[2026-10-20 2026年9月分 新株予約権の行使等に伴う上場株式数等の変更(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf)
+・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf)
+・[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf)
+・[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf)
+・[2026-08-13 半期報告書－第13期(2026/01/01－2026/12/31)(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf)
+・[2026-04-23 公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始(15:30)](https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf)
+・[2026-03-27 有価証券報告書－第12期(2025/01/01－2025/12/31)(15:24)](https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf)
+・[2026-03-23 台湾のBigObjectとZenmuTech Secure Data Intelligence Platformの実現に向けた戦略的協業に関するMOUを締結(18:30)](https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf)
+・[2026-03-13 株式分割に関するお知らせ(18:30)](https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf)
+・[2026-02-13 2025年12月期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf)
+・[2025-12-25 ZENMU Virtual Drive大型案件受注に関するお知らせ(16:00)](https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf)
+・[2025-10-07 ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～(11:30)](https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf)
+・[2025-06-04 医療AIプラットフォーム技術研究組合（HAIP）に参画(10:00)](https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf)
+・[2025-04-21 国産技術を用いた次世代ドローン・セキュリティの実証試験に成功(12:50)](https://pdf.irpocket.com/C338A/dRUj/UQBS/dnfY.pdf)
+・[2024-05-02 中小企業イノベーション創出推進事業開始のお知らせ(時刻記載なし)](https://zenmutech.com/information/news/20240502/)
+・[2022-06-13 「インテグリティ・ドローン」を開発(時刻記載なし)](https://zenmutech.com/information/news/20220613/)
+・[2018-10-16 秘密計算技術の実用化を産総研との協働で始動(時刻記載なし)](https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/)
+
+Sources
+・[IRニュース一覧 | 株式会社ZenmuTech](https://zenmutech.com/ir/news/)
+・[ニュース＆トピック | 株式会社ZenmuTech](https://zenmutech.com/information/news/)
+・[ＺｅｎｍｕＴ（338A）適時開示情報 | 株予報Pro](https://kabuyoho.jp/sp/reportDisclose?bcode=338A)
+・[上場株式数 | 日本取引所グループ](https://www.jpx.co.jp/listing/co/01.html)",2026-10-26T18:01:23.941796+09:00,2026-10-26T20:27:45.535728+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,,,[],4900,verified,2026-10-26T18:01:23.941796+09:00,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":4900.0,""adjusted_price"":4900.0,""basis_asof"":""2026-10-26"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-26"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03"",""source_usable"":true,""split_factor"":1.0,""symbol"":""338A""}",2026-11-04,,pending,,,,,pending,2026-10-27,,,,,,,,,,,,,,
+2026-10-26|338A|volr20_low,2026-10-26,338A,ＺｅｎｍｕＴｅｃｈ,4900,1199300,volr20_low,Silence,2026-10,pending_entry,2026-10-27,,2026-11-02,,,,,-0.0117994100295,0.000670594224053,0.0304942166141,0.756269666606,0.625698324022,1,1,1,0.999207779341,0.83226442337,FORWARD_CAUSAL,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,,,complete,,"材料インパクト
+混在/要確認：レゾナックとの材料開発実証で秘密計算の適用が進む一方、上期の赤字拡大と下期への受注集中、潜在株式の残高未確定が残る。
+
+事業概要
+秘密分散技術「ZENMU-AONT」でデータを無意味な断片に分けて保管する情報セキュリティ企業。企業・金融機関・官公庁等のPC向け「ZENMU Virtual Drive」、他社製品へ組み込むSDK「ZENMU Engine」、データを秘匿したまま分析する秘密計算基盤「QueryAhead」を提供し、ライセンス・保守・サブスクリプションと開発受託を収益源とする。
+
+足元材料
+10月26日15:00、レゾナックと化学メーカーA社の機密データを開示せず結合するMI基盤の実証を公表。QueryAheadを用いた物性の予測誤差が単独データ比で約78％減少し、材料開発での有効性は具体化したが、受注金額・継続課金契約・売上計上額の開示はない。
+8月13日15:30の中間決算は売上305.63百万円（前年同期比0.3％増）、営業損失99.29百万円（前年24.15百万円の損失）。同時開示の計画差異ではZVD約42百万円の導入検討が長期化し、決算説明は一部受注の4Qずれ込みを説明している。通期会社予想の売上1,080百万円・営業利益161百万円は据え置きで、現在の4Qに売上・黒字化を集中させた計画である。
+
+ファンダ要点
+ZVDの上期売上は257百万円（32.5％増）、6月末ライセンス数は126,072件。公表解約率4.4％には大口顧客1,700件の買い切り移行が含まれ、会社算定の実質解約率は0.4％。一方、QueryAhead売上は29百万円（67.0％減）で、国プロジェクト等の単発受託の反動がある。いずれも8月13日15:30公表の値で、総ライセンス数をサブスク契約数やARRとは同一視しない。
+2018年10月16日（時刻記載なし）に始動した産総研との秘密計算実用化は、2023年からのレゾナック共創を経て企業間の材料開発実証まで進んだ。
+8月13日15:30公表のQueryAhead HubのPaaS展開は2026年4Q計画で、基準時点はその計画期に入ったが継続課金の実績は未公表。
+2025年6月4日10:00のHAIP参画は、2026年9月1日17:05公表の共同事業開始に進んだが、当期業績への影響は会社説明で軽微。
+8月13日16:45公表のMac版・秘密分散ストレージは2027年春頃の提供予定で、当期の実績収益とは区別する。
+4月23日15:30公表のNerveNet共同開発は中間決算でも継続案件に位置付けられ、自治体向けの案件別収益は未公表。
+3月23日18:30開示のBigObject協業は最新計画でも2026～2027年の開発案件であり、MOUを確定売上とは扱えない。
+2022年6月13日（時刻記載なし）発表のドローン連携は2025年4月21日12:50に実証成功へ進んだが、最新計画のリリース予定は2028年で、量産収益は未確認。
+2025年10月7日11:30公表のRevoWorksは2026年1月販売予定の時期を過ぎたが、ZenmuTechの案件別ロイヤリティ実績は未公表。
+2025年12月25日16:00のZVD大型受注254百万円は、2月13日15:30の通期説明で前年4Qのフロー売上増に反映済みと確認でき、今回の新規受注には数えない。
+
+注意点
+受注の後ろ倒しと採用・開発費先行が損益を圧迫し、実証成功だけでは4Q計画を裏付けられない。8月13日15:30の半期報告書では現預金861.01百万円、営業CF76.73百万円だが、売上債権301.01百万円の回収による押上げが大きい。りそな銀行の200百万円枠には期末純資産の前年同期比75％以上維持・決算期の経常赤字回避条項がある。中間赤字を直ちに条項違反とは判断しない。
+ストックオプション等の潜在株式は存在するが、原発行資料と10月26日時点の回号別残高を完結照合できず、残存株数と希薄化率は確定できない。 3月13日18:30の公表に基づく4月1日の1対2分割、2月の1,000株と5月の800株の行使、報酬株4,000株の発行を区別した。10月20日公表のJPX9月分では上場株式数2,726,000株・9月の行使増加0株だが、これは未行使残高0を意味しない。
+HAIP共同事業は公表開始日の9月1日を過ぎたが、案件別の売上・利益寄与は未公表。
+2024年5月2日（時刻記載なし）公表のSBIR実施期間は2026年3月末までだが、事業終了・補助金精算の完了は確認できず、上期の補助金収入20.36百万円を恒久収益とは扱えない。
+SBIRの事業終了・補助金精算を確定する続報が不足し、全長期案件の完結照合には至らない。
+
+開示リンク
+・[2026-10-26 レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～(15:00)](https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf)
+・[2026-10-20 2026年9月分 新株予約権の行使等に伴う上場株式数等の変更(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf)
+・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf)
+・[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf)
+・[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf)
+・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf)
+・[2026-08-13 半期報告書－第13期(2026/01/01－2026/12/31)(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf)
+・[2026-04-23 公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始(15:30)](https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf)
+・[2026-03-27 有価証券報告書－第12期(2025/01/01－2025/12/31)(15:24)](https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf)
+・[2026-03-23 台湾のBigObjectとZenmuTech Secure Data Intelligence Platformの実現に向けた戦略的協業に関するMOUを締結(18:30)](https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf)
+・[2026-03-13 株式分割に関するお知らせ(18:30)](https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf)
+・[2026-02-13 2025年12月期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf)
+・[2025-12-25 ZENMU Virtual Drive大型案件受注に関するお知らせ(16:00)](https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf)
+・[2025-10-07 ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～(11:30)](https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf)
+・[2025-06-04 医療AIプラットフォーム技術研究組合（HAIP）に参画(10:00)](https://pdf.irpocket.com/C338A/A2Jy/Zp82/ynZJ.pdf)
+・[2025-04-21 国産技術を用いた次世代ドローン・セキュリティの実証試験に成功(12:50)](https://pdf.irpocket.com/C338A/dRUj/UQBS/dnfY.pdf)
+・[2024-05-02 中小企業イノベーション創出推進事業開始のお知らせ(時刻記載なし)](https://zenmutech.com/information/news/20240502/)
+・[2022-06-13 「インテグリティ・ドローン」を開発(時刻記載なし)](https://zenmutech.com/information/news/20220613/)
+・[2018-10-16 秘密計算技術の実用化を産総研との協働で始動(時刻記載なし)](https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/)
+
+Sources
+・[IRニュース一覧 | 株式会社ZenmuTech](https://zenmutech.com/ir/news/)
+・[ニュース＆トピック | 株式会社ZenmuTech](https://zenmutech.com/information/news/)
+・[ＺｅｎｍｕＴ（338A）適時開示情報 | 株予報Pro](https://kabuyoho.jp/sp/reportDisclose?bcode=338A)
+・[上場株式数 | 日本取引所グループ](https://www.jpx.co.jp/listing/co/01.html)",2026-10-26T18:01:23.941796+09:00,2026-10-26T20:27:45.535728+09:00,,,,,ACTUAL_SESSION_SHARE_AWARE_V1,2026-10-26,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,100,100,1,,,[],4900,verified,2026-10-26T18:01:23.941796+09:00,0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03,ACTUAL_SESSION_SHARE_AWARE_V1,"{""actual_price"":4900.0,""adjusted_price"":4900.0,""basis_asof"":""2026-10-26"",""corporate_actions_source"":""Yahoo Finance Stock Splits"",""corporate_actions_version"":""CLOUD_SPLIT_BASIS_V1"",""field"":""actual_close"",""price_basis"":""ACTUAL_SESSION_SHARE_AWARE_V1"",""session"":""2026-10-26"",""source_price_basis"":""yahoo_daily_split_adjusted"",""source_sha256"":""0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03"",""source_usable"":true,""split_factor"":1.0,""symbol"":""338A""}",2026-11-04,,pending,,,,,pending,2026-10-27,,,,,,,,,,,,,,

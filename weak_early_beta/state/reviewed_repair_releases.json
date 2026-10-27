@@ -1,0 +1,157 @@
+{
+  "identity": "CLOUD_REVIEWED_REPAIR_RELEASE_V1",
+  "manifest_version": 1,
+  "previous_source_sha256": "0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03",
+  "symbol": "523A",
+  "previous_basis": "2026-10-26",
+  "current_basis": "2026-10-27",
+  "previous_journal": [],
+  "current_journal": [],
+  "primary_sources": [
+    "https://query1.finance.yahoo.com/v8/finance/chart/523A.T",
+    "https://www.jpx.co.jp/listing/stocks/new/t13vrt000000nv77-att/03SEIWAHOLDINGS.pdf",
+    "https://seiwaholdings.co.jp/ir/stock/overview/"
+  ],
+  "corroborating_sources": [
+    {
+      "url": "https://www.kabutore.biz/genzaikabuka/523a.html",
+      "sha256": "ebe4616bf0b5705d0def38b14876f76aa93a428291ae8cafec160cf5db165b01",
+      "retrieved_at": "2026-10-27T08:58:12.155Z",
+      "rows_verified": 4
+    }
+  ],
+  "rows": [
+    {
+      "date": "2026-08-18",
+      "previous_actual": {
+        "open": 1799,
+        "high": 1954,
+        "low": 1785,
+        "close": 1792,
+        "volume": 110900
+      },
+      "previous_quarantine_evidence": {
+        "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+        "symbol": "523A",
+        "date": "2026-08-18",
+        "previousBasis": "2026-10-14",
+        "previousProviderRepaired": true,
+        "previousActualVolume": 167700,
+        "previousActualOHLC": {
+          "open": 1799,
+          "high": 1954,
+          "low": 1785,
+          "close": 1792
+        },
+        "historicalActions": [],
+        "currentActualVolume": 110900
+      },
+      "current_actual": {
+        "open": 1800,
+        "high": 1954,
+        "low": 1782,
+        "close": 1785,
+        "volume": 194600
+      }
+    },
+    {
+      "date": "2026-08-19",
+      "previous_actual": {
+        "open": 1785,
+        "high": 1900,
+        "low": 1785,
+        "close": 1820,
+        "volume": 94500
+      },
+      "previous_quarantine_evidence": {
+        "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+        "symbol": "523A",
+        "date": "2026-08-19",
+        "previousBasis": "2026-10-16",
+        "previousProviderRepaired": true,
+        "previousActualVolume": 158400,
+        "previousActualOHLC": {
+          "open": 1785,
+          "high": 1900,
+          "low": 1785,
+          "close": 1820
+        },
+        "historicalActions": [],
+        "currentActualVolume": 94500
+      },
+      "current_actual": {
+        "open": 1810,
+        "high": 1900,
+        "low": 1785,
+        "close": 1816,
+        "volume": 162200
+      }
+    },
+    {
+      "date": "2026-08-20",
+      "previous_actual": {
+        "open": 1816,
+        "high": 1816,
+        "low": 1751,
+        "close": 1762,
+        "volume": 51800
+      },
+      "previous_quarantine_evidence": {
+        "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+        "symbol": "523A",
+        "date": "2026-08-20",
+        "previousBasis": "2026-10-16",
+        "previousProviderRepaired": true,
+        "previousActualVolume": 74900,
+        "previousActualOHLC": {
+          "open": 1816,
+          "high": 1816,
+          "low": 1751,
+          "close": 1762
+        },
+        "historicalActions": [],
+        "currentActualVolume": 51800
+      },
+      "current_actual": {
+        "open": 1783,
+        "high": 1802,
+        "low": 1751,
+        "close": 1757,
+        "volume": 78400
+      }
+    },
+    {
+      "date": "2026-08-21",
+      "previous_actual": {
+        "open": 1757,
+        "high": 1757,
+        "low": 1630,
+        "close": 1683,
+        "volume": 207300
+      },
+      "previous_quarantine_evidence": {
+        "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+        "symbol": "523A",
+        "date": "2026-08-21",
+        "previousBasis": "2026-10-16",
+        "previousProviderRepaired": true,
+        "previousActualVolume": 261200,
+        "previousActualOHLC": {
+          "open": 1757,
+          "high": 1757,
+          "low": 1630,
+          "close": 1683
+        },
+        "historicalActions": [],
+        "currentActualVolume": 207300
+      },
+      "current_actual": {
+        "open": 1749,
+        "high": 1749,
+        "low": 1630,
+        "close": 1688,
+        "volume": 272000
+      }
+    }
+  ]
+}

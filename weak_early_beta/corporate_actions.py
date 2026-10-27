@@ -422,17 +422,53 @@ def action_table(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True).sort_values(["symbol", "effective_date"]).reset_index(drop=True)
 
 
-def quarantine_repaired_volume_revisions(previous: pd.DataFrame, current: pd.DataFrame) -> pd.DataFrame:
+def quarantine_repaired_volume_revisions(
+    previous: pd.DataFrame, current: pd.DataFrame, *, previous_source_sha256: str | None = None,
+) -> pd.DataFrame:
     """Retain, audit and exclude unstable historical reconstructed volumes.
 
     Only two provider-marked repairs with identical actual OHLC and an unchanged
     historical action journal qualify. The ordinary revision validator remains
     strict. Never select either volume as the corrected historical value.
+    One separately reviewed, byte-pinned transition may bypass carried handling
+    after all of its original/new endpoints and provenance have been verified.
     """
+    from .reviewed_repair_releases import reviewed_repair_release_keys
+
+    if previous_source_sha256 is None:
+        previous_source_sha256 = previous.attrs.get("source_sha256")
     if previous.empty or "corporate_actions_version" not in previous:
+        # A matching identity must not opt out through missing old metadata.
+        reviewed_repair_release_keys(previous, current, previous_source_sha256=previous_source_sha256)
         return current
+    original_previous, original_current = previous, current
     previous = normalize_daily(previous)
     result = normalize_daily(current)
+    released_keys, release_audit = reviewed_repair_release_keys(
+        previous, result, previous_source_sha256=previous_source_sha256,
+    )
+    if released_keys:
+        # normalize_daily deliberately allows tiny reconstruction differences.
+        # This reviewed fingerprint does not: check the original inputs too.
+        for original, normalized in ((original_previous, previous), (original_current, result)):
+            numeric_fields = (*OHLC, "volume", *ACTUAL_COLUMNS, "split_factor", "split_ratio")
+            if not set(numeric_fields).issubset(original.columns):
+                raise CorporateActionError("reviewed repair release mismatch: missing original numeric metadata")
+            original_rows = original.loc[original.symbol.astype(str).str.strip().eq("523A")].copy()
+            for field, expected in (
+                ("price_basis", PRICE_BASIS), ("corporate_actions_source", ACTION_SOURCE),
+                ("corporate_actions_version", VERSION),
+            ):
+                if original_rows[field].isna().any() or not original_rows[field].eq(expected).all():
+                    raise CorporateActionError(f"reviewed repair release mismatch: original {field}")
+            original_rows["date"] = _dates(original_rows.date)
+            original_rows = original_rows.set_index("date")
+            normalized_rows = normalized.loc[normalized.symbol.eq("523A")].set_index("date")
+            for symbol, date in released_keys:
+                before, after = original_rows.loc[date], normalized_rows.loc[date]
+                for field in numeric_fields:
+                    if isinstance(before[field], (bool, np.bool_)) or before[field] != after[field]:
+                        raise CorporateActionError(f"reviewed repair release mismatch: original {symbol} {date:%Y-%m-%d} {field}")
     if REVISION_EVIDENCE not in result:
         result[REVISION_EVIDENCE] = ""
     old_groups = {symbol: group for symbol, group in previous.groupby("symbol", sort=False)}
@@ -450,6 +486,8 @@ def quarantine_repaired_volume_revisions(previous: pd.DataFrame, current: pd.Dat
         candidates = (group.provider_repaired & changed_volume) | group.date.isin(carried_dates)
         for position in group.index[candidates]:
             row = result.loc[position]
+            if (str(symbol), row.date) in released_keys:
+                continue
             if row.date not in old_rows.index or row.date >= prior_basis:
                 continue
             before = old_rows.loc[row.date]
@@ -477,7 +515,10 @@ def quarantine_repaired_volume_revisions(previous: pd.DataFrame, current: pd.Dat
             result.at[position, REVISION_EVIDENCE] = json.dumps(evidence, separators=(",", ":"))
             result.at[position, "source_usable"] = False
             result.at[position, "source_issue"] = REVISION_ISSUE
-    return normalize_daily(result)
+    result = normalize_daily(result)
+    # Do not rely on pandas propagating attrs through final normalization.
+    result.attrs["reviewedRepairReleases"] = release_audit
+    return result
 
 
 def validate_source_revision(
@@ -869,8 +910,12 @@ def fetch_daily(
         raise CorporateActionError("Yahoo returned no split-aware daily rows")
     normalized = normalize_daily(pd.concat(rows, ignore_index=True), basis_asof=provider_snapshot)
     if previous is not None:
-        normalized = quarantine_repaired_volume_revisions(previous, normalized)
+        normalized = quarantine_repaired_volume_revisions(
+            previous, normalized, previous_source_sha256=previous_source_sha256,
+        )
+        release_audit = normalized.attrs.get("reviewedRepairReleases", [])
         normalized.attrs["source_revision_receipt"] = validate_source_revision(
             previous, normalized, previous_source_sha256=previous_source_sha256,
         )
+        normalized.attrs["source_revision_receipt"]["reviewedRepairReleases"] = release_audit
     return normalized

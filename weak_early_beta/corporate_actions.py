@@ -908,7 +908,12 @@ def fetch_daily(
             rows.append(source.reset_index(drop=True))
     if not rows:
         raise CorporateActionError("Yahoo returned no split-aware daily rows")
-    normalized = normalize_daily(pd.concat(rows, ignore_index=True), basis_asof=provider_snapshot)
+    from .reviewed_off_session_actions import retain_reviewed_off_session_actions
+
+    raw, retained_actions = retain_reviewed_off_session_actions(
+        previous, pd.concat(rows, ignore_index=True), basis_asof=provider_snapshot,
+    )
+    normalized = normalize_daily(raw, basis_asof=provider_snapshot)
     if previous is not None:
         normalized = quarantine_repaired_volume_revisions(
             previous, normalized, previous_source_sha256=previous_source_sha256,
@@ -918,4 +923,5 @@ def fetch_daily(
             previous, normalized, previous_source_sha256=previous_source_sha256,
         )
         normalized.attrs["source_revision_receipt"]["reviewedRepairReleases"] = release_audit
+        normalized.attrs["source_revision_receipt"]["retainedOffSessionActions"] = retained_actions
     return normalized

@@ -1,31 +1,27 @@
 {
   "ok": true,
-  "claimId": "0c9a76db-5c9d-4765-9940-e974b2db5d1d",
-  "generatedAt": "2026-10-26T18:15:37.701466+09:00",
+  "claimId": "170a0ae2-d14e-4115-bbb1-fa6a920dcd59",
+  "generatedAt": "2026-10-27T20:42:28.921117+09:00",
   "claimedCount": 1,
   "alerts": [
     {
-      "alertId": "weak-early-beta:2026-10-26:338A",
-      "receivedAt": "2026-10-26T16:15:00+09:00",
-      "analysisCutoff": "2026-10-26T09:15:38.201Z",
-      "signalDate": "2026-10-26",
+      "alertId": "weak-early-beta:2026-10-27:4398",
+      "receivedAt": "2026-10-27T16:15:00+09:00",
+      "analysisCutoff": "2026-10-27T11:42:29.271Z",
+      "signalDate": "2026-10-27",
       "signalType": "WEAK_EARLY_BETA",
-      "symbolCode": "338A",
-      "symbolName": "ＺｅｎｍｕＴｅｃｈ",
+      "symbolCode": "4398",
+      "symbolName": "ブロードバンドセキュリティ",
       "entryPrice": null,
-      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A338A",
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A4398",
       "betaSelectors": [
-        "Balance",
-        "Dive",
-        "Fusion",
-        "Shadow",
         "Silence"
       ],
       "capitalRiskReviewVersion": 1,
       "longTermMaterialReviewVersion": 1
     }
   ],
-  "outputReportPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261027-recovery\\repo\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [
       "alertId",
@@ -46,7 +42,7 @@
     "model": "gpt-6.1-sol",
     "reasoningEffort": "xhigh"
   },
-  "analysisStartedAt": "2026-10-26T09:15:38.201Z",
+  "analysisStartedAt": "2026-10-27T11:42:29.271Z",
   "capitalRiskReviewVersion": 1,
   "longTermMaterialReviewVersion": 1
 }

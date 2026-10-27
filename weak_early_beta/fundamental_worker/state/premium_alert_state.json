@@ -4508,6 +4508,2513 @@
           ]
         }
       }
+    },
+    "weak-early-beta:2026-10-27:338A": {
+      "completedAt": "2026-10-27T11:33:09.091Z",
+      "delivery": "html",
+      "analysisCutoff": "2026-10-27T11:10:54.421Z",
+      "analysisBasis": "analysis_start",
+      "report": {
+        "alertId": "weak-early-beta:2026-10-27:338A",
+        "symbolCode": "338A",
+        "symbolName": "ＺｅｎｍｕＴｅｃｈ",
+        "signalDate": "2026-10-27",
+        "receivedAt": "2026-10-27T16:15:00+09:00",
+        "analysisCutoff": "2026-10-27T11:10:54.421Z",
+        "title": "ＺｅｎｍｕＴｅｃｈ (338A) | TradingView チャート",
+        "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A338A",
+        "summary": "秘密計算の実証・医療展開は進むが、ZVD商談の後ずれ・固定費増と潜在株式残高の不確実性が併存する。",
+        "materialImpact": "混在/要確認：レゾナックとの秘密計算実証が進む一方、主力案件後ずれで上期赤字が拡大し、潜在株式の最新残高にも不確実性が残る。",
+        "fields": [
+          {
+            "name": "材料インパクト",
+            "value": "混在/要確認：レゾナックとの秘密計算実証が進む一方、主力案件後ずれで上期赤字が拡大し、潜在株式の最新残高にも不確実性が残る。",
+            "inline": false
+          },
+          {
+            "name": "事業概要",
+            "value": "独自の秘密分散技術ZENMU-AONTでデータを意味のない断片に分け、PCの紛失・盗難時の情報漏洩を防ぐZENMU Virtual Drive（ZVD）を企業・官公庁等へ提供する。ソフトウエア開発キットZENMU Engineの組み込み提供と、企業間で元データを開示せず分析する秘密計算ライブラリ・基盤QueryAheadも展開し、直販とSIer等の販売代理店を通じて導入・利用を支える。",
+            "inline": false
+          },
+          {
+            "name": "足元材料",
+            "value": "10月26日15:00公表：レゾナックがQueryAheadを採用した材料開発向けMI基盤を構築し、化学メーカーとの共同実証で物性の予測誤差を単独データ比約78％減らした。レゾナックとの2023年開始の共創はMI基盤の構築・実証まで進んだが、10月26日公表時点では実運用ルールの整備が残り、受注金額や当社売上への寄与は未公表である。\n\n9月1日17:05公表：HAIPと取得済み特許を使うサイバーセキュリティ事業の開始で合意した。当期業績への影響は軽微と明記され、医療分野への展開進展を直ちに大型収益の発生と評価する内容ではない。\n\n8月13日15:30公表の最新中間決算は売上高3億563万円（前年同期比0.3％増）、営業損失9,928万円（前年同期は2,414万円の損失）、純損失6,008万円。ZVD導入検討の長期化などで約4,200万円が下期へずれ、上期売上は予想3.77億円を下回った。通期会社予想の売上10.8億円・営業利益1.61億円は据え置きで、説明資料では大型商談と後ずれ案件が4Qへ偏る構成を示す。技術実証の進展と、既存事業の売上計上・固定費回収の弱さが併存する。",
+            "inline": false
+          },
+          {
+            "name": "ファンダ要点",
+            "value": "ZVD売上は上期2.57億円、前年同期比32.5％増。6月末ライセンスは126,072件で、サブスクリプション46,024件と保守80,048件に分かれる。公表解約率4.4％には大口顧客1,700件の買い切り移行が含まれ、これを除く実質解約率は0.4％。契約形態の変化を顧客離反と混同せず、ストック収益2億1,394万円の積み上がりと、買い切りの一括計上を分けて捉える（8月13日15:30公表）。2025年12月25日16:00公表の2件計2.54億円の大型ZVD案件は、2月13日15:30公表の2025年決算資料で既反映と確認でき、現在の新規受注材料へ再掲しない。\n\n秘密計算の上期売上は2,909万円で前年同期8,830万円から減少し、最新半期の収益分解では全額フロー型である。2018年10月16日公表（時刻記載なし）の産総研との秘密計算実用化はQueryAheadへつながっており、現在も共同研究・機能開発が続くが、受託中心から継続課金への転換は未完了である。 8月13日15:30公表のQueryAhead Hubは2026年12月期4QのPaaS化計画で、基準時点はその四半期に入っているが、提供開始とARRの実績は確認できない。\n\n医療向け秘密分散プロキシは4月14日のDigital Trust Grid採用公表と4月21日11:30の訂正を経て9月1日17:05のHAIP共同事業開始合意へ進み、技術供与から用途展開へ段階が進んでいる。 2024年5月2日09:30公表のAIホスピタル向けSBIR採択は医療データ伝送開発の資金面を支える案件だが、コンソーシアム全体の補助上限30億円を当社の受注額や売上に読み替えることはできない。\n\nRevoWorks ZENMU-Storageは2025年10月7日11:30に2026年1月提供予定とされ、予定時期を過ぎた現在も8月資料の案件群に載る一方、当社の製品別ロイヤリティ実績は確認できない。 販売元の3年間30億円目標はZenmuTechの売上目標ではない。6月1日15:30公表のTMIP&S・ミントウェーブとの顧客紹介契約はZEEの販売経路を広げる施策で、8月にも継続掲載されるが、この提携単独の受注額は開示されていない。\n\n3月23日18:30公表のBigObject協業は金融・医療・製造向けのデータ基盤構想で、8月資料でも2026～2027年の展開計画に位置づけられる一方、個別の契約売上は未公表である。 4月23日15:30公表のNerveNet共同開発は8月決算でも継続案件とされ、自治体の平時・災害時通信へのSDK適用を広げるが、製品発売や自治体の有償導入実績は確認できない。 5月11日16:35公表の秘密分散とRAGの共同開発は3月の特許出願、4月からの安全性評価を経た開発案件で、8月にも掲載されているが、特許成立や販売計上を意味しない。 8月13日16:45公表の秘密分散ストレージとMac版ZVDは2027年春頃の提供予定で、Windows端末依存を減らす開発案件だが、現時点の販売実績には含められない。",
+            "inline": false
+          },
+          {
+            "name": "注意点",
+            "value": "商談後ずれと費用先行：上期は粗利2億7,070万円に対し販管費3億6,999万円で、人件費・採用費や外注開発費が利益を圧迫した。通期据え置きは4Qに大型商談が集中する会社計画であり、後ずれ分の検収・売上計上済みを示す実績ではない。RevoWorksの2026年1月、QueryAhead Hubの2026年12月期4Qという公表予定と、基準時点で確認できる導入・継続課金実績は区別する。\n\nHAIPとの共同事業は9月1日の開始予定日を過ぎているが、当社への売上・利益寄与額は未公表で、当期影響は会社自身が軽微としている。 SBIR採択事業は当初の実施期間が2026年3月末までで、延長・完了の個別公表と中間期補助金収入との対応を確認できず、継続期間や当社配分を確定できない。 長期案件は下記の原発表と最新決算まで追跡したが、SBIR事業の期間変更・終了と個別採算が未解決であり、長期材料の全履歴照合完了とはしていない。\n\n資本政策：新株予約権の潜在株式は存在するが、発行原資料と2026年10月27日時点の回号別残高・失効の全履歴を照合し切れず、残存対象株数と追加希薄化率は確定できない。 3月27日15:24公表の年度報告では第4・9・11・12の各系列、第13回、第14回を確認し、第4-4回と第12-2回の2025年中の全残行使、第14回の一部失効も確認した。第13回には業績条件と2028年9月までの行使期間が記載される。これらを一括して消滅済みとは扱わない。2024年1月9日公表（時刻記載なし）の約2.4億円調達には有償新株予約権が含まれるが、金額を未行使株数へ変換できる資料ではない。\n\n3月13日18:30公表・4月1日効力発生の1対2分割、2月の第9回1,000株行使（分割前）と5月の第14回800株行使（分割後）を区別し、4月15日15:30の発行決議と5月14日15:30の払込完了公表による株式報酬4,000株も未行使権利には重複計上しない。10月20日公表（時刻記載なし）のJPX9月分では上場株式数2,726,000株・当月新株交付0株だが、この0は未行使残高ではなく、10月の状態も保証しない。半期の新株予約権5,277千円は貸借対照表上の金額であり対象株数ではない。\n\n資金・契約条件：6月末現預金は8.61億円、営業CFは7,672万円のプラスだが、売掛金回収3.01億円が主因で、赤字下の恒常的な資金創出力と同一視できない。8月13日15:30公表の半期報告書にある2億円コミットメントラインには純資産の前年同期比75％以上維持と期末経常損益の黒字条件があり、上期赤字だけで抵触とは判断しない。補助金収入2,036万円も本業売上やSBIRの個社確定配分と混同しない。",
+            "inline": false
+          },
+          {
+            "name": "開示リンク",
+            "value": "・[2026-10-26 レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～(15:00)](https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf)\n・[2026-10-20 新株予約権の行使等に伴う上場株式数等の変更（2026年9月分）(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf)\n・[2026-09-01 HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意(17:05)](https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf)\n・[2026-08-13 情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始(16:45)](https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf)\n・[2026-08-13 2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf)\n・[2026-08-13 2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf)\n・[2026-08-13 2026年12月期 第２四半期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf)\n・[2026-08-13 半期報告書－第13期(2026/01/01－2026/12/31)(15:30)](https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf)\n・[2026-06-19 新株予約権の行使等に伴う上場株式数等の変更（2026年5月分）(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.5.pdf)\n・[2026-06-01 法令対応と実効性の双方を満たすエンドポイントセキュリティの促進～ZenmuTech、TMIP&S、ミントウェーブの3社で業務提携～(15:30)](https://pdf.irpocket.com/C338A/fcDL/WUzM/bpJq.pdf)\n・[2026-05-14 譲渡制限付株式報酬としての新株式発行の払込完了に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/WUpy/otyQ/rhY3.pdf)\n・[2026-05-11 秘密分散(AONT)技術とRAGを融合した次世代セキュアAI基盤の特許を出願(16:35)](https://pdf.irpocket.com/C338A/Kdx3/Oqyn/urlI.pdf)\n・[2026-04-23 公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始(15:30)](https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf)\n・[2026-04-21 （訂正）2026年４月14日のPR開示に関する一部訂正について(11:30)](https://pdf.irpocket.com/C338A/Rytt/qDLr/LoJF.pdf)\n・[2026-04-15 譲渡制限付株式報酬としての新株式発行に関するお知らせ(15:30)](https://pdf.irpocket.com/C338A/nX8G/Hmg3/gelq.pdf)\n・[2026-03-27 有価証券報告書－第12期(2025/01/01－2025/12/31)(15:24)](https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf)\n・[2026-03-23 台湾のBigObjectと戦略的協業に関するMOUを締結(18:30)](https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf)\n・[2026-03-19 新株予約権の行使等に伴う上場株式数等の変更（2026年2月分）(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.2.pdf)\n・[2026-03-13 株式分割に関するお知らせ(18:30)](https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf)\n・[2026-02-13 2025年12月期 決算説明資料(15:30)](https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf)\n・[2025-12-25 ZENMU Virtual Drive大型案件受注に関するお知らせ(16:00)](https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf)\n・[2025-10-07 ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～(11:30)](https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf)\n・[2025-02-21 新規上場申請のための有価証券報告書（Ⅰの部）(時刻記載なし)](https://www.jpx.co.jp/listing/stocks/new/um3qrc000000tjd9-att/03ZenmuTech-1s.pdf)\n・[2024-05-02 中小企業イノベーション創出推進事業開始のお知らせ(09:30)](https://zenmutech.com/information/news/20240502/)\n・[2024-01-09 データの秘密分散化によって情報漏洩セキュリティを開発するZenmuTech、2.4億円の資金調達を実施(時刻記載なし)](https://zenmutech.com/information/news/20240109/)\n・[2018-10-16 秘密計算技術の実用化を産総研との協働で始動(時刻記載なし)](https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/)",
+            "inline": false
+          },
+          {
+            "name": "Sources",
+            "value": "・[IRニュース一覧 | 株式会社ZenmuTech](https://www.zenmutech.com/ir/news/)\n・[ニュース＆トピック | 株式会社ZenmuTech](https://zenmutech.com/information/news/)\n・[有価証券報告書 | 株式会社ZenmuTech](https://www.zenmutech.com/ir/library/securities-report/)\n・[ＺｅｎｍｕＴ（338A）適時開示情報 | 株予報Pro](https://kabuyoho.jp/sp/reportDisclose?bcode=338A)",
+            "inline": false
+          }
+        ],
+        "sources": [
+          {
+            "title": "IRニュース一覧 | 株式会社ZenmuTech",
+            "url": "https://www.zenmutech.com/ir/news/"
+          },
+          {
+            "title": "ニュース＆トピック | 株式会社ZenmuTech",
+            "url": "https://zenmutech.com/information/news/"
+          },
+          {
+            "title": "有価証券報告書 | 株式会社ZenmuTech",
+            "url": "https://www.zenmutech.com/ir/library/securities-report/"
+          },
+          {
+            "title": "ＺｅｎｍｕＴ（338A）適時開示情報 | 株予報Pro",
+            "url": "https://kabuyoho.jp/sp/reportDisclose?bcode=338A"
+          }
+        ],
+        "disclosures": [
+          {
+            "id": "resonac",
+            "title": "レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf",
+            "publishedAt": "2026-10-26T15:00:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "jpx-2026-9",
+            "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年9月分）",
+            "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf",
+            "publishedAt": "2026-10-20",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf"
+          },
+          {
+            "id": "haip",
+            "title": "HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf",
+            "publishedAt": "2026-09-01T17:05:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "mac",
+            "title": "情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf",
+            "publishedAt": "2026-08-13T16:45:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "half-results",
+            "title": "2026年12月期 第２四半期（中間期）決算短信〔日本基準〕（非連結）",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "half-forecast-difference",
+            "title": "2026年12月期 第２四半期（中間期）の業績予想値と実績値の差異に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "half-slides",
+            "title": "2026年12月期 第２四半期 決算説明資料",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "half-report",
+            "title": "半期報告書－第13期(2026/01/01－2026/12/31)",
+            "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf",
+            "publishedAt": "2026-08-13T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "jpx-2026-5",
+            "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年5月分）",
+            "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.5.pdf",
+            "publishedAt": "2026-06-19",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.5.pdf"
+          },
+          {
+            "id": "sales-alliance",
+            "title": "法令対応と実効性の双方を満たすエンドポイントセキュリティの促進～ZenmuTech、TMIP&S、ミントウェーブの3社で業務提携～",
+            "url": "https://pdf.irpocket.com/C338A/fcDL/WUzM/bpJq.pdf",
+            "publishedAt": "2026-06-01T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "rs-paid",
+            "title": "譲渡制限付株式報酬としての新株式発行の払込完了に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C338A/WUpy/otyQ/rhY3.pdf",
+            "publishedAt": "2026-05-14T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "rag",
+            "title": "秘密分散(AONT)技術とRAGを融合した次世代セキュアAI基盤の特許を出願",
+            "url": "https://pdf.irpocket.com/C338A/Kdx3/Oqyn/urlI.pdf",
+            "publishedAt": "2026-05-11T16:35:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "nerve",
+            "title": "公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始",
+            "url": "https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf",
+            "publishedAt": "2026-04-23T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "medical-corrected",
+            "title": "（訂正）2026年４月14日のPR開示に関する一部訂正について",
+            "url": "https://pdf.irpocket.com/C338A/Rytt/qDLr/LoJF.pdf",
+            "publishedAt": "2026-04-21T11:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "rs-issue",
+            "title": "譲渡制限付株式報酬としての新株式発行に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C338A/nX8G/Hmg3/gelq.pdf",
+            "publishedAt": "2026-04-15T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "annual-report",
+            "title": "有価証券報告書－第12期(2025/01/01－2025/12/31)",
+            "url": "https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf",
+            "publishedAt": "2026-03-27T15:24:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "bigobject",
+            "title": "台湾のBigObjectと戦略的協業に関するMOUを締結",
+            "url": "https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf",
+            "publishedAt": "2026-03-23T18:30:00+09:00",
+            "contentReviewed": true,
+            "publicationNote": "TDnet相当一覧の18:30を採用。公式IR配信データには同日15:35の登録値もあるため、その値と混同しない。",
+            "publicationSourceUrl": "https://kabuyoho.jp/sp/reportDisclose?bcode=338A"
+          },
+          {
+            "id": "jpx-2026-2",
+            "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年2月分）",
+            "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.2.pdf",
+            "publishedAt": "2026-03-19",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.2.pdf"
+          },
+          {
+            "id": "stock-split",
+            "title": "株式分割に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf",
+            "publishedAt": "2026-03-13T18:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "annual-slides",
+            "title": "2025年12月期 決算説明資料",
+            "url": "https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf",
+            "publishedAt": "2026-02-13T15:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "large-order",
+            "title": "ZENMU Virtual Drive大型案件受注に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf",
+            "publishedAt": "2025-12-25T16:00:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "revoworks",
+            "title": "ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～",
+            "url": "https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf",
+            "publishedAt": "2025-10-07T11:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+          },
+          {
+            "id": "ipo-history",
+            "title": "新規上場申請のための有価証券報告書（Ⅰの部）",
+            "url": "https://www.jpx.co.jp/listing/stocks/new/um3qrc000000tjd9-att/03ZenmuTech-1s.pdf",
+            "publishedAt": "2025-02-21",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://www.jpx.co.jp/listing/stocks/new/00-archives-01.html"
+          },
+          {
+            "id": "sbir-original",
+            "title": "中小企業イノベーション創出推進事業開始のお知らせ",
+            "url": "https://zenmutech.com/information/news/20240502/",
+            "publishedAt": "2024-05-02T09:30:00+09:00",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://www.atpress.ne.jp/news/393767"
+          },
+          {
+            "id": "funding-2023",
+            "title": "データの秘密分散化によって情報漏洩セキュリティを開発するZenmuTech、2.4億円の資金調達を実施",
+            "url": "https://zenmutech.com/information/news/20240109/",
+            "publishedAt": "2024-01-09",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://zenmutech.com/information/news/20240109/"
+          },
+          {
+            "id": "aist-original",
+            "title": "秘密計算技術の実用化を産総研との協働で始動",
+            "url": "https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/",
+            "publishedAt": "2018-10-16",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true,
+            "publicationSourceUrl": "https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/"
+          }
+        ],
+        "sourceChecks": [
+          {
+            "role": "official_ir",
+            "checked": true,
+            "url": "https://www.zenmutech.com/ir/news/",
+            "checkedUrls": [
+              "https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/R5ax.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/v9md.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+              "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf",
+              "https://pdf.irpocket.com/C338A/fcDL/WUzM/bpJq.pdf",
+              "https://pdf.irpocket.com/C338A/WUpy/otyQ/rhY3.pdf",
+              "https://pdf.irpocket.com/C338A/Kdx3/Oqyn/urlI.pdf",
+              "https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf",
+              "https://pdf.irpocket.com/C338A/Rytt/qDLr/LoJF.pdf",
+              "https://pdf.irpocket.com/C338A/nX8G/Hmg3/gelq.pdf",
+              "https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf",
+              "https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf",
+              "https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf",
+              "https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf",
+              "https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf",
+              "https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf",
+              "https://zenmutech.com/information/news/20240502/",
+              "https://zenmutech.com/information/news/20240109/",
+              "https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/",
+              "https://xml.irpocket.com/338A/JS/release-all-all.js",
+              "https://xml.irpocket.com/338A/JS/ir-all-all.js",
+              "https://zenmutech.com/information/news/20261022/",
+              "https://zenmutech.com/information/news/20261023/",
+              "https://www.atpress.ne.jp/news/393767"
+            ],
+            "result": "公式IRニュース・有価証券報告書/短信/説明資料の各一覧を開き、ページが使用するIRpocket配信データで全登録履歴を照合した。2026年9月12日から分析基準時点の10月27日20:10:54.421 JSTまでのIR・会社ニュースを確認し、最新の重要開示は10月26日15:00のレゾナック共創。10月22/23日のセキュリティ対応も本文を読み、会社は直接影響なしと説明しているため業績悪化材料へ変換しなかった。最新財務基準は8月13日の2026年中間決算・半期報告書で、選定PDF/公式詳細本文を読んだ。時刻のない過去公式記事はdate_onlyとし、同日で時刻不明な資料は採用していない。"
+          },
+          {
+            "role": "irbank_or_tdnet",
+            "checked": true,
+            "url": "https://kabuyoho.jp/sp/reportDisclose?bcode=338A",
+            "checkedUrls": [
+              "https://kabuyoho.jp/sp/reportDisclose?bcode=338A",
+              "https://kabuyoho.jp/sp/reportDisclose?bcode=338A&disc_type=0&page=2",
+              "https://www.jpx.co.jp/listing/stocks/new/00-archives-01.html",
+              "https://www.jpx.co.jp/listing/stocks/new/um3qrc000000tjd9-att/03ZenmuTech-1s.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.2.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.3.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.4.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.5.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.6.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.7.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.8.pdf",
+              "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf"
+            ],
+            "result": "IRBANKの銘柄/適時開示ページは取得403等で一覧確認できなかったため、TDnet相当の株予報Pro銘柄別一覧1・2頁を開いて公式IRと照合。10月26日15:00、9月1日17:05、8月13日15:30/16:45等の日時を確認。BigObjectはTDnet相当の18:30を採用し、公式配信データの15:35という別登録値は監査記録へ残した。JPXの2026年2～9月所報本文で月次の株式増加を追跡し、IPO公表資料も読んだ。JPX月次の新株交付数0を残存権利ゼロと読み替えていない。"
+          }
+        ],
+        "capitalRiskReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-27T11:10:54.421Z",
+          "status": "unresolved",
+          "historyCheckedThrough": null,
+          "documents": [
+            {
+              "id": "cap-half",
+              "title": "半期報告書－第13期(2026/01/01－2026/12/31)",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "p.2、p.6～7、p.10、p.15",
+              "finding": "2026年6月末の潜在株式の存在、新株予約権計上額5,277千円、2月5日の1,000株行使、4月1日の1対2分割、5月14日のRS4,000株発行と5月19日の800株行使を確認。SO等欄の該当事項なしは既存権利の残存ゼロを意味しない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "cap-annual",
+              "title": "有価証券報告書－第12期(2025/01/01－2025/12/31)",
+              "url": "https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf",
+              "publishedAt": "2026-03-27T15:24:00+09:00",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "p.22、p.29～48、p.76～84、p.91～92",
+              "finding": "第4系列、第9系列、第11系列、第12系列、第13回、第14回を確認。第9回は2026年2月末26,400株、その他は末残等を確認。第4-4回と第12-2回は2025年中の全残行使、第14回は3,600株失効後6,200株であり、一部失効を全数終了としない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "cap-correction",
+              "title": "訂正有価証券報告書－第12期(2025/01/01－2025/12/31)",
+              "url": "https://pdf.irpocket.com/C338A/Rytt/h4ec/DP40.pdf",
+              "publishedAt": "2026-04-30T16:14:00+09:00",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "official_ir",
+              "locator": "p.2 訂正箇所",
+              "finding": "非監査業務報酬1,500千円の追記であり、新株予約権の残高・条件を訂正するものではない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "cap-ipo-history",
+              "title": "新規上場申請のための有価証券報告書（Ⅰの部）",
+              "url": "https://www.jpx.co.jp/listing/stocks/new/um3qrc000000tjd9-att/03ZenmuTech-1s.pdf",
+              "publishedAt": "2025-02-21",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "本文p.43～60付近の新株予約権等、p.168～169の第三者割当等（PDF p.46～63、171～172）",
+              "finding": "公開申請資料に過去回号の発行条件と2022～2024年の割当記録を確認。これは過年度発行の再掲であり、各回号の当初発行決議資料そのものの代用にはしない。第13回の82個と分割前後の株数を区別。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/stocks/new/00-archives-01.html"
+            },
+            {
+              "id": "cap-funding-history",
+              "title": "データの秘密分散化によって情報漏洩セキュリティを開発するZenmuTech、2.4億円の資金調達を実施",
+              "url": "https://zenmutech.com/information/news/20240109/",
+              "publishedAt": "2024-01-09",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "official_ir",
+              "locator": "本文冒頭・調達の目的と今後の展開",
+              "finding": "2023年の約2.4億円調達に第三者割当増資と有償新株予約権を含むと記載。本文には回号別の全発行条件・基準時点残高がなく、金額を潜在株数へ変換しない。",
+              "publicationSourceUrl": "https://zenmutech.com/information/news/20240109/"
+            },
+            {
+              "id": "cap-split",
+              "title": "株式分割に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/IuL7/S7rA/ZN5R.pdf",
+              "publishedAt": "2026-03-13T18:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "official_ir",
+              "locator": "p.1～2 分割概要・行使価格調整",
+              "finding": "2026年4月1日1対2分割。第4系列1,141円、第9・11系列1,359円、第12回1,538円、第13回1,375円、第14回1,240円へ調整。分割を新規調達と扱わない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "cap-rs-issue",
+              "title": "譲渡制限付株式報酬としての新株式発行に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/nX8G/Hmg3/gelq.pdf",
+              "publishedAt": "2026-04-15T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "issuance",
+              "source": "official_ir",
+              "locator": "p.1 発行概要、p.2 譲渡制限",
+              "finding": "監査等委員の取締役2名へ普通株式4,000株、1株2,462円、現物出資総額9,848,000円。既発行普通株式の報酬で、未行使SOとは別。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "cap-rs-paid",
+              "title": "譲渡制限付株式報酬としての新株式発行の払込完了に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/WUpy/otyQ/rhY3.pdf",
+              "publishedAt": "2026-05-14T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "official_ir",
+              "locator": "p.1 新株式発行の概要",
+              "finding": "2026年5月14日の4,000株の払込完了を確認。未発行潜在株式として二重計上しない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "cap-jpx-2",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年2月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.2.pdf",
+              "publishedAt": "2026-03-19",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.31 338A欄・冒頭の集計定義",
+              "finding": "2月の新株予約権行使1,000株は2021年3月決議分1。年度報告書の第9回の27,400株から26,400株への減少と照合。株数は4月分割前。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.2.pdf"
+            },
+            {
+              "id": "cap-jpx-3",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年3月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.3.pdf",
+              "publishedAt": "2026-04-20",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.30～31 338A欄・冒頭の集計定義",
+              "finding": "3月の行使による増加は0株、月末上場株式数1,360,600株。0は当月の新株交付数であって未行使残高ではない。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.3.pdf"
+            },
+            {
+              "id": "cap-jpx-4",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年4月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.4.pdf",
+              "publishedAt": "2026-05-20",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.30～31 338A欄・冒頭の集計定義",
+              "finding": "4月1日株式分割で1,360,600株増加し月末2,721,200株。当月の新株予約権行使増加は0株。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.4.pdf"
+            },
+            {
+              "id": "cap-jpx-5",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年5月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.5.pdf",
+              "publishedAt": "2026-06-19",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.31～32 338A欄・冒頭の集計定義",
+              "finding": "月末上場株式数2,726,000株、RS等4,000株と行使800株の増加。続頁の2024年3月決議分1の800株を確認し、第14回の一部行使と照合。上場変更日5月18日と会社の払込日5月14日は区別。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.5.pdf"
+            },
+            {
+              "id": "cap-jpx-6",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年6月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.6.pdf",
+              "publishedAt": "2026-07-17",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.31 338A欄・冒頭の集計定義",
+              "finding": "月末上場株式数2,726,000株、新株予約権行使の当月新株交付数0株。残存数の表示ではない。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.6.pdf"
+            },
+            {
+              "id": "cap-jpx-7",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年7月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.7.pdf",
+              "publishedAt": "2026-08-20",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.31 338A欄・冒頭の集計定義",
+              "finding": "月末上場株式数2,726,000株、新株予約権行使の当月新株交付数0株。残存ゼロ、権利消却・失効の証拠とはしない。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.7.pdf"
+            },
+            {
+              "id": "cap-jpx-8",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年8月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.8.pdf",
+              "publishedAt": "2026-09-18",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.32 338A欄・冒頭の集計定義",
+              "finding": "月末上場株式数2,726,000株、新株予約権行使の当月新株交付数0株。回号ごとの未行使残数は掲載されていない。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.8.pdf"
+            },
+            {
+              "id": "cap-jpx-9",
+              "title": "新株予約権の行使等に伴う上場株式数等の変更（2026年9月分）",
+              "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf",
+              "publishedAt": "2026-10-20",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "status",
+              "source": "tdnet_jpx",
+              "locator": "p.30 338A欄・冒頭の集計定義",
+              "finding": "9月末上場株式数2,726,000株、新株予約権行使の当月新株交付数0株。12系列の記載があり、未行使残高・10月の状態を表す数字ではない。",
+              "publicationSourceUrl": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf"
+            }
+          ],
+          "instruments": [
+            {
+              "id": "warrant-4",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第4回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の5,000株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第4回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第4回、決議日2017-05-30、行使期間2019-05-31～2027-05-30。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 5000,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.30～31、81"
+              }
+            },
+            {
+              "id": "warrant-4-2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第4-2回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の2,000株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第4-2回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第4-2回、決議日2017-05-30、行使期間2019-05-31～2027-05-30。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 2000,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.30～31、81"
+              }
+            },
+            {
+              "id": "warrant-4-3",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第4-3回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の9,000株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第4-3回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第4-3回、決議日2017-05-30、行使期間2019-05-31～2027-05-30。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 9000,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.32～33、81"
+              }
+            },
+            {
+              "id": "warrant-4-4",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第4-4回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の0株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第4-4回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第4-4回、決議日2017-05-30、行使期間2019-05-31～2027-05-30。年次表では2025年中の全残行使を確認したが原発行資料の確認不足を残す。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 0,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.32～33、81"
+              }
+            },
+            {
+              "id": "warrant-9",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第9回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の26,400株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第9回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第9回、決議日2021-03-30、行使期間2023-04-01～2031-03-31。役職員等へのインセンティブ権利。2026年2月の1,000株行使を反映した記載である。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 26400,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.34～35、82"
+              }
+            },
+            {
+              "id": "warrant-9-2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第9-2回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の800株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第9-2回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第9-2回、決議日2021-03-30、行使期間2023-04-01～2031-03-31。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 800,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.34～35、82"
+              }
+            },
+            {
+              "id": "warrant-9-3",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第9-3回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の13,400株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第9-3回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第9-3回、決議日2021-03-30、行使期間表記2024-03-30～2032-03-29、注記の期間と不一致あり。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 13400,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.36～37、82"
+              }
+            },
+            {
+              "id": "warrant-11",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第11回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の10,000株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第11回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第11回、決議日2022-03-30、行使期間2024-07-01～2032-06-30。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 10000,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.38～39、82"
+              }
+            },
+            {
+              "id": "warrant-11-2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第11-2回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の400株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第11-2回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第11-2回、決議日2022-03-30、行使期間2024-09-15～2032-09-14。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 400,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.38～39、82"
+              }
+            },
+            {
+              "id": "warrant-11-3",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第11-3回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の6,400株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第11-3回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第11-3回、決議日2022-03-30、行使期間表記2025-03-15～2033-03-14、注記の終期と不一致あり。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 6400,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.40～41、82"
+              }
+            },
+            {
+              "id": "warrant-12",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第12回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の600株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第12回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第12回、決議日2022-03-30、行使期間2024-04-01～2032-03-31。役職員等へのインセンティブ権利。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 600,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.42～44、82"
+              }
+            },
+            {
+              "id": "warrant-12-2",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第12-2回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の0株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第12-2回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第12-2回、決議日2022-03-30、行使期間2024-04-01～2032-03-31。年次表では2025年中の全残行使を確認したが原発行資料の確認不足を残す。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 0,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.42～44、82"
+              }
+            },
+            {
+              "id": "warrant-13",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第13回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の16,400株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第13回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第13回、決議日2023-10-06、行使期間2025-04-01～2028-09-28。有償権利で業績条件が付く。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 16400,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.46～48"
+              }
+            },
+            {
+              "id": "warrant-14",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "cap-jpx-9",
+              "asOfDate": "2026-09-30",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "第14回の現在残高は、当初発行資料・その後の失効/取得消却を含め基準時点まで照合できない。年次報告書の6,200株は2026年2月末までの記載で4月分割前、JPXの0株は月次行使による新株交付数である。",
+              "unresolvedReason": "第14回の発行原資料が未確認。IPO申請資料・年次報告書の再掲条件は確認したが、10月27日までの回号別全残高を確定できない。",
+              "summary": "第14回、決議日2024-03-28、行使期間2026-03-29～2034-03-28。役職員等へのインセンティブ権利。2025年中の3,600株失効と2026年5月の800株行使を確認し、いずれも全数終了としない。",
+              "lastVerifiedBalance": {
+                "documentId": "cap-annual",
+                "asOfDate": "2026-02-28",
+                "remainingUnderlyingShares": 6200,
+                "shareBasis": "2026年4月1日の1対2分割前。2024年11月の1対200分割後。",
+                "locator": "p.44～45、81、83"
+              }
+            }
+          ],
+          "riskNote": "新株予約権の潜在株式は存在するが、発行原資料と2026年10月27日時点の回号別残高・失効の全履歴を照合し切れず、残存対象株数と追加希薄化率は確定できない。",
+          "unresolvedReason": "最新半期報告書の潜在株式の存在と年次の回号別条件・2025年中の行使/失効、2026年2～9月JPX月次を照合した。ただし各回号の当初発行決議原資料、10月の未公表行使・失効/取得消却、最新回号別残高を通算できない。半期のSO欄の該当事項なしやJPX当月0株から全数消滅を推定しない。",
+          "dilutionRate": null,
+          "dilutionRateUncertainty": "基準時点の未行使株数、新株交付/自己株式交付の内訳と発行済株式数の同一時点照合が完了していない。",
+          "otherSecuritiesReview": "最新年次・半期の株式等・貸借対照表・後発事象を確認。普通株式のみの発行済構成、CB等の新規記載なしは確認できたが、これだけで全潜在株式の残存なしとはしない。",
+          "completedEquityIssuances": [
+            {
+              "issueDocumentId": "cap-rs-issue",
+              "completionDocumentId": "cap-rs-paid",
+              "issuedShares": 4000,
+              "issuedAt": "2026-05-14",
+              "description": "払込済みRS普通株式。未行使対象株数に含めない。"
+            }
+          ]
+        },
+        "longTermMaterialReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-27T11:10:54.421Z",
+          "conclusion": "unresolved",
+          "historyCheckedThrough": null,
+          "reviewedCategories": [
+            "alliances",
+            "orders_contracts",
+            "investment_capacity",
+            "products_services",
+            "approvals_subsidies",
+            "restructuring",
+            "legal_regulatory",
+            "contract_changes"
+          ],
+          "reviewScopeNote": "2026年中間期の公式短信・説明資料・会社IR掲載半期報告書を起点に、2025年年度報告、公式IR配信全履歴・会社ニュース一覧・TDnet相当一覧を照合。年数上限は置かず、2018年産総研協働、2024年SBIR採択から現在の主要案件を追跡した。全開示本文の完全網羅を意味せず、期間・採算が未解決の案件は別記。",
+          "documents": [
+            {
+              "id": "lt-half",
+              "title": "半期報告書－第13期(2026/01/01－2026/12/31)",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/Uuno.pdf",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "p.3～5、p.10～15",
+              "finding": "上期売上305,631千円、営業損失99,287千円、秘密計算フロー29,096千円、ストック213,941千円、補助金収入20,363千円。新コミットメントラインの財務制限を確認。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-slides",
+              "title": "2026年12月期 第２四半期 決算説明資料",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "資料p.4～15、17～21、27～42（PDFは表紙分+1）",
+              "finding": "ZVD売上257百万円・ライセンス126,072、解約率の契約形態変更影響、Q4に偏る商談、PaaS計画、医療・NerveNet・RAG・台湾・販売提携・Engine案件群を確認。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-annual",
+              "title": "有価証券報告書－第12期(2025/01/01－2025/12/31)",
+              "url": "https://pdf.irpocket.com/C338A/LseR/ACI1/S5d0.pdf",
+              "publishedAt": "2026-03-27T15:24:00+09:00",
+              "contentReviewed": true,
+              "kind": "financial_baseline",
+              "source": "official_ir",
+              "locator": "p.4～13、p.15～28、p.76～84",
+              "finding": "事業履歴、契約、知財/訴訟リスクと設備投資を確認。産総研連携と使用許諾の長期契約、2025年のソフトウエア中心投資、過去コミットメントラインの終了を確認。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-annual-results",
+              "title": "2025年12月期 決算説明資料",
+              "url": "https://pdf.irpocket.com/C338A/YpwX/fZv6/x1v2.pdf",
+              "publishedAt": "2026-02-13T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "progress",
+              "source": "official_ir",
+              "locator": "資料p.4～9",
+              "finding": "2025年12月の大型2件計254百万円がZVD売上とフロー増加に寄与済み。既反映の受注を現在の新規材料へ再利用しない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-resonac",
+              "title": "レゾナック、ZenmuTechとの共創により秘密計算を活用したMI基盤を構築 ～機密データを開示せずに企業間での材料開発データ活用を可能に～",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/f6yw/WwdY/q7JT.pdf",
+              "publishedAt": "2026-10-26T15:00:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～5 背景・経緯・実証・今後",
+              "finding": "2023年からの共創を今回の会社発表で回顧。MI実証で予測誤差約78%低減。実運用前のルール整備を明記し、個別契約金額・当社売上寄与額は非開示。今回の公表を新たな進捗の原発表として扱う。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-aist",
+              "title": "秘密計算技術の実用化を産総研との協働で始動",
+              "url": "https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/",
+              "publishedAt": "2018-10-16",
+              "publishedAtPrecision": "date_only",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "本文冒頭・実用化プロジェクト",
+              "finding": "2018年に秘密計算実用化へ向けた産総研との協働開始を公表。現在のQueryAheadにつながる技術協働であり、年数による除外はしない。",
+              "publicationSourceUrl": "https://zenmutech.com/information/news/%E7%A7%98%E5%8C%BF%E8%A8%88%E7%AE%97%E6%8A%80%E8%A1%93%E3%81%AE%E5%AE%9F%E7%94%A8%E5%8C%96%E3%82%92%E7%94%A3%E7%B7%8F%E7%A0%94%E3%81%A8%E3%81%AE%E5%8D%94%E5%83%8D%E3%81%A7%E5%A7%8B%E5%8B%95/"
+            },
+            {
+              "id": "lt-hub-plan",
+              "title": "2026年12月期 第２四半期 決算説明資料",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/IMIc/jRE9.pdf",
+              "publishedAt": "2026-08-13T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "資料p.20～21、37～40",
+              "finding": "2026年12月期4QにQueryAhead Hubを通じたPaaS/継続課金化を計画。四半期表記を架空のリリース日にしない。8月以降の会社IR・ニュース履歴に提供開始・ARR実績の確認可能な続報を見つけられなかった。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-medical-original",
+              "title": "（訂正）2026年４月14日のPR開示に関する一部訂正について",
+              "url": "https://pdf.irpocket.com/C338A/Rytt/qDLr/LoJF.pdf",
+              "publishedAt": "2026-04-21T11:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～2 訂正、p.3以降の訂正後全文",
+              "finding": "4月14日原発表を訂正し、プロキシ共同開発先はAIHOBSではなくHAIP、特許は出願中ではなく取得済みと明記。訂正後全文を原発表の有効本文として採用。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-medical-progress",
+              "title": "HAIPとZenmuTech、「秘密分散プロキシ技術」を活用したサイバーセキュリティ事業の開始で合意",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/M9fy/o83d/yIfc.pdf",
+              "publishedAt": "2026-09-01T17:05:00+09:00",
+              "contentReviewed": true,
+              "kind": "progress",
+              "source": "official_ir",
+              "locator": "p.1～3 開始合意・技術・今後の展開",
+              "finding": "取得特許7825250を用いた事業を2026年9月1日から開始すると公表。医療施設間等への用途展開を計画、当期業績影響は軽微。開始日の経過から売上計上済みとは推定しない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-mac",
+              "title": "情報漏洩対策市場の拡大に向け「秘密分散ストレージ」と「ZENMU Virtual Drive for Mac」の開発を開始",
+              "url": "https://pdf.irpocket.com/C338A/xoA3/tx0r/iZOx/kfU5.pdf",
+              "publishedAt": "2026-08-13T16:45:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～4 新サービス概要・提供予定",
+              "finding": "秘密分散ストレージ、ZVD for Macを2027年春頃のリリース予定と記載。具体日付・価格は未定、現在の販売実績ではない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-bigobject",
+              "title": "台湾のBigObjectと戦略的協業に関するMOUを締結",
+              "url": "https://pdf.irpocket.com/C338A/rJAn/Bq1A/CZUO.pdf",
+              "publishedAt": "2026-03-23T18:30:00+09:00",
+              "contentReviewed": true,
+              "publicationNote": "TDnet相当一覧の18:30を採用。公式IR配信データには同日15:35の登録値もあるため、その値と混同しない。",
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～3 MOU・協業領域",
+              "finding": "秘密計算とBigObjectの解析基盤を組み合わせ金融・医療・製造へ展開するMOU。受注額や売上実績の公表ではない。",
+              "publicationSourceUrl": "https://kabuyoho.jp/sp/reportDisclose?bcode=338A"
+            },
+            {
+              "id": "lt-nerve",
+              "title": "公共自治体向けメッシュネットワーク「ナーブネット（NerveNet）」への秘密分散技術実装に向けた共同開発を開始",
+              "url": "https://pdf.irpocket.com/C338A/Rytt/yHNb/y7P1.pdf",
+              "publishedAt": "2026-04-23T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～3 共同開発の狙い・展開",
+              "finding": "NICTとナシュアによるNerveNetへ秘密分散を実装する共同開発。2026年5月展示予定は機能・運用モデル検討であり、有償導入の証拠ではない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-rag",
+              "title": "秘密分散(AONT)技術とRAGを融合した次世代セキュアAI基盤の特許を出願",
+              "url": "https://pdf.irpocket.com/C338A/Kdx3/Oqyn/urlI.pdf",
+              "publishedAt": "2026-05-11T16:35:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～3 役割・特許・今後の展望",
+              "finding": "イージス・Technica AIとの共同開発、2026年3月12日の特許出願と4月からの産総研での安全性評価を確認。商用売上・特許成立を確認したものではない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-sales",
+              "title": "法令対応と実効性の双方を満たすエンドポイントセキュリティの促進～ZenmuTech、TMIP&S、ミントウェーブの3社で業務提携～",
+              "url": "https://pdf.irpocket.com/C338A/fcDL/WUzM/bpJq.pdf",
+              "publishedAt": "2026-06-01T15:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1 顧客紹介契約",
+              "finding": "TMIP&S顧客に対しミントウェーブがZEEの販売・導入支援をする3社契約。顧客接点の拡大と個別受注売上を区別。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-revo",
+              "title": "ZenmuTechの秘密分散技術を搭載した次世代ファイル交換システム「RevoWorks ZENMU-Storage」～ジェイズ・コミュニケーションより提供～",
+              "url": "https://pdf.irpocket.com/C338A/K2Hn/if2e/wPVY.pdf",
+              "publishedAt": "2025-10-07T11:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～2 提供形態・時期・代表コメント",
+              "finding": "Engine搭載製品を2026年1月提供開始予定と記載。3年間30億円はジェイズ・コミュニケーションの売上目標で当社予想ではない。最新会社決算でも当社ロイヤリティ実績を分離確認できない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-order",
+              "title": "ZENMU Virtual Drive大型案件受注に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C338A/hvir/c4oY/dARn.pdf",
+              "publishedAt": "2025-12-25T16:00:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "p.1～2 受注内容・見通し",
+              "finding": "買い切りライセンス2件計254百万円、2025年12月に検収で一括売上予定。年度決算説明で寄与済みを照合。2026年の未計上受注残と扱わない。",
+              "publicationSourceUrl": "https://xml.irpocket.com/338A/JS/release-all-all.js"
+            },
+            {
+              "id": "lt-sbir",
+              "title": "中小企業イノベーション創出推進事業開始のお知らせ",
+              "url": "https://zenmutech.com/information/news/20240502/",
+              "publishedAt": "2024-05-02T09:30:00+09:00",
+              "contentReviewed": true,
+              "kind": "original_announcement",
+              "source": "official_ir",
+              "locator": "本文 採択概要・実施期間・当社取組",
+              "finding": "コンソーシアム全体の上限30億円、実施期間2024年4月10日～2026年3月末、当社は低コスト安全データ伝送の開発。本文冒頭の2025年度末表記も2026年3月末と整合する。個社配分・期間延長/終了の続報は未確認。",
+              "publicationSourceUrl": "https://www.atpress.ne.jp/news/393767"
+            }
+          ],
+          "items": [
+            {
+              "id": "resonac-mi",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "planned",
+              "originalDocumentId": "lt-resonac",
+              "latestProgressDocumentId": "lt-resonac",
+              "currentAssessment": "レゾナックとの2023年開始の共創はMI基盤の構築・実証まで進んだが、10月26日公表時点では実運用ルールの整備が残り、受注金額や当社売上への寄与は未公表である。",
+              "reportedTiming": {
+                "documentId": "lt-resonac",
+                "statement": "実運用に向けた企業間ルールの整備と適用事例の拡大を進める。開始・収益化の日付は明記なし。",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "aist-secret-computing",
+              "category": "alliances",
+              "direction": "mixed",
+              "status": "in_progress",
+              "originalDocumentId": "lt-aist",
+              "latestProgressDocumentId": "lt-slides",
+              "currentAssessment": "2018年10月16日公表（時刻記載なし）の産総研との秘密計算実用化はQueryAheadへつながっており、現在も共同研究・機能開発が続くが、受託中心から継続課金への転換は未完了である。"
+            },
+            {
+              "id": "queryahead-hub",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "planned",
+              "originalDocumentId": "lt-hub-plan",
+              "latestProgressDocumentId": "lt-hub-plan",
+              "currentAssessment": "8月13日15:30公表のQueryAhead Hubは2026年12月期4QのPaaS化計画で、基準時点はその四半期に入っているが、提供開始とARRの実績は確認できない。",
+              "reportedTiming": {
+                "documentId": "lt-hub-plan",
+                "statement": "2026年12月期4QにPaaS（QueryAhead Hub）を通じ受託・フロー型からクラウド継続課金モデルへ転換する計画。",
+                "dueDate": null
+              },
+              "timingReachedButContributionUnconfirmed": false
+            },
+            {
+              "id": "medical-proxy",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "in_progress",
+              "originalDocumentId": "lt-medical-original",
+              "latestProgressDocumentId": "lt-medical-progress",
+              "currentAssessment": "医療向け秘密分散プロキシは4月14日のDigital Trust Grid採用公表と4月21日11:30の訂正を経て9月1日17:05のHAIP共同事業開始合意へ進み、技術供与から用途展開へ段階が進んでいる。",
+              "reportedTiming": {
+                "documentId": "lt-medical-progress",
+                "statement": "秘密分散プロキシ技術を活用したサイバーセキュリティ事業を2026年9月1日より共同で開始。",
+                "dueDate": "2026-09-01"
+              },
+              "timingReachedButContributionUnconfirmed": true,
+              "riskNote": "HAIPとの共同事業は9月1日の開始予定日を過ぎているが、当社への売上・利益寄与額は未公表で、当期影響は会社自身が軽微としている。"
+            },
+            {
+              "id": "storage-mac",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "planned",
+              "originalDocumentId": "lt-mac",
+              "latestProgressDocumentId": "lt-mac",
+              "currentAssessment": "8月13日16:45公表の秘密分散ストレージとMac版ZVDは2027年春頃の提供予定で、Windows端末依存を減らす開発案件だが、現時点の販売実績には含められない。",
+              "reportedTiming": {
+                "documentId": "lt-mac",
+                "statement": "秘密分散ストレージ及びZVD for Macは、ともに2027年春頃のリリースを予定。",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "bigobject-platform",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "lt-bigobject",
+              "latestProgressDocumentId": "lt-slides",
+              "currentAssessment": "3月23日18:30公表のBigObject協業は金融・医療・製造向けのデータ基盤構想で、8月資料でも2026～2027年の展開計画に位置づけられる一方、個別の契約売上は未公表である。",
+              "reportedTiming": {
+                "documentId": "lt-slides",
+                "statement": "台湾BigObjectを通じた製造・金融・ヘルスケア向け基盤のリリース予定を2026～2027年と記載。",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "nervenet",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "lt-nerve",
+              "latestProgressDocumentId": "lt-slides",
+              "currentAssessment": "4月23日15:30公表のNerveNet共同開発は8月決算でも継続案件とされ、自治体の平時・災害時通信へのSDK適用を広げるが、製品発売や自治体の有償導入実績は確認できない。"
+            },
+            {
+              "id": "secure-rag",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "lt-rag",
+              "latestProgressDocumentId": "lt-slides",
+              "currentAssessment": "5月11日16:35公表の秘密分散とRAGの共同開発は3月の特許出願、4月からの安全性評価を経た開発案件で、8月にも掲載されているが、特許成立や販売計上を意味しない。"
+            },
+            {
+              "id": "zee-distribution",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "lt-sales",
+              "latestProgressDocumentId": "lt-slides",
+              "currentAssessment": "6月1日15:30公表のTMIP&S・ミントウェーブとの顧客紹介契約はZEEの販売経路を広げる施策で、8月にも継続掲載されるが、この提携単独の受注額は開示されていない。"
+            },
+            {
+              "id": "revoworks-storage",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "planned",
+              "originalDocumentId": "lt-revo",
+              "latestProgressDocumentId": "lt-slides",
+              "currentAssessment": "RevoWorks ZENMU-Storageは2025年10月7日11:30に2026年1月提供予定とされ、予定時期を過ぎた現在も8月資料の案件群に載る一方、当社の製品別ロイヤリティ実績は確認できない。",
+              "reportedTiming": {
+                "documentId": "lt-revo",
+                "statement": "2026年1月から提供開始予定。3年間30億円は販売元の売上目標。",
+                "dueDate": null
+              },
+              "timingReachedButContributionUnconfirmed": false
+            },
+            {
+              "id": "zvd-order-2025",
+              "category": "orders_contracts",
+              "direction": "positive",
+              "status": "ended",
+              "originalDocumentId": "lt-order",
+              "latestProgressDocumentId": "lt-annual-results",
+              "currentAssessment": "2025年12月公表の2件計2.54億円の大型ZVD案件は2025年実績へ反映済みで、2026年の新規受注材料ではない。",
+              "endingScope": "一括売上としての材料が既反映という意味。製品保守や相手先契約の全終了を意味しない。"
+            },
+            {
+              "id": "medical-sbir",
+              "category": "approvals_subsidies",
+              "direction": "mixed",
+              "status": "unresolved",
+              "originalDocumentId": "lt-sbir",
+              "latestProgressDocumentId": "lt-half",
+              "currentAssessment": "2024年5月2日09:30公表のAIホスピタル向けSBIR採択は医療データ伝送開発の資金面を支える案件だが、コンソーシアム全体の補助上限30億円を当社の受注額や売上に読み替えることはできない。",
+              "unresolvedReason": "原採択の事業実施期間は2026年3月末まで。最新半期には補助金収入20,363千円があるが、当該基金との個別対応・延長・完了・個社配分を確定する会社IR本文を確認できない。",
+              "riskNote": "SBIR採択事業は当初の実施期間が2026年3月末までで、延長・完了の個別公表と中間期補助金収入との対応を確認できず、継続期間や当社配分を確定できない。",
+              "reportedTiming": {
+                "documentId": "lt-sbir",
+                "statement": "採択概要の実施期間は2024年4月10日から2026年3月末。年月末表記を独自に日付へ変換しない。",
+                "dueDate": null
+              },
+              "timingReachedButContributionUnconfirmed": false
+            }
+          ],
+          "unresolvedReason": "各カテゴリを最新財務資料と履歴で確認したが、SBIR採択事業の期間変更/完了と補助金収入の個別対応は不足。原発表・続報で確認できた案件は維持し、全履歴確認完了の判定は保留する。",
+          "riskNote": "長期案件は下記の原発表と最新決算まで追跡したが、SBIR事業の期間変更・終了と個別採算が未解決であり、長期材料の全履歴照合完了とはしていない。",
+          "categoryChecks": [
+            {
+              "category": "investment_capacity",
+              "result": "年度報告p.27～28でソフトウエア中心の設備投資66,665千円、最新半期で無形資産取得25,915千円、開発・採用先行を確認。工場生産能力の増強として扱わない。",
+              "documentIds": [
+                "lt-annual",
+                "lt-half",
+                "lt-slides"
+              ]
+            },
+            {
+              "category": "restructuring",
+              "result": "公式IR全配信・最新年度/半期の事業内容、関連会社、重要な後発事象を照合。最新説明のM&A方針は一般施策で、個別買収の成立として採用しない。",
+              "documentIds": [
+                "lt-annual",
+                "lt-half",
+                "lt-slides"
+              ]
+            },
+            {
+              "category": "legal_regulatory",
+              "result": "年度報告の知財/訴訟記述、2026年10月22/23日の公式脆弱性対応本文、4月21日の共同開発先・特許状態訂正を確認。会社は当該脆弱性の自社サービスへの直接影響なしと説明し、損失事故として採用しない。",
+              "documentIds": [
+                "lt-annual",
+                "lt-medical-original"
+              ],
+              "checkedUrls": [
+                "https://zenmutech.com/information/news/20261022/",
+                "https://zenmutech.com/information/news/20261023/"
+              ]
+            },
+            {
+              "category": "contract_changes",
+              "result": "旧1億円コミットメントラインは終了、新2億円契約へ移行。2026年2月27日～2027年2月28日、純資産前年同期比75%以上と期末経常黒字の財務制限。中間損失だけで違反を断定しない。",
+              "documentIds": [
+                "lt-annual",
+                "lt-half"
+              ]
+            }
+          ]
+        },
+        "auditStatus": "pass",
+        "auditNotes": [
+          "不変claimの1件のみ。分析基準はanalysisCutoffで、検出時刻receivedAtは独立して保持。",
+          "公式PDF本文の8月業績差異資料冒頭には2025年8月13日とあるが、内容は2026中間期、公式IR配信・TDnet相当一覧は2026年8月13日15:30で一致。公表日時は一覧で照合した2026年を採用。",
+          "2018年の協働開始、2024年の採択・調達、2025年の受注、2026年の進捗を年数上限なしで追跡。未解決項目は全履歴確認済み・残存ゼロへ置換していない。",
+          "2026年4月21日訂正後の医療PR本文を使用。原発表と訂正を別の材料として重複計上していない。",
+          "未行使対象株数を新株発行数や希薄化率へ置換せず、会社目標と当社実績、補助金採択と売上計上を区別。",
+          "HTML保存用として開示リンクは省略していない。Discord送信、worker state、Sheets、Git、workflow、ソースコードの変更は対象外。",
+          "公表日時は公式IR配信/TDnet相当一覧・所報表紙・JPX承認日・同一会社PRの公表時刻で照合し、資料内の作成日時とは区別。"
+        ],
+        "auditScope": "一次資料の採用・日時・数値・公開本文への反映と契約整合を監査。capitalRiskReview/longTermMaterialReviewのunresolvedは根拠不足を明示した調査結果であり、残存なし・全履歴確認済みを意味しない。",
+        "audit": {
+          "version": 1,
+          "claimSha256": "74a961afb779549fbf7907c06dc7c5cf3dc04cbac05646d357f757418905047c",
+          "checks": {
+            "immutableClaimExactMatch": true,
+            "sevenFieldsAndSourceChecks": true,
+            "publicationCutoff": true,
+            "directLinkReceiptCorrespondence": true,
+            "majorCapitalAndLongTermEvidencePreserved": true,
+            "companySpecificPrimaryBodiesReviewed": true,
+            "capitalRiskContract": true,
+            "longTermMaterialContract": true,
+            "htmlForwardContract": true,
+            "materialImpactContract": true
+          },
+          "validationMode": "html_only",
+          "unresolvedFindingsPreserved": true,
+          "validatorLoading": "Existing Python pure validation functions loaded from AST to avoid unavailable requests dependency in unrelated ledger/network imports; Node capital and long-term validators imported unchanged."
+        }
+      }
+    },
+    "weak-early-beta:2026-10-27:4398": {
+      "completedAt": "2026-10-27T14:45:40.005Z",
+      "delivery": "html",
+      "analysisCutoff": "2026-10-27T11:42:29.271Z",
+      "analysisBasis": "analysis_start",
+      "report": {
+        "alertId": "weak-early-beta:2026-10-27:4398",
+        "identity": "2026-10-27|4398",
+        "signalDate": "2026-10-27",
+        "analysisCutoff": "2026-10-27T11:42:29.271Z",
+        "receivedAt": "2026-10-27T16:15:00+09:00",
+        "signalType": "WEAK_EARLY_BETA",
+        "symbolCode": "4398",
+        "symbolName": "ブロードバンドセキュリティ",
+        "title": "ブロードバンドセキュリティ (4398) | TradingView チャート",
+        "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A4398",
+        "summary": "混在/要確認：監査・運用の増収とIoT・SCS対応拡充は事業機会を広げる一方、前期計画未達と新サービスの利益寄与未公表が残る。",
+        "materialImpact": "混在/要確認：監査・運用の増収とIoT・SCS対応拡充は事業機会を広げる一方、前期計画未達と新サービスの利益寄与未公表が残る。",
+        "fields": [
+          {
+            "name": "材料インパクト",
+            "value": "混在/要確認：監査・運用の増収とIoT・SCS対応拡充は事業機会を広げる一方、前期計画未達と新サービスの利益寄与未公表が残る。",
+            "inline": false
+          },
+          {
+            "name": "事業概要",
+            "value": "大手・準大手企業、金融機関、官公庁等にPCI DSS・国際送金等のセキュリティ監査とコンサルティング、Web・アプリ・IoT機器の脆弱性診断、SOCによる24時間365日の監視・運用を提供します。直販とパートナー経由で展開し、G-MDRの統合検知・対応、情報漏えい事故調査、セキュアメール、ゴメスのWebサイト評価・構築支援も手掛けます。",
+            "inline": false
+          },
+          {
+            "name": "足元材料",
+            "value": "2026年10月8日13:15公表では、不正アクセスに関する相談の構成比が1～7月の37.3%から8月以降52.9%へ上昇（10月7日までの集計）し、公開資産の点検、脆弱性診断、継続監視・事故対応を提言しました。自社サービスに沿う需要の兆候ですが、相談比率を受注増・増益の確定材料には置き換えられません。\n\n10月5日11:00公表でIoT診断をJC-STAR★1の適合評価受託・チェックリスト・実機証跡提供まで拡充しました。製品ベンダーの評価負担を代行するサービス拡張であり、BBSec自身がラベルを付与する制度ではありません。2025年8月26日公表のSCS事前対策支援は、2026年10月1日13:00公表の税別200万円の規程体系セットへ広がり、コンサルの知見を文書商品と実行支援へ展開する動きですが、販売件数は未公表です。\n\n9月30日15:30公表では、6月末の議決権所有割合がGSX22.43%、IDホールディングス21.39%で、両社は『その他の関係会社』です。9月9日15:30公表の森澤正人社長・KEL出身の近藤壮一会長を迎える体制変更は、9月24日15:30公表の総会決議結果と代表者表示でも進展を確認できます。提携先との販路・人材連携を深める体制で、業績数値の上積みを示した発表ではありません。\n\n8月12日15:30公表の通期決算は売上67.80億円（前期比11.1%増）、営業利益5.12億円（98.4%増）、純利益3.71億円（160.0%増）でした。同時公表の2027年6月期会社予想は売上76億円・営業利益7.5億円、年間配当予想は16円から17円へ増配ですが、前期は当初営業利益7億円に未達で、今期計画を実績と混同できません。",
+            "inline": false
+          },
+          {
+            "name": "ファンダ要点",
+            "value": "定常収益と監査から運用への追加提案が収益の軸です。8月12日15:30公表資料で、情報漏えいIT対策の国内定常収益は23.89億円（5.1%増）、運用サービス継続率95.5%。6月末受注残は31.83億円（9.1%増）で約67%が情報漏えいIT対策、約24%が監査・コンサルです。9月18日15:30公表の有報でも受注残を照合でき、ストック型収益の積上げと専門人員の生産性が、単発診断だけに依存しない利益構造を支えています。\n\n2025年2月12日公表のG-MDRはPCAへの採用と導入企業増まで進んだが、本格的な業績貢献は2026年8月12日15:30公表の2027年6月期会社計画であり、個別の売上・利益実績は未公表です。\n\n2022年3月18日公表のGSX提携は2023年11月10日に拡大され、2026年8月12日15:30公表資料でも教育・人材補完を成長基盤とする一方、協業別の利益額は示されていません。 2023年11月10日公表のKEL提携は、2025年11月11日公表のタイ3社へのTISAX支援開始へ具体化し、2026年8月12日15:30資料でもG-MDR販売を担う継続的な販路ですが、提供開始を利益計上と同一視できません。\n\n2024年11月14日公表のID提携は最新有報でも重要契約として継続し、大手顧客へのSOC・診断の相互送客とIT人材補完に意味がありますが、964,000株の移動は既存株売買でありBBSecの増資ではありません。 2020年9月25日公表のDNP提携は2025年3月27日に工場OTへ拡張され、2026年8月12日15:30資料でもOT SOCと工場対策を掲げるため、単なる古い提携ではなく製造業向け診断・監視の販路基盤です。\n\n2024年11月14日公表のセキュアヴェイル提携は最新有報の重要契約に残り、SOCの人員補完・共同開発による処理能力と採算改善を狙うものの、共同開発の売上・利益実績は未公表です。\n\n2024年4月12日公表のTMFアースとの動画技術提携は最新有報の重要契約と2026年8月12日15:30資料に残りますが、2024年4月15日の提携開始予定を経ても、動画事業の個別売上・利益や収益化時期は公表されていません。 2019年6月17日公表のTable Trac契約は「2021年度以降の事業化」を視野とし、2024年9月24日公表で米国研究拠点の設立まで進展しましたが、予定の対象時期を過ぎた分析基準時点でもCMS・MICE事業の売上・利益寄与は未確認です。\n\n2021年7月15日公表の秋田診断センターは2024年3月28日公表で開所後の研修実績・増床まで確認でき、技術者育成と診断供給力を支える既存基盤であり、新たな開所材料としては扱いません。 2024年3月28日公表の本社研修機能移転に伴う秋田県の補助金適用は、2026年8月12日15:30資料で本社機能等移転促進事業補助金等約4,000万円の経常利益押上げとして実績反映されており、全額を反復する営業利益とみなせません。\n\n2024年2月13日公表のpluszeroとのAI監査・教育・リスク算定研究は2026年8月12日15:30資料でも施策に残る一方、共同事業の商用売上や利益寄与は未公表です。 2024年11月18日公表のNTTテクノクロスとのAI判定実証は2026年8月12日15:30資料でも継続施策として掲載されていますが、実証の実用化完了や人件費削減実績までは示されていません。\n\n2026年8月26日11:00公表の蓄電所診断は9月からの順次提供を予定し、その予定月を既に過ぎていますが、基準時点までに提供開始を確認する続報と個別の売上・利益実績は見つからず、計画段階の事業機会として扱います。 2026年7月15日15:30公表の都内3拠点統合は2027年12月の移転予定で、分析時点では開発・顧客対応の体制整備計画であり、会社の業績影響見解は軽微です。\n\n資金面は9月18日15:30公表の有報を優先すると、2026年6月期の営業CF5.48億円、投資CFは3.52億円の支出、期末現金同等物16.02億円です。8月短信の現金同等物16.76億円とは差があるため混在させていません。売上増を営業利益へつなげるには、監視運用の継続率だけでなく、専門人材の採用・育成費とソフトウェア投資の負担が重要です。",
+            "inline": false
+          },
+          {
+            "name": "注意点",
+            "value": "総合ソリューション営業の本格稼働に時間を要し、前期売上は当初71億円に対して67.80億円、営業利益は7億円に対して5.12億円でした。需要の強さだけでは計画達成を保証せず、四半期末への検収集中、技術者確保、低価格化が売上時期と粗利率に影響します。10月の提言・IoT拡充・SCS商品は売上や利益の増額を伴う開示ではありません。\n\n蓄電所向けサービスは2026年9月という提供予定月を過ぎていますが、実施確認の続報と業績寄与は未確認です。月のみの予定から開始日を創作せず、正式な延期とも断定していません。\n\nTMFアースとの提携開始予定日は2024年4月15日でしたが、最新有報・開示履歴では動画事業の個別売上・利益寄与を確認できません。\n\nTable Tracの2019年発表が掲げた『2021年度以降の事業化』という時期は既に過ぎていますが、確認できる米国研究拠点の設立とCMS・MICEの収益化実績は別で、個別寄与は未確認です。\n\n第12回新株予約権は最新有報で全数終了を確認できる一方、旧第8・9・11回を含む発行時の原資料が未取得で、全発行履歴を通じた希薄化リスクの有無の監査は未完了です。確認できた各回の残高ゼロを、未確認の回号・条件まで含む「潜在株式なし」の断定へ広げていません。\n\n第12回は2016年付与分で、2016年10月28日の100対1株式併合後の対象株数を用いています。最新有報の2026年6月末残高はゼロ、当期の新株発行は既行使分41,000株で、未行使57,900株を現在の増資予定と扱っていません。発行済4,626,674株は6月末・9月18日現在の開示値です。J-ESOPの信託保有89,700株（6月末）は既に発行された自己株式であり、将来の新株発行数や未行使新株予約権に加算せず、現時点の未公表残高・希薄化率も推計していません。",
+            "inline": false
+          },
+          {
+            "name": "開示リンク",
+            "value": "・[2026-10-08 国内で相次ぐ不正アクセスを受け、BBSecが公開Webサービスの基本対策の再点検を提言(13:15)](https://pdf.irpocket.com/C4398/xoA3/IjHJ/LHyv/qzCJ.pdf)\n・[2026-10-05 IoT機器の安全性を攻撃者視点で検証、BBSecが「IoTセキュリティ診断」を強化(11:00)](https://pdf.irpocket.com/C4398/xoA3/IjHJ/MJ6E/W6v4.pdf)\n・[2026-10-01 SCS評価制度対応を「文書整備」から支援 実践手引き付きの情報セキュリティ規程雛形セットを発売(13:00)](https://pdf.irpocket.com/C4398/xoA3/IjHJ/tXvO/jxDF.pdf)\n・[2026-09-30 支配株主等に関する事項について(15:30)](https://pdf.irpocket.com/C4398/xoA3/MuFf/UW3l/tP6C.pdf)\n・[2026-09-24 臨時報告書(15:30)](https://pdf.irpocket.com/C4398/xoA3/MuFf/REjk/SK8P.pdf)\n・[2026-09-18 有価証券報告書－第27期(2025/07/01－2026/06/30)(15:30)](https://pdf.irpocket.com/C4398/xoA3/MuFf/iMl7/kY9T.pdf)\n・[2026-09-09 代表取締役の異動及び追加選定並びに経営体制に関するお知らせ(15:30)](https://pdf.irpocket.com/C4398/xoA3/M9fy/F9bs/gfB1.pdf)\n・[2026-08-26 業界初、系統用蓄電所に特化したサイバーセキュリティ診断事業を共同展開(11:00)](https://pdf.irpocket.com/C4398/xoA3/M9fy/B2TK/kqHW.pdf)\n・[2026-08-12 2026年６月期 決算短信〔日本基準〕（非連結）(15:30)](https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/DFt5.pdf)\n・[2026-08-12 2026年６月期 決算説明資料(15:30)](https://pdf.irpocket.com/C4398/xoA3/tx0r/F9Fr/nxfM.pdf)\n・[2026-08-12 2027年６月期の業績予想について(15:30)](https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/EzUq.pdf)\n・[2026-08-12 2027年６月期配当予想（増配）に関するお知らせ(15:30)](https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/EkjW.pdf)\n・[2026-07-15 事業所統合に伴う本社移転に関するお知らせ(15:30)](https://pdf.irpocket.com/C4398/xoA3/SFxs/VhaV/Dvoe.pdf)\n・[2026-02-16 アウトソーシング型セキュリティ対策サービス「G-MDR®」採用企業が拡大(10:00)](https://pdf.irpocket.com/C4398/IuL7/V2YD/p5hK.pdf)\n・[2025-11-11 BBSecと兼松エレクトロニクス、アジア太平洋（APAC）でセキュリティ認証支援を共同提供(時刻記載なし)](https://www.bbsec.co.jp/news/pdf/20251111.pdf)\n・[2025-08-26 「サプライチェーン強化に向けたセキュリティ対策評価制度」運用開始に備えた事前対策支援サービスの提供を開始(時刻記載なし)](https://www.bbsec.co.jp/news/pdf/20250826.pdf)\n・[2025-03-27 DNPとの資本業務提携を拡大、工場セキュリティの社会課題解決に向けた取り組みを強化(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/iwFW.pdf)\n・[2025-02-12 サイバー防衛体制の強化のための新しいアプローチ「G-MDR™」を提案(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/wTCX.pdf)\n・[2024-11-18 セキュリティ人材不足を見据え、BBSecとNTTテクノクロスがAI技術で実証実験開始(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/lYN1.pdf)\n・[2024-11-14 資本業務提携契約の締結、株式の売出し、主要株主及びその他の関係会社の異動に関するお知らせ(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/KFxh.pdf)\n・[2024-11-14 株式会社セキュアヴェイルとの資本業務提携の締結、株式の買集め行為に該当する株式取得に関するお知らせ(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/jddB.pdf)\n・[2024-09-24 （開示事項の経過）BBSec USA, Inc.設立のお知らせ(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/DYw7.pdf)\n・[2024-08-14 BBSec米国法人設立について(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/dtTU.pdf)\n・[2024-05-14 株式給付信託（J-ESOP）の導入に伴う第三者割当による自己株式の処分に関するお知らせ(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/AieY.pdf)\n・[2024-04-12 動画の超圧縮技術ベンチャー企業との資本業務提携に関するお知らせ(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/sGIx.pdf)\n・[2024-03-28 BBSecの本社研修機能を「東北セキュリティ診断センター」に拡大移転(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/Jjpy.pdf)\n・[2024-02-13 pluszero社とのAI×セキュリティ分野における協業開始について(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/Lei4.pdf)\n・[2023-11-10 資本業務提携契約の締結、株式の売出し、親会社、筆頭株主である主要株主、主要株主及びその他の関係会社の異動に関するお知らせ(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/V2YD/kDms.pdf)\n・[2022-03-18 グローバルセキュリティエキスパート株式会社との資本業務提携に関するお知らせ(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/XdpB/VeQc.pdf)\n・[2021-07-15 BBSec、東北セキュリティ診断センターを9月開所(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/XdpB/v9XM.pdf)\n・[2020-09-25 大日本印刷とブロードバンドセキュリティ 資本業務提携により、情報セキュリティ事業の強化・拡大を目指す(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/XdpB/yUdD.pdf)\n・[2019-06-17 統合型リゾート（IR）におけるセキュリティ運用事業の展開準備開始について(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/XdpB/N5fw.pdf)\n・[2018-09-28 2018年6月期 有価証券報告書(時刻記載なし)](https://pdf.irpocket.com/C4398/IuL7/tThj/iWCp.pdf)",
+            "inline": false
+          },
+          {
+            "name": "Sources",
+            "value": "・[ブロードバンドセキュリティ IRニュース](https://www.bbsec.co.jp/ir/news/index.html)\n・[ブロードバンドセキュリティ 新着情報一覧](https://www.bbsec.co.jp/news/)\n・[ブロードバンドセキュリティ 有価証券報告書](https://www.bbsec.co.jp/ir/library/securities-report.html)\n・[ブロードバンドセキュリティ 適時開示情報（Yahoo!ファイナンス／TDnet配信）](https://finance.yahoo.co.jp/quote/4398.T/disclosure)",
+            "inline": false
+          }
+        ],
+        "sources": [
+          {
+            "title": "ブロードバンドセキュリティ IRニュース",
+            "url": "https://www.bbsec.co.jp/ir/news/index.html"
+          },
+          {
+            "title": "ブロードバンドセキュリティ 新着情報一覧",
+            "url": "https://www.bbsec.co.jp/news/"
+          },
+          {
+            "title": "ブロードバンドセキュリティ 有価証券報告書",
+            "url": "https://www.bbsec.co.jp/ir/library/securities-report.html"
+          },
+          {
+            "title": "ブロードバンドセキュリティ 適時開示情報（Yahoo!ファイナンス／TDnet配信）",
+            "url": "https://finance.yahoo.co.jp/quote/4398.T/disclosure"
+          }
+        ],
+        "disclosures": [
+          {
+            "title": "国内で相次ぐ不正アクセスを受け、BBSecが公開Webサービスの基本対策の再点検を提言",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/IjHJ/LHyv/qzCJ.pdf",
+            "publishedAt": "2026-10-08T13:15:00+09:00",
+            "contentReviewed": true,
+            "documentId": "web20261008",
+            "source": "official_ir",
+            "locator": "PDF pp.1-4、相談内訳・BBSecによる支援",
+            "reviewedFinding": "10月7日までの相談集計で不正アクセス比率が1～7月37.3%から8月以降52.9%へ上昇。公開資産把握・脆弱性診断・継続監視・事故調査を提言。受注額、契約件数、売上・利益の増額は記載なし。"
+          },
+          {
+            "title": "IoT機器の安全性を攻撃者視点で検証、BBSecが「IoTセキュリティ診断」を強化",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/IjHJ/MJ6E/W6v4.pdf",
+            "publishedAt": "2026-10-05T11:00:00+09:00",
+            "contentReviewed": true,
+            "documentId": "iot20261005",
+            "source": "official_ir",
+            "locator": "PDF pp.1-4、今回の強化内容",
+            "reviewedFinding": "JC-STAR★1適合評価受託、チェックリスト・実機テスト証跡の提供を拡充。IPAがラベルを付与し、BBSecは検証事業者。売上実績・契約金額の記載なし。"
+          },
+          {
+            "title": "SCS評価制度対応を「文書整備」から支援 実践手引き付きの情報セキュリティ規程雛形セットを発売",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/IjHJ/tXvO/jxDF.pdf",
+            "publishedAt": "2026-10-01T13:00:00+09:00",
+            "contentReviewed": true,
+            "documentId": "scs20261001",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、本規程体系セットの概要",
+            "reviewedFinding": "基本方針と15規程、評価基準とのマッピング、利用手引きを税別200万円で2026年10月から提供。販売件数・売上計上額は記載なし。"
+          },
+          {
+            "title": "支配株主等に関する事項について",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/UW3l/tP6C.pdf",
+            "publishedAt": "2026-09-30T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "related20260930",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、1～4",
+            "reviewedFinding": "6月末のその他の関係会社はGSX22.43%、IDホールディングス21.39%（議決権所有割合）。GSX社長が社外取締役を兼務。支配株主等との記載対象取引は該当なし。"
+          },
+          {
+            "title": "有価証券報告書－第27期(2025/07/01－2026/06/30)",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/iMl7/kY9T.pdf",
+            "publishedAt": "2026-09-18T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "annual2026",
+            "source": "official_ir",
+            "locator": "PDF pp.4-6,9-20,23,47,56-57,64-65,70-71",
+            "reviewedFinding": "最新公式有報。売上6,779,831千円、営業利益511,649千円、受注残3,183,281千円。第12回は期首57,900株、行使41,000株、失効16,900株、未行使残なし。3月31日期間満了で消滅。その他新株予約権・ライツプラン・社債明細は該当なし。6月末発行済4,626,674株。J-ESOP信託保有89,700株は発行済自己株式。重要な後発事象なし。"
+          },
+          {
+            "title": "代表取締役の異動及び追加選定並びに経営体制に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/M9fy/F9bs/gfB1.pdf",
+            "publishedAt": "2026-09-09T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "management20260909",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、異動理由・異動の内容",
+            "reviewedFinding": "9月18日予定の代表取締役会長近藤壮一、社長森澤正人への移行。KELとの連携とG-MDRを中心とするリカーリング拡大を狙う。当初は総会等での正式承認予定として開示。"
+          },
+          {
+            "title": "臨時報告書",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/REjk/SK8P.pdf",
+            "publishedAt": "2026-09-24T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "gm20260924",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、株主総会の決議事項と可決結果",
+            "reviewedFinding": "9月18日総会で森澤正人・近藤壮一ら取締役11名選任と1株8円の期末配当が可決。9月24日公表本文の代表者は森澤正人。新株予約権等の発行議案は記載なし。"
+          },
+          {
+            "title": "業界初、系統用蓄電所に特化したサイバーセキュリティ診断事業を共同展開",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/M9fy/B2TK/kqHW.pdf",
+            "publishedAt": "2026-08-26T11:00:00+09:00",
+            "contentReviewed": true,
+            "documentId": "bess20260826",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、事業概要・提供開始時期",
+            "reviewedFinding": "SEGL ENERGY・アスリテラとの事業。PCS/EMS/BMS・市場取引APIの診断と監視を2026年9月から順次提供する計画。2027年の制度対応を需要背景とするが受注・売上の実績額なし。"
+          },
+          {
+            "title": "2026年６月期 決算短信〔日本基準〕（非連結）",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/DFt5.pdf",
+            "publishedAt": "2026-08-12T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "results2026",
+            "source": "official_ir",
+            "locator": "PDF pp.1-4、業績と経営成績",
+            "reviewedFinding": "売上6,779百万円(+11.1%)、営業利益511百万円(+98.4%)、経常利益542百万円、純利益371百万円。監査・コンサル伸長とG-MDR導入増。キャッシュフロー数値は後発の有報と差異があるため、本レポートの資金分析は有報を採用。"
+          },
+          {
+            "title": "2026年６月期 決算説明資料",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/tx0r/F9Fr/nxfM.pdf",
+            "publishedAt": "2026-08-12T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "presentation2026",
+            "source": "official_ir",
+            "locator": "PDF pp.2,4-10,16,25,31,37,39-41（スライド番号1,3-9,15,24,30,36,38-40）",
+            "reviewedFinding": "当初営業利益700百万円に対し実績511百万円で未達。受注残3,183百万円、情報漏えいIT対策の定常収益2,389百万円(+5.1%)、運用サービス継続率95.5%。G-MDRの本格的業績貢献は2027年6月期の会社計画。秋田県本社機能等移転促進事業補助金等約40百万円を経常利益に含む。GSX/ID/KEL/DNPとの協業、pluszero/NTTテクノクロス等のAI施策を再掲。"
+          },
+          {
+            "title": "2027年６月期の業績予想について",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/EzUq.pdf",
+            "publishedAt": "2026-08-12T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "forecast2027",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、予想値・前提条件",
+            "reviewedFinding": "会社予想は売上7,600百万円、営業利益750百万円、経常利益730百万円、純利益470百万円。総合提案、過去最高受注残、G-MDRと専門人材育成を前提とする。実績ではない。"
+          },
+          {
+            "title": "2027年６月期配当予想（増配）に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/EkjW.pdf",
+            "publishedAt": "2026-08-12T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "dividend2027",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、配当予想と理由",
+            "reviewedFinding": "年間配当予想は前期16円から17円（中間8円・期末9円）へ1円増配。総還元性向を意識し投資計画等を勘案する方針。"
+          },
+          {
+            "title": "事業所統合に伴う本社移転に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/xoA3/SFxs/VhaV/Dvoe.pdf",
+            "publishedAt": "2026-07-15T15:30:00+09:00",
+            "contentReviewed": true,
+            "documentId": "headquarters20260715",
+            "source": "official_ir",
+            "locator": "PDF p.1、移転時期・移転理由・業績影響",
+            "reviewedFinding": "都内3拠点を赤坂の三会堂ビルへ統合、移転予定は2027年12月。部門連携・開発提供体制改善が目的。会社は業績影響軽微と説明。"
+          },
+          {
+            "title": "アウトソーシング型セキュリティ対策サービス「G-MDR®」採用企業が拡大",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/p5hK.pdf",
+            "publishedAt": "2026-02-16T10:00:00+09:00",
+            "contentReviewed": true,
+            "documentId": "adoption20260216",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、PCAの採用と提供機能",
+            "reviewedFinding": "PCAへのG-MDR採用を公表。24時間365日の統合検知・分析・対応サービス。契約額・個別売上・利益寄与は非開示。"
+          },
+          {
+            "title": "BBSecと兼松エレクトロニクス、アジア太平洋（APAC）でセキュリティ認証支援を共同提供",
+            "url": "https://www.bbsec.co.jp/news/pdf/20251111.pdf",
+            "publishedAt": "2025-11-11",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "apac20251111",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、提供開始と今後の展開",
+            "reviewedFinding": "タイの自動車部品製造業2社と商社1社でTISAX取得・運用支援を開始。日英タイ語の現地支援、KELとの2023年提携の進展。個別売上・利益額なし。"
+          },
+          {
+            "title": "「サプライチェーン強化に向けたセキュリティ対策評価制度」運用開始に備えた事前対策支援サービスの提供を開始",
+            "url": "https://www.bbsec.co.jp/news/pdf/20250826.pdf",
+            "publishedAt": "2025-08-26",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "scs20250826",
+            "source": "official_ir",
+            "locator": "PDF pp.1-4、対応準備支援サービスと事業戦略",
+            "reviewedFinding": "制度対応のギャップ分析、是正計画、1年契約の実行支援とリスク管理ポータルの連携を公表。2026年度中という制度開始方針は当時の会社説明であり、確定した受注ではない。"
+          },
+          {
+            "title": "DNPとの資本業務提携を拡大、工場セキュリティの社会課題解決に向けた取り組みを強化",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/iwFW.pdf",
+            "publishedAt": "2025-03-27",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "dnp20250327",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、提携強化・工場セキュリティガイドライン",
+            "reviewedFinding": "2020年提携をOTへ拡大。開発済み工場セキュリティガイドラインをDNP工場へ適用し、アセスメントとSOCを統合する計画。個別の売上・利益は非開示。"
+          },
+          {
+            "title": "サイバー防衛体制の強化のための新しいアプローチ「G-MDR™」を提案",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/wTCX.pdf",
+            "publishedAt": "2025-02-12",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "gmdr20250212",
+            "source": "official_ir",
+            "locator": "PDF pp.1-4、サービス概要・資本業務提携先との協業",
+            "reviewedFinding": "XDRを用いるアウトソーシング型の統合監視をリリース。KELのKMS-SOCによる採用、IDの人材・導入支援、GSXの教育・人材供給を記載。"
+          },
+          {
+            "title": "セキュリティ人材不足を見据え、BBSecとNTTテクノクロスがAI技術で実証実験開始",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/lYN1.pdf",
+            "publishedAt": "2024-11-18",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "ntt20241118",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、実証実験の概要",
+            "reviewedFinding": "False-aware AIと専門家判断を組み合わせるMSS向け実証を開始。学習プログラムと共同評価について記載。実用化完了・費用削減額の記載なし。"
+          },
+          {
+            "title": "資本業務提携契約の締結、株式の売出し、主要株主及びその他の関係会社の異動に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/KFxh.pdf",
+            "publishedAt": "2024-11-14",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "id20241114",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、業務提携・株式売出し",
+            "reviewedFinding": "ID向けSOC/診断/フォレンジック、共同総合サービス、相互送客。SBI FinTech保有964,000株をIDが譲受予定。既存株の相対売買であり新株発行ではない。"
+          },
+          {
+            "title": "株式会社セキュアヴェイルとの資本業務提携の締結、株式の買集め行為に該当する株式取得に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/jddB.pdf",
+            "publishedAt": "2024-11-14",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "secureveil20241114",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、SOC業務提携と株式取得",
+            "reviewedFinding": "SOCの人材補完・共同開発・相互送客を目的に、セキュアヴェイル既存株384,500株を取得する計画。BBSecの新株発行ではない。"
+          },
+          {
+            "title": "（開示事項の経過）BBSec USA, Inc.設立のお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/DYw7.pdf",
+            "publishedAt": "2024-09-24",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "usa20240924",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、設立実行・今後の展開",
+            "reviewedFinding": "現地9月18日に米国ネバダ州で資本金20,000米ドル、100%子会社を設立。施設セキュリティ・依存症対策の研究開発拠点。TMF動画技術の応用を計画。当面取引なし。"
+          },
+          {
+            "title": "BBSec米国法人設立について",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/dtTU.pdf",
+            "publishedAt": "2024-08-14",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "usa20240814",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、子会社設立の背景・概要",
+            "reviewedFinding": "米国MICE研究拠点を9月20日に設立予定と開示。2019年Table Trac国内独占使用許諾契約とTMF提携を再説明。2025年6月期影響軽微、当面の取引なし。後の9月24日開示で実際の設立日を更新。"
+          },
+          {
+            "title": "動画の超圧縮技術ベンチャー企業との資本業務提携に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/sGIx.pdf",
+            "publishedAt": "2024-04-12",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "tmf20240412",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、提携目的・内容・日程",
+            "reviewedFinding": "TMFアースに出資し、動画の非改ざん性・アクセス監視等を開発する提携。4月15日に契約・業務開始予定。2024年6月期への影響軽微。"
+          },
+          {
+            "title": "BBSecの本社研修機能を「東北セキュリティ診断センター」に拡大移転",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/Jjpy.pdf",
+            "publishedAt": "2024-03-28",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "akita20240328",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、開所後の研修実績・増床・補助金",
+            "reviewedFinding": "2021年開所済みの秋田拠点へ本社研修機能を移転、増床。秋田県本社機能等移転促進補助金の適用認定。2023/2024年度新卒各7名、初年度研修15名予定。"
+          },
+          {
+            "title": "pluszero社とのAI×セキュリティ分野における協業開始について",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/Lei4.pdf",
+            "publishedAt": "2024-02-13",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "pluszero20240213",
+            "source": "official_ir",
+            "locator": "PDF pp.1-3、協業3項目",
+            "reviewedFinding": "AI事業者の監査・準拠支援、利用企業の教育、AI企業リスク算定モデル共同研究で協業。共同事業の売上・利益額、商用化期限の記載なし。"
+          },
+          {
+            "title": "資本業務提携契約の締結、株式の売出し、親会社、筆頭株主である主要株主、主要株主及びその他の関係会社の異動に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/kDms.pdf",
+            "publishedAt": "2023-11-10",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "gsxkel20231110",
+            "source": "official_ir",
+            "locator": "PDF pp.1-4、業務提携・資本提携・売出し",
+            "reviewedFinding": "2022年GSX提携を踏まえGSX/KELとの協業を拡大。監査/SOCの提供、教育、共同ITソリューション。既存株1,237,800株の譲渡であり新株発行ではない。"
+          },
+          {
+            "title": "グローバルセキュリティエキスパート株式会社との資本業務提携に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/VeQc.pdf",
+            "publishedAt": "2022-03-18",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "gsx20220318",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、業務提携内容・資本提携",
+            "reviewedFinding": "教育、金融機関向け監査/SOC、診断・フォレンジックの人材補完等。GSXが既存普通株を取得する提携で、発行済株式の異動と明記。"
+          },
+          {
+            "title": "BBSec、東北セキュリティ診断センターを9月開所",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/v9XM.pdf",
+            "publishedAt": "2021-07-15",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "akita20210715",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、開所計画・主要業務",
+            "reviewedFinding": "秋田の診断センターを2021年9月1日開所予定とし、脆弱性診断とセキュリティ人材育成を計画。2024年資料で開所実績と増床を確認。"
+          },
+          {
+            "title": "大日本印刷とブロードバンドセキュリティ 資本業務提携により、情報セキュリティ事業の強化・拡大を目指す",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/yUdD.pdf",
+            "publishedAt": "2020-09-25",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "dnp20200925",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、主な業務提携の概要",
+            "reviewedFinding": "脆弱性診断・コンサル、人材育成、セキュリティラボで協業。DNPがBBSec株式を取得する原発表。"
+          },
+          {
+            "title": "統合型リゾート（IR）におけるセキュリティ運用事業の展開準備開始について",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/N5fw.pdf",
+            "publishedAt": "2019-06-17",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "casino20190617",
+            "source": "official_ir",
+            "locator": "PDF p.1、Table Trac契約と末尾の事業化予定",
+            "reviewedFinding": "Table TracのCMS日本国内独占使用許諾権契約を締結し、日本向け改良・開発を予定。『2021年度以降の事業化を視野』、当期業績影響なし。確定した収益化日ではない。"
+          },
+          {
+            "title": "2018年6月期 有価証券報告書",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/tThj/iWCp.pdf",
+            "publishedAt": "2018-09-28",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "annual2018",
+            "source": "official_ir",
+            "locator": "PDF pp.24-25,54-55（本文pp.20-21,50-51）",
+            "reviewedFinding": "第12回の2016年3月31日決議、付与160,500株、行使価額800円、2016年10月28日100対1併合調整を記載。第8/9/11回は2017年9月19日を期限とし当年度表で失効・残高なし。これは後年有報の再掲で、各発行時の原資料ではない。"
+          },
+          {
+            "title": "株式給付信託（J-ESOP）の導入に伴う第三者割当による自己株式の処分に関するお知らせ",
+            "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/AieY.pdf",
+            "publishedAt": "2024-05-14",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "documentId": "jesop20240514",
+            "source": "official_ir",
+            "locator": "PDF pp.1-2、自己株式処分の概要・本信託",
+            "reviewedFinding": "5月30日に信託へ自己株式90,000株を処分し、2024～2028年6月期分の従業員給付に充当する計画。発行済自己株式の交付であり未行使ワラントではない。"
+          }
+        ],
+        "sourceChecks": [
+          {
+            "role": "official_ir",
+            "checked": true,
+            "url": "https://www.bbsec.co.jp/ir/news/index.html",
+            "checkedUrls": [
+              "https://www.bbsec.co.jp/ir/news/index.html",
+              "https://www.bbsec.co.jp/ir/library/securities-report.html",
+              "https://www.bbsec.co.jp/ir/library/briefing.html",
+              "https://www.bbsec.co.jp/ir/library/summary.html",
+              "https://www.bbsec.co.jp/news/",
+              "https://xml.irpocket.com/4398/JS/release-all-all.js",
+              "https://xml.irpocket.com/4398/JS/ir-all-all.js",
+              "https://pdf.irpocket.com/C4398/xoA3/IjHJ/LHyv/qzCJ.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/IjHJ/MJ6E/W6v4.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/IjHJ/tXvO/jxDF.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/MuFf/UW3l/tP6C.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/MuFf/iMl7/kY9T.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/M9fy/F9bs/gfB1.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/MuFf/REjk/SK8P.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/M9fy/B2TK/kqHW.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/DFt5.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/tx0r/F9Fr/nxfM.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/EzUq.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/EkjW.pdf",
+              "https://pdf.irpocket.com/C4398/xoA3/SFxs/VhaV/Dvoe.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/p5hK.pdf",
+              "https://www.bbsec.co.jp/news/pdf/20251111.pdf",
+              "https://www.bbsec.co.jp/news/pdf/20250826.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/iwFW.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/wTCX.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/lYN1.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/KFxh.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/jddB.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/DYw7.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/dtTU.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/sGIx.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/Jjpy.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/Lei4.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/kDms.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/XdpB/VeQc.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/XdpB/v9XM.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/XdpB/yUdD.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/XdpB/N5fw.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/tThj/iWCp.pdf",
+              "https://pdf.irpocket.com/C4398/IuL7/V2YD/AieY.pdf"
+            ],
+            "result": "公式IRのJavaScript表示用データまで開き、release全379件・IRライブラリ全141件と公式ニュース一覧を照合。2026年9月12日（検出前45日）から10月27日20:42:29.271 JSTの基準までを含め、最新掲載は10月8日13:15。検出16:15以後から基準時点までの追加開示は見つからなかった。9月24日の総会決議本文、9月18日の最新有報、8月12日の短信・説明資料・会社予想・配当予想を読むとともに、長期案件は発表年で除外せず2019年の原契約等へ遡及した。公式掲載の2018年有報で旧ストックオプションも確認。採用資料本文はPDFをメモリ内抽出し、IR一覧の公表日時と本文日付を照合。時刻が実証できない過去資料はdate_onlyとした。"
+          },
+          {
+            "role": "irbank_or_tdnet",
+            "checked": true,
+            "url": "https://finance.yahoo.co.jp/quote/4398.T/disclosure",
+            "checkedUrls": [
+              "https://finance.yahoo.co.jp/quote/4398.T/disclosure"
+            ],
+            "result": "Yahoo!ファイナンスのTDnet配信一覧本体を開き、10月8日13:15、10月5日11:00、10月1日13:00、9月30日15:30、9月24日21:18のガバナンス報告、9月9日15:30、8月26日11:00、8月12日15:30の4資料、7月15日15:30、2月16日10:00等を公式掲載と照合。2026年10月27日の基準時点後の資料は採用していない。IRBANKの4398/tdnet、E34288/tdnet、4398/irは403等で本文取得できなかったため、IRBANKを確認済みとせず、到達可能なTDnet相当一覧を採用した。"
+          }
+        ],
+        "capitalRiskReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-27T11:42:29.271Z",
+          "status": "unresolved",
+          "historyCheckedThrough": null,
+          "documents": [
+            {
+              "id": "annual2026",
+              "title": "有価証券報告書－第27期(2025/07/01－2026/06/30)",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/iMl7/kY9T.pdf",
+              "publishedAt": "2026-09-18T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.4-6,9-20,23,47,56-57,64-65,70-71",
+              "finding": "最新公式有報。売上6,779,831千円、営業利益511,649千円、受注残3,183,281千円。第12回は期首57,900株、行使41,000株、失効16,900株、未行使残なし。3月31日期間満了で消滅。その他新株予約権・ライツプラン・社債明細は該当なし。6月末発行済4,626,674株。J-ESOP信託保有89,700株は発行済自己株式。重要な後発事象なし。",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "so12-closure-2026",
+              "title": "有価証券報告書－第27期(2025/07/01－2026/06/30)",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/iMl7/kY9T.pdf",
+              "publishedAt": "2026-09-18T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.19-20,56,64-65",
+              "finding": "第12回は2026年3月31日期間満了で消滅。期首57,900株から41,000株行使・16,900株失効、未行使残なし。41,000株は実際の新株発行。",
+              "kind": "closure"
+            },
+            {
+              "id": "annual2018",
+              "title": "2018年6月期 有価証券報告書",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/tThj/iWCp.pdf",
+              "publishedAt": "2018-09-28",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.24-25,54-55（本文pp.20-21,50-51）",
+              "finding": "第12回の2016年3月31日決議、付与160,500株、行使価額800円、2016年10月28日100対1併合調整を記載。第8/9/11回は2017年9月19日を期限とし当年度表で失効・残高なし。これは後年有報の再掲で、各発行時の原資料ではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "status"
+            },
+            {
+              "id": "jesop20240514",
+              "title": "株式給付信託（J-ESOP）の導入に伴う第三者割当による自己株式の処分に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/AieY.pdf",
+              "publishedAt": "2024-05-14",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、自己株式処分の概要・本信託",
+              "finding": "5月30日に信託へ自己株式90,000株を処分し、2024～2028年6月期分の従業員給付に充当する計画。発行済自己株式の交付であり未行使ワラントではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "issuance"
+            }
+          ],
+          "instruments": [
+            {
+              "id": "stock-option-8",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "annual2018",
+              "asOfDate": "2018-06-30",
+              "remainingUnderlyingShares": 0,
+              "quantityUncertainty": null,
+              "unresolvedReason": "第8回の残高・失効は会社有報で確認したが、発行時の原決議・割当原資料そのものを公式IR/TDnet/JPX経路で取得できず、原条件からの全履歴照合を完了できない。後年の有報を発行原資料と偽って登録していない。",
+              "summary": "2018年有報は2017年9月19日を行使期限とし、2018年6月期の失効・期末残なしを記載する。過去の全数終了を示す後年本文はあるが発行原資料が未取得のため、原資料を備えたclosed判定は付けない。"
+            },
+            {
+              "id": "stock-option-9",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "annual2018",
+              "asOfDate": "2018-06-30",
+              "remainingUnderlyingShares": 0,
+              "quantityUncertainty": null,
+              "unresolvedReason": "第9回の残高・失効は会社有報で確認したが、発行時の原決議・割当原資料そのものを公式IR/TDnet/JPX経路で取得できず、原条件からの全履歴照合を完了できない。後年の有報を発行原資料と偽って登録していない。",
+              "summary": "2018年有報は2017年9月19日を行使期限とし、2018年6月期の失効・期末残なしを記載する。過去の全数終了を示す後年本文はあるが発行原資料が未取得のため、原資料を備えたclosed判定は付けない。"
+            },
+            {
+              "id": "stock-option-11",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "annual2018",
+              "asOfDate": "2018-06-30",
+              "remainingUnderlyingShares": 0,
+              "quantityUncertainty": null,
+              "unresolvedReason": "第11回の残高・失効は会社有報で確認したが、発行時の原決議・割当原資料そのものを公式IR/TDnet/JPX経路で取得できず、原条件からの全履歴照合を完了できない。後年の有報を発行原資料と偽って登録していない。",
+              "summary": "2018年有報は2017年9月19日を行使期限とし、2018年6月期の失効・期末残なしを記載する。過去の全数終了を示す後年本文はあるが発行原資料が未取得のため、原資料を備えたclosed判定は付けない。"
+            },
+            {
+              "id": "stock-option-12",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": null,
+              "statusDocumentId": "so12-closure-2026",
+              "asOfDate": "2026-06-30",
+              "remainingUnderlyingShares": 0,
+              "quantityUncertainty": null,
+              "unresolvedReason": "第12回の残高・失効は会社有報で確認したが、発行時の原決議・割当原資料そのものを公式IR/TDnet/JPX経路で取得できず、原条件からの全履歴照合を完了できない。後年の有報を発行原資料と偽って登録していない。",
+              "summary": "2016年3月31日決議・4月15日付与。株式併合後の付与対象160,500株、行使価格800円。最新有報は全数終了を明記するが、厳格な原資料要件が未充足のためclosed判定は付けない。"
+            }
+          ],
+          "riskNote": "第12回新株予約権は最新有報で全数終了を確認できる一方、旧第8・9・11回を含む発行時の原資料が未取得で、全発行履歴を通じた希薄化リスクの有無の監査は未完了です。確認できた各回の残高ゼロを、未確認の回号・条件まで含む「潜在株式なし」の断定へ広げていません。",
+          "unresolvedReason": "最新有報の第12回全数終了、第8・9・11回の過去有報上の失効は本文で確認した。ただし非上場時の各発行原資料・割当原資料を公式IR/TDnet/JPXで取得できず、全回号の原条件から基準時点までの履歴監査を完了できないため、none_confirmedにはしていない。資料不足と、確認済み回号の残高ゼロを区別した。",
+          "potentialSecuritiesScopeCheck": {
+            "documentId": "annual2026",
+            "locator": "PDF pp.19,64-65,70-71",
+            "finding": "最新有報のストックオプション・その他新株予約権・ライツプランは該当なし、社債明細も該当なし。EPSの潜在株式増加数15,750株は期中平均の計算値であり期末残ではない。公表後の公式IR/TDnet相当一覧にも新たなワラント・CB発行は見つからなかったが、この消極的事実だけで全潜在株式の不在を断定していない。"
+          },
+          "treasurySharePlans": [
+            {
+              "id": "j-esop",
+              "issueDocumentId": "jesop20240514",
+              "statusDocumentId": "annual2026",
+              "asOfDate": "2026-06-30",
+              "trustHeldIssuedShares": 89700,
+              "newSharesRequired": null,
+              "quantityUncertainty": "89,700株は開示された発行済自己株式の信託保有残であり未行使対象株数ではない。基準時点の給付後残高と追加拠出・新株交付の未公表数量は推計しない。",
+              "summary": "2024年5月に90,000株を自己株式から信託へ交付し、2026年6月末残89,700株を会社有報で確認。SO・CBの潜在株式と合算しない。"
+            }
+          ],
+          "shareCountBasis": {
+            "asOfDate": "2026-06-30",
+            "documentId": "annual2026",
+            "issuedShares": 4626674,
+            "actualNewSharesFromExerciseDuringFiscalYear": 41000,
+            "treasurySharesIncludingTrust": 206820,
+            "dilutionRate": null,
+            "reason": "異なる時点の対象株数・発行済株式数を組み合わせた現在の希薄化率は算出していない。"
+          }
+        },
+        "longTermMaterialReview": {
+          "version": 1,
+          "analysisCutoff": "2026-10-27T11:42:29.271Z",
+          "conclusion": "active_materials",
+          "historyCheckedThrough": "2026-10-27T11:42:29.271Z",
+          "reviewedCategories": [
+            "alliances",
+            "orders_contracts",
+            "investment_capacity",
+            "products_services",
+            "approvals_subsidies",
+            "restructuring",
+            "legal_regulatory",
+            "contract_changes"
+          ],
+          "reviewScopeNote": "最新公式の2026年6月期有報（9月18日）、8月12日決算・説明資料・予想を起点に、公式IR全379件とニュース一覧を基準まで照合。発表年の上限を設けず、2019年Table Trac契約、2020年DNP原提携、2021年秋田拠点、2022年GSX原提携、2023年KEL等、2024年動画・米国・SOC・AI実証、2025年G-MDR/SCS、2026年蓄電所・移転を原発表と進捗で追跡した。公表履歴上の取消・解約・訴訟・規制案件もタイトルと最新有報のリスク/重要契約/後発事象で照合し、個別の未公表実績は補完していない。公開済み履歴を確認した範囲の結論であり、非公表案件の不存在を示すものではない。",
+          "documents": [
+            {
+              "id": "annual2026",
+              "title": "有価証券報告書－第27期(2025/07/01－2026/06/30)",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/iMl7/kY9T.pdf",
+              "publishedAt": "2026-09-18T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.4-6,9-20,23,47,56-57,64-65,70-71",
+              "finding": "最新公式有報。売上6,779,831千円、営業利益511,649千円、受注残3,183,281千円。第12回は期首57,900株、行使41,000株、失効16,900株、未行使残なし。3月31日期間満了で消滅。その他新株予約権・ライツプラン・社債明細は該当なし。6月末発行済4,626,674株。J-ESOP信託保有89,700株は発行済自己株式。重要な後発事象なし。",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "presentation2026",
+              "title": "2026年６月期 決算説明資料",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/tx0r/F9Fr/nxfM.pdf",
+              "publishedAt": "2026-08-12T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.2,4-10,16,25,31,37,39-41（スライド番号1,3-9,15,24,30,36,38-40）",
+              "finding": "当初営業利益700百万円に対し実績511百万円で未達。受注残3,183百万円、情報漏えいIT対策の定常収益2,389百万円(+5.1%)、運用サービス継続率95.5%。G-MDRの本格的業績貢献は2027年6月期の会社計画。秋田県本社機能等移転促進事業補助金等約40百万円を経常利益に含む。GSX/ID/KEL/DNPとの協業、pluszero/NTTテクノクロス等のAI施策を再掲。",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "forecast2027",
+              "title": "2027年６月期の業績予想について",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/tx0r/p7TK/EzUq.pdf",
+              "publishedAt": "2026-08-12T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、予想値・前提条件",
+              "finding": "会社予想は売上7,600百万円、営業利益750百万円、経常利益730百万円、純利益470百万円。総合提案、過去最高受注残、G-MDRと専門人材育成を前提とする。実績ではない。",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "gmdr20250212",
+              "title": "サイバー防衛体制の強化のための新しいアプローチ「G-MDR™」を提案",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/wTCX.pdf",
+              "publishedAt": "2025-02-12",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-4、サービス概要・資本業務提携先との協業",
+              "finding": "XDRを用いるアウトソーシング型の統合監視をリリース。KELのKMS-SOCによる採用、IDの人材・導入支援、GSXの教育・人材供給を記載。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "adoption20260216",
+              "title": "アウトソーシング型セキュリティ対策サービス「G-MDR®」採用企業が拡大",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/p5hK.pdf",
+              "publishedAt": "2026-02-16T10:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、PCAの採用と提供機能",
+              "finding": "PCAへのG-MDR採用を公表。24時間365日の統合検知・分析・対応サービス。契約額・個別売上・利益寄与は非開示。",
+              "kind": "progress"
+            },
+            {
+              "id": "gsx20220318",
+              "title": "グローバルセキュリティエキスパート株式会社との資本業務提携に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/VeQc.pdf",
+              "publishedAt": "2022-03-18",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、業務提携内容・資本提携",
+              "finding": "教育、金融機関向け監査/SOC、診断・フォレンジックの人材補完等。GSXが既存普通株を取得する提携で、発行済株式の異動と明記。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "gsxkel20231110",
+              "title": "資本業務提携契約の締結、株式の売出し、親会社、筆頭株主である主要株主、主要株主及びその他の関係会社の異動に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/kDms.pdf",
+              "publishedAt": "2023-11-10",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-4、業務提携・資本提携・売出し",
+              "finding": "2022年GSX提携を踏まえGSX/KELとの協業を拡大。監査/SOCの提供、教育、共同ITソリューション。既存株1,237,800株の譲渡であり新株発行ではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "related20260930",
+              "title": "支配株主等に関する事項について",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/UW3l/tP6C.pdf",
+              "publishedAt": "2026-09-30T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、1～4",
+              "finding": "6月末のその他の関係会社はGSX22.43%、IDホールディングス21.39%（議決権所有割合）。GSX社長が社外取締役を兼務。支配株主等との記載対象取引は該当なし。",
+              "kind": "progress"
+            },
+            {
+              "id": "management20260909",
+              "title": "代表取締役の異動及び追加選定並びに経営体制に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/M9fy/F9bs/gfB1.pdf",
+              "publishedAt": "2026-09-09T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、異動理由・異動の内容",
+              "finding": "9月18日予定の代表取締役会長近藤壮一、社長森澤正人への移行。KELとの連携とG-MDRを中心とするリカーリング拡大を狙う。当初は総会等での正式承認予定として開示。",
+              "kind": "progress"
+            },
+            {
+              "id": "gm20260924",
+              "title": "臨時報告書",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/MuFf/REjk/SK8P.pdf",
+              "publishedAt": "2026-09-24T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、株主総会の決議事項と可決結果",
+              "finding": "9月18日総会で森澤正人・近藤壮一ら取締役11名選任と1株8円の期末配当が可決。9月24日公表本文の代表者は森澤正人。新株予約権等の発行議案は記載なし。",
+              "kind": "progress"
+            },
+            {
+              "id": "apac20251111",
+              "title": "BBSecと兼松エレクトロニクス、アジア太平洋（APAC）でセキュリティ認証支援を共同提供",
+              "url": "https://www.bbsec.co.jp/news/pdf/20251111.pdf",
+              "publishedAt": "2025-11-11",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、提供開始と今後の展開",
+              "finding": "タイの自動車部品製造業2社と商社1社でTISAX取得・運用支援を開始。日英タイ語の現地支援、KELとの2023年提携の進展。個別売上・利益額なし。",
+              "publishedAtPrecision": "date_only",
+              "kind": "progress"
+            },
+            {
+              "id": "id20241114",
+              "title": "資本業務提携契約の締結、株式の売出し、主要株主及びその他の関係会社の異動に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/KFxh.pdf",
+              "publishedAt": "2024-11-14",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、業務提携・株式売出し",
+              "finding": "ID向けSOC/診断/フォレンジック、共同総合サービス、相互送客。SBI FinTech保有964,000株をIDが譲受予定。既存株の相対売買であり新株発行ではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "dnp20200925",
+              "title": "大日本印刷とブロードバンドセキュリティ 資本業務提携により、情報セキュリティ事業の強化・拡大を目指す",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/yUdD.pdf",
+              "publishedAt": "2020-09-25",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、主な業務提携の概要",
+              "finding": "脆弱性診断・コンサル、人材育成、セキュリティラボで協業。DNPがBBSec株式を取得する原発表。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "dnp20250327",
+              "title": "DNPとの資本業務提携を拡大、工場セキュリティの社会課題解決に向けた取り組みを強化",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/iwFW.pdf",
+              "publishedAt": "2025-03-27",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、提携強化・工場セキュリティガイドライン",
+              "finding": "2020年提携をOTへ拡大。開発済み工場セキュリティガイドラインをDNP工場へ適用し、アセスメントとSOCを統合する計画。個別の売上・利益は非開示。",
+              "publishedAtPrecision": "date_only",
+              "kind": "progress"
+            },
+            {
+              "id": "secureveil20241114",
+              "title": "株式会社セキュアヴェイルとの資本業務提携の締結、株式の買集め行為に該当する株式取得に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/jddB.pdf",
+              "publishedAt": "2024-11-14",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、SOC業務提携と株式取得",
+              "finding": "SOCの人材補完・共同開発・相互送客を目的に、セキュアヴェイル既存株384,500株を取得する計画。BBSecの新株発行ではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "tmf20240412",
+              "title": "動画の超圧縮技術ベンチャー企業との資本業務提携に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/sGIx.pdf",
+              "publishedAt": "2024-04-12",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、提携目的・内容・日程",
+              "finding": "TMFアースに出資し、動画の非改ざん性・アクセス監視等を開発する提携。4月15日に契約・業務開始予定。2024年6月期への影響軽微。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "casino20190617",
+              "title": "統合型リゾート（IR）におけるセキュリティ運用事業の展開準備開始について",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/N5fw.pdf",
+              "publishedAt": "2019-06-17",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、Table Trac契約と末尾の事業化予定",
+              "finding": "Table TracのCMS日本国内独占使用許諾権契約を締結し、日本向け改良・開発を予定。『2021年度以降の事業化を視野』、当期業績影響なし。確定した収益化日ではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "usa20240814",
+              "title": "BBSec米国法人設立について",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/dtTU.pdf",
+              "publishedAt": "2024-08-14",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、子会社設立の背景・概要",
+              "finding": "米国MICE研究拠点を9月20日に設立予定と開示。2019年Table Trac国内独占使用許諾契約とTMF提携を再説明。2025年6月期影響軽微、当面の取引なし。後の9月24日開示で実際の設立日を更新。",
+              "publishedAtPrecision": "date_only",
+              "kind": "progress"
+            },
+            {
+              "id": "usa20240924",
+              "title": "（開示事項の経過）BBSec USA, Inc.設立のお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/DYw7.pdf",
+              "publishedAt": "2024-09-24",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、設立実行・今後の展開",
+              "finding": "現地9月18日に米国ネバダ州で資本金20,000米ドル、100%子会社を設立。施設セキュリティ・依存症対策の研究開発拠点。TMF動画技術の応用を計画。当面取引なし。",
+              "publishedAtPrecision": "date_only",
+              "kind": "progress"
+            },
+            {
+              "id": "akita20210715",
+              "title": "BBSec、東北セキュリティ診断センターを9月開所",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/XdpB/v9XM.pdf",
+              "publishedAt": "2021-07-15",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、開所計画・主要業務",
+              "finding": "秋田の診断センターを2021年9月1日開所予定とし、脆弱性診断とセキュリティ人材育成を計画。2024年資料で開所実績と増床を確認。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "akita20240328",
+              "title": "BBSecの本社研修機能を「東北セキュリティ診断センター」に拡大移転",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/Jjpy.pdf",
+              "publishedAt": "2024-03-28",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、開所後の研修実績・増床・補助金",
+              "finding": "2021年開所済みの秋田拠点へ本社研修機能を移転、増床。秋田県本社機能等移転促進補助金の適用認定。2023/2024年度新卒各7名、初年度研修15名予定。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "pluszero20240213",
+              "title": "pluszero社とのAI×セキュリティ分野における協業開始について",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/Lei4.pdf",
+              "publishedAt": "2024-02-13",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、協業3項目",
+              "finding": "AI事業者の監査・準拠支援、利用企業の教育、AI企業リスク算定モデル共同研究で協業。共同事業の売上・利益額、商用化期限の記載なし。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "ntt20241118",
+              "title": "セキュリティ人材不足を見据え、BBSecとNTTテクノクロスがAI技術で実証実験開始",
+              "url": "https://pdf.irpocket.com/C4398/IuL7/V2YD/lYN1.pdf",
+              "publishedAt": "2024-11-18",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、実証実験の概要",
+              "finding": "False-aware AIと専門家判断を組み合わせるMSS向け実証を開始。学習プログラムと共同評価について記載。実用化完了・費用削減額の記載なし。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "bess20260826",
+              "title": "業界初、系統用蓄電所に特化したサイバーセキュリティ診断事業を共同展開",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/M9fy/B2TK/kqHW.pdf",
+              "publishedAt": "2026-08-26T11:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、事業概要・提供開始時期",
+              "finding": "SEGL ENERGY・アスリテラとの事業。PCS/EMS/BMS・市場取引APIの診断と監視を2026年9月から順次提供する計画。2027年の制度対応を需要背景とするが受注・売上の実績額なし。",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "headquarters20260715",
+              "title": "事業所統合に伴う本社移転に関するお知らせ",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/SFxs/VhaV/Dvoe.pdf",
+              "publishedAt": "2026-07-15T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、移転時期・移転理由・業績影響",
+              "finding": "都内3拠点を赤坂の三会堂ビルへ統合、移転予定は2027年12月。部門連携・開発提供体制改善が目的。会社は業績影響軽微と説明。",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "scs20250826",
+              "title": "「サプライチェーン強化に向けたセキュリティ対策評価制度」運用開始に備えた事前対策支援サービスの提供を開始",
+              "url": "https://www.bbsec.co.jp/news/pdf/20250826.pdf",
+              "publishedAt": "2025-08-26",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-4、対応準備支援サービスと事業戦略",
+              "finding": "制度対応のギャップ分析、是正計画、1年契約の実行支援とリスク管理ポータルの連携を公表。2026年度中という制度開始方針は当時の会社説明であり、確定した受注ではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "scs20261001",
+              "title": "SCS評価制度対応を「文書整備」から支援 実践手引き付きの情報セキュリティ規程雛形セットを発売",
+              "url": "https://pdf.irpocket.com/C4398/xoA3/IjHJ/tXvO/jxDF.pdf",
+              "publishedAt": "2026-10-01T13:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、本規程体系セットの概要",
+              "finding": "基本方針と15規程、評価基準とのマッピング、利用手引きを税別200万円で2026年10月から提供。販売件数・売上計上額は記載なし。",
+              "kind": "progress"
+            }
+          ],
+          "items": [
+            {
+              "id": "gmdr",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "gmdr20250212",
+              "latestProgressDocumentId": "presentation2026",
+              "currentAssessment": "2025年2月12日公表のG-MDRはPCAへの採用と導入企業増まで進んだが、本格的な業績貢献は2026年8月12日15:30公表の2027年6月期会社計画であり、個別の売上・利益実績は未公表です。",
+              "reportedTiming": {
+                "documentId": "presentation2026",
+                "statement": "2027年6月期計画でG-MDRの本格的な業績貢献開始を見込む。",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "gsx",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "gsx20220318",
+              "latestProgressDocumentId": "related20260930",
+              "currentAssessment": "2022年3月18日公表のGSX提携は2023年11月10日に拡大され、2026年8月12日15:30公表資料でも教育・人材補完を成長基盤とする一方、協業別の利益額は示されていません。"
+            },
+            {
+              "id": "kel",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "gsxkel20231110",
+              "latestProgressDocumentId": "presentation2026",
+              "currentAssessment": "2023年11月10日公表のKEL提携は、2025年11月11日公表のタイ3社へのTISAX支援開始へ具体化し、2026年8月12日15:30資料でもG-MDR販売を担う継続的な販路ですが、提供開始を利益計上と同一視できません。"
+            },
+            {
+              "id": "id",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "id20241114",
+              "latestProgressDocumentId": "annual2026",
+              "currentAssessment": "2024年11月14日公表のID提携は最新有報でも重要契約として継続し、大手顧客へのSOC・診断の相互送客とIT人材補完に意味がありますが、964,000株の移動は既存株売買でありBBSecの増資ではありません。"
+            },
+            {
+              "id": "dnp",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "dnp20200925",
+              "latestProgressDocumentId": "presentation2026",
+              "currentAssessment": "2020年9月25日公表のDNP提携は2025年3月27日に工場OTへ拡張され、2026年8月12日15:30資料でもOT SOCと工場対策を掲げるため、単なる古い提携ではなく製造業向け診断・監視の販路基盤です。"
+            },
+            {
+              "id": "secureveil",
+              "category": "alliances",
+              "direction": "mixed",
+              "status": "planned",
+              "originalDocumentId": "secureveil20241114",
+              "latestProgressDocumentId": "annual2026",
+              "currentAssessment": "2024年11月14日公表のセキュアヴェイル提携は最新有報の重要契約に残り、SOCの人員補完・共同開発による処理能力と採算改善を狙うものの、共同開発の売上・利益実績は未公表です。"
+            },
+            {
+              "id": "tmf",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "in_progress",
+              "originalDocumentId": "tmf20240412",
+              "latestProgressDocumentId": "annual2026",
+              "currentAssessment": "2024年4月12日公表のTMFアースとの動画技術提携は最新有報の重要契約と2026年8月12日15:30資料に残りますが、2024年4月15日の提携開始予定を経ても、動画事業の個別売上・利益や収益化時期は公表されていません。",
+              "reportedTiming": {
+                "documentId": "tmf20240412",
+                "statement": "契約締結日及び業務提携開始日を2024年4月15日（予定）と記載。収益化日ではない。",
+                "dueDate": "2024-04-15"
+              },
+              "timingReachedButContributionUnconfirmed": true,
+              "riskNote": "TMFアースとの提携開始予定日は2024年4月15日でしたが、最新有報・開示履歴では動画事業の個別売上・利益寄与を確認できません。"
+            },
+            {
+              "id": "casino-mice",
+              "category": "orders_contracts",
+              "direction": "mixed",
+              "status": "in_progress",
+              "originalDocumentId": "casino20190617",
+              "latestProgressDocumentId": "usa20240924",
+              "currentAssessment": "2019年6月17日公表のTable Trac契約は「2021年度以降の事業化」を視野とし、2024年9月24日公表で米国研究拠点の設立まで進展しましたが、予定の対象時期を過ぎた分析基準時点でもCMS・MICE事業の売上・利益寄与は未確認です。",
+              "reportedTiming": {
+                "documentId": "casino20190617",
+                "statement": "2021年度以降の事業化を視野に、事業展開を進める。確定した日付・収益額の約束ではない。",
+                "dueDate": null
+              },
+              "riskNote": "Table Tracの2019年発表が掲げた『2021年度以降の事業化』という時期は既に過ぎていますが、確認できる米国研究拠点の設立とCMS・MICEの収益化実績は別で、個別寄与は未確認です。"
+            },
+            {
+              "id": "akita-capacity",
+              "category": "investment_capacity",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "akita20210715",
+              "latestProgressDocumentId": "annual2026",
+              "currentAssessment": "2021年7月15日公表の秋田診断センターは2024年3月28日公表で開所後の研修実績・増床まで確認でき、技術者育成と診断供給力を支える既存基盤であり、新たな開所材料としては扱いません。"
+            },
+            {
+              "id": "akita-subsidy",
+              "category": "approvals_subsidies",
+              "direction": "positive",
+              "status": "contributing",
+              "originalDocumentId": "akita20240328",
+              "latestProgressDocumentId": "presentation2026",
+              "currentAssessment": "2024年3月28日公表の本社研修機能移転に伴う秋田県の補助金適用は、2026年8月12日15:30資料で本社機能等移転促進事業補助金等約4,000万円の経常利益押上げとして実績反映されており、全額を反復する営業利益とみなせません。",
+              "actualContribution": {
+                "documentId": "presentation2026",
+                "metric": "profit",
+                "basis": "reported_actual",
+                "statement": "2026年6月期PLの経常利益542百万円について、秋田県の本社機能等移転促進事業補助金等の収入約40百万円を含むと記載（スライド3／PDF p.4）。補助金採択のみを利益実績へ読み替えたものではない。"
+              }
+            },
+            {
+              "id": "pluszero",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "pluszero20240213",
+              "latestProgressDocumentId": "presentation2026",
+              "currentAssessment": "2024年2月13日公表のpluszeroとのAI監査・教育・リスク算定研究は2026年8月12日15:30資料でも施策に残る一方、共同事業の商用売上や利益寄与は未公表です。"
+            },
+            {
+              "id": "ntt-ai",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "ntt20241118",
+              "latestProgressDocumentId": "presentation2026",
+              "currentAssessment": "2024年11月18日公表のNTTテクノクロスとのAI判定実証は2026年8月12日15:30資料でも継続施策として掲載されていますが、実証の実用化完了や人件費削減実績までは示されていません。"
+            },
+            {
+              "id": "bess",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "planned",
+              "originalDocumentId": "bess20260826",
+              "latestProgressDocumentId": "bess20260826",
+              "currentAssessment": "2026年8月26日11:00公表の蓄電所診断は9月からの順次提供を予定し、その予定月を既に過ぎていますが、基準時点までに提供開始を確認する続報と個別の売上・利益実績は見つからず、計画段階の事業機会として扱います。",
+              "reportedTiming": {
+                "documentId": "bess20260826",
+                "statement": "2026年9月より順次提供開始（アセスメント・脆弱性診断・監視から順次拡大）。",
+                "dueDate": null
+              },
+              "riskNote": "蓄電所向けサービスは2026年9月という提供予定月を過ぎていますが、実施確認の続報と業績寄与は未確認です。月のみの予定から開始日を創作せず、正式な延期とも断定していません。"
+            },
+            {
+              "id": "headquarters",
+              "category": "restructuring",
+              "direction": "mixed",
+              "status": "planned",
+              "originalDocumentId": "headquarters20260715",
+              "latestProgressDocumentId": "headquarters20260715",
+              "currentAssessment": "2026年7月15日15:30公表の都内3拠点統合は2027年12月の移転予定で、分析時点では開発・顧客対応の体制整備計画であり、会社の業績影響見解は軽微です。",
+              "reportedTiming": {
+                "documentId": "headquarters20260715",
+                "statement": "2027年12月（予定）に本社移転。",
+                "dueDate": null
+              }
+            },
+            {
+              "id": "scs",
+              "category": "legal_regulatory",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "scs20250826",
+              "latestProgressDocumentId": "scs20261001",
+              "currentAssessment": "2025年8月26日公表のSCS事前対策支援は、2026年10月1日13:00公表の税別200万円の規程体系セットへ広がり、コンサルの知見を文書商品と実行支援へ展開する動きですが、販売件数は未公表です。",
+              "reportedTiming": {
+                "documentId": "scs20261001",
+                "statement": "規程体系セットの提供開始は2026年10月から。",
+                "dueDate": null
+              }
+            }
+          ],
+          "categoryFindings": [
+            {
+              "category": "alliances",
+              "documentIds": [
+                "annual2026",
+                "gsx20220318",
+                "gsxkel20231110",
+                "id20241114",
+                "dnp20200925",
+                "dnp20250327",
+                "secureveil20241114"
+              ],
+              "finding": "既存提携の原発表と最新の重要契約・販路進捗を照合。資本提携の既存株売買をBBSecの新株発行と混同しない。"
+            },
+            {
+              "category": "orders_contracts",
+              "documentIds": [
+                "casino20190617",
+                "usa20240814",
+                "usa20240924",
+                "annual2026",
+                "adoption20260216",
+                "apac20251111"
+              ],
+              "finding": "CMS国内使用許諾、PCA採用、タイ3社支援、受注残を確認。金額非開示の採用・契約を実績売上とは扱わない。"
+            },
+            {
+              "category": "investment_capacity",
+              "documentIds": [
+                "akita20210715",
+                "akita20240328",
+                "annual2026",
+                "headquarters20260715"
+              ],
+              "finding": "診断・研修供給拠点、ソフトウェア投資、本社統合を確認。工場の生産能力を持つ事業とは扱わず、専門人材とSOC/診断処理能力を評価。"
+            },
+            {
+              "category": "products_services",
+              "documentIds": [
+                "gmdr20250212",
+                "presentation2026",
+                "tmf20240412",
+                "pluszero20240213",
+                "ntt20241118",
+                "bess20260826",
+                "scs20261001"
+              ],
+              "finding": "導入・サービス開始計画・実証・収益実績を区別。未公表の新事業売上は推計しない。"
+            },
+            {
+              "category": "approvals_subsidies",
+              "documentIds": [
+                "akita20240328",
+                "presentation2026",
+                "annual2026"
+              ],
+              "finding": "秋田補助金の認定と経常利益への実績反映を別々に確認。最新有報の補助金収入総額53,969千円すべてを秋田分と断定しない。IoTの制度上の検証資格は10月5日本文で確認。"
+            },
+            {
+              "category": "restructuring",
+              "documentIds": [
+                "annual2026",
+                "management20260909",
+                "gm20260924",
+                "headquarters20260715",
+                "usa20240924"
+              ],
+              "finding": "子会社設立、経営体制、本社統合を確認。最新基準までに新たな大型M&A等を主要材料として採用すべき開示は見つからず、既存事業基盤と計画を区別。"
+            },
+            {
+              "category": "legal_regulatory",
+              "documentIds": [
+                "annual2026",
+                "related20260930",
+                "scs20250826",
+                "scs20261001"
+              ],
+              "finding": "有報リスクと開示履歴で訴訟・行政処分等を確認し、主要な新規個別案件は見つからなかった。SCS・JC-STAR対応を需要背景として扱い、認可・制度対応を売上確定としない。"
+            },
+            {
+              "category": "contract_changes",
+              "documentIds": [
+                "annual2026",
+                "dnp20250327",
+                "apac20251111",
+                "usa20240924"
+              ],
+              "finding": "DNP提携拡大、KELの提供開始、米国拠点の設立実行という変更・進捗を追跡。取消・撤回・契約解除・終了の公表が見つからないことだけで利益寄与を確定しない。"
+            }
+          ]
+        },
+        "auditStatus": "pass"
+      }
     }
   }
 }

@@ -152,14 +152,26 @@ def command_daily(args: argparse.Namespace) -> None:
             )
             if previous is not None:
                 previous.attrs["source_sha256"] = model.sha256(daily_path)
+                quality_path = daily_path.with_suffix(".source-quality.json")
+                quality = json.loads(quality_path.read_text(encoding="utf-8")) if quality_path.exists() else {}
+                matching_quality = (quality.get("identity") == "CLOUD_SOURCE_QUALITY_V1"
+                                    and quality.get("daily_sha256") == previous.attrs["source_sha256"])
+                if matching_quality:
+                    from .reviewed_off_session_actions import PRIOR_AUDIT_ATTR
+
+                    # Pandas deep-copies attrs: retain only the small reviewed
+                    # journal lineage, never the multi-million-row quality audit.
+                    retention = quality.get("source_revision", {}).get("retainedOffSessionActions", [])
+                    if retention:
+                        previous.attrs[PRIOR_AUDIT_ATTR] = {
+                            "dailySha256": previous.attrs["source_sha256"], "actions": retention,
+                        }
                 delisted_codes = {row["code"] for row in restrictions if row.get("delisting_date")
                                   and not (row.get("relisting_date") and row["relisting_date"] <= tradability_date)}
                 if previous["symbol"].isin(delisted_codes).any():
-                    quality_path = daily_path.with_suffix(".source-quality.json")
-                    quality = json.loads(quality_path.read_text(encoding="utf-8"))
-                    if (quality.get("identity") != "CLOUD_SOURCE_QUALITY_V1"
-                            or quality.get("daily_sha256") != previous.attrs["source_sha256"]):
+                    if not matching_quality:
                         raise RuntimeError("delisted history requires a matching source-quality receipt")
+                del quality
             raw = fetch_daily(universe, args.period, previous=previous)
             source_revision = raw.attrs.get("source_revision_receipt", {})
             raw, acquisition_exclusions = preserve_delisted_history(

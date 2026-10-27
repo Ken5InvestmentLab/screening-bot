@@ -1,12 +1,12 @@
 {
   "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
-  "run_at": "2026-10-26T18:15:28.022518+09:00",
+  "run_at": "2026-10-27T20:10:37.642354+09:00",
   "daily_corpus": ".cache\\weak_early_beta\\tse_daily.csv",
-  "daily_sha256": "0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03",
+  "daily_sha256": "64cc71dbfebbdfb2eb6c7c0a9ef9f59afb17bacd588bac0c7d989be20f359468",
   "source_quality": {
     "identity": "CLOUD_SOURCE_QUALITY_V1",
-    "sourceRows": 4301558,
-    "quarantinedRows": 2930,
+    "sourceRows": 4301925,
+    "quarantinedRows": 2927,
     "quarantinedSymbols": [
       "1383",
       "1401",
@@ -126,7 +126,6 @@
       "5162",
       "5194",
       "5199",
-      "523A",
       "5271",
       "5279",
       "5482",
@@ -318,108 +317,425 @@
       "9986"
     ],
     "quarantinedDateCount": 1221,
-    "firstQuarantinedDate": "2021-10-26",
-    "lastQuarantinedDate": "2026-10-26",
+    "firstQuarantinedDate": "2021-10-27",
+    "lastQuarantinedDate": "2026-10-27",
     "audit_path": ".cache\\weak_early_beta\\tse_daily.source-quality.json",
-    "audit_sha256": "2c2ca58072b1d97d119aacea26b9ab90208e823de7ecae816a2fd8b7c2bbfbf7"
+    "audit_sha256": "e27406c7e00631ec42d5000ce345319d57b21b54ecba2f9373538707be98cfd1"
   },
   "source_revision": {
     "identity": "CLOUD_SOURCE_REVISION_V1",
     "previousBasis": "verified",
-    "comparedRows": 4282889,
-    "quarantinedComparisonRows": 2926,
-    "acceptedRepairColumnValues": 9,
+    "comparedRows": 4283280,
+    "quarantinedComparisonRows": 2927,
+    "acceptedRepairColumnValues": 20,
     "sourceCorrectionAudit": [],
+    "reviewedRepairReleases": [
+      {
+        "identity": "CLOUD_REVIEWED_REPAIR_RELEASE_V1",
+        "manifestVersion": 1,
+        "manifestSha256": "1f497d13fefb01025a1752570474bae36d98bcff59bbca0a1b123b7cf0387584",
+        "previousSourceSha256": "0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03",
+        "symbol": "523A",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27",
+        "dates": [
+          "2026-08-18",
+          "2026-08-19",
+          "2026-08-20",
+          "2026-08-21"
+        ],
+        "oldActualValues": {
+          "2026-08-18": {
+            "open": 1799.0,
+            "high": 1954.0,
+            "low": 1785.0,
+            "close": 1792.0,
+            "volume": 110900.0
+          },
+          "2026-08-19": {
+            "open": 1785.0,
+            "high": 1900.0,
+            "low": 1785.0,
+            "close": 1820.0,
+            "volume": 94500.0
+          },
+          "2026-08-20": {
+            "open": 1816.0,
+            "high": 1816.0,
+            "low": 1751.0,
+            "close": 1762.0,
+            "volume": 51800.0
+          },
+          "2026-08-21": {
+            "open": 1757.0,
+            "high": 1757.0,
+            "low": 1630.0,
+            "close": 1683.0,
+            "volume": 207300.0
+          }
+        },
+        "newActualValues": {
+          "2026-08-18": {
+            "open": 1800.0,
+            "high": 1954.0,
+            "low": 1782.0,
+            "close": 1785.0,
+            "volume": 194600.0
+          },
+          "2026-08-19": {
+            "open": 1810.0,
+            "high": 1900.0,
+            "low": 1785.0,
+            "close": 1816.0,
+            "volume": 162200.0
+          },
+          "2026-08-20": {
+            "open": 1783.0,
+            "high": 1802.0,
+            "low": 1751.0,
+            "close": 1757.0,
+            "volume": 78400.0
+          },
+          "2026-08-21": {
+            "open": 1749.0,
+            "high": 1749.0,
+            "low": 1630.0,
+            "close": 1688.0,
+            "volume": 272000.0
+          }
+        },
+        "originalQuarantineEvidence": {
+          "2026-08-18": {
+            "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+            "symbol": "523A",
+            "date": "2026-08-18",
+            "previousBasis": "2026-10-14",
+            "previousProviderRepaired": true,
+            "previousActualVolume": 167700,
+            "previousActualOHLC": {
+              "open": 1799,
+              "high": 1954,
+              "low": 1785,
+              "close": 1792
+            },
+            "historicalActions": [],
+            "currentActualVolume": 110900
+          },
+          "2026-08-19": {
+            "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+            "symbol": "523A",
+            "date": "2026-08-19",
+            "previousBasis": "2026-10-16",
+            "previousProviderRepaired": true,
+            "previousActualVolume": 158400,
+            "previousActualOHLC": {
+              "open": 1785,
+              "high": 1900,
+              "low": 1785,
+              "close": 1820
+            },
+            "historicalActions": [],
+            "currentActualVolume": 94500
+          },
+          "2026-08-20": {
+            "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+            "symbol": "523A",
+            "date": "2026-08-20",
+            "previousBasis": "2026-10-16",
+            "previousProviderRepaired": true,
+            "previousActualVolume": 74900,
+            "previousActualOHLC": {
+              "open": 1816,
+              "high": 1816,
+              "low": 1751,
+              "close": 1762
+            },
+            "historicalActions": [],
+            "currentActualVolume": 51800
+          },
+          "2026-08-21": {
+            "identity": "CLOUD_REPAIRED_VOLUME_QUARANTINE_V1",
+            "symbol": "523A",
+            "date": "2026-08-21",
+            "previousBasis": "2026-10-16",
+            "previousProviderRepaired": true,
+            "previousActualVolume": 261200,
+            "previousActualOHLC": {
+              "open": 1757,
+              "high": 1757,
+              "low": 1630,
+              "close": 1683
+            },
+            "historicalActions": [],
+            "currentActualVolume": 207300
+          }
+        },
+        "previousHistoricalActions": [],
+        "currentHistoricalActions": [],
+        "primarySourceURLs": [
+          "https://query1.finance.yahoo.com/v8/finance/chart/523A.T",
+          "https://www.jpx.co.jp/listing/stocks/new/t13vrt000000nv77-att/03SEIWAHOLDINGS.pdf",
+          "https://seiwaholdings.co.jp/ir/stock/overview/"
+        ],
+        "corroboratingSources": [
+          {
+            "url": "https://www.kabutore.biz/genzaikabuka/523a.html",
+            "sha256": "ebe4616bf0b5705d0def38b14876f76aa93a428291ae8cafec160cf5db165b01",
+            "retrieved_at": "2026-10-27T08:58:12.155Z",
+            "rows_verified": 4
+          }
+        ]
+      }
+    ],
+    "retainedOffSessionActions": [
+      {
+        "identity": "CLOUD_REVIEWED_OFF_SESSION_ACTION_V1",
+        "catalogSha256": "5f9aac2c9fa0900cbb18d6aefe74118a03f055d090ba46326318e33268142d20",
+        "symbol": "8303",
+        "seedSourceSha256": "0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03",
+        "seedBounds": {
+          "firstDate": "2021-10-26",
+          "lastDate": "2026-10-26",
+          "basisAsOf": "2026-10-26",
+          "rows": 689
+        },
+        "previousSourceSha256": "0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03",
+        "previousBounds": {
+          "firstDate": "2021-10-26",
+          "lastDate": "2026-10-26",
+          "basisAsOf": "2026-10-26",
+          "rows": 689
+        },
+        "currentBounds": {
+          "firstDate": "2021-10-27",
+          "lastDate": "2026-10-27",
+          "basisAsOf": "2026-10-27",
+          "rows": 689
+        },
+        "providerEvent": {
+          "effective_date": "2023-09-28",
+          "ratio": 5e-08,
+          "source": "Yahoo Finance Stock Splits"
+        },
+        "legalEffectiveDate": "2023-10-02",
+        "primarySourceURLs": [
+          "https://www.jpx.co.jp/news/1023/20230901-11.html",
+          "https://corp.sbishinseibank.co.jp/ja/news/news/auto_20230831549172/pdfFile.pdf",
+          "https://corp.sbishinseibank.co.jp/ja/news/news/20251113c.html"
+        ],
+        "originalJournal": [
+          {
+            "effective_date": "2023-09-28",
+            "ratio": 5e-08,
+            "source": "Yahoo Finance Stock Splits"
+          }
+        ],
+        "noPriceEdits": true,
+        "actionStatus": "retained",
+        "rawOHLCVBeforeSha256": "e901635f2de787505e99a44ccc54928e8124f8d3f0640b865e49c1a32e3b275e",
+        "rawOHLCVAfterSha256": "e901635f2de787505e99a44ccc54928e8124f8d3f0640b865e49c1a32e3b275e"
+      }
+    ],
     "acceptedRepairs": [
       {
-        "symbol": "1764",
+        "symbol": "143A",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "3426",
+        "symbol": "3184",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "4445",
+        "symbol": "3416",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "5969",
+        "symbol": "3600",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "6074",
+        "symbol": "4270",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "6408",
+        "symbol": "4920",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "7217",
+        "symbol": "7031",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "7501",
+        "symbol": "7046",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       },
       {
-        "symbol": "9311",
+        "symbol": "7057",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-10-23",
-        "lastDate": "2026-10-23",
-        "previousBasis": "2026-10-23",
-        "currentBasis": "2026-10-26"
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "7081",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "7292",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "7413",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "7434",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "7896",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "9342",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "9345",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "9476",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "9537",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "9720",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
+      },
+      {
+        "symbol": "9867",
+        "column": "volume",
+        "rows": 1,
+        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
+        "firstDate": "2026-10-26",
+        "lastDate": "2026-10-26",
+        "previousBasis": "2026-10-26",
+        "currentBasis": "2026-10-27"
       }
     ],
     "quarantinedComparisonSymbolCount": 307
@@ -1003,7 +1319,7 @@
       "9977",
       "9995"
     ],
-    "retained_rows": 12065,
+    "retained_rows": 12055,
     "retained_symbols": [
       {
         "code": "3670",
@@ -1014,59 +1330,59 @@
       },
       {
         "code": "3787",
-        "rows": 1204,
+        "rows": 1203,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "ebb1120626da3f910b4374fab08f83c5fa9c418b4a6d02cf9073c75a1ed0b6dc"
+        "rows_sha256": "d1b4c93308a2695a758c68596c6514a85ff2f41e715d2d540cd4996c47b983e7"
       },
       {
         "code": "4316",
-        "rows": 1204,
+        "rows": 1203,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "d0753a0276043f9d5273c634966df5cdc3ace3646e87096afa0719d843806d08"
+        "rows_sha256": "bebd7d7d13dfcd8f501fd1fb35b81ae07e624afdbabdfd584e93d17d4567ffc6"
       },
       {
         "code": "5484",
-        "rows": 1215,
+        "rows": 1214,
         "latest_session": "2026-10-16",
         "delisting_date": "2026-10-19",
-        "rows_sha256": "7421efbff98520e27f2ed3a6788443216516df97539b44303299c787bfb77e89"
+        "rows_sha256": "4d335d4c50cc8fb8945ba63c9568f91724a07362846a9aa2671ad94985415fe4"
       },
       {
         "code": "6147",
-        "rows": 1204,
+        "rows": 1203,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "6b19bca8d0127481cc4cd200fada9605ac8bb93ddd34ff84fbdb4a174c0a2158"
+        "rows_sha256": "d78f26106b4290d2acc53e145e7e5a82b865fbc4cbf465b0148dd35d679dd08f"
       },
       {
         "code": "7183",
-        "rows": 1208,
+        "rows": 1207,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "75f72fec12497baa0255ef67b81d40e0444af4da3ea9711b8dcb54c1c793974a"
+        "rows_sha256": "9c105074223e2a8ed5ecfb67ee197064d8095e7a9e80a60d95239f5f25249aec"
       },
       {
         "code": "7255",
-        "rows": 1204,
+        "rows": 1203,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "3d661c4f1917a0781bebfa610660c6c59311f03fcb9ff2ac99e1eb8376144a8b"
+        "rows_sha256": "19741ce28edbcc58f1a378f1e2a8d8496216a6e4aeea4c4a970c172d0a9b7e31"
       },
       {
         "code": "7490",
-        "rows": 1208,
+        "rows": 1207,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "1ff81774821be5311c9d22b813a0ef769f1dd3f4388876b2ee6ef479ba3e4f0e"
+        "rows_sha256": "e53bc366e234415fbae002873037d896ac7dbc423296a004a00a316821a03a76"
       },
       {
         "code": "7709",
-        "rows": 1204,
+        "rows": 1203,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "64d30e8acf433e0c8de119c0ee20b7bb50b71a803f58da850f1c3886ccc3bf15"
+        "rows_sha256": "42900d738266356d3bc740f92ec79e3c615461e44e38f73028d94f9122d4054e"
       },
       {
         "code": "7851",
@@ -1077,10 +1393,10 @@
       },
       {
         "code": "7946",
-        "rows": 1204,
+        "rows": 1203,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "283ed992be25a3a156e0359e408048b18fb798e857e7bb0b664dd802755070d1"
+        "rows_sha256": "47b78de7a3e5210a6538145f87b21021b878907c5f7baab29d1aac42b40ea5d6"
       },
       {
         "code": "7985",
@@ -1091,15 +1407,15 @@
       },
       {
         "code": "9691",
-        "rows": 1207,
+        "rows": 1206,
         "latest_session": "2026-10-05",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "c6625606a89c0da1cff1be30697ae78dcdf5ba56d4f708b4f9543e03515dc7d4"
+        "rows_sha256": "7ba474e9913556f3ce04551493bd0710834ba68b100bb325687df0750ad3f59a"
       }
     ],
     "outside_current_window_rows": 10,
-    "current_window_start": "2021-10-26",
-    "previous_source_sha256": "3f653b4da4f902ec300f473e96a8c48413c71b123e41eb626294e5fe77d5c644",
+    "current_window_start": "2021-10-27",
+    "previous_source_sha256": "0c4643bb6ea521dc99d9e0a7cab3624bc0e9706ea9796bc26f710af48b278a03",
     "excluded_universe_symbols": [
       "3670",
       "3787",
@@ -1116,16 +1432,16 @@
       "9691"
     ]
   },
-  "latest_session": "2026-10-26",
-  "score_from": "2026-10-26",
-  "score_to": "2026-10-26",
-  "tail_rows_latest": 6,
-  "selector_rows_latest": 5,
+  "latest_session": "2026-10-27",
+  "score_from": "2026-10-27",
+  "score_to": "2026-10-27",
+  "tail_rows_latest": 9,
+  "selector_rows_latest": 3,
   "restricted_selector_rows_latest": 0,
   "quarantined_ledger_rows": 0,
   "jpx_restricted_symbols": 582,
-  "new_or_refreshed_rows": 5,
+  "new_or_refreshed_rows": 3,
   "notification_payloads": 0,
-  "ledger_rows": 1003,
+  "ledger_rows": 1006,
   "metrics_rows": 35
 }

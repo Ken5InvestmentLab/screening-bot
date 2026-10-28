@@ -5,13 +5,18 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { LONG_TERM_MATERIAL_CATEGORIES, validateLongTermMaterialReview,
+import { LONG_TERM_MATERIAL_CATEGORIES, CLOUD_LONG_TERM_MATERIAL_CONTRACT, validateLongTermMaterialReview,
   validateClaimLongTermMaterialReviews } from './weak-early-beta-long-term-materials.mjs';
 import { stampAnalysisStart, CLOUD_REPORT_CONTRACT } from './weak-early-beta-fundamental-runner.mjs';
 
 const cutoff = '2026-10-09T01:00:00.123456789Z';
 const alert = { alertId: 'weak-early-beta:2026-10-08:1234', signalType: 'WEAK_EARLY_BETA',
   signalDate: '2026-10-08', analysisCutoff: cutoff };
+
+test('ended matters retain historical revenue without claiming current contribution', () => {
+  assert.match(CLOUD_LONG_TERM_MATERIAL_CONTRACT, /終了済み契約に過去の実績売上/);
+  assert.match(CLOUD_LONG_TERM_MATERIAL_CONTRACT, /actualContribution構造化欄はstatus:contributingの場合だけ/);
+});
 const assessment = '新工場は商業稼働予定の時期に達しているが、製品売上への反映実績は未確認。';
 
 function document(id, kind, publishedAt) {

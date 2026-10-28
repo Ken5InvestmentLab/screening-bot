@@ -45,6 +45,13 @@ assessment without that flag. `contributing` requires separate
 original promise or company forecast. Unresolved items retain their missing
 evidence reason and exact risk note in `注意点`.
 
+Item status describes the matter's current state at the analysis cutoff. An
+`ended` contract can still have historical recognized revenue: retain that
+fact in `currentAssessment`, the public analysis and its financial source, but
+omit the structured `actualContribution` field because that field is reserved
+for `contributing`. Do not relabel an ended contract as currently contributing
+or erase verified historical revenue because the contract ended.
+
 `active_materials` and `no_relevant_found` require review of all eight categories,
 a current official financial baseline and history checked through the cutoff.
 Every original announcement recorded as relevant evidence must be accounted for

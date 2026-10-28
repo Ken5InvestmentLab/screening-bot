@@ -1,27 +1,31 @@
 {
   "ok": true,
-  "claimId": "170a0ae2-d14e-4115-bbb1-fa6a920dcd59",
-  "generatedAt": "2026-10-27T20:42:28.921117+09:00",
+  "claimId": "8b921f7b-309c-4a92-9f91-a491151e6e6f",
+  "generatedAt": "2026-10-28T18:05:52.737299+09:00",
   "claimedCount": 1,
   "alerts": [
     {
-      "alertId": "weak-early-beta:2026-10-27:4398",
-      "receivedAt": "2026-10-27T16:15:00+09:00",
-      "analysisCutoff": "2026-10-27T11:42:29.271Z",
-      "signalDate": "2026-10-27",
+      "alertId": "weak-early-beta:2026-10-28:3905",
+      "receivedAt": "2026-10-28T16:15:00+09:00",
+      "analysisCutoff": "2026-10-28T09:05:53.172Z",
+      "signalDate": "2026-10-28",
       "signalType": "WEAK_EARLY_BETA",
-      "symbolCode": "4398",
-      "symbolName": "ブロードバンドセキュリティ",
+      "symbolCode": "3905",
+      "symbolName": "データセクション",
       "entryPrice": null,
-      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A4398",
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A3905",
       "betaSelectors": [
+        "Balance",
+        "Dive",
+        "Fusion",
+        "Shadow",
         "Silence"
       ],
       "capitalRiskReviewVersion": 1,
       "longTermMaterialReviewVersion": 1
     }
   ],
-  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261027-recovery\\repo\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "outputReportPath": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [
       "alertId",
@@ -42,7 +46,7 @@
     "model": "gpt-6.1-sol",
     "reasoningEffort": "xhigh"
   },
-  "analysisStartedAt": "2026-10-27T11:42:29.271Z",
+  "analysisStartedAt": "2026-10-28T09:05:53.172Z",
   "capitalRiskReviewVersion": 1,
   "longTermMaterialReviewVersion": 1
 }

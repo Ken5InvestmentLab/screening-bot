@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "as_of": "2026-10-28",
-  "fetched_at": "2026-10-28T17:07:57.006669+09:00",
+  "as_of": "2026-10-29",
+  "fetched_at": "2026-10-29T17:44:25.039010+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
-  "source_sha256": "1ceafb60222de316c2c2ef23e0ccdca86e64c9b64349b39e0ea5c45eb21487c6",
+  "source_sha256": "11fa2996a4ac8019c7e976dbf6b9aca9529238221b9bd20229ea405c4f92efd6",
   "rule": "causal designation-date gate; exclude acquisition only on or after the official delisting date",
   "delisting_sources": [
     {
@@ -40,7 +40,7 @@
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
       "source_sha256": "dda84599f94878c8328a847f47821a4633014fd53facbf9a80fe64ac98d43569",
-      "delisted_symbol_count": 133
+      "delisted_symbol_count": 134
     }
   ],
   "delisted_symbols": [
@@ -5793,6 +5793,16 @@
       "delisting_date": "2026-10-19",
       "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
       "relisting_coverage_start_year": 2022
+    },
+    {
+      "code": "8141",
+      "company_name": "新光商事（株）",
+      "designation_date": "2026-10-09",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
+      "delisting_date": "2026-10-29",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
+      "relisting_coverage_start_year": 2022
     }
   ],
   "delisting_history": [
@@ -9251,6 +9261,12 @@
       "company_name": "東北特殊鋼（株）",
       "delisting_date": "2026-10-19",
       "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"
+    },
+    {
+      "code": "8141",
+      "company_name": "新光商事（株）",
+      "delisting_date": "2026-10-29",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"
     }
   ],
   "relisting_sources": [
@@ -9281,7 +9297,7 @@
     {
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/new/index.html",
-      "source_sha256": "32d19835e99a83b1e22b3a7a82e1806f2d5928ad2e611e182ca8cfb0d6aeb820",
+      "source_sha256": "6cf11844790a8ad9006d8bd18994c2a9e439f781337a1e56a4ce51d44b61e0dc",
       "listed_symbol_count": 42
     }
   ],
@@ -15092,7 +15108,10 @@
       "company_name": "新光商事（株）",
       "designation_date": "2026-10-09",
       "designation": "上場廃止の決定・整理銘柄指定",
-      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
+      "delisting_date": "2026-10-29",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
+      "relisting_coverage_start_year": 2022
     },
     {
       "code": "7523",

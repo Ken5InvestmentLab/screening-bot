@@ -1,19 +1,19 @@
 {
   "ok": true,
-  "claimId": "8b921f7b-309c-4a92-9f91-a491151e6e6f",
-  "generatedAt": "2026-10-28T18:05:52.737299+09:00",
+  "claimId": "f061fc93-7107-4978-b3b8-f142fc7f84c0",
+  "generatedAt": "2026-10-29T18:46:16.162512+09:00",
   "claimedCount": 1,
   "alerts": [
     {
-      "alertId": "weak-early-beta:2026-10-28:3905",
-      "receivedAt": "2026-10-28T16:15:00+09:00",
-      "analysisCutoff": "2026-10-28T09:05:53.172Z",
-      "signalDate": "2026-10-28",
+      "alertId": "weak-early-beta:2026-10-29:3042",
+      "receivedAt": "2026-10-29T16:15:00+09:00",
+      "analysisCutoff": "2026-10-29T09:46:16.720Z",
+      "signalDate": "2026-10-29",
       "signalType": "WEAK_EARLY_BETA",
-      "symbolCode": "3905",
-      "symbolName": "データセクション",
+      "symbolCode": "3042",
+      "symbolName": "セキュアヴェイル",
       "entryPrice": null,
-      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A3905",
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A3042",
       "betaSelectors": [
         "Balance",
         "Dive",
@@ -46,7 +46,7 @@
     "model": "gpt-6.1-sol",
     "reasoningEffort": "xhigh"
   },
-  "analysisStartedAt": "2026-10-28T09:05:53.172Z",
+  "analysisStartedAt": "2026-10-29T09:46:16.720Z",
   "capitalRiskReviewVersion": 1,
   "longTermMaterialReviewVersion": 1
 }

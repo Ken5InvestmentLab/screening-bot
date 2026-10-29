@@ -135,7 +135,7 @@ if (cutoff === claimCutoff) {
     }
   }
 }
-if (/(買い推奨|売り推奨|目標株価|追加採点|買うべき|売るべき|利確|損切り)/.test(allText)) {
+if (/(買い推奨|売り推奨|目標株価|追加採点|買うべき|売るべき|(?<!権)利確|損切り)/.test(allText)) {
   throw new Error('report contains prohibited investment-advice wording');
 }
 

@@ -511,7 +511,13 @@ async function main(configFile) {
     const attempts = Number(config.maxFreshnessAttempts || 3);
     if (!Number.isInteger(attempts) || attempts < 1 || attempts > 3) throw new Error('invalid bounded OHLCV freshness attempts');
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
-      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--refresh-live'], { cwd: repo, env, log: path.join(runDir, `detect-${attempt}`) });
+      const acquisitionDirectory = path.join(runDir, `acquisition-${attempt}`);
+      result.acquisitionEvidence ??= [];
+      result.acquisitionEvidence.push({ attempt, directory: acquisitionDirectory });
+      saveProgress('detection', { acquisitionEvidence: result.acquisitionEvidence });
+      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--refresh-live'], {
+        cwd: repo, env: { ...env, CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
+      });
       const receipt = readJson(path.join(repo, 'weak_early_beta', 'state', 'latest_run_receipt.json'));
       result.latestSession = receipt.latest_session;
       result.selectorRows = receipt.selector_rows_latest;

@@ -68,7 +68,7 @@ jobs:
         run: |
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           test -n "$CLOUDFLARE_API_TOKEN"
-          npm run deploy
+          npm run deploy:guarded
 
       - name: Verify the live Worker responds
         shell: bash
@@ -79,3 +79,12 @@ jobs:
             sleep 5
           done
           exit 1
+
+      - name: Retain Cloud publication checkpoint
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cloud-publication-checkpoint
+          path: .cache/weak_early_beta/cloud-deploy-recovery.json
+          if-no-files-found: ignore
+          retention-days: 7

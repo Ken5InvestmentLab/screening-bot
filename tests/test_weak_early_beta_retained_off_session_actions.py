@@ -276,11 +276,14 @@ class RetainedOffSessionActionTests(unittest.TestCase):
                         quality["identity"] = "other"
                     path.with_suffix(".source-quality.json").write_text(json.dumps(quality), encoding="utf-8")
 
-                def capture(universe, period, *, previous):
+                def capture(universe, period, *, previous, archive):
                     expected = {"source_sha256": digest}
                     if quality_kind == "matching":
                         expected[retained.PRIOR_AUDIT_ATTR] = {"dailySha256": digest, "actions": expected_audit}
                     self.assertEqual(previous.attrs, expected)
+                    self.assertFalse(archive.replay)
+                    self.assertEqual(archive.context["previousSourceSha256"], digest)
+                    self.assertEqual(archive.context["tickers"], ["8303.T"])
                     raise VendorReached
 
                 args = Namespace(refresh_live=True, as_of="2026-10-28", period="5y",

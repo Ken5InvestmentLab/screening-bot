@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import tempfile
+from uuid import uuid4
 from datetime import date
 from pathlib import Path
 
@@ -123,6 +124,10 @@ def command_daily(args: argparse.Namespace) -> None:
         quarantine_restricted_detections, restricted_mask,
     )
 
+    retained = getattr(args, "retained_acquisition", None)
+    acquire = bool(args.refresh_live or retained)
+    archive = None
+
     # Fail closed before any vendor acquisition: a stale monthly JPX universe
     # can still contain securities delisted since its publication.
     tradability_date = getattr(args, "as_of", None) or str(pd.Timestamp.now(tz="Asia/Tokyo").date())
@@ -138,8 +143,9 @@ def command_daily(args: argparse.Namespace) -> None:
     daily_path = Path(args.daily_corpus)
     source_revision = {}
     acquisition_exclusions = {}
-    if args.refresh_live:
+    if acquire:
         from .corporate_actions import fetch_daily
+        from .acquisition import AcquisitionArchive
 
         with daily_phase("live-acquisition"):
             universe = model.base.jpx_universe()
@@ -172,7 +178,24 @@ def command_daily(args: argparse.Namespace) -> None:
                     if not matching_quality:
                         raise RuntimeError("delisted history requires a matching source-quality receipt")
                 del quality
-            raw = fetch_daily(universe, args.period, previous=previous)
+            archive_path = Path(retained) if retained else Path(os.environ.get(
+                "CLOUD_DAILY_ACQUISITION_DIR",
+                str(daily_path.parent / "acquisitions" / f"{tradability_date}-{uuid4().hex}"),
+            ))
+            archive = AcquisitionArchive(archive_path, {
+                "date": tradability_date, "period": args.period,
+                "tickers": universe.get("ticker", universe["code"].astype(str) + ".T").astype(str).tolist(),
+                "previousSourceSha256": previous.attrs.get("source_sha256") if previous is not None else None,
+            }, replay=bool(retained))
+            print(json.dumps({"identity": "CLOUD_DAILY_PHASE_V1", "stage": "acquisition-evidence",
+                              "event": "replay" if retained else "retaining", "directory": str(archive.directory)}),
+                  file=sys.stderr, flush=True)
+            try:
+                raw = fetch_daily(universe, args.period, previous=previous, archive=archive)
+            except BaseException as error:
+                archive.mark("failed", error=f"{type(error).__name__}: {error}")
+                raise
+            archive.mark("source_validated")
             source_revision = raw.attrs.get("source_revision_receipt", {})
             raw, acquisition_exclusions = preserve_delisted_history(
                 previous, raw, restrictions, tradability_date,
@@ -198,13 +221,15 @@ def command_daily(args: argparse.Namespace) -> None:
     with daily_phase("source-quality"):
         source_quality = source_quality_receipt(raw)
     quality_path = daily_path.with_suffix(".source-quality.json")
-    if not args.refresh_live and quality_path.exists():
+    if not acquire and quality_path.exists():
         previous_quality = json.loads(quality_path.read_text(encoding="utf-8"))
         if previous_quality.get("daily_sha256") == source_hash:
             source_revision = previous_quality.get("source_revision", {})
             acquisition_exclusions = previous_quality.get("acquisition_exclusions", {})
     _write_receipt(quality_path, {**source_quality, "daily_sha256": source_hash, "source_revision": source_revision,
                                 "acquisition_exclusions": acquisition_exclusions})
+    if archive:
+        archive.mark("cached", dailySha256=source_hash)
     quality_dates = sorted(source_quality["quarantinedDates"])
     source_quality = {key: value for key, value in source_quality.items() if key not in {"issues", "quarantinedDates"}}
     source_quality.update(
@@ -259,6 +284,7 @@ def command_daily(args: argparse.Namespace) -> None:
         "run_at": pd.Timestamp.now(tz="Asia/Tokyo").isoformat(),
         "daily_corpus": str(daily_path),
         "daily_sha256": source_hash,
+        "acquisition_evidence": archive.info() if archive else None,
         "source_quality": source_quality,
         "source_revision": source_revision,
         "acquisition_exclusions": acquisition_exclusions,
@@ -695,7 +721,9 @@ def parser() -> argparse.ArgumentParser:
     daily = sub.add_parser("daily", help="score latest session and update beta artifacts")
     common(daily)
     daily.add_argument("--daily-corpus", default=".cache/weak_early_beta/tse_daily.csv")
-    daily.add_argument("--refresh-live", action="store_true")
+    acquisition = daily.add_mutually_exclusive_group()
+    acquisition.add_argument("--refresh-live", action="store_true")
+    acquisition.add_argument("--retained-acquisition", help="replay a trusted local acquisition archive without Yahoo requests")
     daily.add_argument(
         "--refresh-universe",
         action="store_true",

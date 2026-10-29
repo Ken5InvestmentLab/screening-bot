@@ -47,6 +47,42 @@ function validReport() {
   };
 }
 
+test('legitimate rights-vesting wording is saved while actual advice remains rejected', () => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-wording-regression-'));
+  try {
+    for (const [wording, allowed] of [
+      ['譲渡制限付株式の権利確定条件を確認。', true],
+      ['権利確定前の失効条項を確認。', true],
+      ['利確を推奨。', false],
+      ['権利確定の後に利確を推奨。', false],
+      ['買い推奨。', false],
+      ['権利確定の条件と目標株価。', false],
+    ]) {
+      const report = validReport();
+      report.fields.find(field => field.name === '足元材料').value = wording;
+      const statePath = path.join(fixture, 'state.json'), reportPath = path.join(fixture, 'report.json');
+      const initial = {claims: {[report.alertId]: {claimId: 'wording', symbolCode: report.symbolCode, receivedAt: report.analysisCutoff}}, posted: {}, failed: {}};
+      fs.writeFileSync(statePath, JSON.stringify(initial));
+      fs.writeFileSync(reportPath, JSON.stringify({reports: [report]}));
+      const result = spawnSync(process.execPath, [poster, '--input', reportPath, '--state', statePath, '--save-only'], {
+        encoding: 'utf8', env: {...process.env, WEAK_EARLY_BETA_FUNDAMENTAL_WEBHOOK_URL: 'http://127.0.0.1:1/must-not-send'},
+      });
+      if (allowed) {
+        assert.equal(result.status, 0, result.stderr);
+        assert.deepEqual(JSON.parse(fs.readFileSync(statePath, 'utf8')).completed[report.alertId].report, report);
+      } else {
+        assert.notEqual(result.status, 0, wording);
+        assert.match(result.stderr, /prohibited investment-advice wording/);
+        assert.deepEqual(JSON.parse(fs.readFileSync(statePath, 'utf8')), initial);
+      }
+    }
+  } finally {
+    assert.ok(path.resolve(fixture).startsWith(path.resolve(os.tmpdir()) + path.sep));
+    assert.ok(path.basename(fixture).startsWith('cloud-wording-regression-'));
+    fs.rmSync(fixture, {recursive: true, force: true});
+  }
+});
+
 test('HTML snapshots need no webhook and retain claim ownership until import succeeds', () => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'weak-early-beta-html-snapshot-'));
   try {

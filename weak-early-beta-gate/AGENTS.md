@@ -1,0 +1,6 @@
+# Cloud gate publication
+
+- The dedicated `cloud-deploy-*` tag workflow uses `npm run deploy:guarded`. It checks the latest `research/weak-early-beta` SHA and the prepared source/asset hash before each attempt. Preserve the existing Worker target, authentication, `keep_vars` and release/canonical checks.
+- The guard waits programmatically for an explicitly matching official Workers Assets upload incident, up to 40 minutes. Only a failed, unpublished assets-upload-session may receive one additional attempt after provider recovery. Authentication failures, ambiguous publication and script/publication failures never authorize a retry. Do not restart detection, analysis or notifications to recover publication.
+- Read `CLOUD_DEPLOY_PHASE_V1` and the workflow's `cloud-publication-checkpoint` artifact when publication stops. A timeout is a preserved incomplete stage, not permission to restart the daily runner.
+- From this directory run `npm run check` for release checks, offline tests, type checking and production/preview dry-runs. `npm run deploy` and `npm run deploy:guarded` publish; they are not verification commands. The provider guard's offline cases also run from the repository root with `node --test tests/cloud_deploy_recovery.test.mjs`.

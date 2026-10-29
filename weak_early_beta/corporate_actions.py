@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 
 from .network import permanent_network_error, transient_network_error
+
+if TYPE_CHECKING:
+    from .acquisition import AcquisitionArchive
 
 
 VERSION = "CLOUD_SPLIT_BASIS_V1"
@@ -241,8 +244,13 @@ def normalize_daily(
             ("corporate_actions_version", VERSION),
             ("corporate_actions_source", ACTION_SOURCE),
         ):
-            if not result[column].eq(value).all():
-                raise CorporateActionError(f"unsupported {column}; refusing double adjustment")
+            matches = result[column].eq(value).fillna(False)
+            if not matches.all():
+                sample = result.iloc[np.flatnonzero(~matches.to_numpy())[:5]][["symbol", "date", column]].astype(str).to_dict("records")
+                raise CorporateActionError(
+                    f"unsupported {column}; refusing double adjustment; "
+                    f"invalid_rows={int((~matches).sum())}, expected={value!r}, sample={json.dumps(sample)}"
+                )
         _numeric(result, (*ACTUAL_COLUMNS, "split_factor"))
         result["basis_asof"] = _dates(result["basis_asof"])
         saved_quality = result["source_usable"].astype(str).str.lower().map({"true": True, "false": False})
@@ -778,7 +786,7 @@ def _provider_errors(yf: Any) -> dict:
     return errors if isinstance(errors, dict) else {}
 
 
-def _retry_ticker(yf: Any, ticker: str, period: str) -> pd.DataFrame:
+def _retry_ticker(yf: Any, ticker: str, period: str, *, archive: AcquisitionArchive | None = None) -> pd.DataFrame:
     """Retry only failed tickers, retaining repaired daily bars and split evidence.
 
     yfinance.download forces raise_errors=True. A missing intraday series used
@@ -792,10 +800,12 @@ def _retry_ticker(yf: Any, ticker: str, period: str) -> pd.DataFrame:
         last_error = None
         _provider_errors(yf).pop(ticker.upper(), None)
         try:
-            source = _ticker_source(yf.Ticker(ticker).history(
-                period=period, interval="1d", auto_adjust=False,
-                actions=True, repair=True, raise_errors=False, timeout=30,
-            ), ticker, single=True)
+            kwargs = dict(period=period, interval="1d", auto_adjust=False,
+                          actions=True, repair=True, raise_errors=False, timeout=30)
+            operation = lambda: yf.Ticker(ticker).history(**kwargs)
+            response = (archive.request({"kind": "history", "ticker": ticker, "kwargs": kwargs},
+                                        operation, lambda: _provider_errors(yf)) if archive else operation())
+            source = _ticker_source(response, ticker, single=True)
             problem = _source_problem(source)
             if problem is None:
                 return source
@@ -811,7 +821,7 @@ def _retry_ticker(yf: Any, ticker: str, period: str) -> pd.DataFrame:
                     raise CorporateActionError(
                         f"Yahoo daily history request failed for {ticker}: {provider_error}"
                     ) from RuntimeError(str(provider_error))
-        if attempt < 2:
+        if attempt < 2 and not (archive and archive.replay):
             time.sleep(2 ** attempt)
     if last_error is not None and transient_network_error(last_error):
         cause = last_error if isinstance(last_error, BaseException) else RuntimeError(str(last_error))
@@ -833,6 +843,7 @@ def fetch_daily(
     batch: int = 80,
     *,
     previous: pd.DataFrame | None = None,
+    archive: AcquisitionArchive | None = None,
 ) -> pd.DataFrame:
     """Fetch Cloud daily bars with actions, without changing legacy research IO."""
     import yfinance as yf
@@ -854,11 +865,11 @@ def fetch_daily(
             for ticker in part:
                 _provider_errors(yf).pop(ticker.upper(), None)
             try:
-                data = yf.download(
-                    part, period=period, interval="1d", group_by="ticker",
-                    auto_adjust=False, actions=True, repair=True, threads=True,
-                    progress=False, timeout=30,
-                )
+                kwargs = dict(period=period, interval="1d", group_by="ticker", auto_adjust=False,
+                              actions=True, repair=True, threads=True, progress=False, timeout=30)
+                operation = lambda: yf.download(part, **kwargs)
+                data = (archive.request({"kind": "batch", "tickers": part, "kwargs": kwargs},
+                                        operation, lambda: _provider_errors(yf)) if archive else operation())
                 errors = _provider_errors(yf)
                 failures = [errors.get(ticker.upper()) for ticker in part]
                 for failure in failures:
@@ -873,7 +884,7 @@ def fetch_daily(
                     raise CorporateActionError(f"Yahoo batch daily request failed: {exc}") from exc
                 batch_error = exc
                 data = None
-            if attempt < 2:
+            if attempt < 2 and not (archive and archive.replay):
                 time.sleep(2 ** attempt)
         if (data is None or data.empty) and batch_error is not None:
             raise CorporateActionError(
@@ -882,7 +893,7 @@ def fetch_daily(
         for ticker in part:
             source = _ticker_source(data, ticker, single=len(part) == 1)
             if _source_problem(source) is not None:
-                source = _retry_ticker(yf, ticker, period)
+                source = _retry_ticker(yf, ticker, period, archive=archive)
             required = [*OHLC, "volume", "stock_splits"]
             if "repaired?" in source:
                 source["provider_repaired"] = source["repaired?"].fillna(False)

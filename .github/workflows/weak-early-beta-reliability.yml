@@ -1,0 +1,48 @@
+name: Cloud Reliability Regression
+
+on:
+  push:
+    branches: [research/weak-early-beta]
+    paths:
+      - 'weak_early_beta/**'
+      - 'scripts/windows/weak-early-beta-*.mjs'
+      - 'scripts/windows/test-weak-early-beta-*.mjs'
+      - 'weak-early-beta-gate/scripts/deploy-with-provider-recovery.mjs'
+      - 'weak-early-beta-gate/package.json'
+      - 'tests/test_weak_early_beta*.py'
+      - 'tests/cloud_deploy_recovery.test.mjs'
+      - '.github/workflows/weak-early-beta-reliability.yml'
+      - '.github/workflows/weak-early-beta-report-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install isolated source-validation test runtime
+        run: >-
+          pip install numpy==2.5.3 pandas==2.3.3 scikit-learn==1.9.1 xgboost==3.4.1
+          'requests>=2.32,<3' 'yfinance>=0.2.65,<1'
+      - name: Reproduce provider wait, duplicate prevention and snapshot wording cases
+        run: >-
+          node --test tests/cloud_deploy_recovery.test.mjs
+          scripts/windows/test-weak-early-beta-point-in-time-post.mjs
+          scripts/windows/test-weak-early-beta-daily-runner.mjs
+      - name: Verify retained-response replay and corporate-action gates
+        run: >-
+          python -B -m unittest tests.test_weak_early_beta_acquisition
+          tests.test_weak_early_beta_corporate_actions tests.test_weak_early_beta_model
+          tests.test_weak_early_beta_network tests.test_weak_early_beta_delistings
+          tests.test_weak_early_beta_source_corrections tests.test_weak_early_beta_reviewed_overlay
+          tests.test_weak_early_beta_reviewed_repair_releases tests.test_weak_early_beta_retained_off_session_actions

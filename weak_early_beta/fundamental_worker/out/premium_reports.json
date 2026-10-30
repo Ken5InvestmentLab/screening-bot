@@ -1,535 +1,1420 @@
 {
   "reports": [
     {
-      "alertId": "weak-early-beta:2026-10-29:3042",
-      "signalDate": "2026-10-29",
-      "analysisCutoff": "2026-10-29T09:46:16.720Z",
-      "receivedAt": "2026-10-29T16:15:00+09:00",
+      "alertId": "weak-early-beta:2026-10-30:593A",
+      "identity": "2026-10-30|593A",
+      "signalDate": "2026-10-30",
+      "analysisCutoff": "2026-10-30T08:53:47.257Z",
+      "receivedAt": "2026-10-30T16:15:00+09:00",
       "signalType": "WEAK_EARLY_BETA",
-      "symbolCode": "3042",
-      "symbolName": "セキュアヴェイル",
-      "title": "セキュアヴェイル (3042) | TradingView チャート",
-      "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A3042",
-      "summary": "混在/要確認：31万株の自己株取得は完了しAI-SOCの販路開拓も進む一方、1Qは営業赤字で、個別の収益寄与と新株予約権の全体残高に不確定さが残る。",
-      "materialImpact": "混在/要確認：31万株の自己株取得は完了しAI-SOCの販路開拓も進む一方、1Qは営業赤字で、個別の収益寄与と新株予約権の全体残高に不確定さが残る。",
+      "symbolCode": "593A",
+      "symbolName": "ティアフォー",
+      "companyName": "ティアフォー",
+      "title": "ティアフォー (593A) | TradingView チャート",
+      "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A593A",
+      "selectorNames": [
+        "Balance",
+        "Dive",
+        "Fusion",
+        "Shadow",
+        "Silence"
+      ],
+      "summary": "混在/要確認：豪州バス提供と欧州開発協業は前進するが翌期影響は軽微とされ、本業赤字と既存SOの残高不確定が残る。",
+      "materialImpact": "混在/要確認：豪州バス提供と欧州開発協業は前進するが翌期影響は軽微とされ、本業赤字と既存SOの残高不確定が残る。",
       "fields": [
         {
           "name": "材料インパクト",
-          "value": "混在/要確認：31万株の自己株取得は完了しAI-SOCの販路開拓も進む一方、1Qは営業赤字で、個別の収益寄与と新株予約権の全体残高に不確定さが残る。"
+          "value": "混在/要確認：豪州バス提供と欧州開発協業は前進するが翌期影響は軽微とされ、本業赤字と既存SOの残高不確定が残る。",
+          "inline": false
         },
         {
           "name": "事業概要",
-          "value": "企業・官公庁・自治体・大学・医療機関向けに、NetStareによるネットワークとセキュリティの24時間365日監視、設計・構築・ログ分析を提供する。子会社LogStareが監視・ログ管理ソフトウェアを開発販売し、AI-SOCは専任担当者を置きにくい組織向けの自動ログ分析を担い、キャリアヴェイルはセキュリティ技術者を派遣する。"
+          "value": "自動運転用オープンソース「Autoware」を基盤に、Pilot.Auto等の自動運転ソフトウェアとWeb.Autoの開発・運用基盤を提供する。自治体・交通事業者向けの自動運転車両導入と保守、OEM・特殊用途車両メーカー向けの受託開発・ライセンス、企業・研究教育機関向けのソフトウェア、カメラ等のツール販売を組み合わせる。",
+          "inline": false
         },
         {
           "name": "足元材料",
-          "value": "10月20日9:00公表で、Microsoft 365の監査ログ調査分析レポートを先着100社に無償提供すると発表した。通常のAI-SOCは初期5万円、1ユーザー月額50円・最低20ユーザーの年契約で、無償診断は導入接点を広げる施策だが、有料転換数や増収額は公表されていない。\n10月6日15:30には、10月5日までの累計31万株・9,999万8,300円の自己株取得と8月決議枠の終了を公表。40万株という当初上限の残りを今後の取得余地とは扱わない。\n8月14日15:30公表の最新決算は1Q売上2億6,053万円、前年同期比17.5％減、営業損失5,254万円。前年の大型ソフトウェア案件の反動に加え、ソフトウェア先行費用2,002万円、広告宣伝費486万円増、人件費1,278万円増が重なった。通期売上14.38億円・営業利益1.38億円はその公表時点で据え置かれた会社予想であり、基準時点までに新しい実績決算は確認できない。"
+          "value": "10月29日10:00公表：豪州NTROへの自動運転バス提供と専用コースでの調整試験が示され、2024年3月の提携が車両導入に進んだ。NTROとの2024年提携はバス提供と走行試験へ進んだが、2027年9月期への影響は会社説明で軽微であり、豪州での売上計上実績は開示されていない。\n\n10月22日11:00公表：10月15日12:00に公表したTUM研究拠点を基盤に、AutowareとNVIDIA Hyperion・Halosの統合開発へ協業を拡大した。TUM研究拠点は自社の研究資金負担を伴い、NVIDIA基盤との統合は欧州開発を広げる一方、単独の翌期業績影響は軽微とされる。\n\n10月14日13:00公表：大成建設・大成ロテックと国交省の自動物流道路実証に採択され、10月下旬〜11月上旬の8日間、トンネル等で追従・対面・合流を検証する計画を示した。物流道路実証は3台の自動走行による省人化技術の検証であり、基準日は予定期間内にあるが、実施完了や売上・利益寄与は確認できない。\n\n10月5日公表（時刻記載なし）：9月4日16:30公表のグローバルサウス補助事業を受け、サウジでの車両構築、砂漠環境へのAI適合、現地人材育成を説明した。サウジ計画は2027年の車両構築、2028年の閉鎖空間実証へ向かう準備段階であり、申請経費60億円と補助率2/3予定を確定交付額や売上とはみなさない。 2025年9月26日公表（時刻記載なし）の提携原発表と照合すると、Elmとの2025年MoUはサウジ現地適合・人材育成の協業基盤であり、2026年10月の事業説明まで具体化したが、商業運行や受注額の実績は確認できない。\n\n9月30日公表（時刻記載なし）：MPカメラにC1-120MP・C2-120MPを追加し、当日から提供を開始した。MPカメラは5月の量産向け提供開始から9月の120度モデル追加へ進み、外部製造先を使う製品拡販が続く一方、モデル別の売上・粗利は非開示である。",
+          "inline": false
         },
         {
           "name": "ファンダ要点",
-          "value": "ストック型サービスは1Qに前年並みで推移し、四半期損益は一括販売の案件時期と開発・販促の費用負担に左右される。6月24日公表有報の2026年3月末情報セキュリティ受注残は4億1,401万円、前年比63.8％で、売上増加の実績だけで翌期の受注積み上がりまで強いとはいえない。\n2020年設立のLogStareは、2026年5月22日9:05公表資料で償却済み製品の販売が通期の増収増益に寄与したと説明されており、過去の開発投資は既存製品の収益基盤になっている。 2020年8月20日15:31の資金使途変更では、大規模SOC・集合研修拠点構想を見直して子会社設立等へ振り替えており、当初の大型投資計画を現在の未実行案件として再計上しない。\n2009年の資本業務提携先NRIセキュア向け売上は2026年3月期に2億6,418万円、連結売上の20.6％を占め、既存販路としての実績と顧客集中の両面を持つ。\nAI-SOCは2025年12月1日の公表開始予定を経て提供中となり、STNet経由の四国展開と無償診断による顧客獲得段階にあるが、サービス単独の実績売上・利益は未確認。\n2024年参画の日本サイバーセキュリティファンドは2025年9月にLRMを第一号投資先とする段階まで進んだが、同社への販路効果や投資収益の実績額は未確認。\nNetStareの台帳登録は2027年3月19日までという公表有効期間内にあるが、登録による個別受注額・売上への増分寄与は未確認。"
+          "value": "売上拡大が粗利と固定費吸収へつながるかが収益構造の中心である。8月14日16:00公表の3Q短信・説明資料では累計売上高51.78億円、粗利20.03億円で、説明資料の比較値は前年同期比それぞれ30.0%増・31.6%増。研究開発費59.89億円が粗利を大きく上回り、営業損失68.26億円は前年の72.08億円から縮小しても、本業の赤字はなお大きい。補助金収入36.61億円は営業外収益であり、経常損失40.87億円は持分法損失等もあって14.4%拡大した。\n\n2022年7月19日公表（時刻記載なし）の原発表と、6月29日17:00公表の上場申請有報の契約表を照合した。GI基金は2022年採択時の254億円構想に対し、上場資料では2028年3月まで約165億円が契約済みの助成対象費用であり、全額受領済み補助金や売上とは異なる。 全体計画は2031年3月までだが、次のステージゲートまでの既存契約とは範囲が異なる。8月説明資料は一部補助事業完了による補助金収入8.5%減を示しており、研究開発支援と商用売上の伸長を分けて捉える必要がある。\n\n5月29日公表（時刻記載なし）の合意と8月14日16:00説明資料では、KDDI連携の2030年累計1,000台規模は商用導入目標であり、6月末の実証・実装44地域や7月時点58地域の受注を1,000台の確定受注と読み替えない。 開発プロジェクト顧客数は6月末13件で、単発の開発・車両販売から運用保守・ライセンスの継続収益へ移れるかが事業上の意味を持つ。\n\n2020年3月27日公表（時刻記載なし）のヤマハ発動機との合弁設立、2022年11月30日公表（時刻記載なし）の商用サービス開始、8月14日16:00説明資料の順に実装を辿ると、eve autoは2022年11月の商用提供開始から2026年6月の運用90台へ進んだが、関連会社の車両台数をそのままティアフォーの売上や利益とみなさない。\n\n2025年9月18日公表（時刻記載なし）の建機協業を8月14日16:00説明資料と照合すると、コマツ・EARTHBRAINの建機案件は2027年度中の試験導入・実用化を目指す開発段階であり、量産収益の実績とは区別する。 2024年3月6日公表（時刻記載なし）のいすゞとの提携は2026年3月17日公表（時刻記載なし）の開発続報へ進んでいる。いすゞの大型EVバスはNVIDIA基盤を用いた開発が進むが、8月説明資料では展開計画は非公表で、案件別の量産収益実績は確認できない。 2024年6月17日公表（時刻記載なし）の原発表と同説明資料では、スズキのソリオ向け協業は交通空白地域への展開を狙う開発案件として残るが、8月説明資料の展開計画は非公表である。\n\n2025年12月26日公表（時刻記載なし）の原発表と8月14日16:00説明資料では、JR東海の2025年12月の資本業務提携は駅からの二次交通への接点を広げたが、第三者割当による資金調達と車両サービスの売上・利益寄与は別である。 同日短信にあるJR東海からの10億円の払込は資本取引であり、サービス収益へ振り替えて評価しない。\n\n8月5日公表（時刻記載なし）のAstemoとの共同開発合意を8月14日16:00説明資料と照合すると、Astemo向け開発基盤は2030年頃の実用化、自家用車搭載は2030年代前半という会社目標であり、足元の量産収益として先取りしない。 8月20日13:00公表の内容では、ルネサス協業はR-CarとAutowareの統合開発であり、8月公表時点でMoU等の契約を伴わず、展示予定を販売契約や計上売上とは扱わない。 8月14日13:00公表と同日16:00説明資料では、JSTのAI半導体事業は特定ハードへの依存を下げる研究開発であり、足元の利益寄与は軽微とされ、量産販売の実績とは区別する。\n\n2024年8月20日公表（時刻記載なし）の採択と2025年4月28日公表（時刻記載なし）の完了発表を照合した。2024年採択のトラック開発補助事業は2025年4月に完了済みであり、今回の継続受注や収益計上とは区別する。 原採択の約7億円はタクシーとトラックの両開発を含む交付上限であり、トラック単独の実受領補助金・計上利益ではない。完了した研究開発の成果と、その後の車両販売・継続契約を分けて扱う。",
+          "inline": false
         },
         {
           "name": "注意点",
-          "value": "第8回新株予約権は2026年5月31日時点で28万株相当が残り、286円・2027年12月8日期限の条件付き権利で、会計上の未確定残を残存ゼロとは扱えない。第7回は2024年5月末までの12万株相当から最新有報の記載消失までを確認したが、全数終了の明文根拠を確認できず、基準時点の潜在株式全体の残高・希薄化リスクは確定できない。 28万株は直近の回号別確認日での対象株数であり、新株交付数ではない。10月20日公表のJPX9月分は当月変更0株を示すが、未行使残高のゼロを示さず、自己株交付も区別する必要があるため、基準時点の新株交付数と同時点の分母を確認できない希薄化率は算出しない。\nAI-SOCの提供開始予定日には到達し、提供中であることも確認できるが、商談リードや無料診断の増加を有料契約・利益への実績寄与には置き換えられない。\nBBSecとの2024年の提携はSOC人材・共同開発・相互送客を狙うものの、当初の軽微な業績影響という見込みを、足元の実績収益としては扱えない。 東芝ITサービスへのNetStare Cloud採用は2025年7月に公表済みだが、契約金額・期間と基準時点の個別売上は未確認。 BBSec提携と東芝ITサービス採用は原発表を確認したが、基準時点の契約継続状況と個別の業績反映を裏づける続報を確認できず、長期案件の追跡には未解決点が残る。\n札幌オフィスは2026年7月28日9:00の発表で8月1日開設予定とされ、基準時点は北海道の営業展開期に当たるが、開設後の営業実績・拠点別収益は未確認。 札幌オフィスの8月1日という公表開設予定日には到達しているが、実際の稼働開始を裏づける続報と売上・利益の個別寄与は未確認で、予定経過だけで収益化済みとは断定しない。\n1Q赤字と受注残減少に対し、販促・採用費用を吸収するだけの契約獲得実績は未公表。自己株取得完了は還元実績だが、その後の現預金残高を6月末の残高から機械的に算定しない。2026年1月21日16:30の市場変更承認資料では旧グロース適合計画の取り下げを確認しており、旧計画を未解消の新しい上場懸念として再掲しない。"
+          "value": "研究開発費と補助金依存が資金消費を左右する。8月14日16:00公表の6月末現預金93.91億円は7月のIPO払込前の残高であり、公募の引受価額総額174.07億円を加算して10月30日の現預金残高を推定しない。一部借入にはネット現預金を一定額以上に保つ条項があり、上場資金の獲得と研究開発投資による資金流出は別々の事実である。2026年9月期の売上84.84億円・営業損失112.39億円は8月時点の据置会社予想であり、基準時点で通期確定実績は未公表である。\n\n6月29日17:00のJPX申請有報、同日15:30の会社IR掲載訂正届出書、8月14日16:00の短信を照合した。SOは2017年以降の40系列で5月末の潜在株式613.3万株を照合したが、各発行原資料とその後の異動・基準時点残高を確定できず、残存希薄化リスクの有無と規模は未確定である。 6月末短信も潜在株式の存在を明記する。SOの通常条件は上場後6か月経過等で、低い行使価額だけから足元の一斉行使や新株発行を断定できない。5月末対象株数は2月6日の1:5分割後の値で、IPO後株式数と時点を混ぜた希薄化率は算定していない。\n\n第1回CBはJPX有報で5月末まで全行使済みと明記され、A種・A-1種・A-2種・B種優先株式も2月5日に普通株式化・自己種類株式全数消却済みである。ただし各発行時原資料の検証は未完了のため、内部監査では未解決として履歴を残した。7月6日公表（時刻記載なし）の原資料にあるOA関連追加増資枠321万2,700株は8月6日18:30公表で全数失権・発行なしとなった。これは7月21日に払込完了した公募1,744万9,600株や既存SOの終了を意味しない。\n\n9月4日16:30及び10月5日公表（時刻記載なし）のサウジ資料は採択・事業計画であり、正式な交付決定・金額や現地商用売上の実績は未確認である。10月14日13:00の物流道路実証は予定期間に入っているが、明示された正確な開始日・完了日がないため、日付経過だけで実施済みや収益化済みと判定しない。地域ごとの許認可、走行条件・安全性の制約は、政府の全国導入目標とは別に残る。\n\n6月29日公表の上場資料と8月14日16:00の投資損失開示では、マップフォーは2025年9月に連結から外れた後も持分法損益の対象であり、関連会社3社に係る3Q単独1.31億円の投資損失は提携に伴う財務負担を示す。 マップフォーの2025年株式譲渡は上場資料で実行済みと分かるが、個別の原発表・譲渡対価を確認できず、再編の原契約を通じた財務影響の照合は未完了である。 3Q単独1.31億円と累計持分法投資損失9.18億円は期間が異なり、同額として扱わない。\n\n2023年11月2日公表（時刻記載なし）の連携目標と2024年11月8日公表（時刻記載なし）の佐渡実証続報を、最新決算と後続一覧に照合した。WILLERとの2025年度約10エリア実用化目標は対象年度を過ぎているが、佐渡実証後の達成状況・売上寄与・計画変更を基準時点までの公表資料では確定できない。 年度だけの公表予定から架空の到達日を作らず、延期・取消も断定しない。\n\n長期案件のうち、WILLER連携の目標達成・計画変更とマップフォー再編の原発表・譲渡対価には未照合部分が残るため、全履歴を基準時点まで確認済みとはしない。",
+          "inline": false
         },
         {
           "name": "開示リンク",
-          "value": "・[2026-10-20 緊急対応 Microsoft 365監査ログの調査分析レポート無償提供 不正アクセス急増に『AI-SOC』を活用(先着100社)(09:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/2896789/00.pdf)\n・[2026-10-06 自己株式の取得結果および取得終了に関するお知らせ(15:30)](https://www.release.tdnet.info/inbs/140120261006546526.pdf)\n・[2026-08-14 自己株式の取得に係る事項の決定に関するお知らせ(15:30)](https://www2.jpx.co.jp/disc/30420/140120260812518533.pdf)\n・[2026-08-14 2027年３月期 第１四半期決算短信〔日本基準〕（連結）(15:30)](https://www2.jpx.co.jp/disc/30420/140120260810516396.pdf)\n・[2026-08-14 2027年3月期 第1四半期 決算説明サマリー(15:30)](https://www2.jpx.co.jp/disc/30420/140120260812518530.pdf)\n・[2026-06-24 2026年3月期 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf)\n・[2026-05-22 2026年3月期 決算説明資料 株式会社セキュアヴェイル（3042）(09:05)](https://www2.jpx.co.jp/disc/30420/140120260520542148.pdf)\n・[2022-11-21 募集新株予約権（有償ストック・オプション）の発行に関するお知らせ(17:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf)\n・[2022-12-09 募集新株予約権（有償ストック・オプション）の発行内容確定に関するお知らせ(15:00)](https://www2.jpx.co.jp/disc/30420/140120221209576887.pdf)\n・[2025-06-27 2025年3月期 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf)\n・[2024-06-28 2024年3月期 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100TXWG/00.pdf)\n・[2026-10-20 2026年9月分 新株予約権の行使等に伴う上場株式数等の変更(時刻記載なし)](https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf)\n・[2025-11-06 セキュアヴェイルがAIを活用したセキュリティ運用サービス『AI-SOC』をリリース、Microsoft 365を対象に1ユーザー月額50円で提供開始(時刻記載なし)](https://www.secuavail.com/event/2025/1106/ai-soc_m365.html)\n・[2026-04-17 AIで無人化を実現するセキュアヴェイルの次世代SOCサービス「AI-SOC」を株式会社STNetが四国エリアで販売開始(時刻記載なし)](https://www.secuavail.com/event/2026/0417/ai-soc_stnet.html)\n・[2009-09-18 業務提携、第三者割当による新株式発行並びに主要株主の異動に関するお知らせ(16:15)](https://ssl4.eir-parts.net/doc/3042/tdnet/741364/00.pdf)\n・[2020-08-20 子会社設立に関するお知らせ(15:32)](https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf)\n・[2020-08-20 調達資金の資金使途及び支出予定時期の変更に関するお知らせ(15:31)](https://ssl4.eir-parts.net/doc/3042/tdnet/1877397/00.pdf)\n・[2024-11-14 株式会社ブロードバンドセキュリティ（証券コード：４３９８）との業務提携の締結のお知らせ(時刻記載なし)](https://www.secuavail.com/event/2024/1114/alliance_bbsec.html)\n・[2025-07-08 セキュアヴェイルのNetStare Cloudを東芝ITサービスが採用(時刻記載なし)](https://www.secuavail.com/event/2025/0708/toshibait_secuavail.html)\n・[2024-07-29 セキュアヴェイル、セキュリティ企業に投資するファンド「日本サイバーセキュリティファンド１号投資事業有限責任組合」に出資企業として参画(時刻記載なし)](https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html)\n・[2025-09-12 セキュアヴェイルが参画する日本サイバーセキュリティファンドの第一号投資先企業に国産の従業員向けセキュリティ教育クラウドサービス「セキュリオ」を提供するLRM社が決定(時刻記載なし)](https://www.secuavail.com/event/2025/0912/ncsf_lrm.html)\n・[2026-07-28 札幌オフィス開設に関するお知らせ(09:00)](https://ssl4.eir-parts.net/doc/3042/announcement1/123662/00.pdf)\n・[2026-01-21 （開示事項の経過）東証スタンダード市場への市場区分変更承認に関するお知らせ(16:30)](https://www2.jpx.co.jp/disc/30420/140120260121536494.pdf)\n・[2025-03-28 次世代ファイアウォール運用監視サービス「NetStare」が経済産業省の情報セキュリティサービス台帳に登録されました(時刻記載なし)](https://www.secuavail.com/event/2025/0328/sss-erc_netstare.html)\n・[2018-08-30 第三者割当により発行される第６回新株予約権の発行及びコミットメント条項付き第三者割当契約の締結に関するお知らせ(17:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/1626799/00.pdf)\n・[2020-03-18 第三者割当による第６回新株予約権（行使価額修正条項付）の行使価額の修正決定に関するお知らせ(18:45)](https://ssl4.eir-parts.net/doc/3042/tdnet/1808488/00.pdf)\n・[2021-06-25 2021年3月期 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf)"
+          "value": "・[2026-10-29 National Transport Research Organisationとのオーストラリアでの自動運転バスの展開に関するお知らせ(10:00)](https://contents.xj-storage.jp/xcontents/AS83940/23b17a22/a811/439a/9d4f/0c60a0eafb61/140120261029558749.pdf)\n・[2026-10-22 ミュンヘン工科大学との自動運転レベル４の開発にかかるNVIDIA GTC Berlinでの協業発表に関するお知らせ(11:00)](https://contents.xj-storage.jp/xcontents/AS83940/161e56f2/bdb7/4bff/8592/21c960683e6c/140120261022554420.pdf)\n・[2026-10-15 TUM Autoware Research Center by TIER IV設立に関するお知らせ(12:00)](https://contents.xj-storage.jp/xcontents/AS83940/4b76f734/3daa/468e/810e/3c086c811c63/140120261015550957.pdf)\n・[2026-10-14 国土交通省「自動物流道路の社会実装に向けた実証実験」の採択に関するお知らせ(13:00)](https://contents.xj-storage.jp/xcontents/AS83940/60456668/3df5/41ca/a32e/ffc9393a7862/140120261014550338.pdf)\n・[2026-10-05 ティアフォー、経済産業省の「グローバルサウス未来志向型共創等事業費補助金（大型実証 非ASEAN加盟国） 」に採択(時刻記載なし)](https://tier4.co.jp/updates/press-release/20261005-tieriv-advances-autonomous-bus-fots-and-talent-development-in-saudi-arabia)\n・[2026-09-30 ティアフォー、自動運転レベル4に最適化した車載カメラ「MPシリーズ」に、車両周辺の監視に適した120度画角の新モデルを追加(時刻記載なし)](https://tier4.co.jp/updates/press-release/20260930-tieriv-expands-mp-camera-series-c1c2)\n・[2026-09-04 グローバルサウス未来志向型共創等事業費補助金（大型実証 非ASEAN加盟国） 採択に関するお知らせ(16:30)](https://contents.xj-storage.jp/xcontents/AS83940/2c376381/de47/45b6/9b5a/7b8abcddecc6/140120260904531985.pdf)\n・[2026-08-20 ルネサス エレクトロニクス株式会社との協業に関するお知らせ(13:00)](https://contents.xj-storage.jp/xcontents/AS83940/3db8b02c/45d9/4c9d/9f0f/f77ad858e1db/140120260820523406.pdf)\n・[2026-08-14 2026年９月期　第３四半期決算説明資料(16:00)](https://contents.xj-storage.jp/xcontents/AS83940/9f1229b9/e588/454f/bf8f/c039e7df655b/140120260813519648.pdf)\n・[2026-08-14 2026年９月期 第３四半期決算短信〔日本基準〕(連結)(16:00)](https://contents.xj-storage.jp/xcontents/AS83940/ef51e491/92a9/4bb1/88a2/563d4051502c/140120260813520083.pdf)\n・[2026-08-14 営業外費用（持分法による投資損失）の計上に関するお知らせ(16:00)](https://contents.xj-storage.jp/xcontents/AS83940/b49ef0b3/90b5/48fa/8a25/16a619fc5a30/140120260814521199.pdf)\n・[2026-08-14 JST「次世代エッジAI半導体研究開発事業」への参画のお知らせ(13:00)](https://contents.xj-storage.jp/xcontents/AS83940/4bff20e2/db27/40cc/989e/f16b8ae0d9b9/140120260810515998.pdf)\n・[2026-08-06 第三者割当増資の結果に関するお知らせ(18:30)](https://contents.xj-storage.jp/xcontents/AS83940/7e39b1b6/d65d/47f5/bd0c/659c498f8884/140120260806513031.pdf)\n・[2026-08-05 ティアフォー、Astemoの次世代開発プラットフォームを共同開発(時刻記載なし)](https://tier4.co.jp/updates/press-release/20260805-tieriv-develops-platform-with-astemo)\n・[2026-07-06 募集株式の払込金額及びブックビルディングの仮条件決定のお知らせ(時刻記載なし)](https://tier4.co.jp/hubfs/ir/%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%86%E3%82%A3%E3%82%A2%E3%83%95%E3%82%A9%E3%83%BC_%E5%8B%9F%E9%9B%86%E6%A0%AA%E5%BC%8F%E3%81%AE%E6%89%95%E8%BE%BC%E9%87%91%E9%A1%8D%E5%8F%8A%E3%81%B3%E3%83%96%E3%83%83%E3%82%AF%E3%83%93%E3%83%AB%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%AE%E4%BB%AE%E6%9D%A1%E4%BB%B6%E6%B1%BA%E5%AE%9A%E3%81%AE%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf)\n・[2026-06-29 新規上場申請のための有価証券報告書（Ⅰの部）(17:00)](https://www.jpx.co.jp/listing/stocks/new/t13vrt000001ihj9-att/07TIERIV-1s.pdf)\n・[2026-06-29 訂正有価証券届出書（新規公開時）(15:30)](https://contents.xj-storage.jp/xcontents/AS83940/41ed5a21/6763/4cb7/ba86/5c2dda422fae/S100YN1Q.pdf)\n・[2026-05-29 ティアフォーとKDDI、自動運転サービスの社会実装に向け協業に合意　～運転手不足や交通空白など、地域交通の課題解決に貢献～(時刻記載なし)](https://tier4.co.jp/updates/press-release/20260529-01)\n・[2026-05-13 ティアフォー、自動運転レベル4に最適化した量産向けの車載カメラMPシリーズを提供開始(時刻記載なし)](https://tier4.co.jp/updates/press-release/20260513)\n・[2026-03-17 ティアフォーといすゞ、NVIDIA DRIVE Hyperionを搭載した自動運転レベル4バスを実装へ(時刻記載なし)](https://tier4.co.jp/updates/press-release/20260317)\n・[2025-12-26 ティアフォー、JR東海と資本業務提携　鉄道網と自動運転の連携で地域の価値向上を目指す(時刻記載なし)](https://tier4.co.jp/updates/press-release/20251226)\n・[2025-09-26 ティアフォー、Elmとサウジアラビアにおける自動運転ソリューションの推進に向けて提携(時刻記載なし)](https://tier4.co.jp/updates/press-release/20250926)\n・[2025-09-18 ティアフォー・コマツ・EARTHBRAIN、建設機械の自動運転技術の実用化に向けて協業開始(時刻記載なし)](https://tier4.co.jp/updates/press-release/20250918)\n・[2025-04-28 ティアフォー、経産省事業を完了し、自動運転トラックの社会実装を加速(時刻記載なし)](https://tier4.co.jp/updates/press-release/20250428)\n・[2024-11-08 新潟県佐渡市で自動運転サービス導入を見据えた実証実験を開始　～国内最長ルートを運行！2025年の自動運転レベル4実装に向けた自動走行実証・異業種連携実証～(時刻記載なし)](https://tier4.co.jp/updates/press-release/20241108)\n・[2024-08-20 ティアフォー、モビリティDX促進のための無人自動運転開発・実証支援事業に採択　ロボットタクシーとトラックの開発を加速(時刻記載なし)](https://tier4.co.jp/updates/press-release/20240820)\n・[2024-06-17 ティアフォーとスズキが資本業務提携　～地域モビリティを支える自動運転技術で協業～(時刻記載なし)](https://tier4.co.jp/updates/press-release/20240617)\n・[2024-03-19 ティアフォー、オーストラリアへの自動運転ソリューションの展開に向けてNTROと戦略的提携を開始(時刻記載なし)](https://tier4.co.jp/updates/press-release/20240319)\n・[2024-03-06 いすゞとティアフォーが資本業務提携　～路線バス領域における自動運転システムの開発で協業～(時刻記載なし)](https://tier4.co.jp/updates/press-release/20240306)\n・[2023-11-02 ティアフォーとWILLER、自動運転事業で協力開始　～2023年度に国内3エリアで実証実験、2025年度には10エリアでの実用化目指す～(時刻記載なし)](https://tier4.co.jp/updates/press-release/20231102)\n・[2022-11-30 国内初自動運転EVを用いた無人搬送サービス提供を開始 - 屋外対応型自動搬送サービス「eve auto」を本格始動 -(時刻記載なし)](https://tier4.co.jp/updates/press-release/20221130-01)\n・[2022-07-19 ティアフォー、GI基金採択とシリーズB資金調達　総額400億円規模の自動運転ソフトウェア開発推進とリファレンスデザイン提供へ(時刻記載なし)](https://tier4.co.jp/updates/press-release/20220719)\n・[2020-03-27 ヤマハ発動機とティアフォーが自動搬送ソリューションの合弁会社を設立　−工場内物流の自動運転化を目指して−(時刻記載なし)](https://tier4.co.jp/updates/press-release/20200327)",
+          "inline": false
         },
         {
           "name": "Sources",
-          "value": "・[セキュアヴェイル IRライブラリー](https://www.secuavail.com/info/library.html)\n・[セキュアヴェイル お知らせ](https://www.secuavail.com/event/)\n・[セキュアヴェイル（3042）の適時開示（TDNET）｜IRBANK](https://irbank.net/3042/tdnet)\n・[携帯から開示情報：3042 セキュアヴェイル](https://g2s.skr.jp/?code=30420)"
+          "value": "・[IRニュース｜株式会社ティアフォー](https://tier4.co.jp/ir/ir-news)\n・[有価証券報告書｜株式会社ティアフォー](https://tier4.co.jp/ir/securities)\n・[プレスリリース｜最新情報｜株式会社ティアフォー](https://tier4.co.jp/updates/tag/updates-001-%E3%83%97%E3%83%AC%E3%82%B9%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9)\n・[ティアフォー（593A）適時開示情報｜株予報Pro](https://kabuyoho.jp/reportDisclose?bcode=593A)",
+          "inline": false
         }
       ],
       "sources": [
         {
-          "title": "セキュアヴェイル IRライブラリー",
-          "url": "https://www.secuavail.com/info/library.html"
+          "title": "IRニュース｜株式会社ティアフォー",
+          "url": "https://tier4.co.jp/ir/ir-news"
         },
         {
-          "title": "セキュアヴェイル お知らせ",
-          "url": "https://www.secuavail.com/event/"
+          "title": "有価証券報告書｜株式会社ティアフォー",
+          "url": "https://tier4.co.jp/ir/securities"
         },
         {
-          "title": "セキュアヴェイル（3042）の適時開示（TDNET）｜IRBANK",
-          "url": "https://irbank.net/3042/tdnet"
+          "title": "プレスリリース｜最新情報｜株式会社ティアフォー",
+          "url": "https://tier4.co.jp/updates/tag/updates-001-%E3%83%97%E3%83%AC%E3%82%B9%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9"
         },
         {
-          "title": "携帯から開示情報：3042 セキュアヴェイル",
-          "url": "https://g2s.skr.jp/?code=30420"
+          "title": "ティアフォー（593A）適時開示情報｜株予報Pro",
+          "url": "https://kabuyoho.jp/reportDisclose?bcode=593A"
         }
       ],
       "sourceChecks": [
         {
           "role": "official_ir",
           "checked": true,
-          "url": "https://www.secuavail.com/info/library.html",
+          "url": "https://tier4.co.jp/ir/ir-news",
           "checkedUrls": [
-            "https://www.secuavail.com/info/news.html",
-            "https://ssl4.eir-parts.net/V4Public/EIR/3042/ja/announcement/announcement_1.js",
-            "https://www.secuavail.com/event/",
-            "https://www.secuavail.com/info/ir_koukoku.html",
-            "https://ssl4.eir-parts.net/doc/3042/tdnet/2896789/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100TXWG/00.pdf",
-            "https://www.secuavail.com/event/2025/1106/ai-soc_m365.html",
-            "https://www.secuavail.com/event/2026/0417/ai-soc_stnet.html",
-            "https://ssl4.eir-parts.net/doc/3042/tdnet/741364/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/tdnet/1877397/00.pdf",
-            "https://www.secuavail.com/event/2024/1114/alliance_bbsec.html",
-            "https://www.secuavail.com/event/2025/0708/toshibait_secuavail.html",
-            "https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html",
-            "https://www.secuavail.com/event/2025/0912/ncsf_lrm.html",
-            "https://ssl4.eir-parts.net/doc/3042/announcement1/123662/00.pdf",
-            "https://www.secuavail.com/event/2025/0328/sss-erc_netstare.html",
-            "https://ssl4.eir-parts.net/doc/3042/tdnet/1626799/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/tdnet/1808488/00.pdf",
-            "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf"
+            "https://tier4.co.jp/ir/ir-news",
+            "https://tier4.co.jp/ir/securities",
+            "https://tier4.co.jp/updates/tag/updates-001-%E3%83%97%E3%83%AC%E3%82%B9%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9",
+            "https://www.xj-storage.jp/public-list/GetList2.aspx?company=AS83940&len=10000&output=json",
+            "https://contents.xj-storage.jp/xcontents/AS83940/23b17a22/a811/439a/9d4f/0c60a0eafb61/140120261029558749.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/161e56f2/bdb7/4bff/8592/21c960683e6c/140120261022554420.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/4b76f734/3daa/468e/810e/3c086c811c63/140120261015550957.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/60456668/3df5/41ca/a32e/ffc9393a7862/140120261014550338.pdf",
+            "https://tier4.co.jp/updates/press-release/20261005-tieriv-advances-autonomous-bus-fots-and-talent-development-in-saudi-arabia",
+            "https://tier4.co.jp/updates/press-release/20260930-tieriv-expands-mp-camera-series-c1c2",
+            "https://contents.xj-storage.jp/xcontents/AS83940/2c376381/de47/45b6/9b5a/7b8abcddecc6/140120260904531985.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/3db8b02c/45d9/4c9d/9f0f/f77ad858e1db/140120260820523406.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/9f1229b9/e588/454f/bf8f/c039e7df655b/140120260813519648.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/ef51e491/92a9/4bb1/88a2/563d4051502c/140120260813520083.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/b49ef0b3/90b5/48fa/8a25/16a619fc5a30/140120260814521199.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/4bff20e2/db27/40cc/989e/f16b8ae0d9b9/140120260810515998.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/7e39b1b6/d65d/47f5/bd0c/659c498f8884/140120260806513031.pdf",
+            "https://tier4.co.jp/updates/press-release/20260805-tieriv-develops-platform-with-astemo",
+            "https://tier4.co.jp/hubfs/ir/%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%86%E3%82%A3%E3%82%A2%E3%83%95%E3%82%A9%E3%83%BC_%E5%8B%9F%E9%9B%86%E6%A0%AA%E5%BC%8F%E3%81%AE%E6%89%95%E8%BE%BC%E9%87%91%E9%A1%8D%E5%8F%8A%E3%81%B3%E3%83%96%E3%83%83%E3%82%AF%E3%83%93%E3%83%AB%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%AE%E4%BB%AE%E6%9D%A1%E4%BB%B6%E6%B1%BA%E5%AE%9A%E3%81%AE%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+            "https://contents.xj-storage.jp/xcontents/AS83940/41ed5a21/6763/4cb7/ba86/5c2dda422fae/S100YN1Q.pdf",
+            "https://tier4.co.jp/updates/press-release/20260529-01",
+            "https://tier4.co.jp/updates/press-release/20260513",
+            "https://tier4.co.jp/updates/press-release/20260317",
+            "https://tier4.co.jp/updates/press-release/20251226",
+            "https://tier4.co.jp/updates/press-release/20250926",
+            "https://tier4.co.jp/updates/press-release/20250918",
+            "https://tier4.co.jp/updates/press-release/20250428",
+            "https://tier4.co.jp/updates/press-release/20241108",
+            "https://tier4.co.jp/updates/press-release/20240820",
+            "https://tier4.co.jp/updates/press-release/20240617",
+            "https://tier4.co.jp/updates/press-release/20240319",
+            "https://tier4.co.jp/updates/press-release/20240306",
+            "https://tier4.co.jp/updates/press-release/20231102",
+            "https://tier4.co.jp/updates/press-release/20221130-01",
+            "https://tier4.co.jp/updates/press-release/20220719",
+            "https://tier4.co.jp/updates/press-release/20200327"
           ],
-          "result": "公式IRの表示用JSを辿って公式配信一覧550件を取得。最新は2026年10月20日9:00の無償ログ分析。9月14日～10月29日18:46:16.720 JSTまでを含め、10月6日・2日の自己株取得、10月1日の子会社人事を本文確認。人事資料では代表取締役変更なし・執行体制強化を確認した。最新決算は8月14日、会社IR掲載の最新有報は6月24日。採用資料のPDF/公式本文を読み、資本・長期案件は2009年等まで遡った。同日未時刻資料・基準時点後資料の採用なし。"
+          "result": "会社IRのXJ公開フィード28件を日時順に照合し、最新は10月29日10:00のNTRO公表。公式プレスリリース全19ページと有報ライブラリも開き、9月15日以降の45日窓に9月24・25・30日、10月5・8・14・15・22・29日の項目があることを確認した。採用PDFと個別ページ本文を読み、10月23日の11月決算説明会案内、受賞・教育イベントは公表内容を読んで主要業績材料から外した。11月の決算予定を確定実績に用いず、基準日当日の時刻不明資料も採用していない。長期レビューでは2015年設立以降の沿革から辿り、原発表を2020年・2022年等まで遡った。"
         },
         {
           "role": "irbank_or_tdnet",
           "checked": true,
-          "url": "https://irbank.net/3042/tdnet",
+          "url": "https://kabuyoho.jp/reportDisclose?bcode=593A",
           "checkedUrls": [
-            "https://irbank.net/3042/tdnet",
-            "https://g2s.skr.jp/?code=30420",
-            "https://www.release.tdnet.info/inbs/140120261006546526.pdf",
-            "https://www2.jpx.co.jp/disc/30420/140120260812518533.pdf",
-            "https://www2.jpx.co.jp/disc/30420/140120260810516396.pdf",
-            "https://www2.jpx.co.jp/disc/30420/140120260812518530.pdf",
-            "https://www2.jpx.co.jp/disc/30420/140120260520542148.pdf",
-            "https://www2.jpx.co.jp/disc/30420/140120221209576887.pdf",
-            "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf",
-            "https://www2.jpx.co.jp/disc/30420/140120260121536494.pdf"
+            "https://kabuyoho.jp/reportDisclose?bcode=593A",
+            "https://www.jpx.co.jp/listing/stocks/new/index.html",
+            "https://www.jpx.co.jp/listing/stocks/new/t13vrt000001ihj9-att/07TIERIV-1s.pdf"
           ],
-          "result": "IRBANK一覧はWeb閲覧では403だったためローカルHTTPS GETで一覧本文を取得し照合。最新適時開示は10月6日15:30、10月2日10:10、9月4日11:00、8月14日15:30の決算・自己株取得・説明サマリーを確認。PRを含む公式一覧とは掲載範囲が異なるため、10月20日9:00のPRは公式配信一覧とPDFで補完。TDnet相当一覧のリンクからJPX/TDnet原文を読み、公表日と文書ID内の日付を区別した。JPX月次資料も表紙の10月20日公表日と9月末対象期間を区別。"
+          "result": "TDnet配信相当の銘柄別一覧を開き、6月29日の上場申請有報17:00から10月29日NTRO10:00までの日付・時刻・タイトルを公式フィードと照合した。直近45日だけでなくIPO・増資・最新8月14日決算群まで確認し、JPXの申請有報本文で40系列SO、CB、優先株、政府契約及び通期・中間財務を読んだ。IRBANKの銘柄ページは403等で閲覧できなかったため、IRBANKを確認済みとは扱わず、この記録は到達できたTDnet配信一覧・JPX一次資料に基づく。",
+          "unavailableSources": [
+            {
+              "url": "https://irbank.net/593A",
+              "result": "403 Forbidden"
+            },
+            {
+              "url": "https://irbank.net/593A/tdnet",
+              "result": "web取得不可"
+            }
+          ]
         }
       ],
       "disclosures": [
         {
-          "title": "緊急対応 Microsoft 365監査ログの調査分析レポート無償提供 不正アクセス急増に『AI-SOC』を活用(先着100社)",
-          "publishedAt": "2026-10-20T09:00:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2896789/00.pdf",
+          "title": "National Transport Research Organisationとのオーストラリアでの自動運転バスの展開に関するお知らせ",
+          "publishedAt": "2026-10-29T10:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/23b17a22/a811/439a/9d4f/0c60a0eafb61/140120261029558749.pdf",
           "contentReviewed": true
         },
         {
-          "title": "自己株式の取得結果および取得終了に関するお知らせ",
-          "publishedAt": "2026-10-06T15:30:00+09:00",
-          "url": "https://www.release.tdnet.info/inbs/140120261006546526.pdf",
+          "title": "ミュンヘン工科大学との自動運転レベル４の開発にかかるNVIDIA GTC Berlinでの協業発表に関するお知らせ",
+          "publishedAt": "2026-10-22T11:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/161e56f2/bdb7/4bff/8592/21c960683e6c/140120261022554420.pdf",
           "contentReviewed": true
         },
         {
-          "title": "自己株式の取得に係る事項の決定に関するお知らせ",
-          "publishedAt": "2026-08-14T15:30:00+09:00",
-          "url": "https://www2.jpx.co.jp/disc/30420/140120260812518533.pdf",
+          "title": "TUM Autoware Research Center by TIER IV設立に関するお知らせ",
+          "publishedAt": "2026-10-15T12:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/4b76f734/3daa/468e/810e/3c086c811c63/140120261015550957.pdf",
           "contentReviewed": true
         },
         {
-          "title": "2027年３月期 第１四半期決算短信〔日本基準〕（連結）",
-          "publishedAt": "2026-08-14T15:30:00+09:00",
-          "url": "https://www2.jpx.co.jp/disc/30420/140120260810516396.pdf",
+          "title": "国土交通省「自動物流道路の社会実装に向けた実証実験」の採択に関するお知らせ",
+          "publishedAt": "2026-10-14T13:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/60456668/3df5/41ca/a32e/ffc9393a7862/140120261014550338.pdf",
           "contentReviewed": true
         },
         {
-          "title": "2027年3月期 第1四半期 決算説明サマリー",
-          "publishedAt": "2026-08-14T15:30:00+09:00",
-          "url": "https://www2.jpx.co.jp/disc/30420/140120260812518530.pdf",
+          "title": "ティアフォー、経済産業省の「グローバルサウス未来志向型共創等事業費補助金（大型実証 非ASEAN加盟国） 」に採択",
+          "publishedAt": "2026-10-05",
+          "url": "https://tier4.co.jp/updates/press-release/20261005-tieriv-advances-autonomous-bus-fots-and-talent-development-in-saudi-arabia",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
+        },
+        {
+          "title": "ティアフォー、自動運転レベル4に最適化した車載カメラ「MPシリーズ」に、車両周辺の監視に適した120度画角の新モデルを追加",
+          "publishedAt": "2026-09-30",
+          "url": "https://tier4.co.jp/updates/press-release/20260930-tieriv-expands-mp-camera-series-c1c2",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
+        },
+        {
+          "title": "グローバルサウス未来志向型共創等事業費補助金（大型実証 非ASEAN加盟国） 採択に関するお知らせ",
+          "publishedAt": "2026-09-04T16:30:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/2c376381/de47/45b6/9b5a/7b8abcddecc6/140120260904531985.pdf",
           "contentReviewed": true
         },
         {
-          "title": "2026年3月期 有価証券報告書",
-          "publishedAt": "2026-06-24",
-          "publishedAtPrecision": "date_only",
-          "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
+          "title": "ルネサス エレクトロニクス株式会社との協業に関するお知らせ",
+          "publishedAt": "2026-08-20T13:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/3db8b02c/45d9/4c9d/9f0f/f77ad858e1db/140120260820523406.pdf",
           "contentReviewed": true
         },
         {
-          "title": "2026年3月期 決算説明資料 株式会社セキュアヴェイル（3042）",
-          "publishedAt": "2026-05-22T09:05:00+09:00",
-          "url": "https://www2.jpx.co.jp/disc/30420/140120260520542148.pdf",
+          "title": "2026年９月期　第３四半期決算説明資料",
+          "publishedAt": "2026-08-14T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/9f1229b9/e588/454f/bf8f/c039e7df655b/140120260813519648.pdf",
           "contentReviewed": true
         },
         {
-          "title": "募集新株予約権（有償ストック・オプション）の発行に関するお知らせ",
-          "publishedAt": "2022-11-21T17:00:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf",
+          "title": "2026年９月期 第３四半期決算短信〔日本基準〕(連結)",
+          "publishedAt": "2026-08-14T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/ef51e491/92a9/4bb1/88a2/563d4051502c/140120260813520083.pdf",
           "contentReviewed": true
         },
         {
-          "title": "募集新株予約権（有償ストック・オプション）の発行内容確定に関するお知らせ",
-          "publishedAt": "2022-12-09T15:00:00+09:00",
-          "url": "https://www2.jpx.co.jp/disc/30420/140120221209576887.pdf",
+          "title": "営業外費用（持分法による投資損失）の計上に関するお知らせ",
+          "publishedAt": "2026-08-14T16:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/b49ef0b3/90b5/48fa/8a25/16a619fc5a30/140120260814521199.pdf",
           "contentReviewed": true
         },
         {
-          "title": "2025年3月期 有価証券報告書",
-          "publishedAt": "2025-06-27",
-          "publishedAtPrecision": "date_only",
-          "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf",
+          "title": "JST「次世代エッジAI半導体研究開発事業」への参画のお知らせ",
+          "publishedAt": "2026-08-14T13:00:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/4bff20e2/db27/40cc/989e/f16b8ae0d9b9/140120260810515998.pdf",
           "contentReviewed": true
         },
         {
-          "title": "2024年3月期 有価証券報告書",
-          "publishedAt": "2024-06-28",
-          "publishedAtPrecision": "date_only",
-          "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100TXWG/00.pdf",
+          "title": "第三者割当増資の結果に関するお知らせ",
+          "publishedAt": "2026-08-06T18:30:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/7e39b1b6/d65d/47f5/bd0c/659c498f8884/140120260806513031.pdf",
           "contentReviewed": true
         },
         {
-          "title": "2026年9月分 新株予約権の行使等に伴う上場株式数等の変更",
-          "publishedAt": "2026-10-20",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf",
+          "title": "ティアフォー、Astemoの次世代開発プラットフォームを共同開発",
+          "publishedAt": "2026-08-05",
+          "url": "https://tier4.co.jp/updates/press-release/20260805-tieriv-develops-platform-with-astemo",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
+        },
+        {
+          "title": "募集株式の払込金額及びブックビルディングの仮条件決定のお知らせ",
+          "publishedAt": "2026-07-06",
+          "url": "https://tier4.co.jp/hubfs/ir/%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%86%E3%82%A3%E3%82%A2%E3%83%95%E3%82%A9%E3%83%BC_%E5%8B%9F%E9%9B%86%E6%A0%AA%E5%BC%8F%E3%81%AE%E6%89%95%E8%BE%BC%E9%87%91%E9%A1%8D%E5%8F%8A%E3%81%B3%E3%83%96%E3%83%83%E3%82%AF%E3%83%93%E3%83%AB%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%AE%E4%BB%AE%E6%9D%A1%E4%BB%B6%E6%B1%BA%E5%AE%9A%E3%81%AE%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
+        },
+        {
+          "title": "新規上場申請のための有価証券報告書（Ⅰの部）",
+          "publishedAt": "2026-06-29T17:00:00+09:00",
+          "url": "https://www.jpx.co.jp/listing/stocks/new/t13vrt000001ihj9-att/07TIERIV-1s.pdf",
           "contentReviewed": true
         },
         {
-          "title": "セキュアヴェイルがAIを活用したセキュリティ運用サービス『AI-SOC』をリリース、Microsoft 365を対象に1ユーザー月額50円で提供開始",
-          "publishedAt": "2025-11-06",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.secuavail.com/event/2025/1106/ai-soc_m365.html",
+          "title": "訂正有価証券届出書（新規公開時）",
+          "publishedAt": "2026-06-29T15:30:00+09:00",
+          "url": "https://contents.xj-storage.jp/xcontents/AS83940/41ed5a21/6763/4cb7/ba86/5c2dda422fae/S100YN1Q.pdf",
           "contentReviewed": true
         },
         {
-          "title": "AIで無人化を実現するセキュアヴェイルの次世代SOCサービス「AI-SOC」を株式会社STNetが四国エリアで販売開始",
-          "publishedAt": "2026-04-17",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.secuavail.com/event/2026/0417/ai-soc_stnet.html",
-          "contentReviewed": true
+          "title": "ティアフォーとKDDI、自動運転サービスの社会実装に向け協業に合意　～運転手不足や交通空白など、地域交通の課題解決に貢献～",
+          "publishedAt": "2026-05-29",
+          "url": "https://tier4.co.jp/updates/press-release/20260529-01",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "業務提携、第三者割当による新株式発行並びに主要株主の異動に関するお知らせ",
-          "publishedAt": "2009-09-18T16:15:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/741364/00.pdf",
-          "contentReviewed": true
+          "title": "ティアフォー、自動運転レベル4に最適化した量産向けの車載カメラMPシリーズを提供開始",
+          "publishedAt": "2026-05-13",
+          "url": "https://tier4.co.jp/updates/press-release/20260513",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "子会社設立に関するお知らせ",
-          "publishedAt": "2020-08-20T15:32:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf",
-          "contentReviewed": true
+          "title": "ティアフォーといすゞ、NVIDIA DRIVE Hyperionを搭載した自動運転レベル4バスを実装へ",
+          "publishedAt": "2026-03-17",
+          "url": "https://tier4.co.jp/updates/press-release/20260317",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "調達資金の資金使途及び支出予定時期の変更に関するお知らせ",
-          "publishedAt": "2020-08-20T15:31:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1877397/00.pdf",
-          "contentReviewed": true
+          "title": "ティアフォー、JR東海と資本業務提携　鉄道網と自動運転の連携で地域の価値向上を目指す",
+          "publishedAt": "2025-12-26",
+          "url": "https://tier4.co.jp/updates/press-release/20251226",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "株式会社ブロードバンドセキュリティ（証券コード：４３９８）との業務提携の締結のお知らせ",
-          "publishedAt": "2024-11-14",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.secuavail.com/event/2024/1114/alliance_bbsec.html",
-          "contentReviewed": true
+          "title": "ティアフォー、Elmとサウジアラビアにおける自動運転ソリューションの推進に向けて提携",
+          "publishedAt": "2025-09-26",
+          "url": "https://tier4.co.jp/updates/press-release/20250926",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "セキュアヴェイルのNetStare Cloudを東芝ITサービスが採用",
-          "publishedAt": "2025-07-08",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.secuavail.com/event/2025/0708/toshibait_secuavail.html",
-          "contentReviewed": true
+          "title": "ティアフォー・コマツ・EARTHBRAIN、建設機械の自動運転技術の実用化に向けて協業開始",
+          "publishedAt": "2025-09-18",
+          "url": "https://tier4.co.jp/updates/press-release/20250918",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "セキュアヴェイル、セキュリティ企業に投資するファンド「日本サイバーセキュリティファンド１号投資事業有限責任組合」に出資企業として参画",
-          "publishedAt": "2024-07-29",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html",
-          "contentReviewed": true
+          "title": "ティアフォー、経産省事業を完了し、自動運転トラックの社会実装を加速",
+          "publishedAt": "2025-04-28",
+          "url": "https://tier4.co.jp/updates/press-release/20250428",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "セキュアヴェイルが参画する日本サイバーセキュリティファンドの第一号投資先企業に国産の従業員向けセキュリティ教育クラウドサービス「セキュリオ」を提供するLRM社が決定",
-          "publishedAt": "2025-09-12",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.secuavail.com/event/2025/0912/ncsf_lrm.html",
-          "contentReviewed": true
+          "title": "新潟県佐渡市で自動運転サービス導入を見据えた実証実験を開始　～国内最長ルートを運行！2025年の自動運転レベル4実装に向けた自動走行実証・異業種連携実証～",
+          "publishedAt": "2024-11-08",
+          "url": "https://tier4.co.jp/updates/press-release/20241108",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "札幌オフィス開設に関するお知らせ",
-          "publishedAt": "2026-07-28T09:00:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/123662/00.pdf",
-          "contentReviewed": true
+          "title": "ティアフォー、モビリティDX促進のための無人自動運転開発・実証支援事業に採択　ロボットタクシーとトラックの開発を加速",
+          "publishedAt": "2024-08-20",
+          "url": "https://tier4.co.jp/updates/press-release/20240820",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "（開示事項の経過）東証スタンダード市場への市場区分変更承認に関するお知らせ",
-          "publishedAt": "2026-01-21T16:30:00+09:00",
-          "url": "https://www2.jpx.co.jp/disc/30420/140120260121536494.pdf",
-          "contentReviewed": true
+          "title": "ティアフォーとスズキが資本業務提携　～地域モビリティを支える自動運転技術で協業～",
+          "publishedAt": "2024-06-17",
+          "url": "https://tier4.co.jp/updates/press-release/20240617",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "次世代ファイアウォール運用監視サービス「NetStare」が経済産業省の情報セキュリティサービス台帳に登録されました",
-          "publishedAt": "2025-03-28",
-          "publishedAtPrecision": "date_only",
-          "url": "https://www.secuavail.com/event/2025/0328/sss-erc_netstare.html",
-          "contentReviewed": true
+          "title": "ティアフォー、オーストラリアへの自動運転ソリューションの展開に向けてNTROと戦略的提携を開始",
+          "publishedAt": "2024-03-19",
+          "url": "https://tier4.co.jp/updates/press-release/20240319",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "第三者割当により発行される第６回新株予約権の発行及びコミットメント条項付き第三者割当契約の締結に関するお知らせ",
-          "publishedAt": "2018-08-30T17:00:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1626799/00.pdf",
-          "contentReviewed": true
+          "title": "いすゞとティアフォーが資本業務提携　～路線バス領域における自動運転システムの開発で協業～",
+          "publishedAt": "2024-03-06",
+          "url": "https://tier4.co.jp/updates/press-release/20240306",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "第三者割当による第６回新株予約権（行使価額修正条項付）の行使価額の修正決定に関するお知らせ",
-          "publishedAt": "2020-03-18T18:45:00+09:00",
-          "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1808488/00.pdf",
-          "contentReviewed": true
+          "title": "ティアフォーとWILLER、自動運転事業で協力開始　～2023年度に国内3エリアで実証実験、2025年度には10エリアでの実用化目指す～",
+          "publishedAt": "2023-11-02",
+          "url": "https://tier4.co.jp/updates/press-release/20231102",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         },
         {
-          "title": "2021年3月期 有価証券報告書",
-          "publishedAt": "2021-06-25",
-          "publishedAtPrecision": "date_only",
-          "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf",
-          "contentReviewed": true
+          "title": "国内初自動運転EVを用いた無人搬送サービス提供を開始 - 屋外対応型自動搬送サービス「eve auto」を本格始動 -",
+          "publishedAt": "2022-11-30",
+          "url": "https://tier4.co.jp/updates/press-release/20221130-01",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
+        },
+        {
+          "title": "ティアフォー、GI基金採択とシリーズB資金調達　総額400億円規模の自動運転ソフトウェア開発推進とリファレンスデザイン提供へ",
+          "publishedAt": "2022-07-19",
+          "url": "https://tier4.co.jp/updates/press-release/20220719",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
+        },
+        {
+          "title": "ヤマハ発動機とティアフォーが自動搬送ソリューションの合弁会社を設立　−工場内物流の自動運転化を目指して−",
+          "publishedAt": "2020-03-27",
+          "url": "https://tier4.co.jp/updates/press-release/20200327",
+          "contentReviewed": true,
+          "publishedAtPrecision": "date_only"
         }
       ],
       "capitalRiskReview": {
         "version": 1,
-        "analysisCutoff": "2026-10-29T09:46:16.720Z",
+        "analysisCutoff": "2026-10-30T08:53:47.257Z",
         "status": "unresolved",
         "historyCheckedThrough": null,
         "documents": [
           {
-            "id": "annual_2026",
-            "title": "2026年3月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
-            "publishedAt": "2026-06-24",
-            "publishedAtPrecision": "date_only",
+            "id": "q3_results",
+            "title": "2026年９月期 第３四半期決算短信〔日本基準〕(連結)",
+            "publishedAt": "2026-08-14T16:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/ef51e491/92a9/4bb1/88a2/563d4051502c/140120260813520083.pdf",
             "contentReviewed": true,
+            "kind": "financial_baseline",
             "source": "official_ir",
-            "locator": "pp.5・14-24・63",
-            "finding": "第8回2,800個・280,000株相当、行使価額286円、2027年12月8日期限。3月末内容は5月31日まで変更なし。p.63は権利確定前未確定残280,000株、確定後未行使残は横線で、残存ゼロを意味しない。その他新株予約権等・行使価額修正条項付証券は該当なし。情報セキュリティ受注残414,012千円、前年比63.8％、NRIセキュア向け売上264,184千円・20.6％。",
-            "kind": "financial_baseline"
+            "locator": "PDF p.1-2、p.7-8、p.10-11（添付資料p.5-6、p.8-9）",
+            "finding": "6月30日時点で潜在株式は存在すると明記。新株予約権計上額242百万円。7月21日公募17,449,600株の払込完了後の発行済株式数63,524,090株、引受価額総額17,407百万円。回号別の6月末残高は掲載していない。"
           },
           {
-            "id": "financial_q1",
-            "title": "2027年３月期 第１四半期決算短信〔日本基準〕（連結）",
-            "url": "https://www2.jpx.co.jp/disc/30420/140120260810516396.pdf",
-            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "id": "jpx_annual",
+            "title": "新規上場申請のための有価証券報告書（Ⅰの部）",
+            "publishedAt": "2026-06-29T17:00:00+09:00",
+            "url": "https://www.jpx.co.jp/listing/stocks/new/t13vrt000001ihj9-att/07TIERIV-1s.pdf",
             "contentReviewed": true,
+            "kind": "financial_baseline",
             "source": "tdnet_jpx",
-            "locator": "表紙、添付pp.2-6・8-9",
-            "finding": "売上260,532千円、営業損失52,546千円。大型ソフトウェア案件の反動、先行ソフトウェア費20,020千円、広告宣伝費4,865千円増、人件費12,789千円増。ストック型サービスは前年並み。6月末の新株予約権勘定280千円、発行済7,690,000株。通期売上1,438百万円・営業利益138百万円の予想は変更なし。",
-            "kind": "financial_baseline"
+            "locator": "PDF p.42、p.56-74、p.128-144、p.96-100・p.160（中間連結財務諸表）",
+            "finding": "2017年から2026年までの40系列のSOについて5月31日対象株数を個別照合し合計6,133,000株。2月6日1:5分割後の数値。第1回CBは5月末まで全行使、優先株式は2月5日に全て普通株式化し自己種類株式を全数消却。SOは原則上場後6か月経過等の条件付き。2026年3月中間財務も収録。"
           },
           {
-            "id": "issuance_7_8",
-            "title": "募集新株予約権（有償ストック・オプション）の発行に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf",
-            "publishedAt": "2022-11-21T17:00:00+09:00",
+            "id": "company_filing",
+            "title": "訂正有価証券届出書（新規公開時）",
+            "publishedAt": "2026-06-29T15:30:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/41ed5a21/6763/4cb7/ba86/5c2dda422fae/S100YN1Q.pdf",
             "contentReviewed": true,
+            "kind": "status",
             "source": "official_ir",
-            "locator": "pp.1-8、第7回・第8回発行要項",
-            "finding": "第7回1,200個120,000株、第8回2,800個280,000株。両回の業績条件、286円の行使価額、2024年7月1日から2027年12月8日の行使期間を確認。第8回には業績条件にかかわらず終値が行使価額30％未満となった場合の満期までの行使義務と例外がある。",
-            "kind": "issuance"
+            "locator": "PDF p.64・p.78-96・p.151-170・p.215-220",
+            "finding": "会社IR掲載の6月29日訂正届出書で、各回の決議日、付与日、行使価額、行使期間、失効・残高をJPX資料と照合。6月9日初回届出書を訂正し2026年3月中間財務等を反映した文書であり、2017年等の発行時原資料そのものとは区別する。"
           },
           {
-            "id": "issuance_7_8_final",
-            "title": "募集新株予約権（有償ストック・オプション）の発行内容確定に関するお知らせ",
-            "url": "https://www2.jpx.co.jp/disc/30420/140120221209576887.pdf",
-            "publishedAt": "2022-12-09T15:00:00+09:00",
+            "id": "oa_original",
+            "title": "募集株式の払込金額及びブックビルディングの仮条件決定のお知らせ",
+            "publishedAt": "2026-07-06",
+            "url": "https://tier4.co.jp/hubfs/ir/%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E3%83%86%E3%82%A3%E3%82%A2%E3%83%95%E3%82%A9%E3%83%BC_%E5%8B%9F%E9%9B%86%E6%A0%AA%E5%BC%8F%E3%81%AE%E6%89%95%E8%BE%BC%E9%87%91%E9%A1%8D%E5%8F%8A%E3%81%B3%E3%83%96%E3%83%83%E3%82%AF%E3%83%93%E3%83%AB%E3%83%87%E3%82%A3%E3%83%B3%E3%82%B0%E3%81%AE%E4%BB%AE%E6%9D%A1%E4%BB%B6%E6%B1%BA%E5%AE%9A%E3%81%AE%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B.pdf",
             "contentReviewed": true,
-            "source": "tdnet_jpx",
-            "locator": "p.1、第7回・第8回の確定割当",
-            "finding": "第7回は従業員17名に1,200個、第8回は取締役8名に2,800個と確定。",
-            "kind": "status"
-          },
-          {
-            "id": "annual_2024",
-            "title": "2024年3月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100TXWG/00.pdf",
-            "publishedAt": "2024-06-28",
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "issuance",
             "source": "official_ir",
-            "locator": "pp.24-29・65",
-            "finding": "第7回120,000株相当・第8回280,000株相当を掲載。第7回は2024年3月期経常利益150百万円超で50％、200百万円超で100％の行使条件。両回ともp.65の2024年3月末未確定残を掲載。",
-            "kind": "status"
+            "locator": "PDF p.1-3「第三者割当増資」「オーバーアロットメントによる売出し」「ロックアップ」",
+            "finding": "6月29日及び7月6日決議の公募17,449,600株、OA関連第三者割当上限3,212,700株を確認。貸株返却用の追加増資枠であり、SOと異なる。株主等の180日ロックアップとSOの上場後6か月行使条件も記載。"
           },
           {
-            "id": "annual_2025",
-            "title": "2025年3月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf",
-            "publishedAt": "2025-06-27",
-            "publishedAtPrecision": "date_only",
+            "id": "oa_closed",
+            "title": "第三者割当増資の結果に関するお知らせ",
+            "publishedAt": "2026-08-06T18:30:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/7e39b1b6/d65d/47f5/bd0c/659c498f8884/140120260806513031.pdf",
             "contentReviewed": true,
+            "kind": "closure",
             "source": "official_ir",
-            "locator": "pp.24-27・61",
-            "finding": "第8回280,000株相当のみを記載し、2025年5月末まで変更なし。第7回の全数失効・取得消却を回号付きで明示する終了根拠は該当確認箇所にない。",
-            "kind": "status"
-          },
-          {
-            "id": "jpx_exercises_202609",
-            "title": "2026年9月分 新株予約権の行使等に伴う上場株式数等の変更",
-            "url": "https://www.jpx.co.jp/listing/co/t13vrt000000nsy7-att/HP-2026.9.pdf",
-            "publishedAt": "2026-10-20",
-            "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
-            "source": "tdnet_jpx",
-            "locator": "表紙、PDF p.25 セキュアヴェイル(3042)行",
-            "finding": "公表日は表紙の2026年10月20日。9月末上場株式数7,690,000株、2022年11月決議分の当月変更0株。月次変更数0を未行使残高0と解釈しない。自己株式の交付では株式数が増えない場合があるとの表紙注記も確認。",
-            "kind": "status"
-          },
-          {
-            "id": "issuance_4",
-            "title": "第三者割当により発行される第４回新株予約権の発行及びコミットメント条項付き第三者割当契約の締結に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1286215/00.pdf",
-            "publishedAt": "2015-09-14T17:15:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "p.1、募集の概要",
-            "finding": "マイルストーン社向け160個・800,000株相当、行使価額1,000円固定。",
-            "kind": "issuance"
-          },
-          {
-            "id": "closure_4",
-            "title": "新株予約権の消滅に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1517189/00.pdf",
-            "publishedAt": "2017-10-02T08:45:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "p.1、消滅前後の回号別残高",
-            "finding": "第4回全160個・800,000株相当が2017年9月29日の期間満了で消滅。消滅後0個・0株を明記。",
-            "kind": "closure"
-          },
-          {
-            "id": "issuance_5",
-            "title": "募集新株予約権（有償ストック・オプション）の発行に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1538370/00.pdf",
-            "publishedAt": "2017-12-07T15:30:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.1-2、2017年有償ストックオプションの発行要項",
-            "finding": "2,000個・200,000株相当を決議。発行時の行使価額660円。後年の残存資料は2017年ストックオプションとして表示。",
-            "kind": "issuance"
-          },
-          {
-            "id": "amendment_5",
-            "title": "募集新株予約権（有償ストック・オプション）の発行内容一部変更に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1541269/00.pdf",
-            "publishedAt": "2017-12-22T15:45:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "p.1、割当対象者の変更前後",
-            "finding": "割当数は取締役2名1,100個・従業員8名900個へ変更。総数2,000個は変わらない。",
-            "kind": "status"
-          },
-          {
-            "id": "issuance_6",
-            "title": "第三者割当により発行される第６回新株予約権の発行及びコミットメント条項付き第三者割当契約の締結に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1626799/00.pdf",
-            "publishedAt": "2018-08-30T17:00:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.1-2、募集の概要・行使条件",
-            "finding": "マイルストーン社向け6,000個・600,000株、当初1,080円、下限600円。2021年の株式分割より前の株式単位。",
-            "kind": "issuance"
-          },
-          {
-            "id": "amendment_6",
-            "title": "第三者割当による第６回新株予約権（行使価額修正条項付）の行使価額の修正決定に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1808488/00.pdf",
-            "publishedAt": "2020-03-18T18:45:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "p.1、修正前後行使価額",
-            "finding": "2020年3月19日から行使価額を1,080円から600円へ修正。",
-            "kind": "status"
-          },
-          {
-            "id": "closure_5_6",
-            "title": "2021年3月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf",
-            "publishedAt": "2021-06-25",
-            "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.18-19・55-56",
-            "finding": "p.18はストックオプション・その他新株予約権等とも該当なし。2018年度137,000株と2020年度463,000株の新株予約権行使による増加は計600,000株で第6回原発行対象数と一致。p.56は2017年SOの200,000株全数失効。2021年4月1日の1対2分割はその後であり、旧回号を現在の残存に加算しない。",
-            "kind": "closure"
+            "locator": "PDF p.1 本文及び参考表",
+            "finding": "SMBC日興証券が3,212,700株全株を申し込まないと通知。全数失権として新株発行しないと明記し、追加増資枠は全数終了。公募17,449,600株の実行を取り消す内容ではない。"
           }
         ],
         "instruments": [
           {
-            "id": "warrant_4",
-            "type": "warrant",
-            "status": "closed",
-            "issueDocumentId": "issuance_4",
-            "statusDocumentId": "closure_4",
-            "asOfDate": "2017-09-29",
-            "remainingUnderlyingShares": 0,
-            "quantityUncertainty": null,
-            "closureKind": "expired",
-            "summary": "2015年発行の第4回160個は全く行使されず2017年9月29日に全数期間満了。消滅後0個・0株の明記を確認。"
-          },
-          {
-            "id": "warrant_2017_stock_option",
-            "type": "warrant",
-            "status": "closed",
-            "issueDocumentId": "issuance_5",
-            "statusDocumentId": "closure_5_6",
-            "asOfDate": "2021-03-31",
-            "remainingUnderlyingShares": 0,
-            "quantityUncertainty": null,
-            "closureKind": "expired",
-            "summary": "2017年有償SO2,000個・分割前200,000株相当は2021年3月期変動表で全数失効。原発行・残高資料が用いる『2017年ストック・オプション』で識別し、回号を独自に付番しない。原発行時660円と2021年注記の100円の差について変更経緯を確定できないが、全数失効の数量根拠は別途確認できる。"
-          },
-          {
-            "id": "warrant_6",
-            "type": "warrant",
-            "status": "closed",
-            "issueDocumentId": "issuance_6",
-            "statusDocumentId": "closure_5_6",
-            "asOfDate": "2021-03-31",
-            "remainingUnderlyingShares": 0,
-            "quantityUncertainty": null,
-            "closureKind": "exercised",
-            "summary": "原発行対象600,000株に対し、2021年有報の2018年度137,000株・2020年度463,000株の行使による増加が合計600,000株と一致し、同有報にその他新株予約権等の残存なし。これは原資料の照合による全数行使の判断で、2021年4月1日の分割後数量との混同はしない。"
-          },
-          {
-            "id": "warrant_7",
+            "id": "tier4_so_1_1",
+            "name": "第1回新株予約権（第1次）",
             "type": "warrant",
             "status": "unresolved",
-            "issueDocumentId": "issuance_7_8",
-            "statusDocumentId": "annual_2026",
-            "asOfDate": "2024-05-31",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
             "remainingUnderlyingShares": null,
-            "quantityUncertainty": "2024年有報には120,000株相当が残るが2025年・2026年有報では回号記載がない。回号付きの全数失効・消却の明文、終了日と終了数量を確認できないため、現在残高を0とも120,000株とも置かない。",
-            "lastVerifiedUnderlyingShares": 120000,
-            "lastVerifiedAsOfDate": "2024-05-31",
-            "unresolvedReason": "原発行、2024年有報、2025年・2026年有報、公式IR配信履歴・電子公告・IRBANK履歴を照合し、個別検索も行ったが、全数終了を示す一次資料本文を特定できなかった。",
-            "summary": "業績条件付き従業員SO。原資料は2024年3月期経常利益1.5億円超・2億円超を条件にするが、業績未達から法律上の失効・消却完了を独自に断定せず未解決とする。"
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2017-06-23",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 375000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.79（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第1回新株予約権（第1次）は2017-06-23決議。5月末の対象株数375,000株、分割調整後行使価額2円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
           },
           {
-            "id": "warrant_8",
+            "id": "tier4_so_2_1",
+            "name": "第2回新株予約権（第1次）",
             "type": "warrant",
-            "status": "outstanding",
-            "issueDocumentId": "issuance_7_8",
-            "statusDocumentId": "annual_2026",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2017-06-23",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 250000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.79（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第2回新株予約権（第1次）は2017-06-23決議。5月末の対象株数250,000株、分割調整後行使価額2円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_1_2",
+            "name": "第1回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2017-07-28",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 50000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.79（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第1回新株予約権（第2次）は2017-07-28決議。5月末の対象株数50,000株、分割調整後行使価額2円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_3_1",
+            "name": "第3回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2017-11-29",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 550000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.79（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第3回新株予約権（第1次）は2017-11-29決議。5月末の対象株数550,000株、分割調整後行使価額60円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_4_1",
+            "name": "第4回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2017-11-29",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 100000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.81（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第4回新株予約権（第1次）は2017-11-29決議。5月末の対象株数100,000株、分割調整後行使価額60円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_4_2",
+            "name": "第4回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2017-12-21",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 100000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.81（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第4回新株予約権（第2次）は2017-12-21決議。5月末の対象株数100,000株、分割調整後行使価額60円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_5",
+            "name": "第5回新株予約権",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2018-10-19",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 585500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.83（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第5回新株予約権は2018-10-19決議。5月末の対象株数585,500株、分割調整後行使価額400円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_6_1",
+            "name": "第6回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2019-02-15",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 138000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.83（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第6回新株予約権（第1次）は2019-02-15決議。5月末の対象株数138,000株、分割調整後行使価額400円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_6_3",
+            "name": "第6回新株予約権（第3次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2019-04-19",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 65000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.83（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第6回新株予約権（第3次）は2019-04-19決議。5月末の対象株数65,000株、分割調整後行使価額400円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_7_1",
+            "name": "第7回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2020-01-24",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 175500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.83（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第7回新株予約権（第1次）は2020-01-24決議。5月末の対象株数175,500株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_7_2",
+            "name": "第7回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2020-04-17",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 45000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.83（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第7回新株予約権（第2次）は2020-04-17決議。5月末の対象株数45,000株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_7_3",
+            "name": "第7回新株予約権（第3次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2020-07-17",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 25000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.83（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第7回新株予約権（第3次）は2020-07-17決議。5月末の対象株数25,000株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_7_4",
+            "name": "第7回新株予約権（第4次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2020-12-18",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 100500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.84（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第7回新株予約権（第4次）は2020-12-18決議。5月末の対象株数100,500株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_8_1",
+            "name": "第8回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2021-04-16",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 80000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.86（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第8回新株予約権（第1次）は2021-04-16決議。5月末の対象株数80,000株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_9",
+            "name": "第9回新株予約権",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2021-04-16",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 75000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.86（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第9回新株予約権は2021-04-16決議。5月末の対象株数75,000株、分割調整後行使価額7.6米ドルを確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_8_2",
+            "name": "第8回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2021-07-16",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 50000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.86（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第8回新株予約権（第2次）は2021-07-16決議。5月末の対象株数50,000株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_8_3",
+            "name": "第8回新株予約権（第3次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2021-10-15",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 30000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.86（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第8回新株予約権（第3次）は2021-10-15決議。5月末の対象株数30,000株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_8_4",
+            "name": "第8回新株予約権（第4次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2021-12-17",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 110500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.86（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第8回新株予約権（第4次）は2021-12-17決議。5月末の対象株数110,500株、分割調整後行使価額800円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_10_1",
+            "name": "第10回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2022-06-17",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 80000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.86（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第10回新株予約権（第1次）は2022-06-17決議。5月末の対象株数80,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_10_2",
+            "name": "第10回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2022-09-16",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 270000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.87（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第10回新株予約権（第2次）は2022-09-16決議。5月末の対象株数270,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_11_1",
+            "name": "第11回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2022-09-16",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 125000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.87（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第11回新株予約権（第1次）は2022-09-16決議。5月末の対象株数125,000株、分割調整後行使価額7.6米ドルを確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_10_3",
+            "name": "第10回新株予約権（第3次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2023-02-17",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 265000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.87（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第10回新株予約権（第3次）は2023-02-17決議。5月末の対象株数265,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_11_2",
+            "name": "第11回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2023-02-17",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 25000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.87（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第11回新株予約権（第2次）は2023-02-17決議。5月末の対象株数25,000株、分割調整後行使価額7.6米ドルを確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_12_1",
+            "name": "第12回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2023-09-15",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 126000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.87（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第12回新株予約権（第1次）は2023-09-15決議。5月末の対象株数126,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_13_1",
+            "name": "第13回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2023-09-15",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 85000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.87（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第13回新株予約権（第1次）は2023-09-15決議。5月末の対象株数85,000株、分割調整後行使価額7.6米ドルを確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_12_2",
+            "name": "第12回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2024-03-15",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 100000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.88（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第12回新株予約権（第2次）は2024-03-15決議。5月末の対象株数100,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_13_2",
+            "name": "第13回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2024-03-15",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 85000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.88（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第13回新株予約権（第2次）は2024-03-15決議。5月末の対象株数85,000株、分割調整後行使価額7.6米ドルを確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_12_3",
+            "name": "第12回新株予約権（第3次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2024-05-17",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 147500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.88（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第12回新株予約権（第3次）は2024-05-17決議。5月末の対象株数147,500株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_16_1",
+            "name": "第16回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2024-10-18",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 155000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.88（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第16回新株予約権（第1次）は2024-10-18決議。5月末の対象株数155,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_16_2",
+            "name": "第16回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2025-02-20",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 100000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.88（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第16回新株予約権（第2次）は2025-02-20決議。5月末の対象株数100,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_16_3",
+            "name": "第16回新株予約権（第3次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2025-03-21",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 140500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.88（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第16回新株予約権（第3次）は2025-03-21決議。5月末の対象株数140,500株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_16_4",
+            "name": "第16回新株予約権（第4次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2025-04-18",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 25000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.89（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第16回新株予約権（第4次）は2025-04-18決議。5月末の対象株数25,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_17_2",
+            "name": "第17回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2025-04-18",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 42500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.89（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第17回新株予約権（第2次）は2025-04-18決議。5月末の対象株数42,500株、分割調整後行使価額7.6米ドルを確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_16_5",
+            "name": "第16回新株予約権（第5次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2025-08-07",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 88500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.89（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第16回新株予約権（第5次）は2025-08-07決議。5月末の対象株数88,500株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_18_1",
+            "name": "第18回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2026-02-02",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 535500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.89（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第18回新株予約権（第1次）は2026-02-02決議。5月末の対象株数535,500株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_18_2",
+            "name": "第18回新株予約権（第2次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2026-04-13",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 97500,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.89（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第18回新株予約権（第2次）は2026-04-13決議。5月末の対象株数97,500株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_19_1",
+            "name": "第19回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2026-04-13",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 25000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.89（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第19回新株予約権（第1次）は2026-04-13決議。5月末の対象株数25,000株、分割調整後行使価額7.6米ドルを確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_14",
+            "name": "第14回新株予約権",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2024-09-29",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 100000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.92（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第14回新株予約権は2024-09-29決議。5月末の対象株数100,000株、分割調整後行使価額60円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_15",
+            "name": "第15回新株予約権",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2024-09-29",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 260000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.92（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第15回新株予約権は2024-09-29決議。5月末の対象株数260,000株、分割調整後行使価額400円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_so_20_1",
+            "name": "第20回新株予約権（第1次）",
+            "type": "warrant",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "company_filing",
+            "asOfDate": "2026-10-30",
+            "remainingUnderlyingShares": null,
+            "quantityUncertainty": "5月31日残高は確認できるが、以後の行使・失効・取得消却・条件変更を分析基準時点まで回号別に完結照合できない。",
+            "decisionDate": "2026-02-02",
+            "originalIssuanceDocumentVerified": false,
+            "lastVerifiedBalance": {
+              "documentId": "company_filing",
+              "asOfDate": "2026-05-31",
+              "remainingUnderlyingShares": 350000,
+              "shareBasis": "2026年2月6日の1:5株式分割後",
+              "locator": "PDF p.94（対応するJPX資料の株式等の状況も照合）"
+            },
+            "unresolvedReason": "発行時の取締役会原資料・割当契約の個別公開資料を取得できていない。上場資料が遡及記載する発行条件は読んだが、それを発行時原資料確認と扱わず、5月末以降の回号別異動にも公表上の不足が残る。",
+            "summary": "第20回新株予約権（第1次）は2026-02-02決議。5月末の対象株数350,000株、分割調整後行使価額1000円を確認。対象株数を基準時点の新株交付数とみなさず、通常の上場後6か月等の行使条件・在籍等の個別条件がある。"
+          },
+          {
+            "id": "tier4_cb_1",
+            "name": "第1回無担保転換社債型新株予約権付社債",
+            "type": "convertible_bond",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "jpx_annual",
             "asOfDate": "2026-05-31",
-            "remainingUnderlyingShares": 280000,
+            "remainingUnderlyingShares": 0,
             "quantityUncertainty": null,
-            "cutoffRemainingUnderlyingShares": null,
-            "cutoffQuantityUncertainty": "280,000株は最新有報の2026年5月31日までの確認値。6月末は帳簿価額280千円のみ、JPX9月分は当月株式数変更0のみで、10月29日基準の回号別残高・自己株交付数は未公表のため確定しない。",
-            "summary": "取締役向け第8回2,800個。2026年有報の権利確定前残高280,000株相当が残存し、286円、2027年12月8日期限。原発行資料の業績条件と、最新有報に残る株価下落時の満期までの行使義務を区別。条件成就・行使予定・新株交付数を推定しない。"
+            "decisionDate": "2017-03-06",
+            "issuedAt": "2017-04-28",
+            "unresolvedReason": "全行使・残高ゼロはJPX有報本文で明示されるが、2017年発行当時の原資料を確認できていないため、指定契約のclosed判定は行わない。",
+            "summary": "2017年4月28日発行分はJPX有報PDF p.74で2026年5月末まで全て行使済みと明記。1月の100,000株と4月の750,000株は分割前後の別時点の既発行分であり、未行使SO6,133,000株に重ねて追加希薄化を計上しない。"
+          },
+          {
+            "id": "tier4_preferred_A",
+            "name": "A種優先株式",
+            "type": "other_equity_financing",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "jpx_annual",
+            "asOfDate": "2026-02-05",
+            "remainingUnderlyingShares": 0,
+            "quantityUncertainty": null,
+            "unresolvedReason": "2月5日の全数普通株式化・自己種類株式全数消却の記述は確認したが、各種類株式の当初発行原資料を確認できていない。",
+            "summary": "A種優先株式は2026年2月5日に1株対普通株式1株で全数取得請求が行われ、取得した自己種類株式は全数消却。既発行普通株式に反映済みであり、今後残る転換枠とは扱わない。発行原資料未確認につき形式上はunresolved。"
+          },
+          {
+            "id": "tier4_preferred_A_1",
+            "name": "A-1種優先株式",
+            "type": "other_equity_financing",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "jpx_annual",
+            "asOfDate": "2026-02-05",
+            "remainingUnderlyingShares": 0,
+            "quantityUncertainty": null,
+            "unresolvedReason": "2月5日の全数普通株式化・自己種類株式全数消却の記述は確認したが、各種類株式の当初発行原資料を確認できていない。",
+            "summary": "A-1種優先株式は2026年2月5日に1株対普通株式1株で全数取得請求が行われ、取得した自己種類株式は全数消却。既発行普通株式に反映済みであり、今後残る転換枠とは扱わない。発行原資料未確認につき形式上はunresolved。"
+          },
+          {
+            "id": "tier4_preferred_A_2",
+            "name": "A-2種優先株式",
+            "type": "other_equity_financing",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "jpx_annual",
+            "asOfDate": "2026-02-05",
+            "remainingUnderlyingShares": 0,
+            "quantityUncertainty": null,
+            "unresolvedReason": "2月5日の全数普通株式化・自己種類株式全数消却の記述は確認したが、各種類株式の当初発行原資料を確認できていない。",
+            "summary": "A-2種優先株式は2026年2月5日に1株対普通株式1株で全数取得請求が行われ、取得した自己種類株式は全数消却。既発行普通株式に反映済みであり、今後残る転換枠とは扱わない。発行原資料未確認につき形式上はunresolved。"
+          },
+          {
+            "id": "tier4_preferred_B",
+            "name": "B種優先株式",
+            "type": "other_equity_financing",
+            "status": "unresolved",
+            "issueDocumentId": null,
+            "statusDocumentId": "jpx_annual",
+            "asOfDate": "2026-02-05",
+            "remainingUnderlyingShares": 0,
+            "quantityUncertainty": null,
+            "unresolvedReason": "2月5日の全数普通株式化・自己種類株式全数消却の記述は確認したが、各種類株式の当初発行原資料を確認できていない。",
+            "summary": "B種優先株式は2026年2月5日に1株対普通株式1株で全数取得請求が行われ、取得した自己種類株式は全数消却。既発行普通株式に反映済みであり、今後残る転換枠とは扱わない。発行原資料未確認につき形式上はunresolved。"
+          },
+          {
+            "id": "tier4_oa_2026",
+            "name": "IPO・OA貸株返却用第三者割当増資枠",
+            "type": "other_equity_financing",
+            "status": "closed",
+            "issueDocumentId": "oa_original",
+            "statusDocumentId": "oa_closed",
+            "asOfDate": "2026-08-06",
+            "remainingUnderlyingShares": 0,
+            "quantityUncertainty": null,
+            "closureKind": "expired",
+            "summary": "上限3,212,700株の追加増資枠は割当先が全株申込を行わず、8月6日公表資料で全数失権・新株発行なしを確認。IPO公募実行分と区別する。"
           }
         ],
-        "unresolvedReason": "最新決算と会社IR掲載有報を起点に第4回・2017年SO・第6～8回の原発行・修正・終了・残高を照合したが、第7回の全数終了の明文根拠と基準時点までの第8回の回号別数量を確定できない。2017年SOの行使価額の変遷も全ては追跡できず、古い回号の終了や新しい行使通知がないことを理由に全潜在株式の残存なしとは判定しない。",
-        "riskNote": "第8回新株予約権は2026年5月31日時点で28万株相当が残り、286円・2027年12月8日期限の条件付き権利で、会計上の未確定残を残存ゼロとは扱えない。第7回は2024年5月末までの12万株相当から最新有報の記載消失までを確認したが、全数終了の明文根拠を確認できず、基準時点の潜在株式全体の残高・希薄化リスクは確定できない。",
-        "quantityBasis": {
-          "newSharesIssuedAtCutoff": null,
-          "treasurySharesDeliveredAtCutoff": null,
+        "riskNote": "SOは2017年以降の40系列で5月末の潜在株式613.3万株を照合したが、各発行原資料とその後の異動・基準時点残高を確定できず、残存希薄化リスクの有無と規模は未確定である。",
+        "unresolvedReason": "最新8月14日決算の潜在株式存在、6月29日公開資料の5月末40系列残高、7月のIPO及び8月のOA増資失権まで照合した。2017年以降の各SO・CB・種類株式の発行時原資料と、5月末以降のSOの回号別残高・条件変更の基準時点までの連続記録は公開資料から完結確認できない。最近の新規発行IR不在を残存なしとはしない。",
+        "shareCountReconciliation": {
+          "verifiedOptionBalanceAsOf": "2026-05-31",
+          "verifiedOptionUnderlyingShares": 6133000,
+          "verifiedOptionSeries": 40,
+          "optionBalanceAtAnalysisCutoff": null,
+          "newSharesDeliverableAtAnalysisCutoff": null,
           "dilutionRate": null,
-          "reason": "未確定の原株式対象数と新規発行数は別概念。行使・自己株交付と同時点の分母を全て照合できないため、希薄化率は計算しない。"
+          "reason": "残高の基準日とIPO後発行済株式数の時点が一致せず、新株交付分と自己株式交付分の基準時点での照合も完了していないため希薄化率を算定しない。",
+          "stockSplit": {
+            "effectiveDate": "2026-02-06",
+            "ratio": "1:5"
+          },
+          "ordinaryShares": {
+            "asOfDate": "2026-07-21",
+            "shares": 63524090,
+            "sourceDocumentId": "q3_results"
+          },
+          "ipoNewSharesIssued": 17449600,
+          "ipoSubscriptionValueMillionYen": 17407,
+          "oaAdditionalNewSharesIssued": 0
         }
       },
       "longTermMaterialReview": {
         "version": 1,
-        "analysisCutoff": "2026-10-29T09:46:16.720Z",
+        "analysisCutoff": "2026-10-30T08:53:47.257Z",
         "conclusion": "unresolved",
         "historyCheckedThrough": null,
         "reviewedCategories": [
@@ -542,398 +1427,670 @@
           "legal_regulatory",
           "contract_changes"
         ],
-        "reviewScopeNote": "2026年8月14日の最新四半期決算・説明サマリー、会社IR掲載の2026年有報の沿革・事業リスク・受注販売・重要契約・設備・株式注記を起点に、公式IR配信一覧の2006年6月26日～2026年10月20日、公式ニュースの過去履歴、IRBANK/TDnet相当一覧を基準時点まで照合。2009年NRI提携、2020年LogStare設立・資金使途変更まで遡った。全8カテゴリを調べたが、継続契約の一部に最新状態の根拠不足があるため完了扱いにはしない。",
+        "reviewScopeNote": "8月14日最新短信・決算説明資料と、6月29日JPX申請有報に収録された2025年9月期財務及び2026年3月中間財務、2015年設立以降の沿革を起点に、公式プレスリリース全19ページ（公開アーカイブ最古2018年12月〜2026年10月29日）とTDnet配信一覧を照合。年数上限を設けず、2020年eve、2022年GI、2023年WILLERを含む選定原発表と続報を本文で確認した。WILLERの目標達成とマップフォー再編原資料に不足が残るため全履歴完結とは判定しない。",
         "documents": [
           {
-            "id": "annual_2026",
-            "title": "2026年3月期 有価証券報告書",
-            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
-            "publishedAt": "2026-06-24",
-            "publishedAtPrecision": "date_only",
+            "id": "q3_results",
+            "title": "2026年９月期 第３四半期決算短信〔日本基準〕(連結)",
+            "publishedAt": "2026-08-14T16:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/ef51e491/92a9/4bb1/88a2/563d4051502c/140120260813520083.pdf",
             "contentReviewed": true,
+            "kind": "financial_baseline",
             "source": "official_ir",
-            "locator": "pp.5・14-24・63",
-            "finding": "第8回2,800個・280,000株相当、行使価額286円、2027年12月8日期限。3月末内容は5月31日まで変更なし。p.63は権利確定前未確定残280,000株、確定後未行使残は横線で、残存ゼロを意味しない。その他新株予約権等・行使価額修正条項付証券は該当なし。情報セキュリティ受注残414,012千円、前年比63.8％、NRIセキュア向け売上264,184千円・20.6％。",
-            "kind": "financial_baseline"
+            "locator": "PDF p.4-11（添付資料p.2-9）",
+            "finding": "売上高5,178百万円、売上総利益2,003百万円、研究開発費5,989百万円、営業損失6,826百万円、補助金収入3,661百万円、持分法投資損失918百万円。44地域実績、7月時点58地域受注、開発顧客13件。"
           },
           {
-            "id": "financial_q1",
-            "title": "2027年３月期 第１四半期決算短信〔日本基準〕（連結）",
-            "url": "https://www2.jpx.co.jp/disc/30420/140120260810516396.pdf",
-            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "id": "q3_presentation",
+            "title": "2026年９月期　第３四半期決算説明資料",
+            "publishedAt": "2026-08-14T16:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/9f1229b9/e588/454f/bf8f/c039e7df655b/140120260813519648.pdf",
             "contentReviewed": true,
+            "kind": "financial_baseline",
+            "source": "official_ir",
+            "locator": "PDF p.10-16・p.18-39",
+            "finding": "売上前年比30.0%増、粗利31.6%増、経常損失14.4%拡大。KDDI1,000台目標、eve90台、コマツ2027年度計画、いすゞ・スズキ等の開発、Astemoの2030年代前半計画、研究開発費と補助金・量産運用の収益構造を確認。"
+          },
+          {
+            "id": "jpx_annual",
+            "title": "新規上場申請のための有価証券報告書（Ⅰの部）",
+            "publishedAt": "2026-06-29T17:00:00+09:00",
+            "url": "https://www.jpx.co.jp/listing/stocks/new/t13vrt000001ihj9-att/07TIERIV-1s.pdf",
+            "contentReviewed": true,
+            "kind": "financial_baseline",
             "source": "tdnet_jpx",
-            "locator": "表紙、添付pp.2-6・8-9",
-            "finding": "売上260,532千円、営業損失52,546千円。大型ソフトウェア案件の反動、先行ソフトウェア費20,020千円、広告宣伝費4,865千円増、人件費12,789千円増。ストック型サービスは前年並み。6月末の新株予約権勘定280千円、発行済7,690,000株。通期売上1,438百万円・営業利益138百万円の予想は変更なし。",
-            "kind": "financial_baseline"
+            "locator": "PDF p.51-52（本文p.47-48）・p.55（設備）・p.38-42（事業リスク）・p.96以降（通期・中間財務）",
+            "finding": "GI全体254億円・2031年3月まで、うち2028年3月まで165億円が契約済み助成対象費用。設備新設等は5月末で該当なし。マップフォー株式の一部譲渡で2025年9月末に連結除外。借入には一部ネット現預金条項、訴訟は提出時点で提起なし。"
           },
           {
-            "id": "financial_q1_summary",
-            "title": "2027年3月期 第1四半期 決算説明サマリー",
-            "url": "https://www2.jpx.co.jp/disc/30420/140120260812518530.pdf",
-            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "id": "ntro_original",
+            "title": "ティアフォー、オーストラリアへの自動運転ソリューションの展開に向けてNTROと戦略的提携を開始",
+            "publishedAt": "2024-03-19",
+            "url": "https://tier4.co.jp/updates/press-release/20240319",
             "contentReviewed": true,
-            "source": "tdnet_jpx",
-            "locator": "PDF pp.2-7",
-            "finding": "公共向けソフトウェア販売の期末偏重、AI-SOCの商談リード増加と成約による収益拡大可能性を説明。個別の成約数・実績売上を示した資料ではない。",
-            "kind": "financial_baseline"
-          },
-          {
-            "id": "financial_fy26_presentation",
-            "title": "2026年3月期 決算説明資料 株式会社セキュアヴェイル（3042）",
-            "url": "https://www2.jpx.co.jp/disc/30420/140120260520542148.pdf",
-            "publishedAt": "2026-05-22T09:05:00+09:00",
-            "contentReviewed": true,
-            "source": "tdnet_jpx",
-            "locator": "PDF pp.2-7",
-            "finding": "償却済みLogStare製品の売上が2026年3月期の増収増益・粗利改善に貢献。これと2025年末開始AI-SOCの個別売上は区別。今期広告費前年比50百万円増と税負担増も会社計画として記載。",
-            "kind": "progress"
-          },
-          {
-            "id": "nri_alliance",
-            "title": "業務提携、第三者割当による新株式発行並びに主要株主の異動に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/741364/00.pdf",
-            "publishedAt": "2009-09-18T16:15:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.1-3、提携・資金調達の目的",
-            "finding": "NRIセキュアの顧客の運用監視業務の一部を担い、営業・運用体制・ソフトウェア開発で協力する資本業務提携。ここに記載された2009年の新株式発行を現在の潜在株式とは扱わない。",
-            "kind": "original_announcement"
-          },
-          {
-            "id": "logstare_establishment",
-            "title": "子会社設立に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf",
-            "publishedAt": "2020-08-20T15:32:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.1-2、目的・概要・日程",
-            "finding": "ログ分析関連製品を開発販売する100％子会社LogStareを2020年8月20日に設立。",
-            "kind": "original_announcement"
-          },
-          {
-            "id": "proceeds_change",
-            "title": "調達資金の資金使途及び支出予定時期の変更に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1877397/00.pdf",
-            "publishedAt": "2020-08-20T15:31:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.1-2、変更理由・内容、2021年有報p.19と照合",
-            "finding": "第6回調達資金の大規模SOC・集合研修拠点構想を縮小・見直し、LogStare子会社設立等へ振替。2021年有報では子会社設立へ299百万円充当済みを確認。旧大型拠点計画を現在も未実行の好材料として扱わない。",
-            "kind": "progress"
-          },
-          {
-            "id": "ai_soc_launch",
-            "title": "セキュアヴェイルがAIを活用したセキュリティ運用サービス『AI-SOC』をリリース、Microsoft 365を対象に1ユーザー月額50円で提供開始",
-            "url": "https://www.secuavail.com/event/2025/1106/ai-soc_m365.html",
-            "publishedAt": "2025-11-06",
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "original_announcement",
             "source": "official_ir",
-            "locator": "本文、提供開始日・価格・機能",
-            "finding": "M365向けAI-SOCを2025年12月1日から提供する計画。1ユーザー月額50円。後続の2026年10月20日資料で提供中であることを確認したが、サービス単独の売上・利益実績は確認できない。",
-            "kind": "original_announcement"
+            "locator": "本文冒頭・提携の目的",
+            "finding": "2024年3月にNTROとの豪州向け自動運転ソリューション展開提携を開始。バス等の車両提供を目指す。"
           },
           {
-            "id": "stnet_sales",
-            "title": "AIで無人化を実現するセキュアヴェイルの次世代SOCサービス「AI-SOC」を株式会社STNetが四国エリアで販売開始",
-            "url": "https://www.secuavail.com/event/2026/0417/ai-soc_stnet.html",
-            "publishedAt": "2026-04-17",
+            "id": "ntro_progress",
+            "title": "National Transport Research Organisationとのオーストラリアでの自動運転バスの展開に関するお知らせ",
+            "publishedAt": "2026-10-29T10:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/23b17a22/a811/439a/9d4f/0c60a0eafb61/140120261029558749.pdf",
+            "contentReviewed": true,
+            "kind": "progress",
+            "source": "official_ir",
+            "locator": "PDF p.1-2「協業の概要」「今後の見通し」",
+            "finding": "自動運転バス提供・専用コースでの調整試験後に段階的実証。2027年9月期業績影響は軽微との会社説明。売上計上実績は示していない。"
+          },
+          {
+            "id": "kddi",
+            "title": "ティアフォーとKDDI、自動運転サービスの社会実装に向け協業に合意　～運転手不足や交通空白など、地域交通の課題解決に貢献～",
+            "publishedAt": "2026-05-29",
+            "url": "https://tier4.co.jp/updates/press-release/20260529-01",
+            "contentReviewed": true,
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "original_announcement",
             "source": "official_ir",
-            "locator": "本文、販売開始日・対象顧客・料金",
-            "finding": "4月17日からSTNetが中小規模顧客向けAI-SOCを直接販売。FortiGate対象機器拡張。実績受注数・売上は未記載。",
-            "kind": "progress"
+            "locator": "本文「背景」「本協業の内容」",
+            "finding": "5月29日合意、7月1日からKDDIスマートモビリティを加え3社連携。2030年まで累計1,000台規模の商用導入目標。"
           },
           {
-            "id": "campaign_20261020",
-            "title": "緊急対応 Microsoft 365監査ログの調査分析レポート無償提供 不正アクセス急増に『AI-SOC』を活用(先着100社)",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2896789/00.pdf",
-            "publishedAt": "2026-10-20T09:00:00+09:00",
+            "id": "gi_original",
+            "title": "ティアフォー、GI基金採択とシリーズB資金調達　総額400億円規模の自動運転ソフトウェア開発推進とリファレンスデザイン提供へ",
+            "publishedAt": "2022-07-19",
+            "url": "https://tier4.co.jp/updates/press-release/20220719",
             "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "PDF pp.1-3",
-            "finding": "先着100社への無償監査ログ分析。通常サービスは初期5万円、1ユーザー月額50円、最低20ユーザー・年契約。無料施策の成約数・売上・利益は記載されていない。",
-            "kind": "progress"
-          },
-          {
-            "id": "bbsec_alliance",
-            "title": "株式会社ブロードバンドセキュリティ（証券コード：４３９８）との業務提携の締結のお知らせ",
-            "url": "https://www.secuavail.com/event/2024/1114/alliance_bbsec.html",
-            "publishedAt": "2024-11-14",
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "original_announcement",
             "source": "official_ir",
-            "locator": "本文、目的・資本業務提携内容・業績影響",
-            "finding": "SOC人材補完、共同ソリューション、相互送客を企図。384,500株の取得は既存株主からの株式取得予定で、新株発行ではない。業績影響は連結売上10％未満の軽微な見込みとの会社説明であり実績ではない。",
-            "kind": "original_announcement"
+            "locator": "本文「グリーンイノベーション基金事業」「シリーズBラウンド」",
+            "finding": "2022年度から9年254億円規模のGI研究開発を公表。121億円のシリーズB増資と合わせた400億円規模は構想であり全額補助金受領を意味しない。"
           },
           {
-            "id": "toshiba_adoption",
-            "title": "セキュアヴェイルのNetStare Cloudを東芝ITサービスが採用",
-            "url": "https://www.secuavail.com/event/2025/0708/toshibait_secuavail.html",
-            "publishedAt": "2025-07-08",
+            "id": "eve_original",
+            "title": "ヤマハ発動機とティアフォーが自動搬送ソリューションの合弁会社を設立　−工場内物流の自動運転化を目指して−",
+            "publishedAt": "2020-03-27",
+            "url": "https://tier4.co.jp/updates/press-release/20200327",
+            "contentReviewed": true,
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "original_announcement",
             "source": "official_ir",
-            "locator": "本文、NetStare Cloudの提供と用途",
-            "finding": "東芝ITサービスのSOCを自社の次世代SIEMで支援。契約期間・採用金額・現在の個別売上は未記載。",
-            "kind": "original_announcement"
+            "locator": "本文冒頭・会社概要",
+            "finding": "2020年2月設立のヤマハ発動機との合弁eve autonomy、同年4月から稼働予定。工場内物流の自動運転化、サブスクリプションサービス開発を計画。"
           },
           {
-            "id": "ncsf_original",
-            "title": "セキュアヴェイル、セキュリティ企業に投資するファンド「日本サイバーセキュリティファンド１号投資事業有限責任組合」に出資企業として参画",
-            "url": "https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html",
-            "publishedAt": "2024-07-29",
+            "id": "eve_launch",
+            "title": "国内初自動運転EVを用いた無人搬送サービス提供を開始 - 屋外対応型自動搬送サービス「eve auto」を本格始動 -",
+            "publishedAt": "2022-11-30",
+            "url": "https://tier4.co.jp/updates/press-release/20221130-01",
+            "contentReviewed": true,
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "progress",
             "source": "official_ir",
-            "locator": "本文、LP出資・事業支援",
-            "finding": "サイバーセキュリティ企業特化ファンドへLPとして参加し、販路提供やマーケティング支援を企図。",
-            "kind": "original_announcement"
+            "locator": "本文冒頭・サービス概要",
+            "finding": "2022年11月30日にeve auto商用提供開始を公表、当時9社で運用。後年の運用台数や親会社利益とは区別する。"
           },
           {
-            "id": "ncsf_lrm",
-            "title": "セキュアヴェイルが参画する日本サイバーセキュリティファンドの第一号投資先企業に国産の従業員向けセキュリティ教育クラウドサービス「セキュリオ」を提供するLRM社が決定",
-            "url": "https://www.secuavail.com/event/2025/0912/ncsf_lrm.html",
-            "publishedAt": "2025-09-12",
+            "id": "komatsu",
+            "title": "ティアフォー・コマツ・EARTHBRAIN、建設機械の自動運転技術の実用化に向けて協業開始",
+            "publishedAt": "2025-09-18",
+            "url": "https://tier4.co.jp/updates/press-release/20250918",
+            "contentReviewed": true,
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "original_announcement",
             "source": "official_ir",
-            "locator": "本文、第一号投資先の決定",
-            "finding": "ファンドの第一号投資先としてLRMを選定。セキュアヴェイル自身の売上・利益計上額や投資回収額を示してはいない。",
-            "kind": "progress"
+            "locator": "本文冒頭・対象機種",
+            "finding": "コマツ及びEARTHBRAINと建機の自動運転化協業。HM400・HD785から開始し2027年度までの実用化目標。"
           },
           {
-            "id": "sapporo_office",
-            "title": "札幌オフィス開設に関するお知らせ",
-            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/123662/00.pdf",
-            "publishedAt": "2026-07-28T09:00:00+09:00",
+            "id": "jr_tokai",
+            "title": "ティアフォー、JR東海と資本業務提携　鉄道網と自動運転の連携で地域の価値向上を目指す",
+            "publishedAt": "2025-12-26",
+            "url": "https://tier4.co.jp/updates/press-release/20251226",
             "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.1-2、開設日・業務・業績影響",
-            "finding": "北海道の営業・パートナー開拓拠点を2026年8月1日開設予定と公表。今期影響は軽微という会社説明。営業実績や拠点別売上を示した続報は未確認。",
-            "kind": "original_announcement"
-          },
-          {
-            "id": "growth_listing_plan",
-            "title": "新市場区分の上場維持基準の適合に向けた計画書",
-            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2065916/00.pdf",
-            "publishedAt": "2021-12-28T15:00:00+09:00",
-            "contentReviewed": true,
-            "source": "official_ir",
-            "locator": "pp.1-2、時価総額基準への計画",
-            "finding": "グロース市場の時価総額基準未達に対し2026年3月までを目処に適合を目指した旧計画。",
-            "kind": "original_announcement"
-          },
-          {
-            "id": "standard_listing_approval",
-            "title": "（開示事項の経過）東証スタンダード市場への市場区分変更承認に関するお知らせ",
-            "url": "https://www2.jpx.co.jp/disc/30420/140120260121536494.pdf",
-            "publishedAt": "2026-01-21T16:30:00+09:00",
-            "contentReviewed": true,
-            "source": "tdnet_jpx",
-            "locator": "pp.1-2、承認・旧計画取り下げ・基準適合",
-            "finding": "1月28日のスタンダード移行承認、旧グロース適合計画を1月21日取り下げ。申請直前のスタンダード基準は全て適合。2026年有報の沿革で移行実施も照合。",
-            "kind": "progress"
-          },
-          {
-            "id": "secure_innovation_sale",
-            "title": "持分法適用関連会社の株式譲渡に伴う特別利益の計上に関するお知らせ",
-            "url": "https://www2.jpx.co.jp/disc/30420/140120231215503982.pdf",
-            "publishedAt": "2023-12-15T15:30:00+09:00",
-            "contentReviewed": true,
-            "source": "tdnet_jpx",
-            "locator": "pp.1-2、全株譲渡・実行予定日・利益見込み",
-            "finding": "セキュアイノベーション20,000株を104百万円で全株譲渡し、2023年12月22日実行予定。約78百万円の利益は発表時点の見込み。2026年有報p.5で2023年12月の持分法除外実施を確認。",
-            "kind": "original_announcement"
-          },
-          {
-            "id": "netstare_registration",
-            "title": "次世代ファイアウォール運用監視サービス「NetStare」が経済産業省の情報セキュリティサービス台帳に登録されました",
-            "url": "https://www.secuavail.com/event/2025/0328/sss-erc_netstare.html",
-            "publishedAt": "2025-03-28",
             "publishedAtPrecision": "date_only",
-            "contentReviewed": true,
+            "kind": "original_announcement",
             "source": "official_ir",
-            "locator": "本文、台帳登録内容",
-            "finding": "登録日2025年3月20日、有効期限2027年3月19日。技術・品質基準適合の説明であり、補助金採択や個別受注・売上計上を示すものではない。",
-            "kind": "original_announcement"
+            "locator": "本文「資本業務提携の目的」",
+            "finding": "2025年12月26日資本業務提携。駅からの二次交通整備への協力であり、公表だけで車両販売・利益の実績とはしない。"
+          },
+          {
+            "id": "isuzu_original",
+            "title": "いすゞとティアフォーが資本業務提携　～路線バス領域における自動運転システムの開発で協業～",
+            "publishedAt": "2024-03-06",
+            "url": "https://tier4.co.jp/updates/press-release/20240306",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "本文冒頭・両社の取り組み",
+            "finding": "2024年3月に路線バス用自動運転システム開発を目的とした資本業務提携に合意。"
+          },
+          {
+            "id": "isuzu_progress",
+            "title": "ティアフォーといすゞ、NVIDIA DRIVE Hyperionを搭載した自動運転レベル4バスを実装へ",
+            "publishedAt": "2026-03-17",
+            "url": "https://tier4.co.jp/updates/press-release/20260317",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "progress",
+            "source": "official_ir",
+            "locator": "本文冒頭・自動運転レベル4バス開発",
+            "finding": "NVIDIA DRIVE Hyperionを搭載するいすゞ大型EVバスへのAutoware統合を公表。量産売上や利益実績は示していない。"
+          },
+          {
+            "id": "suzuki",
+            "title": "ティアフォーとスズキが資本業務提携　～地域モビリティを支える自動運転技術で協業～",
+            "publishedAt": "2024-06-17",
+            "url": "https://tier4.co.jp/updates/press-release/20240617",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "本文冒頭・提携目的",
+            "finding": "2024年6月に地域モビリティを支える自動運転システム研究開発・社会実装で資本業務提携。"
+          },
+          {
+            "id": "astemo",
+            "title": "ティアフォー、Astemoの次世代開発プラットフォームを共同開発",
+            "publishedAt": "2026-08-05",
+            "url": "https://tier4.co.jp/updates/press-release/20260805-tieriv-develops-platform-with-astemo",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "本文「共同開発の背景」「共同開発の概要」",
+            "finding": "Co-MLOpsアーキテクチャのライセンスと関連技術を提供。次世代開発基盤は2030年頃の実用化、自家用車への搭載は2030年代前半が会社の目標。"
+          },
+          {
+            "id": "elm",
+            "title": "ティアフォー、Elmとサウジアラビアにおける自動運転ソリューションの推進に向けて提携",
+            "publishedAt": "2025-09-26",
+            "url": "https://tier4.co.jp/updates/press-release/20250926",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "本文「提携の概要」「主な協力領域」",
+            "finding": "2025年9月にElmとのMoUを締結しサウジの現地実装・教育等で提携。量的受注や売上実績の公表とは異なる。"
+          },
+          {
+            "id": "saudi_grant",
+            "title": "グローバルサウス未来志向型共創等事業費補助金（大型実証 非ASEAN加盟国） 採択に関するお知らせ",
+            "publishedAt": "2026-09-04T16:30:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/2c376381/de47/45b6/9b5a/7b8abcddecc6/140120260904531985.pdf",
+            "contentReviewed": true,
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "PDF p.1-2「補助事業の内容」「今後の見通し」",
+            "finding": "対象経費申請予定6,000百万円、補助率2/3予定。交付決定・交付額は後日確定。2027年車両構築・AI学習、2028年閉鎖空間実証、2029年以降ODD拡張、事業期限2029年12月31日予定。"
+          },
+          {
+            "id": "saudi_progress",
+            "title": "ティアフォー、経済産業省の「グローバルサウス未来志向型共創等事業費補助金（大型実証 非ASEAN加盟国） 」に採択",
+            "publishedAt": "2026-10-05",
+            "url": "https://tier4.co.jp/updates/press-release/20261005-tieriv-advances-autonomous-bus-fots-and-talent-development-in-saudi-arabia",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "progress",
+            "source": "official_ir",
+            "locator": "本文「背景」「本事業の概要」「政府による支援」",
+            "finding": "ElmとのMoUを基盤に、欧州OEMとの車両構築、砂漠環境適合、閉鎖空間から公道への実証と人材育成を説明。正式な交付額や売上・利益実績は示していない。"
+          },
+          {
+            "id": "tum_center",
+            "title": "TUM Autoware Research Center by TIER IV設立に関するお知らせ",
+            "publishedAt": "2026-10-15T12:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/4b76f734/3daa/468e/810e/3c086c811c63/140120261015550957.pdf",
+            "contentReviewed": true,
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "PDF p.1-2「協業の概要」「今後の見通し」",
+            "finding": "ティアフォーの研究資金でTUM研究拠点を設立し複数年の研究協業を開始。2026年9月期相当資金は既発表予想に織り込み済み、影響軽微。"
+          },
+          {
+            "id": "tum_nvidia",
+            "title": "ミュンヘン工科大学との自動運転レベル４の開発にかかるNVIDIA GTC Berlinでの協業発表に関するお知らせ",
+            "publishedAt": "2026-10-22T11:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/161e56f2/bdb7/4bff/8592/21c960683e6c/140120261022554420.pdf",
+            "contentReviewed": true,
+            "kind": "progress",
+            "source": "official_ir",
+            "locator": "PDF p.1「協業の概要」「今後の見通し」",
+            "finding": "AutowareとNVIDIA Hyperion・Halosを統合しドイツの開発に導入。2027年9月期単独影響は軽微との会社見通し。"
+          },
+          {
+            "id": "autoflow",
+            "title": "国土交通省「自動物流道路の社会実装に向けた実証実験」の採択に関するお知らせ",
+            "publishedAt": "2026-10-14T13:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/60456668/3df5/41ca/a32e/ffc9393a7862/140120261014550338.pdf",
+            "contentReviewed": true,
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "PDF p.1-2「本実証の内容」「本件の意義」",
+            "finding": "2025年度の単車両実証等を踏まえ、3台でトンネル等の追従・合流等を検証。期間は2026年10月下旬〜11月上旬の8日間予定。売上・利益寄与は非開示。"
+          },
+          {
+            "id": "camera_original",
+            "title": "ティアフォー、自動運転レベル4に最適化した量産向けの車載カメラMPシリーズを提供開始",
+            "publishedAt": "2026-05-13",
+            "url": "https://tier4.co.jp/updates/press-release/20260513",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "本文冒頭・主な特徴",
+            "finding": "5月13日MPシリーズの提供開始。外部パートナー企業が製造と品質管理を行い車載品質・安定供給を目指す。"
+          },
+          {
+            "id": "camera_progress",
+            "title": "ティアフォー、自動運転レベル4に最適化した車載カメラ「MPシリーズ」に、車両周辺の監視に適した120度画角の新モデルを追加",
+            "publishedAt": "2026-09-30",
+            "url": "https://tier4.co.jp/updates/press-release/20260930-tieriv-expands-mp-camera-series-c1c2",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "progress",
+            "source": "official_ir",
+            "locator": "本文冒頭・新モデルの特徴",
+            "finding": "9月30日C1-120MP・C2-120MPの提供開始。120度画角で近傍監視・死角低減に対応。製品別売上・利益実績は示していない。"
+          },
+          {
+            "id": "renesas",
+            "title": "ルネサス エレクトロニクス株式会社との協業に関するお知らせ",
+            "publishedAt": "2026-08-20T13:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/3db8b02c/45d9/4c9d/9f0f/f77ad858e1db/140120260820523406.pdf",
+            "contentReviewed": true,
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "PDF p.1-2「協業の概要」「イベントでの展示」「今後の業績に与える影響」",
+            "finding": "R-Car Gen5/X5HとAutowareを統合する協業。9月9-11日の展示計画があるがMoUその他契約の締結は伴わない。当期業績影響軽微。"
+          },
+          {
+            "id": "jst",
+            "title": "JST「次世代エッジAI半導体研究開発事業」への参画のお知らせ",
+            "publishedAt": "2026-08-14T13:00:00+09:00",
+            "url": "https://contents.xj-storage.jp/xcontents/AS83940/4bff20e2/db27/40cc/989e/f16b8ae0d9b9/140120260810515998.pdf",
+            "contentReviewed": true,
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "PDF p.1-2「プログラムの概要」「今後の見通し」",
+            "finding": "Autoware向けAIチップ・ツールチェーンの設計・評価事業への参画。2026年9月期への影響軽微。"
+          },
+          {
+            "id": "willer_original",
+            "title": "ティアフォーとWILLER、自動運転事業で協力開始　～2023年度に国内3エリアで実証実験、2025年度には10エリアでの実用化目指す～",
+            "publishedAt": "2023-11-02",
+            "url": "https://tier4.co.jp/updates/press-release/20231102",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "本文冒頭・最終段落",
+            "finding": "2023年度3エリア実証、2025年度約10エリア実用化を目標として連携開始。達成保証や実績ではない。"
+          },
+          {
+            "id": "willer_progress",
+            "title": "新潟県佐渡市で自動運転サービス導入を見据えた実証実験を開始　～国内最長ルートを運行！2025年の自動運転レベル4実装に向けた自動走行実証・異業種連携実証～",
+            "publishedAt": "2024-11-08",
+            "url": "https://tier4.co.jp/updates/press-release/20241108",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "progress",
+            "source": "official_ir",
+            "locator": "本文「実証実験の主なポイント」「参画団体役割」",
+            "finding": "2024年11月10-24日の佐渡36kmルート実証計画。WILLERが統括、ティアフォーは車両提供・保守等を担当。2025年のL4実装目標はあるが達成実績を示す文書ではない。"
+          },
+          {
+            "id": "truck_original",
+            "title": "ティアフォー、モビリティDX促進のための無人自動運転開発・実証支援事業に採択　ロボットタクシーとトラックの開発を加速",
+            "publishedAt": "2024-08-20",
+            "url": "https://tier4.co.jp/updates/press-release/20240820",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "original_announcement",
+            "source": "official_ir",
+            "locator": "本文冒頭・「自動運転トラック開発事業」",
+            "finding": "2024年度のモビリティDX補助事業に採択。ロボットタクシーとトラックを含む交付上限約7億円は実受領額ではない。"
+          },
+          {
+            "id": "truck_completed",
+            "title": "ティアフォー、経産省事業を完了し、自動運転トラックの社会実装を加速",
+            "publishedAt": "2025-04-28",
+            "url": "https://tier4.co.jp/updates/press-release/20250428",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only",
+            "kind": "progress",
+            "source": "official_ir",
+            "locator": "本文冒頭・実証走行の結果",
+            "finding": "2025年4月28日に当該トラック開発事業の完了と新東名区間での実証走行成功を明示。継続受注・通期売上・利益額を示すものではない。"
           }
         ],
         "items": [
           {
-            "id": "nri_alliance",
+            "id": "ntro",
             "category": "alliances",
             "direction": "mixed",
-            "status": "contributing",
-            "originalDocumentId": "nri_alliance",
-            "latestProgressDocumentId": "annual_2026",
-            "currentAssessment": "2009年の資本業務提携先NRIセキュア向け売上は2026年3月期に2億6,418万円、連結売上の20.6％を占め、既存販路としての実績と顧客集中の両面を持つ。",
-            "actualContribution": {
-              "documentId": "annual_2026",
-              "metric": "revenue",
-              "basis": "reported_actual",
-              "statement": "2026年3月期の主要販売先としてNRIセキュア向け実績売上264,184千円、連結売上比20.6％を掲載。これを提携先との現存する取引実績とし、2009年契約だけに帰属する増分売上とまでは主張しない。"
-            }
+            "status": "in_progress",
+            "originalDocumentId": "ntro_original",
+            "latestProgressDocumentId": "ntro_progress",
+            "currentAssessment": "NTROとの2024年提携はバス提供と走行試験へ進んだが、2027年9月期への影響は会社説明で軽微であり、豪州での売上計上実績は開示されていない。"
           },
           {
-            "id": "logstare_business",
-            "category": "restructuring",
-            "direction": "positive",
-            "status": "contributing",
-            "originalDocumentId": "logstare_establishment",
-            "latestProgressDocumentId": "financial_fy26_presentation",
-            "currentAssessment": "2020年設立のLogStareは、2026年5月22日9:05公表資料で償却済み製品の販売が通期の増収増益に寄与したと説明されており、過去の開発投資は既存製品の収益基盤になっている。",
+            "id": "tum",
+            "category": "alliances",
+            "direction": "mixed",
+            "status": "in_progress",
+            "originalDocumentId": "tum_center",
+            "latestProgressDocumentId": "tum_nvidia",
+            "currentAssessment": "TUM研究拠点は自社の研究資金負担を伴い、NVIDIA基盤との統合は欧州開発を広げる一方、単独の翌期業績影響は軽微とされる。"
+          },
+          {
+            "id": "autoflow",
+            "category": "orders_contracts",
+            "direction": "mixed",
+            "status": "planned",
+            "originalDocumentId": "autoflow",
+            "latestProgressDocumentId": "autoflow",
+            "currentAssessment": "物流道路実証は3台の自動走行による省人化技術の検証であり、基準日は予定期間内にあるが、実施完了や売上・利益寄与は確認できない。",
             "reportedTiming": {
-              "documentId": "logstare_establishment",
-              "statement": "2020年8月20日に会社設立、同日事業開始予定。",
-              "dueDate": "2020-08-20"
-            },
-            "actualContribution": {
-              "documentId": "financial_fy26_presentation",
-              "metric": "profit",
-              "basis": "reported_actual",
-              "statement": "2026年3月期の増収増益・収益率改善の要因として、開発経費等償却済みのLogStare製品の売上が貢献したと会社が説明。AI-SOC単独の寄与額ではない。"
+              "documentId": "autoflow",
+              "statement": "実証時期は2026年10月下旬〜11月上旬（8日間）",
+              "dueDate": null
             }
           },
           {
-            "id": "ai_soc",
+            "id": "saudi_grant",
+            "category": "approvals_subsidies",
+            "direction": "mixed",
+            "status": "planned",
+            "originalDocumentId": "saudi_grant",
+            "latestProgressDocumentId": "saudi_progress",
+            "currentAssessment": "サウジ計画は2027年の車両構築、2028年の閉鎖空間実証へ向かう準備段階であり、申請経費60億円と補助率2/3予定を確定交付額や売上とはみなさない。",
+            "reportedTiming": {
+              "documentId": "saudi_grant",
+              "statement": "2027年に自動運転バスの構築およびAIモデルの学習・強化、2028年に現地閉鎖空間の走行実証、2029年以降ODDを拡張。事業実施は交付決定日〜2029年12月31日予定。",
+              "dueDate": null
+            }
+          },
+          {
+            "id": "elm",
+            "category": "alliances",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "elm",
+            "latestProgressDocumentId": "saudi_progress",
+            "currentAssessment": "Elmとの2025年MoUはサウジ現地適合・人材育成の協業基盤であり、2026年10月の事業説明まで具体化したが、商業運行や受注額の実績は確認できない。"
+          },
+          {
+            "id": "mp_camera",
+            "category": "products_services",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "camera_original",
+            "latestProgressDocumentId": "camera_progress",
+            "currentAssessment": "MPカメラは5月の量産向け提供開始から9月の120度モデル追加へ進み、外部製造先を使う製品拡販が続く一方、モデル別の売上・粗利は非開示である。"
+          },
+          {
+            "id": "gi",
+            "category": "approvals_subsidies",
+            "direction": "mixed",
+            "status": "in_progress",
+            "originalDocumentId": "gi_original",
+            "latestProgressDocumentId": "jpx_annual",
+            "currentAssessment": "GI基金は2022年採択時の254億円構想に対し、上場資料では2028年3月まで約165億円が契約済みの助成対象費用であり、全額受領済み補助金や売上とは異なる。",
+            "reportedTiming": {
+              "documentId": "jpx_annual",
+              "statement": "事業全体は2031年3月まで、うち次回ステージゲートまでの契約済み期間は2028年3月まで。",
+              "dueDate": null
+            }
+          },
+          {
+            "id": "kddi",
+            "category": "alliances",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "kddi",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "KDDI連携の2030年累計1,000台規模は商用導入目標であり、6月末の実証・実装44地域や7月時点58地域の受注を1,000台の確定受注と読み替えない。",
+            "reportedTiming": {
+              "documentId": "kddi",
+              "statement": "2030年までに累計1,000台規模の商用導入を目指す。",
+              "dueDate": null
+            }
+          },
+          {
+            "id": "eve",
             "category": "products_services",
             "direction": "mixed",
             "status": "in_progress",
-            "originalDocumentId": "ai_soc_launch",
-            "latestProgressDocumentId": "campaign_20261020",
-            "currentAssessment": "AI-SOCは2025年12月1日の公表開始予定を経て提供中となり、STNet経由の四国展開と無償診断による顧客獲得段階にあるが、サービス単独の実績売上・利益は未確認。",
+            "originalDocumentId": "eve_original",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "eve autoは2022年11月の商用提供開始から2026年6月の運用90台へ進んだが、関連会社の車両台数をそのままティアフォーの売上や利益とみなさない。",
+            "supportingDocumentIds": [
+              "eve_launch"
+            ],
             "reportedTiming": {
-              "documentId": "ai_soc_launch",
-              "statement": "AI-SOC for Microsoft 365の提供を2025年12月1日より開始する。",
-              "dueDate": "2025-12-01"
-            },
-            "timingReachedButContributionUnconfirmed": true,
-            "riskNote": "AI-SOCの提供開始予定日には到達し、提供中であることも確認できるが、商談リードや無料診断の増加を有料契約・利益への実績寄与には置き換えられない。"
+              "documentId": "eve_original",
+              "statement": "合弁会社は2020年4月から稼働。",
+              "dueDate": null
+            }
           },
           {
-            "id": "bbsec_alliance",
+            "id": "komatsu",
+            "category": "alliances",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "komatsu",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "コマツ・EARTHBRAINの建機案件は2027年度中の試験導入・実用化を目指す開発段階であり、量産収益の実績とは区別する。",
+            "reportedTiming": {
+              "documentId": "q3_presentation",
+              "statement": "2027年度中の現場への試験導入・実用化を目指す。",
+              "dueDate": null
+            }
+          },
+          {
+            "id": "jr_tokai",
+            "category": "alliances",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "jr_tokai",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "JR東海の2025年12月の資本業務提携は駅からの二次交通への接点を広げたが、第三者割当による資金調達と車両サービスの売上・利益寄与は別である。"
+          },
+          {
+            "id": "isuzu",
+            "category": "products_services",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "isuzu_original",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "いすゞの大型EVバスはNVIDIA基盤を用いた開発が進むが、8月説明資料では展開計画は非公表で、案件別の量産収益実績は確認できない。",
+            "supportingDocumentIds": [
+              "isuzu_progress"
+            ]
+          },
+          {
+            "id": "suzuki",
+            "category": "products_services",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "suzuki",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "スズキのソリオ向け協業は交通空白地域への展開を狙う開発案件として残るが、8月説明資料の展開計画は非公表である。"
+          },
+          {
+            "id": "astemo",
+            "category": "products_services",
+            "direction": "positive",
+            "status": "in_progress",
+            "originalDocumentId": "astemo",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "Astemo向け開発基盤は2030年頃の実用化、自家用車搭載は2030年代前半という会社目標であり、足元の量産収益として先取りしない。",
+            "reportedTiming": {
+              "documentId": "astemo",
+              "statement": "次世代開発プラットフォームは2030年頃の実用化、自家用車搭載は2030年代前半を目指す。",
+              "dueDate": null
+            }
+          },
+          {
+            "id": "renesas",
             "category": "alliances",
             "direction": "mixed",
-            "status": "unresolved",
-            "originalDocumentId": "bbsec_alliance",
-            "latestProgressDocumentId": "annual_2026",
-            "currentAssessment": "BBSecとの2024年の提携はSOC人材・共同開発・相互送客を狙うものの、当初の軽微な業績影響という見込みを、足元の実績収益としては扱えない。",
-            "unresolvedReason": "原発表、最新有報の沿革、IR/ニュース履歴を確認したが、共同開発・送客の実行範囲、基準時点の契約継続・個別寄与を示す続報を確認できない。",
-            "riskNote": "BBSec提携と東芝ITサービス採用は原発表を確認したが、基準時点の契約継続状況と個別の業績反映を裏づける続報を確認できず、長期案件の追跡には未解決点が残る。"
+            "status": "planned",
+            "originalDocumentId": "renesas",
+            "latestProgressDocumentId": "renesas",
+            "currentAssessment": "ルネサス協業はR-CarとAutowareの統合開発であり、8月公表時点でMoU等の契約を伴わず、展示予定を販売契約や計上売上とは扱わない。",
+            "reportedTiming": {
+              "documentId": "renesas",
+              "statement": "2026年9月9日から11日のAutomotive World 2026でデモを行う予定。売上計上・収益化の予定ではない。",
+              "dueDate": null
+            }
           },
           {
-            "id": "toshiba_contract",
-            "category": "orders_contracts",
-            "direction": "positive",
-            "status": "unresolved",
-            "originalDocumentId": "toshiba_adoption",
-            "latestProgressDocumentId": "financial_q1",
-            "currentAssessment": "東芝ITサービスへのNetStare Cloud採用は2025年7月に公表済みだが、契約金額・期間と基準時点の個別売上は未確認。",
-            "unresolvedReason": "採用原発表とその後の最新決算・公式ニュースを照合したが、当該契約の期間・継続・売上寄与を識別できる会社の後続説明を確認できない。",
-            "riskNote": "BBSec提携と東芝ITサービス採用は原発表を確認したが、基準時点の契約継続状況と個別の業績反映を裏づける続報を確認できず、長期案件の追跡には未解決点が残る。"
-          },
-          {
-            "id": "ncsf",
+            "id": "jst",
             "category": "investment_capacity",
             "direction": "mixed",
             "status": "in_progress",
-            "originalDocumentId": "ncsf_original",
-            "latestProgressDocumentId": "ncsf_lrm",
-            "currentAssessment": "2024年参画の日本サイバーセキュリティファンドは2025年9月にLRMを第一号投資先とする段階まで進んだが、同社への販路効果や投資収益の実績額は未確認。"
+            "originalDocumentId": "jst",
+            "latestProgressDocumentId": "q3_presentation",
+            "currentAssessment": "JSTのAI半導体事業は特定ハードへの依存を下げる研究開発であり、足元の利益寄与は軽微とされ、量産販売の実績とは区別する。"
           },
           {
-            "id": "sapporo_office",
-            "category": "investment_capacity",
-            "direction": "mixed",
-            "status": "planned",
-            "originalDocumentId": "sapporo_office",
-            "latestProgressDocumentId": "sapporo_office",
-            "currentAssessment": "札幌オフィスは2026年7月28日9:00の発表で8月1日開設予定とされ、基準時点は北海道の営業展開期に当たるが、開設後の営業実績・拠点別収益は未確認。",
-            "reportedTiming": {
-              "documentId": "sapporo_office",
-              "statement": "2026年8月1日付で札幌オフィスを開設する。2027年3月期の業績への影響は軽微。",
-              "dueDate": "2026-08-01"
-            },
-            "timingReachedButContributionUnconfirmed": true,
-            "riskNote": "札幌オフィスの8月1日という公表開設予定日には到達しているが、実際の稼働開始を裏づける続報と売上・利益の個別寄与は未確認で、予定経過だけで収益化済みとは断定しない。"
-          },
-          {
-            "id": "growth_market_plan",
-            "category": "legal_regulatory",
-            "direction": "mixed",
-            "status": "ended",
-            "originalDocumentId": "growth_listing_plan",
-            "latestProgressDocumentId": "standard_listing_approval",
-            "currentAssessment": "旧グロース市場の適合計画は2026年1月21日に取り下げられ、スタンダード移行は最新有報で実施を確認した。旧基準未達を現在の新たな懸念として持ち越さない。"
-          },
-          {
-            "id": "secure_innovation_divestiture",
+            "id": "mapfour_restructuring",
             "category": "restructuring",
-            "direction": "mixed",
-            "status": "ended",
-            "originalDocumentId": "secure_innovation_sale",
-            "latestProgressDocumentId": "annual_2026",
-            "currentAssessment": "2023年12月のセキュアイノベーション全株譲渡と持分法除外は最新有報で実施を確認した。発表時の約78百万円の特別利益見込みを2026年の新材料や継続収益にしない。"
+            "direction": "negative",
+            "status": "unresolved",
+            "originalDocumentId": null,
+            "latestProgressDocumentId": "q3_results",
+            "currentAssessment": "マップフォーは2025年9月に連結から外れた後も持分法損益の対象であり、関連会社3社に係る3Q単独1.31億円の投資損失は提携に伴う財務負担を示す。",
+            "supportingDocumentIds": [
+              "jpx_annual",
+              "associate_loss"
+            ],
+            "unresolvedReason": "上場資料の株式一部譲渡実行・連結除外と最新持分法損失は確認したが、2025年の個別原発表・株式譲渡原契約・譲渡対価を公表資料から確認できていない。",
+            "riskNote": "マップフォーの2025年株式譲渡は上場資料で実行済みと分かるが、個別の原発表・譲渡対価を確認できず、再編の原契約を通じた財務影響の照合は未完了である。"
           },
           {
-            "id": "netstare_registration",
-            "category": "approvals_subsidies",
-            "direction": "positive",
-            "status": "planned",
-            "originalDocumentId": "netstare_registration",
-            "latestProgressDocumentId": "netstare_registration",
-            "currentAssessment": "NetStareの台帳登録は2027年3月19日までという公表有効期間内にあるが、登録による個別受注額・売上への増分寄与は未確認。"
+            "id": "truck_ended",
+            "category": "contract_changes",
+            "direction": "mixed",
+            "status": "ended",
+            "originalDocumentId": "truck_original",
+            "latestProgressDocumentId": "truck_completed",
+            "currentAssessment": "2024年採択のトラック開発補助事業は2025年4月に完了済みであり、今回の継続受注や収益計上とは区別する。"
+          },
+          {
+            "id": "willer",
+            "category": "alliances",
+            "direction": "mixed",
+            "status": "unresolved",
+            "originalDocumentId": "willer_original",
+            "latestProgressDocumentId": "willer_progress",
+            "currentAssessment": "WILLERとの2025年度約10エリア実用化目標は対象年度を過ぎているが、佐渡実証後の達成状況・売上寄与・計画変更を基準時点までの公表資料では確定できない。",
+            "reportedTiming": {
+              "documentId": "willer_original",
+              "statement": "2025年度には約10エリアでの実用化を目指す。",
+              "dueDate": null
+            },
+            "unresolvedReason": "2024年佐渡実証の続報と2025年度目標は読んだが、最新決算の地域数を当該提携の10エリアに対応付けられず、基準時点までの達成・変更・終了を裏付ける会社公表本文を確認できていない。",
+            "riskNote": "WILLERとの2025年度約10エリア実用化目標は対象年度を過ぎているが、佐渡実証後の達成状況・売上寄与・計画変更を基準時点までの公表資料では確定できない。"
           }
         ],
-        "categoryChecks": [
+        "riskNote": "長期案件のうち、WILLER連携の目標達成・計画変更とマップフォー再編の原発表・譲渡対価には未照合部分が残るため、全履歴を基準時点まで確認済みとはしない。",
+        "unresolvedReason": "全8カテゴリのスクリーニングは行ったが、マップフォー株式譲渡の原発表・原契約及び譲渡対価、WILLERの2025年度実用化目標に対するその後の達成・計画変更・終了資料を公表本文で完結照合できない。",
+        "categoryFindings": [
           {
             "category": "alliances",
-            "result": "NRI、BBSec、STNet、ファンド参画の原発表とその後の決算・ニュースを照合。BBSecの最新実行状況は未解決。"
+            "documentIds": [
+              "ntro_original",
+              "ntro_progress",
+              "kddi",
+              "tum_center",
+              "tum_nvidia",
+              "komatsu",
+              "jr_tokai",
+              "elm"
+            ],
+            "finding": "提携合意・開発・車両提供を区別。確約受注や収益実績に置換していない。"
           },
           {
             "category": "orders_contracts",
-            "result": "最新有報の受注残・主要顧客と東芝ITサービス採用を照合。個別契約の最新継続根拠は未解決。"
+            "documentIds": [
+              "q3_results",
+              "q3_presentation",
+              "autoflow"
+            ],
+            "finding": "44地域は6月末実績、58地域は7月受注状況。物流道路実証は予定期間内で完了・実績収益を未確認。"
           },
           {
             "category": "investment_capacity",
-            "result": "有報の設備投資・新設計画、2020年の資金使途見直し、札幌オフィス、ファンド出資を確認。原予定からの経過を収益寄与と同一視しない。"
+            "documentIds": [
+              "jpx_annual",
+              "q3_results",
+              "q3_presentation",
+              "jst"
+            ],
+            "finding": "5月末で重要設備新設計画は該当なしと会社記載。直近はR&D5,989百万円とOEM・外部製造を通じる量産準備が主要な資金負担。"
           },
           {
             "category": "products_services",
-            "result": "LogStare既存製品の実績寄与とAI-SOCの開始・販売経路・販促を区別した。"
+            "documentIds": [
+              "camera_original",
+              "camera_progress",
+              "eve_original",
+              "eve_launch",
+              "q3_presentation",
+              "astemo"
+            ],
+            "finding": "発売・商用提供・運用台数と製品別収益実績を分けた。OEM開発案件の公表時期と非公表事項を維持。"
           },
           {
             "category": "approvals_subsidies",
-            "result": "公式2025年3月28日発表の台帳登録・有効期間を確認。登録を大型受注や補助金収入と扱わず、今回の確認範囲に売上を裏づける新しい補助金資料は見つからない。"
+            "documentIds": [
+              "jpx_annual",
+              "gi_original",
+              "saudi_grant",
+              "saudi_progress",
+              "q3_results"
+            ],
+            "finding": "GIの契約費用総額、サウジの採択・交付未確定、実際の補助金収入3,661百万円を区別。法令許認可は地域・走行条件に依存。"
           },
           {
             "category": "restructuring",
-            "result": "LogStare設立とセキュアイノベーション全株売却の沿革・実行を確認。終了案件を継続的な新材料にしない。"
+            "documentIds": [
+              "jpx_annual",
+              "associate_loss",
+              "q3_results"
+            ],
+            "finding": "2025年マップフォー連結除外と、その後も続く持分法損失を確認。原契約の証跡は不足。"
           },
           {
             "category": "legal_regulatory",
-            "result": "旧上場適合計画の取り下げと最新有報の情報漏えい・賠償請求等のリスク記載を確認。一般的な訴訟リスクの記載を発生済み訴訟とは扱わない。"
+            "documentIds": [
+              "jpx_annual",
+              "q3_presentation"
+            ],
+            "finding": "申請有報の法的規制・特許・事故・訴訟リスクの本文を確認。提出時点で提起訴訟なしとの記述を基準時点の包括的無リスク保証へ拡張しない。後続公式IR及びTDnet一覧に新たな訴訟・行政処分の個別公表は見当たらない。"
           },
           {
             "category": "contract_changes",
-            "result": "公式IR・ニュースの取消・終了・延期等を含む履歴と重要契約注記を照合。2020年資金使途変更・旧計画取り下げを確認し、BBSec/東芝契約の個別変更・終了の有無は未確定。"
+            "documentIds": [
+              "jpx_annual",
+              "q3_presentation",
+              "truck_original",
+              "truck_completed"
+            ],
+            "finding": "トラック開発補助事業は原採択と完了公表を対照。一部補助事業完了で補助金収入が減少したという最新説明を、全助成事業の終了と扱わない。"
           }
-        ],
-        "unresolvedReason": "全8カテゴリの一覧・決算・関連原発表を調査したが、BBSecとの共同事業と東芝ITサービス案件について、基準時点の契約継続と実績反映を識別する後続一次資料を確認できない。該当案件の不足をリスクなしや現在の収益寄与へ置き換えない。",
-        "riskNote": "BBSec提携と東芝ITサービス採用は原発表を確認したが、基準時点の契約継続状況と個別の業績反映を裏づける続報を確認できず、長期案件の追跡には未解決点が残る。"
+        ]
       },
       "auditStatus": "pass",
-      "auditNotes": [
-        "不変claimのalertId・signalDate・analysisCutoff・receivedAtを文字列単位で照合。",
-        "公開7フィールドとSources、採用資料の本文・公表日時・URL整合を確認。日付のみの資料は基準日の前日以前に限定し、未確認時刻を推測していない。",
-        "資本リスク・長期案件のunresolvedは根拠不足を明示した調査結果で、auditStatusはその不確実性を隠さない報告契約と一次資料照合に対する判定。全履歴の残高確定を意味しない。",
-        "HTML専用のため開示リンクはDiscordの長さ制限で削除していない。"
-      ]
+      "auditNotes": [],
+      "auditScope": "不変claimの1件のみ。公開7フィールドと採用一次資料のURL集合、公表時刻・date_only規則、analysisCutoff、会社固有の数値・期間、資本政策と長期案件の参照を監査。unresolvedは資料不足を明示した調査結果であり、残存なし・実績収益・全履歴確認済みを意味しない。Discord文字数上限を適用しないHTML保存用。"
     }
   ]
 }
-

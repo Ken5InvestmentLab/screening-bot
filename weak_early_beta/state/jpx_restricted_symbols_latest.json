@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "as_of": "2026-10-29",
-  "fetched_at": "2026-10-29T17:44:25.039010+09:00",
+  "as_of": "2026-10-30",
+  "fetched_at": "2026-10-30T16:59:25.765373+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
-  "source_sha256": "11fa2996a4ac8019c7e976dbf6b9aca9529238221b9bd20229ea405c4f92efd6",
+  "source_sha256": "7008ccdfe6661dc29e05dfe2478d1a7d29bfa886e58d14c0e0bdc6f3b538f535",
   "rule": "causal designation-date gate; exclude acquisition only on or after the official delisting date",
   "delisting_sources": [
     {
@@ -39,7 +39,7 @@
     {
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
-      "source_sha256": "dda84599f94878c8328a847f47821a4633014fd53facbf9a80fe64ac98d43569",
+      "source_sha256": "086f915df53da90c90ecc52fc557ecfc123f547e47879afc9576420f09e6b25f",
       "delisted_symbol_count": 134
     }
   ],
@@ -9297,8 +9297,8 @@
     {
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/new/index.html",
-      "source_sha256": "6cf11844790a8ad9006d8bd18994c2a9e439f781337a1e56a4ce51d44b61e0dc",
-      "listed_symbol_count": 42
+      "source_sha256": "95748091b3b2873e9fa124f0386748891e711c2cd78464273a13431dbfc0d9be",
+      "listed_symbol_count": 43
     }
   ],
   "relisting_coverage_start_year": 2022,
@@ -15124,6 +15124,13 @@
       "code": "4059",
       "company_name": "（株）まぐまぐ",
       "designation_date": "2026-10-28",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+    },
+    {
+      "code": "7878",
+      "company_name": "（株）光・彩",
+      "designation_date": "2026-10-30",
       "designation": "上場廃止の決定・整理銘柄指定",
       "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
     }

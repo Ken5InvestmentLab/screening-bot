@@ -26,7 +26,7 @@ for(const [label,change] of [
  ['missing period',f=>delete f.membership.renewal_period_end],['unverified identity',f=>f.link.evidence_reference=''],['test link',f=>f.link.environment='test'],
 ]) test('nested provider '+label+' fails closed',()=>{const f=fixture();change(f);assert.notEqual(decide(f).status,'paid');});
 test('nested runtime reads only exact verified membership and payment; no broad payment query',async()=>{
- const f=fixture(),reads=[];const m=modules({fetchMock:async(url,init)=>{reads.push(String(url));assert.equal(init.cache,'no-store');assert.equal(init.redirect,'error');return Response.json(String(url).includes('/memberships/')?f.membership:f.payment);}});
+ const f=fixture(),reads=[];const m=modules({clock:{now:NOW},fetchMock:async(url,init)=>{reads.push(String(url));assert.equal(init.cache,'no-store');assert.equal(init.redirect,'error');return Response.json(String(url).includes('/memberships/')?f.membership:f.payment);}});
  const db={prepare(){return {bind(){return this;},async first(){return f.link;}};}};
  const result=await m.load('./cloud-api').currentMembership({CLOUD_DB:db,WHOP_API_KEY:'fixture-only',WHOP_ACCOUNT_ID:'biz_1',WHOP_PRODUCT_IDS:'prod_1',WHOP_PAID_PLAN_IDS:'plan_1',WHOP_RESPONSE_SCHEMA:'nested_v1'},'discord-fixture');
  assert.equal(result.status,'paid');assert.deepEqual(reads,['https://api.whop.com/api/v1/memberships/mem_1','https://api.whop.com/api/v1/payments/pay_1']);

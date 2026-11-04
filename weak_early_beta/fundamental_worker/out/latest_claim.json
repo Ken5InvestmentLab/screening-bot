@@ -1,19 +1,19 @@
 {
   "ok": true,
-  "claimId": "93ac1275-ed2e-4f96-8d7a-766f27d05ef0",
-  "generatedAt": "2026-11-02T18:29:29.648812+09:00",
+  "claimId": "e2e2c000-a00c-4ce3-995e-5bd8fb3a930d",
+  "generatedAt": "2026-11-04T19:42:27.824088+09:00",
   "claimedCount": 1,
   "alerts": [
     {
-      "alertId": "weak-early-beta:2026-11-02:3042",
-      "receivedAt": "2026-11-02T16:15:00+09:00",
-      "analysisCutoff": "2026-11-02T09:29:30.147Z",
-      "signalDate": "2026-11-02",
+      "alertId": "weak-early-beta:2026-11-04:593A",
+      "receivedAt": "2026-11-04T16:15:00+09:00",
+      "analysisCutoff": "2026-11-04T22:45:22.308Z",
+      "signalDate": "2026-11-04",
       "signalType": "WEAK_EARLY_BETA",
-      "symbolCode": "3042",
-      "symbolName": "セキュアヴェイル",
+      "symbolCode": "593A",
+      "symbolName": "ティアフォー",
       "entryPrice": null,
-      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A3042",
+      "tradingViewUrl": "https://jp.tradingview.com/chart/?symbol=TSE%3A593A",
       "betaSelectors": [
         "Balance",
         "Dive",
@@ -25,7 +25,7 @@
       "longTermMaterialReviewVersion": 1
     }
   ],
-  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261102-launch\\repo\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
+  "outputReportPath": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261104-launch\\repo\\weak_early_beta\\fundamental_worker\\out\\premium_reports.json",
   "rules": {
     "requiredFields": [
       "alertId",
@@ -46,7 +46,7 @@
     "model": "gpt-6.1-sol",
     "reasoningEffort": "xhigh"
   },
-  "analysisStartedAt": "2026-11-02T09:29:30.147Z",
+  "analysisStartedAt": "2026-11-04T22:45:22.308Z",
   "capitalRiskReviewVersion": 1,
   "longTermMaterialReviewVersion": 1
 }

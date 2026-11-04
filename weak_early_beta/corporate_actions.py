@@ -924,6 +924,11 @@ def fetch_daily(
     raw, retained_actions = retain_reviewed_off_session_actions(
         previous, pd.concat(rows, ignore_index=True), basis_asof=provider_snapshot,
     )
+    from .reviewed_provider_restorations import restore_reviewed_provider_values
+
+    raw, provider_restorations = restore_reviewed_provider_values(
+        previous, raw, basis_asof=provider_snapshot, archive=archive,
+    )
     normalized = normalize_daily(raw, basis_asof=provider_snapshot)
     if previous is not None:
         normalized = quarantine_repaired_volume_revisions(
@@ -935,4 +940,5 @@ def fetch_daily(
         )
         normalized.attrs["source_revision_receipt"]["reviewedRepairReleases"] = release_audit
         normalized.attrs["source_revision_receipt"]["retainedOffSessionActions"] = retained_actions
+        normalized.attrs["source_revision_receipt"]["reviewedProviderRestorations"] = provider_restorations
     return normalized

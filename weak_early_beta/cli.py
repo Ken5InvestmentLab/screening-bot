@@ -172,6 +172,14 @@ def command_daily(args: argparse.Namespace) -> None:
                         previous.attrs[PRIOR_AUDIT_ATTR] = {
                             "dailySha256": previous.attrs["source_sha256"], "actions": retention,
                         }
+                    from .reviewed_provider_restorations import PRIOR_AUDIT_ATTR as RESTORATION_AUDIT_ATTR
+
+                    restorations = quality.get("source_revision", {}).get("reviewedProviderRestorations", [])
+                    if restorations:
+                        previous.attrs[RESTORATION_AUDIT_ATTR] = {
+                            "dailySha256": previous.attrs["source_sha256"],
+                            "restorations": restorations,
+                        }
                 delisted_codes = {row["code"] for row in restrictions if row.get("delisting_date")
                                   and not (row.get("relisting_date") and row["relisting_date"] <= tradability_date)}
                 if previous["symbol"].isin(delisted_codes).any():

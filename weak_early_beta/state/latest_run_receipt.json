@@ -1,18 +1,18 @@
 {
   "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
-  "run_at": "2026-11-05T18:42:30.122582+09:00",
+  "run_at": "2026-11-06T17:58:18.572583+09:00",
   "daily_corpus": ".cache\\weak_early_beta\\tse_daily.csv",
-  "daily_sha256": "63032bee48802fef1d7439f98cd4bf0f575f676e2c7d533e44f01c42a23858d3",
+  "daily_sha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
   "acquisition_evidence": {
-    "directory": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261105-launch\\repo\\.cache\\weak_early_beta\\daily_runtime\\daily-2026-11-05T08-42-29-538Z\\acquisition-1",
-    "manifestSha256": "82c50dd74037a70e5234196324ce5ebd43763ab4ffe8be2cadde789e0883b8a8",
-    "requests": 48,
+    "directory": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\.cache\\weak_early_beta\\daily_runtime\\daily-2026-11-06T08-00-19-537Z\\acquisition-1",
+    "manifestSha256": "646ea21d4752b82caa6ab4a10e908697cdba6704c2dfd6295512094fc2f3c393",
+    "requests": 47,
     "replayed": false
   },
   "source_quality": {
     "identity": "CLOUD_SOURCE_QUALITY_V1",
-    "sourceRows": 4306228,
-    "quarantinedRows": 2933,
+    "sourceRows": 4306627,
+    "quarantinedRows": 2934,
     "quarantinedSymbols": [
       "1383",
       "1401",
@@ -323,17 +323,17 @@
       "9986"
     ],
     "quarantinedDateCount": 1221,
-    "firstQuarantinedDate": "2021-11-05",
-    "lastQuarantinedDate": "2026-11-05",
+    "firstQuarantinedDate": "2021-11-08",
+    "lastQuarantinedDate": "2026-11-06",
     "audit_path": ".cache\\weak_early_beta\\tse_daily.source-quality.json",
-    "audit_sha256": "d37b4fe4d12e48ab340b547bd6951793082379b90810937cd2aaebb6fdc3f570"
+    "audit_sha256": "7967ffc65c98c442783c9caac23d40af5a03409d6524413c9b43463149637992"
   },
   "source_revision": {
     "identity": "CLOUD_SOURCE_REVISION_V1",
     "previousBasis": "verified",
-    "comparedRows": 4284448,
-    "quarantinedComparisonRows": 2929,
-    "acceptedRepairColumnValues": 1,
+    "comparedRows": 4286800,
+    "quarantinedComparisonRows": 2930,
+    "acceptedRepairColumnValues": 0,
     "sourceCorrectionAudit": [],
     "reviewedRepairReleases": [],
     "retainedOffSessionActions": [
@@ -348,17 +348,17 @@
           "basisAsOf": "2026-10-26",
           "rows": 689
         },
-        "previousSourceSha256": "13339205e004a83006fa344926d3a4bd4cb914bf0d917fd1fb7e6c393612dfe2",
+        "previousSourceSha256": "63032bee48802fef1d7439f98cd4bf0f575f676e2c7d533e44f01c42a23858d3",
         "previousBounds": {
-          "firstDate": "2021-11-04",
-          "lastDate": "2026-11-04",
-          "basisAsOf": "2026-11-04",
-          "rows": 689
-        },
-        "currentBounds": {
           "firstDate": "2021-11-05",
           "lastDate": "2026-11-05",
           "basisAsOf": "2026-11-05",
+          "rows": 689
+        },
+        "currentBounds": {
+          "firstDate": "2021-11-08",
+          "lastDate": "2026-11-06",
+          "basisAsOf": "2026-11-06",
           "rows": 689
         },
         "providerEvent": {
@@ -381,8 +381,8 @@
         ],
         "noPriceEdits": true,
         "actionStatus": "retained",
-        "rawOHLCVBeforeSha256": "d144e0c29058e08e6d8092bebd2b3e9e9a3fc7c93cf0a8f640f808deaa27a8ec",
-        "rawOHLCVAfterSha256": "d144e0c29058e08e6d8092bebd2b3e9e9a3fc7c93cf0a8f640f808deaa27a8ec"
+        "rawOHLCVBeforeSha256": "41a74d5939ce8df4abb6074cd8770c67c793c612fec6de6390405177502ddffb",
+        "rawOHLCVAfterSha256": "41a74d5939ce8df4abb6074cd8770c67c793c612fec6de6390405177502ddffb"
       }
     ],
     "reviewedProviderRestorations": [
@@ -394,9 +394,9 @@
         "seedSourceSha256": "2f5d5a26129bad12d4d8c60398595d0c53b5df3bc0b32fce4e36321015ec5935",
         "seedPreviousBasis": "2026-11-02",
         "seedCurrentBasis": "2026-11-04",
-        "previousSourceSha256": "13339205e004a83006fa344926d3a4bd4cb914bf0d917fd1fb7e6c393612dfe2",
-        "previousBasis": "2026-11-04",
-        "currentBasis": "2026-11-05",
+        "previousSourceSha256": "63032bee48802fef1d7439f98cd4bf0f575f676e2c7d533e44f01c42a23858d3",
+        "previousBasis": "2026-11-05",
+        "currentBasis": "2026-11-06",
         "officialPDFURL": "https://www.jpx.co.jp/automation/markets/statistics-equities/daily/files/202611/stq_20261102.pdf",
         "officialPDFSha256": "dc6cb4fe5b94e59e4551a464bd13270d6f5aaaa656187facb25145d2f4a1ef2b",
         "officialPDFPage": 132,
@@ -433,18 +433,7 @@
         "providerRepaired": false
       }
     ],
-    "acceptedRepairs": [
-      {
-        "symbol": "3953",
-        "column": "volume",
-        "rows": 1,
-        "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-11-04",
-        "lastDate": "2026-11-04",
-        "previousBasis": "2026-11-04",
-        "currentBasis": "2026-11-05"
-      }
-    ],
+    "acceptedRepairs": [],
     "quarantinedComparisonSymbolCount": 306
   },
   "acquisition_exclusions": {
@@ -1027,7 +1016,7 @@
       "9977",
       "9995"
     ],
-    "retained_rows": 13211,
+    "retained_rows": 13200,
     "retained_symbols": [
       {
         "code": "3670",
@@ -1038,59 +1027,59 @@
       },
       {
         "code": "3787",
-        "rows": 1197,
+        "rows": 1196,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "c4089ab7159e4057fc400622fd818be869f25714e0eab60c16631bfe3ca9d7c5"
+        "rows_sha256": "4acd6362e1c5130881b6916cb14d58782e1858dfca9b03ad5ea12d8a0dcb6939"
       },
       {
         "code": "4316",
-        "rows": 1197,
+        "rows": 1196,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "a366eea69adc5d6b934e7b733affb11739b84632ad889829133fa92d0965d0d1"
+        "rows_sha256": "1bfe86cb054d3898aba5b2be18090db5a041c283e3a34c482f05a0041b36f4cf"
       },
       {
         "code": "5484",
-        "rows": 1208,
+        "rows": 1207,
         "latest_session": "2026-10-16",
         "delisting_date": "2026-10-19",
-        "rows_sha256": "5d20749a9ac46d5c6054a79c18d78bba230ddd49c7e39c8679520ecb1aa385f1"
+        "rows_sha256": "606e8b6bda4cbcf9d41f4e8ded74c56e27eef47fdb491b916d1d76ec9031cae2"
       },
       {
         "code": "6147",
-        "rows": 1197,
+        "rows": 1196,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "aed95746d7401db5c350c05be1eb1c50499619ed96744aa2098233aad5a79e70"
+        "rows_sha256": "7a6d387c07bdb225c7474fcda101dd5cb68d5248bf7a351fb4dc1b750e6552ae"
       },
       {
         "code": "7183",
-        "rows": 1201,
+        "rows": 1200,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "e75e8ea5d710489c29ae0957d8247cae09b0e42eb470035398984a407fd7a49d"
+        "rows_sha256": "f83cf0721a366fa5d8b9c74a62844d719ad573a7d846829d938817ea7432582d"
       },
       {
         "code": "7255",
-        "rows": 1197,
+        "rows": 1196,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "e32e8493d3150110598ed6c2a2c853369577548da8da73d42e78ea1a1c8f7590"
+        "rows_sha256": "f89c433ae31ac32e8af52cd52307b26c4d2c261dd9814531563bbf810492de62"
       },
       {
         "code": "7490",
-        "rows": 1201,
+        "rows": 1200,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "d66ee609131e19b4bfd47913afcf13fe2b6f01aad4ad2637cee0ae7c627b5e9a"
+        "rows_sha256": "c4cd042285baeaaa39e107e229e26cb36f08ee8057aa316172cc2f6d2f52a5c7"
       },
       {
         "code": "7709",
-        "rows": 1197,
+        "rows": 1196,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "850730ab4e5e1175d6e79ff146bb05a2a40e3d9006b647139b0a82290fbb2d7a"
+        "rows_sha256": "f01bb77728f2649527e2dab04a5813aad83d4d3474631221eed3fc4012675e1f"
       },
       {
         "code": "7851",
@@ -1101,10 +1090,10 @@
       },
       {
         "code": "7946",
-        "rows": 1197,
+        "rows": 1196,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "beb017dfefc93095b7c80b772f1f1f7677ff8df3afdfced8a169a83eda6fac7f"
+        "rows_sha256": "484437794d9c79817db4d3bf6d13d68be9a14585b0dd6ff7ede9900582946308"
       },
       {
         "code": "7985",
@@ -1115,32 +1104,32 @@
       },
       {
         "code": "8141",
-        "rows": 1216,
+        "rows": 1215,
         "latest_session": "2026-10-28",
         "delisting_date": "2026-10-29",
-        "rows_sha256": "69bbf98bbee5ed6b9616f4fb4866a65249e9027fcfdbe72a3fd89d34135506a3"
+        "rows_sha256": "ede105d61f648a82de48fd74a971dc3be3ed1652c36cd21e703cd8e755d95ee3"
       },
       {
         "code": "9691",
-        "rows": 1200,
+        "rows": 1199,
         "latest_session": "2026-10-05",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "7824410e212a2d1ca01dc49b5aa793f16f56c17d544c29e7f9461e0b9e6b8081"
+        "rows_sha256": "e8eae4b083c2d6d97ba6068cd1b96d5edfca10c883fc549def2a82d7c1ce26cb"
       }
     ],
     "outside_current_window_rows": 11,
-    "current_window_start": "2021-11-05",
-    "previous_source_sha256": "13339205e004a83006fa344926d3a4bd4cb914bf0d917fd1fb7e6c393612dfe2",
+    "current_window_start": "2021-11-08",
+    "previous_source_sha256": "63032bee48802fef1d7439f98cd4bf0f575f676e2c7d533e44f01c42a23858d3",
     "excluded_universe_symbols": []
   },
-  "latest_session": "2026-11-05",
-  "score_from": "2026-11-05",
-  "score_to": "2026-11-05",
+  "latest_session": "2026-11-06",
+  "score_from": "2026-11-06",
+  "score_to": "2026-11-06",
   "tail_rows_latest": 0,
   "selector_rows_latest": 0,
   "restricted_selector_rows_latest": 0,
   "quarantined_ledger_rows": 0,
-  "jpx_restricted_symbols": 584,
+  "jpx_restricted_symbols": 585,
   "new_or_refreshed_rows": 0,
   "notification_payloads": 0,
   "ledger_rows": 1031,

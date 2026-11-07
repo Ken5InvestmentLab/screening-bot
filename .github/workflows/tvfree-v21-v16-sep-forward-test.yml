@@ -1,0 +1,51 @@
+name: TV-free V21 V16 September forward TEST
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/tvfree-screener-v1
+    paths:
+      - "tvfree_screener/RUN_V21"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/tvfree-screener-v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Compile runner
+        run: python -m py_compile tvfree_screener/v21_v16_sep2026_forward.py
+      - name: Download preserved frozen run80 dataset
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: tvfree_screener/out
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Run frozen September report
+        run: >-
+          python tvfree_screener/v21_v16_sep2026_forward.py
+          --cache tvfree_screener/out/tse_daily.csv
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-v21-sep-forward-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v21_v16_sep2026_report.json
+            tvfree_screener/out/v21_v16_sep2026_picks.csv
+          if-no-files-found: error
+          retention-days: 30

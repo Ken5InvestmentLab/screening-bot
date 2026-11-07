@@ -1,0 +1,68 @@
+name: TV-free V22 V16 horizon audit TEST
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/tvfree-screener-v1
+    paths:
+      - "tvfree_screener/RUN_V22"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/tvfree-screener-v1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Compile audit
+        run: python -m py_compile tvfree_screener/v22_v16_horizon_audit.py
+      - name: Find latest successful Tail cache run
+        id: tailrun
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          RUN_ID="$(gh run list             --repo "$GITHUB_REPOSITORY"             --workflow "tvfree-tail-cache.yml"             --branch "test/tvfree-screener-v1"             --event push             --status success             --limit 1             --json databaseId             --jq '.[0].databaseId')"
+          test -n "$RUN_ID"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+      - name: Download causal Tail cache
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-v7-causal-tail-cache-2023-2025
+          path: tail_cache
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: ${{ steps.tailrun.outputs.run_id }}
+      - name: Download preserved frozen run80 dataset
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: tvfree_screener/out
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34599959356
+      - name: Run V22 horizon audit
+        run: >-
+          python tvfree_screener/v22_v16_horizon_audit.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --tail-cache tail_cache/v7_causal_tail_cache_2023_2025.csv
+      - name: Upload evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-v22-v16-horizon-${{ github.run_id }}
+          path: |
+            tvfree_screener/out/v22_v16_horizon_audit.csv
+            tvfree_screener/out/v22_v16_horizon_audit.json
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,4 @@
+trigger: 2026-09-11 frozen-preexhaust-range-2026-v1
+logic_frozen_before_2026: true
+source_dataset_artifact: 10264205130
+2026_use: reporting-only; no tuning

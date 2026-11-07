@@ -1,0 +1,231 @@
+name: TradingView-free screener TEST
+
+on:
+  workflow_dispatch:
+    inputs:
+      period:
+        description: Yahoo daily history period (fallback when start_date is blank)
+        required: true
+        default: 3y
+      start_date:
+        description: Fixed Yahoo history start date for reproducible research
+        required: true
+        default: "2022-01-01"
+      price_cap:
+        description: Previous-close cap; 0 = no cap
+        required: true
+        default: "1000"
+      loss_penalty:
+        description: Penalty multiplier for P(-10% or worse)
+        required: true
+        default: "6"
+      topk:
+        description: Picks per trading day in walk-forward
+        required: true
+        default: "1"
+  # Public-repository TEST workflow: standard GitHub-hosted runners are
+  # free, so research changes may run automatically again.
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "tvfree_screener/**"
+      - "!tvfree_screener/**/*.md"
+      - ".github/workflows/tvfree-screener-test.yml"
+
+permissions:
+  contents: read
+
+# Fail-fast JPX live validation is intentionally before heavy research.
+# A lightweight per-update gate below prevents docs-only handoff commits from
+# cancelling/restarting an already running heavy validation job.
+
+env:
+  TVFREE_PERIOD: ${{ inputs.period || '3y' }}
+  TVFREE_START_DATE: ${{ inputs.start_date || '2022-01-01' }}
+  TVFREE_PRICE_CAP: ${{ inputs.price_cap || '1000' }}
+  TVFREE_LOSS_PENALTY: ${{ inputs.loss_penalty || '6' }}
+  TVFREE_TOPK: ${{ inputs.topk || '1' }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      run_heavy: ${{ steps.changed.outputs.run_heavy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect non-documentation changes in this update
+        id: changed
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run_heavy=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          before="$BEFORE_SHA"
+          after="$AFTER_SHA"
+          if [ -z "$after" ]; then
+            after="${{ github.sha }}"
+          fi
+          if [ -z "$before" ] || [[ "$before" =~ ^0+$ ]]; then
+            before="$BASE_SHA"
+          fi
+
+          git diff --name-only "$before" "$after" > /tmp/tvfree_changed_files.txt
+          echo "Changed files for this PR update:"
+          cat /tmp/tvfree_changed_files.txt
+
+          run_heavy=false
+          while IFS= read -r changed_path; do
+            case "$changed_path" in
+              tvfree_screener/*.md) ;;
+              *) run_heavy=true; break ;;
+            esac
+          done < /tmp/tvfree_changed_files.txt
+          echo "run_heavy=$run_heavy" >> "$GITHUB_OUTPUT"
+
+  test:
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true'
+    concurrency:
+      group: tvfree-heavy-test-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install isolated test dependencies
+        run: pip install -r tvfree_screener/requirements.txt
+      - name: Reproducibility manifest synthetic self-check
+        run: python tvfree_screener/reproducibility_selftest.py
+      - name: Fixed run-80 baseline guard synthetic self-check
+        run: python tvfree_screener/fixed_baseline_guard_selftest.py
+      - name: Causal prefix and entry synthetic self-check
+        run: python tvfree_screener/causality_selftest.py
+      - name: Point-in-time universe synthetic self-check
+        run: python tvfree_screener/point_in_time_universe_selftest.py
+      - name: Delisted Yahoo coverage synthetic self-check
+        run: python tvfree_screener/delisted_price_coverage_selftest.py
+      - name: Delisted Stooq coverage synthetic self-check
+        run: python tvfree_screener/stooq_delisted_price_coverage_selftest.py
+      - name: Fundamental and dilution overlay synthetic self-check
+        run: python tvfree_screener/fundamental_overlay_selftest.py
+      - name: Fundamental overlay evaluator synthetic self-check
+        run: python tvfree_screener/fundamental_overlay_evaluator_selftest.py
+      - name: EDINET collector synthetic self-check
+        run: python tvfree_screener/edinet_fundamental_collector_selftest.py
+      - name: EDINET dilution audit synthetic self-check
+        run: python tvfree_screener/edinet_dilution_audit_selftest.py
+      - name: V4 event-quality synthetic self-check
+        run: python tvfree_screener/v4_event_quality_selftest.py
+      - name: Independent 2024 extension synthetic self-check
+        run: python tvfree_screener/v3_pre2026_extension_selftest.py
+      - name: Legacy V3 Short recovery synthetic self-check
+        run: python tvfree_screener/v3_short_legacy_recovery_selftest.py
+      - name: Build current JPX universe snapshot preflight
+        run: python tvfree_screener/jpx_current_snapshot.py
+      - name: Live-validate JPX point-in-time membership reconstruction
+        run: >-
+          python tvfree_screener/point_in_time_universe.py
+          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
+          --start 2022-01-01
+      - name: Measure Yahoo coverage for JPX delistings
+        run: >-
+          python tvfree_screener/delisted_price_coverage.py
+          --events tvfree_screener/out/jpx_membership_events.csv
+          --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv
+          --start 2022-01-01
+          --batch-size 50
+          --request-pause 0.5
+      - name: Probe Stooq coverage for deterministic pre-2026 delistings
+        shell: bash
+        env:
+          STOOQ_APIKEY: ${{ secrets.STOOQ_APIKEY }}
+        run: |
+          if [ -z "$STOOQ_APIKEY" ]; then
+            echo "STOOQ_APIKEY not configured; live Stooq coverage probe remains blocked and is not treated as missing history."
+            exit 0
+          fi
+          python tvfree_screener/stooq_delisted_price_coverage.py \
+            --events tvfree_screener/out/jpx_membership_events.csv \
+            --current-snapshot tvfree_screener/out/jpx_universe_snapshot.csv \
+            --history-start 2022-01-01 \
+            --sample-size 24 \
+            --request-pause 0.75
+      - name: Purged walk-forward backtest
+        run: >-
+          python tvfree_screener/bootstrap.py
+          --mode backtest
+          --period "$TVFREE_PERIOD"
+          --price-cap "$TVFREE_PRICE_CAP"
+          --loss-penalty "$TVFREE_LOSS_PENALTY"
+          --topk "$TVFREE_TOPK"
+          --refresh
+      - name: Score latest session from same downloaded cache
+        run: >-
+          python tvfree_screener/bootstrap.py
+          --mode score
+          --price-cap "$TVFREE_PRICE_CAP"
+          --loss-penalty "$TVFREE_LOSS_PENALTY"
+          --topn 30
+      - name: V3 Swing baseline research
+        run: >-
+          python tvfree_screener/v3_swing.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: V3 Swing v2 causal quality and Breadth Meta
+        run: >-
+          python tvfree_screener/v3_swing_v2.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: V3 Short reproducible reconstruction
+        run: >-
+          python tvfree_screener/v3_short_reconstruction.py
+          --cache tvfree_screener/out/tse_daily.csv
+      - name: V3 Short distinct event-family Attack research
+        run: >-
+          python tvfree_screener/short_event_experiment.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: Independent 2024 Short and Swing extension
+        run: >-
+          python tvfree_screener/v3_pre2026_extension.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: Legacy V3 Short Core-Meta-Attack-Deep-Reversal recovery
+        run: >-
+          python tvfree_screener/v3_short_legacy_recovery.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: V4 event-quality blind research
+        run: >-
+          python tvfree_screener/v4_event_quality_research.py
+          --cache tvfree_screener/out/tse_daily.csv
+          --symbol-batch 200
+      - name: Unified V3 research comparison
+        if: always()
+        run: python tvfree_screener/unified_comparison.py
+      - name: Build fixed-history reproducibility manifest
+        if: always()
+        run: python tvfree_screener/reproducibility_manifest.py
+      - name: Compare frozen run-80 baseline when inputs are identical
+        if: always()
+        run: python tvfree_screener/fixed_baseline_guard.py
+      - name: Upload test outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-screener-test-${{ github.run_id }}
+          path: tvfree_screener/out/
+          if-no-files-found: warn
+          retention-days: 3

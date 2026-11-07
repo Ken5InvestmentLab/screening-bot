@@ -1,0 +1,5 @@
+trigger: 2026-09-11 pre2025-stable-rank-v1
+feature_selection: 2023-2024 only
+rank_features: volr20, ret1
+market_gate: med_ret5<=0
+2025_2026_use: reporting-only

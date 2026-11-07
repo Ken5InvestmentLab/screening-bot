@@ -1,0 +1,45 @@
+name: Preserve TV-free frozen research dataset
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/tvfree-screener-v1
+    paths:
+      - "tvfree_screener/RUN_PRESERVE_DATASET"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  preserve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/tvfree-screener-v1
+      - name: Download frozen run-80 artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: tvfree-screener-test-34545440155
+          path: preserved
+          github-token: ${{ github.token }}
+          repository: Ken5InvestmentLab/screening-bot
+          run-id: 34545440155
+      - name: Verify frozen dataset exists
+        run: |
+          test -f preserved/tse_daily.csv
+          sha256sum preserved/tse_daily.csv | tee preserved/tse_daily.sha256
+          wc -l preserved/tse_daily.csv | tee preserved/tse_daily.lines.txt
+      - name: Preserve frozen research dataset
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvfree-frozen-dataset-run80-preserved
+          path: |
+            preserved/tse_daily.csv
+            preserved/tse_daily.sha256
+            preserved/tse_daily.lines.txt
+          if-no-files-found: error
+          retention-days: 90

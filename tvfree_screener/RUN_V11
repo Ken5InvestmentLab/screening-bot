@@ -1,0 +1,3 @@
+trigger: 2026-09-11 payoff-aware-knn-v1
+source: frozen run-80 artifact 34545440155
+utility: 2*P(+20%) - P(-10%); 2023 warmup -> 2024 dev -> 2025 validation -> 2026 only after pass

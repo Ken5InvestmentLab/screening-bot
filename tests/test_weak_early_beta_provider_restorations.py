@@ -718,5 +718,87 @@ class ArchiveVerificationTests(NoNetwork):
                     reviewed.verify_seed_archive(archive)
 
 
+
+
+class RetainedNovemberQuotesTests(unittest.TestCase):
+    def setUp(self):
+        self.official = pd.DataFrame({
+            "symbol": ["6918", "7886"], "date": pd.to_datetime(["2026-11-06"] * 2),
+            "open": [2900., 500.], "high": [2953., 509.], "low": [2804., 464.],
+            "close": [2951., 509.], "volume": [74600., 7000.], "split_ratio": 0.,
+            "provider_repaired": False, "off_session_actions": "",
+        })
+        self.previous = normalize_daily(self.official, basis_asof="2026-11-06")
+        self.previous.attrs["source_sha256"] = reviewed.NOVEMBER_SEED_SHA
+        self.raw = self.official.copy()
+        self.raw.loc[0, "open"] = 2804.
+        self.raw.loc[1, "low"] = 480.
+        self.archive = AcquisitionArchive.__new__(AcquisitionArchive)
+        self.archive.replay = True
+        self.archive.context = {"date": "2026-11-09", "previousSourceSha256": reviewed.NOVEMBER_SEED_SHA}
+        self.archive.manifest = {"requests": 47}
+        self.archive.sequence = 47
+        self.archive.directory = Path("test-only")
+        self.archive.manifest_path = self.archive.directory / "manifest.json"
+
+    def restore(self):
+        return reviewed.restore_reviewed_november_quotes(
+            self.previous, self.raw, basis_asof="2026-11-09", archive=self.archive,
+        )
+
+    def test_only_reviewed_cells_change_and_normalize(self):
+        with patch.object(reviewed, "_verify_november_archive"):
+            result, audits = self.restore()
+        pd.testing.assert_frame_equal(result, self.official)
+        self.assertEqual(self.raw.loc[0, "open"], 2804.)
+        self.assertEqual(self.raw.loc[1, "low"], 480.)
+        self.assertEqual([audit["changedCellCount"] for audit in audits.values()], [1, 1])
+        normalized = normalize_daily(result, basis_asof="2026-11-09")
+        self.assertEqual(normalized.loc[0, "actual_open"], 2900.)
+        self.assertEqual(normalized.loc[1, "actual_low"], 464.)
+        validate_source_revision(self.previous, normalized)
+
+    def test_fails_closed_on_unreviewed_endpoint_or_archive(self):
+        with patch.object(reviewed, "_file_sha256", return_value="different"):
+            with self.assertRaisesRegex(CorporateActionError, "retained archive differs"):
+                self.restore()
+        self.raw.loc[1, "high"] = 510.
+        with patch.object(reviewed, "_verify_november_archive"):
+            with self.assertRaisesRegex(CorporateActionError, "7886 restoration: OHLCV differs"):
+                self.restore()
+        self.assertEqual(self.raw.loc[0, "open"], 2804.)
+
+    def test_repeat_and_normal_value_require_verified_lineage(self):
+        with patch.object(reviewed, "_verify_november_archive"):
+            result, seed_audits = self.restore()
+        previous = normalize_daily(result, basis_asof="2026-11-09")
+        source_sha = "a" * 64
+        previous.attrs.update({
+            "source_sha256": source_sha,
+            reviewed.NOVEMBER_AUDIT_ATTR: {"dailySha256": source_sha, "restorations": seed_audits},
+        })
+        for _ in range(2):
+            corrected, audits = reviewed.restore_reviewed_november_quotes(
+                previous, self.raw, basis_asof="2026-11-09", archive=None,
+            )
+            pd.testing.assert_frame_equal(corrected, self.official)
+            previous.attrs[reviewed.NOVEMBER_AUDIT_ATTR]["restorations"] = audits
+        normal, audits = reviewed.restore_reviewed_november_quotes(
+            previous, self.official, basis_asof="2026-11-10", archive=None,
+        )
+        pd.testing.assert_frame_equal(normal, self.official)
+        self.assertTrue(all(audit["changedCellCount"] == 0 for audit in audits.values()))
+        previous.attrs[reviewed.NOVEMBER_AUDIT_ATTR]["dailySha256"] = "b" * 64
+        with self.assertRaisesRegex(CorporateActionError, "source-quality lineage differs"):
+            reviewed.restore_reviewed_november_quotes(previous, self.raw, basis_asof="2026-11-10", archive=None)
+
+    def test_live_seed_acquisition_has_no_override(self):
+        self.archive.replay = False
+        result, audits = self.restore()
+        self.assertIs(result, self.raw)
+        self.assertEqual(audits, {})
+
+
+
 if __name__ == "__main__":
     unittest.main()

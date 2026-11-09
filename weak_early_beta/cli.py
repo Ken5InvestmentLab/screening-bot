@@ -172,7 +172,17 @@ def command_daily(args: argparse.Namespace) -> None:
                         previous.attrs[PRIOR_AUDIT_ATTR] = {
                             "dailySha256": previous.attrs["source_sha256"], "actions": retention,
                         }
-                    from .reviewed_provider_restorations import PRIOR_AUDIT_ATTR as RESTORATION_AUDIT_ATTR
+                    from .reviewed_provider_restorations import (
+                        NOVEMBER_AUDIT_ATTR,
+                        PRIOR_AUDIT_ATTR as RESTORATION_AUDIT_ATTR,
+                    )
+
+                    november_restorations = quality.get("source_revision", {}).get("reviewedNovember9Restorations")
+                    if november_restorations is not None:
+                        previous.attrs[NOVEMBER_AUDIT_ATTR] = {
+                            "dailySha256": previous.attrs["source_sha256"],
+                            "restorations": november_restorations,
+                        }
 
                     restorations = quality.get("source_revision", {}).get("reviewedProviderRestorations", [])
                     if restorations:

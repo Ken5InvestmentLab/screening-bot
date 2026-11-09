@@ -46,3 +46,4 @@ jobs:
           tests.test_weak_early_beta_network tests.test_weak_early_beta_delistings
           tests.test_weak_early_beta_source_corrections tests.test_weak_early_beta_reviewed_overlay
           tests.test_weak_early_beta_reviewed_repair_releases tests.test_weak_early_beta_retained_off_session_actions
+          tests.test_weak_early_beta_provider_restorations

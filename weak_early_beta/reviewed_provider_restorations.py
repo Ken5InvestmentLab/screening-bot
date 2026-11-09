@@ -1,4 +1,4 @@
-"""One application-level raw-price restoration backed by reviewed JPX evidence.
+"""Raw-price restorations backed by reviewed JPX evidence.
 
 Provider packets and previous comparison values remain untouched. The quality
 receipt is not signed: lineage relies on a matching computed CSV hash and the
@@ -363,3 +363,160 @@ def restore_reviewed_provider_values(
     high.iloc[int(positions[0])] = 34
     result["high"] = high
     return result, [audit]
+
+
+NOVEMBER_AUDIT_ATTR = "verified_november_9_restorations"
+NOVEMBER_SEED_SHA = "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122"
+NOVEMBER_MANIFEST_SHA = "cacfd93e327a886819f72244a8b3abeb93506bb16a9988a1a8c84ae058e89706"
+NOVEMBER_INVENTORY_SHA = "e42ce2d386a19ce23cbbb69e5672a70719dff1ba4e970605f7c9ab3fd2e06d62"
+NOVEMBER_SESSION = pd.Timestamp("2026-11-06")
+NOVEMBER_FIRST_BASIS = pd.Timestamp("2026-11-09")
+NOVEMBER_QUOTES = MappingProxyType({
+    "6918": ("open", 2804, (2900, 2953, 2804, 2951, 74600), 86,
+             "00031-7fe2903fd0038830eed4.pkl", "8194c1bb3640b4cbf7abd5d90351859b4613dc5ede12a9827f492f37e45f92d1"),
+    "7886": ("low", 480, (500, 509, 464, 509, 7000), 161,
+             "00037-2e93ce6a4ab3179afcb1.pkl", "2d6d43ed855dad61b05e5ab07c22a58a20f4624efc6dee7b94aa92b032d3319c"),
+})
+
+
+def _november_audit(symbol, previous_sha, basis, observed_value):
+    field, _, expected, page, packet, packet_sha = NOVEMBER_QUOTES[symbol]
+    observed = list(expected)
+    position = FIELDS.index(field)
+    observed[position] = observed_value
+    return {
+        "identity": "CLOUD_REVIEWED_NOVEMBER_9_RESTORATION_V1",
+        "symbol": symbol, "session": "2026-11-06", "currentBasis": f"{basis:%Y-%m-%d}",
+        "field": field, "seedSourceSha256": NOVEMBER_SEED_SHA, "previousSourceSha256": previous_sha,
+        "archiveManifestSha256": NOVEMBER_MANIFEST_SHA,
+        "receiptInventorySha256": NOVEMBER_INVENTORY_SHA,
+        "targetPacket": packet, "targetPacketSha256": packet_sha,
+        "officialPDFURL": "https://www.jpx.co.jp/automation/markets/statistics-equities/daily/files/202611/stq_20261106.pdf",
+        "officialPDFSha256": "e571e29926bd76b37724f62d5ac417389e290675d08b5f719c3fa748fb8d0183",
+        "officialPDFPage": page, "observedOHLCV": observed,
+        "restoredOHLCV": list(expected), "changedCellCount": int(observed_value != expected[position]),
+    }
+
+
+def _verify_november_archive(archive):
+    from .corporate_actions import CorporateActionError
+
+    receipts = sorted(
+        [file.name, _file_sha256(file)] for file in archive.directory.glob("0*.json")
+    )
+    inventory_sha = hashlib.sha256(json.dumps(receipts, separators=(",", ":")).encode()).hexdigest()
+    if (
+        archive.context.get("previousSourceSha256") != NOVEMBER_SEED_SHA
+        or archive.manifest.get("requests") != 47 or archive.sequence != 47
+        or _file_sha256(archive.manifest_path) != NOVEMBER_MANIFEST_SHA
+        or inventory_sha != NOVEMBER_INVENTORY_SHA
+        or any(_file_sha256(archive.directory / packet) != packet_sha
+               for _, _, _, _, packet, packet_sha in NOVEMBER_QUOTES.values())
+    ):
+        raise CorporateActionError("reviewed November 9 restoration: retained archive differs")
+
+
+def _verify_november_audit(symbol, audit, old_basis):
+    from .corporate_actions import CorporateActionError
+
+    if not isinstance(audit, dict):
+        raise CorporateActionError("reviewed November 9 restoration: prior audit is missing")
+    previous_sha = audit.get("previousSourceSha256")
+    observed = audit.get("observedOHLCV")
+    field, bad_value, expected, *_ = NOVEMBER_QUOTES[symbol]
+    position = FIELDS.index(field)
+    if (
+        not _sha(previous_sha) or not isinstance(observed, list) or len(observed) != len(FIELDS)
+        or type(observed[position]) is not int or observed[position] not in (bad_value, expected[position])
+        or audit != _november_audit(symbol, previous_sha, old_basis, observed[position])
+        or (previous_sha == NOVEMBER_SEED_SHA and old_basis != NOVEMBER_FIRST_BASIS)
+    ):
+        raise CorporateActionError(f"reviewed {symbol} restoration: prior audit differs")
+
+
+def _november_quote(previous, current, symbol, basis, prior_audit, seed):
+    from .corporate_actions import CorporateActionError, _dates
+
+    before_symbol = previous.loc[previous["symbol"].eq(symbol)]
+    incoming_symbol = current.loc[current["symbol"].eq(symbol)]
+    before_dates, incoming_dates = _dates(before_symbol["date"]), _dates(incoming_symbol["date"])
+    if not seed and incoming_dates.min() > NOVEMBER_SESSION:
+        return None
+    before_rows = before_symbol.loc[before_dates == NOVEMBER_SESSION]
+    incoming_rows = incoming_symbol.loc[incoming_dates == NOVEMBER_SESSION]
+    if len(before_rows) != 1 or len(incoming_rows) != 1:
+        raise CorporateActionError(f"reviewed {symbol} restoration: ambiguous target")
+
+    before, incoming = before_rows.iloc[0], incoming_rows.iloc[0]
+    old_basis = pd.Timestamp(before["basis_asof"])
+    if seed:
+        if old_basis != NOVEMBER_SESSION or basis != NOVEMBER_FIRST_BASIS:
+            raise CorporateActionError(f"reviewed {symbol} restoration: seed basis differs")
+    else:
+        if not NOVEMBER_FIRST_BASIS <= old_basis <= basis:
+            raise CorporateActionError(f"reviewed {symbol} restoration: basis moved backwards")
+        _verify_november_audit(symbol, prior_audit, old_basis)
+
+    field, bad_value, expected, *_ = NOVEMBER_QUOTES[symbol]
+    official_value = expected[FIELDS.index(field)]
+    if (
+        str(before["source_usable"]).lower() != "true"
+        or not (pd.isna(before["source_issue"]) or before["source_issue"] == "")
+        or not _equals([before["split_factor"]], 1)
+        or any(not _equals([before[name], before[f"actual_{name}"]], value)
+               for name, value in zip(FIELDS, expected))
+        or any(not _equals([incoming[name]], value) for name, value in zip(FIELDS, expected) if name != field)
+        or not _number(incoming[field]) or incoming[field] not in ((bad_value,) if seed else (bad_value, official_value))
+    ):
+        raise CorporateActionError(f"reviewed {symbol} restoration: OHLCV differs")
+    for row in (before, incoming):
+        journal = row["off_session_actions"]
+        if (not _equals([row["split_ratio"]], 0)
+                or str(row["provider_repaired"]).lower() != "false"
+                or not (pd.isna(journal) or journal == "")):
+            raise CorporateActionError(f"reviewed {symbol} restoration: unexpected action or repair")
+
+    audit = _november_audit(symbol, previous.attrs["source_sha256"], basis, int(incoming[field]))
+    return incoming_rows.index[0], field, official_value, audit
+
+
+def restore_reviewed_november_quotes(previous, current, *, basis_asof, archive):
+    """Restore only the evidenced raw cells, before ordinary source validation."""
+    from .acquisition import AcquisitionArchive
+    from .corporate_actions import CorporateActionError
+
+    if previous is None:
+        return current, {}
+    source_sha = previous.attrs.get("source_sha256")
+    seed = source_sha == NOVEMBER_SEED_SHA
+    lineage = previous.attrs.get(NOVEMBER_AUDIT_ATTR)
+    if seed:
+        if not isinstance(archive, AcquisitionArchive) or not archive.replay or archive.context.get("date") != "2026-11-09":
+            return current, {}
+        _verify_november_archive(archive)
+        prior = dict.fromkeys(NOVEMBER_QUOTES)
+    elif lineage is None:
+        return current, {}
+    else:
+        if not _sha(source_sha) or not isinstance(lineage, dict) or lineage.get("dailySha256") != source_sha:
+            raise CorporateActionError("reviewed November 9 restoration: source-quality lineage differs")
+        prior = lineage.get("restorations")
+        if not isinstance(prior, dict) or not prior or not prior.keys() <= NOVEMBER_QUOTES.keys():
+            raise CorporateActionError("reviewed November 9 restoration: unexpected audit identities")
+    if not current.index.is_unique:
+        raise CorporateActionError("reviewed November 9 restoration: ambiguous raw index")
+
+    result = current.copy(deep=False)
+    audits = {}
+    basis = pd.Timestamp(basis_asof)
+    for symbol, prior_audit in prior.items():
+        update = _november_quote(previous, current, symbol, basis, prior_audit, seed)
+        if update is None:
+            continue
+        index, field, official_value, audit = update
+        audits[symbol] = audit
+        if audit["changedCellCount"]:
+            column = result[field].copy()
+            column.loc[index] = official_value
+            result[field] = column
+    return result, audits

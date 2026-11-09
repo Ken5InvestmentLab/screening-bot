@@ -12,6 +12,8 @@
 
 ## Cloud beta daily runner
 
+- Use the exact lock paths checked by the launch preflight and reconcile them with the runner process and owning receipt. A suffixed archival copy of a lock is evidence for the old run. Preserve it and verify that the exact active path and owner are absent before launch.
+
 - Use `node scripts/windows/weak-early-beta-launch-preflight.mjs <absolute-daily-config.json>` for read-only launch readiness, then prepare beta-gate dependencies and invoke the daily runner once. Do not reconstruct preflight as quoted inline PowerShell/Node or regex-strip comments from the valid JSON in `wrangler.jsonc` (it contains `https://` values). The runner still owns network/model preflight and lock acquisition. Test with `node --test scripts/windows/test-weak-early-beta-launch-preflight.mjs scripts/windows/test-weak-early-beta-daily-config.mjs`.
 - Clone delivery receipt checks concern `signal_discord_url`, D5/D6 reminder receipts, and the applicable day's notification state. Preserve historical `complete_historical` fundamental URLs and embedded HTML; a deleted historical fundamental message does not establish missing current delivery state and must not trigger resend or block unrelated unstarted-day processing. Reconcile same-day admin history and run receipts separately; stop on unresolved current delivery/auth/history failures.
 

@@ -16,6 +16,7 @@ import {
   queueIdentities,
   reconcileNotifications,
   requireRemoteHead,
+  run,
   selectWorkflowRun,
   verifyLiveWorker,
   waitForTagWorkflow,
@@ -26,6 +27,29 @@ const signalDate = '2026-10-06';
 const tag = 'cloud-deploy-test-20261006';
 const headSha = 'a'.repeat(40);
 const origin = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
+
+test('child capture preserves UTF-8 split across stdout and stderr chunks', async t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-utf8-'));
+  t.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const log = path.join(directory, 'capture');
+  const child = [
+    "const stdout = Buffer.from('東証📈');",
+    "const stderr = Buffer.from('日次通知');",
+    'process.stdout.write(stdout.subarray(0, 1));',
+    'process.stderr.write(stderr.subarray(0, 2));',
+    'setTimeout(() => {',
+    '  process.stdout.write(stdout.subarray(1));',
+    '  process.stderr.write(stderr.subarray(2));',
+    '}, 100);',
+  ].join('\n');
+  const result = await run(process.execPath, ['-e', child], {
+    cwd: directory, env: process.env, log, capture: true, timeoutMs: 10_000,
+  });
+
+  assert.deepEqual(result, { code: 0, stdout: '東証📈', stderr: '日次通知' });
+  assert.deepEqual(fs.readFileSync(log + '.stdout'), Buffer.from('東証📈'));
+  assert.deepEqual(fs.readFileSync(log + '.stderr'), Buffer.from('日次通知'));
+});
 
 test('the generated commit used for tag deployment contains no workflow skip instruction', () => {
   const source = fs.readFileSync(new URL('./weak-early-beta-daily-runner.mjs', import.meta.url), 'utf8');

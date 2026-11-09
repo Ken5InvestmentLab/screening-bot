@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { StringDecoder } from 'node:string_decoder';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
@@ -113,13 +114,15 @@ async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_0
   return await new Promise((resolve, reject) => {
     let stdout = '';
     let stderr = '';
+    const stdoutDecoder = new StringDecoder('utf8');
+    const stderrDecoder = new StringDecoder('utf8');
     const child = spawn(exe, args, { cwd, env, windowsHide: true, stdio: capture ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'] });
     child.stdout.on('data', chunk => {
-      stdout += chunk;
+      stdout += stdoutDecoder.write(chunk);
       fs.appendFileSync(`${log}.stdout`, chunk);
     });
     child.stderr.on('data', chunk => {
-      stderr += chunk;
+      stderr += stderrDecoder.write(chunk);
       fs.appendFileSync(`${log}.stderr`, chunk);
     });
     const timer = setTimeout(() => {
@@ -130,9 +133,9 @@ async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_0
       reject(new Error(`timeout: ${path.basename(log)}`));
     }, timeoutMs);
     child.on('error', error => { clearTimeout(timer); reject(error); });
-    child.on('exit', code => {
+    child.on('close', code => {
       clearTimeout(timer);
-      resolve({ code, stdout, stderr });
+      resolve({ code, stdout: stdout + stdoutDecoder.end(), stderr: stderr + stderrDecoder.end() });
     });
   });
 }

@@ -14779,6 +14779,1158 @@
           "discordPost": false
         }
       }
+    },
+    "weak-early-beta:2026-11-10:3042": {
+      "completedAt": "2026-11-10T13:18:36.275Z",
+      "delivery": "html",
+      "analysisCutoff": "2026-11-10T12:54:10.426Z",
+      "analysisBasis": "analysis_start",
+      "report": {
+        "alertId": "weak-early-beta:2026-11-10:3042",
+        "identity": "2026-11-10|3042",
+        "symbolCode": "3042",
+        "symbolName": "セキュアヴェイル",
+        "signalDate": "2026-11-10",
+        "receivedAt": "2026-11-10T16:15:00+09:00",
+        "analysisCutoff": "2026-11-10T12:54:10.426Z",
+        "title": "セキュアヴェイル (3042) | TradingView チャート",
+        "url": "https://jp.tradingview.com/chart/?symbol=TSE%3A3042",
+        "summary": "アライドテレシスとの協業基本合意とAI-SOCの販路拡張は事業領域を広げる材料です。一方、最新1Qは大型ソフト販売の反動と先行費用で営業赤字となり、新サービス単独の利益寄与と予約権の基準時点残高は未確定です。",
+        "materialImpact": "混在/要確認：協業合意でSOCの機能拡張を狙う一方、直近1Qは減収・営業赤字で、新サービスの利益寄与と潜在株式の最新残高は未確定です。",
+        "fields": [
+          {
+            "name": "材料インパクト",
+            "value": "混在/要確認：協業合意でSOCの機能拡張を狙う一方、直近1Qは減収・営業赤字で、新サービスの利益寄与と潜在株式の最新残高は未確定です。",
+            "inline": false
+          },
+          {
+            "name": "事業概要",
+            "value": "企業・自治体・医療機関などに、ネットワークの24時間365日監視・障害対応・ログ分析を行う「NetStare」と、Microsoft 365やファイアウォール向けの「AI-SOC」を提供します。子会社LogStareがログ管理・セキュリティ運用基盤を開発販売し、キャリアヴェイルがセキュリティ技術者の育成・派遣を担います。",
+            "inline": false
+          },
+          {
+            "name": "足元材料",
+            "value": "11月10日11:00のアライドテレシスとの基本合意は、ログ分析とネットワーク制御をMCP経由で結ぶ共同開発の段階で、提供開始日・受注額・売上寄与はまだ示されていません。 企業・自治体・教育・医療向けのSOCとネットワーク制御の連携は提供領域を広げる狙いがある一方、基本合意を有料契約の獲得と同一視できません。\n\n10月20日08:58の会社IRでは、Microsoft 365の監査ログ分析レポートを先着100社に無償提供すると公表しました（同一資料のTDnet公表は09:00）。利用接点を増やす施策であり、100社の有料受注や売上計上を示す数字ではありません。\n\n10月6日15:30には自己株取得の累計31万株・9,999万8,300円での終了を公表しました。8月14日15:30決議の40万株・1億円の上限に対する実績で、未取得9万株を残していても取得枠は終了済みです。10月1日10:00にはLogStare取締役社長を堀野氏へ変更し、米今代表取締役は維持する執行体制を公表しました。次期中計策定を見据えた体制変更で、数値計画の公表ではありません。\n\n8月14日15:30公表の最新1Qは売上2億6,053万円（前年同期比17.5％減）、営業損失5,254万円（前年は3,973万円の利益）。前年の大型ソフト販売の反動に、既存ソフトウェアの先行費用2,002万円、広告費486万円増、人件費1,278万円増が重なりました。通期売上14.38億円・営業利益1.38億円の会社予想は据え置きですが、AI-SOCの商談増を赤字解消の実績として扱う段階ではありません。",
+            "inline": false
+          },
+          {
+            "name": "ファンダ要点",
+            "value": "ストック型監視サービスの契約更新と、利益率の高いソフトウェア販売の構成が収益を左右します。1Qのストック型サービスは前年並みでも、情報セキュリティ売上は23.9％減、同部門は2,205万円の損失です。人材サービスは売上10.2％増の6,575万円でも部門利益は13.3％減の763万円で、増収だけでは採用・人件費増を吸収できていません。\n\n2025年11月6日15:30に公表したAI-SOCは12月1日提供開始の計画から、2026年4月17日09:00のSTNet販売開始、4月27日09:00のSnowPeak BS参画、6月9日09:00のPaloAlto対応へ進み、低価格SOCの販路と対応機器を拡張しています。 2025年11月20日15:30公表のFortiGate版も同じ12月1日開始予定とされ、M365版は1ユーザー月額50円、FortiGate小型機版は月額9,800円から、PaloAlto版は月額36,000円という価格体系です。低単価サービスを既存のSOC・自社ソフト基盤で提供する仕組みで、顧客数・監視台数・オプション利用と、運用・販促費の吸収が採算の要素になります。\n\n6月24日公表の2026年3月期有価証券報告書（時刻記載なし）では、情報セキュリティ受注残は4億1,401万円、前年比63.8％でした。2009年3月5日10:00の相互販売契約を起点とするNRIセキュアとの取引関係は、2026年3月期に製品・サービス売上2億6,418万円、連結売上の20.6％を占める実収益基盤です。 この取引先別売上は当時の特定製品契約だけの売上額ではなく、現在のNRI向け製品・サービス取引全体の実績です。\n\n2020年8月20日15:32に設立を公表したLogStareは、2026年3月期に単体売上2億6,330万円・経常利益6,427万円を計上し、自社開発体制は既存の収益基盤になっています。 この単体損益は連結消去前で、連結売上への単純加算はできません。2021年6月25日公表の有報（時刻記載なし）では、旧資金調達の使途を大規模SOC・研修設備からLogStare設立等へ変更し、設立資金2.99億円充当済みと説明しています。過去の大型拠点投資案を現在の未稼働大型投資と重ねることはできません。\n\n2024年7月29日公表（時刻記載なし）のサイバーセキュリティファンドLP参画は、2025年9月12日15:30のLRMへの第一号投資先決定へ進みましたが、当社の投資回収や事業収益への寄与は確認できません。 投資先選定・販路支援の継続案件として捉え、投資先LRMの顧客数や売上を当社業績へ足しません。\n\n2018年9月25日16:00に取得を発表したインサイトは、2021年1月29日15:00の全株譲渡発表を経て同年2月に資本関係を解消しています。売却時資料にある2020年3月期の同社単体売上2億8,350万円・営業利益1,148万円は過去実績で、現在の連結成長分には含めません。\n\nLogStareのAI機能は2024年6月12日のアルファ公開から、2025年6月2日のMCP対応、2026年4月8日公表のAI分析オプション販売開始、6月2日の自律調査型AI-SIEM提供へ進んでおり、既存ソフトの付加価値拡張という現在の意味があります（各公式発表は時刻記載なし）。",
+            "inline": false
+          },
+          {
+            "name": "注意点",
+            "value": "大型ソフト販売の時期と先行費用の回収が利益変動の中心です。1Q末の現預金は11.73億円、自己資本比率79.2％ですが、その後の自己株取得約1億円を6月末残高から機械的に控除した数値を現在の現金とみなせません。NRI向け売上20.6％の集中と、人材部門の増収減益も収益分散・費用吸収の弱点です。\n\nAI-SOCは2025年12月1日の提供開始予定日を経て機能・販路を拡張していますが、基準時点までの有料契約数、ARR、サービス単独の売上・利益寄与は公表本文で確認できません。 2024年11月14日公表（時刻記載なし）のBBSec提携はSOC共同開発・相互送客の構想で、会社の当初見込みは連結売上高10％未満の影響とされ、提携別の売上・利益実績は確認できません。 BBSecの38万4,500株取得は既存株主からの取得で、会社への新株払込による資金調達ではありません。\n\n第8回有償ストックオプションは、2026年5月31日時点で対象28万株・行使価額286円・2027年12月8日満期と確認できますが、その後の回号別残高は確認できず、基準時点の希薄化リスク全量は未確定です。第7回も戻入益60万円だけでは全数終了を断定できません。 8月14日公表の1Qでも6月末の新株予約権帳簿額28万円が残りますが、帳簿金額を対象株数へ逆算しません。第8回には原発行資料の業績条件と株価下落時の行使義務条件があり、最新有報に残る条件と、条件成立の事実を分けています。条件成立・実行済み新株交付数・自己株式交付数は照合できず、28万株をそのまま今後の新株発行数や希薄化率としては表示しません。\n\n第7回は2022年11月21日17:00の発行原資料・12月9日15:00の確定資料を確認し、2024年11月14日公表の半期報告書と2025年6月27日公表の有報（両方とも時刻記載なし）を照合しました。戻入益60万円と第8回のみの記載は確認できますが、第7回を名指しした全数終了日・手続きを示す本文が不足しています。資本リスクの確認不足は内部レビューと同じく未解決として保持しています。\n\nAI分析オプションは2026年4月1日の販売開始が本文で確認できますが、オプション単独や自律調査機能の売上・利益は確認できず、累積6,400ユーザーも有料AI契約数やARRには置き換えられません。",
+            "inline": false
+          },
+          {
+            "name": "開示リンク",
+            "value": "・[2026-11-10 アライドテレシスとセキュアヴェイル、協業体制構築に関する基本合意を締結(11:00)](https://ssl4.eir-parts.net/doc/3042/announcement1/126181/00.pdf)\n・[2026-10-20 緊急対応　Microsoft 365監査ログの調査分析レポート無償提供 不正アクセス急増に『AI-SOC』を活用(先着100社)(08:58)](https://ssl4.eir-parts.net/doc/3042/announcement1/126183/00.pdf)\n・[2026-10-06 自己株式の取得結果および取得終了に関するお知らせ(15:30)](https://ssl4.eir-parts.net/doc/3042/tdnet/2892025/00.pdf)\n・[2026-10-01 子会社役員人事に関するお知らせ(10:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/2889891/00.pdf)\n・[2026-08-14 2027年３月期 第１四半期決算短信〔日本基準〕（連結）(15:30)](https://ssl4.eir-parts.net/doc/3042/tdnet/2873416/00.pdf)\n・[2026-08-14 2027年3月期 第1四半期 決算説明サマリー(15:30)](https://ssl4.eir-parts.net/doc/3042/tdnet/2873480/00.pdf)\n・[2026-08-14 自己株式の取得に係る事項の決定に関するお知らせ(15:30)](https://ssl4.eir-parts.net/doc/3042/tdnet/2873481/00.pdf)\n・[2026-06-24 2026年3月期 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf)\n・[2022-11-21 募集新株予約権（有償ストック・オプション）の発行に関するお知らせ(17:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf)\n・[2022-12-09 募集新株予約権（有償ストック・オプション）の発行内容確定に関するお知らせ(15:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/2214171/00.pdf)\n・[2025-06-27 2025年3月期 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf)\n・[2024-11-14 2025年3月期 半期報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100US5J/00.pdf)\n・[2009-03-05 セキュアヴェイル、NRIセキュアと相互販売契約を締結(10:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/688276/00.pdf)\n・[2020-08-20 子会社設立に関するお知らせ(15:32)](https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf)\n・[2025-11-06 セキュアヴェイルがAIを活用したセキュリティ運用サービス『AI-SOC』をリリース、Microsoft 365を対象に1ユーザー月額50円で提供開始(15:30)](https://ssl4.eir-parts.net/doc/3042/announcement1/115388/00.pdf)\n・[2025-11-20 セキュアヴェイル、AIを活用したFortiGate向けセキュリティ運用サービス『AI-SOC』を月額9800円で提供開始(15:30)](https://ssl4.eir-parts.net/doc/3042/announcement1/115714/00.pdf)\n・[2026-04-17 AIで無人化を実現するセキュアヴェイルの次世代SOCサービス「AI-SOC」を株式会社STNetが四国エリアで販売開始(09:00)](https://ssl4.eir-parts.net/doc/3042/announcement1/119627/00.pdf)\n・[2026-04-27 セキュアヴェイルが提供する『AI-SOC for Microsoft 365』のソリューションパートナーにスノーピークビジネスソリューションズが参画(09:00)](https://ssl4.eir-parts.net/doc/3042/announcement1/119851/00.pdf)\n・[2026-06-09 セキュアヴェイルの次世代SOCサービス『AI-SOC』がPaloAlto PA-400シリーズに対応(09:00)](https://ssl4.eir-parts.net/doc/3042/announcement1/122054/00.pdf)\n・[2024-11-14 株式会社ブロードバンドセキュリティ（証券コード：４３９８）との業務提携の締結のお知らせ(時刻記載なし)](https://www.secuavail.com/event/2024/1114/alliance_bbsec.html)\n・[2024-07-29 セキュアヴェイル、セキュリティ企業に投資するファンド「日本サイバーセキュリティファンド１号投資事業有限責任組合」に出資企業として参画(時刻記載なし)](https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html)\n・[2025-09-12 セキュアヴェイルが参画する日本サイバーセキュリティファンドの第一号投資先企業に国産の従業員向けセキュリティ教育クラウドサービス「セキュリオ」を提供するLRM社が決定(15:30)](https://www.secuavail.com/event/2025/0912/ncsf_lrm.html)\n・[2018-09-25 株式会社インサイトの株式取得（連結子会社化）に関するお知らせ(16:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/1631419/00.pdf)\n・[2021-01-29 連結子会社の異動（株式譲渡）に関するお知らせ(15:00)](https://ssl4.eir-parts.net/doc/3042/tdnet/1923829/00.pdf)\n・[2021-06-25 2021年3月期 有価証券報告書(時刻記載なし)](https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf)\n・[2024-06-12 LogStareが生成AIによるログ分析システムのアルファ版を本日公開(時刻記載なし)](https://www.logstare.com/news/logstare_genai_alpha/)\n・[2025-06-02 対話型AIでSOC無人化の時代へ、LogStareがMCPに対応した次世代SIEMの提供を開始(時刻記載なし)](https://www.logstare.com/news/logstare_mcp/)\n・[2026-04-08 次世代のセキュリティ運用プラットフォーム「LogStare」に「AI分析オプション」を搭載、SOC運用を大幅に効率化(時刻記載なし)](https://www.logstare.com/news/logstare_genai_v1/)\n・[2026-06-02 SOCアナリストの思考をAI化し自律的にログを分析、LogStareが無人SOCを実現するAI-SIEMを提供開始(時刻記載なし)](https://www.logstare.com/news/ai-siem_logstare/)",
+            "inline": false
+          },
+          {
+            "name": "Sources",
+            "value": "・[セキュアヴェイル IRライブラリー](https://www.secuavail.com/info/library.html)\n・[セキュアヴェイル お知らせ一覧](https://www.secuavail.com/event/)\n・[セキュアヴェイル（3042）適時開示情報 — Yahoo!ファイナンス](https://finance.yahoo.co.jp/quote/3042.T/disclosure)\n・[セキュアヴェイル（3042）の適時開示情報 — 96ut.com](https://96ut.com/stock/todoke.php?code=3042)",
+            "inline": false
+          }
+        ],
+        "sources": [
+          {
+            "title": "セキュアヴェイル IRライブラリー",
+            "url": "https://www.secuavail.com/info/library.html"
+          },
+          {
+            "title": "セキュアヴェイル お知らせ一覧",
+            "url": "https://www.secuavail.com/event/"
+          },
+          {
+            "title": "セキュアヴェイル（3042）適時開示情報 — Yahoo!ファイナンス",
+            "url": "https://finance.yahoo.co.jp/quote/3042.T/disclosure"
+          },
+          {
+            "title": "セキュアヴェイル（3042）の適時開示情報 — 96ut.com",
+            "url": "https://96ut.com/stock/todoke.php?code=3042"
+          }
+        ],
+        "sourceChecks": [
+          {
+            "role": "official_ir",
+            "checked": true,
+            "url": "https://www.secuavail.com/info/library.html",
+            "checkedUrls": [
+              "https://www.secuavail.com/info/library.html",
+              "https://www.secuavail.com/info/news.html",
+              "https://ssl4.eir-parts.net/V4Public/EIR/3042/ja/announcement/announcement_1.js",
+              "https://www.secuavail.com/event/",
+              "https://www.secuavail.com/info/ir_koukoku.html",
+              "https://ssl4.eir-parts.net/doc/3042/announcement1/126181/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/announcement1/126183/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/2892025/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/2889891/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/2873416/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/2873480/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/2873481/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/2214171/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100US5J/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/688276/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/announcement1/115388/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/announcement1/115714/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/announcement1/119627/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/announcement1/119851/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/announcement1/122054/00.pdf",
+              "https://www.secuavail.com/event/2024/1114/alliance_bbsec.html",
+              "https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html",
+              "https://www.secuavail.com/event/2025/0912/ncsf_lrm.html",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/1631419/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/tdnet/1923829/00.pdf",
+              "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf",
+              "https://www.logstare.com/news/logstare_genai_alpha/",
+              "https://www.logstare.com/news/logstare_mcp/",
+              "https://www.logstare.com/news/logstare_genai_v1/",
+              "https://www.logstare.com/news/ai-siem_logstare/"
+            ],
+            "result": "会社IRライブラリー/IRニュースの動的配信元を取得し、公開一覧552件（2006年6月26日から2026年11月10日11:00）から資本政策と事業案件を抽出。公式お知らせ一覧も照合。2026年9月26日から基準時点までの直近45日を維持し、11月10日11:00の基本合意、10月20日の無償分析、10月6日の自己株取得終了、10月2日の取得進捗、10月1日の子会社役員変更を照合した。最新決算は8月14日1Q、最新会社IR掲載年次報告は6月24日有報。採用資料の本文を既存pypdf/pdfplumberまたは公式HTMLで読み、年数の下限を設けず旧案件・予約権原資料へ遡った。ライブラリーの00:00は公開時刻と見なさず、年次/半期報告書はdate_onlyで保持。10月20日は会社IR08:58、TDnet09:00の差を記録。 親会社公式ニュースからリンクされたLogStare公式ニュース4件の本文も読み、製品化の進捗と個別実績非開示を区別した。"
+          },
+          {
+            "role": "irbank_or_tdnet",
+            "checked": true,
+            "url": "https://finance.yahoo.co.jp/quote/3042.T/disclosure",
+            "checkedUrls": [
+              "https://finance.yahoo.co.jp/quote/3042.T/disclosure",
+              "https://96ut.com/stock/todoke.php?code=3042",
+              "https://jp.kabumap.com/servlets/kabumap/Action?SRC=basic%2Fnews%2Fbase&codetext=3042",
+              "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20261110/20261110570354.pdf",
+              "https://finance-frontend-pc-dist.west.edge.storage-yahoo.jp/disclosure/20260814/20260810516396.pdf"
+            ],
+            "result": "YahooのTDnet配信一覧本文で11月10日11:00の日本語基本合意から直近45日と8月14日の決算・自己株取得同時開示を照合し、選定PDF本文も開いた。96utの長期適時開示一覧で2022年11月/12月の予約権発行と確定、2017年/2018年の旧発行、2020年行使価額修正等を公式IR配信と照合。株マップ一覧は応答キャッシュが古い場合があるため、最新資料の欠落を不在根拠にしなかった。IRBANK取得拒否を確認済み一覧に代用せず、到達できたTDnet相当を確認記録として採用。"
+          },
+          {
+            "role": "irbank_attempt",
+            "checked": false,
+            "url": "https://irbank.net/3042/tdnet",
+            "checkedUrls": [
+              "https://irbank.net/3042",
+              "https://irbank.net/3042/tdnet"
+            ],
+            "result": "web閲覧とローカルGETの双方で403/取得不能。IRBANK一覧本文を確認済みとはしていない。公式IR配信・到達可能なTDnet相当一覧で補完。"
+          }
+        ],
+        "disclosures": [
+          {
+            "id": "allied",
+            "title": "アライドテレシスとセキュアヴェイル、協業体制構築に関する基本合意を締結",
+            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/126181/00.pdf",
+            "publishedAt": "2026-11-10T11:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "m365-free",
+            "title": "緊急対応　Microsoft 365監査ログの調査分析レポート無償提供 不正アクセス急増に『AI-SOC』を活用(先着100社)",
+            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/126183/00.pdf",
+            "publishedAt": "2026-10-20T08:58:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "buyback-end",
+            "title": "自己株式の取得結果および取得終了に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2892025/00.pdf",
+            "publishedAt": "2026-10-06T15:30:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "directors",
+            "title": "子会社役員人事に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2889891/00.pdf",
+            "publishedAt": "2026-10-01T10:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "q1",
+            "title": "2027年３月期 第１四半期決算短信〔日本基準〕（連結）",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2873416/00.pdf",
+            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "q1-summary",
+            "title": "2027年3月期 第1四半期 決算説明サマリー",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2873480/00.pdf",
+            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "buyback-start",
+            "title": "自己株式の取得に係る事項の決定に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2873481/00.pdf",
+            "publishedAt": "2026-08-14T15:30:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "annual26",
+            "title": "2026年3月期 有価証券報告書",
+            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
+            "publishedAt": "2026-06-24",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only"
+          },
+          {
+            "id": "issue78",
+            "title": "募集新株予約権（有償ストック・オプション）の発行に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf",
+            "publishedAt": "2022-11-21T17:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "confirm78",
+            "title": "募集新株予約権（有償ストック・オプション）の発行内容確定に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2214171/00.pdf",
+            "publishedAt": "2022-12-09T15:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "annual25",
+            "title": "2025年3月期 有価証券報告書",
+            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf",
+            "publishedAt": "2025-06-27",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only"
+          },
+          {
+            "id": "half24",
+            "title": "2025年3月期 半期報告書",
+            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100US5J/00.pdf",
+            "publishedAt": "2024-11-14",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only"
+          },
+          {
+            "id": "nri09",
+            "title": "セキュアヴェイル、NRIセキュアと相互販売契約を締結",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/688276/00.pdf",
+            "publishedAt": "2009-03-05T10:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "logstare20",
+            "title": "子会社設立に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf",
+            "publishedAt": "2020-08-20T15:32:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "m365-start",
+            "title": "セキュアヴェイルがAIを活用したセキュリティ運用サービス『AI-SOC』をリリース、Microsoft 365を対象に1ユーザー月額50円で提供開始",
+            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/115388/00.pdf",
+            "publishedAt": "2025-11-06T15:30:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "fortigate-start",
+            "title": "セキュアヴェイル、AIを活用したFortiGate向けセキュリティ運用サービス『AI-SOC』を月額9800円で提供開始",
+            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/115714/00.pdf",
+            "publishedAt": "2025-11-20T15:30:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "stnet",
+            "title": "AIで無人化を実現するセキュアヴェイルの次世代SOCサービス「AI-SOC」を株式会社STNetが四国エリアで販売開始",
+            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/119627/00.pdf",
+            "publishedAt": "2026-04-17T09:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "snowpeak",
+            "title": "セキュアヴェイルが提供する『AI-SOC for Microsoft 365』のソリューションパートナーにスノーピークビジネスソリューションズが参画",
+            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/119851/00.pdf",
+            "publishedAt": "2026-04-27T09:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "paloalto",
+            "title": "セキュアヴェイルの次世代SOCサービス『AI-SOC』がPaloAlto PA-400シリーズに対応",
+            "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/122054/00.pdf",
+            "publishedAt": "2026-06-09T09:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "bbs24",
+            "title": "株式会社ブロードバンドセキュリティ（証券コード：４３９８）との業務提携の締結のお知らせ",
+            "url": "https://www.secuavail.com/event/2024/1114/alliance_bbsec.html",
+            "publishedAt": "2024-11-14",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only"
+          },
+          {
+            "id": "fund24",
+            "title": "セキュアヴェイル、セキュリティ企業に投資するファンド「日本サイバーセキュリティファンド１号投資事業有限責任組合」に出資企業として参画",
+            "url": "https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html",
+            "publishedAt": "2024-07-29",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only"
+          },
+          {
+            "id": "fund-lrm",
+            "title": "セキュアヴェイルが参画する日本サイバーセキュリティファンドの第一号投資先企業に国産の従業員向けセキュリティ教育クラウドサービス「セキュリオ」を提供するLRM社が決定",
+            "url": "https://www.secuavail.com/event/2025/0912/ncsf_lrm.html",
+            "publishedAt": "2025-09-12T15:30:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "insight18",
+            "title": "株式会社インサイトの株式取得（連結子会社化）に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1631419/00.pdf",
+            "publishedAt": "2018-09-25T16:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "insight-sale",
+            "title": "連結子会社の異動（株式譲渡）に関するお知らせ",
+            "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1923829/00.pdf",
+            "publishedAt": "2021-01-29T15:00:00+09:00",
+            "contentReviewed": true
+          },
+          {
+            "id": "annual21",
+            "title": "2021年3月期 有価証券報告書",
+            "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf",
+            "publishedAt": "2021-06-25",
+            "contentReviewed": true,
+            "publishedAtPrecision": "date_only"
+          },
+          {
+            "id": "ai-alpha",
+            "title": "LogStareが生成AIによるログ分析システムのアルファ版を本日公開",
+            "url": "https://www.logstare.com/news/logstare_genai_alpha/",
+            "publishedAt": "2024-06-12",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true
+          },
+          {
+            "id": "ai-mcp",
+            "title": "対話型AIでSOC無人化の時代へ、LogStareがMCPに対応した次世代SIEMの提供を開始",
+            "url": "https://www.logstare.com/news/logstare_mcp/",
+            "publishedAt": "2025-06-02",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true
+          },
+          {
+            "id": "ai-option",
+            "title": "次世代のセキュリティ運用プラットフォーム「LogStare」に「AI分析オプション」を搭載、SOC運用を大幅に効率化",
+            "url": "https://www.logstare.com/news/logstare_genai_v1/",
+            "publishedAt": "2026-04-08",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true
+          },
+          {
+            "id": "ai-siem",
+            "title": "SOCアナリストの思考をAI化し自律的にログを分析、LogStareが無人SOCを実現するAI-SIEMを提供開始",
+            "url": "https://www.logstare.com/news/ai-siem_logstare/",
+            "publishedAt": "2026-06-02",
+            "publishedAtPrecision": "date_only",
+            "contentReviewed": true
+          }
+        ],
+        "capitalRiskReview": {
+          "version": 1,
+          "analysisCutoff": "2026-11-10T12:54:10.426Z",
+          "status": "unresolved",
+          "historyCheckedThrough": null,
+          "documents": [
+            {
+              "id": "annual26",
+              "title": "2026年3月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
+              "publishedAt": "2026-06-24",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.4-11,14-25,56,63,69-71",
+              "finding": "会社IR掲載本文。第8回2,800個・対象280,000株、行使価額286円、行使期間2024年7月1日-2027年12月8日。2026年3月31日残高で5月31日も変更なし。ストックオプション注記では権利確定前未確定残280,000株。株価が行使価額の30％未満となった場合の行使義務条件が残る。その他新株予約権等と行使価額修正条項付新株予約権付社債券等は該当なし。LogStare単体売上263,303千円・経常利益64,276千円、NRIセキュア向け売上264,184千円・連結売上の20.6％。情報セキュリティ受注残414,012千円（前年比63.8％）。",
+              "publishedAtPrecision": "date_only",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "q1",
+              "title": "2027年３月期 第１四半期決算短信〔日本基準〕（連結）",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2873416/00.pdf",
+              "publishedAt": "2026-08-14T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2,4-8,10-11（添付 pp.2-6,8-9）",
+              "finding": "売上260,532千円（17.5％減）、営業損失52,546千円、経常損失51,979千円。先行ソフトウェア費20,020千円、広告宣伝費4,865千円増、人件費12,789千円増。ストック型サービス前年並み。6月30日の新株予約権帳簿額280千円、発行済株式7,690,000株、自己株式448株。帳簿額は回号別未行使株数ではない。通期売上1,438百万円・営業利益138百万円予想を維持。",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "annual25",
+              "title": "2025年3月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100W8D0/00.pdf",
+              "publishedAt": "2025-06-27",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.61、ストック・オプション等関係",
+              "finding": "2025年3月期に存在したストックオプションとして第8回の対象280,000株だけを記載し、未確定残280,000株、権利行使・失効はなし。第7回の回号を明示した全数失効日・取得消却の記述は確認できなかった。",
+              "publishedAtPrecision": "date_only",
+              "kind": "status"
+            },
+            {
+              "id": "half24",
+              "title": "2025年3月期 半期報告書",
+              "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100US5J/00.pdf",
+              "publishedAt": "2024-11-14",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.5-6,9-10,12、株式等・中間財務諸表",
+              "finding": "2024年9月30日の新株予約権帳簿額は880千円から280千円へ減少し、新株予約権戻入益600千円を計上。発行済株式は7,690,000株で増減なし。これだけで第7回全数の法的終了日を断定しない。半期のストックオプション制度『該当事項なし』は既存の全潜在株式の不存在証拠にはしない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "status"
+            },
+            {
+              "id": "issue78",
+              "title": "募集新株予約権（有償ストック・オプション）の発行に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2209392/00.pdf",
+              "publishedAt": "2022-11-21T17:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-8、第7回・第8回発行要項",
+              "finding": "第7回1,200個・120,000株、第8回2,800個・280,000株。双方286円、2022年12月9日割当、行使期間2024年7月1日-2027年12月8日。2024年3月期連結経常利益150百万円超で50％、200百万円超で100％の行使条件。第8回には株価が行使価額の30％を下回った場合の全残存権利の行使義務と例外がある。",
+              "kind": "issuance"
+            },
+            {
+              "id": "confirm78",
+              "title": "募集新株予約権（有償ストック・オプション）の発行内容確定に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2214171/00.pdf",
+              "publishedAt": "2022-12-09T15:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、割当対象者・確定個数",
+              "finding": "第7回は従業員17名・1,200個・120,000株、第8回は取締役8名・2,800個・280,000株に確定。",
+              "kind": "status"
+            },
+            {
+              "id": "issue4",
+              "title": "第三者割当により発行される第４回新株予約権の発行及びコミットメント条項付き第三者割当契約の締結に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1286215/00.pdf",
+              "publishedAt": "2015-09-14T17:15:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、募集概要",
+              "finding": "2015年9月30日割当、160個、潜在800,000株、固定行使価額1,000円、マイルストーン社割当。",
+              "kind": "issuance"
+            },
+            {
+              "id": "closure4",
+              "title": "新株予約権の消滅に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1517189/00.pdf",
+              "publishedAt": "2017-10-02T08:45:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、第4回全数消滅・消滅後残高",
+              "finding": "第4回160個・対象800,000株の全数が2017年9月29日に行使期間満了で消滅し、消滅後0個・0株と明示。",
+              "kind": "closure"
+            },
+            {
+              "id": "issue5",
+              "title": "募集新株予約権（有償ストック・オプション）の発行に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1538370/00.pdf",
+              "publishedAt": "2017-12-07T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-5、2017年SO発行要項",
+              "finding": "2,000個・対象200,000株、行使価額660円、当初行使期間2020年7月1日-2022年12月17日、2020年3月期経常利益の業績条件付き。後の2018年第6回以前の2017年SOとして照合。",
+              "kind": "issuance"
+            },
+            {
+              "id": "issue5-fixed",
+              "title": "募集新株予約権（有償ストック・オプション）の発行内容確定に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1540333/00.pdf",
+              "publishedAt": "2017-12-18T18:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、割当対象者・2,000個",
+              "finding": "取締役2名900個、従業員10名1,100個、合計2,000個・200,000株に確定。",
+              "kind": "status"
+            },
+            {
+              "id": "issue5-change",
+              "title": "募集新株予約権（有償ストック・オプション）の発行内容一部変更に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1541269/00.pdf",
+              "publishedAt": "2017-12-22T15:45:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、割当先内訳変更",
+              "finding": "取締役2名1,100個・従業員8名900個へ変更。全2,000個を維持した内訳変更であり、消却ではない。",
+              "kind": "status"
+            },
+            {
+              "id": "issue6",
+              "title": "第三者割当により発行される第６回新株予約権の発行及びコミットメント条項付き第三者割当契約の締結に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1626799/00.pdf",
+              "publishedAt": "2018-08-30T17:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、募集概要・修正条項",
+              "finding": "2018年9月18日割当6,000個・対象600,000株。当初行使価額1,080円、下限600円、マイルストーン社割当。対象株数は後の2021年1対2分割前の基準。",
+              "kind": "issuance"
+            },
+            {
+              "id": "issue6-change",
+              "title": "第三者割当による第６回新株予約権（行使価額修正条項付）の行使価額の修正決定に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1808488/00.pdf",
+              "publishedAt": "2020-03-18T18:45:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、行使価額修正",
+              "finding": "2020年3月19日から行使価額を1,080円から600円へ修正。修正は権利の全数終了ではない。",
+              "kind": "status"
+            },
+            {
+              "id": "annual21",
+              "title": "2021年3月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf",
+              "publishedAt": "2021-06-25",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.18-19,40,48,55-56",
+              "finding": "2018年予約権（第6回）の期首463,000株が全数減少して年度末ゼロ、新株発行463,000株と整合。2017年ストックオプション（第5回）は200,000株が失効、未確定・未行使残ともなし。2021年4月1日1対2分割前の株数。資金使途をSOC新拠点20百万円、M&A106百万円充当済、LogStare設立299百万円充当済へ変更。",
+              "publishedAtPrecision": "date_only",
+              "kind": "closure"
+            },
+            {
+              "id": "buyback-start",
+              "title": "自己株式の取得に係る事項の決定に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2873481/00.pdf",
+              "publishedAt": "2026-08-14T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、取得枠・取得理由・自己株式保有状況",
+              "finding": "上限400,000株・100,000,000円、期間2026年8月17日-2027年5月31日。7月31日時点で自己株式448株、自己株式を除く発行済株式数7,689,552株。",
+              "kind": "status"
+            },
+            {
+              "id": "buyback-end",
+              "title": "自己株式の取得結果および取得終了に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2892025/00.pdf",
+              "publishedAt": "2026-10-06T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、取得結果・累計・取得終了",
+              "finding": "10月1-5日に196,000株・65,666,800円を取得。累計310,000株・99,998,300円で8月14日決議分の取得は終了。消却や新株予約権終了を示す開示ではない。",
+              "kind": "status"
+            }
+          ],
+          "instruments": [
+            {
+              "id": "warrant-4",
+              "type": "warrant",
+              "status": "closed",
+              "issueDocumentId": "issue4",
+              "statusDocumentId": "closure4",
+              "asOfDate": "2017-09-29",
+              "remainingUnderlyingShares": 0,
+              "quantityUncertainty": null,
+              "closureKind": "expired",
+              "summary": "第4回は固定1,000円、160個・対象80万株。2017年9月29日に全160個が満了消滅し、消滅後0株を会社が明示。後の第6回や第8回と混同しない。"
+            },
+            {
+              "id": "2017-stock-option",
+              "type": "warrant",
+              "status": "closed",
+              "issueDocumentId": "issue5",
+              "statusDocumentId": "annual21",
+              "asOfDate": "2021-03-31",
+              "remainingUnderlyingShares": 0,
+              "quantityUncertainty": null,
+              "closureKind": "expired",
+              "summary": "2017年有償SOは2,000個・20万株。12月22日の変更は割当先内訳で総数不変。2021年有報で20万株全数の権利不確定失効と残高なしを確認。株数は2021年4月1日の1対2分割前。"
+            },
+            {
+              "id": "warrant-6",
+              "type": "warrant",
+              "status": "closed",
+              "issueDocumentId": "issue6",
+              "statusDocumentId": "annual21",
+              "asOfDate": "2021-03-31",
+              "remainingUnderlyingShares": 0,
+              "quantityUncertainty": null,
+              "closureKind": "exercised",
+              "summary": "第6回は2018年9月割当60万株。2020年3月に行使価額を1,080円から600円へ修正。2019年3月期の新株13.7万株と2021年3月期の46.3万株の行使を年次報告で照合し、2021年3月末は対象残ゼロ。2021年4月の分割後株数と混在させない。"
+            },
+            {
+              "id": "warrant-7",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": "issue78",
+              "statusDocumentId": "half24",
+              "asOfDate": "2026-11-10",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "発行時12万株は確認できるが、戻入益60万円は回号別全数終了を明記しない。基準時点の回号別残高・全数失効日を一次資料本文で確定できない。",
+              "unresolvedReason": "2024年半期の新株予約権減少600千円と2025年有報の第8回のみの記載を確認したが、第7回を明示した終了資料が得られていない。金額の一致から全数失効を推定しない。",
+              "summary": "第7回は従業員17名、1,200個・12万株、1株286円、2024年3月期連結経常利益に連動する行使条件。発行・確定資料と後続財務本文を読んだが法的な全数終了の根拠が不足するため残存ゼロとはしない。",
+              "lastConfirmedBalance": {
+                "documentId": "confirm78",
+                "asOfDate": "2022-12-09",
+                "remainingUnderlyingShares": 120000
+              }
+            },
+            {
+              "id": "warrant-8",
+              "type": "warrant",
+              "status": "unresolved",
+              "issueDocumentId": "issue78",
+              "statusDocumentId": "annual26",
+              "asOfDate": "2026-11-10",
+              "remainingUnderlyingShares": null,
+              "quantityUncertainty": "最新の回号別株数は2026年5月31日時点の28万株。1Qの6月末帳簿額280千円は株数の更新ではない。基準時点までの行使・自己株式交付・失効等の数量内訳は未公表または照合不能。",
+              "unresolvedReason": "発行原資料、確定資料、2026年有報、2026年1Q、基準時点までの全公開期間のIR/TDnet系一覧を確認したが、5月31日より新しい回号別株数とその後の全変動を確定する本文を確認できない。",
+              "summary": "第8回は取締役向け2,800個・28万株、286円、2027年12月8日満期。2026年有報は5月31日まで対象28万株・変更なしを明示し、権利確定前の未確定残として記載。原資料の業績条件と株価30％未満時の行使義務・例外を確認し、条件が成立したとは推定しない。未確定残を即時行使可能株数や新株発行確定数に置き換えない。",
+              "lastConfirmedBalance": {
+                "documentId": "annual26",
+                "asOfDate": "2026-05-31",
+                "remainingUnderlyingShares": 280000,
+                "vestingStatus": "権利確定前未確定残"
+              },
+              "latestAccountingBalance": {
+                "documentId": "q1",
+                "asOfDate": "2026-06-30",
+                "amountJPY": 280000,
+                "meaning": "新株予約権の帳簿価額。対象株数ではない。"
+              },
+              "newShareDeliveryShares": null,
+              "treasuryShareDeliveryShares": null,
+              "dilutionPercentage": null
+            }
+          ],
+          "unresolvedReason": "最新1Q・2026年有報から全公開期間の資本政策一覧へ遡り、第4回/2017年SO/第6回の終了を確認した。第7回の回号別全数終了日・終了手続を明示する一次本文と、第8回の2026年5月31日以降から基準時点までの回号別変動・最新残高の照合が不足しており、全潜在株式の基準時点残数を確定できない。",
+          "riskNote": "第8回有償ストックオプションは、2026年5月31日時点で対象28万株・行使価額286円・2027年12月8日満期と確認できますが、その後の回号別残高は確認できず、基準時点の希薄化リスク全量は未確定です。第7回も戻入益60万円だけでは全数終了を断定できません。",
+          "reviewScopeNote": "会社IR掲載の最新1Qと2026年有報を起点に、2006年以降の公開IR一覧・電子公告・TDnet系長期一覧を照合。2015年発行まで遡った旧回号の発行・修正・終了、2022年の第7/8回原発行と2024-2026年財務本文を確認。借入/社債・CB・その他新株予約権等も最新BS/株式注記で確認したが、資料不足を全種類の不存在へ置き換えない。"
+        },
+        "longTermMaterialReview": {
+          "version": 1,
+          "analysisCutoff": "2026-11-10T12:54:10.426Z",
+          "conclusion": "active_materials",
+          "historyCheckedThrough": "2026-11-10T12:54:10.426Z",
+          "reviewedCategories": [
+            "alliances",
+            "orders_contracts",
+            "investment_capacity",
+            "products_services",
+            "approvals_subsidies",
+            "restructuring",
+            "legal_regulatory",
+            "contract_changes"
+          ],
+          "reviewScopeNote": "最新公式決算は2026年8月14日1Q、その説明資料と会社IR掲載2026年有報の事業・受注・設備・研究開発・リスク・主要販売先・関係会社・後発事象を本文確認。会社IR配信全公開期間（2006年以降）と公式お知らせ全公開一覧を、年数上限を設けず基準時点まで照合した。2009年NRI契約、2020年LogStare設立と旧資金使途変更、2018年インサイト取得から2021年売却、2024年BBSec提携・ファンド参画、2025-2026年AI-SOC展開を原発表と続報へ接続。最新公表の実績と案件別に未開示の寄与を区別し、全カテゴリの確認は採用一次資料・公開一覧の範囲の調査結果であって世界中の案件不存在の断定ではない。 子会社公式ニュースでは2024年AIアルファ、2025年MCP、2026年AI分析オプション/自律調査型AI-SIEMの本文を追加照合。",
+          "documents": [
+            {
+              "id": "q1",
+              "title": "2027年３月期 第１四半期決算短信〔日本基準〕（連結）",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2873416/00.pdf",
+              "publishedAt": "2026-08-14T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2,4-8,10-11（添付 pp.2-6,8-9）",
+              "finding": "売上260,532千円（17.5％減）、営業損失52,546千円、経常損失51,979千円。先行ソフトウェア費20,020千円、広告宣伝費4,865千円増、人件費12,789千円増。ストック型サービス前年並み。6月30日の新株予約権帳簿額280千円、発行済株式7,690,000株、自己株式448株。帳簿額は回号別未行使株数ではない。通期売上1,438百万円・営業利益138百万円予想を維持。",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "annual26",
+              "title": "2026年3月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100YH8N/00.pdf",
+              "publishedAt": "2026-06-24",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.4-11,14-25,56,63,69-71",
+              "finding": "会社IR掲載本文。第8回2,800個・対象280,000株、行使価額286円、行使期間2024年7月1日-2027年12月8日。2026年3月31日残高で5月31日も変更なし。ストックオプション注記では権利確定前未確定残280,000株。株価が行使価額の30％未満となった場合の行使義務条件が残る。その他新株予約権等と行使価額修正条項付新株予約権付社債券等は該当なし。LogStare単体売上263,303千円・経常利益64,276千円、NRIセキュア向け売上264,184千円・連結売上の20.6％。情報セキュリティ受注残414,012千円（前年比63.8％）。",
+              "publishedAtPrecision": "date_only",
+              "kind": "financial_baseline"
+            },
+            {
+              "id": "annual21",
+              "title": "2021年3月期 有価証券報告書",
+              "url": "https://ssl4.eir-parts.net/doc/3042/yuho_pdf/S100LR2Q/00.pdf",
+              "publishedAt": "2021-06-25",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.18-19,40,48,55-56",
+              "finding": "2018年予約権（第6回）の期首463,000株が全数減少して年度末ゼロ、新株発行463,000株と整合。2017年ストックオプション（第5回）は200,000株が失効、未確定・未行使残ともなし。2021年4月1日1対2分割前の株数。資金使途をSOC新拠点20百万円、M&A106百万円充当済、LogStare設立299百万円充当済へ変更。",
+              "publishedAtPrecision": "date_only",
+              "kind": "progress"
+            },
+            {
+              "id": "allied",
+              "title": "アライドテレシスとセキュアヴェイル、協業体制構築に関する基本合意を締結",
+              "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/126181/00.pdf",
+              "publishedAt": "2026-11-10T11:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、基本合意・TAP参画・MCP連携",
+              "finding": "ネットワーク可視化・制御技術とログ分析/SOC運用を組み合わせた共同開発の基本合意。TAP参画とMCPを介したAIエージェント連携を公表。製品発売日、受注金額、売上・利益実績は記載されていない。",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "nri09",
+              "title": "セキュアヴェイル、NRIセキュアと相互販売契約を締結",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/688276/00.pdf",
+              "publishedAt": "2009-03-05T10:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、相互販売契約・共同開発",
+              "finding": "LogStare TetraとSecureCube/PC Checkの相互販売・共同開発を公表。当時の業績予想への影響は些少。現在のNRI向け売上全額を当時の特定製品契約だけに帰属させない。",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "logstare20",
+              "title": "子会社設立に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1877399/00.pdf",
+              "publishedAt": "2020-08-20T15:32:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、子会社設立目的・概要・日程",
+              "finding": "ログ分析・関連製品の開発販売を担う100％子会社LogStareを2020年8月20日に設立、同日に事業開始予定。資本金250百万円、資本準備金250百万円。設立時点の売上増大見込みを実績とは扱わない。",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "directors",
+              "title": "子会社役員人事に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2889891/00.pdf",
+              "publishedAt": "2026-10-01T10:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF p.1、子会社役員人事・代表取締役と執行責任",
+              "finding": "LogStare取締役社長に堀野友之氏、代表取締役米今政臣氏は変更なし。次期中期経営計画策定を見据えた執行体制の変更であり、新しい数値計画そのものの発表ではない。",
+              "kind": "progress"
+            },
+            {
+              "id": "m365-start",
+              "title": "セキュアヴェイルがAIを活用したセキュリティ運用サービス『AI-SOC』をリリース、Microsoft 365を対象に1ユーザー月額50円で提供開始",
+              "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/115388/00.pdf",
+              "publishedAt": "2025-11-06T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、提供開始日・料金・パートナー募集",
+              "finding": "Microsoft 365向けAI-SOCを2025年12月1日から提供予定、月額50円/ユーザー。直接販売と販売パートナーを募集。発売予定と売上計上は区別。",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "fortigate-start",
+              "title": "セキュアヴェイル、AIを活用したFortiGate向けセキュリティ運用サービス『AI-SOC』を月額9800円で提供開始",
+              "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/115714/00.pdf",
+              "publishedAt": "2025-11-20T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、提供開始日・対象機器・料金",
+              "finding": "FortiGate 30/40/50向けAI-SOCを2025年12月1日から月額9,800円で提供予定。監視とログ分析、月次レポート、追加オプションを記載。",
+              "kind": "progress"
+            },
+            {
+              "id": "stnet",
+              "title": "AIで無人化を実現するセキュアヴェイルの次世代SOCサービス「AI-SOC」を株式会社STNetが四国エリアで販売開始",
+              "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/119627/00.pdf",
+              "publishedAt": "2026-04-17T09:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、販売開始・対象拡張・料金",
+              "finding": "STNetが4月17日からPowerico/STIA顧客等へAI-SOCを直接販売開始。FortiGate 60/70/80/90版を先行提供、月額12,800円、最低1年・年払い。販売開始は確認できるが契約獲得数や認識済売上は不明。",
+              "kind": "progress"
+            },
+            {
+              "id": "snowpeak",
+              "title": "セキュアヴェイルが提供する『AI-SOC for Microsoft 365』のソリューションパートナーにスノーピークビジネスソリューションズが参画",
+              "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/119851/00.pdf",
+              "publishedAt": "2026-04-27T09:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-2、参画・サービス共同拡充",
+              "finding": "Microsoft 365導入運用支援350社超のSnowPeak BSが参画し、実務に即したログ分析・独自運用サポートを共同展開。350社は相手先の既存実績でありAI-SOC有料顧客数ではない。",
+              "kind": "progress"
+            },
+            {
+              "id": "paloalto",
+              "title": "セキュアヴェイルの次世代SOCサービス『AI-SOC』がPaloAlto PA-400シリーズに対応",
+              "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/122054/00.pdf",
+              "publishedAt": "2026-06-09T09:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、対象機器・新サービス・料金",
+              "finding": "AI-SOC for PaloAltoをリリース、PA-410/415/440/445/450対象、月額36,000円。対応機器拡大を確認したが契約数・サービス単独実績は非記載。",
+              "kind": "progress"
+            },
+            {
+              "id": "m365-free",
+              "title": "緊急対応　Microsoft 365監査ログの調査分析レポート無償提供 不正アクセス急増に『AI-SOC』を活用(先着100社)",
+              "url": "https://ssl4.eir-parts.net/doc/3042/announcement1/126183/00.pdf",
+              "publishedAt": "2026-10-20T08:58:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、無償提供・料金・既存サービス",
+              "finding": "Microsoft 365監査ログ分析レポートを先着100社へ無償提供。既存AI-SOCの利用促進策であり、100社の有料受注・売上計上を示さない。会社IR配信一覧の08:58を採用し、TDnet一覧の09:00との差異を保持。",
+              "kind": "progress"
+            },
+            {
+              "id": "q1-summary",
+              "title": "2027年3月期 第1四半期 決算説明サマリー",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/2873480/00.pdf",
+              "publishedAt": "2026-08-14T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.2-7、業績ハイライト・AI-SOC・重点施策",
+              "finding": "大型ソフトウェア販売案件の前年反動と先行費用を説明。AI-SOCは展示会後の商談リード増加と成約時の収益拡大可能性を記載するが、同サービス単独の実績売上・利益、ARR、有料契約数は示していない。",
+              "kind": "progress"
+            },
+            {
+              "id": "bbs24",
+              "title": "株式会社ブロードバンドセキュリティ（証券コード：４３９８）との業務提携の締結のお知らせ",
+              "url": "https://www.secuavail.com/event/2024/1114/alliance_bbsec.html",
+              "publishedAt": "2024-11-14",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "本文『業務提携の目的』『本資本業務提携の内容』",
+              "finding": "SOCの人材補完・共同開発・相互送客を計画。BBSecは既存株主から384,500株を取得予定で新株発行ではない。会社は連結売上高10％未満の軽微な影響見込みとするが、提携別の実績売上・利益は記載なし。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "fund24",
+              "title": "セキュアヴェイル、セキュリティ企業に投資するファンド「日本サイバーセキュリティファンド１号投資事業有限責任組合」に出資企業として参画",
+              "url": "https://www.secuavail.com/event/2024/0729/secuavail_ncsf.html",
+              "publishedAt": "2024-07-29",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "本文『セキュリティ業界全体の成長機会を支援』",
+              "finding": "日本サイバーセキュリティファンドへのLP参画、投資先選定・販路提供・経営支援を公表。自社への投資回収や売上計上を示す資料ではない。",
+              "publishedAtPrecision": "date_only",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "fund-lrm",
+              "title": "セキュアヴェイルが参画する日本サイバーセキュリティファンドの第一号投資先企業に国産の従業員向けセキュリティ教育クラウドサービス「セキュリオ」を提供するLRM社が決定",
+              "url": "https://www.secuavail.com/event/2025/0912/ncsf_lrm.html",
+              "publishedAt": "2025-09-12T15:30:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "本文冒頭・出資先決定・事業シナジー",
+              "finding": "LRMを第一号投資先として決定。セキュリオの顧客2,200社はLRMの実績であってセキュアヴェイルの顧客数ではない。LP参画から案件選定へ進んだが当社の投資収益実績は非記載。",
+              "kind": "progress"
+            },
+            {
+              "id": "insight18",
+              "title": "株式会社インサイトの株式取得（連結子会社化）に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1631419/00.pdf",
+              "publishedAt": "2018-09-25T16:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、取得目的・100％取得・予定日",
+              "finding": "組込み/オープン系システム受託開発のインサイトを100％子会社化し、自社ソフトウェア開発体制を強化する計画。取得実行予定日は2018年10月4日。",
+              "kind": "original_announcement"
+            },
+            {
+              "id": "insight-sale",
+              "title": "連結子会社の異動（株式譲渡）に関するお知らせ",
+              "url": "https://ssl4.eir-parts.net/doc/3042/tdnet/1923829/00.pdf",
+              "publishedAt": "2021-01-29T15:00:00+09:00",
+              "contentReviewed": true,
+              "source": "official_ir",
+              "locator": "PDF pp.1-3、事業集約・全株譲渡・過去実績",
+              "finding": "インサイト全820株を譲渡し保有ゼロ、連結除外を予定。開発業務をLogStareへ集約。インサイトの2020年3月期単体売上283,505千円・営業利益11,487千円を掲載。2026年有報の沿革で2021年2月全株売却実行を確認。",
+              "kind": "progress"
+            },
+            {
+              "id": "ai-alpha",
+              "title": "LogStareが生成AIによるログ分析システムのアルファ版を本日公開",
+              "url": "https://www.logstare.com/news/logstare_genai_alpha/",
+              "publishedAt": "2024-06-12",
+              "locator": "本文、アルファ版・展示・ベータ開発予定",
+              "finding": "生成AIログ分析アルファ版を公開・展示。ベータ開発と一般公開は予定であり、当時の商用販売・売上実績は示していない。",
+              "publishedAtPrecision": "date_only",
+              "source": "official_ir",
+              "contentReviewed": true,
+              "kind": "original_announcement"
+            },
+            {
+              "id": "ai-mcp",
+              "title": "対話型AIでSOC無人化の時代へ、LogStareがMCPに対応した次世代SIEMの提供を開始",
+              "url": "https://www.logstare.com/news/logstare_mcp/",
+              "publishedAt": "2025-06-02",
+              "locator": "本文、オンプレミス版MCPサーバー搭載・提供開始",
+              "finding": "MCPサーバー搭載で対話型AIからログやセキュリティインシデントを分析する製品の提供開始。6月展示予定と、販売提供済みの事実を区別。個別機能の売上は非開示。",
+              "publishedAtPrecision": "date_only",
+              "source": "official_ir",
+              "contentReviewed": true,
+              "kind": "progress"
+            },
+            {
+              "id": "ai-option",
+              "title": "次世代のセキュリティ運用プラットフォーム「LogStare」に「AI分析オプション」を搭載、SOC運用を大幅に効率化",
+              "url": "https://www.logstare.com/news/logstare_genai_v1/",
+              "publishedAt": "2026-04-08",
+              "locator": "本文、AI分析オプション販売開始・機能・ユーザー数",
+              "finding": "AI分析オプション販売を4月1日より開始したと4月8日に公表。LogStare全体の累積6,400ユーザーは有料AIオプション契約数やARRではない。",
+              "publishedAtPrecision": "date_only",
+              "source": "official_ir",
+              "contentReviewed": true,
+              "kind": "progress"
+            },
+            {
+              "id": "ai-siem",
+              "title": "SOCアナリストの思考をAI化し自律的にログを分析、LogStareが無人SOCを実現するAI-SIEMを提供開始",
+              "url": "https://www.logstare.com/news/ai-siem_logstare/",
+              "publishedAt": "2026-06-02",
+              "locator": "本文、AI-SIEM提供開始・エージェント機能",
+              "finding": "ログの初動調査をAIが自律的に行うAI-SIEMとして提供開始。関連ログ探索・相関分析・アドバイザリーを自動化する製品進捗。製品機能を売上・利益寄与やアライド協業の製品完成と混同しない。",
+              "publishedAtPrecision": "date_only",
+              "source": "official_ir",
+              "contentReviewed": true,
+              "kind": "progress"
+            }
+          ],
+          "items": [
+            {
+              "id": "allied-network-soc",
+              "category": "alliances",
+              "direction": "positive",
+              "status": "planned",
+              "originalDocumentId": "allied",
+              "latestProgressDocumentId": "allied",
+              "currentAssessment": "11月10日11:00のアライドテレシスとの基本合意は、ログ分析とネットワーク制御をMCP経由で結ぶ共同開発の段階で、提供開始日・受注額・売上寄与はまだ示されていません。"
+            },
+            {
+              "id": "ai-soc-platform",
+              "category": "products_services",
+              "direction": "mixed",
+              "status": "in_progress",
+              "originalDocumentId": "m365-start",
+              "latestProgressDocumentId": "m365-free",
+              "currentAssessment": "2025年11月6日15:30に公表したAI-SOCは12月1日提供開始の計画から、2026年4月17日09:00のSTNet販売開始、4月27日09:00のSnowPeak BS参画、6月9日09:00のPaloAlto対応へ進み、低価格SOCの販路と対応機器を拡張しています。",
+              "reportedTiming": {
+                "documentId": "m365-start",
+                "statement": "Microsoft 365向けAI-SOCの提供を2025年12月1日より開始すると公表。",
+                "dueDate": "2025-12-01"
+              },
+              "timingReachedButContributionUnconfirmed": true,
+              "riskNote": "AI-SOCは2025年12月1日の提供開始予定日を経て機能・販路を拡張していますが、基準時点までの有料契約数、ARR、サービス単独の売上・利益寄与は公表本文で確認できません。",
+              "progressDocumentIds": [
+                "fortigate-start",
+                "stnet",
+                "snowpeak",
+                "paloalto",
+                "q1",
+                "q1-summary",
+                "m365-free"
+              ]
+            },
+            {
+              "id": "nri-sales-relationship",
+              "category": "orders_contracts",
+              "direction": "mixed",
+              "status": "contributing",
+              "originalDocumentId": "nri09",
+              "latestProgressDocumentId": "annual26",
+              "currentAssessment": "2009年3月5日10:00の相互販売契約を起点とするNRIセキュアとの取引関係は、2026年3月期に製品・サービス売上2億6,418万円、連結売上の20.6％を占める実収益基盤です。",
+              "actualContribution": {
+                "documentId": "annual26",
+                "metric": "revenue",
+                "basis": "reported_actual",
+                "statement": "2026年3月期のNRIセキュア向け製品・サービス売上264,184千円、連結売上高の20.6％。取引関係全体の実績であり、2009年発表の特定製品契約だけの売上内訳ではない。"
+              }
+            },
+            {
+              "id": "logstare-development-subsidiary",
+              "category": "investment_capacity",
+              "direction": "positive",
+              "status": "contributing",
+              "originalDocumentId": "logstare20",
+              "latestProgressDocumentId": "directors",
+              "currentAssessment": "2020年8月20日15:32に設立を公表したLogStareは、2026年3月期に単体売上2億6,330万円・経常利益6,427万円を計上し、自社開発体制は既存の収益基盤になっています。",
+              "reportedTiming": {
+                "documentId": "logstare20",
+                "statement": "会社設立日・事業開始日を2020年8月20日（事業開始は予定）と公表。",
+                "dueDate": "2020-08-20"
+              },
+              "actualContribution": {
+                "documentId": "annual26",
+                "metric": "profit",
+                "basis": "reported_actual",
+                "statement": "2026年3月期のLogStare単体売上263,303千円、経常利益64,276千円、純利益62,725千円。連結消去前の子会社実績であり連結損益への加算値ではない。"
+              }
+            },
+            {
+              "id": "bbsec-soc-alliance",
+              "category": "alliances",
+              "direction": "mixed",
+              "status": "planned",
+              "originalDocumentId": "bbs24",
+              "latestProgressDocumentId": "bbs24",
+              "currentAssessment": "2024年11月14日公表（時刻記載なし）のBBSec提携はSOC共同開発・相互送客の構想で、会社の当初見込みは連結売上高10％未満の影響とされ、提携別の売上・利益実績は確認できません。"
+            },
+            {
+              "id": "cybersecurity-fund-lp",
+              "category": "investment_capacity",
+              "direction": "mixed",
+              "status": "in_progress",
+              "originalDocumentId": "fund24",
+              "latestProgressDocumentId": "fund-lrm",
+              "currentAssessment": "2024年7月29日公表（時刻記載なし）のサイバーセキュリティファンドLP参画は、2025年9月12日15:30のLRMへの第一号投資先決定へ進みましたが、当社の投資回収や事業収益への寄与は確認できません。"
+            },
+            {
+              "id": "insight-acquisition-and-exit",
+              "category": "restructuring",
+              "direction": "mixed",
+              "status": "ended",
+              "originalDocumentId": "insight18",
+              "latestProgressDocumentId": "annual26",
+              "currentAssessment": "2018年9月25日16:00に取得を発表したインサイトは、2021年1月29日15:00の全株譲渡発表を経て同年2月に資本関係を解消しています。売却時資料にある2020年3月期の同社単体売上2億8,350万円・営業利益1,148万円は過去実績で、現在の連結成長分には含めません。",
+              "progressDocumentIds": [
+                "insight-sale",
+                "annual21",
+                "annual26"
+              ],
+              "historicalContribution": {
+                "documentId": "insight-sale",
+                "statement": "売却時資料に掲載されたインサイトの2020年3月期単体実績は売上283,505千円、営業利益11,487千円。現在の連結寄与ではない。"
+              }
+            },
+            {
+              "id": "logstare-ai-productization",
+              "category": "products_services",
+              "direction": "positive",
+              "status": "in_progress",
+              "originalDocumentId": "ai-alpha",
+              "latestProgressDocumentId": "ai-siem",
+              "currentAssessment": "LogStareのAI機能は2024年6月12日のアルファ公開から、2025年6月2日のMCP対応、2026年4月8日公表のAI分析オプション販売開始、6月2日の自律調査型AI-SIEM提供へ進んでおり、既存ソフトの付加価値拡張という現在の意味があります（各公式発表は時刻記載なし）。",
+              "riskNote": "AI分析オプションは2026年4月1日の販売開始が本文で確認できますが、オプション単独や自律調査機能の売上・利益は確認できず、累積6,400ユーザーも有料AI契約数やARRには置き換えられません。",
+              "progressDocumentIds": [
+                "ai-mcp",
+                "ai-option",
+                "ai-siem",
+                "q1-summary"
+              ]
+            }
+          ],
+          "categoryChecks": [
+            {
+              "category": "alliances",
+              "documentIds": [
+                "allied",
+                "nri09",
+                "bbs24",
+                "stnet",
+                "snowpeak",
+                "annual26"
+              ],
+              "finding": "ネットワーク制御協業、旧相互販売、SOC共同開発、AI-SOC販売パートナーを原発表と最新業績へ接続。提携合意を受注・売上と同一視しない。"
+            },
+            {
+              "category": "orders_contracts",
+              "documentIds": [
+                "q1",
+                "q1-summary",
+                "annual26",
+                "nri09"
+              ],
+              "finding": "1Qの大型ソフト販売反動・ストック前年並み、年次の受注残とNRI向け売上を確認。受注残の全額を将来売上として予測せず、旧特定製品契約だけへNRI売上を帰属させない。"
+            },
+            {
+              "category": "investment_capacity",
+              "documentIds": [
+                "logstare20",
+                "annual21",
+                "annual26",
+                "fund24",
+                "fund-lrm"
+              ],
+              "finding": "旧SOC/研修投資の使途変更とLogStareへの充当、現在の実績損益、ファンドのLP参画から第一号先決定を確認。2026年有報pp.20-21の設備投資11,649千円・重要新設/除却計画なしを確認し、大型未稼働設備を想定しない。"
+            },
+            {
+              "category": "products_services",
+              "documentIds": [
+                "m365-start",
+                "fortigate-start",
+                "stnet",
+                "snowpeak",
+                "paloalto",
+                "m365-free",
+                "q1-summary",
+                "ai-alpha",
+                "ai-mcp",
+                "ai-option",
+                "ai-siem"
+              ],
+              "finding": "AI-SOCの公表開始日・製品範囲・料金・販路・最新利用促進施策を確認。売上単独実績は確認できずin_progressに保持。"
+            },
+            {
+              "category": "approvals_subsidies",
+              "documentIds": [
+                "annual26",
+                "q1",
+                "paloalto"
+              ],
+              "finding": "最新有報の事業/リスク/設備/補助金勘定とIR・公式ニュース履歴を確認。SCS制度やガバメントクラウドは会社が示す需要背景で、当社の補助金受給・許認可獲得や売上実現とは扱わない。確認範囲では現在の分析を左右する独立した未履行補助金案件を採用していない。"
+            },
+            {
+              "category": "restructuring",
+              "documentIds": [
+                "insight18",
+                "insight-sale",
+                "annual21",
+                "annual26",
+                "logstare20",
+                "directors"
+              ],
+              "finding": "インサイト全株売却実行・開発集約と現在の3社体制を確認。過去売上を保存しつつ現在寄与には算入しない。LogStareの代表者維持と執行責任変更も本文確認。"
+            },
+            {
+              "category": "legal_regulatory",
+              "documentIds": [
+                "annual26",
+                "q1",
+                "allied"
+              ],
+              "finding": "有報pp.14-15の情報漏洩・損害賠償可能性、システム障害、競争/人材リスクと最新決算注記・全公開IR一覧を確認。一般的事業リスクを発生済み訴訟・行政処分として記載しない。現在の分析を左右する個別係争・処分の継続案件は確認範囲の採用資料から見つからなかった。"
+            },
+            {
+              "category": "contract_changes",
+              "documentIds": [
+                "insight-sale",
+                "annual26",
+                "annual21",
+                "m365-free"
+              ],
+              "finding": "インサイトとの資本関係解消、旧資金使途変更、既存監視契約の更新/解約リスクを確認。無償診断を有料契約開始・既存契約解約と誤認せず、旧契約の期限延長や解除を推測しない。"
+            }
+          ]
+        },
+        "auditStatus": "pass",
+        "evidenceAudit": {
+          "version": 1,
+          "cutoffRule": "claim.analysisCutoffを公表日時の上限とし、同日資料は時刻照合必須。過去の時刻不明資料はdate_only。",
+          "directUrlAudit": {
+            "checked": 36,
+            "passed": 36,
+            "failed": 0
+          },
+          "publicDisclosureCount": 29,
+          "publicLinkPolicy": "HTML専用のため全主要根拠を保持。Discordの文字数上限は適用していない。",
+          "capitalUncertaintyVisible": true,
+          "plansSeparatedFromActualContribution": true,
+          "contractChecks": {
+            "claimIdentity": "pass",
+            "cutoffAndPublicationDates": "pass",
+            "sevenFieldsAndSources": "pass",
+            "disclosureUrlCorrespondence": "pass",
+            "materialImpactConsistency": "pass",
+            "capitalRiskReview": "pass",
+            "longTermMaterialReview": "pass",
+            "validationMode": "forward_html_only",
+            "pythonValidationMethod": "unmodified pure repository validator functions loaded with AST, excluding unrelated runtime imports"
+          },
+          "limitations": [
+            "Capital review remains unresolved for explicitly documented missing per-series closure/current balance evidence; no zero balance or dilution percentage is inferred."
+          ]
+        }
+      }
     }
   }
 }

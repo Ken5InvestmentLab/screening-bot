@@ -1,18 +1,18 @@
 {
   "identity": "WEAK_EARLY_FIVE_LANE_BETA_V1",
-  "run_at": "2026-11-09T18:59:02.695675+09:00",
-  "daily_corpus": ".cache\\weak_early_beta\\tse_daily.csv",
-  "daily_sha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
+  "run_at": "2026-11-10T21:50:58.837373+09:00",
+  "daily_corpus": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261110-jpx-recovery\\repo\\.cache\\weak_early_beta\\tse_daily.csv",
+  "daily_sha256": "2d6d1e2dd894277ff99932ea20e58547da0d35f1cc39ad1ebbbb4bb88806662e",
   "acquisition_evidence": {
-    "directory": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261109-launch\\repo\\.cache\\weak_early_beta\\daily_runtime\\daily-2026-11-09T08-34-56-529Z\\acquisition-1",
-    "manifestSha256": "cacfd93e327a886819f72244a8b3abeb93506bb16a9988a1a8c84ae058e89706",
-    "requests": 47,
+    "directory": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\.cache\\weak_early_beta\\daily_runtime\\daily-2026-11-10T08-30-57-151Z\\acquisition-1",
+    "manifestSha256": "58a612a9eee3afdf08bc3f28be1378777d6efbedbc3739eeea602fff91a1ac4b",
+    "requests": 48,
     "replayed": true
   },
   "source_quality": {
     "identity": "CLOUD_SOURCE_QUALITY_V1",
-    "sourceRows": 4307010,
-    "quarantinedRows": 2935,
+    "sourceRows": 4307399,
+    "quarantinedRows": 5348,
     "quarantinedSymbols": [
       "1383",
       "1401",
@@ -164,6 +164,7 @@
       "6208",
       "6217",
       "6222",
+      "6276",
       "6291",
       "6309",
       "6336",
@@ -323,18 +324,388 @@
       "9986"
     ],
     "quarantinedDateCount": 1221,
-    "firstQuarantinedDate": "2021-11-09",
-    "lastQuarantinedDate": "2026-11-09",
-    "audit_path": ".cache\\weak_early_beta\\tse_daily.source-quality.json",
-    "audit_sha256": "dc6b8cc8583b13eea81325cbac00356b2d3c0f8a6b1f667442df0902aec5d326"
+    "firstQuarantinedDate": "2021-11-10",
+    "lastQuarantinedDate": "2026-11-10",
+    "audit_path": "C:\\Users\\ken5\\AppData\\Local\\Temp\\weak-early-beta-cloud3-20261110-jpx-recovery\\repo\\.cache\\weak_early_beta\\tse_daily.source-quality.json",
+    "audit_sha256": "763fe7609c50f03c9173d3abbf7061f4b09248a43be86a3966c4e731435f738c"
   },
   "source_revision": {
     "identity": "CLOUD_SOURCE_REVISION_V1",
     "previousBasis": "verified",
-    "comparedRows": 4287209,
-    "quarantinedComparisonRows": 2931,
+    "comparedRows": 4285191,
+    "quarantinedComparisonRows": 5342,
     "acceptedRepairColumnValues": 4,
     "sourceCorrectionAudit": [],
+    "jpxDecisions": [
+      {
+        "symbol": "4512",
+        "date": "2026-11-09",
+        "field": "open",
+        "old": "271.0",
+        "new": "281.0",
+        "evidence": {
+          "symbol": "4512",
+          "session": "2026-11-09",
+          "field": "open",
+          "value": "271.00",
+          "url": "https://www.jpx.co.jp/automation/markets/statistics-equities/daily/files/202611/stq_20261109.pdf",
+          "pdf_sha256": "3d31c7f1ec2dcfa8946eb3571cfe0137f4013d60ab0bc09ac9bd0c9e5a5ee3b2",
+          "page": 74,
+          "units": "JPY",
+          "basis": "actual_session_units",
+          "open_kind": "morning_first_trade",
+          "verified_bytes": true
+        },
+        "held": false,
+        "decision": "keep_old",
+        "selected": "271.0",
+        "reason": "JPX confirms prior value"
+      },
+      {
+        "symbol": "6276",
+        "date": "2026-11-09",
+        "field": "open",
+        "old": "286.0",
+        "new": "277.0",
+        "evidence": null,
+        "held": true,
+        "decision": "hold_symbol",
+        "selected": null,
+        "reason": "independent evidence unavailable"
+      },
+      {
+        "symbol": "9256",
+        "date": "2026-11-09",
+        "field": "open",
+        "old": "760.0",
+        "new": "790.0",
+        "evidence": null,
+        "held": true,
+        "decision": "hold_symbol",
+        "selected": null,
+        "reason": "independent evidence unavailable"
+      },
+      {
+        "symbol": "9256",
+        "date": "2026-11-09",
+        "field": "low",
+        "old": "760.0",
+        "new": "790.0",
+        "evidence": null,
+        "held": true,
+        "decision": "hold_symbol",
+        "selected": null,
+        "reason": "independent evidence unavailable"
+      }
+    ],
+    "jpxHolds": [
+      {
+        "acquisition_inventory_sha256": "c0be64f4cc6dd74fbb8c47bbf08a7b2f0a52cb8d33f6d669f6b734c2b3b384ba",
+        "acquisition_manifest_sha256": "58a612a9eee3afdf08bc3f28be1378777d6efbedbc3739eeea602fff91a1ac4b",
+        "current_rows_sha256": "e755a9ff5d52fdd09cf2d04ebca982219e55b0a08f18aad9cee524f9b68774d2",
+        "decisions": [
+          {
+            "date": "2026-11-09",
+            "decision": "hold_symbol",
+            "evidence": null,
+            "field": "open",
+            "held": true,
+            "new": "277.0",
+            "old": "286.0",
+            "reason": "independent evidence unavailable",
+            "selected": null,
+            "symbol": "6276"
+          }
+        ],
+        "identity": "CLOUD_JPX_SYMBOL_HOLD_V1",
+        "previous_source_sha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
+        "symbol": "6276"
+      },
+      {
+        "acquisition_inventory_sha256": "c0be64f4cc6dd74fbb8c47bbf08a7b2f0a52cb8d33f6d669f6b734c2b3b384ba",
+        "acquisition_manifest_sha256": "58a612a9eee3afdf08bc3f28be1378777d6efbedbc3739eeea602fff91a1ac4b",
+        "current_rows_sha256": "0eb97c974f2f5b68778781b50895765ca9aba570de04c2cd0c4d938991c2f1a2",
+        "decisions": [
+          {
+            "date": "2026-11-09",
+            "decision": "hold_symbol",
+            "evidence": null,
+            "field": "open",
+            "held": true,
+            "new": "790.0",
+            "old": "760.0",
+            "reason": "independent evidence unavailable",
+            "selected": null,
+            "symbol": "9256"
+          },
+          {
+            "date": "2026-11-09",
+            "decision": "hold_symbol",
+            "evidence": null,
+            "field": "low",
+            "held": true,
+            "new": "790.0",
+            "old": "760.0",
+            "reason": "independent evidence unavailable",
+            "selected": null,
+            "symbol": "9256"
+          }
+        ],
+        "identity": "CLOUD_JPX_SYMBOL_HOLD_V1",
+        "previous_source_sha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
+        "symbol": "9256"
+      }
+    ],
+    "jpxAcquisition": {
+      "directory": "C:\\Users\\ken5\\OneDrive\\Desktop\\Product\\天底極致スコアリングBot\\screening-bot\\.cache\\weak_early_beta\\daily_runtime\\daily-2026-11-10T08-30-57-151Z\\acquisition-1",
+      "manifestSha256": "58a612a9eee3afdf08bc3f28be1378777d6efbedbc3739eeea602fff91a1ac4b",
+      "requests": 48,
+      "replayed": true,
+      "responseInventorySha256": "c0be64f4cc6dd74fbb8c47bbf08a7b2f0a52cb8d33f6d669f6b734c2b3b384ba",
+      "responseInventory": [
+        {
+          "receipt": "00001-156c7af82a391527f54d.json",
+          "receiptSha256": "a5ae6d6c90cd08874084d0739d749b063561822ca349726ad8267378cb5f39b4",
+          "packetSha256": "d4e55dd3841fea73234147a16298c683215826023de0601fd89b09bbb9bdee08"
+        },
+        {
+          "receipt": "00002-54efc0d9022e36048a84.json",
+          "receiptSha256": "3aa5807288ac8d0d0415f3446103a86a0e5d256a46d8af6ad5d62e683d3cfe47",
+          "packetSha256": "7881cc16b65e4759743cd7bc3eda18b6e4937fd9e7e4abd273aeba2c5480c69e"
+        },
+        {
+          "receipt": "00003-3b05df1e8ed16fb91859.json",
+          "receiptSha256": "19063b2f5092234cd83154d604d8415f0271a527065e9f0ad13e72cc492bb383",
+          "packetSha256": "a70e9e643cecac178043ce215a19db455c29064564e81cbc2eff5cc46d75204f"
+        },
+        {
+          "receipt": "00004-0638e110911bea75e8e5.json",
+          "receiptSha256": "b7d109c3c6b2cdebe1a2503a0a4548a3387ff7e1a8f8b45683134f06e1f93b58",
+          "packetSha256": "fc9b5e13b2e3109cc8b38d7e9f4c125a42b1f537204c3faabe9dd52931777882"
+        },
+        {
+          "receipt": "00005-8e6362a8e487de868b83.json",
+          "receiptSha256": "673b0c7465679b378c8bf8484758ac4409235f8e46e7a322b0febef082a4951f",
+          "packetSha256": "44c61c41d5ca1316fa1b09eb6e62bed3a99bbfe4c570f3a21324e8125fecef78"
+        },
+        {
+          "receipt": "00006-ecac2b111b872a63f10f.json",
+          "receiptSha256": "6be471c158cb2b641eb52902d97e7988f12e25aa835348b629d7ccc305b934eb",
+          "packetSha256": "1e93be2dd20e6c4bccad1e84689246fe07afad6fa707ca302053cea40063f2fe"
+        },
+        {
+          "receipt": "00007-956c9fe8e573a9bd48b8.json",
+          "receiptSha256": "fc54e2ff47faa692b6910603927244fab565e0279674181135596ad8838619ee",
+          "packetSha256": "51b6df761f3240ba3589935505e23aa3a34ee21238c71ab7025c258e71bd4b04"
+        },
+        {
+          "receipt": "00008-fa5f54405d6c4ac1867a.json",
+          "receiptSha256": "13d8270ce5c4e52b9f6ca2a83ab943e3263e875a9da60ef9bef8c1f04e0ee240",
+          "packetSha256": "272460f2adde5bba9f6b60f95562bfb902c2266aa875e40d6f36328e72fe15fe"
+        },
+        {
+          "receipt": "00009-746a890bd25f6358ffd0.json",
+          "receiptSha256": "a433d983edbebde301bd613e111c8b4e6cf61b8aee4a51cf26e21def6756c931",
+          "packetSha256": "191050df72b2094d28be41ef910f8cb64f74e0eecb097f330dd842c033f79b18"
+        },
+        {
+          "receipt": "00010-0d93bacf0078fb1233de.json",
+          "receiptSha256": "c544f478e4f597692f84f278687a713910f35fe68bfca78ea03f874a014f385f",
+          "packetSha256": "05e08bc842649d830fceef20155bb714777f0e903e2ba754862b0f3fe3c0e404"
+        },
+        {
+          "receipt": "00011-ae8f5b4225001403bfb5.json",
+          "receiptSha256": "9233958b34bdf34c02b44eaeb5075061e47578ddce8c3f41b30269f3902241d1",
+          "packetSha256": "904d729d23406a36a881a72f00a79d83e0c5c7b3c6f686138c293be6ffb10061"
+        },
+        {
+          "receipt": "00012-0eca4e7cab9aa0094dc1.json",
+          "receiptSha256": "4038d4fc4fede10c0d7b4521578a3e02a12562aa9f4c647fca02522b64f9e489",
+          "packetSha256": "ad6c5433aa305a2dfa067a62ec221aad8ca932c9cf85581043a8f61308d6da96"
+        },
+        {
+          "receipt": "00013-a39e1e2b5ded15eadd10.json",
+          "receiptSha256": "2de14efa9c4084bc831502c0278b25f54d0ce2b62306934aa749a1a197724c73",
+          "packetSha256": "97c45f6b0788a8b756e5f19a3dc6fc2246e108c16731f3ca2ea0e89db6ea38b5"
+        },
+        {
+          "receipt": "00014-5a32a657251f81b014df.json",
+          "receiptSha256": "0e3480e6b2461d704ea164a811b6435512165fcb2cb594cf6387bbaa6a1b10a7",
+          "packetSha256": "3d8882eac6c91bb20eb693d9ac283f82c2d29e495ad5a9f29d3fd8229c4f2a6f"
+        },
+        {
+          "receipt": "00015-ecd98ffe65619fa374b9.json",
+          "receiptSha256": "ba1996dcef34ecd11be95e0c328c95cb5ead968bad8ac8173caf34f3422d8cdc",
+          "packetSha256": "f29d4900c5e60fd039504849984404a1102f81770fb620c12883835728feb7ee"
+        },
+        {
+          "receipt": "00016-7df4ff44835ef7dc69e8.json",
+          "receiptSha256": "10167981fa63b89c4ca47c9acb55eed5b2f42cd9eeeb8ac663362a0eab892501",
+          "packetSha256": "f30c2d4cfbee4234a3b6d99d962d2ecc412d30cdd5f6366e51b37c385d8c4122"
+        },
+        {
+          "receipt": "00017-79fefa7634ecd372f80e.json",
+          "receiptSha256": "3692e137711d65f422598c02e36dfb6db5075239450518c4b531431ef427e4eb",
+          "packetSha256": "79fbe82bb3c6983017cc43667ef00f526cda80fb34e21435c958c6fceed47e5a"
+        },
+        {
+          "receipt": "00018-b05940bd22ad0c7795de.json",
+          "receiptSha256": "c472d9dc6fee1bc20c3ee69ead7604faebbd6c5b6eed374fd7f8fc7a045e3ce3",
+          "packetSha256": "8f4c4838ea26df3b3589cf9e2bae6fd645192d41fafc73a52d7dba4446716c34"
+        },
+        {
+          "receipt": "00019-d7b5aa42a0232dd89135.json",
+          "receiptSha256": "fdb252b75e2885d78ae69b7fb5e52dfbcbe8dbede73c872ecd457a1026fa49e7",
+          "packetSha256": "70dd3b66931bd386dcfdc0946b30197a5d79d12176a02fedb7e93d92de20cd51"
+        },
+        {
+          "receipt": "00020-09590a405d08b2426113.json",
+          "receiptSha256": "99b1c03804341abedfad1c1ef0554a47ee441676c475c83a83fa25a57bd8074e",
+          "packetSha256": "b219cb397b5689e5ae6648cf62481e16b85963c3943b908948884b9e20a5ffbc"
+        },
+        {
+          "receipt": "00021-a44aad4f2fe51d779573.json",
+          "receiptSha256": "aedc94c5465b9012229ded0ec9bb14ba05a05e75c9358c1c59792f72e6c4f428",
+          "packetSha256": "aeef42da58aed7d54976dec1d0f2c6f177c47b51c34b54c95adeb16b5cb58ab1"
+        },
+        {
+          "receipt": "00022-bdd45b1004405b84bef1.json",
+          "receiptSha256": "3ac0a68f92b31ef05dfe50c5438911c6badf14dd7a40c8eee4cfe83d407c9d2f",
+          "packetSha256": "362bbdde64d06a28ec6d072dcca89da652cf16acec5165e3c9a17fdc15650bb0"
+        },
+        {
+          "receipt": "00023-7dff259500d1796f8212.json",
+          "receiptSha256": "6448c3121779bad718b30ba0f5e457f70b2824409b1869e6dd5b0848745878f5",
+          "packetSha256": "1c857b4667b4acd4e243a10f3d93fa05fe936fff33ad25abe53d434f6ad80087"
+        },
+        {
+          "receipt": "00024-241a528ceb7dbd51d149.json",
+          "receiptSha256": "4beb8a341c5166c1a6bf0f9c7b62bfba518daab8f54adf639828270de297121e",
+          "packetSha256": "7f973940ae63fd59bfd56249f51dd30deee095f4694f24b0f336c6f2ad0e1b77"
+        },
+        {
+          "receipt": "00025-ef22bffaf4bcf3a52514.json",
+          "receiptSha256": "237245db2d31094b6cb148034023d3df91fc525c4bd2726f4607b1d4590033d0",
+          "packetSha256": "6c23edb607488cb0329198a66dce080a180e72842e9d583694f2fe90595510e1"
+        },
+        {
+          "receipt": "00026-4af76165f23588e9098d.json",
+          "receiptSha256": "32fe02c4bf6d6ba68f64b4f1845e2e19422e463eab01e19b8d18b275409b937f",
+          "packetSha256": "e0012d93f46ff65383684eb312eeafa53f8ecf993e0c1194c3245d0f8e552bda"
+        },
+        {
+          "receipt": "00027-68bb580b99c7f5457694.json",
+          "receiptSha256": "9bc7dee105df2959404249cf2179ceafeb1c1952c8a1ead4e69cf1b6bc0990dc",
+          "packetSha256": "9ef1076fdc90aedf774791162685d0c9ef00bd29d01c5f1266ebc698d0da18dc"
+        },
+        {
+          "receipt": "00028-b0014f065754d0f5dea2.json",
+          "receiptSha256": "a249a32fd99e7e25a27480812e93af272f16a32d12fee0375a5ef90c3a665bfe",
+          "packetSha256": "3bafe2dd923c6077fbdcf91c217836501872fc87f57746b694c5198f6301fd2c"
+        },
+        {
+          "receipt": "00029-d81d82faefd566e63f70.json",
+          "receiptSha256": "a9a281df41feb4e77e83afc285fe2978892ac23c9a94213063aafa93240e1a71",
+          "packetSha256": "494a043d89f197bb50ff862f141183dc5525bb5b752afefc5537a2acce636d9e"
+        },
+        {
+          "receipt": "00030-8cdb837e30c0c9d8495d.json",
+          "receiptSha256": "ccd8a6c447dc91b397d23970d26c1ad1b1815d1ae6ee8f74c86093d82d911e66",
+          "packetSha256": "4d8524b1d920dacc3d5bbc947e86c6ec1bd609c31aa804550c47d67a020a09bf"
+        },
+        {
+          "receipt": "00031-7fe2903fd0038830eed4.json",
+          "receiptSha256": "50b5c5d921ed8010352d1ac3cbcf56ac94be7c995d1be0681458d32f157279db",
+          "packetSha256": "bf6722af5fd50a369108972de4b1d7d01177bd24661c0041a8a5efe91d1bf8e9"
+        },
+        {
+          "receipt": "00032-16ece0e48b53cc012d89.json",
+          "receiptSha256": "b151458b4d3faa7ed9769304296615e1596c078c4e1d4396917431e51e134a5a",
+          "packetSha256": "55b3f30106f4c7a27e4dbbd4deef2f2dc6c04c217413ddd29f53ae7280aac2fd"
+        },
+        {
+          "receipt": "00033-fe2942a69d6c4c4b8290.json",
+          "receiptSha256": "924099d8db4168294b9ddfafec737c1e88801533b90e544f64ff05c6dff4c051",
+          "packetSha256": "83fe62f75c9dd430dcb046e23cd328f61c99d7ceeb0b2a63cceb00dcc8bdd1ef"
+        },
+        {
+          "receipt": "00034-d1352ea3aa172c5c8a50.json",
+          "receiptSha256": "996dec613b4b6003856654d2510e1ee25caf703917e36ad4bfa97b6bf6c35a3c",
+          "packetSha256": "eb78ffd485c8536ddb4ec0edbdc0b8ecc5749f31a46de002b36a48c9b8b00791"
+        },
+        {
+          "receipt": "00035-ef4b151061e128b1728b.json",
+          "receiptSha256": "1215bddae9f74257ecfdea1d29679deb178759dc35e7edcee378a5f50a020cc9",
+          "packetSha256": "bc477a119a6f19f6c7a4372b9ba76b2a621442f62d556f1b875a24a972632759"
+        },
+        {
+          "receipt": "00036-34b5da9340ac63c33d3e.json",
+          "receiptSha256": "7fc3250bfd69ae1338aa44789b5970f387fed32e01c1dff29cd4f7738c785029",
+          "packetSha256": "fafa9f1109e44a9bcb131d540aad4653b635cdde7292343a358f109eda217740"
+        },
+        {
+          "receipt": "00037-2e93ce6a4ab3179afcb1.json",
+          "receiptSha256": "c175c778b34ad9a57a3d2df00b105a20cbfd7d022e9eaf12c1200cf1dd6a83a1",
+          "packetSha256": "2870774d7c061c54c630b5802d588f25558653c3eaf5a8de47077da6f33482da"
+        },
+        {
+          "receipt": "00038-24953d542864d83af1bd.json",
+          "receiptSha256": "afca10f1e5e7b7077b2410ef93d336955efb0f276941cc4998bbe37af6e4ab1f",
+          "packetSha256": "6c54a2bf44cbaef21593895cf40ea3de49c0bb35f953439a9095558c152d9aa9"
+        },
+        {
+          "receipt": "00039-ca382c0c961d62c7f79a.json",
+          "receiptSha256": "18965d1afb5e7bd7aaea09b1989cfc08b9eb105bd1da85d6a47dfa9393029145",
+          "packetSha256": "a0ac7cef6d3092e08294db6e725344efdba2e98eeb9d86bf602ad0fbbc8ff15b"
+        },
+        {
+          "receipt": "00040-0a2ee39922244478db01.json",
+          "receiptSha256": "21e4feb802e3520015abb327f2be6e0f678fc0f2e7fef444a2b370aa3c5e1064",
+          "packetSha256": "c665435af05c0ed820ec92a7091dc5dad74d98cb5c8fcd369b76f0e981b67278"
+        },
+        {
+          "receipt": "00041-1a0a1bc916fd1288e8c4.json",
+          "receiptSha256": "549dc7b48909aa7d015c9daab8d069a07ba38fe7fc0257e145ed0dbdeb07806f",
+          "packetSha256": "e050c5b596086cda95cd7737dc6c3743e40f874b496fe991b1f4d7402196d5bc"
+        },
+        {
+          "receipt": "00042-3db8c115b507a0701b28.json",
+          "receiptSha256": "63858c20889d56c931037580436310e04834aa0146ef79c0e1120f1d5333d280",
+          "packetSha256": "7efe17e7c969839c8ae21f3583b5b0975e6d317f11ae363a0243fff28cd63c21"
+        },
+        {
+          "receipt": "00043-4cc093e73503594d1cff.json",
+          "receiptSha256": "ca6cae653bd26a9f99d3129495cb8778ba13918b5b7b445883e5a8ef2aad14c6",
+          "packetSha256": "5ebd11115ff6cf6c941f08a47a5cac0e5a1339677e0bacf3051b87298b446da3"
+        },
+        {
+          "receipt": "00044-8cf715b0ede548caf49d.json",
+          "receiptSha256": "446c2955b50c281813a88109248efa86c8d40d05c85918115e6753636b2ca6ff",
+          "packetSha256": "c90376891ca4be2b0631485ba9d2988e2e7e4598285e6d45f63047966b905cf4"
+        },
+        {
+          "receipt": "00045-7a4f7a0e152d4f2ca739.json",
+          "receiptSha256": "84a93cfeede345df41e2f9b227b4800e937f030e3e0a3e46e862ee02ac9dced7",
+          "packetSha256": "554a8b4f2ddf370f72c8880a7b908a51d48bf59c1f2f3cfa63de7c2ebe907225"
+        },
+        {
+          "receipt": "00046-9861ab1cc3d92c094510.json",
+          "receiptSha256": "5e9a13b75823e8a4387dba1fd7f32c180797b94672615279faa8e077febe40ee",
+          "packetSha256": "9e4bf5b283fa7b535a408dd6369e8e768f92956d7bbf6cf01f629651a40d9dd7"
+        },
+        {
+          "receipt": "00047-01601cdb0946bc9f5510.json",
+          "receiptSha256": "7efc0e75a927297bf28c51b5c97680fb7023c456774d689a77cdcf1378894054",
+          "packetSha256": "2d23b35cbb81678d03790cc8a54cd9ac99f9411aa8f4e22975aecde09047c287"
+        },
+        {
+          "receipt": "00048-f50bdd5b89d82618eed9.json",
+          "receiptSha256": "528c4852294187877fb134e216910b6a51b24040952ea36689a5c7bf5ec7c7a0",
+          "packetSha256": "6e224b6247e83f15740b84e100e9affc22017d31fead50fc0b022ed65d2b2d97"
+        }
+      ]
+    },
+    "jpxEvidenceFailures": {},
     "reviewedRepairReleases": [],
     "retainedOffSessionActions": [
       {
@@ -348,17 +719,17 @@
           "basisAsOf": "2026-10-26",
           "rows": 689
         },
-        "previousSourceSha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
+        "previousSourceSha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
         "previousBounds": {
-          "firstDate": "2021-11-08",
-          "lastDate": "2026-11-06",
-          "basisAsOf": "2026-11-06",
-          "rows": 689
-        },
-        "currentBounds": {
           "firstDate": "2021-11-09",
           "lastDate": "2026-11-09",
           "basisAsOf": "2026-11-09",
+          "rows": 689
+        },
+        "currentBounds": {
+          "firstDate": "2021-11-10",
+          "lastDate": "2026-11-10",
+          "basisAsOf": "2026-11-10",
           "rows": 689
         },
         "providerEvent": {
@@ -381,8 +752,8 @@
         ],
         "noPriceEdits": true,
         "actionStatus": "retained",
-        "rawOHLCVBeforeSha256": "edd392348c3489d60a1e408a99574cb533d023e223cee2573fdfe791faf96d90",
-        "rawOHLCVAfterSha256": "edd392348c3489d60a1e408a99574cb533d023e223cee2573fdfe791faf96d90"
+        "rawOHLCVBeforeSha256": "8982b24939043ef53e9eefb0c5882cc4dbf0dc80b1536f32a3b7dfd09f717097",
+        "rawOHLCVAfterSha256": "8982b24939043ef53e9eefb0c5882cc4dbf0dc80b1536f32a3b7dfd09f717097"
       }
     ],
     "reviewedProviderRestorations": [
@@ -394,9 +765,9 @@
         "seedSourceSha256": "2f5d5a26129bad12d4d8c60398595d0c53b5df3bc0b32fce4e36321015ec5935",
         "seedPreviousBasis": "2026-11-02",
         "seedCurrentBasis": "2026-11-04",
-        "previousSourceSha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
-        "previousBasis": "2026-11-06",
-        "currentBasis": "2026-11-09",
+        "previousSourceSha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
+        "previousBasis": "2026-11-09",
+        "currentBasis": "2026-11-10",
         "officialPDFURL": "https://www.jpx.co.jp/automation/markets/statistics-equities/daily/files/202611/stq_20261102.pdf",
         "officialPDFSha256": "dc6cb4fe5b94e59e4551a464bd13270d6f5aaaa656187facb25145d2f4a1ef2b",
         "officialPDFPage": 132,
@@ -438,10 +809,10 @@
         "identity": "CLOUD_REVIEWED_NOVEMBER_9_RESTORATION_V1",
         "symbol": "6918",
         "session": "2026-11-06",
-        "currentBasis": "2026-11-09",
+        "currentBasis": "2026-11-10",
         "field": "open",
         "seedSourceSha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
-        "previousSourceSha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
+        "previousSourceSha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
         "archiveManifestSha256": "cacfd93e327a886819f72244a8b3abeb93506bb16a9988a1a8c84ae058e89706",
         "receiptInventorySha256": "e42ce2d386a19ce23cbbb69e5672a70719dff1ba4e970605f7c9ab3fd2e06d62",
         "targetPacket": "00031-7fe2903fd0038830eed4.pkl",
@@ -469,10 +840,10 @@
         "identity": "CLOUD_REVIEWED_NOVEMBER_9_RESTORATION_V1",
         "symbol": "7886",
         "session": "2026-11-06",
-        "currentBasis": "2026-11-09",
+        "currentBasis": "2026-11-10",
         "field": "low",
         "seedSourceSha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
-        "previousSourceSha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
+        "previousSourceSha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
         "archiveManifestSha256": "cacfd93e327a886819f72244a8b3abeb93506bb16a9988a1a8c84ae058e89706",
         "receiptInventorySha256": "e42ce2d386a19ce23cbbb69e5672a70719dff1ba4e970605f7c9ab3fd2e06d62",
         "targetPacket": "00037-2e93ce6a4ab3179afcb1.pkl",
@@ -499,47 +870,47 @@
     },
     "acceptedRepairs": [
       {
-        "symbol": "3954",
+        "symbol": "5971",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-11-06",
-        "lastDate": "2026-11-06",
-        "previousBasis": "2026-11-06",
-        "currentBasis": "2026-11-09"
+        "firstDate": "2026-11-09",
+        "lastDate": "2026-11-09",
+        "previousBasis": "2026-11-09",
+        "currentBasis": "2026-11-10"
       },
       {
-        "symbol": "7565",
+        "symbol": "9012",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-11-06",
-        "lastDate": "2026-11-06",
-        "previousBasis": "2026-11-06",
-        "currentBasis": "2026-11-09"
+        "firstDate": "2026-11-09",
+        "lastDate": "2026-11-09",
+        "previousBasis": "2026-11-09",
+        "currentBasis": "2026-11-10"
       },
       {
-        "symbol": "9537",
+        "symbol": "9365",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-11-06",
-        "lastDate": "2026-11-06",
-        "previousBasis": "2026-11-06",
-        "currentBasis": "2026-11-09"
+        "firstDate": "2026-11-09",
+        "lastDate": "2026-11-09",
+        "previousBasis": "2026-11-09",
+        "currentBasis": "2026-11-10"
       },
       {
-        "symbol": "9778",
+        "symbol": "9849",
         "column": "volume",
         "rows": 1,
         "reason": "latest_repaired_bar_settled_by_unrepaired_bar",
-        "firstDate": "2026-11-06",
-        "lastDate": "2026-11-06",
-        "previousBasis": "2026-11-06",
-        "currentBasis": "2026-11-09"
+        "firstDate": "2026-11-09",
+        "lastDate": "2026-11-09",
+        "previousBasis": "2026-11-09",
+        "currentBasis": "2026-11-10"
       }
     ],
-    "quarantinedComparisonSymbolCount": 306
+    "quarantinedComparisonSymbolCount": 307
   },
   "acquisition_exclusions": {
     "identity": "CLOUD_DELISTED_HISTORY_V1",
@@ -1121,7 +1492,7 @@
       "9977",
       "9995"
     ],
-    "retained_rows": 13189,
+    "retained_rows": 13178,
     "retained_symbols": [
       {
         "code": "3670",
@@ -1132,59 +1503,59 @@
       },
       {
         "code": "3787",
-        "rows": 1195,
+        "rows": 1194,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "d694180f1fe727912554a4432c23a055cd575c5d48d7b9288d33ce2b381744ad"
+        "rows_sha256": "fd5cc3bf47138b5ec94c24ad4a4f98848b8190098f2f192bcdb2e36066bb41b3"
       },
       {
         "code": "4316",
-        "rows": 1195,
+        "rows": 1194,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "758f12759f4574f7e3be6375aa9a01372ee7700b794f01d13d2ce92191916168"
+        "rows_sha256": "a2215db4291cd0502e7b45dead1e6aab554a323d3cbe42043b5935689cf0ecbd"
       },
       {
         "code": "5484",
-        "rows": 1206,
+        "rows": 1205,
         "latest_session": "2026-10-16",
         "delisting_date": "2026-10-19",
-        "rows_sha256": "1849703179a52010e7658606e4615b7658f81ef4a328facf505617eedd83d1ec"
+        "rows_sha256": "df18457705c0143783cba081c47a101dc7fcee7ecd0fa2a8faac8055aa3e6510"
       },
       {
         "code": "6147",
-        "rows": 1195,
+        "rows": 1194,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "39782ffb3f0d2688354af127b5009459c3f3f77ba397e21de08efda629e3ecdf"
+        "rows_sha256": "5895283af42a0ebf87adeaec1acf45afe6d64ae7ae70da572502021e14b6dd44"
       },
       {
         "code": "7183",
-        "rows": 1199,
+        "rows": 1198,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "3bad191036eb995e568ae0707a69c50c4be65287c4fff6fc5d5127829a5ff3e4"
+        "rows_sha256": "9a61f976e28227fd5c9ca9de8d4a5c89a1afce419a0ec7a4abe6eeb1a4fc7acc"
       },
       {
         "code": "7255",
-        "rows": 1195,
+        "rows": 1194,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "2d144757fa22f3c9bc6bceb74a5d633e50cdae4572a808f53851c65de0f759ca"
+        "rows_sha256": "4a08a9fd66d4b071e7cd66119d7832a80ecfa187d77ea60a77cb6a03183ef322"
       },
       {
         "code": "7490",
-        "rows": 1199,
+        "rows": 1198,
         "latest_session": "2026-10-06",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "493ac64fe79a94c72e8cec490fa65ef34c2327f01ec68058c49dba9c140b80a5"
+        "rows_sha256": "461ce67a982d2954377ade09a878ef8874d93b6e6943450305370ad23e158edc"
       },
       {
         "code": "7709",
-        "rows": 1195,
+        "rows": 1194,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "e6967a4ff45acf60341e0d68299a4ad101d5e9ac6f4872c845b8e1cc84e89581"
+        "rows_sha256": "9ca693b293c0f41f85c35ed28253369366abea74da5d4d3b319e44c17f4a920e"
       },
       {
         "code": "7851",
@@ -1195,10 +1566,10 @@
       },
       {
         "code": "7946",
-        "rows": 1195,
+        "rows": 1194,
         "latest_session": "2026-09-30",
         "delisting_date": "2026-10-01",
-        "rows_sha256": "5aad571c4aeb52179da1ef2c7657175a78c668e11ce02d7fe6db2ed701eff13d"
+        "rows_sha256": "11addc63c293030f221b1e0c57d22ad0bf1ba64267221345e51501f3402e788b"
       },
       {
         "code": "7985",
@@ -1209,34 +1580,34 @@
       },
       {
         "code": "8141",
-        "rows": 1214,
+        "rows": 1213,
         "latest_session": "2026-10-28",
         "delisting_date": "2026-10-29",
-        "rows_sha256": "9386433f5c257550154882626c6cb0e06f47862c480dfc1637a61b6cab7fa9a3"
+        "rows_sha256": "0c45896bc0536da31e68ba21184a8bc411739aec31562ed04cd702a9c6e856bb"
       },
       {
         "code": "9691",
-        "rows": 1198,
+        "rows": 1197,
         "latest_session": "2026-10-05",
         "delisting_date": "2026-10-09",
-        "rows_sha256": "e8c45e5d809f2df41d372c1d551f6a8187f98fe0a2e49e317808b6462dc351a1"
+        "rows_sha256": "aabbf86b863b33d2570acd04bd4407505aa969927d91b8b7e7e1348b82b7791b"
       }
     ],
     "outside_current_window_rows": 11,
-    "current_window_start": "2021-11-09",
-    "previous_source_sha256": "7d66aba2de7f1568eeaacfc0c19ed4a964aaca8a436f5d8f620fb4e5e9b70122",
+    "current_window_start": "2021-11-10",
+    "previous_source_sha256": "463de3c11450f1185b63f03748976bd41a9dcf894ad247eb540bd28491db48d8",
     "excluded_universe_symbols": []
   },
-  "latest_session": "2026-11-09",
-  "score_from": "2026-11-09",
-  "score_to": "2026-11-09",
-  "tail_rows_latest": 0,
-  "selector_rows_latest": 0,
+  "latest_session": "2026-11-10",
+  "score_from": "2026-11-10",
+  "score_to": "2026-11-10",
+  "tail_rows_latest": 1,
+  "selector_rows_latest": 5,
   "restricted_selector_rows_latest": 0,
   "quarantined_ledger_rows": 0,
   "jpx_restricted_symbols": 585,
-  "new_or_refreshed_rows": 0,
+  "new_or_refreshed_rows": 5,
   "notification_payloads": 0,
-  "ledger_rows": 1031,
+  "ledger_rows": 1036,
   "metrics_rows": 35
 }

@@ -112,3 +112,31 @@ class AcquisitionArchive:
     def info(self) -> dict:
         return {"directory": str(self.directory), "manifestSha256": _hash(self.manifest_path),
                 "requests": self.sequence, "replayed": self.replay}
+
+    def verified_revision_info(self) -> dict:
+        """Bind a revision decision to every retained request receipt + packet.
+
+        Read-only streaming verification; never deserializes or reissues a request.
+        """
+        inventory = []
+        for sequence in range(1, self.sequence + 1):
+            found = list(self.directory.glob(f"{sequence:05d}-*.json"))
+            if len(found) != 1:
+                raise RetainedResponseError("revision evidence receipt missing/ambiguous")
+            receipt = found[0]
+            raw = receipt.read_bytes()
+            saved = json.loads(raw.decode("utf-8"))
+            request = saved.get("request")
+            key = hashlib.sha256(json.dumps(request, sort_keys=True).encode()).hexdigest()[:20]
+            if receipt.stem != f"{sequence:05d}-{key}":
+                raise RetainedResponseError("revision evidence request identity mismatch")
+            packet_sha = None
+            if not saved.get("error"):
+                packet = receipt.with_suffix(".pkl")
+                if not packet.exists() or _hash(packet) != saved.get("sha256"):
+                    raise RetainedResponseError("revision evidence packet SHA mismatch")
+                packet_sha = saved["sha256"]
+            inventory.append({"receipt": receipt.name, "receiptSha256": hashlib.sha256(raw).hexdigest(), "packetSha256": packet_sha})
+        if not inventory:
+            raise RetainedResponseError("revision evidence has no retained requests")
+        return {**self.info(), "responseInventorySha256": hashlib.sha256(json.dumps(inventory, sort_keys=True, separators=(",", ":")).encode()).hexdigest(), "responseInventory": inventory}

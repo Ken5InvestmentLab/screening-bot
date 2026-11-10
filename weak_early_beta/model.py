@@ -331,7 +331,11 @@ def refresh_forward_endpoints(
     endpoint_digest = source_digest(raw, source_sha256)
     now = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
     mask = result["source_scope"].eq("FORWARD_CAUSAL")
+    from .jpx_holds import COLUMN as JPX_HOLD, verify as verify_jpx_hold
+    held_symbols = {symbol for symbol, group in raw.groupby("symbol", sort=False) if JPX_HOLD in group and verify_jpx_hold(group)}
     for index, row in result[mask].iterrows():
+        if str(row["symbol"]) in held_symbols:
+            continue  # Preserve all prior endpoint receipts/economics/updated_at.
         receipts = build_endpoint_receipts(
             row, prices, actions, digest=endpoint_digest, observed_at=now,
         )
@@ -387,3 +391,4 @@ def refresh_forward_endpoints(
             result.at[index, "d5_price_observed_at"] = now
         result.at[index, "updated_at"] = pd.Timestamp.now(tz="Asia/Tokyo").isoformat()
     return result
+

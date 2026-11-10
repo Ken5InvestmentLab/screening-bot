@@ -163,6 +163,9 @@ def command_daily(args: argparse.Namespace) -> None:
                 matching_quality = (quality.get("identity") == "CLOUD_SOURCE_QUALITY_V1"
                                     and quality.get("daily_sha256") == previous.attrs["source_sha256"])
                 if matching_quality:
+                    holds = quality.get("source_revision", {}).get("jpxHolds", [])
+                    if holds:
+                        previous.attrs["jpx_hold_lineage"] = {"dailySha256": previous.attrs["source_sha256"], "holds": holds}
                     from .reviewed_off_session_actions import PRIOR_AUDIT_ATTR
 
                     # Pandas deep-copies attrs: retain only the small reviewed
@@ -239,6 +242,10 @@ def command_daily(args: argparse.Namespace) -> None:
     with daily_phase("source-quality"):
         source_quality = source_quality_receipt(raw)
     quality_path = daily_path.with_suffix(".source-quality.json")
+    if not acquire:
+        from .jpx_holds import verify_cached_lineage
+        prior_quality = json.loads(quality_path.read_text(encoding="utf-8")) if quality_path.exists() else {}
+        verify_cached_lineage(raw, prior_quality, source_hash)
     if not acquire and quality_path.exists():
         previous_quality = json.loads(quality_path.read_text(encoding="utf-8"))
         if previous_quality.get("daily_sha256") == source_hash:
@@ -940,3 +947,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

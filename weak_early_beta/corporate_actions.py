@@ -351,6 +351,18 @@ def normalize_daily(
                 source_usable.at[position] = False
                 source_issue.at[position] = REVISION_ISSUE
         result[REVISION_EVIDENCE] = evidence_values
+    # JPX hold integration: verify full original symbol rows before
+    # deriving usability. A stored boolean alone never authorizes quarantine.
+    from .jpx_holds import COLUMN as JPX_HOLD, ISSUE as JPX_ISSUE, verify as verify_jpx_hold
+    if JPX_HOLD in result:
+        for symbol, group in result.groupby("symbol", sort=False):
+            try:
+                hold = verify_jpx_hold(group)
+            except (ValueError, KeyError, TypeError) as exc:
+                raise CorporateActionError(f"invalid JPX symbol hold evidence: {symbol}") from exc
+            if hold:
+                source_issue.loc[group.index[source_usable.loc[group.index]]] = JPX_ISSUE
+                source_usable.loc[group.index] = False
     if enriched:
         if saved_quality.isna().any() or not saved_quality.eq(source_usable).all():
             raise CorporateActionError("stored source_usable disagrees with provider evidence")
@@ -535,6 +547,8 @@ def validate_source_revision(
     *,
     previous_source_sha256: str | None = None,
     source_corrections_manifest: dict[str, Any] | None = None,
+    collect_unexplained: bool = False,
+    confirmed_new: dict | None = None,
 ) -> dict[str, Any]:
     """Reject missing actions and unexplained historical share-unit revisions.
 
@@ -700,12 +714,29 @@ def validate_source_revision(
                 )
             unexplained = different & ~(accepted | settled)
             if unexplained.any():
-                position = int(np.flatnonzero(unexplained)[0])
-                raise CorporateActionError(
-                    f"unexplained historical {column} revision for {symbol} "
-                    f"{right.index[position]:%Y-%m-%d}: {before[position]} -> {after[position]}; "
-                    "missing/corrected action or provider repair requires review"
-                )
+                for position in np.flatnonzero(unexplained):
+                    key = (str(symbol), f"{right.index[position]:%Y-%m-%d}", column)
+                    confirmation = (confirmed_new or {}).get(key)
+                    if confirmation is not None:
+                        # Internal resolver's official byte-verified decision. Never a
+                        # boolean override. Endpoint mismatches fail closed.
+                        from .jpx_decisions import decide
+                        decision = decide(*key, before[position], after[position], confirmation)
+                        if decision["decision"] != "accept_new":
+                            raise CorporateActionError("JPX new confirmation endpoint mismatch")
+                        receipt.setdefault("jpxConfirmedNew", []).append(decision)
+                        continue
+                    if collect_unexplained:
+                        receipt.setdefault("unexplainedCells", []).append({
+                            "symbol": key[0], "session": key[1], "field": column,
+                            "old": float(before[position]), "new": float(after[position]),
+                        })
+                    else:
+                        raise CorporateActionError(
+                            f"unexplained historical {column} revision for {symbol} "
+                            f"{right.index[position]:%Y-%m-%d}: {before[position]} -> {after[position]}; "
+                            "missing/corrected action or provider repair requires review"
+                        )
             if accepted.any():
                 receipt["acceptedRepairColumnValues"] += int(accepted.sum())
                 receipt["acceptedRepairs"].append({
@@ -941,12 +972,42 @@ def fetch_daily(
             previous, normalized, previous_source_sha256=previous_source_sha256,
         )
         release_audit = normalized.attrs.get("reviewedRepairReleases", [])
-        normalized.attrs["source_revision_receipt"] = validate_source_revision(
-            previous, normalized, previous_source_sha256=previous_source_sha256,
-        )
+        from .jpx_holds import carry as carry_jpx_holds, audit as audit_jpx_holds
+        try:
+            normalized = carry_jpx_holds(previous, normalized, archive=archive)
+        except ValueError as exc:
+            raise CorporateActionError(str(exc)) from exc
+        try:
+            revision = validate_source_revision(
+                previous, normalized, previous_source_sha256=previous_source_sha256,
+            )
+        except CorporateActionError as exc:
+            # Only the established historical numeric-revision failure qualifies.
+            # Missing/changed actions, invalid identities, or corrupt data remain
+            # systemic hard failures. No daily runner retry or notification here.
+            if not str(exc).startswith("unexplained historical ") or archive is None:
+                raise
+            from .jpx_reports import load as load_jpx_reports
+            from .jpx_resolver import resolve as resolve_jpx_revisions
+            pending = validate_source_revision(
+                previous, normalized, previous_source_sha256=previous_source_sha256,
+                collect_unexplained=True,
+            )
+            evidence, failures = load_jpx_reports(pending.get("unexplainedCells", []), archive)
+            normalized, revision = resolve_jpx_revisions(
+                previous, normalized, evidence=evidence,
+                previous_source_sha256=previous_source_sha256, archive=archive,
+            )
+            revision["jpxEvidenceFailures"] = failures
+        normalized.attrs["source_revision_receipt"] = revision
+        normalized.attrs["source_revision_receipt"]["jpxHolds"] = audit_jpx_holds(normalized)
         normalized.attrs["source_revision_receipt"]["reviewedRepairReleases"] = release_audit
         normalized.attrs["source_revision_receipt"]["retainedOffSessionActions"] = retained_actions
         normalized.attrs["source_revision_receipt"]["reviewedProviderRestorations"] = provider_restorations
         if november_restorations:
             normalized.attrs["source_revision_receipt"]["reviewedNovember9Restorations"] = november_restorations
     return normalized
+
+
+
+

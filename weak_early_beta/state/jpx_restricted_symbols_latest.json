@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "as_of": "2026-11-10",
-  "fetched_at": "2026-11-10T20:44:15.453866+09:00",
+  "as_of": "2026-11-11",
+  "fetched_at": "2026-11-11T21:45:12.799114+09:00",
   "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
-  "source_sha256": "b1c9964ae92d9f9844ab0b8b99fce145d2693396c2008037e833f2d034584cd3",
+  "source_sha256": "72562018b3c6a765e04abc4dbd13420f888b1ce0bef6dcda75c2a52cfe023e7b",
   "rule": "causal designation-date gate; exclude acquisition only on or after the official delisting date",
   "delisting_sources": [
     {
@@ -40,7 +40,7 @@
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
       "source_sha256": "154d8a4e54d2c48f5bcdfb76b51d9b257cfd52df3dd0ac9513d67ee2a96ab0af",
-      "delisted_symbol_count": 134
+      "delisted_symbol_count": 135
     }
   ],
   "delisted_symbols": [
@@ -5803,6 +5803,16 @@
       "delisting_date": "2026-10-29",
       "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
       "relisting_coverage_start_year": 2022
+    },
+    {
+      "code": "7523",
+      "company_name": "アールビバン（株）",
+      "designation_date": "2026-10-20",
+      "designation": "上場廃止の決定・整理銘柄指定",
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
+      "delisting_date": "2026-11-11",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
+      "relisting_coverage_start_year": 2022
     }
   ],
   "delisting_history": [
@@ -9267,6 +9277,12 @@
       "company_name": "新光商事（株）",
       "delisting_date": "2026-10-29",
       "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"
+    },
+    {
+      "code": "7523",
+      "company_name": "アールビバン（株）",
+      "delisting_date": "2026-11-11",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html"
     }
   ],
   "relisting_sources": [
@@ -9297,7 +9313,7 @@
     {
       "year": 2026,
       "source_url": "https://www.jpx.co.jp/listing/stocks/new/index.html",
-      "source_sha256": "35368d72772f36b3874c6caa7e3cb69a78b0964c0eba0fb5dafd5bc873c42636",
+      "source_sha256": "37bb370842ef277e747656d32043da578caa6b030afba184fec376dd506b1179",
       "listed_symbol_count": 47
     }
   ],
@@ -15118,7 +15134,10 @@
       "company_name": "アールビバン（株）",
       "designation_date": "2026-10-20",
       "designation": "上場廃止の決定・整理銘柄指定",
-      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html"
+      "source_url": "https://www.jpx.co.jp/listing/market-alerts/supervision/01.html",
+      "delisting_date": "2026-11-11",
+      "delisting_source_url": "https://www.jpx.co.jp/listing/stocks/delisted/index.html",
+      "relisting_coverage_start_year": 2022
     },
     {
       "code": "4059",

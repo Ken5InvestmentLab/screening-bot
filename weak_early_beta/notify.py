@@ -164,6 +164,7 @@ def notify_pending(
     dry_run: bool = False,
     signal_date: Any | None = None,
     refresh_existing: bool = False,
+    blocked_symbols=(),
 ) -> tuple[pd.DataFrame, list[dict[str, Any]]]:
     webhook_url = (webhook_url or os.environ.get(WEBHOOK_ENV, "")).strip()
     bot_token = (
@@ -171,6 +172,7 @@ def notify_pending(
         or ""
     ).strip()
     eligible = ledger["source_scope"].eq("FORWARD_CAUSAL")
+    eligible &= ~ledger["symbol"].astype(str).isin(set(blocked_symbols))
     if signal_date is not None:
         eligible &= pd.to_datetime(ledger["signal_date"]).eq(pd.Timestamp(signal_date))
     if not refresh_existing:
@@ -260,8 +262,11 @@ def notify_daily_completion(
     state_path: Path = DEFAULT_DAILY_NOTIFICATION_STATE,
     bot_token: str | None = None,
     dry_run: bool = False,
+    blocked_symbols=(),
 ) -> list[dict[str, Any]]:
     """Post one idempotent summary only when the day has new symbols."""
+    blocked_symbols = set(blocked_symbols)
+    ledger = ledger[~ledger["symbol"].astype(str).isin(blocked_symbols)].copy()
     date_key = f"{pd.Timestamp(target_date):%Y-%m-%d}"
     dated = ledger[
         ledger["source_scope"].eq("FORWARD_CAUSAL")
@@ -279,6 +284,9 @@ def notify_daily_completion(
     if day_state.get("summary_url"):
         return []
     payload = daily_summary_payload(ledger, target_date, report_url)
+    if blocked_symbols:
+        payload["embeds"][0]["fields"].append({"name": "価格差分による個別保留",
+            "value": ", ".join(sorted(blocked_symbols)) + "（検出・通知対象から除外）", "inline": False})
     if dry_run:
         return [payload]
     receipt = _post_bot(SUMMARY_CHANNEL_ID, token, payload)

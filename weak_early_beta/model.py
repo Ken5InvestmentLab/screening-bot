@@ -333,6 +333,8 @@ def refresh_forward_endpoints(
     mask = result["source_scope"].eq("FORWARD_CAUSAL")
     from .jpx_holds import COLUMN as JPX_HOLD, verify as verify_jpx_hold
     held_symbols = {symbol for symbol, group in raw.groupby("symbol", sort=False) if JPX_HOLD in group and verify_jpx_hold(group)}
+    from .endpoint_holds import audit as endpoint_hold_audit
+    held_symbols.update(e["symbol"] for e in endpoint_hold_audit(raw))
     for index, row in result[mask].iterrows():
         if str(row["symbol"]) in held_symbols:
             continue  # Preserve all prior endpoint receipts/economics/updated_at.

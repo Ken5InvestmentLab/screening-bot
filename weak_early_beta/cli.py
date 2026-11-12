@@ -271,6 +271,14 @@ def command_daily(args: argparse.Namespace) -> None:
         ],
         "quarantinedComparisonSymbolCount": len(source_revision.get("quarantinedComparisons", [])),
     }
+    from .endpoint_holds import quarantine as quarantine_endpoint_conflicts
+    raw, endpoint_holds = quarantine_endpoint_conflicts(ledger, raw, source_hash)
+    endpoint_hold_path = quality_path.with_name(quality_path.stem + ".endpoint-holds.json")
+    _write_receipt(endpoint_hold_path, {
+        "identity": "CLOUD_ENDPOINT_HOLD_AUDIT_V1", "daily_sha256": source_hash,
+        "holds": endpoint_holds,
+        "scope": "run-local whole-symbol feature and endpoint quarantine; source CSV unchanged",
+    })
     with daily_phase("forward-endpoints"):
         ledger = model.refresh_forward_endpoints(ledger, raw, source_sha256=source_hash)
     with daily_phase("scoring"):
@@ -299,6 +307,7 @@ def command_daily(args: argparse.Namespace) -> None:
             ledger,
             report_url=report_url,
             dry_run=args.dry_run_notify,
+            blocked_symbols={hold["symbol"] for hold in endpoint_holds},
         )
     write_ledger(ledger, ledger_path)
     write_fundamental_queue(ledger, Path(args.queue))
@@ -311,6 +320,9 @@ def command_daily(args: argparse.Namespace) -> None:
         "daily_sha256": source_hash,
         "acquisition_evidence": archive.info() if archive else None,
         "source_quality": source_quality,
+        "endpoint_holds": endpoint_holds,
+        "endpoint_hold_audit": str(endpoint_hold_path),
+        "endpoint_hold_audit_sha256": model.sha256(endpoint_hold_path),
         "source_revision": source_revision,
         "acquisition_exclusions": acquisition_exclusions,
         "latest_session": f"{latest:%Y-%m-%d}",
@@ -359,12 +371,16 @@ def command_notify(args: argparse.Namespace) -> None:
 
     ledger_path = Path(args.ledger)
     ledger = _load_or_bootstrap(ledger_path)
+    from .endpoint_holds import notification_holds
+    target = args.date or pd.Timestamp.now(tz="Asia/Tokyo").date()
+    blocked = notification_holds(getattr(args, "daily_receipt", DEFAULT_RECEIPT), target, ledger)
     ledger, payloads = notify_pending(
         ledger,
         report_url=args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", ""),
         dry_run=args.dry_run,
         signal_date=args.date,
         refresh_existing=args.refresh_existing,
+        blocked_symbols=blocked,
     )
     if payloads and not args.dry_run:
         write_ledger(ledger, ledger_path)
@@ -378,12 +394,15 @@ def command_notify_day(args: argparse.Namespace) -> None:
     target = pd.Timestamp(args.date or pd.Timestamp.now(tz="Asia/Tokyo").date()).date()
     ledger_path = Path(args.ledger)
     ledger = _load_or_bootstrap(ledger_path)
+    from .endpoint_holds import notification_holds
+    blocked = notification_holds(getattr(args, "daily_receipt", DEFAULT_RECEIPT), target, ledger)
     report_url = args.report_url or os.environ.get("WEAK_EARLY_BETA_REPORT_URL", "")
     ledger, signal_payloads = notify_pending(
         ledger,
         report_url=report_url,
         dry_run=args.dry_run,
         signal_date=target,
+        blocked_symbols=blocked,
     )
     completion_payloads = notify_daily_completion(
         ledger,
@@ -391,6 +410,7 @@ def command_notify_day(args: argparse.Namespace) -> None:
         report_url,
         state_path=Path(args.daily_notification_state),
         dry_run=args.dry_run,
+        blocked_symbols=blocked,
     )
     if signal_payloads and not args.dry_run:
         write_ledger(ledger, ledger_path)
@@ -792,12 +812,14 @@ def parser() -> argparse.ArgumentParser:
     notify.add_argument("--report-url", default="")
     notify.add_argument("--dry-run", action="store_true")
     notify.add_argument("--date")
+    notify.add_argument("--daily-receipt", default=str(DEFAULT_RECEIPT))
     notify.add_argument("--refresh-existing", action="store_true")
     notify.set_defaults(func=command_notify)
 
     notify_day = sub.add_parser("notify-day", help="send one business day's signals and completion embeds")
     common(notify_day)
     notify_day.add_argument("--date")
+    notify_day.add_argument("--daily-receipt", default=str(DEFAULT_RECEIPT), help="verified same-day detection receipt")
     notify_day.add_argument("--report-url", default="")
     notify_day.add_argument("--dry-run", action="store_true")
     notify_day.add_argument(

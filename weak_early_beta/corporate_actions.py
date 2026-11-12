@@ -363,6 +363,16 @@ def normalize_daily(
             if hold:
                 source_issue.loc[group.index[source_usable.loc[group.index]]] = JPX_ISSUE
                 source_usable.loc[group.index] = False
+    from .endpoint_holds import COLUMN as ENDPOINT_HOLD, ISSUE as ENDPOINT_ISSUE, verify as verify_endpoint_hold
+    if ENDPOINT_HOLD in result:
+        for symbol, group in result.groupby("symbol", sort=False):
+            try:
+                hold = verify_endpoint_hold(group)
+            except (ValueError, KeyError, TypeError) as exc:
+                raise CorporateActionError(f"invalid endpoint symbol hold evidence: {symbol}") from exc
+            if hold:
+                source_issue.loc[group.index[source_usable.loc[group.index]]] = ENDPOINT_ISSUE
+                source_usable.loc[group.index] = False
     if enriched:
         if saved_quality.isna().any() or not saved_quality.eq(source_usable).all():
             raise CorporateActionError("stored source_usable disagrees with provider evidence")

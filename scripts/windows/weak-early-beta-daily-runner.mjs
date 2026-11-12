@@ -8,6 +8,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
 import { checkpointJpxRefresh } from './weak-early-beta-jpx-checkout.mjs';
 import { networkFailureDetail, waitForNetworkCapacity } from './weak-early-beta-network-guard.mjs';
+import { atomicJson, appendEvent, recoveryPlan, verifiedDetectionCache } from './weak-early-beta-run-journal.mjs';
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
 const DEFAULT_RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
@@ -67,8 +68,7 @@ export function loadDailyConfig(
 }
 
 function writeJson(file, value) {
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+  atomicJson(file, value);
 }
 function loadDotEnv(env, file) {
   if (!fs.existsSync(file)) return;
@@ -116,7 +116,9 @@ async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_0
     let stderr = '';
     const stdoutDecoder = new StringDecoder('utf8');
     const stderrDecoder = new StringDecoder('utf8');
+    atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', parentPid: process.pid, executable: path.basename(exe), startedAt: new Date().toISOString(), status: 'planned' });
     const child = spawn(exe, args, { cwd, env, windowsHide: true, stdio: capture ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'] });
+    atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', pid: child.pid || null, parentPid: process.pid, executable: path.basename(exe), startedAt: new Date().toISOString(), status: 'running' });
     child.stdout.on('data', chunk => {
       stdout += stdoutDecoder.write(chunk);
       fs.appendFileSync(`${log}.stdout`, chunk);
@@ -132,9 +134,10 @@ async function run(exe, args, { cwd, env, log, capture = false, timeoutMs = 12_0
       } else child.kill('SIGTERM');
       reject(new Error(`timeout: ${path.basename(log)}`));
     }, timeoutMs);
-    child.on('error', error => { clearTimeout(timer); reject(error); });
+    child.on('error', error => { clearTimeout(timer); atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', pid: child.pid || null, completedAt: new Date().toISOString(), status: 'spawn_failed', error: error.code || 'unknown' }); reject(error); });
     child.on('close', code => {
       clearTimeout(timer);
+      atomicJson(`${log}.process.json`, { identity: 'CLOUD_CHILD_PROCESS_V1', pid: child.pid || null, completedAt: new Date().toISOString(), status: 'exited', code });
       resolve({ code, stdout: stdout + stdoutDecoder.end(), stderr: stderr + stderrDecoder.end() });
     });
   });
@@ -398,14 +401,21 @@ async function probeFundamentalModel(config, runDir, env) {
   }
 }
 
-async function main(configFile) {
+async function main(configFile, { resumeReceipt = null } = {}) {
   const config = loadDailyConfig(configFile);
   const repo = path.resolve(config.repoPath);
   const runtime = path.resolve(config.runtimeDir);
   const startedAt = new Date().toISOString();
   const runDir = path.join(runtime, `daily-${startedAt.replace(/[:.]/g, '-')}`);
   const resultPath = path.join(runtime, 'daily-latest.json');
-  const result = { identity: 'WEAK_EARLY_CLOUD_DAILY_V1', startedAt, ok: false };
+  const result = { identity: 'WEAK_EARLY_CLOUD_DAILY_V1', startedAt, pid: process.pid, ok: false };
+  const prior = resumeReceipt ? readJson(resumeReceipt) : null;
+  if (prior) {
+    const resolved = fs.realpathSync(resumeReceipt);
+    if (path.dirname(resolved) !== fs.realpathSync(runtime) || !path.basename(resolved).startsWith('recovery-input-')) throw new Error('Recovery receipt must be an immutable task-entry runtime receipt');
+    const latest = readJson(resultPath);
+    if (!isDeepStrictEqual(prior, latest)) throw new Error('Recovery receipt is no longer the latest terminal run; reconcile first');
+  }
   fs.mkdirSync(runDir, { recursive: true });
   const lock = path.join(runtime, 'daily.lock');
   let ownsLock = false;
@@ -413,6 +423,11 @@ async function main(configFile) {
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
   const today = config.date || jstDate();
+  if (today !== jstDate()) throw new Error('Cloud daily cannot replay a different JST date');
+  if (prior && recoveryPlan(prior, today).action !== 'resume-detection') throw new Error('Only a terminal same-day detection failure may resume automatically');
+  if (prior) result.originalRunId = prior.originalRunId || prior.startedAt;
+  result.date = today;
+  atomicJson(path.join(runDir, 'invoked.json'), { ...result, identity: 'CLOUD_RUNNER_INVOKED_V1' });
   const python = config.pythonPath;
   let stage = 'lock';
   let commandNumber = 0;
@@ -422,8 +437,9 @@ async function main(configFile) {
     }
     stage = nextStage;
     Object.assign(result, extra, { stage, progressAt: new Date().toISOString() });
+    writeJson(path.join(runDir, 'result.json'), result);
     if (ownsLock) writeJson(resultPath, result);
-    fs.appendFileSync(path.join(runDir, 'progress.jsonl'), `${JSON.stringify({ stage, ...extra, at: result.progressAt })}\n`);
+    appendEvent(path.join(runDir, 'progress.jsonl'), { stage, ...extra, at: result.progressAt });
     console.error(`Cloud daily stage: ${stage}`);
   };
   const git = async args => requireOk('git', args, { cwd: repo, env,
@@ -506,19 +522,21 @@ async function main(configFile) {
       '--status', 'success', '--limit', '1', '--json', 'databaseId,headSha,headBranch,status,conclusion,url'],
     { cwd: repo, env, log: path.join(runDir, 'previous-release'), capture: true, timeoutMs: 60_000 });
     result.previousSuccessfulDeployment = JSON.parse(previous.stdout.trim())[0] || null;
-    await sendSystemLog('started');
+    if (!prior) await sendSystemLog('started');
     saveProgress('model-preflight');
     await probeFundamentalModel(config, runDir, env);
 
     saveProgress('detection');
-    const attempts = Number(config.maxFreshnessAttempts || 3);
+    const cacheRecovery = prior ? await verifiedDetectionCache(repo, today) : null;
+    if (cacheRecovery) saveProgress('detection', { recoveryCache: cacheRecovery });
+    const attempts = prior ? 1 : Number(config.maxFreshnessAttempts || 3);
     if (!Number.isInteger(attempts) || attempts < 1 || attempts > 3) throw new Error('invalid bounded OHLCV freshness attempts');
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       const acquisitionDirectory = path.join(runDir, `acquisition-${attempt}`);
       result.acquisitionEvidence ??= [];
-      result.acquisitionEvidence.push({ attempt, directory: acquisitionDirectory });
+      result.acquisitionEvidence.push(prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
       saveProgress('detection', { acquisitionEvidence: result.acquisitionEvidence });
-      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--refresh-live'], {
+      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', ...(prior ? [] : ['--refresh-live'])], {
         cwd: repo, env: { ...env, CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
       });
       const receipt = readJson(path.join(repo, 'weak_early_beta', 'state', 'latest_run_receipt.json'));
@@ -584,12 +602,12 @@ async function main(configFile) {
     saveProgress('notification');
     await reconcileNotifications({ date: today,
       preview: async phase => {
-        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today, '--dry-run'],
+        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today, '--daily-receipt', path.join(repo, 'weak_early_beta', 'state', 'latest_run_receipt.json'), '--dry-run'],
           { cwd: repo, env, log: path.join(runDir, `notify-${phase}`), capture: true });
         return JSON.parse(attempt.stdout.trim());
       },
       send: async () => {
-        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today],
+        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today, '--daily-receipt', path.join(repo, 'weak_early_beta', 'state', 'latest_run_receipt.json')],
           { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
         return JSON.parse(attempt.stdout.trim());
       },
@@ -631,7 +649,8 @@ async function main(configFile) {
     process.exitCode = 1;
   } finally {
     result.completedAt = new Date().toISOString();
-    writeJson(ownsLock ? resultPath : path.join(runDir, 'result.json'), result);
+    writeJson(path.join(runDir, 'result.json'), result);
+    if (ownsLock) writeJson(resultPath, result);
     if (ownsLock && fs.existsSync(lock) && fs.readFileSync(lock, 'utf8') === startedAt) fs.rmSync(lock);
     console.log(JSON.stringify(result));
   }
@@ -639,7 +658,9 @@ async function main(configFile) {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (!process.argv[2]) throw new Error('usage: node weak-early-beta-daily-runner.mjs <config.json>');
-  await main(process.argv[2]);
+  const resumeIndex = process.argv.indexOf('--resume-detection');
+  if (resumeIndex >= 0 && !process.argv[resumeIndex + 1]) throw new Error('Missing terminal receipt path');
+  await main(process.argv[2], { resumeReceipt: resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null });
 }
 
 export { npmInvocation, probeFundamentalModel, run, parseGitStatus, assertGeneratedChanges, GENERATED_PATHS,

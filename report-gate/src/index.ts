@@ -56,6 +56,11 @@ function accessGuardScript(env: WorkerEnv): string {
         headers: { accept: 'application/json' },
         signal: AbortSignal.timeout(25000),
       });
+      if (response.headers.get('x-cloud-private') === 'true') {
+        finished = true;
+        window.location.replace('/private');
+        return;
+      }
       if (response.status === 503) {
         retry(Number(response.headers.get('retry-after')));
         return;
@@ -724,6 +729,11 @@ export async function reportIdentity(request: Request, env: WorkerEnv, freshRole
   return { subject: session.sub, discord_authorized: check.authorized };
 }
 
+// Signed session identity only; preserves identity while OAuth needs refreshing.
+// This grants no membership, report or notification authorization.
+export async function reportVerifiedSessionSubject(request: Request, env: WorkerEnv): Promise<string | undefined> {
+  return (await readSession(request, env))?.sub;
+}
 // Identifies the signed, unexpired session without a role lookup. This does not
 // grant report or push access. Manual dispatch uses it only to select the owner;
 // it must perform reportIdentity(..., true) immediately before sending.

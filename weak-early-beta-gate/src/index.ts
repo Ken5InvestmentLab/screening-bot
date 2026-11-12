@@ -3,6 +3,7 @@
 import sharedGate, { reportIdentity } from "./shared-report-gate";
 import { cloudApi, type CloudEnv } from "./cloud-api";
 import { runScheduledPersonalNotifications, type ScheduleEnv } from "./cloud-push-scheduler";
+import { ownerOnlyGate } from "./cloud-owner-only";
 import { cloudReportRole } from "./cloud-role-authority";
 export { CloudRoleAuthority } from "./cloud-role-authority";
 
@@ -35,6 +36,8 @@ export default {
     console.log(JSON.stringify({ operation: "cloud_personal_schedule", ...result }));
   },
   async fetch(request: SharedRequest, env: CloudEnv): Promise<Response> {
+    const denied = await ownerOnlyGate(request, env);
+    if (denied) return denied;
     const pathname = new URL(request.url).pathname;
     const bundle = BUNDLE_RE.exec(pathname);
     if (bundle) return bundleResponse(request, env, bundle[1]);

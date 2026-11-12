@@ -11,6 +11,8 @@ import {
 } from "./cloud-membership";
 
 export type CloudEnv = Env & PushConfig & {
+  CLOUD_OWNER_ONLY_ENABLED?: string;
+  CLOUD_OWNER_DISCORD_ID?: string;
   CLOUD_DB?: D1Database;
   CLOUD_ROLE_AUTHORITY?: DurableObjectNamespace;
   WHOP_API_KEY?: string;

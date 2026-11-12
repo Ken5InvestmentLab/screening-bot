@@ -51,6 +51,8 @@ export function verifyReleaseConfig(config) {
       assert.equal(environment.vars?.CLOUD_PUSH_REGISTRATION_ENABLED, 'false', 'nonpersonal registration must stay OFF');
       assert.equal(environment.vars?.CLOUD_PUSH_MODE, 'disabled', 'nonpersonal sending must stay OFF');
     }
+    assert.equal(environment.vars?.CLOUD_OWNER_DISCORD_ID, undefined, 'owner identity must stay outside Git');
+    assert.equal(environment.vars?.CLOUD_OWNER_ONLY_ENABLED, undefined, 'owner-only switch is runtime-only and preserved by keep_vars');
     assert.equal(environment.vars?.CLOUD_ROLE_INITIAL_WAIT, undefined, 'owner wait metadata must stay outside Git');
     assert.notEqual(environment.vars?.CLOUD_PUSH_SCHEDULER_ENABLED, 'true', 'scheduled delivery must stay OFF in this manual-test release');
     assert.equal(environment.triggers?.crons?.length ?? 0, 0, 'no notification scheduler');

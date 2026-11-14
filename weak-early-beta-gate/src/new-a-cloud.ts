@@ -20,7 +20,8 @@ export async function newACloudRoute(request:Request,env:CloudEnv):Promise<Respo
   // 本人限定が現状どおり有効でなければ、新Aを出すことはない。
   if(env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase()!=='true')return reply(request,503,json?{available:false,reason:'owner_mode_required'}:'Unavailable',json);
   if(!['GET','HEAD'].includes(request.method))return reply(request,405,'Method not allowed');
-  if(request.headers.get('sec-fetch-site')==='cross-site'||(request.headers.get('origin')&&request.headers.get('origin')!==url.origin))return reply(request,403,'Forbidden');
+  if(request.headers.get('sec-fetch-site')==='cross-site')return reply(request,403,json?{authorized:false,reason:'cross_site_request'}:'Forbidden',json);
+  if(request.headers.get('origin')&&request.headers.get('origin')!==url.origin)return reply(request,403,json?{authorized:false,reason:'origin_mismatch'}:'Forbidden',json);
   // 旧結果はバックアップと既存ASSETSに保全するが、新A画面からは配信しない。
   if(oldAssets.test(path))return reply(request,410,json?{available:false,reason:'legacy_asset_retained_offline'}:'Gone',json);
   if(oldDocument.test(path))return new Response(null,{status:302,headers:{...PRIVATE,location:'/research-a'}});

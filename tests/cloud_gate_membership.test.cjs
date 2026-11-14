@@ -548,6 +548,15 @@ test('new A rejects unauthenticated cross-origin malformed and mutating requests
   ]) {const before=h.newA.reads;const response=await h.worker.fetch(await h.request(pathname,options),h.env);assert.equal(response.status,expected);await assertNoLegacyData(response);if(expected!==400)assert.equal(h.newA.reads,before);}
   assert.equal(h.assets.length, 0);
 });
+test('new A request-origin refusals expose only fixed categories and no data',async()=>{
+  const h=await apiHarness({ownerOnly:true});
+  for(const [header,value,reason] of [['origin','https://elsewhere.invalid','origin_mismatch'],['sec-fetch-site','cross-site','cross_site_request']]){
+    const original=await h.request('/api/research-a/details');const headers=new Headers(original.headers);headers.set(header,value);
+    const response=await h.worker.fetch(new Request(original,{headers}),h.env);
+    assert.equal(response.status,403);assert.deepEqual(await response.json(),{authorized:false,reason});assert.equal(h.newA.reads,0);assert.equal(h.assets.length,0);
+  }
+});
+
 test('new A follows the owner Discord role while delivery separately rechecks membership revocation', async () => {
   const h = await apiHarness({ownerOnly:true});
   assert.equal((await h.worker.fetch(await h.request('/api/research-a/details'), h.env)).status, 200);

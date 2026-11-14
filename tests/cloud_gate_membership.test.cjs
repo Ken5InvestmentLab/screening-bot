@@ -15,7 +15,7 @@ const ts = require(tsPath);
 
 // Load the actual Worker modules with synthetic credentials and no network.
 // Only relative imports under the Cloud source directory are permitted.
-function createModules({ fetchMock, clock } = {}) {
+function createModules({ fetchMock, clock, researchSnapshotReader } = {}) {
   const sourceRoot = path.join(repoRoot, 'weak-early-beta-gate', 'src');
   const cache = new Map();
   function load(name, parent = sourceRoot) {
@@ -24,6 +24,13 @@ function createModules({ fetchMock, clock } = {}) {
     if (cache.has(filename)) return cache.get(filename).exports;
     const module = { exports: {} };
     cache.set(filename, module);
+    // Authorization tests replace only the data adapter seam. Actual source
+    // gate/role/renderer code still runs; canonical D1/hash validation has its
+    // own migration suite. Never load the real price snapshot in these tests.
+    if (path.basename(filename) === 'new-a-data.ts' && researchSnapshotReader) {
+      module.exports = { readResearchASnapshot: researchSnapshotReader };
+      return module.exports;
+    }
     let source = fs.readFileSync(filename, 'utf8');
     if (path.basename(filename) === 'shared-report-gate.ts') source += '\nexport const __test = { createSession };';
     const compiled = ts.transpileModule(source, {
@@ -433,13 +440,27 @@ function fakeDatabase() {
   return { state, prepare, batch: async (statements) => Promise.all(statements.map(statement => statement.run())) };
 }
 
+const SYNTHETIC_OWNER = '111111111111111111';
+function syntheticResearchSnapshot() {
+  const common = { detectionDate:'2026-01-05', triggerDate:'2026-01-06', simulatedEntryDate:'2026-01-07',
+    entryBasis:'NEXT_SESSION_OPEN_AFTER_TRIGGER', entryPrice:123, pricePublicationStatus:'OWNER_ONLY_NOT_FOR_REDISTRIBUTION' };
+  return { period:{first:'2026-01-05',last:'2026-11-12',sessions:209}, conditions:{costs:0},
+    account:{portfolioReturn:0.001}, snapshot:{namespace:'research-a',accessScope:'SYNTHETIC_OWNER_ONLY',source:'SYNTHETIC_TEST_ONLY',marketPriceRedistributionApproved:false},
+    closed:[{...common,rowId:'synthetic-closed',securityCode:'TEST-A',securityName:'SYNTHETIC-NEW-A-ONLY',state:'SIMULATED_CLOSED',simulatedExitDate:'2026-02-04',exitBasis:'CLOSE_ON_20TH_HOLDING_SESSION',exitPrice:124.5,holdingSessions:20,simulatedProfitJPY:150,simulatedReturn:0.01}],
+    openAtEnd:[{...common,rowId:'synthetic-open',securityCode:'TEST-B',securityName:'SYNTHETIC-OPEN-A-ONLY',state:'SIMULATED_OPEN_AT_END',simulatedExitDate:null,exitBasis:null,exitPrice:null,valuationDate:'2026-11-12',observedHoldingSessions:2,simulatedUnrealizedProfitJPY:20,simulatedUnrealizedReturn:0.002}] };
+}
+async function assertNoLegacyData(response) {
+  assert.doesNotMatch(await response.text(), /SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY|SYNTHETIC-(?:NEW|OPEN)-A|securityCode|entryPrice|must-never-leak|synthetic-(?:discord|whop)-(?:access|refresh|secret|read-key)/);
+}
 async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-role'], configured = true,
-  providerStatus = 200, dbFailure = false } = {}) {
+  providerStatus = 200, dbFailure = false, ownerOnly = false } = {}) {
+  if (ownerOnly) fixture = {...fixture,link:{...fixture.link,discord_user_id:SYNTHETIC_OWNER}};
   const clock = { now: NOW };
   const calls = [];
   const assets = [];
   const provider = { status: providerStatus, fixture, discordRoles: roles, discordStatus:200, discordCalls:0 };
-  const modules = createModules({ clock, fetchMock: async (input, init = {}) => {
+  const newA = { reads:0, unavailable:false };
+  const modules = createModules({ clock, researchSnapshotReader:ownerOnly?async()=>{newA.reads++;if(newA.unavailable)throw new Error('SYNTHETIC-NEW-A-READ-FAILED');return syntheticResearchSnapshot();}:undefined, fetchMock: async (input, init = {}) => {
     const url = new URL(String(input));
     if(url.origin==='https://discord.com'){provider.discordCalls+=1;return Response.json({roles:provider.discordRoles},{status:provider.discordStatus});}
     assert.equal(url.origin, 'https://api.whop.com');
@@ -465,6 +486,7 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
     DISCORD_CLIENT_ID: 'synthetic-discord-client', DISCORD_CLIENT_SECRET: 'synthetic-discord-secret',
     DISCORD_GUILD_ID: 'synthetic-guild', DISCORD_ALLOWED_ROLE_IDS: 'paid-discord-role',
     SESSION_SECRET: 'synthetic-session-encryption-key',
+    ...(ownerOnly ? { CLOUD_OWNER_ONLY_ENABLED:'true', CLOUD_OWNER_DISCORD_ID:SYNTHETIC_OWNER } : {}),
     REPORT_ASSET_PATH: '/weak_early_beta_latest.html',
     CLOUD_DB: db,
     ...(configured ? { WHOP_API_KEY: 'synthetic-whop-read-key', WHOP_ACCOUNT_ID: 'biz_1',
@@ -491,47 +513,50 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
     return new Request(`https://gate.invalid${pathname}`, { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
   }
   const fetchApi = async (pathname, options) => api.cloudApi(await request(pathname, options), env);
-  return { api, worker, env, db, memberId, request, fetchApi, calls, assets, provider, clock };
+  return { api, worker, env, db, memberId, request, fetchApi, calls, assets, provider, clock, newA, subject:fixture.link.discord_user_id };
 }
 
 const bundlePath = (audience) => `/weak_early_beta_data_${audience}_analytics_${'a'.repeat(16)}_0000.json`;
 for (const scenario of ['paid', 'free', 'expired', 'test', 'unlinked', 'provider-error', 'unconfigured']) {
-  test(`lazy full/free bundle preserves Discord role contract for ${scenario}`, async () => {
+  test(`new A preserves owner role contract and retires both legacy bundles for ${scenario}`, async () => {
     const fixture = memberFixture();
     if (scenario === 'expired') fixture.membership.current_period_end = '2026-10-01T00:00:00Z';
     if (scenario === 'test') fixture.link.environment = 'test';
-    const h = await apiHarness({ fixture, roles: scenario === 'free' ? [] : ['paid-discord-role'], configured: scenario !== 'unconfigured', providerStatus: scenario === 'provider-error' ? 503 : 200 });
+    const h = await apiHarness({ fixture, ownerOnly:true, roles: scenario === 'free' ? [] : ['paid-discord-role'], configured: scenario !== 'unconfigured', providerStatus: scenario === 'provider-error' ? 503 : 200 });
     if (scenario === 'unlinked') h.db.state.links.clear();
-    const full = await h.worker.fetch(await h.request(bundlePath('full')), h.env);
-    assert.equal(full.status, scenario === 'free' ? 403 : 200);
-    assert.equal(full.headers.get('cache-control'), 'private, no-store');
-    assert.equal(full.headers.get('vary'), 'Cookie');
-    assert.equal(full.headers.get('cross-origin-resource-policy'), 'same-origin');
-    assert.equal(full.headers.get('access-control-allow-origin'), null);
-    const free = await h.worker.fetch(await h.request(bundlePath('free')), h.env);
-    assert.equal(free.status, 200);
-    if (scenario === 'free') assert.equal(h.assets.some(name => name.includes('_data_full_')), false);
+    const details = await h.worker.fetch(await h.request('/api/research-a/details'), h.env);
+    assert.equal(details.status, scenario === 'free' ? 403 : 200);
+    assert.match(details.headers.get('cache-control'), /private.*no-store/);
+    assert.equal(details.headers.get('vary'), 'Cookie');
+    assert.equal(details.headers.get('cross-origin-resource-policy'), 'same-origin');
+    assert.equal(details.headers.get('access-control-allow-origin'), null);
+    if (scenario === 'free') { await assertNoLegacyData(details); assert.equal(h.newA.reads,0); }
+    else { const data=await details.json();assert.equal(data.rows.length,2);assert(data.rows.every(r=>r.securityCode.startsWith('TEST-')));assert.equal(h.newA.reads,1); }
+    for(const audience of ['full','free']){const retired=await h.worker.fetch(await h.request(bundlePath(audience)),h.env);assert.equal(retired.status,410);await assertNoLegacyData(retired);}
+    assert.equal(h.assets.length,0);
     assert.equal(h.calls.length, 0, 'report access must not require another Whop login/check');
   });
 }
-test('bundle routes reject unauthenticated, cross-origin, malformed and mutating requests', async () => {
-  const h = await apiHarness();
+test('new A rejects unauthenticated cross-origin malformed and mutating requests; legacy prefixes remain retired', async () => {
+  const h = await apiHarness({ownerOnly:true});
   for (const [pathname, options, expected] of [
-    [bundlePath('full'), { authenticated: false }, 401],
-    [bundlePath('full'), { origin: 'https://elsewhere.invalid' }, 403],
-    [bundlePath('full'), { method: 'POST' }, 405],
-    ['/weak_early_beta_data_full_analytics_bad_0000.json', {}, 404],
-  ]) assert.equal((await h.worker.fetch(await h.request(pathname, options), h.env)).status, expected);
+    ['/api/research-a/details', { authenticated: false }, 401],
+    ['/api/research-a/details', { origin: 'https://elsewhere.invalid' }, 403],
+    ['/api/research-a/details', { method: 'POST' }, 405],
+    ['/api/research-a/details?q=x&q=y', {}, 400],
+    ['/weak_early_beta_data_full_analytics_bad_0000.json', {}, 410],
+  ]) {const before=h.newA.reads;const response=await h.worker.fetch(await h.request(pathname,options),h.env);assert.equal(response.status,expected);await assertNoLegacyData(response);if(expected!==400)assert.equal(h.newA.reads,before);}
   assert.equal(h.assets.length, 0);
 });
-test('bundle access follows the existing role while delivery separately rechecks revocation', async () => {
-  const h = await apiHarness();
-  assert.equal((await h.worker.fetch(await h.request(bundlePath('full')), h.env)).status, 200);
+test('new A follows the owner Discord role while delivery separately rechecks membership revocation', async () => {
+  const h = await apiHarness({ownerOnly:true});
+  assert.equal((await h.worker.fetch(await h.request('/api/research-a/details'), h.env)).status, 200);
   h.provider.fixture.membership.status = 'revoked';
-  assert.equal((await h.worker.fetch(await h.request(bundlePath('full')), h.env)).status, 200);
-  assert.equal((await h.api.currentMembership(h.env, 'discord-user-1')).status, 'free');
-  assert.equal(h.assets.length, 2);
-  assert.equal((await h.worker.fetch(await h.request(bundlePath('free'), { method: 'HEAD' }), h.env)).status, 200);
+  assert.equal((await h.worker.fetch(await h.request('/api/research-a/details'), h.env)).status, 200);
+  assert.equal((await h.api.currentMembership(h.env, h.subject)).status, 'free');
+  assert.equal(h.assets.length, 0);
+  const head=await h.worker.fetch(await h.request('/api/research-a/details',{method:'HEAD'}),h.env);assert.equal(head.status,200);assert.equal(await head.text(),'');
+  assert.equal((await h.worker.fetch(await h.request(bundlePath('free'), { method: 'HEAD' }), h.env)).status, 410);
 });
 
 test('API stores settings under the server session identity and returns private uncached JSON', async () => {
@@ -965,38 +990,41 @@ for (const [label, setup] of [
   ['expired membership', { fixture: (() => { const f = memberFixture(); f.membership.status = 'expired'; return f; })() }],
   ['test identity', { fixture: (() => { const f = memberFixture(); f.link.environment = 'test'; return f; })() }],
 ]) {
-  test(`Cloud preserves existing role access for ${label}, without requiring a new Whop login`, async () => {
-    const h = await apiHarness(setup);
-    for (const pathname of ['/', '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_fusion.html']) {
+  test(`owner new A preserves Discord role access for ${label}, without another Whop login or legacy data`, async () => {
+    const h = await apiHarness({...setup,ownerOnly:true});
+    for (const pathname of ['/', '/report', '/research-a']) {
       const response = await h.worker.fetch(await h.request(pathname), h.env);
       assert.equal(response.status, 200);
       const html = await response.text();
-      assert.match(html, /SECRET-UNRELEASED-TICKER/);
-      assert.equal(response.headers.get('cache-control'), 'private, no-store');
+      assert.match(html, /SYNTHETIC-NEW-A-ONLY/);
+      assert.match(html,/天底極致 Cloud 2\.0/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);
+      assert.match(response.headers.get('cache-control'), /private.*no-store/);
     }
-    assert.ok(h.assets.every(asset => !asset.endsWith('_free.html')));
+    for(const pathname of ['/weak_early_beta_latest.html','/weak_early_beta_analytics.html','/weak_early_beta_fusion.html']){const retired=await h.worker.fetch(await h.request(pathname),h.env);assert.equal(retired.status,302);assert.equal(retired.headers.get('location'),'/research-a');await assertNoLegacyData(retired);}
+    assert.equal(h.assets.length,0);
     assert.equal(h.calls.length, 0);
-    const noRole = await apiHarness({ ...setup, roles: [] });
-    const denied = await noRole.worker.fetch(await noRole.request('/weak_early_beta_latest.html'), noRole.env);
-    assert.doesNotMatch(await denied.text(), /SECRET-UNRELEASED-TICKER/);
+    const noRole = await apiHarness({ ...setup, ownerOnly:true, roles: [] });
+    const denied = await noRole.worker.fetch(await noRole.request('/research-a'), noRole.env);
+    assert.equal(denied.status,403);await assertNoLegacyData(denied);assert.equal(noRole.newA.reads,0);assert.equal(noRole.assets.length,0);
   });
 }
 
-test('valid Discord session and specified role retain report and auth/check access', async () => {
-  const h = await apiHarness();
-  const report = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html'), h.env);
+test('valid owner Discord session and role retain new A and auth/check; legacy documents only redirect', async () => {
+  const h = await apiHarness({ownerOnly:true});
+  const retired=await h.worker.fetch(await h.request('/weak_early_beta_analytics.html'),h.env);assert.equal(retired.status,302);assert.equal(retired.headers.get('location'),'/research-a');await assertNoLegacyData(retired);
+  const report = await h.worker.fetch(await h.request('/research-a'), h.env);
   assert.equal(report.status, 200);
-  assert.match(await report.text(), /SECRET-UNRELEASED-TICKER/);
-  const loggedOut = await h.worker.fetch(await h.request('/weak_early_beta_analytics.html', { authenticated: false }), h.env);
+  assert.match(await report.text(), /SYNTHETIC-NEW-A-ONLY/);
+  const loggedOut = await h.worker.fetch(await h.request('/research-a', { authenticated: false }), h.env);
   assert.equal(loggedOut.status, 302);
   assert.match(loggedOut.headers.get('location'), /^\/auth\/login/);
-  assert.doesNotMatch(await loggedOut.text(), /SECRET-UNRELEASED-TICKER/);
+  await assertNoLegacyData(loggedOut);
   const check = await h.worker.fetch(await h.request('/auth/check'), h.env);
   assert.equal(check.status, 200);
   h.provider.fixture.membership.status = 'expired';
   const sameRole = await h.worker.fetch(await h.request('/auth/check'), h.env);
   assert.equal(sameRole.status, 200);
-  assert.equal((await h.api.currentMembership(h.env, 'discord-user-1')).status, 'free');
+  assert.equal((await h.api.currentMembership(h.env, h.subject)).status, 'free');assert.equal(h.assets.length,0);
 });
 
 for (const exit_endpoint of ['d5_close','d6_open']) test(`removed result ${exit_endpoint} is suppressed even for paid legacy opt-in`, () => {
@@ -1035,13 +1063,13 @@ test('hidden notification settings preserve authoritative opt-ins and other memb
 });
 
 test('hidden notification preference read skips redundant roles without qualifying notifications or reports', async () => {
- const h=await apiHarness(); h.env.CLOUD_PUSH_MEMBERSHIP_POLICY='whop_managed_discord_role'; h.provider.discordStatus=429;
+ const h=await apiHarness({ownerOnly:true}); h.env.CLOUD_PUSH_MEMBERSHIP_POLICY='whop_managed_discord_role'; h.provider.discordStatus=429;
  const saved=preferences({notifications:{new_detection:true,reminder:true}});h.db.state.preferences.set(h.memberId,JSON.stringify(saved));
  const response=await h.fetchApi('/api/cloud/preferences?notification_status=omit'); assert.equal(response.status,200);
  const body=await response.json();assert.deepEqual(body.preferences,saved);assert.equal(body.membership.status,'unavailable');assert.equal(body.membership.reason,'notification_status_not_requested');assert.equal(body.notification_eligible,false);assert.equal(h.provider.discordCalls,0);
  const anonymous=await h.fetchApi('/api/cloud/preferences?notification_status=omit',{authenticated:false});assert.equal(anonymous.status,401);
- const report=await h.worker.fetch(await h.request('/weak_early_beta_latest.html?notification_status=omit'),h.env);
- assert.doesNotMatch(await report.text(),/SECRET-UNRELEASED-TICKER/);assert.equal(h.provider.discordCalls,1);
+ const report=await h.worker.fetch(await h.request('/research-a?notification_status=omit'),h.env);
+ assert.equal(report.status,503);await assertNoLegacyData(report);assert.equal(h.provider.discordCalls,1);assert.equal(h.newA.reads,0);assert.equal(h.assets.length,0);
 });
 
 test('notification-OFF settings save without Whop configuration and stay isolated across two Discord sessions', async () => {
@@ -1068,44 +1096,44 @@ test('notification-OFF settings save without Whop configuration and stay isolate
   assert.equal(enabled.status, 403);
 });
 
-for(const [label,options,expected] of [['anonymous',{authenticated:false},'login'],['free',{},'free'],['paid',{},'full']])test('Cloud initial Discord authentication and free bundle: '+label,async()=>{
- const h=await apiHarness({roles:label==='paid'?['paid-discord-role']:[]});
- for(const path of ['/','/weak_early_beta_latest.html','/weak_early_beta_analytics.html','/weak_early_beta_guide.html']){
+for(const [label,options,expected] of [['anonymous',{authenticated:false},'login'],['free',{},'free'],['paid',{},'full']])test('owner Cloud new A initially authenticates without legacy free fallback: '+label,async()=>{
+ const h=await apiHarness({ownerOnly:true,roles:label==='paid'?['paid-discord-role']:[]});
+ for(const path of ['/','/report','/research-a']){
   const response=await h.worker.fetch(await h.request(path,options),h.env);
-  if(expected==='login'){assert.equal(response.status,302);assert.match(response.headers.get('location'),/^\/auth\/login/);assert.doesNotMatch(await response.text(),/purchase|whop|SECRET-UNRELEASED-TICKER/);continue;}
-  assert.equal(response.status,200);
-  const html=await response.text();assert.match(html,expected==='free'?/RELEASED-PUBLIC-ONLY/:/SECRET-UNRELEASED-TICKER/);
-  if(expected==='free'){assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER/);assert.match(html,/data-auth-free/);assert.match(html,/auth\/guard/);}
+  if(expected==='login'){assert.equal(response.status,302);assert.match(response.headers.get('location'),/^\/auth\/login/);await assertNoLegacyData(response);continue;}
+  assert.equal(response.status,expected==='free'?403:200);
+  if(expected==='free')await assertNoLegacyData(response);else{const html=await response.text();assert.match(html,/SYNTHETIC-NEW-A-ONLY/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);}
  }
- const free=await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env);assert.equal(free.status,200);
- const full=await h.worker.fetch(await h.request(bundlePath('full'),options),h.env);assert.equal(full.status,expected==='full'?200:label==='anonymous'?401:403);
+ const details=await h.worker.fetch(await h.request('/api/research-a/details',options),h.env);assert.equal(details.status,expected==='full'?200:label==='anonymous'?401:403);if(expected!=='full'){await assertNoLegacyData(details);assert.equal(h.newA.reads,0);}else assert.equal((await details.json()).rows.length,2);
+ for(const audience of ['free','full']){const retired=await h.worker.fetch(await h.request(bundlePath(audience),options),h.env);assert.equal(retired.status,label==='anonymous'?401:410);await assertNoLegacyData(retired);}
+ assert.equal(h.assets.length,0);assert.equal(h.calls.length,0);
 });
 
-for(const [label,status,roles] of [['revoked',200,[]],['429',429,['paid-discord-role']],['503',503,['paid-discord-role']],['401',401,['paid-discord-role']],['403',403,['paid-discord-role']]])test('cached paid Cloud session cannot expose unreleased documents or full bundles after '+label,async()=>{
- const h=await apiHarness();h.provider.discordRoles=roles;h.provider.discordStatus=status;
- const document=await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);
- assert.equal(document.status,200);const text=await document.text();assert.match(text,/RELEASED-PUBLIC-ONLY/);assert.doesNotMatch(text,/SECRET-UNRELEASED-TICKER/);
- const full=await h.worker.fetch(await h.request(bundlePath('full')),h.env);assert.ok([401,403,503].includes(full.status));
- assert.equal(h.assets.some(path=>path.includes('_data_full_')),false);
- assert.equal((await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env)).status,200);
+for(const [label,status,roles] of [['revoked',200,[]],['429',429,['paid-discord-role']],['503',503,['paid-discord-role']],['401',401,['paid-discord-role']],['403',403,['paid-discord-role']]])test('cached owner session exposes neither new A nor legacy fallback after '+label,async()=>{
+ const h=await apiHarness({ownerOnly:true});h.provider.discordRoles=roles;h.provider.discordStatus=status;
+ const document=await h.worker.fetch(await h.request('/research-a'),h.env);
+ assert.equal(document.status,label==='revoked'?403:503);await assertNoLegacyData(document);
+ const details=await h.worker.fetch(await h.request('/api/research-a/details'),h.env);assert.equal(details.status,label==='revoked'?403:503);await assertNoLegacyData(details);
+ for(const audience of ['full','free']){const retired=await h.worker.fetch(await h.request(bundlePath(audience)),h.env);assert.equal(retired.status,410);await assertNoLegacyData(retired);}
+ const anonymous=await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env);assert.equal(anonymous.status,401);await assertNoLegacyData(anonymous);
+ assert.equal(h.assets.length,0);assert.equal(h.newA.reads,0);
 });
 
-test('approved authority shares a 90 second decision across navigation and full data, then confirms revocation',async()=>{
- const h=await apiHarness();
- for(const path of ['/weak_early_beta_latest.html','/weak_early_beta_analytics.html',bundlePath('full'),'/auth/check']) assert.equal((await h.worker.fetch(await h.request(path),h.env)).status,200);
+test('approved authority shares 90 seconds across owner new A and auth/check then confirms revocation',async()=>{
+ const h=await apiHarness({ownerOnly:true});
+ for(const path of ['/research-a','/api/research-a/details','/research-a/details.json','/auth/check']) assert.equal((await h.worker.fetch(await h.request(path),h.env)).status,200);
  assert.equal(h.provider.discordCalls,1);
  h.provider.discordRoles=[];h.clock.now+=90000;
- const doc=await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);const html=await doc.text();
- assert.match(html,/data-auth-free/);assert.doesNotMatch(html,/data-auth-unavailable|SECRET-UNRELEASED-TICKER/);
- assert.equal((await h.worker.fetch(await h.request(bundlePath('full')),h.env)).status,403);assert.equal(h.provider.discordCalls,2);
+ const reads=h.newA.reads,doc=await h.worker.fetch(await h.request('/research-a'),h.env);assert.equal(doc.status,403);await assertNoLegacyData(doc);
+ const details=await h.worker.fetch(await h.request('/api/research-a/details'),h.env);assert.equal(details.status,403);await assertNoLegacyData(details);assert.equal(h.provider.discordCalls,2);assert.equal(h.newA.reads,reads);assert.equal(h.assets.length,0);
 });
-test('expired authority with failed lookup is visibly unknown and closes all full assets, while settings remain writable',async()=>{
- const h=await apiHarness();h.env.CLOUD_PUSH_MEMBERSHIP_POLICY='whop_managed_discord_role';
- await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);h.clock.now+=90000;h.provider.discordStatus=429;
- const doc=await h.worker.fetch(await h.request('/weak_early_beta_latest.html'),h.env);const html=await doc.text();
- assert.match(html,/data-auth-unavailable|会員資格を確認できませんでした/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER/);
+test('expired authority failure closes owner new A without legacy fallback while settings remain writable',async()=>{
+ const h=await apiHarness({ownerOnly:true});h.env.CLOUD_PUSH_MEMBERSHIP_POLICY='whop_managed_discord_role';
+ await h.worker.fetch(await h.request('/research-a'),h.env);const reads=h.newA.reads;h.clock.now+=90000;h.provider.discordStatus=429;
+ const doc=await h.worker.fetch(await h.request('/research-a'),h.env);assert.equal(doc.status,503);await assertNoLegacyData(doc);
  const check=await h.worker.fetch(await h.request('/auth/check'),h.env);assert.equal(check.status,503);assert.equal((await check.json()).reason,'discord_role_lookup_429');
- assert.equal((await h.worker.fetch(await h.request(bundlePath('full')),h.env)).status,503);
+ const details=await h.worker.fetch(await h.request('/api/research-a/details'),h.env);assert.equal(details.status,503);await assertNoLegacyData(details);assert.equal(h.newA.reads,reads);
+ for(const audience of ['full','free']){const retired=await h.worker.fetch(await h.request(bundlePath(audience)),h.env);assert.equal(retired.status,410);await assertNoLegacyData(retired);}assert.equal(h.assets.length,0);
  const input=preferences();delete input.notifications;
  const save=await h.worker.fetch(await h.request('/api/cloud/preferences',{method:'PUT',body:input}),h.env);assert.equal(save.status,200);
  assert.equal(h.provider.discordCalls,2);

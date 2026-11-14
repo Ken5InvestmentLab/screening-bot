@@ -499,8 +499,8 @@ async function apiHarness({ fixture = memberFixture(), roles = ['paid-discord-ro
   };
   env.CLOUD_ROLE_AUTHORITY = require('./helpers/cloud-role-authority.cjs').namespace(modules.load('./cloud-role-authority').CloudRoleAuthority,env);
   if (dbFailure) env.CLOUD_DB = { prepare() { throw new Error('synthetic db outage'); } };
-  async function request(pathname = '/api/cloud/preferences', { method = 'GET', body, origin = 'https://gate.invalid', authenticated = true, subject } = {}) {
-    const headers = new Headers();
+  async function request(pathname = '/api/cloud/preferences', { method = 'GET', body, origin = 'https://gate.invalid', authenticated = true, subject, fetchMetadata = {} } = {}) {
+    const headers = new Headers(fetchMetadata);
     if (origin !== null) headers.set('origin', origin);
     if (authenticated) {
       const now = Math.floor(clock.now / 1000);
@@ -547,6 +547,48 @@ test('new A rejects unauthenticated cross-origin malformed and mutating requests
     ['/weak_early_beta_data_full_analytics_bad_0000.json', {}, 410],
   ]) {const before=h.newA.reads;const response=await h.worker.fetch(await h.request(pathname,options),h.env);assert.equal(response.status,expected);await assertNoLegacyData(response);if(expected!==400)assert.equal(h.newA.reads,before);}
   assert.equal(h.assets.length, 0);
+});
+
+test('cross-site top-level document GET and HEAD keep owner role access; APIs never inherit the navigation exception', async () => {
+  const h=await apiHarness({ownerOnly:true});
+  const fetchMetadata={'sec-fetch-site':'cross-site','sec-fetch-mode':'navigate','sec-fetch-dest':'document'};
+  for(const pathname of ['/','/report','/research-a'])for(const method of ['GET','HEAD']){
+    const response=await h.worker.fetch(await h.request(pathname,{method,origin:null,fetchMetadata}),h.env);assert.equal(response.status,200);
+    if(method==='HEAD')assert.equal(await response.text(),'');else{const html=await response.text();assert.match(html,/SYNTHETIC-NEW-A-ONLY/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);}
+  }
+  assert.equal(h.newA.reads,6);assert.equal(h.provider.discordCalls,1);assert.equal(h.assets.length,0);
+  const legacy=await h.worker.fetch(await h.request('/weak_early_beta_latest.html',{origin:null,fetchMetadata}),h.env);assert.equal(legacy.status,302);assert.equal(legacy.headers.get('location'),'/research-a');await assertNoLegacyData(legacy);
+  for(const pathname of ['/api/research-a/details','/research-a/details.json'])for(const method of ['GET','HEAD']){
+    const response=await h.worker.fetch(await h.request(pathname,{method,origin:null,fetchMetadata}),h.env);assert.equal(response.status,403);
+    if(method==='HEAD')assert.equal(await response.text(),'');else assert.equal((await response.json()).reason,'cross_site_request');
+  }
+  assert.equal(h.newA.reads,6);assert.equal(h.assets.length,0);
+});
+
+test('cross-site fetch cors iframe embed and incomplete metadata remain denied before data; explicit foreign Origin remains denied', async () => {
+  const h=await apiHarness({ownerOnly:true});
+  for(const [mode,dest] of [['cors','empty'],['no-cors','document'],['navigate','iframe'],['navigate','embed'],['navigate','object'],['navigate','empty'],['same-origin','document'],['','document'],['navigate','']]){
+    const response=await h.worker.fetch(await h.request('/research-a',{origin:null,fetchMetadata:{'sec-fetch-site':'cross-site','sec-fetch-mode':mode,'sec-fetch-dest':dest}}),h.env);assert.equal(response.status,403);await assertNoLegacyData(response);
+  }
+  const nav={'sec-fetch-site':'cross-site','sec-fetch-mode':'navigate','sec-fetch-dest':'document'};
+  for(const pathname of ['/research-a','/api/research-a/details']){
+    const response=await h.worker.fetch(await h.request(pathname,{origin:'https://foreign.invalid',fetchMetadata:nav}),h.env);assert.equal(response.status,403);
+    if(pathname.startsWith('/api/'))assert.equal((await response.json()).reason,'cross_site_request');else await assertNoLegacyData(response);
+  }
+  const originOnly=await h.worker.fetch(await h.request('/api/research-a/details',{origin:'https://foreign.invalid',fetchMetadata:{'sec-fetch-site':'same-origin'}}),h.env);assert.equal(originOnly.status,403);assert.equal((await originOnly.json()).reason,'origin_mismatch');
+  const post=await h.worker.fetch(await h.request('/research-a',{method:'POST',origin:null,fetchMetadata:nav}),h.env);assert.equal(post.status,405);await assertNoLegacyData(post);
+  assert.equal(h.newA.reads,0);assert.equal(h.provider.discordCalls,0);assert.equal(h.assets.length,0);
+});
+
+test('top-level cross-site navigation never bypasses anonymous other-owner or missing-role denial', async () => {
+  const fetchMetadata={'sec-fetch-site':'cross-site','sec-fetch-mode':'navigate','sec-fetch-dest':'document'};
+  for(const [label,setup,options,expected] of [['anonymous',{}, {authenticated:false},302],['other-owner',{}, {subject:'222222222222222222'},403],['missing-role',{roles:[]},{},403]]){
+    const h=await apiHarness({ownerOnly:true,...setup});
+    for(const pathname of ['/','/report','/research-a']){
+      const response=await h.worker.fetch(await h.request(pathname,{...options,origin:null,fetchMetadata}),h.env);assert.equal(response.status,expected,label);await assertNoLegacyData(response);
+    }
+    assert.equal(h.newA.reads,0);assert.equal(h.assets.length,0);assert.equal(h.provider.discordCalls,label==='missing-role'?1:0);
+  }
 });
 test('new A request-origin refusals expose only fixed categories and no data',async()=>{
   const h=await apiHarness({ownerOnly:true});

@@ -1,4 +1,3 @@
-import { newACloudRoute } from "./new-a-cloud";
 // The OAuth/session/role implementation remains byte-identical in the synced
 // shared module. This wrapper only lets the beta's mode pages use the same gate.
 import sharedGate, { reportIdentity } from "./shared-report-gate";
@@ -39,8 +38,6 @@ export default {
   async fetch(request: SharedRequest, env: CloudEnv): Promise<Response> {
     const denied = await ownerOnlyGate(request, env);
     if (denied) return denied;
-    const newAResponse = await newACloudRoute(request, env);
-    if (newAResponse) return newAResponse;
     const pathname = new URL(request.url).pathname;
     const bundle = BUNDLE_RE.exec(pathname);
     if (bundle) return bundleResponse(request, env, bundle[1]);

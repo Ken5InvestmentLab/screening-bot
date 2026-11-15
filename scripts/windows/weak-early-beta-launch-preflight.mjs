@@ -24,6 +24,7 @@ async function sha256(file) {
 // acquire prices, post Discord events, install dependencies or start a runner.
 export async function launchPreflight(configFile, {
   repoRoot = runnerRepo,
+  strategy = "legacy",
   platform = process.platform,
   command = (exe, args, cwd) => execFileSync(exe, args, {
     cwd, encoding: 'utf8', windowsHide: true, timeout: 30_000,
@@ -33,24 +34,23 @@ export async function launchPreflight(configFile, {
   const repo = real(config.repoPath);
   const configPath = real(path.resolve(configFile));
   if (!inside(repo, configPath)) throw new Error('Daily config is outside its repository');
-  for (const key of ['runtimeDir', 'fundamentalConfigPath']) {
+  if (!['legacy', 'A_BASE'].includes(strategy)) throw new Error('Unexpected Cloud strategy');
+  for (const key of (strategy === 'A_BASE' ? ['runtimeDir'] : ['runtimeDir', 'fundamentalConfigPath'])) {
     if (!inside(repo, path.resolve(config[key]))) throw new Error(`${key} is outside the daily repository`);
   }
   // Existing directories can be junctions; reject realpath escapes as well.
   const runtimeParent = fs.existsSync(config.runtimeDir) ? config.runtimeDir : path.dirname(config.runtimeDir);
-  if (!inside(repo, real(runtimeParent)) || !inside(repo, real(config.fundamentalConfigPath))) {
-    throw new Error('Runtime or fundamental config realpath escapes the daily repository');
+  if (!inside(repo, real(runtimeParent))) throw new Error('Runtime realpath escapes the daily repository');
+  const runtimeFiles = [config.pythonPath, config.nodePath, path.join(repo, '.env'), path.join(repo, 'weak-early-beta-gate', '.env')];
+  if (strategy !== 'A_BASE') {
+    if (!inside(repo, real(config.fundamentalConfigPath))) throw new Error('Fundamental config realpath escapes the repository');
+    const fundamental = readJson(config.fundamentalConfigPath);
+    if (real(fundamental.repoPath) !== repo || !inside(repo, path.resolve(fundamental.runtimeDir))) throw new Error('Fundamental configuration targets another repository');
+    const parent = fs.existsSync(fundamental.runtimeDir) ? fundamental.runtimeDir : path.dirname(fundamental.runtimeDir);
+    if (!inside(repo, real(parent))) throw new Error('Fundamental runtime realpath escapes the repository');
+    runtimeFiles.push(fundamental.codexExecutable);
   }
-  const fundamental = readJson(config.fundamentalConfigPath);
-  if (real(fundamental.repoPath) !== repo || !inside(repo, path.resolve(fundamental.runtimeDir))) {
-    throw new Error('Fundamental configuration targets another repository');
-  }
-  const fundamentalParent = fs.existsSync(fundamental.runtimeDir) ? fundamental.runtimeDir : path.dirname(fundamental.runtimeDir);
-  if (!inside(repo, real(fundamentalParent))) throw new Error('Fundamental runtime realpath escapes the repository');
-  for (const file of [config.pythonPath, config.nodePath, fundamental.codexExecutable,
-    path.join(repo, '.env'), path.join(repo, 'weak-early-beta-gate', '.env')]) {
-    if (typeof file !== 'string' || !fs.statSync(file).isFile()) throw new Error('Required Cloud runtime or environment file is missing');
-  }
+  for (const file of runtimeFiles) if (typeof file !== 'string' || !fs.statSync(file).isFile()) throw new Error('Required Cloud runtime or environment file is missing');
   // This tracked configuration is JSON. Do not strip // comments: that would
   // truncate https:// origins and turn valid configuration into invalid JSON.
   const worker = readJson(path.join(repo, 'weak-early-beta-gate', 'wrangler.jsonc'));

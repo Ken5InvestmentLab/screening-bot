@@ -9,6 +9,8 @@ import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASO
 import { checkpointJpxRefresh } from './weak-early-beta-jpx-checkout.mjs';
 import { networkFailureDetail, waitForNetworkCapacity } from './weak-early-beta-network-guard.mjs';
 import { atomicJson, appendEvent, recoveryPlan, verifiedDetectionCache } from './weak-early-beta-run-journal.mjs';
+import taskRoute from './new-a-task-route.cjs';
+const { newATaskPlan } = taskRoute;
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
 const DEFAULT_RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
@@ -419,6 +421,7 @@ async function main(configFile, { resumeReceipt = null } = {}) {
   fs.mkdirSync(runDir, { recursive: true });
   const lock = path.join(runtime, 'daily.lock');
   let ownsLock = false;
+  let preservePriorCompletion = false;
   const env = { ...process.env };
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
@@ -474,6 +477,12 @@ async function main(configFile, { resumeReceipt = null } = {}) {
       throw error;
     }
     ownsLock = true;
+    if (fs.existsSync(resultPath)) {
+      const saved = readJson(resultPath); const plan = newATaskPlan("cloud-2", today, saved, recoveryPlan);
+      if (saved.date === today && plan.action === "complete") { preservePriorCompletion = true; Object.assign(result, { ok: true, skippedAlreadyCompleted: true, new_a: saved.new_a }); return; }
+      if (saved.date === today && ["observe", "reconcile"].includes(plan.action)) { preservePriorCompletion = true; throw new Error("Same-day New A receipt requires reconciliation"); }
+      if (saved.date === today && plan.action === "resume-detection" && !prior) { preservePriorCompletion = true; throw new Error("Detection recovery requires the immutable task-entry receipt"); }
+    }
     for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
       if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
     }
@@ -508,11 +517,7 @@ async function main(configFile, { resumeReceipt = null } = {}) {
     });
     saveProgress('preflight');
     result.startCommit = await requireRemoteHead(git);
-    const fundamentalConfig = readJson(path.resolve(config.fundamentalConfigPath));
-    if (path.resolve(fundamentalConfig.repoPath) !== repo) throw new Error('fundamental runner configuration points outside the daily checkout');
-    const betaStatePath = path.join(repo, 'weak_early_beta', 'fundamental_worker', 'state', 'premium_alert_state.json');
-    const stateBefore = readJson(betaStatePath);
-    assertHtmlImports(stateBefore, []);
+    result.fundamentals = []; result.fundamental = { ok: true, status: 'NOT_REQUESTED', imported: 0, posted: 0 };
     if (readJson(path.join(repo, 'weak-early-beta-gate', 'wrangler.jsonc')).name !== 'tentei-kyokuchi-cloud') throw new Error('unexpected Cloud Worker target');
     const checkCommand = npmInvocation(config, 'check');
     const ghPath = config.ghPath || (process.platform === 'win32' ? 'C:\\Program Files\\GitHub CLI\\gh.exe' : 'gh');
@@ -523,8 +528,9 @@ async function main(configFile, { resumeReceipt = null } = {}) {
     { cwd: repo, env, log: path.join(runDir, 'previous-release'), capture: true, timeoutMs: 60_000 });
     result.previousSuccessfulDeployment = JSON.parse(previous.stdout.trim())[0] || null;
     if (!prior) await sendSystemLog('started');
-    saveProgress('model-preflight');
-    await probeFundamentalModel(config, runDir, env);
+    saveProgress('new-a-preflight');
+    result.new_a = { strategy: 'A_BASE', entry: 'new-a-verified-daily-v1', owner_publication_verified: false };
+
 
     saveProgress('detection');
     const cacheRecovery = prior ? await verifiedDetectionCache(repo, today) : null;
@@ -536,10 +542,12 @@ async function main(configFile, { resumeReceipt = null } = {}) {
       result.acquisitionEvidence ??= [];
       result.acquisitionEvidence.push(prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
       saveProgress('detection', { acquisitionEvidence: result.acquisitionEvidence });
-      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', ...(prior ? [] : ['--refresh-live'])], {
+      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(prior ? [] : ['--refresh-live'])], {
         cwd: repo, env: { ...env, CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
       });
-      const receipt = readJson(path.join(repo, 'weak_early_beta', 'state', 'latest_run_receipt.json'));
+      const receipt = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-run.json'));
+      if (receipt.strategy !== 'A_BASE' || receipt.entry !== 'new-a-verified-daily-v1') throw new Error('unexpected New A daily receipt');
+      if (receipt.latest_session === today && (receipt.dry_run === true || receipt.detection_executed !== true)) throw new Error('isolated or unexecuted receipt cannot complete a live New A day');
       result.latestSession = receipt.latest_session;
       result.selectorRows = receipt.selector_rows_latest;
       if (receipt.latest_session === today) break;
@@ -548,36 +556,18 @@ async function main(configFile, { resumeReceipt = null } = {}) {
     }
     await sendSystemLog('detected', ['--count', String(result.selectorRows)]);
 
-    saveProgress('fundamental');
-    const queuePath = path.join(repo, 'weak_early_beta', 'state', 'fundamental_queue.json');
-    result.fundamentals = [];
-    result.fundamentals = await drainFundamentalQueue({
-      readQueue: () => readJson(queuePath),
-      runChild: batch => run(config.nodePath,
-        [path.join(repo, 'scripts', 'windows', 'weak-early-beta-fundamental-runner.mjs'), config.fundamentalConfigPath],
-        { cwd: repo, env, log: path.join(runDir, `fundamental-${batch}`) }),
-      verifyImported: identities => assertHtmlImports(readJson(betaStatePath), identities),
-      onProgress: progress => {
-        if (progress.receipt) result.fundamentals.push(progress.receipt);
-        saveProgress('fundamental', { fundamentalProgress: { batch: progress.batch, remaining: progress.remaining, total: progress.total } });
-      },
-    });
-    result.fundamental = result.fundamentals.at(-1) || { ok: true, imported: 0, posted: 0 };
-    if (result.fundamentals.length) assertValidatedFundamentalOutput({
-      raw: fs.readFileSync(path.join(repo, 'weak_early_beta', 'fundamental_worker', 'out', 'premium_reports.json')),
-      state: readJson(betaStatePath), receipt: result.fundamental, env,
-    });
-
     saveProgress('report');
-    await requireOk(python, ['-m', 'weak_early_beta.cli', 'report'], { cwd: repo, env, log: path.join(runDir, 'report') });
+    await requireOk(python, ['-m', 'weak_early_beta.cli', 'report', '--strategy', 'new-a'], { cwd: repo, env, log: path.join(runDir, 'report') });
     saveProgress('canonical-input');
     await buildCanonicalInput('canonical-before-deploy');
     saveProgress('gate-check');
     await requireOk(checkCommand.exe, checkCommand.args, { cwd: path.join(repo, 'weak-early-beta-gate'), env,
       log: path.join(runDir, 'gate-check'), timeoutMs: 600_000 });
-    saveProgress('git-sync-before-deploy');
+    saveProgress('code-only-pre-deploy');
     await requireBranch();
-    result.generatedCommit = await commitGeneratedChanges({ git, message: `chore: refresh Cloud beta ${today}` });
+    const clean = await git(['status', '--porcelain=v1', '--untracked-files=all']);
+    if (clean.stdout.trim()) throw new Error('New A refuses any generated commit; reconcile local changes');
+    result.generatedCommit = null; result.generatedFilesSent = 0;
     const headSha = await requireRemoteHead(git);
     const tag = `cloud-deploy-daily-${new Date().toISOString().replace(/[-:.]/g, '')}-${headSha.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
     result.deployment = { tag, headSha, workflow: DEPLOY_WORKFLOW, worker: 'tentei-kyokuchi-cloud' };
@@ -599,15 +589,21 @@ async function main(configFile, { resumeReceipt = null } = {}) {
     });
     saveProgress('live-verification');
     result.deployment.live = await verifyLiveWorker({});
+    saveProgress('private-data-publication');
+    await requireOk(python, ['-m', 'weak_early_beta.new_a.cli', 'publish', '--remote'], { cwd: repo, env, log: path.join(runDir, 'new-a-publish'), capture: true });
+    const published = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-publication.json'));
+    const detected = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-run.json'));
+    if (published.published !== true || published.active_readback_verified !== true || published.existing_owner_gate_verified !== true || published.snapshot_sha256 !== detected.snapshot_sha256 || published.source_version !== detected.source_version) throw new Error('New A owner publication readback mismatch');
+    Object.assign(result.new_a, { owner_publication_verified: true, snapshot_sha256: published.snapshot_sha256, source_version: published.source_version, dataset_id: published.dataset_id });
     saveProgress('notification');
     await reconcileNotifications({ date: today,
       preview: async phase => {
-        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today, '--daily-receipt', path.join(repo, 'weak_early_beta', 'state', 'latest_run_receipt.json'), '--dry-run'],
+        const attempt = await requireOk(python, ['-m', 'weak_early_beta.new_a.cli', 'notify', '--date', today, '--dry-run'],
           { cwd: repo, env, log: path.join(runDir, `notify-${phase}`), capture: true });
         return JSON.parse(attempt.stdout.trim());
       },
       send: async () => {
-        const attempt = await requireOk(python, ['-m', 'weak_early_beta.cli', 'notify-day', '--date', today, '--daily-receipt', path.join(repo, 'weak_early_beta', 'state', 'latest_run_receipt.json')],
+        const attempt = await requireOk(python, ['-m', 'weak_early_beta.new_a.cli', 'notify', '--date', today],
           { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
         return JSON.parse(attempt.stdout.trim());
       },
@@ -616,41 +612,20 @@ async function main(configFile, { resumeReceipt = null } = {}) {
         saveProgress('notification', { [key]: receipt });
       },
     });
-    if (result.notifications.signal_notifications || result.notifications.completion_notifications) {
-      // Discord receipts change the CSV byte hash without changing event economics. No second deploy.
-      saveProgress('canonical-after-notification');
-      await buildCanonicalInput('canonical-after-notify');
-      await requireOk(config.nodePath, [path.join(repo, 'weak-early-beta-gate', 'scripts', 'verify-canonical-input.mjs')],
-        { cwd: path.join(repo, 'weak-early-beta-gate'), env, log: path.join(runDir, 'canonical-after-notify-check'), timeoutMs: 60_000 });
-    }
-    saveProgress('git-sync-receipts');
-    await requireBranch();
-    result.receiptCommit = await commitGeneratedChanges({ git, message: `chore: save Cloud beta ${today} notification receipts [skip ci]` });
-    result.finalCommit = await requireRemoteHead(git);
-    result.committed = result.generatedCommit.committed || result.receiptCommit.committed;
+    // New-A outbox receipts remain private; never stage notification or price data in Git.
+
     result.ok = true;
   } catch (error) {
     result.error = error.message;
     if (error.failureType) result.failureType = error.failureType;
     result.stage = stage;
-    if (ownsLock && stage === 'detection') {
-      try {
-        result.failedJpxRefresh = await checkpointJpxRefresh({ repo, git, startedAt, startCommit: result.startCommit, date: today, checkSafety: () => {
-          if (!fs.existsSync(lock) || fs.readFileSync(lock, 'utf8') !== startedAt) throw new Error('Cloud daily lock ownership changed');
-          for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
-            if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
-          }
-        } });
-      } catch (cleanupError) {
-        result.jpxRefreshError = cleanupError.message;
-      }
-    }
+    if (ownsLock && stage === 'detection') result.privateSourceCacheRetained = true;
     await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
     process.exitCode = 1;
   } finally {
     result.completedAt = new Date().toISOString();
     writeJson(path.join(runDir, 'result.json'), result);
-    if (ownsLock) writeJson(resultPath, result);
+    if (ownsLock && !preservePriorCompletion) writeJson(resultPath, result);
     if (ownsLock && fs.existsSync(lock) && fs.readFileSync(lock, 'utf8') === startedAt) fs.rmSync(lock);
     console.log(JSON.stringify(result));
   }

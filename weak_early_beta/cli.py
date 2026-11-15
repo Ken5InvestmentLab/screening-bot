@@ -106,6 +106,9 @@ def _load_or_bootstrap(path: Path) -> pd.DataFrame:
 
 
 def command_report(args: argparse.Namespace) -> None:
+    if getattr(args, "strategy", "legacy") == "new-a":
+        from .new_a.run import command_report as new_a_report
+        return new_a_report(args)
     ledger = _load_or_bootstrap(Path(args.ledger))
     write_ledger(ledger, Path(args.ledger))
     write_fundamental_queue(ledger, Path(args.queue))
@@ -114,6 +117,9 @@ def command_report(args: argparse.Namespace) -> None:
 
 
 def command_daily(args: argparse.Namespace) -> None:
+    if getattr(args, "strategy", "legacy") == "new-a":
+        from .new_a.run import command_daily as new_a_daily
+        return new_a_daily(args)
     # Heavy TV-free runtime dependencies are needed only for the daily scorer;
     # report/bootstrap operations stay lightweight and deterministic.
     from . import model
@@ -751,6 +757,7 @@ def parser() -> argparse.ArgumentParser:
 
     report = sub.add_parser("report", help="regenerate metrics and HTML from ledger")
     common(report)
+    report.add_argument("--strategy", choices=["legacy", "new-a"], default="legacy")
     report.set_defaults(func=command_report)
 
     endpoints = sub.add_parser("backfill-endpoints", help="write a reviewed actual-price/D6 migration to a separate ledger")
@@ -765,6 +772,7 @@ def parser() -> argparse.ArgumentParser:
 
     daily = sub.add_parser("daily", help="score latest session and update beta artifacts")
     common(daily)
+    daily.add_argument("--strategy", choices=["legacy", "new-a"], default="legacy")
     daily.add_argument("--daily-corpus", default=".cache/weak_early_beta/tse_daily.csv")
     acquisition = daily.add_mutually_exclusive_group()
     acquisition.add_argument("--refresh-live", action="store_true")
@@ -792,6 +800,8 @@ def parser() -> argparse.ArgumentParser:
         default=str(ROOT / "weak_early_beta" / "state" / "excluded_detections.csv"),
     )
     daily.add_argument("--receipt", default=str(DEFAULT_RECEIPT))
+    daily.add_argument("--new-a-isolated", action="store_true", help="private historical dry-run; never publishes or sends")
+    daily.add_argument("--new-a-resume-held-from-source", help="explicit predecessor SHA for held-only same-day completion; committed inputs must be identical")
     daily.set_defaults(func=command_daily)
 
     restrictions = sub.add_parser("refresh-restrictions", help="apply the causal JPX delisting gate")

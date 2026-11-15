@@ -19,12 +19,11 @@ export function verifyCanonicalInput(source, ledger, calendarSource) {
  assert.ok(Array.isArray(manifest.events) && manifest.events.length <= 1000);
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
- const repoRoot = new URL('../../', import.meta.url);
- const [source, ledger, calendar] = await Promise.all([
-  readFile(new URL('../src/cloud-canonical-input.generated.ts', import.meta.url), 'utf8'),
-  readFile(new URL('weak_early_beta/state/detections.csv', repoRoot)),
-  readFile(new URL('weak_early_beta/bank_calendar.py', repoRoot)),
- ]);
- verifyCanonicalInput(source, ledger, calendar);
- console.log('Private canonical ledger/calendar input matches source. No remote operation.');
+ const contract=JSON.parse(await readFile(new URL('./new-a-code-contract.json',import.meta.url),'utf8'));
+ const legacy=await readFile(new URL('../src/cloud-canonical-input.generated.ts',import.meta.url));
+ assert.equal(contract.schema,'NEW_A_CODE_RELEASE_CONTRACT_V1');
+ assert.equal(sha(legacy.toString('utf8').replace(/\r\n?/g,'\n')),contract.legacyCanonicalSha256,'Legacy scheduler canonical content must remain unchanged (LF); do not regenerate it from A');
+ await import('./sync-report.mjs');
+ await import('./verify-new-a-code-only.mjs');
+ console.log('New-A code-only frame verified; existing legacy scheduler input preserved.');
 }

@@ -51,11 +51,14 @@ test('child capture preserves UTF-8 split across stdout and stderr chunks', asyn
   assert.deepEqual(fs.readFileSync(log + '.stderr'), Buffer.from('日次通知'));
 });
 
-test('the generated commit used for tag deployment contains no workflow skip instruction', () => {
+test('New A tags only the verified code HEAD and never commits generated data', () => {
   const source = fs.readFileSync(new URL('./weak-early-beta-daily-runner.mjs', import.meta.url), 'utf8');
-  const generatedMessage = source.match(/result\.generatedCommit = await commitGeneratedChanges\(\{ git, message: `([^`]+)`/);
-  assert.ok(generatedMessage, 'the live generated-commit message must be checked');
-  assert.doesNotMatch(generatedMessage[1], /\[(?:skip ci|ci skip|no ci|skip actions|actions skip)\]|skip-checks\s*:/i);
+  const main = source.slice(source.indexOf('async function main('), source.indexOf('export {'));
+  assert.ok(main.includes('result.generatedFilesSent = 0'), 'explicit zero generated-file contract');
+  assert.doesNotMatch(main, /commitGeneratedChanges\(/, 'legacy generated commit helper must not run for A');
+  assert.match(main, /const headSha = await requireRemoteHead\(git\)/, 'exact remote code HEAD is required');
+  assert.match(main, /await git\(\['tag', tag, headSha\]\)/, 'tag must point at that verified code HEAD');
+  assert.match(main, /New A refuses any generated commit; reconcile local changes/, 'dirty output stops before tag');
 });
 
 function queueItem(symbol) {

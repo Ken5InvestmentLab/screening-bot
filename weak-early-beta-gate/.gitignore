@@ -4,3 +4,8 @@ worker-configuration.d.ts
 src/shared-report-gate.ts
 src/shared-report-gate.sha256
 .wrangler/
+
+# New-A source-only release: these remain local/CI build products.
+src/research-a/frame.generated.ts
+src/research-a/assets.generated.ts
+.cache/new-a/

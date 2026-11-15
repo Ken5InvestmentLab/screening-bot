@@ -42,10 +42,18 @@ test('reminder invocation never falls through to daily launcher',async()=>{
 test('same original failure cannot cause an endless recovery chain', async()=>{
  const directory=temp(), runtime=path.join(directory,'runtime');fs.mkdirSync(runtime);
  const { EventEmitter }=await import('node:events');let launches=0;
- const prior={identity:'WEAK_EARLY_CLOUD_DAILY_V1',date:jstDay(),startedAt:'2026-11-12T08:34:03Z',stage:'detection',completedAt:'2026-11-12T09:46:00Z',ok:false};
+ const prior={new_a:{strategy:'A_BASE',entry:'new-a-verified-daily-v1'},identity:'WEAK_EARLY_CLOUD_DAILY_V1',date:jstDay(),startedAt:'2026-11-12T08:34:03Z',stage:'detection',completedAt:'2026-11-12T09:46:00Z',ok:false};
  const latest=path.join(runtime,'daily-latest.json');fs.writeFileSync(latest,JSON.stringify(prior));
  const options={start:true,auditDirectory:path.join(directory,'audit'),load:()=>({runtimeDir:runtime,repoPath:directory,nodePath:process.execPath}),check:async()=>({ok:true}),launch:()=>{launches++;const c=new EventEmitter();c.pid=12345;c.unref=()=>{};queueMicrotask(()=>c.emit('spawn'));return c;}};
  assert.equal((await taskEntry('test.json',options)).status,'launched');
  fs.writeFileSync(latest,JSON.stringify({...prior,startedAt:'2026-11-12T10:30:00Z',originalRunId:prior.startedAt}));
  assert.equal((await taskEntry('test.json',options)).status,'reconcile');assert.equal(launches,1);
+});
+
+test('same-day legacy or unknown receipt is never proof for New A recovery',async()=>{
+ const directory=temp(),runtime=path.join(directory,'runtime');fs.mkdirSync(runtime);
+ const prior={identity:'WEAK_EARLY_CLOUD_DAILY_V1',date:jstDay(),startedAt:'synthetic-old-run',stage:'detection',completedAt:'synthetic-complete',ok:false};
+ fs.writeFileSync(path.join(runtime,'daily-latest.json'),JSON.stringify(prior));
+ const r=await taskEntry('test.json',{start:true,auditDirectory:path.join(directory,'audit'),load:()=>({runtimeDir:runtime,repoPath:directory,nodePath:process.execPath}),check:async()=>({ok:true}),launch:()=>{throw Error('MUST NOT SPAWN');}});
+ assert.equal(r.status,'reconcile');assert.match(r.plan.reason,/legacy or unknown/);
 });

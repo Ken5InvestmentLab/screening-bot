@@ -524,14 +524,14 @@ for (const scenario of ['paid', 'free', 'expired', 'test', 'unlinked', 'provider
     if (scenario === 'test') fixture.link.environment = 'test';
     const h = await apiHarness({ fixture, ownerOnly:true, roles: scenario === 'free' ? [] : ['paid-discord-role'], configured: scenario !== 'unconfigured', providerStatus: scenario === 'provider-error' ? 503 : 200 });
     if (scenario === 'unlinked') h.db.state.links.clear();
-    const details = await h.worker.fetch(await h.request('/api/research-a/details'), h.env);
+    const details = await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access'), h.env);
     assert.equal(details.status, scenario === 'free' ? 403 : 200);
     assert.match(details.headers.get('cache-control'), /private.*no-store/);
     assert.equal(details.headers.get('vary'), 'Cookie');
     assert.equal(details.headers.get('cross-origin-resource-policy'), 'same-origin');
     assert.equal(details.headers.get('access-control-allow-origin'), null);
     if (scenario === 'free') { await assertNoLegacyData(details); assert.equal(h.newA.reads,0); }
-    else { const data=await details.json();assert.equal(data.rows.length,2);assert(data.rows.every(r=>r.securityCode.startsWith('TEST-')));assert.equal(h.newA.reads,1); }
+    else { assert.deepEqual(await details.json(),{authorized:true,strategy:'A_BASE'});assert.equal(h.newA.reads,0); }
     for(const audience of ['full','free']){const retired=await h.worker.fetch(await h.request(bundlePath(audience)),h.env);assert.equal(retired.status,410);await assertNoLegacyData(retired);}
     assert.equal(h.assets.length,0);
     assert.equal(h.calls.length, 0, 'report access must not require another Whop login/check');
@@ -540,10 +540,10 @@ for (const scenario of ['paid', 'free', 'expired', 'test', 'unlinked', 'provider
 test('new A rejects unauthenticated cross-origin malformed and mutating requests; legacy prefixes remain retired', async () => {
   const h = await apiHarness({ownerOnly:true});
   for (const [pathname, options, expected] of [
-    ['/api/research-a/details', { authenticated: false }, 401],
-    ['/api/research-a/details', { origin: 'https://elsewhere.invalid' }, 403],
-    ['/api/research-a/details', { method: 'POST' }, 405],
-    ['/api/research-a/details?q=x&q=y', {}, 400],
+    ['/api/cloud/new-a-finite/access', { authenticated: false }, 401],
+    ['/api/cloud/new-a-finite/access', { origin: 'https://elsewhere.invalid' }, 403],
+    ['/api/cloud/new-a-finite/access', { method: 'POST' }, 405],
+    ['/api/cloud/new-a-finite/access?q=x&q=y', {}, 404],
     ['/weak_early_beta_data_full_analytics_bad_0000.json', {}, 410],
   ]) {const before=h.newA.reads;const response=await h.worker.fetch(await h.request(pathname,options),h.env);assert.equal(response.status,expected);await assertNoLegacyData(response);if(expected!==400)assert.equal(h.newA.reads,before);}
   assert.equal(h.assets.length, 0);
@@ -554,15 +554,15 @@ test('cross-site top-level document GET and HEAD keep owner role access; APIs ne
   const fetchMetadata={'sec-fetch-site':'cross-site','sec-fetch-mode':'navigate','sec-fetch-dest':'document'};
   for(const pathname of ['/','/report','/research-a'])for(const method of ['GET','HEAD']){
     const response=await h.worker.fetch(await h.request(pathname,{method,origin:null,fetchMetadata}),h.env);assert.equal(response.status,200);
-    if(method==='HEAD')assert.equal(await response.text(),'');else{const html=await response.text();assert.match(html,/SYNTHETIC-NEW-A-ONLY/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);}
+    if(method==='HEAD')assert.equal(await response.text(),'');else{const html=await response.text();assert.match(html,/owner-loader\.js/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);}
   }
-  assert.equal(h.newA.reads,6);assert.equal(h.provider.discordCalls,1);assert.equal(h.assets.length,0);
-  const legacy=await h.worker.fetch(await h.request('/weak_early_beta_latest.html',{origin:null,fetchMetadata}),h.env);assert.equal(legacy.status,302);assert.equal(legacy.headers.get('location'),'/research-a');await assertNoLegacyData(legacy);
-  for(const pathname of ['/api/research-a/details','/research-a/details.json'])for(const method of ['GET','HEAD']){
+  assert.equal(h.newA.reads,0);assert.equal(h.provider.discordCalls,1);assert.equal(h.assets.length,0);
+  const legacy=await h.worker.fetch(await h.request('/weak_early_beta_latest.html',{origin:null,fetchMetadata}),h.env);assert.equal(legacy.status,200);assert.equal(legacy.headers.get('location'),null);await assertNoLegacyData(legacy);
+  for(const pathname of ['/api/cloud/new-a-finite/access','/research-a/details.json'])for(const method of ['GET','HEAD']){
     const response=await h.worker.fetch(await h.request(pathname,{method,origin:null,fetchMetadata}),h.env);assert.equal(response.status,403);
-    if(method==='HEAD')assert.equal(await response.text(),'');else assert.equal((await response.json()).reason,'cross_site_request');
+    if(method==='HEAD')assert.equal(await response.text(),'');else assert.equal((await response.json()).error,'cross_site_request');
   }
-  assert.equal(h.newA.reads,6);assert.equal(h.assets.length,0);
+  assert.equal(h.newA.reads,0);assert.equal(h.assets.length,0);
 });
 
 test('cross-site fetch cors iframe embed and incomplete metadata remain denied before data; explicit foreign Origin remains denied', async () => {
@@ -571,11 +571,11 @@ test('cross-site fetch cors iframe embed and incomplete metadata remain denied b
     const response=await h.worker.fetch(await h.request('/research-a',{origin:null,fetchMetadata:{'sec-fetch-site':'cross-site','sec-fetch-mode':mode,'sec-fetch-dest':dest}}),h.env);assert.equal(response.status,403);await assertNoLegacyData(response);
   }
   const nav={'sec-fetch-site':'cross-site','sec-fetch-mode':'navigate','sec-fetch-dest':'document'};
-  for(const pathname of ['/research-a','/api/research-a/details']){
+  for(const pathname of ['/research-a','/api/cloud/new-a-finite/access']){
     const response=await h.worker.fetch(await h.request(pathname,{origin:'https://foreign.invalid',fetchMetadata:nav}),h.env);assert.equal(response.status,403);
-    if(pathname.startsWith('/api/'))assert.equal((await response.json()).reason,'cross_site_request');else await assertNoLegacyData(response);
+    if(pathname.startsWith('/api/'))assert.equal((await response.json()).error,'cross_site_request');else await assertNoLegacyData(response);
   }
-  const originOnly=await h.worker.fetch(await h.request('/api/research-a/details',{origin:'https://foreign.invalid',fetchMetadata:{'sec-fetch-site':'same-origin'}}),h.env);assert.equal(originOnly.status,403);assert.equal((await originOnly.json()).reason,'origin_mismatch');
+  const originOnly=await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access',{origin:'https://foreign.invalid',fetchMetadata:{'sec-fetch-site':'same-origin'}}),h.env);assert.equal(originOnly.status,403);assert.equal((await originOnly.json()).error,'origin_mismatch');
   const post=await h.worker.fetch(await h.request('/research-a',{method:'POST',origin:null,fetchMetadata:nav}),h.env);assert.equal(post.status,405);await assertNoLegacyData(post);
   assert.equal(h.newA.reads,0);assert.equal(h.provider.discordCalls,0);assert.equal(h.assets.length,0);
 });
@@ -593,20 +593,20 @@ test('top-level cross-site navigation never bypasses anonymous other-owner or mi
 test('new A request-origin refusals expose only fixed categories and no data',async()=>{
   const h=await apiHarness({ownerOnly:true});
   for(const [header,value,reason] of [['origin','https://elsewhere.invalid','origin_mismatch'],['sec-fetch-site','cross-site','cross_site_request']]){
-    const original=await h.request('/api/research-a/details');const headers=new Headers(original.headers);headers.set(header,value);
+    const original=await h.request('/api/cloud/new-a-finite/access');const headers=new Headers(original.headers);headers.set(header,value);
     const response=await h.worker.fetch(new Request(original,{headers}),h.env);
-    assert.equal(response.status,403);assert.deepEqual(await response.json(),{authorized:false,reason});assert.equal(h.newA.reads,0);assert.equal(h.assets.length,0);
+    assert.equal(response.status,403);assert.deepEqual(await response.json(),{error:reason});assert.equal(h.newA.reads,0);assert.equal(h.assets.length,0);
   }
 });
 
 test('new A follows the owner Discord role while delivery separately rechecks membership revocation', async () => {
   const h = await apiHarness({ownerOnly:true});
-  assert.equal((await h.worker.fetch(await h.request('/api/research-a/details'), h.env)).status, 200);
+  assert.equal((await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access'), h.env)).status, 200);
   h.provider.fixture.membership.status = 'revoked';
-  assert.equal((await h.worker.fetch(await h.request('/api/research-a/details'), h.env)).status, 200);
+  assert.equal((await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access'), h.env)).status, 200);
   assert.equal((await h.api.currentMembership(h.env, h.subject)).status, 'free');
   assert.equal(h.assets.length, 0);
-  const head=await h.worker.fetch(await h.request('/api/research-a/details',{method:'HEAD'}),h.env);assert.equal(head.status,200);assert.equal(await head.text(),'');
+  const head=await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access',{method:'HEAD'}),h.env);assert.equal(head.status,200);assert.equal(await head.text(),'');
   assert.equal((await h.worker.fetch(await h.request(bundlePath('free'), { method: 'HEAD' }), h.env)).status, 410);
 });
 
@@ -1047,11 +1047,11 @@ for (const [label, setup] of [
       const response = await h.worker.fetch(await h.request(pathname), h.env);
       assert.equal(response.status, 200);
       const html = await response.text();
-      assert.match(html, /SYNTHETIC-NEW-A-ONLY/);
+      assert.match(html, /owner-loader\.js/);
       assert.match(html,/天底極致 Cloud 2\.0/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);
       assert.match(response.headers.get('cache-control'), /private.*no-store/);
     }
-    for(const pathname of ['/weak_early_beta_latest.html','/weak_early_beta_analytics.html','/weak_early_beta_fusion.html']){const retired=await h.worker.fetch(await h.request(pathname),h.env);assert.equal(retired.status,302);assert.equal(retired.headers.get('location'),'/research-a');await assertNoLegacyData(retired);}
+    for(const pathname of ['/weak_early_beta_latest.html','/weak_early_beta_analytics.html','/weak_early_beta_fusion.html']){const retired=await h.worker.fetch(await h.request(pathname),h.env);assert.equal(retired.status,200);assert.equal(retired.headers.get('location'),null);await assertNoLegacyData(retired);}
     assert.equal(h.assets.length,0);
     assert.equal(h.calls.length, 0);
     const noRole = await apiHarness({ ...setup, ownerOnly:true, roles: [] });
@@ -1060,12 +1060,12 @@ for (const [label, setup] of [
   });
 }
 
-test('valid owner Discord session and role retain new A and auth/check; legacy documents only redirect', async () => {
+test('valid owner Discord session and role retain new A and auth/check; legacy documents are data-free aliases', async () => {
   const h = await apiHarness({ownerOnly:true});
-  const retired=await h.worker.fetch(await h.request('/weak_early_beta_analytics.html'),h.env);assert.equal(retired.status,302);assert.equal(retired.headers.get('location'),'/research-a');await assertNoLegacyData(retired);
+  const retired=await h.worker.fetch(await h.request('/weak_early_beta_analytics.html'),h.env);assert.equal(retired.status,200);assert.equal(retired.headers.get('location'),null);await assertNoLegacyData(retired);
   const report = await h.worker.fetch(await h.request('/research-a'), h.env);
   assert.equal(report.status, 200);
-  assert.match(await report.text(), /SYNTHETIC-NEW-A-ONLY/);
+  assert.match(await report.text(), /owner-loader\.js/);
   const loggedOut = await h.worker.fetch(await h.request('/research-a', { authenticated: false }), h.env);
   assert.equal(loggedOut.status, 302);
   assert.match(loggedOut.headers.get('location'), /^\/auth\/login/);
@@ -1153,9 +1153,9 @@ for(const [label,options,expected] of [['anonymous',{authenticated:false},'login
   const response=await h.worker.fetch(await h.request(path,options),h.env);
   if(expected==='login'){assert.equal(response.status,302);assert.match(response.headers.get('location'),/^\/auth\/login/);await assertNoLegacyData(response);continue;}
   assert.equal(response.status,expected==='free'?403:200);
-  if(expected==='free')await assertNoLegacyData(response);else{const html=await response.text();assert.match(html,/SYNTHETIC-NEW-A-ONLY/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);}
+  if(expected==='free')await assertNoLegacyData(response);else{const html=await response.text();assert.match(html,/owner-loader\.js/);assert.doesNotMatch(html,/SECRET-UNRELEASED-TICKER|RELEASED-PUBLIC-ONLY/);}
  }
- const details=await h.worker.fetch(await h.request('/api/research-a/details',options),h.env);assert.equal(details.status,expected==='full'?200:label==='anonymous'?401:403);if(expected!=='full'){await assertNoLegacyData(details);assert.equal(h.newA.reads,0);}else assert.equal((await details.json()).rows.length,2);
+ const details=await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access',options),h.env);assert.equal(details.status,expected==='full'?200:label==='anonymous'?401:403);if(expected!=='full'){await assertNoLegacyData(details);assert.equal(h.newA.reads,0);}else assert.deepEqual(await details.json(),{authorized:true,strategy:'A_BASE'});
  for(const audience of ['free','full']){const retired=await h.worker.fetch(await h.request(bundlePath(audience),options),h.env);assert.equal(retired.status,label==='anonymous'?401:410);await assertNoLegacyData(retired);}
  assert.equal(h.assets.length,0);assert.equal(h.calls.length,0);
 });
@@ -1164,7 +1164,7 @@ for(const [label,status,roles] of [['revoked',200,[]],['429',429,['paid-discord-
  const h=await apiHarness({ownerOnly:true});h.provider.discordRoles=roles;h.provider.discordStatus=status;
  const document=await h.worker.fetch(await h.request('/research-a'),h.env);
  assert.equal(document.status,label==='revoked'?403:503);await assertNoLegacyData(document);
- const details=await h.worker.fetch(await h.request('/api/research-a/details'),h.env);assert.equal(details.status,label==='revoked'?403:503);await assertNoLegacyData(details);
+ const details=await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access'),h.env);assert.equal(details.status,label==='revoked'?403:503);await assertNoLegacyData(details);
  for(const audience of ['full','free']){const retired=await h.worker.fetch(await h.request(bundlePath(audience)),h.env);assert.equal(retired.status,410);await assertNoLegacyData(retired);}
  const anonymous=await h.worker.fetch(await h.request(bundlePath('free'),{authenticated:false}),h.env);assert.equal(anonymous.status,401);await assertNoLegacyData(anonymous);
  assert.equal(h.assets.length,0);assert.equal(h.newA.reads,0);
@@ -1172,20 +1172,23 @@ for(const [label,status,roles] of [['revoked',200,[]],['429',429,['paid-discord-
 
 test('approved authority shares 90 seconds across owner new A and auth/check then confirms revocation',async()=>{
  const h=await apiHarness({ownerOnly:true});
- for(const path of ['/research-a','/api/research-a/details','/research-a/details.json','/auth/check']) assert.equal((await h.worker.fetch(await h.request(path),h.env)).status,200);
+ for(const path of ['/research-a','/api/cloud/new-a-finite/access','/weak_early_beta_analytics.html','/auth/check']) assert.equal((await h.worker.fetch(await h.request(path),h.env)).status,200);
  assert.equal(h.provider.discordCalls,1);
  h.provider.discordRoles=[];h.clock.now+=90000;
  const reads=h.newA.reads,doc=await h.worker.fetch(await h.request('/research-a'),h.env);assert.equal(doc.status,403);await assertNoLegacyData(doc);
- const details=await h.worker.fetch(await h.request('/api/research-a/details'),h.env);assert.equal(details.status,403);await assertNoLegacyData(details);assert.equal(h.provider.discordCalls,2);assert.equal(h.newA.reads,reads);assert.equal(h.assets.length,0);
+ const details=await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access'),h.env);assert.equal(details.status,403);await assertNoLegacyData(details);assert.equal(h.provider.discordCalls,2);assert.equal(h.newA.reads,reads);assert.equal(h.assets.length,0);
 });
 test('expired authority failure closes owner new A without legacy fallback while settings remain writable',async()=>{
  const h=await apiHarness({ownerOnly:true});h.env.CLOUD_PUSH_MEMBERSHIP_POLICY='whop_managed_discord_role';
  await h.worker.fetch(await h.request('/research-a'),h.env);const reads=h.newA.reads;h.clock.now+=90000;h.provider.discordStatus=429;
  const doc=await h.worker.fetch(await h.request('/research-a'),h.env);assert.equal(doc.status,503);await assertNoLegacyData(doc);
  const check=await h.worker.fetch(await h.request('/auth/check'),h.env);assert.equal(check.status,503);assert.equal((await check.json()).reason,'discord_role_lookup_429');
- const details=await h.worker.fetch(await h.request('/api/research-a/details'),h.env);assert.equal(details.status,503);await assertNoLegacyData(details);assert.equal(h.newA.reads,reads);
+ const details=await h.worker.fetch(await h.request('/api/cloud/new-a-finite/access'),h.env);assert.equal(details.status,503);await assertNoLegacyData(details);assert.equal(h.newA.reads,reads);
  for(const audience of ['full','free']){const retired=await h.worker.fetch(await h.request(bundlePath(audience)),h.env);assert.equal(retired.status,410);await assertNoLegacyData(retired);}assert.equal(h.assets.length,0);
  const input=preferences();delete input.notifications;
  const save=await h.worker.fetch(await h.request('/api/cloud/preferences',{method:'PUT',body:input}),h.env);assert.equal(save.status,200);
  assert.equal(h.provider.discordCalls,2);
 });
+
+// The old fixed-fill API stays closed, independently of private-dataset rollout.
+test("retired fixed-fill details API never reads old data",async()=>{const h=await apiHarness({ownerOnly:true});for(const p of ["/api/research-a/details","/research-a/details.json"]){const r=await h.worker.fetch(await h.request(p),h.env);assert.equal(r.status,410);await assertNoLegacyData(r);}assert.equal(h.newA.reads,0);assert.equal(h.assets.length,0);});

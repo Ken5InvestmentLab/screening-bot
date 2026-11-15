@@ -1,47 +1,76 @@
-// 現在の配信コードを変更せず、本人ゲートを通った新A経路だけを置き換える。
-import { reportIdentity as migrationReportIdentity } from "./shared-report-gate";
-import { cloudReportRole as migrationCloudReportRole } from "./cloud-role-authority";
-import type { CloudEnv } from "./cloud-api";
-import { createResearchAHandler, isResearchAPath } from "./research-a/owner-view.generated";
-import { readResearchASnapshot } from "./new-a-data";
-const PRIVATE = { 'cache-control':'private, no-store, max-age=0', vary:'Cookie', 'x-content-type-options':'nosniff',
- 'referrer-policy':'no-referrer','cross-origin-resource-policy':'same-origin',
- 'content-security-policy':"default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'" };
-const oldDocument = /^\/weak_early_beta_(?:latest|analytics|silence|dive|shadow|fusion|balance|guide)(?:_free)?\.html$/;
-const oldAssets = /^(?:\/weak_early_beta_data_|\/weak-early-beta-|\/report-assets\/|\/report-interactions\.js$|\/report-theme-init\.js$)/;
-function reply(request:Request,status:number,body:any,json=false){return new Response(request.method==='HEAD'?null:json?JSON.stringify(body):body,{status,headers:{...PRIVATE,'content-type':json?'application/json; charset=utf-8':'text/html; charset=utf-8'}});}
-function ownedPath(path:string){return path==='/'||path==='/report'||isResearchAPath(path)||oldDocument.test(path)||oldAssets.test(path);}
-export async function newACloudRoute(request:Request,env:CloudEnv):Promise<Response|null>{
-  const url=new URL(request.url),path=url.pathname;
-  // OAuth、セッション更新、D1設定等は現行の入口・実装へそのまま渡す。
-  if(!ownedPath(path))return null;
-  // この関数は現行index.tsのownerOnlyGateを通った後にだけ呼ばれる。
-  const json=path.startsWith('/api/')||path.endsWith('.json');
-  // 本人限定が現状どおり有効でなければ、新Aを出すことはない。
-  if(env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase()!=='true')return reply(request,503,json?{available:false,reason:'owner_mode_required'}:'Unavailable',json);
-  if(!['GET','HEAD'].includes(request.method))return reply(request,405,'Method not allowed');
-  const topLevelDocumentNavigation=(path==='/'||path==='/report'||path==='/research-a'||oldDocument.test(path))&&['GET','HEAD'].includes(request.method)&&request.headers.get('sec-fetch-mode')==='navigate'&&request.headers.get('sec-fetch-dest')==='document';
-  if(request.headers.get('sec-fetch-site')==='cross-site'&&!topLevelDocumentNavigation)return reply(request,403,json?{authorized:false,reason:'cross_site_request'}:'Forbidden',json);
-  if(request.headers.get('origin')&&request.headers.get('origin')!==url.origin)return reply(request,403,json?{authorized:false,reason:'origin_mismatch'}:'Forbidden',json);
-  // 旧結果はバックアップと既存ASSETSに保全するが、新A画面からは配信しない。
-  if(oldAssets.test(path))return reply(request,410,json?{available:false,reason:'legacy_asset_retained_offline'}:'Gone',json);
-  if(oldDocument.test(path))return new Response(null,{status:302,headers:{...PRIVATE,location:'/research-a'}});
-  try{
-   const identity=await migrationReportIdentity(request,{...env,REPORT_ROLE_LOOKUP:(subject,token)=>migrationCloudReportRole(env,subject,token,'/research-a')},true);
-   if(identity.reason==='refresh_required'){
-    if(json)return reply(request,401,{authorized:false,reason:'refresh_required'},true);
-    // 現行の/auth/guard.js→/auth/checkが既存Cookieを更新してから再表示する。
-    return reply(request,200,'<!doctype html><html lang="ja" data-auth-recovery><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Discord認証確認</title><script src="/auth/guard.js" defer></script></head><body>Discord認証を確認しています。</body></html>');
-   }
-   if(identity.reason||!identity.subject)return reply(request,identity.reason==='login_required'?401:503,json?{authorized:false,reason:'authentication_unavailable'}:'Unavailable',json);
-   if(identity.discord_authorized!==true)return reply(request,403,json?{authorized:false,reason:'role_required'}:'Forbidden',json);
-   const target=new URL(request.url);if(path==='/'||path==='/report')target.pathname='/research-a';
-   const snapshot=await readResearchASnapshot(env.CLOUD_DB);
-   const handleResearchA=createResearchAHandler(snapshot);
-   const result=handleResearchA(new Request(target,request));
-   const headers=new Headers(result.headers);for(const[k,v]of Object.entries(PRIVATE))headers.set(k,v);
-   const html=headers.get('content-type')?.startsWith('text/html');
-   const body=request.method==='HEAD'?null:html?(await result.text()).replace('</head>','<script src="/auth/guard.js" defer></script></head>'):result.body;
-   return new Response(body,{status:result.status,headers});
-  }catch{return reply(request,503,json?{available:false,reason:'authentication_unavailable'}:'Unavailable',json);}
+// New-A routing only. The existing index owner gate and identity implementation inject context.
+import {cloudMemberId,type CloudEnv} from './cloud-api';
+import {readActiveManifest,readPrivatePart,PART_NAME,DATASET_ID} from './new-a-private';
+import {readTrial,saveTrial,validateTrial} from './new-a-preferences';
+import {ownerFrame,FRAME_PATHS} from './research-a/frame.generated';
+import {ASSET_NAMES,COMPAT_ASSET_NAMES} from './research-a/assets.generated';
+export type TrustedOwnerContext={ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean;subject?:string};
+export const PRIVATE_HEADERS={'cache-control':'private, no-store, max-age=0',vary:'Cookie','x-content-type-options':'nosniff','referrer-policy':'no-referrer','cross-origin-resource-policy':'same-origin','content-security-policy':"default-src 'none'; script-src 'self'; worker-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"};
+const legacyData=/^\/(?:weak_early_beta_data_|report-interactions\.js|report-theme-init\.js|weak-early-beta-)|^\/(?:api\/research-a\/details|research-a\/details\.json)$/;
+export function isNewAPath(path:string):boolean{return FRAME_PATHS.includes(path)||path.startsWith('/api/cloud/new-a-finite/')||path.startsWith('/new-a-assets/')||legacyData.test(path)||path.startsWith('/report-assets/');}
+export function protectedReply(request:Request,status:number,value:unknown,json=true):Response{return new Response(request.method==='HEAD'?null:json?JSON.stringify(value):String(value),{status,headers:{...PRIVATE_HEADERS,'content-type':json?'application/json; charset=utf-8':'text/html; charset=utf-8'}});}
+export function newAEarlyRefusal(request:Request):Response|null{
+ const u=new URL(request.url),document=FRAME_PATHS.includes(u.pathname),read=['GET','HEAD'].includes(request.method);
+ if((document||u.pathname==='/api/cloud/new-a-finite/access')&&!read)return protectedReply(request,405,{error:'method_not_allowed'});
+ const top=document&&read&&request.headers.get('sec-fetch-mode')==='navigate'&&request.headers.get('sec-fetch-dest')==='document';
+ if(request.headers.get('sec-fetch-site')==='cross-site'&&!top)return protectedReply(request,403,{error:'cross_site_request'});
+ if(request.headers.get('origin')&&request.headers.get('origin')!==u.origin)return protectedReply(request,403,{error:'origin_mismatch'});
+ if(legacyData.test(u.pathname)||u.pathname.startsWith('/report-assets/'))return protectedReply(request,410,{error:'legacy_data_not_served'});
+ return null;
+}
+export function isCompatibilityAsset(path:string):boolean{return COMPAT_ASSET_NAMES.includes(path);}
+// These existing push-only scripts contain no A data and were owner-gated without report-role lookup.
+// Never register/unregister a worker or change notification preferences from this response.
+export async function compatibilityCodeResponse(request:Request,env:CloudEnv):Promise<Response>{
+ const u=new URL(request.url);if(env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase()!=='true')return protectedReply(request,503,{error:'owner_mode_required'});
+ if(!isCompatibilityAsset(u.pathname)||u.search||!['GET','HEAD'].includes(request.method))return protectedReply(request,404,{error:'not_found'});
+ if(request.headers.get('sec-fetch-site')==='cross-site'||request.headers.get('origin')&&request.headers.get('origin')!==u.origin)return protectedReply(request,403,{error:'cross_site_request'});
+ const result=await env.ASSETS.fetch(new URL(u.pathname,'https://assets.local').toString());if(!result.ok)return protectedReply(request,404,{error:'not_found'});
+ return new Response(request.method==='HEAD'?null:result.body,{status:200,headers:{...PRIVATE_HEADERS,'content-type':'application/javascript; charset=utf-8'}});
+}
+export async function newACloudRoute(request:Request,env:CloudEnv,context:TrustedOwnerContext):Promise<Response>{
+ const url=new URL(request.url),p=url.pathname,document=FRAME_PATHS.includes(p);
+ // No database, pointer, manifest or ASSETS request precedes this context check.
+ if(!context.ownerAuthorized||!context.subject)return protectedReply(request,401,{error:'owner_required'});
+ if(!context.current)return protectedReply(request,503,{error:'authentication_unavailable'});
+ if(!context.roleAuthorized)return protectedReply(request,403,{error:'role_required'});
+ const refused=newAEarlyRefusal(request);if(refused)return refused;
+ if(document){if(!['GET','HEAD'].includes(request.method))return protectedReply(request,405,{error:'method_not_allowed'});return protectedReply(request,200,ownerFrame(p,context),false);}
+ if(legacyData.test(p)||p.startsWith('/report-assets/'))return protectedReply(request,410,{error:'legacy_data_not_served'});
+ if(p.startsWith('/new-a-assets/')){
+  const name=p.slice('/new-a-assets/'.length);if(url.search||!ASSET_NAMES.includes(name)||!['GET','HEAD'].includes(request.method))return protectedReply(request,404,{error:'not_found'});
+  const asset=await env.ASSETS.fetch(new URL(p,'https://assets.local').toString());if(!asset.ok)return protectedReply(request,404,{error:'not_found'});
+  return new Response(request.method==='HEAD'?null:asset.body,{status:200,headers:{...PRIVATE_HEADERS,'content-type':name.endsWith('.png')?'image/png':'application/javascript; charset=utf-8'}});
+ }
+ if(p==='/api/cloud/new-a-finite/access'){
+  if(url.search)return protectedReply(request,404,{error:'not_found'});
+  if(!['GET','HEAD'].includes(request.method))return protectedReply(request,405,{error:'method_not_allowed'});
+  return protectedReply(request,200,{authorized:true,strategy:'A_BASE'});
+ }
+ if(!env.CLOUD_DB)return protectedReply(request,503,{error:'storage_unavailable'});
+ if(url.search)return protectedReply(request,404,{error:'not_found'});
+ const resource=p.slice('/api/cloud/new-a-finite/'.length);
+ try{
+  if(resource==='input/manifest.json'){
+   if(!['GET','HEAD'].includes(request.method))return protectedReply(request,405,{error:'method_not_allowed'});
+   return protectedReply(request,200,await readActiveManifest(env.CLOUD_DB));
+  }
+  const part=/^input\/([^/]+)\/([^/]+)$/.exec(resource);
+  if(part){if(!['GET','HEAD'].includes(request.method)||!DATASET_ID.test(part[1])||!PART_NAME.test(part[2]))return protectedReply(request,404,{error:'not_found'});const body=await readPrivatePart(env.CLOUD_DB,part[1],part[2]);return body===null?protectedReply(request,404,{error:'not_found'}):new Response(request.method==='HEAD'?null:body,{status:200,headers:{...PRIVATE_HEADERS,'content-type':'application/json; charset=utf-8'}});}
+  if(resource==='simulate')return protectedReply(request,409,{error:'owner_browser_worker_required'});
+  if(resource!=='preferences')return protectedReply(request,404,{error:'not_found'});
+  const member=await cloudMemberId(context.subject);
+  if(['GET','HEAD'].includes(request.method))return protectedReply(request,200,await readTrial(env.CLOUD_DB,member));
+  if(request.method!=='PUT')return protectedReply(request,405,{error:'method_not_allowed'});
+  if(request.headers.get('origin')!==url.origin)return protectedReply(request,403,{error:'origin_required'});
+  if(!(request.headers.get('content-type')||'').toLowerCase().startsWith('application/json'))return protectedReply(request,415,{error:'json_required'});
+  const raw=await request.text();if(new TextEncoder().encode(raw).byteLength>8192)return protectedReply(request,413,{error:'request_too_large'});
+  let body:unknown;try{body=JSON.parse(raw);}catch{return protectedReply(request,400,{error:'invalid_json'});}
+  if(!body||typeof body!=='object'||Array.isArray(body))return protectedReply(request,400,{error:'request_fields'});
+  const b=body as Record<string,unknown>;
+  if(Object.keys(b).some(k=>!['preferences','expected_revision','request_id'].includes(k))||typeof b.request_id!=='string'||!/^[-A-Za-z0-9_:]{1,80}$/.test(b.request_id)||!Number.isSafeInteger(b.expected_revision)||Number(b.expected_revision)<0)return protectedReply(request,400,{error:'request_fields'});
+  let preferences;try{preferences=validateTrial(b.preferences);}catch{return protectedReply(request,400,{error:'invalid_preferences'});}
+  const saved=await saveTrial(env.CLOUD_DB,member,preferences,Number(b.expected_revision));if(!saved.ok)return protectedReply(request,409,{error:'revision_conflict',revision:saved.revision,request_id:b.request_id});
+  return protectedReply(request,200,{schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,preferences,revision:saved.revision,default_proposal_verified:false,preference_source:'new-a-saved',request_id:b.request_id});
+ }catch{return protectedReply(request,503,{error:'new_a_service_unavailable'});}
 }

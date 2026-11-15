@@ -1,0 +1,92 @@
+{
+  "schema": "NEW_A_CODE_RELEASE_CONTRACT_V1",
+  "private_source": "EXISTING_CLOUD_D1_ONLY",
+  "calculation": "OWNER_BROWSER_WEB_WORKER",
+  "legacyCanonicalSha256": "ddad04410373050f0b11ae1834a112bfc9b3dc08fcc1289535016d4fd7fca57d",
+  "legacySchedulerUnchanged": true,
+  "liveSourceCommitIdentityVerified": false,
+  "staticAssets": [
+    {
+      "source": "reports/weak-early-beta-theme-init.js",
+      "target": "weak-early-beta-theme-init.js",
+      "sha256": "cf8f001635cc0e74a0d8519074e9c2673c7c5be5ea6a61b7081180da4339de1c",
+      "normalization": "LF_UTF8"
+    },
+    {
+      "source": "reports/weak-early-beta-scenarios.js",
+      "target": "weak-early-beta-scenarios.js",
+      "sha256": "409c7208a1fc020a9c0df24a7dd051125ed0c9fa17ff76efc6487322debad49e",
+      "normalization": "LF_UTF8"
+    },
+    {
+      "source": "reports/report-assets/cloud-logo-dark.png",
+      "target": "report-assets/cloud-logo-dark.png",
+      "sha256": "a4fdd5b0fda96d07008d8606ec8b4b0b607fb927208ba8cbb72e25b877ffe24a",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/report-assets/cloud-logo-light.png",
+      "target": "report-assets/cloud-logo-light.png",
+      "sha256": "1b2904ea6edddb2c1c32261d5317e78dc6ff9b69bc33ee02ad5b554ee347952e",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/report-assets/coconala-dark.png",
+      "target": "report-assets/coconala-dark.png",
+      "sha256": "617b7ad1812adb281126bd5a4d600e329ace11df01bee983b7bf1a927e078632",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/report-assets/coconala-light.png",
+      "target": "report-assets/coconala-light.png",
+      "sha256": "8633383e9f3ec10fe7e617963f03f96f152b63f044d0ab5336bc77cc92197b4d",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/report-assets/discord-dark.png",
+      "target": "report-assets/discord-dark.png",
+      "sha256": "348bf1f75acb624b11d3727e63efe3f551259ab1286f11186d2c2b16d2ee0674",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/report-assets/discord-light.png",
+      "target": "report-assets/discord-light.png",
+      "sha256": "f6c1a66250d366d213789faefab59a9ec6ac6334e6c4be0af254680c148810dc",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/report-assets/x-dark.png",
+      "target": "report-assets/x-dark.png",
+      "sha256": "432bdd47255b48366843ec21d209e774f93b807e1fd0894fc983aad0dc7bd03b",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/report-assets/x-light.png",
+      "target": "report-assets/x-light.png",
+      "sha256": "391a3a86f40e253b584defa5f284c7402a2175a705ebb2b4b9460112fc92dc77",
+      "normalization": "BYTES"
+    },
+    {
+      "source": "reports/weak-early-beta-interactions.js",
+      "target": "new-a-legacy-interactions.generated.js",
+      "sha256": "d4e4f655816d2bbb1c1c9c9673a9a89b035bce774b2e6dc7c7a3b9ec6fe3b626",
+      "patch": "legacy-interactions",
+      "normalization": "LF_UTF8"
+    }
+  ],
+  "legacyCanonicalNormalization": "LF_UTF8",
+  "compatibilityAssets": [
+    {
+      "source": "reports/weak-early-beta-service-worker.js",
+      "target": "weak-early-beta-service-worker.js",
+      "normalization": "LF_UTF8",
+      "sha256": "494f4917db0d748c9ed888b3cd538bca01c2625cde1278cef3a29a2ff4f99726"
+    },
+    {
+      "source": "reports/weak-early-beta-push.js",
+      "target": "weak-early-beta-push.js",
+      "normalization": "LF_UTF8",
+      "sha256": "e361fe4da7c6836c25857063ce1066b7cd017a5c1a015234b045db8bcf5de228"
+    }
+  ]
+}

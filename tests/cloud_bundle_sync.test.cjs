@@ -1,65 +1,18 @@
-const test = require('node:test');
-const assert = require('node:assert/strict');
-const fs = require('node:fs/promises');
-const os = require('node:os');
-const path = require('node:path');
-const { spawnSync } = require('node:child_process');
-
-const pages = ['latest','analytics','silence','dive','shadow','fusion','balance','guide'];
-const filename = (audience, page) => `weak_early_beta_data_${audience}_${page}_${'a'.repeat(16)}_0000.json`;
-async function fixture(t, fault) {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'cloud-bundle-sync-'));
-  t.after(async () => {
-    assert.equal(path.dirname(root), path.resolve(os.tmpdir()));
-    assert.ok(path.basename(root).startsWith('cloud-bundle-sync-'));
-    await fs.rm(root, {recursive:true,force:true});
-  });
-  const reports = path.join(root,'reports'), gate = path.join(root,'weak-early-beta-gate');
-  await fs.mkdir(path.join(reports,'report-assets'),{recursive:true});
-  await fs.mkdir(path.join(gate,'scripts'),{recursive:true});
-  await fs.mkdir(path.join(gate,'public'),{recursive:true});
-  await fs.copyFile(path.resolve(__dirname,'../weak-early-beta-gate/scripts/sync-report.mjs'),path.join(gate,'scripts/sync-report.mjs'));
-  for (const page of pages) for (const audience of ['full','free']) {
-    const name = filename(audience,page);
-    const context = {audience,page,snapshot:'a'.repeat(16)};
-    const bundle = {version:1,encoding:'gzip-base64-json',...context,chunk:0,variants:{'d6_open:all':{gzip:'cHJpdmF0ZS1vci1yZWxlYXNlZA=='}}};
-    const payload = {bundleContext:context,variants:{'d6_open:all':{bundle:`./${name}`}}};
-    if (page === 'analytics' && audience === 'free') {
-      if (fault === 'path') payload.variants['d6_open:all'].bundle = '../private.json';
-      if (fault === 'audience') payload.variants['d6_open:all'].bundle = `./${filename('full',page)}`;
-      if (fault === 'metadata') bundle.audience = 'full';
-      if (fault === 'key') bundle.variants = {};
-    }
-    await fs.writeFile(path.join(reports,name),fault === 'size' && page === 'analytics' && audience === 'free' ? ' '.repeat(1024*1024+1) : JSON.stringify(bundle));
-    await fs.writeFile(path.join(reports,`weak_early_beta_${page}${audience==='free'?'_free':''}.html`),page === 'guide' ? '<html>guide</html>' : `<script id="cloud-analytics-data" type="application/json">${JSON.stringify(payload)}</script>`);
-  }
-  for (const name of ['weak-early-beta-interactions.js','weak-early-beta-theme-init.js','weak-early-beta-scenarios.js','weak-early-beta-push.js','weak-early-beta-service-worker.js']) await fs.writeFile(path.join(reports,name),'// generated');
-  for (const name of ['discord-light','discord-dark','coconala-light','coconala-dark','x-light','x-dark','cloud-logo-light','cloud-logo-dark']) await fs.writeFile(path.join(reports,'report-assets',name+'.png'),'fixture');
-  await fs.writeFile(path.join(reports,'private.json'),'PRIVATE RECEIPTS');
-  await fs.writeFile(path.join(gate,'public','keep.json'),'keep');
-  const stale = `weak_early_beta_data_full_analytics_${'b'.repeat(16)}_0000.json`;
-  await fs.writeFile(path.join(gate,'public',stale),'stale');
-  const result = spawnSync(process.execPath,[path.join(gate,'scripts/sync-report.mjs')],{encoding:'utf8'});
-  return {result,publicDir:path.join(gate,'public'),stale};
-}
-test('actual sync copies only validated current bundles and preserves unrelated files',async t=>{
-  const f=await fixture(t);
-  assert.equal(f.result.status,0,f.result.stderr);
-  const names=await fs.readdir(f.publicDir);
-  assert.ok(names.includes(filename('free','analytics')));
-  assert.ok(names.includes(filename('full','analytics')));
-  assert.ok(names.includes('keep.json'));
-  assert.ok(!names.includes('private.json'));
-  assert.ok(!names.includes(f.stale));
-});
-for (const fault of ['path','audience','metadata','key','size']) test(`sync refuses ${fault} before touching existing public assets`,async t=>{
-  const f=await fixture(t,fault);
-  assert.notEqual(f.result.status,0);
-  assert.deepEqual((await fs.readdir(f.publicDir)).sort(),['keep.json',f.stale].sort());
-});
-
-test('v05 calculator is a public code asset and private price evidence stays outside sync',async t=>{
- const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);
- const names=await fs.readdir(f.publicDir);assert.ok(names.includes('weak-early-beta-scenarios.js'));
- assert.ok(!names.includes('private.json'));
-});
+// The old full/free price-bundle publication contract is replaced by code-only new-A.
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs/promises'),os=require('node:os'),path=require('node:path'),{spawnSync}=require('node:child_process'),{createHash}=require('node:crypto');
+const repo=path.resolve(__dirname,'..'),sourceGate=path.join(repo,'weak-early-beta-gate'),baseline=process.env.NEW_A_TEST_BASELINE_ROOT||repo;
+const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+async function inventory(dir,rel=''){const result={};for(const e of await fs.readdir(dir,{withFileTypes:true})){const name=path.posix.join(rel,e.name),p=path.join(dir,e.name);if(e.isDirectory())Object.assign(result,await inventory(p,name));else result[name]=sha(await fs.readFile(p));}return result;}
+async function fixture(t,fault){const root=await fs.mkdtemp(path.join(os.tmpdir(),'new-a-code-sync-'));t.after(async()=>{assert.equal(path.dirname(root),path.resolve(os.tmpdir()));assert(path.basename(root).startsWith('new-a-code-sync-'));await fs.rm(root,{recursive:true,force:true});});const gate=path.join(root,'weak-early-beta-gate'),scripts=path.join(gate,'scripts'),publicDir=path.join(gate,'public');await fs.mkdir(scripts,{recursive:true});await fs.mkdir(publicDir,{recursive:true});
+ for(const name of ['sync-report.mjs','build-new-a-frame.mjs','verify-new-a-code-only.mjs','new-a-code-contract.json'])await fs.copyFile(path.join(sourceGate,'scripts',name),path.join(scripts,name));await fs.cp(path.join(sourceGate,'scripts/new-a-ui-source'),path.join(scripts,'new-a-ui-source'),{recursive:true});
+ const contractFile=path.join(scripts,'new-a-code-contract.json'),contract=JSON.parse(await fs.readFile(contractFile,'utf8'));for(const asset of [...contract.staticAssets,...contract.compatibilityAssets]){const target=path.join(root,asset.source);await fs.mkdir(path.dirname(target),{recursive:true});await fs.copyFile(path.join(baseline,asset.source),target);}
+ // These existing reports/private artifacts must never be opened or copied.
+ await fs.writeFile(path.join(root,'reports/private.json'),'SYNTHETIC_PRIVATE_EVIDENCE_DO_NOT_PUBLISH');await fs.writeFile(path.join(root,'reports/weak_early_beta_data_full_latest_aaaaaaaaaaaaaaaa_0000.json'),'SYNTHETIC_PRIVATE_PRICE_BUNDLE');
+ const stale='weak_early_beta_data_full_latest_bbbbbbbbbbbbbbbb_0000.json';await fs.writeFile(path.join(publicDir,stale),'stale generated data');for(const name of ['report-interactions.js','report-theme-init.js'])await fs.writeFile(path.join(publicDir,name),'stale shared code');
+ if(fault==='path')contract.staticAssets[0].source='../private.json';if(fault==='audience')contract.private_source='PUBLIC';if(fault==='metadata')contract.staticAssets[0].sha256='0'.repeat(64);if(fault==='key')contract.staticAssets[1].target=contract.staticAssets[0].target;
+ if(fault==='size')await fs.appendFile(path.join(scripts,'new-a-ui-source/frame.html'),' '.repeat(128*1024));if(fault==='private-data')await fs.appendFile(path.join(scripts,'new-a-ui-source/frame.html'),'<table><tbody><tr data-date="synthetic-date"><td>private row</td></tr></tbody></table>');if(fault==='unknown-public')await fs.writeFile(path.join(publicDir,'keep.json'),'UNKNOWN_PRIVATE_PAYLOAD');
+ await fs.writeFile(contractFile,JSON.stringify(contract));const before=await inventory(publicDir),result=spawnSync(process.execPath,[path.join(scripts,'sync-report.mjs')],{encoding:'utf8'});return {root,gate,publicDir,before,result,stale};}
+test('actual sync builds data-free frames and code assets without opening old price bundles/private evidence',async t=>{const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);const files=await inventory(f.publicDir);assert.equal(Object.keys(files).length,35);assert(!files[f.stale]);assert(!files['private.json']);assert(!files['report-interactions.js']);for(const page of ['latest','analytics','silence','dive','shadow','fusion','balance','guide'])for(const suffix of['','_free']){const html=await fs.readFile(path.join(f.publicDir,`weak_early_beta_${page}${suffix}.html`),'utf8');assert(!html.includes('data-date='));assert(!html.includes('SYNTHETIC_PRIVATE'));assert(!html.includes('variants.bundle'));}const scan=spawnSync(process.execPath,[path.join(f.gate,'scripts/verify-new-a-code-only.mjs')],{encoding:'utf8'});assert.equal(scan.status,0,scan.stderr);});
+for(const fault of ['path','audience','metadata','key','size','private-data','unknown-public'])test(`code-only sync refuses ${fault} before touching existing public assets`,async t=>{const f=await fixture(t,fault);assert.notEqual(f.result.status,0);assert.deepEqual(await inventory(f.publicDir),f.before);});
+test('same original calculator and shared finite Worker are code assets; private inputs stay outside sync',async t=>{const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);const calculator=await fs.readFile(path.join(f.publicDir,'new-a-assets/weak-early-beta-scenarios.js'));assert.equal(calculator.toString('utf8'),(await fs.readFile(path.join(baseline,'reports/weak-early-beta-scenarios.js'),'utf8')).replace(/\r\n?/g,'\n'));const worker=await fs.readFile(path.join(f.publicDir,'new-a-assets/new-a-finite-worker.generated.js'),'utf8');assert(worker.includes('createDatasetRuntime'));assert(!worker.includes('SYNTHETIC_PRIVATE'));const first=await inventory(f.publicDir),again=spawnSync(process.execPath,[path.join(f.gate,'scripts/sync-report.mjs')],{encoding:'utf8'});assert.equal(again.status,0,again.stderr);assert.deepEqual(await inventory(f.publicDir),first);});
+test('Windows CRLF and Git/Linux LF source checkouts produce identical code-only assets',async t=>{const f=await fixture(t);assert.equal(f.result.status,0,f.result.stderr);const before=await inventory(f.publicDir);async function normalize(dir){for(const e of await fs.readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())await normalize(p);else if(/\.(?:js|mjs|cjs|html)$/.test(e.name))await fs.writeFile(p,(await fs.readFile(p,'utf8')).replace(/\r\n?/g,'\n'));}}await normalize(path.join(f.root,'reports'));await normalize(path.join(f.gate,'scripts/new-a-ui-source'));const r=spawnSync(process.execPath,[path.join(f.gate,'scripts/sync-report.mjs')],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);assert.deepEqual(await inventory(f.publicDir),before);});

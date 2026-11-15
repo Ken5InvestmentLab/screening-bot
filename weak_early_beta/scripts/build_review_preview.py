@@ -1,60 +1,35 @@
-"""Build a standalone local preview without writing ledger or production state."""
+"""Build the same data-free Cloud frame as CI. Private data is delivered by D1."""
 from __future__ import annotations
-
 import argparse
-import hashlib
 import json
 from pathlib import Path
 import shutil
-import sys
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
-
-from weak_early_beta.ledger import DEFAULT_LEDGER, read_ledger
-from weak_early_beta.report import write_report
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--ledger", type=Path, default=DEFAULT_LEDGER)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--baseline-root', type=Path, help='Isolated review only; every existing asset must match the pinned code hash')
+    # No ledger argument or fallback. A legacy caller fails instead of publishing prices.
     args = parser.parse_args()
-    ledger_path, destination = args.ledger.resolve(), args.output.resolve()
-    protected = (ROOT / "weak_early_beta" / "state").resolve()
-    if destination == protected or protected in destination.parents:
-        raise ValueError("preview output must be outside production state")
-    if destination == ledger_path or destination in ledger_path.parents:
-        raise ValueError("preview output must not contain the source ledger")
-    before = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
-    frame = read_ledger(ledger_path)
-    destination.mkdir(parents=True, exist_ok=True)
-    # Keep audit CSVs/receipts outside the directory served by a preview server.
-    evidence = destination.with_name(destination.name + "-evidence")
-    evidence.mkdir(parents=True, exist_ok=True)
-    write_report(frame, destination / "weak_early_beta_latest.html",
-                 evidence / "review_metrics.csv", evidence / "review_monthly_metrics.csv")
-    for filename in ("weak-early-beta-interactions.js", "weak-early-beta-theme-init.js", "weak-early-beta-scenarios.js"):
-        target = destination / filename
-        source = ROOT / "reports" / filename
-        if target.resolve() != source.resolve():
-            shutil.copyfile(source, target)
-    assets = destination / "report-assets"
-    assets.mkdir(exist_ok=True)
-    for filename in ("discord-light.png", "discord-dark.png", "coconala-light.png", "coconala-dark.png",
-                     "x-light.png", "x-dark.png", "cloud-logo-light.png", "cloud-logo-dark.png"):
-        source, target = ROOT / "reports" / "report-assets" / filename, assets / filename
-        if source.resolve() != target.resolve():
-            shutil.copyfile(source, target)
-    after = hashlib.sha256(ledger_path.read_bytes()).hexdigest()
-    if before != after:
-        raise RuntimeError("source ledger changed during preview generation")
-    receipt = {"source_sha256": before, "source_rows": len(frame), "source_unchanged": True,
-               "notifications_sent": 0, "deployment": False,
-               "note": "Local preview only. Missing verified prices remain unavailable."}
-    (evidence / "review_receipt.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(receipt))
+    output = args.output.resolve()
+    state = (ROOT / 'weak_early_beta' / 'state').resolve()
+    if output == state or state in output.parents:
+        raise ValueError('preview cannot overwrite state')
+    gate = ROOT / 'weak-early-beta-gate'
+    command = ['node', str(gate / 'scripts' / 'sync-report.mjs')]
+    if args.baseline_root:
+        command += ['--baseline-root', str(args.baseline_root.resolve())]
+    subprocess.run(command, check=True, cwd=gate)
+    output.mkdir(parents=True, exist_ok=True)
+    source = gate / 'public'
+    if output != source.resolve():
+        for file in source.glob('weak_early_beta_*.html'):
+            shutil.copyfile(file, output / file.name)
+        shutil.copytree(source / 'new-a-assets', output / 'new-a-assets', dirs_exist_ok=True)
+    print(json.dumps({'data_free_frame': True, 'private_inputs_read': 0, 'source_rows_embedded': 0, 'notifications_sent': 0, 'deployed': False}))
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

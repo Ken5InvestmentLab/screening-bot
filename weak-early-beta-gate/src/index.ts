@@ -1,4 +1,4 @@
-import { newACloudRoute } from "./new-a-cloud";
+import {isNewAPath,newACloudRoute,protectedReply,newAEarlyRefusal,isCompatibilityAsset,compatibilityCodeResponse} from "./new-a-cloud";
 // The OAuth/session/role implementation remains byte-identical in the synced
 // shared module. This wrapper only lets the beta's mode pages use the same gate.
 import sharedGate, { reportIdentity } from "./shared-report-gate";
@@ -39,9 +39,24 @@ export default {
   async fetch(request: SharedRequest, env: CloudEnv): Promise<Response> {
     const denied = await ownerOnlyGate(request, env);
     if (denied) return denied;
-    const newAResponse = await newACloudRoute(request, env);
-    if (newAResponse) return newAResponse;
     const pathname = new URL(request.url).pathname;
+    // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.
+    // Preserve existing push-only script updates after the unchanged owner gate.
+    if (isCompatibilityAsset(pathname)) return compatibilityCodeResponse(request, env);
+    if (isNewAPath(pathname)) {
+      if (env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase() !== "true") return protectedReply(request, 503, {error:"owner_mode_required"});
+      const earlyRefusal = newAEarlyRefusal(request); if (earlyRefusal) return earlyRefusal;
+      try {
+        const identity = await reportIdentity(request, { ...env, REPORT_ROLE_LOOKUP: (subject, token) => cloudReportRole(env, subject, token, pathname) }, true);
+        if (identity.reason === "refresh_required") {
+          if (pathname.startsWith("/api/") || pathname.startsWith("/new-a-assets/")) return protectedReply(request, 401, {error:"refresh_required"});
+          return protectedReply(request, 200, '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Discord認証確認</title><script src="/auth/guard.js" defer></script></head><body>Discord認証を確認しています。</body></html>', false);
+        }
+        if (identity.reason || !identity.subject) return protectedReply(request, identity.reason === "login_required" ? 401 : 503, {error:"authentication_unavailable"});
+        const ownerAuthorized = identity.subject === env.CLOUD_OWNER_DISCORD_ID?.trim();
+        return newACloudRoute(request, env, {ownerAuthorized, roleAuthorized:identity.discord_authorized === true, current:true, subject:identity.subject});
+      } catch { return protectedReply(request, 503, {error:"authentication_unavailable"}); }
+    }
     const bundle = BUNDLE_RE.exec(pathname);
     if (bundle) return bundleResponse(request, env, bundle[1]);
     if (pathname.startsWith("/weak_early_beta_data_")) return new Response("Not found", { status: 404, headers: { "cache-control": "private, no-store" } });

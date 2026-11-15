@@ -4,13 +4,15 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadDailyConfig } from './weak-early-beta-daily-runner.mjs';
+import taskRoute from './new-a-task-route.cjs';
+const { newATaskPlan } = taskRoute;
 import { launchPreflight } from './weak-early-beta-launch-preflight.mjs';
 import { startInvocation, boundedPreflight, readRecord, recoveryPlan, atomicJson, jstDay } from './weak-early-beta-run-journal.mjs';
 
 // The audit file is written before reading config, inspecting processes, or hashing data.
 export async function taskEntry(configPath, { task = 'cloud-3', start = false,
   auditDirectory = path.join(os.homedir(), 'Documents', 'Codex', 'Cloud_task_invocations'),
-  check = launchPreflight, load = loadDailyConfig, launch = spawn, retryOptions = {} } = {}) {
+  check = file => launchPreflight(file, { strategy: task === "cloud-5" ? "legacy" : "A_BASE" }), load = loadDailyConfig, launch = spawn, retryOptions = {} } = {}) {
   const invocation = startInvocation(auditDirectory, { task, configPath });
   let fd, guard;
   try {
@@ -25,7 +27,7 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false,
     if (readiness.status !== 'ready') return invocation.update({ status: 'recovery-required', preflight: readiness });
     const latest = path.join(runtime, 'daily-latest.json');
     const prior = fs.existsSync(latest) ? readRecord(latest) : null;
-    const plan = recoveryPlan(prior, invocation.value.date);
+    const plan = task === 'cloud-5' ? recoveryPlan(prior, invocation.value.date) : newATaskPlan(task, invocation.value.date, prior, recoveryPlan);
     if (!['none', 'resume-detection'].includes(plan.action)) return invocation.update({ status: plan.action, plan });
     if (task === 'cloud-5') return invocation.update({ status: 'reconcile', reason: 'Reminder recovery must reconcile its own delivery receipts; daily launcher not used' });
     if (!start) return invocation.update({ status: 'ready', plan, externalSideEffects: false });

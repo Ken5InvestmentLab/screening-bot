@@ -1,0 +1,9 @@
+import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';import assert from 'node:assert/strict';
+const gate=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const prohibited=/(?:data-(?:date|entry-open|d5-close|d6-open)\s*=|"(?:rows|episodes|quotes|watches|intents)"\s*:\s*\[\s*\{|\d{4}-\d{2}-\d{2})/;
+const sourceNames=[];async function check(dir,base){for(const e of await fs.readdir(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isDirectory())await check(p,base);else{const relative=path.relative(base,p).split(path.sep).join('/');sourceNames.push(relative);assert(!/\.generated\.|\.json$|\.sqlite(?:-.*)?$|\.csv$|\.gz$/.test(e.name),'Private/generated data file in UI source');if(/\.(html|c?js|ts)$/.test(e.name)){const s=await fs.readFile(p,'utf8');assert(!prohibited.test(s),'Data row/date literal entered source: '+relative);}}}}
+await check(path.join(gate,'scripts/new-a-ui-source'),path.join(gate,'scripts/new-a-ui-source'));
+const assets=[];async function list(dir,rel=''){for(const e of await fs.readdir(dir,{withFileTypes:true})){if(e.isDirectory())await list(path.join(dir,e.name),path.posix.join(rel,e.name));else assets.push(path.posix.join(rel,e.name));}}
+await list(path.join(gate,'public'));
+for(const name of assets){assert(/^(?:weak_early_beta_(?:latest|analytics|guide|silence|dive|shadow|fusion|balance)(?:_free)?\.html|weak-early-beta-(?:push|service-worker)\.js|new-a-assets\/(?:[a-z0-9-]+(?:\.generated)?\.js|report-assets\/[a-z0-9-]+\.png))$/.test(name),'Unexpected public asset: '+name);if(name.endsWith('.html'))assert(!prohibited.test(await fs.readFile(path.join(gate,'public',name),'utf8')),'Private row entered public frame');}
+console.log(JSON.stringify({codeOnly:true,uiSourceFiles:sourceNames.length,publicFiles:assets.length,privatePayloadsAllowed:false}));

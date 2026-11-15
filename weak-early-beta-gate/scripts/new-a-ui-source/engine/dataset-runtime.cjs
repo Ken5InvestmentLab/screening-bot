@@ -1,11 +1,11 @@
 // 同一の検証済み入力を使う純粋なtrial wrapper。通信・ファイル・認証を持たない。
 'use strict';
-const {replay,valid,validatePreferences}=require('./finite-engine.cjs');
+const {replay,valid,validatePreferences,validateExitPolicy}=require('./finite-engine.cjs');
 function createDatasetRuntime(input,quotes){
  const results=new Map();
- function simulate(preferences,{identityScreen=true,variableShares=false}={}){
-  preferences=validatePreferences(preferences);
-  const key=JSON.stringify([preferences,identityScreen,variableShares]);if(results.has(key))return structuredClone(results.get(key));
+ function simulate(preferences,{identityScreen=true,variableShares=false,exitPolicy=null}={}){
+  preferences=validatePreferences(preferences);exitPolicy=validateExitPolicy(exitPolicy);
+  const key=JSON.stringify([preferences,identityScreen,variableShares,exitPolicy]);if(results.has(key))return structuredClone(results.get(key));
   const hold=preferences.exit_endpoint==='a20_close'?20:preferences.exit_endpoint==='d5_close'?5:6;
   let calendar=input.calendar;
   if(preferences.year_scope!=='all'){
@@ -24,7 +24,7 @@ function createDatasetRuntime(input,quotes){
   });
   const identityKeys=new Set(watches.filter(w=>w.selection_reason==='IDENTITY_UNVERIFIED').map(w=>`${w.symbol}|${w.candidate_date}|${w.episode_id}`));
   const intents=input.intents.filter(e=>calendar.includes(e.candidate_date)&&calendar.includes(e.trigger_date)&&(preferences.year_scope==='all'||e.candidate_date.startsWith(preferences.year_scope))&&!identityKeys.has(`${e.symbol}|${e.candidate_date}|${e.episode_id}`));
-  const result={...replay({calendar,intents,quotes},preferences,{variableShares}),simulation:true,execution_status:'SIMULATED_NOT_ACTUAL_TRADES',watches,period:[calendar[0],calendar.at(-1)],source_limits:input.limits,pending_next_open:intents.filter(e=>e.trigger_date===calendar.at(-1)).length,view_kind:identityScreen?'A_FINITE_IDENTITY_SCREENED_TRIAL_V1':'FROZEN_ORIGINAL_COHORT_FINITE_PROFILE_COMPARISON'};
+  const result={...replay({calendar,intents,quotes},preferences,{variableShares,exitPolicy}),simulation:true,execution_status:'SIMULATED_NOT_ACTUAL_TRADES',watches,period:[calendar[0],calendar.at(-1)],source_limits:input.limits,pending_next_open:intents.filter(e=>e.trigger_date===calendar.at(-1)).length,view_kind:identityScreen?'A_FINITE_IDENTITY_SCREENED_TRIAL_V1':'FROZEN_ORIGINAL_COHORT_FINITE_PROFILE_COMPARISON'};
   results.set(key,result);if(results.size>4)results.delete(results.keys().next().value);return structuredClone(result);
  }
  return {source_version:input.source_version,input,quotes,simulate};

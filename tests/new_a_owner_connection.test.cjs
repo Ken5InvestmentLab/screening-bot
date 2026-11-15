@@ -33,3 +33,84 @@ test('normal large current display reassembles UTF-8 fragments; missing/order/ta
  await assert.rejects(()=>api.readPresentation(async url=>url.endsWith('/manifest.json')?Response.json(manifest):new Response(parts.get(url.split('/').pop())),webcrypto),/daily_snapshot_mismatch/);
 });
 test('current watch display labels missing/restricted source holds without inventing a last observation date',()=>{const c={module:{exports:{}}};vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),c);const snapshot={schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',as_of:'synthetic-session',observation_kind:'DRY_RUN_HISTORICAL',held_symbols:{'1111':{day:'held-session',reason:'MISSING_SOURCE'},'2222':{day:'held-session',reason:'SOURCE_QUARANTINED'}},monitor_state:{watches:{'1111|1':{episode:{symbol:'1111',candidate_date:'candidate'}},'2222|1':{episode:{symbol:'2222',candidate_date:'candidate'}},'3333|1':{episode:{symbol:'3333',candidate_date:'candidate'}}}},events:[]};const html=c.module.exports.currentMarkup([snapshot]);assert(html.includes('保留 2銘柄／うち監視 2件'));assert(html.includes('取得・価格保留（取得未確認）'));assert(html.includes('取得・価格保留（価格照合保留）'));assert(html.includes('保留対象日 held-session'));assert(!html.includes('最終観測'));assert(html.includes('<td>3333</td>'));assert(html.includes('監視中・未約定'));});
+
+// Exit-transition fixtures are synthetic; no actual price input or production session.
+const transitionEngine=require(path.join(gate,'scripts/new-a-ui-source/engine/finite-engine.cjs'));
+const transitionPolicy={version:'A_OPEN_EXIT_V2',first_d5_entry_session:'2026-11-17',legacy_endpoint:'d6_open',new_endpoint:'d5_open'};
+const transitionCalendar=['09','10','11','12','13','16','17','18','19','20','24','25','26','27','30'].map(d=>'2026-11-'+d);
+const transitionPreferences={price_cap_yen:null,exit_endpoint:'d6_open',base_shares:100,cost_percent:0,year_scope:'all',allocation:'all',initial_cash_yen:10000000,max_positions:20,per_order_cap_yen:500000};
+const transitionIntent=(symbol,day)=>({symbol,candidate_date:day,trigger_date:day,episode_id:1,priority_score:1});
+const transitionQuote=()=>({open:100,high:101,low:99,close:100,actual_close:100,volume:100,actual_volume:100,split_factor:1,source_usable:true});
+function transitionReplay(intents,patch={},options={}){return transitionEngine.replay({calendar:transitionCalendar,intents,quotes:{get:transitionQuote},...options},{...transitionPreferences,...patch},{exitPolicy:transitionPolicy});}
+
+test('open-exit transition starts with Nov17 entries, counts purchase day one and skips Nov23',()=>{
+ assert.equal(transitionPolicy.first_d5_entry_session,'2026-11-17');
+ const result=transitionReplay([transitionIntent('1111','2026-11-13'),transitionIntent('2222','2026-11-16')]);
+ assert.equal(result.trades.length,2);
+ const old=result.trades.find(t=>t.symbol==='1111'),fresh=result.trades.find(t=>t.symbol==='2222');
+ assert.equal(old.entry_date,'2026-11-16');assert.equal(old.exit_date,'2026-11-24');assert.equal(old.actual_exit_timing,'OPEN');assert.equal(old.exit_endpoint,undefined);
+ assert.equal(fresh.entry_date,'2026-11-17');assert.equal(fresh.exit_date,'2026-11-24');assert.equal(fresh.actual_exit_timing,'OPEN');assert.equal(fresh.exit_endpoint,'d5_open');
+ assert.equal(old.exit_i-old.entry_i,5);assert.equal(fresh.exit_i-fresh.entry_i,4);assert.equal(fresh.exit_policy_version,transitionEngine.OPEN_EXIT_POLICY_VERSION);
+ assert.equal(result.open_positions['1111'],undefined);assert.equal(result.open_positions['2222'],undefined);
+});
+test('positions bought before transition retain D6 even when their exit is after transition',()=>{
+ const result=transitionReplay([transitionIntent('1111','2026-11-09')]);
+ assert.equal(result.trades[0].entry_date,'2026-11-10');assert.equal(result.trades[0].exit_date,'2026-11-17');assert.equal(result.trades[0].exit_endpoint,undefined);
+ const first=transitionReplay([transitionIntent('1111','2026-11-09')],{}, {calendar:transitionCalendar.slice(0,6)});
+ assert.equal(first.trades.length,0);assert.equal(first.open_positions['1111'].exit_i,6);assert.equal(first.open_positions['1111'].exit_endpoint,undefined);
+});
+test('D5 close and A20 close preserve their old timing and calendar offsets',()=>{
+ const close=transitionReplay([transitionIntent('1111','2026-11-16')],{exit_endpoint:'d5_close'});
+ assert.equal(close.trades[0].exit_date,'2026-11-24');assert.equal(close.trades[0].actual_exit_timing,'CLOSE');assert.equal(close.exit_policy,undefined);
+ assert.deepEqual(transitionEngine.exitTerms('a20_close','2026-11-17'),{sessions:20,timing:'CLOSE',endpoint:'a20_close'});
+});
+test('missing or one-price D5 quote stays unresolved and never silently delays to D6',()=>{
+ for(const kind of ['missing','flat']){
+  const quotes={get:(s,d)=>d==='2026-11-24'?(kind==='missing'?null:{...transitionQuote(),open:100,high:100,low:100,close:100}):transitionQuote()};
+  const result=transitionReplay([transitionIntent('1111','2026-11-16')],{}, {quotes});
+  assert.equal(result.trades.length,0);assert.equal(result.resolved,false);assert.equal(result.metrics.netProfit,null);assert.equal(result.metrics.winRate,null);assert(result.unresolved.some(x=>x.reason==='UNRESOLVED_SCHEDULED_EXIT'));
+ }
+});
+test('fixed lots, per-order cap, portfolio cap and absence of an extra daily cap are retained',()=>{
+ const intents=Array.from({length:21},(_,i)=>transitionIntent(String(1100+i),'2026-11-16'));
+ const result=transitionReplay(intents);assert.equal(result.counts.FILLED,20);assert.equal(result.counts.CAPACITY,1);assert.equal(result.trades.length,20);assert(result.trades.every(t=>t.shares===100));assert(result.daily.every(d=>d.positions<=20));
+ const capped=transitionReplay([transitionIntent('1111','2026-11-16')],{}, {quotes:{get:()=>({...transitionQuote(),open:6000,high:6100,low:5900,close:6000,actual_close:6000})}});
+ assert.equal(capped.counts.LOT_EXCEEDS_ALLOCATION,1);assert.equal(capped.metrics.fills,0);
+});
+test('repeated simulation of the same mixed holdings cannot create double settlements',()=>{
+ const intents=[transitionIntent('1111','2026-11-13'),transitionIntent('2222','2026-11-16')];
+ const first=transitionReplay(intents),second=transitionReplay(intents);assert.deepEqual(first,second);assert.equal(new Set(first.trades.map(t=>t.symbol+'|'+t.entry_date)).size,2);
+});
+test('settings reload keeps saved d6_open bytes while labels and exports describe each cohort',()=>{
+ const c={module:{exports:{}}};vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/finite-controller.js'),'utf8'),c);const api=c.module.exports;
+ const result=transitionReplay([transitionIntent('1111','2026-11-13'),transitionIntent('2222','2026-11-16')]),policy=result.exit_policy;
+ assert.equal(api.validate(transitionPreferences).exit_endpoint,'d6_open');
+ assert.equal(api.exitLabel('d6_open',{entry_date:'2026-11-16'},policy),'6営業日目 寄付');assert.equal(api.exitLabel('d6_open',{entry_date:'2026-11-17'},policy),'5営業日目 寄付');
+ const d={request_id:'synthetic-transition',source_version:'synthetic-version',view_kind:'synthetic',preferences:transitionPreferences,result:{...result,watches:[]}};
+ const html=api.render(d);assert(html.includes('2026-11-17買付から5営業日目'));assert(html.includes('以前は6営業日目'));
+ assert(api.exportsFor(d,'daily').includes('exit_policy'));assert(api.exportsFor(d,'daily').includes(transitionEngine.OPEN_EXIT_POLICY_VERSION));
+});
+
+test('private owner policy passes through the real browser broker and worker; missing policy fails closed',async()=>{
+ const f=fixture();try{
+  const state=await(await f.app.fetch(request('/api/cloud/new-a-finite/preferences'),f.env)).json();assert.deepEqual(state.exit_policy,transitionPolicy);
+  const runtime=require(path.join(gate,'scripts/new-a-ui-source/engine/dataset-runtime.cjs'));
+  const manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',dataset_id:'a-'+'1'.repeat(24),source_version:'synthetic',input_header:{source_version:'synthetic',calendar:transitionCalendar,limits:{identityUnverifiedBefore:{}}},collections:{episodes:[],intents:[],watches:[]},quotes:[],quote_fields:[],expected_quote_keys:0};
+  let workers=0,policy=state.exit_policy,authorized=true;
+  const brokerContext={module:{exports:{}},Response,TextDecoder,Uint8Array,crypto:webcrypto};vm.createContext(brokerContext);vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/browser-transport.js'),'utf8'),brokerContext);
+  const broker=brokerContext.module.exports.create({fetch:async()=>authorized?Response.json({exit_policy:policy}):new Response(null,{status:403}),pinnedManifest:manifest,createWorker(){workers++;const worker={terminate(){},postMessage(message){context.onmessage({data:message});}},context={AFiniteDataset:runtime,postMessage:message=>worker.onmessage({data:message})};vm.createContext(context);vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/engine/worker-entry.js'),'utf8'),context);return worker;}});
+  const simulate=()=>broker.transport('/api/cloud/new-a-finite/simulate',{method:'POST',body:JSON.stringify({preferences:transitionPreferences,request_id:'synthetic'})});
+  const ok=await simulate();assert.equal(ok.status,200);assert.deepEqual((await ok.json()).result.exit_policy,transitionPolicy);assert.equal(workers,1);
+  policy=undefined;assert.equal((await simulate()).status,503);assert.equal(workers,1);
+  authorized=false;assert.equal((await simulate()).status,403);assert.equal(workers,1);
+ }finally{f.close();}
+});
+
+test('runtime caches policy generations separately and preserves original semantics without transition',()=>{
+ const {createDatasetRuntime}=require(path.join(gate,'scripts/new-a-ui-source/engine/dataset-runtime.cjs'));
+ const intents=[transitionIntent('1111','2026-11-16')],input={calendar:transitionCalendar,intents,episodes:[],watches:[],limits:{identityUnverifiedBefore:{}},source_version:'synthetic'},runtime=createDatasetRuntime(input,{get:transitionQuote});
+ assert.equal(runtime.simulate(transitionPreferences).trades[0].exit_date,'2026-11-25');
+ assert.equal(runtime.simulate(transitionPreferences,{exitPolicy:transitionPolicy}).trades[0].exit_date,'2026-11-24');
+ assert.equal(runtime.simulate(transitionPreferences).trades[0].exit_date,'2026-11-25');
+ for(const invalid of [{},{...transitionPolicy,version:'unknown'},{...transitionPolicy,first_d5_entry_session:'invalid'}])assert.throws(()=>runtime.simulate(transitionPreferences,{exitPolicy:invalid}),/exit_policy_invalid/);
+});

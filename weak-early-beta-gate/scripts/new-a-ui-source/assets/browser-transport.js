@@ -27,7 +27,8 @@
    if(url!=='/api/cloud/new-a-finite/simulate'||options.method!=='POST')return network(url,options);
    // キャッシュ済み価格を使う場合も、既存本人・role・sessionの最新可否を先に確認する。
    const access=await network('/api/cloud/new-a-finite/preferences',{cache:'no-store'});if(!access.ok){clear();return access;}
-   try{await initialized();const body=JSON.parse(options.body);if(body.expected_source_version!==undefined){const pin=await rpc({kind:'source_version'});if(body.expected_source_version!==pin.source_version)return response(409,{error:'source_version_changed'});}const value=await rpc({kind:'simulate',preferences:body.preferences,request_id:body.request_id});delete value.id;return response(200,value);}catch(e){if(e.status===401||e.status===403)clear();return response(e.status||503,{error:e.status===401?'login_required':e.status===403?'owner_required':'local_simulation_unavailable'});}
+   let policy;try{const state=await access.json();policy=state.exit_policy;if(!policy||policy.version!=='A_OPEN_EXIT_V2'||!/^\d{4}-\d{2}-\d{2}$/.test(policy.first_d5_entry_session)||policy.legacy_endpoint!=='d6_open'||policy.new_endpoint!=='d5_open')throw Error('exit_policy_invalid');}catch{clear();return response(503,{error:'local_simulation_unavailable'});}
+   try{await initialized();const body=JSON.parse(options.body);if(body.expected_source_version!==undefined){const pin=await rpc({kind:'source_version'});if(body.expected_source_version!==pin.source_version)return response(409,{error:'source_version_changed'});}const value=await rpc({kind:'simulate',preferences:body.preferences,exit_policy:policy,request_id:body.request_id});delete value.id;return response(200,value);}catch(e){if(e.status===401||e.status===403)clear();return response(e.status||503,{error:e.status===401?'login_required':e.status===403?'owner_required':'local_simulation_unavailable'});}
   }
   return{transport,clear};
  }

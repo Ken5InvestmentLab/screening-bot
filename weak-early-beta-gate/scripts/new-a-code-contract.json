@@ -21,13 +21,13 @@
     {
       "source": "reports/report-assets/cloud-logo-dark.png",
       "target": "report-assets/cloud-logo-dark.png",
-      "sha256": "a4fdd5b0fda96d07008d8606ec8b4b0b607fb927208ba8cbb72e25b877ffe24a",
+      "sha256": "88d476f599a6ed747790a04d4492ae3873d1338dbef120822622078110e76997",
       "normalization": "BYTES"
     },
     {
       "source": "reports/report-assets/cloud-logo-light.png",
       "target": "report-assets/cloud-logo-light.png",
-      "sha256": "1b2904ea6edddb2c1c32261d5317e78dc6ff9b69bc33ee02ad5b554ee347952e",
+      "sha256": "00efacd592fd504dea8b20c6aab3273210091eb2caaacc39dd73673c9dc0e385",
       "normalization": "BYTES"
     },
     {

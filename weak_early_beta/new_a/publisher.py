@@ -7,6 +7,110 @@ def literal(value):
  if value is None:return 'NULL'
  if isinstance(value,(int,float)):return str(value)
  return "'"+str(value).replace("'","''")+"'"
+
+class RemoteD1Error(RuntimeError):
+ """Fixed categories and numeric provider codes only; never include SQL or output."""
+ def __init__(self,category,*,provider_codes=(),returncode=None):
+  self.provider_codes=tuple(provider_codes);self.returncode=returncode
+  super().__init__(category)
+
+def is_read_only_select(statement):
+ """Conservative routing only: one SELECT, no comments or outside-string ';'."""
+ text=statement.strip()
+ if not re.match(r'SELECT\b',text,re.I) or '\0' in text:return False
+ quote=None;i=0
+ while i<len(text):
+  char=text[i]
+  if quote:
+   if char==quote:
+    if i+1<len(text) and text[i+1]==quote:i+=1
+    else:quote=None
+  elif char in "'\"`":quote=char
+  elif char=='[':quote=']'
+  elif char==';' or text[i:i+2] in ['--','/*']:return False
+  i+=1
+ return quote is None
+
+_CLI_NOTICES={
+ 'Using secrets defined in process.env',
+ 'Using secrets defined in .env',
+ "Proxy environment variables detected. We'll use your proxy for fetch requests.",
+}
+
+def _decode_wrangler_output(stdout,*,returncode=0,stderr=''):
+ """Decode one document with only the existing allowlisted CLI notices."""
+ def reject(category,codes=()):
+  raise RemoteD1Error(category,provider_codes=codes,returncode=returncode)
+ if returncode:
+  codes=sorted({int(value) for pair in re.findall(r'\[code:\s*(\d+)\]|"code"\s*:\s*(\d+)',(stdout or '')+'\n'+(stderr or '')) for value in pair if value})
+  reject('remote_d1_authorization_failed_reconcile_before_retry' if 7403 in codes else 'remote_d1_operation_failed_reconcile_before_retry',codes)
+ if not isinstance(stdout,str) or not stdout.strip('\ufeff \t\r\n'):
+  reject('remote_d1_response_empty_reconcile_before_retry')
+ text=re.sub(r'\x1b\[[0-9;]*m','',stdout).lstrip('\ufeff')
+ lines=text.splitlines(keepends=True)
+ while lines and (not lines[0].strip() or lines[0].strip() in _CLI_NOTICES):lines.pop(0)
+ text=''.join(lines).lstrip()
+ def unique_object(pairs):
+  value={}
+  for key,item in pairs:
+   if key in value:raise ValueError('duplicate JSON key')
+   value[key]=item
+  return value
+ def invalid_constant(_):raise ValueError('non-JSON constant')
+ try:
+  data,end=json.JSONDecoder(object_pairs_hook=unique_object,parse_constant=invalid_constant).raw_decode(text)
+  if any(line.strip() and line.strip() not in _CLI_NOTICES for line in text[end:].splitlines()):raise ValueError('unexpected trailing output')
+ except (ValueError,TypeError):
+  reject('remote_d1_response_unrecognized_reconcile_before_retry')
+ if isinstance(data,dict) and data.get('error'):
+  # The CLI's JSON failure envelope is not a successful result, even at exit 0.
+  codes=sorted({int(value) for pair in re.findall(r'"code"\s*:\s*(\d+)|\[code:\s*(\d+)\]',json.dumps(data['error'])) for value in pair if value})
+  reject('remote_d1_authorization_failed_reconcile_before_retry' if 7403 in codes else 'remote_d1_operation_unconfirmed',codes)
+ return data
+
+def _require_success(item,returncode):
+ if not isinstance(item,dict):raise RemoteD1Error('remote_d1_operation_unconfirmed',returncode=returncode)
+ if item.get('success') is not True or item.get('error') or item.get('errors'):
+  detail=json.dumps({'error':item.get('error'),'errors':item.get('errors')})
+  codes=sorted({int(value) for pair in re.findall(r'"code"\s*:\s*(\d+)|\[code:\s*(\d+)\]',detail) for value in pair if value})
+  raise RemoteD1Error('remote_d1_authorization_failed_reconcile_before_retry' if 7403 in codes else 'remote_d1_operation_unconfirmed',provider_codes=codes,returncode=returncode)
+
+def parse_wrangler_query_results(stdout,expected_count,*,returncode=0,stderr=''):
+ """Accept query rows only; an import receipt cannot supply RETURNING rows."""
+ data=_decode_wrangler_output(stdout,returncode=returncode,stderr=stderr)
+ def reject(category):raise RemoteD1Error(category,returncode=returncode)
+ if not isinstance(data,list) or len(data)!=expected_count:
+  reject('remote_d1_query_result_count_mismatch_reconcile_before_retry')
+ for item in data:
+  _require_success(item,returncode)
+  if 'finalBookmark' in item:
+   reject('remote_d1_import_summary_not_query_results_reconcile_before_retry')
+  if not isinstance(item.get('results'),list) or any(not isinstance(row,dict) for row in item['results']):
+   reject('remote_d1_query_result_shape_invalid_reconcile_before_retry')
+ return [item['results'] for item in data]
+
+def parse_wrangler_import_ack(stdout,expected_count,*,returncode=0,stderr=''):
+ """Validate file-import completion, never manufacture SQL result rows."""
+ data=_decode_wrangler_output(stdout,returncode=returncode,stderr=stderr)
+ def reject():raise RemoteD1Error('remote_d1_import_unconfirmed_reconcile_before_retry',returncode=returncode)
+ if not isinstance(data,list) or len(data)!=1:reject()
+ item=data[0];_require_success(item,returncode)
+ rows=item.get('results');meta=item.get('meta');bookmark=item.get('finalBookmark')
+ if not isinstance(bookmark,str) or not bookmark.strip() or not isinstance(meta,dict) or not isinstance(rows,list) or len(rows)!=1 or not isinstance(rows[0],dict):reject()
+ total=rows[0].get('Total queries executed')
+ if type(total) is not int or total!=expected_count or expected_count<1:reject()
+ for label,key in [('Rows read','rows_read'),('Rows written','rows_written')]:
+  value=rows[0].get(label)
+  if type(value) is not int or value<0 or type(meta.get(key)) is not int or meta[key]!=value:reject()
+ return [[] for _ in range(expected_count)]
+
+def _import_statement_allowed(sql):
+ """Restrict imports to the publisher's single DML statements without row output."""
+ if not re.match(r'(INSERT|UPDATE|DELETE)\b',sql.strip(),re.I) or '\0' in sql:return False
+ # Removing quoted content allows harmless literals and quoted identifiers.
+ unquoted=re.sub(r"'(?:''|[^'])*'|\"(?:\"\"|[^\"])*\"|`(?:``|[^`])*`|\[(?:\]\]|[^\]])*\]",' ',sql)
+ return not re.search(r"[;'\"`\[\]]|--|/\*|\bRETURNING\b",unquoted,re.I)
+
 class LocalD1:
  def __init__(self,path,schema):
   Path(path).parent.mkdir(parents=True,exist_ok=True);self.db=sqlite3.connect(path,isolation_level=None);self.db.row_factory=sqlite3.Row;self.db.execute('PRAGMA foreign_keys=ON');self.db.executescript(Path(schema).read_text(encoding='utf8'));self.external=False
@@ -24,6 +128,7 @@ class WranglerD1:
   self.directory.mkdir(parents=True,exist_ok=True)
  def query(self,sql,values=()):return self.batch([(sql,values)])[0]
  def batch(self,statements):
+  if not statements:return []
   compiled=[]
   for sql,values in statements:
    segments=sql.split('?')
@@ -33,15 +138,18 @@ class WranglerD1:
    compiled.append(sql.rstrip(';'))
   sql=';\n'.join(compiled)+';'
   if len(sql.encode())>1024*1024:raise ValueError('D1 SQL batch budget exceeded')
+  read_only=bool(compiled) and all(is_read_only_select(statement) for statement in compiled)
+  if not read_only and not all(_import_statement_allowed(statement) for statement in compiled):raise ValueError('D1 import requires single DML statements without RETURNING')
   # 値を引数/履歴へ入れずprivate fileから渡し、stdout/stderrはチャット/CIへ出さない。
   with tempfile.NamedTemporaryFile(mode='w',encoding='utf8',suffix='.sql',dir=self.directory,delete=False) as f:f.write(sql);name=f.name
   try:
+   if read_only:
+    bridge=Path(__file__).with_name('wrangler-query.cjs')
+    result=subprocess.run([self.node,str(bridge),str(self.cli),name],cwd=self.repo/'weak-early-beta-gate',capture_output=True,text=True,encoding='utf8',timeout=120)
+    return parse_wrangler_query_results(result.stdout,len(statements),returncode=result.returncode,stderr=result.stderr)
+   # Keep the existing file-import transport, statement order, limits and timeout.
    result=subprocess.run([self.node,str(self.cli),'d1','execute','CLOUD_DB','--remote','--file',name,'--yes','--json'],cwd=self.repo/'weak-early-beta-gate',capture_output=True,text=True,encoding='utf8',timeout=120)
-   if result.returncode:raise RuntimeError('remote_d1_operation_failed_reconcile_before_retry')
-   try:data=json.loads(result.stdout)
-   except Exception:raise RuntimeError('remote_d1_response_unrecognized_reconcile_before_retry') from None
-   if not isinstance(data,list) or any(item.get('success') is not True for item in data):raise RuntimeError('remote_d1_operation_unconfirmed')
-   return [item.get('results',[]) for item in data]
+   return parse_wrangler_import_ack(result.stdout,len(statements),returncode=result.returncode,stderr=result.stderr)
   finally:Path(name).unlink(missing_ok=True)
  def close(self):pass
 def descriptors(manifest):return [*manifest['quotes'],*[d for values in manifest['collections'].values() for d in values]]
@@ -133,10 +241,10 @@ def activate_prepared(db,prepared,*,expected_revision,now=None):
  if current and current['dataset_id']==row['dataset_id'] and prior_revision in (expected_revision,expected_revision+1):return publication_receipt(current,manifest,prior_revision,True,db.external)
  if prior_revision!=expected_revision:raise ValueError('active pointer revision conflict')
  now=now or datetime.datetime.now(datetime.timezone.utc).isoformat();dataset_id=row['dataset_id']
- if prior_revision==0:switched=db.query("INSERT INTO new_a_active_pointer VALUES ('owner',?,1,?) ON CONFLICT(pointer_key) DO NOTHING RETURNING revision",(dataset_id,now))
- else:switched=db.query("UPDATE new_a_active_pointer SET dataset_id=?,revision=revision+1,updated_at=? WHERE pointer_key='owner' AND revision=? RETURNING revision",(dataset_id,now,prior_revision))
+ if prior_revision==0:db.query("INSERT INTO new_a_active_pointer VALUES ('owner',?,1,?) ON CONFLICT(pointer_key) DO NOTHING",(dataset_id,now))
+ else:db.query("UPDATE new_a_active_pointer SET dataset_id=?,revision=revision+1,updated_at=? WHERE pointer_key='owner' AND revision=?",(dataset_id,now,prior_revision))
  current=pointer(db)
- if not switched and (not current or current['dataset_id']!=dataset_id or current['revision']!=expected_revision+1):raise ValueError('active pointer conflict after staging; reconcile')
+ if not current or current['dataset_id']!=dataset_id or current['revision']!=expected_revision+1:raise ValueError('active pointer conflict after staging; reconcile')
  if not current or current['dataset_id']!=dataset_id or current['status']!='READY':raise ValueError('active dataset readback mismatch')
  verify_dataset(db,dataset_id);return publication_receipt(current,manifest,current['revision'],False,db.external)
 
@@ -147,10 +255,13 @@ def publish_bundle(db,folder,*,expected_revision=None,now=None):
 def publication_receipt(active,manifest,revision,duplicate,external):
  return {'schema':'NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1','published':external,'local_d1_emulation':not external,'dataset_id':active['dataset_id'],'revision':revision,'source_version':manifest['source_version'],'manifest_sha256':active['manifest_sha256'],'snapshot_sha256':manifest['daily_snapshot_sha256'],'as_of':manifest['as_of'],'active_readback_verified':True,'same_dataset_replay':duplicate,'existing_owner_gate_verified':False,'notifications_sent':0}
 def rollback_pointer(db,target_dataset_id,expected_revision):
+ if type(expected_revision) is not int or expected_revision<1:raise ValueError('explicit rollback revision required')
  row,m=verify_dataset(db,target_dataset_id)
  if row['status']!='READY':raise ValueError('rollback target not verified ready')
- now=datetime.datetime.now(datetime.timezone.utc).isoformat();changed=db.query("UPDATE new_a_active_pointer SET dataset_id=?,revision=revision+1,updated_at=? WHERE pointer_key='owner' AND revision=? RETURNING revision",(target_dataset_id,now,expected_revision))
- if not changed:raise ValueError('rollback pointer conflict')
+ before=pointer(db)
+ if not before or before['revision']!=expected_revision:raise ValueError('rollback pointer conflict')
+ now=datetime.datetime.now(datetime.timezone.utc).isoformat();db.query("UPDATE new_a_active_pointer SET dataset_id=?,revision=revision+1,updated_at=? WHERE pointer_key='owner' AND revision=?",(target_dataset_id,now,expected_revision))
  current=pointer(db)
- if current['dataset_id']!=target_dataset_id:raise ValueError('rollback readback failed')
+ if not current or current['dataset_id']!=target_dataset_id or current['revision']!=expected_revision+1 or current['status']!='READY':raise ValueError('rollback readback failed; reconcile')
+ verify_dataset(db,target_dataset_id)
  return publication_receipt(current,m,current['revision'],False,db.external)

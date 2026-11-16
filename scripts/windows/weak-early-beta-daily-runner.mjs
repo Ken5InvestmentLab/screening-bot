@@ -9,6 +9,7 @@ import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASO
 import { checkpointJpxRefresh } from './weak-early-beta-jpx-checkout.mjs';
 import { networkFailureDetail, waitForNetworkCapacity } from './weak-early-beta-network-guard.mjs';
 import { atomicJson, appendEvent, recoveryPlan, verifiedDetectionCache } from './weak-early-beta-run-journal.mjs';
+import { verifyPreflightReconciliation, consumePreflightReconciliation } from './preflight-reconciliation.mjs';
 import taskRoute from './new-a-task-route.cjs';
 const { newATaskPlan } = taskRoute;
 
@@ -403,7 +404,8 @@ async function probeFundamentalModel(config, runDir, env) {
   }
 }
 
-async function main(configFile, { resumeReceipt = null } = {}) {
+async function main(configFile, { resumeReceipt = null, reconciliationFile = null, reconciliationInvocation = null } = {}) {
+  if (reconciliationFile && (resumeReceipt || !reconciliationInvocation)) throw new Error('Distinct task-entry reconciliation invocation required');
   const config = loadDailyConfig(configFile);
   const repo = path.resolve(config.repoPath);
   const runtime = path.resolve(config.runtimeDir);
@@ -422,6 +424,7 @@ async function main(configFile, { resumeReceipt = null } = {}) {
   const lock = path.join(runtime, 'daily.lock');
   let ownsLock = false;
   let preservePriorCompletion = false;
+  let reconciliationAccepted = false;
   const env = { ...process.env };
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
@@ -477,12 +480,22 @@ async function main(configFile, { resumeReceipt = null } = {}) {
       throw error;
     }
     ownsLock = true;
+    if (reconciliationFile) preservePriorCompletion = true;
     if (fs.existsSync(resultPath)) {
-      const saved = readJson(resultPath); const plan = newATaskPlan("cloud-2", today, saved, recoveryPlan);
+      const saved = readJson(resultPath); let plan = newATaskPlan("cloud-2", today, saved, recoveryPlan);
+      if (reconciliationFile) {
+        if (plan.action !== 'reconcile') throw new Error('Only unresolved preflight may use reconciliation');
+        const head = (await git(['rev-parse', 'HEAD'])).stdout.trim();
+        const verified = verifyPreflightReconciliation({repo,runtime,date:today,head,prior:saved,file:reconciliationFile});
+        result.preflightReconciliation = consumePreflightReconciliation(runtime,verified,reconciliationInvocation,startedAt);
+        result.originalRunId = saved.startedAt;
+        reconciliationAccepted = true; preservePriorCompletion = false;
+        plan = {action:'none'};
+      }
       if (saved.date === today && plan.action === "complete") { preservePriorCompletion = true; Object.assign(result, { ok: true, skippedAlreadyCompleted: true, new_a: saved.new_a }); return; }
       if (saved.date === today && ["observe", "reconcile"].includes(plan.action)) { preservePriorCompletion = true; throw new Error("Same-day New A receipt requires reconciliation"); }
       if (saved.date === today && plan.action === "resume-detection" && !prior) { preservePriorCompletion = true; throw new Error("Detection recovery requires the immutable task-entry receipt"); }
-    }
+    } else if (reconciliationFile) throw new Error('Original preflight record missing');
     for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
       if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
     }
@@ -620,7 +633,7 @@ async function main(configFile, { resumeReceipt = null } = {}) {
     if (error.failureType) result.failureType = error.failureType;
     result.stage = stage;
     if (ownsLock && stage === 'detection') result.privateSourceCacheRetained = true;
-    await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
+    if (!reconciliationFile || reconciliationAccepted) await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
     process.exitCode = 1;
   } finally {
     result.completedAt = new Date().toISOString();
@@ -635,7 +648,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!process.argv[2]) throw new Error('usage: node weak-early-beta-daily-runner.mjs <config.json>');
   const resumeIndex = process.argv.indexOf('--resume-detection');
   if (resumeIndex >= 0 && !process.argv[resumeIndex + 1]) throw new Error('Missing terminal receipt path');
-  await main(process.argv[2], { resumeReceipt: resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null });
+  const reconcileIndex=process.argv.indexOf('--reconcile-preflight'),invocationIndex=process.argv.indexOf('--reconcile-invocation');
+  if ((reconcileIndex>=0)!==(invocationIndex>=0) || (reconcileIndex>=0&&(!process.argv[reconcileIndex+1]||!process.argv[invocationIndex+1]))) throw Error('Missing reconciliation record or invocation');
+  await main(process.argv[2], { resumeReceipt: resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null, reconciliationFile:reconcileIndex>=0?process.argv[reconcileIndex+1]:null, reconciliationInvocation:invocationIndex>=0?process.argv[invocationIndex+1]:null });
 }
 
 export { npmInvocation, probeFundamentalModel, run, parseGitStatus, assertGeneratedChanges, GENERATED_PATHS,

@@ -4,7 +4,10 @@ from .files import file_sha
 def validate_activation(value,repo):
  if value.get('schema')!='NEW_A_OWNER_ACTIVATION_V1' or value.get('active') is not True or value.get('external_actions_approved') is not True or value.get('strategy')!='A_BASE':raise ValueError('new-A activation not approved')
  evidence=value.get('owner_acceptance',{})
- if any(evidence.get(k) is not True for k in ['actual_owner_allowed','anonymous_denied','nonowner_denied','private_direct_paths_denied','existing_auth_unchanged']):raise ValueError('actual owner acceptance incomplete')
+ if evidence.get('continuing_acceptance') is not None:
+  from .continuing_acceptance import validate_evidence
+  validate_evidence(evidence,repo)
+ elif any(evidence.get(k) is not True for k in ['actual_owner_allowed','anonymous_denied','nonowner_denied','private_direct_paths_denied','existing_auth_unchanged']):raise ValueError('actual owner acceptance incomplete')
  for path,h in evidence.get('auth_source_hashes',{}).items():
   p=(Path(repo)/path).resolve()
   if not p.is_relative_to(Path(repo).resolve()) or p.suffix not in ['.ts','.mjs'] or file_sha(p)!=h:raise ValueError('accepted owner wrapper changed')

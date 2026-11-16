@@ -53,7 +53,8 @@
   const title=r.trial_policy?'試算｜'+TRIAL_PRESETS[r.trial_policy.id]:'試算｜個別設定';
   const cards=[['純損益',yen(m.netProfit)],['最大DD',pct(m.maxDrawdown)],['勝率',pct(m.winRate)],['保有件数',r.resolved?number(m.open)+'件':'未確定']];
   const fresh=s?.as_of===today&&s.observation_kind==='LIVE_OBSERVATION';
-  const delayed=s?.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'&&s.as_of==='2026-11-16'&&s.observed_at&&String(s.observed_at).slice(0,10)>='2026-11-16';
+  const observedDay=typeof s?.observed_at==='string'&&Number.isFinite(Date.parse(s.observed_at))?new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s.observed_at)):'';
+  const delayed=s?.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'&&/^\d{4}-\d{2}-\d{2}$/.test(s.as_of||'')&&observedDay>s.as_of&&observedDay<=today;
   const seen=new Set(),detections=(fresh||delayed)?(s.events||[]).filter(e=>{const k=e.symbol+'|'+e.session;if(e.session!==(delayed?s.as_of:today)||(delayed?e.is_delayed_scheduled_signal!==true:e.is_new_live_signal!==true)||seen.has(k))return false;seen.add(k);return true;}):[];
   const items=detections.map(e=>`<article class="today-item"><strong>${esc(names.get(e.symbol)||e.symbol)} <small>(${esc(e.symbol)})</small></strong><dl><dt>検出日</dt><dd>${esc(e.session)}</dd></dl></article>`).join('');
   const holdings=Object.entries(model.open_positions||{}).sort(([a],[b])=>a.localeCompare(b,'en')).map(([symbol,p])=>{

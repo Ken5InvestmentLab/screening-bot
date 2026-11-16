@@ -784,6 +784,7 @@ def parser() -> argparse.ArgumentParser:
     )
     daily.add_argument("--period", default="5y")
     daily.add_argument("--as-of")
+    daily.add_argument("--delayed-recovery", help="private executing contract from the approved stopped-run recovery entry")
     daily.add_argument(
         "--from-date",
         help="score every session from this date through --as-of, fitting each month once",

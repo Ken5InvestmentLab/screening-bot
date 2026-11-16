@@ -3,13 +3,21 @@ import argparse,datetime,json,os
 from pathlib import Path
 from .files import private_root,read,atomic_write
 from .run import require_activation
-from .publisher import WranglerD1,LocalD1,publish_bundle
+from .publisher import WranglerD1,LocalD1,publish_bundle,pointer
 from .notifications import notify_day
 ROOT=Path(__file__).resolve().parents[2]
 def publish(root,db,*,owner_verified=False):
  run=read(Path(root)/'latest-run.json')
  if run.get('strategy')!='A_BASE' or not run.get('detection_executed'):raise ValueError('completed New A detection required')
- receipt=publish_bundle(db,run['bundle_directory']);receipt['existing_owner_gate_verified']=owner_verified
+ context=None
+ if run.get('delayed_recovery'):
+  from . import delayed_recovery as delayed
+  repo=Path(root).resolve().parents[2];snapshot=read(run['snapshot_file'])
+  context=delayed.delivery_context(repo,snapshot)
+  if run['delayed_recovery']!=snapshot['delayed_recovery'] or not owner_verified:raise ValueError('approved delayed remote publication required')
+  delayed.assert_publication_pointer(context,pointer(db))
+ receipt=publish_bundle(db,run['bundle_directory'],**({'expected_revision':context['expected_revision']} if context else {}));receipt['existing_owner_gate_verified']=owner_verified
+ if context:receipt['delayed_recovery']=run['delayed_recovery']
  if receipt['snapshot_sha256']!=run['snapshot_sha256'] or receipt['source_version']!=run['source_version']:raise ValueError('publication source mismatch')
  atomic_write(Path(root)/'latest-publication.json',receipt);return receipt
 def main(argv=None):
@@ -38,7 +46,15 @@ def main(argv=None):
   finally:db.close()
  else:
   require_activation(root,ROOT)
-  if not args.dry_run and args.date!=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date().isoformat():raise ValueError('same actual JST day required')
+  run=read(root/'latest-run.json')
+  if run.get('delayed_recovery'):
+   from . import delayed_recovery as delayed
+   snapshot=read(run['snapshot_file']);publication=read(root/'latest-publication.json');context=delayed.delivery_context(ROOT,snapshot,publication)
+   if args.date!=context['target_date']:raise ValueError('delayed notification target mismatch')
+   db=WranglerD1(ROOT,root/'sql',execute=True)
+   try:delayed.assert_published_pointer(context,pointer(db),publication)
+   finally:db.close()
+  elif not args.dry_run and args.date!=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date().isoformat():raise ValueError('same actual JST day required')
   receipt=notify_day(root,date=args.date,dry_run=args.dry_run,report_url=args.report_url or os.environ.get('WEAK_EARLY_BETA_REPORT_URL',''))
  print(json.dumps(receipt,ensure_ascii=False));return receipt
 if __name__=='__main__':main()

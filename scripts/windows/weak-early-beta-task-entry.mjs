@@ -1,3 +1,4 @@
+import { delayedBridge } from './delayed-run-bridge.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -11,9 +12,9 @@ import { startInvocation, boundedPreflight, readRecord, recoveryPlan, atomicJson
 import { verifyPreflightReconciliation, claimPreflightReconciliation } from './preflight-reconciliation.mjs';
 
 // The audit file is written before reading config, inspecting processes, or hashing data.
-export async function taskEntry(configPath, { task = 'cloud-3', start = false, reconciliationFile = null,
+export async function taskEntry(configPath, { task = 'cloud-3', start = false, reconciliationFile = null, delayedRecord = null, acceptanceApplication = null,
   auditDirectory = path.join(os.homedir(), 'Documents', 'Codex', 'Cloud_task_invocations'),
-  check = file => launchPreflight(file, { strategy: task === "cloud-5" ? "legacy" : "A_BASE" }), load = loadDailyConfig, launch = spawn, retryOptions = {} } = {}) {
+  bridge = delayedBridge, check = file => launchPreflight(file, { strategy: task === "cloud-5" ? "legacy" : "A_BASE" }), load = loadDailyConfig, launch = spawn, retryOptions = {} } = {}) {
   const invocation = startInvocation(auditDirectory, { task, configPath });
   let fd, guard;
   try {
@@ -23,6 +24,26 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false, r
     guard = path.join(runtime, 'task-entry.lock');
     try { fd = fs.openSync(guard, 'wx'); fs.writeFileSync(fd, invocation.value.id); fs.fsyncSync(fd); }
     catch (error) { if (error.code !== 'EEXIST') throw error; return invocation.update({ status: 'observe', reason: 'Another task-entry owns launch arbitration; inspect its record, do not delete the lock' }); }
+    if(delayedRecord) {
+      if(task!=='cloud-2' || reconciliationFile || !acceptanceApplication || !start) throw Error('Delayed recovery requires exact cloud-2 one-shot accepted application');
+      invocation.update({status:'checking-stopped-run',targetDate:'2026-11-16',executionDate:invocation.value.date});
+      const claim=bridge(config,'claim',path.resolve(delayedRecord),['--invocation',invocation.value.id,'--config',path.resolve(configPath),'--acceptance-application',path.resolve(acceptanceApplication)]);
+      const claimFile=path.resolve(config.repoPath,claim.path), log=path.join(runtime,`task-entry-${invocation.value.id}.log`), output=fs.openSync(log,'a');
+      try {
+        const child=launch(config.nodePath,[path.join(config.repoPath,'scripts/windows/weak-early-beta-daily-runner.mjs'),path.resolve(configPath),'--delayed-recovery',claimFile],{cwd:config.repoPath,detached:true,windowsHide:true,stdio:['ignore',output,output]});
+        await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});
+        invocation.update({status:'launched-delayed',targetDate:'2026-11-16',executionDate:invocation.value.date,childPid:child.pid,log,claim});
+        const until=Date.now()+30000;let rootObserved=false;
+        while(Date.now()<until) {
+          const latest=path.join(runtime,'daily-latest.json');
+          if(fs.existsSync(latest)) {const value=readRecord(latest);if(value.pid===child.pid && value.delayedRecovery && fs.existsSync(path.join(runtime,'daily.lock'))) {rootObserved=true;break;}}
+          await new Promise(resolve=>setTimeout(resolve,100));
+        }
+        invocation.update({status:rootObserved?'launched-delayed':'launched-delayed-unconfirmed',rootLockObserved:rootObserved});
+        child.unref();
+      } finally {fs.closeSync(output);}
+      return invocation.value;
+    }
     const readiness = await boundedPreflight(() => check(configPath), { ...retryOptions,
       date: invocation.value.date, onAttempt: attempt => invocation.update({ status: 'checking', preflight: attempt }) });
     if (readiness.status !== 'ready') return invocation.update({ status: 'recovery-required', preflight: readiness });
@@ -71,5 +92,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (!process.argv[2]) throw new Error('Expected daily config path');
   const index=process.argv.indexOf('--reconcile-preflight');
   if(index>=0&&!process.argv[index+1])throw Error('Missing reconciliation record');
-  console.log(JSON.stringify(await taskEntry(process.argv[2], { task: process.argv[3] || 'cloud-3', start: process.argv.includes('--start'), reconciliationFile:index>=0?process.argv[index+1]:null })));
+  const delayedIndex=process.argv.indexOf('--delayed-recovery'),applicationIndex=process.argv.indexOf('--acceptance-application');
+  console.log(JSON.stringify(await taskEntry(process.argv[2], { delayedRecord:delayedIndex>=0?process.argv[delayedIndex+1]:null, acceptanceApplication:applicationIndex>=0?process.argv[applicationIndex+1]:null, task: process.argv[3] || 'cloud-3', start: process.argv.includes('--start'), reconciliationFile:index>=0?process.argv[index+1]:null })));
 }

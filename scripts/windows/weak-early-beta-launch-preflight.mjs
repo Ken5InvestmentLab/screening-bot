@@ -96,5 +96,6 @@ export async function launchPreflight(configFile, {
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (!process.argv[2]) throw new Error('usage: node weak-early-beta-launch-preflight.mjs <absolute-daily-config.json>');
-  console.log(JSON.stringify(await launchPreflight(process.argv[2])));
+  const strategyIndex=process.argv.indexOf('--strategy');
+  console.log(JSON.stringify(await launchPreflight(process.argv[2],{strategy:strategyIndex>=0?process.argv[strategyIndex+1]:'legacy'})));
 }

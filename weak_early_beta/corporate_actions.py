@@ -163,6 +163,10 @@ def _ambiguous_repair_boundary(group: pd.DataFrame, events: list[dict[str, Any]]
     return False
 
 
+from .progress import recorded_phase
+
+
+@recorded_phase('corporate-action-normalization')
 def normalize_daily(
     frame: pd.DataFrame,
     *,
@@ -452,6 +456,7 @@ def action_table(frame: pd.DataFrame) -> pd.DataFrame:
     return pd.concat(parts, ignore_index=True).sort_values(["symbol", "effective_date"]).reset_index(drop=True)
 
 
+@recorded_phase('corporate-action-volume-revision')
 def quarantine_repaired_volume_revisions(
     previous: pd.DataFrame, current: pd.DataFrame, *, previous_source_sha256: str | None = None,
 ) -> pd.DataFrame:
@@ -551,6 +556,7 @@ def quarantine_repaired_volume_revisions(
     return result
 
 
+@recorded_phase('corporate-action-source-revision')
 def validate_source_revision(
     previous: pd.DataFrame,
     current: pd.DataFrame,

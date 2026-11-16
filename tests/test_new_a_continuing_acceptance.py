@@ -236,4 +236,34 @@ class ContinuingAcceptance(unittest.TestCase):
    for argv in [['publish','--remote'],['notify','--date','2026-11-17']]:
     with self.subTest(argv=argv),self.assertRaisesRegex(ValueError,'revoked'):private_cli.main(argv)
 
+
+ def upgrade_candidate(self):
+  original=self.issue();self.apply(original);previous=original['acceptance'];before=self.activation.read_bytes();self.source='d'*40;self.plan['source_commit']=self.source;self.plan['expected_activation_sha256']=file_sha(self.activation)
+  for kind,measurement in self.measurements.items():measurement['source_commit']=self.source
+  self.plan['measurements']={k:dict(id=k,sha256=digest(v)) for k,v in self.measurements.items()};self.review=self.review_for(self.binding,'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED');return previous,before,self.issue()
+ def test_audited_source_upgrade_keeps_active_and_continuing_nov17(self):
+  previous,before,issued=self.upgrade_candidate();applied=ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous)
+  value=read(self.activation);self.assertTrue(value['active']);self.assertTrue(value['external_actions_approved']);self.assertFalse(value['owner_acceptance']['nonowner_denied']);self.assertEqual(value['unrelated_setting'],'PRESERVE')
+  self.assertEqual((ca.root(self.repo)/'applications'/Path(issued['application_grant']['path']).stem/'original.json').read_bytes(),before);self.assertEqual(applied['previous_acceptance'],previous)
+  self.time=datetime.datetime(2026,11,17,8,tzinfo=datetime.timezone.utc);self.assertIs(validate_activation(value,self.repo),value)
+ def test_source_upgrade_requires_exact_old_completed_audit(self):
+  previous,before,issued=self.upgrade_candidate();other=copy.deepcopy(previous);other['sha256']='0'*64
+  with self.assertRaisesRegex(ValueError,'upgrade baseline'):ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=other)
+  self.assertEqual(self.activation.read_bytes(),before)
+ def test_source_upgrade_does_not_revive_revoked_predecessor(self):
+  previous,before,issued=self.upgrade_candidate();oldpath,_=ca.load_reference(self.repo,previous,'records');ca.immutable(ca.root(self.repo)/'revocations'/(oldpath.stem+'.json'),dict(synthetic=True))
+  with self.assertRaisesRegex(ValueError,'revoked'):ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous)
+  self.assertEqual(self.activation.read_bytes(),before)
+ def test_source_upgrade_rejects_changed_authentication_sources(self):
+  previous,before,issued=self.upgrade_candidate();p=self.repo/next(iter(ca.AUTH_FILES));p.write_text('// CHANGED')
+  with self.assertRaisesRegex(ValueError,'authentication source'):ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous)
+  self.assertEqual(self.activation.read_bytes(),before)
+ def test_source_upgrade_holds_existing_entry_but_never_takes_other_owner(self):
+  previous,before,issued=self.upgrade_candidate();runtime=self.repo/'.cache/weak_early_beta/daily_runtime';(runtime/'task-entry.lock').write_text('SYNTHETIC-ENTRY')
+  with self.assertRaisesRegex(ValueError,'arbitration'):ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous,arbitration_owner='WRONG')
+  ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous,arbitration_owner='SYNTHETIC-ENTRY');self.assertEqual((runtime/'task-entry.lock').read_text(),'SYNTHETIC-ENTRY');validate_activation(read(self.activation),self.repo)
+ def test_revoked_predecessor_invalidates_upgraded_chain(self):
+  previous,before,issued=self.upgrade_candidate();ca.apply(self.repo,issued,preflight=self.ready,previous_acceptance=previous);oldpath,_=ca.load_reference(self.repo,previous,'records');ca.immutable(ca.root(self.repo)/'revocations'/(oldpath.stem+'.json'),dict(synthetic=True))
+  with self.assertRaisesRegex(ValueError,'revoked'):validate_activation(read(self.activation),self.repo)
+
 if __name__=='__main__':unittest.main()

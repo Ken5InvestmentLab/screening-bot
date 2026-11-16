@@ -3,10 +3,12 @@ import datetime,json,os
 from urllib.parse import urljoin,urlparse
 from .files import read,digest
 from .outbox import Outbox
-def eligible(snapshot):return [e for e in snapshot['events'] if e.get('is_new_live_signal') is True and e['kind']=='WATCH_STARTED' and e['session']==snapshot['as_of']]
+def eligible(snapshot):return [e for e in snapshot['events'] if (e.get('is_new_live_signal') is True or (snapshot.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION' and e.get('is_delayed_scheduled_signal') is True)) and e['kind']=='WATCH_STARTED' and e['session']==snapshot['as_of']]
 def message(event,report_url):
  summary=event.get('kind')=='DAILY_SUMMARY';label='新A 日次検出' if summary else str(event['symbol'])+' 仕込み候補・監視開始'
  fields=[{'name':'検出日','value':event['signal_date'],'inline':True},{'name':'状態','value':'監視開始・未約定','inline':True}]
+ if event.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION':
+  label+=' (delayed scheduled result)';fields.append({'name':'Actual observed at','value':event['observed_at'],'inline':False})
  if summary:fields.append({'name':'新規銘柄数','value':str(event['count']),'inline':True})
  payload={'content':'','embeds':[{'title':label,'url':urljoin(report_url,'weak_early_beta_latest.html'),'fields':fields,'footer':{'text':'A_BASE | '+event['event_id']},'color':0x5B8DEF}],'allowed_mentions':{'parse':[]}}
  if not summary:
@@ -35,13 +37,18 @@ def notify_day(root,*,date,dry_run,report_url,transport=None):
  if digest({k:v for k,v in snapshot.items() if k!='payload_sha256'})!=snapshot['payload_sha256'] or run['source_sha256']!=snapshot['source_sha256'] or run['source_version']!=publication.get('source_version'):raise ValueError('private notification source bytes changed')
  local_historical_preview=dry_run and snapshot['observation_kind']=='DRY_RUN_HISTORICAL' and publication.get('local_d1_emulation') is True
  if publication.get('snapshot_sha256')!=snapshot['payload_sha256'] or publication.get('active_readback_verified') is not True or (not local_historical_preview and (publication.get('existing_owner_gate_verified') is not True or publication.get('published') is not True)):raise ValueError('verified private publication required')
- if not dry_run and snapshot['observation_kind']!='LIVE_OBSERVATION':raise ValueError('historical/catchup notifications prohibited')
+ delayed=snapshot.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION'
+ if delayed:
+  from .delayed_recovery import delivery_context
+  delivery_context(root.resolve().parents[2],snapshot,publication)
+ if not dry_run and snapshot['observation_kind']!='LIVE_OBSERVATION' and not delayed:raise ValueError('historical/catchup notifications prohibited')
  outbox=Outbox(root/'notification-outbox.sqlite');new=eligible(snapshot)
  try:
   outbox.stage(snapshot,publication,existing_notifications_enabled=True)
   # 0件では通常の銘柄/完了通知を送らない。処理成功は日次receiptで別に証明。
   if new:
    summary={'kind':'DAILY_SUMMARY','event_id':digest(['A_BASE',date,'DAILY_SUMMARY']),'signal_date':date,'count':len({e['symbol'] for e in new}),'strategy':'A_BASE','signal_phase':'WATCH_STARTED','execution_status':'NOT_EXECUTED'}
+   if delayed:summary.update(observation_kind=snapshot['observation_kind'],observed_at=snapshot['observed_at'],delayed_recovery=snapshot['delayed_recovery'])
    with outbox.db:outbox.db.execute('INSERT OR IGNORE INTO new_a_delivery VALUES (?,?,"PENDING",NULL)',(summary['event_id'],json.dumps(summary,sort_keys=True)))
   allrows=outbox.db.execute('SELECT event_id,payload_json,status FROM new_a_delivery').fetchall();rows=[(event_id,json.loads(raw),status) for event_id,raw,status in allrows if json.loads(raw).get('signal_date')==date]
   if any(status=='ATTEMPTED_UNCONFIRMED' for _,_,status in rows):raise ValueError('notification outcome unconfirmed; reconcile before retry')

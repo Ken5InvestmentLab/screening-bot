@@ -2,16 +2,21 @@
 import json,sqlite3
 class Outbox:
  def __init__(self,path):
-  self.db=sqlite3.connect(path);self.db.execute('CREATE TABLE IF NOT EXISTS new_a_delivery(event_id TEXT PRIMARY KEY,payload_json TEXT NOT NULL,status TEXT NOT NULL,receipt_json TEXT)');self.db.commit()
+  self.path=__import__('pathlib').Path(path).resolve();self.db=sqlite3.connect(path);self.db.execute('CREATE TABLE IF NOT EXISTS new_a_delivery(event_id TEXT PRIMARY KEY,payload_json TEXT NOT NULL,status TEXT NOT NULL,receipt_json TEXT)');self.db.commit()
  def stage(self,snapshot,publication_receipt,*,existing_notifications_enabled):
   if not existing_notifications_enabled:return []
-  if snapshot.get('observation_kind')!='LIVE_OBSERVATION' or publication_receipt.get('published') is not True:return []
+  delayed=snapshot.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION'
+  if delayed:
+   from .delayed_recovery import delivery_context
+   delivery_context(self.path.parent.parents[2],snapshot,publication_receipt)
+  if (snapshot.get('observation_kind')!='LIVE_OBSERVATION' and not delayed) or publication_receipt.get('published') is not True:return []
   if publication_receipt.get('snapshot_sha256')!=snapshot.get('payload_sha256') or publication_receipt.get('existing_owner_gate_verified') is not True:raise ValueError('verified owner publication required')
   staged=[]
   with self.db:
    for e in snapshot['events']:
-    if not(e.get('is_new_live_signal') is True and e['kind']=='WATCH_STARTED' and e['session']==snapshot['as_of']):continue
+    if not((e.get('is_new_live_signal') is True or (delayed and e.get('is_delayed_scheduled_signal') is True)) and e['kind']=='WATCH_STARTED' and e['session']==snapshot['as_of']):continue
     payload={'event_id':e['event_id'],'symbol':e['symbol'],'signal_date':e['session'],'strategy':'A_BASE','signal_phase':'WATCH_STARTED','display_label':'仕込み候補・監視開始','execution_status':'NOT_EXECUTED'}
+    if delayed:payload.update(observation_kind=snapshot['observation_kind'],observed_at=snapshot['observed_at'],delayed_recovery=snapshot['delayed_recovery'])
     inserted=self.db.execute('INSERT OR IGNORE INTO new_a_delivery VALUES (?,?,"PENDING",NULL)',(e['event_id'],json.dumps(payload,sort_keys=True))).rowcount
     if inserted:staged.append(payload)
   return staged

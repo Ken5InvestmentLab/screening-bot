@@ -1,3 +1,4 @@
+import { delayedBridge } from './delayed-run-bridge.mjs';
 import fs from 'node:fs';
 import { StringDecoder } from 'node:string_decoder';
 import path from 'node:path';
@@ -404,7 +405,8 @@ async function probeFundamentalModel(config, runDir, env) {
   }
 }
 
-async function main(configFile, { resumeReceipt = null, reconciliationFile = null, reconciliationInvocation = null } = {}) {
+async function main(configFile, { resumeReceipt = null, reconciliationFile = null, reconciliationInvocation = null, delayedClaimFile = null } = {}) {
+  if (delayedClaimFile && (resumeReceipt || reconciliationFile)) throw new Error('Delayed recovery cannot mix ordinary recovery');
   if (reconciliationFile && (resumeReceipt || !reconciliationInvocation)) throw new Error('Distinct task-entry reconciliation invocation required');
   const config = loadDailyConfig(configFile);
   const repo = path.resolve(config.repoPath);
@@ -428,11 +430,15 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   const env = { ...process.env };
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
-  const today = config.date || jstDate();
-  if (today !== jstDate()) throw new Error('Cloud daily cannot replay a different JST date');
+  const executionDate=jstDate();
+  const delayedPlan=delayedClaimFile?delayedBridge(config,'inspect-claim',delayedClaimFile):null;
+  if(delayedPlan && (delayedPlan.execution_date!==executionDate || (config.date && config.date!==delayedPlan.target_date))) throw new Error('Delayed actual execution or configured date mismatch');
+  const today = delayedPlan?.target_date || config.date || executionDate;
+  if (!delayedPlan && today !== executionDate) throw new Error('Cloud daily cannot replay a different JST date');
   if (prior && recoveryPlan(prior, today).action !== 'resume-detection') throw new Error('Only a terminal same-day detection failure may resume automatically');
   if (prior) result.originalRunId = prior.originalRunId || prior.startedAt;
   result.date = today;
+  if(delayedPlan) Object.assign(result,{executionDate,observationKind:'DELAYED_SCHEDULED_OBSERVATION',originalRunId:delayedPlan.original_run_id,delayedClaim:delayedPlan.claim});
   atomicJson(path.join(runDir, 'invoked.json'), { ...result, identity: 'CLOUD_RUNNER_INVOKED_V1' });
   const python = config.pythonPath;
   let stage = 'lock';
@@ -480,8 +486,10 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       throw error;
     }
     ownsLock = true;
+    let delayedExecuting=null;
+    if(delayedPlan) { delayedExecuting=delayedBridge(config,'begin',delayedClaimFile,['--root-pid',String(process.pid),'--started-at',startedAt]);result.delayedRecovery=delayedExecuting; }
     if (reconciliationFile) preservePriorCompletion = true;
-    if (fs.existsSync(resultPath)) {
+    if (!delayedPlan && fs.existsSync(resultPath)) {
       const saved = readJson(resultPath); let plan = newATaskPlan("cloud-2", today, saved, recoveryPlan);
       if (reconciliationFile) {
         if (plan.action !== 'reconcile') throw new Error('Only unresolved preflight may use reconciliation');
@@ -523,7 +531,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     // A waiting preflight owns this run's lock and never replays daily work.
     saveProgress('network-preflight');
     result.networkPreflight = await waitForNetworkCapacity({
-      expectedDate: today,
+      expectedDate: executionDate,
       timeoutMs: Number(config.networkWaitTimeoutMs ?? 900_000),
       pollMs: Number(config.networkPollMs ?? 30_000),
       onProgress: progress => saveProgress('network-preflight', { networkPreflight: progress }),
@@ -540,7 +548,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       '--status', 'success', '--limit', '1', '--json', 'databaseId,headSha,headBranch,status,conclusion,url'],
     { cwd: repo, env, log: path.join(runDir, 'previous-release'), capture: true, timeoutMs: 60_000 });
     result.previousSuccessfulDeployment = JSON.parse(previous.stdout.trim())[0] || null;
-    if (!prior) await sendSystemLog('started');
+    if (!prior && !delayedPlan) await sendSystemLog('started');
     saveProgress('new-a-preflight');
     result.new_a = { strategy: 'A_BASE', entry: 'new-a-verified-daily-v1', owner_publication_verified: false };
 
@@ -548,14 +556,16 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     saveProgress('detection');
     const cacheRecovery = prior ? await verifiedDetectionCache(repo, today) : null;
     if (cacheRecovery) saveProgress('detection', { recoveryCache: cacheRecovery });
-    const attempts = prior ? 1 : Number(config.maxFreshnessAttempts || 3);
+    const attempts = prior || delayedPlan ? 1 : Number(config.maxFreshnessAttempts || 3);
     if (!Number.isInteger(attempts) || attempts < 1 || attempts > 3) throw new Error('invalid bounded OHLCV freshness attempts');
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       const acquisitionDirectory = path.join(runDir, `acquisition-${attempt}`);
       result.acquisitionEvidence ??= [];
-      result.acquisitionEvidence.push(prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
+      result.acquisitionEvidence.push(delayedPlan ? {attempt,recovery:'verified-retained-parts',originalRunId:delayedPlan.original_run_id} : prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
       saveProgress('detection', { acquisitionEvidence: result.acquisitionEvidence });
-      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(prior ? [] : ['--refresh-live'])], {
+      const delayedFile=delayedExecuting?path.resolve(repo,delayedExecuting.path):null;
+      const replayDirectory=delayedFile?path.join(path.dirname(delayedFile),'replay-acquisition'):null;
+      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(delayedPlan?['--as-of',today,'--retained-acquisition',replayDirectory,'--delayed-recovery',delayedFile]:prior?[]:['--refresh-live'])], {
         cwd: repo, env: { ...env, CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
       });
       const receipt = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-run.json'));
@@ -650,7 +660,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (resumeIndex >= 0 && !process.argv[resumeIndex + 1]) throw new Error('Missing terminal receipt path');
   const reconcileIndex=process.argv.indexOf('--reconcile-preflight'),invocationIndex=process.argv.indexOf('--reconcile-invocation');
   if ((reconcileIndex>=0)!==(invocationIndex>=0) || (reconcileIndex>=0&&(!process.argv[reconcileIndex+1]||!process.argv[invocationIndex+1]))) throw Error('Missing reconciliation record or invocation');
-  await main(process.argv[2], { resumeReceipt: resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null, reconciliationFile:reconcileIndex>=0?process.argv[reconcileIndex+1]:null, reconciliationInvocation:invocationIndex>=0?process.argv[invocationIndex+1]:null });
+  const delayedIndex=process.argv.indexOf('--delayed-recovery');
+  if(delayedIndex>=0&&!process.argv[delayedIndex+1]) throw Error('Missing private delayed claim');
+  await main(process.argv[2], { delayedClaimFile:delayedIndex>=0?process.argv[delayedIndex+1]:null, resumeReceipt: resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null, reconciliationFile:reconcileIndex>=0?process.argv[reconcileIndex+1]:null, reconciliationInvocation:invocationIndex>=0?process.argv[invocationIndex+1]:null });
 }
 
 export { npmInvocation, probeFundamentalModel, run, parseGitStatus, assertGeneratedChanges, GENERATED_PATHS,

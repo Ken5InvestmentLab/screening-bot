@@ -41,6 +41,7 @@ jobs:
           scripts/windows/test-weak-early-beta-point-in-time-post.mjs
           scripts/windows/test-weak-early-beta-daily-runner.mjs
           scripts/windows/test-weak-early-beta-run-journal.mjs
+          scripts/windows/test-weak-early-beta-delayed-recovery.mjs
       - name: Verify retained-response replay and corporate-action gates
         run: >-
           python -B -m unittest tests.test_weak_early_beta_acquisition
@@ -49,3 +50,5 @@ jobs:
           tests.test_weak_early_beta_source_corrections tests.test_weak_early_beta_reviewed_overlay
           tests.test_weak_early_beta_reviewed_repair_releases tests.test_weak_early_beta_retained_off_session_actions
           tests.test_weak_early_beta_provider_restorations tests.test_endpoint_holds
+          tests.test_new_a_delayed_recovery tests.test_new_a_delayed_progress
+          tests.test_new_a_continuing_acceptance tests.test_new_a_connection

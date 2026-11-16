@@ -6,6 +6,7 @@ from . import monitor
 class Pipeline:
  def __init__(self,db_path,verified_checkpoint,*,allow_live=False):
   self.allow_live=allow_live
+  self.private_directory=Path(db_path).resolve().parent
   self.db=sqlite3.connect(db_path);self.db.executescript('CREATE TABLE IF NOT EXISTS symbol_heads(symbol TEXT PRIMARY KEY,state_json TEXT NOT NULL,state_hash TEXT NOT NULL);CREATE TABLE IF NOT EXISTS symbol_days(symbol TEXT NOT NULL,day TEXT NOT NULL,input_hash TEXT NOT NULL,PRIMARY KEY(symbol,day));CREATE TABLE IF NOT EXISTS events(event_id TEXT PRIMARY KEY,event_json TEXT NOT NULL,publication_state TEXT NOT NULL);CREATE TABLE IF NOT EXISTS runs(run_key TEXT PRIMARY KEY,source_hash TEXT NOT NULL,result_json TEXT NOT NULL);CREATE TABLE IF NOT EXISTS held(symbol TEXT PRIMARY KEY,day TEXT NOT NULL,reason TEXT NOT NULL);')
   self.db.execute('CREATE TABLE IF NOT EXISTS observed_quotes(symbol TEXT NOT NULL,day TEXT NOT NULL,row_json TEXT NOT NULL,row_hash TEXT NOT NULL,PRIMARY KEY(symbol,day))')
   seed=verified_checkpoint
@@ -30,11 +31,16 @@ class Pipeline:
   state=json.loads(row[0])
   if monitor.digest(state)!=row[1]:raise ValueError('corrupt symbol state')
   return state
- def run(self,*,as_of,observed_at,calendar,rows_by_day,source_hash,quality_verified,universe,restrictions=None,dry_run=True,resume_held=False,predecessor_source_hash=None):
+ def run(self,*,as_of,observed_at,calendar,rows_by_day,source_hash,quality_verified,universe,restrictions=None,dry_run=True,resume_held=False,predecessor_source_hash=None,recovery_reference=None):
   if quality_verified is not True or not re.fullmatch('[a-f0-9]{64}',source_hash):raise ValueError('verified source receipt required')
   if calendar!=sorted(set(calendar)) or as_of not in calendar:raise ValueError('verified market calendar required')
   obs=datetime.datetime.fromisoformat(observed_at.replace('Z','+00:00'));jst=datetime.timezone(datetime.timedelta(hours=9))
   if obs.tzinfo is None or obs>datetime.datetime.now(datetime.timezone.utc) or obs<datetime.datetime.fromisoformat(as_of+'T15:30:00+09:00'):raise ValueError('completed-session observation required')
+  delayed=None
+  if recovery_reference:
+   from .delayed_recovery import classify,KIND
+   if dry_run or self.private_directory.name!='new-a-private':raise ValueError('delayed recovery requires the approved private live store')
+   delayed=classify(self.private_directory.parents[2],recovery_reference,as_of=as_of,observed_at=observed_at)
   if not universe or len(set(universe))!=len(universe) or any(set(values)!=set(universe) for values in rows_by_day.values()):raise ValueError('complete explicit universe required')
   key=as_of+'|'+source_hash+'|'+('DRY_RUN' if dry_run else 'LIVE');old=self.db.execute('SELECT result_json FROM runs WHERE run_key=?',(key,)).fetchone()
   latest=self.db.execute('SELECT source_hash,result_json FROM runs WHERE run_key LIKE ? ORDER BY rowid DESC LIMIT 1',(as_of+'|%',)).fetchone()
@@ -95,11 +101,13 @@ class Pipeline:
      for e in events:
       live_signal=not dry_run and day==as_of==obs.astimezone(jst).date().isoformat() and e['kind']=='WATCH_STARTED'
       tagged={**e,'observation_kind':'DRY_RUN_HISTORICAL' if dry_run else 'LIVE_OBSERVATION' if day==as_of==obs.astimezone(jst).date().isoformat() else 'CATCHUP_NOT_NEW','is_new_live_signal':live_signal,'publication_state':'LOCAL_ONLY_NOT_SENT' if dry_run else 'PENDING_PUBLISH_NOT_SENT'}
+      if delayed and day==as_of:tagged.update(observation_kind=KIND,is_delayed_scheduled_signal=e['kind']=='WATCH_STARTED')
       self.db.execute('INSERT INTO events VALUES (?,?,?)',(e['event_id'],monitor.encode(tagged),tagged['publication_state']));emitted.append(tagged)
     self.db.execute('INSERT INTO symbol_heads VALUES (?,?,?) ON CONFLICT(symbol) DO UPDATE SET state_json=excluded.state_json,state_hash=excluded.state_hash',(sym,monitor.encode(state),monitor.digest(state)))
     if sym in holds:self.db.execute('INSERT INTO held VALUES (?,?,?) ON CONFLICT(symbol) DO UPDATE SET day=excluded.day,reason=excluded.reason',(sym,holds[sym]['day'],holds[sym]['reason']))
     else:self.db.execute('DELETE FROM held WHERE symbol=?',(sym,))
    result={'status':'COMPLETED_WITH_HELD_SYMBOLS' if holds else 'COMPLETED','as_of':as_of,'observed_at':observed_at,'source_hash':source_hash,'dry_run':dry_run,'universe_hash':monitor.digest(sorted(universe)),'held_resume':bool(previous_run and previous_run[0]!=source_hash),'observation_kind':'DRY_RUN_HISTORICAL' if dry_run else 'LIVE_OBSERVATION' if as_of==obs.astimezone(jst).date().isoformat() else 'CATCHUP_NOT_NEW','new_live_signals':sum(e['is_new_live_signal'] for e in emitted),'event_count':len(emitted),'new_event_count':len(emitted),'processed_symbol_sessions':processed,'held':holds,'events':emitted,'notification_sends':0,'publication_executed':False,'zero_detection_is_success':True}
+   if delayed:result.update(observation_kind=KIND,delayed_recovery=recovery_reference,delayed_scheduled_signals=sum(e.get('is_delayed_scheduled_signal') is True for e in emitted))
    self.db.execute('INSERT INTO runs VALUES (?,?,?)',(key,source_hash,monitor.encode(result)))
   return result
  def export_current(self):

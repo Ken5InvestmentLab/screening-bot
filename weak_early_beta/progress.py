@@ -26,3 +26,15 @@ def daily_phase(stage: str):
         raise
     else:
         emit("finished")
+
+
+def recorded_phase(stage):
+    """Instrument a pure call without inspecting its arguments or return value."""
+    from functools import wraps
+    def decorate(function):
+        @wraps(function)
+        def traced(*args, **kwargs):
+            with daily_phase(stage):
+                return function(*args, **kwargs)
+        return traced
+    return decorate

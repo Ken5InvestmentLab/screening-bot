@@ -144,13 +144,13 @@ def issue(repo, plan, *, primary_reader, measurement_reader, decision_reader, au
     immutable(grant_path, grant)
     return {'acceptance': ref, 'application_grant': reference(repo, grant_path)}
 
-def validate_record(repo, ref):
+def validate_record(repo, ref, *, _historical_source=None):
     path, value = load_reference(repo, ref, 'records')
     record = dict(value)
     pin = record.pop('record_sha256', None)
     require(digest(record) == pin and path.stem == pin and record.get('schema') == SCHEMA and record.get('scope') == SCOPE and record.get('strategy') == 'A_BASE' and record.get('virtual_only') is True and record.get('decision') == 'CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED' and record.get('issuance') == 'HOST_VERIFIED_OPERATOR_ATTESTATION_V1' and record.get('platform_signature_claimed') is False, 'continuing acceptance contract mismatch')
     require('expires_at' not in record and 'run_date' not in record and record.get('nonowner_denied') is False and record.get('authenticated_nonowner_observed') is False, 'continuing evidence falsely dated or measured')
-    require(record.get('source_commit') == head(repo) and record.get('target') == target(repo), 'accepted source or target changed')
+    require(record.get('source_commit') == (_historical_source or head(repo)) and record.get('target') == target(repo), 'accepted source or target changed')
     checked_decision(record['host_decision'], record['owner_message'], record['source_commit'], record['target'], 'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
     require(not (root(repo) / 'revocations' / (pin + '.json')).exists(), 'continuing acceptance revoked')
     verify_sources(repo, record['auth_source_hashes'])
@@ -159,10 +159,13 @@ def validate_record(repo, ref):
         verify_measurement(measurement, kind, record['source_commit'], record['auth_source_hashes'], record['target'])
     return record
 
-def validate_evidence(evidence, repo):
+def validate_evidence(evidence, repo, *, _activation_path=None, _historical_source=None, _seen=None):
     require(all(evidence.get(k) is True for k in ['actual_owner_allowed', 'anonymous_denied', 'private_direct_paths_denied', 'existing_auth_unchanged']), 'other owner acceptance incomplete')
     require(evidence.get('nonowner_denied') is False and evidence.get('authenticated_nonowner_observed') is False, 'unmeasured nonowner must remain false')
-    record = validate_record(repo, evidence['continuing_acceptance'])
+    _seen=set() if _seen is None else set(_seen)
+    require(evidence['continuing_acceptance']['sha256'] not in _seen and len(_seen)<16, 'acceptance audit chain cycle or depth')
+    _seen.add(evidence['continuing_acceptance']['sha256'])
+    record = validate_record(repo, evidence['continuing_acceptance'], _historical_source=_historical_source)
     require(evidence.get('auth_source_hashes') == record['auth_source_hashes'], 'accepted source pins differ')
     application_id = evidence.get('application_id')
     require(isinstance(application_id, str) and re.fullmatch('[a-f0-9]{64}', application_id), 'completed application audit required')
@@ -171,8 +174,16 @@ def validate_evidence(evidence, repo):
     completed = read(folder / 'completed.json')
     claim = read(folder / 'claim.json')
     grant_path, grant = load_reference(repo, completed['grant'], 'grants')
-    require(grant_path.stem == application_id == digest(grant) and completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1' and completed.get('acceptance') == evidence['continuing_acceptance'] and grant.get('acceptance') == evidence['continuing_acceptance'] and completed.get('source_commit') == record['source_commit'] and claim.get('grant') == completed['grant'] and claim.get('before_sha256') == completed.get('before_sha256') == file_sha(folder / 'original.json') and claim.get('after_sha256') == completed.get('after_sha256') == file_sha(private_root(repo) / 'activation.json'), 'completed application audit or activation changed')
+    require(grant_path.stem == application_id == digest(grant) and completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1' and completed.get('acceptance') == evidence['continuing_acceptance'] and grant.get('acceptance') == evidence['continuing_acceptance'] and completed.get('source_commit') == record['source_commit'] and claim.get('grant') == completed['grant'] and claim.get('before_sha256') == completed.get('before_sha256') == file_sha(folder / 'original.json') and claim.get('after_sha256') == completed.get('after_sha256') == file_sha(_activation_path or (private_root(repo) / 'activation.json')), 'completed application audit or activation changed')
     require(grant.get('schema') == 'NEW_A_FINITE_ACCEPTANCE_APPLICATION_V1' and grant.get('scope') == SCOPE and grant.get('source_commit') == record['source_commit'] and grant.get('target') == record['target'] and grant.get('owner_message') == record['owner_message'] and grant.get('platform_signature_claimed') is False and grant.get('expected_activation_sha256') == completed['before_sha256'] and timestamp(grant['issued_at']) <= timestamp(completed['applied_at']) <= timestamp(grant['not_after']) <= timestamp(grant['issued_at']) + datetime.timedelta(hours=1), 'application was not completed within its finite authority')
+    original_activation=read(folder/'original.json')
+    require((original_activation.get('active') is True)==bool(completed.get('previous_acceptance')), 'active predecessor audit link missing or invented')
+    if completed.get('previous_acceptance'):
+        previous=read(folder/'original.json')
+        require(previous.get('active') is True and previous.get('external_actions_approved') is True and previous.get('owner_acceptance',{}).get('continuing_acceptance')==completed['previous_acceptance'], 'upgraded original activation differs')
+        _,old=load_reference(repo,completed['previous_acceptance'],'records')
+        require(old['source_commit']!=record['source_commit'] and old['target']==record['target'] and old['auth_source_hashes']==record['auth_source_hashes'] and all(old['owner_message'][k]==record['owner_message'][k] for k in ['author_id','room_id']), 'upgrade broadened owner, target or authentication source')
+        validate_evidence(previous['owner_acceptance'],repo,_activation_path=folder/'original.json',_historical_source=old['source_commit'],_seen=_seen)
     return record
 
 def revoke(repo, ref, binding, *, primary_reader, decision_reader, authority):
@@ -186,7 +197,7 @@ def revoke(repo, ref, binding, *, primary_reader, decision_reader, authority):
     immutable(root(repo) / 'revocations' / (path.stem + '.json'), event)
     return event
 
-def apply(repo, issued, *, preflight):
+def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owner=None):
     """Only the original finite grant can CAS-apply this accepted record once."""
     repo = Path(repo).resolve()
     record = validate_record(repo, issued['acceptance'])
@@ -213,7 +224,8 @@ def apply(repo, issued, *, preflight):
             os.close(fd)
         held.append(path)
     try:
-        claim_lock(runtime / 'task-entry.lock')
+        if arbitration_owner is None:claim_lock(runtime / 'task-entry.lock')
+        else:require(isinstance(arbitration_owner,str) and (runtime/'task-entry.lock').read_text()==arbitration_owner, 'existing formal launch arbitration differs')
         ready = preflight()
         require(ready.get('ok') is True and ready.get('head') == record['source_commit'] and Path(ready.get('repository', '')).resolve() == repo, 'normal launch preflight not ready')
         claim_lock(runtime / 'daily.lock')
@@ -221,7 +233,14 @@ def apply(repo, issued, *, preflight):
             require(not (repo / name).exists(), 'reminder or legacy lock exists')
         require(file_sha(activation) == grant['expected_activation_sha256'], 'activation baseline changed')
         current = read(activation)
-        require(current.get('schema') == 'NEW_A_OWNER_ACTIVATION_V1' and current.get('strategy') == 'A_BASE' and current.get('active') is False and current.get('external_actions_approved') is False, 'inactive exact baseline required')
+        require(current.get('schema') == 'NEW_A_OWNER_ACTIVATION_V1' and current.get('strategy') == 'A_BASE', 'activation contract differs')
+        if previous_acceptance is None:
+            require(current.get('active') is False and current.get('external_actions_approved') is False, 'inactive exact baseline required')
+        else:
+            require(current.get('active') is True and current.get('external_actions_approved') is True and current.get('owner_acceptance',{}).get('continuing_acceptance')==previous_acceptance, 'active source upgrade baseline differs')
+            _,old=load_reference(repo,previous_acceptance,'records')
+            validate_evidence(current['owner_acceptance'],repo,_historical_source=old['source_commit'])
+            require(old['source_commit']!=record['source_commit'] and old['target']==record['target'] and old['auth_source_hashes']==record['auth_source_hashes'] and all(old['owner_message'][k]==record['owner_message'][k] for k in ['author_id','room_id']), 'source upgrade broadens continuing acceptance')
         evidence = dict(actual_owner_allowed=True, anonymous_denied=True, private_direct_paths_denied=True, existing_auth_unchanged=True, nonowner_denied=False, authenticated_nonowner_observed=False, auth_source_hashes=record['auth_source_hashes'], continuing_acceptance=issued['acceptance'], application_id=grant_path.stem)
         value = {**current, 'active': True, 'external_actions_approved': True, 'owner_acceptance': evidence}
         after_sha = hashlib.sha256((encode(value) + os.linesep).encode()).hexdigest()
@@ -236,6 +255,7 @@ def apply(repo, issued, *, preflight):
         atomic_write(activation, value)
         require(file_sha(activation) == after_sha, 'activation readback ambiguous; reconcile')
         result = dict(schema='NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1', before_sha256=grant['expected_activation_sha256'], after_sha256=after_sha, acceptance=issued['acceptance'], grant=issued['application_grant'], source_commit=record['source_commit'], applied_at=now().isoformat(), same_operation_replay=False)
+        if previous_acceptance is not None:result['previous_acceptance']=previous_acceptance
         atomic_write(completed, result)
         validate_evidence(evidence, repo)
         return result

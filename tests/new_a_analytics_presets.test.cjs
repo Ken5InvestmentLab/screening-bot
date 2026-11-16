@@ -114,3 +114,11 @@ test('unresolved preset exposes incomplete numbers and stop date without changin
  const F=controllerFactory(),d=workerFixture().simulate('profit');d.result={...d.result,resolved:false,metrics:{...d.result.metrics,netProfit:null,maxDrawdown:null,winRate:null},unresolved:[{date:'2026-11-27',symbol:'1100',reason:'UNRESOLVED_SCHEDULED_EXIT'}]};
  const html=F.renderToday(d);assert(html.includes('2026-11-27で試算停止'));assert.equal((html.match(/<b>未確定<\/b>/g)||[]).length,4);assert(F.render(d).includes('以降の資金推移は未計算'));
 });
+
+
+test('one authorized delayed snapshot shows its real target and observation without pretending Today',()=>{
+ const F=controllerFactory(),d=workerFixture().simulate('balanced');
+ const snapshot={as_of:'2026-11-16',observed_at:'2026-11-16T16:00:00Z',observation_kind:'DELAYED_SCHEDULED_OBSERVATION',events:[{session:'2026-11-16',symbol:'1100',kind:'WATCH_STARTED',is_new_live_signal:false,is_delayed_scheduled_signal:true}]};
+ const html=F.renderToday(d,{snapshots:[snapshot],today:'2026-11-17'});assert(html.includes('遅延した新規検出'));assert(html.includes('2026-11-16T16:00:00Z'));assert(html.includes('(1100)'));assert(!html.includes('今日の検出は未確認です。'));
+ const catchup=F.renderToday(d,{snapshots:[{...snapshot,observation_kind:'CATCHUP_NOT_NEW'}],today:'2026-11-17'});assert(catchup.includes('今日の検出は未確認です。'));assert(!catchup.includes('(1100)'));
+});

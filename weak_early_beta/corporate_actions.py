@@ -632,10 +632,17 @@ def validate_source_revision(
         previous = normalize_daily(previous)
         old_events = action_table(previous).set_index(["symbol", "effective_date"])
         new_events = current_events.set_index(["symbol", "effective_date"])
+        # Same overlap rule, evaluated once per symbol instead of scanning
+        # the full multi-million-row corpus for every historical split event.
+        current_bounds = current.groupby("symbol", sort=False).agg(
+            first_date=("date", "min"), last_basis=("basis_asof", "max"),
+        )
         for identity, event in old_events.iterrows():
             symbol, effective = identity
-            now = current[current["symbol"].eq(symbol)]
-            if now.empty or not now["date"].min() <= effective <= now["basis_asof"].max():
+            if symbol not in current_bounds.index:
+                continue
+            bounds = current_bounds.loc[symbol]
+            if not bounds["first_date"] <= effective <= bounds["last_basis"]:
                 continue
             if identity not in new_events.index or not np.isclose(
                 event["ratio"], new_events.at[identity, "ratio"], rtol=1e-12, atol=0

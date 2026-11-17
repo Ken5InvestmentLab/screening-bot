@@ -38,25 +38,42 @@ def checked_deployment(source, destination, reader):
     ca.require(callable(reader), 'independent deployment reader required')
     value = reader()
     ca.require(isinstance(value, dict) and
-               value.get('schema') == 'NEW_A_HOST_VERIFIED_DEPLOYMENT_V1' and
+               value.get('schema') in {'NEW_A_HOST_VERIFIED_DEPLOYMENT_V1',
+                                       'NEW_A_HOST_VERIFIED_PRIVATE_CANDIDATE_PROBE_V1'} and
                value.get('source_commit') == source and value.get('target') == destination and
-               value.get('deployment_succeeded') is True and
                value.get('synthetic') is not True and
                value.get('platform_signature_claimed') is False and
                re.fullmatch(r'[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}',
                             str(value.get('version_id', ''))) and
                re.fullmatch(r'[a-f0-9]{64}', str(value.get('raw_receipt_sha256', ''))),
                'verified exact deployment unavailable')
-    ca.require(ca.timestamp(value['deployed_at']) <= ca.timestamp(value['observed_at']) <= ca.now(),
+    if value['schema'] == 'NEW_A_HOST_VERIFIED_DEPLOYMENT_V1':
+        ca.require(value.get('deployment_succeeded') is True, 'actual deployment success required')
+    else:
+        # Separate future host capability; NEVER describe an upload/probe as a
+        # deployment. No provider implementation or credentials are supplied.
+        ca.require(value.get('deployment_succeeded') is False and
+                   value.get('uploaded_only') is True and value.get('live_traffic_percent') == 0 and
+                   value.get('normal_protected_probe') is True and
+                   value.get('existing_owner_authorization') is True and
+                   value.get('access_policy_unchanged') is True and
+                   value.get('public_preview') is False,
+                   'private pretraffic probe capability unavailable')
+    ca.require(ca.timestamp(version_available_at(value)) <= ca.timestamp(value['observed_at']) <= ca.now(),
                'deployment observation time invalid')
     return value
+
+
+def version_available_at(value):
+    return value['deployed_at'] if value['schema'] == 'NEW_A_HOST_VERIFIED_DEPLOYMENT_V1' else value['version_available_at']
 
 
 def same_deployment(first, latest):
     # A fresh GET can have a new observation time/receipt hash while observing
     # the same immutable provider version. Do not compare transport receipts.
     return all(first[key] == latest[key] for key in
-               ['source_commit', 'target', 'version_id', 'deployed_at']) and \
+               ['schema', 'source_commit', 'target', 'version_id']) and \
+        version_available_at(first) == version_available_at(latest) and \
         ca.timestamp(latest['observed_at']) >= ca.timestamp(first['observed_at'])
 
 
@@ -80,7 +97,7 @@ def checked_measurements(plan, measurement_reader, raw_reader, deployment):
                    raw.get('version_id') == deployment['version_id'] and
                    measurement.get('deployment_version_id') == deployment['version_id'] and
                    raw.get('observed_at') == measurement['observed_at'] and
-                   ca.timestamp(deployment['deployed_at']) <= ca.timestamp(raw['observed_at']) <= ca.now(),
+                   ca.timestamp(version_available_at(deployment)) <= ca.timestamp(raw['observed_at']) <= ca.now(),
                    'raw receipt source, version or observation mismatch')
         if kind == 'owner':
             ca.require(raw.get('owner_identity_verified') is True and
@@ -219,3 +236,17 @@ def verify_ready(operating_repo, candidate_repo, receipt, *, deployment_reader):
                'observed deployed version changed')
     return dict(ok=True, source_commit=receipt['candidate_source'],
                 operationally_promoted=False, production_acceptance_written=False)
+
+
+def handoff_binding(operating_repo, candidate_repo, receipt, *, deployment_reader):
+    """Opaque safe binding for a trusted CI/runtime coordinator, not a signature."""
+    verify_ready(operating_repo, candidate_repo, receipt, deployment_reader=deployment_reader)
+    return dict(schema='NEW_A_RELEASE_CANDIDATE_BINDING_V1',
+                source_commit=receipt['candidate_source'], target=receipt['operating_baseline']['target'],
+                worker_version_id=receipt['deployment']['version_id'],
+                acceptance_sha256=receipt['issued']['acceptance']['sha256'],
+                activation_sha256=receipt['candidate_activation_sha256'],
+                preparation_sha256=digest(receipt), not_after=receipt['not_after'],
+                evidence_mode='PRIVATE_PRETRAFFIC_PROBE' if
+                receipt['deployment']['schema'] == 'NEW_A_HOST_VERIFIED_PRIVATE_CANDIDATE_PROBE_V1'
+                else 'ALREADY_DEPLOYED_VERSION', platform_signature_claimed=False)

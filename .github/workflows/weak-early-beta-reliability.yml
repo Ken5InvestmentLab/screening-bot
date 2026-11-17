@@ -62,3 +62,4 @@ jobs:
           tests.test_weak_early_beta_provider_restorations tests.test_endpoint_holds
           tests.test_new_a_delayed_recovery tests.test_new_a_delayed_progress
           tests.test_new_a_continuing_acceptance tests.test_new_a_connection
+          tests.test_new_a_native_admission_context tests.test_new_a_wrangler_import_progress

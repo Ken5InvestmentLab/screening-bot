@@ -52,7 +52,9 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false, r
     const latest = path.join(runtime, 'daily-latest.json');
     const prior = fs.existsSync(latest) ? readRecord(latest) : null;
     if(admissionContinuationFile){
-      const verified=verifyAdmissionContinuation({repo:config.repoPath,runtime,date:invocation.value.date,head:readiness.result.head,sourceSha256:readiness.result.sourceSha256,prior,file:path.resolve(admissionContinuationFile),auditDirectory,processReader:continuationOptions.processReader});
+      const record=readRecord(path.resolve(admissionContinuationFile));
+      if((record.execution_date||record.date)!==invocation.value.date)throw Error('Actual native admission execution day mismatch');
+      const verified=verifyAdmissionContinuation({repo:config.repoPath,runtime,date:record.date,head:readiness.result.head,sourceSha256:readiness.result.sourceSha256,prior,file:path.resolve(admissionContinuationFile),auditDirectory,processReader:continuationOptions.processReader});
       if(!start)return invocation.update({status:'ready-continuation',externalSideEffects:false,record:verified.digest});
       if(jstDay()!==invocation.value.date)throw Error('Target JST day changed');
       claimAdmissionContinuation(runtime,verified,invocation.value.id);

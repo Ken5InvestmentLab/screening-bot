@@ -1,5 +1,5 @@
 import { delayedBridge } from './delayed-run-bridge.mjs';
-import { continuationForRunner, consumeAdmissionContinuation } from './native-admission-continuation.mjs';
+import { continuationForRunner, consumeAdmissionContinuation, beginAdmissionExecution } from './native-admission-continuation.mjs';
 import fs from 'node:fs';
 import { StringDecoder } from 'node:string_decoder';
 import path from 'node:path';
@@ -436,7 +436,8 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
   const executionDate=jstDate();
-  const delayedPlan=delayedClaimFile?delayedBridge(config,'inspect-claim',delayedClaimFile):null;
+  const nativeDelayed=continuation&&(continuation.record.execution_date||continuation.record.date)!==continuation.record.date;
+  const delayedPlan=delayedClaimFile?delayedBridge(config,'inspect-claim',delayedClaimFile):nativeDelayed?{target_date:continuation.record.date,execution_date:continuation.record.execution_date,original_run_id:continuation.record.proof.original_run_id}:null;
   if(delayedPlan && (delayedPlan.execution_date!==executionDate || (config.date && config.date!==delayedPlan.target_date))) throw new Error('Delayed actual execution or configured date mismatch');
   const today = delayedPlan?.target_date || config.date || executionDate;
   if (!delayedPlan && today !== executionDate) throw new Error('Cloud daily cannot replay a different JST date');
@@ -492,7 +493,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     }
     ownsLock = true;
     let delayedExecuting=null;
-    if(delayedPlan) { delayedExecuting=delayedBridge(config,'begin',delayedClaimFile,['--root-pid',String(process.pid),'--started-at',startedAt]);result.delayedRecovery=delayedExecuting; }
+    if(delayedPlan&&!nativeDelayed) { delayedExecuting=delayedBridge(config,'begin',delayedClaimFile,['--root-pid',String(process.pid),'--started-at',startedAt]);result.delayedRecovery=delayedExecuting; }
     if (reconciliationFile) preservePriorCompletion = true;
     if (!delayedPlan && fs.existsSync(resultPath)) {
       const saved = readJson(resultPath); let plan = newATaskPlan("cloud-2", today, saved, recoveryPlan);
@@ -512,7 +513,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
       if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
     }
-    if(continuation)result.nativeAdmissionContinuation=consumeAdmissionContinuation(runtime,continuation,continuationInvocation,startedAt);
+    if(continuation){result.nativeAdmissionContinuation=consumeAdmissionContinuation(runtime,continuation,continuationInvocation,startedAt,process.pid);if(nativeDelayed){delayedExecuting=beginAdmissionExecution(config,result.nativeAdmissionContinuation,startedAt,process.pid);result.delayedRecovery=delayedExecuting;}}
     saveProgress('branch');
     await requireBranch();
     stage = 'business-day';

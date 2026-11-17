@@ -37,7 +37,7 @@ _CLI_NOTICES={
  "Proxy environment variables detected. We'll use your proxy for fetch requests.",
 }
 
-def _decode_wrangler_output(stdout,*,returncode=0,stderr=''):
+def _decode_wrangler_output(stdout,*,returncode=0,stderr='',import_progress=False):
  """Decode one document with only the existing allowlisted CLI notices."""
  def reject(category,codes=()):
   raise RemoteD1Error(category,provider_codes=codes,returncode=returncode)
@@ -48,7 +48,23 @@ def _decode_wrangler_output(stdout,*,returncode=0,stderr=''):
   reject('remote_d1_response_empty_reconcile_before_retry')
  text=re.sub(r'\x1b\[[0-9;]*m','',stdout).lstrip('\ufeff')
  lines=text.splitlines(keepends=True)
- while lines and (not lines[0].strip() or lines[0].strip() in _CLI_NOTICES):lines.pop(0)
+ progress=[]
+ while lines:
+  line=lines[0].strip()
+  if not line or line in _CLI_NOTICES:lines.pop(0);continue
+  token=None
+  if import_progress:
+   # Wrangler 4.135.0 spinnerWhile writes non-TTY progress directly even
+   # when its normal logger is suppressed by --json. Only its known file
+   # import protocol is accepted; query results and arbitrary prose are not.
+   if line=='├ Checking if file needs uploading':token='check'
+   elif line=='│':token='separator'
+   elif re.fullmatch(r'├ 🌀 Uploading [^\s\x00-\x1f\x7f\[\]{}]{1,512}',line):token='upload'
+   elif line=='│ 🌀 Uploading complete.':token='done'
+  if token is None:break
+  progress.append(token);lines.pop(0)
+ if progress and progress not in [['check','separator'],['check','separator','upload','done','separator']]:
+  reject('remote_d1_response_unrecognized_reconcile_before_retry')
  text=''.join(lines).lstrip()
  def unique_object(pairs):
   value={}
@@ -91,7 +107,7 @@ def parse_wrangler_query_results(stdout,expected_count,*,returncode=0,stderr='')
 
 def parse_wrangler_import_ack(stdout,expected_count,*,returncode=0,stderr=''):
  """Validate file-import completion, never manufacture SQL result rows."""
- data=_decode_wrangler_output(stdout,returncode=returncode,stderr=stderr)
+ data=_decode_wrangler_output(stdout,returncode=returncode,stderr=stderr,import_progress=True)
  def reject():raise RemoteD1Error('remote_d1_import_unconfirmed_reconcile_before_retry',returncode=returncode)
  if not isinstance(data,list) or len(data)!=1:reject()
  item=data[0];_require_success(item,returncode)

@@ -145,6 +145,10 @@ def begin(repo,claim_reference,*,root_pid,started_at):
  immutable(p.parent/'executing.json',running);return ref(repo,p.parent/'executing.json')
 
 def runtime_context(repo,reference):
+ if reference.get('kind')=='NATIVE_ADMISSION_EXECUTION_V1':
+  from .native_admission_context import runtime_context as native_context
+  return native_context(repo,reference)
+ require(not reference.get('kind'),'unknown recovery reference kind')
  p,running=load_ref(repo,reference,base(repo)/'operations');require(p.name=='executing.json' and running.get('schema')=='NEW_A_DELAYED_RUN_EXECUTING_V1','executing recovery required')
  _,record=verify(repo,running['contract'],administration=False);cp,claim=load_ref(repo,running['claim'],base(repo)/'operations')
  require(cp.parent==p.parent and claim.get('contract')==running['contract'] and p.parent.name==Path(running['contract']['path']).stem,'running/claim binding differs')
@@ -160,6 +164,9 @@ def classify(repo,reference,*,as_of,observed_at):
  return context
 
 def executing_reference(repo,path):
+ if Path(path).resolve().is_relative_to(runtime(repo)/'native-admission-continuations'):
+  from .native_admission_context import executing_reference as native_reference
+  return native_reference(repo,path)
  p=Path(path).resolve();require(p.is_relative_to(base(repo)/'operations') and p.name=='executing.json','private executing recovery path required');reference=ref(repo,p);runtime_context(repo,reference);return reference
 
 def assert_publication_pointer(context,pointer):

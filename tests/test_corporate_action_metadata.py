@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from weak_early_beta.corporate_actions import normalize_daily
+from weak_early_beta.corporate_actions import normalize_daily,validate_source_revision,quarantine_repaired_volume_revisions
 class AuditCounter:
  copies=0
  def __deepcopy__(self,memo):type(self).copies+=1;return type(self)()
@@ -21,4 +21,10 @@ class MetadataTests(unittest.TestCase):
  def test_empty_preserves_nested_lineage(self):
   frame=self.frame().iloc[:0];frame.attrs={'audit':{'items':[1]}};result=normalize_daily(frame)
   self.assertEqual(result.attrs,frame.attrs);result.attrs['audit']['items'].append(2);self.assertEqual(frame.attrs['audit']['items'],[1])
+ def test_revision_audit_not_copied_per_symbol_or_comparison(self):
+  previous=normalize_daily(self.frame());previous.attrs={'counter':AuditCounter(),'source_sha256':'f'*64};current=normalize_daily(self.frame());current.attrs={'counter':AuditCounter()};AuditCounter.copies=0
+  result=validate_source_revision(previous,current);self.assertEqual(result['comparedRows'],8);self.assertLessEqual(AuditCounter.copies,3);self.assertIn('counter',previous.attrs);self.assertIn('counter',current.attrs);self.assertEqual(previous.attrs['source_sha256'],'f'*64)
+ def test_volume_revision_preserves_output_lineage_without_group_copies(self):
+  previous=normalize_daily(self.frame());previous.attrs={'counter':AuditCounter(),'source_sha256':'f'*64};current=normalize_daily(self.frame());current.attrs={'counter':AuditCounter(),'audit':{'items':[1]}};AuditCounter.copies=0
+  result=quarantine_repaired_volume_revisions(previous,current);self.assertLessEqual(AuditCounter.copies,3);self.assertIn('counter',result.attrs);self.assertEqual(result.attrs['audit'],{'items':[1]});result.attrs['audit']['items'].append(2);self.assertEqual(current.attrs['audit'],{'items':[1]});self.assertIn('counter',previous.attrs)
 if __name__=='__main__':unittest.main()

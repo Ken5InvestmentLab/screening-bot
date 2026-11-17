@@ -486,7 +486,10 @@ def quarantine_repaired_volume_revisions(
         return current
     original_previous, original_current = previous, current
     previous = normalize_daily(previous)
+    previous.attrs = {}
     result = normalize_daily(current)
+    result_attrs = result.attrs
+    result.attrs = {}
     released_keys, release_audit = reviewed_repair_release_keys(
         previous, result, previous_source_sha256=previous_source_sha256,
     )
@@ -560,6 +563,7 @@ def quarantine_repaired_volume_revisions(
             result.at[position, "source_issue"] = REVISION_ISSUE
     result = normalize_daily(result)
     # Do not rely on pandas propagating attrs through final normalization.
+    result.attrs = result_attrs
     result.attrs["reviewedRepairReleases"] = release_audit
     return result
 
@@ -598,10 +602,14 @@ def validate_source_revision(
     if previous.empty:
         return receipt
     current = normalize_daily(current)
+    # This validator returns only a receipt. Audit lineage remains on the
+    # caller frames; it is not an input to any row/basis comparison below.
+    current.attrs = {}
     required = {"symbol", "date", *OHLC, "volume"}
     if not required.issubset(previous.columns):
         raise CorporateActionError("previous daily corpus cannot verify a source revision")
     previous = previous.copy()
+    previous.attrs = {}
     previous["symbol"] = previous["symbol"].astype(str)
     previous["date"] = _dates(previous["date"])
     if previous.duplicated(["symbol", "date"]).any():

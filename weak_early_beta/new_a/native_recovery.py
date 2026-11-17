@@ -31,6 +31,11 @@ def inspect(repo,runtime,prior,date,source_sha):
           'terminal same-day detection receipt required')
     check(read(runtime/'daily-latest.json')==prior,'latest terminal receipt changed')
     folder=inside(runtime,runtime/('daily-'+prior['startedAt'].replace(':','-').replace('.','-')))
+    check(read(folder/'result.json')==prior,'preserved original terminal receipt differs')
+    invoked=read(folder/'invoked.json')
+    check(invoked.get('identity')=='CLOUD_RUNNER_INVOKED_V1' and invoked.get('date')==date
+          and invoked.get('startedAt')==prior['startedAt'] and invoked.get('pid')==prior.get('pid'),
+          'original invocation identity differs')
     children=sorted(folder.glob('detect-*.process.json'))
     if not children:return None
     child_file=children[-1];child=read(child_file)
@@ -87,12 +92,20 @@ def inspect(repo,runtime,prior,date,source_sha):
             check(connection.execute('SELECT COUNT(*) FROM symbol_days WHERE day>=?',(date,)).fetchone()[0]==0,
                   'pipeline state already advanced to target/later day')
     latest=private/'latest-run.json'
-    if latest.exists():check(read(latest).get('latest_session','')<date,'target/later detection receipt exists')
+    if latest.exists():
+        previous_run=read(latest);session=previous_run.get('latest_session')
+        check(previous_run.get('identity')=='NEW_A_CLOUD_DAILY_V1' and previous_run.get('strategy')=='A_BASE'
+              and previous_run.get('entry')=='new-a-verified-daily-v1' and isinstance(session,str)
+              and re.fullmatch(r'\d{4}-\d{2}-\d{2}',session) and session<date,
+              'target/later or unrecognized detection receipt exists')
     outbox=private/'notification-outbox.sqlite'
     if outbox.exists():
         with closing(sqlite3.connect(outbox.as_uri()+'?mode=ro',uri=True)) as connection:
             for (payload,) in connection.execute('SELECT payload_json FROM new_a_delivery'):
-                check(json.loads(payload).get('signal_date','')<date,'target/later notification outcome exists')
+                event=json.loads(payload);day=event.get('signal_date')
+                check(event.get('strategy')=='A_BASE' and isinstance(day,str)
+                      and re.fullmatch(r'\d{4}-\d{2}-\d{2}',day) and day<date,
+                      'target/later or unrecognized notification outcome exists')
     # A normal source-stage crash cannot have created target-day bundle/outbox.
     runs=private/'runs'
     if runs.exists():check(not any(date in p.name for p in runs.iterdir()),'target-day artifact exists')

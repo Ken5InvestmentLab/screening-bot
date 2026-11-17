@@ -556,17 +556,26 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     saveProgress('detection');
     const cacheRecovery = prior ? await verifiedDetectionCache(repo, today) : null;
     if (cacheRecovery) saveProgress('detection', { recoveryCache: cacheRecovery });
+    let nativeRecovery = null;
+    if (prior) {
+      const inspected = await requireOk(python, ['-m', 'weak_early_beta.new_a.native_recovery', repo, runtime,
+        resumeReceipt, today, cacheRecovery.sha256], {
+        cwd: repo, env, log: path.join(runDir, 'native-source-recovery'), capture: true,
+      });
+      nativeRecovery = JSON.parse(inspected.stdout.trim());
+      if (nativeRecovery) saveProgress('detection', { nativeSourceRecovery: nativeRecovery });
+    }
     const attempts = prior || delayedPlan ? 1 : Number(config.maxFreshnessAttempts || 3);
     if (!Number.isInteger(attempts) || attempts < 1 || attempts > 3) throw new Error('invalid bounded OHLCV freshness attempts');
     for (let attempt = 1; attempt <= attempts; attempt += 1) {
       const acquisitionDirectory = path.join(runDir, `acquisition-${attempt}`);
       result.acquisitionEvidence ??= [];
-      result.acquisitionEvidence.push(delayedPlan ? {attempt,recovery:'verified-retained-parts',originalRunId:delayedPlan.original_run_id} : prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
+      result.acquisitionEvidence.push(delayedPlan ? {attempt,recovery:'verified-retained-parts',originalRunId:delayedPlan.original_run_id} : nativeRecovery ? {attempt,recovery:'verified-native-source-parts',...nativeRecovery} : prior ? { attempt, recovery: 'verified-cache-no-download', sourceSha256: cacheRecovery.sha256 } : { attempt, directory: acquisitionDirectory });
       saveProgress('detection', { acquisitionEvidence: result.acquisitionEvidence });
       const delayedFile=delayedExecuting?path.resolve(repo,delayedExecuting.path):null;
       const replayDirectory=delayedFile?path.join(path.dirname(delayedFile),'replay-acquisition'):null;
-      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(delayedPlan?['--as-of',today,'--retained-acquisition',replayDirectory,'--delayed-recovery',delayedFile]:prior?[]:['--refresh-live'])], {
-        cwd: repo, env: { ...env, CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
+      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(delayedPlan?['--as-of',today,'--retained-acquisition',replayDirectory,'--delayed-recovery',delayedFile]:nativeRecovery?['--as-of',today,'--retained-acquisition',nativeRecovery.directory]:prior?[]:['--refresh-live'])], {
+        cwd: repo, env: { ...env, PYTHONFAULTHANDLER: '1', CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
       });
       const receipt = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-run.json'));
       if (receipt.strategy !== 'A_BASE' || receipt.entry !== 'new-a-verified-daily-v1') throw new Error('unexpected New A daily receipt');

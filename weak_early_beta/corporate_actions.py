@@ -187,11 +187,18 @@ def normalize_daily(
         raise CorporateActionError(
             f"missing split-aware daily columns {sorted(missing)}; use --refresh-live"
         )
-    result = frame.copy()
+    # Keep one independent attrs copy, outside the numeric/group operations.
+    # Pandas propagates/deep-copies attrs on each slice/group/copy; large audit
+    # lineage must not be multiplied by thousands of symbols. No audit is lost.
+    result = frame.copy(deep=False)
+    saved_attrs = result.attrs
+    result.attrs = {}
+    result = result.copy()
     if result.empty:
         for column in (*ACTUAL_COLUMNS, *BASIS_COLUMNS):
             if column not in result:
                 result[column] = pd.Series(dtype="object")
+        result.attrs = saved_attrs
         return result
     result["symbol"] = result["symbol"].astype(str).str.strip()
     valid_symbols = result["symbol"].str.fullmatch(r"[0-9A-Z]{4}")
@@ -405,6 +412,7 @@ def normalize_daily(
     result["off_session_actions"] = off_session_values
     result["source_usable"] = source_usable
     result["source_issue"] = source_issue
+    result.attrs = saved_attrs
     return result
 
 

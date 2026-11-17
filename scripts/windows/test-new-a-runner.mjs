@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
+import { isDeepStrictEqual } from 'node:util';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import taskRoute from './new-a-task-route.cjs';
@@ -18,14 +19,14 @@ const privateBase=path.join(ROOT,'.cache/new-a-runner-tests');fs.mkdirSync(priva
 const receipts=[];
 const write=(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,JSON.stringify(v));};
 function fixture(){const repo=fs.mkdtempSync(path.join(privateBase,'case-')),runtime=path.join(repo,'.cache/runtime');fs.mkdirSync(runtime,{recursive:true});fs.mkdirSync(path.join(repo,'weak-early-beta-gate'));write(path.join(repo,'weak-early-beta-gate/wrangler.jsonc'),{name:'tentei-kyokuchi-cloud'});return{repo,runtime};}
-function runnerFixture({pending=0,gateAccepted=true}={}){
+function runnerFixture({pending=0,gateAccepted=true,nativeProof=null}={}){
  const {repo,runtime}=fixture(),today='2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  const local=path.join(repo,'.cache/weak_early_beta/new-a-private');fs.mkdirSync(local,{recursive:true});
  let metadata={identity:'NEW_A_CLOUD_DAILY_V1',strategy:'A_BASE',entry:'new-a-verified-daily-v1',latest_session:today,selector_rows_latest:0,detection_executed:true,source_version:'a'.repeat(64),snapshot_sha256:'b'.repeat(64),source_sha256:'c'.repeat(64),dry_run:false};
  if(process.env.NEW_A_REAL_E2E_RECEIPT){const proof=JSON.parse(fs.readFileSync(process.env.NEW_A_REAL_E2E_RECEIPT,'utf8'));assert.equal(proof.passed,true);const bundle=JSON.parse(fs.readFileSync(path.join(proof.private_bundle_directory,'receipt.json'),'utf8'));metadata={...metadata,source_version:bundle.source_version,snapshot_sha256:proof.snapshot_sha256,source_sha256:proof.source_sha256};}
  // No external process is ever created. Optional real receipt is injected by tests below as metadata only.
- const context={fs,path,console:{log(){},error(){}},process:{pid:1234,platform:'linux',env:{},exitCode:0},Date,JSON,randomUUID:crypto.randomUUID,
+ const context={fs,path,isDeepStrictEqual,console:{log(){},error(){}},process:{pid:1234,platform:'linux',env:{},exitCode:0},Date,JSON,randomUUID:crypto.randomUUID,
   loadDailyConfig:()=>config,readJson:p=>JSON.parse(fs.readFileSync(p,'utf8')),writeJson:write,atomicJson:write,appendEvent:(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.appendFileSync(p,JSON.stringify(v)+'\n');},
   loadDotEnv:()=>{},jstDate:()=>today,newATaskPlan:taskRoute.newATaskPlan,parseGitStatus:s=>s.trim()?['dirty']:[],
   probeFundamentalModel:()=>{throw Error('FUNDAMENTAL_MODEL_MUST_NOT_RUN');},drainFundamentalQueue:()=>{throw Error('FUNDAMENTAL_QUEUE_MUST_NOT_RUN');},assertHtmlImports:()=>{throw Error('FUNDAMENTAL_STATE_MUST_NOT_READ');},
@@ -36,7 +37,7 @@ function runnerFixture({pending=0,gateAccepted=true}={}){
   RESEARCH_BRANCH:'research/weak-early-beta',GITHUB_REPOSITORY:'Ken5InvestmentLab/screening-bot',DEPLOY_WORKFLOW:'weak-early-beta-report-deploy.yml',
   run:async(...args)=>context.requireOk(...args),
   requireOk:async(exe,args,options)=>{
-   calls.push({exe,args:[...args]});
+   calls.push({exe,args:[...args],pythonFaulthandler:options?.env?.PYTHONFAULTHANDLER});
    if(exe==='git'){
     assert(!['add','commit'].includes(args[0]),'No generated files may be committed');
     if(args[0]==='push')assert(/^refs\/tags\/cloud-deploy-daily-/.test(args[2]),'Only the existing code deploy tag is planned');
@@ -46,6 +47,7 @@ function runnerFixture({pending=0,gateAccepted=true}={}){
    if(exe==='FAKE_GH_NO_EXEC')return{code:0,stdout:args[0]==='run'?JSON.stringify(args.includes('--status')?[]:[{headSha:head,headBranch:context.lastTag,status:'completed',conclusion:'success'}]):'',stderr:''};
    if(exe==='FAKE_NPM_NO_EXEC')return{code:0,stdout:'local checks mocked',stderr:''};
    assert.equal(exe,'FAKE_PYTHON_NO_EXEC');
+   if(args[1]==='weak_early_beta.new_a.native_recovery')return{code:0,stdout:JSON.stringify(nativeProof),stderr:''};
    if(args.includes('is-business-day'))return{code:0,stdout:'{"business_day":true}',stderr:''};
    if(args.includes('system-log'))return{code:0,stdout:'{"synthetic":true}',stderr:''};
    if(args[1]==='weak_early_beta.cli'&&args[2]==='daily'){
@@ -77,6 +79,18 @@ test('Health success alone cannot complete owner publication or trigger notify',
 });
 test('Existing notification preview-send-reconcile ordering is kept with synthetic callbacks',async()=>{
  const f=runnerFixture({pending:1});assert.equal((await f.run()).ok,true);const notify=f.calls.filter(c=>c.args.includes('weak_early_beta.new_a.cli')&&c.args.includes('notify'));assert.equal(notify.length,3);assert(notify[0].args.includes('--dry-run'));assert(!notify[1].args.includes('--dry-run'));assert(notify[2].args.includes('--dry-run'));receipts.push({case:'new_a_notify_order',passed:true,realExternalCalls:0});
+});
+
+test('Native source recovery uses retained packets, one normal publication and no repeated completed run',async()=>{
+ const proof={schema:'CLOUD_NATIVE_SOURCE_REPLAY_V1',directory:'SYNTHETIC_RETAINED_PRIVATE_PARTS',requests:1,network_fallback:false};
+ const f=runnerFixture({nativeProof:proof}),prior={identity:'WEAK_EARLY_CLOUD_DAILY_V1',date:f.today,startedAt:'2026-11-13T08:00:00.000Z',completedAt:'2026-11-13T09:00:00.000Z',stage:'detection',ok:false,new_a:{strategy:'A_BASE',entry:'new-a-verified-daily-v1'}};
+ const receipt=path.join(f.runtime,'recovery-input-synthetic.json');write(receipt,prior);write(path.join(f.runtime,'daily-latest.json'),prior);const preserved=fs.readFileSync(receipt,'utf8');
+ await f.context.runnerMain(path.join(f.repo,'synthetic-daily-config.json'),{resumeReceipt:receipt});
+ const result=JSON.parse(fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8'));assert.equal(result.ok,true);
+ const daily=f.calls.filter(c=>c.args[1]==='weak_early_beta.cli'&&c.args[2]==='daily');assert.equal(daily.length,1);assert(!daily[0].args.includes('--refresh-live'));assert.equal(daily[0].args[daily[0].args.indexOf('--as-of')+1],f.today);assert.equal(daily[0].args[daily[0].args.indexOf('--retained-acquisition')+1],proof.directory);assert.equal(daily[0].pythonFaulthandler,'1');
+ assert.equal(f.calls.filter(c=>c.args[1]==='weak_early_beta.new_a.cli'&&c.args[2]==='publish').length,1);assert.equal(fs.readFileSync(receipt,'utf8'),preserved);
+ const count=f.calls.length;await f.context.runnerMain(path.join(f.repo,'synthetic-daily-config.json'));assert.equal(f.calls.length,count);
+ receipts.push({case:'native_recovery_exact_retained_args_one_publication',passed:true,actualExternalCalls:0});
 });
 test('A-only launch preflight passes with absent fundamental config; legacy still requires it',async()=>{
  const {repo,runtime}=fixture(),configPath=path.join(repo,'daily.json');write(configPath,{});const python=path.join(repo,'python.fixture'),node=path.join(repo,'node.fixture');for(const p of [python,node,path.join(repo,'.env'),path.join(repo,'weak-early-beta-gate/.env')])fs.writeFileSync(p,'');const corpus=path.join(repo,'.cache/weak_early_beta/tse_daily.csv');fs.mkdirSync(path.dirname(corpus),{recursive:true});fs.writeFileSync(corpus,'SYNTHETIC_NOT_A_PRICE_CORPUS');write(corpus.replace('.csv','.source-quality.json'),{identity:'CLOUD_SOURCE_QUALITY_V1',daily_sha256:hash(fs.readFileSync(corpus)),sourceRows:0});const config={repoPath:repo,runtimeDir:runtime,pythonPath:python,nodePath:node};

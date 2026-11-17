@@ -29,6 +29,38 @@ class NativeRecoveryTests(unittest.TestCase):
  def test_still_running_is_not_retried(self):self.prior.pop('completedAt');self.assertRejected()
  def test_other_day_is_not_retried(self):self.prior['date']='2026-11-16';self.assertRejected()
  def test_latest_receipt_changed(self):self.mutate(self.runtime/'daily-latest.json',error='changed');self.assertRejected()
+ def active_fixture(self):
+  self.active_start='2026-11-17T12:42:59.478Z';self.active_pid=24680
+  self.active_folder=self.runtime/('daily-'+self.active_start.replace(':','-').replace('.','-'));self.active_folder.mkdir()
+  self.current={'identity':'WEAK_EARLY_CLOUD_DAILY_V1','pid':self.active_pid,'date':self.date,'startedAt':self.active_start,'ok':False,'stage':'detection','originalRunId':self.start}
+  self.write(self.runtime/'daily-latest.json',self.current);self.write(self.active_folder/'result.json',self.current)
+  self.write(self.active_folder/'invoked.json',{**self.current,'identity':'CLOUD_RUNNER_INVOKED_V1'})
+  (self.runtime/'daily.lock').write_text(self.active_start,encoding='utf8')
+  self.key='2026-11-17T080024610Z'
+  self.write(self.runtime/f'recovery-{self.key}.json',{'invocation':'synthetic-invocation','priorStartedAt':self.start})
+  self.write(self.runtime/f'recovery-input-{self.key}.json',self.prior)
+ def inspect_active(self):return inspect(self.repo,self.runtime,self.prior,self.date,self.sha,active_run=(self.active_start,self.active_pid))
+ def test_normal_runner_progress_replaces_latest_but_preserved_prior_stays_immutable(self):
+  self.active_fixture();self.assertRejected()
+  before={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in self.repo.rglob('*') if p.is_file()}
+  self.assertEqual(self.inspect_active()['requests'],1)
+  self.assertEqual(before,{str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in self.repo.rglob('*') if p.is_file()})
+ def test_active_context_rejects_wrong_identity_date_stage_or_terminal_state(self):
+  self.active_fixture()
+  for update in [{'startedAt':self.start},{'pid':1},{'date':'2026-11-18'},{'ok':True},{'completedAt':'2026-11-17T13:00:00Z'},{'stage':'publish'},{'originalRunId':'other'},{'deployment':{}}]:
+   with self.subTest(update=update):
+    changed={**self.current,**update};self.write(self.runtime/'daily-latest.json',changed);self.write(self.active_folder/'result.json',changed)
+    with self.assertRaises(ValueError):self.inspect_active()
+ def test_active_context_rejects_lock_or_invoked_or_reservation_or_input_change(self):
+  self.active_fixture()
+  for file in [self.runtime/'daily.lock',self.active_folder/'invoked.json',self.runtime/f'recovery-{self.key}.json',self.runtime/f'recovery-input-{self.key}.json',self.active_folder/'result.json']:
+   with self.subTest(file=file.name):
+    original=file.read_bytes();file.write_text('{}',encoding='utf8')
+    with self.assertRaises(ValueError):self.inspect_active()
+    file.write_bytes(original)
+ def test_active_context_rejects_detection_already_attempted(self):
+  self.active_fixture();self.write(self.active_folder/'detect-1.process.json',{'code':1})
+  with self.assertRaises(ValueError):self.inspect_active()
  def test_publication_or_send_ambiguity_is_not_retried(self):
   for key in ['deployment','notifications','notificationPreview','latestSession','selectorRows']:
    with self.subTest(key=key):

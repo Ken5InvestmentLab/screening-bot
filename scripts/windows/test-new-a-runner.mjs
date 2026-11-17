@@ -19,8 +19,8 @@ const privateBase=path.join(ROOT,'.cache/new-a-runner-tests');fs.mkdirSync(priva
 const receipts=[];
 const write=(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,JSON.stringify(v));};
 function fixture(){const repo=fs.mkdtempSync(path.join(privateBase,'case-')),runtime=path.join(repo,'.cache/runtime');fs.mkdirSync(runtime,{recursive:true});fs.mkdirSync(path.join(repo,'weak-early-beta-gate'));write(path.join(repo,'weak-early-beta-gate/wrangler.jsonc'),{name:'tentei-kyokuchi-cloud'});return{repo,runtime};}
-function runnerFixture({pending=0,gateAccepted=true,nativeProof=null}={}){
- const {repo,runtime}=fixture(),today='2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null}={}){
+ const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  const local=path.join(repo,'.cache/weak_early_beta/new-a-private');fs.mkdirSync(local,{recursive:true});
  let metadata={identity:'NEW_A_CLOUD_DAILY_V1',strategy:'A_BASE',entry:'new-a-verified-daily-v1',latest_session:today,selector_rows_latest:0,detection_executed:true,source_version:'a'.repeat(64),snapshot_sha256:'b'.repeat(64),source_sha256:'c'.repeat(64),dry_run:false};
@@ -47,7 +47,14 @@ function runnerFixture({pending=0,gateAccepted=true,nativeProof=null}={}){
    if(exe==='FAKE_GH_NO_EXEC')return{code:0,stdout:args[0]==='run'?JSON.stringify(args.includes('--status')?[]:[{headSha:head,headBranch:context.lastTag,status:'completed',conclusion:'success'}]):'',stderr:''};
    if(exe==='FAKE_NPM_NO_EXEC')return{code:0,stdout:'local checks mocked',stderr:''};
    assert.equal(exe,'FAKE_PYTHON_NO_EXEC');
-   if(args[1]==='weak_early_beta.new_a.native_recovery')return{code:0,stdout:JSON.stringify(nativeProof),stderr:''};
+   if(args[1]==='weak_early_beta.new_a.native_recovery'){
+    const active=JSON.parse(fs.readFileSync(path.join(runtime,'daily-latest.json'),'utf8'));
+    assert.equal(args[7],active.startedAt,'bind inspector to the newly written live progress, not the old terminal latest');
+    assert.equal(args[8],String(active.pid));assert.equal(active.stage,'detection');assert.equal(active.completedAt,undefined);
+    assert.equal(fs.readFileSync(path.join(runtime,'daily.lock'),'utf8'),active.startedAt);
+    const preserved=JSON.parse(fs.readFileSync(args[4],'utf8'));assert.equal(active.originalRunId,preserved.originalRunId||preserved.startedAt);
+    return nativeInspector?nativeInspector(args):{code:0,stdout:JSON.stringify(nativeProof),stderr:''};
+   }
    if(args.includes('is-business-day'))return{code:0,stdout:'{"business_day":true}',stderr:''};
    if(args.includes('system-log'))return{code:0,stdout:'{"synthetic":true}',stderr:''};
    if(args[1]==='weak_early_beta.cli'&&args[2]==='daily'){

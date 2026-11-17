@@ -23,13 +23,49 @@ def inside(root,path):
     check(path!=root and path.is_relative_to(root),'artifact escapes its original private directory')
     return path
 
-def inspect(repo,runtime,prior,date,source_sha):
+def inspect(repo,runtime,prior,date,source_sha,*,active_run=None):
     """Return None for non-native failures; reject incomplete native evidence."""
     repo=Path(repo).resolve();runtime=inside(repo,runtime)
     check(prior.get('identity')=='WEAK_EARLY_CLOUD_DAILY_V1' and prior.get('date')==date
           and prior.get('ok') is False and prior.get('completedAt') and prior.get('stage')=='detection',
           'terminal same-day detection receipt required')
-    check(read(runtime/'daily-latest.json')==prior,'latest terminal receipt changed')
+    current=read(runtime/'daily-latest.json')
+    if active_run is None:
+        check(current==prior,'latest terminal receipt changed')
+    else:
+        # The normal runner has already claimed this recovery and published its
+        # own progress. Bind that precise live invocation instead of pretending
+        # daily-latest still points at the preserved terminal source failure.
+        started,pid=active_run
+        check(current.get('identity')=='WEAK_EARLY_CLOUD_DAILY_V1'
+              and current.get('startedAt')==started and current.get('pid')==pid
+              and current.get('date')==date and current.get('ok') is False
+              and not current.get('completedAt') and current.get('stage')=='detection'
+              and current.get('originalRunId')==(prior.get('originalRunId') or prior['startedAt']),
+              'active recovery invocation differs or is terminal')
+        check((runtime/'daily.lock').read_text(encoding='utf8')==started,'active recovery does not own daily lock')
+        active_folder=inside(runtime,runtime/('daily-'+started.replace(':','-').replace('.','-')))
+        check(read(active_folder/'result.json')==current,'active progress differs from latest')
+        active_invoked=read(active_folder/'invoked.json')
+        check(active_invoked.get('identity')=='CLOUD_RUNNER_INVOKED_V1'
+              and all(active_invoked.get(k)==current.get(k) for k in ['startedAt','pid','date','originalRunId']),
+              'active invocation identity differs')
+        key=re.sub(r'[^0-9TZ-]','',prior.get('originalRunId') or prior['startedAt'])
+        claim=read(runtime/f'recovery-{key}.json')
+        check(claim.get('priorStartedAt')==prior['startedAt'] and isinstance(claim.get('invocation'),str)
+              and claim['invocation'],'immutable recovery reservation missing or different')
+        check(read(runtime/f'recovery-input-{key}.json')==prior,'immutable recovery input differs')
+        check(not list(active_folder.glob('detect-*.process.json')),'active detection may already have executed')
+        for name in ['deployment','notifications','notificationPreview','latestSession','selectorRows','generatedCommit']:
+            check(name not in current,'active downstream outcome exists or is uncertain')
+    return inspect_source_evidence(repo,runtime,prior,date,source_sha)
+
+def inspect_source_evidence(repo,runtime,prior,date,source_sha):
+    """Read preserved source artifacts only; does not authorize a new run."""
+    repo=Path(repo).resolve();runtime=inside(repo,runtime)
+    check(prior.get('identity')=='WEAK_EARLY_CLOUD_DAILY_V1' and prior.get('date')==date
+          and prior.get('ok') is False and prior.get('completedAt') and prior.get('stage')=='detection',
+          'terminal original source receipt required')
     folder=inside(runtime,runtime/('daily-'+prior['startedAt'].replace(':','-').replace('.','-')))
     check(read(folder/'result.json')==prior,'preserved original terminal receipt differs')
     invoked=read(folder/'invoked.json')
@@ -117,7 +153,11 @@ def inspect(repo,runtime,prior,date,source_sha):
             'network_fallback':False,'inspection_wrote_or_sent':False,'remote_readback_required':True}
 
 def main():
-    if len(sys.argv)!=6:raise ValueError('expected repo runtime immutable-prior date verified-source-sha')
-    repo,runtime,prior,date,source=sys.argv[1:]
-    print(json.dumps(inspect(repo,runtime,read(prior),date,source),sort_keys=True))
+    if len(sys.argv)==7 and sys.argv[1]=='--preserved-source-evidence':
+        repo,runtime,prior,date,source=sys.argv[2:]
+        print(json.dumps(inspect_source_evidence(repo,runtime,read(prior),date,source),sort_keys=True));return
+    if len(sys.argv) not in [6,8]:raise ValueError('expected repo runtime immutable-prior date verified-source-sha [active-start active-pid]')
+    repo,runtime,prior,date,source=sys.argv[1:6]
+    active=(sys.argv[6],int(sys.argv[7])) if len(sys.argv)==8 else None
+    print(json.dumps(inspect(repo,runtime,read(prior),date,source,active_run=active),sort_keys=True))
 if __name__=='__main__':main()

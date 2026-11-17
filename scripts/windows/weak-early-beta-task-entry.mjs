@@ -1,4 +1,5 @@
 import { delayedBridge } from './delayed-run-bridge.mjs';
+import { verifyAdmissionContinuation, claimAdmissionContinuation } from './native-admission-continuation.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -12,9 +13,9 @@ import { startInvocation, boundedPreflight, readRecord, recoveryPlan, atomicJson
 import { verifyPreflightReconciliation, claimPreflightReconciliation } from './preflight-reconciliation.mjs';
 
 // The audit file is written before reading config, inspecting processes, or hashing data.
-export async function taskEntry(configPath, { task = 'cloud-3', start = false, reconciliationFile = null, delayedRecord = null, acceptanceApplication = null,
+export async function taskEntry(configPath, { task = 'cloud-3', start = false, reconciliationFile = null, delayedRecord = null, acceptanceApplication = null, admissionContinuationFile = null,
   auditDirectory = path.join(os.homedir(), 'Documents', 'Codex', 'Cloud_task_invocations'),
-  bridge = delayedBridge, check = file => launchPreflight(file, { strategy: task === "cloud-5" ? "legacy" : "A_BASE" }), load = loadDailyConfig, launch = spawn, retryOptions = {} } = {}) {
+  bridge = delayedBridge, check = file => launchPreflight(file, { strategy: task === "cloud-5" ? "legacy" : "A_BASE" }), load = loadDailyConfig, launch = spawn, retryOptions = {}, continuationOptions = {} } = {}) {
   const invocation = startInvocation(auditDirectory, { task, configPath });
   let fd, guard;
   try {
@@ -24,6 +25,7 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false, r
     guard = path.join(runtime, 'task-entry.lock');
     try { fd = fs.openSync(guard, 'wx'); fs.writeFileSync(fd, invocation.value.id); fs.fsyncSync(fd); }
     catch (error) { if (error.code !== 'EEXIST') throw error; return invocation.update({ status: 'observe', reason: 'Another task-entry owns launch arbitration; inspect its record, do not delete the lock' }); }
+    if(admissionContinuationFile && (task!=='cloud-2'||delayedRecord||reconciliationFile||acceptanceApplication))throw Error('Distinct cloud-2 native admission continuation required');
     if(delayedRecord) {
       if(task!=='cloud-2' || reconciliationFile || !acceptanceApplication || !start) throw Error('Delayed recovery requires exact cloud-2 one-shot accepted application');
       invocation.update({status:'checking-stopped-run',targetDate:'2026-11-16',executionDate:invocation.value.date});
@@ -49,6 +51,16 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false, r
     if (readiness.status !== 'ready') return invocation.update({ status: 'recovery-required', preflight: readiness });
     const latest = path.join(runtime, 'daily-latest.json');
     const prior = fs.existsSync(latest) ? readRecord(latest) : null;
+    if(admissionContinuationFile){
+      const verified=verifyAdmissionContinuation({repo:config.repoPath,runtime,date:invocation.value.date,head:readiness.result.head,sourceSha256:readiness.result.sourceSha256,prior,file:path.resolve(admissionContinuationFile),auditDirectory,processReader:continuationOptions.processReader});
+      if(!start)return invocation.update({status:'ready-continuation',externalSideEffects:false,record:verified.digest});
+      if(jstDay()!==invocation.value.date)throw Error('Target JST day changed');
+      claimAdmissionContinuation(runtime,verified,invocation.value.id);
+      const args=[path.join(config.repoPath,'scripts/windows/weak-early-beta-daily-runner.mjs'),path.resolve(configPath),'--native-admission-continuation',verified.file,'--continuation-invocation',invocation.value.id];
+      const log=path.join(runtime,`task-entry-${invocation.value.id}.log`),output=fs.openSync(log,'a');
+      try{const child=launch(config.nodePath,args,{cwd:config.repoPath,detached:true,windowsHide:true,stdio:['ignore',output,output]});await new Promise((resolve,reject)=>{child.once('spawn',resolve);child.once('error',reject);});invocation.update({status:'launched-continuation',childPid:child.pid,log,continuation:verified.digest});child.unref();}finally{fs.closeSync(output);}
+      return invocation.value;
+    }
     let plan = task === 'cloud-5' ? recoveryPlan(prior, invocation.value.date) : newATaskPlan(task, invocation.value.date, prior, recoveryPlan);
     let reconciliation;
     if (reconciliationFile) {
@@ -93,5 +105,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const index=process.argv.indexOf('--reconcile-preflight');
   if(index>=0&&!process.argv[index+1])throw Error('Missing reconciliation record');
   const delayedIndex=process.argv.indexOf('--delayed-recovery'),applicationIndex=process.argv.indexOf('--acceptance-application');
-  console.log(JSON.stringify(await taskEntry(process.argv[2], { delayedRecord:delayedIndex>=0?process.argv[delayedIndex+1]:null, acceptanceApplication:applicationIndex>=0?process.argv[applicationIndex+1]:null, task: process.argv[3] || 'cloud-3', start: process.argv.includes('--start'), reconciliationFile:index>=0?process.argv[index+1]:null })));
+  const continuationIndex=process.argv.indexOf('--native-admission-continuation');
+  if(continuationIndex>=0&&(!process.argv[continuationIndex+1]||process.argv[continuationIndex+1].startsWith('--')))throw Error('Missing native admission continuation record');
+  console.log(JSON.stringify(await taskEntry(process.argv[2], { admissionContinuationFile:continuationIndex>=0?process.argv[continuationIndex+1]:null, delayedRecord:delayedIndex>=0?process.argv[delayedIndex+1]:null, acceptanceApplication:applicationIndex>=0?process.argv[applicationIndex+1]:null, task: process.argv[3] || 'cloud-3', start: process.argv.includes('--start'), reconciliationFile:index>=0?process.argv[index+1]:null })));
 }

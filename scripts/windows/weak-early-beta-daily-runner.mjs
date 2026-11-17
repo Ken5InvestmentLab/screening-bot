@@ -1,4 +1,5 @@
 import { delayedBridge } from './delayed-run-bridge.mjs';
+import { continuationForRunner, consumeAdmissionContinuation } from './native-admission-continuation.mjs';
 import fs from 'node:fs';
 import { StringDecoder } from 'node:string_decoder';
 import path from 'node:path';
@@ -405,12 +406,16 @@ async function probeFundamentalModel(config, runDir, env) {
   }
 }
 
-async function main(configFile, { resumeReceipt = null, reconciliationFile = null, reconciliationInvocation = null, delayedClaimFile = null } = {}) {
+async function main(configFile, { resumeReceipt = null, reconciliationFile = null, reconciliationInvocation = null, delayedClaimFile = null, admissionContinuationFile = null, continuationInvocation = null } = {}) {
+  if(Boolean(admissionContinuationFile)!==Boolean(continuationInvocation))throw Error('Missing native admission continuation invocation');
+  if(admissionContinuationFile&&(resumeReceipt||reconciliationFile||delayedClaimFile||!continuationInvocation))throw Error('Distinct native admission continuation invocation required');
   if (delayedClaimFile && (resumeReceipt || reconciliationFile)) throw new Error('Delayed recovery cannot mix ordinary recovery');
   if (reconciliationFile && (resumeReceipt || !reconciliationInvocation)) throw new Error('Distinct task-entry reconciliation invocation required');
   const config = loadDailyConfig(configFile);
   const repo = path.resolve(config.repoPath);
   const runtime = path.resolve(config.runtimeDir);
+  const continuation=admissionContinuationFile?continuationForRunner({repo,runtime,file:admissionContinuationFile}):null;
+  if(continuation)resumeReceipt=continuation.record.proof.original_input;
   const startedAt = new Date().toISOString();
   const runDir = path.join(runtime, `daily-${startedAt.replace(/[:.]/g, '-')}`);
   const resultPath = path.join(runtime, 'daily-latest.json');
@@ -420,7 +425,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     const resolved = fs.realpathSync(resumeReceipt);
     if (path.dirname(resolved) !== fs.realpathSync(runtime) || !path.basename(resolved).startsWith('recovery-input-')) throw new Error('Recovery receipt must be an immutable task-entry runtime receipt');
     const latest = readJson(resultPath);
-    if (!isDeepStrictEqual(prior, latest)) throw new Error('Recovery receipt is no longer the latest terminal run; reconcile first');
+    if (!continuation && !isDeepStrictEqual(prior, latest)) throw new Error('Recovery receipt is no longer the latest terminal run; reconcile first');
   }
   fs.mkdirSync(runDir, { recursive: true });
   const lock = path.join(runtime, 'daily.lock');
@@ -507,6 +512,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
       if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
     }
+    if(continuation)result.nativeAdmissionContinuation=consumeAdmissionContinuation(runtime,continuation,continuationInvocation,startedAt);
     saveProgress('branch');
     await requireBranch();
     stage = 'business-day';
@@ -559,7 +565,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     let nativeRecovery = null;
     if (prior) {
       const inspected = await requireOk(python, ['-m', 'weak_early_beta.new_a.native_recovery', repo, runtime,
-        resumeReceipt, today, cacheRecovery.sha256], {
+        resumeReceipt, today, cacheRecovery.sha256, startedAt, String(process.pid)], {
         cwd: repo, env, log: path.join(runDir, 'native-source-recovery'), capture: true,
       });
       nativeRecovery = JSON.parse(inspected.stdout.trim());
@@ -671,7 +677,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if ((reconcileIndex>=0)!==(invocationIndex>=0) || (reconcileIndex>=0&&(!process.argv[reconcileIndex+1]||!process.argv[invocationIndex+1]))) throw Error('Missing reconciliation record or invocation');
   const delayedIndex=process.argv.indexOf('--delayed-recovery');
   if(delayedIndex>=0&&!process.argv[delayedIndex+1]) throw Error('Missing private delayed claim');
-  await main(process.argv[2], { delayedClaimFile:delayedIndex>=0?process.argv[delayedIndex+1]:null, resumeReceipt: resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null, reconciliationFile:reconcileIndex>=0?process.argv[reconcileIndex+1]:null, reconciliationInvocation:invocationIndex>=0?process.argv[invocationIndex+1]:null });
+  const continuationIndex=process.argv.indexOf('--native-admission-continuation'),continuationInvocationIndex=process.argv.indexOf('--continuation-invocation');
+  if((continuationIndex>=0)!==(continuationInvocationIndex>=0))throw Error('Missing native admission continuation invocation');
+  await main(process.argv[2], { admissionContinuationFile:continuationIndex>=0?process.argv[continuationIndex+1]:null, continuationInvocation:continuationInvocationIndex>=0?process.argv[continuationInvocationIndex+1]:null, delayedClaimFile:delayedIndex>=0?process.argv[delayedIndex+1]:null, resumeReceipt: resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null, reconciliationFile:reconcileIndex>=0?process.argv[reconcileIndex+1]:null, reconciliationInvocation:invocationIndex>=0?process.argv[invocationIndex+1]:null });
 }
 
 export { npmInvocation, probeFundamentalModel, run, parseGitStatus, assertGeneratedChanges, GENERATED_PATHS,

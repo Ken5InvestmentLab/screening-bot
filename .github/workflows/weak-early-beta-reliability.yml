@@ -8,6 +8,8 @@ on:
       - 'scripts/windows/weak-early-beta-*.mjs'
       - 'scripts/windows/test-weak-early-beta-*.mjs'
       - 'scripts/windows/test-new-a-runner.mjs'
+      - 'scripts/windows/native-admission-continuation.mjs'
+      - 'scripts/windows/test-native-admission-continuation.mjs'
       - 'weak-early-beta-gate/scripts/deploy-with-provider-recovery.mjs'
       - 'weak-early-beta-gate/package.json'
       - 'tests/test_weak_early_beta*.py'
@@ -40,13 +42,14 @@ jobs:
           pip install numpy==2.5.3 pandas==2.3.3 scikit-learn==1.9.1 xgboost==3.4.1
           'requests>=2.32,<3' 'yfinance>=0.2.65,<1'
       - name: Reproduce provider wait, duplicate prevention and snapshot wording cases
+        # The continuation suite imports the existing runner cases; run each once.
         run: >-
           node --test tests/cloud_deploy_recovery.test.mjs
           scripts/windows/test-weak-early-beta-point-in-time-post.mjs
           scripts/windows/test-weak-early-beta-daily-runner.mjs
           scripts/windows/test-weak-early-beta-run-journal.mjs
           scripts/windows/test-weak-early-beta-delayed-recovery.mjs
-          scripts/windows/test-new-a-runner.mjs
+          scripts/windows/test-native-admission-continuation.mjs
       - name: Verify retained-response replay and corporate-action gates
         run: >-
           python -B -m unittest tests.test_weak_early_beta_acquisition

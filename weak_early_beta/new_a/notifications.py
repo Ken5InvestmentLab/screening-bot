@@ -26,12 +26,83 @@ def _counts(rows):
     }
 
 
-def _attachment(date, chart_links):
+def _attachment(date, chart_links, entries=None):
     file = io.StringIO(newline="")
     writer = csv.writer(file)
-    writer.writerow(["検出日", "証券コード", "TradingView"])
-    writer.writerows((date, symbol, url) for symbol, url in chart_links)
+    if entries is None:
+        writer.writerow(["検出日", "証券コード", "TradingView"])
+        writer.writerows((date, symbol, url) for symbol, url in chart_links)
+    else:
+        writer.writerow(["通知種別", "対象日", "証券コード", "TradingView"])
+        writer.writerows(("監視開始", date, symbol, url) for symbol, url in chart_links)
+        writer.writerows(("買付候補（未約定）", entries["session"], symbol, "")
+                         for symbol in entries["symbols"])
     return {"filename": f"cloud-new-a-{date}.csv", "text": "\ufeff" + file.getvalue()}
+
+
+def _fresh_ordinary_result(run, snapshot, publication):
+    date = snapshot["as_of"]
+    return (snapshot["observation_kind"] == "LIVE_OBSERVATION"
+            and run.get("identity") == "NEW_A_CLOUD_DAILY_V1"
+            and run.get("latest_session") == date and run.get("dry_run") is False
+            and run.get("detection_executed") is True and run.get("same_run_replay") is False
+            and "delayed_recovery" not in run
+            and publication.get("schema") == "NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1"
+            and publication.get("as_of") == date and publication.get("same_dataset_replay") is False
+            and publication.get("existing_owner_gate_verified") is True
+            and publication.get("local_d1_emulation") is False
+            and publication.get("operational_gate_continuity_verified") in (None, False)
+            and "delayed_recovery" not in publication)
+
+
+def _next_session_entries(root, snapshot):
+    from .owner_notice_producer import _verified_calendar
+
+    date = snapshot["as_of"]
+    candidates = [
+        event for event in snapshot["events"]
+        if event["kind"] == "ENTRY_CANDIDATE" and event["session"] == date
+        and event.get("observation_kind") == "LIVE_OBSERVATION"
+        and event.get("observed_at") == snapshot["observed_at"]
+        and event.get("trigger_date") == date
+        and event.get("execution_status") == "NOT_EXECUTED"
+        and event.get("price_status") == "UNCONFIRMED_NEXT_OPEN"
+    ]
+    if not candidates:
+        return None
+    observed = datetime.datetime.fromisoformat(snapshot["observed_at"])
+    day = datetime.date.fromisoformat(date)
+    close = datetime.datetime.combine(day, datetime.time(15, 30), tzinfo=JST)
+    if observed.tzinfo is None or observed < close or observed.astimezone(JST).date() != day:
+        raise ValueError("entry candidates require a same-session live observation after close")
+    calendar = _verified_calendar(root.parents[2])
+    if day not in calendar or calendar[-1] <= day:
+        raise ValueError("verified next market session required for entry candidates")
+    next_date = calendar[calendar.index(day) + 1].isoformat()
+    if any(event.get("reference_entry_date") != next_date
+           or not re.fullmatch(r"[0-9A-Z]{4}", event["symbol"]) for event in candidates):
+        raise ValueError("entry candidate differs from the verified next market session")
+    return {
+        "session": next_date,
+        "symbols": sorted({event["symbol"] for event in candidates}),
+        "snapshot_sha256": snapshot["payload_sha256"],
+    }
+
+
+def _entry_field(entries, attached):
+    symbols = entries["symbols"]
+    shown = "・".join(symbols[:12] if attached else symbols)
+    if attached:
+        shown += f"（全{len(symbols)}銘柄は添付CSV）"
+    return {
+        "name": f"翌営業日の買付候補（{entries['session']}）",
+        "value": (f"{shown}\n"
+                  "支持線付近で終値の反発条件を満たした銘柄です。"
+                  "次の前場の最初の約定価格を参照し、未成立の場合は保留します。"
+                  "始値×設定株数が注文上限以内で、手数料込みの資金と保有枠が足りる場合が対象です。"
+                  "保有の確定には当日の値幅と出来高の確認も必要です。"
+                  "現時点では買付候補（未約定）です。"),
+    }
 
 
 def _delivery_sha(batch):
@@ -67,13 +138,23 @@ def _batch(snapshot, rows, report_url):
         "fields": fields,
         "color": 0x5B8DEF,
     }
-    attachment = None
+    entries = next((payload["next_session_entries"] for _, payload, _ in pending
+                    if "next_session_entries" in payload), None)
+    if entries is not None:
+        if delayed or entries["snapshot_sha256"] != snapshot["payload_sha256"]:
+            raise ValueError("next-session entry summary differs from the verified live snapshot")
+        entry_field = _entry_field(entries, attached=False)
+        attach_entries = len(entry_field["value"]) > 1024
+        fields.append(_entry_field(entries, attached=True) if attach_entries else entry_field)
+    else:
+        attach_entries = False
+    attachment = _attachment(date, chart_links, entries) if attach_entries else None
     if chart_links:
         lines = [f"[{symbol}]({url})" for symbol, url in chart_links]
         heading = f"**検出一覧（{len(symbols)}銘柄）**\n仕込み候補・監視開始（未約定）\n"
         description = heading + " ・ ".join(lines)
         if len(description) > 4096:
-            attachment = _attachment(date, chart_links)
+            attachment = attachment or _attachment(date, chart_links, entries)
             description = heading + "全銘柄のチャートリンクは添付CSVをご覧ください。\n" + " ・ ".join(lines[:8])
         embed["description"] = description
     payload = {"content": "", "embeds": [embed], "allowed_mentions": {"parse": []}}
@@ -239,7 +320,10 @@ def notify_day(root, *, date, dry_run, report_url, transport=None, reconcile_onl
         if (snapshot.get("data_status") not in {"COMPLETED", "COMPLETED_WITH_HELD_SYMBOLS"}
                 or snapshot.get(count_field) != len(signals)):
             raise ValueError("completed New A detection result required")
-    if signals:
+    next_session_summary = None
+    if _fresh_ordinary_result(run, snapshot, publication):
+        next_session_summary = lambda: _next_session_entries(root, snapshot)
+    if signals or next_session_summary is not None:
         summary = {
             "kind": SUMMARY, "event_id": digest(["A_BASE", date, SUMMARY]), "signal_date": date,
             "count": len({event["symbol"] for event in signals}), "strategy": "A_BASE",
@@ -254,8 +338,10 @@ def notify_day(root, *, date, dry_run, report_url, transport=None, reconcile_onl
     outbox = Outbox(root / "notification-outbox.sqlite")
     try:
         if not reconcile_only:
-            # An empty verified result preserves the previous silent completion behavior.
-            outbox.stage(snapshot, publication, existing_notifications_enabled=True, summary=summary)
+            # Only a fresh session can add the optional evening summary; a
+            # verified day without signals or entry candidates stays silent.
+            outbox.stage(snapshot, publication, existing_notifications_enabled=True, summary=summary,
+                         next_session_summary=next_session_summary)
         rows = outbox.day_rows(date)
         reconciled = False
         if any(status == ATTEMPTED for _, _, status in rows):

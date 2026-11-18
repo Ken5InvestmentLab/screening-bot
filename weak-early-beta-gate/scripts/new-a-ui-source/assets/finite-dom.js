@@ -153,6 +153,7 @@
  }
  function clearPrivateDisplay(){
   globalThis.AFiniteRevoked=true;
+  globalThis.AOwnerOpening?.clear();
   globalThis.AOwnerPageData=null;
   globalThis.AFiniteBrowser?.clear();
   history.clear();

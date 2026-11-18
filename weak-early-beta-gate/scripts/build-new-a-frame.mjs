@@ -20,7 +20,8 @@ const [guideBody,settingsBody,historyBody]=await Promise.all(['guide-body.html',
 const pages={latest:'ダッシュボード',analytics:'アナリティクス',guide:'ヘルプ',silence:'Silence',dive:'Dive',shadow:'Shadow',fusion:'Fusion',balance:'Balance',settings:'設定'};
 const routes=['/','/report','/index.html','/research-a',...Object.keys(pages).flatMap(p=>p==='settings'?['/weak_early_beta_settings.html']:['/weak_early_beta_'+p+'.html','/weak_early_beta_'+p+'_free.html'])];
 const loadStatus=(message='')=>'<section class="panel cloud-load-panel" id="new-a-load-panel"'+(message?'':' hidden')+'><progress id="new-a-load-progress" aria-label="読み込み状況"'+(message?'':' hidden')+'></progress><p id="new-a-load-message" role="status">'+message+'</p><button type="button" class="settings-secondary" id="new-a-load-retry" hidden>再試行</button></section>';
-const home='<div class="page-heading"><h1>ダッシュボード</h1><a href="#history" id="new-a-history-jump" class="button-link cloud-jump" hidden>検出履歴へ</a></div>'+loadStatus('対象日の銘柄を読み込んでいます。')+'<div id="new-a-dashboard"></div>'+historyBody;
+const opening='<section class="panel" id="cloud-opening" aria-labelledby="cloud-opening-heading" hidden><div class="cloud-section-head"><h2 id="cloud-opening-heading">寄付の確認結果</h2><small id="cloud-opening-status" role="status"></small></div><div class="cloud-stock-grid" id="cloud-opening-cards"></div></section>';
+const home='<div class="page-heading"><h1>ダッシュボード</h1><a href="#history" id="new-a-history-jump" class="button-link cloud-jump" hidden>検出履歴へ</a></div>'+loadStatus('対象日の銘柄を読み込んでいます。')+opening+'<div id="new-a-dashboard"></div>'+historyBody;
 const analytics='<div class="page-heading"><h1>アナリティクス</h1></div>'+loadStatus('試算の設定を読み込んでいます。')+'<div id="cloud-analytics-content"></div>';
 const views={home,analytics,guide:guideBody,settings:settingsBody+loadStatus()};
 const generated='// Build-only data-free source. Do not commit generated files.\n'+

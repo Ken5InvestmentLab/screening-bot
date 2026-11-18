@@ -2,7 +2,7 @@
 
 const { createHash } = require('node:crypto');
 const { createDatasetRuntime } = require('../../weak-early-beta-gate/scripts/new-a-ui-source/engine/dataset-runtime.cjs');
-const { exitTerms, validateExitPolicy, validatePreferences } = require('../../weak-early-beta-gate/scripts/new-a-ui-source/engine/finite-engine.cjs');
+const { exitTerms, validateExitPolicy, validatePreferences, trialTerms } = require('../../weak-early-beta-gate/scripts/new-a-ui-source/engine/finite-engine.cjs');
 
 const MORNING_CRON = '0 23 * * *';
 const JST_MS = 9 * 60 * 60 * 1000;
@@ -79,7 +79,12 @@ function savedOwner(value) {
   const preferences = validatePreferences(value.preferences);
   const exitPolicy = validateExitPolicy(value.exit_policy);
   requireValid(exitPolicy !== null, 'verified service exit policy required');
-  return { binding: value.owner_binding_sha256, revision: value.revision, preferences, exitPolicy };
+  // Match the account controller's Dashboard selection. Existing 08:00
+  // evaluation reminders below retain their separately saved endpoint policy.
+  const dashboardTrialPreset = value.view_preferences == null ? 'balanced' : value.view_preferences.trial_preset;
+  requireValid(dashboardTrialPreset === null || typeof dashboardTrialPreset === 'string', 'invalid saved dashboard preset');
+  trialTerms(dashboardTrialPreset);
+  return { binding: value.owner_binding_sha256, revision: value.revision, preferences, exitPolicy, dashboardTrialPreset };
 }
 
 async function partRows(readPart, descriptor, datasetId) {
@@ -91,7 +96,7 @@ async function partRows(readPart, descriptor, datasetId) {
   return value;
 }
 
-async function replayPublished(active, owner, readPart) {
+async function replayInputs(active, readPart) {
   const { pointer, manifest } = active;
   const input = { ...manifest.input_header };
   const dates = validateCalendar(input.calendar);
@@ -132,10 +137,14 @@ async function replayPublished(active, owner, readPart) {
     },
   };
 
-  // The site displays the model result for holdings, separately from analytics
-  // trial presets. Reuse that same model rather than recreating virtual fills.
-  return createDatasetRuntime(input, reader).currentPortfolio(owner.preferences, manifest.as_of,
-    { exitPolicy: owner.exitPolicy });
+  return { input, quotes: reader };
+}
+
+async function replayPublished(active, owner, readPart, { dashboard = false } = {}) {
+  const { input, quotes } = await replayInputs(active, readPart);
+  const options = { exitPolicy: owner.exitPolicy };
+  if (dashboard) options.trialPreset = owner.dashboardTrialPreset;
+  return createDatasetRuntime(input, quotes).currentPortfolio(owner.preferences, active.manifest.as_of, options);
 }
 
 function jst(ms) {
@@ -269,7 +278,7 @@ async function planHoldingTransitions({ now, targetDate, bankBusinessDate, readA
   if (active.manifest.as_of !== targetDate || active.manifest.live !== true)
     return empty('current_live_publication_required');
   const owner = savedOwner(await readOwnerPreferences());
-  const portfolio = await replayPublished(active, owner, readPart);
+  const portfolio = await replayPublished(active, owner, readPart, { dashboard: true });
   if (!portfolio) return empty('virtual_model_not_current');
   const { result } = portfolio;
 
@@ -307,4 +316,5 @@ async function planHoldingTransitions({ now, targetDate, bankBusinessDate, readA
   };
 }
 
-module.exports = { MORNING_CRON, planEvaluationMorning, planHoldingTransitions };
+module.exports = { MORNING_CRON, planEvaluationMorning, planHoldingTransitions, verifiedActive, savedOwner,
+  replayInputs, replayPublished, validateCalendar, sourceBasis, checkSourcesUnchanged };

@@ -4,6 +4,7 @@ import {DEFAULT_PREFERENCES,isObject} from './cloud-membership';
 import {ownerNoticeEnrollmentConfigured} from './cloud-web-push';
 import {readActiveManifest,readPrivatePart,PART_NAME,DATASET_ID} from './new-a-private';
 import {readTrial,saveTrial,validateTrial,validateView,type ViewPreferences} from './new-a-preferences';
+import {OPENING_OBSERVATION_PATH,readOpeningObservation} from './new-a-opening-observation';
 import {ownerFrame,FRAME_PATHS} from './research-a/frame.generated';
 import {ASSET_NAMES,COMPAT_ASSET_NAMES} from './research-a/assets.generated';
 export type TrustedOwnerContext={ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean;subject?:string};
@@ -76,7 +77,7 @@ async function ownerNotificationPreferences(request: Request, env: CloudEnv, sub
 }
 export function newAEarlyRefusal(request:Request):Response|null{
  const u=new URL(request.url),document=FRAME_PATHS.includes(u.pathname),read=['GET','HEAD'].includes(request.method);
- if((document||u.pathname==='/api/cloud/new-a-finite/access')&&!read)return protectedReply(request,405,{error:'method_not_allowed'});
+ if((document||u.pathname==='/api/cloud/new-a-finite/access'||u.pathname===OPENING_OBSERVATION_PATH)&&!read)return protectedReply(request,405,{error:'method_not_allowed'});
  const top=document&&read&&request.headers.get('sec-fetch-mode')==='navigate'&&request.headers.get('sec-fetch-dest')==='document';
  if(request.headers.get('sec-fetch-site')==='cross-site'&&!top)return protectedReply(request,403,{error:'cross_site_request'});
  if(request.headers.get('origin')&&request.headers.get('origin')!==u.origin)return protectedReply(request,403,{error:'origin_mismatch'});
@@ -116,6 +117,10 @@ export async function newACloudRoute(request:Request,env:CloudEnv,context:Truste
  if(url.search)return protectedReply(request,404,{error:'not_found'});
  const resource=p.slice('/api/cloud/new-a-finite/'.length);
  try{
+  if(p===OPENING_OBSERVATION_PATH){
+   if(context.subject!==env.CLOUD_OWNER_DISCORD_ID?.trim())return protectedReply(request,403,{error:'owner_required'});
+   return protectedReply(request,200,await readOpeningObservation(env.CLOUD_DB,await cloudMemberId(context.subject)));
+  }
   if(resource==='input/manifest.json'){
    if(!['GET','HEAD'].includes(request.method))return protectedReply(request,405,{error:'method_not_allowed'});
    return protectedReply(request,200,await readActiveManifest(env.CLOUD_DB));

@@ -245,6 +245,7 @@
   pageLoad.abort();
   global.AFiniteBrowser?.clear();
   global.AFiniteRevoked=true;
+  global.AOwnerOpening?.clear();
   global.AOwnerPageData=null;
   for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','new-a-history-jump']){
    const node=document.getElementById(id);
@@ -274,6 +275,9 @@
    return browser;
   }
   if(page==='home'){
+   script('owner-opening.js').then(()=>{
+    if(!pageLoad.signal.aborted&&!global.AFiniteRevoked)global.AOwnerOpening.start(unavailable);
+   }).catch(()=>{});
    let watchesExpanded=false;
    const cardDetails='.cloud-stock-grid > [data-daily-change] > .cloud-stock-detail';
    function showAllWatches(){
@@ -334,6 +338,7 @@
    tbody.innerHTML=presentationMarkup(data.rows,data.manifest,adapter);
   }else await Promise.all(preload);
   global.AOwnerPageData=data;
+  global.AOwnerOpening?.renderSavedRows();
   const payload=document.createElement('script');
   payload.type='application/json';
   payload.id='cloud-analytics-data';

@@ -7,7 +7,7 @@ function modules(){const cache=new Map(),mock={
  './shared-report-gate':{reportVerifiedSessionSubject:async r=>r.headers.get('x-synthetic-subject')||undefined,reportIdentity:async(r,e,fresh)=>{assert.equal(fresh,true);return{subject:r.headers.get('x-synthetic-subject')||undefined,discord_authorized:r.headers.get('x-synthetic-role')==='yes'};},default:{fetch:async()=>new Response('legacy-auth')}},
  './cloud-api':{cloudMemberId:async s=>'cloud_'+sha('cloud-member:'+s),cloudApi:async()=>Response.json({legacy:true})},'./cloud-role-authority':{cloudReportRole:async()=>({status:'paid'}),CloudRoleAuthority:class{}},'./cloud-push-scheduler':{runScheduledPersonalNotifications:async()=>({status:'disabled'})}};
  function load(name,parent=source){if(mock[name])return mock[name];let file=path.resolve(parent,name.replace(/\.ts$/,'')+'.ts');assert(file.startsWith(source+path.sep));if(!fs.existsSync(file)&&process.env.NEW_A_TEST_BASELINE_ROOT)file=path.resolve(process.env.NEW_A_TEST_BASELINE_ROOT,'weak-early-beta-gate/src',path.relative(source,file));if(cache.has(file))return cache.get(file).exports;const module={exports:{}};cache.set(file,module);const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;vm.runInNewContext(code,{module,exports:module.exports,require:n=>load(n,path.dirname(file)),crypto:webcrypto,Request,Response,Headers,URL,TextEncoder,TextDecoder,console:{log(){}}},{filename:file});return module.exports;}return load('./index').default;}
-function fixture(){const sql=new DatabaseSync(':memory:');sql.exec(fs.readFileSync(path.join(gate,'schema/new-a-private.sql'),'utf8'));sql.exec('CREATE TABLE cloud_member_preferences(member_id TEXT PRIMARY KEY,preferences_json TEXT)');let reads=0;const db={prepare(query){reads++;return{bind(...args){return{first:async()=>sql.prepare(query).get(...args)||null};}};}};const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_OWNER_DISCORD_ID:OWNER,CLOUD_DB:db,ASSETS:{fetch:async()=>new Response('// synthetic asset')}},app=modules();return{sql,env,app,get reads(){return reads;},close:()=>sql.close()};}
+function fixture(){const sql=new DatabaseSync(':memory:');sql.exec(fs.readFileSync(path.join(gate,'schema/new-a-private.sql'),'utf8'));sql.exec('CREATE TABLE cloud_member_preferences(member_id TEXT PRIMARY KEY,preferences_json TEXT)');let reads=0;const db={prepare(query){reads++;return{bind(...args){return{first:async()=>sql.prepare(query).get(...args)||null};}};}};const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_OWNER_DISCORD_ID:OWNER,SESSION_SECRET:'synthetic-session-secret',CLOUD_DB:db,ASSETS:{fetch:async()=>new Response('// synthetic asset')}},app=modules();return{sql,env,app,get reads(){return reads;},close:()=>sql.close()};}
 function request(url,subject=OWNER,role=true,init={}){return new Request('https://synthetic.invalid'+url,{...init,headers:{...(subject?{'x-synthetic-subject':subject}:{}),'x-synthetic-role':role?'yes':'no',...init.headers}});}
 test('unsaved server and existing modal reset retain D6; a saved D5 remains authoritative and reset is draft-only',async()=>{
  const f=fixture();try{
@@ -48,14 +48,19 @@ test('view and trial settings persist by account and trial-only clients keep the
  assert.equal(initial.view_preferences, null);
  const trialA = {...initial.preferences, cost_percent: 0.25};
  const trialB = {...initial.preferences, allocation: 'unique'};
- const accountA = await putSettings(f, trialA, 0, {view_preferences: firstView});
+ assert.match(initial.save_binding, /^[a-f0-9]{64}$/);
+ const accountA = await putSettings(f, trialA, 0, {view_preferences: firstView, save_binding: initial.save_binding});
  assert.equal(accountA.status, 200);
- assert.deepEqual((await accountA.json()).view_preferences, firstView);
+ const receiptA = await accountA.json();
+ assert.deepEqual(receiptA.view_preferences, firstView);
+ assert.notEqual(receiptA.save_binding, initial.save_binding);
 
  const otherEnv = {...f.env, CLOUD_OWNER_DISCORD_ID: OTHER};
  assert.equal((await f.app.fetch(request(preferencesPath, OTHER), f.env)).status, 403);
- assert.equal((await readSettings(f, OTHER, otherEnv)).view_preferences, null);
- assert.equal((await putSettings(f, trialB, 0, {view_preferences: secondView}, OTHER, otherEnv)).status, 200);
+ const initialB = await readSettings(f, OTHER, otherEnv);
+ assert.equal(initialB.view_preferences, null);
+ assert.equal((await putSettings(f, trialB, 0, {view_preferences: secondView, save_binding: initialB.save_binding}, OTHER, otherEnv)).status, 200);
+ assert.equal((await readSettings(f)).save_binding, receiptA.save_binding);
  const updatedTrialA = {...trialA, base_shares: 200};
  const legacy = await putSettings(f, updatedTrialA, 1);
  assert.equal(legacy.status, 200);
@@ -73,12 +78,12 @@ test('view and trial settings persist by account and trial-only clients keep the
 test('trial and view CAS rejects a stale or failed settings save without changing either row', async t => {
  const f = fixture();
  t.after(f.close);
- const {preferences} = await readSettings(f);
+ const {preferences, save_binding} = await readSettings(f);
  const changes = [
   {preferences: {...preferences, cost_percent: 0.25}, view_preferences: firstView},
   {preferences: {...preferences, cost_percent: 0.5}, view_preferences: secondView},
  ];
- const tie = await Promise.all(changes.map(change => putSettings(f, change.preferences, 0, {view_preferences: change.view_preferences})));
+ const tie = await Promise.all(changes.map(change => putSettings(f, change.preferences, 0, {view_preferences: change.view_preferences, save_binding})));
  assert.deepEqual(tie.map(r => r.status).sort(), [200, 409]);
  const winner = changes[tie.findIndex(r => r.ok)];
  const conflict = await tie.find(r => r.status === 409).json();
@@ -89,7 +94,8 @@ test('trial and view CAS rejects a stale or failed settings save without changin
   BEFORE UPDATE ON new_a_finite_trial_preferences
   WHEN NEW.member_id GLOB 'new-a-view:v1:*'
   BEGIN SELECT RAISE(ABORT, 'synthetic write failure'); END;`);
- const failed = await putSettings(f, preferences, 1, {view_preferences: secondView});
+ const beforeFailure = await readSettings(f);
+ const failed = await putSettings(f, preferences, 1, {view_preferences: secondView, save_binding: beforeFailure.save_binding});
  assert.equal(failed.status, 503);
  assert.deepEqual(await failed.json(), {error: 'new_a_service_unavailable'});
  const saved = await readSettings(f);
@@ -98,12 +104,34 @@ test('trial and view CAS rejects a stale or failed settings save without changin
  assert.deepEqual(saved.view_preferences, winner.view_preferences);
 });
 
+test('an open account draft cannot save under a different authorized account at the same revision', async t => {
+ const f = fixture();
+ t.after(f.close);
+ const a = await readSettings(f);
+ const otherEnv = {...f.env, CLOUD_OWNER_DISCORD_ID: OTHER};
+ const b = await readSettings(f, OTHER, otherEnv);
+ assert.equal(a.revision, b.revision);
+ assert.notEqual(a.save_binding, b.save_binding);
+ const draft = {...a.preferences, max_positions: 7};
+ const result = await putSettings(f, draft, a.revision, {view_preferences: firstView, save_binding: a.save_binding}, OTHER, otherEnv);
+ assert.equal(result.status, 409);
+ assert.deepEqual(await result.json(), {error: 'settings_session_changed', request_id: 'fixture-save'});
+ assert.deepEqual(await readSettings(f), a);
+ assert.deepEqual(await readSettings(f, OTHER, otherEnv), b);
+ assert.equal(f.sql.prepare('SELECT count(*) AS n FROM new_a_finite_trial_preferences').get().n, 0);
+});
+
 test('settings rejects caller-supplied account selectors, invalid values and anonymous requests', async t => {
  const f = fixture();
  t.after(f.close);
  const {preferences} = await readSettings(f);
  assert.equal((await putSettings(f, preferences, 0, {member_id: OTHER})).status, 400);
  assert.equal((await putSettings(f, preferences, 0, {view_preferences: {...firstView, member_id: OTHER}})).status, 400);
+ for(const binding of [{}, {save_binding:'invalid'}]){
+  const rejected = await putSettings(f, preferences, 0, {view_preferences: firstView, ...binding});
+  assert.equal(rejected.status, 400);
+  assert.deepEqual(await rejected.json(), {error: 'save_binding_required'});
+ }
  for(const invalid of [null, {...firstView, page_size: '50'}, {...firstView, trial_preset: 'custom'}, {...firstView, theme: 'other'}, {...firstView, font_size: 'normal'}]){
   const rejected = await putSettings(f, preferences, 0, {view_preferences: invalid});
   assert.equal(rejected.status, 400);

@@ -242,6 +242,37 @@ test('normal large current display reassembles UTF-8 fragments; missing/order/ta
  const parts=new Map(),ds=fragments.map((f,i)=>{const name='current_daily-'+String(i).padStart(3,'0')+'.json',text=JSON.stringify([f]);parts.set(name,text);return{name,bytes:Buffer.byteLength(text),sha256:sha(text),rows:1};}),version=sha('synthetic input'),manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',source_version:version,dataset_id:'a-'+'1'.repeat(24),input_header:{source_version:version},collections:{episodes:[],intents:[],watches:[],presentation:[],current_daily:ds},quotes:[],daily_snapshot_sha256:'0'.repeat(64)};
  await assert.rejects(()=>api.readPresentation(async url=>url.endsWith('/manifest.json')?Response.json(manifest):new Response(parts.get(url.split('/').pop())),webcrypto),/daily_snapshot_mismatch/);
 });
+test('verified current snapshot is available while history is pending',async()=>{
+ const context={module:{exports:{}},TextDecoder};
+ vm.createContext(context);
+ vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),context);
+ const api=context.module.exports;
+ const source_version=sha('ordered read'),snapshotHash=sha('current snapshot');
+ const display={schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',source_snapshot_sha256:snapshotHash};
+ const datePart=JSON.stringify([display]),historyPart=JSON.stringify([{identity:'current'}]);
+ const descriptor=(name,text)=>({name,bytes:Buffer.byteLength(text),sha256:sha(text),rows:1});
+ const date=descriptor('current_daily-000.json',datePart),history=descriptor('presentation-000.json',historyPart);
+ const manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',source_version,
+  dataset_id:'a-'+'1'.repeat(24),input_header:{source_version},daily_snapshot_sha256:snapshotHash,
+  collections:{episodes:[],intents:[],watches:[],presentation:[history],current_daily:[date]},quotes:[]};
+ const requests=[],observed=[];
+ const historyResponse=Promise.withResolvers(),historyRequested=Promise.withResolvers();
+ const network=async path=>{
+  const name=path.split('/').pop();requests.push(name);
+  if(name==='manifest.json')return Response.json(manifest);
+  if(name===date.name)return new Response(datePart);
+  assert.equal(name,history.name);historyRequested.resolve();return historyResponse.promise;
+ };
+ const pending=api.readPresentation(network,webcrypto,current=>observed.push(JSON.stringify(current)));
+ await historyRequested.promise;
+ assert.deepEqual(requests,['manifest.json',date.name,history.name]);
+ assert.deepEqual(observed,[datePart]);
+ historyResponse.resolve(new Response(historyPart));
+ assert.equal(JSON.stringify((await pending).rows),historyPart);
+ const denied=[];
+ await assert.rejects(api.readPresentation(async url=>url.endsWith('manifest.json')?Response.json(manifest):new Response(null,{status:403}),webcrypto,current=>denied.push(current)),/authorization_required/);
+ assert.deepEqual(denied,[]);
+});
 test('dashboard identifies the snapshot day, a delayed observation and independent held stocks',()=>{
  const c={module:{exports:{}}};
  vm.createContext(c);

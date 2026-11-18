@@ -1,7 +1,7 @@
 // 資金配分は本人端末のWorkerで実行。Cloudflareは本人認証・保存・private小分け入力のみ。
 (function(){'use strict';
  const response=(status,body)=>new Response(JSON.stringify(body),{status,headers:{'content-type':'application/json','cache-control':'private, no-store'}});
- function create({fetch:network,createWorker,crypto=globalThis.crypto,pinnedManifest=null}){
+ function create({fetch:network,createWorker,crypto=globalThis.crypto,pinnedManifest=null,onSimulationPhase=()=>{}}){
   let worker=null,ready=null,next=0,generation=0;const jobs=new Map();
   function clear(){generation++;worker?.terminate();worker=null;ready=null;for(const j of jobs.values())j.reject(Error('authorization_reset'));jobs.clear();}
   function rpc(message){return new Promise((resolve,reject)=>{const id=++next;jobs.set(id,{resolve,reject});worker.postMessage({...message,id});});}
@@ -28,7 +28,7 @@
    // キャッシュ済み価格を使う場合も、既存本人・role・sessionの最新可否を先に確認する。
    const access=await network('/api/cloud/new-a-finite/preferences',{cache:'no-store'});if(!access.ok){clear();return access;}
    let policy;try{const state=await access.json();policy=state.exit_policy;if(!policy||policy.version!=='A_OPEN_EXIT_V2'||!/^\d{4}-\d{2}-\d{2}$/.test(policy.first_d5_entry_session)||policy.legacy_endpoint!=='d6_open'||policy.new_endpoint!=='d5_open')throw Error('exit_policy_invalid');}catch{clear();return response(503,{error:'local_simulation_unavailable'});}
-   try{await initialized();const body=JSON.parse(options.body);if(body.expected_source_version!==undefined){const pin=await rpc({kind:'source_version'});if(body.expected_source_version!==pin.source_version)return response(409,{error:'source_version_changed'});}const value=await rpc({kind:'simulate',preferences:body.preferences,exit_policy:policy,request_id:body.request_id,...(body.recent_analytics===true?{recent_analytics:true}:{}),...(body.dashboard_prices===true?{dashboard_prices:true}:{}),...(body.trial_preset!==undefined?{trial_preset:body.trial_preset}:{})});delete value.id;return response(200,value);}catch(e){if(e.status===401||e.status===403)clear();return response(e.status||503,{error:e.status===401?'login_required':e.status===403?'owner_required':'local_simulation_unavailable'});}
+   try{if(!ready)onSimulationPhase('prices');await initialized();const body=JSON.parse(options.body);if(body.expected_source_version!==undefined){const pin=await rpc({kind:'source_version'});if(body.expected_source_version!==pin.source_version)return response(409,{error:'source_version_changed'});}onSimulationPhase('calculation');const value=await rpc({kind:'simulate',preferences:body.preferences,exit_policy:policy,request_id:body.request_id,...(body.recent_analytics===true?{recent_analytics:true}:{}),...(body.dashboard_prices===true?{dashboard_prices:true}:{}),...(body.trial_preset!==undefined?{trial_preset:body.trial_preset}:{})});delete value.id;return response(200,value);}catch(e){if(e.status===401||e.status===403)clear();return response(e.status||503,{error:e.status===401?'login_required':e.status===403?'owner_required':'local_simulation_unavailable'});}
   }
   return{transport,clear};
  }

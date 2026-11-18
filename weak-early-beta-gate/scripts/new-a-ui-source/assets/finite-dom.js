@@ -101,6 +101,10 @@
   const tbody=document.querySelector('#detection-table tbody');
   if(tbody)tbody.hidden=false;
   hydrateVisible();
+  const section=byId('history'),firstDisplay=section.hidden;
+  section.hidden=false;
+  byId('new-a-history-jump').hidden=false;
+  if(firstDisplay&&location.hash==='#history')section.scrollIntoView();
  }
  function hydrateVisible(){
   for(const row of rows)if(!row.hidden&&row.dataset.finiteHydrate==='pending'){
@@ -132,6 +136,7 @@
   globalThis.AOwnerPageData=null;
   globalThis.AFiniteBrowser?.clear();
   history.clear();
+  if(isHome)byId('new-a-history-jump').hidden=true;
   legacy.clearHistory();
   rows.length=0;
   for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','cloud-settings-page']){
@@ -164,6 +169,7 @@
   }
   if(state.phase==='error'){
    if(content&&!state.accepted)content.hidden=true;
+   if(isHome&&!state.accepted)globalThis.AOwnerPageData?.renderDashboard?.(null);
    if(!settings||state.revision===null){
     const message=isAnalytics?(state.accepted?'過去成績を更新できませんでした。':'過去成績を読み込めませんでした。'):isHome?'検出履歴を読み込めませんでした。':'設定を読み込めませんでした。';
     globalThis.AOwnerLoadStatus?.(message,()=>{

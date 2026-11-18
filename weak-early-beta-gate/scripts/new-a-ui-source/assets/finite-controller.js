@@ -18,6 +18,7 @@
   return copy(p);
  }
  const key=r=>`${r.symbol}|${r.candidate_date}|${r.episode_id}`;
+ const validSaveBinding=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
  function validateView(view){
   if(view==null)return null;
   if(!validTrial(view.trial_preset)||!['dark','light','system'].includes(view.theme)||!['small','standard','large'].includes(view.font_size)||![20,50,100].includes(view.page_size))throw Error('保存した表示設定を確認できません。');
@@ -26,14 +27,14 @@
  function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null,useTrialPreset=true}){
   if(!validTrial(trialPreset))throw Error('trial_preset_invalid');
   const s={trialPreset,viewPreferences:null,phase:'loading',presence:'unknown',revision:null,applied:null,draft:copy(BASE),accepted:null,dirty:false,edit:0,request:0,message:'設定を読み込んでいます。',defaultProposalVerified:false};
-  let committed=null;
+  let committed=null,saveBinding=null;
   const emit=()=>onChange(copy(s));
   async function api(path,method,body){
    const response=await transport(path,{method,credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
    let data;
    try{data=await response.json();}catch(_){throw Error('応答を確認できません。');}
    if(!response.ok){
-    const e=Error(response.status===409?'別の画面で設定が更新されました。再読み込みして確認してください。':response.status===401||response.status===403?'認証を確認してください。':method==='PUT'?'設定を保存できませんでした。':'読み込めませんでした。');
+    const e=Error(data?.error==='settings_session_changed'?'ログイン状態が変わりました。':response.status===409?'別の画面で設定が更新されました。再読み込みして確認してください。':response.status===401||response.status===403?'認証を確認してください。':method==='PUT'?'設定を保存できませんでした。':'読み込めませんでした。');
     e.status=response.status;e.data=data;throw e;
    }
    return data;
@@ -49,8 +50,9 @@
    committed={preferences:s.applied,result,preset,view};
   }
   function failed(e){
-   s.phase=e.status===401||e.status===403?'denied':'error';s.message=e.message;
-   if(s.phase==='denied'){
+   s.phase=e.data?.error==='settings_session_changed'?'session-changed':e.status===401||e.status===403?'denied':'error';s.message=e.message;
+   if(s.phase==='denied'||s.phase==='session-changed'){
+    saveBinding=null;
     s.accepted=null;s.applied=null;s.viewPreferences=null;s.revision=null;s.draft=copy(BASE);s.trialPreset=trialPreset;s.dirty=false;committed=null;
    }
    emit();return false;
@@ -67,10 +69,12 @@
     if(!d.has_saved_preferences&&localPreferences)p=validate(localPreferences);
     else if(!d.has_saved_finite_preferences&&localViewPreferences)p=validate({...p,...localViewPreferences});
     const view=validateView(d.view_preferences);
+    if(d.save_binding!==undefined&&!validSaveBinding(d.save_binding))throw Error('設定の読み込みを確認できません。');
     const preset=view?view.trial_preset:trialPreset;
     const result=calculateOnLoad?await simulation(p,'load-'+token,useTrialPreset?preset:null):null;
     if(token!==s.request)return false;
     s.presence=d.has_saved_preferences?'saved':'absent';s.revision=d.revision;
+    saveBinding=d.save_binding??null;
     remember(p,result,preset,view);
     s.draft=copy(p);s.dirty=false;s.phase='ready';s.message='';
     emit();return true;
@@ -86,16 +90,18 @@
   async function run(save,viewPreferences){
    if(s.revision===null||s.phase==='loading'||s.phase==='saving'||s.phase==='calculating')return false;
    const p=validate(save?s.draft:s.applied),view=validateView(viewPreferences),preset=view?view.trial_preset:s.trialPreset;
+   if(save&&view&&!validSaveBinding(saveBinding))return failed(Error('設定を保存できませんでした。再読み込みして確認してください。'));
    const token=++s.request,id=(save?'save-':'preview-')+token;
    s.phase=save?'saving':'calculating';s.message=save?'設定を保存しています。':'試算しています。';emit();
    try{
     const d=await simulation(p,id,preset);
     if(token!==s.request)return false;
     if(save){
-     const receipt=await api('/api/cloud/new-a-finite/preferences','PUT',{preferences:p,expected_revision:s.revision,request_id:id,...(view?{view_preferences:view}:{})});
+     const receipt=await api('/api/cloud/new-a-finite/preferences','PUT',{preferences:p,expected_revision:s.revision,request_id:id,...(view?{view_preferences:view,save_binding:saveBinding}:{})});
      if(token!==s.request)return false;
-     if(receipt.request_id!==id||receipt.schema_version!==1||receipt.has_saved_preferences!==true||receipt.has_saved_finite_preferences!==true||receipt.default_proposal_verified!==false||receipt.revision!==s.revision+1||canonical(validate(receipt.preferences))!==canonical(p)||view&&(!validateView(receipt.view_preferences)||canonical(validateView(receipt.view_preferences))!==canonical(view)))throw Error('保存結果を確認できません。再読み込みして確認してください。');
+     if(receipt.request_id!==id||receipt.schema_version!==1||receipt.has_saved_preferences!==true||receipt.has_saved_finite_preferences!==true||receipt.default_proposal_verified!==false||receipt.revision!==s.revision+1||canonical(validate(receipt.preferences))!==canonical(p)||view&&(!validSaveBinding(receipt.save_binding)||!validateView(receipt.view_preferences)||canonical(validateView(receipt.view_preferences))!==canonical(view)))throw Error('保存結果を確認できません。再読み込みして確認してください。');
      s.revision=receipt.revision;s.presence='saved';
+     if(view)saveBinding=receipt.save_binding;
      remember(p,d,preset,view||s.viewPreferences);
      s.dirty=false;s.message='設定を保存しました。';
     }else{

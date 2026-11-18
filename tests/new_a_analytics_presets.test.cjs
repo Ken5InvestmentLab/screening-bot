@@ -110,3 +110,36 @@ test('unresolved analytics shows the actual stop date and incomplete metrics',()
  assert.equal((html.match(/<b>未確定<\/b>/g)||[]).length,3);
  assert.doesNotMatch(html,/検出履歴/);
 });
+
+test('account view save uses the loaded binding and adopts only a matching receipt',async()=>{
+ const F=controllerFactory(),worker=workerFixture(),writes=[];
+ const binding='a'.repeat(64),next='b'.repeat(64);
+ const view={trial_preset:'profit',theme:'light',font_size:'large',page_size:50};
+ const base={schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,revision:1,default_proposal_verified:false,preferences:prefs,save_binding:binding,view_preferences:null};
+ let changed=false;
+ const transport=async(url,options)=>{
+  if(options.method==='GET')return Response.json(base);
+  const body=JSON.parse(options.body);
+  if(options.method==='PUT'){
+   writes.push(body);
+   if(changed)return Response.json({error:'settings_session_changed'},{status:409});
+   return Response.json({...base,preferences:body.preferences,revision:2,save_binding:next,view_preferences:view,request_id:body.request_id});
+  }
+  const value=worker.simulate(body.trial_preset??null);value.request_id=body.request_id;value.preferences=body.preferences;
+  return Response.json(value);
+ };
+ const c=F.createController({transport,calculateOnLoad:false,trialPreset:'balanced'});
+ assert(await c.load());
+ assert.equal(c.state().viewPreferences,null);
+ assert(await c.save(view));
+ assert.equal(writes[0].save_binding,binding);
+ assert.equal(c.state().viewPreferences.trial_preset,'profit');
+ assert.equal(c.state().revision,2);
+ changed=true;
+ assert.equal(await c.save(view),false);
+ assert.equal(writes[1].save_binding,next);
+ assert.equal(c.state().phase,'session-changed');
+ assert.equal(c.state().viewPreferences,null);
+ assert.equal(c.state().applied,null);
+ assert.equal(c.state().accepted,null);
+});

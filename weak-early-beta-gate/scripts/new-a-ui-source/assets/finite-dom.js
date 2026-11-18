@@ -156,9 +156,10 @@
    setSettingsStatus(state.message,state.phase==='error'||state.phase==='denied');
   }
   content?.setAttribute('aria-busy',String(working));
-  if(state.phase==='denied'){
+  if(state.phase==='denied'||state.phase==='session-changed'){
    clearPrivateDisplay();
-   globalThis.AOwnerLoadStatus?.('認証を確認できませんでした。',()=>location.reload());
+   const message=state.phase==='session-changed'?'ログイン状態が変わりました。':'認証を確認できませんでした。';
+   globalThis.AOwnerLoadStatus?.(message,()=>location.reload());
    return;
   }
   if(state.phase==='error'){

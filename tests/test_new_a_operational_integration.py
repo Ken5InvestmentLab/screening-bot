@@ -20,11 +20,11 @@ class FiniteDelivery(unittest.TestCase):
   self.checks+=1
   if not self.allowed or date!=op.TARGET:raise ValueError('finite expired or wrong date')
   self.assertIs(kwargs['publication']['existing_owner_gate_verified'],False);return {'schema':op.SCHEMA}
- def send(self,payload):self.sent.append(payload['event_id']);return {'confirmed':True,'message_id':'synthetic'}
+ def send(self,payload):self.sent.append(payload['batch_id']);return {'confirmed':True,'message_id':'synthetic'}
  def call(self,**kwargs):return notify_day(self.root,date=kwargs.pop('date',op.TARGET),dry_run=kwargs.pop('dry_run',False),report_url='https://synthetic.invalid/',transport=kwargs.pop('transport',self.send),**kwargs)
  def test_real_outbox_accepts_distinct_v3_then_deduplicates(self):
   with patch.object(op,'action_context',side_effect=self.guard):
-   first=self.call();self.assertEqual(first['external_sends'],2);self.assertEqual(len(self.sent),2);self.call();self.assertEqual(len(self.sent),2)
+   first=self.call();self.assertEqual(first['external_sends'],1);self.assertEqual(len(self.sent),1);self.call();self.assertEqual(len(self.sent),1)
   self.assertGreaterEqual(self.checks,5)
  def test_wrong_date_or_expiry_stops_before_outbox_creation_including_preview(self):
   for dry,date,allowed in [(True,'2026-11-18',True),(False,op.TARGET,False)]:
@@ -34,13 +34,14 @@ class FiniteDelivery(unittest.TestCase):
  def test_structural_operational_flags_without_finite_authority_cannot_stage(self):
   with patch.object(op,'local_record',return_value=None),self.assertRaisesRegex(ValueError,'no finite authority'):self.call()
   self.assertFalse((self.root/'notification-outbox.sqlite').exists());self.assertFalse(self.sent)
- def test_expiry_after_first_message_keeps_second_pending_and_resumes_only_unsent(self):
+ def test_expiry_after_post_preserves_all_local_receipts_and_blocks_further_actions(self):
   def first(payload):
    result=self.send(payload);self.allowed=False;return result
   with patch.object(op,'action_context',side_effect=self.guard):
-   with self.assertRaisesRegex(ValueError,'expired'):self.call(transport=first)
-   db=sqlite3.connect(self.root/'notification-outbox.sqlite');statuses=dict(db.execute('SELECT status,count(*) FROM new_a_delivery GROUP BY status'));db.close();self.assertEqual(statuses,{'PENDING':1,'SENT':1})
-   self.allowed=True;self.call();self.assertEqual(len(self.sent),2);self.assertEqual(len(set(self.sent)),2)
+   self.assertEqual(self.call(transport=first)['external_sends'],1)
+   db=sqlite3.connect(self.root/'notification-outbox.sqlite');statuses=dict(db.execute('SELECT status,count(*) FROM new_a_delivery GROUP BY status'));db.close();self.assertEqual(statuses,{'SENT':2})
+   with self.assertRaisesRegex(ValueError,'expired'):self.call()
+   self.assertEqual(len(self.sent),1)
 
 class FinitePublication(unittest.TestCase):
  def setUp(self):

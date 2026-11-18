@@ -135,10 +135,10 @@ class DelayedRecoveryTests(unittest.TestCase):
  def test_original_retained_packets_are_not_mutated_by_runtime_replay(self):
   _,_,reference=self.running();context=d.runtime_context(self.repo,reference);clone=Path(context['replay_directory']);self.assertNotEqual(clone,self.archive);self.assertEqual(file_sha(clone/'manifest.json'),file_sha(self.archive/'manifest.json'));(clone/'manifest.json').write_text('SYNTHETIC REPLAY STATUS');self.assertEqual(d.verify_retained(self.repo,self.plan['source']),self.archive)
  def test_late_notifications_use_same_outbox_and_never_send_twice(self):
-  from weak_early_beta.new_a.notifications import notify_day,message
+  from weak_early_beta.new_a.notifications import JST,notify_day
   root,snapshot,publication=self.snapshot();calls=[]
   def send(payload):calls.append(payload);return dict(confirmed=True,message_id='SYNTHETIC-'+str(len(calls)))
-  sent=notify_day(root,date=d.TARGET,dry_run=False,report_url='https://synthetic.invalid/',transport=send);self.assertEqual(sent['external_sends'],2);self.assertEqual(len(calls),2);self.assertTrue(all(c['observation_kind']==d.KIND and c['observed_at']==self.time.isoformat() for c in calls));self.assertIn('delayed',message(calls[0],'https://synthetic.invalid/')['embeds'][0]['title']);notify_day(root,date=d.TARGET,dry_run=False,report_url='https://synthetic.invalid/',transport=send);self.assertEqual(len(calls),2)
+  sent=notify_day(root,date=d.TARGET,dry_run=False,report_url='https://synthetic.invalid/',transport=send);self.assertEqual(sent['external_sends'],1);self.assertEqual(len(calls),1);self.assertTrue(all(c['observation_kind']==d.KIND and c['observed_at']==self.time.isoformat() for c in calls));self.assertEqual(calls[0]['payload']['embeds'][0]['fields'][1]['value'],self.time.astimezone(JST).strftime('%Y-%m-%d %H:%M:%S'));notify_day(root,date=d.TARGET,dry_run=False,report_url='https://synthetic.invalid/',transport=send);self.assertEqual(len(calls),1)
  def test_late_uncertain_delivery_is_never_reset_or_resent(self):
   from weak_early_beta.new_a.notifications import notify_day
   root,snapshot,publication=self.snapshot();calls=[]

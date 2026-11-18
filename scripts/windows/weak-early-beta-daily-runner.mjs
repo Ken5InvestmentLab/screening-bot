@@ -295,8 +295,11 @@ async function verifyLiveWorker({ origin = CLOUD_ORIGIN, fetchImpl = fetch }) {
 }
 
 function assertNotificationReceipt(receipt, date, dryRun) {
+  const hasLogicalEvents = receipt?.signal_notifications > 0 || receipt?.completion_notifications > 0;
   if (receipt?.date !== date || receipt.dry_run !== dryRun ||
-      !['signal_notifications', 'completion_notifications'].every(key => Number.isInteger(receipt[key]) && receipt[key] >= 0)) {
+      !['signal_notifications', 'completion_notifications'].every(key => Number.isInteger(receipt[key]) && receipt[key] >= 0) ||
+      receipt.pending_discord_messages !== Number(dryRun && hasLogicalEvents) ||
+      receipt.external_sends !== Number(!dryRun && hasLogicalEvents)) {
     throw new Error('invalid Cloud notification receipt; reconcile saved receipts before retrying');
   }
 }
@@ -305,9 +308,10 @@ async function reconcileNotifications({ date, preview, send, onProgress = () => 
   const before = await preview('preview');
   assertNotificationReceipt(before, date, true);
   await onProgress({ phase: 'preview', receipt: before });
-  const hasPending = before.signal_notifications + before.completion_notifications > 0;
+  const hasPending = before.pending_discord_messages === 1;
   const notifications = hasPending ? await send() : {
-    date, signal_notifications: 0, completion_notifications: 0, dry_run: false, skipped: 'no_new_symbols',
+    date, signal_notifications: 0, completion_notifications: 0, pending_discord_messages: 0, external_sends: 0,
+    dry_run: false, skipped: 'no_pending_results',
   };
   assertNotificationReceipt(notifications, date, false);
   await onProgress({ phase: 'sent', receipt: notifications });

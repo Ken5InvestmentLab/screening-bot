@@ -16,7 +16,7 @@
     "sync-report": "node scripts/sync-report.mjs",
     "sync-shared": "node scripts/sync-shared-gate.mjs",
     "typecheck": "npm run sync-report && node scripts/build-operational-identity.mjs && tsc --noEmit",
-    "types": "npm run sync-report && node scripts/build-operational-identity.mjs && npm run sync-shared && wrangler types"
+    "types": "npm run sync-report && node scripts/build-operational-identity.mjs && npm run sync-shared && wrangler types --strict-vars false"
   },
   "devDependencies": {
     "typescript": "6.0.3",

@@ -134,7 +134,7 @@
   history.clear();
   legacy.clearHistory();
   rows.length=0;
-  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history']){
+  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','cloud-settings-page']){
    const node=byId(id);
    if(node){node.replaceChildren();node.hidden=true;}
   }
@@ -161,12 +161,15 @@
    globalThis.AOwnerLoadStatus?.('認証を確認できませんでした。',()=>location.reload());
    return;
   }
-  if(state.phase==='error'&&!state.accepted){
-   if(content)content.hidden=true;
-   if(state.revision===null||!settings)globalThis.AOwnerLoadStatus?.(isAnalytics?'過去成績を読み込めませんでした。':isHome?'検出履歴を読み込めませんでした。':'設定を読み込めませんでした。',()=>{
-    globalThis.AOwnerLoadStatus?.('読み込んでいます。');
-    controller.load();
-   });
+  if(state.phase==='error'){
+   if(content&&!state.accepted)content.hidden=true;
+   if(!settings||state.revision===null){
+    const message=isAnalytics?(state.accepted?'過去成績を更新できませんでした。':'過去成績を読み込めませんでした。'):isHome?'検出履歴を読み込めませんでした。':'設定を読み込めませんでした。';
+    globalThis.AOwnerLoadStatus?.(message,()=>{
+     globalThis.AOwnerLoadStatus?.('読み込んでいます。');
+     controller.load();
+    });
+   }
    return;
   }
   if(state.phase==='ready'){

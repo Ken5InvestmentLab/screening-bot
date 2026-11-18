@@ -5,6 +5,9 @@ const patches = [
   ['const applyPreferences = async ({ persist = false } = {}) => {', 'const applyPreferences = async ({ persist = false } = {}) => {\n    if (window.AFiniteUI) return false;'],
   ["window.addEventListener?.('storage', async event => {", "window.addEventListener?.('storage', async event => {\n    if (window.AFiniteUI) return;"],
   ['    const legacyTheme = localStorage.getItem(THEME_KEY);', '    if (window.AFiniteUI) throw Error("account_display_preference");\n    const legacyTheme = localStorage.getItem(THEME_KEY);'],
+  ['  const filter = ({ resetLimit = false } = {}) => {', '  let lastHistorySort;\n  const filter = ({ resetLimit = false } = {}) => {'],
+  ['    if (historySort) {', '    if (historySort && lastHistorySort !== historySort.value) {\n      lastHistorySort = historySort.value;'],
+  ['      row.hidden = !display;', '      if (row.hidden === display) row.hidden = !display;'],
   ['    if (resetLimit) visibleLimit = PAGE_SIZE;', '    if (window.AFiniteRevoked) return;\n    if (resetLimit) visibleLimit = PAGE_SIZE;'],
   ['    if (clear) clear.disabled = !symbolValue', '    const empty = document.getElementById("new-a-history-empty");\n    if (empty) empty.hidden = matchedRows.length > 0;\n    if (clear) clear.disabled = !symbolValue'],
 ];

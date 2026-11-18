@@ -51,7 +51,7 @@
   function failed(e){
    s.phase=e.status===401||e.status===403?'denied':'error';s.message=e.message;
    if(s.phase==='denied'){
-    s.accepted=null;s.applied=null;s.viewPreferences=null;s.revision=null;committed=null;
+    s.accepted=null;s.applied=null;s.viewPreferences=null;s.revision=null;s.draft=copy(BASE);s.trialPreset=trialPreset;s.dirty=false;committed=null;
    }
    emit();return false;
   }

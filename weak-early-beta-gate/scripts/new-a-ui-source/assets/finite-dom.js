@@ -169,7 +169,7 @@
   latest=state;
   const working=busy(state);
   const key=JSON.stringify(state.viewPreferences);
-  if(key!==displayKey){
+  if(state.revision!==null&&key!==displayKey){
    legacy.applyAccountDisplay(state.viewPreferences);
    displayKey=key;
   }

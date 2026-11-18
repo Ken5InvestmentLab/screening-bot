@@ -3,7 +3,7 @@ import {cloudMemberId,type CloudEnv} from './cloud-api';
 import {DEFAULT_PREFERENCES,isObject} from './cloud-membership';
 import {ownerNoticeEnrollmentConfigured} from './cloud-web-push';
 import {readActiveManifest,readPrivatePart,PART_NAME,DATASET_ID} from './new-a-private';
-import {readTrial,saveTrial,validateTrial,validateView,type ViewPreferences} from './new-a-preferences';
+import {readInitialTheme,readTrial,saveTrial,validateTrial,validateView,type ViewPreferences} from './new-a-preferences';
 import {OPENING_OBSERVATION_PATH,readOpeningObservation} from './new-a-opening-observation';
 import {ownerFrame,FRAME_PATHS} from './research-a/frame.generated';
 import {ASSET_NAMES,COMPAT_ASSET_NAMES} from './research-a/assets.generated';
@@ -101,7 +101,16 @@ export async function newACloudRoute(request:Request,env:CloudEnv,context:Truste
  if(!context.current)return protectedReply(request,503,{error:'authentication_unavailable'});
  if(!context.roleAuthorized)return protectedReply(request,403,{error:'role_required'});
  const refused=newAEarlyRefusal(request);if(refused)return refused;
- if(document){if(!['GET','HEAD'].includes(request.method))return protectedReply(request,405,{error:'method_not_allowed'});return protectedReply(request,200,ownerFrame(p,context),false);}
+ if(document){
+  if(!['GET','HEAD'].includes(request.method))return protectedReply(request,405,{error:'method_not_allowed'});
+  if(request.method==='HEAD')return protectedReply(request,200,'',false);
+  let theme: ViewPreferences['theme'] = 'dark';
+  if(env.CLOUD_DB){
+   try{theme=await readInitialTheme(env.CLOUD_DB,await cloudMemberId(context.subject));}
+   catch{/* A preference storage error must not prevent the owner page from loading. */}
+  }
+  return protectedReply(request,200,ownerFrame(p,context,theme),false);
+ }
  if(legacyData.test(p)||p.startsWith('/report-assets/'))return protectedReply(request,410,{error:'legacy_data_not_served'});
  if(p.startsWith('/new-a-assets/')){
   const name=p.slice('/new-a-assets/'.length);if(url.search||!ASSET_NAMES.includes(name)||!['GET','HEAD'].includes(request.method))return protectedReply(request,404,{error:'not_found'});

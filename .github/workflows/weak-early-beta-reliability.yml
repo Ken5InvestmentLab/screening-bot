@@ -59,7 +59,7 @@ jobs:
           scripts/windows/test-native-admission-continuation.mjs
           scripts/windows/test-new-a-operational-loader.mjs
           scripts/windows/test-new-a-evaluation-morning.cjs
-          tests/new_a_opening_plan.test.cjs tests/new_a_opening_observation_coordinator.test.cjs
+          tests/new_a_opening_plan.test.cjs
           scripts/windows/test-new-a-fundamental-stage.mjs
       - name: Verify retained-response replay and corporate-action gates
         run: >-

@@ -14,6 +14,9 @@ import subprocess
 from .files import atomic_write, digest, encode, file_sha, private_root, read
 
 SCHEMA = 'NEW_A_CONTINUING_OWNER_ACCEPTANCE_V1'
+STABLE_SCHEMA = 'NEW_A_CONTINUING_OWNER_ACCEPTANCE_V2'
+STABLE_DECISION = 'CONTINUE_UNTIL_REVOKED_OR_BOUND_EXECUTION_CHANGED'
+STABLE_REVIEW = 'CONTINUING_DAILY_WITH_STABLE_EXECUTION_IDENTITY_NONOWNER_UNMEASURED'
 SCOPE = 'EXISTING_NEW_A_PERSONAL_PC_DAILY_V1'
 SERVICE = 'tentei-kyokuchi-cloud'
 AUTH_FILES = frozenset(['report-gate/src/index.ts', *[
@@ -110,10 +113,14 @@ def load_reference(repo, ref, section):
     require(path.is_relative_to(section_root) and path.suffix == '.json' and file_sha(path) == ref.get('sha256'), 'private operator reference mismatch')
     return path, read(path)
 
-def issue(repo, plan, *, primary_reader, measurement_reader, decision_reader, authority):
+def issue(repo, plan, *, primary_reader, measurement_reader, decision_reader, authority,
+          dependency_reader=None, worker_reader=None, raw_reader=None):
     """Host-reviewed intent is required; no generic approval-file CLI is installed."""
     repo = Path(repo).resolve()
-    require(plan.get('scope') == SCOPE and plan.get('decision') == 'CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED' and plan.get('strategy') == 'A_BASE' and plan.get('virtual_only') is True and plan.get('nonowner_evidence_mode') == 'OWNER_DECISION_UNMEASURED', 'continuing decision scope not approved')
+    stable = plan.get('acceptance_schema') == STABLE_SCHEMA
+    require(plan.get('acceptance_schema', SCHEMA) in {SCHEMA, STABLE_SCHEMA}, 'unsupported acceptance schema')
+    require(stable or 'execution_identity' not in plan, 'old acceptance cannot acquire a stable identity')
+    require(plan.get('scope') == SCOPE and plan.get('decision') == (STABLE_DECISION if stable else 'CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED') and plan.get('strategy') == 'A_BASE' and plan.get('virtual_only') is True and plan.get('nonowner_evidence_mode') == 'OWNER_DECISION_UNMEASURED', 'continuing decision scope not approved')
     require(plan.get('source_commit') == head(repo) and plan.get('target') == target(repo), 'continuing target or source mismatch')
     require('run_date' not in plan and 'expires_at' not in plan, 'dated recovery cannot become continuing acceptance')
     until = timestamp(plan['management_not_after'])
@@ -122,7 +129,7 @@ def issue(repo, plan, *, primary_reader, measurement_reader, decision_reader, au
     verify_sources(repo, plan['auth_source_hashes'])
     owner = primary_message(plan['owner_message'], primary_reader, authority)
     require(callable(decision_reader), 'host operator intent review required')
-    review = checked_decision(decision_reader(owner['message_id']), owner, plan['source_commit'], plan['target'], 'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
+    review = checked_decision(decision_reader(owner['message_id']), owner, plan['source_commit'], plan['target'], STABLE_REVIEW if stable else 'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
     require(callable(measurement_reader) and set(plan['measurements']) == set(PATHS), 'independent measured acceptance required')
     measurements = {}
     for kind, binding in plan['measurements'].items():
@@ -130,7 +137,18 @@ def issue(repo, plan, *, primary_reader, measurement_reader, decision_reader, au
         require(digest(observed) == binding.get('sha256'), 'actual host measurement changed')
         verify_measurement(observed, kind, plan['source_commit'], plan['auth_source_hashes'], plan['target'])
         measurements[kind] = observed
-    record = dict(schema=SCHEMA, scope=SCOPE, strategy='A_BASE', virtual_only=True, target=plan['target'], source_commit=plan['source_commit'], auth_source_hashes=plan['auth_source_hashes'], decision=plan['decision'], owner_message=owner, host_decision=review, measurements=measurements, nonowner_denied=False, authenticated_nonowner_observed=False, issued_at=now().isoformat(), issuance='HOST_VERIFIED_OPERATOR_ATTESTATION_V1', platform_signature_claimed=False)
+    identity = None
+    if stable:
+        from . import execution_identity as execution
+        identity, observed = execution.bind(repo, plan['source_commit'], plan['target'],
+                                           dependency_reader=dependency_reader, worker_reader=worker_reader)
+        require(plan.get('execution_identity') == identity, 'reviewed execution identity changed')
+        require(review.get('acceptance_schema') == STABLE_SCHEMA and
+                review.get('execution_identity_sha256') == digest(identity),
+                'owner review not bound to V2 execution identity')
+        execution.verify_measurements(measurements, observed, raw_reader)
+    record = dict(schema=STABLE_SCHEMA if stable else SCHEMA, scope=SCOPE, strategy='A_BASE', virtual_only=True, target=plan['target'], source_commit=plan['source_commit'], auth_source_hashes=plan['auth_source_hashes'], decision=plan['decision'], owner_message=owner, host_decision=review, measurements=measurements, nonowner_denied=False, authenticated_nonowner_observed=False, issued_at=now().isoformat(), issuance='HOST_VERIFIED_OPERATOR_ATTESTATION_V1', platform_signature_claimed=False)
+    if stable: record['execution_identity'] = identity
     record['record_sha256'] = digest(record)
     path = root(repo) / 'records' / (record['record_sha256'] + '.json')
     if path.exists():
@@ -144,14 +162,28 @@ def issue(repo, plan, *, primary_reader, measurement_reader, decision_reader, au
     immutable(grant_path, grant)
     return {'acceptance': ref, 'application_grant': reference(repo, grant_path)}
 
-def validate_record(repo, ref, *, _historical_source=None):
+def validate_record(repo, ref, *, _historical_source=None, dependency_reader=None, worker_reader=None):
     path, value = load_reference(repo, ref, 'records')
     record = dict(value)
     pin = record.pop('record_sha256', None)
-    require(digest(record) == pin and path.stem == pin and record.get('schema') == SCHEMA and record.get('scope') == SCOPE and record.get('strategy') == 'A_BASE' and record.get('virtual_only') is True and record.get('decision') == 'CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED' and record.get('issuance') == 'HOST_VERIFIED_OPERATOR_ATTESTATION_V1' and record.get('platform_signature_claimed') is False, 'continuing acceptance contract mismatch')
+    require(digest(record) == pin and path.stem == pin and record.get('schema') in {SCHEMA, STABLE_SCHEMA} and record.get('scope') == SCOPE and record.get('strategy') == 'A_BASE' and record.get('virtual_only') is True and record.get('decision') == (STABLE_DECISION if record.get('schema') == STABLE_SCHEMA else 'CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED') and record.get('issuance') == 'HOST_VERIFIED_OPERATOR_ATTESTATION_V1' and record.get('platform_signature_claimed') is False, 'continuing acceptance contract mismatch')
     require('expires_at' not in record and 'run_date' not in record and record.get('nonowner_denied') is False and record.get('authenticated_nonowner_observed') is False, 'continuing evidence falsely dated or measured')
-    require(record.get('source_commit') == (_historical_source or head(repo)) and record.get('target') == target(repo), 'accepted source or target changed')
-    checked_decision(record['host_decision'], record['owner_message'], record['source_commit'], record['target'], 'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
+    require(record.get('target') == target(repo), 'accepted source or target changed')
+    if record['schema'] == SCHEMA:
+        require('execution_identity' not in record and record.get('source_commit') == (_historical_source or head(repo)), 'accepted source or target changed')
+    else:
+        from . import execution_identity as execution
+        binding = record.get('execution_identity', {})
+        require(binding.get('anchor_source') == record.get('source_commit'), 'stable anchor source differs')
+        if _historical_source is not None:
+            require(record['source_commit'] == _historical_source and binding.get('tracked') == execution.tracked_identity(repo, _historical_source), 'historical stable identity differs')
+        else:
+            execution.verify(repo, binding, head(repo), record['target'], dependency_reader=dependency_reader, worker_reader=worker_reader)
+    checked_decision(record['host_decision'], record['owner_message'], record['source_commit'], record['target'], STABLE_REVIEW if record['schema'] == STABLE_SCHEMA else 'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
+    if record['schema'] == STABLE_SCHEMA:
+        require(record['host_decision'].get('acceptance_schema') == STABLE_SCHEMA and
+                record['host_decision'].get('execution_identity_sha256') == digest(record['execution_identity']),
+                'owner review not bound to V2 execution identity')
     require(not (root(repo) / 'revocations' / (pin + '.json')).exists(), 'continuing acceptance revoked')
     verify_sources(repo, record['auth_source_hashes'])
     require(set(record['measurements']) == set(PATHS), 'measured acceptance incomplete')
@@ -159,13 +191,15 @@ def validate_record(repo, ref, *, _historical_source=None):
         verify_measurement(measurement, kind, record['source_commit'], record['auth_source_hashes'], record['target'])
     return record
 
-def validate_evidence(evidence, repo, *, _activation_path=None, _historical_source=None, _seen=None):
+def validate_evidence(evidence, repo, *, _activation_path=None, _historical_source=None, _seen=None,
+                      dependency_reader=None, worker_reader=None):
     require(all(evidence.get(k) is True for k in ['actual_owner_allowed', 'anonymous_denied', 'private_direct_paths_denied', 'existing_auth_unchanged']), 'other owner acceptance incomplete')
     require(evidence.get('nonowner_denied') is False and evidence.get('authenticated_nonowner_observed') is False, 'unmeasured nonowner must remain false')
     _seen=set() if _seen is None else set(_seen)
     require(evidence['continuing_acceptance']['sha256'] not in _seen and len(_seen)<16, 'acceptance audit chain cycle or depth')
     _seen.add(evidence['continuing_acceptance']['sha256'])
-    record = validate_record(repo, evidence['continuing_acceptance'], _historical_source=_historical_source)
+    record = validate_record(repo, evidence['continuing_acceptance'], _historical_source=_historical_source,
+                             dependency_reader=dependency_reader, worker_reader=worker_reader)
     require(evidence.get('auth_source_hashes') == record['auth_source_hashes'], 'accepted source pins differ')
     application_id = evidence.get('application_id')
     require(isinstance(application_id, str) and re.fullmatch('[a-f0-9]{64}', application_id), 'completed application audit required')
@@ -197,10 +231,11 @@ def revoke(repo, ref, binding, *, primary_reader, decision_reader, authority):
     immutable(root(repo) / 'revocations' / (path.stem + '.json'), event)
     return event
 
-def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owner=None):
+def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owner=None,
+          dependency_reader=None, worker_reader=None):
     """Only the original finite grant can CAS-apply this accepted record once."""
     repo = Path(repo).resolve()
-    record = validate_record(repo, issued['acceptance'])
+    record = validate_record(repo, issued['acceptance'], dependency_reader=dependency_reader, worker_reader=worker_reader)
     grant_path, grant = load_reference(repo, issued['application_grant'], 'grants')
     require(grant_path.stem == digest(grant) and grant.get('schema') == 'NEW_A_FINITE_ACCEPTANCE_APPLICATION_V1' and grant.get('acceptance') == issued['acceptance'] and grant.get('scope') == SCOPE and grant.get('source_commit') == record['source_commit'] and grant.get('target') == record['target'] and grant.get('owner_message') == record['owner_message'] and grant.get('platform_signature_claimed') is False and timestamp(grant['issued_at']) <= now() < timestamp(grant['not_after']) <= timestamp(grant['issued_at']) + datetime.timedelta(hours=1), 'finite application grant expired or mismatched')
     require(callable(preflight), 'normal launch preflight required')
@@ -211,7 +246,7 @@ def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owne
     if completed.exists():
         result = read(completed)
         require(result.get('after_sha256') == file_sha(activation), 'completed activation changed; reconcile')
-        validate_evidence(read(activation)['owner_acceptance'], repo)
+        validate_evidence(read(activation)['owner_acceptance'], repo, dependency_reader=dependency_reader, worker_reader=worker_reader)
         return {**result, 'same_operation_replay': True}
     runtime = repo / '.cache/weak_early_beta/daily_runtime'
     runtime.mkdir(parents=True, exist_ok=True)
@@ -250,14 +285,14 @@ def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owne
         with (operation / 'original.json').open('xb') as stream:
             stream.write(raw); stream.flush(); os.fsync(stream.fileno())
         require(file_sha(activation) == grant['expected_activation_sha256'] and head(repo) == record['source_commit'], 'activation or source changed before replace')
-        validate_record(repo, issued['acceptance'])
+        validate_record(repo, issued['acceptance'], dependency_reader=dependency_reader, worker_reader=worker_reader)
         require(now() < timestamp(grant['not_after']), 'finite application authority expired before replace')
         atomic_write(activation, value)
         require(file_sha(activation) == after_sha, 'activation readback ambiguous; reconcile')
         result = dict(schema='NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1', before_sha256=grant['expected_activation_sha256'], after_sha256=after_sha, acceptance=issued['acceptance'], grant=issued['application_grant'], source_commit=record['source_commit'], applied_at=now().isoformat(), same_operation_replay=False)
         if previous_acceptance is not None:result['previous_acceptance']=previous_acceptance
         atomic_write(completed, result)
-        validate_evidence(evidence, repo)
+        validate_evidence(evidence, repo, dependency_reader=dependency_reader, worker_reader=worker_reader)
         return result
     finally:
         for path in reversed(held):

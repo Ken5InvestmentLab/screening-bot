@@ -1,4 +1,45 @@
 import assert from 'node:assert/strict';
-const PATCHES=[["if (settings && endpoint) {","if (settings && endpoint && !window.AFiniteUI) {"],["const applyPreferences = async ({ persist = false } = {}) => {","const applyPreferences = async ({ persist = false } = {}) => {\n    if (window.AFiniteUI) return false;"],["window.addEventListener?.('storage', async event => {","window.addEventListener?.('storage', async event => {\n    if (window.AFiniteUI) { if (event.key === DISPLAY_KEY && !settingsDialog?.open) { try { const saved = localStorage.getItem(DISPLAY_KEY); if(saved){appliedDisplay=CloudPreferences.normalizeDisplay(JSON.parse(saved));PAGE_SIZE=appliedDisplay.pageSize;applyDisplay(appliedDisplay);filter({resetLimit:true});} } catch (_) {} } return; }"],["const filter = ({ resetLimit = false } = {}) => {","const filter = ({ resetLimit = false } = {}) => {\n    if(window.AFiniteRevoked){for(const row of rows)row.hidden=true;return;}"]];
-const HOOK="\n  // Generated finite extension hook: original display, navigation, filtering and pagination.\n  if (window.AFiniteUI) window.AFiniteLegacy = {\n    applySelection(p) { appliedPreferences={priceCapYen:p.price_cap_yen,exitKey:p.exit_endpoint,baseShares:p.base_shares,costPercent:p.cost_percent};requestedPreferences={...appliedPreferences};appliedView={yearScope:p.year_scope,allocation:p.allocation};requestedView={...appliedView};appliedYears=p.year_scope==='all'?null:[Number(p.year_scope)];filter({resetLimit:true}); },\n    matchingIdentities() {return matchingRows.map(r=>r.dataset.aIdentity);},\n    saveDisplay() { appliedDisplay=readDisplayControls();PAGE_SIZE=appliedDisplay.pageSize;let persisted=true;try{applyDisplay(appliedDisplay,true);}catch(_){persisted=false;}syncDisplayControls();filter({resetLimit:true});return persisted; },\n    resetDisplay() {displayTheme.value='dark';displayFont.value=defaultFontSize;displayPage.value='20';applyDisplay(readDisplayControls());},\n    initialize(scope) {initializePagination(scope);initializeAnnualSummary(scope);}\n  };\n";
-export function patchLegacy(raw){for(const[a,b]of PATCHES){assert.equal(raw.split(a).length,2,'Pinned legacy hook anchor');raw=raw.replace(a,b);}return raw.replace(/\}\)\(\);\s*$/,HOOK+'})();\n');}
+
+const patches = [
+  ['if (settings && endpoint) {', 'if (settings && endpoint && !window.AFiniteUI) {'],
+  ['const applyPreferences = async ({ persist = false } = {}) => {', 'const applyPreferences = async ({ persist = false } = {}) => {\n    if (window.AFiniteUI) return false;'],
+  ["window.addEventListener?.('storage', async event => {", "window.addEventListener?.('storage', async event => {\n    if (window.AFiniteUI) return;"],
+  ['    const legacyTheme = localStorage.getItem(THEME_KEY);', '    if (window.AFiniteUI) throw Error("account_display_preference");\n    const legacyTheme = localStorage.getItem(THEME_KEY);'],
+  ['    if (resetLimit) visibleLimit = PAGE_SIZE;', '    if (window.AFiniteRevoked) return;\n    if (resetLimit) visibleLimit = PAGE_SIZE;'],
+  ['    if (clear) clear.disabled = !symbolValue', '    const empty = document.getElementById("new-a-history-empty");\n    if (empty) empty.hidden = matchedRows.length > 0;\n    if (clear) clear.disabled = !symbolValue'],
+];
+
+const hook = `
+  if (window.AFiniteUI) window.AFiniteLegacy = {
+    applySelection(p) {
+      appliedPreferences = {priceCapYen:p.price_cap_yen,exitKey:p.exit_endpoint,baseShares:p.base_shares,costPercent:p.cost_percent};
+      appliedView = {yearScope:p.year_scope,allocation:p.allocation};
+      appliedYears = p.year_scope==='all'?null:[Number(p.year_scope)];
+      filter({resetLimit:true});
+    },
+    matchingIdentities() {return matchingRows.map(r=>r.dataset.aIdentity);},
+    initialDisplay() {return {theme:'dark',fontSize:defaultFontSize,pageSize:20};},
+    applyAccountDisplay(view) {
+      appliedDisplay = view ? {theme:view.theme,fontSize:view.font_size,pageSize:view.page_size} : this.initialDisplay();
+      PAGE_SIZE = appliedDisplay.pageSize;
+      applyDisplay(appliedDisplay);
+      syncDisplayControls();
+    },
+    clearHistory() {
+      for (const row of rows) {
+        for (const key of Object.keys(row.dataset)) delete row.dataset[key];
+        row.replaceChildren();
+        row.remove();
+      }
+      rows.length=0;
+      matchingRows=[];
+    },
+  };
+`;
+export function patchLegacy(raw){
+  for(const [before,after] of patches){
+    assert.equal(raw.split(before).length,2,'Pinned legacy hook anchor');
+    raw=raw.replace(before,after);
+  }
+  return raw.replace(/\}\)\(\);\s*$/,hook+'})();\n');
+}

@@ -53,7 +53,7 @@ export default {
         const identity = await reportIdentity(request, { ...env, REPORT_ROLE_LOOKUP: (subject, token) => cloudReportRole(env, subject, token, pathname) }, true);
         if (identity.reason === "refresh_required") {
           if (pathname.startsWith("/api/") || pathname.startsWith("/new-a-assets/")) return protectedReply(request, 401, {error:"refresh_required"});
-          return protectedReply(request, 200, '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Discord認証確認</title><script src="/auth/guard.js" defer></script></head><body>Discord認証を確認しています。</body></html>', false);
+          return protectedReply(request, 200, '<!doctype html><html lang="ja" data-auth-recovery><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Discord認証確認</title><script src="/auth/guard.js" defer></script></head><body>Discord認証を確認しています。</body></html>', false);
         }
         if (identity.reason || !identity.subject) return protectedReply(request, identity.reason === "login_required" ? 401 : 503, {error:"authentication_unavailable"});
         const ownerAuthorized = identity.subject === env.CLOUD_OWNER_DISCORD_ID?.trim();

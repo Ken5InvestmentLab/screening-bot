@@ -4,11 +4,28 @@ const repo=path.resolve(__dirname,'..'),gate=path.join(repo,'weak-early-beta-gat
 const tsFile=[path.join(gate,'node_modules/typescript/lib/typescript.js'),process.env.NEW_A_TEST_TYPESCRIPT].find(p=>p&&fs.existsSync(p));assert(tsFile,'Install gate dependencies, or explicitly provide the local review TypeScript');const ts=require(tsFile);
 const sha=s=>createHash('sha256').update(s).digest('hex'),OWNER='100000000000000001',OTHER='100000000000000002';
 function modules(){const cache=new Map(),mock={
- './shared-report-gate':{reportVerifiedSessionSubject:async r=>r.headers.get('x-synthetic-subject')||undefined,reportIdentity:async(r,e,fresh)=>{assert.equal(fresh,true);return{subject:r.headers.get('x-synthetic-subject')||undefined,discord_authorized:r.headers.get('x-synthetic-role')==='yes'};},default:{fetch:async()=>new Response('legacy-auth')}},
+ './shared-report-gate':{reportVerifiedSessionSubject:async r=>r.headers.get('x-synthetic-subject')||undefined,reportIdentity:async(r,e,fresh)=>{assert.equal(fresh,true);const refresh=r.headers.get('x-synthetic-refresh')==='yes';return{subject:r.headers.get('x-synthetic-subject')||undefined,discord_authorized:!refresh&&r.headers.get('x-synthetic-role')==='yes',...(refresh?{reason:'refresh_required'}:{})};},default:{fetch:async()=>new Response('legacy-auth')}},
+ './operational-build.generated':{operationalBuild:{source_commit:'1'.repeat(40),build_input_sha256:'2'.repeat(64),target:{worker:'tentei-kyokuchi-cloud',database:'tentei-cloud-settings'}}},
  './cloud-api':{cloudMemberId:async s=>'cloud_'+sha('cloud-member:'+s),cloudApi:async()=>Response.json({legacy:true})},'./cloud-role-authority':{cloudReportRole:async()=>({status:'paid'}),CloudRoleAuthority:class{}},'./cloud-push-scheduler':{runScheduledPersonalNotifications:async()=>({status:'disabled'})}};
  function load(name,parent=source){if(mock[name])return mock[name];let file=path.resolve(parent,name.replace(/\.ts$/,'')+'.ts');assert(file.startsWith(source+path.sep));if(!fs.existsSync(file)&&process.env.NEW_A_TEST_BASELINE_ROOT)file=path.resolve(process.env.NEW_A_TEST_BASELINE_ROOT,'weak-early-beta-gate/src',path.relative(source,file));if(cache.has(file))return cache.get(file).exports;const module={exports:{}};cache.set(file,module);const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;vm.runInNewContext(code,{module,exports:module.exports,require:n=>load(n,path.dirname(file)),crypto:webcrypto,Request,Response,Headers,URL,TextEncoder,TextDecoder,console:{log(){}}},{filename:file});return module.exports;}return load('./index').default;}
 function fixture(){const sql=new DatabaseSync(':memory:');sql.exec(fs.readFileSync(path.join(gate,'schema/new-a-private.sql'),'utf8'));sql.exec('CREATE TABLE cloud_member_preferences(member_id TEXT PRIMARY KEY,preferences_json TEXT)');let reads=0;const db={prepare(query){reads++;return{bind(...args){return{first:async()=>sql.prepare(query).get(...args)||null};}};}};const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_OWNER_DISCORD_ID:OWNER,CLOUD_DB:db,ASSETS:{fetch:async()=>new Response('// synthetic asset')}},app=modules();return{sql,env,app,get reads(){return reads;},close:()=>sql.close()};}
 function request(url,subject=OWNER,role=true,init={}){return new Request('https://synthetic.invalid'+url,{...init,headers:{...(subject?{'x-synthetic-subject':subject}:{}),'x-synthetic-role':role?'yes':'no',...init.headers}});}
+test('refresh documents activate the existing recovery guard while private APIs remain closed until refreshed',async()=>{
+ const f=fixture();try{
+  const initialReads=f.reads,refresh={headers:{'x-synthetic-refresh':'yes'}};
+  for(const route of ['/weak_early_beta_latest.html','/weak_early_beta_analytics.html']){
+   const response=await f.app.fetch(request(route,OWNER,true,refresh),f.env),html=await response.text();
+   assert.equal(response.status,200);assert.match(html,/<html[^>]*\bdata-auth-recovery\b/);assert.match(html,/src="\/auth\/guard\.js"/);
+   assert.match(response.headers.get('cache-control'),/no-store/);assert.equal(f.reads,initialReads);
+  }
+  for(const route of ['/api/cloud/new-a-finite/access','/api/cloud/new-a-finite/input/manifest.json']){
+   const response=await f.app.fetch(request(route,OWNER,true,refresh),f.env);
+   assert.equal(response.status,401);assert.equal((await response.json()).error,'refresh_required');assert.equal(f.reads,initialReads);
+  }
+  const refreshed=await f.app.fetch(request('/api/cloud/new-a-finite/access'),f.env);
+  assert.equal(refreshed.status,200);assert.deepEqual(await refreshed.json(),{authorized:true,strategy:'A_BASE'});assert.equal(f.reads,initialReads);
+ }finally{f.close();}
+});
 test('unsaved server and existing modal reset retain D6; a saved D5 remains authoritative and reset is draft-only',async()=>{
  const f=fixture();try{
   const get=async()=>await(await f.app.fetch(request('/api/cloud/new-a-finite/preferences'),f.env)).json();
@@ -32,7 +49,28 @@ test('normal large current display reassembles UTF-8 fragments; missing/order/ta
  const parts=new Map(),ds=fragments.map((f,i)=>{const name='current_daily-'+String(i).padStart(3,'0')+'.json',text=JSON.stringify([f]);parts.set(name,text);return{name,bytes:Buffer.byteLength(text),sha256:sha(text),rows:1};}),version=sha('synthetic input'),manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',source_version:version,dataset_id:'a-'+'1'.repeat(24),input_header:{source_version:version},collections:{episodes:[],intents:[],watches:[],presentation:[],current_daily:ds},quotes:[],daily_snapshot_sha256:'0'.repeat(64)};
  await assert.rejects(()=>api.readPresentation(async url=>url.endsWith('/manifest.json')?Response.json(manifest):new Response(parts.get(url.split('/').pop())),webcrypto),/daily_snapshot_mismatch/);
 });
-test('current watch display labels missing/restricted source holds without inventing a last observation date',()=>{const c={module:{exports:{}}};vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),c);const snapshot={schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',as_of:'synthetic-session',observation_kind:'DRY_RUN_HISTORICAL',held_symbols:{'1111':{day:'held-session',reason:'MISSING_SOURCE'},'2222':{day:'held-session',reason:'SOURCE_QUARANTINED'}},monitor_state:{watches:{'1111|1':{episode:{symbol:'1111',candidate_date:'candidate'}},'2222|1':{episode:{symbol:'2222',candidate_date:'candidate'}},'3333|1':{episode:{symbol:'3333',candidate_date:'candidate'}}}},events:[]};const html=c.module.exports.currentMarkup([snapshot]);assert(html.includes('保留 2銘柄／うち監視 2件'));assert(html.includes('取得・価格保留（取得未確認）'));assert(html.includes('取得・価格保留（価格照合保留）'));assert(html.includes('保留対象日 held-session'));assert(!html.includes('最終観測'));assert(html.includes('<td>3333</td>'));assert(html.includes('監視中・未約定'));});
+test('dashboard identifies the snapshot day, a delayed observation and independent held stocks',()=>{
+ const c={module:{exports:{}}};
+ vm.createContext(c);
+ vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),c);
+ const snapshot={
+  schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',as_of:'2026-11-16',
+  observed_at:'2026-11-16T16:00:00Z',observation_kind:'DELAYED_SCHEDULED_OBSERVATION',
+  held_symbols:{'1111':{day:'2026-11-16',reason:'MISSING_SOURCE'},'2222':{day:'2026-11-16',reason:'SOURCE_QUARANTINED'},'4444':{day:'2026-11-16',reason:'VERIFIED_RESTRICTED'}},
+  monitor_state:{watches:{'1111|1':{episode:{symbol:'1111',candidate_date:'2026-11-14'}},'3333|1':{episode:{symbol:'3333',candidate_date:'2026-11-15'}}}},
+  events:[{session:'2026-11-16',symbol:'3333',kind:'WATCH_STARTED',is_delayed_scheduled_signal:true},{session:'2026-11-16',symbol:'3333',kind:'WATCH_STARTED',is_delayed_scheduled_signal:true}],
+ };
+ const {currentMarkup}=c.module.exports,html=currentMarkup([snapshot]);
+ assert.match(html,/対象 2026-11-16/);
+ assert.match(html,/観測 11\/17 01:00 JST/);
+ assert.match(html,/遅延実行/);
+ assert.match(html,/新規監視 1件/);
+ assert.match(html,/データ保留 3銘柄/);
+ for(const label of ['取得未確認','価格照合','取引制限','監視中'])assert(html.includes(label));
+ assert.doesNotMatch(html,/今日の新規検出|最終観測/);
+ assert.doesNotMatch(currentMarkup([{...snapshot,observation_kind:'CATCHUP_NOT_NEW'}]),/新規監視/);
+ assert.match(currentMarkup([]),/監視状況を確認できません/);
+});
 
 // Exit-transition fixtures are synthetic; no actual price input or production session.
 const transitionEngine=require(path.join(gate,'scripts/new-a-ui-source/engine/finite-engine.cjs'));

@@ -14,23 +14,112 @@
  function validateManifest(m){if(!m||m.schema!=='A_BROWSER_PRIVATE_INPUT_V1'||m.audience!=='EXISTING_CLOUD_OWNER_ONLY'||!/^a-[a-f0-9]{20,64}$/.test(m.dataset_id)||!m.input_header||m.input_header.source_version!==m.source_version||!m.collections||kinds.some(k=>!Array.isArray(m.collections[k])))throw Error('private_manifest');const all=[...Object.values(m.collections).flat(),...m.quotes];if(all.length>512||new Set(all.map(d=>d.name)).size!==all.length||all.some(d=>!/^(episodes|intents|watches|presentation|current_daily|quotes)-\d{3}\.json$/.test(d.name)||d.dataset_id!==undefined&&!/^a-[a-f0-9]{20,64}$/.test(d.dataset_id)||!Number.isSafeInteger(d.bytes)||d.bytes<2||d.bytes>196608||!Number.isSafeInteger(d.rows)||d.rows<0||!/^[a-f0-9]{64}$/.test(d.sha256)))throw Error('private_manifest_bounds');return m;}
  async function readPresentation(network,crypto){const r=await network('/api/cloud/new-a-finite/input/manifest.json',{credentials:'same-origin',cache:'no-store'});if(!r.ok)throw Error(r.status===401||r.status===403?'authorization_required':'private_unavailable');const m=validateManifest(await r.json()),ds=[...m.collections.presentation,...m.collections.current_daily],loaded=new Map();let next=0;async function load(){while(next<ds.length){const d=ds[next++],r=await network(`/api/cloud/new-a-finite/input/${d.dataset_id||m.dataset_id}/${d.name}`,{credentials:'same-origin',cache:'no-store'});if(!r.ok)throw Error('private_unavailable');const bytes=await r.arrayBuffer();if(bytes.byteLength!==d.bytes||await hash(bytes,crypto)!==d.sha256)throw Error('private_integrity');const rows=JSON.parse(new TextDecoder().decode(bytes));if(!Array.isArray(rows)||rows.length!==d.rows)throw Error('private_rows');loaded.set(d.name,rows);}}await Promise.all(Array.from({length:Math.min(4,ds.length)},load));const current=await assembleCurrent(m.collections.current_daily.flatMap(d=>loaded.get(d.name)),crypto);if(current[0]?.schema==='NEW_A_OWNER_DAILY_DISPLAY_V1'&&(!/^[a-f0-9]{64}$/.test(m.daily_snapshot_sha256)||current[0].source_snapshot_sha256!==m.daily_snapshot_sha256))throw Error('daily_snapshot_mismatch');return {manifest:m,rows:m.collections.presentation.flatMap(d=>loaded.get(d.name)),current};}
  function inputFor(rows,manifest){return {schema:'A_LEGACY_UI_INPUT_V1',status:'ready',scopeLabel:'新A・監視開始',asOfDate:manifest.input_header.limits?.completeThrough,accountRegimes:[],measurement:{kind:'A_SIGNAL_LEGACY_D5_D6',anchorBasis:'candidateDate',entryBasis:'EXPLICIT_VERIFIED_ENTRY'},rows};}
- function presentationMarkup(rows,manifest,adapter){adapter.validateInput(inputFor(rows,manifest));const ordered=[...rows].sort((a,b)=>b.signalDate.localeCompare(a.signalDate)||a.symbol.localeCompare(b.symbol)||a.identity.localeCompare(b.identity));return ordered.map((r,i)=>i<20?adapter.rowHtml(r,i):adapter.lightweightRowHtml(r,i)).join('');}
- function currentMarkup(snapshots){if(!snapshots.length)return '<section class="panel"><h2>現在の監視</h2><p>未確認</p></section>';if(snapshots.length!==1)throw Error('current_snapshot_count');const s=snapshots[0];if(!['NEW_A_OWNER_DAILY_SNAPSHOT_V1','NEW_A_OWNER_DAILY_DISPLAY_V1'].includes(s.schema)||s.audience!=='EXISTING_CLOUD_OWNER_ONLY'&&s.audience!=='OWNER_ONLY')throw Error('current_snapshot_schema');const watches=Object.entries(s.monitor_state?.watches??{}),events=s.events??[],held=s.held_symbols??{},heldReason={MISSING_SOURCE:'取得未確認',VERIFIED_DELISTED:'上場廃止確認',SOURCE_QUARANTINED:'価格照合保留'},label={WATCH_STARTED:'監視開始',ENTRY_CANDIDATE:'候補・未約定',WATCH_TERMINAL:'監視終了',MONITOR_RESET:'監視リセット',REFERENCE_OPEN:'寄付の照合・試算参考'},reason={UP_ESCAPED:'上方離脱',DOWN_INVALIDATED:'下方無効',EXPIRED:'監視期限',TRIGGERED:'支持反発確認'},observation={DRY_RUN_HISTORICAL:'保存データの再生',LIVE_OBSERVATION:'当日の日次観測',CATCHUP_NOT_NEW:'遅延照合',DELAYED_SCHEDULED_OBSERVATION:'指定日の遅延実行'};
-  return `<section class="panel" id="new-a-current"><h2>現在の監視</h2><p class="note">${esc(s.as_of)}｜監視 ${watches.length}件｜候補・監視状況／実取引ではありません</p><p class="note">${esc(observation[s.observation_kind]||'観測状態未確認')}｜観測記録</p><p class="note">取得・価格保留 ${Object.keys(held).length}銘柄／うち監視 ${watches.filter(([,w])=>held[w.episode?.symbol]).length}件</p><div class="table-wrap"><table class="scenario-table"><thead><tr><th>銘柄コード</th><th>監視開始</th><th>状態</th></tr></thead><tbody>${watches.map(([symbol,w],i)=>`<tr data-current-watch${i>=20?' hidden':''}><td>${esc(w.episode?.symbol||'名称未照合')}</td><td>${esc(w.episode?.candidate_date)}</td><td>${held[w.episode?.symbol]?'取得・価格保留（'+esc(heldReason[held[w.episode.symbol].reason]||'確認待ち')+'）・未約定<small>保留対象日 '+esc(held[w.episode.symbol].day||'未確認')+'</small>':'監視中・未約定'}</td></tr>`).join('')}</tbody></table></div><button class="settings-secondary" type="button" id="new-a-current-more">監視一覧をすべて表示</button><h3>当日の観測イベント</h3><div class="table-wrap"><table class="scenario-table"><thead><tr><th>日付</th><th>銘柄コード</th><th>状態</th></tr></thead><tbody>${events.map(e=>`<tr><td>${esc(e.session)}</td><td>${esc(e.symbol)}</td><td>${esc(label[e.kind]||'観測記録')}${e.reason?'・'+esc(reason[e.reason]||'確認待ち'):''}${e.is_new_live_signal===true?'・新規検出':'・照合記録'}</td></tr>`).join('')}</tbody></table></div></section>`;
+ function presentationMarkup(rows,manifest,adapter){adapter.validateInput(inputFor(rows,manifest));const ordered=[...rows].sort((a,b)=>b.signalDate.localeCompare(a.signalDate)||a.symbol.localeCompare(b.symbol)||a.identity.localeCompare(b.identity));return ordered.map((r,i)=>adapter.lightweightRowHtml(r,i)).join('');}
+ function currentMarkup(snapshots,rows=[]){
+  if(!snapshots.length)return '<section class="panel"><h2>最新の監視状況</h2><p>監視状況を確認できません。</p></section>';
+  if(snapshots.length!==1)throw Error('current_snapshot_count');
+  const s=snapshots[0];
+  if(!['NEW_A_OWNER_DAILY_SNAPSHOT_V1','NEW_A_OWNER_DAILY_DISPLAY_V1'].includes(s.schema)||!['EXISTING_CLOUD_OWNER_ONLY','OWNER_ONLY'].includes(s.audience))throw Error('current_snapshot_schema');
+  const watches=Object.values(s.monitor_state?.watches??{}),events=s.events??[],held=s.held_symbols??{};
+  const names=new Map();
+  for(const row of rows){
+   if(row.identityStatus==='PRELISTING_HISTORY_MAPPING_UNVERIFIED')continue;
+   const existing=names.get(row.symbol);
+   if(!existing||existing.signalDate<row.signalDate)names.set(row.symbol,row);
+  }
+  const stock=symbol=>{
+   const name=names.get(symbol)?.companyName;
+   return name?'<span class="cloud-stock"><strong>'+esc(name)+'</strong><small>'+esc(symbol)+'</small></span>':esc(symbol||'—');
+  };
+  const heldReason={MISSING_SOURCE:'取得未確認',VERIFIED_DELISTED:'上場廃止',SOURCE_QUARANTINED:'価格照合',VERIFIED_RESTRICTED:'取引制限'};
+  const labels={WATCH_STARTED:'監視開始',ENTRY_CANDIDATE:'買付候補',WATCH_TERMINAL:'監視終了',MONITOR_RESET:'監視終了',REFERENCE_OPEN:'寄付参照'};
+  const reasons={UP_ESCAPED:'上方離脱',DOWN_INVALIDATED:'下方無効',EXPIRED:'期限',TRIGGERED:'支持反発'};
+  const observed=typeof s.observed_at==='string'&&Number.isFinite(Date.parse(s.observed_at))?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(s.observed_at)):'';
+  const live=s.observation_kind==='LIVE_OBSERVATION',delayed=s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION';
+  const newCount=new Set(events.filter(e=>e.kind==='WATCH_STARTED'&&e.session===s.as_of&&(live&&e.is_new_live_signal||delayed&&e.is_delayed_scheduled_signal)).map(e=>e.symbol)).size;
+  const eventCards=events.map(e=>{
+   const badge=labels[e.kind]||'照合';
+   const subtype=reasons[e.reason];
+   return '<article>'+stock(e.symbol)+'<span class="badge">'+esc(badge)+'</span>'+(subtype?'<small>'+esc(subtype)+'</small>':'')+'</article>';
+  }).join('');
+  const watchRows=watches.map((w,i)=>{
+   const symbol=w.episode?.symbol, hold=held[symbol], detail=hold?heldReason[hold.reason]||'確認待ち':'';
+   return '<tr data-current-watch'+(i>=20?' hidden':'')+'><td>'+stock(symbol)+'</td><td>'+esc(w.episode?.candidate_date||'—')+'</td><td><span class="badge'+(hold?' cloud-status-held':'')+'">'+(hold?'保留':'監視中')+'</span>'+(detail?'<small class="cloud-table-meta"> '+esc(detail)+'</small>':'')+'</td></tr>';
+  }).join('');
+  const heldRows=Object.entries(held).sort(([a],[b])=>a.localeCompare(b)).map(([symbol,item])=>'<tr><td>'+stock(symbol)+'</td><td>'+esc(heldReason[item.reason]||'確認待ち')+'</td><td>'+esc(item.day||'—')+'</td></tr>').join('');
+  const table=(head,body)=>'<div class="table-wrap"><table class="scenario-table"><thead><tr>'+head.map(h=>'<th scope="col">'+h+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>';
+  return '<section class="panel" id="new-a-current" aria-labelledby="new-a-events-heading"><div class="cloud-section-head"><h2 id="new-a-events-heading">対象日の銘柄</h2><div class="cloud-meta"><span class="badge">対象 '+esc(s.as_of||'—')+'</span>'+(observed?'<span class="badge">観測 '+esc(observed)+' JST</span>':'')+(s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'?'<span class="badge">遅延実行</span>':'')+'</div></div><div class="cloud-meta">'+(live||delayed?'<span class="badge">新規監視 '+newCount+'件</span>':'<span class="badge">照合</span>')+'<span class="badge">データ保留 '+Object.keys(held).length+'銘柄</span></div><div class="cloud-stock-grid">'+(eventCards||'<p class="cloud-empty">対象日の観測イベントなし</p>')+'</div></section>'+
+   '<section class="panel" aria-labelledby="new-a-watch-heading"><div class="cloud-section-head"><h2 id="new-a-watch-heading">現在の監視</h2><span class="badge">'+watches.length+'銘柄</span></div>'+(watchRows?table(['銘柄','監視開始日','状況'],watchRows):'<p class="cloud-empty">監視中の銘柄なし</p>')+(watches.length>20?'<button class="settings-secondary" type="button" id="new-a-current-more">残り '+(watches.length-20)+'銘柄を表示</button>':'')+(heldRows?'<details class="cloud-table-details"><summary>データ保留 '+Object.keys(held).length+'銘柄</summary>'+table(['銘柄','理由','対象日'],heldRows)+'</details>':'')+'</section>';
  }
- const api={validateManifest,assembleCurrent,readPresentation,inputFor,presentationMarkup,currentMarkup};if(typeof module!=='undefined'&&module.exports){module.exports=api;return;}global.AOwnerPresentation=api;
+ const api={validateManifest,assembleCurrent,readPresentation,inputFor,presentationMarkup,currentMarkup};
+ if(typeof module!=='undefined'&&module.exports){module.exports=api;return;}
+ global.AOwnerPresentation=api;
  if(typeof document==='undefined')return;
- const script=name=>new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='/new-a-assets/'+name;s.onload=resolve;s.onerror=()=>reject(Error('asset_unavailable'));document.head.append(s);});
- async function start(){
-  global.AFiniteUI=true;const network=global.fetch.bind(global),guide=document.body.dataset.page==='guide';const open=document.getElementById('cloud-settings-open');if(open)open.disabled=true;
-  let data;if(guide){const r=await network('/api/cloud/new-a-finite/input/manifest.json',{credentials:'same-origin',cache:'no-store'});if(!r.ok)throw Error('private_unavailable');data={manifest:validateManifest(await r.json()),rows:[],current:[]};}else data=await readPresentation(network,global.crypto);
-  if(!guide){await script('presentation-adapter.generated.js');const tbody=document.querySelector('#detection-table tbody');if(tbody){tbody.hidden=true;tbody.innerHTML=presentationMarkup(data.rows,data.manifest,global.ANewPresentation);}}
-  const payload=document.createElement('script');payload.type='application/json';payload.id='cloud-analytics-data';const years=[...new Set((guide?data.manifest.input_header.calendar:data.rows.map(r=>r.signalDate)).map(d=>Number(d.slice(0,4))))].sort(),scopes={all:{label:'記録期間すべて',years}};for(const y of years)scopes[String(y)]={label:y+'年',years:[y]};payload.textContent=JSON.stringify({version:2,page:document.body.dataset.page,scopes,variants:{},modeNames:{A_BASE:'A'},generated:data.manifest.input_header.limits?.completeThrough||'',aInputStatus:'ready'});document.body.append(payload);
-  const status=document.getElementById('new-a-source-status');if(status)status.textContent='新A・監視開始 '+data.rows.length.toLocaleString('ja-JP')+'件／対象端点 '+(data.manifest.input_header.limits?.completeThrough||'未確認')+(data.manifest.input_header.limits?.partialSource?'・一部銘柄保留':'')+'／参照名・当時名未確認';
-  global.AOwnerPageData=data;
-  if(!guide){const holder=document.createElement('div');holder.hidden=['home','analytics'].includes(document.body.dataset.page);holder.innerHTML=currentMarkup(data.current);document.getElementById('cloud-analytics-content').before(holder);document.getElementById('new-a-current-more')?.addEventListener('click',event=>{for(const row of holder.querySelectorAll('[data-current-watch]'))row.hidden=false;event.target.hidden=true;});}
-  await script('browser-transport.js');global.AFiniteBrowser=global.AFiniteBrowserTransport.create({fetch:network,pinnedManifest:data.manifest,createWorker:()=>new Worker('/new-a-assets/new-a-finite-worker.generated.js')});global.AFiniteTransport=global.AFiniteBrowser.transport;for(const name of ['finite-controller.js','new-a-legacy-interactions.generated.js','finite-dom.js'])await script(name);
+ const script=name=>new Promise((resolve,reject)=>{
+  const node=document.createElement('script');
+  node.src='/new-a-assets/'+name;
+  node.onload=resolve;
+  node.onerror=()=>reject(Error('asset_unavailable'));
+  document.head.append(node);
+ });
+ const menu=document.querySelector('.cloud-more-menu');
+ document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&menu?.open){menu.open=false;menu.querySelector('summary')?.focus();}
+ });
+ document.addEventListener('click',event=>{
+  if(menu?.open&&!menu.contains(event.target))menu.open=false;
+ });
+ function showLoadStatus(message,retry){
+  const panel=document.getElementById('new-a-load-panel');
+  if(!panel)return;
+  panel.hidden=!message;
+  document.getElementById('new-a-load-message').textContent=message||'';
+  const button=document.getElementById('new-a-load-retry');
+  button.hidden=!retry;
+  button.onclick=retry||null;
  }
+ global.AOwnerLoadStatus=showLoadStatus;
+ async function start(){
+  global.AFiniteUI=true;
+  const network=global.fetch.bind(global),page=document.body.dataset.page;
 
- start().catch(()=>{global.AFiniteBrowser?.clear();global.AFiniteRevoked=true;global.AOwnerPageData=null;document.getElementById('new-a-current')?.remove();const content=document.getElementById('cloud-analytics-content');if(content)content.textContent='本人の認証と新Aデータを確認できません。再読込して確認してください。';const table=document.querySelector('#detection-table tbody');if(table)table.replaceChildren();});
+  let data={manifest:null,rows:[],current:[]};
+  if(page==='home'){
+   data=await readPresentation(network,global.crypto);
+   const dashboard=document.getElementById('new-a-dashboard');
+   dashboard.innerHTML=currentMarkup(data.current,data.rows);
+   document.getElementById('new-a-current-more')?.addEventListener('click',event=>{
+    const hidden=dashboard.querySelectorAll('[data-current-watch][hidden]');
+    for(const row of hidden)row.hidden=false;
+    event.currentTarget.hidden=true;
+    hidden[0]?.querySelector('td')?.focus();
+   });
+   await script('presentation-adapter.generated.js');
+   const tbody=document.querySelector('#detection-table tbody');
+   tbody.hidden=true;
+   tbody.innerHTML=presentationMarkup(data.rows,data.manifest,global.ANewPresentation);
+  }
+  global.AOwnerPageData=data;
+  const payload=document.createElement('script');
+  payload.type='application/json';
+  payload.id='cloud-analytics-data';
+  const years=[...new Set(data.rows.map(r=>Number(r.signalDate.slice(0,4))))].sort(),scopes={all:{label:'全期間',years}};
+  for(const y of years)scopes[String(y)]={label:y+'年',years:[y]};
+  payload.textContent=JSON.stringify({version:2,page,scopes,variants:{},modeNames:{A_BASE:'A'},generated:data.manifest?.input_header?.limits?.completeThrough||'',aInputStatus:'ready'});
+  document.body.append(payload);
+  await script('browser-transport.js');
+  global.AFiniteBrowser=global.AFiniteBrowserTransport.create({fetch:network,pinnedManifest:data.manifest,createWorker:()=>new Worker('/new-a-assets/new-a-finite-worker.generated.js')});
+  global.AFiniteTransport=global.AFiniteBrowser.transport;
+  for(const name of ['finite-controller.js','new-a-legacy-interactions.generated.js','finite-dom.js'])await script(name);
+ }
+ start().catch(()=>{
+  global.AFiniteBrowser?.clear();
+  global.AFiniteRevoked=true;
+  global.AOwnerPageData=null;
+  for(const id of ['new-a-dashboard','cloud-analytics-content','history']){
+   const node=document.getElementById(id);
+   if(node){node.replaceChildren();node.hidden=true;}
+  }
+  showLoadStatus('データを読み込めませんでした。',()=>global.location.reload());
+ });
 })(typeof globalThis!=='undefined'?globalThis:this);

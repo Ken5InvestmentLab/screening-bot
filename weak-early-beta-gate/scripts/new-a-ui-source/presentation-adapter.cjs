@@ -60,6 +60,13 @@ function rowHtml(row,index){
  const price=(v,status)=>v===''?endpointLabel(status):html(Number(v).toLocaleString('ja-JP',{maximumFractionDigits:12}))+'円';
  return `<tr ${attrs}${index>=20?' hidden':''}><td colspan="8" class="history-record"><div class="history-visible-grid"><div class="history-date" data-label="検出日"><div class="history-date-value">${html(row.signalDate)}</div><div class="actions history-date-actions">${actions}</div></div><div class="history-company"><strong><span class="symbol">${html(row.symbol)}</span> ${html(row.companyName)}</strong>${identityHold(row)?"<small>現在コード・現在名の参照／当時対応未確認</small>":""}<small>検出日 終値 ${price(d.signalActualClose)}</small><small>候補 ${html(row.candidateDate)} / 反発確認 ${html(row.triggerDate??'未確認')}</small></div><div data-label="該当モード"><span class="badge">A</span><small data-scenario-shares>100株で試算</small></div><div data-label="状況"><span class="status pending">${statusLabel(row)}</span></div><div data-label="試算開始日・始値">${html(d.entryDate||'未確認')}<small>${price(d.entryOpen)}</small><small data-scenario-cost></small></div><div data-label="5営業日後 終値">${html(d.d5Date)}<small>${price(d.d5Close,d.aD5Status)}</small></div><div data-label="6営業日後 始値">${html(d.d6Date)}<small>${price(d.d6Open,d.aD6Status)}</small></div><div data-label="成績" class="number"><small data-scenario-endpoint-label>6営業日後 始値</small><strong data-scenario-pl>未作成</strong><small data-scenario-return></small></div></div><button class="history-mobile-toggle" type="button" data-cloud-history-details aria-expanded="false">詳細を見る</button></td></tr>`;
 }
+function fundamentalMarkup(row){
+ if(!row||identityHold(row))return '';
+ const analysis=row.fundamental;
+ if(analysis?.auditStatus!=='pass'||analysis.symbol!==row.symbol||analysis.signalDate!==row.signalDate||analysis.analysisCutoff!==row.analysisCutoff||!Number.isFinite(Date.parse(analysis.analysisCutoff))||analysis.identity!==row.signalDate+'|'+row.symbol||!Array.isArray(analysis.fields)||!analysis.fields.length)return '';
+ const details=analysis.fields.map(field=>'<p><strong>'+html(field.label)+'</strong><br>'+html(field.text)+'</p>').join('');
+ return '<details class="cloud-fundamental"><summary class="button-link">ファンダ分析</summary><div><p class="note">分析時点 '+html(analysis.analysisCutoff)+'</p>'+details+'</div></details>';
+}
 function scopes(input){const years=[...new Set(input.rows.map(r=>Number(r.signalDate.slice(0,4))))].sort();return{all:{label:input.status==='missing'?'A検出 接続待ち':'A検出の記録期間',years:null},...Object.fromEntries(years.map(y=>[String(y),{label:`${y}年`,years:[y]}]))};}
 // Staged default policy; no UI/server defaults are changed before a proposal is frozen.
 function resolveInitialTrial({serverStatus,serverValues,localStatus,localValues,proposedDefaults,proposalVerified=false}){
@@ -69,4 +76,4 @@ function resolveInitialTrial({serverStatus,serverValues,localStatus,localValues,
  if(!proposalVerified||!proposedDefaults)return{source:'proposal-not-frozen',values:null,defaultsApplied:false};
  return{source:'new-user-default',values:structuredClone(proposedDefaults),defaultsApplied:true};
 }
-module.exports={validateInput,toDataset,rowHtml,lightweightRowHtml,datasetAttributes,statusLabel,endpointLabel,identityHold,scopes,missingInput,resolveInitialTrial};
+module.exports={validateInput,toDataset,rowHtml,lightweightRowHtml,fundamentalMarkup,datasetAttributes,statusLabel,endpointLabel,identityHold,scopes,missingInput,resolveInitialTrial};

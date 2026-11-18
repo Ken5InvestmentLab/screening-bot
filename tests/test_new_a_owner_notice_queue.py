@@ -1,5 +1,6 @@
 """Stage-only tests using a local SQLite database and synthetic verification."""
 from datetime import datetime, timedelta
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -112,10 +113,21 @@ class OwnerNoticeQueueTests(unittest.TestCase):
         self.write_receipts(as_of=self.day, publish_overrides={"operational_gate_continuity_verified": True})
         with self.assertRaisesRegex(ValueError, "ordinary published"):
             self.stage()
-        self.plan["notices"] = [{**self.event, "event_id": char * 64} for char in ("a", "b", "c")]
-        with self.assertRaisesRegex(ValueError, "delivery budget"):
+        self.plan["notices"] = [{**self.event, "event_id": f"{i:064x}"} for i in range(1001)]
+        with self.assertRaisesRegex(ValueError, "source bound"):
             self.stage()
         self.assertEqual(self.rows(), [])
+
+    def test_thousand_events_fit_the_d1_statement_and_staged_payload(self):
+        self.plan["notices"] = [{**self.event, "event_id": f"{i:064x}", "symbol": f"{i:04d}"} for i in range(1000)]
+        result = self.stage()
+        self.assertEqual(result["staged"], 1000)
+        row = self.rows()[0]
+        self.assertLess(len(row["payload_json"].encode("utf-8")), 85_000)
+        document = json.loads(row["payload_json"])
+        self.assertEqual(document["schema"], "NEW_A_OWNER_NOTICE_QUEUE_V2")
+        self.assertEqual(len(document["notices"]), 1000)
+        self.assertEqual(document["notices"][0], ["A" * 43, "0000", 20261124, 20261125, None])
 
     def test_morning_requires_real_local_time_and_previous_publication(self):
         self.plan["basis"]["calendar_sha256"] = "6" * 64
@@ -127,3 +139,18 @@ class OwnerNoticeQueueTests(unittest.TestCase):
         self.now = datetime.fromisoformat(self.day + "T08:00:00+09:00")
         self.write_receipts(as_of="2026-11-24")
         self.assertEqual(self.stage(MORNING)["staged"], 1)
+
+    def test_future_morning_can_be_staged_from_its_actual_preceding_evening(self):
+        due = datetime.fromisoformat(self.day + "T08:00:00+09:00")
+        self.now = datetime.fromisoformat("2026-11-24T17:15:00+09:00")
+        self.write_receipts(as_of="2026-11-24")
+        self.plan.update(preparation_mode="AFTER_ORDINARY_PUBLICATION", scheduled_for="2026-11-24T23:00:00.000Z")
+        self.plan["basis"]["calendar_sha256"] = "6" * 64
+        self.event.update(kind=MORNING, candidate_date="2026-11-17", simulated_entry_date="2026-11-18",
+                          scheduled_evaluation_date=self.day, evaluation_endpoint="d5_open", evaluation_timing="OPEN",
+                          evaluation_price_status="NOT_YET_OBSERVED", title="確定日の朝8時（日本時間）",
+                          description="今日は、設定した確定日です。その日の価格はまだ確定していません。")
+        with self.assertRaisesRegex(ValueError, "preparation mode"):
+            self.stage(MORNING)
+        self.assertEqual(self.stage(MORNING, advance=True, scheduled_at=due)["staged"], 1)
+        self.assertEqual(json.loads(self.rows()[0]["payload_json"])["notices"][0][4], 1)

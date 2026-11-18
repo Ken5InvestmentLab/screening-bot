@@ -1,10 +1,10 @@
 import { bankBusinessDate } from "./cloud-canonical-feed";
 import { digest } from "./new-a-private";
-import { dispatchNewAOwnerPush, readNewAOwnerPushReceipt, readNewAOwnerPushRecipient } from "./new-a-owner-push";
+import { dispatchNewAOwnerPush, NEW_A_NOTICE_BATCH_LIMIT, readNewAOwnerPushReceipt, readNewAOwnerPushRecipient } from "./new-a-owner-push";
 import type { OperationalBuild } from "./operational-readback";
 
 type Notice = Parameters<typeof dispatchNewAOwnerPush>[1];
-type Kind = Notice["event"]["kind"];
+type Kind = Notice["kind"];
 type Environment = Parameters<typeof dispatchNewAOwnerPush>[0] & {
   CLOUD_VERSION_METADATA?: { id?: string; tag?: string };
 };
@@ -21,9 +21,10 @@ type Report = {
   kind?: Kind;
   queued: number;
   verified_accepted: number;
+  verified_accepted_pushes: number;
   arrival_confirmed: false;
 };
-type Prepared = { report: Report; notices: Notice[] };
+type Prepared = { report: Report; notice?: Notice };
 type QueueRow = {
   payload_json: string;
   payload_sha256: string;
@@ -41,10 +42,7 @@ const morning = "EVALUATION_DAY_MORNING";
 const holding = "WATCH_TO_SIMULATED_HOLDING";
 export const NEW_A_MORNING_CRON = "0 23 * * *";
 export const NEW_A_HOLDING_CRON = "*/5 8-14 * * *";
-const payloadMaxBytes = 16 * 1024;
-// Includes the adapter's reads/claim/final source check and independent
-// receipt reads. Larger plans are held as a whole pending measured capacity.
-export const NEW_A_NOTICE_BATCH_LIMIT = 2;
+const payloadMaxBytes = 88 * 1024;
 const JST = 9 * 60 * 60 * 1000;
 const sha = /^[a-f0-9]{64}$/;
 const commit = /^[a-f0-9]{40}$/;
@@ -59,11 +57,9 @@ const planFields = ["schema", "target_date", "kind", "source_commit", "worker_ve
   "recipient_binding_sha256", "model_basis", "basis", "publication", "notices"];
 const publicationFields = ["schema", "as_of", "dataset_id", "revision", "manifest_sha256", "source_version",
   "snapshot_sha256", "published", "active_readback_verified", "existing_owner_gate_verified", "local_d1_emulation"];
-const eventFields = ["event_id", "kind", "symbol", "candidate_date", "simulated_entry_date", "title",
-  "description", "execution_status"];
-const morningFields = ["scheduled_evaluation_date", "evaluation_endpoint", "evaluation_timing", "evaluation_price_status"];
 const basisFields = ["dataset_id", "revision", "manifest_sha256", "source_version", "snapshot_sha256", "preferences_revision"];
-const endpoints = new Map([["d5_close", "CLOSE"], ["d5_open", "OPEN"], ["d6_open", "OPEN"], ["a20_close", "CLOSE"]]);
+const eventId = /^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$/;
+const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 function object(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -96,24 +92,37 @@ function slot(controller: Scheduled, now: number): { target_date: string; kind: 
   return null;
 }
 
-function validEvent(value: unknown, kind: Kind, target: string) {
-  if (!shape(value, kind === morning ? [...eventFields, ...morningFields] : eventFields) ||
-      value.kind !== kind || !matches(value.event_id, sha) || !matches(value.symbol, /^[0-9A-Z]{4}$/) ||
-      value.execution_status !== "SIMULATED_NOT_ACTUAL_TRADES" || !day(value.candidate_date) ||
-      !day(value.simulated_entry_date) || value.candidate_date > value.simulated_entry_date) return false;
-  if (kind === holding) return value.simulated_entry_date === target && value.title === "監視から仮想保有に移行" &&
-    value.description === "保存した条件による仮想保有です。実際の取引は行われていません。";
-  return value.scheduled_evaluation_date === target && value.simulated_entry_date < target &&
-    value.evaluation_price_status === "NOT_YET_OBSERVED" && value.title === "確定日の朝8時（日本時間）" &&
-    value.description === "今日は、設定した確定日です。その日の価格はまだ確定していません。" &&
-    typeof value.evaluation_endpoint === "string" && endpoints.has(value.evaluation_endpoint) &&
-    value.evaluation_timing === endpoints.get(value.evaluation_endpoint);
+function wireDay(value: unknown): value is number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 10000101 || value > 99991231) return false;
+  const year = Math.floor(value / 10000);
+  const month = Math.floor(value / 100) % 100;
+  const date = value % 100;
+  const leapDay = month === 2 && year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  return month >= 1 && month <= 12 && date >= 1 && date <= monthDays[month - 1] + Number(leapDay);
+}
+
+function validEvents(values: unknown[], kind: Kind, target: string): boolean {
+  const targetDate = Number(target.replaceAll("-", ""));
+  const ids = new Set<string>();
+  for (const value of values) {
+    if (!Array.isArray(value) || value.length !== 5) return false;
+    // V2 orders the fields as SHA-256 base64url, symbol, two YYYYMMDD dates, endpoint.
+    // Morning endpoint codes 0..3 mean d5_close, d5_open, d6_open, a20_close.
+    const [id, symbol, candidate, entry, endpoint] = value;
+    if (!matches(id, eventId) || ids.has(id) || !matches(symbol, /^[0-9A-Z]{4}$/) ||
+        !wireDay(candidate) || !wireDay(entry) || candidate > entry ||
+        (kind === holding ? entry !== targetDate || endpoint !== null
+          : entry >= targetDate || typeof endpoint !== "number" || !Number.isInteger(endpoint) || endpoint < 0 || endpoint > 3))
+      return false;
+    ids.add(id);
+  }
+  return true;
 }
 
 async function prepare(env: Environment, controller: Scheduled, build: OperationalBuild, now: number): Promise<Prepared> {
   let time: ReturnType<typeof slot> = null;
   const stop = (status: Report["status"], reason: string): Prepared => ({
-    report: { status, reason, ...(time ?? {}), queued: 0, verified_accepted: 0, arrival_confirmed: false }, notices: [],
+    report: { status, reason, ...(time ?? {}), queued: 0, verified_accepted: 0, verified_accepted_pushes: 0, arrival_confirmed: false },
   });
   if (env.CLOUD_NEW_A_OWNER_PUSH_ENABLED !== "true") return stop("disabled", "owner_notice_disabled");
   try {
@@ -142,7 +151,7 @@ async function prepare(env: Environment, controller: Scheduled, build: Operation
         new TextEncoder().encode(row.payload_json).length > payloadMaxBytes || !matches(row.payload_sha256, sha) ||
         await digest(row.payload_json) !== row.payload_sha256) return stop("held", "queue_integrity_mismatch");
     const plan: unknown = JSON.parse(row.payload_json);
-    if (!shape(plan, planFields) || plan.schema !== "NEW_A_OWNER_NOTICE_QUEUE_V1" ||
+    if (!shape(plan, planFields) || plan.schema !== "NEW_A_OWNER_NOTICE_QUEUE_V2" ||
         plan.kind !== kind || plan.target_date !== target_date || plan.source_commit !== build.source_commit ||
         plan.worker_version_id !== metadata.id || plan.build_input_sha256 !== build.build_input_sha256 ||
         ![plan.source_run_sha256, plan.publication_receipt_sha256, plan.owner_binding_sha256,
@@ -166,18 +175,19 @@ async function prepare(env: Environment, controller: Scheduled, build: Operation
         (kind === morning ? publication.as_of >= target_date || row.active_next_session !== target_date
           : publication.as_of !== target_date || row.active_live !== 1))
       return stop("held", "active_publication_mismatch");
-    if (plan.notices.some(event => !validEvent(event, kind, target_date)) ||
-        new Set(plan.notices.map(event => event.event_id)).size !== plan.notices.length)
+    if (!validEvents(plan.notices, kind, target_date))
       return stop("held", "queue_event_mismatch");
     if (!plan.notices.length) return stop("suppressed", "no_notices_due");
-    const notices = plan.notices.map(event => ({
+    const notice = {
       owner_binding_sha256: plan.owner_binding_sha256,
       recipient_binding_sha256: plan.recipient_binding_sha256,
       target_date,
       basis,
-      event,
-    } as Notice));
-    return { report: { ...stop("ready", "queue_verified").report, queued: notices.length }, notices };
+      kind,
+      event_count: plan.notices.length,
+      batch_sha256: row.payload_sha256,
+    } as Notice;
+    return { report: { ...stop("ready", "queue_verified").report, queued: notice.event_count }, notice };
   } catch { return stop("held", "queue_preflight_unavailable"); }
 }
 
@@ -190,24 +200,22 @@ export async function checkNewAOwnerNoticeQueue(env: Environment, controller: Sc
 /** Internal bounded consumer for explicitly enabled New A schedule slots. */
 export async function runNewAOwnerNoticeQueue(env: Environment, controller: Scheduled,
   build: OperationalBuild, now = Date.now(), readers = defaults): Promise<Report> {
-  const { report, notices } = await prepare(env, controller, build, now);
-  if (report.status !== "ready") return report;
+  const { report, notice } = await prepare(env, controller, build, now);
+  if (report.status !== "ready" || !notice) return report;
   const hold = (reason: string): Report => ({ ...report, status: "held", reason });
   try {
     const recipient = await readers.readRecipient(env);
     if (!recipient || recipient.fresh_paid_role !== true ||
-        recipient.owner_binding_sha256 !== notices[0].owner_binding_sha256 ||
-        recipient.recipient_binding_sha256 !== notices[0].recipient_binding_sha256)
+        recipient.owner_binding_sha256 !== notice.owner_binding_sha256 ||
+        recipient.recipient_binding_sha256 !== notice.recipient_binding_sha256)
       return hold("owner_recipient_unverified");
-    for (const notice of notices) {
-      const attempt = await readers.dispatch(env, notice);
-      // A duplicate or ambiguous attempt is reconciled by read only. It
-      // cannot lead to a second provider request for the same event.
-      if (!["accepted", "suppressed", "unknown"].includes(attempt.status)) return hold("delivery_held");
-      const receipt = await readers.readReceipt(env, notice);
-      if (receipt.status !== "accepted") return hold("delivery_readback_unconfirmed");
-      report.verified_accepted++;
-    }
-    return { ...report, status: "processed", reason: "provider_acceptance_verified" };
+    const attempt = await readers.dispatch(env, notice);
+    // A duplicate or ambiguous attempt is reconciled by read only. It
+    // cannot lead to a second provider request for this owner's slot.
+    if (!["accepted", "suppressed", "unknown"].includes(attempt.status)) return hold("delivery_held");
+    const receipt = await readers.readReceipt(env, notice);
+    if (receipt.status !== "accepted") return hold("delivery_readback_unconfirmed");
+    return { ...report, status: "processed", reason: "provider_acceptance_verified",
+      verified_accepted: notice.event_count, verified_accepted_pushes: 1 };
   } catch { return hold("delivery_readback_unavailable"); }
 }

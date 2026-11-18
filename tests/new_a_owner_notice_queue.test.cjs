@@ -52,15 +52,10 @@ function setUp(t, kind = morning) {
     active_readback_verified: true, existing_owner_gate_verified: true, local_d1_emulation: false,
   };
   function event(i = 1) {
-    return { event_id: String(i).repeat(64), kind, symbol: '123A', candidate_date: '2026-11-12',
-      simulated_entry_date: kind === morning ? '2026-11-13' : day, execution_status: 'SIMULATED_NOT_ACTUAL_TRADES',
-      ...(kind === morning ? { title: '確定日の朝8時（日本時間）',
-        description: '今日は、設定した確定日です。その日の価格はまだ確定していません。', scheduled_evaluation_date: day,
-        evaluation_endpoint: 'd5_open', evaluation_timing: 'OPEN', evaluation_price_status: 'NOT_YET_OBSERVED',
-      } : { title: '監視から仮想保有に移行', description: '保存した条件による仮想保有です。実際の取引は行われていません。' }),
-    };
+    const id = createHash('sha256').update(String(i)).digest('base64url');
+    return [id, '123A', 20261112, kind === morning ? 20261113 : 20261119, kind === morning ? 1 : null];
   }
-  const payload = { schema: 'NEW_A_OWNER_NOTICE_QUEUE_V1', target_date: day, kind,
+  const payload = { schema: 'NEW_A_OWNER_NOTICE_QUEUE_V2', target_date: day, kind,
     source_commit: build.source_commit, worker_version_id: uid, build_input_sha256: build.build_input_sha256,
     source_run_sha256: '3'.repeat(64), publication_receipt_sha256: '4'.repeat(64), owner_binding_sha256: owner,
     recipient_binding_sha256: recipient, model_basis: 'SAVED_SCOPE', basis, publication, notices: [event()],
@@ -82,14 +77,15 @@ function setUp(t, kind = morning) {
       return { owner_binding_sha256: owner, recipient_binding_sha256: recipient, fresh_paid_role: true };
     },
     dispatch: async (unused, value) => {
-      calls.push('dispatch-' + value.event.event_id[0]);
+      calls.push('dispatch-' + value.event_count);
       assert.equal(value.owner_binding_sha256, owner);
       assert.equal(value.recipient_binding_sha256, recipient);
       assert.equal(value.basis.manifest_sha256, hash(manifest));
+      assert.equal(value.batch_sha256, sqlite.prepare('SELECT payload_sha256 FROM new_a_owner_notice_queue').get().payload_sha256);
       return { status: 'accepted' };
     },
     readReceipt: async (unused, value) => {
-      calls.push('receipt-' + value.event.event_id[0]);
+      calls.push('receipt-' + value.event_count);
       return { status: 'accepted' };
     },
   };
@@ -139,7 +135,10 @@ test('queue digest, exact release and full event shape fail closed before queryi
     [p => p, '0'.repeat(64), 'queue_integrity_mismatch'],
     [p => ({ ...p, worker_version_id: '99999999-2222-4333-8444-555555555555' }), null, 'queue_contract_mismatch'],
     [p => ({ ...p, model_basis: ['SAVED_SCOPE'] }), null, 'queue_contract_mismatch'],
-    [p => ({ ...p, notices: p.notices.map(event => ({ ...event, observed_price: 100 })) }), null, 'queue_event_mismatch'],
+    [p => ({ ...p, notices: p.notices.map(event => [...event, 100]) }), null, 'queue_event_mismatch'],
+    [p => ({ ...p, notices: p.notices.map(event => [...event.slice(0, 4), 4]) }), null, 'queue_event_mismatch'],
+    [p => ({ ...p, notices: p.notices.map(event => [event[0].slice(0, 42) + 'z', ...event.slice(1)]) }), null, 'queue_event_mismatch'],
+    [p => ({ ...p, notices: p.notices.map(event => [...event.slice(0, 2), 20260230, ...event.slice(3)]) }), null, 'queue_event_mismatch'],
     [p => ({ ...p, notices: [p.notices[0], p.notices[0]] }), null, 'queue_event_mismatch'],
   ]) {
     const f = setUp(t);
@@ -151,7 +150,7 @@ test('queue digest, exact release and full event shape fail closed before queryi
 
 test('oversized batches and stale ordinary publication do not enter the provider path', async t => {
   const over = setUp(t);
-  over.stage({ ...over.payload, notices: [over.event(1), over.event(2), over.event(3)] });
+  over.stage({ ...over.payload, notices: Array.from({ length: 1001 }, (_, i) => over.event(i)) });
   assert.equal((await over.run()).reason, 'batch_exceeds_delivery_budget');
   assert.deepEqual(over.calls, []);
   const stale = setUp(t, holding);
@@ -161,9 +160,9 @@ test('oversized batches and stale ordinary publication do not enter the provider
   assert.deepEqual(stale.calls, []);
 });
 
-test('holding dispatch checks exact recipient and serializes independent acceptance receipts', async t => {
+test('holding dispatch checks exact recipient and reads back one aggregate for all events', async t => {
   const f = setUp(t, holding);
-  f.stage({ ...f.payload, notices: [f.event(1), f.event(2)] });
+  f.stage({ ...f.payload, notices: Array.from({ length: 1000 }, (_, i) => f.event(i)) });
   const changed = { ...f.readers, readRecipient: async () => {
     f.calls.push('different-recipient');
     return { owner_binding_sha256: owner, recipient_binding_sha256: '0'.repeat(64), fresh_paid_role: true };
@@ -171,9 +170,10 @@ test('holding dispatch checks exact recipient and serializes independent accepta
   assert.equal((await f.run(changed)).reason, 'owner_recipient_unverified');
   const ready = await f.run();
   assert.equal(ready.status, 'processed');
-  assert.equal(ready.verified_accepted, 2);
+  assert.equal(ready.verified_accepted, 1000);
+  assert.equal(ready.verified_accepted_pushes, 1);
   assert.equal(ready.arrival_confirmed, false);
-  assert.deepEqual(f.calls, ['different-recipient', 'recipient', 'dispatch-1', 'receipt-1', 'dispatch-2', 'receipt-2']);
+  assert.deepEqual(f.calls, ['different-recipient', 'recipient', 'dispatch-1000', 'receipt-1000']);
 });
 
 test('ambiguous delivery checks the existing receipt and stops further events if unconfirmed', async t => {

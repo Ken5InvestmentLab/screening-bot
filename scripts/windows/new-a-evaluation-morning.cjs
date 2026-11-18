@@ -174,20 +174,27 @@ function heldSymbols(active) {
  * writes are available in this module.
  */
 async function planEvaluationMorning({ cron, scheduledAt, now, bankBusinessDate, readActive,
-                                       readOwnerPreferences, readCalendar, readPart }) {
+                                       readOwnerPreferences, readCalendar, readPart, advance = false }) {
+  requireValid(typeof advance === 'boolean', 'invalid morning preparation mode');
   const scheduledJst = jst(scheduledAt);
   const actualJst = jst(now);
   const target = scheduledJst.slice(0, 10);
   const empty = status => ({ status, target_date: target, notices: [] });
 
-  if (cron !== MORNING_CRON || scheduledAt > now || scheduledJst.slice(11, 16) !== '08:00' ||
-      actualJst.slice(0, 10) !== target || actualJst.slice(11, 13) !== '08') {
+  const today = actualJst.slice(0, 10);
+  const hour = actualJst.slice(11, 13);
+  const validWindow = advance
+    ? now < scheduledAt && today < target && hour >= '17'
+    : scheduledAt <= now && today === target && hour === '08';
+  if (cron !== MORNING_CRON || scheduledJst.slice(11, 23) !== '08:00:00.000' || !validWindow) {
     return empty('outside_reminder_window');
   }
   const business = await bankBusinessDate(target);
   if (business !== true) return empty(business === false ? 'bank_non_business_day' : 'bank_calendar_unavailable');
 
   const active = verifiedActive(await readActive());
+  if (advance && (active.manifest.as_of !== today || active.manifest.live !== true))
+    return empty('current_live_publication_required');
   const owner = savedOwner(await readOwnerPreferences());
   const calendarReceipt = await readCalendar();
   requireValid(calendarReceipt && typeof calendarReceipt.raw === 'string' &&
@@ -202,6 +209,8 @@ async function planEvaluationMorning({ cron, scheduledAt, now, bankBusinessDate,
   const next = calendar[cutoff + 1];
   if (!next || next < target) return empty('previous_market_session_not_published');
   if (next > target) return empty('market_non_business_day');
+  if (advance) requireValid(active.manifest.input_header.limits?.nextPlannedSession === target,
+    'published next session differs from bootstrap');
 
   const portfolio = await replayPublished(active, owner, readPart);
   if (!portfolio) return empty('virtual_model_not_current');
@@ -238,6 +247,7 @@ async function planEvaluationMorning({ cron, scheduledAt, now, bankBusinessDate,
   return {
     status: 'planned', target_date: target,
     model_basis: portfolio.basis,
+    ...(advance ? { preparation_mode: 'AFTER_ORDINARY_PUBLICATION', scheduled_for: new Date(scheduledAt).toISOString() } : {}),
     basis: { ...sourceBasis(active, owner), calendar_sha256: calendarReceipt.sha256 },
     notices: notices.sort((a, b) => a.symbol.localeCompare(b.symbol)),
   };

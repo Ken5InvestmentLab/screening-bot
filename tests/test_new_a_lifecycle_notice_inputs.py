@@ -121,7 +121,8 @@ class LifecycleNoticeInputTests(unittest.TestCase):
             "quote_fields": ["open", "high", "low", "close", "volume", "actual_close", "actual_volume",
                              "split_factor", "source_usable"],
             "input_header": {"calendar": dates, "source_version": self.source,
-                             "limits": {"completeThrough": as_of, "identityUnverifiedBefore": {}, "heldSymbols": {}}},
+                             "limits": {"completeThrough": as_of, "identityUnverifiedBefore": {}, "heldSymbols": {},
+                                        "nextPlannedSession": next((day for day in CALENDAR if day > as_of), None)}},
         }
         raw = encode(manifest)
         self.active_hash = digest(["NEW_A_ACTIVE_METADATA_V1", DATASET, 1, "READY",
@@ -159,6 +160,18 @@ class LifecycleNoticeInputTests(unittest.TestCase):
         self.assertEqual(binding["plan_sha256"], digest(result.plan))
         self.assertEqual(self.proof_reads, 3)
         self.assertTrue(any(values[0] == SHARED_DATASET for _, values in self.db.called if values))
+
+    def test_morning_advance_uses_the_current_evening_and_exact_next_slot(self):
+        due = MORNING_NOW - timedelta(minutes=1)
+        morning = self._morning()
+        self.clock = datetime.fromisoformat("2026-11-24T08:15:00+00:00")
+        early = self.inputs.prepare(MORNING, now=self.clock, scheduled_at=due, advance=True)
+        self.assertEqual(early.plan["preparation_mode"], "AFTER_ORDINARY_PUBLICATION")
+        self.assertEqual(early.plan["scheduled_for"], "2026-11-24T23:00:00.000Z")
+        self.assertEqual(early.plan["notices"], morning.plan["notices"])
+        self.assertEqual(self.inputs.read_source(early)["plan_sha256"], early.plan_sha256)
+        normal = self.inputs.prepare(MORNING, now=self.clock, scheduled_at=due)
+        self.assertEqual(normal.plan["status"], "outside_reminder_window")
 
     def test_holding_uses_same_verified_part_read_and_actual_prior_watch(self):
         self._publish(DAY)

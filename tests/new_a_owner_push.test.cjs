@@ -25,7 +25,7 @@ const date = '2026-11-19';
 
 async function setup(t, { morning = false } = {}) {
   const clock = { now: Date.parse(date + (morning ? 'T08:00:00+09:00' : 'T17:05:00+09:00')) };
-  const state = { role: true, roleReads: 0, sends: 0, afterClaim: null, failSave: false, failSend: false };
+  const state = { role: true, roleReads: 0, queries: 0, sends: 0, afterClaim: null, failSave: false, failSend: false };
   const m = modules({ clock, fetchMock: async (url, init) => {
     assert.equal(url, `https://discord.com/api/v10/guilds/${guild}/members/${subject}`);
     assert.equal(init.redirect, 'error');
@@ -42,13 +42,15 @@ async function setup(t, { morning = false } = {}) {
     sqlite.exec(fs.readFileSync(path.join(gate, 'migrations', name), 'utf8'));
   }
   sqlite.exec(fs.readFileSync(path.join(gate, 'schema/new-a-private.sql'), 'utf8'));
+  sqlite.exec(fs.readFileSync(path.join(gate, 'schema/new-a-owner-notice-queue.sql'), 'utf8'));
   const db = { prepare(sql) {
     const statement = sqlite.prepare(sql);
     return {
       args: [],
       bind(...args) { this.args = args; return this; },
-      async first() { return statement.get(...this.args) ?? null; },
+      async first() { state.queries++; return statement.get(...this.args) ?? null; },
       async run() {
+        state.queries++;
         if (state.failSave && sql.includes('UPDATE cloud_push_dispatch_receipts')) throw Error('fixture receipt save fault');
         const result = statement.run(...this.args);
         if (sql.includes('INSERT OR IGNORE INTO cloud_push_dispatch_receipts')) state.afterClaim?.();
@@ -80,15 +82,15 @@ async function setup(t, { morning = false } = {}) {
     CLOUD_PUSH_MEMBERSHIP_POLICY: 'whop_managed_discord_role', CLOUD_PUSH_AUDIENCE: 'authenticated',
     DISCORD_GUILD_ID: guild, DISCORD_ALLOWED_ROLE_IDS: role, CLOUD_PUSH_ALLOWED_ORIGINS: new URL(endpoint).origin,
     CLOUD_VAPID_PUBLIC_KEY: publicKey, CLOUD_VAPID_PRIVATE_KEY: privateKey, CLOUD_VAPID_SUBJECT: 'https://cloud.example.invalid/' };
-  const event = { event_id: 'e'.repeat(64), kind: morning ? 'EVALUATION_DAY_MORNING' : 'WATCH_TO_SIMULATED_HOLDING',
-    symbol: '9999', candidate_date: '2026-11-16', simulated_entry_date: morning ? '2026-11-17' : date,
-    execution_status: 'SIMULATED_NOT_ACTUAL_TRADES',
-    ...(morning ? { scheduled_evaluation_date: date, evaluation_price_status: 'NOT_YET_OBSERVED' } : {}) };
+  const kind = morning ? 'EVALUATION_DAY_MORNING' : 'WATCH_TO_SIMULATED_HOLDING';
+  const rawBatch = JSON.stringify({ fixture: 'one verified slot' });
   const notice = { owner_binding_sha256: member.slice('cloud_'.length),
     recipient_binding_sha256: sha(JSON.stringify(['NEW_A_OWNER_WEB_PUSH_DEVICE_V1', member, deviceId, sha(endpoint)])),
-    target_date: date, event, basis: { dataset_id: dataset, revision: 2, manifest_sha256: manifestSha,
+    target_date: date, kind, event_count: 1, batch_sha256: sha(rawBatch),
+    basis: { dataset_id: dataset, revision: 2, manifest_sha256: manifestSha,
       source_version: source, snapshot_sha256: snapshot, preferences_revision: 3,
       ...(morning ? { calendar_sha256: 'f'.repeat(64) } : {}) } };
+  sqlite.prepare('INSERT INTO new_a_owner_notice_queue VALUES (?,?,?,?)').run(date, kind, rawBatch, notice.batch_sha256);
   const point = sender.decode(publicKey, 65);
   const imported = await webcrypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', x: sender.encode(point.slice(1, 33)),
     y: sender.encode(point.slice(33)), d: privateKey }, { name: 'ECDH', namedCurve: 'P-256' }, false, ['deriveBits']);
@@ -98,10 +100,10 @@ async function setup(t, { morning = false } = {}) {
     assert.equal(url, endpoint);
     assert.equal(init.method, 'POST');
     assert.equal(init.headers['Content-Encoding'], 'aes128gcm');
-    const row = sqlite.prepare('SELECT event_key,status FROM cloud_push_dispatch_receipts').get();
+    const row = sqlite.prepare("SELECT event_key,status FROM cloud_push_dispatch_receipts WHERE event_key GLOB 'new-a-owner-v2:*'").get();
     assert.equal(row.status, 'preparing');
-    const body = morning ? '今日は、設定した確定日です。その日の価格はまだ確定していません。' :
-      '監視から仮想保有に移行しました。保存した条件による試算です。実際の取引は行われていません。';
+    const body = morning ? `本日の評価予定は${notice.event_count}件です。価格はまだ確定していません。` :
+      `監視から仮想保有に移行した銘柄は${notice.event_count}件です。保存した条件による試算です。`;
     const expected = await sender.encryptPushPayload({ endpoint, p256dh: agentKey, auth },
       JSON.stringify({ version: 1, kind: morning ? 'reminder' : 'new_detection', tag: row.event_key, body }), cryptoFixture);
     assert.deepEqual(Buffer.from(init.body), Buffer.from(expected));
@@ -109,6 +111,7 @@ async function setup(t, { morning = false } = {}) {
     return new Response('', { status: 201 });
   };
   return { adapter, clock, env, notice, sqlite, state, preferences,
+    loadQueue: () => m.load('./new-a-owner-notice-queue'),
     send: (chosen = notice, configuration = env) => adapter.dispatchNewAOwnerPush(configuration, chosen, transport, cryptoFixture) };
 }
 
@@ -171,5 +174,75 @@ test('unknown provider outcome is lookup-only', async t => {
   assert.equal(receipt.status, 'unknown');
   assert.equal(receipt.reason, 'delivery_outcome_unknown_no_auto_retry');
   assert.equal((await f.send()).status, 'suppressed');
+  assert.equal(f.state.sends, 1);
+});
+
+test('slot acceptance is bound to the exact batch and never re-sent for a changed set', async t => {
+  const f = await setup(t);
+  f.notice.event_count = 1000;
+  assert.equal((await f.send()).status, 'accepted');
+  const row = f.sqlite.prepare('SELECT event_key,status,reason FROM cloud_push_dispatch_receipts').get();
+  assert.deepEqual({ ...row }, { event_key: `new-a-owner-v2:${f.notice.kind}:${date}`, status: 'accepted',
+    reason: `batch:${f.notice.batch_sha256}:provider_accepted_not_arrival` });
+  const changed = { ...f.notice, batch_sha256: 'f'.repeat(64) };
+  f.sqlite.prepare('UPDATE new_a_owner_notice_queue SET payload_sha256=?').run(changed.batch_sha256);
+  assert.equal((await f.send(changed)).status, 'suppressed');
+  assert.equal((await f.adapter.readNewAOwnerPushReceipt(f.env, changed)).reason, 'receipt_batch_mismatch');
+  assert.equal(f.state.sends, 1);
+});
+
+test('a same-slot legacy receipt holds the aggregate without repeating provider delivery', async t => {
+  const f = await setup(t);
+  f.sqlite.prepare('INSERT INTO cloud_push_dispatch_receipts VALUES(?,?,?,?,?,?)').run(
+    'cloud_' + f.notice.owner_binding_sha256, deviceId, `new-a-owner-v1:${f.notice.kind}:${'e'.repeat(64)}`,
+    'accepted', 'provider_accepted', new Date(f.clock.now).toISOString());
+  assert.equal((await f.send()).status, 'suppressed');
+  assert.equal((await f.adapter.readNewAOwnerPushReceipt(f.env, f.notice)).status, 'unknown');
+  assert.equal(f.state.sends, 0);
+});
+
+test('changed queue digest after claiming prevents a provider request', async t => {
+  const f = await setup(t, { morning: true });
+  f.state.afterClaim = () => {
+    f.sqlite.prepare('UPDATE new_a_owner_notice_queue SET payload_sha256=?').run('f'.repeat(64));
+  };
+  assert.equal((await f.send()).reason, 'final_qualification_changed');
+  assert.equal(f.state.sends, 0);
+});
+
+test('one thousand verified events reach one encrypted aggregate through the actual scheduled consumer', async t => {
+  const f = await setup(t);
+  const build = { source_commit: 'a'.repeat(40), build_input_sha256: 'b'.repeat(64),
+    target: { worker: 'tentei-kyokuchi-cloud', database: 'tentei-cloud-settings' } };
+  const version = { id: '12345678-1234-4234-8234-123456789012', tag: build.source_commit };
+  const notices = Array.from({ length: 1000 }, (_, i) => [
+    createHash('sha256').update(String(i)).digest('base64url'), String(i).padStart(4, '0'), 20261116, 20261119, null,
+  ]);
+  const raw = JSON.stringify({
+    schema: 'NEW_A_OWNER_NOTICE_QUEUE_V2', target_date: date, kind: f.notice.kind,
+    source_commit: build.source_commit, worker_version_id: version.id, build_input_sha256: build.build_input_sha256,
+    source_run_sha256: '1'.repeat(64), publication_receipt_sha256: '2'.repeat(64),
+    owner_binding_sha256: f.notice.owner_binding_sha256, recipient_binding_sha256: f.notice.recipient_binding_sha256,
+    model_basis: 'SAVED_SCOPE', basis: f.notice.basis, notices,
+    publication: { schema: 'NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1', as_of: date, dataset_id: dataset, revision: 2,
+      manifest_sha256: f.notice.basis.manifest_sha256, source_version: source, snapshot_sha256: snapshot,
+      published: true, active_readback_verified: true, existing_owner_gate_verified: true, local_d1_emulation: false },
+  });
+  f.notice.event_count = notices.length;
+  f.notice.batch_sha256 = sha(raw);
+  f.sqlite.prepare('UPDATE new_a_owner_notice_queue SET payload_json=?,payload_sha256=?').run(raw, f.notice.batch_sha256);
+  const { NEW_A_HOLDING_CRON, runNewAOwnerNoticeQueue } = f.loadQueue();
+  const env = { ...f.env, CLOUD_VERSION_METADATA: version };
+  const scheduler = { cron: NEW_A_HOLDING_CRON, scheduledTime: f.clock.now };
+  const readers = { readRecipient: f.adapter.readNewAOwnerPushRecipient,
+    dispatch: (env, value) => f.send(value, env), readReceipt: f.adapter.readNewAOwnerPushReceipt };
+  const run = () => runNewAOwnerNoticeQueue(env, scheduler, build, f.clock.now, readers);
+  const first = await run();
+  assert.equal(first.status, 'processed');
+  assert.equal(first.verified_accepted, 1000);
+  assert.equal(first.verified_accepted_pushes, 1);
+  assert.equal(first.arrival_confirmed, false);
+  assert(f.state.queries <= 50);
+  assert.deepEqual(await run(), first);
   assert.equal(f.state.sends, 1);
 });

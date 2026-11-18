@@ -1,4 +1,5 @@
 """Stage one verified owner notice slot. No live host or scheduler is installed here."""
+from base64 import urlsafe_b64encode
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -6,28 +7,31 @@ import re
 
 from .continuing_transition import RUNTIME_RELEASE_SCHEMA
 from .files import encode, private_root
+from .lifecycle_notice_inputs import valid_morning_advance
 from .planned_notice_delivery import (
-    HOLDING, MORNING, _assert_window, _clock, _day, _hash, _require,
+    HOLDING, JST, MORNING, _assert_window, _clock, _day, _hash, _instant, _require,
     _validate_plan, _verify_recipient, _verify_source,
 )
 
 
-QUEUE_SCHEMA = "NEW_A_OWNER_NOTICE_QUEUE_V1"
-MAX_NOTICES = 2
-MAX_PAYLOAD_BYTES = 16 * 1024
+QUEUE_SCHEMA = "NEW_A_OWNER_NOTICE_QUEUE_V2"
+MAX_NOTICES = 1000
+MAX_PAYLOAD_BYTES = 88 * 1024
 MODEL_BASES = {"SAVED_SCOPE", "LATEST_YEAR_STANDALONE"}
+ENDPOINTS = ("d5_close", "d5_open", "d6_open", "a20_close")
 PUBLICATION_FIELDS = ("schema", "as_of", "dataset_id", "revision", "manifest_sha256", "source_version",
                       "snapshot_sha256", "published", "active_readback_verified",
                       "existing_owner_gate_verified", "local_d1_emulation")
 
 
 def _read_record(path):
-    raw = path.read_bytes()
+    with path.open("rb") as stream:
+        raw = stream.read(4 * 1024 * 1024 + 1)
     _require(len(raw) <= 4 * 1024 * 1024, "notice source receipt exceeds its bounds")
     return json.loads(raw.decode("utf-8-sig")), sha256(raw).hexdigest()
 
 
-def _read_live_receipts(repo, run_path, basis, target, kind, release):
+def _read_live_receipts(repo, run_path, basis, target, kind, release, now, advance):
     data_root = private_root(repo)
     runtime = (repo / ".cache/weak_early_beta/daily_runtime").resolve()
     path = Path(run_path)
@@ -40,6 +44,9 @@ def _read_live_receipts(repo, run_path, basis, target, kind, release):
     publication, publication_sha = _read_record(publication_path)
     as_of = publication.get("as_of")
     _day(as_of)
+    if advance:
+        _require(as_of == now.astimezone(JST).date().isoformat(),
+                 "advance preparation requires the current ordinary publication")
     bound = {key: basis[key] for key in ("dataset_id", "revision", "manifest_sha256", "source_version", "snapshot_sha256")}
     _require(publication.get("schema") == "NEW_A_PRIVATE_PUBLICATION_RECEIPT_V1" and
              all(publication.get(key) is True for key in
@@ -52,7 +59,8 @@ def _read_live_receipts(repo, run_path, basis, target, kind, release):
     deployment = run.get("deployment", {})
     verified = deployment.get("approvedWorkerReadback", {})
     new_a = run.get("new_a", {})
-    _require(run.get("ok") is True and run.get("completedAt") and run.get("date") == run.get("latestSession") == as_of and
+    _require(run.get("ok") is True and run.get("completedAt") and _instant(run["completedAt"]) <= now and
+             run.get("date") == run.get("latestSession") == as_of and
              run.get("startCommit") == release["source_commit"] and
              run.get("observationKind") != "DELAYED_SCHEDULED_OBSERVATION" and
              new_a.get("owner_publication_verified") is True and
@@ -66,12 +74,34 @@ def _read_live_receipts(repo, run_path, basis, target, kind, release):
     return (run_sha, publication_sha, {key: publication[key] for key in PUBLICATION_FIELDS})
 
 
+def _assert_preparation(kind, target, plan, now, scheduled_at, advance):
+    _require(type(advance) is bool, "invalid notice preparation mode")
+    if not advance:
+        _require("preparation_mode" not in plan and "scheduled_for" not in plan,
+                 "an advance plan requires its exact preparation mode")
+        _assert_window(kind, target, now)
+        return
+    _require(kind == MORNING and valid_morning_advance(now, scheduled_at) and
+             scheduled_at.astimezone(JST).date().isoformat() == target and
+             plan.get("preparation_mode") == "AFTER_ORDINARY_PUBLICATION" and
+             isinstance(plan.get("scheduled_for"), str) and _instant(plan["scheduled_for"]) == scheduled_at,
+             "advance preparation requires the exact next 08:00 JST slot")
+
+
+def _compact_notice(notice, kind):
+    event_id = urlsafe_b64encode(bytes.fromhex(notice["event_id"])).decode("ascii").rstrip("=")
+    candidate = int(notice["candidate_date"].replace("-", ""))
+    entry = int(notice["simulated_entry_date"].replace("-", ""))
+    endpoint = ENDPOINTS.index(notice["evaluation_endpoint"]) if kind == MORNING else None
+    return [event_id, notice["symbol"], candidate, entry, endpoint]
+
+
 def stage_notice_queue(db, repo, run_path, plan, *, kind, owner, read_source, read_release,
-                       read_recipient, now=_clock):
+                       read_recipient, now=_clock, scheduled_at=None, advance=False):
     """Prepare by CAS, retain existing rows, and verify the exact staged payload."""
     repo = Path(repo).resolve(strict=True)
     target, notices = _validate_plan(plan, kind)
-    _assert_window(kind, target, now())
+    _assert_preparation(kind, target, plan, now(), scheduled_at, advance)
     _require(plan.get("model_basis") in MODEL_BASES, "notice calculation basis is unverified")
     _require(len(notices) <= MAX_NOTICES, "notice slot exceeds the Worker delivery budget")
     if not notices:
@@ -85,22 +115,22 @@ def stage_notice_queue(db, repo, run_path, plan, *, kind, owner, read_source, re
              re.fullmatch(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}", str(release.get("version_id", ""))) and
              _hash(release.get("activation_sha256")) and _hash(release.get("build_input_sha256")),
              "live ordinary release verification required")
-    run_sha, publication_sha, publication = _read_live_receipts(repo, run_path, basis, target, kind, release)
+    run_sha, publication_sha, publication = _read_live_receipts(repo, run_path, basis, target, kind, release, now(), advance)
     recipient_proof = read_recipient()
     recipient = recipient_proof.get("recipient_binding_sha256")
     _verify_recipient(recipient_proof, owner, recipient, now())
     _verify_source(read_source(), plan, owner, now())
     _require(read_release() == release, "live approved release changed during notice preparation")
-    _require(_read_live_receipts(repo, run_path, basis, target, kind, release)[:2] == (run_sha, publication_sha),
+    _require(_read_live_receipts(repo, run_path, basis, target, kind, release, now(), advance)[:2] == (run_sha, publication_sha),
              "notice source receipts changed during preparation")
-    _assert_window(kind, target, now())
+    _assert_preparation(kind, target, plan, now(), scheduled_at, advance)
     value = {
         "schema": QUEUE_SCHEMA, "kind": kind, "target_date": target,
         "source_commit": release["source_commit"], "worker_version_id": release["version_id"],
         "build_input_sha256": release["build_input_sha256"], "source_run_sha256": run_sha,
         "publication_receipt_sha256": publication_sha, "owner_binding_sha256": owner,
         "recipient_binding_sha256": recipient, "model_basis": plan["model_basis"],
-        "basis": basis, "publication": publication, "notices": notices,
+        "basis": basis, "publication": publication, "notices": [_compact_notice(notice, kind) for notice in notices],
     }
     raw = encode(value)
     _require(len(raw.encode("utf-8")) <= MAX_PAYLOAD_BYTES, "notice payload exceeds the Worker input budget")

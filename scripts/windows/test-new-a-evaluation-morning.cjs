@@ -49,7 +49,7 @@ function fixture({ asOf = '2026-11-24', held = false, lowVolume = false, saved =
       'split_factor', 'source_usable'],
     input_header: {
       source_version: key, calendar: dates,
-      limits: { completeThrough: asOf, identityUnverifiedBefore: {},
+      limits: { completeThrough: asOf, identityUnverifiedBefore: {}, nextPlannedSession: calendar[dates.length] ?? null,
         heldSymbols: held ? { [symbol]: { reason: 'SOURCE_QUARANTINED' } } : {} },
     },
   };
@@ -124,6 +124,32 @@ test('endpoint changes preserve one reminder identity per holding and evaluation
   assert.equal(close.event_id, open.event_id);
   settings.preferences.exit_endpoint = 'a20_close';
   assert.deepEqual((await planEvaluationMorning(args)).notices, []);
+});
+
+test('preceding market evening can prepare the exact next 08:00 slot with the same event identity', async () => {
+  const { args } = fixture();
+  const advance = await planEvaluationMorning({ ...args, advance: true,
+    now: Date.parse('2026-11-24T08:45:00Z') });
+  assert.equal(advance.status, 'planned');
+  assert.equal(advance.preparation_mode, 'AFTER_ORDINARY_PUBLICATION');
+  assert.equal(advance.scheduled_for, '2026-11-24T23:00:00.000Z');
+  assert.deepEqual(advance.notices, (await planEvaluationMorning(args)).notices);
+  assert.equal((await planEvaluationMorning({ ...args, advance: true,
+    now: Date.parse('2026-11-24T07:59:00Z') })).status, 'outside_reminder_window');
+  assert.equal((await planEvaluationMorning({ ...args, advance: true,
+    now: Date.parse('2026-11-23T09:00:00Z') })).status, 'current_live_publication_required');
+  assert.equal((await planEvaluationMorning({ ...fixture({ live: false }).args, advance: true,
+    now: Date.parse('2026-11-24T09:00:00Z') })).status, 'current_live_publication_required');
+});
+
+test('advance preparation skips the non-trading bank holiday and checks the published next session', async () => {
+  const { args } = fixture({ asOf: '2026-11-20' });
+  const next = await planEvaluationMorning({ ...args, advance: true,
+    now: Date.parse('2026-11-20T08:45:00Z'), scheduledAt: Date.parse('2026-11-23T23:00:00Z'),
+    bankBusinessDate: async day => day === '2026-11-24' });
+  assert.equal(next.status, 'planned');
+  assert.equal(next.target_date, '2026-11-24');
+  assert.equal(next.scheduled_for, '2026-11-23T23:00:00.000Z');
 });
 
 test('newer preset does not promote a non-filled or held source to a reminder', async () => {

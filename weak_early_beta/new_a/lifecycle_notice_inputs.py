@@ -61,6 +61,16 @@ def _instant(value):
     return parsed
 
 
+def valid_morning_advance(now, scheduled_at):
+    """Only an actual evening before a canonical 08:00 JST slot can prepare it."""
+    if now.utcoffset() is None or scheduled_at is None or scheduled_at.utcoffset() is None:
+        return False
+    observed = now.astimezone(JST)
+    slot = scheduled_at.astimezone(JST)
+    return (observed.hour >= 17 and observed.date() < slot.date() and slot.hour == 8 and
+            slot.minute == slot.second == slot.microsecond == 0)
+
+
 @dataclass(frozen=True)
 class PreparedLifecycleNotice:
     plan: dict
@@ -190,16 +200,18 @@ class LifecycleNoticeInputs:
                     values[dataset + "/" + item["name"]] = raw
         return values
 
-    def prepare(self, kind, *, now, scheduled_at=None, target_date=None):
+    def prepare(self, kind, *, now, scheduled_at=None, target_date=None, advance=False):
         _require(kind in (HOLDING, MORNING) and now.tzinfo is not None, "invalid lifecycle planning window")
         jst = now.astimezone(JST)
         morning = kind == MORNING
+        _require(type(advance) is bool and (morning or not advance), "invalid morning preparation mode")
         if morning:
             _require(scheduled_at is not None and scheduled_at.tzinfo is not None, "scheduled time required")
             scheduled = scheduled_at.astimezone(JST)
             target_date = scheduled.date().isoformat()
-            in_window = (scheduled <= jst and scheduled.date() == jst.date() and
-                         scheduled.hour == jst.hour == 8 and scheduled.minute == 0)
+            in_window = valid_morning_advance(now, scheduled_at) if advance else (
+                scheduled <= jst and scheduled.date() == jst.date() and scheduled.hour == jst.hour == 8 and
+                scheduled.minute == scheduled.second == scheduled.microsecond == 0)
         else:
             in_window = _day(target_date) == jst.date()
         if not in_window:
@@ -215,7 +227,7 @@ class LifecycleNoticeInputs:
         payload = {
             "kind": kind, "now": int(now.timestamp() * 1000),
             "scheduledAt": int(scheduled_at.timestamp() * 1000) if morning else None,
-            "targetDate": target_date, "active": active,
+            "targetDate": target_date, "active": active, "advance": advance,
             "owner": owner, "preferences": preferences, "calendar": calendar,
             "parts": self._read_parts(active["pointer"], manifest),
         }

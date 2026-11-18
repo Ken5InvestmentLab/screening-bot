@@ -5,7 +5,7 @@ import{fileURLToPath}from'node:url';
 const sha=v=>createHash('sha256').update(typeof v==='string'||Buffer.isBuffer(v)||v instanceof Uint8Array?v:JSON.stringify(v)).digest('hex');
 const read=p=>JSON.parse(fs.readFileSync(p,'utf8').replace(/^\uFEFF/,''));
 async function get(url,headers){const r=await fetch(url,{headers,redirect:'error',signal:AbortSignal.timeout(30000)});if(r.status!==200)throw Error('normal_service_metadata_unavailable');return r.json();}
-export async function operationalLoader(configFile,{fetchMetadata=get,configReader=loadDailyConfig,inheritedEnvironment=process.env}={}){
+export async function operationalLoader(configFile,{fetchMetadata=get,configReader=loadDailyConfig,inheritedEnvironment=process.env,includeOwnerBinding=false}={}){
  const config=configReader(configFile),repo=path.resolve(config.repoPath),env={...inheritedEnvironment};
  const names=['ADMIN_USER_ID','DISCORD_TOKEN','WEAK_EARLY_BETA_DISCORD_BOT_TOKEN','WEAK_EARLY_BETA_SIGNAL_WEBHOOK_URL','WEAK_EARLY_BETA_REPORT_URL'];
  const configured={},references={};loadDotEnv(configured,path.join(repo,'.env'));for(const k of names)if(configured[k]!==undefined)references[k]='root';
@@ -28,6 +28,6 @@ export async function operationalLoader(configFile,{fetchMetadata=get,configRead
  const policy=['NEW_A_OPERATIONAL_POLICY_V1',true,owner,guild,[...new Set(roles)],String(app.id),'https://discord.com/api',Number(vars.SESSION_TTL_SECONDS),'NEW_A_REPORT_IDENTITY_FRESH_ROLE_V1',[true,true,true]];
  const configuration=Object.fromEntries(['repoPath','runtimeDir','pythonPath','nodePath','npmPath','fundamentalConfigPath','maxFreshnessAttempts','freshnessRetryDelayMs'].map(k=>[k,config[k]??null]));
  const runtime=[process.version,sha(fs.readFileSync(config.nodePath)),sha(fs.readFileSync(config.pythonPath))];
- return{schema:'NEW_A_EXISTING_LOADER_METADATA_V1',runner_configuration_sha256:sha(JSON.stringify(configuration)),loader_precedence_sha256:sha(precedence),runtime_sha256:sha(runtime),report_origin:'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev',policy_sha256:sha(policy),signal_destination_sha256:sha('DISCORD_SIGNAL_DESTINATION_V1|'+guild+'|'+destination.channel_id+'|'+destination.id),summary_destination_sha256:sha(['DISCORD_SUMMARY_DESTINATION_V1',guild,constant('SUMMARY_CHANNEL_ID')]),credential_values_returned:false};
+ return{schema:'NEW_A_EXISTING_LOADER_METADATA_V1',runner_configuration_sha256:sha(JSON.stringify(configuration)),loader_precedence_sha256:sha(precedence),runtime_sha256:sha(runtime),report_origin:'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev',policy_sha256:sha(policy),signal_destination_sha256:sha('DISCORD_SIGNAL_DESTINATION_V1|'+guild+'|'+destination.channel_id+'|'+destination.id),summary_destination_sha256:sha(['DISCORD_SUMMARY_DESTINATION_V1',guild,constant('SUMMARY_CHANNEL_ID')]),credential_values_returned:false,...(includeOwnerBinding===true?{owner_binding_sha256:sha('cloud-member:'+owner)}:{})};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url))operationalLoader(process.argv[2]).then(v=>console.log(JSON.stringify(v))).catch(()=>{console.error('operational_loader_metadata_unavailable');process.exitCode=1;});

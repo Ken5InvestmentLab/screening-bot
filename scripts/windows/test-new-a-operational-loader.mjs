@@ -9,3 +9,12 @@ function fixture(){const repo=fs.mkdtempSync(path.join(os.tmpdir(),'new-a-loader
 test('same effective selection survives normal child inheritance without losing override detection',async()=>{const f=fixture();try{const args={configReader:()=>f.config,fetchMetadata:f.fetchMetadata};const parent=await operationalLoader('synthetic',{...args,inheritedEnvironment:{}}),child=await operationalLoader('synthetic',{...args,inheritedEnvironment:f.env});assert.deepEqual(parent,child);const different=await operationalLoader('synthetic',{...args,inheritedEnvironment:{ADMIN_USER_ID:'100000000000000009'}});assert.notEqual(different.loader_precedence_sha256,parent.loader_precedence_sha256);assert.notEqual(different.policy_sha256,parent.policy_sha256);}finally{f.close();}});
 test('policy deduplicates roles exactly like runtime and hashes raw executable bytes',async()=>{const f=fixture();try{const value=await operationalLoader('synthetic',{configReader:()=>f.config,fetchMetadata:f.fetchMetadata,inheritedEnvironment:{}});assert.equal(value.policy_sha256,sha(['NEW_A_OPERATIONAL_POLICY_V1',true,ids.owner,ids.guild,[ids.role],ids.client,'https://discord.com/api',31536000,'NEW_A_REPORT_IDENTITY_FRESH_ROLE_V1',[true,true,true]]));assert.equal(value.runtime_sha256,sha([process.version,sha(fs.readFileSync(f.config.nodePath)),sha(fs.readFileSync(f.config.pythonPath))]));assert(!JSON.stringify(value).includes('synthetic-token'));assert(!JSON.stringify(value).includes('/api/webhooks/'));}finally{f.close();}});
 test('real metadata destination mismatch or failed service GET never provides a pin',async()=>{const f=fixture();try{await assert.rejects(operationalLoader('synthetic',{configReader:()=>f.config,fetchMetadata:async()=>({id:'wrong'}),inheritedEnvironment:{}}),/destination_changed/);}finally{f.close();}});
+test('owner binding is available only by explicit in-process projection',async()=>{const f=fixture();try{
+ const args={configReader:()=>f.config,fetchMetadata:f.fetchMetadata,inheritedEnvironment:{}};
+ const defaults=await operationalLoader('synthetic',args);
+ const {owner_binding_sha256,...privateProjection}=await operationalLoader('synthetic',{...args,includeOwnerBinding:true});
+ assert.equal(defaults.owner_binding_sha256,undefined);
+ assert.deepEqual(privateProjection,defaults);
+ assert.equal(owner_binding_sha256,sha('cloud-member:'+ids.owner));
+ assert(!JSON.stringify(privateProjection).includes(ids.owner));
+}finally{f.close();}});

@@ -3,7 +3,7 @@
 const fs = require('node:fs');
 const { MORNING_CRON, planEvaluationMorning, planHoldingTransitions } = require('./new-a-evaluation-morning.cjs');
 
-async function plan({ kind, now, scheduledAt, targetDate, active, owner, preferences, calendar, parts }) {
+async function plan({ kind, now, scheduledAt, targetDate, active, owner, preferences, calendar, parts, advance = false }) {
   // Reuse the actual owner endpoint preference parser and the same exit policy.
   // Any query outside the selected owner row (including defaults) must fail.
   const { readTrial } = await import('../../weak-early-beta-gate/src/new-a-preferences.ts');
@@ -28,8 +28,8 @@ async function plan({ kind, now, scheduledAt, targetDate, active, owner, prefere
     readCalendar: async () => calendar,
     readPart: async (dataset, name) => parts[dataset + '/' + name],
   };
-  if (kind === 'EVALUATION_DAY_MORNING') return planEvaluationMorning({ ...readers, scheduledAt, cron: MORNING_CRON });
-  if (kind === 'WATCH_TO_SIMULATED_HOLDING') return planHoldingTransitions({ ...readers, targetDate });
+  if (kind === 'EVALUATION_DAY_MORNING') return planEvaluationMorning({ ...readers, scheduledAt, advance, cron: MORNING_CRON });
+  if (kind === 'WATCH_TO_SIMULATED_HOLDING' && !advance) return planHoldingTransitions({ ...readers, targetDate });
   throw Error('unknown lifecycle notice');
 }
 

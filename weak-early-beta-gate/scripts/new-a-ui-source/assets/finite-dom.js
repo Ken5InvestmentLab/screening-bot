@@ -183,17 +183,22 @@
   if(isAnalytics){
    content.innerHTML=app.render(simulation);
    byId('new-a-daily-chart').innerHTML=equityChart(simulation.result.daily,simulation.result.resolved);
+   const recentChart=byId('new-a-latest-year-chart');
+   if(recentChart&&simulation.latest_year)recentChart.innerHTML=equityChart(simulation.latest_year.daily,simulation.latest_year.resolved);
    dailyLimit=50;
    drawDaily(simulation.result);
   }
   if(isHome){
    byId('new-a-model-holdings')?.remove();
    const data=globalThis.AOwnerPageData;
-   byId('new-a-dashboard').insertAdjacentHTML('beforeend',app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar}));
+   const model=simulation.model_result||simulation.result;
+   data.renderDashboard?.(model);
+   const details=data.current?.[0]&&globalThis.AOwnerPresentation.stockDetails(data.current[0],data.rows,globalThis.ANewPresentation,model);
+   byId('new-a-dashboard').insertAdjacentHTML('beforeend',app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details}));
    rebuildHistory(simulation);
   }
  }
- const controller=app.createController({trialPreset:'balanced',useTrialPreset:!isHome,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
+ const controller=app.createController({trialPreset:'balanced',useTrialPreset:!isHome,recentAnalytics:isAnalytics,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
  globalThis.AFiniteUIController=controller;
 
  if(settings){

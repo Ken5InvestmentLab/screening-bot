@@ -284,6 +284,38 @@ class ContinuingTransitionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'revoked'):
             validate_activation(value, self.repo)
 
+    def test_verified_same_account_can_move_rooms_without_inheriting_unknown_actors(self):
+        previous = dict(self.owner.binding)
+        current = dict(previous, room_id='second-owner-room', message_id='fresh-owner-message')
+        self.owner.binding = current
+        self.owner.authority = dict(self.owner.authority, room_id=current['room_id'])
+        self.owner.primary['room_id'] = current['room_id']
+        self.owner.primary['message']['message_id'] = current['message_id']
+        self.plan['owner_message'] = current
+        self.review.update(room_id=current['room_id'], message_id=current['message_id'])
+        proof = dict(
+            schema='NEW_A_TRUSTED_SAME_ACCOUNT_ROOM_TRANSFER_V1', author_id=current['author_id'],
+            previous_room_id=previous['room_id'], previous_message_id=previous['message_id'],
+            previous_text_sha256=previous['text_sha256'], room_id=current['room_id'],
+            message_id=current['message_id'], text_sha256=current['text_sha256'],
+            host_verified_same_account=True, platform_signature_claimed=False,
+            host_receipt_sha256='3' * 64, observed_at=self.owner.time.isoformat(),
+        )
+        self.review['owner_room_transfer'] = proof
+        self.rejects_without_mutation('room transfer reader required')
+        self.rejects_without_mutation('room transfer proof required',
+                                      room_transfer_reader=lambda *_: {**proof, 'author_id': 'other'})
+        self.rejects_without_mutation('room transfer proof required',
+                                      room_transfer_reader=lambda *_: {**proof, 'message_id': 'stale-event'})
+        self.rejects_without_mutation('observation is stale',
+                                      room_transfer_reader=lambda *_: {**proof, 'observed_at': '2026-11-19T07:00:00Z'})
+        reader = lambda *_: copy.deepcopy(proof)
+        issued = self.ordinary_issue()
+        completed = self.apply(issued, room_transfer_reader=reader)
+        self.assertEqual(completed['previous_acceptance'], self.prior['acceptance'])
+        value = read(self.owner.activation)
+        self.assertIs(validate_activation(value, self.repo), value)
+
     def test_ambiguous_replace_preserves_claim_and_cannot_replay(self):
         issued = self.ordinary_issue()
         before = self.owner.activation.read_bytes()

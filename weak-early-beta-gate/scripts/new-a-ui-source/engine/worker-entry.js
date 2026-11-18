@@ -1,1 +1,46 @@
-let runtime=null;onmessage=event=>{const m=event.data;try{if(m.kind==='initialize'){const map=new Map(m.records.map(r=>[r[0]+'|'+r[1],r[2]===null?null:Object.fromEntries(m.manifest.quote_fields.map((k,i)=>[k,r[2][i]]))]));if(map.size!==m.manifest.expected_quote_keys)throw Error('quote_key_count');runtime=AFiniteDataset.createDatasetRuntime(m.manifest.input,{get:(s,d)=>{const k=s+'|'+d;if(!map.has(k))throw Error('unprepared_quote_key');return map.get(k);}});postMessage({id:m.id,ready:true,source_version:runtime.source_version});}else if(m.kind==='source_version'){if(!runtime)throw Error('input_not_ready');postMessage({id:m.id,source_version:runtime.source_version});}else if(m.kind==='simulate'){if(!runtime)throw Error('input_not_ready');const trial=m.trial_preset??null,r=runtime.simulate(m.preferences,{exitPolicy:m.exit_policy,trialPreset:trial}),model=trial?runtime.simulate(m.preferences,{exitPolicy:m.exit_policy}):null;postMessage({id:m.id,request_id:m.request_id,preferences:m.preferences,source_version:runtime.source_version,view_kind:r.view_kind,result:r,...(trial?{trial_preset:trial,model_result:model}:{})});}else throw Error('request_kind');}catch(e){postMessage({id:m.id,error:e.message==='unprepared_quote_key'?'incomplete_source':'simulation_unavailable'});}};
+let runtime=null;
+
+function initialize(manifest,records){
+ const quoteMap=new Map(records.map(([symbol,day,quote])=>[
+  symbol+'|'+day,
+  quote===null?null:Object.fromEntries(manifest.quote_fields.map((field,index)=>[field,quote[index]])),
+ ]));
+ if(quoteMap.size!==manifest.expected_quote_keys)throw Error('quote_key_count');
+ runtime=AFiniteDataset.createDatasetRuntime(manifest.input,{get(symbol,day){
+  const key=symbol+'|'+day;
+  if(!quoteMap.has(key))throw Error('unprepared_quote_key');
+  return quoteMap.get(key);
+ }});
+}
+
+function simulation(message){
+ const {id,request_id,preferences,exit_policy}=message;
+ const trialPreset=message.trial_preset??null;
+ const options={exitPolicy:exit_policy,trialPreset};
+ const result=runtime.simulate(preferences,options);
+ const response={id,request_id,preferences,source_version:runtime.source_version,view_kind:result.view_kind,result};
+ if(trialPreset){
+  response.trial_preset=trialPreset;
+  response.model_result=runtime.simulate(preferences,{exitPolicy:exit_policy});
+ }
+ if(message.recent_analytics===true&&!result.resolved){
+  const recent=runtime.simulateLatestYear(preferences,options);
+  if(recent)response.latest_year=recent;
+ }
+ return response;
+}
+
+onmessage=event=>{
+ const message=event.data,{id,kind}=message;
+ try{
+  if(kind==='initialize'){
+   initialize(message.manifest,message.records);
+   postMessage({id,ready:true,source_version:runtime.source_version});
+  }else if(kind==='source_version'||kind==='simulate'){
+   if(!runtime)throw Error('input_not_ready');
+   postMessage(kind==='simulate'?simulation(message):{id,source_version:runtime.source_version});
+  }else throw Error('request_kind');
+ }catch(error){
+  postMessage({id,error:error.message==='unprepared_quote_key'?'incomplete_source':'simulation_unavailable'});
+ }
+};

@@ -25,6 +25,11 @@ historical recovery and current, exact-version protected measurements.
    authentication files, previous acceptance, active overlay digest and
    reconciled recovery evidence. The operator needs the formal ordinary
    acceptance decision and a distinct finite-to-ordinary transition review.
+   If the current owner message is in another chat, the same authenticated
+   account must be independently verified. The trusted host supplies a fresh
+   room-transfer observation bound to both exact messages, their digests, and
+   rooms; the review binds that observation. A thread name, a copied message,
+   or matching display names alone do not authorize the transfer.
 4. Run `continuing_transition.prepare` with the independent readers. A
    successful plan cannot write activation. The trusted host issues the
    matching ordinary grant through `continuing_acceptance.issue`, then passes

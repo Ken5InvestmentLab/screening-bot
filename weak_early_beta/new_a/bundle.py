@@ -93,6 +93,17 @@ def prepare_bundle(files,pipeline,snapshot,full_calendar,folder,company_names=No
  display={k:copy.deepcopy(v) for k,v in snapshot.items() if k not in ['schema','payload_sha256','monitor_state']};display.update(schema='NEW_A_OWNER_DAILY_DISPLAY_V1',source_snapshot_sha256=snapshot['payload_sha256'])
  state=snapshot['monitor_state'];head_counts={}
  for day in state['heads'].values():head_counts[str(day)]=head_counts.get(str(day),0)+1
+ current_symbols={event['symbol'] for event in snapshot['events'] if event['session']==as_of}
+ current_symbols.update(watch['episode']['symbol'] for watch in state['watches'].values())
+ today_index=full_calendar.index(as_of)
+ current_symbols.update(ref['symbol'] for ref in state['pending_references'] if today_index-ref['entry_index']<20)
+ held=snapshot['held_symbols']
+ held_symbols=set(held) if isinstance(held,dict) else {item['symbol'] for item in held}
+ display['latest_closes']={}
+ for symbol in sorted(current_symbols-held_symbols):
+  price=quote(symbol,as_of)
+  if valid(price):
+   display['latest_closes'][symbol]={'date':as_of,'price':price['actual_close']}
  display['monitor_state']={k:copy.deepcopy(v) for k,v in state.items() if k!='heads'};display['monitor_state']['heads_by_date_counts']=head_counts;display['display_payload_sha256']=digest(display)
  display_raw=encode(display).encode();count=(len(display_raw)+32767)//32768
  if len(display_raw)>8*1024*1024 or count>256:raise ValueError('current display resource budget exceeded')

@@ -1,3 +1,4 @@
+import { runNewAFundamentalStage } from './new-a-fundamental-stage.mjs';
 import { delayedBridge } from './delayed-run-bridge.mjs';
 import { continuationForRunner, consumeAdmissionContinuation, beginAdmissionExecution } from './native-admission-continuation.mjs';
 import fs from 'node:fs';
@@ -564,6 +565,11 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     result.new_a = { strategy: 'A_BASE', entry: 'new-a-verified-daily-v1', owner_publication_verified: false };
 
 
+    const regularAnalysis = !delayedPlan && today === executionDate;
+    if (regularAnalysis && config.fundamentalConfigPath) {
+      saveProgress('model-preflight');
+      await probeFundamentalModel(config, runDir, env);
+    }
     saveProgress('detection');
     const cacheRecovery = prior ? await verifiedDetectionCache(repo, today) : null;
     if (cacheRecovery) saveProgress('detection', { recoveryCache: cacheRecovery });
@@ -598,6 +604,12 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       await waitInShortChunks(Number(config.freshnessRetryDelayMs || 300_000));
     }
     await sendSystemLog('detected', ['--count', String(result.selectorRows)]);
+    if (regularAnalysis) {
+      saveProgress('fundamental');
+      result.fundamental = await runNewAFundamentalStage({ config, repo, runtime, today, startedAt, runDir, env,
+        runStep: requireOk, expectedCount: result.selectorRows });
+    }
+
 
     saveProgress('report');
     await requireOk(python, ['-m', 'weak_early_beta.cli', 'report', '--strategy', 'new-a'], { cwd: repo, env, log: path.join(runDir, 'report') });

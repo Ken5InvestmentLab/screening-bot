@@ -19,17 +19,23 @@ const privateBase=path.join(ROOT,'.cache/new-a-runner-tests');fs.mkdirSync(priva
 const receipts=[];
 const write=(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,JSON.stringify(v));};
 function fixture(){const repo=fs.mkdtempSync(path.join(privateBase,'case-')),runtime=path.join(repo,'.cache/runtime');fs.mkdirSync(runtime,{recursive:true});fs.mkdirSync(path.join(repo,'weak-early-beta-gate'));write(path.join(repo,'weak-early-beta-gate/wrangler.jsonc'),{name:'tentei-kyokuchi-cloud'});return{repo,runtime};}
-export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null}={}){
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true}={}){
  const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  const local=path.join(repo,'.cache/weak_early_beta/new-a-private');fs.mkdirSync(local,{recursive:true});
- let metadata={identity:'NEW_A_CLOUD_DAILY_V1',strategy:'A_BASE',entry:'new-a-verified-daily-v1',latest_session:today,selector_rows_latest:0,detection_executed:true,source_version:'a'.repeat(64),snapshot_sha256:'b'.repeat(64),source_sha256:'c'.repeat(64),dry_run:false};
+ let metadata={identity:'NEW_A_CLOUD_DAILY_V1',strategy:'A_BASE',entry:'new-a-verified-daily-v1',latest_session:today,selector_rows_latest:detected,detection_executed:true,source_version:'a'.repeat(64),snapshot_sha256:'b'.repeat(64),source_sha256:'c'.repeat(64),dry_run:false};
  if(process.env.NEW_A_REAL_E2E_RECEIPT){const proof=JSON.parse(fs.readFileSync(process.env.NEW_A_REAL_E2E_RECEIPT,'utf8'));assert.equal(proof.passed,true);const bundle=JSON.parse(fs.readFileSync(path.join(proof.private_bundle_directory,'receipt.json'),'utf8'));metadata={...metadata,source_version:bundle.source_version,snapshot_sha256:proof.snapshot_sha256,source_sha256:proof.source_sha256};}
  // No external process is ever created. Optional real receipt is injected by tests below as metadata only.
  const context={fs,path,isDeepStrictEqual,console:{log(){},error(){}},process:{pid:1234,platform:'linux',env:{},exitCode:0},Date,JSON,randomUUID:crypto.randomUUID,
   loadDailyConfig:()=>config,readJson:p=>JSON.parse(fs.readFileSync(p,'utf8')),writeJson:write,atomicJson:write,appendEvent:(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.appendFileSync(p,JSON.stringify(v)+'\n');},
   loadDotEnv:()=>{},jstDate:()=>today,newATaskPlan:taskRoute.newATaskPlan,parseGitStatus:s=>s.trim()?['dirty']:[],
-  probeFundamentalModel:()=>{throw Error('FUNDAMENTAL_MODEL_MUST_NOT_RUN');},drainFundamentalQueue:()=>{throw Error('FUNDAMENTAL_QUEUE_MUST_NOT_RUN');},assertHtmlImports:()=>{throw Error('FUNDAMENTAL_STATE_MUST_NOT_READ');},
+  probeFundamentalModel:async()=>{assert(detected>0);calls.push({args:['fundamental-model-preflight']});},
+  runNewAFundamentalStage:async({expectedCount})=>{
+   assert.equal(expectedCount,detected);calls.push({args:['new-a-fundamental']});
+   if(!fundamentalOK)throw Error('synthetic analysis failed');
+   if(detected>0){metadata={...metadata,source_version:'e'.repeat(64)};write(path.join(local,'latest-run.json'),metadata);}
+   return {ok:true,status:detected?'COMPLETE':'NO_NEW_SIGNALS',imported:detected,posted:0};
+  },drainFundamentalQueue:()=>{throw Error('FUNDAMENTAL_QUEUE_MUST_NOT_RUN');},assertHtmlImports:()=>{throw Error('FUNDAMENTAL_STATE_MUST_NOT_READ');},
   commitGeneratedChanges:()=>{throw Error('GENERATED_GIT_COMMIT_FORBIDDEN');},checkpointJpxRefresh:()=>{throw Error('OLD_TRACKED_JPX_COMMIT_FORBIDDEN');},
   networkFailureDetail:()=>null,waitForNetworkCapacity:async()=>({ok:true,synthetic:true}),waitInShortChunks:async()=>{},verifiedDetectionCache:async()=>({sha256:metadata.source_sha256}),
   npmInvocation:()=>({exe:'FAKE_NPM_NO_EXEC',args:['run','check']}),requireRemoteHead:async()=>head,
@@ -78,8 +84,26 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
  return{context,calls,config,repo,runtime,today,async run(){await context.runnerMain(path.join(repo,'synthetic-daily-config.json'));return JSON.parse(fs.readFileSync(path.join(runtime,'daily-latest.json'),'utf8'));}};
 }
 test('New A main finishes without fundamental config, model, queue or generated commit',async()=>{
- const f=runnerFixture();assert.equal(f.config.fundamentalConfigPath,undefined);const result=await f.run();assert.equal(result.ok,true);assert.equal(result.fundamental.status,'NOT_REQUESTED');assert.equal(result.generatedFilesSent,0);assert.equal(result.new_a.owner_publication_verified,true);assert(f.calls.some(c=>c.args.includes('weak_early_beta.new_a.cli')&&c.args.includes('publish')));assert(!f.calls.some(c=>c.args.includes('notify-day')));assert(!f.calls.some(c=>c.args.includes('add')||c.args.includes('commit')));receipts.push({case:'main_fundamental_unconfigured',passed:true,subprocesses:f.calls.length});
+ const f=runnerFixture();assert.equal(f.config.fundamentalConfigPath,undefined);const result=await f.run();assert.equal(result.ok,true);assert.equal(result.fundamental.status,'NO_NEW_SIGNALS');assert.equal(result.generatedFilesSent,0);assert.equal(result.new_a.owner_publication_verified,true);assert(f.calls.some(c=>c.args.includes('weak_early_beta.new_a.cli')&&c.args.includes('publish')));assert(!f.calls.some(c=>c.args.includes('notify-day')));assert(!f.calls.some(c=>c.args.includes('add')||c.args.includes('commit')));receipts.push({case:'main_fundamental_unconfigured',passed:true,subprocesses:f.calls.length});
  const before=fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8'),calls=f.calls.length;await f.context.runnerMain(path.join(f.repo,'synthetic-daily-config.json'));assert.equal(f.calls.length,calls);assert.equal(fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8'),before);receipts.push({case:'direct_main_same_day_completion_no_repeat',passed:true});
+});
+test('Fundamental analysis covers the current batch before report and publication',async()=>{
+ const f=runnerFixture({detected:2});f.config.fundamentalConfigPath='SYNTHETIC';
+ const result=await f.run();
+ assert.equal(result.ok,true);assert.equal(result.fundamental.imported,2);assert.equal(result.fundamental.posted,0);
+ const before=f.calls.findIndex(c=>c.args.includes('fundamental-model-preflight'));
+ const detection=f.calls.findIndex(c=>c.args.includes('daily')&&c.args.includes('--strategy'));
+ const analysis=f.calls.findIndex(c=>c.args.includes('new-a-fundamental'));
+ const publish=f.calls.findIndex(c=>c.args.includes('publish'));
+ assert(before>=0&&before<detection&&detection<analysis&&analysis<publish);
+ assert.equal(result.new_a.source_version,'e'.repeat(64));
+});
+test('Fundamental failure retains detection without starting report deployment or notifications',async()=>{
+ const f=runnerFixture({detected:2,fundamentalOK:false});f.config.fundamentalConfigPath='SYNTHETIC';
+ const result=await f.run();
+ assert.equal(result.ok,false);assert.equal(result.stage,'fundamental');
+ assert.equal(f.calls.filter(c=>c.args.includes('daily')&&c.args.includes('--strategy')).length,1);
+ assert(!f.calls.some(c=>c.args.includes('publish')||c.args.includes('notify')||c.args[0]==='tag'));
 });
 test('Health success alone cannot complete owner publication or trigger notify',async()=>{
  const f=runnerFixture({gateAccepted:false});const result=await f.run();assert.equal(result.ok,false);assert(!f.calls.some(c=>c.args.includes('weak_early_beta.new_a.cli')&&c.args.includes('notify')));receipts.push({case:'owner_proof_required_beyond_health',passed:true});

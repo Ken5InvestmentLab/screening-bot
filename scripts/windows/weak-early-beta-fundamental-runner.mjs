@@ -355,4 +355,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   await main(process.argv[2]);
 }
 
-export { CLOUD_REPORT_CONTRACT, assertIsolated, cleanEnvironment, loadFundamentalEnvironment, codexInvocation, finalizeHtmlSnapshots, reportsMatchClaim, reusableClaimReport, stampAnalysisStart, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };
+export { CLOUD_REPORT_CONTRACT, command, assertIsolated, cleanEnvironment, loadFundamentalEnvironment, codexInvocation, finalizeHtmlSnapshots, reportsMatchClaim, reusableClaimReport, stampAnalysisStart, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT };

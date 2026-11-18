@@ -104,8 +104,37 @@ def validate_closure(closure, finite_ref, record):
     return closure
 
 
+def check_owner_continuity(previous, current, room_proof, *, as_of, live):
+    ca.require(previous['author_id'] == current['author_id'],
+               'transition would change the owner account')
+    if previous['room_id'] == current['room_id']:
+        ca.require(room_proof is None, 'room proof supplied for an unchanged room')
+        return
+    required = dict(
+        schema='NEW_A_TRUSTED_SAME_ACCOUNT_ROOM_TRANSFER_V1',
+        author_id=current['author_id'],
+        previous_room_id=previous['room_id'],
+        previous_message_id=previous['message_id'],
+        previous_text_sha256=previous['text_sha256'],
+        room_id=current['room_id'],
+        message_id=current['message_id'],
+        text_sha256=current['text_sha256'],
+        host_verified_same_account=True,
+        platform_signature_claimed=False,
+    )
+    ca.require(isinstance(room_proof, dict)
+               and all(room_proof.get(k) == v for k, v in required.items())
+               and room_proof.get('synthetic') is not True
+               and re.fullmatch(r'[a-f0-9]{64}', str(room_proof.get('host_receipt_sha256', ''))),
+               'independent same-account room transfer proof required')
+    observed_at = ca.timestamp(room_proof['observed_at'])
+    ca.require(ca.timestamp(current['sent_at']) <= observed_at <= as_of
+               and (not live or as_of - observed_at <= datetime.timedelta(minutes=15)),
+               'room transfer observation is stale or invalid')
+
+
 def _prepare(repo, plan, *, primary_reader, measurement_reader, raw_reader,
-             deployment_reader, decision_reader, authority, closure_reader):
+             deployment_reader, decision_reader, authority, closure_reader, room_transfer_reader=None):
     repo = Path(repo).resolve()
     source = ca.head(repo)
     target = ca.target(repo)
@@ -124,8 +153,12 @@ def _prepare(repo, plan, *, primary_reader, measurement_reader, raw_reader,
     old = history['previous_record']
 
     owner = ca.primary_message(plan['owner_message'], primary_reader, authority)
-    ca.require(all(old['owner_message'][key] == owner[key] for key in ('author_id', 'room_id')),
-               'transition would change the owner authority')
+    previous_owner = old['owner_message']
+    room_proof = None
+    if previous_owner['room_id'] != owner['room_id']:
+        ca.require(callable(room_transfer_reader), 'independent same-account room transfer reader required')
+        room_proof = room_transfer_reader(previous_owner, owner)
+    check_owner_continuity(previous_owner, owner, room_proof, as_of=ca.now(), live=True)
     ca.require(callable(closure_reader), 'trusted terminal recovery reader required')
     closure = validate_closure(closure_reader(repo, plan['finite_admission'], history['finite_record']),
                                plan['finite_admission'], history['finite_record'])
@@ -142,6 +175,7 @@ def _prepare(repo, plan, *, primary_reader, measurement_reader, raw_reader,
                     historical_auth_source_hashes=old['auth_source_hashes'],
                     current_auth_source_hashes=plan['auth_source_hashes'])
     ca.require(all(review.get(key) == value for key, value in expected.items())
+               and review.get('owner_room_transfer') == room_proof
                and review.get('existing_access_policy_preserved') is True,
                'transition review is not bound to the predecessor, closure and current version')
     measurements = release.checked_measurements(plan, measurement_reader, raw_reader, deployment)
@@ -165,12 +199,13 @@ def _prepare(repo, plan, *, primary_reader, measurement_reader, raw_reader,
 
 
 def prepare(repo, plan, *, primary_reader, measurement_reader, raw_reader,
-            deployment_reader, decision_reader, authority, closure_reader):
+            deployment_reader, decision_reader, authority, closure_reader, room_transfer_reader=None):
     """Prove prerequisite compatibility without issuing or applying anything."""
     summary, *_ = _prepare(repo, plan, primary_reader=primary_reader,
                            measurement_reader=measurement_reader, raw_reader=raw_reader,
                            deployment_reader=deployment_reader, decision_reader=decision_reader,
-                           authority=authority, closure_reader=closure_reader)
+                           authority=authority, closure_reader=closure_reader,
+                           room_transfer_reader=room_transfer_reader)
     return summary
 
 
@@ -190,10 +225,10 @@ def _review_binding(transition, history, record, completed_at):
                     deployment_version_id=deployment['version_id'],
                     historical_auth_source_hashes=old['auth_source_hashes'],
                     current_auth_source_hashes=record['auth_source_hashes'])
+    check_owner_continuity(old['owner_message'], record['owner_message'],
+                           review.get('owner_room_transfer'), as_of=completed_at, live=False)
     ca.require(all(review.get(key) == value for key, value in expected.items())
                and review.get('existing_access_policy_preserved') is True
-               and all(old['owner_message'][key] == record['owner_message'][key]
-                       for key in ('author_id', 'room_id'))
                and completed_at <= ca.timestamp(review['management_not_after'])
                and all(value.get('deployment_version_id') == deployment['version_id']
                        for value in record['measurements'].values()),
@@ -231,7 +266,7 @@ def _acquire(path, token, held):
 
 
 def apply(repo, plan, issued, *, preflight, primary_reader, measurement_reader,
-          raw_reader, deployment_reader, decision_reader, authority, closure_reader):
+          raw_reader, deployment_reader, decision_reader, authority, closure_reader, room_transfer_reader=None):
     """Apply one new ordinary grant after an independently reviewed finite closure.
 
     The caller supplies trusted host readers, including a distinct transition
@@ -302,7 +337,7 @@ def apply(repo, plan, issued, *, preflight, primary_reader, measurement_reader,
         _, owner, review, closure, deployment, measurements = _prepare(
             repo, plan, primary_reader=primary_reader, measurement_reader=measurement_reader,
             raw_reader=raw_reader, deployment_reader=deployment_reader, decision_reader=decision_reader,
-            authority=authority, closure_reader=closure_reader)
+            authority=authority, closure_reader=closure_reader, room_transfer_reader=room_transfer_reader)
         ca.require(owner == record['owner_message'] and measurements == record['measurements'],
                    'live transition observations differ from the granted ordinary acceptance')
 

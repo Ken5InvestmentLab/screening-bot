@@ -27,7 +27,7 @@ const ordinaryFixture = (head = 'f'.repeat(40)) => ({
  activation_sha256: '1'.repeat(64), build_input_sha256: '2'.repeat(64), policy_sha256: '3'.repeat(64),
  tag: 'cloud-deploy-transition-fixture', ci_run_id: 1234,
 });
-export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null}={}){
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null,noticeConfigured=false,noticeHost=null,windowsTrust=null}={}){
  const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  const local=path.join(repo,'.cache/weak_early_beta/new-a-private');fs.mkdirSync(local,{recursive:true});
@@ -36,7 +36,7 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
  let metadata={identity:'NEW_A_CLOUD_DAILY_V1',strategy:'A_BASE',entry:'new-a-verified-daily-v1',latest_session:today,selector_rows_latest:detected,detection_executed:true,source_version:'a'.repeat(64),snapshot_sha256:'b'.repeat(64),source_sha256:'c'.repeat(64),dry_run:false};
  if(process.env.NEW_A_REAL_E2E_RECEIPT){const proof=JSON.parse(fs.readFileSync(process.env.NEW_A_REAL_E2E_RECEIPT,'utf8'));assert.equal(proof.passed,true);const bundle=JSON.parse(fs.readFileSync(path.join(proof.private_bundle_directory,'receipt.json'),'utf8'));metadata={...metadata,source_version:bundle.source_version,snapshot_sha256:proof.snapshot_sha256,source_sha256:proof.source_sha256};}
  // No external process is ever created. Optional real receipt is injected by tests below as metadata only.
- const context={fs,path,isDeepStrictEqual,console:{log(){},error(){}},process:{pid:1234,platform:'linux',env:{},exitCode:0},Date,JSON,randomUUID:crypto.randomUUID,createHash:crypto.createHash,
+ const context={fs,path,isDeepStrictEqual,console:{log(){},error(){}},process:{pid:1234,platform:windowsTrust?'win32':'linux',env:{},exitCode:0},Date,JSON,randomUUID:crypto.randomUUID,createHash:crypto.createHash,
   loadDailyConfig:()=>config,readJson:p=>JSON.parse(fs.readFileSync(p,'utf8')),writeJson:write,atomicJson:write,appendEvent:(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.appendFileSync(p,JSON.stringify(v)+'\n');},
   loadDotEnv:()=>{},jstDate:()=>today,newATaskPlan:taskRoute.newATaskPlan,assertActivationRunScope:taskRoute.assertActivationRunScope,parseGitStatus:s=>s.trim()?['dirty']:[],
   probeFundamentalModel:async()=>{assert(detected>0);calls.push({args:['fundamental-model-preflight']});},
@@ -48,6 +48,11 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
   },drainFundamentalQueue:()=>{throw Error('FUNDAMENTAL_QUEUE_MUST_NOT_RUN');},assertHtmlImports:()=>{throw Error('FUNDAMENTAL_STATE_MUST_NOT_READ');},
   commitGeneratedChanges:()=>{throw Error('GENERATED_GIT_COMMIT_FORBIDDEN');},checkpointJpxRefresh:()=>{throw Error('OLD_TRACKED_JPX_COMMIT_FORBIDDEN');},
   networkFailureDetail:()=>null,waitForNetworkCapacity:async()=>({ok:true,synthetic:true}),waitInShortChunks:async()=>{},verifiedDetectionCache:async()=>({sha256:metadata.source_sha256}),
+  withWindowsDetectionTrust:async(options,run)=>{
+   assert.equal(options.python,config.pythonPath);assert.equal(options.cwd,repo);
+   assert.equal(options.env.SSL_CERT_FILE,undefined);
+   return windowsTrust(options,run);
+  },
   npmInvocation:()=>({exe:'FAKE_NPM_NO_EXEC',args:['run','check']}),requireRemoteHead:async()=>head,
   waitForTagWorkflow:async({headSha,tag,listRuns})=>{const runs=await listRuns();assert.equal(runs[0].headSha,headSha);assert.equal(runs[0].headBranch,tag);return runs[0];},verifyLiveWorker:async()=>({synthetic:true,healthOnly:true}),
   verifyAcceptedWorker:async(release,source)=>{
@@ -59,7 +64,8 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
   RESEARCH_BRANCH:'research/weak-early-beta',GITHUB_REPOSITORY:'Ken5InvestmentLab/screening-bot',DEPLOY_WORKFLOW:'weak-early-beta-report-deploy.yml',
   run:async(...args)=>context.requireOk(...args),
   requireOk:async(exe,args,options)=>{
-   calls.push({exe,args:[...args],pythonFaulthandler:options?.env?.PYTHONFAULTHANDLER});
+   calls.push({exe,args:[...args],pythonFaulthandler:options?.env?.PYTHONFAULTHANDLER,caFile:options?.env?.SSL_CERT_FILE});
+   if(exe==='powershell.exe'&&windowsTrust)return{code:0,stdout:'[]',stderr:''};
    if(exe==='git'){
     assert(!['add','commit'].includes(args[0]),'No generated files may be committed');
     if(args[0]==='push')assert(/^refs\/tags\/cloud-deploy-daily-/.test(args[2]),'Only the existing code deploy tag is planned');
@@ -107,6 +113,34 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
 test('New A main finishes without fundamental config, model, queue or generated commit',async()=>{
  const f=runnerFixture();assert.equal(f.config.fundamentalConfigPath,undefined);const result=await f.run();assert.equal(result.ok,true);assert.equal(result.fundamental.status,'NO_NEW_SIGNALS');assert.equal(result.generatedFilesSent,0);assert.equal(result.new_a.owner_publication_verified,true);assert(f.calls.some(c=>c.args.includes('weak_early_beta.new_a.cli')&&c.args.includes('publish')));assert(!f.calls.some(c=>c.args.includes('notify-day')));assert(!f.calls.some(c=>c.args.includes('add')||c.args.includes('commit')));receipts.push({case:'main_fundamental_unconfigured',passed:true,subprocesses:f.calls.length});
  const before=fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8'),calls=f.calls.length;await f.context.runnerMain(path.join(f.repo,'synthetic-daily-config.json'));assert.equal(f.calls.length,calls);assert.equal(fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8'),before);receipts.push({case:'direct_main_same_day_completion_no_repeat',passed:true});
+});
+
+test('the prepared Windows CA is passed only to fresh detection', async () => {
+ const temporaryCa = 'synthetic-ca.pem';
+ let preparations = 0;
+ const f = runnerFixture({ windowsTrust: ({ env }, run) => {
+  preparations += 1;
+  return run({ ...env, SSL_CERT_FILE: temporaryCa });
+ } });
+ assert.equal((await f.run()).ok, true);
+ assert.equal(preparations, 1);
+ const preparedChildren = f.calls.filter(call => call.caFile === temporaryCa);
+ assert.equal(preparedChildren.length, 1);
+ assert(preparedChildren[0].args.includes('--refresh-live'));
+});
+
+test('a Windows trust preparation failure stops before market acquisition and is never retried', async () => {
+ let preparations = 0;
+ const f = runnerFixture({ windowsTrust: () => {
+  preparations += 1;
+  throw Object.assign(new Error('synthetic TLS CA preparation failure'), { failureType: 'tls_ca_bundle_unavailable' });
+ } });
+ const result = await f.run();
+ assert.equal(result.ok, false);
+ assert.equal(result.stage, 'detection');
+ assert.equal(result.failureType, 'tls_ca_bundle_unavailable');
+ assert.equal(preparations, 1);
+ assert(!f.calls.some(call => call.args.includes('--refresh-live') || call.args.includes('publish')));
 });
 test('Fundamental analysis covers the current batch before report and publication',async()=>{
  const f=runnerFixture({detected:2});f.config.fundamentalConfigPath='SYNTHETIC';
@@ -259,7 +293,7 @@ test('Approved Worker probe verifies exact origin, source, version, build, polic
 
 test('Native source recovery uses retained packets, one normal publication and no repeated completed run',async()=>{
  const proof={schema:'CLOUD_NATIVE_SOURCE_REPLAY_V1',directory:'SYNTHETIC_RETAINED_PRIVATE_PARTS',requests:1,network_fallback:false};
- const f=runnerFixture({nativeProof:proof,approvedWorker:ordinaryFixture(),noticeConfigured:true}),prior={identity:'WEAK_EARLY_CLOUD_DAILY_V1',date:f.today,startedAt:'2026-11-13T08:00:00.000Z',completedAt:'2026-11-13T09:00:00.000Z',stage:'detection',ok:false,new_a:{strategy:'A_BASE',entry:'new-a-verified-daily-v1'}};
+ const f=runnerFixture({nativeProof:proof,approvedWorker:ordinaryFixture(),noticeConfigured:true,windowsTrust:()=>assert.fail('retained acquisition must not probe CA trust')}),prior={identity:'WEAK_EARLY_CLOUD_DAILY_V1',date:f.today,startedAt:'2026-11-13T08:00:00.000Z',completedAt:'2026-11-13T09:00:00.000Z',stage:'detection',ok:false,new_a:{strategy:'A_BASE',entry:'new-a-verified-daily-v1'}};
  const receipt=path.join(f.runtime,'recovery-input-synthetic.json');write(receipt,prior);write(path.join(f.runtime,'daily-latest.json'),prior);const preserved=fs.readFileSync(receipt,'utf8');
  await f.context.runnerMain(path.join(f.repo,'synthetic-daily-config.json'),{resumeReceipt:receipt});
  const result=JSON.parse(fs.readFileSync(path.join(f.runtime,'daily-latest.json'),'utf8'));assert.equal(result.ok,true);

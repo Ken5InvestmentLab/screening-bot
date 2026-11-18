@@ -1,7 +1,90 @@
 import { execFile } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { promisify } from 'node:util';
 
 const execute = promisify(execFile);
+const caVariables = ['SSL_CERT_FILE', 'CURL_CA_BUNDLE', 'REQUESTS_CA_BUNDLE'];
+const asciiPath = value => /^[\x20-\x7e]+$/.test(value);
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+const caFailureType = 'tls_ca_bundle_unavailable';
+
+export async function withWindowsDetectionTrust({
+  python, cwd, env, platform = process.platform, exec = execute,
+}, operation) {
+  if (platform !== 'win32') return operation(env);
+  let directory;
+  const aliases = new Map();
+  const childEnv = { ...env };
+  try {
+    try {
+      const envKey = name => {
+        const matches = Object.keys(env).filter(key => key.toUpperCase() === name);
+        if (matches.length > 1) throw new Error('ambiguous case-insensitive CA configuration');
+        return matches[0] ?? name;
+      };
+      const checkedFile = value => {
+        const file = fs.realpathSync.native(path.resolve(cwd, value));
+        if (!fs.statSync(file).isFile()) throw new Error('CA bundle is not a regular file');
+        fs.closeSync(fs.openSync(file, 'r'));
+        return file;
+      };
+      const explicit = caVariables.map(envKey).filter(key => env[key]).map(key => ({
+        key, value: env[key], file: checkedFile(env[key]),
+      }));
+      // curl_cffi fixes its default when imported, including inside yfinance.
+      // Use the configured interpreter to resolve it without making a request.
+      const { stdout } = await exec(python, ['-B', '-c',
+        'import json; from curl_cffi.curl import DEFAULT_CACERT; print(json.dumps(DEFAULT_CACERT))',
+      ], { cwd, env, encoding: 'utf8', windowsHide: true, timeout: 20_000, maxBuffer: 16_384 });
+      const selected = JSON.parse(stdout);
+      if (typeof selected !== 'string' || !selected) throw new Error('invalid CA bundle probe');
+      const defaultFile = checkedFile(selected);
+      if (explicit.length && explicit[0].file !== defaultFile) throw new Error('CA configuration and interpreter disagree');
+
+      const alias = file => {
+        if (aliases.has(file)) return aliases.get(file);
+        if (!directory) {
+          const localAppData = env[envKey('LOCALAPPDATA')];
+          if (!localAppData || !path.isAbsolute(localAppData)) throw new Error('missing local AppData');
+          const appData = fs.realpathSync.native(localAppData);
+          const temp = fs.realpathSync.native(path.join(appData, 'Temp'));
+          if (path.dirname(temp) !== appData || !asciiPath(temp)) throw new Error('invalid local CA alias directory');
+          directory = fs.mkdtempSync(path.join(temp, 'cloud-ca-'));
+        }
+        const target = path.join(directory, `ca-${aliases.size}.pem`);
+        const bytes = fs.readFileSync(file);
+        aliases.set(file, target);
+        fs.writeFileSync(target, bytes, { flag: 'wx' });
+        if (sha256(fs.readFileSync(target)) !== sha256(bytes)) throw new Error('CA alias differs from original');
+        return target;
+      };
+      // Keep each variable's certificate policy. curl_cffi's default and
+      // Requests-compatible sessions use different precedence orders.
+      for (const { key, value, file } of explicit) {
+        if (!asciiPath(value) || !asciiPath(file)) childEnv[key] = alias(file);
+      }
+      if (!explicit.length && (!asciiPath(selected) || !asciiPath(defaultFile))) {
+        childEnv[envKey('SSL_CERT_FILE')] = alias(defaultFile);
+      }
+    } catch {
+      throw Object.assign(new Error('Windows Yahoo TLS CA bundle unavailable; check the CA files and local temporary directory'),
+        { failureType: caFailureType });
+    }
+    return await operation(childEnv);
+  } finally {
+    if (directory) {
+      // Remove only the PEM files and fresh directory created by this call.
+      try {
+        for (const file of aliases.values()) fs.rmSync(file, { force: true });
+        fs.rmdirSync(directory);
+      } catch {
+        console.error('Could not remove the temporary Cloud CA bundle');
+      }
+    }
+  }
+}
 
 export function networkFailureDetail(stderr) {
   // Only fixed classifications leave bounded local logs. Never copy an error
@@ -9,6 +92,9 @@ export function networkFailureDetail(stderr) {
   // Earlier attempts may have recovered. Only the terminal diagnostic can
   // classify this failed command; historical log lines are not its cause.
   const terminal = String(stderr).trim().split(/\r?\n/).at(-1) || '';
+  if (/curl:\s*\(77\)/i.test(terminal)) {
+    return { failureType: caFailureType, message: 'Windows Yahoo TLS CA bundle could not be loaded' };
+  }
   if (/(?:WinError|os error)\s*10048\b|WSAEADDRINUSE/.test(terminal)) {
     return { failureType: 'windows_tcp_ports_exhausted',
       message: 'Windows TCP port resources exhausted (10048)' };

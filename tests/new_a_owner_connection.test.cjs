@@ -3,13 +3,85 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const repo=path.resolve(__dirname,'..'),gate=path.join(repo,'weak-early-beta-gate'),source=path.join(gate,'src');
 const tsFile=[path.join(gate,'node_modules/typescript/lib/typescript.js'),process.env.NEW_A_TEST_TYPESCRIPT].find(p=>p&&fs.existsSync(p));assert(tsFile,'Install gate dependencies, or explicitly provide the local review TypeScript');const ts=require(tsFile);
 const sha=s=>createHash('sha256').update(s).digest('hex'),OWNER='100000000000000001',OTHER='100000000000000002';
-function modules(){const cache=new Map(),mock={
+function modules(log=()=>{}, entry='./index'){const cache=new Map(),mock={
  './shared-report-gate':{reportVerifiedSessionSubject:async r=>r.headers.get('x-synthetic-subject')||undefined,reportIdentity:async(r,e,fresh)=>{assert.equal(fresh,true);const refresh=r.headers.get('x-synthetic-refresh')==='yes';return{subject:r.headers.get('x-synthetic-subject')||undefined,discord_authorized:!refresh&&r.headers.get('x-synthetic-role')==='yes',...(refresh?{reason:'refresh_required'}:{})};},default:{fetch:async()=>new Response('legacy-auth')}},
  './operational-build.generated':{operationalBuild:{source_commit:'1'.repeat(40),build_input_sha256:'2'.repeat(64),target:{worker:'tentei-kyokuchi-cloud',database:'tentei-cloud-settings'}}},
  './cloud-api':{cloudMemberId:async s=>'cloud_'+sha('cloud-member:'+s),cloudApi:async()=>Response.json({legacy:true})},'./cloud-role-authority':{cloudReportRole:async()=>({status:'paid'}),CloudRoleAuthority:class{}},'./cloud-push-scheduler':{runScheduledPersonalNotifications:async()=>({status:'disabled'})}};
- function load(name,parent=source){if(mock[name])return mock[name];let file=path.resolve(parent,name.replace(/\.ts$/,'')+'.ts');assert(file.startsWith(source+path.sep));if(!fs.existsSync(file)&&process.env.NEW_A_TEST_BASELINE_ROOT)file=path.resolve(process.env.NEW_A_TEST_BASELINE_ROOT,'weak-early-beta-gate/src',path.relative(source,file));if(cache.has(file))return cache.get(file).exports;const module={exports:{}};cache.set(file,module);const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;vm.runInNewContext(code,{module,exports:module.exports,require:n=>load(n,path.dirname(file)),crypto:webcrypto,Request,Response,Headers,URL,TextEncoder,TextDecoder,console:{log(){}}},{filename:file});return module.exports;}return load('./index').default;}
-function fixture(){const sql=new DatabaseSync(':memory:');sql.exec(fs.readFileSync(path.join(gate,'schema/new-a-private.sql'),'utf8'));sql.exec('CREATE TABLE cloud_member_preferences(member_id TEXT PRIMARY KEY,preferences_json TEXT)');let reads=0;const db={prepare(query){reads++;return{bind(...args){return{first:async()=>sql.prepare(query).get(...args)||null};}};}};const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_OWNER_DISCORD_ID:OWNER,SESSION_SECRET:'synthetic-session-secret',CLOUD_DB:db,ASSETS:{fetch:async()=>new Response('// synthetic asset')}},app=modules();return{sql,env,app,get reads(){return reads;},close:()=>sql.close()};}
+ function load(name,parent=source){if(mock[name])return mock[name];let file=path.resolve(parent,name.replace(/\.ts$/,'')+'.ts');assert(file.startsWith(source+path.sep));if(!fs.existsSync(file)&&process.env.NEW_A_TEST_BASELINE_ROOT)file=path.resolve(process.env.NEW_A_TEST_BASELINE_ROOT,'weak-early-beta-gate/src',path.relative(source,file));if(cache.has(file))return cache.get(file).exports;const module={exports:{}};cache.set(file,module);const code=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;vm.runInNewContext(code,{module,exports:module.exports,require:n=>load(n,path.dirname(file)),crypto:webcrypto,Request,Response,Headers,URL,TextEncoder,TextDecoder,setTimeout,clearTimeout,console:{log}},{filename:file});return module.exports;}const loaded=load(entry);return loaded.default??loaded;}
+function fixture(){const sql=new DatabaseSync(':memory:');sql.exec(fs.readFileSync(path.join(gate,'schema/new-a-private.sql'),'utf8'));sql.exec('CREATE TABLE cloud_member_preferences(member_id TEXT PRIMARY KEY,preferences_json TEXT)');let reads=0;const db={prepare(query){reads++;return{bind(...args){return{first:async()=>sql.prepare(query).get(...args)||null};}};}};const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_OWNER_DISCORD_ID:OWNER,SESSION_SECRET:'synthetic-session-secret',CLOUD_DB:db,ASSETS:{fetch:async()=>new Response('// synthetic asset')}};const logs=[],app=modules(event=>logs.push(event));return{sql,env,app,logs,get reads(){return reads;},close:()=>sql.close()};}
 function request(url,subject=OWNER,role=true,init={}){return new Request('https://synthetic.invalid'+url,{...init,headers:{...(subject?{'x-synthetic-subject':subject}:{}),'x-synthetic-role':role?'yes':'no',...init.headers}});}
+const ownerDocument = '/weak_early_beta_latest.html';
+const ownerAccess = '/api/cloud/new-a-finite/access';
+const observedVersion = {
+ id: '12345678-1234-1234-1234-123456789abc',
+ tag: '1'.repeat(40),
+ timestamp: '2026-01-01T00:00:00Z',
+};
+function normalOwnerRequest(route, ...args) {
+ return new Request('https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev'+route, request(route,...args));
+}
+const ownerLogs = f => f.logs.filter(event=>event.operation==='cloud_owner_response_observed');
+test('normal final owner responses produce minimal provider audit events without changing the response', async t=>{
+ const f=fixture();t.after(f.close);
+ const env={...f.env,CLOUD_VERSION_METADATA:observedVersion};
+ const auth={headers:{cookie:'synthetic-cookie-value'}};
+ const doc=await f.app.fetch(normalOwnerRequest(ownerDocument,OWNER,true,auth),env);
+ const api=await f.app.fetch(normalOwnerRequest(ownerAccess,OWNER,true,auth),env);
+ assert.equal(doc.status,200);assert.doesNotMatch(await doc.text(),/data-auth-recovery/);
+ assert.equal(api.status,200);assert.deepEqual(await api.json(),{authorized:true,strategy:'A_BASE'});
+ assert.equal(api.headers.get('cache-control'),'private, no-store, max-age=0');
+ assert.equal(f.reads,0);
+ assert.deepEqual(JSON.parse(JSON.stringify(ownerLogs(f))),[ownerDocument,ownerAccess].map(route=>({
+  operation:'cloud_owner_response_observed',
+  schema:'NEW_A_PROTECTED_OWNER_RESPONSE_V1',
+  source_commit:observedVersion.tag,
+  build_input_sha256:'2'.repeat(64),
+  worker:'tentei-kyokuchi-cloud',
+  version_id:observedVersion.id,
+  version_timestamp:observedVersion.timestamp,
+  route,status:200,strategy:'A_BASE',
+  ...(route===ownerAccess?{verified_access_contract:{authorized:true,strategy:'A_BASE'}}:{}),
+ })));
+});
+test('denial, synthetic preview, recovery shell and routing overrides cannot produce owner evidence', async t=>{
+ const f=fixture();t.after(f.close);
+ const env={...f.env,CLOUD_VERSION_METADATA:observedVersion};
+ const recovery=await f.app.fetch(normalOwnerRequest(ownerDocument,OWNER,true,{headers:{'x-synthetic-refresh':'yes'}}),env);
+ assert.equal(recovery.status,200);assert.match(await recovery.text(),/data-auth-recovery/);
+ for(const [req,targetEnv] of [
+  [normalOwnerRequest(ownerAccess,null),env],
+  [normalOwnerRequest(ownerAccess,OTHER),env],
+  [normalOwnerRequest(ownerAccess,OWNER,false),env],
+  [normalOwnerRequest(ownerAccess,OWNER,true,{method:'HEAD'}),env],
+  [normalOwnerRequest(ownerDocument+'?ignored=1'),env],
+  [normalOwnerRequest(ownerAccess,OWNER,true,{headers:{'cloudflare-workers-version-key':'synthetic'}}),env],
+  [normalOwnerRequest(ownerAccess,OWNER,true,{headers:{authorization:'synthetic'}}),env],
+  [request(ownerAccess),env],
+  [normalOwnerRequest(ownerAccess),f.env],
+  [normalOwnerRequest(ownerAccess),{...env,CLOUD_VERSION_METADATA:{...observedVersion,tag:'3'.repeat(40)}}],
+ ]) await f.app.fetch(req,targetEnv);
+ assert.deepEqual(ownerLogs(f),[]);
+});
+test('access observation skips wrong, extra or oversized JSON without consuming the original response', async ()=>{
+ const logs=[];
+ const {observeOwnerResponse}=modules(event=>logs.push(event),'./owner-response-observation');
+ const context={ownerAuthorized:true,roleAuthorized:true,current:true,subject:OWNER};
+ const build={source_commit:observedVersion.tag,build_input_sha256:'2'.repeat(64),target:{worker:'tentei-kyokuchi-cloud',database:'tentei-cloud-settings'}};
+ for(const body of [
+  {authorized:false,strategy:'A_BASE'},
+  {authorized:true,strategy:'OTHER'},
+  {authorized:true,strategy:'A_BASE',extra:'synthetic-not-for-logs'},
+ ]) {
+  const response=Response.json(body);
+  await observeOwnerResponse(normalOwnerRequest(ownerAccess),response,context,build,observedVersion);
+  assert.deepEqual(await response.json(),body);
+ }
+ const longBody=' '.repeat(300)+'{"authorized":true,"strategy":"A_BASE"}';
+ const oversized=new Response(longBody,{headers:{'content-type':'application/json'}});
+ await observeOwnerResponse(normalOwnerRequest(ownerAccess),oversized,context,build,observedVersion);
+ assert.equal(await oversized.text(),longBody);
+ assert.deepEqual(logs,[]);
+});
 test('refresh documents activate the existing recovery guard while private APIs remain closed until refreshed',async()=>{
  const f=fixture();try{
   const initialReads=f.reads,refresh={headers:{'x-synthetic-refresh':'yes'}};

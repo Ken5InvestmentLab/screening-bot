@@ -17,6 +17,7 @@ SCHEMA = 'NEW_A_CONTINUING_OWNER_ACCEPTANCE_V1'
 STABLE_SCHEMA = 'NEW_A_CONTINUING_OWNER_ACCEPTANCE_V2'
 STABLE_DECISION = 'CONTINUE_UNTIL_REVOKED_OR_BOUND_EXECUTION_CHANGED'
 STABLE_REVIEW = 'CONTINUING_DAILY_WITH_STABLE_EXECUTION_IDENTITY_NONOWNER_UNMEASURED'
+TRANSITION_APPLICATION_SCHEMA = 'NEW_A_CONTINUING_TRANSITION_APPLICATION_V1'
 SCOPE = 'EXISTING_NEW_A_PERSONAL_PC_DAILY_V1'
 SERVICE = 'tentei-kyokuchi-cloud'
 AUTH_FILES = frozenset(['report-gate/src/index.ts', *[
@@ -208,11 +209,16 @@ def validate_evidence(evidence, repo, *, _activation_path=None, _historical_sour
     completed = read(folder / 'completed.json')
     claim = read(folder / 'claim.json')
     grant_path, grant = load_reference(repo, completed['grant'], 'grants')
-    require(grant_path.stem == application_id == digest(grant) and completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1' and completed.get('acceptance') == evidence['continuing_acceptance'] and grant.get('acceptance') == evidence['continuing_acceptance'] and completed.get('source_commit') == record['source_commit'] and claim.get('grant') == completed['grant'] and claim.get('before_sha256') == completed.get('before_sha256') == file_sha(folder / 'original.json') and claim.get('after_sha256') == completed.get('after_sha256') == file_sha(_activation_path or (private_root(repo) / 'activation.json')), 'completed application audit or activation changed')
+    transition = completed.get('schema') == TRANSITION_APPLICATION_SCHEMA
+    activation_path = _activation_path or (private_root(repo) / 'activation.json')
+    require(grant_path.stem == application_id == digest(grant) and (transition or completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1') and completed.get('acceptance') == evidence['continuing_acceptance'] and grant.get('acceptance') == evidence['continuing_acceptance'] and completed.get('source_commit') == record['source_commit'] and claim.get('grant') == completed['grant'] and claim.get('before_sha256') == completed.get('before_sha256') == file_sha(folder / 'original.json') and claim.get('after_sha256') == completed.get('after_sha256') == file_sha(activation_path), 'completed application audit or activation changed')
     require(grant.get('schema') == 'NEW_A_FINITE_ACCEPTANCE_APPLICATION_V1' and grant.get('scope') == SCOPE and grant.get('source_commit') == record['source_commit'] and grant.get('target') == record['target'] and grant.get('owner_message') == record['owner_message'] and grant.get('platform_signature_claimed') is False and grant.get('expected_activation_sha256') == completed['before_sha256'] and timestamp(grant['issued_at']) <= timestamp(completed['applied_at']) <= timestamp(grant['not_after']) <= timestamp(grant['issued_at']) + datetime.timedelta(hours=1), 'application was not completed within its finite authority')
     original_activation=read(folder/'original.json')
     require((original_activation.get('active') is True)==bool(completed.get('previous_acceptance')), 'active predecessor audit link missing or invented')
-    if completed.get('previous_acceptance'):
+    if transition:
+        from . import continuing_transition
+        continuing_transition.verify_application(repo, record, grant, activation_path, folder, completed, claim)
+    elif completed.get('previous_acceptance'):
         previous=read(folder/'original.json')
         require(previous.get('active') is True and previous.get('external_actions_approved') is True and previous.get('owner_acceptance',{}).get('continuing_acceptance')==completed['previous_acceptance'], 'upgraded original activation differs')
         _,old=load_reference(repo,completed['previous_acceptance'],'records')
@@ -240,6 +246,7 @@ def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owne
     require(grant_path.stem == digest(grant) and grant.get('schema') == 'NEW_A_FINITE_ACCEPTANCE_APPLICATION_V1' and grant.get('acceptance') == issued['acceptance'] and grant.get('scope') == SCOPE and grant.get('source_commit') == record['source_commit'] and grant.get('target') == record['target'] and grant.get('owner_message') == record['owner_message'] and grant.get('platform_signature_claimed') is False and timestamp(grant['issued_at']) <= now() < timestamp(grant['not_after']) <= timestamp(grant['issued_at']) + datetime.timedelta(hours=1), 'finite application grant expired or mismatched')
     require(callable(preflight), 'normal launch preflight required')
     activation = private_root(repo) / 'activation.json'
+    require(read(activation).get('operational_admission') is None, 'finite recovery requires the formal continuing transition')
     operation = root(repo) / 'applications' / grant_path.stem
     operation.mkdir(parents=True, exist_ok=True)
     completed = operation / 'completed.json'
@@ -269,6 +276,7 @@ def apply(repo, issued, *, preflight, previous_acceptance=None, arbitration_owne
         require(file_sha(activation) == grant['expected_activation_sha256'], 'activation baseline changed')
         current = read(activation)
         require(current.get('schema') == 'NEW_A_OWNER_ACTIVATION_V1' and current.get('strategy') == 'A_BASE', 'activation contract differs')
+        require(current.get('operational_admission') is None, 'finite recovery requires the formal continuing transition')
         if previous_acceptance is None:
             require(current.get('active') is False and current.get('external_actions_approved') is False, 'inactive exact baseline required')
         else:

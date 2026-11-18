@@ -86,9 +86,12 @@ def observe(repo,ci,*,loader_reader=None,database_factory=None,http_get=None):
  from .publisher import logical_manifest
  return {'schema':'NEW_A_OPERATIONAL_OBSERVATION_V1','observed_at':now().isoformat(),'source_commit':source,'version_id':ci['version_id'],'build_input_sha256':ci['build_input_sha256'],'dependencies':deps,'d1_active_sha256':active,'active_as_of':manifest['as_of'],'active_revision':row['revision'],'active_dataset_id':row['dataset_id'],'active_source_version':row['source_version'],'active_manifest_sha256':row['manifest_sha256'],'active_logical_manifest_sha256':digest(logical_manifest(manifest)),'raw_response_sha256':hashlib.sha256(response.content).hexdigest(),'owner_http_observed':False,'authenticated_nonowner_observed':False,'authentication_probe':False,'management_deployment_observed':False,'traffic_percentages_observed':False,'final_worker_artifact_sha256_observed':False}
 
-def historical_review(repo,value):
+def historical_review(repo,value,*,activation_path=None):
  """Replay the genuine old V1 audit in its historical source view only."""
  evidence=value['owner_acceptance'];_,record=ca.load_reference(repo,evidence['continuing_acceptance'],'records');source=record['source_commit']
+ original=Path(activation_path) if activation_path is not None else private_root(repo)/'activation.json'
+ original_bytes=original.read_bytes()
+ require(json.loads(original_bytes.decode('utf-8-sig'))==value,'historical activation differs from the reviewed value')
  with tempfile.TemporaryDirectory(prefix='new-a-historical-review-') as name:
   view=Path(name);private=private_root(view);private.mkdir(parents=True)
   shutil.copytree(ca.root(repo),ca.root(view))
@@ -99,9 +102,8 @@ def historical_review(repo,value):
    require(matching,'historical auth blob cannot reproduce its accepted checkout bytes')
    p=view/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(matching[0])
   p=view/'weak-early-beta-gate/wrangler.jsonc';p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(git(repo,'show',source+':weak-early-beta-gate/wrangler.jsonc'))
-  activation=private/'activation.json';activation.write_bytes((encode(value)+os.linesep).encode())
   # Preserve exact Windows newline bytes for the old application CAS audit.
-  original=private_root(repo)/'activation.json';activation.write_bytes(original.read_bytes())
+  activation=private/'activation.json';activation.write_bytes(original_bytes)
   ca.validate_evidence(evidence,view,_activation_path=activation,_historical_source=source)
  return {'source_commit':source,'acceptance':evidence['continuing_acceptance'],'auth_source_hashes':record['auth_source_hashes'],'owner_http_observed_at_historical_source':True,'current_owner_http_observed':False}
 

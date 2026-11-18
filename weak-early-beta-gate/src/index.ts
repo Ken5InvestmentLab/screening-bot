@@ -8,6 +8,7 @@ import { ownerOnlyGate } from "./cloud-owner-only";
 import { cloudReportRole } from "./cloud-role-authority";
 import { operationalReadback } from "./operational-readback";
 import { operationalBuild } from "./operational-build.generated";
+import { observeOwnerResponse } from "./owner-response-observation";
 export { CloudRoleAuthority } from "./cloud-role-authority";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
@@ -56,8 +57,15 @@ export default {
           return protectedReply(request, 200, '<!doctype html><html lang="ja" data-auth-recovery><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Discord認証確認</title><script src="/auth/guard.js" defer></script></head><body>Discord認証を確認しています。</body></html>', false);
         }
         if (identity.reason || !identity.subject) return protectedReply(request, identity.reason === "login_required" ? 401 : 503, {error:"authentication_unavailable"});
-        const ownerAuthorized = identity.subject === env.CLOUD_OWNER_DISCORD_ID?.trim();
-        return newACloudRoute(request, env, {ownerAuthorized, roleAuthorized:identity.discord_authorized === true, current:true, subject:identity.subject});
+        const ownerContext = {
+          ownerAuthorized: identity.subject === env.CLOUD_OWNER_DISCORD_ID?.trim(),
+          roleAuthorized: identity.discord_authorized === true,
+          current: true,
+          subject: identity.subject,
+        };
+        const response = await newACloudRoute(request, env, ownerContext);
+        await observeOwnerResponse(request, response, ownerContext, operationalBuild, env.CLOUD_VERSION_METADATA);
+        return response;
       } catch { return protectedReply(request, 503, {error:"authentication_unavailable"}); }
     }
     const bundle = BUNDLE_RE.exec(pathname);

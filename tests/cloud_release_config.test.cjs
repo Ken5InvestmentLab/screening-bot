@@ -15,7 +15,7 @@ test('release preserves production access/D1 and excludes previews and broad del
     c => { c.vars.CLOUD_PUSH_MODE = 'members'; },
     c => { c.vars.CLOUD_PUSH_REGISTRATION_ENABLED = c.vars.CLOUD_PUSH_REGISTRATION_ENABLED === 'true' ? 'false' : 'true'; },
     c => { c.vars.CLOUD_PUSH_SCHEDULER_ENABLED = 'true'; },
-    c => { c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'true'; },
+    c => { c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED === 'true' ? 'false' : 'true'; },
     c => { c.vars.DISCORD_ALLOWED_ROLE_IDS = ''; },
     c => { c.assets.run_worker_first = false; },
   ]) {
@@ -30,6 +30,8 @@ test('personal manual release requires managed role/public key and keeps runtime
   personal.vars.CLOUD_PUSH_MODE = 'personal_test';
   personal.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'true';
   personal.vars.CLOUD_PUSH_AUDIENCE = 'authenticated';
+  personal.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'false';
+  delete personal.triggers;
   verifyReleaseConfig(personal);
   for (const mutate of [
     c => { c.keep_vars = false; },
@@ -55,6 +57,7 @@ function ownerProfile(mode, scheduled) {
   owner.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'true';
   owner.vars.CLOUD_PUSH_AUDIENCE = 'paid';
   owner.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = String(scheduled);
+  delete owner.triggers;
   return owner;
 }
 

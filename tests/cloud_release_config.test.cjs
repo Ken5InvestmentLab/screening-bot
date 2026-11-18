@@ -6,6 +6,9 @@ const config = JSON.parse(fs.readFileSync(path.join(__dirname, '../weak-early-be
 test('release preserves production access/D1 and excludes previews and broad delivery', async () => {
   const { verifyReleaseConfig } = await import('../weak-early-beta-gate/scripts/verify-release-config.mjs');
   verifyReleaseConfig(config);
+  assert.equal(config.vars.CLOUD_PUSH_MODE, 'new_a_owner_registration');
+  assert.equal(config.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED, 'false');
+  assert.deepEqual(config.triggers?.crons ?? [], []);
   for (const mutate of [
     c => { c.d1_databases = []; },
     c => { c.d1_databases[0].remote = true; },
@@ -30,6 +33,8 @@ test('personal manual release requires managed role/public key and keeps runtime
   personal.vars.CLOUD_PUSH_MODE = 'personal_test';
   personal.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'true';
   personal.vars.CLOUD_PUSH_AUDIENCE = 'authenticated';
+  personal.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'false';
+  delete personal.triggers;
   verifyReleaseConfig(personal);
   for (const mutate of [
     c => { c.keep_vars = false; },
@@ -55,6 +60,7 @@ function ownerProfile(mode, scheduled) {
   owner.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'true';
   owner.vars.CLOUD_PUSH_AUDIENCE = 'paid';
   owner.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = String(scheduled);
+  delete owner.triggers;
   return owner;
 }
 

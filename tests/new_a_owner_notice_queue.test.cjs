@@ -36,7 +36,7 @@ function setUp(t, kind = morning) {
       return { first: async () => statement.get(...values) ?? null };
     } };
   } };
-  const env = { CLOUD_NEW_A_OWNER_PUSH_ENABLED: 'true', CLOUD_DB: d1,
+  const env = { CLOUD_NEW_A_OWNER_PUSH_ENABLED: 'true', CLOUD_PUSH_MODE: 'new_a_owner_scheduled', CLOUD_DB: d1,
     CLOUD_VERSION_METADATA: { id: uid, tag: build.source_commit } };
   const dailyAsOf = kind === morning ? '2026-11-18' : day;
   const manifest = JSON.stringify({ as_of: dailyAsOf, live: true,
@@ -94,10 +94,41 @@ function setUp(t, kind = morning) {
     run: (selected = readers, configured = env) => q.runNewAOwnerNoticeQueue(configured, controller, build, clock.now, selected) };
 }
 
+test('same-day holding dispatch does not wait for a cron tick and requires the staged token', async t => {
+  const f = setUp(t, holding);
+  const token = '1'.repeat(64);
+  f.clock.now += 1_234;
+  f.payload.holding_trigger = {sha256: hash(token), expires_at_ms: f.clock.now + 120_000};
+  f.stage();
+  const url = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev' + f.q.HOLDING_NOTICE_DISPATCH_PATH;
+  const send = (supplied, env = f.env, body = null, headers = {}) =>
+    f.q.dispatchStagedHoldingNotice(new Request(url, { method: 'POST', body, duplex: 'half',
+      headers: { ...headers, ...(supplied ? { authorization: 'Bearer ' + supplied } : {}) },
+    }), env, build, f.clock.now, f.readers);
+  const emptyBody = new ReadableStream({ start: controller => controller.close() });
+  assert.equal((await send()).status, 404);
+  assert.equal((await send(token, { ...f.env, CLOUD_PUSH_MODE: 'new_a_owner_registration' })).status, 404);
+  assert.equal((await send(token, f.env, 'unexpected', { 'content-length': '0' })).status, 404);
+  assert.equal((await send(token, f.env, 'unexpected', { 'content-length': '10' })).status, 404);
+  assert.equal((await send(token, f.env, null, { 'transfer-encoding': 'chunked' })).status, 404);
+  assert.equal(f.reads.length, 0);
+  assert.equal((await send('2'.repeat(64))).status, 404);
+  assert.deepEqual(f.calls, []);
+  assert.equal((await send(token, f.env, emptyBody, { 'content-length': '0' })).status, 204);
+  assert.deepEqual(f.calls, ['recipient', 'dispatch-1', 'receipt-1']);
+  f.clock.now += 120_000;
+  assert.equal((await send(token)).status, 404);
+  assert.equal(f.calls.length, 3);
+  const fallback = await f.q.checkNewAOwnerNoticeQueue(f.env, f.controller, build, f.clock.now);
+  assert.equal(fallback.status, 'ready');
+});
+
 test('disabled and wrongly scheduled queues do not query D1 or the recipient', async t => {
   const f = setUp(t);
   f.stage();
   assert.equal((await f.run(f.readers, { ...f.env, CLOUD_NEW_A_OWNER_PUSH_ENABLED: undefined })).status, 'disabled');
+  assert.equal((await f.run(f.readers, { ...f.env, CLOUD_PUSH_MODE: 'new_a_owner_registration' })).status, 'disabled');
+  assert.equal((await f.run(f.readers, { ...f.env, CLOUD_PUSH_SCHEDULER_ENABLED: 'true' })).reason, 'conflicting_legacy_schedule');
   assert.equal((await f.check(f.env, { ...f.controller, scheduledTime: f.clock.now - 60_000 })).reason, 'outside_notice_slot');
   assert.equal((await f.check({ ...f.env, CLOUD_VERSION_METADATA: { id: uid, tag: '9'.repeat(40) } })).reason,
     'normal_release_unverified');

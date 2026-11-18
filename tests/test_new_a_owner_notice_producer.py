@@ -1,5 +1,6 @@
 """Integration of the actual planner and queue using an isolated D1 fixture."""
 from datetime import datetime, timedelta
+from hashlib import sha256
 import json
 import unittest
 
@@ -90,6 +91,27 @@ class OwnerNoticeProducerTests(unittest.TestCase):
         payload = json.loads(rows[0]["payload_json"])
         self.assertEqual(payload["publication"]["as_of"], fixtures.DAY)
         self.assertEqual(len(payload["notices"]), 1)
+
+    def test_holding_dispatch_uses_already_staged_token_once_without_persisting_it(self):
+        path = self._run(fixtures.DAY)
+        self.fixture.clock = fixtures.HOLDING_NOW + timedelta(minutes=30)
+        dispatched = []
+
+        def dispatch(token):
+            payload = json.loads(self._rows()[0]["payload_json"])
+            self.assertEqual(payload["holding_trigger"]["sha256"], sha256(token.encode("ascii")).hexdigest())
+            self.assertNotIn(token, encode(payload))
+            dispatched.append(token)
+            return "unconfirmed"
+
+        self.producer.dispatch_holding = dispatch
+        first = self.producer.after_publication(path)
+        subsequent = self.producer.after_publication(path)
+        self.assertEqual(len(dispatched), 1)
+        self.assertEqual(first["holding"]["delivery"], "unconfirmed")
+        self.assertNotIn("delivery", subsequent["holding"])
+        self.assertEqual(first["holding"]["payload_sha256"], subsequent["holding"]["payload_sha256"])
+        self.assertEqual(first["morning"], subsequent["morning"])
 
     def test_previous_jpx_publication_can_stage_exact_08_slot_in_advance_and_verify_at_08(self):
         path = self._run("2026-11-24")

@@ -2,9 +2,12 @@
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sqlite3
+import sys
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import Mock, patch
 
+from weak_early_beta.new_a import owner_notice_host
 from weak_early_beta.new_a.continuing_acceptance import target
 from weak_early_beta.new_a.continuing_transition import RUNTIME_RELEASE_SCHEMA
 from weak_early_beta.new_a.files import atomic_write, digest, encode, private_root
@@ -102,6 +105,32 @@ class OwnerNoticeHostTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "ordinary approved Worker"):
             self.host.read_release()
         self.assertEqual(self.observations, 0)
+
+    def test_immediate_dispatch_requires_the_scheduled_release(self):
+        config = self.repo / ".cache/weak_early_beta/daily-runner.config.json"
+        atomic_write(config, {"repoPath": str(self.repo), "nodePath": sys.executable,
+                              "runtimeDir": str(config.parent / "daily_runtime")})
+        worker = self.repo / "weak-early-beta-gate/wrangler.jsonc"
+        document = owner_notice_host.read(worker)
+        d1, lifecycle, producer = Mock(), Mock(), Mock()
+        for (mode, enabled, legacy, dispatcher) in (
+            ("new_a_owner_registration", "false", "false", None),
+            ("new_a_owner_registration", "true", "false", None),
+            ("new_a_owner_scheduled", "false", "false", None),
+            ("new_a_owner_scheduled", "true", "true", None),
+            ("new_a_owner_scheduled", "true", "false", owner_notice_host._dispatch_holding),
+        ):
+            with self.subTest(mode=mode, enabled=enabled, legacy=legacy):
+                document["vars"] = {"CLOUD_PUSH_MODE": mode, "CLOUD_NEW_A_OWNER_PUSH_ENABLED": enabled,
+                                    "CLOUD_PUSH_SCHEDULER_ENABLED": legacy, "CLOUD_VAPID_PUBLIC_KEY": "fixture",
+                                    "CLOUD_PUSH_MEMBERSHIP_POLICY": "whop_managed_discord_role"}
+                atomic_write(worker, document)
+                with patch.multiple(owner_notice_host,
+                                    __file__=str(self.repo / "weak_early_beta/new_a/owner_notice_host.py"),
+                                    _terminal_result=Mock(), WranglerD1=d1, LifecycleNoticeInputs=lifecycle,
+                                    OwnerNoticeProducer=producer):
+                    owner_notice_host.after_publication(self.repo, self.repo / "result.json")
+                    self.assertIs(producer.call_args.kwargs["dispatch_holding"], dispatcher)
 
     def test_d1_read_respects_opt_in_expiry_and_current_key_without_reading_endpoint(self):
         conn = sqlite3.connect(":memory:")

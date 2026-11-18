@@ -189,7 +189,7 @@ export async function dispatchNewAOwnerPush(env: Environment, notice: Notice,
     if (claim.meta.changes !== 1) return outcome("suppressed", "existing_notice_receipt");
     const morning = notice.kind === MORNING;
     const payload = JSON.stringify({ version: 1, kind: morning ? "reminder" : "new_detection", tag: key,
-      body: morning ? `本日の評価予定は${notice.event_count}件です。価格はまだ確定していません。` :
+      body: morning ? `今日は、設定した確定日です。対象は${notice.event_count}件です。その日の価格はまだ確定していません。` :
         `監視から仮想保有に移行した銘柄は${notice.event_count}件です。保存した条件による試算です。` });
     let finalHeld = false;
     const guardedTransport: typeof fetch = async (input, init) => {

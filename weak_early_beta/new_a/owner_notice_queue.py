@@ -97,7 +97,7 @@ def _compact_notice(notice, kind):
 
 
 def stage_notice_queue(db, repo, run_path, plan, *, kind, owner, read_source, read_release,
-                       read_recipient, now=_clock, scheduled_at=None, advance=False):
+                       read_recipient, now=_clock, scheduled_at=None, advance=False, holding_trigger=None):
     """Prepare by CAS, retain existing rows, and verify the exact staged payload."""
     repo = Path(repo).resolve(strict=True)
     target, notices = _validate_plan(plan, kind)
@@ -132,6 +132,12 @@ def stage_notice_queue(db, repo, run_path, plan, *, kind, owner, read_source, re
         "recipient_binding_sha256": recipient, "model_basis": plan["model_basis"],
         "basis": basis, "publication": publication, "notices": [_compact_notice(notice, kind) for notice in notices],
     }
+    if holding_trigger is not None:
+        _require(kind == HOLDING and _hash(holding_trigger), "invalid holding dispatch token")
+        value["holding_trigger"] = {
+            "sha256": sha256(holding_trigger.encode("ascii")).hexdigest(),
+            "expires_at_ms": int(now().timestamp() * 1000) + 120_000,
+        }
     raw = encode(value)
     _require(len(raw.encode("utf-8")) <= MAX_PAYLOAD_BYTES, "notice payload exceeds the Worker input budget")
     payload_sha = sha256(raw.encode("utf-8")).hexdigest()
@@ -154,7 +160,23 @@ def stage_notice_queue(db, repo, run_path, plan, *, kind, owner, read_source, re
           AND p.revision=? AND d.manifest_sha256=? AND d.source_version=? AND f.revision=?
     """, ("cloud_" + owner, target, kind, basis["dataset_id"], basis["revision"],
           basis["manifest_sha256"], basis["source_version"], basis["preferences_revision"]))
-    _require(rows == [{"payload_json": raw, "payload_sha256": payload_sha}],
-             "notice staging conflict, source race or incomplete readback")
-    return {"status": "staged", "kind": kind, "target_date": target,
-            "staged": len(notices), "payload_sha256": payload_sha}
+    exact = rows == [{"payload_json": raw, "payload_sha256": payload_sha}]
+    if not exact and holding_trigger is not None and len(rows) == 1:
+        # A later attempt may recover the same queue without receiving the
+        # original one-time dispatch token. Leave that row and its receipt intact.
+        previous_raw = rows[0]["payload_json"]
+        previous_sha = rows[0]["payload_sha256"]
+        _require(sha256(previous_raw.encode("utf-8")).hexdigest() == previous_sha,
+                 "notice staging digest mismatch")
+        previous = json.loads(previous_raw)
+        previous.pop("holding_trigger", None)
+        value.pop("holding_trigger")
+        _require(encode(previous) == encode(value), "notice staging conflict or source race")
+        payload_sha = previous_sha
+    else:
+        _require(exact, "notice staging conflict, source race or incomplete readback")
+    result = {"status": "staged", "kind": kind, "target_date": target,
+              "staged": len(notices), "payload_sha256": payload_sha}
+    if holding_trigger is not None:
+        result["ready_to_dispatch_holding"] = exact
+    return result

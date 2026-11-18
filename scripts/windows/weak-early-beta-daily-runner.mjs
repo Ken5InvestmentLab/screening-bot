@@ -834,6 +834,9 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
               ...(slot.status === 'staged' ? { payloadSha256: slot.payload_sha256 } : {}) };
           };
           const holding = summarize(staged.holding, 'WATCH_TO_SIMULATED_HOLDING');
+          if (['accepted', 'unconfirmed'].includes(staged.holding.delivery) && holding.status === 'staged') {
+            holding.providerReceipt = staged.holding.delivery;
+          }
           const morning = summarize(staged.morning, 'EVALUATION_DAY_MORNING');
           if (staged.source_date !== today || holding.targetDate !== today || morning.targetDate <= today ||
               !stillOwnsLock() || terminalHash() !== receipt.resultSha256) throw new Error('Owner notice staging run identity changed');

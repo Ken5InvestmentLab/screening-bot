@@ -9,7 +9,7 @@ import { cloudReportRole } from "./cloud-role-authority";
 import { operationalReadback } from "./operational-readback";
 import { operationalBuild } from "./operational-build.generated";
 import { observeOwnerResponse } from "./owner-response-observation";
-import { NEW_A_HOLDING_CRON, NEW_A_MORNING_CRON, runNewAOwnerNoticeQueue } from "./new-a-owner-notice-queue";
+import { dispatchStagedHoldingNotice, HOLDING_NOTICE_DISPATCH_PATH, NEW_A_HOLDING_CRON, NEW_A_MORNING_CRON, runNewAOwnerNoticeQueue } from "./new-a-owner-notice-queue";
 export { CloudRoleAuthority } from "./cloud-role-authority";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
@@ -50,9 +50,10 @@ export default {
     console.log(JSON.stringify({ operation: "cloud_personal_schedule", ...result }));
   },
   async fetch(request: SharedRequest, env: CloudEnv): Promise<Response> {
+    const pathname = new URL(request.url).pathname;
+    if (pathname === HOLDING_NOTICE_DISPATCH_PATH) return dispatchStagedHoldingNotice(request, env, operationalBuild);
     const denied = await ownerOnlyGate(request, env);
     if (denied) return denied;
-    const pathname = new URL(request.url).pathname;
     if (pathname === '/healthz' && new URL(request.url).searchParams.has('new_a_probe')) return operationalReadback(request, env, operationalBuild);
     // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.
     // Preserve existing push-only script updates after the unchanged owner gate.

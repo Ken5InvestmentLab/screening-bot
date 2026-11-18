@@ -44,6 +44,10 @@ CATALOG_SHA256 = hashlib.sha256(
 FIELDS = ("open", "high", "low", "close", "volume")
 SESSION = pd.Timestamp(CATALOG["session"])
 FIRST_BASIS = pd.Timestamp(CATALOG["seedCurrentBasis"])
+# Observed vendor bytes, not an official quote or permission to repair it.
+# The Nov 18 retained-source readback proved this exact bar was quarantined.
+INVALID_SESSION = pd.Timestamp("2026-11-18")
+INVALID_OHLCV = (78., 107., 73., float.fromhex("0x1.b800000000001p+6"), 12506100.)
 
 
 def _reject(reason: str) -> None:
@@ -149,6 +153,43 @@ def _number(value: object) -> bool:
 
 def _equals(values, expected: Real) -> bool:
     return all(_number(value) and value == expected for value in values)
+
+
+def _retained_invalid_bar(group, current_basis: pd.Timestamp, *, previous: bool) -> bool:
+    """Allow only the known unusable bar to reach ordinary OHLC quarantine.
+
+    This is a history exception for later snapshots, never a same-day replay
+    authorization. Every raw value and the provider flag remain untouched.
+    """
+    from .corporate_actions import normalize_daily
+
+    if current_basis <= INVALID_SESSION or len(group) != 1:
+        return False
+    row = group.iloc[0]
+    # Existing CSV loaders decode the persisted close to exactly 110.0.
+    # Admit that representation only in the hash-bound previous quality row;
+    # fresh vendor input must still retain the original IEEE-754 endpoint.
+    expected_values = list(INVALID_OHLCV)
+    if previous and _equals([row.close], 110.):
+        expected_values[FIELDS.index("close")] = 110.
+    if (
+        row.date != INVALID_SESSION
+        or str(row.provider_repaired).lower() != "true"
+        or any(not _equals([row[field]], value) for field, value in zip(FIELDS, expected_values))
+    ):
+        return False
+    if previous and (
+        str(row.source_usable).lower() != "false" or row.source_issue != "inconsistent_ohlc"
+        or any(not _equals([row[f"actual_{field}"]], value) for field, value in zip(FIELDS, expected_values))
+    ):
+        return False
+    # Exercise the unchanged quality contract on an isolated raw row. Future
+    # normalizer changes must not silently make this flagged quote usable.
+    checked = normalize_daily(
+        group[["symbol", "date", *FIELDS, "split_ratio", "provider_repaired", "off_session_actions"]],
+        basis_asof=current_basis,
+    )
+    return not bool(checked.source_usable.item()) and checked.source_issue.item() == "inconsistent_ohlc"
 
 
 def _fingerprint(values) -> str:
@@ -316,11 +357,14 @@ def restore_reviewed_provider_values(
         _reject("previous reviewed source is not usable")
     if not reviewed_old.source_issue.fillna("").eq("").all():
         _reject("previous reviewed source issue is not empty")
-    for group in (old, now):
+    for is_previous, group in ((True, old), (False, now)):
+        flagged = ~group.provider_repaired.astype(str).str.lower().eq("false")
         if (
             not _equals(group.split_ratio, 0)
-            or not group.provider_repaired.astype(str).str.lower().eq("false").all()
             or not group.off_session_actions.fillna("").eq("").all()
+            or (flagged.any() and not _retained_invalid_bar(
+                group.loc[flagged], current_basis, previous=is_previous,
+            ))
         ):
             _reject("repair flag or action journal differs")
     for group in (reviewed_old, reviewed_now):

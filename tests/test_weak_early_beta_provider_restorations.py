@@ -449,6 +449,126 @@ class RestorationTests(NoNetwork):
                     write.assert_not_called()
 
 
+class HistoricalInvalidBarTests(NoNetwork):
+    @staticmethod
+    def histories(*, carried=False):
+        # Synthetic surrounding history; the invalid Nov 18 row is copied
+        # exactly from the retained vendor/source-quality readback, including
+        # its close's low bit. No official Nov 18 quote is asserted here.
+        dates = pd.bdate_range("2026-06-01", "2026-11-19")
+        raw = pd.concat([pd.DataFrame({
+            "symbol": symbol, "date": dates, "open": 100., "high": 103.,
+            "low": 98., "close": 101., "volume": 1000000.,
+            "split_ratio": 0., "provider_repaired": False, "off_session_actions": "",
+        }) for symbol in ("3624", "9999")], ignore_index=True)
+        reviewed_key = raw.symbol.eq("3624") & raw.date.eq(reviewed.SESSION)
+        raw.loc[reviewed_key, list(reviewed.FIELDS)] = reviewed.CATALOG["previousOHLCV"]
+        invalid_key = raw.symbol.eq("3624") & raw.date.eq(pd.Timestamp("2026-11-18"))
+        raw.loc[invalid_key, list(reviewed.FIELDS)] = [
+            78., 107., 73., float.fromhex("0x1.b800000000001p+6"), 12506100.,
+        ]
+        raw.loc[invalid_key, "provider_repaired"] = True
+        basis = "2026-11-18" if carried else "2026-11-17"
+        old = normalize_daily(raw.loc[raw.date.le(basis)], basis_asof=basis)
+        previous, _ = persist(old, [reviewed._audit("a" * 64, "2026-11-16", basis, 33)])
+        raw.loc[reviewed_key, "high"] = 33.
+        return previous, raw
+
+    def test_next_day_first_and_carried_quote_remain_quarantined_without_raw_edits(self):
+        from weak_early_beta.new_a.features import compute_features
+
+        for carried in (False, True):
+            with self.subTest(carried=carried):
+                previous, raw = self.histories(carried=carried)
+                original_old, original_raw = copy.deepcopy(previous), copy.deepcopy(raw)
+                if carried:
+                    saved = previous.loc[previous.symbol.eq("3624") & previous.date.eq("2026-11-18")].iloc[0]
+                    self.assertEqual(float(saved.close).hex(), "0x1.b800000000000p+6")
+                result, audits = restore(previous, raw, basis="2026-11-19")
+                expected = raw.copy()
+                key = expected.symbol.eq("3624") & expected.date.eq(reviewed.SESSION)
+                expected.loc[key, "high"] = 34.
+                pd.testing.assert_frame_equal(result, expected)
+                self.assertEqual(int(result.ne(raw).to_numpy().sum()), 1)
+                normalized = normalize_daily(result, basis_asof="2026-11-19")
+                receipt = validate_source_revision(previous, normalized)
+                self.assertEqual(receipt["acceptedRepairColumnValues"], 0)
+                self.assertEqual(len(audits), 1)
+                bad = normalized.loc[normalized.symbol.eq("3624") & normalized.date.eq("2026-11-18")].iloc[0]
+                self.assertEqual(float(bad.close).hex(), "0x1.b800000000001p+6")
+                self.assertTrue(bad.provider_repaired)
+                self.assertFalse(bad.source_usable)
+                self.assertEqual(bad.source_issue, "inconsistent_ohlc")
+                self.assertEqual(normalized.duplicated(["symbol", "date"]).sum(), 0)
+                features = {symbol: compute_features(group) for symbol, group in normalized.groupby("symbol")}
+                self.assertFalse(features["3624"].loc["2026-11-19", "eligible_common"])
+                self.assertFalse(features["3624"].loc["2026-11-19", "candidate"])
+                self.assertTrue(features["9999"].loc["2026-11-19", "eligible_common"])
+                baseline = normalize_daily(raw.loc[raw.symbol.eq("9999")], basis_asof="2026-11-19")
+                pd.testing.assert_frame_equal(features["9999"], compute_features(baseline))
+                for frame, original in ((previous, original_old), (raw, original_raw)):
+                    pd.testing.assert_frame_equal(frame, original)
+                    self.assertEqual(frame.attrs, original.attrs)
+
+    def test_exact_endpoints_flags_actions_and_previous_quality_are_required(self):
+        mutations = [
+            ("close", 110.00000000000003), ("open", 78.000000001), ("high", 110.00000000000001),
+            ("low", 72.), ("volume", 12506101.), ("date", pd.Timestamp("2026-11-17")),
+            ("provider_repaired", "unknown"), ("split_ratio", 2.),
+            ("off_session_actions", "[]"),
+        ]
+        for endpoint in (0, 1):
+            cases = mutations + ([("source_usable", True), ("source_issue", "other"),
+                                    ("actual_close", 110.00000000000001)] if endpoint == 0 else [("close", 110.)])
+            for field, value in cases:
+                previous, raw = self.histories(carried=True)
+                frame = (previous, raw)[endpoint]
+                key = frame.symbol.eq("3624") & frame.date.eq("2026-11-18")
+                if isinstance(value, str):
+                    frame[field] = frame[field].astype(object)
+                frame.loc[key, field] = value
+                with self.subTest(endpoint=endpoint, field=field), self.assertRaises(CorporateActionError):
+                    restore(previous, raw, basis="2026-11-19")
+        previous, raw = self.histories()
+        # Another flagged, otherwise valid row is still unreviewed.
+        raw.loc[raw.symbol.eq("3624") & raw.date.eq("2026-11-19"), "provider_repaired"] = True
+        with self.assertRaises(CorporateActionError):
+            restore(previous, raw, basis="2026-11-19")
+
+    def test_same_day_duplicate_and_lost_lineage_do_not_gain_permission(self):
+        previous, raw = self.histories()
+        with self.assertRaises(CorporateActionError):
+            restore(previous, raw.loc[raw.date.le("2026-11-18")], basis="2026-11-18")
+        for endpoint in (0, 1):
+            frames = list(self.histories(carried=True))
+            frame = frames[endpoint]
+            duplicate = frame.loc[frame.symbol.eq("3624") & frame.date.eq("2026-11-18")]
+            frames[endpoint] = pd.concat([frame, duplicate], ignore_index=True)
+            frames[endpoint].attrs = copy.deepcopy(frame.attrs)
+            with self.subTest(endpoint=endpoint), self.assertRaises(CorporateActionError):
+                restore(*frames, basis="2026-11-19")
+        previous, raw = self.histories()
+        previous.attrs[reviewed.PRIOR_AUDIT_ATTR]["dailySha256"] = "0" * 64
+        with self.assertRaises(CorporateActionError):
+            restore(previous, raw, basis="2026-11-19")
+
+    def test_fresh_fetch_uses_normal_quality_and_revision_pipeline(self):
+        previous, raw = self.histories()
+        provider = raw.loc[raw.symbol.eq("3624")].set_index("date")[[*OHLC, "volume", "split_ratio", "provider_repaired"]].rename(columns={
+            **{field: field.title() for field in (*OHLC, "volume")},
+            "split_ratio": "Stock Splits", "provider_repaired": "Repaired?",
+        })
+        with patch("yfinance.download", return_value=provider), \
+             patch("weak_early_beta.reviewed_repair_releases.reviewed_repair_release_keys", return_value=(set(), [])):
+            result = fetch_daily(pd.DataFrame({"ticker": ["3624.T"]}), "5y", previous=previous)
+        bad = result.loc[result.date.eq("2026-11-18")].iloc[0]
+        self.assertFalse(bad.source_usable)
+        self.assertTrue(bad.provider_repaired)
+        self.assertEqual(bad.source_issue, "inconsistent_ohlc")
+        audit = result.attrs["source_revision_receipt"]["reviewedProviderRestorations"]
+        self.assertEqual(audit, [reviewed._audit(previous.attrs["source_sha256"], "2026-11-17", "2026-11-19", 33)])
+
+
 class ArchiveVerificationTests(NoNetwork):
     def with_inventory_root(self, archive, catalog):
         inventory = sorted([

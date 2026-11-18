@@ -256,7 +256,10 @@ body[data-page="home"] #new-a-trial-preset-field{display:block}
 .cloud-steps .step-arrow{color:var(--cyan);text-align:center;font-weight:bold}
 body[data-page="settings"] main{max-width:900px}
 body[data-page="settings"] .cloud-settings .filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+body[data-page="settings"] .settings-actions{flex-wrap:wrap}
+body[data-page="settings"] #cloud-settings-status{flex-basis:100%;margin:0}
 body[data-page="settings"] #cloud-settings-status[data-state="error"]{color:var(--warn)}
+body[data-page="settings"] .topbar a[aria-disabled="true"]{opacity:.55;cursor:wait}
 @media(max-width:760px){
  .topbar .nav{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:9px 12px}
  .topbar .brand{grid-column:1;grid-row:1}

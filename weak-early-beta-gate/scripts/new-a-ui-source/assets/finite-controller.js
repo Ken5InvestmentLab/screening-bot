@@ -73,6 +73,7 @@
    emit();return false;
   }
   async function load(){
+   if(s.phase==='saving')return false;
    const token=++s.request;
    s.phase='loading';s.message='設定を読み込んでいます。';emit();
    try{
@@ -95,10 +96,16 @@
     emit();return true;
    }catch(e){return token===s.request?failed(e):false;}
   }
-  function edit(p){s.draft=validate(p);s.edit++;s.dirty=true;s.message='未保存の変更';emit();}
-  function reset(){s.draft=copy(BASE);s.edit++;s.dirty=true;s.message='初期値（未保存）';emit();}
+  function edit(p){
+   if(s.phase==='saving')return;
+   s.draft=validate(p);s.edit++;s.dirty=true;s.message='未保存の変更';emit();
+  }
+  function reset(){
+   if(s.phase==='saving')return;
+   s.draft=copy(BASE);s.edit++;s.dirty=true;s.message='初期値（未保存）';emit();
+  }
   function cancel(){
-   if(!committed||s.phase==='denied')return;
+   if(!committed||s.phase==='denied'||s.phase==='saving')return;
    s.draft=copy(committed.preferences);s.accepted=committed.result;s.trialPreset=committed.preset;s.viewPreferences=committed.view;
    s.edit++;s.dirty=false;s.phase='ready';s.message='';emit();
   }
@@ -107,7 +114,7 @@
    const p=validate(save?s.draft:s.applied),view=validateView(viewPreferences),preset=view?view.trial_preset:s.trialPreset;
    if(save&&view&&!validSaveBinding(saveBinding))return failed(Error('設定を保存できませんでした。再読み込みして確認してください。'));
    const token=++s.request,id=(save?'save-':'preview-')+token;
-   s.phase=save?'saving':'calculating';s.message=save?'設定を保存しています。':'試算しています。';emit();
+   s.phase=save?'saving':'calculating';s.message=save?'設定を保存しています。完了までお待ちください。':'試算しています。';emit();
    try{
     const displayOnly=save&&view&&committed&&preset===committed.preset&&canonical(p)===canonical(committed.preferences);
     const d=displayOnly?committed.result:await simulation(p,id,preset);

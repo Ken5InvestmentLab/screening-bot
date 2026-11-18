@@ -134,7 +134,8 @@ async function replayPublished(active, owner, readPart) {
 
   // The site displays the model result for holdings, separately from analytics
   // trial presets. Reuse that same model rather than recreating virtual fills.
-  return createDatasetRuntime(input, reader).simulate(owner.preferences, { exitPolicy: owner.exitPolicy });
+  return createDatasetRuntime(input, reader).currentPortfolio(owner.preferences, manifest.as_of,
+    { exitPolicy: owner.exitPolicy });
 }
 
 function jst(ms) {
@@ -202,12 +203,12 @@ async function planEvaluationMorning({ cron, scheduledAt, now, bankBusinessDate,
   if (!next || next < target) return empty('previous_market_session_not_published');
   if (next > target) return empty('market_non_business_day');
 
-  const result = await replayPublished(active, owner, readPart);
-  if (result.resolved !== true || result.period[1] !== active.manifest.as_of) return empty('virtual_model_not_current');
+  const portfolio = await replayPublished(active, owner, readPart);
+  if (!portfolio) return empty('virtual_model_not_current');
 
   const held = heldSymbols(active);
   const notices = [];
-  for (const [symbol, position] of Object.entries(result.open_positions)) {
+  for (const [symbol, position] of Object.entries(portfolio.result.open_positions)) {
     if (Object.hasOwn(held, symbol)) continue;
     const entry = calendar.indexOf(position.entry_date);
     requireValid(entry >= 0 && entry <= cutoff && isDate(position.candidate_date) &&
@@ -236,6 +237,7 @@ async function planEvaluationMorning({ cron, scheduledAt, now, bankBusinessDate,
   await checkSourcesUnchanged({ readActive, readOwnerPreferences }, active, owner);
   return {
     status: 'planned', target_date: target,
+    model_basis: portfolio.basis,
     basis: { ...sourceBasis(active, owner), calendar_sha256: calendarReceipt.sha256 },
     notices: notices.sort((a, b) => a.symbol.localeCompare(b.symbol)),
   };
@@ -257,8 +259,9 @@ async function planHoldingTransitions({ now, targetDate, bankBusinessDate, readA
   if (active.manifest.as_of !== targetDate || active.manifest.live !== true)
     return empty('current_live_publication_required');
   const owner = savedOwner(await readOwnerPreferences());
-  const result = await replayPublished(active, owner, readPart);
-  if (result.resolved !== true || result.period[1] !== targetDate) return empty('virtual_model_not_current');
+  const portfolio = await replayPublished(active, owner, readPart);
+  if (!portfolio) return empty('virtual_model_not_current');
+  const { result } = portfolio;
 
   const held = heldSymbols(active);
   const days = active.manifest.input_header.calendar;
@@ -288,6 +291,7 @@ async function planHoldingTransitions({ now, targetDate, bankBusinessDate, readA
   await checkSourcesUnchanged({ readActive, readOwnerPreferences }, active, owner);
   return {
     status: 'planned', target_date: targetDate,
+    model_basis: portfolio.basis,
     basis: sourceBasis(active, owner),
     notices: notices.sort((a, b) => a.symbol.localeCompare(b.symbol)),
   };

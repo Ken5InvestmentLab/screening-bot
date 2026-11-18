@@ -9,17 +9,29 @@ const fullCalendar = ['2026-11-16', '2026-11-17', '2026-11-18', '2026-11-19',
   '2026-11-20', '2026-11-24', '2026-11-25', '2026-11-26'];
 const quote = [90, 101, 89, 100, 2000, 100, 2000, 1, true];
 
-function fixture({ asOf = '2026-11-24', held = false, lowVolume = false, saved = true, live = true } = {}) {
+function fixture({ asOf = '2026-11-24', held = false, lowVolume = false, saved = true, live = true,
+  pastGap = false, currentGap = false } = {}) {
   const symbol = '123A';
-  const dates = fullCalendar.filter(date => date <= asOf);
-  const scope = { symbol, candidate_date: dates[0], episode_id: 1, priority_score: 1 };
+  const previousYear = pastGap ? ['2025-11-17', '2025-11-18', '2025-11-19'] : [];
+  const calendar = [...previousYear, ...fullCalendar];
+  const current = fullCalendar.filter(date => date <= asOf);
+  const dates = calendar.filter(date => date <= asOf);
+  const scope = { symbol, candidate_date: current[0], episode_id: 1, priority_score: 1 };
   const parts = {
     'episodes-000.json': [scope],
-    'watches-000.json': [{ ...scope, watch_status: 'TRIGGERED', trigger_date: dates[1] }],
-    'intents-000.json': [{ ...scope, trigger_date: dates[1] }],
-    'quotes-000.json': dates.map((date, i) =>
-      [symbol, date, lowVolume && i === 2 ? [90, 101, 89, 100, 0, 100, 0, 1, true] : quote]),
+    'watches-000.json': [{ ...scope, watch_status: 'TRIGGERED', trigger_date: current[1] }],
+    'intents-000.json': [{ ...scope, trigger_date: current[1] }],
+    'quotes-000.json': current.map((date, i) =>
+      [symbol, date, currentGap && i === 3 ? null
+        : lowVolume && i === 2 ? [90, 101, 89, 100, 0, 100, 0, 1, true] : quote]),
   };
+  if (pastGap) {
+    const previous = { ...scope, symbol: '456B', candidate_date: previousYear[0] };
+    parts['episodes-000.json'].push(previous);
+    parts['watches-000.json'].push({ ...previous, watch_status: 'TRIGGERED', trigger_date: previousYear[0] });
+    parts['intents-000.json'].push({ ...previous, trigger_date: previousYear[0] });
+    parts['quotes-000.json'].push(...dates.map((date, index) => [previous.symbol, date, index === 2 ? null : quote]));
+  }
   const part = name => {
     const raw = JSON.stringify(parts[name]);
     return { name, sha256: hash(raw), bytes: Buffer.byteLength(raw), rows: parts[name].length };
@@ -32,7 +44,7 @@ function fixture({ asOf = '2026-11-24', held = false, lowVolume = false, saved =
       episodes: [part('episodes-000.json')], intents: [part('intents-000.json')],
       watches: [part('watches-000.json')], presentation: [], current_daily: [],
     },
-    quotes: [part('quotes-000.json')], expected_quote_keys: dates.length,
+    quotes: [part('quotes-000.json')], expected_quote_keys: parts['quotes-000.json'].length,
     quote_fields: ['open', 'high', 'low', 'close', 'volume', 'actual_close', 'actual_volume',
       'split_factor', 'source_usable'],
     input_header: {
@@ -65,7 +77,7 @@ function fixture({ asOf = '2026-11-24', held = false, lowVolume = false, saved =
     // Analytics presets do not determine holdings in the normal dashboard.
     view_preferences: { trial_preset: 'profit' },
   };
-  const raw = JSON.stringify(fullCalendar);
+  const raw = JSON.stringify(calendar);
   return {
     active, settings, args: {
       cron: MORNING_CRON, scheduledAt: Date.parse('2026-11-24T23:00:00Z'),
@@ -84,6 +96,7 @@ test('08 JST selects the saved virtual holding with the existing D5-open policy,
   const one = await planEvaluationMorning(args);
   assert.equal(one.status, 'planned');
   assert.equal(one.target_date, '2026-11-25');
+  assert.equal(one.model_basis, 'SAVED_SCOPE');
   assert.equal(one.basis.preferences_revision, 4);
   assert.equal(one.notices.length, 1);
   const row = one.notices[0];
@@ -170,12 +183,33 @@ test('watch to holding requires same-day normal-site simulated fill and a prior 
   const args = holdingFixture();
   const result = await planHoldingTransitions(args);
   assert.equal(result.status, 'planned');
+  assert.equal(result.model_basis, 'SAVED_SCOPE');
   assert.equal(result.notices.length, 1);
   assert.equal(result.notices[0].kind, 'WATCH_TO_SIMULATED_HOLDING');
   assert.equal(result.notices[0].execution_status, 'SIMULATED_NOT_ACTUAL_TRADES');
   assert.equal(result.notices[0].simulated_entry_date, '2026-11-18');
   assert.match(result.notices[0].title, /仮想保有/);
   assert.deepEqual(await planHoldingTransitions(args), result);
+});
+
+test('both notice types use the same independently complete latest year as the dashboard', async () => {
+  const morning = await planEvaluationMorning(fixture({ pastGap: true }).args);
+  const holding = await planHoldingTransitions(holdingFixture({ pastGap: true }));
+  for (const plan of [morning, holding]) {
+    assert.equal(plan.status, 'planned');
+    assert.equal(plan.model_basis, 'LATEST_YEAR_STANDALONE');
+    assert.deepEqual(plan.notices.map(notice => notice.symbol), ['123A']);
+  }
+});
+
+test('unresolved current year or explicit historical scope holds the notice', async () => {
+  const historical = fixture({ pastGap: true });
+  historical.settings.preferences.year_scope = '2025';
+  for (const args of [historical.args, fixture({ pastGap: true, currentGap: true }).args]) {
+    const plan = await planEvaluationMorning(args);
+    assert.equal(plan.status, 'virtual_model_not_current');
+    assert.deepEqual(plan.notices, []);
+  }
 });
 
 test('unfilled, held, delayed or previous-day data cannot create a holding notice', async () => {

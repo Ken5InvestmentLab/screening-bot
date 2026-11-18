@@ -41,8 +41,8 @@ function simulation(message){
    resolved:recent.resolved,first_unresolved_date:recent.unresolved[0]?.date??null};
  }
  if(message.dashboard_prices===true&&!trialPreset&&!result.resolved){
-  const current=runtime.simulateLatestYear(preferences,options);
-  if(current?.resolved&&current.period[1]===dashboardCloses?.date)response.dashboard_year=current;
+  const current=runtime.currentPortfolio(preferences,dashboardCloses?.date,{exitPolicy:exit_policy,fullResult:result});
+  if(current?.basis==='LATEST_YEAR_STANDALONE')response.dashboard_year=current.result;
  }
  return response;
 }

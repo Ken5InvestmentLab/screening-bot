@@ -41,6 +41,17 @@ function createDatasetRuntime(input,quotes){
   // settlement from the interrupted full-period result enters this calculation.
   return calculate(preferences,options,start);
  }
- return {source_version:input.source_version,input,quotes,simulate,simulateLatestYear};
+ function currentPortfolio(preferences,asOf,{exitPolicy=null,fullResult=null}={}){
+  if(typeof asOf!=='string'||asOf!==input.calendar.at(-1)||asOf!==input.limits?.completeThrough)return null;
+  const options={exitPolicy};
+  const full=fullResult??simulate(preferences,options);
+  if(full.period?.[1]!==asOf)return null;
+  if(full.resolved===true)return {result:full,basis:'SAVED_SCOPE'};
+  if(full.resolved!==false||preferences.year_scope!=='all')return null;
+  const current=simulateLatestYear(preferences,options);
+  return current?.resolved===true&&current.period[1]===asOf
+   ?{result:current,basis:'LATEST_YEAR_STANDALONE'}:null;
+ }
+ return {source_version:input.source_version,input,quotes,simulate,simulateLatestYear,currentPortfolio};
 }
 module.exports={createDatasetRuntime};

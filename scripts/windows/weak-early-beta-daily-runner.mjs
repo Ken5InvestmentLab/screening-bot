@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
 import { checkpointJpxRefresh } from './weak-early-beta-jpx-checkout.mjs';
-import { networkFailureDetail, waitForNetworkCapacity } from './weak-early-beta-network-guard.mjs';
+import { networkFailureDetail, waitForNetworkCapacity, withWindowsDetectionTrust } from './weak-early-beta-network-guard.mjs';
 import { atomicJson, appendEvent, recoveryPlan, verifiedDetectionCache } from './weak-early-beta-run-journal.mjs';
 import { verifyPreflightReconciliation, consumePreflightReconciliation } from './preflight-reconciliation.mjs';
 import taskRoute from './new-a-task-route.cjs';
@@ -677,9 +677,14 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       saveProgress('detection', { acquisitionEvidence: result.acquisitionEvidence });
       const delayedFile=delayedExecuting?path.resolve(repo,delayedExecuting.path):null;
       const replayDirectory=delayedFile?path.join(path.dirname(delayedFile),'replay-acquisition'):null;
-      await requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(delayedPlan?['--as-of',today,'--retained-acquisition',replayDirectory,'--delayed-recovery',delayedFile]:nativeRecovery?['--as-of',today,'--retained-acquisition',nativeRecovery.directory]:prior?[]:['--refresh-live'])], {
-        cwd: repo, env: { ...env, PYTHONFAULTHANDLER: '1', CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
+      const runDetection = detectionEnv => requireOk(python, ['-m', 'weak_early_beta.cli', 'daily', '--strategy', 'new-a', ...(delayedPlan?['--as-of',today,'--retained-acquisition',replayDirectory,'--delayed-recovery',delayedFile]:nativeRecovery?['--as-of',today,'--retained-acquisition',nativeRecovery.directory]:prior?[]:['--refresh-live'])], {
+        cwd: repo, env: { ...detectionEnv, PYTHONFAULTHANDLER: '1', CLOUD_DAILY_ACQUISITION_DIR: acquisitionDirectory }, log: path.join(runDir, `detect-${attempt}`),
       });
+      if (!prior && !delayedPlan && process.platform === 'win32') {
+        await withWindowsDetectionTrust({ python, cwd: repo, env }, runDetection);
+      } else {
+        await runDetection(env);
+      }
       const receipt = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-run.json'));
       if (receipt.strategy !== 'A_BASE' || receipt.entry !== 'new-a-verified-daily-v1') throw new Error('unexpected New A daily receipt');
       if (receipt.latest_session === today && (receipt.dry_run === true || receipt.detection_executed !== true)) throw new Error('isolated or unexecuted receipt cannot complete a live New A day');

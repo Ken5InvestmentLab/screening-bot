@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import test from 'node:test';
 import { networkFailureDetail, parseDynamicPorts, summarizePortPressure, inspectWindowsNetwork,
-  waitForNetworkCapacity } from './weak-early-beta-network-guard.mjs';
+  waitForNetworkCapacity, withWindowsDetectionTrust } from './weak-early-beta-network-guard.mjs';
 
 const ranges = { ipv4: { start: 49152, count: 16384 }, ipv6: { start: 49152, count: 16384 } };
 const row = (port, remote = '1.2.3.4:443', owner = '123') => `  TCP  192.0.2.1:${port}  ${remote}  ESTABLISHED  ${owner}`;
@@ -11,10 +14,131 @@ test('network failure summaries keep actual category without copying log secrets
     failureType: 'windows_tcp_ports_exhausted', message: 'Windows TCP port resources exhausted (10048)',
   });
   assert.equal(networkFailureDetail('curl: (7) failed').failureType, 'network_connection_failed');
+  assert.deepEqual(networkFailureDetail('progress\nCorporateActionError: curl: (77) error setting certificate file: private path'), {
+    failureType: 'tls_ca_bundle_unavailable', message: 'Windows Yahoo TLS CA bundle could not be loaded',
+  });
+  assert.equal(networkFailureDetail('curl: (77) prior warning\nCorporateActionError: source quality failed'), null);
   assert.equal(networkFailureDetail('Yahoo did not return split actions'), null);
   assert.equal(networkFailureDetail('certificate verification failed'), null);
   assert.equal(networkFailureDetail('curl: (7) failed\nrequest recovered\nCorporateActionError: unexplained source revision'), null);
   assert.equal(networkFailureDetail('[WinError 10048] old failure\nValueError: schema is invalid\n'), null);
+});
+
+function trustFixture(t) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'cloud-ca-test-'));
+  t.after(() => {
+    for (const file of fs.readdirSync(root, { withFileTypes: true })) {
+      const localPath = path.join(root, file.name);
+      if (file.isDirectory()) fs.rmdirSync(localPath);
+      else fs.unlinkSync(localPath);
+    }
+    fs.rmdirSync(root);
+  });
+  const temp = path.join(root, 'Temp');
+  fs.mkdirSync(temp);
+  const bundle = (name, bytes) => {
+    const file = path.join(root, name);
+    fs.writeFileSync(file, bytes);
+    return file;
+  };
+  const defaultBundle = bundle('既定.pem', 'test default bytes\n');
+  const env = { LOCALAPPDATA: root };
+  const python = path.join(root, 'configured python.exe');
+  const probe = (selected = defaultBundle) => async (executable, args, options) => {
+    assert.equal(executable, python);
+    assert.equal(args[0], '-B');
+    assert.match(args[2], /curl_cffi\.curl import DEFAULT_CACERT/);
+    assert.equal(options.cwd, root);
+    assert.equal(options.env, env);
+    assert.ok(options.timeout <= 20_000);
+    return { stdout: JSON.stringify(selected) };
+  };
+  const options = { platform: 'win32', cwd: root, python, env };
+  return { root, temp, defaultBundle, env, bundle, probe, options };
+}
+
+test('the configured interpreter default is copied exactly for the live child and removed after it exits', async t => {
+  const f = trustFixture(t);
+  const priorGlobal = process.env.SSL_CERT_FILE;
+  let alias;
+  const result = await withWindowsDetectionTrust({ ...f.options, exec: f.probe() }, env => {
+    alias = env.SSL_CERT_FILE;
+    assert.match(alias, /^[\x20-\x7e]+$/);
+    assert.equal(path.dirname(path.dirname(alias)), fs.realpathSync.native(f.temp));
+    assert.deepEqual(fs.readFileSync(alias), fs.readFileSync(f.defaultBundle));
+    assert.equal(env.REQUESTS_CA_BUNDLE, undefined);
+    assert.equal(env.CURL_CA_BUNDLE, undefined);
+    assert.equal(f.env.SSL_CERT_FILE, undefined);
+    return 'ran';
+  });
+  assert.equal(result, 'ran');
+  assert.equal(fs.existsSync(alias), false);
+  assert.deepEqual(fs.readdirSync(f.temp), []);
+  assert.equal(process.env.SSL_CERT_FILE, priorGlobal);
+});
+
+test('explicit CA sources preserve differing precedence and bytes without replacing an ASCII override', async t => {
+  const f = trustFixture(t);
+  const curl = f.bundle('curl.pem', 'curl-specific bytes\r\n');
+  const requests = f.bundle('要求用.pem', 'requests-specific bytes\n');
+  Object.assign(f.env, { ssl_cert_file: f.defaultBundle, CURL_CA_BUNDLE: curl, REQUESTS_CA_BUNDLE: requests });
+  const original = { ...f.env };
+  await withWindowsDetectionTrust({ ...f.options, exec: f.probe() }, env => {
+    assert.deepEqual(fs.readFileSync(env.ssl_cert_file), fs.readFileSync(f.defaultBundle));
+    assert.deepEqual(fs.readFileSync(env.REQUESTS_CA_BUNDLE), fs.readFileSync(requests));
+    assert.notEqual(env.ssl_cert_file, env.REQUESTS_CA_BUNDLE);
+    assert.equal(env.CURL_CA_BUNDLE, curl);
+    assert.equal(env.SSL_CERT_FILE, undefined);
+  });
+  assert.deepEqual(f.env, original);
+  assert.deepEqual(fs.readdirSync(f.temp), []);
+});
+
+test('missing or conflicting explicit CA policies and an unusable alias root stop before the detection child', async t => {
+  const f = trustFixture(t);
+  const never = () => assert.fail('detection must not start');
+  const fail = { failureType: 'tls_ca_bundle_unavailable' };
+  f.env.SSL_CERT_FILE = path.join(f.root, 'missing.pem');
+  await assert.rejects(withWindowsDetectionTrust({ ...f.options, exec: never }, never), fail);
+  f.env.SSL_CERT_FILE = f.bundle('custom.pem', 'a different explicit CA');
+  await assert.rejects(withWindowsDetectionTrust({ ...f.options, exec: f.probe() }, never), fail);
+  delete f.env.SSL_CERT_FILE;
+  f.env.LOCALAPPDATA = path.join(f.root, '非ASCII-temp');
+  const nonAsciiTemp = path.join(f.env.LOCALAPPDATA, 'Temp');
+  fs.mkdirSync(nonAsciiTemp, { recursive: true });
+  try {
+    await assert.rejects(withWindowsDetectionTrust({ ...f.options, exec: f.probe() }, never), fail);
+    assert.deepEqual(fs.readdirSync(nonAsciiTemp), []);
+  } finally {
+    fs.rmdirSync(nonAsciiTemp);
+    fs.rmdirSync(f.env.LOCALAPPDATA);
+  }
+  assert.deepEqual(fs.readdirSync(f.temp), []);
+});
+
+test('child failure is preserved and temporary CA material is cleaned without retrying', async t => {
+  const f = trustFixture(t);
+  const childError = new Error('terminal TLS failure');
+  let calls = 0;
+  await assert.rejects(withWindowsDetectionTrust({ ...f.options, exec: f.probe() }, env => {
+    calls += 1;
+    assert.equal(fs.existsSync(env.SSL_CERT_FILE), true);
+    throw childError;
+  }), childError);
+  assert.equal(calls, 1);
+  assert.deepEqual(fs.readdirSync(f.temp), []);
+});
+
+test('an ASCII default or a non-Windows process leaves CA variables alone', async t => {
+  const f = trustFixture(t);
+  const asciiBundle = f.bundle('ascii.pem', 'test default bytes\n');
+  await withWindowsDetectionTrust({ ...f.options, exec: f.probe(asciiBundle) }, env => {
+    assert.deepEqual(env, f.env);
+  });
+  await withWindowsDetectionTrust({ ...f.options, platform: 'linux', exec: () => assert.fail('no probe') }, env => {
+    assert.equal(env, f.env);
+  });
+  assert.deepEqual(fs.readdirSync(f.temp), []);
 });
 
 test('localized dynamic port ranges are validated without assuming English labels', () => {

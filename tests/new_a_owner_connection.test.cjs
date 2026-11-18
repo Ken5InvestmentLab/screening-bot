@@ -58,11 +58,12 @@ test('normal final owner responses produce minimal provider audit events without
  const env={...f.env,CLOUD_VERSION_METADATA:observedVersion};
  const auth={headers:{cookie:'synthetic-cookie-value'}};
  const doc=await f.app.fetch(normalOwnerRequest(ownerDocument,OWNER,true,auth),env);
+ assert.equal(f.reads,1);
  const api=await f.app.fetch(normalOwnerRequest(ownerAccess,OWNER,true,auth),env);
  assert.equal(doc.status,200);assert.doesNotMatch(await doc.text(),/data-auth-recovery/);
  assert.equal(api.status,200);assert.deepEqual(await api.json(),{authorized:true,strategy:'A_BASE'});
  assert.equal(api.headers.get('cache-control'),'private, no-store, max-age=0');
- assert.equal(f.reads,0);
+ assert.equal(f.reads,1);
  assert.deepEqual(JSON.parse(JSON.stringify(ownerLogs(f))),[ownerDocument,ownerAccess].map(route=>({
   operation:'cloud_owner_response_observed',
   schema:'NEW_A_PROTECTED_OWNER_RESPONSE_V1',
@@ -161,6 +162,45 @@ const readSettings = async (f, id = OWNER, env = f.env) => {
  assert.equal(response.headers.get('vary'), 'Cookie');
  return response.json();
 };
+
+test('owner documents use the saved theme before loading application scripts', async t => {
+ const f = fixture();
+ t.after(f.close);
+ const member = 'cloud_'+sha('cloud-member:'+OWNER);
+ const routes = [ownerDocument, '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html'];
+ const systemScript = '<script src="/new-a-assets/initial-display.js"></script>';
+ for (const theme of ['light','system','dark']) {
+  const current = await readSettings(f);
+  const saved = await putSettings(f,current.preferences,current.revision,{
+   view_preferences:{...firstView,theme},save_binding:current.save_binding,
+  });
+  assert.equal(saved.status,200);
+  for (const route of routes) {
+   const before = f.reads;
+   const response = await f.app.fetch(request(route),f.env);
+   const html = await response.text();
+   assert.equal(response.status,200);
+   assert.equal(response.headers.get('cache-control'),'private, no-store, max-age=0');
+   assert.equal(response.headers.get('vary'),'Cookie');
+   assert.match(response.headers.get('content-security-policy'),/script-src 'self';/);
+   assert(html.startsWith(`<!doctype html><html lang="ja" data-theme="${theme}" data-initial-theme="${theme}"`));
+   assert(!html.includes(member));
+   assert.equal(f.reads,before+1);
+   if (theme==='system') assert(html.indexOf(systemScript)>=0&&html.indexOf(systemScript)<html.indexOf('<style>'));
+   else assert(!html.includes(systemScript));
+  }
+ }
+ const before = f.reads;
+ const head = await f.app.fetch(request(ownerDocument,OWNER,true,{method:'HEAD'}),f.env);
+ assert.equal(head.status,200);
+ assert.equal(await head.text(),'');
+ assert.equal(f.reads,before);
+ f.sql.prepare('UPDATE new_a_finite_trial_preferences SET preferences_json=? WHERE member_id=?')
+  .run(JSON.stringify({...firstView,theme:'invalid'}),'new-a-view:v1:'+member);
+ const fallback = await f.app.fetch(request(ownerDocument),f.env);
+ assert.equal(fallback.status,200);
+ assert.match(await fallback.text(),/^<!doctype html><html lang="ja" data-theme="dark" data-initial-theme="dark"/);
+});
 
 test('view and trial settings persist by account and trial-only clients keep the saved view', async t => {
  const f = fixture();

@@ -4,6 +4,8 @@ const patches = [
   ['if (settings && endpoint) {', 'if (settings && endpoint && !window.AFiniteUI) {'],
   ['const applyPreferences = async ({ persist = false } = {}) => {', 'const applyPreferences = async ({ persist = false } = {}) => {\n    if (window.AFiniteUI) return false;'],
   ["window.addEventListener?.('storage', async event => {", "window.addEventListener?.('storage', async event => {\n    if (window.AFiniteUI) return;"],
+  ['  let appliedDisplay = { theme: "dark", fontSize: defaultFontSize, pageSize: 20 };',
+    '  const initialTheme = window.AFiniteUI ? document.documentElement.dataset.initialTheme : null;\n  let appliedDisplay = { theme: ["light", "dark", "system"].includes(initialTheme) ? initialTheme : "dark", fontSize: defaultFontSize, pageSize: 20 };'],
   ['    const legacyTheme = localStorage.getItem(THEME_KEY);', '    if (window.AFiniteUI) throw Error("account_display_preference");\n    const legacyTheme = localStorage.getItem(THEME_KEY);'],
   ['  const filter = ({ resetLimit = false } = {}) => {', '  let lastHistorySort;\n  const filter = ({ resetLimit = false } = {}) => {'],
   ['    if (historySort) {', '    if (historySort && lastHistorySort !== historySort.value) {\n      lastHistorySort = historySort.value;'],

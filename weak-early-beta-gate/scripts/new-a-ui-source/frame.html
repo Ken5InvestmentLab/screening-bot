@@ -1,5 +1,5 @@
-<!doctype html><html lang="ja" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{{TITLE}} | 天底極致 Cloud 2.0</title><style>
+<!doctype html><html lang="ja" data-theme="{{INITIAL_THEME}}" data-initial-theme="{{INITIAL_THEME}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}} | 天底極致 Cloud 2.0</title>{{INITIAL_THEME_SCRIPT}}<style>
 #detection-table{width:100%;min-width:0;table-layout:fixed}#detection-table thead th:nth-child(1){width:34%}#detection-table thead th:nth-child(n+2){width:16.5%}
 
 #cloud-notification-settings label,.cloud-notification-settings label{display:block;margin:12px 0}
@@ -9,8 +9,8 @@
 .cloud-settings button{min-height:44px;padding:8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-solid);color:var(--ink)}
 @media(max-width:620px){.cloud-settings .filters .filter-field{grid-column:1/-1}}
 
-:root{--bg:#edf4ff;--panel:rgba(255,255,255,.9);--panel-solid:#fff;--ink:#14213d;--muted:#60708a;--line:#d4e1f3;--blue:#4169e1;--cyan:#149fba;--violet:#725fda;--good:#08744f;--warn:#a25b00;--shadow:0 18px 46px rgba(54,84,145,.12)}
-:root[data-theme="dark"]{--bg:#0c1424;--panel:rgba(21,32,51,.94);--panel-solid:#152033;--ink:#edf4ff;--muted:#a3b3ca;--line:#2b405e;--blue:#91adff;--cyan:#65d5e6;--violet:#ad9bff;--good:#65d6a7;--warn:#ffc56b;--shadow:0 18px 46px rgba(0,0,0,.28)}
+:root{color-scheme:light;--bg:#edf4ff;--panel:rgba(255,255,255,.9);--panel-solid:#fff;--ink:#14213d;--muted:#60708a;--line:#d4e1f3;--blue:#4169e1;--cyan:#149fba;--violet:#725fda;--good:#08744f;--warn:#a25b00;--shadow:0 18px 46px rgba(54,84,145,.12)}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0c1424;--panel:rgba(21,32,51,.94);--panel-solid:#152033;--ink:#edf4ff;--muted:#a3b3ca;--line:#2b405e;--blue:#91adff;--cyan:#65d5e6;--violet:#ad9bff;--good:#65d6a7;--warn:#ffc56b;--shadow:0 18px 46px rgba(0,0,0,.28)}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 12% -8%,color-mix(in srgb,var(--cyan) 18%,transparent),transparent 34%),radial-gradient(circle at 94% 5%,color-mix(in srgb,var(--violet) 16%,transparent),transparent 30%),var(--bg);color:var(--ink);font:15px/1.65 system-ui,-apple-system,"Noto Sans JP",sans-serif}a{color:var(--blue)}
 .topbar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--panel-solid) 86%,transparent);border-bottom:1px solid var(--line);backdrop-filter:blur(16px)}
 .nav{max-width:1440px;margin:auto;padding:10px 20px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}.brand{display:inline-flex;align-items:center;min-width:0;text-decoration:none}.brand-logo{display:block;width:min(340px,42vw);height:52px;object-fit:contain;object-position:left center}.brand-logo-dark{display:none}:root[data-theme="dark"] .brand-logo-light{display:none}:root[data-theme="dark"] .brand-logo-dark{display:block}.nav-links{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:2px;min-width:0}.nav-link{padding:7px 10px;border-radius:999px;text-decoration:none;font-weight:700;white-space:nowrap}.nav-link.active,.nav-link:hover{background:color-mix(in srgb,var(--blue) 12%,var(--panel-solid))}button,select,input{font:inherit}button{cursor:pointer}

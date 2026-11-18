@@ -28,15 +28,17 @@ const generated='// Build-only data-free source. Do not commit generated files.\
  'const VIEWS='+JSON.stringify(views)+' as Record<string,string>;\n'+
  'const PAGES='+JSON.stringify(pages)+' as Record<string,string>;\n'+
  'export const FRAME_PATHS='+JSON.stringify(routes)+' as string[];\n'+
- 'export function ownerFrame(path:string,context:{ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean}):string{\n'+
+ 'export function ownerFrame(path:string,context:{ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean},theme:string="dark"):string{\n'+
  ' if(!context.ownerAuthorized||!context.roleAuthorized||!context.current)throw Error("owner_context_required");\n'+
  ' const key=/^\\/weak_early_beta_(\\w+?)(?:_free)?\\.html$/.exec(path)?.[1]||"latest";\n'+
  ' const view=["analytics","settings","guide"].includes(key)?key:"home";\n'+
  ' const selected="./weak_early_beta_"+(view==="home"?"latest":key)+".html";\n'+
- ' return SHELL.replaceAll("{{TITLE}}",view==="home"?PAGES.latest:PAGES[key]).replaceAll("{{PAGE}}",view).replace("{{VIEW}}",VIEWS[view]).replace(\'class="nav-link" href="\'+selected+\'"\',\'class="nav-link active" aria-current="page" href="\'+selected+\'"\');\n'+
+ ' const initialTheme=["light","dark","system"].includes(theme)?theme:"dark";\n'+
+ ' const initialThemeScript=initialTheme==="system"?\'<script src="/new-a-assets/initial-display.js"></script>\':"";\n'+
+ ' return SHELL.replaceAll("{{INITIAL_THEME}}",initialTheme).replace("{{INITIAL_THEME_SCRIPT}}",initialThemeScript).replaceAll("{{TITLE}}",view==="home"?PAGES.latest:PAGES[key]).replaceAll("{{PAGE}}",view).replace("{{VIEW}}",VIEWS[view]).replace(\'class="nav-link" href="\'+selected+\'"\',\'class="nav-link active" aria-current="page" href="\'+selected+\'"\');\n'+
  '}\n';
 await fs.mkdir(path.join(gate,'src/research-a'),{recursive:true});await fs.writeFile(path.join(gate,'src/research-a/frame.generated.ts'),generated);
-const runtime=generated.replace(' as string[]','').replaceAll(' as Record<string,string>','').replace('path:string,context:{ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean}):string','path,context)');await fs.mkdir(path.join(gate,'.cache/new-a'),{recursive:true});await fs.writeFile(path.join(gate,'.cache/new-a/frame.generated.mjs'),runtime);
+const runtime=generated.replace(' as string[]','').replaceAll(' as Record<string,string>','').replace('path:string,context:{ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean},theme:string="dark"):string','path,context,theme="dark")');await fs.mkdir(path.join(gate,'.cache/new-a'),{recursive:true});await fs.writeFile(path.join(gate,'.cache/new-a/frame.generated.mjs'),runtime);
 const names=[];async function copy(dir,rel=''){for(const entry of await fs.readdir(dir,{withFileTypes:true})){const r=path.posix.join(rel,entry.name),src=path.join(dir,entry.name);if(entry.isDirectory())await copy(src,r);else{assert(/^(?:[a-z0-9-]+\.js|report-assets\/[a-z0-9-]+\.png)$/.test(r),'Unexpected asset');const to=path.join(out,r);await fs.mkdir(path.dirname(to),{recursive:true});await fs.writeFile(to,lf(await fs.readFile(src,'utf8')));names.push(r);}}}await copy(path.join(source,'assets'));
 for(const item of contract.staticAssets){assert(/^reports\/(?:weak-early-beta-(?:theme-init|scenarios|interactions)\.js|report-assets\/[a-z0-9-]+\.png)$/.test(item.source),'Unexpected baseline source');const bytes=assetBytes(await fs.readFile(path.join(baseline,item.source)),item);assert.equal(createHash('sha256').update(bytes).digest('hex'),item.sha256,'Pinned existing source changed; review required');const target=path.join(out,item.target);await fs.mkdir(path.dirname(target),{recursive:true});await fs.writeFile(target,item.patch==='legacy-interactions'?patchLegacy(bytes.toString('utf8')):bytes);names.push(item.target);}
 const adapter=lf(await fs.readFile(path.join(source,'presentation-adapter.cjs'),'utf8'));await fs.writeFile(path.join(out,'presentation-adapter.generated.js'),'var ANewPresentation=(()=>{const module={exports:{}};\n'+adapter+'\nreturn module.exports;})();\n');names.push('presentation-adapter.generated.js');

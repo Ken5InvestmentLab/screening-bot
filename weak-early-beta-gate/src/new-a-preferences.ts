@@ -33,6 +33,16 @@ export function validateView(value: unknown): ViewPreferences {
 // Keeping the trial JSON intact lets an earlier Worker still read and save it.
 const viewKey = (member: string) => `new-a-view:v1:${member}`;
 
+export async function readInitialTheme(db: NewADatabase, member: string): Promise<ViewPreferences['theme']> {
+ const row = await db.prepare(`
+  SELECT view.preferences_json
+  FROM new_a_finite_trial_preferences AS trial
+  JOIN new_a_finite_trial_preferences AS view ON view.member_id = ?
+  WHERE trial.member_id = ?
+ `).bind(viewKey(member), member).first<{preferences_json:string}>();
+ return row ? validateView(JSON.parse(row.preferences_json)).theme : 'dark';
+}
+
 // Service policy, returned only inside the existing authenticated owner route.
 export const OPEN_EXIT_POLICY={version:'A_OPEN_EXIT_V2',first_d5_entry_session:'2026-11-17',legacy_endpoint:'d6_open',new_endpoint:'d5_open'} as const;
 export async function readTrial(db:NewADatabase,member:string){

@@ -24,7 +24,7 @@
   if(!validTrial(view.trial_preset)||!['dark','light','system'].includes(view.theme)||!['small','standard','large'].includes(view.font_size)||![20,50,100].includes(view.page_size))throw Error('保存した表示設定を確認できません。');
   return {trial_preset:view.trial_preset,theme:view.theme,font_size:view.font_size,page_size:view.page_size};
  }
- function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null,useTrialPreset=true,recentAnalytics=false}){
+ function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null,useTrialPreset=true,recentAnalytics=false,dashboardPrices=false}){
   if(!validTrial(trialPreset))throw Error('trial_preset_invalid');
   const s={trialPreset,viewPreferences:null,phase:'loading',presence:'unknown',revision:null,applied:null,draft:copy(BASE),accepted:null,dirty:false,edit:0,request:0,message:'設定を読み込んでいます。',defaultProposalVerified:false};
   let committed=null,saveBinding=null;
@@ -40,7 +40,7 @@
    return data;
   }
   async function simulation(p,id,selected){
-   const d=await api('/api/cloud/new-a-finite/simulate','POST',{preferences:p,request_id:id,...(selected?{trial_preset:selected}:{}),...(recentAnalytics?{recent_analytics:true}:{})});
+   const d=await api('/api/cloud/new-a-finite/simulate','POST',{preferences:p,request_id:id,...(selected?{trial_preset:selected}:{}),...(recentAnalytics?{recent_analytics:true}:{}),...(dashboardPrices?{dashboard_prices:true}:{})});
    if((d.trial_preset??null)!==selected||selected&&(!d.model_result||!Array.isArray(d.model_result.trades)||!Array.isArray(d.model_result.orders)||!Array.isArray(d.model_result.watches)||!d.result?.trial_policy||d.result.trial_policy.id!==selected))throw Error('試算結果を確認できませんでした。');
    if(d.request_id!==id||canonical(validate(d.preferences))!==canonical(p)||typeof d.source_version!=='string'||!d.source_version||typeof d.view_kind!=='string'||!d.result||typeof d.result.resolved!=='boolean'||!Array.isArray(d.result.orders)||!Array.isArray(d.result.trades)||!Array.isArray(d.result.daily)||!Array.isArray(d.result.yearly)||!Array.isArray(d.result.watches))throw Error('試算結果を確認できませんでした。');
    const recent=d.latest_year;
@@ -50,6 +50,12 @@
        recent.period[0].slice(0,4)!==recent.period[1]?.slice(0,4)||!Array.isArray(recent.daily)||
        recent.daily[0]?.date!==recent.period[0]||recent.daily.at(-1)?.date!==recent.period[1]||
        typeof recent.resolved!=='boolean'||!recent.metrics))throw Error('直近年の試算結果を確認できませんでした。');
+   const current=d.dashboard_year;
+   if(current!==undefined&&(!dashboardPrices||selected||p.year_scope!=='all'||d.result.resolved||current.resolved!==true||
+       !Array.isArray(current.period)||current.period.length!==2||!/^\d{4}-\d{2}-\d{2}$/.test(current.period[0])||
+       current.period[1]!==d.result.period?.[1]||current.period[0].slice(0,4)!==current.period[1]?.slice(0,4)||
+       !Array.isArray(current.orders)||!Array.isArray(current.trades)||!Array.isArray(current.watches)||
+       !current.open_positions||typeof current.open_positions!=='object'))throw Error('直近年の保有試算を確認できませんでした。');
    return d;
   }
   function remember(preferences,result,preset,view){
@@ -161,17 +167,17 @@
   const unresolved=!r.resolved?'<p role="status" class="note">試算保留'+(r.unresolved[0]?' · '+esc(r.unresolved[0].date)+'以降の資金推移は未計算':'')+'</p>':'';
   const applied='<dl class="scenario-stats" id="cloud-applied-summary"><div><dt>決済方法</dt><dd>'+esc(trial)+'</dd></div><div><dt>株価上限</dt><dd>'+(p.price_cap_yen===null?'上限なし':yen(p.price_cap_yen))+'</dd></div><div><dt>株数・手数料</dt><dd>'+number(p.base_shares)+'株・片道 '+number(p.cost_percent)+'%</dd></div><div><dt>保有・注文上限</dt><dd>'+number(p.max_positions)+'銘柄・'+yen(p.per_order_cap_yen)+'</dd></div></dl>';
   const badges=Object.entries(r.counts).filter(([,v])=>v).map(([k,v])=>'<span class="badge">'+esc(status(k))+' '+number(v)+'</span>').join(' ');
-  return '<section class="panel" aria-labelledby="analytics-overview"><div class="cloud-section-head"><h2 id="analytics-overview">過去成績</h2><div class="cloud-meta"><span class="badge">仮想試算</span><span class="badge">'+esc(r.period?.join(' 〜 ')||'期間未確認')+'</span></div></div>'+
+  return recentAnalyticsPanel(d.latest_year)+'<section class="panel" aria-labelledby="analytics-overview"><div class="cloud-section-head"><h2 id="analytics-overview">'+(d.latest_year?'全期間の成績':'過去成績')+'</h2><div class="cloud-meta"><span class="badge">仮想試算</span><span class="badge">'+esc(r.period?.join(' 〜 ')||'期間未確認')+'</span></div></div>'+
    '<p class="note" id="new-a-trial-summary">'+esc(trial)+'</p>'+unresolved+
    '<div class="kpis">'+cards.map(([label,value])=>'<div class="kpi"><small>'+label+'</small><b>'+value+'</b></div>').join('')+'</div>'+
    '<details class="cloud-kpi-detail"><summary>成績の内訳</summary><dl class="scenario-stats">'+stats+'</dl><div class="cloud-meta">'+badges+'</div></details>'+
    '<details class="cloud-kpi-detail"><summary>適用中の設定</summary>'+applied+'<a href="./weak_early_beta_settings.html">設定を開く</a></details>'+
-   '</section>'+recentAnalyticsPanel(d.latest_year)+'<section class="panel" aria-labelledby="analytics-equity"><h2 id="analytics-equity">日次資金推移</h2><div class="cloud-chart" id="new-a-daily-chart"></div><details class="cloud-table-details"><summary>日次表</summary><div id="new-a-daily-table"></div><button id="new-a-daily-more" class="settings-secondary" type="button">次の50営業日</button></details></section>'+
+   '</section><section class="panel" aria-labelledby="analytics-equity"><h2 id="analytics-equity">日次資金推移</h2><div class="cloud-chart" id="new-a-daily-chart"></div><details class="cloud-table-details"><summary>日次表</summary><div id="new-a-daily-table"></div><button id="new-a-daily-more" class="settings-secondary" type="button">次の50営業日</button></details></section>'+
    '<section class="panel" aria-labelledby="analytics-yearly"><h2 id="analytics-yearly">年別純損益</h2>'+annualBars(r.yearly)+'<details class="cloud-table-details"><summary>年次表</summary>'+table([['year','年'],['markedNetProfit','純損益',yen],['fills','仮想買付件数',number]],r.yearly,'yearly')+'</details></section>'+
    '<section class="panel" aria-labelledby="analytics-export"><h2 id="analytics-export">CSV</h2><div class="cloud-meta"><button id="new-a-export-summary" class="settings-secondary" type="button">集計</button><button id="new-a-export-trades" class="settings-secondary" type="button">明細</button><button id="new-a-export-daily" class="settings-secondary" type="button">日次</button></div></section>';
  }
- function renderHoldings(d,{rows=[],calendar=[],details}={}){
-  const model=d.model_result||d.result,byIdentity=new Map(rows.map(r=>[r.identity,r]));
+ function renderHoldings(d,{rows=[],calendar=[],details,model=d.model_result||d.result}={}){
+  const byIdentity=new Map(rows.map(r=>[r.identity,r]));
   if(model.resolved===false)return '<section class="panel" id="new-a-model-holdings"><h2>仮想保有</h2><p class="note">未確認の価格があるため、現在の仮想保有は確定していません。</p></section>';
   const holdings=Object.entries(model.open_positions||{}).sort(([a],[b])=>a.localeCompare(b));
   const display=holdings.map(([symbol,p])=>{
@@ -181,7 +187,8 @@
    return {stock:row?.companyName?row.companyName+' ('+symbol+')':symbol,entry:p.entry_date,exit:scheduled||'未確認',details:details?.({...p,symbol})||''};
   });
   const holdingsTable='<div class="table-wrap"><table class="scenario-table" data-finite-table="holdings"><thead><tr><th>銘柄</th><th>仮想買付日</th><th>仮想決済予定日</th></tr></thead><tbody>'+display.map(r=>'<tr><td data-label="銘柄">'+esc(r.stock)+r.details+'</td><td data-label="仮想買付日">'+esc(r.entry)+'</td><td data-label="仮想決済予定日">'+esc(r.exit)+'</td></tr>').join('')+'</tbody></table></div>';
-  return '<section class="panel" id="new-a-model-holdings"><details class="cloud-table-details"><summary>仮想保有 '+holdings.length+'銘柄</summary><p class="note">モデル決済 · '+esc(model.period?.[1]||'対象日未確認')+'</p>'+(display.length?holdingsTable:'<p>仮想保有なし</p>')+'</details></section>';
+  const periodLabel=model===d.dashboard_year?model.period[0].slice(0,4)+'年の独立試算':'対象日';
+  return '<section class="panel" id="new-a-model-holdings"><details class="cloud-table-details"><summary>仮想保有 '+holdings.length+'銘柄</summary><p class="note">'+esc(periodLabel)+' · '+esc(model.period?.[1]||'未確認')+'</p>'+(display.length?holdingsTable:'<p>仮想保有なし</p>')+'</details></section>';
  }
  function csv(records){const keys=[...new Set(records.flatMap(Object.keys))];const cell=v=>{const s=v===null||v===undefined?'':typeof v==='object'?JSON.stringify(v):String(v);return '"'+(/^[=+@\-\t\r]/.test(s)&&typeof v!=='number'?"'":'')+s.replaceAll('"','""')+'"';};return '\ufeff'+[keys.map(cell).join(','),...records.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n')+'\r\n';}
  function exportsFor(d,kind,keys=null){if(!d)throw Error('適用済み結果がありません。');const prefix={request_id:d.request_id,source_version:d.source_version,view_kind:d.view_kind,measurement:'過去検証',resolved:d.result.resolved,...d.preferences,...(d.result.exit_policy?{exit_policy:d.result.exit_policy}:{}),...(d.result.trial_policy?{trial_preset:d.trial_preset,trial_policy:d.result.trial_policy}:{})};const orders=new Map(d.result.orders.map(r=>[key(r),r])),trades=new Map(d.result.trades.map(r=>[key(r),r]));let rows=kind==='daily'?d.result.daily:kind==='summary'?[d.result.metrics]:d.result.watches.map(w=>({...w,...orders.get(key(w)),...trades.get(key(w))}));if(keys&&kind==='trades')rows=rows.filter(r=>keys.has(key(r)));return csv(rows.map(r=>({...prefix,...r})));}

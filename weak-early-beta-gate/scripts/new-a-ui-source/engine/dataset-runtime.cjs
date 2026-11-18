@@ -39,9 +39,7 @@ function createDatasetRuntime(input,quotes){
   if(!start||start===input.calendar[0])return null;
   // Start a separate account with the same preferences. No position or missing
   // settlement from the interrupted full-period result enters this calculation.
-  const result=calculate(preferences,options,start);
-  return {period:result.period,daily:result.daily,metrics:result.metrics,
-   resolved:result.resolved,first_unresolved_date:result.unresolved[0]?.date??null};
+  return calculate(preferences,options,start);
  }
  return {source_version:input.source_version,input,quotes,simulate,simulateLatestYear};
 }

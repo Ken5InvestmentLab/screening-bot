@@ -56,6 +56,14 @@ test('missing latest quote, held quote and a different episode cannot be used as
   assert.equal(stockDetails(snapshot, [row], adapter, null)({ ...key, episode_id: 2 }), '');
 });
 
+test('older daily snapshots show only the matching date from verified prepared quote input', () => {
+  const older = { ...snapshot, latest_closes: undefined };
+  const prepared = { date, prices: snapshot.latest_closes };
+  assert.match(stockDetails(older, [row], adapter, null, prepared)(key), /対象日終値<\/dt><dd>1,100円/);
+  assert.match(stockDetails(older, [row], adapter, null, { ...prepared, date: key.candidate_date })(key), /対象日終値<\/dt><dd>未確認/);
+  assert.match(stockDetails({ ...older, held_symbols: { 1234: {} } }, [row], adapter, null, prepared)(key), /対象日終値<\/dt><dd>未確認/);
+});
+
 test('identity hold suppresses TradingView and fundamentals; unresolved portfolio is not labelled current', () => {
   const unsafe = { ...row, identityStatus: 'PRELISTING_HISTORY_MAPPING_UNVERIFIED', chartAllowed: false };
   const html = stockDetails(snapshot, [unsafe], adapter, null)(key);

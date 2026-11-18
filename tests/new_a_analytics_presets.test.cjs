@@ -73,18 +73,18 @@ test('controller selects and recalculates presets without changing the nine save
 });
 
 test('Analytics shows the newest verified year separately when an old one-price exit stops full-period results',async()=>{
- const days=['2024-02-19','2024-02-20','2024-02-21','2024-02-22','2024-02-26','2024-02-27',...calendar];
+ const days=['2024-02-19','2024-02-20','2024-02-21','2024-02-22','2024-02-26','2024-02-27','2024-02-28',...calendar];
  const past={symbol:'4911',candidate_date:days[0],trigger_date:days[0],episode_id:1,priority_score:1};
  const current=intents(1)[0];
- const episodes=[past,current],data={source_version:'verified-fixture',calendar:days,limits:{identityUnverifiedBefore:{}},
+ const episodes=[past,current],data={source_version:'verified-fixture',calendar:days,limits:{identityUnverifiedBefore:{},completeThrough:days.at(-1)},
   episodes,intents:episodes,watches:episodes.map(e=>({...e,watch_status:'TRIGGERED'}))};
  const normalQuote={open:100,high:103,low:99,close:101,actual_close:101,volume:100,actual_volume:100,source_usable:1};
- const get=(symbol,day)=>symbol===past.symbol&&day==='2024-02-27'
+ const get=(symbol,day)=>symbol===past.symbol&&['2024-02-27','2024-02-28'].includes(day)
   ?{...normalQuote,open:100,high:100,low:100,close:100,actual_close:100}:normalQuote;
  const fields=Object.keys(normalQuote),records=episodes.flatMap(e=>days.map(day=>[e.symbol,day,fields.map(f=>get(e.symbol,day)[f])]));
- const messages=[],ctx={AFiniteDataset:dataset,postMessage:m=>messages.push(structuredClone(m))};
+ const messages=[],ctx={AFiniteEngine:engine,AFiniteDataset:dataset,postMessage:m=>messages.push(structuredClone(m))};
  vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'engine/worker-entry.js'),'utf8'),ctx);
- ctx.onmessage({data:{id:1,kind:'initialize',manifest:{quote_fields:fields,expected_quote_keys:records.length,input:data},records}});
+ ctx.onmessage({data:{id:1,kind:'initialize',manifest:{as_of:days.at(-1),quote_fields:fields,expected_quote_keys:records.length,input:data},records}});
  assert.equal(messages.pop().ready,true);
  const simulate=(preferences,options={})=>{
   ctx.onmessage({data:{id:2,kind:'simulate',request_id:'load-1',preferences,exit_policy:policy,trial_preset:'balanced',...options}});
@@ -103,6 +103,12 @@ test('Analytics shows the newest verified year separately when an old one-price 
  assert(Number.isFinite(newer.latest_year.daily.at(-1).equity_diagnostic));
  assert.equal(newer.latest_year.metrics.fills,1);
  assert.equal(simulate({...prefs,year_scope:'2024'},{recent_analytics:true}).latest_year,undefined);
+ assert.equal(simulate(prefs,{dashboard_prices:true}).dashboard_year,undefined);
+ const dashboard=simulate(prefs,{dashboard_prices:true,trial_preset:undefined});
+ assert.equal(dashboard.result.resolved,false);
+ assert.equal(dashboard.dashboard_year.resolved,true);
+ assert.equal(dashboard.dashboard_year.trades[0].symbol,current.symbol);
+ assert.deepEqual(dashboard.dashboard_closes.prices[current.symbol],{date:calendar.at(-1),price:101});
  const F=controllerFactory(),requests=[];
  const transport=async(url,options)=>{
   if(options.method==='GET')return Response.json({schema_version:1,has_saved_preferences:true,
@@ -120,6 +126,7 @@ test('Analytics shows the newest verified year separately when an old one-price 
  assert.match(html,/2026-11-09 〜 2026-11-30/);
  assert.match(html,/全期間の資金・保有は引き継ぎません/);
  assert.match(html,/id="new-a-latest-year-chart"/);
+ assert(html.indexOf('2026年の成績')<html.indexOf('全期間の成績'));
 });
 
 test('preset result mismatch is rejected before it can replace accepted metrics',async()=>{

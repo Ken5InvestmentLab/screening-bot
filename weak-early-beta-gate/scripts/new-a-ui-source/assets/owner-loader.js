@@ -19,7 +19,7 @@
   ?[entry.symbol,entry.candidate_date,entry.episode_id].join('|'):null;
  const validPrice=price=>Number.isFinite(price)&&price>0;
  const money=price=>esc(price.toLocaleString('ja-JP',{maximumFractionDigits:2}))+'円';
- function stockDetails(snapshot,rows,adapter,model){
+ function stockDetails(snapshot,rows,adapter,model,preparedCloses,dashboardYear){
   const byEpisode=new Map(rows.map(row=>[row.identity,row]));
   const trades=new Map((model?.trades??[]).map(trade=>[episodeKey(trade),trade]));
   const open=model?.resolved===false?{}:model?.open_positions??{};
@@ -29,7 +29,8 @@
    if(!row)return '';
    const symbol=entry.symbol;
    const chartAllowed=row.chartAllowed!==false&&!adapter?.identityHold(row)&&/^[0-9][0-9A-Z]{3}$/.test(symbol);
-   const latest=snapshot.latest_closes?.[symbol];
+   const prepared=preparedCloses?.date===snapshot.as_of?preparedCloses.prices?.[symbol]:null;
+   const latest=snapshot.latest_closes?.[symbol]??prepared;
    const settled=latest?.date===snapshot.as_of&&validPrice(latest.price)&&!Object.hasOwn(snapshot.held_symbols??{},symbol);
    const confirmed=chartAllowed&&settled;
    const trade=trades.get(identity);
@@ -55,16 +56,17 @@
    }
    const chart=chartAllowed?'<a class="button-link" href="https://jp.tradingview.com/chart/?symbol=TSE%3A'+encodeURIComponent(symbol)+'" target="_blank" rel="noopener noreferrer">チャート</a>':'';
    const analysis=chartAllowed&&adapter?adapter.fundamentalMarkup(row):'';
-   return '<details class="cloud-table-details cloud-stock-detail"><summary>銘柄の詳細</summary><dl class="scenario-stats">'+actual+signal+entryPrice+outcome+'</dl><div class="actions">'+chart+(analysis||'<small class="note">ファンダ分析 未確認</small>')+'</div></details>';
+   const basis=dashboardYear&&(trade||stillOpen)?'<p class="note">'+esc(dashboardYear.period[0].slice(0,4))+'年の独立試算</p>':'';
+   return '<details class="cloud-table-details cloud-stock-detail"><summary>銘柄の詳細</summary><dl class="scenario-stats">'+actual+signal+entryPrice+outcome+'</dl>'+basis+'<div class="actions">'+chart+(analysis||'<small class="note">ファンダ分析 未確認</small>')+'</div></details>';
   };
  }
- function currentMarkup(snapshots,rows=[],{adapter,model}={}){
+ function currentMarkup(snapshots,rows=[],{adapter,model,preparedCloses,dashboardYear}={}){
   if(!snapshots.length)return '<section class="panel"><h2>最新の監視状況</h2><p>監視状況を確認できません。</p></section>';
   if(snapshots.length!==1)throw Error('current_snapshot_count');
   const s=snapshots[0];
   if(!['NEW_A_OWNER_DAILY_SNAPSHOT_V1','NEW_A_OWNER_DAILY_DISPLAY_V1'].includes(s.schema)||!['EXISTING_CLOUD_OWNER_ONLY','OWNER_ONLY'].includes(s.audience))throw Error('current_snapshot_schema');
   const watches=Object.values(s.monitor_state?.watches??{}),events=s.events??[],held=s.held_symbols??{};
-  const detailFor=stockDetails(s,rows,adapter,model);
+  const detailFor=stockDetails(s,rows,adapter,model,preparedCloses,dashboardYear);
   const names=new Map();
   for(const row of rows){
    if(row.identityStatus==='PRELISTING_HISTORY_MAPPING_UNVERIFIED')continue;
@@ -133,7 +135,7 @@
    await script('presentation-adapter.generated.js');
    const dashboard=document.getElementById('new-a-dashboard');
    const adapter=globalThis.ANewPresentation;
-   const renderDashboard=model=>{dashboard.innerHTML=currentMarkup(data.current,data.rows,{adapter,model});};
+   const renderDashboard=(model,preparedCloses,dashboardYear)=>{dashboard.innerHTML=currentMarkup(data.current,data.rows,{adapter,model,preparedCloses,dashboardYear});};
    data.renderDashboard=renderDashboard;
    renderDashboard(null);
    dashboard.addEventListener('click',event=>{

@@ -9,7 +9,7 @@ function loadBrowserScript(file) {
   vm.runInContext(fs.readFileSync(path.join(assets, file), 'utf8'), context);
   return context.module.exports;
 }
-const { currentMarkup, stockDetails } = loadBrowserScript('owner-loader.js');
+const { currentMarkup, stockDetails, holdingPerformance } = loadBrowserScript('owner-loader.js');
 const { renderHoldings } = loadBrowserScript('finite-controller.js');
 const adapter = require('../weak-early-beta-gate/scripts/new-a-ui-source/presentation-adapter.cjs');
 
@@ -119,4 +119,23 @@ test('candidate, reset and exit schedule do not count as target-day transitions'
 test('data on hold is distinct from watching and virtual holding', () => {
   const html = currentMarkup([{ ...snapshot, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } } }], [row]);
   assert.match(html, /監視中<\/span><span class="badge cloud-status-held">データ保留/);
+});
+
+test('confirmed holding gains, losses, and flat returns appear outside details', () => {
+  const position = { ...key, entry_date: date, entry_cost: 100000, shares: 100 };
+  const performance = holdingPerformance(snapshot, [row], adapter);
+  const cases = [[position, /positive">\+10,000円 <small>（\+10%）/],
+    [{ ...position, entry_cost: 125000 }, /negative">-15,000円 <small>（-12%）/],
+    [{ ...position, entry_cost: 110000 }, /cloud-pnl">0円 <small>（0%）/]];
+  for (const [held, value] of cases) assert.match(performance(held, key.symbol), value);
+  assert.match(performance({ ...position, episode_id: 2 }, key.symbol), /未確認/);
+  assert.match(holdingPerformance({ ...snapshot, held_symbols: { 1234: {} } }, [row], adapter)(position, key.symbol), /未確認/);
+  assert.match(holdingPerformance({ ...snapshot, as_of: key.candidate_date }, [row], adapter)(position, key.symbol), /未確認/);
+
+  const model = { resolved: true, period: [key.candidate_date, date], trades: [], open_positions: { 1234: position } };
+  const holdings = renderHoldings({ result: model, preferences: { exit_endpoint: 'd5_open' } }, { rows: [row], performance, asOf: date });
+  assert.match(holdings, /data-label="評価損益"><span class="cloud-pnl positive">\+10,000円/);
+  assert.doesNotMatch(holdings, /<details/);
+  const dashboard = currentMarkup([snapshot], [row], { adapter, model });
+  assert.match(dashboard, /cloud-card-pnl"><small>評価損益<\/small><span class="cloud-pnl positive">\+10,000円/);
 });

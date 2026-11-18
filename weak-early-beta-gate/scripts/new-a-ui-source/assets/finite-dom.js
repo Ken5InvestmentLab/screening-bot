@@ -77,8 +77,8 @@
   return '<td colspan="8" class="history-record"><div class="history-visible-grid">'+
    '<div class="history-date" data-label="検出日"><div class="history-date-value">'+app.esc(d.date)+'</div><div class="actions history-date-actions">'+(fundamental||'')+chart+'</div></div>'+
    '<div class="history-company"><strong><span class="symbol">'+code+'</span> '+name+'</strong>'+close+(chartAllowed?'':'<small>当時の銘柄名を確認中</small>')+'</div>'+
-   '<div data-label="該当モード"><span class="badge">A</span></div>'+
    '<div data-label="状況"><span class="status pending">'+app.esc(state==='FILLED'?(t?'仮想決済済':'仮想保有中'):app.status(state))+'</span></div>'+
+   '<div data-label="試算条件"><small>'+app.number(pos?.shares??latest.applied.base_shares)+'株で試算</small></div>'+
    '<div data-label="試算開始日・始値">'+entry+'</div>'+
    '<div data-label="5営業日後 終値">'+refCell(d.d5Date,d.d5Close,d.aD5Status)+'</div>'+
    '<div data-label="6営業日後 始値">'+refCell(d.d6Date,d.d6Open,d.aD6Status)+'</div>'+
@@ -195,8 +195,13 @@
    const dashboardYear=simulation.dashboard_year?.period[1]===current?.as_of?simulation.dashboard_year:null;
    const model=dashboardYear||simulation.model_result||simulation.result;
    data.renderDashboard?.(model,simulation.dashboard_closes,dashboardYear);
-   const details=current&&globalThis.AOwnerPresentation.stockDetails(current,data.rows,globalThis.ANewPresentation,model,simulation.dashboard_closes,dashboardYear);
-   byId('new-a-dashboard').insertAdjacentHTML('beforeend',app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details,model,asOf:current?.as_of}));
+   const presentation=globalThis.AOwnerPresentation;
+   const details=current&&presentation.stockDetails(current,data.rows,globalThis.ANewPresentation,model,simulation.dashboard_closes,dashboardYear);
+   const performance=current&&presentation.holdingPerformance(current,data.rows,globalThis.ANewPresentation,simulation.dashboard_closes);
+   const holdings=app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details,performance,model,asOf:current?.as_of});
+   const events=byId('new-a-current');
+   if(events)events.insertAdjacentHTML('afterend',holdings);
+   else byId('new-a-dashboard').insertAdjacentHTML('beforeend',holdings);
    rebuildHistory(simulation);
   }
  }

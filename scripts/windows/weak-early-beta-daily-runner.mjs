@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import { StringDecoder } from 'node:string_decoder';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { cleanEnvironment, codexInvocation, FUNDAMENTAL_MODEL, FUNDAMENTAL_REASONING_EFFORT } from './weak-early-beta-fundamental-runner.mjs';
@@ -295,6 +295,48 @@ async function verifyLiveWorker({ origin = CLOUD_ORIGIN, fetchImpl = fetch }) {
   return { origin, healthStatus: health.status, rootStatus: root.status, oauthRedirect: true };
 }
 
+async function verifyAcceptedWorker(release, head, fetchImpl = fetch) {
+  const hex = /^[a-f0-9]{64}$/;
+  const versionId = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
+  if (release?.schema !== 'NEW_A_ORDINARY_RUNTIME_RELEASE_V1' ||
+      !/^[a-f0-9]{40}$/.test(head) || release.source_commit !== head ||
+      release.worker !== 'tentei-kyokuchi-cloud' || release.database !== 'tentei-cloud-settings' ||
+      !versionId.test(release.version_id) || !hex.test(release.activation_sha256) ||
+      !hex.test(release.build_input_sha256) || !hex.test(release.policy_sha256) ||
+      !/^cloud-deploy-[A-Za-z0-9._-]{1,100}$/.test(release.tag) ||
+      !Number.isSafeInteger(release.ci_run_id) || release.ci_run_id <= 0) {
+    throw new Error('Completed Cloud approval has no exact Worker and build identity');
+  }
+  const nonce = randomBytes(32).toString('hex');
+  const url = `${CLOUD_ORIGIN}/healthz?new_a_probe=${nonce}`;
+  const response = await fetchImpl(url, {
+    redirect: 'error', headers: { 'Cache-Control': 'no-cache' }, signal: AbortSignal.timeout(30_000),
+  });
+  if (response.status !== 200 || response.url !== url ||
+      !response.headers.get('cache-control')?.includes('no-store')) {
+    throw new Error('Approved Cloud Worker normal readback unavailable');
+  }
+  const proof = await response.json();
+  if (proof?.schema !== 'NEW_A_OPERATIONAL_READBACK_V1' || proof.nonce !== nonce ||
+      proof.source_commit !== head || proof.build_input_sha256 !== release.build_input_sha256 ||
+      proof.target?.worker !== release.worker || proof.target?.database !== release.database ||
+      proof.version?.id !== release.version_id || proof.version?.tag !== head ||
+      typeof proof.version?.timestamp !== 'string' || !Number.isFinite(Date.parse(proof.version.timestamp)) ||
+      proof.policy_sha256 !== release.policy_sha256 || !hex.test(proof.d1_active_sha256) ||
+      proof.owner_http_observed !== false || proof.authentication_probe !== false || proof.d1_writes !== 0) {
+    throw new Error('Approved Cloud Worker version, build or policy drifted');
+  }
+  const identity = ['NEW_A_OPERATIONAL_CHALLENGE_V1', nonce, release.worker, release.database,
+    release.version_id, head, proof.version.timestamp, head, release.build_input_sha256];
+  const challenge = (kind, sha) => createHash('sha256').update(JSON.stringify([...identity, kind, sha])).digest('hex');
+  if (proof.policy_challenge_sha256 !== challenge('policy', proof.policy_sha256) ||
+      proof.d1_challenge_sha256 !== challenge('d1-active', proof.d1_active_sha256)) {
+    throw new Error('Approved Cloud Worker readback challenge mismatch');
+  }
+  return { origin: CLOUD_ORIGIN, sourceCommit: head, versionId: release.version_id,
+    buildInputSha256: release.build_input_sha256, observedAt: new Date().toISOString() };
+}
+
 function assertNotificationReceipt(receipt, date, dryRun) {
   const hasLogicalEvents = receipt?.signal_notifications > 0 || receipt?.completion_notifications > 0;
   if (receipt?.date !== date || receipt.dry_run !== dryRun ||
@@ -437,6 +479,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   let ownsLock = false;
   let preservePriorCompletion = false;
   let reconciliationAccepted = false;
+  let approvedWorkerReadbackFailed = false;
   const env = { ...process.env };
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
@@ -452,6 +495,28 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   if(delayedPlan) Object.assign(result,{executionDate,observationKind:'DELAYED_SCHEDULED_OBSERVATION',originalRunId:delayedPlan.original_run_id,delayedClaim:delayedPlan.claim});
   atomicJson(path.join(runDir, 'invoked.json'), { ...result, identity: 'CLOUD_RUNNER_INVOKED_V1' });
   const python = config.pythonPath;
+  const activationFile = path.join(repo, '.cache/weak_early_beta/new-a-private/activation.json');
+  const inspectApprovedRelease = async (label) => {
+    try {
+      const inspection = await requireOk(python, ['-B', '-m', 'weak_early_beta.new_a.continuing_transition', 'inspect-worker'],
+        { cwd: repo, env, log: path.join(runDir, label), capture: true, timeoutMs: 60_000 });
+      return JSON.parse(inspection.stdout.trim());
+    } catch (error) {
+      approvedWorkerReadbackFailed = true;
+      throw error;
+    }
+  };
+  const checkApprovedWorker = async (release, head, label, recheck = true) => {
+    try {
+      if (recheck && !isDeepStrictEqual(await inspectApprovedRelease(label), release)) {
+        throw new Error('Ordinary Cloud approval changed during the run');
+      }
+      return await verifyAcceptedWorker(release, head);
+    } catch (error) {
+      approvedWorkerReadbackFailed = true;
+      throw error;
+    }
+  };
   let stage = 'lock';
   let commandNumber = 0;
   const saveProgress = (nextStage, extra = {}) => {
@@ -560,6 +625,15 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       '--status', 'success', '--limit', '1', '--json', 'databaseId,headSha,headBranch,status,conclusion,url'],
     { cwd: repo, env, log: path.join(runDir, 'previous-release'), capture: true, timeoutMs: 60_000 });
     result.previousSuccessfulDeployment = JSON.parse(previous.stdout.trim())[0] || null;
+    const initialActivation = fs.existsSync(activationFile) ? readJson(activationFile) : {};
+    const approvedRelease = initialActivation.owner_acceptance?.application_id && !initialActivation.operational_admission
+      ? await inspectApprovedRelease('approved-release-before-detection') : null;
+    if (approvedRelease !== null) {
+      if (delayedPlan) throw new Error('Ordinary Cloud approval cannot be used for a delayed continuation');
+      saveProgress('approved-worker-preflight');
+      result.approvedWorkerPreflight = await checkApprovedWorker(
+        approvedRelease, result.startCommit, 'approved-release-before-detection', false);
+    }
     if (!prior && !delayedPlan) await sendSystemLog('started');
     saveProgress('new-a-preflight');
     result.new_a = { strategy: 'A_BASE', entry: 'new-a-verified-daily-v1', owner_publication_verified: false };
@@ -603,6 +677,10 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       if (attempt === attempts) throw new Error(`OHLCV freshness gate failed: expected ${today}, got ${receipt.latest_session}`);
       await waitInShortChunks(Number(config.freshnessRetryDelayMs || 300_000));
     }
+    if (approvedRelease !== null) {
+      saveProgress('approved-worker-after-detection');
+      await checkApprovedWorker(approvedRelease, result.startCommit, 'approved-release-after-detection');
+    }
     await sendSystemLog('detected', ['--count', String(result.selectorRows)]);
     if (regularAnalysis) {
       saveProgress('fundamental');
@@ -624,9 +702,13 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     if (clean.stdout.trim()) throw new Error('New A refuses any generated commit; reconcile local changes');
     result.generatedCommit = null; result.generatedFilesSent = 0;
     const headSha = await requireRemoteHead(git);
-    const activationFile=path.join(repo,'.cache/weak_early_beta/new-a-private/activation.json');
     const activation = fs.existsSync(activationFile)?readJson(activationFile):{};
-    if (activation.operational_admission) {
+    if (approvedRelease !== null) {
+      result.deployment = { tag: approvedRelease.tag, headSha, workflow: DEPLOY_WORKFLOW,
+        worker: approvedRelease.worker, versionId: approvedRelease.version_id,
+        run: { databaseId: approvedRelease.ci_run_id, status: 'completed', conclusion: 'success' },
+        reusedApprovedCodeOnly: true };
+    } else if (activation.operational_admission) {
       if (!nativeDelayed || today !== '2026-11-17' || executionDate !== '2026-11-18') throw Error('Finite predeployed continuity is restricted to the approved Nov17 native continuation');
       const proofResult = await requireOk(python,['-B','-m','weak_early_beta.new_a.operational_admission','inspect'],{cwd:repo,env,log:path.join(runDir,'finite-predeployed-readback'),capture:true,timeoutMs:300000});
       const proof=JSON.parse(proofResult.stdout.trim());
@@ -655,6 +737,10 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     }
     saveProgress('live-verification');
     result.deployment.live = await verifyLiveWorker({});
+    if (approvedRelease !== null) {
+      result.deployment.approvedWorkerReadback = await checkApprovedWorker(
+        approvedRelease, headSha, 'approved-release-before-publication');
+    }
     saveProgress('private-data-publication');
     await requireOk(python, ['-m', 'weak_early_beta.new_a.cli', 'publish', '--remote'], { cwd: repo, env, log: path.join(runDir, 'new-a-publish'), capture: true });
     const published = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-publication.json'));
@@ -670,6 +756,9 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
         return JSON.parse(attempt.stdout.trim());
       },
       send: async () => {
+        if (approvedRelease !== null) {
+          await checkApprovedWorker(approvedRelease, headSha, 'approved-release-before-notification');
+        }
         const attempt = await requireOk(python, ['-m', 'weak_early_beta.new_a.cli', 'notify', '--date', today],
           { cwd: repo, env, log: path.join(runDir, 'notify'), capture: true });
         return JSON.parse(attempt.stdout.trim());
@@ -687,7 +776,9 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     if (error.failureType) result.failureType = error.failureType;
     result.stage = stage;
     if (ownsLock && stage === 'detection') result.privateSourceCacheRetained = true;
-    if (!reconciliationFile || reconciliationAccepted) await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
+    if (!approvedWorkerReadbackFailed && (!reconciliationFile || reconciliationAccepted)) {
+      await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
+    }
     process.exitCode = 1;
   } finally {
     result.completedAt = new Date().toISOString();
@@ -713,4 +804,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 
 export { npmInvocation, probeFundamentalModel, run, parseGitStatus, assertGeneratedChanges, GENERATED_PATHS,
   queueIdentities, drainFundamentalQueue, assertHtmlImports, selectWorkflowRun, waitForTagWorkflow,
-  verifyLiveWorker, commitGeneratedChanges, requireRemoteHead, assertValidatedFundamentalOutput, reconcileNotifications, loadDotEnv };
+  verifyLiveWorker, verifyAcceptedWorker, commitGeneratedChanges, requireRemoteHead, assertValidatedFundamentalOutput, reconcileNotifications, loadDotEnv };

@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import sys
 
 from . import continuing_acceptance as ca
 from . import operational_admission as finite
@@ -21,6 +22,25 @@ DECISION = 'CONTINUING_DAILY_AFTER_FINITE_RECOVERY_AUTH_REVIEW'
 CLOSURE_SCHEMA = 'NEW_A_VERIFIED_FINITE_COMPLETION_V1'
 PREPARATION_SCHEMA = 'NEW_A_CONTINUING_TRANSITION_PREPARATION_V1'
 APPLICATION_SCHEMA = ca.TRANSITION_APPLICATION_SCHEMA
+RUNTIME_RELEASE_SCHEMA = 'NEW_A_ORDINARY_RUNTIME_RELEASE_V1'
+
+
+def checked_normal_deployment(source, target, reader):
+    value = release.checked_deployment(source, target, reader)
+    ca.require(value['schema'] == 'NEW_A_HOST_VERIFIED_DEPLOYMENT_V1',
+               'transition requires the actual normal deployed Worker version')
+    ca.require(all(re.fullmatch(r'[a-f0-9]{64}', str(value.get(key, '')))
+                   for key in ('build_input_sha256', 'policy_sha256'))
+               and type(value.get('ci_run_id')) is int and value['ci_run_id'] > 0
+               and re.fullmatch(r'cloud-deploy-[A-Za-z0-9._-]{1,100}', str(value.get('tag', ''))),
+               'normal deployment build, policy or workflow identity unavailable')
+    return value
+
+
+def same_normal_deployment(first, latest):
+    return release.same_deployment(first, latest) and all(
+        first[key] == latest[key] for key in ('build_input_sha256', 'policy_sha256', 'ci_run_id', 'tag')
+    )
 
 
 def baseline(repo, plan, *, archived_activation=None):
@@ -162,9 +182,7 @@ def _prepare(repo, plan, *, primary_reader, measurement_reader, raw_reader,
     ca.require(callable(closure_reader), 'trusted terminal recovery reader required')
     closure = validate_closure(closure_reader(repo, plan['finite_admission'], history['finite_record']),
                                plan['finite_admission'], history['finite_record'])
-    deployment = release.checked_deployment(source, target, deployment_reader)
-    ca.require(deployment['schema'] == 'NEW_A_HOST_VERIFIED_DEPLOYMENT_V1',
-               'transition requires the actual normal deployed Worker version')
+    deployment = checked_normal_deployment(source, target, deployment_reader)
     ca.require(callable(decision_reader), 'independent host transition review required')
     review = ca.checked_decision(decision_reader(owner['message_id']), owner, source, target, DECISION)
     expected = dict(previous_acceptance=plan['prior_acceptance'],
@@ -179,8 +197,8 @@ def _prepare(repo, plan, *, primary_reader, measurement_reader, raw_reader,
                and review.get('existing_access_policy_preserved') is True,
                'transition review is not bound to the predecessor, closure and current version')
     measurements = release.checked_measurements(plan, measurement_reader, raw_reader, deployment)
-    latest = release.checked_deployment(source, target, deployment_reader)
-    ca.require(release.same_deployment(deployment, latest), 'normal deployment changed during preparation')
+    latest = checked_normal_deployment(source, target, deployment_reader)
+    ca.require(same_normal_deployment(deployment, latest), 'normal deployment changed during preparation')
 
     ca.verify_sources(repo, plan['auth_source_hashes'])
     ca.require(ca.head(repo) == source and ca.target(repo) == target and ca.now() < until
@@ -213,10 +231,8 @@ def _review_binding(transition, history, record, completed_at):
     review = ca.checked_decision(transition['host_review'], record['owner_message'],
                                  record['source_commit'], record['target'], DECISION)
     closure = validate_closure(transition['closure'], review['finite_admission'], history['finite_record'])
-    deployment = release.checked_deployment(record['source_commit'], record['target'],
+    deployment = checked_normal_deployment(record['source_commit'], record['target'],
                                             lambda: transition['deployment'])
-    ca.require(deployment['schema'] == 'NEW_A_HOST_VERIFIED_DEPLOYMENT_V1',
-               'completed transition requires the normal deployed Worker')
     old = history['previous_record']
     expected = dict(previous_acceptance=history['historical']['acceptance'],
                     finite_admission=review['finite_admission'],
@@ -374,8 +390,8 @@ def apply(repo, plan, issued, *, preflight, primary_reader, measurement_reader,
                       previous_acceptance=plan['prior_acceptance'], source_commit=record['source_commit'],
                       applied_at=applied_at, same_operation_replay=False)
         verify_application(repo, record, grant, candidate, folder, result, claim)
-        latest_deployment = release.checked_deployment(record['source_commit'], record['target'], deployment_reader)
-        ca.require(release.same_deployment(deployment, latest_deployment),
+        latest_deployment = checked_normal_deployment(record['source_commit'], record['target'], deployment_reader)
+        ca.require(same_normal_deployment(deployment, latest_deployment),
                    'normal deployment changed before transition replace')
         ca.require(ca.validate_record(repo, issued['acceptance']) == record
                    and file_sha(activation) == expected_sha and time_remaining()
@@ -390,3 +406,44 @@ def apply(repo, plan, issued, *, preflight, primary_reader, measurement_reader,
         for lock in reversed(held):
             if lock.exists() and lock.read_text() == grant_id:
                 lock.unlink()
+
+
+def ordinary_runtime_release(repo):
+    """Read the exact code-only release approved by a completed ordinary transition."""
+    from .acceptance import validate_activation
+
+    repo = Path(repo).resolve()
+    activation = private_root(repo) / 'activation.json'
+    original_sha = file_sha(activation)
+    value = read(activation)
+    application = value.get('owner_acceptance', {}).get('application_id')
+    if value.get('operational_admission') is not None or not application:
+        return None
+    ca.require(re.fullmatch(r'[a-f0-9]{64}', str(application)), 'invalid ordinary approval application identity')
+    folder = ca.root(repo) / 'applications' / application
+    ca.require(folder.resolve() == folder, 'ordinary approval application leaves private root')
+    completed = read(folder / 'completed.json')
+    if completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1':
+        return None
+    ca.require(completed.get('schema') == APPLICATION_SCHEMA, 'unrecognized ordinary approval application')
+    validate_activation(value, repo)
+    audit = folder / 'transition.json'
+    deployment = read(audit)['deployment']
+    source = ca.head(repo)
+    target = ca.target(repo)
+    checked_normal_deployment(source, target, lambda: deployment)
+    ca.require(file_sha(activation) == original_sha == completed['after_sha256']
+               and file_sha(audit) == completed['transition_sha256'],
+               'ordinary activation or deployment audit changed during readback')
+    return dict(
+        schema=RUNTIME_RELEASE_SCHEMA, activation_sha256=original_sha, source_commit=source,
+        worker=target['service'], database=target['database_name'],
+        **{key: deployment[key]
+           for key in ('version_id', 'build_input_sha256', 'policy_sha256', 'ci_run_id', 'tag')},
+    )
+
+
+if __name__ == '__main__':
+    if sys.argv[1:] != ['inspect-worker']:
+        raise SystemExit('usage: python -m weak_early_beta.new_a.continuing_transition inspect-worker')
+    print(encode(ordinary_runtime_release(Path.cwd())))

@@ -118,6 +118,8 @@ class ContinuingTransitionTests(unittest.TestCase):
             target=self.owner.target, version_id=self.version, deployment_succeeded=True,
             deployed_at='2026-11-19T07:25:00Z', observed_at='2026-11-19T07:30:00Z',
             raw_receipt_sha256='a'*64, synthetic=False, platform_signature_claimed=False,
+            build_input_sha256='1'*64, policy_sha256='2'*64, ci_run_id=1234,
+            tag='cloud-deploy-transition-fixture',
         )
         receipts = {'terminal_runner': 'b' * 64, 'independent_readback': 'c' * 64}
         self.closure = dict(
@@ -251,6 +253,12 @@ class ContinuingTransitionTests(unittest.TestCase):
         self.finite_backup.write_bytes(self.finite_backup.read_bytes() + b' ')
         self.rejects_without_mutation('historical activation backup differs')
 
+    def test_transition_requires_exact_runtime_build_and_policy(self):
+        missing = self.deployment.pop('build_input_sha256')
+        self.rejects_without_mutation('deployment build, policy or workflow identity')
+        self.deployment['build_input_sha256'] = missing
+        observations = iter([self.deployment, {**self.deployment, 'policy_sha256': '3'*64}])
+        self.rejects_without_mutation('normal deployment changed', deployment_reader=lambda: next(observations))
 
     def test_opt_in_apply_preserves_history_and_enables_ordinary_validation(self):
         issued = self.ordinary_issue()
@@ -272,11 +280,20 @@ class ContinuingTransitionTests(unittest.TestCase):
             for file in (private / 'continuing-acceptance/applications').rglob('original.json')
         ))
         self.assertIs(validate_activation(value, self.repo), value)
+        runtime_release = transition.ordinary_runtime_release(self.repo)
+        self.assertEqual(runtime_release['schema'], transition.RUNTIME_RELEASE_SCHEMA)
+        self.assertEqual(runtime_release['source_commit'], self.current)
+        self.assertEqual(runtime_release['version_id'], self.version)
+        self.assertEqual(runtime_release['build_input_sha256'], self.deployment['build_input_sha256'])
+        self.assertEqual(runtime_release['policy_sha256'], self.deployment['policy_sha256'])
+        self.assertEqual(runtime_release['ci_run_id'], self.deployment['ci_run_id'])
         self.assertTrue(self.apply(issued)['same_operation_replay'])
         applied = self.owner.activation.read_bytes()
         self.owner.activation.write_bytes(applied + b' ')
         with self.assertRaisesRegex(ValueError, 'completed transition activation changed'):
             self.apply(issued)
+        with self.assertRaisesRegex(ValueError, 'audit or activation changed'):
+            transition.ordinary_runtime_release(self.repo)
         self.owner.activation.write_bytes(applied)
         old, _ = acceptance.load_reference(self.repo, self.prior['acceptance'], 'records')
         revocation = acceptance.root(self.repo) / 'revocations' / (old.stem + '.json')

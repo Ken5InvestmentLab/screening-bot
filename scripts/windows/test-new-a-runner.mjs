@@ -8,6 +8,7 @@ import vm from 'node:vm';
 import { isDeepStrictEqual } from 'node:util';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { verifyAcceptedWorker } from './weak-early-beta-daily-runner.mjs';
 import taskRoute from './new-a-task-route.cjs';
 const HERE=path.dirname(fileURLToPath(import.meta.url)),ROOT=path.resolve(HERE,'../..');
 const source=fs.readFileSync(path.join(HERE,'weak-early-beta-daily-runner.mjs'),'utf8');
@@ -19,10 +20,18 @@ const privateBase=path.join(ROOT,'.cache/new-a-runner-tests');fs.mkdirSync(priva
 const receipts=[];
 const write=(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,JSON.stringify(v));};
 function fixture(){const repo=fs.mkdtempSync(path.join(privateBase,'case-')),runtime=path.join(repo,'.cache/runtime');fs.mkdirSync(runtime,{recursive:true});fs.mkdirSync(path.join(repo,'weak-early-beta-gate'));write(path.join(repo,'weak-early-beta-gate/wrangler.jsonc'),{name:'tentei-kyokuchi-cloud'});return{repo,runtime};}
-export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true}={}){
+const ordinaryFixture = (head = 'f'.repeat(40)) => ({
+ schema: 'NEW_A_ORDINARY_RUNTIME_RELEASE_V1', source_commit: head,
+ worker: 'tentei-kyokuchi-cloud', database: 'tentei-cloud-settings',
+ version_id: '00000000-0000-4000-8000-000000000019',
+ activation_sha256: '1'.repeat(64), build_input_sha256: '2'.repeat(64), policy_sha256: '3'.repeat(64),
+ tag: 'cloud-deploy-transition-fixture', ci_run_id: 1234,
+});
+export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nativeInspector=null,dateOverride=null,detected=0,fundamentalOK=true,approvedWorker=null,failApprovedAt=null}={}){
  const {repo,runtime}=fixture(),today=dateOverride||'2026-11-13',head='f'.repeat(40),calls=[];let sent=false;
  const config={repoPath:repo,runtimeDir:runtime,nodePath:'FAKE_NODE_NO_EXEC',pythonPath:'FAKE_PYTHON_NO_EXEC',npmPath:'FAKE_NPM_NO_EXEC',ghPath:'FAKE_GH_NO_EXEC',date:today};
  const local=path.join(repo,'.cache/weak_early_beta/new-a-private');fs.mkdirSync(local,{recursive:true});
+ if(approvedWorker)write(path.join(local,'activation.json'),{owner_acceptance:{application_id:'4'.repeat(64)}});
  let metadata={identity:'NEW_A_CLOUD_DAILY_V1',strategy:'A_BASE',entry:'new-a-verified-daily-v1',latest_session:today,selector_rows_latest:detected,detection_executed:true,source_version:'a'.repeat(64),snapshot_sha256:'b'.repeat(64),source_sha256:'c'.repeat(64),dry_run:false};
  if(process.env.NEW_A_REAL_E2E_RECEIPT){const proof=JSON.parse(fs.readFileSync(process.env.NEW_A_REAL_E2E_RECEIPT,'utf8'));assert.equal(proof.passed,true);const bundle=JSON.parse(fs.readFileSync(path.join(proof.private_bundle_directory,'receipt.json'),'utf8'));metadata={...metadata,source_version:bundle.source_version,snapshot_sha256:proof.snapshot_sha256,source_sha256:proof.source_sha256};}
  // No external process is ever created. Optional real receipt is injected by tests below as metadata only.
@@ -40,6 +49,12 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
   networkFailureDetail:()=>null,waitForNetworkCapacity:async()=>({ok:true,synthetic:true}),waitInShortChunks:async()=>{},verifiedDetectionCache:async()=>({sha256:metadata.source_sha256}),
   npmInvocation:()=>({exe:'FAKE_NPM_NO_EXEC',args:['run','check']}),requireRemoteHead:async()=>head,
   waitForTagWorkflow:async({headSha,tag,listRuns})=>{const runs=await listRuns();assert.equal(runs[0].headSha,headSha);assert.equal(runs[0].headBranch,tag);return runs[0];},verifyLiveWorker:async()=>({synthetic:true,healthOnly:true}),
+  verifyAcceptedWorker:async(release,source)=>{
+   assert.deepEqual(JSON.parse(JSON.stringify(release)),approvedWorker);assert.equal(source,head);
+   calls.push({args:['verify-approved-worker']});
+   if(failApprovedAt===calls.filter(call=>call.args[0]==='verify-approved-worker').length)throw Error('synthetic worker drift');
+   return {sourceCommit:source,versionId:release.version_id};
+  },
   RESEARCH_BRANCH:'research/weak-early-beta',GITHUB_REPOSITORY:'Ken5InvestmentLab/screening-bot',DEPLOY_WORKFLOW:'weak-early-beta-report-deploy.yml',
   run:async(...args)=>context.requireOk(...args),
   requireOk:async(exe,args,options)=>{
@@ -53,6 +68,7 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
    if(exe==='FAKE_GH_NO_EXEC')return{code:0,stdout:args[0]==='run'?JSON.stringify(args.includes('--status')?[]:[{headSha:head,headBranch:context.lastTag,status:'completed',conclusion:'success'}]):'',stderr:''};
    if(exe==='FAKE_NPM_NO_EXEC')return{code:0,stdout:'local checks mocked',stderr:''};
    assert.equal(exe,'FAKE_PYTHON_NO_EXEC');
+   if(args.includes('inspect-worker'))return{code:0,stdout:JSON.stringify(approvedWorker),stderr:''};
    if(args[1]==='weak_early_beta.new_a.native_recovery'){
     const active=JSON.parse(fs.readFileSync(path.join(runtime,'daily-latest.json'),'utf8'));
     assert.equal(args[7],active.startedAt,'bind inspector to the newly written live progress, not the old terminal latest');
@@ -110,6 +126,60 @@ test('Health success alone cannot complete owner publication or trigger notify',
 });
 test('Existing notification preview-send-reconcile ordering is kept with synthetic callbacks',async()=>{
  const f=runnerFixture({pending:1});assert.equal((await f.run()).ok,true);const notify=f.calls.filter(c=>c.args.includes('weak_early_beta.new_a.cli')&&c.args.includes('notify'));assert.equal(notify.length,3);assert(notify[0].args.includes('--dry-run'));assert(!notify[1].args.includes('--dry-run'));assert(notify[2].args.includes('--dry-run'));receipts.push({case:'new_a_notify_order',passed:true,realExternalCalls:0});
+});
+
+test('Transition-approved daily work reuses the exact checked Worker before publication and send',async()=>{
+ const approvedWorker=ordinaryFixture(),f=runnerFixture({approvedWorker,pending:1});
+ const result=await f.run();
+ assert.equal(result.ok,true);
+ assert.equal(result.deployment.reusedApprovedCodeOnly,true);
+ assert.equal(result.deployment.versionId,approvedWorker.version_id);
+ assert.equal(result.deployment.run.databaseId,approvedWorker.ci_run_id);
+ assert(!f.calls.some(({args})=>args[0]==='tag'||args[0]==='push'));
+ const probes=f.calls.flatMap(({args},i)=>args[0]==='verify-approved-worker'?[i]:[]);
+ const firstStarted=f.calls.findIndex(({args})=>args.includes('system-log')&&args.includes('started'));
+ const publish=f.calls.findIndex(({args})=>args.includes('publish'));
+ const sent=f.calls.findIndex(({args})=>args.includes('notify')&&!args.includes('--dry-run'));
+ assert.equal(probes.length,4);
+ assert(probes[0]<firstStarted&&probes[2]<publish&&publish<probes[3]&&probes[3]<sent);
+});
+
+test('A changed approved Worker stops before detection or D1 and results delivery',async()=>{
+ for(const [failApprovedAt,stage] of [[1,'approved-worker-preflight'],[3,'live-verification'],[4,'notification']]){
+  const f=runnerFixture({approvedWorker:ordinaryFixture(),pending:1,failApprovedAt});
+  const result=await f.run();
+  assert.equal(result.ok,false);assert.equal(result.stage,stage);assert.match(result.error,/synthetic worker drift/);
+  assert(!f.calls.some(({args})=>args[0]==='tag'||args[0]==='push'||args.includes('notify')&&!args.includes('--dry-run')));
+  if(failApprovedAt<4)assert(!f.calls.some(({args})=>args.includes('publish')));
+  if(failApprovedAt===1)assert(!f.calls.some(({args})=>args.includes('system-log')||args.includes('daily')));
+ }
+});
+
+test('Approved Worker probe verifies exact origin, source, version, build, policy and fresh challenge',async()=>{
+ const release=ordinaryFixture();
+ const makeFetch=overrides=>async(url,options)=>{
+  assert.equal(options.redirect,'error');
+  const address=new URL(url),nonce=address.searchParams.get('new_a_probe');
+  assert.equal(address.origin,'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev');
+  assert.equal(address.pathname,'/healthz');assert.match(nonce,/^[a-f0-9]{64}$/);
+  const version={id:release.version_id,tag:release.source_commit,timestamp:'2026-11-18T11:10:00Z'};
+  const active='4'.repeat(64);
+  const target={worker:release.worker,database:release.database};
+  const identity=['NEW_A_OPERATIONAL_CHALLENGE_V1',nonce,target.worker,target.database,
+   version.id,version.tag,version.timestamp,release.source_commit,release.build_input_sha256];
+  const body={schema:'NEW_A_OPERATIONAL_READBACK_V1',nonce,target,version,source_commit:release.source_commit,
+   build_input_sha256:release.build_input_sha256,policy_sha256:release.policy_sha256,d1_active_sha256:active,
+   policy_challenge_sha256:hash(JSON.stringify([...identity,'policy',release.policy_sha256])),
+   d1_challenge_sha256:hash(JSON.stringify([...identity,'d1-active',active])),
+   owner_http_observed:false,authentication_probe:false,d1_writes:0,...overrides};
+  return {status:200,url,headers:new Headers({'cache-control':'no-store'}),json:async()=>body};
+ };
+ assert.equal((await verifyAcceptedWorker(release,release.source_commit,makeFetch())).versionId,release.version_id);
+ for(const mismatch of [{nonce:'0'.repeat(64)},{version:{id:'different'}},{build_input_sha256:'9'.repeat(64)},
+   {policy_sha256:'9'.repeat(64)},{policy_challenge_sha256:'9'.repeat(64)},{d1_writes:1}]){
+  await assert.rejects(verifyAcceptedWorker(release,release.source_commit,makeFetch(mismatch)),/drifted|challenge mismatch/);
+ }
+ await assert.rejects(verifyAcceptedWorker(release,'9'.repeat(40),makeFetch()),/no exact Worker and build identity/);
 });
 
 test('Native source recovery uses retained packets, one normal publication and no repeated completed run',async()=>{

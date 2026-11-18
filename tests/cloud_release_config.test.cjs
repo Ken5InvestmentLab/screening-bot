@@ -15,6 +15,7 @@ test('release preserves production access/D1 and excludes previews and broad del
     c => { c.vars.CLOUD_PUSH_MODE = 'members'; },
     c => { c.vars.CLOUD_PUSH_REGISTRATION_ENABLED = c.vars.CLOUD_PUSH_REGISTRATION_ENABLED === 'true' ? 'false' : 'true'; },
     c => { c.vars.CLOUD_PUSH_SCHEDULER_ENABLED = 'true'; },
+    c => { c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'true'; },
     c => { c.vars.DISCORD_ALLOWED_ROLE_IDS = ''; },
     c => { c.assets.run_worker_first = false; },
   ]) {
@@ -48,6 +49,60 @@ test('personal manual release requires managed role/public key and keeps runtime
   off.vars.CLOUD_PUSH_MODE = 'disabled'; off.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'false';
   verifyReleaseConfig(off);
 });
+
+function ownerProfile(mode, scheduled) {
+  const owner = structuredClone(config);
+  owner.vars.CLOUD_PUSH_MODE = mode;
+  owner.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'true';
+  owner.vars.CLOUD_PUSH_AUDIENCE = 'paid';
+  owner.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = String(scheduled);
+  return owner;
+}
+
+test('owner registration release is paid-only, sending OFF and has no scheduler', async () => {
+  const { verifyReleaseConfig } = await import('../weak-early-beta-gate/scripts/verify-release-config.mjs');
+  const owner = ownerProfile('new_a_owner_registration', false);
+  verifyReleaseConfig(owner);
+  for (const mutate of [
+    c => { c.vars.CLOUD_PUSH_AUDIENCE = 'authenticated'; },
+    c => { c.vars.CLOUD_PUSH_REGISTRATION_ENABLED = 'false'; },
+    c => { delete c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED; },
+    c => { c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'true'; },
+    c => { c.vars.CLOUD_PUSH_TEST_RUN_ID = 'fixture-only-forbidden'; },
+    c => { c.triggers = { crons: ['0 23 * * *'] }; },
+    c => { c.env.preview.vars.CLOUD_PUSH_MODE = 'new_a_owner_registration'; },
+  ]) {
+    const changed = structuredClone(owner); mutate(changed);
+    assert.throws(() => verifyReleaseConfig(changed));
+  }
+});
+
+test('scheduled owner release accepts only both New A crons and keeps fixed identity outside Git', async () => {
+  const { verifyReleaseConfig } = await import('../weak-early-beta-gate/scripts/verify-release-config.mjs');
+  const owner = ownerProfile('new_a_owner_scheduled', true);
+  owner.triggers = { crons: ['0 23 * * *', '*/5 8-14 * * *'] };
+  verifyReleaseConfig(owner);
+  for (const mutate of [
+    c => { c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'false'; },
+    c => { c.vars.CLOUD_PUSH_SCHEDULER_ENABLED = 'true'; },
+    c => { c.vars.CLOUD_VAPID_PRIVATE_KEY = 'fixture-only-forbidden'; },
+    c => { c.vars.CLOUD_PUSH_TEST_DISCORD_USER_ID = '123456789012345678'; },
+    c => { c.vars.CLOUD_PUSH_TEST_SUBSCRIPTION_ID = 'fixture-only-forbidden'; },
+    c => { c.vars.CLOUD_OWNER_ONLY_ENABLED = 'true'; },
+    c => { c.version_metadata = { binding: 'WRONG' }; },
+    c => { c.main = 'src/other.ts'; },
+    c => { c.triggers.crons = ['0 23 * * *']; },
+    c => { c.triggers.crons = ['0 23 * * *', '0 23 * * *']; },
+    c => { c.triggers.crons.push('0 8 * * *'); },
+    c => { c.env.preview.triggers = structuredClone(c.triggers); },
+    c => { c.env.preview.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'true'; },
+    c => { c.queues = { consumers: [{ queue: 'fixture-only-forbidden' }] }; },
+  ]) {
+    const changed = structuredClone(owner); mutate(changed);
+    assert.throws(() => verifyReleaseConfig(changed));
+  }
+});
+
 test('deployment does not rerun already applied production migrations', () => {
   const workflow = fs.readFileSync(path.join(__dirname, '../.github/workflows/weak-early-beta-report-deploy.yml'), 'utf8');
   const scripts = JSON.parse(fs.readFileSync(path.join(__dirname, '../weak-early-beta-gate/package.json'), 'utf8')).scripts;

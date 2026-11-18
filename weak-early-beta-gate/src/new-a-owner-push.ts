@@ -4,7 +4,8 @@ import { cloudMemberId, currentMembership } from "./cloud-api";
 import { bankBusinessDate } from "./cloud-canonical-feed";
 import { validatePreferences } from "./cloud-membership";
 import { readBackgroundDiscordRole, type BackgroundPushEnv } from "./cloud-push-dispatch";
-import { allowedEndpoint, sendPersonalPush, type PushSubscription, type encryptPushPayload } from "./cloud-web-push";
+import { allowedEndpoint, NEW_A_OWNER_SCHEDULED_MODE, ownerNoticeEnrollmentConfigured, sendNewAOwnerPush,
+  type PushSubscription, type encryptPushPayload } from "./cloud-web-push";
 import { digest, validateManifest } from "./new-a-private";
 import { readTrial } from "./new-a-preferences";
 
@@ -37,7 +38,8 @@ async function configuredOwner(env: Environment): Promise<Owner | null> {
   const subject = env.CLOUD_OWNER_DISCORD_ID?.trim();
   const member = env.CLOUD_PUSH_TEST_MEMBER_ID;
   const subscription = env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID;
-  if (env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase() !== "true" || String(env.CLOUD_PUSH_MODE) !== "personal_test" ||
+  if (!ownerNoticeEnrollmentConfigured(env) || String(env.CLOUD_PUSH_MODE) !== NEW_A_OWNER_SCHEDULED_MODE ||
+      String(env.CLOUD_PUSH_AUDIENCE) !== "paid" ||
       env.CLOUD_PUSH_MEMBERSHIP_POLICY !== "whop_managed_discord_role" || !env.CLOUD_DB ||
       !subject || !SNOWFLAKE.test(subject) || subject !== env.CLOUD_PUSH_TEST_DISCORD_USER_ID ||
       !member || member !== await cloudMemberId(subject) || !subscription || !UUID_V4.test(subscription)) return null;
@@ -206,7 +208,7 @@ export async function dispatchNewAOwnerPush(env: Environment, notice: Notice,
       }
       return transport(input, init);
     };
-    const result = await sendPersonalPush(env, owner.member, owner.subscription, device.device, payload, guardedTransport, fixture);
+    const result = await sendNewAOwnerPush(env, owner.member, owner.subscription, device.device, payload, guardedTransport, fixture);
     const received = finalHeld ? { status: "held" as const, reason: "final_qualification_changed" } : result;
     const status: ReceiptStatus = received.status === "disabled" ? "held" : received.status;
     const saved = await db.prepare(`UPDATE cloud_push_dispatch_receipts SET status=?,reason=?,updated_at=?

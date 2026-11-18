@@ -1,5 +1,7 @@
 // New-A routing only. The existing index owner gate and identity implementation inject context.
 import {cloudMemberId,type CloudEnv} from './cloud-api';
+import {DEFAULT_PREFERENCES,isObject} from './cloud-membership';
+import {ownerNoticeEnrollmentConfigured} from './cloud-web-push';
 import {readActiveManifest,readPrivatePart,PART_NAME,DATASET_ID} from './new-a-private';
 import {readTrial,saveTrial,validateTrial,validateView,type ViewPreferences} from './new-a-preferences';
 import {ownerFrame,FRAME_PATHS} from './research-a/frame.generated';
@@ -26,6 +28,52 @@ function matchesSaveBinding(key: CryptoKey, subject: string, revision: number, v
 const legacyData=/^\/(?:weak_early_beta_data_|report-interactions\.js|report-theme-init\.js|weak-early-beta-)|^\/(?:api\/research-a\/details|research-a\/details\.json)$/;
 export function isNewAPath(path:string):boolean{return FRAME_PATHS.includes(path)||path.startsWith('/api/cloud/new-a-finite/')||path.startsWith('/new-a-assets/')||legacyData.test(path)||path.startsWith('/report-assets/');}
 export function protectedReply(request:Request,status:number,value:unknown,json=true):Response{return new Response(request.method==='HEAD'?null:json?JSON.stringify(value):String(value),{status,headers:{...PRIVATE_HEADERS,'content-type':json?'application/json; charset=utf-8':'text/html; charset=utf-8'}});}
+
+async function ownerNotificationPreferences(request: Request, env: CloudEnv, subject: string): Promise<Response> {
+ const member = await cloudMemberId(subject);
+ const validOwner = /^[0-9]{17,20}$/.test(subject) && subject === env.CLOUD_OWNER_DISCORD_ID?.trim();
+ if (!validOwner) return protectedReply(request, 403, {error: 'owner_required'});
+ const available = ownerNoticeEnrollmentConfigured(env) && String(env.CLOUD_PUSH_AUDIENCE) === 'paid' &&
+  env.CLOUD_PUSH_MEMBERSHIP_POLICY === 'whop_managed_discord_role' && member === env.CLOUD_PUSH_TEST_MEMBER_ID;
+ const db = env.CLOUD_DB!;
+ const read = async () => {
+  const row = await db.prepare('SELECT preferences_json FROM cloud_member_preferences WHERE member_id=?')
+   .bind(member).first<{preferences_json: string}>();
+  if (!row) return DEFAULT_PREFERENCES.notifications;
+  const stored: unknown = JSON.parse(row.preferences_json);
+  if (!isObject(stored)) throw Error('invalid_notification_preferences');
+  const notifications = stored.notifications ?? {};
+  if (!isObject(notifications) || ['new_detection', 'reminder'].some(key =>
+      Object.hasOwn(notifications, key) && typeof notifications[key] !== 'boolean')) throw Error('invalid_notification_preferences');
+  return {new_detection: notifications.new_detection === true, reminder: notifications.reminder === true};
+ };
+ if (request.method === 'GET') return protectedReply(request, 200, {ok: true, notifications: await read(), available});
+ if (request.method !== 'PUT') return protectedReply(request, 405, {error: 'method_not_allowed'});
+ if (!available) return protectedReply(request, 503, {error: 'owner_notice_settings_unavailable'});
+ if (request.headers.get('origin') !== new URL(request.url).origin)
+  return protectedReply(request, 403, {error: 'origin_required'});
+ if (!(request.headers.get('content-type') ?? '').toLowerCase().startsWith('application/json'))
+  return protectedReply(request, 415, {error: 'json_required'});
+ const raw = await request.text();
+ if (new TextEncoder().encode(raw).byteLength > 1024) return protectedReply(request, 413, {error: 'request_too_large'});
+ let body: unknown;
+ try { body = JSON.parse(raw); } catch { return protectedReply(request, 400, {error: 'invalid_json'}); }
+ const notifications = isObject(body) && Object.keys(body).join(',') === 'notifications' ? body.notifications : null;
+ if (!isObject(notifications) || Object.keys(notifications).sort().join(',') !== 'new_detection,reminder' ||
+     typeof notifications.new_detection !== 'boolean' || typeof notifications.reminder !== 'boolean')
+  return protectedReply(request, 400, {error: 'invalid_notification_preferences'});
+ await read();
+ const patch = JSON.stringify({notifications});
+ const saved = await db.prepare(`INSERT INTO cloud_member_preferences(member_id,preferences_json,updated_at)
+  VALUES (?,?,?) ON CONFLICT(member_id) DO UPDATE SET
+  preferences_json=json_patch(cloud_member_preferences.preferences_json,?), updated_at=excluded.updated_at`)
+  .bind(member, JSON.stringify({...DEFAULT_PREFERENCES, notifications}), new Date().toISOString(), patch).run();
+ if (!saved.success || saved.meta.changes !== 1) return protectedReply(request, 503, {error: 'notification_save_failed'});
+ const confirmed = await read();
+ if (confirmed.new_detection !== notifications.new_detection || confirmed.reminder !== notifications.reminder)
+  return protectedReply(request, 409, {error: 'notification_preferences_changed'});
+ return protectedReply(request, 200, {ok: true, notifications: confirmed, available});
+}
 export function newAEarlyRefusal(request:Request):Response|null{
  const u=new URL(request.url),document=FRAME_PATHS.includes(u.pathname),read=['GET','HEAD'].includes(request.method);
  if((document||u.pathname==='/api/cloud/new-a-finite/access')&&!read)return protectedReply(request,405,{error:'method_not_allowed'});
@@ -74,6 +122,7 @@ export async function newACloudRoute(request:Request,env:CloudEnv,context:Truste
   }
   const part=/^input\/([^/]+)\/([^/]+)$/.exec(resource);
   if(part){if(!['GET','HEAD'].includes(request.method)||!DATASET_ID.test(part[1])||!PART_NAME.test(part[2]))return protectedReply(request,404,{error:'not_found'});const body=await readPrivatePart(env.CLOUD_DB,part[1],part[2]);return body===null?protectedReply(request,404,{error:'not_found'}):new Response(request.method==='HEAD'?null:body,{status:200,headers:{...PRIVATE_HEADERS,'content-type':'application/json; charset=utf-8'}});}
+  if(resource==='notification-preferences')return await ownerNotificationPreferences(request,env,context.subject);
   if(resource==='simulate')return protectedReply(request,409,{error:'owner_browser_worker_required'});
   if(resource!=='preferences')return protectedReply(request,404,{error:'not_found'});
   const member=await cloudMemberId(context.subject);

@@ -2,7 +2,7 @@ import { reportIdentity, reportSessionIdentity } from "./shared-report-gate";
 import { pushApi } from "./cloud-push";
 import { dispatchPersonalDeviceTest } from "./cloud-push-dispatch";
 import { evaluateNestedMembership } from "./cloud-whop-adapter";
-import type { PushConfig } from "./cloud-web-push";
+import { isNewAOwnerPushMode, type PushConfig } from "./cloud-web-push";
 import {
   DEFAULT_PREFERENCES, WHOP_API_VERSION, evaluateMembership, evaluateNotification,
   isObject, validatePreferences, notificationEligible,
@@ -157,6 +157,13 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     const identity = path === "/api/cloud/notifications/personal-test" || managedRoles
       ? await reportSessionIdentity(request, env) : await reportIdentity(request, env);
     if (!identity.subject) return json({ ok: false, reason: identity.reason }, identity.reason === "temporarily_unavailable" ? 503 : 401);
+    const ownerMode = isNewAOwnerPushMode(env.CLOUD_PUSH_MODE);
+    const ownerVerified = env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase() === "true" &&
+      /^[0-9]{17,20}$/.test(identity.subject) && identity.subject === env.CLOUD_OWNER_DISCORD_ID?.trim();
+    if (ownerMode && (!ownerVerified || !managedRoles || String(env.CLOUD_PUSH_AUDIENCE) !== "paid"))
+      return json({ ok: false, reason: "owner_notification_policy_required" }, 403);
+    if (ownerMode && path.startsWith("/api/cloud/notifications/"))
+      return json({ ok: false, reason: "legacy_notification_path_disabled" }, 403);
     if (!env.CLOUD_DB) return json({ ok: false, reason: "storage_unavailable", delivery_mode: "dry_run" }, 503);
     const memberId = await cloudMemberId(identity.subject);
     const freshMembership = (fresh: Awaited<ReturnType<typeof reportIdentity>>) => {
@@ -175,7 +182,7 @@ export async function cloudApi(request: Request, env: CloudEnv): Promise<Respons
     if (path === "/api/cloud/push-config" || path === "/api/cloud/push-subscriptions/device" ||
       (path === "/api/cloud/push-subscriptions" && request.method === "POST")) {
       const freshIdentity = request.method === "POST" || (path === "/api/cloud/push-config" && env.CLOUD_PUSH_MEMBERSHIP_POLICY === "whop_managed_discord_role") ? await reportIdentity(request, env, true) : identity;
-      return pushApi(request, env, { memberId, roleAuthorized: freshIdentity.discord_authorized,
+      return pushApi(request, env, { memberId, ownerVerified, roleAuthorized: freshIdentity.discord_authorized,
         membership: () => Promise.resolve(freshMembership(freshIdentity)) });
     }
     const preferences = await preferencesFor(env.CLOUD_DB, memberId);

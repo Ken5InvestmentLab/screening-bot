@@ -15,3 +15,20 @@
 <label class="filter-field"><span>一覧件数</span><select id="cloud-page-size"><option value="20">20件</option><option value="50">50件</option><option value="100">100件</option></select></label></div></div>
 <p id="cloud-settings-status" role="status"></p>
 <div class="settings-actions"><button id="cloud-research-reset" class="settings-secondary" type="button">試算方法をリセット</button><button id="cloud-settings-cancel" class="settings-secondary" type="button">キャンセル</button><button disabled id="cloud-settings-save" class="settings-primary" type="button">設定を保存</button></div></section>
+<section class="panel cloud-settings" id="new-a-notification-settings" aria-labelledby="new-a-notification-title" hidden>
+<h2 id="new-a-notification-title">プッシュ通知</h2>
+<p class="note">通知を受け取りたい端末で登録してください。</p>
+<div id="new-a-notification-device"></div>
+<button id="new-a-notification-register" class="settings-secondary" type="button" disabled>この端末を登録</button>
+<fieldset id="new-a-notification-opt-in" class="new-a-notification-options" disabled>
+<legend>受け取る通知</legend>
+<label><input id="new-a-notify-detection" type="checkbox"> 新しい検出</label>
+<label><input id="new-a-notify-reminder" type="checkbox"> 確定日の朝8時（日本時間）</label>
+<p class="note">選んだ確定日の朝8時にお知らせします。その日の価格はまだ確定していません。</p>
+</fieldset>
+<p id="new-a-notification-status" role="status"></p>
+<div class="settings-actions">
+<button id="new-a-notification-retry" class="settings-secondary" type="button" hidden>再試行</button>
+<button id="new-a-notification-save" class="settings-primary" type="button" disabled>通知設定を保存</button>
+</div>
+</section>

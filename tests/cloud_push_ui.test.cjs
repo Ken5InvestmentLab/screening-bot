@@ -101,3 +101,97 @@ test('approved free audience hides paid-only offer and enables registration, fai
  assert.equal(p.get('cloud-device-register'),undefined);assert.equal(p.get('cloud-notification-retry').hidden,false);
  assert.equal(p.get('cloud-notification-eligibility-status').textContent,'通知を利用できません。再試行してください。');
 });
+
+async function newASettings({available=true,originAllowed=true}={}){
+ const app={exports:{}};
+ vm.runInNewContext(fs.readFileSync(require.resolve('../weak-early-beta-gate/scripts/new-a-ui-source/assets/owner-notifications.js'),'utf8'),{module:app});
+ const {mount}=app.exports;
+ const elements=new Map(),listeners=new Map(),writes=[];
+ const state={permissions:0,subscriptionWrites:0,saved:{new_detection:false,reminder:false},registered:false,scriptLoads:0};
+ const element=()=>({hidden:false,disabled:false,checked:false,children:[],listeners:{},textContent:'',
+  set id(id){elements.set(id,this);},append(...nodes){this.children.push(...nodes);},prepend(...nodes){this.children.unshift(...nodes);},
+  addEventListener(name,callback){this.listeners[name]=callback;},setAttribute(){},focus(){},remove(){elements.delete('cloud-device-test');}});
+ for(const id of ['settings','device','register','opt-in','status','save','retry']) elements.set('new-a-notification-'+id,element());
+ for(const id of ['detection','reminder']) elements.set('new-a-notify-'+id,element());
+ const get=id=>elements.get(id),document={getElementById:get,createElement:element};
+ class CustomEvent {constructor(type,{detail}){this.type=type;this.detail=detail;}}
+ const window={CustomEvent,isSecureContext:true,PushManager:{},Notification:null,
+  addEventListener:(name,callback)=>listeners.set(name,callback),
+  dispatchEvent:event=>listeners.get(event.type)?.(event)};
+ const Notification={permission:'default',async requestPermission(){state.permissions++;this.permission='granted';return 'granted';}};
+ window.Notification=Notification;
+ const endpoint='https://fixture-provider.invalid/private-token';
+ const subscription={endpoint,toJSON:()=>({endpoint,keys:{p256dh:'synthetic',auth:'synthetic'}}),unsubscribe:async()=>true};
+ let browserSubscription=null;
+ const worker={pushManager:{getSubscription:async()=>browserSubscription,subscribe:async()=>browserSubscription=subscription}};
+ const config=()=>({ok:true,notification_eligible:true,membership:{status:'paid'},registration_available:originAllowed,
+  preparation_available:!originAllowed,public_key:'BA',allowed_origins:originAllowed?['https://fixture-provider.invalid']:[],
+  personal_test_available:true,personal_test_subscription_id:ownId,
+  devices:state.registered?[{subscription_id:ownId,endpoint_hash:createHash('sha256').update(endpoint).digest('hex')}]:[]});
+ const fetch=async(path,init)=>{
+  if(init.method!=='GET')writes.push([path,init.method,JSON.parse(init.body)]);
+  if(path==='/api/cloud/new-a-finite/notification-preferences'){
+   if(init.method==='PUT')state.saved=JSON.parse(init.body).notifications;
+   return Response.json({ok:true,available,notifications:state.saved});
+  }
+  if(path==='/api/cloud/push-config') return Response.json(config());
+  if(path==='/api/cloud/push-subscriptions'&&init.method==='POST'){
+   state.registered=true;
+   state.subscriptionWrites++;
+   return Response.json({ok:true,subscription_id:ownId});
+  }
+  assert.fail('Unexpected request '+path);
+ };
+ const loadPush=async()=>{
+  state.scriptLoads++;
+  vm.runInNewContext(source,{document,window,CustomEvent,Notification,navigator:{
+   serviceWorker:{getRegistration:async()=>worker,register:async()=>worker,ready:Promise.resolve(worker)}
+  },fetch,Response,URL,crypto:webcrypto,TextEncoder,Uint8Array,atob});
+ };
+ await mount({document,window,fetch,loadPush});
+ if(available){
+  const deadline=Date.now()+1000,register=get('new-a-notification-register');
+  while(register.disabled&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,5));
+  assert.equal(register.disabled,false,'Initial push qualification must finish before enrollment.');
+ }
+ return {state,writes,get,click:async id=>get('new-a-notification-'+id).listeners.click(),
+  change:(kind,checked)=>{get('new-a-notify-'+kind).checked=checked;get('new-a-notification-opt-in').listeners.change();}};
+}
+
+test('New A enrolls only after explicit registration and saves just the two scoped opt-ins',async()=>{
+ const {state,writes,get,click,change}=await newASettings();
+ assert.equal(state.permissions,0);
+ assert.deepEqual(writes,[]);
+ assert.equal(get('cloud-device-test'),undefined);
+ change('detection',true);
+ await click('save');
+ assert.deepEqual(writes,[]);
+ assert.equal(state.permissions,0);
+ await click('register');
+ assert.equal(state.permissions,1);
+ assert.equal(state.subscriptionWrites,1);
+ assert.equal(state.saved.new_detection,false);
+ assert.equal(get('cloud-device-test'),undefined);
+ await click('save');
+ assert.deepEqual(writes.at(-1),['/api/cloud/new-a-finite/notification-preferences','PUT',{notifications:{new_detection:true,reminder:false}}]);
+ assert.equal(state.saved.new_detection,true);
+ change('detection',false);
+ await click('save');
+ assert.equal(state.saved.new_detection,false);
+ assert.equal(state.registered,true);
+ assert.equal(state.subscriptionWrites,1);
+});
+
+test('New A keeps unavailable modes read-only and reports only the unapproved provider origin',async()=>{
+ const disabled=await newASettings({available:false});
+ assert.equal(disabled.state.scriptLoads,0);
+ assert.equal(disabled.get('new-a-notification-register').disabled,true);
+ assert.equal(disabled.get('new-a-notification-opt-in').disabled,true);
+ assert.deepEqual(disabled.writes,[]);
+ const prepared=await newASettings({originAllowed:false});
+ await prepared.click('register');
+ assert.equal(prepared.state.permissions,1);
+ assert.equal(prepared.state.registered,false);
+ assert.equal(prepared.get('cloud-device-provider-origin').textContent,'通知サービスのorigin: https://fixture-provider.invalid');
+ assert.deepEqual(prepared.writes,[]);
+});

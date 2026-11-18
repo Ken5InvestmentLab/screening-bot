@@ -101,13 +101,14 @@
  if(typeof module!=='undefined'&&module.exports){module.exports=api;return;}
  global.AOwnerPresentation=api;
  if(typeof document==='undefined')return;
- const script=name=>new Promise((resolve,reject)=>{
+ const scriptAt=path=>new Promise((resolve,reject)=>{
   const node=document.createElement('script');
-  node.src='/new-a-assets/'+name;
+  node.src=path;
   node.onload=resolve;
   node.onerror=()=>reject(Error('asset_unavailable'));
   document.head.append(node);
  });
+ const script=name=>scriptAt('/new-a-assets/'+name);
  const menu=document.querySelector('.cloud-more-menu');
  document.addEventListener('keydown',event=>{
   if(event.key==='Escape'&&menu?.open){menu.open=false;menu.querySelector('summary')?.focus();}
@@ -162,6 +163,17 @@
   global.AFiniteBrowser=global.AFiniteBrowserTransport.create({fetch:network,pinnedManifest:data.manifest,createWorker:()=>new Worker('/new-a-assets/new-a-finite-worker.generated.js')});
   global.AFiniteTransport=global.AFiniteBrowser.transport;
   for(const name of ['finite-controller.js','new-a-legacy-interactions.generated.js','finite-dom.js'])await script(name);
+  if(page==='settings'&&!global.AFiniteRevoked){
+   try{
+    await script('owner-notifications.js');
+    await global.AOwnerNotifications.mount({document,window:global,fetch:network,loadPush:()=>scriptAt('/weak-early-beta-push.js')});
+   }catch(_){
+    if(!global.AFiniteRevoked){
+     document.getElementById('new-a-notification-settings').hidden=false;
+     document.getElementById('new-a-notification-status').textContent='通知設定を読み込めませんでした。';
+    }
+   }
+  }
  }
  start().catch(()=>{
   global.AFiniteBrowser?.clear();

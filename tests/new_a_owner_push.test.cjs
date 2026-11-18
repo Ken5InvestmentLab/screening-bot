@@ -77,9 +77,9 @@ async function setup(t, { morning = false } = {}) {
   sqlite.prepare('INSERT INTO cloud_push_subscription_metadata VALUES (?,?,?,NULL,?)')
     .run(deviceId, sha(endpoint), publicKey, 'fixture');
   const env = { CLOUD_DB: db, CLOUD_NEW_A_OWNER_PUSH_ENABLED: 'true', CLOUD_OWNER_ONLY_ENABLED: 'true',
-    CLOUD_OWNER_DISCORD_ID: subject, CLOUD_PUSH_MODE: 'personal_test', CLOUD_PUSH_TEST_DISCORD_USER_ID: subject,
+    CLOUD_OWNER_DISCORD_ID: subject, CLOUD_PUSH_MODE: 'new_a_owner_scheduled', CLOUD_PUSH_REGISTRATION_ENABLED: 'true', CLOUD_PUSH_TEST_DISCORD_USER_ID: subject,
     CLOUD_PUSH_TEST_MEMBER_ID: member, CLOUD_PUSH_TEST_SUBSCRIPTION_ID: deviceId, CLOUD_DISCORD_BOT_TOKEN: 'fixture-only',
-    CLOUD_PUSH_MEMBERSHIP_POLICY: 'whop_managed_discord_role', CLOUD_PUSH_AUDIENCE: 'authenticated',
+    CLOUD_PUSH_MEMBERSHIP_POLICY: 'whop_managed_discord_role', CLOUD_PUSH_AUDIENCE: 'paid',
     DISCORD_GUILD_ID: guild, DISCORD_ALLOWED_ROLE_IDS: role, CLOUD_PUSH_ALLOWED_ORIGINS: new URL(endpoint).origin,
     CLOUD_VAPID_PUBLIC_KEY: publicKey, CLOUD_VAPID_PRIVATE_KEY: privateKey, CLOUD_VAPID_SUBJECT: 'https://cloud.example.invalid/' };
   const kind = morning ? 'EVALUATION_DAY_MORNING' : 'WATCH_TO_SIMULATED_HOLDING';

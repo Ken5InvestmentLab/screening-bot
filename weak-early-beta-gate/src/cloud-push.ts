@@ -1,7 +1,8 @@
 import { isObject, notificationEligible, type MembershipDecision } from "./cloud-membership";
-import { personalPreparationConfigured, registrationConfigured, validateSubscription, type PushConfig } from "./cloud-web-push";
+import { isNewAOwnerPushMode, ownerNoticeEnrollmentConfigured, personalPreparationConfigured,
+  registrationConfigured, validateSubscription, type PushConfig } from "./cloud-web-push";
 type Environment = PushConfig & { CLOUD_DB?: D1Database; CLOUD_PUSH_AUDIENCE?: string };
-type Dependencies = { memberId: string; roleAuthorized: boolean; membership: () => Promise<MembershipDecision> };
+type Dependencies = { memberId: string; ownerVerified?: boolean; roleAuthorized: boolean; membership: () => Promise<MembershipDecision> };
 const json = (body: unknown, status = 200) => Response.json(body, { status, headers: {
   "cache-control": "private, no-store", vary: "Cookie", "x-content-type-options": "nosniff",
   "content-security-policy": "default-src 'none'; frame-ancestors 'none'", "x-robots-tag": "noindex, nofollow, noarchive",
@@ -14,13 +15,18 @@ export async function pushApi(request: Request, env: Environment, context: Depen
   const db = env.CLOUD_DB;
   if (!db) return json({ ok: false, reason: "storage_unavailable" }, 503);
   const path = new URL(request.url).pathname;
+  const ownerMode = isNewAOwnerPushMode(env.CLOUD_PUSH_MODE);
+  const ownerEnrollment = ownerNoticeEnrollmentConfigured(env) && context.ownerVerified === true &&
+    context.memberId === env.CLOUD_PUSH_TEST_MEMBER_ID && env.CLOUD_PUSH_AUDIENCE === "paid";
+  if (ownerMode && !ownerEnrollment) return json({ ok: false, reason: "owner_notification_policy_required" }, 403);
   // A separately approved personal-test configuration must not open device
   // registration for other paid members. Revocation remains available to owners.
   const personalMemberAllowed = env.CLOUD_PUSH_MODE !== "personal_test" ||
     (!!env.CLOUD_PUSH_TEST_MEMBER_ID && context.memberId === env.CLOUD_PUSH_TEST_MEMBER_ID);
   if (path === "/api/cloud/push-config") {
     const membership = await context.membership();
-    const eligible = notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE) && (context.roleAuthorized || env.CLOUD_PUSH_AUDIENCE === "authenticated");
+    const eligible = ownerMode ? context.roleAuthorized && membership.status === "paid"
+      : notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE) && (context.roleAuthorized || env.CLOUD_PUSH_AUDIENCE === "authenticated");
     const ready = eligible && personalMemberAllowed && registrationConfigured(env);
     const preparation = eligible && personalMemberAllowed && personalPreparationConfigured(env);
     const rows = await db.prepare(`SELECT s.subscription_id, m.endpoint_hash FROM cloud_push_subscriptions s
@@ -31,6 +37,7 @@ export async function pushApi(request: Request, env: Environment, context: Depen
     const testReady = ready && env.CLOUD_PUSH_MODE === "personal_test" && /^[A-Za-z0-9_-]{16,64}$/.test(env.CLOUD_PUSH_TEST_RUN_ID ?? "") &&
       (rows.results ?? []).some(device => device.subscription_id === env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID);
     return json({ ok: true, registration_available: ready, preparation_available: preparation, delivery_available: false,
+      ...(ownerMode ? { owner_enrollment_available: ready || preparation } : {}),
       personal_test_available: testReady, ...(testReady ? { personal_test_subscription_id: env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID } : {}),
       reason: ready ? "device_registration_only" : !personalMemberAllowed ? "personal_test_member_required" : !eligible ? membership.reason : "push_unavailable", membership, notification_eligible: eligible,
       ...(ready || preparation ? { public_key: env.CLOUD_VAPID_PUBLIC_KEY,
@@ -57,7 +64,9 @@ export async function pushApi(request: Request, env: Environment, context: Depen
   if (!registrationConfigured(env)) return json({ ok: false, reason: "registration_disabled" }, 503);
   if (!personalMemberAllowed) return json({ ok: false, reason: "personal_test_member_required" }, 403);
   const membership = await context.membership();
-  if (!notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE) || (!context.roleAuthorized && env.CLOUD_PUSH_AUDIENCE !== "authenticated")) return json({ ok: false, reason: "notification_qualification_required", membership }, 403);
+  const eligible = ownerMode ? context.roleAuthorized && membership.status === "paid"
+    : notificationEligible(membership, env.CLOUD_PUSH_AUDIENCE) && (context.roleAuthorized || env.CLOUD_PUSH_AUDIENCE === "authenticated");
+  if (!eligible) return json({ ok: false, reason: "notification_qualification_required", membership }, 403);
   if (!isObject(input) || Object.keys(input).sort().join(",") !== "opt_in,subscription" || input.opt_in !== true) return json({ ok: false, reason: "explicit_opt_in_required" }, 400);
   let subscription;
   try { subscription = await validateSubscription(input.subscription, env); }

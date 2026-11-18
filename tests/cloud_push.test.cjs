@@ -40,6 +40,20 @@ test('default-off, wrong member and wrong device never encrypt or call transport
  for(const [env,member,device] of [[{},'mine','my-device'],[config,'other','my-device'],[config,'mine','other'],[{...config,CLOUD_PUSH_MODE:'members'},'mine','my-device']])assert.equal((await cryptoModule.sendPersonalPush(env,member,device,subscription,'test',transport)).status,'disabled');
  assert.equal(calls,0);
 });
+test('owner registration-only mode cannot send, and scheduled owner mode cannot use the legacy manual sender',async()=>{
+ let calls=0;
+ const transport=async()=>{calls++;return new Response('',{status:201});};
+ const member='cloud_'+'a'.repeat(64);
+ const base={...config,CLOUD_PUSH_TEST_MEMBER_ID:member,CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_NEW_A_OWNER_PUSH_ENABLED:'true'};
+ const register={...base,CLOUD_PUSH_MODE:'new_a_owner_registration'};
+ const scheduled={...base,CLOUD_PUSH_MODE:'new_a_owner_scheduled'};
+ for(const env of [register,scheduled])assert.equal((await cryptoModule.sendPersonalPush(env,member,'my-device',subscription,'fixture',transport)).status,'disabled');
+ assert.equal((await cryptoModule.sendNewAOwnerPush(register,member,'my-device',subscription,'fixture',transport)).status,'disabled');
+ assert.equal((await cryptoModule.sendNewAOwnerPush({...scheduled,CLOUD_NEW_A_OWNER_PUSH_ENABLED:'false'},member,'my-device',subscription,'fixture',transport)).status,'disabled');
+ assert.equal(calls,0);
+ assert.equal((await cryptoModule.sendNewAOwnerPush(scheduled,member,'my-device',subscription,'fixture',transport,await fixture())).status,'accepted');
+ assert.equal(calls,1);
+});
 for(const [http,status] of [[201,'accepted'],[404,'expired'],[410,'expired'],[429,'rejected'],[503,'rejected']])test('personal sender records HTTP '+http+' as '+status+' without claiming arrival',async()=>{
  let calls=0;const result=await cryptoModule.sendPersonalPush(config,'mine','my-device',subscription,'本人端末テスト',async(url,init)=>{
  calls++;assert.equal(url,subscription.endpoint);assert.equal(init.redirect,'error');assert.equal(init.headers['Content-Encoding'],'aes128gcm');assert.equal(init.headers.TTL,'300');assert.ok(init.body.length>86);return new Response('',{status:http});},await fixture());
@@ -63,6 +77,22 @@ const push=modules({cryptoMock:noGenerate}).load('./cloud-push');
 test('config exposes only own opaque device list; disabled mode excludes even public key',async()=>{
  const db=database(), response=await push.pushApi(request('/api/cloud/push-config'),{CLOUD_DB:db},{memberId:'mine',roleAuthorized:true,membership:async()=>({status:'paid'})});
  const value=await response.json();assert.equal(value.registration_available,false);assert.equal(value.delivery_available,false);assert.equal(value.public_key,undefined);assert.equal(response.headers.get('cache-control'),'private, no-store');
+});
+test('only the fixed verified owner can prepare a registration-only device before its origin is known',async()=>{
+ const memberId='cloud_'+'a'.repeat(64), db=database(memberId);
+ const owner={memberId,ownerVerified:true,roleAuthorized:true,membership:async()=>({status:'paid'})};
+ const env={...config,CLOUD_DB:db,CLOUD_PUSH_MODE:'new_a_owner_registration',CLOUD_OWNER_ONLY_ENABLED:'true',
+  CLOUD_PUSH_TEST_MEMBER_ID:memberId,CLOUD_PUSH_AUDIENCE:'paid',CLOUD_PUSH_ALLOWED_ORIGINS:'',CLOUD_PUSH_TEST_RUN_ID:'legacy_retained_fixture'};
+ const endpointPath='/api/cloud/push-config';
+ const allowed=await(await push.pushApi(request(endpointPath),env,owner)).json();
+ assert.equal(allowed.owner_enrollment_available,true);assert.equal(allowed.preparation_available,true);
+ assert.equal(allowed.registration_available,false);assert.equal(allowed.personal_test_available,false);
+ for(const rejected of [{...owner,ownerVerified:false},{...owner,memberId:'cloud_'+'b'.repeat(64)}]){
+  assert.equal((await push.pushApi(request(endpointPath),env,rejected)).status,403);
+ }
+ const unauthenticated=await(await push.pushApi(request(endpointPath),env,{...owner,roleAuthorized:false})).json();
+ assert.equal(unauthenticated.owner_enrollment_available,false);
+ assert.equal(db.batchCalls,0);
 });
 for(const status of ['paid','free','unavailable','unverified'])test('notification config contains no paid-plan offer: '+status,async()=>{
  const configured=JSON.parse(fs.readFileSync(require('node:path').resolve(__dirname,'../weak-early-beta-gate/wrangler.jsonc'),'utf8')).vars.ACCESS_PURCHASE_URL;

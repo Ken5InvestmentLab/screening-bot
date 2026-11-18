@@ -134,7 +134,7 @@
   history.clear();
   legacy.clearHistory();
   rows.length=0;
-  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','cloud-settings-page']){
+  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','cloud-settings-page','new-a-notification-settings']){
    const node=byId(id);
    if(node){node.replaceChildren();node.hidden=true;}
   }

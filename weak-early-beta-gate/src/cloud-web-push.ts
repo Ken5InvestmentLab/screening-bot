@@ -2,6 +2,8 @@
 export type PushConfig = {
   CLOUD_PUSH_REGISTRATION_ENABLED?: string;
   CLOUD_PUSH_MODE?: string;
+  CLOUD_NEW_A_OWNER_PUSH_ENABLED?: string;
+  CLOUD_OWNER_ONLY_ENABLED?: string;
   CLOUD_PUSH_TEST_MEMBER_ID?: string;
   CLOUD_PUSH_TEST_SUBSCRIPTION_ID?: string;
   CLOUD_PUSH_TEST_RUN_ID?: string;
@@ -11,6 +13,13 @@ export type PushConfig = {
   CLOUD_VAPID_SUBJECT?: string;
 };
 export type PushSubscription = { endpoint: string; p256dh: string; auth: string };
+export const NEW_A_OWNER_REGISTRATION_MODE = "new_a_owner_registration";
+export const NEW_A_OWNER_SCHEDULED_MODE = "new_a_owner_scheduled";
+export const isNewAOwnerPushMode = (mode?: string) =>
+  mode === NEW_A_OWNER_REGISTRATION_MODE || mode === NEW_A_OWNER_SCHEDULED_MODE;
+export const ownerNoticeEnrollmentConfigured = (env: PushConfig) =>
+  isNewAOwnerPushMode(env.CLOUD_PUSH_MODE) && env.CLOUD_OWNER_ONLY_ENABLED?.trim().toLowerCase() === "true" &&
+  env.CLOUD_PUSH_REGISTRATION_ENABLED === "true" && /^cloud_[a-f0-9]{64}$/.test(env.CLOUD_PUSH_TEST_MEMBER_ID ?? "");
 export function decode(value: string, length?: number): Uint8Array<ArrayBuffer> {
   if (typeof value !== "string" || !/^[A-Za-z0-9_-]+$/.test(value) || value.length > 512) throw new Error("invalid_key");
   const bytes = Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
@@ -60,8 +69,10 @@ export function registrationConfigured(env: PushConfig): boolean {
 // provider origin has been observed. Preparation does not save it or send.
 export function personalPreparationConfigured(env: PushConfig): boolean {
   try {
-    return env.CLOUD_PUSH_MODE === "personal_test" && !!env.CLOUD_PUSH_TEST_MEMBER_ID &&
-      env.CLOUD_PUSH_REGISTRATION_ENABLED === "true" && decode(env.CLOUD_VAPID_PUBLIC_KEY ?? "", 65)[0] === 4;
+    const legacy = env.CLOUD_PUSH_MODE === "personal_test" && !!env.CLOUD_PUSH_TEST_MEMBER_ID &&
+      env.CLOUD_PUSH_REGISTRATION_ENABLED === "true";
+    const allowed = legacy || ownerNoticeEnrollmentConfigured(env);
+    return allowed && decode(env.CLOUD_VAPID_PUBLIC_KEY ?? "", 65)[0] === 4;
   } catch { return false; }
 }
 async function hkdf(key: Uint8Array<ArrayBuffer>, salt: Uint8Array<ArrayBuffer>, info: Uint8Array<ArrayBuffer>, bits: number): Promise<Uint8Array<ArrayBuffer>> {
@@ -107,11 +118,10 @@ export async function vapidAuthorization(endpoint: URL, env: PushConfig, now = D
   return `vapid t=${token}.${encode(signature)}, k=${env.CLOUD_VAPID_PUBLIC_KEY}`;
 }
 export type SendResult = { status: "disabled" | "accepted" | "expired" | "rejected" | "unknown"; reason: string };
-export async function sendPersonalPush(env: PushConfig, memberId: string, subscriptionId: string,
+async function sendFixedPush(mode: string, env: PushConfig, memberId: string, subscriptionId: string,
   subscription: PushSubscription, payload: string, transport: typeof fetch = fetch,
   fixture?: Parameters<typeof encryptPushPayload>[2]): Promise<SendResult> {
-  // No broad-member mode exists. Even test mode requires one exact member/device.
-  if (env.CLOUD_PUSH_MODE !== "personal_test" || !env.CLOUD_PUSH_TEST_MEMBER_ID || !env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID ||
+  if (env.CLOUD_PUSH_MODE !== mode || !env.CLOUD_PUSH_TEST_MEMBER_ID || !env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID ||
       env.CLOUD_PUSH_TEST_MEMBER_ID !== memberId || env.CLOUD_PUSH_TEST_SUBSCRIPTION_ID !== subscriptionId) return { status: "disabled", reason: "personal_test_not_enabled" };
   let endpoint: URL, authorization: string, body: Uint8Array<ArrayBuffer>;
   try {
@@ -127,4 +137,19 @@ export async function sendPersonalPush(env: PushConfig, memberId: string, subscr
     if ([404, 410].includes(response.status)) return { status: "expired", reason: "subscription_expired" };
     return { status: "rejected", reason: "provider_rejected" };
   } catch { return { status: "unknown", reason: "delivery_outcome_unknown_no_auto_retry" }; }
+}
+
+export function sendPersonalPush(env: PushConfig, memberId: string, subscriptionId: string,
+  subscription: PushSubscription, payload: string, transport: typeof fetch = fetch,
+  fixture?: Parameters<typeof encryptPushPayload>[2]): Promise<SendResult> {
+  return sendFixedPush("personal_test", env, memberId, subscriptionId, subscription, payload, transport, fixture);
+}
+
+export function sendNewAOwnerPush(env: PushConfig, memberId: string, subscriptionId: string,
+  subscription: PushSubscription, payload: string, transport: typeof fetch = fetch,
+  fixture?: Parameters<typeof encryptPushPayload>[2]): Promise<SendResult> {
+  if (env.CLOUD_PUSH_MODE !== NEW_A_OWNER_SCHEDULED_MODE || env.CLOUD_NEW_A_OWNER_PUSH_ENABLED !== "true" ||
+      !ownerNoticeEnrollmentConfigured(env))
+    return Promise.resolve({ status: "disabled", reason: "new_a_owner_schedule_not_enabled" });
+  return sendFixedPush(NEW_A_OWNER_SCHEDULED_MODE, env, memberId, subscriptionId, subscription, payload, transport, fixture);
 }

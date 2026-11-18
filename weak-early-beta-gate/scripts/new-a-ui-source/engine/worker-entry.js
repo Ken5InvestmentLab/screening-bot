@@ -1,21 +1,30 @@
 let runtime=null;
 let dashboardCloses=null;
 
-function initialize(manifest,records){
- const quoteMap=new Map(records.map(([symbol,day,quote])=>[
-  symbol+'|'+day,
-  quote===null?null:Object.fromEntries(manifest.quote_fields.map((field,index)=>[field,quote[index]])),
- ]));
- if(quoteMap.size!==manifest.expected_quote_keys)throw Error('quote_key_count');
+function initialize(manifest,quoteChunks){
+ if(!Array.isArray(quoteChunks)||quoteChunks.length!==manifest.quotes.length)throw Error('quote_chunk_count');
+ const quoteMap=new Map(),decoder=new TextDecoder(),fields=manifest.quote_fields;
  const asOf=manifest.as_of;
  const closes={};
- if(typeof asOf==='string'&&asOf===manifest.input.calendar.at(-1)&&asOf===manifest.input.limits?.completeThrough){
-  for(const [symbol,day] of records){
-   if(day!==asOf||!/^[0-9][0-9A-Z]{3}$/.test(symbol))continue;
-   const quote=quoteMap.get(symbol+'|'+day);
-   if(AFiniteEngine.valid(quote,true))closes[symbol]={date:day,price:quote.actual_close};
+ const hasLatestPrices=typeof asOf==='string'&&asOf===manifest.input.calendar.at(-1)&&asOf===manifest.input.limits?.completeThrough;
+ for(const [index,chunk] of quoteChunks.entries()){
+  const descriptor=manifest.quotes[index];
+  if(chunk.byteLength!==descriptor.bytes)throw Error('quote_chunk_bytes');
+  const rows=JSON.parse(decoder.decode(chunk));
+  if(!Array.isArray(rows)||rows.length!==descriptor.rows)throw Error('quote_chunk_rows');
+  for(const [symbol,day,record] of rows){
+   const key=symbol+'|'+day;
+   if(quoteMap.has(key))throw Error('quote_duplicate_key');
+   let quote=null;
+   if(record!==null){
+    quote=Object.create(null);
+    for(let i=0;i<fields.length;i++)quote[fields[i]]=record[i];
+   }
+   quoteMap.set(key,quote);
+   if(hasLatestPrices&&day===asOf&&/^[0-9][0-9A-Z]{3}$/.test(symbol)&&AFiniteEngine.valid(quote,true))closes[symbol]={date:day,price:quote.actual_close};
   }
  }
+ if(quoteMap.size!==manifest.expected_quote_keys)throw Error('quote_key_count');
  dashboardCloses={date:asOf,prices:closes};
  runtime=AFiniteDataset.createDatasetRuntime(manifest.input,{get(symbol,day){
   const key=symbol+'|'+day;
@@ -51,7 +60,7 @@ onmessage=event=>{
  const message=event.data,{id,kind}=message;
  try{
   if(kind==='initialize'){
-   initialize(message.manifest,message.records);
+   initialize(message.manifest,message.quoteChunks);
    postMessage({id,ready:true,source_version:runtime.source_version});
   }else if(kind==='source_version'||kind==='simulate'){
    if(!runtime)throw Error('input_not_ready');

@@ -36,7 +36,7 @@
   }
   const current=await assembleCurrent(await readParts(manifest.collections.current_daily),crypto);
   if(current[0]?.schema==='NEW_A_OWNER_DAILY_DISPLAY_V1'&&(!/^[a-f0-9]{64}$/.test(manifest.daily_snapshot_sha256)||current[0].source_snapshot_sha256!==manifest.daily_snapshot_sha256))throw Error('daily_snapshot_mismatch');
-  onCurrent?.(current);
+  onCurrent?.(current,manifest);
   const rows=await readParts(manifest.collections.presentation);
   return {manifest,rows,current};
  }
@@ -240,13 +240,39 @@
   button.onclick=retry||null;
  }
  global.AOwnerLoadStatus=showLoadStatus;
+ const pageLoad=new AbortController();
+ function unavailable(){
+  pageLoad.abort();
+  global.AFiniteBrowser?.clear();
+  global.AFiniteRevoked=true;
+  global.AOwnerPageData=null;
+  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','new-a-history-jump']){
+   const node=document.getElementById(id);
+   if(node){node.replaceChildren();node.hidden=true;}
+  }
+  showLoadStatus('データを読み込めませんでした。',()=>global.location.reload());
+ }
+
  async function start(){
   global.AFiniteUI=true;
-  const network=global.fetch.bind(global),page=document.body.dataset.page;
+  const network=(url,options={})=>global.fetch(url,{...options,signal:options.signal??pageLoad.signal});
+  const page=document.body.dataset.page;
 
   let data={manifest:null,rows:[],current:[]};
   const dashboard=document.getElementById('new-a-dashboard');
   const preload=[script('browser-transport.js'),script('finite-controller.js')];
+  function configureTransport(manifest){
+   const browser=global.AFiniteBrowserTransport.create({
+    fetch:network,pinnedManifest:manifest,createWorker:()=>new Worker('/new-a-assets/new-a-finite-worker.generated.js'),
+    onSimulationPhase:phase=>{
+     const task=page==='home'?'監視対象・仮想保有':'過去成績';
+     showLoadStatus(phase==='prices'?'株価データを読み込んでいます。':task+'を計算しています。');
+    },
+   });
+   global.AFiniteBrowser=browser;
+   global.AFiniteTransport=browser.transport;
+   return browser;
+  }
   if(page==='home'){
    let watchesExpanded=false;
    function showAllWatches(){
@@ -266,11 +292,18 @@
     watchesExpanded=true;
     showAllWatches()?.querySelector('summary,td')?.focus();
    });
-   const reading=readPresentation(network,global.crypto,current=>{
+   const reading=readPresentation(network,global.crypto,(current,manifest)=>{
     renderDashboard(current,[],{modelPending:true});
     showLoadStatus('検出履歴を読み込んでいます。');
+    // The displayed snapshot pins the inputs, which still pass through the
+    // protected no-store route individually while history is fetched.
+    preload[0].then(()=>{
+     if(pageLoad.signal.aborted||global.AFiniteBrowser)return;
+     return configureTransport(manifest).preload();
+    }).catch(error=>{if(error.status===401||error.status===403)unavailable();});
    });
    [data]=await Promise.all([reading,script('presentation-adapter.generated.js'),...preload]);
+   if(pageLoad.signal.aborted)return;
    const adapter=global.ANewPresentation;
    data.renderDashboard=options=>renderDashboard(data.current,data.rows,{adapter,...options});
    renderDashboard(data.current,data.rows,{adapter,modelPending:true});
@@ -286,15 +319,9 @@
   for(const y of years)scopes[String(y)]={label:y+'年',years:[y]};
   payload.textContent=JSON.stringify({version:2,page,scopes,variants:{},modeNames:{A_BASE:'監視開始'},generated:data.manifest?.input_header?.limits?.completeThrough||'',aInputStatus:'ready'});
   document.body.append(payload);
-  global.AFiniteBrowser=global.AFiniteBrowserTransport.create({
-   fetch:network,pinnedManifest:data.manifest,createWorker:()=>new Worker('/new-a-assets/new-a-finite-worker.generated.js'),
-   onSimulationPhase:phase=>{
-    const task=page==='home'?'監視対象・仮想保有':'過去成績';
-    showLoadStatus(phase==='prices'?'株価データを読み込んでいます。':task+'を計算しています。');
-   },
-  });
-  global.AFiniteTransport=global.AFiniteBrowser.transport;
+  if(!global.AFiniteBrowser)configureTransport(data.manifest);
   await script('new-a-legacy-interactions.generated.js');
+  if(pageLoad.signal.aborted)return;
   await script('finite-dom.js');
   if(page==='settings'&&!global.AFiniteRevoked){
    try{
@@ -308,14 +335,5 @@
    }
   }
  }
- start().catch(()=>{
-  global.AFiniteBrowser?.clear();
-  global.AFiniteRevoked=true;
-  global.AOwnerPageData=null;
-  for(const id of ['new-a-dashboard','cloud-analytics-content','history']){
-   const node=document.getElementById(id);
-   if(node){node.replaceChildren();node.hidden=true;}
-  }
-  showLoadStatus('データを読み込めませんでした。',()=>global.location.reload());
- });
+ start().catch(unavailable);
 })(typeof globalThis!=='undefined'?globalThis:this);

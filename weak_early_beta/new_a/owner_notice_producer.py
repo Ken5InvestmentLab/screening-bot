@@ -1,12 +1,13 @@
 """Host orchestration for staging notices from an exact completed ordinary run.
 
-This module accepts already-provisioned readers and a queue writer. It never opens
-a production connection, starts the daily process, or invokes the push provider.
+This module accepts readers, a queue writer and an optional Worker dispatcher.
+The dispatcher receives only the token for a staged same-day holding notice.
 """
 from bisect import bisect_left
 from datetime import datetime, time
 import json
 from pathlib import Path
+from secrets import token_hex
 
 from ..bank_calendar import is_bank_business_day
 from .files import private_root, verify_bootstrap
@@ -63,17 +64,19 @@ def _verified_calendar(repo):
 class OwnerNoticeProducer:
     """Connect the verified lifecycle planner to the queue writer after publication."""
 
-    def __init__(self, repo, inputs, queue, *, read_release, read_recipient, clock=_clock):
+    def __init__(self, repo, inputs, queue, *, read_release, read_recipient, clock=_clock, dispatch_holding=None):
         self.repo = Path(repo).resolve(strict=True)
-        _require(inputs.repo == self.repo and callable(read_release) and
-                 callable(read_recipient) and callable(clock), "trusted owner notice adapters required")
+        _require(inputs.repo == self.repo and callable(read_release) and callable(read_recipient) and
+                 callable(clock) and (dispatch_holding is None or callable(dispatch_holding)),
+                 "trusted owner notice adapters required")
         self.inputs = inputs
         self.queue = queue
         self.read_release = read_release
         self.read_recipient = read_recipient
         self.clock = clock
+        self.dispatch_holding = dispatch_holding
 
-    def _stage(self, run_path, kind, *, now, target, **timing):
+    def _stage(self, run_path, kind, *, now, target, holding_trigger=None, **timing):
         planner_args = {"target_date": target} if kind == HOLDING else timing
         prepared = self.inputs.prepare(kind, now=now, **planner_args)
         plan = prepared.plan
@@ -85,7 +88,8 @@ class OwnerNoticeProducer:
         return stage_notice_queue(
             self.queue, self.repo, run_path, plan, kind=kind,
             owner=prepared.owner_binding_sha256, read_source=lambda: self.inputs.read_source(prepared),
-            read_release=self.read_release, read_recipient=self.read_recipient, now=self.clock, **writer_timing,
+            read_release=self.read_release, read_recipient=self.read_recipient, now=self.clock,
+            holding_trigger=holding_trigger, **writer_timing,
         )
 
     def after_publication(self, run_path):
@@ -100,9 +104,15 @@ class OwnerNoticeProducer:
         _require(index + 1 < len(days) and days[index] == source and is_bank_business_day(days[index + 1]),
                  "next verified JPX notice session is unavailable")
         morning_at = datetime.combine(days[index + 1], time(8), JST)
+        holding_trigger = token_hex(32) if self.dispatch_holding is not None else None
+        holding = self._stage(run_path, HOLDING, now=now, target=source.isoformat(), holding_trigger=holding_trigger)
+        if holding.pop("ready_to_dispatch_holding", False):
+            # A timeout leaves the original queue and its deduplication receipt
+            # available to the evening schedule. It never delays the morning slot.
+            holding["delivery"] = self.dispatch_holding(holding_trigger)
         return {
             "source_date": source.isoformat(),
-            "holding": self._stage(run_path, HOLDING, now=now, target=source.isoformat()),
+            "holding": holding,
             "morning": self._stage(run_path, MORNING, now=_instant(self.clock()),
                                    target=morning_at.date().isoformat(), scheduled_at=morning_at, advance=True),
         }

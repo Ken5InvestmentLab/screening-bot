@@ -2,10 +2,11 @@
 
 Enable only with the exact opted-in device binding and an already-applied ordinary
 approval. This entrypoint uses existing readbacks and the existing D1 writer.
-It does not alter the Worker configuration, register a device, or send a push.
+After staging, it asks the Worker to dispatch the same-day holding notice.
 """
 import argparse
 from datetime import timedelta
+from http.client import HTTPSConnection, HTTPException
 import json
 from pathlib import Path
 import re
@@ -23,6 +24,8 @@ from .publisher import WranglerD1
 HOST_SCHEMA = "NEW_A_OWNER_NOTICE_HOST_V1"
 RUNTIME_SCHEMA = "NEW_A_OWNER_NOTICE_RUNTIME_V1"
 DEVICE_ID = re.compile(r"[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}")
+NOTICE_HOST = "tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev"
+HOLDING_NOTICE_PATH = "/api/cloud/new-a-finite/holding-notice-dispatch"
 DEVICE_READ = """
 SELECT subscription.subscription_id, metadata.endpoint_hash
 FROM cloud_push_subscriptions AS subscription
@@ -57,6 +60,17 @@ def _runtime_subprocess(repo, config, node, release):
     _require(result.returncode == 0 and len(result.stdout.encode("utf-8")) <= 4096,
              "live owner notice identity observation failed")
     return json.loads(result.stdout)
+
+
+def _dispatch_holding(token):
+    connection = HTTPSConnection(NOTICE_HOST, timeout=8)
+    try:
+        connection.request("POST", HOLDING_NOTICE_PATH, headers={"Authorization": "Bearer " + token})
+        return "accepted" if connection.getresponse().status == 204 else "unconfirmed"
+    except (OSError, HTTPException):
+        return "unconfirmed"
+    finally:
+        connection.close()
 
 
 class OwnerNoticeHost:
@@ -153,7 +167,7 @@ def after_publication(repo, run_path):
                                approval=lambda: ordinary_runtime_release(repo))
         inputs = LifecycleNoticeInputs(repo, database, lambda: host.read_owner_policy(official_target), node=str(node))
         producer = OwnerNoticeProducer(repo, inputs, database, read_release=host.read_release,
-                                       read_recipient=host.read_recipient)
+                                       read_recipient=host.read_recipient, dispatch_holding=_dispatch_holding)
         return producer.after_publication(run_path)
     finally:
         database.close()

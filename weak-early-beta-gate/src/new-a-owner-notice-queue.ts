@@ -2,6 +2,7 @@ import { bankBusinessDate } from "./cloud-canonical-feed";
 import { digest } from "./new-a-private";
 import { dispatchNewAOwnerPush, NEW_A_NOTICE_BATCH_LIMIT, readNewAOwnerPushReceipt, readNewAOwnerPushRecipient } from "./new-a-owner-push";
 import type { OperationalBuild } from "./operational-readback";
+import { NEW_A_OWNER_SCHEDULED_MODE } from "./cloud-web-push";
 
 type Notice = Parameters<typeof dispatchNewAOwnerPush>[1];
 type Kind = Notice["kind"];
@@ -42,6 +43,7 @@ const morning = "EVALUATION_DAY_MORNING";
 const holding = "WATCH_TO_SIMULATED_HOLDING";
 export const NEW_A_MORNING_CRON = "0 23 * * *";
 export const NEW_A_HOLDING_CRON = "*/5 8-14 * * *";
+export const HOLDING_NOTICE_DISPATCH_PATH = "/api/cloud/new-a-finite/holding-notice-dispatch";
 const payloadMaxBytes = 88 * 1024;
 const JST = 9 * 60 * 60 * 1000;
 const sha = /^[a-f0-9]{64}$/;
@@ -92,6 +94,12 @@ function slot(controller: Scheduled, now: number): { target_date: string; kind: 
   return null;
 }
 
+function holdingSlot(now: number): ReturnType<typeof slot> {
+  if (!Number.isSafeInteger(now)) return null;
+  const actual = new Date(now + JST).toISOString();
+  return actual.slice(11, 13) >= "17" ? { target_date: actual.slice(0, 10), kind: holding } : null;
+}
+
 function wireDay(value: unknown): value is number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 10000101 || value > 99991231) return false;
   const year = Math.floor(value / 10000);
@@ -119,14 +127,15 @@ function validEvents(values: unknown[], kind: Kind, target: string): boolean {
   return true;
 }
 
-async function prepare(env: Environment, controller: Scheduled, build: OperationalBuild, now: number): Promise<Prepared> {
+async function prepare(env: Environment, controller: Scheduled | null, build: OperationalBuild, now: number,
+  token?: string): Promise<Prepared> {
   let time: ReturnType<typeof slot> = null;
   const stop = (status: Report["status"], reason: string): Prepared => ({
     report: { status, reason, ...(time ?? {}), queued: 0, verified_accepted: 0, verified_accepted_pushes: 0, arrival_confirmed: false },
   });
   if (env.CLOUD_NEW_A_OWNER_PUSH_ENABLED !== "true") return stop("disabled", "owner_notice_disabled");
   try {
-    time = slot(controller, now);
+    time = controller ? slot(controller, now) : holdingSlot(now);
     if (!time) return stop("suppressed", "outside_notice_slot");
     const { kind, target_date } = time;
     const business = bankBusinessDate(target_date);
@@ -151,13 +160,22 @@ async function prepare(env: Environment, controller: Scheduled, build: Operation
         new TextEncoder().encode(row.payload_json).length > payloadMaxBytes || !matches(row.payload_sha256, sha) ||
         await digest(row.payload_json) !== row.payload_sha256) return stop("held", "queue_integrity_mismatch");
     const plan: unknown = JSON.parse(row.payload_json);
-    if (!shape(plan, planFields) || plan.schema !== "NEW_A_OWNER_NOTICE_QUEUE_V2" ||
+    const hasTrigger = kind === holding && object(plan) && Object.hasOwn(plan, "holding_trigger");
+    if (!shape(plan, hasTrigger ? [...planFields, "holding_trigger"] : planFields) ||
+        plan.schema !== "NEW_A_OWNER_NOTICE_QUEUE_V2" ||
         plan.kind !== kind || plan.target_date !== target_date || plan.source_commit !== build.source_commit ||
         plan.worker_version_id !== metadata.id || plan.build_input_sha256 !== build.build_input_sha256 ||
         ![plan.source_run_sha256, plan.publication_receipt_sha256, plan.owner_binding_sha256,
           plan.recipient_binding_sha256].every(value => matches(value, sha)) ||
         (plan.model_basis !== "SAVED_SCOPE" && plan.model_basis !== "LATEST_YEAR_STANDALONE") || !Array.isArray(plan.notices))
       return stop("held", "queue_contract_mismatch");
+    if (token !== undefined) {
+      const trigger = plan.holding_trigger;
+      if (!hasTrigger || !shape(trigger, ["sha256", "expires_at_ms"]) ||
+          !positive(trigger.expires_at_ms) || trigger.expires_at_ms <= now || trigger.expires_at_ms > now + 120_000 ||
+          !matches(trigger.sha256, sha) || await digest(token) !== trigger.sha256)
+        return stop("suppressed", "holding_trigger_unverified");
+    }
     if (plan.notices.length > NEW_A_NOTICE_BATCH_LIMIT) return stop("held", "batch_exceeds_delivery_budget");
     const { basis, publication } = plan;
     if (!shape(basis, kind === morning ? [...basisFields, "calendar_sha256"] : basisFields) ||
@@ -200,7 +218,28 @@ export async function checkNewAOwnerNoticeQueue(env: Environment, controller: Sc
 /** Internal bounded consumer for explicitly enabled New A schedule slots. */
 export async function runNewAOwnerNoticeQueue(env: Environment, controller: Scheduled,
   build: OperationalBuild, now = Date.now(), readers = defaults): Promise<Report> {
-  const { report, notice } = await prepare(env, controller, build, now);
+  return deliver(env, await prepare(env, controller, build, now), readers);
+}
+
+/** Dispatch only the holding row just committed by the authorized daily host. */
+export async function dispatchStagedHoldingNotice(request: Request, env: Environment, build: OperationalBuild,
+  now = Date.now(), readers = defaults): Promise<Response> {
+  const reply = (status: number) => new Response(null, { status, headers: { "cache-control": "no-store" } });
+  const url = new URL(request.url);
+  const token = /^Bearer ([a-f0-9]{64})$/.exec(request.headers.get("authorization") ?? "")?.[1];
+  if (request.method !== "POST" || !token || request.body !== null || url.search ||
+      url.origin !== "https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev" ||
+      url.pathname !== HOLDING_NOTICE_DISPATCH_PATH || request.headers.has("origin") ||
+      String(env.CLOUD_PUSH_MODE) !== NEW_A_OWNER_SCHEDULED_MODE ||
+      env.CLOUD_NEW_A_OWNER_PUSH_ENABLED !== "true" || String(env.CLOUD_PUSH_SCHEDULER_ENABLED) === "true")
+    return reply(404);
+  const prepared = await prepare(env, null, build, now, token);
+  if (!prepared.notice) return reply(404);
+  const result = await deliver(env, prepared, readers);
+  return reply(result.status === "processed" ? 204 : 503);
+}
+
+async function deliver(env: Environment, { report, notice }: Prepared, readers: Reader): Promise<Report> {
   if (report.status !== "ready" || !notice) return report;
   const hold = (reason: string): Report => ({ ...report, status: "held", reason });
   try {

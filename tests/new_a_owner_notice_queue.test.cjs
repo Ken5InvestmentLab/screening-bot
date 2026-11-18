@@ -94,6 +94,29 @@ function setUp(t, kind = morning) {
     run: (selected = readers, configured = env) => q.runNewAOwnerNoticeQueue(configured, controller, build, clock.now, selected) };
 }
 
+test('same-day holding dispatch does not wait for a cron tick and requires the staged token', async t => {
+  const f = setUp(t, holding);
+  const token = '1'.repeat(64);
+  f.clock.now += 1_234;
+  f.payload.holding_trigger = {sha256: hash(token), expires_at_ms: f.clock.now + 120_000};
+  f.stage();
+  const env = {...f.env, CLOUD_PUSH_MODE: 'new_a_owner_scheduled'};
+  const url = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev' + f.q.HOLDING_NOTICE_DISPATCH_PATH;
+  const send = supplied => f.q.dispatchStagedHoldingNotice(new Request(url, {method: 'POST',
+    headers: supplied ? {authorization: 'Bearer ' + supplied} : {}}), env, build, f.clock.now, f.readers);
+  assert.equal((await send()).status, 404);
+  assert.equal(f.reads.length, 0);
+  assert.equal((await send('2'.repeat(64))).status, 404);
+  assert.deepEqual(f.calls, []);
+  assert.equal((await send(token)).status, 204);
+  assert.deepEqual(f.calls, ['recipient', 'dispatch-1', 'receipt-1']);
+  f.clock.now += 120_000;
+  assert.equal((await send(token)).status, 404);
+  assert.equal(f.calls.length, 3);
+  const fallback = await f.q.checkNewAOwnerNoticeQueue(env, f.controller, build, f.clock.now);
+  assert.equal(fallback.status, 'ready');
+});
+
 test('disabled and wrongly scheduled queues do not query D1 or the recipient', async t => {
   const f = setUp(t);
   f.stage();

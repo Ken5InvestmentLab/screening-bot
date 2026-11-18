@@ -102,7 +102,7 @@ async function setup(t, { morning = false } = {}) {
     assert.equal(init.headers['Content-Encoding'], 'aes128gcm');
     const row = sqlite.prepare("SELECT event_key,status FROM cloud_push_dispatch_receipts WHERE event_key GLOB 'new-a-owner-v2:*'").get();
     assert.equal(row.status, 'preparing');
-    const body = morning ? `本日の評価予定は${notice.event_count}件です。価格はまだ確定していません。` :
+    const body = morning ? `今日は、設定した確定日です。対象は${notice.event_count}件です。その日の価格はまだ確定していません。` :
       `監視から仮想保有に移行した銘柄は${notice.event_count}件です。保存した条件による試算です。`;
     const expected = await sender.encryptPushPayload({ endpoint, p256dh: agentKey, auth },
       JSON.stringify({ version: 1, kind: morning ? 'reminder' : 'new_detection', tag: row.event_key, body }), cryptoFixture);

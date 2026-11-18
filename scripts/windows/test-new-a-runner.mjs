@@ -67,7 +67,7 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
     const publication={schema:'SYNTHETIC_OWNER_PUBLICATION_FOR_RUNNER_TEST',published:true,active_readback_verified:true,existing_owner_gate_verified:gateAccepted,dataset_id:'a-'+'d'.repeat(24),source_version:metadata.source_version,snapshot_sha256:metadata.snapshot_sha256};write(path.join(local,'latest-publication.json'),publication);return{code:0,stdout:JSON.stringify(publication),stderr:''};
    }
    if(args[1]==='weak_early_beta.new_a.cli'&&args[2]==='notify'){
-    const dry=args.includes('--dry-run'),n=sent?0:pending;if(!dry)sent=true;return{code:0,stdout:JSON.stringify({date:today,dry_run:dry,signal_notifications:n,completion_notifications:n?1:0,synthetic:true}),stderr:''};
+    const dry=args.includes('--dry-run'),n=sent?0:pending;if(!dry)sent=true;return{code:0,stdout:JSON.stringify({date:today,dry_run:dry,signal_notifications:n,completion_notifications:n?1:0,pending_discord_messages:dry&&n?1:0,external_sends:!dry&&n?1:0,synthetic:true}),stderr:''};
    }
    throw Error('Unexpected subprocess boundary: '+exe+' '+args.slice(0,3).join(' '));
   }};

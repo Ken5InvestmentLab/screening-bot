@@ -39,7 +39,7 @@ def publish(root,db,*,owner_verified=False,operational_verified=False):
  if receipt['snapshot_sha256']!=run['snapshot_sha256'] or receipt['source_version']!=run['source_version']:raise ValueError('publication source mismatch')
  atomic_write(Path(root)/'latest-publication.json',receipt);return receipt
 def main(argv=None):
- p=argparse.ArgumentParser();sub=p.add_subparsers(dest='command',required=True);pub=sub.add_parser('publish');pub.add_argument('--remote',action='store_true');pub.add_argument('--local',action='store_true');n=sub.add_parser('notify');n.add_argument('--date',required=True);n.add_argument('--dry-run',action='store_true');n.add_argument('--report-url',default='')
+ p=argparse.ArgumentParser();sub=p.add_subparsers(dest='command',required=True);pub=sub.add_parser('publish');pub.add_argument('--remote',action='store_true');pub.add_argument('--local',action='store_true');n=sub.add_parser('notify');n.add_argument('--date',required=True);mode=n.add_mutually_exclusive_group();mode.add_argument('--dry-run',action='store_true');mode.add_argument('--reconcile-only',action='store_true');n.add_argument('--report-url',default='')
  for command in ['prepare-release','prearm-release']:
   initial=sub.add_parser(command);initial.add_argument('--remote',action='store_true');initial.add_argument('--local',action='store_true');initial.add_argument('--approval-file');initial.add_argument('--code-manifest')
   if command=='prepare-release':initial.add_argument('--bundle',required=True);initial.add_argument('--expected-revision',type=int,default=0)
@@ -75,6 +75,6 @@ def main(argv=None):
    try:delayed.assert_published_pointer(context,pointer(db),publication)
    finally:db.close()
   elif not args.dry_run and args.date!=datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).date().isoformat():raise ValueError('same actual JST day required')
-  receipt=notify_day(root,date=args.date,dry_run=args.dry_run,report_url=args.report_url or os.environ.get('WEAK_EARLY_BETA_REPORT_URL',''))
+  receipt=notify_day(root,date=args.date,dry_run=args.dry_run,reconcile_only=args.reconcile_only,report_url=args.report_url or os.environ.get('WEAK_EARLY_BETA_REPORT_URL',''))
  print(json.dumps(receipt,ensure_ascii=False));return receipt
 if __name__=='__main__':main()

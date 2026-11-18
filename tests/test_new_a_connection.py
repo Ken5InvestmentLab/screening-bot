@@ -1,5 +1,6 @@
 """新A接続の境界試験。合成価格だけ、ネットワーク/通知は使用しない。"""
 import copy,datetime,json,sqlite3,sys,tempfile,unittest
+from contextlib import closing
 from unittest.mock import patch
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -71,20 +72,20 @@ class Publisher(unittest.TestCase):
 class Notifications(unittest.TestCase):
  def setUp(self):
   self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)/'new-a-private';self.root.mkdir();self.day='2026-06-01';self.calls=[]
-  self.snapshot={'schema':'NEW_A_OWNER_DAILY_SNAPSHOT_V1','strategy':'A_BASE','audience':'EXISTING_CLOUD_OWNER_ONLY','as_of':self.day,'source_sha256':'a'*64,'observation_kind':'LIVE_OBSERVATION','new_live_signals':1,'events':[{'event_id':'b'*64,'kind':'WATCH_STARTED','symbol':'1111','session':self.day,'is_new_live_signal':True}],'published':False};self.save()
+  self.snapshot={'schema':'NEW_A_OWNER_DAILY_SNAPSHOT_V1','strategy':'A_BASE','audience':'EXISTING_CLOUD_OWNER_ONLY','as_of':self.day,'source_sha256':'a'*64,'observation_kind':'LIVE_OBSERVATION','data_status':'COMPLETED','held_symbols':{},'new_live_signals':1,'events':[{'event_id':'b'*64,'kind':'WATCH_STARTED','symbol':'1111','session':self.day,'is_new_live_signal':True}],'published':False};self.save()
  def save(self):
   self.snapshot['payload_sha256']=digest({k:v for k,v in self.snapshot.items() if k!='payload_sha256'});atomic_write(self.root/'snapshot.json',self.snapshot);atomic_write(self.root/'latest-run.json',{'strategy':'A_BASE','source_sha256':'a'*64,'source_version':'c'*64,'snapshot_sha256':self.snapshot['payload_sha256'],'snapshot_file':str(self.root/'snapshot.json')});atomic_write(self.root/'latest-publication.json',{'published':True,'active_readback_verified':True,'existing_owner_gate_verified':True,'snapshot_sha256':self.snapshot['payload_sha256'],'source_version':'c'*64})
  def tearDown(self):self.temp.cleanup()
  def test_only_newA_receipts_and_existing_transport_callback_no_repeat(self):
   from weak_early_beta.new_a.notifications import notify_day
   before=notify_day(self.root,date=self.day,dry_run=True,report_url='https://synthetic.invalid/');self.assertEqual((before['signal_notifications'],before['completion_notifications']),(1,1));self.assertFalse(self.calls)
-  def fake(payload):self.calls.append(payload['event_id']);return{'confirmed':True,'message_id':'SYNTHETIC_ONLY'}
-  sent=notify_day(self.root,date=self.day,dry_run=False,report_url='https://synthetic.invalid/',transport=fake);self.assertEqual(len(self.calls),2);self.assertEqual(sent['signal_notifications'],1)
+  def fake(payload):self.calls.append(payload['batch_id']);return{'confirmed':True,'message_id':'SYNTHETIC_ONLY'}
+  sent=notify_day(self.root,date=self.day,dry_run=False,report_url='https://synthetic.invalid/',transport=fake);self.assertEqual(len(self.calls),1);self.assertEqual(sent['signal_notifications'],1)
   remaining=notify_day(self.root,date=self.day,dry_run=True,report_url='https://synthetic.invalid/');self.assertEqual(remaining['signal_notifications']+remaining['completion_notifications'],0)
-  notify_day(self.root,date=self.day,dry_run=False,report_url='https://synthetic.invalid/',transport=fake);self.assertEqual(len(self.calls),2)
+  notify_day(self.root,date=self.day,dry_run=False,report_url='https://synthetic.invalid/',transport=fake);self.assertEqual(len(self.calls),1)
  def test_unknown_send_never_retries_automatically(self):
   from weak_early_beta.new_a.notifications import notify_day
-  def uncertain(payload):self.calls.append(payload['event_id']);return{'confirmed':False}
+  def uncertain(payload):self.calls.append(payload['batch_id']);return{'confirmed':False}
   with self.assertRaises(RuntimeError):notify_day(self.root,date=self.day,dry_run=False,report_url='https://synthetic.invalid/',transport=uncertain)
   with self.assertRaisesRegex(ValueError,'unconfirmed'):notify_day(self.root,date=self.day,dry_run=True,report_url='https://synthetic.invalid/')
   self.assertEqual(len(self.calls),1)
@@ -105,4 +106,277 @@ class Notifications(unittest.TestCase):
   with patch('weak_early_beta.new_a.notifications.default_transport',side_effect=AssertionError('credentials forbidden')):
    preview=notify_day(self.root,date=self.day,dry_run=True,report_url='https://synthetic.invalid/');self.assertEqual(preview['signal_notifications']+preview['completion_notifications'],0)
   with self.assertRaises(ValueError):notify_day(self.root,date=self.day,dry_run=False,report_url='https://synthetic.invalid/')
-if __name__=='__main__':unittest.main()
+
+class BatchedDiscord(unittest.TestCase):
+    def setUp(self):
+        from weak_early_beta import notify
+        self.fixture = Notifications()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.tearDown)
+        self.root, self.day = self.fixture.root, self.fixture.day
+        self.snapshot = self.fixture.snapshot
+        self.report = "https://synthetic.invalid/"
+        self.posts = []
+        self.webhook_id = "123456789"
+        self.webhook_url = f"https://discord.com/api/webhooks/{self.webhook_id}/synthetic"
+        self.channel_id = notify.CHANNEL_ID
+        self.guild_id = notify.GUILD_ID
+        self.message_id = "987654321"
+        self.enterContext(patch.dict("os.environ", {
+            notify.WEBHOOK_ENV: self.webhook_url,
+            "WEAK_EARLY_BETA_DISCORD_BOT_TOKEN": "synthetic",
+        }))
+        self.post = self.enterContext(patch.object(notify.requests, "post", side_effect=self.capture_post))
+        self.get = self.enterContext(patch.object(notify.requests, "get", side_effect=self.capture_metadata))
+
+    def capture_metadata(self, url, **kwargs):
+        from unittest.mock import Mock
+
+        self.assertEqual(url, self.webhook_url)
+        self.assertFalse(kwargs["allow_redirects"])
+        self.assertEqual(kwargs["headers"]["User-Agent"], "DiscordBot (screening-bot, 1.0)")
+        response = Mock(status_code=200)
+        response.json.return_value = {
+            "id": self.webhook_id, "channel_id": self.channel_id, "guild_id": self.guild_id,
+        }
+        return response
+
+    def capture_post(self, url, **kwargs):
+        from unittest.mock import Mock
+
+        self.assertEqual(url, self.webhook_url)
+        self.assertFalse(kwargs["allow_redirects"])
+        self.assertEqual(kwargs["headers"]["User-Agent"], "DiscordBot (screening-bot, 1.0)")
+        self.assertEqual(kwargs["params"]["wait"], "true")
+        payload = kwargs["json"] if "json" in kwargs else json.loads(kwargs["data"]["payload_json"])
+        self.assertEqual(payload["allowed_mentions"], {"parse": []})
+        files = kwargs.get("files", {})
+        attachments = [
+            {"filename": filename, "size": len(data)} for filename, data, _ in files.values()
+        ]
+        message = {
+            "id": self.message_id, "webhook_id": self.webhook_id, "channel_id": self.channel_id,
+            "content": payload["content"], "embeds": payload["embeds"], "attachments": attachments,
+        }
+        self.posts.append((message, files))
+        response = Mock(status_code=200)
+        response.json.return_value = message
+        return response
+
+    def call(self, **kwargs):
+        from weak_early_beta.new_a.notifications import notify_day
+
+        return notify_day(self.root, date=self.day, report_url=self.report,
+                          dry_run=kwargs.pop("dry_run", False), **kwargs)
+
+    def events(self, count):
+        self.snapshot["events"] = [{
+            "event_id": digest(["synthetic", i]), "kind": "WATCH_STARTED", "symbol": f"{i:04}",
+            "session": self.day, "is_new_live_signal": True,
+        } for i in range(count)]
+        self.snapshot["new_live_signals"] = count
+        self.fixture.save()
+
+    def update_rows(self, status, ids):
+        with closing(sqlite3.connect(self.root / "notification-outbox.sqlite")) as db:
+            db.executemany("UPDATE new_a_delivery SET status = ?, receipt_json = ? WHERE event_id = ?",
+                           [(status, '{"message_id":"legacy"}', event_id) for event_id in ids])
+            db.commit()
+
+    def receipts(self):
+        with closing(sqlite3.connect(self.root / "notification-outbox.sqlite")) as db:
+            return db.execute("SELECT event_id, status, receipt_json FROM new_a_delivery").fetchall()
+
+    def test_eight_symbols_and_summary_in_one_post_then_no_pending(self):
+        self.events(8)
+        self.snapshot["held_symbols"] = {"T1": {}, "T2": {}}
+        self.snapshot["data_status"] = "COMPLETED_WITH_HELD_SYMBOLS"
+        self.fixture.save()
+        preview = self.call(dry_run=True)
+        self.assertEqual((preview["signal_notifications"], preview["completion_notifications"]), (8, 1))
+        self.assertEqual((preview["pending_discord_messages"], preview["external_sends"]), (1, 0))
+        self.post.assert_not_called()
+        sent = self.call()
+        self.assertEqual((sent["external_sends"], sent["pending_discord_messages"]), (1, 0))
+        self.assertEqual(self.post.call_count, 1)
+        message, files = self.posts[0]
+        embed = message["embeds"][0]
+        self.assertEqual(embed["url"], self.report + "weak_early_beta_latest.html")
+        for event in self.snapshot["events"]:
+            self.assertIn(f"[{event['symbol']}](https://jp.tradingview.com/chart/", embed["description"])
+        self.assertEqual([field["value"] for field in embed["fields"]][0], self.day)
+        self.assertEqual([field["value"] for field in embed["fields"]][1][0], "8")
+        self.assertEqual([field["value"] for field in embed["fields"]][2][0], "2")
+        self.assertFalse(files)
+        receipts = self.receipts()
+        self.assertEqual(len(receipts), 9)
+        self.assertEqual({(status, json.loads(receipt)["message_id"]) for _, status, receipt in receipts},
+                         {("SENT", self.message_id)})
+        self.assertEqual(self.call(dry_run=True)["pending_discord_messages"], 0)
+        self.assertEqual(self.call()["external_sends"], 0)
+        self.assertEqual(self.post.call_count, 1)
+
+    def test_verified_zero_is_silent_unknown_is_not_zero(self):
+        self.events(0)
+        self.assertEqual(self.call(dry_run=True)["pending_discord_messages"], 0)
+        self.assertEqual(self.call()["external_sends"], 0)
+        self.snapshot["data_status"] = "INCOMPLETE"
+        self.fixture.save()
+        with self.assertRaisesRegex(ValueError, "completed"):
+            self.call()
+        self.post.assert_not_called()
+
+    def test_all_legacy_sent_preserves_existing_rows_and_stays_silent(self):
+        self.events(8)
+        self.call(dry_run=True)
+        self.update_rows("SENT", [event_id for event_id, _, _ in self.receipts()])
+        before = self.receipts()
+        self.assertEqual(self.call()["external_sends"], 0)
+        self.assertEqual(self.receipts(), before)
+        self.post.assert_not_called()
+
+    def test_partial_legacy_sends_only_pending_symbols_and_preserves_summary(self):
+        self.events(4)
+        self.call(dry_run=True)
+        sent_events = [self.snapshot["events"][0]["event_id"],
+                       digest(["A_BASE", self.day, "DAILY_SUMMARY"])]
+        self.update_rows("SENT", sent_events)
+        sent = self.call()
+        self.assertEqual((sent["signal_notifications"], sent["completion_notifications"], sent["external_sends"]),
+                         (3, 0, 1))
+        embed = self.posts[0][0]["embeds"][0]
+        self.assertEqual(len(embed["fields"]), 1)
+        self.assertNotIn("[0000]", embed["description"])
+        self.assertIn("[0003]", embed["description"])
+        self.assertEqual({json.loads(receipt)["message_id"] for event_id, _, receipt in self.receipts()
+                          if event_id in sent_events}, {"legacy"})
+
+    def test_unverified_webhook_destination_stops_before_claim_and_post(self):
+        for mismatch in ("id", "channel_id", "guild_id", "redirect"):
+            with self.subTest(mismatch=mismatch):
+                response = self.capture_metadata(
+                    self.webhook_url, allow_redirects=False,
+                    headers={"User-Agent": "DiscordBot (screening-bot, 1.0)"},
+                )
+                if mismatch == "redirect":
+                    response.status_code = 302
+                else:
+                    response.json.return_value[mismatch] = "737373"
+                self.get.side_effect = None
+                self.get.return_value = response
+                with self.assertRaisesRegex(RuntimeError, "existing_signal_destination_unverified"):
+                    self.call()
+                self.assertEqual({status for _, status, _ in self.receipts()}, {"PENDING"})
+        self.post.assert_not_called()
+
+    def test_webhook_url_cannot_redirect_posts_to_another_destination(self):
+        from weak_early_beta import notify
+
+        invalid_urls = [
+            self.webhook_url + "?thread_id=222222",
+            self.webhook_url + "#fragment",
+            self.webhook_url.replace("discord.com", "discord.com:8443"),
+            self.webhook_url.replace("discord.com", "other@discord.com"),
+            self.webhook_url.replace("/api/", "/other/"),
+        ]
+        for url in invalid_urls:
+            with patch.dict("os.environ", {notify.WEBHOOK_ENV: url}):
+                with self.assertRaisesRegex(RuntimeError, "existing_signal_transport_unavailable"):
+                    self.call()
+        self.get.assert_not_called()
+        self.post.assert_not_called()
+        self.assertEqual({status for _, status, _ in self.receipts()}, {"PENDING"})
+
+    def test_legacy_unknown_is_not_reposted_or_accepted_as_a_batch(self):
+        self.call(dry_run=True)
+        self.update_rows("ATTEMPTED_UNCONFIRMED", [self.snapshot["events"][0]["event_id"]])
+        for reconcile in [False, True]:
+            with self.assertRaisesRegex(ValueError, "unconfirmed"):
+                self.call(reconcile_only=reconcile)
+        self.post.assert_not_called()
+        self.get.assert_not_called()
+
+    def test_lost_result_reconciles_only_exact_webhook_message_with_get(self):
+        from unittest.mock import Mock
+        from weak_early_beta.new_a.outbox import Outbox
+
+        self.events(8)
+        with patch.object(Outbox, "confirm_batch", side_effect=RuntimeError("interrupted after POST")):
+            with self.assertRaisesRegex(RuntimeError, "interrupted"):
+                self.call()
+        self.assertEqual({status for _, status, _ in self.receipts()}, {"ATTEMPTED_UNCONFIRMED"})
+        with self.assertRaisesRegex(ValueError, "reconcile-only"):
+            self.call()
+        with self.assertRaisesRegex(ValueError, "reconcile-only"):
+            self.call(dry_run=True)
+        message = self.posts[0][0]
+        forged = {**message, "webhook_id": "212121"}
+        edited = copy.deepcopy(message)
+        edited["embeds"][0]["description"] = "wrong body"
+        response = Mock(status_code=200)
+        response.json.return_value = [forged, edited]
+        self.get.side_effect = None
+        self.get.return_value = response
+        with self.assertRaisesRegex(ValueError, "expected one exact"):
+            self.call(reconcile_only=True)
+        self.assertEqual(self.get.call_args.kwargs["headers"]["User-Agent"], "DiscordBot (screening-bot, 1.0)")
+        self.assertFalse(self.get.call_args.kwargs["allow_redirects"])
+        self.assertEqual({status for _, status, _ in self.receipts()}, {"ATTEMPTED_UNCONFIRMED"})
+        response.json.return_value = [forged, edited, message]
+        recovered = self.call(reconcile_only=True)
+        self.assertTrue(recovered["reconciled_batch"])
+        self.assertEqual(recovered["external_sends"], 0)
+        self.assertEqual(self.call(dry_run=True)["pending_discord_messages"], 0)
+        self.assertEqual(self.call()["external_sends"], 0)
+        self.assertEqual(self.post.call_count, 1)
+        self.assertEqual({(status, json.loads(receipt)["message_id"]) for _, status, receipt in self.receipts()},
+                         {("SENT", self.message_id)})
+
+    def test_concurrent_claim_allows_one_post(self):
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Event
+
+        entered, release = Event(), Event()
+        post = self.capture_post
+
+        def wait_for_other(*args, **kwargs):
+            entered.set()
+            if not release.wait(timeout=10):
+                raise RuntimeError("timed out waiting for competing delivery")
+            return post(*args, **kwargs)
+
+        self.post.side_effect = wait_for_other
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first = pool.submit(self.call)
+            self.assertTrue(entered.wait(timeout=10))
+            try:
+                second = pool.submit(self.call)
+                with self.assertRaisesRegex(ValueError, "unconfirmed"):
+                    second.result(timeout=10)
+            finally:
+                release.set()
+            self.assertEqual(first.result(timeout=10)["external_sends"], 1)
+        self.assertEqual(self.post.call_count, 1)
+
+    def test_full_csv_attachment_keeps_every_long_day_result_in_one_post(self):
+        import csv
+        import io
+
+        self.events(220)
+        sent = self.call()
+        self.assertEqual(sent["signal_notifications"], 220)
+        self.assertEqual(sent["external_sends"], 1)
+        self.assertEqual(self.post.call_count, 1)
+        message, files = self.posts[0]
+        self.assertLessEqual(len(message["embeds"][0]["description"]), 4096)
+        filename, data, content_type = files["files[0]"]
+        self.assertEqual(filename, f"cloud-new-a-{self.day}.csv")
+        self.assertEqual(content_type, "text/csv")
+        rows = list(csv.reader(io.StringIO(data.decode("utf-8-sig"))))[1:]
+        self.assertEqual(len(rows), 220)
+        self.assertEqual({row[1] for row in rows}, {event["symbol"] for event in self.snapshot["events"]})
+        self.assertTrue(all(row[0] == self.day and row[2].endswith(row[1]) for row in rows))
+
+
+if __name__ == "__main__":
+    unittest.main()

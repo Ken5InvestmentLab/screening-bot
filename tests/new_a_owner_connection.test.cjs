@@ -24,6 +24,99 @@ test('unsaved server and existing modal reset retain D6; a saved D5 remains auth
 test('existing owner/fresh-role boundary precedes every private D1 read; code-only access needs no D1',async()=>{const f=fixture();try{for(const target of ['/','/api/cloud/new-a-finite/access','/api/cloud/new-a-finite/input/manifest.json','/new-a-assets/owner-loader.js'])for(const[id,role]of[[null,true],[OTHER,true],[OWNER,false]]){const before=f.reads,r=await f.app.fetch(request(target,id,role),f.env);assert([302,401,403].includes(r.status));assert.equal(f.reads,before);}const before=f.reads,r=await f.app.fetch(request('/api/cloud/new-a-finite/access'),{...f.env,CLOUD_DB:undefined});assert.equal(r.status,200);assert.deepEqual(await r.json(),{authorized:true,strategy:'A_BASE'});assert.equal(f.reads,before);}finally{f.close();}});
 test('manifest pins immutable READY parts; old pending data routes and foreign-site reads stay closed',async()=>{const f=fixture();try{const id='a-'+'1'.repeat(24),version=sha('synthetic-source'),collections={},quotes=[],body='[]';for(const kind of['episodes','intents','watches','presentation','current_daily','quotes']){const d={name:kind+'-000.json',sha256:sha(body),bytes:2,rows:0};if(kind==='quotes')quotes.push(d);else collections[kind]=[d];}const manifest=JSON.stringify({schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',source_version:version,input_header:{source_version:version},collections,quotes});f.sql.prepare('INSERT INTO new_a_private_datasets VALUES (?,?,?,?,?,?)').run(id,version,manifest,sha(manifest),'READY','synthetic');for(const d of[...quotes,...Object.values(collections).flat()])f.sql.prepare('INSERT INTO new_a_private_parts VALUES (?,?,?,?,?)').run(id,d.name,body,d.sha256,2);f.sql.prepare('INSERT INTO new_a_active_pointer VALUES (?,?,?,?)').run('owner',id,1,'synthetic');const m=await(await f.app.fetch(request('/api/cloud/new-a-finite/input/manifest.json'),f.env)).json();assert.equal(m.dataset_id,id);const r=await f.app.fetch(request(`/api/cloud/new-a-finite/input/${id}/quotes-000.json`),f.env);assert.equal(await r.text(),body);assert.equal(r.headers.get('cache-control'),'private, no-store, max-age=0');assert.equal((await f.app.fetch(request('/api/cloud/new-a-finite/input/manifest.json',OWNER,true,{headers:{'sec-fetch-site':'cross-site'}}),f.env)).status,403);assert.equal((await f.app.fetch(request('/research-a/details.json'),f.env)).status,410);assert.equal((await f.app.fetch(request('/api/cloud/new-a-finite/simulate',OWNER,true,{method:'POST'}),f.env)).status,409);}finally{f.close();}});
 test('finite preferences save/reload and conflict preserve existing preference/notification bytes',async()=>{const f=fixture();try{const member='cloud_'+sha('cloud-member:'+OWNER),legacy=JSON.stringify({max_price:1000,exit_endpoint:'d5_close',base_shares:100,cost_percent:0,notifications:{new_detection:true}});f.sql.prepare('INSERT INTO cloud_member_preferences VALUES (?,?)').run(member,legacy);const before=await(await f.app.fetch(request('/api/cloud/new-a-finite/preferences'),f.env)).json();assert.equal(before.has_saved_preferences,true);assert.equal(before.has_saved_finite_preferences,false);const preferences={...before.preferences,initial_cash_yen:20000000,max_positions:7},put=()=>f.app.fetch(request('/api/cloud/new-a-finite/preferences',OWNER,true,{method:'PUT',headers:{origin:'https://synthetic.invalid','content-type':'application/json'},body:JSON.stringify({preferences,expected_revision:0,request_id:'synthetic-save'})}),f.env);assert.equal((await put()).status,200);assert.equal((await put()).status,409);const after=await(await f.app.fetch(request('/api/cloud/new-a-finite/preferences'),f.env)).json();assert.deepEqual(after.preferences,preferences);assert.equal(f.sql.prepare('SELECT preferences_json FROM cloud_member_preferences WHERE member_id=?').get(member).preferences_json,legacy);}finally{f.close();}});
+const preferencesPath = '/api/cloud/new-a-finite/preferences';
+const firstView = {trial_preset: 'profit', theme: 'light', font_size: 'large', page_size: 50};
+const secondView = {trial_preset: null, theme: 'system', font_size: 'small', page_size: 100};
+const putSettings = (f, preferences, expected_revision, extra = {}, id = OWNER, env = f.env) =>
+ f.app.fetch(request(preferencesPath, id, true, {
+  method: 'PUT',
+  headers: {origin: 'https://synthetic.invalid', 'content-type': 'application/json'},
+  body: JSON.stringify({preferences, expected_revision, request_id: 'fixture-save', ...extra}),
+ }), env);
+const readSettings = async (f, id = OWNER, env = f.env) => {
+ const response = await f.app.fetch(request(preferencesPath, id), env);
+ assert.equal(response.status, 200);
+ assert.equal(response.headers.get('cache-control'), 'private, no-store, max-age=0');
+ assert.equal(response.headers.get('vary'), 'Cookie');
+ return response.json();
+};
+
+test('view and trial settings persist by account and trial-only clients keep the saved view', async t => {
+ const f = fixture();
+ t.after(f.close);
+ const initial = await readSettings(f);
+ assert.equal(initial.view_preferences, null);
+ const trialA = {...initial.preferences, cost_percent: 0.25};
+ const trialB = {...initial.preferences, allocation: 'unique'};
+ const accountA = await putSettings(f, trialA, 0, {view_preferences: firstView});
+ assert.equal(accountA.status, 200);
+ assert.deepEqual((await accountA.json()).view_preferences, firstView);
+
+ const otherEnv = {...f.env, CLOUD_OWNER_DISCORD_ID: OTHER};
+ assert.equal((await f.app.fetch(request(preferencesPath, OTHER), f.env)).status, 403);
+ assert.equal((await readSettings(f, OTHER, otherEnv)).view_preferences, null);
+ assert.equal((await putSettings(f, trialB, 0, {view_preferences: secondView}, OTHER, otherEnv)).status, 200);
+ const updatedTrialA = {...trialA, base_shares: 200};
+ const legacy = await putSettings(f, updatedTrialA, 1);
+ assert.equal(legacy.status, 200);
+ assert.equal(Object.hasOwn(await legacy.json(), 'view_preferences'), false);
+ const savedA = await readSettings(f);
+ const savedB = await readSettings(f, OTHER, otherEnv);
+ assert.deepEqual(savedA.preferences, updatedTrialA);
+ assert.deepEqual(savedA.view_preferences, firstView);
+ assert.equal(savedA.revision, 2);
+ assert.deepEqual(savedB.preferences, trialB);
+ assert.deepEqual(savedB.view_preferences, secondView);
+ assert.equal(savedB.revision, 1);
+});
+
+test('trial and view CAS rejects a stale or failed settings save without changing either row', async t => {
+ const f = fixture();
+ t.after(f.close);
+ const {preferences} = await readSettings(f);
+ const changes = [
+  {preferences: {...preferences, cost_percent: 0.25}, view_preferences: firstView},
+  {preferences: {...preferences, cost_percent: 0.5}, view_preferences: secondView},
+ ];
+ const tie = await Promise.all(changes.map(change => putSettings(f, change.preferences, 0, {view_preferences: change.view_preferences})));
+ assert.deepEqual(tie.map(r => r.status).sort(), [200, 409]);
+ const winner = changes[tie.findIndex(r => r.ok)];
+ const conflict = await tie.find(r => r.status === 409).json();
+ assert.equal(conflict.error, 'revision_conflict');
+ assert.equal(conflict.revision, 1);
+
+ f.sql.exec(`CREATE TRIGGER synthetic_failed_view_update
+  BEFORE UPDATE ON new_a_finite_trial_preferences
+  WHEN NEW.member_id GLOB 'new-a-view:v1:*'
+  BEGIN SELECT RAISE(ABORT, 'synthetic write failure'); END;`);
+ const failed = await putSettings(f, preferences, 1, {view_preferences: secondView});
+ assert.equal(failed.status, 503);
+ assert.deepEqual(await failed.json(), {error: 'new_a_service_unavailable'});
+ const saved = await readSettings(f);
+ assert.equal(saved.revision, 1);
+ assert.deepEqual(saved.preferences, winner.preferences);
+ assert.deepEqual(saved.view_preferences, winner.view_preferences);
+});
+
+test('settings rejects caller-supplied account selectors, invalid values and anonymous requests', async t => {
+ const f = fixture();
+ t.after(f.close);
+ const {preferences} = await readSettings(f);
+ assert.equal((await putSettings(f, preferences, 0, {member_id: OTHER})).status, 400);
+ assert.equal((await putSettings(f, preferences, 0, {view_preferences: {...firstView, member_id: OTHER}})).status, 400);
+ for(const invalid of [null, {...firstView, page_size: '50'}, {...firstView, trial_preset: 'custom'}, {...firstView, theme: 'other'}, {...firstView, font_size: 'normal'}]){
+  const rejected = await putSettings(f, preferences, 0, {view_preferences: invalid});
+  assert.equal(rejected.status, 400);
+  assert.deepEqual(await rejected.json(), {error: 'invalid_view_preferences'});
+ }
+ assert.equal((await putSettings(f, preferences, Number.MAX_SAFE_INTEGER)).status, 400);
+ assert.equal((await f.app.fetch(request(preferencesPath + '?member_id=' + OTHER), f.env)).status, 404);
+ assert.equal((await f.app.fetch(request(preferencesPath, null), f.env)).status, 401);
+ assert.equal((await putSettings(f, preferences, 0, {}, null)).status, 401);
+ assert.equal((await f.app.fetch(request(preferencesPath, OWNER, false), f.env)).status, 403);
+ assert.equal((await readSettings(f)).revision, 0);
+});
+
 test('normal large current display reassembles UTF-8 fragments; missing/order/tamper/size and snapshot mismatch are rejected',async()=>{
  const c={module:{exports:{}},TextEncoder,TextDecoder,Uint8Array,atob,crypto:webcrypto};vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(gate,'scripts/new-a-ui-source/assets/owner-loader.js'),'utf8'),c);const api=c.module.exports;
  const display={schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',source_snapshot_sha256:sha('synthetic snapshot'),monitor_state:{watches:Object.fromEntries(Array.from({length:250},(_,i)=>[String(i),{episode:{symbol:String(1000+i),candidate_date:'synthetic-date',note:'合成監視'.repeat(30)}}]))},events:[]},bytes=Buffer.from(JSON.stringify(display));assert(bytes.length>65536);const count=Math.ceil(bytes.length/32768),fragments=Array.from({length:count},(_,index)=>({schema:'NEW_A_CURRENT_JSON_FRAGMENT_V1',index,count,display_sha256:sha(bytes),bytes_total:bytes.length,payload_base64:bytes.subarray(index*32768,(index+1)*32768).toString('base64')}));

@@ -1,72 +1,303 @@
-"""新A専用receiptで既存Discord transportを呼ぶ。宛先設定は流用し変更しない。"""
-import datetime,json,os
-from urllib.parse import urljoin,urlparse
-from .files import read,digest
-from .outbox import Outbox
-def eligible(snapshot):return [e for e in snapshot['events'] if (e.get('is_new_live_signal') is True or (snapshot.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION' and e.get('is_delayed_scheduled_signal') is True)) and e['kind']=='WATCH_STARTED' and e['session']==snapshot['as_of']]
-def message(event,report_url):
- summary=event.get('kind')=='DAILY_SUMMARY';label='新A 日次検出' if summary else str(event['symbol'])+' 仕込み候補・監視開始'
- fields=[{'name':'検出日','value':event['signal_date'],'inline':True},{'name':'状態','value':'監視開始・未約定','inline':True}]
- if event.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION':
-  label+=' (delayed scheduled result)';fields.append({'name':'Actual observed at','value':event['observed_at'],'inline':False})
- if summary:fields.append({'name':'新規銘柄数','value':str(event['count']),'inline':True})
- payload={'content':'','embeds':[{'title':label,'url':urljoin(report_url,'weak_early_beta_latest.html'),'fields':fields,'footer':{'text':'A_BASE | '+event['event_id']},'color':0x5B8DEF}],'allowed_mentions':{'parse':[]}}
- if not summary:
-  from ..notify import chart_components
-  payload['components']=chart_components(event['symbol'])
- return payload
-def default_transport(report_url):
- # 通常通知の既存保管経路をライブラリ内だけで使用。値/長さを返さない。
- from .. import notify
- webhook=os.environ.get(notify.WEBHOOK_ENV,'').strip();token=(os.environ.get('WEAK_EARLY_BETA_DISCORD_BOT_TOKEN') or os.environ.get('DISCORD_TOKEN') or '').strip()
- def send(event):
-  payload=message(event,report_url)
-  try:
-   if event.get('kind')=='DAILY_SUMMARY':
-    if not token:raise RuntimeError('existing_summary_transport_unavailable')
-    receipt=notify._post_bot(notify.SUMMARY_CHANNEL_ID,token,payload)
-   else:
-    if not webhook:raise RuntimeError('existing_signal_transport_unavailable')
-    receipt=notify._post_webhook(webhook,payload)
-  except Exception:raise RuntimeError('existing_notification_transport_failed_reconcile_before_retry') from None
-  return {'confirmed':bool(receipt.get('id')),'message_id':str(receipt.get('id',''))}
- return send
-def notify_day(root,*,date,dry_run,report_url,transport=None):
- root=__import__('pathlib').Path(root);run=read(root/'latest-run.json');snapshot=read(run['snapshot_file']);publication=read(root/'latest-publication.json')
- if publication.get('operational_gate_continuity_verified') is True:
-  from .operational_admission import action_context
-  action_context(root.resolve().parents[2],date=date,run=run,snapshot=snapshot,publication=publication,required=True)
- if date!=snapshot['as_of'] or run['strategy']!='A_BASE' or run['snapshot_sha256']!=snapshot['payload_sha256']:raise ValueError('matching New A daily snapshot required')
- if digest({k:v for k,v in snapshot.items() if k!='payload_sha256'})!=snapshot['payload_sha256'] or run['source_sha256']!=snapshot['source_sha256'] or run['source_version']!=publication.get('source_version'):raise ValueError('private notification source bytes changed')
- local_historical_preview=dry_run and snapshot['observation_kind']=='DRY_RUN_HISTORICAL' and publication.get('local_d1_emulation') is True
- from .operational_admission import publication_gate_verified
- if publication.get('snapshot_sha256')!=snapshot['payload_sha256'] or publication.get('active_readback_verified') is not True or (not local_historical_preview and (not publication_gate_verified(publication) or publication.get('published') is not True)):raise ValueError('verified private publication required')
- delayed=snapshot.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION'
- if delayed:
-  from .delayed_recovery import delivery_context
-  delivery_context(root.resolve().parents[2],snapshot,publication)
- if not dry_run and snapshot['observation_kind']!='LIVE_OBSERVATION' and not delayed:raise ValueError('historical/catchup notifications prohibited')
- outbox=Outbox(root/'notification-outbox.sqlite');new=eligible(snapshot)
- try:
-  outbox.stage(snapshot,publication,existing_notifications_enabled=True)
-  # 0件では通常の銘柄/完了通知を送らない。処理成功は日次receiptで別に証明。
-  if new:
-   summary={'kind':'DAILY_SUMMARY','event_id':digest(['A_BASE',date,'DAILY_SUMMARY']),'signal_date':date,'count':len({e['symbol'] for e in new}),'strategy':'A_BASE','signal_phase':'WATCH_STARTED','execution_status':'NOT_EXECUTED'}
-   if delayed:summary.update(observation_kind=snapshot['observation_kind'],observed_at=snapshot['observed_at'],delayed_recovery=snapshot['delayed_recovery'])
-   with outbox.db:outbox.db.execute('INSERT OR IGNORE INTO new_a_delivery VALUES (?,?,"PENDING",NULL)',(summary['event_id'],json.dumps(summary,sort_keys=True)))
-  allrows=outbox.db.execute('SELECT event_id,payload_json,status FROM new_a_delivery').fetchall();rows=[(event_id,json.loads(raw),status) for event_id,raw,status in allrows if json.loads(raw).get('signal_date')==date]
-  if any(status=='ATTEMPTED_UNCONFIRMED' for _,_,status in rows):raise ValueError('notification outcome unconfirmed; reconcile before retry')
-  pending=[r for r in rows if r[2]=='PENDING'];counts={'signal_notifications':sum(p.get('kind')!='DAILY_SUMMARY' for _,p,_ in pending),'completion_notifications':sum(p.get('kind')=='DAILY_SUMMARY' for _,p,_ in pending)}
-  if not dry_run and pending:
-   if publication.get('operational_gate_continuity_verified') is True:
-    from .operational_admission import action_context
-    action_context(root.resolve().parents[2],date=date,run=run,snapshot=snapshot,publication=publication,required=True)
-   target=urlparse(report_url)
-   if target.scheme!='https' or not target.netloc:raise ValueError('existing Cloud report URL is required before send')
-   send=transport or default_transport(report_url)
-   for event_id,payload,_ in sorted(pending,key=lambda r:r[1].get('kind')=='DAILY_SUMMARY'):
-    if publication.get('operational_gate_continuity_verified') is True:action_context(root.resolve().parents[2],date=date,run=run,snapshot=snapshot,publication=publication,required=True)
-    receipt=outbox.deliver(event_id,send,execute=True)
-    if receipt.get('sent') is not True:raise RuntimeError('notification_unconfirmed_reconcile_before_retry')
-  return {'date':date,'dry_run':dry_run,**counts,'strategy':'A_BASE','source_sha256':snapshot['source_sha256'],'snapshot_sha256':snapshot['payload_sha256'],'old_ledger_written':False,'external_sends':0 if dry_run else sum(counts.values())}
- finally:outbox.close()
+"""Send one New A Discord result through the existing detection webhook."""
+
+import csv
+import datetime
+import io
+import os
+import re
+from pathlib import Path
+from urllib.parse import urljoin, urlparse
+
+from .files import digest, encode, read
+from .outbox import ATTEMPTED, Outbox, eligible
+
+
+SUMMARY = "DAILY_SUMMARY"
+DELAYED = "DELAYED_SCHEDULED_OBSERVATION"
+FOOTER_PREFIX = "A_BASE | daily batch | "
+JST = datetime.timezone(datetime.timedelta(hours=9))
+DISCORD_HEADERS = {"User-Agent": "DiscordBot (screening-bot, 1.0)"}
+
+
+def _counts(rows):
+    return {
+        "signal_notifications": sum(payload.get("kind") != SUMMARY for _, payload, _ in rows),
+        "completion_notifications": sum(payload.get("kind") == SUMMARY for _, payload, _ in rows),
+    }
+
+
+def _attachment(date, chart_links):
+    file = io.StringIO(newline="")
+    writer = csv.writer(file)
+    writer.writerow(["検出日", "証券コード", "TradingView"])
+    writer.writerows((date, symbol, url) for symbol, url in chart_links)
+    return {"filename": f"cloud-new-a-{date}.csv", "text": "\ufeff" + file.getvalue()}
+
+
+def _delivery_sha(batch):
+    embed = batch["payload"]["embeds"][0]
+    return digest({
+        **batch, "batch_id": "",
+        "payload": {**batch["payload"], "embeds": [{**embed, "footer": None}]},
+    })
+
+
+def _batch(snapshot, rows, report_url):
+    from ..notify import chart_components
+
+    date = snapshot["as_of"]
+    pending = [row for row in rows if row[2] == "PENDING"]
+    counts = _counts(pending)
+    symbols = sorted({payload["symbol"] for _, payload, _ in pending if payload.get("kind") != SUMMARY})
+    chart_links = [(symbol, chart_components(symbol)[0]["components"][0]["url"]) for symbol in symbols]
+    delayed = snapshot["observation_kind"] == DELAYED
+    fields = [{"name": "検出日", "value": date, "inline": True}]
+    if delayed:
+        observed = datetime.datetime.fromisoformat(snapshot["observed_at"]).astimezone(JST)
+        fields.append({"name": "実際の観測日時（日本時間）", "value": observed.strftime("%Y-%m-%d %H:%M:%S")})
+    if counts["completion_notifications"]:
+        total = len({payload["symbol"] for _, payload, _ in rows if payload.get("kind") != SUMMARY})
+        fields.extend([
+            {"name": "新規検出", "value": f"{total}銘柄", "inline": True},
+            {"name": "判定保留", "value": f"{len(snapshot.get('held_symbols', {}))}銘柄", "inline": True},
+        ])
+    embed = {
+        "title": "Cloud 2.0 新A 日次検出" + ("（遅延実行）" if delayed else ""),
+        "url": urljoin(report_url, "weak_early_beta_latest.html"),
+        "fields": fields,
+        "color": 0x5B8DEF,
+    }
+    attachment = None
+    if chart_links:
+        lines = [f"[{symbol}]({url})" for symbol, url in chart_links]
+        heading = f"**検出一覧（{len(symbols)}銘柄）**\n仕込み候補・監視開始（未約定）\n"
+        description = heading + " ・ ".join(lines)
+        if len(description) > 4096:
+            attachment = _attachment(date, chart_links)
+            description = heading + "全銘柄のチャートリンクは添付CSVをご覧ください。\n" + " ・ ".join(lines[:8])
+        embed["description"] = description
+    payload = {"content": "", "embeds": [embed], "allowed_mentions": {"parse": []}}
+    if attachment is not None:
+        payload["attachments"] = [{"id": 0, "filename": attachment["filename"]}]
+    batch = {
+        "batch_id": "", "signal_date": date, "event_ids": [event_id for event_id, _, _ in pending],
+        "snapshot_sha256": snapshot["payload_sha256"], "source_sha256": snapshot["source_sha256"],
+        "observation_kind": snapshot["observation_kind"], "observed_at": snapshot.get("observed_at"),
+        "payload": payload, "attachment": attachment, **counts,
+    }
+    batch["batch_id"] = _delivery_sha(batch)
+    embed["footer"] = {"text": FOOTER_PREFIX + batch["batch_id"]}
+    return batch
+
+
+def _signal_webhook():
+    from .. import notify
+
+    target = urlparse(os.environ.get(notify.WEBHOOK_ENV, "").strip())
+    match = re.fullmatch(r"/api/(?:v\d+/)?webhooks/(\d+)/[A-Za-z0-9_.-]+/?", target.path)
+    if (target.scheme != "https" or target.netloc not in {"discord.com", "discordapp.com"}
+            or not match or target.query or target.fragment):
+        raise RuntimeError("existing_signal_transport_unavailable")
+    return target.geturl(), match[1]
+
+
+def _verify_destination(url, webhook_id):
+    from .. import notify
+
+    try:
+        response = notify.requests.get(
+            url, headers=DISCORD_HEADERS, allow_redirects=False, timeout=30,
+        )
+        metadata = response.json() if response.status_code == 200 else {}
+        if (str(metadata.get("id")) == webhook_id
+                and str(metadata.get("guild_id")) == notify.GUILD_ID
+                and str(metadata.get("channel_id")) == notify.CHANNEL_ID):
+            return
+    except Exception:
+        pass
+    raise RuntimeError("existing_signal_destination_unverified")
+
+def _field_values(embed):
+    return [(f.get("name"), f.get("value"), bool(f.get("inline"))) for f in embed.get("fields", [])]
+
+
+def _matches_discord(message, batch, *, webhook_id, channel_id):
+    if (not isinstance(message, dict) or not re.fullmatch(r"\d+", str(message.get("id", "")))
+            or str(message.get("channel_id")) != channel_id
+            or str(message.get("webhook_id")) != webhook_id
+            or message.get("content") != batch["payload"]["content"]):
+        return False
+    embeds = message.get("embeds", [])
+    if len(embeds) != 1:
+        return False
+    expected = batch["payload"]["embeds"][0]
+    actual = embeds[0]
+    if (any(actual.get(key) != expected.get(key) for key in ("title", "url", "description", "color"))
+            or actual.get("footer", {}).get("text") != FOOTER_PREFIX + batch["batch_id"]
+            or _field_values(actual) != _field_values(expected)):
+        return False
+    attachments = [(file.get("filename"), file.get("size")) for file in message.get("attachments", [])]
+    file = batch["attachment"]
+    return attachments == ([(file["filename"], len(file["text"].encode("utf-8")))] if file else [])
+
+
+def default_transport():
+    from .. import notify
+
+    url, webhook_id = _signal_webhook()
+    _verify_destination(url, webhook_id)
+
+    def send(batch):
+        try:
+            file = batch["attachment"]
+            body = {"json": batch["payload"]}
+            if file is not None:
+                body = {
+                    "data": {"payload_json": encode(batch["payload"])},
+                    "files": {"files[0]": (file["filename"], file["text"].encode("utf-8"), "text/csv")},
+                }
+            response = notify.requests.post(
+                url, params={"wait": "true", "with_components": "true"}, headers=DISCORD_HEADERS,
+                allow_redirects=False, timeout=30, **body,
+            )
+            message = response.json() if response.status_code == 200 else None
+            if _matches_discord(message, batch, webhook_id=webhook_id, channel_id=notify.CHANNEL_ID):
+                return {"confirmed": True, "message_id": str(message["id"])}
+        except Exception:
+            raise RuntimeError("existing_notification_transport_failed_reconcile_before_retry") from None
+        return {"confirmed": False}
+
+    return send
+
+def _lookup_discord(batch):
+    from .. import notify
+
+    _, webhook_id = _signal_webhook()
+    token = (os.environ.get("WEAK_EARLY_BETA_DISCORD_BOT_TOKEN") or os.environ.get("DISCORD_TOKEN") or "").strip()
+    if not token:
+        raise ValueError("notification outcome unconfirmed; existing Discord history access required")
+    try:
+        response = notify.requests.get(
+            f"https://discord.com/api/v10/channels/{notify.CHANNEL_ID}/messages",
+            params={"limit": 100}, headers={**DISCORD_HEADERS, "authorization": f"Bot {token}"},
+            allow_redirects=False, timeout=30,
+        )
+        if response.status_code != 200:
+            raise ValueError("unexpected Discord history status")
+        matches = [
+            message for message in response.json()
+            if _matches_discord(message, batch, webhook_id=webhook_id, channel_id=notify.CHANNEL_ID)
+        ]
+    except Exception:
+        raise ValueError("notification outcome unconfirmed; Discord history lookup failed") from None
+    if len(matches) == 1:
+        return str(matches[0]["id"])
+    raise ValueError("notification outcome unconfirmed; expected one exact Discord message")
+
+
+def notify_day(root, *, date, dry_run, report_url, transport=None, reconcile_only=False):
+    if dry_run and reconcile_only:
+        raise ValueError("choose either dry run or Discord reconciliation")
+    root = Path(root).resolve()
+    run = read(root / "latest-run.json")
+    snapshot = read(run["snapshot_file"])
+    publication = read(root / "latest-publication.json")
+    from .operational_admission import action_context, publication_gate_verified
+
+    def verify_finite_admission():
+        if publication.get("operational_gate_continuity_verified") is True:
+            action_context(
+                root.parents[2], date=date, run=run, snapshot=snapshot, publication=publication, required=True,
+            )
+
+    verify_finite_admission()
+    if (date != snapshot["as_of"] or run["strategy"] != "A_BASE"
+            or run["snapshot_sha256"] != snapshot["payload_sha256"]):
+        raise ValueError("matching New A daily snapshot required")
+    if (digest({k: v for k, v in snapshot.items() if k != "payload_sha256"}) != snapshot["payload_sha256"]
+            or run["source_sha256"] != snapshot["source_sha256"]
+            or run["source_version"] != publication.get("source_version")):
+        raise ValueError("private notification source bytes changed")
+    kind = snapshot["observation_kind"]
+    local_historical_preview = (
+        dry_run and kind == "DRY_RUN_HISTORICAL" and publication.get("local_d1_emulation") is True
+    )
+    if (publication.get("snapshot_sha256") != snapshot["payload_sha256"]
+            or publication.get("active_readback_verified") is not True
+            or (not local_historical_preview
+                and (not publication_gate_verified(publication) or publication.get("published") is not True))):
+        raise ValueError("verified private publication required")
+    if kind == DELAYED:
+        from .delayed_recovery import delivery_context
+        delivery_context(root.parents[2], snapshot, publication)
+    if not dry_run and kind not in {"LIVE_OBSERVATION", DELAYED}:
+        raise ValueError("historical/catchup notifications prohibited")
+    summary = None
+    signals = eligible(snapshot)
+    if kind in {"LIVE_OBSERVATION", DELAYED}:
+        count_field = "delayed_scheduled_signals" if kind == DELAYED else "new_live_signals"
+        if (snapshot.get("data_status") not in {"COMPLETED", "COMPLETED_WITH_HELD_SYMBOLS"}
+                or snapshot.get(count_field) != len(signals)):
+            raise ValueError("completed New A detection result required")
+    if signals:
+        summary = {
+            "kind": SUMMARY, "event_id": digest(["A_BASE", date, SUMMARY]), "signal_date": date,
+            "count": len({event["symbol"] for event in signals}), "strategy": "A_BASE",
+            "signal_phase": "WATCH_STARTED", "execution_status": "NOT_EXECUTED",
+        }
+        if kind == DELAYED:
+            summary.update(
+                observation_kind=kind, observed_at=snapshot["observed_at"],
+                delayed_recovery=snapshot["delayed_recovery"],
+            )
+
+    outbox = Outbox(root / "notification-outbox.sqlite")
+    try:
+        if not reconcile_only:
+            # An empty verified result preserves the previous silent completion behavior.
+            outbox.stage(snapshot, publication, existing_notifications_enabled=True, summary=summary)
+        rows = outbox.day_rows(date)
+        reconciled = False
+        if any(status == ATTEMPTED for _, _, status in rows):
+            if not reconcile_only:
+                raise ValueError("notification outcome unconfirmed; use --reconcile-only before retry")
+            batch = outbox.unconfirmed_batch(date)
+            if (batch["signal_date"] != date or batch["snapshot_sha256"] != snapshot["payload_sha256"]
+                    or _delivery_sha(batch) != batch["batch_id"]):
+                raise ValueError("notification batch differs from verified snapshot")
+            verify_finite_admission()
+            outbox.confirm_batch(batch, _lookup_discord(batch))
+            reconciled = True
+            rows = outbox.day_rows(date)
+            if any(status == ATTEMPTED for _, _, status in rows):
+                raise ValueError("other notification outcomes remain unconfirmed")
+        counts = _counts([row for row in rows if row[2] == "PENDING"])
+        sent = 0
+        if not dry_run and not reconcile_only and any(counts.values()):
+            target = urlparse(report_url)
+            if target.scheme != "https" or not target.netloc:
+                raise ValueError("existing Cloud report URL is required before send")
+            send = transport or default_transport()
+            verify_finite_admission()
+            batch = outbox.claim_batch(date, lambda current: _batch(snapshot, current, report_url))
+            if batch is not None:
+                receipt = send(batch)
+                if (not isinstance(receipt, dict) or receipt.get("confirmed") is not True
+                        or not isinstance(receipt.get("message_id"), str) or not receipt["message_id"].strip()):
+                    raise RuntimeError("notification_unconfirmed_reconcile_before_retry")
+                outbox.confirm_batch(batch, receipt["message_id"])
+                counts = {name: batch[name] for name in counts}
+                sent = 1
+            else:
+                counts = _counts([])
+        result = {
+            "date": date, "dry_run": dry_run, **counts, "strategy": "A_BASE",
+            "source_sha256": snapshot["source_sha256"], "snapshot_sha256": snapshot["payload_sha256"],
+            "old_ledger_written": False, "external_sends": sent,
+            "pending_discord_messages": int((dry_run or reconcile_only) and any(counts.values())),
+        }
+        if reconcile_only:
+            result["reconciled_batch"] = reconciled
+        return result
+    finally:
+        outbox.close()

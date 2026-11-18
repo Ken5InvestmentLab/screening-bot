@@ -1,44 +1,272 @@
-/* Browser binding for the preserved Cloud frame; no source prices are accepted from the browser. */
+/* Bind the owner-only frame to its calculation, history and account settings. */
 (function(){
- 'use strict';if(typeof document==='undefined')return;
- const isGuide=document.body?.dataset.page==='guide',isAnalytics=document.body?.dataset.page==='analytics',isToday=document.body?.dataset.page==='home',trialPage=isAnalytics||isToday;const F=globalThis.AFinite,$=id=>document.getElementById(id),dialog=$('cloud-settings-dialog'),content=$('cloud-analytics-content');
- if(!dialog||!content||!globalThis.AFiniteLegacy)return;
- const fields={initial_cash_yen:'new-a-initial-cash',max_positions:'new-a-max-positions',per_order_cap_yen:'new-a-per-order-cap',base_shares:'cloud-base-shares',cost_percent:'cloud-cost-percent',exit_endpoint:'cloud-exit-endpoint',year_scope:'cloud-year-scope',allocation:'cloud-allocation'};
- let latest=null,drawn=null,dailyLimit=50,history=new Map(),queued=false;
+ 'use strict';
+ const page=document.body.dataset.page, isHome=page==='home', isAnalytics=page==='analytics';
+ const app=globalThis.AFinite,legacy=globalThis.AFiniteLegacy;
+ if(!app||!legacy)return;
+ const byId=id=>document.getElementById(id);
+ const content=byId('cloud-analytics-content');
+ const settings=byId('cloud-settings-page');
  const rows=Array.from(document.querySelectorAll('#detection-table tbody tr[data-date]'));
- for(const row of rows)row.hidden=true;
- const safeLocal=()=>{try{const finite=localStorage.getItem('newACloudFinitePreferences:v1');if(finite!==null)return F.validate(JSON.parse(finite));const old=localStorage.getItem('cloudReportPreferences:v1'),view=localStorage.getItem('cloudReportView:v1');if(old===null&&view===null)return null;const p=old!==null?JSON.parse(old):{},v=view!==null?JSON.parse(view):{};return F.validate({...F.BASE,price_cap_yen:p.priceCapYen===undefined?F.BASE.price_cap_yen:p.priceCapYen,exit_endpoint:p.exitKey??F.BASE.exit_endpoint,base_shares:p.baseShares??100,cost_percent:p.costPercent??0,year_scope:v.yearScope??'all',allocation:v.allocation??'all'});}catch(_){return 'unknown';}};
- const safeLocalView=()=>{try{const raw=localStorage.getItem('cloudReportView:v1');if(raw===null)return null;const v=JSON.parse(raw),p=F.validate({...F.BASE,year_scope:v.yearScope,allocation:v.allocation});return{year_scope:p.year_scope,allocation:p.allocation};}catch(_){return 'unknown';}};
- const controls=()=>{const p={};for(const [k,id]of Object.entries(fields))p[k]=['exit_endpoint','year_scope','allocation'].includes(k)?$(id).value:Number($(id).value);const cap=$('cloud-price-preset').value;p.price_cap_yen=cap==='unlimited'?null:Number(cap==='custom'?$('cloud-price-custom').value:cap);return F.validate(p);};
- function sync(p){for(const [k,id]of Object.entries(fields))$(id).value=String(p[k]);const preset=$('cloud-price-preset'),custom=$('cloud-price-custom'),holder=$('cloud-price-custom-field');preset.value=p.price_cap_yen===null?'unlimited':[1000,2000,3000,5000].includes(p.price_cap_yen)?String(p.price_cap_yen):'custom';custom.value=p.price_cap_yen===null?'':String(p.price_cap_yen);custom.disabled=preset.value!=='custom';custom.hidden=holder.hidden=preset.value!=='custom';}
- const busy=s=>s.phase==='loading'||s.phase==='saving'||s.phase==='calculating';
- function rebuildHistory(d){const model=d.model_result||d.result;history=new Map();const orders=new Map(model.orders.map(x=>[F.key(x),x])),trades=new Map(model.trades.map(x=>[F.key(x),x]));for(const w of model.watches){const key=F.key(w),t=trades.get(key),o=orders.get(key),open=model.open_positions[w.symbol];history.set(key,{w,o,t,open:open&&F.key({...open,symbol:w.symbol})===key?open:null});}for(const row of rows){row.dataset.finiteHydrate='pending';row.innerHTML='<td colspan="8">適用条件を反映中</td>';row.hidden=true;}globalThis.AFiniteLegacy.applySelection(d.preferences);for(const label of document.querySelectorAll('[data-scenario-endpoint-label]'))label.textContent='モデル決済（買付日別）';hydrateVisible();}
- function rowMarkup(row,record){const d=row.dataset,{w,o,t,open}=record||{},pos=t||open,selected=latest.accepted.preferences.exit_endpoint,chartAllowed=d.aChartAllowed!=='false',chart='https://jp.tradingview.com/chart/?symbol=TSE%3A'+encodeURIComponent(d.symbol),name=`${F.esc(d.name)} (${F.esc(d.symbol)})`,state=w?.selection_reason||o?.status||w?.watch_status||'未確認';
- const chartLink=chartAllowed?`<a class="button-link" href="${chart}" target="_blank" rel="noopener noreferrer" data-source-symbol="${F.esc(d.symbol)}" data-candidate-date="${F.esc(d.date)}" data-entry-date="${F.esc(pos?.entry_date||'')}" data-selected-exit-date="${F.esc(t?.exit_date||'')}" data-source-version="${F.esc(latest.accepted.source_version)}">チャート</a>`:'<span class="button-link" aria-disabled="true">チャート・照合保留</span>';
- const fundamental=`<button type="button" class="fundamental-toggle" data-finite-fundamental aria-expanded="false">ファンダを見る</button><dialog class="fundamental-detail"><button class="fundamental-close" type="button">閉じる</button><div class="discord-message"><article class="discord-embed"><h4>${name}</h4><p>未作成</p></article></div></dialog>`;
- const entry=pos?`${F.esc(pos.entry_date)}<small>寄付 ${F.yen(pos.entry_price_nominal)}</small><small>${F.number(pos.shares)}株／取得 ${F.yen(pos.entry_cost)}</small>`:o?.status==='FILLED'?'約定・価格確認待ち':'未約定';
- const exit=F.exitLabel(selected,pos,(latest.accepted.model_result||latest.accepted.result).exit_policy);
- const exitText=t?`${F.esc(t.exit_date)}<small>${F.yen(t.exit_price_nominal)}</small>`:open?'未決済':'—';
- const reference=(date,price,status)=>date&&price?`${F.esc(date)}<small>${F.yen(Number(price))}・${status==='reference_price_only'?'価格のみ参照':'参照'}</small>`:'参照未計測';
- return `<td colspan="8" class="history-record"><div class="history-visible-grid"><div class="history-date" data-label="監視開始日"><div class="history-date-value">${F.esc(d.date)}</div><div class="actions history-date-actions">${fundamental}${chartLink}</div></div><div class="history-company"><strong>${name}</strong><small>参照名・当時名未確認</small>${chartAllowed?'':'<small>現在コード参照・歴史対応未確認</small>'}<small>支持反発 ${F.esc(w?.trigger_date||'未確認')}</small></div><div data-label="条件"><span class="badge">A</span><small>${pos?F.number(pos.shares)+'株':'—'}</small></div><div data-label="状態"><span class="status pending">${F.esc(F.status(state))}</span></div><div data-label="購入日・株価">${entry}</div><div data-label="5営業日目 終値・参照">${reference(d.d5Date,d.d5Close,d.aD5Status)}</div><div data-label="6営業日目 始値・参照">${reference(d.d6Date,d.d6Open,d.aD6Status)}</div><div data-label="選択中の決済・損益" class="number"><small>${exit}・試算約定</small><small>決済日・価格 ${exitText}</small><strong>${t?F.yen(t.profit):open?'未決済':'対象外'}</strong><small>${t?F.pct(t.return):''}</small></div></div><button type="button" class="history-mobile-toggle" data-cloud-history-details aria-expanded="false">詳細を見る</button></td>`;
+ const fields={initial_cash_yen:'new-a-initial-cash',max_positions:'new-a-max-positions',per_order_cap_yen:'new-a-per-order-cap',base_shares:'cloud-base-shares',cost_percent:'cloud-cost-percent',exit_endpoint:'cloud-exit-endpoint',year_scope:'cloud-year-scope',allocation:'cloud-allocation'};
+ let drawn=null,displayKey,history=new Map(),dailyLimit=50,latest=null;
+ const busy=s=>['loading','saving','calculating'].includes(s.phase);
+ const trial=()=>byId('new-a-trial-preset').value;
+ const defaultPrefs=legacy.initialDisplay();
+ function readTrial(){
+  const values={};
+  for(const [key,id] of Object.entries(fields)){
+   const field=byId(id);
+   if(!field.value)throw Error('空欄を入力してください。');
+   values[key]=field.type==='number'?field.valueAsNumber:field.value;
+  }
+  const preset=byId('cloud-price-preset').value;
+  values.price_cap_yen=preset==='unlimited'?null:preset==='custom'?byId('cloud-price-custom').valueAsNumber:Number(preset);
+  return app.validate(values);
  }
- function hydrateVisible(){if(!latest?.accepted)return;for(const row of rows)if(!row.hidden&&row.dataset.finiteHydrate==='pending'){row.innerHTML=rowMarkup(row,history.get(row.dataset.aIdentity));row.dataset.finiteHydrate='done';}}
- function daily(){const d=latest?.accepted;if(!d)return;const list=d.result.daily;const host=$('new-a-daily-table');if(host)host.innerHTML=F.table([['date','日付'],['cash','現金',F.yen],['holdings_value','保有評価',F.yen],['equity_diagnostic',d.result.resolved?'純資産':'純資産・診断値',F.yen],['positions','保有数',F.number],['unresolved','評価状態',v=>v?'保留':'確定']],list.slice(0,dailyLimit),'daily');const more=$('new-a-daily-more');if(more){more.hidden=dailyLimit>=list.length;more.textContent=`次の50営業日 (${Math.min(dailyLimit,list.length)} / ${list.length})`;}const chart=$('new-a-daily-chart');if(chart)chart.innerHTML=equityChart(list,d.result.resolved);}
- function equityChart(list,resolved){const points=list.filter(d=>Number.isFinite(d.equity_diagnostic));if(!points.length)return '<p>日次値なし</p>';const values=points.map(d=>d.equity_diagnostic),lo=Math.min(...values),hi=Math.max(...values),x=i=>115+i/Math.max(1,points.length-1)*750,y=v=>260-(v-lo)/Math.max(1,hi-lo)*220;const line=points.map((d,i)=>`${i?'L':'M'}${x(i).toFixed(2)} ${y(d.equity_diagnostic).toFixed(2)}`).join(' ');return `<svg class="scenario-chart cloud-equity-chart" viewBox="0 0 900 320" role="img" aria-label="${resolved?'純資産':'診断用純資産'}の日次推移" data-finite-points="${points.length}"><title>同じ適用条件の日次純資産${resolved?'':'・未解決あり'}</title><text x="115" y="20" class="axis-label">純資産（円）</text><text x="100" y="45" text-anchor="end" class="axis-label">${F.number(hi)}</text><text x="100" y="260" text-anchor="end" class="axis-label">${F.number(lo)}</text><path class="equity-line" d="${line}" style="stroke:var(--blue)"/><text x="115" y="300" class="axis-label">${F.esc(points[0].date)}</text><text x="865" y="300" text-anchor="end" class="axis-label">${F.esc(points.at(-1).date)}</text></svg>`;}
- function update(s){latest=s;$('cloud-settings-open').disabled=busy(s);const status=$('cloud-settings-status');status.textContent=s.message;status.setAttribute('aria-invalid',String(['error','denied'].includes(s.phase)));content.setAttribute('aria-busy',String(busy(s)));for(const el of dialog.querySelectorAll('input,select,button'))el.disabled=busy(s);if(!busy(s))$('cloud-price-custom').disabled=$('cloud-price-preset').value!=='custom';const trialSelect=$('new-a-trial-preset');if(trialSelect)trialSelect.value=s.trialPreset||'custom';$('cloud-exit-endpoint').disabled=busy(s)||trialPage&&s.trialPreset!==null;$('cloud-exit-endpoint').closest('label').hidden=trialPage&&s.trialPreset!==null;$('cloud-settings-save').disabled=busy(s)||s.revision===null;if(!dialog.open||!s.dirty)sync(s.draft);if(s.accepted!==null&&drawn!==s.accepted.request_id){const tbody=document.querySelector('#detection-table tbody');if(tbody)tbody.hidden=false;drawn=s.accepted.request_id;if(!isGuide){const pageData=globalThis.AOwnerPageData;content.innerHTML=isToday?F.renderToday(s.accepted,{snapshots:pageData?.current||[],rows:pageData?.rows||[],calendar:pageData?.manifest?.input_header?.calendar||[],today:new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo'}).format(new Date())}):F.render(s.accepted);dailyLimit=50;rebuildHistory(s.accepted);daily();}else globalThis.AFiniteLegacy.applySelection(s.accepted.preferences);}if(!s.accepted&&s.phase==='denied'){globalThis.AFiniteRevoked=true;globalThis.AOwnerPageData=null;$('new-a-current')?.remove();drawn=null;content.innerHTML='<section class="panel"><p>認証を確認してください。</p></section>';for(const row of rows)row.hidden=true;}for(const id of ['new-a-export-summary','new-a-export-trades','new-a-export-daily'])if($(id))$(id).disabled=busy(s)||!s.accepted;}
- const trialInitial=(()=>{if(!trialPage)return null;try{const saved=localStorage.getItem('newACloudTrialPreset:v1');if(saved==='custom')return null;if(Object.hasOwn(F.TRIAL_PRESETS,saved))return saved;}catch(_){}return 'balanced';})();
- const controller=F.createController({trialPreset:trialInitial,transport:globalThis.AFiniteTransport||globalThis.fetch.bind(globalThis),onChange:update,localPreferences:safeLocal(),localViewPreferences:safeLocalView(),calculateOnLoad:!isGuide});globalThis.AFiniteUIController=controller;
- const changed=()=>{const preset=$('cloud-price-preset'),custom=$('cloud-price-custom'),holder=$('cloud-price-custom-field');holder.hidden=custom.hidden=preset.value!=='custom';custom.disabled=preset.value!=='custom';try{controller.edit(controls());}catch(e){$('cloud-settings-status').textContent=e.message;}};
- for(const id of [...Object.values(fields),'cloud-price-preset','cloud-price-custom'])$(id).addEventListener(id==='cloud-price-custom'?'input':'change',changed);
- $('cloud-settings-open').addEventListener('click',()=>sync(controller.state().draft));
- $('new-a-trial-preset')?.addEventListener('change',async()=>{if(!trialPage||busy(controller.state()))return;const selected=$('new-a-trial-preset').value;controller.setTrialPreset(selected==='custom'?null:selected);await controller.recalculate();});
- for(const id of ['cloud-settings-cancel','cloud-settings-close'])$(id).addEventListener('click',()=>{controller.cancel();sync(controller.state().draft);});
- dialog.addEventListener('cancel',()=>{if(busy(controller.state()))return;controller.cancel();sync(controller.state().draft);});
- dialog.addEventListener('cancel',event=>{if(busy(controller.state())){event.preventDefault();event.stopImmediatePropagation();}},true);
- dialog.addEventListener('close',()=>{if(controller.state().dirty){controller.cancel();sync(controller.state().draft);}});
- $('cloud-research-reset').addEventListener('click',event=>{event.preventDefault();const tab=dialog.querySelector('[role="tab"][aria-selected="true"]')?.id;if(tab==='settings-tab-display'){globalThis.AFiniteLegacy.resetDisplay();return;}controller.reset();sync(controller.state().draft);});
- $('cloud-settings-save').addEventListener('click',async event=>{event.preventDefault();try{controller.edit(controls());}catch(e){$('cloud-settings-status').textContent=e.message;return;}if(await controller.save()){const displaySaved=globalThis.AFiniteLegacy.saveDisplay();const s=controller.state();try{localStorage.setItem('newACloudFinitePreferences:v1',JSON.stringify(s.applied));if(trialPage)localStorage.setItem('newACloudTrialPreset:v1',s.trialPreset||'custom');}catch(_){}if(!s.dirty){dialog.close();$('cloud-settings-feedback')?.replaceChildren(document.createTextNode(displaySaved?'設定を保存しました。':'試算設定は保存済み・端末の表示設定は未保存'));}}});
- document.addEventListener('click',event=>{const target=event.target;if(busy(controller.state())&&(target.closest?.('#cloud-settings-cancel,#cloud-settings-close')||target===dialog)){event.preventDefault();event.stopImmediatePropagation();return;}const fund=target.closest?.('[data-finite-fundamental]'),close=target.closest?.('.fundamental-close');if(fund){event.preventDefault();event.stopImmediatePropagation();const modal=fund.parentElement.querySelector('dialog');modal.showModal();fund.setAttribute('aria-expanded','true');return;}if(close){const modal=close.closest('dialog');if(modal?.classList.contains('fundamental-detail')){event.preventDefault();event.stopImmediatePropagation();modal.close();return;}}const id=target.closest?.('button')?.id;if(id==='new-a-daily-more'){dailyLimit+=50;daily();return;}const kind=({'new-a-export-summary':'summary','new-a-export-trades':'trades','new-a-export-daily':'daily'})[id];if(kind&&!busy(controller.state())&&latest.accepted){event.preventDefault();const keys=kind==='trades'?new Set(globalThis.AFiniteLegacy.matchingIdentities()):null,text=F.exportsFor(latest.accepted,kind,keys);if(globalThis.AFiniteDownload){globalThis.AFiniteDownload(text,kind);return;}const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download=`Cloud2_A_${kind}_${latest.accepted.request_id}.csv`;a.click();URL.revokeObjectURL(url);}},true);
- const tbody=document.querySelector('#detection-table tbody');if(tbody)new MutationObserver(()=>{if(!queued){queued=true;queueMicrotask(()=>{queued=false;hydrateVisible();});}}).observe(tbody,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});
+ function readView(){
+  return {trial_preset:trial()==='custom'?null:trial(),theme:byId('cloud-theme').value,font_size:byId('cloud-font-size').value,page_size:Number(byId('cloud-page-size').value)};
+ }
+ function syncPriceControl(){
+  const custom=byId('cloud-price-preset').value==='custom';
+  byId('cloud-price-custom-field').hidden=!custom;
+  byId('cloud-price-custom').disabled=!custom;
+ }
+ function syncExitControl(){
+  const active=trial()==='custom';
+  const field=byId('cloud-exit-endpoint');
+  field.closest('label').hidden=!active;
+  field.disabled=!active;
+ }
+ function syncTrial(p,preset){
+  for(const [key,id] of Object.entries(fields))byId(id).value=String(p[key]);
+  const cap=p.price_cap_yen;
+  byId('cloud-price-preset').value=cap===null?'unlimited':[1000,2000,3000,5000].includes(cap)?String(cap):'custom';
+  byId('cloud-price-custom').value=cap===null?'':String(cap);
+  byId('new-a-trial-preset').value=preset??'custom';
+  syncPriceControl();
+  syncExitControl();
+ }
+ function syncDisplay(v){
+  byId('cloud-theme').value=v?.theme??defaultPrefs.theme;
+  byId('cloud-font-size').value=v?.font_size??defaultPrefs.fontSize;
+  byId('cloud-page-size').value=String(v?.page_size??defaultPrefs.pageSize);
+ }
+ function setSettingsStatus(text,error=false){
+  const status=byId('cloud-settings-status');
+  status.textContent=text;
+  status.dataset.state=error?'error':'';
+ }
+ function refCell(date,price,status){
+  if(!date||!price)return '—';
+  return app.esc(date)+'<small>'+app.yen(Number(price))+' · '+(status==='reference_price_only'?'価格のみ参照':'参照')+'</small>';
+ }
+ function rowMarkup(row,record){
+  const d=row.dataset, {w,o,t,open,source}=record||{}, pos=t||open;
+  const chartAllowed=d.aChartAllowed!=='false';
+  const name=app.esc(d.name),code=app.esc(d.symbol);
+  const url='https://jp.tradingview.com/chart/?symbol=TSE%3A'+encodeURIComponent(d.symbol);
+  const chart=chartAllowed?'<a class="button-link" href="'+url+'" target="_blank" rel="noopener noreferrer">チャート</a>':'<span class="button-link" aria-disabled="true">チャート保留</span>';
+  const fundamental=globalThis.ANewPresentation?.fundamentalMarkup(source);
+  const entry=pos?app.esc(pos.entry_date)+'<small>寄付 '+app.yen(pos.entry_price_nominal)+'</small><small>'+app.number(pos.shares)+'株 · '+app.yen(pos.entry_cost)+'</small>':'—';
+  const exit=app.exitLabel(latest.applied.exit_endpoint,pos,historyExitPolicy);
+  const result=t?'<strong>'+app.yen(t.profit)+'</strong><small>'+app.pct(t.return)+'</small>':open?'<strong>仮想保有中</strong>':'—';
+  const exitDetails=t?'<small>決済 '+app.esc(t.exit_date)+' · '+app.yen(t.exit_price_nominal)+'</small>':'';
+  const close=d.signalActualClose?'<small>検出日終値 '+app.yen(Number(d.signalActualClose))+'</small>':'<small>検出日終値 未確認</small>';
+  const state=w?.selection_reason||o?.status||w?.watch_status||d.aStatusLabel;
+  return '<td colspan="8" class="history-record"><div class="history-visible-grid">'+
+   '<div class="history-date" data-label="検出日"><div class="history-date-value">'+app.esc(d.date)+'</div><div class="actions history-date-actions">'+(fundamental||'')+chart+'</div></div>'+
+   '<div class="history-company"><strong><span class="symbol">'+code+'</span> '+name+'</strong>'+close+(chartAllowed?'':'<small>当時の銘柄名を確認中</small>')+'</div>'+
+   '<div data-label="該当モード"><span class="badge">A</span></div>'+
+   '<div data-label="状況"><span class="status pending">'+app.esc(state==='FILLED'?(t?'仮想決済済':'仮想保有中'):app.status(state))+'</span></div>'+
+   '<div data-label="試算開始日・始値">'+entry+'</div>'+
+   '<div data-label="5営業日後 終値">'+refCell(d.d5Date,d.d5Close,d.aD5Status)+'</div>'+
+   '<div data-label="6営業日後 始値">'+refCell(d.d6Date,d.d6Open,d.aD6Status)+'</div>'+
+   '<div data-label="成績" class="number cloud-history-result">'+result+'<div class="cloud-exit-details"><small>'+app.esc(exit)+'</small>'+exitDetails+'</div></div></div>'+
+   '<button type="button" class="history-mobile-toggle" data-cloud-history-details aria-expanded="false">詳細を見る</button></td>';
+ }
+ let historyExitPolicy=null;
+ function rebuildHistory(d){
+  const model=d.model_result||d.result;
+  historyExitPolicy=model.exit_policy;
+  const orders=new Map(model.orders.map(x=>[app.key(x),x])),trades=new Map(model.trades.map(x=>[app.key(x),x]));
+  history=new Map(globalThis.AOwnerPageData.rows.map(row=>[row.identity,{source:row}]));
+  for(const w of model.watches){
+   const identity=app.key(w),open=model.open_positions[w.symbol];
+   const entry=history.get(identity);
+   if(entry)Object.assign(entry,{w,o:orders.get(identity),t:trades.get(identity),open:open&&app.key({...open,symbol:w.symbol})===identity?open:null});
+  }
+  for(const row of rows){row.dataset.finiteHydrate='pending';row.replaceChildren();}
+  legacy.applySelection(d.preferences);
+  const tbody=document.querySelector('#detection-table tbody');
+  if(tbody)tbody.hidden=false;
+  hydrateVisible();
+ }
+ function hydrateVisible(){
+  for(const row of rows)if(!row.hidden&&row.dataset.finiteHydrate==='pending'){
+   row.innerHTML=rowMarkup(row,history.get(row.dataset.aIdentity));
+   row.dataset.finiteHydrate='done';
+  }
+ }
+ function equityChart(list,resolved){
+  const points=list.filter(d=>Number.isFinite(d.equity_diagnostic));
+  if(!points.length)return '<p>日次値なし</p>';
+  const values=points.map(d=>d.equity_diagnostic),lo=Math.min(...values),hi=Math.max(...values);
+  const x=i=>132+i/Math.max(1,points.length-1)*694,y=v=>hi===lo?145:240-(v-lo)/(hi-lo)*190;
+  const line=points.map((d,i)=>(i?'L':'M')+x(i).toFixed(2)+' '+y(d.equity_diagnostic).toFixed(2)).join(' ');
+  const label=resolved?'純資産（円）':'純資産の診断値（円）';
+  const ticks=hi===lo?'<text x="122" y="151" text-anchor="end" class="axis-label">'+app.number(hi)+'</text>':'<text x="122" y="55" text-anchor="end" class="axis-label">'+app.number(hi)+'</text><text x="122" y="246" text-anchor="end" class="axis-label">'+app.number(lo)+'</text>';
+  return '<svg class="scenario-chart cloud-equity-chart" viewBox="0 0 870 308" role="img" aria-label="'+label+'の日次推移"><title>'+label+'の日次推移</title>'+
+   '<text x="132" y="25" class="axis-label">'+label+'</text><path d="M132 49H826M132 242H826" fill="none" stroke="var(--line)"/>'+
+   ticks+
+   '<path class="equity-line" d="'+line+'" style="stroke:var(--blue)"/><circle cx="'+x(points.length-1)+'" cy="'+y(values.at(-1))+'" r="4" fill="var(--blue)"/>'+
+   '<text x="132" y="284" class="axis-label">'+app.esc(points[0].date)+'</text><text x="826" y="284" text-anchor="end" class="axis-label">'+app.esc(points.at(-1).date)+'</text></svg>';
+ }
+ function drawDaily(result){
+  const data=result.daily;
+  byId('new-a-daily-table').innerHTML=app.table([['date','日付'],['cash','現金',app.yen],['holdings_value','保有評価',app.yen],['equity_diagnostic',result.resolved?'純資産':'純資産（診断値）',app.yen],['positions','保有数',app.number],['unresolved','状態',v=>v?'保留':'確定']],data.slice(0,dailyLimit),'daily');
+  byId('new-a-daily-more').hidden=dailyLimit>=data.length;
+ }
+ function clearPrivateDisplay(){
+  globalThis.AFiniteRevoked=true;
+  globalThis.AOwnerPageData=null;
+  globalThis.AFiniteBrowser?.clear();
+  history.clear();
+  legacy.clearHistory();
+  rows.length=0;
+  for(const id of ['new-a-dashboard','new-a-model-holdings','cloud-analytics-content','history','cloud-settings-page']){
+   const node=byId(id);
+   if(node){node.replaceChildren();node.hidden=true;}
+  }
+ }
+ function update(state){
+  latest=state;
+  const working=busy(state);
+  const key=JSON.stringify(state.viewPreferences);
+  if(key!==displayKey){
+   legacy.applyAccountDisplay(state.viewPreferences);
+   displayKey=key;
+  }
+  if(settings){
+   for(const control of settings.querySelectorAll('select,input,button'))control.disabled=working||state.revision===null;
+   if(!working&&state.revision!==null){
+    if(!state.dirty){syncTrial(state.draft,state.trialPreset);syncDisplay(state.viewPreferences);}
+    syncPriceControl();syncExitControl();
+   }
+   setSettingsStatus(state.message,state.phase==='error'||state.phase==='denied');
+  }
+  content?.setAttribute('aria-busy',String(working));
+  if(state.phase==='denied'||state.phase==='session-changed'){
+   clearPrivateDisplay();
+   const message=state.phase==='session-changed'?'ログイン状態が変わりました。':'認証を確認できませんでした。';
+   globalThis.AOwnerLoadStatus?.(message,()=>location.reload());
+   return;
+  }
+  if(state.phase==='error'){
+   if(content&&!state.accepted)content.hidden=true;
+   if(!settings||state.revision===null){
+    const message=isAnalytics?(state.accepted?'過去成績を更新できませんでした。':'過去成績を読み込めませんでした。'):isHome?'検出履歴を読み込めませんでした。':'設定を読み込めませんでした。';
+    globalThis.AOwnerLoadStatus?.(message,()=>{
+     globalThis.AOwnerLoadStatus?.('読み込んでいます。');
+     controller.load();
+    });
+   }
+   return;
+  }
+  if(state.phase==='ready'){
+   globalThis.AOwnerLoadStatus?.('');
+   if(content)content.hidden=false;
+  }
+  if(!state.accepted||drawn===state.accepted.request_id)return;
+  const simulation=state.accepted;
+  drawn=simulation.request_id;
+  if(isAnalytics){
+   content.innerHTML=app.render(simulation);
+   byId('new-a-daily-chart').innerHTML=equityChart(simulation.result.daily,simulation.result.resolved);
+   dailyLimit=50;
+   drawDaily(simulation.result);
+  }
+  if(isHome){
+   byId('new-a-model-holdings')?.remove();
+   const data=globalThis.AOwnerPageData;
+   byId('new-a-dashboard').insertAdjacentHTML('beforeend',app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar}));
+   rebuildHistory(simulation);
+  }
+ }
+ const controller=app.createController({trialPreset:'balanced',useTrialPreset:!isHome,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
+ globalThis.AFiniteUIController=controller;
+
+ if(settings){
+  const tabs=[...settings.querySelectorAll('[role="tab"]')];
+  const switchTab=tab=>{
+   for(const item of tabs){
+    const selected=item===tab;
+    item.tabIndex=selected?0:-1;
+    item.setAttribute('aria-selected',String(selected));
+    byId(item.getAttribute('aria-controls')).hidden=!selected;
+   }
+   byId('cloud-research-reset').textContent=tab.id==='settings-tab-display'?'表示をリセット':'試算方法をリセット';
+  };
+  for(const [i,tab] of tabs.entries()){
+   tab.addEventListener('click',()=>switchTab(tab));
+   tab.addEventListener('keydown',event=>{
+    const offset={ArrowLeft:-1,ArrowRight:1}[event.key];
+    const next=event.key==='Home'?tabs[0]:event.key==='End'?tabs.at(-1):offset?tabs[(i+offset+tabs.length)%tabs.length]:null;
+    if(!next)return;
+    event.preventDefault();
+    switchTab(next);
+    next.focus();
+   });
+  }
+  const markChanged=()=>{
+   syncPriceControl();
+   try{controller.edit(readTrial());}catch(e){setSettingsStatus(e.message,true);}
+  };
+  settings.addEventListener('change',()=>{
+   syncExitControl();
+   markChanged();
+  });
+  byId('cloud-settings-cancel').addEventListener('click',()=>{
+   controller.cancel();
+   const state=controller.state();
+   syncTrial(state.draft,state.trialPreset);
+   syncDisplay(state.viewPreferences);
+  });
+  byId('cloud-research-reset').addEventListener('click',()=>{
+   if(byId('settings-tab-display').getAttribute('aria-selected')==='true'){
+    syncDisplay(null);
+    markChanged();
+    return;
+   }
+   controller.reset();
+   controller.setTrialPreset('balanced');
+   syncTrial(controller.state().draft,'balanced');
+  });
+  byId('cloud-settings-save').addEventListener('click',async()=>{
+   try{
+    const conditions=readTrial(),view=readView();
+    controller.edit(conditions);
+    await controller.save(view);
+   }catch(e){setSettingsStatus(e.message,true);}
+  });
+ }
+ document.addEventListener('click',event=>{
+  const id=event.target.closest('button')?.id, snapshot=latest;
+  if(!id||!snapshot)return;
+  if(id==='new-a-daily-more'&&snapshot.accepted){
+   dailyLimit+=50;drawDaily(snapshot.accepted.result);return;
+  }
+  const kind={'new-a-export-summary':'summary','new-a-export-trades':'trades','new-a-export-daily':'daily'}[id];
+  if(!kind||busy(snapshot)||!snapshot.accepted)return;
+  const data=snapshot.accepted;
+  const matching=kind==='trades'?new Set(data.result.watches.filter(w=>!['PRICE_CAP','SIGNAL_PRICE_UNVERIFIED'].includes(w.selection_reason)).map(app.key)):null;
+  const text=app.exportsFor(data,kind,matching);
+  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));
+  const link=document.createElement('a');
+  link.href=url;link.download='Cloud2_A_'+kind+'.csv';link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+ const tbody=document.querySelector('#detection-table tbody');
+ if(tbody)new MutationObserver(hydrateVisible).observe(tbody,{subtree:true,attributes:true,attributeFilter:['hidden']});
  controller.load();
 })();

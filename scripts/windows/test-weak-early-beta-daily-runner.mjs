@@ -473,7 +473,11 @@ test('completed deployment failures stop polling immediately', async () => {
 });
 
 function notificationReceipt({ signal = 2, completion = 1, dryRun = true, date = signalDate } = {}) {
-  return { date, signal_notifications: signal, completion_notifications: completion, dry_run: dryRun };
+  const hasEvents = signal > 0 || completion > 0;
+  return {
+    date, signal_notifications: signal, completion_notifications: completion, dry_run: dryRun,
+    pending_discord_messages: Number(dryRun && hasEvents), external_sends: Number(!dryRun && hasEvents),
+  };
 }
 
 test('notification reconciliation sends the exact preview counts and confirms zero remaining', async () => {
@@ -510,7 +514,7 @@ test('zero preview notifications skip send and still reconcile the remaining que
   assert.deepEqual(calls, ['preview', 'reconcile']);
   assert.deepEqual(result.notifications, {
     date: signalDate, signal_notifications: 0, completion_notifications: 0,
-    dry_run: false, skipped: 'no_new_symbols',
+    pending_discord_messages: 0, external_sends: 0, dry_run: false, skipped: 'no_pending_results',
   });
   assert.deepEqual(result.remaining, empty);
   assert.deepEqual(progress.map(item => item.phase), ['preview', 'sent', 'reconcile']);
@@ -575,6 +579,8 @@ test('invalid actual notification receipts stop without another preview or send'
     notificationReceipt({ signal: -1, dryRun: false }),
     notificationReceipt({ completion: 0.5, dryRun: false }),
     notificationReceipt({ dryRun: true }),
+    { ...notificationReceipt({ dryRun: false }), external_sends: 3 },
+    { ...notificationReceipt({ dryRun: false }), external_sends: 0 },
     { date: signalDate, signal_notifications: 2, completion_notifications: 1 },
   ]) {
     let sends = 0;

@@ -18,20 +18,105 @@
   return copy(p);
  }
  const key=r=>`${r.symbol}|${r.candidate_date}|${r.episode_id}`;
- function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null}){
+ const validSaveBinding=value=>typeof value==='string'&&/^[a-f0-9]{64}$/.test(value);
+ function validateView(view){
+  if(view==null)return null;
+  if(!validTrial(view.trial_preset)||!['dark','light','system'].includes(view.theme)||!['small','standard','large'].includes(view.font_size)||![20,50,100].includes(view.page_size))throw Error('保存した表示設定を確認できません。');
+  return {trial_preset:view.trial_preset,theme:view.theme,font_size:view.font_size,page_size:view.page_size};
+ }
+ function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null,useTrialPreset=true}){
   if(!validTrial(trialPreset))throw Error('trial_preset_invalid');
-  const s={trialPreset,phase:'loading',presence:'unknown',revision:null,applied:null,draft:copy(BASE),accepted:null,dirty:false,edit:0,request:0,message:'保存設定を確認中',defaultProposalVerified:false};
+  const s={trialPreset,viewPreferences:null,phase:'loading',presence:'unknown',revision:null,applied:null,draft:copy(BASE),accepted:null,dirty:false,edit:0,request:0,message:'設定を読み込んでいます。',defaultProposalVerified:false};
+  let committed=null,saveBinding=null;
   const emit=()=>onChange(copy(s));
-  async function api(path,method,body){const r=await transport(path,{method,credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});let d;try{d=await r.json();}catch(_){throw Error('応答を確認できません。入力は保持しています。');}if(!r.ok){const e=Error(r.status===409?'別の保存を検出しました。再読込して確認してください。':r.status===401||r.status===403?'認証を確認してください。':'計算・保存に失敗しました。入力は保持しています。');e.status=r.status;e.data=d;throw e;}return d;}
-  async function simulation(p,id){const selected=s.trialPreset,d=await api('/api/cloud/new-a-finite/simulate','POST',{preferences:p,request_id:id,...(selected?{trial_preset:selected}:{})});if((d.trial_preset??null)!==selected||selected&&(!d.model_result||!Array.isArray(d.model_result.trades)||!Array.isArray(d.model_result.orders)||!Array.isArray(d.model_result.watches)||!d.result?.trial_policy||d.result.trial_policy.id!==selected))throw Error('trial_response_mismatch');if(d.request_id!==id||canonical(validate(d.preferences))!==canonical(p)||typeof d.source_version!=='string'||!d.source_version||typeof d.view_kind!=='string'||!d.result||typeof d.result.resolved!=='boolean'||!Array.isArray(d.result.orders)||!Array.isArray(d.result.trades)||!Array.isArray(d.result.daily)||!Array.isArray(d.result.yearly)||!Array.isArray(d.result.watches))throw Error('計算結果の対応を確認できません。');return d;}
-  const accept=(d,p)=>{s.accepted=d;s.applied=copy(p);s.phase='ready';s.message=d.result.resolved?'過去検証・費用込み試算':'未解決の価格・決済を含むため成績は未確定';};
-  async function load(){const token=++s.request,edit=s.edit;s.phase='loading';emit();try{const d=await api('/api/cloud/new-a-finite/preferences','GET');if(token!==s.request)return false;if(d.schema_version!==1||typeof d.has_saved_preferences!=='boolean'||typeof d.has_saved_finite_preferences!=='boolean'||!Number.isSafeInteger(d.revision)||d.revision<0||d.default_proposal_verified!==false||d.has_saved_finite_preferences&&(!d.has_saved_preferences||d.revision===0)||!d.has_saved_finite_preferences&&d.revision!==0)throw Error('保存状態を確認できません。新初期値は適用しません。');if(!d.has_saved_finite_preferences&&(localPreferences==='unknown'||localViewPreferences==='unknown'))throw Error('端末の保存状態を確認できません。初期値は適用しません。');s.presence=d.has_saved_preferences?'saved':'absent';s.revision=d.revision;let p=validate(d.preferences);if(!d.has_saved_preferences&&localPreferences)p=validate(localPreferences);else if(!d.has_saved_finite_preferences&&localViewPreferences)p=validate({...p,...localViewPreferences});if(!calculateOnLoad){s.applied=copy(p);s.phase='ready';s.message='設定を読み込みました。';if(edit===s.edit){s.draft=copy(p);s.dirty=false;}emit();return true;}const result=await simulation(p,`load-${token}`);if(token!==s.request)return false;accept(result,p);if(edit===s.edit){s.draft=copy(p);s.dirty=false;}emit();return true;}catch(e){if(token!==s.request)return false;s.phase=e.status===401||e.status===403?'denied':'error';s.message=e.message;if(s.phase==='denied'){s.accepted=null;s.applied=null;}emit();return false;}}
-  function edit(p){s.draft=validate(p);s.edit++;s.dirty=true;s.message='未保存・未適用';emit();}
-  function reset(){s.draft=copy(BASE);s.edit++;s.dirty=true;s.message='初期値の下書き・保存で反映';emit();}
-  function cancel(){if(s.applied)s.draft=copy(s.applied);s.edit++;s.dirty=false;s.message=s.accepted?'適用中の条件に戻しました。':'保存状態未確認';emit();}
-  async function run(save){if(s.revision===null||s.phase==='saving'||s.phase==='calculating')return false;const p=validate(s.draft),token=++s.request,edit=s.edit,id=`${save?'save':'preview'}-${token}`;s.phase=save?'saving':'calculating';s.message=save?'計算・保存中':'計算中';emit();try{const d=await simulation(p,id);if(token!==s.request)return false;if(save){const receipt=await api('/api/cloud/new-a-finite/preferences','PUT',{preferences:p,expected_revision:s.revision,request_id:id});if(token!==s.request)return false;if(receipt.request_id!==id||receipt.schema_version!==1||receipt.has_saved_preferences!==true||receipt.has_saved_finite_preferences!==true||receipt.default_proposal_verified!==false||receipt.revision!==s.revision+1||canonical(validate(receipt.preferences))!==canonical(p))throw Error('保存結果の対応を確認できません。');s.revision=receipt.revision;s.presence='saved';}accept(d,p);if(edit===s.edit){s.draft=copy(p);s.dirty=false;}else s.message+='／新しい入力は未保存';emit();return true;}catch(e){if(token!==s.request)return false;s.phase=e.status===401||e.status===403?'denied':'error';s.message=e.message;if(s.phase==='denied'){s.accepted=null;s.applied=null;}emit();return false;}}
-  function setTrialPreset(id){if(!validTrial(id))throw Error('trial_preset_invalid');if(s.phase==='saving'||s.phase==='calculating')return false;s.trialPreset=id;emit();return true;}
-  return {load,edit,reset,cancel,setTrialPreset,save:()=>run(true),recalculate:()=>run(false),state:()=>copy(s)};
+  async function api(path,method,body){
+   const response=await transport(path,{method,credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+   let data;
+   try{data=await response.json();}catch(_){throw Error('応答を確認できません。');}
+   if(!response.ok){
+    const e=Error(data?.error==='settings_session_changed'?'ログイン状態が変わりました。':response.status===409?'別の画面で設定が更新されました。再読み込みして確認してください。':response.status===401||response.status===403?'認証を確認してください。':method==='PUT'?'設定を保存できませんでした。':'読み込めませんでした。');
+    e.status=response.status;e.data=data;throw e;
+   }
+   return data;
+  }
+  async function simulation(p,id,selected){
+   const d=await api('/api/cloud/new-a-finite/simulate','POST',{preferences:p,request_id:id,...(selected?{trial_preset:selected}:{})});
+   if((d.trial_preset??null)!==selected||selected&&(!d.model_result||!Array.isArray(d.model_result.trades)||!Array.isArray(d.model_result.orders)||!Array.isArray(d.model_result.watches)||!d.result?.trial_policy||d.result.trial_policy.id!==selected))throw Error('試算結果を確認できませんでした。');
+   if(d.request_id!==id||canonical(validate(d.preferences))!==canonical(p)||typeof d.source_version!=='string'||!d.source_version||typeof d.view_kind!=='string'||!d.result||typeof d.result.resolved!=='boolean'||!Array.isArray(d.result.orders)||!Array.isArray(d.result.trades)||!Array.isArray(d.result.daily)||!Array.isArray(d.result.yearly)||!Array.isArray(d.result.watches))throw Error('試算結果を確認できませんでした。');
+   return d;
+  }
+  function remember(preferences,result,preset,view){
+   s.applied=copy(preferences);s.accepted=result;s.trialPreset=preset;s.viewPreferences=view;
+   committed={preferences:s.applied,result,preset,view};
+  }
+  function failed(e){
+   s.phase=e.data?.error==='settings_session_changed'?'session-changed':e.status===401||e.status===403?'denied':'error';s.message=e.message;
+   if(s.phase==='denied'||s.phase==='session-changed'){
+    saveBinding=null;
+    s.accepted=null;s.applied=null;s.viewPreferences=null;s.revision=null;s.draft=copy(BASE);s.trialPreset=trialPreset;s.dirty=false;committed=null;
+   }
+   emit();return false;
+  }
+  async function load(){
+   const token=++s.request;
+   s.phase='loading';s.message='設定を読み込んでいます。';emit();
+   try{
+    const d=await api('/api/cloud/new-a-finite/preferences','GET');
+    if(token!==s.request)return false;
+    if(d.schema_version!==1||typeof d.has_saved_preferences!=='boolean'||typeof d.has_saved_finite_preferences!=='boolean'||!Number.isSafeInteger(d.revision)||d.revision<0||d.default_proposal_verified!==false||d.has_saved_finite_preferences&&(!d.has_saved_preferences||d.revision===0)||!d.has_saved_finite_preferences&&d.revision!==0)throw Error('保存状態を確認できません。');
+    if(!d.has_saved_finite_preferences&&(localPreferences==='unknown'||localViewPreferences==='unknown'))throw Error('以前の設定を確認できません。');
+    let p=validate(d.preferences);
+    if(!d.has_saved_preferences&&localPreferences)p=validate(localPreferences);
+    else if(!d.has_saved_finite_preferences&&localViewPreferences)p=validate({...p,...localViewPreferences});
+    const view=validateView(d.view_preferences);
+    if(d.save_binding!==undefined&&!validSaveBinding(d.save_binding))throw Error('設定の読み込みを確認できません。');
+    const preset=view?view.trial_preset:trialPreset;
+    const result=calculateOnLoad?await simulation(p,'load-'+token,useTrialPreset?preset:null):null;
+    if(token!==s.request)return false;
+    s.presence=d.has_saved_preferences?'saved':'absent';s.revision=d.revision;
+    saveBinding=d.save_binding??null;
+    remember(p,result,preset,view);
+    s.draft=copy(p);s.dirty=false;s.phase='ready';s.message='';
+    emit();return true;
+   }catch(e){return token===s.request?failed(e):false;}
+  }
+  function edit(p){s.draft=validate(p);s.edit++;s.dirty=true;s.message='未保存の変更';emit();}
+  function reset(){s.draft=copy(BASE);s.edit++;s.dirty=true;s.message='初期値（未保存）';emit();}
+  function cancel(){
+   if(!committed||s.phase==='denied')return;
+   s.draft=copy(committed.preferences);s.accepted=committed.result;s.trialPreset=committed.preset;s.viewPreferences=committed.view;
+   s.edit++;s.dirty=false;s.phase='ready';s.message='';emit();
+  }
+  async function run(save,viewPreferences){
+   if(s.revision===null||s.phase==='loading'||s.phase==='saving'||s.phase==='calculating')return false;
+   const p=validate(save?s.draft:s.applied),view=validateView(viewPreferences),preset=view?view.trial_preset:s.trialPreset;
+   if(save&&view&&!validSaveBinding(saveBinding))return failed(Error('設定を保存できませんでした。再読み込みして確認してください。'));
+   const token=++s.request,id=(save?'save-':'preview-')+token;
+   s.phase=save?'saving':'calculating';s.message=save?'設定を保存しています。':'試算しています。';emit();
+   try{
+    const displayOnly=save&&view&&committed&&preset===committed.preset&&canonical(p)===canonical(committed.preferences);
+    const d=displayOnly?committed.result:await simulation(p,id,preset);
+    if(token!==s.request)return false;
+    if(save){
+     const receipt=await api('/api/cloud/new-a-finite/preferences','PUT',{preferences:p,expected_revision:s.revision,request_id:id,...(view?{view_preferences:view,save_binding:saveBinding}:{})});
+     if(token!==s.request)return false;
+     if(receipt.request_id!==id||receipt.schema_version!==1||receipt.has_saved_preferences!==true||receipt.has_saved_finite_preferences!==true||receipt.default_proposal_verified!==false||receipt.revision!==s.revision+1||canonical(validate(receipt.preferences))!==canonical(p)||view&&(!validSaveBinding(receipt.save_binding)||!validateView(receipt.view_preferences)||canonical(validateView(receipt.view_preferences))!==canonical(view)))throw Error('保存結果を確認できません。再読み込みして確認してください。');
+     s.revision=receipt.revision;s.presence='saved';
+     if(view)saveBinding=receipt.save_binding;
+     remember(p,d,preset,view||s.viewPreferences);
+     s.dirty=false;s.message='設定を保存しました。';
+    }else{
+     s.accepted=d;s.message='未保存の変更';
+    }
+    s.phase='ready';emit();return true;
+   }catch(e){return token===s.request?failed(e):false;}
+  }
+  function setTrialPreset(id){
+   if(!validTrial(id))throw Error('trial_preset_invalid');
+   if(s.phase==='saving'||s.phase==='calculating')return false;
+   s.trialPreset=id;s.dirty=true;s.message='未保存の変更';emit();return true;
+  }
+  return {load,edit,reset,cancel,setTrialPreset,save:view=>run(true,view),recalculate:()=>run(false),state:()=>copy(s)};
  }
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const number=v=>v===null||v===undefined?'未確定':Number(v).toLocaleString('ja-JP',{maximumFractionDigits:2});
@@ -40,33 +125,47 @@
  const status=v=>({DAILY_FILLED_CAP:'1日新規上限',FILLED:'約定',CAPACITY:'保有上限',LOT_EXCEEDS_ALLOCATION:'注文上限超過',CASH_INSUFFICIENT:'資金不足',DUPLICATE_HELD:'保有中',PRICE_CAP:'株価上限',SIGNAL_PRICE_UNVERIFIED:'株価未確認',UNFILLED:'未約定',UNFILLED_UNCERTAIN_ONE_PRICE:'一値・約定未確認',HALTED_UNRESOLVED:'未解決で停止',IDENTITY_UNVERIFIED:'銘柄対応未確認',TRIGGERED:'支持反発確認',EXPIRED:'監視期限',UP_ESCAPED:'上方離脱',DOWN_INVALIDATED:'下方無効',WATCHING:'監視中'})[v]||v||'未確認';
  function table(columns,rows,id){return `<div class="table-wrap"><table class="scenario-table" data-finite-table="${id}"><thead><tr>${columns.map(c=>`<th>${esc(c[1])}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+columns.map(c=>`<td data-label="${esc(c[1])}">${esc(c[2]?c[2](r[c[0]]):r[c[0]])}</td>`).join('')+'</tr>').join('')}</tbody></table></div>`;}
  function exitLabel(endpoint,position,policy){if(endpoint==='a20_close')return '20営業日目 引け';if(endpoint==='d5_close')return '5営業日目 引け';if(!policy?.first_d5_entry_session)return '6営業日目 寄付';if(position?.entry_date)return position.entry_date>=policy.first_d5_entry_session?'5営業日目 寄付':'6営業日目 寄付';return `寄付（${policy.first_d5_entry_session}買付から5営業日目・以前は6営業日目）`;}
- function render(d){if(!d)return '<section class="panel"><h2>資金制約試算</h2><p>保存状態・計算結果を確認中</p></section>';const r=d.result,m=r.metrics,p=d.preferences;
-  const cards=[['監視開始・制約前',number(r.watches.length)+'件'],['支持反発・制約前',number(r.watches.filter(w=>w.trigger_date).length)+'件'],['元本',yen(m.initialCash)],['純損益',yen(m.netProfit)],['最大DD',pct(m.maxDrawdown)],['必要資金',yen(m.requiredCash)],['約定',number(m.fills)+'件'],['決済済',number(m.closed)+'件'],['未決済',number(m.open)+'件'],['勝率',pct(m.winRate)]];
-  const percentValue=v=>v===null||v===undefined?'未確定':number(v)+'%';
-  const detail=[['期末純資産',yen(m.endEquity)],['確定損益',yen(m.realizedProfit)],['評価損益',yen(m.unrealizedProfit)],['平均騰落率',percentValue(m.meanReturnPct)],['中央値',percentValue(m.medianReturnPct)],['平均利益',yen(m.averageWinYen)],['平均損失',yen(m.averageLossYen)],['利益合計',yen(m.totalWinYen)],['損失合計',yen(m.totalLossYen)],['未解決',number(m.unresolvedCount)+'件']].map(([label,value])=>`<div><dt>${esc(label)}</dt><dd>${value}</dd></div>`).join('');
-  const counts=Object.entries(r.counts).map(([k,v])=>`<span class="badge">${esc(status(k))} ${number(v)}</span>`).join(' ');
-  return `<section class="panel"><h1>天底極致 Cloud 2.0</h1><p class="note">過去検証・費用込み｜${esc(p.year_scope==='all'?'2023年〜確認済み最新・連続口座':p.year_scope+'年の監視開始・元本リセット')}｜${esc(r.period?.join('〜')||'確認済み範囲')}</p>${r.trial_policy?`<p class="note" id="new-a-trial-summary">試算プリセット：${esc(trialLabel(r.trial_policy))}。実運用の保有・決済とは別の試算です。</p>`:''}${!r.resolved?`<p role="status">未解決あり・純損益と勝率は未確定${r.trial_policy&&r.unresolved[0]?'。'+esc(r.unresolved[0].date)+'で計算停止・以降の資金推移は未計算':''}</p>`:''}<div class="kpis">${cards.map(([label,value])=>`<div class="kpi"><small>${label}</small><b>${value}</b></div>`).join('')}</div><dl class="scenario-stats">${detail}</dl><p>${counts}</p><p class="note" id="cloud-applied-summary">適用中：元本 ${yen(p.initial_cash_yen)}／上限 ${number(p.max_positions)}銘柄／1注文 ${yen(p.per_order_cap_yen)}／株価 ${p.price_cap_yen===null?'上限なし':yen(p.price_cap_yen)}／${r.trial_policy?esc(trialLabel(r.trial_policy)):exitLabel(p.exit_endpoint,null,r.exit_policy)}・固定株数試算</p><p class="note">一律／条件数配分は単一Aで同じ｜片道 ${number(p.cost_percent)}%｜${number(p.base_shares)}株｜保有 ${number(p.max_positions)}銘柄｜注文 ${yen(p.per_order_cap_yen)}</p><div class="settings-actions"><button id="new-a-export-summary" class="settings-secondary" type="button">集計CSV</button><button id="new-a-export-trades" class="settings-secondary" type="button">明細CSV</button><button id="new-a-export-daily" class="settings-secondary" type="button">日次CSV</button></div></section><section class="panel"><h2>年別</h2>${table([['year','年'],['markedNetProfit','純損益',yen],['fills','約定件数',number]],r.yearly,'yearly')}</section><section class="panel"><h2>日次資金推移</h2><p class="note">${r.resolved?'同じ適用条件の口座推移':'未解決あり・診断値'}｜${r.daily.length.toLocaleString('ja-JP')}営業日</p><div id="new-a-daily-chart"></div><div id="new-a-daily-table"></div><button id="new-a-daily-more" class="settings-secondary" type="button">次の50営業日</button></section>`;
+ function annualBars(rows){
+  const values=rows.filter(r=>Number.isFinite(r.markedNetProfit));
+  if(!values.length)return '';
+  const max=Math.max(1,...values.map(r=>Math.abs(r.markedNetProfit)));
+  return '<ul class="cloud-annual-bars" aria-label="年別の純損益">'+values.map(r=>{
+   const v=r.markedNetProfit,width=Math.abs(v)/max*50,left=v<0?50-width:50;
+   return '<li><span>'+esc(r.year)+'年</span><span class="cloud-annual-track" aria-hidden="true"><span class="cloud-annual-bar'+(v<0?' loss':'')+'" style="width:'+width+'%;left:'+left+'%"></span></span><strong>'+yen(v)+'</strong></li>';
+  }).join('')+'</ul>';
  }
- function renderToday(d,{snapshots=[],rows=[],calendar=[],today=''}={}){
-  if(!d)return '<section class="panel"><h1>今日（新A）</h1><p>確認中</p></section>';
-  const r=d.result,m=r.metrics,model=d.model_result||r,s=snapshots[0],names=new Map(rows.map(v=>[v.symbol,v.companyName])),byIdentity=new Map(rows.map(v=>[v.identity,v]));
-  const title=r.trial_policy?'試算｜'+TRIAL_PRESETS[r.trial_policy.id]:'試算｜個別設定';
-  const cards=[['純損益',yen(m.netProfit)],['最大DD',pct(m.maxDrawdown)],['勝率',pct(m.winRate)],['保有件数',r.resolved?number(m.open)+'件':'未確定']];
-  const fresh=s?.as_of===today&&s.observation_kind==='LIVE_OBSERVATION';
-  const observedDay=typeof s?.observed_at==='string'&&Number.isFinite(Date.parse(s.observed_at))?new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(s.observed_at)):'';
-  const delayed=s?.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'&&/^\d{4}-\d{2}-\d{2}$/.test(s.as_of||'')&&observedDay>s.as_of&&observedDay<=today;
-  const seen=new Set(),detections=(fresh||delayed)?(s.events||[]).filter(e=>{const k=e.symbol+'|'+e.session;if(e.session!==(delayed?s.as_of:today)||(delayed?e.is_delayed_scheduled_signal!==true:e.is_new_live_signal!==true)||seen.has(k))return false;seen.add(k);return true;}):[];
-  const items=detections.map(e=>`<article class="today-item"><strong>${esc(names.get(e.symbol)||e.symbol)} <small>(${esc(e.symbol)})</small></strong><dl><dt>検出日</dt><dd>${esc(e.session)}</dd></dl></article>`).join('');
-  const holdings=Object.entries(model.open_positions||{}).sort(([a],[b])=>a.localeCompare(b,'en')).map(([symbol,p])=>{
+ function render(d){
+  if(!d)return '';
+  const r=d.result,m=r.metrics,p=d.preferences;
+  const cards=[['純損益',yen(m.netProfit)],['勝率',pct(m.winRate)],['最大下落率',pct(m.maxDrawdown)],['決済済み',number(m.closed)+'件']];
+  const details=[['元本',yen(m.initialCash)],['期末純資産',yen(m.endEquity)],['必要資金',yen(m.requiredCash)],['確定損益',yen(m.realizedProfit)],['評価損益',yen(m.unrealizedProfit)],['仮想買付',number(m.fills)+'件'],['仮想保有',number(m.open)+'件'],['監視開始',number(r.watches.length)+'件'],['支持反発',number(r.watches.filter(w=>w.trigger_date).length)+'件'],['平均騰落率',m.meanReturnPct==null?'未確定':number(m.meanReturnPct)+'%'],['中央値',m.medianReturnPct==null?'未確定':number(m.medianReturnPct)+'%'],['平均利益',yen(m.averageWinYen)],['平均損失',yen(m.averageLossYen)],['利益合計',yen(m.totalWinYen)],['損失合計',yen(m.totalLossYen)],['未解決',number(m.unresolvedCount)+'件']];
+  const stats=details.map(([label,value])=>'<div><dt>'+esc(label)+'</dt><dd>'+value+'</dd></div>').join('');
+  const trial=r.trial_policy?trialLabel(r.trial_policy):exitLabel(p.exit_endpoint,null,r.exit_policy);
+  const unresolved=!r.resolved?'<p role="status" class="note">試算保留'+(r.unresolved[0]?' · '+esc(r.unresolved[0].date)+'以降の資金推移は未計算':'')+'</p>':'';
+  const applied='<dl class="scenario-stats" id="cloud-applied-summary"><div><dt>決済方法</dt><dd>'+esc(trial)+'</dd></div><div><dt>株価上限</dt><dd>'+(p.price_cap_yen===null?'上限なし':yen(p.price_cap_yen))+'</dd></div><div><dt>株数・手数料</dt><dd>'+number(p.base_shares)+'株・片道 '+number(p.cost_percent)+'%</dd></div><div><dt>保有・注文上限</dt><dd>'+number(p.max_positions)+'銘柄・'+yen(p.per_order_cap_yen)+'</dd></div></dl>';
+  const badges=Object.entries(r.counts).filter(([,v])=>v).map(([k,v])=>'<span class="badge">'+esc(status(k))+' '+number(v)+'</span>').join(' ');
+  return '<section class="panel" aria-labelledby="analytics-overview"><div class="cloud-section-head"><h2 id="analytics-overview">過去成績</h2><div class="cloud-meta"><span class="badge">仮想試算</span><span class="badge">'+esc(r.period?.join(' 〜 ')||'期間未確認')+'</span></div></div>'+
+   '<p class="note" id="new-a-trial-summary">'+esc(trial)+'</p>'+unresolved+
+   '<div class="kpis">'+cards.map(([label,value])=>'<div class="kpi"><small>'+label+'</small><b>'+value+'</b></div>').join('')+'</div>'+
+   '<details class="cloud-kpi-detail"><summary>成績の内訳</summary><dl class="scenario-stats">'+stats+'</dl><div class="cloud-meta">'+badges+'</div></details>'+
+   '<details class="cloud-kpi-detail"><summary>適用中の設定</summary>'+applied+'<a href="./weak_early_beta_settings.html">設定を開く</a></details>'+
+   '</section><section class="panel" aria-labelledby="analytics-equity"><h2 id="analytics-equity">日次資金推移</h2><div class="cloud-chart" id="new-a-daily-chart"></div><details class="cloud-table-details"><summary>日次表</summary><div id="new-a-daily-table"></div><button id="new-a-daily-more" class="settings-secondary" type="button">次の50営業日</button></details></section>'+
+   '<section class="panel" aria-labelledby="analytics-yearly"><h2 id="analytics-yearly">年別純損益</h2>'+annualBars(r.yearly)+'<details class="cloud-table-details"><summary>年次表</summary>'+table([['year','年'],['markedNetProfit','純損益',yen],['fills','仮想買付件数',number]],r.yearly,'yearly')+'</details></section>'+
+   '<section class="panel" aria-labelledby="analytics-export"><h2 id="analytics-export">CSV</h2><div class="cloud-meta"><button id="new-a-export-summary" class="settings-secondary" type="button">集計</button><button id="new-a-export-trades" class="settings-secondary" type="button">明細</button><button id="new-a-export-daily" class="settings-secondary" type="button">日次</button></div></section>';
+ }
+ function renderHoldings(d,{rows=[],calendar=[]}={}){
+  const model=d.model_result||d.result,byIdentity=new Map(rows.map(r=>[r.identity,r]));
+  const holdings=Object.entries(model.open_positions||{}).sort(([a],[b])=>a.localeCompare(b));
+  const display=holdings.map(([symbol,p])=>{
    const row=byIdentity.get(key({...p,symbol})),endpoint=p.exit_endpoint==='d5_open'?'d5_close':d.preferences.exit_endpoint;
-   const scheduled=calendar[p.exit_i]||(row?.entry?.date===p.entry_date?row.endpoints?.[endpoint]?.date:null);
-   return `<article class="today-item"><strong>${esc(names.get(symbol)||symbol)} <small>(${esc(symbol)})</small></strong><dl><dt>買い日</dt><dd>${esc(p.entry_date)}</dd><dt>決済予定日</dt><dd>${esc(scheduled||'未確認')}<small>${esc(exitLabel(d.preferences.exit_endpoint,p,model.exit_policy))}</small></dd></dl></article>`;
-  }).join('');
-  const stopped=!r.resolved?`<p role="status" class="note">${esc(r.unresolved[0]?.date||'')}で試算停止・以降は未計算</p>`:'';
-  return `<section class="panel today-summary"><h1>今日（新A）</h1><p class="note" id="new-a-trial-summary">${esc(r.trial_policy?'試算｜'+trialLabel(r.trial_policy):title)}</p><div class="kpis today-kpis">${cards.map(([label,value])=>`<div class="kpi"><small>${label}</small><b>${value}</b></div>`).join('')}</div>${stopped}<p class="note">仮想試算・実売買ではありません</p></section><section class="panel" id="new-a-today-detections"><h2>${delayed?'遅延した新規検出':'今日の新規検出'}</h2><p class="note">${delayed?'対象 '+esc(s.as_of)+'・観測 '+esc(s.observed_at)+'｜':'観測記録｜'}確認済み ${esc(s?.as_of||'未確認')}</p><div class="today-list">${items||`<p>${fresh||delayed?'新規検出なし':'今日の検出は未確認です。'}</p>`}</div></section><section class="panel" id="new-a-model-holdings"><h2>保有中</h2><p class="note">従来ルールの仮想保有｜${esc(model.period?.[1]||s?.as_of||'未確認')}時点・プリセット対象外</p><div class="today-list">${holdings||'<p>仮想保有なし</p>'}</div></section><section class="panel"><h2>日次資金推移</h2><p class="note">${esc(title)}${r.resolved?'':'｜未解決以降は未計算'}</p><div id="new-a-daily-chart"></div></section>`;
+   const offset=calendar.indexOf(model.period?.[0]);
+   const scheduled=(offset<0?null:calendar[offset+p.exit_i])||(row?.entry?.date===p.entry_date?row.endpoints?.[endpoint]?.date:null);
+   return {stock:row?.companyName?row.companyName+' ('+symbol+')':symbol,entry:p.entry_date,exit:scheduled||'未確認'};
+  });
+  return '<section class="panel" id="new-a-model-holdings"><details class="cloud-table-details"><summary>仮想保有 '+holdings.length+'銘柄</summary><p class="note">モデル決済 · '+esc(model.period?.[1]||'対象日未確認')+'</p>'+(display.length?table([['stock','銘柄'],['entry','仮想買付日'],['exit','仮想決済予定日']],display,'holdings'):'<p>仮想保有なし</p>')+'</details></section>';
  }
  function csv(records){const keys=[...new Set(records.flatMap(Object.keys))];const cell=v=>{const s=v===null||v===undefined?'':typeof v==='object'?JSON.stringify(v):String(v);return '"'+(/^[=+@\-\t\r]/.test(s)&&typeof v!=='number'?"'":'')+s.replaceAll('"','""')+'"';};return '\ufeff'+[keys.map(cell).join(','),...records.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n')+'\r\n';}
  function exportsFor(d,kind,keys=null){if(!d)throw Error('適用済み結果がありません。');const prefix={request_id:d.request_id,source_version:d.source_version,view_kind:d.view_kind,measurement:'過去検証',resolved:d.result.resolved,...d.preferences,...(d.result.exit_policy?{exit_policy:d.result.exit_policy}:{}),...(d.result.trial_policy?{trial_preset:d.trial_preset,trial_policy:d.result.trial_policy}:{})};const orders=new Map(d.result.orders.map(r=>[key(r),r])),trades=new Map(d.result.trades.map(r=>[key(r),r]));let rows=kind==='daily'?d.result.daily:kind==='summary'?[d.result.metrics]:d.result.watches.map(w=>({...w,...orders.get(key(w)),...trades.get(key(w))}));if(keys&&kind==='trades')rows=rows.filter(r=>keys.has(key(r)));return csv(rows.map(r=>({...prefix,...r})));}
- const api={BASE,validate,canonical,key,createController,render,exportsFor,table,esc,number,yen,pct,status,exitLabel,TRIAL_PRESETS,trialLabel,renderToday};
+ const api={BASE,validate,canonical,key,createController,render,exportsFor,table,esc,number,yen,pct,status,exitLabel,TRIAL_PRESETS,trialLabel,renderHoldings};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;global.AFinite=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

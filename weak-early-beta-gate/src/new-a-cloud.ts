@@ -1,11 +1,28 @@
 // New-A routing only. The existing index owner gate and identity implementation inject context.
 import {cloudMemberId,type CloudEnv} from './cloud-api';
 import {readActiveManifest,readPrivatePart,PART_NAME,DATASET_ID} from './new-a-private';
-import {readTrial,saveTrial,validateTrial} from './new-a-preferences';
+import {readTrial,saveTrial,validateTrial,validateView,type ViewPreferences} from './new-a-preferences';
 import {ownerFrame,FRAME_PATHS} from './research-a/frame.generated';
 import {ASSET_NAMES,COMPAT_ASSET_NAMES} from './research-a/assets.generated';
 export type TrustedOwnerContext={ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean;subject?:string};
 export const PRIVATE_HEADERS={'cache-control':'private, no-store, max-age=0',vary:'Cookie','x-content-type-options':'nosniff','referrer-policy':'no-referrer','cross-origin-resource-policy':'same-origin','content-security-policy':"default-src 'none'; script-src 'self'; worker-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"};
+const bindingEncoder = new TextEncoder();
+const saveBindingPattern = /^[a-f0-9]{64}$/;
+async function saveBindingKey(secret: string | undefined): Promise<CryptoKey> {
+ if (!secret?.trim()) throw Error('session_key_unavailable');
+ return crypto.subtle.importKey('raw', bindingEncoder.encode(secret), {name:'HMAC', hash:'SHA-256'}, false, ['sign','verify']);
+}
+function saveBindingInput(subject: string, revision: number) {
+ return bindingEncoder.encode(JSON.stringify(['new-a-preferences-save-v1', subject, revision]));
+}
+async function issueSaveBinding(key: CryptoKey, subject: string, revision: number): Promise<string> {
+ const signature = await crypto.subtle.sign('HMAC', key, saveBindingInput(subject, revision));
+ return Array.from(new Uint8Array(signature), byte => byte.toString(16).padStart(2, '0')).join('');
+}
+function matchesSaveBinding(key: CryptoKey, subject: string, revision: number, value: string): Promise<boolean> {
+ const signature = Uint8Array.from({length: 32}, (_, i) => parseInt(value.slice(i * 2, i * 2 + 2), 16));
+ return crypto.subtle.verify('HMAC', key, signature, saveBindingInput(subject, revision));
+}
 const legacyData=/^\/(?:weak_early_beta_data_|report-interactions\.js|report-theme-init\.js|weak-early-beta-)|^\/(?:api\/research-a\/details|research-a\/details\.json)$/;
 export function isNewAPath(path:string):boolean{return FRAME_PATHS.includes(path)||path.startsWith('/api/cloud/new-a-finite/')||path.startsWith('/new-a-assets/')||legacyData.test(path)||path.startsWith('/report-assets/');}
 export function protectedReply(request:Request,status:number,value:unknown,json=true):Response{return new Response(request.method==='HEAD'?null:json?JSON.stringify(value):String(value),{status,headers:{...PRIVATE_HEADERS,'content-type':json?'application/json; charset=utf-8':'text/html; charset=utf-8'}});}
@@ -60,7 +77,12 @@ export async function newACloudRoute(request:Request,env:CloudEnv,context:Truste
   if(resource==='simulate')return protectedReply(request,409,{error:'owner_browser_worker_required'});
   if(resource!=='preferences')return protectedReply(request,404,{error:'not_found'});
   const member=await cloudMemberId(context.subject);
-  if(['GET','HEAD'].includes(request.method))return protectedReply(request,200,await readTrial(env.CLOUD_DB,member));
+  if(['GET','HEAD'].includes(request.method)){
+   const state = await readTrial(env.CLOUD_DB,member);
+   const key = await saveBindingKey(env.SESSION_SECRET);
+   const save_binding = await issueSaveBinding(key, context.subject, state.revision);
+   return protectedReply(request,200,{...state,save_binding});
+  }
   if(request.method!=='PUT')return protectedReply(request,405,{error:'method_not_allowed'});
   if(request.headers.get('origin')!==url.origin)return protectedReply(request,403,{error:'origin_required'});
   if(!(request.headers.get('content-type')||'').toLowerCase().startsWith('application/json'))return protectedReply(request,415,{error:'json_required'});
@@ -68,9 +90,22 @@ export async function newACloudRoute(request:Request,env:CloudEnv,context:Truste
   let body:unknown;try{body=JSON.parse(raw);}catch{return protectedReply(request,400,{error:'invalid_json'});}
   if(!body||typeof body!=='object'||Array.isArray(body))return protectedReply(request,400,{error:'request_fields'});
   const b=body as Record<string,unknown>;
-  if(Object.keys(b).some(k=>!['preferences','expected_revision','request_id'].includes(k))||typeof b.request_id!=='string'||!/^[-A-Za-z0-9_:]{1,80}$/.test(b.request_id)||!Number.isSafeInteger(b.expected_revision)||Number(b.expected_revision)<0)return protectedReply(request,400,{error:'request_fields'});
+  if(Object.keys(b).some(k=>!['preferences','view_preferences','save_binding','expected_revision','request_id'].includes(k))||typeof b.request_id!=='string'||!/^[-A-Za-z0-9_:]{1,80}$/.test(b.request_id)||!Number.isSafeInteger(b.expected_revision)||Number(b.expected_revision)<0||Number(b.expected_revision)>=Number.MAX_SAFE_INTEGER)return protectedReply(request,400,{error:'request_fields'});
+  const expectedRevision = Number(b.expected_revision);
   let preferences;try{preferences=validateTrial(b.preferences);}catch{return protectedReply(request,400,{error:'invalid_preferences'});}
-  const saved=await saveTrial(env.CLOUD_DB,member,preferences,Number(b.expected_revision));if(!saved.ok)return protectedReply(request,409,{error:'revision_conflict',revision:saved.revision,request_id:b.request_id});
-  return protectedReply(request,200,{schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,preferences,revision:saved.revision,default_proposal_verified:false,preference_source:'new-a-saved',request_id:b.request_id});
+  let view: ViewPreferences | undefined;
+  let saveBinding: string | undefined;
+  if(Object.hasOwn(b,'view_preferences')){
+   try{view=validateView(b.view_preferences);}catch{return protectedReply(request,400,{error:'invalid_view_preferences'});}
+   if(typeof b.save_binding!=='string'||!saveBindingPattern.test(b.save_binding))return protectedReply(request,400,{error:'save_binding_required'});
+   const key=await saveBindingKey(env.SESSION_SECRET);
+   if(!await matchesSaveBinding(key,context.subject,expectedRevision,b.save_binding))return protectedReply(request,409,{error:'settings_session_changed',request_id:b.request_id});
+   // Prepare the next receipt before writing, so a signing failure cannot hide a completed save.
+   saveBinding=await issueSaveBinding(key,context.subject,expectedRevision+1);
+  } else if(Object.hasOwn(b,'save_binding')){
+   return protectedReply(request,400,{error:'request_fields'});
+  }
+  const saved=await saveTrial(env.CLOUD_DB,member,preferences,expectedRevision,view);if(!saved.ok)return protectedReply(request,409,{error:'revision_conflict',revision:saved.revision,request_id:b.request_id});
+  return protectedReply(request,200,{schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,preferences,...(view?{view_preferences:view,save_binding:saveBinding}:{}),revision:saved.revision,default_proposal_verified:false,preference_source:'new-a-saved',request_id:b.request_id});
  }catch{return protectedReply(request,503,{error:'new_a_service_unavailable'});}
 }

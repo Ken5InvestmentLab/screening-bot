@@ -88,37 +88,88 @@ test('warm browser broker rechecks owner access before another preset and clears
  assert.equal((await broker.transport('/api/cloud/new-a-finite/simulate',{method:'POST',body})).status,401);assert.equal(checks,2);assert.equal(terminated,1);
 });
 
-test('Today shows preset cards but keeps observations and legacy virtual holdings distinct',()=>{
+test('dashboard virtual holdings use model dates relative to the selected period',()=>{
  const F=controllerFactory(),d=workerFixture().simulate('profit');
- const model=dataset.createDatasetRuntime({...input(),calendar:calendar.slice(0,10)},{get:quote}).simulate(prefs,{exitPolicy:policy});d.model_result=model;
- const rows=intents().map(e=>({symbol:e.symbol,identity:F.key(e),companyName:'Company '+e.symbol,entry:{date:'2026-11-17'},endpoints:{d5_close:{date:'2026-11-24'},d6_open:{date:'2026-11-25'}}}));
- const snapshot={as_of:'2026-11-16',observation_kind:'LIVE_OBSERVATION',events:[{symbol:'1100',session:'2026-11-16',is_new_live_signal:true},{symbol:'1101',session:'2026-11-16',is_new_live_signal:false}]};
- const html=F.renderToday(d,{snapshots:[snapshot],rows,calendar:calendar.slice(0,10),today:'2026-11-16'});
- assert.equal((html.match(/class="kpi"/g)||[]).length,4);assert(html.includes('利益優先'));assert(html.includes('今日の新規検出'));assert(html.includes('従来ルールの仮想保有'));assert(html.includes('プリセット対象外'));assert(html.includes('2026-11-24'));assert(!html.includes('2026-11-25'));assert(html.includes('日次資金推移'));
+ const row={symbol:'1100',identity:'1100|2026-11-16|1',companyName:'<script>synthetic</script>',entry:{date:'different'}};
+ const pos={candidate_date:'2026-11-16',episode_id:1,entry_date:'2026-11-17',exit_i:3};
+ d.model_result={...d.model_result,period:['2026-11-16','2026-11-18'],open_positions:{'1100':pos}};
+ const html=F.renderHoldings(d,{rows:[row],calendar});
+ assert.match(html,/仮想決済予定日/);
+ assert.match(html,/2026-11-19/);
+ assert.match(html,/&lt;script&gt;/);
+ assert.doesNotMatch(html,/<script>synthetic/);
+ d.model_result.open_positions['1100'].exit_i=99;
+ assert.match(F.renderHoldings(d,{rows:[row],calendar}),/未確認/);
 });
 
-test('historical or stale observations never become a false zero or a fresh Today detection',()=>{
- const F=controllerFactory(),d=workerFixture().simulate('balanced');
- for(const snapshot of [{as_of:'2026-11-13',observation_kind:'LIVE_OBSERVATION',events:[{session:'2026-11-13',symbol:'1100',is_new_live_signal:true}]},{as_of:'2026-11-16',observation_kind:'DRY_RUN_HISTORICAL',events:[{session:'2026-11-16',symbol:'1100',is_new_live_signal:true}]}]){
-  const html=F.renderToday(d,{snapshots:[snapshot],today:'2026-11-16'});assert(html.includes('今日の検出は未確認です。'));assert(!html.includes('新規検出なし'));
- }
+test('unresolved analytics shows the actual stop date and incomplete metrics',()=>{
+ const F=controllerFactory(),d=workerFixture().simulate('profit');
+ d.result={...d.result,resolved:false,metrics:{...d.result.metrics,netProfit:null,maxDrawdown:null,winRate:null},unresolved:[{date:'2026-11-27',symbol:'1100',reason:'UNRESOLVED_SCHEDULED_EXIT'}]};
+ const html=F.render(d);
+ assert.match(html,/2026-11-27以降の資金推移は未計算/);
+ assert.equal((html.match(/<b>未確定<\/b>/g)||[]).length,3);
+ assert.doesNotMatch(html,/検出履歴/);
 });
 
-test('Today escapes company names and shows unknown scheduled dates instead of invented weekdays',()=>{
- const F=controllerFactory(),d=workerFixture().simulate('balanced');d.model_result={...d.model_result,open_positions:{'1100':{candidate_date:'2026-11-16',episode_id:1,entry_date:'2026-11-17',exit_i:99}}};
- const html=F.renderToday(d,{rows:[{symbol:'1100',identity:'1100|2026-11-16|1',companyName:'<script>bad</script>',entry:{date:'different'},endpoints:{}}]});
- assert(html.includes('&lt;script&gt;'));assert(!html.includes('<script>bad'));assert(html.includes('決済予定日'));assert(html.includes('未確認'));
+test('account view save uses the loaded binding and adopts only a matching receipt',async()=>{
+ const F=controllerFactory(),worker=workerFixture(),writes=[];
+ const binding='a'.repeat(64),next='b'.repeat(64);
+ const view={trial_preset:'profit',theme:'light',font_size:'large',page_size:50};
+ const base={schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,revision:1,default_proposal_verified:false,preferences:prefs,save_binding:binding,view_preferences:null};
+ let changed=false;
+ const transport=async(url,options)=>{
+  if(options.method==='GET')return Response.json(base);
+  const body=JSON.parse(options.body);
+  if(options.method==='PUT'){
+   writes.push(body);
+   if(changed)return Response.json({error:'settings_session_changed'},{status:409});
+   return Response.json({...base,preferences:body.preferences,revision:2,save_binding:next,view_preferences:view,request_id:body.request_id});
+  }
+  const value=worker.simulate(body.trial_preset??null);value.request_id=body.request_id;value.preferences=body.preferences;
+  return Response.json(value);
+ };
+ const c=F.createController({transport,calculateOnLoad:false,trialPreset:'balanced'});
+ assert(await c.load());
+ assert.equal(c.state().viewPreferences,null);
+ assert(await c.save(view));
+ assert.equal(writes[0].save_binding,binding);
+ assert.equal(c.state().viewPreferences.trial_preset,'profit');
+ assert.equal(c.state().revision,2);
+ changed=true;
+ assert.equal(await c.save(view),false);
+ assert.equal(writes[1].save_binding,next);
+ assert.equal(c.state().phase,'session-changed');
+ assert.equal(c.state().viewPreferences,null);
+ assert.equal(c.state().applied,null);
+ assert.equal(c.state().accepted,null);
 });
 
-test('unresolved preset exposes incomplete numbers and stop date without changing legacy holdings',()=>{
- const F=controllerFactory(),d=workerFixture().simulate('profit');d.result={...d.result,resolved:false,metrics:{...d.result.metrics,netProfit:null,maxDrawdown:null,winRate:null},unresolved:[{date:'2026-11-27',symbol:'1100',reason:'UNRESOLVED_SCHEDULED_EXIT'}]};
- const html=F.renderToday(d);assert(html.includes('2026-11-27で試算停止'));assert.equal((html.match(/<b>未確定<\/b>/g)||[]).length,4);assert(F.render(d).includes('以降の資金推移は未計算'));
-});
-
-
-test('one authorized delayed snapshot shows its real target and observation without pretending Today',()=>{
- const F=controllerFactory(),d=workerFixture().simulate('balanced');
- const snapshot={as_of:'2026-11-16',observed_at:'2026-11-16T16:00:00Z',observation_kind:'DELAYED_SCHEDULED_OBSERVATION',events:[{session:'2026-11-16',symbol:'1100',kind:'WATCH_STARTED',is_new_live_signal:false,is_delayed_scheduled_signal:true}]};
- const html=F.renderToday(d,{snapshots:[snapshot],today:'2026-11-17'});assert(html.includes('遅延した新規検出'));assert(html.includes('2026-11-16T16:00:00Z'));assert(html.includes('(1100)'));assert(!html.includes('今日の検出は未確認です。'));
- const catchup=F.renderToday(d,{snapshots:[{...snapshot,observation_kind:'CATCHUP_NOT_NEW'}],today:'2026-11-17'});assert(catchup.includes('今日の検出は未確認です。'));assert(!catchup.includes('(1100)'));
+test('display only saves without quote data, but changing the trial still requires simulation',async()=>{
+ const F=controllerFactory(),writes=[];
+ const binding='a'.repeat(64),next='b'.repeat(64);
+ const view={trial_preset:'balanced',theme:'light',font_size:'large',page_size:50};
+ const base={schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,revision:1,default_proposal_verified:false,preferences:prefs,save_binding:binding,view_preferences:null};
+ let simulations=0;
+ const transport=async(url,options)=>{
+  if(options.method==='GET')return Response.json(base);
+  const body=JSON.parse(options.body);
+  if(options.method==='PUT'){
+   writes.push(body);
+   return Response.json({...base,preferences:body.preferences,revision:2,save_binding:next,view_preferences:view,request_id:body.request_id});
+  }
+  simulations++;
+  return Response.json({error:'offline_quotes'},{status:503});
+ };
+ const c=F.createController({transport,calculateOnLoad:false,trialPreset:'balanced'});
+ assert(await c.load());
+ assert(await c.save(view));
+ assert.equal(simulations,0);
+ assert.equal(writes.length,1);
+ assert.equal(c.state().viewPreferences.theme,'light');
+ c.edit({...prefs,initial_cash_yen:20000000});
+ assert.equal(await c.save(view),false);
+ assert.equal(simulations,1);
+ assert.equal(writes.length,1);
+ assert.equal(c.state().applied.initial_cash_yen,prefs.initial_cash_yen);
+ assert.equal(c.state().draft.initial_cash_yen,20000000);
 });

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import {assetIncidents, assetSessionFailure, guardedDeploy, preparedBundleHash, standardDeploymentVersion} from '../weak-early-beta-gate/scripts/deploy-with-provider-recovery.mjs';
+import {verifyOperationalLive} from '../weak-early-beta-gate/scripts/verify-operational-live.mjs';
 
 const TIME = Date.parse('2026-10-29T11:00:00Z');
 test('standard published version is exact, ANSI-safe and absent on missing or ambiguous output',()=>{const id='11111111-2222-3333-4444-555555555555';assert.equal(standardDeploymentVersion('Current Version ID: '+id),id);assert.equal(standardDeploymentVersion('\u001b[32mCurrent Version ID:\u001b[0m '+id),id);assert.equal(standardDeploymentVersion(''),null);assert.equal(standardDeploymentVersion('Current Version ID: bad'),null);assert.equal(standardDeploymentVersion('Current Version ID: '+id+'\nCurrent Version ID: '+id),null);});
@@ -125,5 +126,60 @@ test('prepared publication hash covers changes, additions and deletions', () => 
     assert.ok(path.resolve(directory).startsWith(path.resolve(os.tmpdir()) + path.sep));
     assert.ok(path.basename(directory).startsWith('cloud-publish-hash-'));
     fs.rmSync(directory, {recursive: true, force: true});
+  }
+});
+
+function liveReadbackFixture(select) {
+  const head = 'a'.repeat(40);
+  const version = '11111111-2222-3333-4444-555555555555';
+  const build = 'b'.repeat(64);
+  const receipt = {ok:true, headSha:head, versionId:version,
+    operationalBuild:{source_commit:head, build_input_sha256:build}};
+  const recording = {urls:[], waits:[]};
+  const observe = () => verifyOperationalLive(receipt, head, {
+    fetchImpl: async (url, options) => {
+      recording.urls.push(url);
+      const nonce = new URL(url).searchParams.get('new_a_probe');
+      assert.equal(options.redirect,'error');
+      assert.equal(options.headers['Cache-Control'],'no-cache');
+      const expected = {schema:'NEW_A_OPERATIONAL_READBACK_V1', nonce, source_commit:head,
+        version:{id:version,tag:head}, build_input_sha256:build, owner_http_observed:false,
+        authentication_probe:false, d1_writes:0};
+      return {url, status:200, headers:new Headers({'Cache-Control':'no-store'}),
+        json:async()=>select(recording.urls.length,expected)};
+    },
+    wait: async ms => recording.waits.push(ms),
+    nonce: () => String(recording.urls.length + 1).padStart(64,'0'),
+  });
+  return {recording, observe};
+}
+
+const priorReadback = expected => ({...expected, source_commit:'c'.repeat(40),
+  version:{id:'99999999-7777-5555-3333-111111111111',tag:'c'.repeat(40)}, build_input_sha256:'d'.repeat(64)});
+
+test('old edge version is observed again with a fresh nonce until exact new version appears', async () => {
+  const {recording,observe}=liveReadbackFixture((attempt,expected)=>attempt<3?priorReadback(expected):expected);
+  const result=await observe();
+  assert.equal(result.source_commit,'a'.repeat(40));
+  assert.deepEqual(recording.waits,[2000,4000]);
+  assert.equal(new Set(recording.urls).size,3);
+});
+
+test('perpetually old version has a firm read-only verification limit', async () => {
+  const {recording,observe}=liveReadbackFixture((_,expected)=>priorReadback(expected));
+  await assert.rejects(observe(),/deployed Worker version in time/);
+  assert.equal(recording.urls.length,5);
+  assert.deepEqual(recording.waits,[2000,4000,8000,12000]);
+});
+
+test('integrity and same-version build mismatches are reported without retry', async () => {
+  for (const [alter,error] of [
+    [expected=>({...expected,nonce:'wrong'}),/integrity mismatch/],
+    [expected=>({...expected,build_input_sha256:'e'.repeat(64)}),/different source or build/],
+  ]) {
+    const {recording,observe}=liveReadbackFixture((_,expected)=>alter(expected));
+    await assert.rejects(observe(),error);
+    assert.equal(recording.urls.length,1);
+    assert.deepEqual(recording.waits,[]);
   }
 });

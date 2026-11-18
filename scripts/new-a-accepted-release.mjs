@@ -13,6 +13,11 @@ const commit = value => /^[a-f0-9]{40}$/.test(value || '');
 function requireState(condition, code) {if (!condition) throw Error(code);}
 
 function checkedBinding(binding, expected, now) {
+  // AH V2 requires genuinely observed normal-URL single-100% evidence.
+  // The existing selector admits only private pretraffic proof. Do not relabel
+  // either kind or pretend these two contracts already form a two-phase proof.
+  requireState(binding?.schema !== 'NEW_A_RELEASE_CANDIDATE_BINDING_V2',
+    'V2_NORMAL_PROOF_PRETRAFFIC_CONTRACT_UNAVAILABLE');
   requireState(binding?.schema === 'NEW_A_RELEASE_CANDIDATE_BINDING_V1' &&
     commit(binding.source_commit) && binding.source_commit === expected.source_commit &&
     same(binding.target, expected.target) && binding.target.service === 'tentei-kyokuchi-cloud' &&
@@ -125,13 +130,31 @@ export async function acceptedLaunchPreflight({readPair, verifyPair, normalPrefl
     .every(f => typeof f === 'function'), 'NORMAL_LAUNCH_READERS_REQUIRED');
   requireState(await releaseInProgress() === false, 'RELEASE_HANDOFF_IN_PROGRESS');
   const selected = await readPair();
-  requireState(await verifyPair(selected) === true, 'SELECTED_ACCEPTANCE_INVALID');
-  const ready = await normalPreflight(selected);
-  requireState(ready?.ok === true && ready.head === selected.source_commit &&
+  const verified = await verifyPair(selected);
+  const runtime = checkedRuntime(selected, verified);
+  const ready = await normalPreflight(runtime);
+  requireState(ready?.ok === true && ready.head === runtime.source_commit &&
     fs.realpathSync.native(ready.repository) === fs.realpathSync.native(selected.repository),
     'NORMAL_PREFLIGHT_SOURCE_OR_REPOSITORY_MISMATCH');
-  requireState(await requireLatestHead(selected) === selected.source_commit, 'LATEST_RESEARCH_HEAD_REQUIRED');
+  requireState(await requireLatestHead(runtime) === runtime.source_commit, 'LATEST_RESEARCH_HEAD_REQUIRED');
   requireState(await releaseInProgress() === false && same(await readPair(), selected) &&
-    await verifyPair(selected) === true, 'SELECTION_CHANGED_BEFORE_LAUNCH');
+    same(checkedRuntime(selected, await verifyPair(selected)), runtime), 'SELECTION_CHANGED_BEFORE_LAUNCH');
   return {...ready, accepted_pair_sha256: pairDigest(selected), starts: 0};
+}
+
+function checkedRuntime(pair, proof) {
+  if (pair?.schema !== 'NEW_A_OPERATING_ACCEPTED_PAIR_V2') {
+    requireState(proof === true, 'SELECTED_ACCEPTANCE_INVALID');
+    return pair;
+  }
+  // Only a trusted host's full current Python V2 validator can provide this
+  // typed result. A boolean, an old anchor or a raw plan is insufficient.
+  requireState(proof?.schema === 'NEW_A_VERIFIED_RUNTIME_PAIR_V2' &&
+    commit(proof.runtime_source_commit) &&
+    ['source_commit', 'worker_version_id', 'worker_artifact_sha256',
+      'execution_identity_sha256', 'acceptance_sha256', 'activation_sha256',
+      'repository'].every(key => proof[key] === pair[key]) &&
+    same(proof.target, pair.target), 'SELECTED_V2_RUNTIME_PROOF_INVALID');
+  return {...pair, accepted_source_commit: pair.source_commit,
+    source_commit: proof.runtime_source_commit};
 }

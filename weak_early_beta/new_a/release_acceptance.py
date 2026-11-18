@@ -16,22 +16,36 @@ from .files import digest, file_sha, private_root, read
 SCHEMA = 'NEW_A_ACCEPTED_CANDIDATE_HANDOFF_V1'
 
 
-def baseline(repo):
+def bound_readers(repo, dependency_reader=None, worker_reader=None):
+    """Bind trusted host functions to one repo; never construct them from JSON."""
+    repo = Path(repo).resolve()
+    return dict(dependency_reader=(lambda: dependency_reader(repo)) if callable(dependency_reader) else None,
+                worker_reader=(lambda: worker_reader(repo)) if callable(worker_reader) else None)
+
+
+def baseline(repo, *, dependency_reader=None, worker_reader=None):
     """Read the actual current acceptance; never reinterpret it for another SHA."""
     repo = Path(repo).resolve()
     activation = private_root(repo) / 'activation.json'
     value = read(activation)
-    validate_activation(value, repo)
+    readers = bound_readers(repo, dependency_reader, worker_reader)
+    validate_activation(value, repo, **readers)
     ca.require('continuing_acceptance' in value['owner_acceptance'],
                'formal continuing predecessor required')
-    return dict(source_commit=ca.head(repo), activation_sha256=file_sha(activation),
+    result = dict(source_commit=ca.head(repo), activation_sha256=file_sha(activation),
                 target=ca.target(repo), auth_source_hashes={
                     name: file_sha(repo / name) for name in ca.AUTH_FILES},
                 previous_acceptance=value['owner_acceptance']['continuing_acceptance'])
+    record = ca.validate_record(repo, result['previous_acceptance'], **readers)
+    if record['schema'] == ca.STABLE_SCHEMA:
+        result.update(accepted_source_commit=record['source_commit'], acceptance_schema=record['schema'],
+                      execution_identity_sha256=digest(record['execution_identity']))
+    return result
 
 
-def unchanged(repo, expected):
-    ca.require(baseline(repo) == expected, 'operating baseline changed; do not promote')
+def unchanged(repo, expected, *, dependency_reader=None, worker_reader=None):
+    ca.require(baseline(repo, dependency_reader=dependency_reader, worker_reader=worker_reader) == expected,
+               'operating baseline changed; do not promote')
 
 
 def checked_deployment(source, destination, reader):
@@ -112,7 +126,7 @@ def checked_measurements(plan, measurement_reader, raw_reader, deployment):
 
 def prepare(operating_repo, candidate_repo, plan, *, primary_reader,
             measurement_reader, raw_reader, deployment_reader, decision_reader,
-            authority, preflight, dry_run=True):
+            authority, preflight, dry_run=True, dependency_reader=None, worker_reader=None):
     """Use existing issue/apply ONLY in a separate, private candidate directory.
 
     Default is read-only. Candidate must already contain the byte-identical old
@@ -124,10 +138,12 @@ def prepare(operating_repo, candidate_repo, plan, *, primary_reader,
     ca.require(not (operating_repo.is_relative_to(candidate_repo) or
                     candidate_repo.is_relative_to(operating_repo)),
                'separate non-overlapping candidate required')
-    before = baseline(operating_repo)
+    host = dict(dependency_reader=dependency_reader, worker_reader=worker_reader)
+    before = baseline(operating_repo, **host)
     source = ca.head(candidate_repo)
+    stable = plan.get('acceptance_schema') == ca.STABLE_SCHEMA
     ca.require(plan.get('scope') == ca.SCOPE and
-               plan.get('decision') == 'CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED' and
+               plan.get('decision') == (ca.STABLE_DECISION if stable else 'CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED') and
                plan.get('strategy') == 'A_BASE' and plan.get('virtual_only') is True and
                plan.get('nonowner_evidence_mode') == 'OWNER_DECISION_UNMEASURED' and
                'run_date' not in plan and 'expires_at' not in plan,
@@ -142,19 +158,28 @@ def prepare(operating_repo, candidate_repo, plan, *, primary_reader,
     ca.require(file_sha(activation) == before['activation_sha256'] ==
                plan['expected_activation_sha256'], 'candidate baseline copy differs')
     ca.validate_evidence(read(activation)['owner_acceptance'], candidate_repo,
-                         _historical_source=before['source_commit'])
+                         _historical_source=before.get('accepted_source_commit', before['source_commit']))
     deployment = checked_deployment(source, before['target'], deployment_reader)
     measurements = checked_measurements(plan, measurement_reader, raw_reader, deployment)
     # Review actual primary and intent even for dry-run. No issuance is allowed
     # to treat a Slack message as a ChatGPT primary or widen its scope.
     owner = ca.primary_message(plan['owner_message'], primary_reader, authority)
     ca.require(callable(decision_reader), 'host operator intent review required')
-    ca.checked_decision(decision_reader(owner['message_id']), owner, source,
-                        before['target'], 'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
+    review = ca.checked_decision(decision_reader(owner['message_id']), owner, source,
+                                before['target'], ca.STABLE_REVIEW if stable else 'CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED')
+    candidate_readers = bound_readers(candidate_repo, **host)
+    if stable:
+        from . import execution_identity as execution
+        binding, observed = execution.bind(candidate_repo, source, before['target'], **candidate_readers)
+        ca.require(plan.get('execution_identity') == binding and
+                   review.get('acceptance_schema') == ca.STABLE_SCHEMA and
+                   review.get('execution_identity_sha256') == digest(binding),
+                   'reviewed V2 execution identity differs')
+        execution.verify_measurements(measurements, observed, raw_reader)
     until = ca.timestamp(plan['management_not_after'])
     ca.require(ca.now() < until <= ca.now() + datetime.timedelta(hours=1),
                'management authority expired or too broad')
-    unchanged(operating_repo, before)
+    unchanged(operating_repo, before, **host)
     identity = digest(dict(baseline=before, candidate=source,
                            deployment=deployment, measurements=measurements))
     result = dict(schema=SCHEMA, preparation_id=identity, candidate_source=source, operating_baseline=before,
@@ -162,6 +187,8 @@ def prepare(operating_repo, candidate_repo, plan, *, primary_reader,
                   not_after=until.isoformat(), operationally_promoted=False,
                   production_acceptance_written=False, synthetic=False,
                   platform_signature_claimed=False)
+    if stable:
+        result.update(acceptance_schema=ca.STABLE_SCHEMA, execution_identity_sha256=digest(binding))
     if dry_run:
         return {**result, 'dry_run': True, 'candidate_acceptance_written': False}
     folder = private_root(candidate_repo) / 'release-handoffs' / identity
@@ -177,21 +204,22 @@ def prepare(operating_repo, candidate_repo, plan, *, primary_reader,
             'candidate_source': source, 'operating_baseline': before,
             'started_at': ca.now().isoformat()}))
         started, stage = True, 'issue'
-        unchanged(operating_repo, before)
+        unchanged(operating_repo, before, **host)
         frozen_by_id = {binding['id']: measurements[kind]
                         for kind, binding in plan['measurements'].items()}
         issued = ca.issue(candidate_repo, plan, primary_reader=primary_reader,
                           measurement_reader=lambda identifier: frozen_by_id[identifier],
-                          decision_reader=decision_reader, authority=authority)
+                          decision_reader=decision_reader, authority=authority,
+                          raw_reader=raw_reader, **candidate_readers)
         stage = 'apply'
         applied = ca.apply(candidate_repo, issued, preflight=preflight,
-                           previous_acceptance=before['previous_acceptance'])
-        validate_activation(read(activation), candidate_repo)
+                           previous_acceptance=before['previous_acceptance'], **candidate_readers)
+        validate_activation(read(activation), candidate_repo, **candidate_readers)
         # Fail closed if another release replaced the actual observed version.
         stage = 'readback'
         ca.require(same_deployment(deployment, checked_deployment(source, before['target'], deployment_reader)),
                    'deployment changed during preparation')
-        unchanged(operating_repo, before)
+        unchanged(operating_repo, before, **host)
         result.update(dry_run=False, candidate_acceptance_written=True,
                       candidate_activation_sha256=file_sha(activation),
                       issued=issued, application=applied)
@@ -211,7 +239,8 @@ def prepare(operating_repo, candidate_repo, plan, *, primary_reader,
             lock.unlink()
 
 
-def verify_ready(operating_repo, candidate_repo, receipt, *, deployment_reader):
+def verify_ready(operating_repo, candidate_repo, receipt, *, deployment_reader,
+                 dependency_reader=None, worker_reader=None):
     """Read-only prerequisite; no function here changes the operating directory."""
     ca.require(receipt.get('schema') == SCHEMA and receipt.get('dry_run') is False and
                receipt.get('candidate_acceptance_written') is True and
@@ -221,7 +250,8 @@ def verify_ready(operating_repo, candidate_repo, receipt, *, deployment_reader):
                receipt.get('platform_signature_claimed') is False,
                'completed candidate receipt required')
     ca.require(ca.now() < ca.timestamp(receipt['not_after']), 'handoff management authority expired')
-    unchanged(operating_repo, receipt['operating_baseline'])
+    host = dict(dependency_reader=dependency_reader, worker_reader=worker_reader)
+    unchanged(operating_repo, receipt['operating_baseline'], **host)
     candidate_repo = Path(candidate_repo).resolve()
     ca.require(re.fullmatch(r'[a-f0-9]{64}', str(receipt.get('preparation_id', ''))),
                'private preparation reference required')
@@ -230,18 +260,31 @@ def verify_ready(operating_repo, candidate_repo, receipt, *, deployment_reader):
     ca.require(ca.head(candidate_repo) == receipt['candidate_source'] and
                file_sha(private_root(candidate_repo) / 'activation.json') ==
                receipt['candidate_activation_sha256'], 'prepared candidate changed')
-    validate_activation(read(private_root(candidate_repo) / 'activation.json'), candidate_repo)
+    readers = bound_readers(candidate_repo, **host)
+    active = read(private_root(candidate_repo) / 'activation.json')
+    validate_activation(active, candidate_repo, **readers)
+    record = ca.validate_record(candidate_repo, active['owner_acceptance']['continuing_acceptance'], **readers)
     ca.require(same_deployment(receipt['deployment'], checked_deployment(receipt['candidate_source'],
                                  receipt['operating_baseline']['target'], deployment_reader)),
                'observed deployed version changed')
-    return dict(ok=True, source_commit=receipt['candidate_source'],
-                operationally_promoted=False, production_acceptance_written=False)
+    result = dict(ok=True, source_commit=receipt['candidate_source'],
+                  operationally_promoted=False, production_acceptance_written=False)
+    if record['schema'] == ca.STABLE_SCHEMA:
+        ca.require(receipt.get('acceptance_schema') == record['schema'] and
+                   receipt.get('execution_identity_sha256') == digest(record['execution_identity']),
+                   'ready V2 identity differs')
+        result.update(acceptance_schema=record['schema'],
+                      execution_identity_sha256=digest(record['execution_identity']),
+                      worker_artifact_sha256=record['execution_identity']['worker']['artifact_sha256'])
+    return result
 
 
-def handoff_binding(operating_repo, candidate_repo, receipt, *, deployment_reader):
+def handoff_binding(operating_repo, candidate_repo, receipt, *, deployment_reader,
+                    dependency_reader=None, worker_reader=None):
     """Opaque safe binding for a trusted CI/runtime coordinator, not a signature."""
-    verify_ready(operating_repo, candidate_repo, receipt, deployment_reader=deployment_reader)
-    return dict(schema='NEW_A_RELEASE_CANDIDATE_BINDING_V1',
+    ready = verify_ready(operating_repo, candidate_repo, receipt, deployment_reader=deployment_reader,
+                         dependency_reader=dependency_reader, worker_reader=worker_reader)
+    result = dict(schema='NEW_A_RELEASE_CANDIDATE_BINDING_V1',
                 source_commit=receipt['candidate_source'], target=receipt['operating_baseline']['target'],
                 worker_version_id=receipt['deployment']['version_id'],
                 acceptance_sha256=receipt['issued']['acceptance']['sha256'],
@@ -250,3 +293,26 @@ def handoff_binding(operating_repo, candidate_repo, receipt, *, deployment_reade
                 evidence_mode='PRIVATE_PRETRAFFIC_PROBE' if
                 receipt['deployment']['schema'] == 'NEW_A_HOST_VERIFIED_PRIVATE_CANDIDATE_PROBE_V1'
                 else 'ALREADY_DEPLOYED_VERSION', platform_signature_claimed=False)
+    if ready.get('acceptance_schema') == ca.STABLE_SCHEMA:
+        result.update(schema='NEW_A_RELEASE_CANDIDATE_BINDING_V2',
+                      acceptance_schema=ready['acceptance_schema'],
+                      execution_identity_sha256=ready['execution_identity_sha256'],
+                      worker_artifact_sha256=ready['worker_artifact_sha256'])
+    return result
+
+
+def runtime_binding(repo, *, dependency_reader=None, worker_reader=None):
+    """Read-only typed result after full CURRENT V2 validation, never historical."""
+    repo = Path(repo).resolve()
+    host = dict(dependency_reader=dependency_reader, worker_reader=worker_reader)
+    current = baseline(repo, **host)
+    ca.require(current.get('acceptance_schema') == ca.STABLE_SCHEMA, 'genuine current V2 acceptance required')
+    record = ca.validate_record(repo, current['previous_acceptance'], **bound_readers(repo, **host))
+    unchanged(repo, current, **host)
+    return dict(schema='NEW_A_VERIFIED_RUNTIME_PAIR_V2', source_commit=record['source_commit'],
+                runtime_source_commit=current['source_commit'], target=current['target'],
+                repository=str(repo), activation_sha256=current['activation_sha256'],
+                acceptance_sha256=current['previous_acceptance']['sha256'],
+                execution_identity_sha256=current['execution_identity_sha256'],
+                worker_version_id=record['execution_identity']['worker']['version_id'],
+                worker_artifact_sha256=record['execution_identity']['worker']['artifact_sha256'])

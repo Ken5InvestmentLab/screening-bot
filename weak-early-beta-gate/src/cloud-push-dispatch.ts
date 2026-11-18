@@ -70,6 +70,24 @@ export async function dispatchPersonalCandidate(request: Request, env: CloudEnv,
 // Dormant server path: production activation requires configured fixed IDs.
 // Never invoked by HTTP, a cron, or a queue. No user token is stored for this path.
 export type BackgroundPushEnv = CloudEnv & { CLOUD_DISCORD_BOT_TOKEN?: string; CLOUD_PUSH_TEST_DISCORD_USER_ID?: string };
+export async function readBackgroundDiscordRole(env: BackgroundPushEnv, subject: string): Promise<Identity> {
+  const denied = (): Identity => ({ discord_authorized: false });
+  if (!env.CLOUD_DISCORD_BOT_TOKEN || !/^\d{17,20}$/.test(subject) ||
+      !/^\d{17,20}$/.test(String(env.DISCORD_GUILD_ID))) return denied();
+  const roles = String(env.DISCORD_ALLOWED_ROLE_IDS ?? "").split(",").map(x => x.trim()).filter(Boolean);
+  if (!roles.length || roles.some(role => !/^\d{17,20}$/.test(role))) return denied();
+  try {
+    const response = await fetch(`https://discord.com/api/v10/guilds/${env.DISCORD_GUILD_ID}/members/${subject}`, {
+      headers: { Authorization: `Bot ${env.CLOUD_DISCORD_BOT_TOKEN}` }, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return denied();
+    const member: unknown = await response.json();
+    if (!isObject(member) || !isObject(member.user) || member.user.id !== subject || !Array.isArray(member.roles) ||
+        member.roles.some(role => typeof role !== "string")) return denied();
+    return { subject, discord_authorized: roles.some(role => (member.roles as string[]).includes(role)) };
+  } catch { return denied(); }
+}
+
 export async function dispatchBackgroundPersonalCandidate(env: BackgroundPushEnv, sourceEventKey: string,
   transport: typeof fetch = fetch, fixture?: Parameters<typeof encryptPushPayload>[2]): Promise<SendResult | { status: "held" | "suppressed"; reason: string }> {
   const denied = (): Identity => ({ discord_authorized: false });
@@ -89,20 +107,8 @@ export async function dispatchBackgroundPersonalCandidate(env: BackgroundPushEnv
           !link.evidence_reference || !Number.isFinite(Date.parse(link.verified_at)) || Date.parse(link.verified_at) > now) return denied();
       subject = link.discord_user_id;
     }
-    if (!subject || !/^\d{17,20}$/.test(subject) || await cloudMemberId(subject) !== env.CLOUD_PUSH_TEST_MEMBER_ID ||
-        !/^\d{17,20}$/.test(String(env.DISCORD_GUILD_ID))) return denied();
-    const roles = String(env.DISCORD_ALLOWED_ROLE_IDS ?? "").split(",").map(x => x.trim()).filter(Boolean);
-    if (!roles.length || roles.some(role => !/^\d{17,20}$/.test(role))) return denied();
-    try {
-      const response = await fetch(`https://discord.com/api/v10/guilds/${env.DISCORD_GUILD_ID}/members/${subject}`, {
-        headers: { Authorization: `Bot ${env.CLOUD_DISCORD_BOT_TOKEN}` }, redirect: "error", cache: "no-store", signal: AbortSignal.timeout(8000),
-      });
-      if (!response.ok) return denied();
-      const member: unknown = await response.json();
-      if (!isObject(member) || !isObject(member.user) || member.user.id !== subject || !Array.isArray(member.roles) ||
-          member.roles.some(role => typeof role !== "string")) return denied();
-      return { subject, discord_authorized: roles.some(role => (member.roles as string[]).includes(role)) };
-    } catch { return denied(); }
+    if (!subject || !/^\d{17,20}$/.test(subject) || await cloudMemberId(subject) !== env.CLOUD_PUSH_TEST_MEMBER_ID) return denied();
+    return readBackgroundDiscordRole(env, subject);
   }, transport, fixture);
 }
 

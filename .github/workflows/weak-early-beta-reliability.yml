@@ -10,6 +10,7 @@ on:
       - 'scripts/windows/test-new-a-runner.mjs'
       - 'scripts/windows/*new-a-operational*.mjs'
       - 'scripts/windows/*new-a-evaluation-morning.cjs'
+      - 'scripts/windows/new-a-lifecycle-notice-inputs.cjs'
       - 'scripts/windows/new-a-fundamental-stage.mjs'
       - 'scripts/windows/test-new-a-fundamental-stage.mjs'
       - 'weak-early-beta-gate/scripts/new-a-ui-source/engine/**'
@@ -71,7 +72,7 @@ jobs:
           tests.test_new_a_delayed_recovery tests.test_new_a_delayed_progress
           tests.test_new_a_continuing_acceptance tests.test_new_a_connection
           tests.test_new_a_continuing_transition tests.test_new_a_finite_completion tests.test_new_a_fundamentals
-          tests.test_new_a_planned_notice_delivery
+          tests.test_new_a_planned_notice_delivery tests.test_new_a_lifecycle_notice_inputs
           tests.test_new_a_execution_identity
           tests.test_new_a_native_admission_context tests.test_new_a_wrangler_import_progress
           tests.test_new_a_operational_admission tests.test_new_a_operational_integration

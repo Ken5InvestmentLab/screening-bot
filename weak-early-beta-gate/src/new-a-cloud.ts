@@ -1,7 +1,7 @@
 // New-A routing only. The existing index owner gate and identity implementation inject context.
 import {cloudMemberId,type CloudEnv} from './cloud-api';
 import {readActiveManifest,readPrivatePart,PART_NAME,DATASET_ID} from './new-a-private';
-import {readTrial,saveTrial,validateTrial} from './new-a-preferences';
+import {readTrial,saveTrial,validateTrial,validateView,type ViewPreferences} from './new-a-preferences';
 import {ownerFrame,FRAME_PATHS} from './research-a/frame.generated';
 import {ASSET_NAMES,COMPAT_ASSET_NAMES} from './research-a/assets.generated';
 export type TrustedOwnerContext={ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean;subject?:string};
@@ -68,9 +68,13 @@ export async function newACloudRoute(request:Request,env:CloudEnv,context:Truste
   let body:unknown;try{body=JSON.parse(raw);}catch{return protectedReply(request,400,{error:'invalid_json'});}
   if(!body||typeof body!=='object'||Array.isArray(body))return protectedReply(request,400,{error:'request_fields'});
   const b=body as Record<string,unknown>;
-  if(Object.keys(b).some(k=>!['preferences','expected_revision','request_id'].includes(k))||typeof b.request_id!=='string'||!/^[-A-Za-z0-9_:]{1,80}$/.test(b.request_id)||!Number.isSafeInteger(b.expected_revision)||Number(b.expected_revision)<0)return protectedReply(request,400,{error:'request_fields'});
+  if(Object.keys(b).some(k=>!['preferences','view_preferences','expected_revision','request_id'].includes(k))||typeof b.request_id!=='string'||!/^[-A-Za-z0-9_:]{1,80}$/.test(b.request_id)||!Number.isSafeInteger(b.expected_revision)||Number(b.expected_revision)<0||Number(b.expected_revision)>=Number.MAX_SAFE_INTEGER)return protectedReply(request,400,{error:'request_fields'});
   let preferences;try{preferences=validateTrial(b.preferences);}catch{return protectedReply(request,400,{error:'invalid_preferences'});}
-  const saved=await saveTrial(env.CLOUD_DB,member,preferences,Number(b.expected_revision));if(!saved.ok)return protectedReply(request,409,{error:'revision_conflict',revision:saved.revision,request_id:b.request_id});
-  return protectedReply(request,200,{schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,preferences,revision:saved.revision,default_proposal_verified:false,preference_source:'new-a-saved',request_id:b.request_id});
+  let view: ViewPreferences | undefined;
+  if(Object.hasOwn(b,'view_preferences')){
+   try{view=validateView(b.view_preferences);}catch{return protectedReply(request,400,{error:'invalid_view_preferences'});}
+  }
+  const saved=await saveTrial(env.CLOUD_DB,member,preferences,Number(b.expected_revision),view);if(!saved.ok)return protectedReply(request,409,{error:'revision_conflict',revision:saved.revision,request_id:b.request_id});
+  return protectedReply(request,200,{schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,preferences,...(view?{view_preferences:view}:{}),revision:saved.revision,default_proposal_verified:false,preference_source:'new-a-saved',request_id:b.request_id});
  }catch{return protectedReply(request,503,{error:'new_a_service_unavailable'});}
 }

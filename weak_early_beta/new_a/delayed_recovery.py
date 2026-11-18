@@ -186,7 +186,8 @@ def delivery_context(repo,snapshot,publication=None):
   else:require(not flagged and not event.get('is_new_live_signal'),'unrelated catchup cannot be delivered')
  require(sum(e.get('is_delayed_scheduled_signal') is True for e in events)==snapshot.get('delayed_scheduled_signals'),'delayed delivery count changed')
  if publication is not None:
-  require(publication.get('delayed_recovery')==snapshot['delayed_recovery'] and publication.get('snapshot_sha256')==snapshot['payload_sha256'] and publication.get('revision')==context['expected_revision']+1 and publication.get('as_of')==context['target_date'] and publication.get('active_readback_verified') is True and publication.get('published') is True and publication.get('existing_owner_gate_verified') is True,'delayed publication receipt mismatch')
+  from .operational_admission import publication_gate_verified
+  require(publication.get('delayed_recovery')==snapshot['delayed_recovery'] and publication.get('snapshot_sha256')==snapshot['payload_sha256'] and publication.get('revision')==context['expected_revision']+1 and publication.get('as_of')==context['target_date'] and publication.get('active_readback_verified') is True and publication.get('published') is True and publication_gate_verified(publication),'delayed publication receipt mismatch')
  return context
 
 def assert_published_pointer(context,pointer,publication):

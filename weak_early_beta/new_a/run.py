@@ -38,6 +38,8 @@ def require_activation(root,repo):
 def command_daily(args,*,source_provider=None,root=None):
  repo=Path(__file__).resolve().parents[2];root=Path(root) if root else private_root(repo);isolated=bool(getattr(args,'new_a_isolated',False));manifest,files=verify_bootstrap(root);verify_code_contract(manifest)
  if not isolated:require_activation(root,repo)
+ from .operational_admission import source_context
+ source_context(repo,args)
  if getattr(args,'notify',False) or getattr(args,'dry_run_notify',False):raise ValueError('daily never sends; use verified post-publication new-A notify stage')
  recovery_reference=None
  if getattr(args,'delayed_recovery',None):

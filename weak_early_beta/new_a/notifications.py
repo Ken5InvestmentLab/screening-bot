@@ -33,10 +33,14 @@ def default_transport(report_url):
  return send
 def notify_day(root,*,date,dry_run,report_url,transport=None):
  root=__import__('pathlib').Path(root);run=read(root/'latest-run.json');snapshot=read(run['snapshot_file']);publication=read(root/'latest-publication.json')
+ if publication.get('operational_gate_continuity_verified') is True:
+  from .operational_admission import action_context
+  action_context(root.resolve().parents[2],date=date,run=run,snapshot=snapshot,publication=publication,required=True)
  if date!=snapshot['as_of'] or run['strategy']!='A_BASE' or run['snapshot_sha256']!=snapshot['payload_sha256']:raise ValueError('matching New A daily snapshot required')
  if digest({k:v for k,v in snapshot.items() if k!='payload_sha256'})!=snapshot['payload_sha256'] or run['source_sha256']!=snapshot['source_sha256'] or run['source_version']!=publication.get('source_version'):raise ValueError('private notification source bytes changed')
  local_historical_preview=dry_run and snapshot['observation_kind']=='DRY_RUN_HISTORICAL' and publication.get('local_d1_emulation') is True
- if publication.get('snapshot_sha256')!=snapshot['payload_sha256'] or publication.get('active_readback_verified') is not True or (not local_historical_preview and (publication.get('existing_owner_gate_verified') is not True or publication.get('published') is not True)):raise ValueError('verified private publication required')
+ from .operational_admission import publication_gate_verified
+ if publication.get('snapshot_sha256')!=snapshot['payload_sha256'] or publication.get('active_readback_verified') is not True or (not local_historical_preview and (not publication_gate_verified(publication) or publication.get('published') is not True)):raise ValueError('verified private publication required')
  delayed=snapshot.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION'
  if delayed:
   from .delayed_recovery import delivery_context
@@ -54,10 +58,14 @@ def notify_day(root,*,date,dry_run,report_url,transport=None):
   if any(status=='ATTEMPTED_UNCONFIRMED' for _,_,status in rows):raise ValueError('notification outcome unconfirmed; reconcile before retry')
   pending=[r for r in rows if r[2]=='PENDING'];counts={'signal_notifications':sum(p.get('kind')!='DAILY_SUMMARY' for _,p,_ in pending),'completion_notifications':sum(p.get('kind')=='DAILY_SUMMARY' for _,p,_ in pending)}
   if not dry_run and pending:
+   if publication.get('operational_gate_continuity_verified') is True:
+    from .operational_admission import action_context
+    action_context(root.resolve().parents[2],date=date,run=run,snapshot=snapshot,publication=publication,required=True)
    target=urlparse(report_url)
    if target.scheme!='https' or not target.netloc:raise ValueError('existing Cloud report URL is required before send')
    send=transport or default_transport(report_url)
    for event_id,payload,_ in sorted(pending,key=lambda r:r[1].get('kind')=='DAILY_SUMMARY'):
+    if publication.get('operational_gate_continuity_verified') is True:action_context(root.resolve().parents[2],date=date,run=run,snapshot=snapshot,publication=publication,required=True)
     receipt=outbox.deliver(event_id,send,execute=True)
     if receipt.get('sent') is not True:raise RuntimeError('notification_unconfirmed_reconcile_before_retry')
   return {'date':date,'dry_run':dry_run,**counts,'strategy':'A_BASE','source_sha256':snapshot['source_sha256'],'snapshot_sha256':snapshot['payload_sha256'],'old_ledger_written':False,'external_sends':0 if dry_run else sum(counts.values())}

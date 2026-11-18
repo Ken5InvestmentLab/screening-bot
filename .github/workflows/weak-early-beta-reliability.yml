@@ -8,6 +8,7 @@ on:
       - 'scripts/windows/weak-early-beta-*.mjs'
       - 'scripts/windows/test-weak-early-beta-*.mjs'
       - 'scripts/windows/test-new-a-runner.mjs'
+      - 'scripts/windows/*new-a-operational*.mjs'
       - 'scripts/windows/native-admission-continuation.mjs'
       - 'scripts/windows/test-native-admission-continuation.mjs'
       - 'weak-early-beta-gate/scripts/deploy-with-provider-recovery.mjs'
@@ -50,6 +51,7 @@ jobs:
           scripts/windows/test-weak-early-beta-run-journal.mjs
           scripts/windows/test-weak-early-beta-delayed-recovery.mjs
           scripts/windows/test-native-admission-continuation.mjs
+          scripts/windows/test-new-a-operational-loader.mjs
       - name: Verify retained-response replay and corporate-action gates
         run: >-
           python -B -m unittest tests.test_weak_early_beta_acquisition
@@ -64,3 +66,5 @@ jobs:
           tests.test_new_a_continuing_acceptance tests.test_new_a_connection
           tests.test_new_a_execution_identity
           tests.test_new_a_native_admission_context tests.test_new_a_wrangler_import_progress
+          tests.test_new_a_operational_admission tests.test_new_a_operational_integration
+          tests.test_new_a_fixed_source_recovery

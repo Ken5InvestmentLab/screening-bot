@@ -40,3 +40,4 @@ reports/weak_early_beta_data_*.json
 reports/review_metrics.csv
 reports/review_monthly_metrics.csv
 reports/review_receipt.json
+weak-early-beta-gate/src/operational-build.generated.ts

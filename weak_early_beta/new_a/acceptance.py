@@ -3,6 +3,10 @@ from pathlib import Path
 from .files import file_sha
 def validate_activation(value,repo,*,dependency_reader=None,worker_reader=None):
  if value.get('schema')!='NEW_A_OWNER_ACTIVATION_V1' or value.get('active') is not True or value.get('external_actions_approved') is not True or value.get('strategy')!='A_BASE':raise ValueError('new-A activation not approved')
+ if value.get('operational_admission') is not None:
+  from .operational_admission import validate
+  validate(repo,value)
+  return value
  evidence=value.get('owner_acceptance',{})
  if evidence.get('continuing_acceptance') is not None:
   from .continuing_acceptance import validate_evidence

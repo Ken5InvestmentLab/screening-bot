@@ -27,6 +27,12 @@ export function preparedBundleHash(gate) {
   return hash.digest('hex');
 }
 
+export function standardDeploymentVersion(output) {
+  const text=String(output).replace(/\x1b\[[0-9;]*m/g,'');
+  const ids=[...text.matchAll(/Current Version ID:\s*([a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12})/g)].map(m=>m[1]);
+  return ids.length===1?ids[0]:null;
+}
+
 export function assetIncidents(payload, now = Date.now()) {
   return (payload.incidents || []).filter(incident => {
     const created = Date.parse(incident.created_at);
@@ -109,6 +115,11 @@ async function main() {
           !String(process.env.GITHUB_REF || '').startsWith('refs/tags/cloud-deploy-')) throw Error('Unexpected deployment workflow ref');
     } else if (git(['branch', '--show-current']) !== 'research/weak-early-beta') throw Error('Unexpected deployment branch');
     receipt.headSha = expected;
+    const buildSource = fs.readFileSync(path.join(gate, 'src/operational-build.generated.ts'), 'utf8');
+    const buildMatch = buildSource.match(/export const operationalBuild = (\{.*\}) as const;/);
+    if (!buildMatch) throw Error('Prepared operational build identity unavailable');
+    receipt.operationalBuild = JSON.parse(buildMatch[1]);
+    if (receipt.operationalBuild.source_commit !== expected) throw Error('Operational build source differs');
     receipt.preparedBundleSha256 = preparedBundleHash(gate);
     const assertHead = () => {
       const remote = git(['ls-remote', 'origin', 'refs/heads/research/weak-early-beta']).split(/\s+/)[0];
@@ -122,13 +133,17 @@ async function main() {
     };
     const runDeploy = () => new Promise((resolve, reject) => {
       let output = '';
-      const child = spawn(process.execPath, [path.join(gate, 'node_modules/wrangler/bin/wrangler.js'), 'deploy', '--env=', '--minify'],
+      const child = spawn(process.execPath, [path.join(gate, 'node_modules/wrangler/bin/wrangler.js'), 'deploy', '--env=', '--minify', '--tag', expected],
         {cwd: gate, env: process.env, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']});
       for (const [stream, destination] of [[child.stdout, process.stdout], [child.stderr, process.stderr]]) stream.on('data', chunk => {
         output = (output + chunk.toString()).slice(-2_000_000); destination.write(chunk);
       });
       child.once('error', reject);
-      child.once('exit', code => resolve({code: code ?? 1, output}));
+      child.once('exit', code => {
+        const version=standardDeploymentVersion(output);
+        if(code===0&&version)receipt.versionId=version;
+        resolve({code:code===0&&!version?1:code??1,output});
+      });
     });
     Object.assign(receipt, await guardedDeploy({runDeploy, assertHead,
       getStatus: () => get(STATUS_ORIGIN + '/api/v2/summary.json'),

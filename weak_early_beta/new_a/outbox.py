@@ -5,12 +5,17 @@ class Outbox:
   self.path=__import__('pathlib').Path(path).resolve();self.db=sqlite3.connect(path);self.db.execute('CREATE TABLE IF NOT EXISTS new_a_delivery(event_id TEXT PRIMARY KEY,payload_json TEXT NOT NULL,status TEXT NOT NULL,receipt_json TEXT)');self.db.commit()
  def stage(self,snapshot,publication_receipt,*,existing_notifications_enabled):
   if not existing_notifications_enabled:return []
+  from .operational_admission import publication_gate_verified
+  if publication_receipt.get('operational_gate_continuity_verified') is True:
+   from .operational_admission import action_context
+   from .files import read
+   action_context(self.path.parent.parents[2],date=snapshot.get('as_of'),run=read(self.path.parent/'latest-run.json'),snapshot=snapshot,publication=publication_receipt,required=True)
   delayed=snapshot.get('observation_kind')=='DELAYED_SCHEDULED_OBSERVATION'
   if delayed:
    from .delayed_recovery import delivery_context
    delivery_context(self.path.parent.parents[2],snapshot,publication_receipt)
   if (snapshot.get('observation_kind')!='LIVE_OBSERVATION' and not delayed) or publication_receipt.get('published') is not True:return []
-  if publication_receipt.get('snapshot_sha256')!=snapshot.get('payload_sha256') or publication_receipt.get('existing_owner_gate_verified') is not True:raise ValueError('verified owner publication required')
+  if publication_receipt.get('snapshot_sha256')!=snapshot.get('payload_sha256') or not publication_gate_verified(publication_receipt):raise ValueError('verified publication required')
   staged=[]
   with self.db:
    for e in snapshot['events']:

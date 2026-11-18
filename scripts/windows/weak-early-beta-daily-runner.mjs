@@ -513,7 +513,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     for (const other of ['exit-reminder-runner.lock', 'exit-reminder.lock']) {
       if (fs.existsSync(path.join(repo, '.cache', 'weak_early_beta', other))) throw new Error('another Cloud reminder lock exists');
     }
-    if(continuation){result.nativeAdmissionContinuation=consumeAdmissionContinuation(runtime,continuation,continuationInvocation,startedAt,process.pid);if(nativeDelayed){delayedExecuting=beginAdmissionExecution(config,result.nativeAdmissionContinuation,startedAt,process.pid);result.delayedRecovery=delayedExecuting;}}
+    if(continuation){result.nativeAdmissionContinuation=consumeAdmissionContinuation(runtime,continuation,continuationInvocation,startedAt,process.pid);if(nativeDelayed){delayedExecuting=beginAdmissionExecution(config,result.nativeAdmissionContinuation,startedAt,process.pid,env);result.delayedRecovery=delayedExecuting;}}
     saveProgress('branch');
     await requireBranch();
     stage = 'business-day';
@@ -608,6 +608,16 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     if (clean.stdout.trim()) throw new Error('New A refuses any generated commit; reconcile local changes');
     result.generatedCommit = null; result.generatedFilesSent = 0;
     const headSha = await requireRemoteHead(git);
+    const activationFile=path.join(repo,'.cache/weak_early_beta/new-a-private/activation.json');
+    const activation = fs.existsSync(activationFile)?readJson(activationFile):{};
+    if (activation.operational_admission) {
+      if (!nativeDelayed || today !== '2026-11-17' || executionDate !== '2026-11-18') throw Error('Finite predeployed continuity is restricted to the approved Nov17 native continuation');
+      const proofResult = await requireOk(python,['-B','-m','weak_early_beta.new_a.operational_admission','inspect'],{cwd:repo,env,log:path.join(runDir,'finite-predeployed-readback'),capture:true,timeoutMs:300000});
+      const proof=JSON.parse(proofResult.stdout.trim());
+      if(proof.schema!=='NEW_A_FINITE_OPERATIONAL_READY_V1'||proof.source_commit!==headSha||proof.target_date!==today||proof.owner_http_observed!==false||proof.ci.conclusion!=='success'||proof.ci.source_commit!==headSha)throw Error('Finite predeployed Worker proof differs');
+      result.deployment={tag:proof.ci.tag,headSha,workflow:DEPLOY_WORKFLOW,worker:'tentei-kyokuchi-cloud',run:{databaseId:proof.ci.run_id,status:'completed',conclusion:'success'},reusedPredeployedCodeOnly:true,versionId:proof.ci.version_id,operationalObservation:proof.observation};
+      saveProgress('finite-predeployed-verification');
+    } else {
     const tag = `cloud-deploy-daily-${new Date().toISOString().replace(/[-:.]/g, '')}-${headSha.slice(0, 8)}-${randomUUID().slice(0, 8)}`;
     result.deployment = { tag, headSha, workflow: DEPLOY_WORKFLOW, worker: 'tentei-kyokuchi-cloud' };
     saveProgress('deploy-tag');
@@ -626,14 +636,16 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       },
       onProgress: progress => saveProgress('deploy-workflow', { deploymentProgress: progress }),
     });
+    }
     saveProgress('live-verification');
     result.deployment.live = await verifyLiveWorker({});
     saveProgress('private-data-publication');
     await requireOk(python, ['-m', 'weak_early_beta.new_a.cli', 'publish', '--remote'], { cwd: repo, env, log: path.join(runDir, 'new-a-publish'), capture: true });
     const published = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-publication.json'));
     const detected = readJson(path.join(repo, '.cache', 'weak_early_beta', 'new-a-private', 'latest-run.json'));
-    if (published.published !== true || published.active_readback_verified !== true || published.existing_owner_gate_verified !== true || published.snapshot_sha256 !== detected.snapshot_sha256 || published.source_version !== detected.source_version) throw new Error('New A owner publication readback mismatch');
-    Object.assign(result.new_a, { owner_publication_verified: true, snapshot_sha256: published.snapshot_sha256, source_version: published.source_version, dataset_id: published.dataset_id });
+    const operational = published.operational_gate_continuity_verified === true && published.existing_owner_gate_verified === false && published.owner_http_observed === false && isDeepStrictEqual(published.operational_admission,activation.operational_admission);
+    if (published.published !== true || published.active_readback_verified !== true || (published.existing_owner_gate_verified !== true && !operational) || published.snapshot_sha256 !== detected.snapshot_sha256 || published.source_version !== detected.source_version) throw new Error('New A publication readback mismatch');
+    Object.assign(result.new_a, { owner_publication_verified: !operational, ...(operational?{operational_publication_verified:true,operational_scope:'FINITE_NOV17_NATIVE_ONCE',owner_http_observed:false}:{}), snapshot_sha256: published.snapshot_sha256, source_version: published.source_version, dataset_id: published.dataset_id });
     saveProgress('notification');
     await reconcileNotifications({ date: today,
       preview: async phase => {
@@ -685,4 +697,4 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
 
 export { npmInvocation, probeFundamentalModel, run, parseGitStatus, assertGeneratedChanges, GENERATED_PATHS,
   queueIdentities, drainFundamentalQueue, assertHtmlImports, selectWorkflowRun, waitForTagWorkflow,
-  verifyLiveWorker, commitGeneratedChanges, requireRemoteHead, assertValidatedFundamentalOutput, reconcileNotifications };
+  verifyLiveWorker, commitGeneratedChanges, requireRemoteHead, assertValidatedFundamentalOutput, reconcileNotifications, loadDotEnv };

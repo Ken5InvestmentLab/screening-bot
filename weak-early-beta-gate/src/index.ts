@@ -6,6 +6,8 @@ import { cloudApi, type CloudEnv } from "./cloud-api";
 import { runScheduledPersonalNotifications, type ScheduleEnv } from "./cloud-push-scheduler";
 import { ownerOnlyGate } from "./cloud-owner-only";
 import { cloudReportRole } from "./cloud-role-authority";
+import { operationalReadback } from "./operational-readback";
+import { operationalBuild } from "./operational-build.generated";
 export { CloudRoleAuthority } from "./cloud-role-authority";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
@@ -40,6 +42,7 @@ export default {
     const denied = await ownerOnlyGate(request, env);
     if (denied) return denied;
     const pathname = new URL(request.url).pathname;
+    if (pathname === '/healthz' && new URL(request.url).searchParams.has('new_a_probe')) return operationalReadback(request, env, operationalBuild);
     // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.
     // Preserve existing push-only script updates after the unchanged owner gate.
     if (isCompatibilityAsset(pathname)) return compatibilityCodeResponse(request, env);

@@ -109,6 +109,6 @@ export function consumeAdmissionContinuation(runtime,verified,invocation,started
  check(day(new Date())===(verified.record.execution_date||verified.record.date),'actual execution day changed');
  immutable(file+'.consumed',{...claim,schema:'CLOUD_NATIVE_ADMISSION_CONSUMED_V1',new_run_id:startedAt,root_pid:rootPid,record_file:verified.file,record_file_sha256:hash(fs.readFileSync(verified.file))});return{record:verified.digest,original_run_id:verified.record.proof.original_run_id,stopped_run_id:verified.record.proof.stopped_run_id,path:file+'.consumed'};
 }
-export function beginAdmissionExecution(config,consumed,startedAt,rootPid){
- return JSON.parse(execFileSync(config.pythonPath,['-B','-m','weak_early_beta.new_a.native_admission_context','begin','--record',consumed.path,'--root-pid',String(rootPid),'--started-at',startedAt],{cwd:config.repoPath,encoding:'utf8',windowsHide:true,timeout:300000}));
+export function beginAdmissionExecution(config,consumed,startedAt,rootPid,env=process.env){
+ return JSON.parse(execFileSync(config.pythonPath,['-B','-m','weak_early_beta.new_a.native_admission_context','begin','--record',consumed.path,'--root-pid',String(rootPid),'--started-at',startedAt],{cwd:config.repoPath,env,encoding:'utf8',windowsHide:true,timeout:300000}));
 }

@@ -7,6 +7,7 @@ from .jpx_decisions import Evidence,IntegrityError
 
 def load(cells,archive,*,allow_network=True):
     if archive is None:raise IntegrityError('independent evidence requires acquisition archive')
+    if getattr(archive,'network_fallback_allowed',True) is False:allow_network=False
     root=archive.directory/'jpx-evidence';root.mkdir(exist_ok=True)
     by_date={}
     for c in cells:by_date.setdefault(c['session'],set()).add(c['symbol'])

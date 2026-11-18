@@ -80,6 +80,10 @@ jobs:
           done
           exit 1
 
+      - name: Verify exact normal Worker version without owner credentials
+        working-directory: weak-early-beta-gate
+        run: node scripts/verify-operational-live.mjs
+
       - name: Record Cloud publication checkpoint in logs and summary
         if: always()
         continue-on-error: true

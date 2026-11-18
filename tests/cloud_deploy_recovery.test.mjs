@@ -3,9 +3,10 @@ import test from 'node:test';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import {assetIncidents, assetSessionFailure, guardedDeploy, preparedBundleHash} from '../weak-early-beta-gate/scripts/deploy-with-provider-recovery.mjs';
+import {assetIncidents, assetSessionFailure, guardedDeploy, preparedBundleHash, standardDeploymentVersion} from '../weak-early-beta-gate/scripts/deploy-with-provider-recovery.mjs';
 
 const TIME = Date.parse('2026-10-29T11:00:00Z');
+test('standard published version is exact, ANSI-safe and absent on missing or ambiguous output',()=>{const id='11111111-2222-3333-4444-555555555555';assert.equal(standardDeploymentVersion('Current Version ID: '+id),id);assert.equal(standardDeploymentVersion('\u001b[32mCurrent Version ID:\u001b[0m '+id),id);assert.equal(standardDeploymentVersion(''),null);assert.equal(standardDeploymentVersion('Current Version ID: bad'),null);assert.equal(standardDeploymentVersion('Current Version ID: '+id+'\nCurrent Version ID: '+id),null);});
 const failure = {code: 1, output: 'A request to the Cloudflare API (/accounts/***/workers/scripts/tentei-kyokuchi-cloud/assets-upload-session) failed. [code: 10013]'};
 const incident = status => ({id: 'abc12345', status, created_at: new Date(TIME - 1000).toISOString(),
   incident_updates: [{body: 'Elevated 500 errors affecting D1 and Workers Assets uploads.'}]});

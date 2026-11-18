@@ -240,3 +240,59 @@ test('display only saves without quote data, but changing the trial still requir
  assert.equal(c.state().applied.initial_cash_yen,prefs.initial_cash_yen);
  assert.equal(c.state().draft.initial_cash_yen,20000000);
 });
+
+test('pending account save holds the submitted draft until a verified receipt or a retryable error',async()=>{
+ const F=controllerFactory(),worker=workerFixture(),writes=[];
+ const binding='a'.repeat(64),view={trial_preset:'profit',theme:'light',font_size:'large',page_size:50};
+ const base={schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,revision:1,default_proposal_verified:false,preferences:prefs,save_binding:binding};
+ const draft={...prefs,max_positions:7};
+ let simulation=Promise.withResolvers(),write=Promise.withResolvers(),writing=Promise.withResolvers();
+ const transport=async(url,options)=>{
+  if(options.method==='GET')return Response.json(base);
+  const body=JSON.parse(options.body);
+  if(options.method==='PUT'){
+   writes.push(body);writing.resolve();
+   return write.promise;
+  }
+  await simulation.promise;
+  const data=worker.simulate(body.trial_preset);
+  return Response.json({...data,request_id:body.request_id,preferences:body.preferences});
+ };
+ const c=F.createController({transport,calculateOnLoad:false,trialPreset:'balanced'});
+ assert(await c.load());
+ c.edit(draft);
+ const pending=c.save(view);
+ assert.equal(c.state().phase,'saving');
+ assert.equal(await c.save(view),false);
+ assert.equal(await c.load(),false);
+ c.reset();c.cancel();c.edit({...draft,max_positions:5});
+ assert.equal(c.state().draft.max_positions,7);
+ assert.equal(writes.length,0);
+ simulation.resolve();await writing.promise;
+ assert.equal(c.state().phase,'saving');
+ assert.equal(c.state().revision,1);
+ write.resolve(Response.json({error:'temporarily_unavailable'},{status:503}));
+ assert.equal(await pending,false);
+ assert.equal(c.state().phase,'error');
+ assert.equal(c.state().dirty,true);
+ assert.equal(c.state().draft.max_positions,7);
+ assert.equal(c.state().revision,1);
+ assert.notEqual(c.state().message,'設定を保存しました。');
+
+ write=Promise.withResolvers();writing=Promise.withResolvers();
+ const retry=c.save(view);
+ await writing.promise;
+ assert.equal(c.state().phase,'saving');
+ assert.equal(writes.length,2);
+ const put=writes[1];
+ assert.deepEqual(put.preferences,draft);
+ assert.deepEqual(put.view_preferences,view);
+ assert.equal(put.expected_revision,1);
+ assert.equal(put.save_binding,binding);
+ write.resolve(Response.json({...base,preferences:draft,view_preferences:view,revision:2,request_id:put.request_id,save_binding:'b'.repeat(64)}));
+ assert.equal(await retry,true);
+ assert.equal(c.state().phase,'ready');
+ assert.equal(c.state().revision,2);
+ assert.equal(c.state().dirty,false);
+ assert.equal(c.state().message,'設定を保存しました。');
+});

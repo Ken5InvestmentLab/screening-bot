@@ -7,9 +7,10 @@
  const byId=id=>document.getElementById(id);
  const content=byId('cloud-analytics-content');
  const settings=byId('cloud-settings-page');
+ const settingsLinks=settings?[...document.querySelectorAll('.topbar .nav a[href]')]:[];
  const rows=Array.from(document.querySelectorAll('#detection-table tbody tr[data-date]'));
  const fields={initial_cash_yen:'new-a-initial-cash',max_positions:'new-a-max-positions',per_order_cap_yen:'new-a-per-order-cap',base_shares:'cloud-base-shares',cost_percent:'cloud-cost-percent',exit_endpoint:'cloud-exit-endpoint',year_scope:'cloud-year-scope',allocation:'cloud-allocation'};
- let drawn=null,displayKey,history=new Map(),dailyLimit=50,latest=null;
+ let drawn=null,displayKey,history=new Map(),dailyLimit=50,latest=null,settingsSaving=false;
  const busy=s=>['loading','saving','calculating'].includes(s.phase);
  const trial=()=>byId('new-a-trial-preset').value;
  const defaultPrefs=legacy.initialDisplay();
@@ -56,6 +57,29 @@
   const status=byId('cloud-settings-status');
   status.textContent=text;
   status.dataset.state=error?'error':'';
+ }
+ function confirmLeaveWhileSaving(event){
+  event.preventDefault();
+  event.returnValue=true;
+ }
+ function blockSettingsNavigation(event){
+  if(settingsLinks.includes(event.target.closest?.('a[href]')))event.preventDefault();
+ }
+ function setSettingsSaving(saving){
+  if(settingsSaving===saving)return;
+  settingsSaving=saving;
+  for(const link of settingsLinks){
+   if(saving)link.setAttribute('aria-disabled','true');
+   else link.removeAttribute('aria-disabled');
+  }
+  if(saving){
+   document.addEventListener('click',blockSettingsNavigation,true);
+   window.addEventListener('beforeunload',confirmLeaveWhileSaving);
+   byId('cloud-settings-status').focus({preventScroll:true});
+  }else{
+   document.removeEventListener('click',blockSettingsNavigation,true);
+   window.removeEventListener('beforeunload',confirmLeaveWhileSaving);
+  }
  }
  function refCell(date,price,status){
   if(!date||!price)return '—';
@@ -155,6 +179,7 @@
     syncPriceControl();syncExitControl();
    }
    setSettingsStatus(state.message,state.phase==='error'||state.phase==='denied');
+   setSettingsSaving(state.phase==='saving');
   }
   content?.setAttribute('aria-busy',String(working));
   if(state.phase==='denied'||state.phase==='session-changed'){
@@ -242,16 +267,19 @@
    try{controller.edit(readTrial());}catch(e){setSettingsStatus(e.message,true);}
   };
   settings.addEventListener('change',()=>{
+   if(busy(latest))return;
    syncExitControl();
    markChanged();
   });
   byId('cloud-settings-cancel').addEventListener('click',()=>{
+   if(busy(latest))return;
    controller.cancel();
    const state=controller.state();
    syncTrial(state.draft,state.trialPreset);
    syncDisplay(state.viewPreferences);
   });
   byId('cloud-research-reset').addEventListener('click',()=>{
+   if(busy(latest))return;
    if(byId('settings-tab-display').getAttribute('aria-selected')==='true'){
     syncDisplay(null);
     markChanged();
@@ -262,6 +290,7 @@
    syncTrial(controller.state().draft,'balanced');
   });
   byId('cloud-settings-save').addEventListener('click',async()=>{
+   if(busy(latest))return;
    try{
     const conditions=readTrial(),view=readView();
     controller.edit(conditions);

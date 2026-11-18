@@ -176,9 +176,10 @@
    '<section class="panel" aria-labelledby="analytics-yearly"><h2 id="analytics-yearly">年別純損益</h2>'+annualBars(r.yearly)+'<details class="cloud-table-details"><summary>年次表</summary>'+table([['year','年'],['markedNetProfit','純損益',yen],['fills','仮想買付件数',number]],r.yearly,'yearly')+'</details></section>'+
    '<section class="panel" aria-labelledby="analytics-export"><h2 id="analytics-export">CSV</h2><div class="cloud-meta"><button id="new-a-export-summary" class="settings-secondary" type="button">集計</button><button id="new-a-export-trades" class="settings-secondary" type="button">明細</button><button id="new-a-export-daily" class="settings-secondary" type="button">日次</button></div></section>';
  }
- function renderHoldings(d,{rows=[],calendar=[],details,model=d.model_result||d.result}={}){
+ function renderHoldings(d,{rows=[],calendar=[],details,model=d.model_result||d.result,asOf}={}){
   const byIdentity=new Map(rows.map(r=>[r.identity,r]));
   if(model.resolved===false)return '<section class="panel" id="new-a-model-holdings"><h2>仮想保有</h2><p class="note">未確認の価格があるため、現在の仮想保有は確定していません。</p></section>';
+  if(asOf&&model.period?.[1]!==asOf)return '<section class="panel" id="new-a-model-holdings"><h2>仮想保有</h2><p class="note">対象日時点の仮想保有は未確定です。</p></section>';
   const holdings=Object.entries(model.open_positions||{}).sort(([a],[b])=>a.localeCompare(b));
   const display=holdings.map(([symbol,p])=>{
    const row=byIdentity.get(key({...p,symbol})),endpoint=p.exit_endpoint==='d5_open'?'d5_close':d.preferences.exit_endpoint;
@@ -188,7 +189,7 @@
   });
   const holdingsTable='<div class="table-wrap"><table class="scenario-table" data-finite-table="holdings"><thead><tr><th>銘柄</th><th>仮想買付日</th><th>仮想決済予定日</th></tr></thead><tbody>'+display.map(r=>'<tr><td data-label="銘柄">'+esc(r.stock)+r.details+'</td><td data-label="仮想買付日">'+esc(r.entry)+'</td><td data-label="仮想決済予定日">'+esc(r.exit)+'</td></tr>').join('')+'</tbody></table></div>';
   const periodLabel=model===d.dashboard_year?model.period[0].slice(0,4)+'年の独立試算':'対象日';
-  return '<section class="panel" id="new-a-model-holdings"><details class="cloud-table-details"><summary>仮想保有 '+holdings.length+'銘柄</summary><p class="note">'+esc(periodLabel)+' · '+esc(model.period?.[1]||'未確認')+'</p>'+(display.length?holdingsTable:'<p>仮想保有なし</p>')+'</details></section>';
+  return '<section class="panel" id="new-a-model-holdings"><details class="cloud-table-details"><summary>現在の仮想保有 '+holdings.length+'銘柄</summary><p class="note">'+esc(periodLabel)+' · '+esc(model.period?.[1]||'未確認')+'</p>'+(display.length?holdingsTable:'<p>仮想保有なし</p>')+'</details></section>';
  }
  function csv(records){const keys=[...new Set(records.flatMap(Object.keys))];const cell=v=>{const s=v===null||v===undefined?'':typeof v==='object'?JSON.stringify(v):String(v);return '"'+(/^[=+@\-\t\r]/.test(s)&&typeof v!=='number'?"'":'')+s.replaceAll('"','""')+'"';};return '\ufeff'+[keys.map(cell).join(','),...records.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n')+'\r\n';}
  function exportsFor(d,kind,keys=null){if(!d)throw Error('適用済み結果がありません。');const prefix={request_id:d.request_id,source_version:d.source_version,view_kind:d.view_kind,measurement:'過去検証',resolved:d.result.resolved,...d.preferences,...(d.result.exit_policy?{exit_policy:d.result.exit_policy}:{}),...(d.result.trial_policy?{trial_preset:d.trial_preset,trial_policy:d.result.trial_policy}:{})};const orders=new Map(d.result.orders.map(r=>[key(r),r])),trades=new Map(d.result.trades.map(r=>[key(r),r]));let rows=kind==='daily'?d.result.daily:kind==='summary'?[d.result.metrics]:d.result.watches.map(w=>({...w,...orders.get(key(w)),...trades.get(key(w))}));if(keys&&kind==='trades')rows=rows.filter(r=>keys.has(key(r)));return csv(rows.map(r=>({...prefix,...r})));}

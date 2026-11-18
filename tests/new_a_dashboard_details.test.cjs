@@ -72,3 +72,51 @@ test('identity hold suppresses TradingView and fundamentals; unresolved portfoli
   assert.match(holdings, /現在の仮想保有は確定していません/);
   assert.doesNotMatch(holdings, /1234|仮想保有 1銘柄/);
 });
+
+test('target-day transitions have separate labels, totals and one card per episode', () => {
+  const another = { ...key, episode_id: 2 };
+  const opening = { symbol: '5678', candidate_date: date, episode_id: 1, entry_date: date };
+  const daily = { ...snapshot, events: [
+    { ...key, session: date, kind: 'WATCH_TERMINAL', reason: 'TRIGGERED' },
+    { ...key, session: date, kind: 'ENTRY_CANDIDATE', reason: 'TRIGGERED' },
+    { ...key, session: date, kind: 'MONITOR_RESET', reason: 'TRIGGERED' },
+    { ...key, session: date, kind: 'WATCH_TERMINAL' },
+    { ...another, session: date, kind: 'WATCH_STARTED' },
+    { ...opening, session: key.candidate_date, kind: 'WATCH_STARTED' },
+  ] };
+  const model = { resolved: true, period: [key.candidate_date, date],
+    trades: [{ ...closed, entry_date: date }], open_positions: { 5678: opening } };
+  const html = currentMarkup([daily], [row], { adapter, model });
+  assert.match(html, /cloud-transition--watch-start">監視開始 <b>1件/);
+  assert.match(html, /cloud-transition--watch-end">監視終了 <b>1件/);
+  assert.match(html, /cloud-transition--hold-start">仮想保有開始 <b>2件/);
+  assert.match(html, /cloud-transition--hold-end">仮想保有終了 <b>1件/);
+  assert.match(html, /監視終了<\/span><small>支持反発/);
+  assert.match(html, /買付候補・その他の記録/);
+  assert.equal(html.match(/<article data-daily-change>/g).length, 3);
+});
+
+test('candidate, reset and exit schedule do not count as target-day transitions', () => {
+  const daily = { ...snapshot, events: [
+    { ...key, session: date, kind: 'ENTRY_CANDIDATE', reason: 'TRIGGERED' },
+    { ...key, session: date, kind: 'MONITOR_RESET', reason: 'UP_ESCAPED' },
+    { ...key, session: key.candidate_date, kind: 'WATCH_TERMINAL', reason: 'UP_ESCAPED' },
+  ] };
+  const result = { resolved: true, period: [key.candidate_date, date], trades: [],
+    open_positions: { 1234: { ...key, entry_date: key.candidate_date, scheduled_exit_date: date } } };
+  const html = currentMarkup([daily], [row], { model: result });
+  assert.match(html, /監視終了 <b>0件/);
+  assert.match(html, /仮想保有開始 <b>0件/);
+  assert.match(html, /仮想保有終了 <b>0件/);
+  assert.doesNotMatch(html, /<article data-daily-change>/);
+  const stale = { ...result, period: [key.candidate_date, key.candidate_date] };
+  for (const model of [null, stale, { ...result, resolved: false }]) {
+    assert.match(currentMarkup([daily], [row], { model }), /仮想保有終了 <b>未確定/);
+  }
+  assert.match(renderHoldings({ result: stale }, { asOf: date }), /対象日時点の仮想保有は未確定/);
+});
+
+test('data on hold is distinct from watching and virtual holding', () => {
+  const html = currentMarkup([{ ...snapshot, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } } }], [row]);
+  assert.match(html, /監視中<\/span><span class="badge cloud-status-held">データ保留/);
+});

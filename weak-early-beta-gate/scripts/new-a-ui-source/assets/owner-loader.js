@@ -17,6 +17,39 @@
  function presentationMarkup(rows,manifest,adapter){adapter.validateInput(inputFor(rows,manifest));const ordered=[...rows].sort((a,b)=>b.signalDate.localeCompare(a.signalDate)||a.symbol.localeCompare(b.symbol)||a.identity.localeCompare(b.identity));return ordered.map((r,i)=>adapter.lightweightRowHtml(r,i)).join('');}
  const episodeKey=entry=>entry?.symbol&&entry?.candidate_date&&entry?.episode_id!=null
   ?[entry.symbol,entry.candidate_date,entry.episode_id].join('|'):null;
+ const transitions={
+  WATCH_STARTED:{label:'監視開始',tone:'watch-start'},
+  WATCH_TERMINAL:{label:'監視終了',tone:'watch-end'},
+  HOLD_STARTED:{label:'仮想保有開始',tone:'hold-start'},
+  HOLD_ENDED:{label:'仮想保有終了',tone:'hold-end'},
+ };
+ const reasons={UP_ESCAPED:'上方離脱',DOWN_INVALIDATED:'下方無効',EXPIRED:'期限',TRIGGERED:'支持反発'};
+ function dailyChanges(snapshot,model){
+  const changes=new Map();
+  const date=snapshot.as_of;
+  function add(entry,kind,reason){
+   const key=episodeKey(entry);
+   if(!key)return;
+   if(!changes.has(key))changes.set(key,{entry,labels:new Map()});
+   const labels=changes.get(key).labels;
+   if(!labels.has(kind)||reason)labels.set(kind,reason);
+  }
+  for(const event of snapshot.events??[]){
+   if(event.session!==date)continue;
+   if(event.kind==='WATCH_STARTED'||event.kind==='WATCH_TERMINAL')add(event,event.kind,reasons[event.reason]);
+  }
+  const holdingReady=model?.resolved===true&&model.period?.[1]===date;
+  if(holdingReady){
+   for(const trade of model.trades){
+    if(trade.entry_date===date)add(trade,'HOLD_STARTED');
+    if(trade.exit_date===date)add(trade,'HOLD_ENDED');
+   }
+   for(const [symbol,position] of Object.entries(model.open_positions??{})){
+    if(position.entry_date===date)add({...position,symbol},'HOLD_STARTED');
+   }
+  }
+  return {changes,holdingReady};
+ }
  const validPrice=price=>Number.isFinite(price)&&price>0;
  const money=price=>esc(price.toLocaleString('ja-JP',{maximumFractionDigits:2}))+'円';
  function stockDetails(snapshot,rows,adapter,model,preparedCloses,dashboardYear){
@@ -78,23 +111,34 @@
    return name?'<span class="cloud-stock"><strong>'+esc(name)+'</strong><small>'+esc(symbol)+'</small></span>':esc(symbol||'—');
   };
   const heldReason={MISSING_SOURCE:'取得未確認',VERIFIED_DELISTED:'上場廃止',SOURCE_QUARANTINED:'価格照合',VERIFIED_RESTRICTED:'取引制限'};
-  const labels={WATCH_STARTED:'監視開始',ENTRY_CANDIDATE:'買付候補',WATCH_TERMINAL:'監視終了',MONITOR_RESET:'監視終了',REFERENCE_OPEN:'寄付参照'};
-  const reasons={UP_ESCAPED:'上方離脱',DOWN_INVALIDATED:'下方無効',EXPIRED:'期限',TRIGGERED:'支持反発'};
+  const {changes,holdingReady}=dailyChanges(s,model);
+  const counts=Object.fromEntries(Object.keys(transitions).map(kind=>[kind,0]));
+  const transitionBadge=(kind,text)=>'<span class="cloud-transition cloud-transition--'+transitions[kind].tone+'">'+text+'</span>';
   const observed=typeof s.observed_at==='string'&&Number.isFinite(Date.parse(s.observed_at))?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(s.observed_at)):'';
   const live=s.observation_kind==='LIVE_OBSERVATION',delayed=s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION';
   const newCount=new Set(events.filter(e=>e.kind==='WATCH_STARTED'&&e.session===s.as_of&&(live&&e.is_new_live_signal||delayed&&e.is_delayed_scheduled_signal)).map(e=>e.symbol)).size;
-  const eventCards=events.map(e=>{
-   const badge=labels[e.kind]||'照合';
-   const subtype=reasons[e.reason];
-   return '<article>'+stock(e.symbol)+'<span class="badge">'+esc(badge)+'</span>'+(subtype?'<small>'+esc(subtype)+'</small>':'')+detailFor(e)+'</article>';
+  const eventCards=[...changes.values()].map(({entry,labels})=>{
+   const badges=Object.entries(transitions).filter(([kind])=>labels.has(kind)).map(([kind,{label}])=>{
+    counts[kind]++;
+    const reason=labels.get(kind);
+    return '<div class="cloud-transition-row">'+transitionBadge(kind,label)+(reason?'<small>'+esc(reason)+'</small>':'')+'</div>';
+   }).join('');
+   return '<article data-daily-change>'+stock(entry.symbol)+'<div class="cloud-transition-list">'+badges+'</div>'+detailFor(entry)+'</article>';
   }).join('');
+  const totals=Object.entries(transitions).map(([kind,{label}])=>{
+   const total=kind.startsWith('HOLD_')&&!holdingReady?'未確定':counts[kind]+'件';
+   return '<li>'+transitionBadge(kind,label+' <b>'+total+'</b>')+'</li>';
+  }).join('');
+  const referenceLabels={ENTRY_CANDIDATE:'買付候補',REFERENCE_OPEN:'寄付参照',MONITOR_RESET:'監視条件リセット'};
+  const referenceRows=events.filter(e=>e.session===s.as_of&&Object.hasOwn(referenceLabels,e.kind)).map(e=>
+   '<tr><td>'+stock(e.symbol)+'</td><td>'+referenceLabels[e.kind]+(reasons[e.reason]?' · '+esc(reasons[e.reason]):'')+detailFor(e)+'</td></tr>').join('');
   const watchRows=watches.map((w,i)=>{
    const symbol=w.episode?.symbol, hold=held[symbol], detail=hold?heldReason[hold.reason]||'確認待ち':'';
-   return '<tr data-current-watch'+(i>=20?' hidden':'')+'><td>'+stock(symbol)+'</td><td>'+esc(w.episode?.candidate_date||'—')+'</td><td><span class="badge'+(hold?' cloud-status-held':'')+'">'+(hold?'保留':'監視中')+'</span>'+(detail?'<small class="cloud-table-meta"> '+esc(detail)+'</small>':'')+detailFor(w.episode)+'</td></tr>';
+   return '<tr data-current-watch'+(i>=20?' hidden':'')+'><td>'+stock(symbol)+'</td><td>'+esc(w.episode?.candidate_date||'—')+'</td><td><span class="badge">監視中</span>'+(detail?'<span class="badge cloud-status-held">データ保留</span><small class="cloud-table-meta"> '+esc(detail)+'</small>':'')+detailFor(w.episode)+'</td></tr>';
   }).join('');
   const heldRows=Object.entries(held).sort(([a],[b])=>a.localeCompare(b)).map(([symbol,item])=>'<tr><td>'+stock(symbol)+'</td><td>'+esc(heldReason[item.reason]||'確認待ち')+'</td><td>'+esc(item.day||'—')+'</td></tr>').join('');
   const table=(head,body)=>'<div class="table-wrap"><table class="scenario-table"><thead><tr>'+head.map(h=>'<th scope="col">'+h+'</th>').join('')+'</tr></thead><tbody>'+body+'</tbody></table></div>';
-  return '<section class="panel" id="new-a-current" aria-labelledby="new-a-events-heading"><div class="cloud-section-head"><h2 id="new-a-events-heading">対象日の銘柄</h2><div class="cloud-meta"><span class="badge">対象 '+esc(s.as_of||'—')+'</span>'+(observed?'<span class="badge">観測 '+esc(observed)+' JST</span>':'')+(s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'?'<span class="badge">遅延実行</span>':'')+'</div></div><div class="cloud-meta">'+(live||delayed?'<span class="badge">新規監視 '+newCount+'件</span>':'<span class="badge">照合</span>')+'<span class="badge">データ保留 '+Object.keys(held).length+'銘柄</span></div><div class="cloud-stock-grid">'+(eventCards||'<p class="cloud-empty">対象日の観測イベントなし</p>')+'</div></section>'+
+  return '<section class="panel" id="new-a-current" aria-labelledby="new-a-events-heading"><div class="cloud-section-head"><h2 id="new-a-events-heading">対象日の動き</h2><div class="cloud-meta"><span class="badge">対象 '+esc(s.as_of||'—')+'</span>'+(observed?'<span class="badge">観測 '+esc(observed)+' JST</span>':'')+(s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION'?'<span class="badge">遅延実行</span>':'')+'</div></div><ul class="cloud-transition-summary" aria-label="対象日の件数">'+totals+'</ul><div class="cloud-meta">'+(live||delayed?'<span class="badge">新規検出 '+newCount+'銘柄</span>':'<span class="badge">照合</span>')+'<span class="badge">データ保留 '+Object.keys(held).length+'銘柄</span></div><div class="cloud-stock-grid">'+(eventCards||'<p class="cloud-empty">確認済みの開始・終了はありません</p>')+'</div>'+(referenceRows?'<details class="cloud-table-details cloud-reference-events"><summary>買付候補・その他の記録</summary>'+table(['銘柄','記録'],referenceRows)+'</details>':'')+'</section>'+
    '<section class="panel" aria-labelledby="new-a-watch-heading"><div class="cloud-section-head"><h2 id="new-a-watch-heading">現在の監視</h2><span class="badge">'+watches.length+'銘柄</span></div>'+(watchRows?table(['銘柄','監視開始日','状況'],watchRows):'<p class="cloud-empty">監視中の銘柄なし</p>')+(watches.length>20?'<button class="settings-secondary" type="button" id="new-a-current-more">残り '+(watches.length-20)+'銘柄を表示</button>':'')+(heldRows?'<details class="cloud-table-details"><summary>データ保留 '+Object.keys(held).length+'銘柄</summary>'+table(['銘柄','理由','対象日'],heldRows)+'</details>':'')+'</section>';
  }
  const api={validateManifest,assembleCurrent,readPresentation,inputFor,presentationMarkup,currentMarkup,stockDetails};

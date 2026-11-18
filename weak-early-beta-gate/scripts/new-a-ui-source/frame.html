@@ -213,6 +213,21 @@ body[data-page="home"] #new-a-trial-preset-field{display:block}
 .cloud-stock-grid article{padding:12px;border:1px solid var(--line);border-radius:12px;display:grid;align-content:start;gap:6px;background:var(--panel-solid);min-width:0}
 .cloud-stock-grid article .badge{justify-self:start}
 .cloud-stock-grid article strong{overflow-wrap:anywhere}
+.cloud-transition-summary{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:12px 0}
+.cloud-transition-list{display:grid;gap:5px}
+.cloud-transition-row{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.cloud-transition-row small{color:var(--muted)}
+.cloud-transition{display:inline-flex;align-items:center;gap:.4em;border:1px solid currentColor;border-radius:8px;padding:4px 8px;font-size:clamp(13px,calc(14px * var(--text-scale)),20px);font-weight:750;line-height:1.3}
+.cloud-transition b{white-space:nowrap;font-variant-numeric:tabular-nums}
+.cloud-transition--watch-start{color:#154a96;background:#e7f0ff}
+.cloud-transition--watch-end{color:#814100;background:#fff0d8}
+.cloud-transition--hold-start{color:#005a45;background:#d9f6ec}
+.cloud-transition--hold-end{color:#643599;background:#f3eaff}
+:root[data-theme="dark"] .cloud-transition--watch-start{color:#c7ddff;background:#193457}
+:root[data-theme="dark"] .cloud-transition--watch-end{color:#ffdba4;background:#492f16}
+:root[data-theme="dark"] .cloud-transition--hold-start{color:#a9f3df;background:#123d35}
+:root[data-theme="dark"] .cloud-transition--hold-end{color:#ead6ff;background:#3b2756}
+.cloud-reference-events{margin-top:12px}
 .cloud-stock-detail .scenario-stats{grid-template-columns:repeat(auto-fit,minmax(min(100%,105px),1fr));gap:8px}
 .cloud-stock-detail .scenario-stats dd{font-size:calc(14px * var(--text-scale));overflow-wrap:anywhere}
 .cloud-stock-detail .scenario-stats small{display:block;color:var(--muted)}
@@ -265,6 +280,7 @@ body[data-page="settings"] #cloud-settings-status[data-state="error"]{color:var(
  .cloud-stock-grid article{padding:9px}
  .cloud-stock-grid .cloud-empty{grid-column:1/-1}
 }
+@media(max-width:350px){.cloud-stock-grid{grid-template-columns:1fr}}
 </style>
 <script src="/auth/guard.js" defer></script><script src="/new-a-assets/owner-loader.js" defer></script></head><body data-page="{{PAGE}}"><header class="topbar"><a class="skip-link" href="#main-content">本文へ</a><nav class="nav" aria-label="ページ移動"><a class="brand" href="./weak_early_beta_latest.html" aria-label="天底極致-Cloud 2.0- ダッシュボードへ"><img class="brand-logo brand-logo-light" src="/new-a-assets/report-assets/cloud-logo-light.png" alt="天底極致-Cloud 2.0-"><img class="brand-logo brand-logo-dark" src="/new-a-assets/report-assets/cloud-logo-dark.png" alt=""></a><div class="cloud-main-nav"><span class="cloud-primary-nav"><a class="nav-link" href="./weak_early_beta_latest.html">ダッシュボード</a><a class="nav-link" href="./weak_early_beta_analytics.html">アナリティクス</a><a class="nav-link" href="./weak_early_beta_settings.html">設定</a></span></div><details class="cloud-more-menu"><summary class="nav-control">その他</summary><div class="cloud-navigation" aria-label="その他のページ"><a class="nav-link" href="./weak_early_beta_guide.html">ヘルプ</a><a class="nav-link" href="./weak_early_beta_silence.html">Silence</a><a class="nav-link" href="./weak_early_beta_dive.html">Dive</a><a class="nav-link" href="./weak_early_beta_shadow.html">Shadow</a><a class="nav-link" href="./weak_early_beta_fusion.html">Fusion</a><a class="nav-link" href="./weak_early_beta_balance.html">Balance</a></div></details></nav></header><main id="main-content" tabindex="-1">{{VIEW}}</main><footer class="site-footer"><div class="site-footer-inner">
 <p class="footer-copy">© 2026 Ken5 Investment Lab. All rights reserved.</p>

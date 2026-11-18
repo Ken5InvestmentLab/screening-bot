@@ -196,7 +196,7 @@
    const model=dashboardYear||simulation.model_result||simulation.result;
    data.renderDashboard?.(model,simulation.dashboard_closes,dashboardYear);
    const details=current&&globalThis.AOwnerPresentation.stockDetails(current,data.rows,globalThis.ANewPresentation,model,simulation.dashboard_closes,dashboardYear);
-   byId('new-a-dashboard').insertAdjacentHTML('beforeend',app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details,model}));
+   byId('new-a-dashboard').insertAdjacentHTML('beforeend',app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details,model,asOf:current?.as_of}));
    rebuildHistory(simulation);
   }
  }

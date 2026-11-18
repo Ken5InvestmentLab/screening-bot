@@ -143,3 +143,33 @@ test('account view save uses the loaded binding and adopts only a matching recei
  assert.equal(c.state().applied,null);
  assert.equal(c.state().accepted,null);
 });
+
+test('display only saves without quote data, but changing the trial still requires simulation',async()=>{
+ const F=controllerFactory(),writes=[];
+ const binding='a'.repeat(64),next='b'.repeat(64);
+ const view={trial_preset:'balanced',theme:'light',font_size:'large',page_size:50};
+ const base={schema_version:1,has_saved_preferences:true,has_saved_finite_preferences:true,revision:1,default_proposal_verified:false,preferences:prefs,save_binding:binding,view_preferences:null};
+ let simulations=0;
+ const transport=async(url,options)=>{
+  if(options.method==='GET')return Response.json(base);
+  const body=JSON.parse(options.body);
+  if(options.method==='PUT'){
+   writes.push(body);
+   return Response.json({...base,preferences:body.preferences,revision:2,save_binding:next,view_preferences:view,request_id:body.request_id});
+  }
+  simulations++;
+  return Response.json({error:'offline_quotes'},{status:503});
+ };
+ const c=F.createController({transport,calculateOnLoad:false,trialPreset:'balanced'});
+ assert(await c.load());
+ assert(await c.save(view));
+ assert.equal(simulations,0);
+ assert.equal(writes.length,1);
+ assert.equal(c.state().viewPreferences.theme,'light');
+ c.edit({...prefs,initial_cash_yen:20000000});
+ assert.equal(await c.save(view),false);
+ assert.equal(simulations,1);
+ assert.equal(writes.length,1);
+ assert.equal(c.state().applied.initial_cash_yen,prefs.initial_cash_yen);
+ assert.equal(c.state().draft.initial_cash_yen,20000000);
+});

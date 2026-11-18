@@ -94,7 +94,8 @@
    const token=++s.request,id=(save?'save-':'preview-')+token;
    s.phase=save?'saving':'calculating';s.message=save?'設定を保存しています。':'試算しています。';emit();
    try{
-    const d=await simulation(p,id,preset);
+    const displayOnly=save&&view&&committed&&preset===committed.preset&&canonical(p)===canonical(committed.preferences);
+    const d=displayOnly?committed.result:await simulation(p,id,preset);
     if(token!==s.request)return false;
     if(save){
      const receipt=await api('/api/cloud/new-a-finite/preferences','PUT',{preferences:p,expected_revision:s.revision,request_id:id,...(view?{view_preferences:view,save_binding:saveBinding}:{})});

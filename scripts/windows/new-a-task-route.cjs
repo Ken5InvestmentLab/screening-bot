@@ -12,4 +12,9 @@ function newATaskPlan(task,date,prior,existingRecoveryPlan){
  }
  return {...existingRecoveryPlan(prior,date),entry:ENTRY};
 }
-module.exports={newATaskPlan,ENTRY};
+function assertActivationRunScope(activation,{nativeDelayed=false,targetDate,executionDate}={}){
+ if(activation?.operational_admission==null)return;
+ if(nativeDelayed&&targetDate==='2026-11-17'&&executionDate==='2026-11-18')return;
+ throw Error('Ordinary Cloud activation is required; a finite recovery approval cannot start another day');
+}
+module.exports={newATaskPlan,assertActivationRunScope,ENTRY};

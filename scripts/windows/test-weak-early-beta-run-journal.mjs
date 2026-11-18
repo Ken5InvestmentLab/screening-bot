@@ -31,7 +31,7 @@ test('terminal stage receipt refuses deployment and send replay',()=>{
 });
 test('task inspect cannot launch and launch arbitration cannot be stolen',async()=>{
  const directory=temp(),runtime=path.join(directory,'runtime');fs.mkdirSync(runtime);
- const options={auditDirectory:path.join(directory,'audit'),load:()=>({runtimeDir:runtime}),check:async()=>({ok:true}),launch:()=>{throw new Error('MUST NOT SPAWN');}};
+ const options={auditDirectory:path.join(directory,'audit'),load:()=>({runtimeDir:runtime,repoPath:directory}),check:async()=>({ok:true}),launch:()=>{throw new Error('MUST NOT SPAWN');}};
  assert.equal((await taskEntry('test.json',options)).status,'ready');
  fs.writeFileSync(path.join(runtime,'task-entry.lock'),'other-owner');
  assert.equal((await taskEntry('test.json',{...options,start:true})).status,'observe');assert.equal(fs.readFileSync(path.join(runtime,'task-entry.lock'),'utf8'),'other-owner');
@@ -56,4 +56,27 @@ test('same-day legacy or unknown receipt is never proof for New A recovery',asyn
  fs.writeFileSync(path.join(runtime,'daily-latest.json'),JSON.stringify(prior));
  const r=await taskEntry('test.json',{start:true,auditDirectory:path.join(directory,'audit'),load:()=>({runtimeDir:runtime,repoPath:directory,nodePath:process.execPath}),check:async()=>({ok:true}),launch:()=>{throw Error('MUST NOT SPAWN');}});
  assert.equal(r.status,'reconcile');assert.match(r.plan.reason,/legacy or unknown/);
+});
+
+test('finite approval stops ordinary task ahead of spawn and recovery reservation',async()=>{
+ const directory=temp(),runtime=path.join(directory,'runtime'),repo=path.join(directory,'repo');
+ const privateRoot=path.join(repo,'.cache/weak_early_beta/new-a-private');
+ fs.mkdirSync(privateRoot,{recursive:true});
+ const activation=path.join(privateRoot,'activation.json');
+ const raw=JSON.stringify({operational_admission:{path:'finite-record.json'}});
+ fs.writeFileSync(activation,raw);
+ let launches=0;
+ const options={auditDirectory:path.join(directory,'audit'),
+  load:()=>({runtimeDir:runtime,repoPath:repo,nodePath:process.execPath}),
+  check:async()=>({ok:true}),launch:()=>{launches++;throw Error('unexpected launch');}};
+ for(const start of [false,true]){
+  const result=await taskEntry('test.json',{...options,start});
+  assert.equal(result.status,'recovery-required');
+  assert.match(result.reason,/finite recovery approval/);
+  assert.equal(result.preflight.result.ok,true);
+  assert.equal(result.externalSideEffects,false);
+ }
+ assert.equal(launches,0);
+ assert.deepEqual(fs.readdirSync(runtime),[]);
+ assert.equal(fs.readFileSync(activation,'utf8'),raw);
 });

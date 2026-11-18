@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { loadDailyConfig } from './weak-early-beta-daily-runner.mjs';
 import taskRoute from './new-a-task-route.cjs';
-const { newATaskPlan } = taskRoute;
+const { newATaskPlan, assertActivationRunScope } = taskRoute;
 import { launchPreflight } from './weak-early-beta-launch-preflight.mjs';
 import { startInvocation, boundedPreflight, readRecord, recoveryPlan, atomicJson, jstDay } from './weak-early-beta-run-journal.mjs';
 import { verifyPreflightReconciliation, claimPreflightReconciliation } from './preflight-reconciliation.mjs';
@@ -72,6 +72,13 @@ export async function taskEntry(configPath, { task = 'cloud-3', start = false, r
     }
     if (!['none', 'resume-detection', 'resume-preflight'].includes(plan.action)) return invocation.update({ status: plan.action, plan });
     if (task === 'cloud-5') return invocation.update({ status: 'reconcile', reason: 'Reminder recovery must reconcile its own delivery receipts; daily launcher not used' });
+    const activationPath = path.join(config.repoPath, '.cache/weak_early_beta/new-a-private/activation.json');
+    try {
+      if (fs.existsSync(activationPath)) assertActivationRunScope(readRecord(activationPath));
+    } catch (error) {
+      return invocation.update({ status: 'recovery-required', plan, preflight: readiness,
+        reason: String(error.message || error).slice(0, 1500), externalSideEffects: false });
+    }
     if (!start) return invocation.update({ status: 'ready', plan, externalSideEffects: false });
     if (jstDay() !== invocation.value.date) throw new Error('Target JST day changed');
     if (reconciliation) claimPreflightReconciliation(runtime,reconciliation,invocation.value.id);

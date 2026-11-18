@@ -73,13 +73,13 @@ test('controller selects and recalculates presets without changing the nine save
 });
 
 test('Analytics shows the newest verified year separately when an old one-price exit stops full-period results',async()=>{
- const days=['2024-02-19','2024-02-20','2024-02-21','2024-02-22','2024-02-26','2024-02-27','2024-02-28',...calendar];
+ const days=['2024-02-19','2024-02-20','2024-02-21','2024-02-22','2024-02-26','2024-02-27','2024-02-28','2024-02-29','2024-03-01','2024-03-04',...calendar];
  const past={symbol:'4911',candidate_date:days[0],trigger_date:days[0],episode_id:1,priority_score:1};
  const current=intents(1)[0];
  const episodes=[past,current],data={source_version:'verified-fixture',calendar:days,limits:{identityUnverifiedBefore:{},completeThrough:days.at(-1)},
   episodes,intents:episodes,watches:episodes.map(e=>({...e,watch_status:'TRIGGERED'}))};
  const normalQuote={open:100,high:103,low:99,close:101,actual_close:101,volume:100,actual_volume:100,source_usable:1};
- const get=(symbol,day)=>symbol===past.symbol&&['2024-02-27','2024-02-28'].includes(day)
+ const get=(symbol,day)=>symbol===past.symbol&&['2024-02-27','2024-02-28','2024-03-01'].includes(day)
   ?{...normalQuote,open:100,high:100,low:100,close:100,actual_close:100}:normalQuote;
  const fields=Object.keys(normalQuote),records=episodes.flatMap(e=>days.map(day=>[e.symbol,day,fields.map(f=>get(e.symbol,day)[f])]));
  const messages=[],ctx={AFiniteEngine:engine,AFiniteDataset:dataset,postMessage:m=>messages.push(structuredClone(m))};
@@ -103,7 +103,14 @@ test('Analytics shows the newest verified year separately when an old one-price 
  assert(Number.isFinite(newer.latest_year.daily.at(-1).equity_diagnostic));
  assert.equal(newer.latest_year.metrics.fills,1);
  assert.equal(simulate({...prefs,year_scope:'2024'},{recent_analytics:true}).latest_year,undefined);
- assert.equal(simulate(prefs,{dashboard_prices:true}).dashboard_year,undefined);
+ const presetDashboard=simulate(prefs,{dashboard_prices:true});
+ assert.equal(presetDashboard.dashboard_year.trial_policy.id,'balanced');
+ assert.equal(presetDashboard.model_result,undefined);
+ assert.deepEqual(presetDashboard.dashboard_year.daily,newer.latest_year.daily);
+ const profitDashboard=simulate(prefs,{dashboard_prices:true,trial_preset:'profit'});
+ assert.equal(profitDashboard.dashboard_year.trial_policy.id,'profit');
+ assert.equal(profitDashboard.dashboard_year.trades[0].exit_date,'2026-11-27');
+ assert.equal(simulate({...prefs,year_scope:'2024'},{dashboard_prices:true}).dashboard_year,undefined);
  const dashboard=simulate(prefs,{dashboard_prices:true,trial_preset:undefined});
  assert.equal(dashboard.result.resolved,false);
  assert.equal(dashboard.dashboard_year.resolved,true);
@@ -147,16 +154,19 @@ test('warm browser broker rechecks owner access before another preset and clears
 
 test('dashboard virtual holdings use model dates relative to the selected period',()=>{
  const F=controllerFactory(),d=workerFixture().simulate('profit');
- const row={symbol:'1100',identity:'1100|2026-11-16|1',companyName:'<script>synthetic</script>',entry:{date:'different'}};
+ const row={symbol:'1100',identity:'1100|2026-11-16|1',companyName:'<script>synthetic</script>',entry:{date:'2026-11-17'},endpoints:{d6_open:{date:'wrong-D6-date'}}};
  const pos={candidate_date:'2026-11-16',episode_id:1,entry_date:'2026-11-17',exit_i:3};
- d.model_result={...d.model_result,period:['2026-11-16','2026-11-18'],open_positions:{'1100':pos}};
+ d.result={...d.result,period:['2026-11-16','2026-11-18'],open_positions:{'1100':pos}};
  const html=F.renderHoldings(d,{rows:[row],calendar});
  assert.match(html,/仮想決済予定日/);
  assert.match(html,/2026-11-19/);
  assert.match(html,/&lt;script&gt;/);
  assert.doesNotMatch(html,/<script>synthetic/);
- d.model_result.open_positions['1100'].exit_i=99;
- assert.match(F.renderHoldings(d,{rows:[row],calendar}),/未確認/);
+ assert.match(html,/8営業日目 寄付/);
+ d.result.open_positions['1100'].exit_i=99;
+ const unknown=F.renderHoldings(d,{rows:[row],calendar});
+ assert.match(unknown,/未確認/);
+ assert.doesNotMatch(unknown,/wrong-D6-date/);
 });
 
 test('unresolved analytics shows the actual stop date and incomplete metrics',()=>{

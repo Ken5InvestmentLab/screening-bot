@@ -24,7 +24,7 @@
   if(!validTrial(view.trial_preset)||!['dark','light','system'].includes(view.theme)||!['small','standard','large'].includes(view.font_size)||![20,50,100].includes(view.page_size))throw Error('保存した表示設定を確認できません。');
   return {trial_preset:view.trial_preset,theme:view.theme,font_size:view.font_size,page_size:view.page_size};
  }
- function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null,useTrialPreset=true,recentAnalytics=false,dashboardPrices=false}){
+ function createController({transport,onChange=()=>{},localPreferences=null,localViewPreferences=null,calculateOnLoad=true,trialPreset=null,recentAnalytics=false,dashboardPrices=false}){
   if(!validTrial(trialPreset))throw Error('trial_preset_invalid');
   const s={trialPreset,viewPreferences:null,phase:'loading',presence:'unknown',revision:null,applied:null,draft:copy(BASE),accepted:null,dirty:false,edit:0,request:0,message:'設定を読み込んでいます。',defaultProposalVerified:false};
   let committed=null,saveBinding=null;
@@ -41,7 +41,8 @@
   }
   async function simulation(p,id,selected){
    const d=await api('/api/cloud/new-a-finite/simulate','POST',{preferences:p,request_id:id,...(selected?{trial_preset:selected}:{}),...(recentAnalytics?{recent_analytics:true}:{}),...(dashboardPrices?{dashboard_prices:true}:{})});
-   if((d.trial_preset??null)!==selected||selected&&(!d.model_result||!Array.isArray(d.model_result.trades)||!Array.isArray(d.model_result.orders)||!Array.isArray(d.model_result.watches)||!d.result?.trial_policy||d.result.trial_policy.id!==selected))throw Error('試算結果を確認できませんでした。');
+   if((d.trial_preset??null)!==selected||(d.result?.trial_policy?.id??null)!==selected)throw Error('試算結果を確認できませんでした。');
+   if(selected&&!dashboardPrices&&(!Array.isArray(d.model_result?.trades)||!Array.isArray(d.model_result.orders)||!Array.isArray(d.model_result.watches)))throw Error('試算結果を確認できませんでした。');
    if(d.request_id!==id||canonical(validate(d.preferences))!==canonical(p)||typeof d.source_version!=='string'||!d.source_version||typeof d.view_kind!=='string'||!d.result||typeof d.result.resolved!=='boolean'||!Array.isArray(d.result.orders)||!Array.isArray(d.result.trades)||!Array.isArray(d.result.daily)||!Array.isArray(d.result.yearly)||!Array.isArray(d.result.watches))throw Error('試算結果を確認できませんでした。');
    const recent=d.latest_year;
    if(recent!==undefined&&(!recentAnalytics||p.year_scope!=='all'||d.result.resolved||
@@ -51,7 +52,8 @@
        recent.daily[0]?.date!==recent.period[0]||recent.daily.at(-1)?.date!==recent.period[1]||
        typeof recent.resolved!=='boolean'||!recent.metrics))throw Error('直近年の試算結果を確認できませんでした。');
    const current=d.dashboard_year;
-   if(current!==undefined&&(!dashboardPrices||selected||p.year_scope!=='all'||d.result.resolved||current.resolved!==true||
+   if(current!==undefined&&(!dashboardPrices||p.year_scope!=='all'||d.result.resolved||current.resolved!==true||
+       (current.trial_policy?.id??null)!==selected||
        !Array.isArray(current.period)||current.period.length!==2||!/^\d{4}-\d{2}-\d{2}$/.test(current.period[0])||
        current.period[1]!==d.result.period?.[1]||current.period[0].slice(0,4)!==current.period[1]?.slice(0,4)||
        !Array.isArray(current.orders)||!Array.isArray(current.trades)||!Array.isArray(current.watches)||
@@ -84,7 +86,7 @@
     const view=validateView(d.view_preferences);
     if(d.save_binding!==undefined&&!validSaveBinding(d.save_binding))throw Error('設定の読み込みを確認できません。');
     const preset=view?view.trial_preset:trialPreset;
-    const result=calculateOnLoad?await simulation(p,'load-'+token,useTrialPreset?preset:null):null;
+    const result=calculateOnLoad?await simulation(p,'load-'+token,preset):null;
     if(token!==s.request)return false;
     s.presence=d.has_saved_preferences?'saved':'absent';s.revision=d.revision;
     saveBinding=d.save_binding??null;
@@ -176,23 +178,37 @@
    '<section class="panel" aria-labelledby="analytics-yearly"><h2 id="analytics-yearly">年別純損益</h2>'+annualBars(r.yearly)+'<details class="cloud-table-details"><summary>年次表</summary>'+table([['year','年'],['markedNetProfit','純損益',yen],['fills','仮想買付件数',number]],r.yearly,'yearly')+'</details></section>'+
    '<section class="panel" aria-labelledby="analytics-export"><h2 id="analytics-export">CSV</h2><div class="cloud-meta"><button id="new-a-export-summary" class="settings-secondary" type="button">集計</button><button id="new-a-export-trades" class="settings-secondary" type="button">明細</button><button id="new-a-export-daily" class="settings-secondary" type="button">日次</button></div></section>';
  }
- function renderHoldings(d,{rows=[],calendar=[],details,performance,model=d.model_result||d.result,asOf}={}){
+ function renderHoldings(d,{rows=[],calendar=[],details,performance,model=d.dashboard_year||d.result,asOf}={}){
   const byIdentity=new Map(rows.map(r=>[r.identity,r]));
+  if(!model||asOf&&model.period?.[1]!==asOf)return '<section class="panel" id="new-a-model-holdings"><h2>現在の仮想保有</h2><p class="note">対象日時点の仮想保有は未確定です。</p></section>';
   if(model.resolved===false)return '<section class="panel" id="new-a-model-holdings"><h2>仮想保有</h2><p class="note">未確認の価格があるため、現在の仮想保有は確定していません。</p></section>';
-  if(asOf&&model.period?.[1]!==asOf)return '<section class="panel" id="new-a-model-holdings"><h2>仮想保有</h2><p class="note">対象日時点の仮想保有は未確定です。</p></section>';
   const holdings=Object.entries(model.open_positions||{}).sort(([a],[b])=>a.localeCompare(b));
+  const offset=calendar.indexOf(model.period?.[0]);
   const display=holdings.map(([symbol,p])=>{
-   const row=byIdentity.get(key({...p,symbol})),endpoint=p.exit_endpoint==='d5_open'?'d5_close':d.preferences.exit_endpoint;
-   const offset=calendar.indexOf(model.period?.[0]);
-   const scheduled=(offset<0?null:calendar[offset+p.exit_i])||(row?.entry?.date===p.entry_date?row.endpoints?.[endpoint]?.date:null);
+   const row=byIdentity.get(key({...p,symbol}));
+   const scheduled=offset>=0&&Number.isSafeInteger(p.exit_i)&&p.exit_i>=0?calendar[offset+p.exit_i]:null;
    return {stock:row?.companyName?row.companyName+' ('+symbol+')':symbol,entry:p.entry_date,exit:scheduled||'未確認',performance:performance?.(p,symbol)||'未確認',details:details?.({...p,symbol})||''};
   });
   const holdingsTable='<div class="table-wrap"><table class="scenario-table" data-finite-table="holdings"><thead><tr><th scope="col">銘柄</th><th scope="col">評価損益</th><th scope="col">仮想買付日</th><th scope="col">仮想決済予定日</th></tr></thead><tbody>'+display.map(r=>'<tr><td data-label="銘柄">'+esc(r.stock)+r.details+'</td><td data-label="評価損益">'+r.performance+'</td><td data-label="仮想買付日">'+esc(r.entry)+'</td><td data-label="仮想決済予定日">'+esc(r.exit)+'</td></tr>').join('')+'</tbody></table></div>';
   const periodLabel=model===d.dashboard_year?model.period[0].slice(0,4)+'年の独立試算':'対象日';
-  return '<section class="panel" id="new-a-model-holdings" aria-labelledby="new-a-holdings-heading"><div class="cloud-section-head"><h2 id="new-a-holdings-heading">現在の仮想保有</h2><div class="cloud-meta"><span class="badge">'+holdings.length+'銘柄</span><span class="note">'+esc(periodLabel)+' · '+esc(model.period?.[1]||'未確認')+'</span></div></div>'+(display.length?holdingsTable:'<p class="cloud-empty">仮想保有なし</p>')+'</section>';
+  const decision=model.trial_policy?trialLabel(model.trial_policy):exitLabel(d.preferences?.exit_endpoint,null,model.exit_policy);
+  return '<section class="panel" id="new-a-model-holdings" aria-labelledby="new-a-holdings-heading"><div class="cloud-section-head"><h2 id="new-a-holdings-heading">現在の仮想保有</h2><div class="cloud-meta"><span class="badge">'+holdings.length+'銘柄</span><span class="note">'+esc(periodLabel)+' · '+esc(model.period?.[1]||'未確認')+'</span></div></div><p class="note">'+esc(decision)+'</p>'+(display.length?holdingsTable:'<p class="cloud-empty">仮想保有なし</p>')+'</section>';
  }
  function csv(records){const keys=[...new Set(records.flatMap(Object.keys))];const cell=v=>{const s=v===null||v===undefined?'':typeof v==='object'?JSON.stringify(v):String(v);return '"'+(/^[=+@\-\t\r]/.test(s)&&typeof v!=='number'?"'":'')+s.replaceAll('"','""')+'"';};return '\ufeff'+[keys.map(cell).join(','),...records.map(r=>keys.map(k=>cell(r[k])).join(','))].join('\r\n')+'\r\n';}
  function exportsFor(d,kind,keys=null){if(!d)throw Error('適用済み結果がありません。');const prefix={request_id:d.request_id,source_version:d.source_version,view_kind:d.view_kind,measurement:'過去検証',resolved:d.result.resolved,...d.preferences,...(d.result.exit_policy?{exit_policy:d.result.exit_policy}:{}),...(d.result.trial_policy?{trial_preset:d.trial_preset,trial_policy:d.result.trial_policy}:{})};const orders=new Map(d.result.orders.map(r=>[key(r),r])),trades=new Map(d.result.trades.map(r=>[key(r),r]));let rows=kind==='daily'?d.result.daily:kind==='summary'?[d.result.metrics]:d.result.watches.map(w=>({...w,...orders.get(key(w)),...trades.get(key(w))}));if(keys&&kind==='trades')rows=rows.filter(r=>keys.has(key(r)));return csv(rows.map(r=>({...prefix,...r})));}
- const api={BASE,validate,canonical,key,createController,render,exportsFor,table,esc,number,yen,pct,status,exitLabel,TRIAL_PRESETS,trialLabel,renderHoldings};
+ function historyRecords(rows,model){
+  const records=new Map(rows.map(row=>[row.identity,{source:row}]));
+  if(!model)return records;
+  const orders=new Map(model.orders.map(order=>[key(order),order]));
+  const trades=new Map(model.trades.map(trade=>[key(trade),trade]));
+  for(const w of model.watches){
+   const identity=key(w),record=records.get(identity);
+   if(!record)continue;
+   const position=model.resolved===true?model.open_positions?.[w.symbol]:null;
+   Object.assign(record,{w,o:orders.get(identity),t:trades.get(identity),open:position&&key({...position,symbol:w.symbol})===identity?position:null});
+  }
+  return records;
+ }
+ const api={BASE,validate,canonical,key,createController,render,exportsFor,table,esc,number,yen,pct,status,exitLabel,TRIAL_PRESETS,trialLabel,renderHoldings,historyRecords};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;global.AFinite=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

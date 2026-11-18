@@ -33,16 +33,13 @@ function simulation(message){
  if(message.dashboard_prices===true&&dashboardCloses?.date)response.dashboard_closes=dashboardCloses;
  if(trialPreset){
   response.trial_preset=trialPreset;
-  response.model_result=runtime.simulate(preferences,{exitPolicy:exit_policy});
+  if(message.dashboard_prices!==true)response.model_result=runtime.simulate(preferences,{exitPolicy:exit_policy});
  }
- if(message.recent_analytics===true&&!result.resolved){
+ if(!result.resolved&&(message.recent_analytics===true||message.dashboard_prices===true)){
   const recent=runtime.simulateLatestYear(preferences,options);
-  if(recent)response.latest_year={period:recent.period,daily:recent.daily,metrics:recent.metrics,
+  if(recent&&message.recent_analytics===true)response.latest_year={period:recent.period,daily:recent.daily,metrics:recent.metrics,
    resolved:recent.resolved,first_unresolved_date:recent.unresolved[0]?.date??null};
- }
- if(message.dashboard_prices===true&&!trialPreset&&!result.resolved){
-  const current=runtime.simulateLatestYear(preferences,options);
-  if(current?.resolved&&current.period[1]===dashboardCloses?.date)response.dashboard_year=current;
+  if(message.dashboard_prices===true&&recent?.resolved&&recent.period[1]===dashboardCloses?.date)response.dashboard_year=recent;
  }
  return response;
 }

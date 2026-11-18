@@ -8,10 +8,14 @@ const calendar=['09','10','11','12','13','16','17','18','19','20','24','25','26'
 const quote=(s,d)=>{const n=calendar.indexOf(d),price=100+n;return {open:price,high:price+2,low:price-2,close:price+1,actual_close:price+1,volume:100,actual_volume:100,source_usable:1,split_factor:1};};
 const intents=(n=5)=>Array.from({length:n},(_,i)=>({symbol:String(1100+i),candidate_date:'2026-11-16',trigger_date:'2026-11-16',episode_id:1,priority_score:n-i}));
 function input(){const selected=intents();return {source_version:'synthetic-input',calendar,limits:{identityUnverifiedBefore:{}},episodes:selected.map(e=>({...e})),intents:selected,watches:selected.map(e=>({...e,watch_status:'TRIGGERED'}))};}
+function workerInitialization(manifest,records){
+ const chunk=new TextEncoder().encode(JSON.stringify(records)).buffer;
+ return {id:1,kind:'initialize',manifest:{...manifest,expected_quote_keys:records.length,quotes:[{bytes:chunk.byteLength,rows:records.length}]},quoteChunks:[chunk]};
+}
 function workerFixture(){
  const data=input(),fields=Object.keys(quote('1100',calendar[0])),records=intents().flatMap(e=>calendar.map(d=>[e.symbol,d,fields.map(k=>quote(e.symbol,d)[k])])),messages=[];
- const ctx={AFiniteDataset:dataset,postMessage:m=>messages.push(structuredClone(m))};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'engine/worker-entry.js'),'utf8'),ctx);
- ctx.onmessage({data:{id:1,kind:'initialize',manifest:{quote_fields:fields,expected_quote_keys:records.length,input:data},records}});assert.equal(messages.pop().ready,true);
+ const ctx={AFiniteDataset:dataset,TextDecoder,postMessage:m=>messages.push(structuredClone(m))};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'engine/worker-entry.js'),'utf8'),ctx);
+ ctx.onmessage({data:workerInitialization({quote_fields:fields,input:data},records)});assert.equal(messages.pop().ready,true);
  return {simulate:(preset=null)=>{ctx.onmessage({data:{id:2,kind:'simulate',preferences:prefs,exit_policy:policy,...(preset?{trial_preset:preset}:{}),request_id:'synthetic-request'}});return messages.pop();}};
 }
 function controllerFactory(){const ctx={module:{exports:{}}};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/finite-controller.js'),'utf8'),ctx);return ctx.module.exports;}
@@ -82,9 +86,9 @@ test('Analytics shows the newest verified year separately when an old one-price 
  const get=(symbol,day)=>symbol===past.symbol&&['2024-02-27','2024-02-28','2024-03-01'].includes(day)
   ?{...normalQuote,open:100,high:100,low:100,close:100,actual_close:100}:normalQuote;
  const fields=Object.keys(normalQuote),records=episodes.flatMap(e=>days.map(day=>[e.symbol,day,fields.map(f=>get(e.symbol,day)[f])]));
- const messages=[],ctx={AFiniteEngine:engine,AFiniteDataset:dataset,postMessage:m=>messages.push(structuredClone(m))};
+ const messages=[],ctx={AFiniteEngine:engine,AFiniteDataset:dataset,TextDecoder,postMessage:m=>messages.push(structuredClone(m))};
  vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'engine/worker-entry.js'),'utf8'),ctx);
- ctx.onmessage({data:{id:1,kind:'initialize',manifest:{as_of:days.at(-1),quote_fields:fields,expected_quote_keys:records.length,input:data},records}});
+ ctx.onmessage({data:workerInitialization({as_of:days.at(-1),quote_fields:fields,input:data},records)});
  assert.equal(messages.pop().ready,true);
  const simulate=(preferences,options={})=>{
   ctx.onmessage({data:{id:2,kind:'simulate',request_id:'load-1',preferences,exit_policy:policy,trial_preset:'balanced',...options}});
@@ -143,13 +147,121 @@ test('preset result mismatch is rejected before it can replace accepted metrics'
 });
 
 test('warm browser broker rechecks owner access before another preset and clears on denial',async()=>{
- const ctx={module:{exports:{}},Response,TextDecoder,Uint8Array,crypto:webcrypto};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/browser-transport.js'),'utf8'),ctx);
+ const ctx={module:{exports:{}},Response,TextDecoder,Uint8Array,AbortController,crypto:webcrypto};vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/browser-transport.js'),'utf8'),ctx);
  const manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',dataset_id:'a-'+'1'.repeat(24),source_version:'synthetic-input',input_header:{...input()},collections:{episodes:[],intents:[],watches:[]},quotes:[],quote_fields:[],expected_quote_keys:0};
  let allowed=true,checks=0,terminated=0;const posts=[];
  const broker=ctx.module.exports.create({pinnedManifest:manifest,fetch:async()=>{checks++;return new Response(JSON.stringify({exit_policy:policy}),{status:allowed?200:401});},createWorker:()=>({postMessage(m){posts.push(m);queueMicrotask(()=>this.onmessage({data:{id:m.id,request_id:m.request_id,source_version:'synthetic-input',ready:true}}));},terminate(){terminated++;}})});
  const body=JSON.stringify({preferences:prefs,trial_preset:'balanced',request_id:'synthetic'});
  assert.equal((await broker.transport('/api/cloud/new-a-finite/simulate',{method:'POST',body})).status,200);assert.equal(posts.at(-1).trial_preset,'balanced');allowed=false;
  assert.equal((await broker.transport('/api/cloud/new-a-finite/simulate',{method:'POST',body})).status,401);assert.equal(checks,2);assert.equal(terminated,1);
+});
+
+test('preloading model data transfers the original verified quote buffers exactly once',async()=>{
+ const ctx={module:{exports:{}},Response,TextDecoder,Uint8Array,AbortController,crypto:webcrypto};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/browser-transport.js'),'utf8'),ctx);
+ const quoteText=JSON.stringify([['1100',calendar[0],[100,102,98,101]]]);
+ const bytes=new TextEncoder().encode(quoteText);
+ const descriptor={name:'quotes-000.json',bytes:bytes.length,rows:1,
+  sha256:Buffer.from(await webcrypto.subtle.digest('SHA-256',bytes)).toString('hex')};
+ const manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',dataset_id:'a-'+'1'.repeat(24),
+  source_version:'synthetic-input',input_header:input(),collections:{episodes:[],intents:[],watches:[]},quotes:[descriptor]};
+ const entered=Promise.withResolvers(),release=Promise.withResolvers();
+ let quoteRequests=0,authChecks=0,workerStarts=0;
+ const broker=ctx.module.exports.create({
+  pinnedManifest:manifest,
+  async fetch(url,options){
+   assert.equal(options.cache,'no-store');
+   if(url.endsWith('/preferences')){authChecks++;return Response.json({exit_policy:policy});}
+   assert(url.endsWith(descriptor.name));quoteRequests++;entered.resolve();await release.promise;
+   return new Response(quoteText);
+  },
+  createWorker(){
+   workerStarts++;
+   return {
+    postMessage(message,transfer){
+     if(message.kind==='initialize'){
+      assert.equal(transfer.length,1);
+      assert.equal(transfer[0],message.quoteChunks[0]);
+      assert.equal(new TextDecoder().decode(transfer[0]),quoteText);
+      const copied=structuredClone(message,{transfer});
+      assert.equal(transfer[0].byteLength,0);
+      assert.equal(copied.quoteChunks[0].byteLength,descriptor.bytes);
+     }
+     queueMicrotask(()=>this.onmessage({data:{id:message.id,ready:true}}));
+    },
+    terminate(){},
+   };
+  },
+ });
+ const preparing=broker.preload();assert.equal(broker.preload(),preparing);
+ await entered.promise;
+ assert.equal(authChecks,0);
+ const result=broker.transport('/api/cloud/new-a-finite/simulate',{method:'POST',body:JSON.stringify({preferences:prefs})});
+ release.resolve();
+ await preparing;assert.equal((await result).status,200);
+ assert.equal(quoteRequests,1);assert.equal(workerStarts,1);assert.equal(authChecks,1);
+});
+
+test('a failed preload is surfaced without a silent retry and its other part reads are aborted',async()=>{
+ const ctx={module:{exports:{}},Response,TextDecoder,Uint8Array,AbortController,crypto:webcrypto};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/browser-transport.js'),'utf8'),ctx);
+ const descriptor=name=>({name,bytes:2,rows:0,sha256:'1'.repeat(64)});
+ const manifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',dataset_id:'a-'+'1'.repeat(24),
+  source_version:'synthetic-input',input_header:input(),collections:{episodes:[],intents:[],watches:[]},
+  quotes:[descriptor('quotes-000.json'),descriptor('quotes-001.json')]};
+ for(const status of [401,503]){
+  const blocked=Promise.withResolvers(),ready=Promise.withResolvers(),cancelled=Promise.withResolvers();
+  let loads=0;
+  const broker=ctx.module.exports.create({
+   pinnedManifest:manifest,
+   async fetch(url,{signal}){
+    if(url.endsWith('/preferences'))return Response.json({exit_policy:policy});
+    loads++;
+    if(url.endsWith('000.json')){await blocked.promise;return new Response(null,{status});}
+    return new Promise((resolve,reject)=>{
+     signal.addEventListener('abort',()=>{cancelled.resolve();reject(signal.reason);},{once:true});
+     ready.resolve();
+    });
+   },
+   createWorker:()=>assert.fail('unverified inputs must not reach the worker'),
+  });
+  const result=assert.rejects(broker.preload(),error=>error.status===status);
+  await ready.promise;blocked.resolve();
+  await result;await cancelled.promise;
+  const simulation=await broker.transport('/api/cloud/new-a-finite/simulate',{method:'POST',body:'{}'});
+  assert.equal(simulation.status,status);
+  assert.equal(loads,2);
+ }
+});
+
+test('a same-length price change is rejected before any buffers reach a worker',async()=>{
+ const ctx={module:{exports:{}},Response,TextDecoder,Uint8Array,AbortController,crypto:webcrypto};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'assets/browser-transport.js'),'utf8'),ctx);
+ const original='[["1100","2026-11-09",[100]]]';
+ const sha256=Buffer.from(await webcrypto.subtle.digest('SHA-256',new TextEncoder().encode(original))).toString('hex');
+ const pinnedManifest={schema:'A_BROWSER_PRIVATE_INPUT_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',dataset_id:'a-'+'1'.repeat(24),
+  source_version:'synthetic-input',input_header:input(),collections:{episodes:[],intents:[],watches:[]},
+  quotes:[{name:'quotes-000.json',bytes:original.length,rows:1,sha256}]};
+ const broker=ctx.module.exports.create({
+  pinnedManifest,fetch:async()=>new Response(original.replace('[100]', '[101]')),
+  createWorker:()=>assert.fail('tampered quote bytes reached the worker'),
+ });
+ await assert.rejects(broker.preload(),/chunk_hash/);
+});
+
+test('model initialization rejects missing, truncated and duplicate quote chunks',()=>{
+ const ctx={AFiniteDataset:dataset,TextDecoder,postMessage:null};
+ let reply;ctx.postMessage=value=>{reply=value;};
+ vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(source,'engine/worker-entry.js'),'utf8'),ctx);
+ const record=['1100',calendar[0],[100]];
+ const prepare=records=>workerInitialization({quote_fields:['open'],input:input()},records);
+ const missing=prepare([record]);missing.quoteChunks=[];
+ const truncated=prepare([record]);truncated.manifest.quotes[0].rows=2;
+ for(const message of [missing,truncated,prepare([record,record])]){
+  ctx.onmessage({data:message});
+  assert.equal(reply.error,'simulation_unavailable');
+  assert.equal(reply.ready,undefined);
+ }
 });
 
 test('dashboard virtual holdings use model dates relative to the selected period',()=>{

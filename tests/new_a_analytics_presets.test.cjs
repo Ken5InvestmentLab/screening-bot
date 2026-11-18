@@ -120,9 +120,10 @@ test('Analytics shows the newest verified year separately when an old one-price 
  assert.equal(dashboard.dashboard_year.resolved,true);
  assert.equal(dashboard.dashboard_year.trades[0].symbol,current.symbol);
  assert.deepEqual(dashboard.dashboard_closes.prices[current.symbol],{date:calendar.at(-1),price:101});
- ctx.onmessage({data:{id:3,kind:'initialize',manifest:{as_of:days.at(-2),quote_fields:fields,expected_quote_keys:records.length,input:data},records}});
+ ctx.onmessage({data:workerInitialization({as_of:days.at(-2),quote_fields:fields,input:data},records)});
  assert.equal(messages.pop().ready,true);
  assert.equal(simulate(prefs,{dashboard_prices:true,trial_preset:undefined}).dashboard_year,undefined);
+ assert.equal(simulate(prefs,{dashboard_prices:true}).dashboard_year,undefined);
  const F=controllerFactory(),requests=[];
  const transport=async(url,options)=>{
   if(options.method==='GET')return Response.json({schema_version:1,has_saved_preferences:true,

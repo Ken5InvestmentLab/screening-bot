@@ -69,7 +69,8 @@
   const chart=chartAllowed?'<a class="button-link" href="'+url+'" target="_blank" rel="noopener noreferrer">チャート</a>':'<span class="button-link" aria-disabled="true">チャート保留</span>';
   const fundamental=globalThis.ANewPresentation?.fundamentalMarkup(source);
   const entry=pos?app.esc(pos.entry_date)+'<small>寄付 '+app.yen(pos.entry_price_nominal)+'</small><small>'+app.number(pos.shares)+'株 · '+app.yen(pos.entry_cost)+'</small>':'—';
-  const exit=app.exitLabel(latest.applied.exit_endpoint,pos,historyExitPolicy);
+  const simulated=w&&w.selection_reason===null&&latest?.applied;
+  const exit=simulated?(historyTrialPolicy?app.trialLabel(historyTrialPolicy):app.exitLabel(latest.applied.exit_endpoint,pos,historyExitPolicy)):'';
   const result=t?'<strong>'+app.yen(t.profit)+'</strong><small>'+app.pct(t.return)+'</small>':open?'<strong>仮想保有中</strong>':'—';
   const exitDetails=t?'<small>決済 '+app.esc(t.exit_date)+' · '+app.yen(t.exit_price_nominal)+'</small>':'';
   const close=d.signalActualClose?'<small>検出日終値 '+app.yen(Number(d.signalActualClose))+'</small>':'<small>検出日終値 未確認</small>';
@@ -78,33 +79,28 @@
    '<div class="history-date" data-label="検出日"><div class="history-date-value">'+app.esc(d.date)+'</div><div class="actions history-date-actions">'+(fundamental||'')+chart+'</div></div>'+
    '<div class="history-company"><strong><span class="symbol">'+code+'</span> '+name+'</strong>'+close+(chartAllowed?'':'<small>当時の銘柄名を確認中</small>')+'</div>'+
    '<div data-label="状況"><span class="status pending">'+app.esc(state==='FILLED'?(t?'仮想決済済':'仮想保有中'):app.status(state))+'</span></div>'+
-   '<div data-label="試算条件"><small>'+app.number(pos?.shares??latest.applied.base_shares)+'株で試算</small></div>'+
+   '<div data-label="試算条件"><small>'+(simulated?app.number(pos?.shares??latest.applied.base_shares)+'株で試算':'—')+'</small></div>'+
    '<div data-label="試算開始日・始値">'+entry+'</div>'+
    '<div data-label="5営業日後 終値">'+refCell(d.d5Date,d.d5Close,d.aD5Status)+'</div>'+
    '<div data-label="6営業日後 始値">'+refCell(d.d6Date,d.d6Open,d.aD6Status)+'</div>'+
-   '<div data-label="成績" class="number cloud-history-result">'+result+'<div class="cloud-exit-details"><small>'+app.esc(exit)+'</small>'+exitDetails+'</div></div></div>'+
+   '<div data-label="成績" class="number cloud-history-result">'+result+(exit?'<div class="cloud-exit-details"><small>'+app.esc(exit)+'</small>'+exitDetails+'</div>':'')+'</div></div>'+
    '<button type="button" class="history-mobile-toggle" data-cloud-history-details aria-expanded="false">詳細を見る</button></td>';
  }
- let historyExitPolicy=null;
- function rebuildHistory(d){
-  const model=d.model_result||d.result;
-  historyExitPolicy=model.exit_policy;
-  const orders=new Map(model.orders.map(x=>[app.key(x),x])),trades=new Map(model.trades.map(x=>[app.key(x),x]));
-  history=new Map(globalThis.AOwnerPageData.rows.map(row=>[row.identity,{source:row}]));
-  for(const w of model.watches){
-   const identity=app.key(w),open=model.open_positions[w.symbol];
-   const entry=history.get(identity);
-   if(entry)Object.assign(entry,{w,o:orders.get(identity),t:trades.get(identity),open:open&&app.key({...open,symbol:w.symbol})===identity?open:null});
-  }
+ let historyExitPolicy=null,historyTrialPolicy=null;
+ function rebuildHistory(model){
+  historyExitPolicy=model?.exit_policy;
+  historyTrialPolicy=model?.trial_policy;
+  history=app.historyRecords(globalThis.AOwnerPageData.rows,model);
   for(const row of rows){row.dataset.finiteHydrate='pending';row.replaceChildren();}
-  legacy.applySelection(d.preferences);
+  hydrateVisible();
+ }
+ function showHistory(){
   const tbody=document.querySelector('#detection-table tbody');
   if(tbody)tbody.hidden=false;
-  hydrateVisible();
-  const section=byId('history'),firstDisplay=section.hidden;
+  const section=byId('history');
   section.hidden=false;
   byId('new-a-history-jump').hidden=false;
-  if(firstDisplay&&location.hash==='#history')section.scrollIntoView();
+  if(location.hash==='#history')section.scrollIntoView();
  }
  function hydrateVisible(){
   for(const row of rows)if(!row.hidden&&row.dataset.finiteHydrate==='pending'){
@@ -169,9 +165,9 @@
   }
   if(state.phase==='error'){
    if(content&&!state.accepted)content.hidden=true;
-   if(isHome&&!state.accepted)globalThis.AOwnerPageData?.renderDashboard?.(null);
+   if(isHome&&!state.accepted)globalThis.AOwnerPageData?.renderDashboard?.({});
    if(!settings||state.revision===null){
-    const message=isAnalytics?(state.accepted?'過去成績を更新できませんでした。':'過去成績を読み込めませんでした。'):isHome?'検出履歴を読み込めませんでした。':'設定を読み込めませんでした。';
+    const message=isAnalytics?(state.accepted?'過去成績を更新できませんでした。':'過去成績を読み込めませんでした。'):isHome?'監視対象と仮想保有を確認できませんでした。':'設定を読み込めませんでした。';
     globalThis.AOwnerLoadStatus?.(message,()=>{
      globalThis.AOwnerLoadStatus?.('読み込んでいます。');
      controller.load();
@@ -198,20 +194,25 @@
    byId('new-a-model-holdings')?.remove();
    const data=globalThis.AOwnerPageData;
    const current=data.current?.[0];
-   const dashboardYear=simulation.dashboard_year?.period[1]===current?.as_of?simulation.dashboard_year:null;
-   const model=dashboardYear||simulation.model_result||simulation.result;
-   data.renderDashboard?.(model,simulation.dashboard_closes,dashboardYear);
+   const asOf=current?.as_of;
+   const sameDate=Boolean(asOf&&simulation.dashboard_closes?.date===asOf);
+   const dashboardYear=sameDate&&simulation.dashboard_year?.period[1]===asOf?simulation.dashboard_year:null;
+   const model=sameDate?(dashboardYear||simulation.result):null;
+   const currentModel=model?.period?.[1]===asOf?model:null;
+   const preparedCloses=simulation.dashboard_closes;
+   const watchSelection=sameDate?simulation.result.watches:null;
+   data.renderDashboard?.({model:currentModel,preparedCloses,dashboardYear,watchSelection});
    const presentation=globalThis.AOwnerPresentation;
-   const details=current&&presentation.stockDetails(current,data.rows,globalThis.ANewPresentation,model,simulation.dashboard_closes,dashboardYear);
-   const performance=current&&presentation.holdingPerformance(current,data.rows,globalThis.ANewPresentation,simulation.dashboard_closes);
-   const holdings=app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details,performance,model,asOf:current?.as_of});
+   const details=current&&presentation.stockDetails(current,data.rows,globalThis.ANewPresentation,currentModel,preparedCloses,dashboardYear);
+   const performance=current&&presentation.holdingPerformance(current,data.rows,globalThis.ANewPresentation,preparedCloses);
+   const holdings=app.renderHoldings(simulation,{rows:data.rows,calendar:data.manifest.input_header.calendar,details,performance,model,asOf});
    const events=byId('new-a-current');
    if(events)events.insertAdjacentHTML('afterend',holdings);
    else byId('new-a-dashboard').insertAdjacentHTML('beforeend',holdings);
-   rebuildHistory(simulation);
+   rebuildHistory(simulation.result);
   }
  }
- const controller=app.createController({trialPreset:'balanced',useTrialPreset:!isHome,recentAnalytics:isAnalytics,dashboardPrices:isHome,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
+ const controller=app.createController({trialPreset:'balanced',recentAnalytics:isAnalytics,dashboardPrices:isHome,transport:globalThis.AFiniteTransport,onChange:update,calculateOnLoad:isAnalytics||isHome});
  globalThis.AFiniteUIController=controller;
 
  if(settings){
@@ -286,5 +287,6 @@
  });
  const tbody=document.querySelector('#detection-table tbody');
  if(tbody)new MutationObserver(hydrateVisible).observe(tbody,{subtree:true,attributes:true,attributeFilter:['hidden']});
+ if(isHome){rebuildHistory(null);showHistory();}
  controller.load();
 })();

@@ -41,9 +41,9 @@ function createDatasetRuntime(input,quotes){
   // settlement from the interrupted full-period result enters this calculation.
   return calculate(preferences,options,start);
  }
- function currentPortfolio(preferences,asOf,{exitPolicy=null,fullResult=null}={}){
+ function currentPortfolio(preferences,asOf,{exitPolicy=null,trialPreset=null,fullResult=null}={}){
   if(typeof asOf!=='string'||asOf!==input.calendar.at(-1)||asOf!==input.limits?.completeThrough)return null;
-  const options={exitPolicy};
+  const options={exitPolicy,trialPreset};
   const full=fullResult??simulate(preferences,options);
   if(full.period?.[1]!==asOf)return null;
   if(full.resolved===true)return {result:full,basis:'SAVED_SCOPE'};

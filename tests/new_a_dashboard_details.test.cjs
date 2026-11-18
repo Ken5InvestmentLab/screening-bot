@@ -10,7 +10,7 @@ function loadBrowserScript(file) {
   return context.module.exports;
 }
 const { currentMarkup, stockDetails, holdingPerformance } = loadBrowserScript('owner-loader.js');
-const { renderHoldings } = loadBrowserScript('finite-controller.js');
+const { renderHoldings, historyRecords } = loadBrowserScript('finite-controller.js');
 const adapter = require('../weak-early-beta-gate/scripts/new-a-ui-source/presentation-adapter.cjs');
 
 const key = { symbol: '1234', candidate_date: '2026-11-17', episode_id: 1 };
@@ -117,7 +117,8 @@ test('candidate, reset and exit schedule do not count as target-day transitions'
 });
 
 test('data on hold is distinct from watching and virtual holding', () => {
-  const html = currentMarkup([{ ...snapshot, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } } }], [row]);
+  const watchSelection = [{ ...key, watch_status: 'WATCHING', selection_reason: null }];
+  const html = currentMarkup([{ ...snapshot, held_symbols: { 1234: { reason: 'MISSING_SOURCE' } } }], [row], { watchSelection });
   assert.match(html, /監視中<\/span><span class="badge cloud-status-held">データ保留/);
 });
 
@@ -162,4 +163,44 @@ test('completed holdings show exact settled gains or losses before stock details
   const html = currentMarkup([daily], [{ ...row, identity: '1234|2026-11-17|2' }], { adapter, model });
   assert.match(html, /確定損益<\/small><span class="cloud-pnl">未確認/);
   assert.doesNotMatch(html, /9,320円/);
+});
+
+test('current watches match the saved cohort by episode, including unmatched stale episodes', () => {
+  const sameSymbolOtherEpisode = { ...key, episode_id: 9 };
+  const high = { symbol: '4321', candidate_date: date, episode_id: 1 };
+  const olderYear = { symbol: '2222', candidate_date: '2025-12-30', episode_id: 1 };
+  const daily = { ...snapshot, monitor_state: { watches: {
+    active: { episode: key }, expensive: { episode: high }, past: { episode: olderYear },
+  } } };
+  const open = { watch_status: 'WATCHING', selection_reason: null };
+  const selected = currentMarkup([daily], [row], { watchSelection: [
+    { ...open, ...sameSymbolOtherEpisode },
+    { ...open, ...key },
+    { ...open, ...high, selection_reason: 'PRICE_CAP' },
+  ] }).split('id="new-a-watch-heading"')[1];
+  assert.match(selected, /1銘柄/);
+  assert.match(selected, /1234/);
+  assert.doesNotMatch(selected, /4321|2222/);
+
+  const unmatched = currentMarkup([daily], [row], { watchSelection: [{ ...open, ...sameSymbolOtherEpisode }] });
+  assert.match(unmatched, /現在の監視<\/h2><span class="badge">0銘柄/);
+  assert.match(currentMarkup([daily], [row], { modelPending: true }), /現在の監視<\/h2><span class="badge">計算中/);
+  assert.match(currentMarkup([daily], [row]), /現在の監視<\/h2><span class="badge">未確認/);
+});
+
+test('history keeps all presentation rows and only displays modeled results for the exact episode', () => {
+  const earlier = { ...row, identity: '1234|2026-11-17|2' };
+  const older = { ...row, identity: '1234|2025-11-17|1' };
+  const held = { ...key, episode_id: 2 };
+  const rows = [row, earlier, older];
+  const index = historyRecords(rows, { resolved: true, orders: [], trades: [closed],
+    watches: [key, held], open_positions: { 1234: held } });
+  assert.equal(index.size, rows.length);
+  assert.equal(index.get(row.identity).t, closed);
+  assert.equal(index.get(row.identity).open, null);
+  assert.equal(index.get(earlier.identity).t, undefined);
+  assert.equal(index.get(earlier.identity).open, held);
+  assert.equal(index.get(older.identity).source, older);
+  assert.equal(index.get(older.identity).w, undefined);
+  assert.equal(historyRecords(rows, null).size, rows.length);
 });

@@ -9,17 +9,13 @@ const patches = [
   ['    if (historySort) {', '    if (historySort && lastHistorySort !== historySort.value) {\n      lastHistorySort = historySort.value;'],
   ['      row.hidden = !display;', '      if (row.hidden === display) row.hidden = !display;'],
   ['    if (resetLimit) visibleLimit = PAGE_SIZE;', '    if (window.AFiniteRevoked) return;\n    if (resetLimit) visibleLimit = PAGE_SIZE;'],
+  ['      return (row.dataset.masked === "true" || CloudPreferences.matchesCap(row.dataset.signalActualClose,\n        row.dataset.signalPriceVerified || row.dataset.signalActualCloseStatus, appliedPreferences.priceCapYen))\n        && (appliedYears === null || appliedYears.includes(Number(signalDate.slice(0, 4))))',
+    '      return (window.AFiniteUI || ((row.dataset.masked === "true" || CloudPreferences.matchesCap(row.dataset.signalActualClose,\n        row.dataset.signalPriceVerified || row.dataset.signalActualCloseStatus, appliedPreferences.priceCapYen))\n        && (appliedYears === null || appliedYears.includes(Number(signalDate.slice(0, 4))))))'],
   ['    if (clear) clear.disabled = !symbolValue', '    const empty = document.getElementById("new-a-history-empty");\n    if (empty) empty.hidden = matchedRows.length > 0;\n    if (clear) clear.disabled = !symbolValue'],
 ];
 
 const hook = `
   if (window.AFiniteUI) window.AFiniteLegacy = {
-    applySelection(p) {
-      appliedPreferences = {priceCapYen:p.price_cap_yen,exitKey:p.exit_endpoint,baseShares:p.base_shares,costPercent:p.cost_percent};
-      appliedView = {yearScope:p.year_scope,allocation:p.allocation};
-      appliedYears = p.year_scope==='all'?null:[Number(p.year_scope)];
-      filter({resetLimit:true});
-    },
     matchingIdentities() {return matchingRows.map(r=>r.dataset.aIdentity);},
     initialDisplay() {return {theme:'dark',fontSize:defaultFontSize,pageSize:20};},
     applyAccountDisplay(view) {
@@ -27,6 +23,7 @@ const hook = `
       PAGE_SIZE = appliedDisplay.pageSize;
       applyDisplay(appliedDisplay);
       syncDisplayControls();
+      filter({resetLimit:true});
     },
     clearHistory() {
       for (const row of rows) {

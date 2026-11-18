@@ -313,10 +313,12 @@ test('dashboard identifies the snapshot day, a delayed observation and independe
   schema:'NEW_A_OWNER_DAILY_DISPLAY_V1',audience:'EXISTING_CLOUD_OWNER_ONLY',as_of:'2026-11-16',
   observed_at:'2026-11-16T16:00:00Z',observation_kind:'DELAYED_SCHEDULED_OBSERVATION',
   held_symbols:{'1111':{day:'2026-11-16',reason:'MISSING_SOURCE'},'2222':{day:'2026-11-16',reason:'SOURCE_QUARANTINED'},'4444':{day:'2026-11-16',reason:'VERIFIED_RESTRICTED'}},
-  monitor_state:{watches:{'1111|1':{episode:{symbol:'1111',candidate_date:'2026-11-14'}},'3333|1':{episode:{symbol:'3333',candidate_date:'2026-11-15'}}}},
+  monitor_state:{watches:{'1111|1':{episode:{symbol:'1111',candidate_date:'2026-11-14',episode_id:1}},'3333|1':{episode:{symbol:'3333',candidate_date:'2026-11-15',episode_id:1}}}},
   events:[{session:'2026-11-16',symbol:'3333',candidate_date:'2026-11-16',episode_id:1,kind:'WATCH_STARTED',is_delayed_scheduled_signal:true},{session:'2026-11-16',symbol:'3333',candidate_date:'2026-11-16',episode_id:1,kind:'WATCH_STARTED',is_delayed_scheduled_signal:true}],
  };
- const {currentMarkup}=c.module.exports,html=currentMarkup([snapshot]);
+ const {currentMarkup}=c.module.exports;
+ const watchSelection=Object.values(snapshot.monitor_state.watches).map(({episode})=>({...episode,watch_status:'WATCHING',selection_reason:null}));
+ const html=currentMarkup([snapshot],[],{watchSelection});
  assert.match(html,/対象 2026-11-16/);
  assert.match(html,/観測 11\/17 01:00 JST/);
  assert.match(html,/遅延実行/);

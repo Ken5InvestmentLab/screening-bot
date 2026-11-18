@@ -14,7 +14,7 @@ import { networkFailureDetail, waitForNetworkCapacity } from './weak-early-beta-
 import { atomicJson, appendEvent, recoveryPlan, verifiedDetectionCache } from './weak-early-beta-run-journal.mjs';
 import { verifyPreflightReconciliation, consumePreflightReconciliation } from './preflight-reconciliation.mjs';
 import taskRoute from './new-a-task-route.cjs';
-const { newATaskPlan } = taskRoute;
+const { newATaskPlan, assertActivationRunScope } = taskRoute;
 
 function readJson(file) { return JSON.parse(fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '')); }
 const DEFAULT_RUNNER_REPO = fileURLToPath(new URL('../../', import.meta.url));
@@ -480,7 +480,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   let ownsLock = false;
   let preservePriorCompletion = false;
   let reconciliationAccepted = false;
-  let approvedWorkerReadbackFailed = false;
+  let approvalPreflightFailed = false;
   const env = { ...process.env };
   loadDotEnv(env, path.join(repo, '.env'));
   loadDotEnv(env, path.join(repo, 'weak-early-beta-gate', '.env'));
@@ -497,13 +497,21 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   atomicJson(path.join(runDir, 'invoked.json'), { ...result, identity: 'CLOUD_RUNNER_INVOKED_V1' });
   const python = config.pythonPath;
   const activationFile = path.join(repo, '.cache/weak_early_beta/new-a-private/activation.json');
+  const checkActivationScope = (activation) => {
+    try {
+      assertActivationRunScope(activation, { nativeDelayed, targetDate: today, executionDate });
+    } catch (error) {
+      approvalPreflightFailed = true;
+      throw error;
+    }
+  };
   const inspectApprovedRelease = async (label) => {
     try {
       const inspection = await requireOk(python, ['-B', '-m', 'weak_early_beta.new_a.continuing_transition', 'inspect-worker'],
         { cwd: repo, env, log: path.join(runDir, label), capture: true, timeoutMs: 60_000 });
       return JSON.parse(inspection.stdout.trim());
     } catch (error) {
-      approvedWorkerReadbackFailed = true;
+      approvalPreflightFailed = true;
       throw error;
     }
   };
@@ -514,7 +522,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
       }
       return await verifyAcceptedWorker(release, head);
     } catch (error) {
-      approvedWorkerReadbackFailed = true;
+      approvalPreflightFailed = true;
       throw error;
     }
   };
@@ -594,6 +602,9 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     result.businessDay = businessDay;
     if (!businessDay) { result.ok = true; result.skipped = 'bank_holiday'; return; }
     saveProgress('preflight');
+    if (fs.existsSync(activationFile)) {
+      checkActivationScope(readJson(activationFile));
+    }
     if (process.platform === 'win32') {
       const processCheck = await requireOk('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
         `@(Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object { $_.ProcessId -ne ${process.pid} -and $_.CommandLine -match 'weak-early-beta-(?:exit-reminder|daily)-runner\\.mjs' } | Select-Object -ExpandProperty ProcessId) | ConvertTo-Json -Compress`],
@@ -627,6 +638,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     { cwd: repo, env, log: path.join(runDir, 'previous-release'), capture: true, timeoutMs: 60_000 });
     result.previousSuccessfulDeployment = JSON.parse(previous.stdout.trim())[0] || null;
     const initialActivation = fs.existsSync(activationFile) ? readJson(activationFile) : {};
+    checkActivationScope(initialActivation);
     const approvedRelease = initialActivation.owner_acceptance?.application_id && !initialActivation.operational_admission
       ? await inspectApprovedRelease('approved-release-before-detection') : null;
     if (approvedRelease !== null) {
@@ -710,7 +722,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
         run: { databaseId: approvedRelease.ci_run_id, status: 'completed', conclusion: 'success' },
         reusedApprovedCodeOnly: true };
     } else if (activation.operational_admission) {
-      if (!nativeDelayed || today !== '2026-11-17' || executionDate !== '2026-11-18') throw Error('Finite predeployed continuity is restricted to the approved Nov17 native continuation');
+      checkActivationScope(activation);
       const proofResult = await requireOk(python,['-B','-m','weak_early_beta.new_a.operational_admission','inspect'],{cwd:repo,env,log:path.join(runDir,'finite-predeployed-readback'),capture:true,timeoutMs:300000});
       const proof=JSON.parse(proofResult.stdout.trim());
       if(proof.schema!=='NEW_A_FINITE_OPERATIONAL_READY_V1'||proof.source_commit!==headSha||proof.target_date!==today||proof.owner_http_observed!==false||proof.ci.conclusion!=='success'||proof.ci.source_commit!==headSha)throw Error('Finite predeployed Worker proof differs');
@@ -777,7 +789,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     if (error.failureType) result.failureType = error.failureType;
     result.stage = stage;
     if (ownsLock && stage === 'detection') result.privateSourceCacheRetained = true;
-    if (!approvedWorkerReadbackFailed && (!reconciliationFile || reconciliationAccepted)) {
+    if (!approvalPreflightFailed && (!reconciliationFile || reconciliationAccepted)) {
       await sendSystemLog('error', ['--stage', stage, '--detail', error.message]);
     }
     process.exitCode = 1;

@@ -38,7 +38,7 @@ export function runnerFixture({pending=0,gateAccepted=true,nativeProof=null,nati
  // No external process is ever created. Optional real receipt is injected by tests below as metadata only.
  const context={fs,path,isDeepStrictEqual,console:{log(){},error(){}},process:{pid:1234,platform:'linux',env:{},exitCode:0},Date,JSON,randomUUID:crypto.randomUUID,createHash:crypto.createHash,
   loadDailyConfig:()=>config,readJson:p=>JSON.parse(fs.readFileSync(p,'utf8')),writeJson:write,atomicJson:write,appendEvent:(p,v)=>{fs.mkdirSync(path.dirname(p),{recursive:true});fs.appendFileSync(p,JSON.stringify(v)+'\n');},
-  loadDotEnv:()=>{},jstDate:()=>today,newATaskPlan:taskRoute.newATaskPlan,parseGitStatus:s=>s.trim()?['dirty']:[],
+  loadDotEnv:()=>{},jstDate:()=>today,newATaskPlan:taskRoute.newATaskPlan,assertActivationRunScope:taskRoute.assertActivationRunScope,parseGitStatus:s=>s.trim()?['dirty']:[],
   probeFundamentalModel:async()=>{assert(detected>0);calls.push({args:['fundamental-model-preflight']});},
   runNewAFundamentalStage:async({expectedCount})=>{
    assert.equal(expectedCount,detected);calls.push({args:['new-a-fundamental']});
@@ -276,3 +276,14 @@ test('A-only launch preflight passes with absent fundamental config; legacy stil
  assert.equal((await context.check(configPath,{strategy:'A_BASE',platform:'linux',command})).ok,true);await assert.rejects(context.check(configPath,{strategy:'legacy',platform:'linux',command}));receipts.push({case:'launch_preflight_no_fundamental_A_only',passed:true,credentialsRead:false});
 });
 test.after(()=>{write(path.join(ROOT,'.cache/new-a-runner-tests/verification.json'),{passed:true,groups:receipts.length,checks:receipts,scope:'EXACT_STAGED_MAIN_AND_PREFLIGHT_WITH_SYNTHETIC_CONFIG_EMPTY_ENV_FAKE_SUBPROCESS_NETWORK_BOUNDARIES',actualSubprocessesExecuted:0,actualNotifications:0,actualGitWrites:0,actualDeployments:0,sourceHashes:{runner:hash(source),preflight:hash(preflight),journal:hash(journal)}});});
+
+test('stale finite activation stops direct ordinary runner before external work',async()=>{
+ const fixture=runnerFixture();
+ const pathToActivation=path.join(fixture.repo,'.cache/weak_early_beta/new-a-private/activation.json');
+ write(pathToActivation,{operational_admission:{path:'finite-record.json'}});
+ const result=await fixture.run();
+ assert.equal(result.ok,false);
+ assert.equal(result.stage,'preflight');
+ assert.match(result.error,/finite recovery approval/);
+ assert(fixture.calls.every(call=>!call.args.some(arg=>['system-log','daily','report','publish','notify','run','push'].includes(arg))));
+});

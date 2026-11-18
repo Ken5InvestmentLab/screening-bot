@@ -190,7 +190,7 @@
    }else if(position&&episodeKey({...position,symbol:entry.symbol})===identity){
     profit='<div class="cloud-card-pnl"><small>評価損益</small>'+performanceFor(position,entry.symbol)+'</div>';
    }
-   return '<article data-daily-change>'+stock(entry.symbol)+'<div class="cloud-transition-list">'+badges+'</div>'+profit+detailFor(entry)+'</article>';
+   return '<article data-daily-change="'+esc(identity)+'">'+stock(entry.symbol)+'<div class="cloud-transition-list">'+badges+'</div>'+profit+detailFor(entry)+'</article>';
   }).join('');
   const totals=Object.entries(transitions).map(([kind,{label}])=>{
    const total=kind.startsWith('HOLD_')&&!holdingReady?(modelPending?'計算中':'未確定'):counts[kind]+'件';
@@ -275,6 +275,7 @@
   }
   if(page==='home'){
    let watchesExpanded=false;
+   const cardDetails='.cloud-stock-grid > [data-daily-change] > .cloud-stock-detail';
    function showAllWatches(){
     const hidden=dashboard.querySelectorAll('[data-current-watch][hidden]');
     for(const row of hidden)row.hidden=false;
@@ -284,10 +285,31 @@
    }
    function renderDashboard(snapshots,rows,options){
     if(global.AFiniteRevoked)throw Error('authorization_reset');
+    const openCards=new Set(Array.from(dashboard.querySelectorAll(cardDetails+'[open]'),
+     details=>details.parentElement.dataset.dailyChange));
+    const focusedCard=document.activeElement?.matches(cardDetails+' > summary')?
+     document.activeElement.parentElement.parentElement.dataset.dailyChange:null;
     dashboard.innerHTML=currentMarkup(snapshots,rows,options);
+    for(const details of dashboard.querySelectorAll(cardDetails)){
+     const identity=details.parentElement.dataset.dailyChange;
+     details.open=openCards.has(identity);
+     if(identity===focusedCard)details.querySelector('summary').focus({preventScroll:true});
+    }
     if(watchesExpanded)showAllWatches();
    }
    dashboard.addEventListener('click',event=>{
+    const summary=event.target.closest?.(cardDetails+' > summary');
+    if(summary){
+     event.preventDefault();
+     const pressed=summary.parentElement;
+     const top=pressed.parentElement.getBoundingClientRect().top;
+     const open=!pressed.open;
+     // Measure the row before toggling any card and moving the following rows.
+     const row=Array.from(dashboard.querySelectorAll(cardDetails)).filter(
+      details=>Math.abs(details.parentElement.getBoundingClientRect().top-top)<1);
+     for(const details of row)details.open=open;
+     return;
+    }
     if(!event.target.closest?.('#new-a-current-more'))return;
     watchesExpanded=true;
     showAllWatches()?.querySelector('summary,td')?.focus();

@@ -6,9 +6,9 @@ const config = JSON.parse(fs.readFileSync(path.join(__dirname, '../weak-early-be
 test('release preserves production access/D1 and excludes previews and broad delivery', async () => {
   const { verifyReleaseConfig } = await import('../weak-early-beta-gate/scripts/verify-release-config.mjs');
   verifyReleaseConfig(config);
-  assert.equal(config.vars.CLOUD_PUSH_MODE, 'new_a_owner_registration');
-  assert.equal(config.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED, 'false');
-  assert.deepEqual(config.triggers?.crons ?? [], []);
+  assert.equal(config.vars.CLOUD_PUSH_MODE, 'new_a_owner_scheduled');
+  assert.equal(config.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED, 'true');
+  assert.deepEqual([...config.triggers.crons].sort(), ['*/5 8-14 * * *', '0 23 * * *']);
   for (const mutate of [
     c => { c.d1_databases = []; },
     c => { c.d1_databases[0].remote = true; },
@@ -18,7 +18,7 @@ test('release preserves production access/D1 and excludes previews and broad del
     c => { c.vars.CLOUD_PUSH_MODE = 'members'; },
     c => { c.vars.CLOUD_PUSH_REGISTRATION_ENABLED = c.vars.CLOUD_PUSH_REGISTRATION_ENABLED === 'true' ? 'false' : 'true'; },
     c => { c.vars.CLOUD_PUSH_SCHEDULER_ENABLED = 'true'; },
-    c => { c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'true'; },
+    c => { c.vars.CLOUD_NEW_A_OWNER_PUSH_ENABLED = 'false'; },
     c => { c.vars.DISCORD_ALLOWED_ROLE_IDS = ''; },
     c => { c.assets.run_worker_first = false; },
   ]) {

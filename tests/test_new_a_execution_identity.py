@@ -2,6 +2,7 @@
 import copy
 import csv
 import io
+import stat
 import subprocess
 import unittest
 from pathlib import Path
@@ -233,9 +234,12 @@ class StableExecutionIdentity(unittest.TestCase):
         issued = self.issue()
         self.apply(issued)
         self.csv.write_bytes(csv_bytes(self.receipt()))
+        # Match the staged mode on POSIX; Git for Windows needs update-index.
+        self.csv.chmod(self.csv.stat().st_mode | stat.S_IXUSR)
         self.command('add', identity.RECEIPTS)
         self.command('update-index', '--chmod=+x', identity.RECEIPTS)
         self.command('commit', '-q', '-m', 'Synthetic mode change')
+        self.assertEqual(self.command('status', '--porcelain'), '')
         self.fixture.source = self.command('rev-parse', 'HEAD')
         with self.assertRaisesRegex(ValueError, 'mode changed'):
             self.validate()

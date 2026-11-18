@@ -139,3 +139,27 @@ test('confirmed holding gains, losses, and flat returns appear outside details',
   const dashboard = currentMarkup([snapshot], [row], { adapter, model });
   assert.match(dashboard, /cloud-card-pnl"><small>評価損益<\/small><span class="cloud-pnl positive">\+10,000円/);
 });
+
+test('completed holdings show exact settled gains or losses before stock details', () => {
+  const daily = { ...snapshot, latest_closes: {} };
+  const period = [key.candidate_date, date];
+  const scenarios = [
+    [closed, /positive">\+9,320円 <small>（\+9\.32%）/],
+    [{ ...closed, profit: -870, return: -0.0087 }, /negative">-870円 <small>（-0\.87%）/],
+    [{ ...closed, profit: 0, return: 0 }, /cloud-pnl">0円 <small>（0%）/],
+    [{ ...closed, profit: null, return: null }, /cloud-pnl">未確認/],
+  ];
+  for (const [trade, expected] of scenarios) {
+    const html = currentMarkup([daily], [row], { adapter, model: { resolved: true, period, trades: [trade] } });
+    const card = html.split('<article data-daily-change>')[1].split('<details')[0];
+    assert.match(card, /仮想保有終了/);
+    assert.match(card, /確定損益/);
+    assert.match(card, expected);
+    assert.doesNotMatch(card, /評価損益/);
+  }
+  const model = { resolved: true, period, trades: [closed],
+    open_positions: { 1234: { ...key, episode_id: 2, entry_date: date, entry_cost: 1000, shares: 1 } } };
+  const html = currentMarkup([daily], [{ ...row, identity: '1234|2026-11-17|2' }], { adapter, model });
+  assert.match(html, /確定損益<\/small><span class="cloud-pnl">未確認/);
+  assert.doesNotMatch(html, /9,320円/);
+});

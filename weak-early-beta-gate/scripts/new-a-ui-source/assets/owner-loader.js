@@ -31,8 +31,9 @@
    const key=episodeKey(entry);
    if(!key)return;
    if(!changes.has(key))changes.set(key,{entry,labels:new Map()});
-   const labels=changes.get(key).labels;
-   if(!labels.has(kind)||reason)labels.set(kind,reason);
+   const change=changes.get(key);
+   if(!change.labels.has(kind)||reason)change.labels.set(kind,reason);
+   if(kind==='HOLD_ENDED')change.settlement=entry;
   }
   for(const event of snapshot.events??[]){
    if(event.session!==date)continue;
@@ -54,6 +55,14 @@
  const money=price=>esc(price.toLocaleString('ja-JP',{maximumFractionDigits:2}))+'円';
  const percentage=value=>esc((value*100).toLocaleString('ja-JP',{maximumFractionDigits:2}))+'%';
  const chartAvailable=(row,symbol,adapter)=>row&&row.chartAllowed!==false&&!adapter?.identityHold(row)&&/^[0-9][0-9A-Z]{3}$/.test(symbol);
+ function settledProfit(trade){
+  return trade&&Number.isFinite(trade.profit)&&Number.isFinite(trade.return)?{yen:trade.profit,rate:trade.return}:null;
+ }
+ function profitMarkup(profit){
+  if(!profit)return '<span class="cloud-pnl">未確認</span>';
+  const sign=profit.yen>0?'+':'',tone=profit.yen>0?' positive':profit.yen<0?' negative':'';
+  return '<span class="cloud-pnl'+tone+'">'+sign+money(profit.yen)+' <small>（'+sign+percentage(profit.rate)+'）</small></span>';
+ }
  function confirmedClose(snapshot,symbol,preparedCloses){
   const prepared=preparedCloses?.date===snapshot.as_of?preparedCloses.prices?.[symbol]:null;
   const latest=snapshot.latest_closes?.[symbol]??prepared;
@@ -69,10 +78,7 @@
   return (position,symbol)=>{
    const row=byEpisode.get(episodeKey({...position,symbol}));
    const close=chartAvailable(row,symbol,adapter)?confirmedClose(snapshot,symbol,preparedCloses):null;
-   const profit=positionProfit(close,position);
-   if(!profit)return '<span class="cloud-pnl">未確認</span>';
-   const sign=profit.yen>0?'+':'',tone=profit.yen>0?' positive':profit.yen<0?' negative':'';
-   return '<span class="cloud-pnl'+tone+'">'+sign+money(profit.yen)+' <small>（'+sign+percentage(profit.rate)+'）</small></span>';
+   return profitMarkup(positionProfit(close,position));
   };
  }
  function stockDetails(snapshot,rows,adapter,model,preparedCloses,dashboardYear){
@@ -98,8 +104,9 @@
     ?datePrice('仮想開始価格',{date:started.entry_date,price:started.entry_price_nominal})
     :row.entry?.status==='verified'?datePrice('開始価格（参考）',row.entry):'';
    let outcome='<div><dt>個別成績</dt><dd>未確定</dd></div>';
-   if(chartAllowed&&trade&&Number.isFinite(trade.profit)&&Number.isFinite(trade.return)){
-    outcome='<div><dt>仮想決済 成績</dt><dd>'+money(trade.profit)+'（'+percentage(trade.return)+'） <small>'+esc(trade.exit_date)+'</small></dd></div>';
+   const settled=chartAllowed?settledProfit(trade):null;
+   if(settled){
+    outcome='<div><dt>仮想決済 成績</dt><dd>'+money(settled.yen)+'（'+percentage(settled.rate)+'） <small>'+esc(trade.exit_date)+'</small></dd></div>';
    }else if(chartAllowed&&stillOpen){
     const profit=positionProfit(latest,position);
     if(profit)outcome='<div><dt>仮想保有 評価損益</dt><dd>'+money(profit.yen)+'（'+percentage(profit.rate)+'）</dd></div>';
@@ -131,20 +138,27 @@
   const heldReason={MISSING_SOURCE:'取得未確認',VERIFIED_DELISTED:'上場廃止',SOURCE_QUARANTINED:'価格照合',VERIFIED_RESTRICTED:'取引制限'};
   const {changes,holdingReady}=dailyChanges(s,model);
   const performanceFor=holdingPerformance(s,rows,adapter,preparedCloses);
+  const byEpisode=new Map(rows.map(row=>[row.identity,row]));
   const counts=Object.fromEntries(Object.keys(transitions).map(kind=>[kind,0]));
   const transitionBadge=(kind,text)=>'<span class="cloud-transition cloud-transition--'+transitions[kind].tone+'">'+text+'</span>';
   const observed=typeof s.observed_at==='string'&&Number.isFinite(Date.parse(s.observed_at))?new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(s.observed_at)):'';
   const live=s.observation_kind==='LIVE_OBSERVATION',delayed=s.observation_kind==='DELAYED_SCHEDULED_OBSERVATION';
   const newCount=new Set(events.filter(e=>e.kind==='WATCH_STARTED'&&e.session===s.as_of&&(live&&e.is_new_live_signal||delayed&&e.is_delayed_scheduled_signal)).map(e=>e.symbol)).size;
-  const eventCards=[...changes.values()].map(({entry,labels})=>{
+  const eventCards=[...changes.values()].map(({entry,labels,settlement})=>{
    const badges=Object.entries(transitions).filter(([kind])=>labels.has(kind)).map(([kind,{label}])=>{
     counts[kind]++;
     const reason=labels.get(kind);
     return '<div class="cloud-transition-row">'+transitionBadge(kind,label)+(reason?'<small>'+esc(reason)+'</small>':'')+'</div>';
    }).join('');
+   const identity=episodeKey(entry);
    const position=holdingReady?model.open_positions?.[entry.symbol]:null;
-   const profit=position&&episodeKey({...position,symbol:entry.symbol})===episodeKey(entry)
-    ?'<div class="cloud-card-pnl"><small>評価損益</small>'+performanceFor(position,entry.symbol)+'</div>':'';
+   let profit='';
+   if(settlement){
+    const confirmed=chartAvailable(byEpisode.get(identity),entry.symbol,adapter)?settledProfit(settlement):null;
+    profit='<div class="cloud-card-pnl"><small>確定損益</small>'+profitMarkup(confirmed)+'</div>';
+   }else if(position&&episodeKey({...position,symbol:entry.symbol})===identity){
+    profit='<div class="cloud-card-pnl"><small>評価損益</small>'+performanceFor(position,entry.symbol)+'</div>';
+   }
    return '<article data-daily-change>'+stock(entry.symbol)+'<div class="cloud-transition-list">'+badges+'</div>'+profit+detailFor(entry)+'</article>';
   }).join('');
   const totals=Object.entries(transitions).map(([kind,{label}])=>{

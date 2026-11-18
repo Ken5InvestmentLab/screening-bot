@@ -20,6 +20,7 @@ tmp_*.md
 .claude/worktrees/
 
 # Codex 添付ファイルの一時保存
+/.codex-attachments/
 .codex-remote-attachments/
 
 # Python インタプリタ本体（OneDrive同期で混入）

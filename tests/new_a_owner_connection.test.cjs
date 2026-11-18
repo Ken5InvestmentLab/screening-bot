@@ -283,17 +283,18 @@ test('dashboard identifies the snapshot day, a delayed observation and independe
   observed_at:'2026-11-16T16:00:00Z',observation_kind:'DELAYED_SCHEDULED_OBSERVATION',
   held_symbols:{'1111':{day:'2026-11-16',reason:'MISSING_SOURCE'},'2222':{day:'2026-11-16',reason:'SOURCE_QUARANTINED'},'4444':{day:'2026-11-16',reason:'VERIFIED_RESTRICTED'}},
   monitor_state:{watches:{'1111|1':{episode:{symbol:'1111',candidate_date:'2026-11-14'}},'3333|1':{episode:{symbol:'3333',candidate_date:'2026-11-15'}}}},
-  events:[{session:'2026-11-16',symbol:'3333',kind:'WATCH_STARTED',is_delayed_scheduled_signal:true},{session:'2026-11-16',symbol:'3333',kind:'WATCH_STARTED',is_delayed_scheduled_signal:true}],
+  events:[{session:'2026-11-16',symbol:'3333',candidate_date:'2026-11-16',episode_id:1,kind:'WATCH_STARTED',is_delayed_scheduled_signal:true},{session:'2026-11-16',symbol:'3333',candidate_date:'2026-11-16',episode_id:1,kind:'WATCH_STARTED',is_delayed_scheduled_signal:true}],
  };
  const {currentMarkup}=c.module.exports,html=currentMarkup([snapshot]);
  assert.match(html,/対象 2026-11-16/);
  assert.match(html,/観測 11\/17 01:00 JST/);
  assert.match(html,/遅延実行/);
- assert.match(html,/新規監視 1件/);
+ assert.match(html,/新規検出 1銘柄/);
+ assert.match(html,/監視開始 <b>1件/);
  assert.match(html,/データ保留 3銘柄/);
  for(const label of ['取得未確認','価格照合','取引制限','監視中'])assert(html.includes(label));
  assert.doesNotMatch(html,/今日の新規検出|最終観測/);
- assert.doesNotMatch(currentMarkup([{...snapshot,observation_kind:'CATCHUP_NOT_NEW'}]),/新規監視/);
+ assert.doesNotMatch(currentMarkup([{...snapshot,observation_kind:'CATCHUP_NOT_NEW'}]),/新規検出 /);
  assert.match(currentMarkup([]),/監視状況を確認できません/);
 });
 

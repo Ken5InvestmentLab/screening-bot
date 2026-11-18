@@ -466,6 +466,7 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
   const startedAt = new Date().toISOString();
   const runDir = path.join(runtime, `daily-${startedAt.replace(/[:.]/g, '-')}`);
   const resultPath = path.join(runtime, 'daily-latest.json');
+  const terminalPath = path.join(runDir, 'result.json');
   const result = { identity: 'WEAK_EARLY_CLOUD_DAILY_V1', startedAt, pid: process.pid, ok: false };
   const prior = resumeReceipt ? readJson(resumeReceipt) : null;
   if (prior) {
@@ -782,10 +783,58 @@ async function main(configFile, { resumeReceipt = null, reconciliationFile = nul
     process.exitCode = 1;
   } finally {
     result.completedAt = new Date().toISOString();
-    writeJson(path.join(runDir, 'result.json'), result);
+    writeJson(terminalPath, result);
     if (ownsLock && !preservePriorCompletion) writeJson(resultPath, result);
-    if (ownsLock && fs.existsSync(lock) && fs.readFileSync(lock, 'utf8') === startedAt) fs.rmSync(lock);
-    console.log(JSON.stringify(result));
+    const stillOwnsLock = () => ownsLock && fs.existsSync(lock) && fs.readFileSync(lock, 'utf8') === startedAt;
+    try {
+      const noticeConfig = path.join(path.dirname(activationFile), 'owner-notice-host.json');
+      if (result.ok && result.latestSession === today && result.new_a?.owner_publication_verified === true &&
+          result.deployment?.reusedApprovedCodeOnly === true && !preservePriorCompletion && !prior &&
+          !continuation && !delayedPlan && !reconciliationFile && fs.existsSync(noticeConfig) && stillOwnsLock()) {
+        const noticePath = path.join(runDir, 'owner-notices-staging.json');
+        const terminalHash = () => createHash('sha256').update(fs.readFileSync(terminalPath)).digest('hex');
+        const receipt = { identity: 'CLOUD_OWNER_NOTICE_STAGING_V1', date: today, startedAt,
+          resultSha256: terminalHash(), status: 'staging', deliveryConfirmed: false };
+        writeJson(noticePath, receipt);
+        try {
+          const child = await requireOk(python, ['-B', '-m', 'weak_early_beta.new_a.owner_notice_host',
+            '--after-publication', terminalPath], {
+            cwd: repo, env, log: path.join(runDir, 'owner-notice-host'), capture: true, timeoutMs: 300_000,
+          });
+          const staged = JSON.parse(child.stdout.trim());
+          const summarize = (slot, kind) => {
+            const statuses = ['staged', 'no-notices', 'held', 'bank_non_business_day', 'bank_calendar_unavailable',
+              'outside_reminder_window', 'not_current_jst_day', 'current_live_publication_required',
+              'previous_market_session_not_published', 'market_non_business_day', 'virtual_model_not_current'];
+            const target = new Date(`${slot?.target_date}T00:00:00Z`);
+            if (!statuses.includes(slot?.status) || slot.kind !== kind || !Number.isFinite(target.valueOf()) ||
+                target.toISOString().slice(0, 10) !== slot.target_date ||
+                !Number.isSafeInteger(slot.staged) || slot.staged < 0 || slot.staged > 1_000 ||
+                (slot.status === 'staged' ? slot.staged === 0 || !/^[a-f0-9]{64}$/.test(slot.payload_sha256) : slot.staged !== 0)) {
+              throw new Error('Owner notice staging readback did not match its contract');
+            }
+            return { status: slot.status, targetDate: slot.target_date, count: slot.staged,
+              ...(slot.status === 'staged' ? { payloadSha256: slot.payload_sha256 } : {}) };
+          };
+          const holding = summarize(staged.holding, 'WATCH_TO_SIMULATED_HOLDING');
+          const morning = summarize(staged.morning, 'EVALUATION_DAY_MORNING');
+          if (staged.source_date !== today || holding.targetDate !== today || morning.targetDate <= today ||
+              !stillOwnsLock() || terminalHash() !== receipt.resultSha256) throw new Error('Owner notice staging run identity changed');
+          const confirmed = [holding, morning].every(slot => ['staged', 'no-notices'].includes(slot.status));
+          Object.assign(receipt, { status: confirmed ? 'verified' : 'held', holding, morning });
+        } catch {
+          // Staging may have reached D1 before an interruption. Always reconcile first.
+          receipt.status = 'reconcile-required';
+        }
+        writeJson(noticePath, { ...receipt, observedAt: new Date().toISOString() });
+        console.error(`Cloud owner notification staging: ${receipt.status}`);
+      }
+    } catch {
+      console.error('Cloud owner notification staging receipt unavailable; reconcile the run before retrying');
+    } finally {
+      if (stillOwnsLock()) fs.rmSync(lock);
+      console.log(JSON.stringify(result));
+    }
   }
 }
 

@@ -93,7 +93,8 @@ test('target-day transitions have separate labels, totals and one card per episo
   assert.match(html, /cloud-transition--hold-end">仮想保有終了 <b>1件/);
   assert.match(html, /監視終了<\/span><small>支持反発/);
   assert.match(html, /買付候補・その他の記録/);
-  assert.equal(html.match(/<article data-daily-change>/g).length, 3);
+  const cards = [...html.matchAll(/<article data-daily-change="([^"]+)">/g)].map(match => match[1]);
+  assert.deepEqual(cards, ['1234|2026-11-17|1', '1234|2026-11-17|2', '5678|2026-11-18|1']);
 });
 
 test('candidate, reset and exit schedule do not count as target-day transitions', () => {
@@ -108,7 +109,7 @@ test('candidate, reset and exit schedule do not count as target-day transitions'
   assert.match(html, /監視終了 <b>0件/);
   assert.match(html, /仮想保有開始 <b>0件/);
   assert.match(html, /仮想保有終了 <b>0件/);
-  assert.doesNotMatch(html, /<article data-daily-change>/);
+  assert.doesNotMatch(html, /<article data-daily-change=/);
   const stale = { ...result, period: [key.candidate_date, key.candidate_date] };
   for (const model of [null, stale, { ...result, resolved: false }]) {
     assert.match(currentMarkup([daily], [row], { model }), /仮想保有終了 <b>未確定/);
@@ -152,7 +153,7 @@ test('completed holdings show exact settled gains or losses before stock details
   ];
   for (const [trade, expected] of scenarios) {
     const html = currentMarkup([daily], [row], { adapter, model: { resolved: true, period, trades: [trade] } });
-    const card = html.split('<article data-daily-change>')[1].split('<details')[0];
+    const card = html.split(/<article data-daily-change="[^"]+">/)[1].split('<details')[0];
     assert.match(card, /仮想保有終了/);
     assert.match(card, /確定損益/);
     assert.match(card, expected);

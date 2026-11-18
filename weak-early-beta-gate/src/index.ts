@@ -9,12 +9,14 @@ import { cloudReportRole } from "./cloud-role-authority";
 import { operationalReadback } from "./operational-readback";
 import { operationalBuild } from "./operational-build.generated";
 import { observeOwnerResponse } from "./owner-response-observation";
+import { NEW_A_HOLDING_CRON, NEW_A_MORNING_CRON, runNewAOwnerNoticeQueue } from "./new-a-owner-notice-queue";
 export { CloudRoleAuthority } from "./cloud-role-authority";
 
 const MODE_PAGE_RE = /^\/weak_early_beta_(?:analytics|silence|dive|shadow|fusion|balance|guide)\.html$/;
 const BETA_SCRIPT_RE = /^\/weak-early-beta-(?:interactions|theme-init|scenarios|push|service-worker)\.js$/;
 const BUNDLE_RE = /^\/weak_early_beta_data_(full|free)_(latest|analytics|silence|dive|shadow|fusion|balance|guide)_([a-f0-9]{16})_(\d{4})\.json$/;
 type SharedRequest = Parameters<typeof sharedGate.fetch>[0];
+type CloudScheduleEnv = ScheduleEnv & Parameters<typeof runNewAOwnerNoticeQueue>[0];
 
 async function bundleResponse(request: Request, env: CloudEnv, audience: string): Promise<Response> {
   const headers = { "content-type": "application/json; charset=utf-8", "cache-control": "private, no-store",
@@ -35,7 +37,15 @@ async function bundleResponse(request: Request, env: CloudEnv, audience: string)
 }
 
 export default {
-  async scheduled(controller: ScheduledController, env: ScheduleEnv): Promise<void> {
+  async scheduled(controller: ScheduledController, env: CloudScheduleEnv): Promise<void> {
+    if (env.CLOUD_NEW_A_OWNER_PUSH_ENABLED === "true" &&
+        (controller.cron === NEW_A_MORNING_CRON || controller.cron === NEW_A_HOLDING_CRON)) {
+      const result = String(env.CLOUD_PUSH_SCHEDULER_ENABLED) === "true"
+        ? { status: "held", reason: "conflicting_legacy_schedule" }
+        : await runNewAOwnerNoticeQueue(env, controller, operationalBuild);
+      console.log(JSON.stringify({ operation: "cloud_new_a_owner_schedule", ...result }));
+      return;
+    }
     const result = await runScheduledPersonalNotifications(controller, env);
     console.log(JSON.stringify({ operation: "cloud_personal_schedule", ...result }));
   },

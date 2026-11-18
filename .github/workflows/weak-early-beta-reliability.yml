@@ -73,6 +73,7 @@ jobs:
           tests.test_new_a_continuing_acceptance tests.test_new_a_connection
           tests.test_new_a_continuing_transition tests.test_new_a_finite_completion tests.test_new_a_fundamentals
           tests.test_new_a_planned_notice_delivery tests.test_new_a_lifecycle_notice_inputs
+          tests.test_new_a_owner_notice_queue
           tests.test_new_a_execution_identity
           tests.test_new_a_native_admission_context tests.test_new_a_wrangler_import_progress
           tests.test_new_a_operational_admission tests.test_new_a_operational_integration

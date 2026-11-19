@@ -108,3 +108,27 @@ test('deployment does not rerun already applied production migrations', () => {
   assert.doesNotMatch(workflow + JSON.stringify(scripts), /d1\s+(?:migrations\s+apply|execute|time-travel\s+restore)/);
   assert.match(workflow, /test "\$GITHUB_SHA" = "\$target"/);
 });
+
+test('member viewing requires a separate production database outside the canonical preview', async () => {
+  const { verifyReleaseConfig } = await import('../weak-early-beta-gate/scripts/verify-release-config.mjs');
+  const member = structuredClone(config);
+  member.vars.CLOUD_MEMBER_VIEW_ENABLED = 'true';
+  assert.throws(() => verifyReleaseConfig(member), /dedicated database/);
+  member.d1_databases.push({
+    binding: 'CLOUD_MEMBER_DB', database_name: 'tentei-cloud-member-view',
+    database_id: '12345678-1234-1234-1234-123456789012', migrations_dir: 'member-migrations', remote: false,
+  });
+  verifyReleaseConfig(member);
+  for (const change of [
+    c => { c.d1_databases.at(-1).database_id = c.d1_databases[0].database_id; },
+    c => { c.d1_databases.at(-1).database_name = 'tentei-cloud-member-stage-member'; },
+    c => { c.d1_databases.at(-1).remote = true; },
+    c => { c.d1_databases.at(-1).preview_database_id = c.d1_databases.at(-1).database_id; },
+    c => { c.vars.CLOUD_MEMBER_STAGE_ORIGIN = 'https://stage.example.invalid'; },
+    c => { c.env.preview.vars.CLOUD_MEMBER_VIEW_ENABLED = 'true'; },
+  ]) {
+    const invalid = structuredClone(member);
+    change(invalid);
+    assert.throws(() => verifyReleaseConfig(invalid));
+  }
+});

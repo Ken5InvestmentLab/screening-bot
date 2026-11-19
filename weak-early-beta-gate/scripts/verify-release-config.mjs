@@ -34,6 +34,21 @@ export function verifyReleaseConfig(config) {
   assert.equal(db?.migrations_dir, 'migrations');
   assert.equal(db?.remote, false, 'local development must not use remote D1');
   assert.notEqual(db?.preview_database_id, productionDatabaseId, 'preview cannot reuse production D1');
+  const memberDatabases = (config.d1_databases ?? []).filter(value => value.binding === 'CLOUD_MEMBER_DB');
+  const memberEnabled = config.vars?.CLOUD_MEMBER_VIEW_ENABLED;
+  assert.ok([undefined, 'false', 'true'].includes(memberEnabled), 'invalid member view configuration');
+  assert.ok(memberDatabases.length <= 1, 'duplicate member database binding');
+  assert.equal(config.vars?.CLOUD_MEMBER_STAGE_ORIGIN, undefined, 'a stage origin cannot be configured on production');
+  if (memberEnabled === 'true') assert.equal(memberDatabases.length, 1, 'member view requires a dedicated database');
+  if (memberDatabases.length) {
+    const member = memberDatabases[0];
+    assert.match(member.database_id ?? '', /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/);
+    assert.notEqual(member.database_id, productionDatabaseId, 'member view cannot reuse owner D1');
+    assert.equal(member.database_name, 'tentei-cloud-member-view', 'wrong production member view database');
+    assert.equal(member.migrations_dir, 'member-migrations');
+    assert.equal(member.remote, false, 'local member development must not use remote D1');
+    assert.equal(member.preview_database_id, undefined, 'member storage is not shared with preview');
+  }
   assert.equal(config.vars?.DISCORD_GUILD_ID, '1479418833352785944');
   assert.equal(config.vars?.DISCORD_ALLOWED_ROLE_IDS, '1487089073385373828');
   assert.equal(config.vars?.SESSION_TTL_SECONDS, '31536000');
@@ -45,6 +60,8 @@ export function verifyReleaseConfig(config) {
   assert.equal(preview?.name, 'tentei-kyokuchi-cloud-preview');
   assert.deepEqual(preview?.d1_databases, [], 'preview must have no D1 binding');
   assert.equal(preview?.preview_urls, false);
+  assert.notEqual(preview?.vars?.CLOUD_MEMBER_VIEW_ENABLED, 'true', 'canonical preview cannot serve member data');
+  assert.equal(preview?.vars?.CLOUD_MEMBER_STAGE_ORIGIN, undefined, 'member stage has its own Worker configuration');
   const previewAuthority = preview.durable_objects?.bindings?.find(value => value.name === 'CLOUD_ROLE_AUTHORITY');
   assert.equal(previewAuthority?.class_name, 'CloudRoleAuthority');
   assert.equal(previewAuthority?.script_name, undefined, 'preview must not point to production authority');

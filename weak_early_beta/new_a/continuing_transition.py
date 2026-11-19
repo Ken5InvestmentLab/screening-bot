@@ -425,15 +425,22 @@ def ordinary_runtime_release(repo):
     completed = read(folder / 'completed.json')
     if completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1':
         return None
-    ca.require(completed.get('schema') == APPLICATION_SCHEMA, 'unrecognized ordinary approval application')
+    application_schema = completed.get('schema')
+    ca.require(application_schema in {APPLICATION_SCHEMA, ca.MEMBER_ORDINARY_APPLICATION_SCHEMA},
+               'unrecognized ordinary approval application')
     validate_activation(value, repo)
-    audit = folder / 'transition.json'
+    if application_schema == APPLICATION_SCHEMA:
+        audit = folder / 'transition.json'
+        audit_sha = completed['transition_sha256']
+    else:
+        audit = folder / 'member-ordinary.json'
+        audit_sha = completed['member_ordinary_sha256']
     deployment = read(audit)['deployment']
     source = ca.head(repo)
     target = ca.target(repo)
     checked_normal_deployment(source, target, lambda: deployment)
     ca.require(file_sha(activation) == original_sha == completed['after_sha256']
-               and file_sha(audit) == completed['transition_sha256'],
+               and file_sha(audit) == audit_sha,
                'ordinary activation or deployment audit changed during readback')
     return dict(
         schema=RUNTIME_RELEASE_SCHEMA, activation_sha256=original_sha, source_commit=source,

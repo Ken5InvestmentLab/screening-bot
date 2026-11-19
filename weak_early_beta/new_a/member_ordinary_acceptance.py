@@ -1,0 +1,408 @@
+"""Apply a reviewed, dormant role-capable release over an ordinary owner release.
+
+This module has no CLI, deployment, observer or promotion adapter. Callbacks
+must independently read the actual owner, provider, CI and member D1 evidence.
+"""
+from copy import deepcopy
+from pathlib import Path
+import datetime
+import hashlib
+import json
+import os
+import re
+
+from . import continuing_acceptance as ca
+from . import continuing_transition as transition
+from .files import atomic_write, digest, file_sha, private_root, read
+from .member_release_source_review import review_member_release_source
+from .operational_admission import ORIGIN, checked_ci
+from .release_acceptance import checked_measurements
+
+
+APPLICATION_SCHEMA = ca.MEMBER_ORDINARY_APPLICATION_SCHEMA
+DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
+ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"
+ROUTE = "/api/cloud/new-a-view/history.json"
+MAX_OBSERVATION_AGE = datetime.timedelta(minutes=15)
+SHA = re.compile(r"[a-f0-9]{64}")
+VERSION = re.compile(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}")
+RELEASE_KEYS = ("version_id", "build_input_sha256", "policy_sha256", "ci_run_id", "tag")
+DEPLOYMENT_KEYS = ("source_commit", "target", "deployment_id", "deployed_at", "active_owner_sha256", *RELEASE_KEYS)
+OTHER_LOCKS = (
+    ".cache/weak_early_beta/exit-reminder-runner.lock", ".cache/weak_early_beta/exit-reminder.lock",
+    "weak_early_beta/state/exit-reminder.lock", "weak_early_beta/state/daily_runtime/daily.lock",
+)
+
+
+def _activation(repo):
+    path = private_root(repo) / "activation.json"
+    ca.require(path.resolve() == path, "canonical ordinary activation path required")
+    return path
+
+
+def _app_folder(repo, application_id):
+    ca.require(isinstance(application_id, str) and SHA.fullmatch(application_id),
+               "canonical ordinary application identity required")
+    folder = ca.root(repo) / "applications" / application_id
+    ca.require(folder.resolve() == folder, "canonical ordinary application path required")
+    return folder
+
+
+def _header(operating_repo, candidate_repo, plan):
+    previous, repo = Path(operating_repo).resolve(), Path(candidate_repo).resolve()
+    ca.require(not (repo.is_relative_to(previous) or previous.is_relative_to(repo)),
+               "distinct non-overlapping operating and candidate checkouts required")
+    baseline = transition.ordinary_runtime_release(previous)
+    ca.require(baseline is not None, "verified operating ordinary predecessor required")
+    previous_activation = read(_activation(previous))
+    owner = previous_activation["owner_acceptance"]
+    completed = read(_app_folder(previous, owner["application_id"]) / "completed.json")
+    ca.require(completed["schema"] == ca.TRANSITION_APPLICATION_SCHEMA,
+               "existing finite-to-ordinary predecessor application required")
+    source = ca.head(repo)
+    target = ca.target(repo)
+    ca.require(plan.get("decision") == DECISION and plan.get("scope") == ca.SCOPE
+               and plan.get("strategy") == "A_BASE" and plan.get("virtual_only") is True
+               and plan.get("nonowner_evidence_mode") == "OWNER_DECISION_UNMEASURED"
+               and "run_date" not in plan and "expires_at" not in plan
+               and plan.get("source_commit") == source and plan.get("target") == target == ca.target(previous)
+               and plan.get("prior_acceptance") == owner["continuing_acceptance"]
+               and plan.get("expected_activation_sha256") == baseline["activation_sha256"] == file_sha(_activation(repo)),
+               "member ordinary plan, predecessor, target or activation differs")
+    until = ca.timestamp(plan["management_not_after"])
+    ca.require(ca.now() < until <= ca.now() + datetime.timedelta(hours=1),
+               "member ordinary management authority expired or too broad")
+    ca.verify_sources(repo, plan["auth_source_hashes"])
+    _, old = ca.load_reference(previous, owner["continuing_acceptance"], "records")
+    source_review = review_member_release_source(repo, baseline["source_commit"], source)
+    ca.require(source_review["member_support_configured"] is True
+               and source_review == plan.get("source_review"),
+               "reviewed member capability must match the exact candidate source")
+    return repo, baseline, old, source_review
+
+
+def _normal_evidence(source, target, member_database_id, ci, deployment, policy, as_of, *, live):
+    checked_ci(ci, source)
+    transition.checked_normal_deployment(source, target, lambda: deployment)
+    ca.require(ci.get("synthetic") is not True and deployment.get("normal_origin") == ORIGIN
+               and type(deployment.get("live_traffic_percent")) in (int, float)
+               and deployment["live_traffic_percent"] == 100
+               and VERSION.fullmatch(str(deployment.get("deployment_id", "")))
+               and SHA.fullmatch(str(deployment.get("active_owner_sha256", "")))
+               and deployment["ci_run_id"] == ci["run_id"]
+               and all(deployment[key] == ci[key] for key in ("tag", "version_id", "build_input_sha256")),
+               "exact normal CI, production deployment or owner generation differs")
+    ca.require(isinstance(policy, dict) and policy.get("schema") == "NEW_A_HOST_MEMBER_POLICY_OFF_V1"
+               and policy.get("database_id") == member_database_id and policy.get("source_commit") == source
+               and policy.get("worker_version_id") == deployment["version_id"] and policy.get("primary") is True
+               and "policy" in policy and policy.get("synthetic") is not True
+               and policy.get("platform_signature_claimed") is False
+               and SHA.fullmatch(str(policy.get("raw_receipt_sha256", ""))),
+               "primary member rollout OFF readback required")
+    row = policy["policy"]
+    ca.require(row is None or (
+        isinstance(row, dict) and set(row) == {"mode", "source_commit", "worker_version_id", "revision"}
+        and row.get("mode") == "off" and row.get("source_commit") == source
+        and row.get("worker_version_id") == deployment["version_id"]
+        and type(row.get("revision")) is int and 1 <= row["revision"] <= 2**53 - 1
+    ), "member rollout must remain OFF")
+    earliest = ca.timestamp(deployment["deployed_at"])
+    if live:
+        earliest = max(earliest, as_of - MAX_OBSERVATION_AGE)
+    ca.require(all(earliest <= ca.timestamp(item["observed_at"]) <= as_of for item in (deployment, policy)),
+               "normal deployment or member OFF observation is stale or premature")
+    return {key: deployment[key] for key in DEPLOYMENT_KEYS}, row
+
+
+def _review(plan, old, source_review, deployment, policy, room_transfer):
+    return dict(
+        previous_acceptance=plan["prior_acceptance"], expected_activation_sha256=plan["expected_activation_sha256"],
+        prior_source_commit=old["source_commit"], reviewed_diff_sha256=source_review["reviewed_diff_sha256"],
+        historical_auth_source_hashes=old["auth_source_hashes"], current_auth_source_hashes=plan["auth_source_hashes"],
+        management_not_after=plan["management_not_after"], normal_deployment_sha256=digest(deployment),
+        member_policy_sha256=digest(policy), member_access_off=True,
+        existing_access_policy_preserved=True, owner_room_transfer=room_transfer,
+    )
+
+
+def _readers(*, ci_reader, deployment_reader, member_policy_reader):
+    ca.require(all(callable(reader) for reader in (ci_reader, deployment_reader, member_policy_reader)),
+               "independent CI, production deployment and member D1 readers required")
+    return tuple(deepcopy(reader()) for reader in (ci_reader, deployment_reader, member_policy_reader))
+
+
+def _private_http_observations(raw):
+    shared = ("receipt_sha256", "source_commit", "target", "version_id", "observed_at",
+              "origin", "deployment_id", "synthetic")
+    return {
+        kind: {key: deepcopy(item[key]) for key in (
+            *shared, *(("owner_identity_verified", "source_kind", "document", "api") if kind == "owner" else ()),
+        ) if key in item}
+        for kind, item in raw.items()
+    }
+
+
+def _check_http_boundary(measurements, raw, deployment, as_of):
+    ca.require(set(raw) == set(ca.PATHS)
+               and all(value.get("origin") == ORIGIN and value.get("deployment_id") == deployment["deployment_id"]
+                       and as_of - MAX_OBSERVATION_AGE <= ca.timestamp(value["observed_at"]) <= as_of
+                       for value in raw.values()), "fresh exact normal-origin HTTP evidence required")
+    direct = {r["path"]: r for r in measurements["direct"]["observations"]}
+    ca.require(direct.get(ROUTE, {}).get("status") in (401, 403)
+               and direct[ROUTE].get("private_gate") is True, "member endpoint denial not observed while OFF")
+
+
+def _prepare(operating_repo, candidate_repo, plan, *, primary_reader, ordinary_decision_reader,
+             role_decision_reader, measurement_reader, raw_reader, authority, room_transfer_reader=None,
+             ci_reader, deployment_reader, member_policy_reader):
+    repo, baseline, old, source_review = _header(operating_repo, candidate_repo, plan)
+    owner = ca.primary_message(plan["owner_message"], primary_reader, authority)
+    room = None
+    if old["owner_message"]["room_id"] != owner["room_id"]:
+        ca.require(callable(room_transfer_reader), "independent same-account room transfer reader required")
+        room = room_transfer_reader(old["owner_message"], owner)
+    transition.check_owner_continuity(old["owner_message"], owner, room, as_of=ca.now(), live=True)
+    ca.require(callable(ordinary_decision_reader) and callable(role_decision_reader) and callable(raw_reader),
+               "independent ordinary and member intent reviews and raw observations required")
+    ci, deployment, policy = _readers(ci_reader=ci_reader, deployment_reader=deployment_reader,
+                                     member_policy_reader=member_policy_reader)
+    source, target = plan["source_commit"], plan["target"]
+    pins, row = _normal_evidence(source, target, source_review["member_database_id"],
+                                 ci, deployment, policy, ca.now(), live=True)
+    raw = _private_http_observations({kind: raw_reader(kind) for kind in ca.PATHS})
+    measurements = checked_measurements(plan, measurement_reader, raw.__getitem__, deployment)
+    _check_http_boundary(measurements, raw, pins, ca.now())
+    ordinary_review = ca.checked_decision(ordinary_decision_reader(owner["message_id"]), owner, source, target,
+                                          ORDINARY_DECISION)
+    review = ca.checked_decision(role_decision_reader(owner["message_id"]), owner, source, target, DECISION)
+    expected = _review(plan, old, source_review, pins, row, room)
+    ca.require(all(review.get(key, object()) == value for key, value in expected.items()),
+               "member role review does not bind the exact predecessor, deployment and OFF policy")
+    ca.require(_header(operating_repo, repo, plan)[1] == baseline,
+               "operating ordinary predecessor changed during observation")
+    return owner, ordinary_review, measurements, dict(review=review, source_review=source_review,
+        predecessor=baseline, ci=ci, deployment=deployment, member_policy=policy, http_observations=raw)
+
+
+def prepare(operating_repo, candidate_repo, plan, **readers):
+    """Check current real host evidence without writing an application or grant.
+
+    The independent CI and deployment readers return the existing exact
+    normal-CI and production-deployment evidence. The member policy reader
+    returns a primary OFF observation for the same candidate Worker and
+    dedicated D1. Ordinary HTTP measurements use the existing owner boundary,
+    with the actual normal origin, deployment ID and denied member API added.
+    """
+    _, _, measurements, audit = _prepare(operating_repo, candidate_repo, plan, **readers)
+    return dict(status="prepared-not-applied", source_commit=plan["source_commit"],
+                deployment_version_id=audit["deployment"]["version_id"], review_sha256=digest(audit["review"]),
+                measurement_sha256={kind: digest(value) for kind, value in measurements.items()},
+                apply_authorized=False)
+
+
+def issue(operating_repo, candidate_repo, plan, **readers):
+    """Use the existing finite management grant issuer, not a reusable flag."""
+    owner, review, measurements, _ = _prepare(operating_repo, candidate_repo, plan, **readers)
+    by_id = {binding["id"]: measurements[kind] for kind, binding in plan["measurements"].items()}
+    ca.require(len(by_id) == len(ca.PATHS), "distinct host measurement identities required")
+    return ca.issue(candidate_repo, {**plan, "decision": "CONTINUE_UNTIL_REVOKED_OR_BOUND_SOURCE_CHANGED"},
+                    primary_reader=readers["primary_reader"], authority=readers["authority"],
+                    measurement_reader=by_id.__getitem__,
+                    decision_reader=lambda message_id: review if message_id == owner["message_id"] else {})
+
+
+def verify_application(repo, record, grant, current_path, folder, completed, claim, seen):
+    """Verify the completed operation without requiring any online approval reader."""
+    path = folder / "member-ordinary.json"
+    ca.require(path.resolve() == path and file_sha(path) == completed.get("member_ordinary_sha256")
+               == claim.get("member_ordinary_sha256"), "completed member ordinary audit differs")
+    audit = read(path)
+    archived = folder / "original.json"
+    before, current = read(archived), read(current_path)
+    old_evidence = before["owner_acceptance"]
+    baseline = audit["predecessor"]
+    ca.require(before.get("operational_admission") is None and baseline["activation_sha256"] == file_sha(archived)
+               and completed["previous_acceptance"] == old_evidence["continuing_acceptance"]
+               and read(_app_folder(repo, old_evidence["application_id"]) / "completed.json")["schema"]
+               == ca.TRANSITION_APPLICATION_SCHEMA, "completed member ordinary predecessor differs")
+    old = ca.validate_evidence(old_evidence, repo, _activation_path=archived,
+                               _historical_source=baseline["source_commit"], _historical_git_sources=True,
+                               _seen=seen)
+    old_deployment = read(_app_folder(repo, old_evidence["application_id"]) / "transition.json")["deployment"]
+    ca.require(baseline["source_commit"] == old["source_commit"] and baseline["worker"] == record["target"]["service"]
+               and baseline["database"] == record["target"]["database_name"] and old["target"] == record["target"]
+               and all(baseline[key] == old_deployment[key] for key in RELEASE_KEYS),
+               "archived ordinary Worker release differs")
+    source_review = review_member_release_source(repo, old["source_commit"], record["source_commit"])
+    ca.require(source_review["member_support_configured"] is True and source_review == audit["source_review"],
+               "completed member source review differs")
+    applied_at = ca.timestamp(completed["applied_at"])
+    pins, row = _normal_evidence(record["source_commit"], record["target"], source_review["member_database_id"],
+                                 audit["ci"], audit["deployment"], audit["member_policy"], applied_at, live=False)
+    raw = audit["http_observations"]
+    measurements = record["measurements"]
+    measurement_check = {**record, "measurements": {
+        kind: {"id": kind, "sha256": digest(value)} for kind, value in measurements.items()
+    }}
+    checked_measurements(measurement_check, measurements.__getitem__, raw.__getitem__, audit["deployment"])
+    _check_http_boundary(measurements, raw, pins, applied_at)
+    review = ca.checked_decision(audit["review"], record["owner_message"], record["source_commit"],
+                                 record["target"], DECISION)
+    room = review.get("owner_room_transfer")
+    transition.check_owner_continuity(old["owner_message"], record["owner_message"], room,
+                                      as_of=applied_at, live=False)
+    expected = _review({
+        "auth_source_hashes": record["auth_source_hashes"],
+        "prior_acceptance": completed["previous_acceptance"],
+        "expected_activation_sha256": grant["expected_activation_sha256"],
+        "management_not_after": review["management_not_after"],
+    }, old, source_review, pins, row, room)
+    ca.require(all(review.get(key, object()) == value for key, value in expected.items())
+               and applied_at <= ca.timestamp(review["management_not_after"])
+               and all(item["deployment_version_id"] == pins["version_id"] for item in record["measurements"].values())
+               and current == {**before, "owner_acceptance": current["owner_acceptance"]},
+               "completed member ordinary application widened runtime or access scope")
+    return audit["deployment"]
+
+
+def apply(operating_repo, candidate_repo, plan, issued, *, preflight, arbitration_owner=None,
+          operating_arbitration_owner=None, **readers):
+    """Apply once to the candidate. An ambiguous application must be reconciled."""
+    repo = Path(candidate_repo).resolve()
+    activation = _activation(repo)
+    record = ca.validate_record(repo, issued["acceptance"])
+    grant_path, grant = ca.load_reference(repo, issued["application_grant"], "grants")
+    grant_id = grant_path.stem
+    ca.require(record["schema"] == ca.SCHEMA and grant_id == digest(grant)
+               and grant.get("schema") == "NEW_A_FINITE_ACCEPTANCE_APPLICATION_V1"
+               and grant.get("scope") == ca.SCOPE and grant.get("acceptance") == issued["acceptance"]
+               and grant.get("source_commit") == record["source_commit"] == plan["source_commit"]
+               and grant.get("target") == record["target"] == plan["target"]
+               and grant.get("owner_message") == record["owner_message"]
+               and grant.get("expected_activation_sha256") == plan["expected_activation_sha256"]
+               and grant.get("platform_signature_claimed") is False,
+               "exact member ordinary management grant required")
+    folder = _app_folder(repo, grant_id)
+    completed_path = folder / "completed.json"
+    if completed_path.exists():
+        completed = read(completed_path)
+        ca.require(completed["schema"] == APPLICATION_SCHEMA and completed["grant"] == issued["application_grant"]
+                   and completed["acceptance"] == issued["acceptance"]
+                   and completed["after_sha256"] == file_sha(activation),
+                   "completed member ordinary activation changed")
+        ca.validate_evidence(read(activation)["owner_acceptance"], repo)
+        return {**completed, "same_operation_replay": True}
+
+    def within_grant():
+        start, end = (ca.timestamp(grant[key]) for key in ("issued_at", "not_after"))
+        current = ca.now()
+        return start <= current < end <= start + datetime.timedelta(hours=1)             and current < ca.timestamp(plan["management_not_after"])
+
+    previous_repo = Path(operating_repo).resolve()
+    config = repo / ".cache/weak_early_beta/daily-runner.config.json"
+    runtime = config.parent / "daily_runtime"
+    old_runtime = previous_repo / ".cache/weak_early_beta/daily_runtime"
+    config_bytes = config.read_bytes()
+    configured = json.loads(config_bytes.decode("utf-8-sig"))
+    ca.require(config.resolve() == config and runtime.resolve() == runtime and runtime.is_dir()
+               and old_runtime.resolve() == old_runtime and old_runtime.is_dir()
+               and not (repo.is_relative_to(previous_repo) or previous_repo.is_relative_to(repo))
+               and (repo / configured["repoPath"]).resolve() == repo
+               and (repo / configured["runtimeDir"]).resolve() == runtime
+               and within_grant() and callable(preflight), "canonical runtime and unexpired member grant required")
+    held = []
+
+    def hold(path, delegated):
+        if delegated is None:
+            transition._acquire(path, grant_id, held)
+        else:
+            ca.require(isinstance(delegated, str) and delegated and path.resolve() == path
+                       and path.read_text() == delegated, "delegated launch arbitration changed")
+
+    def other_locks_clear():
+        for base in (repo, previous_repo):
+            for name in OTHER_LOCKS:
+                lock = base / name
+                if not lock.exists():
+                    continue
+                if (base == previous_repo and name == OTHER_LOCKS[0]
+                        and operating_arbitration_owner is not None and lock.resolve() == lock
+                        and lock.read_text() == operating_arbitration_owner):
+                    continue
+                return False
+        return True
+
+    try:
+        hold(old_runtime / "task-entry.lock", operating_arbitration_owner)
+        hold(runtime / "task-entry.lock", arbitration_owner)
+        ready = preflight()
+        ca.require(ready.get("ok") is True and ready.get("sideEffects") is False
+                   and ready.get("head") == record["source_commit"]
+                   and Path(ready.get("repository", "")).resolve() == repo,
+                   "formal candidate launch preflight not ready")
+        hold(old_runtime / "daily.lock", operating_arbitration_owner)
+        hold(runtime / "daily.lock", None)
+        ca.require(other_locks_clear(),
+                   "another Cloud owner lock exists before member approval")
+        owner, ordinary_review, measurements, audit = _prepare(previous_repo, repo, plan, **readers)
+        ca.require(owner == record["owner_message"] and ordinary_review == record["host_decision"]
+                   and measurements == record["measurements"], "issued member ordinary observations differ")
+
+        original = activation.read_bytes()
+        expected_sha = plan["expected_activation_sha256"]
+        ca.require(hashlib.sha256(original).hexdigest() == expected_sha, "member ordinary activation changed")
+        value = json.loads(original.decode("utf-8-sig"))
+        evidence = {**value["owner_acceptance"], "auth_source_hashes": record["auth_source_hashes"],
+                    "continuing_acceptance": issued["acceptance"], "application_id": grant_id}
+        value["owner_acceptance"] = evidence
+        folder.mkdir(parents=True, exist_ok=False)
+        audit_ref = ca.immutable(folder / "member-ordinary.json", audit)
+        # Persist the application intent before replacing activation.
+        pending = folder / "candidate.json"
+        atomic_write(pending, value)
+        claim = dict(grant=issued["application_grant"], before_sha256=expected_sha,
+                     after_sha256=file_sha(pending), member_ordinary_sha256=audit_ref["sha256"])
+        ca.immutable(folder / "claim.json", claim)
+        with (folder / "original.json").open("xb") as archive:
+            archive.write(original)
+            archive.flush()
+            os.fsync(archive.fileno())
+        completed = dict(schema=APPLICATION_SCHEMA, **claim, acceptance=issued["acceptance"],
+                         previous_acceptance=plan["prior_acceptance"], source_commit=record["source_commit"],
+                         applied_at=ca.now().isoformat(), same_operation_replay=False)
+        verify_application(repo, record, grant, pending, folder, completed, claim, set())
+        ca.require(within_grant() and ca.validate_record(repo, issued["acceptance"]) == record
+                   and config.read_bytes() == config_bytes and file_sha(activation) == expected_sha
+                   and transition.ordinary_runtime_release(previous_repo) == audit["predecessor"]
+                   and other_locks_clear(),
+                   "member ordinary runtime, predecessor or authority changed before replace")
+        stored_pins, stored_policy = _normal_evidence(record["source_commit"], record["target"],
+            audit["source_review"]["member_database_id"], audit["ci"], audit["deployment"], audit["member_policy"],
+            ca.now(), live=True)
+        live_proofs = _readers(**{key: readers[key] for key in ("ci_reader", "deployment_reader", "member_policy_reader")})
+        fresh_pins, fresh_policy = _normal_evidence(record["source_commit"], record["target"],
+            audit["source_review"]["member_database_id"], *live_proofs, ca.now(), live=True)
+        ca.require(fresh_pins == stored_pins and fresh_policy == stored_policy and live_proofs[0] == audit["ci"],
+                   "production Worker or member OFF policy changed before apply")
+        ca.require(within_grant() and config.read_bytes() == config_bytes
+                   and file_sha(activation) == expected_sha and other_locks_clear()
+                   and ca.head(repo) == record["source_commit"]
+                   and ca.head(previous_repo) == audit["predecessor"]["source_commit"]
+                   and file_sha(_activation(previous_repo)) == expected_sha,
+                   "member ordinary inputs changed before replace")
+        ca.verify_sources(repo, record["auth_source_hashes"])
+        for base, delegated, daily in ((old_runtime, operating_arbitration_owner, operating_arbitration_owner),
+                                       (runtime, arbitration_owner, None)):
+            ca.require((base / "task-entry.lock").read_text() == (delegated or grant_id)
+                       and (base / "daily.lock").read_text() == (daily or grant_id),
+                       "member ordinary launch locks changed before replace")
+        completed["applied_at"] = ca.now().isoformat()
+        os.replace(pending, activation)
+        ca.require(file_sha(activation) == completed["after_sha256"], "member ordinary replace ambiguous")
+        ca.immutable(completed_path, completed)
+        ca.validate_evidence(evidence, repo)
+        return completed
+    finally:
+        for lock in reversed(held):
+            if lock.exists() and lock.read_text() == grant_id:
+                lock.unlink()

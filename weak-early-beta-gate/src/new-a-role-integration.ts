@@ -1,12 +1,13 @@
-import { roleFacade, type RoleEnv } from './new-a-role-facade';
+import { hasMemberRoleConfiguration, memberOrigin, roleFacade, type RoleEnv } from './new-a-role-facade';
 import { memberServices, type MemberAdapters } from './new-a-member-services';
-import { reportIdentity } from './shared-report-gate';
+import { reportIdentity, reportVerifiedSessionSubject } from './shared-report-gate';
 import { cloudReportRole } from './cloud-role-authority';
 import type { CloudEnv } from './cloud-api';
 import { createNewAMemberCurrentReader } from './new-a-member-current';
 import { createNewAMemberProjectionReader } from './new-a-member-projection';
 import { createMemberPersonalReader, createMemberSettings } from './new-a-member-storage';
 import { memberReleaseAllows } from './new-a-member-release';
+import { memberResponseObserver, OBSERVED_OWNER_MANIFEST } from './new-a-member-observation';
 import type { OperationalBuild } from './operational-readback';
 
 type MemberEnv = CloudEnv & RoleEnv & { CLOUD_MEMBER_DB?: D1Database };
@@ -39,9 +40,19 @@ export function memberRouteCandidate(
   env: MemberEnv,
   denial: Response,
   build: OperationalBuild,
+  ctx?: ExecutionContext,
 ): Promise<Response | null> {
   if (env.CLOUD_MEMBER_VIEW_ENABLED !== 'true') return Promise.resolve(denial);
   const adapters = memberAdapters(env);
+  const url = new URL(request.url);
+  const scope = memberOrigin(url, env);
+  const observe = adapters && scope && hasMemberRoleConfiguration(env) && denial.status === 403
+    ? memberResponseObserver(request, build, {
+      db: env.CLOUD_MEMBER_DB, ctx, version: env.CLOUD_VERSION_METADATA, owner: env.CLOUD_OWNER_DISCORD_ID, scope,
+    }) : undefined;
+  if (observe && url.pathname === OBSERVED_OWNER_MANIFEST) {
+    observe(denial, () => reportVerifiedSessionSubject(request, env), 'not_checked');
+  }
   const services = adapters && memberServices({
     ...adapters,
     identity: memberRequest => reportIdentity(memberRequest, {
@@ -50,5 +61,5 @@ export function memberRouteCandidate(
     }, true),
   }, env.SESSION_SECRET);
   return roleFacade(request, env, denial, services,
-    subject => memberReleaseAllows(env.CLOUD_MEMBER_DB, build, env.CLOUD_VERSION_METADATA, subject));
+    subject => memberReleaseAllows(env.CLOUD_MEMBER_DB, build, env.CLOUD_VERSION_METADATA, subject), observe);
 }

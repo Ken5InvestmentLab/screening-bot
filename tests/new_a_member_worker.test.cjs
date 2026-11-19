@@ -40,7 +40,7 @@ function openDb(t, sql) {
         return { prepare(sql) {
           const statement = db.prepare(sql);
           const first = async (...params) => { count++; return statement.get(...params) ?? null; };
-          return { first, bind: (...params) => ({ first: () => first(...params) }) };
+          return { first, bind: (...params) => ({ first: () => first(...params), run: async () => statement.run(...params) }) };
         } };
       },
     },
@@ -237,4 +237,113 @@ test('the private migration has no default grant and rejects malformed policy ro
   assert.throws(() => f.setPolicy('canary', { nonce: 'b7'.repeat(32) }), /CHECK constraint/);
   assert.throws(() => f.setPolicy('canary', { nonce: 'b7'.repeat(32), tag: 'F'.repeat(64) }), /CHECK constraint/);
   assert.throws(() => f.setPolicy('enabled', { version: '87654321-b321-4321-áaaa-123456789abc' }), /CHECK constraint/);
+});
+
+const ownerManifest = '/api/cloud/new-a-finite/input/manifest.json';
+const observationBuild = workerModules.load('operational-build.generated').operationalBuild;
+
+function observationFixture(t) {
+  const f = setup(t);
+  const tasks = [];
+  const now = Date.now();
+  const windowId = 'ab'.repeat(32);
+  const key = '51'.repeat(32);
+  const subjects = [allowed, denied];
+  f.env.CLOUD_VERSION_METADATA = { id: workerVersion, tag: sourceCommit, timestamp: new Date(now - 120_000).toISOString() };
+  f.memberDb.db.exec(loadSql('member-migrations/0003_new_a_member_response_observations.sql'));
+  function tag(subject) {
+    const target = ['new-a-member-observation-subject-v1', windowId, stage, sourceCommit,
+      observationBuild.build_input_sha256, workerVersion, subject];
+    return createHmac('sha256', Buffer.from(key, 'hex')).update(JSON.stringify(target)).digest('hex');
+  }
+  function open({ origin = stage, source = sourceCommit, build = observationBuild.build_input_sha256, id = workerVersion,
+    opens = now - 1_000, closes = now + 60_000 } = {}) {
+    f.memberDb.db.exec('DELETE FROM new_a_member_observation_window_v1');
+    f.memberDb.db.prepare('INSERT INTO new_a_member_observation_window_v1 VALUES (1,?,?,?,?,?,?,?,?,?,?)')
+      .run(windowId, origin, source, build, id, opens, closes, key, tag(allowed), tag(denied));
+  }
+  async function call(route, user, { env = f.env, headers = {} } = {}) {
+    const request = await f.request(route, user);
+    for (const [name, value] of Object.entries(headers)) request.headers.set(name, value);
+    const response = await worker.fetch(request, env, { waitUntil: task => tasks.push(task) });
+    await Promise.all(tasks.splice(0));
+    return response;
+  }
+  const rows = () => f.memberDb.db.prepare('SELECT * FROM new_a_member_response_observation_v1 ORDER BY subject_hmac,route').all();
+  return { ...f, key, subjects, tag, open, call, rows, windowId };
+}
+
+test('exact signed nonowner responses create six bounded, keyed stage observations', async t => {
+  const f = observationFixture(t);
+  f.open();
+  for (const user of f.subjects) {
+    for (const route of [documentPath, history, ownerManifest]) {
+      const response = await f.call(route, user);
+      const status = user === allowed && route !== ownerManifest ? 200 : 403;
+      assert.equal(response.status, status);
+      for (const hidden of [f.key, user, f.tag(user)]) {
+        assert.ok(!JSON.stringify([...response.headers]).includes(hidden));
+        assert.ok(!(await response.clone().text()).includes(hidden));
+      }
+    }
+  }
+  const recorded = f.rows();
+  assert.equal(recorded.length, 6);
+  for (const row of recorded) {
+    assert.equal(row.origin, stage);
+    assert.equal(row.source_commit, sourceCommit);
+    assert.equal(row.build_input_sha256, observationBuild.build_input_sha256);
+    assert.equal(row.worker_version_id, workerVersion);
+    assert.equal(row.window_id, f.windowId);
+    assert.ok(Number.isSafeInteger(row.observed_at_ms));
+    const actualRole = row.subject_hmac === f.tag(allowed) ? 'allowed' : row.subject_hmac === f.tag(denied) ? 'denied' : '';
+    assert.ok(actualRole);
+    assert.equal(row.role_result, row.route === ownerManifest ? 'not_checked' : actualRole);
+    assert.equal(row.status, row.role_result === 'allowed' ? 200 : 403);
+    for (const hidden of [f.key, ...f.subjects]) assert.ok(!JSON.stringify(row).includes(hidden));
+  }
+  await f.call(documentPath, allowed);
+  assert.deepEqual(f.rows(), recorded);
+});
+
+test('feeds no observation for unrelated actor, expired or mismatched window, or spoofed request', async t => {
+  const f = observationFixture(t);
+  assert.equal((await f.call(documentPath, allowed)).status, 200);
+  assert.equal(f.rows().length, 0);
+  for (const override of [{ origin: production }, { id: '11111111-1111-4111-8111-111111111111' },
+    { build: 'c'.repeat(64) }, { source: 'd'.repeat(40) }, { opens: Date.now() - 10_000, closes: Date.now() - 1 }]) {
+    f.open(override);
+    assert.equal((await f.call(documentPath, allowed)).status, 200);
+    assert.equal(f.rows().length, 0);
+  }
+  f.open();
+  assert.equal((await f.call(documentPath, otherAllowed)).status, 200);
+  assert.equal((await f.call(documentPath)).status, 302);
+  assert.equal((await f.call(history + '?page=1', allowed)).status, 200);
+  assert.equal((await f.call(documentPath, allowed, { headers: { 'x-forwarded-host': new URL(stage).host } })).status, 200);
+  assert.equal((await f.call(history, allowed, { env: { ...f.env, CLOUD_VERSION_METADATA: {
+    ...f.env.CLOUD_VERSION_METADATA, tag: 'e'.repeat(40),
+  } } })).status, 200);
+  assert.equal(f.rows().length, 0);
+});
+
+test('worker never counts Discord lookup failure or an observation revoked before storage', async t => {
+  const f = observationFixture(t);
+  f.open();
+  const unavailable = { ...f.env, CLOUD_ROLE_AUTHORITY: { ...f.env.CLOUD_ROLE_AUTHORITY,
+    get: () => ({ fetch: async () => Response.json({ status: 'unavailable', reason: 'discord_role_lookup_503' }) }),
+  } };
+  assert.equal((await f.call(documentPath, denied, { env: unavailable })).status, 503);
+  const db = f.memberDb.binding;
+  const revoked = { ...f.env, CLOUD_MEMBER_DB: { withSession(constraint) {
+    const session = db.withSession(constraint);
+    return { prepare(sql) {
+      if (sql.startsWith('INSERT INTO new_a_member_response_observation_v1')) {
+        f.memberDb.db.exec('DELETE FROM new_a_member_observation_window_v1');
+      }
+      return session.prepare(sql);
+    } };
+  } } };
+  assert.equal((await f.call(documentPath, allowed, { env: revoked })).status, 200);
+  assert.equal(f.rows().length, 0);
 });

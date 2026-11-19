@@ -18,6 +18,7 @@ STABLE_SCHEMA = 'NEW_A_CONTINUING_OWNER_ACCEPTANCE_V2'
 STABLE_DECISION = 'CONTINUE_UNTIL_REVOKED_OR_BOUND_EXECUTION_CHANGED'
 STABLE_REVIEW = 'CONTINUING_DAILY_WITH_STABLE_EXECUTION_IDENTITY_NONOWNER_UNMEASURED'
 TRANSITION_APPLICATION_SCHEMA = 'NEW_A_CONTINUING_TRANSITION_APPLICATION_V1'
+MEMBER_ORDINARY_APPLICATION_SCHEMA = 'NEW_A_MEMBER_ORDINARY_APPLICATION_V1'
 SCOPE = 'EXISTING_NEW_A_PERSONAL_PC_DAILY_V1'
 SERVICE = 'tentei-kyokuchi-cloud'
 AUTH_FILES = frozenset(['report-gate/src/index.ts', *[
@@ -163,7 +164,20 @@ def issue(repo, plan, *, primary_reader, measurement_reader, decision_reader, au
     immutable(grant_path, grant)
     return {'acceptance': ref, 'application_grant': reference(repo, grant_path)}
 
-def validate_record(repo, ref, *, _historical_source=None, dependency_reader=None, worker_reader=None):
+def _verify_historical_auth_sources(repo, source, pins):
+    # Match the original raw pin to a Git blob or its Windows checkout bytes.
+    # An old pin is never converted or replaced by a normalized checksum.
+    require(re.fullmatch(r'[a-f0-9]{40}', str(source)) and set(pins) == AUTH_FILES,
+            'historical authentication source identity differs')
+    for name, pin in pins.items():
+        blob = subprocess.check_output(['git', '--no-optional-locks', 'show', f'{source}:{name}'], cwd=repo)
+        windows_checkout = blob.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n')
+        require(any(hashlib.sha256(raw).hexdigest() == pin for raw in (blob, windows_checkout)),
+                'historical authentication source bytes cannot reproduce the exact pin')
+
+
+def validate_record(repo, ref, *, _historical_source=None, _historical_git_sources=False,
+                    dependency_reader=None, worker_reader=None):
     path, value = load_reference(repo, ref, 'records')
     record = dict(value)
     pin = record.pop('record_sha256', None)
@@ -186,13 +200,19 @@ def validate_record(repo, ref, *, _historical_source=None, dependency_reader=Non
                 record['host_decision'].get('execution_identity_sha256') == digest(record['execution_identity']),
                 'owner review not bound to V2 execution identity')
     require(not (root(repo) / 'revocations' / (pin + '.json')).exists(), 'continuing acceptance revoked')
-    verify_sources(repo, record['auth_source_hashes'])
+    if _historical_git_sources:
+        require(_historical_source is not None and record['schema'] == SCHEMA,
+                'explicit historical V1 source required')
+        _verify_historical_auth_sources(repo, _historical_source, record['auth_source_hashes'])
+    else:
+        verify_sources(repo, record['auth_source_hashes'])
     require(set(record['measurements']) == set(PATHS), 'measured acceptance incomplete')
     for kind, measurement in record['measurements'].items():
         verify_measurement(measurement, kind, record['source_commit'], record['auth_source_hashes'], record['target'])
     return record
 
 def validate_evidence(evidence, repo, *, _activation_path=None, _historical_source=None, _seen=None,
+                      _historical_git_sources=False,
                       dependency_reader=None, worker_reader=None):
     require(all(evidence.get(k) is True for k in ['actual_owner_allowed', 'anonymous_denied', 'private_direct_paths_denied', 'existing_auth_unchanged']), 'other owner acceptance incomplete')
     require(evidence.get('nonowner_denied') is False and evidence.get('authenticated_nonowner_observed') is False, 'unmeasured nonowner must remain false')
@@ -200,6 +220,7 @@ def validate_evidence(evidence, repo, *, _activation_path=None, _historical_sour
     require(evidence['continuing_acceptance']['sha256'] not in _seen and len(_seen)<16, 'acceptance audit chain cycle or depth')
     _seen.add(evidence['continuing_acceptance']['sha256'])
     record = validate_record(repo, evidence['continuing_acceptance'], _historical_source=_historical_source,
+                             _historical_git_sources=_historical_git_sources,
                              dependency_reader=dependency_reader, worker_reader=worker_reader)
     require(evidence.get('auth_source_hashes') == record['auth_source_hashes'], 'accepted source pins differ')
     application_id = evidence.get('application_id')
@@ -210,14 +231,18 @@ def validate_evidence(evidence, repo, *, _activation_path=None, _historical_sour
     claim = read(folder / 'claim.json')
     grant_path, grant = load_reference(repo, completed['grant'], 'grants')
     transition = completed.get('schema') == TRANSITION_APPLICATION_SCHEMA
+    member_upgrade = completed.get('schema') == MEMBER_ORDINARY_APPLICATION_SCHEMA
     activation_path = _activation_path or (private_root(repo) / 'activation.json')
-    require(grant_path.stem == application_id == digest(grant) and (transition or completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1') and completed.get('acceptance') == evidence['continuing_acceptance'] and grant.get('acceptance') == evidence['continuing_acceptance'] and completed.get('source_commit') == record['source_commit'] and claim.get('grant') == completed['grant'] and claim.get('before_sha256') == completed.get('before_sha256') == file_sha(folder / 'original.json') and claim.get('after_sha256') == completed.get('after_sha256') == file_sha(activation_path), 'completed application audit or activation changed')
+    require(grant_path.stem == application_id == digest(grant) and (transition or member_upgrade or completed.get('schema') == 'NEW_A_CONTINUING_ACCEPTANCE_APPLICATION_V1') and completed.get('acceptance') == evidence['continuing_acceptance'] and grant.get('acceptance') == evidence['continuing_acceptance'] and completed.get('source_commit') == record['source_commit'] and claim.get('grant') == completed['grant'] and claim.get('before_sha256') == completed.get('before_sha256') == file_sha(folder / 'original.json') and claim.get('after_sha256') == completed.get('after_sha256') == file_sha(activation_path), 'completed application audit or activation changed')
     require(grant.get('schema') == 'NEW_A_FINITE_ACCEPTANCE_APPLICATION_V1' and grant.get('scope') == SCOPE and grant.get('source_commit') == record['source_commit'] and grant.get('target') == record['target'] and grant.get('owner_message') == record['owner_message'] and grant.get('platform_signature_claimed') is False and grant.get('expected_activation_sha256') == completed['before_sha256'] and timestamp(grant['issued_at']) <= timestamp(completed['applied_at']) <= timestamp(grant['not_after']) <= timestamp(grant['issued_at']) + datetime.timedelta(hours=1), 'application was not completed within its finite authority')
     original_activation=read(folder/'original.json')
     require((original_activation.get('active') is True)==bool(completed.get('previous_acceptance')), 'active predecessor audit link missing or invented')
     if transition:
         from . import continuing_transition
         continuing_transition.verify_application(repo, record, grant, activation_path, folder, completed, claim)
+    elif member_upgrade:
+        from . import member_ordinary_acceptance
+        member_ordinary_acceptance.verify_application(repo, record, grant, activation_path, folder, completed, claim, _seen)
     elif completed.get('previous_acceptance'):
         previous=read(folder/'original.json')
         require(previous.get('active') is True and previous.get('external_actions_approved') is True and previous.get('owner_acceptance',{}).get('continuing_acceptance')==completed['previous_acceptance'], 'upgraded original activation differs')

@@ -1,3 +1,5 @@
+import type { MemberResponseObserver } from './new-a-member-observation';
+
 export type RoleEnv = {
   CLOUD_OWNER_ONLY_ENABLED?: string;
   CLOUD_MEMBER_VIEW_ENABLED?: string;
@@ -61,11 +63,16 @@ function reject(request: Request, status: number, error: string): Response {
   });
 }
 
-function memberOrigin(url: URL, env: RoleEnv): 'production' | 'stage' | null {
+export function memberOrigin(url: URL, env: RoleEnv): 'production' | 'stage' | null {
   const stage = env.CLOUD_MEMBER_STAGE_ORIGIN;
   if (stage === undefined) return url.origin === productionOrigin ? 'production' : null;
   return stage === isolatedStageOrigin && url.origin === isolatedStageOrigin && env.PUBLIC_BASE_URL === isolatedStageOrigin
     ? 'stage' : null;
+}
+
+export function hasMemberRoleConfiguration(env: RoleEnv): boolean {
+  return env.CLOUD_OWNER_ONLY_ENABLED === 'true' && env.DISCORD_GUILD_ID === '1479418833352785944'
+    && env.DISCORD_ALLOWED_ROLE_IDS === '1487089073385373828';
 }
 
 async function memberSessionTag(secret: string, subject: string): Promise<string> {
@@ -80,6 +87,7 @@ async function memberSessionTag(secret: string, subject: string): Promise<string
 export async function roleFacade(
   request: Request, env: RoleEnv, ownerDenial: Response | null, services: RoleServices | undefined,
   productionAllowed?: (subject: string) => Promise<boolean>,
+  observe?: MemberResponseObserver,
 ): Promise<Response | null> {
   if (!ownerDenial || env.CLOUD_MEMBER_VIEW_ENABLED !== 'true') return ownerDenial;
   const url = new URL(request.url);
@@ -92,8 +100,7 @@ export async function roleFacade(
   if (!document && !aggregate && !preferences && !session && !asset) return ownerDenial;
   if (ownerDenial.status !== 403) return ownerDenial;
 
-  if (env.CLOUD_OWNER_ONLY_ENABLED !== 'true' || env.DISCORD_GUILD_ID !== '1479418833352785944'
-    || env.DISCORD_ALLOWED_ROLE_IDS !== '1487089073385373828' || !services) {
+  if (!hasMemberRoleConfiguration(env) || !services) {
     return reject(request, 503, 'member_service_unavailable');
   }
   const methods = preferences ? ['GET', 'HEAD', 'PUT'] : ['GET', 'HEAD'];
@@ -125,8 +132,11 @@ export async function roleFacade(
       }
       return reject(request, loginRequired ? 401 : 503, 'authentication_unavailable');
     }
-    if (!/^\d{17,20}$/.test(identity.subject) || identity.discord_authorized !== true) {
-      return reject(request, 403, 'role_required');
+    const subject = identity.subject;
+    if (!/^\d{17,20}$/.test(subject) || identity.discord_authorized !== true) {
+      const response = reject(request, 403, 'role_required');
+      if (identity.discord_authorized === false) observe?.(response, subject, 'denied');
+      return response;
     }
     if (releaseOrigin === 'production' && await productionAllowed?.(identity.subject) !== true) return ownerDenial;
     const expectedSession = aggregate || preferences ? request.headers.get(memberSessionHeader) : null;
@@ -141,7 +151,9 @@ export async function roleFacade(
     const response = await handler(request, identity.subject);
     const headers = new Headers(response.headers);
     for (const [key, value] of Object.entries(privateHeaders)) headers.set(key, value);
-    return new Response(request.method === 'HEAD' ? null : response.body, { status: response.status, headers });
+    const finalResponse = new Response(request.method === 'HEAD' ? null : response.body, { status: response.status, headers });
+    observe?.(finalResponse, subject, 'allowed');
+    return finalResponse;
   } catch {
     return reject(request, 503, 'member_service_unavailable');
   }

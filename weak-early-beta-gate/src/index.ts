@@ -53,7 +53,7 @@ export default {
   },
   async fetch(request: SharedRequest, env: CloudEnv, ctx?: ExecutionContext): Promise<Response> {
     const denied = await ownerOnlyGate(request, env);
-    if (denied) return (await memberRouteCandidate(request, env, denied)) ?? denied;
+    if (denied) return (await memberRouteCandidate(request, env, denied, operationalBuild)) ?? denied;
     const pathname = new URL(request.url).pathname;
     if (pathname === '/healthz' && new URL(request.url).searchParams.has('new_a_probe')) return operationalReadback(request, env, operationalBuild);
     // Existing ownerOnlyGate has already run. Reuse the existing fresh-role identity.

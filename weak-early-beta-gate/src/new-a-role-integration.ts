@@ -6,6 +6,8 @@ import type { CloudEnv } from './cloud-api';
 import { createNewAMemberCurrentReader } from './new-a-member-current';
 import { createNewAMemberProjectionReader } from './new-a-member-projection';
 import { createMemberPersonalReader, createMemberSettings } from './new-a-member-storage';
+import { memberReleaseAllows } from './new-a-member-release';
+import type { OperationalBuild } from './operational-readback';
 
 type MemberEnv = CloudEnv & RoleEnv & { CLOUD_MEMBER_DB?: D1Database };
 
@@ -36,6 +38,7 @@ export function memberRouteCandidate(
   request: Request,
   env: MemberEnv,
   denial: Response,
+  build: OperationalBuild,
 ): Promise<Response | null> {
   if (env.CLOUD_MEMBER_VIEW_ENABLED !== 'true') return Promise.resolve(denial);
   const adapters = memberAdapters(env);
@@ -46,5 +49,6 @@ export function memberRouteCandidate(
       REPORT_ROLE_LOOKUP: (subject, token) => cloudReportRole(env, subject, token, new URL(memberRequest.url).pathname),
     }, true),
   }, env.SESSION_SECRET);
-  return roleFacade(request, env, denial, services);
+  return roleFacade(request, env, denial, services,
+    subject => memberReleaseAllows(env.CLOUD_MEMBER_DB, build, env.CLOUD_VERSION_METADATA, subject));
 }

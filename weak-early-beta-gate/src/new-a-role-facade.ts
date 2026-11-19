@@ -23,6 +23,7 @@ export type RoleServices = {
 };
 
 const productionOrigin = 'https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
+const isolatedStageOrigin = 'https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev';
 const documents = new Set([
   '/', '/report', '/index.html',
   '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html',
@@ -60,11 +61,11 @@ function reject(request: Request, status: number, error: string): Response {
   });
 }
 
-function matchesMemberOrigin(url: URL, env: RoleEnv): boolean {
+function memberOrigin(url: URL, env: RoleEnv): 'production' | 'stage' | null {
   const stage = env.CLOUD_MEMBER_STAGE_ORIGIN;
-  if (!stage) return url.origin === productionOrigin;
-  return url.protocol === 'https:' && stage !== productionOrigin
-    && url.origin === stage && env.PUBLIC_BASE_URL === stage;
+  if (stage === undefined) return url.origin === productionOrigin ? 'production' : null;
+  return stage === isolatedStageOrigin && url.origin === isolatedStageOrigin && env.PUBLIC_BASE_URL === isolatedStageOrigin
+    ? 'stage' : null;
 }
 
 async function memberSessionTag(secret: string, subject: string): Promise<string> {
@@ -78,6 +79,7 @@ async function memberSessionTag(secret: string, subject: string): Promise<string
 
 export async function roleFacade(
   request: Request, env: RoleEnv, ownerDenial: Response | null, services: RoleServices | undefined,
+  productionAllowed?: (subject: string) => Promise<boolean>,
 ): Promise<Response | null> {
   if (!ownerDenial || env.CLOUD_MEMBER_VIEW_ENABLED !== 'true') return ownerDenial;
   const url = new URL(request.url);
@@ -96,7 +98,9 @@ export async function roleFacade(
   }
   const methods = preferences ? ['GET', 'HEAD', 'PUT'] : ['GET', 'HEAD'];
   if (!methods.includes(request.method)) return reject(request, 405, 'method_not_allowed');
-  if (!matchesMemberOrigin(url, env)) return reject(request, 403, 'origin_not_allowed');
+  const releaseOrigin = memberOrigin(url, env);
+  const host = request.headers.get('host');
+  if (!releaseOrigin || (host && host !== url.host)) return reject(request, 403, 'origin_not_allowed');
 
   const origin = request.headers.get('origin');
   const topLevelDocument = document && request.headers.get('sec-fetch-mode') === 'navigate'
@@ -124,6 +128,7 @@ export async function roleFacade(
     if (!/^\d{17,20}$/.test(identity.subject) || identity.discord_authorized !== true) {
       return reject(request, 403, 'role_required');
     }
+    if (releaseOrigin === 'production' && await productionAllowed?.(identity.subject) !== true) return ownerDenial;
     const expectedSession = aggregate || preferences ? request.headers.get(memberSessionHeader) : null;
     if (session || expectedSession !== null) {
       if (!env.SESSION_SECRET) return reject(request, 503, 'member_service_unavailable');

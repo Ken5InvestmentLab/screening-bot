@@ -1,5 +1,6 @@
 const {test}=require('node:test'),a=require('node:assert/strict');
-const {roleFacade}=require('../weak-early-beta-gate/src/new-a-role-facade.ts');
+const {roleFacade:routeWithRelease}=require('../weak-early-beta-gate/src/new-a-role-facade.ts');
+const roleFacade=(request,env,denial,services)=>routeWithRelease(request,env,denial,services,async()=>true);
 const origin='https://tentei-kyokuchi-cloud.ipo-ken5-5489.workers.dev';
 const env={CLOUD_OWNER_ONLY_ENABLED:'true',CLOUD_MEMBER_VIEW_ENABLED:'true',DISCORD_GUILD_ID:'1479418833352785944',DISCORD_ALLOWED_ROLE_IDS:'1487089073385373828',SESSION_SECRET:'synthetic-test-key'};
 function setup(identity={subject:'123456789012345678',discord_authorized:true}){const calls=[];const f=k=>async(r,s)=>{calls.push([k,s]);return new Response(k)};return {calls,s:{identity:async()=>identity,document:f('document'),aggregate:f('aggregate'),preferences:f('preferences'),asset:f('asset')}}}
@@ -43,14 +44,31 @@ test('the normal entry shows the member front page and access checks return no p
 
 test('isolated stage only accepts the configured HTTPS OAuth origin', async () => {
   const { s, calls } = setup();
-  const stageOrigin = 'https://cloud-stage.example';
+  const stageOrigin = 'https://tentei-kyokuchi-cloud-member-stage.ipo-ken5-5489.workers.dev';
   const path = '/api/cloud/new-a-view/session';
   const stage = { ...env, CLOUD_MEMBER_STAGE_ORIGIN: stageOrigin, PUBLIC_BASE_URL: stageOrigin };
   a.equal((await roleFacade(new Request(stageOrigin + path), env, deny(), s)).status, 403);
   a.equal((await roleFacade(new Request(stageOrigin + path), stage, deny(), s)).status, 204);
   a.equal((await roleFacade(req(path), stage, deny(), s)).status, 403);
   a.equal((await roleFacade(new Request(stageOrigin + path), { ...stage, PUBLIC_BASE_URL: origin }, deny(), s)).status, 403);
+  a.equal((await roleFacade(new Request(stageOrigin + path, { headers: { host: new URL(origin).host } }), stage, deny(), s)).status, 403);
+  const arbitrary = 'https://cloud-stage.example';
+  a.equal((await roleFacade(new Request(arbitrary + path), { ...stage, CLOUD_MEMBER_STAGE_ORIGIN: arbitrary, PUBLIC_BASE_URL: arbitrary }, deny(), s)).status, 403);
   a.equal(calls.length, 0);
+});
+
+test('the release check can restrict only an already verified member', async () => {
+  const { s, calls } = setup();
+  const path = '/weak_early_beta_latest.html';
+  const denial = deny();
+  const seen = [];
+  const allows = async subject => { seen.push(subject); return false; };
+  a.equal(await routeWithRelease(req(path), env, denial, s), denial);
+  a.equal(await routeWithRelease(req(path), env, denial, s, allows), denial);
+  a.equal(await routeWithRelease(req(path), env, null, s, allows), null);
+  await routeWithRelease(req(path), env, denial, setup({ subject: '987654321012345678', discord_authorized: false }).s, allows);
+  a.deepEqual(seen, ['123456789012345678']);
+  a.deepEqual(calls, []);
 });
 
 test('private aggregate routes reject unsupported and repeated query parameters', async () => {

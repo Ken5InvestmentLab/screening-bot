@@ -15,7 +15,8 @@ from . import continuing_acceptance as ca
 from . import continuing_transition as transition
 from .files import atomic_write, digest, file_sha, private_root, read
 from .member_release_source_review import (
-    COMPLETED_TIMING_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA, PRESENTATION_REVIEW_SCHEMA, review_member_release_source,
+    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, INITIAL_REVIEW_SCHEMA,
+    PRESENTATION_REVIEW_SCHEMA, review_member_release_source,
 )
 from .operational_admission import ORIGIN, checked_ci
 from .release_acceptance import checked_measurements
@@ -25,6 +26,7 @@ APPLICATION_SCHEMA = ca.MEMBER_ORDINARY_APPLICATION_SCHEMA
 MEMBER_SUCCESSORS = {
     INITIAL_REVIEW_SCHEMA: PRESENTATION_REVIEW_SCHEMA,
     PRESENTATION_REVIEW_SCHEMA: COMPLETED_TIMING_REVIEW_SCHEMA,
+    COMPLETED_TIMING_REVIEW_SCHEMA: FUNDAMENTAL_REVIEW_SCHEMA,
 }
 DECISION = "CONTINUING_DAILY_WITH_DORMANT_DESIGNATED_MEMBER_VIEW"
 ORDINARY_DECISION = "CONTINUING_DAILY_WITH_NONOWNER_UNMEASURED"

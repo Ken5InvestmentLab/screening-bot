@@ -14,7 +14,7 @@ from weak_early_beta.new_a import continuing_transition as transition
 from weak_early_beta.new_a import member_ordinary_acceptance as member
 from weak_early_beta.new_a.files import atomic_write, digest, file_sha, private_root, read
 from weak_early_beta.new_a.member_release_source_review import (
-    COMPLETED_TIMING_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
+    COMPLETED_TIMING_REVIEW_SCHEMA, FUNDAMENTAL_REVIEW_SCHEMA, MEMBER_BINDING, PRESENTATION_REVIEW_SCHEMA,
 )
 
 
@@ -294,5 +294,24 @@ class MemberOrdinaryAcceptanceTests(unittest.TestCase):
 
         archived_older = self.repo / older_audit.relative_to(older_repo)
         archived_older.write_bytes(archived_older.read_bytes() + b'\n')
+        with self.assertRaisesRegex(ValueError, 'completed member ordinary audit'):
+            transition.ordinary_runtime_release(self.repo)
+
+
+    def test_fundamental_successor_keeps_the_full_previous_approval_chain(self):
+        _, initial_audit = self.prepare_successor()
+        initial_repo = self.operating
+        self.prepare_successor(COMPLETED_TIMING_REVIEW_SCHEMA)
+        previous, timing_audit = self.prepare_successor(FUNDAMENTAL_REVIEW_SCHEMA)
+        timing_bytes = timing_audit.read_bytes()
+        with self.assertRaisesRegex(ValueError, 'approved live owner policy'):
+            member.prepare(self.operating, self.repo, self.plan, **self.readers(
+                deployment_reader=lambda: {**self.deployment, 'policy_sha256': 'f' * 64}))
+        result = self.apply(self.issue())
+        self.assertEqual(transition.ordinary_runtime_release(self.operating), previous)
+        self.assertEqual(timing_audit.read_bytes(), timing_bytes)
+        self.assertEqual(transition.ordinary_runtime_release(self.repo)['activation_sha256'], result['after_sha256'])
+        initial_copy = self.repo / initial_audit.relative_to(initial_repo)
+        initial_copy.write_bytes(initial_copy.read_bytes() + b'\n')
         with self.assertRaisesRegex(ValueError, 'completed member ordinary audit'):
             transition.ordinary_runtime_release(self.repo)

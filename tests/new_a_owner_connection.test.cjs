@@ -451,3 +451,23 @@ test('runtime caches policy generations separately and preserves original semant
  assert.equal(runtime.simulate(transitionPreferences).trades[0].exit_date,'2026-11-25');
  for(const invalid of [{},{...transitionPolicy,version:'unknown'},{...transitionPolicy,first_d5_entry_session:'invalid'}])assert.throws(()=>runtime.simulate(transitionPreferences,{exitPolicy:invalid}),/exit_policy_invalid/);
 });
+test('version-pinned durable sink attached only to exact protected fetch; old posture and response unchanged',async t=>{
+ const f=fixture();t.after(f.close);
+ f.sql.exec(fs.readFileSync(path.join(gate,'schema/new-a-owner-observation.sql'),'utf8'));
+ const tasks=[], ctx={waitUntil:p=>tasks.push(p)};
+ const base={...f.env,CLOUD_VERSION_METADATA:observedVersion};
+ const enabled=base;
+ const select=f.sql.prepare('SELECT route, status, api_contract_verified, version_id FROM new_a_protected_owner_observations_v1 ORDER BY route');
+ assert.equal((await f.app.fetch(normalOwnerRequest(ownerDocument),base)).status,200); assert.equal(tasks.length,0);
+ assert.equal((await f.app.fetch(normalOwnerRequest(ownerDocument,OTHER),enabled,ctx)).status,403);
+ assert.equal((await f.app.fetch(normalOwnerRequest(ownerAccess,OWNER,false),enabled,ctx)).status,403); assert.equal(tasks.length,0);
+ for(let i=0;i<2;i++){
+   assert.equal((await f.app.fetch(normalOwnerRequest(ownerDocument),enabled,ctx)).status,200);
+   const api=await f.app.fetch(normalOwnerRequest(ownerAccess),enabled,ctx);
+   assert.deepEqual(await api.json(),{authorized:true,strategy:'A_BASE'});
+ }
+ await Promise.all(tasks);
+ assert.equal(select.all().length,2);
+ assert.equal(select.all().find(x=>x.route===ownerAccess).api_contract_verified,1);
+ assert.ok(select.all().every(x=>x.version_id===observedVersion.id&&x.status===200));
+});

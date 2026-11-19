@@ -1,3 +1,4 @@
+import { passiveObservationSink } from './owner-observation-d1';
 import {isNewAPath,newACloudRoute,protectedReply,newAEarlyRefusal,isCompatibilityAsset,compatibilityCodeResponse} from "./new-a-cloud";
 // The OAuth/session/role implementation remains byte-identical in the synced
 // shared module. This wrapper only lets the beta's mode pages use the same gate.
@@ -49,7 +50,7 @@ export default {
     const result = await runScheduledPersonalNotifications(controller, env);
     console.log(JSON.stringify({ operation: "cloud_personal_schedule", ...result }));
   },
-  async fetch(request: SharedRequest, env: CloudEnv): Promise<Response> {
+  async fetch(request: SharedRequest, env: CloudEnv, ctx?: ExecutionContext): Promise<Response> {
     const denied = await ownerOnlyGate(request, env);
     if (denied) return denied;
     const pathname = new URL(request.url).pathname;
@@ -74,7 +75,8 @@ export default {
           subject: identity.subject,
         };
         const response = await newACloudRoute(request, env, ownerContext);
-        await observeOwnerResponse(request, response, ownerContext, operationalBuild, env.CLOUD_VERSION_METADATA);
+        await observeOwnerResponse(request, response, ownerContext, operationalBuild, env.CLOUD_VERSION_METADATA,
+          passiveObservationSink({enabled:true, db:env.CLOUD_DB, ctx}));
         return response;
       } catch { return protectedReply(request, 503, {error:"authentication_unavailable"}); }
     }

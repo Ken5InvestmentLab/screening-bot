@@ -1,3 +1,4 @@
+import type {SafeOwnerObservation} from './owner-observation-d1';
 import type { OperationalBuild } from "./operational-readback";
 import type { TrustedOwnerContext } from "./new-a-cloud";
 
@@ -55,6 +56,7 @@ export async function observeOwnerResponse(
   context: TrustedOwnerContext,
   build: OperationalBuild,
   version: VersionMetadata | undefined,
+  privateDurableSink?: (event:SafeOwnerObservation)=>void,
 ): Promise<void> {
   try {
     if (request.method !== "GET" || response.status !== 200 || !context.ownerAuthorized ||
@@ -83,7 +85,7 @@ export async function observeOwnerResponse(
     // Status comes from the existing successful route. Never log response bodies,
     // cookies, account identifiers, request URLs/headers, or tokens. The only API
     // fields emitted are these two fixed literals after the strict contract check.
-    console.log({
+    const safeEvent:SafeOwnerObservation = {
       operation: "cloud_owner_response_observed",
       schema: "NEW_A_PROTECTED_OWNER_RESPONSE_V1",
       source_commit: build.source_commit,
@@ -95,7 +97,9 @@ export async function observeOwnerResponse(
       status: response.status,
       strategy: "A_BASE",
       ...(checksApi ? { verified_access_contract: EXPECTED_ACCESS_RESULT } : {}),
-    });
+    };
+    console.log(safeEvent);
+    privateDurableSink?.(safeEvent);
   } catch {
     // Instrumentation is optional and must not modify the normal response.
   }

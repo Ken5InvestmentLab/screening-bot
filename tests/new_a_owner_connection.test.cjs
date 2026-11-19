@@ -471,3 +471,14 @@ test('version-pinned durable sink attached only to exact protected fetch; old po
  assert.equal(select.all().find(x=>x.route===ownerAccess).api_contract_verified,1);
  assert.ok(select.all().every(x=>x.version_id===observedVersion.id&&x.status===200));
 });
+
+test('maintenance control asset is normal owner-only, only on approved dashboard path',async t=>{
+ const f=fixture();t.after(f.close);
+ const normal=await f.app.fetch(normalOwnerRequest(ownerDocument),f.env);
+ assert.match(await normal.text(),/id="new-a-owner-access-check"/);
+ const denied=await f.app.fetch(normalOwnerRequest(ownerDocument,OTHER),f.env);
+ assert.equal(denied.status,403);assert.doesNotMatch(await denied.text(),/id="new-a-owner-access-check"/);
+ const second=await f.app.fetch(normalOwnerRequest('/weak_early_beta_analytics.html'),f.env);assert.doesNotMatch(await second.text(),/id="new-a-owner-access-check"/);
+ assert.equal((await f.app.fetch(normalOwnerRequest('/new-a-assets/owner-loader.js'),f.env)).status,200);
+ assert.equal((await f.app.fetch(normalOwnerRequest('/new-a-assets/owner-loader.js',OTHER),f.env)).status,403);
+});

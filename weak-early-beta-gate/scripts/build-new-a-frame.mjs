@@ -23,9 +23,11 @@ const loadStatus=(message='')=>'<section class="panel cloud-load-panel" id="new-
 const home='<div class="page-heading"><h1>ダッシュボード</h1><a href="#history" id="new-a-history-jump" class="button-link cloud-jump" hidden>検出履歴へ</a></div>'+loadStatus('対象日の銘柄を読み込んでいます。')+'<div id="new-a-dashboard"></div>'+historyBody;
 const analytics='<div class="page-heading"><h1>アナリティクス</h1></div>'+loadStatus('試算の設定を読み込んでいます。')+'<div id="cloud-analytics-content"></div>';
 const views={home,analytics,guide:guideBody,settings:settingsBody+loadStatus()};
+const ownerStatus='<details class="panel"><summary>運用状況の確認</summary><p class="note">本人用APIへのアクセスだけを確認します。</p><button class="button-link" type="button" id="new-a-owner-access-check">本人アクセスを確認</button><p id="new-a-owner-access-status" role="status" aria-live="polite"></p></details>';
 const generated='// Build-only data-free source. Do not commit generated files.\n'+
  'const SHELL='+JSON.stringify(html)+';\n'+
  'const VIEWS='+JSON.stringify(views)+' as Record<string,string>;\n'+
+ 'const OWNER_STATUS='+JSON.stringify(ownerStatus)+';\n'+
  'const PAGES='+JSON.stringify(pages)+' as Record<string,string>;\n'+
  'export const FRAME_PATHS='+JSON.stringify(routes)+' as string[];\n'+
  'export function ownerFrame(path:string,context:{ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean},theme:string="dark"):string{\n'+
@@ -35,7 +37,7 @@ const generated='// Build-only data-free source. Do not commit generated files.\
  ' const selected="./weak_early_beta_"+(view==="home"?"latest":key)+".html";\n'+
  ' const initialTheme=["light","dark","system"].includes(theme)?theme:"dark";\n'+
  ' const initialThemeScript=initialTheme==="system"?\'<script src="/new-a-assets/initial-display.js"></script>\':"";\n'+
- ' return SHELL.replaceAll("{{INITIAL_THEME}}",initialTheme).replace("{{INITIAL_THEME_SCRIPT}}",initialThemeScript).replaceAll("{{TITLE}}",view==="home"?PAGES.latest:PAGES[key]).replaceAll("{{PAGE}}",view).replace("{{VIEW}}",VIEWS[view]).replace(\'class="nav-link" href="\'+selected+\'"\',\'class="nav-link active" aria-current="page" href="\'+selected+\'"\');\n'+
+ ' return SHELL.replaceAll("{{INITIAL_THEME}}",initialTheme).replace("{{INITIAL_THEME_SCRIPT}}",initialThemeScript).replaceAll("{{TITLE}}",view==="home"?PAGES.latest:PAGES[key]).replaceAll("{{PAGE}}",view).replace("{{VIEW}}",VIEWS[view]+(path==="/weak_early_beta_latest.html"?OWNER_STATUS:"")).replace(\'class="nav-link" href="\'+selected+\'"\',\'class="nav-link active" aria-current="page" href="\'+selected+\'"\');\n'+
  '}\n';
 await fs.mkdir(path.join(gate,'src/research-a'),{recursive:true});await fs.writeFile(path.join(gate,'src/research-a/frame.generated.ts'),generated);
 const runtime=generated.replace(' as string[]','').replaceAll(' as Record<string,string>','').replace('path:string,context:{ownerAuthorized:boolean;roleAuthorized:boolean;current:boolean},theme:string="dark"):string','path,context,theme="dark")');await fs.mkdir(path.join(gate,'.cache/new-a'),{recursive:true});await fs.writeFile(path.join(gate,'.cache/new-a/frame.generated.mjs'),runtime);

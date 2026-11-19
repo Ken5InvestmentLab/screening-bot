@@ -407,3 +407,46 @@
  }
  start().catch(unavailable);
 })(typeof globalThis!=='undefined'?globalThis:this);
+
+/* Code-only owner UI: an ordinary same-origin read behind the existing access gate. */
+(function () {
+  'use strict';
+  if (typeof location === 'undefined' || typeof document === 'undefined' || location.pathname !== '/weak_early_beta_latest.html') return;
+  const button = document.getElementById('new-a-owner-access-check');
+  const output = document.getElementById('new-a-owner-access-status');
+  if (!button || !output) return;
+  let pending = false;
+  const tell = (status, text) => {
+    output.dataset.state = status;
+    output.textContent = text;
+  };
+  button.addEventListener('click', async () => {
+    if (pending) return;
+    pending = true;
+    button.disabled = true;
+    tell('checking', '本人アクセスを確認しています。');
+    try {
+      const response = await fetch('/api/cloud/new-a-finite/access', {
+        method: 'GET', mode: 'same-origin', credentials: 'same-origin',
+        cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(5000)
+      });
+      if (response.status !== 200 || !response.headers.get('content-type')?.toLowerCase().startsWith('application/json')) {
+        tell('denied', '本人アクセスを確認できません。');
+        return;
+      }
+      const raw = await response.text();
+      if (raw.length > 256) throw Error('access_contract');
+      const body = JSON.parse(raw);
+      if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).length !== 2 || body.authorized !== true || body.strategy !== 'A_BASE') {
+        tell('denied', '本人アクセスを確認できません。');
+        return;
+      }
+      tell('verified', '本人アクセスを確認しました。日次処理の完了を示すものではありません。');
+    } catch {
+      tell('unavailable', '確認に失敗しました。時間をおいて再度お試しください。');
+    } finally {
+      pending = false;
+      button.disabled = false;
+    }
+  });
+})();

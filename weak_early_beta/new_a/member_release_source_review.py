@@ -16,6 +16,7 @@ PRESENTATION = "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-prese
 INITIAL_REVIEW_SCHEMA = "NEW_A_MEMBER_RELEASE_SOURCE_REVIEW_V1"
 PRESENTATION_REVIEW_SCHEMA = "NEW_A_MEMBER_PRESENTATION_SUCCESSOR_SOURCE_REVIEW_V1"
 COMPLETED_TIMING_REVIEW_SCHEMA = "NEW_A_MEMBER_COMPLETED_TIMING_SUCCESSOR_SOURCE_REVIEW_V1"
+FUNDAMENTAL_REVIEW_SCHEMA = "NEW_A_MEMBER_FUNDAMENTAL_SUCCESSOR_SOURCE_REVIEW_V1"
 _PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>'.encode()
 _NEW_PURCHASE_LABEL = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>'.encode()
 _SUCCESSOR_REVIEW_PATHS = frozenset({
@@ -58,6 +59,28 @@ _TIMING_SUCCESSOR_PATHS = _SUCCESSOR_REVIEW_PATHS | set(_COMPLETED_TIMING_DELTAS
     "tests/new_a_member_projection.test.cjs",
     "tests/test_new_a_member_publisher.py",
 }
+_FUNDAMENTAL_BASELINE = "161016a13ca09c310fd8d24687743ad90831a8a9"
+_FUNDAMENTAL_MIGRATION = "weak-early-beta-gate/member-migrations/0005_new_a_member_fundamental_reports.sql"
+_FUNDAMENTAL_PRODUCT_PATHS = frozenset({
+    _FUNDAMENTAL_MIGRATION,
+    PRESENTATION,
+    "weak-early-beta-gate/scripts/new-a-ui-source/assets/member-loader.js",
+    "weak-early-beta-gate/scripts/prepare-new-a-member-projection.cjs",
+    "weak-early-beta-gate/src/new-a-member-projection.ts",
+    "weak-early-beta-gate/src/new-a-member-services.ts",
+    "weak-early-beta-gate/src/new-a-role-facade.ts",
+    "weak_early_beta/new_a/fundamentals.py",
+    "weak_early_beta/new_a/member_publisher.py",
+    "tests/new_a_member_consistency.test.cjs",
+    "tests/new_a_member_projection_preparation.test.cjs",
+    "tests/new_a_member_worker.test.cjs",
+    "tests/new_a_role_presentation_candidate.test.cjs",
+    "tests/test_new_a_fundamentals.py",
+    "tests/test_new_a_member_publisher.py",
+})
+# Exact product blobs reviewed from 94d7474 (server), 23dc91c (daily) and ea85b3a (UI).
+# Include the full migration bytes; earlier member migrations may not change.
+_FUNDAMENTAL_PRODUCT_SHA256 = "0fa5bc7d4f39a024b0031fdb0613d4630c7082d60f718ec82e8b1a2a94cd2800"
 MEMBER_BINDING = {
     "binding": "CLOUD_MEMBER_DB",
     "database_name": "tentei-cloud-member-view",
@@ -77,15 +100,21 @@ def unique_replace(data, old, new):
     return data.replace(old, new)
 
 
-def _successor_paths(repo, baseline, candidate):
+def _successor_paths(repo, baseline, candidate, *, allowed_addition=None):
     raw = git(repo, "diff", "--raw", "--no-abbrev", "--no-renames", "-z", baseline, candidate, "--")
     records = raw.split(b"\0")[:-1]
     paths = set()
     for metadata, path in zip(records[::2], records[1::2], strict=True):
+        name = path.decode("utf-8")
         fields = metadata.split()
-        if len(fields) != 5 or fields[:2] != [b":100644", b"100644"] or fields[-1] != b"M":
+        if len(fields) != 5:
             raise ValueError("Member successor changes an existing file mode or inventory")
-        paths.add(path.decode("utf-8"))
+        regular_edit = fields[:2] == [b":100644", b"100644"] and fields[-1] == b"M"
+        approved_addition = (name == allowed_addition and fields[:2] == [b":000000", b"100644"]
+                             and fields[2] == b"0" * 40 and fields[-1] == b"A")
+        if not regular_edit and not approved_addition:
+            raise ValueError("Member successor changes an existing file mode or inventory")
+        paths.add(name)
     return paths
 
 
@@ -119,14 +148,30 @@ def _check_completed_timing_successor(repo, baseline, candidate, paths):
             raise ValueError("Completed-history successor changes more than the inclusive cutoff")
 
 
+def _check_fundamental_successor(repo, candidate, paths):
+    if paths != _FUNDAMENTAL_PRODUCT_PATHS | _SUCCESSOR_REVIEW_PATHS:
+        raise ValueError("Fundamental successor differs from the exact reviewed source scope")
+    checked = hashlib.sha256()
+    for path in sorted(_FUNDAMENTAL_PRODUCT_PATHS):
+        checked.update(path.encode() + b"\0")
+        checked.update(hashlib.sha256(git(repo, "show", f"{candidate}:{path}")).digest())
+    if checked.hexdigest() != _FUNDAMENTAL_PRODUCT_SHA256:
+        raise ValueError("Fundamental successor differs from the reviewed product or migration bytes")
+
+
 def _member_successor(repo, baseline, candidate):
-    paths = _successor_paths(repo, baseline, candidate)
-    if PRESENTATION in paths and not _COMPLETED_TIMING_DELTAS.keys() & paths:
-        _check_presentation_successor(repo, baseline, candidate, paths)
-        schema = PRESENTATION_REVIEW_SCHEMA
+    if baseline == _FUNDAMENTAL_BASELINE:
+        paths = _successor_paths(repo, baseline, candidate, allowed_addition=_FUNDAMENTAL_MIGRATION)
+        _check_fundamental_successor(repo, candidate, paths)
+        schema = FUNDAMENTAL_REVIEW_SCHEMA
     else:
-        _check_completed_timing_successor(repo, baseline, candidate, paths)
-        schema = COMPLETED_TIMING_REVIEW_SCHEMA
+        paths = _successor_paths(repo, baseline, candidate)
+        if PRESENTATION in paths and not _COMPLETED_TIMING_DELTAS.keys() & paths:
+            _check_presentation_successor(repo, baseline, candidate, paths)
+            schema = PRESENTATION_REVIEW_SCHEMA
+        else:
+            _check_completed_timing_successor(repo, baseline, candidate, paths)
+            schema = COMPLETED_TIMING_REVIEW_SCHEMA
     # Keep the full-index diff format of the already-issued presentation approval.
     delta = git(repo, "diff", "--binary", "--full-index", "--no-renames", "--no-ext-diff", "--no-textconv",
                 "--no-color", "--src-prefix=a/", "--dst-prefix=b/", "--unified=3", "--diff-algorithm=myers",

@@ -190,3 +190,46 @@ class PresentationSuccessorReviewTest(unittest.TestCase):
         extra = self.commit("Changes outside the cutoff")
         with self.assertRaisesRegex(ValueError, "more than the inclusive cutoff"):
             review.review_member_release_source(self.repo, baseline, extra)
+
+    def test_fundamentals_requires_exact_reviewed_files_and_only_the_approved_regular_migration(self):
+        migration = review._FUNDAMENTAL_MIGRATION
+        paths = review._FUNDAMENTAL_PRODUCT_PATHS | review._SUCCESSOR_REVIEW_PATHS
+        for path in paths - {migration}:
+            self.write(path, b"old " + path.encode())
+        baseline = self.commit("Accepted dashboard")
+        content = {path: b"reviewed " + path.encode() for path in paths}
+        checked = hashlib.sha256()
+        for path in sorted(review._FUNDAMENTAL_PRODUCT_PATHS):
+            checked.update(path.encode() + b"\0" + hashlib.sha256(content[path]).digest())
+        for path, data in content.items():
+            self.write(path, data)
+        candidate = self.commit("Exact reviewed fundamentals")
+        with (patch.object(review, "_FUNDAMENTAL_BASELINE", baseline),
+              patch.object(review, "_FUNDAMENTAL_PRODUCT_SHA256", checked.hexdigest())):
+            result = review.review_member_release_source(self.repo, baseline, candidate)
+            self.assertEqual(result["schema"], review.FUNDAMENTAL_REVIEW_SCHEMA)
+            self.assertTrue(result["owner_only_gate_preserved"])
+            self.assertEqual(result["member_database_id"], review.MEMBER_BINDING["database_id"])
+            self.assertEqual(result["reviewed_diff_sha256"], hashlib.sha256(review.git(
+                self.repo, "diff", "--binary", "--full-index", "--no-renames", "--no-ext-diff", "--no-textconv",
+                "--no-color", "--src-prefix=a/", "--dst-prefix=b/", "--unified=3", "--diff-algorithm=myers",
+                "--no-indent-heuristic", baseline, candidate, "--")).hexdigest())
+            for path, unexpected, error in (
+                (migration, b"alternate SQL", "migration bytes"),
+                ("weak-early-beta-gate/src/new-a-role-facade.ts", b"different member auth", "reviewed product"),
+                ("weak-early-beta-gate/member-migrations/0006_unreviewed.sql", b"another table", "mode or inventory"),
+                (self.prepare_path, b"old " + self.prepare_path.encode(), "exact reviewed source scope"),
+                (review.CONFIG, b"{}", "Worker configuration"),
+                (review.ENTRY, b"different owner auth", "authorization"),
+            ):
+                with self.subTest(path=path):
+                    self.git("reset", "--hard", candidate)
+                    self.write(path, unexpected)
+                    changed = self.commit("Unreviewed fundamental successor")
+                    with self.assertRaisesRegex(ValueError, error):
+                        review.review_member_release_source(self.repo, baseline, changed)
+            self.git("reset", "--hard", candidate)
+            self.git("update-index", "--chmod=+x", migration)
+            self.git("commit", "-qm", "Make the added migration executable")
+            with self.assertRaisesRegex(ValueError, "mode or inventory"):
+                review.review_member_release_source(self.repo, baseline, self.git("rev-parse", "HEAD"))

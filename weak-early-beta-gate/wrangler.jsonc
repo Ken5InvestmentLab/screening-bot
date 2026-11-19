@@ -35,7 +35,7 @@
     }
   ],
   "vars": {
-    "CLOUD_MEMBER_VIEW_ENABLED": "false",
+    "CLOUD_MEMBER_VIEW_ENABLED": "true",
     "DISCORD_API_BASE": "https://discord.com/api",
     "DISCORD_GUILD_ID": "1479418833352785944",
     "DISCORD_ALLOWED_ROLE_IDS": "1487089073385373828",

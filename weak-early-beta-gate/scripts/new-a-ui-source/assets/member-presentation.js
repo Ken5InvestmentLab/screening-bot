@@ -21,7 +21,67 @@ function chart(rows){
  rows.forEach((r,i)=>{if(r.equity_yen==null){if(points.length)segments.push(points);points=[];return;}points.push((48+ i/Math.max(rows.length-1,1)*844).toFixed(2)+','+(220-(r.equity_yen-min)/span*180).toFixed(2));});if(points.length)segments.push(points);
  return '<div class="research-chart"><svg role="img" aria-label="仮想資金の日次推移。欠測区間は線を結びません" viewBox="0 0 940 275" style="width:100%;height:auto"><text x="48" y="22" fill="currentColor">'+esc(number(max))+'円</text><text x="48" y="252" fill="currentColor">'+esc(rows[0].date)+'</text><text text-anchor="end" x="892" y="252" fill="currentColor">'+esc(rows.at(-1).date)+'</text>'+segments.map(p=>'<polyline fill="none" stroke="var(--blue)" stroke-width="3" points="'+p.join(' ')+'"/>').join('')+'</svg></div>';
 }
-function history(rows){return '<div class="history-table-wrap"><table id="detection-table"><thead><tr><th>検出日</th><th>銘柄</th><th>状態</th><th>詳細</th></tr></thead><tbody>'+rows.map(r=>'<tr><td data-label="検出日">'+esc(r.date)+'</td><th scope="row">'+esc(r.symbol)+'</th><td data-label="状態">'+esc(states[r.state]??r.state)+'</td><td><details><summary>確認</summary><p>検出日 '+esc(r.date)+'<br>銘柄 '+esc(r.symbol)+'<br>状態 '+esc(states[r.state]??r.state)+'</p><p class="note">共通の検出情報です。本人の保有・注文ではありません。</p></details></td></tr>').join('')+'</tbody></table></div>';}
+const fundamentalLabels = ['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources'];
+const day = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+  && Number.isFinite(Date.parse(value + 'T00:00:00Z'))
+  && new Date(value + 'T00:00:00Z').toISOString().slice(0,10) === value;
+const exactKeys = (value, keys) => value !== null && typeof value === 'object' && !Array.isArray(value)
+  && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value,key));
+function fundamentalItem(page, row) {
+  return Number.isSafeInteger(page) && page >= 1 && page <= 999999 && row?.has_fundamental === true
+    && day(row.date) && typeof row.symbol === 'string' && /^[0-9A-Z]{4}$/.test(row.symbol)
+    ? [page,row.date,row.symbol].join('.') : null;
+}
+function fundamentalText({label,text}) {
+  const references = label === '開示リンク' || label === 'Sources';
+  return text.split(/\r\n?|\n/u).map(line => {
+    if (!references) return esc(line);
+    // The verified formatter emits one titled Markdown link per bullet.
+    const link = /^[ \t]*(?:・[ \t]*)?\[((?:\\[\[\]]|[^\\[\]]|\\(?![\[\]]))+)\]\((https:\/\/[^\s()<>\\\x00-\x1f\x7f]+)\)[ \t]*$/u.exec(line);
+    if (!link) return esc(line);
+    const title = link[1].replace(/\\([\[\]])/gu,'$1').trim();
+    if (!title || /^(?:https?:\/\/|www\.)/iu.test(title)) return esc(line);
+    let address;
+    try { address = new URL(link[2]); } catch { return esc(line); }
+    if (address.protocol !== 'https:' || !address.hostname || address.username || address.password) return esc(line);
+    return '・<a href="' + esc(address.href) + '" target="_blank" rel="noopener noreferrer">' + esc(title) + '</a>';
+  }).join('<br>');
+}
+function fundamentalMarkup(report, {date,symbol,asOf,generation}) {
+  const encoder = new TextEncoder();
+  const boundedText = (value, limit) => typeof value === 'string' && value.trim().length > 0
+    && value.length <= limit && encoder.encode(value).length <= limit;
+  if (!exactKeys(report,['as_of','generation','date','symbol','company_name','analysis_cutoff','fields'])
+    || report.generation !== generation || report.as_of !== asOf || report.date !== date || report.symbol !== symbol
+    || (report.company_name !== null && !boundedText(report.company_name,256))
+    || typeof report.analysis_cutoff !== 'string' || report.analysis_cutoff.length > 40
+    || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(report.analysis_cutoff)
+    || !day(report.analysis_cutoff.slice(0,10)) || !Number.isFinite(Date.parse(report.analysis_cutoff))
+    || !Array.isArray(report.fields) || report.fields.length !== fundamentalLabels.length
+    || !report.fields.every((field,index) => exactKeys(field,['label','text'])
+      && field.label === fundamentalLabels[index] && boundedText(field.text,8192))
+    || encoder.encode(JSON.stringify(report)).length > 16384) return null;
+  const heading = report.company_name === null ? symbol : report.company_name + '(' + symbol + ')';
+  const fields = report.fields.map(field => '<p><strong>' + esc(field.label) + '</strong><br>'
+    + fundamentalText(field) + '</p>').join('');
+  return '<button class="fundamental-close" type="button" aria-label="ファンダ分析を閉じる">×</button>'
+    + '<div class="discord-message"><article class="discord-embed"><h4>' + esc(heading) + '</h4>'
+    + '<p>検出日 ' + esc(date) + '</p><p>分析時点 ' + esc(report.analysis_cutoff) + '</p>'
+    + fields + '</article></div>';
+}
+function history(rows, premiumPage) {
+  return '<div class="history-table-wrap"><table id="detection-table"><thead><tr><th>検出日</th><th>銘柄</th>'
+    + '<th>状態</th><th>詳細</th></tr></thead><tbody>' + rows.map(row => {
+      const item = fundamentalItem(premiumPage,row);
+      const action = item ? '<div class="actions"><button class="fundamental-toggle" type="button" aria-haspopup="dialog" aria-expanded="false" data-member-fundamental="'
+        + esc(item) + '">ファンダ分析</button></div>' : '';
+      const state = esc(Object.hasOwn(states,row.state) ? states[row.state] : row.state);
+      return '<tr><td data-label="検出日">' + esc(row.date) + action + '</td><th scope="row">' + esc(row.symbol)
+        + '</th><td data-label="状態">' + state + '</td><td><details><summary>確認</summary><p>検出日 ' + esc(row.date)
+        + '<br>銘柄 ' + esc(row.symbol) + '<br>状態 ' + state + '</p>'
+        + '<p class="note">共通の検出情報です。本人の保有・注文ではありません。</p></details></td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
 const purchase = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>';
 const titleFor = mode => mode === 'analytics' ? 'アナリティクス' : mode === 'settings' ? '設定' : 'ダッシュボード';
 function heading(mode, asOf) {
@@ -75,7 +135,7 @@ function dashboardLevel(selected) {
       + value + '"' + (value === selected ? ' checked' : '') + '><span>' + label + '</span></label>').join('')
     + '</div></fieldset>';
 }
-function premiumHome({asOf, selected, rows, chartRows, dashboard}, current) {
+function premiumHome({asOf, selected, rows, chartRows, dashboard, historyPage}, current) {
   if (!Array.isArray(dashboard?.today) || !Array.isArray(dashboard?.watching)) throw Error('dashboard_unavailable');
   const latest = chartRows?.at(-1);
   const holdingCount = current.resolved && latest?.date === asOf
@@ -94,7 +154,7 @@ function premiumHome({asOf, selected, rows, chartRows, dashboard}, current) {
     + '<h2 id="member-watching-heading">現在の監視</h2><span class="badge">' + dashboard.watching.length + '銘柄</span></div>'
     + currentWatch(dashboard.watching) + '</section>'
     + '<section class="panel"><h2>日次資金推移</h2>' + chart(chartRows) + '</section>'
-    + '<section class="panel"><h2>検出履歴</h2>' + history(rows) + '</section>';
+    + '<section class="panel"><h2>検出履歴</h2>' + history(rows,historyPage) + '</section>';
 }
 function freeHome(rows = null) {
   return heading('home') + '<section class="panel member-locked"><h2>今日の動きと監視状況</h2>'
@@ -102,13 +162,13 @@ function freeHome(rows = null) {
     + (rows === null ? '' : '<section class="panel"><h2>終了済みの検出履歴</h2>'
       + (rows.length ? history(rows) : '<p class="note">表示できる検出履歴はありません。</p>') + '</section>');
 }
-function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard}){
+function view({mode,access,asOf,presets,selected,rows,chartRows,personal,dashboard,historyPage}){
  if(access==='free')return mode==='home'?freeHome(rows):lockedPage(mode);
  if(access!=='premium')throw Error('access_unavailable');
  const current=presets.find(x=>x.preset===selected);if(!current)throw Error('preset_unavailable');
- if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard},current);
+ if(mode==='home')return premiumHome({asOf,selected,rows,chartRows,dashboard,historyPage},current);
  return heading(mode, asOf)+'<section class="panel"><label>見方を変える <select id="member-preset">'+presets.map(x=>'<option value="'+esc(x.preset)+'"'+(x.preset===selected?' selected':'')+'>'+esc(names[x.preset]??x.preset)+'</option>').join('')+'</select></label><p class="note">共通条件による仮想試算です。売買や通知の設定は変更しません。</p>'+metrics(current.resolved?current.metrics:null)+'</section><section class="panel"><h2>日次資金推移</h2>'+chart(chartRows)+'</section>'+(mode==='analytics'?'<section class="panel"><h2>あなたの保存条件による試算</h2>'+(personal?metrics(personal):'<p role="status">現在のデータ・保存条件に一致する結果を準備中、または未確定です。以前の結果では代用しません。</p>')+'</section><section class="panel"><h2>3つの見方の比較</h2>'+presets.map(x=>'<h3>'+esc(names[x.preset]??x.preset)+'</h3>'+metrics(x.resolved?x.metrics:null)).join('')+'</section>':'<section class="panel"><h2>検出履歴</h2>'+history(rows)+'</section>');
 }
-g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome};
+g.NewAMemberPresentation={metrics,chart,history,view,lockedPage,freeHome,fundamentalItem,fundamentalMarkup};
 if(typeof module!=='undefined')module.exports=g.NewAMemberPresentation;
 })(globalThis);

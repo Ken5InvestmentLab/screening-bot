@@ -1,6 +1,6 @@
 const {test}=require('node:test'),a=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
 const src=path.join(__dirname,'../weak-early-beta-gate/scripts/new-a-ui-source/assets');
-const context={module:{exports:{}}};vm.runInNewContext(fs.readFileSync(path.join(src,'member-presentation.js'),'utf8'),context);const ui=context.module.exports;
+const context={module:{exports:{}},TextEncoder,URL};vm.runInNewContext(fs.readFileSync(path.join(src,'member-presentation.js'),'utf8'),context);const ui=context.module.exports;
 const metrics={net_profit:1200,max_drawdown_pct:-3.25,win_rate_pct:60,trade_count:5};const presets=['defensive','medium','return_priority'].map(preset=>({preset,from:'2026-01-01',through:'2026-11-19',resolved:true,metrics}));
 const premiumHome = {
  mode:'home',access:'premium',asOf:'2026-11-19',presets,selected:'medium',
@@ -103,6 +103,53 @@ test('free presentation shows server-provided closed history and one existing pu
  a.doesNotMatch(html,/today-summary|today-kpis|運用レベル/);
  a.equal((html.match(/href="\/purchase"/g)||[]).length,1);
  for(const mode of ['analytics','settings'])a.match(ui.view({mode,access:'free'}),/Premium会員限定.*href="\/purchase"/);
+});
+test('only verified Premium history rows have the exact page, date and symbol analysis button',()=>{
+ const match={date:'2026-11-18',symbol:'234A',state:'EXPIRED',has_fundamental:true};
+ const rows=[match,{...match,symbol:'345A',has_fundamental:false},
+   {...match,symbol:'456A',has_fundamental:'true'},{...match,symbol:'567A',date:'2026-11-31'}];
+ const html=ui.view({...premiumHome,rows,historyPage:42});
+ a.equal((html.match(/data-member-fundamental=/g)||[]).length,1);
+ a.match(html,/data-member-fundamental="42\.2026-11-18\.234A">ファンダ分析/);
+ a.doesNotMatch(ui.view({...premiumHome,rows}),/ファンダ分析/);
+ a.doesNotMatch(ui.view({...premiumHome,rows,access:'free',historyPage:42}),/ファンダ分析|has_fundamental|data-member-fundamental/);
+});
+test('verified report fields keep the existing dialog copy, escape content and reject mismatches',()=>{
+ const expected={asOf:'2026-11-19',date:'2026-11-18',symbol:'234A',generation:'a'.repeat(64)};
+ const labels=['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources'];
+ const report={as_of:expected.asOf,date:expected.date,symbol:expected.symbol,generation:expected.generation,
+  company_name:'<銘柄名>',analysis_cutoff:'2026-11-18T16:15:00+09:00',
+  fields:labels.map(label=>({label,text:'確定\n<script>alert(1)</script> https://example.invalid/'})),
+ };
+ const html=ui.fundamentalMarkup(report,expected);
+ a.match(html,/ファンダ分析を閉じる/);
+ a.match(html,/&lt;銘柄名&gt;\(234A\)/);
+ a.match(html,/検出日 2026-11-18/);
+ a.match(html,/分析時点 2026-11-18T16:15:00\+09:00/);
+ a.match(html,/確定<br>&lt;script&gt;/);
+ a.doesNotMatch(html,/<script|href=/);
+ for(const invalid of [{...report,date:'2026-11-17'},{...report,symbol:'345A'},{...report,generation:'b'.repeat(64)},
+   {...report,draft:true},{...report,fields:[...report.fields].reverse()},{...report,analysis_cutoff:'2026-11-18T16:15:00'}]){
+  a.equal(ui.fundamentalMarkup(invalid,expected),null);
+ }
+});
+test('verified disclosure and Sources fields render only safe titled HTTPS links',()=>{
+ const expected={asOf:'2026-11-19',date:'2026-11-18',symbol:'234A',generation:'a'.repeat(64)};
+ const fields=['材料インパクト','事業概要','足元材料','ファンダ要点','注意点','開示リンク','Sources']
+  .map(label=>({label,text:'[本文の参照](https://body.example/)'}));
+ fields[5].text='・[2026-11-18 決算資料 \\[別紙\\](15:00)](https://disclosure.example/file?a=1&b=2)\n'
+  +'[危険](javascript:alert%281%29)\n[HTTP](http://insecure.example/)\n[無題](https://invalid [url])';
+ fields[6].text='・[公式IR・開示一覧 <IR>](https://source.example/)\n'
+  +'[認証情報付き](https://user:pw@source.example/)\n[https://bare.example/](https://bare.example/)\n'
+  +'https://unlabeled.example/\n<a href="https://markup.example/">未確認</a>';
+ const html=ui.fundamentalMarkup({as_of:expected.asOf,date:expected.date,symbol:expected.symbol,
+  generation:expected.generation,company_name:null,analysis_cutoff:'2026-11-18T16:15:00+09:00',fields},expected);
+ a.equal((html.match(/<a href=/g)||[]).length,2);
+ a.match(html,/・<a href="https:\/\/disclosure\.example\/file\?a=1&amp;b=2" target="_blank" rel="noopener noreferrer">2026-11-18 決算資料 \[別紙\]\(15:00\)<\/a>/);
+ a.match(html,/・<a href="https:\/\/source\.example\/" target="_blank" rel="noopener noreferrer">公式IR・開示一覧 &lt;IR&gt;<\/a>/);
+ a.match(html,/\[本文の参照\]\(https:\/\/body\.example\/\)/);
+ a.doesNotMatch(html,/href="(?:javascript|http:|https:\/\/(?:invalid|user:|bare\.example|unlabeled\.example|body\.example))/);
+ a.match(html,/&lt;a href=&quot;https:\/\/markup\.example\/&quot;&gt;/);
 });
 test('chart gaps never joined and values not normalized to fake zero',()=>{const html=ui.chart([{date:'2026-11-17',equity_yen:100},{date:'2026-11-18',equity_yen:null},{date:'2026-11-19',equity_yen:120}]);a.equal((html.match(/<polyline/g)||[]).length,2);a.ok(!/NaN|Infinity/.test(html));a.ok(ui.chart([{date:'2026-11-19',equity_yen:null}]).includes('未確定'));});
 test('untrusted labels escaped and unresolved metrics never shown',()=>{a.ok(!ui.history([{date:'<script>',symbol:'<img>',state:'<script>'}]).includes('<script>'));a.ok(ui.metrics(null).includes('未確定'));a.ok(!ui.metrics(null).includes('0円'));});

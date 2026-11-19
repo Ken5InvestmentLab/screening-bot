@@ -17,7 +17,7 @@ function chart(rows){
  return '<div class="research-chart"><svg role="img" aria-label="仮想資金の日次推移。欠測区間は線を結びません" viewBox="0 0 940 275" style="width:100%;height:auto"><text x="48" y="22" fill="currentColor">'+esc(number(max))+'円</text><text x="48" y="252" fill="currentColor">'+esc(rows[0].date)+'</text><text text-anchor="end" x="892" y="252" fill="currentColor">'+esc(rows.at(-1).date)+'</text>'+segments.map(p=>'<polyline fill="none" stroke="var(--blue)" stroke-width="3" points="'+p.join(' ')+'"/>').join('')+'</svg></div>';
 }
 function history(rows){return '<div class="history-table-wrap"><table id="detection-table"><thead><tr><th>検出日</th><th>銘柄</th><th>状態</th><th>詳細</th></tr></thead><tbody>'+rows.map(r=>'<tr><td data-label="検出日">'+esc(r.date)+'</td><th scope="row">'+esc(r.symbol)+'</th><td data-label="状態">'+esc(states[r.state]??r.state)+'</td><td><details><summary>確認</summary><p>検出日 '+esc(r.date)+'<br>銘柄 '+esc(r.symbol)+'<br>状態 '+esc(states[r.state]??r.state)+'</p><p class="note">共通の検出情報です。本人の保有・注文ではありません。</p></details></td></tr>').join('')+'</tbody></table></div>';}
-const purchase = '<a class="member-purchase" href="/purchase">Premiumのアクセス権を購入する</a>';
+const purchase = '<a class="member-purchase" href="/purchase">Premiumアクセス権を購入する</a>';
 const titleFor = mode => mode === 'analytics' ? 'アナリティクス' : mode === 'settings' ? '設定' : 'ダッシュボード';
 function heading(mode, asOf) {
   return '<div class="page-heading"><h1>' + titleFor(mode) + '</h1>'

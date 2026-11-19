@@ -24,6 +24,9 @@ _MAX_DASHBOARD_ROWS = 1000
 _MAX_SAFE_INT = 2**53 - 1
 _MAX_MANIFEST = 65_536
 _MAX_PART = 196_608
+_MAX_FUNDAMENTAL = 16_384
+_FUNDAMENTAL_FIELDS = ("材料インパクト", "事業概要", "足元材料", "ファンダ要点", "注意点", "開示リンク", "Sources")
+_ANALYSIS_TIMESTAMP = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?(?:Z|[+-]\d\d:\d\d)")
 _BATCH_SIZE = 8
 _SQL_STATEMENT_LIMIT = 90_000  # WranglerD1 serializes parameters into SQL.
 _MANIFEST = "SELECT digest,json FROM private_projection_manifest WHERE identity=?"
@@ -35,6 +38,10 @@ _INSERT_MANIFEST = """
 _INSERT_PART = """
     INSERT INTO private_projection_part (identity,kind,idx,json) VALUES (?,?,?,?)
     ON CONFLICT(identity,kind,idx) DO NOTHING
+"""
+_INSERT_FUNDAMENTAL = """
+    INSERT INTO private_projection_fundamental (identity,sha256,json) VALUES (?,?,?)
+    ON CONFLICT(identity,sha256) DO NOTHING
 """
 _STAGED = """
     EXISTS (SELECT 1 FROM private_projection_manifest WHERE identity=? AND digest=?)
@@ -119,7 +126,7 @@ def _amount(value):
     return type(value) in (int, float) and abs(value) < 1e12
 
 
-def _public_part_shape(part, kind, index, rows, as_of, view):
+def _public_part_shape(part, kind, index, rows, as_of, view, with_reports):
     # The pinned builder and Worker validate the actual analytic values.
     # Reject any data outside the builder's public field and container shapes.
     _require(
@@ -135,8 +142,12 @@ def _public_part_shape(part, kind, index, rows, as_of, view):
                 keys += ("lane",)
             elif view == "completed":
                 keys += ("completed_on",)
+            valid_shape = _keys(row, keys) or (
+                view == "history" and with_reports and _keys(row, (*keys, "fundamental_sha256"))
+                and _hash(row["fundamental_sha256"])
+            )
             allowed = (
-                _keys(row, keys) and _day(row["date"]) and row["date"] <= as_of
+                valid_shape and _day(row["date"]) and row["date"] <= as_of
                 and isinstance(row["symbol"], str) and re.fullmatch(r"[0-9A-Z]{4}", row["symbol"])
                 and isinstance(row["state"], str)
             )
@@ -179,23 +190,49 @@ def _metrics_shape(metrics):
     )
 
 
+def _fundamental_text(value, limit):
+    return isinstance(value, str) and bool(value.strip()) and len(value.encode("utf-8", errors="surrogatepass")) <= limit \
+        and not any(0xD800 <= ord(char) <= 0xDFFF for char in value)
+
+
+def _fundamental_shape(report, expected):
+    _require(
+        _keys(report, ("date", "symbol", "company_name", "analysis_cutoff", "fields"))
+        and (report["date"], report["symbol"]) == expected
+        and (report["company_name"] is None or _fundamental_text(report["company_name"], 256))
+        and isinstance(report["analysis_cutoff"], str) and _ANALYSIS_TIMESTAMP.fullmatch(report["analysis_cutoff"])
+        and isinstance(report["fields"], list) and len(report["fields"]) == len(_FUNDAMENTAL_FIELDS)
+        and all(_keys(field, ("label", "text")) and field["label"] == label
+                and _fundamental_text(field["text"], 8192) for label, field in zip(_FUNDAMENTAL_FIELDS, report["fields"])),
+        "member_projection_fundamental_shape",
+    )
+    try:
+        datetime.datetime.fromisoformat(report["analysis_cutoff"].replace("Z", "+00:00"))
+    except ValueError:
+        raise ValueError("member_projection_fundamental_cutoff") from None
+
+
 def _prepared(folder, receipt_sha256):
     folder = Path(folder).resolve()
     receipt_bytes, receipt_text = _read(folder / "receipt.json", _MAX_MANIFEST)
     _require(_hash(receipt_sha256) and _sha(receipt_bytes) == receipt_sha256, "member_projection_receipt_pin")
     receipt = _json(receipt_text)
     version = receipt.get("schema") if isinstance(receipt, dict) else None
-    tiered = version == "NEW_A_MEMBER_PROJECTION_OFFLINE_V2"
+    with_reports = version == "NEW_A_MEMBER_PROJECTION_OFFLINE_V3"
+    tiered = with_reports or version == "NEW_A_MEMBER_PROJECTION_OFFLINE_V2"
+    receipt_keys = (
+        "schema", "source", "source_manifest_sha256", "owner_readback_sha256",
+        "projection_manifest_sha256", "history_rows", "parts", "activated",
+    )
     _require(
-        _keys(receipt, (
-            "schema", "source", "source_manifest_sha256", "owner_readback_sha256",
-            "projection_manifest_sha256", "history_rows", "parts", "activated",
-        )) and (tiered or version == "NEW_A_MEMBER_PROJECTION_OFFLINE_V1")
+        _keys(receipt, (*receipt_keys, "fundamental_reports") if with_reports else receipt_keys)
+        and (tiered or version == "NEW_A_MEMBER_PROJECTION_OFFLINE_V1")
         and receipt["activated"] is False and _hash(receipt["source_manifest_sha256"])
         and _hash(receipt["owner_readback_sha256"]) and _hash(receipt["projection_manifest_sha256"])
         and _int(receipt["history_rows"])
         and _int(receipt["parts"], 5 if tiered else 4,
-                 2 * _MAX_HISTORY_PAGES + 5 if tiered else _MAX_HISTORY_PAGES + 4),
+                 2 * _MAX_HISTORY_PAGES + 5 if tiered else _MAX_HISTORY_PAGES + 4)
+        and (not with_reports or _int(receipt["fundamental_reports"], 1, min(100 * _MAX_HISTORY_PAGES, receipt["history_rows"]))),
         "member_projection_receipt_invalid",
     )
     identity = _identity(receipt["source"])
@@ -204,9 +241,14 @@ def _prepared(folder, receipt_sha256):
     _require(digest == receipt["projection_manifest_sha256"], "member_projection_manifest_pin")
     manifest = _json(manifest_text)
     keys = ("schema", "audience", "basis", "source", "parts")
+    if tiered:
+        keys += ("history_layout",)
+    if with_reports:
+        keys += ("fundamental_reports",)
+    schema = "NEW_A_SHARED_READONLY_VIEW_V" + ("3" if with_reports else "2" if tiered else "1")
     _require(
-        _keys(manifest, (*keys, "history_layout") if tiered else keys)
-        and manifest["schema"] == ("NEW_A_SHARED_READONLY_VIEW_V2" if tiered else "NEW_A_SHARED_READONLY_VIEW_V1")
+        _keys(manifest, keys) and manifest["schema"] == schema
+        and (not with_reports or _int(manifest["fundamental_reports"], receipt["fundamental_reports"], receipt["fundamental_reports"]))
         and manifest["audience"] == ("AUTHENTICATED_TIERED_DISCORD_VIEW" if tiered else "EXISTING_DESIGNATED_DISCORD_ROLE")
         and manifest["basis"] == "SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS"
         and _identity(manifest["source"]) == identity and isinstance(manifest["parts"], list)
@@ -227,6 +269,7 @@ def _prepared(folder, receipt_sha256):
     history_rows = 0
     premium = {}
     completed = set()
+    report_refs = {}
     for descriptor in manifest["parts"]:
         _require(_keys(descriptor, ("kind", "index", "rows", "bytes", "sha256")), "member_projection_descriptor")
         kind, index, rows, size, sha = (descriptor[key] for key in ("kind", "index", "rows", "bytes", "sha256"))
@@ -248,7 +291,7 @@ def _prepared(folder, receipt_sha256):
         raw, text = _read(folder / f"{kind}-{index}.json", size)
         _require(len(raw) == size and _sha(raw) == sha, "member_projection_part_pin")
         part = _json(text)
-        _public_part_shape(part, kind, index, rows, receipt["source"]["as_of"], view)
+        _public_part_shape(part, kind, index, rows, receipt["source"]["as_of"], view, with_reports)
         parts[kind, index] = text
         counts[kind] += 1
         if view == "history":
@@ -258,6 +301,10 @@ def _prepared(folder, receipt_sha256):
                     key = (row["date"], row["symbol"])
                     _require(key not in premium, "member_projection_history_duplicate")
                     premium[key] = row["state"]
+                    report_digest = row.get("fundamental_sha256")
+                    if report_digest is not None:
+                        _require(report_digest not in report_refs, "member_projection_fundamental_duplicate")
+                        report_refs[report_digest] = key
         elif view == "completed":
             for row in part["rows"]:
                 key = (row["date"], row["symbol"])
@@ -270,7 +317,14 @@ def _prepared(folder, receipt_sha256):
         and (not tiered or counts["history"] == dashboard_index + 1),
         "member_projection_inventory",
     )
-    return identity, digest, manifest_text, parts
+    _require(len(report_refs) == receipt.get("fundamental_reports", 0), "member_projection_fundamental_inventory")
+    reports = {}
+    for report_digest, expected in report_refs.items():
+        raw, text = _read(folder / f"fundamental-{report_digest}.json", _MAX_FUNDAMENTAL)
+        _require(_sha(raw) == report_digest, "member_projection_fundamental_pin")
+        _fundamental_shape(_json(text), expected)
+        reports[report_digest] = text
+    return identity, digest, manifest_text, parts, reports
 
 
 def _checked_marker(marker):
@@ -308,7 +362,7 @@ def _verify_manifest(member_db, identity, digest, text):
     )
 
 
-def _verify_staged(member_db, identity, digest, text, parts):
+def _verify_staged(member_db, identity, digest, text, parts, reports):
     _verify_manifest(member_db, identity, digest, text)
     count = member_db.query("SELECT COUNT(*) AS total FROM private_projection_part WHERE identity=?", (identity,))
     _require(count == [{"total": len(parts)}], "member_projection_readback_inventory")
@@ -324,6 +378,23 @@ def _verify_staged(member_db, identity, digest, text, parts):
             "member_projection_readback_part_conflict",
         )
 
+    if reports:
+        count = member_db.query(
+            "SELECT COUNT(*) AS total FROM private_projection_fundamental WHERE identity=?", (identity,),
+        )
+        _require(count == [{"total": len(reports)}], "member_projection_readback_fundamental_inventory")
+        for group in _batches(list(reports)):
+            placeholders = ",".join("?" for _ in group)
+            rows = member_db.query(
+                f"SELECT sha256,json FROM private_projection_fundamental WHERE identity=? AND sha256 IN ({placeholders})",
+                (identity, *group),
+            )
+            _require(
+                len(rows) == len(group) and all(_keys(row, ("sha256", "json")) for row in rows)
+                and {row["sha256"]: row["json"] for row in rows} == {sha: reports[sha] for sha in group},
+                "member_projection_readback_fundamental_conflict",
+            )
+
 
 def import_member_projection(
     member_db, projection_directory, *, read_official_ready, receipt_sha256, expected_previous, activate=True,
@@ -337,7 +408,7 @@ def import_member_projection(
     _require(type(activate) is bool and callable(read_official_ready), "member_projection_import_context")
     baseline = _checked_marker(expected_previous)
     baseline = dict(baseline) if baseline else None
-    identity, digest, text, parts = _prepared(projection_directory, receipt_sha256)
+    identity, digest, text, parts, reports = _prepared(projection_directory, receipt_sha256)
     source = _json(identity)
     target = {"identity": identity, "digest": digest}
 
@@ -346,6 +417,7 @@ def import_member_projection(
 
     stage = (_INSERT_MANIFEST, (identity, digest, text))
     statements = [(_INSERT_PART, (identity, *key, part)) for key, part in parts.items()]
+    statements.extend((_INSERT_FUNDAMENTAL, (identity, sha, report)) for sha, report in reports.items())
     _check_sql_size(*stage)
     for statement in statements:
         _check_sql_size(*statement)
@@ -360,23 +432,27 @@ def import_member_projection(
         _verify_manifest(member_db, identity, digest, text)
         for group in _batches(statements):
             member_db.batch(group)
-    _verify_staged(member_db, identity, digest, text, parts)
+    _verify_staged(member_db, identity, digest, text, parts, reports)
     check_owner()
     if not activate or replay:
         _require(read_member_marker(member_db) == current, "member_projection_marker_changed")
         check_owner()
         status = "already_active" if replay else "staged"
     else:
+        staged_checks = _STAGED
         staged = (identity, digest, identity, len(parts))
+        if reports:
+            staged_checks += " AND (SELECT COUNT(*) FROM private_projection_fundamental WHERE identity=?)=?"
+            staged += (identity, len(reports))
         if current is None:
             sql = """
                 INSERT INTO private_projection_ready (singleton,identity,digest)
-                SELECT 1,?,? WHERE """ + _STAGED + " ON CONFLICT(singleton) DO NOTHING"
+                SELECT 1,?,? WHERE """ + staged_checks + " ON CONFLICT(singleton) DO NOTHING"
             values = (identity, digest, *staged)
         else:
             sql = """
                 UPDATE private_projection_ready SET identity=?,digest=?
-                WHERE singleton=1 AND identity=? AND digest=? AND """ + _STAGED
+                WHERE singleton=1 AND identity=? AND digest=? AND """ + staged_checks
             values = (identity, digest, current["identity"], current["digest"], *staged)
         # Unknown write outcomes are read back exactly once, without writing again.
         try:

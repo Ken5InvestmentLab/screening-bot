@@ -18,7 +18,7 @@ const day = '2026-11-19';
 const calendar = ['2026-11-17', '2026-11-18', day];
 const sourceVersion = 'a'.repeat(64);
 
-async function fixture(t, { hasMissingMark = true, logical = true } = {}) {
+async function fixture(t, { hasMissingMark = true, logical = true, presentations } = {}) {
   const base = await fs.realpath(os.tmpdir());
   const root = await fs.mkdtemp(path.join(base, 'new-a-member-projection-'));
   t.after(async () => {
@@ -52,7 +52,7 @@ async function fixture(t, { hasMissingMark = true, logical = true } = {}) {
       episodes: [await save('episodes-000.json', [episode])],
       intents: [await save('intents-000.json', hasMissingMark ? [episode] : [])],
       watches: [await save('watches-000.json', watches)],
-      presentation: [await save('presentation-000.json', [{ secret: 'PRIVATE_PRESENTATION_MARKER' }])],
+      presentation: [await save('presentation-000.json', presentations ?? [{ secret: 'PRIVATE_PRESENTATION_MARKER' }])],
       current_daily: [],
     },
   };
@@ -148,6 +148,47 @@ test('accepts the exact READY manifest, and CLI output is deterministic and cann
   const analytics = JSON.parse(await fs.readFile(path.join(out, 'analytics-0.json'), 'utf8'));
   assert(analytics.rows.every(row => row.resolved && row.metrics.net_profit === 0 && row.metrics.win_rate_pct === null));
   assert.notEqual(spawnSync(process.execPath, args).status, 0);
+});
+
+test('stores only positively audited matching reports as separately pinned Premium data', async t => {
+  const cutoff = calendar[0] + 'T16:13:29+09:00';
+  const fields = ['材料インパクト', '事業概要', '足元材料', 'ファンダ要点', '注意点', '開示リンク', 'Sources']
+    .map(label => ({ label, text: '版を替えない本文\nhttps://example.com/report', evidence: 'PRIVATE_RAW_PROOF' }));
+  const exact = {
+    identity: '123A|' + calendar[0] + '|1', candidateDate: calendar[0], signalDate: calendar[0],
+    symbol: '123A', companyName: '会社名', chartAllowed: true, analysisCutoff: cutoff,
+    fundamental: { identity: calendar[0] + '|123A', symbol: '123A', signalDate: calendar[0],
+      analysisCutoff: cutoff, auditStatus: 'pass', fields, raw: 'PRIVATE_RAW_PROOF' },
+  };
+  const valid = await fixture(t, { presentations: [
+    exact,
+    { ...exact, fundamental: { ...exact.fundamental, auditStatus: 'fail' } },
+    { ...exact, identity: '123A|' + calendar[0] + '|999' },
+    { ...exact, chartAllowed: false },
+  ] });
+  const result = await prepareNewAMemberProjection(valid.input);
+  assert.equal(result.receipt.schema, 'NEW_A_MEMBER_PROJECTION_OFFLINE_V3');
+  assert.equal(result.receipt.fundamental_reports, 1);
+  assert.equal(JSON.parse(result.manifestJson).fundamental_reports, 1);
+  assert.equal(result.fundamentals.length, 1);
+  const [report] = result.fundamentals;
+  assert.equal(digest(report.json), report.sha256);
+  assert.deepEqual(JSON.parse(report.json), {
+    date: calendar[0], symbol: '123A', company_name: '会社名', analysis_cutoff: cutoff,
+    fields: fields.map(({ label, text }) => ({ label, text })),
+  });
+  assert.deepEqual(JSON.parse(result.parts[0].json).rows, [{
+    date: calendar[0], symbol: '123A', state: 'TRIGGERED', fundamental_sha256: report.sha256,
+  }]);
+  assert.equal(result.parts.filter(part => part.json.includes(report.sha256)).length, 1);
+  assert.equal(result.parts.every(part => !part.json.includes(fields[0].text)), true);
+  assert.doesNotMatch(JSON.stringify(result), /PRIVATE_RAW_PROOF/);
+  const noMatch = await fixture(t, { presentations: [{ ...exact, fundamental: { ...exact.fundamental, signalDate: day } }] });
+  assert.equal((await prepareNewAMemberProjection(noMatch.input)).receipt.schema, 'NEW_A_MEMBER_PROJECTION_OFFLINE_V2');
+  const oversized = await fixture(t, { presentations: [{
+    ...exact, fundamental: { ...exact.fundamental, fields: fields.map((field, index) => index ? field : { ...field, text: 'あ'.repeat(3000) }) },
+  }] });
+  await assert.rejects(() => prepareNewAMemberProjection(oversized.input), /Invalid verified member fundamental field/);
 });
 
 test('rejects unpinned evidence, invalid owner READY digest and retained source mutation before output', async t => {

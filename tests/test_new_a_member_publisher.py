@@ -40,9 +40,10 @@ def source(revision):
 
 def projection(
     folder, ready, *, alter=lambda parts: None,
-    source_manifest_sha256="d" * 64, owner_readback_sha256="e" * 64, tiered=False,
+    source_manifest_sha256="d" * 64, owner_readback_sha256="e" * 64, tiered=False, report=None,
 ):
     folder.mkdir()
+    tiered = tiered or report is not None
     parts = [
         {"kind": "history", "index": 0, "rows": [{"date": DAY, "symbol": "123A", "state": "WATCHING"}]},
         {"kind": "analytics", "index": 0, "rows": [
@@ -62,6 +63,11 @@ def projection(
             ]},
             {"kind": "history", "index": 2, "rows": []},
         ]
+    if report is not None:
+        body = encode(report)
+        report_hash = sha(body)
+        (folder / f"fundamental-{report_hash}.json").write_bytes(body.encode())
+        parts[0]["rows"][0]["fundamental_sha256"] = report_hash
     alter(parts)
     descriptors = []
     for part in parts:
@@ -73,14 +79,16 @@ def projection(
             "sha256": sha(text),
         })
     manifest = encode({
-        "schema": "NEW_A_SHARED_READONLY_VIEW_V2" if tiered else "NEW_A_SHARED_READONLY_VIEW_V1",
+        "schema": "NEW_A_SHARED_READONLY_VIEW_V" + ("3" if report is not None else "2" if tiered else "1"),
+        **({"fundamental_reports": 1} if report is not None else {}),
         "audience": "AUTHENTICATED_TIERED_DISCORD_VIEW" if tiered else "EXISTING_DESIGNATED_DISCORD_ROLE",
         "basis": "SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS", "source": ready, "parts": descriptors,
         **({"history_layout": {"premium_pages": 1, "completed_pages": 1}} if tiered else {}),
     })
     (folder / "manifest.json").write_bytes(manifest.encode())
     receipt = encode({
-        "schema": "NEW_A_MEMBER_PROJECTION_OFFLINE_V2" if tiered else "NEW_A_MEMBER_PROJECTION_OFFLINE_V1",
+        "schema": "NEW_A_MEMBER_PROJECTION_OFFLINE_V" + ("3" if report is not None else "2" if tiered else "1"),
+        **({"fundamental_reports": 1} if report is not None else {}),
         "source": ready,
         "source_manifest_sha256": source_manifest_sha256, "owner_readback_sha256": owner_readback_sha256,
         "projection_manifest_sha256": sha(manifest), "history_rows": 1, "parts": len(parts), "activated": False,
@@ -218,6 +226,44 @@ class MemberPublisherTest(unittest.TestCase):
                                           read_official_ready=lambda: source(4), expected_previous=None)
         self.assertEqual(result["status"], "activated")
         self.assertEqual(result["parts"], 7)
+
+    def test_verified_fundamentals_require_exact_premium_row_and_complete_sidecar_readback(self):
+        self.member.db.executescript((GATE / "member-migrations/0005_new_a_member_fundamental_reports.sql").read_text(encoding="utf-8"))
+        report = {
+            "date": "2026-11-17", "symbol": "123A", "company_name": "テスト会社",
+            "analysis_cutoff": "2026-11-17T12:00:00+09:00",
+            "fields": [{"label": label, "text": "公開済み本文"} for label in (
+                "材料インパクト", "事業概要", "足元材料", "ファンダ要点", "注意点", "開示リンク", "Sources",
+            )],
+        }
+        with self.assertRaisesRegex(ValueError, "fundamental_shape"):
+            folder = self.root / "other-episode"
+            self.ingest(prepared=(folder, projection(folder, source(4), report={**report, "symbol": "123B"})))
+        with self.assertRaisesRegex(ValueError, "public_row_shape"):
+            folder = self.root / "report-in-free-history"
+            self.ingest(prepared=(folder, projection(
+                folder, source(4), report=report,
+                alter=lambda parts: parts[1]["rows"][0].update(fundamental_sha256=sha(encode(report))),
+            )))
+        folder = self.root / "exact-report"
+        pin = projection(folder, source(4), report=report)
+        body_hash = sha(encode(report))
+        sidecar = folder / f"fundamental-{body_hash}.json"
+        sidecar.write_bytes(sidecar.read_bytes() + b" ")
+        with self.assertRaisesRegex(ValueError, "fundamental_pin"):
+            self.ingest(prepared=(folder, pin))
+        self.assertEqual(self.member.query("SELECT COUNT(*) AS total FROM private_projection_manifest"), [{"total": 0}])
+        sidecar.write_bytes(encode(report).encode())
+        prepared = (folder, pin)
+        staged = self.ingest(prepared=prepared, activate=False)
+        self.assertIsNone(read_member_marker(self.member))
+        self.assertEqual(self.member.query("SELECT sha256,json FROM private_projection_fundamental WHERE identity=?",
+                                           (staged["identity"],)), [{"sha256": body_hash, "json": encode(report)}])
+        self.assertEqual(self.ingest(prepared=prepared)["status"], "activated")
+        self.assertEqual(self.ingest(prepared=prepared)["status"], "already_active")
+        self.member.query("UPDATE private_projection_fundamental SET json=json || ' '")
+        with self.assertRaisesRegex(ValueError, "readback_fundamental_conflict"):
+            self.ingest(prepared=prepared)
 
     def test_conflicting_existing_bytes_withhold_activation(self):
         staged = self.ingest(activate=False)

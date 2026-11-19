@@ -25,8 +25,15 @@ const makeSession = workerModules.load('shared-report-gate').__test.createSessio
 const preferences = '/api/cloud/new-a-view/preferences';
 const history = '/api/cloud/new-a-view/history.json';
 const dashboard = '/api/cloud/new-a-view/dashboard.json';
-const documentPath = '/weak_early_beta_latest.html';
+const fundamental = '/api/cloud/new-a-view/fundamental.json';
+const sessionPath = '/api/cloud/new-a-view/session';
 const ended = { date: '2026-11-18', symbol: '0010', state: 'EXPIRED' };
+const reportFixture = {
+  date: ended.date, symbol: ended.symbol, company_name: 'テスト会社', analysis_cutoff: '2026-11-18T07:00:00Z',
+  fields: ['材料インパクト', '事業概要', '足元材料', 'ファンダ要点', '注意点', '開示リンク', 'Sources']
+    .map(label => ({ label, text: 'AUDITED_REPORT_FIXTURE\nhttps://example.com/source' })),
+};
+const documentPath = '/weak_early_beta_latest.html';
 
 function openDb(t, sql) {
   const db = new DatabaseSync(':memory:');
@@ -50,7 +57,7 @@ function openDb(t, sql) {
   };
 }
 
-function setup(t) {
+function setup(t, { report } = {}) {
   const ownerDb = openDb(t, 'schema/new-a-private.sql');
   const memberDb = openDb(t, 'member-migrations/0001_new_a_member_storage.sql');
   const version = 'e'.repeat(64);
@@ -78,8 +85,12 @@ function setup(t) {
     { kind: 'analytics', index: 0, rows: presets.map(preset => ({ preset, from: day, through: day, resolved: false, metrics: null })) },
     ...presets.map((_, index) => ({ kind: 'chart', index, rows: [{ date: day, equity_yen: null, holding_count: null }] })),
   ];
+  const reportText = report && JSON.stringify(report);
+  if (report) parts[0].rows[1] = { ...ended, fundamental_sha256: digest(reportText) };
   const shared = JSON.stringify({
-    schema: 'NEW_A_SHARED_READONLY_VIEW_V2', audience: 'AUTHENTICATED_TIERED_DISCORD_VIEW',
+    schema: report ? 'NEW_A_SHARED_READONLY_VIEW_V3' : 'NEW_A_SHARED_READONLY_VIEW_V2',
+    ...(report ? { fundamental_reports: 1 } : {}),
+    audience: 'AUTHENTICATED_TIERED_DISCORD_VIEW',
     history_layout: { premium_pages: 1, completed_pages: 1 },
     basis: 'SHARED_SIMULATION_DEFAULTS_NOT_OWNER_SETTINGS', source, parts: parts.map(part => {
       const json = JSON.stringify(part);
@@ -91,6 +102,12 @@ function setup(t) {
   for (const part of parts) memberDb.db.prepare('INSERT INTO private_projection_part VALUES (?,?,?,?)')
     .run(identity, part.kind, part.index, JSON.stringify(part));
   memberDb.db.prepare('INSERT INTO private_projection_ready VALUES (1,?,?)').run(identity, sharedDigest);
+  if (report) {
+    memberDb.db.exec(loadSql('member-migrations/0005_new_a_member_fundamental_reports.sql'));
+    memberDb.db.prepare('INSERT INTO private_projection_fundamental VALUES (?,?,?)')
+      .run(identity, digest(reportText), reportText);
+  }
+  const paid = new Set([allowed, otherAllowed, owner]);
   const env = {
     ASSETS: { fetch: async url => new Response(url.endsWith('/member-loader.js') ? 'fixture code' : null,
       { status: url.endsWith('/member-loader.js') ? 200 : 404 }) },
@@ -104,7 +121,7 @@ function setup(t) {
         assert.equal(url, 'https://cloud-role-authority.invalid/check');
         const { accessToken } = JSON.parse(options.body);
         const now = Date.now();
-        return Response.json({ status: [allowed, otherAllowed, owner].some(subject => accessToken === 'fixture-' + subject) ? 'paid' : 'free',
+        return Response.json({ status: [...paid].some(subject => accessToken === 'fixture-' + subject) ? 'paid' : 'free',
           checkedAt: now, validUntil: now + 60000, source: 'discord' });
       },
     }) },
@@ -119,7 +136,7 @@ function setup(t) {
     }
     return new Request(origin + route, { headers });
   };
-  return { env, request, ownerDb, memberDb };
+  return { env, request, ownerDb, memberDb, revoke: subject => paid.delete(subject) };
 }
 
 function productionFixture(t) {
@@ -175,6 +192,65 @@ test('the Worker serves assets and shared data to a verified member while keepin
   assert.deepEqual((await premiumDashboard.json()).watching, [{ date: day, symbol: '123A', state: 'WATCHING' }]);
   f.ownerDb.db.exec('UPDATE new_a_active_pointer SET revision=2');
   assert.equal((await call(history, allowed)).status, 503);
+});
+
+test('Fundamentals requires the fresh Premium session and the exact visible history generation', async t => {
+  const f = setup(t, { report: reportFixture });
+  const call = async (route, user, headers = {}) => {
+    const request = await f.request(route, user);
+    for (const [key, value] of Object.entries(headers)) request.headers.set(key, value);
+    return worker.fetch(request, f.env);
+  };
+  const route = fundamental + '?item=1.' + reportFixture.date + '.0010';
+  const start = f.memberDb.reads();
+  assert.equal((await call(route)).status, 401);
+  assert.equal((await call(route, denied)).status, 403);
+  assert.equal((await call(route, allowed)).status, 403);
+  assert.equal(f.memberDb.reads(), start);
+  const session = await call(sessionPath, allowed);
+  assert.equal(session.status, 204);
+  const memberSession = session.headers.get('x-cloud-member-session');
+  assert.match(memberSession, /^[0-9a-f]{64}$/);
+  const sameSession = { 'x-cloud-member-session': memberSession };
+  const premium = await (await call(history, allowed, sameSession)).json();
+  assert.deepEqual(premium.rows, [{ date: day, symbol: '123A', state: 'WATCHING' }, { ...ended, has_fundamental: true }]);
+  assert.doesNotMatch(JSON.stringify(premium), /AUDITED_REPORT_FIXTURE|fundamental_sha256|company_name/);
+  assert.deepEqual((await (await call(history, denied)).json()).rows, [ended]);
+  assert.equal((await call(route, allowed, sameSession)).status, 403);
+  const scoped = { ...sameSession, 'x-cloud-generation': premium.generation };
+  assert.equal((await call(route, otherAllowed, scoped)).status, 403);
+  assert.equal((await call(route, allowed, { ...scoped, 'x-cloud-generation': 'stale' })).status, 409);
+  assert.equal((await call(route.replace('1.', '2.'), allowed, scoped)).status, 404);
+  assert.equal((await call(route.replace(reportFixture.date, '2026-02-31'), allowed, scoped)).status, 400);
+  const answer = await call(route, allowed, scoped);
+  assert.equal(answer.status, 200);
+  assert.match(answer.headers.get('cache-control'), /no-store/);
+  assert.deepEqual(await answer.json(), { as_of: day, generation: premium.generation, ...reportFixture });
+  f.revoke(allowed);
+  assert.equal((await call(route, allowed, scoped)).status, 403);
+});
+
+test('Fundamentals rejects legacy, replaced and altered member projection bytes', async t => {
+  const legacy = setup(t);
+  const f = setup(t, { report: reportFixture });
+  async function fetchAt(fixture, route, headers = {}) {
+    const req = await fixture.request(route, allowed);
+    for (const [name, value] of Object.entries(headers)) req.headers.set(name, value);
+    return worker.fetch(req, fixture.env);
+  }
+  async function scope(fixture) {
+    const session = await fetchAt(fixture, sessionPath);
+    const list = await (await fetchAt(fixture, history)).json();
+    return { 'x-cloud-member-session': session.headers.get('x-cloud-member-session'), 'x-cloud-generation': list.generation };
+  }
+  const route = fundamental + '?item=1.' + reportFixture.date + '.0010';
+  const legacyReply = await fetchAt(legacy, route, await scope(legacy));
+  assert.equal(legacyReply.status, 404);
+  const scoped = await scope(f);
+  f.memberDb.db.prepare('UPDATE private_projection_fundamental SET json=json || ?').run(' ');
+  assert.equal((await fetchAt(f, route, scoped)).status, 503);
+  f.ownerDb.db.exec('UPDATE new_a_active_pointer SET revision=2');
+  assert.equal((await fetchAt(f, route, scoped)).status, 409);
 });
 
 test('disabled member view or missing or shared D1 bindings cannot open the protected member route', async t => {

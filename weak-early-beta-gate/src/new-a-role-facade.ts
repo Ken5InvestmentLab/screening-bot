@@ -33,8 +33,10 @@ const documents = new Set([
   '/weak_early_beta_latest.html', '/weak_early_beta_analytics.html', '/weak_early_beta_settings.html',
 ]);
 const historyPath = '/api/cloud/new-a-view/history.json';
+const fundamentalPath = '/api/cloud/new-a-view/fundamental.json';
 const aggregates = new Map([
   [historyPath, 'page'],
+  [fundamentalPath, 'item'],
   ['/api/cloud/new-a-view/dashboard.json', null],
   ['/api/cloud/new-a-view/analytics.json', null],
   ['/api/cloud/new-a-view/chart.json', 'preset'],
@@ -150,6 +152,7 @@ export async function roleFacade(
       return response;
     }
     const expectedSession = aggregate || preferences ? request.headers.get(memberSessionHeader) : null;
+    if (pathname === fundamentalPath && expectedSession === null) return reject(request, 403, 'member_session_required');
     if (session || expectedSession !== null) {
       if (!env.SESSION_SECRET) return reject(request, 503, 'member_service_unavailable');
       const tag = await memberSessionTag(env.SESSION_SECRET, subject, tier);
